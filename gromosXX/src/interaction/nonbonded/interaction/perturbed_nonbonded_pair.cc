@@ -247,7 +247,7 @@ void interaction::Perturbed_Nonbonded_Pair
       A_qi = topo.charge()(it->i);
       A_qj = topo.perturbed_solute().atoms()[it->j].A_charge();
 
-      B_qi = topo.charge()(it->j);
+      B_qi = topo.charge()(it->i);
       B_qj = topo.perturbed_solute().atoms()[it->j].B_charge();
       
       A_q = A_qi * A_qj;
@@ -312,7 +312,7 @@ void interaction::Perturbed_Nonbonded_Pair
       A_f = 0.0;
       DEBUG(7, "excluded in A");
       if(sim.param().nonbonded.rf_excluded){
-        if (is_perturbed){
+        if (is_perturbed){ //perturbed atoms are involved
           switch(t_interaction_spec::interaction_func){
             case simulation::lj_crf_func : {
               m_perturbed_nonbonded_term.
@@ -321,46 +321,71 @@ void interaction::Perturbed_Nonbonded_Pair
               break;
             }
             case simulation::pol_lj_crf_func : {
-              m_perturbed_nonbonded_term.
+              /* polarization function not correctly implemented --martina
+	      m_perturbed_nonbonded_term.
               pol_rf_soft_interaction(r, rp1, rp2, rpp,
                       A_qi, A_qj, B_qi, B_qj,
                       topo.coscharge(it->i), topo.coscharge(it->j),
                       alpha_crf, A_f_pol, A_e_crf, A_de_crf);
+	      */
+	      io::messages.add("Perturbed_Nonbonded_Pair", 
+		      "polarization: interaction function not implemented",
+                       io::message::critical);
               break;
             }
             case simulation::pol_off_lj_crf_func : {
-              m_perturbed_nonbonded_term.
+              /* polarization function not correctly implemented --martina
+	      m_perturbed_nonbonded_term.
               pol_rf_soft_interaction(rm, rp1, rp2, rpp,
                       A_qi, A_qj, B_qi, B_qj,
                       topo.coscharge(it->i), topo.coscharge(it->j),
                       alpha_crf, A_f_pol, A_e_crf, A_de_crf);
+	      */
+	      io::messages.add("Perturbed_Nonbonded_Pair", 
+		      "polarization: interaction function not implemented",
+                       io::message::critical);
               break;
             }
-            default: io::messages.add("Nonbonded_Innerloop",
+            default: io::messages.add("Perturbed_Nonbonded_Pair",
                     "interaction function not implemented",
                     io::message::critical);
           }
-        } else { // non perturbed
+        } else { // non perturbed. 
           switch(t_interaction_spec::interaction_func){
             case simulation::lj_crf_func : {
               m_nonbonded_term.rf_interaction(r, A_q, A_f, A_e_crf);
+
+	      //Since nonbonded_term is not scaled by lambda, this is calculated here --martina
+	      A_f = m_perturbed_nonbonded_term.A_lj_lambda_n() * A_f;
+
+	      A_de_crf = - topo.lambda_exp() * m_perturbed_nonbonded_term.A_crf_lambda_n_1() * A_e_crf; //define before multiplication of A_e_crf with lambda!
+	      A_e_crf *= m_perturbed_nonbonded_term.A_crf_lambda_n(); //scale A_e_crf with lambda
+
               break;
             }
             case simulation::pol_lj_crf_func : {
-              m_nonbonded_term.
+              /*m_nonbonded_term.
               pol_rf_interaction(r, rp1, rp2, rpp, topo.charge()(it->i),
                       topo.charge()(it->j), topo.coscharge(it->i),
                       topo.coscharge(it->j), A_f_pol_vec, A_e_crf);
+	      */
+	      io::messages.add("Perturbed_Nonbonded_Pair", 
+		      "polarization: interaction function not implemented",
+                       io::message::critical);
               break;
             }
             case simulation::pol_off_lj_crf_func : {
-              m_nonbonded_term.
+              /*m_nonbonded_term.
               pol_rf_interaction(rm, rp1, rp2, rpp, topo.charge()(it->i),
                       topo.charge()(it->j), topo.coscharge(it->i),
                       topo.coscharge(it->j), A_f_pol_vec, A_e_crf);
+	      */
+	      io::messages.add("Perturbed_Nonbonded_Pair", 
+		      "polarization: interaction function not implemented",
+                       io::message::critical);
               break;
             }
-            default: io::messages.add("Nonbonded_Innerloop",
+            default: io::messages.add("Perturbed_Nonbonded_Pair",
                     "interaction function not implemented",
                     io::message::critical);
           }
@@ -392,7 +417,7 @@ void interaction::Perturbed_Nonbonded_Pair
             break;
           }
           case simulation::pol_lj_crf_func : {
-            double A_f6, A_f12;
+            /*double A_f6, A_f12;
             m_perturbed_nonbonded_term.
 	      pol_lj_crf_soft_interaction(r, rp1, rp2, rpp,
 					  A_lj->c6, A_lj->c12,
@@ -408,10 +433,14 @@ void interaction::Perturbed_Nonbonded_Pair
             A_f_pol_vec(1) = A_f_pol[1] * rp1;
             A_f_pol_vec(2) = A_f_pol[2] * rp2;
             A_f_pol_vec(3) = A_f_pol[3] * rpp;
+	    */
+	      io::messages.add("Perturbed_Nonbonded_Pair", 
+		      "polarization: interaction function not implemented",
+                       io::message::critical);
             break;
           }
           case simulation::pol_off_lj_crf_func : {
-            double A_f6, A_f12;
+            /*double A_f6, A_f12;
             m_perturbed_nonbonded_term.
               pol_off_lj_crf_soft_interaction(r, rm, rp1, rp2, rpp,
                                           A_lj->c6, A_lj->c12,
@@ -427,9 +456,13 @@ void interaction::Perturbed_Nonbonded_Pair
             A_f_pol_vec(1) = A_f_pol[1] * rp1;
             A_f_pol_vec(2) = A_f_pol[2] * rp2;
             A_f_pol_vec(3) = A_f_pol[3] * rpp;
+	    */
+	      io::messages.add("Perturbed_Nonbonded_Pair", 
+		      "polarization: interaction function not implemented",
+                       io::message::critical);
             break;
           }
-          default: io::messages.add("Nonbonded_Innerloop",
+          default: io::messages.add("Perturbed_Nonbonded_Pair",
                   "interaction function not implemented",
                   io::message::critical);
         }
@@ -444,12 +477,19 @@ void interaction::Perturbed_Nonbonded_Pair
 			       A_q, A_f1, A_e_lj,
 			       A_e_crf);
             
-//            A_de_lj = A_de_crf = 0.0;
-            A_f = A_f1 * r;
+            //A_de_lj = A_de_crf = 0.0;
+            A_f = A_f1 * r * m_perturbed_nonbonded_term.A_lj_lambda_n();
+
+	    A_de_lj = - topo.lambda_exp() * m_perturbed_nonbonded_term.A_lj_lambda_n_1() * A_e_lj; //again: calculate before scaling A_e_lj with lambda!
+	    A_de_crf = - topo.lambda_exp() * m_perturbed_nonbonded_term.A_crf_lambda_n_1() * A_e_crf;
+
+	    A_e_lj *= m_perturbed_nonbonded_term.A_lj_lambda_n();
+	    A_e_crf *= m_perturbed_nonbonded_term.A_crf_lambda_n();
+
             break;
           }
           case simulation::pol_lj_crf_func : {
-            m_nonbonded_term.
+           /* m_nonbonded_term.
             pol_lj_crf_interaction(r, rp1, rp2, rpp, A_lj->c6, A_lj->c12,
                     topo.charge(it->i), topo.charge(it->j),
                     topo.coscharge(it->i), topo.coscharge(it->j),
@@ -458,10 +498,14 @@ void interaction::Perturbed_Nonbonded_Pair
             A_f_pol_vec(1) = A_f_pol[1] * rp1;
             A_f_pol_vec(2) = A_f_pol[2] * rp2;
             A_f_pol_vec(3) = A_f_pol[3] * rpp;
+	    */
+	      io::messages.add("Perturbed_Nonbonded_Pair", 
+		      "polarization: interaction function not implemented",
+                       io::message::critical);
             break;
           }
           case simulation::pol_off_lj_crf_func : {
-            m_nonbonded_term.
+            /*m_nonbonded_term.
             pol_off_lj_crf_interaction(r, rm,  rp1, rp2, rpp, A_lj->c6, A_lj->c12,
                     topo.charge(it->i), topo.charge(it->j),
                     topo.coscharge(it->i), topo.coscharge(it->j),
@@ -470,9 +514,13 @@ void interaction::Perturbed_Nonbonded_Pair
             A_f_pol_vec(1) = A_f_pol[1] * rp1;
             A_f_pol_vec(2) = A_f_pol[2] * rp2;
             A_f_pol_vec(3) = A_f_pol[3] * rpp;
+	    */
+	      io::messages.add("Perturbed_Nonbonded_Pair", 
+		      "polarization: interaction function not implemented",
+                       io::message::critical);
             break;
           }
-          default: io::messages.add("Nonbonded_Innerloop",
+          default: io::messages.add("Perturbed_Nonbonded_Pair",
                   "interaction function not implemented",
                   io::message::critical);
         }
@@ -506,7 +554,7 @@ void interaction::Perturbed_Nonbonded_Pair
             break;
           }
           case simulation::pol_lj_crf_func : {
-            double A_f6, A_f12;
+            /*double A_f6, A_f12;
             m_perturbed_nonbonded_term.
             pol_lj_crf_soft_interaction(r, rp1, rp2, rpp,
 					A_lj->cs6, A_lj->cs12,
@@ -523,10 +571,14 @@ void interaction::Perturbed_Nonbonded_Pair
             A_f_pol_vec(1) = A_f_pol[1] * rp1;
             A_f_pol_vec(2) = A_f_pol[2] * rp2;
             A_f_pol_vec(3) = A_f_pol[3] * rpp;
+	     */
+	      io::messages.add("Perturbed_Nonbonded_Pair", 
+		      "polarization: interaction function not implemented",
+                       io::message::critical);
             break;
           }
           case simulation::pol_off_lj_crf_func : {
-            double A_f6, A_f12;
+            /*double A_f6, A_f12;
             m_perturbed_nonbonded_term.
             pol_off_lj_crf_soft_interaction(r,rm, rp1, rp2, rpp,
                                         A_lj->cs6, A_lj->cs12,
@@ -543,9 +595,13 @@ void interaction::Perturbed_Nonbonded_Pair
             A_f_pol_vec(1) = A_f_pol[1] * rp1;
             A_f_pol_vec(2) = A_f_pol[2] * rp2;
             A_f_pol_vec(3) = A_f_pol[3] * rpp;
+	     */
+	      io::messages.add("Perturbed_Nonbonded_Pair", 
+		      "polarization: interaction function not implemented",
+                       io::message::critical);
             break;
           }
-          default: io::messages.add("Nonbonded_Innerloop",
+          default: io::messages.add("Perturbed_Nonbonded_Pair",
                   "interaction function not implemented",
                   io::message::critical);
         }
@@ -558,12 +614,21 @@ void interaction::Perturbed_Nonbonded_Pair
             lj_crf_interaction(r, A_lj->cs6, A_lj->cs12,
 			       A_q, A_f1, A_e_lj,
 			       A_e_crf);
-            A_de_lj = A_de_crf = 0.0;
-            A_f = A_f1 * r;
+            //A_de_lj = A_de_crf = 0.0;
+
+            A_f = A_f1 * r * m_perturbed_nonbonded_term.A_lj_lambda_n();
+
+	    A_de_lj = - topo.lambda_exp() * m_perturbed_nonbonded_term.A_lj_lambda_n_1() * A_e_lj;
+	    A_de_crf = - topo.lambda_exp() * m_perturbed_nonbonded_term.A_crf_lambda_n_1() * A_e_crf;
+
+	    A_e_lj *= m_perturbed_nonbonded_term.A_lj_lambda_n();
+	    A_e_crf *= m_perturbed_nonbonded_term.A_crf_lambda_n();
+
+
             break;
           }
           case simulation::pol_lj_crf_func : {
-            m_nonbonded_term.
+           /* m_nonbonded_term.
             pol_lj_crf_interaction(r, rp1, rp2, rpp, A_lj->cs6, A_lj->cs12,
 				   topo.charge(it->i), topo.charge(it->j),
 				   topo.coscharge(it->i), topo.coscharge(it->j),
@@ -572,10 +637,14 @@ void interaction::Perturbed_Nonbonded_Pair
             A_f_pol_vec(1) = A_f_pol[1] * rp1;
             A_f_pol_vec(2) = A_f_pol[2] * rp2;
             A_f_pol_vec(3) = A_f_pol[3] * rpp;
+	    */
+	      io::messages.add("Perturbed_Nonbonded_Pair", 
+		      "polarization: interaction function not implemented",
+                       io::message::critical);
             break;
           }
           case simulation::pol_off_lj_crf_func : {
-            m_nonbonded_term.
+            /*m_nonbonded_term.
             pol_off_lj_crf_interaction(r, rm,  rp1, rp2, rpp, A_lj->cs6, A_lj->cs12,
                                    topo.charge(it->i), topo.charge(it->j),
                                    topo.coscharge(it->i), topo.coscharge(it->j),
@@ -584,9 +653,13 @@ void interaction::Perturbed_Nonbonded_Pair
             A_f_pol_vec(1) = A_f_pol[1] * rp1;
             A_f_pol_vec(2) = A_f_pol[2] * rp2;
             A_f_pol_vec(3) = A_f_pol[3] * rpp;
+	    */
+	      io::messages.add("Perturbed_Nonbonded_Pair", 
+		      "polarization: interaction function not implemented",
+                       io::message::critical);
             break;
           }
-          default: io::messages.add("Nonbonded_Innerloop",
+          default: io::messages.add("Perturbed_Nonbonded_Pair",
                   "interaction function not implemented",
                   io::message::critical);
         }
@@ -609,26 +682,30 @@ void interaction::Perturbed_Nonbonded_Pair
     case 0: // excluded
       B_e_lj = B_e_crf = B_de_lj = B_de_crf = 0.0;
       B_f = 0.0;
-      DEBUG(7, "excluded in A");
+      DEBUG(7, "excluded in B");
       if(sim.param().nonbonded.rf_excluded){
         if (is_perturbed){
           switch(t_interaction_spec::interaction_func){
             case simulation::lj_crf_func : {
               m_perturbed_nonbonded_term.
-              rf_soft_interaction(r, B_q, 0, alpha_crf,
+              rf_soft_interaction(r, 0, B_q, alpha_crf,
 				  B_f, B_e_crf, B_de_crf);
               break;
             }
             case simulation::pol_lj_crf_func : 
             case simulation::pol_off_lj_crf_func : {
-              m_perturbed_nonbonded_term.
+              /*m_perturbed_nonbonded_term.
               pol_rf_soft_interaction(r, rp1, rp2, rpp,
 				      A_qi, A_qj, B_qi, B_qj,
 				      topo.coscharge(it->i), topo.coscharge(it->j),
 				      alpha_crf, B_f_pol, B_e_crf, B_de_crf);
+	     */
+	      io::messages.add("Perturbed_Nonbonded_Pair", 
+		      "polarization: interaction function not implemented",
+                       io::message::critical);
               break;
             }
-            default: io::messages.add("Nonbonded_Innerloop",
+            default: io::messages.add("Perturbed_Nonbonded_Pair",
                     "interaction function not implemented",
                     io::message::critical);
           }
@@ -636,17 +713,29 @@ void interaction::Perturbed_Nonbonded_Pair
           switch(t_interaction_spec::interaction_func){
             case simulation::lj_crf_func : {
               m_nonbonded_term.rf_interaction(r, B_q, B_f, B_e_crf);
+
+	      B_f = B_f * m_perturbed_nonbonded_term.B_lj_lambda_n();
+
+	      B_de_crf = topo.lambda_exp() * m_perturbed_nonbonded_term.B_crf_lambda_n_1() * B_e_crf;
+
+	      B_e_crf *=  m_perturbed_nonbonded_term.B_crf_lambda_n();
+
+
               break;
             }
             case simulation::pol_lj_crf_func : 
             case simulation::pol_off_lj_crf_func : {
-              m_nonbonded_term.
+              /*m_nonbonded_term.
               pol_rf_interaction(r, rp1, rp2, rpp, topo.charge()(it->i),
 				 topo.charge()(it->j), topo.coscharge(it->i),
 				 topo.coscharge(it->j), B_f_pol_vec, B_e_crf);
+	      */
+	      io::messages.add("Perturbed_Nonbonded_Pair", 
+		      "polarization: interaction function not implemented",
+                       io::message::critical);
               break;
             }
-            default: io::messages.add("Nonbonded_Innerloop",
+            default: io::messages.add("Perturbed_Nonbonded_Pair",
                     "interaction function not implemented",
                     io::message::critical);
           }
@@ -667,9 +756,9 @@ void interaction::Perturbed_Nonbonded_Pair
             double B_f1, B_f6, B_f12;
             
             m_perturbed_nonbonded_term.
-            lj_crf_soft_interaction(r, B_lj->c6, B_lj->c12,
-				    0, 0,
-				    B_q, 0,
+            lj_crf_soft_interaction(r, 0, 0,
+			            B_lj->c6, B_lj->c12,				    
+				    0, B_q,
 				    alpha_lj, alpha_crf,
 				    B_f1, B_f6, B_f12,
 				    B_e_lj, B_e_crf, B_de_lj, B_de_crf);
@@ -678,7 +767,7 @@ void interaction::Perturbed_Nonbonded_Pair
             break;
           }
           case simulation::pol_lj_crf_func : {
-            double B_f6, B_f12;
+            /*double B_f6, B_f12;
             m_perturbed_nonbonded_term.
             pol_lj_crf_soft_interaction(r, rp1, rp2, rpp,
 					A_lj->c6, A_lj->c12,
@@ -694,10 +783,14 @@ void interaction::Perturbed_Nonbonded_Pair
             B_f_pol_vec(1) = B_f_pol[1] * rp1;
             B_f_pol_vec(2) = B_f_pol[2] * rp2;
             B_f_pol_vec(3) = B_f_pol[3] * rpp;
+	    */
+	      io::messages.add("Perturbed_Nonbonded_Pair", 
+		      "polarization: interaction function not implemented",
+                       io::message::critical);
             break;
           }
           case simulation::pol_off_lj_crf_func : {
-            double B_f6, B_f12;
+            /*double B_f6, B_f12;
             m_perturbed_nonbonded_term.
             pol_off_lj_crf_soft_interaction(r, rm, rp1, rp2, rpp,
                                         A_lj->c6, A_lj->c12,
@@ -713,9 +806,13 @@ void interaction::Perturbed_Nonbonded_Pair
             B_f_pol_vec(1) = B_f_pol[1] * rp1;
             B_f_pol_vec(2) = B_f_pol[2] * rp2;
             B_f_pol_vec(3) = B_f_pol[3] * rpp;
+	     */
+	      io::messages.add("Perturbed_Nonbonded_Pair", 
+		      "polarization: interaction function not implemented",
+                       io::message::critical);
             break;
           }
-          default: io::messages.add("Nonbonded_Innerloop",
+          default: io::messages.add("Perturbed_Nonbonded_Pair",
                   "interaction function not implemented",
                   io::message::critical);
         }
@@ -730,12 +827,21 @@ void interaction::Perturbed_Nonbonded_Pair
 			       B_q, B_f1, B_e_lj,
 			       B_e_crf);
             
-	    //            B_de_lj = B_de_crf = 0.0;
-            B_f = B_f1 * r;
+	  //  B_de_lj = B_de_crf = 0.0;
+
+            B_f = B_f1 * r * m_perturbed_nonbonded_term.B_lj_lambda_n();
+
+	    B_de_lj = topo.lambda_exp() * m_perturbed_nonbonded_term.B_lj_lambda_n_1() * B_e_lj;
+	    B_de_crf = topo.lambda_exp() * m_perturbed_nonbonded_term.B_crf_lambda_n_1() * B_e_crf;
+
+	    B_e_lj *= m_perturbed_nonbonded_term.B_lj_lambda_n();
+	    B_e_crf *=  m_perturbed_nonbonded_term.B_crf_lambda_n();
+
+
             break;
           }
           case simulation::pol_lj_crf_func : {
-            m_nonbonded_term.
+            /*m_nonbonded_term.
             pol_lj_crf_interaction(r, rp1, rp2, rpp, B_lj->c6, B_lj->c12,
 				   topo.charge(it->i), topo.charge(it->j),
 				   topo.coscharge(it->i), topo.coscharge(it->j),
@@ -744,10 +850,14 @@ void interaction::Perturbed_Nonbonded_Pair
             B_f_pol_vec(1) = B_f_pol[1] * rp1;
             B_f_pol_vec(2) = B_f_pol[2] * rp2;
             B_f_pol_vec(3) = B_f_pol[3] * rpp;
+	    */
+	      io::messages.add("Perturbed_Nonbonded_Pair", 
+		      "polarization: interaction function not implemented",
+                       io::message::critical);
             break;
           }
           case simulation::pol_off_lj_crf_func : {
-            m_nonbonded_term.
+            /*m_nonbonded_term.
             pol_off_lj_crf_interaction(r, rm,  rp1, rp2, rpp, B_lj->c6, B_lj->c12,
                                    topo.charge(it->i), topo.charge(it->j),
                                    topo.coscharge(it->i), topo.coscharge(it->j),
@@ -756,9 +866,13 @@ void interaction::Perturbed_Nonbonded_Pair
             B_f_pol_vec(1) = B_f_pol[1] * rp1;
             B_f_pol_vec(2) = B_f_pol[2] * rp2;
             B_f_pol_vec(3) = B_f_pol[3] * rpp;
+	    */
+	      io::messages.add("Perturbed_Nonbonded_Pair", 
+		      "polarization: interaction function not implemented",
+                       io::message::critical);
             break;
           }
-          default: io::messages.add("Nonbonded_Innerloop",
+          default: io::messages.add("Perturbed_Nonbonded_Pair",
                   "interaction function not implemented",
                   io::message::critical);
         }
@@ -783,16 +897,16 @@ void interaction::Perturbed_Nonbonded_Pair
             double B_f1, B_f6, B_f12;
             
             m_perturbed_nonbonded_term.
-            lj_crf_soft_interaction(r, B_lj->cs6, B_lj->cs12,
-				    0, 0,
-				    B_q, 0,
+            lj_crf_soft_interaction(r, 0, 0,
+				    B_lj->cs6, B_lj->cs12,
+				    0, B_q,
 				    alpha_lj, alpha_crf,
 				    B_f1, B_f6, B_f12, B_e_lj, B_e_crf, B_de_lj, B_de_crf);
             B_f = (B_f1 + B_f6 + B_f12) * r;
             break;
           }
           case simulation::pol_lj_crf_func : {
-            double B_f6, B_f12;
+            /*double B_f6, B_f12;
             m_perturbed_nonbonded_term.
             pol_lj_crf_soft_interaction(r, rp1, rp2, rpp,
 					A_lj->cs6, A_lj->cs12,
@@ -813,10 +927,14 @@ void interaction::Perturbed_Nonbonded_Pair
             B_f_pol_vec(1) = B_f_pol[1] * rp1;
             B_f_pol_vec(2) = B_f_pol[2] * rp2;
             B_f_pol_vec(3) = B_f_pol[3] * rpp;
+	    */
+	      io::messages.add("Perturbed_Nonbonded_Pair", 
+		      "polarization: interaction function not implemented",
+                       io::message::critical);
             break;
           }
           case simulation::pol_off_lj_crf_func : {
-            double B_f6, B_f12;
+            /*double B_f6, B_f12;
             m_perturbed_nonbonded_term.
             pol_off_lj_crf_soft_interaction(r, rm, rp1, rp2, rpp,
                                         A_lj->cs6, A_lj->cs12,
@@ -837,9 +955,13 @@ void interaction::Perturbed_Nonbonded_Pair
             B_f_pol_vec(1) = B_f_pol[1] * rp1;
             B_f_pol_vec(2) = B_f_pol[2] * rp2;
             B_f_pol_vec(3) = B_f_pol[3] * rpp;
+   	    */
+	      io::messages.add("Perturbed_Nonbonded_Pair", 
+		      "polarization: interaction function not implemented",
+                       io::message::critical);
             break;
           }
-          default: io::messages.add("Nonbonded_Innerloop",
+          default: io::messages.add("Perturbed_Nonbonded_Pair",
                   "interaction function not implemented",
                   io::message::critical);
         }
@@ -853,11 +975,20 @@ void interaction::Perturbed_Nonbonded_Pair
 				 B_q, B_f1, B_e_lj,
 				 B_e_crf);
             B_de_lj = B_de_crf = 0.0;
-            B_f = B_f1 * r;
+
+            B_f = B_f1 * r * m_perturbed_nonbonded_term.B_lj_lambda_n();
+
+	    B_de_lj = topo.lambda_exp() * m_perturbed_nonbonded_term.B_lj_lambda_n_1() * B_e_lj;
+	    B_de_crf = topo.lambda_exp() * m_perturbed_nonbonded_term.B_crf_lambda_n_1() * B_e_crf;
+
+	    B_e_lj *= m_perturbed_nonbonded_term.B_lj_lambda_n();
+	    B_e_crf *= m_perturbed_nonbonded_term.B_crf_lambda_n();
+
+
             break;
           }
           case simulation::pol_lj_crf_func : {
-            m_nonbonded_term.
+            /*m_nonbonded_term.
 	      pol_lj_crf_interaction(r, rp1, rp2, rpp, B_lj->cs6, B_lj->cs12,
 				     topo.charge(it->i), topo.charge(it->j),
 				     topo.coscharge(it->i), topo.coscharge(it->j),
@@ -866,10 +997,14 @@ void interaction::Perturbed_Nonbonded_Pair
             B_f_pol_vec(1) = B_f_pol[1] * rp1;
             B_f_pol_vec(2) = B_f_pol[2] * rp2;
             B_f_pol_vec(3) = B_f_pol[3] * rpp;
+	    */
+	      io::messages.add("Perturbed_Nonbonded_Pair", 
+		      "polarization: interaction function not implemented",
+                       io::message::critical);
             break;
           }
           case simulation::pol_off_lj_crf_func : {
-            m_nonbonded_term.
+            /*m_nonbonded_term.
               pol_off_lj_crf_interaction(r, rm, rp1, rp2, rpp, B_lj->cs6, B_lj->cs12,
                                      topo.charge(it->i), topo.charge(it->j),
                                      topo.coscharge(it->i), topo.coscharge(it->j),
@@ -878,9 +1013,10 @@ void interaction::Perturbed_Nonbonded_Pair
             B_f_pol_vec(1) = B_f_pol[1] * rp1;
             B_f_pol_vec(2) = B_f_pol[2] * rp2;
             B_f_pol_vec(3) = B_f_pol[3] * rpp;
+	    */
             break;
           }
-          default: io::messages.add("Nonbonded_Innerloop",
+          default: io::messages.add("Perturbed_Nonbonded_Pair",
                   "interaction function not implemented",
                   io::message::critical);
         }
@@ -901,13 +1037,13 @@ void interaction::Perturbed_Nonbonded_Pair
   
   if (perturbation_details::do_scaling){
     if (t_interaction_spec::interaction_func == simulation::pol_lj_crf_func) {
-      io::messages.add("Nonbonded_Innerloop",
+      io::messages.add("Perturbed_Nonbonded_Pair",
 		       "interaction function not implemented",
 		       io::message::critical);
       return;
     }
     if (t_interaction_spec::interaction_func == simulation::pol_off_lj_crf_func) {
-      io::messages.add("Nonbonded_Innerloop",
+      io::messages.add("Perturbed_Nonbonded_Pair",
                        "interaction function not implemented",
                        io::message::critical);
       return;
@@ -983,10 +1119,17 @@ void interaction::Perturbed_Nonbonded_Pair
   }
    */
 
+ 
+/* OLD: lambdas were used twice for perturbed interactions, 
+  	since e&f are already scaled by lambda in the perturbed_nonbonded functions. 
+	non-perturbed-nonbonded interactions, however, are not scaled in their functions.
+
+
   // now combine state A and B
   // for the forces we take A_lj_lambda_n and B_lj_lambda_n, because we checked that this is the
   // same as A_crf_lambda_n and B_crf_lambda_n before
-  if (t_interaction_spec::interaction_func == simulation::pol_lj_crf_func
+
+ if (t_interaction_spec::interaction_func == simulation::pol_lj_crf_func
       || t_interaction_spec::interaction_func == simulation::pol_off_lj_crf_func) {
     for(unsigned int i = 0; i < 4; ++i) {
       f_pol_vec(i) = m_perturbed_nonbonded_term.B_lj_lambda_n() * B_f_pol_vec(i) +
@@ -1012,18 +1155,44 @@ void interaction::Perturbed_Nonbonded_Pair
     m_perturbed_nonbonded_term.A_crf_lambda_n() * A_de_crf 
     + topo.lambda_exp() * m_perturbed_nonbonded_term.B_crf_lambda_n_1() * B_e_crf 
     - topo.lambda_exp() * m_perturbed_nonbonded_term.A_crf_lambda_n_1() * A_e_crf;
+*/
+
+//   NEW: nonbonded-non-perturbed interactions are scaled in-line,
+//   and state A and B are added up here:
+
+//forces:
+  if (t_interaction_spec::interaction_func == simulation::pol_lj_crf_func
+      || t_interaction_spec::interaction_func == simulation::pol_off_lj_crf_func) {
+	      io::messages.add("Perturbed_Nonbonded_Pair", 
+		      "polarization: interaction function not implemented",
+                       io::message::critical);
+  } else {
+    f = B_f + A_f;
+  }
+//energies:
+  e_lj   = B_e_lj + A_e_lj;
+  e_crf  = B_e_crf + A_e_crf;
   
+  de_lj  = B_de_lj  + A_de_lj;
+  de_crf = B_de_crf + A_de_crf;
+
+
   conf.current().force(it->i) += f;
   conf.current().force(it->j) -= f;
   
   if (t_interaction_spec::interaction_func == simulation::pol_lj_crf_func
      || t_interaction_spec::interaction_func == simulation::pol_off_lj_crf_func) {
-    for(int a=0; a<3; ++a)
+   /* for(int a=0; a<3; ++a)
       for(int b=0; b<3; ++b)
         conf.current().virial_tensor(a, b) += r(a) *( f_pol_vec(0)(b) +
                                                f_pol_vec(1)(b) + 
                                                f_pol_vec(2)(b) +
                                                f_pol_vec(3)(b));
+  */
+	      io::messages.add("Perturbed_Nonbonded_Pair", 
+		      "polarization: interaction function not implemented",
+                       io::message::critical);
+
   } else {
     for(int a=0; a<3; ++a)
       for(int b=0; b<3; ++b)
