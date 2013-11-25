@@ -241,7 +241,7 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update
     timer().start("pairlist");
   
   DEBUG(12, "Timer named: " << timer().name() << " begin:" << begin);
-
+  DEBUG(10,"Extended_Grid_Pairlist_Algorithm::_update");
   std::vector<Grid::Particle> p_plane;
   std::vector<int> cell_start;
 
@@ -339,7 +339,7 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update
 		for(int a2 = topo.chargegroups()[m_grid.p_cell[z][j].i],
 		      a2_to = topo.chargegroups()[m_grid.p_cell[z][j].i + 1];
 		    a2 < a2_to; ++a2) {
-                  if (a2 >= num_solute_atoms) {
+                  if (a2 >= num_solute_atoms) { //solvent-solvent
 #ifdef HAVE_LIBCUKERNEL
                     // do only add the atoms to the pairlist if we are not doing
                     // CUDA
@@ -508,7 +508,7 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update
 		  for(int a2 = topo.chargegroups()[p_plane[j].i],
 			a2_to = topo.chargegroups()[p_plane[j].i + 1];
 		      a2 < a2_to; ++a2) {
-                    if (a2 >= num_solute_atoms) {
+                    if (a2 >= num_solute_atoms) { //solvent-solvent
 #ifdef HAVE_LIBCUKERNEL
                       if (no_cuda)
                         pairlist.solvent_long[a2].push_back(a1);
@@ -573,7 +573,9 @@ void interaction::Extended_Grid_Pairlist_Algorithm::update_perturbed
  unsigned int stride
  ) {
   if (failed) {
+    DEBUG(10,"Extended_Grid_Pairlist_Algorithm::update_perturbed. FALLBACK");
     fallback_algorithm->update_perturbed(topo, conf, sim, pairlist, perturbed_pairlist, begin, end, stride);
+
     return;
   }
   _update_perturbed(topo, conf, sim, pairlist, perturbed_pairlist, begin, end, stride);
@@ -610,7 +612,13 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update_perturbed
   const int N = m_grid.Na * m_grid.Nb;
   const int num_solute_cg = topo.num_solute_chargegroups();
   const int num_solute_atoms = topo.num_solute_atoms();
-
+  
+  DEBUG(10, "Extended_Grid_Pairlist_Algorithm::_update_perturbed");
+  
+#ifdef HAVE_LIBCUKERNEL  
+  const bool no_cuda = sim.param().innerloop.method != simulation::sla_cuda;
+#endif
+  
   for(int z=begin; z < m_grid.Nc + c_ex; z+=stride){
 
     prepare_plane(z, p_plane, cell_start);
@@ -623,43 +631,53 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update_perturbed
 
       int base = -1;
       int start = -1;
-
+     
       for(int i=i_first; i < i_last; ++i){
-
+          DEBUG(10,"INTRACELL");
 	if (m_grid.p_cell[z][i].i < num_solute_cg){ // self interaction
-	  DEBUG(8, "self " << m_grid.p_cell[z][i].i);
+	  DEBUG(11, "self interaction" << m_grid.p_cell[z][i].i);
+          DEBUG(10,"\tsolute-solute (intracell)");
 	  for(int a1 = topo.chargegroups()[m_grid.p_cell[z][i].i],
 		a_to = topo.chargegroups()[m_grid.p_cell[z][i].i + 1];
 	      a1 < a_to; ++a1){
 	    for(int a2 = a1+1; a2 < a_to; ++a2){
+              DEBUG(10,"\t\ta1 " << a1 << " a2 " << a2);
 	      if (excluded_solute_pair(topo, a1, a2))
 		continue;
+              
 	      if (insert_pair
 		  (topo, pairlist.solute_short, perturbed_pairlist.solute_short,
-		   a1, a2, scaled_only))
-		;
+		   a1, a2, scaled_only)){
+                DEBUG(10,"\t\t\tadded a2 to a1 solute shortrange pairlist");  
+              }
 	      else if (insert_pair
 		       (topo, pairlist.solute_short, perturbed_pairlist.solute_short,
-			a2, a1, scaled_only))
-		;
-	      else
+			a2, a1, scaled_only)){
+                DEBUG(10,"\t\t\tadded a1 to a2 solute shortrange pairlist");  
+              }
+	      else{
 		pairlist.solute_short[a1].push_back(a2);
+                DEBUG(10,"\t\t\tadd a2 to a1 solute shortrange pairlist");
+              }
 	    }
 	  }
 	}
 	
 	if (base != m_grid.cell_index[z][i]){
+          DEBUG(10,"\tbase!=cell index (intracell)");
 	  base = m_grid.cell_index[z][i];
 	  start = i;
 	}
 	else{ // more than 1 cg in the cell
+          DEBUG(10,"more than 1 cg in the cell");
 	  if (m_grid.p_cell[z][i].i < num_solute_cg){ // solute - ?
+            DEBUG(10,"\tsolute - ? (intracell)");
 	    for(int j=start; j<i; ++j){
-	      DEBUG(8, "intra cell " << m_grid.p_cell[z][i].i << " - " 
+	      DEBUG(11, "intra cell solute" << m_grid.p_cell[z][i].i << " - " 
 		    << m_grid.p_cell[z][j].i);
 	      
 	      if (m_grid.p_cell[z][j].i < num_solute_cg){ // solute - solute
-
+                DEBUG(10,"\t\tsolute-solute (intracell)");
 		const int ii = (m_grid.p_cell[z][i].i < m_grid.p_cell[z][j].i) ? 
 		  m_grid.p_cell[z][i].i : m_grid.p_cell[z][j].i;
 		const int jj = (m_grid.p_cell[z][i].i < m_grid.p_cell[z][j].i) ? 
@@ -671,37 +689,45 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update_perturbed
 		  for(int a2 = topo.chargegroups()[jj],
 			a2_to = topo.chargegroups()[jj + 1];
 		      a2 < a2_to; ++a2){
-		    
+		    DEBUG(10,"\t\t\ta1 " << a1 << " a2 " << a2);
 		    if (excluded_solute_pair(topo, a1, a2))
 		      continue;
-
+                    
 		    if (insert_pair
 			(topo, pairlist.solute_short, perturbed_pairlist.solute_short,
-			 a1, a2, scaled_only))
-		      ;
+			 a1, a2, scaled_only)){
+                       DEBUG(10,"\t\t\tadded a2 to a1 solute shortrange pairlist");   
+                    }
 		    else if (insert_pair
 			     (topo, pairlist.solute_short, perturbed_pairlist.solute_short,
-			      a2, a1, scaled_only))
-		      ;
-		    else
+			      a2, a1, scaled_only)){
+                        DEBUG(10,"\t\t\tadded a1 to a2 solute shortrange pairlist");
+                    }
+		    else{
 		      pairlist.solute_short[a1].push_back(a2);
+                      DEBUG(10,"\t\t\tadd a2 to a1 solute shortrange pairlist");
+                    }
 		  }
 		}
 	      }
 	      else{ // solute - solvent
+                DEBUG(10,"\t\tsolute-solvent (intracell)");
 		for(int a1 = topo.chargegroups()[m_grid.p_cell[z][i].i],
 		      a_to = topo.chargegroups()[m_grid.p_cell[z][i].i+1];
 		    a1 < a_to; ++a1){
 		  for(int a2 = topo.chargegroups()[m_grid.p_cell[z][j].i],
 			a2_to = topo.chargegroups()[m_grid.p_cell[z][j].i + 1];
 		      a2 < a2_to; ++a2){
-
+                    DEBUG(10,"\t\t\ta1 " << a1 << " a2 " << a2);
 		    if (insert_pair
 			(topo, pairlist.solute_short, perturbed_pairlist.solute_short,
-			 a1, a2, scaled_only))
-		      ;
-		    else
+			 a1, a2, scaled_only)){
+                      DEBUG(10,"\t\t\tadded a2 to a1 solute shortrange pairlist");   
+                    }
+		    else{
 		      pairlist.solute_short[a1].push_back(a2);
+                      DEBUG(10,"\t\t\tadd a2 to a1 solute shortrange pairlist");
+                    }
 		  }
 		}
 
@@ -710,29 +736,42 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update_perturbed
 	  }
 	  else{ // solvent - ?
 	    for(int j=start; j<i; ++j){
-	      DEBUG(8, "intra cell " << m_grid.p_cell[z][i].i << " - " 
+	      DEBUG(11, "intra cell solvent" << m_grid.p_cell[z][i].i << " - " 
 		    << m_grid.p_cell[z][j].i);
-	      
+	      DEBUG(10,"\tsolvent-? (intracell)");
 	      for(int a1 = topo.chargegroups()[m_grid.p_cell[z][i].i],
 		    a_to = topo.chargegroups()[m_grid.p_cell[z][i].i+1];
 		  a1 < a_to; ++a1){
 		for(int a2 = topo.chargegroups()[m_grid.p_cell[z][j].i],
 		      a2_to = topo.chargegroups()[m_grid.p_cell[z][j].i + 1];
 		    a2 < a2_to; ++a2){
-
-		  if (insert_pair
+                  DEBUG(10,"\t\ta1 " << a1 << " a2 " << a2);
+		  if (insert_pair //only a2 can be solute
 		      (topo, pairlist.solute_short, perturbed_pairlist.solute_short,
-		       a2, a1, scaled_only))
-		    ;
-                  else if (a2 >= num_solute_atoms)
-		    pairlist.solvent_short[a2].push_back(a1);
-                  else
+		       a2, a1, scaled_only)){
+		    DEBUG(10,"\t\tadded a1 to a2 solute shortrange pairlist");
+                  }
+                  else if (a2 >= num_solute_atoms){ //solvent-solvent
+#ifdef HAVE_LIBCUKERNEL
+                    // do only add the atoms to the pairlist if we are not doing
+                    // CUDA
+                    if (no_cuda)
+                      pairlist.solvent_short[a2].push_back(a1);
+#else
+                    pairlist.solvent_short[a2].push_back(a1);
+#endif
+                    DEBUG(10,"\t\tadd a1 to a2 solvent shortrange pairlist")
+                  }
+                  else{ //solvent-solute
                     pairlist.solute_short[a2].push_back(a1);
+                    DEBUG(10,"\t\tadd a1 to a2 solute shortrange pairlist");
+                  }
+                  
 		}
 	      }
 	    }
-	  }
-	}
+	  } //solvent - ?
+	}// more than 1 cg in the cell
       } // loop over plane
     } // self interaction
 
@@ -757,9 +796,10 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update_perturbed
 	
 	assert(m_grid.cell_index[i_level].size() > unsigned(i));
 	const int base = m_grid.cell_index[i_level][i];
-	
+        
+	DEBUG(10,"INTERCELL");
 	if (m_grid.p_cell[i_level][i].i < num_solute_cg){ // solute - ?
-	  
+          DEBUG(10,"\tsolute-? (intercell)")
 	  assert(m_grid.mask.size() > unsigned(mask_z));
 	  for(unsigned int m=0; m<m_grid.mask[mask_z].size(); m+=2){
 	    
@@ -781,44 +821,48 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update_perturbed
 	      if (d2 > m_cutoff_long_2) continue;
 
 	      // no self interaction here...
-	      DEBUG(8, "inter cell: " << m_grid.p_cell[i_level][i].i << " - " << p_plane[j].i);
+	      DEBUG(11, "inter cell: " << m_grid.p_cell[i_level][i].i << " - " << p_plane[j].i);
 	      assert(m_grid.p_cell[i_level][i].i != p_plane[j].i);
 
 	      if (p_plane[j].i < num_solute_cg){ 
 		// solute - solute
-
+	      DEBUG(10,"\t\tsolute-solute (intercell)");
                 if (d2 > m_cutoff_short_2){ // LONGRANGE
-                  
+                  DEBUG(10,"\t\t\tlongrange (solute-solute intercell)");
                   for(int a1 = topo.chargegroups()[m_grid.p_cell[i_level][i].i],
                           a_to = topo.chargegroups()[m_grid.p_cell[i_level][i].i + 1];
                   a1 < a_to; ++a1){
                     for(int a2 = topo.chargegroups()[p_plane[j].i],
                             a2_to = topo.chargegroups()[p_plane[j].i + 1];
                     a2 < a2_to; ++a2){
-                      
+                      DEBUG(10,"\t\t\ta1 " << a1 << " a2 " << a2);
                       if (insert_pair
                               (topo, pairlist.solute_long, perturbed_pairlist.solute_long,
-                              a1, a2, scaled_only))
-                        ;
+                              a1, a2, scaled_only)){
+                          DEBUG(10,"\t\t\t\tperturbed: added a2 to a1 solute longrange pairlist");
+                      }
                       // careful: shift index needs to change here !!!
                       else if (insert_pair
                               (topo, pairlist.solute_long, perturbed_pairlist.solute_long,
-                              a2, a1, scaled_only))
-                        ;
+                              a2, a1, scaled_only)){
+                          DEBUG(10,"\t\t\t\tperturbed: added a1 to a2 solute longrange pairlist");
+                      }
                       else {
                         pairlist.solute_long[a1].push_back(a2);
+                        DEBUG(10,"\t\t\t\tadd a2 to a1 solute longrange pairlist");
                       }
                     }
                   }
                 }
 		else{ // SHORTRANGE
+                  DEBUG(10,"\t\t\tshortrange (solute-solute intercell)");
 		  // exclusions => order
 		  const int ii = (m_grid.p_cell[i_level][i].i < p_plane[j].i) ? 
 		    m_grid.p_cell[i_level][i].i : p_plane[j].i;
 		  const int jj = (m_grid.p_cell[i_level][i].i < p_plane[j].i) ? 
 		    p_plane[j].i : m_grid.p_cell[i_level][i].i;
 		  
-		  DEBUG(8, "rewritten: " << ii
+		  DEBUG(8, "\t\t\trewritten: " << ii
 			<< " - " << jj);
 		  
 		  for(int a1 = topo.chargegroups()[ii],
@@ -827,59 +871,69 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update_perturbed
                     for(int a2 = topo.chargegroups()[jj],
                             a2_to = topo.chargegroups()[jj + 1];
                             a2 < a2_to; ++a2){
-                      
+                      DEBUG(10,"\t\t\ta1 " << a1 << " a2 " << a2);                                   
                       if (excluded_solute_pair(topo, a1, a2))
                         continue;
-                      
+                                            
                       if (insert_pair
                               (topo, pairlist.solute_short, perturbed_pairlist.solute_short,
-                              a1, a2, scaled_only))
-                        ;
+                              a1, a2, scaled_only)){
+                         DEBUG(10,"\t\t\t\tperturbed: added a2 to a1 solute shortrange pairlist");
+                      }
                       else if (insert_pair
                               (topo, pairlist.solute_short, perturbed_pairlist.solute_short,
-                              a2, a1, scaled_only))
-                        ;
-                      else
+                              a2, a1, scaled_only)){
+                         DEBUG(10,"\t\t\t\tperturbed: added a1 to a2 solute shortrange pairlist");
+                      }
+                      else{
                         pairlist.solute_short[a1].push_back(a2);
+                        DEBUG(10,"\t\t\t\tadd a2 to a1 solute shortrange pairlist");
+                      }
                     }
 		  }
 		}
 	      }
               else{ // solute - solvent
+                DEBUG(10,"\t\tsolute-solvent (intercell)");
                 if (d2 > m_cutoff_short_2){ // LONGRANGE
-                  
+                  DEBUG(10,"\t\t\tlongrange (solute-solvent intercell)");
                   for(int a1 = topo.chargegroups()[m_grid.p_cell[i_level][i].i],
                           a_to = topo.chargegroups()[m_grid.p_cell[i_level][i].i + 1];
-                  a1 < a_to; ++a1){
+                          a1 < a_to; ++a1){
                     for(int a2 = topo.chargegroups()[p_plane[j].i],
                             a2_to = topo.chargegroups()[p_plane[j].i + 1];
-                    a2 < a2_to; ++a2){
-                      
+                            a2 < a2_to; ++a2){
+                      DEBUG(10,"\t\t\ta1 " << a1 << " a2 " << a2);
                       if (insert_pair
                               (topo, pairlist.solute_long, perturbed_pairlist.solute_long,
-                              a1, a2, scaled_only))
-                        ;
+                              a1, a2, scaled_only)){
+                          DEBUG(10,"\t\t\t\tperturbed: added a2 to a1 solute longrange pairlist");
+                      }
                       else {
                         pairlist.solute_long[a1].push_back(a2);
+                        DEBUG(10,"\t\t\t\tadd a2 to a1 solute longrange pairlist");
                       }
                     }
                   }
                 }
                 else{ // SHORTRANGE
-
+                  DEBUG(10,"\t\t\tshortrange (solute-solvent intercell)");
 		  for(int a1 = topo.chargegroups()[m_grid.p_cell[i_level][i].i],
 			a_to = topo.chargegroups()[m_grid.p_cell[i_level][i].i + 1];
 		      a1 < a_to; ++a1){
 		    for(int a2 = topo.chargegroups()[p_plane[j].i],
 			  a2_to = topo.chargegroups()[p_plane[j].i + 1];
 			a2 < a2_to; ++a2){
-
+                      DEBUG(10,"\t\t\ta1 " << a1 << " a2 " << a2);
 		      if (insert_pair
 			  (topo, pairlist.solute_short, perturbed_pairlist.solute_short,
-			   a1, a2, scaled_only))
-			;
-		      else
+			   a1, a2, scaled_only)){
+                          DEBUG(10,"\t\t\t\tperturbed: added a2 to a1 solute shortrange pairlist");
+                      }
+		      else{
 			pairlist.solute_short[a1].push_back(a2);
+                        DEBUG(10,"\t\t\t\tadd a2 to a1 solute shortrange pairlist");
+                      }
 		    }
 		  }
 		}
@@ -889,7 +943,8 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update_perturbed
 	    } // j in mask row
 	  }  // mask
 	} // solute - ?
-	else{ // solvent - ?
+	else{ // i=solvent - j=?
+          DEBUG(10,"\tsolvent - ? (intercell)");
 	  assert(m_grid.mask.size() > unsigned(mask_z));
 	  for(unsigned int m=0; m<m_grid.mask[mask_z].size(); m+=2){
 	    
@@ -910,48 +965,78 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update_perturbed
 
 	      if (d2 > m_cutoff_long_2) continue;
 
-	      DEBUG(8, "inter (solvent - ?): " << m_grid.p_cell[i_level][i].i << " - " << p_plane[j].i);
-	      DEBUG(8, "i_level=" << i_level << " d2=" << d2);
+	      DEBUG(11, "inter (solvent - ?): " << m_grid.p_cell[i_level][i].i << " - " << p_plane[j].i);
+	      DEBUG(11, "i_level=" << i_level << " d2=" << d2);
 	      
 	      if (d2 > m_cutoff_short_2){ // LONGRANGE
+                DEBUG(10,"\t\tlongrange (solvent - ? intercell)");
 		for(int a1 = topo.chargegroups()[m_grid.p_cell[i_level][i].i],
 		      a_to = topo.chargegroups()[m_grid.p_cell[i_level][i].i + 1];
-		    a1 < a_to; ++a1){
+		      a1 < a_to; ++a1){
 		  for(int a2 = topo.chargegroups()[p_plane[j].i],
-			a2_to = topo.chargegroups()[p_plane[j].i + 1];
-		      a2 < a2_to; ++a2){
-
+		       a2_to = topo.chargegroups()[p_plane[j].i + 1];
+		       a2 < a2_to; ++a2){
 		    // maybe for fast solvent loop, check cg of j...
-
+                    DEBUG(10,"\t\ta1 " << a1 << " a2 " << a2);
 		    // careful : shift index needs to change!
 		    if (insert_pair
 			(topo, pairlist.solute_long, perturbed_pairlist.solute_long,
-			 a2, a1, scaled_only))
-		      ;
-                    else if (a1 >= num_solute_atoms && a1 >= num_solute_atoms)
-		      pairlist.solvent_long[a1].push_back(a2);
-                    else
-                      pairlist.solute_long[a1].push_back(a2);
-                    
-		  }
+			 a2, a1, scaled_only)){
+		       DEBUG(10,"\t\t\tperturbed: a1 added to a2 solute longrange pairlist");
+                    }
+                    else if (a2 >= num_solute_atoms){ //solvent -solvent //BUG: a1 >= num_solute_atoms && a1 >= num_solute_atoms --martina
+#ifdef HAVE_LIBCUKERNEL
+                    // do only add the atoms to the pairlist if we are not doing
+                    // CUDA
+                    if (no_cuda)
+                      pairlist.solvent_short[a1].push_back(a2);
+#else
+                      pairlist.solvent_short[a1].push_back(a2);
+#endif
+                      DEBUG(10,"\t\t\tsolvent-solvent: add a2 to a1 solvent longrange pairlist");
+                    }
+                    else{ //if (a1 >= num_solute_atoms && a2 < num_solute_atoms){ //solvent-solute
+                      pairlist.solute_long[a2].push_back(a1);
+                      DEBUG(10,"\t\t\tsolvent-solute: add a1 to a2 solute longrange pairlist");
+                    }
+                    /*else{
+                       io::messages.add("error during perturbed grid update. Use standard pairlist instead.",
+                       "Grid_Pairlist_Algorithm",
+		       io::message::error);
+                       return;
+                    }*/
+		  }//for
 		}
 	      }
 	      else{ // SHORTRANGE
+                DEBUG(10,"\t\tshortrange (solvent - ? intercell)");
 		for(int a1 = topo.chargegroups()[m_grid.p_cell[i_level][i].i],
 		      a_to = topo.chargegroups()[m_grid.p_cell[i_level][i].i + 1];
 		    a1 < a_to; ++a1){
 		  for(int a2 = topo.chargegroups()[p_plane[j].i],
 			a2_to = topo.chargegroups()[p_plane[j].i + 1];
 		      a2 < a2_to; ++a2){
-
+                    DEBUG(10,"\t\ta1 " << a1 << " a2 " << a2);
 		    if (insert_pair
 			(topo, pairlist.solute_short, perturbed_pairlist.solute_short,
-			 a2, a1, scaled_only))
-		      ;
-                    else if (a2 >= num_solute_atoms)
-		      pairlist.solvent_short[a2].push_back(a1);
-                    else
+			 a2, a1, scaled_only)){ //only a2 could be solute (=perturbed). therefore no need to check for a1
+		       DEBUG(10,"\t\t\tperturbed: a1 added to a2 solute shortrange pairlist");
+                    }
+                    else if (a2 >= num_solute_atoms){ //solvent-solvent
+#ifdef HAVE_LIBCUKERNEL
+                    // do only add the atoms to the pairlist if we are not doing
+                    // CUDA
+                      if (no_cuda)
+                        pairlist.solvent_short[a2].push_back(a1);
+#else
+                      pairlist.solvent_short[a2].push_back(a1);
+#endif
+                      DEBUG(10,"\t\t\tsolvent-solvent: add a1 to a2 solvent shortrange pairlist");
+                    }
+                    else{ //if (a1 >= num_solute_atoms && a2 < num_solute_atoms){ //solvent-solute
                       pairlist.solute_short[a2].push_back(a1);
+                      DEBUG(10,"\t\t\tsolvent-solute: add a1 to a2 solute shortrange pairlist");
+                    }
 		  }
 		}
 	      }
@@ -981,24 +1066,31 @@ inline bool interaction::Extended_Grid_Pairlist_Algorithm::insert_pair
  bool scaled_only
  )
 {
+  DEBUG(10,"\t\t\t\tinsert perturbed pair?");
   if (topo.is_perturbed(a1) || topo.is_eds_perturbed(a1)){
     if (scaled_only){
+        DEBUG(10,"\t\t\t\t\tscaled")
       // ok, only perturbation if it is a scaled pair...
       std::pair<int, int> 
 	energy_group_pair(topo.atom_energy_group(a1),
 			  topo.atom_energy_group(a2));
       
-      if (topo.energy_group_scaling().count(energy_group_pair))
+      if (topo.energy_group_scaling().count(energy_group_pair)){
 	perturbed_pairlist[a1].push_back(a2);
-      else
+        DEBUG(10,"\t\t\t\t\t\tadd a2 to perturbed a1 pairlist");
+      }
+      else{
 	pairlist[a1].push_back(a2);
+        DEBUG(10,"\t\t\t\t\t\tadd a2 to a1 pairlist");
+      }
     } // scaling
     else{
       perturbed_pairlist[a1].push_back(a2);
+      DEBUG(10,"\t\t\t\t\tadd a2 to perturbed a1 pairlist");
     }
     return true;
   }
-
+  DEBUG(10,"\t\t\t\tno insertion");
   return false;
 }
 
@@ -1007,7 +1099,7 @@ bool interaction::Extended_Grid_Pairlist_Algorithm
 		       unsigned int i, unsigned int j)
 {
   assert(i<j);
-  
+  DEBUG(10,"\t\t\t\texcluded solute pair?");
   std::set<int>::reverse_iterator
     e = topo.all_exclusion(i).rbegin(),
     e_to = topo.all_exclusion(i).rend();
@@ -1015,12 +1107,12 @@ bool interaction::Extended_Grid_Pairlist_Algorithm
   for( ; e != e_to; ++e){
     if (j > unsigned(*e)) break;
     if (j == unsigned(*e)){
-      DEBUG(11, "\texcluded");
+    DEBUG(10, "\t\t\t\t\tsolute pair is excluded");
       return true;
     }
       
   }
-  DEBUG(12, "\tnot excluded");
+  DEBUG(10, "\t\t\t\t\tnot excluded solute pair");
   return false;
 }
 

@@ -120,6 +120,31 @@ void interaction::Nonbonded_Outerloop
       innerloop.lj_crf_innerloop(topo, conf, i, *j_it, storage, periodicity);
     }
   }
+/*only for DEBUG*/
+ /* DEBUG(1,"current solute pairlist:\n");
+unsigned int i_deb;
+  for (i_deb=0; i_deb < end; ++i_deb) {
+    for (j_it = pairlist_solute[i_deb].begin(),
+            j_to = pairlist_solute[i_deb].end();
+            j_it < j_to;
+            j_it++) {
+      //DEBUG(10, "i " << i_deb << " j " << *j_it << " i " << topo.solvent(0).atom(i_deb).name << " j " << topo.solvent(0).atom(*j_it).name);
+      DEBUG(1, "i " << i_deb << " j " << *j_it);
+    }
+  }
+  DEBUG(1,"current solvent pairlist:\n");
+  for (; i_deb < size_i; ++i_deb) {
+    for (j_it = pairlist_solvent[i_deb].begin(),
+            j_to = pairlist_solvent[i_deb].end();
+            j_it < j_to;
+            j_it++) {
+      //DEBUG(10, "i " << i_deb << " j " << *j_it << " i " << topo.solvent(0).atom(i_deb).name << " j " << topo.solvent(0).atom(*j_it).name);
+      DEBUG(1, "i " << i_deb << " j " << *j_it);
+    }
+  }
+  */
+/*DEBUG end*/
+
   // cuda doesn't do solvent-solvent here
   if (sim.param().innerloop.method == simulation::sla_cuda) return;
   // solvent-solvent
@@ -134,11 +159,11 @@ void interaction::Nonbonded_Outerloop
               j_it != j_to;
               j_it += 3) { // use every third atom (OW) in pairlist i
 
-        DEBUG(10, "\tspc_nonbonded_interaction: i " << i << " j " << *j_it);
+        DEBUG(10, "\tsolvent-solvent longrange spc_nonbonded_interaction: i " << i << " j " << *j_it);
 
         innerloop.spc_innerloop(topo, conf, i, *j_it, storage, periodicity);
       }
-    }
+    } 
   } else if (sim.param().force.special_loop == simulation::special_loop_spc_table) { // special solvent loop
     // solvent - solvent with tabulated spc innerloop...
     if (longrange) {
@@ -149,7 +174,7 @@ void interaction::Nonbonded_Outerloop
                 j_it != j_to;
                 j_it += 3) { // use every third atom (OW) in pairlist i
 
-          DEBUG(10, "\tspc_nonbonded_interaction: i " << i << " j " << *j_it);
+          DEBUG(10, "\tsolvent-solvent (tabulated) longrange spc_nonbonded_interaction: i " << i << " j " << *j_it);
           //innerloop.spc_innerloop(topo, conf, i, *j_it, storage, periodicity);
           innerloop.longrange_spc_table_innerloop(topo, conf, i, *j_it, storage, periodicity);
         }
@@ -161,7 +186,7 @@ void interaction::Nonbonded_Outerloop
                 j_it != j_to;
                 j_it += 3) { // use every third atom (OW) in pairlist i
 
-          DEBUG(10, "\tspc_nonbonded_interaction: i " << i << " j " << *j_it);
+          DEBUG(10, "\tsolvent-solvent (tabulated) shortrange spc_nonbonded_interaction: i " << i << " j " << *j_it);
           //innerloop.spc_innerloop(topo, conf, i, *j_it, storage, periodicity);
           innerloop.shortrange_spc_table_innerloop(topo, conf, i, *j_it, storage, periodicity);
         }
@@ -200,7 +225,7 @@ void interaction::Nonbonded_Outerloop
               j_it != j_to;
               j_it += num_solvent_atoms) { // use num_solvent_atoms-th atom (first of solvent molecule j)
 
-        DEBUG(10, "\tsolvent_nonbonded_interaction: i " << i << " j " << *j_it);
+        DEBUG(10, "\tsolvent_nonbonded_interaction (special_loop_generic): i " << i << " j " << *j_it);
 
         innerloop.solvent_innerloop(topo, pair_parameter, conf, num_solvent_atoms, i, *j_it, storage, periodicity);
       }
@@ -212,7 +237,7 @@ void interaction::Nonbonded_Outerloop
               j_it != j_to;
               ++j_it) {
 
-        DEBUG(10, "\tsolvent_nonbonded_interaction: i " << i << " j " << *j_it);
+        DEBUG(10, "\tsolvent_nonbonded_interaction (normal solvent loop): i " << i << " j " << *j_it);
 
         innerloop.lj_crf_innerloop(topo, conf, i, *j_it, storage, periodicity);
       }
