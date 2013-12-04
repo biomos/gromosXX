@@ -108,7 +108,7 @@ int _calculate_jvalue_restraint_interactions
     double memory_decay;
 
     //decide on time averaging
-    if (sim.param().jvalue.mode != simulation::jvalue_restr_inst ||
+    if (sim.param().jvalue.mode != simulation::jvalue_restr_inst && // ||
             sim.param().jvalue.mode != simulation::jvalue_restr_inst_weighted){
  
       // time averaging 
@@ -134,7 +134,7 @@ int _calculate_jvalue_restraint_interactions
       it->b * cos_phi_delta +
       it->c;
 
-    // calculate average from pervious average
+    // calculate average from previous average
     const double Jav =
       memory_decay * Jcurr +
       conf.special().jvalue_av[n] * exp_term;
