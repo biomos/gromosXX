@@ -4254,6 +4254,7 @@ void io::In_Parameter::read_NONBONDED(simulation::Parameter & param,
         break;
       case 2:
         param.nonbonded.method = simulation::el_ewald;
+        param.setDevelop("Ewald sum is under development");
         param.nonbonded.lserf = false;
         param.nonbonded.rf_excluded = false;
         do_ls = true;
