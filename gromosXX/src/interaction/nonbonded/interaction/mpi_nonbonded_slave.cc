@@ -123,6 +123,8 @@ int interaction::MPI_Nonbonded_Slave::calculate_interactions
                           1,
                           MPI::DOUBLE,
                           0);
+    // and also update the individual lambdas on the slave!
+    topo.update_for_lambda();    
     
     // do this on the master and on the slaves...
     m_pairlist_algorithm->prepare(topo, conf, sim);
