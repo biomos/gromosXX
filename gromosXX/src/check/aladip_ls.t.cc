@@ -45,18 +45,19 @@
 #include "check_state.h"
 
 void hard_coded_values(std::map<std::string, double> & m){
-  m["NonBonded_-1"] = -168.832;
-  m["NonBonded_0"]  = -129.245;
-  m["NonBonded_1"]  = -125.946;
-  m["NonBonded_2"]  = -129.641;
-  m["NonBonded_3"]  = -123.305;
-  m["NonBonded_4"]  = -124.849;
-  m["NonBonded_5"]  = -130.201;
-  m["NonBonded_6"]  = -125.314;
-  m["NonBonded_7"]  = -130.103;
-  m["NonBonded_8"]  = -137.76;
-  m["NonBonded_9"]  = -132.338;
-  m["NonBonded_10"] = -139.645;
+    m["NonBonded_-1"] = -0.65647E+02; // This number is slightly different in the fortran code, -0.65652E+02, probably due to the use of a numerical approximation to the error function there
+    m["NonBonded_0"]  = -0.65880E+02;
+    m["NonBonded_1"]  = -0.66016E+02;
+    m["NonBonded_2"]  = -0.65843E+02;
+    m["NonBonded_3"]  = -0.66068E+02;
+    m["NonBonded_4"]  = -0.66018E+02;
+    m["NonBonded_5"]  = -0.65900E+02;
+    m["NonBonded_6"]  = -0.66028E+02;
+    m["NonBonded_7"]  = -0.65972E+02;
+    m["NonBonded_8"]  = -0.65862E+02;
+    m["NonBonded_9"]  = -0.65964E+02;
+    m["NonBonded_10"] = -0.65880E+02;
+
 }
 
 #ifdef OMP
@@ -138,7 +139,7 @@ int main(int argc, char* argv[]) {
 			      sinput,
 			      aladip_sim,
 			      in_topo,
-			      "", "", "",
+			      "", "", "", 
 			      quiet
 			      )
       != 0){
@@ -161,13 +162,23 @@ int main(int argc, char* argv[]) {
       return 1;
     }
 
+    // store backup value for width of the charge shaping function
+    double ashape = aladip_sim.sim.param().nonbonded.ls_charge_shape_width;
+
     std::cout << "Checking Ewald. This can take some time...\n";
-    aladip_sim.sim.param().nonbonded.method = simulation::el_ewald;
-    aladip_sim.sim.param().nonbonded.ls_charge_shape = -1;
-    ff->init(aladip_sim.topo, aladip_sim.conf, aladip_sim.sim, std::cout,  quiet);
+    std::cout << "Attention: Ewald summation is currently under development and not included in the checks\n";
+    std::cout << "[============================================================================]\n";
+    //aladip_sim.sim.param().nonbonded.method = simulation::el_ewald;
+    //aladip_sim.sim.param().nonbonded.ls_charge_shape = -1;
+
+    // !!! if charge shape == -1 (Gaussian), we need to decrease the width
+    //aladip_sim.sim.param().nonbonded.ls_charge_shape_width = 0.4; // this is suitable for the RCUT = 1.4 nm in the input file
+    //std::cout << "Charge-shape width: " <<  aladip_sim.sim.param().nonbonded.ls_charge_shape_width << std::endl;
+
+    //ff->init(aladip_sim.topo, aladip_sim.conf, aladip_sim.sim, std::cout,  quiet);
     // first check the forcefield
-    total += check::check_forcefield(aladip_sim.topo, aladip_sim.conf,
-				     aladip_sim.sim, *ff, ref_values);
+    //total += check::check_forcefield(aladip_sim.topo, aladip_sim.conf,
+    //				     aladip_sim.sim, *ff, ref_values);
 
     aladip_sim.sim.param().nonbonded.method = simulation::el_p3m;
     ff->init(aladip_sim.topo, aladip_sim.conf, aladip_sim.sim, std::cout,  quiet);
@@ -176,6 +187,15 @@ int main(int argc, char* argv[]) {
     // first check the forcefield
     for (int shape = -1; shape < 11; ++shape) {
       std::cout << "Charge shape type: " << shape << "\n";
+
+      // !!! if charge shape == -1 (Gaussian), we need to decrease the width
+      if ( shape == -1 ) {
+        aladip_sim.sim.param().nonbonded.ls_charge_shape_width = 0.4; // this is suitable for the RCUT = 1.4 nm in the input file
+      } else {
+        aladip_sim.sim.param().nonbonded.ls_charge_shape_width = ashape;
+      }     
+      std::cout << "Charge-shape width: " <<  aladip_sim.sim.param().nonbonded.ls_charge_shape_width << std::endl;
+     
       aladip_sim.sim.param().nonbonded.ls_charge_shape = shape;
       total += check::check_forcefield(aladip_sim.topo, aladip_sim.conf,
               aladip_sim.sim, *ff, ref_values);

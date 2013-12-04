@@ -131,7 +131,8 @@ calculate_interactions(topology::Topology & topo,
     // have to do all from here (probably it's only one,
     // but then maybe it's clearer like it is...)
     for (int i = 0; i < m_set_size; ++i) {
-      m_nonbonded_set[i]->calculate_interactions(*p_topo, *p_conf, sim);
+      if(m_nonbonded_set[i]->calculate_interactions(*p_topo, *p_conf, sim))
+	return 1;
     }
 
     ///////////////////////////////////////////////////
@@ -820,7 +821,7 @@ void interaction::Nonbonded_Interaction::reduce_configuration
   e.ls_pair_total += exp_e.ls_pair_total;
   e.ls_self_total += exp_e.ls_self_total;
   e.ls_surface_total += exp_e.ls_surface_total;
-
+  
   // reduce the virial
   if (sim.param().pcouple.virial) {
     DEBUG(7, "\tadd set virial");

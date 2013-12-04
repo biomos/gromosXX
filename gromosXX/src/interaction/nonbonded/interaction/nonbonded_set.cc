@@ -161,9 +161,14 @@ int interaction::Nonbonded_Set
         // check whether we have to recalculate the influence function
       }
       // do the longrange calculation in k space
+      bool is_ok = true;
       m_outerloop.ls_p3m_kspace_outerloop(topo, conf, sim, m_storage,
-              m_rank, m_num_threads, m_pairlist_alg.timer());
+              m_rank, m_num_threads, m_pairlist_alg.timer(), is_ok);
       stop_timer("k-space P3M");
+  // !!! crash if not ok
+        if ( is_ok == false ) {
+          return 1;
+        }
       break;
     }
     default:

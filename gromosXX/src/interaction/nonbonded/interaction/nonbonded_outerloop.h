@@ -180,7 +180,8 @@ namespace interaction
             configuration::Configuration & conf,
             simulation::Simulation & sim,
             Storage & storage, int rank, int size,
-            util::Algorithm_Timer & timer);
+            util::Algorithm_Timer & timer,
+            bool & is_ok);
     
     /**
      * calculate the ls self and constant interactions/energies
@@ -390,7 +391,8 @@ namespace interaction
             configuration::Configuration & conf,
             simulation::Simulation & sim,
             Storage & storage, int rank, int size,
-            util::Algorithm_Timer & timer);
+            util::Algorithm_Timer & timer,
+            bool & is_ok);
 
     template<typename t_interaction_spec>
     void _ls_surface_outerloop(topology::Topology & topo,
