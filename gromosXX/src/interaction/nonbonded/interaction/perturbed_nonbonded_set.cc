@@ -60,7 +60,7 @@ int interaction::Perturbed_Nonbonded_Set
 			 configuration::Configuration & conf,
 			 simulation::Simulation & sim)
 {
-  DEBUG(4, "Nonbonded_Set::calculate_interactions");
+  DEBUG(4, "Perturbed_Nonbonded_Set::calculate_interactions");
 
   // zero forces, energies, virial...
   m_storage.zero();
@@ -87,6 +87,7 @@ int interaction::Perturbed_Nonbonded_Set
       m_pairlist_alg.update_perturbed(topo, conf, sim, 
 				      pairlist(), perturbed_pairlist(),
 				      m_rank, topo.num_atoms(), m_num_threads);
+      DEBUG(10,"m_pairlist_alg.update_perturbed");
     }
     else{
       // assure it's empty
@@ -97,6 +98,7 @@ int interaction::Perturbed_Nonbonded_Set
       m_pairlist_alg.update(topo, conf, sim, 
 			    pairlist(),
 			    m_rank, topo.num_atoms(), m_num_threads);
+            DEBUG(10,"m_pairlist_alg.update");
     }
 
     // Print pairlist
@@ -109,7 +111,7 @@ int interaction::Perturbed_Nonbonded_Set
     std::cout << perturbed_pairlist().solute_short << std::endl;
     std::cout << perturbed_pairlist().solvent_long << std::endl;
     std::cout << perturbed_pairlist().solvent_short << std::endl;
-     */
+   */  
   }
 
   if (sim.param().polarise.cos) {

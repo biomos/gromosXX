@@ -585,10 +585,15 @@ _update_pert_cg(topology::Topology & topo,
   } // cg1
 
   // solvent - solvent
-  _solvent_solvent(topo, conf, sim,
+  
+  const bool no_cuda = sim.param().innerloop.method != simulation::sla_cuda; //--martina
+  if (no_cuda && num_cg > num_solute_cg)
+    _solvent_solvent(topo, conf, sim, pairlist, cg1, stride, periodicity); //only create solvent-solvent pairlist if we dont have cuda.
+  
+  /*_solvent_solvent(topo, conf, sim,
                    pairlist,  
                    cg1, stride, periodicity);
-  
+  */
   if (begin == 0) // master
     timer().stop("perturbed pairlist");
   DEBUG(7, "pairlist done");

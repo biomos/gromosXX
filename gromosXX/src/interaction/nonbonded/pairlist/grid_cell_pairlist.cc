@@ -329,7 +329,7 @@ void interaction::Grid_Cell_Pairlist::update_perturbed(
         interaction::PairlistContainer & perturbed_pairlist,
         unsigned int begin, unsigned int end,
         unsigned int stride) {
-  DEBUG(5, "Grid Cell : Update pairlist");
+  DEBUG(5, "Grid Cell : Update pairlist & pertubred pairlist");
   if (failed) {
     fallback_algorithm->update_perturbed(topo, conf, sim, pairlist, perturbed_pairlist, begin, end, stride);
     return;
@@ -974,7 +974,7 @@ inline int interaction::Grid_Cell_Pairlist::pair(
 }
 
 /**
- * put the atoms of a chargegroupe into the pairlist
+ * put the atoms of a chargegroup into the pairlist
  */
 template<class perturbation_trait>
 inline int interaction::Grid_Cell_Pairlist::pair_solute_solvent(const unsigned int first,

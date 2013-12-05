@@ -1205,6 +1205,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("perturbation", "random_gsl");
   fc.unlock("perturbation", "parallel_mpi");
   fc.unlock("perturbation", "parallel_omp");
+  fc.unlock("perturbation", "innerloop_method_cuda");
   fc.unlock("perturbation_scaling", "bond");
   fc.unlock("perturbation_scaling", "angle");
   fc.unlock("perturbation_scaling", "dihedral");
