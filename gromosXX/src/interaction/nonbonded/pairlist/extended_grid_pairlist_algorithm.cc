@@ -989,9 +989,9 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update_perturbed
                     // do only add the atoms to the pairlist if we are not doing
                     // CUDA
                     if (no_cuda)
-                      pairlist.solvent_short[a1].push_back(a2);
+                      pairlist.solvent_long[a1].push_back(a2);
 #else
-                      pairlist.solvent_short[a1].push_back(a2);
+                      pairlist.solvent_long[a1].push_back(a2);
 #endif
                       DEBUG(10,"\t\t\tsolvent-solvent: add a2 to a1 solvent longrange pairlist");
                     }
