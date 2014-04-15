@@ -104,6 +104,8 @@ static int _calculate_perturbed_dihedral_new_interactions
     ip = dot(rim, rln);
 
     double cosphi = ip / (dim*dln);
+    if (cosphi > 1) cosphi = 1;
+    if (cosphi < -1) cosphi = -1;
     double phi = acos(cosphi);
     double sign = dot(rij, rnk);
     if(sign < 0) phi*=-1.0;
@@ -171,6 +173,12 @@ static int _calculate_perturbed_dihedral_new_interactions
 
     energy = (1.0 - lambda) * A_energy + lambda * B_energy;
     e_lambda = lambda_derivative * (B_energy - A_energy);
+    DEBUG(10, "energy " << energy << " e_lambda " << e_lambda);
+    DEBUG(10, "force i " << force(d_it->i)[0] << " " << force(d_it->i)[1] << " " << force(d_it->i)[2]);
+    DEBUG(10, "force j " << force(d_it->j)[0] << " " << force(d_it->j)[1] << " " << force(d_it->j)[2]);
+    DEBUG(10, "force k " << force(d_it->k)[0] << " " << force(d_it->k)[1] << " " << force(d_it->k)[2]);
+    DEBUG(10, "force l " << force(d_it->l)[0] << " " << force(d_it->l)[1] << " " << force(d_it->l)[2]);
+
 
     assert(conf.current().energies.dihedral_energy.size() >
 	   topo.atom_energy_group()[d_it->i]);
