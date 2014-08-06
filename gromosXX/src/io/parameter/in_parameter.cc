@@ -2230,7 +2230,7 @@ DISTANCERES
 #         0: generate initial averages
 #         1: read from configuration
 #    CDIR >= 0.0 force constant for distance restraining
-#    DIR0 >= 0.0 distance offset in restraining function
+#    DIR0 > 0.0 distance offset in restraining function
 #  TAUDIR >= 0.0 coupling time for time averaging
 #  NTWDIR >= 0 write every NTWDIRth step dist. restr. information to external file
 #   NTDIR  NTDIRA    CDIR    DIR0  TAUDIR  NTWDIR
@@ -2283,6 +2283,11 @@ void io::In_Parameter::read_DISTANCERES(simulation::Parameter &param,
     default: param.distanceres.read = false;
       io::messages.add("DISTANCERES block: NTDIRA must be 0 or 1.",
               "In_Parameter", io::message::error);
+  }
+
+  if (param.distanceres.r_linear <=  0.0) {
+    io::messages.add("DISTANCERES block: DIR0 must be > 0.0.",
+            "In_Parameter", io::message::error);
   }
 
   if (param.distanceres.tau < 0.0) {

@@ -2075,6 +2075,8 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("stochdyn", "random_gsl");
   fc.unlock("stochdyn", "parallel_mpi");
   fc.unlock("stochdyn", "parallel_omp");
+// lzx
+  fc.unlock("stochdyn", "repex_temp");
   fc.unlock("multistep", "multistep_boost");
   fc.unlock("multistep", "montecarlo");
   fc.unlock("multistep", "ramd");
