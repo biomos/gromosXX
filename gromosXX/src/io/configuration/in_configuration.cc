@@ -352,10 +352,10 @@ bool io::In_Configuration::read_velocity
 {
   // read velocities
   std::vector<std::string> buffer;
-  if (sim.param().bsleus.transition_conf){
+  if (sim.param().bsleus.transition_conf || sim.param().minimise.ntem){
     return true;
   }
-  else if(!sim.param().start.generate_velocities && !sim.param().minimise.ntem){
+  else if(!sim.param().start.generate_velocities){
     buffer = m_block["VELOCITY"];
     if (buffer.size()){
       if (!quiet)
