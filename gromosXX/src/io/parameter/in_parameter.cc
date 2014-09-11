@@ -2404,10 +2404,10 @@ DIHEDRALRES
 #         3:    dihedral constraining
 #    
 # CDLR    >=0.0 force constant for dihedral restraining
-# PHILIN  deviation after which the potential energy function is linearized
+# PHILIN  >0.0  deviation after which the potential energy function is linearized
 #
 # NTDLR  CDLR      PHILIN
-  1      100.0     -1.0
+  1      100.0     180.0
 END
 @endverbatim
  */
@@ -2466,6 +2466,10 @@ void io::In_Parameter::read_DIHEDRALRES(simulation::Parameter &param,
       io::messages.add("DIHEDRALRES block: NTDLR must be 0...3.",
               "In_Parameter", io::message::error);
   }
+
+  if (phi_lin <= 0.0)
+    io::messages.add("DIHEDRALRES block: Illegal value for PHILIN (>0)",
+          "In_Parameter", io::message::error);
 
   param.dihrest.phi_lin = phi_lin * 2 * math::Pi / 360;
 
