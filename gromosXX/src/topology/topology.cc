@@ -400,6 +400,7 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
   DEBUG(10, "\tspecial");
   m_position_restraint = topo.m_position_restraint;
   m_jvalue_restraint = topo.m_jvalue_restraint;
+  m_rdc_restraint = topo.m_rdc_restraint; 
   m_rottrans_last_atom = topo.m_rottrans_last_atom;
   for (unsigned int i = 0; i < topo.m_le_coordinates.size(); ++i) {
     m_le_coordinates.push_back(topo.m_le_coordinates[i]->clone());

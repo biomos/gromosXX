@@ -141,6 +141,11 @@ void util::get_usage(util::Known const &knowns, std::string &usage, std::string 
     usage += "\t# @order     filename\n\n";
   }
   
+  if (knowns.count("rdc")){
+    usage += "\t# RDC restraints specification\n";
+    usage += "\t# @rdc       filename\n\n";
+  }
+
   if (knowns.count("friction")){
     usage += "\t# atomic friction coefficients\n";
     usage += "\t# @friction   filename\n\n";

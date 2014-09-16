@@ -181,7 +181,8 @@ libgrointeraction_la_SOURCES =interaction.cc\
 	special/qmmm/turbomole_worker.cc\
 	special/qmmm/gathering.cc\
 	special/qmmm_interaction.cc\
-	special/symmetry_restraint_interaction.cc
+	special/symmetry_restraint_interaction.cc\
+	special/rdc_restraint_interaction.cc
 
 bin_PROGRAMS =			
 

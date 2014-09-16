@@ -1118,6 +1118,23 @@ namespace topology
     }
 
     /**
+     * RDC restraints accessor.
+     */
+    std::vector<rdc_restraint_struct> & rdc_restraints()
+    {
+      return m_rdc_restraint;
+    }
+
+    /**
+     * const RDC restraints accessor.
+     */
+    std::vector<rdc_restraint_struct> const & rdc_restraints()const
+    {
+      return m_rdc_restraint;
+    }
+
+
+    /**
      * multi cell topology accessor
      */
     Topology & multicell_topo()
@@ -1521,6 +1538,12 @@ namespace topology
      * jvalue restraints / constraints
      */
     std::vector<jvalue_restraint_struct> m_jvalue_restraint;
+
+    /**
+     * rdc restraints
+     */
+    std::vector<rdc_restraint_struct> m_rdc_restraint;
+
 
     /**
      * xray restraints

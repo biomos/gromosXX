@@ -48,6 +48,7 @@ xray_total(0.0),
 leus_total(0.0),
 bsleus_total(0.0),
 oparam_total(0.0),
+rdc_total(0.0),
 symrest_total(0.0),
 constraints_total(0.0),
 self_total(0.0),
@@ -117,6 +118,7 @@ void configuration::Energy::zero(bool potential, bool kinetic)
     disfieldres_energy.assign(disfieldres_energy.size(), 0.0);
     dihrest_energy.assign(dihrest_energy.size(), 0.0);
     jvalue_energy.assign(jvalue_energy.size(), 0.0);
+    rdc_energy.assign(rdc_energy.size(), 0.0);  
     constraints_energy.assign(constraints_energy.size(), 0.0);
     self_energy.assign(self_energy.size(), 0.0);
     sasa_energy.assign(sasa_energy.size(), 0.0);
@@ -176,6 +178,7 @@ void configuration::Energy::resize(unsigned int energy_groups, unsigned int mult
     disfieldres_energy.resize(energy_groups);
     dihrest_energy.resize(energy_groups);
     jvalue_energy.resize(energy_groups);
+    rdc_energy.resize(energy_groups);  
     constraints_energy.resize(energy_groups);
     
     self_energy.resize(energy_groups);
@@ -223,6 +226,7 @@ int configuration::Energy::calculate_totals()
   disfieldres_total =0.0; 
   dihrest_total = 0.0;
   jvalue_total = 0.0; 
+  rdc_total = 0.0; 
   constraints_total = 0.0;
   self_total = 0.0;
   sasa_total = 0.0;
@@ -311,6 +315,10 @@ int configuration::Energy::calculate_totals()
       std::cout << "EWARN: jvalue energy " << i+1 << " = " << jvalue_energy[i] << "\n";
     }
     jvalue_total       += jvalue_energy[i];
+    if (rdc_energy[i] > m_ewarn){
+      std::cout << "EWARN: rdc energy " << i+1 << " = " << rdc_energy[i] << "\n";
+    }
+    rdc_total       += rdc_energy[i];
     if (constraints_energy[i] > m_ewarn){
       std::cout << "EWARN: constraints energy " << i+1 << " = " << constraints_energy[i] << "\n";
     }
@@ -366,7 +374,7 @@ int configuration::Energy::calculate_totals()
     + dihrest_total
     + constraints_total + jvalue_total + xray_total
     + eds_vr + leus_total + sasa_total + sasa_volume_total + oparam_total
-    + symrest_total + bsleus_total + qm_total;
+    + symrest_total + bsleus_total + qm_total + rdc_total;
   
   total = potential_total + kinetic_total + special_total;
 
@@ -425,6 +433,7 @@ double configuration::Energy::get_energy_by_index(const unsigned int & index) {
     case 35 : return entropy_term;
     case 36 : return qm_total;
     case 37 : return bsleus_total;
+    case 38 : return rdc_total;
   }
   return 0.0;
 }

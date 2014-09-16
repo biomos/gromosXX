@@ -73,6 +73,7 @@ m_every_current(0),
 m_every_adde(0),
 m_every_nemd(0),
 m_every_oparam(0),
+m_every_rdc(0),
 m_write_blockaverage_energy(false),
 m_write_blockaverage_free_energy(false),
 m_precision(9),
@@ -142,7 +143,7 @@ io::Out_Configuration::~Out_Configuration()
 
   if (m_every_cos_pos || m_every_jvalue || m_every_xray || m_every_disres || m_every_disfieldres
           || m_every_dat || m_every_leus || m_every_dipole || m_every_current
-          || m_every_adde || m_every_nemd || m_every_bsleus) { // add others if there are any
+          || m_every_adde || m_every_nemd || m_every_bsleus || m_every_rdc) { // add others if there are any
     m_special_traj.flush();
     m_special_traj.close();
   }
@@ -191,11 +192,13 @@ void io::Out_Configuration::init(io::Argument & args,
             param.jvalue.write, param.xrayrest.write, param.distanceres.write, 
             param.distancefield.write, param.print.monitor_dihedrals,param.localelev.write, 
             param.electric.dip_write, param.electric.cur_write, param.addecouple.write,
-            param.nemd.write, param.orderparamrest.write, param.bsleus.write);
+	    param.nemd.write, param.orderparamrest.write, param.rdc.write,
+	    param.bsleus.write);
   else if (param.polarise.write || param.jvalue.write || param.xrayrest.write 
         || param.distanceres.write || param.distancefield.write || param.print.monitor_dihedrals 
         || param.localelev.write || param.electric.dip_write || param.electric.cur_write 
-        || param.addecouple.write || param.nemd.write || param.orderparamrest.write || param.bsleus.write)
+        || param.addecouple.write || param.nemd.write || param.orderparamrest.write || param.rdc.write
+        || param.bsleus.write)
     io::messages.add("write special trajectory but no trs argument",
           "Out_Configuration",
           io::message::error);
@@ -394,6 +397,14 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       m_special_traj.flush();
     }
 
+    if (m_every_rdc && sim.steps() && (sim.steps() % m_every_rdc) == 0) {
+      if (!special_timestep_printed) {
+        _print_timestep(sim, m_special_traj);
+        special_timestep_printed = true;
+      }
+      _print_rdc(sim.param(), conf, topo, m_special_traj, true);
+    }
+
     if (m_every_dipole && (sim.steps() % m_every_dipole) == 0) {
       if (!special_timestep_printed) {
         _print_timestep(sim, m_special_traj);
@@ -548,6 +559,10 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       _print_order_parameter_restraint_average_window(conf, topo, m_final_conf);
     }
 
+    if (sim.param().rdc.mode != simulation::rdc_restr_off) {
+      _print_rdc(sim.param(), conf, topo, m_final_conf, false);
+    }
+
     if (sim.param().rottrans.rottrans) {
       _print_rottrans(conf, sim, m_final_conf);
     }
@@ -668,7 +683,7 @@ void io::Out_Configuration
 ::special_trajectory(std::string name, int every_cos, int every_jvalue, 
                      int every_xray, int every_disres, int every_disfieldres, int every_dat, 
                      int every_leus, int every_dipole, int every_current,
-                     int every_adde, int every_nemd, int every_oparam,
+                     int every_adde, int every_nemd, int every_oparam, int every_rdc,
                      int every_bsleus) {
 
   m_special_traj.open(name.c_str());
@@ -685,6 +700,7 @@ void io::Out_Configuration
   m_every_adde = every_adde;
   m_every_nemd = every_nemd;
   m_every_oparam = every_oparam;
+  m_every_rdc = every_rdc; 
   m_every_bsleus = every_bsleus;
   _print_title(m_title, "special trajectory", m_special_traj);
 }
@@ -1445,6 +1461,7 @@ ENERGY03
    0.000000000e+00 # Entropy
    0.000000000e+00 # QM/MM total
    0.000000000e+00 # B&S-LEUS energy
+   0.000000000e+00 # RDC-value total
 # baths
 # number of baths
 2
@@ -1463,9 +1480,9 @@ ENERGY03
   -6.774710271e-01   4.920740888e-01   0.000000000e+00   0.000000000e+00  # 1 - 2
   -7.163386790e-01  -1.309311086e+01   0.000000000e+00   0.000000000e+00  # 2 - 2
 # special
-#  constraints       pos. restraints   dist. restraints  disfield res      dihe. restr.      SASA              SASA volume       jvalue            local elevation   path integral
-   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00 # group 1
-   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00 # group 2
+#  constraints       pos. restraints   dist. restraints  disfield res      dihe. restr.      SASA              SASA volume       jvalue            rdc               local elevation   path integral
+   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00 # group 1
+   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00 # group 2
 # eds (enveloping distribution sampling)
 # numstates
 2
@@ -2429,6 +2446,145 @@ void io::Out_Configuration::_print_order_parameter_restraint_average_window(
   os << "END" << std::endl;
 }
 
+void io::Out_Configuration::_print_rdc(simulation::Parameter const & param,
+        configuration::Configuration const &conf,
+        topology::Topology const &topo,
+        std::ostream &os, bool formatted) {
+  DEBUG(10, "RDC data");
+
+  if(param.rdc.type == simulation::rdc_mf) {
+    os << "RDCMFV\n";
+    if (formatted) {
+      os << "# NMF\n";
+    }
+    os << conf.special().rdc.MFpoint.size() << std::endl;
+    if (formatted) {
+      os << "#      x      y      z      vx      vy      vz    mass\n";
+    }
+    os.setf(std::ios::fixed, std::ios::floatfield);
+    os.precision(7);
+    for (unsigned int i = 0; i < conf.special().rdc.MFpoint.size(); ++i) {
+      math::Vec posMF = conf.special().rdc.MFpoint[i];
+      math::Vec velMF = conf.special().rdc.MFpointVel[i];
+      os      << std::setw(m_width) << posMF(0)
+              << std::setw(m_width) << posMF(1)
+              << std::setw(m_width) << posMF(2)
+              << std::setw(m_width) << velMF(0)
+              << std::setw(m_width) << velMF(1)
+              << std::setw(m_width) << velMF(2)
+              << std::setw(m_width) << conf.special().rdc.MFpointMass[i]
+              << "\n";
+    }
+    /*
+    if (param.rdc.write_Ek) {
+      // Ekin gained with normalisation
+      if (formatted) {
+        os << "# Normalisation Energy = ";
+      }
+      os.precision(12);
+      os << std::setw(7) << conf.special().rdc.Ekin << "\n";
+    }
+     */ 
+    os << "END\n";
+  }
+  
+  if(param.rdc.type == simulation::rdc_t) {
+    const int tensor_size = 5;
+    os << "RDCT\n";
+    if (formatted) {
+      os << "#      Axx      vel1      mass1      Ayy      vel2      mass2"
+          << "     Axy      vel3      mass3      Axz      vel4      mass4      Ayz      vel5      mass5      \n";
+    }
+    os.setf(std::ios::fixed, std::ios::floatfield);
+    os.precision(6);
+    for (unsigned int i = 0; i < tensor_size; ++i) {
+      os << std::setw(m_width) << conf.special().rdc.Tensor[i]
+         << std::setw(m_width) << conf.special().rdc.TensorVel[i]
+         << std::setw(m_width) << conf.special().rdc.TensorMass[i];
+    }
+    os << "\n";
+    os << "END\n";    
+  }
+  
+  if (param.rdc.type == simulation::rdc_sh) {
+    const int n_clm = 5;
+    os << "RDCSH\n";
+    if (formatted) {
+      os << "#      c1        vel1        mass1        c2        vel2        mass2       c3       vel3        mass3        c4        vel4        mass4        c5        vel5        mass5\n";
+    }
+    os.setf(std::ios::fixed, std::ios::floatfield);
+    os.precision(6);
+    for (unsigned int i = 0; i < n_clm; ++i) {
+      os << std::setw(m_width) << conf.special().rdc.clm[i]
+         << std::setw(m_width) << conf.special().rdc.clmVel[i]
+         << std::setw(m_width) << conf.special().rdc.clmMass[i];
+    }
+    os << "\n";
+    os << "END\n";    
+  }
+
+
+  if (param.rdc.mode != simulation::rdc_restr_inst &&
+      param.rdc.mode != simulation::rdc_restr_inst_weighted) {
+    os << "RDCRESEXPAVE\n";
+    if (formatted) {
+      os << "#   I    J              <R>\n";
+    }
+    os.setf(std::ios::fixed, std::ios::floatfield);
+    os.precision(7);
+    std::vector<double>::const_iterator av_it = conf.special().rdc.av.begin(),
+            av_to = conf.special().rdc.av.end();
+    std::vector<topology::rdc_restraint_struct>::const_iterator rdc_it =
+            topo.rdc_restraints().begin();
+    for (; av_it != av_to; ++av_it, ++rdc_it) {
+        os << std::setw(5) << rdc_it->i+1
+           << std::setw(5) << rdc_it->j+1;
+        os.precision(13);
+        os << std::setw(17) << *av_it << "\n";
+    }
+    os << "END\n";
+  }
+//GP TODO LE werte speichern
+  /*if (param.rdc.le && param.rdc.mode != simulation::rdc_restr_off) {
+    os << "RDCRESEPS\n";
+    if (formatted) {
+      os << "# I J\n# MFV[1.." << conf.special().rdc.MFpoint.size() << "]\n# GRID[1.."
+              << param.rdc.ngrid << "]\n";
+    }
+    os.setf(std::ios::scientific, std::ios::floatfield);
+    os.precision(7);
+    std::vector<std::vector<double> >::const_iterator
+    le_it = conf.special().rdc.epsilon.begin(),
+            le_to = conf.special().rdc.epsilon.end();
+    std::vector<topology::rdc_restraint_struct>::const_iterator rdc_it =
+            topo.rdc_restraints().begin();
+    unsigned int n = 0;
+    unsigned int neps = conf.special().rdc.epsilon.size();
+
+    // loop over RDCs and magnetic field vectors
+    for (; (le_it != le_to)&&(n != neps); ++le_it, ++n) {
+      if (formatted) {
+        os << std::setw(5) << rdc_it->i + 1
+                << std::setw(5) << rdc_it->j + 1 << "\n";
+      }
+
+      // loop over bins in LE grid (each grid on separate line)
+      for (unsigned int i = 0; i < le_it->size(); ++i) {
+        os << std::setw(15) << (*le_it)[i] << " ";
+      }
+      os << "\n";
+
+      // increase rdc_it after printing LE grid for all magnetic field vectors
+      if ((n + 1) % conf.special().rdc.MFpoint.size() == 0)
+        ++rdc_it;
+    }
+    os << "END\n";
+  }*/
+}
+
+
+
+
 void io::Out_Configuration::_print_dihangle_trans(
         configuration::Configuration const &conf,
         topology::Topology const &topo,
@@ -2532,7 +2688,8 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
           << std::setw(18) << e.eds_vr << "\n" // 34
           << std::setw(18) << e.entropy_term << "\n" // 35
           << std::setw(18) << e.qm_total << "\n" // 36
-          << std::setw(18) << e.bsleus_total << "\n"; // 37
+          << std::setw(18) << e.bsleus_total << "\n" // 37
+          << std::setw(18) << e.rdc_total << "\n"; //38
 
   os << "# baths\n";
   os << numbaths << "\n";
@@ -2577,6 +2734,7 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
             << std::setw(18) << e.sasa_energy[i]
             << std::setw(18) << e.sasa_volume_energy[i]
             << std::setw(18) << 0.0 // jval
+            << std::setw(18) << 0.0 // rdc
             << std::setw(18) << 0.0 // local elevation
             << std::setw(18) << 0.0 << "\n"; //path integral
   }

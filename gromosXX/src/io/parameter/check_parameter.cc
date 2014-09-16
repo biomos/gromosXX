@@ -129,6 +129,8 @@ int io::check_parameter(simulation::Simulation & sim)
   add("dihedral_const", "dihedral constraints", param.dihrest.dihrest == simulation::dihedral_constr);
   // JVALUERES block
   add("jvalue_rest", "J-value restraints", param.jvalue.mode != simulation::jvalue_restr_off);
+  // RDC block
+  add("rdc_rest", "RDC restraints", param.rdc.mode != simulation::rdc_restr_off); 
   // PERSCALE block
   add("perscale", "peridoic scaling", param.pscale.jrest);
   // ROTTRANS block
@@ -270,6 +272,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solute", "dihedral_rest");
   fc.unlock("solute", "dihedral_const");
   fc.unlock("solute", "jvalue_rest");
+  fc.unlock("solute", "rdc_rest");    
   fc.unlock("solute", "perscale");
   fc.unlock("solute", "rottrans");
   fc.unlock("solute", "repex_temp");
@@ -331,6 +334,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solvent", "dihedral_rest");
   fc.unlock("solvent", "dihedral_const");
   fc.unlock("solvent", "jvalue_rest");
+  fc.unlock("solvent", "rdc_rest");   
   fc.unlock("solvent", "perscale");
   fc.unlock("solvent", "rottrans");
   fc.unlock("solvent", "repex_temp");
@@ -434,6 +438,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("steepest_descent", "dihedral_rest");
   fc.unlock("steepest_descent", "dihedral_const");
   fc.unlock("steepest_descent", "jvalue_rest");
+  fc.unlock("steepest_descent", "rdc_rest");  
   fc.unlock("steepest_descent", "perscale");
   fc.unlock("steepest_descent", "rottrans");
   fc.unlock("steepest_descent", "multicell");
@@ -485,6 +490,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solute_constraint_off", "distance_rest");
   fc.unlock("solute_constraint_off", "dihedral_rest");
   fc.unlock("solute_constraint_off", "jvalue_rest");
+  fc.unlock("solute_constraint_off", "rdc_rest");
   fc.unlock("solute_constraint_off", "perscale");
   fc.unlock("solute_constraint_off", "rottrans");
   fc.unlock("solute_constraint_off", "repex_temp");
@@ -540,6 +546,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solute_shake", "dihedral_rest");
   fc.unlock("solute_shake", "dihedral_const");
   fc.unlock("solute_shake", "jvalue_rest");
+  fc.unlock("solute_shake", "rdc_rest"); 
   fc.unlock("solute_shake", "perscale");
   fc.unlock("solute_shake", "rottrans");
   fc.unlock("solute_shake", "repex_temp");
@@ -591,6 +598,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solute_lincs", "distance_rest");
   fc.unlock("solute_lincs", "dihedral_rest");
   fc.unlock("solute_lincs", "jvalue_rest");
+  fc.unlock("solute_lincs", "rdc_rest");
   fc.unlock("solute_lincs", "perscale");
   fc.unlock("solute_lincs", "rottrans");
   fc.unlock("solute_lincs", "repex_temp");
@@ -637,6 +645,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solute_flexshake", "distance_rest");
   fc.unlock("solute_flexshake", "dihedral_rest");
   fc.unlock("solute_flexshake", "jvalue_rest");
+  fc.unlock("solute_flexshake", "rdc_rest");  
   fc.unlock("solute_flexshake", "perscale");
   fc.unlock("solute_flexshake", "rottrans");
   fc.unlock("solute_flexshake", "repex_temp");
@@ -685,6 +694,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solvent_constraint_off", "dihedral_rest");
   fc.unlock("solvent_constraint_off", "dihedral_const");
   fc.unlock("solvent_constraint_off", "jvalue_rest");
+  fc.unlock("solvent_constraint_off", "rdc_rest");  
   fc.unlock("solvent_constraint_off", "perscale");
   fc.unlock("solvent_constraint_off", "rottrans");
   fc.unlock("solvent_constraint_off", "repex_temp");
@@ -738,6 +748,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solvent_shake", "dihedral_rest");
   fc.unlock("solvent_shake", "dihedral_const");
   fc.unlock("solvent_shake", "jvalue_rest");
+  fc.unlock("solvent_shake", "rdc_rest"); 
   fc.unlock("solvent_shake", "perscale");
   fc.unlock("solvent_shake", "rottrans");
   fc.unlock("solvent_shake", "repex_temp");
@@ -788,6 +799,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("pressure_calculation", "dihedral_rest");
   fc.unlock("pressure_calculation", "dihedral_const");
   fc.unlock("pressure_calculation", "jvalue_rest");
+  fc.unlock("pressure_calculation", "rdc_rest");  
   fc.unlock("pressure_calculation", "perscale");
   fc.unlock("pressure_calculation", "rottrans");
   fc.unlock("pressure_calculation", "repex_temp");
@@ -838,6 +850,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("pressure_scale_berendsen", "dihedral_rest");
   fc.unlock("pressure_scale_berendsen", "dihedral_const");
   fc.unlock("pressure_scale_berendsen", "jvalue_rest");
+  fc.unlock("pressure_calculation", "rdc_rest");          
   fc.unlock("pressure_scale_berendsen", "perscale");
   fc.unlock("pressure_scale_berendsen", "rottrans");
   fc.unlock("pressure_scale_berendsen", "repex_temp");
@@ -885,6 +898,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("virial_off", "dihedral_rest");
   fc.unlock("virial_off", "dihedral_const");
   fc.unlock("virial_off", "jvalue_rest");
+  fc.unlock("virial_off", "rdc_rest");    
   fc.unlock("virial_off", "perscale");
   fc.unlock("virial_off", "rottrans");
   fc.unlock("virial_off", "repex_temp");
@@ -932,6 +946,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("virial_atomic", "distance_rest");
   fc.unlock("virial_atomic", "dihedral_rest");
   fc.unlock("virial_atomic", "jvalue_rest");
+  fc.unlock("virial_atomic", "rdc_rest");   
   fc.unlock("virial_atomic", "perscale");
   fc.unlock("virial_atomic", "rottrans");
   fc.unlock("virial_atomic", "repex_temp");
@@ -980,6 +995,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("virial_molecular", "dihedral_rest");
   fc.unlock("virial_molecular", "dihedral_const");
   fc.unlock("virial_molecular", "jvalue_rest");
+  fc.unlock("virial_molecular", "rdc_rest");   
   fc.unlock("virial_molecular", "perscale");
   fc.unlock("virial_molecular", "rottrans");
   fc.unlock("virial_molecular", "repex_temp");
@@ -1022,6 +1038,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("vacuum", "dihedral_rest");
   fc.unlock("vacuum", "dihedral_const");
   fc.unlock("vacuum", "jvalue_rest");
+  fc.unlock("vacuum", "rdc_rest");       
   fc.unlock("vacuum", "perscale");
   fc.unlock("vacuum", "rottrans");
   fc.unlock("vacuum", "repex_temp");
@@ -1065,6 +1082,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("pbc_r", "dihedral_rest");
   fc.unlock("pbc_r", "dihedral_const");
   fc.unlock("pbc_r", "jvalue_rest");
+  fc.unlock("pbc_r", "rdc_rest");  
   fc.unlock("pbc_r", "perscale");
   fc.unlock("pbc_r", "rottrans");
   fc.unlock("pbc_r", "repex_temp");
@@ -1109,6 +1127,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("pbc_c", "dihedral_rest");
   fc.unlock("pbc_c", "dihedral_const");
   fc.unlock("pbc_c", "jvalue_rest");
+  fc.unlock("pbc_c", "rdc_rest");  
   fc.unlock("pbc_c", "perscale");
   fc.unlock("pbc_c", "rottrans");
   fc.unlock("pbc_c", "repex_temp");
@@ -1151,6 +1170,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("pbc_t", "dihedral_rest");
   fc.unlock("pbc_t", "dihedral_const");
   fc.unlock("pbc_t", "jvalue_rest");
+  fc.unlock("pbc_t", "rdc_rest");    
   fc.unlock("pbc_t", "perscale");
   fc.unlock("pbc_t", "rottrans");
   fc.unlock("pbc_t", "repex_temp");
@@ -1192,6 +1212,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("perturbation", "dihedral_rest");
   fc.unlock("perturbation", "dihedral_const");
   fc.unlock("perturbation", "jvalue_rest");
+  fc.unlock("perturbation", "rdc_rest");
   fc.unlock("perturbation", "perscale");
   fc.unlock("perturbation", "rottrans");
   fc.unlock("perturbation", "repex_temp");
@@ -1230,6 +1251,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("perturbation_scaling", "dihedral_rest");
   fc.unlock("perturbation_scaling", "dihedral_const");
   fc.unlock("perturbation_scaling", "jvalue_rest");
+  fc.unlock("perturbation_scaling", "rdc_rest");                    
   fc.unlock("perturbation_scaling", "perscale");
   fc.unlock("perturbation_scaling", "rottrans");
   fc.unlock("perturbation_scaling", "repex_temp");
@@ -1291,6 +1313,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("individual_lambdas", "dihedral_rest");
   fc.unlock("individual_lambdas", "dihedral_const");
   fc.unlock("individual_lambdas", "jvalue_rest");
+  fc.unlock("individual_lambdas", "rdc_rest"); 
   fc.unlock("individual_lambdas", "perscale");
   fc.unlock("individual_lambdas", "rottrans");
   fc.unlock("individual_lambdas", "repex_temp");
@@ -1334,6 +1357,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("bond", "dihedral_rest");
   fc.unlock("bond", "dihedral_const");
   fc.unlock("bond", "jvalue_rest");
+  fc.unlock("bond", "rdc_rest"); 
   fc.unlock("bond", "perscale");
   fc.unlock("bond", "rottrans");
   fc.unlock("bond", "repex_temp");
@@ -1374,6 +1398,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("angle", "dihedral_rest");
   fc.unlock("angle", "dihedral_const");
   fc.unlock("angle", "jvalue_rest");
+  fc.unlock("angle", "rdc_rest"); 
   fc.unlock("angle", "perscale");
   fc.unlock("angle", "rottrans");
   fc.unlock("angle", "repex_temp");
@@ -1413,6 +1438,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("dihedral", "dihedral_rest");
   fc.unlock("dihedral", "dihedral_const");
   fc.unlock("dihedral", "jvalue_rest");
+  fc.unlock("dihedral", "rdc_rest");         
   fc.unlock("dihedral", "perscale");
   fc.unlock("dihedral", "rottrans");
   fc.unlock("dihedral", "repex_temp");
@@ -1451,6 +1477,8 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("improper", "dihedral_rest");
   fc.unlock("improper", "dihedral_const");
   fc.unlock("improper", "jvalue_rest");
+  fc.unlock("improper", "rdc_rest");
+  fc.unlock("improper", "perscale"); 
   fc.unlock("improper", "perscale");
   fc.unlock("improper", "rottrans");
   fc.unlock("improper", "repex_temp");
@@ -1488,6 +1516,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("crf", "dihedral_rest");
   fc.unlock("crf", "dihedral_const");
   fc.unlock("crf", "jvalue_rest");
+  fc.unlock("crf", "rdc_rest");            
   fc.unlock("crf", "perscale");
   fc.unlock("crf", "rottrans");
   fc.unlock("crf", "repex_temp");
@@ -1524,6 +1553,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("lj", "dihedral_rest");
   fc.unlock("lj", "dihedral_const");
   fc.unlock("lj", "jvalue_rest");
+  fc.unlock("lj", "rdc_rest");  
   fc.unlock("lj", "perscale");
   fc.unlock("lj", "rottrans");
   fc.unlock("lj", "repex_temp");
@@ -1557,6 +1587,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("com_removal", "dihedral_rest");
   fc.unlock("com_removal", "dihedral_const");
   fc.unlock("com_removal", "jvalue_rest");
+  fc.unlock("com_removal", "rdc_rest");  
   fc.unlock("com_removal", "perscale");
   fc.unlock("com_removal", "rottrans");
   fc.unlock("com_removal", "repex_temp");
@@ -1591,6 +1622,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("rf_excluded", "dihedral_rest");
   fc.unlock("rf_excluded", "dihedral_const");
   fc.unlock("rf_excluded", "jvalue_rest");
+  fc.unlock("rf_excluded", "rdc_rest"); 
   fc.unlock("rf_excluded", "perscale");
   fc.unlock("rf_excluded", "rottrans");
   fc.unlock("rf_excluded", "repex_temp");
@@ -1623,6 +1655,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("pairlist_standard", "dihedral_rest");
   fc.unlock("pairlist_standard", "dihedral_const");
   fc.unlock("pairlist_standard", "jvalue_rest");
+  fc.unlock("pairlist_standard", "rdc_rest"); 
   fc.unlock("pairlist_standard", "perscale");
   fc.unlock("pairlist_standard", "rottrans");
   fc.unlock("pairlist_standard", "repex_temp");
@@ -1654,6 +1687,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("pairlist_grid", "dihedral_rest");
   fc.unlock("pairlist_grid", "dihedral_const");
   fc.unlock("pairlist_grid", "jvalue_rest");
+  fc.unlock("pairlist_grid", "rdc_rest");         
   fc.unlock("pairlist_grid", "perscale");
   fc.unlock("pairlist_grid", "rottrans");
   fc.unlock("pairlist_grid", "repex_temp");
@@ -1685,6 +1719,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("cutoff_atomic", "dihedral_rest");
   fc.unlock("cutoff_atomic", "dihedral_const");
   fc.unlock("cutoff_atomic", "jvalue_rest");
+  fc.unlock("cutoff_atomic", "rdc_rest"); 
   fc.unlock("cutoff_atomic", "perscale");
   fc.unlock("cutoff_atomic", "rottrans");
   fc.unlock("cutoff_atomic", "repex_temp");
@@ -1776,6 +1811,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("temp_berendsen", "dihedral_rest");
   fc.unlock("temp_berendsen", "dihedral_const");
   fc.unlock("temp_berendsen", "jvalue_rest");
+  fc.unlock("temp_berendsen", "rdc_rest"); 
   fc.unlock("temp_berendsen", "perscale");
   fc.unlock("temp_berendsen", "rottrans");
   fc.unlock("temp_berendsen", "repex_temp");
@@ -1801,6 +1837,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("temp_nosehoover", "dihedral_rest");
   fc.unlock("temp_nosehoover", "dihedral_const");
   fc.unlock("temp_nosehoover", "jvalue_rest");
+  fc.unlock("temp_nosehoover", "rdc_rest"); 
   fc.unlock("temp_nosehoover", "perscale");
   fc.unlock("temp_nosehoover", "rottrans");
   fc.unlock("temp_nosehoover", "repex_temp");
@@ -1826,6 +1863,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("temp_nosehoover_chains", "dihedral_rest");
   fc.unlock("temp_nosehoover_chains", "dihedral_const");
   fc.unlock("temp_nosehoover_chains", "jvalue_rest");
+  fc.unlock("temp_nosehoover_chains", "rdc_rest");    
   fc.unlock("temp_nosehoover_chains", "perscale");
   fc.unlock("temp_nosehoover_chains", "rottrans");
   fc.unlock("temp_nosehoover_chains", "repex_temp");
@@ -1848,6 +1886,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("position_rest", "dihedral_rest");
   fc.unlock("position_rest", "dihedral_const");
   fc.unlock("position_rest", "jvalue_rest");
+  fc.unlock("position_rest", "rdc_rest"); 
   fc.unlock("position_rest", "perscale");
   fc.unlock("position_rest", "rottrans");
   fc.unlock("position_rest", "repex_temp");
@@ -1869,6 +1908,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("position_const", "distance_rest");
   fc.unlock("position_const", "dihedral_rest");
   fc.unlock("position_const", "jvalue_rest");
+  fc.unlock("position_const", "rdc_rest");   
   fc.unlock("position_const", "perscale");
   fc.unlock("position_const", "repex_temp");
   fc.unlock("position_const", "repex_lambda");
@@ -1889,6 +1929,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("position_const_scaled", "distance_rest");
   fc.unlock("position_const_scaled", "dihedral_rest");
   fc.unlock("position_const_scaled", "jvalue_rest");
+  fc.unlock("position_const_scaled", "rdc_rest"); 
   fc.unlock("position_const_scaled", "perscale");
   fc.unlock("position_const_scaled", "rottrans");
   fc.unlock("position_const_scaled", "repex_temp");
@@ -1910,6 +1951,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("distance_rest", "dihedral_rest");
   fc.unlock("distance_rest", "dihedral_const");
   fc.unlock("distance_rest", "jvalue_rest");
+  fc.unlock("distance_rest", "rdc_rest");  
   fc.unlock("distance_rest", "perscale");
   fc.unlock("distance_rest", "rottrans");
   fc.unlock("distance_rest", "repex_temp");
@@ -1929,6 +1971,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("distance_rest", "parallel_mpi");
   fc.unlock("distance_rest", "parallel_omp");
   fc.unlock("dihedral_rest", "jvalue_rest");
+  fc.unlock("dihedral_rest", "rdc_rest");  
   fc.unlock("dihedral_rest", "perscale");
   fc.unlock("dihedral_rest", "rottrans");
   fc.unlock("dihedral_rest", "repex_temp");
@@ -1948,6 +1991,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("dihedral_rest", "parallel_mpi");
   fc.unlock("dihedral_rest", "parallel_omp");
   fc.unlock("dihedral_const", "jvalue_rest");
+  fc.unlock("dihedral_const", "rdc_rest");           
   fc.unlock("dihedral_const", "perscale");
   fc.unlock("dihedral_const", "rottrans");
   fc.unlock("dihedral_const", "repex_temp");
@@ -1966,6 +2010,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("dihedral_const", "random_gsl");
   fc.unlock("dihedral_const", "parallel_mpi");
   fc.unlock("dihedral_const", "parallel_omp");
+  fc.unlock("jvalue_rest", "rdc_rest");    
   fc.unlock("jvalue_rest", "perscale");
   fc.unlock("jvalue_rest", "rottrans");
   fc.unlock("jvalue_rest", "repex_temp");
@@ -1984,6 +2029,24 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("jvalue_rest", "random_gsl");
   fc.unlock("jvalue_rest", "parallel_mpi");
   fc.unlock("jvalue_rest", "parallel_omp");
+  fc.unlock("rdc_rest", "perscale");
+  fc.unlock("rdc_rest", "rottrans");
+  fc.unlock("rdc_rest", "repex_temp");
+  fc.unlock("rdc_rest", "repex_lambda");
+  fc.unlock("rdc_rest", "multicell");
+  fc.unlock("rdc_rest", "analysis");
+  fc.unlock("rdc_rest", "no_integration");
+  fc.unlock("rdc_rest", "stochdyn");
+  fc.unlock("rdc_rest", "multistep");
+  fc.unlock("rdc_rest", "multistep_boost");
+  fc.unlock("rdc_rest", "montecarlo");
+  fc.unlock("rdc_rest", "ramd");
+  fc.unlock("rdc_rest", "polarisation_cos");
+  fc.unlock("rdc_rest", "polarisation_cos_damped");
+  fc.unlock("rdc_rest", "random_gromos");
+  fc.unlock("rdc_rest", "random_gsl");
+  fc.unlock("rdc_rest", "parallel_mpi");
+  fc.unlock("rdc_rest", "parallel_omp");
   fc.unlock("perscale", "rottrans");
   fc.unlock("perscale", "repex_temp");
   fc.unlock("perscale", "repex_lambda");
@@ -2156,6 +2219,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("slow_growth", "dihedral_rest");
   fc.unlock("slow_growth", "dihedral_const");
   fc.unlock("slow_growth", "jvalue_rest");
+  fc.unlock("slow_growth", "rdc_rest");  
   fc.unlock("slow_growth", "perscale");
   fc.unlock("slow_growth", "rottrans");
   fc.unlock("slow_growth", "repex_temp");
@@ -2281,6 +2345,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("mult_energy_groups", "dihedral_rest");
   fc.unlock("mult_energy_groups", "dihedral_const");
   fc.unlock("mult_energy_groups", "jvalue_rest");
+  fc.unlock("mult_energy_groups", "rdc_rest"); 
   fc.unlock("mult_energy_groups", "perscale");
   fc.unlock("mult_energy_groups", "rottrans");
   fc.unlock("mult_energy_groups", "repex_temp");
@@ -2349,6 +2414,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("ewald", "dihedral_rest");
   fc.unlock("ewald", "dihedral_const");
   fc.unlock("ewald", "jvalue_rest");
+  fc.unlock("ewald", "rdc_rest"); 
   fc.unlock("ewald", "perscale");
   fc.unlock("ewald", "rottrans");
   //fc.unlock("ewald", "innerloop_spc");
@@ -2420,6 +2486,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("p3m", "dihedral_rest");
   fc.unlock("p3m", "dihedral_const");
   fc.unlock("p3m", "jvalue_rest");
+  fc.unlock("innerloop_method_off", "rdc_rest");                
   fc.unlock("p3m", "perscale");
   fc.unlock("p3m", "rottrans");
   //fc.unlock("p3m", "innerloop_spc");
@@ -2490,6 +2557,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("innerloop_method_off", "dihedral_rest");
   fc.unlock("innerloop_method_off", "dihedral_const");
   fc.unlock("innerloop_method_off", "jvalue_rest");
+  fc.unlock("innerloop_method_off", "rdc_rest");   
   fc.unlock("innerloop_method_off", "perscale");
   fc.unlock("innerloop_method_off", "rottrans");
   fc.unlock("innerloop_method_off", "innerloop_solvent_topology");
@@ -2557,6 +2625,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("innerloop_method_generic", "dihedral_rest");
   fc.unlock("innerloop_method_generic", "dihedral_const");
   fc.unlock("innerloop_method_generic", "jvalue_rest");
+  fc.unlock("innerloop_method_generic", "rdc_rest");        
   fc.unlock("innerloop_method_generic", "perscale");
   fc.unlock("innerloop_method_generic", "rottrans");
   fc.unlock("innerloop_method_generic", "innerloop_solvent_topology");
@@ -2621,6 +2690,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("innerloop_method_hardcode", "dihedral_rest");
   fc.unlock("innerloop_method_hardcode", "dihedral_const");
   fc.unlock("innerloop_method_hardcode", "jvalue_rest");
+  fc.unlock("innerloop_method_hardcode", "rdc_rest");  
   fc.unlock("innerloop_method_hardcode", "perscale");
   fc.unlock("innerloop_method_hardcode", "rottrans");
   fc.unlock("innerloop_method_hardcode", "innerloop_solvent_spc");
@@ -2684,6 +2754,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("innerloop_method_table", "dihedral_rest");
   fc.unlock("innerloop_method_table", "dihedral_const");
   fc.unlock("innerloop_method_table", "jvalue_rest");
+  fc.unlock("innerloop_method_table", "rdc_rest");
   fc.unlock("innerloop_method_table", "perscale");
   fc.unlock("innerloop_method_table", "rottrans");
   fc.unlock("innerloop_method_table", "innerloop_solvent_spc");
@@ -2704,7 +2775,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("innerloop_method_table", "parallel_omp");
   fc.unlock("innerloop_method_table", "mult_energy_groups");
   
-    fc.unlock("innerloop_solvent_topology", "solute");
+  fc.unlock("innerloop_solvent_topology", "solute");
   fc.unlock("innerloop_solvent_topology", "solvent");
   fc.unlock("innerloop_solvent_topology", "solvent_only");
   fc.unlock("innerloop_solvent_topology", "steepest_descent");
@@ -2751,6 +2822,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("innerloop_solvent_topology", "dihedral_rest");
   fc.unlock("innerloop_solvent_topology", "dihedral_const");
   fc.unlock("innerloop_solvent_topology", "jvalue_rest");
+  fc.unlock("innerloop_solvent_topology", "rdc_rest");      
   fc.unlock("innerloop_solvent_topology", "perscale");
   fc.unlock("innerloop_solvent_topology", "rottrans");
   fc.unlock("innerloop_solvent_topology", "repex_temp");
@@ -2820,6 +2892,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("innerloop_solvent_spc", "dihedral_rest");
   fc.unlock("innerloop_solvent_spc", "dihedral_const");
   fc.unlock("innerloop_solvent_spc", "jvalue_rest");
+  fc.unlock("innerloop_solvent_spc", "rdc_rest");    
   fc.unlock("innerloop_solvent_spc", "perscale");
   fc.unlock("innerloop_solvent_spc", "rottrans");
   fc.unlock("innerloop_solvent_spc", "repex_temp");
@@ -2884,6 +2957,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solvent_lincs", "dihedral_rest");
   fc.unlock("solvent_lincs", "dihedral_const");
   fc.unlock("solvent_lincs", "jvalue_rest");
+  fc.unlock("solvent_lincs", "rdc_rest");   
   fc.unlock("solvent_lincs", "perscale");
   fc.unlock("solvent_lincs", "rottrans");
   fc.unlock("solvent_lincs", "innerloop_method_off");
@@ -2956,6 +3030,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solvent_settle", "dihedral_rest");
   fc.unlock("solvent_settle", "dihedral_const");
   fc.unlock("solvent_settle", "jvalue_rest");
+  fc.unlock("solvent_settle", "rdc_rest");       
   fc.unlock("solvent_settle", "perscale");
   fc.unlock("solvent_settle", "rottrans");
   fc.unlock("solvent_settle", "innerloop_method_off");
@@ -3019,6 +3094,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("innerloop_method_cuda", "dihedral_rest");
   fc.unlock("innerloop_method_cuda", "dihedral_const");
   fc.unlock("innerloop_method_cuda", "jvalue_rest");
+  fc.unlock("innerloop_method_cuda", "rdc_rest");  
   fc.unlock("innerloop_method_cuda", "perscale");
   fc.unlock("innerloop_method_cuda", "rottrans");
   fc.unlock("innerloop_method_cuda", "innerloop_solvent_topology");
@@ -3089,6 +3165,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("leus", "dihedral_rest");
   fc.unlock("leus", "dihedral_const");
   fc.unlock("leus", "jvalue_rest");
+  fc.unlock("leus", "rdc_rest");  
   fc.unlock("leus", "perscale");
   fc.unlock("leus", "rottrans");
   fc.unlock("leus", "innerloop_method_off");
@@ -3169,6 +3246,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("xray", "dihedral_rest");
   fc.unlock("xray", "dihedral_const");
   fc.unlock("xray", "jvalue_rest");
+  fc.unlock("xray", "rdc_rest"); 
   fc.unlock("xray", "perscale");
   fc.unlock("xray", "rottrans");
   fc.unlock("xray", "innerloop_method_off");
@@ -3250,6 +3328,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("sasa", "dihedral_rest");
   fc.unlock("sasa", "dihedral_const");
   fc.unlock("sasa", "jvalue_rest");
+  fc.unlock("sasa", "rdc_rest");  
   fc.unlock("sasa", "perscale");
   fc.unlock("sasa", "rottrans");
   fc.unlock("sasa", "innerloop_method_off");
@@ -3333,6 +3412,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("sasavol", "dihedral_rest");
   fc.unlock("sasavol", "dihedral_const");
   fc.unlock("sasavol", "jvalue_rest");
+  fc.unlock("sasavol", "rdc_rest"); 
   fc.unlock("sasavol", "perscale");
   fc.unlock("sasavol", "rottrans");
   fc.unlock("sasavol", "innerloop_method_off");
@@ -3413,6 +3493,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("pairlist_gridcell", "dihedral_rest");
   fc.unlock("pairlist_gridcell", "dihedral_const");
   fc.unlock("pairlist_gridcell", "jvalue_rest");
+  fc.unlock("pairlist_gridcell", "rdc_rest");  
   fc.unlock("pairlist_gridcell", "perscale");
   fc.unlock("pairlist_gridcell", "rottrans");
   fc.unlock("pairlist_gridcell", "innerloop_method_off");
@@ -3497,6 +3578,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("cutoff_cg", "dihedral_rest");
   fc.unlock("cutoff_cg", "dihedral_const");
   fc.unlock("cutoff_cg", "jvalue_rest");
+  fc.unlock("cutoff_cg", "rdc_rest");   
   fc.unlock("cutoff_cg", "perscale");
   fc.unlock("cutoff_cg", "rottrans");
   fc.unlock("cutoff_cg", "innerloop_method_off");
@@ -3576,6 +3658,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("force_groups", "dihedral_rest");
   fc.unlock("force_groups", "dihedral_const");
   fc.unlock("force_groups", "jvalue_rest");
+  fc.unlock("force_groups", "rdc_rest");
   fc.unlock("force_groups", "perscale");
   fc.unlock("force_groups", "rottrans");
   fc.unlock("force_groups", "innerloop_method_off");
@@ -3645,6 +3728,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("distance_field", "dihedral_rest");
   fc.unlock("distance_field", "dihedral_const");
   fc.unlock("distance_field", "jvalue_rest");
+  fc.unlock("distance_field", "rdc_rest");
   //  fc.unlock("distance_field", "perscale");
   fc.unlock("distance_field", "rottrans");
   fc.unlock("distance_field", "innerloop_method_off");
@@ -3730,6 +3814,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("bsleus", "dihedral_rest");
   fc.unlock("bsleus", "dihedral_const");
   fc.unlock("bsleus", "jvalue_rest");
+  fc.unlock("bsleus", "rdc_rest");
   fc.unlock("bsleus", "perscale");
   fc.unlock("bsleus", "rottrans");
   fc.unlock("bsleus", "innerloop_method_off");

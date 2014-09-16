@@ -246,6 +246,82 @@ namespace configuration {
       std::vector<std::vector<double> > jvalue_epsilon;
       //////////////////////////////////////////////////
 
+      
+      struct rdc_struct{
+        /**
+         * RDC averages
+         */
+        std::vector<double> av;
+        /**
+         * current RDC values
+         */
+        std::vector<double> curr;
+        /**
+         * Magnetic field endpoints
+         */
+        math::VArray MFpoint;
+        /**
+         * Magnetic field endpoint velocities
+         */
+        math::VArray MFpointVel;
+        /**
+         * Magnetic field endpoint masses
+         */
+        std::vector<double> MFpointMass;
+        /**
+         * Alignment tensor components 
+         */
+        std::vector<double> Tensor;
+        /**
+         * Tensor component velocities
+         */
+        std::vector<double> TensorVel;      
+        /**
+         * Alignment tensor component masses
+         */
+        std::vector<double> TensorMass;
+        /**
+         * Shperical harmonics coefficients 
+         */
+        std::vector<double> clm;
+        /**
+         * Shperical harmonics coefficient masses
+         */
+        std::vector<double> clmMass;
+        /**
+         * Shperical harmonics coefficient velocities
+         */
+        std::vector<double> clmVel;      
+        /**
+         * Conversion of the frequency
+         */
+        double factorFreq;
+        /**
+         * Conversion of the gyromagnetic ratio
+         */
+        double factorGyr;
+        /**
+         * 'kinetic energy'
+         */
+        double Ekin;
+        /**
+         * rdc stochastic integrals for the magnetic field vector representation
+         */
+        math::VArray stochastic_integral_mf;
+        /**
+         * rdc stochastic integrals for the tensor representation
+         */
+        std::vector<double> stochastic_integral_t;
+        /**
+         * rdc stochastic integrals for the spherical harmonic representation
+         */
+        std::vector<double> stochastic_integral_sh;
+      } rdc; // rdc related variables
+
+      //////////////////////////////////////////////////
+
+
+
       /**
        * @struct xray_struct
        * struct that holds the average and current structure factors and their

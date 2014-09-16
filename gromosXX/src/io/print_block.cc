@@ -475,6 +475,7 @@ namespace io
     os << type << "X-ray restraints     : " << std::setw(30) << e.xray_total << "\n";
     os << type << "Local elevation      : " << std::setw(30) << e.leus_total << "\n";
     os << type << "Order-parameter rest.: " << std::setw(30) << e.oparam_total << "\n";
+    os << type << "RDCrest              : " << std::setw(30) << e.rdc_total << "\n";    
     os << type << "Symmetry restraints  : " << std::setw(30) << e.symrest_total << "\n";
     os << type << "EDS reference        : " << std::setw(30) << e.eds_vr << "\n";
     os << type << "Entropy              : " << std::setw(30) << e.entropy_term << "\n";
@@ -588,6 +589,9 @@ namespace io
 
     os << "\n" << std::setw(20) << type + "JRest";
     for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << e.jvalue_energy[i];
+
+    os << "\n" << std::setw(20) << type + "RDCRest";  
+    for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << e.rdc_energy[i];  
 
     os << "\nEND\n";
     

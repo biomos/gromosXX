@@ -32,6 +32,7 @@
 #include "../../interaction/special/local_elevation_interaction.h"
 #include "../../interaction/special/electric_field_interaction.h"
 #include "../../interaction/special/order_parameter_restraint_interaction.h"
+#include "../../interaction/special/rdc_restraint_interaction.h"
 #include "../../interaction/special/symmetry_restraint_interaction.h"
 
 #include "../../interaction/bonded/dihedral_interaction.h"
@@ -236,7 +237,41 @@ int interaction::create_special(interaction::Forcefield & ff,
 
     ff.push_back(opr);
   }
-  
+  // RDC restraints
+  if (param.rdc.mode != simulation::rdc_restr_off){
+    if(!quiet){
+      os << "\tRDC restraints (";
+      switch(param.rdc.mode){
+	    case simulation::rdc_restr_inst :
+	      os << "instantaneous";
+	      break;
+	    case simulation::rdc_restr_av :
+	      os << "time averaged";
+	      break;
+ 	    case simulation::rdc_restr_inst_weighted :
+	      os << "instantaneous, weighted";
+	      break;
+	    case simulation::rdc_restr_av_weighted :
+	      os << "time averaged, weighted";
+	      break;
+	    case simulation::rdc_restr_biq :
+	      os << "biquadratic";
+	      break;
+	    case simulation::rdc_restr_biq_weighted :
+	      os << "biquadratic, weighted";
+	      break;
+	    default:
+	      os << "unknown mode!";
+	      break;
+      }
+      os << ")\n";
+    }
+
+    interaction::RDC_Restraint_Interaction *rdcr =
+      new interaction::RDC_Restraint_Interaction;
+
+    ff.push_back(rdcr);
+  }
   // symmetry restraints
   if (param.symrest.symrest != simulation::xray_symrest_off){
     if(!quiet){

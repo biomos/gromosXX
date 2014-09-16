@@ -229,6 +229,14 @@ namespace io {
             std::ostream & os);
 
     /**
+     * try to get rdc average data
+     */
+    bool read_rdc(topology::Topology & topo,
+		    configuration::Configuration & conf,
+		    simulation::Simulation & sim,
+		    std::ostream & os = std::cout);
+
+    /**
      * read LE umbrella potentials
      */
     bool read_leusbias(topology::Topology &topo,
@@ -394,6 +402,37 @@ namespace io {
                  const std::vector<topology::order_parameter_restraint_struct> & oparamres,
                  std::vector<std::list<math::Matrix> > & Q_avg,
                  std::vector<std::list<double> > & D_avg);
+
+
+        /**
+     * read RDC averages.
+     */
+    bool _read_rdc_av(std::vector<std::string> &buffer,
+			 std::vector<double> & rdc_av,
+			 std::vector<topology::rdc_restraint_struct> const & rdc_res);
+
+    /**
+     * read RDC magnetic field vectors.
+     */
+    bool _read_rdc_mfv(std::vector<std::string> &buffer,
+			 configuration::Configuration &conf);
+    
+    /**
+     * read RDC alignment tensor
+     */
+    bool _read_rdc_t(std::vector<std::string> &buffer,
+			 configuration::Configuration &conf);
+    
+
+    /**
+     * read RDC local elevation epsilons.
+     */
+    bool _read_rdc_le(std::vector<std::string> &buffer,
+                         configuration::Configuration const &conf,
+			 std::vector<std::vector<double> > & rdc_epsilon,
+			 std::vector<topology::rdc_restraint_struct> const & rdc_res,
+                         unsigned int const & grid_size);
+
 
     /**
      * read time information.

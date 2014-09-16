@@ -59,6 +59,8 @@
  * - @ref  multigradient
  * - @ref  addecouple
  * - @ref  orderparamres
+ * - @ref  rdc
+ * - @ref  rdcvalue
  * - @ref  qmmmb
  * - @ref  xrayres
  */
@@ -212,6 +214,13 @@ namespace io {
      * read ORDERPARAMRES block.
      */
     void read_ORDERPARAMRES(simulation::Parameter &param, std::ostream & os = std::cout);
+
+    /**
+     * read RDCRES block.
+     */
+    void read_RDCRES(simulation::Parameter &param, std::ostream & os = std::cout);
+ 
+
 
     /**
      * read PERSCALE block.

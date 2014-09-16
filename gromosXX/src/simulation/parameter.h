@@ -239,6 +239,82 @@ namespace simulation
     oparam_restr_winav_weighted = 2
   };
 
+   /**
+   * @enum rdc_restr_enum
+   * RDC restraints enumeration
+   */
+  enum rdc_restr_enum{
+    /**
+     * no restraints
+     */
+    rdc_restr_off = 0,
+    /**
+     * instantaneous restraints
+     */
+    rdc_restr_inst = 1,
+    /**
+     * instantaneous restraints, weighted
+     */
+    rdc_restr_inst_weighted = 2,
+    /**
+     * time-averaged restraints
+     */
+    rdc_restr_av = -1,
+    /**
+     * time-averaged restraints, weighted
+     */
+    rdc_restr_av_weighted = -2,
+    /**
+     * biquadratic (time averaged & instantaneous) restraints
+     */
+    rdc_restr_biq = -3,
+    /**
+     * biquadratic (time averaged & instantaneous) restraints, weighted
+     */
+    rdc_restr_biq_weighted = -4
+  };
+  
+  /**
+   * @enum rdc_mode_enum
+   * Method of updating RDC magnetic field vectors enumeration
+   */
+  
+  enum rdc_mode_enum {
+      /**
+       * Energy minimisation
+       */
+      rdc_em = 0,
+      /**
+       * Stochastic dynamics
+       */
+      rdc_sd = 1,
+      /**
+       * Molecular dynamics
+       */
+      rdc_md = 2,
+  };
+  
+  /**
+   * @enum rdc_type_enum
+   * Type of magnetic field representation
+   */
+  
+  enum rdc_type_enum {
+      /**
+       * Magnetic field vectors
+       */
+      rdc_mf = 0,
+      /**
+       * Alignment tensor
+       */
+      rdc_t = 1,
+      /**
+       * Spherical harmonics
+       */
+      rdc_sh = 2
+  };  
+
+
   /**
    * @enum dihedral_restr_enum
    * Dihedral restraints enumeration
@@ -3077,6 +3153,121 @@ namespace simulation
        */
       unsigned int write;
     }/** order parameter restraints parameters */ orderparamrest;
+
+     /**
+     * @struct rdc_struct
+     * RDC restraint parameters.
+     */
+    struct rdc_struct
+    {
+      /**
+       * Constructor
+       * Default values:
+       * - mode restr_off
+       * - read_av false
+       * - type rdc_mf
+       * - read_mfv false
+       * - method rdc_em
+       * - emgradient 0.0
+       * - emstepsize 0.0
+       * - emmaxiter 0
+       * - sdfric 0.0
+       * - temp 0.0
+       * - delta 0.0
+       * - K 1.0
+       * - tau 0
+       * - ngrid 1
+       * - write 0
+       * - write_Ek 0
+       */
+        
+      rdc_struct()
+	: mode(rdc_restr_off),
+          read_av(false),
+          type(rdc_mf),
+          read_align(false),
+          method(rdc_em),
+          emgradient(0.0),
+          emstepsize(0.0),
+          emmaxiter(0),
+          sdfric(0.0),
+          temp(0.0),
+          delta(0.0),
+          K(1.0),
+          tau(0),
+	  ngrid(1),
+          write(0),
+          write_Ek(0)
+      {
+      }
+      /**
+       * restraining mode.
+       */
+      rdc_restr_enum mode;
+      /**
+       * read averages
+       */
+      bool read_av;
+      /**
+       * type of magnetic field vector representation
+       */
+      rdc_type_enum type;
+      /**
+       * read magnetic field vectors
+       */
+      bool read_align;
+      /**
+       * method of updating the magnetic field vectors
+       */
+      rdc_mode_enum method;  
+      /**
+       * EM: stop if gradient is below emgradient
+       */      
+      double emgradient;
+      /**
+       * EM: start with emstepsize
+       */
+      double emstepsize;
+      /**
+       * EM: stop after emmaxiter are reached
+       */
+      unsigned int emmaxiter;
+      /**
+       * SD: friction coefficient
+       */
+      double sdfric;
+      /**
+       * reference temperature for SD and for initial velocities
+       */
+      double temp;     
+      /**
+       * no elevation of potential if RDC is within delta to RDC0
+       */
+      double delta;
+      /**
+       * force constant
+       * (multiplied by individual restraint weighting)
+       */
+      double K;
+      /**
+       * coupling time.
+       */
+      double tau;
+      /**
+       * number of local elevation grid points
+       */
+      int ngrid;
+       /**
+       * write output to special trajectory every n-th step
+       */
+      unsigned int write;
+      /**
+       * print kinetic energy
+       */
+      unsigned int write_Ek;
+    } /** RDC-parameters */ rdc;
+
+
 
     struct qmmm_struct {
       /**

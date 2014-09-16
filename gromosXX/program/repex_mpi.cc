@@ -74,7 +74,7 @@ int main(int argc, char *argv[]) {
   knowns << "topo" << "conf" << "input" << "verb" << "pttopo"
           << "trc" << "fin" << "trv" << "trf" << "trs" << "tramd" << "tre" << "trg"
           << "bae" << "bag" << "posresspec" << "refpos" << "distrest" << "dihrest"
-          << "jval" << "xray" << "lud" << "led" << "anatrj" << "print" << "friction"
+	 << "jval" << "rdc" << "xray" << "lud" << "led" << "anatrj" << "print" << "friction"
           << "version" << "repdat" << "repout";
 
   std::string usage;

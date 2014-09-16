@@ -150,6 +150,10 @@ namespace configuration
      */
     double oparam_total;
     /**
+     * total energy of the rdc restraint interaction
+     */
+    double rdc_total;
+    /**
      * symmetry restraints energy
      */
     double symrest_total;
@@ -269,6 +273,10 @@ namespace configuration
      */
     std::vector<double> jvalue_energy;
     /**
+     * RDC restraint energy term
+     */
+    std::vector<double> rdc_energy;  
+    /**
      * (distance) constraints energy term
      * (has to be 0.0 always)
      */
@@ -319,7 +327,7 @@ namespace configuration
      */
     double get_energy_by_index(const unsigned int & index);
     
-    static const unsigned int MAX_ENERGY_INDEX = 37;
+    static const unsigned int MAX_ENERGY_INDEX = 38;
 
   private:
     double m_ewarn;

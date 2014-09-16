@@ -72,7 +72,7 @@ int main(int argc, char *argv[]){
 	 << "trv1" << "trv2" << "trf1" << "trf2" << "trs1" << "trs2" << "tramd1" << "tramd2" 
          << "tre1" << "tre2" << "trg1" << "trg2" 
 	 << "bae" << "bag" << "posresspec" << "refpos" << "distrest1" << "distrest2" << "dihrest"
-         << "jval" << "xray" << "order" << "lud" << "led" << "anatrj" << "print" << "friction"
+         << "jval" << "xray" << "order" << "rdc" << "lud" << "led" << "anatrj" << "print" << "friction"
          << "qmmm" << "version";  
   
   std::string usage;

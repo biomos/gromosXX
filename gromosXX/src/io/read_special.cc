@@ -32,6 +32,7 @@
 #include "../io/topology/in_qmmm.h"
 #include "../io/topology/in_order.h"
 #include "../io/topology/in_symrest.h"
+#include "../io/topology/in_rdc.h"
 #include "../util/coding.h"
 
 #include "read_special.h"
@@ -224,6 +225,26 @@ int io::read_special(io::Argument const & args,
       }
     }
   } // ORDERPARAMRES
+
+
+  // RDC restraints
+  if (sim.param().rdc.mode != simulation::rdc_restr_off){
+    io::igzstream rdc_file;
+
+    if (args.count("rdc") != 1){
+      io::messages.add("rdc restraints: no data file specified (use @rdc)", "read special", io::message::error);
+    } else {
+      rdc_file.open(args["rdc"].c_str());
+      if (!rdc_file.is_open()){
+        io::messages.add("opening rdc restraints file failed!\n", "read_special", io::message::error);
+      } else {
+        io::In_RDC ir(rdc_file);
+        ir.quiet = quiet;
+        ir.read(topo, conf, sim, os);
+        io::messages.add("rdc restraints read from " + args["rdc"], "read special", io::message::notice);
+      }
+    }
+  } // RDC
 
     // FRICTION
   if (sim.param().stochastic.sd && sim.param().stochastic.ntfr == 2){

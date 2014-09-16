@@ -1069,6 +1069,36 @@ namespace topology {
     double w;
   };
 
+
+  /**
+   * RDC restraints.
+   */
+  struct rdc_restraint_struct
+  {
+    /**
+     * Constructor.
+     */
+    rdc_restraint_struct(int i, int j, double weight, double R0, double gyri, double gyrj)
+      : i(i), j(j), weight(weight), R0(R0), gyri(gyri), gyrj(gyrj) { }
+
+    /**
+     * atom sequence numbers.
+     */
+    unsigned int i, j;
+    /**
+     * weight factor of individual RDCs
+     */
+    double weight;
+    /**
+     * reference RDC value
+     */
+    double R0;
+    /**
+     * gyromagnetic ratios of atom i and j
+     */
+    double gyri, gyrj;
+  };
+
 }
 
 #endif

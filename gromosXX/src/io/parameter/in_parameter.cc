@@ -74,6 +74,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_PERTURBATION(param);
   read_JVALUERES(param);
   read_ORDERPARAMRES(param);
+  read_RDCRES(param);
   read_XRAYRES(param);
   read_PERSCALE(param);
   read_ROTTRANS(param);
@@ -2404,7 +2405,7 @@ DIHEDRALRES
 #         3:    dihedral constraining
 #    
 # CDLR    >=0.0 force constant for dihedral restraining
-# PHILIN  >0.0  deviation after which the potential energy function is linearized
+# PHILIN  >0.0  deviation after which the potential energy function is linearized 
 #
 # NTDLR  CDLR      PHILIN
   1      100.0     180.0
@@ -2468,8 +2469,8 @@ void io::In_Parameter::read_DIHEDRALRES(simulation::Parameter &param,
   }
 
   if (phi_lin <= 0.0)
-    io::messages.add("DIHEDRALRES block: Illegal value for PHILIN (>0)",
-          "In_Parameter", io::message::error);
+    io::messages.add("DIHEDRALRES block: Illegal value for force constant (>=0)",
+	 "In_Parameter", io::message::error);
 
   param.dihrest.phi_lin = phi_lin * 2 * math::Pi / 360;
 
@@ -2712,6 +2713,199 @@ void io::In_Parameter::read_ORDERPARAMRES(simulation::Parameter &param,
     
   } // ORDERPARAMRES
 } // ORDERPARAMRES
+
+
+/**
+ * @section RDCRES block
+ * @verbatim
+RDCRES
+# NTRDCR -4..2                 RDC restraining
+#        -4:                   biquadratic using CRDCR * WRDCR
+#        -3:                   biquadratic using CRDCR
+#        -2:                   time averaged using CRDCR * WRDCR
+#        -1:                   time averaged using CRDCR
+#         0:                   no RDC restraints [default]
+#         1:                   instantaneous using CRDCR
+#         2:                   instantaneous using CRDCR * WRDCR
+# NTRDCRA 0,1                  controls reading of average RDCs
+#         0:                   take initial values RDC0 from the RDC restraint file
+#         1:                   read time averages from initial coordinate file 
+#                              (for continuation run)
+#
+# NTRDCT  0..2                 Type of alignment representation
+#         0:                   cartesian magnetic field vectors
+#         1:                   alignment tensor
+#         2:                   spherical harmonics
+# NTALR   0,1                  controls reading of values in the chosen representation
+#         0:                   start from values given in RDC restraint file
+#         1:                   read values from initial coordinate file (for continuation run)
+#
+# METHOD  0..3                 Method of updating the magnetic field vectors
+#         0:                   Energy minimisation
+#         1:                   Stochastic dynamics
+#         2:                   Molecular dynamics
+# EMGRAD  > 0.0                (METHOD = 0, EM) stop minimisation if gradient is below EMGRAD 
+# EMDX0   > 0.0                (METHOD = 0, EM) initial step size
+# EMNMAX  > 0                  (METHOD = 0, EM) maximum number of minimisation steps
+# SDCFRIC >= 0.0               (METHOD = 1, SD) global friction coefficient gamma
+# TEMP  >= 0.0                 temperature of stochastic bath (SD) and temperature used for initial velocities (MD, SD)
+#
+# DELTA   >= 0.0               no penalty if RDC is within DELTA to RDC0 (tolerance)
+# CRDCR   >= 0                 RDC restraining force constant
+#                              (weighted by individual WRDCR)
+# TAU     >= 0                 coupling time for time averaging
+# NGRID   >0                   number of grid points for local elevation restraining
+# NTWRDC  >= 0                 write output to special trajectory
+#         0:                   don't write
+#        >0:                   write every NTWRDCth step.
+#
+#      NTRDCR  NTRDCRA  NTRDCT  NTALR  METHOD  
+            2        0       0      0       0
+#      EMGRAD  EMDX0  EMNMAX  SDCFRIC    TEMP  DELTA  CRDCR  TAU    NGRID  NTWRDC 
+        0.001   0.01    1000       20     300      1      1    1       36    2500
+END
+@endverbatim
+ */
+void io::In_Parameter::read_RDCRES(simulation::Parameter &param,
+				   std::ostream & os)
+{
+  DEBUG(8, "read RDCRES");
+
+  std::vector<std::string> buffer;
+  std::string s;
+
+  //set at develop flag
+  param.setDevelop("RDC restraining is under development!"); 
+
+  buffer = m_block["RDCRES"];
+  if (buffer.size()){
+
+    block_read.insert("RDCRES");
+
+    _lineStream.clear();
+    _lineStream.str(concatenate(buffer.begin()+1, buffer.end()-1, s));
+
+    int ntrdcr, ntrdct, method;
+    _lineStream >> ntrdcr // NTRDCR
+                >> param.rdc.read_av // NTRDCRA
+                >> ntrdct    // NTRDCT
+                >> param.rdc.read_align // NTALR
+                >> method // METHOD
+                >> param.rdc.emgradient // EMGRAD
+                >> param.rdc.emstepsize // EMDX0
+                >> param.rdc.emmaxiter // EMNMAX
+                >> param.rdc.sdfric // SDCFRIC
+                >> param.rdc.temp // TEMP
+                >> param.rdc.delta // DELTA    
+                >> param.rdc.K // CRDCR // [kJ*ps^2]
+                >> param.rdc.tau // TAU // [ps]
+                >> param.rdc.ngrid // NGRID
+                >> param.rdc.write; // NTWRDC
+
+
+    if (_lineStream.fail())
+      io::messages.add("bad line in RDCRES block", "In_Parameter", io::message::error);
+    
+    switch (ntrdct) {
+      case 0:
+        param.rdc.type = simulation::rdc_mf;
+        break;
+      case 1:
+        param.rdc.type = simulation::rdc_t;
+        break;
+      case 2:
+        param.rdc.type = simulation::rdc_sh;
+        break;
+      default:
+        io::messages.add("RDCRES block: NTRDCT must be 0..2", "In_Parameter", io::message::error);
+    }
+    
+    switch (method) {
+      case 0:
+        param.rdc.method = simulation::rdc_em;
+        break;
+      case 1:
+        param.rdc.method = simulation::rdc_sd;
+        break;
+      case 2:
+        param.rdc.method = simulation::rdc_md;
+        break;
+      default:
+        io::messages.add("RDCRES block: METHOD must be 0..2", "In_Parameter", io::message::error);
+    }
+
+    switch (ntrdcr) {
+      case -4:
+        param.rdc.mode = simulation::rdc_restr_biq_weighted;
+        param.rdc.K *= 10e20; // multiply with 10e20 ps^2  to roughly compensate for second quadratic term
+        io::messages.add("Multyplying RDC force constant K with 10e20 ps^2 to compensate for second quadratic term", "In_Parameter", io::message::notice);
+        break;
+      case -3:
+        param.rdc.mode = simulation::rdc_restr_biq;
+        param.rdc.K *= 10e20; // multiply with 10e20 ps^2  to roughly compensate for second quadratic term
+        io::messages.add("Multyplying RDC force constant K with 10e20 ps^2 to compensate for second quadratic term", "In_Parameter", io::message::notice);
+        break;
+      case -2:
+        param.rdc.mode = simulation::rdc_restr_av_weighted;
+        break;
+      case -1:
+        param.rdc.mode = simulation::rdc_restr_av;
+        break;
+      case 0:
+        param.rdc.mode = simulation::rdc_restr_off;
+        break;
+      case 1:
+        param.rdc.mode = simulation::rdc_restr_inst;
+        break;
+      case 2:
+        param.rdc.mode = simulation::rdc_restr_inst_weighted;
+        break;
+      default:
+        io::messages.add("RDCRES block: NTRDCR must be -3..2.", "In_Parameter", io::message::error);
+    }
+    //GP TODO Check write_EK
+    /*
+    param.rdc.write_Ek = 0;
+    if(ntrdcr != 0 && param.rdc.refine == 1) {
+        param.rdc.write_Ek = 1;
+    }
+    */
+    // for testing
+    param.rdc.write_Ek = 1;
+
+    if (param.rdc.tau < 0 ||
+        (param.rdc.tau == 0 && (param.rdc.mode != simulation::rdc_restr_off ||
+		param.rdc.mode != simulation::rdc_restr_inst ||
+        param.rdc.mode != simulation::rdc_restr_inst_weighted))){
+      io::messages.add("RDCRES block: bad value for TAU, should be > 0.0",
+		       "In_Parameter", io::message::error);
+    }
+    if (param.rdc.mode != simulation::rdc_restr_off && param.rdc.K < 0.0){
+      io::messages.add("RDCRES block: bad value for CRDCR(K) in RDCRES block, should be > 0.0",
+		       "In_Parameter", io::message::error);
+    }
+    if (param.rdc.method == 3){
+      if (param.rdc.ngrid < 1){
+        io::messages.add("RDCRES block: bad value for NGRID in RDCRES block, should be > 1",
+			 "In_Parameter", io::message::error);
+      }
+      if (param.rdc.delta < 0) {
+        io::messages.add("RDCRES block: bad value for DELTA in RDCRES block, should be > 0",
+			 "In_Parameter", io::message::error);
+      }
+    }
+    if (param.rdc.read_av && (param.rdc.mode != simulation::rdc_restr_av
+        && param.rdc.mode != simulation::rdc_restr_av_weighted
+        && param.rdc.mode != simulation::rdc_restr_biq
+        && param.rdc.mode != simulation::rdc_restr_biq_weighted
+        && !(param.rdc.method == 3))){
+      io::messages.add("RDCRES block: Continuation only needed with averaging or LE.",
+		       "In_Parameter", io::message::error);
+    }
+  } // RDCRES
+} // RDC
+
+
 
 /**
  * @section perscale PERSCALE block
