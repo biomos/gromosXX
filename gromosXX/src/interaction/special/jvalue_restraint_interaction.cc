@@ -169,7 +169,7 @@ int _calculate_jvalue_restraint_interactions
       double delta_Jinst = Jcurr - it->J0;
 
       // zero potential energy within J0 +- delta
-      // (no elevation if J is ~ correct)
+      // (flat bottom: no elevation if J is ~ correct)
       if (delta_Jav > 0){
 	if (delta_Jav > sim.param().jvalue.delta)
 	  delta_Jav -= sim.param().jvalue.delta;
@@ -373,7 +373,7 @@ double _calculate_derivative(topology::Topology & topo,
   }
   else{
 
-    // STANDARD RESTRAINIG
+    // STANDARD RESTRAINING
 
     // instantaneous / time averaged
     if (param.jvalue.mode == simulation::jvalue_restr_inst ||
@@ -391,15 +391,32 @@ double _calculate_derivative(topology::Topology & topo,
         if (param.jvalue.mode == simulation::jvalue_restr_inst_weighted ||
             param.jvalue.mode == simulation::jvalue_restr_av_weighted)
           K *= it->K;
+
+        double delta_Jav = Jav - it->J0;
+        // zero potential energy within J0 +- delta
+        // (flat bottom: no force if J is ~ correct)
+        if (delta_Jav > 0){
+	  if (delta_Jav > param.jvalue.delta)
+	    delta_Jav -= param.jvalue.delta;
+	  else delta_Jav = 0.0;
+        }
+        else{
+	  if (delta_Jav < -param.jvalue.delta)
+	    delta_Jav += param.jvalue.delta;
+	  else delta_Jav = 0.0;
+        }
+        DEBUG(10, "flat bottom: " << param.jvalue.delta);
 	
 	// calculate derivatives + energy	
 	// Jav == Jcurr for instantaneous...
-	const double dV_dJ = K * (Jav - it->J0);
-	
+	//const double dV_dJ = K * (Jav - it->J0);
+	const double dV_dJ = K * delta_Jav;
+        
 	// memory_decay factor is omitted for practical reasons.
 	const double dJ_dphi = - (2 * it->a * cos_phi_delta * sin_phi_delta + it->b * sin_phi_delta);
 	
-	const double energy = 0.5 * K * (Jav - it->J0) * (Jav - it->J0);
+	//const double energy = 0.5 * K * (Jav - it->J0) * (Jav - it->J0);
+        const double energy = 0.5 * K * delta_Jav * delta_Jav;
 	// and store...
 	conf.current().energies.jvalue_energy[topo.atom_energy_group()[it->i]]
 	  += energy;
@@ -417,9 +434,33 @@ double _calculate_derivative(topology::Topology & topo,
       else{
 	// calculate derivatives + energy	
 	const double K = it->K * param.jvalue.K;
-	const double delta_Jcurr = Jcurr - it->J0;
-	const double delta_Jav = Jav - it->J0;
-	
+	double delta_Jcurr = Jcurr - it->J0;
+	double delta_Jav = Jav - it->J0;
+	        
+        // zero potential energy within J0 +- delta
+        // (flat bottom: no force if J is ~ correct)
+        if (delta_Jav > 0){
+	  if (delta_Jav > param.jvalue.delta)
+	    delta_Jav -= param.jvalue.delta;
+	  else delta_Jav = 0.0;
+        }
+        else{
+	  if (delta_Jav < -param.jvalue.delta)
+	    delta_Jav += param.jvalue.delta;
+	  else delta_Jav = 0.0;
+        }
+
+        if (delta_Jcurr > 0){
+	  if (delta_Jcurr > param.jvalue.delta)
+	    delta_Jcurr -= param.jvalue.delta;
+	  else delta_Jcurr = 0.0;
+        }
+        else{
+	  if (delta_Jcurr < -param.jvalue.delta)
+	    delta_Jcurr += param.jvalue.delta;
+	  else delta_Jcurr = 0.0;
+        }        
+        
 	// --- dV / dJ ---
 	const double dV_dJ = K * delta_Jcurr * delta_Jav * delta_Jav;
 	// memory_decay factor is omitted for practical reasons.

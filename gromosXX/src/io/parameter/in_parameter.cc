@@ -2774,11 +2774,11 @@ void io::In_Parameter::read_RDCRES(simulation::Parameter &param,
   std::vector<std::string> buffer;
   std::string s;
 
-  //set at develop flag
-  param.setDevelop("RDC restraining is under development!"); 
-
   buffer = m_block["RDCRES"];
   if (buffer.size()){
+      
+    //set at develop flag
+    param.setDevelop("RDC restraining is under development!"); 
 
     block_read.insert("RDCRES");
 
