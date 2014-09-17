@@ -176,7 +176,7 @@ int _calculate_jvalue_restraint_interactions
 	else delta_Jav = 0.0;
       }
       else{
-	if (delta_Jav < sim.param().jvalue.delta)
+	if (delta_Jav < -sim.param().jvalue.delta)
 	  delta_Jav += sim.param().jvalue.delta;
 	else delta_Jav = 0.0;
       }
@@ -187,7 +187,7 @@ int _calculate_jvalue_restraint_interactions
 	else delta_Jinst = 0.0;
       }
       else{
-	if (delta_Jinst < sim.param().jvalue.delta)
+	if (delta_Jinst < -sim.param().jvalue.delta)
 	  delta_Jinst += sim.param().jvalue.delta;
 	else delta_Jinst = 0.0;
       }
