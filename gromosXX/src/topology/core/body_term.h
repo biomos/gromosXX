@@ -876,7 +876,7 @@ namespace topology {
      * Constructor.
      */
     xray_restraint_struct(int h, int k, int l,
-            double sf, double stddevsf)
+            double sf, double stddev_sf)
     : h(h), k(k), l(l),
     sf(sf), stddev_sf(stddev_sf) {
     }

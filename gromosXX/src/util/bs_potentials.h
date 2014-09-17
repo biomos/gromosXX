@@ -351,7 +351,7 @@ namespace util{
   };
   
   struct BS_Pipe_Param {
-    BS_Pipe_Param(BS_Vector point, double innter_width, double outer_width) :
+    BS_Pipe_Param(BS_Vector point, double inner_width, double outer_width) :
     point(point), inner_width(inner_width), outer_width(outer_width) {}
     BS_Pipe_Param() :
     point(), inner_width(-1), outer_width(-1) {}
