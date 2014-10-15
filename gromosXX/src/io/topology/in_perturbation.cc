@@ -1083,8 +1083,8 @@ io::In_Perturbation::read(topology::Topology &topo,
           topo.perturbed_solute().atom(seq).A_polarisability(a_pol/ math::four_pi_eps_i);
           topo.perturbed_solute().atom(seq).B_polarisability(b_pol/ math::four_pi_eps_i);
           
-          topo.perturbed_solute().atom(seq).A_damping_level(a_lev);
-          topo.perturbed_solute().atom(seq).B_damping_level(b_lev);
+          topo.perturbed_solute().atom(seq).A_damping_level(a_lev * sqrt(math::four_pi_eps_i));
+          topo.perturbed_solute().atom(seq).B_damping_level(b_lev * sqrt(math::four_pi_eps_i));
           
           topo.is_polarisable()[seq] = true;
           
@@ -1100,9 +1100,9 @@ io::In_Perturbation::read(topology::Topology &topo,
             os << "\t"
             << std::setw(5) << seq + 1
             << std::setw(12) << topo.perturbed_solute().atom(seq).A_polarisability()* math::four_pi_eps_i
-            << std::setw(12) << topo.perturbed_solute().atom(seq).A_damping_level()
+            << std::setw(12) << topo.perturbed_solute().atom(seq).A_damping_level()/sqrt(math::four_pi_eps_i) 
             << std::setw(12) << topo.perturbed_solute().atom(seq).B_polarisability()* math::four_pi_eps_i
-            << std::setw(12) << topo.perturbed_solute().atom(seq).B_damping_level()
+            << std::setw(12) << topo.perturbed_solute().atom(seq).B_damping_level()/sqrt(math::four_pi_eps_i)
             << "\n";
         }
         if (n != num){
