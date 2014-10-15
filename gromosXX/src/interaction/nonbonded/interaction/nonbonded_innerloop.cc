@@ -1448,15 +1448,16 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
 
       for( ; it != to; ++it){
         periodicity.nearest_image(pos(i), pos(*it), r);
+	math::Vec rjm= math::Vec(0.0);
         if(topo.gamma(*it)!=0.0){
           math::Vec rjj, rjk;
           periodicity.nearest_image(conf.current().pos(*it),
                             conf.current().pos(topo.gamma_j(*it)), rjj);
           periodicity.nearest_image(conf.current().pos(*it),
                             conf.current().pos(topo.gamma_k(*it)), rjk);
-          rm+=topo.gamma(*it)*(rjj+rjk)/2;
+          rjm+=topo.gamma(*it)*(rjj+rjk)/2;
         }
-        rm-=rim;
+        rm=r-rim+rjm; 
         DEBUG(11, "\texcluded pair " << i << " - " << *it);
 
         rp1 = rm - conf.current().posV(*it);
@@ -1615,10 +1616,15 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_solvent_interaction_inner
           // and the distance independent parts should go to zero
           const double cqi = topo.coscharge(*at_it);
           const double cqj = topo.coscharge(*at2_it);
-          const double qeps = -topo.charge()(*at_it) * topo.charge()(*at2_it) * math::four_pi_eps_i;
-          const double qepsp1 = -topo.charge()(*at_it)*(topo.charge()(*at2_it) - cqj) * math::four_pi_eps_i;
-          const double qepsp2 = (-topo.charge()(*at_it) - cqi) * topo.charge()(*at2_it) * math::four_pi_eps_i;
-          const double qepspp = cqi * cqj * math::four_pi_eps_i;
+          //const double qeps = -topo.charge()(*at_it) * topo.charge()(*at2_it) * math::four_pi_eps_i;
+          //const double qepsp1 = -topo.charge()(*at_it)*(topo.charge()(*at2_it) - cqj) * math::four_pi_eps_i;
+          //const double qepsp2 = (-topo.charge()(*at_it) - cqi) * topo.charge()(*at2_it) * math::four_pi_eps_i;
+          //const double qepspp = cqi * cqj * math::four_pi_eps_i;
+	  const double qeps = -(topo.charge()(*at_it)-cqi) * (topo.charge()(*at2_it)-cqj) * math::four_pi_eps_i;
+	  const double qepsp1 = (-topo.charge()(*at_it) - cqi) * cqj * math::four_pi_eps_i;
+	  const double qepsp2 = -cqi*(topo.charge()(*at2_it) - cqj) * math::four_pi_eps_i;
+	  const double qepspp = cqi * cqj * math::four_pi_eps_i;
+
           e_crf = qeps * crf_2cut3i() * abs2(r) + qepsp1 * crf_2cut3i() * abs2(rp1)
                   + qepsp2 * crf_2cut3i() * abs2(rp2) + qepspp * crf_2cut3i() * abs2(rpp);
 
@@ -1673,11 +1679,15 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_solvent_interaction_inner
           // and the distance independent parts should go to zero
           const double cqi = topo.coscharge(*at_it);
           const double cqj = topo.coscharge(*at2_it);
-          const double qeps = -topo.charge()(*at_it) * topo.charge()(*at2_it) * math::four_pi_eps_i;
-          const double qepsp1 = -topo.charge()(*at_it)*(topo.charge()(*at2_it) - cqj) * math::four_pi_eps_i;
-          const double qepsp2 = (-topo.charge()(*at_it) - cqi) * topo.charge()(*at2_it) * math::four_pi_eps_i;
-          const double qepspp = cqi * cqj * math::four_pi_eps_i;
-          e_crf = qeps * crf_2cut3i() * abs2(r) + qepsp1 * crf_2cut3i() * abs2(rp1)
+          //const double qeps = -topo.charge()(*at_it) * topo.charge()(*at2_it) * math::four_pi_eps_i;
+          //const double qepsp1 = -topo.charge()(*at_it)*(topo.charge()(*at2_it) - cqj) * math::four_pi_eps_i;
+          //const double qepsp2 = (-topo.charge()(*at_it) - cqi) * topo.charge()(*at2_it) * math::four_pi_eps_i;
+          //const double qepspp = cqi * cqj * math::four_pi_eps_i;
+	  const double qeps = -(topo.charge()(*at_it)-cqi) * (topo.charge()(*at2_it)-cqj) * math::four_pi_eps_i;
+	  const double qepsp1 = -(topo.charge()(*at_it) - cqi) * cqj * math::four_pi_eps_i;
+	  const double qepsp2 = -cqi*(topo.charge()(*at2_it) - cqj) * math::four_pi_eps_i;
+	  const double qepspp = cqi * cqj * math::four_pi_eps_i;
+          e_crf = qeps * crf_2cut3i() * abs2(rm) + qepsp1 * crf_2cut3i() * abs2(rp1)
                   + qepsp2 * crf_2cut3i() * abs2(rp2) + qepspp * crf_2cut3i() * abs2(rpp);
 
           // energy

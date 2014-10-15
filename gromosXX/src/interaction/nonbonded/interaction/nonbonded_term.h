@@ -100,7 +100,12 @@ namespace interaction
                  double qi, double qj, 
                  double cgi, double cgj,
 		 math::VArray &force, double &e_crf, unsigned int eps = 0);
-    
+    /**
+     * helper function to calculate the self reaction field term
+     */
+    inline void pol_rf_self_interaction(double const qi,double &e_crf,unsigned int eps=0);
+
+
     /**
      * calculate a term of the electric field for polarisation
      */

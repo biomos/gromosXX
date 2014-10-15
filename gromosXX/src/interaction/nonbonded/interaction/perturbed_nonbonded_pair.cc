@@ -118,7 +118,7 @@ void interaction::Perturbed_Nonbonded_Pair
   double A_q, B_q, A_qi, A_qj, B_qi, B_qj;
   double alpha_lj=0, alpha_crf=0;
   
-  double A_f_pol[4], B_f_pol[4];
+  //double A_f_pol[4], B_f_pol[4];
   math::VArray A_f_pol_vec(4), B_f_pol_vec(4), f_pol_vec(4);
   f_pol_vec = A_f_pol_vec = B_f_pol_vec = 0.0;
 

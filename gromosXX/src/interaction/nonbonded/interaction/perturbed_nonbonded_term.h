@@ -122,6 +122,14 @@ namespace interaction
                              unsigned int eps = 0);
 
     /**
+     * calculate the self reaction field energy with polarisation
+     */
+    void pol_rf_self_soft_interaction(double const A_qi,double const B_qi,
+	                              double & e_rf, double & de_rf,
+                                      bool selfterm_correction = false,
+                                      unsigned int eps = 0); 
+
+    /**
      * calculate the reaction field force and energy
      * of a perturbed atom pair for which the interaction
      * is scaled.

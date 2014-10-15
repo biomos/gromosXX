@@ -471,9 +471,9 @@ void interaction::Perturbed_Nonbonded_Outerloop
               delta_r = (alpha / topo.coscharge(i)) * e_el_new(i);
             else {
               const double p = damp_pow;
-              delta_r = alpha * e_0 / p *
-                      (p + 1.0 - pow(e_0/e_i, p)) /
-                      (topo.coscharge(i) * e_i) * e_el_new(i);
+              delta_r = alpha * e_0 *
+                        (p + 1.0 - pow(e_0/e_i, p)) /
+		        (p*topo.coscharge(i) * e_i) * e_el_new(i);
             }
           } else { // no damping
             delta_r = (alpha / topo.coscharge(i)) * e_el_new(i);

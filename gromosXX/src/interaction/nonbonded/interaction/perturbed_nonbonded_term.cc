@@ -333,6 +333,24 @@ inline void interaction::Perturbed_Nonbonded_Term
           m_A_crf_lambda_n_1 * A_e_rf) * m_lambda_exp) * math::four_pi_eps_i;
 }
 
+inline void interaction::Perturbed_Nonbonded_Term      
+::pol_rf_self_soft_interaction(double const A_qi,double const B_qi,
+        double & e_rf, double & de_rf, bool selfterm_correction ,unsigned int eps){ 
+
+  double const field_term = math::four_pi_eps_i * (-m_crf_cut[eps]);
+  double const charge_term = (m_A_crfs_lambda * A_qi) + (m_B_crfs_lambda * B_qi);
+ 
+
+  e_rf =  math::four_pi_eps_i * charge_term * charge_term * (-m_crf_cut[eps]); 
+
+  if (selfterm_correction) 
+    e_rf += A_qi*A_qi*math::four_pi_eps_i * m_crf_cut[eps];          
+  
+  de_rf = field_term * charge_term * (B_qi - A_qi) *2;      
+
+}
+
+
 /**
  * helper function to calculate the force and energy for 
  * the reaction field contribution for a given pair
@@ -1223,7 +1241,7 @@ inline void interaction::Perturbed_Nonbonded_Term
   const double d_alpha = m_n * (m_A_crf_lambda_n_1 * A_alpha -
           m_B_crf_lambda_n_1 * B_alpha);
   const double e_0 = m_A_crf_lambda_n * A_e_0 + m_B_crf_lambda_n * B_e_0;
-  const double d_e_0 = m_n * (m_A_crf_lambda_n_1 * A_e_0 - m_B_crf_lambda_n_1 * B_e_0);
+  //const double d_e_0 = m_n * (m_A_crf_lambda_n_1 * A_e_0 - m_B_crf_lambda_n_1 * B_e_0);
 
   const double e_02 = e_0 * e_0;
   if (e_i2 <= e_02) {
@@ -1234,23 +1252,19 @@ inline void interaction::Perturbed_Nonbonded_Term
     const double e_0_div_e_i = e_0 / e_i;
     const double p_minus_1 = p - 1;
     const double p_times_p = p*p;
-    const double p_plus_1 = p + 1;
-    const double e_0_mul_d_alpha = e_0 * d_alpha;
-    const double alpha_mul_d_e_0 = alpha * d_e_0;
+    //const double p_plus_1 = p + 1;
+    //const double e_0_mul_d_alpha = e_0 * d_alpha;
+    //const double alpha_mul_d_e_0 = alpha * d_e_0;
 
     self_e = 0.5 * alpha * e_02 +
-            0.5 * alpha * e_02 / (p * (p_minus_1)) *
+            alpha * e_02 / (p * (p_minus_1)) *
             (-p_times_p +
             (e_i / e_0)*(p_times_p - 1) +
             pow(e_0_div_e_i, p_minus_1)
             );
-    self_de = e_0 * (e_0_mul_d_alpha / 2 + alpha_mul_d_e_0 +
-            e_0_mul_d_alpha / (p * (p_minus_1))*
-            (-p_times_p + (e_i / e_0)*(p_times_p - 1) + pow(e_0 / e_i, p_minus_1))
-            - 2 * p * alpha_mul_d_e_0 / p_minus_1
-            + alpha_mul_d_e_0 * p_plus_1 / (p * p_minus_1)*
-            (p_minus_1 * e_i / e_0 + pow(e_0_div_e_i, p_minus_1)));
-
+    self_de = d_alpha *  e_02 *
+            (0.5 + 1/(p * p_minus_1) * (-p_times_p + (p_times_p-1) *
+            (e_i/e_0) + pow(e_0 / e_i, p_minus_1)));
 
   }
 }

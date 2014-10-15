@@ -407,7 +407,7 @@ t_interaction_spec, t_perturbation_details>
       case simulation::pol_off_lj_crf_func:
       {
         math::Vec rm = r;
-        if (topo.gamma_j(i)) {
+        if (topo.gamma(i)!=0.0) {
           math::Vec rij, rik;
           periodicity.nearest_image(conf.current().pos(i),
                   conf.current().pos(topo.gamma_j(i)), rij);
@@ -415,14 +415,14 @@ t_interaction_spec, t_perturbation_details>
                   conf.current().pos(topo.gamma_k(i)), rik);
           rm -= topo.gamma(i)*(rij + rik) / 2;
         }
-        if (topo.gamma_k(i)) {
+        if (topo.gamma(j)!=0.0) {
           math::Vec rjj, rjk;
           periodicity.nearest_image(conf.current().pos(j),
                   conf.current().pos(topo.gamma_k(j)), rjk);
           periodicity.nearest_image(conf.current().pos(j),
                   conf.current().pos(topo.gamma_j(j)), rjj);
 
-          rm -= topo.gamma(j)*(rjj + rjk) / 2;
+          rm += topo.gamma(j)*(rjj + rjk) / 2;
         }
 
         math::Vec rp1, rp2, rpp;
@@ -805,7 +805,7 @@ t_interaction_spec, t_perturbation_details>
       case simulation::pol_off_lj_crf_func:
       {
         math::Vec rm = r;
-        if (topo.gamma_j(i)) {
+        if (topo.gamma(i)!=0.0) {
           math::Vec rij, rik;
           periodicity.nearest_image(conf.current().pos(i),
                   conf.current().pos(topo.gamma_j(i)), rij);
@@ -813,14 +813,14 @@ t_interaction_spec, t_perturbation_details>
                   conf.current().pos(topo.gamma_k(i)), rik);
           rm -= topo.gamma(i)*(rij + rik) / 2;
         }
-        if (topo.gamma_k(i)) {
+        if (topo.gamma(j)!=0.0) {
           math::Vec rjj, rjk;
           periodicity.nearest_image(conf.current().pos(j),
                   conf.current().pos(topo.gamma_k(j)), rjk);
           periodicity.nearest_image(conf.current().pos(j),
                   conf.current().pos(topo.gamma_j(j)), rjj);
 
-          rm -= topo.gamma(j)*(rjj + rjk) / 2;
+          rm += topo.gamma(j)*(rjj + rjk) / 2;
         }
 
         math::Vec rp1, rp2, rpp;
@@ -984,20 +984,10 @@ t_interaction_spec, t_perturbation_details>
     case simulation::pol_off_lj_crf_func:
     {
       math::Vec rp1, rp2, rpp;
-      double f_rf[4];
-      r = 0.0;
-      rp1 = -conf.current().posV(*it);
-      rp2 = conf.current().posV(i);
-      rpp = 0.0;
 
-      // now calculate everything
-      // rf_interaction(r, q_i_a*q_i_a, f_old_A, e_crf_old_A);
+      //new introduced function to calculate the perturbed self reaction field term
+      pol_rf_self_soft_interaction(q_i_a,q_i_b, e_rf, de_rf,true);
 
-      pol_rf_soft_interaction(r, rp1, rp2, rpp,
-              q_i_a, q_i_a, q_i_b, q_i_b,
-              topo.coscharge(i), topo.coscharge(i),
-              mit->second.CRF_softcore(),
-              f_rf, e_rf, de_rf, true);
       break;
     }
     default:
@@ -1171,7 +1161,7 @@ t_interaction_spec, t_perturbation_details>
       case simulation::pol_off_lj_crf_func:
       {
         math::Vec rm = r;
-        if (topo.gamma_j(i)) {
+        if (topo.gamma(i)!=0.0) {
           math::Vec rij, rik;
           periodicity.nearest_image(conf.current().pos(i),
                   conf.current().pos(topo.gamma_j(i)), rij);
@@ -1179,14 +1169,14 @@ t_interaction_spec, t_perturbation_details>
                   conf.current().pos(topo.gamma_k(i)), rik);
           rm -= topo.gamma(i)*(rij + rik) / 2;
         }
-        if (topo.gamma_k(i)) {
+        if (topo.gamma(*it)!=0.0) {
           math::Vec rjj, rjk;
           periodicity.nearest_image(conf.current().pos(*it),
                   conf.current().pos(topo.gamma_k(*it)), rjk);
           periodicity.nearest_image(conf.current().pos(*it),
                   conf.current().pos(topo.gamma_j(*it)), rjj);
 
-          rm -= topo.gamma(*it)*(rjj + rjk) / 2;
+          rm += topo.gamma(*it)*(rjj + rjk) / 2;
         }
 
         math::Vec rp1, rp2, rpp;
@@ -1284,6 +1274,26 @@ t_interaction_spec, t_perturbation_details>::perturbed_electric_field_innerloop
           topo.individual_lambda_derivative(simulation::crf_softness_lambda)[n1][n2],
           topo.lambda_exp());
 
+  if (topo.gamma(i) != 0.0 && simulation::pol_off_lj_crf_func)
+  {
+     math::Vec rij, rik, rim;
+     periodicity.nearest_image(conf.current().pos(i),
+       conf.current().pos(topo.gamma_j(i)), rij); 
+     periodicity.nearest_image(conf.current().pos(i),
+       conf.current().pos(topo.gamma_k(i)), rik);
+     rim = topo.gamma(i)*(rij + rik) / 2;
+     r -= rim;
+  }
+  if (topo.gamma(j) != 0.0 && simulation::pol_off_lj_crf_func) 
+  {
+     math::Vec rjj, rjk, rjm;
+     periodicity.nearest_image(conf.current().pos(j),
+       conf.current().pos(topo.gamma_j(j)), rjj); 
+     periodicity.nearest_image(conf.current().pos(j),
+       conf.current().pos(topo.gamma_k(j)), rjk);   
+     rjm = topo.gamma(j)*(rjj + rjk) / 2; 
+     r += rjm;
+  }
   switch (t_interaction_spec::efield_site) {
     case simulation::ef_atom:
     {

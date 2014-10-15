@@ -465,6 +465,13 @@ inline void interaction::Nonbonded_Term
           + qepspp * (-m_crf_2cut3i[eps] * dist2pp - m_crf_cut[eps]);
 }
 
+inline void interaction::Nonbonded_Term
+::pol_rf_self_interaction(double const qi,double &e_crf,unsigned int eps) {
+
+  e_crf=math::four_pi_eps_i*qi*qi*m_crf_cut[eps];
+
+}
+
 /**
  * helper function to calculate the force and energy for
  * a given atom pair in the coarse grain model
