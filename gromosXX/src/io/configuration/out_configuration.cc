@@ -87,6 +87,9 @@ minimum_energy(std::numeric_limits<double>::max()) {
   _print_title(m_title, "output file", os);
 }
 
+/**
+ * destructor
+ */
 io::Out_Configuration::~Out_Configuration() 
 {
   // std::cout << "out_configuration destructor" << std::endl;
@@ -192,8 +195,8 @@ void io::Out_Configuration::init(io::Argument & args,
             param.jvalue.write, param.xrayrest.write, param.distanceres.write, 
             param.distancefield.write, param.print.monitor_dihedrals,param.localelev.write, 
             param.electric.dip_write, param.electric.cur_write, param.addecouple.write,
-	    param.nemd.write, param.orderparamrest.write, param.rdc.write,
-	    param.bsleus.write);
+            param.nemd.write, param.orderparamrest.write, param.rdc.write,
+            param.bsleus.write);
   else if (param.polarise.write || param.jvalue.write || param.xrayrest.write 
         || param.distanceres.write || param.distancefield.write || param.print.monitor_dihedrals 
         || param.localelev.write || param.electric.dip_write || param.electric.cur_write 
@@ -402,7 +405,22 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
         _print_timestep(sim, m_special_traj);
         special_timestep_printed = true;
       }
-      _print_rdc(sim.param(), conf, topo, m_special_traj, true);
+      if(sim.param().rdc.mode != simulation::rdc_restr_off) {
+        io::Out_Configuration::_print_rdc_values(sim.param(), conf, topo, m_special_traj, /*formatted*/ true);
+      }
+      if(sim.param().rdc.mode == simulation::rdc_restr_av ||
+         sim.param().rdc.mode == simulation::rdc_restr_av_weighted ||
+         sim.param().rdc.mode == simulation::rdc_restr_biq ||
+         sim.param().rdc.mode == simulation::rdc_restr_biq_weighted) {
+        io::Out_Configuration::_print_rdc_averages(sim.param(), conf, topo, m_special_traj, /*formatted*/ true);
+      }
+      if(sim.param().rdc.mode != simulation::rdc_restr_off) {
+        io::Out_Configuration::_print_rdc_representation(sim.param(), conf, topo, m_special_traj, /*formatted*/ true);
+      }
+      if (sim.param().rdc.method == simulation::rdc_sd) {
+        io::Out_Configuration::_print_rdc_stochastic_integrals(sim.param(), conf, topo, m_special_traj, /*formatted*/ true);
+      }
+      m_special_traj.flush();
     }
 
     if (m_every_dipole && (sim.steps() % m_every_dipole) == 0) {
@@ -411,9 +429,9 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
         special_timestep_printed = true;
       }
       SPLIT_BOUNDARY(_print_dipole, sim, topo, conf, m_special_traj);
-      
       m_special_traj.flush();
     }
+
     if (m_every_current && sim.steps() && (sim.steps() % m_every_current) == 0) {
       if (!special_timestep_printed) {
         _print_timestep(sim, m_special_traj);
@@ -549,7 +567,6 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
         m_special_traj.flush();
       }
     }
-    
 
     if (sim.param().orderparamrest.orderparamrest == simulation::oparam_restr_av ||
         sim.param().orderparamrest.orderparamrest == simulation::oparam_restr_av_weighted) {
@@ -559,8 +576,19 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       _print_order_parameter_restraint_average_window(conf, topo, m_final_conf);
     }
 
-    if (sim.param().rdc.mode != simulation::rdc_restr_off) {
-      _print_rdc(sim.param(), conf, topo, m_final_conf, false);
+    if(sim.param().rdc.mode == simulation::rdc_restr_av ||
+       sim.param().rdc.mode == simulation::rdc_restr_av_weighted ||
+       sim.param().rdc.mode == simulation::rdc_restr_biq ||
+       sim.param().rdc.mode == simulation::rdc_restr_biq_weighted) {
+      io::Out_Configuration::_print_rdc_averages(sim.param(), conf, topo, m_final_conf, /*formatted*/ false);
+    }
+  
+    if(sim.param().rdc.mode != simulation::rdc_restr_off) {
+      io::Out_Configuration::_print_rdc_representation(sim.param(), conf, topo, m_final_conf, /*formatted*/ false);
+    }
+  
+    if (sim.param().rdc.method == simulation::rdc_sd) {
+      io::Out_Configuration::_print_rdc_stochastic_integrals(sim.param(), conf, topo, m_final_conf, /*formatted*/ false);
     }
 
     if (sim.param().rottrans.rottrans) {
@@ -2446,143 +2474,213 @@ void io::Out_Configuration::_print_order_parameter_restraint_average_window(
   os << "END" << std::endl;
 }
 
-void io::Out_Configuration::_print_rdc(simulation::Parameter const & param,
-        configuration::Configuration const &conf,
-        topology::Topology const &topo,
-        std::ostream &os, bool formatted) {
-  DEBUG(10, "RDC data");
+void io::Out_Configuration::_print_rdc_values(simulation::Parameter const &param,
+                             configuration::Configuration const &conf,
+                             topology::Topology const &topo,
+                             std::ostream &os,
+                             bool formatted) {
+  os << "RDCVALUES" << std::endl;
+  os.setf(std::ios::scientific, std::ios::floatfield);
+  os.precision(m_precision);
+  for (unsigned int i=0; i<conf.special().rdc.size(); ++i){
+    for (unsigned int j=0; j<conf.special().rdc[i].curr.size(); ++j){
+      os << std::setw(m_width) << conf.special().rdc[i].curr[j] << std::endl;
+    }
+  }
+  os << "END" << std::endl;
+}
 
-  if(param.rdc.type == simulation::rdc_mf) {
-    os << "RDCMFV\n";
-    if (formatted) {
-      os << "# NMF\n";
+void io::Out_Configuration::_print_rdc_averages(simulation::Parameter const &param,
+                             configuration::Configuration const &conf,
+                             topology::Topology const &topo,
+                             std::ostream &os,
+                             bool formatted) {
+  os << "RDCAVERAGES" << std::endl;
+  os.setf(std::ios::scientific, std::ios::floatfield);
+  os.precision(m_precision);
+  for (unsigned int i=0; i<conf.special().rdc.size(); ++i){
+    for (unsigned int j=0; j<conf.special().rdc[i].av.size(); ++j){
+      os << std::setw(m_width) << conf.special().rdc[i].av[j] << std::endl;
     }
-    os << conf.special().rdc.MFpoint.size() << std::endl;
-    if (formatted) {
-      os << "#      x      y      z      vx      vy      vz    mass\n";
-    }
-    os.setf(std::ios::fixed, std::ios::floatfield);
-    os.precision(7);
-    for (unsigned int i = 0; i < conf.special().rdc.MFpoint.size(); ++i) {
-      math::Vec posMF = conf.special().rdc.MFpoint[i];
-      math::Vec velMF = conf.special().rdc.MFpointVel[i];
-      os      << std::setw(m_width) << posMF(0)
-              << std::setw(m_width) << posMF(1)
-              << std::setw(m_width) << posMF(2)
-              << std::setw(m_width) << velMF(0)
-              << std::setw(m_width) << velMF(1)
-              << std::setw(m_width) << velMF(2)
-              << std::setw(m_width) << conf.special().rdc.MFpointMass[i]
-              << "\n";
-    }
-    /*
-    if (param.rdc.write_Ek) {
-      // Ekin gained with normalisation
-      if (formatted) {
-        os << "# Normalisation Energy = ";
+  }
+  os << "END" << std::endl;
+}
+
+void io::Out_Configuration::_print_rdc_representation(simulation::Parameter const &param,
+                             configuration::Configuration const &conf,
+                             topology::Topology const &topo,
+                             std::ostream &os,
+                             bool formatted) {
+  switch(param.rdc.type){
+    case(simulation::rdc_mf): {
+      os << "RDCMF" << std::endl;
+      switch(param.rdc.method) {
+        case simulation::rdc_em: {
+          if (formatted) {
+            os << "#   x              y              z" << std::endl;
+          }
+          os.setf(std::ios::fixed, std::ios::floatfield);
+          os.precision(m_precision);
+          for (unsigned int i=0; i<conf.special().rdc.size(); ++i){
+            for (unsigned int j=0; j<conf.special().rdc[i].MFpoint.size(); ++j) {
+              os << std::setw(m_width) << conf.special().rdc[i].MFpoint[j](0)
+                 << std::setw(m_width) << conf.special().rdc[i].MFpoint[j](1)
+                 << std::setw(m_width) << conf.special().rdc[i].MFpoint[j](2) << std::endl;
+            }
+          }
+          
+          break;
+        }
+        case simulation::rdc_md:
+        case simulation::rdc_sd: {
+          if (formatted) {
+            os << "#   x              y              z              vx             vy             vz             mass" << std::endl;
+          }
+          os.setf(std::ios::fixed, std::ios::floatfield);
+          os.precision(m_precision);
+          for (unsigned int i=0; i<conf.special().rdc.size(); ++i){
+            for (unsigned int j=0; j<conf.special().rdc[i].MFpoint.size(); ++j) {
+              os << std::setw(m_width) << conf.special().rdc[i].MFpoint[j](0)
+                 << std::setw(m_width) << conf.special().rdc[i].MFpoint[j](1)
+                 << std::setw(m_width) << conf.special().rdc[i].MFpoint[j](2)
+                 << std::setw(m_width) << conf.special().rdc[i].MFpointVel[j](0)
+                 << std::setw(m_width) << conf.special().rdc[i].MFpointVel[j](1)
+                 << std::setw(m_width) << conf.special().rdc[i].MFpointVel[j](2)
+                 << std::setw(m_width) << conf.special().rdc[i].MFpointMass[j] << std::endl;
+            }
+          }
+          break;
+        }
       }
-      os.precision(12);
-      os << std::setw(7) << conf.special().rdc.Ekin << "\n";
+      os << "END" << std::endl;
+      break;
     }
-     */ 
-    os << "END\n";
-  }
-  
-  if(param.rdc.type == simulation::rdc_t) {
-    const int tensor_size = 5;
-    os << "RDCT\n";
-    if (formatted) {
-      os << "#      Axx      vel1      mass1      Ayy      vel2      mass2"
-          << "     Axy      vel3      mass3      Axz      vel4      mass4      Ayz      vel5      mass5      \n";
-    }
-    os.setf(std::ios::fixed, std::ios::floatfield);
-    os.precision(6);
-    for (unsigned int i = 0; i < tensor_size; ++i) {
-      os << std::setw(m_width) << conf.special().rdc.Tensor[i]
-         << std::setw(m_width) << conf.special().rdc.TensorVel[i]
-         << std::setw(m_width) << conf.special().rdc.TensorMass[i];
-    }
-    os << "\n";
-    os << "END\n";    
-  }
-  
-  if (param.rdc.type == simulation::rdc_sh) {
-    const int n_clm = 5;
-    os << "RDCSH\n";
-    if (formatted) {
-      os << "#      c1        vel1        mass1        c2        vel2        mass2       c3       vel3        mass3        c4        vel4        mass4        c5        vel5        mass5\n";
-    }
-    os.setf(std::ios::fixed, std::ios::floatfield);
-    os.precision(6);
-    for (unsigned int i = 0; i < n_clm; ++i) {
-      os << std::setw(m_width) << conf.special().rdc.clm[i]
-         << std::setw(m_width) << conf.special().rdc.clmVel[i]
-         << std::setw(m_width) << conf.special().rdc.clmMass[i];
-    }
-    os << "\n";
-    os << "END\n";    
-  }
-
-
-  if (param.rdc.mode != simulation::rdc_restr_inst &&
-      param.rdc.mode != simulation::rdc_restr_inst_weighted) {
-    os << "RDCRESEXPAVE\n";
-    if (formatted) {
-      os << "#   I    J              <R>\n";
-    }
-    os.setf(std::ios::fixed, std::ios::floatfield);
-    os.precision(7);
-    std::vector<double>::const_iterator av_it = conf.special().rdc.av.begin(),
-            av_to = conf.special().rdc.av.end();
-    std::vector<topology::rdc_restraint_struct>::const_iterator rdc_it =
-            topo.rdc_restraints().begin();
-    for (; av_it != av_to; ++av_it, ++rdc_it) {
-        os << std::setw(5) << rdc_it->i+1
-           << std::setw(5) << rdc_it->j+1;
-        os.precision(13);
-        os << std::setw(17) << *av_it << "\n";
-    }
-    os << "END\n";
-  }
-//GP TODO LE werte speichern
-  /*if (param.rdc.le && param.rdc.mode != simulation::rdc_restr_off) {
-    os << "RDCRESEPS\n";
-    if (formatted) {
-      os << "# I J\n# MFV[1.." << conf.special().rdc.MFpoint.size() << "]\n# GRID[1.."
-              << param.rdc.ngrid << "]\n";
-    }
-    os.setf(std::ios::scientific, std::ios::floatfield);
-    os.precision(7);
-    std::vector<std::vector<double> >::const_iterator
-    le_it = conf.special().rdc.epsilon.begin(),
-            le_to = conf.special().rdc.epsilon.end();
-    std::vector<topology::rdc_restraint_struct>::const_iterator rdc_it =
-            topo.rdc_restraints().begin();
-    unsigned int n = 0;
-    unsigned int neps = conf.special().rdc.epsilon.size();
-
-    // loop over RDCs and magnetic field vectors
-    for (; (le_it != le_to)&&(n != neps); ++le_it, ++n) {
-      if (formatted) {
-        os << std::setw(5) << rdc_it->i + 1
-                << std::setw(5) << rdc_it->j + 1 << "\n";
+    case(simulation::rdc_t): {
+      os << "RDCT\n";
+      switch(param.rdc.method) {
+        case simulation::rdc_em: {
+          const int n_ah = 5;
+          if (formatted) {
+            os << "#   Axx            Ayy            Axy            Axz            Ayz\n";
+          }
+          os.setf(std::ios::fixed, std::ios::floatfield);
+          os.precision(m_precision);
+          for (unsigned int i=0; i<conf.special().rdc.size(); ++i){
+            for (unsigned int j=0; j<n_ah; ++j) {
+              os << std::setw(m_width) << conf.special().rdc[i].Tensor[j];
+            }
+            os << std::endl;
+          }
+          break;
+        }
+        case simulation::rdc_md:
+        case simulation::rdc_sd: {
+          const int n_ah = 5;
+          if (formatted) {
+            os <<      "#   Axx            vel1           mass1"
+              << "          Ayy            vel2           mass2"
+              << "          Axy            vel3           mass3"
+              << "          Axz            vel4           mass4"
+              << "          Ayz            vel5           mass5\n";
+          }
+          os.setf(std::ios::fixed, std::ios::floatfield);
+          os.precision(m_precision);
+          for (unsigned int i=0; i<conf.special().rdc.size(); ++i){
+            for (unsigned int j=0; j<n_ah; ++j) {
+              os << std::setw(m_width) << conf.special().rdc[i].Tensor[j]
+                 << std::setw(m_width) << conf.special().rdc[i].TensorVel[j]
+                 << std::setw(m_width) << conf.special().rdc[i].TensorMass[j];
+            }
+            os << std::endl;
+          }
+          break;
+        }
       }
-
-      // loop over bins in LE grid (each grid on separate line)
-      for (unsigned int i = 0; i < le_it->size(); ++i) {
-        os << std::setw(15) << (*le_it)[i] << " ";
-      }
-      os << "\n";
-
-      // increase rdc_it after printing LE grid for all magnetic field vectors
-      if ((n + 1) % conf.special().rdc.MFpoint.size() == 0)
-        ++rdc_it;
+      os << "END" << std::endl;
+      break;
     }
-    os << "END\n";
-  }*/
+    case(simulation::rdc_sh): {
+      os << "RDCSH" << std::endl;
+      switch(param.rdc.method) {
+        case simulation::rdc_em: {
+          const int n_clm = 5;
+          if (formatted) {
+            os << "#   c2,-2          c2,-1          c2,0           c2,1           c2,2\n";
+          }
+          os.setf(std::ios::fixed, std::ios::floatfield);
+          os.precision(m_precision);
+          for (unsigned int i=0; i<conf.special().rdc.size(); ++i){
+            for (unsigned int j=0; j<n_clm; ++j) {
+              os << std::setw(m_width) << conf.special().rdc[i].clm[j];
+            }
+            os << std::endl;
+          }
+          break;
+        }
+        case simulation::rdc_md:
+        case simulation::rdc_sd: {
+          const int n_clm = 5;
+          if (formatted) {
+            os <<       "#   c2,-2          vel1           mass1"
+               << "          c2,-1          vel2           mass2"
+               << "          c2,0           vel3           mass3"
+               << "          c2,1           vel4           mass4"
+               << "          c2,2           vel5           mass5\n";
+          }
+          os.setf(std::ios::fixed, std::ios::floatfield);
+          os.precision(m_precision);
+          for (unsigned int i=0; i<conf.special().rdc.size(); ++i){
+            for (unsigned int j=0; j<n_clm; ++j) {
+              os << std::setw(m_width) << conf.special().rdc[i].clm[j]
+                 << std::setw(m_width) << conf.special().rdc[i].clmVel[j]
+                 << std::setw(m_width) << conf.special().rdc[i].clmMass[j];
+            }
+            os << std::endl;
+          }
+          break;
+        }
+      }
+      os << "END" << std::endl;
+      break;
+    }
+  }
 }
 
 
+void io::Out_Configuration::_print_rdc_stochastic_integrals(simulation::Parameter const &param,
+                             configuration::Configuration const &conf,
+                             topology::Topology const &topo,
+                             std::ostream &os,
+                             bool formatted) {
+  os << "RDCSTOCHINT" << std::endl;
+  os.setf(std::ios::scientific, std::ios::floatfield);
+  os.precision(m_precision);
+  for (unsigned int i=0; i<conf.special().rdc.size(); ++i){
+    switch(param.rdc.type){
+      case(simulation::rdc_mf): {
+        for (unsigned int j=0; j<conf.special().rdc[i].stochastic_integral_mf.size(); ++j){
+          os << std::setw(m_width) << conf.special().rdc[i].stochastic_integral_mf[j][0];
+          os << std::setw(m_width) << conf.special().rdc[i].stochastic_integral_mf[j][1];
+          os << std::setw(m_width) << conf.special().rdc[i].stochastic_integral_mf[j][2] << std::endl;
+        }
+        break;
+      }
+      case(simulation::rdc_t): {
+        for (unsigned int j=0; j<conf.special().rdc[i].stochastic_integral_t.size(); ++j){
+          os << std::setw(m_width) << conf.special().rdc[i].stochastic_integral_t[j] << std::endl;
+        }
+        break;
+      }
+      case(simulation::rdc_sh): {
+        for (unsigned int j=0; j<conf.special().rdc[i].stochastic_integral_sh.size(); ++j){
+          os << std::setw(m_width) << conf.special().rdc[i].stochastic_integral_sh[j] << std::endl;
+        }
+        break;
+      }
+    }
+  }
+  os << "END" << std::endl;
+}
 
 
 void io::Out_Configuration::_print_dihangle_trans(
@@ -2734,7 +2832,7 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
             << std::setw(18) << e.sasa_energy[i]
             << std::setw(18) << e.sasa_volume_energy[i]
             << std::setw(18) << 0.0 // jval
-            << std::setw(18) << 0.0 // rdc
+            << std::setw(18) << e.rdc_energy[i] // rdc
             << std::setw(18) << 0.0 // local elevation
             << std::setw(18) << 0.0 << "\n"; //path integral
   }
@@ -3337,7 +3435,7 @@ _print_dipole(simulation::Simulation const & sim,
     {
       math::Vec r = conf.current().pos(i);
       if (topo.is_polarisable(i)) 
-      {	
+      {
 	//offset position
 	math::Vec rm=r;
         

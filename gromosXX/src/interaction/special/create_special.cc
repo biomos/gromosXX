@@ -237,6 +237,7 @@ int interaction::create_special(interaction::Forcefield & ff,
 
     ff.push_back(opr);
   }
+
   // RDC restraints
   if (param.rdc.mode != simulation::rdc_restr_off){
     if(!quiet){
@@ -245,11 +246,11 @@ int interaction::create_special(interaction::Forcefield & ff,
 	    case simulation::rdc_restr_inst :
 	      os << "instantaneous";
 	      break;
-	    case simulation::rdc_restr_av :
-	      os << "time averaged";
-	      break;
  	    case simulation::rdc_restr_inst_weighted :
 	      os << "instantaneous, weighted";
+	      break;
+	    case simulation::rdc_restr_av :
+	      os << "time averaged";
 	      break;
 	    case simulation::rdc_restr_av_weighted :
 	      os << "time averaged, weighted";
@@ -272,6 +273,7 @@ int interaction::create_special(interaction::Forcefield & ff,
 
     ff.push_back(rdcr);
   }
+
   // symmetry restraints
   if (param.symrest.symrest != simulation::xray_symrest_off){
     if(!quiet){

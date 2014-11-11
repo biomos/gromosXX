@@ -835,7 +835,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("pressure_scale_berendsen", "rf_excluded");
   fc.unlock("pressure_scale_berendsen", "pairlist_standard");
   fc.unlock("pressure_scale_berendsen", "pairlist_grid");
-
   fc.unlock("pressure_scale_berendsen", "cutoff_atomic");
   fc.unlock("pressure_scale_berendsen", "cg_martini");
   fc.unlock("pressure_scale_berendsen", "cg_gromos");
@@ -850,7 +849,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("pressure_scale_berendsen", "dihedral_rest");
   fc.unlock("pressure_scale_berendsen", "dihedral_const");
   fc.unlock("pressure_scale_berendsen", "jvalue_rest");
-  fc.unlock("pressure_calculation", "rdc_rest");          
+  fc.unlock("pressure_scale_berendsen", "rdc_rest");          
   fc.unlock("pressure_scale_berendsen", "perscale");
   fc.unlock("pressure_scale_berendsen", "rottrans");
   fc.unlock("pressure_scale_berendsen", "repex_temp");
@@ -2486,7 +2485,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("p3m", "dihedral_rest");
   fc.unlock("p3m", "dihedral_const");
   fc.unlock("p3m", "jvalue_rest");
-  fc.unlock("innerloop_method_off", "rdc_rest");                
+  fc.unlock("p3m", "rdc_rest");                
   fc.unlock("p3m", "perscale");
   fc.unlock("p3m", "rottrans");
   //fc.unlock("p3m", "innerloop_spc");

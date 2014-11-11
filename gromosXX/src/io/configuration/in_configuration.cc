@@ -205,6 +205,8 @@ bool io::In_Configuration::read_next
 
   return true;
 }
+
+
 bool io::In_Configuration::read_position_plain(topology::Topology &topo,
         configuration::Configuration &conf,
         simulation::Simulation & sim,
@@ -515,7 +517,6 @@ bool io::In_Configuration::read_box
     conf.current().vel(i) = math::Vec(math::product(math::transpose(Rmat), conf.current().vel(i)));
   }          
   
-  
   return true;
 }
 
@@ -533,24 +534,24 @@ bool io::In_Configuration::read_jvalue
     if (sim.param().jvalue.mode == simulation::jvalue_restr_inst ||
         sim.param().jvalue.mode == simulation::jvalue_restr_inst_weighted){
       if (sim.param().jvalue.read_av)
-	io::messages.add("instantaneous J-value restraints, ignoring reading of averages",
-			 "in_configuration",
-			 io::message::warning);
+        io::messages.add("instantaneous J-value restraints, ignoring reading of averages",
+                         "in_configuration",
+                         io::message::warning);
     }
     else if (!sim.param().jvalue.read_av){
 
       buffer = m_block["JVALUERESEXPAVE"];
       if (buffer.size()){
-	block_read.insert("JVALUERESEXPAVE");
+        block_read.insert("JVALUERESEXPAVE");
 
-	io::messages.add("re-initialising J-value averages, non-continuous simulation",
-			 "in_configuration",
-			 io::message::warning);
+        io::messages.add("re-initialising J-value averages, non-continuous simulation",
+                         "in_configuration",
+                         io::message::warning);
       }
       else{
-	io::messages.add("initialising J-value averages",
-			 "in_configuration",
-			 io::message::notice);
+        io::messages.add("initialising J-value averages",
+                         "in_configuration",
+                         io::message::notice);
       }
     }
     else {
@@ -558,15 +559,15 @@ bool io::In_Configuration::read_jvalue
       buffer = m_block["JVALUERESEXPAVE"];
       if (buffer.size())
       {
-	block_read.insert("JVALUERESEXPAVE");
-	_read_jvalue_av(buffer, conf.special().jvalue_av, topo.jvalue_restraints());
+        block_read.insert("JVALUERESEXPAVE");
+        _read_jvalue_av(buffer, conf.special().jvalue_av, topo.jvalue_restraints());
       }
       else{
-	io::messages.add("reading in of J-value averages requested "
-			 "but JVALUERESEXPAVE block not found",
-			 "in_configuration",
-			 io::message::error);
-	return false;
+        io::messages.add("reading in of J-value averages requested "
+                         "but JVALUERESEXPAVE block not found",
+                         "in_configuration",
+                         io::message::error);
+        return false;
       }
     }
   } // jvalue averages
@@ -601,6 +602,8 @@ bool io::In_Configuration::read_jvalue
   } // jvalue local elevation
   return true;
 }
+
+
 bool io::In_Configuration::read_xray
 (
         topology::Topology &topo,
@@ -889,95 +892,163 @@ bool io::In_Configuration::read_order_parameter_restraint_averages
   return true;
 }
 
-bool io::In_Configuration::read_rdc
-(
- topology::Topology &topo,
- configuration::Configuration &conf,
- simulation::Simulation & sim,
- std::ostream & os)
+bool io::In_Configuration::read_rdc (topology::Topology &topo,
+                                     configuration::Configuration &conf,
+                                     simulation::Simulation &sim,
+                                     std::ostream &os)
 {
-  std::vector<std::string> buffer;
-
   if (sim.param().rdc.mode != simulation::rdc_restr_off) {
+    std::vector<std::string> buffer;
 
-    if (sim.param().rdc.mode == simulation::rdc_restr_inst ||
-        sim.param().rdc.mode == simulation::rdc_restr_inst_weighted) {
-      if (sim.param().rdc.read_av) {
-        io::messages.add("instantaneous RDC restraints, ignoring reading of averages", "in_configuration", io::message::warning);
-      }
-    } else if (!sim.param().rdc.read_av) {
-      buffer = m_block["RDCRESEXPAVE"];
-      if (buffer.size()) {
-        block_read.insert("RDCRESEXPAVE");
+    buffer = m_block["RDCAVERAGES"];
+    if (buffer.size()) block_read.insert("RDCAVERAGES"); // mark block read
 
-        io::messages.add("re-initialising RDC restraint averages, non-continuous simulation", "in_configuration", io::message::warning);
-      } else {
-        io::messages.add("initialising RDC restraint averages", "in_configuration", io::message::notice);
-      }
-    } else {
-      buffer = m_block["RDCRESEXPAVE"];
+    // the user chose to read av values and there is a block
+    if (sim.param().rdc.mode == simulation::rdc_restr_av ||
+        sim.param().rdc.mode == simulation::rdc_restr_av_weighted ||
+        sim.param().rdc.mode == simulation::rdc_restr_biq ||
+        sim.param().rdc.mode == simulation::rdc_restr_biq_weighted) {
       if (buffer.size()) {
-        block_read.insert("RDCRESEXPAVE");
-        _read_rdc_av(buffer, conf.special().rdc.av, topo.rdc_restraints());
-      } else {
-        io::messages.add("reading in of RDC averages requested but RDCRESEXPAVE block not found", "in_configuration", io::message::error);
+        if (sim.param().rdc.read_av) {
+//          io::messages.add("initialising RDC restraint averages from saved values", "in_configuration", io::message::notice);
+          if(!_read_rdc_av(buffer, conf.special().rdc, topo.rdc_restraints(), os)){
+            io::messages.add("reading RDCAVERAGES block failed", "in_configuration", io::message::error);
+            return false;
+          }
+        }
+        else{
+          io::messages.add("you provided an RDCAVERAGES block but chose not to read it", "in_configuration", io::message::warning);
+        }
+      }
+      else{
+        if (sim.param().rdc.read_av) {
+          io::messages.add("you chose to read an RDCAVERAGES block but there is none", "in_configuration", io::message::error);
+          return false;
+        }
+        // else: no block, no reading selected
+      }
+    }
+    else if (sim.param().rdc.mode == simulation::rdc_restr_inst ||
+             sim.param().rdc.mode == simulation::rdc_restr_inst_weighted) {
+      if (buffer.size()) {
+        if (sim.param().rdc.read_av) {
+          io::messages.add("you provided an RDCAVERAGES block and chose to read it, but the restraining mode is instantaneous: ignoring averages", "in_configuration", io::message::warning);
+        }
+        else{
+          io::messages.add("you provided an RDCAVERAGES block, but chose not to read it and the restraining mode is instantaneous: ignoring averages", "in_configuration", io::message::warning);
+        }
+      }
+      else{
+        if (sim.param().rdc.read_av) {
+          io::messages.add("you chose to read an RDCAVERAGES block, but there is none and the restraining mode is instantaneous: I'm going to ignore this", "in_configuration", io::message::warning);
+        }
+        // else: no block, no reading selected
+      }
+    }
+    else assert(false);
+
+    
+    // read_align && em does not make sense
+    if(sim.param().rdc.method == simulation::rdc_em){
+      if(sim.param().rdc.read_align){
+        io::messages.add("it does not make sense to read the magnetic field representation in an rdc-em run: ignore reading", "in_configuration", io::message::warning);
+      }
+    }
+    else if (sim.param().rdc.method == simulation::rdc_sd || sim.param().rdc.method == simulation::rdc_md){
+      switch(sim.param().rdc.type) {
+        case simulation::rdc_mf:
+          buffer = m_block["RDCMF"];
+          if (buffer.size()) block_read.insert("RDCMF"); // mark block read
+          if (sim.param().rdc.read_align) {
+            if (buffer.size()) {
+//              io::messages.add("magnetic field vectors from saved values", "in_configuration", io::message::notice);
+              if(!_read_rdc_mf(buffer, conf.special().rdc, topo.rdc_restraints(), os)){
+                io::messages.add("reading of RDCMF block failed", "in_configuration", io::message::error);
+                return false;
+              }
+            } else {
+              io::messages.add("you chose to read an RDCMF block but there is none", "in_configuration", io::message::error);
+              return false;
+            }
+          }
+          else { // don't read
+            if (buffer.size()) {
+              io::messages.add("you provided an RDCMF block but chose not to read it: ignore reading", "in_configuration", io::message::warning);
+            }
+            // else: don't read and none given
+          }
+          break;
+          
+        case simulation::rdc_t:
+          buffer = m_block["RDCT"];
+          if (buffer.size()) block_read.insert("RDCT"); // mark block read
+          if (sim.param().rdc.read_align) {
+            if (buffer.size()) {
+//              io::messages.add("magnetic field vectors from saved values", "in_configuration", io::message::notice);
+              if(!_read_rdc_t(buffer, conf.special().rdc, os)){
+                io::messages.add("reading of RDCT block failed", "in_configuration", io::message::error);
+                return false;
+              }
+            } else {
+              io::messages.add("you chose to read an RDCT block but there is none", "in_configuration", io::message::error);
+              return false;
+            }
+          }
+          else { // don't read
+            if (buffer.size()) {
+              io::messages.add("you provided an RDCT block but chose not to read it: ignore reading", "in_configuration", io::message::warning);
+            }
+            // else: don't read and none given
+          }
+          break;
+          
+        case simulation::rdc_sh:
+          buffer = m_block["RDCSH"];
+          if (buffer.size()) block_read.insert("RDCSH"); // mark block read
+          if (sim.param().rdc.read_align) {
+            if (buffer.size()) {
+//              io::messages.add("magnetic field vectors from saved values", "in_configuration", io::message::notice);
+              if(!_read_rdc_sh(buffer, conf.special().rdc, os)){
+                io::messages.add("reading of RDCSH block failed", "in_configuration", io::message::error);
+                return false;
+              }
+            } else {
+              io::messages.add("you chose to read an RDCSH block but there is none", "in_configuration", io::message::error);
+              return false;
+            }
+          }
+          else { // don't read
+            if (buffer.size()) {
+              io::messages.add("you provided an RDCSH block but chose not to read it: ignore reading", "in_configuration", io::message::warning);
+            }
+            // don't read and none given
+          }
+          break;
+          
+        default:
+          io::messages.add("Reading of RDC magnetic field data requested but unknown type of representation given (NTRDCT)", "in_configuration", io::message::error);
+          return false;
+      } // switch: type
+    }
+    else assert(false); // tertium non datur
+
+    //stochastic integral reading ...
+    if (sim.param().rdc.method == simulation::rdc_sd && sim.param().rdc.read_align) {
+      buffer = m_block["RDCSTOCHINT"];
+      if (buffer.size()) {
+        block_read.insert("RDCSH"); // mark block read
+        if(!_read_rdc_stochint(buffer, conf.special().rdc, sim.param().rdc.type, os)){
+          io::messages.add("reading of RDCSTOCHINT block failed", "in_configuration", io::message::error);
+          return false;
+        }
+      }
+      else {
+        io::messages.add("you chose to read the magnetic field representation, and use SD but there is no RDCSTOCHINT block", "in_configuration", io::message::error);
         return false;
       }
     }
-    
-    switch(sim.param().rdc.type) {
-      case simulation::rdc_mf:
-        if (!sim.param().rdc.read_align) {
-          buffer = m_block["RDCMFV"];
-          if (buffer.size()) {
-            block_read.insert("RDCMFV");
-            io::messages.add("re-initialising RDC magnetic field vectors, non-continuous simulation", "in_configuration", io::message::warning);
-          } else {
-            io::messages.add("initialising RDC magnetic field vectors", "in_configuration", io::message::notice);
-          }
-        } else {
-          buffer = m_block["RDCMFV"];
-          if (buffer.size()) {
-            block_read.insert("RDCMFV");
-            _read_rdc_mfv(buffer, conf);
-          } else {
-            io::messages.add("reading in of RDC magnetic field vectors requested but RDCMFV block not found", "in_configuration", io::message::error);
-            return false;
-          }
-        }
-        break;
-        
-      case simulation::rdc_t:
-        if (!sim.param().rdc.read_align) {
-          buffer = m_block["RDCT"];
-          if (buffer.size()) {
-            block_read.insert("RDCT");
-            io::messages.add("re-initialising RDC alignment tensor, non-continuous simulation", "in_configuration", io::message::warning);
-          } else {
-            io::messages.add("initialising RDC alignment tensor", "in_configuration", io::message::notice);
-          }
-        } else {
-          buffer = m_block["RDCT"];
-          if (buffer.size()) {
-            block_read.insert("RDCT");
-            _read_rdc_t(buffer, conf);
-          } else {
-            io::messages.add("reading in of RDC alignment tensor requested but RDCT block not found", "in_configuration", io::message::error);
-            return false;
-          }
-        }
-        break;
-        
-      case simulation::rdc_sh:
-// FIXME fill in the gap
-        break;
-        
-      default:
-        io::messages.add("Reading of RDC magnetic field data requested but unknown type of representation given (NTRDCT)", "in_configuration",
-                io::message::error);
-    }
-  } // rdc averages
 
+  } // not off
   return true;
 }
 
@@ -1998,8 +2069,8 @@ bool io::In_Configuration::_read_distance_restraint_averages
     
     if (_lineStream.fail() || ave < 0.0) {
       io::messages.add("Could not read averages from DISRESEXPAVE block",
-		       "In_Configuration",
-		       io::message::error);
+                       "In_Configuration",
+                       io::message::error);
       return false;
     }
     
@@ -2011,8 +2082,8 @@ bool io::In_Configuration::_read_distance_restraint_averages
 
 bool io::In_Configuration::
 _read_jvalue_av(std::vector<std::string> &buffer,
-		std::vector<double> & jval_av,
-		std::vector<topology::jvalue_restraint_struct> const & jval_res)
+                std::vector<double> & jval_av,
+                std::vector<topology::jvalue_restraint_struct> const & jval_res)
 {
   DEBUG(8, "read jvalue averages");
 
@@ -2030,12 +2101,12 @@ _read_jvalue_av(std::vector<std::string> &buffer,
   
   if (buffer.size() - 1 != jval_res.size()){
     std::cout << "JVALUERESEXPAVE: " << buffer.size() - 1
-	      << " but restraints: " << jval_res.size()
-	      << std::endl;
+              << " but restraints: " << jval_res.size()
+              << std::endl;
 
     io::messages.add("number of J-restraints does not match with number of "
-		     "continuation data", "in_configuration",
-		     io::message::error);
+                     "continuation data", "in_configuration",
+                     io::message::error);
     return false;
   }
   
@@ -2047,7 +2118,7 @@ _read_jvalue_av(std::vector<std::string> &buffer,
     _lineStream >> av;
     if (_lineStream.fail()){
       io::messages.add("Bad value in JVALUERESEXPAVE block",
-		       "In_Configuration", io::message::error);
+                       "In_Configuration", io::message::error);
       return false;
     }
     jval_av.push_back(av);
@@ -2055,8 +2126,8 @@ _read_jvalue_av(std::vector<std::string> &buffer,
   
   if (jval_it != jval_to || it != to){
     io::messages.add("Wrong number of J-Values in JVALUERESEXPAVE block",
-		     "In_Configuration",
-		     io::message::error);
+                     "In_Configuration",
+                     io::message::error);
     return false;
   }
   
@@ -2065,8 +2136,8 @@ _read_jvalue_av(std::vector<std::string> &buffer,
 
 bool io::In_Configuration::
 _read_jvalue_le(std::vector<std::string> &buffer,
-		std::vector<std::vector<double> > & jval_epsilon,
-		std::vector<topology::jvalue_restraint_struct> const & jval_res,
+                std::vector<std::vector<double> > & jval_epsilon,
+                std::vector<topology::jvalue_restraint_struct> const & jval_res,
                 unsigned int const & grid_size)
 {
   DEBUG(8, "read jvalue local elevation epsilon");
@@ -2204,349 +2275,349 @@ bool io::In_Configuration::_read_order_parameter_restraint_average_window(
   return true;
 }
 
-bool io::In_Configuration::
-_read_rdc_av(std::vector<std::string> &buffer,
-		std::vector<double> & rdc_av,
-		std::vector<topology::rdc_restraint_struct> const & rdc_res)
+
+//FIXME remove rdc-res dependency
+bool io::In_Configuration::_read_rdc_av(std::vector<std::string> &buffer,
+                           std::vector<configuration::Configuration::special_struct::rdc_struct> &rdc,
+                           std::vector<std::vector<topology::rdc_restraint_struct> > const &rdc_res,
+                           std::ostream & os)
 {
-  DEBUG(8, "read rdc averages");
+  if(!quiet) os << "RDCAVERAGES from configuration ...\n";
 
-  // no title in buffer!?
-  std::vector<std::string>::const_iterator it = buffer.begin(),
-    to = buffer.end()-1;
+  //remove average values
+  for(std::vector<configuration::Configuration::special_struct::rdc_struct>::iterator it=rdc.begin(), to=rdc.end();it!=to; ++it){
+    it->av.clear();
+  }
 
-  std::vector<topology::rdc_restraint_struct>::const_iterator
-    rdc_it = rdc_res.begin(),
-    rdc_to = rdc_res.end();
-
-  rdc_av.clear();
-
-  double av;
-
-  if (buffer.size() - 1 != rdc_res.size()){
-    std::cout << "RDCRESEXPAVE: " << buffer.size() - 1
-	      << " but restraints: " << rdc_res.size()
-	      << std::endl;
-
+  // check if number of saved values is correct
+  // we can only check the sum, not the individual values
+  int count=0;
+  for(int i=0; i<rdc_res.size(); ++i) count += rdc_res[i].size();
+  DEBUG(15,"buffer size: " << buffer.size()-1)
+  DEBUG(15,"count: " << count)
+  if (buffer.size()-1 != count){
+    os << "RDCAVERAGES: " << buffer.size() - 1 << " but restraints: " << count << std::endl;
     io::messages.add("number of RDC restraints does not match with number of continuation data", "in_configuration", io::message::error);
     return false;
   }
 
-  for( ; (it != to) && (rdc_it != rdc_to); ++it, ++rdc_it){
+  std::vector<std::string>::const_iterator
+      buff_it = buffer.begin(),
+      buff_to = buffer.end()-1;
+
+  double av;
+  int i=0,j=0; // index for rdc-groups and rdcs in groups
+  for(; buff_it != buff_to; ++buff_it, ++j){
 
     _lineStream.clear();
-    _lineStream.str(*it);
+    _lineStream.str(*buff_it);
 
     _lineStream >> av;
     if (_lineStream.fail()){
-      io::messages.add("Bad value in RDCRESEXPAVE block", "In_Configuration", io::message::error);
+      io::messages.add("Bad value in RDCAVERAGES block", "In_Configuration", io::message::error);
       return false;
     }
-    rdc_av.push_back(av);
+    rdc[i].av.push_back(av);
+    if(rdc_res[i].size() == j-1){
+      ++i;
+      j=0;
+    }
+    if(!quiet){
+      std::cout.precision(8); std::cout.width(13); std::cout.setf(std::ios_base::scientific);
+      os << av << std::endl;
+    }
   }
-
-  if (rdc_it != rdc_to || it != to){
-    io::messages.add("Wrong number of RDCs in RDCRESEXPAVE block", "In_Configuration", io::message::error);
-    return false;
-  }
-
+  if(!quiet) os << "END\n";
   return true;
 }
 
-bool io::In_Configuration::
-_read_rdc_mfv(std::vector<std::string> &buffer,
-        configuration::Configuration &conf)
+//FIXME remove rdc-res dependency
+bool io::In_Configuration::_read_rdc_mf(std::vector<std::string> &buffer,
+                           std::vector<configuration::Configuration::special_struct::rdc_struct> &rdc,
+                           std::vector<std::vector<topology::rdc_restraint_struct> > const &rdc_res,
+                           std::ostream & os)
 {
-  DEBUG(8, "read RDC magnetic field vectors");
+  if (!quiet) os << "RDCMF from configuration ...\n";
 
-  if (buffer.size() < 7) {
-    io::messages.add("no or empty RDCMFV block or insufficient information in "
-            "configuration file - using magnetic field information "
-            "from RDC restraint file",
-            "in_configuration", io::message::warning);
-  } else {
-    if (!quiet) std::cout << "RDC MAGFIELD from configuration (normalised)\n";
+  DEBUG(15, "buffer size: " << buffer.size()-1)
+  DEBUG(15, "<number of rdc groups> * <mf-points der group>: " << rdc.size()*rdc[0].MFpoint.size())
+  if(rdc.size()*rdc[0].MFpoint.size() != buffer.size()-1){
+    io::messages.add("no or empty RDCMF block or insufficient information in configuration file",
+        "in_configuration", io::message::error);
+    return false;
+  }
 
-    std::vector<std::string>::const_iterator it = buffer.begin(),
-            to = buffer.end() - 1; 
 
-    unsigned int nmf = 0;
-    double tref = 0.0;
+  const int mfv_per_rep = rdc[0].MFpoint.size();
+
+  //remove mf vectors
+  for(std::vector<configuration::Configuration::special_struct::rdc_struct>::iterator it=rdc.begin(), to=rdc.end();it!=to; ++it){
+    it->MFpoint.clear();
+    it->MFpointVel.clear();
+    it->MFpointMass.clear();
+  }
+
+  std::cout.precision(8);
+  std::cout.setf(std::ios_base::fixed, std::ios_base::floatfield);
+  if (!quiet) {
+    os << std::setw(13) << "x" << std::setw(13) << "y" << std::setw(13) << "z"
+       << std::setw(13) << "vx" << std::setw(13) << "vy" << std::setw(13) << "vz"
+       << std::setw(13) << "mass" << "\n";
+  }
+
+  std::vector<std::string>::const_iterator
+      buff_it = buffer.begin(),
+      buff_to = buffer.end()-1;
+
+  double x = 0.0, y = 0.0, z = 0.0, vx = 0.0, vy = 0.0, vz = 0.0, m = 0.0;
+  int i=0,j=0; // index for rdc-groups and mfv in rep
+  for(; buff_it != buff_to; ++buff_it, ++j){
 
     _lineStream.clear();
-    _lineStream.str(*it);
-    _lineStream >> tref;
-    
-    if (_lineStream.fail()) {
-      std::ostringstream msg;
-      msg << "bad line in RDCMFV block: failed to read in Tref" << std::endl;
-      io::messages.add(msg.str(),
-              "in_configuration",
-              io::message::error);
-    }    
-    ++it;
-    
-    _lineStream.clear();
-    _lineStream.str(*it);
-    _lineStream >> nmf;
-    ++it;
-    if (_lineStream.fail()) {
-      std::ostringstream msg;
-      msg << "bad line in RDCMFV block: failed to read in NMF" << std::endl;
-      io::messages.add(msg.str(),
-              "in_configuration",
-              io::message::error);
-    }
-//    if (nmf != conf.special().rdc.nmf) {
-//      std::ostringstream msg;
-//      msg << "NMF in RDCMFV block (" << nmf << ") not equal to NMF from "
-//              "RDC restraint file (" << conf.special().rdc.nmf << ")" << std::endl;
-//      io::messages.add(msg.str(), "in_configuration", io::message::error);
-//    }    
+    _lineStream.str(*buff_it);
 
-    std::cout.precision(8);
-    std::cout.setf(std::ios_base::fixed, std::ios_base::floatfield);
-    if (!quiet) {
-      std::cout << std::setw(8) << "Tref"
-              << "\n"
-              << std::setw(8) << tref
-              << "\n";      
-      std::cout << std::setw(8) << "NMF"
-              << "\n"
-              << std::setw(8) << nmf
-              << "\n";
-      std::cout << std::setw(13) << "x"
-              << std::setw(13) << "y"
-              << std::setw(13) << "z"
-              << std::setw(13) << "vx"
-              << std::setw(13) << "vy"
-              << std::setw(13) << "vz"
-              << std::setw(13) << "mass"
-              << "\n";
-    }
-
-    unsigned int i = 0;
-    for (; it != to; ++it, ++i) {
-      double x = 0.0, y = 0.0, z = 0.0, vx = 0.0, vy = 0.0, vz = 0.0, m = 0.0;
-      _lineStream.clear();
-      _lineStream.str(*it);
-      _lineStream >> x >> y >> z >> vx >> vy >> vz >> m;
-
-      // GP TODO check old comment: why doesn't this work? i.e. if there is one value instead of
-      // four, it doesn't fail...
-      if (_lineStream.fail()) {
-        std::ostringstream msg;
-        msg << "bad line in RDCMFV block: failed to read in magnetic "
-                "field vector " << i + 1 << std::endl;
-        io::messages.add(msg.str(),
-                "in_configuration",
-                io::message::error);
-      }
-
-      math::Vec tmpVecP(x, y, z);
-      tmpVecP = tmpVecP.norm(); // GP TODO brauchts das normalise?
-      math::Vec tmpVecV(vx, vy, vz);
-      conf.special().rdc.MFpoint[i] = tmpVecP;
-      conf.special().rdc.MFpointVel[i] = tmpVecV;
-      conf.special().rdc.MFpointMass[i] = m;
-
-      // write to output file
-      if (!quiet) {
-        std::cout << std::setw(13) << tmpVecP[0]
-            << std::setw(13) << tmpVecP[1]
-            << std::setw(13) << tmpVecP[2]
-            << std::setw(13) << tmpVecV[0]
-            << std::setw(13) << tmpVecV[1]
-            << std::setw(13) << tmpVecV[2]
-            << std::setw(13) << m
-            << "\n";
-      }
-    }
-    if (!quiet) std::cout << "END\n";
-
-    if (_lineStream.fail()) {
-      io::messages.add("Bad line in RDCMFV block",
-              "In_Configuration", io::message::error);
+    _lineStream >> x >> y >> z >> vx >> vy >> vz >> m;
+    if (_lineStream.fail()){
+      io::messages.add("Bad value in RDCMF block", "In_Configuration", io::message::error);
       return false;
     }
-    // GP TODO check if remainder will actually come from RDC file
-//    if (i < conf.special().rdc.nmf) {
-//              std::ostringstream msg;
-//        msg << "Only " << i << " magnetic field vectors read "
-//                "from RDCMFV block - remainder will come from RDC "
-//                "restraint file" << std::endl;
-//        io::messages.add(msg.str(),
-//                "in_configuration",
-//                io::message::warning);
-//    }
+    rdc[i].MFpoint.push_back(math::Vec(x, y, z));
+    rdc[i].MFpointVel.push_back(math::Vec(vx, vy, vz));
+    rdc[i].MFpointMass.push_back(m);
+
+    if (!quiet) {
+      os << std::setw(13) << x
+         << std::setw(13) << y
+         << std::setw(13) << z
+         << std::setw(13) << vx
+         << std::setw(13) << vy
+         << std::setw(13) << vz
+         << std::setw(13) << m << std::endl;
+    }
+    if(mfv_per_rep == j-1){
+      ++i;
+      j=0;
+    }
   }
+
+  if (!quiet) os << "END\n";
   return true;
 }
 
-bool io::In_Configuration::
-_read_rdc_t(std::vector<std::string> &buffer,
-        configuration::Configuration &conf) {
-  DEBUG(8, "read RDC magnetic field vectors");
-
-  if (buffer.size() < 15) {
-    io::messages.add("no or empty RDCT block or insufficient information in "
-            "configuration file - using alignment tensor "
-            "from RDC restraint file",
-            "in_configuration", io::message::warning);
-  } else {
-    if (!quiet) std::cout << "RDC ALIGNT from configuration\n";
-    
-    std::vector<std::string>::const_iterator it = buffer.begin(),
-        to = buffer.end() - 1; 
-
-    double tref = 0.0;
-
-    _lineStream.clear();
-    _lineStream.str(*it);
-    _lineStream >> tref;
-    
-    if (_lineStream.fail()) {
-      std::ostringstream msg;
-      msg << "bad line in RDCT block: failed to read in Tref" << std::endl;
-      io::messages.add(msg.str(),
-              "in_configuration",
-              io::message::error);
-    }    
-    ++it;    
-
-    std::cout.precision(8);
-    std::cout.setf(std::ios_base::fixed, std::ios_base::floatfield);
-    if (!quiet) {
-      std::cout << std::setw(13) << "Axx"
-              << std::setw(13) << "mass1"
-              << std::setw(13) << "vel1"
-              << std::setw(13) << "Ayy"
-              << std::setw(13) << "mass2"
-              << std::setw(13) << "vel2"
-              << std::setw(13) << "Axy"
-              << std::setw(13) << "mass3"
-              << std::setw(13) << "vel3"
-              << std::setw(13) << "Axz"
-              << std::setw(13) << "mass4"
-              << std::setw(13) << "vel4"
-              << std::setw(13) << "Ayz"
-              << std::setw(13) << "mass5"
-              << std::setw(13) << "vel5"
-              << "\n";
-    }
-
-    std::vector<double> A(5,0.0);
-    std::vector<double> mass(5,0.0);
-    std::vector<double> vel(5,0.0);
-      
-    _lineStream.clear();
-    _lineStream.str(*it);
-    _lineStream >> A[0] >> mass[0] >> vel[0] >> A[1] >> mass[1] >> vel[1] >> 
-           A[2] >> mass[2] >> vel[2] >> A[3] >> mass[3] >> vel[3] >> A[4] >> mass[4] >> vel[4];
-    
-    if (_lineStream.fail()) {
-      std::ostringstream msg;
-      msg << "bad line in RDCT block: failed to read in alignment tensor " << std::endl;
-      io::messages.add(msg.str(),
-              "in_configuration",
-              io::message::error);
-    }
-
-    conf.special().rdc.Tensor = A;
-    conf.special().rdc.TensorMass = mass;
-    conf.special().rdc.TensorVel = vel;
-
-    // write to output file
-    if (!quiet) {
-      std::cout << std::setw(13) << A[0]
-          << std::setw(13) << mass[0]
-          << std::setw(13) << vel[0]
-          << std::setw(13) << A[1]
-          << std::setw(13) << mass[1]
-          << std::setw(13) << vel[1]
-          << std::setw(13) << A[2]
-          << std::setw(13) << mass[2]
-          << std::setw(13) << vel[2]
-          << std::setw(13) << A[3]
-          << std::setw(13) << mass[3]
-          << std::setw(13) << vel[3]
-          << std::setw(13) << A[4]
-          << std::setw(13) << mass[4]
-          << std::setw(13) << vel[4]
-          << "\n";
-    }
-
-    if (!quiet) std::cout << "END\n";
-  }
-  return true;
-}
-
-bool io::In_Configuration::
-_read_rdc_le(std::vector<std::string> &buffer,
-                configuration::Configuration const &conf,
-		std::vector<std::vector<double> > & rdc_epsilon,
-		std::vector<topology::rdc_restraint_struct> const & rdc_res,
-                unsigned int const & grid_size)
+bool io::In_Configuration::_read_rdc_t(std::vector<std::string> &buffer,
+                           std::vector<configuration::Configuration::special_struct::rdc_struct> &rdc,
+                           std::ostream & os)
 {
-  DEBUG(8, "read rdc local elevation epsilon");
+  if(!quiet) os << "RDCT from configuration ...\n";
+  const int n_ah = 5;
 
-  // no title in buffer!
-  std::vector<std::string>::const_iterator it = buffer.begin(),
-    to = buffer.end()-1;
-
-  std::vector<topology::rdc_restraint_struct>::const_iterator
-    rdc_it = rdc_res.begin(),
-    rdc_to = rdc_res.end();
-
-  unsigned int n = 0;
-  unsigned int neps = rdc_res.size()*conf.special().rdc.MFpoint.size(); // used to be nmf
-
-  rdc_epsilon.clear();
-
-  if (buffer.size() - 1 != neps){
-    std::cout << "RDCRESEPSILON size: " << buffer.size() - 1
-	      << " but restraints*nmf = " << neps
-	      << std::endl;
-
-    io::messages.add("number of RDC restraints does not match with number of "
-		     "LE continuation data", "in_configuration",
-		     io::message::error);
+  DEBUG(15, "buffer size: " << buffer.size()-1)
+  DEBUG(15, "number of rdc groups: " << rdc.size())
+  // check for buffer size which should be one line per rdc group
+  if(rdc.size() != buffer.size()-1 ){
+    io::messages.add("no or empty RDCT block or insufficient information in configuration file",
+        "in_configuration", io::message::error);
     return false;
   }
 
-  // loop over RDCs and magnetic field vectors
-  for (; (it != to) && (n != neps); ++it, ++n) {
-
-    std::vector<double> eps(grid_size, 0.0);
+  if (!quiet) {
+    os << std::setw(13) << "Axx" << std::setw(13) << "mass1" << std::setw(13) << "vel1"
+       << std::setw(13) << "Ayy" << std::setw(13) << "mass2" << std::setw(13) << "vel2"
+       << std::setw(13) << "Axy" << std::setw(13) << "mass3" << std::setw(13) << "vel3"
+       << std::setw(13) << "Axz" << std::setw(13) << "mass4" << std::setw(13) << "vel4"
+       << std::setw(13) << "Ayz" << std::setw(13) << "mass5" << std::setw(13) << "vel5" << std::endl;
+  }
+  
+  // tmp
+  std::vector<double> A(n_ah,0.0);
+  std::vector<double> mass(n_ah,0.0);
+  std::vector<double> vel(n_ah,0.0);
+    
+  std::vector<std::string>::const_iterator
+      it = buffer.begin(),
+      to = buffer.end() - 1; 
+  int i=0;
+  for (; it!=to; ++it, ++i){
     _lineStream.clear();
     _lineStream.str(*it);
-
-    // read in eps grid for this RDC:magnetic field vector combination
-    for (unsigned int i = 0; i < grid_size; ++i)
-      _lineStream >> eps[i];
-
+    _lineStream >> A[0] >> mass[0] >> vel[0] >> 
+                   A[1] >> mass[1] >> vel[1] >> 
+                   A[2] >> mass[2] >> vel[2] >>
+                   A[3] >> mass[3] >> vel[3] >>
+                   A[4] >> mass[4] >> vel[4];
+    
     if (_lineStream.fail()) {
-      io::messages.add("Bad value in RDCRESEPSILON block",
-              "In_Configuration", io::message::error);
+      io::messages.add("error while reading RDCT block ... there might be too few entries", "in_configuration", io::message::error);
       return false;
     }
-    rdc_epsilon.push_back(eps);
 
-    // increase rdc_it after reading LE grid for all magnetic field vectors
-    if ((n + 1) % conf.special().rdc.MFpoint.size() == 0) // used to be nmf
-      ++rdc_it;
+    rdc[i].Tensor = A;
+    rdc[i].TensorMass = mass;
+    rdc[i].TensorVel = vel;
 
+    if (!quiet) {
+//    write to output file
+      std::cout.precision(8);
+      std::cout.width(13);
+      std::cout.setf(std::ios_base::fixed, std::ios_base::floatfield);
+      os  << A[0] << mass[0] << vel[0]
+          << A[1] << mass[1] << vel[1]
+          << A[2] << mass[2] << vel[2]
+          << A[3] << mass[3] << vel[3]
+          << A[4] << mass[4] << vel[4] << std::endl;
+    }
   }
 
-  if (rdc_it != rdc_to || n != neps || it != to) {
+  if (!quiet) os << "END\n";
+  return true;
+}
 
-    io::messages.add("Wrong number of lines "
-            "in RDCRESEPSILON block",
-            "In_Configuration",
-            io::message::error);
+bool io::In_Configuration::_read_rdc_sh(std::vector<std::string> &buffer,
+                           std::vector<configuration::Configuration::special_struct::rdc_struct> &rdc,
+                           std::ostream & os)
+{
+  if (!quiet) os << "RDCSH from configuration ...\n";
+  const int n_clm = 5;
+
+  DEBUG(15, "buffer size: " << buffer.size()-1)
+  DEBUG(15, "number of rdc groups: " << rdc.size())
+  // check for buffer size which should be one line per rdc group
+  if(rdc.size() != buffer.size()-1 ){
+    io::messages.add("no or empty RDCSH block or insufficient information in configuration file",
+        "in_configuration", io::message::error);
     return false;
   }
 
+  if (!quiet) {
+    os << std::setw(13) << "c2,-2" << std::setw(13) << "mass1" << std::setw(13) << "vel1"
+       << std::setw(13) << "c2,-1" << std::setw(13) << "mass2" << std::setw(13) << "vel2"
+       << std::setw(13) << "c2,0"  << std::setw(13) << "mass3" << std::setw(13) << "vel3"
+       << std::setw(13) << "c2,1"  << std::setw(13) << "mass4" << std::setw(13) << "vel4"
+       << std::setw(13) << "c2,2"  << std::setw(13) << "mass5" << std::setw(13) << "vel5" << std::endl;
+  }
+  
+  // tmp
+  std::vector<double> clm(n_clm,0.0);
+  std::vector<double> mass(n_clm,0.0);
+  std::vector<double> vel(n_clm,0.0);
+    
+  std::vector<std::string>::const_iterator
+      it = buffer.begin(),
+      to = buffer.end() - 1; 
+  int i=0;
+  for (; it!=to; ++it, ++i){
+    _lineStream.clear();
+    _lineStream.str(*it);
+    _lineStream >> clm[0] >> mass[0] >> vel[0] >> 
+                   clm[1] >> mass[1] >> vel[1] >> 
+                   clm[2] >> mass[2] >> vel[2] >>
+                   clm[3] >> mass[3] >> vel[3] >>
+                   clm[4] >> mass[4] >> vel[4];
+    
+    if (_lineStream.fail()) {
+      io::messages.add("error while reading RDCSH block ... there might be too few entries", "in_configuration", io::message::error);
+      return false;
+    }
+
+    rdc[i].clm = clm;
+    rdc[i].clmMass = mass;
+    rdc[i].clmVel = vel;
+
+    if (!quiet) {
+//    write to output file
+      std::cout.precision(8);
+      std::cout.setf(std::ios_base::fixed, std::ios_base::floatfield);
+      os << std::setw(13) << clm[0] << std::setw(13) << mass[0] << std::setw(13) << vel[0]
+         << std::setw(13) << clm[1] << std::setw(13) << mass[1] << std::setw(13) << vel[1]
+         << std::setw(13) << clm[2] << std::setw(13) << mass[2] << std::setw(13) << vel[2]
+         << std::setw(13) << clm[3] << std::setw(13) << mass[3] << std::setw(13) << vel[3]
+         << std::setw(13) << clm[4] << std::setw(13) << mass[4] << std::setw(13) << vel[4] << std::endl;
+    }
+  }
+
+  if (!quiet) os << "END\n";
+  return true;
+}
+
+bool io::In_Configuration::_read_rdc_stochint(std::vector<std::string> &buffer,
+                         std::vector<configuration::Configuration::special_struct::rdc_struct> &rdc, 
+                         simulation::rdc_type_enum &type,
+                         std::ostream & os)
+{
+  if(!quiet) os << "RDCSTOCHINT from configuration ...\n";
+
+  DEBUG(15, "buffer size: " << buffer.size()-1)
+  DEBUG(15, "number of rdc groups: " << rdc.size())
+  // check for buffer size which should be one line per rdc group
+  bool valid = true;
+  const int n_ah = 5, n_clm = 5;
+  switch(type){
+    case(simulation::rdc_mf): {
+      if(rdc.size()*rdc[0].MFpoint.size() != buffer.size()-1) valid = false;
+      break;
+    }
+    case(simulation::rdc_t): {
+      if(rdc.size()*n_ah != buffer.size()-1) valid = false;
+      break;
+    }
+    case(simulation::rdc_sh): {
+      if(rdc.size()*n_clm != buffer.size()-1) valid = false;
+      break;
+    }
+    default: assert(false);
+  }
+  if(!valid){
+    io::messages.add("no or empty RDCSH block or insufficient information in configuration file",
+        "in_configuration", io::message::error);
+    return false;
+  }
+
+  if(type==simulation::rdc_mf) for (int i=0; i!=rdc.size(); ++i) rdc[i].stochastic_integral_mf.clear();
+  else if(type==simulation::rdc_t) for (int i=0; i!=rdc.size(); ++i) rdc[i].stochastic_integral_t.clear();
+  else if(type==simulation::rdc_sh) for (int i=0; i!=rdc.size(); ++i) rdc[i].stochastic_integral_sh.clear();
+  else assert (false);
+
+  // tmp
+  math::Vec tmp_v;
+  double tmp_d;
+    
+  std::vector<std::string>::const_iterator
+      buff_it = buffer.begin(),
+      buff_to = buffer.end() - 1; 
+  int i=0;
+  for (; buff_it!=buff_to; ++buff_it){
+    _lineStream.clear();
+    _lineStream.str(*buff_it);
+
+    if(type==simulation::rdc_mf) _lineStream >> tmp_v[0] >> tmp_v[1] >> tmp_v[2];
+    else if(type==simulation::rdc_t || type==simulation::rdc_sh) _lineStream >> tmp_d;
+    else assert (false);
+
+    if (_lineStream.fail()) {
+      io::messages.add("error while reading RDCSTOCHINT block ... there might be too few entries",
+          "in_configuration", io::message::error);
+      return false;
+    }
+
+    if(type==simulation::rdc_mf) rdc[i].stochastic_integral_mf.push_back(tmp_v);
+    else if(type==simulation::rdc_t) rdc[i].stochastic_integral_t.push_back(tmp_d);
+    else if(type==simulation::rdc_sh) rdc[i].stochastic_integral_sh.push_back(tmp_d);
+    else assert (false);
+
+    if( (type==simulation::rdc_mf && i%rdc[0].MFpoint.size()==0)
+       || ( (type==simulation::rdc_t || type==simulation::rdc_sh) && i%n_clm==0) ) ++i;
+
+    if (!quiet) {
+ //   write to output file
+      std::cout.precision(8);
+      std::cout.setf(std::ios_base::fixed, std::ios_base::floatfield);
+      if(type==simulation::rdc_mf) os << std::setw(13) << tmp_v[0] << std::setw(13) << tmp_v[1] << std::setw(13) << tmp_v[2] << std::endl;
+      else if(type==simulation::rdc_t || type==simulation::rdc_sh) os << std::setw(13) << tmp_d << std::endl;
+      else assert (false);
+    }
+  }
+
+  if (!quiet) os << "END\n";
   return true;
 }
 

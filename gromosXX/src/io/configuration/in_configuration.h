@@ -229,7 +229,7 @@ namespace io {
             std::ostream & os);
 
     /**
-     * try to get rdc average data
+     * read RDC average data
      */
     bool read_rdc(topology::Topology & topo,
 		    configuration::Configuration & conf,
@@ -404,38 +404,46 @@ namespace io {
                  std::vector<std::list<double> > & D_avg);
 
 
-        /**
-     * read RDC averages.
+    /**
+     * read RDC averages
      */
     bool _read_rdc_av(std::vector<std::string> &buffer,
-			 std::vector<double> & rdc_av,
-			 std::vector<topology::rdc_restraint_struct> const & rdc_res);
+             std::vector<configuration::Configuration::special_struct::rdc_struct> &rdc,
+			 std::vector<std::vector<topology::rdc_restraint_struct> > const &rdc_res,
+		     std::ostream & os = std::cout);
 
     /**
-     * read RDC magnetic field vectors.
+     * read RDC magnetic field vectors
      */
-    bool _read_rdc_mfv(std::vector<std::string> &buffer,
-			 configuration::Configuration &conf);
+    bool _read_rdc_mf(std::vector<std::string> &buffer,
+             std::vector<configuration::Configuration::special_struct::rdc_struct> &rdc,
+			 std::vector<std::vector<topology::rdc_restraint_struct> > const &rdc_res,
+		     std::ostream & os = std::cout);
     
     /**
      * read RDC alignment tensor
      */
     bool _read_rdc_t(std::vector<std::string> &buffer,
-			 configuration::Configuration &conf);
+             std::vector<configuration::Configuration::special_struct::rdc_struct> &rdc,
+		     std::ostream & os = std::cout);
     
-
     /**
-     * read RDC local elevation epsilons.
+     * read RDC spherical harmonics
      */
-    bool _read_rdc_le(std::vector<std::string> &buffer,
-                         configuration::Configuration const &conf,
-			 std::vector<std::vector<double> > & rdc_epsilon,
-			 std::vector<topology::rdc_restraint_struct> const & rdc_res,
-                         unsigned int const & grid_size);
-
+    bool _read_rdc_sh(std::vector<std::string> &buffer,
+             std::vector<configuration::Configuration::special_struct::rdc_struct> &rdc,
+		     std::ostream & os = std::cout);
 
     /**
-     * read time information.
+     * read RDC stochastic integrals
+     */
+    bool _read_rdc_stochint(std::vector<std::string> &buffer,
+             std::vector<configuration::Configuration::special_struct::rdc_struct> &rdc,
+             simulation::rdc_type_enum & mode,
+		     std::ostream & os = std::cout);
+
+    /**
+     * read time information
      */
     bool _read_time(std::vector<std::string> &buffer,
 		    double & t);

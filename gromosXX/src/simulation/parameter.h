@@ -3176,7 +3176,6 @@ namespace simulation
        * - delta 0.0
        * - K 1.0
        * - tau 0
-       * - ngrid 1
        * - write 0
        * - write_Ek 0
        */
@@ -3195,7 +3194,6 @@ namespace simulation
           delta(0.0),
           K(1.0),
           tau(0),
-	  ngrid(1),
           write(0),
           write_Ek(0)
       {
@@ -3241,7 +3239,7 @@ namespace simulation
        */
       double temp;     
       /**
-       * no elevation of potential if RDC is within delta to RDC0
+       * half the width of the flat bottom potential
        */
       double delta;
       /**
@@ -3253,10 +3251,6 @@ namespace simulation
        * coupling time.
        */
       double tau;
-      /**
-       * number of local elevation grid points
-       */
-      int ngrid;
        /**
        * write output to special trajectory every n-th step
        */

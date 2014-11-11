@@ -1073,16 +1073,18 @@ namespace topology {
   /**
    * RDC restraints.
    */
-  struct rdc_restraint_struct
-  {
+  struct rdc_restraint_struct {
     /**
-     * Constructor.
+     * default constructor (required for creating vectors of rdc_restraint_struct and providing values later)
+     */
+    rdc_restraint_struct(): i(0), j(0), weight(1.0), R0(0.0), gyri(0.0), gyrj(0.0) { }
+    /**
+     * constructor
      */
     rdc_restraint_struct(int i, int j, double weight, double R0, double gyri, double gyrj)
       : i(i), j(j), weight(weight), R0(R0), gyri(gyri), gyrj(gyrj) { }
-
     /**
-     * atom sequence numbers.
+     * atom sequence numbers
      */
     unsigned int i, j;
     /**

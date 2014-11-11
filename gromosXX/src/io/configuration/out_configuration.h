@@ -329,8 +329,26 @@ namespace io {
             topology::Topology const &topo,
             std::ostream &os);
 
-    void _print_rdc(simulation::Parameter const & param,
-	    configuration::Configuration const &conf,
+    void _print_rdc_values(simulation::Parameter const & param,
+            configuration::Configuration const &conf,
+            topology::Topology const &topo,
+            std::ostream &os,
+            bool formatted = false);
+
+    void _print_rdc_averages(simulation::Parameter const & param,
+            configuration::Configuration const &conf,
+            topology::Topology const &topo,
+            std::ostream &os,
+            bool formatted = false);
+
+    void _print_rdc_representation(simulation::Parameter const & param,
+            configuration::Configuration const &conf,
+            topology::Topology const &topo,
+            std::ostream &os,
+            bool formatted = false);
+
+    void _print_rdc_stochastic_integrals(simulation::Parameter const & param,
+            configuration::Configuration const &conf,
             topology::Topology const &topo,
             std::ostream &os,
             bool formatted = false);

@@ -244,9 +244,13 @@ namespace configuration {
        * local elevation counter
        */
       std::vector<std::vector<double> > jvalue_epsilon;
-      //////////////////////////////////////////////////
 
-      
+
+      /**
+       * @struct rdc_struct
+       * struct that holds the average and current rdc values
+       * and other parameters that occur per rdc interaction.
+       */
       struct rdc_struct{
         /**
          * RDC averages
@@ -305,21 +309,23 @@ namespace configuration {
          */
         double Ekin;
         /**
-         * rdc stochastic integrals for the magnetic field vector representation
+         * stochastic integrals for the magnetic field vector representation
          */
         math::VArray stochastic_integral_mf;
         /**
-         * rdc stochastic integrals for the tensor representation
+         * stochastic integrals for the tensor representation
          */
         std::vector<double> stochastic_integral_t;
         /**
-         * rdc stochastic integrals for the spherical harmonic representation
+         * stochastic integrals for the spherical harmonic representation
          */
         std::vector<double> stochastic_integral_sh;
-      } rdc; // rdc related variables
+      }; // rdc related variables
 
-      //////////////////////////////////////////////////
-
+      /**
+       * rdc restraint averages and other related data
+       */
+      std::vector<rdc_struct> rdc;
 
 
       /**

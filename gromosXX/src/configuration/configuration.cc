@@ -167,23 +167,7 @@ configuration::Configuration::Configuration
   special().orderparamres.Q_winavg = conf.special().orderparamres.Q_winavg;
   special().orderparamres.D_winavg = conf.special().orderparamres.D_winavg;
 
-  special().rdc.av = conf.special().rdc.av;
-  special().rdc.curr = conf.special().rdc.curr;
-  special().rdc.MFpoint = conf.special().rdc.MFpoint;
-  special().rdc.MFpointVel = conf.special().rdc.MFpointVel;
-  special().rdc.MFpointMass = conf.special().rdc.MFpointMass;
-  special().rdc.Tensor = conf.special().rdc.Tensor;
-  special().rdc.TensorVel = conf.special().rdc.TensorVel;
-  special().rdc.TensorMass = conf.special().rdc.TensorMass;
-  special().rdc.clm = conf.special().rdc.clm;
-  special().rdc.clmVel = conf.special().rdc.clmVel;
-  special().rdc.clmMass = conf.special().rdc.clmMass;
-  special().rdc.factorFreq = conf.special().rdc.factorFreq;
-  special().rdc.factorGyr = conf.special().rdc.factorGyr;
-  special().rdc.Ekin = conf.special().rdc.Ekin;
-  special().rdc.stochastic_integral_mf = conf.special().rdc.stochastic_integral_mf;
-  special().rdc.stochastic_integral_t = conf.special().rdc.stochastic_integral_t;
-  special().rdc.stochastic_integral_sh = conf.special().rdc.stochastic_integral_sh;
+  special().rdc = conf.special().rdc;
  
   special().rottrans_constr = conf.special().rottrans_constr;
 
@@ -291,23 +275,7 @@ configuration::Configuration & configuration::Configuration::operator=
   special().distancefield.energy = conf.special().distancefield.energy;
   special().distancefield.energy_deriv = conf.special().distancefield.energy_deriv;
  
-  special().rdc.av = conf.special().rdc.av;
-  special().rdc.curr = conf.special().rdc.curr;
-  special().rdc.MFpoint = conf.special().rdc.MFpoint;
-  special().rdc.MFpointVel = conf.special().rdc.MFpointVel;
-  special().rdc.MFpointMass = conf.special().rdc.MFpointMass;
-  special().rdc.Tensor = conf.special().rdc.Tensor;
-  special().rdc.TensorVel = conf.special().rdc.TensorVel;
-  special().rdc.TensorMass = conf.special().rdc.TensorMass;
-  special().rdc.clm = conf.special().rdc.clm;
-  special().rdc.clmVel = conf.special().rdc.clmVel;
-  special().rdc.clmMass = conf.special().rdc.clmMass;
-  special().rdc.factorFreq = conf.special().rdc.factorFreq;
-  special().rdc.factorGyr = conf.special().rdc.factorGyr;
-  special().rdc.Ekin = conf.special().rdc.Ekin;
-  special().rdc.stochastic_integral_mf = conf.special().rdc.stochastic_integral_mf;
-  special().rdc.stochastic_integral_t = conf.special().rdc.stochastic_integral_t;
-  special().rdc.stochastic_integral_sh = conf.special().rdc.stochastic_integral_sh;
+  special().rdc = conf.special().rdc;
 
   special().pscale = conf.special().pscale;
   
@@ -324,8 +292,6 @@ configuration::Configuration & configuration::Configuration::operator=
   special().force_groups = conf.special().force_groups;
   
   boundary_type = conf.boundary_type;
-
-
 
   return *this;
 }

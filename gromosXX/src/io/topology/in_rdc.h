@@ -1,4 +1,3 @@
-//GP AT WORK 21
 /**
  * @file in_rdc.h
  * read in a rdc restraining specification file.
