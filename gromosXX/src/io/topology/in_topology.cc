@@ -780,14 +780,14 @@ io::In_Topology::read(topology::Topology& topo,
 
     } // BOND
 
-    { // CGBOND
-      DEBUG(10, "CGBOND block");
+    { // BONDDP
+      DEBUG(10, "BONDDP block");
 
       if (!quiet)
-        os << "\tCGBOND";
+        os << "\tBONDDP";
 
       buffer.clear();
-      buffer = m_block["CGBOND"];
+      buffer = m_block["BONDDP"];
       if (buffer.size()) {
         it = buffer.begin() + 1;
 
@@ -805,18 +805,18 @@ io::In_Topology::read(topology::Topology& topo,
           _lineStream >> i >> j >> t;
 
           if (_lineStream.fail() || !_lineStream.eof()) {
-            io::messages.add("Bad line in CGBOND block",
+            io::messages.add("Bad line in BONDDP block",
                     "In_Topology", io::message::error);
           }
 
           if (i > int(topo.num_solute_atoms()) || j > int(topo.num_solute_atoms()) ||
                   i < 1 || j < 1) {
-            io::messages.add("Atom number out of range in CGBOND block",
+            io::messages.add("Atom number out of range in BONDDP block",
                     "In_Topology", io::message::error);
           }
           
           if (t < 1) {
-            io::messages.add("Error in CGBOND block: bond type < 1",
+            io::messages.add("Error in BONDDP block: bond type < 1",
                     "In_Topology", io::message::error);
           }
 
@@ -825,19 +825,19 @@ io::In_Topology::read(topology::Topology& topo,
         }
 
         if (n != num) {
-          io::messages.add("Wrong number of bonds in CGBOND block",
+          io::messages.add("Wrong number of bonds in BONDDP block",
                   "In_Topology", io::message::error);
         }
       }
 
-    } // CGBOND
+    } // BONDDP
 
     { // check the bonds
 
       if (param.force.bond) {
         if (!check_type(m_block[bond_bname], topo.solute().bonds()) ||
                 !check_type(m_block[bond_bname], topo.solute().cgbonds())) {
-          io::messages.add("Illegal bond type in BOND(H) or CGBOND block (type not in "
+          io::messages.add("Illegal bond type in BOND(H) or BONDDP block (type not in "
                   + bond_bname + ")",
                   "In_Topology", io::message::error);
         }
