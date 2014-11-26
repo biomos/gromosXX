@@ -453,6 +453,7 @@ int algorithm::Stochastic_Dynamics_Vel2
       math::Vec r;
       periodicity.nearest_image(conf.current().pos(i), conf.old().pos(i), r);
       conf.current().vel(i) = r * cinv;
+      DEBUG(10, "velocity SHAKEN" << math::v2s(conf.current().vel(i)))
     }
   } // constraints
   else{

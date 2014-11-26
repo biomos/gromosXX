@@ -108,7 +108,7 @@ util::replica::replica(io::Argument _args, int cont, int _ID, int _rank) : ID(_I
     (*it).second.insert(pos, tmp.str());
   }
   if (sim.param().polarise.write || sim.param().jvalue.write || sim.param().xrayrest.write
-          || sim.param().distanceres.write || sim.param().localelev.write
+          || sim.param().distanceres.write || sim.param().distancefield.write || sim.param().localelev.write
           || sim.param().electric.dip_write || sim.param().electric.cur_write
           || sim.param().addecouple.write || sim.param().nemd.write
           || sim.param().orderparamrest.write || sim.param().print.monitor_dihedrals) {
@@ -583,6 +583,7 @@ void util::replica::send_coord(const int receiverID, const int receiverRank) {
   angles[2] = conf.current().theta;
 
   MPI_Send(&angles[0], angles.size(), MPI_DOUBLE, receiverRank, ANGLES, MPI_COMM_WORLD);
+  MPI_Send(&conf.special().distancefield.distance[0], conf.special().distancefield.distance.size(), MPI_DOUBLE, receiverRank, DF, MPI_COMM_WORLD);
   if ((int) ID > receiverID)
     conf.exchange_state();
 #endif
@@ -612,6 +613,9 @@ void util::replica::receive_new_coord(const int senderID, const int senderRank) 
   conf.current().phi = angles[0];
   conf.current().psi = angles[1];
   conf.current().theta = angles[2];
+
+  MPI_Recv(&conf.special().distancefield.distance[0], conf.special().distancefield.distance.size(), MPI_DOUBLE, senderRank, DF, MPI_COMM_WORLD, &status);
+
   if ((int) ID > senderID)
     conf.exchange_state();
 #endif

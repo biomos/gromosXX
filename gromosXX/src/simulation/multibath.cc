@@ -105,12 +105,24 @@ void simulation::Multibath
   topo.calculate_constraint_dof(*this, rottrans_constraints, position_constraints);
 
   // subtract user dof (NDFMIN in BOUNDCOND block)
-  // loop over bath an remove one (size())th of them from every bath
-  dof_to_subtract /= double(size());
+  //
+  // Martin Stroet edit:
+  //     loop over baths and remove bath_dof/total_dof from every bath
+  int dof_total = 0;
   for (simulation::Multibath::iterator it = begin(), to = end();
-          it != to; ++it) {
-    it->dof -= dof_to_subtract;
+            it != to; ++it) {
+    dof_total += it->dof;
   }
+  for (simulation::Multibath::iterator it = begin(), to = end();
+       it != to; ++it) {
+    it->dof -= dof_to_subtract*(it->dof/dof_total);
+  }
+
+  //dof_to_subtract /= double(size());
+  //for (simulation::Multibath::iterator it = begin(), to = end();
+  //        it != to; ++it) {
+  //  it->dof -= dof_to_subtract;
+  //}
 
   // check whether all temperature groups are attached to only one bath
   for (topology::Temperaturegroup_Iterator tg_it = topo.temperature_group_begin(),

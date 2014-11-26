@@ -205,7 +205,10 @@ io::In_Refpos::read(topology::Topology& topo,
         conf.special().reference_positions.resize(topo.num_atoms());
         io::In_Configuration::_read_position(conf.special().reference_positions,
                                                 buffer, topo.num_atoms(), std::string("REFPOSITION"));
-        if (conf.boundary_type == math::truncoct) {
+        // CHRIS: this is only set in read_configuration so we cannot do this check here
+        // use the value from sim.param()
+        //if (conf.boundary_type == math::truncoct) {
+        if (sim.param().boundary.boundary == math::truncoct) {
           // convert to triclinic system
           math::truncoct_triclinic(conf.special().reference_positions, true);
         }
