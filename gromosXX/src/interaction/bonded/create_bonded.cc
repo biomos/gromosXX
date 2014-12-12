@@ -53,113 +53,60 @@ int interaction::create_g96_bonded(interaction::Forcefield & ff,
   DEBUG(8, "creating g96 bonded");
   
   if (param.force.bond == 1){
+    if (!quiet)
+      os << "\tquartic bond interaction\n";
 
     interaction::Quartic_Bond_Interaction *b =
               new interaction::Quartic_Bond_Interaction();
-    interaction::CG_Bond_Interaction * bcg =
-              new interaction::CG_Bond_Interaction();
 
-    if (param.cgrain.level > 1) {  // CG
-      if (!quiet)
-        os <<"\tcoarse grained bond interaction\n";
-      it.read_g96_bonds(bcg->parameter());
-      ff.push_back(bcg);
-      if (param.cgrain.level == 3) {  // CG-FG
-        if (!quiet)
-          os << "\tquartic bond interaction\n";
-        ff.push_back(b);
-      }
-    } else {   // FG
-      DEBUG(8, "quartic, FG");
-      if (!quiet)
-        os << "\tquartic bond interaction\n";
-      it.read_g96_bonds(b->parameter());
-      ff.push_back(b);
-    }
+    it.read_g96_bonds(b->parameter());
+    ff.push_back(b);
 
     if (param.perturbation.perturbation) {
+      if (!quiet)
+        os << "\tperturbed quartic bond interaction\n";
 
-      if (param.cgrain.level > 1) {
-        if (!quiet)
-          os << "\tperturbed coarse grained bond interaction\n";
-        interaction::Perturbed_CG_Bond_Interaction * pbcg =
-                new interaction::Perturbed_CG_Bond_Interaction(*bcg);
-        ff.push_back(pbcg);
-        if (param.cgrain.level == 3) {
-          if (!quiet)
-            os << "\tperturbed quartic bond interaction\n";
-          interaction::Perturbed_Quartic_Bond_Interaction * pb =
-                  new interaction::Perturbed_Quartic_Bond_Interaction(*b);
-          ff.push_back(pb);
-        }
-      } else {
-        if (!quiet)
-            os << "\tperturbed quartic bond interaction\n";
-        interaction::Perturbed_Quartic_Bond_Interaction * pb =
-                new interaction::Perturbed_Quartic_Bond_Interaction(*b);
-        ff.push_back(pb);
-      }
+      interaction::Perturbed_Quartic_Bond_Interaction * pb =
+        new interaction::Perturbed_Quartic_Bond_Interaction(*b);
+      ff.push_back(pb);
     }
-  }
-  else if (param.force.bond == 2) {
+  } else if (param.force.bond == 2) {
+    if (!quiet)
+      os << "\tharmonic bond interaction\n";
 
     interaction::Harmonic_Bond_Interaction *b =
-              new interaction::Harmonic_Bond_Interaction();
-    interaction::CG_Bond_Interaction * bcg =
-              new interaction::CG_Bond_Interaction();
+      new interaction::Harmonic_Bond_Interaction();
 
-    if (param.cgrain.level > 1) {  // CG
-      if (!quiet)
-        os <<"\tcoarse grained bond interaction\n";
-      it.read_g96_bonds(bcg->parameter());
-      ff.push_back(bcg);
-      if (param.cgrain.level == 3) {  // CG-FG
-        if (!quiet)
-          os << "\tharmonic bond interaction\n";
-        ff.push_back(b);
-      }
-    } else {   // FG
-      DEBUG(8, "quartic, FG");
-      if (!quiet)
-        os << "\tharmonic bond interaction\n";
-      it.read_harmonic_bonds(b->parameter());
-      ff.push_back(b);
-    }
+    it.read_harmonic_bonds(b->parameter());
+    ff.push_back(b);
+
+    io::messages.add("using harmonic bond potential",
+                     "create bonded", io::message::notice);
 
     if (param.perturbation.perturbation) {
+      if (!quiet)
+        os << "\tperturbed harmonic bond interaction\n";
 
-      if (param.cgrain.level > 1) {
-        if (!quiet)
-          os << "\tperturbed coarse grained bond interaction\n";
-        interaction::Perturbed_CG_Bond_Interaction * pbcg =
-                new interaction::Perturbed_CG_Bond_Interaction(*bcg);
-        ff.push_back(pbcg);
-        if (param.cgrain.level == 3) {
-          if (!quiet)
-            os << "\tperturbed harmonic bond interaction\n";
-          interaction::Perturbed_Harmonic_Bond_Interaction * pb =
-                  new interaction::Perturbed_Harmonic_Bond_Interaction(*b);
-          ff.push_back(pb);
-        }
-      } else {
-        if (!quiet)
-            os << "\tperturbed harmonic bond interaction\n";
-        interaction::Perturbed_Harmonic_Bond_Interaction * pb =
-                new interaction::Perturbed_Harmonic_Bond_Interaction(*b);
-        ff.push_back(pb);
-      }
+      interaction::Perturbed_Harmonic_Bond_Interaction * pb =
+        new interaction::Perturbed_Harmonic_Bond_Interaction(*b);
+      ff.push_back(pb);
     }
-  } else if (param.force.bond == 0 && param.cgrain.level > 1) {
-    interaction::CG_Bond_Interaction * bcg =
-              new interaction::CG_Bond_Interaction();
+  } 
+
+  if (param.cgrain.level > 1) {
     if (!quiet)
-      os << "\tcoarse grained bond interaction\n";
+      os << "\tdipole-particle bond interaction\n";
+
+    interaction::CG_Bond_Interaction * bcg =
+      new interaction::CG_Bond_Interaction();
+
     it.read_g96_bonds(bcg->parameter());
     ff.push_back(bcg);
 
     if (param.perturbation.perturbation) {
       if (!quiet)
-        os << "\tperturbed coarse grained bond interaction\n";
+        os << "\tperturbed dipole-particle bond interaction\n";
+
       interaction::Perturbed_CG_Bond_Interaction * pbcg =
               new interaction::Perturbed_CG_Bond_Interaction(*bcg);
       ff.push_back(pbcg);
