@@ -798,6 +798,11 @@ io::In_Topology::read(topology::Topology& topo,
         _lineStream >> num;
         ++it;
 
+        if (!quiet) {
+            os << "\n\t\tspecial bonds to dipole particles : "
+                  << num;
+        }
+
         for (n = 0; it != buffer.end() - 1; ++it, ++n) {
           int i, j, t;
           _lineStream.clear();
@@ -829,6 +834,9 @@ io::In_Topology::read(topology::Topology& topo,
                   "In_Topology", io::message::error);
         }
       }
+
+      if (!quiet)
+        os << "\n\tEND\n";
 
     } // BONDDP
 
