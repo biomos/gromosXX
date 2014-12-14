@@ -569,14 +569,11 @@ namespace io
     os << "\n" << std::setw(20) << type + "SASA";
     for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << e.sasa_energy[i];
 
-    os << "\n" << std::setw(20) << type + "Volume";
+    os << "\n" << std::setw(20) << type + "SASA Volume";
     for (unsigned int i = 0; i < numenergygroups; i++) os << std::setw(12) << e.sasa_volume_energy[i];
 
     os << "\n" << std::setw(20) << type + "Constraints";
     for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << e.constraints_energy[i];
-
-    os << "\n" << std::setw(20) << type + "Posrest";
-    for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << e.posrest_energy[i];
 
     os << "\n" << std::setw(20) << type + "Distanceres";
     for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << e.distanceres_energy[i];
@@ -587,11 +584,14 @@ namespace io
     os << "\n" << std::setw(20) << type + "Dihrest";
     for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << e.dihrest_energy[i];
 
-    os << "\n" << std::setw(20) << type + "JRest";
+    os << "\n" << std::setw(20) << type + "Posrest";
+    for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << e.posrest_energy[i];
+
+    os << "\n" << std::setw(20) << type + "Jrest";
     for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << e.jvalue_energy[i];
 
-    os << "\n" << std::setw(20) << type + "RDCRest";  
-    for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << e.rdc_energy[i];  
+    os << "\n" << std::setw(20) << type + "RDCrest";
+    for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << e.rdc_energy[i];
 
     os << "\nEND\n";
     

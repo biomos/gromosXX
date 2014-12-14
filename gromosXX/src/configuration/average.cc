@@ -499,8 +499,9 @@ fluct.prop = old_fluct.prop + dt * e.prop * e.prop
     ENERGY_AVG(dihrest_energy[i]);
     ENERGY_AVG(disfieldres_energy[i]);
     ENERGY_AVG(constraints_energy[i]);
-    ENERGY_AVG(self_energy[i]);
+    ENERGY_AVG(jvalue_energy[i]);
     ENERGY_AVG(rdc_energy[i]);
+    ENERGY_AVG(self_energy[i]);
   }
 
 #undef ENERGY_AVG
@@ -705,6 +706,7 @@ void configuration::Average::Block_Average
     ENERGY_RES(dihrest_energy[i]);
     ENERGY_RES(disfieldres_energy[i]);
     ENERGY_RES(constraints_energy[i]);
+    ENERGY_RES(jvalue_energy[i]);
     ENERGY_RES(rdc_energy[i]);
     
     ENERGY_RES(self_energy[i]);
