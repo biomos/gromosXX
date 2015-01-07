@@ -24,6 +24,9 @@
 
 #include <configuration/energy.h>
 
+#include <string>
+#include <iterator>
+
 #ifdef OMP
 #include <omp.h>
 #endif
@@ -1122,17 +1125,16 @@ void io::In_Parameter::read_PERTURBATION(simulation::Parameter &param,
  * @section force FORCE block
  * @verbatim
 FORCE
-# NTF(1..10): 0,1 determines terms used in force calculation
+# NTF(1..6): 0,1 determines terms used in force calculation
 #             0: do not include terms
 #             1: include terms
 # NEGR: ABS(NEGR): number of energy groups
 #             > 0: use energy groups
 #             < 0: use energy and force groups
 # NRE(1..NEGR): >= 1.0 last atom in each energy group
-# NTF(1..2) NTF(3..4) NTF(5..6) NTF(7..8) NTF(9)        NTF(10)
+# NTF(1)    NTF(2)    NTF(3)    NTF(4)    NTF(5)        NTF(6)
 # bonds     angles    improper  dihedral  electrostatic vdW
-# H         H         H         H
-  0  0      1  1      1  1      1  1      1             1
+  0         1         1         1         1             1
 # NEGR    NRE(1)    NRE(2)    ...      NRE(NEGR)
      1        60           
 END
@@ -1155,15 +1157,66 @@ void io::In_Parameter::read_FORCE(simulation::Parameter &param,
 
   block_read.insert("FORCE");
 
+  // NTS
   _lineStream.clear();
-  _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
+  _lineStream.str(buffer[1]);
+  
+  int a;
+  std::vector<int> ntf;
+  while (_lineStream >> a) {
+    ntf.push_back(a);
+  }
+  
+  int bondH, angleH, impH, dihedralH;
+  if (ntf.size() == 10) { // old FORCE block
+    io::messages.add("Old FORCE block used.", "In_Parameter",
+            io::message::warning);
+    bondH = ntf[0];
+    param.force.bond = ntf[1];
+    angleH = ntf[2];
+    param.force.angle = ntf[3];
+    impH = ntf[4];
+    param.force.improper = ntf[5];
+    dihedralH = ntf[6];
+    param.force.dihedral = ntf[7];
+    param.force.nonbonded_crf = ntf[8];
+    param.force.nonbonded_vdw = ntf[9];
+    
+    // checks
+    if (bondH ^ param.force.bond)
+    io::messages.add("FORCE block: switch for bond and bond H has to be equal",
+          "In_Parameter", io::message::error);
 
-  int bondH, angleH, impH, dihedralH, snum;
+    if (angleH ^ param.force.angle)
+      io::messages.add("FORCE block: switch for angle and angle H has to be equal",
+            "In_Parameter", io::message::error);
+
+    if (impH ^ param.force.improper)
+      io::messages.add("FORCE block: switch for improper and improper H has to be equal",
+            "In_Parameter", io::message::error);
+
+    if (dihedralH ^ param.force.dihedral)
+      io::messages.add("FORCE block: switch for dihedral and dihedral H has to be equal",
+            "In_Parameter", io::message::error);
+  } else if (ntf.size() == 6) { // new FORCE block
+    param.force.bond = ntf[0];
+    param.force.angle = ntf[1];
+    param.force.improper = ntf[2];
+    param.force.dihedral = ntf[3];
+    param.force.nonbonded_crf = ntf[4];
+    param.force.nonbonded_vdw = ntf[5];
+  } else {
+    io::messages.add("FORCE block: bad line in NTS",
+            "In_Parameter", io::message::error);
+  }
+  
+  // energy groups
+  _lineStream.clear();
+  _lineStream.str(concatenate(buffer.begin() + 2, buffer.end() - 1, s));
+
+  int snum;
   unsigned int num, e, old_e = 0;
 
-  _lineStream >> bondH >> param.force.bond >> angleH >> param.force.angle
-          >> impH >> param.force.improper >> dihedralH >> param.force.dihedral
-          >> param.force.nonbonded_crf >> param.force.nonbonded_vdw;
   _lineStream >> snum;
   
   if (snum < 0) {
@@ -1218,23 +1271,6 @@ void io::In_Parameter::read_FORCE(simulation::Parameter &param,
 
   if (_lineStream.fail())
     io::messages.add("FORCE block: bad line in ENERGYGROUP",
-          "In_Parameter", io::message::error);
-
-
-  if (bondH ^ param.force.bond)
-    io::messages.add("FORCE block: switch for bond and bond H has to be equal",
-          "In_Parameter", io::message::error);
-
-  if (angleH ^ param.force.angle)
-    io::messages.add("FORCE block: switch for angle and angle H has to be equal",
-          "In_Parameter", io::message::error);
-
-  if (impH ^ param.force.improper)
-    io::messages.add("FORCE block: switch for improper and improper H has to be equal",
-          "In_Parameter", io::message::error);
-
-  if (dihedralH ^ param.force.dihedral)
-    io::messages.add("FORCE block: switch for dihedral and dihedral H has to be equal",
           "In_Parameter", io::message::error);
 
   if ((!param.force.nonbonded_crf) && param.force.nonbonded_vdw)
