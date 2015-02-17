@@ -191,7 +191,16 @@ static void _init(topology::Topology & topo,
       conf.current().pos(i) -= com_pos;
     periodicity.put_chargegroups_into_box(conf, topo);
     conf.exchange_state();
-
+    
+    // if position restraints are used, the reference positions should be moved along
+    if(sim.param().posrest.posrest != simulation::posrest_off){
+      for(unsigned int i = 0; i < topo.num_atoms(); ++i){
+	conf.special().reference_positions(i) -= com_pos;
+	// and they should also be put in the box
+	periodicity.put_into_box(conf.special().reference_positions(i));      
+      }
+    }
+    
     // check
     // sp.center_of_mass(0, topo.num_solute_atoms(), topo.mass(), com_pos, com_e_kin);
     // DEBUG(10, "com (centered): " << math::v2s(com_pos));

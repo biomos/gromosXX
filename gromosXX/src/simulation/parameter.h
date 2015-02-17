@@ -1911,6 +1911,7 @@ namespace simulation
 	  smooth(0),
           r_l(0),
           write(0),
+          printgrid(false),
 	  update(1)
       {
       }
@@ -1943,6 +1944,10 @@ namespace simulation
        * write on/off
        */
       unsigned int write;
+      /**
+       * print the final grid to file
+       */
+      bool printgrid;
       /**
        * update frequency
        */

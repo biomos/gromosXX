@@ -2348,24 +2348,24 @@ void io::In_Parameter::read_DISTANCERES(simulation::Parameter &param,
  * @section distancefield DISTANCEFIELD block
  * @verbatim
 DISTANCEFIELD
-#   NTDFR 0,1 controls distance field restraining
+#   NTDFR 0,1         controls distance field restraining
 #         0: no distance field restraining
 #         1: apply distance field restraining
 #   GRID  > 0.0 Grid size for distance field
 #   PROTEINOFFSET > 0 penalty for distances through the host
 #   PROTEINCUTOFF > 0 distance to protein atoms to be considered inside
-#   UPDATE > 0 update frequency for grid
-#   RL >= 0 linearize forces for distances larger than RL
-#   SMOOTH >= 0 smoothen the protein boundary after grid construction
-#               by SMOOTH layers
-#   NTWDF >= 0 write every NTWDF step disfield information to external file 
-#
+#   UPDATE > 0        update frequency for grid
+#   RL >= 0           linearize forces for distances larger than RL
+#   SMOOTH >= 0       smoothen the protein boundary after grid construction
+#                     by SMOOTH layers
+#   NTWDF >= 0        write every NTWDF step disfield information to external file 
+#   PRINTGRID = 0,1   write grid to final configuration file      
 #   NTDFR  
         1
 #    GRID   PROTEINOFFSET  PROTEINCUTOFF
       0.2   15             0.2         
-#  UPDATE   SMOOTH   RL    NTWDF
-      100   1        1.0      50
+#  UPDATE   SMOOTH   RL    NTWDF   PRINTGRID
+      100   1        1.0      50           0
 END  
 @endverbatim
  */
@@ -2388,7 +2388,7 @@ void io::In_Parameter::read_DISTANCEFIELD(simulation::Parameter &param,
   _lineStream.clear();
   _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
 
-  int num, atom;
+  int printgrid = -1;
   _lineStream >> param.distancefield.distancefield
 	      >> param.distancefield.grid
 	      >> param.distancefield.proteinoffset
@@ -2396,7 +2396,8 @@ void io::In_Parameter::read_DISTANCEFIELD(simulation::Parameter &param,
 	      >> param.distancefield.update
 	      >> param.distancefield.smooth
               >> param.distancefield.r_l
-	      >> param.distancefield.write;
+	      >> param.distancefield.write
+	      >> printgrid;
 
   if (_lineStream.fail())
     io::messages.add("bad line in DISTANCEFIELD block",
@@ -2428,6 +2429,13 @@ void io::In_Parameter::read_DISTANCEFIELD(simulation::Parameter &param,
     io::messages.add("DISTANCEFIELD block: SMOOTH must be >= 0.",
 		     "In_Parameter", io::message::error);
   }
+  if (printgrid!=0 && printgrid!=1) {
+    io::messages.add("DISTANCEFIELD block: PRINTGRID must be 0 or 1.",
+		     "In_Parameter", io::message::error);
+  }
+  if(printgrid==1) param.distancefield.printgrid = true;
+  else param.distancefield.printgrid = false;
+  
 } // DISTANCEFIELD
 
 /**

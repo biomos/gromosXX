@@ -534,6 +534,10 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       _print_distance_restraint_averages(conf, topo, m_final_conf);
     }
 
+    if(sim.param().distancefield.printgrid) {
+      _print_disfield_grid(sim.param(), conf, topo, m_final_conf);
+    }
+    
     if (sim.param().posrest.posrest != simulation::posrest_off) {
       _print_position_restraints(sim, topo, conf, m_final_conf);
     }
@@ -2348,12 +2352,14 @@ void io::Out_Configuration::_print_disfield_restraints(
   DEBUG(10, "disfield restraints");
 
   double distance = conf.special().distancefield.dist;
-
+  double energy = conf.special().distancefield.energy;
+  
   os.setf(std::ios::fixed, std::ios::floatfield);
   os.precision(m_disfield_restraint_precision);
 
   os << "DISFIELDRESDATA" << std::endl;
   os << std::setw(m_width) << distance
+     << std::setw(m_width) << energy
      << std::endl;
   os << "END" << std::endl;
 }
@@ -2380,6 +2386,46 @@ void io::Out_Configuration::_print_distance_restraint_averages(
   if ((i-1) % 5 != 0)
     os << std::endl;
 
+  os << "END" << std::endl;
+}
+
+void io::Out_Configuration::_print_disfield_grid(
+	simulation::Parameter const &param,
+        configuration::Configuration const &conf,
+        topology::Topology const &topo,
+        std::ostream &os) {
+  DEBUG(10, "distancefield grid");
+  
+  os.setf(std::ios::fixed, std::ios::floatfield);
+  os.precision(m_distance_restraint_precision);
+
+  os << "DISTANCEFIELDGRID" << std::endl;
+ 
+  const std::vector<int> &ngrid = conf.special().distancefield.ngrid;
+  const double grid = param.distancefield.grid;
+  math::Box box = conf.current().box;
+  
+  for(unsigned int j=0; j< conf.special().distancefield.distance.size(); j++){ 
+    int nz = int(double(j) / double(ngrid[0] * ngrid[1]));
+    int ny = int(double( j % (ngrid[0] * ngrid[1]) ) / double(ngrid[0]));
+    int nx = (j % (ngrid[0] * ngrid[1])) % ngrid[0];
+    // the grid is defined for -half the box lenght to +half the box length
+    math::Vec gpos(nx*grid - box(0,0)/2, ny*grid - box(1,1)/2, nz*grid - box(2,2)/2);
+    
+    // we put it in the positive box in an ugly way because:
+    // 1. distancefield only works for rectangular boxes anyway
+    // 2. otherwise this function has to be templated for periodicity
+    if(gpos[0] < 0.0) gpos[0] += box(0,0);
+    if(gpos[1] < 0.0) gpos[1] += box(1,1);
+    if(gpos[2] < 0.0) gpos[2] += box(2,2);
+    
+    os << std::setw(m_width) << gpos[0]
+       << std::setw(m_width) << gpos[1]
+       << std::setw(m_width) << gpos[2]
+       << std::setw(m_width) << conf.special().distancefield.distance[j]
+       << std::endl;
+    
+  }
   os << "END" << std::endl;
 }
 

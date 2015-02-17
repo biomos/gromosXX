@@ -41,7 +41,7 @@ util::replica::replica(io::Argument _args, int cont, int _ID, int _rank) : ID(_I
 
   // set trajectory
   std::stringstream trajstr;
-  trajstr << GROMOSXX << "\nReplica Exchange with Replica ID " << (ID+1) << std::endl;
+  trajstr << GROMOSXX << "\n\tReplica Exchange with Replica ID " << (ID+1) << std::endl;
   std::string trajname = trajstr.str();
 
   traj = new io::Out_Configuration(trajname, *os);
@@ -132,10 +132,12 @@ util::replica::replica(io::Argument _args, int cont, int _ID, int _rank) : ID(_I
     (*it).second.insert(pos, tmp.str());
   }
 
-  traj->init(args, sim.param());
+  // Chris: setting the title after init does not make much sense. The init function already prints it
   std::stringstream trajtitle;
-  trajtitle << GROMOSXX << "\n" << sim.param().title << "\nReplica " << (ID+1) << "on Node " << rank;
+  trajtitle << GROMOSXX << "\n" << sim.param().title << "\n\tReplica " << (ID+1) << "on Node " << rank;
   traj->title(trajtitle.str());
+
+  traj->init(args, sim.param());
 
   // random generator
   std::stringstream seed;

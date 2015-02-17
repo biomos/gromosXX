@@ -281,6 +281,12 @@ namespace io {
             topology::Topology const &topo,
             std::ostream &os);
 
+    void _print_disfield_grid(
+	    simulation::Parameter const &param,
+	    configuration::Configuration const &conf,
+	    topology::Topology const &topo,
+	    std::ostream &os);
+    
     void _print_position_restraints(simulation::Simulation const &sim,
             topology::Topology const &topo,
             configuration::Configuration const &conf,

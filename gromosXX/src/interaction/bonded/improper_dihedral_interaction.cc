@@ -94,6 +94,12 @@ static int _calculate_improper_interactions(topology::Topology & topo,
     const double K  = param[i_it->type].K;
     const double q0 = param[i_it->type].q0;
 
+    // move q to the interval q0 - 180 < q < q0 + 180
+    while(q < q0 - math::Pi)
+      q += 2 * math::Pi;
+    while(q > q0 + math::Pi)
+      q -= 2* math::Pi;
+
     const double ki = -K * (q - q0) * dkj / dmj2;
     const double kl = K * (q - q0) * dkj / dnk2;
     const double kj1 = dot(rij, rkj) / dkj2 - 1.0;
