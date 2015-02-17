@@ -32,11 +32,13 @@ int algorithm::Pressure_Calculation
   DEBUG(7, "Pressure calculation");
 
   m_timer.start();
-  // virial -0.5 factor applied here!
-  conf.old().virial_tensor *= -0.5;
+
+  // the virial is stored internally as just the outer product of positions and forces
+  // so without the -0.5 prefactor.
+
   // calculate the pressure tensor
   conf.old().pressure_tensor = topo.tot_cg_factor() *
-          (conf.old().kinetic_energy_tensor - conf.old().virial_tensor) *
+          (conf.old().kinetic_energy_tensor + 0.5 * conf.old().virial_tensor) *
           (2.0 / math::volume(conf.old().box, conf.boundary_type));
   
   m_timer.stop();

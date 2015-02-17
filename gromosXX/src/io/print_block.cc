@@ -383,9 +383,12 @@ namespace io
     }
     
     os << "\n\tvirial\n\t";
+    // the virial is stored internally as just the outer product of positions and forces
+    // so without the -0.5 prefactor.
+
     for(int i=0; i<3; ++i){
       for(int j=0; j<3; ++j)
-	os << std::setw(15) << conf.old().virial_tensor(i,j);
+	os << std::setw(15) << -0.5 * conf.old().virial_tensor(i,j);
       os << "\n\t";
     }
 

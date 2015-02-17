@@ -2954,7 +2954,12 @@ static void _print_volumepressurered_helper(std::ostream &os,
   os << "# pressure\n";
   math::Matrixl auxp(math::product(Rmat, p));
   os << std::setw(18) << (auxp(0, 0) + auxp(1, 1) + auxp(2, 2)) / 3.0 << "\n";
+
   math::Matrixl auxv(math::product(Rmat, v));
+  // the virial is stored internally as just the outer product of positions and forces
+  // so without the -0.5 prefactor
+  auxv *= -0.5;
+
   os << std::setw(18) << (auxv(0, 0) + auxv(1, 1) + auxv(2, 2)) / 3.0 << "\n";
   math::Matrixl auxk(math::product(Rmat, k));
   os << std::setw(18) << (auxk(0, 0) + auxk(1, 1) + auxk(2, 2)) / 3.0 << "\n";
