@@ -69,70 +69,74 @@ static int _calculate_distance_restraint_interactions
     DEBUG(9, "DISTANCERES v : " << math::v2s(v));
 
     double dist = math::abs(v);
+    // dist is possibly overwritten with the time-averaged distance
+    // store the instanteneous value in vabs
+    double vabs = dist;
+    
     (*d_it) = dist;
     DEBUG(9, "DISTANCERES dist : " << dist << " r0 : " << it->r0);
     double force_scale = 1.0;
     if (sim.param().distanceres.distanceres < 0) {
-      //force_scale = (1.0 - exponential_term);
-      // this can cause large fluctuations and is omited.
+
       (*ave_it) = (1.0 - exponential_term) * pow(dist, -3.0) + 
                    exponential_term * (*ave_it);
 
       dist = pow(*ave_it, -1.0 / 3.0);
       DEBUG(9, "DISTANCERES average dist : " << dist);
+
+      // the force_scaling causes large fluctuations and may be omitted
+      if(sim.param().distanceres.forcescale == 0)
+	force_scale = 1.0;
+      else if(sim.param().distanceres.forcescale == 1)
+	force_scale = (1.0 - exponential_term);
+      else if(sim.param().distanceres.forcescale == 2)
+	force_scale = (1.0 - exponential_term) * dist * dist * dist * dist / 
+	  (vabs * vabs * vabs * vabs);
     } else {
       (*ave_it) = 0.0;
     }
 
     if(it->rah*dist < it->rah * it->r0){
       DEBUG(9, "DISTANCERES  : restraint fulfilled");
+      energy = 0;
       f=0;
     }
     else if(fabs(it->r0 - dist) < sim.param().distanceres.r_linear){
       DEBUG(9, "DISTANCERES  : harmonic");
-      f = - sim.param().distanceres.K * (dist - it->r0) * v / dist;
+      energy = 0.5 * sim.param().distanceres.K * (dist - it->r0) * (dist - it->r0);
+      f = - sim.param().distanceres.K * (dist - it->r0) * v / vabs;
     }
     else{
       DEBUG(9, "DISTANCERES  : linear");
-      if(dist < it->r0)
-	f =  sim.param().distanceres.r_linear * sim.param().distanceres.K  * v / dist;
-      else
-	f = -sim.param().distanceres.r_linear * sim.param().distanceres.K  * v / dist;
+      if(dist < it->r0){
+	energy = -sim.param().distanceres.K * sim.param().distanceres.r_linear *
+	  (dist - it->r0 + 0.5 * sim.param().distanceres.r_linear);
+	f =  sim.param().distanceres.r_linear * sim.param().distanceres.K  * v / vabs;
+      }
+      else {
+	energy =  sim.param().distanceres.K * sim.param().distanceres.r_linear *
+	  (dist - it->r0 - 0.5 * sim.param().distanceres.r_linear); 
+	f = -sim.param().distanceres.r_linear * sim.param().distanceres.K  * v / vabs;
+      }
     }
     
     if(abs(sim.param().distanceres.distanceres) == 1)
       ;
-    else if(abs(sim.param().distanceres.distanceres) == 2)
+    else if(abs(sim.param().distanceres.distanceres) == 2){
+      energy *= it->w0;
       f *= it->w0;
-    else 
+    }
+    else{
+      energy = 0;
       f = 0;
-
-    // scale the force according to 2.6.3.15
+    }
+    
+    // scale the force according to 8.17
     f *= force_scale;
     DEBUG(9, "Distanceres force : " << math::v2s(f));
 
     it->v1.force(conf, topo,  f);
     it->v2.force(conf, topo, -f);  
-
-    if(it->rah * dist < it->rah * it->r0)
-      energy = 0;
-    else if(fabs(it->r0 - dist) < sim.param().distanceres.r_linear)
-      energy = 0.5 * sim.param().distanceres.K * (dist - it->r0) * (dist - it->r0);
-    else{
-      if(dist < it->r0)
-	energy = -sim.param().distanceres.K * sim.param().distanceres.r_linear *
-	  (dist - it->r0 + 0.5 * sim.param().distanceres.r_linear);
-      else
-	energy =  sim.param().distanceres.K * sim.param().distanceres.r_linear *
-	  (dist - it->r0 - 0.5 * sim.param().distanceres.r_linear);
-    }
-    
-    if(abs(sim.param().distanceres.distanceres) == 1)
-      ;
-    else if(abs(sim.param().distanceres.distanceres) == 2)
-     energy *= it->w0;
-    else
-      energy=0;
 
     (*ene_it) = energy;
 
@@ -140,6 +144,14 @@ static int _calculate_distance_restraint_interactions
 
     conf.current().energies.distanceres_energy[topo.atom_energy_group()
 					    [it->v1.atom(0)]] += energy;
+
+    if (sim.param().distanceres.virial) { 
+      for (int a = 0; a < 3; ++a) {
+	for (int b = 0; b < 3; ++b) { 
+	  conf.current().virial_tensor(a, b) += v(a) * f(b); 
+	}
+      } 
+    }
     
     // std::cout.precision(9);
     // std::cout.setf(std::ios::fixed, std::ios::floatfield);

@@ -1849,6 +1849,8 @@ namespace simulation
 	  r_linear(0),
 	  tau(10),
 	  read(0),
+	  virial(0),
+	  forcescale(0),
           write(0)
       {
       }
@@ -1878,6 +1880,16 @@ namespace simulation
        */
       bool read;
 
+      /**
+       * compute virial contribution
+       */
+      unsigned int virial;
+      
+      /**
+       * force scaling according to equation 8.17
+       */
+      unsigned int forcescale;
+      
       /**
        * write on/off
        */

@@ -2269,9 +2269,16 @@ DISTANCERES
 #    CDIR >= 0.0 force constant for distance restraining
 #    DIR0 > 0.0 distance offset in restraining function
 #  TAUDIR >= 0.0 coupling time for time averaging
+# FORCESCALE 0..2 controls approximation of force scaling
+#         0: approximate d<r>/dr = 1
+#         1: approximate d<r>/dr = (1.0 - exp(-Dt/tau))
+#         2: use d<r>/dr = (1.0 - exp(-Dt/tau))*(<r>/r)^4
+#    VDIR 0,1 controls contribution to virial
+#         0: no contribution
+#         1: distance restraints contribute to virial
 #  NTWDIR >= 0 write every NTWDIRth step dist. restr. information to external file
-#   NTDIR  NTDIRA    CDIR    DIR0  TAUDIR  NTWDIR
-        0       0     0.0     1.0     0.0       0
+#   NTDIR  NTDIRA    CDIR    DIR0  TAUDIR  FORCESCALE  VDIR  NTWDIR
+        0       0     0.0     1.0     0.0           0     0       0
 END
 @endverbatim
  */
@@ -2296,11 +2303,13 @@ void io::In_Parameter::read_DISTANCERES(simulation::Parameter &param,
 
   int ntdira;
   _lineStream >> param.distanceres.distanceres
-          >> ntdira
-          >> param.distanceres.K
-          >> param.distanceres.r_linear
-          >> param.distanceres.tau
-          >> param.distanceres.write;
+	      >> ntdira
+	      >> param.distanceres.K
+	      >> param.distanceres.r_linear
+	      >> param.distanceres.tau
+	      >> param.distanceres.write
+	      >> param.distanceres.forcescale
+	      >> param.distanceres.virial;
 
   if (_lineStream.fail())
     io::messages.add("bad line in DISTANCERES block",
@@ -2342,6 +2351,14 @@ void io::In_Parameter::read_DISTANCERES(simulation::Parameter &param,
             "In_Parameter", io::message::warning);
   }
 
+  if(param.distanceres.virial !=0 && param.distanceres.virial != 1){
+    io::messages.add("DISTANCERES block: VDIR must be 0 or 1",
+		     "In_Parameter", io::message::error);
+  }
+  if(param.distanceres.forcescale < 0 || param.distanceres.forcescale > 2){
+    io::messages.add("DISTANCERES block: FORCESCALE must be 0, 1 or 2",
+		     "In_Parameter", io::message::error);
+  }
 } // DISTANCERES
 
 /**
@@ -2351,7 +2368,7 @@ DISTANCEFIELD
 #   NTDFR 0,1         controls distance field restraining
 #         0: no distance field restraining
 #         1: apply distance field restraining
-#   GRID  > 0.0 Grid size for distance field
+#   GRID  > 0.0       grid size for distance field
 #   PROTEINOFFSET > 0 penalty for distances through the host
 #   PROTEINCUTOFF > 0 distance to protein atoms to be considered inside
 #   UPDATE > 0        update frequency for grid
@@ -2360,6 +2377,7 @@ DISTANCEFIELD
 #                     by SMOOTH layers
 #   NTWDF >= 0        write every NTWDF step disfield information to external file 
 #   PRINTGRID = 0,1   write grid to final configuration file      
+#
 #   NTDFR  
         1
 #    GRID   PROTEINOFFSET  PROTEINCUTOFF
