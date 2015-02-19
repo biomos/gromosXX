@@ -262,11 +262,12 @@ int algorithm::Stochastic_Dynamics_Vel1
 		     io::message::error);
   }
 
-  if (topo.num_solvent_atoms() > 0){
-    io::messages.add("SD only supported with no SOLVENT",
-		     "Stochastic_Dynamics",
-		     io::message::error);
-  }
+  // this has been commented out to enable SD with SOLVENT simulation
+  //if (topo.num_solvent_atoms() > 0){
+  //  io::messages.add("SD only supported with no SOLVENT",
+  //		     "Stochastic_Dynamics",
+  //		     io::message::error);
+  //}
   
   if (!quiet)
     os << "END\n";
@@ -310,79 +311,83 @@ int algorithm::Stochastic_Dynamics_Vel1
   // copy the box
   conf.current().box = conf.old().box;     
   for (unsigned int i=0; i < topo.num_atoms(); ++i){
-    const double kToverM = sqrt(math::k_Boltzmann * sim.param().stochastic.temp / topo.mass(i));
+    if(topo.stochastic().gamma(i) != 0.0) {
+	
+      const double kToverM = sqrt(math::k_Boltzmann * sim.param().stochastic.temp / topo.mass(i));
 
-    //CC2(NATTOT) = delivered with (1-EXP(-GDT))/GDT
-    double cf = sim.time_step_size() * topo.stochastic().c2(i) / topo.mass(i);
-
-    //CC3(NATTOT) = delivered with SQRT(1-EXP(-GDT))
-    //this is 2.11.2.8
-    double sd1 = topo.stochastic().c3(i) * kToverM;
-
-    //CC4(NATTOT) = delivered with SQRT(B(+GDT/2)/C(+GDT/2)) (SEE PAPER)
-    // this is 2.11.2.9
-    double sd2 = kToverM * topo.stochastic().c4(i);
-
-    DEBUG(10, "\ti: " << i << " kT/m(i): " << kToverM <<
-              " sd1: " << sd1 << " sd2: " << sd2);
-
-    //we sample the V'i vector from eq. 2.11.2.20 from a Gaussian with 0.0 mean
-    //and width sigma2_sq (sd1)
-    m_rng->stddev(sd1);
-    m_vrand.vrand1(i) = m_rng->get_gaussian_vec();
-    //we sample the Vi vector to be used in eq. 2.11.2.2 from a Gaussian with 0.0 mean
-    //and width rho1_sq (sd2)
-    m_rng->stddev(sd2);
-    m_vrand.vrand2(i) = m_rng->get_gaussian_vec();
-
-    DEBUG(10, "vrand1=" <<  math::v2s(m_vrand.vrand1(i)));
-    DEBUG(10, "vrand2=" << math::v2s(m_vrand.vrand2(i)));
-    
-    //CC6(NATTOT) = delivered with (EXP(+GDT/2)-EXP(-GDT/2))/GDT
-    //double cvdt = topo.stochastic().c6(i) * sim.time_step_size();
-
-    DEBUG(9, "old vel(" << i << ") " << math::v2s(conf.old().vel(i)));
-    DEBUG(9, "old pos(" << i << ") " << math::v2s(conf.old().pos(i)));
-    DEBUG(9, "old frc(" << i << ") " << math::v2s(conf.old().force(i)));
-    DEBUG(10, "c5=" << topo.stochastic().c5(i));
-    DEBUG(10, "stochastic integral=" << math::v2s(conf.old().stochastic_integral(i)));
+      //CC2(NATTOT) = delivered with (1-EXP(-GDT))/GDT
+      double cf = sim.time_step_size() * topo.stochastic().c2(i) / topo.mass(i);
       
-    math::Vec svh = conf.old().stochastic_integral(i) * topo.stochastic().c5(i) + m_vrand.vrand2(i);
-    //assign vrand to the Stochastic Integral array
-    conf.current().stochastic_integral(i) = m_vrand.vrand1(i);
-    
-    //calculate new velocity using eq. 2.11.2.2 from the GROMOS96 book
-    //CC1(NATTOT) = delivered with EXP(-GDT)  (GDT=GAM(J)*DT)
-    //CC2(NATTOT) = delivered with (1-EXP(-GDT))/GDT
-    //slightly rewritten form of first line of 2.11.2.3 minus
-    //the first term in the third line of 2.11.2.3
-    
-    DEBUG(10, "svh=" << math::v2s(svh));
-    DEBUG(10, "cf=" << cf);
-     
-    conf.current().vel(i) = (conf.old().vel(i) - svh) * topo.stochastic().c1(i)
+      //CC3(NATTOT) = delivered with SQRT(1-EXP(-GDT))
+      //this is 2.11.2.8
+      double sd1 = topo.stochastic().c3(i) * kToverM;
+      
+      //CC4(NATTOT) = delivered with SQRT(B(+GDT/2)/C(+GDT/2)) (SEE PAPER)
+      // this is 2.11.2.9
+      double sd2 = kToverM * topo.stochastic().c4(i);
+      
+      DEBUG(10, "\ti: " << i << " kT/m(i): " << kToverM <<
+	    " sd1: " << sd1 << " sd2: " << sd2);
+      
+      //we sample the V'i vector from eq. 2.11.2.20 from a Gaussian with 0.0 mean
+      //and width sigma2_sq (sd1)
+      m_rng->stddev(sd1);
+      m_vrand.vrand1(i) = m_rng->get_gaussian_vec();
+      //we sample the Vi vector to be used in eq. 2.11.2.2 from a Gaussian with 0.0 mean
+      //and width rho1_sq (sd2)
+      m_rng->stddev(sd2);
+      m_vrand.vrand2(i) = m_rng->get_gaussian_vec();
+      
+      DEBUG(10, "vrand1=" <<  math::v2s(m_vrand.vrand1(i)));
+      DEBUG(10, "vrand2=" << math::v2s(m_vrand.vrand2(i)));
+      
+      //CC6(NATTOT) = delivered with (EXP(+GDT/2)-EXP(-GDT/2))/GDT
+      //double cvdt = topo.stochastic().c6(i) * sim.time_step_size();
+      
+      DEBUG(9, "old vel(" << i << ") " << math::v2s(conf.old().vel(i)));
+      DEBUG(9, "old pos(" << i << ") " << math::v2s(conf.old().pos(i)));
+      DEBUG(9, "old frc(" << i << ") " << math::v2s(conf.old().force(i)));
+      DEBUG(10, "c5=" << topo.stochastic().c5(i));
+      DEBUG(10, "stochastic integral=" << math::v2s(conf.old().stochastic_integral(i)));
+      
+      math::Vec svh = conf.old().stochastic_integral(i) * topo.stochastic().c5(i) + m_vrand.vrand2(i);
+      //assign vrand to the Stochastic Integral array
+      conf.current().stochastic_integral(i) = m_vrand.vrand1(i);
+      
+      //calculate new velocity using eq. 2.11.2.2 from the GROMOS96 book
+      //CC1(NATTOT) = delivered with EXP(-GDT)  (GDT=GAM(J)*DT)
+      //CC2(NATTOT) = delivered with (1-EXP(-GDT))/GDT
+      //slightly rewritten form of first line of 2.11.2.3 minus
+      //the first term in the third line of 2.11.2.3
+      
+      DEBUG(10, "svh=" << math::v2s(svh));
+      DEBUG(10, "cf=" << cf);
+      
+      conf.current().vel(i) = (conf.old().vel(i) - svh) * topo.stochastic().c1(i)
 	// force * m-1 * dt * (1-EXP(-GDT))/GDT, i.e.
 	+ conf.old().force(i) * cf
 	// last term of 2.11.2.2
 	+ m_vrand.vrand1(i);
-	
-    const double sd3 = kToverM * topo.stochastic().c7(i);
-    const double sd4 = kToverM * topo.stochastic().c8(i);
- 
-    DEBUG(10, "sd3: " << sd3 << " sd4: " << sd4);   
+      
+      const double sd3 = kToverM * topo.stochastic().c7(i);
+      const double sd4 = kToverM * topo.stochastic().c8(i);
+      
+      DEBUG(10, "sd3: " << sd3 << " sd4: " << sd4);   
     
-    //we sample the R'i vector from eq. 2.11.2.25 from a Gaussian with 0.0 mean
-    //and width rho2_sq (sd3)
-    m_rng->stddev(sd3);
-    m_vrand.vrand3(i) = m_rng->get_gaussian_vec();
-    //we sample the Ri vector to be used in eq. 2.11.2.26 from a Gaussian with 0.0 mean
-    //and width rho1_sq (sd4)
-    m_rng->stddev(sd4);
-    m_vrand.vrand4(i) = m_rng->get_gaussian_vec();
-
-    DEBUG(10, "vrand3=" << math::v2s(m_vrand.vrand3(i)));
-    DEBUG(10, "vrand4=" << math::v2s(m_vrand.vrand4(i)));
-
+      //we sample the R'i vector from eq. 2.11.2.25 from a Gaussian with 0.0 mean
+      //and width rho2_sq (sd3)
+      m_rng->stddev(sd3);
+      m_vrand.vrand3(i) = m_rng->get_gaussian_vec();
+      //we sample the Ri vector to be used in eq. 2.11.2.26 from a Gaussian with 0.0 mean
+      //and width rho1_sq (sd4)
+      m_rng->stddev(sd4);
+      m_vrand.vrand4(i) = m_rng->get_gaussian_vec();
+      
+      DEBUG(10, "vrand3=" << math::v2s(m_vrand.vrand3(i)));
+      DEBUG(10, "vrand4=" << math::v2s(m_vrand.vrand4(i)));
+    } else {
+      conf.current().vel(i) = conf.old().vel(i) + conf.old().force(i) * sim.time_step_size() / topo.mass(i);
+    }
   } // loop over atoms
  
   // save the seed

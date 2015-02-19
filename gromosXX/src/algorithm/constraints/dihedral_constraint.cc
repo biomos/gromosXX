@@ -155,7 +155,7 @@ int algorithm::Shake::dih_constr_iteration
       
       //////////////////////////////////////////////////
       // reference phi!
-      const double sin_2phi = sin(2 * it->phi);
+      //const double sin_2phi = sin(2 * it->phi);
       const double cos_phi2 = cos(it->phi) * cos(it->phi);
       
       const double nominator = 
@@ -165,7 +165,7 @@ int algorithm::Shake::dih_constr_iteration
 	c1234 * c1234;
       
       const double denominator =
-	2 * sin_2phi * dt2 *
+	2 * 
 	(
 	 c1234 * d1234 - cos_phi2 *
 	 (
@@ -176,13 +176,13 @@ int algorithm::Shake::dih_constr_iteration
 	  )
 	 );
 
-      const double l = nominator / denominator;
+      const double l_sin_2phi_dt2 = nominator / denominator;
       //////////////////////////////////////////////////
 
-      pos(it->i) += l * sin_2phi * dt2 * a1 / m1;
-      pos(it->j) += l * sin_2phi * dt2 * a2 / m2;
-      pos(it->k) += l * sin_2phi * dt2 * a3 / m3;
-      pos(it->l) += l * sin_2phi * dt2 * a4 / m4;
+      pos(it->i) += l_sin_2phi_dt2 * a1 / m1;
+      pos(it->j) += l_sin_2phi_dt2 * a2 / m2;
+      pos(it->k) += l_sin_2phi_dt2 * a3 / m3;
+      pos(it->l) += l_sin_2phi_dt2 * a4 / m4;
       
       if (V == math::atomic_virial){
 	io::messages.add("atomic virial not implemented. copy from dihedral angle interaction!",

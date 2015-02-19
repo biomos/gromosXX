@@ -315,6 +315,9 @@ int main(int argc, char *argv[]){
     bool do_shake = sim.param().system.nsm &&
       sim.param().constraint.solvent.algorithm == simulation::constr_shake;
 
+    // for stochastic dynamics simulation we need to call SHAKE twice
+    bool do_shake_twice = sim.param().stochastic.sd;
+
     algorithm::Shake * shake =
       dynamic_cast<algorithm::Shake *>(md.algorithm("Shake"));
     if (do_shake && shake == NULL) {
@@ -376,6 +379,11 @@ int main(int argc, char *argv[]){
 
       if (do_shake && (error = shake->apply(topo, conf, sim)) != 0) {
         std::cout << "MPI slave " << rank << ": error in Shake algorithm!\n" << std::endl;
+      }
+      
+      // if stochastic dynamics simulation, then expect second call to SHAKE
+      if (do_shake && do_shake_twice && (error = shake->apply(topo, conf, sim)) != 0) {
+	std::cout << "MPI slave " << rank << ": error in Shake algorithm on second call!\n" << std::endl;
       }
 
       if (do_m_shake && (error = m_shake->apply(topo, conf, sim)) != 0) {
