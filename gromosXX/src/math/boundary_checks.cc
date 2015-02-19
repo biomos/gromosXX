@@ -54,7 +54,7 @@ bool math::boundary_check_cutoff(math::Box const & box, math::boundary_enum cons
               << " ga: " << gamma * 180.0 / math::Pi);
 
       triclinicvolume = a * b * c *
-              (1.0 - cos(alpha) * cos(alpha) - cos(beta) * cos(beta) - cos(gamma) * cos(gamma)
+              sqrt(1.0 - cos(alpha) * cos(alpha) - cos(beta) * cos(beta) - cos(gamma) * cos(gamma)
               + 2.0 * cos(alpha) * cos(beta) * cos(gamma));
 
       DEBUG(4, "vol: " << triclinicvolume);
