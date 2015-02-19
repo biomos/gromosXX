@@ -536,7 +536,12 @@ namespace math
   private:
     Vec d_b[3];
   public:
-    Box() {}
+    Box() {
+     // avoid occurrences of uninitialized vacuum boxes
+     d_b[0] = 0.0;
+     d_b[1] = 0.0;
+     d_b[2] = 0.0;
+    }
     explicit Box(double d) 
     {
       d_b[0] = d;
