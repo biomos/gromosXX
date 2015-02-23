@@ -2307,9 +2307,9 @@ void io::In_Parameter::read_DISTANCERES(simulation::Parameter &param,
 	      >> param.distanceres.K
 	      >> param.distanceres.r_linear
 	      >> param.distanceres.tau
-	      >> param.distanceres.write
 	      >> param.distanceres.forcescale
-	      >> param.distanceres.virial;
+	      >> param.distanceres.virial
+	      >> param.distanceres.write;
 
   if (_lineStream.fail())
     io::messages.add("bad line in DISTANCERES block",
