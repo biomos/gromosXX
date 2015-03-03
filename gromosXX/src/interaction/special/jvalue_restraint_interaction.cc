@@ -477,7 +477,17 @@ double _calculate_derivative(topology::Topology & topo,
 	conf.current().energies.jvalue_energy[topo.atom_energy_group()[it->i]]
 	  += energy;
 	
-	return dV_dJ * dJ_dphi + dV_dJav * dJav_dphi;
+        double biq_weight = 1.0;
+        if (param.jvalue.biqweight == simulation::jvalue_restr_biq_equal_weight)
+            biq_weight = 1.0;
+        else if (param.jvalue.biqweight == simulation::jvalue_restr_biq_exp_weight)
+            biq_weight = (1.0-exp(-param.step.dt / param.jvalue.tau));
+        else if (param.jvalue.biqweight == simulation::jvalue_restr_biq_zero_weight)
+            biq_weight = 0.0;
+        DEBUG(10, "biq_weight" << biq_weight);
+        DEBUG(10, "(qav-q0)(q(t)-q0)^2" << dV_dJav/K << "(qav-q0)^2(q(t)-q0)" << dV_dJ/K);
+        
+	return dV_dJ * dJ_dphi + dV_dJav * dJav_dphi * biq_weight;
       }
     }
     

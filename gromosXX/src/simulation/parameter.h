@@ -209,7 +209,19 @@ namespace simulation
     /**
      * biquadratic (time averaged & instantaneous) restraints, weighted
      */
-    jvalue_restr_biq_weighted = -3
+    jvalue_restr_biq_weighted = -3,
+    /**
+     * biquadratic with equal weights of the two terms
+     */
+    jvalue_restr_biq_equal_weight = 0,
+    /**
+     * biquadratic with exponential weight of the average term
+     */
+    jvalue_restr_biq_exp_weight = 1,
+    /**
+     * biquadratic with zero weight of the average term
+     */
+    jvalue_restr_biq_zero_weight = 2            
   };
 
     /**
@@ -2090,6 +2102,7 @@ namespace simulation
 	  ngrid(1),
 	  K(1.0),
 	  delta(0.0),
+          biqweight(0),
 	  read_av(false),
           write(0)
       {
@@ -2120,6 +2133,10 @@ namespace simulation
        */
       double delta;
       /**
+       * weighting of the two terms in biquadratic restraining
+       */
+      unsigned int biqweight;
+       /**
        * read averages.
        */
       bool read_av;

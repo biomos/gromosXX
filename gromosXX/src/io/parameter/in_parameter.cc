@@ -2570,6 +2570,10 @@ JVALUERES
 # CJVR   >= 0                J-value restraining force constant 
 #                            (weighted by individual WJVR)
 # TAUJVR >= 0                coupling time for time-averaging
+# NJVRBIQW  0..2             controls weights (X in Eq. 19 of MD98.17) of the two terms in biquadratic restraining
+#           0                X = 1
+#           1                X = (1 - exp(-Dt/tau)) 
+#           2                X = 0
 # LE        0,1              local elevation restraining
 #           0                local elevation off [default]
 #           1                local elevation on
@@ -2579,8 +2583,8 @@ JVALUERES
 #           0                don't write [default]
 #         > 0                write every NTWJVth step
 #
-#       NTJVR  NTJVRA  CJVR   TAUJVR   LE    NGRID   DELTA  NTWJV
-           -3  0       10.0      5.0    1       16     0.5      0
+#       NTJVR  NTJVRA  CJVR   TAUJVR  NJVRBIQW   LE    NGRID   DELTA  NTWJV
+           -3  0       10.0      5.0      0       1       16     0.5      0
 END
 @endverbatim
  */
@@ -2604,6 +2608,7 @@ void io::In_Parameter::read_JVALUERES(simulation::Parameter &param,
             >> param.jvalue.read_av // NTJVRA
             >> param.jvalue.K // CJVR
             >> param.jvalue.tau // TAUJVR
+            >> param.jvalue.biqweight // NJVRBIQW
             >> param.jvalue.le // LE
             >> param.jvalue.ngrid // NGRID
             >> param.jvalue.delta // DELTA
@@ -2643,6 +2648,10 @@ void io::In_Parameter::read_JVALUERES(simulation::Parameter &param,
             param.jvalue.mode != simulation::jvalue_restr_inst_weighted))) {
       io::messages.add("JVALUERES block: bad value for TAU, should be > 0.0",
               "In_Parameter", io::message::error);
+    }
+    if (param.jvalue.biqweight < 0 || param.jvalue.biqweight > 2){
+        io::messages.add("JVALUERES block: NJVRBIQW must be 0, 1 or 2",
+                        "In_Parameter", io::message::error);
     }
     if (param.jvalue.mode != simulation::jvalue_restr_off && param.jvalue.K < 0.0) {
       io::messages.add("JVALUERES block: bad value for K in JVALUERES block,"
