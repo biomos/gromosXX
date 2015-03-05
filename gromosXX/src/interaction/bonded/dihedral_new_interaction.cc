@@ -27,8 +27,6 @@
 #define MODULE interaction
 #define SUBMODULE bonded
 
-#include "../../util/debug.h"
-
 static double _calculate_nearest_minimum(double phi, int m, double cospd);
 
 /**
@@ -63,8 +61,8 @@ static int _calculate_dihedral_new_interactions(topology::Topology & topo,
     dnk2 = abs2(rnk);
     dkj2 = abs2(rkj);
     dkj = abs(rkj);
-
-    double frim = dot(rij, rkj) / dkj2;
+    
+	double frim = dot(rij, rkj) / dkj2;
     double frln = dot(rkl, rkj) / dkj2;
 
     rim = rij - frim * rkj;
@@ -97,8 +95,20 @@ static int _calculate_dihedral_new_interactions(topology::Topology & topo,
     double ki = K * m * sin(m * phi - delta);
     double kl = -ki;
 
-    fi = ki * dkj / dmj2 * rmj;
-    fl = kl * dkj / dnk2 * rnk;
+    fi = ki * dkj * rmj;
+	if (dmj2 < (1.0e-10 * dkj2)) {
+		fi = 0;
+	    io::messages.add("One bond angle is close to 180 degrees!","dihedral_new_interaction",io::message::warning);
+	} else {
+       fi = fi / dmj2;
+	}
+	fl = kl * dkj * rnk;
+	if (dnk2 < (1.0e-10 * dkj2)) {
+		fl = 0;
+		io::messages.add("One bond angle is close to 180 degrees!","dihedral_new_interaction",io::message::warning);
+	} else {
+	   fl = fl / dnk2;
+	}
     fj = kj1 * fi - kj2 * fl;
     fk = -1.0 * (fi + fj + fl);
 

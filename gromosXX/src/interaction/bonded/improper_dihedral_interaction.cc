@@ -94,14 +94,21 @@ static int _calculate_improper_interactions(topology::Topology & topo,
     const double K  = param[i_it->type].K;
     const double q0 = param[i_it->type].q0;
 
-    // move q to the interval q0 - 180 < q < q0 + 180
-    while(q < q0 - math::Pi)
-      q += 2 * math::Pi;
-    while(q > q0 + math::Pi)
-      q -= 2* math::Pi;
+    double ki = -K * (q - q0) * dkj;
+	double kl = -ki;
+	if ( dmj2 < ( (1.0e-10 * dkj2))){
+       ki = 0;
+	   io::messages.add("One bond angle is close to 180 degrees!","improper_dihedral_interaction",io::message::warning);
+    } else {
+       ki = ki / dmj2;
+    }
+    if ( dnk2 < ( (1.0e-10 * dkj2))){
+       kl = 0;
+	   io::messages.add("One bond angle is close to 180 degrees!","improper_dihedral_interaction",io::message::warning);
+    } else {
+       kl = kl / dnk2;
+    }
 
-    const double ki = -K * (q - q0) * dkj / dmj2;
-    const double kl = K * (q - q0) * dkj / dnk2;
     const double kj1 = dot(rij, rkj) / dkj2 - 1.0;
     const double kj2 = dot(rkl, rkj) / dkj2;
     
