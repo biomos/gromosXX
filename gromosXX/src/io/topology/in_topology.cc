@@ -23,6 +23,8 @@
 #define MODULE io
 #define SUBMODULE topology
 
+static std::set<std::string> block_read;
+
 template<typename T>
 bool check_type(std::vector<std::string> const & buffer, std::vector<T> term) {
   if (buffer.size()) {
@@ -68,36 +70,60 @@ io::In_Topology::read(topology::Topology& topo,
     os << title << "\n";
   }
 
+  block_read.clear();
+
+  if (m_block["TOPVERSION"].size()) {
+    block_read.insert("TOPVERSION");
+  }
+
   std::vector<std::string> buffer;
   std::vector<std::string>::const_iterator it;
 
   std::string bond_bname = "BONDTYPE";
+  block_read.insert("BONDTYPE");
   if (param.force.bond == 2) {
-    if (m_block["HARMBONDTYPE"].size())
+    if (m_block["HARMBONDTYPE"].size()) {
       bond_bname = "HARMBONDTYPE";
+      block_read.insert("HARMBONDTYPE");
+    }
   }
   if (param.force.bond == 0 &&
           m_block["BONDTYPE"].size() == 0 &&
-          m_block["HARMBONDTYPE"].size() > 0)
+          m_block["HARMBONDTYPE"].size() > 0) {
     bond_bname = "HARMBONDTYPE";
+    block_read.insert("HARMBONDTYPE");
+  }
 
-  if (m_block["BONDSTRETCHTYPE"].size())
+  if (m_block["BONDSTRETCHTYPE"].size()) {
     bond_bname = "BONDSTRETCHTYPE";
+    block_read.insert("BONDSTRETCHTYPE");
+  }
 
   std::string angle_bname = "BONDANGLETYPE";
+  block_read.insert("BONDANGLETYPE");
   // no automatic conversion for angles!
-  if (param.force.angle == 2)
+  if (param.force.angle == 2) {
     angle_bname = "HARMBONDANGLETYPE";
-  if (m_block["BONDANGLEBENDTYPE"].size())
+    block_read.insert("HARMBONDANGLETYPE");
+  }
+  if (m_block["BONDANGLEBENDTYPE"].size()) {
     angle_bname = "BONDANGLEBENDTYPE";
+    block_read.insert("BONDANGLEBENDTYPE");
+  }
 
   std::string dihedral_bname = "DIHEDRALTYPE";
-  if (m_block["TORSDIHEDRALTYPE"].size())
+  block_read.insert("DIHEDRALTYPE");
+  if (m_block["TORSDIHEDRALTYPE"].size()) {
     dihedral_bname = "TORSDIHEDRALTYPE";
+    block_read.insert("TORSDIHEDRALTYPE");
+  }
+
+  block_read.insert("IMPDIHEDRALTYPE");
 
   {
     buffer = m_block["TYPE"];
     if (buffer.size()) {
+      block_read.insert("TYPE");
       if (buffer.size() != 3) {
         io::messages.add("Bad line in TYPE block",
                 "InTopology", io::message::error);
@@ -161,6 +187,7 @@ io::In_Topology::read(topology::Topology& topo,
   { // PHYSICALCONSTANTS
     buffer = m_block["PHYSICALCONSTANTS"];
     if (buffer.size()) {
+      block_read.insert("PHYSICALCONSTANTS");
       std::string s;
       _lineStream.clear();
       _lineStream.str(concatenate(buffer.begin() + 1,
@@ -189,6 +216,7 @@ io::In_Topology::read(topology::Topology& topo,
 
       DEBUG(10, "RESNAME block");
       buffer = m_block["RESNAME"];
+      block_read.insert("RESNAME");
       it = buffer.begin() + 1;
       int n, num;
       _lineStream.clear();
@@ -240,6 +268,7 @@ io::In_Topology::read(topology::Topology& topo,
 
       DEBUG(10, "ATOMTYPENAME block");
       buffer = m_block["ATOMTYPENAME"];
+      block_read.insert("ATOMTYPENAME");
       it = buffer.begin() + 1;
       int n, num;
       _lineStream.clear();
@@ -284,6 +313,7 @@ io::In_Topology::read(topology::Topology& topo,
     { // SOLUTEATOM
       DEBUG(10, "SOLUTEATOM block");
       buffer = m_block["SOLUTEATOM"];
+      block_read.insert("SOLUTEATOM");
 
       it = buffer.begin() + 1;
       _lineStream.clear();
@@ -477,6 +507,7 @@ io::In_Topology::read(topology::Topology& topo,
       buffer = m_block["SOLUTEPOLARISATION"];
 
       if (buffer.size()) {
+        block_read.insert("SOLUTEPOLARISATION");
         if (!quiet)
           os << "\tSOLUTEPOLARISATION\n"
                 << "\t\tblock present\n"
@@ -541,6 +572,7 @@ io::In_Topology::read(topology::Topology& topo,
       buffer.clear();
       buffer = m_block["CGSOLUTE"];
       if (buffer.size()) {
+        block_read.insert("CGSOLUTE");
         it = buffer.begin() + 1;
 
         _lineStream.clear();
@@ -596,6 +628,7 @@ io::In_Topology::read(topology::Topology& topo,
       buffer = m_block["LJEXCEPTIONS"];
 
       if (buffer.size()) {
+        block_read.insert("LJEXCEPTIONS");
         it = buffer.begin() + 1;
 
         _lineStream.clear();
@@ -657,6 +690,7 @@ io::In_Topology::read(topology::Topology& topo,
       buffer.clear();
       buffer = m_block["BONDH"];
       if (buffer.size()) {
+        block_read.insert("BONDH");
         it = buffer.begin() + 1;
 
         _lineStream.clear();
@@ -720,6 +754,7 @@ io::In_Topology::read(topology::Topology& topo,
       buffer = m_block["BOND"];
 
       if (buffer.size()) {
+        block_read.insert("BOND");
 
         it = buffer.begin() + 1;
         _lineStream.clear();
@@ -789,6 +824,7 @@ io::In_Topology::read(topology::Topology& topo,
       buffer.clear();
       buffer = m_block["BONDDP"];
       if (buffer.size()) {
+        block_read.insert("BONDDP");
         it = buffer.begin() + 1;
 
         _lineStream.clear();
@@ -857,6 +893,7 @@ io::In_Topology::read(topology::Topology& topo,
       buffer = m_block["CONSTRAINT"];
 
       if (buffer.size() && param.constraint.ntc != 1) {
+        block_read.insert("CONSTRAINT");
 
         it = buffer.begin() + 1;
         _lineStream.clear();
@@ -924,6 +961,7 @@ io::In_Topology::read(topology::Topology& topo,
       buffer = m_block["BONDANGLEH"];
 
       if (buffer.size()) {
+        block_read.insert("BONDANGLEH");
 
         it = buffer.begin() + 1;
 
@@ -977,6 +1015,7 @@ io::In_Topology::read(topology::Topology& topo,
       buffer = m_block["BONDANGLE"];
 
       if (buffer.size()) {
+        block_read.insert("BONDANGLE");
 
         it = buffer.begin() + 1;
         _lineStream.clear();
@@ -1043,6 +1082,7 @@ io::In_Topology::read(topology::Topology& topo,
         os << "\tIMPDIHEDRAL";
 
       if (buffer.size()) {
+        block_read.insert("IMPDIHEDRAL");
 
         it = buffer.begin() + 1;
         _lineStream.clear();
@@ -1097,6 +1137,7 @@ io::In_Topology::read(topology::Topology& topo,
       buffer = m_block["IMPDIHEDRALH"];
 
       if (buffer.size()) {
+        block_read.insert("IMPDIHEDRALH");
 
         it = buffer.begin() + 1;
 
@@ -1164,6 +1205,7 @@ io::In_Topology::read(topology::Topology& topo,
         os << "\tDIHEDRAL";
 
       if (buffer.size()) {
+        block_read.insert("DIHEDRAL");
 
         it = buffer.begin() + 1;
         _lineStream.clear();
@@ -1217,6 +1259,7 @@ io::In_Topology::read(topology::Topology& topo,
       buffer.clear();
       buffer = m_block["DIHEDRALH"];
       if (buffer.size()) {
+        block_read.insert("DIHEDRALH");
 
         it = buffer.begin() + 1;
 
@@ -1283,6 +1326,7 @@ io::In_Topology::read(topology::Topology& topo,
         os << "\tCROSSDIHEDRAL";
 
       if (buffer.size()) {
+        block_read.insert("CROSSDIHEDRAL");
 
         it = buffer.begin() + 1;
         _lineStream.clear();
@@ -1339,6 +1383,7 @@ io::In_Topology::read(topology::Topology& topo,
       buffer.clear();
       buffer = m_block["CROSSDIHEDRALH"];
       if (buffer.size()) {
+        block_read.insert("CROSSDIHEDRALH");
 
         it = buffer.begin() + 1;
 
@@ -1409,6 +1454,7 @@ io::In_Topology::read(topology::Topology& topo,
       buffer.clear();
       buffer = m_block["VIRTUALGRAIN"];
       if (buffer.size()) {
+        block_read.insert("VIRTUALGRAIN");
 
         it = buffer.begin() + 1;
 
@@ -1473,6 +1519,7 @@ io::In_Topology::read(topology::Topology& topo,
         io::messages.add("no SOLUTEMOLECULES block in topology",
                 "In_Topology", io::message::error);
       } else {
+        block_read.insert("SOLUTEMOLECULES");
         _lineStream.clear();
         _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
 
@@ -1539,6 +1586,7 @@ io::In_Topology::read(topology::Topology& topo,
         io::messages.add("no TEMPERATUREGROUPS block in topology",
                 "In_Topology", io::message::error);
       } else {
+        block_read.insert("TEMPERATUREGROUPS");
         _lineStream.clear();
         _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
 
@@ -1605,6 +1653,7 @@ io::In_Topology::read(topology::Topology& topo,
         io::messages.add("no PRESSUREGROUPS block in topology",
                 "In_Topology", io::message::error);
       } else {
+        block_read.insert("PRESSUREGROUPS");
         _lineStream.clear();
         _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
 
@@ -1661,9 +1710,11 @@ io::In_Topology::read(topology::Topology& topo,
 
     { // PATHINTSPEC
       buffer = m_block["PATHINTSPEC"];
-      if (buffer.size())
+      if (buffer.size()) {
+        block_read.insert("PATHINTSPEC");
         io::messages.add("md++ does not support path-integral simulations (PATHINTSPEC block).",
               "InTopology", io::message::warning);
+      }
     }
   } // npm != 0
 
@@ -1677,6 +1728,7 @@ io::In_Topology::read(topology::Topology& topo,
       os << "\tSOLVENT";
 
     if (buffer.size()) {
+        block_read.insert("SOLVENTATOM");
 
       unsigned int res_nr = unsigned(topo.residue_names().size());
 
@@ -1742,6 +1794,7 @@ io::In_Topology::read(topology::Topology& topo,
       buffer.clear();
       buffer = m_block["SOLVENTPOLARISATION"];
       if (buffer.size()) {
+        block_read.insert("SOLVENTPOLARISATION");
         if (!quiet)
           os << "\n\t\tpolarisation parameters present";
         it = buffer.begin() + 1;
@@ -1813,6 +1866,7 @@ io::In_Topology::read(topology::Topology& topo,
         io::messages.add("no SOLVENTCONST (block missing).",
                 "In_Topology", io::message::notice);
       } else {
+        block_read.insert("SOLVENTCONSTR");
 
         it = buffer.begin() + 1;
         _lineStream.clear();
@@ -2022,6 +2076,23 @@ io::In_Topology::read(topology::Topology& topo,
             << "MULTIBATH format.\n";
 
     util::parse_TCOUPLE(param, topo);
+  }
+
+  // additional known blocks not read in with this routine
+  if (m_block["LJPARAMETERS"].size()) {
+    block_read.insert("LJPARAMETERS");
+  }
+  if (m_block["CGPARAMETERS"].size()) {
+    block_read.insert("CGPARAMETERS");
+  }
+
+  // warn for unread input data
+  for(std::map<std::string, std::vector<std::string> >::const_iterator
+      it = m_block.begin(), to = m_block.end(); it != to; ++it){
+    if (block_read.count(it->first) == 0 && it->second.size()){
+      io::messages.add("block " + it->first + " unknown and not read in!",
+                       "In_Topology", io::message::warning);
+    }
   }
 
   if (!quiet)
@@ -2792,6 +2863,7 @@ read_sasa_parameter(topology::Topology & topo, std::vector<topology::sasa_parame
   { // SASAPARAMETERS
 
     buffer = m_block["SASAPARAMETERS"];
+    block_read.insert("SASAPARAMETERS");
     // if no SASA block is present
     if (!buffer.size()) {
       io::messages.add("No SASAPARAMETERS block found in topology!",
