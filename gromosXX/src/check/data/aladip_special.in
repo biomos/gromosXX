@@ -238,7 +238,7 @@ DIHEDRALRES
 # PHILIN  deviation after which the potential energy function is linearized
 #
 # NTDLR  CDLR      PHILIN
-  2      100.0     -1.0
+  2      100.0   1000.0
 END
 PERTURBATION
 #    NTG: 0..1 controls use of free-energy calculation.

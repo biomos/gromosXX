@@ -152,7 +152,8 @@ int check::check_state(topology::Topology & mytopo,
 
   delete pcalc;
 
-  math::Matrix realP(conf.old().virial_tensor);
+  // The virial is internally stored without the factor -0.5
+  math::Matrix realP(-0.5*conf.old().virial_tensor);
 
   // std::cout << "real virial is\n"
   // << math::m2s(realP)
@@ -286,10 +287,13 @@ static void exact_atomic_virial(topology::Topology & topo,
   pcalc->apply(topo, conf, sim);
 
   conf.exchange_state();
-  
+ 
+  // the virial is internally stored without the prefactor of -0.5  
+  math::Matrix realP(-0.5*conf.current().virial_tensor);
+
   for(int i=0; i < 3; i++){
     // check the trace
-    CHECK_APPROX_EQUAL(conf.current().virial_tensor(i,i), vir(i), accuracy, res);
+    CHECK_APPROX_EQUAL(realP(i,i), vir(i), accuracy, res);
   }
   
   RESULT(res,total);
