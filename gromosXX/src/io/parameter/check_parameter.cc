@@ -2286,7 +2286,7 @@ int io::check_parameter(simulation::Simulation & sim)
   //fc.unlock("eds", "multicell");
   //fc.unlock("eds", "analysis");
   //fc.unlock("eds", "no_integration");
-  fc.unlock("eds", "stochdyn"); // test! probably works!
+  //fc.unlock("eds", "stochdyn"); // test! probably works!
   //fc.unlock("eds", "multistep");
   //fc.unlock("eds", "multistep_boost");
   //fc.unlock("eds", "montecarlo");
