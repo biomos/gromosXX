@@ -294,7 +294,14 @@ io::In_Topology::read(topology::Topology& topo,
           io::messages.add(msg.str(), "InTopology", io::message::error);
         }
 
-        topo.atom_names()[s] = n;
+        if (topo.atom_names().find(s) == topo.atom_names().end()) {  // not found
+          topo.atom_names()[s] = n;
+        } else {  // found 
+          std::ostringstream msg;
+          msg << "Error in ATOMTYPENAME block: atom type name " << s
+                  << " used more than once.";   
+          io::messages.add(msg.str(), "InTopology", io::message::error);        
+        }
       }
 
       if (n != num) {
