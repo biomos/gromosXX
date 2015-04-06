@@ -100,6 +100,10 @@ namespace util {
      * Prints information of replica to std::cout for debugging purposes
      */
     void print_info(std::string bla)const;
+    /**
+     * Scales the velocities after an exchange in temperature replica exchange
+     */
+    void velscale(int i);
 
   private:
     /**

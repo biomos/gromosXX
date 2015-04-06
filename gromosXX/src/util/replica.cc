@@ -623,6 +623,17 @@ void util::replica::receive_new_coord(const int senderID, const int senderRank) 
 #endif
 }
 
+void util::replica::velscale(int i){ 
+  double T1 = sim.param().replica.temperature[ID]; 
+  double T2 = sim.param().replica.temperature[i];
+  if (T1 != T2) {
+    double factor = sqrt(T1/T2);
+    for (int k = 0; k < topo.num_atoms(); ++k) {
+      conf.current().vel(k) *= factor;
+    }
+  } 
+}
+
 void util::replica::set_lambda() {
   // change Lambda in simulation
   sim.param().perturbation.lambda = l;

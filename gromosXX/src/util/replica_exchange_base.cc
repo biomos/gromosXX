@@ -107,6 +107,13 @@ void util::replica_exchange_base::swap() {
     }
 
   }
+
+  // scale the velocities?
+  for (std::vector< util::replica* >::iterator it = replicas.begin();it < replicas.end(); ++it) {
+    if((*it)->switched && (*it)->sim.param().replica.scale) {
+      (*it)->velscale((*it)->partner);
+    }
+  }
 }
 
 void util::replica_exchange_base::swap_on_node(repIterator it1, const unsigned int partner) {
