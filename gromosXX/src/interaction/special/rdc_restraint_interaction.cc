@@ -262,7 +262,7 @@ void _calculate_forces_vectors_MF(topology::Topology & topo,
     }
   }// loop over rdc groups
 
-  write_mf_forces(force_vectors_hfield, "trfmf");
+  //write_mf_forces(force_vectors_hfield, "trfmf");
 }
 
 
@@ -1332,7 +1332,7 @@ void _calculate_forces_tensor_T(topology::Topology & topo,
     } // Loop over RDCs
   } // loop over rdc groups
 
-  write_tensor_forces(force_array_tensor, "trft");
+  //write_tensor_forces(force_array_tensor, "trft");
 
 }
 
@@ -1941,8 +1941,8 @@ void _calculate_forces_clm_SH(topology::Topology & topo,
   const int l = 2;
 
   // hardcoded Lebedev Grid of order 5
-  const double aux_a = 2.0/30.0;
-  const double aux_b = 3.0/40.0;
+  const double aux_a = 2.0/30.0 * 4.0*M_PI;
+  const double aux_b = 3.0/40.0 * 4.0*M_PI;
   const double aux_c = 1.0/sqrt(3.0);
   const int grid_number_of_points = 14;
   const double grid_weight[grid_number_of_points] = {aux_a, aux_a, aux_a, aux_a, aux_a, aux_a, aux_b,  aux_b,  aux_b,  aux_b,  aux_b,  aux_b,  aux_b,  aux_b};
@@ -2051,7 +2051,7 @@ void _calculate_forces_clm_SH(topology::Topology & topo,
 
 
   } // loop over rdc groups
-  write_clm_forces(force_array_clm, "trfsh");
+  //write_clm_forces(force_array_clm, "trfsh");
 }
 
 
@@ -2078,8 +2078,8 @@ void _calculate_forces_atoms_SH(topology::Topology & topo,
   const int l = 2;
 
   // hardcoded LebedevGrid of order 5
-  const double aux_a = 2.0/30.0;
-  const double aux_b = 3.0/40.0;
+  const double aux_a = 2.0/30.0 * 4.0*M_PI;
+  const double aux_b = 3.0/40.0 * 4.0*M_PI;
   const double aux_c = 1.0/sqrt(3.0);
   const int grid_number_of_points = 14;
   const double grid_weight[grid_number_of_points] = {aux_a, aux_a, aux_a, aux_a, aux_a, aux_a, aux_b,  aux_b,  aux_b,  aux_b,  aux_b,  aux_b,  aux_b,  aux_b};
@@ -2245,8 +2245,8 @@ void _calculate_clm(topology::Topology & topo,
   const int n_clm = 5;
 
   // hardcoded LebedevGrid of order 5
-  const double aux_a = 2.0/30.0;
-  const double aux_b = 3.0/40.0;
+  const double aux_a = 2.0/30.0 * 4.0*M_PI;
+  const double aux_b = 3.0/40.0 * 4.0*M_PI;
   const double aux_c = 1.0/sqrt(3.0);
   const int grid_number_of_points = 14;
   const double grid_weight[grid_number_of_points] = {aux_a, aux_a, aux_a, aux_a, aux_a, aux_a, aux_b,  aux_b,  aux_b,  aux_b,  aux_b,  aux_b,  aux_b,  aux_b};

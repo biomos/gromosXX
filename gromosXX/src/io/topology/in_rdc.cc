@@ -176,25 +176,11 @@ bool a_is_valid(double a1, double a2, double a3, double a4, double a5){
 }
 
 math::VArray create_points_on_sphere(const unsigned int N){
-  if (N<2) {
-    io::messages.add("Please choose a number of at least 3 magnetic field vectors", "In_RDC", io::message::critical);
+  if (N<5) {
+    io::messages.add("Please choose a number of at least 5 magnetic field vectors, to describe general alignment", "In_RDC", io::message::critical);
   }
   math::VArray coordinates;
   switch(N){
-    case 3:{
-      coordinates.push_back(math::Vec(1, 0, 0));
-      coordinates.push_back(math::Vec(0, 1, 0));
-      coordinates.push_back(math::Vec(0, 0, 1));
-    break;
-    }
-    case 4:{
-      const double a = 1.0/sqrt(3.0);
-      coordinates.push_back(math::Vec( a, a, a));
-      coordinates.push_back(math::Vec( a,-a,-a));
-      coordinates.push_back(math::Vec(-a, a,-a));
-      coordinates.push_back(math::Vec(-a,-a, a));
-    break;
-    }
     case 5:{ //FIXME, this is not a good distribution
       coordinates.push_back(math::Vec( 0,   0,             1));
       coordinates.push_back(math::Vec( 1,   0,             0));
@@ -466,7 +452,7 @@ void io::In_RDC::read(topology::Topology& topo,
               << setw(13) << "Ayy" << setw(13) << "vAyy" << setw(13) << "mAyy"
               << setw(13) << "Axy" << setw(13) << "vAxy" << setw(13) << "mAxy"
               << setw(13) << "Axz" << setw(13) << "vAxz" << setw(13) << "mAxz"
-	          << setw(13) << "Ayz" << setw(13) << "vAyz" << setw(13) << "mAyz")
+              << setw(13) << "Ayz" << setw(13) << "vAyz" << setw(13) << "mAyz")
 
         DEBUG(10, setprecision(4)
               << setw(13) << Axx << setw(13) << vAxx << setw(13) << mass
@@ -521,8 +507,8 @@ void io::In_RDC::read(topology::Topology& topo,
         }
         if(mAxx<1e-5 || mAyy<1e-5 || mAxy<1e-5 || mAxz<1e-5 || mAyz<1e-5 ) io::messages.add("masses can only be positive and shouldn't be too small", "In_RDC", io::message::error);
 
-	    // the tensor components a_1 to a_5 can be expressed as averages over
-	    // products of cosines and are, hence, limited to a range of values
+        // the tensor components a_1 to a_5 can be expressed as averages over
+        // products of cosines and are, hence, limited to a range of values
         if(!a_is_valid(Axx, Ayy, Axy, Axz, Ayz)){
           io::messages.add("some or all a_h have insensible values.  Setting all components to 0.0 (i.e. isotropic alignment) ...", "In_RDC", io::message::warning);
           Axx = 0.0;
@@ -543,7 +529,7 @@ void io::In_RDC::read(topology::Topology& topo,
               << setw(13) << "Ayy" << setw(13) << "vAyy" << setw(13) << "mAyy"
               << setw(13) << "Axy" << setw(13) << "vAxy" << setw(13) << "mAxy"
               << setw(13) << "Axz" << setw(13) << "vAxz" << setw(13) << "mAxz"
-	          << setw(13) << "Ayz" << setw(13) << "vAyz" << setw(13) << "mAyz")
+              << setw(13) << "Ayz" << setw(13) << "vAyz" << setw(13) << "mAyz")
 
         DEBUG(10, setprecision(4)
               << setw(13) << Axx << setw(13) << vAxx << setw(13) << mAxx
@@ -691,8 +677,8 @@ void io::In_RDC::read(topology::Topology& topo,
     os.setf(ios_base::fixed, ios_base::floatfield);
 
     DEBUG(10, setw(6) << "i"
-	       << setw(6) << "j"
-	       << setw(8) << "weight"
+           << setw(6) << "j"
+           << setw(8) << "weight"
            << setw(19) << "R [1/ps]"
       //     << setw(19) << "RDCav [1/ps]"
            << setw(12) << "GYRi [e/u]"
@@ -852,16 +838,19 @@ void io::In_RDC::read(topology::Topology& topo,
 #endif
  
 // check if rdc groups contain each rdc at least once
-  DEBUG(10, "setting RDC weights according to occurrence in rdc groups")
+  bool ignored_rdcs_exist = false;
   for (int i=0; i<occurrence_count.size(); ++i) {
     if (occurrence_count[i] == 0) {
+      ignored_rdcs_exist = true;
       DEBUG(10, "RDC #" << i << " is not part of any RDC group.")
-      io::messages.add("One or more RDCs are not part of any RDC group and will be ignored entirely ... you probably don't want this",
-        "In_RDC", io::message::warning);
     }
   }
+  if(ignored_rdcs_exist){
+    io::messages.add("One or more RDCs are not part of any RDC group and will be ignored entirely.  You probably don't want this.  In particular, if you run svd-fit to analyse the trajectory, *all* RDCs will be taken into account, even the ones that are not restrained.",
+      "In_RDC", io::message::warning);
+  }
 
-// setting weights according to occurrence_count
+  DEBUG(10, "setting RDC weights according to occurrence in rdc groups")
   for (int i=0; i<occurrence_count.size(); ++i) {
     if(occurrence_count[i] != 0) tmp_rdc_rest_strct[i].weight /= occurrence_count[i];
   }
@@ -962,6 +951,9 @@ void io::In_RDC::read(topology::Topology& topo,
        }
      }
    }
+
+  // destroy the rng that was only created for this file
+  delete rng;
 
   DEBUG(10, "done")
 
