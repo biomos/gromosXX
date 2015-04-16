@@ -29,7 +29,7 @@
  * calculate cg bond forces and energies.
  */
 template<math::boundary_enum B, math::virial_enum V>
-static int _calculate_cg_bond_interactions
+static int _calculate_dp_bond_interactions
 (topology::Topology & topo,
  configuration::Configuration & conf,
  simulation::Simulation & sim,
@@ -99,7 +99,7 @@ static int _calculate_cg_bond_interactions
 }
 
 
-int interaction::CG_Bond_Interaction
+int interaction::DP_Bond_Interaction
 ::calculate_interactions(topology::Topology &topo,
 			 configuration::Configuration &conf,
 			 simulation::Simulation &sim)
@@ -107,7 +107,7 @@ int interaction::CG_Bond_Interaction
 
   m_timer.start();
 
-  SPLIT_VIRIAL_BOUNDARY(_calculate_cg_bond_interactions,
+  SPLIT_VIRIAL_BOUNDARY(_calculate_dp_bond_interactions,
 			topo, conf, sim, m_parameter);
 
   m_timer.stop();

@@ -22,18 +22,18 @@ namespace interaction
    * @class cg_bond_interaction
    * calculates the bond interactions (cg).
    */
-  class CG_Bond_Interaction : public Interaction
+  class DP_Bond_Interaction : public Interaction
   {
   public:
     /**
      * Constructor.
      */
-    CG_Bond_Interaction() : Interaction("CGBond") {}
+    DP_Bond_Interaction() : Interaction("DPBond") {}
     
     /**
      * Destructor.
      */
-    virtual ~CG_Bond_Interaction() {}
+    virtual ~DP_Bond_Interaction() {}
     /**
      * init
      */

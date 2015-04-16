@@ -34,7 +34,7 @@ static int _calculate_perturbed_bond_interactions
 (  topology::Topology & topo,
    configuration::Configuration & conf,
    simulation::Simulation & sim,
-   interaction::CG_Bond_Interaction const & m_interaction)
+   interaction::DP_Bond_Interaction const & m_interaction)
 {
 
   DEBUG(7, "perturbed cg bond interaction");

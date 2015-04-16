@@ -29,7 +29,7 @@ namespace interaction
      * Constructor.
      */
     Perturbed_CG_Bond_Interaction(
-       CG_Bond_Interaction &bond_interaction)
+       DP_Bond_Interaction &bond_interaction)
       : Interaction("PerturbedCGBond"),
 	m_interaction(bond_interaction)
     {}
@@ -61,7 +61,7 @@ namespace interaction
 				       simulation::Simulation & sim);
     
   protected:
-    CG_Bond_Interaction & m_interaction;
+    DP_Bond_Interaction & m_interaction;
 
   };
   

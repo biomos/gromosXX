@@ -97,8 +97,8 @@ int interaction::create_g96_bonded(interaction::Forcefield & ff,
     if (!quiet)
       os << "\tdipole-particle bond interaction\n";
 
-    interaction::CG_Bond_Interaction * bcg =
-      new interaction::CG_Bond_Interaction();
+    interaction::DP_Bond_Interaction * bcg =
+      new interaction::DP_Bond_Interaction();
 
     it.read_g96_bonds(bcg->parameter());
     ff.push_back(bcg);
