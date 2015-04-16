@@ -2710,8 +2710,6 @@ void io::In_Parameter::read_ORDERPARAMRES(simulation::Parameter &param,
   buffer = m_block["ORDERPARAMRES"];
   if (buffer.size()) {
 
-    param.setDevelop("Order parameter restraining is under development.");
-    
     block_read.insert("ORDERPARAMRES");
 
     _lineStream.clear();
