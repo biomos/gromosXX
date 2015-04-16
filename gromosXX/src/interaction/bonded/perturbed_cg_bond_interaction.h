@@ -22,22 +22,22 @@ namespace interaction
    * @class Perturbed_CG_Bond_Interaction
    * calculates the perturbed bond interactions (cg).
    */
-  class Perturbed_CG_Bond_Interaction : public Interaction
+  class Perturbed_DP_Bond_Interaction : public Interaction
   {
   public:
     /**
      * Constructor.
      */
-    Perturbed_CG_Bond_Interaction(
+    Perturbed_DP_Bond_Interaction(
        DP_Bond_Interaction &bond_interaction)
-      : Interaction("PerturbedCGBond"),
+      : Interaction("PerturbedDPBond"),
 	m_interaction(bond_interaction)
     {}
     
     /**
      * Destructor.
      */
-    virtual ~Perturbed_CG_Bond_Interaction() {}
+    virtual ~Perturbed_DP_Bond_Interaction() {}
 
     /**
      * init

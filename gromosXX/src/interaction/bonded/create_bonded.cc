@@ -107,8 +107,8 @@ int interaction::create_g96_bonded(interaction::Forcefield & ff,
       if (!quiet)
         os << "\tperturbed dipole-particle bond interaction\n";
 
-      interaction::Perturbed_CG_Bond_Interaction * pbcg =
-              new interaction::Perturbed_CG_Bond_Interaction(*bcg);
+      interaction::Perturbed_DP_Bond_Interaction * pbcg =
+              new interaction::Perturbed_DP_Bond_Interaction(*bcg);
       ff.push_back(pbcg);
     }
 

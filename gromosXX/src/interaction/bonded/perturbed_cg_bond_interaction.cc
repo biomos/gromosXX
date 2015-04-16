@@ -150,7 +150,7 @@ static int _calculate_perturbed_bond_interactions
   
 }
 
-int interaction::Perturbed_CG_Bond_Interaction
+int interaction::Perturbed_DP_Bond_Interaction
 ::calculate_interactions(topology::Topology &topo,
 			 configuration::Configuration &conf,
 			 simulation::Simulation &sim)
