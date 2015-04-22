@@ -78,7 +78,7 @@ xxintnbspecialdir = $(includedir)/md++/interaction/special
 xxintnbspecial_HEADERS = special/create_special.h\
 	special/position_restraint_interaction.h\
 	special/distance_restraint_interaction.h\
-        special/distance_field_interaction.h\
+	special/distance_field_interaction.h\
 	special/dihedral_restraint_interaction.h\
 	special/perturbed_distance_restraint_interaction.h\
 	special/perturbed_distance_field_interaction.h\
@@ -94,6 +94,7 @@ xxintnbspecial_HEADERS = special/create_special.h\
 	special/adde_reweighting.h\
 	special/nemd.h\
 	special/order_parameter_restraint_interaction.h\
+	special/rdc_restraint_interaction.h\
 	special/qmmm_interaction.h\
 	special/symmetry_restraint_interaction.h
 
@@ -156,7 +157,7 @@ libgrointeraction_la_SOURCES =interaction.cc\
 	special/create_special.cc\
 	special/position_restraint_interaction.cc\
 	special/distance_restraint_interaction.cc\
-        special/distance_field_interaction.cc\
+	special/distance_field_interaction.cc\
 	special/dihedral_restraint_interaction.cc\
 	special/perturbed_distance_restraint_interaction.cc\
 	special/perturbed_distance_field_interaction.cc\
@@ -175,16 +176,16 @@ libgrointeraction_la_SOURCES =interaction.cc\
 	special/xray/sf.cc\
 	special/xray/bfactor.cc\
 	special/order_parameter_restraint_interaction.cc\
+	special/rdc_restraint_interaction.cc\
 	special/qmmm/mm_atom.cc\
 	special/qmmm/qm_worker.cc\
 	special/qmmm/mndo_worker.cc\
 	special/qmmm/turbomole_worker.cc\
 	special/qmmm/gathering.cc\
 	special/qmmm_interaction.cc\
-	special/symmetry_restraint_interaction.cc\
-	special/rdc_restraint_interaction.cc
+	special/symmetry_restraint_interaction.cc
 
-bin_PROGRAMS =			
+bin_PROGRAMS =
 
 check_PROGRAMS =
 
