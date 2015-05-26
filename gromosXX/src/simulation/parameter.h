@@ -211,6 +211,14 @@ namespace simulation
      */
     jvalue_restr_biq_weighted = -3,
     /**
+     * time-averaged restraints with no force scaling
+     */
+    jvalue_restr_tar_no_scaling = 0,
+    /**
+     * time-averaged restraints with force scaling
+     */
+    jvalue_restr_tar_scaling = 1,
+    /**
      * biquadratic with equal weights of the two terms
      */
     jvalue_restr_biq_equal_weight = 0,
@@ -2102,6 +2110,7 @@ namespace simulation
 	  ngrid(1),
 	  K(1.0),
 	  delta(0.0),
+          tarfscale(0),
           biqweight(0),
 	  read_av(false),
           write(0)
@@ -2132,6 +2141,10 @@ namespace simulation
        * no elevation of potential if J is whitin delta to J0
        */
       double delta;
+      /**
+       * force scaling in time-averaged restraining
+       */
+      unsigned int tarfscale;
       /**
        * weighting of the two terms in biquadratic restraining
        */
