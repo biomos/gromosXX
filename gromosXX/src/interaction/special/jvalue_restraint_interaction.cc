@@ -411,10 +411,18 @@ double _calculate_derivative(topology::Topology & topo,
 	// Jav == Jcurr for instantaneous...
 	//const double dV_dJ = K * (Jav - it->J0);
 	const double dV_dJ = K * delta_Jav;
-        
-	// memory_decay factor is omitted for practical reasons.
-	const double dJ_dphi = - (2 * it->a * cos_phi_delta * sin_phi_delta + it->b * sin_phi_delta);
-	
+        	
+        double tar_fscale = 1.0;
+        // memory_decay factor may be omitted in case of time-averaged restraining
+        if (param.jvalue.mode == simulation::jvalue_restr_av ||
+           param.jvalue.mode == simulation::jvalue_restr_av_weighted){       	
+           if(param.jvalue.tarfscale == simulation::jvalue_restr_tar_no_scaling) // omit memory decay factor
+              tar_fscale == 1.0;
+           else if(param.jvalue.tarfscale == simulation::jvalue_restr_tar_scaling) // use memory decay factor
+              tar_fscale == (1.0-exp(-param.step.dt / param.jvalue.tau));
+        }
+	const double dJ_dphi = - (2 * it->a * cos_phi_delta * sin_phi_delta + it->b * sin_phi_delta)*tar_fscale;
+
 	//const double energy = 0.5 * K * (Jav - it->J0) * (Jav - it->J0);
         const double energy = 0.5 * K * delta_Jav * delta_Jav;
 	// and store...
@@ -463,12 +471,12 @@ double _calculate_derivative(topology::Topology & topo,
         
 	// --- dV / dJ ---
 	const double dV_dJ = K * delta_Jcurr * delta_Jav * delta_Jav;
-	// memory_decay factor is omitted for practical reasons.
+
 	const double dJ_dphi = - (2 * it->a * cos_phi_delta * sin_phi_delta + it->b * sin_phi_delta);
 	
 	// --- dV / dJav ---
 	const double dV_dJav = K * delta_Jcurr * delta_Jcurr * delta_Jav;
-	// memory_decay factor is omitted for practical reasons.
+
 	const double dJav_dphi = - (2 * it->a * cos_phi_delta * sin_phi_delta + it->b * sin_phi_delta);
 	
 	const double energy = 0.5 * K
@@ -476,7 +484,8 @@ double _calculate_derivative(topology::Topology & topo,
 	
 	conf.current().energies.jvalue_energy[topo.atom_energy_group()[it->i]]
 	  += energy;
-	
+
+        // options for weighting factor	
         double biq_weight = 1.0;
         if (param.jvalue.biqweight == simulation::jvalue_restr_biq_equal_weight)
             biq_weight = 1.0;
