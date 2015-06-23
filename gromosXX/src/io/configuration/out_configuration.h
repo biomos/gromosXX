@@ -183,6 +183,11 @@ namespace io {
     // make them available for scripting!
     void _print_title(std::string title, std::string name,
             std::ostream &os);
+    
+    /*
+     * Prints the ENEVERSION block for the (free) energy trajectories
+     */
+    void _print_ene_version(std::ostream &os);
 
     void _print_timestep(simulation::Simulation const &sim,
             std::ostream &os);
@@ -468,6 +473,21 @@ namespace io {
      * minimum energy for NTWSE trajectory
      */
     double minimum_energy;
+    /**
+     * The version of the energy trajectory, will be printed in the ENEVERSION
+     * block. ene_ana compares the ENEVERSION of the trajectory with the one of
+     * the ene_ana library used.
+     * If modifications in the energy trajectory are done, this version number
+     * should be adapted, along with an updated version of the ene_ana library.
+     * The standard for the version number is the current date, in the format
+     * YYYY-MM-DD, followed by a dash and an (incrementation) letter, for the 
+     * case that two or more version should be comitted ona specific day.
+     * Example:
+     *   2015-06-23-A
+     * (As discussed at GROMOS Meeting 22. June 2015)
+     * The string is initialized at the head of the out_configuration.cc file.
+     */
+    static const std::string ene_version;
   };
 
 } // io
