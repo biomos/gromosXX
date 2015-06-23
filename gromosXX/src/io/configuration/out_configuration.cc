@@ -32,6 +32,10 @@
 #define MODULE io
 #define SUBMODULE configuration
 
+// Energy trajectory version
+// For details, see definition in out_configuration.cc
+const std::string io::Out_Configuration::ene_version = "2015-06-23-A";
+
 // declarations
 static void _print_energyred_helper(std::ostream & os, configuration::Energy const &e);
 
@@ -159,6 +163,15 @@ void io::Out_Configuration::_print_title(std::string title,
           << title << "\n"
           << "\t" << name
           << "\nEND\n";
+}
+
+/*
+     * Prints the ENEVERSION block for the (free) energy trajectories
+     */
+void io::Out_Configuration::_print_ene_version(std::ostream &os) {
+  os << "ENEVERSION\n\t"
+     << ene_version
+     << "\nEND\n";
 }
 
 void io::Out_Configuration::init(io::Argument & args,
@@ -743,6 +756,7 @@ void io::Out_Configuration
 
   m_every_energy = every;
   _print_title(m_title, "energy trajectory", m_energy_traj);
+  _print_ene_version(m_energy_traj);
 }
 
 void io::Out_Configuration
@@ -751,6 +765,7 @@ void io::Out_Configuration
 
   m_every_free_energy = every;
   _print_title(m_title, "free energy trajectory", m_free_energy_traj);
+  _print_ene_version(m_free_energy_traj);
 }
 
 void io::Out_Configuration
