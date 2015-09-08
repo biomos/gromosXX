@@ -2830,17 +2830,25 @@ RDCRES
 # CRDCR   >= 0                 RDC restraining force constant
 #                              (weighted by individual WRDCR)
 # TAU     >= 0                 coupling time for time averaging
-# NTWRDC  >= 0                 write output to special trajectory
-#         0:                   don't write
-#        >0:                   write every NTWRDCth step.
+# NRDCRTARS 0,1                omits or includes force scaling by memory decay factor in case of time-averaging
+#           0                  omit factor (set (1-exp(-dt/tau))=1 )
+#           1                  scale force by (1-exp(-dt/tau))
+# NRDCRBIQW 0..2               controls weights of the two terms in biquadratic restraining
+#           0                  X = 1
+#           1                  X = (1 - exp(-dt/tau))
+#           2                  X = 0
+# NTWRDC   >= 0                write output to special trajectory
+#           0:                 don't write
+#          >0:                 write every NTWRDCth step.
 #
 #      NTRDCR  NTRDCRA  NTRDCT  NTALR  METHOD  
             2        0       0      0       0
-#      EMGRAD  EMDX0  EMNMAX  SDCFRIC    TEMP    DELTA  CRDCR  TAU    NTWRDC 
-        0.001   0.01    1000       20     300      0      1     1      2500
+#      EMGRAD  EMDX0  EMNMAX  SDCFRIC    TEMP    DELTA  CRDCR  TAU   NRDCRBIQW   NTWRDC   NTWRDC 
+        0.001   0.01    1000       20     300      0      1     1     0          0        10000
 END
 @endverbatim
  */
+
 void io::In_Parameter::read_RDCRES(simulation::Parameter &param,
                                    std::ostream & os)
 {
@@ -2874,11 +2882,13 @@ void io::In_Parameter::read_RDCRES(simulation::Parameter &param,
                 >> param.rdc.delta // DELTA [ps^-1]
                 >> param.rdc.K // CRDCR // [kJ*ps^2]
                 >> param.rdc.tau // TAU // [ps]
+                >> param.rdc.tAVfactor // NRDCRTARS
+                >> param.rdc.biqfactor // NRDCRBIQW
                 >> param.rdc.write; // NTWRDC
 
     if (_lineStream.fail()){
       io::messages.add("bad line in RDCRES block", "In_Parameter", io::message::error);
-    }    
+    }
 
     switch (ntrdct) {
       case 0:
@@ -2946,15 +2956,6 @@ void io::In_Parameter::read_RDCRES(simulation::Parameter &param,
       default:
         io::messages.add("RDCRES block: NTRDCR must be -4..2.", "In_Parameter", io::message::error);
     }
-    //GP TODO Check write_EK
-    /*
-    param.rdc.write_Ek = 0;
-    if(ntrdcr != 0 && param.rdc.refine == 1) {
-        param.rdc.write_Ek = 1;
-    }
-    */
-    // for testing
-    //param.rdc.write_Ek = 1;
 
     if (param.rdc.mode != simulation::rdc_restr_off){
       if (param.rdc.tau <= 0.0 && ( param.rdc.mode != simulation::rdc_restr_inst && param.rdc.mode != simulation::rdc_restr_inst_weighted)){
@@ -2973,6 +2974,13 @@ void io::In_Parameter::read_RDCRES(simulation::Parameter &param,
                  "In_Parameter", io::message::error);
       }
     } // rdcs not switched off
+
+    if(!(param.rdc.tAVfactor == 0 || param.rdc.tAVfactor == 1 )) 
+        io::messages.add("RDCRES block: The only possible values for NRDCRTARS are 0 and 1.", "In_Parameter", io::message::error);
+
+    if(!(param.rdc.biqfactor == 0 || param.rdc.biqfactor == 1 || param.rdc.biqfactor == 2)) 
+        io::messages.add("RDCRES block: The only possible values for NRDCRBIQW are 0, 1 and 2.", "In_Parameter", io::message::error);
+
   } // RDCRES block
 } // read RDCs
 

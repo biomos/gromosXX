@@ -2,6 +2,7 @@
  * @file rdc_restraint_interaction.cc
  */
 
+
 #include <time.h>
 
 #include <stdheader.h>
@@ -14,6 +15,7 @@
 #include <interaction/forcefield/forcefield.h>
 #include <interaction/special/rdc_restraint_interaction.h>
 #include <math/periodicity.h>
+#include <math/random.h>
 #include <util/error.h>
 #include <util/template_split.h>
 #include <create_special.h>
@@ -52,11 +54,18 @@ namespace math{
 namespace interaction {
 
 inline double flat_bottom_pot(const double x, const double x0, const double delta){
-//  return pow(max( {x-x0-delta, -(x-x0+delta), 0.0} ), 2); // only c++11
+#if (__cplusplus > 199711L) // we have c++11 or newer
+  return 0.5 * pow(max( {x-x0-delta, -(x-x0+delta), 0.0} ), 2);
+#else
   return 0.5 * pow(max(min(x-x0+delta, 0.0), x-x0-delta), 2);
+#endif
 }
 inline double dflat_bottom_pot(const double x, const double x0, const double delta){
+#if (__cplusplus > 199711L) // we have c++11 or newer
+  return max( {x-x0-delta, -(x-x0+delta), 0.0} );
+#else
   return max(min(x-x0+delta, 0.0), x-x0-delta);
+#endif
 }
 
 /**
@@ -148,8 +157,8 @@ struct fit_param {
 // calculate forces on magnetic field vectors in the MF representation
 template<math::boundary_enum B>
 void _calculate_forces_vectors_MF(topology::Topology & topo,
-  				  configuration::Configuration & conf,
-  				  const simulation::Simulation & sim,
+                    configuration::Configuration & conf,
+                    const simulation::Simulation & sim,
                   math::VArray & force_vectors_hfield /*empty*/) {
 
   vector<configuration::Configuration::special_struct::rdc_struct>::iterator
@@ -209,7 +218,7 @@ void _calculate_forces_vectors_MF(topology::Topology & topo,
          sim.param().rdc.mode == simulation::rdc_restr_biq ||
          sim.param().rdc.mode == simulation::rdc_restr_biq_weighted){
         const double exp = pow(M_E, -sim.time_step_size()/sim.param().rdc.tau); // [1]
-        double local_average = exp * conf_it->av[k] + (1.0 - exp) * conf_it->curr[k]; // [1/ps]
+        local_average = exp * conf_it->av[k] + (1.0 - exp) * conf_it->curr[k]; // [1/ps]
         DEBUG(15, "Delta t, tau, e^(- Delta t/tau): " << scientific << sim.time_step_size() << ", " <<  sim.param().rdc.tau << ", " << pow(M_E, -sim.time_step_size()/sim.param().rdc.tau) )
         DEBUG(10, "interaction " << k << ":  R-inst, R-av: " << conf_it->curr[k] << ", " << local_average )
       }
@@ -232,10 +241,9 @@ void _calculate_forces_vectors_MF(topology::Topology & topo,
         else if(sim.param().rdc.mode == simulation::rdc_restr_av ||
                 sim.param().rdc.mode == simulation::rdc_restr_av_weighted){
           const double dVav_dDav = force_coefficient * dflat_bottom_pot(local_average, it->R0, sim.param().rdc.delta); // [kJ/(nm^2*mol)]
-  	    // the following is wrong, but [1-e^(-dt/tau)] is constant and very small and
-  	    // would therefore require a different K.  Omitting this factor allows us
-  	    // to use the same K as before
-          const double dDav_dD = 1.0;
+          // in the following we set dDav_dD to either 1.0 or [1-e^(-dt/tau)].
+          // The latter is correct, the former allows for using the same K as without time AV
+          const double dDav_dD = sim.param().rdc.tAVfactor ? (1.0-pow(M_E, -sim.time_step_size()/sim.param().rdc.tau)) : 1.0;
           force_vectors_hfield[h] -= dVav_dDav * dDav_dD * dD_dh; // [kJ/(nm*mol)]
           DEBUG(15, "dVav_dDav; dDav_dD; dD_dh: " << dVav_dDav << ", " << dDav_dD << ", " << scientific << "(" << dD_dh[0] << ", " << dD_dh[1] << ", " << dD_dh[2] << ")")
         }
@@ -243,10 +251,11 @@ void _calculate_forces_vectors_MF(topology::Topology & topo,
                 sim.param().rdc.mode == simulation::rdc_restr_biq_weighted){
           const double dVbq_dD = 2.0 * force_coefficient * dflat_bottom_pot(conf_it->curr[k], it->R0, sim.param().rdc.delta) * flat_bottom_pot(local_average, it->R0, sim.param().rdc.delta); // [kJ/(nm^2*mol)]
           const double dVbq_dDav = 2.0 * force_coefficient * flat_bottom_pot(conf_it->curr[k], it->R0, sim.param().rdc.delta) * dflat_bottom_pot(local_average, it->R0, sim.param().rdc.delta); // [kJ/(nm^2*mol)]
-  	    // the following is wrong, but [1-e^(-dt/tau)] is constant and very small and
-  	    // would therefore require a different K.  Omitting this factor allows us
-  	    // to use the same K as before
-          const double dDav_dD = 1.0;
+          // in the following we set dDav_dD to either 1.0 or [1-e^(-dt/tau)] or 0.
+          // The first is simple, the second correct.
+          double dDav_dD = 0;  // case 2
+          if (sim.param().rdc.tAVfactor == 0) dDav_dD = 1.0;
+          else if (sim.param().rdc.tAVfactor == 1) dDav_dD = 1.0-pow(M_E, -sim.time_step_size()/sim.param().rdc.tau);
           force_vectors_hfield[h] -= (dVbq_dD + dVbq_dDav * dDav_dD) * dD_dh; // [kJ/(nm*mol)]
           DEBUG(15, "dVbq_dD; dVbq_dDav; dDav_dD; dD_dh: " << dVbq_dD << ", " << dVbq_dDav << ", "<< dDav_dD << ", " << scientific << "(" << dD_dh[0] << ", " << dD_dh[1] << ", " << dD_dh[2] << ")")
         }
@@ -269,8 +278,8 @@ void _calculate_forces_vectors_MF(topology::Topology & topo,
 // calculate forces on atoms in the MF representation
 template<math::boundary_enum B>
 void _calculate_forces_atoms_MF(topology::Topology & topo,
-  				  configuration::Configuration & conf,
-  				  const simulation::Simulation & sim) {
+                    configuration::Configuration & conf,
+                    const simulation::Simulation & sim) {
 
   vector<configuration::Configuration::special_struct::rdc_struct>::iterator
       conf_it = conf.special().rdc.begin(),
@@ -388,10 +397,9 @@ void _calculate_forces_atoms_MF(topology::Topology & topo,
       else if(sim.param().rdc.mode == simulation::rdc_restr_av ||
               sim.param().rdc.mode == simulation::rdc_restr_av_weighted){
         const double dVav_dDav = force_coefficient * dflat_bottom_pot(conf_it->av[k], it->R0, sim.param().rdc.delta); // [kJ/(nm^2*mol)]
-  	    // the following is wrong, but [1-e^(-dt/tau)] is constant and very small and
-  	    // would therefore require a different K.  Omitting this factor allows us
-  	    // to use the same K as before
-        const double dDav_dD = 1.0;
+        // in the following we set dDav_dD to either 1.0 or [1-e^(-dt/tau)].
+        // The latter is correct, the former allows for using the same K as without time AV
+        const double dDav_dD = sim.param().rdc.tAVfactor ? (1.0-pow(M_E, -sim.time_step_size()/sim.param().rdc.tau)) : 1.0;
         conf.current().force(it->i) -= dVav_dDav * dDav_dD * dD_dr; // [kJ/(nm*mol)]
         conf.current().force(it->j) += dVav_dDav * dDav_dD * dD_dr; // [kJ/(nm*mol)]
         DEBUG(15, "dVav_dDav; dDav_dD; dD_dr: " << dVav_dDav << ", " << dDav_dD << ", (" << scientific << dD_dr[0] << ", " << dD_dr[1] << ", " << dD_dr[2] << ")")
@@ -400,10 +408,11 @@ void _calculate_forces_atoms_MF(topology::Topology & topo,
               sim.param().rdc.mode == simulation::rdc_restr_biq_weighted){
         const double dVbq_dD = 2.0 * force_coefficient * dflat_bottom_pot(conf_it->curr[k], it->R0, sim.param().rdc.delta) * flat_bottom_pot(conf_it->av[k], it->R0, sim.param().rdc.delta); // [kJ/(nm^2*mol)]
         const double dVbq_dDav = 2.0 * force_coefficient * flat_bottom_pot(conf_it->curr[k], it->R0, sim.param().rdc.delta) * dflat_bottom_pot(conf_it->av[k], it->R0, sim.param().rdc.delta); // [kJ/(nm^2*mol)]
-  	    // the following is wrong, but [1-e^(-dt/tau)] is constant and very small and
-  	    // would therefore require a different K.  Omitting this factor allows us
-  	    // to use the same K as before
-        const double dDav_dD = 1.0;
+        // in the following we set dDav_dD to either 1.0 or [1-e^(-dt/tau)] or 0.
+        // The first is simple, the second correct.
+        double dDav_dD = 0;  // case 2
+        if (sim.param().rdc.tAVfactor == 0) dDav_dD = 1.0;
+        else if (sim.param().rdc.tAVfactor == 1) dDav_dD = 1.0-pow(M_E, -sim.time_step_size()/sim.param().rdc.tau);
         conf.current().force(it->i) -= (dVbq_dD + dVbq_dDav * dDav_dD) * dD_dr; // [kJ/(nm*mol)]
         conf.current().force(it->j) += (dVbq_dD + dVbq_dDav * dDav_dD) * dD_dr; // [kJ/(nm*mol)]
         DEBUG(15, "dVbq_dD; dVbq_dDav; dDav_dD; dD_dr: " << dVbq_dD << ", " << dVbq_dDav << ", "<< dDav_dD << ", (" << scientific << dD_dr[0] << ", " << dD_dr[1] << ", " << dD_dr[2] << ")")
@@ -592,11 +601,11 @@ int _calculate_interactions_mfield(topology::Topology & topo,
                                    configuration::Configuration & conf,
                                    simulation::Simulation & sim) {
 
-  //FIXME remove the following
-  //DEBUG PRECISION
+#ifdef DEBUG
   cout.precision(14);
   setw(20);
   cout.setf(ios::fixed, ios::floatfield);
+#endif
 
   DEBUG(5, "Mode chosen: " <<  sim.param().rdc.method)
 
@@ -765,9 +774,9 @@ int _calculate_interactions_mfield(topology::Topology & topo,
 
       const double gamma = sim.param().rdc.sdfric;
       const double gamma_abs = fabs(gamma);
-	  DEBUG(12, "friction coeff: " << gamma)
-	  DEBUG(12, "step length: " << sim.time_step_size())
-	  DEBUG(12, "Tref: " << sim.param().rdc.temp)
+      DEBUG(12, "friction coeff: " << gamma)
+      DEBUG(12, "step length: " << sim.time_step_size())
+      DEBUG(12, "Tref: " << sim.param().rdc.temp)
 
 // FIXME put the rng in conf_it->rng ?
 #ifdef DEBUG
@@ -1041,17 +1050,17 @@ int _calculate_interactions_mfield(topology::Topology & topo,
           conf_it->MFpoint[h] += conf_it->MFpointVel[h] * sim.time_step_size(); // [nm]
 
           // Apply SHAKE to constrain the length of the vectors to length 1
-  		//constraint correction
+          //constraint correction
           //TODO check if this is appropriate
           // delta = -[r_new * r_old - 1]*rold
-  //        conf_it->MFpoint[h] -= (math::dot(conf_it->MFpoint[h], rold) - 1) * rold;
-  		const double discriminant = 4 * pow(math::dot(conf_it->MFpoint[h], rold),2) - 4 * math::abs2(rold) * (math::abs2(conf_it->MFpoint[h]) - vector_length_squared);
-  //        cout << "disc: " << discriminant << endl;
-  		if (discriminant >= 0.0){// small displacement, we can use SHAKE (something SHAKE-like anyway ...)
-          	conf_it->MFpoint[h] -= (2 * math::dot(conf_it->MFpoint[h], rold) - sqrt(discriminant)) / (2 * math::abs2(rold)) * rold;
+          //        conf_it->MFpoint[h] -= (math::dot(conf_it->MFpoint[h], rold) - 1) * rold;
+          const double discriminant = 4 * pow(math::dot(conf_it->MFpoint[h], rold),2) - 4 * math::abs2(rold) * (math::abs2(conf_it->MFpoint[h]) - vector_length_squared);
+          //        cout << "disc: " << discriminant << endl;
+          if (discriminant >= 0.0){// small displacement, we can use SHAKE (something SHAKE-like anyway ...)
+            conf_it->MFpoint[h] -= (2 * math::dot(conf_it->MFpoint[h], rold) - sqrt(discriminant)) / (2 * math::abs2(rold)) * rold;
           }else{// larger displacement, we rescale in direction of r(t+\delta t) which is cheap and works for any length of r(t+\delta t)
-              conf_it->MFpoint[h] = vector_length / math::abs(conf_it->MFpoint[h]) * conf_it->MFpoint[h];
-              DEBUG(10, "something went wrong:  very large displacement of MFpoint (requiring very large corrections)")
+            conf_it->MFpoint[h] = vector_length / math::abs(conf_it->MFpoint[h]) * conf_it->MFpoint[h];
+            DEBUG(10, "something went wrong:  very large displacement of MFpoint (requiring very large corrections)")
           }
   //        cout <<"abs: " << math::abs(conf_it->MFpoint[h]) << endl;
 
@@ -1117,10 +1126,11 @@ void _calculate_ah(topology::Topology & topo,
                    configuration::Configuration & conf,
                    const simulation::Simulation & sim) {
 
-  //FIXME remove three lines
-  //DEBUG PRECISION
+#ifdef DEBUG
   cout.precision(14);
   setw(20);
+  cout.setf(ios::fixed, ios::floatfield);
+#endif
 
   // create variables
   math::Periodicity<B> periodicity(conf.current().box);
@@ -1285,7 +1295,7 @@ void _calculate_forces_tensor_T(topology::Topology & topo,
          sim.param().rdc.mode == simulation::rdc_restr_biq ||
          sim.param().rdc.mode == simulation::rdc_restr_biq_weighted){
         const double exp = pow(M_E, -sim.time_step_size()/sim.param().rdc.tau); // [1]
-        double local_average = exp * conf_it->av[k] + (1.0 - exp) * conf_it->curr[k]; // [1/ps]
+        local_average = exp * conf_it->av[k] + (1.0 - exp) * conf_it->curr[k]; // [1/ps]
         DEBUG(15, "Delta t, tau, e^(- Delta t/tau): " << scientific << sim.time_step_size() << ", " <<  sim.param().rdc.tau << ", " << pow(M_E, -sim.time_step_size()/sim.param().rdc.tau) )
         DEBUG(10, "interaction " << k << ":  R-inst, R-av: " << conf_it->curr[k] << ", " << local_average )
       }
@@ -1307,10 +1317,9 @@ void _calculate_forces_tensor_T(topology::Topology & topo,
         else if(sim.param().rdc.mode == simulation::rdc_restr_av ||
                 sim.param().rdc.mode == simulation::rdc_restr_av_weighted){
           const double dVav_dDav = force_coefficient * dflat_bottom_pot(local_average, it->R0, sim.param().rdc.delta); // [kJ/(nm^2*mol)]
-  	    // the following is wrong, but [1-e^(-dt/tau)] is constant and very small and
-  	    // would therefore require a different K.  Omitting this factor allows us
-  	    // to use the same K as before
-          const double dDav_dD = 1.0;
+          // in the following we set dDav_dD to either 1.0 or [1-e^(-dt/tau)].
+          // The latter is correct, the former allows for using the same K as without time AV
+          const double dDav_dD = sim.param().rdc.tAVfactor ? (1.0-pow(M_E, -sim.time_step_size()/sim.param().rdc.tau)) : 1.0;
           force_array_tensor[i] -= dVav_dDav * dDav_dD * dD_dck; // [kJ/(nm*mol)]
           DEBUG(15, "dVav_dDav; dDav_dD; dD_dc: " << dVav_dDav << ", " << dDav_dD << ", " << scientific << dD_dck)
         }
@@ -1318,10 +1327,11 @@ void _calculate_forces_tensor_T(topology::Topology & topo,
                 sim.param().rdc.mode == simulation::rdc_restr_biq_weighted){
           const double dVbq_dD = 2.0 * force_coefficient * dflat_bottom_pot(conf_it->curr[k], it->R0, sim.param().rdc.delta) * flat_bottom_pot(local_average, it->R0, sim.param().rdc.delta); // [kJ/(nm^2*mol)]
           const double dVbq_dDav = 2.0 * force_coefficient * flat_bottom_pot(conf_it->curr[k], it->R0, sim.param().rdc.delta) * dflat_bottom_pot(local_average, it->R0, sim.param().rdc.delta); // [kJ/(nm^2*mol)]
-  	    // the following is wrong, but [1-e^(-dt/tau)] is constant and very small and
-  	    // would therefore require a different K.  Omitting this factor allows us
-  	    // to use the same K as before
-          const double dDav_dD = 1.0;
+          // in the following we set dDav_dD to either 1.0 or [1-e^(-dt/tau)] or 0.
+          // The first is simple, the second correct.
+          double dDav_dD = 0;  // case 2
+          if (sim.param().rdc.tAVfactor == 0) dDav_dD = 1.0;
+          else if (sim.param().rdc.tAVfactor == 1) dDav_dD = 1.0-pow(M_E, -sim.time_step_size()/sim.param().rdc.tau);
           force_array_tensor[i] -= (dVbq_dD + dVbq_dDav * dDav_dD) * dD_dck; // [kJ/(nm*mol)]
           DEBUG(15, "dVbq_dD; dVbq_dDav; dDav_dD; dD_dc: " << dVbq_dD << ", " << dVbq_dDav << ", "<< dDav_dD << ", " << scientific << dD_dck)
         }
@@ -1461,10 +1471,9 @@ void _calculate_forces_atoms_T(topology::Topology & topo,
       else if(sim.param().rdc.mode == simulation::rdc_restr_av ||
               sim.param().rdc.mode == simulation::rdc_restr_av_weighted){
         const double dVav_dDav = force_coefficient * dflat_bottom_pot(conf_it->av[k], it->R0, sim.param().rdc.delta); // [kJ/(nm^2*mol)]
-       // the following is wrong, but [1-e^(-dt/tau)] is constant and very small and
-       // would therefore require a different K.  Omitting this factor allows us
-       // to use the same K as before
-        const double dDav_dD = 1.0;
+        // in the following we set dDav_dD to either 1.0 or [1-e^(-dt/tau)].
+        // The latter is correct, the former allows for using the same K as without time AV
+        const double dDav_dD = sim.param().rdc.tAVfactor ? (1.0-pow(M_E, -sim.time_step_size()/sim.param().rdc.tau)) : 1.0;
         conf.current().force(it->i) -= dVav_dDav * dDav_dD * dD_dr; // [kJ/(nm*mol)]
         conf.current().force(it->j) += dVav_dDav * dDav_dD * dD_dr; // [kJ/(nm*mol)]
         DEBUG(15, "dVav_dDav; dDav_dD; dD_dr: " << dVav_dDav << ", " << dDav_dD << ", (" << scientific << dD_dr[0] << ", " << dD_dr[1] << ", " << dD_dr[2] << ")")
@@ -1473,10 +1482,11 @@ void _calculate_forces_atoms_T(topology::Topology & topo,
               sim.param().rdc.mode == simulation::rdc_restr_biq_weighted){
         const double dVbq_dD = 2.0 * force_coefficient * dflat_bottom_pot(conf_it->curr[k], it->R0, sim.param().rdc.delta) * flat_bottom_pot(conf_it->av[k], it->R0, sim.param().rdc.delta); // [kJ/(nm^2*mol)]
         const double dVbq_dDav = 2.0 * force_coefficient * flat_bottom_pot(conf_it->curr[k], it->R0, sim.param().rdc.delta) * dflat_bottom_pot(conf_it->av[k], it->R0, sim.param().rdc.delta); // [kJ/(nm^2*mol)]
-       // the following is wrong, but [1-e^(-dt/tau)] is constant and very small and
-       // would therefore require a different K.  Omitting this factor allows us
-       // to use the same K as before
-        const double dDav_dD = 1.0;
+        // in the following we set dDav_dD to either 1.0 or [1-e^(-dt/tau)] or 0.
+        // The first is simple, the second correct.
+        double dDav_dD = 0;  // case 2
+        if (sim.param().rdc.tAVfactor == 0) dDav_dD = 1.0;
+        else if (sim.param().rdc.tAVfactor == 1) dDav_dD = 1.0-pow(M_E, -sim.time_step_size()/sim.param().rdc.tau);
         conf.current().force(it->i) -= (dVbq_dD + dVbq_dDav * dDav_dD) * dD_dr; // [kJ/(nm*mol)]
         conf.current().force(it->j) += (dVbq_dD + dVbq_dDav * dDav_dD) * dD_dr; // [kJ/(nm*mol)]
         DEBUG(15, "dVbq_dD; dVbq_dDav; dDav_dD; dD_dr: " << dVbq_dD << ", " << dVbq_dDav << ", "<< dDav_dD << ", (" << scientific << dD_dr[0] << ", " << dD_dr[1] << ", " << dD_dr[2] << ")")
@@ -1488,13 +1498,14 @@ void _calculate_forces_atoms_T(topology::Topology & topo,
 
 template<math::boundary_enum B, math::virial_enum V>
 int _calculate_interactions_tensor(topology::Topology & topo,
-									configuration::Configuration & conf,
-									simulation::Simulation & sim) {
+                                    configuration::Configuration & conf,
+                                    simulation::Simulation & sim) {
 
-  //DEBUG PRECISION // FIXME remove
+#ifdef DEBUG
   cout.precision(14);
   setw(20);
   cout.setf(ios::fixed, ios::floatfield);
+#endif
 
   DEBUG(5, "Mode chosen: " <<  sim.param().rdc.method)
 
@@ -1748,7 +1759,7 @@ int _calculate_interactions_tensor(topology::Topology & topo,
           //2.11.2.26
           conf_it->Tensor[h] += (vrand3 - sxh);
 
-          //FIXME there is no shake here because the tensor components appeared to be unconstrained which is wrong.
+          // there is no SHAKE here because the length of tensor components is not constrained (except for extreme values, and then we have other problems)
 
           // 'Ekin' of the tensor
           // E = 0.5 * m * v^2 = 0.25 * m * (v_{n-.5}^2 + v_{n+.5}^2)
@@ -1841,8 +1852,7 @@ int _calculate_interactions_tensor(topology::Topology & topo,
           // Position step r = r + v*dt // r[nm], v[nm/ps], dt[ps]
           conf_it->Tensor[h] += conf_it->TensorVel[h] * sim.time_step_size(); // [nm]
 
-  		// there is no SHAKE here because the length of tensor components is not constrained
-          // I wish! FIXME verify
+          // there is no SHAKE here because the length of tensor components is not constrained (except for extreme values, and then we have other problems)
 
           // 'Ekin' of the tensor components
           // E = 0.5 * m * v^2 = 0.25 * m * (v_{n-.5}^2 + v_{n+.5}^2)
@@ -1911,7 +1921,7 @@ inline double real_harmonic_2nd_order(const int m, const double x, const double 
   switch(m){
     case -2: return 0.5  * sqrt(15.0/M_PI) * x * y;
     case -1: return 0.5  * sqrt(15.0/M_PI) * y * z;
-    case  0: return 0.25 * sqrt(5.0/M_PI)  * (2*z*z - y*y - x*x);
+    case  0: return 0.25 * sqrt(5.0/M_PI)  * (3.0*z*z - 1.0);
     case  1: return 0.5  * sqrt(15.0/M_PI) * x * z;
     case  2: return 0.25 * sqrt(15.0/M_PI) * (x*x - y*y);
     default: return 0.0;
@@ -1928,11 +1938,11 @@ void _calculate_forces_clm_SH(topology::Topology & topo,
 
   DEBUG(10, "getting forces on clm components")
 
-  //FIXME remove three lines
-  //DEBUG PRECISION
+#ifdef DEBUG
   cout.precision(14);
   setw(20);
   cout.setf(ios::fixed, ios::floatfield);
+#endif
 
   // create variables
   math::Periodicity<B> periodicity(conf.current().box);
@@ -2005,7 +2015,7 @@ void _calculate_forces_clm_SH(topology::Topology & topo,
          sim.param().rdc.mode == simulation::rdc_restr_biq ||
          sim.param().rdc.mode == simulation::rdc_restr_biq_weighted){
         const double exp = pow(M_E, -sim.time_step_size()/sim.param().rdc.tau); // [1]
-        double local_average = exp * conf_it->av[k] + (1.0 - exp) * conf_it->curr[k]; // [1/ps]
+        local_average = exp * conf_it->av[k] + (1.0 - exp) * conf_it->curr[k]; // [1/ps]
         DEBUG(15, "Delta t, tau, e^(- Delta t/tau): " << scientific << sim.time_step_size() << ", " <<  sim.param().rdc.tau << ", " << pow(M_E, -sim.time_step_size()/sim.param().rdc.tau) )
         DEBUG(10, "interaction " << k << ":  R-inst, R-av: " << conf_it->curr[k] << ", " << local_average )
       }
@@ -2027,10 +2037,9 @@ void _calculate_forces_clm_SH(topology::Topology & topo,
         else if(sim.param().rdc.mode == simulation::rdc_restr_av ||
                 sim.param().rdc.mode == simulation::rdc_restr_av_weighted){
           const double dVav_dDav = force_coefficient * dflat_bottom_pot(local_average, it->R0, sim.param().rdc.delta); // [kJ/(nm^2*mol)]
-  	    // the following is wrong, but [1-e^(-dt/tau)] is constant and very small and
-  	    // would therefore require a different K.  Omitting this factor allows us
-  	    // to use the same K as before
-          const double dDav_dD = 1.0;
+          // in the following we set dDav_dD to either 1.0 or [1-e^(-dt/tau)].
+          // The latter is correct, the former allows for using the same K as without time AV
+          const double dDav_dD = sim.param().rdc.tAVfactor ? (1.0-pow(M_E, -sim.time_step_size()/sim.param().rdc.tau)) : 1.0;
           force_array_clm[l+m] -= dVav_dDav * dDav_dD * dD_dc; // [kJ/(nm*mol)]
           DEBUG(15, "dVav_dDav; dDav_dD; dD_dc: " << dVav_dDav << ", " << dDav_dD << ", " << scientific << dD_dc)
         }
@@ -2038,10 +2047,11 @@ void _calculate_forces_clm_SH(topology::Topology & topo,
                 sim.param().rdc.mode == simulation::rdc_restr_biq_weighted){
           const double dVbq_dD = 2.0 * force_coefficient * dflat_bottom_pot(conf_it->curr[k], it->R0, sim.param().rdc.delta) * flat_bottom_pot(local_average, it->R0, sim.param().rdc.delta); // [kJ/(nm^2*mol)]
           const double dVbq_dDav = 2.0 * force_coefficient * flat_bottom_pot(conf_it->curr[k], it->R0, sim.param().rdc.delta) * dflat_bottom_pot(local_average, it->R0, sim.param().rdc.delta); // [kJ/(nm^2*mol)]
-  	    // the following is wrong, but [1-e^(-dt/tau)] is constant and very small and
-  	    // would therefore require a different K.  Omitting this factor allows us
-  	    // to use the same K as before
-          const double dDav_dD = 1.0;
+          // in the following we set dDav_dD to either 1.0 or [1-e^(-dt/tau)] or 0.
+          // The first is simple, the second correct.
+          double dDav_dD = 0;  // case 2
+          if (sim.param().rdc.tAVfactor == 0) dDav_dD = 1.0;
+          else if (sim.param().rdc.tAVfactor == 1) dDav_dD = 1.0-pow(M_E, -sim.time_step_size()/sim.param().rdc.tau);
           force_array_clm[l+m] -= (dVbq_dD + dVbq_dDav * dDav_dD) * dD_dc; // [kJ/(nm*mol)]
           DEBUG(15, "dVbq_dD; dVbq_dDav; dDav_dD; dD_dc: " << dVbq_dD << ", " << dVbq_dDav << ", "<< dDav_dD << ", " << scientific << dD_dc)
         }
@@ -2062,11 +2072,11 @@ void _calculate_forces_atoms_SH(topology::Topology & topo,
                    configuration::Configuration & conf,
                    const simulation::Simulation & sim) {
 
-  //FIXME remove three lines
-  //DEBUG PRECISION
+#ifdef DEBUG
   cout.precision(14);
   setw(20);
   cout.setf(ios::fixed, ios::floatfield);
+#endif
 
   // create variables
   math::Periodicity<B> periodicity(conf.current().box);
@@ -2198,10 +2208,9 @@ void _calculate_forces_atoms_SH(topology::Topology & topo,
       else if(sim.param().rdc.mode == simulation::rdc_restr_av ||
               sim.param().rdc.mode == simulation::rdc_restr_av_weighted){
         const double dVav_dDav = force_coefficient * dflat_bottom_pot(conf_it->av[k], it->R0, sim.param().rdc.delta); // [kJ/(nm^2*mol)]
-  	  // the following is wrong, but [1-e^(-dt/tau)] is constant and very small and
-  	  // would therefore require a different K.  Omitting this factor allows us
-  	  // to use the same K as before
-        const double dDav_dD = 1.0;
+        // in the following we set dDav_dD to either 1.0 or [1-e^(-dt/tau)].
+        // The latter is correct, the former allows for using the same K as without time AV
+        const double dDav_dD = sim.param().rdc.tAVfactor ? (1.0-pow(M_E, -sim.time_step_size()/sim.param().rdc.tau)) : 1.0;
         conf.current().force(it->i) -= dVav_dDav * dDav_dD * dD_dr; // [kJ/(nm*mol)]
         conf.current().force(it->j) += dVav_dDav * dDav_dD * dD_dr; // [kJ/(nm*mol)]
         DEBUG(15, "dVav_dDav; dDav_dD; dD_dr: " << dVav_dDav << ", " << dDav_dD << ", (" << scientific << dD_dr[0] << ", " << dD_dr[1] << ", " << dD_dr[2] << ")")
@@ -2210,10 +2219,11 @@ void _calculate_forces_atoms_SH(topology::Topology & topo,
               sim.param().rdc.mode == simulation::rdc_restr_biq_weighted){
         const double dVbq_dD = 2.0 * force_coefficient * dflat_bottom_pot(conf_it->curr[k], it->R0, sim.param().rdc.delta) * flat_bottom_pot(conf_it->av[k], it->R0, sim.param().rdc.delta); // [kJ/(nm^2*mol)]
         const double dVbq_dDav = 2.0 * force_coefficient * flat_bottom_pot(conf_it->curr[k], it->R0, sim.param().rdc.delta) * dflat_bottom_pot(conf_it->av[k], it->R0, sim.param().rdc.delta); // [kJ/(nm^2*mol)]
-  	  // the following is wrong, but [1-e^(-dt/tau)] is constant and very small and
-  	  // would therefore require a different K.  Omitting this factor allows us
-  	  // to use the same K as before
-        const double dDav_dD = 1.0;
+        // in the following we set dDav_dD to either 1.0 or [1-e^(-dt/tau)] or 0.
+        // The first is simple, the second correct.
+        double dDav_dD = 0;  // case 2
+        if (sim.param().rdc.tAVfactor == 0) dDav_dD = 1.0;
+        else if (sim.param().rdc.tAVfactor == 1) dDav_dD = 1.0-pow(M_E, -sim.time_step_size()/sim.param().rdc.tau);
         conf.current().force(it->i) -= (dVbq_dD + dVbq_dDav * dDav_dD) * dD_dr; // [kJ/(nm*mol)]
         conf.current().force(it->j) += (dVbq_dD + dVbq_dDav * dDav_dD) * dD_dr; // [kJ/(nm*mol)]
         DEBUG(15, "dVbq_dD; dVbq_dDav; dDav_dD; dD_dr: " << dVbq_dD << ", " << dVbq_dDav << ", "<< dDav_dD << ", (" << scientific << dD_dr[0] << ", " << dD_dr[1] << ", " << dD_dr[2] << ")")
@@ -2229,10 +2239,11 @@ void _calculate_clm(topology::Topology & topo,
                    configuration::Configuration & conf,
                    const simulation::Simulation & sim) {
 
-  //FIXME remove three lines
-  //DEBUG PRECISION
+#ifdef DEBUG
   cout.precision(14);
   setw(20);
+  cout.setf(ios::fixed, ios::floatfield);
+#endif
 
   // create variables
   math::Periodicity<B> periodicity(conf.current().box);
@@ -2352,14 +2363,14 @@ void _calculate_clm(topology::Topology & topo,
 
 template<math::boundary_enum B, math::virial_enum V>
 int _calculate_interactions_sh(topology::Topology & topo,
-								configuration::Configuration & conf,
-								simulation::Simulation & sim) {
+                                configuration::Configuration & conf,
+                                simulation::Simulation & sim) {
 
-  //FIXME remove three lines
-  //DEBUG PRECISION
+#ifdef DEBUG
   cout.precision(14);
   setw(20);
   cout.setf(ios::fixed, ios::floatfield);
+#endif
 
   DEBUG(5, "Mode chosen: " <<  sim.param().rdc.method)
 
@@ -2714,8 +2725,7 @@ int _calculate_interactions_sh(topology::Topology & topo,
           conf_it->clm[lm] += conf_it->clmVel[lm] * sim.time_step_size(); // [nm]
           DEBUG(12, "clm, vel[" << lm << "]: " << conf_it->clm[lm] << ", " << conf_it->clmVel[lm])
 
-  		// there is no SHAKE here because the length of tensor components is not constrained
-          // I wish! FIXME verify
+          // there is no SHAKE here because the values of clm are not constrained (except for extreme values, and then we have other problems)
 
           // 'Ekin' of the clm
           // E = 0.5 * m * v^2 = 0.25 * m * (v_{n-.5}^2 + v_{n+.5}^2)
@@ -2757,10 +2767,9 @@ int _calculate_interactions_sh(topology::Topology & topo,
 
       break;
     }
-    default: {
+    default:
       // should never be the case
       assert(false);
-    }
   }
   return 0;
 }
@@ -2778,15 +2787,15 @@ int RDC_Restraint_Interaction::calculate_interactions
   switch(sim.param().rdc.type) {
     case simulation::rdc_mf:
       DEBUG(5, "RDC calculating interactions, magnetic field vector representation")
-      SPLIT_VIRIAL_BOUNDARY(_calculate_interactions_mfield, topo, conf, sim);
+      SPLIT_VIRIAL_BOUNDARY(_calculate_interactions_mfield, topo, conf, sim)
       break;
     case simulation::rdc_t:
       DEBUG(5, "RDC calculating interactions, alignment tensor representation")
-      SPLIT_VIRIAL_BOUNDARY(_calculate_interactions_tensor, topo, conf, sim);
+      SPLIT_VIRIAL_BOUNDARY(_calculate_interactions_tensor, topo, conf, sim)
       break;
     case simulation::rdc_sh:
       DEBUG(5, "RDC calculating interactions, spherical harmonics representation")
-      SPLIT_VIRIAL_BOUNDARY(_calculate_interactions_sh, topo, conf, sim);
+      SPLIT_VIRIAL_BOUNDARY(_calculate_interactions_sh, topo, conf, sim)
       break;
     default:
       break;
@@ -2800,11 +2809,11 @@ int RDC_Restraint_Interaction::calculate_interactions
  * init
  */
 int RDC_Restraint_Interaction::init(
-				topology::Topology &topo,
-				configuration::Configuration &conf,
-				simulation::Simulation &sim,
-				ostream &os,
-				bool quiet) {
+                topology::Topology &topo,
+                configuration::Configuration &conf,
+                simulation::Simulation &sim,
+                ostream &os,
+                bool quiet) {
     if (!quiet) {
     os << "RDC RESTRAINT INTERACTION\n";
     switch (sim.param().rdc.mode) {
@@ -2838,7 +2847,7 @@ int RDC_Restraint_Interaction::init(
   }
 
   return 0;
-};
+}
 
 }//namespace interaction
 
