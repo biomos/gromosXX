@@ -507,8 +507,8 @@ void io::In_RDC::read(topology::Topology& topo,
         }
         if(mAxx<1e-5 || mAyy<1e-5 || mAxy<1e-5 || mAxz<1e-5 || mAyz<1e-5 ) io::messages.add("masses can only be positive and shouldn't be too small", "In_RDC", io::message::error);
 
-        // the tensor components a_1 to a_5 can be expressed as averages over
-        // products of cosines and are, hence, limited to a range of values
+	    // the tensor components a_1 to a_5 can be expressed as averages over
+	    // products of cosines and are, hence, limited to a range of values
         if(!a_is_valid(Axx, Ayy, Axy, Axz, Ayz)){
           io::messages.add("some or all a_h have insensible values.  Setting all components to 0.0 (i.e. isotropic alignment) ...", "In_RDC", io::message::warning);
           Axx = 0.0;

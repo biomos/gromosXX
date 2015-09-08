@@ -12,7 +12,7 @@
  * - @ref conversion
  * - @ref magfieldc
  * - @ref alignt
-  * - @ref rdcresspec
+ * - @ref rdcresspec
  */
 
 #ifndef INCLUDED_IN_RDC_H
@@ -50,5 +50,4 @@ namespace io {
 } // io
 
 #endif
-
 

@@ -311,7 +311,7 @@ namespace simulation
       /**
        * Molecular dynamics
        */
-      rdc_md = 2,
+      rdc_md = 2
   };
   
   /**
@@ -3223,8 +3223,9 @@ namespace simulation
        * - delta 0.0
        * - K 1.0
        * - tau 0
+       * - tAVfactor 0
+       * - biqfactor 0
        * - write 0
-       * - write_Ek 0
        */
         
       rdc_struct()
@@ -3241,8 +3242,9 @@ namespace simulation
           delta(0.0),
           K(1.0),
           tau(0),
-          write(0),
-          write_Ek(0)
+          tAVfactor(0),
+          biqfactor(0),
+          write(0)
       {
       }
       /**
@@ -3298,14 +3300,18 @@ namespace simulation
        * coupling time.
        */
       double tau;
+      /**
+       * choose if (1 - e^(...)) factor is omitted in time AV
+       */
+      unsigned tAVfactor;
+      /**
+       * choose factor by which biquad term is multiplied (1, (1 - e^(...)), 0)
+       */
+      unsigned biqfactor;
        /**
        * write output to special trajectory every n-th step
        */
       unsigned int write;
-      /**
-       * print kinetic energy
-       */
-      unsigned int write_Ek;
     } /** RDC-parameters */ rdc;
 
 
