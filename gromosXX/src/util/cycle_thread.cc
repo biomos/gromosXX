@@ -7,8 +7,10 @@
 #include <sched.h>
 #include <unistd.h>
 #include <signal.h>
+#include <errno.h>
 #include "../stdheader.h"
 #include "../util/debug.h"
+//#include "../util/pthread_barrier.h"
 #undef MODULE
 #undef SUBMODULE
 #define MODULE util
@@ -16,8 +18,7 @@
 
 #include "cycle_thread.h"
 
-// addition apple
-
+#ifdef __APPLE__
 int pthread_barrier_init(pthread_barrier_t *barrier, const pthread_barrierattr_t *attr, unsigned int count)
 {
     if(count == 0)
@@ -65,10 +66,11 @@ int pthread_barrier_wait(pthread_barrier_t *barrier)
         return 0;
     }
 }
-// end addition apple
+
+#endif
 
 /**
- * Constructor
+ * Consttuctor
  */
 util::CycleThread::CycleThread() {
   // For the while loop in run()

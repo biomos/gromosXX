@@ -7,12 +7,9 @@
 #define	_CYCLE_THREAD_H
 #include <pthread.h>
 #include "thread.h"
+//#include "pthread_barrier.h"
 
-// addition for apple ? 
-#ifndef PTHREAD_BARRIER_H_
-#define PTHREAD_BARRIER_H_
-
-#include <errno.h>
+#ifdef __APPLE__
 
 typedef int pthread_barrierattr_t;
 typedef struct
@@ -23,15 +20,14 @@ typedef struct
     int tripCount;
 } pthread_barrier_t;
 
-
 int pthread_barrier_init(pthread_barrier_t *barrier, const pthread_barrierattr_t *attr, unsigned int count);
 
 int pthread_barrier_destroy(pthread_barrier_t *barrier);
 
 int pthread_barrier_wait(pthread_barrier_t *barrier);
 
-#endif // PTHREAD_BARRIER_H_
-// END addition apple
+#endif
+
 namespace util {
 
   /**
