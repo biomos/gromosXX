@@ -192,8 +192,15 @@ int _calculate_jvalue_restraint_interactions
 	else delta_Jinst = 0.0;
       }
       
-      if (sim.param().jvalue.mode == simulation::jvalue_restr_biq_weighted)
+      if (sim.param().jvalue.mode == simulation::jvalue_restr_biq_weighted){
+        // if Jinst and Jav lie on different sides of J0 and outside the flat bottom region,
+        // no weight should be added.
+        if (delta_Jav * delta_Jinst < 0.0){
+          delta_Jav = 0.0;
+          delta_Jinst = 0.0;
+        }
 	delta_epsilon = delta_Jinst*delta_Jinst * delta_Jav * delta_Jav;
+      }
       else if (sim.param().jvalue.mode == simulation::jvalue_restr_inst ||
               sim.param().jvalue.mode == simulation::jvalue_restr_inst_weighted)
 	delta_epsilon = delta_Jinst * delta_Jinst;	
@@ -468,7 +475,13 @@ double _calculate_derivative(topology::Topology & topo,
 	    delta_Jcurr += param.jvalue.delta;
 	  else delta_Jcurr = 0.0;
         }        
-        
+        // if Jcurr and Jav lie on different sides of J0 and outside the flat bottom region,
+        // no restraining force is generated.
+        if (delta_Jcurr * delta_Jav < 0.0){
+          delta_Jcurr = 0.0;
+          delta_Jav = 0.0;
+        }
+
 	// --- dV / dJ ---
 	const double dV_dJ = K * delta_Jcurr * delta_Jav * delta_Jav;
 
