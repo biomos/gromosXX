@@ -94,9 +94,13 @@ void util::replica_exchange_base::swap() {
           if ((*it)->ID < partner) {
             (*it)->send_coord(partner, partnerRank);
             (*it)->receive_new_coord(partner, partnerRank);
+            // the averages of current and old are interchanged after calling exchange_state() and have to be switched back
+            (*it)->exchange_averages();
           } else {
             (*it)->receive_new_coord(partner, partnerRank);
             (*it)->send_coord(partner, partnerRank);
+            // the averages of current and old are interchanged after calling exchange_state() and have to be switched back
+            (*it)->exchange_averages();
           }
         }
       }
@@ -239,6 +243,9 @@ void util::replica_exchange_base::switch_coords_on_node(repIterator it1, const u
   rep2->conf.old().theta = rep1->conf.old().theta;
 
   rep2->conf.exchange_state();
+  // the averages of current and old are interchanged after calling exchange_state() and have to be switched back
+  rep1->exchange_averages();
+  rep2->exchange_averages();
 }
 
 void util::replica_exchange_base::print_coords(std::string name) {

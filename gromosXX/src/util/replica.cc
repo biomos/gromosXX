@@ -67,7 +67,7 @@ util::replica::replica(io::Argument _args, int cont, int _ID, int _rank) : ID(_I
   run = 0;
   total_runs = sim.param().replica.trials + sim.param().replica.equilibrate;
   partner = ID;
-  time = 0.0;
+  time = sim.time();
   steps = 0;
   switched = 0;
 
@@ -227,8 +227,8 @@ void util::replica::run_MD() {
   // print final data of run
   if (run ==  total_runs) {
     traj->write(conf, topo, sim, io::final);
+    traj->print_final(topo, conf, sim);
   }
-  traj->print_final(topo, conf, sim);
 }
 
 // this function is deadlock safe, because it's made sure, that the replicas
@@ -557,6 +557,13 @@ double util::replica::calculate_energy() {
 #endif
   }
   return energy;
+}
+
+void util::replica::exchange_averages() {
+  // after a swap the averages of current and old are exchanged and have to be switched back
+  configuration::Average  dummy = conf.current().averages;
+  conf.current().averages=conf.old().averages;
+  conf.old().averages=dummy;
 }
 
 void util::replica::send_coord(const int receiverID, const int receiverRank) {

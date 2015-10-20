@@ -132,6 +132,7 @@ int main(int argc, char *argv[]) {
     // read in the rest
     if(io::read_input_repex(args2, topo, conf, sim, md, std::cout, true)){
         std::cerr << "\nErrors during initialization!\n" << std::endl;
+        io::messages.display(std::cout);
         MPI_Abort(MPI_COMM_WORLD, E_INPUT_ERROR);
         return 1;
     }
@@ -226,7 +227,7 @@ int main(int argc, char *argv[]) {
       }
     }
   }
-
+  
   std::cout << "REPLICA EXCHANGE SIMULATION finished successfully! " << "Node " << rank << std::endl;
 
   MPI_Barrier(MPI_COMM_WORLD); // maybe not needed in the end...

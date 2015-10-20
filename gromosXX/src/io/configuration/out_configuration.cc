@@ -359,22 +359,26 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       m_special_traj.flush();
     }
 
-    if (m_every_disres && sim.steps() && (sim.steps() % m_every_disres) == 0) {
-      if (!special_timestep_printed) {
-        _print_timestep(sim, m_special_traj);
+    if (m_every_disres && ((sim.steps() - 1) % m_every_disres) == 0) {
+      if (sim.steps()) {
+       if (!special_timestep_printed) {
+        _print_old_timestep(sim, m_special_traj);
         special_timestep_printed = true;
       }
       _print_distance_restraints(conf, topo, m_special_traj);
       m_special_traj.flush();
+      }
     }
 
-    if (m_every_disfieldres && sim.steps() && (sim.steps() % m_every_disfieldres) == 0) {
-      if (!special_timestep_printed) {
-        _print_timestep(sim, m_special_traj);
+    if (m_every_disfieldres && ((sim.steps() - 1) % m_every_disfieldres) == 0) {
+      if (sim.steps()) {
+       if (!special_timestep_printed) {
+        _print_old_timestep(sim, m_special_traj);
         special_timestep_printed = true;
       }
       _print_disfield_restraints(conf, topo, m_special_traj);
       m_special_traj.flush();
+      }
     }
 
     if (m_every_dat) {
@@ -638,6 +642,16 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
     if (m_every_free_energy && ((sim.steps() - 1) % m_every_free_energy) == 0) {
       _print_old_timestep(sim, m_free_energy_traj);
       _print_free_energyred(conf, topo, m_free_energy_traj);
+    }
+    
+    if (m_every_disres && ((sim.steps() - 1) % m_every_disres) == 0) {   
+      _print_old_timestep(sim, m_special_traj);
+      _print_distance_restraints(conf, topo, m_special_traj);
+    }
+    
+    if (m_every_disfieldres && ((sim.steps() - 1) % m_every_disfieldres) == 0) {    
+      _print_old_timestep(sim, m_special_traj);
+      _print_disfield_restraints(conf, topo, m_special_traj);
     }
 
     if (m_every_blockaverage && ((sim.steps() - 1) % m_every_blockaverage) == 0) {

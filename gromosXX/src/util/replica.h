@@ -84,6 +84,12 @@ namespace util {
      * finds out if configurations are to be switched; sets switched to true if so
      */
     void swap(const unsigned int partner, const unsigned int partnerRank);
+    
+    /**
+     * switch back the averages
+     */
+     void exchange_averages();
+     
     /**
      * Initiates MPI communication to receive new configuration information
      * @param senderID
