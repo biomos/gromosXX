@@ -348,9 +348,9 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       m_special_traj.flush();
     }
 
-    if (m_every_xray && sim.steps() && (sim.steps() % m_every_xray) == 0) {
+    if (m_every_xray && sim.steps() && ((sim.steps()-1) % m_every_xray) == 0) {
       if (!special_timestep_printed) {
-        _print_timestep(sim, m_special_traj);
+        _print_old_timestep(sim, m_special_traj);
         special_timestep_printed = true;
       }
       _print_xray_rvalue(sim.param(), conf, m_special_traj);
@@ -643,7 +643,14 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       _print_old_timestep(sim, m_free_energy_traj);
       _print_free_energyred(conf, topo, m_free_energy_traj);
     }
-    
+   
+    if (m_every_xray && ((sim.steps() - 1) % m_every_xray) == 0) {    
+      _print_old_timestep(sim, m_special_traj);       
+      _print_xray_rvalue(sim.param(), conf, m_special_traj);
+      _print_xray_umbrellaweightthresholds(sim.param(), topo, m_special_traj);
+      _print_xray_bfactors(sim.param(), conf, m_special_traj);
+    }
+ 
     if (m_every_disres && ((sim.steps() - 1) % m_every_disres) == 0) {   
       _print_old_timestep(sim, m_special_traj);
       _print_distance_restraints(conf, topo, m_special_traj);
@@ -2357,11 +2364,13 @@ void io::Out_Configuration::_print_distance_restraints(
 
   os.setf(std::ios::fixed, std::ios::floatfield);
   os.precision(m_distance_restraint_precision);
-
-  os << "DISRESDATA" << std::endl;
-  int i;
-  for (i = 1; av_it != av_to; ++av_it, ++ene_it, ++d_it, ++i) {
-    os << std::setw(m_width) << *d_it
+  
+  if (conf.special().distanceres.d.size() > 0) {
+    os << "DISRESDATA" << std::endl;
+    os << conf.special().distanceres.d.size() << "\n";
+    int i;
+    for (i = 1; av_it != av_to; ++av_it, ++ene_it, ++d_it, ++i) {
+       os << std::setw(m_width) << *d_it
        << std::setw(m_width) << *ene_it;
        if (*av_it != 0) {
          os << std::setw(m_width) << pow(*av_it, -1.0 / 3.0);
@@ -2369,9 +2378,31 @@ void io::Out_Configuration::_print_distance_restraints(
          os << std::setw(m_width) << 0.0;
        }
        os << std::endl;
+    }
+    os << "END" << std::endl;
   }
-
-  os << "END" << std::endl;
+  
+  std::vector<double>::const_iterator pav_it = conf.special().pertdistanceres.av.begin(),
+          pav_to = conf.special().pertdistanceres.av.end();
+  std::vector<double>::const_iterator pene_it = conf.special().pertdistanceres.energy.begin();
+  std::vector<double>::const_iterator pd_it = conf.special().pertdistanceres.d.begin();
+  
+  if (conf.special().pertdistanceres.d.size() > 0) {
+    os << "PERTDISRESDATA" << std::endl;
+    os << conf.special().pertdistanceres.d.size() << "\n";
+    int i;
+    for (i = 1; pav_it != pav_to; ++pav_it, ++pene_it, ++pd_it, ++i) {
+       os << std::setw(m_width) << *pd_it
+       << std::setw(m_width) << *pene_it;
+       if (*pav_it != 0) {
+         os << std::setw(m_width) << pow(*pav_it, -1.0 / 3.0);
+       } else {
+         os << std::setw(m_width) << 0.0;
+       }
+       os << std::endl;
+    }
+    os << "END" << std::endl;
+  }
 }
 
 void io::Out_Configuration::_print_disfield_restraints(

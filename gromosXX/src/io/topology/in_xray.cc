@@ -203,7 +203,7 @@ END
  *
  * @section xrayreplicaexchange XRAYREPLICAEXCHANGE block
  * Make resolution or force constant lambda dependent
- * @verbtaim
+ * @verbatim
 XRAYREPLICAEXCHANGE
 # NTXRRE: use X-ray replica exchange 0..2
 #                   0 don't use replica exchange
@@ -219,7 +219,7 @@ END
  * 
  * @section xrayoverallbfactor XRAYOVERALLBFACTOR block
  * Controls the usage of an overall B-factor
- * 
+ * @verbatim
 XRAYOVERALLBFACTOR
 # XROB >= 0.0 the overall B factor used.
 # XROBF 0,1 fit the overall B factor using least-squares

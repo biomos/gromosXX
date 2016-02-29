@@ -69,7 +69,7 @@ namespace util {
      */
     void receive_from_all_slaves();
     /**
-     * writes data to output file @repout
+     * writes data to output file @repdat
      */
     void write();
 

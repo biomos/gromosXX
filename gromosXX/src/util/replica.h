@@ -91,6 +91,11 @@ namespace util {
      void exchange_averages();
      
     /**
+     * write final cnf
+     */
+     void write_final_conf();
+     
+    /**
      * Initiates MPI communication to receive new configuration information
      * @param senderID
      * @param senderRank

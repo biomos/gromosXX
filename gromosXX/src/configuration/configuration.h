@@ -444,6 +444,7 @@ namespace configuration {
          */
         std::vector<double> av;
       } /** disres informaton */ distanceres;
+      disres_struct pertdistanceres;
 
       /**
        * @struct disfield_struct

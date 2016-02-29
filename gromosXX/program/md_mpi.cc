@@ -60,7 +60,7 @@ int main(int argc, char *argv[]){
   util::Known knowns;
   knowns << "topo" << "conf" << "input" << "verb" << "pttopo"
 	 << "trc" << "fin" << "trv" << "trf" << "trs" << "tramd" << "tre" << "trg"
-	 << "bae" << "bag" << "posresspec" << "refpos" << "distrest" 
+	 << "bae" << "bag" << "posresspec" << "refpos" << "distrest"  
          << "dihrest" << "jval" << "xray" << "sym" << "order"  << "rdc" << "lud" << "led" << "anatrj"
          << "print" << "friction" << "qmmm" << "version" << "develop";
   
@@ -145,7 +145,6 @@ int main(int argc, char *argv[]){
 
   
   int error;
-
   if(rank == 0){
     
     std::cout << "MPI master node (of " << size << " nodes)" << std::endl;
@@ -157,11 +156,17 @@ int main(int argc, char *argv[]){
     traj.init(args, sim.param());
     
     std::cout << "\nMESSAGES FROM INITIALIZATION\n";
+
+  
     {
       int iom = io::messages.display(std::cout);
       if (iom >= io::message::error) {
         std::cout << "\nErrors during initialisation!\n" << std::endl;
-        MPI::Finalize();
+        // send error status to slaves
+        error = 1;
+        std::cout << "Telling slaves to quit." << std::endl;
+        MPI::COMM_WORLD.Bcast(&error, 1, MPI::INT, 0);
+        //MPI::Finalize();
         return 1;
       } else if (iom == io::message::develop) {
         std::cout << "\nUse @develop to run untested code.\n" << std::endl;
@@ -170,8 +175,13 @@ int main(int argc, char *argv[]){
       }
     }
 
+    error=0;
+    MPI::COMM_WORLD.Bcast(&error, 1, MPI::INT, 0);
+
+
     io::messages.clear();
 
+    if (!error) {
     std::cout.precision(5);
     std::cout.setf(std::ios_base::fixed, std::ios_base::floatfield);
     
@@ -278,7 +288,7 @@ int main(int argc, char *argv[]){
     else{
       std::cout << "\n" GROMOSXX " finished successfully\n" << std::endl;
     }
-    
+   }
   }
 
   ////////////////////////////////////////////////////////////////////////////////
@@ -287,7 +297,14 @@ int main(int argc, char *argv[]){
 
   else{
     (*os) << "MPI slave " << rank << " of " << size << std::endl;
-    
+    MPI::COMM_WORLD.Bcast(&error, 1, MPI::INT, 0);
+
+      if (error) {
+        (*os) << "There was an error in the master. Check output file for details." << std::endl
+              << "Exiting ." << std::endl;
+      }
+
+    else {
     // check whether we have nonbonded interactions
     bool do_nonbonded = (sim.param().force.nonbonded_crf || 
                          sim.param().force.nonbonded_vdw);
@@ -354,6 +371,17 @@ int main(int argc, char *argv[]){
       MPI::Finalize();
       return 1;
     }
+
+/*    bool test_fail = true;
+    if (test_fail) {
+           std::cerr << "MPI slave: test fail."
+              << "\n\t(internal error)"
+              << std:: endl;
+      MPI::Finalize();
+      return 1;
+
+    } 
+*/
     
     //////////////////////////////////////////////////////////////////////////////////////////////////////
     // run the simulation
@@ -427,7 +455,7 @@ int main(int argc, char *argv[]){
     else{
       (*os) << "\n" GROMOSXX " MPI slave " << rank << " finished successfully\n" << std::endl;
     }
-    
+    }
   } // end of slave
 
   os = NULL;

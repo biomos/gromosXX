@@ -27,7 +27,7 @@
 #define SUBMODULE special
 
 /**
- * calculate position restraint interactions
+ * calculate distance restraint interactions
  */
 template<math::boundary_enum B, math::virial_enum V>
 static int _calculate_distance_restraint_interactions
@@ -35,7 +35,7 @@ static int _calculate_distance_restraint_interactions
  configuration::Configuration & conf,
  simulation::Simulation & sim, double exponential_term)
 {
-  // loop over the position restraints
+  // loop over the distance restraints
   std::vector<topology::distance_restraint_struct>::const_iterator 
     it = topo.distance_restraints().begin(),
     to = topo.distance_restraints().end();
@@ -197,7 +197,7 @@ static void _init_averages
 }
 
 /**
- * initiate position restraint interactions
+ * initiate distance restraint interactions
  */
 template<math::boundary_enum B>
 static void _init_disres_data

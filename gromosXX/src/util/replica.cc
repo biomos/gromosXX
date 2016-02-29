@@ -111,7 +111,7 @@ util::replica::replica(io::Argument _args, int cont, int _ID, int _rank) : ID(_I
           || sim.param().distanceres.write || sim.param().distancefield.write || sim.param().localelev.write
           || sim.param().electric.dip_write || sim.param().electric.cur_write
           || sim.param().addecouple.write || sim.param().nemd.write
-          || sim.param().orderparamrest.write || sim.param().print.monitor_dihedrals) {
+          || sim.param().orderparamrest.write || sim.param().print.monitor_dihedrals ) {
     it = args.lower_bound("trs");
     pos = (*it).second.find_last_of(".");
     (*it).second.insert(pos, tmp.str());
@@ -211,11 +211,11 @@ void util::replica::run_MD() {
       break;
     }
 
-    ++sim.steps();
+    traj->print(topo, conf, sim);
 
+    ++sim.steps();
     sim.time() = sim.param().step.t0 + sim.steps() * sim.time_step_size();
 
-    traj->print(topo, conf, sim);
   } // main md loop
   
   // update replica information
@@ -226,9 +226,12 @@ void util::replica::run_MD() {
 
   // print final data of run
   if (run ==  total_runs) {
-    traj->write(conf, topo, sim, io::final);
     traj->print_final(topo, conf, sim);
   }
+}
+
+void util::replica::write_final_conf() {
+    traj->write(conf, topo, sim, io::final);
 }
 
 // this function is deadlock safe, because it's made sure, that the replicas

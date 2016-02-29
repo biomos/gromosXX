@@ -66,6 +66,13 @@ void util::replica_exchange_base::run_MD() {
   }
 }
 
+void util::replica_exchange_base::write_final_conf() {
+  // write coordinates to cnf for all replica assigned to this node
+  for (std::vector< util::replica * >::iterator it = replicas.begin(); it < replicas.end(); ++it) {
+    (*it)->write_final_conf();
+  }
+}
+
 void util::replica_exchange_base::init() {
   // do init for all replica assigned to this node
   for (std::vector< util::replica * >::iterator it = replicas.begin(); it < replicas.end(); ++it) {

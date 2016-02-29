@@ -209,13 +209,23 @@ int io::read_topology(io::Argument const & args,
   if(io::messages.contains(io::message::error) ||
      io::messages.contains(io::message::critical))
     return -1;
+    
   
-  if(sim.param().perturbation.perturbation || sim.param().eds.eds){
-    if(args.count(argname_pttopo)<1){
-      io::messages.add("No perturbation topology specified",
+  
+  if(args.count(argname_pttopo)<1 && sim.param().eds.eds){
+      io::messages.add("EDS on but no perturbation topology specified",
 		       "read_input", io::message::critical);
       return -1;
+  }
+  
+  if(sim.param().perturbation.perturbation || sim.param().eds.eds){ 
+    // if there is no perturbation topology there might still be perturbed
+    // distance or df restraints, so only warn and do not abort here --MP  
+    if(args.count(argname_pttopo)<1){
+      io::messages.add("No perturbation topology specified",
+		       "read_input", io::message::warning);
     }
+    else {
     
     pttopo_file.open(args[argname_pttopo].c_str());
     
@@ -232,7 +242,7 @@ int io::read_topology(io::Argument const & args,
     ipt.read(topo, sim.param(), os);
     io::messages.add("perturbation topology read from " + args[argname_pttopo] + "\n" + util::frame_text(ipt.title),
 		     "read input", io::message::notice);
-    
+    }
   }
   
   topo.init(sim, os, quiet);

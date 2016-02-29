@@ -78,6 +78,9 @@ int interaction::create_special(interaction::Forcefield & ff,
 		     "create_special", io::message::error);
   }
   // Distance restraints 
+  // as this function is called before read_special, we do not know if we 
+  // really need the (perturbed) interactions
+  // so we generate them, but need to check inside if we really do something
   if (abs(param.distanceres.distanceres) == 1 || 
       abs(param.distanceres.distanceres) == 2){
 

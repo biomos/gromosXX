@@ -72,6 +72,12 @@ namespace util {
      * runs MD simulation for all replicas; one by one
      */
     void run_MD();
+    
+    /**
+     * write coordinates for all replicas to cnf
+     */
+    void write_final_conf();
+    
     /**
      * init MD simulation for all replicas; one by one
      */

@@ -214,6 +214,7 @@ int main(int argc, char *argv[]) {
         Master.write();
       }
     }
+    Master.write_final_conf();
     
   } else {
     util::replica_exchange_slave Slave(args, cont, rank, repIDs[rank], repMap);
@@ -226,6 +227,7 @@ int main(int argc, char *argv[]) {
         Slave.send_to_master();
       }
     }
+    Slave.write_final_conf();
   }
   
   std::cout << "REPLICA EXCHANGE SIMULATION finished successfully! " << "Node " << rank << std::endl;
