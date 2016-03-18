@@ -144,7 +144,7 @@ int main(int argc, char *argv[]){
   md.init(topo, conf, sim, *os, quiet);
 
   
-  int error;
+  int error=0;
   if(rank == 0){
     
     std::cout << "MPI master node (of " << size << " nodes)" << std::endl;
@@ -162,11 +162,11 @@ int main(int argc, char *argv[]){
       int iom = io::messages.display(std::cout);
       if (iom >= io::message::error) {
         std::cout << "\nErrors during initialisation!\n" << std::endl;
-        // send error status to slaves
         error = 1;
         std::cout << "Telling slaves to quit." << std::endl;
         MPI::COMM_WORLD.Bcast(&error, 1, MPI::INT, 0);
-        //MPI::Finalize();
+        FFTW3(mpi_cleanup());
+        MPI::Finalize();
         return 1;
       } else if (iom == io::message::develop) {
         std::cout << "\nUse @develop to run untested code.\n" << std::endl;
@@ -174,14 +174,12 @@ int main(int argc, char *argv[]){
         return 1;
       }
     }
-
-    error=0;
+    
+    // tell slaves there were no initialization errors
     MPI::COMM_WORLD.Bcast(&error, 1, MPI::INT, 0);
-
 
     io::messages.clear();
 
-    if (!error) {
     std::cout.precision(5);
     std::cout.setf(std::ios_base::fixed, std::ios_base::floatfield);
     
@@ -288,23 +286,20 @@ int main(int argc, char *argv[]){
     else{
       std::cout << "\n" GROMOSXX " finished successfully\n" << std::endl;
     }
-   }
   }
 
   ////////////////////////////////////////////////////////////////////////////////
   // MPI Slave
   ////////////////////////////////////////////////////////////////////////////////
 
-  else{
+  else {
     (*os) << "MPI slave " << rank << " of " << size << std::endl;
     MPI::COMM_WORLD.Bcast(&error, 1, MPI::INT, 0);
 
-      if (error) {
+    if (error) {
         (*os) << "There was an error in the master. Check output file for details." << std::endl
               << "Exiting ." << std::endl;
-      }
-
-    else {
+    } else {
     // check whether we have nonbonded interactions
     bool do_nonbonded = (sim.param().force.nonbonded_crf || 
                          sim.param().force.nonbonded_vdw);
