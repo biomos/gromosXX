@@ -72,8 +72,31 @@ static int _calculate_perturbed_distance_restraint_interactions
       DEBUG(10, "v2 (atom " << i+1 << "): " << it->v2.atom(i)+1);
     }
 #endif
-    // store the value of rah
+    // ugly hack to do distance restraints (full harmonic) in limited dimensions:
+    // rah = 2 means v = (x, y, 0)
+    // rah = 3 means v = (x, 0, z)
+    // rah = 4 means v = (0, y, z)
+    // rah = 5 means v = (0, 0, z)
+    //
+    // first store the value of rah
     int rah = it->rah;
+    if(it->rah == 2){
+      rah = 0;
+      v[2] = 0.0;
+    }
+    if(it->rah == 3){
+      rah = 0;
+      v[1] = 0.0;
+    }
+    if(it->rah == 4){
+      rah = 0;
+      v[0] = 0.0;
+    }
+    if(it->rah == 5){
+      rah = 0;
+      v[0] = 0.0;
+      v[1] = 0.0;
+    }
   
     DEBUG(9, "PERTDISTANCERES v : " << math::v2s(v));
    
