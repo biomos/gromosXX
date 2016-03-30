@@ -36,7 +36,8 @@ static int _calculate_perturbed_distance_restraint_interactions
 (topology::Topology & topo,
  configuration::Configuration & conf,
  simulation::Simulation & sim,
- double exponential_term)
+ double exponential_term,
+ std::map<int,math::Vec> & rah_map)
 {
   // loop over the perturbed distance restraints
   std::vector<topology::perturbed_distance_restraint_struct>::const_iterator 
@@ -72,33 +73,32 @@ static int _calculate_perturbed_distance_restraint_interactions
       DEBUG(10, "v2 (atom " << i+1 << "): " << it->v2.atom(i)+1);
     }
 #endif
-    // ugly hack to do distance restraints (full harmonic) in limited dimensions:
-    // rah = 2 means v = (x, y, 0)
-    // rah = 3 means v = (x, 0, z)
-    // rah = 4 means v = (0, y, z)
-    // rah = 5 means v = (0, 0, z)
-    //
-    // first store the value of rah
-    int rah = it->rah;
-    if(it->rah == 2){
-      rah = 0;
-      v[2] = 0.0;
-    }
-    if(it->rah == 3){
-      rah = 0;
-      v[1] = 0.0;
-    }
-    if(it->rah == 4){
-      rah = 0;
-      v[0] = 0.0;
-    }
-    if(it->rah == 5){
-      rah = 0;
-      v[0] = 0.0;
-      v[1] = 0.0;
-    }
-  
+
+    DEBUG(9, "PERDISTANCERES rah: " << it->rah); 
     DEBUG(9, "PERTDISTANCERES v : " << math::v2s(v));
+
+    // determine the dimensionality and a local copy of rah
+    int rah=it->rah;
+    bool found=false;
+    for(std::map<int,math::Vec>::iterator i = rah_map.begin(), to = rah_map.end(); i != to; i++){
+      if(it->rah>=(i->first) - 1 && it->rah <= (i->first) + 1){
+        for(int j=0; j<3; j++){
+          v[j] = v[j]*(i->second)[j];
+        }
+        rah = it->rah - (i->first);
+        found = true;
+      }
+    }
+    if(!found){
+       std::ostringstream msg;
+       msg << "Do not know how to handle " << it->rah << " for RAH in distance restraint" << std::endl;
+       io::messages.add(msg.str(),
+			 "Perturbed_distance_restraints",
+			 io::message::critical);
+       return 1;
+    }              
+    DEBUG(9, "PERDISTANCERES updated rah: " << rah); 
+    DEBUG(9, "PERTDISTANCERES updated v : " << math::v2s(v));
    
     double dist = abs(v);
     (*d_it) = dist;
@@ -120,7 +120,7 @@ static int _calculate_perturbed_distance_restraint_interactions
     const double r_l = sim.param().distanceres.r_linear; 
     const double D_r0 = it->B_r0 - it->A_r0;
     
-    DEBUG(9, "PERTDISTANCERES dist : " << dist << " r0 " << r0 << " rah " << it->rah);  
+    DEBUG(9, "PERTDISTANCERES dist : " << dist << " r0 " << r0 << " rah " << rah);  
     if (sim.param().distanceres.distanceres < 0) {
       (*ave_it) = (1.0 - exponential_term) * pow(dist, -3.0) + 
                    exponential_term * (*ave_it);
@@ -290,7 +290,7 @@ int interaction::Perturbed_Distance_Restraint_Interaction
 			 simulation::Simulation &sim)
 {
   SPLIT_VIRIAL_BOUNDARY(_calculate_perturbed_distance_restraint_interactions,
-			topo, conf, sim, exponential_term);
+			topo, conf, sim, exponential_term, rah_map)
   
   return 0;
 }
@@ -315,7 +315,15 @@ int interaction::Perturbed_Distance_Restraint_Interaction
   } else {
     SPLIT_BOUNDARY(_init_averages, topo, conf);
   }
-  
+  // set the dimensionality map only once 
+  rah_map[0] = math::Vec(1,1,1);
+  rah_map[10] = math::Vec(1,1,0);
+  rah_map[20] = math::Vec(1,0,1);
+  rah_map[30] = math::Vec(0,1,1);
+  rah_map[40] = math::Vec(1,0,0);
+  rah_map[50] = math::Vec(0,1,0);
+  rah_map[60] = math::Vec(0,0,1);
+
   if (!quiet) {
     os << "Perturbed distance restraint interaction";
     if (sim.param().distanceres.distanceres < 0)

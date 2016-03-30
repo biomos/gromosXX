@@ -33,7 +33,8 @@ template<math::boundary_enum B, math::virial_enum V>
 static int _calculate_distance_restraint_interactions
 (topology::Topology & topo,
  configuration::Configuration & conf,
- simulation::Simulation & sim, double exponential_term)
+ simulation::Simulation & sim, double exponential_term,
+std::map<int,math::Vec> &rah_map)
 {
   // loop over the distance restraints
   std::vector<topology::distance_restraint_struct>::const_iterator 
@@ -67,6 +68,30 @@ static int _calculate_distance_restraint_interactions
     DEBUG(10, "pos(v2) = " << math::v2s(it->v2.pos(conf,topo)));
 
     DEBUG(9, "DISTANCERES v : " << math::v2s(v));
+    DEBUG(9, "DISTANCERES rah: " << it->rah);
+
+    // determine the dimensionality and a local copy of rah
+    int rah=it->rah;
+    bool found=false;
+    for(std::map<int,math::Vec>::iterator i = rah_map.begin(), to = rah_map.end(); i != to; i++){
+      if(it->rah>=(i->first) - 1 && it->rah <= (i->first) + 1){
+        for(int j=0; j<3; j++){
+          v[j] = v[j]*(i->second)[j];
+        }
+        rah = it->rah - (i->first);
+        found = true;
+      }
+    }
+    if(!found){
+       std::ostringstream msg;
+       msg << "Do not know how to handle " << it->rah << " for RAH in distance restraint" << std::endl;
+       io::messages.add(msg.str(),
+                         "Distance_restraints",
+                         io::message::critical);
+       return 1;
+    }
+    DEBUG(9, "DISTANCERES updated rah: " << rah);
+    DEBUG(9, "DISTANCERES updated v : " << math::v2s(v));
 
     double dist = math::abs(v);
     // dist is possibly overwritten with the time-averaged distance
@@ -96,7 +121,7 @@ static int _calculate_distance_restraint_interactions
       (*ave_it) = 0.0;
     }
 
-    if(it->rah*dist < it->rah * it->r0){
+    if(rah*dist < rah * it->r0){
       DEBUG(9, "DISTANCERES  : restraint fulfilled");
       energy = 0;
       f=0;
@@ -170,7 +195,7 @@ int interaction::Distance_Restraint_Interaction
 			 simulation::Simulation &sim)
 {
   SPLIT_VIRIAL_BOUNDARY(_calculate_distance_restraint_interactions,
-			topo, conf, sim, exponential_term);
+			topo, conf, sim, exponential_term, rah_map);
   
   return 0;
 }
@@ -235,7 +260,16 @@ int interaction::Distance_Restraint_Interaction::init(topology::Topology &topo,
   } else {
     SPLIT_BOUNDARY(_init_averages, topo, conf);
   }
-  
+ 
+  // set the dimensionality map only once 
+  rah_map[0] = math::Vec(1,1,1);
+  rah_map[10] = math::Vec(1,1,0);
+  rah_map[20] = math::Vec(1,0,1);
+  rah_map[30] = math::Vec(0,1,1);
+  rah_map[40] = math::Vec(1,0,0);
+  rah_map[50] = math::Vec(0,1,0);
+  rah_map[60] = math::Vec(0,0,1);
+ 
   if (!quiet) {
     os << "Distance restraint interaction";
     if (sim.param().distanceres.distanceres < 0)
