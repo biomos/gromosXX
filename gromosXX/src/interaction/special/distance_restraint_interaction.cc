@@ -34,7 +34,7 @@ static int _calculate_distance_restraint_interactions
 (topology::Topology & topo,
  configuration::Configuration & conf,
  simulation::Simulation & sim, double exponential_term,
-std::map<int,math::Vec> &rah_map)
+std::map<int,math::Vec> &rah_map, int &error)
 {
   // loop over the distance restraints
   std::vector<topology::distance_restraint_struct>::const_iterator 
@@ -88,7 +88,8 @@ std::map<int,math::Vec> &rah_map)
        io::messages.add(msg.str(),
                          "Distance_restraints",
                          io::message::critical);
-       return 1;
+       error = 1;
+       return error;
     }
     DEBUG(9, "DISTANCERES updated rah: " << rah);
     DEBUG(9, "DISTANCERES updated v : " << math::v2s(v));
@@ -194,10 +195,11 @@ int interaction::Distance_Restraint_Interaction
 			 configuration::Configuration &conf,
 			 simulation::Simulation &sim)
 {
+  int error =0;
   SPLIT_VIRIAL_BOUNDARY(_calculate_distance_restraint_interactions,
-			topo, conf, sim, exponential_term, rah_map);
+			topo, conf, sim, exponential_term, rah_map, error);
   
-  return 0;
+  return error;
 }
 
 /**

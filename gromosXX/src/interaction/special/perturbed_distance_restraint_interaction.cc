@@ -37,7 +37,7 @@ static int _calculate_perturbed_distance_restraint_interactions
  configuration::Configuration & conf,
  simulation::Simulation & sim,
  double exponential_term,
- std::map<int,math::Vec> & rah_map)
+ std::map<int,math::Vec> & rah_map, int &error)
 {
   // loop over the perturbed distance restraints
   std::vector<topology::perturbed_distance_restraint_struct>::const_iterator 
@@ -94,8 +94,9 @@ static int _calculate_perturbed_distance_restraint_interactions
        msg << "Do not know how to handle " << it->rah << " for RAH in distance restraint" << std::endl;
        io::messages.add(msg.str(),
 			 "Perturbed_distance_restraints",
-			 io::message::critical);
-       return 1;
+			 io::message::error);
+       error = 1;
+       return error;
     }              
     DEBUG(9, "PERDISTANCERES updated rah: " << rah); 
     DEBUG(9, "PERTDISTANCERES updated v : " << math::v2s(v));
@@ -289,10 +290,11 @@ int interaction::Perturbed_Distance_Restraint_Interaction
 			 configuration::Configuration &conf,
 			 simulation::Simulation &sim)
 {
+  int error=0;
   SPLIT_VIRIAL_BOUNDARY(_calculate_perturbed_distance_restraint_interactions,
-			topo, conf, sim, exponential_term, rah_map)
+			topo, conf, sim, exponential_term, rah_map, error)
   
-  return 0;
+  return error;
 }
 
 int interaction::Perturbed_Distance_Restraint_Interaction
