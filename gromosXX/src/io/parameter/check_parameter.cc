@@ -159,8 +159,6 @@ int io::check_parameter(simulation::Simulation & sim)
   add("multistep_boost", "boost method for multiple steps", param.multistep.boost);
   // MONTECARLO block
   add("montecarlo", "chemical monte-carlo", param.montecarlo.mc);
-  // RAMD block
-  add("ramd", "random acceleration MD", param.ramd.fc != 0.0);
   // POLARISE block
   add("polarisation_cos", "COS polarisation", param.polarise.cos && 
                                               !param.polarise.damp);
@@ -284,7 +282,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solute", "multistep");
   fc.unlock("solute", "multistep_boost");
   fc.unlock("solute", "montecarlo");
-  fc.unlock("solute", "ramd");
   fc.unlock("solute", "polarisation_cos");
   fc.unlock("solute", "polarisation_cos_damped");
   fc.unlock("solute", "random_gromos");
@@ -345,7 +342,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solvent", "multistep");
   fc.unlock("solvent", "multistep_boost");
   fc.unlock("solvent", "montecarlo");
-  fc.unlock("solvent", "ramd");
   fc.unlock("solvent", "polarisation_cos");
   fc.unlock("solvent", "polarisation_cos_damped");
   fc.unlock("solvent", "random_gromos");
@@ -390,7 +386,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solvent_only", "multicell");
   fc.unlock("solvent_only", "analysis");
   fc.unlock("solvent_only", "no_integration");
-  fc.unlock("solvent_only", "ramd");
   fc.unlock("solvent_only", "polarisation_cos");
   fc.unlock("solvent_only", "polarisation_cos_damped");
   fc.unlock("solvent_only", "random_gromos");
@@ -447,7 +442,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("steepest_descent", "multistep");
   fc.unlock("steepest_descent", "multistep_boost");
   fc.unlock("steepest_descent", "montecarlo");
-  fc.unlock("steepest_descent", "ramd");
   fc.unlock("steepest_descent", "polarisation_cos");
   fc.unlock("steepest_descent", "polarisation_cos_damped");
   fc.unlock("steepest_descent", "random_gromos");
@@ -502,7 +496,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solute_constraint_off", "multistep");
   fc.unlock("solute_constraint_off", "multistep_boost");
   fc.unlock("solute_constraint_off", "montecarlo");
-  fc.unlock("solute_constraint_off", "ramd");
   fc.unlock("solute_constraint_off", "polarisation_cos");
   fc.unlock("solute_constraint_off", "polarisation_cos_damped");
   fc.unlock("solute_constraint_off", "random_gromos");
@@ -558,7 +551,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solute_shake", "multistep");
   fc.unlock("solute_shake", "multistep_boost");
   fc.unlock("solute_shake", "montecarlo");
-  fc.unlock("solute_shake", "ramd");
   fc.unlock("solute_shake", "polarisation_cos");
   fc.unlock("solute_shake", "polarisation_cos_damped");
   fc.unlock("solute_shake", "random_gromos");
@@ -609,7 +601,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solute_lincs", "multistep");
   fc.unlock("solute_lincs", "multistep_boost");
   fc.unlock("solute_lincs", "montecarlo");
-  fc.unlock("solute_lincs", "ramd");
   fc.unlock("solute_lincs", "polarisation_cos");
   fc.unlock("solute_lincs", "polarisation_cos_damped");
   fc.unlock("solute_lincs", "random_gromos");
@@ -654,7 +645,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solute_flexshake", "analysis");
   fc.unlock("solute_flexshake", "no_integration");
   fc.unlock("solute_flexshake", "montecarlo");
-  fc.unlock("solute_flexshake", "ramd");
   fc.unlock("solute_flexshake", "random_gromos");
   fc.unlock("solute_flexshake", "random_gsl");
   fc.unlock("solute_flexshake", "parallel_mpi");
@@ -706,7 +696,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solvent_constraint_off", "multistep");
   fc.unlock("solvent_constraint_off", "multistep_boost");
   fc.unlock("solvent_constraint_off", "montecarlo");
-  fc.unlock("solvent_constraint_off", "ramd");
   fc.unlock("solvent_constraint_off", "polarisation_cos");
   fc.unlock("solvent_constraint_off", "polarisation_cos_damped");
   fc.unlock("solvent_constraint_off", "random_gromos");
@@ -760,7 +749,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solvent_shake", "multistep");
   fc.unlock("solvent_shake", "multistep_boost");
   fc.unlock("solvent_shake", "montecarlo");
-  fc.unlock("solvent_shake", "ramd");
   fc.unlock("solvent_shake", "polarisation_cos");
   fc.unlock("solvent_shake", "polarisation_cos_damped");
   fc.unlock("solvent_shake", "random_gromos");
@@ -811,7 +799,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("pressure_calculation", "multistep");
   fc.unlock("pressure_calculation", "multistep_boost");
   fc.unlock("pressure_calculation", "montecarlo");
-  fc.unlock("pressure_calculation", "ramd");
   fc.unlock("pressure_calculation", "polarisation_cos");
   fc.unlock("pressure_calculation", "polarisation_cos_damped");
   fc.unlock("pressure_calculation", "random_gromos");
@@ -861,7 +848,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("pressure_scale_berendsen", "multistep");
   fc.unlock("pressure_scale_berendsen", "multistep_boost");
   fc.unlock("pressure_scale_berendsen", "montecarlo");
-  fc.unlock("pressure_scale_berendsen", "ramd");
   fc.unlock("pressure_scale_berendsen", "polarisation_cos");
   fc.unlock("pressure_scale_berendsen", "polarisation_cos_damped");
   fc.unlock("pressure_scale_berendsen", "random_gromos");
@@ -909,7 +895,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("virial_off", "multistep");
   fc.unlock("virial_off", "multistep_boost");
   fc.unlock("virial_off", "montecarlo");
-  fc.unlock("virial_off", "ramd");
   fc.unlock("virial_off", "polarisation_cos");
   fc.unlock("virial_off", "polarisation_cos_damped");
   fc.unlock("virial_off", "random_gromos");
@@ -957,7 +942,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("virial_atomic", "multistep");
   fc.unlock("virial_atomic", "multistep_boost");
   fc.unlock("virial_atomic", "montecarlo");
-  fc.unlock("virial_atomic", "ramd");
   fc.unlock("virial_atomic", "polarisation_cos");
   fc.unlock("virial_atomic", "polarisation_cos_damped");
   fc.unlock("virial_atomic", "random_gromos");
@@ -1006,7 +990,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("virial_molecular", "multistep");
   fc.unlock("virial_molecular", "multistep_boost");
   fc.unlock("virial_molecular", "montecarlo");
-  fc.unlock("virial_molecular", "ramd");
   fc.unlock("virial_molecular", "polarisation_cos");
   fc.unlock("virial_molecular", "polarisation_cos_damped");
   fc.unlock("virial_molecular", "random_gromos");
@@ -1048,7 +1031,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("vacuum", "multistep");
   fc.unlock("vacuum", "multistep_boost");
   fc.unlock("vacuum", "montecarlo");
-  fc.unlock("vacuum", "ramd");
   fc.unlock("vacuum", "polarisation_cos");
   fc.unlock("vacuum", "polarisation_cos_damped");
   fc.unlock("vacuum", "random_gromos");
@@ -1093,7 +1075,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("pbc_r", "multistep");
   fc.unlock("pbc_r", "multistep_boost");
   fc.unlock("pbc_r", "montecarlo");
-  fc.unlock("pbc_r", "ramd");
   fc.unlock("pbc_r", "polarisation_cos");
   fc.unlock("pbc_r", "polarisation_cos_damped");
   fc.unlock("pbc_r", "random_gromos");
@@ -1137,7 +1118,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("pbc_c", "multistep");
   fc.unlock("pbc_c", "multistep_boost");
   fc.unlock("pbc_c", "montecarlo");
-  fc.unlock("pbc_c", "ramd");
   fc.unlock("pbc_c", "polarisation_cos");
   fc.unlock("pbc_c", "polarisation_cos_damped");
   fc.unlock("pbc_c", "random_gromos");
@@ -1179,7 +1159,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("pbc_t", "multistep");
   fc.unlock("pbc_t", "multistep_boost");
   fc.unlock("pbc_t", "montecarlo");
-  fc.unlock("pbc_t", "ramd");
   fc.unlock("pbc_t", "polarisation_cos");
   fc.unlock("pbc_t", "polarisation_cos_damped");
   fc.unlock("pbc_t", "random_gromos");
@@ -1223,7 +1202,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("perturbation", "multistep");
   fc.unlock("perturbation", "multistep_boost");
   fc.unlock("perturbation", "montecarlo");
-  fc.unlock("perturbation", "ramd");
   fc.unlock("perturbation", "polarisation_cos");
   fc.unlock("perturbation", "polarisation_cos_damped");
   fc.unlock("perturbation", "random_gromos");
@@ -1262,7 +1240,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("perturbation_scaling", "multistep");
   fc.unlock("perturbation_scaling", "multistep_boost");
   fc.unlock("perturbation_scaling", "montecarlo");
-  fc.unlock("perturbation_scaling", "ramd");
   fc.unlock("perturbation_scaling", "random_gromos");
   fc.unlock("perturbation_scaling", "random_gsl");
   fc.unlock("perturbation_scaling", "parallel_mpi");
@@ -1324,7 +1301,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("individual_lambdas", "multistep");
   fc.unlock("individual_lambdas", "multistep_boost");
   fc.unlock("individual_lambdas", "montecarlo");
-  fc.unlock("individual_lambdas", "ramd");
   fc.unlock("individual_lambdas", "polarisation_cos");
   fc.unlock("individual_lambdas", "polarisation_cos_damped");
   fc.unlock("individual_lambdas", "random_gromos");
@@ -1368,7 +1344,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("bond", "multistep");
   fc.unlock("bond", "multistep_boost");
   fc.unlock("bond", "montecarlo");
-  fc.unlock("bond", "ramd");
   fc.unlock("bond", "polarisation_cos");
   fc.unlock("bond", "polarisation_cos_damped");
   fc.unlock("bond", "random_gromos");
@@ -1409,7 +1384,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("angle", "multistep");
   fc.unlock("angle", "multistep_boost");
   fc.unlock("angle", "montecarlo");
-  fc.unlock("angle", "ramd");
   fc.unlock("angle", "polarisation_cos");
   fc.unlock("angle", "polarisation_cos_damped");
   fc.unlock("angle", "random_gromos");
@@ -1449,7 +1423,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("dihedral", "multistep");
   fc.unlock("dihedral", "multistep_boost");
   fc.unlock("dihedral", "montecarlo");
-  fc.unlock("dihedral", "ramd");
   fc.unlock("dihedral", "polarisation_cos");
   fc.unlock("dihedral", "polarisation_cos_damped");
   fc.unlock("dihedral", "random_gromos");
@@ -1489,7 +1462,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("improper", "multistep");
   fc.unlock("improper", "multistep_boost");
   fc.unlock("improper", "montecarlo");
-  fc.unlock("improper", "ramd");
   fc.unlock("improper", "polarisation_cos");
   fc.unlock("improper", "polarisation_cos_damped");
   fc.unlock("improper", "random_gromos");
@@ -1527,7 +1499,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("crf", "multistep");
   fc.unlock("crf", "multistep_boost");
   fc.unlock("crf", "montecarlo");
-  fc.unlock("crf", "ramd");
   fc.unlock("crf", "polarisation_cos");
   fc.unlock("crf", "polarisation_cos_damped");
   fc.unlock("crf", "random_gromos");
@@ -1564,7 +1535,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("lj", "multistep");
   fc.unlock("lj", "multistep_boost");
   fc.unlock("lj", "montecarlo");
-  fc.unlock("lj", "ramd");
   fc.unlock("lj", "polarisation_cos");
   fc.unlock("lj", "polarisation_cos_damped");
   fc.unlock("lj", "random_gromos");
@@ -1598,7 +1568,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("com_removal", "multistep");
   fc.unlock("com_removal", "multistep_boost");
   fc.unlock("com_removal", "montecarlo");
-  fc.unlock("com_removal", "ramd");
   fc.unlock("com_removal", "polarisation_cos");
   fc.unlock("com_removal", "polarisation_cos_damped");
   fc.unlock("com_removal", "random_gromos");
@@ -1633,7 +1602,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("rf_excluded", "multistep");
   fc.unlock("rf_excluded", "multistep_boost");
   fc.unlock("rf_excluded", "montecarlo");
-  fc.unlock("rf_excluded", "ramd");
   fc.unlock("rf_excluded", "polarisation_cos");
   fc.unlock("rf_excluded", "polarisation_cos_damped");
   fc.unlock("rf_excluded", "random_gromos");
@@ -1666,7 +1634,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("pairlist_standard", "multistep");
   fc.unlock("pairlist_standard", "multistep_boost");
   fc.unlock("pairlist_standard", "montecarlo");
-  fc.unlock("pairlist_standard", "ramd");
   fc.unlock("pairlist_standard", "polarisation_cos");
   fc.unlock("pairlist_standard", "polarisation_cos_damped");
   fc.unlock("pairlist_standard", "random_gromos");
@@ -1698,7 +1665,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("pairlist_grid", "multistep");
   fc.unlock("pairlist_grid", "multistep_boost");
   fc.unlock("pairlist_grid", "montecarlo");
-  fc.unlock("pairlist_grid", "ramd");
   fc.unlock("pairlist_grid", "polarisation_cos");
   fc.unlock("pairlist_grid", "polarisation_cos_damped");
   fc.unlock("pairlist_grid", "random_gromos");
@@ -1730,7 +1696,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("cutoff_atomic", "multistep");
   fc.unlock("cutoff_atomic", "multistep_boost");
   fc.unlock("cutoff_atomic", "montecarlo");
-  fc.unlock("cutoff_atomic", "ramd");
   fc.unlock("cutoff_atomic", "polarisation_cos");
   fc.unlock("cutoff_atomic", "polarisation_cos_damped");
   fc.unlock("cutoff_atomic", "random_gromos");
@@ -1754,7 +1719,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("cg_martini", "stochdyn");
   fc.unlock("cg_martini", "multistep");
   fc.unlock("cg_martini", "multistep_boost");
-  fc.unlock("cg_martini", "ramd");
   fc.unlock("cg_martini", "random_gromos");
   fc.unlock("cg_martini", "random_gsl");
   fc.unlock("cg_martini", "parallel_mpi");
@@ -1776,7 +1740,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("cg_gromos", "stochdyn");
   fc.unlock("cg_gromos", "multistep");
   fc.unlock("cg_gromos", "multistep_boost");
-  fc.unlock("cg_gromos", "ramd");
   fc.unlock("cg_gromos", "random_gromos");
   fc.unlock("cg_gromos", "random_gsl");
   fc.unlock("cg_gromos", "parallel_mpi");
@@ -1798,7 +1761,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("mixed_grain", "stochdyn");
   fc.unlock("mixed_grain", "multistep");
   fc.unlock("mixed_grain", "multistep_boost");
-  fc.unlock("mixed_grain", "ramd");
   fc.unlock("mixed_grain", "random_gromos");
   fc.unlock("mixed_grain", "random_gsl");
   fc.unlock("mixed_grain", "parallel_mpi");
@@ -1822,7 +1784,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("temp_berendsen", "multistep");
   fc.unlock("temp_berendsen", "multistep_boost");
   fc.unlock("temp_berendsen", "montecarlo");
-  fc.unlock("temp_berendsen", "ramd");
   fc.unlock("temp_berendsen", "polarisation_cos");
   fc.unlock("temp_berendsen", "polarisation_cos_damped");
   fc.unlock("temp_berendsen", "random_gromos");
@@ -1848,7 +1809,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("temp_nosehoover", "multistep");
   fc.unlock("temp_nosehoover", "multistep_boost");
   fc.unlock("temp_nosehoover", "montecarlo");
-  fc.unlock("temp_nosehoover", "ramd");
   fc.unlock("temp_nosehoover", "polarisation_cos");
   fc.unlock("temp_nosehoover", "polarisation_cos_damped");
   fc.unlock("temp_nosehoover", "random_gromos");
@@ -1874,7 +1834,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("temp_nosehoover_chains", "multistep");
   fc.unlock("temp_nosehoover_chains", "multistep_boost");
   fc.unlock("temp_nosehoover_chains", "montecarlo");
-  fc.unlock("temp_nosehoover_chains", "ramd");
   fc.unlock("temp_nosehoover_chains", "polarisation_cos");
   fc.unlock("temp_nosehoover_chains", "polarisation_cos_damped");
   fc.unlock("temp_nosehoover_chains", "random_gromos");
@@ -1897,7 +1856,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("position_rest", "multistep");
   fc.unlock("position_rest", "multistep_boost");
   fc.unlock("position_rest", "montecarlo");
-  fc.unlock("position_rest", "ramd");
   fc.unlock("position_rest", "polarisation_cos");
   fc.unlock("position_rest", "polarisation_cos_damped");
   fc.unlock("position_rest", "random_gromos");
@@ -1918,7 +1876,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("position_const", "multistep");
   fc.unlock("position_const", "multistep_boost");
   fc.unlock("position_const", "montecarlo");
-  fc.unlock("position_const", "ramd");
   fc.unlock("position_const", "polarisation_cos");
   fc.unlock("position_const", "polarisation_cos_damped");
   fc.unlock("position_const", "random_gromos");
@@ -1940,7 +1897,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("position_const_scaled", "multistep");
   fc.unlock("position_const_scaled", "multistep_boost");
   fc.unlock("position_const_scaled", "montecarlo");
-  fc.unlock("position_const_scaled", "ramd");
   fc.unlock("position_const_scaled", "polarisation_cos");
   fc.unlock("position_const_scaled", "polarisation_cos_damped");
   fc.unlock("position_const_scaled", "random_gromos");
@@ -1962,7 +1918,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("distance_rest", "multistep");
   fc.unlock("distance_rest", "multistep_boost");
   fc.unlock("distance_rest", "montecarlo");
-  fc.unlock("distance_rest", "ramd");
   fc.unlock("distance_rest", "polarisation_cos");
   fc.unlock("distance_rest", "polarisation_cos_damped");
   fc.unlock("distance_rest", "random_gromos");
@@ -1982,7 +1937,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("dihedral_rest", "multistep");
   fc.unlock("dihedral_rest", "multistep_boost");
   fc.unlock("dihedral_rest", "montecarlo");
-  fc.unlock("dihedral_rest", "ramd");
   fc.unlock("dihedral_rest", "polarisation_cos");
   fc.unlock("dihedral_rest", "polarisation_cos_damped");
   fc.unlock("dihedral_rest", "random_gromos");
@@ -2002,7 +1956,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("dihedral_const", "multistep");
   fc.unlock("dihedral_const", "multistep_boost");
   fc.unlock("dihedral_const", "montecarlo");
-  fc.unlock("dihedral_const", "ramd");
   fc.unlock("dihedral_const", "polarisation_cos");
   fc.unlock("dihedral_const", "polarisation_cos_damped");
   fc.unlock("dihedral_const", "random_gromos");
@@ -2021,7 +1974,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("jvalue_rest", "multistep");
   fc.unlock("jvalue_rest", "multistep_boost");
   fc.unlock("jvalue_rest", "montecarlo");
-  fc.unlock("jvalue_rest", "ramd");
   fc.unlock("jvalue_rest", "polarisation_cos");
   fc.unlock("jvalue_rest", "polarisation_cos_damped");
   fc.unlock("jvalue_rest", "random_gromos");
@@ -2039,7 +1991,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("rdc_rest", "multistep");
   fc.unlock("rdc_rest", "multistep_boost");
   fc.unlock("rdc_rest", "montecarlo");
-  fc.unlock("rdc_rest", "ramd");
   fc.unlock("rdc_rest", "polarisation_cos");
   fc.unlock("rdc_rest", "polarisation_cos_damped");
   fc.unlock("rdc_rest", "random_gromos");
@@ -2056,7 +2007,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("perscale", "multistep");
   fc.unlock("perscale", "multistep_boost");
   fc.unlock("perscale", "montecarlo");
-  fc.unlock("perscale", "ramd");
   fc.unlock("perscale", "polarisation_cos");
   fc.unlock("perscale", "polarisation_cos_damped");
   fc.unlock("perscale", "random_gromos");
@@ -2072,7 +2022,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("rottrans", "multistep");
   fc.unlock("rottrans", "multistep_boost");
   fc.unlock("rottrans", "montecarlo");
-  fc.unlock("rottrans", "ramd");
   fc.unlock("rottrans", "polarisation_cos");
   fc.unlock("rottrans", "polarisation_cos_damped");
   fc.unlock("rottrans", "random_gromos");
@@ -2084,7 +2033,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("repex_temp", "analysis");
   fc.unlock("repex_temp", "no_integration");
   fc.unlock("repex_temp", "montecarlo");
-  fc.unlock("repex_temp", "ramd");
   fc.unlock("repex_temp", "polarisation_cos");
   fc.unlock("repex_temp", "polarisation_cos_damped");
   fc.unlock("repex_temp", "random_gromos");
@@ -2094,7 +2042,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("repex_lambda", "multicell");
   fc.unlock("repex_lambda", "analysis");
   fc.unlock("repex_lambda", "no_integration");
-  fc.unlock("repex_lambda", "ramd");
   fc.unlock("repex_lambda", "polarisation_cos");
   fc.unlock("repex_lambda", "polarisation_cos_damped");
   fc.unlock("repex_lambda", "random_gromos");
@@ -2104,7 +2051,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("multicell", "analysis");
   fc.unlock("multicell", "no_integration");
   fc.unlock("multicell", "stochdyn");
-  fc.unlock("multicell", "ramd");
   fc.unlock("multicell", "random_gromos");
   fc.unlock("multicell", "polarisation_cos");
   fc.unlock("multicell", "polarisation_cos_damped");
@@ -2115,14 +2061,12 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("analysis", "multistep");
   fc.unlock("analysis", "multistep_boost");
   fc.unlock("analysis", "montecarlo");
-  fc.unlock("analysis", "ramd");
   fc.unlock("analysis", "random_gromos");
   fc.unlock("analysis", "random_gsl");
   fc.unlock("analysis", "parallel_mpi");
   fc.unlock("analysis", "parallel_omp");
   fc.unlock("no_integration", "multistep");
   fc.unlock("no_integration", "multistep_boost");
-  fc.unlock("no_integration", "ramd");
   fc.unlock("no_integration", "random_gromos");
   fc.unlock("no_integration", "random_gsl");
   fc.unlock("no_integration", "parallel_mpi");
@@ -2130,7 +2074,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("stochdyn", "multistep");
   fc.unlock("stochdyn", "multistep_boost");
   fc.unlock("stochdyn", "montecarlo");
-  fc.unlock("stochdyn", "ramd");
   fc.unlock("stochdyn", "polarisation_cos");
   fc.unlock("stochdyn", "polarisation_cos_damped");
   fc.unlock("stochdyn", "random_gromos");
@@ -2140,7 +2083,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("stochdyn", "solvent");
   fc.unlock("multistep", "multistep_boost");
   fc.unlock("multistep", "montecarlo");
-  fc.unlock("multistep", "ramd");
   fc.unlock("multistep", "polarisation_cos");
   fc.unlock("multistep", "polarisation_cos_damped");
   fc.unlock("multistep", "random_gromos");
@@ -2148,24 +2090,17 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("multistep", "parallel_mpi");
   fc.unlock("multistep", "parallel_omp");
   fc.unlock("multistep_boost", "montecarlo");
-  fc.unlock("multistep_boost", "ramd");
   fc.unlock("multistep_boost", "polarisation_cos");
   fc.unlock("multistep_boost", "polarisation_cos_damped");
   fc.unlock("multistep_boost", "random_gromos");
   fc.unlock("multistep_boost", "random_gsl");
   fc.unlock("multistep_boost", "parallel_mpi");
   fc.unlock("multistep_boost", "parallel_omp");
-  fc.unlock("montecarlo", "ramd");
   fc.unlock("montecarlo", "polarisation_cos");
   fc.unlock("montecarlo", "polarisation_cos_damped");
   fc.unlock("montecarlo", "random_gsl");
   fc.unlock("montecarlo", "parallel_mpi");
   fc.unlock("montecarlo", "parallel_omp");
-  fc.unlock("ramd", "polarisation_cos");
-  fc.unlock("ramd", "polarisation_cos_damped");
-  fc.unlock("ramd", "random_gsl");
-  fc.unlock("ramd", "parallel_mpi");
-  fc.unlock("ramd", "parallel_omp");
   fc.unlock("polarisation_cos", "polarisation_cos_damped");
   fc.unlock("polarisation_cos", "random_gromos");
   fc.unlock("polarisation_cos", "random_gsl");
@@ -2229,7 +2164,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("slow_growth", "stochdyn");
   fc.unlock("slow_growth", "multistep");
   fc.unlock("slow_growth", "multistep_boost");
-  fc.unlock("slow_growth", "ramd");
   fc.unlock("slow_growth", "polarisation_cos");
   fc.unlock("slow_growth", "polarisation_cos_damped");
   fc.unlock("slow_growth", "random_gromos");
@@ -2290,7 +2224,6 @@ int io::check_parameter(simulation::Simulation & sim)
   //fc.unlock("eds", "multistep");
   //fc.unlock("eds", "multistep_boost");
   //fc.unlock("eds", "montecarlo");
-  //fc.unlock("eds", "ramd");
   //fc.unlock("eds", "polarisation_cos");
   // fc.unlock("eds", "polarisation_cos_damped");
   fc.unlock("eds", "random_gromos");
@@ -2357,7 +2290,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("mult_energy_groups", "multistep");
   fc.unlock("mult_energy_groups", "multistep_boost");
   fc.unlock("mult_energy_groups", "montecarlo");
-  fc.unlock("mult_energy_groups", "ramd");
   fc.unlock("mult_energy_groups", "polarisation_cos");
   fc.unlock("mult_energy_groups", "polarisation_cos_damped");
   fc.unlock("mult_energy_groups", "random_gromos");
@@ -2427,7 +2359,6 @@ int io::check_parameter(simulation::Simulation & sim)
   //fc.unlock("ewald", "multistep");
   //fc.unlock("ewald", "multistep_boost");
   //fc.unlock("ewald", "montecarlo");
-  //fc.unlock("ewald", "ramd"); --probably works
   //fc.unlock("ewald", "polarisation_cos");
   //fc.unlock("ewald", "polarisation_cos_damped");
   fc.unlock("ewald", "random_gromos");
@@ -2499,7 +2430,6 @@ int io::check_parameter(simulation::Simulation & sim)
   //fc.unlock("p3m", "multistep");
   //fc.unlock("p3m", "multistep_boost");
   //fc.unlock("p3m", "montecarlo");
-  //fc.unlock("p3m", "ramd"); --probably works
   //fc.unlock("p3m", "polarisation_cos");
   //fc.unlock("p3m", "polarisation_cos_damped");
   fc.unlock("p3m", "random_gromos");
@@ -2570,7 +2500,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("innerloop_method_off", "multistep");
   fc.unlock("innerloop_method_off", "multistep_boost");
   fc.unlock("innerloop_method_off", "montecarlo");
-  fc.unlock("innerloop_method_off", "ramd");
   fc.unlock("innerloop_method_off", "polarisation_cos");
   fc.unlock("innerloop_method_off", "polarisation_cos_damped");
   fc.unlock("innerloop_method_off", "random_gromos");
@@ -2639,7 +2568,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("innerloop_method_generic", "multistep");
   fc.unlock("innerloop_method_generic", "multistep_boost");
   fc.unlock("innerloop_method_generic", "montecarlo");
-  fc.unlock("innerloop_method_generic", "ramd");
   fc.unlock("innerloop_method_generic", "random_gromos");
   fc.unlock("innerloop_method_generic", "random_gsl");
   fc.unlock("innerloop_method_generic", "eds");
@@ -2703,7 +2631,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("innerloop_method_hardcode", "multistep");
   fc.unlock("innerloop_method_hardcode", "multistep_boost");
   fc.unlock("innerloop_method_hardcode", "montecarlo");
-  fc.unlock("innerloop_method_hardcode", "ramd");
   fc.unlock("innerloop_method_hardcode", "random_gromos");
   fc.unlock("innerloop_method_hardcode", "random_gsl");
   fc.unlock("innerloop_method_hardcode", "eds");
@@ -2767,7 +2694,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("innerloop_method_table", "multistep");
   fc.unlock("innerloop_method_table", "multistep_boost");
   fc.unlock("innerloop_method_table", "montecarlo");
-  fc.unlock("innerloop_method_table", "ramd");
   fc.unlock("innerloop_method_table", "random_gromos");
   fc.unlock("innerloop_method_table", "random_gsl");
   fc.unlock("innerloop_method_table", "eds");
@@ -2834,7 +2760,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("innerloop_solvent_topology", "multistep");
   fc.unlock("innerloop_solvent_topology", "multistep_boost");
   fc.unlock("innerloop_solvent_topology", "montecarlo");
-  fc.unlock("innerloop_solvent_topology", "ramd");
   fc.unlock("innerloop_solvent_topology", "polarisation_cos");
   fc.unlock("innerloop_solvent_topology", "polarisation_cos_damped");
   fc.unlock("innerloop_solvent_topology", "random_gromos");
@@ -2904,7 +2829,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("innerloop_solvent_spc", "multistep");
   fc.unlock("innerloop_solvent_spc", "multistep_boost");
   fc.unlock("innerloop_solvent_spc", "montecarlo");
-  fc.unlock("innerloop_solvent_spc", "ramd");
   fc.unlock("innerloop_solvent_spc", "polarisation_cos");
   fc.unlock("innerloop_solvent_spc", "polarisation_cos_damped");
   fc.unlock("innerloop_solvent_spc", "random_gromos");
@@ -2975,7 +2899,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solvent_lincs", "multistep");
   fc.unlock("solvent_lincs", "multistep_boost");
   fc.unlock("solvent_lincs", "montecarlo");
-  fc.unlock("solvent_lincs", "ramd");
   fc.unlock("solvent_lincs", "polarisation_cos");
   fc.unlock("solvent_lincs", "polarisation_cos_damped");
   fc.unlock("solvent_lincs", "random_gromos");
@@ -3048,7 +2971,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solvent_settle", "multistep");
   fc.unlock("solvent_settle", "multistep_boost");
   fc.unlock("solvent_settle", "montecarlo");
-  fc.unlock("solvent_settle", "ramd");
   fc.unlock("solvent_settle", "polarisation_cos");
   fc.unlock("solvent_settle", "polarisation_cos_damped");
   fc.unlock("solvent_settle", "random_gromos");
@@ -3103,7 +3025,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("innerloop_method_cuda", "analysis");
   fc.unlock("innerloop_method_cuda", "no_integration");
   fc.unlock("innerloop_method_cuda", "stochdyn");
-  fc.unlock("innerloop_method_cuda", "ramd");
   fc.unlock("innerloop_method_cuda", "random_gromos");
   fc.unlock("innerloop_method_cuda", "random_gsl");
   fc.unlock("innerloop_method_cuda", "pressure_calculation");
@@ -3184,7 +3105,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("leus", "multistep");
   fc.unlock("leus", "multistep_boost");
   fc.unlock("leus", "montecarlo");
-  fc.unlock("leus", "ramd");
   fc.unlock("leus", "polarisation_cos");
   fc.unlock("leus", "polarisation_cos_damped");
   fc.unlock("leus", "random_gromos");
@@ -3265,7 +3185,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("xray", "multistep");
   fc.unlock("xray", "multistep_boost");
   fc.unlock("xray", "montecarlo");
-  fc.unlock("xray", "ramd");
   fc.unlock("xray", "polarisation_cos");
   fc.unlock("xray", "polarisation_cos_damped");
   fc.unlock("xray", "random_gromos");
@@ -3347,7 +3266,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("sasa", "multistep");
   fc.unlock("sasa", "multistep_boost");
   fc.unlock("sasa", "montecarlo");
-  fc.unlock("sasa", "ramd");
   //fc.unlock("sasa", "polarisation_cos");
   //fc.unlock("sasa", "polarisation_cos_damped");
   //fc.unlock("sasa", "sasavol");
@@ -3431,7 +3349,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("sasavol", "multistep");
   fc.unlock("sasavol", "multistep_boost");
   fc.unlock("sasavol", "montecarlo");
-  fc.unlock("sasavol", "ramd");
   //fc.unlock("sasavol", "polarisation_cos");
   //fc.unlock("sasavol", "polarisation_cos_damped");
   //fc.unlock("sasavol", "sasa");
@@ -3512,7 +3429,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("pairlist_gridcell", "multistep");
   fc.unlock("pairlist_gridcell", "multistep_boost");
   fc.unlock("pairlist_gridcell", "montecarlo");
-  fc.unlock("pairlist_gridcell", "ramd");
   fc.unlock("pairlist_gridcell", "polarisation_cos");
   fc.unlock("pairlist_gridcell", "polarisation_cos_damped");
   fc.unlock("pairlist_gridcell", "sasa");
@@ -3597,7 +3513,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("cutoff_cg", "multistep");
   fc.unlock("cutoff_cg", "multistep_boost");
   fc.unlock("cutoff_cg", "montecarlo");
-  fc.unlock("cutoff_cg", "ramd");
   fc.unlock("cutoff_cg", "polarisation_cos");
   fc.unlock("cutoff_cg", "polarisation_cos_damped");
   fc.unlock("cutoff_cg", "sasa");
@@ -3668,7 +3583,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("force_groups", "analysis");
   fc.unlock("force_groups", "no_integration");
   fc.unlock("force_groups", "stochdyn");
-  fc.unlock("force_groups", "ramd");
   fc.unlock("force_groups", "random_gromos");
   fc.unlock("force_groups", "random_gsl");
   fc.unlock("force_groups", "parallel_mpi");
@@ -3747,7 +3661,6 @@ int io::check_parameter(simulation::Simulation & sim)
   //  fc.unlock("distance_field", "multistep");
   //  fc.unlock("distance_field", "multistep_boost");
   //  fc.unlock("distance_field", "montecarlo");
-  //  fc.unlock("distance_field", "ramd");
   //  fc.unlock("distance_field", "polarisation_cos");
   // fc.unlock("distance_field", "polarisation_cos_damped");
   //  fc.unlock("distance_field", "sasa");
@@ -3832,7 +3745,6 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("bsleus", "stochdyn");
   fc.unlock("bsleus", "multistep");
   fc.unlock("bsleus", "multistep_boost");
-  fc.unlock("bsleus", "ramd");
   fc.unlock("bsleus", "polarisation_cos");
   fc.unlock("bsleus", "polarisation_cos_damped");
   fc.unlock("bsleus", "sasa");

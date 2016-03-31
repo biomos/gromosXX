@@ -171,7 +171,6 @@ configuration::Configuration::Configuration
  
   special().rottrans_constr = conf.special().rottrans_constr;
 
-  special().ramd = conf.special().ramd;
   // if this works just like this, why do we need to explicitly copy the virial tensor?
   special().eds = conf.special().eds;
   
@@ -281,8 +280,6 @@ configuration::Configuration & configuration::Configuration::operator=
   
   special().rottrans_constr = conf.special().rottrans_constr;
 
-  special().ramd = conf.special().ramd;
-  
   special().eds = conf.special().eds;
   
   special().lattice_shifts = conf.special().lattice_shifts;
@@ -379,12 +376,6 @@ void configuration::Configuration::init(topology::Topology const & topo,
     special().flexible_constraint.flexible_ekin.resize(numb);
   }
 
-  if(param.ramd.fc!=0.0){
-    special().ramd.force_direction = math::Vec(0.0,0.0,0.0);
-    // initialize the ta_average to the minimum distance.
-    special().ramd.ta_average = param.ramd.ta_min * exp(1.0);
-  }
-  
   if(param.nemd.nemd != simulation::nemd_off){
     special().nemd_conf.Px = 0.0; //To accumulate the momemtum
     special().nemd_conf.counter = 0; 

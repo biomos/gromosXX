@@ -24,7 +24,6 @@
 #include "../../interaction/special/eds_distance_restraint_interaction.h"
 #include "../../interaction/special/perturbed_dihedral_restraint_interaction.h"
 #include "../../interaction/special/jvalue_restraint_interaction.h"
-#include "../../interaction/special/ramd_interaction.h"
 #include "../../util/umbrella_weight.h"
 #include "../../interaction/special/xray_restraint_interaction.h"
 #include "../../interaction/special/adde_reweighting.h"
@@ -344,15 +343,6 @@ int interaction::create_special(interaction::Forcefield & ff,
     ff.push_back(ps);
   }
 
-  if (param.ramd.fc!=0.0){
-    if(!quiet){
-      os << "\tadding ramd forces\n";
-    }
-    interaction::RAMD_Interaction * ri = 
-      new interaction::RAMD_Interaction;
-    ff.push_back(ri);
-  }
-  
   if(param.addecouple.adgr>0){
     if(!quiet){
       os << "\tadding adiabatic decoupling reweighting\n";

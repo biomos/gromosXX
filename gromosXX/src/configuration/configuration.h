@@ -523,26 +523,6 @@ namespace configuration {
         math::VArray pos;
       } /** roto-translational constraints information */ rottrans_constr;
 
-      struct ramd_struct {
-        /**
-         * directionality of the force
-         */
-        math::Vec force_direction;
-        /**
-         * old center of mass of RAMD atoms
-         */
-        math::Vec old_com;
-        /**
-         * total mass of the RAMD atoms
-         */
-        double total_mass;
-        /**
-         * time averaged distance that we have travelled
-         */
-        double ta_average;
-
-      } /** ramd information */ ramd;
-
       struct eds_struct {
         /**
          * (longrange) force storage (perturbed part of multiple states)

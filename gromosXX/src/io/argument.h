@@ -70,10 +70,6 @@ namespace io{
    */
   extern std::string argname_bag;
   /**
-   * RAMD trajectory argument
-   */
-  extern std::string argname_tramd;
-  /**
    * gzip compression argument
    */
   extern std::string argname_gzip;

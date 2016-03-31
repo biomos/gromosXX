@@ -233,15 +233,15 @@ bool io::In_Configuration::read_position_plain(topology::Topology &topo,
   
   math::VArray &pos = conf.current().pos;
   
-  std::string s1, s2;
-  int i, n, nr;
+  int i;
 
   for(i=0; it != to; ++i, ++it){
     DEBUG(8, "line: " << *it);
     
     _lineStream.clear();
-    _lineStream.str(*it);
-    _lineStream >> n >> s1 >> s2 >> nr;
+    // first 24 characters are ignored
+    _lineStream.str((*it).substr(24, (*it).size()));
+    // _lineStream >> n >> s1 >> s2 >> nr;
     _lineStream >> pos(i)(0) >> pos(i)(1) >> pos(i)(2);
     DEBUG(8, "atom " << i << ": " << v2s(pos(i)));
     
@@ -1415,8 +1415,7 @@ bool io::In_Configuration::_read_position(math::VArray &pos, std::vector<std::st
   std::vector<std::string>::const_iterator it = buffer.begin(),
     to = buffer.end()-1;
   
-  std::string s1, s2;
-  int i, n, nr;
+  int i;
 
   std::istringstream _lineStream;
 
@@ -1430,9 +1429,9 @@ bool io::In_Configuration::_read_position(math::VArray &pos, std::vector<std::st
     }
 
     _lineStream.clear();
-    _lineStream.str(*it);
-    // ignore first 4 fields
-    _lineStream >> n >> s1 >> s2 >> nr;
+    // ignore first 24 characters
+    _lineStream.str((*it).substr(24,(*it).size()));
+    //_lineStream >> n >> s1 >> s2 >> nr;
     _lineStream >> pos(i)(0) >> pos(i)(1) >> pos(i)(2);
     
     if(_lineStream.fail()){
@@ -1524,9 +1523,9 @@ bool io::In_Configuration::_read_velocity(math::VArray &vel,
     }
    
     _lineStream.clear();
-    _lineStream.str(*it);
-    // ignore first 4 fields
-    _lineStream >> n >> s1 >> s2 >> nr;
+    // first 24 characters are ignored
+    _lineStream.str((*it).substr(24,(*it).size()));
+    // _lineStream >> n >> s1 >> s2 >> nr;
     _lineStream >> vel(i)(0) >> vel(i)(1) >> vel(i)(2);
     
     if(_lineStream.fail()){

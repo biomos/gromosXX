@@ -63,7 +63,6 @@ m_every_force(0),
 m_every_energy(0),
 m_every_free_energy(0),
 m_every_blockaverage(0),
-m_every_ramd(0),
 m_every_cos_pos(0),
 m_every_jvalue(0),
 m_every_xray(0),
@@ -141,11 +140,6 @@ io::Out_Configuration::~Out_Configuration()
   if (m_write_blockaverage_free_energy) {
     m_blockaveraged_free_energy.flush();
     m_blockaveraged_free_energy.close();
-  }
-
-  if (m_every_ramd) {
-    m_ramd_traj.flush();
-    m_ramd_traj.close();
   }
 
   if (m_every_cos_pos || m_every_jvalue || m_every_xray || m_every_disres || m_every_disfieldres
@@ -250,12 +244,6 @@ void io::Out_Configuration::init(io::Argument & args,
             "Out_Configuration",
             io::message::error);
   }
-  if (args.count(argname_tramd) > 0)
-    ramd_trajectory(args[argname_tramd], param.ramd.every);
-  else if (param.ramd.fc != 0.0 && param.ramd.every)
-    io::messages.add("write RAMD trajectory but no tramd argument",
-          "Out_Configuration",
-          io::message::error);
 
   if (param.replica.num_T * param.replica.num_l) {
     m_replica = true;
@@ -513,12 +501,6 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
         }
       }
       conf.current().averages.block().zero();
-    }
-
-    if (m_every_ramd && (sim.steps() % m_every_ramd) == 0) {
-      _print_timestep(sim, m_ramd_traj);
-      _print_ramd(topo, conf, sim, m_ramd_traj);
-      m_ramd_traj.flush();
     }
 
   } else if (form == final && m_final) {
@@ -815,14 +797,6 @@ void io::Out_Configuration
   m_every_blockaverage = every;
   m_write_blockaverage_free_energy = true;
   _print_title(m_title, "block averaged free energies", m_blockaveraged_free_energy);
-}
-
-void io::Out_Configuration
-::ramd_trajectory(std::string name, int every) {
-  m_ramd_traj.open(name.c_str());
-
-  m_every_ramd = every;
-  _print_title(m_title, "RAMD trajectory", m_ramd_traj);
 }
 
 void io::Out_Configuration
@@ -1659,64 +1633,6 @@ void io::Out_Configuration
 
 }
 
-template<math::boundary_enum b>
-void _print_ramd_bound(topology::Topology const & topo,
-        configuration::Configuration const &conf,
-        simulation::Simulation const &sim,
-        std::ostream &os, int width) {
-
-  math::Periodicity<b> periodicity(conf.current().box);
-  math::Vec com(0.0, 0.0, 0.0);
-  math::Vec r;
-  math::Vec f = conf.special().ramd.force_direction * sim.param().ramd.fc;
-  std::set<unsigned int>::const_iterator
-  it = sim.param().ramd.atom.begin(),
-          i0 = sim.param().ramd.atom.begin(),
-          to = sim.param().ramd.atom.end();
-
-  for (; it != to; ++it) {
-    periodicity.nearest_image(conf.current().pos(*it),
-            conf.current().pos(*i0), r);
-    com += topo.mass()(*it) * r;
-  }
-
-  com /= conf.special().ramd.total_mass;
-  com += conf.current().pos(*i0);
-  //rotate to orignial Cartesian coordinates
-  math::Matrixl Rmat(math::rmat(conf.current().phi,
-          conf.current().theta, conf.current().psi));
-  if (conf.boundary_type == math::truncoct)
-    Rmat = math::product(Rmat, math::truncoct_triclinic_rotmat(false));
-  f = math::Vec(math::product(Rmat, f));
-  com = math::Vec(math::product(Rmat, com));
-  os << "# force\n";
-  os << std::setw(width) << f(0)
-          << std::setw(width) << f(1)
-          << std::setw(width) << f(2)
-          << "\n";
-  os << "# com RAMD atoms\n";
-  os << std::setw(width) << com(0)
-          << std::setw(width) << com(1)
-          << std::setw(width) << com(2)
-          << "\n";
-
-}
-
-void io::Out_Configuration
-::_print_ramd(topology::Topology const &topo,
-        configuration::Configuration const &conf,
-        simulation::Simulation const &sim,
-        std::ostream &os) {
-  os.setf(std::ios::fixed, std::ios::floatfield);
-  os.precision(m_precision);
-  os << "RAMD\n";
-
-  SPLIT_BOUNDARY(_print_ramd_bound,
-          topo, conf, sim, os, m_width);
-  os << "END\n";
-
-}
-
 void io::Out_Configuration
 ::_print_box(configuration::Configuration const &conf,
         std::ostream &os) {
@@ -1882,11 +1798,6 @@ void io::Out_Configuration
     m_output.flush();
 
   }
-  if (sim.param().ramd.fc != 0.0 &&
-          sim.param().ramd.every &&
-          (sim.steps() % sim.param().ramd.every) == 0) {
-    print_RAMD(m_output, conf, topo.old_lambda());
-  }
 }
 
 void io::Out_Configuration
@@ -1961,8 +1872,6 @@ void io::Out_Configuration
 
     }
   }
-  if (sim.param().ramd.fc != 0.0 && sim.param().ramd.every)
-    print_RAMD(m_output, conf, topo.old_lambda());
 
   // print sasa and volume averages, fluctuations
   if (sim.param().sasa.switch_sasa){

@@ -87,7 +87,7 @@ std::map<int,math::Vec> &rah_map, int &error)
        msg << "Do not know how to handle " << it->rah << " for RAH in distance restraint" << std::endl;
        io::messages.add(msg.str(),
                          "Distance_restraints",
-                         io::message::critical);
+                         io::message::error);
        error = 1;
        return error;
     }

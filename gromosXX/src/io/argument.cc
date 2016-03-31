@@ -26,7 +26,6 @@ namespace io{
   std::string argname_re         = "re";
   std::string argname_bae        = "bae";
   std::string argname_bag        = "bag";
-  std::string argname_tramd      = "tramd";
   std::string argname_gzip       = "gzip";
   
   typedef std::multimap<std::string,std::string>::value_type argType;

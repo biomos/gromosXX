@@ -23,7 +23,6 @@
  * <tr><td> \@trv</td><td>&lt;velocity trajectory&gt; </td><td style="color:#FF0000">out</td></tr>
  * <tr><td> \@trf</td><td>&lt;force trajectory&gt; </td><td style="color:#FF0000">out</td></tr>
  * <tr><td> \@trs</td><td>&lt;special trajectory&gt; </td><td style="color:#FF0000">out</td></tr>
- * <tr><td> \@tramd</td><td>&lt;RAMD trajectory&gt; </td><td style="color:#FF0000">out</td></tr>
  * <tr><td> \@tre</td><td>&lt;@ref energy_trajectory "energy trajectory"&gt; </td><td style="color:#FF0000">out</td></tr>
  * <tr><td> \@bae</td><td>&lt;@ref block_averaged_energy_trajectory "block averaged energy trajectory"&gt; </td><td style="color:#FF0000">out</td></tr>
  * <tr><td> \@trg</td><td>&lt;@ref free_energy_trajectory "free energy trajectory"&gt; </td><td style="color:#FF0000">out</td></tr>
@@ -90,7 +89,7 @@ int main(int argc, char *argv[]){
 
   util::Known knowns;
   knowns << "topo" << "conf" << "input" << "verb" << "pttopo"
-	 << "trc" << "fin" << "trv" << "trf" << "trs" << "tramd" << "tre" << "trg"
+	 << "trc" << "fin" << "trv" << "trf" << "trs" << "tre" << "trg"
 	 << "bae" << "bag" << "posresspec" << "refpos" <<"distrest" << "dihrest"
          << "jval" << "xray" << "sym" << "order" << "rdc" << "lud" << "led" << "bsleus" 
          << "anatrj" << "print" << "friction" << "qmmm" << "version" << "develop";

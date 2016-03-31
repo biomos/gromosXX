@@ -72,7 +72,7 @@ int main(int argc, char *argv[]) {
   // reading arguments
   util::Known knowns;
   knowns << "topo" << "conf" << "input" << "verb" << "pttopo"
-          << "trc" << "fin" << "trv" << "trf" << "trs" << "tramd" << "tre" << "trg"
+          << "trc" << "fin" << "trv" << "trf" << "trs" << "tre" << "trg"
           << "bae" << "bag" << "posresspec" << "refpos" << "distrest" << "dihrest"
 	 << "jval" << "rdc" << "xray" << "lud" << "led" << "anatrj" << "print" << "friction"
           << "version" << "repdat" << "repout";

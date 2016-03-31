@@ -56,11 +56,6 @@ void util::get_usage(util::Known const &knowns, std::string &usage, std::string 
     usage += "\t# @trs       filename\n\n";
   }  
   
-  if (knowns.count("tramd")){
-    usage += "\t# output RAMD trajectory\n";
-    usage += "\t# @tramd     filename\n\n";
-  }
-  
   if (knowns.count("tre")){
     usage += "\t# output energy trajectory\n";
     usage += "\t# @tre       filename\n\n";

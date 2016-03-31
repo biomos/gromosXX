@@ -89,7 +89,6 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_EWARN(param);
   read_MULTISTEP(param);
   read_MONTECARLO(param);
-  read_RAMD(param);
   read_POLARISE(param);
   read_RANDOMNUMBERS(param);
   read_EDS(param);
@@ -3912,83 +3911,6 @@ void io::In_Parameter::read_MONTECARLO(simulation::Parameter & param,
               "In_Parameter", io::message::error);
       return;
     }
-  }
-}
-
-void io::In_Parameter::read_RAMD(simulation::Parameter & param,
-        std::ostream & os) {
-  DEBUG(8, "read RAMD");
-
-  std::vector<std::string> buffer;
-  std::string s;
-
-  buffer = m_block["RAMD"];
-
-  if (buffer.size()) {
-    block_read.insert("RAMD");
-
-    _lineStream.clear();
-    _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
-
-    _lineStream >> param.ramd.fc
-            >> param.ramd.steps
-            >> param.ramd.r_min
-            >> param.ramd.every
-            >> param.ramd.tau
-            >> param.ramd.ta_min;
-
-
-    if (_lineStream.fail()) {
-      io::messages.add("bad line in RAMD block",
-              "In_Parameter", io::message::error);
-      return;
-    }
-    int numAtoms = 0, atom;
-    _lineStream >> numAtoms;
-    for (int i = 0; i < numAtoms; i++) {
-      _lineStream >> atom;
-      param.ramd.atom.insert(atom - 1);
-    }
-    if (_lineStream.fail()) {
-      io::messages.add("bad line in RAMD block",
-              "In_Parameter", io::message::error);
-    }
-
-    if (param.ramd.fc < 0)
-      io::messages.add("RAMD block: FC should be >=0",
-            "io::In_Parameter::read_RAMD",
-            io::message::error);
-    if (param.ramd.steps < 0)
-      io::messages.add("RAMD block: STEPS should be >0",
-            "io::In_Parameter::read_RAMD",
-            io::message::error);
-    if (param.ramd.r_min < 0)
-      io::messages.add("RAMD block: R_MIN should be >0",
-            "io::In_Parameter::read_RAMD",
-            io::message::error);
-    if (param.ramd.every < 0)
-      io::messages.add("RAMD block: NWRITE should be >=0",
-            "io::In_Parameter::read_RAMD",
-            io::message::error);
-    if (param.ramd.tau == 0)
-      param.ramd.do_ta = false;
-    else if (param.ramd.tau < 0)
-      io::messages.add("RAMD block: TAU should be >=0",
-            "io::In_Parameter::read_RAMD",
-            io::message::error);
-    else
-      param.ramd.do_ta = true;
-    if (param.ramd.do_ta && param.ramd.ta_min <= 0)
-      io::messages.add("RAMD block: TA_MIN should be >0 if time averaging is included",
-            "io::In_Parameter::read_RAMD",
-            io::message::error);
-
-    if (param.ramd.fc != 0.0 && param.ramd.atom.size() == 0)
-      io::messages.add("RAMD block: no atoms read in to apply random force",
-            "io::In_Parameter::read_RAMD",
-            io::message::warning);
-
-
   }
 }
 
