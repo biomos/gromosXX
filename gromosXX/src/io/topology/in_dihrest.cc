@@ -38,10 +38,11 @@ DIHEDRALRESSPEC
 # PDLR                     dihedral angle value (in degrees) at minimum energy of
 #                          of the harmonic dihedral restraining term.
 # DELTA                    deviation of the zero-energy dihedral angle value after
-#                          after which the restraint switches to the next periodic
-#                          value.
+#                          which the restraint switches to the next periodic
+#                          value. The dihedral angle is put in the interval
+#                          [ PDLR + DELTA - 360 , PDLR + DELTA ]
 #  IPLR  JPLR  KPLR  LPLR  WDLR  PDLR  DELTA
-    1     2     3     4    1.0   120.0  90.0
+    1     2     3     4    1.0   120.0 180.0
 END
 @endverbatim
  *
@@ -51,6 +52,8 @@ END
  *
  * @verbatim
 PERTDIHRESSPEC
+# IPLR, JPLR, KPLR, LPLR   atom sequence numbers of the atoms defining the
+#                          restrained dihedral i-j-k-l
 # APDLR    dihedral angle value (in degrees) at minimum energy of the harmonic
 #          dihedral restraining term in state A.
 # AWDLR    individual dihedral restraint weight factor by which the harmonic
@@ -60,9 +63,14 @@ PERTDIHRESSPEC
 # M        hidden restraint parameter m and
 # N        hidden restraint parameter n of
 #          hidden restraint prefactor l^n*(1-l)^m.
+# DELTA    deviation of the zero-energy dihedral angle value after which the 
+#          restraint switches to the next periodic value. The dihedral angle 
+#          is put in the interval
+#          [ (1-RLAM)*APDLR + RLAM*BPDLR + DELTA - 360 , 
+#                                       (1-RLAM)*APDLR + RLAM*BPDLR + DELTA ]
 #
 # IPLR  JPLR  KPLR  LPLR  M   N  DELTA  APDLR  AWDLR  BPDLR  BWDLR
-  1      2     3     4  2.0 2.0   90.0  120.0   1.0   160.0   1.0
+  1      2     3     4    2      180.0  120.0    1.0  160.0    1.0
 END
 @endverbatim
  */

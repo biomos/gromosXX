@@ -44,6 +44,7 @@ static int _calculate_dihedral_restraint_interactions
   math::VArray &force = conf.current().force;
   math::Vec rij, rkj, rkl, rlj, rmj, rnk, fi, fj, fk, fl;
   double dkj2, dkj, dmj2, dmj, dnk2, dnk, ip, phi;
+  double lower_bound, upper_bound;
   double energy, f;
 
   // math::Vec rij, rkj, rkl, rlj, rim, rln, rmj, rnk, fi, fj, fk, fl;
@@ -97,19 +98,27 @@ static int _calculate_dihedral_restraint_interactions
 
     DEBUG(9, "uncorrected phi=" << 180.0 * phi / math::Pi);
 
-    while(phi < it->delta)
-      phi += 2 * math::Pi;
-    while(phi > it->delta + 2 * math::Pi)
-      phi -= 2 * math::Pi;
-    
     double phi_0 = it->phi;
-    while(phi_0 < it->delta)
+
+    upper_bound = phi_0 + it->delta;
+    lower_bound = upper_bound - 2 * math::Pi;
+
+    // bring the calculated value of phi to the interval between upper_bound and lower_bound
+    while(phi < lower_bound)
+      phi += 2 * math::Pi;
+    while(phi > upper_bound)
+      phi -= 2 * math::Pi;
+   
+    // in case delta is larger than 2*Pi, we need to do the same for phi_0 
+    while(phi_0 < lower_bound)
       phi_0 += 2 * math::Pi;
-    while(phi_0 > it->delta + 2 * math::Pi)
+    while(phi_0 > upper_bound)
       phi_0 -= 2 * math::Pi;
 
     DEBUG(9, "phi=" << 180 * phi / math::Pi << " phi0=" << 180 * phi_0 / math::Pi
 	  << " delta=" << 180 * it->delta / math::Pi);
+    DEBUG(9, "lower_bound =" << 180*lower_bound / math::Pi 
+          << " upper_bound =" << 180*upper_bound/math::Pi);
 
     double delta_phi = phi - phi_0;
     DEBUG(9, "delta_phi=" << 180 * delta_phi / math::Pi);

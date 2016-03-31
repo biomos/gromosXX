@@ -46,6 +46,7 @@ static int _calculate_perturbed_dihedral_restraint_interactions
   math::VArray &force = conf.current().force;
   math::Vec rij, rkj, rkl, rlj, rmj, rnk, fi, fj, fk, fl;
   double dkj2, dkj, dmj2, dmj, dnk2, dnk, ip, phi;
+  double lower_bound, upper_bound;
   double energy, en_term, f, energy_derivative, dlam_term;
 
   /*
@@ -112,25 +113,42 @@ static int _calculate_perturbed_dihedral_restraint_interactions
 
     DEBUG(9, "uncorrected phi=" << 180.0 * phi / math::Pi);
     
-    while(phi < it->delta)
-      phi += 2 * math::Pi;
-    while(phi > it->delta + 2 * math::Pi)
-      phi -= 2 * math::Pi;
-
     double phi0_A = it->A_phi;
     double phi0_B = it->B_phi;
+    double phi0 = (1-l) * phi0_A + l * phi0_B;
 
-    while(phi0_A < it->delta)
+    upper_bound = phi0 + it->delta;
+    lower_bound = upper_bound - 2 * math::Pi;
+
+    // bring the calculated value of phi to the interval between upper_bound and lower_bound
+    while(phi < lower_bound)
+      phi += 2 * math::Pi;
+    while(phi > upper_bound)
+      phi -= 2 * math::Pi;
+   
+    // in case delta is larger than 2*Pi, we need to do the same for phi_0 
+    // to be sure, we also do this for phi0_A and phi0_B
+    // this may go wrong if you put phi0_A and phi0_B more than 2Pi apart
+    while(phi0_A < lower_bound)
       phi0_A += 2 * math::Pi;
-    while(phi0_A > it->delta + 2 * math::Pi)
+    while(phi0_A > upper_bound)
       phi0_A -= 2 * math::Pi;
 
-    while(phi0_B < it->delta)
+    while(phi0_B < lower_bound)
       phi0_B += 2 * math::Pi;
-    while(phi0_B > it->delta + 2 * math::Pi)
+    while(phi0_B > upper_bound)
       phi0_B -= 2 * math::Pi;
-    
-    double phi0 = (1-l) * phi0_A + l * phi0_B;
+
+    while(phi0 < lower_bound)
+      phi0 += 2 * math::Pi;
+    while(phi0 > upper_bound)
+      phi0 -= 2 * math::Pi;
+
+    DEBUG(9, "phi=" << 180 * phi / math::Pi << " phi0=" << 180 * phi0 / math::Pi
+	  << " delta=" << 180 * it->delta / math::Pi);
+    DEBUG(9, "lower_bound =" << 180*lower_bound / math::Pi 
+          << " upper_bound =" << 180*upper_bound/math::Pi);
+
     double delta_phi = phi - phi0;
     double phi_lin = sim.param().dihrest.phi_lin;
     double K = sim.param().dihrest.K;
