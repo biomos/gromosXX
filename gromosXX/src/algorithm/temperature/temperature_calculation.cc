@@ -96,7 +96,8 @@ int algorithm::Temperature_Calculation
   if (sim.param().perturbation.perturbation){
     
     math::VArray &vel = conf.current().vel;
-
+    math::VArray &old_vel = conf.old().vel;
+  
     // loop over the baths
     std::vector<simulation::bath_index_struct>::iterator
       it = sim.multibath().bath_index().begin(),
@@ -108,13 +109,20 @@ int algorithm::Temperature_Calculation
 
     assert(e_kin.size() == conf.old().energies.kinetic_energy.size());
 
+    // zero the kinetic energy derivatives
+    for(unsigned int i=0; i< e_kin.size(); i++){
+      e_kin[i] = 0.0;
+    }
+
     for(; it != to; ++it){
       DEBUG(10, "starting atom range...");
       
       // or just put everything into the first bath...?
       unsigned int bath = it->com_bath;
     
-      e_kin[bath] = 0.0;
+      // don't zero them here, if there is a second set of DOF coming that is coupled to the 
+      // same bath, you loose your contribution so far.
+      //e_kin[bath] = 0.0;
       DEBUG(10, "\tperturbed kinetic energy last atom: "
 	    << it->last_atom << " to bath " << bath << "\n");
       
@@ -128,6 +136,7 @@ int algorithm::Temperature_Calculation
 	  DEBUG(11, "\tA_mass: " << topo.perturbed_solute().atoms()[i].A_mass() 
 		<< " B_mass: " << topo.perturbed_solute().atoms()[i].B_mass());
 	  DEBUG(11, "\tabs2(vel): " << math::abs2(vel(i)));
+	  DEBUG(11, "\tabs2(old_vel): " << math::abs2(old_vel(i)));
 	  
 	  DEBUG(10, "\tbefore dE_kin/dl: " << e_kin[bath]);
 
@@ -140,10 +149,12 @@ int algorithm::Temperature_Calculation
 	  DEBUG(10, "\tl_deriv: " << l_deriv);
 	  
 	  // for some reason we take the new velocities here
+          // let's take the average of the old and the new velocities (squared) to be consistent with the 
+          // calculation of the kinetic energy itself
 	  e_kin[bath] -= l_deriv * 
 	    (topo.perturbed_solute().atoms()[i].B_mass() -
 	     topo.perturbed_solute().atoms()[i].A_mass()) 
-	    * math::abs2(vel(i));
+	    * (math::abs2(old_vel(i)) + math::abs2(vel(i))) * 0.5;
 	  
 	  DEBUG(10, "\tdE_kin/dl: " << e_kin[bath]);
 	
