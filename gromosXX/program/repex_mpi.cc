@@ -112,11 +112,16 @@ int main(int argc, char *argv[]) {
     configuration::Configuration conf;
     algorithm::Algorithm_Sequence md;
     simulation::Simulation sim;
-    
+
     // read in parameters
     io::read_parameter(args,sim,std::cout,true);
-    if (io::check_parameter(sim) != 0) return -1;
-    
+    if (io::check_parameter(sim)){
+      io::messages.display(std::cout);
+      std::cout << "\nErrors during feature checker!\n" << std::endl;
+      return -1;
+    }
+    //if (io::check_parameter(sim) != 0) return -1;
+
     // make a copy, don't change the original args
     io::Argument args2(args);
     

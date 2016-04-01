@@ -144,8 +144,8 @@ int io::check_parameter(simulation::Simulation & sim)
   add("innerloop_solvent_topology", "topology solvent", param.innerloop.solvent == simulation::sls_topo);
   add("innerloop_solvent_spc", "SPC solvent", param.innerloop.solvent == simulation::sls_spc);
   // REPLICA block
-  add("repex_temp", "temperature replica exchange", param.replica.num_T > 0);
-  add("repex_lambda", "lambda replica exchange", param.replica.num_l > 0);
+  add("repex_temp", "temperature replica exchange", param.replica.num_T > 1);
+  add("repex_lambda", "lambda replica exchange", param.replica.num_l > 1);
   // MULTICELL block
   add("multicell", "multiple unit cell simulation", param.multicell.multicell);
   // READTRAJ block
@@ -2039,6 +2039,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("repex_temp", "random_gsl");
   fc.unlock("repex_temp", "parallel_mpi");
   fc.unlock("repex_temp", "parallel_omp");
+  //fc.unlock("repex_temp", "stochdyn");
   fc.unlock("repex_lambda", "multicell");
   fc.unlock("repex_lambda", "analysis");
   fc.unlock("repex_lambda", "no_integration");
@@ -2048,6 +2049,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("repex_lambda", "random_gsl");
   fc.unlock("repex_lambda", "parallel_mpi");
   fc.unlock("repex_lambda", "parallel_omp");
+  fc.unlock("repex_lambda", "stochdyn");
   fc.unlock("multicell", "analysis");
   fc.unlock("multicell", "no_integration");
   fc.unlock("multicell", "stochdyn");
