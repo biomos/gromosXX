@@ -364,6 +364,7 @@ io::In_Distanceres::read(topology::Topology& topo,
 		       "in_distanceres", io::message::warning);
     }
     else{
+      sim.param().perturbation.perturbed_par=true;
       std::vector<std::string>::const_iterator it = buffer.begin()+1,
 	to = buffer.end()-1;
       
@@ -691,6 +692,7 @@ io::In_Distanceres::read(topology::Topology& topo,
     else{
       
       DEBUG(10, "reading in DISTANCERES (PERTDFRESSPEC) data");
+      sim.param().perturbation.perturbed_par=true;
       
       if (!quiet){
 	switch(sim.param().distancefield.distancefield * sim.param().perturbation.perturbation){
@@ -826,6 +828,8 @@ io::In_Distanceres::read(topology::Topology& topo,
       
       double dish,disc;
       bool nr_atoms=true;
+      
+      sim.param().perturbation.perturbed_par=true;
       
       DEBUG(10, "reading in MDISRESSPEC data");
       

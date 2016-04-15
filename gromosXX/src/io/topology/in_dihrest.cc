@@ -184,7 +184,8 @@ void io::In_Dihrest::read(topology::Topology& topo,
     if (!buffer.size()){
       return;
     }
-
+    
+    sim.param().perturbation.perturbed_par=true;
     std::vector<std::string>::const_iterator it = buffer.begin()+1,
       to = buffer.end()-1;
 

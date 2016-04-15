@@ -2044,12 +2044,17 @@ namespace simulation
       perturb_struct() : perturbation(false), read_initial(false), 
                          lambda(0), lambda_exponent(1),
 			 dlamt(0), scaling(false), scaled_only(false),
-			 soft_vdw(0.0), soft_crf(0.0) {}
+			 soft_vdw(0.0), soft_crf(0.0), perturbed_par(false) {}
       
       /**
        * perturbation?
        */
       bool perturbation;
+      /**
+       * will be set to true if any perturbed parameter
+       * is read in read_special  or read_topology
+       */
+      bool perturbed_par;
       /**
        * read initial lambda from configuration
        */

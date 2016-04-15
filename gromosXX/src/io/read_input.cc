@@ -56,6 +56,13 @@ int io::read_input(io::Argument const & args,
   
   // read this before configuration, as it contains topological data...
   if (read_special(args, topo, conf, sim, os, quiet) != 0) return -1;
+  
+  // error if no perturbed parameters were read from pttop or restraints
+  if(!sim.param().perturbation.perturbed_par && sim.param().perturbation.perturbation){
+      io::messages.add("Neither perturbed restraints nor perturbed topology found - if you do not want to perturb anything, turn off PERTURBATION",
+		       "read_input", io::message::error);
+      return -1;
+  }
 
   sim.multibath().calculate_degrees_of_freedom
           (topo, sim.param().rottrans.rottrans, sim.param().posrest.posrest == simulation::posrest_const, sim.param().boundary.dof_to_subtract);
@@ -90,6 +97,13 @@ int io::read_input_repex(io::Argument const & args,
   
   // read this before configuration, as it contains topological data...
   if (read_special(args, topo, conf, sim, os, quiet) != 0) return -1;
+  
+  // error if no perturbed parameters were read from pttop or restraints
+  if(!sim.param().perturbation.perturbed_par){
+      io::messages.add("Neither perturbed restraints nor perturbed topology found - if you do not want to perturb anything, turn off PERTURBATION",
+		       "read_input", io::message::error);
+      return -1;
+  }
 
   sim.multibath().calculate_degrees_of_freedom
           (topo, sim.param().rottrans.rottrans, sim.param().posrest.posrest == simulation::posrest_const, sim.param().boundary.dof_to_subtract);
@@ -240,6 +254,9 @@ int io::read_topology(io::Argument const & args,
     ipt.quiet = quiet;
     
     ipt.read(topo, sim.param(), os);
+    
+    sim.param().perturbation.perturbed_par=true;
+    
     io::messages.add("perturbation topology read from " + args[argname_pttopo] + "\n" + util::frame_text(ipt.title),
 		     "read input", io::message::notice);
     }
