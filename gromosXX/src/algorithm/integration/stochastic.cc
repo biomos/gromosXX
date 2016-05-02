@@ -387,6 +387,11 @@ int algorithm::Stochastic_Dynamics_Vel1
       DEBUG(10, "vrand4=" << math::v2s(m_vrand.vrand4(i)));
     } else {
       conf.current().vel(i) = conf.old().vel(i) + conf.old().force(i) * sim.time_step_size() / topo.mass(i);
+      m_vrand.vrand1(i)=math::Vec(0.0, 0.0, 0.0);
+      m_vrand.vrand2(i)=math::Vec(0.0, 0.0, 0.0);
+      m_vrand.vrand3(i)=math::Vec(0.0, 0.0, 0.0);
+      m_vrand.vrand4(i)=math::Vec(0.0, 0.0, 0.0);
+
     }
   } // loop over atoms
  
@@ -488,12 +493,13 @@ int algorithm::Stochastic_Dynamics_Pos2
 
   for (unsigned int i=0; i < topo.num_atoms(); ++i){
     //this is 2.11.2.25
-    math::Vec sxh = conf.current().stochastic_integral(i) * topo.stochastic().c9(i)
+    if(topo.stochastic().gamma(i) != 0.0) {
+      math::Vec sxh = conf.current().stochastic_integral(i) * topo.stochastic().c9(i)
       + m_vrand->vrand4(i);
-    conf.current().stochastic_integral(i) = m_vrand->vrand3(i);  
-    //this is 2.11.2.26
-    conf.current().pos(i) += m_vrand->vrand3(i) - sxh;
-    
+      conf.current().stochastic_integral(i) = m_vrand->vrand3(i);  
+      //this is 2.11.2.26
+      conf.current().pos(i) += m_vrand->vrand3(i) - sxh;
+    }     
   } // loop over atoms
 
   m_timer.stop();
