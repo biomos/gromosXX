@@ -1635,7 +1635,7 @@ void io::In_Parameter::read_COMTRANSROT(simulation::Parameter &param,
 }
 
 /**
- * @section HOOMD block (optional)
+ * @section hoomd HOOMD block (optional)
  * @verbatim
 HOOMD
 #       PROCESSOR: cpu gpus
@@ -2792,7 +2792,7 @@ void io::In_Parameter::read_ORDERPARAMRES(simulation::Parameter &param,
 
 
 /**
- * @section RDCRES block
+ * @section rdcres RDCRES block
  * @verbatim
 RDCRES
 # NTRDCR -4..2                 RDC restraining

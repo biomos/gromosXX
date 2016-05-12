@@ -77,6 +77,7 @@ m_every_adde(0),
 m_every_nemd(0),
 m_every_oparam(0),
 m_every_rdc(0),
+m_write_special(false),
 m_write_blockaverage_energy(false),
 m_write_blockaverage_free_energy(false),
 m_precision(9),
@@ -142,9 +143,7 @@ io::Out_Configuration::~Out_Configuration()
     m_blockaveraged_free_energy.close();
   }
 
-  if (m_every_cos_pos || m_every_jvalue || m_every_xray || m_every_disres || m_every_disfieldres
-          || m_every_dat || m_every_leus || m_every_dipole || m_every_current
-          || m_every_adde || m_every_nemd || m_every_bsleus || m_every_rdc) { // add others if there are any
+  if (m_write_special) { 
     m_special_traj.flush();
     m_special_traj.close();
   }
@@ -197,6 +196,12 @@ void io::Out_Configuration::init(io::Argument & args,
           "Out_Configuration",
           io::message::error);
 
+  m_write_special = param.polarise.write || param.jvalue.write || param.xrayrest.write 
+     || param.distanceres.write || param.distancefield.write || param.print.monitor_dihedrals 
+     || param.localelev.write || param.electric.dip_write || param.electric.cur_write 
+     || param.addecouple.write || param.nemd.write || param.orderparamrest.write || param.rdc.write
+     || param.bsleus.write;    // add others if there are any
+
   if (args.count(argname_trs) > 0)
     special_trajectory(args[argname_trs], param.polarise.write, 
             param.jvalue.write, param.xrayrest.write, param.distanceres.write, 
@@ -204,11 +209,7 @@ void io::Out_Configuration::init(io::Argument & args,
             param.electric.dip_write, param.electric.cur_write, param.addecouple.write,
             param.nemd.write, param.orderparamrest.write, param.rdc.write,
             param.bsleus.write);
-  else if (param.polarise.write || param.jvalue.write || param.xrayrest.write 
-        || param.distanceres.write || param.distancefield.write || param.print.monitor_dihedrals 
-        || param.localelev.write || param.electric.dip_write || param.electric.cur_write 
-        || param.addecouple.write || param.nemd.write || param.orderparamrest.write || param.rdc.write
-        || param.bsleus.write)
+  else if (m_write_special)
     io::messages.add("write special trajectory but no trs argument",
           "Out_Configuration",
           io::message::error);
@@ -277,7 +278,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
      * set this to true when you print the timestep to the special traj.
      * make sure you don't print it twice. 
      */
-    bool special_timestep_printed = false;
+    //  m_special_traj << "time " << sim.time() << ", steps " << sim.steps() << "\n";
 
     if (m_every_pos && ((sim.steps() % m_every_pos) == 0 || minimum_found)) {
       // don't write starting configuration if analyzing a trajectory
@@ -307,7 +308,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       m_vel_traj.flush();
     }
 
-    if (m_every_force && ((sim.steps() + 1) % m_every_force) == 0) {
+    if (m_every_force && ((sim.steps() - 1) % m_every_force) == 0) {
       if (sim.steps()) {
         _print_old_timestep(sim, m_force_traj);
         if (sim.param().write.force_solute_only)
@@ -317,99 +318,41 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
         m_force_traj.flush();
       }
     }
+    
+    // special trajectory blocks
+    // IMPORTANT: because this writing is done before the md_sequence is applied
+    // most special terms for the current configuration are written at the 
+    // beginning of the next step; they therefore have to be printed before 
+    // _print_special_timestep is executed -- MariaP 2016/04/29
 
-    if (m_every_cos_pos && (sim.steps() % m_every_cos_pos) == 0) {
-      if (!special_timestep_printed) {
-        _print_timestep(sim, m_special_traj);
-        special_timestep_printed = true;
-      }
-      _print_cos_position(conf, topo, m_special_traj);
+    if (m_every_disres && sim.steps() && ((sim.steps() - 1) % m_every_disres) == 0) {
+      _print_distance_restraints(conf, topo, m_special_traj);
       m_special_traj.flush();
     }
 
-    if (m_every_jvalue && sim.steps() && (sim.steps() % m_every_jvalue) == 0) {
-      if (!special_timestep_printed) {
-        _print_timestep(sim, m_special_traj);
-        special_timestep_printed = true;
-      }
+    if (m_every_disfieldres && sim.steps() && ((sim.steps() - 1) % m_every_disfieldres) == 0) {
+      _print_disfield_restraints(conf, topo, m_special_traj);
+      m_special_traj.flush();
+    }
+
+    if (m_every_jvalue  && sim.steps() && ((sim.steps() - 1) % m_every_jvalue) == 0) {
       _print_jvalue(sim.param(), conf, topo, m_special_traj, true);
       m_special_traj.flush();
     }
 
     if (m_every_xray && sim.steps() && ((sim.steps()-1) % m_every_xray) == 0) {
-      if (!special_timestep_printed) {
-        _print_old_timestep(sim, m_special_traj);
-        special_timestep_printed = true;
-      }
       _print_xray_rvalue(sim.param(), conf, m_special_traj);
       _print_xray_umbrellaweightthresholds(sim.param(), topo, m_special_traj);
       _print_xray_bfactors(sim.param(), conf, m_special_traj);
       m_special_traj.flush();
     }
 
-    if (m_every_disres && ((sim.steps() - 1) % m_every_disres) == 0) {
-      if (sim.steps()) {
-       if (!special_timestep_printed) {
-        _print_old_timestep(sim, m_special_traj);
-        special_timestep_printed = true;
-      }
-      _print_distance_restraints(conf, topo, m_special_traj);
-      m_special_traj.flush();
-      }
-    }
-
-    if (m_every_disfieldres && ((sim.steps() - 1) % m_every_disfieldres) == 0) {
-      if (sim.steps()) {
-       if (!special_timestep_printed) {
-        _print_old_timestep(sim, m_special_traj);
-        special_timestep_printed = true;
-      }
-      _print_disfield_restraints(conf, topo, m_special_traj);
-      m_special_traj.flush();
-      }
-    }
-
-    if (m_every_dat) {
-      if (!special_timestep_printed) {
-        _print_timestep(sim, m_special_traj);
-        special_timestep_printed = true;
-      }
-      _print_dihangle_trans(conf, topo, m_special_traj);
-      m_special_traj.flush();
-    }
-    if (m_every_leus && sim.steps() && (sim.steps() % m_every_leus) == 0) {
-      if (!special_timestep_printed) {
-        _print_timestep(sim, m_special_traj);
-        special_timestep_printed = true;
-      }
-      _print_umbrellas(conf, m_special_traj);
-      m_special_traj.flush();
-    }
-    if ((sim.param().bsleus.bsleus == simulation::bsleus_on) && 
-            m_every_bsleus && ((sim.steps() - 1) % m_every_bsleus) == 0) {
-      if (!special_timestep_printed) {
-        _print_timestep(sim, m_special_traj);
-        special_timestep_printed = true;
-      }
-      _print_bsleusmem(conf, m_special_traj);
-      _print_bsleus(conf, m_special_traj);
-      m_special_traj.flush();
-    }
-
-    if (m_every_oparam && sim.steps() && (sim.steps() % m_every_oparam) == 0) {
-      if (!special_timestep_printed) {
-        _print_timestep(sim, m_special_traj);
-        special_timestep_printed = true;
-      }
+    if (m_every_oparam && sim.steps() && ((sim.steps()-1) % m_every_oparam) == 0) {
       _print_order_parameter_restraints(conf, topo, m_special_traj);
       m_special_traj.flush();
     }
 
-    if (m_every_rdc && sim.steps() && (sim.steps() % m_every_rdc) == 0) {
-      if (!special_timestep_printed) {
-        _print_timestep(sim, m_special_traj);
-        special_timestep_printed = true;
-      }
+    if (m_every_rdc && sim.steps() && ((sim.steps()-1) % m_every_rdc) == 0) {
       if(sim.param().rdc.mode != simulation::rdc_restr_off) {
         io::Out_Configuration::_print_rdc_values(sim.param(), conf, topo, m_special_traj, /*formatted*/ true);
       }
@@ -428,41 +371,56 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       m_special_traj.flush();
     }
 
-    if (m_every_dipole && (sim.steps() % m_every_dipole) == 0) {
-      if (!special_timestep_printed) {
-        _print_timestep(sim, m_special_traj);
-        special_timestep_printed = true;
-      }
-      SPLIT_BOUNDARY(_print_dipole, sim, topo, conf, m_special_traj);
-      m_special_traj.flush();
-    }
-
-    if (m_every_current && sim.steps() && (sim.steps() % m_every_current) == 0) {
-      if (!special_timestep_printed) {
-        _print_timestep(sim, m_special_traj);
-        special_timestep_printed = true;
-      }
-      _print_current(sim, topo, conf, m_special_traj);
-      m_special_traj.flush();
-    }
-
-    if (m_every_adde && sim.steps() && (sim.steps() % m_every_adde) == 0) {
-      if (!special_timestep_printed) {
-        _print_timestep(sim, m_special_traj);
-        special_timestep_printed = true;
-      }
+    if (m_every_adde && sim.steps() && ((sim.steps()-1) % m_every_adde) == 0) {
       _print_adde(sim, topo, conf, m_special_traj);
       m_special_traj.flush();
     }
     
-    if (m_every_nemd && sim.steps() && (sim.steps() % m_every_nemd) == 0) {
-      if (!special_timestep_printed) {
-        _print_timestep(sim, m_special_traj);
-        special_timestep_printed = true;
-      }
+    if (m_every_nemd && sim.steps() && ((sim.steps()-1) % m_every_nemd) == 0) {
       _print_nemd(sim, topo, conf, m_special_traj);
       m_special_traj.flush();
     }
+    
+    if (m_every_leus && sim.steps() && ((sim.steps() - 1) % m_every_leus) == 0) {
+      _print_umbrellas(conf, m_special_traj);
+      m_special_traj.flush();
+    }
+    
+    if ((sim.param().bsleus.bsleus == simulation::bsleus_on) && 
+            m_every_bsleus && sim.steps() && ((sim.steps() - 1) % m_every_bsleus) == 0) {
+      _print_bsleusmem(conf, m_special_traj);
+      _print_bsleus(conf, m_special_traj);
+      m_special_traj.flush();
+    }  
+
+    if (m_every_cos_pos && sim.steps() && ((sim.steps() - 1) % m_every_cos_pos) == 0) {
+      _print_cos_position(conf, topo, m_special_traj);
+      m_special_traj.flush();
+    }
+    
+    // print timestep to the special trajectory if any special terms 
+    // are to be written for the current timestep (even if most printing is only 
+    // done at the start of the next timestep
+    _print_special_timestep(sim);  
+
+    if (m_every_dat) {
+      _print_dihangle_trans(conf, topo, m_special_traj);
+      m_special_traj.flush();
+    }
+    
+    // WARNING: with polarization it seems like _print_dipole is using 
+    // positions and cos-displacement that don't belong to the same configuration
+    // this should be looked into -- MariaP 16/05/12
+    if (m_every_dipole && (sim.steps() % m_every_dipole) == 0) {
+      SPLIT_BOUNDARY(_print_dipole, sim, topo, conf, m_special_traj);
+      m_special_traj.flush();
+    }
+
+    if (m_every_current && (sim.steps() % m_every_current) == 0) {
+      _print_current(sim, topo, conf, m_special_traj);
+      m_special_traj.flush();
+    }    
+    // end of special trajectory printing statements
     
     if (m_every_energy && (((sim.steps() - 1) % m_every_energy) == 0 || minimum_found)) {
       if (sim.steps()) {
@@ -558,17 +516,6 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
     if (sim.param().bsleus.bsleus != simulation::bsleus_off){
       _print_bsleusmem(conf, m_final_conf);
       _print_bsleuspos(conf, m_final_conf);
-
-      if ((sim.param().bsleus.bsleus == simulation::bsleus_on) &&
-              m_every_bsleus && (sim.steps() % m_every_bsleus) == 0) {
-        //if (!special_timestep_printed) {
-          _print_timestep(sim, m_special_traj);
-          //special_timestep_printed = true;
-        //}
-        _print_bsleusmem(conf, m_special_traj);
-        _print_bsleus(conf, m_special_traj);
-        m_special_traj.flush();
-      }
     }
 
     if (sim.param().orderparamrest.orderparamrest == simulation::oparam_restr_av ||
@@ -625,24 +572,6 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       _print_old_timestep(sim, m_free_energy_traj);
       _print_free_energyred(conf, topo, m_free_energy_traj);
     }
-   
-    if (m_every_xray && ((sim.steps() - 1) % m_every_xray) == 0) {    
-      _print_old_timestep(sim, m_special_traj);       
-      _print_xray_rvalue(sim.param(), conf, m_special_traj);
-      _print_xray_umbrellaweightthresholds(sim.param(), topo, m_special_traj);
-      _print_xray_bfactors(sim.param(), conf, m_special_traj);
-    }
- 
-    if (m_every_disres && ((sim.steps() - 1) % m_every_disres) == 0) {   
-      _print_old_timestep(sim, m_special_traj);
-      _print_distance_restraints(conf, topo, m_special_traj);
-    }
-    
-    if (m_every_disfieldres && ((sim.steps() - 1) % m_every_disfieldres) == 0) {    
-      _print_old_timestep(sim, m_special_traj);
-      _print_disfield_restraints(conf, topo, m_special_traj);
-    }
-
     if (m_every_blockaverage && ((sim.steps() - 1) % m_every_blockaverage) == 0) {
 
       if (m_write_blockaverage_energy) {
@@ -662,6 +591,76 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       }
       conf.current().averages.block().zero();
     }
+   
+    // the last step of special terms which are printed after the md sequence
+    // still has to be written to the special trajectory
+    // the timestep has already been printed
+ 
+    if (m_every_disres && ((sim.steps() - 1) % m_every_disres) == 0) {   
+      _print_distance_restraints(conf, topo, m_special_traj);
+    }
+    
+    if (m_every_disfieldres && ((sim.steps() - 1) % m_every_disfieldres) == 0) {    
+      _print_disfield_restraints(conf, topo, m_special_traj);
+    }
+    
+    if (m_every_jvalue && ((sim.steps() - 1) % m_every_jvalue) == 0) {    
+      _print_jvalue(sim.param(), conf, topo, m_special_traj, true);
+    }
+    
+    if (m_every_xray && ((sim.steps() - 1) % m_every_xray) == 0) {    
+      _print_xray_rvalue(sim.param(), conf, m_special_traj);
+      _print_xray_umbrellaweightthresholds(sim.param(), topo, m_special_traj);
+      _print_xray_bfactors(sim.param(), conf, m_special_traj);
+    }
+
+    if (m_every_oparam &&  ((sim.steps()-1) % m_every_oparam) == 0) {
+      _print_order_parameter_restraints(conf, topo, m_special_traj);
+    }
+
+    if (m_every_rdc && ((sim.steps()-1) % m_every_rdc) == 0) {
+      if(sim.param().rdc.mode != simulation::rdc_restr_off) {
+        io::Out_Configuration::_print_rdc_values(sim.param(), conf, topo, m_special_traj, /*formatted*/ true);
+      }
+      if(sim.param().rdc.mode == simulation::rdc_restr_av ||
+         sim.param().rdc.mode == simulation::rdc_restr_av_weighted ||
+         sim.param().rdc.mode == simulation::rdc_restr_biq ||
+         sim.param().rdc.mode == simulation::rdc_restr_biq_weighted) {
+        io::Out_Configuration::_print_rdc_averages(sim.param(), conf, topo, m_special_traj, /*formatted*/ true);
+      }
+      if(sim.param().rdc.mode != simulation::rdc_restr_off) {
+        io::Out_Configuration::_print_rdc_representation(sim.param(), conf, topo, m_special_traj, /*formatted*/ true);
+      }
+      if (sim.param().rdc.method == simulation::rdc_sd) {
+        io::Out_Configuration::_print_rdc_stochastic_integrals(sim.param(), conf, topo, m_special_traj, /*formatted*/ true);
+      }
+    }
+
+    if (m_every_adde  && ((sim.steps()-1) % m_every_adde) == 0) {
+      _print_adde(sim, topo, conf, m_special_traj);
+    }
+    
+    if (m_every_nemd && ((sim.steps()-1) % m_every_nemd) == 0) {
+      _print_nemd(sim, topo, conf, m_special_traj);
+    }
+    
+    if (m_every_leus && ((sim.steps() - 1) % m_every_leus) == 0) {
+      _print_umbrellas(conf, m_special_traj);
+    }
+
+    if ((sim.param().bsleus.bsleus == simulation::bsleus_on) &&
+              m_every_bsleus && ((sim.steps() - 1) % m_every_bsleus) == 0) {
+        _print_bsleusmem(conf, m_special_traj);
+        _print_bsleus(conf, m_special_traj);
+    }
+    
+    if (m_every_cos_pos && ((sim.steps() - 1) % m_every_cos_pos) == 0) {
+      _print_cos_position(conf, topo, m_special_traj);
+    }
+    
+    
+    //end of special traj printing
+
 
     if (conf.special().shake_failure_occurred) {
       _print_shake_failure(conf, topo, m_final_conf);
@@ -824,6 +823,25 @@ void io::Out_Configuration
           << std::setw(m_width - 1) << sim.time() - sim.time_step_size()
           << "\nEND\n";
 
+}
+
+void io::Out_Configuration
+::_print_special_timestep(simulation::Simulation const &sim) {
+   if (m_write_special  && ( (m_every_cos_pos && ((sim.steps() % m_every_cos_pos) == 0)) ||
+                             (m_every_jvalue && ((sim.steps() % m_every_jvalue) == 0)) ||
+                             (m_every_xray && ((sim.steps() % m_every_xray) == 0)) ||
+                             (m_every_disres && ((sim.steps() % m_every_disres) == 0)) ||
+                             (m_every_disfieldres && ((sim.steps() % m_every_disfieldres) == 0)) ||
+                             (m_every_dat && ((sim.steps() % m_every_dat) == 0)) ||
+                             (m_every_leus && ((sim.steps() % m_every_leus) == 0)) ||
+                             (m_every_bsleus && ((sim.steps() % m_every_bsleus) == 0)) ||
+                             (m_every_dipole && ((sim.steps() % m_every_dipole) == 0)) ||
+                             (m_every_current && ((sim.steps() % m_every_current) == 0)) ||
+                             (m_every_adde && ((sim.steps() % m_every_adde) == 0)) ||
+                             (m_every_nemd && ((sim.steps() % m_every_nemd) == 0)) ||
+                             (m_every_oparam && ((sim.steps() % m_every_oparam) == 0)) ||
+                             (m_every_rdc && ((sim.steps() % m_every_rdc) == 0)) ))
+        _print_timestep(sim, m_special_traj);
 }
 
 template<math::boundary_enum b>
@@ -1034,7 +1052,7 @@ void _print_g96_positionred_bound(configuration::Configuration const &conf,
   math::VArray pos = conf.current().pos;
 
   math::Vec v, v_box, trans, r;
-  //matrix to rotate back into orignial Cartesian Coordinat system
+  //matrix to rotate back into original Cartesian Coordinate system
   math::Matrixl Rmat(math::rmat(conf.current().phi,
           conf.current().theta, conf.current().psi));
 
@@ -1125,7 +1143,7 @@ _print_positionred_bound(configuration::Configuration const &conf,
 
   math::VArray const &pos = conf.current().pos;
   math::Vec v;
-  //matrix to rotate back into orignial Cartesian Coordinat system
+  //matrix to rotate back into original Cartesian Coordinate system
   math::Matrixl Rmat(math::rmat(conf.current().phi,
           conf.current().theta, conf.current().psi));
 
@@ -2721,11 +2739,11 @@ void io::Out_Configuration::_print_dihangle_trans(
       atom_k = conf.special().dihangle_trans.k[i];
       atom_l = conf.special().dihangle_trans.l[i];
       os << i << std::setw(14) << conf.special().dihangle_trans.resid[i] + 1
-         << std::setw(4) << topo.residue_names()[topo.solute().atom(atom_i).residue_nr]
+         << std::setw(5) << topo.residue_names()[topo.solute().atom(atom_i).residue_nr]
          << std::setw(4) << topo.solute().atom(atom_i).name << " - "
          << topo.solute().atom(atom_j).name << " - "
          << topo.solute().atom(atom_k).name << " - " << topo.solute().atom(atom_l).name
-         << std::setw(4) << atom_i + 1 << " - " << atom_j + 1 << " - "
+         << std::setw(5) << atom_i + 1 << " - " << atom_j + 1 << " - "
          << atom_k + 1 << " - " << atom_l + 1
          << std::setw(m_width) << 180.0 * conf.special().dihangle_trans.old_minimum[i] / math::Pi << " -> "
          << 180.0 * conf.special().dihangle_trans.dihedral_angle_minimum[i] / math::Pi

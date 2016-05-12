@@ -54,7 +54,7 @@
  * - @ref  bsleusparam
  * - @ref  electric
  * - @ref  sasa
- * - @ref  symref
+ * - @ref  symres
  * - @ref  nemd
  * - @ref  multigradient
  * - @ref  addecouple

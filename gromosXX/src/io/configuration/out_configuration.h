@@ -175,6 +175,11 @@ namespace io {
             std::ostream &os) {
       _print_timestep(sim, os);
     }
+    
+    /**
+     * print timestep to special traj if any special terms are to be written
+     */
+    void _print_special_timestep(simulation::Simulation const &sim);
 
     // make them available for scripting!
     void _print_title(std::string title, std::string name,
@@ -431,6 +436,12 @@ namespace io {
     int m_every_energy;
     int m_every_free_energy;
     int m_every_blockaverage;
+    
+    
+    /**
+     * true if a special trajectory has to be written
+     */
+    bool m_write_special;
     int m_every_cos_pos;
     int m_every_jvalue;
     int m_every_xray;

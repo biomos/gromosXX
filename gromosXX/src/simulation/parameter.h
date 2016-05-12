@@ -2051,11 +2051,6 @@ namespace simulation
        */
       bool perturbation;
       /**
-       * will be set to true if any perturbed parameter
-       * is read in read_special  or read_topology
-       */
-      bool perturbed_par;
-      /**
        * read initial lambda from configuration
        */
       bool read_initial;
@@ -2087,6 +2082,11 @@ namespace simulation
        * soft crf interaction
        */
       double soft_crf;
+      /**
+       * will be set to true if any perturbed parameter
+       * is read in read_special  or read_topology
+       */
+      bool perturbed_par;
       
     } /** Perturbation parameters */ perturbation;
 
