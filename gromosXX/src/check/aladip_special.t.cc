@@ -49,7 +49,7 @@ void hard_coded_values(std::map<std::string, double> & m){
   m["DistanceRestraint"] = 257.189539;
   m["PerturbedDistanceRestraint"] = 195.899012;
   m["DihedralRestraint"] = 2127.910749;
-  m["PerturbedDihedralRestraint"] = 279.207857;
+  m["PerturbedDihedralRestraint"] = 399.820792;
   m["XrayRestraint"] = 5.9411e+03;
   m["Local Elevation"] = 3.5284e+01;
   m["OrderParameterRestraint"] = 3.316416e-02;
