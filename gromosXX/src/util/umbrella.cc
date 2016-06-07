@@ -249,7 +249,7 @@ void util::Umbrella::transform_units() {
         conversion_factor_grid = math::Pi * 2.0 / num_grid_points[i];
         break;
       default:
-        conversion_factor_grid = (grid_max[i] - grid_min[i])/num_grid_points[i];
+        conversion_factor_grid = (grid_max[i] - grid_min[i])/(num_grid_points[i]-1.0);
         break;
     }
     cutoff_rel[i] = conversion_factor_grid * cutoff[i];
@@ -259,7 +259,7 @@ void util::Umbrella::transform_units() {
 
     // check for weird periodicity settings
     if (grid_max_rel[i] != grid_min_rel[i])
-      grid_spacing_rel[i] = num_grid_points[i] / (grid_max_rel[i] - grid_min_rel[i]);
+      grid_spacing_rel[i] = (num_grid_points[i]-1.0) / (grid_max_rel[i] - grid_min_rel[i]);
     else {
       switch(variable_type[i]) {
         case util::Umbrella::vt_dihedral :

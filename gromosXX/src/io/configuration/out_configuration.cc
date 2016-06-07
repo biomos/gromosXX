@@ -23,6 +23,7 @@
 #include <util/template_split.h>
 #include <util/debug.h>
 #include <limits>
+#include <util/le_coordinate.h>
 #include <util/umbrella_weight.h>
 #include <util/bs_potentials.h>
 
@@ -3127,6 +3128,23 @@ _print_umbrellas(configuration::Configuration const & conf, std::ostream & os) {
         // here we have to convert to fortran and add 1 because the grid
         // goes form 1 to NDIM in the output format
         os << std::setw(10) << conf_it->first.pos[j]+1;
+      }
+      os << "\n";
+    }
+  }
+  os << "END\n";
+  os << "LEUSPOS\n# NUMUMBRELLAS\n"
+     << umb.size()
+     << "\n";
+  for(unsigned int i = 0; i < umb.size(); ++i) {
+    os << "# NLEPID NDIM\n";
+    os << std::setw(10) << umb[i].id << std::setw(10) << umb[i].dim() << "\n";
+    os << "# POS(1..NDIM)\n";
+    std::vector<util::LE_Coordinate*>::const_iterator coord_it =
+    umb[i].coordinates.begin(), coord_to = umb[i].coordinates.end();
+    for(; coord_it != coord_to; ++coord_it) {
+      for(unsigned int j = 0; j < umb[i].dim(); j++) {
+        os << std::setw(10) << (*coord_it)->get_value(umb[i].grid_min[j], umb[i].grid_max[j]);
       }
       os << "\n";
     }

@@ -145,7 +145,7 @@ int interaction::Local_Elevation_Interaction::init(topology::Topology &topo,
 
   if (!quiet) {
     os << "LOCALELEV\n"
-            << "Local-elevation umbrella samping is on.\n" 
+            << "Local-elevation umbrella sampling is on.\n" 
             << "Number of umbrellas: " << conf.special().umbrellas.size() << "\n\n";
     std::vector<util::Umbrella>::const_iterator umb_it = conf.special().umbrellas.begin(),
             umb_to = conf.special().umbrellas.end();
