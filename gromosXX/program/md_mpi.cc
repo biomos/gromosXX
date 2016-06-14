@@ -222,13 +222,12 @@ int main(int argc, char *argv[]){
         std::cout << "Telling slaves to quit." << std::endl;
         MPI::COMM_WORLD.Bcast(&next_step, 1, MPI::INT, 0);
 
-	// try to save the final structures...
-	break;
+        // try to save the final structures...
+        break;
       }
 
       // tell the slaves to continue
       MPI::COMM_WORLD.Bcast(&next_step, 1, MPI::INT, 0);
-      
       traj.print(topo, conf, sim);
       
       ++sim.steps();
@@ -276,8 +275,11 @@ int main(int argc, char *argv[]){
     const time_t time_now = time_t(util::now());
     std::cout << ctime(&time_now) << "\n\n";
     
-    if (error)
+    if (error) {
       std::cout << "\nErrors encountered during run - check above!\n" << std::endl;
+      // to make sure all slaves are stopped as well just abort here--MariaP 20/5/2016
+      MPI_Abort(MPI_COMM_WORLD,error);
+    }
     else if(err_msg > io::message::notice){
       std::cout << "\n" GROMOSXX " finished. "
 		<< "Check the messages for possible problems during the run."
@@ -403,7 +405,7 @@ int main(int argc, char *argv[]){
       if (do_shake && (error = shake->apply(topo, conf, sim)) != 0) {
         std::cout << "MPI slave " << rank << ": error in Shake algorithm!\n" << std::endl;
       }
-      
+            
       // if stochastic dynamics simulation, then expect second call to SHAKE
       if (do_shake && do_shake_twice && (error = shake->apply(topo, conf, sim)) != 0) {
 	std::cout << "MPI slave " << rank << ": error in Shake algorithm on second call!\n" << std::endl;
