@@ -6,7 +6,7 @@
 
 /**
  * Dihedral Constraints
- * 
+ *
  * see: Sampling of rare events using hidden restraints
  * in preparation for: Journal of Physical Chemistry
  * Markus Christen, Anna-Pitschna E. Kunz and
@@ -15,6 +15,8 @@
  * Appendix
  *
  */
+#ifndef DIHEDRAL_CONSTRAINT_CC
+#define DIHEDRAL_CONSTRAINT_CC
 template<math::boundary_enum B, math::virial_enum V>
 int algorithm::Shake::dih_constr_iteration
 (
@@ -34,19 +36,19 @@ int algorithm::Shake::dih_constr_iteration
   math::VArray &pos   = conf.current().pos;
   math::VArray &ref   = conf.old().pos;
 
-  std::vector<topology::dihedral_restraint_struct>::const_iterator 
+  std::vector<topology::dihedral_restraint_struct>::const_iterator
     it = topo.dihedral_restraints().begin(),
     to = topo.dihedral_restraints().end();
 
   for( ; it != to; ++it){
-	
+
     // check whether we can skip this constraint
     if (skip_now[it->i] && skip_now[it->j] &&
 	skip_now[it->k] && skip_now[it->l]) continue;
 
     // first equation in Dihedral-angle constraints (Appendix)
     // is number 36.
-    
+
     // calculate dihedral angle
     DEBUG(9, "dihedral angle " << it->i << "-" << it->j << "-" << it->k << "-" << it->l);
 
@@ -71,24 +73,24 @@ int algorithm::Shake::dih_constr_iteration
       phi += 2 * math::Pi;
     while(phi > it->phi + math::Pi)
       phi -= 2 * math::Pi;
-      
+
     // decide if constraint is fulfilled using phi
     // and not cos(phi)
     // and a relatvie criterion is not what we want here
 
     const double diff = phi - it->phi;
-    DEBUG(8, "phi=" << 180 * phi / math::Pi 
+    DEBUG(8, "phi=" << 180 * phi / math::Pi
 	  << "\tphi0=" << 180 * it->phi / math::Pi);
-    
+
     if(fabs(diff) >= tolerance){
       // we have to shake
       DEBUG(10, "shaking");
-      
+
       math::Vec ref12, ref32, ref34;
       periodicity.nearest_image(ref(it->i), ref(it->j), ref12);
       periodicity.nearest_image(ref(it->k), ref(it->j), ref32);
       periodicity.nearest_image(ref(it->k), ref(it->l), ref34);
-      
+
       // eq 37
       const math::Vec ref52 = math::cross(ref12, ref32);
       const double dref52 = math::abs(ref52);
@@ -99,10 +101,10 @@ int algorithm::Shake::dih_constr_iteration
       // eq 45
       const double dref32 = math::abs(ref32);
 
-      const math::Vec a1 = 
+      const math::Vec a1 =
 	dref32/(dref52 * dref52) * ref52;
 
-      const math::Vec a2 = 
+      const math::Vec a2 =
 	(math::dot(ref12, ref32) / (dref32 * dref32) - 1) *
 	dref32 / (dref52 * dref52) * ref52 +
 	math::dot(ref34, ref32) / (dref32 * dref32) *
@@ -113,7 +115,7 @@ int algorithm::Shake::dih_constr_iteration
 	   dref32 / (dref63 * dref63) * ref63 +
 	   math::dot(ref12, ref32) / (dref32 * dref32) *
 	   dref32 / (dref52 * dref52) * ref52);
-      
+
       const math::Vec a4 =
 	- dref32 / (dref63 * dref63) * ref63;
 
@@ -122,23 +124,23 @@ int algorithm::Shake::dih_constr_iteration
       const double m3 = topo.mass(it->k);
       const double m4 = topo.mass(it->l);
 
-      // eq 50, 51      
+      // eq 50, 51
       const math::Vec b123 =
 	math::cross(r12, a3 / m3 - a2 / m2) -
 	math::cross(r32, a1 / m1 - a2 / m2);
-      
+
       // eq 52, 53
       const math::Vec b234 =
 	math::cross(r32, a3 / m3 - a4 / m4) -
 	math::cross(r34, a3 / m3 - a2 / m2);
-      
+
       // eq 54, 55
       const double c1234 =
 	math::dot(
 		  math::cross(r12, r32),
 		  math::cross(r32, r34)
 		  );
-      
+
       const double d1234 =
 	math::dot(
 		  math::cross(r12, r32),
@@ -152,20 +154,20 @@ int algorithm::Shake::dih_constr_iteration
       // Finally, eq 60
       const double dt = sim.time_step_size();
       const double dt2 = dt * dt;
-      
+
       //////////////////////////////////////////////////
       // reference phi!
       //const double sin_2phi = sin(2 * it->phi);
       const double cos_phi2 = cos(it->phi) * cos(it->phi);
-      
-      const double nominator = 
+
+      const double nominator =
 	cos_phi2 *
 	math::dot(math::cross(r12, r32), math::cross(r12, r32)) *
 	math::dot(math::cross(r32, r34), math::cross(r32, r34)) -
 	c1234 * c1234;
-      
+
       const double denominator =
-	2 * 
+	2 *
 	(
 	 c1234 * d1234 - cos_phi2 *
 	 (
@@ -183,13 +185,13 @@ int algorithm::Shake::dih_constr_iteration
       pos(it->j) += l_sin_2phi_dt2 * a2 / m2;
       pos(it->k) += l_sin_2phi_dt2 * a3 / m3;
       pos(it->l) += l_sin_2phi_dt2 * a4 / m4;
-      
+
       if (V == math::atomic_virial){
 	io::messages.add("atomic virial not implemented. copy from dihedral angle interaction!",
 			 "Dihedral Constraints",
 			 io::message::error);
       }
-      
+
       convergence = false;
 
       // consider atoms in the next step
@@ -197,9 +199,10 @@ int algorithm::Shake::dih_constr_iteration
       skip_next[it->j] = false;
       skip_next[it->k] = false;
       skip_next[it->l] = false;
-      
+
     } // we have to shake
   } // constraints
-      
+
   return 0;
-}    
+}
+#endif //DIHEDRAL_CONSTRAINT_CC
