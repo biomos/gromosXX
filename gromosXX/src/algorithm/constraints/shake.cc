@@ -91,11 +91,6 @@ int algorithm::Shake::apply(topology::Topology & topo,
             topo, conf, sim,
             m_max_iterations, error);
 
-#ifdef XXMPI
-    if (sim.mpi && sim.param().system.nsm &&
-      sim.param().constraint.solvent.algorithm == simulation::constr_shake)
-         MPI::COMM_WORLD.Bcast(&error, 1, MPI::INT, 0);
-#endif
     if (error) {
       std::cout << "SHAKE: exiting with error condition: E_SHAKE_FAILURE_SOLUTE "
               << "at step " << sim.steps() << std::endl;
@@ -104,13 +99,6 @@ int algorithm::Shake::apply(topology::Topology & topo,
       return E_SHAKE_FAILURE_SOLUTE;
     }
   }
-#ifdef XXMPI
-  //receive solute shake error
-  if (sim.mpi && m_rank) {
-      MPI::COMM_WORLD.Bcast(&error, 1, MPI::INT, 0);
-      if (error) return E_SHAKE_FAILURE_SOLUTE;
-  }
-#endif
 
   if (!error && sim.param().system.nsm &&
           sim.param().constraint.solvent.algorithm == simulation::constr_shake) {
