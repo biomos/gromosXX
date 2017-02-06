@@ -1944,7 +1944,8 @@ namespace simulation
           r_l(0),
           write(0),
           printgrid(false),
-	  update(1)
+	  update(1),
+          protect(0)
       {
       }
       
@@ -1984,6 +1985,11 @@ namespace simulation
        * update frequency
        */
       int update;
+      /**
+       * radius around the zero-grid-point which is protected
+       * from being flagged as protein
+       */
+      double protect;
     }/** Distancefield restraints parameters */ distancefield;
 
     /**

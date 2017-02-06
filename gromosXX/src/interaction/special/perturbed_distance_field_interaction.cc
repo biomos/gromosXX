@@ -304,8 +304,9 @@ static void _update_grid
 
   //std::cerr << "DISTANCEFIELD UPDATE at " << sim.steps() << " with lambda value " << topo.lambda() << std::endl;
 
-  // check if the start pos is in the protein
-  for(int a =0; a <= topo.perturbed_disfield_restraints().proteinatoms; a++){
+  // if protection radius is 0, check if the start pos is in the protein
+  if (sim.param().distancefield.protect==0) {
+   for(int a =0; a <= topo.perturbed_disfield_restraints().proteinatoms; a++){
     math::Vec ppos = conf.current().pos(a);
     periodicity.put_into_box(ppos);
     math::Vec d = startpos - ppos;
@@ -334,12 +335,14 @@ static void _update_grid
         return;
       }
     }
+   }
   }
 
 
   DEBUG(10, "DF UPDATE, start: " << start << " at " << dist_to_i);
   // reinitialize all points to a high value (4*(box+box+box))
   // and flag all gridpoints that are within the protein
+  // except the ones that are within the protection radius
   for(unsigned int j=0; j < distance.size(); j++)
     distance[j] = 4*(box(0,0)+box(1,1)+box(2,2));
 
@@ -359,7 +362,8 @@ static void _update_grid
         for(int iz=nz_min; iz < nz_max; iz++){
           math::Vec gpos(ix*grid - box(0,0)/2, iy*grid - box(1,1)/2, iz*grid - box(2,2)/2);
           math::Vec d = gpos - ppos;
-          if(math::abs(d) < sim.param().distancefield.proteincutoff){
+	      math::Vec e = startpos - gpos;
+          if(math::abs(d) < sim.param().distancefield.proteincutoff && math::abs(e) > sim.param().distancefield.protect){
             int j=int(ix + ngrid[0]*iy + ngrid[0]*ngrid[1]*iz);
             protein.insert(j);
           }
