@@ -211,7 +211,33 @@ int main(int argc, char *argv[]){
 	  io::print_ENERGY(traj.output(), conf.old().energies, 
 			   topo.energy_groups(),
 			   "MINIMUM ENERGY", "EMIN_");
-	  
+
+      // write final coordinates and then do shake once more
+      // because the slaves will and otherwise get stuck
+      std::cout << "writing final configuration" << std::endl;
+      traj.write(conf, topo, sim, io::final);
+      traj.print_final(topo, conf, sim);
+
+      bool do_shake = sim.param().system.nsm &&
+        sim.param().constraint.solvent.algorithm == simulation::constr_shake;
+
+      algorithm::Shake * shake =
+        dynamic_cast<algorithm::Shake *>(md.algorithm("Shake"));
+      if (do_shake && shake == NULL) {
+        std::cerr << "MPI master: could not get Shake algorithm from MD sequence."
+                << "\n\t(internal error)"
+                << std::endl;
+        MPI::Finalize();
+        return 1;
+      }
+      if (do_shake && (error = shake->apply(topo, conf, sim)) != 0) {
+        std::cout << "MPI master " << rank
+        << ": error in Shake algorithm after energy minimum reached?!\n" << std::endl;
+      }
+
+      // signal that energy minimum is reached: exit, but without error message
+      next_step = 2;
+	  MPI::COMM_WORLD.Bcast(&next_step, 1, MPI::INT, 0);
 	  error = 0; // clear error condition
 	  break;
 	}
@@ -257,10 +283,12 @@ int main(int argc, char *argv[]){
       }
     }
     
-    std::cout << "writing final configuration" << std::endl;
-    
-    traj.write(conf, topo, sim, io::final);
-    traj.print_final(topo, conf, sim);
+    // if next_step==2, we are at an energy minimum and wrote the coordinates already
+    if (next_step != 2) {
+      std::cout << "writing final configuration" << std::endl;
+      traj.write(conf, topo, sim, io::final);
+      traj.print_final(topo, conf, sim);
+    }
 
     std::cout << "\nMESSAGES FROM SIMULATION\n";
     io::message::severity_enum err_msg = io::messages.display(std::cout);
@@ -418,8 +446,13 @@ int main(int argc, char *argv[]){
 
       MPI::COMM_WORLD.Bcast(&next_step, 1, MPI::INT, 0);
 
-      if (!next_step) {
-        (*os) << "There was an error in the master. Check output file for details." << std::endl
+      if (next_step == 2) {
+        (*os) << "Message from master: Steepest descent: minimum reached." << std::endl;
+        error = 0;
+        break;
+      }
+      else if (!next_step) {
+        (*os) << "There was an error in the master. Check output file for details."
               << "Exiting from MD main loop." << std::endl;
         error = 1;
         break;
