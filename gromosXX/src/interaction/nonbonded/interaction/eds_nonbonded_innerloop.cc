@@ -548,7 +548,7 @@ t_interaction_spec, t_perturbation_details>
 
   double alpha_crf = mit->second.CRF_softcore();
 
-  std::set<int>::const_iterator it, to;
+  topology::excl_cont_t::value_type::const_iterator it, to;
 
   const int i = mit->second.sequence_number();
   // self term has already been calculated for state A, 

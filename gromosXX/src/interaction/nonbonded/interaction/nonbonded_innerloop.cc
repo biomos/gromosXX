@@ -1261,7 +1261,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
   math::VArray &pos = conf.current().pos;
   math::VArray &force = storage.force;
 
-  std::set<int>::const_iterator it, to;
+  topology::excl_cont_t::value_type::const_iterator it, to;
   it = topo.exclusion(i).begin();
   to = topo.exclusion(i).end();
 

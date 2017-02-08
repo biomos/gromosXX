@@ -635,20 +635,6 @@ bool interaction::Standard_Pairlist_Algorithm
 		       unsigned int i, unsigned int j)
 {
   assert(i<j);
-  
-  std::set<int>::reverse_iterator
-    e = topo.all_exclusion(i).rbegin(),
-    e_to = topo.all_exclusion(i).rend();
-
-  for( ; e != e_to; ++e){
-    if (j > unsigned(*e)) break;
-    if (j == unsigned(*e)){
-      DEBUG(11, "\texcluded");
-      return true;
-    }
-      
-  }
-  DEBUG(12, "\tnot excluded");
-  return false;
+  return topo.all_exclusion(i).is_excluded(j);
 }
 

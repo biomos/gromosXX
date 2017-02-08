@@ -5,6 +5,7 @@
 
 #ifndef INCLUDED_PERTURBED_ATOM_H
 #define INCLUDED_PERTURBED_ATOM_H
+#include "exclusions.h"
 
 namespace topology
 {
@@ -115,11 +116,11 @@ namespace topology
     double CRF_softcore()const;
     void CRF_softcore(double);
     
-    std::set<int> & exclusion();
-    std::set<int> const & exclusion()const;
+    topology::excl_cont_t::value_type & exclusion();
+    topology::excl_cont_t::value_type const & exclusion()const;
     
-    std::set<int> & one_four_pair();
-    std::set<int> const & one_four_pair()const;
+    topology::excl_cont_t::value_type & one_four_pair();
+    topology::excl_cont_t::value_type const & one_four_pair()const;
     /**
      * @}
      */
@@ -138,8 +139,8 @@ namespace topology
     double m_B_damping_level;
     double m_LJ_softcore;
     double m_crf_softcore;
-    std::set<int> m_exclusion;
-    std::set<int> m_one_four_pair;
+    topology::excl_cont_t::value_type m_exclusion;
+    topology::excl_cont_t::value_type m_one_four_pair;
   };
   
 } // topology
@@ -235,21 +236,21 @@ inline void topology::Perturbed_Atom::LJ_softcore(double a){
 inline void topology::Perturbed_Atom::CRF_softcore(double a){
   m_crf_softcore = a;
 }
-inline std::set<int> & topology::Perturbed_Atom::exclusion()
+inline topology::excl_cont_t::value_type & topology::Perturbed_Atom::exclusion()
 {
   return m_exclusion;
 }
-inline std::set<int> const & topology::Perturbed_Atom::exclusion()const
+inline topology::excl_cont_t::value_type const & topology::Perturbed_Atom::exclusion()const
 {
   return m_exclusion;
 }
 
-inline std::set<int> & topology::Perturbed_Atom::one_four_pair()
+inline topology::excl_cont_t::value_type & topology::Perturbed_Atom::one_four_pair()
 {
   return m_one_four_pair;
 }
 
-inline std::set<int> const & topology::Perturbed_Atom::one_four_pair()const
+inline topology::excl_cont_t::value_type const & topology::Perturbed_Atom::one_four_pair()const
 {
   return m_one_four_pair;
 }
@@ -319,11 +320,11 @@ namespace topology
     double CRF_softcore()const;
     void CRF_softcore(double);
     
-    std::set<int> & exclusion();
-    std::set<int> const & exclusion()const;
+    topology::excl_cont_t::value_type & exclusion();
+    topology::excl_cont_t::value_type const & exclusion()const;
     
-    std::set<int> & one_four_pair();
-    std::set<int> const & one_four_pair()const;
+    topology::excl_cont_t::value_type & one_four_pair();
+    topology::excl_cont_t::value_type const & one_four_pair()const;
     
     /**
      * @}
@@ -335,8 +336,8 @@ namespace topology
     std::vector<double> m_M_charge;
     double m_LJ_softcore;
     double m_crf_softcore;
-    std::set<int> m_exclusion;
-    std::set<int> m_one_four_pair;
+    topology::excl_cont_t::value_type m_exclusion;
+    topology::excl_cont_t::value_type m_one_four_pair;
   };
   
 } // topology
@@ -356,10 +357,10 @@ inline double topology::EDS_Perturbed_Atom::LJ_softcore()const{
 inline double topology::EDS_Perturbed_Atom::CRF_softcore()const{
   return m_crf_softcore; 
 }
-inline std::set<int> const & topology::EDS_Perturbed_Atom::exclusion()const{
+inline topology::excl_cont_t::value_type const & topology::EDS_Perturbed_Atom::exclusion()const{
   return m_exclusion;
 }
-inline std::set<int> const & topology::EDS_Perturbed_Atom::one_four_pair()const{
+inline topology::excl_cont_t::value_type const & topology::EDS_Perturbed_Atom::one_four_pair()const{
   return m_one_four_pair;
 }
 
@@ -378,11 +379,11 @@ inline void topology::EDS_Perturbed_Atom::LJ_softcore(double a){
 inline void topology::EDS_Perturbed_Atom::CRF_softcore(double a){
   m_crf_softcore = a;
 }
-inline std::set<int> & topology::EDS_Perturbed_Atom::exclusion()
+inline topology::excl_cont_t::value_type & topology::EDS_Perturbed_Atom::exclusion()
 {
   return m_exclusion;
 }
-inline std::set<int> & topology::EDS_Perturbed_Atom::one_four_pair()
+inline topology::excl_cont_t::value_type & topology::EDS_Perturbed_Atom::one_four_pair()
 {
   return m_one_four_pair;
 }

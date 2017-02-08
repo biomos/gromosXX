@@ -1151,21 +1151,7 @@ inline void interaction::Grid_Cell_Pairlist::insert_pair(
 inline bool interaction::Grid_Cell_Pairlist::excluded_solute_pair(topology::Topology & topo,
 		       unsigned int i, unsigned int j)
 {
-  assert(i<j);
-  std::set<int>::reverse_iterator
-    e = topo.all_exclusion(i).rbegin(),
-    e_to = topo.all_exclusion(i).rend();
-
-  for( ; e != e_to; ++e){
-    if (j > unsigned(*e)) break;
-    if (j == unsigned(*e)){
-      DEBUG(15, "\texcluded");
-      return true;
-    }
-
-  }
-  DEBUG(15, "\tnot excluded");
-  return false;
+  return topo.all_exclusion(i).is_excluded(j);
 }
 
 /**

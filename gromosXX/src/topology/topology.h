@@ -12,6 +12,7 @@
 #include "perturbed_atom.h"
 #include "perturbed_solute.h"
 #include "sd.h"
+#include "exclusions.h"
 
 namespace simulation
 {
@@ -324,8 +325,8 @@ namespace topology
      */
     void add_solute_atom(std::string name, int residue_nr, int iac,
 			 double mass, double charge, bool chargegroup,
-			 std::set<int> exclusions,
-			 std::set<int> one_four_pairs);
+			 topology::excl_cont_t::value_type exclusions,
+			 topology::excl_cont_t::value_type one_four_pairs);
     
     /**
      * residue names.
@@ -348,7 +349,7 @@ namespace topology
     /**
      * all exclusions for atom i. Exclusions, 1,4 interactions and Lennard-Jones exceptions
      */
-    std::set<int> & all_exclusion(unsigned int const i){
+    excl_cont_t::value_type & all_exclusion(unsigned int const i){
       assert(i < m_all_exclusion.size());
       return m_all_exclusion[i];
     }
@@ -356,7 +357,7 @@ namespace topology
     /**
      * const all exclusions for atom i. Exclusions, 1,4 interactions and Lennard-Jones exceptions
      */
-    std::set<int> const & all_exclusion(unsigned int const i)const{
+    excl_cont_t::value_type const & all_exclusion(unsigned int const i)const{
       assert(i < m_all_exclusion.size());
       return m_all_exclusion[i];
     }
@@ -380,26 +381,26 @@ namespace topology
     /**
      * exclusions for atom i.
      */
-    std::set<int> & exclusion(unsigned int const i){
+		excl_cont_t::value_type & exclusion(unsigned int const i){
       assert(i < m_exclusion.size());
       return m_exclusion[i];
     }
     /**
      * exclusions
      */
-    std::vector<std::set<int> > & exclusion() {return m_exclusion;}
+    excl_cont_t & exclusion() {return m_exclusion;}
     
     /**
      * 1,4 pairs of atom i.
      */
-    std::set<int> & one_four_pair(unsigned int const i){
+    excl_cont_t::value_type & one_four_pair(unsigned int const i){
       assert(i < m_one_four_pair.size());
       return m_one_four_pair[i];
     }
     /**
      * 1,4 pairs 
      */
-    std::vector<std::set<int> > & one_four_pair(){return m_one_four_pair;}
+    excl_cont_t & one_four_pair(){return m_one_four_pair;}
     
     /**
      * chargegroup accessor.
@@ -1345,17 +1346,17 @@ namespace topology
     /**
      * the atom exclusions.
      */
-    std::vector< std::set<int> > m_exclusion;
+    excl_cont_t m_exclusion;
     
     /**
      * the atom 1-4 interactions.
      */
-    std::vector< std::set<int> > m_one_four_pair;
+    excl_cont_t m_one_four_pair;
     
     /**
      * atom exclusions and 1-4 interactions.
      */
-    std::vector< std::set<int> > m_all_exclusion;
+    excl_cont_t m_all_exclusion;
     
     /**
      * chargegroup exclusions

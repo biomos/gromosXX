@@ -13,6 +13,7 @@
 #include <io/blockinput.h>
 
 #include "in_perturbation.h"
+#include <algorithm>
 
 
 #undef MODULE
@@ -710,8 +711,7 @@ io::In_Perturbation::read(topology::Topology &topo,
           topo.perturbed_solute().atompairs().push_back(ap);
           
           // make sure it's excluded
-          if (topo.all_exclusion(ap.i).count(ap.j) != 1){
-            topo.all_exclusion(ap.i).insert(ap.j);
+          if (topo.all_exclusion(i).insert(ap.j)){
             DEBUG(7, "excluding perturbed pair " << ap.i << " and " << ap.j);
             
           }
@@ -720,15 +720,13 @@ io::In_Perturbation::read(topology::Topology &topo,
             // exclusions or 1,4 pairs...
             
             // is it in the exclusions
-            if (topo.exclusion(ap.i).count(ap.j)){
+            if (topo.exclusion(ap.i).find_and_remove(ap.j)){
               DEBUG(7, "removing perturbed pair from exclusion "
                       << ap.i << " and " << ap.j);
-              topo.exclusion(ap.i).erase(ap.j);
             }
-            if (topo.one_four_pair(ap.i).count(ap.j)){
+            if (topo.one_four_pair(ap.i).find_and_remove(ap.j)){
               DEBUG(7, "removing perturbed pair from one four "
                       << ap.i << " and " << ap.j);
-              topo.one_four_pair(ap.i).erase(ap.j);
             }
             
           }
@@ -862,14 +860,13 @@ io::In_Perturbation::read(topology::Topology &topo,
           topo.exclusion(seq).clear();
           DEBUG(10, "\treplace the exclusions to perturbation");
           
-          std::vector<std::set<int> > & ex = topo.exclusion();
+          topology::excl_cont_t & ex = topo.exclusion();
           int seq2=0;
           
-          for(std::vector<std::set<int> >::iterator eit=ex.begin(),
+          for(topology::excl_cont_t::iterator eit=ex.begin(),
                   eto=ex.end(); eit!=eto; ++eit, ++seq2){
-            if(eit->count(seq)){
+            if(eit->find_and_remove(seq)){
               atom.exclusion().insert(seq2);
-              eit->erase(seq);
             }
           }
           DEBUG(10, "\tadapted perturbed exclusions");
@@ -878,14 +875,13 @@ io::In_Perturbation::read(topology::Topology &topo,
           topo.one_four_pair(seq).clear();
           DEBUG(10, "\treplaced the 14 interactions");
           
-          std::vector<std::set<int> > & ofp = topo.one_four_pair();
+          topology::excl_cont_t & ofp = topo.one_four_pair();
           seq2=0;
           
-          for(std::vector<std::set<int> >::iterator pit=ofp.begin(),
+          for(topology::excl_cont_t::iterator pit=ofp.begin(),
                   pito= ofp.end(); pit!=pito; ++pit, ++seq2){
-            if(pit->count(seq)){
+            if(pit->find_and_remove(seq)){
               atom.one_four_pair().insert(seq2);
-              pit->erase(seq);
             }
           }
           DEBUG(10, "\tadapted 14 interactions");
@@ -1258,14 +1254,13 @@ io::In_Perturbation::read(topology::Topology &topo,
         topo.exclusion(seq).clear();
         DEBUG(10, "\treplace the exclusions to perturbation");
         
-        std::vector<std::set<int> > & ex = topo.exclusion();
+        topology::excl_cont_t & ex = topo.exclusion();
         int seq2=0;
         
-        for(std::vector<std::set<int> >::iterator eit=ex.begin(),
+        for(topology::excl_cont_t::iterator eit=ex.begin(),
                 eto=ex.end(); eit!=eto; ++eit, ++seq2){
-          if(eit->count(seq)){
+          if(eit->find_and_remove(seq)){
             atom.exclusion().insert(seq2);
-            eit->erase(seq);
           }
         }
         DEBUG(10, "\tadapted perturbed exclusions");
@@ -1274,14 +1269,13 @@ io::In_Perturbation::read(topology::Topology &topo,
         topo.one_four_pair(seq).clear();
         DEBUG(10, "\treplaced the 1,4 interactions");
         
-        std::vector<std::set<int> > & ofp = topo.one_four_pair();
+        topology::excl_cont_t & ofp = topo.one_four_pair();
         seq2=0;
         
-        for(std::vector<std::set<int> >::iterator pit=ofp.begin(),
+        for(topology::excl_cont_t::iterator pit=ofp.begin(),
                 pito= ofp.end(); pit!=pito; ++pit, ++seq2){
-          if(pit->count(seq)){
+          if(pit->find_and_remove(seq)){
             atom.one_four_pair().insert(seq2);
-            pit->erase(seq);
           }
         }
         DEBUG(10, "\tadapted 1,4 interactions");

@@ -928,7 +928,7 @@ t_interaction_spec, t_perturbation_details>
   math::Vec r;
   double e_rf, de_rf;
 
-  std::set<int>::const_iterator it, to;
+  topology::excl_cont_t::value_type::const_iterator it, to;
 
   // self term has already been calculated for state A, 
   // correct for that and 

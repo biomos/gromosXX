@@ -47,6 +47,8 @@
 #include <omp.h>
 #endif
 
+#include <algorithm>
+
 #undef MODULE
 #undef SUBMODULE
 #define MODULE interaction
@@ -382,7 +384,7 @@ void interaction::Nonbonded_Outerloop
   Nonbonded_Innerloop<t_interaction_spec> innerloop(m_param);
   innerloop.init(sim);
 
-  std::set<int>::const_iterator it, to;
+  topology::excl_cont_t::value_type::const_iterator it, to;
   unsigned int const num_solute_atoms = topo.num_solute_atoms();
 
   for (unsigned int i = rank; i < num_solute_atoms; i += size) {
@@ -481,9 +483,11 @@ void interaction::Nonbonded_Outerloop
 
           if (a1 >= a2) continue;
 
-          if (topo.exclusion(a1).find(a2) != topo.exclusion(a1).end()) continue;
+          if (std::find(topo.exclusion(a1).begin(), topo.exclusion(a1).end(), a2) 
+              != topo.exclusion(a1).end()) continue;
 
-          if (topo.one_four_pair(a1).find(a2) != topo.one_four_pair(a1).end()) {
+          if (std::find(topo.one_four_pair(a1).begin(), topo.one_four_pair(a1).end(), a2) 
+              != topo.one_four_pair(a1).end()) {
             // std::cout << "\t1,4" << std::endl;
             innerloop.one_four_interaction_innerloop(topo, conf, a1, a2, storage, periodicity);
           } else {
@@ -862,7 +866,7 @@ void interaction::Nonbonded_Outerloop
     outer index has to be integer...
    */
   std::vector<unsigned int>::const_iterator j_it, j_to;
-  std::set<int>::const_iterator ex_it, ex_to;
+  topology::excl_cont_t::value_type::const_iterator ex_it, ex_to;
 
   unsigned int size_i = unsigned(pairlist_solute.size());
   DEBUG(10, "outerloop pairlist size " << size_i);
