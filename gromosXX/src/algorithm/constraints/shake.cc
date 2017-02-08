@@ -24,6 +24,7 @@
 #include "../../util/template_split.h"
 #include "../../util/error.h"
 #include "../../util/debug.h"
+#include "../../util/undirected_graph.h"
 
 #include <limits>
 
@@ -78,12 +79,32 @@ int algorithm::Shake::apply(topology::Topology & topo,
     conf.old().constraint_force(*it) = 0.0;
   }
 
+#ifdef XXMPI
+  math::VArray & pos = conf.current().pos;
+  if (sim.mpi) {
+    // broadcast current and old coordinates and pos.
+
+    MPI::COMM_WORLD.Bcast(&pos(0)(0), pos.size() * 3, MPI::DOUBLE, 0);
+    MPI::COMM_WORLD.Bcast(&conf.old().pos(0)(0), conf.old().pos.size() * 3, MPI::DOUBLE, 0);
+    MPI::COMM_WORLD.Bcast(&conf.current().box(0)(0), 9, MPI::DOUBLE, 0);
+
+    // set virial tensor and solute coordinates of slaves to zero
+    if (m_rank) { // slave
+      conf.old().virial_tensor = 0.0;
+      conf.old().constraint_force = 0.0;
+    }
+    // set positions of constraint groups worked on by other ranks to 0
+    for(unsigned int i = 0; i < m_constraint_groups[m_rank].unaffected_indices.size(); ++i){
+      pos(m_constraint_groups[m_rank].unaffected_indices[i]) = 0;
+    }
+  }
+#endif
+
   // check whether we shake
-  if (m_rank == 0 &&
-          ((topo.solute().distance_constraints().size() &&
+  if ((topo.solute().distance_constraints().size() &&
           sim.param().constraint.solute.algorithm == simulation::constr_shake &&
           sim.param().constraint.ntc > 1) ||
-          sim.param().dihrest.dihrest == simulation::dihedral_constr)) {
+          sim.param().dihrest.dihrest == simulation::dihedral_constr) {
 
     DEBUG(8, "\twe need to shake SOLUTE");
 
@@ -115,6 +136,42 @@ int algorithm::Shake::apply(topology::Topology & topo,
       return E_SHAKE_FAILURE_SOLVENT;
     }
   }
+#ifdef XXMPI
+  if (sim.mpi) {
+    if (m_rank == 0) {
+      // Master 
+      // reduce current positions, store them in new_pos and assign them to current positions
+      math::VArray new_pos(topo.num_atoms(), math::Vec(0.0));
+      MPI::COMM_WORLD.Reduce(&pos(0)(0), &new_pos(0)(0),
+              pos.size() * 3, MPI::DOUBLE, MPI::SUM, 0);
+      pos = new_pos;
+
+      // reduce current virial tensor, store it in virial_new and reduce it to current tensor
+      math::Matrix virial_new(0.0);
+      MPI::COMM_WORLD.Reduce(&conf.old().virial_tensor(0, 0), &virial_new(0, 0),
+              9, MPI::DOUBLE, MPI::SUM, 0);
+      conf.old().virial_tensor = virial_new;
+
+      // reduce current contraint force, store it in cons_force_new and reduce
+      //it to the current constraint force
+      math::VArray cons_force_new(topo.num_atoms(), math::Vec(0.0));
+      MPI::COMM_WORLD.Reduce(&conf.old().constraint_force(0)(0), &cons_force_new(0)(0),
+              conf.old().constraint_force.size() * 3, MPI::DOUBLE, MPI::SUM, 0);
+      conf.old().constraint_force = cons_force_new;
+    } else {
+      // slave
+      // reduce pos
+      MPI::COMM_WORLD.Reduce(&pos(0)(0), NULL,
+              pos.size() * 3, MPI::DOUBLE, MPI::SUM, 0);
+      // reduce virial
+      MPI::COMM_WORLD.Reduce(&conf.old().virial_tensor(0, 0), NULL,
+              9, MPI::DOUBLE, MPI::SUM, 0);
+      // reduce constraint force
+      MPI::COMM_WORLD.Reduce(&conf.old().constraint_force(0)(0), NULL,
+              conf.old().constraint_force.size() * 3, MPI::DOUBLE, MPI::SUM, 0);
+    }
+  }
+#endif
 
   // shaken velocity:
   // stochastic dynamics, energy minimisation, analysis needs to shake without
@@ -175,8 +232,10 @@ int algorithm::Shake::init(topology::Topology & topo,
   m_size = 1;
 #endif
 
+  util::UndirectedGraph g(topo.num_solute_atoms());
+
   if (sim.param().constraint.solute.algorithm == simulation::constr_shake) {
-    // loop over the constraints to find out which atoms are constrained
+    // loop over the constraints to find which atoms are constrained
     {
       std::vector<topology::two_body_term_struct>::const_iterator
       it = topo.solute().distance_constraints().begin(),
@@ -184,6 +243,7 @@ int algorithm::Shake::init(topology::Topology & topo,
       for (; it != to; ++it) {
         constrained_atoms().insert(it->i);
         constrained_atoms().insert(it->j);
+        g.add_edge(it->i, it->j);
       }
     }
     // also add the dihedral constrained atoms
@@ -196,9 +256,69 @@ int algorithm::Shake::init(topology::Topology & topo,
         constrained_atoms().insert(it->j);
         constrained_atoms().insert(it->k);
         constrained_atoms().insert(it->l);
+        g.add_edge(it->i, it->j);
+        g.add_edge(it->k, it->j);
+        g.add_edge(it->k, it->l);
       }
     }
   }
+  // detect atoms connected by constraints
+  util::UndirectedGraph::component_cont_t component = g.connected_components();
+  // set number of constraint groups to number of MPI processes
+  m_constraint_groups.resize(m_size);
+
+  std::vector<std::set<unsigned int> > affected_indices(m_size);
+
+  const std::vector<topology::two_body_term_struct> & dist_constr = 
+  topo.solute().distance_constraints();
+  // assemble distance constraints into groups
+  for(std::vector<topology::two_body_term_struct>::const_iterator it = dist_constr.begin();
+    it != dist_constr.end(); ++it){
+	// each rank should get an equal amount of constraint groups
+	const unsigned int group_id = component[it->i] % m_size;
+    m_constraint_groups[group_id].distance_restraints.push_back(*it);
+#ifdef XXMPI
+    affected_indices[group_id].insert(it->i);
+    affected_indices[group_id].insert(it->j);
+#endif
+  }
+  if (sim.param().dihrest.dihrest == simulation::dihedral_constr) {
+	// assemble dihedral constraints into groups
+    for(std::vector<topology::dihedral_restraint_struct>::const_iterator it =
+      topo.dihedral_restraints().begin(); it != topo.dihedral_restraints().end(); ++it){
+	  const unsigned int group_id = component[it->i] % m_size;
+      m_constraint_groups[group_id].dihedral_restraints.push_back(*it);
+#ifdef XXMPI
+      affected_indices[group_id].insert(it->i);
+      affected_indices[group_id].insert(it->j);
+      affected_indices[group_id].insert(it->k);
+      affected_indices[group_id].insert(it->l);
+#endif
+    }
+  }
+
+#ifdef XXMPI
+  // set unaffected solute indices for each group
+  for (unsigned int i = 0; i < topo.num_solute_atoms(); ++i) {
+	  if(affected_indices[m_rank].find(i) == affected_indices[m_rank].end())
+		  m_constraint_groups[m_rank].unaffected_indices.push_back(i);
+  }
+  // detect unconstrained solute atoms and remove from unaffected list for master process
+  if(m_rank == 0) {
+      std::vector<unsigned int>::iterator it_end = m_constraint_groups[0].unaffected_indices.end();
+	  for (unsigned int i = 0; i < topo.num_solute_atoms(); ++i) {
+		bool is_constrained = false;
+		for(unsigned int group_id = 1; group_id < m_size; ++group_id) {
+			is_constrained |= affected_indices[group_id].find(i) != affected_indices[group_id].end();
+		}
+		if(!is_constrained) {
+          it_end = std::remove(m_constraint_groups[0].unaffected_indices.begin(),
+                      m_constraint_groups[0].unaffected_indices.end(), i);
+        }
+	  }
+      m_constraint_groups[0].unaffected_indices.erase(it_end, m_constraint_groups[0].unaffected_indices.end());
+  }
+#endif
 
   if (sim.param().constraint.solvent.algorithm == simulation::constr_shake) {
     // this means that all solvent atoms are constrained. Add the to the list
@@ -206,6 +326,7 @@ int algorithm::Shake::init(topology::Topology & topo,
       constrained_atoms().insert(i);
     }
   }
+
 
   if (sim.param().start.shake_pos) {
     if (!quiet)

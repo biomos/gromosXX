@@ -31,7 +31,8 @@ xxinclude_HEADERS = error.h\
 	umbrella.h\
 	umbrella_weight.h\
 	thread.h\
-	system_call.h
+	system_call.h\
+	undirected_graph.h
 
 noinst_LTLIBRARIES = libgroutil.la
 
@@ -60,7 +61,8 @@ libgroutil_la_SOURCES =	cycle_thread.cc\
 	umbrella.cc\
 	umbrella_weight.cc\
 	thread.cc\
-	system_call.cc
+	system_call.cc\
+	undirected_graph.cc
 
 libgroutil_la_LIBADD =
 

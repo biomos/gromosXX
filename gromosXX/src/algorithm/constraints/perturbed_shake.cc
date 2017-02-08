@@ -309,7 +309,7 @@ void algorithm::Perturbed_Shake
 
       DEBUG(7, "SHAKE: dihedral constraints iteration");
       if(dih_constr_iteration<B, V>
-	 (topo, conf, sim, dih_convergence, skip_now, skip_next, periodicity)
+	 (topo, conf, sim, dih_convergence, skip_now, skip_next,topo.dihedral_restraints(), periodicity)
 	 ){
 	io::messages.add("SHAKE error: dihedral constraints",
 			 "Shake::solute",

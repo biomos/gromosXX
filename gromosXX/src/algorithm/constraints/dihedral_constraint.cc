@@ -26,6 +26,7 @@ int algorithm::Shake::dih_constr_iteration
  bool & convergence,
  std::vector<bool> &skip_now,
  std::vector<bool> &skip_next,
+ std::vector<topology::dihedral_restraint_struct> const & dihedral_restraints,
  math::Periodicity<B> const & periodicity
  )
 {
@@ -37,8 +38,8 @@ int algorithm::Shake::dih_constr_iteration
   math::VArray &ref   = conf.old().pos;
 
   std::vector<topology::dihedral_restraint_struct>::const_iterator
-    it = topo.dihedral_restraints().begin(),
-    to = topo.dihedral_restraints().end();
+    it = dihedral_restraints.begin(),
+    to = dihedral_restraints.end();
 
   for( ; it != to; ++it){
 
