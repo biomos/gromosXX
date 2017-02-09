@@ -543,6 +543,67 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::spc_innerloop
       
 }
 
+
+template<typename t_nonbonded_spec>
+inline void 
+interaction::Nonbonded_Innerloop<t_nonbonded_spec>::spc_innerloop
+(
+  double &e_lj,
+  double &e_crf,
+  double dist6i,
+  double f[9],
+  double r2[9],
+  double r2i[9],
+  double ri[9],
+  unsigned int eps
+)
+{  
+  // O - O
+      
+  e_lj += (2.634129E-6 * dist6i - 2.617346E-3) * dist6i;
+  e_crf += 0.82 * 0.82 * 138.9354 * (ri[0] - m_crf_2cut3i[eps] * r2[0] - m_crf_cut[eps]);
+      
+  f[0] = (12 * 2.634129E-6 * dist6i - 6 * 2.617346E-3) * dist6i * r2i[0] +
+    0.82 * 0.82 * 138.9354 * (ri[0] * r2i[0] + m_crf_cut3i[eps]);  
+  
+  DEBUG(10, "e_lj: " << e_lj << " c_crf: " << e_crf << " f: " << f[0]);
+  
+  // O - H interactions...
+      
+  e_crf -= 0.82 * 0.41 * 138.9354 * (ri[1] + ri[2] + ri[3] + ri[4] -
+				    m_crf_2cut3i[eps] * (r2[1] + r2[2] + r2[3] + r2[4]) - 4 * m_crf_cut[eps]);
+  
+  DEBUG(10, "e_crf: " << e_crf);
+      
+  f[1] = -0.82 * 0.41 * 138.9354 * (ri[1] * r2i[1] + m_crf_cut3i[eps]);
+  f[2] = -0.82 * 0.41 * 138.9354 * (ri[2] * r2i[2] + m_crf_cut3i[eps]);
+  f[3] = -0.82 * 0.41 * 138.9354 * (ri[3] * r2i[3] + m_crf_cut3i[eps]);
+  f[4] = -0.82 * 0.41 * 138.9354 * (ri[4] * r2i[4] + m_crf_cut3i[eps]);
+  
+  DEBUG(10, "f: " << f[1]);
+  DEBUG(10, "f: " << f[2]);
+  DEBUG(10, "f: " << f[3]);
+  DEBUG(10, "f: " << f[4]);
+      
+  // H - H interactions...
+
+  e_crf += 0.41 * 0.41 * 138.9354 * (ri[5] + ri[6] + ri[7] + ri[8] -
+				    m_crf_2cut3i[eps] * (r2[5] + r2[6] + r2[7] + r2[8]) - 4 * m_crf_cut[eps]);
+  
+  DEBUG(10, "e_crf: " << e_crf);
+
+  f[5] = 0.41 * 0.41 * 138.9354 * (ri[5] * r2i[5] + m_crf_cut3i[eps]);
+  f[6] = 0.41 * 0.41 * 138.9354 * (ri[6] * r2i[6] + m_crf_cut3i[eps]);
+  f[7] = 0.41 * 0.41 * 138.9354 * (ri[7] * r2i[7] + m_crf_cut3i[eps]);
+  f[8] = 0.41 * 0.41 * 138.9354 * (ri[8] * r2i[8] + m_crf_cut3i[eps]);
+  
+  DEBUG(10, "f: " << f[5]);
+  DEBUG(10, "f: " << f[6]);
+  DEBUG(10, "f: " << f[7]);
+  DEBUG(10, "f: " << f[8]);
+  
+}
+ 
 template<typename t_nonbonded_spec>
 inline void 
 interaction::Nonbonded_Innerloop<t_nonbonded_spec>::shortrange_spc_table_innerloop
@@ -1358,4 +1419,303 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::longrange_spc_table_innerloo
   storage.virial_tensor(2, 2) += z[3] * fz;
     
   storage.energies.crf_energy[egroup][egroup] += e_crf;
+}
+
+
+template<typename t_nonbonded_spec>
+inline void 
+interaction::Nonbonded_Innerloop<t_nonbonded_spec>::shortrange_spc_table_innerloop
+(
+  double &e_lj,
+  double &e_crf,
+  double f[9],
+  double r2[9]
+)
+{
+  unsigned int r2_int[4];
+  double r2_tab[4];
+
+  DEBUG(8, "\ttable shortrange");
+
+  // O - O
+  struct lj_crf_values {
+    double e_lj, e_lj_diff, e_crf, e_crf_diff, f, f_diff;
+  };
+  
+  struct crf_values {
+    double e_crf, e_crf_diff, f, f_diff;
+  };
+  
+  #define SHORTRANGE "shortrange"
+  #include "spc_table.h"
+  #undef SHORTRANGE
+
+  static const double to_table = table_size / data_range;
+  
+  const crf_values * values[4];
+  
+  // calculate the grid point
+  r2_tab[0] = r2[0] * to_table;    
+  // round the grid point to the lower integer
+  r2_int[0] = int(r2_tab[0]);
+  assert(r2_int[0] < table_size);
+  // safe the offset from the grid point for linear interpolation
+  r2_tab[0] -= r2_int[0];
+  DEBUG(10, "r: " << sqrt(r2[0]) << " r2: " << r2[0] << " r2_tab: " << r2_tab[0] << " r2_int: " << r2_int[0]);
+  
+  // the the data from the grid point
+  const lj_crf_values & val = OO_table[r2_int[0]];
+  
+  // the _diff variables hold the gradient for the interpolation.
+  e_lj  += val.e_lj + val.e_lj_diff * r2_tab[0];
+  e_crf += val.e_crf + val.e_crf_diff * r2_tab[0];
+  f[0] = val.f + val.f_diff * r2_tab[0];
+  
+  DEBUG(10, "e_lj: " << e_lj << " c_crf: " << e_crf << " f: " << f[0]);
+      
+  // O - H interactions...
+  r2_tab[0] = r2[1] * to_table;
+  r2_tab[1] = r2[2] * to_table;
+  r2_tab[2] = r2[3] * to_table;
+  r2_tab[3] = r2[4] * to_table;
+ 
+  r2_int[0] = int(r2_tab[0]);
+  r2_int[1] = int(r2_tab[1]);
+  r2_int[2] = int(r2_tab[2]);
+  r2_int[3] = int(r2_tab[3]);
+  
+  DEBUG(12, "\t\t0: r2: " << r2[1] << " r2_tab: " << r2_tab[0]);
+  DEBUG(12, "\t\t1: r2: " << r2[2] << " r2_tab: " << r2_tab[1]);
+  DEBUG(12, "\t\t2: r2: " << r2[3] << " r2_tab: " << r2_tab[2]);
+  DEBUG(12, "\t\t3: r2: " << r2[4] << " r2_tab: " << r2_tab[3]);
+  
+  assert(r2_int[0] < table_size);
+  assert(r2_int[1] < table_size);
+  assert(r2_int[2] < table_size);
+  assert(r2_int[3] < table_size);
+
+  r2_tab[0] -= r2_int[0];
+  r2_tab[1] -= r2_int[1];
+  r2_tab[2] -= r2_int[2];
+  r2_tab[3] -= r2_int[3];
+  
+  values[0] = &OH_table[r2_int[0]];
+  values[1] = &OH_table[r2_int[1]];
+  values[2] = &OH_table[r2_int[2]];
+  values[3] = &OH_table[r2_int[3]];
+
+  e_crf += values[0]->e_crf + values[0]->e_crf_diff * r2_tab[0];
+  e_crf += values[1]->e_crf + values[1]->e_crf_diff * r2_tab[1];
+  e_crf += values[2]->e_crf + values[2]->e_crf_diff * r2_tab[2];
+  e_crf += values[3]->e_crf + values[3]->e_crf_diff * r2_tab[3];
+
+  DEBUG(10, "e_crf: " << e_crf);
+
+  f[1] = values[0]->f + values[0]->f_diff * r2_tab[0];
+  f[2] = values[1]->f + values[1]->f_diff * r2_tab[1];
+  f[3] = values[2]->f + values[2]->f_diff * r2_tab[2];
+  f[4] = values[3]->f + values[3]->f_diff * r2_tab[3];
+  
+  DEBUG(10, "f: " << f[1]);
+  DEBUG(10, "f: " << f[2]);
+  DEBUG(10, "f: " << f[3]);
+  DEBUG(10, "f: " << f[4]);
+      
+  // H - H interactions...
+ 
+  r2_tab[0] = r2[5] * to_table; 
+  r2_tab[1] = r2[6] * to_table; 
+  r2_tab[2] = r2[7] * to_table; 
+  r2_tab[3] = r2[8] * to_table; 
+ 
+  r2_int[0] = int(r2_tab[0]);
+  r2_int[1] = int(r2_tab[1]);
+  r2_int[2] = int(r2_tab[2]);
+  r2_int[3] = int(r2_tab[3]);
+  
+  DEBUG(12, "\t\t0: r2: " << r2[5] << " r2_tab: " << r2_tab[0]);
+  DEBUG(12, "\t\t1: r2: " << r2[6] << " r2_tab: " << r2_tab[1]);
+  DEBUG(12, "\t\t2: r2: " << r2[7] << " r2_tab: " << r2_tab[2]);
+  DEBUG(12, "\t\t3: r2: " << r2[8] << " r2_tab: " << r2_tab[3]);
+  
+  assert(r2_int[0] < table_size);
+  assert(r2_int[1] < table_size);
+  assert(r2_int[2] < table_size);
+  assert(r2_int[3] < table_size);
+
+  r2_tab[0] -= r2_int[0];
+  r2_tab[1] -= r2_int[1];
+  r2_tab[2] -= r2_int[2];
+  r2_tab[3] -= r2_int[3];
+  
+  values[0] = &HH_table[r2_int[0]];
+  values[1] = &HH_table[r2_int[1]];
+  values[2] = &HH_table[r2_int[2]];
+  values[3] = &HH_table[r2_int[3]];
+
+  e_crf += values[0]->e_crf + values[0]->e_crf_diff * r2_tab[0];
+  e_crf += values[1]->e_crf + values[1]->e_crf_diff * r2_tab[1];
+  e_crf += values[2]->e_crf + values[2]->e_crf_diff * r2_tab[2];
+  e_crf += values[3]->e_crf + values[3]->e_crf_diff * r2_tab[3];
+
+  DEBUG(10, "e_crf: " << e_crf);
+
+  f[5] = values[0]->f + values[0]->f_diff * r2_tab[0];
+  f[6] = values[1]->f + values[1]->f_diff * r2_tab[1];
+  f[7] = values[2]->f + values[2]->f_diff * r2_tab[2];
+  f[8] = values[3]->f + values[3]->f_diff * r2_tab[3];
+  
+  DEBUG(10, "f: " << f[5]);
+  DEBUG(10, "f: " << f[6]);
+  DEBUG(10, "f: " << f[7]);
+  DEBUG(10, "f: " << f[8]);
+}
+
+template<typename t_nonbonded_spec>
+inline void 
+interaction::Nonbonded_Innerloop<t_nonbonded_spec>::longrange_spc_table_innerloop
+(
+  double &e_lj,
+  double &e_crf,
+  double f[9],
+  double r2[9]
+)
+{
+  unsigned int r2_int[4];
+  double r2_tab[4];
+
+  DEBUG(8, "\ttable longrange");
+
+  // O - O
+  struct lj_crf_values {
+    double e_lj, e_lj_diff, e_crf, e_crf_diff, f, f_diff;
+  };
+  
+  struct crf_values {
+    double e_crf, e_crf_diff, f, f_diff;
+  };
+  
+  #define LONGRANGE "longrange"
+  #include "spc_table.h"
+  #undef LONGRANGE
+
+  static const double to_table = table_size / data_range;
+  
+  const crf_values * values[4];
+  
+  // calculate the grid point
+  r2_tab[0] = (r2[0] - data_start) * to_table;    
+  // round the grid point to the lower integer
+  r2_int[0] = int(r2_tab[0]);
+  assert(r2_int[0] < table_size);
+  // safe the offset from the grid point for linear interpolation
+  r2_tab[0] -= r2_int[0];
+  DEBUG(10, "r: " << sqrt(r2[0]) << " r2: " << r2[0] << " r2_tab: " << r2_tab[0] << " r2_int: " << r2_int[0]);
+  
+  // the the data from the grid point
+  const lj_crf_values & val = OO_table[r2_int[0]];
+  
+  // the _diff variables hold the gradient for the interpolation.
+  e_lj  += val.e_lj + val.e_lj_diff * r2_tab[0];
+  e_crf += val.e_crf + val.e_crf_diff * r2_tab[0];
+  f[0] = val.f + val.f_diff * r2_tab[0];
+  
+  DEBUG(10, "e_lj: " << e_lj << " c_crf: " << e_crf << " f: " << f[0]);
+      
+  // O - H interactions...
+  r2_tab[0] = (r2[1] - data_start) * to_table;
+  r2_tab[1] = (r2[2] - data_start) * to_table;
+  r2_tab[2] = (r2[3] - data_start) * to_table;
+  r2_tab[3] = (r2[4] - data_start) * to_table;
+ 
+  r2_int[0] = int(r2_tab[0]);
+  r2_int[1] = int(r2_tab[1]);
+  r2_int[2] = int(r2_tab[2]);
+  r2_int[3] = int(r2_tab[3]);
+  
+  DEBUG(12, "\t\t0: r2: " << r2[1] << " r2_tab: " << r2_tab[0]);
+  DEBUG(12, "\t\t1: r2: " << r2[2] << " r2_tab: " << r2_tab[1]);
+  DEBUG(12, "\t\t2: r2: " << r2[3] << " r2_tab: " << r2_tab[2]);
+  DEBUG(12, "\t\t3: r2: " << r2[4] << " r2_tab: " << r2_tab[3]);
+  
+  assert(r2_int[0] < table_size);
+  assert(r2_int[1] < table_size);
+  assert(r2_int[2] < table_size);
+  assert(r2_int[3] < table_size);
+
+  r2_tab[0] -= r2_int[0];
+  r2_tab[1] -= r2_int[1];
+  r2_tab[2] -= r2_int[2];
+  r2_tab[3] -= r2_int[3];
+  
+  values[0] = &OH_table[r2_int[0]];
+  values[1] = &OH_table[r2_int[1]];
+  values[2] = &OH_table[r2_int[2]];
+  values[3] = &OH_table[r2_int[3]];
+
+  e_crf += values[0]->e_crf + values[0]->e_crf_diff * r2_tab[0];
+  e_crf += values[1]->e_crf + values[1]->e_crf_diff * r2_tab[1];
+  e_crf += values[2]->e_crf + values[2]->e_crf_diff * r2_tab[2];
+  e_crf += values[3]->e_crf + values[3]->e_crf_diff * r2_tab[3];
+
+  DEBUG(10, "e_crf: " << e_crf);
+
+  f[1] = values[0]->f + values[0]->f_diff * r2_tab[0];
+  f[2] = values[1]->f + values[1]->f_diff * r2_tab[1];
+  f[3] = values[2]->f + values[2]->f_diff * r2_tab[2];
+  f[4] = values[3]->f + values[3]->f_diff * r2_tab[3];
+  
+  DEBUG(10, "f: " << f[1]);
+  DEBUG(10, "f: " << f[2]);
+  DEBUG(10, "f: " << f[3]);
+  DEBUG(10, "f: " << f[4]);
+      
+  // H - H interactions...
+ 
+  r2_tab[0] = (r2[5] - data_start) * to_table; 
+  r2_tab[1] = (r2[6] - data_start) * to_table; 
+  r2_tab[2] = (r2[7] - data_start) * to_table; 
+  r2_tab[3] = (r2[8] - data_start) * to_table; 
+ 
+  r2_int[0] = int(r2_tab[0]);
+  r2_int[1] = int(r2_tab[1]);
+  r2_int[2] = int(r2_tab[2]);
+  r2_int[3] = int(r2_tab[3]);
+  
+  DEBUG(12, "\t\t0: r2: " << r2[5] << " r2_tab: " << r2_tab[0]);
+  DEBUG(12, "\t\t1: r2: " << r2[6] << " r2_tab: " << r2_tab[1]);
+  DEBUG(12, "\t\t2: r2: " << r2[7] << " r2_tab: " << r2_tab[2]);
+  DEBUG(12, "\t\t3: r2: " << r2[8] << " r2_tab: " << r2_tab[3]);
+  
+  assert(r2_int[0] < table_size);
+  assert(r2_int[1] < table_size);
+  assert(r2_int[2] < table_size);
+  assert(r2_int[3] < table_size);
+
+  r2_tab[0] -= r2_int[0];
+  r2_tab[1] -= r2_int[1];
+  r2_tab[2] -= r2_int[2];
+  r2_tab[3] -= r2_int[3];
+  
+  values[0] = &HH_table[r2_int[0]];
+  values[1] = &HH_table[r2_int[1]];
+  values[2] = &HH_table[r2_int[2]];
+  values[3] = &HH_table[r2_int[3]];
+
+  e_crf += values[0]->e_crf + values[0]->e_crf_diff * r2_tab[0];
+  e_crf += values[1]->e_crf + values[1]->e_crf_diff * r2_tab[1];
+  e_crf += values[2]->e_crf + values[2]->e_crf_diff * r2_tab[2];
+  e_crf += values[3]->e_crf + values[3]->e_crf_diff * r2_tab[3];
+
+  DEBUG(10, "e_crf: " << e_crf);
+
+  f[5] = values[0]->f + values[0]->f_diff * r2_tab[0];
+  f[6] = values[1]->f + values[1]->f_diff * r2_tab[1];
+  f[7] = values[2]->f + values[2]->f_diff * r2_tab[2];
+  f[8] = values[3]->f + values[3]->f_diff * r2_tab[3];
+  
+  DEBUG(10, "f: " << f[5]);
+  DEBUG(10, "f: " << f[6]);
+  DEBUG(10, "f: " << f[7]);
+  DEBUG(10, "f: " << f[8]);
 }

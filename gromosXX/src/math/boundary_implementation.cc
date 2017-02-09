@@ -189,23 +189,57 @@ math::Boundary_Implementation<math::triclinic>
 /**
  * nearest image : vacuum
  */
-inline void math::Boundary_Implementation<math::vacuum>
+inline int math::Boundary_Implementation<math::vacuum>
 ::nearest_image(Vec const &v1,
 		Vec const &v2,
 		Vec &nim)const
 {
   nim = v1 - v2;
+  return 0;
 }
 
 /**
  * nearest image : rectangular
  */
-inline void math::Boundary_Implementation<math::rectangular>
+inline int math::Boundary_Implementation<math::rectangular>
 ::nearest_image(Vec const &v1, Vec const &v2,
 		Vec &nim)const
 {
   // nim = v1 - v2;
 
+  int na = 0, nb = 0, nc = 0;
+  
+  nim[0] = v1[0] - v2[0];
+  while (nim[0] > m_half_box[0]) {
+    nim[0] -= 2. * m_half_box[0];
+    na = -9;
+  }
+  while (nim[0] < -m_half_box[0]) {
+    nim[0] += 2. * m_half_box[0];
+    na = 9;
+  }
+  nim[1] = v1[1] - v2[1];
+  while (nim[1] > m_half_box[1]) {
+    nim[1] -= 2. * m_half_box[1];
+    nb = -3;
+  }
+  while (nim[1] < -m_half_box[1]) {
+    nim[1] += 2. * m_half_box[1];
+    nb = 3;
+  }
+  nim[2] = v1[2] - v2[2];
+  while (nim[2] > m_half_box[2]) {
+    nim[2] -= 2. * m_half_box[2];
+    nc = -1;
+  }
+  while (nim[2] < -m_half_box[2]) {
+    nim[2] += 2. * m_half_box[2];
+    nc = 1;
+  }
+  
+  return na + nb + nc;
+
+  /*
   for(int d=0; d<3; ++d){
     nim(d) = v1(d) - v2(d);
 
@@ -214,18 +248,56 @@ inline void math::Boundary_Implementation<math::rectangular>
 
     }
   }
+   */
 }      
 
 /**
  * nearest image : triclinic
  */
-inline void math::Boundary_Implementation<math::triclinic>
+inline int math::Boundary_Implementation<math::triclinic>
 ::nearest_image(Vec const &v1,
 		Vec const &v2,
 		Vec &nim)const
 {
   // nim has to be out of the loop here!
   nim = v1 - v2;
+  //for(int d=0; d<3; ++d){
+  while (nim(2) >= 0.5*m_box(2,2)) {
+    nim -= m_box(2);
+  }
+  while (nim(2) <= -0.5*m_box(2,2)) {
+    nim += m_box(2);
+  }
+  
+  double nim_y = nim(1) - m_box(2,1)/m_box(2,2)*nim(2);
+  while (nim_y >= 0.5*m_box(1,1)) {
+    nim -= m_box(1);
+    nim_y = nim(1) - m_box(2,1)/m_box(2,2)*nim(2);
+  }
+  while (nim_y <= -0.5*m_box(1,1)) {
+    nim += m_box(1);
+    nim_y = nim(1) - m_box(2,1)/m_box(2,2)*nim(2);
+  }
+
+  double nim_x = nim(0)- 
+                 m_box(1,0)*(nim(1)-m_box(2,1)*nim(2)/m_box(2,2))/m_box(1,1) -
+                 m_box(2,0)*nim(2)/m_box(2,2);
+  while (nim_x >= 0.5*m_box(0,0)) {
+    nim -= m_box(0);
+    nim_x = nim(0)- 
+            m_box(1,0)*(nim(1)-m_box(2,1)*nim(2)/m_box(2,2))/m_box(1,1) -
+            m_box(2,0)*nim(2)/m_box(2,2);
+  }
+  while (nim_x <= -0.5*m_box(0,0)) {
+    nim += m_box(0);
+    nim_x = nim(0)- 
+            m_box(1,0)*(nim(1)-m_box(2,1)*nim(2)/m_box(2,2))/m_box(1,1) -
+            m_box(2,0)*nim(2)/m_box(2,2);
+  }
+   
+  return 0;
+   
+  /*
   //for(int d=0; d<3; ++d){
     // i think the if statement might be wrong for really 
     // triclinic cases! - > agree
@@ -246,6 +318,8 @@ inline void math::Boundary_Implementation<math::triclinic>
     if (nim_x*nim_x >= 0.25*m_box(0,0)* m_box(0,0))
       nim -= m_box(0) * rint(nim_x/fabs(m_box(0,0)));
  // }
+   return 0;
+  */
 }
         
 ////////////////////////////////////////////////////////////////////////////////

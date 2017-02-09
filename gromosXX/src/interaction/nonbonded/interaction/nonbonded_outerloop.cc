@@ -94,6 +94,14 @@ void interaction::Nonbonded_Outerloop
         util::Algorithm_Timer & timer, bool master) {
   DEBUG(7, "\tcalculate interactions");
 
+  // WORKAROUND! See definition of _lj_crf_outerloop_2
+  if (t_interaction_spec::boundary_type == math::rectangular &&
+      t_interaction_spec::interaction_func == simulation::lj_crf_func) {
+    _lj_crf_outerloop_2(topo, conf, sim, pairlist_solute, pairlist_solvent,
+                        storage, longrange, timer, master);
+    return;
+  }
+
   math::Periodicity<t_interaction_spec::boundary_type> periodicity(conf.current().box);
   Nonbonded_Innerloop<t_interaction_spec> innerloop(m_param);
   innerloop.init(sim);
@@ -248,6 +256,852 @@ unsigned int i_deb;
   if (master)
     timer.stop(timer_name);
 }
+
+
+/**
+ * helper function to calculate forces and energies, 
+ * stores them in the arrays pointed to by parameters
+ * to make it usable for longrange calculations.
+ */
+// WORKAROUND - see definition!
+void interaction::Nonbonded_Outerloop
+::_lj_crf_outerloop_2(topology::Topology & topo,
+        configuration::Configuration & conf,
+        simulation::Simulation & sim,
+        Pairlist const & pairlist_solute,
+        Pairlist const & pairlist_solvent,
+        Storage & storage, bool longrange,
+        util::Algorithm_Timer & timer, bool master) {
+  DEBUG(7, "\tcalculate interactions");
+
+  math::Periodicity<math::rectangular> periodicity(conf.current().box);
+  periodicity.recalc_shift_vectors();
+  Nonbonded_Innerloop<interaction::Interaction_Spec<math::rectangular, simulation::lj_crf_func> > innerloop(m_param);
+  innerloop.init(sim);
+
+  /*
+    variables for a OMP parallelizable loop.
+    outer index has to be integer...
+   */
+  std::vector<unsigned int>::const_iterator j_it, j_to;
+
+  unsigned int size_i = unsigned(pairlist_solute.size());
+  DEBUG(10, "outerloop pairlist size " << size_i);
+
+  const unsigned int end = topo.num_solute_atoms();
+
+  unsigned int i;
+  for (i = 0; i < end; ++i) {
+    const math::Vec posI = conf.current().pos(i);
+    const unsigned int eg_i = topo.atom_energy_group(i);
+    math::Vec groupForce(0.0);
+    int k = 0;
+    
+
+      DEBUG(10, "\tnonbonded_interaction: i " << i << " j " << *j_it);
+
+      // shortrange, therefore store in simulation.system()
+    for (j_it = pairlist_solute[i].begin(),
+         j_to = pairlist_solute[i].end();
+         j_it != j_to;
+         ++j_it) {
+      DEBUG(10, "\tnonbonded_interaction: i " << i << " j " << *j_it);
+            
+      math::Vec r;
+      const int kk = periodicity.nearest_image(posI, conf.current().pos(*j_it), r);
+      
+      if (kk != k) {
+        storage.force(i) += groupForce;
+        if (k != 0) {
+          const math::Vec shift = periodicity.shift(k+13).pos;
+          for (int a = 0; a < 3; ++a) {
+            for (int b = 0; b < 3; ++b) {
+              //storage.virial_tensor(b, a) += (posI(b) + shift(b)) * groupForce(a);
+              storage.virial_tensor(b, a) += shift(b) * groupForce(a);
+            }
+          }
+        }
+        groupForce = 0.;
+        k = kk;
+        
+      }
+      
+      const double dist2 = abs2(r);
+      math::Vec force;
+      double f;
+      double e_lj, e_crf;
+      
+      innerloop.lj_crf_innerloop_2(topo, i, *j_it, dist2, f, e_lj, e_crf);      
+      
+      const unsigned int eg_j = topo.atom_energy_group(*j_it);
+      DEBUG(11, "\tenergy group i " << eg_i << " j " << eg_j);
+      storage.energies.lj_energy[eg_i][eg_j] += e_lj;
+      storage.energies.crf_energy[eg_i][eg_j] += e_crf;
+            
+      force = f * r;
+      storage.force(*j_it) -= force;
+      groupForce += force;
+      
+      // shortrange, therefore store in simulation.system()
+      // innerloop.lj_crf_innerloop(topo, conf, i, *j_it, storage, periodicity);
+    }
+    
+    storage.force(i) += groupForce;
+    if (k != 0) {
+      const math::Vec shift = periodicity.shift(k+13).pos;
+      for (int a = 0; a < 3; ++a) {
+        for (int b = 0; b < 3; ++b) {
+          //storage.virial_tensor(b, a) += (posI(b) + shift(b)) * groupForce(a);
+          storage.virial_tensor(b, a) += shift(b) * groupForce(a);
+        }
+      }
+    }
+  }
+    
+  for (unsigned int ii = 0; ii < topo.num_solute_atoms(); ++ii) {
+    const math::Vec pos = conf.current().pos(ii);
+    const math::Vec force = storage.force(ii);
+    for (int a = 0; a < 3; ++a) {
+      for (int b = 0; b < 3; ++b) {
+        //storage.virial_tensor(b, a) += (posI(b) + shift(b)) * groupForce(a);
+        storage.virial_tensor(b, a) += pos(b) * force(a);
+      }
+    }
+  }
+/*only for DEBUG*/
+ /* DEBUG(1,"current solute pairlist:\n");
+unsigned int i_deb;
+  for (i_deb=0; i_deb < end; ++i_deb) {
+    for (j_it = pairlist_solute[i_deb].begin(),
+            j_to = pairlist_solute[i_deb].end();
+            j_it < j_to;
+            j_it++) {
+      //DEBUG(10, "i " << i_deb << " j " << *j_it << " i " << topo.solvent(0).atom(i_deb).name << " j " << topo.solvent(0).atom(*j_it).name);
+      DEBUG(1, "i " << i_deb << " j " << *j_it);
+    }
+  }
+  DEBUG(1,"current solvent pairlist:\n");
+  for (; i_deb < size_i; ++i_deb) {
+    for (j_it = pairlist_solvent[i_deb].begin(),
+            j_to = pairlist_solvent[i_deb].end();
+            j_it < j_to;
+            j_it++) {
+      //DEBUG(10, "i " << i_deb << " j " << *j_it << " i " << topo.solvent(0).atom(i_deb).name << " j " << topo.solvent(0).atom(*j_it).name);
+      DEBUG(1, "i " << i_deb << " j " << *j_it);
+    }
+  }
+  */
+/*DEBUG end*/
+
+  // cuda doesn't do solvent-solvent here
+  if (sim.param().innerloop.method == simulation::sla_cuda) return;
+  // solvent-solvent
+  const std::string timer_name(longrange ? "longrange solvent-solvent" : "solvent-solvent");
+  if (master)
+    timer.start(timer_name);
+  if (sim.param().force.special_loop == simulation::special_loop_spc) { // special solvent loop
+    // solvent - solvent with spc innerloop...
+
+    // only one energy group
+    const int egroup = topo.atom_energy_group(topo.num_solute_atoms());
+
+    for (; i < size_i; i += 3) { // use every third pairlist (OW's)
+
+      const math::Vec posI  = conf.current().pos(i);
+      const math::Vec posI1 = conf.current().pos(i + 1);
+      const math::Vec posI2 = conf.current().pos(i + 2);
+      math::Vec groupForce0(0.0);
+      math::Vec groupForce1(0.0);
+      math::Vec groupForce2(0.0);
+      int k = 0;
+      math::Vec shift = periodicity.shift(k + 13).pos;
+      double tx = shift(0), ty = shift(1), tz = shift(2);
+
+      double dist6i;
+      double e_lj = 0., e_crf = 0.;
+      double r2[9], r2i[9], ri[9], x[9], y[9], z[9], f[9], fx[9], fy[9], fz[9];
+      math::Vec r;
+
+      for (j_it = pairlist_solvent[i].begin(),
+          j_to = pairlist_solvent[i].end();
+          j_it != j_to;
+          j_it += 3) { // use every third atom (OW) in pairlist i
+
+        DEBUG(10, "\tsolvent-solvent spc_nonbonded_interaction: i " << i << " j " << *j_it);
+
+        const int kk = periodicity.nearest_image(posI, conf.current().pos(*j_it), r);
+
+        if (kk != k) {
+          storage.force(i) += groupForce0;
+          storage.force(i + 1) += groupForce1;
+          storage.force(i + 2) += groupForce2;
+          
+          if (k != 0) {
+            for (int a = 0; a < 3; ++a) {
+              for (int b = 0; b < 3; ++b) {
+                //storage.virial_tensor(b, a) += (posI(b) + shift(b)) * groupForce(a);
+                storage.virial_tensor(b, a) += shift(b) * (groupForce0(a) + groupForce1(a) + groupForce2(a));
+              }
+            }
+          }
+          
+          groupForce0 = 0.;
+          groupForce1 = 0.;
+          groupForce2 = 0.;
+          k = kk;
+          shift = periodicity.shift(k + 13).pos;
+          tx = shift(0);
+          ty = shift(1);
+          tz = shift(2);
+        }
+
+        math::Vec const * const pos_j = &conf.current().pos(*j_it);
+        math::Vec * const force_j = &storage.force(*j_it);
+
+        x[0] = r(0);
+        y[0] = r(1);
+        z[0] = r(2);
+
+        x[1] = posI(0) - (*(pos_j + 1))(0) + tx;
+        y[1] = posI(1) - (*(pos_j + 1))(1) + ty;
+        z[1] = posI(2) - (*(pos_j + 1))(2) + tz;
+
+        x[2] = posI(0) - (*(pos_j + 2))(0) + tx;
+        y[2] = posI(1) - (*(pos_j + 2))(1) + ty;
+        z[2] = posI(2) - (*(pos_j + 2))(2) + tz;
+
+        x[3] = posI1(0) - (*(pos_j))(0) + tx;
+        y[3] = posI1(1) - (*(pos_j))(1) + ty;
+        z[3] = posI1(2) - (*(pos_j))(2) + tz;
+
+        x[4] = posI2(0) - (*(pos_j))(0) + tx;
+        y[4] = posI2(1) - (*(pos_j))(1) + ty;
+        z[4] = posI2(2) - (*(pos_j))(2) + tz;
+
+        x[5] = posI1(0) - (*(pos_j + 1))(0) + tx;
+        y[5] = posI1(1) - (*(pos_j + 1))(1) + ty;
+        z[5] = posI1(2) - (*(pos_j + 1))(2) + tz;
+
+        x[6] = posI1(0) - (*(pos_j + 2))(0) + tx;
+        y[6] = posI1(1) - (*(pos_j + 2))(1) + ty;
+        z[6] = posI1(2) - (*(pos_j + 2))(2) + tz;
+
+        x[7] = posI2(0) - (*(pos_j + 1))(0) + tx;
+        y[7] = posI2(1) - (*(pos_j + 1))(1) + ty;
+        z[7] = posI2(2) - (*(pos_j + 1))(2) + tz;
+
+        x[8] = posI2(0) - (*(pos_j + 2))(0) + tx;
+        y[8] = posI2(1) - (*(pos_j + 2))(1) + ty;
+        z[8] = posI2(2) - (*(pos_j + 2))(2) + tz;
+
+        for (int ii = 0; ii < 9; ++ii) {
+          r2[ii] = x[ii] * x[ii] + y[ii] * y[ii] + z[ii] * z[ii];
+          r2i[ii] = 1.0 / r2[ii];
+          ri[ii] = sqrt(r2i[ii]);
+        }
+
+        dist6i = r2i[0] * r2i[0] * r2i[0];
+
+        innerloop.spc_innerloop(e_lj, e_crf, dist6i, f, r2, r2i, ri);
+
+        for (int ii = 0; ii < 9; ++ii) {
+          fx[ii] = f[ii] * x[ii];
+          fy[ii] = f[ii] * y[ii];
+          fz[ii] = f[ii] * z[ii];
+        }
+
+        (*force_j)(0) -= fx[0] + fx[3] + fx[4];
+        (*force_j)(1) -= fy[0] + fy[3] + fy[4];
+        (*force_j)(2) -= fz[0] + fz[3] + fz[4];
+        (*(force_j + 1))(0) -= fx[1] + fx[5] + fx[7];
+        (*(force_j + 1))(1) -= fy[1] + fy[5] + fy[7];
+        (*(force_j + 1))(2) -= fz[1] + fz[5] + fz[7];
+        (*(force_j + 2))(0) -= fx[2] + fx[6] + fx[8];
+        (*(force_j + 2))(1) -= fy[2] + fy[6] + fy[8];
+        (*(force_j + 2))(2) -= fz[2] + fz[6] + fz[8];
+
+        groupForce0(0) += fx[0] + fx[1] + fx[2];
+        groupForce0(1) += fy[0] + fy[1] + fy[2];
+        groupForce0(2) += fz[0] + fz[1] + fz[2];
+        groupForce1(0) += fx[3] + fx[5] + fx[6];
+        groupForce1(1) += fy[3] + fy[5] + fy[6];
+        groupForce1(2) += fz[3] + fz[5] + fz[6];
+        groupForce2(0) += fx[4] + fx[7] + fx[8];
+        groupForce2(1) += fy[4] + fy[7] + fy[8];
+        groupForce2(2) += fz[4] + fz[7] + fz[8];
+      }
+
+      storage.force(i) += groupForce0;
+      storage.force(i + 1) += groupForce1;
+      storage.force(i + 2) += groupForce2;
+      
+      if (k != 0) {
+        for (int a = 0; a < 3; ++a) {
+          for (int b = 0; b < 3; ++b) {
+            //storage.virial_tensor(b, a) += (posI(b) + shift(b)) * groupForce(a);
+            storage.virial_tensor(b, a) += shift(b) * (groupForce0(a) + groupForce1(a) + groupForce2(a));
+          }
+        }
+      }
+
+      storage.energies.lj_energy[egroup][egroup] += e_lj;
+      storage.energies.crf_energy[egroup][egroup] += e_crf;
+    }
+    
+    for (unsigned int ii = end; ii < size_i; ++ii) {
+      const math::Vec pos = conf.current().pos(ii);
+      const math::Vec force = storage.force(ii);
+      //std::cout << "XYZ\t" << ii << std::setprecision(9)
+      //          << std::setw(20) << force(0) << std::setw(20) << force(0) << std::setw(20) << force(0)
+      //          << std::endl;
+      for (int a = 0; a < 3; ++a) {
+        for (int b = 0; b < 3; ++b) {
+          //storage.virial_tensor(b, a) += (posI(b) + shift(b)) * groupForce(a);
+          storage.virial_tensor(b, a) += pos(b) * force(a);
+        }
+      }
+    }
+    
+    
+  } else if (sim.param().force.special_loop == simulation::special_loop_spc_table) { // special solvent loop
+    // solvent - solvent with tabulated spc innerloop...
+
+    // only one energy group
+    const int egroup = topo.atom_energy_group(topo.num_solute_atoms());
+    if (longrange) {
+      double e_lj = 0.0, e_crf = 0.0;
+      // here we call the longrange function that uses a smaller table
+      for (; i < size_i; i += 3) { // use every third pairlist (OW's)
+
+        const math::Vec posI = conf.current().pos(i);
+        const math::Vec posI1 = conf.current().pos(i + 1);
+        const math::Vec posI2 = conf.current().pos(i + 2);
+        math::Vec groupForce0(0.0);
+        math::Vec groupForce1(0.0);
+        math::Vec groupForce2(0.0);
+        int k = 0;
+        math::Vec shift = periodicity.shift(k + 13).pos;
+        double tx = shift(0), ty = shift(1), tz = shift(2);
+
+        double r2[9], x[9], y[9], z[9], f[9], fx[9], fy[9], fz[9];
+        math::Vec r;
+
+        for (j_it = pairlist_solvent[i].begin(),
+            j_to = pairlist_solvent[i].end();
+            j_it != j_to;
+            j_it += 3) { // use every third atom (OW) in pairlist i
+
+          DEBUG(10, "\tsolvent-solvent (tabulated) longrange spc_nonbonded_interaction: i " << i << " j " << *j_it);
+
+          const int kk = periodicity.nearest_image(posI, conf.current().pos(*j_it), r);
+
+          if (kk != k) {
+            storage.force(i) += groupForce0;
+            storage.force(i + 1) += groupForce1;
+            storage.force(i + 2) += groupForce2;
+            if (k != 0) {
+              for (int a = 0; a < 3; ++a) {
+                for (int b = 0; b < 3; ++b) {
+                  //storage.virial_tensor(b, a) += (posI(b) + shift(b)) * groupForce(a);
+                  storage.virial_tensor(b, a) += shift(b) * (groupForce0(a) + groupForce1(a) + groupForce2(a));
+                }
+              }
+            }
+            groupForce0 = 0.;
+            groupForce1 = 0.;
+            groupForce2 = 0.;
+            k = kk;
+            shift = periodicity.shift(k + 13).pos;
+            tx = shift(0);
+            ty = shift(1);
+            tz = shift(2);
+          }
+
+          math::Vec const * const pos_j = &conf.current().pos(*j_it);
+          math::Vec * const force_j = &storage.force(*j_it);
+
+          x[0] = r(0);
+          y[0] = r(1);
+          z[0] = r(2);
+
+          x[1] = posI(0) - (*(pos_j + 1))(0) + tx;
+          y[1] = posI(1) - (*(pos_j + 1))(1) + ty;
+          z[1] = posI(2) - (*(pos_j + 1))(2) + tz;
+
+          x[2] = posI(0) - (*(pos_j + 2))(0) + tx;
+          y[2] = posI(1) - (*(pos_j + 2))(1) + ty;
+          z[2] = posI(2) - (*(pos_j + 2))(2) + tz;
+
+          x[3] = posI1(0) - (*(pos_j))(0) + tx;
+          y[3] = posI1(1) - (*(pos_j))(1) + ty;
+          z[3] = posI1(2) - (*(pos_j))(2) + tz;
+
+          x[4] = posI2(0) - (*(pos_j))(0) + tx;
+          y[4] = posI2(1) - (*(pos_j))(1) + ty;
+          z[4] = posI2(2) - (*(pos_j))(2) + tz;
+
+          x[5] = posI1(0) - (*(pos_j + 1))(0) + tx;
+          y[5] = posI1(1) - (*(pos_j + 1))(1) + ty;
+          z[5] = posI1(2) - (*(pos_j + 1))(2) + tz;
+
+          x[6] = posI1(0) - (*(pos_j + 2))(0) + tx;
+          y[6] = posI1(1) - (*(pos_j + 2))(1) + ty;
+          z[6] = posI1(2) - (*(pos_j + 2))(2) + tz;
+
+          x[7] = posI2(0) - (*(pos_j + 1))(0) + tx;
+          y[7] = posI2(1) - (*(pos_j + 1))(1) + ty;
+          z[7] = posI2(2) - (*(pos_j + 1))(2) + tz;
+
+          x[8] = posI2(0) - (*(pos_j + 2))(0) + tx;
+          y[8] = posI2(1) - (*(pos_j + 2))(1) + ty;
+          z[8] = posI2(2) - (*(pos_j + 2))(2) + tz;
+
+          for (int ii = 0; ii < 9; ++ii) {
+            r2[ii] = x[ii] * x[ii] + y[ii] * y[ii] + z[ii] * z[ii];
+          }
+
+          innerloop.longrange_spc_table_innerloop(e_lj, e_crf, f, r2);
+
+          for (int ii = 0; ii < 9; ++ii) {
+            fx[ii] = f[ii] * x[ii];
+            fy[ii] = f[ii] * y[ii];
+            fz[ii] = f[ii] * z[ii];
+          }
+
+          (*force_j)(0) -= fx[0] + fx[3] + fx[4];
+          (*force_j)(1) -= fy[0] + fy[3] + fy[4];
+          (*force_j)(2) -= fz[0] + fz[3] + fz[4];
+          (*(force_j + 1))(0) -= fx[1] + fx[5] + fx[7];
+          (*(force_j + 1))(1) -= fy[1] + fy[5] + fy[7];
+          (*(force_j + 1))(2) -= fz[1] + fz[5] + fz[7];
+          (*(force_j + 2))(0) -= fx[2] + fx[6] + fx[8];
+          (*(force_j + 2))(1) -= fy[2] + fy[6] + fy[8];
+          (*(force_j + 2))(2) -= fz[2] + fz[6] + fz[8];
+
+          groupForce0(0) += fx[0] + fx[1] + fx[2];
+          groupForce0(1) += fy[0] + fy[1] + fy[2];
+          groupForce0(2) += fz[0] + fz[1] + fz[2];
+          groupForce1(0) += fx[3] + fx[5] + fx[6];
+          groupForce1(1) += fy[3] + fy[5] + fy[6];
+          groupForce1(2) += fz[3] + fz[5] + fz[6];
+          groupForce2(0) += fx[4] + fx[7] + fx[8];
+          groupForce2(1) += fy[4] + fy[7] + fy[8];
+          groupForce2(2) += fz[4] + fz[7] + fz[8];
+        }
+
+        storage.force(i) += groupForce0;
+        storage.force(i + 1) += groupForce1;
+        storage.force(i + 2) += groupForce2;
+        if (k != 0) {
+          for (int a = 0; a < 3; ++a) {
+            for (int b = 0; b < 3; ++b) {
+              //storage.virial_tensor(b, a) += (posI(b) + shift(b)) * groupForce(a);
+              storage.virial_tensor(b, a) += shift(b) * (groupForce0(a) + groupForce1(a) + groupForce2(a));
+            }
+          }
+        }
+      }
+
+    for (unsigned int ii = topo.num_solute_atoms(); ii < size_i; ++ii) {
+      const math::Vec pos = conf.current().pos(ii);
+      const math::Vec force = storage.force(ii);
+      for (int a = 0; a < 3; ++a) {
+        for (int b = 0; b < 3; ++b) {
+          //innerloop.spc_innerloop(topo, conf, i, *j_it, storage, periodicity);
+          storage.virial_tensor(b, a) += pos(b) * force(a);
+        }
+      }
+    }
+
+      storage.energies.lj_energy[egroup][egroup] += e_lj;
+      storage.energies.crf_energy[egroup][egroup] += e_crf;
+    } else { // shortrange
+      double e_lj = 0.0, e_crf = 0.0;
+      for (; i < size_i; i += 3) { // use every third pairlist (OW's)
+
+        const math::Vec posI = conf.current().pos(i);
+        const math::Vec posI1 = conf.current().pos(i + 1);
+        const math::Vec posI2 = conf.current().pos(i + 2);
+        math::Vec groupForce0(0.0);
+        math::Vec groupForce1(0.0);
+        math::Vec groupForce2(0.0);
+        int k = 0;
+        math::Vec shift = periodicity.shift(k + 13).pos;
+        double tx = shift(0), ty = shift(1), tz = shift(2);
+
+        double r2[9], x[9], y[9], z[9], f[9], fx[9], fy[9], fz[9];
+        math::Vec r;
+
+        for (j_it = pairlist_solvent[i].begin(),
+                j_to = pairlist_solvent[i].end();
+                j_it != j_to;
+                j_it += 3) { // use every third atom (OW) in pairlist i
+
+          DEBUG(10, "\tsolvent-solvent (tabulated) shortrange spc_nonbonded_interaction: i " << i << " j " << *j_it);
+
+          const int kk = periodicity.nearest_image(posI, conf.current().pos(*j_it), r);
+
+          if (kk != k) {
+            storage.force(i) += groupForce0;
+            storage.force(i + 1) += groupForce1;
+            storage.force(i + 2) += groupForce2;
+            if (k != 0) {
+              for (int a = 0; a < 3; ++a) {
+                for (int b = 0; b < 3; ++b) {
+                  //storage.virial_tensor(b, a) += (posI(b) + shift(b)) * groupForce(a);
+                  storage.virial_tensor(b, a) += shift(b) * (groupForce0(a) + groupForce1(a) + groupForce2(a));
+                }
+              }
+            }
+            groupForce0 = 0.;
+            groupForce1 = 0.;
+            groupForce2 = 0.;
+            k = kk;
+            shift = periodicity.shift(k + 13).pos;
+            tx = shift(0);
+            ty = shift(1);
+            tz = shift(2);
+          }
+
+          math::Vec const * const pos_j = &conf.current().pos(*j_it);
+          math::Vec * const force_j = &storage.force(*j_it);
+
+          x[0] = r(0);
+          y[0] = r(1);
+          z[0] = r(2);
+
+          x[1] = posI(0) - (*(pos_j + 1))(0) + tx;
+          y[1] = posI(1) - (*(pos_j + 1))(1) + ty;
+          z[1] = posI(2) - (*(pos_j + 1))(2) + tz;
+
+          x[2] = posI(0) - (*(pos_j + 2))(0) + tx;
+          y[2] = posI(1) - (*(pos_j + 2))(1) + ty;
+          z[2] = posI(2) - (*(pos_j + 2))(2) + tz;
+
+          x[3] = posI1(0) - (*(pos_j))(0) + tx;
+          y[3] = posI1(1) - (*(pos_j))(1) + ty;
+          z[3] = posI1(2) - (*(pos_j))(2) + tz;
+
+          x[4] = posI2(0) - (*(pos_j))(0) + tx;
+          y[4] = posI2(1) - (*(pos_j))(1) + ty;
+          z[4] = posI2(2) - (*(pos_j))(2) + tz;
+
+          x[5] = posI1(0) - (*(pos_j + 1))(0) + tx;
+          y[5] = posI1(1) - (*(pos_j + 1))(1) + ty;
+          z[5] = posI1(2) - (*(pos_j + 1))(2) + tz;
+
+          x[6] = posI1(0) - (*(pos_j + 2))(0) + tx;
+          y[6] = posI1(1) - (*(pos_j + 2))(1) + ty;
+          z[6] = posI1(2) - (*(pos_j + 2))(2) + tz;
+
+          x[7] = posI2(0) - (*(pos_j + 1))(0) + tx;
+          y[7] = posI2(1) - (*(pos_j + 1))(1) + ty;
+          z[7] = posI2(2) - (*(pos_j + 1))(2) + tz;
+
+          x[8] = posI2(0) - (*(pos_j + 2))(0) + tx;
+          y[8] = posI2(1) - (*(pos_j + 2))(1) + ty;
+          z[8] = posI2(2) - (*(pos_j + 2))(2) + tz;
+
+          for (int ii = 0; ii < 9; ++ii) {
+            r2[ii] = x[ii] * x[ii] + y[ii] * y[ii] + z[ii] * z[ii];
+          }
+
+          innerloop.shortrange_spc_table_innerloop(e_lj, e_crf, f, r2);
+
+          for (int ii = 0; ii < 9; ++ii) {
+            fx[ii] = f[ii] * x[ii];
+            fy[ii] = f[ii] * y[ii];
+            fz[ii] = f[ii] * z[ii];
+          }
+
+          (*force_j)(0) -= fx[0] + fx[3] + fx[4];
+          (*force_j)(1) -= fy[0] + fy[3] + fy[4];
+          (*force_j)(2) -= fz[0] + fz[3] + fz[4];
+          (*(force_j + 1))(0) -= fx[1] + fx[5] + fx[7];
+          (*(force_j + 1))(1) -= fy[1] + fy[5] + fy[7];
+          (*(force_j + 1))(2) -= fz[1] + fz[5] + fz[7];
+          (*(force_j + 2))(0) -= fx[2] + fx[6] + fx[8];
+          (*(force_j + 2))(1) -= fy[2] + fy[6] + fy[8];
+          (*(force_j + 2))(2) -= fz[2] + fz[6] + fz[8];
+
+          groupForce0(0) += fx[0] + fx[1] + fx[2];
+          groupForce0(1) += fy[0] + fy[1] + fy[2];
+          groupForce0(2) += fz[0] + fz[1] + fz[2];
+          groupForce1(0) += fx[3] + fx[5] + fx[6];
+          groupForce1(1) += fy[3] + fy[5] + fy[6];
+          groupForce1(2) += fz[3] + fz[5] + fz[6];
+          groupForce2(0) += fx[4] + fx[7] + fx[8];
+          groupForce2(1) += fy[4] + fy[7] + fy[8];
+          groupForce2(2) += fz[4] + fz[7] + fz[8];
+        }
+
+        storage.force(i) += groupForce0;
+        storage.force(i + 1) += groupForce1;
+        storage.force(i + 2) += groupForce2;
+        if (k != 0) {
+          for (int a = 0; a < 3; ++a) {
+            for (int b = 0; b < 3; ++b) {
+              //storage.virial_tensor(b, a) += (posI(b) + shift(b)) * groupForce(a);
+              storage.virial_tensor(b, a) += shift(b) * (groupForce0(a) + groupForce1(a) + groupForce2(a));
+            }
+          }
+        }
+      }
+
+    for (unsigned int ii = topo.num_solute_atoms(); ii < size_i; ++ii) {
+      const math::Vec pos = conf.current().pos(ii);
+      const math::Vec force = storage.force(ii);
+      for (int a = 0; a < 3; ++a) {
+        for (int b = 0; b < 3; ++b) {
+          //innerloop.spc_innerloop(topo, conf, i, *j_it, storage, periodicity);
+          storage.virial_tensor(b, a) += pos(b) * force(a);
+        }
+      }
+    }
+
+      storage.energies.lj_energy[egroup][egroup]  += e_lj;
+      storage.energies.crf_energy[egroup][egroup] += e_crf;
+    }
+  } else if (sim.param().force.special_loop == simulation::special_loop_generic) {
+    const unsigned int num_solvent_atoms = topo.solvent(0).num_atoms();
+    // prepare parameters
+    const unsigned int num_param = num_solvent_atoms * num_solvent_atoms;
+    typename interaction::Nonbonded_Innerloop<interaction::Interaction_Spec<math::rectangular, simulation::lj_crf_func> >::solvent_pair_parameter pair_parameter[num_param];
+
+    unsigned int param = 0;
+    for (unsigned int atom_i = 0; atom_i < num_solvent_atoms; ++atom_i) {
+      for (unsigned int atom_j = 0; atom_j < num_solvent_atoms; ++atom_j, ++param) {
+        assert(param < num_param);
+        DEBUG(10, "\tsolvent pair parameter: " << param);
+
+        const lj_parameter_struct & lj =
+                innerloop.param()->lj_parameter(topo.solvent(0).atom(atom_i).iac, topo.solvent(0).atom(atom_j).iac);
+        pair_parameter[param].c12 = lj.c12;
+        pair_parameter[param].c6 = lj.c6;
+
+        pair_parameter[param].q = math::four_pi_eps_i *
+                topo.solvent(0).atom(atom_i).charge *
+                topo.solvent(0).atom(atom_j).charge;
+
+        DEBUG(10, "\t\tc12: " << pair_parameter[param].c12 << " c6: " <<
+                pair_parameter[param].c6 << " q: " << pair_parameter[param].q);
+      }
+    }
+
+    math::Vec r;
+    
+    const double crf_2cut3i = innerloop.crf_2cut3i(0);
+    const double crf_cut3i  = crf_2cut3i * 2.;
+    const double crf_cut    = innerloop.crf_cut(0);
+  
+    // only one energy group
+    const int egroup = topo.atom_energy_group(topo.num_solute_atoms());
+    double e_lj = 0.0, e_crf = 0.0;
+    // use num_solvent_atoms-th atom (first of solvent molecule i)
+    for (; i < size_i; i += num_solvent_atoms) {
+      math::Vec const * const pos_i = &conf.current().pos(i);
+      math::Vec * const force_i = &storage.force(i);
+      int k = 0;
+      std::vector<math::Vec> groupForce(num_solvent_atoms, math::Vec(0.0));
+      math::Vec totalForce;
+      math::Vec shift = periodicity.shift(k+13).pos;
+      double tx = shift(0), ty = shift(1), tz = shift(2);
+      
+      for (j_it = pairlist_solvent[i].begin(),
+              j_to = pairlist_solvent[i].end();
+              j_it != j_to;
+              j_it += num_solvent_atoms) { // use num_solvent_atoms-th atom (first of solvent molecule j)
+
+        DEBUG(10, "\tsolvent_nonbonded_interaction (special_loop_generic): i " << i << " j " << *j_it);
+
+        const int kk = periodicity.nearest_image(*pos_i, conf.current().pos(*j_it), r);
+        
+        if (kk != k) {
+	  totalForce = 0.;
+          for(unsigned int atom_i = 0; atom_i < num_solvent_atoms; ++atom_i) {
+            (*(force_i+atom_i)) += groupForce[atom_i];
+            if (k != 0) {
+	      totalForce += groupForce[atom_i];
+            }            
+            groupForce[atom_i] = 0.0;
+          }
+	  if (k != 0) {
+            const math::Vec shift = periodicity.shift(k+13).pos;
+            for (int a = 0; a < 3; ++a) {
+              for (int b = 0; b < 3; ++b) {
+                //storage.virial_tensor(b, a) += (posI(b) + shift(b)) * groupForce(a);
+                storage.virial_tensor(b, a) += shift(b) * totalForce(a);
+              }
+            }
+	  }
+          k = kk;
+          shift = periodicity.shift(k + 13).pos;
+          tx = shift(0);
+          ty = shift(1);
+          tz = shift(2);
+        }
+        
+        math::Vec const * const pos_j = &conf.current().pos(*j_it);
+        math::Vec * const force_j = &storage.force(*j_it);
+        
+        for(unsigned int param = 0, atom_i = 0; atom_i < num_solvent_atoms; ++atom_i) {
+          const double xi = (*(pos_i+atom_i))(0) + tx;
+          const double yi = (*(pos_i+atom_i))(1) + ty;
+          const double zi = (*(pos_i+atom_i))(2) + tz;
+          for(unsigned int atom_j = 0; atom_j < num_solvent_atoms; ++atom_j, ++param) {
+            DEBUG(15, "\tatoms: i: " << atom_i << " j: " << atom_j);
+            const double x = xi - (*(pos_j+atom_j))(0);
+            const double y = yi - (*(pos_j+atom_j))(1);
+            const double z = zi - (*(pos_j+atom_j))(2);
+
+            const double r2 = x * x + y * y + z * z;
+            DEBUG(15, "\tr2: " << r2);
+            assert(r2 != 0.0);
+            const double r2i = 1.0 / r2;
+            const double ri = sqrt(r2i);
+            const double dist6i = r2i * r2i * r2i;
+            const double dist6i_c12 = pair_parameter[param].c12 * dist6i;
+
+            e_lj += (dist6i_c12 - pair_parameter[param].c6) * dist6i;
+            e_crf += pair_parameter[param].q * (ri - crf_2cut3i * r2 - crf_cut);
+
+            const double f = (dist6i_c12 + dist6i_c12 - pair_parameter[param].c6) * 6.0 
+                    * dist6i * r2i + pair_parameter[param].q * (ri * r2i + crf_cut3i);
+
+            const double fx = f * x;
+            const double fy = f * y;
+            const double fz = f * z;
+
+            //(*(force_i+atom_i))(0) += fx;
+            groupForce[atom_i](0) += fx;
+            (*(force_j+atom_j))(0) -= fx;
+            //(*(force_i+atom_i))(1) += fy;
+            groupForce[atom_i](1) += fy;
+            (*(force_j+atom_j))(1) -= fy;
+            //(*(force_i+atom_i))(2) += fz;
+            groupForce[atom_i](2) += fz;
+            (*(force_j+atom_j))(2) -= fz;
+          }
+        // innerloop.solvent_innerloop(topo, pair_parameter, conf, num_solvent_atoms, i, *j_it, storage, periodicity);
+        }
+      }
+        
+      totalForce = 0.;
+      for(unsigned int atom_i = 0; atom_i < num_solvent_atoms; ++atom_i) {
+        (*(force_i+atom_i)) += groupForce[atom_i];
+        if (k != 0) {
+	  totalForce += groupForce[atom_i];
+        }
+      }
+        
+      if (k != 0) {
+        const math::Vec shift = periodicity.shift(k+13).pos;
+        for (int a = 0; a < 3; ++a) {
+          for (int b = 0; b < 3; ++b) {
+            //storage.virial_tensor(b, a) += (posI(b) + shift(b)) * groupForce(a);
+            storage.virial_tensor(b, a) += shift(b) * totalForce(a);
+          }
+        }
+      }   
+    }
+    
+    storage.energies.lj_energy[egroup][egroup] += e_lj;
+    storage.energies.crf_energy[egroup][egroup] += e_crf;
+    
+    
+    for (unsigned int ii = end; ii < size_i; ++ii) {
+      const math::Vec pos = conf.current().pos(ii);
+      const math::Vec force = storage.force(ii);
+      //std::cout << "XYZ\t" << ii << std::setprecision(9)
+      //          << std::setw(20) << force(0) << std::setw(20) << force(0) << std::setw(20) << force(0)
+      //          << std::endl;
+      for (int a = 0; a < 3; ++a) {
+        for (int b = 0; b < 3; ++b) {
+          //storage.virial_tensor(b, a) += (posI(b) + shift(b)) * groupForce(a);
+          storage.virial_tensor(b, a) += pos(b) * force(a);
+        }
+      }
+    }
+    
+    
+  } else { // normal solvent loop
+    for (; i < size_i; ++i) {
+      const math::Vec posI = conf.current().pos(i);
+      const unsigned int eg_i = topo.atom_energy_group(i);
+      math::Vec groupForce(0.0);
+      int k = 0;
+      for (j_it = pairlist_solvent[i].begin(),
+              j_to = pairlist_solvent[i].end();
+              j_it != j_to;
+              ++j_it) {
+
+        DEBUG(10, "\tsolvent_nonbonded_interaction (normal solvent loop): i " << i << " j " << *j_it);
+            
+        math::Vec r;
+        const int kk = periodicity.nearest_image(posI, conf.current().pos(*j_it), r);
+
+        if (kk != k) {
+          storage.force(i) += groupForce;
+          if (k != 0) {
+            const math::Vec shift = periodicity.shift(k+13).pos;
+            for (int a = 0; a < 3; ++a) {
+              for (int b = 0; b < 3; ++b) {
+                //storage.virial_tensor(b, a) += (posI(b) + shift(b)) * groupForce(a);
+                storage.virial_tensor(b, a) += shift(b) * groupForce(a);
+              }
+            }
+          }
+          groupForce = 0.;
+          k = kk;
+
+        }
+
+        const double dist2 = abs2(r);
+        math::Vec force;
+        double f;
+        double e_lj, e_crf;
+
+        innerloop.lj_crf_innerloop_2(topo, i, *j_it, dist2, f, e_lj, e_crf);
+
+        const unsigned int eg_j = topo.atom_energy_group(*j_it);
+        DEBUG(11, "\tenergy group i " << eg_i << " j " << eg_j);
+        storage.energies.lj_energy[eg_i][eg_j] += e_lj;
+        storage.energies.crf_energy[eg_i][eg_j] += e_crf;
+
+        force = f * r;
+        storage.force(*j_it) -= force;
+        groupForce += force;
+
+        //innerloop.lj_crf_innerloop(topo, conf, i, *j_it, storage, periodicity);
+      }
+    
+      storage.force(i) += groupForce;
+      if (k != 0) {
+        const math::Vec shift = periodicity.shift(k+13).pos;
+        for (int a = 0; a < 3; ++a) {
+          for (int b = 0; b < 3; ++b) {
+            //storage.virial_tensor(b, a) += (posI(b) + shift(b)) * groupForce(a);
+            storage.virial_tensor(b, a) += shift(b) * groupForce(a);
+          }
+        }
+      }
+    }
+
+    for (unsigned int ii = end; ii < size_i; ++ii) {
+      const math::Vec pos = conf.current().pos(ii);
+      const math::Vec force = storage.force(ii);
+      for (int a = 0; a < 3; ++a) {
+        for (int b = 0; b < 3; ++b) {
+          //storage.virial_tensor(b, a) += (posI(b) + shift(b)) * groupForce(a);
+          storage.virial_tensor(b, a) += pos(b) * force(a);
+        }
+      }
+    }
+  }
+  if (master)
+    timer.stop(timer_name);
+}
+
 
 // calculate sasa and volume term
 

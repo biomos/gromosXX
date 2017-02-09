@@ -219,6 +219,46 @@ inline void interaction::Nonbonded_Term
  * a given atom pair.
  */
 inline void interaction::Nonbonded_Term
+::lj_crf_interaction_2(double dist2,
+        double c6, double c12,
+        double q,
+        double &force, double &e_lj, double &e_crf, unsigned int eps) {
+  DEBUG(14, "\t\tnonbonded term");
+
+  //assert(abs2(r) != 0);
+  //const double dist2 = abs2(r);
+  
+  assert(dist2 > 0);
+  
+  HEAVISIDETRUNC(dist2, force = e_lj = e_crf)
+          const double dist2i = 1.0 / dist2;
+  const double q_eps = q * math::four_pi_eps_i;
+  const double dist6i = dist2i * dist2i * dist2i;
+  const double disti = sqrt(dist2i);
+  const double c12_dist6i = c12 * dist6i;
+
+  e_lj = (c12_dist6i - c6) * dist6i;
+
+  e_crf = q_eps *
+          (disti - m_crf_2cut3i[eps] * dist2 - m_crf_cut[eps]);
+
+  force = (c12_dist6i + c12_dist6i - c6) * 6.0 * dist6i * dist2i +
+          q_eps * (disti * dist2i + m_crf_cut3i[eps]);
+
+  //double f_crf = q_eps * (disti * dist2i + m_crf_cut3i);
+  //DEBUG(1, "force = " << f_crf*r(0) << "  " << f_crf*r(1) << "  " << f_crf*r(2));
+
+  DEBUG(15, "\t\tq=" << q << " 4pie=" << math::four_pi_eps_i
+          << " crf_cut2i=" << m_crf_cut3i[eps]);
+
+}
+
+
+/**
+ * helper function to calculate the force and energy for
+ * a given atom pair.
+ */
+inline void interaction::Nonbonded_Term
 ::lj_interaction(math::Vec const &r,
         double c6, double c12,
         double &force, double &e_lj) {
@@ -537,6 +577,16 @@ inline double interaction::Nonbonded_Term
   } else {  // mixed-grained
     return m_crf[2];
   }
+}
+
+inline double interaction::Nonbonded_Term
+::crf_2cut3i(int eps) const {
+  return m_crf_2cut3i[eps];
+}
+    
+inline double interaction::Nonbonded_Term
+::crf_cut(int eps) const {
+  return m_crf_cut[eps];  
 }
 
 /**

@@ -33,7 +33,7 @@ namespace interaction
   operator<<(std::ostream &os, Pairlist &pl);
   
   /** 
-   * @struct ParilistContainer
+   * @struct PairlistContainer
    * holds a set of pairlists.
    */
   struct PairlistContainer {
