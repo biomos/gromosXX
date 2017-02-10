@@ -839,7 +839,7 @@ namespace configuration {
     /**
      * check configuration
      */
-    bool check(topology::Topology const & topo, simulation::Simulation & sim) const;
+    bool check(topology::Topology const & topo, simulation::Simulation & sim);
 
     //////////////////////////////////////////////////////////////////////
     // data
@@ -880,6 +880,16 @@ namespace configuration {
      */
     template<math::boundary_enum B> 
     void check_positions(int & error) const;
+    
+    /**
+     * check the positions for excluded atoms which are further away than
+     * the inner cut-off. As this exclusions are ignored, it is worth a check.
+     * See Gitlab issue #18.
+     * Pascal, Feb 2017
+     */
+    template<math::boundary_enum B> 
+    void check_excluded_positions(topology::Topology const & topo, 
+                                  simulation::Simulation & sim);
 
 
   }; // Configuration
