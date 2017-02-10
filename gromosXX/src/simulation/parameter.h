@@ -3417,6 +3417,24 @@ namespace simulation
       std::vector<std::pair<math::Matrix, math::Vec> > symmetry_operations;
     } /* symmetry restraints */symrest;
     
+    struct domdec_struct {
+      /**
+       * Constructor
+       * - no domain decomposition
+       */
+      domdec_struct():
+        enabled(false),
+        version(0) {}
+      /**
+       * switch on / off
+       */
+      bool enabled;
+      /**
+       * version number
+       */
+      int version;
+    } /* domain decomposition */ domdec;
+    
     /**
      A struct to mark parts of the code as "under development"
      */

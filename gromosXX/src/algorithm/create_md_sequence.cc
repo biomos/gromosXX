@@ -265,3 +265,219 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
 
 }
 
+
+
+int algorithm::create_md_sequence_dd(algorithm::Algorithm_Sequence &md_seq,
+                                     topology::Topology &topo,
+                                     simulation::Simulation & sim,
+                                     io::In_Topology &it,
+                                     std::ostream & os,
+                                     bool quiet) {
+  
+  // analyze trajectory:
+  // overwrite current configuration with trajectory data
+  if (sim.param().analyze.analyze) {
+    assert(false);
+    algorithm::Analyze_Step * as =
+        new algorithm::Analyze_Step(sim.param().analyze.trajectory);
+    md_seq.push_back(as);
+  }
+
+  // create a forcefield
+  interaction::Forcefield *ff = new interaction::Forcefield;
+  interaction::create_g96_forcefield(*ff, topo, sim, it, os, quiet);
+
+  //==================================================
+  // construct the md algorithm
+  //==================================================
+
+  if (sim.param().multigradient.multigradient) {
+    assert(false);
+    md_seq.push_back(new algorithm::Multi_Gradient());
+  }
+
+  // center of mass motion printing / removal
+  if (sim.param().centreofmass.skip_step ||
+      sim.param().print.centreofmass) {
+    assert(false);
+    algorithm::Remove_COM_Motion * rcom =
+        new algorithm::Remove_COM_Motion(os);
+
+    md_seq.push_back(rcom);
+  }
+
+  // add the lattice shift tracking 
+  if (sim.param().boundary.boundary != math::vacuum) {
+    md_seq.push_back(new algorithm::Lattice_Shift_Tracker());
+  }
+
+  // add the forcefield
+  md_seq.push_back(ff);
+
+  //add EDS
+  if (sim.param().eds.eds) {
+    assert(false);
+    md_seq.push_back(new algorithm::EDS());
+  }
+
+  // position constraints?
+  if (sim.param().posrest.posrest == 3) {
+    assert(false);
+    algorithm::Position_Constraints * pc = new algorithm::Position_Constraints;
+    md_seq.push_back(pc);
+  }
+
+  // monte-carlo steps?
+  if (sim.param().montecarlo.mc) {
+    assert(false);
+    algorithm::Monte_Carlo * mc = new algorithm::Monte_Carlo(ff);
+    md_seq.push_back(mc);
+  }
+
+  // energy minimisation or MD?
+  algorithm::Stochastic_Dynamics_Vel1 * sd_vel = NULL;
+  if (sim.param().minimise.ntem == 1) {
+    assert(false);
+    algorithm::Steepest_Descent * sd = new algorithm::Steepest_Descent;
+    md_seq.push_back(sd);
+  } else if (sim.param().analyze.analyze) {
+    assert(false);
+    md_seq.push_back(new algorithm::Analyze_Exchange);
+  } else {
+    // SD ?
+    if (sim.param().stochastic.sd) {
+      assert(false);
+      sd_vel = new algorithm::Stochastic_Dynamics_Vel1(sim.param());
+      md_seq.push_back(sd_vel);
+    }      // MD ?
+    else if (sim.param().integrate.method == simulation::integrate_leap_frog) {
+      if (sim.param().addecouple.adgr > 0) {
+        assert(false);
+        md_seq.push_back(new algorithm::Scaled_Leap_Frog_Velocity);
+      } else {
+        md_seq.push_back(new algorithm::Leap_Frog_Velocity);
+      }
+    }      // ??
+    else {
+      if (!quiet)
+        std::cout << "\tno integration (velocities) selected!\n";
+    }
+
+    // temperature scaling? -> has to be done before temperature calculation!!!
+    if (sim.param().multibath.couple) {
+
+      if (sim.param().stochastic.sd) {
+        io::messages.add("temperature coupling only of atoms with gamma=0 not implemented,"
+            " couples ALL ATOMS!",
+            "create_md_sequence",
+            io::message::warning);
+      }
+
+      if (sim.param().multibath.nosehoover == 0) {
+        algorithm::Berendsen_Thermostat * tcoup =
+            new algorithm::Berendsen_Thermostat;
+        md_seq.push_back(tcoup);
+      } else if (sim.param().multibath.nosehoover >= 1) {
+        assert(false);
+        algorithm::NoseHoover_Thermostat *tcoup =
+            new algorithm::NoseHoover_Thermostat;
+        md_seq.push_back(tcoup);
+      }
+    }
+
+    if (sim.param().stochastic.sd) {
+      assert(false);
+      //calculating the new position without the contribution form the random velocity
+      md_seq.push_back(new algorithm::Stochastic_Dynamics_Pos1);
+    } else if (sim.param().integrate.method == simulation::integrate_leap_frog) {
+      md_seq.push_back(new algorithm::Leap_Frog_Position);
+    } else {
+      if (!quiet)
+        std::cout << "\tno integration (position) selected!\n";
+    }
+  }
+
+  // CONSTRAINTS
+  create_constraints(md_seq, topo, sim, it);
+  if (sim.param().stochastic.sd) {
+    assert(false);
+    //getting the Velocities from the restraint conformation
+    md_seq.push_back(new algorithm::Stochastic_Dynamics_Vel2);
+  }
+
+  // temperature calculation (always!)
+  {
+    algorithm::Temperature_Calculation * tcalc =
+        new algorithm::Temperature_Calculation;
+
+    DEBUG(7, tcalc->name);
+    md_seq.push_back(tcalc);
+
+  }
+
+  // pressure calculation?
+  if (!quiet) {
+    io::print_PCOUPLE(os, sim.param().pcouple.calculate,
+        sim.param().pcouple.scale,
+        sim.param().pcouple.pres0,
+        sim.param().pcouple.compressibility,
+        sim.param().pcouple.tau,
+        sim.param().pcouple.virial,
+        sim.param().pcouple.x_semi,
+        sim.param().pcouple.y_semi,
+        sim.param().pcouple.z_semi);
+  }
+
+  if (sim.param().pcouple.calculate) {
+    assert(false);
+    algorithm::Pressure_Calculation * pcalc =
+        new algorithm::Pressure_Calculation;
+    md_seq.push_back(pcalc);
+
+    // coarse grain factor for pressure correction
+    double tot_factor = 0.0;
+    for (unsigned int i = 0; i < topo.num_atoms(); ++i)
+      tot_factor += topo.cg_factor(i);
+    topo.tot_cg_factor() = double(tot_factor) / double(topo.num_atoms());
+    DEBUG(10, "atoms = " << topo.num_atoms());
+    DEBUG(10, "coarse grain correction factor = " << topo.tot_cg_factor());
+  }
+
+  //  pressure scaling
+  if (sim.param().pcouple.scale != math::pcouple_off) {
+    assert(false);
+    algorithm::Berendsen_Barostat * pcoup =
+        new algorithm::Berendsen_Barostat;
+    md_seq.push_back(pcoup);
+  }
+
+  // slow growth
+  if (sim.param().perturbation.perturbation) {
+    assert(false);
+    if (sim.param().perturbation.dlamt) {
+      algorithm::Slow_Growth *sg =
+          new algorithm::Slow_Growth;
+      md_seq.push_back(sg);
+    }
+  }
+
+  // total energy calculation and energy average update
+  {
+    algorithm::Energy_Calculation * ec =
+        new algorithm::Energy_Calculation();
+    md_seq.push_back(ec);
+  }
+  if (sim.param().stochastic.sd) {
+    assert(false);
+    // getting the new positions including the contribution from the random velocity
+    md_seq.push_back(new algorithm::Stochastic_Dynamics_Pos2(sd_vel->rng(),
+        &sd_vel->random_vectors()));
+    //do the constraints again without changing the velocities
+    create_constraints(md_seq, topo, sim, it);
+
+  }
+
+
+  return 0;
+
+}

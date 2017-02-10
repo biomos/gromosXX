@@ -35,6 +35,14 @@ namespace algorithm
 			 io::In_Topology &it,
 			 std::ostream & os = std::cout,
 			 bool quiet = false);
+
+
+  int create_md_sequence_dd(algorithm::Algorithm_Sequence & md_seq,
+			 topology::Topology & topo,
+			 simulation::Simulation & sim,
+			 io::In_Topology &it,
+			 std::ostream & os = std::cout,
+			 bool quiet = false);
 }
 
 #endif

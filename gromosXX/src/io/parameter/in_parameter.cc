@@ -102,6 +102,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_MULTIGRADIENT(param);
   read_QMMM(param);
   read_SYMRES(param);
+  read_DOMDEC(param);
 
   read_known_unsupported_blocks();
 
@@ -5892,3 +5893,55 @@ void io::In_Parameter::read_SYMRES(simulation::Parameter & param,
   } // if block
 }
 
+/**
+ * @section domdec DOMDEC block
+ * @verbatim
+ * DOMDEC
+# ENABLE 0..1 enable domain decomposition
+#    0: Standard GROMOS (no domain decomposition)
+#    1: Enable domain decomposition (version 1)
+#
+# ENABLE
+       1
+END
+
+@endverbatim
+ */
+void io::In_Parameter::read_DOMDEC(simulation::Parameter & param,
+        std::ostream & os) {
+  DEBUG(8, "read DOMDEC");
+
+  std::vector<std::string> buffer;
+  std::string s;
+
+  buffer = m_block["DOMDEC"];
+
+  if (buffer.size()) {
+    block_read.insert("DOMDEC");
+    _lineStream.clear();
+    _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
+
+    int enable;
+    _lineStream >> enable;
+    if (_lineStream.fail()) {
+      io::messages.add("Bad line in DOMDEC block.",
+                    "In_Parameter", io::message::error);
+      return;
+    }
+
+    switch(enable) {
+      case 0:
+        param.domdec.enabled = false;
+        break;
+      case 1:
+        param.domdec.enabled = true;
+        param.domdec.version = 1;
+        break;
+      default:
+        param.domdec.enabled = false;
+        io::messages.add("DOMDEC block: ENABLE must be 0..1.",
+                    "In_Parameter", io::message::error);
+        return;
+    }
+  } // if block
+}

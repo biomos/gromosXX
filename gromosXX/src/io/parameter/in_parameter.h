@@ -347,6 +347,10 @@ namespace io {
      * read SYMRES block
      */
     void read_SYMRES(simulation::Parameter &param, std::ostream & os = std::cout);
+    /**
+     * read DOMDEC block
+     */
+    void read_DOMDEC(simulation::Parameter &param, std::ostream & os = std::cout);
   };
   
 } // io
