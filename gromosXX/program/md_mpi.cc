@@ -326,7 +326,7 @@ int main(int argc, char *argv[]){
     }
 
     // get shake and check whether we do it for solvent
-    bool do_shake = sim.param().system.nsm &&
+    bool do_shake = sim.param().constraint.solute.algorithm == simulation::constr_shake ||
       sim.param().constraint.solvent.algorithm == simulation::constr_shake;
 
     // for stochastic dynamics simulation we need to call SHAKE twice
