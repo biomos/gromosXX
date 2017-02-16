@@ -116,11 +116,13 @@ int algorithm::Shake::apply(topology::Topology & topo,
       std::cout << "SHAKE: exiting with error condition: E_SHAKE_FAILURE_SOLUTE "
               << "at step " << sim.steps() << std::endl;
       conf.special().shake_failure_occurred = true;
-      m_timer.stop();
+      if (!sim.mpi || m_rank == 0)
+        m_timer.stop();
       return E_SHAKE_FAILURE_SOLUTE;
     }
   }
 
+  int transfer_size=topo.num_atoms();
   if (!error && sim.param().system.nsm &&
           sim.param().constraint.solvent.algorithm == simulation::constr_shake) {
 
@@ -132,18 +134,23 @@ int algorithm::Shake::apply(topology::Topology & topo,
       std::cout << "SHAKE: exiting with error condition: E_SHAKE_FAILURE_SOLVENT "
               << "at step " << sim.steps() << std::endl;
       conf.special().shake_failure_occurred = true;
-      m_timer.stop();
+      if (!sim.mpi || m_rank == 0)
+        m_timer.stop();
       return E_SHAKE_FAILURE_SOLVENT;
     }
+  } else {
+    // sum up only solute positions in the next block, otherwise things will 
+    // go wrong, because all ranks still have all solvent positions
+    transfer_size=topo.num_solute_atoms();
   }
 #ifdef XXMPI
   if (sim.mpi) {
     if (m_rank == 0) {
       // Master 
       // reduce current positions, store them in new_pos and assign them to current positions
-      math::VArray new_pos(topo.num_atoms(), math::Vec(0.0));
+      math::VArray new_pos=pos;
       MPI::COMM_WORLD.Reduce(&pos(0)(0), &new_pos(0)(0),
-              pos.size() * 3, MPI::DOUBLE, MPI::SUM, 0);
+              transfer_size * 3, MPI::DOUBLE, MPI::SUM, 0);
       pos = new_pos;
 
       // reduce current virial tensor, store it in virial_new and reduce it to current tensor
@@ -153,22 +160,22 @@ int algorithm::Shake::apply(topology::Topology & topo,
       conf.old().virial_tensor = virial_new;
 
       // reduce current contraint force, store it in cons_force_new and reduce
-      //it to the current constraint force
-      math::VArray cons_force_new(topo.num_atoms(), math::Vec(0.0));
+      // it to the current constraint force
+      math::VArray cons_force_new=conf.old().constraint_force;
       MPI::COMM_WORLD.Reduce(&conf.old().constraint_force(0)(0), &cons_force_new(0)(0),
-              conf.old().constraint_force.size() * 3, MPI::DOUBLE, MPI::SUM, 0);
+              transfer_size * 3, MPI::DOUBLE, MPI::SUM, 0);
       conf.old().constraint_force = cons_force_new;
     } else {
       // slave
       // reduce pos
       MPI::COMM_WORLD.Reduce(&pos(0)(0), NULL,
-              pos.size() * 3, MPI::DOUBLE, MPI::SUM, 0);
+              transfer_size * 3, MPI::DOUBLE, MPI::SUM, 0);
       // reduce virial
       MPI::COMM_WORLD.Reduce(&conf.old().virial_tensor(0, 0), NULL,
               9, MPI::DOUBLE, MPI::SUM, 0);
       // reduce constraint force
       MPI::COMM_WORLD.Reduce(&conf.old().constraint_force(0)(0), NULL,
-              conf.old().constraint_force.size() * 3, MPI::DOUBLE, MPI::SUM, 0);
+              transfer_size * 3, MPI::DOUBLE, MPI::SUM, 0);
     }
   }
 #endif
@@ -269,6 +276,9 @@ int algorithm::Shake::init(topology::Topology & topo,
 
   std::vector<std::set<unsigned int> > affected_indices(m_size);
 
+if ((topo.solute().distance_constraints().size() &&
+          sim.param().constraint.solute.algorithm == simulation::constr_shake &&
+          sim.param().constraint.ntc > 1)) {
   const std::vector<topology::two_body_term_struct> & dist_constr = 
   topo.solute().distance_constraints();
   // assemble distance constraints into groups
@@ -282,6 +292,7 @@ int algorithm::Shake::init(topology::Topology & topo,
     affected_indices[group_id].insert(it->j);
 #endif
   }
+}
   if (sim.param().dihrest.dihrest == simulation::dihedral_constr) {
 	// assemble dihedral constraints into groups
     for(std::vector<topology::dihedral_restraint_struct>::const_iterator it =
