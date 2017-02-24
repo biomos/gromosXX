@@ -393,15 +393,13 @@ solute(topology::Topology const & topo,
   std::vector<bool> skip_now;
   std::vector<bool> skip_next;
   skip_next.assign(topo.solute().num_atoms(), true);
+  skip_now.assign(topo.solute().num_atoms(), false);
 
   int first = 0;
   error = 0;
   int my_error = error;
 
-
-  std::set<unsigned int> changed;
   const unsigned int group_id = m_rank;
-  skip_now.assign(topo.solute().num_atoms(), false);
   int num_iterations = 0;
   bool convergence = false;
   while (!convergence) {
@@ -465,7 +463,6 @@ solute(topology::Topology const & topo,
   // reduce errors
 #ifdef XXMPI
   if (sim.mpi) {
-    math::VArray & pos = conf.current().pos;
     MPI::COMM_WORLD.Allreduce(&my_error, &error, 1, MPI::INT, MPI::MAX);
   } else
   error = my_error;

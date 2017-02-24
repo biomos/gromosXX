@@ -84,6 +84,8 @@ int algorithm::Perturbed_Shake
 	
     // check whether we can skip this constraint
     if (skip_now[it->i] && skip_now[it->j]) continue;
+    if (topo.inverse_mass(first + it->i) == 0 &&
+            topo.inverse_mass(first + it->j) == 0) continue;
 
     DEBUG(10, "i: " << it->i << " j: " << it->j << " first: " << first);
 
@@ -125,8 +127,8 @@ int algorithm::Perturbed_Shake
       // the reference position
       const unsigned int atom_i = first+it->i;
       const unsigned int atom_j = first+it->j;
-      const math::Vec &ref_i = conf.old().pos(first+it->i);
-      const math::Vec &ref_j = conf.old().pos(first+it->j);
+      const math::Vec &ref_i = conf.old().pos(atom_i);
+      const math::Vec &ref_j = conf.old().pos(atom_j);
       
       math::Vec ref_r;
       periodicity.nearest_image(ref_i, ref_j, ref_r);
@@ -167,8 +169,8 @@ int algorithm::Perturbed_Shake
 	  
       // lagrange multiplier
       double lambda = diff / (sp * 2 *
-			      (1.0 / topo.mass()(atom_i) +
-			       1.0 / topo.mass()(atom_j) ));      
+			      (topo.inverse_mass()(atom_i) +
+			       topo.inverse_mass()(atom_j) ));      
 
       DEBUG(10, "lagrange multiplier " << lambda);
 
@@ -195,8 +197,8 @@ int algorithm::Perturbed_Shake
 
       // update positions
       ref_r *= lambda;
-      pos_i += ref_r / topo.mass()(first+it->i);
-      pos_j -= ref_r / topo.mass()(first+it->j);
+      pos_i += ref_r * topo.inverse_mass()(first+it->i);
+      pos_j -= ref_r * topo.inverse_mass()(first+it->j);
 	  
       convergence = false;
 
@@ -229,24 +231,23 @@ void algorithm::Perturbed_Shake
   // not bothering about submolecules...
 
   if (!sim.mpi || m_rank == 0)
-    m_timer.start();
+    m_timer.start("solute");
 
-  DEBUG(8, "\tshaking perturbed SOLUTE");
-  
-  const unsigned int num_atoms = topo.num_solute_atoms();  
+  DEBUG(8, "\tshaking perturbed SOLUTE"); 
   math::Periodicity<B> periodicity(conf.current().box);
   
+  const unsigned int num_atoms = topo.num_solute_atoms();   
   std::vector<bool> skip_now;
   std::vector<bool> skip_next;
-  int num_iterations = 0;
+  skip_next.assign(topo.solute().num_atoms(), true);
+  skip_now.assign(topo.solute().num_atoms(), false);
 
   int first = 0;
-
-  skip_now.assign(topo.solute().num_atoms(), false);
-  skip_next.assign(topo.solute().num_atoms(), true);
+  error = 0;
   
+  const unsigned int group_id = m_rank;
+  int num_iterations = 0;
   bool convergence = false;
-
   while(!convergence){
     DEBUG(9, "\titeration" << std::setw(10) << num_iterations);
 
@@ -267,7 +268,7 @@ void algorithm::Perturbed_Shake
 			 io::message::error);
 	std::cout << "Perturbed SHAKE failure in solute!" << std::endl;
 	error = E_SHAKE_FAILURE_SOLUTE;
-	return;
+	break;
       }
     }
     
@@ -287,7 +288,7 @@ void algorithm::Perturbed_Shake
 			 io::message::error);
 	std::cout << "SHAKE failure in solute!" << std::endl;
 	error = E_SHAKE_FAILURE_SOLUTE;
-	return;
+	break;
       }
     }
     
@@ -304,7 +305,7 @@ void algorithm::Perturbed_Shake
 			 io::message::error);
 	std::cout << "SHAKE failure in solute perturbed dihedral constraints!" << std::endl;
 	error = E_SHAKE_FAILURE_SOLUTE;
-	return;
+	break;
       }
 
       DEBUG(7, "SHAKE: dihedral constraints iteration");
@@ -316,7 +317,7 @@ void algorithm::Perturbed_Shake
 			 io::message::error);
 	std::cout << "SHAKE failure in solute dihedral constraints!" << std::endl;
 	error = E_SHAKE_FAILURE_SOLUTE;
-	return;
+	break;
       }
     }
 
@@ -328,7 +329,7 @@ void algorithm::Perturbed_Shake
 		       "Perturbed_Shake::solute",
 		       io::message::error);
       error = E_SHAKE_FAILURE_SOLUTE;
-      return;
+      break;
     }
 
     skip_now = skip_next;
@@ -344,9 +345,9 @@ void algorithm::Perturbed_Shake
   }
 
   if (!sim.mpi || m_rank == 0)
-    m_timer.stop();
+    m_timer.stop("solute");
 
-  error = 0;
+  //error = 0;
 
 } // solute
 
@@ -390,19 +391,50 @@ int algorithm::Perturbed_Shake
               topo, conf, sim,
               this->max_iterations(), error);
     }
-    
-    if (error){
+  }
+  
+  // broadcast eventual errors from master to slaves
+#ifdef XXMPI
+  if (sim.mpi) {
+    math::VArray & pos = conf.current().pos;
+    MPI::COMM_WORLD.Bcast(&error, 1, MPI::INT, 0);
+  } 
+#endif
+
+  if (error){
       std::cout << "SHAKE: exiting with error condition: E_SHAKE_FAILURE_SOLUTE "
       << "at step " << sim.steps() << std::endl;
       conf.special().shake_failure_occurred = true;
       m_timer.stop();
       return E_SHAKE_FAILURE_SOLUTE;
+  }
+  
+
+#ifdef XXMPI
+  math::VArray & pos = conf.current().pos;
+  if (sim.mpi) {
+    // broadcast current and old coordinates and pos.
+
+    MPI::COMM_WORLD.Bcast(&pos(0)(0), pos.size() * 3, MPI::DOUBLE, 0);
+    MPI::COMM_WORLD.Bcast(&conf.old().pos(0)(0), conf.old().pos.size() * 3, MPI::DOUBLE, 0);
+    MPI::COMM_WORLD.Bcast(&conf.current().box(0)(0), 9, MPI::DOUBLE, 0);
+
+    // set virial tensor and solute coordinates of slaves to zero
+    if (m_rank) { // slave
+      conf.old().virial_tensor = 0.0;
+      conf.old().constraint_force = 0.0;
+      
+    for(unsigned int i = 0; i <topo.num_solute_atoms(); ++i){
+      pos(i) = 0;
+    }
     }
   }
+#endif
 
   // solvent
-  if (sim.param().system.nsm &&
-      sim.param().constraint.solvent.algorithm == simulation::constr_shake){
+  bool do_shake_solv=sim.param().system.nsm &&
+      sim.param().constraint.solvent.algorithm == simulation::constr_shake;
+  if (do_shake_solv){
 
     DEBUG(8, "\twe need to shake SOLVENT");
     
@@ -417,6 +449,42 @@ int algorithm::Perturbed_Shake
     conf.special().shake_failure_occurred = true;
     return E_SHAKE_FAILURE_SOLVENT;
   }
+#ifdef XXMPI
+  if (sim.mpi && do_shake_solv) {
+    if (m_rank == 0) {
+      // Master 
+      // reduce current positions, store them in new_pos and assign them to current positions
+      math::VArray new_pos=pos;
+      MPI::COMM_WORLD.Reduce(&pos(0)(0), &new_pos(0)(0),
+              topo.num_atoms() * 3, MPI::DOUBLE, MPI::SUM, 0);
+      pos = new_pos;
+
+      // reduce current virial tensor, store it in virial_new and reduce it to current tensor
+      math::Matrix virial_new(0.0);
+      MPI::COMM_WORLD.Reduce(&conf.old().virial_tensor(0, 0), &virial_new(0, 0),
+              9, MPI::DOUBLE, MPI::SUM, 0);
+      conf.old().virial_tensor = virial_new;
+
+      // reduce current contraint force, store it in cons_force_new and reduce
+      // it to the current constraint force
+      math::VArray cons_force_new=conf.old().constraint_force;
+      MPI::COMM_WORLD.Reduce(&conf.old().constraint_force(0)(0), &cons_force_new(0)(0),
+              topo.num_atoms() * 3, MPI::DOUBLE, MPI::SUM, 0);
+      conf.old().constraint_force = cons_force_new;
+    } else {
+      // slave
+      // reduce pos
+      MPI::COMM_WORLD.Reduce(&pos(0)(0), NULL,
+              topo.num_atoms() * 3, MPI::DOUBLE, MPI::SUM, 0);
+      // reduce virial
+      MPI::COMM_WORLD.Reduce(&conf.old().virial_tensor(0, 0), NULL,
+              9, MPI::DOUBLE, MPI::SUM, 0);
+      // reduce constraint force
+      MPI::COMM_WORLD.Reduce(&conf.old().constraint_force(0)(0), NULL,
+              topo.num_atoms() * 3, MPI::DOUBLE, MPI::SUM, 0);
+    }
+  }
+#endif
   
   // shaken velocity:
   // stochastic dynamics, energy minimisation, analysis needs to shake without
