@@ -2414,7 +2414,8 @@ void io::In_Parameter::read_DISTANCEFIELD(simulation::Parameter &param,
 	      >> param.distancefield.smooth
               >> param.distancefield.r_l
 	      >> param.distancefield.write
-	      >> printgrid;
+	      >> printgrid
+              >> param.distancefield.protect;
 
   if (_lineStream.fail())
     io::messages.add("bad line in DISTANCEFIELD block",
@@ -2435,7 +2436,7 @@ void io::In_Parameter::read_DISTANCEFIELD(simulation::Parameter &param,
 		     "In_Parameter", io::message::error);
   }
   if (param.distancefield.proteincutoff < 0.0) {
-    io::messages.add("DISTANCEFIELD block: PROTEINCUTOFFmust be >= 0.0.",
+    io::messages.add("DISTANCEFIELD block: PROTEINCUTOFF must be >= 0.0.",
 		     "In_Parameter", io::message::error);
   }
   if (param.distancefield.update < 0) {
@@ -2452,6 +2453,11 @@ void io::In_Parameter::read_DISTANCEFIELD(simulation::Parameter &param,
   }
   if(printgrid==1) param.distancefield.printgrid = true;
   else param.distancefield.printgrid = false;
+
+  if (param.distancefield.protect < 0.0) {
+    io::messages.add("DISTANCEFIELD block: PROTECT must be >= 0.0.",
+		     "In_Parameter", io::message::error);
+  }
   
 } // DISTANCEFIELD
 

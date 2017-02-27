@@ -53,14 +53,6 @@ util::replica::replica(io::Argument _args, int cont, int _ID, int _rank) : ID(_I
     MPI_Abort(MPI_COMM_WORLD, E_INPUT_ERROR);
 #endif
   }
-
-  *os << "\nMESSAGES FROM INITIALISATION\n";
-  if (io::messages.display(*os) >= io::message::error) {
-    *os << "\nErrors during initialization!\n" << std::endl;
-#ifdef XXMPI
-    MPI_Abort(MPI_COMM_WORLD, E_INPUT_ERROR);
-#endif
-  }
   
   // set some variables
   maxSteps = sim.param().step.number_of_steps;
@@ -87,46 +79,46 @@ util::replica::replica(io::Argument _args, int cont, int _ID, int _rank) : ID(_I
   pos = (*it).second.find_last_of(".");
   (*it).second.insert(pos, tmp.str());
   
-  if (sim.param().write.position) {
+  if (sim.param().write.position && args.count("trc") > 0) {
     it = args.lower_bound("trc");
     pos = (*it).second.find_last_of(".");
     (*it).second.insert(pos, tmp.str());
   }
-  if (sim.param().write.energy) {
+  if (sim.param().write.energy && args.count("tre") > 0) {
     it = args.lower_bound("tre");
     pos = (*it).second.find_last_of(".");
     (*it).second.insert(pos, tmp.str());
   }
-  if (sim.param().write.free_energy) {
+  if (sim.param().write.free_energy && args.count("trg") > 0) {
     it = args.lower_bound("trg");
     pos = (*it).second.find_last_of(".");
     (*it).second.insert(pos, tmp.str());
   }
-  if (sim.param().write.velocity) {
+  if (sim.param().write.velocity && args.count("trv") > 0) {
     it = args.lower_bound("trv");
     pos = (*it).second.find_last_of(".");
     (*it).second.insert(pos, tmp.str());
   }
-  if (sim.param().polarise.write || sim.param().jvalue.write || sim.param().xrayrest.write
+  if ((sim.param().polarise.write || sim.param().jvalue.write || sim.param().xrayrest.write
           || sim.param().distanceres.write || sim.param().distancefield.write || sim.param().localelev.write
           || sim.param().electric.dip_write || sim.param().electric.cur_write
           || sim.param().addecouple.write || sim.param().nemd.write
-          || sim.param().orderparamrest.write || sim.param().print.monitor_dihedrals ) {
+          || sim.param().orderparamrest.write || sim.param().print.monitor_dihedrals ) && args.count("trs") > 0) {
     it = args.lower_bound("trs");
     pos = (*it).second.find_last_of(".");
     (*it).second.insert(pos, tmp.str());
   }
-  if (sim.param().write.force) {
+  if (sim.param().write.force && args.count("trf") > 0) {
     it = args.lower_bound("trf");
     pos = (*it).second.find_last_of(".");
     (*it).second.insert(pos, tmp.str());
   }
-  if (sim.param().write.block_average && sim.param().write.energy) {
+  if (sim.param().write.block_average && sim.param().write.energy && args.count("bae") > 0) {
     it = args.lower_bound("bae");
     pos = (*it).second.find_last_of(".");
     (*it).second.insert(pos, tmp.str());
   }
-  if (sim.param().write.block_average && sim.param().write.free_energy) {
+  if (sim.param().write.block_average && sim.param().write.free_energy && args.count("bag") > 0) {
     it = args.lower_bound("bag");
     pos = (*it).second.find_last_of(".");
     (*it).second.insert(pos, tmp.str());
@@ -138,6 +130,14 @@ util::replica::replica(io::Argument _args, int cont, int _ID, int _rank) : ID(_I
   traj->title(trajtitle.str());
 
   traj->init(args, sim.param());
+  
+  *os << "\nMESSAGES FROM INITIALISATION\n";
+  if (io::messages.display(*os) >= io::message::error) {
+    *os << "\nErrors during initialization!\n" << std::endl;
+#ifdef XXMPI
+    MPI_Abort(MPI_COMM_WORLD, E_INPUT_ERROR);
+#endif
+  }
 
   // random generator
   std::stringstream seed;
