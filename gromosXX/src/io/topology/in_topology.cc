@@ -347,8 +347,8 @@ io::In_Topology::read(topology::Topology& topo,
       int a_nr, r_nr, t, cg, n_ex, a_ex;
       double m, q;
       std::string s;
-      std::set<int> ex;
-      std::set<int> ex14;
+      topology::excl_cont_t::value_type ex;
+      topology::excl_cont_t::value_type ex14;
 
       for (n = 0; n < num; ++n) {
 

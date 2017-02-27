@@ -37,6 +37,17 @@ namespace interaction
 			    double & e_crf,
                             unsigned int eps = 0);
 
+    /**
+     * calculate the force and energy of an atom pair.
+     * New version (distance calculation in outer loop)
+     */
+    void lj_crf_interaction_2(double dist2,
+			    double c6, double c12,
+			    double q,
+			    double & force, double & e_lj,
+			    double & e_crf,
+                            unsigned int eps = 0);
+
      /**
      * calculate the force and energy of an atom pair.
      */
@@ -150,6 +161,16 @@ namespace interaction
      * get the coulomb constant
      */
     double crf() const;
+    
+    /**
+     * a constant.
+     */
+    double crf_2cut3i(int eps) const;
+    
+    /**
+     * a constant.
+     */
+    double crf_cut(int eps) const;
 
 
     /**

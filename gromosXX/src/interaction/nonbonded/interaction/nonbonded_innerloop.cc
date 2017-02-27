@@ -20,6 +20,46 @@
 
 template<typename t_nonbonded_spec>
 inline void
+interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop_2
+    (
+     topology::Topology & topo, 
+     unsigned int i,
+     unsigned int j,
+        const double dist2,
+        double &f,
+       double &e_lj, double &e_crf
+            ) {
+
+  switch (t_nonbonded_spec::interaction_func) {
+    case simulation::lj_crf_func:
+    {
+      const lj_parameter_struct & lj =
+              m_param->lj_parameter(topo.iac(i),
+              topo.iac(j));
+
+      DEBUG(11, "\tlj-parameter c6=" << lj.c6 << " c12=" << lj.c12);
+      DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));
+
+      lj_crf_interaction_2(dist2, lj.c6, lj.c12,
+              topo.charge(i) *
+              topo.charge(j),
+              f, e_lj, e_crf);
+      DEBUG(12, "f: " << f);
+      DEBUG(12, "e_lj: " << e_lj);
+      DEBUG(12, "e_crf: " << e_crf);
+
+      break;
+    }
+   
+    default:
+      io::messages.add("Nonbonded_Innerloop",
+              "interaction function not implemented (new version)",
+              io::message::critical);
+  }
+}
+
+template<typename t_nonbonded_spec>
+inline void
 interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop
 (
         topology::Topology & topo,
@@ -1261,7 +1301,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
   math::VArray &pos = conf.current().pos;
   math::VArray &force = storage.force;
 
-  std::set<int>::const_iterator it, to;
+  topology::excl_cont_t::value_type::const_iterator it, to;
   it = topo.exclusion(i).begin();
   to = topo.exclusion(i).end();
 

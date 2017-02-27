@@ -25,7 +25,8 @@ xxinclude_HEADERS =	solute.h\
 noinst_LTLIBRARIES = libgrotopology.la
 
 libgrotopology_la_SOURCES =	topology.cc\
-	topology_global.cc
+	topology_global.cc\
+	exclusions.cc
 
 libgrotopology_la_LIBADD =
 

@@ -13,6 +13,18 @@ namespace interaction {
 namespace algorithm
 {
   /**
+   * @struct ConstraintGroup
+   * grouped constraints
+   */
+  struct ConstraintGroup {
+    std::vector<topology::dihedral_restraint_struct> dihedral_restraints;
+    std::vector<topology::two_body_term_struct> distance_restraints;
+#ifdef XXMPI
+    std::vector<unsigned int> unaffected_indices;
+#endif
+  };
+
+  /**
    * @class Shake
    * implements the shake algorithm.
    */
@@ -106,6 +118,11 @@ namespace algorithm
      * the atoms that are involved in the contraints
      */
     std::set<unsigned int> m_constrained_atoms;
+
+    /**
+     * disjoined constrained groups
+     */
+    std::vector<ConstraintGroup> m_constraint_groups;
     /** 
      * rank and size for parallelization
      */
@@ -135,6 +152,7 @@ namespace algorithm
      bool & convergence,
      std::vector<bool> & skip_now,
      std::vector<bool> & skip_next,
+     std::vector<topology::dihedral_restraint_struct> const & dihedral_restraints,
      math::Periodicity<B> const & periodicity
      );
 
@@ -368,18 +386,21 @@ solute(topology::Topology const & topo,
   DEBUG(8, "\tshaking SOLUTE");
   math::Periodicity<B> periodicity(conf.current().box);
 
-  m_timer.start("solute");
+  if (!sim.mpi || m_rank == 0)
+    m_timer.start("solute");
 
   const unsigned int num_atoms = topo.num_solute_atoms();
   std::vector<bool> skip_now;
   std::vector<bool> skip_next;
-  int num_iterations = 0;
+  skip_next.assign(topo.solute().num_atoms(), true);
+  skip_now.assign(topo.solute().num_atoms(), false);
 
   int first = 0;
+  error = 0;
+  int my_error = error;
 
-  skip_now.assign(topo.solute().num_atoms(), false);
-  skip_next.assign(topo.solute().num_atoms(), true);
-
+  const unsigned int group_id = m_rank;
+  int num_iterations = 0;
   bool convergence = false;
   while (!convergence) {
     DEBUG(9, "\titeration" << std::setw(10) << num_iterations);
@@ -395,15 +416,15 @@ solute(topology::Topology const & topo,
 
       if (shake_iteration<B, V >
               (topo, conf, dist_convergence, first, skip_now, skip_next,
-              topo.solute().distance_constraints(), sim.time_step_size(),
+              m_constraint_groups[group_id].distance_restraints, sim.time_step_size(),
               periodicity)
               ) {
         io::messages.add("SHAKE error. vectors orthogonal",
                 "Shake::solute",
                 io::message::error);
         std::cout << "SHAKE failure in solute!" << std::endl;
-        error = E_SHAKE_FAILURE_SOLUTE;
-        return;
+        my_error = E_SHAKE_FAILURE_SOLUTE;
+        break;
       }
     }
 
@@ -414,14 +435,14 @@ solute(topology::Topology const & topo,
       DEBUG(7, "SHAKE: dihedral constraints iteration");
 
       if (dih_constr_iteration<B, V >
-              (topo, conf, sim, dih_convergence, skip_now, skip_next, periodicity)
+              (topo, conf, sim, dih_convergence, skip_now, skip_next, m_constraint_groups[group_id].dihedral_restraints, periodicity)
               ) {
         io::messages.add("SHAKE error: dihedral constraints",
                 "Shake::solute",
                 io::message::error);
         std::cout << "SHAKE failure in solute dihedral constraints!" << std::endl;
-        error = E_SHAKE_FAILURE_SOLUTE;
-        return;
+        my_error = E_SHAKE_FAILURE_SOLUTE;
+        break;
       }
     }
 
@@ -431,14 +452,23 @@ solute(topology::Topology const & topo,
       io::messages.add("SHAKE error. too many iterations",
               "Shake::solute",
               io::message::error);
-      error = E_SHAKE_FAILURE_SOLUTE;
-      return;
+      my_error = E_SHAKE_FAILURE_SOLUTE;
+      break;
     }
 
-    skip_now = skip_next;
+    std::swap(skip_next, skip_now);
     skip_next.assign(skip_next.size(), true);
-
   } // convergence?
+
+  // reduce errors
+#ifdef XXMPI
+  if (sim.mpi) {
+    MPI::COMM_WORLD.Allreduce(&my_error, &error, 1, MPI::INT, MPI::MAX);
+  } else
+  error = my_error;
+#else
+  error = my_error;
+#endif
 
   // constraint force
   const double dt2 = sim.time_step_size() * sim.time_step_size();
@@ -446,9 +476,10 @@ solute(topology::Topology const & topo,
     conf.old().constraint_force(i) *= 1 / dt2;
     DEBUG(5, "constraint_force " << math::v2s(conf.old().constraint_force(i)));
   }
-  error = 0;
+  // error = 0;
 
-  m_timer.stop("solute");
+  if (!sim.mpi || m_rank == 0)
+    m_timer.stop("solute");
 
 } // solute
 /**
@@ -480,26 +511,6 @@ void algorithm::Shake
   const unsigned int num_atoms = topo.num_atoms();
   math::Periodicity<B> periodicity(conf.current().box);
 
-#ifdef XXMPI
-  math::VArray & pos = conf.current().pos;
-  if (sim.mpi) {
-    // broadcast current and old coordinates and pos.
-
-    MPI::COMM_WORLD.Bcast(&pos(0)(0), pos.size() * 3, MPI::DOUBLE, 0);
-    MPI::COMM_WORLD.Bcast(&conf.old().pos(0)(0), conf.old().pos.size() * 3, MPI::DOUBLE, 0);
-    MPI::COMM_WORLD.Bcast(&conf.current().box(0)(0), 9, MPI::DOUBLE, 0);
-
-    // set virial tensor and solute coordinates of slaves to zero
-    if (m_rank) { // slave
-      conf.old().virial_tensor = 0.0;
-      conf.old().constraint_force = 0.0;
-      for (unsigned int i = 0; i < first; ++i) {
-        pos(i) = 0.0;
-      }
-    }
-  }
-#endif
-
   // for all solvents
   for (unsigned int i = 0; i < topo.num_solvents(); ++i) {
     const unsigned int num_solvent_atoms = topo.solvent(i).num_atoms();
@@ -508,6 +519,7 @@ void algorithm::Shake
             ++nm, first += num_solvent_atoms) {
 
 #ifdef XXMPI
+      math::VArray & pos = conf.current().pos;
       if (sim.mpi) {
         int stride = nm + m_rank;
         DEBUG(12, "rank: " << m_rank << " nm: " << nm << " stride: " << stride);
@@ -565,46 +577,16 @@ void algorithm::Shake
 
   } // solvents
 
-  // reduce everything
+  // reduce errors
 #ifdef XXMPI
   if (sim.mpi) {
     if (m_rank == 0) {
       // Master 
       // reduce the error to all processors
       MPI::COMM_WORLD.Allreduce(&my_error, &error, 1, MPI::INT, MPI::MAX);
-      //
-      // reduce current positions, store them in new_pos and assign them to current positions
-      math::VArray new_pos(topo.num_atoms(), math::Vec(0.0));
-      MPI::COMM_WORLD.Reduce(&pos(0)(0), &new_pos(0)(0),
-              pos.size() * 3, MPI::DOUBLE, MPI::SUM, 0);
-      pos = new_pos;
-
-      // reduce current virial tensor, store it in virial_new and reduce it to current tensor
-      math::Matrix virial_new(0.0);
-      MPI::COMM_WORLD.Reduce(&conf.old().virial_tensor(0, 0), &virial_new(0, 0),
-              9, MPI::DOUBLE, MPI::SUM, 0);
-      conf.old().virial_tensor = virial_new;
-
-      // reduce current contraint force, store it in cons_force_new and reduce
-      //it to the current constraint force
-      math::VArray cons_force_new(topo.num_atoms(), math::Vec(0.0));
-      MPI::COMM_WORLD.Reduce(&conf.old().constraint_force(0)(0), &cons_force_new(0)(0),
-              conf.old().constraint_force.size() * 3, MPI::DOUBLE, MPI::SUM, 0);
-      conf.old().constraint_force = cons_force_new;
     } else {
       // reduce the error to all processors
       MPI::COMM_WORLD.Allreduce(&my_error, &error, 1, MPI::INT, MPI::MAX);
-
-      // slave
-      // reduce pos
-      MPI::COMM_WORLD.Reduce(&pos(0)(0), NULL,
-              pos.size() * 3, MPI::DOUBLE, MPI::SUM, 0);
-      // reduce virial
-      MPI::COMM_WORLD.Reduce(&conf.old().virial_tensor(0, 0), NULL,
-              9, MPI::DOUBLE, MPI::SUM, 0);
-      // reduce constraint force
-      MPI::COMM_WORLD.Reduce(&conf.old().constraint_force(0)(0), NULL,
-              conf.old().constraint_force.size() * 3, MPI::DOUBLE, MPI::SUM, 0);
     }
   }
 #else

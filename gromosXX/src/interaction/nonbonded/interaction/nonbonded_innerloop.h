@@ -42,6 +42,19 @@ namespace interaction
      Storage & storage,
      math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity
             );
+    
+    /**
+     * (normal) interaction, new version (no virial calculation)
+     */
+    void lj_crf_innerloop_2
+    (
+     topology::Topology & topo, 
+     unsigned int i,
+     unsigned int j,
+     const double dist2,
+     double &f,
+     double &e_lj, double &e_crf
+    );
 
     /**
      * sasa adjustment
@@ -189,6 +202,21 @@ namespace interaction
      math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity,
      unsigned int eps = 0
      );
+
+    /**
+     * fast innerloop for SPC water model (new version)
+     */
+    void spc_innerloop
+    (
+     double &e_lj,
+     double &e_crf,
+     double dist6i,
+     double f[9],
+     double r2[9],
+     double r2i[9],
+     double ri[9],
+     unsigned int eps = 0
+     );
     
     /**
      * fast innerloop for SPC water model using tables (shortrange)
@@ -202,6 +230,17 @@ namespace interaction
      Storage & storage,
      math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity
      );
+
+    /**
+     * fast innerloop for SPC water model using tables (shortrange, new version)
+     */    
+    void shortrange_spc_table_innerloop
+    (
+     double &e_lj,
+     double &e_crf,
+     double f[9],
+     double r2[9]
+    );
     
     /**
      * fast innerloop for SPC water model using tables (longrange)
@@ -215,6 +254,17 @@ namespace interaction
      Storage & storage,
      math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity
      );
+    
+    /**
+     * fast innerloop for SPC water model using tables (longrange, new version)
+     */
+    void longrange_spc_table_innerloop
+    (
+     double &e_lj,
+     double &e_crf,
+     double f[9],
+     double r2[9]
+    );
     
     /**
      * @struct solvent_pair_parameters

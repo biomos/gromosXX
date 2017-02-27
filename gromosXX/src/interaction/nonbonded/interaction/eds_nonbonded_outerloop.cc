@@ -138,7 +138,7 @@ void interaction::Eds_Nonbonded_Outerloop
   Eds_Nonbonded_Innerloop<t_interaction_spec, t_perturbation_details> innerloop(m_param);
   innerloop.init(sim);
   
-  std::set<int>::const_iterator it, to;
+  topology::excl_cont_t::value_type::const_iterator it, to;
   
   std::map<unsigned int, topology::EDS_Perturbed_Atom>::const_iterator 
     mit=topo.eds_perturbed_solute().atoms().begin(), 

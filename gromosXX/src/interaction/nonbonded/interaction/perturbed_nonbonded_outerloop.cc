@@ -150,7 +150,7 @@ void interaction::Perturbed_Nonbonded_Outerloop
   // this is now (unfortunately) done in the innerloop, when we know which energy group we are in
   // innerloop.set_lambda(topo.lambda(), topo.lambda_exp());
   
-  std::set<int>::const_iterator it, to;
+  topology::excl_cont_t::value_type::const_iterator it, to;
   std::map<unsigned int, topology::Perturbed_Atom>::const_iterator 
     mit=topo.perturbed_solute().atoms().begin(), 
     mto=topo.perturbed_solute().atoms().end();

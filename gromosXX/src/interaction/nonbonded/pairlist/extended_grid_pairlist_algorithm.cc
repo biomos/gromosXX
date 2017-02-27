@@ -1098,21 +1098,7 @@ bool interaction::Extended_Grid_Pairlist_Algorithm
 ::excluded_solute_pair(topology::Topology & topo,
 		       unsigned int i, unsigned int j)
 {
-  assert(i<j);
   DEBUG(10,"\t\t\t\texcluded solute pair?");
-  std::set<int>::reverse_iterator
-    e = topo.all_exclusion(i).rbegin(),
-    e_to = topo.all_exclusion(i).rend();
-
-  for( ; e != e_to; ++e){
-    if (j > unsigned(*e)) break;
-    if (j == unsigned(*e)){
-    DEBUG(10, "\t\t\t\t\tsolute pair is excluded");
-      return true;
-    }
-      
-  }
-  DEBUG(10, "\t\t\t\t\tnot excluded solute pair");
-  return false;
+  return topo.all_exclusion(i).is_excluded(j);
 }
 

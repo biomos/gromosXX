@@ -164,8 +164,8 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
       m_gamma_k.push_back(topo.m_gamma_k[i]);
       m_cg_factor.push_back(topo.m_cg_factor[i]);
 
-      std::set<int> ex;
-      std::set<int>::const_iterator it = topo.m_exclusion[i].begin(),
+      topology::excl_cont_t::value_type ex;
+      topology::excl_cont_t::value_type::const_iterator it = topo.m_exclusion[i].begin(),
               to = topo.m_exclusion[i].end();
       for (; it != to; ++it)
         ex.insert(*it + num_solute * m);
@@ -304,7 +304,7 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
       perturbed_solute().atoms()[seq].exclusion().clear();
       perturbed_solute().atoms()[seq].one_four_pair().clear();
 
-      std::set<int>::const_iterator ex_it, ex_to;
+      topology::excl_cont_t::value_type::const_iterator ex_it, ex_to;
       ex_it = it->second.exclusion().begin();
       ex_to = it->second.exclusion().end();
       for (; ex_it != ex_to; ++ex_it)
@@ -530,7 +530,7 @@ void topology::Topology::init(simulation::Simulation const & sim,
 
       for (int at1 = m_chargegroup[cg1]; at1 < m_chargegroup[cg1 + 1]; ++at1) {
 
-        std::set<int>::iterator ex = m_all_exclusion[at1].begin(),
+              topology::excl_cont_t::value_type::const_iterator ex = m_all_exclusion[at1].begin(),
                 ex_to = m_all_exclusion[at1].end();
         for (; ex != ex_to; ++ex) {
 
@@ -775,8 +775,8 @@ void topology::Topology
 ::add_solute_atom(std::string name, int residue_nr,
         int iac, double mass,
         double charge, bool chargegroup,
-        std::set<int> exclusions,
-        std::set<int> one_four_pairs) {
+        topology::excl_cont_t::value_type exclusions,
+        topology::excl_cont_t::value_type one_four_pairs) {
 
   if (unsigned(m_mass.size()) < num_solute_atoms() + 1) {
     resize(num_solute_atoms() + 1);

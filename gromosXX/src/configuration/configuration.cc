@@ -581,12 +581,13 @@ namespace configuration
 }
 
 
-bool configuration::Configuration::check(topology::Topology const & topo, simulation::Simulation & sim) const {
+bool configuration::Configuration::check(topology::Topology const & topo, simulation::Simulation & sim) {
   int error = 0;
   
   // check the positions if nonbonded forces are computed
   if (sim.param().force.nonbonded_crf || sim.param().force.nonbonded_vdw) {
     SPLIT_MY_BOUNDARY(boundary_type, check_positions, error);
+    SPLIT_MY_BOUNDARY(boundary_type, check_excluded_positions, topo, sim);
   }
   
   return error == 0;
@@ -606,6 +607,86 @@ void configuration::Configuration::check_positions(int & error) const {
         std::ostringstream msg;
         msg << "Singularity: Atoms " << i+1 << " and " << j+1 << " at same position.";
         io::messages.add(msg.str(), "Configuration", io::message::error);
+      }
+    }
+  }
+}
+
+
+template<math::boundary_enum B> 
+void configuration::Configuration::check_excluded_positions(topology::Topology const & topo, simulation::Simulation & sim) {
+  math::Periodicity<B> periodicity(current().box);
+  const int num_solute = topo.num_solute_atoms();
+  const math::VArray & pos = current().pos;
+  math::Vec r;
+  const double cutoff_2 = sim.param().pairlist.cutoff_short * sim.param().pairlist.cutoff_short;
+  
+  if (sim.param().pairlist.atomic_cutoff) {
+    // loop over the solute atoms
+    for(int a1 = 0 ; a1 < num_solute; ++a1) {
+      for(int a2 = a1 + 1; a2 < num_solute; ++a2){
+        // check if they are outside the inner cut off
+        periodicity.nearest_image(pos(a1), pos(a2), r);
+        const double d2 = math::abs2(r);
+        if (d2 > cutoff_2) {
+          // if yes, check if they are excluded
+          if (topo.all_exclusion(a1).is_excluded(a2)) {
+            // if yes, issue warning!
+            std::ostringstream msg;
+            msg << "Warning: Atoms " << a1 << " and " << a2
+                << " are excluded, but they are further apart than the"
+                << " short cut-off radius distance. Any two atoms further"
+                << " apart than this distance interact fully.";
+            io::messages.add(msg.str(), "Configuration", io::message::warning);
+          }
+        }
+      } 
+    }
+      
+  } else {
+    // first put the chargegroups into the box
+    periodicity.put_chargegroups_into_box(*this, topo);
+
+    // calculate cg cog's
+    DEBUG(10, "calculating cg cog (" << topo.num_solute_chargegroups() << ")");
+    math::VArray cg_cog;
+    cg_cog.resize(topo.num_solute_chargegroups());
+
+    // calculate solute center of geometries
+    topology::Chargegroup_Iterator
+      cg1 =   topo.chargegroup_begin();
+    unsigned int i, num_cg = topo.num_solute_chargegroups();
+    
+    for(i=0; i < num_cg; ++cg1, ++i){
+      cg1.cog(pos, cg_cog(i));
+    }
+
+    // loop over the solute charge groups
+    int idx_cg1, idx_cg2;
+    for (idx_cg1 = 0; idx_cg1 < num_cg; idx_cg1++) {
+      for (idx_cg2 = idx_cg1 + 1; idx_cg2 < num_cg; idx_cg2++) {
+        // check if they are outside of inner cut off
+        periodicity.nearest_image(cg_cog(idx_cg1), cg_cog(idx_cg2), r);
+        const double d2 = math::abs2(r);
+        if (d2 > cutoff_2) {
+          // if yes, check if any of the atoms are excluded
+          for (int a1 = topo.chargegroup(idx_cg1), a1_to = topo.chargegroup(idx_cg1 + 1);
+                   a1 != a1_to; ++a1) {
+            for (int a2 = topo.chargegroup(idx_cg2), a2_to = topo.chargegroup(idx_cg2 + 1);
+                     a2 != a2_to; ++a2) {
+              if (topo.all_exclusion(a1).is_excluded(a2)) {
+                // if yes, issue warning!
+                std::ostringstream msg;
+                msg << "Warning: Atoms " << a1 << " and " << a2
+                    << " are excluded, but their respective charge groups "
+                    << idx_cg1 << " and " << idx_cg2 << " are further apart than the"
+                    << " short cut-off radius distance. Any two atoms whose charge"
+                    << " groups are further apart than this distance interact fully.";
+                io::messages.add(msg.str(), "Configuration", io::message::warning);
+              }
+            } // loop over atom of cg2
+          } // loop over atom of cg1
+        }
       }
     }
   }

@@ -250,7 +250,7 @@ int interaction::Nonbonded_Interaction::init(topology::Topology & topo,
       topology::Atom_Iterator a_it = m_it.begin(), a_start = m_it.begin(), a_end = m_it.end();
       DEBUG(10, "molecule from " << *a_start << " to " << *a_end);
       for(; a_it != a_end; ++a_it) {
-        std::set<int>::const_iterator ex_it = topo.exclusion(*a_it).begin(),
+        topology::excl_cont_t::value_type::const_iterator ex_it = topo.exclusion(*a_it).begin(),
                 ex_to = topo.exclusion(*a_it).end();
         for (; ex_it != ex_to; ++ex_it) {
           if (*ex_it < int(*a_start) || *ex_it >= int(*a_end)) {
@@ -259,7 +259,7 @@ int interaction::Nonbonded_Interaction::init(topology::Topology & topo,
             return 1;
           }
         } // for exclusions
-        std::set<int>::const_iterator of_it = topo.one_four_pair(*a_it).begin(),
+        topology::excl_cont_t::value_type::const_iterator of_it = topo.one_four_pair(*a_it).begin(),
                 of_to = topo.one_four_pair(*a_it).end();
         for (; of_it != of_to; ++of_it) {
           if (*of_it < int(*a_start) || *of_it >= int(*a_end)) {
