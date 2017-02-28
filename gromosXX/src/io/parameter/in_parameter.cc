@@ -2369,7 +2369,9 @@ DISTANCEFIELD
 #         1: apply distance field restraining
 #   GRID  > 0.0       grid size for distance field
 #   PROTEINOFFSET > 0 penalty for distances through the host
-#   PROTEINCUTOFF > 0 distance to protein atoms to be considered inside
+#   PROTEINCUTOFF > 0 distance to protein aitoms to be considered inside
+#   PROTECT >= 0      protect grid points within this radius around the zero-distance
+#                     point from being flagged as protein
 #   UPDATE > 0        update frequency for grid
 #   RL >= 0           linearize forces for distances larger than RL
 #   SMOOTH >= 0       smoothen the protein boundary after grid construction
@@ -2379,8 +2381,8 @@ DISTANCEFIELD
 #
 #   NTDFR  
         1
-#    GRID   PROTEINOFFSET  PROTEINCUTOFF
-      0.2   15             0.2         
+#    GRID   PROTEINOFFSET  PROTEINCUTOFF  PROTECT
+      0.2   15             0.2            0
 #  UPDATE   SMOOTH   RL    NTWDF   PRINTGRID
       100   1        1.0      50           0
 END  
@@ -2410,12 +2412,12 @@ void io::In_Parameter::read_DISTANCEFIELD(simulation::Parameter &param,
 	      >> param.distancefield.grid
 	      >> param.distancefield.proteinoffset
 	      >> param.distancefield.proteincutoff
+          >> param.distancefield.protect
 	      >> param.distancefield.update
 	      >> param.distancefield.smooth
               >> param.distancefield.r_l
 	      >> param.distancefield.write
-	      >> printgrid
-              >> param.distancefield.protect;
+	      >> printgrid;
 
   if (_lineStream.fail())
     io::messages.add("bad line in DISTANCEFIELD block",

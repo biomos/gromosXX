@@ -100,7 +100,6 @@ int _lincs(topology::Topology & topo,
 		  util::Algorithm_Timer & m_timer,
 		  unsigned int offset = 0)
 {
-  m_timer.start("solute");
   
   const unsigned int num_constr = unsigned(constr.size());
   math::VArray & old_pos = conf.old().pos;
@@ -183,8 +182,6 @@ int _lincs(topology::Topology & topo,
   if (count)
     std::cout << "LINCS:\ttoo much rotation in " << count << " cases!\n";
 
-  m_timer.stop("solute");
-
   return 0;
 }
 
@@ -233,9 +230,11 @@ int algorithm::Lincs::apply(topology::Topology & topo,
       sim.param().constraint.ntc > 1){
 
     DEBUG(8, "\twe need to lincs SOLUTE");
+    m_timer.start("solute");
     SPLIT_BOUNDARY(_lincs, topo, conf, sim, topo.solute().distance_constraints(),
 		   topo.solute().lincs(), parameter(),
 		   sim.param().constraint.solute.lincs_order, m_timer);
+    m_timer.stop("solute");
  
   }
 
