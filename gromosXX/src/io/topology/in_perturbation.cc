@@ -711,7 +711,7 @@ io::In_Perturbation::read(topology::Topology &topo,
           topo.perturbed_solute().atompairs().push_back(ap);
           
           // make sure it's excluded
-          if (topo.all_exclusion(i).insert(ap.j)){
+          if (topo.all_exclusion(ap.i).insert(ap.j)){
             DEBUG(7, "excluding perturbed pair " << ap.i << " and " << ap.j);
             
           }
@@ -733,7 +733,7 @@ io::In_Perturbation::read(topology::Topology &topo,
         }
         
         if (n != num){
-          io::messages.add("Wrong number of bonds in PERTATOMPAIR block.",
+          io::messages.add("Wrong number of pairs in PERTATOMPAIR block.",
                   "In_Perturbation", io::message::error);
         }
         else if (_lineStream.fail()){
