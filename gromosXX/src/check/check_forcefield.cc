@@ -663,6 +663,14 @@ int check::check_forcefield(topology::Topology & topo,
               ref["PerturbedQuarticBond"],
               0.0000000001, 0.001);
       total += check_lambda_derivative(topo, conf, sim, **it, 0.001, 0.001);
+    } else if ((*it)->name == "PerturbedSoftBond") {
+      if (ref.find((*it)->name) == ref.end())
+        continue;
+      total += check_interaction(topo, conf, sim, **it,
+              topo.num_solute_atoms(),
+              ref["PerturbedSoftBond"],
+              0.0000000001, 0.001);
+      total += check_lambda_derivative(topo, conf, sim, **it, 0.001, 0.001);
     } else if ((*it)->name == "Angle") {
       if (ref.find((*it)->name) == ref.end())
         continue;
@@ -678,6 +686,14 @@ int check::check_forcefield(topology::Topology & topo,
               ref["PerturbedAngle"],
               0.00000001, 0.001);
       total += check_lambda_derivative(topo, conf, sim, **it, 0.001, 0.001);
+    } else if ((*it)->name == "PerturbedSoftAngle") {
+      if (ref.find((*it)->name) == ref.end())
+        continue;
+      total += check_interaction(topo, conf, sim, **it,
+              topo.num_solute_atoms(),
+              ref["PerturbedSoftAngle"],
+              0.00000001, 0.001);
+      total += check_lambda_derivative(topo, conf, sim, **it, 0.001, 0.001);
     } else if ((*it)->name == "ImproperDihedral") {
       if (ref.find((*it)->name) == ref.end())
         continue;
@@ -691,6 +707,14 @@ int check::check_forcefield(topology::Topology & topo,
       total += check_interaction(topo, conf, sim, **it,
               topo.num_solute_atoms(),
               ref["PerturbedImproperDihedral"],
+              0.00000001, 0.001);
+      total += check_lambda_derivative(topo, conf, sim, **it, 0.001, 0.001);
+    } else if ((*it)->name == "PerturbedSoftImproper") {
+      if (ref.find((*it)->name) == ref.end())
+        continue;
+      total += check_interaction(topo, conf, sim, **it,
+              topo.num_solute_atoms(),
+              ref["PerturbedSoftImproper"],
               0.00000001, 0.001);
       total += check_lambda_derivative(topo, conf, sim, **it, 0.001, 0.001);
     } else if ((*it)->name == "Dihedral") {

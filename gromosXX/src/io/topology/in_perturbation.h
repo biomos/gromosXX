@@ -13,10 +13,13 @@
  * - @ref  pertatompair
  * - @ref  pertbondstretch
  * - @ref  pertbondstretchh
+ * - @ref  pertbondstretchsoft
  * - @ref  pertbondangle
  * - @ref  pertbondangleh
+ * - @ref  pertbondanglesoft
  * - @ref  pertimproperdih
  * - @ref  pertimproperdihh
+ * - @ref  pertimproperdihsoft
  * - @ref  pertproperdih
  * - @ref  pertproperdihh
  * - @ref  pertpolparam
@@ -36,7 +39,7 @@ SCALEDINTERACTIONS
 END
 @endverbatim
 
-@section pertatomparam PETATOMPARAM block
+@section pertatomparam PERTATOMPARAM block
 Perturbed atom information block
 @verbatim
 PERTATOMPARAM
@@ -91,6 +94,20 @@ PERTBONDSTRETCHH
 END
 @endverbatim
 
+@section pertbondstretchsoft PERTBONDSOFT block 
+Perturbed soft bonds 
+@verbatim 
+PERTBONDSOFT
+# number of perturbed soft bonds
+	2
+#   type:  0 .. bond type with K=0
+#   ALB:   softness parameter, 0 .. no softness
+#   atom(i) atom(j) bond_type(A) bond_type(B)  ALB
+       4       6           15	    0         1000
+       6      12           0       25         1000
+END
+@endverbatim
+
 @section pertbondangle PERTBONDANGLE block
 Perturbed bond angles NOT involving H-atoms
 @verbatim
@@ -117,6 +134,20 @@ PERTBONDANGLEH
 END
 @endverbatim
 
+@section pertbondanglesoft PERTANGLESOFT block
+Perturbed bond angles
+@verbatim
+PERTANGLESOFT
+# number of perturbed soft bond angles
+    2
+#   type:  0 .. angle type with K=0
+#   ALA:   softness parameter, 0 .. no softness
+#    atom(i) atom(j) atom(k) type(A) type(B)  ALA
+        4       6      12       0       7       4
+        3       8      10      26       0       4
+END
+@endverbatim
+
 @section pertimproperdih PERTIMPROPERDIH block
 Perturbed improper (harmonic) dihedrals NOT involving H-atoms
 @verbatim
@@ -138,6 +169,20 @@ PERTIMPROPERDIHH
 #    atom(i) atom(j) atom(k) atom(l)  type(A) type(B)
        12      13      10       6        1       2
        18      19      13      16        1       2
+END
+@endverbatim
+
+@section pertimproperdihsoft PERTIMPROPERDIHSOFT block
+Perturbed soft improper (harmonic) dihedrals
+@verbatim
+PERTIMPROPERDIHSOFT
+# number of perturbed soft improper dihedrals
+    2
+#   type:  0 .. imp. dih. angle type with K=0
+#   ALI:   softness parameter, 0 .. no softness
+#    atom(i) atom(j) atom(k) atom(l)  type(A) type(B)  ALI
+       12      13      10       6        1       0      4
+       18      19      13      16        0       2      4
 END
 @endverbatim
 

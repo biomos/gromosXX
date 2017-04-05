@@ -45,12 +45,15 @@
 #include "check_state.h"
 
 void hard_coded_values(std::map<std::string, double> & m){
-  m["QuarticBond"] = 18.055276;
+  m["QuarticBond"] = 18.053811;
   m["PerturbedQuarticBond"] = 1.149568;
-  m["Angle"] = 12.170290;
+  m["PerturbedSoftBond"] = 0.001281;
+  m["Angle"] = 11.870406;
   m["PerturbedAngle"] = 0.714818;
-  m["ImproperDihedral"] = 0.965060;
+  m["PerturbedSoftAngle"] = 0.262310;
+  m["ImproperDihedral"] = 0.809250;
   m["PerturbedImproperDihedral"] = 2.642780;
+  m["PerturbedSoftImproper"] = 0.136207;
   m["Dihedral"] = 2.255206;
   m["PerturbedDihedral"] = 13.314602;
   m["NonBonded_cg"] = -7.352312;

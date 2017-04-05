@@ -35,6 +35,96 @@ namespace topology
      * perturbed coarse grained bonds.
      */
     std::vector<perturbed_two_body_term_struct> & cgbonds() {return m_cgbond;}
+    
+    /**
+     * const perturbed soft bonds.
+     */
+    std::vector<perturbed_two_body_term_struct> const & softbonds()const {return m_softbond;}
+
+    /**
+     * perturbed soft bonds.
+     */
+    std::vector<perturbed_two_body_term_struct> & softbonds() {return m_softbond;}
+        
+    /**
+     * const perturbed soft angles.
+     */
+    std::vector<perturbed_three_body_term_struct> const & softangles()const {return m_softangle;}
+
+    /**
+     * perturbed soft angles.
+     */
+    std::vector<perturbed_three_body_term_struct> & softangles() {return m_softangle;}
+        
+    /**
+     * const perturbed soft improper dihedrals.
+     */
+    std::vector<perturbed_four_body_term_struct> const & softimpropers()const {return m_softimproper;}
+
+    /**
+     * perturbed soft improper dihedrals.
+     */
+    std::vector<perturbed_four_body_term_struct> & softimpropers() {return m_softimproper;}
+    
+    /**
+     * const perturbed soft bond softness parameter.
+     */
+    std::vector<double> const & alpha_bond()const {return m_alpha_bond;}
+
+    /**
+     * perturbed soft bond softness parameter.
+     */
+    std::vector<double> & alpha_bond() {return m_alpha_bond;}
+    
+    /**
+     * const perturbed soft angle softness parameter.
+     */
+    std::vector<double> const & alpha_angle()const {return m_alpha_angle;}
+
+    /**
+     * perturbed soft angle softness parameter.
+     */
+    std::vector<double> & alpha_angle() {return m_alpha_angle;}
+    
+    /**
+     * const perturbed soft improper dihedral softness parameter.
+     */
+    std::vector<double> const & alpha_improper()const {return m_alpha_improper;}
+
+    /**
+     * perturbed soft improper dihedral softness parameter.
+     */
+    std::vector<double> & alpha_improper() {return m_alpha_improper;}
+    
+    /**
+     * bond_types to be added to the ones in the read topology.
+     */
+    std::vector<int> const & soft_bond_types()const {return m_soft_bond_types;}
+    
+    /**
+     * bond_types to be added to the ones in the read topology.
+     */
+    std::vector<int> & soft_bond_types() {return m_soft_bond_types;}
+    
+    /**
+     * angle_types to be added to the ones in the read topology.
+     */
+    std::vector<int> const & soft_angle_types()const {return m_soft_angle_types;}
+    
+    /**
+     * angle_types to be added to the ones in the read topology.
+     */
+    std::vector<int> & soft_angle_types() {return m_soft_angle_types;}
+    
+    /**
+     * improper_types to be added to the ones in the read topology.
+     */
+    std::vector<int> const & soft_improper_types()const {return m_soft_improper_types;}
+    
+    /**
+     * improper_types to be added to the ones in the read topology.
+     */
+    std::vector<int> & soft_improper_types() {return m_soft_improper_types;}
 
     /**
      * const perturbed angles.
@@ -125,6 +215,52 @@ namespace topology
      * the perturbed coarse grained bonds.
      */
     std::vector<perturbed_two_body_term_struct> m_cgbond;
+    
+    /**
+     * the perturbed soft bonds.
+     */
+    std::vector<perturbed_two_body_term_struct> m_softbond;
+    
+    /**
+     * the perturbed soft angles.
+     */
+    std::vector<perturbed_three_body_term_struct> m_softangle;
+    
+    /**
+     * the perturbed soft improper dihedrals.
+     */
+    std::vector<perturbed_four_body_term_struct> m_softimproper;
+    
+    /**
+     * the perturbed soft bond softness parameters.
+     */
+    std::vector<double> m_alpha_bond;
+    
+    /**
+     * the perturbed soft angle softness parameters.
+     */
+    std::vector<double> m_alpha_angle;
+
+    /**
+     * the perturbed soft improper dihedral softness parameters.
+     */
+    std::vector<double> m_alpha_improper;
+    
+    /**
+     * bond types to be added for bonds that are made or broken using 
+     * the soft potential
+     */
+    std::vector<int> m_soft_bond_types;
+    
+    /**
+     * angle types to be added for angles that are destroyed
+     */
+    std::vector<int> m_soft_angle_types;
+    
+    /**
+     * improper types to be added for improper dihedrals that are destroyed
+     */
+    std::vector<int> m_soft_improper_types;
 
     /**
      * the perturbed angles.
