@@ -82,6 +82,12 @@ int io::check_parameter(simulation::Simulation & sim)
   // LAMBDAS block
   add("individual_lambdas", "individual lambdas", param.lambdas.individual_lambdas);
   
+  // ANITA
+  // add(key,description,bool(active))
+  // PRECALCLAM block
+  add("precalculate_lambdas","precalculate at other lambdas", param.precalclam.nr_lambdas > 0);
+  // end ANITA
+
   // FORCE block
   add("bond", "bond interaction", param.force.bond == 1);
   add("angle", "bond angle interaction", param.force.angle == 1);
@@ -3761,7 +3767,98 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("bsleus", "p3m");
   fc.unlock("bsleus", "xray");
   fc.unlock("bsleus", "force_groups");
+
+  // ANITA
+  fc.unlock("precalculate_lambdas", "solute");
+  fc.unlock("precalculate_lambdas", "solvent");
+  fc.unlock("precalculate_lambdas", "solvent_only");
+  fc.unlock("precalculate_lambdas", "steepest_descent");
+  fc.unlock("precalculate_lambdas", "solute_constraint_off");
+  fc.unlock("precalculate_lambdas", "solute_shake");
+  fc.unlock("precalculate_lambdas", "solute_lincs");
+  fc.unlock("precalculate_lambdas", "solute_flexshake");
+  fc.unlock("precalculate_lambdas", "solvent_constraint_off");
+  fc.unlock("precalculate_lambdas", "solvent_shake");
+  fc.unlock("precalculate_lambdas", "solvent_lincs");
+  fc.unlock("precalculate_lambdas", "solvent_settle");
+  fc.unlock("precalculate_lambdas", "pressure_calculation");
+  fc.unlock("precalculate_lambdas", "pressure_scale_berendsen");
+  fc.unlock("precalculate_lambdas", "virial_off");
+  fc.unlock("precalculate_lambdas", "virial_atomic");
+  fc.unlock("precalculate_lambdas", "virial_molecular");
+  fc.unlock("precalculate_lambdas", "vacuum");
+  fc.unlock("precalculate_lambdas", "pbc_r");
+  fc.unlock("precalculate_lambdas", "pbc_c");
+  fc.unlock("precalculate_lambdas", "pbc_t");
+  fc.unlock("precalculate_lambdas", "perturbation");
+//  fc.unlock("precalculate_lambdas", "perturbation_scaling");
+//  fc.unlock("precalculate_lambdas", "slow_growth");
+  fc.unlock("precalculate_lambdas", "individual_lambdas");
+  fc.unlock("precalculate_lambdas", "bond");
+  fc.unlock("precalculate_lambdas", "angle");
+  fc.unlock("precalculate_lambdas", "dihedral");
+  fc.unlock("precalculate_lambdas", "improper");
+  fc.unlock("precalculate_lambdas", "crf");
+  fc.unlock("precalculate_lambdas", "lj");
+  fc.unlock("precalculate_lambdas", "com_removal");
+  fc.unlock("precalculate_lambdas", "rf_excluded");
+  fc.unlock("precalculate_lambdas", "pairlist_standard");
+  fc.unlock("precalculate_lambdas", "pairlist_grid");
+  fc.unlock("precalculate_lambdas", "pairlist_gridcell");
+  fc.unlock("precalculate_lambdas", "cutoff_atomic");
+  fc.unlock("precalculate_lambdas", "cutoff_cg");
+//  fc.unlock("precalculate_lambdas", "cg_martini");
+//  fc.unlock("precalculate_lambdas", "cg_gromos");
+//  fc.unlock("precalculate_lambdas", "mixed_grain");
+  fc.unlock("precalculate_lambdas", "temp_berendsen");
+  fc.unlock("precalculate_lambdas", "temp_nosehoover");
+  fc.unlock("precalculate_lambdas", "temp_nosehoover_chains");
+  fc.unlock("precalculate_lambdas", "position_rest");
+  fc.unlock("precalculate_lambdas", "position_const");
+  fc.unlock("precalculate_lambdas", "position_const_scaled");
+  fc.unlock("precalculate_lambdas", "distance_rest");
+  fc.unlock("precalculate_lambdas", "distance_field");
+  fc.unlock("precalculate_lambdas", "dihedral_rest");
+  fc.unlock("precalculate_lambdas", "dihedral_const");
+  fc.unlock("precalculate_lambdas", "jvalue_rest");
+  fc.unlock("precalculate_lambdas", "rdc_rest");
+  fc.unlock("precalculate_lambdas", "perscale");
+  fc.unlock("precalculate_lambdas", "rottrans");
+  fc.unlock("precalculate_lambdas", "innerloop_method_off");
+  fc.unlock("precalculate_lambdas", "innerloop_method_generic");
+  fc.unlock("precalculate_lambdas", "innerloop_method_hardcode");
+  fc.unlock("precalculate_lambdas", "innerloop_method_table");
+//  fc.unlock("precalculate_lambdas", "innerloop_method_cuda");
+  fc.unlock("precalculate_lambdas", "innerloop_solvent_topology");
+  fc.unlock("precalculate_lambdas", "innerloop_solvent_spc");
+  fc.unlock("precalculate_lambdas", "repex_temp");
+  fc.unlock("precalculate_lambdas", "repex_lambda");
+//  fc.unlock("precalculate_lambdas", "multicell");
+  fc.unlock("precalculate_lambdas", "analysis");
+  fc.unlock("precalculate_lambdas", "no_integration");
+  fc.unlock("precalculate_lambdas", "stochdyn");
+  fc.unlock("precalculate_lambdas", "multistep");
+  fc.unlock("precalculate_lambdas", "multistep_boost");
+  fc.unlock("precalculate_lambdas", "montecarlo");
+//  fc.unlock("precalculate_lambdas", "polarisation_cos");
+//  fc.unlock("precalculate_lambdas", "polarisation_cos_damped");
+  fc.unlock("precalculate_lambdas", "sasa");
+  fc.unlock("precalculate_lambdas", "sasavol");
+  fc.unlock("precalculate_lambdas", "random_gromos");
+  fc.unlock("precalculate_lambdas", "random_gsl");
+//  fc.unlock("precalculate_lambdas", "eds");
+  fc.unlock("precalculate_lambdas", "parallel_mpi");
+  fc.unlock("precalculate_lambdas", "parallel_omp");
+  fc.unlock("precalculate_lambdas", "mult_energy_groups");
+//  fc.unlock("precalculate_lambdas", "ewald");
+//  fc.unlock("precalculate_lambdas", "p3m");
+  fc.unlock("precalculate_lambdas", "leus");
+  fc.unlock("precalculate_lambdas", "bsleus");
+  fc.unlock("precalculate_lambdas", "xray");
+//  fc.unlock("precalculate_lambdas", "force_groups");
   
+  // ANITA
+
   if (fc.check()) 
     return 0;
   

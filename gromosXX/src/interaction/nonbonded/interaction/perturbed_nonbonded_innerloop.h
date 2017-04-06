@@ -35,7 +35,9 @@ namespace interaction
      configuration::Configuration & conf,
      unsigned int i, unsigned int j,
      Storage &storage,
-     Periodicity_type const & periodicity
+     Periodicity_type const & periodicity,
+     // ANITA
+     simulation::Simulation & sim //
      );
 
     /**
@@ -45,7 +47,10 @@ namespace interaction
     void perturbed_one_four_interaction_innerloop
     (topology::Topology & topo, configuration::Configuration & conf,
      unsigned int i, unsigned int j,
-     Periodicity_type const & periodicity);
+     Periodicity_type const & periodicity,
+     // ANITA
+     simulation::Simulation & sim //
+     );
     
     /**
      * perturbed RF interaction (solute).
@@ -55,7 +60,10 @@ namespace interaction
     ( topology::Topology & topo,
       configuration::Configuration & conf,
       std::map<unsigned int, topology::Perturbed_Atom>::const_iterator const & mit,
-      Periodicity_type const & periodicity);
+      Periodicity_type const & periodicity,
+      // ANITA
+      simulation::Simulation & sim //
+    );
     
     /**
      * Calculation of the perturbed electric field (polarisation)

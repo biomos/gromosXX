@@ -108,7 +108,7 @@ configuration::Configuration::Configuration
   
   current().box = conf.current().box;
   old().box = conf.old().box;
-  
+ 
   current().energies = conf.current().energies;
   old().energies = conf.old().energies;
   current().averages = conf.current().averages;
@@ -300,12 +300,19 @@ void configuration::Configuration::init(topology::Topology const & topo,
   // resize the energy arrays
   const unsigned int num = unsigned(topo.energy_groups().size());
   const unsigned int numb = unsigned(param.multibath.multibath.size());
+  // ANITA
+  const unsigned int numl = unsigned(param.precalclam.nr_lambdas); //
   
   DEBUG(5, "number of energy groups: " << num 
-	<< "\nnumber of baths: " << numb);
+	<< "\nnumber of baths: " << numb
+        << "\nnumber of lambdas: " << numl); // ANITA
 
-  current().energies.resize(num, numb);
-  old().energies.resize(num, numb);
+  DEBUG(5, "ANITA resizing energies, configuration::init"); 
+  current().energies.resize(num, numb,numl);
+  old().energies.resize(num, numb,numl);
+
+//  current().energies.resize(num, numb);
+//  old().energies.resize(num, numb); // ANITA
   if (param.force.force_groups) {
     special().force_groups.resize(num, 
             std::vector<math::VArray>(num, math::VArray(
@@ -339,9 +346,14 @@ void configuration::Configuration::init(topology::Topology const & topo,
   current().energies.ewarn(param.ewarn.limit);
   old().energies.ewarn(param.ewarn.limit);
 
-  current().perturbed_energy_derivatives.resize(num, numb);
-  old().perturbed_energy_derivatives.resize(num, numb);
+  //ANITA
+//  current().perturbed_energy_derivatives.resize(num, numb);
+//  old().perturbed_energy_derivatives.resize(num, numb);
+  DEBUG(5, "ANITA resizing perturbed energies, configuration::init");
+  current().perturbed_energy_derivatives.resize(num, numb,numl);
+  old().perturbed_energy_derivatives.resize(num, numb,numl); //
 
+  DEBUG(5, "ANITA resizing averages , configuration::init");
   current().averages.resize(topo, *this, param);
   old().averages.resize(topo, *this, param);
 

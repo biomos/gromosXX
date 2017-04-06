@@ -93,6 +93,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_RANDOMNUMBERS(param);
   read_EDS(param);
   read_LAMBDAS(param); // needs to be called after FORCE
+  read_PRECALCLAM(param); // ANITA 
   read_LOCALELEV(param);
   read_BSLEUS(param);
   read_ELECTRIC(param);
@@ -1322,8 +1323,24 @@ COVALENTFORM
 # NTBDN: 0,1 controls torsional dihedral potential
 #        0: arbitrary phase shifts (default)
 #        1: phase shifts limited to 0 and 180 degrees.
+# PNTBBH: 0,1 controls perturbed bond-stretching potential
+#        0: quartic form (default)
+#        1: harmonic form
+#        2: new form // ANITA
+# PNTBAH: 0,1 controls perturbed bond-angle bending potential
+#        0: cosine-harmonic (default)
+#        1: harmonic
+# PNTBDN: 0,1 controls perturbed torsional dihedral potential
+#        0: arbitrary phase shifts (default)
+#        1: phase shifts limited to 0 and 180 degrees.
+# POWLAMB: >= 1 controls the lambda power dependence for the
+#          new perturbed bond stretching potential
 #   NTBBH    NTBAH    NTBDN
         0        0        0
+#  PNTBBH   PNTBAH   PNTBDN
+        2	 0	  0
+# POWLAMB
+       12
 END
 @endverbatim
  */
@@ -1345,15 +1362,19 @@ void io::In_Parameter::read_COVALENTFORM(simulation::Parameter &param,
   _lineStream.clear();
   _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
 
-  int bond, angle, dihedral;
+  int bond, angle, dihedral, pbond, pangle, pdihedral, powlamb;
 
   _lineStream >> bond
           >> angle
-          >> dihedral;
+          >> dihedral
+          >> pbond
+          >> pangle
+          >> pdihedral
+          >> powlamb;
 
-  if (bond != 0 && bond != 1) {
+  if (bond != 0 && bond != 1 ) {
     io::messages.add("COVALENTFORM block: NTBBH must be 0 (quartic) "
-            "or 1 (harmonic).",
+            "or 1 (harmonic) ",
             "In_Parameter", io::message::error);
   } else {
     if (param.force.bond != 0) {
@@ -1394,6 +1415,55 @@ void io::In_Parameter::read_COVALENTFORM(simulation::Parameter &param,
         default: param.force.dihedral = 1;
       }
     }
+  }
+
+  if (pbond != 0 && pbond != 1 && pbond != 2) {
+    io::messages.add("COVALENTFORM block: PNTBBH must be 0 (quartic) "
+            "or 1 (harmonic) or 2 (new)",
+            "In_Parameter", io::message::error);
+  } 
+  else if (pbond != bond && pbond != 2 ) {
+      io::messages.add("COVALENTFORM block: PNTBBH should be equal to "
+           "NTBBH, unless PNTBBH equals 2", 
+            "In_Parameter", io::message::error);
+  }
+  else if (pbond != bond && bond != 0){
+      io::messages.add("COVALENTFORM block: PNTBBH = 2 is only "
+           "implemented for NTBBH = 0",
+            "In_Parameter", io::message::error);
+  }
+     
+  else {
+    if (param.force.bond != 0) {
+      switch (pbond) {
+        case 2: param.force.pbond = 3;
+          break;
+        case 1: param.force.pbond = 2;
+          break;
+        case 0:
+        default: param.force.pbond = 1;
+      }
+    }
+  }
+
+  if ( pangle != angle ){
+    io::messages.add("COVALENTFORM block: PNTBAH != NTBAH "
+            "is not yet implemented", "In_Parameter",
+            io::message::error);
+  }
+
+  if (pdihedral != dihedral){
+    io::messages.add("COVALENTFORM block: PNTBDN != NTBDN "
+            "is not yet implemented", "In_Parameter",
+            io::message::error);
+  }
+
+  if (powlamb < 1){
+    io::messages.add("COVALENTFORM block: POWLAMB must be "
+           " larger than 0", "In_Parameter", io::message::error);
+  }
+  else {
+    param.force.powlamb = powlamb;
   }
 }
 
@@ -4440,6 +4510,59 @@ void io::In_Parameter::read_LAMBDAS(simulation::Parameter & param,
     }
   }
 }
+
+/** ANITA
+ * @section PRECALCLAM PRECALCLAM block
+ * @verbatim
+PRECALCLAM
+# NRLAM   0  : off
+#         >1 : precalculating energies for NRLAM extra lambda values
+# MINLAM  between 0 and 1: minimum lambda value to precalculate energies
+# MAXLAM  between MINLAM and 1: maximum lambda value to precalculate energies 
+# NRLAM	  MINLAM   MAXLAM
+   100      0.0        1.0
+END
+@endverbatim
+ */
+void io::In_Parameter::read_PRECALCLAM(simulation::Parameter & param,
+        std::ostream & os) {
+  DEBUG(8, "read PRECALCLAM");
+  std::vector<std::string> buffer;
+  std::string s;
+
+  buffer = m_block["PRECALCLAM"];
+
+  if (buffer.size()) {
+
+    block_read.insert("PRECALCLAM");
+
+    _lineStream.clear();
+    _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
+
+// TODO: make sure that nr_lambdas is an integer
+    _lineStream >> param.precalclam.nr_lambdas
+          >> param.precalclam.min_lam
+          >> param.precalclam.max_lam;
+
+    if (_lineStream.fail())
+      io::messages.add("bad line in PRECALCLAM block", "In_Parameter", io::message::error);
+ 
+    if (param.precalclam.nr_lambdas < 0 )
+      io::messages.add("PRECALCLAM block: Negative nr of lambdas is not allowed",
+            "In_Parameter", io::message::error);
+    if (param.precalclam.min_lam >= param.precalclam.max_lam)
+      io::messages.add("PRECALCLAM block: MINLAM should be smaller than MAXLAM",
+            "In_Parameter", io::message::error);
+    if (param.perturbation.perturbation == false && param.precalclam.nr_lambdas > 0)
+    io::messages.add("PRECALCLAM cannot be on without perturbation",
+            "In_Parameter", io::message::error);
+    if (param.write.energy == 0 || param.write.free_energy ==0 || 
+        param.write.energy != param.write.free_energy)
+      io::messages.add("PRECALCLAM requires NTWE=NTWG > 0", 
+            "In_Parameter", io::message::error);
+  }
+
+} //ANITA
 
 /**
  * @section nonbonded NONBONDED block

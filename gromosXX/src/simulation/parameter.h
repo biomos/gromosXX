@@ -1300,12 +1300,14 @@ namespace simulation
        * - special_loop -1
        * - interaction function lj_crf_func
        * - force_groups false
+       * - pbond 1
+       * - powlamb 1
        */
       force_struct() : bond(1), angle(1), improper(1),
 		       dihedral(1), crossdihedral(1), nonbonded_vdw(1),
 		       nonbonded_crf(1), special_loop(special_loop_off),
 		       interaction_function(lj_crf_func),
-		       force_groups(false)
+		       force_groups(false), pbond(1), powlamb(1)
       {}
       
       /**
@@ -1352,7 +1354,14 @@ namespace simulation
        * use energy groups also for forces
        */
       bool force_groups;
-      
+      /**
+       * perturbed bond stretching form
+       */
+      int pbond;
+      /** 
+       * lambda dependency new bond stretching term
+       */
+      int powlamb;
     } /** Force(field) parameters */ force;
 
 #ifdef HAVE_HOOMD
@@ -2481,6 +2490,42 @@ namespace simulation
       std::vector< std::vector< std::vector < double > > > e;
 
     } /** lambdas struct */ lambdas;
+
+
+    /**
+     * ANITA
+     * @struct precalclam_struct
+     * pre-calculate energies for other lambda values
+     */
+    struct precalclam_struct
+    {
+      /**
+       * constructor
+       * default values:
+       * - nr_lambdas (0)
+       * - min_lam (0.0)
+       * - max_lam (1.0)
+       */
+      precalclam_struct() : nr_lambdas(0),
+                          min_lam(0.0),
+                          max_lam(1.0)
+      {
+      }
+      /** 
+       * calculate nr_lambdas extra lambda points 
+       */
+       int nr_lambdas;
+      /** 
+       * starting from lambda 
+       */
+       double min_lam;
+      /** 
+       * up to lambda 
+       */
+       double max_lam;
+
+    } /** precalculate lambdas struct */ precalclam;
+    // END ANITA
  
     struct stochastic_struct
     {

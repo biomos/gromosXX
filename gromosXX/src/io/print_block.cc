@@ -532,7 +532,71 @@ namespace io
       }
       os << "\n";
     }
+
+    // ANITA 
+    // print A_e_lj, B_e_lj, A_e_crf, B_e_crf for the lambda at which
+    // we are simulating
+/*    double lambda_step = (simulation::Parameter().precalclam.max_lam -
+             simulation::Parameter().precalclam.min_lam) /
+             (simulation::Parameter().precalclam.nr_lambdas-1);
+    os << std::setw(20) << "lambda_step: " << lambda_step << "\n";
+    double lambda_s = simulation::Parameter().perturbation.lambda;
+    unsigned int lambda_index = (lambda_s - simulation::Parameter().precalclam.min_lam) /
+                    lambda_step;
+    os << "\n" << "\n";
+    os << std::setw(20) << "lambda_s: " << lambda_s << "\n";
+    os << std::setw(20) << "lambda_index: " << lambda_index << "\n";
+    os << std::setw(20) << type + "A_e_lj (lambda_s)";
+    for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << energroup[i];
+    os << "\n";
+    for(unsigned int j=0; j < numenergygroups; j++) {
+      os << std::setw(20) << energroup[j];
+      for(unsigned int i=0; i<j; i++) os << std::setw(12) << " ";
+      for(unsigned int i=j; i < numenergygroups; i++){
+        os << std::setw(12) << e.A_lj_energy[lambda_index][i][j];
+      }
+      os << "\n";
+    }
+
+    os << "\n" << "\n";
+    os << std::setw(20) << type + "B_e_lj (lambda_s)";
+    for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << energroup[i];
+    os << "\n";
+    for(unsigned int j=0; j < numenergygroups; j++) {
+      os << std::setw(20) << energroup[j];
+      for(unsigned int i=0; i<j; i++) os << std::setw(12) << " ";
+      for(unsigned int i=j; i < numenergygroups; i++){
+        os << std::setw(12) << e.B_lj_energy[lambda_index][i][j];
+      }
+      os << "\n";
+    }
+
+    os << "\n" << "\n";
+    os << std::setw(20) << type + "A_e_crf (lambda_s)";
+    for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << energroup[i];
+    os << "\n";
+    for(unsigned int j=0; j < numenergygroups; j++) {
+      os << std::setw(20) << energroup[j];
+      for(unsigned int i=0; i<j; i++) os << std::setw(12) << " ";
+      for(unsigned int i=j; i < numenergygroups; i++){
+        os << std::setw(12) << e.A_crf_energy[lambda_index][i][j];
+      }
+      os << "\n";
+    }
     
+    os << "\n" << "\n";
+    os << std::setw(20) << type + "B_e_crf (lambda_s)";
+    for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << energroup[i];
+    os << "\n";
+    for(unsigned int j=0; j < numenergygroups; j++) {
+      os << std::setw(20) << energroup[j];
+      for(unsigned int i=0; i<j; i++) os << std::setw(12) << " ";
+      for(unsigned int i=j; i < numenergygroups; i++){
+        os << std::setw(12) << e.B_crf_energy[lambda_index][i][j];
+      }
+      os << "\n";
+    }//ANITA
+*/    
     os << "\n" << std::setw(20) << type + "LS (real)";
     
     for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << energroup[i];
@@ -595,6 +659,7 @@ namespace io
 
     os << "\n" << std::setw(20) << type + "RDCrest";
     for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << e.rdc_energy[i];
+
 
     os << "\nEND\n";
     

@@ -2886,6 +2886,40 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
   }
 
   // write eds energies (vr,{V_i}) here
+
+  // ANITA
+  // write precalculate energies for all lambda values
+  DEBUG(5,"ANITA writing precalc data");
+  DEBUG(5,"ANITA nr lambdas: " << e.A_lj_total.size());
+  os << "# precalclam\n";
+  os << "# nr_lambdas\n";
+  const unsigned int nr_lambdas = e.A_lj_total.size();
+  os << nr_lambdas << "\n";
+  os << std::setw(18) << "# A_e_lj" << std::setw(18)
+        << "B_e_lj" << std::setw(18) << "A_e_crf" 
+        << std::setw(18) << "B_e_crf" << std::setw(18)
+        << "AB_kinetic" << std::setw(18) << "AB_bond" 
+        << std::setw(18) << "AB_angle" << std::setw(18)
+        << "AB_improper\n"; /*<< std::setw(18) << /"AB_dihedral\n";*/
+         
+  for (unsigned i = 0; i < nr_lambdas; i++) {
+    os << std::setw(18) << e.A_lj_total[i]
+       << std::setw(18) << e.B_lj_total[i]
+       << std::setw(18) << e.A_crf_total[i]
+       << std::setw(18) << e.B_crf_total[i]
+       << std::setw(18) << e.AB_kinetic[i]
+       << std::setw(18) << e.AB_bond[i]
+       << std::setw(18) << e.AB_angle[i]
+       << std::setw(18) << e.AB_improper[i]
+       //<< std::setw(18) << e.AB_dihedral[i]
+       << "\n";
+  }
+  os << "# ABdih\n";
+  os << std::setw(18) << "# A_dihedral"
+     << std::setw(18) << "B_dihedral\n";
+  os << std::setw(18) << e.A_dihedral
+     << std::setw(18) << e.B_dihedral << "\n";
+ // ANITA
 }
 
 static void _print_volumepressurered_helper(std::ostream &os,

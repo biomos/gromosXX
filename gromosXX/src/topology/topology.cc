@@ -1267,6 +1267,7 @@ topology::Topology::update_for_lambda() {
       }
     }
   }
+
   // update the masses using the correct lambda
   for (std::map<unsigned int, topology::Perturbed_Atom>::const_iterator
     it = perturbed_solute().atoms().begin(),

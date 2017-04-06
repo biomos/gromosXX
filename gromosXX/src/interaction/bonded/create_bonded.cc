@@ -32,6 +32,7 @@
 #include "../../interaction/bonded/perturbed_improper_dihedral_interaction.h"
 #include "../../interaction/bonded/perturbed_dihedral_interaction.h"
 #include "../../interaction/bonded/perturbed_dihedral_new_interaction.h"
+#include "../../interaction/bonded/perturbed_new_bond_interaction.h"
 
 // #include "../../io/instream.h"
 #include "../../io/ifp.h"
@@ -62,14 +63,26 @@ int interaction::create_g96_bonded(interaction::Forcefield & ff,
     it.read_g96_bonds(b->parameter());
     ff.push_back(b);
 
-    if (param.perturbation.perturbation) {
-      if (!quiet)
-        os << "\tperturbed quartic bond interaction\n";
+    if (param.perturbation.perturbation){
+      if (param.force.pbond == 1){
+        if (!quiet)
+          os << "\tperturbed quartic bond interaction\n";
 
-      interaction::Perturbed_Quartic_Bond_Interaction * pb =
-        new interaction::Perturbed_Quartic_Bond_Interaction(*b);
-      ff.push_back(pb);
+        interaction::Perturbed_Quartic_Bond_Interaction * pb =
+            new interaction::Perturbed_Quartic_Bond_Interaction(*b);
+        ff.push_back(pb);
+      }
+      else if (param.force.pbond == 3){
+        if (!quiet)
+          os << "\tperturbed new bond interaction\n";
+
+        os << "\tpowlamb: " << param.force.powlamb << "\n";
+        interaction::Perturbed_New_Bond_Interaction * pb =
+            new interaction::Perturbed_New_Bond_Interaction(*b);
+        ff.push_back(pb);
+      }
     }
+
   } else if (param.force.bond == 2) {
     if (!quiet)
       os << "\tharmonic bond interaction\n";
@@ -83,15 +96,17 @@ int interaction::create_g96_bonded(interaction::Forcefield & ff,
     io::messages.add("using harmonic bond potential",
                      "create bonded", io::message::notice);
 
-    if (param.perturbation.perturbation) {
-      if (!quiet)
-        os << "\tperturbed harmonic bond interaction\n";
+    if (param.perturbation.perturbation){
+      if (param.force.pbond == 2){
+        if (!quiet)
+          os << "\tperturbed harmonic bond interaction\n";
 
-      interaction::Perturbed_Harmonic_Bond_Interaction * pb =
-        new interaction::Perturbed_Harmonic_Bond_Interaction(*b);
-      ff.push_back(pb);
-    }
-  } 
+        interaction::Perturbed_Harmonic_Bond_Interaction * pb =
+            new interaction::Perturbed_Harmonic_Bond_Interaction(*b);
+        ff.push_back(pb);
+      }
+    } 
+  }
 
   if (param.cgrain.level > 1) {
     if (!quiet)

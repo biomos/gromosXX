@@ -49,7 +49,6 @@ int algorithm::Energy_Calculation::apply
  simulation::Simulation &sim
  )
 {
-
   // update the energies
   if (conf.old().energies.calculate_totals()){
     std::cout << "\nError during MD run : energies are NaN!\n"

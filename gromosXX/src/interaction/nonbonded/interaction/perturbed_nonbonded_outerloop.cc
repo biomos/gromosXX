@@ -110,8 +110,10 @@ void interaction::Perturbed_Nonbonded_Outerloop
       
       DEBUG(10, "\tperturbed nonbonded_interaction: i "
 	    << i << " j " << *j_it);
-      
-      innerloop.perturbed_lj_crf_innerloop(topo, conf, i, *j_it, storage, periodicity);
+     // ANITA 
+     // include sim such that we can decide if extendedTI is required 
+     // innerloop.perturbed_lj_crf_innerloop(topo, conf, i, *j_it, storage, periodicity);
+      innerloop.perturbed_lj_crf_innerloop(topo, conf, i, *j_it, storage, periodicity, sim);
     }
     
   }
@@ -162,7 +164,7 @@ void interaction::Perturbed_Nonbonded_Outerloop
     for( ; it != to; ++it){
 
       innerloop.perturbed_one_four_interaction_innerloop
-	(topo, conf, mit->second.sequence_number(), *it, periodicity);
+	(topo, conf, mit->second.sequence_number(), *it, periodicity, sim); // ANITA: include sim
 
     } // loop over 1,4 pairs
   } // loop over solute atoms
@@ -208,7 +210,7 @@ void interaction::Perturbed_Nonbonded_Outerloop
 	<< unsigned(topo.perturbed_solute().atoms().size()));
   
   for(; mit!=mto; ++mit){
-    innerloop.perturbed_RF_excluded_interaction_innerloop(topo, conf, mit, periodicity);
+    innerloop.perturbed_RF_excluded_interaction_innerloop(topo, conf, mit, periodicity, sim); //ANITA
   }
 }
 

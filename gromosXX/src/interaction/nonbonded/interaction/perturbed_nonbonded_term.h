@@ -45,6 +45,22 @@ namespace interaction
                                  unsigned int eps = 0);
     
     /**
+     * ####### ANITA ############ 
+     * precalculate the energy and dh/dl of an atom pair for other lambda points.
+     */
+    void lj_crf_soft_interaction_ext(math::Vec const &r,
+                                 double const A_c6, double const A_c12,
+                                 double const B_c6, double const B_c12,
+                                 double const A_q, double const B_q,
+                                 double const alpha_lj, double const alpha_crf,
+                                 double &A_e_lj, double &B_e_lj,
+                                 double &A_e_crf, double &B_e_crf,
+                                 double &A_de_lj, double &B_de_lj,
+                                 double &A_de_crf, double &B_de_crf,
+                                 double const lam = 0.0, unsigned int eps = 0);
+
+
+    /**
      * calculate the force, energy and dh/dl of an atom pair. for polarisation
      */
     void pol_lj_crf_soft_interaction(math::Vec const &r, math::Vec const &rp1,
@@ -104,6 +120,17 @@ namespace interaction
 			     double & de_rf,
 			     bool selfterm_correction = false,
                              unsigned int eps = 0);
+
+    //ANITA
+    /**
+     * calculate the reaction field force and energy
+     * of a perturbed atom pair (for precalclam)
+     */
+    void rf_soft_interaction_ext(math::Vec const &r, double const A_q, 
+                                 double const B_q, double const alpha_crf, 
+                                 double & A_e_rf, double & B_e_rf,
+                                 double & A_de_rf, double & B_de_rf, 
+                                 double const crfs_lambda, unsigned int eps=0);
     /**
      * calculate the reaction field force and energy
      * of a perturbed atom pair (with polarisation)

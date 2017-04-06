@@ -62,8 +62,8 @@ namespace algorithm
      std::vector<topology::perturbed_two_body_term_struct>
      const & constr,
      double dt,
-     math::Periodicity<B> const & periodicity
-     );
+     math::Periodicity<B> const & periodicity,
+     simulation::Simulation & sim); //ANITA
 
     /**
      * do a perturbed dihedral constraint iteration
@@ -86,9 +86,10 @@ namespace algorithm
     template<math::boundary_enum B, math::virial_enum V>
     void perturbed_solute(topology::Topology const & topo,
 			  configuration::Configuration & conf,
-			  simulation::Simulation const & sim,
+			  simulation::Simulation & sim,
 			  int max_iterations,
 			  int & error);
+  // ANITA		  simulation::Simulation const & sim,
     
     // overwrites the other one, as g++ seems unable to compile this...!!!
     // seems to work with gcc 4.1 (by Clara & Nathan)

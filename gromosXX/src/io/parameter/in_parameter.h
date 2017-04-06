@@ -299,6 +299,11 @@ namespace io {
      */
     void read_LAMBDAS(simulation::Parameter &param, std::ostream & os = std::cout);
     
+    /** ANITA
+     * read PRECALCLAM block.
+     */
+    void read_PRECALCLAM(simulation::Parameter &param, std::ostream & os = std::cout);
+
     /**
      * read blocks that are either g96 or promd specific and tell user what to do
      */
