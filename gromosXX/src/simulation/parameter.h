@@ -1300,14 +1300,12 @@ namespace simulation
        * - special_loop -1
        * - interaction function lj_crf_func
        * - force_groups false
-       * - pbond 1
-       * - powlamb 1
        */
       force_struct() : bond(1), angle(1), improper(1),
 		       dihedral(1), crossdihedral(1), nonbonded_vdw(1),
 		       nonbonded_crf(1), special_loop(special_loop_off),
 		       interaction_function(lj_crf_func),
-		       force_groups(false), pbond(1), powlamb(1)
+		       force_groups(false)
       {}
       
       /**
@@ -1354,14 +1352,7 @@ namespace simulation
        * use energy groups also for forces
        */
       bool force_groups;
-      /**
-       * perturbed bond stretching form
-       */
-      int pbond;
-      /** 
-       * lambda dependency new bond stretching term
-       */
-      int powlamb;
+      
     } /** Force(field) parameters */ force;
 
 #ifdef HAVE_HOOMD
