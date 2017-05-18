@@ -2,7 +2,7 @@ TITLE
   XX Library file for ene_ana
 END
 ENEVERSION
-  2016-04-06
+  2017-04-06
 END
 ENERTRJ
 # block definition for the energy trajectory file.
@@ -63,7 +63,7 @@ FRENERTRJ
     subblock FREEEDS NUM_EDS_STATES 3
     size NUM_LAMBDAS
     subblock FREEPRECALCLAM NUM_LAMBDAS 8
-    subblock FREEABKINDIH 1 2
+    subblock FREEABDIH 1 2
 END
 VARIABLES
 # Here you can define variables to be calculated by the program ene_ana

@@ -186,6 +186,42 @@ static int _calculate_perturbed_soft_improper_interactions
     conf.current().perturbed_energy_derivatives.
       improper_energy[topo.atom_energy_group()
 		      [i_it->i]] += e_lambda;
+
+    // ANITA
+    if (sim.param().precalclam.nr_lambdas &&
+        ((sim.steps() % sim.param().write.free_energy) == 0)){
+
+      double lambda_step = (sim.param().precalclam.max_lam -
+                            sim.param().precalclam.min_lam) /
+                            (sim.param().precalclam.nr_lambdas-1);
+
+      //loop over nr_lambdas
+      for (int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
+
+        // determine current lambda for this index
+        double lam=(lam_index * lambda_step) + sim.param().precalclam.min_lam;
+
+        const double q0lam = (1 - lam) * impropertypes[i_it->A_type].q0 
+		                         + lam * impropertypes[i_it->B_type].q0;
+        double difflam = q - q0lam;
+        double difflam2 = difflam * difflam; 
+
+        const double soft_Alam = 1 + *alpha_it * lam * difflam2;
+        const double soft_Blam = 1 + *alpha_it * (1-lam) * difflam2;
+        const double soft_Alam2 = soft_Alam*soft_Alam;
+        const double soft_Blam2 = soft_Blam*soft_Blam;
+
+        const double Ksoftlam = (1-lam)*K_A / soft_Alam + lam*K_B / soft_Blam;
+        const double softterm1lam = 1 + *alpha_it * difflam2;
+        const double softterm2lam = -2 * *alpha_it * lam * (1-lam) * difflam * q_diff;
+
+        conf.current().energies.AB_improper[lam_index] += 0.5 * Ksoftlam * difflam2;
+        conf.current().perturbed_energy_derivatives.AB_improper[lam_index] += 
+                  0.5 * difflam2 * ( K_A /  soft_Alam2  * ((-1) * softterm1lam - softterm2lam) 
+                        +  K_B /  soft_Blam2 * (softterm1lam - softterm2lam))
+                  - Ksoftlam * difflam * q_diff;
+      }
+    } //ANITA
     
   }
 

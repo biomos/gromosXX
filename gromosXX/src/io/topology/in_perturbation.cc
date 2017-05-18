@@ -1139,14 +1139,6 @@ io::In_Perturbation::read(topology::Topology &topo,
         _lineStream >> num;
         ++it;
 
-        //ANITA
-        if (num>0 && param.precalclam.nr_lambdas>0){
-          io::messages.add("peratompair is not allowed together with precalclam!",
-                     "In_Perturbation",
-                     io::message::error);
-        } //ANITA
-
-        
         int i, j, A, B;
         
         if (!quiet)

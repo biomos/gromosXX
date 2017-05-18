@@ -97,7 +97,6 @@ static int _calculate_perturbed_soft_interactions
 
     const double K_A = bondtypes[b_it->A_type].K;
     const double K_B = bondtypes[b_it->B_type].K;
-      
     
     DEBUG(7, "K_A: " << K_A << ", K_B: " << K_B);
 
@@ -132,8 +131,10 @@ static int _calculate_perturbed_soft_interactions
 
       DEBUG(7, "\tatomic virial done");
       // }
-  
-    e = 0.5 * ((1-lambda)*K_A / soft_A + lambda*K_B / soft_B) * diff2;
+
+    const double Ksoft = (1-lambda)*K_A / soft_A + lambda*K_B / soft_B;
+
+    e = 0.5 * Ksoft * diff2;
 
     DEBUG(9, "energy: " << e);
 
@@ -151,7 +152,7 @@ static int _calculate_perturbed_soft_interactions
     e_lambda = lambda_derivative 
        * ( 0.5 * diff2 * ( K_A /  soft_A2  * ((-1) * softterm1 - softterm2) 
                         +  K_B /  soft_B2 * (softterm1 - softterm2))
-       - diff * b_diff * ( K_A / soft_A * (1-lambda) + K_B / soft_B * lambda));
+       - Ksoft * diff * b_diff);
 
     DEBUG(9, "e_lambda: " << e_lambda);
     
@@ -168,6 +169,42 @@ static int _calculate_perturbed_soft_interactions
     conf.current().perturbed_energy_derivatives.
       bond_energy[topo.atom_energy_group()
 		  [b_it->i]] += e_lambda;
+
+    // ANITA
+    if (sim.param().precalclam.nr_lambdas &&
+        ((sim.steps() % sim.param().write.free_energy) == 0)){
+
+      double lambda_step = (sim.param().precalclam.max_lam -
+                            sim.param().precalclam.min_lam) /
+                            (sim.param().precalclam.nr_lambdas-1);
+
+      //loop over nr_lambdas
+      for (int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
+
+        // determine current lambda for this index
+        double lam=(lam_index * lambda_step) + sim.param().precalclam.min_lam;
+
+        const double b0lam = (1 - lam) * bondtypes[b_it->A_type].r0 
+		                         + lam * bondtypes[b_it->B_type].r0;
+        double difflam = dist - b0lam;
+        double difflam2 = difflam * difflam; 
+
+        const double soft_Alam = 1 + *alpha_it * lam * difflam2;
+        const double soft_Blam = 1 + *alpha_it * (1-lam) * difflam2;
+        const double soft_Alam2 = soft_Alam*soft_Alam;
+        const double soft_Blam2 = soft_Blam*soft_Blam;
+
+        const double Ksoftlam = (1-lam)*K_A / soft_Alam + lam*K_B / soft_Blam;
+        const double softterm1lam = 1 + *alpha_it * difflam2;
+        const double softterm2lam = -2 * *alpha_it * lam * (1-lam) * difflam * b_diff;
+
+        conf.current().energies.AB_bond[lam_index] += 0.5 * Ksoftlam * difflam2;
+        conf.current().perturbed_energy_derivatives.AB_bond[lam_index] += 
+                  0.5 * difflam2 * ( K_A /  soft_Alam2  * ((-1) * softterm1lam - softterm2lam) 
+                        +  K_B /  soft_Blam2 * (softterm1lam - softterm2lam))
+                  - Ksoftlam * difflam * b_diff; 
+      }
+    } //ANITA
     
   }
   

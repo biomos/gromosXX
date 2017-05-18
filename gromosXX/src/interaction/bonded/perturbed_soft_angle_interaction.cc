@@ -143,8 +143,8 @@ static int _calculate_perturbed_soft_angle_interactions
 
       DEBUG(11, "\tatomic virial done");
       // }
-
-    energy = 0.5 * ((1-lambda)*K_A / soft_A + lambda*K_B / soft_B) * diff2;
+    const double Ksoft = (1-lambda)*K_A / soft_A + lambda*K_B / soft_B;
+    energy = 0.5 * Ksoft * diff2;
 
     const double softterm1 = 1 + *alpha_it * diff2;
     const double softterm2 = -2 * *alpha_it * lambda * (1-lambda) * diff * cos_diff;
@@ -152,7 +152,7 @@ static int _calculate_perturbed_soft_angle_interactions
     e_lambda = lambda_derivative 
        * ( 0.5 * diff2 * ( K_A /  soft_A2  * ((-1) * softterm1 - softterm2) 
                         +  K_B /  soft_B2 * (softterm1 - softterm2))
-       - diff * cos_diff * ( K_A / soft_A * (1-lambda) + K_B / soft_B * lambda));
+       - diff * cos_diff * Ksoft);
 
     DEBUG(9, "energy: " << energy);
 
@@ -175,6 +175,42 @@ static int _calculate_perturbed_soft_angle_interactions
     conf.current().perturbed_energy_derivatives.
       angle_energy[topo.atom_energy_group()
 		  [a_it->i]] += e_lambda;
+
+    // ANITA
+    if (sim.param().precalclam.nr_lambdas &&
+        ((sim.steps() % sim.param().write.free_energy) == 0)){
+
+      double lambda_step = (sim.param().precalclam.max_lam -
+                            sim.param().precalclam.min_lam) /
+                            (sim.param().precalclam.nr_lambdas-1);
+
+      //loop over nr_lambdas
+      for (int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
+
+        // determine current lambda for this index
+        double lam=(lam_index * lambda_step) + sim.param().precalclam.min_lam;
+
+        double cos0lam = (1-lam)*angletypes[a_it->A_type].cos0
+                           + lam*angletypes[a_it->B_type].cos0;
+        double difflam = cost - cos0lam;
+        double difflam2 = difflam * difflam;
+
+        const double soft_Alam = 1 + *alpha_it * lam * difflam2;
+        const double soft_Blam = 1 + *alpha_it * (1-lam) * difflam2;
+        const double soft_Alam2 = soft_Alam*soft_Alam;
+        const double soft_Blam2 = soft_Blam*soft_Blam;
+
+        const double Ksoftlam = (1-lam)*K_A / soft_Alam + lam*K_B / soft_Blam;
+        const double softterm1lam = 1 + *alpha_it * difflam2;
+        const double softterm2lam = -2 * *alpha_it * lam * (1-lam) * difflam * cos_diff;
+
+        conf.current().energies.AB_angle[lam_index] += 0.5 * Ksoftlam * difflam2;
+        conf.current().perturbed_energy_derivatives.AB_angle[lam_index] +=
+                  0.5 * difflam2 * ( K_A /  soft_Alam2  * ((-1) * softterm1lam - softterm2lam) 
+                        +  K_B /  soft_Blam2 * (softterm1lam - softterm2lam))
+                  - Ksoftlam * difflam * cos_diff;
+      }
+    } //ANITA
 
   }
 

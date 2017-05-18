@@ -130,6 +130,7 @@ int algorithm::Perturbed_Shake
       const unsigned int atom_j = first+it->j;
       const math::Vec &ref_i = conf.old().pos(atom_i);
       const math::Vec &ref_j = conf.old().pos(atom_j);
+    DEBUG(10, "\niref: " << math::v2s(ref_i) << "\njref: " << math::v2s(ref_j));
       
       math::Vec ref_r;
       periodicity.nearest_image(ref_i, ref_j, ref_r);
@@ -224,7 +225,7 @@ int algorithm::Perturbed_Shake
           DEBUG(1, "AB_bond r0lam " << r0lam); 
           double difflam = r0lam*r0lam - dist2; 
           DEBUG(1, "AB_bond difflam " << difflam); 
-          double value = (difflam / sp_2_m_dt2) * sqrt(r0lam*r0lam) *r0_diff;
+          double value = (difflam / sp_2_m_dt2) * r0lam *r0_diff;
           conf.old().perturbed_energy_derivatives.AB_bond[lam_index] += 
              (difflam / sp_2_m_dt2) * sqrt(r0lam*r0lam) *r0_diff;
         }

@@ -344,8 +344,8 @@ inline void interaction::Perturbed_Nonbonded_Term
         unsigned int eps) {
   const double dist2 = abs2(r);
 
-  const double A_cut2soft = m_cut2 + alpha_crf * m_B_crfs_lambda2;
-  const double B_cut2soft = m_cut2 + alpha_crf * m_A_crfs_lambda2;
+  const double A_cut2soft = m_cut2 + alpha_crf * crfs_lambda*crfs_lambda;
+  const double B_cut2soft = m_cut2 + alpha_crf * (1-crfs_lambda)*(1-crfs_lambda);
 
   const double A_cut2soft3 = A_cut2soft * A_cut2soft * A_cut2soft;
   const double B_cut2soft3 = B_cut2soft * B_cut2soft * B_cut2soft;
