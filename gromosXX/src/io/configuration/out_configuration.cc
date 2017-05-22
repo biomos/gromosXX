@@ -205,13 +205,14 @@ void io::Out_Configuration::init(io::Argument & args,
      || param.addecouple.write || param.nemd.write || param.orderparamrest.write || param.rdc.write
      || param.bsleus.write;    // add others if there are any
 
-  if (args.count(argname_trs) > 0)
+  if (args.count(argname_trs) > 0){
     special_trajectory(args[argname_trs], param.polarise.write, 
             param.jvalue.write, param.xrayrest.write, param.distanceres.write, 
             param.distancefield.write, param.dihrest.write, param.print.monitor_dihedrals,param.localelev.write, 
             param.electric.dip_write, param.electric.cur_write, param.addecouple.write,
             param.nemd.write, param.orderparamrest.write, param.rdc.write,
             param.bsleus.write);
+  }
   else if (m_write_special)
     io::messages.add("write special trajectory but no trs argument",
           "Out_Configuration",

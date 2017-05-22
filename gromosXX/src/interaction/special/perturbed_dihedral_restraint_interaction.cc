@@ -74,10 +74,30 @@ static int _calculate_perturbed_dihedral_restraint_interactions
       (simulation::dihres_lambda)
       [topo.atom_energy_group()[it->i]]
       [topo.atom_energy_group()[it->i]];
-
-    periodicity.nearest_image(pos(it->k), pos(it->j), rkj);
-    periodicity.nearest_image(pos(it->i), pos(it->j), rij);
-    periodicity.nearest_image(pos(it->k), pos(it->l), rkl);
+      
+    if (it->a>=0 && it->b>=0 && it->c>=0) {
+      // use defined "anchor" atoms to make sure the vectors
+      // are calculated from the periodic images we want
+      // a is a point between i and j
+      // b is between j and k
+      // c is between k and l
+      
+      math::Vec ria, raj, rkb, rbj, rkc, rcl;
+      periodicity.nearest_image(pos(it->i), pos(it->a), ria);
+      periodicity.nearest_image(pos(it->a), pos(it->j), raj);
+      periodicity.nearest_image(pos(it->k), pos(it->b), rkb);
+      periodicity.nearest_image(pos(it->b), pos(it->j), rbj);
+      periodicity.nearest_image(pos(it->k), pos(it->c), rkc);
+      periodicity.nearest_image(pos(it->c), pos(it->l), rcl);
+      
+      rij=ria+raj;
+      rkj=rkb+rbj;
+      rkl=rkc+rcl;
+    } else {
+      periodicity.nearest_image(pos(it->i), pos(it->j), rij);
+      periodicity.nearest_image(pos(it->k), pos(it->j), rkj);
+      periodicity.nearest_image(pos(it->k), pos(it->l), rkl);
+    }
     
     rmj = cross(rij, rkj);
     rnk = cross(rkj, rkl);
@@ -288,26 +308,45 @@ static void _init_dihres_data
         
     DEBUG(9, "init: perturbed dihedral angle " << it->i << "-" << it->j << "-" << it->k << "-" << it->l);
 
-    
-
-    periodicity.nearest_image(pos(it->i), pos(it->j), rij);
-    periodicity.nearest_image(pos(it->k), pos(it->j), rkj);
-    periodicity.nearest_image(pos(it->k), pos(it->l), rkl);
+        if (it->a>=0 && it->b>=0 && it->c>=0) {
+      // use defined "anchor" atoms to make sure the vectors
+      // are calculated from the periodic images we want
+      // a is a point between i and j
+      // b is between j and k
+      // c is between k and l
       
-    bool warn=false;
-    for (int i=0; i<3;  i++) {
+      math::Vec ria, raj, rkb, rbj, rkc, rcl;
+      periodicity.nearest_image(pos(it->i), pos(it->a), ria);
+      periodicity.nearest_image(pos(it->a), pos(it->j), raj);
+      periodicity.nearest_image(pos(it->k), pos(it->b), rkb);
+      periodicity.nearest_image(pos(it->b), pos(it->j), rbj);
+      periodicity.nearest_image(pos(it->k), pos(it->c), rkc);
+      periodicity.nearest_image(pos(it->c), pos(it->l), rcl);
+      
+      rij=ria+raj;
+      rkj=rkb+rbj;
+      rkl=rkc+rcl;
+    } else {
+      periodicity.nearest_image(pos(it->i), pos(it->j), rij);
+      periodicity.nearest_image(pos(it->k), pos(it->j), rkj);
+      periodicity.nearest_image(pos(it->k), pos(it->l), rkl);
+      
+      bool warn=false;
+      for (int i=0; i<3;  i++) {
         if ((fabs(rij[i]) > conf.current().box(i)[i]*0.45 && abs(rij[i]) < conf.current().box(i)[i]*0.55)
          || (fabs(rkj[i]) > conf.current().box(i)[i]*0.45 && abs(rkj[i]) < conf.current().box(i)[i]*0.55) 
          || (fabs(rkl[i]) > conf.current().box(i)[i]*0.45 && abs(rkl[i]) < conf.current().box(i)[i]*0.55)) {
           warn=true;
         }
-    }
-    if (warn) {
+      }
+      if (warn) {
         std::ostringstream oss;
         oss << "one or more vectors of your dihedral angle restraint are\n"
           << "close to half a box length long in your initial structure, \n"
           << "the dihedral might be calculated from other periodic copies of the atoms than you intended!\n";
           io::messages.add(oss.str(),  "dihedral_restraint", io::message::warning);
+
+      }
     }
     
     rmj = cross(rij, rkj);

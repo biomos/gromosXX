@@ -290,6 +290,219 @@ void io::In_Dihrest::read(topology::Topology& topo,
   }
   } // PERTDIHRESPEC
   
+    { // DIHEDRALRESSPECANCHOR
+    DEBUG(10, "DIHEDRALRESSPECANCHOR block");
+    buffer = m_block["DIHEDRALRESSPECANCHOR"];
+    
+    if (buffer.size() > 0 && buffer.size()<=2){
+      io::messages.add("empty DIHEDRALRESSPECANCHOR block in dihedral restraints file",
+                       "in_dihedralres", io::message::warning);
+    } else if (buffer.size()>2) {
+    found_restraints=true;
+
+    block_read.insert("DIHEDRALRESSPECANCHOR");
+
+    std::vector<std::string>::const_iterator it = buffer.begin()+1,
+      to = buffer.end()-1;
+
+    int i, j, k, l, a, b, c;
+    double delta, phi, w0;
+
+    DEBUG(10, "reading in DIHREST data");
+
+    if (!quiet){
+      switch(sim.param().dihrest.dihrest){
+	case simulation::dihedral_restr_off:
+	  os << "\tDihedral restraints OFF\n";
+	  // how did you get here?
+	  break;
+	case simulation::dihedral_restr_inst:
+	  os << "\tDihedral restraints ON\n"
+	     << "\t\t(uniform force constant K)\n";
+	  break;
+	case simulation::dihedral_restr_inst_weighted:
+	  os << "\tDihedral restraints ON\n"
+	     << "\t\t(force constant K*w0)\n";
+	  break;
+	case simulation::dihedral_constr:
+	  os << "\tDihedral constraints ON\n";
+	  break;
+	default:
+	  os << "\tDihedral restraints: ERROR\n";
+	  io::messages.add("wrong value for method in dihedral restraints block",
+			   "in_dihedral", io::message::error);
+	  return;
+      }
+    }
+    
+    if (!quiet){
+
+      os << std::setw(10) << "i"
+	 << std::setw(8) << "j"
+	 << std::setw(8) << "k"
+	 << std::setw(8) << "l"
+	 << std::setw(8) << "delta"
+	 << std::setw(8) << "phi"
+	 << std::setw(8) << "w0"
+	 << std::setw(8) << "a"
+	 << std::setw(8) << "b"
+	 << std::setw(8) << "c"
+	 << "\n";
+
+      os.precision(2);
+      os.setf(std::ios::fixed, std::ios::floatfield);
+
+    }
+    
+    for(int ii=0; it != to; ++ii, ++it){
+      
+      DEBUG(11, "\tnr " << ii);
+      
+      _lineStream.clear();
+      _lineStream.str(*it);
+
+      _lineStream >> i >> j >> k >> l >> w0 >> phi >> delta >> a >> b >> c;
+      if(_lineStream.fail()){
+	io::messages.add("bad line in DIHEDRALRESSPECANCHOR block",
+			 "In_Dihrest", io::message::error);
+      }
+      
+      topo.dihedral_restraints().push_back
+	(topology::dihedral_restraint_struct(i-1, j-1, k-1, l-1,
+					     delta * 2 * math::Pi / 360, phi * 2 * math::Pi / 360, w0,
+					     a-1, b-1, c-1));
+      
+      if (!quiet){
+	os << std::setw(10) << i
+	   << std::setw(8) << j
+	   << std::setw(8) << k
+	   << std::setw(8) << l
+	   << std::setw(8) << delta
+	   << std::setw(8) << phi
+	   << std::setw(8) <<  w0
+	   << std::setw(8) << a
+	   << std::setw(8) << b
+	   << std::setw(8) << c
+	   << "\n";
+      }
+    }
+  }
+  } // DIHRESTANCHOR
+
+  { // PERTDIHESPECANCHOR
+    DEBUG(10, "PERTDIHRESSPECANCHOR block");
+    buffer = m_block["PERTDIHRESSPECANCHOR"];
+    
+    block_read.insert("PERTDIHRESSPECANCHOR");
+    
+    if (buffer.size()>0 && buffer.size()<=2){
+      io::messages.add("empty PERTDIHRESSPECANCHOR block in dihedral restraints file",
+                       "in_dihedralres", io::message::warning);
+    } else if (buffer.size()>2) {
+    found_restraints=true;
+    
+    sim.param().perturbation.perturbed_par=true;
+    std::vector<std::string>::const_iterator it = buffer.begin()+1,
+      to = buffer.end()-1;
+
+    int i, j, k, l, m, n, a, b, c;
+    double delta, A_phi, A_w0, B_phi, B_w0;
+    
+    DEBUG(10, "reading in perturbed DIHREST (PERTDIHRESSPECANCHOR data");
+
+    if (!quiet){
+      switch(sim.param().dihrest.dihrest){
+	case 0:
+	  os << "\tPerturbed Dihedral restraints OFF\n";
+	  // how did you get here?
+	  break;
+	case 1:
+	  os << "\tPerturbed Dihedral restraints ON\n"
+	     << "\t\t(using uniform force constant K\n";
+	  break;
+	case 2:
+	  os << "\tPerturbed Dihedral restraints ON\n"
+	     << "\t\t(using force constant K*w0)\n";
+	  break;
+	case 3:
+	  os << "\tPerturbed Dihedral constraints ON\n";
+	  break;
+	default:
+	  os << "\tPerturbed Dihedral restraints ERROR\n";
+	  io::messages.add("wrong method for dihedral restraints",
+			   "in_dihrest", io::message::error);
+	  return;
+      }
+    }
+
+    if (!quiet){
+      os << std::setw(10) << "i"
+	 << std::setw(8) << "j"
+	 << std::setw(8) << "k"
+	 << std::setw(8) << "l"
+	 << std::setw(8) << "m"
+	 << std::setw(8) << "n"
+	 << std::setw(8) << "delta"
+	 << std::setw(8) << "A_phi"
+	 << std::setw(8) << "A_w0"
+	 << std::setw(8) << "B_phi"
+	 << std::setw(8) << "B_w0"
+	 << std::setw(8) << "a"
+	 << std::setw(8) << "b"
+	 << std::setw(8) << "c"
+	 << "\n";
+
+      os.precision(2);
+      os.setf(std::ios::fixed, std::ios::floatfield);
+    }
+    
+    for(int ii=0; it != to; ++ii, ++it){
+      
+      DEBUG(11, "\tnr " << ii);
+      
+      _lineStream.clear();
+      _lineStream.str(*it);
+
+      _lineStream >> i >> j >> k >> l >> m >> n;
+      _lineStream >> delta >> A_phi >> A_w0 >> B_phi >> B_w0;
+      _lineStream >> a >> b >> c;
+    
+      if(_lineStream.fail()){
+	io::messages.add("bad line in PERTDIHRESSPECANCHOR block",
+			 "In_Dihrest", io::message::error);
+      }
+
+      topo.perturbed_dihedral_restraints().push_back
+	(topology::perturbed_dihedral_restraint_struct(i-1, j-1, k-1, l-1, m, n, delta * 2 * math::Pi / 360,
+						       A_phi * 2 * math::Pi / 360, A_w0,
+						       B_phi * 2 * math::Pi / 360, B_w0,
+						       a-1, b-1, c-1 ));
+
+      if (!quiet){
+	os << std::setw(10) << i
+	   << std::setw(8) << j
+	   << std::setw(8) << k
+	   << std::setw(8) << l
+	   << std::setw(8) << m
+	   << std::setw(8) << n
+	   << std::setw(8) << delta
+	   << std::setw(8) << A_phi
+	   << std::setw(8) << A_w0
+	   << std::setw(8) << B_phi
+	   << std::setw(8) << B_w0  
+	   << std::setw(8) << a
+	   << std::setw(8) << b
+	   << std::setw(8) << c  
+	   << "\n";
+      }
+      
+    }
+    
+    if (!quiet) os << "END\n";
+  }
+  } // PERTDIHRESPECANCHOR
+
+  
   for(std::map<std::string, std::vector<std::string> >::const_iterator
 	it = m_block.begin(),
 	to = m_block.end();

@@ -699,8 +699,10 @@ namespace topology {
     /**
      * Constructor.
      */
-    dihedral_restraint_struct(int i, int j, int k, int l, double delta, double phi, double w0)
+    dihedral_restraint_struct(int i, int j, int k, int l, double delta, double phi, double w0,
+    int a=-1, int b=-1, int c=-1)
     : i(i), j(j), k(k), l(l),
+    a(a), b(b), c(c),
     delta(delta), phi(phi),
     w0(w0) {
     }
@@ -721,6 +723,13 @@ namespace topology {
      * atom l
      */
     int l;
+    
+    /** anchor atoms
+     * a should be between i and j
+     * b between j and k
+     * c between k and l
+     */
+    int a, b, c;    
 
     /**
      * restraint maximum
@@ -743,8 +752,10 @@ namespace topology {
      * Constructor.
      */
     perturbed_dihedral_restraint_struct(int i, int j, int k, int l, int m, int n, double delta,
-            double A_phi, double A_w0, double B_phi, double B_w0)
+            double A_phi, double A_w0, double B_phi, double B_w0,
+            int a=-1, int b=-1, int c=-1)
     : i(i), j(j), k(k), l(l),
+    a(a), b(b), c(c),
     m(m), n(n),
     delta(delta),
     A_phi(A_phi), A_w0(A_w0),
@@ -767,6 +778,12 @@ namespace topology {
      * atom l
      */
     int l;
+    /** anchor atoms
+     * a should be between i and j
+     * b between j and k
+     * c between k and l
+     */
+    int a, b, c;   
     /**
      * exponent m
      */
