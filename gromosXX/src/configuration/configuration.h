@@ -472,6 +472,22 @@ namespace configuration {
 	 */
 	double energy_deriv;
       }  /** disfield information */ distancefield;
+
+      /**
+       * @struct dihres_struct
+       * holds the dihedral restraints configuration data
+       */
+      struct dihres_struct {
+        /**
+         * the dihedral
+         */
+        std::vector<double> d;
+        /**
+         * the energy
+         */
+        std::vector<double> energy;
+      } /** dihres informaton */ dihedralres;
+      dihres_struct pertdihedralres;
       
 	
       /**

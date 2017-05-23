@@ -32,12 +32,7 @@ namespace interaction
 		     configuration::Configuration &conf,
 		     simulation::Simulation &sim,
 		     std::ostream &os = std::cout,
-		     bool quiet = false) 
-    {
-      if (!quiet)
-	os << "Perturbed dihedral restraint interaction\n";
-      return 0;
-    };
+		     bool quiet = false);
 
     /**
      * calculate the interactions.

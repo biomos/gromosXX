@@ -2475,9 +2475,10 @@ DIHEDRALRES
 #    
 # CDLR    >=0.0 force constant for dihedral restraining
 # PHILIN  >0.0  deviation after which the potential energy function is linearized 
+# NTWDLR >= 0  write every NTWDLR step dihedral information to external file 
 #
-# NTDLR  CDLR      PHILIN
-  1      100.0     180.0
+# NTDLR  CDLR      PHILIN  NTWDLR
+  1      100.0     180.0   100
 END
 @endverbatim
  */
@@ -2512,7 +2513,8 @@ void io::In_Parameter::read_DIHEDRALRES(simulation::Parameter &param,
   int dihrest;
   _lineStream >> dihrest
           >> param.dihrest.K
-          >> phi_lin;
+          >> phi_lin
+	      >> param.dihrest.write;
 
   if (_lineStream.fail())
     io::messages.add("bad line in DIHEDRALRES block",

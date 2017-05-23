@@ -2007,7 +2007,8 @@ namespace simulation
       dihrest_struct()
 	: dihrest(dihedral_restr_off),
 	  K(0.0),
-	  phi_lin(0.0) {}
+	  phi_lin(0.0),
+      write(0) {}
       
       /** 
        * dihedral restraints
@@ -2026,6 +2027,10 @@ namespace simulation
        * deviation larger phi_lin leads to linear potential
        */
       double phi_lin;
+      /**
+       * write on/off
+       */
+      unsigned int write;
       
     }/** dihedral restraint parameters */ dihrest;
 

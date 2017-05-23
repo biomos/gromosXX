@@ -2,7 +2,8 @@
  * @file dihedral_restraint_interaction.cc
  * template methods of Dihedral_Restraint_Interaction
  */
-
+ 
+#include <sstream>
 #include "../../stdheader.h"
 
 #include "../../algorithm/algorithm.h"
@@ -35,10 +36,15 @@ static int _calculate_dihedral_restraint_interactions
  configuration::Configuration & conf,
  simulation::Simulation & sim)
 {
+  DEBUG(5, "dihedral angle restraint interaction");
   // loop over the dihedral restraints
   std::vector<topology::dihedral_restraint_struct>::const_iterator 
     it = topo.dihedral_restraints().begin(),
     to = topo.dihedral_restraints().end();
+    
+   
+  std::vector<double>::iterator ene_it = conf.special().dihedralres.energy.begin();
+  std::vector<double>::iterator d_it = conf.special().dihedralres.d.begin();
 
   math::VArray &pos   = conf.current().pos;
   math::VArray &force = conf.current().force;
@@ -47,13 +53,9 @@ static int _calculate_dihedral_restraint_interactions
   double lower_bound, upper_bound;
   double energy, f;
 
-  // math::Vec rij, rkj, rkl, rlj, rim, rln, rmj, rnk, fi, fj, fk, fl;
-  // double dkj2, dim, dln, ip;
-  // double energy, f;
-
   math::Periodicity<B> periodicity(conf.current().box);
 
-  for(; it != to; ++it){
+  for(; it != to; ++it, ++ene_it, ++d_it){
 
     DEBUG(9, "dihedral angle " << it->i << "-" << it->j << "-" << it->k << "-" << it->l);
 
@@ -108,6 +110,7 @@ static int _calculate_dihedral_restraint_interactions
       phi += 2 * math::Pi;
     while(phi > upper_bound)
       phi -= 2 * math::Pi;
+    (*d_it) = phi;
    
     // in case delta is larger than 2*Pi, we need to do the same for phi_0 
     while(phi_0 < lower_bound)
@@ -145,7 +148,8 @@ static int _calculate_dihedral_restraint_interactions
     }
 
     DEBUG(10, "energy=" << energy << " force=" << f);
-
+ 
+    (*ene_it) = energy;
     conf.current().energies.dihrest_energy[topo.atom_energy_group()
 					   [it->i]] += energy;
 
@@ -178,5 +182,103 @@ int interaction::Dihedral_Restraint_Interaction
   SPLIT_VIRIAL_BOUNDARY(_calculate_dihedral_restraint_interactions,
 			topo, conf, sim);
   
+  return 0;
+}
+
+
+  
+ /**
+ * initiate dihedral restraint interactions
+ */
+template<math::boundary_enum B>
+static void _init_dihres_data
+(topology::Topology & topo,
+ configuration::Configuration & conf)
+{
+   math::Periodicity<B> periodicity(conf.current().box);
+   math::VArray &pos   = conf.current().pos;
+ 
+   math::Vec rij, rkj, rkl, rmj, rnk;
+   double dkj2, dkj, dmj2, dmj, dnk2, dnk, ip, phi;
+    
+  for(std::vector<topology::dihedral_restraint_struct>::const_iterator
+        it = topo.dihedral_restraints().begin(),
+        to = topo.dihedral_restraints().end(); it != to; ++it) {
+        
+    DEBUG(9, "init: dihedral angle " << it->i << "-" << it->j << "-" << it->k << "-" << it->l);
+
+    
+    periodicity.nearest_image(pos(it->i), pos(it->j), rij);
+    periodicity.nearest_image(pos(it->k), pos(it->j), rkj);
+    periodicity.nearest_image(pos(it->k), pos(it->l), rkl);
+      
+    bool warn=false;
+    for (int i=0; i<3;  i++) {
+        if ((fabs(rij[i]) > conf.current().box(i)[i]*0.45 && abs(rij[i]) < conf.current().box(i)[i]*0.55)
+         || (fabs(rkj[i]) > conf.current().box(i)[i]*0.45 && abs(rkj[i]) < conf.current().box(i)[i]*0.55) 
+         || (fabs(rkl[i]) > conf.current().box(i)[i]*0.45 && abs(rkl[i]) < conf.current().box(i)[i]*0.55)) {
+          warn=true;
+        }
+    }
+    if (warn) {
+        std::ostringstream oss;
+        oss << "one or more vectors of your dihedral angle restraint are\n"
+          << "close to half a box length long in your initial structure, \n"
+          << "the dihedral might be calculated from other periodic copies of the atoms than you intended!\n";
+          io::messages.add(oss.str(),  "dihedral_restraint", io::message::warning);
+    }
+    
+    
+    rmj = cross(rij, rkj);
+    rnk = cross(rkj, rkl);
+    
+    dkj2 = abs2(rkj);
+    dmj2 = abs2(rmj);
+    dnk2 = abs2(rnk);
+    dkj  = sqrt(dkj2);
+    dmj  = sqrt(dmj2);
+    dnk  = sqrt(dnk2);
+    
+    DEBUG(15,"dkj="<<dkj<<" dmj="<<dmj<<" dnk="<<dnk);
+    
+    assert(dmj != 0.0);
+    assert(dnk != 0.0);
+
+    ip = dot(rmj, rnk);
+   
+    double acs = ip / (dmj*dnk);
+    if (acs > 1.0) {
+      if (acs < 1.0 + math::epsilon) {
+        acs = 1.0;
+      } else {
+        io::messages.add("improper dihedral",
+                "acs > 1.0",
+                io::message::critical);
+      }
+    }
+    
+    phi  = acos(acs);
+
+
+    DEBUG(10, "raw phi="<< 180.0 * phi / math::Pi);
+             
+    conf.special().dihedralres.d.push_back(phi);
+    conf.special().dihedralres.energy.push_back(0.0);
+  }
+}
+
+int interaction::Dihedral_Restraint_Interaction::init(topology::Topology &topo, 
+		     configuration::Configuration &conf,
+		     simulation::Simulation &sim,
+		     std::ostream &os,
+		     bool quiet) 
+{
+  
+  SPLIT_BOUNDARY(_init_dihres_data, topo, conf);
+ 
+  if (!quiet) {
+    os << "Dihedral restraint interaction";
+    os << std::endl;
+  }
   return 0;
 }
