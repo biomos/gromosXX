@@ -1167,37 +1167,7 @@ void io::In_Parameter::read_FORCE(simulation::Parameter &param,
   }
   
   int bondH, angleH, impH, dihedralH;
-  if (ntf.size() == 10) { // old FORCE block
-    io::messages.add("Old FORCE block used.", "In_Parameter",
-            io::message::warning);
-    bondH = ntf[0];
-    param.force.bond = ntf[1];
-    angleH = ntf[2];
-    param.force.angle = ntf[3];
-    impH = ntf[4];
-    param.force.improper = ntf[5];
-    dihedralH = ntf[6];
-    param.force.dihedral = ntf[7];
-    param.force.nonbonded_crf = ntf[8];
-    param.force.nonbonded_vdw = ntf[9];
-    
-    // checks
-    if (bondH ^ param.force.bond)
-    io::messages.add("FORCE block: switch for bond and bond H has to be equal",
-          "In_Parameter", io::message::error);
-
-    if (angleH ^ param.force.angle)
-      io::messages.add("FORCE block: switch for angle and angle H has to be equal",
-            "In_Parameter", io::message::error);
-
-    if (impH ^ param.force.improper)
-      io::messages.add("FORCE block: switch for improper and improper H has to be equal",
-            "In_Parameter", io::message::error);
-
-    if (dihedralH ^ param.force.dihedral)
-      io::messages.add("FORCE block: switch for dihedral and dihedral H has to be equal",
-            "In_Parameter", io::message::error);
-  } else if (ntf.size() == 6) { // new FORCE block
+  if (ntf.size() == 6) {
     param.force.bond = ntf[0];
     param.force.angle = ntf[1];
     param.force.improper = ntf[2];
