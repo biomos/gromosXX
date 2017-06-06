@@ -3037,7 +3037,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("innerloop_method_cuda", "parallel_omp");
   //allow multiple energy groups
   fc.unlock("innerloop_method_cuda", "mult_energy_groups");  
-
+  fc.unlock("innerloop_method_cuda", "individual_lambdas");
 
   fc.unlock("leus", "solute");
   fc.unlock("leus", "solvent");
