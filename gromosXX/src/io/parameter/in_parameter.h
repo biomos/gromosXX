@@ -37,6 +37,7 @@
  * - @ref  readtraj
  * - @ref  integrate
  * - @ref  cgrain
+ * - @ref  colvarres
  * - @ref  rottrans
  * - @ref  distanceres
  * - @ref  distancefield
@@ -347,6 +348,10 @@ namespace io {
      * read SYMRES block
      */
     void read_SYMRES(simulation::Parameter &param, std::ostream & os = std::cout);
+    /**
+     * read COLVARRES block
+     */
+    void read_COLVARRES(simulation::Parameter &param, std::ostream & os = std::cout);
   };
   
 } // io

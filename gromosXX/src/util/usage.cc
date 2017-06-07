@@ -101,6 +101,11 @@ void util::get_usage(util::Known const &knowns, std::string &usage, std::string 
     usage += "\t# @dihrest  filename\n\n";
   }
   
+  if (knowns.count("colvarres")){
+    usage += "\t# collective variable restraints specification\n";
+    usage += "\t# @colvarres  filename\n\n";
+  }
+
   if (knowns.count("jval")){
     usage += "\t# J-value restraints specification\n";
     usage += "\t# @jval      filename\n\n";

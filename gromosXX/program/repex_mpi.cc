@@ -75,7 +75,7 @@ int main(int argc, char *argv[]) {
           << "trc" << "fin" << "trv" << "trf" << "trs" << "tre" << "trg"
           << "bae" << "bag" << "posresspec" << "refpos" << "distrest" << "dihrest"
 	 << "jval" << "rdc" << "xray" << "lud" << "led" << "anatrj" << "print" << "friction"
-          << "version" << "repdat" << "repout";
+          << "version" << "repdat" << "repout" << "colvarres";
 
   std::string usage;
   util::get_usage(knowns, usage, argv[0]);

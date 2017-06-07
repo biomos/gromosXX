@@ -357,6 +357,22 @@ namespace simulation
      */
     dihedral_constr = 3
   };
+  
+  
+  /**
+   * @enum colvar_restr_enum
+   * colvar restraints enumeration
+   */
+  enum colvar_restr_enum{
+    /**
+     * no restraints
+     */
+    colvar_restr_off = 0,
+    /**
+     * instantaneous restraints
+     */
+    colvar_restr_harmonic = 1
+  };
 
   /**
    * @enum integrate_enum
@@ -618,9 +634,13 @@ namespace simulation
      */
     mass_lambda = 11,
     /**
+     * collective variable restraint interaction
+     */
+    colvarres_lambda = 12,
+    /**
      * one extra interaction for looping
      */
-    last_interaction_lambda=12
+    last_interaction_lambda=13
   };
   
   /**
@@ -3427,6 +3447,63 @@ namespace simulation
        */
       std::vector<std::pair<math::Matrix, math::Vec> > symmetry_operations;
     } /* symmetry restraints */symrest;
+  
+     /**
+     * @struct colvarres_struct
+     * colvarres block
+     */
+    struct colvarres_struct
+    {
+      /**
+       * Constructor
+       * Default values:
+       * - colvarres 0 (no colvar restraints)
+       * - K 0
+       * - read 0
+       * - write 0
+       */
+
+      colvarres_struct()
+	: colvarres(colvar_restr_off),
+	  K(0.0),
+	  read(0),
+	  virial(0),
+	  tau(10.0),
+      write(0)
+      {
+      }
+      
+      /** 
+       * colvar restraints on/off
+       */
+      colvar_restr_enum colvarres;
+      
+      /**
+       * force constant K
+       */
+      double K;
+            
+      /**
+       * read on/off (not supported)
+       */
+      bool read;
+      
+      /**
+       * memory time for time averaging 
+       */
+      double tau;
+
+      /**
+       * compute virial contribution
+       */
+      unsigned int virial;      
+     
+      /**
+       * write on/off
+       */
+      unsigned int write;
+      
+    }/** colvar restraints parameters */ colvarres;
     
     /**
      A struct to mark parts of the code as "under development"

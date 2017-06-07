@@ -1057,6 +1057,35 @@ namespace topology
     {
       return m_eds_distance_restraint;
     } 
+    /**
+     * const contactnum restraints accessor.
+     */
+    std::vector<contactnum_restraint_struct > const & contactnum_restraint()const
+    {
+      return m_contactnum_restraint;
+    }
+    /**
+     *  contactnum restraints accessor.
+     */
+    std::vector<contactnum_restraint_struct >  & contactnum_restraint()
+    {
+      return m_contactnum_restraint;
+    } 
+    /**
+     * const perturbed contactnum restraints accessor.
+     */
+    std::vector<perturbed_contactnum_restraint_struct > const & perturbed_contactnum_restraint()const
+    {
+      return m_perturbed_contactnum_restraint;
+    }
+    /**
+     *  perturbed contactnum restraints accessor.
+     */
+    std::vector<perturbed_contactnum_restraint_struct >  & perturbed_contactnum_restraint()
+    {
+      return m_perturbed_contactnum_restraint;
+    } 
+    /**
 
     /**
      * const dihedral restraints accessor.
@@ -1526,6 +1555,15 @@ namespace topology
      * eds distance restraints 
      */
     std::vector<eds_distance_restraint_struct> m_eds_distance_restraint;
+
+    /**
+     * contactnum restraints 
+     */
+    std::vector<contactnum_restraint_struct > m_contactnum_restraint;
+    /**
+     * perturbed contactnum restraints 
+     */
+    std::vector<perturbed_contactnum_restraint_struct > m_perturbed_contactnum_restraint;
     /**
      * dihedral restraints 
      */

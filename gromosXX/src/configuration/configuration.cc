@@ -161,6 +161,11 @@ configuration::Configuration::Configuration
   special().dihedralres.energy = conf.special().dihedralres.energy;
   special().dihedralres.d = conf.special().dihedralres.d;
   
+  special().colvarres.energies=conf.special().colvarres.energies;
+  special().colvarres.values=conf.special().colvarres.values;
+  special().colvarres.totv=conf.special().colvarres.totv;
+  special().colvarres.tote=conf.special().colvarres.tote;
+  
   special().pscale = conf.special().pscale;
 
   special().orderparamres.S2_avg = conf.special().orderparamres.S2_avg;
@@ -279,6 +284,11 @@ configuration::Configuration & configuration::Configuration::operator=
   
   special().dihedralres.energy = conf.special().dihedralres.energy;
   special().dihedralres.d = conf.special().dihedralres.d;
+
+  special().colvarres.energies=conf.special().colvarres.energies;
+  special().colvarres.values=conf.special().colvarres.values;
+  special().colvarres.totv=conf.special().colvarres.totv;
+  special().colvarres.tote=conf.special().colvarres.tote;
  
   special().rdc = conf.special().rdc;
 

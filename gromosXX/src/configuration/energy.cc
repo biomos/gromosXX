@@ -42,6 +42,7 @@ special_total(0.0),
 posrest_total(0.0),
 distanceres_total(0.0),
 disfieldres_total(0.0),
+colvarres_total(0.0),
 dihrest_total(0.0),
 jvalue_total(0.0),
 xray_total(0.0),
@@ -91,6 +92,7 @@ void configuration::Energy::zero(bool potential, bool kinetic)
     posrest_total = 0.0;
     distanceres_total = 0.0;
     disfieldres_total = 0.0;
+    colvarres_total = 0.0;
     dihrest_total = 0.0;
     jvalue_total = 0.0;
     xray_total = 0.0;
@@ -116,6 +118,7 @@ void configuration::Energy::zero(bool potential, bool kinetic)
     posrest_energy.assign(posrest_energy.size(), 0.0);
     distanceres_energy.assign(distanceres_energy.size(), 0.0);
     disfieldres_energy.assign(disfieldres_energy.size(), 0.0);
+    colvarres_energy.assign(colvarres_energy.size(), 0.0);
     dihrest_energy.assign(dihrest_energy.size(), 0.0);
     jvalue_energy.assign(jvalue_energy.size(), 0.0);
     rdc_energy.assign(rdc_energy.size(), 0.0);  
@@ -176,6 +179,7 @@ void configuration::Energy::resize(unsigned int energy_groups, unsigned int mult
     posrest_energy.resize(energy_groups);
     distanceres_energy.resize(energy_groups);
     disfieldres_energy.resize(energy_groups);
+    colvarres_energy.resize(energy_groups);
     dihrest_energy.resize(energy_groups);
     jvalue_energy.resize(energy_groups);
     rdc_energy.resize(energy_groups);  
@@ -224,6 +228,7 @@ int configuration::Energy::calculate_totals()
   posrest_total = 0.0; 
   distanceres_total =0.0; 
   disfieldres_total =0.0; 
+  colvarres_total =0.0; 
   dihrest_total = 0.0;
   jvalue_total = 0.0; 
   rdc_total = 0.0; 
@@ -307,6 +312,10 @@ int configuration::Energy::calculate_totals()
       std::cout << "EWARN: disfieldres energy " << i+1 << " = " << disfieldres_energy[i] << "\n";
     }
     disfieldres_total     += disfieldres_energy[i];
+    if (colvarres_energy[i] > m_ewarn){
+      std::cout << "EWARN: colvarres energy " << i+1 << " = " << colvarres_energy[i] << "\n";
+    }
+    colvarres_total     += colvarres_energy[i];
     if (dihrest_energy[i] > m_ewarn){
       std::cout << "EWARN: dihrest energy " << i+1 << " = " << dihrest_energy[i] << "\n";
     }
@@ -374,7 +383,7 @@ int configuration::Energy::calculate_totals()
     + dihrest_total
     + constraints_total + jvalue_total + xray_total
     + eds_vr + leus_total + sasa_total + sasa_volume_total + oparam_total
-    + symrest_total + bsleus_total + qm_total + rdc_total;
+    + symrest_total + bsleus_total + qm_total + rdc_total+colvarres_total;
   
   total = potential_total + kinetic_total + special_total;
 
@@ -434,6 +443,7 @@ double configuration::Energy::get_energy_by_index(const unsigned int & index) {
     case 36 : return qm_total;
     case 37 : return bsleus_total;
     case 38 : return rdc_total;
+    case 39 : return colvarres_total;
   }
   return 0.0;
 }

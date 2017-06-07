@@ -73,7 +73,8 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_POSITIONRES(param);
   read_DISTANCERES(param);
   read_DISTANCEFIELD(param); 
-  read_DIHEDRALRES(param); // needs to be called after CONSTRAINT!
+  read_DIHEDRALRES(param); // needs to be called after CONSTRAINT! 
+  read_COLVARRES(param);
   read_PERTURBATION(param);
   read_JVALUERES(param);
   read_ORDERPARAMRES(param);
@@ -4303,7 +4304,7 @@ LAMBDAS
 # NTLI(1..)  interaction type to treat with individual lambda: 
 #            bond(1), angle(2), dihedral(3), improper(4), vdw(5), vdw_soft(6),
 #            crf(7), crf_soft(8), distanceres(9), distancefield(10), 
-#            dihedralres(11), mass(12)
+#            dihedralres(11), mass(12), colvar(13)
 # NILG1, NILG2 energy groups of interactions that are treated with individual 
 #              lambda values
 # ALI, BLI, CLI, DLI, ELI polynomial coefficients linking the individual lambda-
@@ -4414,6 +4415,8 @@ void io::In_Parameter::read_LAMBDAS(simulation::Parameter & param,
         j = simulation::dihres_lambda;
       else if (nm == "mass" || nm == "12")
         j = simulation::mass_lambda;
+      else if (nm == "colvarres" || nm == "13")
+        j = simulation::colvarres_lambda;
       else {
         io::messages.add("unknown lambda type in LAMBDAS block: " + nm,
                 "In_Parameter", io::message::error);
@@ -5902,3 +5905,83 @@ void io::In_Parameter::read_SYMRES(simulation::Parameter & param,
   } // if block
 }
 
+
+/**
+ * @section colvarres COLVARRES block
+ * @verbatim
+COLVARRES
+# CVR: 0 .. do not bias
+#      1 .. harmonic biasing potential
+# CVK: force constant
+# TAUCVR: coupling time for time averaging (not implemented yet)
+# VCVR: 0/1 .. don't use / use virial (not implemented yet)
+# NTWCV: write out every nth step to special traj; 0 .. do not write
+# CVR   CVK  TAUCVR VCVR NTWCV
+    1  1000       0    1     2
+END
+@endverbatim
+ */
+void io::In_Parameter::read_COLVARRES(simulation::Parameter &param,
+        std::ostream & os) {
+  DEBUG(8, "read COLVARRES");
+
+  std::vector<std::string> buffer;
+  std::string s;
+
+  DEBUG(10, "colvarres block");
+  buffer = m_block["COLVARRES"];
+
+  if (!buffer.size()) {
+    return;
+  }
+
+  block_read.insert("COLVARRES");
+
+  _lineStream.clear();
+  _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
+
+  int colvarres;
+  _lineStream >> colvarres
+	      >> param.colvarres.K
+	      >> param.colvarres.tau
+	      >> param.colvarres.virial
+	      >> param.colvarres.write;
+        
+  
+  switch (colvarres) {
+    case 0:
+      param.colvarres.colvarres = simulation::colvar_restr_off;
+      break;
+    case 1:
+      param.colvarres.colvarres = simulation::colvar_restr_harmonic;
+      break;
+    default:
+      io::messages.add("COLVARRES block: NTWCV must be 0..1.",
+              "In_Parameter", io::message::error);
+  }
+
+  if (_lineStream.fail())
+    io::messages.add("bad line in COLVARRES block",
+          "In_Parameter", io::message::error);
+
+
+  if (param.colvarres.colvarres < 0 || param.colvarres.colvarres > 1) {
+    io::messages.add("COLVARRES block: CVR must be 0..1",
+            "In_Parameter", io::message::error);
+  }
+
+  if (param.colvarres.K < 0) {
+    io::messages.add("COLVARRES block: CVK must be >= 0.0.",
+            "In_Parameter", io::message::error);
+  }  
+  if (param.colvarres.write < 0)
+    io::messages.add("COLVARRES block: NTWCV should be >= 0",
+          "In_Parameter", io::message::error);
+  if (param.colvarres.tau < 0)
+    io::messages.add("COLVARRES block: TAUCVR should be >= 0",
+          "In_Parameter", io::message::error);
+  if (param.colvarres.virial != 0 && param.colvarres.virial !=1)
+    io::messages.add("COLVARRES block: VCVR should be 0 or 1",
+          "In_Parameter", io::message::error);
+
+} // COLVARRES

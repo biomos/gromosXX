@@ -104,7 +104,8 @@ util::replica::replica(io::Argument _args, int cont, int _ID, int _rank) : ID(_I
           || sim.param().dihrest.write || sim.param().localelev.write
           || sim.param().electric.dip_write || sim.param().electric.cur_write
           || sim.param().addecouple.write || sim.param().nemd.write
-          || sim.param().orderparamrest.write || sim.param().print.monitor_dihedrals ) && args.count("trs") > 0) {
+          || sim.param().orderparamrest.write || sim.param().print.monitor_dihedrals
+          || sim.param().colvarres.write) && args.count("trs") > 0) {
     it = args.lower_bound("trs");
     pos = (*it).second.find_last_of(".");
     (*it).second.insert(pos, tmp.str());

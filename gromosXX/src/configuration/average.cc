@@ -431,6 +431,7 @@ fluct.prop = old_fluct.prop + dt * e.prop * e.prop
   ENERGY_AVG(distanceres_total);
   ENERGY_AVG(dihrest_total);
   ENERGY_AVG(disfieldres_total);
+  ENERGY_AVG(colvarres_total);
   ENERGY_AVG(jvalue_total);
   ENERGY_AVG(xray_total);
   ENERGY_AVG(leus_total);
@@ -498,6 +499,7 @@ fluct.prop = old_fluct.prop + dt * e.prop * e.prop
     ENERGY_AVG(distanceres_energy[i]);
     ENERGY_AVG(dihrest_energy[i]);
     ENERGY_AVG(disfieldres_energy[i]);
+    ENERGY_AVG(colvarres_energy[i]);
     ENERGY_AVG(constraints_energy[i]);
     ENERGY_AVG(jvalue_energy[i]);
     ENERGY_AVG(rdc_energy[i]);
@@ -650,6 +652,7 @@ void configuration::Average::Block_Average
   ENERGY_RES(distanceres_total);
   ENERGY_RES(dihrest_total);
   ENERGY_RES(disfieldres_total);
+  ENERGY_RES(colvarres_total);
   ENERGY_RES(jvalue_total);
   ENERGY_RES(xray_total);
   ENERGY_RES(leus_total);
@@ -705,6 +708,7 @@ void configuration::Average::Block_Average
     ENERGY_RES(distanceres_energy[i]);
     ENERGY_RES(dihrest_energy[i]);
     ENERGY_RES(disfieldres_energy[i]);
+    ENERGY_RES(colvarres_energy[i]);
     ENERGY_RES(constraints_energy[i]);
     ENERGY_RES(jvalue_energy[i]);
     ENERGY_RES(rdc_energy[i]);

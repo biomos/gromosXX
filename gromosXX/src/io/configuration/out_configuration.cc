@@ -35,7 +35,7 @@
 
 // Energy trajectory version
 // For details, see definition in out_configuration.cc
-const std::string io::Out_Configuration::ene_version = "2015-06-23-A";
+const std::string io::Out_Configuration::ene_version = "2016-01-13-A";
 
 // declarations
 static void _print_energyred_helper(std::ostream & os, configuration::Energy const &e);
@@ -70,6 +70,7 @@ m_every_xray(0),
 m_every_disres(0),
 m_every_disfieldres(0),
 m_every_dihres(0),
+m_every_colvarres(0),
 m_every_dat(0),
 m_every_leus(0),
 m_every_bsleus(0),
@@ -87,6 +88,7 @@ m_force_precision(9),
 m_distance_restraint_precision(7),
 m_disfield_restraint_precision(7),
 m_dihedral_restraint_precision(7),
+m_colvar_restraint_precision(7),
 m_width(15),
 m_force_width(18),
 m_title(title),
@@ -200,8 +202,8 @@ void io::Out_Configuration::init(io::Argument & args,
           io::message::error);
 
   m_write_special = param.polarise.write || param.jvalue.write || param.xrayrest.write 
-     || param.distanceres.write || param.distancefield.write || param.dihrest.write || param.print.monitor_dihedrals 
-     || param.localelev.write || param.electric.dip_write || param.electric.cur_write 
+     || param.distanceres.write || param.distancefield.write || param.dihrest.write || param.colvarres.write 
+     || param.print.monitor_dihedrals|| param.localelev.write || param.electric.dip_write || param.electric.cur_write
      || param.addecouple.write || param.nemd.write || param.orderparamrest.write || param.rdc.write
      || param.bsleus.write;    // add others if there are any
 
@@ -211,7 +213,7 @@ void io::Out_Configuration::init(io::Argument & args,
             param.distancefield.write, param.dihrest.write, param.print.monitor_dihedrals,param.localelev.write, 
             param.electric.dip_write, param.electric.cur_write, param.addecouple.write,
             param.nemd.write, param.orderparamrest.write, param.rdc.write,
-            param.bsleus.write);
+            param.bsleus.write, param.colvarres.write);
   else if (m_write_special)
     io::messages.add("write special trajectory but no trs argument",
           "Out_Configuration",
@@ -260,6 +262,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
         simulation::Simulation const &sim,
         output_format const form) {
   // standard trajectories
+  DEBUG(8, "outconfiguration write");
 
   bool constraint_force = sim.param().constraint.solute.algorithm == simulation::constr_shake ||
           sim.param().constraint.solvent.algorithm == simulation::constr_shake;
@@ -277,6 +280,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
   }
 
   if (form == reduced) {
+    DEBUG(8, "writing reduced outconfiguration");
     /**
      * set this to true when you print the timestep to the special traj.
      * make sure you don't print it twice. 
@@ -339,6 +343,11 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
     }
     if (m_every_dihres && sim.steps() && ((sim.steps() - 1) % m_every_dihres) == 0) {
       _print_dihedral_restraints(conf, topo, m_special_traj);
+     m_special_traj.flush();
+    }
+ 
+    if (m_every_colvarres && sim.steps() && ((sim.steps() - 1) % m_every_colvarres) == 0) {
+      _print_colvar_restraints(conf, topo, m_special_traj);
       m_special_traj.flush();
     }
 
@@ -469,6 +478,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
     }
 
   } else if (form == final && m_final) {
+    DEBUG(8, "writing final outconfiguration");
     _print_timestep(sim, m_final_conf);
     _print_position(conf, topo, m_final_conf);
     _print_lattice_shifts(conf, topo, m_final_conf);
@@ -615,6 +625,10 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       _print_dihedral_restraints(conf, topo, m_special_traj);
     }
     
+    if (m_every_colvarres && ((sim.steps() - 1) % m_every_colvarres) == 0) {    
+      _print_colvar_restraints(conf, topo, m_special_traj);
+    }
+    
     if (m_every_jvalue && ((sim.steps() - 1) % m_every_jvalue) == 0) {    
       _print_jvalue(sim.param(), conf, topo, m_special_traj, true);
     }
@@ -742,7 +756,7 @@ void io::Out_Configuration
                      int every_xray, int every_disres, int every_disfieldres, int every_dihres, int every_dat, 
                      int every_leus, int every_dipole, int every_current,
                      int every_adde, int every_nemd, int every_oparam, int every_rdc,
-                     int every_bsleus) {
+                     int every_bsleus, int every_colvarres) {
 
   m_special_traj.open(name.c_str());
 
@@ -752,6 +766,7 @@ void io::Out_Configuration
   m_every_disres = every_disres;
   m_every_disfieldres = every_disfieldres;
   m_every_dihres = every_dihres;
+  m_every_colvarres = every_colvarres;
   m_every_dat = every_dat;
   m_every_leus = every_leus;
   m_every_dipole = every_dipole;
@@ -845,6 +860,7 @@ void io::Out_Configuration
                              (m_every_disres && ((sim.steps() % m_every_disres) == 0)) ||
                              (m_every_disfieldres && ((sim.steps() % m_every_disfieldres) == 0)) ||
                              (m_every_dihres && ((sim.steps() % m_every_dihres) == 0)) ||
+                             (m_every_colvarres && ((sim.steps() % m_every_colvarres) == 0)) ||
                              (m_every_dat && ((sim.steps() % m_every_dat) == 0)) ||
                              (m_every_leus && ((sim.steps() % m_every_leus) == 0)) ||
                              (m_every_bsleus && ((sim.steps() % m_every_bsleus) == 0)) ||
@@ -1535,6 +1551,7 @@ ENERGY03
    0.000000000e+00 # QM/MM total
    0.000000000e+00 # B&S-LEUS energy
    0.000000000e+00 # RDC-value total
+   0.000000000e+00 # colvar restraint total
 # baths
 # number of baths
 2
@@ -1553,7 +1570,7 @@ ENERGY03
   -6.774710271e-01   4.920740888e-01   0.000000000e+00   0.000000000e+00  # 1 - 2
   -7.163386790e-01  -1.309311086e+01   0.000000000e+00   0.000000000e+00  # 2 - 2
 # special
-#  constraints       pos. restraints   dist. restraints  disfield res      dihe. restr.      SASA              SASA volume       jvalue            rdc               local elevation   path integral
+#  constraints       pos. restraints   dist. restraints  disfield res      dihe. restr.      SASA              SASA volume       jvalue            rdc               local elevation   path integral colvar restr.
    0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00 # group 1
    0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00 # group 2
 # eds (enveloping distribution sampling)
@@ -2364,6 +2381,54 @@ void io::Out_Configuration::_print_disfield_restraints(
   os << "END" << std::endl;
 }
 
+void io::Out_Configuration::_print_colvar_restraints(
+        configuration::Configuration const &conf,
+        topology::Topology const & topo,
+        std::ostream &os) {
+  DEBUG(10, "colvar restraints");
+
+  std::vector<double>::const_iterator v_it = conf.special().colvarres.values.begin(),
+          v_to = conf.special().colvarres.values.end();
+  std::vector<double>::const_iterator ene_it = conf.special().colvarres.energies.begin();
+
+  os.setf(std::ios::fixed, std::ios::floatfield);
+  os.precision(m_colvar_restraint_precision);
+  
+  if (conf.special().colvarres.values.size() > 0) {
+    os << "COLVARRESDATA" << std::endl;
+    os << conf.special().colvarres.values.size() << "\n";
+    
+    //os << std::setw(m_width) << conf.special().colvarres.totv 
+    //   << std::setw(m_width) << conf.special().colvarres.tote << "\n";
+    
+    int i;
+    for (i = 1; v_it != v_to; ++v_it, ++ene_it, ++i) {
+       os << std::setw(m_width) << *v_it
+       << std::setw(m_width) << *ene_it;
+       os << std::endl;
+    }
+    os << "END" << std::endl;
+  }
+  
+
+  std::vector<double>::const_iterator pv_it = conf.special().pertcolvarres.values.begin(),
+          pv_to = conf.special().pertcolvarres.values.end();
+  std::vector<double>::const_iterator pene_it = conf.special().pertcolvarres.energies.begin();
+  
+  if (conf.special().pertcolvarres.values.size() > 0) {
+    os << "PERTCOLVARRESDATA" << std::endl;
+    os << conf.special().pertcolvarres.values.size() << "\n";
+        
+    int i;
+    for (i = 1; pv_it != pv_to; ++pv_it, ++pene_it, ++i) {
+       os << std::setw(m_width) << *pv_it
+       << std::setw(m_width) << *pene_it;
+       os << std::endl;
+    }
+    os << "END" << std::endl;
+  }
+}
+
 void io::Out_Configuration::_print_distance_restraint_averages(
         configuration::Configuration const &conf,
         topology::Topology const &topo,
@@ -2877,7 +2942,8 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
           << std::setw(18) << e.entropy_term << "\n" // 35
           << std::setw(18) << e.qm_total << "\n" // 36
           << std::setw(18) << e.bsleus_total << "\n" // 37
-          << std::setw(18) << e.rdc_total << "\n"; //38
+          << std::setw(18) << e.rdc_total << "\n" //38
+          << std::setw(18) << e.colvarres_total << "\n"; //39
 
   os << "# baths\n";
   os << numbaths << "\n";
@@ -2924,7 +2990,8 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
             << std::setw(18) << 0.0 // jval
             << std::setw(18) << e.rdc_energy[i] // rdc
             << std::setw(18) << 0.0 // local elevation
-            << std::setw(18) << 0.0 << "\n"; //path integral
+            << std::setw(18) << 0.0 //path integral
+            << std::setw(18) << e.colvarres_energy[i] << "\n"; // colvarres
   }
 
   // eds energy of end states

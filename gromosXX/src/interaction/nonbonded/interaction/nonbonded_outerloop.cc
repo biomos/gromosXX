@@ -113,7 +113,7 @@ void interaction::Nonbonded_Outerloop
   std::vector<unsigned int>::const_iterator j_it, j_to;
 
   unsigned int size_i = unsigned(pairlist_solute.size());
-  DEBUG(10, "outerloop pairlist size " << size_i);
+  DEBUG(10, "lj_crf outerloop pairlist size " << size_i);
 
   const unsigned int end = topo.num_solute_atoms();
 
@@ -286,7 +286,7 @@ void interaction::Nonbonded_Outerloop
   std::vector<unsigned int>::const_iterator j_it, j_to;
 
   unsigned int size_i = unsigned(pairlist_solute.size());
-  DEBUG(10, "outerloop pairlist size " << size_i);
+  DEBUG(10, "outerloop2 pairlist size " << size_i);
 
   const unsigned int end = topo.num_solute_atoms();
 
@@ -297,10 +297,7 @@ void interaction::Nonbonded_Outerloop
     math::Vec groupForce(0.0);
     int k = 0;
     
-
-      DEBUG(10, "\tnonbonded_interaction: i " << i << " j " << *j_it);
-
-      // shortrange, therefore store in simulation.system()
+    // shortrange, therefore store in simulation.system()
     for (j_it = pairlist_solute[i].begin(),
          j_to = pairlist_solute[i].end();
          j_it != j_to;
@@ -1479,7 +1476,7 @@ void interaction::Nonbonded_Outerloop
   unsigned int i;
   unsigned int size_i = unsigned(pairlist.size());
   unsigned int size_lr = size_i;
-  DEBUG(11, "outerloop pairlist size " << size_i);
+  DEBUG(11, "el.field outerloop pairlist size " << size_i);
 
   unsigned int end = size_i;
   unsigned int end_lr = size_lr;
@@ -1723,7 +1720,7 @@ void interaction::Nonbonded_Outerloop
   topology::excl_cont_t::value_type::const_iterator ex_it, ex_to;
 
   unsigned int size_i = unsigned(pairlist_solute.size());
-  DEBUG(10, "outerloop pairlist size " << size_i);
+  DEBUG(10, "ls outerloop pairlist size " << size_i);
 
   unsigned int end = topo.num_solute_atoms();
 

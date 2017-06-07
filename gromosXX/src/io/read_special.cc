@@ -33,6 +33,7 @@
 #include "../io/topology/in_order.h"
 #include "../io/topology/in_symrest.h"
 #include "../io/topology/in_rdc.h"
+#include "../io/topology/in_colvarres.h"
 #include "../util/coding.h"
 
 #include "read_special.h"
@@ -129,6 +130,30 @@ int io::read_special(io::Argument const & args,
       }
     }    
   } // DISTANCERES
+
+  // COLVARRES
+  if (sim.param().colvarres.colvarres){
+    io::igzstream colvarres_file;
+
+    if (args.count("colvarres") != 1){
+      io::messages.add("collective variable restraints: no data file specified (use @colvarres)",
+		       "read special", io::message::error);
+    } else {
+      colvarres_file.open(args["colvarres"].c_str());
+      if (!colvarres_file.is_open()){
+	io::messages.add("opening colvarres file failed!\n",
+			 "read_special", io::message::error);
+      } else {
+        io::In_Colvarres ip(colvarres_file);
+        ip.quiet = quiet;
+
+        ip.read(topo, sim, os);
+        io::messages.add("collective variable restraints read from " + args["colvarres"] +
+                "\n" + util::frame_text(ip.title),
+                "read special", io::message::notice);
+      }
+    }    
+  } // COLVARRES
 
   // DIHREST
   if (sim.param().dihrest.dihrest != simulation::dihedral_restr_off){

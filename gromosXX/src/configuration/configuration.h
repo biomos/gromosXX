@@ -425,6 +425,32 @@ namespace configuration {
          */
         double vhl0;
       } /** adde information */ adde;
+      
+      /**
+       * @struct colvarres_struct
+       * holds the colvar restraints configuration data
+       */
+      struct colvarres_struct {
+      
+        /**
+         * the sum of all collective variables
+         */
+         double totv;
+        /**
+         * total energy of collective variable restraints
+         */
+         double tote;
+      
+        /**
+         * the values
+         */
+        std::vector<double> values;
+        /**
+         * the energies
+         */
+        std::vector<double> energies;
+      } /** colvarres informaton */ colvarres;
+      colvarres_struct pertcolvarres;
 
       /**
        * @struct disres_struct
