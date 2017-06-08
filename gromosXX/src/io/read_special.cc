@@ -71,7 +71,7 @@ int io::read_special(io::Argument const & args,
         ip.quiet = quiet;
 
         ip.read(topo, sim, os);
-        io::messages.add("position restraints specifciation read from " +
+        io::messages.add("position restraints specification read from " +
                 args["posresspec"] + "\n" + util::frame_text(ip.title),
                 "read special", io::message::notice);
       }

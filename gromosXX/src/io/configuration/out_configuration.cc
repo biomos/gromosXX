@@ -556,7 +556,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       _print_pscale_jrest(conf, topo, m_final_conf);
     }
 
-    if (sim.param().multibath.nosehoover > 1) {
+    if (sim.param().multibath.algorithm > 1) {
       _print_nose_hoover_chain_variables(sim.multibath(), m_final_conf);
     }
 

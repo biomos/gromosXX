@@ -4,7 +4,7 @@
  */
 /**
  * @page input input file format
- * 
+ *
  * @date 28-10-2008
  *
  * - @ref  title
@@ -95,7 +95,7 @@ namespace io {
      * Store standard parameters in the simulation.
      */
     void read(simulation::Parameter &param, std::ostream & os = std::cout);
-    
+
     /**
      * read energymin block.
      */
@@ -120,7 +120,7 @@ namespace io {
      * read FORCE block.
      */
     void read_FORCE(simulation::Parameter &param, std::ostream & os = std::cout);
-    
+
     /**
      * read COVALENTFORM block.
      */
@@ -145,7 +145,7 @@ namespace io {
      * read the PRESSURESCALE block.
      */
     void read_PRESSURESCALE(simulation::Parameter &param, std::ostream & os = std::cout);
-    
+
     /**
      * read the BOUNDCOND block.
      */
@@ -155,7 +155,7 @@ namespace io {
      * read the PERTURBATION block.
      */
     void read_PERTURBATION(simulation::Parameter &param, std::ostream & os = std::cout);
-    
+
     /**
      * read INITIALISE block.
      */
@@ -170,7 +170,7 @@ namespace io {
      * read HOOMD block.
      */
     void read_HOOMD(simulation::Parameter &param, std::ostream & os = std::cout);
-    
+
 	/**
      * read PAIRLIST block.
      */
@@ -195,7 +195,7 @@ namespace io {
      * read DISTANCEFIELD block.
      */
     void read_DISTANCEFIELD(simulation::Parameter &param, std::ostream & os = std::cout);
-    
+
     /**
      * read DIHEDRALRES block.
      */
@@ -259,7 +259,7 @@ namespace io {
      * read INTEGRATE block.
      */
     void read_INTEGRATE(simulation::Parameter & param, std::ostream & os = std::cout);
-    
+
     /**
      * read STOCHDYN block.
      */
@@ -274,27 +274,27 @@ namespace io {
      * read MULTISTEP block.
      */
     void read_MULTISTEP(simulation::Parameter & param, std::ostream & os = std::cout);
-    
+
     /**
-     * read MONTECARLO block.
+     * read CHEMICALMONTECARLO block.
      */
-    void read_MONTECARLO(simulation::Parameter & param, std::ostream & os = std::cout);
-    
+    void read_CHEMICALMONTECARLO(simulation::Parameter & param, std::ostream & os = std::cout);
+
     /**
      * read RAND block.
      */
     void read_RAMD(simulation::Parameter & param, std::ostream & os = std::cout);
-    
+
     /**
      * read POLARISE block.
      */
     void read_POLARISE(simulation::Parameter &param, std::ostream & os = std::cout);
-    
+
     /**
      * read RANDOMNUMBERS block.
      */
     void read_RANDOMNUMBERS(simulation::Parameter &param, std::ostream & os = std::cout);
-    
+
     /**
      * read LAMBDAS block.
      */
@@ -354,7 +354,7 @@ namespace io {
      */
     void read_SYMRES(simulation::Parameter &param, std::ostream & os = std::cout);
   };
-  
+
 } // io
 
 #endif

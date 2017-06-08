@@ -29,15 +29,15 @@ int algorithm::NoseHoover_Thermostat::init
  bool quiet
  )
 {
-  if (sim.param().multibath.nosehoover > 0){
+  if (sim.param().multibath.algorithm > 0){
 
     if (!quiet){
-      if (sim.param().multibath.nosehoover == 1){
+      if (sim.param().multibath.algorithm == 1){
 	std::cout << "\tNose-Hoover temperature coupling\n";
       }
       else{
 	std::cout << "\tNose-Hoover-Chain temperature coupling: using "
-		  << sim.param().multibath.nosehoover << " instances\n";
+		  << sim.param().multibath.algorithm << " instances\n";
       }
     }
     
@@ -46,7 +46,7 @@ int algorithm::NoseHoover_Thermostat::init
       b_to = sim.multibath().end();
   
     for( ; b_it != b_to; ++b_it){
-      b_it->zeta.resize(sim.param().multibath.nosehoover, 0.0);
+      b_it->zeta.resize(sim.param().multibath.algorithm, 0.0);
     }
   }
   return 0;
@@ -61,9 +61,9 @@ int algorithm::NoseHoover_Thermostat::apply
 {
   m_timer.start();
 
-  assert(sim.param().multibath.nosehoover > 0);
+  assert(sim.param().multibath.algorithm > 0);
   
-  if (sim.param().multibath.nosehoover == 1)
+  if (sim.param().multibath.algorithm == 1)
     calc_scaling(topo, conf, sim);
   else
     calc_chain_scaling(topo, conf, sim);
@@ -176,7 +176,7 @@ void algorithm::NoseHoover_Thermostat
       // divide by zero measure...
       if (free_temp < math::epsilon) free_temp = b_it->temperature;
 
-      const int nhc = sim.param().multibath.nosehoover;
+      const int nhc = sim.param().multibath.algorithm;
       
       std::vector<double> tau(nhc, b_it->tau * b_it->tau / b_it->dof);
       tau[0] = b_it->tau * b_it->tau;

@@ -1,5 +1,5 @@
 /**
- * @file check_parameter
+ * @file check_parameter.cc
  * check those parameters
  */
 
@@ -24,43 +24,185 @@
 #define SUBMODULE parameter
 
 
-int io::check_parameter(simulation::Simulation & sim)
+int io::check_parameter(simulation::Simulation & sim){
+  int check1 = simple_crosschecks(sim);
+  int check2 = check_features(sim);
+  if (check1 || check2)
+    return -1;
+  else
+    return 0;
+}
+
+int io::simple_crosschecks(simulation::Simulation & sim) {
+  const simulation::Parameter & param = sim.param();
+
+  // no velocity writeout or generation with energy minimization
+  if (param.minimise.ntem != 0 && param.write.velocity != 0)
+    io::messages.add("WRITETRAJ: NTWV has to be 0 for energy minimization.",
+                     "In_Parameter", io::message::error);
+
+  if (param.start.generate_velocities && param.minimise.ntem==1)
+    io::messages.add("INITIALISE block: NTIVEL=1 even though we do an energy minimization",
+                     "In_Parameter", io::message::warning);
+
+  // no pressure or temperature coupling with energy minimization
+  if (param.pcouple.calculate && param.minimise.ntem==1)
+      io::messages.add("PRESSURESCALE block: pressure coupling not allowed with steepest descent minimization",
+                       "In_Parameter", io::message::error);
+
+  if (param.multibath.couple && param.minimise.ntem==1)
+      io::messages.add("MULTIBATH block: temperature coupling not allowed with energy minimization",
+                       "In_Parameter", io::message::error);
+
+  // no reading of atomic shift vectors in vacuum
+  if (param.boundary.boundary == math::vacuum && param.start.read_lattice_shifts)
+      io::messages.add("Atomic shift vector reading (NTISHI=0) not possible under vacuum boundary conditions.",
+                       "In_Parameter", io::message::error);
+
+  // free-energy trajectories are useless if there is no perturbation
+  if (!param.perturbation.perturbation && param.write.free_energy>0)
+      io::messages.add("NTWG>0: free-energy trajectory writing even though perturbation is off.",
+                       "In_Parameter", io::message::warning);
+
+  // generating nose-hoover chain thermostat variables not allowed when not using
+  // the corresponding algorithm
+  if (!param.start.read_nosehoover_chains && param.multibath.algorithm<2)
+      io::messages.add("MULTIBATH block: NTINHT must be 0 when not using Nose-Hoover chains for temperature coupling",
+                       "In_Parameter", io::message::error);
+
+  // no scaling of reference positions when pressure scaling is off
+  if (param.pcouple.scale == math::pcouple_off && param.posrest.scale_reference_positions)
+      io::messages.add("POSITIONRES block: NTPORS=1 can not be used when pressure scaling is off.",
+                       "In_Parameter", io::message::error);
+
+  // center of mass removal and roto-translational constraints should not be used together
+  if (param.rottrans.rottrans && param.centreofmass.skip_step != 0)
+      io::messages.add("ROTTRANS or COMTRANSROT should not be used at the same time.",
+                       "In_Parameter", io::message::warning);
+
+  // trajectory analysis not allow with vacuum
+  if (param.boundary.boundary == math::vacuum && param.analyze.analyze)
+      io::messages.add("READTRAJ block: not allowed with vacuum boundary conditions.", "In_Parameter",
+                       io::message::error);
+
+  // do not try to generate velocities or shake velocities with trajectory analysis
+  if (param.analyze.analyze && (param.start.generate_velocities or param.start.shake_vel))
+      io::messages.add("READTRAJ block: requires NTIVEL=0 and NTISHK=0,1.", "In_Parameter",
+                       io::message::error);
+                       
+  // do not write velocity trajectory when doing trajectory analysis
+  if (param.analyze.analyze && param.write.velocity!=0)
+      io::messages.add("READTRAJ block requires NTWV=0.", "In_Parameter",
+                       io::message::error);
+  
+  // no generation of stochastic integrals when stochastic dynamics is off
+  if (param.stochastic.generate_integral && param.stochastic.sd==0)
+      io::messages.add("STOCHDYN block: if stochastic dynamics is off, NTISTI has to be set to 0",
+                       "In_Parameter", io::message::error);
+
+  // perturbation
+  if (param.montecarlo.mc && !param.perturbation.perturbation) {
+      io::messages.add("CHEMICALMONTECARLO only possible if perturbation is on."
+                       " Set NTG to 1.",
+                       "In_Parameter", io::message::error);
+  }
+
+  // Multicell with polarization mey converge differently
+  if (param.polarise.cos && param.multicell.multicell) {
+      io::messages.add("MULTICELL block: multiple unit cell simulation using polarisation may "
+                       "converge differently. Use a small MINFIELD parameter.",
+                       "In_Parameter", io::message::warning);
+  }
+
+  // EDS: make sure we simulate at a given temperature (unambiguous kT)
+    if (param.eds.eds && !param.multibath.couple) {
+        io::messages.add("EDS block: EDS requires temperature coupling.",
+                               "In_Parameter", io::message::error);
+    }
+
+    // check whether all baths have the same temperature (unambiguous kT)
+    if (param.eds.eds){
+      for (unsigned int i = 1; i < param.multibath.multibath.size(); i++) {
+              if (param.multibath.multibath.bath(i).temperature !=
+                  param.multibath.multibath.bath(0).temperature) {
+                  io::messages.add("EDS block: all baths must have the same temperature.",
+                                   "In_Parameter", io::message::error);
+                  break;
+              }
+      }
+    }
+
+    // lattice shift and pressure coupling:
+    if (param.pcouple.scale != math::pcouple_off
+        && param.nonbonded.method == simulation::el_p3m
+        && param.nonbonded.accuracy_evaluation == 0)
+        io::messages.add("NONBONDED block: Pressure scaling but no quality evaluation of influence function."
+                         " Set NQEVAL > 0.", "In_Parameter", io::message::warning);
+
+    if (param.pcouple.scale == math::pcouple_full_anisotropic
+        && (param.nonbonded.method == simulation::el_p3m || param.nonbonded.method == simulation::el_ewald)) {
+        io::messages.add("NONBONDED block: Full anisotropic pressure scaling "
+                         "could not be tested yet.", "In_Parameter", io::message::warning);
+    }
+    
+    // pressure scaling and boundary conditions
+    if (param.pcouple.scale == math::pcouple_full_anisotropic && param.boundary.boundary != math::triclinic)
+        io::messages.add("PRESSURESCALE block: full anisotropic pressure scaling requires a triclinic box.",
+                         "In_Parameter", io::message::error);
+    if ((param.pcouple.scale == math::pcouple_anisotropic || param.pcouple.scale == math::pcouple_semi_anisotropic)
+       && (param.boundary.boundary != math::triclinic && param.boundary.boundary != math::rectangular))
+        io::messages.add("PRESSURESCALE block: (semi-)anisotropic pressure scaling requires a rectangular or triclinic box.",
+                         "In_Parameter", io::message::error);
+    
+    // warn if Hamiltonian repex but no perturbation
+    if (param.replica.num_l > 1 && !param.perturbation.perturbation)
+        io::messages.add("REPLICA block: Hamiltonian replica exchange but perturbation is off.",
+                         "In_Parameter", io::message::warning);
+
+  if (io::messages.contains(io::message::error) ||
+      io::messages.contains(io::message::critical))
+    return -1;
+  else
+    return 0;
+}
+
+int io::check_features(simulation::Simulation & sim)
 {
   const simulation::Parameter & param = sim.param();
   std::vector<util::Feature> features;
-  
+
   // this macro function is needed by the contrib script to automatically
   // unlock features. Only features added with this add function are recognized
   // by the script!
 #define add(x, y, z) features.push_back(util::Feature((x), (y), (z)))
-  
+
   // Add all features of GROMOS that you want to cross check using the
   // "add" macro.
-  
+
   // SYSTEM block
   add("solute", "solute simulation", param.system.npm == 1);
   add("solvent", "solvent simulation", param.system.nsm > 0);
-  add("solvent_only", "solvent only simulation", param.system.npm == 0 && 
+  add("solvent_only", "solvent only simulation", param.system.npm == 0 &&
                                                  param.system.nsm > 0);
   // ENERGYMIN block
-  add("steepest_descent", "steepest descent energy minimisation", 
+  add("steepest_descent", "steepest descent energy minimisation",
           param.minimise.ntem == 1);
   // CONSTRAINT block
-  add("solute_constraint_off", "unconstrained solute", 
+  add("solute_constraint_off", "unconstrained solute",
           param.constraint.solute.algorithm == simulation::constr_off);
-  add("solute_shake", "SHAKE for solute", 
+  add("solute_shake", "SHAKE for solute",
           param.constraint.solute.algorithm == simulation::constr_shake);
-  add("solute_lincs", "LINCS for solute", 
+  add("solute_lincs", "LINCS for solute",
           param.constraint.solute.algorithm == simulation::constr_lincs);
-  add("solute_flexshake", "flexible SHAKE for solute", 
+  add("solute_flexshake", "flexible SHAKE for solute",
           param.constraint.solute.algorithm == simulation::constr_flexshake);
-  add("solvent_constraint_off", "unconstrained solvent", 
+  add("solvent_constraint_off", "unconstrained solvent",
           param.constraint.solvent.algorithm == simulation::constr_off);
-  add("solvent_shake", "SHAKE for solvent", 
+  add("solvent_shake", "SHAKE for solvent",
           param.constraint.solvent.algorithm == simulation::constr_shake);
-  add("solvent_lincs", "LINCS for solvent", 
+  add("solvent_lincs", "LINCS for solvent",
           param.constraint.solvent.algorithm == simulation::constr_lincs);
-  add("solvent_settle", "SETTLE for solvent", 
+  add("solvent_settle", "SETTLE for solvent",
           param.constraint.solvent.algorithm == simulation::constr_settle);
   // PRESSURESCALE block
   add("pressure_calculation", "pressure calculation", param.pcouple.calculate);
@@ -76,9 +218,9 @@ int io::check_parameter(simulation::Simulation & sim)
   // PERTURBATION block
   add("perturbation", "free energy perturbation", param.perturbation.perturbation);
   add("perturbation_scaling", "perturbation scaling", param.perturbation.scaling);
-  add("slow_growth", "slow growth", param.perturbation.perturbation && 
+  add("slow_growth", "slow growth", param.perturbation.perturbation &&
                                     param.perturbation.dlamt > 0.0);
-  
+
   // LAMBDAS block
   add("individual_lambdas", "individual lambdas", param.lambdas.individual_lambdas);
   
@@ -96,7 +238,7 @@ int io::check_parameter(simulation::Simulation & sim)
   add("crf", "coulomb reaction field interaction", param.force.nonbonded_crf == 1);
   add("lj", "Lennard-Jones interaction", param.force.nonbonded_vdw == 1);
   // COMTRANSROT block
-  add("com_removal", "COM motion removal", param.centreofmass.remove_rot || 
+  add("com_removal", "COM motion removal", param.centreofmass.remove_rot ||
                                            param.centreofmass.remove_trans);
   // LONGRANGE block
   add("rf_excluded", "reaction field for excluded pairs", param.nonbonded.rf_excluded);
@@ -110,20 +252,20 @@ int io::check_parameter(simulation::Simulation & sim)
   add("cg_martini", "coarse-grained simulation", param.cgrain.level == 1);
   add("cg_gromos", "coarse-grained simulation", param.cgrain.level == 2);
   add("mixed_grain", "mixed-grained simulation", param.cgrain.level == 3);
-  
+
   // MULTIBATH block
-  add("temp_berendsen", "Berendsen thermostat", param.multibath.nosehoover == 0);
-  add("temp_nosehoover", "Nose-Hoover thermostat", param.multibath.nosehoover == 1);
-  add("temp_nosehoover_chains", "Nose-Hoover chains thermostat", 
-          param.multibath.nosehoover == 2);
+  add("temp_berendsen", "Berendsen thermostat", param.multibath.algorithm == 0);
+  add("temp_nosehoover", "Nose-Hoover thermostat", param.multibath.algorithm == 1);
+  add("temp_nosehoover_chains", "Nose-Hoover chains thermostat",
+          param.multibath.algorithm == 2);
   // POSITIONRES block
   add("position_rest", "position restraints", param.posrest.posrest != simulation::posrest_off &&
                                               param.posrest.posrest != simulation::posrest_const);
-  add("position_const", "position constraints without reference position scaling", 
-      param.posrest.posrest == simulation::posrest_const && 
+  add("position_const", "position constraints without reference position scaling",
+      param.posrest.posrest == simulation::posrest_const &&
       !param.posrest.scale_reference_positions);
-  add("position_const_scaled", "position constraints with reference position scaling", 
-      param.posrest.posrest == simulation::posrest_const && 
+  add("position_const_scaled", "position constraints with reference position scaling",
+      param.posrest.posrest == simulation::posrest_const &&
       param.posrest.scale_reference_positions);
   // DISTANCERES block
   add("distance_rest", "distance restraints", param.distanceres.distanceres != 0);
@@ -136,9 +278,9 @@ int io::check_parameter(simulation::Simulation & sim)
   // JVALUERES block
   add("jvalue_rest", "J-value restraints", param.jvalue.mode != simulation::jvalue_restr_off);
   // RDC block
-  add("rdc_rest", "RDC restraints", param.rdc.mode != simulation::rdc_restr_off); 
+  add("rdc_rest", "RDC restraints", param.rdc.mode != simulation::rdc_restr_off);
   // PERSCALE block
-  add("perscale", "peridoic scaling", param.pscale.jrest);
+  add("perscale", "periodic scaling", param.pscale.jrest);
   // ROTTRANS block
   add("rottrans", "roto-translational constraints", param.rottrans.rottrans);
   // INNERLOOP block
@@ -166,9 +308,9 @@ int io::check_parameter(simulation::Simulation & sim)
   // MONTECARLO block
   add("montecarlo", "chemical monte-carlo", param.montecarlo.mc);
   // POLARISE block
-  add("polarisation_cos", "COS polarisation", param.polarise.cos && 
+  add("polarisation_cos", "COS polarisation", param.polarise.cos &&
                                               !param.polarise.damp);
-  add("polarisation_cos_damped", "COS polarisation", param.polarise.cos && 
+  add("polarisation_cos_damped", "COS polarisation", param.polarise.cos &&
                                                      param.polarise.damp);
   // SASA block
   add("sasa", "SASA implicit solvent model",  param.sasa.switch_sasa == true &&
@@ -176,13 +318,13 @@ int io::check_parameter(simulation::Simulation & sim)
   add("sasavol", "SASA/VOL implicit solvent model", param.sasa.switch_volume == true &&
           param.sasa.sigma_v != 0.0);
   // RANDOMNUMBERS block
-  add("random_gromos", "GROMOS96 random numbers", 
+  add("random_gromos", "GROMOS96 random numbers",
           param.rng.rng == simulation::random_g96);
-  add("random_gsl", "GROMOS96 random numbers", 
+  add("random_gsl", "GROMOS96 random numbers",
           param.rng.rng == simulation::random_gsl);
   // EDS block
   add("eds", "Enveloping distribution sampling", param.eds.eds);
-  
+
   // parallelization
   add("parallel_mpi", "MPI parallelization", sim.mpi);
   int size = 1;
@@ -195,22 +337,22 @@ int io::check_parameter(simulation::Simulation & sim)
 	size = omp_get_num_threads();
       }
     }
-#endif 
+#endif
   add("parallel_omp", "OpenMP parallelization", size > 1);
-  
+
   // multiple energy groups
   add("mult_energy_groups", "multiple energy groups", param.force.energy_group.size() > 1);
-  
+
   // lattice sum: Ewald
   add("ewald", "Ewald sum electrostatics.\n"
       "    If this is changed in the future, line 2534 in\n"
-      "    out_configuration.cc needs to be adapted",         
+      "    out_configuration.cc needs to be adapted",
       param.nonbonded.method == simulation::el_ewald);
-  
+
   // lattice sum: P3M
   add("p3m", "P3M electrostatics.\n"
       "    If this is changed in the future, line 2534 in\n"
-      "    out_configuration.cc needs to be adapted", 
+      "    out_configuration.cc needs to be adapted",
       param.nonbonded.method == simulation::el_p3m);
 
   add("leus", "local elevation umbrella sampling", param.localelev.localelev != simulation::localelev_off);
@@ -218,15 +360,15 @@ int io::check_parameter(simulation::Simulation & sim)
   add("bsleus", "Balls and Sticks local elevation umbrella sampling",
           param.bsleus.bsleus != simulation::bsleus_off);
   add("xray", "X-ray restraints", param.xrayrest.xrayrest != simulation::xrayrest_off);
-  
+
   // force groups
   add("force_groups", "force groups", param.force.force_groups);
 
 // we don't need the add function anymore.
 #undef add
-  
+
   util::FeatureChecker fc(features);
-  
+
 // unlock the features here. This can be very tedious. Use the script
 // unlock_features.pl in the contrib directory to unlock your feature against
 // all others and delete the lines you don't need. Make sure you don't unlock
@@ -276,7 +418,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solute", "dihedral_rest");
   fc.unlock("solute", "dihedral_const");
   fc.unlock("solute", "jvalue_rest");
-  fc.unlock("solute", "rdc_rest");    
+  fc.unlock("solute", "rdc_rest");
   fc.unlock("solute", "perscale");
   fc.unlock("solute", "rottrans");
   fc.unlock("solute", "repex_temp");
@@ -337,7 +479,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solvent", "dihedral_rest");
   fc.unlock("solvent", "dihedral_const");
   fc.unlock("solvent", "jvalue_rest");
-  fc.unlock("solvent", "rdc_rest");   
+  fc.unlock("solvent", "rdc_rest");
   fc.unlock("solvent", "perscale");
   fc.unlock("solvent", "rottrans");
   fc.unlock("solvent", "repex_temp");
@@ -421,7 +563,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("steepest_descent", "improper");
   fc.unlock("steepest_descent", "crf");
   fc.unlock("steepest_descent", "lj");
-  fc.unlock("steepest_descent", "com_removal");
+  //fc.unlock("steepest_descent", "com_removal");
   fc.unlock("steepest_descent", "rf_excluded");
   fc.unlock("steepest_descent", "pairlist_standard");
   fc.unlock("steepest_descent", "pairlist_grid");
@@ -439,11 +581,11 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("steepest_descent", "dihedral_rest");
   fc.unlock("steepest_descent", "dihedral_const");
   fc.unlock("steepest_descent", "jvalue_rest");
-  fc.unlock("steepest_descent", "rdc_rest");  
+  fc.unlock("steepest_descent", "rdc_rest");
   fc.unlock("steepest_descent", "perscale");
   fc.unlock("steepest_descent", "rottrans");
   fc.unlock("steepest_descent", "multicell");
-  fc.unlock("steepest_descent", "analysis");
+  //fc.unlock("steepest_descent", "analysis");
   fc.unlock("steepest_descent", "no_integration");
   fc.unlock("steepest_descent", "multistep");
   fc.unlock("steepest_descent", "multistep_boost");
@@ -545,7 +687,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solute_shake", "dihedral_rest");
   fc.unlock("solute_shake", "dihedral_const");
   fc.unlock("solute_shake", "jvalue_rest");
-  fc.unlock("solute_shake", "rdc_rest"); 
+  fc.unlock("solute_shake", "rdc_rest");
   fc.unlock("solute_shake", "perscale");
   fc.unlock("solute_shake", "rottrans");
   fc.unlock("solute_shake", "repex_temp");
@@ -642,7 +784,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solute_flexshake", "distance_rest");
   fc.unlock("solute_flexshake", "dihedral_rest");
   fc.unlock("solute_flexshake", "jvalue_rest");
-  fc.unlock("solute_flexshake", "rdc_rest");  
+  fc.unlock("solute_flexshake", "rdc_rest");
   fc.unlock("solute_flexshake", "perscale");
   fc.unlock("solute_flexshake", "rottrans");
   fc.unlock("solute_flexshake", "repex_temp");
@@ -690,7 +832,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solvent_constraint_off", "dihedral_rest");
   fc.unlock("solvent_constraint_off", "dihedral_const");
   fc.unlock("solvent_constraint_off", "jvalue_rest");
-  fc.unlock("solvent_constraint_off", "rdc_rest");  
+  fc.unlock("solvent_constraint_off", "rdc_rest");
   fc.unlock("solvent_constraint_off", "perscale");
   fc.unlock("solvent_constraint_off", "rottrans");
   fc.unlock("solvent_constraint_off", "repex_temp");
@@ -743,7 +885,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solvent_shake", "dihedral_rest");
   fc.unlock("solvent_shake", "dihedral_const");
   fc.unlock("solvent_shake", "jvalue_rest");
-  fc.unlock("solvent_shake", "rdc_rest"); 
+  fc.unlock("solvent_shake", "rdc_rest");
   fc.unlock("solvent_shake", "perscale");
   fc.unlock("solvent_shake", "rottrans");
   fc.unlock("solvent_shake", "repex_temp");
@@ -793,7 +935,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("pressure_calculation", "dihedral_rest");
   fc.unlock("pressure_calculation", "dihedral_const");
   fc.unlock("pressure_calculation", "jvalue_rest");
-  fc.unlock("pressure_calculation", "rdc_rest");  
+  fc.unlock("pressure_calculation", "rdc_rest");
   fc.unlock("pressure_calculation", "perscale");
   fc.unlock("pressure_calculation", "rottrans");
   fc.unlock("pressure_calculation", "repex_temp");
@@ -842,7 +984,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("pressure_scale_berendsen", "dihedral_rest");
   fc.unlock("pressure_scale_berendsen", "dihedral_const");
   fc.unlock("pressure_scale_berendsen", "jvalue_rest");
-  fc.unlock("pressure_scale_berendsen", "rdc_rest");          
+  fc.unlock("pressure_scale_berendsen", "rdc_rest");
   fc.unlock("pressure_scale_berendsen", "perscale");
   fc.unlock("pressure_scale_berendsen", "rottrans");
   fc.unlock("pressure_scale_berendsen", "repex_temp");
@@ -889,7 +1031,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("virial_off", "dihedral_rest");
   fc.unlock("virial_off", "dihedral_const");
   fc.unlock("virial_off", "jvalue_rest");
-  fc.unlock("virial_off", "rdc_rest");    
+  fc.unlock("virial_off", "rdc_rest");
   fc.unlock("virial_off", "perscale");
   fc.unlock("virial_off", "rottrans");
   fc.unlock("virial_off", "repex_temp");
@@ -936,7 +1078,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("virial_atomic", "distance_rest");
   fc.unlock("virial_atomic", "dihedral_rest");
   fc.unlock("virial_atomic", "jvalue_rest");
-  fc.unlock("virial_atomic", "rdc_rest");   
+  fc.unlock("virial_atomic", "rdc_rest");
   fc.unlock("virial_atomic", "perscale");
   fc.unlock("virial_atomic", "rottrans");
   fc.unlock("virial_atomic", "repex_temp");
@@ -984,7 +1126,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("virial_molecular", "dihedral_rest");
   fc.unlock("virial_molecular", "dihedral_const");
   fc.unlock("virial_molecular", "jvalue_rest");
-  fc.unlock("virial_molecular", "rdc_rest");   
+  fc.unlock("virial_molecular", "rdc_rest");
   fc.unlock("virial_molecular", "perscale");
   fc.unlock("virial_molecular", "rottrans");
   fc.unlock("virial_molecular", "repex_temp");
@@ -1026,7 +1168,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("vacuum", "dihedral_rest");
   fc.unlock("vacuum", "dihedral_const");
   fc.unlock("vacuum", "jvalue_rest");
-  fc.unlock("vacuum", "rdc_rest");       
+  fc.unlock("vacuum", "rdc_rest");
   fc.unlock("vacuum", "perscale");
   fc.unlock("vacuum", "rottrans");
   fc.unlock("vacuum", "repex_temp");
@@ -1069,7 +1211,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("pbc_r", "dihedral_rest");
   fc.unlock("pbc_r", "dihedral_const");
   fc.unlock("pbc_r", "jvalue_rest");
-  fc.unlock("pbc_r", "rdc_rest");  
+  fc.unlock("pbc_r", "rdc_rest");
   fc.unlock("pbc_r", "perscale");
   fc.unlock("pbc_r", "rottrans");
   fc.unlock("pbc_r", "repex_temp");
@@ -1113,7 +1255,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("pbc_c", "dihedral_rest");
   fc.unlock("pbc_c", "dihedral_const");
   fc.unlock("pbc_c", "jvalue_rest");
-  fc.unlock("pbc_c", "rdc_rest");  
+  fc.unlock("pbc_c", "rdc_rest");
   fc.unlock("pbc_c", "perscale");
   fc.unlock("pbc_c", "rottrans");
   fc.unlock("pbc_c", "repex_temp");
@@ -1155,7 +1297,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("pbc_t", "dihedral_rest");
   fc.unlock("pbc_t", "dihedral_const");
   fc.unlock("pbc_t", "jvalue_rest");
-  fc.unlock("pbc_t", "rdc_rest");    
+  fc.unlock("pbc_t", "rdc_rest");
   fc.unlock("pbc_t", "perscale");
   fc.unlock("pbc_t", "rottrans");
   fc.unlock("pbc_t", "repex_temp");
@@ -1234,7 +1376,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("perturbation_scaling", "dihedral_rest");
   fc.unlock("perturbation_scaling", "dihedral_const");
   fc.unlock("perturbation_scaling", "jvalue_rest");
-  fc.unlock("perturbation_scaling", "rdc_rest");                    
+  fc.unlock("perturbation_scaling", "rdc_rest");
   fc.unlock("perturbation_scaling", "perscale");
   fc.unlock("perturbation_scaling", "rottrans");
   fc.unlock("perturbation_scaling", "repex_temp");
@@ -1295,7 +1437,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("individual_lambdas", "dihedral_rest");
   fc.unlock("individual_lambdas", "dihedral_const");
   fc.unlock("individual_lambdas", "jvalue_rest");
-  fc.unlock("individual_lambdas", "rdc_rest"); 
+  fc.unlock("individual_lambdas", "rdc_rest");
   fc.unlock("individual_lambdas", "perscale");
   fc.unlock("individual_lambdas", "rottrans");
   fc.unlock("individual_lambdas", "repex_temp");
@@ -1338,7 +1480,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("bond", "dihedral_rest");
   fc.unlock("bond", "dihedral_const");
   fc.unlock("bond", "jvalue_rest");
-  fc.unlock("bond", "rdc_rest"); 
+  fc.unlock("bond", "rdc_rest");
   fc.unlock("bond", "perscale");
   fc.unlock("bond", "rottrans");
   fc.unlock("bond", "repex_temp");
@@ -1378,7 +1520,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("angle", "dihedral_rest");
   fc.unlock("angle", "dihedral_const");
   fc.unlock("angle", "jvalue_rest");
-  fc.unlock("angle", "rdc_rest"); 
+  fc.unlock("angle", "rdc_rest");
   fc.unlock("angle", "perscale");
   fc.unlock("angle", "rottrans");
   fc.unlock("angle", "repex_temp");
@@ -1417,7 +1559,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("dihedral", "dihedral_rest");
   fc.unlock("dihedral", "dihedral_const");
   fc.unlock("dihedral", "jvalue_rest");
-  fc.unlock("dihedral", "rdc_rest");         
+  fc.unlock("dihedral", "rdc_rest");
   fc.unlock("dihedral", "perscale");
   fc.unlock("dihedral", "rottrans");
   fc.unlock("dihedral", "repex_temp");
@@ -1456,7 +1598,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("improper", "dihedral_const");
   fc.unlock("improper", "jvalue_rest");
   fc.unlock("improper", "rdc_rest");
-  fc.unlock("improper", "perscale"); 
+  fc.unlock("improper", "perscale");
   fc.unlock("improper", "perscale");
   fc.unlock("improper", "rottrans");
   fc.unlock("improper", "repex_temp");
@@ -1493,7 +1635,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("crf", "dihedral_rest");
   fc.unlock("crf", "dihedral_const");
   fc.unlock("crf", "jvalue_rest");
-  fc.unlock("crf", "rdc_rest");            
+  fc.unlock("crf", "rdc_rest");
   fc.unlock("crf", "perscale");
   fc.unlock("crf", "rottrans");
   fc.unlock("crf", "repex_temp");
@@ -1529,7 +1671,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("lj", "dihedral_rest");
   fc.unlock("lj", "dihedral_const");
   fc.unlock("lj", "jvalue_rest");
-  fc.unlock("lj", "rdc_rest");  
+  fc.unlock("lj", "rdc_rest");
   fc.unlock("lj", "perscale");
   fc.unlock("lj", "rottrans");
   fc.unlock("lj", "repex_temp");
@@ -1562,7 +1704,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("com_removal", "dihedral_rest");
   fc.unlock("com_removal", "dihedral_const");
   fc.unlock("com_removal", "jvalue_rest");
-  fc.unlock("com_removal", "rdc_rest");  
+  fc.unlock("com_removal", "rdc_rest");
   fc.unlock("com_removal", "perscale");
   fc.unlock("com_removal", "rottrans");
   fc.unlock("com_removal", "repex_temp");
@@ -1596,7 +1738,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("rf_excluded", "dihedral_rest");
   fc.unlock("rf_excluded", "dihedral_const");
   fc.unlock("rf_excluded", "jvalue_rest");
-  fc.unlock("rf_excluded", "rdc_rest"); 
+  fc.unlock("rf_excluded", "rdc_rest");
   fc.unlock("rf_excluded", "perscale");
   fc.unlock("rf_excluded", "rottrans");
   fc.unlock("rf_excluded", "repex_temp");
@@ -1628,7 +1770,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("pairlist_standard", "dihedral_rest");
   fc.unlock("pairlist_standard", "dihedral_const");
   fc.unlock("pairlist_standard", "jvalue_rest");
-  fc.unlock("pairlist_standard", "rdc_rest"); 
+  fc.unlock("pairlist_standard", "rdc_rest");
   fc.unlock("pairlist_standard", "perscale");
   fc.unlock("pairlist_standard", "rottrans");
   fc.unlock("pairlist_standard", "repex_temp");
@@ -1659,7 +1801,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("pairlist_grid", "dihedral_rest");
   fc.unlock("pairlist_grid", "dihedral_const");
   fc.unlock("pairlist_grid", "jvalue_rest");
-  fc.unlock("pairlist_grid", "rdc_rest");         
+  fc.unlock("pairlist_grid", "rdc_rest");
   fc.unlock("pairlist_grid", "perscale");
   fc.unlock("pairlist_grid", "rottrans");
   fc.unlock("pairlist_grid", "repex_temp");
@@ -1690,7 +1832,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("cutoff_atomic", "dihedral_rest");
   fc.unlock("cutoff_atomic", "dihedral_const");
   fc.unlock("cutoff_atomic", "jvalue_rest");
-  fc.unlock("cutoff_atomic", "rdc_rest"); 
+  fc.unlock("cutoff_atomic", "rdc_rest");
   fc.unlock("cutoff_atomic", "perscale");
   fc.unlock("cutoff_atomic", "rottrans");
   fc.unlock("cutoff_atomic", "repex_temp");
@@ -1778,7 +1920,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("temp_berendsen", "dihedral_rest");
   fc.unlock("temp_berendsen", "dihedral_const");
   fc.unlock("temp_berendsen", "jvalue_rest");
-  fc.unlock("temp_berendsen", "rdc_rest"); 
+  fc.unlock("temp_berendsen", "rdc_rest");
   fc.unlock("temp_berendsen", "perscale");
   fc.unlock("temp_berendsen", "rottrans");
   fc.unlock("temp_berendsen", "repex_temp");
@@ -1803,7 +1945,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("temp_nosehoover", "dihedral_rest");
   fc.unlock("temp_nosehoover", "dihedral_const");
   fc.unlock("temp_nosehoover", "jvalue_rest");
-  fc.unlock("temp_nosehoover", "rdc_rest"); 
+  fc.unlock("temp_nosehoover", "rdc_rest");
   fc.unlock("temp_nosehoover", "perscale");
   fc.unlock("temp_nosehoover", "rottrans");
   fc.unlock("temp_nosehoover", "repex_temp");
@@ -1828,7 +1970,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("temp_nosehoover_chains", "dihedral_rest");
   fc.unlock("temp_nosehoover_chains", "dihedral_const");
   fc.unlock("temp_nosehoover_chains", "jvalue_rest");
-  fc.unlock("temp_nosehoover_chains", "rdc_rest");    
+  fc.unlock("temp_nosehoover_chains", "rdc_rest");
   fc.unlock("temp_nosehoover_chains", "perscale");
   fc.unlock("temp_nosehoover_chains", "rottrans");
   fc.unlock("temp_nosehoover_chains", "repex_temp");
@@ -1850,7 +1992,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("position_rest", "dihedral_rest");
   fc.unlock("position_rest", "dihedral_const");
   fc.unlock("position_rest", "jvalue_rest");
-  fc.unlock("position_rest", "rdc_rest"); 
+  fc.unlock("position_rest", "rdc_rest");
   fc.unlock("position_rest", "perscale");
   fc.unlock("position_rest", "rottrans");
   fc.unlock("position_rest", "repex_temp");
@@ -1871,7 +2013,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("position_const", "distance_rest");
   fc.unlock("position_const", "dihedral_rest");
   fc.unlock("position_const", "jvalue_rest");
-  fc.unlock("position_const", "rdc_rest");   
+  fc.unlock("position_const", "rdc_rest");
   fc.unlock("position_const", "perscale");
   fc.unlock("position_const", "repex_temp");
   fc.unlock("position_const", "repex_lambda");
@@ -1891,7 +2033,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("position_const_scaled", "distance_rest");
   fc.unlock("position_const_scaled", "dihedral_rest");
   fc.unlock("position_const_scaled", "jvalue_rest");
-  fc.unlock("position_const_scaled", "rdc_rest"); 
+  fc.unlock("position_const_scaled", "rdc_rest");
   fc.unlock("position_const_scaled", "perscale");
   fc.unlock("position_const_scaled", "rottrans");
   fc.unlock("position_const_scaled", "repex_temp");
@@ -1912,7 +2054,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("distance_rest", "dihedral_rest");
   fc.unlock("distance_rest", "dihedral_const");
   fc.unlock("distance_rest", "jvalue_rest");
-  fc.unlock("distance_rest", "rdc_rest");  
+  fc.unlock("distance_rest", "rdc_rest");
   fc.unlock("distance_rest", "perscale");
   fc.unlock("distance_rest", "rottrans");
   fc.unlock("distance_rest", "repex_temp");
@@ -1931,7 +2073,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("distance_rest", "parallel_mpi");
   fc.unlock("distance_rest", "parallel_omp");
   fc.unlock("dihedral_rest", "jvalue_rest");
-  fc.unlock("dihedral_rest", "rdc_rest");  
+  fc.unlock("dihedral_rest", "rdc_rest");
   fc.unlock("dihedral_rest", "perscale");
   fc.unlock("dihedral_rest", "rottrans");
   fc.unlock("dihedral_rest", "repex_temp");
@@ -1950,7 +2092,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("dihedral_rest", "parallel_mpi");
   fc.unlock("dihedral_rest", "parallel_omp");
   fc.unlock("dihedral_const", "jvalue_rest");
-  fc.unlock("dihedral_const", "rdc_rest");           
+  fc.unlock("dihedral_const", "rdc_rest");
   fc.unlock("dihedral_const", "perscale");
   fc.unlock("dihedral_const", "rottrans");
   fc.unlock("dihedral_const", "repex_temp");
@@ -1968,7 +2110,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("dihedral_const", "random_gsl");
   fc.unlock("dihedral_const", "parallel_mpi");
   fc.unlock("dihedral_const", "parallel_omp");
-  fc.unlock("jvalue_rest", "rdc_rest");    
+  fc.unlock("jvalue_rest", "rdc_rest");
   fc.unlock("jvalue_rest", "perscale");
   fc.unlock("jvalue_rest", "rottrans");
   fc.unlock("jvalue_rest", "repex_temp");
@@ -2036,7 +2178,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("rottrans", "parallel_omp");
   fc.unlock("repex_temp", "repex_lambda");
   fc.unlock("repex_temp", "multicell");
-  fc.unlock("repex_temp", "analysis");
+  //fc.unlock("repex_temp", "analysis");
   fc.unlock("repex_temp", "no_integration");
   fc.unlock("repex_temp", "montecarlo");
   fc.unlock("repex_temp", "polarisation_cos");
@@ -2047,7 +2189,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("repex_temp", "parallel_omp");
   //fc.unlock("repex_temp", "stochdyn");
   fc.unlock("repex_lambda", "multicell");
-  fc.unlock("repex_lambda", "analysis");
+  //fc.unlock("repex_lambda", "analysis");
   fc.unlock("repex_lambda", "no_integration");
   fc.unlock("repex_lambda", "polarisation_cos");
   fc.unlock("repex_lambda", "polarisation_cos_damped");
@@ -2065,7 +2207,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("multicell", "analysis");
   fc.unlock("multicell", "parallel_omp");
   fc.unlock("analysis", "no_integration");
-  fc.unlock("analysis", "stochdyn");
+  //fc.unlock("analysis", "stochdyn");
   fc.unlock("analysis", "multistep");
   fc.unlock("analysis", "multistep_boost");
   fc.unlock("analysis", "montecarlo");
@@ -2120,7 +2262,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("random_gromos", "parallel_mpi");
   fc.unlock("random_gromos", "parallel_omp");
   fc.unlock("random_gsl", "parallel_mpi");
-  fc.unlock("random_gsl", "parallel_omp");  
+  fc.unlock("random_gsl", "parallel_omp");
   fc.unlock("slow_growth", "solute");
   fc.unlock("slow_growth", "solvent");
   fc.unlock("slow_growth", "solvent_only");
@@ -2162,7 +2304,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("slow_growth", "dihedral_rest");
   fc.unlock("slow_growth", "dihedral_const");
   fc.unlock("slow_growth", "jvalue_rest");
-  fc.unlock("slow_growth", "rdc_rest");  
+  fc.unlock("slow_growth", "rdc_rest");
   fc.unlock("slow_growth", "perscale");
   fc.unlock("slow_growth", "rottrans");
   fc.unlock("slow_growth", "repex_temp");
@@ -2216,7 +2358,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("eds", "temp_berendsen");
   fc.unlock("eds", "temp_nosehoover");
   fc.unlock("eds", "temp_nosehoover_chains");
-  fc.unlock("eds", "position_rest"); 
+  fc.unlock("eds", "position_rest");
   fc.unlock("eds", "distance_rest");
   fc.unlock("eds", "dihedral_rest");
   fc.unlock("eds", "dihedral_const");
@@ -2238,7 +2380,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("eds", "random_gsl");
   fc.unlock("eds", "parallel_mpi");
   fc.unlock("eds", "parallel_omp");
-  
+
   fc.unlock("mult_energy_groups", "solute");
   fc.unlock("mult_energy_groups", "solvent");
   fc.unlock("mult_energy_groups", "solvent_only");
@@ -2286,7 +2428,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("mult_energy_groups", "dihedral_rest");
   fc.unlock("mult_energy_groups", "dihedral_const");
   fc.unlock("mult_energy_groups", "jvalue_rest");
-  fc.unlock("mult_energy_groups", "rdc_rest"); 
+  fc.unlock("mult_energy_groups", "rdc_rest");
   fc.unlock("mult_energy_groups", "perscale");
   fc.unlock("mult_energy_groups", "rottrans");
   fc.unlock("mult_energy_groups", "repex_temp");
@@ -2354,7 +2496,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("ewald", "dihedral_rest");
   fc.unlock("ewald", "dihedral_const");
   fc.unlock("ewald", "jvalue_rest");
-  fc.unlock("ewald", "rdc_rest"); 
+  fc.unlock("ewald", "rdc_rest");
   fc.unlock("ewald", "perscale");
   fc.unlock("ewald", "rottrans");
   //fc.unlock("ewald", "innerloop_spc");
@@ -2374,7 +2516,7 @@ int io::check_parameter(simulation::Simulation & sim)
   //fc.unlock("ewald", "eds");
   fc.unlock("ewald", "parallel_mpi");
   //fc.unlock("ewald", "parallel_omp");
-  //fc.unlock("ewald", "mult_energy_groups"); 
+  //fc.unlock("ewald", "mult_energy_groups");
   //fc.unlock("ewald", "p3m");
 
   // unlocking features for P3M electrostatics
@@ -2425,12 +2567,12 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("p3m", "dihedral_rest");
   fc.unlock("p3m", "dihedral_const");
   fc.unlock("p3m", "jvalue_rest");
-  fc.unlock("p3m", "rdc_rest");                
+  fc.unlock("p3m", "rdc_rest");
   fc.unlock("p3m", "perscale");
   fc.unlock("p3m", "rottrans");
   //fc.unlock("p3m", "innerloop_spc");
-  fc.unlock("p3m", "repex_temp"); 
-  fc.unlock("p3m", "repex_lambda"); 
+  fc.unlock("p3m", "repex_temp");
+  fc.unlock("p3m", "repex_lambda");
   fc.unlock("p3m", "multicell");
   //fc.unlock("p3m", "analysis");  --works if box invariant (recalculation of infl. func. necessary otherwise)
   fc.unlock("p3m", "no_integration");
@@ -2447,7 +2589,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("p3m", "parallel_omp");
   //fc.unlock("p3m", "mult_energy_groups");
   //fc.unlock("p3m", "ewald");
-  
+
   fc.unlock("innerloop_method_off", "solute");
   fc.unlock("innerloop_method_off", "solvent");
   fc.unlock("innerloop_method_off", "solvent_only");
@@ -2495,7 +2637,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("innerloop_method_off", "dihedral_rest");
   fc.unlock("innerloop_method_off", "dihedral_const");
   fc.unlock("innerloop_method_off", "jvalue_rest");
-  fc.unlock("innerloop_method_off", "rdc_rest");   
+  fc.unlock("innerloop_method_off", "rdc_rest");
   fc.unlock("innerloop_method_off", "perscale");
   fc.unlock("innerloop_method_off", "rottrans");
   fc.unlock("innerloop_method_off", "innerloop_solvent_topology");
@@ -2518,7 +2660,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("innerloop_method_off", "mult_energy_groups");
   fc.unlock("innerloop_method_off", "ewald");
   fc.unlock("innerloop_method_off", "p3m");
-  
+
     fc.unlock("innerloop_method_generic", "solute");
   fc.unlock("innerloop_method_generic", "solvent");
   fc.unlock("innerloop_method_generic", "solvent_only");
@@ -2562,7 +2704,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("innerloop_method_generic", "dihedral_rest");
   fc.unlock("innerloop_method_generic", "dihedral_const");
   fc.unlock("innerloop_method_generic", "jvalue_rest");
-  fc.unlock("innerloop_method_generic", "rdc_rest");        
+  fc.unlock("innerloop_method_generic", "rdc_rest");
   fc.unlock("innerloop_method_generic", "perscale");
   fc.unlock("innerloop_method_generic", "rottrans");
   fc.unlock("innerloop_method_generic", "innerloop_solvent_topology");
@@ -2582,7 +2724,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("innerloop_method_generic", "parallel_mpi");
   fc.unlock("innerloop_method_generic", "parallel_omp");
   fc.unlock("innerloop_method_generic", "mult_energy_groups");
-  
+
     fc.unlock("innerloop_method_hardcode", "solute");
   fc.unlock("innerloop_method_hardcode", "solvent");
   fc.unlock("innerloop_method_hardcode", "solvent_only");
@@ -2626,7 +2768,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("innerloop_method_hardcode", "dihedral_rest");
   fc.unlock("innerloop_method_hardcode", "dihedral_const");
   fc.unlock("innerloop_method_hardcode", "jvalue_rest");
-  fc.unlock("innerloop_method_hardcode", "rdc_rest");  
+  fc.unlock("innerloop_method_hardcode", "rdc_rest");
   fc.unlock("innerloop_method_hardcode", "perscale");
   fc.unlock("innerloop_method_hardcode", "rottrans");
   fc.unlock("innerloop_method_hardcode", "innerloop_solvent_spc");
@@ -2645,7 +2787,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("innerloop_method_hardcode", "parallel_mpi");
   fc.unlock("innerloop_method_hardcode", "parallel_omp");
   fc.unlock("innerloop_method_hardcode", "mult_energy_groups");
-  
+
   fc.unlock("innerloop_method_table", "solute");
   fc.unlock("innerloop_method_table", "solvent");
   fc.unlock("innerloop_method_table", "solvent_only");
@@ -2708,7 +2850,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("innerloop_method_table", "parallel_mpi");
   fc.unlock("innerloop_method_table", "parallel_omp");
   fc.unlock("innerloop_method_table", "mult_energy_groups");
-  
+
   fc.unlock("innerloop_solvent_topology", "solute");
   fc.unlock("innerloop_solvent_topology", "solvent");
   fc.unlock("innerloop_solvent_topology", "solvent_only");
@@ -2756,7 +2898,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("innerloop_solvent_topology", "dihedral_rest");
   fc.unlock("innerloop_solvent_topology", "dihedral_const");
   fc.unlock("innerloop_solvent_topology", "jvalue_rest");
-  fc.unlock("innerloop_solvent_topology", "rdc_rest");      
+  fc.unlock("innerloop_solvent_topology", "rdc_rest");
   fc.unlock("innerloop_solvent_topology", "perscale");
   fc.unlock("innerloop_solvent_topology", "rottrans");
   fc.unlock("innerloop_solvent_topology", "repex_temp");
@@ -2825,7 +2967,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("innerloop_solvent_spc", "dihedral_rest");
   fc.unlock("innerloop_solvent_spc", "dihedral_const");
   fc.unlock("innerloop_solvent_spc", "jvalue_rest");
-  fc.unlock("innerloop_solvent_spc", "rdc_rest");    
+  fc.unlock("innerloop_solvent_spc", "rdc_rest");
   fc.unlock("innerloop_solvent_spc", "perscale");
   fc.unlock("innerloop_solvent_spc", "rottrans");
   fc.unlock("innerloop_solvent_spc", "repex_temp");
@@ -2845,7 +2987,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("innerloop_solvent_spc", "parallel_mpi");
   fc.unlock("innerloop_solvent_spc", "parallel_omp");
   fc.unlock("innerloop_solvent_spc", "mult_energy_groups");
-  
+
   fc.unlock("solvent_lincs", "solute");
   fc.unlock("solvent_lincs", "solvent");
   fc.unlock("solvent_lincs", "solvent_only");
@@ -2889,7 +3031,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solvent_lincs", "dihedral_rest");
   fc.unlock("solvent_lincs", "dihedral_const");
   fc.unlock("solvent_lincs", "jvalue_rest");
-  fc.unlock("solvent_lincs", "rdc_rest");   
+  fc.unlock("solvent_lincs", "rdc_rest");
   fc.unlock("solvent_lincs", "perscale");
   fc.unlock("solvent_lincs", "rottrans");
   fc.unlock("solvent_lincs", "innerloop_method_off");
@@ -2917,7 +3059,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solvent_lincs", "mult_energy_groups");
   fc.unlock("solvent_lincs", "ewald");
   fc.unlock("solvent_lincs", "p3m");
-  
+
   fc.unlock("solvent_settle", "solute");
   fc.unlock("solvent_settle", "solvent");
   fc.unlock("solvent_settle", "solvent_only");
@@ -2961,7 +3103,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("solvent_settle", "dihedral_rest");
   fc.unlock("solvent_settle", "dihedral_const");
   fc.unlock("solvent_settle", "jvalue_rest");
-  fc.unlock("solvent_settle", "rdc_rest");       
+  fc.unlock("solvent_settle", "rdc_rest");
   fc.unlock("solvent_settle", "perscale");
   fc.unlock("solvent_settle", "rottrans");
   fc.unlock("solvent_settle", "innerloop_method_off");
@@ -3024,7 +3166,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("innerloop_method_cuda", "dihedral_rest");
   fc.unlock("innerloop_method_cuda", "dihedral_const");
   fc.unlock("innerloop_method_cuda", "jvalue_rest");
-  fc.unlock("innerloop_method_cuda", "rdc_rest");  
+  fc.unlock("innerloop_method_cuda", "rdc_rest");
   fc.unlock("innerloop_method_cuda", "perscale");
   fc.unlock("innerloop_method_cuda", "rottrans");
   fc.unlock("innerloop_method_cuda", "innerloop_solvent_topology");
@@ -3042,7 +3184,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("innerloop_method_cuda", "virial_molecular");
   fc.unlock("innerloop_method_cuda", "parallel_omp");
   //allow multiple energy groups
-  fc.unlock("innerloop_method_cuda", "mult_energy_groups");  
+  fc.unlock("innerloop_method_cuda", "mult_energy_groups");
 
 
   fc.unlock("leus", "solute");
@@ -3094,7 +3236,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("leus", "dihedral_rest");
   fc.unlock("leus", "dihedral_const");
   fc.unlock("leus", "jvalue_rest");
-  fc.unlock("leus", "rdc_rest");  
+  fc.unlock("leus", "rdc_rest");
   fc.unlock("leus", "perscale");
   fc.unlock("leus", "rottrans");
   fc.unlock("leus", "innerloop_method_off");
@@ -3174,7 +3316,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("xray", "dihedral_rest");
   fc.unlock("xray", "dihedral_const");
   fc.unlock("xray", "jvalue_rest");
-  fc.unlock("xray", "rdc_rest"); 
+  fc.unlock("xray", "rdc_rest");
   fc.unlock("xray", "perscale");
   fc.unlock("xray", "rottrans");
   fc.unlock("xray", "innerloop_method_off");
@@ -3255,7 +3397,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("sasa", "dihedral_rest");
   fc.unlock("sasa", "dihedral_const");
   fc.unlock("sasa", "jvalue_rest");
-  fc.unlock("sasa", "rdc_rest");  
+  fc.unlock("sasa", "rdc_rest");
   fc.unlock("sasa", "perscale");
   fc.unlock("sasa", "rottrans");
   fc.unlock("sasa", "innerloop_method_off");
@@ -3338,7 +3480,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("sasavol", "dihedral_rest");
   fc.unlock("sasavol", "dihedral_const");
   fc.unlock("sasavol", "jvalue_rest");
-  fc.unlock("sasavol", "rdc_rest"); 
+  fc.unlock("sasavol", "rdc_rest");
   fc.unlock("sasavol", "perscale");
   fc.unlock("sasavol", "rottrans");
   fc.unlock("sasavol", "innerloop_method_off");
@@ -3418,7 +3560,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("pairlist_gridcell", "dihedral_rest");
   fc.unlock("pairlist_gridcell", "dihedral_const");
   fc.unlock("pairlist_gridcell", "jvalue_rest");
-  fc.unlock("pairlist_gridcell", "rdc_rest");  
+  fc.unlock("pairlist_gridcell", "rdc_rest");
   fc.unlock("pairlist_gridcell", "perscale");
   fc.unlock("pairlist_gridcell", "rottrans");
   fc.unlock("pairlist_gridcell", "innerloop_method_off");
@@ -3502,7 +3644,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("cutoff_cg", "dihedral_rest");
   fc.unlock("cutoff_cg", "dihedral_const");
   fc.unlock("cutoff_cg", "jvalue_rest");
-  fc.unlock("cutoff_cg", "rdc_rest");   
+  fc.unlock("cutoff_cg", "rdc_rest");
   fc.unlock("cutoff_cg", "perscale");
   fc.unlock("cutoff_cg", "rottrans");
   fc.unlock("cutoff_cg", "innerloop_method_off");
@@ -3615,10 +3757,10 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("distance_field", "virial_off");
   //  fc.unlock("distance_field", "virial_atomic");
   //  fc.unlock("distance_field", "virial_molecular");
-  fc.unlock("distance_field", "vacuum");
+  // fc.unlock("distance_field", "vacuum");
   fc.unlock("distance_field", "pbc_r");
-  fc.unlock("distance_field", "pbc_c");
-  fc.unlock("distance_field", "pbc_t");
+  // fc.unlock("distance_field", "pbc_c");
+  // fc.unlock("distance_field", "pbc_t");
   fc.unlock("distance_field", "perturbation");
   fc.unlock("distance_field", "perturbation_scaling");
   fc.unlock("distance_field", "slow_growth");
@@ -3861,6 +4003,6 @@ int io::check_parameter(simulation::Simulation & sim)
 
   if (fc.check()) 
     return 0;
-  
+
   return -1;
 }

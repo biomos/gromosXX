@@ -9,9 +9,23 @@
 namespace io
 {
   /**
-   * does basic cross checks on the parameters
+   * cross checks on the parameters
    */
   int check_parameter(simulation::Simulation &sim);
+  
+  /**
+   * does basic cross checks on parameters from different blocks
+   * cross-checks of parameters within one block should be done in the 
+   * read_XXX functions in @ref In_Parameter
+   */
+  int simple_crosschecks(simulation::Simulation &sim);
+  
+  /**
+   * does basic cross checks on the parameters
+   * checks each feature against all others
+   * every allowed combination has to be unlocked
+   */
+  int check_features(simulation::Simulation &sim);
 }
 
 #endif

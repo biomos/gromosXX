@@ -74,7 +74,7 @@ int main(int argc, char *argv[]) {
   knowns << "topo" << "conf" << "input" << "verb" << "pttopo"
           << "trc" << "fin" << "trv" << "trf" << "trs" << "tre" << "trg"
           << "bae" << "bag" << "posresspec" << "refpos" << "distrest" << "dihrest"
-	 << "jval" << "rdc" << "xray" << "lud" << "led" << "anatrj" << "print" << "friction"
+	 << "jval" << "rdc" << "xray" << "lud" << "led" << "print" << "friction" // << "anatrj"
           << "version" << "repdat" << "repout";
 
   std::string usage;
@@ -114,10 +114,11 @@ int main(int argc, char *argv[]) {
     simulation::Simulation sim;
 
     // read in parameters
-    io::read_parameter(args,sim,std::cout,true);
-    if (io::check_parameter(sim)){
-      io::messages.display(std::cout);
-      std::cout << "\nErrors during feature checker!\n" << std::endl;
+    if (io::read_parameter(args,sim,std::cout,true) || io::check_parameter(sim)){
+      if (rank == 0) {
+        io::messages.display(std::cout);
+        std::cout << "\nErrors in in_parameters!\n" << std::endl;
+      }
       return -1;
     }
     //if (io::check_parameter(sim) != 0) return -1;

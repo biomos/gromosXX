@@ -68,6 +68,8 @@ void io::GInStream::readStream() {
     } else {
       std::string n = buffer[0];
       DEBUG(10, "reading block -" << buffer[0] << "- size " << buffer.size());
+      if (m_block.find(buffer[0]) != m_block.end())
+        io::messages.add("Found more than one "+buffer[0]+" block.", "GInStream", io::message::warning);
       m_block[buffer[0]] = buffer;
     }
     buffer.clear();
