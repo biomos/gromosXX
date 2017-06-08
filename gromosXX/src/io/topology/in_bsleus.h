@@ -26,8 +26,8 @@
 
 namespace io {
   /**
-   * @class In_BSLEUS reads in the definition of the B&S-LEUS Umbrella 
-   * definition.
+   * @class In_BSLEUS 
+   * reads in the definition of the B&S-LEUS Umbrella definition.
    */
   class In_BSLEUS : public GInStream {
   public:

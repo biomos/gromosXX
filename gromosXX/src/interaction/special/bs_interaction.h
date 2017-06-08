@@ -9,7 +9,8 @@
 
 namespace interaction {
   /**
-   * @class BS_Interaction Implements the B&S-LEUS algorithm of Halvor Hansen
+   * @class BS_Interaction 
+   * Implements the B&S-LEUS algorithm of Halvor Hansen
    */
   class BS_Interaction : public Interaction {
   public:

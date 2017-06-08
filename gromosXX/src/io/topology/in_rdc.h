@@ -6,7 +6,7 @@
  * @page rdc RDC restraints specification format
  * @date 09-05-2011
  *
- * A RDC restraints specifcation file has to contain the following
+ * A RDC restraints specification file has to contain the following
  * blocks:
  * - @ref title
  * - @ref conversion

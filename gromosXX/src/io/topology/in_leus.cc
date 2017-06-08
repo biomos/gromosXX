@@ -146,8 +146,6 @@ io::In_Localelevspec::read(topology::Topology& topo,
 
 /**
  * @section leusbias LEUSBIAS block
- * The LOCALELEVSPEC specifies the dihedral angles which we attach to
- * umbrella potentials.
  *
  * The block is read from the local elevation umbrella sampling database file
  * (\@lud) or the configuration. The reading from the input file is not implemented

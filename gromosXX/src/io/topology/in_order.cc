@@ -37,11 +37,10 @@ ORDERPARAMRESSPEC
 # DISH  DISC
   0.1   0.153
 # i  j  k  l  type    i  j  k  l  type    RN     S0    DS0   WOPR
-  1  0  0  0  0       10 12 11 13 3       0.1    0.8   0.1   1.0
+  1  0  0  0  0       10 12 11 0   3       0.1    0.8   0.1   1.0
 END
 @endverbatim
  * @sa util::virtual_type util::Virtual_Atom
-@endverbatim
  */
 void
 io::In_Orderparamresspec::read(topology::Topology& topo,

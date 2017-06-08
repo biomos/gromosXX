@@ -26,7 +26,7 @@ namespace util {
     /**
      * this - subtrahend = result
      * @param[in]    subtrahend
-     * @param[inout] result
+     * @param[in,out] result
      */
     void minus(const BS_Vector &subtrahend, BS_Vector &result);
     /**
@@ -57,8 +57,8 @@ namespace util {
     BS_Vector operator +(const BS_Vector &summand);
     /**
      * Subtract two vectors from each other
-     * @param[in] summand
-     * @return the sum
+     * @param[in] subtrahend
+     * @return the difference
      */
     BS_Vector operator -(const BS_Vector &subtrahend);
     /**
@@ -74,7 +74,7 @@ namespace util {
      */
     double dot(const BS_Vector &other);
     /**
-     * Create a BS_Vector from a <double> vector     
+     * Create a BS_Vector from a vector of doubles
      * @param values
      */
     void create(std::vector<double> &values);

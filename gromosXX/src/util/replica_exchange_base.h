@@ -83,7 +83,7 @@ namespace util {
      */
     void init();
     /**
-     * prints out configuration to a file named <name>_<ID>.cnf
+     * prints out configuration to a file named \<name\>_\<ID\>.cnf
      * @param name string, name of output file
      */
     void print_coords(std::string name);

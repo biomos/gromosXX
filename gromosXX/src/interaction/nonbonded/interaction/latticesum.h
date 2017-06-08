@@ -61,7 +61,7 @@ namespace interaction {
      *
      * @param[in] shape the charge shape switch
      * @param[out] eta_xi the shaping switch function @f$ \eta(\xi) @f$
-     * @param[out] eta_xi_d_xi the derivative @f$ \eta'(\xi) @f$
+     * @param[out] d_eta_xi_d_xi the derivative @f$ \eta'(\xi) @f$
      */
     static inline void charge_shape_switch(const int &shape,
             const double &xi,
@@ -549,7 +549,7 @@ namespace interaction {
      * with @f$ w_p @f$ as  one-dimensional charge assignment function.
      *
      * @param[in] p order of the assignment function
-     * @param[in] a position vector in grid units
+     * @param[in] po a position vector in grid units
      * @return  the charge assignment function of the given point of order p
      * @sa MD.05.32 eq. 78 @ref interaction::Lattice_Sum::charge_assignment_1d
      * 
@@ -925,7 +925,6 @@ namespace interaction {
              \mathrm{diag}(\hat{G}_g^{\dagger}(\mathbf{k}_{\mathbf{l}}))\right]
              \hat{R}_g(\mathbf{k}_{\mathbf{l}}) @f]
      *
-     * @param[in] storage the storage is used to store the energy
      * @sa interaction::Nonbonded_Outerloop::ls_self_outerloop
      */
     template<class MeshType>
@@ -981,7 +980,7 @@ namespace interaction {
      * cells.
      *
      * @param[in] storage the storage is used to store the force
-     * @param[in] a VArray containing the positive, in-box positions of the charges
+     * @param[in] r a VArray containing the positive, in-box positions of the charges
      */
     template<class MeshType>
     static void calculate_force(

@@ -36,7 +36,7 @@ SCALEDINTERACTIONS
 END
 @endverbatim
 
-@section pertatomparam PETATOMPARAM block
+@section pertatomparam PERTATOMPARAM block
 Perturbed atom information block
 @verbatim
 PERTATOMPARAM

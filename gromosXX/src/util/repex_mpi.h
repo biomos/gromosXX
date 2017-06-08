@@ -53,11 +53,13 @@ namespace util {
 }
 
 /**
- * @typedef ID type
+ * @typedef ID_t
+ * ID type
  */
 typedef unsigned int ID_t;
 /**
- * @typedef rank type
+ * @typedef rank_t
+ * rank_type
  */
 typedef unsigned int rank_t;
 /**

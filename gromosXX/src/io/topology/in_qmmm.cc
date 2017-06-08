@@ -46,7 +46,7 @@ QMZONE
 END
 @endverbatim
  *
- * @section qmunbit QMUNIT block
+ * @section qmunit QMUNIT block
  * The QMUNIT block specifies conversion factors for units
  *
  * The block is read from the QM/MM specification file

@@ -147,7 +147,7 @@ namespace configuration
       /**
        * get the average energy and fluctuations
        * @param pressure average
-       * @param perssure_fluctuations pressure fluctuations
+       * @param pressure_fluctuations pressure fluctuations
        * @param virial average
        * @param virial_fluctuations virial fluctuations
        * @param kinetic_energy tensor average

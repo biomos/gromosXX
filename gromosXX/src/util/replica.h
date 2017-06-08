@@ -104,7 +104,7 @@ namespace util {
     /**
      * Initiates MPI communication to send new configuration information
      * @param receiverID
-     * @param receiverRank
+     * @param senderRank
      */
     void send_coord(const int receiverID, const int senderRank);
     /**

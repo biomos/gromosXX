@@ -637,7 +637,7 @@ namespace io
   }
 
   /**
-   * @TODO don't print rotation in periodic system
+   * @todo don't print rotation in periodic system
    */
   void print_CENTREOFMASS(std::ostream &os, 
 			  double const ekin_trans, 

@@ -58,7 +58,7 @@ namespace util{
     unsigned int getDimension() {return m_dimension;};
     /**
      * calculate the internal Coordinate and the derivatives
-     * @param[inout] conf the configuration for which the value is calculated.
+     * @param[in,out] conf the configuration for which the value is calculated.
      *             it will also be used to store the force
      */
     virtual void calculateInternalCoord(configuration::Configuration &conf) = 0;
@@ -71,8 +71,8 @@ namespace util{
      * Add the forces expressed in internal Coordinates.
      * The derivatives are dB / dQ.
      * to the particles in conf.
-     * @param [inout] conf the configuration to which the forces should be added
-     * @param [inout] icForces the forces expressed in the particular internal
+     * @param [in,out] conf the configuration to which the forces should be added
+     * @param [in,out] derivatives the forces expressed in the particular internal
      *                         coordinates
      */
     virtual void addForces(configuration::Configuration &conf, 

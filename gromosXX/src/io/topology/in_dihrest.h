@@ -6,7 +6,7 @@
  * @page dihrest dihedral restraints format
  * @date 28-10-2008
  *
- * A dihedral restraints/constraints specifcation file may contain the following
+ * A dihedral restraints/constraints specification file may contain the following
  * blocks:
  * - @ref title
  * - @ref dihedralresspec

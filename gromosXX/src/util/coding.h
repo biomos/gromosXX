@@ -14,7 +14,7 @@ namespace util {
   std::string base64_encode(unsigned char const* , unsigned int len);
   /**
    * decode a RFC1113 base64 encoded string
-   * @param a string with "B64:" at the begin.
+   * @param s a string with "B64:" at the begin.
    * @return decoded string or "" if the parameter is not in the right format
    */
   std::string base64_decode(std::string const& s);

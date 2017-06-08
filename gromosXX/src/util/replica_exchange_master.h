@@ -51,7 +51,7 @@ namespace util {
      * @param _size size of mpi comm world
      * @param _numReplicas total number of replicas
      * @param repIDs std::vector<int>, IDs of replicas the instance has to manage
-     * @param _repMap std::map<int,int>, maps replica IDs to nodes; needed for communication
+     * @param repMap std::map<int,int>, maps replica IDs to nodes; needed for communication
      */
     replica_exchange_master(io::Argument & args,
             int cont,
@@ -69,7 +69,7 @@ namespace util {
      */
     void receive_from_all_slaves();
     /**
-     * writes data to output file @repdat
+     * writes data to output file \@repdat
      */
     void write();
 

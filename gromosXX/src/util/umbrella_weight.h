@@ -8,7 +8,7 @@
 
 namespace util {
   /**
-   * @class Umbrella Weight
+   * @class Umbrella_Weight
    * represents the weight of a certain configuration
    */
   class Umbrella_Weight {

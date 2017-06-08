@@ -45,7 +45,7 @@ namespace util {
     /**
      * transform the current configuration into internal Configurations
      * @param[in]    conf   The current configuration
-     * @param[inout] result The vector containing the internal coordinates
+     * @param[in,out] result The vector containing the internal coordinates
      *                      (Q)
      */
     void transformCoordinates(configuration::Configuration &conf,
@@ -58,9 +58,7 @@ namespace util {
     /**
      * Add the Forces of one Potential (in internal Coordinates) to the 
      * atoms.
-     * @param[inout] conf               The current configuration
-     * @param[in]    totalPartitionFct  The total Partition Function for
-     *                                  calculating the weight
+     * @param[in,out] conf               The current configuration
      * @param[in]    potentials         A vector with all the potentials
      * @param[in]    beta               1 / kB T
      */
@@ -83,7 +81,6 @@ namespace util {
     /**
      * Set the memory of Potential
      * @param[in] id    The id of the potential
-     * @param[in] type  The Type (Sphere / Stick)
      * @param[in] memory    The memory
      * @return whether Potential was found
      */
@@ -91,7 +88,6 @@ namespace util {
     /**
      * Get the memory of Potential
      * @param[in] id    The id of the potential
-     * @param[in] type  The Type (Sphere / Stick)
      * @param[out] memory    The memory
      * @return whether Potential was found
      */
@@ -103,7 +99,6 @@ namespace util {
     /**
      * Set the auxiliary memory of Potential
      * @param[in] id    The id of the potential
-     * @param[in] type  The Type (Sphere / Stick)
      * @param[in] memory    The memory
      * @return whether Potential was found
      */
@@ -111,7 +106,6 @@ namespace util {
     /**
      * Get the auxiliary memory of Potential
      * @param[in] id    The id of the potential
-     * @param[in] type  The Type (Sphere / Stick)
      * @param[out] memory    The auxiliary memory
      * @return whether Potential was found
      */
@@ -122,15 +116,15 @@ namespace util {
     void setAuxMemoryToZero();
     /**
      * Set the auxilliary and reduction counter
-     * @param auxillaryCounter
+     * @param auxilliaryCounter
      * @param reductionCounter
      */
     void setCounter(unsigned int auxilliaryCounter, 
                      unsigned int reductionCounter);
     /**
      * Set the auxilliary and reduction counter
-     * @param[inout] auxillaryCounter
-     * @param[inout] reductionCounter
+     * @param[in,out] auxilliaryCounter
+     * @param[in,out] reductionCounter
      */
     void getCounter(unsigned int &auxilliaryCounter, 
                      unsigned int &reductionCounter);
@@ -176,7 +170,7 @@ namespace util {
     void addPotential(BS_Potential *newPotential);
     /**
      * Return the force in internal coordinates
-     * @param[inout] force
+     * @param[in,out] force
      */
     void getForce(std::vector<double> &force);
     /**

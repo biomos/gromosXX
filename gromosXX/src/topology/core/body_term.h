@@ -998,7 +998,8 @@ namespace topology {
   };
 
   /**
-   * @struct lj_exception_struct Lennard Jones exception struct
+   * @struct lj_exception_struct 
+   * Lennard Jones exception struct
    */
   struct lj_exception_struct {
 

@@ -77,11 +77,11 @@ _centre_of_mass(topology::Atom_Iterator start, topology::Atom_Iterator end,
  * atoms.
  * @param start begin of a group of atoms.
  * @param end of a group of atoms.
- * @mass the masses of (all) atoms.
- * @com_pos returns the center of mass.
- * @com_e_kin returns the tranlational kinetic energy tensor.
+ * @param mass the masses of (all) atoms.
+ * @param com_pos returns the center of mass.
+ * @param com_e_kin returns the tranlational kinetic energy tensor.
  * 
- * @TODO the gathering of the molecule is hardcoded in here.
+ * @todo the gathering of the molecule is hardcoded in here.
  * Maybe this should be changed to a generic implementation.
  * Gathering is done in respect to the previous atom. An idea would
  * be to gather as default with respect to the previous atom but
