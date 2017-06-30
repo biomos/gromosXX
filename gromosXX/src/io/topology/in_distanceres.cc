@@ -33,10 +33,22 @@ static std::set<std::string> block_read;
  * See @ref util::virtual_type for valid virtual atom types.
  * \c r0 is the restraint distance, \c w0 a weight factor (multiplied by the force 
  * constant specified in the input file, \c CDIR) and rah specifies the type of 
- * restraint. Possible values for \c rah
- * - -1: half harmonic repulsive 
- * - 0: full harmonic
- * - +1: half harmonic attractive
+ * restraint (half harmonic repulsive, full harmonic, half harmonic attractive). 
+ * The restraint may be applied in a reduced set of dimensions, which is also set
+ * by the value of \c rah. Allowed values of rah are \c dim - 1, \c dim or 
+ * \c dim + 1, where dim can take the following values:
+ * - dim = 0  : dimensions to apply distance restraint: X, Y, Z
+ * - dim = 10 : dimensions to apply distance restraint: X, Y
+ * - dim = 20 : dimensions to apply distance restraint: X, Z
+ * - dim = 30 : dimensions to apply distance restraint: Y, Z
+ * - dim = 40 : dimension to apply distance restraint: X
+ * - dim = 50 : dimension to apply distance restraint: Y
+ * - dim = 60 : dimension to apply distance restraint: Z
+ *
+ * The type of restraint is determined as follows:
+ * - rah = dim - 1: half harmonic repulsive distance restraint
+ * - rah = dim: full harmonic distance restraint
+ * - rah = dim + 1: half harmonic attractive distance restraint
  *
  * @verbatim
 DISTANCERESSPEC

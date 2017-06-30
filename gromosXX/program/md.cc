@@ -30,7 +30,7 @@
  * <tr><td> \@posresspec</td><td>&lt;@ref posres "position restraints specification"&gt;</td><td style="color:#088A08">in</td></tr>
  * <tr><td> \@refpos</td><td>&lt;@ref posres "position restraints"&gt;</td><td style="color:#088A08">in</td></tr>
  * <tr><td> \@distrest</td><td>&lt;@ref disres "distance restraints specification"&gt;</td><td style="color:#088A08">in</td></tr>
- * <tr><td> \@dihtrest</td><td>&lt;@ref dihrest "dihedral restraints specification"&gt; </td><td style="color:#088A08">in</td></tr>
+ * <tr><td> \@dihrest</td><td>&lt;@ref dihrest "dihedral restraints specification"&gt; </td><td style="color:#088A08">in</td></tr>
  * <tr><td> \@jval</td><td>&lt;@ref jvalue "J-value restraints specification"&gt;</td><td style="color:#088A08">in</td></tr>
  * <tr><td> \@xray</td><td>&lt;@ref xrayresfile "X-ray restraints specification"&gt;</td><td style="color:#088A08">in</td></tr>
  * <tr><td> \@sym</td><td>&lt;@ref symresfile "Symmetry restraints specification"&gt;</td><td style="color:#088A08">in</td></tr>
