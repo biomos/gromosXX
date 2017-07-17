@@ -72,8 +72,8 @@ int algorithm::Settle::init(topology::Topology & topo,
   }
   
   // the molecule must have two equal bond lengths (constraints 1 and 2)
-  if (parameter()[topo.solvent(0).distance_constraint(0).type].r0 !=
-      parameter()[topo.solvent(0).distance_constraint(1).type].r0) {
+  if (topo.bond_types_harm()[topo.solvent(0).distance_constraint(0).type].r0 !=
+      topo.bond_types_harm()[topo.solvent(0).distance_constraint(1).type].r0) {
     io::messages.add("SETTLE does only work with water like molecules (distance constraints wrong).",
             "Settle", io::message::error);
     return 1;
@@ -173,10 +173,10 @@ void algorithm::Settle
   const double mass_H = topo.solvent(0).atom(1).mass;
   // distance constraints
   assert(topo.solvent(0).distance_constraints().size() == 3);
-  assert(parameter()[topo.solvent(0).distance_constraints()[0].type].r0 ==
-      parameter()[topo.solvent(0).distance_constraints()[1].type].r0);
-  const double dist_OH = parameter()[topo.solvent(0).distance_constraints()[0].type].r0;
-  const double dist_HH = parameter()[topo.solvent(0).distance_constraints()[2].type].r0;
+  assert(topo.bond_types_harm()[topo.solvent(0).distance_constraints()[0].type].r0 ==
+      topo.bond_types_harm()[topo.solvent(0).distance_constraints()[1].type].r0);
+  const double dist_OH = topo.bond_types_harm()[topo.solvent(0).distance_constraints()[0].type].r0;
+  const double dist_HH = topo.bond_types_harm()[topo.solvent(0).distance_constraints()[2].type].r0;
 
   // calculate the coordinates of the canonical triangle
   // see Figure 2 (a)

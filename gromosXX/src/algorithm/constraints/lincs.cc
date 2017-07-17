@@ -95,7 +95,6 @@ int _lincs(topology::Topology & topo,
 		  simulation::Simulation & sim,
 		  std::vector<topology::two_body_term_struct> const & constr,
 		  topology::Compound::lincs_struct const & lincs,
-		  std::vector<interaction::bond_type_struct> const & param,
 		  int lincs_order,
 		  util::Algorithm_Timer & m_timer,
 		  unsigned int offset = 0)
@@ -138,7 +137,7 @@ int _lincs(topology::Topology & topo,
 
     for(unsigned int n=0; n < ccon; ++n){
       DEBUG(8, "A[" << i << "]: coupled: " << lincs.coupled_constr[i][n]);
-      DEBUG(8, "constraint length: " << param[constr[i].type].r0);
+      DEBUG(8, "constraint length: " << topo.bond_types_harm()[constr[i].type].r0);
       
       A[i].a.push_back(lincs.coef[i][n] * 
 		       math::dot(B(i), B(lincs.coupled_constr[i][n])));
@@ -147,7 +146,7 @@ int _lincs(topology::Topology & topo,
     periodicity.nearest_image(pos(constr[i].i + offset), pos(constr[i].j + offset), r);
 
     rhs[0](i) = lincs.sdiag[i] * 
-      (math::dot(B(i), r) - param[constr[i].type].r0);
+      (math::dot(B(i), r) - topo.bond_types_harm()[constr[i].type].r0);
 
     sol(i) = rhs[0](i);
 
@@ -163,7 +162,7 @@ int _lincs(topology::Topology & topo,
 
     periodicity.nearest_image(pos(constr[i].i + offset), pos(constr[i].j + offset), r);
 
-    const double diff = 2 * param[constr[i].type].r0 * param[constr[i].type].r0 -
+    const double diff = 2 * topo.bond_types_harm()[constr[i].type].r0 * topo.bond_types_harm()[constr[i].type].r0 -
       math::abs2(r);
     if (diff > 0.0)
       p = sqrt(diff);
@@ -172,7 +171,7 @@ int _lincs(topology::Topology & topo,
       ++count;
     }
     
-    rhs[0](i) = lincs.sdiag[i] * (param[constr[i].type].r0 - p);
+    rhs[0](i) = lincs.sdiag[i] * (topo.bond_types_harm()[constr[i].type].r0 - p);
     sol(i) = rhs[0](i);
 
   }
@@ -189,7 +188,6 @@ template<math::boundary_enum B, math::virial_enum V>
 void _solvent(topology::Topology & topo,
 		     configuration::Configuration & conf,
 		     simulation::Simulation & sim,
-		     std::vector<interaction::bond_type_struct> const & param,
 		     util::Algorithm_Timer & m_timer, int & error)
 {
   m_timer.start("solvent");
@@ -205,7 +203,7 @@ void _solvent(topology::Topology & topo,
 
       _lincs<B>(topo, conf, sim, topo.solvent(i).distance_constraints(),
 		topo.solvent(i).lincs(), 
-		param, sim.param().constraint.solvent.lincs_order,
+		sim.param().constraint.solvent.lincs_order,
 		m_timer, first);
     }
   }
@@ -232,7 +230,7 @@ int algorithm::Lincs::apply(topology::Topology & topo,
     DEBUG(8, "\twe need to lincs SOLUTE");
     m_timer.start("solute");
     SPLIT_BOUNDARY(_lincs, topo, conf, sim, topo.solute().distance_constraints(),
-		   topo.solute().lincs(), parameter(),
+		   topo.solute().lincs(),
 		   sim.param().constraint.solute.lincs_order, m_timer);
     m_timer.stop("solute");
  
@@ -245,7 +243,7 @@ int algorithm::Lincs::apply(topology::Topology & topo,
     DEBUG(8, "\twe need to lincs SOLVENT");
     int error = 0;
     SPLIT_VIRIAL_BOUNDARY(_solvent,
-			  topo, conf, sim, parameter(), m_timer, error);
+			  topo, conf, sim, m_timer, error);
     
   }
   

@@ -109,12 +109,12 @@ int algorithm::Perturbed_Shake
     periodicity.nearest_image(pos_i, pos_j, r);
     double dist2 = math::abs2(r);
 	
-    double r0 = (1.0 - lam) * this->parameter()[it->A_type].r0 + 
-      lam * this->parameter()[it->B_type].r0;
+    double r0 = (1.0 - lam) * topo.bond_types_harm()[it->A_type].r0 + 
+      lam * topo.bond_types_harm()[it->B_type].r0;
 
     DEBUG(10, "constraint length: " << r0);
-    DEBUG(10, "r0(A) = " << this->parameter()[it->A_type].r0);
-    DEBUG(10, "r0(B) = " << this->parameter()[it->B_type].r0);    
+    DEBUG(10, "r0(A) = " << topo.bond_types_harm()[it->A_type].r0);
+    DEBUG(10, "r0(B) = " << topo.bond_types_harm()[it->B_type].r0);    
 
     double constr_length2 = r0 * r0;
     double diff = constr_length2 - dist2;
@@ -195,7 +195,7 @@ int algorithm::Perturbed_Shake
       conf.old().perturbed_energy_derivatives.
 	constraints_energy[topo.atom_energy_group()[it->i]] +=
 	lam_derivative * lambda / dt2 * sqrt(constr_length2) *
-	(this->parameter()[it->B_type].r0 - this->parameter()[it->A_type].r0);
+	(topo.bond_types_harm()[it->B_type].r0 - topo.bond_types_harm()[it->A_type].r0);
 
       //ANITA
       if (((sim.steps()  % sim.param().write.free_energy) == 0) &&

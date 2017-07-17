@@ -37,6 +37,7 @@ static int _calculate_perturbed_hbond_interactions
    interaction::Harmonic_Bond_Interaction const & m_interaction)
 {
 
+  std::vector<interaction::bond_type_struct> const & bondtypes=topo.bond_types_harm();
   DEBUG(7, "perturbed harmonic bond interaction");
   DEBUG(9, "using the bond interaction: " << m_interaction.name);
   DEBUG(9, std::setprecision(5));
@@ -78,18 +79,18 @@ static int _calculate_perturbed_hbond_interactions
     DEBUG(7, "dist: " << dist);
 
     assert(dist != 0.0);
-    assert(unsigned(b_it->A_type) < m_interaction.parameter().size());
-    assert(unsigned(b_it->B_type) < m_interaction.parameter().size());
+    assert(unsigned(b_it->A_type) < bondtypes.size());
+    assert(unsigned(b_it->B_type) < bondtypes.size());
 
-    const double K = (1 - lambda) * m_interaction.parameter()[b_it->A_type].K +
-      lambda * m_interaction.parameter()[b_it->B_type].K;
+    const double K = (1 - lambda) * bondtypes[b_it->A_type].K +
+      lambda * bondtypes[b_it->B_type].K;
     
     DEBUG(7, "K: " << K);
 
     const double r0 = ((1 - lambda) *
-		       m_interaction.parameter()[b_it->A_type].r0 +
+		       bondtypes[b_it->A_type].r0 +
 		       lambda *
-		       m_interaction.parameter()[b_it->B_type].r0);
+		       bondtypes[b_it->B_type].r0);
     diff = dist - r0;
     
     DEBUG(9, "r0: " << r0);
@@ -116,12 +117,12 @@ static int _calculate_perturbed_hbond_interactions
 
     DEBUG(9, "energy: " << e);
 
-    const double K_diff = m_interaction.parameter()[b_it->B_type].K -
-      m_interaction.parameter()[b_it->A_type].K;
+    const double K_diff = bondtypes[b_it->B_type].K -
+      bondtypes[b_it->A_type].K;
     DEBUG(9, "K_diff: " << K_diff);
     
-    const double b_diff = m_interaction.parameter()[b_it->B_type].r0 -
-      m_interaction.parameter()[b_it->A_type].r0;
+    const double b_diff = bondtypes[b_it->B_type].r0 -
+      bondtypes[b_it->A_type].r0;
     DEBUG(9, "b_diff: " << b_diff);
     
     e_lambda = lambda_derivative * (0.5 * K_diff*diff*diff - K*diff*b_diff) ;

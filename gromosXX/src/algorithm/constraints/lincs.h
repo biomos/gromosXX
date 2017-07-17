@@ -28,19 +28,6 @@ namespace algorithm {
             configuration::Configuration & conf,
             simulation::Simulation & sim);
 
-    /**
-     * the const bond type parameter.
-     */
-    std::vector<interaction::bond_type_struct> const &parameter()const {
-      return m_parameter;
-    }
-
-    /**
-     * the bond type parameter.
-     */
-    std::vector<interaction::bond_type_struct> & parameter() {
-      return m_parameter;
-    }
 
     /**
      * accessor to the constrained atoms
@@ -68,10 +55,6 @@ namespace algorithm {
 
   protected:
 
-    /**
-     * the constraint parameters (bond lengths)
-     */
-    std::vector<interaction::bond_type_struct> m_parameter;
     /**
      * the atoms that are involved in the contraints
      */

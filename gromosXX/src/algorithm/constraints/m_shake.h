@@ -52,21 +52,6 @@ namespace algorithm
     int const & max_iterations()const {return m_max_iterations;}
 
     /**
-     * the const bond type parameter.
-     */
-    std::vector<interaction::bond_type_struct> const &parameter()const
-    {
-      return m_parameter;
-    }
-    /**
-     * the bond type parameter.
-     */
-    std::vector<interaction::bond_type_struct> & parameter()
-    {
-      return m_parameter;
-    }
-
-    /**
      * initialize startup positions and velocities
      * if required.
      */
@@ -86,10 +71,6 @@ namespace algorithm
      * max iterations
      */
     const int m_max_iterations;
-    /**
-     * bond parameter
-     */
-    std::vector<interaction::bond_type_struct> m_parameter;
     /** 
      * rank and size for parallelization
      */

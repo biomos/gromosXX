@@ -31,10 +31,10 @@
 template<math::boundary_enum B, math::virial_enum V>
 static int _calculate_quartic_bond_interactions(topology::Topology &topo,
 						configuration::Configuration &conf,
-						simulation::Simulation &sim,
-						std::vector<interaction::bond_type_struct> const & param)
+						simulation::Simulation &sim)
 {
-  
+
+  std::vector<interaction::bond_type_struct> const & bondtypes=topo.bond_types_quart();
   math::Periodicity<B> periodicity(conf.current().box);
 
   // loop over the bonds
@@ -53,18 +53,18 @@ static int _calculate_quartic_bond_interactions(topology::Topology &topo,
 
     double dist2 = abs2(v);
     
-    assert(unsigned(b_it->type) < param.size());
-    const double r02 = param[b_it->type].r0 *
-      param[b_it->type].r0;
+    assert(unsigned(b_it->type) < bondtypes.size());
+    const double r02 = bondtypes[b_it->type].r0 *
+      bondtypes[b_it->type].r0;
 
     DEBUG(7, "bond " << b_it->i << "-" << b_it->j
 	  << " type " << b_it->type);
-    DEBUG(10, "K " << param[b_it->type].K
+    DEBUG(10, "K " << bondtypes[b_it->type].K
 	  << " r02 " << r02);
-    DEBUG(10, "DF " << (-param[b_it->type].K *
+    DEBUG(10, "DF " << (-bondtypes[b_it->type].K *
 			(dist2 - r02)) << "\n" << math::v2s(v));
 
-    f = v * (-param[b_it->type].K *
+    f = v * (-bondtypes[b_it->type].K *
 	     (dist2 - r02));
     
     force(b_it->i) += f;
@@ -79,7 +79,7 @@ static int _calculate_quartic_bond_interactions(topology::Topology &topo,
       DEBUG(7, "\tatomic virial done");
       // }
 
-    e = 0.25 * param[b_it->type].K *
+    e = 0.25 * bondtypes[b_it->type].K *
       (dist2 -r02) * (dist2 - r02);
 
     DEBUG(10, "energy: " << e);
@@ -104,7 +104,7 @@ int interaction::Quartic_Bond_Interaction
 {
   m_timer.start();
 
-  SPLIT_VIRIAL_BOUNDARY(_calculate_quartic_bond_interactions, topo, conf, sim, m_parameter);
+  SPLIT_VIRIAL_BOUNDARY(_calculate_quartic_bond_interactions, topo, conf, sim);
   
   m_timer.stop();
   

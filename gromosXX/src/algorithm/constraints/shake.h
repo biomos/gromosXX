@@ -64,20 +64,6 @@ namespace algorithm
     int const & max_iterations()const {return m_max_iterations;}
 
     /**
-     * the const bond type parameter.
-     */
-    std::vector<interaction::bond_type_struct> const &parameter()const
-    {
-      return m_parameter;
-    }
-    /**
-     * the bond type parameter.
-     */
-    std::vector<interaction::bond_type_struct> & parameter()
-    {
-      return m_parameter;
-    }
-    /**
      * accessor to the constrained atoms
      */
     std::set<unsigned int> & constrained_atoms() {
@@ -110,10 +96,6 @@ namespace algorithm
      * max iterations
      */
     const int m_max_iterations;
-    /**
-     * bond parameter
-     */
-    std::vector<interaction::bond_type_struct> m_parameter;
     /**
      * the atoms that are involved in the contraints
      */
@@ -275,8 +257,8 @@ int algorithm::Shake::shake_iteration
 
     double dist2 = abs2(r);
 
-    assert(parameter().size() > it->type);
-    double constr_length2 = parameter()[it->type].r0 * parameter()[it->type].r0;
+    assert(topo.bond_types_harm().size() > it->type);
+    double constr_length2 = topo.bond_types_harm()[it->type].r0 * topo.bond_types_harm()[it->type].r0;
     double diff = constr_length2 - dist2;
 
     DEBUG(13, "constr: " << constr_length2 << " dist2: " << dist2);

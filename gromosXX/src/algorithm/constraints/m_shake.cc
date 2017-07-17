@@ -493,8 +493,8 @@ int algorithm::M_Shake::init(topology::Topology & topo,
     it_k = topo.solvent(0).distance_constraints().begin(),
           to_k = topo.solvent(0).distance_constraints().end(); it_k != to_k; ++it_k, ++k) {
 
-    assert(parameter().size() > it_k->type);
-    constr_length2(k) = parameter()[it_k->type].r0 * parameter()[it_k->type].r0;
+    assert(topo.bond_types_harm().size() > it_k->type);
+    constr_length2(k) = topo.bond_types_harm()[it_k->type].r0 * topo.bond_types_harm()[it_k->type].r0;
     unsigned int l = 0;
     for (std::vector<topology::two_body_term_struct>::const_iterator
       it_l = topo.solvent(0).distance_constraints().begin(),

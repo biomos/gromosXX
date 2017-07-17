@@ -63,20 +63,6 @@ namespace algorithm
     int const & max_iterations()const {return m_max_iterations;}
 
     /**
-     * the const bond type parameter.
-     */
-    std::vector<interaction::bond_type_struct> const &parameter()const
-    {
-      return m_parameter;
-    }
-    /**
-     * the bond type parameter.
-     */
-    std::vector<interaction::bond_type_struct> & parameter()
-    {
-      return m_parameter;
-    }
-    /**
      * accessor to the constrained atoms
      */
     std::set<unsigned int> & constrained_atoms() {
@@ -118,10 +104,6 @@ namespace algorithm
      * max iterations.
      */
     const int m_max_iterations;
-    /**
-     * bond parameter
-     */
-    std::vector<interaction::bond_type_struct> m_parameter;
     /**
      * the atoms that are involved in the contraints
      */
@@ -603,17 +585,17 @@ void algorithm::Flexible_Constraint::_calc_distance
     // flex_len:  flexible constraint distance
     // =================================================
 
-    // const double constr_length2 = m_parameter(it->type).r0 * m_parameter(it->type).r0;
+    // const double constr_length2 = topo.bond_types_harm()(it->type).r0 * topo.bond_types_harm()(it->type).r0;
     
     // calculate the flexible constraint distance
     DEBUG(10, "F(c) = " << force_on_constraint);
-    DEBUG(10, "it->type = " << it->type << " of " << m_parameter.size());
+    DEBUG(10, "it->type = " << it->type << " of " << topo.bond_types_harm().size());
     
-    assert(m_parameter.size() > it->type);
-    DEBUG(10, "K = " << m_parameter[it->type].K << "     r0 = " << m_parameter[it->type].r0);
+    assert(topo.bond_types_harm().size() > it->type);
+    DEBUG(10, "K = " << topo.bond_types_harm()[it->type].K << "     r0 = " << topo.bond_types_harm()[it->type].r0);
 
-    const double new_len = force_on_constraint / m_parameter[it->type].K + 
-      m_parameter[it->type].r0;
+    const double new_len = force_on_constraint / topo.bond_types_harm()[it->type].K + 
+      topo.bond_types_harm()[it->type].r0;
     
     // store for shake
     m_flex_len.push_back(new_len);
@@ -636,8 +618,8 @@ void algorithm::Flexible_Constraint::_calc_distance
 
     // calculate Epot in the bond length constraints
     conf.old().energies.constraints_energy[topo.atom_energy_group()[it->i]] += 
-      0.5 * m_parameter[it->type].K * (m_parameter[it->type].r0 - new_len) * 
-      (m_parameter[it->type].r0 - new_len);
+      0.5 * topo.bond_types_harm()[it->type].K * (topo.bond_types_harm()[it->type].r0 - new_len) * 
+      (topo.bond_types_harm()[it->type].r0 - new_len);
       
     DEBUG(5, "flex_constraint_distance: " << new_len);
     
@@ -757,12 +739,12 @@ void algorithm::Flexible_Constraint::_calc_undetermined_forces
 	  }
 	}
 
-	math::Vec f1 =   r - math::product(u1, r_nc) * dk * mu / m_parameter[it->type].K;
-	math::Vec f2 =  -r - math::product(u2, r_nc) * dk * mu / m_parameter[it->type].K;
+	math::Vec f1 =   r - math::product(u1, r_nc) * dk * mu / topo.bond_types_harm()[it->type].K;
+	math::Vec f2 =  -r - math::product(u2, r_nc) * dk * mu / topo.bond_types_harm()[it->type].K;
 	
 	// r_nc is normalized!
-	f1 += (r_nc - r / r_dist) * dk * mu / (m_parameter[it->type].K * dt2);
-	f2 -= (r_nc - r / r_dist) * dk * mu / (m_parameter[it->type].K * dt2);
+	f1 += (r_nc - r / r_dist) * dk * mu / (topo.bond_types_harm()[it->type].K * dt2);
+	f2 -= (r_nc - r / r_dist) * dk * mu / (topo.bond_types_harm()[it->type].K * dt2);
 
 	assert(m_force.size() > k && m_force[k].size() > it->i && m_force[k].size() > it->j);
 
@@ -802,7 +784,7 @@ void algorithm::Flexible_Constraint::_calc_undetermined_forces
 	assert(m_force.size() > k && m_force[k].size() > a);
 
 	// r_nc is normalized
-	m_force[k][a] = math::product(h1, r_nc)  * (-dk) * mu / m_parameter[it->type].K;
+	m_force[k][a] = math::product(h1, r_nc)  * (-dk) * mu / topo.bond_types_harm()[it->type].K;
 	DEBUG(12, "f(" << a << ") = " << math::v2s(m_force[k][a]));
 
       }
