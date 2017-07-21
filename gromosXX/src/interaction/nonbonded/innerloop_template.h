@@ -7,7 +7,6 @@
  */
 
 /**
- * @define SPLIT_INTERACTION_FUNC
  * call a function f with a Interaction_Spec using the correct values for
  * boundary, virial and interaction term function to construct a
  * Nonbonded_Innerloop : split the interaction term function
@@ -79,7 +78,6 @@
 
 
 /**
- * @define SPLIT_INNERLOOP
  * call a function with a Interaction_Spec using the correct values for
  * boundary, virial and interaction term function for a
  * Nonbonded_Innerloop : split the boundary
@@ -104,7 +102,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 /**
- * @define PERT_SPLIT_INTERACTION_FUNC
  * call a function f with a Interaction_Spec using the correct values for
  * boundary, virial and interaction term function to construct a
  * Nonbonded_Innerloop : split the interaction term function
@@ -176,7 +173,6 @@
 
 
 /**
- * @define PERT_SPLIT_PERT_BOUNDARY
  * call a function with a Interaction_Spec using the correct values for
  * boundary, virial and interaction term function for a
  * Nonbonded_Innerloop : split the boundary
@@ -198,7 +194,6 @@
   } \
 
 /**
- * @define SPLIT_PERT_INNERLOOP
  * call a function with a Interaction_Spec using the correct values for
  * boundary, virial and interaction term function for a
  * Nonbonded_Innerloop : split perturbation
@@ -216,7 +211,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 /**
- * @define SPLIT_PERTURBATION
  * call a function with the appropriate values for scaling
  * (assuming that perturbation is enabled).
  */

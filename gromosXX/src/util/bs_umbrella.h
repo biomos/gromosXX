@@ -45,7 +45,6 @@ namespace util {
      * Set the memory of Potential
      * @param[in] id    The id of the potential
      * @param[in] subid The id of the subspace
-     * @param[in] type  The Type (Sphere / Stick)
      * @param[in] memory    The memory
      */
     void setMemory(int id, int subid, std::vector<double> &memory);
@@ -53,7 +52,6 @@ namespace util {
      * Set the auxiliary memory of Potential
      * @param[in] id    The id of the potential
      * @param[in] subid The id of the subspace
-     * @param[in] type  The Type (Sphere / Stick)
      * @param[in] memory    The auxiliary memory
      */
     void setAuxMemory(int id, int subid, std::vector<double> &memory);
@@ -75,7 +73,6 @@ namespace util {
     /**
      * Get the Memory of a sphere or stick
      * @param[in] id
-     * @param[in] type
      * @param[out] memory
      * @return wheter memory with specified id was found or not
      */
@@ -83,7 +80,7 @@ namespace util {
     /**
      * Get the Auxiliary Memory of a sphere or stick
      * @param[in] id
-     * @param[in] type
+     * @param[in] subid
      * @param[out] memory
      * @return whether memory with specified id was found or not
      */
@@ -97,17 +94,16 @@ namespace util {
     void getCounter(int subid, 
                     unsigned int &auxCounter, unsigned int &redCounter) const;
     /**
-     * Set the position of the subspace <subid>.
+     * Set the position of the subspace \<subid\>.
      */
     void setPosition(unsigned int subid, std::vector<double> &position);
     /**
-     * Get the position of the subspace <subid>.
+     * Get the position of the subspace \<subid\>.
      */
     void getPosition(unsigned int subid, std::vector<double> &position) const;
     /**
-     * Get Number of Spheres and Sticks
-     * @param[out] numSpheres
-     * @param[out] numSticks
+     * Get Number of Potentials
+     * @param[out] numPotentials
      */
     void getNumPotentials(int &numPotentials) const;
     /**
@@ -121,7 +117,7 @@ namespace util {
     double getTotalPotential() const;
     /**
      * Get the force in reduced coordinate space
-     * @param[inout] force
+     * @param[in,out] force
      */
     void getForce(std::vector<double> &force) const;
     /**

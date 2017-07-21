@@ -170,6 +170,9 @@ int main(int argc, char *argv[]){
         return 1;
       } else if (iom == io::message::develop) {
         std::cout << "\nUse @develop to run untested code.\n" << std::endl;
+        error = 1;
+        MPI::COMM_WORLD.Bcast(&error, 1, MPI::INT, 0);
+        FFTW3(mpi_cleanup());
         MPI::Finalize();
         return 1;
       }

@@ -200,19 +200,19 @@ namespace util {
      * calculate the attached coordinates.
      * This will invoke a loop over the attached coordinates and calculate
      * their values.
-     * @param[inout] the configuration that is used to calculate the energy
+     * @param[in,out] conf the configuration that is used to calculate the energy
      *               and force and wherin the force is stored.
      */
     void calculate_coordinates(configuration::Configuration & conf);
     /**
      * built-up the umbrella
      * This will find the grid point and add it to the visited configurations
-     * @param[inout] conf the configuration
+     * @param[in,out] conf the configuration
      */
     void build(configuration::Configuration & conf);
     /**
      * apply the umbrella
-     * @param[inout] conf the configuration
+     * @param[in,out] conf the configuration
      */
     void apply(configuration::Configuration & conf);
     /**

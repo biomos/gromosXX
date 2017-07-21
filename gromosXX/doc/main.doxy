@@ -13,9 +13,7 @@
  *  - @ref md_mpi
  *  - @ref repex_mpi
  * - Available contrib programs 
- *  - @ref repana
  *  - @ref tabulate_spc
- *  - @ref rep_rewrite
  *  - @ref split_frame
  *  - @ref rng_gsl
  * - File formats:
@@ -24,7 +22,7 @@
  *   - @ref pttopo
  *   - @ref friction
  *   - @ref bsleus
- *  - restraint specifciation
+ *  - restraint specification
  *   - @ref dihrest
  *   - @ref disres
  *   - @ref jvalue
@@ -32,6 +30,8 @@
  *   - @ref xrayresfile
  *   - @ref leus
  *   - @ref leusdb
+ *   - @ref orderparam
+ *   - @ref rdc
  *
  * <h3>Modules</h3>
  * - @ref algorithmoverview "algorithm"

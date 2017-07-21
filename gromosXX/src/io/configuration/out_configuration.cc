@@ -69,6 +69,7 @@ m_every_jvalue(0),
 m_every_xray(0),
 m_every_disres(0),
 m_every_disfieldres(0),
+m_every_dihres(0),
 m_every_dat(0),
 m_every_leus(0),
 m_every_bsleus(0),
@@ -85,6 +86,7 @@ m_precision(9),
 m_force_precision(9),
 m_distance_restraint_precision(7),
 m_disfield_restraint_precision(7),
+m_dihedral_restraint_precision(7),
 m_width(15),
 m_force_width(18),
 m_title(title),
@@ -198,7 +200,7 @@ void io::Out_Configuration::init(io::Argument & args,
           io::message::error);
 
   m_write_special = param.polarise.write || param.jvalue.write || param.xrayrest.write 
-     || param.distanceres.write || param.distancefield.write || param.print.monitor_dihedrals 
+     || param.distanceres.write || param.distancefield.write || param.dihrest.write || param.print.monitor_dihedrals 
      || param.localelev.write || param.electric.dip_write || param.electric.cur_write 
      || param.addecouple.write || param.nemd.write || param.orderparamrest.write || param.rdc.write
      || param.bsleus.write;    // add others if there are any
@@ -206,7 +208,7 @@ void io::Out_Configuration::init(io::Argument & args,
   if (args.count(argname_trs) > 0)
     special_trajectory(args[argname_trs], param.polarise.write, 
             param.jvalue.write, param.xrayrest.write, param.distanceres.write, 
-            param.distancefield.write, param.print.monitor_dihedrals,param.localelev.write, 
+            param.distancefield.write, param.dihrest.write, param.print.monitor_dihedrals,param.localelev.write, 
             param.electric.dip_write, param.electric.cur_write, param.addecouple.write,
             param.nemd.write, param.orderparamrest.write, param.rdc.write,
             param.bsleus.write);
@@ -333,6 +335,10 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
 
     if (m_every_disfieldres && sim.steps() && ((sim.steps() - 1) % m_every_disfieldres) == 0) {
       _print_disfield_restraints(conf, topo, m_special_traj);
+      m_special_traj.flush();
+    }
+    if (m_every_dihres && sim.steps() && ((sim.steps() - 1) % m_every_dihres) == 0) {
+      _print_dihedral_restraints(conf, topo, m_special_traj);
       m_special_traj.flush();
     }
 
@@ -605,6 +611,10 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       _print_disfield_restraints(conf, topo, m_special_traj);
     }
     
+    if (m_every_dihres && ((sim.steps() - 1) % m_every_dihres) == 0) {   
+      _print_dihedral_restraints(conf, topo, m_special_traj);
+    }
+    
     if (m_every_jvalue && ((sim.steps() - 1) % m_every_jvalue) == 0) {    
       _print_jvalue(sim.param(), conf, topo, m_special_traj, true);
     }
@@ -729,7 +739,7 @@ void io::Out_Configuration
 
 void io::Out_Configuration
 ::special_trajectory(std::string name, int every_cos, int every_jvalue, 
-                     int every_xray, int every_disres, int every_disfieldres, int every_dat, 
+                     int every_xray, int every_disres, int every_disfieldres, int every_dihres, int every_dat, 
                      int every_leus, int every_dipole, int every_current,
                      int every_adde, int every_nemd, int every_oparam, int every_rdc,
                      int every_bsleus) {
@@ -741,6 +751,7 @@ void io::Out_Configuration
   m_every_xray = every_xray;
   m_every_disres = every_disres;
   m_every_disfieldres = every_disfieldres;
+  m_every_dihres = every_dihres;
   m_every_dat = every_dat;
   m_every_leus = every_leus;
   m_every_dipole = every_dipole;
@@ -833,6 +844,7 @@ void io::Out_Configuration
                              (m_every_xray && ((sim.steps() % m_every_xray) == 0)) ||
                              (m_every_disres && ((sim.steps() % m_every_disres) == 0)) ||
                              (m_every_disfieldres && ((sim.steps() % m_every_disfieldres) == 0)) ||
+                             (m_every_dihres && ((sim.steps() % m_every_dihres) == 0)) ||
                              (m_every_dat && ((sim.steps() % m_every_dat) == 0)) ||
                              (m_every_leus && ((sim.steps() % m_every_leus) == 0)) ||
                              (m_every_bsleus && ((sim.steps() % m_every_bsleus) == 0)) ||
@@ -2415,6 +2427,50 @@ void io::Out_Configuration::_print_disfield_grid(
     
   }
   os << "END" << std::endl;
+}
+
+void io::Out_Configuration::_print_dihedral_restraints(
+        configuration::Configuration const &conf,
+        topology::Topology const & topo,
+        std::ostream &os) {
+  DEBUG(10, "dihedral restraints");
+
+  std::vector<double>::const_iterator ene_it = conf.special().dihedralres.energy.begin();
+  std::vector<double>::const_iterator d_it = conf.special().dihedralres.d.begin(), 
+                                      d_to = conf.special().dihedralres.d.end();
+
+  os.setf(std::ios::fixed, std::ios::floatfield);
+  os.precision(m_dihedral_restraint_precision);
+  
+  if (conf.special().dihedralres.d.size() > 0) {
+    os << "DIHRESDATA" << std::endl;
+    os << conf.special().dihedralres.d.size() << "\n";
+    int i;
+    for (i = 1; d_it != d_to; ++d_it, ++ene_it, ++i) {
+       double phi = *d_it * 360 /(2 * math::Pi);
+       os << std::setw(m_width) << phi
+       << std::setw(m_width) << *ene_it;
+       os << std::endl;
+    }
+    os << "END" << std::endl;
+  }
+  
+  std::vector<double>::const_iterator pene_it = conf.special().pertdihedralres.energy.begin();
+  std::vector<double>::const_iterator pd_it = conf.special().pertdihedralres.d.begin(), 
+                                      pd_to = conf.special().pertdihedralres.d.end();
+  
+  if (conf.special().pertdihedralres.d.size() > 0) {
+    os << "PERTDIHRESDATA" << std::endl;
+    os << conf.special().pertdihedralres.d.size() << "\n";
+    int i;
+    for (i = 1; pd_it != pd_to; ++pd_it, ++pene_it, ++i) {
+       double phi = *pd_it * 360 /(2 * math::Pi);
+       os << std::setw(m_width) << phi
+       << std::setw(m_width) << *pene_it;
+       os << std::endl;
+    }
+    os << "END" << std::endl;
+  }
 }
 
 void io::Out_Configuration::_print_order_parameter_restraints(

@@ -48,8 +48,7 @@ namespace math {
   void truncoct_triclinic_box(math::Box & box, bool forward);
   /**
    * transform a truncated octahedral box to a triclinic box and vice versa
-   * @param[inout] box the box to transform
-   * @param[inout] pos the positions to transform
+   * @param[in,out] pos the positions to transform
    * @param[in] forward true for truncoct to triclinic and false for vice versa
    */
   void truncoct_triclinic(math::VArray & pos, bool forward);

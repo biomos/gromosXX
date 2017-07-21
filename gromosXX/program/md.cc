@@ -33,7 +33,7 @@
  * <tr><td> \@dihrest</td><td>&lt;@ref dihrest "dihedral restraints specification"&gt; </td><td style="color:#088A08">in</td></tr>
  * <tr><td> \@jval</td><td>&lt;@ref jvalue "J-value restraints specification"&gt;</td><td style="color:#088A08">in</td></tr>
  * <tr><td> \@xray</td><td>&lt;@ref xrayresfile "X-ray restraints specification"&gt;</td><td style="color:#088A08">in</td></tr>
- * <tr><td> \@sym</td><td>&lt;@ref symresfile "Symmetry restraints specification"&gt;</td><td style="color:#088A08">in</td></tr>
+ * <tr><td> \@sym</td><td>&lt;@ref symrest "Symmetry restraints specification"&gt;</td><td style="color:#088A08">in</td></tr>
  * <tr><td> \@order</td><td>&lt;@ref orderparamresspec "Order-parameter restraints specification"&gt;</td><td style="color:#088A08">in</td></tr>
  * <tr><td> \@lud</td><td>&lt;@ref leusdb "local elevation umbrella database"&gt;</td><td style="color:#088A08">in</td></tr>
  * <tr><td> \@led</td><td>&lt;@ref leus "local elevation coordinate specification"&gt;</td><td style="color:#088A08">in</td></tr>

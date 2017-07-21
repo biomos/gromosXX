@@ -24,7 +24,7 @@
 #define SUBMODULE topology
 
 /**
- * @section transfrom TRANSFORM
+ * @section transform TRANSFORM
 @verbatim
 TRANSFORM
 # Number of symmetry transformations 

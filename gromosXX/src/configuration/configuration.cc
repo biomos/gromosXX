@@ -158,6 +158,9 @@ configuration::Configuration::Configuration
   special().distancefield.energy = conf.special().distancefield.energy;
   special().distancefield.energy_deriv = conf.special().distancefield.energy_deriv;
   
+  special().dihedralres.energy = conf.special().dihedralres.energy;
+  special().dihedralres.d = conf.special().dihedralres.d;
+  
   special().pscale = conf.special().pscale;
 
   special().orderparamres.S2_avg = conf.special().orderparamres.S2_avg;
@@ -273,6 +276,9 @@ configuration::Configuration & configuration::Configuration::operator=
   special().distancefield.dist = conf.special().distancefield.dist;
   special().distancefield.energy = conf.special().distancefield.energy;
   special().distancefield.energy_deriv = conf.special().distancefield.energy_deriv;
+  
+  special().dihedralres.energy = conf.special().dihedralres.energy;
+  special().dihedralres.d = conf.special().dihedralres.d;
  
   special().rdc = conf.special().rdc;
 

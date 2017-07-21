@@ -47,9 +47,9 @@ namespace util{
     /**
      * An intelligent version of eq. (1) & (2) for calculating the potential
      * inside the sphere / stick
-     * @param gridPointCoordinate[in] = (num_gp - 1) / Characteristic_Length * distance
-     * @param potential[out]
-     * @param force[out]
+     * @param[in] gridPointCoordinate = (num_gp - 1) / Characteristic_Length * distance
+     * @param[out] potential
+     * @param[out] force
      * @return the potential
      */
     void calcPotAndForce(double gridPointCoordinate, 
@@ -78,15 +78,11 @@ namespace util{
     /**
      * Set the auxiliary memory to newMemory
      * @param[in] newMemory the new Memory
-     * @param[in] auxCounter    The auxiliary memory Counter
-     * @param[in] redCounter    The reduction Counter
      */
     void setAuxMemory(std::vector<double> &newMemory); 
     /**
      * Get the auxiliary memory of the potential
      * @param[out] newMemory
-     * @param[out] auxCounter    The auxiliary memory Counter
-     * @param[out] redCounter    The reduction Counter
      */
     void getAuxMemory(std::vector<double> &newMemory);
     /**
@@ -110,14 +106,13 @@ namespace util{
     double getPotential() {return m_potential;}
     /**
      * get the derivatives of the potential dB_m / dQ
-     * @param[inout] target the derivatives will be saved in target
+     * @param target the derivatives will be saved in target
      */
     void getDerivatives(BS_Vector &target) {target = m_potDerivatives;}
     /**
      * Calculate the weight:
      * w_m = BoltzmannFactor / totalPartitionFct
      * w_m = exp[ -beta B_m] / sum_n( exp[-beta * (B_n - B_m)])
-     * @param[in] {B_n}
      * @param[in] beta
      * @return the weight w_m
      */

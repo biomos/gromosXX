@@ -1,5 +1,5 @@
 /**
- * @file grid_pairlist_algorithm.h
+ * @file extended_grid_pairlist_algorithm.h
  * extended grid pairlist algorithm (beautiful implementation)
  */
 

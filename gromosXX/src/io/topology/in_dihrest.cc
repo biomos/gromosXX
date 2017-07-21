@@ -3,7 +3,7 @@
  * implements methods of In_Dihrest
  */
 
-
+#include <sstream>
 #include "../../stdheader.h"
 
 #include "../../algorithm/algorithm.h"
@@ -70,7 +70,7 @@ PERTDIHRESSPEC
 #                                       (1-RLAM)*APDLR + RLAM*BPDLR + DELTA ]
 #
 # IPLR  JPLR  KPLR  LPLR  M   N  DELTA  APDLR  AWDLR  BPDLR  BWDLR
-  1      2     3     4    2      180.0  120.0    1.0  160.0    1.0
+  1      2     3     4    2   1   180.0  120.0    1.0  160.0    1.0
 END
 @endverbatim
  */
@@ -79,6 +79,14 @@ void io::In_Dihrest::read(topology::Topology& topo,
 			  std::ostream & os){
   
   DEBUG(7, "reading in a dihedral restraints file");
+  bool found_restraints=false;
+  
+  
+  std::ostringstream oss;                
+  oss << "the dihedral is calculated from the nearest-image\n"
+       << "         vectors, you have to make sure that none of the vectors defining it become \n"
+       << "         longer than half the box length at any point during the simulations!\n";
+  io::messages.add(oss.str(), "in_dihedralres", io::message::warning);
   
   if (!quiet)
     os << "DIHEDRAL RESTRAINTS\n";
@@ -89,12 +97,12 @@ void io::In_Dihrest::read(topology::Topology& topo,
     DEBUG(10, "DIHEDRALRESSPEC block");
     buffer = m_block["DIHEDRALRESSPEC"];
     
-    if (!buffer.size()){
-      io::messages.add("no DIHEDRALRESSPEC block in dihedral restraints file",
-		       "in_dihrest", io::message::error);
-      return;
-    }
+    if (buffer.size()>0 && buffer.size()<=2){
+      io::messages.add("empty DIHEDRALRESSPEC block in dihedral restraints file",
+                       "in_dihedralres", io::message::warning);
+    } else  if (buffer.size()>2) {
 
+    found_restraints=true;
     block_read.insert("DIHEDRALRESSPEC");
 
     std::vector<std::string>::const_iterator it = buffer.begin()+1,
@@ -174,6 +182,7 @@ void io::In_Dihrest::read(topology::Topology& topo,
 	   << "\n";
       }
     }
+  } // if block empty or not there
   } // DIHREST
 
   { // PERTDIHESPEC
@@ -181,9 +190,12 @@ void io::In_Dihrest::read(topology::Topology& topo,
     buffer = m_block["PERTDIHRESSPEC"];
     
     block_read.insert("PERTDIHRESSPEC");
-    if (!buffer.size()){
-      return;
-    }
+    
+    if (buffer.size()>0 && buffer.size()<=2){
+      io::messages.add("empty PERTDIHRESSPEC block in dihedral restraints file",
+                       "in_dihedralres", io::message::warning);
+    } else if (buffer.size()>2) {
+    found_restraints=true;
     
     sim.param().perturbation.perturbed_par=true;
     std::vector<std::string>::const_iterator it = buffer.begin()+1,
@@ -248,7 +260,7 @@ void io::In_Dihrest::read(topology::Topology& topo,
       _lineStream >> delta >> A_phi >> A_w0 >> B_phi >> B_w0;
     
       if(_lineStream.fail()){
-	io::messages.add("bad line in PERTDIHREST block",
+	io::messages.add("bad line in PERTDIHRESSPEC block",
 			 "In_Dihrest", io::message::error);
       }
 
@@ -272,10 +284,11 @@ void io::In_Dihrest::read(topology::Topology& topo,
 	   << "\n";
       }
       
-    } // PERTDIHRESPEC
+    }
     
     if (!quiet) os << "END\n";
   }
+  } // PERTDIHRESPEC
   
   for(std::map<std::string, std::vector<std::string> >::const_iterator
 	it = m_block.begin(),
@@ -288,5 +301,10 @@ void io::In_Dihrest::read(topology::Topology& topo,
 		       "In_Dihrest",
 		       io::message::warning);
     }
+  }
+  
+  if (!found_restraints) {
+      io::messages.add("no valid restraint block in dihedral restraints file",
+                       "in_dihedralres", io::message::error);
   }
 }

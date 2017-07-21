@@ -50,7 +50,7 @@ namespace util {
     virtual int get_type() const = 0;
     /**
      * calculate the value and setup the pointers needed
-     * @param[inout] conf the configuration for which the value is calculated.
+     * @param[in,out] conf the configuration for which the value is calculated.
      *             it will also be used to store the force
      */
     virtual void calculate(configuration::Configuration & conf) = 0;

@@ -358,6 +358,9 @@ _update_pert_atomic(topology::Topology & topo,
     int end = solv_start + topo.num_solvent_atoms(s);
     DEBUG(11, "\tends at atom " << end);
 
+    if (topo.num_solvent_molecules(s) == 0)
+      continue;
+
     const int num_solv_at = topo.num_solvent_atoms(s) / topo.num_solvent_molecules(s);
     int a2_start = solv_start + num_solv_at;
     DEBUG(11, "\twith " << num_solv_at << " atoms");

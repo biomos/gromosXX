@@ -38,9 +38,9 @@ namespace io {
      * concatenate and store it in title.
      * @section title TITLE block
  @verbatim
- TITLE
-  your title
- END
+TITLE
+ your title
+END
  @endverbatim
      */
     void readTitle();
@@ -60,7 +60,13 @@ namespace io {
     bool quiet;
 
   protected:
+
+    /**
+     * temporary storage of individual block data while
+     * the block is read
+     */
     std::istringstream _lineStream;
+    
     /**
      * stores the blocks if read_stream is called.
      */

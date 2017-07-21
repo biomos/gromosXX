@@ -5,7 +5,6 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 /**
- * @define SPLIT_BOUNDARY
  * call a function with the appropriate boundary as template parameter
  */
 #define SPLIT_BOUNDARY(f, ...) \
@@ -19,7 +18,6 @@ switch(conf.boundary_type){ \
 
 ////////////////////////////////////////////////////////////////////////////////
 /**
- * @define SPLIT_MY_BOUNDARY
  * call a function with the appropriate boundary as template parameter
  */
 #define SPLIT_MY_BOUNDARY(bound, f, ...) \
@@ -34,7 +32,6 @@ switch(bound){ \
 ////////////////////////////////////////////////////////////////////////////////
 
 /**
- * @define SPLIT_VIRIAL_BOUNDARY
  * call a function with the appropriate values for virial and boundary
  * as template parameters.
  */

@@ -19,7 +19,7 @@ namespace algorithm
    * removed.
    * It is recommended to remove it at every step.
    *
-   * @TODO check if there is a Gromos96 bug in cenmas.
+   * @todo check if there is a Gromos96 bug in cenmas.
    * seems like absolute positions instead of
    * relative to centre of mass are taken in
    * angular momentum calculation.

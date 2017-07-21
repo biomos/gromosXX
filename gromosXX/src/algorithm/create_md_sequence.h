@@ -25,7 +25,7 @@ namespace algorithm
 	 * create a MD sequence.
 	 * creates the necessary algorithm in the correct order and
 	 * inserts them into the Algorithm_Sequence md_seq.
-	 * @TODO this should be reworked into a
+	 * @todo this should be reworked into a
 	 * Factory (factory pattern) using sub-factories for the
 	 * big thingies like forcefield, maybe algorithms
 	 */

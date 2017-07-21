@@ -8,7 +8,7 @@
  *
  * @anchor tabulate_spc
  * @section tabulate_spc tabulate forces and energies for SPC
- * @author @ref ns
+ * @author Nathan Schmid
  * @date 21.10.2008
  *
  * Program tabulate_spc is used to create a table containing forces and energies
