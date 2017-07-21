@@ -318,6 +318,33 @@ void interaction::Perturbed_Nonbonded_Pair
               m_perturbed_nonbonded_term.
               rf_soft_interaction(r, A_q, 0, alpha_crf,
 				  A_f, A_e_crf, A_de_crf);
+
+      // ANITA
+      if (((sim.steps()  % sim.param().write.free_energy) == 0) &&
+         sim.param().precalclam.nr_lambdas ){
+        double A_e_rf, B_e_rf, A_de_rf, B_de_rf;
+
+        // determine lambda stepsize from min,max and nr of lambdas
+        double lambda_step = (sim.param().precalclam.max_lam -
+                 sim.param().precalclam.min_lam) /
+                 (sim.param().precalclam.nr_lambdas-1);
+
+        //loop over nr_lambdas
+        for (int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
+
+          // determine current lambda for this index
+          double lam=(lam_index * lambda_step) + sim.param().precalclam.min_lam;
+          m_perturbed_nonbonded_term.rf_soft_interaction_ext(r, A_q, 0,
+                  alpha_crf, A_e_rf, B_e_rf, 
+                  A_de_rf, B_de_rf, lam);
+          conf.current().energies.A_crf_energy[lam_index][topo.atom_energy_group(it->i)]
+            [topo.atom_energy_group(it->j)] +=  A_e_rf;
+          conf.current().perturbed_energy_derivatives.A_crf_energy[lam_index]
+            [topo.atom_energy_group(it->i)]
+            [topo.atom_energy_group(it->j)] += A_de_rf;
+        }
+      } // ANITA 
+      
               break;
             }
             case simulation::pol_lj_crf_func : {
@@ -356,9 +383,34 @@ void interaction::Perturbed_Nonbonded_Pair
               m_nonbonded_term.rf_interaction(r, A_q, A_f, A_e_crf);
 
 	      //Since nonbonded_term is not scaled by lambda, this is calculated here --martina
-	      A_f = m_perturbed_nonbonded_term.A_lj_lambda_n() * A_f;
+	      A_f = m_perturbed_nonbonded_term.A_crf_lambda_n() * A_f;
 
 	      A_de_crf = - topo.lambda_exp() * m_perturbed_nonbonded_term.A_crf_lambda_n_1() * A_e_crf; //define before multiplication of A_e_crf with lambda!
+	      
+      // ANITA
+      if (((sim.steps()  % sim.param().write.free_energy) == 0) &&
+         sim.param().precalclam.nr_lambdas ){
+
+        // determine lambda stepsize from min,max and nr of lambdas
+        double lambda_step = (sim.param().precalclam.max_lam -
+                 sim.param().precalclam.min_lam) /
+                 (sim.param().precalclam.nr_lambdas-1);
+
+        //loop over nr_lambdas
+        for (int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
+
+          // determine current lambda for this index
+          double lam=(lam_index * lambda_step) + sim.param().precalclam.min_lam;
+          
+          conf.current().energies.A_crf_energy[lam_index][topo.atom_energy_group(it->i)]
+            [topo.atom_energy_group(it->j)] += pow(1 - lam, topo.lambda_exp()) * A_e_crf;
+            
+          conf.current().perturbed_energy_derivatives.A_crf_energy[lam_index]
+            [topo.atom_energy_group(it->i)]
+            [topo.atom_energy_group(it->j)] += - topo.lambda_exp() * pow(1 - lam, topo.lambda_exp() - 1) * A_e_crf;
+        }
+      } // ANITA 
+      
 	      A_e_crf *= m_perturbed_nonbonded_term.A_crf_lambda_n(); //scale A_e_crf with lambda
 
               break;
@@ -390,7 +442,7 @@ void interaction::Perturbed_Nonbonded_Pair
                     io::message::critical);
           }
         }
-      }
+      } //if(sim.param().nonbonded.rf_excluded)
 
       break;
       // --------------------------
@@ -414,6 +466,58 @@ void interaction::Perturbed_Nonbonded_Pair
 				    A_e_lj, A_e_crf, A_de_lj, A_de_crf);
             
             A_f = (A_f1 + A_f6 + A_f12) * r;
+            
+      // ANITA
+            if (((sim.steps()  % sim.param().write.free_energy) == 0) && 
+           sim.param().precalclam.nr_lambdas ){
+//        if ( sim.param().precalclam.nr_lambdas ) { 
+          double A_e_lj_l, B_e_lj_l, A_e_crf_l, B_e_crf_l,
+              A_de_lj_l, B_de_lj_l, A_de_crf_l, B_de_crf_l;
+
+          // determine lambda stepsize from min,max and nr of lambdas
+          double lambda_step = (sim.param().precalclam.max_lam - 
+                   sim.param().precalclam.min_lam) / 
+                   (sim.param().precalclam.nr_lambdas-1);
+
+          //loop over nr_lambdas
+          for (int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){ 
+
+            // determine current lambda for this index
+            double lam=(lam_index * lambda_step) + sim.param().precalclam.min_lam;
+
+            // start the calculations
+            m_perturbed_nonbonded_term.
+            lj_crf_soft_interaction_ext(r, A_lj->c6, A_lj->c12,
+                0, 0, A_q, 0, alpha_lj, alpha_crf,
+                A_e_lj_l,  B_e_lj_l, A_e_crf_l, B_e_crf_l,
+                A_de_lj_l, B_de_lj_l, A_de_crf_l, B_de_crf_l,
+                lam);
+
+            DEBUG(8, "ANITA: precalculated energies for lambda " << lam
+                   << "\n now starting storage");
+            DEBUG(8, "\n  A_e_lj " << A_e_lj << "\n  lambda index " << lam_index <<
+                   "\n  storage.energies.A_lj_energy.size() " << conf.current().energies.A_lj_energy.size()
+                   << "\n  energy group1 " << topo.atom_energy_group(it->i) << " energy group2 " 
+                   << topo.atom_energy_group(it->j));
+
+            conf.current().energies.A_lj_energy[lam_index][topo.atom_energy_group(it->i)]
+                    [topo.atom_energy_group(it->j)] += A_e_lj_l;
+
+            conf.current().energies.A_crf_energy[lam_index][topo.atom_energy_group(it->i)]
+                    [topo.atom_energy_group(it->j)] += A_e_crf_l;
+
+            conf.current().perturbed_energy_derivatives.A_lj_energy
+                    [lam_index][topo.atom_energy_group(it->i)]
+                    [topo.atom_energy_group(it->j)] += A_de_lj_l;
+
+            conf.current().perturbed_energy_derivatives.A_crf_energy
+                    [lam_index][topo.atom_energy_group(it->i)]
+                    [topo.atom_energy_group(it->j)] += A_de_crf_l;
+            DEBUG(8, "\ndone with storing energies ");
+          } //all 101 lambda points done
+        } // done with extended TI
+      // ANITA
+      
             break;
           }
           case simulation::pol_lj_crf_func : {
@@ -482,6 +586,37 @@ void interaction::Perturbed_Nonbonded_Pair
 
 	    A_de_lj = - topo.lambda_exp() * m_perturbed_nonbonded_term.A_lj_lambda_n_1() * A_e_lj; //again: calculate before scaling A_e_lj with lambda!
 	    A_de_crf = - topo.lambda_exp() * m_perturbed_nonbonded_term.A_crf_lambda_n_1() * A_e_crf;
+	    
+	    
+	      
+      // ANITA
+      if (((sim.steps()  % sim.param().write.free_energy) == 0) &&
+         sim.param().precalclam.nr_lambdas ){
+
+        // determine lambda stepsize from min,max and nr of lambdas
+        double lambda_step = (sim.param().precalclam.max_lam -
+                 sim.param().precalclam.min_lam) /
+                 (sim.param().precalclam.nr_lambdas-1);
+
+        //loop over nr_lambdas
+        for (int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
+
+          // determine current lambda for this index
+          double lam=(lam_index * lambda_step) + sim.param().precalclam.min_lam;
+          
+          conf.current().energies.A_lj_energy[lam_index][topo.atom_energy_group(it->i)]
+            [topo.atom_energy_group(it->j)] += pow(1 - lam, topo.lambda_exp()) * A_e_lj;
+          conf.current().energies.A_crf_energy[lam_index][topo.atom_energy_group(it->i)]
+            [topo.atom_energy_group(it->j)] += pow(1 - lam, topo.lambda_exp()) * A_e_crf;
+            
+          conf.current().perturbed_energy_derivatives.A_lj_energy[lam_index]
+            [topo.atom_energy_group(it->i)]
+            [topo.atom_energy_group(it->j)] += - topo.lambda_exp() * pow(1 - lam, topo.lambda_exp() - 1) * A_e_lj;
+          conf.current().perturbed_energy_derivatives.A_crf_energy[lam_index]
+            [topo.atom_energy_group(it->i)]
+            [topo.atom_energy_group(it->j)] += - topo.lambda_exp() * pow(1 - lam, topo.lambda_exp() - 1) * A_e_crf;
+        }
+      } // ANITA 
 
 	    A_e_lj *= m_perturbed_nonbonded_term.A_lj_lambda_n();
 	    A_e_crf *= m_perturbed_nonbonded_term.A_crf_lambda_n();
@@ -551,6 +686,57 @@ void interaction::Perturbed_Nonbonded_Pair
 				      alpha_lj, alpha_crf,
 				      A_f1, A_f6, A_f12, A_e_lj, A_e_crf, A_de_lj, A_de_crf);
             A_f = (A_f1 + A_f6 + A_f12) * r;
+            
+      // ANITA
+            if (((sim.steps()  % sim.param().write.free_energy) == 0) && 
+           sim.param().precalclam.nr_lambdas ){
+//        if ( sim.param().precalclam.nr_lambdas ) { 
+          double A_e_lj_l, B_e_lj_l, A_e_crf_l, B_e_crf_l,
+              A_de_lj_l, B_de_lj_l, A_de_crf_l, B_de_crf_l;
+
+          // determine lambda stepsize from min,max and nr of lambdas
+          double lambda_step = (sim.param().precalclam.max_lam - 
+                   sim.param().precalclam.min_lam) / 
+                   (sim.param().precalclam.nr_lambdas-1);
+
+          //loop over nr_lambdas
+          for (int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){ 
+
+            // determine current lambda for this index
+            double lam=(lam_index * lambda_step) + sim.param().precalclam.min_lam;
+
+            // start the calculations
+            m_perturbed_nonbonded_term.
+            lj_crf_soft_interaction_ext(r, A_lj->cs6, A_lj->cs12,
+                0, 0, A_q, 0, alpha_lj, alpha_crf,
+                A_e_lj_l,  B_e_lj_l, A_e_crf_l, B_e_crf_l,
+                A_de_lj_l, B_de_lj_l, A_de_crf_l, B_de_crf_l,
+                lam);
+
+            DEBUG(8, "ANITA: precalculated energies for lambda " << lam
+                   << "\n now starting storage");
+            DEBUG(8, "\n  A_e_lj " << A_e_lj << "\n  lambda index " << lam_index <<
+                   "\n  storage.energies.A_lj_energy.size() " << conf.current().energies.A_lj_energy.size()
+                   << "\n  energy group1 " << topo.atom_energy_group(it->i) << " energy group2 " 
+                   << topo.atom_energy_group(it->j));
+
+            conf.current().energies.A_lj_energy[lam_index][topo.atom_energy_group(it->i)]
+                    [topo.atom_energy_group(it->j)] += A_e_lj_l;
+
+            conf.current().energies.A_crf_energy[lam_index][topo.atom_energy_group(it->i)]
+                    [topo.atom_energy_group(it->j)] += A_e_crf_l;
+
+            conf.current().perturbed_energy_derivatives.A_lj_energy
+                    [lam_index][topo.atom_energy_group(it->i)]
+                    [topo.atom_energy_group(it->j)] += A_de_lj_l;
+
+            conf.current().perturbed_energy_derivatives.A_crf_energy
+                    [lam_index][topo.atom_energy_group(it->i)]
+                    [topo.atom_energy_group(it->j)] += A_de_crf_l;
+            DEBUG(8, "\ndone with storing energies ");
+          } //all 101 lambda points done
+        } // done with extended TI
+      // ANITA
             break;
           }
           case simulation::pol_lj_crf_func : {
@@ -620,6 +806,34 @@ void interaction::Perturbed_Nonbonded_Pair
 
 	    A_de_lj = - topo.lambda_exp() * m_perturbed_nonbonded_term.A_lj_lambda_n_1() * A_e_lj;
 	    A_de_crf = - topo.lambda_exp() * m_perturbed_nonbonded_term.A_crf_lambda_n_1() * A_e_crf;
+      // ANITA
+      if (((sim.steps()  % sim.param().write.free_energy) == 0) &&
+         sim.param().precalclam.nr_lambdas ){
+
+        // determine lambda stepsize from min,max and nr of lambdas
+        double lambda_step = (sim.param().precalclam.max_lam -
+                 sim.param().precalclam.min_lam) /
+                 (sim.param().precalclam.nr_lambdas-1);
+
+        //loop over nr_lambdas
+        for (int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
+
+          // determine current lambda for this index
+          double lam=(lam_index * lambda_step) + sim.param().precalclam.min_lam;
+          
+          conf.current().energies.A_lj_energy[lam_index][topo.atom_energy_group(it->i)]
+            [topo.atom_energy_group(it->j)] += pow(1 - lam, topo.lambda_exp()) * A_e_lj;
+          conf.current().energies.A_crf_energy[lam_index][topo.atom_energy_group(it->i)]
+            [topo.atom_energy_group(it->j)] += pow(1 - lam, topo.lambda_exp()) * A_e_crf;
+            
+          conf.current().perturbed_energy_derivatives.A_lj_energy[lam_index]
+            [topo.atom_energy_group(it->i)]
+            [topo.atom_energy_group(it->j)] += - topo.lambda_exp() * pow(1 - lam, topo.lambda_exp() - 1) * A_e_lj;
+          conf.current().perturbed_energy_derivatives.A_crf_energy[lam_index]
+            [topo.atom_energy_group(it->i)]
+            [topo.atom_energy_group(it->j)] += - topo.lambda_exp() * pow(1 - lam, topo.lambda_exp() - 1) * A_e_crf;
+        }
+      } // ANITA 
 
 	    A_e_lj *= m_perturbed_nonbonded_term.A_lj_lambda_n();
 	    A_e_crf *= m_perturbed_nonbonded_term.A_crf_lambda_n();
@@ -690,6 +904,33 @@ void interaction::Perturbed_Nonbonded_Pair
               m_perturbed_nonbonded_term.
               rf_soft_interaction(r, 0, B_q, alpha_crf,
 				  B_f, B_e_crf, B_de_crf);
+      // ANITA
+      if (((sim.steps()  % sim.param().write.free_energy) == 0) &&
+         sim.param().precalclam.nr_lambdas ){
+        double A_e_rf, B_e_rf, A_de_rf, B_de_rf;
+
+        // determine lambda stepsize from min,max and nr of lambdas
+        double lambda_step = (sim.param().precalclam.max_lam -
+                 sim.param().precalclam.min_lam) /
+                 (sim.param().precalclam.nr_lambdas-1);
+
+        //loop over nr_lambdas
+        for (int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
+
+          // determine current lambda for this index
+          double lam=(lam_index * lambda_step) + sim.param().precalclam.min_lam;
+          m_perturbed_nonbonded_term.rf_soft_interaction_ext(r, 0, B_q,
+                  alpha_crf, A_e_rf, B_e_rf,
+                  A_de_rf, B_de_rf, lam);
+          conf.current().energies.B_crf_energy[lam_index][topo.atom_energy_group(it->i)]
+            [topo.atom_energy_group(it->j)] += B_e_rf;
+          conf.current().perturbed_energy_derivatives.B_crf_energy[lam_index]
+            [topo.atom_energy_group(it->i)]
+            [topo.atom_energy_group(it->j)] += B_de_rf;
+
+        }
+      } // ANITA 
+
               break;
             }
             case simulation::pol_lj_crf_func : 
@@ -717,6 +958,31 @@ void interaction::Perturbed_Nonbonded_Pair
 	      B_f = B_f * m_perturbed_nonbonded_term.B_lj_lambda_n();
 
 	      B_de_crf = topo.lambda_exp() * m_perturbed_nonbonded_term.B_crf_lambda_n_1() * B_e_crf;
+	      
+      // ANITA
+      if (((sim.steps()  % sim.param().write.free_energy) == 0) &&
+         sim.param().precalclam.nr_lambdas ){
+
+        // determine lambda stepsize from min,max and nr of lambdas
+        double lambda_step = (sim.param().precalclam.max_lam -
+                 sim.param().precalclam.min_lam) /
+                 (sim.param().precalclam.nr_lambdas-1);
+
+        //loop over nr_lambdas
+        for (int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
+
+          // determine current lambda for this index
+          double lam=(lam_index * lambda_step) + sim.param().precalclam.min_lam;
+
+          conf.current().energies.B_crf_energy[lam_index][topo.atom_energy_group(it->i)]
+            [topo.atom_energy_group(it->j)] += pow(1 - lam, topo.lambda_exp()) * B_e_crf;
+
+          conf.current().perturbed_energy_derivatives.B_crf_energy[lam_index]
+            [topo.atom_energy_group(it->i)]
+            [topo.atom_energy_group(it->j)] += - topo.lambda_exp() * pow(1 - lam, topo.lambda_exp() - 1) * B_e_crf;
+        }
+      } // ANITA 
+
 
 	      B_e_crf *=  m_perturbed_nonbonded_term.B_crf_lambda_n();
 
@@ -764,6 +1030,57 @@ void interaction::Perturbed_Nonbonded_Pair
 				    B_e_lj, B_e_crf, B_de_lj, B_de_crf);
             
             B_f = (B_f1 + B_f6 + B_f12) * r;
+           // ANITA
+            if (((sim.steps()  % sim.param().write.free_energy) == 0) &&
+           sim.param().precalclam.nr_lambdas ){
+//        if ( sim.param().precalclam.nr_lambdas ) { 
+          double A_e_lj_l, B_e_lj_l, A_e_crf_l, B_e_crf_l,
+              A_de_lj_l, B_de_lj_l, A_de_crf_l, B_de_crf_l;
+
+          // determine lambda stepsize from min,max and nr of lambdas
+          double lambda_step = (sim.param().precalclam.max_lam -
+                   sim.param().precalclam.min_lam) /
+                   (sim.param().precalclam.nr_lambdas-1);
+
+          //loop over nr_lambdas
+          for (int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
+
+            // determine current lambda for this index
+            double lam=(lam_index * lambda_step) + sim.param().precalclam.min_lam;
+
+            // start the calculations
+            m_perturbed_nonbonded_term.
+            lj_crf_soft_interaction_ext(r, 0, 0, B_lj->c6, B_lj->c12,
+                0, B_q, alpha_lj, alpha_crf,
+                A_e_lj_l,  B_e_lj_l, A_e_crf_l, B_e_crf_l,
+                A_de_lj_l, B_de_lj_l, A_de_crf_l, B_de_crf_l,
+                lam);
+
+            DEBUG(8, "ANITA: precalculated energies for lambda " << lam
+                   << "\n now starting storage");
+            DEBUG(8, "\n  B_e_lj " << B_e_lj << "\n  lambda index " << lam_index <<
+                   "\n  conf.current().energies.B_lj_energy.size() " << conf.current().energies.B_lj_energy.size()
+                   << "\n  energy group1 " << topo.atom_energy_group(it->i) << " energy group2 "
+                   << topo.atom_energy_group(it->j));
+
+            conf.current().energies.B_lj_energy[lam_index][topo.atom_energy_group(it->i)]
+                    [topo.atom_energy_group(it->j)] += B_e_lj_l;
+
+            conf.current().energies.B_crf_energy[lam_index][topo.atom_energy_group(it->i)]
+                    [topo.atom_energy_group(it->j)] += B_e_crf_l;
+
+            conf.current().perturbed_energy_derivatives.B_lj_energy
+                    [lam_index][topo.atom_energy_group(it->i)]
+                    [topo.atom_energy_group(it->j)] += B_de_lj_l;
+
+            conf.current().perturbed_energy_derivatives.B_crf_energy
+                    [lam_index][topo.atom_energy_group(it->i)]
+                    [topo.atom_energy_group(it->j)] += B_de_crf_l;
+            DEBUG(8, "\ndone with storing energies ");
+          } //all 101 lambda points done
+        } // done with extended TI
+      // ANITA
+
             break;
           }
           case simulation::pol_lj_crf_func : {
@@ -833,6 +1150,35 @@ void interaction::Perturbed_Nonbonded_Pair
 
 	    B_de_lj = topo.lambda_exp() * m_perturbed_nonbonded_term.B_lj_lambda_n_1() * B_e_lj;
 	    B_de_crf = topo.lambda_exp() * m_perturbed_nonbonded_term.B_crf_lambda_n_1() * B_e_crf;
+	    
+      // ANITA
+      if (((sim.steps()  % sim.param().write.free_energy) == 0) &&
+         sim.param().precalclam.nr_lambdas ){
+
+        // determine lambda stepsize from min,max and nr of lambdas
+        double lambda_step = (sim.param().precalclam.max_lam -
+                 sim.param().precalclam.min_lam) /
+                 (sim.param().precalclam.nr_lambdas-1);
+
+        //loop over nr_lambdas
+        for (int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
+
+          // determine current lambda for this index
+          double lam=(lam_index * lambda_step) + sim.param().precalclam.min_lam;
+
+          conf.current().energies.B_lj_energy[lam_index][topo.atom_energy_group(it->i)]
+            [topo.atom_energy_group(it->j)] += pow(1 - lam, topo.lambda_exp()) * B_e_lj;
+          conf.current().energies.B_crf_energy[lam_index][topo.atom_energy_group(it->i)]
+            [topo.atom_energy_group(it->j)] += pow(1 - lam, topo.lambda_exp()) * B_e_crf;
+
+          conf.current().perturbed_energy_derivatives.B_lj_energy[lam_index]
+            [topo.atom_energy_group(it->i)]
+            [topo.atom_energy_group(it->j)] += - topo.lambda_exp() * pow(1 - lam, topo.lambda_exp() - 1) * B_e_lj;
+          conf.current().perturbed_energy_derivatives.B_crf_energy[lam_index]
+            [topo.atom_energy_group(it->i)]
+            [topo.atom_energy_group(it->j)] += - topo.lambda_exp() * pow(1 - lam, topo.lambda_exp() - 1) * B_e_crf;
+        }
+      } // ANITA 
 
 	    B_e_lj *= m_perturbed_nonbonded_term.B_lj_lambda_n();
 	    B_e_crf *=  m_perturbed_nonbonded_term.B_crf_lambda_n();
@@ -903,6 +1249,57 @@ void interaction::Perturbed_Nonbonded_Pair
 				    alpha_lj, alpha_crf,
 				    B_f1, B_f6, B_f12, B_e_lj, B_e_crf, B_de_lj, B_de_crf);
             B_f = (B_f1 + B_f6 + B_f12) * r;
+            
+          // ANITA
+            if (((sim.steps()  % sim.param().write.free_energy) == 0) &&
+           sim.param().precalclam.nr_lambdas ){ 
+          double A_e_lj_l, B_e_lj_l, A_e_crf_l, B_e_crf_l,
+              A_de_lj_l, B_de_lj_l, A_de_crf_l, B_de_crf_l;
+
+          // determine lambda stepsize from min,max and nr of lambdas
+          double lambda_step = (sim.param().precalclam.max_lam -
+                   sim.param().precalclam.min_lam) /
+                   (sim.param().precalclam.nr_lambdas-1);
+
+          //loop over nr_lambdas
+          for (int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
+
+            // determine current lambda for this index
+            double lam=(lam_index * lambda_step) + sim.param().precalclam.min_lam;
+
+            // start the calculations
+            m_perturbed_nonbonded_term.
+            lj_crf_soft_interaction_ext(r, 0, 0, B_lj->cs6, B_lj->cs12,
+                 0, B_q, alpha_lj, alpha_crf,
+                A_e_lj_l,  B_e_lj_l, A_e_crf_l, B_e_crf_l,
+                A_de_lj_l, B_de_lj_l, A_de_crf_l, B_de_crf_l,
+                lam);
+
+            DEBUG(8, "ANITA: precalculated energies for lambda " << lam
+                   << "\n now starting storage");
+            DEBUG(8, "\n  A_e_lj " << A_e_lj << "\n  lambda index " << lam_index <<
+                   "\n  conf.current().energies.A_lj_energy.size() " << conf.current().energies.A_lj_energy.size()
+                   << "\n  energy group1 " << topo.atom_energy_group(it->i) << " energy group2 "
+                   << topo.atom_energy_group(it->j));
+
+            conf.current().energies.B_lj_energy[lam_index][topo.atom_energy_group(it->i)]
+                    [topo.atom_energy_group(it->j)] += B_e_lj_l;
+
+            conf.current().energies.B_crf_energy[lam_index][topo.atom_energy_group(it->i)]
+                    [topo.atom_energy_group(it->j)] += B_e_crf_l;
+
+            conf.current().perturbed_energy_derivatives.B_lj_energy
+                    [lam_index][topo.atom_energy_group(it->i)]
+                    [topo.atom_energy_group(it->j)] += B_de_lj_l;
+
+            conf.current().perturbed_energy_derivatives.B_crf_energy
+                    [lam_index][topo.atom_energy_group(it->i)]
+                    [topo.atom_energy_group(it->j)] += B_de_crf_l;
+            DEBUG(8, "\ndone with storing energies ");
+          } //all 101 lambda points done
+        } // done with extended TI
+      // ANITA
+
             break;
           }
           case simulation::pol_lj_crf_func : {
@@ -980,6 +1377,34 @@ void interaction::Perturbed_Nonbonded_Pair
 
 	    B_de_lj = topo.lambda_exp() * m_perturbed_nonbonded_term.B_lj_lambda_n_1() * B_e_lj;
 	    B_de_crf = topo.lambda_exp() * m_perturbed_nonbonded_term.B_crf_lambda_n_1() * B_e_crf;
+      // ANITA
+      if (((sim.steps()  % sim.param().write.free_energy) == 0) &&
+         sim.param().precalclam.nr_lambdas ){
+
+        // determine lambda stepsize from min,max and nr of lambdas
+        double lambda_step = (sim.param().precalclam.max_lam -
+                 sim.param().precalclam.min_lam) /
+                 (sim.param().precalclam.nr_lambdas-1);
+
+        //loop over nr_lambdas
+        for (int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
+
+          // determine current lambda for this index
+          double lam=(lam_index * lambda_step) + sim.param().precalclam.min_lam;
+
+          conf.current().energies.B_lj_energy[lam_index][topo.atom_energy_group(it->i)]
+            [topo.atom_energy_group(it->j)] += pow(1 - lam, topo.lambda_exp()) * B_e_lj;
+          conf.current().energies.B_crf_energy[lam_index][topo.atom_energy_group(it->i)]
+            [topo.atom_energy_group(it->j)] += pow(1 - lam, topo.lambda_exp()) * B_e_crf;
+
+          conf.current().perturbed_energy_derivatives.B_lj_energy[lam_index]
+            [topo.atom_energy_group(it->i)]
+            [topo.atom_energy_group(it->j)] += - topo.lambda_exp() * pow(1 - lam, topo.lambda_exp() - 1) * B_e_lj;
+          conf.current().perturbed_energy_derivatives.B_crf_energy[lam_index]
+            [topo.atom_energy_group(it->i)]
+            [topo.atom_energy_group(it->j)] += - topo.lambda_exp() * pow(1 - lam, topo.lambda_exp() - 1) * B_e_crf;
+        }
+      } // ANITA 
 
 	    B_e_lj *= m_perturbed_nonbonded_term.B_lj_lambda_n();
 	    B_e_crf *= m_perturbed_nonbonded_term.B_crf_lambda_n();

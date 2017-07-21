@@ -93,6 +93,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_RANDOMNUMBERS(param);
   read_EDS(param);
   read_LAMBDAS(param); // needs to be called after FORCE
+  read_PRECALCLAM(param); // ANITA 
   read_LOCALELEV(param);
   read_BSLEUS(param);
   read_ELECTRIC(param);
@@ -4410,6 +4411,59 @@ void io::In_Parameter::read_LAMBDAS(simulation::Parameter & param,
     }
   }
 }
+
+/** ANITA
+ * @section PRECALCLAM PRECALCLAM block
+ * @verbatim
+PRECALCLAM
+# NRLAM   0  : off
+#         >1 : precalculating energies for NRLAM extra lambda values
+# MINLAM  between 0 and 1: minimum lambda value to precalculate energies
+# MAXLAM  between MINLAM and 1: maximum lambda value to precalculate energies 
+# NRLAM	  MINLAM   MAXLAM
+   100      0.0        1.0
+END
+@endverbatim
+ */
+void io::In_Parameter::read_PRECALCLAM(simulation::Parameter & param,
+        std::ostream & os) {
+  DEBUG(8, "read PRECALCLAM");
+  std::vector<std::string> buffer;
+  std::string s;
+
+  buffer = m_block["PRECALCLAM"];
+
+  if (buffer.size()) {
+
+    block_read.insert("PRECALCLAM");
+
+    _lineStream.clear();
+    _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
+
+// TODO: make sure that nr_lambdas is an integer
+    _lineStream >> param.precalclam.nr_lambdas
+          >> param.precalclam.min_lam
+          >> param.precalclam.max_lam;
+
+    if (_lineStream.fail())
+      io::messages.add("bad line in PRECALCLAM block", "In_Parameter", io::message::error);
+ 
+    if (param.precalclam.nr_lambdas < 0 )
+      io::messages.add("PRECALCLAM block: Negative nr of lambdas is not allowed",
+            "In_Parameter", io::message::error);
+    if (param.precalclam.min_lam >= param.precalclam.max_lam)
+      io::messages.add("PRECALCLAM block: MINLAM should be smaller than MAXLAM",
+            "In_Parameter", io::message::error);
+    if (param.perturbation.perturbation == false && param.precalclam.nr_lambdas > 0)
+    io::messages.add("PRECALCLAM cannot be on without perturbation",
+            "In_Parameter", io::message::error);
+    if (param.write.energy == 0 || param.write.free_energy ==0 || 
+        param.write.energy != param.write.free_energy)
+      io::messages.add("PRECALCLAM requires NTWE=NTWG > 0", 
+            "In_Parameter", io::message::error);
+  }
+
+} //ANITA
 
 /**
  * @section nonbonded NONBONDED block

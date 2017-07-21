@@ -180,6 +180,55 @@ namespace configuration
      */
     double qm_total;
 
+    /** ANITA
+    * total A_lj for each lambda
+    */
+    std::vector<double> A_lj_total;
+
+    /** ANITA
+    * total B_lj for each lambda
+    */
+    std::vector<double> B_lj_total;
+
+    /** ANITA
+    * total A_crf for each lambda
+    */
+    std::vector<double> A_crf_total;
+
+    /** ANITA
+    * total B_crf for each lambda
+    */
+    std::vector<double> B_crf_total;
+
+    /** ANITA
+    * kinetic energy for each lambda
+    */
+//    double A_kinetic;
+//    double B_kinetic;
+    std::vector<double> AB_kinetic;
+
+    /** ANITA
+    * bond stretching energy for each lambda
+    */
+    std::vector<double> AB_bond;
+
+    /** ANITA
+    * bond angle energy for each lambda
+    */
+    std::vector<double> AB_angle;
+
+    /** ANITA
+    * improper dihedral energy for each lambda
+    */
+    std::vector<double> AB_improper;
+
+    /** ANITA
+    * dihedral energy for each lambda
+    */
+    double A_dihedral;
+    double B_dihedral;
+//    std::vector<double> AB_dihedral;
+
     /**
      * total energy of the dipole-dipole interaction (self energy)
      */
@@ -303,7 +352,27 @@ namespace configuration
      * volume (sasa) interaction energy term
      */
     std::vector<double> sasa_volume_energy;
-    
+
+    /** ANITA
+     * A_lj energies for [lam][groupi][groupj]    
+     */
+    std::vector<std::vector<std::vector<double> > > A_lj_energy;
+
+    /** ANITA
+     * B_lj energies for [lam][groupi][groupj]    
+     */
+    std::vector<std::vector<std::vector<double> > > B_lj_energy;
+
+    /** ANITA
+     * A_crf energies for [lam][groupi][groupj]    
+     */
+    std::vector<std::vector<std::vector<double> > > A_crf_energy;
+
+    /** ANITA
+     * B_crf energies for [lam][groupi][groupj]    
+     */
+    std::vector<std::vector<std::vector<double> > > B_crf_energy;
+
     /**
      * reset the energy terms to zero
      */
@@ -311,7 +380,8 @@ namespace configuration
     /**
      * resize the arrays for energy groups and temperature baths
      */
-    void resize(unsigned int energy_groups, unsigned int multi_baths = 0);
+    void resize(unsigned int energy_groups, unsigned int multi_baths = 0,
+                unsigned int nr_lambdas = 0); //ANITA
     /**
      * calculate the totals of the individual energy terms.
      */

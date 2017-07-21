@@ -122,13 +122,19 @@ resize(topology::Topology const & topo,
   const unsigned int e_groups = unsigned(param.force.energy_group.size());
   const unsigned int baths = unsigned(param.multibath.multibath.size());
   const unsigned int num_sasa_atoms = unsigned(topo.sasa_parameter().size());
+// ANITA
+  const unsigned int nr_lambdas = unsigned(param.precalclam.nr_lambdas);
 
-  energy_avg.resize(e_groups, baths);
-  energy_fluct.resize(e_groups, baths);
+//  energy_avg.resize(e_groups, baths);
+//  energy_fluct.resize(e_groups, baths);
+  energy_avg.resize(e_groups, baths, nr_lambdas);
+  energy_fluct.resize(e_groups, baths, nr_lambdas);
   
   if (param.perturbation.perturbation){
-    energy_derivative_avg.resize(e_groups, baths);
-    energy_derivative_fluct.resize(e_groups, baths);
+//    energy_derivative_avg.resize(e_groups, baths);
+//    energy_derivative_fluct.resize(e_groups, baths);
+    energy_derivative_avg.resize(e_groups, baths, nr_lambdas);
+    energy_derivative_fluct.resize(e_groups, baths,nr_lambdas);
   }
 
   temp_scaling_avg.resize(baths);
@@ -156,6 +162,9 @@ update(Block_Average const & old,
   const double dt = sim.time_step_size();
   
   time = old.time + dt;
+
+  DEBUG(5, "ANITA, Block_Average::update, checking nr lambdas" 
+            << "\n conf.old: " << conf.old().energies.A_lj_total.size());
 
   update_energies(energy_avg,
 		  energy_fluct,
@@ -441,6 +450,24 @@ fluct.prop = old_fluct.prop + dt * e.prop * e.prop
   ENERGY_AVG(self_total);
   ENERGY_AVG(eds_vr);
   ENERGY_AVG(entropy_term);
+
+  // ANITA
+  for(size_t i=0; i < e.A_lj_total.size(); ++i){
+    ENERGY_AVG(A_lj_total[i]); 
+    ENERGY_AVG(B_lj_total[i]); 
+    ENERGY_AVG(A_crf_total[i]); 
+    ENERGY_AVG(B_crf_total[i]); 
+    for(size_t j=0; j < e.A_lj_energy[i].size(); ++j){
+      for(size_t k=0; k < e.A_lj_energy[i][j].size(); ++k){
+        ENERGY_AVG(A_lj_energy[i][j][k]); 
+        ENERGY_AVG(B_lj_energy[i][j][k]); 
+        ENERGY_AVG(A_crf_energy[i][j][k]); 
+        ENERGY_AVG(B_crf_energy[i][j][k]); 
+      }
+    }
+  } // ANITA
+
+
   // kinetic energies...
   for(size_t i=0; i < e.kinetic_energy.size(); ++i){
 
@@ -609,10 +636,14 @@ void configuration::Average::Block_Average
   Energy &e = energy;
   Energy &f = fluctuation;
 
+  DEBUG(5, "ANITA energy_average_helper, resizing to " <<
+            energy_avg.A_lj_total.size());
   e.resize(unsigned(energy_avg.bond_energy.size()),
-		unsigned(energy_avg.kinetic_energy.size()));
+		unsigned(energy_avg.kinetic_energy.size()),
+                unsigned(energy_avg.A_lj_total.size())); //ANITA
   f.resize(unsigned(energy_avg.bond_energy.size()),
-	  unsigned(energy_avg.kinetic_energy.size()));
+	  unsigned(energy_avg.kinetic_energy.size()),
+          unsigned(energy_avg.A_lj_total.size())); //ANITA
 
 #define ENERGY_RES(prop) \
   e.prop = avg.prop / cumu; \
@@ -659,6 +690,22 @@ void configuration::Average::Block_Average
   ENERGY_RES(constraints_total);
   ENERGY_RES(entropy_term);
   ENERGY_RES(self_total);
+
+  // ANITA
+  for(size_t i=0; i < e.A_lj_total.size(); ++i){
+    ENERGY_RES(A_lj_total[i]);
+    ENERGY_RES(B_lj_total[i]);
+    ENERGY_RES(A_crf_total[i]);
+    ENERGY_RES(B_crf_total[i]);
+    for(size_t j=0; j < e.A_lj_energy[i].size(); ++j){
+      for(size_t k=0; k < e.A_lj_energy[i][j].size(); ++k){
+        ENERGY_RES(A_lj_energy[i][j][k]);
+        ENERGY_RES(B_lj_energy[i][j][k]);
+        ENERGY_RES(A_crf_energy[i][j][k]);
+        ENERGY_RES(B_crf_energy[i][j][k]);
+      }
+    }
+  } // ANITA
 
   // std::cout << e.kinetic_energy.size() << std::endl;
 

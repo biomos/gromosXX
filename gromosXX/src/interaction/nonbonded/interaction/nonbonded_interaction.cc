@@ -774,6 +774,7 @@ void interaction::Nonbonded_Interaction::reduce_configuration
         simulation::Simulation & sim,
         configuration::Configuration & exp_conf
         ) {
+
   // add one-four, rf excluded etc... all those things that go directly into 
   // the configuration and not into storages of the sets
 

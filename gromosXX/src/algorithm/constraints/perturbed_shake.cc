@@ -66,7 +66,8 @@ int algorithm::Perturbed_Shake
 			    std::vector<topology::perturbed_two_body_term_struct>
 			    const & constr,
 			    double const dt,
-			    math::Periodicity<B> const & periodicity)
+			    math::Periodicity<B> const & periodicity,
+			    simulation::Simulation & sim) // ANITA
 {
   convergence = true;
 
@@ -129,6 +130,7 @@ int algorithm::Perturbed_Shake
       const unsigned int atom_j = first+it->j;
       const math::Vec &ref_i = conf.old().pos(atom_i);
       const math::Vec &ref_j = conf.old().pos(atom_j);
+    DEBUG(10, "\niref: " << math::v2s(ref_i) << "\njref: " << math::v2s(ref_j));
       
       math::Vec ref_r;
       periodicity.nearest_image(ref_i, ref_j, ref_r);
@@ -195,6 +197,40 @@ int algorithm::Perturbed_Shake
 	lam_derivative * lambda / dt2 * sqrt(constr_length2) *
 	(this->parameter()[it->B_type].r0 - this->parameter()[it->A_type].r0);
 
+      //ANITA
+      if (((sim.steps()  % sim.param().write.free_energy) == 0) &&
+           sim.param().precalclam.nr_lambdas ){
+        DEBUG(1, "AB_bond within if ");
+        double r0A = this->parameter()[it->A_type].r0;
+        DEBUG(1, "AB_bond r0A " << r0A); 
+        double r0B = this->parameter()[it->B_type].r0;
+        DEBUG(1, "AB_bond r0B " << r0B); 
+        double r0_diff = r0B - r0A; 
+        DEBUG(1, "AB_bond r0_diff " << r0_diff); 
+        double sp_2_m_dt2 = sp * 2 * (1.0 / topo.mass()(atom_i) +
+                               1.0 / topo.mass()(atom_j) ) * dt2; 
+        DEBUG(1, "AB_bond sp_2_m_dt2 " << sp_2_m_dt2); 
+
+        double lambda_step = (sim.param().precalclam.max_lam -
+                   sim.param().precalclam.min_lam) /
+                   (sim.param().precalclam.nr_lambdas-1);
+
+        //loop over nr_lambdas
+        for (int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
+
+          // determine current lambda for this index
+          double lam=(lam_index * lambda_step) + sim.param().precalclam.min_lam;
+
+          double r0lam = (1-lam)*r0A + lam*r0B;
+          DEBUG(1, "AB_bond r0lam " << r0lam); 
+          double difflam = r0lam*r0lam - dist2; 
+          DEBUG(1, "AB_bond difflam " << difflam); 
+          double value = (difflam / sp_2_m_dt2) * r0lam *r0_diff;
+          conf.old().perturbed_energy_derivatives.AB_bond[lam_index] += 
+             (difflam / sp_2_m_dt2) * sqrt(r0lam*r0lam) *r0_diff;
+        }
+      } // ANITA 
+
       // update positions
       ref_r *= lambda;
       pos_i += ref_r * topo.inverse_mass()(first+it->i);
@@ -223,7 +259,8 @@ template<math::boundary_enum B, math::virial_enum V>
 void algorithm::Perturbed_Shake
 ::perturbed_solute(topology::Topology const & topo,
 		   configuration::Configuration & conf,
-		   simulation::Simulation const & sim,
+		   simulation::Simulation & sim,
+//ANITA		   simulation::Simulation const & sim,
 		   int max_iterations,
 		   int &error)
 {
@@ -262,7 +299,7 @@ void algorithm::Perturbed_Shake
       if(perturbed_shake_iteration<B, V>
 	 (topo, conf, pert_dist_convergence, first, skip_now, skip_next,
 	  topo.perturbed_solute().distance_constraints(), sim.time_step_size(),
-	  periodicity)){
+	  periodicity, sim)){
 	io::messages.add("Perturbed SHAKE error. vectors orthogonal",
 			 "Perturbed_Shake::solute",
 			 io::message::error);

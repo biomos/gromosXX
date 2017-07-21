@@ -2481,6 +2481,42 @@ namespace simulation
       std::vector< std::vector< std::vector < double > > > e;
 
     } /** lambdas struct */ lambdas;
+
+
+    /**
+     * ANITA
+     * @struct precalclam_struct
+     * pre-calculate energies for other lambda values
+     */
+    struct precalclam_struct
+    {
+      /**
+       * constructor
+       * default values:
+       * - nr_lambdas (0)
+       * - min_lam (0.0)
+       * - max_lam (1.0)
+       */
+      precalclam_struct() : nr_lambdas(0),
+                          min_lam(0.0),
+                          max_lam(1.0)
+      {
+      }
+      /** 
+       * calculate nr_lambdas extra lambda points 
+       */
+       int nr_lambdas;
+      /** 
+       * starting from lambda 
+       */
+       double min_lam;
+      /** 
+       * up to lambda 
+       */
+       double max_lam;
+
+    } /** precalculate lambdas struct */ precalclam;
+    // END ANITA
  
     struct stochastic_struct
     {

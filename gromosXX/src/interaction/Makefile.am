@@ -24,9 +24,12 @@ xxintbonded_HEADERS = bonded/create_bonded.h\
 	bonded/crossdihedral_interaction.h\
 	bonded/perturbed_quartic_bond_interaction.h\
 	bonded/perturbed_harmonic_bond_interaction.h\
+	bonded/perturbed_soft_bond_interaction.h\
 	bonded/perturbed_cg_bond_interaction.h\
 	bonded/perturbed_angle_interaction.h\
+    bonded/perturbed_soft_angle_interaction.h\
 	bonded/perturbed_improper_dihedral_interaction.h\
+    bonded/perturbed_soft_improper_interaction.h\
 	bonded/perturbed_dihedral_new_interaction.h\
 	bonded/perturbed_dihedral_interaction.h
 
@@ -141,13 +144,16 @@ libgrointeraction_la_SOURCES =interaction.cc\
 	bonded/perturbed_quartic_bond_interaction.cc\
 	bonded/harmonic_bond_interaction.cc\
 	bonded/perturbed_harmonic_bond_interaction.cc\
+	bonded/perturbed_soft_bond_interaction.cc\
 	bonded/cg_bond_interaction.cc\
 	bonded/perturbed_cg_bond_interaction.cc\
 	bonded/angle_interaction.cc\
 	bonded/harm_angle_interaction.cc\
 	bonded/perturbed_angle_interaction.cc\
+    bonded/perturbed_soft_angle_interaction.cc\
 	bonded/improper_dihedral_interaction.cc\
 	bonded/perturbed_improper_dihedral_interaction.cc\
+    bonded/perturbed_soft_improper_interaction.cc\
 	bonded/dihedral_interaction.cc\
 	bonded/dihedral_new_interaction.cc\
 	bonded/crossdihedral_interaction.cc\

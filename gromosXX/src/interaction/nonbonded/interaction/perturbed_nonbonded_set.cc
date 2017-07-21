@@ -244,6 +244,24 @@ int interaction::Perturbed_Nonbonded_Set
     }
   }
 
+  //ANITA
+  if (sim.param().precalclam.nr_lambdas){
+    for(unsigned int i = 0; i < sim.param().precalclam.nr_lambdas; ++i){
+      for(unsigned int j = 0; j < lj_e_size; ++j){
+        for(unsigned int k = 0; k < lj_e_size; ++k){
+          m_storage.energies.A_lj_energy[i][j][k] +=
+            m_longrange_storage.energies.A_lj_energy[i][j][k];
+          m_storage.energies.B_lj_energy[i][j][k] +=
+            m_longrange_storage.energies.B_lj_energy[i][j][k];
+          m_storage.energies.A_crf_energy[i][j][k] +=
+            m_longrange_storage.energies.A_crf_energy[i][j][k];
+          m_storage.energies.B_crf_energy[i][j][k] +=
+            m_longrange_storage.energies.B_crf_energy[i][j][k];
+        }
+      }
+    }
+  }//ANITA
+
   // add longrange virial
   if (sim.param().pcouple.virial){
     DEBUG(7, "\t(set) add long range virial");
@@ -286,6 +304,25 @@ int interaction::Perturbed_Nonbonded_Set
     }
   }
   
+  //ANITA
+  if (sim.param().precalclam.nr_lambdas){
+    for(unsigned int i = 0; i < sim.param().precalclam.nr_lambdas; ++i){
+      for(unsigned int j = 0; j < lj_e_size; ++j){
+        for(unsigned int k = 0; k < lj_e_size; ++k){
+          m_storage.perturbed_energy_derivatives.A_lj_energy[i][j][k] +=
+            m_longrange_storage.perturbed_energy_derivatives.A_lj_energy[i][j][k];
+          m_storage.perturbed_energy_derivatives.B_lj_energy[i][j][k] +=
+            m_longrange_storage.perturbed_energy_derivatives.B_lj_energy[i][j][k];
+          m_storage.perturbed_energy_derivatives.A_crf_energy[i][j][k] +=
+            m_longrange_storage.perturbed_energy_derivatives.A_crf_energy[i][j][k];
+          m_storage.perturbed_energy_derivatives.B_crf_energy[i][j][k] +=
+            m_longrange_storage.perturbed_energy_derivatives.B_crf_energy[i][j][k];
+        }
+      }
+    }
+  }//ANITA
+
+
   DEBUG(7, "(set) calculate interactions done!");
 
   return 0;
@@ -322,6 +359,25 @@ int interaction::Perturbed_Nonbonded_Set::update_configuration
     }
     pe.self_energy[i] += m_storage.perturbed_energy_derivatives.self_energy[i];
   }
+
+  // ANITA
+  const unsigned int nr_lambdas = unsigned(m_storage.energies.A_lj_total.size());
+
+  for(int i=0; i < nr_lambdas; ++i) {
+    for(int j=0; j < ljs; ++j) {
+      for(int k=0; k < ljs; ++k) {
+        pe.A_lj_energy[i][j][k] +=
+            m_storage.perturbed_energy_derivatives.A_lj_energy[i][j][k];
+        pe.B_lj_energy[i][j][k] +=
+            m_storage.perturbed_energy_derivatives.B_lj_energy[i][j][k];
+        pe.A_crf_energy[i][j][k] +=
+            m_storage.perturbed_energy_derivatives.A_crf_energy[i][j][k];
+        pe.B_crf_energy[i][j][k] +=
+            m_storage.perturbed_energy_derivatives.B_crf_energy[i][j][k];
+      }
+    }
+  } //ANITA
+
   
   return 0;
 }
@@ -364,11 +420,13 @@ int interaction::Perturbed_Nonbonded_Set
   
   m_storage.perturbed_energy_derivatives.resize
     (unsigned(conf.current().perturbed_energy_derivatives.bond_energy.size()),
-     unsigned(conf.current().perturbed_energy_derivatives.kinetic_energy.size()));
+     unsigned(conf.current().perturbed_energy_derivatives.kinetic_energy.size()),
+     unsigned(sim.param().precalclam.nr_lambdas)); //ANITA
 
   m_longrange_storage.perturbed_energy_derivatives.resize
     (unsigned(conf.current().perturbed_energy_derivatives.bond_energy.size()),
-     unsigned(conf.current().perturbed_energy_derivatives.kinetic_energy.size()));
+     unsigned(conf.current().perturbed_energy_derivatives.kinetic_energy.size()),
+     unsigned(sim.param().precalclam.nr_lambdas));  //ANITA
 
   perturbed_pairlist().resize(topo.num_atoms());
 

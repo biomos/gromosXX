@@ -169,6 +169,35 @@ static int _calculate_perturbed_improper_interactions
     conf.current().perturbed_energy_derivatives.
       improper_energy[topo.atom_energy_group()
 		      [i_it->i]] += e_lambda;
+
+    // ANITA
+    if (sim.param().precalclam.nr_lambdas &&
+        ((sim.steps() % sim.param().write.free_energy) == 0)){
+      double KA = m_interaction.parameter()[i_it->A_type].K;
+      double KB = m_interaction.parameter()[i_it->B_type].K;
+      double q0A = m_interaction.parameter()[i_it->A_type].q0;
+      double q0B = m_interaction.parameter()[i_it->B_type].q0;
+
+      double lambda_step = (sim.param().precalclam.max_lam -
+                            sim.param().precalclam.min_lam) /
+                            (sim.param().precalclam.nr_lambdas-1);
+
+      //loop over nr_lambdas
+      for (int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
+
+        // determine current lambda for this index
+        double lam=(lam_index * lambda_step) + sim.param().precalclam.min_lam;
+
+        double Klam = (1-lam)*KA + lam*KB;
+        double q0lam = (1-lam)*q0A + lam*q0B;
+        double difflam = q - q0lam;
+        double difflam2 = difflam * difflam;
+
+        conf.current().energies.AB_improper[lam_index] += 0.5 * Klam * difflam2;
+        conf.current().perturbed_energy_derivatives.AB_improper[lam_index] +=
+                  0.5 * K_diff * difflam2 - Klam * q_diff * difflam;
+      }
+    } //ANITA
     
   }
 

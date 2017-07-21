@@ -245,6 +245,32 @@ static int _calculate_perturbed_dihedral_interactions
 	   topo.atom_energy_group()[d_it->i]);
     conf.current().perturbed_energy_derivatives.dihedral_energy
       [topo.atom_energy_group()[d_it->i]] += e_lambda;   
+
+    // ANITA
+    if (sim.param().precalclam.nr_lambdas &&
+        ((sim.steps() % sim.param().write.free_energy) == 0)){
+
+      conf.current().energies.A_dihedral += A_energy;
+      conf.current().energies.B_dihedral += B_energy;
+
+      conf.current().perturbed_energy_derivatives.A_dihedral += B_energy - A_energy;
+
+/*      double lambda_step = (sim.param().precalclam.max_lam -
+                            sim.param().precalclam.min_lam) /
+                            (sim.param().precalclam.nr_lambdas-1);
+
+      //loop over nr_lambdas
+      for (int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
+
+        // determine current lambda for this index
+        double lam=(lam_index * lambda_step) + sim.param().precalclam.min_lam;
+
+        conf.current().energies.AB_dihedral[lam_index] += (1-lam)*A_energy + lam*B_energy;
+        conf.current().perturbed_energy_derivatives.AB_dihedral[lam_index] +=
+                  B_energy - A_energy;
+      } */
+    } //ANITA
+
   }
 
   return 0;

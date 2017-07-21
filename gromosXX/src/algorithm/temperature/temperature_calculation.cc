@@ -157,7 +157,47 @@ int algorithm::Temperature_Calculation
 	    * (math::abs2(old_vel(i)) + math::abs2(vel(i))) * 0.5;
 	  
 	  DEBUG(10, "\tdE_kin/dl: " << e_kin[bath]);
-	
+
+          // ANITA
+          // using average velocities for energy and new velocities for free energy!!
+          if (sim.param().precalclam.nr_lambdas && 
+                ((sim.steps() % sim.param().write.free_energy) == 0)){
+
+            double massA = topo.perturbed_solute().atoms()[i].A_mass();
+            double massB = topo.perturbed_solute().atoms()[i].B_mass();
+            double avg_v2 = (math::abs2(conf.old().vel(i)) + math::abs2(vel(i)))/2;
+            double v2 = math::abs2(vel(i));
+            double slam = topo.individual_lambda(simulation::mass_lambda)
+                          [topo.atom_energy_group()[i]][topo.atom_energy_group()[i]];
+
+            double mass_s = (1-slam)*massA + slam*massB;
+            double mass_s2 = mass_s *mass_s;
+            /*double A_kin = 0.5 * massA * v2;
+            double B_kin = 0.5 * massB * v2;
+
+            // calculate derivative (independent of lambda) and save in A_kinetic of trg file (leave B_kinetic at 0)
+	    double AB_de_kinetic = -0.5 * (massB - massA) * v2; 
+            conf.old().perturbed_energy_derivatives.A_kinetic += AB_de_kinetic;
+            */
+            double lambda_step = (sim.param().precalclam.max_lam -
+                                 sim.param().precalclam.min_lam) /
+                                 (sim.param().precalclam.nr_lambdas-1); 
+
+            //loop over nr_lambdas
+            for (int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
+
+              // determine current lambda for this index
+              double lam=(lam_index * lambda_step) + sim.param().precalclam.min_lam;
+              double mass_p = (1-lam)*massA + lam*massB;
+              double mass_p2= mass_p * mass_p;
+
+              //add kinetic energy and derivative
+              conf.old().energies.AB_kinetic[lam_index] += 
+                    0.5 * (mass_s2/mass_p) * avg_v2;
+              conf.old().perturbed_energy_derivatives.AB_kinetic[lam_index] += 
+                   -0.5*(massB - massA)*(mass_s2/mass_p2)*v2; 
+            } 
+          } // ANITA
 	}
       
       } // atoms in bath

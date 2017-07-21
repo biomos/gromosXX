@@ -1860,6 +1860,7 @@ io::In_Topology::read(topology::Topology& topo,
       // lookup the number of bond types
       // add additional ones for the solvent constraints
       {
+        // this does not seem to do anything outside this block? MP
         std::vector<interaction::bond_type_struct> b;
         std::ostringstream os;
         read_harmonic_bonds(b, os);
@@ -2100,6 +2101,20 @@ io::In_Topology::read(topology::Topology& topo,
       io::messages.add("block " + it->first + " unknown and not read in!",
                        "In_Topology", io::message::warning);
     }
+  }
+
+  // store number of bond/angle/improper types
+  {
+  std::vector<interaction::bond_type_struct> b;
+  std::vector<interaction::angle_type_struct> a;
+  std::vector<interaction::improper_dihedral_type_struct> im;
+  std::ostringstream os;
+  read_harmonic_bonds(b, os);
+  read_harm_angles(a,os);
+  read_improper_dihedrals(im,os);
+  topo.set_num_bondtype(b.size());
+  topo.set_num_angletype(a.size());
+  topo.set_num_impropertype(im.size());
   }
 
   if (!quiet)

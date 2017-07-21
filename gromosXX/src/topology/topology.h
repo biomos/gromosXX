@@ -254,6 +254,36 @@ namespace topology
     unsigned int num_solvents()const {return unsigned(m_num_solvent_molecules.size());}
     
     /**
+     * number of bond types.
+     */
+    int num_bondtype()const {return m_num_bondtype;}
+    
+    /**
+     * set number of bond types.
+     */
+    void set_num_bondtype(int num) {m_num_bondtype = num;}
+    
+    /**
+     * number of angle types.
+     */
+    int num_angletype()const {return m_num_angletype;}
+    
+    /**
+     * set number of angle types.
+     */
+    void set_num_angletype(int num) {m_num_angletype = num;}
+    
+    /**
+     * number of improper dihedral types.
+     */
+    int num_impropertype()const {return m_num_impropertype;}
+    
+    /**
+     * set number of improper dihedral types.
+     */
+    void set_num_impropertype(int num) {m_num_impropertype = num;}
+    
+    /**
      * solvent accessor.
      * support for multiple solvents.
      */
@@ -1267,6 +1297,18 @@ namespace topology
      * the number of atom types
      */
     int m_num_atomtype;
+    /**
+     * the number of bond types
+     */
+    int m_num_bondtype;
+    /**
+     * the number of angle types
+     */
+    int m_num_angletype;
+    /**
+     * the number of improper dihedral types
+     */
+    int m_num_impropertype;
     
     /**
      * the solute.

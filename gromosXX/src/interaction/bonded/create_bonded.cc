@@ -27,9 +27,12 @@
 // perturbed interactions
 #include "../../interaction/bonded/perturbed_quartic_bond_interaction.h"
 #include "../../interaction/bonded/perturbed_harmonic_bond_interaction.h"
+#include "../../interaction/bonded/perturbed_soft_bond_interaction.h"
 #include "../../interaction/bonded/perturbed_cg_bond_interaction.h"
 #include "../../interaction/bonded/perturbed_angle_interaction.h"
+#include "../../interaction/bonded/perturbed_soft_angle_interaction.h"
 #include "../../interaction/bonded/perturbed_improper_dihedral_interaction.h"
+#include "../../interaction/bonded/perturbed_soft_improper_interaction.h"
 #include "../../interaction/bonded/perturbed_dihedral_interaction.h"
 #include "../../interaction/bonded/perturbed_dihedral_new_interaction.h"
 
@@ -92,6 +95,26 @@ int interaction::create_g96_bonded(interaction::Forcefield & ff,
       ff.push_back(pb);
     }
   } 
+  
+  // do the perturbed soft bonds regardless of constraints
+  // the affected bonds will have been removed from bonds and constraints
+  if (param.perturbation.perturbation) { 
+      if (!quiet)
+        os << "\tperturbed soft harmonic bond interaction\n";   
+      interaction::Perturbed_Soft_Bond_Interaction * sb =
+        new interaction::Perturbed_Soft_Bond_Interaction(it);
+      ff.push_back(sb);
+      if (!quiet)
+        os << "\tperturbed soft harmonic angle interaction\n";   
+      interaction::Perturbed_Soft_Angle_Interaction * sa =
+        new interaction::Perturbed_Soft_Angle_Interaction(it);
+      ff.push_back(sa);
+      if (!quiet)
+        os << "\tperturbed soft improper dihedral interaction\n";   
+      interaction::Perturbed_Soft_Improper_Interaction * si =
+        new interaction::Perturbed_Soft_Improper_Interaction(it);
+      ff.push_back(si);
+  }
 
   if (param.cgrain.level > 1) {
     if (!quiet)

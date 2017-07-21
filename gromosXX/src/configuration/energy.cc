@@ -108,6 +108,20 @@ void configuration::Energy::zero(bool potential, bool kinetic)
     eds_vi.assign(eds_vi.size(), 0.0);
     eds_vi_special.assign(eds_vi_special.size(), 0.0);
     
+    // ANITA
+    // total A_lj for each lambda set to zero
+    A_lj_total.assign(A_lj_total.size(),0.0);
+    B_lj_total.assign(A_lj_total.size(),0.0);
+    A_crf_total.assign(A_lj_total.size(),0.0);
+    B_crf_total.assign(A_lj_total.size(),0.0);
+    AB_bond.assign(AB_bond.size(),0.0);
+    AB_angle.assign(AB_angle.size(),0.0);
+    AB_improper.assign(AB_angle.size(),0.0);
+    A_dihedral = 0.0;
+    B_dihedral = 0.0;
+    //AB_dihedral.assign(AB_angle.size(),0.0);
+    //
+
     bond_energy.assign(bond_energy.size(), 0.0);
     angle_energy.assign(angle_energy.size(), 0.0);
     improper_energy.assign(improper_energy.size(), 0.0);
@@ -127,7 +141,7 @@ void configuration::Energy::zero(bool potential, bool kinetic)
     DEBUG(15, "energy groups: " << unsigned(lj_energy.size()) 
 			<< " - " << unsigned(crf_energy.size()));
 
-    lj_energy.assign(lj_energy.size(), 
+    lj_energy.assign(lj_energy.size(),
 		     std::vector<double>(lj_energy.size(), 0.0));
     
     crf_energy.assign(crf_energy.size(), 
@@ -138,7 +152,25 @@ void configuration::Energy::zero(bool potential, bool kinetic)
     
     ls_k_energy.assign(ls_k_energy.size(),
             std::vector<double>(ls_k_energy.size(), 0.0));
-    
+
+    // ANITA  
+    // TODO: only if extended TI??
+    if (A_lj_total.size()){
+      DEBUG(10, "ANITA: setting A_lj_energy to 0");
+      DEBUG(10, "  ANITA: nr_lambdas in A_lj_energy: " << unsigned(A_lj_total.size()));
+      A_lj_energy.assign(A_lj_total.size(),
+              std::vector<std::vector<double> >(A_lj_energy[0].size(),
+              std::vector<double>(A_lj_energy[0].size(),0.0)));
+      B_lj_energy.assign(B_lj_total.size(),
+              std::vector<std::vector<double> >(B_lj_energy[0].size(),
+              std::vector<double>(B_lj_energy[0].size(),0.0)));
+      A_crf_energy.assign(A_crf_total.size(),
+              std::vector<std::vector<double> >(A_crf_energy[0].size(),
+              std::vector<double>(A_crf_energy[0].size(),0.0)));
+      B_crf_energy.assign(B_crf_total.size(),
+              std::vector<std::vector<double> >(B_crf_energy[0].size(),
+              std::vector<double>(B_crf_energy[0].size(),0.0)));
+    }//
   }
 
   if (kinetic){
@@ -151,13 +183,19 @@ void configuration::Energy::zero(bool potential, bool kinetic)
     com_kinetic_energy.assign(com_kinetic_energy.size(), 0.0);
     ir_kinetic_energy.assign(ir_kinetic_energy.size(), 0.0);
 
+    // ANITA
+//    A_kinetic = 0.0;
+//    B_kinetic = 0.0;
+    AB_kinetic.assign(AB_kinetic.size(),0.0);
+
   }
   DEBUG(15, "energies zero");
 
 }
 
 
-void configuration::Energy::resize(unsigned int energy_groups, unsigned int multi_baths)
+void configuration::Energy::resize(unsigned int energy_groups, unsigned int multi_baths,
+     unsigned int nr_lambdas) //ANITA
 {
   DEBUG(10, "energy resize");
   
@@ -192,6 +230,42 @@ void configuration::Energy::resize(unsigned int energy_groups, unsigned int mult
       ls_real_energy[i].resize(energy_groups);
       ls_k_energy[i].resize(energy_groups);
     }
+
+    // ANITA
+    A_lj_total.resize(nr_lambdas);
+    B_lj_total.resize(nr_lambdas);
+    A_crf_total.resize(nr_lambdas);
+    B_crf_total.resize(nr_lambdas);
+    AB_kinetic.resize(nr_lambdas);
+    AB_bond.resize(nr_lambdas);
+    AB_angle.resize(nr_lambdas);
+    AB_improper.resize(nr_lambdas);
+    //AB_dihedral.resize(nr_lambdas);
+
+    DEBUG(8, "ANITA resizing A_lj_energy to " << nr_lambdas);
+    A_lj_energy.resize(nr_lambdas);
+    B_lj_energy.resize(nr_lambdas);
+    A_crf_energy.resize(nr_lambdas);
+    B_crf_energy.resize(nr_lambdas);
+//    DEBUG(8, "new size: " << A_lj_energy.size());
+
+    for(unsigned int i=0; i<nr_lambdas; ++i){
+      A_lj_energy[i].resize(energy_groups);
+      B_lj_energy[i].resize(energy_groups);
+      A_crf_energy[i].resize(energy_groups);
+      B_crf_energy[i].resize(energy_groups);
+      DEBUG(15, "    A_lj_energy[0].size() " << A_lj_energy[0].size());
+
+      for(unsigned int j=0; j<energy_groups; ++j){
+        A_lj_energy[i][j].resize(energy_groups);
+        B_lj_energy[i][j].resize(energy_groups);
+        A_crf_energy[i][j].resize(energy_groups);
+        B_crf_energy[i][j].resize(energy_groups);
+        DEBUG(15, "    A_lj_energy[0][0].size() " << A_lj_energy[0][0].size());
+      }
+    }
+    //
+
   }
 
   if (multi_baths){
@@ -200,6 +274,7 @@ void configuration::Energy::resize(unsigned int energy_groups, unsigned int mult
     ir_kinetic_energy.resize(multi_baths);
   }
 
+  DEBUG(8, "ANITA calling zero after resizing");
   zero();  
 }
 
@@ -231,6 +306,42 @@ int configuration::Energy::calculate_totals()
   self_total = 0.0;
   sasa_total = 0.0;
   sasa_volume_total = 0.0;
+
+  // ANITA 
+  DEBUG(8, "ANITA setting totals to zero");
+  DEBUG(8, "ANITA A_lj_total.size() " << A_lj_total.size());
+
+  int nr_lambdas = unsigned(A_lj_total.size());
+  for(unsigned int i=0; i<nr_lambdas; ++i){
+    A_lj_total[i] = 0.0;
+    B_lj_total[i] = 0.0;
+    A_crf_total[i] = 0.0;
+    B_crf_total[i] = 0.0;
+  }
+
+  for(int i=0; i<nr_lambdas; ++i){
+    for(int j=0; j<num_groups; j++){
+      for(int k=j; k<num_groups; k++){
+        if(j!=k){
+          A_lj_energy[i][k][j] += A_lj_energy[i][j][k];
+          B_lj_energy[i][k][j] += B_lj_energy[i][j][k];
+          A_crf_energy[i][k][j] += A_crf_energy[i][j][k];
+          B_crf_energy[i][k][j] += B_crf_energy[i][j][k];
+
+          A_lj_energy[i][j][k] = 0.0;
+          B_lj_energy[i][j][k] = 0.0;
+          A_crf_energy[i][j][k] = 0.0;
+          B_crf_energy[i][j][k] = 0.0;
+        }
+        A_lj_total[i] += A_lj_energy[i][k][j];
+        B_lj_total[i] += B_lj_energy[i][k][j];
+        A_crf_total[i] += A_crf_energy[i][k][j];
+        B_crf_total[i] += B_crf_energy[i][k][j];
+      }
+    }
+  }
+          
+  //  
   
   for(size_t i=0; i<kinetic_energy.size(); ++i){
     if (kinetic_energy[i] > m_ewarn){
@@ -394,6 +505,9 @@ int configuration::Energy::calculate_totals()
   return 0;
 }
 
+// ANITA: only needed for minimum-energy coordinate and energy trajectory writing?
+// NTWSE (>0) matches the indices below
+// don't need this for A_lj_total etc ??
 double configuration::Energy::get_energy_by_index(const unsigned int & index) {
   switch(index) {
     case 1 : return total;

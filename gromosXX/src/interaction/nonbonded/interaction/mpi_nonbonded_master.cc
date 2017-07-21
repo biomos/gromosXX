@@ -257,7 +257,115 @@ calculate_interactions(topology::Topology & topo,
         }
       }
     }
-    
+
+    // ANITA
+    unsigned int nr_lambdas = sim.param().precalclam.nr_lambdas;
+    for(unsigned int l = 0; l < nr_lambdas; ++l){
+      std::vector<double> A_lj_scratch(ljs*ljs), A_rlj_scratch(ljs*ljs);
+      std::vector<double> B_lj_scratch(ljs*ljs), B_rlj_scratch(ljs*ljs);
+      std::vector<double> A_crf_scratch(ljs*ljs), A_rcrf_scratch(ljs*ljs);
+      std::vector<double> B_crf_scratch(ljs*ljs), B_rcrf_scratch(ljs*ljs);
+
+      std::vector<double> A_dlj_scratch(ljs*ljs), A_rdlj_scratch(ljs*ljs);
+      std::vector<double> B_dlj_scratch(ljs*ljs), B_rdlj_scratch(ljs*ljs);
+      std::vector<double> A_dcrf_scratch(ljs*ljs), A_rdcrf_scratch(ljs*ljs);
+      std::vector<double> B_dcrf_scratch(ljs*ljs), B_rdcrf_scratch(ljs*ljs);
+
+      for(unsigned int i = 0; i < ljs; ++i){
+        for(unsigned int j = 0; j < ljs; ++j){
+          A_lj_scratch[i*ljs + j] = 
+             m_nonbonded_set[0]->storage().energies.A_lj_energy[l][i][j];
+          B_lj_scratch[i*ljs + j] = 
+             m_nonbonded_set[0]->storage().energies.B_lj_energy[l][i][j];
+          A_crf_scratch[i*ljs + j] = 
+             m_nonbonded_set[0]->storage().energies.A_crf_energy[l][i][j];
+          B_crf_scratch[i*ljs + j] = 
+             m_nonbonded_set[0]->storage().energies.B_crf_energy[l][i][j];
+
+          A_dlj_scratch[i*ljs + j] = 
+             m_nonbonded_set[0]->storage().perturbed_energy_derivatives.A_lj_energy[l][i][j];
+          B_dlj_scratch[i*ljs + j] = 
+             m_nonbonded_set[0]->storage().perturbed_energy_derivatives.B_lj_energy[l][i][j];
+          A_dcrf_scratch[i*ljs + j] = 
+             m_nonbonded_set[0]->storage().perturbed_energy_derivatives.A_crf_energy[l][i][j];
+          B_dcrf_scratch[i*ljs + j] = 
+             m_nonbonded_set[0]->storage().perturbed_energy_derivatives.B_crf_energy[l][i][j];
+        }
+      }
+      MPI::COMM_WORLD.Reduce(&A_lj_scratch[0],
+              &A_rlj_scratch[0],
+              ljs * ljs,
+              MPI::DOUBLE,
+              MPI::SUM,
+              0);
+      MPI::COMM_WORLD.Reduce(&B_lj_scratch[0],
+              &B_rlj_scratch[0],
+              ljs * ljs,
+              MPI::DOUBLE,
+              MPI::SUM,
+              0);
+      MPI::COMM_WORLD.Reduce(&A_crf_scratch[0],
+              &A_rcrf_scratch[0],
+              ljs * ljs,
+              MPI::DOUBLE,
+              MPI::SUM,
+              0);
+      MPI::COMM_WORLD.Reduce(&B_crf_scratch[0],
+              &B_rcrf_scratch[0],
+              ljs * ljs,
+              MPI::DOUBLE,
+              MPI::SUM,
+              0);
+
+      MPI::COMM_WORLD.Reduce(&A_dlj_scratch[0],
+              &A_rdlj_scratch[0],
+              ljs * ljs,
+              MPI::DOUBLE,
+              MPI::SUM,
+              0);
+      MPI::COMM_WORLD.Reduce(&B_dlj_scratch[0],
+              &B_rdlj_scratch[0],
+              ljs * ljs,
+              MPI::DOUBLE,
+              MPI::SUM,
+              0);
+      MPI::COMM_WORLD.Reduce(&A_dcrf_scratch[0],
+              &A_rdcrf_scratch[0],
+              ljs * ljs,
+              MPI::DOUBLE,
+              MPI::SUM,
+              0);
+      MPI::COMM_WORLD.Reduce(&B_dcrf_scratch[0],
+              &B_rdcrf_scratch[0],
+              ljs * ljs,
+              MPI::DOUBLE,
+              MPI::SUM,
+              0);
+
+      for(unsigned int i = 0; i < ljs; ++i){
+        for(unsigned int j = 0; j < ljs; ++j){
+          m_nonbonded_set[0]->storage().energies.A_lj_energy[l][i][j] = 
+              A_rlj_scratch[i*ljs + j];
+          m_nonbonded_set[0]->storage().energies.B_lj_energy[l][i][j] = 
+              B_rlj_scratch[i*ljs + j];
+          m_nonbonded_set[0]->storage().energies.A_crf_energy[l][i][j] = 
+              A_rcrf_scratch[i*ljs + j];
+          m_nonbonded_set[0]->storage().energies.B_crf_energy[l][i][j] = 
+              B_rcrf_scratch[i*ljs + j];
+
+          m_nonbonded_set[0]->storage().perturbed_energy_derivatives.A_lj_energy[l][i][j] = 
+              A_rdlj_scratch[i*ljs + j];
+          m_nonbonded_set[0]->storage().perturbed_energy_derivatives.B_lj_energy[l][i][j] = 
+              B_rdlj_scratch[i*ljs + j];
+          m_nonbonded_set[0]->storage().perturbed_energy_derivatives.A_crf_energy[l][i][j] = 
+              A_rdcrf_scratch[i*ljs + j];
+          m_nonbonded_set[0]->storage().perturbed_energy_derivatives.B_crf_energy[l][i][j] = 
+              B_rdcrf_scratch[i*ljs + j];
+        }
+      }
+
+    } // ANITA
+
     if (sim.param().eds.eds){
       const unsigned int numstates = sim.param().eds.numstates;
       

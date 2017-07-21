@@ -3,6 +3,7 @@
  * implements methods of In_Perturbation.
  */
 
+#include <climits>
 #include <stdheader.h>
 
 #include <topology/topology.h>
@@ -67,6 +68,9 @@ class bondMatcher {
   bool operator()(const topology::two_body_term_struct &x) {
     return (a.i == x.i && a.j == x.j);
   }
+  bool operator()(const topology::perturbed_two_body_term_struct &x) {
+    return (a.i == x.i && a.j == x.j);
+  }
   private:
   topology::two_body_term_struct a;
 };
@@ -81,6 +85,9 @@ class angleMatcher {
   bool operator()(const topology::three_body_term_struct &x) {
     return (a.i == x.i && a.j == x.j && a.k == x.k);
   }
+  bool operator()(const topology::perturbed_three_body_term_struct &x) {
+    return (a.i == x.i && a.j == x.j && a.k == x.k);
+  }
   private:
   topology::three_body_term_struct a;
 };
@@ -93,6 +100,9 @@ class dihedralMatcher {
   public:
   dihedralMatcher(const topology::four_body_term_struct& arg) : a(arg) {}
   bool operator()(const topology::four_body_term_struct &x) {
+    return (a.i == x.i && a.j == x.j && a.k == x.k && a.l == x.l);
+  }
+  bool operator()(const topology::perturbed_four_body_term_struct &x) {
     return (a.i == x.i && a.j == x.j && a.k == x.k && a.l == x.l);
   }
   private:
@@ -122,7 +132,7 @@ io::In_Perturbation::read(topology::Topology &topo,
   }
   
   
-  // lets do a warning because state A information is overwritten?
+  // let's do a warning because state A information is overwritten?
   bool warn = false;
   if(!param.eds.eds){
     // prepare arrays
@@ -134,11 +144,11 @@ io::In_Perturbation::read(topology::Topology &topo,
       DEBUG(10, "PERTBOND03 block");
       buffer = m_block["PERTBOND03"];
       if (buffer.size()){
-        
         block_read.insert("PERTBOND03");
         io::messages.add("The PERTBOND03 block was renamed to PERTBONDSTRETCH.",
                 "In_Perturbation", io::message::error);
       }
+      
       std::vector<std::string> pertbondstretch;
       pertbondstretch.push_back("PERTBONDSTRETCHH");
       pertbondstretch.push_back("PERTBONDSTRETCH");
@@ -200,9 +210,19 @@ io::In_Perturbation::read(topology::Topology &topo,
                       bondMatcher(b));
               
               if (b_it == topo.solute().bonds().end()){
+              // check if this bond is already in the soft perturbed ones
+              std::vector<topology::perturbed_two_body_term_struct>::iterator pb_it
+                    = std::find_if(topo.perturbed_solute().softbonds().begin(),
+                    topo.perturbed_solute().softbonds().end(),
+                    bondMatcher(b));
+              if (pb_it != topo.perturbed_solute().softbonds().end()){
+                io::messages.add("Bond found both in PERTBONDSTRETCH(H) and PERTBONDSOFT blocks!",
+                    "In_Perturbation", io::message::error);
+              } else {
                 io::messages.add("Perturbation of a non-existing bond "
                 "in " + pertbondstretch.at(hh) + " block.",
                         "In_Perturbation", io::message::error);
+              }
                 return;
               }
               
@@ -229,9 +249,19 @@ io::In_Perturbation::read(topology::Topology &topo,
                       bondMatcher(b));
               
               if (b_it == topo.solute().distance_constraints().end()){
+              // check if this bond is already in the soft perturbed ones
+              std::vector<topology::perturbed_two_body_term_struct>::iterator pb_it
+                    = std::find_if(topo.perturbed_solute().softbonds().begin(),
+                    topo.perturbed_solute().softbonds().end(),
+                    bondMatcher(b));
+              if (pb_it != topo.perturbed_solute().softbonds().end()){
+                io::messages.add("Bond found both in PERTBONDSTRETCH(H) and PERTBONDSOFT blocks!",
+                    "In_Perturbation", io::message::error);
+              } else {
                 io::messages.add("Perturbation of a non-existing distance "
                 "constraint in " + pertbondstretch.at(hh) + " block.",
                         "In_Perturbation", io::message::error);
+                }
                 return;
               }
               
@@ -278,6 +308,154 @@ io::In_Perturbation::read(topology::Topology &topo,
         } // if block present
       }  // loop over H/non H blocks
     } // PERTBONDSTRETCH(H)
+    
+    
+    { // PERTBONDSOFT
+        buffer = m_block["PERTBONDSOFT"];
+        if (buffer.size()){
+          
+          block_read.insert("PERTBONDSOFT");
+          
+          if (!quiet)
+            os << "\t" << "PERTBONDSOFT" << "\n";
+          
+          it = buffer.begin() + 1;
+          _lineStream.clear();
+          _lineStream.str(*it);
+          int num, n;
+          _lineStream >> num;
+          ++it;
+          
+          if (!quiet)
+            os << "\n\t"
+            << std::setw(10) << "atom i"
+            << std::setw(10) << "atom j"
+            << std::setw(10) << "type A"
+            << std::setw(10) << "type B"
+            << std::setw(10) << "ALB"
+            << "\n";
+          
+          for(n=0; it != buffer.end() -1; ++it, ++n){
+            int i, j, t_A, t_B;
+            double alphab;
+            _lineStream.clear();
+            _lineStream.str(*it);
+            _lineStream >> i >> j >> t_A >> t_B >> alphab;
+            
+            if (_lineStream.fail()){
+              io::messages.add("Bad line in PERTBONDSOFT block.",
+                      "In_Perturbation", io::message::error);
+            }
+            
+            // does a bond or constraint exist between the two atoms?
+            // if yes we remove it, it will be handled in the perturbed-soft-bonds
+            topology::two_body_term_struct b(i-1, j-1, t_A-1);
+            bool bond_exists=false, constraint_exists=false;
+            std::vector<topology::two_body_term_struct>::iterator b_it, c_it;
+            b_it = std::find_if(topo.solute().bonds().begin(),
+                      topo.solute().bonds().end(),
+                      bondMatcher(b));
+                  if (b_it != topo.solute().bonds().end()){
+                     bond_exists=true;
+                     if (b_it->type != b.type) warn = true;
+                     topo.solute().bonds().erase(b_it);
+                  }
+            c_it = std::find_if(topo.solute().distance_constraints().begin(),
+                      topo.solute().distance_constraints().end(),
+                      bondMatcher(b));
+              
+                  if (c_it != topo.solute().distance_constraints().end()){
+                     constraint_exists=true;
+                     if (c_it->type != b.type) warn = true;
+                     topo.solute().distance_constraints().erase(c_it); 
+                  }
+              // check if this bond is already in the perturbed ones
+              std::vector<topology::perturbed_two_body_term_struct>::iterator pb_it
+                    = std::find_if(topo.perturbed_solute().bonds().begin(),
+                    topo.perturbed_solute().bonds().end(),
+                    bondMatcher(b));
+              std::vector<topology::perturbed_two_body_term_struct>::iterator pc_it
+                    = std::find_if(topo.perturbed_solute().distance_constraints().begin(),
+                    topo.perturbed_solute().distance_constraints().end(),
+                    bondMatcher(b));
+              if (pb_it != topo.perturbed_solute().bonds().end() || pc_it != topo.perturbed_solute().distance_constraints().end()){
+                io::messages.add("Bond found both in PERTBONDSTRETCH(H) and PERTBONDSOFT blocks!",
+                    "In_Perturbation", io::message::error);
+                    return;
+              }
+
+            
+            
+            if (t_A > 0 && ! bond_exists && ! constraint_exists) {
+                    io::messages.add("Perturbation of a non-existing bond "
+                    "in PERTBONDSOFT block.",
+                        "In_Perturbation", io::message::error);
+                    return;
+            }
+            if (t_A == 0 && t_B != 0 && (bond_exists || constraint_exists)){
+                    io::messages.add("PERTBONDSOFT block: Adding a bond that already exists",
+                        "In_Perturbation", io::message::warning);
+                   // return;
+            }
+
+            int t_A_copy=t_A, t_B_copy=t_B;
+            // if given bond_type is <= 0 create a dummy bond with the same
+            // length as in the other state and K=0
+            if (t_A <= 0 && t_B <= 0) {
+                io::messages.add("Conversion from bond type 0 to bond type 0 "
+                "in PERTBONDSOFT block.",
+                        "In_Perturbation", io::message::error);
+                return;
+            } else if (t_A <= 0) {
+              t_A=INT_MAX;
+              //store type of stateB, we will retrieve the bond length for the new bond from there
+              topo.perturbed_solute().soft_bond_types().push_back(t_B-1);
+              io::messages.add("You are making a bond, make sure you adapt the excluded atoms to this change.", io::message::warning);
+            } else if (t_B <= 0) {
+              t_B=INT_MAX;
+              topo.perturbed_solute().soft_bond_types().push_back(t_A-1);
+              io::messages.add("You are breaking a bond, make sure you adapt the excluded atoms to this change.", io::message::warning);
+            }          
+             topo.perturbed_solute().alpha_bond().push_back(alphab);
+              
+              topology::perturbed_two_body_term_struct
+              pb(i-1, j-1, t_A-1, t_B-1);
+              
+              if (!quiet)
+                os << "\t"
+                << std::setw(10) << pb.i+1
+                << std::setw(10) << pb.j+1
+                << std::setw(10) << t_A_copy
+                << std::setw(10) << t_B_copy
+                << std::setw(10) << alphab
+                << "\n";
+              
+              topo.perturbed_solute().softbonds().push_back(pb);
+          }
+          
+          if (n != num){
+            io::messages.add("Wrong number of bonds in PERTBONDSOFT block.",
+                    "In_Perturbation", io::message::error);
+          }
+          else if (_lineStream.fail()){
+            io::messages.add("Bad line in PERTBONDSOFT block.",
+                    "In_Perturbation", io::message::error);
+          }
+          
+          if (!quiet)
+            os << "\n\t\tbonds :                          "
+            << unsigned(topo.solute().bonds().size())
+            << "\n\t\tperturbed soft bonds :           "
+            << unsigned(topo.perturbed_solute().softbonds().size())
+            << "\n\t\tdistance constraints :           "
+            << unsigned(topo.solute().distance_constraints().size())
+            << "\n\t\tperturbed distance constraints : "
+            << unsigned(topo.perturbed_solute().distance_constraints().size())
+            << "\n\n"
+            << "\tEND\n";
+          
+        } // if block present
+    } // PERTBONDSOFT
     
     { // PERTCONSTRAINT03
       DEBUG(10, "PERTCONSTRAINT03 block");
@@ -422,9 +600,19 @@ io::In_Perturbation::read(topology::Topology &topo,
                     angleMatcher(a));
             
             if (a_it == topo.solute().angles().end()){
-              io::messages.add("Perturbation of a non-existing angle in "
-              + pertbondangle.at(hh) + " block.",
+              // check if this angle is already in the soft perturbed ones
+              std::vector<topology::perturbed_three_body_term_struct>::iterator pa_it
+                    = std::find_if(topo.perturbed_solute().softangles().begin(),
+                    topo.perturbed_solute().softangles().end(),
+                    angleMatcher(a));
+              if (pa_it != topo.perturbed_solute().softangles().end()){
+                io::messages.add("Angle found both in PERTBONDANGLE(H) and PERTANGLESOFT blocks!",
+                    "In_Perturbation", io::message::error);
+              } else {
+                io::messages.add("Perturbation of a non-existing angle in "
+                + pertbondangle.at(hh) + " block.",
                       "In_Perturbation", io::message::error);
+              }
               return;
             }
             
@@ -460,6 +648,139 @@ io::In_Perturbation::read(topology::Topology &topo,
         } // if block present
       } // loop over H/non H blocks
     } // PERTBONDANGLE(H)
+    
+    
+    { // PERTANGLESOFT
+        buffer = m_block["PERTANGLESOFT"];
+        if (buffer.size()){
+          
+          block_read.insert("PERTANGLESOFT");
+          
+          if (!quiet)
+            os << "\t" << "PERTANGLESOFT" << "\n";
+          
+          it = buffer.begin() + 1;
+          _lineStream.clear();
+          _lineStream.str(*it);
+          int num, n;
+          _lineStream >> num;
+          ++it;
+          
+          if (!quiet)
+            os << "\n\t"
+            << std::setw(10) << "atom i"
+            << std::setw(10) << "atom j"
+            << std::setw(10) << "atom k"
+            << std::setw(10) << "type A"
+            << std::setw(10) << "type B"
+            << std::setw(10) << "ALA"
+            << "\n";
+          
+          for(n=0; it != buffer.end() -1; ++it, ++n){
+            int i, j, k, t_A, t_B;
+            double alphaa;
+            _lineStream.clear();
+            _lineStream.str(*it);
+            _lineStream >> i >> j >> k >> t_A >> t_B >> alphaa;
+            
+            if (_lineStream.fail()){
+              io::messages.add("Bad line in PERTANGLESOFT block.",
+                      "In_Perturbation", io::message::error);
+            }
+            
+            
+            // does an angle exist between the atoms?
+            // if yes we remove it, it will be handled in the perturbed-soft-angles
+            topology::three_body_term_struct a(i-1, j-1, k-1, t_A-1);
+            bool angle_exists=false;
+            std::vector<topology::three_body_term_struct>::iterator b_it;
+            b_it = std::find_if(topo.solute().angles().begin(),
+                      topo.solute().angles().end(),
+                      angleMatcher(a));
+                  if (b_it != topo.solute().angles().end()){
+                     angle_exists=true;
+                     if (b_it->type != a.type) warn = true;
+                     topo.solute().angles().erase(b_it);
+                  }
+              // check if this angle is already in the perturbed ones
+              std::vector<topology::perturbed_three_body_term_struct>::iterator pa_it
+                    = std::find_if(topo.perturbed_solute().angles().begin(),
+                    topo.perturbed_solute().angles().end(),
+                    angleMatcher(a));
+              if (pa_it != topo.perturbed_solute().angles().end()){
+                io::messages.add("Angle found both in PERTBONDANGLE(H) and PERTANGLESOFT blocks!",
+                    "In_Perturbation", io::message::error);
+                    return;
+              }
+
+            
+            
+            if (t_A > 0 && ! angle_exists) {
+                    io::messages.add("Perturbation of a non-existing angle "
+                    "in PERTANGLESOFT block.",
+                        "In_Perturbation", io::message::error);
+                    return;
+            }
+            if (t_A == 0 && t_B != 0 && angle_exists) {
+                    io::messages.add("PERTANGLESOFT block: Adding an angle that already exists",
+                        "In_Perturbation", io::message::warning);
+                   // return;
+            }
+         
+
+            int t_A_copy=t_A, t_B_copy=t_B;   
+            // if given angle_type is <= 0 create a dummy angle with the same
+            // length as in the other state and K=0
+            if (t_A <= 0 && t_B <= 0) {
+                io::messages.add("Conversion from angle type 0 to angle type 0 "
+                "in PERTANGLESOFT block.",
+                        "In_Perturbation", io::message::error);
+                return;
+            } else if (t_A <= 0) {
+              t_A=INT_MAX;
+              //store type of stateB, we will retrieve the angle length for the new angle from there
+              topo.perturbed_solute().soft_angle_types().push_back(t_B-1);
+            } else if (t_B <= 0) {
+              t_B=INT_MAX;
+              topo.perturbed_solute().soft_angle_types().push_back(t_A-1);
+            }          
+             topo.perturbed_solute().alpha_angle().push_back(alphaa);
+              
+              topology::perturbed_three_body_term_struct
+              pb(i-1, j-1, k-1, t_A-1, t_B-1);
+              
+              if (!quiet)
+                os << "\t"
+                << std::setw(10) << pb.i+1
+                << std::setw(10) << pb.j+1
+                << std::setw(10) << pb.k+1
+                << std::setw(10) << t_A_copy
+                << std::setw(10) << t_B_copy
+                << std::setw(10) << alphaa
+                << "\n";
+              
+              topo.perturbed_solute().softangles().push_back(pb);
+          }
+          
+          if (n != num){
+            io::messages.add("Wrong number of angles in PERTANGLESOFT block.",
+                    "In_Perturbation", io::message::error);
+          }
+          else if (_lineStream.fail()){
+            io::messages.add("Bad line in PERTANGLESOFT block.",
+                    "In_Perturbation", io::message::error);
+          }
+          
+          if (!quiet)
+            os << "\n\t\tangles :                          "
+            << unsigned(topo.solute().angles().size())
+            << "\n\t\tperturbed soft angles :           "
+            << unsigned(topo.perturbed_solute().softangles().size())
+            << "\n\n"
+            << "\tEND\n";
+          
+        } // if block present
+    } // PERTANGLESOFT
     
     { // PERTIMPROPERDIH(H)
       DEBUG(10, "PERTIMPDIHEDRAL03 block");
@@ -517,9 +838,20 @@ io::In_Perturbation::read(topology::Topology &topo,
                     dihedralMatcher(id));
             
             if (id_it == topo.solute().improper_dihedrals().end()){
+              
+              // check if this improper is already in the soft perturbed ones
+              std::vector<topology::perturbed_four_body_term_struct>::iterator pid_it 
+                    = std::find_if(topo.perturbed_solute().softimpropers().begin(),
+                    topo.perturbed_solute().softimpropers().end(),
+                    dihedralMatcher(id));
+              if (pid_it != topo.perturbed_solute().softimpropers().end()){
+                io::messages.add("Improper dihedral found both in PERTIMPROPERDIH and PERTIMPROPERDIHSOFT blocks!",
+                    "In_Perturbation", io::message::error);
+              } else {
               io::messages.add("Perturbation of a non-existing improper dihedral in "
               + pertimproperdih.at(hh) + " block.",
                       "In_Perturbation", io::message::error);
+              }
               return;
             }
             
@@ -557,6 +889,137 @@ io::In_Perturbation::read(topology::Topology &topo,
         } // if block present
       } // loop over H/non H blocks
     } // PERTIMPROPERDIH(H)
+    
+        
+    { // PERTIMPROPERDIHSOFT
+        buffer = m_block["PERTIMPROPERDIHSOFT"];
+        if (buffer.size()){
+          
+          block_read.insert("PERTIMPROPERDIHSOFT");
+          
+          if (!quiet)
+            os << "\t" << "PERTIMPROPERDIHSOFT" << "\n";
+          
+          it = buffer.begin() + 1;
+          _lineStream.clear();
+          _lineStream.str(*it);
+          int num, n;
+          _lineStream >> num;
+          ++it;
+          
+          if (!quiet)
+            os << "\n\t"
+            << std::setw(10) << "atom i"
+            << std::setw(10) << "atom j"
+            << std::setw(10) << "atom k"
+            << std::setw(10) << "atom l"
+            << std::setw(10) << "type A"
+            << std::setw(10) << "type B"
+            << std::setw(10) << "ALI"
+            << "\n";
+          
+          for(n=0; it != buffer.end() -1; ++it, ++n){
+            int i, j, k, l, t_A, t_B;
+            double alphaa;
+            _lineStream.clear();
+            _lineStream.str(*it);
+            _lineStream >> i >> j >> k >> l >> t_A >> t_B >> alphaa;
+            
+            if (_lineStream.fail()){
+              io::messages.add("Bad line in PERTIMPROPERDIHSOFT block.",
+                      "In_Perturbation", io::message::error);
+            }
+            
+            // does the improper exist?
+            // if yes we remove it, it will be handled in the perturbed-soft-impropers
+            topology::four_body_term_struct b(i-1, j-1, k-1, l-1, t_A-1);
+            bool imp_exists=false;
+            std::vector<topology::four_body_term_struct>::iterator b_it;
+            b_it = std::find_if(topo.solute().improper_dihedrals().begin(),
+                      topo.solute().improper_dihedrals().end(),
+                      dihedralMatcher(b));
+                  if (b_it != topo.solute().improper_dihedrals().end()){
+                     imp_exists=true;
+                     if (b_it->type != b.type) warn = true;
+                     topo.solute().improper_dihedrals().erase(b_it);
+                  }
+              // check if this improper is already in the perturbed ones
+              std::vector<topology::perturbed_four_body_term_struct>::iterator pid_it 
+                    = std::find_if(topo.perturbed_solute().improper_dihedrals().begin(),
+                    topo.perturbed_solute().improper_dihedrals().end(),
+                    dihedralMatcher(b));
+              if (pid_it != topo.perturbed_solute().improper_dihedrals().end()){
+                io::messages.add("Improper dihedral found both in PERTIMPROPERDIH and PERTIMPROPERDIHSOFT blocks!",
+                    "In_Perturbation", io::message::error);
+                    return;
+              }
+          
+            if (t_A > 0 && ! imp_exists) {   
+                    io::messages.add("Perturbation of a non-existing improper "
+                    "in PERTIMPROPERDIHSOFT block.",
+                        "In_Perturbation", io::message::error);
+                    return;
+            }
+            if (t_A <= 0 && t_B > 0 && imp_exists) {
+                     io::messages.add("PERTIMPROPERDIHSOFT block: Adding an improper that exists in the topology",
+                        "In_Perturbation", io::message::warning);
+                   // return;
+            }
+
+            int t_A_copy=t_A, t_B_copy=t_B;   
+            // if given improper_type is <= 0 create a dummy improper with the same
+            // length as in the other state and K=0
+            if (t_A <= 0 && t_B <= 0) {
+                io::messages.add("Conversion from improper type 0 to improper type 0 "
+                "in PERTIMPROPERDIHSOFT block.",
+                        "In_Perturbation", io::message::error);
+                return;
+            } else if (t_A <= 0) {
+              t_A=INT_MAX;
+              //store type of stateB, we will retrieve the value for the new improper from there
+              topo.perturbed_solute().soft_improper_types().push_back(t_B-1);
+            } else if (t_B <= 0) {
+              t_B=INT_MAX;
+              topo.perturbed_solute().soft_improper_types().push_back(t_A-1);
+            }          
+             topo.perturbed_solute().alpha_improper().push_back(alphaa);
+              
+              topology::perturbed_four_body_term_struct
+              pb(i-1, j-1, k-1, l-1, t_A-1, t_B-1);
+              
+              if (!quiet)
+                os << "\t"
+                << std::setw(10) << pb.i+1
+                << std::setw(10) << pb.j+1
+                << std::setw(10) << pb.k+1
+                << std::setw(10) << pb.l+1
+                << std::setw(10) << t_A_copy
+                << std::setw(10) << t_B_copy
+                << std::setw(10) << alphaa
+                << "\n";
+              
+              topo.perturbed_solute().softimpropers().push_back(pb);
+          }
+          
+          if (n != num){
+            io::messages.add("Wrong number of improper dihedrals in PERTIMPROPERDIHSOFT block.",
+                    "In_Perturbation", io::message::error);
+          }
+          else if (_lineStream.fail()){
+            io::messages.add("Bad line in PERTIMPROPERDIHSOFT block.",
+                    "In_Perturbation", io::message::error);
+          }
+          
+          if (!quiet)
+            os << "\n\t\timproper dihedrals :                          "
+            << unsigned(topo.solute().improper_dihedrals().size())
+            << "\n\t\tperturbed soft improper dihedrals :           "
+            << unsigned(topo.perturbed_solute().softimpropers().size())
+            << "\n\n"
+            << "\tEND\n";
+          
+        } // if block present
+    } // PERTIMPROPERDIHSOFT
     
     { // PERTPROPERDIH(H)
       
@@ -675,7 +1138,7 @@ io::In_Perturbation::read(topology::Topology &topo,
         int num, n;
         _lineStream >> num;
         ++it;
-        
+
         int i, j, A, B;
         
         if (!quiet)
@@ -711,9 +1174,8 @@ io::In_Perturbation::read(topology::Topology &topo,
           topo.perturbed_solute().atompairs().push_back(ap);
           
           // make sure it's excluded
-          if (topo.all_exclusion(i).insert(ap.j)){
+          if (topo.all_exclusion(ap.i).insert(ap.j)){
             DEBUG(7, "excluding perturbed pair " << ap.i << " and " << ap.j);
-            
           }
           else{
             // it was already excluded, let's remove it from the
@@ -733,7 +1195,7 @@ io::In_Perturbation::read(topology::Topology &topo,
         }
         
         if (n != num){
-          io::messages.add("Wrong number of bonds in PERTATOMPAIR block.",
+          io::messages.add("Wrong number of pairs in PERTATOMPAIR block.",
                   "In_Perturbation", io::message::error);
         }
         else if (_lineStream.fail()){
