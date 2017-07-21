@@ -16,10 +16,6 @@ namespace simulation{
 	class Simulation;
 }
 
-namespace io{
-	class IFP;
-}
-
 namespace interaction
 {
   /**
@@ -33,7 +29,9 @@ namespace interaction
     /**
      * Constructor.
      */
-    Perturbed_Soft_Bond_Interaction(io::IFP &it);
+    Perturbed_Soft_Bond_Interaction()
+      : Interaction("PerturbedSoftBond") {}
+
     
     
     /**
@@ -57,18 +55,6 @@ namespace interaction
 				       configuration::Configuration & conf,
 				       simulation::Simulation & sim);
     
-     /**
-     * the bond parameter.
-     */
-    std::vector<bond_type_struct> const & parameter()const { return m_parameter;}
-    /**
-     * the bond parameter.
-     */
-    std::vector<bond_type_struct> & parameter() { return m_parameter; }
-    
-  protected:
-    std::vector<bond_type_struct> m_parameter;
-
   };
   
 } // interaction

@@ -201,9 +201,9 @@ int algorithm::Perturbed_Shake
       if (((sim.steps()  % sim.param().write.free_energy) == 0) &&
            sim.param().precalclam.nr_lambdas ){
         DEBUG(1, "AB_bond within if ");
-        double r0A = this->parameter()[it->A_type].r0;
+        double r0A = topo.bond_types_harm()[it->A_type].r0;
         DEBUG(1, "AB_bond r0A " << r0A); 
-        double r0B = this->parameter()[it->B_type].r0;
+        double r0B = topo.bond_types_harm()[it->B_type].r0;
         DEBUG(1, "AB_bond r0B " << r0B); 
         double r0_diff = r0B - r0A; 
         DEBUG(1, "AB_bond r0_diff " << r0_diff); 

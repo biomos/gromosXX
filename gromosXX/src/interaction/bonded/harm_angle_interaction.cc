@@ -31,9 +31,9 @@
 template<math::boundary_enum B, math::virial_enum V>
 static int _calculate_harm_angle_interactions(topology::Topology & topo,
 					      configuration::Configuration & conf,
-					      simulation::Simulation & sim,
-					      std::vector<interaction::angle_type_struct> const & param)
+					      simulation::Simulation & sim)
 {
+  std::vector<interaction::angle_type_struct> const & param = topo.angle_types_harm();
   // loop over the bonds
   std::vector<topology::three_body_term_struct>::const_iterator a_it =
     topo.solute().angles().begin(),
@@ -82,7 +82,7 @@ static int _calculate_harm_angle_interactions(topology::Topology & topo,
     double K  = param[a_it->type].K;
     double theta0 = param[a_it->type].cos0;
     //here theta0 is actually cos0, as the parameter cosO is read differently depending on harmonicity 
-    //see io::In_Topology::read_harm_angles
+    //see io::In_Topology::read_bondangle_types
 
     DEBUG(10, "\tK=" << K << " theta0=" << theta0 << " dij=" << dij << " dkj=" << dkj);
 
@@ -155,7 +155,7 @@ int interaction::Harm_Angle_Interaction
   m_timer.start();
 
   SPLIT_VIRIAL_BOUNDARY(_calculate_harm_angle_interactions,
-			topo, conf, sim, m_parameter);
+			topo, conf, sim);
 
   m_timer.stop();
 

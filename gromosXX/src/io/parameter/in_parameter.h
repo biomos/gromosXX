@@ -300,7 +300,7 @@ namespace io {
      */
     void read_LAMBDAS(simulation::Parameter &param, std::ostream & os = std::cout);
     
-    /** ANITA
+    /** 
      * read PRECALCLAM block.
      */
     void read_PRECALCLAM(simulation::Parameter &param, std::ostream & os = std::cout);

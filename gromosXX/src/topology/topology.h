@@ -377,13 +377,33 @@ namespace topology
      */
     std::map<std::string, int> const & atom_names()const {return m_atom_name;}
 
-        /**
+    /**
      * bond types
      */
     std::vector<interaction::bond_type_struct> & bond_types_harm() {return m_bond_types_harm;}
     std::vector<interaction::bond_type_struct> & bond_types_quart() {return m_bond_types_quart;}
     std::vector<interaction::bond_type_struct> const & bond_types_harm() const {return m_bond_types_harm;}
     std::vector<interaction::bond_type_struct> const & bond_types_quart() const {return m_bond_types_quart;}
+
+    /**
+     * bond angle types
+     */
+    std::vector<interaction::angle_type_struct> & angle_types_harm() {return m_angle_types_harm;}
+    std::vector<interaction::angle_type_struct> & angle_types_cosharm() {return m_angle_types_cosharm;}
+    std::vector<interaction::angle_type_struct> const & angle_types_harm() const {return m_angle_types_harm;}
+    std::vector<interaction::angle_type_struct> const & angle_types_cosharm() const {return m_angle_types_cosharm;}
+
+    /**
+     * dihedral angle types
+     */
+    std::vector<interaction::dihedral_type_struct> & dihedral_types() {return m_dihedral_types;}
+    std::vector<interaction::dihedral_type_struct> const & dihedral_types() const {return m_dihedral_types;}
+
+    /**
+     * improper dihedral angle types
+     */
+    std::vector<interaction::improper_dihedral_type_struct> & impdihedral_types() {return m_impdihedral_types;}
+    std::vector<interaction::improper_dihedral_type_struct> const & impdihedral_types() const {return m_impdihedral_types;}
 
     /**
      * all exclusions for atom i. Exclusions, 1,4 interactions and Lennard-Jones exceptions
@@ -1469,6 +1489,22 @@ namespace topology
      */
     std::vector<interaction::bond_type_struct> m_bond_types_harm;
     std::vector<interaction::bond_type_struct> m_bond_types_quart;
+
+    /**
+     * store all available angle types with harmonic/cosine harmonic force constant
+     */
+    std::vector<interaction::angle_type_struct> m_angle_types_harm;
+    std::vector<interaction::angle_type_struct> m_angle_types_cosharm;
+
+    /**
+     * store all available dihedral types
+     */
+    std::vector<interaction::dihedral_type_struct> m_dihedral_types;
+
+    /**
+     * store all available improper dihedral types
+     */
+    std::vector<interaction::improper_dihedral_type_struct> m_impdihedral_types;
 
     /**
      * energy groups.

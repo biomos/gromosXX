@@ -308,8 +308,8 @@ int configuration::Energy::calculate_totals()
   sasa_volume_total = 0.0;
 
   // ANITA 
-  DEBUG(8, "ANITA setting totals to zero");
-  DEBUG(8, "ANITA A_lj_total.size() " << A_lj_total.size());
+  DEBUG(10, "ANITA setting totals to zero");
+  DEBUG(10, "ANITA A_lj_total.size() " << A_lj_total.size());
 
   int nr_lambdas = unsigned(A_lj_total.size());
   for(unsigned int i=0; i<nr_lambdas; ++i){

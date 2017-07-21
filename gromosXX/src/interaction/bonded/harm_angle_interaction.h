@@ -52,18 +52,6 @@ namespace interaction
     virtual int calculate_interactions(topology::Topology & topo,
 				       configuration::Configuration & conf,
 				       simulation::Simulation & sim);
-
-    /**
-     * angle interaction parameter.
-     */
-    std::vector<angle_type_struct> const & parameter()const { return m_parameter; }
-    /**
-     * angle interaction parameter.
-     */
-    std::vector<angle_type_struct> & parameter() { return m_parameter; }
-    
-  protected:
-    std::vector<angle_type_struct> m_parameter;
     
   };
   

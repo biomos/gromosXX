@@ -16,10 +16,6 @@ namespace simulation{
 	class Simulation;
 }
 
-namespace io{
-	class IFP;
-}
-
 namespace interaction
 {
   /**
@@ -32,7 +28,8 @@ namespace interaction
     /**
      * Constructor.
      */
-    Perturbed_Soft_Angle_Interaction(io::IFP &it);
+    Perturbed_Soft_Angle_Interaction()
+      : Interaction("PerturbedSoftAngle") {}
     
     /**
      * Destructor.
@@ -54,8 +51,6 @@ namespace interaction
 				       configuration::Configuration & conf,
 				       simulation::Simulation & sim);
     
-  protected:
-    std::vector<angle_type_struct> m_parameter;
   };
   
 } // interaction

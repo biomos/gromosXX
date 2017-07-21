@@ -27,6 +27,7 @@ END
 STEP
 #   NSTLIM  >0 number of steps 
 #   T       >=0 initial time 
+#           -1  read time from configuration file 
 #   DT      >0 time step 
 # 
 #   NSTLIM         T        DT 
@@ -38,9 +39,10 @@ END
 CONSTRAINT
 #	NTC 
 #		1	solvent    solvent only 
-#		2	hydrogen   solvent and solute bonds containing hydrogens 
+#		2	hydrogen   solvent and solute bonds containing hydrogens and  
+#		               constraints in the topology's CONSTRAINTS block 
 #		3	all        solvent and solute all bonds 
-#		4	specified  solvent and constraints in the CONSTRAINTS block 
+#		4	specified  solvent and constraints in the topology's CONSTRAINTS block 
     3 
 #       NTCP: solute algorithm 
 #               1        shake 
@@ -448,7 +450,7 @@ DIHEDRALRES
 #         2:    dihedral restraining using CDLR * WDLR 
 #         3:    dihedral constraining 
 # 
-# CDLR    >=0.0 force constant for dihedral restraining 
+# CDLR    >=0.0 force constant for dihedral restraining [kJ/mol/degree^2] 
 # PHILIN  >0.0  deviation after which the potential energy function is linearized 
 # NTWDLR  >=0   write every NTWDLR step dihedral information to external file 
 # 
@@ -591,7 +593,7 @@ PERSCALE
 #          1		read from configuration 
 # 
 # RESTYPE 
-      off 
+      0 
 #    KDIH      KJ       T   DIFF    RATIO    READ 
       0.1     0.1     0.2    0.7      1.0       0 
 END 
@@ -863,6 +865,17 @@ LAMBDAS
     7      1      3    0     0     1     0     0 
 END 
 //! [LAMBDAS]
+
+//! [PRECALCLAM]
+PRECALCLAM
+# NRLAM   0  : off 
+#         >1 : precalculating energies for NRLAM extra lambda values 
+# MINLAM  between 0 and 1: minimum lambda value to precalculate energies 
+# MAXLAM  between MINLAM and 1: maximum lambda value to precalculate energies 
+# NRLAM	  MINLAM   MAXLAM 
+   100      0.0        1.0 
+END 
+//! [PRECALCLAM]
 
 //! [NONBONDED]
 NONBONDED
@@ -1158,10 +1171,17 @@ DISTANCERESSPEC
 # i,j,k,l  atoms comprising the virtual atom (put 0 if less than four atoms in use) 
 # type   virtual atom type 
 # r0, w0  target distance and force constant weighting factor 
-# rah    form of the potential 
-#   -1: half harmonic repulsive 
-#    0: full harmonic 
-#    1: half harmonic attractive 
+# rah    form and dimension of the potential 
+# full harmonic: 
+#     0: x,y,z 
+#    10: x,y 
+#    20: x,z 
+#    30: y,z 
+#    40: x 
+#    50: y 
+#    60: z 
+#  subtract or add 1 from these numbers to select a half harmonic 
+#  repulsive or attractive potential 
 # DISH  DISC 
   0.1   0.153 
 # i  j  k  l  type    i  j  k  l  type    r0    w0    rah 

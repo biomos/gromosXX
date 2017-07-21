@@ -52,10 +52,11 @@ namespace interaction
      */
     double scale(double t, double T, double s);
 
+
     /**
-     * Dihedral interaction
+     * private dihedral types
      */
-    interaction::Dihedral_Interaction * m_DI;
+    std::vector<interaction::dihedral_type_struct>  m_dihedral_types;
 
   };
   

@@ -16,11 +16,6 @@ namespace simulation{
 	class Simulation;
 }
 
-namespace io{
-	class IFP;
-}
-
-
 namespace interaction
 {
   /**
@@ -33,7 +28,8 @@ namespace interaction
     /**
      * Constructor.
      */
-    Perturbed_Soft_Improper_Interaction(io::IFP &it);
+    Perturbed_Soft_Improper_Interaction()
+      : Interaction("PerturbedSoftImproper"){}
         
     /**
      * Destructor.
@@ -55,8 +51,6 @@ namespace interaction
 				       configuration::Configuration & conf,
 				       simulation::Simulation & sim);
     
-  protected:
-    std::vector<improper_dihedral_type_struct> m_parameter;
 
   };
   

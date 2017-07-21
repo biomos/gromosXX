@@ -109,27 +109,10 @@ void io::In_Topology::read(topology::Topology& topo,
                   "In_Topology", io::message::error);
 
   read_bond_types(topo, param, os);
+  read_bondangle_types(topo, param, os);
+  read_dihedral_types(topo, param, os);
 
-  std::string angle_bname = "BONDANGLETYPE";
-  block_read.insert("BONDANGLETYPE");
-  // no automatic conversion for angles!
-  if (param.force.angle == 2) {
-    angle_bname = "HARMBONDANGLETYPE";
-    block_read.insert("HARMBONDANGLETYPE");
-  }
-  if (m_block["BONDANGLEBENDTYPE"].size()) {
-    angle_bname = "BONDANGLEBENDTYPE";
-    block_read.insert("BONDANGLEBENDTYPE");
-  }
-
-  std::string dihedral_bname = "DIHEDRALTYPE";
-  block_read.insert("DIHEDRALTYPE");
-  if (m_block["TORSDIHEDRALTYPE"].size()) {
-    dihedral_bname = "TORSDIHEDRALTYPE";
-    block_read.insert("TORSDIHEDRALTYPE");
-  }
-
-  block_read.insert("IMPDIHEDRALTYPE");
+  read_block_IMPDIHEDRALTYPE(topo, param, os);
 
   read_block_TYPE(topo, param, os);
   read_block_PHYSICALCONSTANTS(topo, param, os);
@@ -189,16 +172,18 @@ void io::In_Topology::read(topology::Topology& topo,
     // os << "time after BONDANGLE: " << util::now() - start << std::endl;
 
     // check the angles
-    if (!check_type(m_block[angle_bname], topo.solute().angles())) {
-      io::messages.add("Illegal bond angle type in BONDANGLE(H) block",
+    if (param.force.angle) {
+      if (!check_type(num_solute_angletypes, topo.solute().angles())) {
+        io::messages.add("Illegal bond angle type in BONDANGLE(H) block",
               "In_Topology", io::message::error);
+      }
     }
 
     read_block_IMPDIHEDRAL(topo, param, os);
     read_block_IMPDIHEDRALH(topo, param, os);
 
     // check the impropers
-    if (!check_type(m_block["IMPDIHEDRALTYPE"], topo.solute().improper_dihedrals())) {
+    if (!check_type(num_solute_impropertypes, topo.solute().improper_dihedrals())) {
       io::messages.add("Illegal improper dihedral type in IMPDIHEDRAL(H) block",
               "In_Topology", io::message::error);
     }
@@ -207,7 +192,7 @@ void io::In_Topology::read(topology::Topology& topo,
     read_block_DIHEDRALH(topo, param, os);
 
     // check the dihedrals
-    if (!check_type(m_block[dihedral_bname], topo.solute().dihedrals())) {
+    if (!check_type(num_solute_dihedraltypes, topo.solute().dihedrals())) {
       io::messages.add("Illegal dihedral type in DIHEDRAL(H) block",
               "In_Topology", io::message::error);
     }
@@ -216,11 +201,12 @@ void io::In_Topology::read(topology::Topology& topo,
     read_block_CROSSDIHEDRALH(topo, param, os);
 
     // check the crossdihedrals
-    if ((m_block["CROSSDIHEDRALH"]).size() && dihedral_bname != "TORSDIHEDRALTYPE") {
+    if (m_block["CROSSDIHEDRALH"].size() && !m_block["TORSDIHEDRALTYPE"].size()) {
       io::messages.add("TORSDIHEDRALTYPE block must be specified to use crossdihedrals",
               "In_Topology", io::message::error);
     }
-    if (!check_type(m_block[dihedral_bname], topo.solute().crossdihedrals())) {
+    
+    if (!check_type(num_solute_dihedraltypes, topo.solute().crossdihedrals())) {
       io::messages.add("Illegal crossdihedral type in CROSSDIHEDRAL(H) block",
               "In_Topology", io::message::error);
     }
@@ -513,7 +499,8 @@ void io::In_Topology::read(topology::Topology& topo,
 void io::In_Topology::read_bond_types(topology::Topology& topo,
         simulation::Parameter &param,
         std::ostream & os) {
-
+  
+  DEBUG(10, "reading bond types");
   if (m_block["BONDSTRETCHTYPE"].size()) {
       io::messages.add("Reading bond types from BONDSTRETCHTYPE block",
           "In_Topology::bondtype", io::message::notice);
@@ -552,7 +539,7 @@ void io::In_Topology::read_bond_types(topology::Topology& topo,
       for (int i=0; i< topo.bond_types_harm().size(); i++) {
           double kh=topo.bond_types_harm()[i].K;
           double r=topo.bond_types_harm()[i].r0;
-          double k=kh/2/r/r;
+          double k=kh/(2*r*r);
           topo.bond_types_quart().push_back(interaction::bond_type_struct(k, r));
       }
 
@@ -575,11 +562,11 @@ void io::In_Topology::read_bond_types(topology::Topology& topo,
       }
 
   } else {
-        io::messages.add("Found no bond type specifications (BONDSTRETCHTYPE, BONDTYPE or HARMBONDTYPE block) in the topology.",
+        io::messages.add("Found no bond type parameters (BONDSTRETCHTYPE, BONDTYPE or HARMBONDTYPE block) in the topology.",
                   "In_Topology", io::message::error);
   }
 
-  //check consistency: bond_types_quart and bond_types_harm have to be the same
+  // check consistency: bond_types_quart and bond_types_harm have to be the same
   for (int i=0; i< topo.bond_types_harm().size(); i++) {
       double kh=topo.bond_types_harm()[i].K, k=topo.bond_types_quart()[i].K;
       double r=topo.bond_types_harm()[i].r0;
@@ -587,7 +574,7 @@ void io::In_Topology::read_bond_types(topology::Topology& topo,
       if (fabs(kh - calc_kh) / kh > 1.0e-4) {
         std::ostringstream msg;
         msg << "harmonic and quartic force constant do not match (CHB!=CB*2*B0*B0): " << std::endl
-                << "CHB = " << kh << ", CB*2*B0*B0 = " << calc_kh
+                << "\tCHB = " << kh << ", CB*2*B0*B0 = " << calc_kh
                 << " |CHB-CB*2*B0*B0| = " << fabs(kh - calc_kh) << std::endl;
         io::messages.add(msg.str(), "InTopology", io::message::warning);
       }
@@ -620,6 +607,85 @@ void io::In_Topology::read_bond_types(topology::Topology& topo,
   }
 }
 
+void io::In_Topology::read_bondangle_types(topology::Topology& topo,
+    simulation::Parameter &param,
+    std::ostream & os) {
+
+  // avoid "block not read" messages
+  block_read.insert("BONDANGLEBENDTYPE");
+  block_read.insert("BONDANGLETYPE");
+  block_read.insert("HARMBONDANGLETYPE");
+
+  // read BONDANGLEBENDTYPE, or, if it does not exist, any other bond angle
+  // type blocks that exist
+  if (m_block["BONDANGLEBENDTYPE"].size()) {
+    io::messages.add("Reading angle types from BONDANGLEBENDTYPE block",
+        "In_Topology::angletype", io::message::notice);
+    read_block_BONDANGLEBENDTYPE(topo, param, os);
+  } else {
+    if (m_block["BONDANGLETYPE"].size()) {
+        io::messages.add("Reading angle types from BONDANGLETYPE block",
+          "In_Topology::angletype", io::message::notice);
+        read_block_BONDANGLETYPE(topo, param, os);
+    }
+    if (m_block["HARMBONDANGLETYPE"].size()) {
+        io::messages.add("Reading angle types from HARMBONDANGLETYPE block",
+          "In_Topology::angletype", io::message::notice);
+        read_block_HARMBONDANGLETYPE(topo, param, os);
+    }
+  }
+
+  // now check if we have the ones that we need
+  if (param.force.angle == 2) {
+      // harmonic potential
+      if (!m_block["HARMBONDANGLETYPE"].size() && !m_block["BONDANGLEBENDTYPE"].size()) {
+        io::messages.add("Harmonic angle potential requested (NTBAH=1) but "
+            "no BONDANGLEBENDTYPE or HARMBONDANGLETYPE block found.",
+            "In_Topology", io::message::error);
+      }
+  } else if (param.force.angle == 1) {
+      // cosine harmonic potential
+      if (!m_block["BONDANGLETYPE"].size() && !m_block["BONDANGLEBENDTYPE"].size()) {
+        io::messages.add("Cosine armonic angle potential requested (NTBAH=0) but "
+            "no BONDANGLEBENDTYPE or BONDANGLETYPE block found.",
+            "In_Topology", io::message::error);
+      }
+  } 
+
+  // either both lists have the same length or one of them has size 0:
+  num_solute_angletypes = topo.angle_types_cosharm().size();
+  if (num_solute_angletypes == 0) num_solute_angletypes = topo.angle_types_harm().size();
+
+}
+
+
+void io::In_Topology::read_dihedral_types(topology::Topology& topo,
+    simulation::Parameter &param,
+    std::ostream & os) {
+
+  // avoid "block not read" messages
+  block_read.insert("TORSDIHEDRALTYPE");
+  block_read.insert("DIHEDRALTYPE");
+
+  if (m_block["TORSDIHEDRALTYPE"].size()) {
+    io::messages.add("Reading angle types from TORSDIHEDRALTYPE block",
+        "In_Topology::dihedraltype", io::message::notice);
+    read_block_TORSDIHEDRALTYPE(topo, param, os);
+  } else if (m_block["DIHEDRALTYPE"].size()) {
+    if (param.force.dihedral == 1) {
+        io::messages.add("DIHEDRALTYPE block can not be used with NTBDN=0 (COVALENTFORM block).",
+            "In_Topology", io::message::error);
+    }
+    io::messages.add("Reading angle types from DIHEDRALTYPE block",
+        "In_Topology::dihedraltype", io::message::notice);
+    read_block_DIHEDRALTYPE(topo, param, os);
+  } else {
+    io::messages.add("Either TORSDIHEDRALTYPE or DIHEDRALTYPE block must be present.",
+        "In_Topology", io::message::error);
+  }
+  num_solute_dihedraltypes=topo.dihedral_types().size();
+}
+
 void io::In_Topology::read_block_BONDSTRETCHTYPE(topology::Topology &topo,
         simulation::Parameter &param, std::ostream & os) {
 
@@ -627,7 +693,7 @@ void io::In_Topology::read_block_BONDSTRETCHTYPE(topology::Topology &topo,
   Block block(blockname);
 
   if (block.read_buffer(m_block[blockname], false) == 0) {
-    DEBUG(7, "reading in "+blockname+" block)");
+    DEBUG(7, "reading in "+blockname+" block");
 
     block_read.insert(blockname);
 
@@ -665,7 +731,7 @@ void io::In_Topology::read_block_BONDTYPE(topology::Topology& topo,
   Block block(blockname);
 
   if (block.read_buffer(m_block[blockname], false) == 0) {
-    DEBUG(7, "reading in "+blockname+" block)");
+    DEBUG(7, "reading in "+blockname+" block");
 
     block_read.insert(blockname);
 
@@ -700,7 +766,7 @@ void io::In_Topology::read_block_HARMBONDTYPE(topology::Topology& topo,
   Block block(blockname);
 
   if (block.read_buffer(m_block[blockname], false) == 0) {
-    DEBUG(7, "reading in "+blockname+" block)");
+    DEBUG(7, "reading in "+blockname+" block");
 
     block_read.insert(blockname);
 
@@ -728,292 +794,239 @@ void io::In_Topology::read_block_HARMBONDTYPE(topology::Topology& topo,
   }
 }
 
-void io::In_Topology
-::read_angles(std::vector<interaction::angle_type_struct> &b,
-        std::ostream & os) {
+void io::In_Topology::read_block_BONDANGLEBENDTYPE(topology::Topology &topo,
+        simulation::Parameter &param, std::ostream & os) {
 
-  std::vector<std::string> buffer;
-  std::vector<std::string>::const_iterator it;
+  std::string blockname = "BONDANGLEBENDTYPE";
+  Block block(blockname);
 
-  if (m_block["BONDANGLEBENDTYPE"].size()) {
-    DEBUG(10, "BONDANGLEBENDTYPE block");
-    buffer = m_block["BONDANGLEBENDTYPE"];
-    // 1. BONDTYPE 2. number of types
-    for (it = buffer.begin() + 2;
-            it != buffer.end() - 1; ++it) {
+  if (block.read_buffer(m_block[blockname], false) == 0) {
+    DEBUG(7, "reading in "+blockname+" block");
 
-      double k, kh, cos0;
-      _lineStream.clear();
-      _lineStream.str(*it);
+    block_read.insert(blockname);
 
-      _lineStream >> k >> kh >> cos0;
+    int num;
+    double kcosh, kh, theta;
+    block.get_next_parameter("NTTY", num, ">=0", "");
 
-      if (_lineStream.fail()) {
-        os << *it << std::endl;
-        io::messages.add("bad line in BONDANGLEBENDTYPE block", "In_Topology",
+    if (num<=0 || block.error() ) return;
+
+    for (int i=0; i<num; i++) {
+      block.get_next_parameter("CT", kcosh, ">=0", "");
+      block.get_next_parameter("CHT", kh, ">=0", "");
+      block.get_next_parameter("T0", theta, "", "");
+      if (block.error()) {
+        std::string linenumber=io::to_string(num+1);
+        io::messages.add("Bad values in line "+linenumber+" in "+blockname+" block",
+                "In_Topology",
                 io::message::error);
+        break;
+      } else {
+        topo.angle_types_harm().push_back(interaction::angle_type_struct(kh * (180.0 * 180.0 / (math::Pi * math::Pi)),
+               theta *  math::Pi / 180.0));
+        topo.angle_types_cosharm().push_back(interaction::angle_type_struct(kcosh, cos(theta * math::Pi / 180.0)));
       }
-      if (!_lineStream.eof()) {
-        os << *it << std::endl;
-        io::messages.add("eof not reached in BONDANGLEBENDTYPE block",
-                "InTopology", io::message::warning);
-      }
-
-      // and add (force constant based on a potential harmonic in the angle cosine)
-      b.push_back(interaction::angle_type_struct(k, cos(cos0 * 2 * math::Pi / 360.0)));
     }
-  } else if (m_block["BONDANGLETYPE"].size()) {
-    DEBUG(10, "BONDANGLETYPE block");
-    buffer = m_block["BONDANGLETYPE"];
 
-    // 1. BONDTYPE 2. number of types
-    for (it = buffer.begin() + 2;
-            it != buffer.end() - 1; ++it) {
-
-      double k, cos0;
-      _lineStream.clear();
-      _lineStream.str(*it);
-
-      _lineStream >> k >> cos0;
-
-      if (_lineStream.fail()) {
-        os << *it << std::endl;
-        io::messages.add("bad line in BONDANGLETYPE block", "In_Topology",
-                io::message::error);
-      }
-      if (!_lineStream.eof()) {
-        os << *it << std::endl;
-        io::messages.add("eof not reached in BONDANGLETYPE block",
-                "InTopology", io::message::warning);
-      }
-
-      // and add...
-      b.push_back(interaction::angle_type_struct(k, cos(cos0 * 2 * math::Pi / 360.0)));
-    }
-  } else {
-    io::messages.add("either BONDANGLEBENDTYPE or BONDANGLETYPE block must be present",
-            "In_Topology", io::message::error);
+    block.get_final_messages(false);
   }
 
 }
 
-void io::In_Topology
-::read_harm_angles(std::vector<interaction::angle_type_struct> &b,
-        std::ostream & os) {
-  std::vector<std::string> buffer;
-  std::vector<std::string>::const_iterator it;
-  if (m_block["BONDANGLEBENDTYPE"].size()) {
-    DEBUG(10, "BONDANGLEBENDTYPE block");
-    buffer = m_block["BONDANGLEBENDTYPE"];
-    // 1. BONDTYPE 2. number of types
-    for (it = buffer.begin() + 2;
-            it != buffer.end() - 1; ++it) {
+void io::In_Topology::read_block_BONDANGLETYPE(topology::Topology &topo,
+        simulation::Parameter &param, std::ostream & os) {
 
-      double k, kh, cos0;
-      _lineStream.clear();
-      _lineStream.str(*it);
+  std::string blockname = "BONDANGLETYPE";
+  Block block(blockname);
 
-      _lineStream >> k >> kh >> cos0;
+  if (block.read_buffer(m_block[blockname], false) == 0) {
+    DEBUG(7, "reading in "+blockname+" block");
 
-      if (_lineStream.fail()) {
-        os << *it << std::endl;
-        io::messages.add("bad line in BONDANGLEBENDTYPE block", "In_Topology",
+    block_read.insert(blockname);
+
+    int num;
+    double kcosh, theta;
+    block.get_next_parameter("NTTY", num, ">=0", "");
+
+    if (num<=0 || block.error() ) return;
+
+    for (int i=0; i<num; i++) {
+      block.get_next_parameter("CT", kcosh, ">=0", "");
+      block.get_next_parameter("T0", theta, "", "");
+      if (block.error()) {
+        std::string linenumber=io::to_string(num+1);
+        io::messages.add("Bad values in line "+linenumber+" in "+blockname+" block",
+                "In_Topology",
                 io::message::error);
+        break;
+      } else {
+        topo.angle_types_cosharm().push_back(interaction::angle_type_struct(kcosh, cos(theta * math::Pi / 180.0)));
       }
-      if (!_lineStream.eof()) {
-        os << *it << std::endl;
-        io::messages.add("eof not reached in BONDANGLEBENDTYPE block",
-                "InTopology", io::message::warning);
-      }
-
-      // and add (force constant based on a potential harmonic in the angle cosine)
-      b.push_back(interaction::angle_type_struct(kh * (180.0 * 180.0 / (math::Pi * math::Pi)),
-              cos0 * 2 * math::Pi / 360.0));
-    }
-  } else if (m_block["HARMBONDANGLETYPE"].size()) {
-    DEBUG(10, "HARMBONDANGLETYPE block");
-
-    buffer = m_block["HARMBONDANGLETYPE"];
-
-    if (buffer.size() == 0) {
-      io::messages.add("HARMBONDANGLETYPE block not found!", "In_Topology",
-              io::message::error);
-      return;
     }
 
-    // 1. BONDANGLETYPE 2. number of types
-    for (it = buffer.begin() + 2;
-            it != buffer.end() - 1; ++it) {
-
-      double k, theta;
-      _lineStream.clear();
-      _lineStream.str(*it);
-
-      _lineStream >> k >> theta;
-
-      if (_lineStream.fail()) {
-        os << *it << std::endl;
-        io::messages.add("bad line in HARMBONDANGLETYPE block", "In_Topology",
-                io::message::error);
-      }
-      if (!_lineStream.eof()) {
-        os << *it << std::endl;
-        io::messages.add("eof not reached in HARMBONDANGLETYPE block",
-                "InTopology", io::message::warning);
-      }
-
-      // and add...
-      b.push_back(interaction::angle_type_struct(k * (180.0 * 180.0 / (math::Pi * math::Pi)),
-             theta *  math::Pi / 180.0));
-    }
-  } else {
-    io::messages.add("either BONDANGLEBENDTYPE or HARMBONDANGLETYPE block must be present",
-            "In_Topology", io::message::error);
+    block.get_final_messages(false);
   }
 
 }
 
-void io::In_Topology
-::read_improper_dihedrals(std::vector<interaction::improper_dihedral_type_struct> &i,
-        std::ostream & os) {
+void io::In_Topology::read_block_HARMBONDANGLETYPE(topology::Topology &topo,
+        simulation::Parameter &param, std::ostream & os) {
 
-  DEBUG(10, "IMPDIHEDRALTYPE block");
+  std::string blockname = "HARMBONDANGLETYPE";
+  Block block(blockname);
 
-  std::vector<std::string> buffer;
-  std::vector<std::string>::const_iterator it;
+  if (block.read_buffer(m_block[blockname], false) == 0) {
+    DEBUG(7, "reading in "+blockname+" block");
 
-  buffer = m_block["IMPDIHEDRALTYPE"];
+    block_read.insert(blockname);
 
-  if (buffer.size() == 0) {
-    io::messages.add("IMPDIHEDRALTYPE block not found!", "In_Topology",
-            io::message::error);
-    return;
-  }
+    int num;
+    double kh, theta;
+    block.get_next_parameter("NTTY", num, ">=0", "");
 
-  // 1. IMPDIHEDRALTYPE 2. number of types
-  for (it = buffer.begin() + 2;
-          it != buffer.end() - 1; ++it) {
+    if (num<=0 || block.error() ) return;
 
-    double k, q0;
-    _lineStream.clear();
-    _lineStream.str(*it);
-
-    _lineStream >> k >> q0;
-
-    if (_lineStream.fail()) {
-      os << *it << std::endl;
-      io::messages.add("bad line in IMPDIHEDRALTYPE block", "In_Topology",
-              io::message::error);
-    }
-    if (!_lineStream.eof()) {
-      os << *it << std::endl;
-      io::messages.add("eof not reached in IMPDIHEDRALTYPE block",
-              "InTopology", io::message::warning);
+    for (int i=0; i<num; i++) {
+      block.get_next_parameter("CHT", kh, ">=0", "");
+      block.get_next_parameter("T0", theta, "", "");
+      if (block.error()) {
+        std::string linenumber=io::to_string(num+1);
+        io::messages.add("Bad values in line "+linenumber+" in "+blockname+" block",
+                "In_Topology",
+                io::message::error);
+        break;
+      } else {
+        topo.angle_types_harm().push_back(interaction::angle_type_struct(kh * (180.0 * 180.0 / (math::Pi * math::Pi)),
+               theta *  math::Pi / 180.0));
+      }
     }
 
-    // and add...
-    i.push_back(interaction::improper_dihedral_type_struct(k * 180 * 180 / math::Pi / math::Pi,
-            q0 * math::Pi / 180.0));
+    block.get_final_messages(false);
   }
 
 }
 
-void io::In_Topology
-::read_dihedrals(std::vector<interaction::dihedral_type_struct> &d,
-        const simulation::Parameter &param,
-        std::ostream & os) {
-  if (m_block["TORSDIHEDRALTYPE"].size()) {
-    DEBUG(10, "TORSDIHEDRALTYPE block");
+void io::In_Topology::read_block_TORSDIHEDRALTYPE(topology::Topology &topo,
+        simulation::Parameter &param, std::ostream & os) {
+  // dihedrals in degrees
+  std::string blockname = "TORSDIHEDRALTYPE";
+  Block block(blockname);
 
-    std::vector<std::string> buffer;
-    std::vector<std::string>::const_iterator it;
+  if (block.read_buffer(m_block[blockname], false) == 0) {
+    DEBUG(7, "reading in "+blockname+" block");
 
-    buffer = m_block["TORSDIHEDRALTYPE"];
+    block_read.insert(blockname);
 
-    if (buffer.size() == 0) {
-      io::messages.add("TORSDIHEDRALTYPE block not found!", "In_Topology",
-              io::message::error);
-      return;
-    }
+    int num, m;
+    double k, pdl;
+    bool asymmetric=false;
+    block.get_next_parameter("NPTY", num, ">=0", "");
 
-    // 1. DIHEDRALTYPE 2. number of types
-    for (it = buffer.begin() + 2;
-            it != buffer.end() - 1; ++it) {
+    if (num<=0 || block.error() ) return;
 
-      double k, pdl;
-      int m;
-
-      _lineStream.clear();
-      _lineStream.str(*it);
-
-      _lineStream >> k >> pdl >> m;
-
+    for (int i=0; i<num; i++) {
+      block.get_next_parameter("CP", k, ">=0", "");
+      block.get_next_parameter("PD", pdl, "", "");
+      block.get_next_parameter("NP", m, ">0", "");
       if (param.force.dihedral == 2) {
         if (pdl != 0 && pdl != 180)
           io::messages.add("TORSDIHEDRALTYPE block: dihedral neither 0 nor 180, this is not allowed if NTBDN=1 (COVALENTFORM block)", "In_Topology",
                 io::message::error);
+      } else if (param.force.dihedral == 1) {
+          if (pdl!=0 || pdl!=180) {
+            asymmetric=true;
+          }
       }
-
-      if (_lineStream.fail()) {
-        os << *it << std::endl;
-        io::messages.add("bad line in TORSDIHEDRALTYPE block", "In_Topology",
+      if (block.error()) {
+        std::string linenumber=io::to_string(num+1);
+        io::messages.add("Bad values in line "+linenumber+" in "+blockname+" block",
+                "In_Topology",
                 io::message::error);
+        break;
+      } else {
+        topo.dihedral_types().push_back(interaction::dihedral_type_struct(k, cos(pdl * math::Pi / 180.0), pdl * math::Pi / 180.0, m));
       }
-      if (!_lineStream.eof()) {
-        os << *it << std::endl;
-        io::messages.add("eof not reached in TORSDIHEDRALTYPE block",
-                "InTopology", io::message::warning);
-      }
-
-      // and add...
-
-      d.push_back(interaction::dihedral_type_struct(k, cos(pdl * math::Pi / 180.0), pdl * math::Pi / 180.0, m));
     }
-  } else if (m_block["DIHEDRALTYPE"].size()) {
-    DEBUG(10, "DIHEDRALTYPE block");
+    if (!asymmetric)
+        io::messages.add("TORSDIHEDRALTYPE block contains no values different from 0 or 180, you could also use NTBDN=1 (COVALENTFORM block)", "In_Topology",
+              io::message::notice);
 
-    std::vector<std::string> buffer;
-    std::vector<std::string>::const_iterator it;
-
-    buffer = m_block["DIHEDRALTYPE"];
-
-    if (buffer.size() == 0) {
-      io::messages.add("DIHEDRALTYPE block not found!", "In_Topology",
-              io::message::error);
-      return;
-    }
-
-    // 1. DIHEDRALTYPE 2. number of types
-    for (it = buffer.begin() + 2;
-            it != buffer.end() - 1; ++it) {
-
-      double k, pd;
-      int m;
-
-      _lineStream.clear();
-      _lineStream.str(*it);
-
-      _lineStream >> k >> pd >> m;
-
-      if (_lineStream.fail()) {
-        os << *it << std::endl;
-        io::messages.add("bad line in DIHEDRALTYPE block", "In_Topology",
-                io::message::error);
-      }
-      if (!_lineStream.eof()) {
-        os << *it << std::endl;
-        io::messages.add("eof not reached in DIHEDRALTYPE block",
-                "InTopology", io::message::warning);
-      }
-
-      // and add...
-      d.push_back(interaction::dihedral_type_struct(k, pd, acos(pd), m));
-    }
-  } else {
-    // complain that we need a block
-    io::messages.add("either TORSDIHEDRALTYPE or DIHEDRALTYPE block must be present", "In_Topology",
-            io::message::error);
+    block.get_final_messages(false);
   }
+
+}
+
+void io::In_Topology::read_block_DIHEDRALTYPE(topology::Topology &topo,
+        simulation::Parameter &param, std::ostream & os) {
+  // dihedrals as cos(theta)
+  std::string blockname = "DIHEDRALTYPE";
+  Block block(blockname);
+
+  if (block.read_buffer(m_block[blockname], false) == 0) {
+    DEBUG(7, "reading in "+blockname+" block");
+
+    block_read.insert(blockname);
+
+    int num, m;
+    double k, pd;
+    block.get_next_parameter("NPTY", num, ">=0", "");
+
+    if (num<=0 || block.error() ) return;
+
+    for (int i=0; i<num; i++) {
+      block.get_next_parameter("CP", k, ">=0", "");
+      block.get_next_parameter("PD", pd, "", "1, -1");
+      block.get_next_parameter("NP", m, ">0", "");
+      if (block.error()) {
+        std::string linenumber=io::to_string(num+1);
+        io::messages.add("Bad values in line "+linenumber+" in "+blockname+" block",
+                "In_Topology",
+                io::message::error);
+        break;
+      } else {
+        topo.dihedral_types().push_back(interaction::dihedral_type_struct(k, pd, acos(pd), m));
+      }
+    }
+
+    block.get_final_messages(false);
+  }
+
+}
+void io::In_Topology::read_block_IMPDIHEDRALTYPE(topology::Topology &topo,
+        simulation::Parameter &param, std::ostream & os) {
+  std::string blockname = "IMPDIHEDRALTYPE";
+  Block block(blockname);
+
+  if (block.read_buffer(m_block[blockname], false) == 0) {
+    DEBUG(7, "reading in "+blockname+" block");
+
+    block_read.insert(blockname);
+
+    int num, m;
+    double k, q0;
+    block.get_next_parameter("NQTY", num, ">=0", "");
+
+    if (num<=0 || block.error() ) return;
+
+    for (int i=0; i<num; i++) {
+      block.get_next_parameter("CQ", k, ">=0", "");
+      block.get_next_parameter("Q0", q0, "", "");
+      if (block.error()) {
+        std::string linenumber=io::to_string(num+1);
+        io::messages.add("Bad values in line "+linenumber+" in "+blockname+" block",
+                "In_Topology",
+                io::message::error);
+        break;
+      } else {
+        topo.impdihedral_types().push_back(interaction::improper_dihedral_type_struct(k * 180 * 180 / math::Pi / math::Pi,
+                q0 * math::Pi / 180.0));
+      }
+    }
+
+    num_solute_impropertypes=topo.impdihedral_types().size();
+    block.get_final_messages(false);
+  }
+
 }
 
 void io::In_Topology
@@ -1873,15 +1886,7 @@ void io::In_Topology::read_block_BONDH(topology::Topology& topo,
         }
       }
 
-      //--------------------------------------------------
-      // lookup the number of bond types
-      // add additional ones for the solvent constraints
-      {
-        // this does not seem to do anything outside this block? MP
-        std::vector<interaction::bond_type_struct> b;
-        std::ostringstream os;
-        read_harmonic_bonds(b, os);
-      }
+    } // BONDH
 
 void io::In_Topology::read_block_BOND(topology::Topology& topo,
         simulation::Parameter &param, std::ostream & os)
@@ -2119,22 +2124,6 @@ void io::In_Topology::read_block_BONDANGLEH(topology::Topology& topo,
                     "In_Topology", io::message::error);
           }
 
-  // store number of bond/angle/improper types
-  {
-  std::vector<interaction::bond_type_struct> b;
-  std::vector<interaction::angle_type_struct> a;
-  std::vector<interaction::improper_dihedral_type_struct> im;
-  std::ostringstream os;
-  read_harmonic_bonds(b, os);
-  read_harm_angles(a,os);
-  read_improper_dihedrals(im,os);
-  topo.set_num_bondtype(b.size());
-  topo.set_num_angletype(a.size());
-  topo.set_num_impropertype(im.size());
-  }
-
-  if (!quiet)
-    os << "END\n";
           topo.solute().angles().
                   push_back(topology::three_body_term_struct(i - 1, j - 1, k - 1, t - 1));
         }

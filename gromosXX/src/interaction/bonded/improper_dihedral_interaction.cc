@@ -31,10 +31,9 @@
 template<math::boundary_enum B, math::virial_enum V>
 static int _calculate_improper_interactions(topology::Topology & topo,
 					    configuration::Configuration & conf,
-					    simulation::Simulation & sim,
-					    std::vector<interaction::improper_dihedral_type_struct>
-					    const & param)
+					    simulation::Simulation & sim)
 {
+  std::vector<interaction::improper_dihedral_type_struct> const & param = topo.impdihedral_types();
   // loop over the improper dihedrals
   std::vector<topology::four_body_term_struct>::const_iterator i_it =
     topo.solute().improper_dihedrals().begin(),
@@ -153,7 +152,7 @@ int interaction::Improper_Dihedral_Interaction
   m_timer.start();
   
   SPLIT_VIRIAL_BOUNDARY(_calculate_improper_interactions,
-			topo, conf, sim, m_parameter);
+			topo, conf, sim);
 
   m_timer.stop();
 

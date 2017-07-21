@@ -53,19 +53,6 @@ namespace interaction
 				       configuration::Configuration & conf,
 				       simulation::Simulation & sim);
 
-    /**
-     * the angle type parameters.
-     */
-    std::vector<improper_dihedral_type_struct> const & parameter()const { return m_parameter; }
-
-    /**
-     * the angle type parameters.
-     */
-    std::vector<improper_dihedral_type_struct> & parameter() { return m_parameter; }
-    
-  protected:
-    std::vector<improper_dihedral_type_struct> m_parameter;
-    
   };
   
 } // interaction

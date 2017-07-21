@@ -35,9 +35,8 @@ static double _calculate_nearest_minimum(double phi, int m, double cospd);
 template<math::boundary_enum B, math::virial_enum V>
 static int _calculate_dihedral_new_interactions(topology::Topology & topo,
         configuration::Configuration & conf,
-        simulation::Simulation & sim,
-        std::vector<interaction::dihedral_type_struct>
-        const & param) {
+        simulation::Simulation & sim) {
+  std::vector<interaction::dihedral_type_struct> const & param = topo.dihedral_types();
   // loop over the dihedrals
   std::vector<topology::four_body_term_struct>::iterator d_it =
           topo.solute().dihedrals().begin(),
@@ -195,7 +194,7 @@ int interaction::Dihedral_new_Interaction
   m_timer.start();
 
   SPLIT_VIRIAL_BOUNDARY(_calculate_dihedral_new_interactions,
-          topo, conf, sim, m_parameter);
+          topo, conf, sim);
 
   m_timer.stop();
 

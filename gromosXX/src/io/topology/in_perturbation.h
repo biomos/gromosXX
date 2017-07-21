@@ -137,13 +137,15 @@ END
 @endverbatim
 
 @section pertbondanglesoft PERTANGLESOFT block
-Perturbed bond angles
+Soft perturbed bond angles
 @verbatim
 PERTANGLESOFT
 # number of perturbed soft bond angles
     2
-#   type:  0 .. angle type with K=0
-#   ALA:   softness parameter, 0 .. no softness
+#   type:  0 .. angle type with the same equilibrium value
+#          as the type of the other state but force constant 0
+#   ALA:   softness parameter
+#          0 .. no softness
 #    atom(i) atom(j) atom(k) type(A) type(B)  ALA
         4       6      12       0       7       4
         3       8      10      26       0       4

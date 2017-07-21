@@ -121,9 +121,9 @@ void io::In_Parameter::read(simulation::Parameter &param,
               io::message::error);
     }
   }
+
     if (!quiet)
         os << "END\n";
-
 }
 
 /**
@@ -1815,7 +1815,7 @@ void io::In_Parameter::read_DISTANCERES(simulation::Parameter &param,
     exampleblock << "#         1: read from configuration\n";
     exampleblock << "#    CDIR >= 0.0 force constant for distance restraining\n";
     exampleblock << "#    DIR0 > 0.0 distance offset in restraining function\n";
-    exampleblock << "#  TAUDIR >= 0.0 coupling time for time averaging\n";
+    exampleblock << "#  TAUDIR > 0.0 coupling time for time averaging\n";
     exampleblock << "# FORCESCALE 0..2 controls approximation of force scaling\n";
     exampleblock << "#         0: approximate d<r>/dr = 1\n";
     exampleblock << "#         1: approximate d<r>/dr = (1.0 - exp(-Dt/tau))\n";
@@ -1840,7 +1840,7 @@ void io::In_Parameter::read_DISTANCERES(simulation::Parameter &param,
         block.get_next_parameter("NTDIRA", ntdira, "", "0,1");
         block.get_next_parameter("CDIR", param.distanceres.K, ">=0", "");
         block.get_next_parameter("DIR0", param.distanceres.r_linear, ">=0", "");
-        block.get_next_parameter("TAUDIR", param.distanceres.tau, ">=0", "");
+        block.get_next_parameter("TAUDIR", param.distanceres.tau, ">0", "");
         block.get_next_parameter("FORCESCALE", param.distanceres.forcescale, "", "0, 1, 2");
         block.get_next_parameter("VDIR", param.distanceres.virial, "", "0,1");
         block.get_next_parameter("NTWDIR", param.distanceres.write, ">=0", "");
@@ -3403,7 +3403,6 @@ void io::In_Parameter::read_EDS(simulation::Parameter & param,
                 // read in 1 S value
                 param.eds.s.resize(1, 1.0);
                 block.get_next_parameter("S[0]", param.eds.s[0], ">0", "");
-                //std::cerr << " s[0] = " << param.eds.s[0] <<  std::endl;
                 break;
             }
             case 2: {
@@ -3437,10 +3436,8 @@ void io::In_Parameter::read_EDS(simulation::Parameter & param,
         for (unsigned int i = 0; i < param.eds.numstates; i++) {
             std::string idx = io::to_string(i);
             block.get_next_parameter("EIR["+idx+"]", param.eds.eir[i], "", "");
-            //std::cerr << "eir = " << param.eds.eir[i] << std::endl;
         }
 
-        //std::cerr << "eds (at end) = " <<  eds << ", form = " << form << ", numstates=" << param.eds.numstates;
         block.get_final_messages();
     }
 }
@@ -3526,6 +3523,7 @@ void io::In_Parameter::read_LAMBDAS(simulation::Parameter & param,
             if (n1 > maxnilg || n2 > maxnilg) {
                 io::messages.add("LAMBDAS block: NILG1 and NILG2 need to be smaller than the number of energy groups",
                                  "In_Parameter", io::message::error);
+                return;
             }
 
             if (n2 < n1) {
@@ -3597,56 +3595,44 @@ void io::In_Parameter::read_LAMBDAS(simulation::Parameter & param,
 
 /** 
  * @section precalclam PRECALCLAM block
- * @verbatim
-PRECALCLAM
-# NRLAM   0  : off
-#         >1 : precalculating energies for NRLAM extra lambda values
-# MINLAM  between 0 and 1: minimum lambda value to precalculate energies
-# MAXLAM  between MINLAM and 1: maximum lambda value to precalculate energies 
-# NRLAM	  MINLAM   MAXLAM
-   100      0.0        1.0
-END
-@endverbatim
+ * @snippet snippets/snippets.cc PRECALCLAM
  */
 void io::In_Parameter::read_PRECALCLAM(simulation::Parameter & param,
         std::ostream & os) {
-  DEBUG(8, "read PRECALCLAM");
-  std::vector<std::string> buffer;
-  std::string s;
+    DEBUG(8, "read PRECALCLAM");
 
-  buffer = m_block["PRECALCLAM"];
+    std::stringstream exampleblock;
+    // lines starting with 'exampleblock<<"' and ending with '\n";' (spaces don't matter)
+    // will be used to generate snippets that can be included in the doxygen doc;
+    // the first line is the tag
+    exampleblock << "PRECALCLAM\n";
+    exampleblock << "# NRLAM   0  : off\n";
+    exampleblock << "#         >1 : precalculating energies for NRLAM extra lambda values\n";
+    exampleblock << "# MINLAM  between 0 and 1: minimum lambda value to precalculate energies\n";
+    exampleblock << "# MAXLAM  between MINLAM and 1: maximum lambda value to precalculate energies\n";
+    exampleblock << "# NRLAM	  MINLAM   MAXLAM\n";
+    exampleblock << "   100      0.0        1.0\n";
+    exampleblock << "END\n";
 
-  if (buffer.size()) {
+    std::string blockname = "PRECALCLAM";
+    Block block(blockname, exampleblock.str());
 
-    block_read.insert("PRECALCLAM");
+    if (block.read_buffer(m_block[blockname], false) == 0) {
+        block_read.insert(blockname);
+        
+        block.get_next_parameter("NRLAM", param.precalclam.nr_lambdas, ">=0", "");
+        block.get_next_parameter("MINLAM", param.precalclam.min_lam, ">=0 && <=1", "");
+        block.get_next_parameter("MAXLAM", param.precalclam.max_lam, ">=0 && <=1", "");
 
-    _lineStream.clear();
-    _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
-
-// TODO: make sure that nr_lambdas is an integer
-    _lineStream >> param.precalclam.nr_lambdas
-          >> param.precalclam.min_lam
-          >> param.precalclam.max_lam;
-
-    if (_lineStream.fail())
-      io::messages.add("bad line in PRECALCLAM block", "In_Parameter", io::message::error);
- 
-    if (param.precalclam.nr_lambdas < 0 )
-      io::messages.add("PRECALCLAM block: Negative nr of lambdas is not allowed",
+        if (param.precalclam.min_lam >= param.precalclam.max_lam)
+          io::messages.add("PRECALCLAM block: MINLAM should be smaller than MAXLAM",
             "In_Parameter", io::message::error);
-    if (param.precalclam.min_lam >= param.precalclam.max_lam)
-      io::messages.add("PRECALCLAM block: MINLAM should be smaller than MAXLAM",
-            "In_Parameter", io::message::error);
-    if (param.perturbation.perturbation == false && param.precalclam.nr_lambdas > 0)
-    io::messages.add("PRECALCLAM cannot be on without perturbation",
-            "In_Parameter", io::message::error);
-    if (param.write.energy == 0 || param.write.free_energy ==0 || 
-        param.write.energy != param.write.free_energy)
-      io::messages.add("PRECALCLAM requires NTWE=NTWG > 0", 
-            "In_Parameter", io::message::error);
+
+    block.get_final_messages();
+   
   }
 
-} //ANITA
+} // PRECALCLAM
 
 /**
  * @section nonbonded NONBONDED block

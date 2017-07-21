@@ -127,10 +127,8 @@ namespace io {
 
   // trim from both ends (in place)
    static inline void trim(std::string &s) {
-     //std::cerr << "trim" << s << "Y" <<std::endl;
      ltrim(s);
      rtrim(s);
-     //std::cerr << "done" << s << "Y" <<std::endl;
    }
    
    // trim from start (copying)
@@ -160,13 +158,11 @@ namespace io {
   template < class T >
   bool evaluate_comparison(const T &var, std::string expr) {
     bool result;
-    //std::cerr << "   evaluating " << expr << " -- ";
     
     std::size_t found = expr.find("<=");
     if (found != std::string::npos) {
       std::vector<std::string> parts = io::split(expr, "<=");
       try {
-        //std::cerr << "found <= " << parts[1] << std::endl;
         T value;
         std::stringstream stream(parts[1]);
         stream >> value;
@@ -183,7 +179,6 @@ namespace io {
     if (found != std::string::npos) {
       std::vector<std::string> parts = io::split(expr, ">=");
       try {
-        //std::cerr << "found >= " << parts[1] << std::endl;
         T value;
         std::stringstream stream(parts[1]);
         stream >> value;
@@ -200,7 +195,6 @@ namespace io {
     if (found != std::string::npos) {
       std::vector<std::string> parts = io::split(expr, "<");
       try {
-       // std::cerr << "found < " << parts[1] << std::endl;
         T value;
         std::stringstream stream(parts[1]);
         stream >> value;
@@ -217,7 +211,6 @@ namespace io {
     if (found != std::string::npos) {
       std::vector<std::string> parts = io::split(expr, ">");
       try {
-        //std::cerr << "found > " << parts[1] << std::endl;
         T value;
         std::stringstream stream(parts[1]);
         stream >> value;
@@ -230,7 +223,6 @@ namespace io {
       }       
     }
     if (expr != "") {
-        std::cerr << "no valid expr " << expr << "!!"<< std::endl;
         io::messages.add("evaluate_comparison: could not evaluate "+expr+"!",
 		     "In_Parameter", io::message::error);
         return false;        
@@ -241,7 +233,6 @@ namespace io {
  
   template < class T >
   bool evaluate_logical_expression(const T &var, const std::string &expr) {
-    //std::cerr << "evaluate_logical_exp " << expr << std::endl;
     bool result = false;
     std::vector<std::string> substrings_or = io::split(expr, "||");
     for (int i=0; i<substrings_or.size(); i++) {
@@ -339,14 +330,13 @@ namespace io {
   template < class T > 
   int io::Block::get_next_parameter(std::string  varname, T &var, std::string expr, std::string allowed) {
     _par_names.push_back(varname);
-    //std::cerr << varname << std::endl;
     std::string tmp_string;
     _lineStream >> tmp_string;
   
     if (_lineStream.eof()) {
       io::messages.add(_blockname + " block reached END before "+varname
               +" could be read!",
-		     "In_Parameter", io::message::error);
+		     "BlockInput", io::message::error);
       _par_values.push_back(tmp_string);
       _block_error=1;
       return 1;  

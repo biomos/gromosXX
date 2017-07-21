@@ -112,6 +112,20 @@ namespace io {
     void read_block_HARMBONDTYPE(topology::Topology& topo,
         simulation::Parameter &param, std::ostream & os);
 
+    void read_block_BONDANGLEBENDTYPE(topology::Topology& topo,
+        simulation::Parameter &param, std::ostream & os);
+    void read_block_BONDANGLETYPE(topology::Topology& topo,
+        simulation::Parameter &param, std::ostream & os);
+    void read_block_HARMBONDANGLETYPE(topology::Topology& topo,
+        simulation::Parameter &param, std::ostream & os);
+
+    void read_block_DIHEDRALTYPE(topology::Topology& topo,
+        simulation::Parameter &param, std::ostream & os);
+    void read_block_TORSDIHEDRALTYPE(topology::Topology& topo,
+        simulation::Parameter &param, std::ostream & os);
+    void read_block_IMPDIHEDRALTYPE(topology::Topology& topo,
+        simulation::Parameter &param, std::ostream & os);
+
     /**
      * Read in the bond parameters.
      */
@@ -120,29 +134,18 @@ namespace io {
        std::ostream & os);
 
     /**
-     * Read in the bond angle parameter.
-     */
-    virtual void read_angles(std::vector<interaction::angle_type_struct> &a,
-			     std::ostream & os = std::cout);
+    * Read in the bond angle parameters.
+    */
+    void read_bondangle_types(topology::Topology& topo,
+      simulation::Parameter &param,
+      std::ostream & os);
 
-    /**
-     * Read in the harmonic bond angle parameter.
-     */
-    virtual void read_harm_angles(std::vector<interaction::angle_type_struct> &a,
-				  std::ostream & os = std::cout);
-
-    /**
-     * Read in the improper dihedral parameter.
-     */
-    virtual void read_improper_dihedrals(std::vector<interaction::improper_dihedral_type_struct> &i,
-					 std::ostream & os = std::cout);
-
-    /**
-     * Read in the dihedral parameter.
-     */
-    virtual void read_dihedrals(std::vector<interaction::dihedral_type_struct> &d,
-                                const simulation::Parameter &param,
-				std::ostream & os = std::cout);
+   /**
+   * Read in the dihedral angle parameters.
+   */
+   void read_dihedral_types(topology::Topology& topo,
+     simulation::Parameter &param,
+     std::ostream & os);
 
     /**
      * Read in the nonbonded interaction types (lennard-jones).
@@ -177,6 +180,18 @@ namespace io {
      * solute bond types
      */
     int num_solute_bondtypes;
+    /**
+     * solute angle types
+     */
+    int num_solute_angletypes;
+    /**
+     * solute angle types
+     */
+    int num_solute_dihedraltypes;
+    /**
+     * solute angle types
+     */
+    int num_solute_impropertypes;
 
   };
 

@@ -22,31 +22,6 @@ namespace io {
         }
 
         /**
-         * Read in the bond angle parameter.
-         */
-        virtual void read_angles(std::vector<interaction::angle_type_struct> &a,
-                std::ostream & os = std::cout) = 0;
-
-        /**
-         * Read in the harmonic bond angle parameter.
-         */
-        virtual void read_harm_angles(std::vector<interaction::angle_type_struct> &a,
-                std::ostream & os = std::cout) = 0;
-
-        /**
-         * Read in the improper dihedral parameter.
-         */
-        virtual void read_improper_dihedrals(std::vector<interaction::improper_dihedral_type_struct> &i,
-                std::ostream & os = std::cout) = 0;
-
-        /**
-         * Read in the dihedral parameter.
-         */
-        virtual void read_dihedrals(std::vector<interaction::dihedral_type_struct> &d,
-                                    const simulation::Parameter &param,
-                                    std::ostream & os = std::cout) = 0;
-
-        /**
          * Read in the nonbonded interaction types (lennard-jones).
          */
         virtual void read_lj_parameter(std::vector<std::vector

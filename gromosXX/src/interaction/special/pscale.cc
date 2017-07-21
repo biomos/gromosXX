@@ -32,28 +32,7 @@
  */
 interaction::Periodic_Scaling
 ::Periodic_Scaling(interaction::Forcefield & ff, simulation::Parameter const & param)
-  : Interaction("Periodic_Scaling"),
-    m_DI(NULL)
-{
-
-  if (param.pscale.jrest){
-    // try to get the DihedralAngle interaction from the forcefield
-    std::vector<interaction::Interaction *>::iterator
-      i_it = ff.begin(),
-      i_to = ff.end();
-    
-    for( ; i_it != i_to; ++i_it){
-      
-      if ((m_DI = dynamic_cast<interaction::Dihedral_Interaction *>(*i_it)))
-	break;
-    }
-    if (i_it == i_to){
-      io::messages.add("Could not access a dihedral interaction. Use NTBDN=1 in COVALENTFORM block.",
-		       "Periodic Scaling",
-		       io::message::error);
-    }
-  } // JREST periodic scaling
-}
+  : Interaction("Periodic_Scaling") {}
 
 
 /**
@@ -105,7 +84,7 @@ int interaction::Periodic_Scaling
 	  // reset force constants
 	  it->K = conf.special().pscale.KJ[n];
 	  if (conf.special().pscale.JtoDihedral[n] != -1){
-	    m_DI->parameter()[conf.special().pscale.JtoDihedral[n]].K =
+	    m_dihedral_types[conf.special().pscale.JtoDihedral[n]].K =
 	      conf.special().pscale.KDIH[n];
 	  }
 	  
@@ -125,7 +104,7 @@ int interaction::Periodic_Scaling
 	  // do we have a dihedral potential as well?
 	  if (conf.special().pscale.JtoDihedral[n] != -1){
 
-	    m_DI->parameter()[conf.special().pscale.JtoDihedral[n]].K =
+	    m_dihedral_types[conf.special().pscale.JtoDihedral[n]].K =
 	      scale(conf.special().pscale.t[n],
 		    sim.param().pscale.T,
 		    sim.param().pscale.KDIH)
@@ -155,6 +134,20 @@ int interaction::Periodic_Scaling
        bool quiet)
 {
   DEBUG(8, "PSCALE::init");
+  
+  if (sim.param().pscale.jrest){
+    if (sim.param().force.dihedral!=2)  {
+      io::messages.add("Could not access a dihedral interaction. Use NTBDN=1 in COVALENTFORM block.",
+		       "Periodic Scaling",
+		       io::message::error);
+      return 1;
+    }
+    
+    // copy dihedral types from topology
+    for (int i=0; i<topo.dihedral_types().size(); i++){
+        m_dihedral_types.push_back(topo.dihedral_types()[i]);
+    }
+  } // JREST periodic scaling
   
   if (!quiet)
     os << "PERIODIC SCALING\n";
@@ -216,15 +209,15 @@ int interaction::Periodic_Scaling
 	     << std::setw(5) << "->";
 	  
 	  // change the type to a new (private) type
-	  interaction::dihedral_type_struct dts(m_DI->parameter()[d_it->type]);
-	  m_DI->parameter().push_back(dts);
-	  d_it->type = m_DI->parameter().size() - 1;
+	  interaction::dihedral_type_struct dts(m_dihedral_types[d_it->type]);
+	  m_dihedral_types.push_back(dts);
+	  d_it->type = m_dihedral_types.size() - 1;
 	  
 	  std::cout << std::setw(10) << d_it->type + 1
 		    << "\n";
 	  
 	  // store force constant to avoid drift
-	  conf.special().pscale.KDIH[n] = m_DI->parameter()[d_it->type].K;
+	  conf.special().pscale.KDIH[n] = m_dihedral_types[d_it->type].K;
 	  conf.special().pscale.JtoDihedral[n] = d;
 	  
 	}
@@ -242,7 +235,7 @@ int interaction::Periodic_Scaling
 	  // do we have a dihedral potential as well?
 	  if (conf.special().pscale.JtoDihedral[n] != -1){
 
-	    m_DI->parameter()[conf.special().pscale.JtoDihedral[n]].K =
+	    m_dihedral_types[conf.special().pscale.JtoDihedral[n]].K =
 	      scale(conf.special().pscale.t[n],
 		    sim.param().pscale.T,
 		    sim.param().pscale.KDIH)

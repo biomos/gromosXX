@@ -36,10 +36,9 @@
 template<math::boundary_enum B, math::virial_enum V>
 static int _calculate_crossdihedral_interactions(topology::Topology & topo,
 					    configuration::Configuration & conf,
-					    simulation::Simulation & sim,
-					    std::vector<interaction::dihedral_type_struct> 
-					    const & param)
+					    simulation::Simulation & sim)
 {
+  std::vector<interaction::dihedral_type_struct> const & param = topo.dihedral_types();
   // loop over the crossdihedrals
   std::vector<topology::eight_body_term_struct>::iterator d_it =
     topo.solute().crossdihedrals().begin(),
@@ -222,7 +221,7 @@ int interaction::Crossdihedral_Interaction
   m_timer.start();
 
   SPLIT_VIRIAL_BOUNDARY(_calculate_crossdihedral_interactions,
-			topo, conf, sim, m_parameter);
+			topo, conf, sim);
 
   m_timer.stop();
 

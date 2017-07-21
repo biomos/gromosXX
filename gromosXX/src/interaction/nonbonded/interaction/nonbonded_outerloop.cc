@@ -286,7 +286,7 @@ void interaction::Nonbonded_Outerloop
   std::vector<unsigned int>::const_iterator j_it, j_to;
 
   unsigned int size_i = unsigned(pairlist_solute.size());
-  DEBUG(10, "outerloop pairlist size " << size_i);
+  DEBUG(10, "lj_crf2 outerloop pairlist size " << size_i);
 
   const unsigned int end = topo.num_solute_atoms();
 
@@ -298,8 +298,7 @@ void interaction::Nonbonded_Outerloop
     int k = 0;
     
 
-
-      // shortrange, therefore store in simulation.system()
+    // shortrange, therefore store in simulation.system()
     for (j_it = pairlist_solute[i].begin(),
          j_to = pairlist_solute[i].end();
          j_it != j_to;

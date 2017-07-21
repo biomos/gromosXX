@@ -139,7 +139,6 @@ int check::check_state(topology::Topology & mytopo,
 
   // prepare rel_mol_com_pos
   util::prepare_virial(topo, conf, sim);
-
   // calculate the virial (real)
   ff.apply(topo, conf, sim);
 

@@ -152,10 +152,10 @@ int _calculate_perturbed_qbond_interactions
     // ANITA
     if (sim.param().precalclam.nr_lambdas &&
         ((sim.steps() % sim.param().write.free_energy) == 0)){
-      double KA = m_interaction.parameter()[b_it->A_type].K;
-      double KB = m_interaction.parameter()[b_it->B_type].K;
-      double b0A = m_interaction.parameter()[b_it->A_type].r0;
-      double b0B = m_interaction.parameter()[b_it->B_type].r0;
+      double KA = bondtypes[b_it->A_type].K;
+      double KB = bondtypes[b_it->B_type].K;
+      double b0A = bondtypes[b_it->A_type].r0;
+      double b0B = bondtypes[b_it->B_type].r0;
 
       double lambda_step = (sim.param().precalclam.max_lam -
                             sim.param().precalclam.min_lam) /

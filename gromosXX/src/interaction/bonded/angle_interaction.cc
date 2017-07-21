@@ -31,9 +31,9 @@
 template<math::boundary_enum B, math::virial_enum V>
 static int _calculate_angle_interactions(topology::Topology & topo,
 					 configuration::Configuration & conf,
-					 simulation::Simulation & sim,
-					 std::vector<interaction::angle_type_struct> const & param)
+					 simulation::Simulation & sim)
 {
+  std::vector<interaction::angle_type_struct> const & param = topo.angle_types_cosharm();
   // loop over the bonds
   std::vector<topology::three_body_term_struct>::const_iterator
     a_it = topo.solute().angles().begin(),
@@ -136,7 +136,7 @@ int interaction::Angle_Interaction
   m_timer.start();
 
   SPLIT_VIRIAL_BOUNDARY(_calculate_angle_interactions,
-			topo, conf, sim, m_parameter);
+			topo, conf, sim);
 
   m_timer.stop();
 

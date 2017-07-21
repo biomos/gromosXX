@@ -337,7 +337,7 @@ int main(int argc, char* argv[]) {
 	// let's not claim we checked something that was zero to begin with
 	if(dE_on !=0){
 	    
-	  CHECKING("indivual lambdas ("+nm+")", res);
+	  CHECKING("individual lambdas ("+nm+")", res);
 	  CHECK_APPROX_EQUAL(E_on, E_off, 0.0000001, res);
 	  CHECK_APPROX_EQUAL(dE_on, dE_off*dLint, 0.0000001, res);
 	  RESULT(res, total);

@@ -17,7 +17,6 @@
 // interactions
 #include "../../interaction/interaction_types.h"
 #include "perturbed_soft_angle_interaction.h"
-#include "../../io/ifp.h"
 
 #include "../../util/template_split.h"
 #include "../../util/debug.h"
@@ -28,12 +27,6 @@
 #define SUBMODULE bonded
 
 
-interaction::Perturbed_Soft_Angle_Interaction::Perturbed_Soft_Angle_Interaction(io::IFP &it)
-      : Interaction("PerturbedSoftAngle")
-{
-      it.read_angles(m_parameter);
-}
-
 /**
  * calculate angle forces and energies and lambda derivatives.
  */
@@ -41,10 +34,10 @@ template<math::boundary_enum B, math::virial_enum V>
 static int _calculate_perturbed_soft_angle_interactions
 ( topology::Topology & topo,
   configuration::Configuration & conf,
-  simulation::Simulation & sim,
-  std::vector<interaction::angle_type_struct> &angletypes)
+  simulation::Simulation & sim)
 {
   // this is repeated code from Angle_Interaction !!!
+  std::vector<interaction::angle_type_struct> &angletypes = topo.angle_types_cosharm();
 
   DEBUG(5, "perturbed soft angle interaction");
   DEBUG(7, std::setprecision(5));
@@ -226,7 +219,7 @@ int interaction::Perturbed_Soft_Angle_Interaction
   m_timer.start();
 
   SPLIT_VIRIAL_BOUNDARY(_calculate_perturbed_soft_angle_interactions,
-			topo, conf, sim, m_parameter);
+			topo, conf, sim);
 
   m_timer.stop();
 
@@ -249,15 +242,15 @@ int interaction::Perturbed_Soft_Angle_Interaction
                                  bt_to = topo.perturbed_solute().softangles().end();
       for( ; bt_it != bt_to; ++bt_it){
           if (bt_it->A_type==INT_MAX-1) {
-            bt_it->A_type=m_parameter.size();
-            double cost = m_parameter[bt_it->B_type].cos0;
-            m_parameter.push_back(interaction::angle_type_struct(0, cost));   
+            bt_it->A_type=topo.angle_types_cosharm().size();
+            double cost = topo.angle_types_cosharm()[bt_it->B_type].cos0;
+            topo.angle_types_cosharm().push_back(interaction::angle_type_struct(0, cost));   
             DEBUG(10, "adding new angle type for soft angle perturbation: " 
                        << bt_it->A_type << " K=" << 0 << " cost=" << cost);         
           } else if (bt_it->B_type==INT_MAX-1) {
-            bt_it->B_type=m_parameter.size();
-            double cost = m_parameter[bt_it->A_type].cos0;
-            m_parameter.push_back(interaction::angle_type_struct(0, cost)); 
+            bt_it->B_type=topo.angle_types_cosharm().size();
+            double cost = topo.angle_types_cosharm()[bt_it->A_type].cos0;
+            topo.angle_types_cosharm().push_back(interaction::angle_type_struct(0, cost)); 
             DEBUG(10, "adding new angle type for soft angle perturbation: " 
                        << bt_it->B_type << " K=" << 0 << " cost=" << cost);      
           }
