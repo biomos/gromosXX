@@ -4414,8 +4414,8 @@ void io::In_Parameter::read_LAMBDAS(simulation::Parameter & param,
   }
 }
 
-/** ANITA
- * @section PRECALCLAM PRECALCLAM block
+/** 
+ * @section precalclam PRECALCLAM block
  * @verbatim
 PRECALCLAM
 # NRLAM   0  : off

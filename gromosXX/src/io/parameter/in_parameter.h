@@ -29,6 +29,7 @@
  * - @ref  positionres
  * - @ref  posres
  * - @ref  perturbation
+ * - @ref  precalclam
  * - @ref  pttopo
  * - @ref  jval
  * - @ref  jvalue
