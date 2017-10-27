@@ -1417,7 +1417,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
       f_pol = 0.0;
 
       DEBUG(8, "\tself-term " << i);
-      rp1 = -conf.current().posV(*it);
+      rp1 = -conf.current().posV(i);
       rp2 = conf.current().posV(i);
       rpp = 0.0;
 
@@ -1464,7 +1464,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
       f_pol = 0.0;
 
       DEBUG(8, "\tself-term " << i );
-      rp1 = -conf.current().posV(*it);
+      rp1 = -conf.current().posV(i);
       //rp1 = 0.0;
       rp2 = conf.current().posV(i);
       rpp = 0.0;
