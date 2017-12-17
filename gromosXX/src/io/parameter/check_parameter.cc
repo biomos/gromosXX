@@ -405,7 +405,7 @@ int io::check_parameter(simulation::Simulation & sim)
   fc.unlock("steepest_descent", "solvent_constraint_off");
   fc.unlock("steepest_descent", "solvent_shake");
   fc.unlock("steepest_descent", "pressure_calculation");
-  fc.unlock("steepest_descent", "pressure_scale_berendsen");
+  // fc.unlock("steepest_descent", "pressure_scale_berendsen");
   fc.unlock("steepest_descent", "virial_off");
   fc.unlock("steepest_descent", "virial_atomic");
   fc.unlock("steepest_descent", "virial_molecular");
