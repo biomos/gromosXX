@@ -96,7 +96,7 @@ int interaction::create_g96_nonbonded
     
     if (sim.param().polarise.cos) {
       os << "\t" << setw(20) << left << "Polarisation enabled" << right << "\n";
-      os << "\t" << setw(20) << left << "Eletric Field";
+      os << "\t" << setw(20) << left << "Electric Field";
       switch(sim.param().polarise.efield_site) {
         case simulation::ef_atom :
           os << setw(30) << left << "calculated at atom position" << right << "\n";

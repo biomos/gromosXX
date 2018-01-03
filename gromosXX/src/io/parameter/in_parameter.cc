@@ -3177,7 +3177,11 @@ void io::In_Parameter::read_POLARISE(simulation::Parameter & param,
     exampleblock << "# EFIELD   0,1 controls evaluation site for electric field\n";
     exampleblock << "#          0: evaluate at atom position\n";
     exampleblock << "#          1: evaluate at cos position\n";
-    exampleblock << "# MINFIELD >0.0 convergence criterium\n";
+    exampleblock << "# MINFIELD >0.0 convergence criterion in terms of the el. field (dU/(|qO|*dOH))\n";
+    exampleblock << "#          where dU  .. maximum change in energy due to the change in field\n";
+    exampleblock << "#                       [typically 2.5 kJ/mol]\n";
+    exampleblock << "#                qO  .. charge of an oxygen atom\n";
+    exampleblock << "#                dOH .. length of OH bond\n";
     exampleblock << "# DAMP     0,1 controls polarisability damping\n";
     exampleblock << "#          0: don't damp polarisability\n";
     exampleblock << "#          1: damp polarisability (with paramaters from topology)\n";

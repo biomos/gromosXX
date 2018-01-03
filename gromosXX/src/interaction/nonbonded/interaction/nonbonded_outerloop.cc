@@ -1663,7 +1663,7 @@ void interaction::Nonbonded_Outerloop
 
           // calculation of convergence criterium
           for (int j = 0; j < 3; ++j) {
-            double delta_e = fabs(storage.electric_field(i)(j) - e_el_new(i)(j))* 7.911492226513023 * 0.1;
+            double delta_e = fabs(storage.electric_field(i)(j) - e_el_new(i)(j));
             if (delta_e > maxfield) {
               maxfield = delta_e;
             }
@@ -1685,6 +1685,7 @@ void interaction::Nonbonded_Outerloop
 #endif
     DEBUG(11, "\trank: " << rank << " minfield: " << minfield << " iteration round: " << turni);
   }
+  DEBUG(5, "number of iterations: " << turni);
 }
 
 void interaction::Nonbonded_Outerloop

@@ -2664,7 +2664,7 @@ namespace simulation
        * - damp, no damping of polarisability
        * - output cospositions every 'write'th block to special trajectory
        */
-      polarise_struct() : cos(0), minfield(2.5), efield_site(ef_atom),
+      polarise_struct() : cos(0), minfield(37.3), efield_site(ef_atom),
                           damp(false), write(0)
       {}
       /**
