@@ -1663,15 +1663,16 @@ void interaction::Nonbonded_Outerloop
 
           // calculation of convergence criterium
           for (int j = 0; j < 3; ++j) {
-            double delta_e = fabs(storage.electric_field(i)(j) - e_el_new(i)(j));
-            if (delta_e > maxfield) {
-              maxfield = delta_e;
+            double delta_field = fabs(storage.electric_field(i)(j) - e_el_new(i)(j));
+            if (delta_field > maxfield) {
+              maxfield = delta_field;
             }
           }
         }
+
         storage.electric_field(i) = e_el_new(i);
       }
-    }
+    } // end if rank==0
     turni++;
     minfield = maxfield;
 
@@ -1685,7 +1686,7 @@ void interaction::Nonbonded_Outerloop
 #endif
     DEBUG(11, "\trank: " << rank << " minfield: " << minfield << " iteration round: " << turni);
   }
-  DEBUG(5, "number of iterations: " << turni);
+  DEBUG(5, "electric field iterations: " << turni);
 }
 
 void interaction::Nonbonded_Outerloop
