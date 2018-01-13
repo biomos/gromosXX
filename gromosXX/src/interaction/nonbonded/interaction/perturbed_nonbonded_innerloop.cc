@@ -202,7 +202,7 @@ t_interaction_spec, t_perturbation_details>
     // interactions have been calculated
     //--------------------------------------------------
 
-    DEBUG(8, "\tcalculated interaction state A:\n\t\tf: "
+    DEBUG(8, "\tdoscaling: calculated interaction state A:\n\t\tf: "
             << f1 << " f6: " << f6 << " f12: " << f12
             << "\n\t\te_lj: " << e_lj
             << " e_crf: " << e_crf
@@ -244,7 +244,7 @@ t_interaction_spec, t_perturbation_details>
         // interactions have been calculated
         //--------------------------------------------------
 
-        DEBUG(8, "\tcalculated interaction state A:\n\t\tf: "
+        DEBUG(8, "\tnoscaling: calculated interaction state A:\n\t\tf: "
                 << f1 << " f6: " << f6 << " f12: " << f12
                 << "\n\t\te_lj: " << e_lj
                 << " e_crf: " << e_crf
@@ -274,8 +274,8 @@ t_interaction_spec, t_perturbation_details>
 
         // TODO: could add another parameter, to only calculate every x steps
         // if nr_lambdas > 1, we apply extended TI 
-        if (((sim.steps()  % sim.param().write.free_energy) == 0) && 
-           sim.param().precalclam.nr_lambdas ){
+        if (sim.param().precalclam.nr_lambdas && ((sim.steps()  % sim.param().write.free_energy) == 0)){
+            DEBUG(8, "precalculate lj_crf_soft");
 //        if ( sim.param().precalclam.nr_lambdas ) { 
           double A_e_lj,B_e_lj, A_e_crf, B_e_crf,
               A_de_lj, B_de_lj, A_de_crf, B_de_crf;
@@ -335,11 +335,13 @@ t_interaction_spec, t_perturbation_details>
             DEBUG(8, "\ndone with storing energies ");
           } //all 101 lambda points done
         } // done with extended TI
+        DEBUG(8, "\ndone with lj_crf_func ");
 
         break;
       }
       case simulation::cgrain_func:
       {
+        DEBUG(7, "\tcgrain_func");
         math::Vec f;
         double f1, f6, f12;
 
@@ -378,6 +380,7 @@ t_interaction_spec, t_perturbation_details>
       }
       case simulation::cggromos_func:
       {
+        DEBUG(7, "\tcggromos_func");
         math::Vec f;
         double f1, f6, f12;
 
@@ -409,7 +412,7 @@ t_interaction_spec, t_perturbation_details>
         // interactions have been calculated
         //--------------------------------------------------
 
-        DEBUG(8, "\tcalculated interaction state A:\n\t\tf: "
+        DEBUG(8, "\tcg: calculated interaction state A:\n\t\tf: "
                 << f1 << " f6: " << f6 << " f12: " << f12
                 << "\n\t\te_lj: " << e_lj
                 << " e_crf: " << e_crf
@@ -434,6 +437,7 @@ t_interaction_spec, t_perturbation_details>
       }
       case simulation::pol_lj_crf_func:
       {
+        DEBUG(7, "\tpol_lj_crf_func");
         math::Vec rp1, rp2, rpp;
         double f1[4];
         math::VArray f(4);
@@ -479,6 +483,7 @@ t_interaction_spec, t_perturbation_details>
       }
       case simulation::pol_off_lj_crf_func:
       {
+        DEBUG(7, "\tpol_off_lj_crf_func");
         math::Vec rm = r;
         if (topo.gamma(i)!=0.0) {
           math::Vec rij, rik;
@@ -556,7 +561,7 @@ t_interaction_spec, t_perturbation_details>
                 io::message::critical);
     }
   }
-
+DEBUG(8, "\tenergies perturbed lj_crf_innerloop;");
   // energy
   assert(storage.energies.lj_energy.size() >
           topo.atom_energy_group(i));
@@ -770,8 +775,7 @@ t_interaction_spec, t_perturbation_details>
 
         // TODO: could add another parameter, to only calculate every x steps
         // if nr_lambdas > 1, we apply extended TI
-        if (((sim.steps()  % sim.param().write.free_energy) == 0) &&
-           sim.param().precalclam.nr_lambdas ){
+        if (sim.param().precalclam.nr_lambdas && ((sim.steps()  % sim.param().write.free_energy) == 0)){
  
           double A_e_lj,B_e_lj, A_e_crf, B_e_crf,
               A_de_lj, B_de_lj, A_de_crf, B_de_crf;
@@ -1111,8 +1115,7 @@ t_interaction_spec, t_perturbation_details>
               f_rf, e_rf, de_rf, true);
 
       // ANITA
-      if (((sim.steps()  % sim.param().write.free_energy) == 0) &&
-         sim.param().precalclam.nr_lambdas ){
+      if (sim.param().precalclam.nr_lambdas && ((sim.steps()  % sim.param().write.free_energy) == 0)){
         double A_e_rf, B_e_rf, A_de_rf, B_de_rf;
 
         // determine lambda stepsize from min,max and nr of lambdas
@@ -1260,8 +1263,7 @@ t_interaction_spec, t_perturbation_details>
         force(*it) -= f_rf;
 
         // ANITA
-        if (((sim.steps() % sim.param().write.free_energy) == 0) &&
-           sim.param().precalclam.nr_lambdas ){
+        if (sim.param().precalclam.nr_lambdas && ((sim.steps() % sim.param().write.free_energy) == 0)){
 //        if ( sim.param().precalclam.nr_lambdas ) {
           double A_e_rf, B_e_rf, A_de_rf, B_de_rf;
  
