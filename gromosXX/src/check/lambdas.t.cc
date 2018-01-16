@@ -143,16 +143,17 @@ int main(int argc, char* argv[]) {
   util::simulation_struct aladip_sim_on;
   util::simulation_struct aladip_sim_off;
   
-  io::In_Topology in_topo;
+  io::In_Topology in_topo_on, in_topo_off;
 
-  in_topo.quiet = quiet;
+  in_topo_on.quiet = quiet;
+  in_topo_off.quiet = quiet;
       
   if (util::create_simulation(stopo,
 			      spttopo,
 			      sconf,
 			      sinputon,
 			      aladip_sim_on,
-			      in_topo,
+			      in_topo_on,
 			      "", "", "", "", "", "", 
 			      quiet
 			      )
@@ -168,7 +169,7 @@ int main(int argc, char* argv[]) {
 			      sconf,
 			      sinputoff,
 			      aladip_sim_off,
-			      in_topo,
+			      in_topo_off,
 			      "", "", "", "", "", "", 
 			      quiet
 			      )
@@ -185,7 +186,7 @@ int main(int argc, char* argv[]) {
   if (interaction::create_g96_forcefield(*ff_on, 
 					 aladip_sim_on.topo,
 					 aladip_sim_on.sim,
-					 in_topo,
+					 in_topo_on,
 					 std::cout,
 					 quiet)
       != 0){
@@ -210,7 +211,7 @@ int main(int argc, char* argv[]) {
   if (interaction::create_g96_forcefield(*ff_off, 
 					 aladip_sim_off.topo,
 					 aladip_sim_off.sim,
-					 in_topo,
+					 in_topo_off,
 					 std::cout,
 					 quiet)
       != 0){

@@ -160,11 +160,6 @@ PAIRLIST
 #       ALGORITHM       NSNB    RCUTP   RCUTL   SIZE    TYPE
         standard        5       0.8     1.4     auto    chargegroup
 END
-#LONGRANGE
-# EPSRF     APPAK      RCRF
-#    62.0       0.0       1.4
-#END
-#
 NONBONDED
 #   NLRELE
          1
@@ -202,7 +197,6 @@ POSITIONRES
 #   NTPOR  NTPORB  NTPORS    CPOR
         0       0       0   1.0E1
 END
-#
 PERTURBATION
 #    NTG: 0..3 controls use of free-energy calculation.
 #         0: no free-energy calculation (default)
@@ -256,8 +250,6 @@ crf_soft        1     1   1.0   0.0   0.0   0.0   0.0
 crf_soft        1     2   1.0   1.0  -1.0   0.0   0.0
 crf_soft        2     2   0.0   0.0   0.5   0.5   0.0
 END   
-
-#-------
 #PATHINT
 # restrictions for PI
 # topology must contain bead information

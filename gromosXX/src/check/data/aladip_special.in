@@ -232,7 +232,7 @@ DISTANCERES
 #         1: distance restraints contribute to virial
 #
 #   NTDIR  NTDIRA    CDIR    DIR0  TAUDIR  FORCESCALE VDIR NTWDIR
-        2       0  1000.0     0.3     0.0           0    0      0
+        2       0  1000.0     0.3     0.1           0    0      0
 END
 DIHEDRALRES
 # NTDLR   0...3 controls dihedral-angle restraining and constraining 
