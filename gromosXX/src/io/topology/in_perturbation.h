@@ -100,8 +100,10 @@ Perturbed soft bonds
 PERTBONDSOFT
 # number of perturbed soft bonds
 	2
-#   type:  0 .. bond type with K=0
-#   ALB:   softness parameter, 0 .. no softness
+#   type:  0 .. bond type with the same equilibrium length as the other state
+#               but force constant K=0
+#   ALB:   softness parameter, 
+#          0 .. no softness
 #   atom(i) atom(j) bond_type(A) bond_type(B)  ALB
        4       6           15	    0         1000
        6      12           0       25         1000
@@ -178,8 +180,10 @@ Perturbed soft improper (harmonic) dihedrals
 PERTIMPROPERDIHSOFT
 # number of perturbed soft improper dihedrals
     2
-#   type:  0 .. imp. dih. angle type with K=0
-#   ALI:   softness parameter, 0 .. no softness
+#   type:  0 .. imp. dih. angle type with the same equilibrium value
+#          as the type of the other state but force constant 0
+#   ALI:   softness parameter, 
+#          0 .. no softness
 #    atom(i) atom(j) atom(k) atom(l)  type(A) type(B)  ALI
        12      13      10       6        1       0      4
        18      19      13      16        0       2      4
