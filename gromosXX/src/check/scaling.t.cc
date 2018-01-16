@@ -116,6 +116,8 @@ int main(int argc, char* argv[]) {
     std::cerr << "creating simulation failed!" << std::endl;
     return 1;
   }
+  io::messages.display(std::cout);
+  io::messages.clear();
       
   // std::cout << "aladip sim" << std::endl;
   // io::messages.display(std::cout);
@@ -134,6 +136,8 @@ int main(int argc, char* argv[]) {
     std::cerr << "creating lambda dependent simulation failed!" << std::endl;
     return 1;
   }
+  io::messages.display(std::cout);
+  io::messages.clear();
 
   // std::cout << "aladip lambdadep sim" << std::endl;
   // io::messages.display(std::cout);
@@ -287,6 +291,8 @@ int main(int argc, char* argv[]) {
   }
 */
   RESULT(res, total);
+  io::messages.display(std::cout);
+  io::messages.clear();
 
   return total;
 }

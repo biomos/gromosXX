@@ -25,6 +25,7 @@
 #include "../util/parse_tcouple.h"
 #include "../io/blockinput.h"
 #include "../io/topology/in_topology.h"
+#include "../io/message.h"
 
 #include "../algorithm/integration/leap_frog.h"
 #include "../algorithm/temperature/temperature_calculation.h"
@@ -127,6 +128,8 @@ int main(int argc, char* argv[])
     std::cerr << "creating simulation failed!" << std::endl;
     return 1;
   }
+  io::messages.display(std::cout);
+  io::messages.clear();
 
   // create a forcefield
   interaction::Forcefield *ff = new interaction::Forcefield;
@@ -141,10 +144,14 @@ int main(int argc, char* argv[])
     std::cerr << "creating forcefield failed!" << std::endl;
     return 1;
   }
+  io::messages.display(std::cout);
+  io::messages.clear();
 
   ff->init(aladip_sim.topo, aladip_sim.conf, aladip_sim.sim, std::cout, quiet);
       
   total += check::check_atomic_virial(aladip_sim.topo, aladip_sim.conf, aladip_sim.sim, *ff);
     
+  io::messages.display(std::cout);
+  io::messages.clear();
   return total;
 }

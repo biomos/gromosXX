@@ -145,7 +145,7 @@ FORCE
 #      NTF array
 # bonds    angles    imp.     dihe     charge nonbonded
 # H        H         H        H
-   1 1       1 1       1 1      1 1      1  1
+     1         1        1        1      1  1
 # NEGR    NRE(1)    NRE(2)    ...      NRE(NEGR)
      1     72
 END
@@ -256,6 +256,3 @@ END
 # NTPI
 #    0
 #END
-GROMOS96COMPAT
-1 1 1 1
-END

@@ -145,7 +145,7 @@ FORCE
 #      NTF array
 # bonds    angles    imp.     dihe     charge nonbonded
 # H        H         H        H
-  1  1     1  1      1  1     1  1     1  1
+     1        1         1        1     1  1
 # NEGR    NRE(1)    NRE(2)    ...      NRE(NEGR)
      2     12      72
 END
@@ -167,8 +167,8 @@ END
 NONBONDED
 #   NLRELE
          1
-#    APPAK      RCRF     EPSRF
-       0.0       1.4      62.0
+#    APPAK      RCRF     EPSRF  NSLFEXCL
+       0.0       1.4      62.0         1
 #   NSHAPE    ASHAPE    NA2CLC     TOLA2    EPSLS
         -1       1.4         2    0.1E-9      0.0
 #      NKX       NKY       NKZ       NK2
@@ -256,21 +256,3 @@ END
 # NTPI
 #    0
 #END
-
-
-GROMOS96COMPAT
-# NTNB96 0,1 controls use of g96-like nonbonded routines (ignored)
-#    0 : not used [default]
-#    1 : g96-like double-loop routines are used
-# NTR96 0,1 controls use of reaction field formula
-#    0 : new reaction field formula [default]
-#    1 : g96 reaction field formula
-# NTP96 0,1 controls use of g96 pressure calculation (ignored)
-#    0 : new formula using ekin a t 
-#    1 : g96 formulat using ekin at t - dt / 2
-# NTG96 0,1 controls use of soft-core formula (ignored)
-#    0 : new soft-core formula
-#    1 : g96 soft-core formula [default]
-# NTNB96   NTR96     NTP96   NTG96
-    1         1       1        1
-END

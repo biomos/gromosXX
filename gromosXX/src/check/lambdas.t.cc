@@ -25,6 +25,7 @@
 #include "../util/parse_tcouple.h"
 #include "../io/blockinput.h"
 #include "../io/topology/in_topology.h"
+#include "../io/message.h"
 
 #include "../algorithm/integration/leap_frog.h"
 #include "../algorithm/temperature/temperature_calculation.h"
@@ -159,6 +160,9 @@ int main(int argc, char* argv[]) {
     std::cerr << "creating simulation (on) failed!" << std::endl;
     return 1;
   }
+  io::messages.display(std::cout);
+  io::messages.clear();
+
   if (util::create_simulation(stopo,
 			      spttopo,
 			      sconf,
@@ -172,6 +176,8 @@ int main(int argc, char* argv[]) {
     std::cerr << "creating simulation (off) failed!" << std::endl;
     return 1;
   }     
+  io::messages.display(std::cout);
+  io::messages.clear();
   
   // create a forcefield
   interaction::Forcefield *ff_on = new interaction::Forcefield;
@@ -384,6 +390,8 @@ int main(int argc, char* argv[]) {
       RESULT(res, total);
     }
   }
+  io::messages.display(std::cout);
+  io::messages.clear();
 
   return total;
 }

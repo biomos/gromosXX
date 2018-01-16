@@ -25,6 +25,7 @@
 #include "../util/parse_tcouple.h"
 #include "../io/blockinput.h"
 #include "../io/topology/in_topology.h"
+#include "../io/message.h"
 
 #include "../algorithm/integration/leap_frog.h"
 #include "../algorithm/temperature/temperature_calculation.h"
@@ -146,6 +147,8 @@ int main(int argc, char* argv[]) {
     std::cerr << "creating simulation failed!" << std::endl;
     return 1;
   }
+  io::messages.display(std::cout);
+  io::messages.clear();
       
   if (true){
     // create a forcefield
@@ -161,6 +164,8 @@ int main(int argc, char* argv[]) {
       std::cerr << "creating forcefield failed!" << std::endl;
       return 1;
     }
+  io::messages.display(std::cout);
+  io::messages.clear();
 
     // store backup value for width of the charge shaping function
     double ashape = aladip_sim.sim.param().nonbonded.ls_charge_shape_width;
@@ -249,6 +254,8 @@ int main(int argc, char* argv[]) {
     }
     aladip_sim.md.print_timing(std::cout);
   }
+  io::messages.display(std::cout);
+  io::messages.clear();
 
   return total;
 }
