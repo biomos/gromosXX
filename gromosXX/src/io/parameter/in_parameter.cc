@@ -2444,7 +2444,7 @@ DIHEDRALRES
 #         2:    dihedral restraining using CDLR * WDLR
 #         3:    dihedral constraining
 #    
-# CDLR    >=0.0 force constant for dihedral restraining
+# CDLR    >=0.0 force constant for dihedral restraining [kJ/mol/degree^2]
 # PHILIN  >0.0  deviation after which the potential energy function is linearized 
 # NTWDLR >= 0  write every NTWDLR step dihedral information to external file 
 #
@@ -2459,7 +2459,7 @@ void io::In_Parameter::read_DIHEDRALRES(simulation::Parameter &param,
 
   std::vector<std::string> buffer;
   std::string s;
-  double phi_lin;
+  double phi_lin, K;
 
   DEBUG(10, "DIHEDRALRES block");
   buffer = m_block["DIHEDRALRES"];
@@ -2483,7 +2483,7 @@ void io::In_Parameter::read_DIHEDRALRES(simulation::Parameter &param,
 
   int dihrest;
   _lineStream >> dihrest
-          >> param.dihrest.K
+          >> K
           >> phi_lin
 	      >> param.dihrest.write;
 
@@ -2491,6 +2491,7 @@ void io::In_Parameter::read_DIHEDRALRES(simulation::Parameter &param,
     io::messages.add("bad line in DIHEDRALRES block",
           "In_Parameter", io::message::error);
 
+  param.dihrest.K = K*180*180 / (math::Pi * math::Pi);
   switch (dihrest) {
     case 0:
       param.dihrest.dihrest = simulation::dihedral_restr_off;

@@ -235,10 +235,11 @@ DIHEDRALRES
 #         3:    dihedral constraining
 #    
 # CDLR    >=0.0 force constant for dihedral restraining
-# PHILIN  deviation after which the potential energy function is linearized
+# PHILIN  deviation after which the potential energy function is linearizedi
+# NTWDLR >= 0  write every NTWDLR step dihedral information to external file 
 #
-# NTDLR  CDLR      PHILIN
-  2      100.0   1000.0
+# NTDLR  CDLR      PHILIN   NTWDLR
+  2      0.03046   1000.0    0
 END
 PERTURBATION
 #    NTG: 0..1 controls use of free-energy calculation.
