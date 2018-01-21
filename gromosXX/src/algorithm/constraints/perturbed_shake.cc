@@ -216,7 +216,7 @@ int algorithm::Perturbed_Shake
                    (sim.param().precalclam.nr_lambdas-1);
 
         //loop over nr_lambdas
-        for (int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
+        for (unsigned int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
 
           // determine current lambda for this index
           double lam=(lam_index * lambda_step) + sim.param().precalclam.min_lam;
@@ -226,8 +226,7 @@ int algorithm::Perturbed_Shake
           double difflam = r0lam*r0lam - dist2; 
           DEBUG(1, "AB_bond difflam " << difflam); 
           double value = (difflam / sp_2_m_dt2) * r0lam *r0_diff;
-          conf.old().perturbed_energy_derivatives.AB_bond[lam_index] += 
-             (difflam / sp_2_m_dt2) * sqrt(r0lam*r0lam) *r0_diff;
+          conf.old().perturbed_energy_derivatives.AB_bond[lam_index] += value;
         }
       } // ANITA 
 
@@ -282,7 +281,6 @@ void algorithm::Perturbed_Shake
   int first = 0;
   error = 0;
   
-  const unsigned int group_id = m_rank;
   int num_iterations = 0;
   bool convergence = false;
   while(!convergence){
@@ -433,7 +431,6 @@ int algorithm::Perturbed_Shake
   // broadcast eventual errors from master to slaves
 #ifdef XXMPI
   if (sim.mpi) {
-    math::VArray & pos = conf.current().pos;
     MPI::COMM_WORLD.Bcast(&error, 1, MPI::INT, 0);
   } 
 #endif

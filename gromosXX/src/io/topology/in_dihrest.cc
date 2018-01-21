@@ -148,7 +148,7 @@ void io::In_Dihrest::read_DIHEDRALRESSPEC(topology::Topology &topo,
   int i, j, k, l;
   double delta, phi, w0;
 
-  int num = block.numlines()-2;
+  unsigned int num = block.numlines()-2;
   for(unsigned int line_number=0; line_number < num; ++line_number){
     DEBUG(11, "\tnr " << line_number);
     block.get_next_parameter("IPLR", i, ">0", "");
@@ -272,7 +272,7 @@ void io::In_Dihrest::read_PERTDIHRESSPEC(topology::Topology &topo,
   int i, j, k, l, m, n;
   double delta, A_phi, A_w0, B_phi, B_w0;
 
-  int num = block.numlines()-2;
+  unsigned int num = block.numlines()-2;
   for(unsigned int line_number=0; line_number < num; ++line_number){
 
     DEBUG(11, "\tnr " << line_number);

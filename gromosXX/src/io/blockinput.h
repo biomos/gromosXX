@@ -235,10 +235,10 @@ namespace io {
   bool evaluate_logical_expression(const T &var, const std::string &expr) {
     bool result = false;
     std::vector<std::string> substrings_or = io::split(expr, "||");
-    for (int i=0; i<substrings_or.size(); i++) {
+    for (unsigned int i=0; i<substrings_or.size(); i++) {
         bool iresult=true;
         std::vector<std::string> substrings_and = io::split(io::trimmed(substrings_or[i]), "&&");
-        for (int j=0; j<substrings_and.size(); j++) {
+        for (unsigned int j=0; j<substrings_and.size(); j++) {
             iresult = iresult && evaluate_comparison(var, io::trimmed(substrings_and[j]));
         }
         result = result || iresult;

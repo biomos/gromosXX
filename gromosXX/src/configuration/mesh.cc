@@ -172,7 +172,7 @@ ParallelMesh::ParallelMesh(unsigned int size, unsigned int arank, unsigned int a
 ParallelMesh::ParallelMesh(unsigned int size, unsigned int arank, unsigned int acache_size,
       unsigned int x, unsigned int y, unsigned int z) : GenericMesh<complex_number>(),
       mesh_left(NULL), mesh_right(NULL), mesh_tmp(NULL),
-      num_threads(size), rank(arank), cache_size(cache_size), slice_width(0),
+      num_threads(size), rank(arank), cache_size(acache_size), slice_width(0),
       slice_start(0), slice_end(0) {
   resize(x,y,z);
 }

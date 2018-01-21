@@ -823,8 +823,8 @@ void io::In_RDC::read(topology::Topology& topo,
 // count in how many rdc groups every rdc appears
   const int n_rdc = tmp_rdc_rest_strct.size();
   vector<int> occurrence_count(n_rdc, 0);
-  for (int i=0; i<rdc_groups.size(); ++i) {
-    for (int j=0; j<rdc_groups[i].size(); ++j) {
+  for (unsigned int i=0; i<rdc_groups.size(); ++i) {
+    for (unsigned int j=0; j<rdc_groups[i].size(); ++j) {
       occurrence_count[rdc_groups[i][j]-1]++;
     }
   }
@@ -838,7 +838,7 @@ void io::In_RDC::read(topology::Topology& topo,
  
 // check if rdc groups contain each rdc at least once
   bool ignored_rdcs_exist = false;
-  for (int i=0; i<occurrence_count.size(); ++i) {
+  for (unsigned int i=0; i<occurrence_count.size(); ++i) {
     if (occurrence_count[i] == 0) {
       ignored_rdcs_exist = true;
       DEBUG(10, "RDC #" << i << " is not part of any RDC group.")
@@ -850,7 +850,7 @@ void io::In_RDC::read(topology::Topology& topo,
   }
 
   DEBUG(10, "setting RDC weights according to occurrence in rdc groups")
-  for (int i=0; i<occurrence_count.size(); ++i) {
+  for (unsigned int i=0; i<occurrence_count.size(); ++i) {
     if(occurrence_count[i] != 0) tmp_rdc_rest_strct[i].weight /= occurrence_count[i];
   }
 

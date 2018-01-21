@@ -517,7 +517,7 @@ void io::In_Topology::read_bond_types(topology::Topology& topo,
                   "In_Topology", io::message::error);
 
       //check consistency of bond lengths
-      for (int i=0; i< topo.bond_types_harm().size(); i++) {
+      for (unsigned int i=0; i< topo.bond_types_harm().size(); i++) {
         double rh=topo.bond_types_harm()[i].r0, r=topo.bond_types_quart()[i].r0;
         if (rh != r) {
           std::ostringstream msg;
@@ -536,7 +536,7 @@ void io::In_Topology::read_bond_types(topology::Topology& topo,
       read_block_HARMBONDTYPE(topo, param, os);
 
       // calculate the quartic ones
-      for (int i=0; i< topo.bond_types_harm().size(); i++) {
+      for (unsigned int i=0; i< topo.bond_types_harm().size(); i++) {
           double kh=topo.bond_types_harm()[i].K;
           double r=topo.bond_types_harm()[i].r0;
           double k=kh/(2*r*r);
@@ -554,7 +554,7 @@ void io::In_Topology::read_bond_types(topology::Topology& topo,
       read_block_BONDTYPE(topo, param, os);
 
       // calculate the harmonic ones
-      for (int i=0; i< topo.bond_types_quart().size(); i++) {
+      for (unsigned int i=0; i< topo.bond_types_quart().size(); i++) {
           double k=topo.bond_types_quart()[i].K;
           double r=topo.bond_types_quart()[i].r0;
           double kh=k*2*r*r;
@@ -567,7 +567,7 @@ void io::In_Topology::read_bond_types(topology::Topology& topo,
   }
 
   // check consistency: bond_types_quart and bond_types_harm have to be the same
-  for (int i=0; i< topo.bond_types_harm().size(); i++) {
+  for (unsigned int i=0; i< topo.bond_types_harm().size(); i++) {
       double kh=topo.bond_types_harm()[i].K, k=topo.bond_types_quart()[i].K;
       double r=topo.bond_types_harm()[i].r0;
       double calc_kh = k * 2.0 * r*r;
@@ -587,12 +587,12 @@ void io::In_Topology::read_bond_types(topology::Topology& topo,
   Block block(blockname);
   if (block.read_buffer(m_block[blockname], false) == 0) {
     block_read.insert(blockname);
-    int num;
+    unsigned int num;
     block.get_next_parameter("NCONS", num, ">=0", "");
 
-    int ic, jc, n;
+    int ic, jc;
     double b0;
-    for (int i=0; i<num; i++) {
+    for (unsigned int i=0; i<num; i++) {
       block.get_next_parameter("ICONS", ic, ">=1", "");
       block.get_next_parameter("JCONS", jc, ">=1", "");
       block.get_next_parameter("CONS", b0, ">=0", "");
@@ -736,7 +736,7 @@ void io::In_Topology::read_block_BONDTYPE(topology::Topology& topo,
     block_read.insert(blockname);
 
     int num;
-    double k, kh, r;
+    double k, r;
     block.get_next_parameter("NBTY", num, ">=0", "");
 
     if (num<=0 || block.error() ) return;
@@ -771,7 +771,7 @@ void io::In_Topology::read_block_HARMBONDTYPE(topology::Topology& topo,
     block_read.insert(blockname);
 
     int num;
-    double k, kh, r;
+    double kh, r;
     block.get_next_parameter("NBTY", num, ">=0", "");
 
     if (num<=0 || block.error() ) return;
@@ -1002,7 +1002,7 @@ void io::In_Topology::read_block_IMPDIHEDRALTYPE(topology::Topology &topo,
 
     block_read.insert(blockname);
 
-    int num, m;
+    int num;
     double k, q0;
     block.get_next_parameter("NQTY", num, ">=0", "");
 

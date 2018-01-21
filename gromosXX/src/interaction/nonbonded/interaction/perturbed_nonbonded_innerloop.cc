@@ -286,7 +286,7 @@ t_interaction_spec, t_perturbation_details>
                    (sim.param().precalclam.nr_lambdas-1);
 
           //loop over nr_lambdas
-          for (int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){ 
+          for (unsigned int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){ 
 
             // determine current lambda for this index
             double lam=(lam_index * lambda_step) + sim.param().precalclam.min_lam;
@@ -786,7 +786,7 @@ t_interaction_spec, t_perturbation_details>
                    (sim.param().precalclam.nr_lambdas-1);
 
           //loop over nr_lambdas
-          for (int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){ 
+          for (unsigned int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){ 
 
             // determine current lambda for this index
             double lam=(lam_index * lambda_step) + sim.param().precalclam.min_lam;
@@ -1124,7 +1124,7 @@ t_interaction_spec, t_perturbation_details>
                  (sim.param().precalclam.nr_lambdas-1);
 
         //loop over nr_lambdas
-        for (int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
+        for (unsigned int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
 
           // determine current lambda for this index
           double lam=(lam_index * lambda_step) + sim.param().precalclam.min_lam;
@@ -1273,7 +1273,7 @@ t_interaction_spec, t_perturbation_details>
                    (sim.param().precalclam.nr_lambdas-1);
  
           //loop over nr_lambdas
-          for (int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
+          for (unsigned int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
  
             // determine current lambda for this index
             double lam=(lam_index * lambda_step) + sim.param().precalclam.min_lam;
@@ -1489,7 +1489,7 @@ t_interaction_spec, t_perturbation_details>::perturbed_electric_field_innerloop
           topo.individual_lambda_derivative(simulation::crf_softness_lambda)[n1][n2],
           topo.lambda_exp());
 
-  if (topo.gamma(i) != 0.0 && simulation::pol_off_lj_crf_func)
+  if (topo.gamma(i) != 0.0 && simulation::pol_off_lj_crf_func != 0)
   {
      math::Vec rij, rik, rim;
      periodicity.nearest_image(conf.current().pos(i),
@@ -1499,7 +1499,7 @@ t_interaction_spec, t_perturbation_details>::perturbed_electric_field_innerloop
      rim = topo.gamma(i)*(rij + rik) / 2;
      r -= rim;
   }
-  if (topo.gamma(j) != 0.0 && simulation::pol_off_lj_crf_func) 
+  if (topo.gamma(j) != 0.0 && simulation::pol_off_lj_crf_func != 0) 
   {
      math::Vec rjj, rjk, rjm;
      periodicity.nearest_image(conf.current().pos(j),

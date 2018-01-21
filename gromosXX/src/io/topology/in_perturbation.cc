@@ -1235,8 +1235,9 @@ io::In_Perturbation::read(topology::Topology &topo,
         int num, n;
         _lineStream >> num;
         ++it;
-        
-        int seq, res, a_iac, b_iac;
+       
+        int seq; 
+        unsigned int res, a_iac, b_iac;
         double a_mass, b_mass, a_charge, b_charge;
         double lj_soft, crf_soft;
         std::string name;

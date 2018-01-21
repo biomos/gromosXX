@@ -118,7 +118,6 @@ static int _calculate_perturbed_soft_improper_interactions
     double diff = q - q0;
     double diff2 = diff * diff;
 
-    const double K_diff = K_B - K_A;
     const double q_diff =
       impropertypes[i_it->B_type].q0- 
       impropertypes[i_it->A_type].q0;
@@ -189,7 +188,7 @@ static int _calculate_perturbed_soft_improper_interactions
                             (sim.param().precalclam.nr_lambdas-1);
 
       //loop over nr_lambdas
-      for (int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
+      for (unsigned int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
 
         // determine current lambda for this index
         double lam=(lam_index * lambda_step) + sim.param().precalclam.min_lam;

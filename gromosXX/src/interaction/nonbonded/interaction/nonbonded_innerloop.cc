@@ -1773,7 +1773,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::electric_field_innerloop
   DEBUG(10, "\tni r " << r(0) << " / " << r(1) << " / " << r(2));
   math::Vec rm = r;
   DEBUG(10, "\t topo.gamma(i) " << topo.gamma(i));
-  if (topo.gamma(i) != 0.0 && simulation::pol_off_lj_crf_func)  {
+  if (topo.gamma(i) != 0.0 && simulation::pol_off_lj_crf_func != 0)  {
      math::Vec rij, rik, rim;
      periodicity.nearest_image(conf.current().pos(i),
         conf.current().pos(topo.gamma_j(i)), rij);
@@ -1783,7 +1783,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::electric_field_innerloop
      rm -= rim;
   }
   DEBUG(10, "\t topo.gamma(j) " << topo.gamma(j));
-  if (topo.gamma(j) != 0.0 && simulation::pol_off_lj_crf_func) {
+  if (topo.gamma(j) != 0.0 && simulation::pol_off_lj_crf_func != 0) {
      math::Vec rjj, rjk, rjm;
      periodicity.nearest_image(conf.current().pos(j),
          conf.current().pos(topo.gamma_j(j)), rjj);

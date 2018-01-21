@@ -47,7 +47,7 @@ static int _calculate_dp_bond_interactions
   //double energy, sigma2, diff2i, sigma4, diff4i, diffi;
   //double limitr = 0.3;
 
-  double energy, diff, diff2, diff4;
+  double energy, diff, diff2;
 
   math::Periodicity<B> periodicity(conf.current().box);
 
@@ -69,7 +69,6 @@ static int _calculate_dp_bond_interactions
 
       diff = dist - bondtypes[b_it->type].r0;
       diff2 = diff * diff;
-      diff4 = diff2 * diff2;
 
       f = (v / dist) * -0.5 * 4 * bondtypes[b_it->type].K * diff * diff2;
 

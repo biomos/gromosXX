@@ -338,7 +338,7 @@ int interaction::Nonbonded_Set::update_configuration
 
   // ANITA
   const unsigned int nr_lambdas = unsigned(m_storage.energies.A_lj_total.size());
-  for(int i=0; i < nr_lambdas; ++i) {
+  for(unsigned int i=0; i < nr_lambdas; ++i) {
     for(int j=0; j < ljs; ++j) {
       for(int k=0; k < ljs; ++k) {
         e.A_lj_energy[i][j][k] += 

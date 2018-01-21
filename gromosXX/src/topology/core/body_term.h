@@ -565,7 +565,7 @@ namespace topology {
     disfield_restraint_struct(bool on, util::Virtual_Atom v1,
             util::Virtual_Atom v2, 
             double r0, double K,
-            int proteinatoms)
+            unsigned int proteinatoms)
       : on(on), v1(v1), v2(v2), r0(r0), K(K),
     proteinatoms(proteinatoms) {
     }
@@ -592,7 +592,7 @@ namespace topology {
     /**
      * last atom of the protein atoms
      */
-    int proteinatoms;
+    unsigned int proteinatoms;
 
   };
   /**
@@ -604,7 +604,7 @@ namespace topology {
      */
     perturbed_disfield_restraint_struct() {on=false;}
     perturbed_disfield_restraint_struct(bool on, util::Virtual_Atom v1,
-            util::Virtual_Atom v2, int proteinatoms, 
+            util::Virtual_Atom v2, unsigned int proteinatoms, 
             double A_r0, double B_r0, double K_A, double K_B, 
             int n, int m)
       : on(on), v1(v1), v2(v2), proteinatoms(proteinatoms),
@@ -625,7 +625,7 @@ namespace topology {
     /**
      * last atom of the protein atoms
      */
-    int proteinatoms;
+    unsigned int proteinatoms;
     /**
      * restraint distance A.
      */

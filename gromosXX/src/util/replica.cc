@@ -167,7 +167,7 @@ void util::replica::run_MD() {
   int error;
   sim.steps() = steps;
   sim.time() = time;
-  while (int(sim.steps()) < maxSteps + steps) {
+  while ((unsigned int)(sim.steps()) < maxSteps + steps) {
     traj->write(conf, topo, sim, io::reduced);
     // run a step
     if ((error = md.run(topo, conf, sim))) {
@@ -271,22 +271,22 @@ void util::replica::swap(const unsigned int partnerID, const unsigned int partne
         // this we can store as the partner energy of the current replica
         epot_partner = E21;
         // E22: Energy with configuration 2 and lambda 2(own one)
+#ifdef XXMPI
         const double E22 = epot;
         // send E21 and E22
         double energies[2] = {E22, E21};
         //this send operation is matched in calc_probability()
-#ifdef XXMPI
         MPI_Send(&energies[0], 2, MPI_DOUBLE, partnerRank, SWITCHENERGIES, MPI_COMM_WORLD);
 #endif
       } else { // sameLambda
-        double energies[2] = {epot, 0.0};
 #ifdef XXMPI
+        double energies[2] = {epot, 0.0};
         MPI_Send(&energies[0],2,MPI_DOUBLE, partnerRank, SWITCHENERGIES, MPI_COMM_WORLD);
 #endif
      }
       if (sim.param().pcouple.scale != math::pcouple_off) {
-        math::Box box_replica = conf.current().box;
 #ifdef XXMPI
+        math::Box box_replica = conf.current().box;
         MPI_Send(&box_replica(0)[0], 1, MPI_BOX, partnerRank, BOX, MPI_COMM_WORLD);
 #endif
       }
@@ -639,7 +639,7 @@ void util::replica::velscale(int i){
   double T2 = sim.param().replica.temperature[i];
   if (T1 != T2) {
     double factor = sqrt(T1/T2);
-    for (int k = 0; k < topo.num_atoms(); ++k) {
+    for (unsigned int k = 0; k < topo.num_atoms(); ++k) {
       conf.current().vel(k) *= factor;
     }
   } 

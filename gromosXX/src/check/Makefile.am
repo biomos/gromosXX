@@ -64,7 +64,7 @@ lambdas_t_SOURCES = lambdas.t.cc\
 	check_state.cc
 
 lambdas_t_LDADD = ../libmdpp.la $(extra_lib)
-TESTS = aladip.t aladip_unperturbed.t aladip_atomic.t aladip_ls.t aladip_special.t c16_cg.t lambdas.t
+TESTS = aladip.t aladip_unperturbed.t aladip_atomic.t aladip_special.t c16_cg.t lambdas.t
 
 EXTRA_DIST = data/aladip.topo\
 	data/aladip.pttopo\

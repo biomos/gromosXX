@@ -283,7 +283,7 @@ namespace io {
      * read VELOCITY block.
      */
     bool _read_velocity(math::VArray &vel, std::vector<std::string> &buffer,
-			int const num);
+			unsigned int const num);
     
     /**
      * read LATTICESHIFTS block.

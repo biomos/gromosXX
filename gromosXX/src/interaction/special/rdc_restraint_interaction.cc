@@ -620,7 +620,7 @@ int _calculate_interactions_mfield(topology::Topology & topo,
       const double stepsize = sim.param().rdc.emstepsize; // eg 1e-3
       const double terminate_gradient = sim.param().rdc.emgradient; // eg 1e-5
       const double tol = 1e-1; // accuracy of line minimization, the manual suggests 0.1
-      const int max_iterations = sim.param().rdc.emmaxiter;
+      const unsigned int max_iterations = sim.param().rdc.emmaxiter;
 
       vector<configuration::Configuration::special_struct::rdc_struct>::iterator
           conf_it = conf.special().rdc.begin(),

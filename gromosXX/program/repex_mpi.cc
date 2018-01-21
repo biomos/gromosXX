@@ -192,7 +192,7 @@ int main(int argc, char *argv[]) {
   // could be optimized by putting neighboring replicas on same node; less communication...
   for (int i = 0; i < ceil((float) numReplicas / (float) size); ++i) {
     for (int j = 0; j < size; ++j) {
-      int ID = j + i*size;
+      unsigned int ID = j + i*size;
       if (ID >= numReplicas)
         break;
       repMap.insert(std::pair<unsigned int, unsigned int>(ID, j));

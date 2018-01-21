@@ -424,9 +424,9 @@ double _calculate_derivative(topology::Topology & topo,
         if (param.jvalue.mode == simulation::jvalue_restr_av ||
            param.jvalue.mode == simulation::jvalue_restr_av_weighted){       	
            if(param.jvalue.tarfscale == simulation::jvalue_restr_tar_no_scaling) // omit memory decay factor
-              tar_fscale == 1.0;
+              tar_fscale = 1.0;
            else if(param.jvalue.tarfscale == simulation::jvalue_restr_tar_scaling) // use memory decay factor
-              tar_fscale == (1.0-exp(-param.step.dt / param.jvalue.tau));
+              tar_fscale = (1.0-exp(-param.step.dt / param.jvalue.tau));
         }
 	const double dJ_dphi = - (2 * it->a * cos_phi_delta * sin_phi_delta + it->b * sin_phi_delta)*tar_fscale;
 

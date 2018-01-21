@@ -1692,7 +1692,7 @@ namespace topology
      /**
      * the last atom of roto-translational constraints
      */
-    int m_rottrans_last_atom;
+    unsigned int m_rottrans_last_atom;
     /**
      * order parameter restraints
      */

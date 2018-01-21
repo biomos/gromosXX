@@ -1532,7 +1532,7 @@ void io::In_Parameter::read_MULTIBATH(simulation::Parameter &param,
         }
 
         int num_baths, num_dof;
-        int last, com_bath, ir_bath;
+        unsigned int last, com_bath, ir_bath;
         double temp, tau;
 
         // the baths
@@ -4264,8 +4264,7 @@ void io::In_Parameter::read_NEMD(simulation::Parameter & param,
         block_read.insert(blockname);
         param.setDevelop("NEMD is under development.");
 
-        int nemd, property, method, slabnum, pertfrq, stdyaft, write;
-        double ampli;
+        int nemd, method;
         block.get_next_parameter("NEMD", nemd, "", "0,1");
         block.get_next_parameter("PROPERTY", param.nemd.property, "", "0");
         block.get_next_parameter("METHOD", method, "", "0,1");
@@ -4287,7 +4286,7 @@ void io::In_Parameter::read_NEMD(simulation::Parameter & param,
             case 0:
             {
                 param.nemd.method = 0;
-                if (slabnum <=0 || ampli <=0)
+                if (param.nemd.slabnum <=0 || param.nemd.ampbath <=0)
                     io::messages.add("NEMD block: PPM method used, but found invalid values for SLABNUM and AMPLI",
                                      "In_Parameter", io::message::error);
                 break;
@@ -4295,7 +4294,7 @@ void io::In_Parameter::read_NEMD(simulation::Parameter & param,
             case 1:
             {
                 param.nemd.method = 1;
-                if (slabnum <=0 || pertfrq <=0)
+                if (param.nemd.slabnum <=0 || param.nemd.pertfrq <=0)
                     io::messages.add("NEMD block: IRM method used, but found invalid values for SLABNUM and PERTFRQ",
                                      "In_Parameter", io::message::error);
                 break;
@@ -4479,8 +4478,8 @@ void io::In_Parameter::read_ADDECOUPLE(simulation::Parameter & param,
     if (block.read_buffer(m_block[blockname], false) == 0) {
         block_read.insert(blockname);
 
-        unsigned int adstart, eg, tg=0, adend, write, tir;
-        double sm, sv, st, tmf;
+        unsigned int adstart, eg, tg=0, adend, tir;
+        double sm, sv, st;
 
         block.get_next_parameter("ADGR", param.addecouple.adgr, "=>0", "");
 
@@ -4802,7 +4801,6 @@ void io::In_Parameter::read_SYMRES(simulation::Parameter & param,
         block_read.insert(blockname);
 
         int enable;
-        double fc;
         block.get_next_parameter("NTSYM", enable, "", "0,1,2");
         block.get_next_parameter("CSYM", param.symrest.force_constant, ">=0", "");
 

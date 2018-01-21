@@ -478,14 +478,13 @@ bool io::In_Configuration::read_box
       buffer = m_block["BOX"];
       if (buffer.size() && (sim.param().boundary.boundary == math::rectangular ||
 			    sim.param().boundary.boundary == math::truncoct)){
-	if (!quiet)
-	  os << "\treading BOX...\n";
-          _read_g96_box(conf.current().box, buffer);
-          conf.old().box = conf.current().box;
-          conf.old().phi = conf.current().phi;
-          conf.old().theta = conf.current().theta;
-          conf.old().psi = conf.current().psi;
-          io::messages.add("BOX given"
+	if (!quiet) os << "\treading BOX...\n";
+        _read_g96_box(conf.current().box, buffer);
+        conf.old().box = conf.current().box;
+        conf.old().phi = conf.current().phi;
+        conf.old().theta = conf.current().theta;
+        conf.old().psi = conf.current().psi;
+        io::messages.add("BOX given"
 		     " - output will be GENBOX",
 		     "In_Configuration", io::message::notice);
 	block_read.insert("BOX");
@@ -1514,7 +1513,7 @@ bool io::In_Configuration::_read_velocityred(math::VArray &vel,
 
 bool io::In_Configuration::_read_velocity(math::VArray &vel,
 					  std::vector<std::string> &buffer,
-					  int const num)
+					  unsigned int const num)
 {
   DEBUG(8, "read velocity");
 
@@ -1523,7 +1522,7 @@ bool io::In_Configuration::_read_velocity(math::VArray &vel,
     to = buffer.end()-1;
 
   std::string s1, s2;
-  int i, n, nr;
+  unsigned int i;
 
   for(i=0; it != to; ++i, ++it){
     if (i >= num){
@@ -2302,8 +2301,8 @@ bool io::In_Configuration::_read_rdc_av(std::vector<std::string> &buffer,
 
   // check if number of saved values is correct
   // we can only check the sum, not the individual values
-  int count=0;
-  for(int i=0; i<rdc_res.size(); ++i) count += rdc_res[i].size();
+  unsigned int count=0;
+  for(unsigned int i=0; i<rdc_res.size(); ++i) count += rdc_res[i].size();
   DEBUG(15,"buffer size: " << buffer.size()-1)
   DEBUG(15,"count: " << count)
   if (buffer.size()-1 != count){
@@ -2317,7 +2316,7 @@ bool io::In_Configuration::_read_rdc_av(std::vector<std::string> &buffer,
       buff_to = buffer.end()-1;
 
   double av;
-  int i=0,j=0; // index for rdc-groups and rdcs in groups
+  unsigned int i=0,j=0; // index for rdc-groups and rdcs in groups
   for(; buff_it != buff_to; ++buff_it, ++j){
 
     _lineStream.clear();
@@ -2583,9 +2582,9 @@ bool io::In_Configuration::_read_rdc_stochint(std::vector<std::string> &buffer,
     return false;
   }
 
-  if(type==simulation::rdc_mf) for (int i=0; i!=rdc.size(); ++i) rdc[i].stochastic_integral_mf.clear();
-  else if(type==simulation::rdc_t) for (int i=0; i!=rdc.size(); ++i) rdc[i].stochastic_integral_t.clear();
-  else if(type==simulation::rdc_sh) for (int i=0; i!=rdc.size(); ++i) rdc[i].stochastic_integral_sh.clear();
+  if(type==simulation::rdc_mf) for (unsigned int i=0; i!=rdc.size(); ++i) rdc[i].stochastic_integral_mf.clear();
+  else if(type==simulation::rdc_t) for (unsigned int i=0; i!=rdc.size(); ++i) rdc[i].stochastic_integral_t.clear();
+  else if(type==simulation::rdc_sh) for (unsigned int i=0; i!=rdc.size(); ++i) rdc[i].stochastic_integral_sh.clear();
   else assert (false);
 
   // tmp
@@ -2693,8 +2692,7 @@ _read_time(std::vector<std::string> &buffer,
   DEBUG(8, "read time");
 
   // no title in buffer!
-  std::vector<std::string>::const_iterator it = buffer.begin(),
-    to = buffer.end()-1;
+  std::vector<std::string>::const_iterator it = buffer.begin();
 
   _lineStream.clear();
   _lineStream.str(*it);
@@ -2718,8 +2716,7 @@ _read_time_step(std::vector<std::string> &buffer,
   DEBUG(8, "read time step");
 
   // no title in buffer!
-  std::vector<std::string>::const_iterator it = buffer.begin(),
-    to = buffer.end()-1;
+  std::vector<std::string>::const_iterator it = buffer.begin();
 
   _lineStream.clear();
   _lineStream.str(*it);

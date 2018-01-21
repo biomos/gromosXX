@@ -144,7 +144,7 @@ int interaction::Periodic_Scaling
     }
     
     // copy dihedral types from topology
-    for (int i=0; i<topo.dihedral_types().size(); i++){
+    for (unsigned int i=0; i<topo.dihedral_types().size(); i++){
         m_dihedral_types.push_back(topo.dihedral_types()[i]);
     }
   } // JREST periodic scaling

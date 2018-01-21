@@ -48,6 +48,7 @@ m_num_solute_chargegroups(0),
 m_num_solute_molecules(0),
 m_num_solute_temperature_groups(0),
 m_num_solute_pressure_groups(0),
+m_rottrans_last_atom(0),
 m_multicell_topo(NULL),
 m_polarisability(0),
 m_coscharge(0),
@@ -64,8 +65,7 @@ m_sasa_volume_tot(0.0),
 m_sasa_first_neighbour(),
 m_sasa_second_neighbour(),
 m_sasa_third_neighbour(),
-m_sasa_higher_neighbour(),
-m_rottrans_last_atom(0) {
+m_sasa_higher_neighbour() {
   m_chargegroup.push_back(0);
   m_molecule.push_back(0);
   m_temperature_group.push_back(0);
@@ -1154,9 +1154,6 @@ calculate_constraint_dof(simulation::Multibath &multibath,
 
   if (position_constraints) {
     DEBUG(6, "position contraints dof");
-    std::vector<topology::position_restraint_struct>::const_iterator
-    it = position_restraints().begin(),
-            to = position_restraints().end();
 
     topology::Temperaturegroup_Iterator tmpit = temperature_group_begin(),
             tmpto = temperature_group_end();

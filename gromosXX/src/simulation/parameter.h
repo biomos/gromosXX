@@ -2510,7 +2510,7 @@ namespace simulation
       /** 
        * calculate nr_lambdas extra lambda points 
        */
-       int nr_lambdas;
+       unsigned int nr_lambdas;
       /** 
        * starting from lambda 
        */
@@ -3063,7 +3063,7 @@ namespace simulation
       /**
        * number of addiabatic decoupling groups
        */
-      int adgr;
+      unsigned int adgr;
 
       struct adc_struct {
 

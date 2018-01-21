@@ -58,6 +58,7 @@ io::Out_Configuration::Out_Configuration(std::string title,
 m_output(os),
 m_final(false),
 m_replica(false),
+m_write_special(false),
 m_every_pos(0),
 m_every_vel(0),
 m_every_force(0),
@@ -79,7 +80,6 @@ m_every_adde(0),
 m_every_nemd(0),
 m_every_oparam(0),
 m_every_rdc(0),
-m_write_special(false),
 m_write_blockaverage_energy(false),
 m_write_blockaverage_free_energy(false),
 m_precision(9),
@@ -249,7 +249,7 @@ void io::Out_Configuration::init(io::Argument & args,
             io::message::error);
   }
 
-  if (param.replica.num_T * param.replica.num_l) {
+  if (param.replica.num_T && param.replica.num_l) {
     m_replica = true;
   }
 
