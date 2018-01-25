@@ -45,9 +45,10 @@ util::replica_exchange_master::replica_exchange_master(io::Argument & args,
         std::map<ID_t, rank_t> & repMap)
 :
 replica_exchange_base(args, cont, rank, repIDs, repMap),
-repParams(replicas[0]->sim.param().replica),
 size(_size),
-numReplicas(_numReplicas) {
+numReplicas(_numReplicas), 
+repParams(replicas[0]->sim.param().replica)
+{
   assert(rank == 0);
   assert(numReplicas > 0);
   replicaData.resize(numReplicas);

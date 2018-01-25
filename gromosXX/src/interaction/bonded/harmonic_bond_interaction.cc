@@ -32,9 +32,9 @@ template<math::boundary_enum B, math::virial_enum V>
 static int _calculate_harmonic_bond_interactions
 (topology::Topology & topo,
  configuration::Configuration & conf,
- simulation::Simulation & sim,
- std::vector<interaction::bond_type_struct> const & param)
+ simulation::Simulation & sim)
 {
+  std::vector<interaction::bond_type_struct> const & bondtypes=topo.bond_types_harm();
   // loop over the bonds
   std::vector<topology::two_body_term_struct>::const_iterator b_it =
     topo.solute().bonds().begin(),
@@ -54,21 +54,21 @@ static int _calculate_harmonic_bond_interactions
     double dist = sqrt(abs2(v));
     
     assert(dist != 0.0);
-    assert(unsigned(b_it->type) < param.size());
+    assert(unsigned(b_it->type) < bondtypes.size());
     
     DEBUG(7, "bond " << b_it->i << "-" << b_it->j << " type " << b_it->type);
-    DEBUG(10, "K " << param[b_it->type].K << " r0 " 
-	  << param[b_it->type].r0);
+    DEBUG(10, "K " << bondtypes[b_it->type].K << " r0 " 
+	  << bondtypes[b_it->type].r0);
     DEBUG(10, "pos i " << math::v2s(pos(b_it->i)));
     DEBUG(10, "pos j " << math::v2s(pos(b_it->j)));
     DEBUG(10, "dist " << dist);
-    DEBUG(10, "DF " << (-param[b_it->type].K * 
-			(dist - param[b_it->type].r0) / dist) 
+    DEBUG(10, "DF " << (-bondtypes[b_it->type].K * 
+			(dist - bondtypes[b_it->type].r0) / dist) 
 	  << "\nr(ij) " << math::v2s(v));
 
-    diff = dist - param[b_it->type].r0;
+    diff = dist - bondtypes[b_it->type].r0;
 
-    f = v * (-param[b_it->type].K *
+    f = v * (-bondtypes[b_it->type].K *
 	     (diff) / dist);
     
     force(b_it->i) += f;
@@ -83,7 +83,7 @@ static int _calculate_harmonic_bond_interactions
       DEBUG(7, "\tatomic virial done");
       // }
 
-    energy = 0.5 * param[b_it->type].K * diff * diff;
+    energy = 0.5 * bondtypes[b_it->type].K * diff * diff;
     conf.current().energies.bond_energy[topo.atom_energy_group()
 					[b_it->i]] += energy;
 
@@ -105,7 +105,7 @@ int interaction::Harmonic_Bond_Interaction
   m_timer.start();
 
   SPLIT_VIRIAL_BOUNDARY(_calculate_harmonic_bond_interactions,
-			topo, conf, sim, m_parameter);
+			topo, conf, sim);
 
   m_timer.stop();
 

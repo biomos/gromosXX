@@ -36,8 +36,10 @@ ls_pair_total(0.0),
 ls_realspace_total(0.0),
 ls_kspace_total(0.0),
 ls_self_total(0.0),
+ls_self_total_nvt(0.0),
 ls_surface_total(0.0),
 ls_a_term_total(0.0),
+ls_a_term_total_nvt(0.0),
 special_total(0.0),
 posrest_total(0.0),
 distanceres_total(0.0),
@@ -57,9 +59,7 @@ sasa_volume_total(0.0),
 qm_total(0.0),
 eds_vr(0.0),
 entropy_term(0.0),
-m_ewarn(1E99),
-ls_self_total_nvt(0.0),
-ls_a_term_total_nvt(0.0){         
+m_ewarn(1E99){         
 }
 
 void configuration::Energy::zero(bool potential, bool kinetic)
@@ -282,7 +282,7 @@ int configuration::Energy::calculate_totals()
 {
   DEBUG(10, "energy: calculate totals");
   
-  int num_groups = unsigned(bond_energy.size());
+  unsigned int num_groups = unsigned(bond_energy.size());
 
   kinetic_total = 0.0;
 
@@ -308,10 +308,10 @@ int configuration::Energy::calculate_totals()
   sasa_volume_total = 0.0;
 
   // ANITA 
-  DEBUG(8, "ANITA setting totals to zero");
-  DEBUG(8, "ANITA A_lj_total.size() " << A_lj_total.size());
+  DEBUG(10, "ANITA setting totals to zero");
+  DEBUG(10, "ANITA A_lj_total.size() " << A_lj_total.size());
 
-  int nr_lambdas = unsigned(A_lj_total.size());
+  unsigned int nr_lambdas = unsigned(A_lj_total.size());
   for(unsigned int i=0; i<nr_lambdas; ++i){
     A_lj_total[i] = 0.0;
     B_lj_total[i] = 0.0;
@@ -319,9 +319,9 @@ int configuration::Energy::calculate_totals()
     B_crf_total[i] = 0.0;
   }
 
-  for(int i=0; i<nr_lambdas; ++i){
-    for(int j=0; j<num_groups; j++){
-      for(int k=j; k<num_groups; k++){
+  for(unsigned int i=0; i<nr_lambdas; ++i){
+    for(unsigned int j=0; j<num_groups; j++){
+      for(unsigned int k=j; k<num_groups; k++){
         if(j!=k){
           A_lj_energy[i][k][j] += A_lj_energy[i][j][k];
           B_lj_energy[i][k][j] += B_lj_energy[i][j][k];
@@ -352,8 +352,8 @@ int configuration::Energy::calculate_totals()
   }
 
 
-  for(int i=0; i<num_groups; i++){
-    for(int j=i; j<num_groups; j++){
+  for(unsigned int i=0; i<num_groups; i++){
+    for(unsigned int j=i; j<num_groups; j++){
 
       if(i!=j){
         lj_energy[j][i] += lj_energy[i][j];

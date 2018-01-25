@@ -13,6 +13,7 @@
 #include "perturbed_solute.h"
 #include "sd.h"
 #include "exclusions.h"
+#include "../interaction/interaction_types.h"
 
 namespace simulation
 {
@@ -45,7 +46,7 @@ namespace topology
      * can multiply topologies
      */
     explicit Topology(Topology const & topo, int mul_solute = 1, int mul_solvent = -1);
-    
+
     /**
      * Destructor
      */
@@ -55,7 +56,7 @@ namespace topology
      * integer atom code accessor.
      */
     int iac(unsigned int const i)const {assert(i < m_iac.size()); return m_iac[i];}
-    
+
     /**
      * masses accessor
      */
@@ -84,36 +85,36 @@ namespace topology
      * mass of atom i
      */
     double inverse_mass(int i)const { return m_inverse_mass(i); }
-    
+
     /**
      * charge accessor
      */
     math::SArray &charge() {return m_charge;}
-    
+
     /**
      * charge const accessor
      */
     math::SArray const & charge()const{return m_charge;}
-    
+
     /**
      * charge accessor
      */
     double charge(int i)const { return m_charge(i); }
-    
+
     /**
      * calculates the square of the sum of the charges
      *
      * @f[S^2 = (\sum_{i=1}^{N_q}\,q_i)@f]
      */
     double squared_sum_charges() const;
-    
+
     /**
      * calculates the sum of the squared charges
      *
      * @f[\tilde{S}^2 = \sum_{i=1}^{N_q}\,q_i^2@f]
      */
     double sum_squared_charges() const;
-    
+
     /**
      * polarisation charge accessor
      */
@@ -133,7 +134,7 @@ namespace topology
      * polarisability const accessor
      */
     double polarisability(int i)const {return m_polarisability(i);}
-    
+
     /**
      * polarisability damping E0 accessor
      */
@@ -143,7 +144,7 @@ namespace topology
      * polarisability damping E0 const accessor
      */
     double damping_level(int i)const {return m_damping_level(i);}
-    
+
     /**
      * polarisability damping p accessor
      */
@@ -197,7 +198,7 @@ namespace topology
      * total coarse grain factor
      */
     double & tot_cg_factor() {return m_tot_cg_factor;}
- 
+
     /**
      * stochastic dynamics const accessor
      */
@@ -217,7 +218,7 @@ namespace topology
      * perturbed solute accessor.
      */
     Perturbed_Solute & perturbed_solute() {return m_perturbed_solute;}
-    
+
     /**
      * eds-perturbed solute accessor.
      */
@@ -232,27 +233,27 @@ namespace topology
      * const perturbed solute accessor.
      */
     Perturbed_Solute const & perturbed_solute()const{return m_perturbed_solute;}
-    
+
     /**
      * const eds-perturbed solute accessor.
      */
     EDS_Perturbed_Solute const & eds_perturbed_solute()const{return m_eds_perturbed_solute;}
-    
+
     /**
      * number of atom types.
      */
     int num_atomtype()const {return m_num_atomtype;}
-    
+
     /**
      * set number of atom types.
      */
     void set_num_atomtype(int num) {m_num_atomtype = num;}
-    
+
     /**
      * number of solvents.
      */
     unsigned int num_solvents()const {return unsigned(m_num_solvent_molecules.size());}
-    
+
     /**
      * number of bond types.
      */
@@ -313,7 +314,7 @@ namespace topology
      * @param num_molecules the number of solvent molecules to add.
      */
     void resolvate(unsigned int solv, unsigned int num_molecules);
-    
+
     /**
      * set the capacity of solute atoms
      */
@@ -341,7 +342,7 @@ namespace topology
       assert(i < m_num_solvent_molecules.size());
       return m_num_solvent_molecules[i];
     }
-    
+
     /**
      * get the number of solvent atoms.
      */
@@ -357,7 +358,7 @@ namespace topology
 			 double mass, double charge, bool chargegroup,
 			 topology::excl_cont_t::value_type exclusions,
 			 topology::excl_cont_t::value_type one_four_pairs);
-    
+
     /**
      * residue names.
      */
@@ -375,6 +376,34 @@ namespace topology
      * const atom names.
      */
     std::map<std::string, int> const & atom_names()const {return m_atom_name;}
+
+    /**
+     * bond types
+     */
+    std::vector<interaction::bond_type_struct> & bond_types_harm() {return m_bond_types_harm;}
+    std::vector<interaction::bond_type_struct> & bond_types_quart() {return m_bond_types_quart;}
+    std::vector<interaction::bond_type_struct> const & bond_types_harm() const {return m_bond_types_harm;}
+    std::vector<interaction::bond_type_struct> const & bond_types_quart() const {return m_bond_types_quart;}
+
+    /**
+     * bond angle types
+     */
+    std::vector<interaction::angle_type_struct> & angle_types_harm() {return m_angle_types_harm;}
+    std::vector<interaction::angle_type_struct> & angle_types_cosharm() {return m_angle_types_cosharm;}
+    std::vector<interaction::angle_type_struct> const & angle_types_harm() const {return m_angle_types_harm;}
+    std::vector<interaction::angle_type_struct> const & angle_types_cosharm() const {return m_angle_types_cosharm;}
+
+    /**
+     * dihedral angle types
+     */
+    std::vector<interaction::dihedral_type_struct> & dihedral_types() {return m_dihedral_types;}
+    std::vector<interaction::dihedral_type_struct> const & dihedral_types() const {return m_dihedral_types;}
+
+    /**
+     * improper dihedral angle types
+     */
+    std::vector<interaction::improper_dihedral_type_struct> & impdihedral_types() {return m_impdihedral_types;}
+    std::vector<interaction::improper_dihedral_type_struct> const & impdihedral_types() const {return m_impdihedral_types;}
 
     /**
      * all exclusions for atom i. Exclusions, 1,4 interactions and Lennard-Jones exceptions
@@ -419,7 +448,7 @@ namespace topology
      * exclusions
      */
     excl_cont_t & exclusion() {return m_exclusion;}
-    
+
     /**
      * 1,4 pairs of atom i.
      */
@@ -428,16 +457,16 @@ namespace topology
       return m_one_four_pair[i];
     }
     /**
-     * 1,4 pairs 
+     * 1,4 pairs
      */
     excl_cont_t & one_four_pair(){return m_one_four_pair;}
-    
+
     /**
      * chargegroup accessor.
      */
     std::vector<int> const & chargegroups()const { return m_chargegroup; }
-    
-    int chargegroup(int i)const 
+
+    int chargegroup(int i)const
     {
       assert(int(m_chargegroup.size()) > i);
       return m_chargegroup[i];
@@ -462,7 +491,7 @@ namespace topology
      * the number of solute (sub)molecules
      */
     unsigned int & num_solute_molecules() {return m_num_solute_molecules;}
-    
+
     /**
      * the number of solute temperature groups (const)
      */
@@ -472,7 +501,7 @@ namespace topology
      * the number of solute temperature groups
      */
     unsigned int & num_solute_temperature_groups() {return m_num_solute_temperature_groups;}
-    
+
     /**
      * the number of solute pressure groups (const)
      */
@@ -539,8 +568,8 @@ namespace topology
      * end of temperature groups iterator
      */
     Temperaturegroup_Iterator temperature_group_end()const{
-      return Temperaturegroup_Iterator(m_temperature_group.end()-1);}    
- 
+      return Temperaturegroup_Iterator(m_temperature_group.end()-1);}
+
     /**
      * the pressure groups
      */
@@ -558,8 +587,8 @@ namespace topology
      * end of pressure groups iterator
      */
     Pressuregroup_Iterator pressure_group_end()const{
-      return Pressuregroup_Iterator(m_pressure_group.end()-1);}       
-    
+      return Pressuregroup_Iterator(m_pressure_group.end()-1);}
+
     /**
      * const energy group accessor.
      */
@@ -583,7 +612,7 @@ namespace topology
     std::vector<unsigned int> & atom_energy_group(){
       return m_atom_energy_group;
     }
-  
+
     /**
      * energy group of atom accessor
      */
@@ -598,7 +627,7 @@ namespace topology
     void calculate_constraint_dof(simulation::Multibath & mb,
 				  bool rottrans_constraints,
                                   bool position_constraints)const;
-    
+
     /**
      * check state
      */
@@ -608,7 +637,7 @@ namespace topology
      * return lambda
      */
     double lambda()const {return m_lambda;}
-    
+
     /**
      * return lambda (Bcast lambda to slaves)
      */
@@ -623,7 +652,7 @@ namespace topology
      * old lambda
      */
     double old_lambda()const { return m_old_lambda; }
-    
+
     /**
      * return nlam (exponent to lambda)
      */
@@ -639,35 +668,35 @@ namespace topology
      */
     bool is_perturbed(unsigned int const i)const {
       if (i >= num_solute_atoms()) return false;
-      
-      assert(i < m_is_perturbed.size()); 
+
+      assert(i < m_is_perturbed.size());
       return m_is_perturbed[i];
     }
     /**
      * is the atom perturbed?
      */
     std::vector<bool> & is_perturbed() { return m_is_perturbed;}
-    
+
     /**
      * is the atom eds-perturbed?
      */
     bool is_eds_perturbed(unsigned int const i)const {
       if (i >= num_solute_atoms()) return false;
-      
-      assert(i < m_is_eds_perturbed.size()); 
+
+      assert(i < m_is_eds_perturbed.size());
       return m_is_eds_perturbed[i];
     }
     /**
      * is the atom eds-perturbed?
      */
     std::vector<bool> & is_eds_perturbed() { return m_is_eds_perturbed;}
-    
+
     /**
      * is the atom polarisable?
      */
     bool is_polarisable(unsigned int const i)const {
-      
-      assert(i < m_is_polarisable.size()); 
+
+      assert(i < m_is_polarisable.size());
       return m_is_polarisable[i];
     }
     /**
@@ -687,7 +716,7 @@ namespace topology
      * is the atom coarse-grained?
      */
     std::vector<bool> & is_coarse_grained() { return m_is_coarse_grained;}
-    
+
     /**
      * recalculate lambda dependent properties.
      */
@@ -724,16 +753,16 @@ namespace topology
      * (so that they do not have to be recalculated for every interaction.
      */
     //std::vector<double> & lambda_prime() { return m_lambda_prime; }
-    
+
     /**
      * d lambda prime / d lambda derivative.
      * (to store the d Energy / d lambda derivative in one energy class as
-     * sum d E / d lambda prime * d lambda prime / d lambda 
+     * sum d E / d lambda prime * d lambda prime / d lambda
      * for all lambda prime).
      */
-    //std::vector<double> & lambda_prime_derivative() 
+    //std::vector<double> & lambda_prime_derivative()
     //{ return m_lambda_prime_derivative; }
-    
+
     /**
      * alpha parameters for the perturbed energy derivatives.
      */
@@ -745,11 +774,11 @@ namespace topology
      */
     //std::vector<double> & perturbed_energy_derivative_alpha()
     //{ return m_perturbed_energy_derivative_alpha; }
-    
+
     /**
-     * individual lambda values 
+     * individual lambda values
      */
-    std::vector< std::vector< double > >  & individual_lambda(int i) 
+    std::vector< std::vector< double > >  & individual_lambda(int i)
     {
       return m_individual_lambda[i];
     }
@@ -775,7 +804,7 @@ namespace topology
     {
       return m_individual_lambda_derivative[i];
     }
-    
+
     /**
      * position restraints accessor.
      */
@@ -966,7 +995,7 @@ namespace topology
     std::vector<unsigned int> const & xray_sym_restraints() const {
       return m_xray_sym_restraints;
     }
-    
+
     /**
      * atom numbers of the atoms to be symmetry restraint.
      */
@@ -1030,7 +1059,7 @@ namespace topology
     std::vector<distance_restraint_struct>  & distance_restraints()
     {
       return m_distance_restraint;
-    } 
+    }
     /**
      * const perturbed distance restraints accessor.
      */
@@ -1058,7 +1087,7 @@ namespace topology
     disfield_restraint_struct  & disfield_restraints()
     {
       return m_disfield_restraint;
-    } 
+    }
     /**
      * const perturbed distancefield restraints accessor.
      */
@@ -1086,7 +1115,7 @@ namespace topology
     std::vector<eds_distance_restraint_struct>  & eds_distance_restraints()
     {
       return m_eds_distance_restraint;
-    } 
+    }
 
     /**
      * const dihedral restraints accessor.
@@ -1184,11 +1213,11 @@ namespace topology
     /**
      * virtual grains accessor
      */
-    std::vector<virtual_grain_struct> & virtual_grains() 
+    std::vector<virtual_grain_struct> & virtual_grains()
     {
       return m_virtual_grain;
     }
-    
+
     /**
      * const virtual grains accessor
      */
@@ -1211,13 +1240,13 @@ namespace topology
     {
       return m_le_coordinates;
     }
-    
+
     /**
      * initialise the topology.
      * - adjust submolecules if empty
      */
     void init(simulation::Simulation const & sim,
-	      std::ostream & os = std::cout, 
+	      std::ostream & os = std::cout,
 	      bool quiet = false);
 
     /**
@@ -1319,7 +1348,7 @@ namespace topology
      * the perturbed solute.
      */
     Perturbed_Solute m_perturbed_solute;
-    
+
     /**
      * the eds-perturbed solute
      */
@@ -1329,12 +1358,12 @@ namespace topology
      * is the atom perturbed?
      */
     std::vector<bool> m_is_perturbed;
-    
+
     /**
      * is the atom eds-perturbed?
      */
-    std::vector<bool> m_is_eds_perturbed;   
-    
+    std::vector<bool> m_is_eds_perturbed;
+
     /**
      * is the atom polarisable?
      */
@@ -1344,23 +1373,23 @@ namespace topology
      * is the atom polarisable?
      */
     std::vector<bool> m_is_coarse_grained;
-    
+
     /**
      * the number of solvent molecules.
      */
     std::vector<unsigned int> m_num_solvent_molecules;
-    
+
     /**
      * the number of solvent atoms.
      * vector for multiple solvents.
      */
     std::vector<unsigned int> m_num_solvent_atoms;
-    
+
     /**
      * the solvents (multiple solvent).
      */
     std::vector<Solvent> m_solvent;
-    
+
     /**
      * the integer atom code.
      */
@@ -1374,7 +1403,7 @@ namespace topology
      * the inverse of the atomic masses.
      */
     math::SArray m_inverse_mass;
-    
+
     /**
      * the atom charges.
      */
@@ -1384,37 +1413,37 @@ namespace topology
      * stochastic dynamics variables
      */
     stochastic_struct m_stochastic;
-    
+
     /**
      * the atom exclusions.
      */
     excl_cont_t m_exclusion;
-    
+
     /**
      * the atom 1-4 interactions.
      */
     excl_cont_t m_one_four_pair;
-    
+
     /**
      * atom exclusions and 1-4 interactions.
      */
     excl_cont_t m_all_exclusion;
-    
+
     /**
      * chargegroup exclusions
      */
     std::vector<std::set<int> > m_chargegroup_exclusion;
-    
+
     /**
      * the molecules.
      */
     std::vector<unsigned int> m_molecule;
-    
+
     /**
      * the temperature groups
      */
     std::vector<unsigned int> m_temperature_group;
-    
+
     /**
      * the pressure groups
      */
@@ -1424,27 +1453,27 @@ namespace topology
      * the chargegroups.
      */
     std::vector<int> m_chargegroup;
-        
+
     /**
      * the number of solute chargegroups.
      */
     unsigned int m_num_solute_chargegroups;
-    
+
     /**
      * the number of solute molecules.
      */
     unsigned int m_num_solute_molecules;
-    
+
     /**
      * the number of solute temperature groups
      */
     unsigned int m_num_solute_temperature_groups;
-    
+
     /**
      * the number of solute pressure groups
      */
     unsigned int m_num_solute_pressure_groups;
-   
+
     /**
      * residue names (solute and solvent).
      */
@@ -1456,20 +1485,42 @@ namespace topology
     std::map<std::string, int> m_atom_name;
 
     /**
+     * store all available bond types with harmonic/quartic force constant
+     */
+    std::vector<interaction::bond_type_struct> m_bond_types_harm;
+    std::vector<interaction::bond_type_struct> m_bond_types_quart;
+
+    /**
+     * store all available angle types with harmonic/cosine harmonic force constant
+     */
+    std::vector<interaction::angle_type_struct> m_angle_types_harm;
+    std::vector<interaction::angle_type_struct> m_angle_types_cosharm;
+
+    /**
+     * store all available dihedral types
+     */
+    std::vector<interaction::dihedral_type_struct> m_dihedral_types;
+
+    /**
+     * store all available improper dihedral types
+     */
+    std::vector<interaction::improper_dihedral_type_struct> m_impdihedral_types;
+
+    /**
      * energy groups.
      */
     std::vector<unsigned int> m_energy_group;
-    
+
     /**
      * energy group of atom
      */
     std::vector<unsigned int> m_atom_energy_group;
-    
+
     /**
      * lambda.
      */
     double m_lambda;
-    
+
     /**
      * old lambda
      */
@@ -1483,26 +1534,26 @@ namespace topology
     /**
      * interaction matrix for scaled interactions
      */
-    std::map<std::pair<int, int>, std::pair<double, double> > 
+    std::map<std::pair<int, int>, std::pair<double, double> >
     m_energy_group_scaling;
 
     /**
      * interaction matrix for interactions with
      * changed lambda dependence
      */
-    //std::map<std::pair<int, int>, std::pair<int, double> > 
+    //std::map<std::pair<int, int>, std::pair<int, double> >
     //m_energy_group_lambdadep;
 
     /**
      * lambda primes for current lambda
      */
     //std::vector<double> m_lambda_prime;
-    
+
     /**
      * lambda prime / lambda derivatives
      */
     //std::vector<double> m_lambda_prime_derivative;
-    
+
     /**
      * alpha parameter values for the perturbed energy derivatives
      */
@@ -1532,48 +1583,48 @@ namespace topology
        */
       std::vector< std::map< std::pair<int, int>, double> > e;
     } /** individual_lambdas_struct */ m_individual_lambda_parameters;
-    
+
     /**
      * lambda-values for individual lambdas
      */
     std::vector< std::vector< std::vector< double > > > m_individual_lambda;
-    
+
     /**
      * lambda-derivative for individual lambdas
      */
     std::vector< std::vector< std::vector< double > > > m_individual_lambda_derivative;
-      
+
     /**
      * position restraints / constraints
      */
     std::vector<position_restraint_struct> m_position_restraint;
 
     /**
-     * distance restraints 
+     * distance restraints
      */
     std::vector<distance_restraint_struct> m_distance_restraint;
     /**
-     * perturbed distance restraints 
+     * perturbed distance restraints
      */
     std::vector<perturbed_distance_restraint_struct> m_perturbed_distance_restraint;
     /**
-     * distancefield restraints 
+     * distancefield restraints
      */
     disfield_restraint_struct m_disfield_restraint;
     /**
-     * perturbed distancefield restraints 
+     * perturbed distancefield restraints
      */
     perturbed_disfield_restraint_struct m_perturbed_disfield_restraint;
     /**
-     * eds distance restraints 
+     * eds distance restraints
      */
     std::vector<eds_distance_restraint_struct> m_eds_distance_restraint;
     /**
-     * dihedral restraints 
+     * dihedral restraints
      */
     std::vector<dihedral_restraint_struct> m_dihedral_restraint;
     /**
-     * perturbed dihedral restraints 
+     * perturbed dihedral restraints
      */
     std::vector<perturbed_dihedral_restraint_struct> m_perturbed_dihedral_restraint;
     /**
@@ -1641,7 +1692,7 @@ namespace topology
      /**
      * the last atom of roto-translational constraints
      */
-    int m_rottrans_last_atom;
+    unsigned int m_rottrans_last_atom;
     /**
      * order parameter restraints
      */
@@ -1655,27 +1706,27 @@ namespace topology
      * virtual grains
      */
     std::vector<virtual_grain_struct> m_virtual_grain;
-    
+
     /**
      * the atom polarisabilities
      */
-     math::SArray m_polarisability;    
-    
+     math::SArray m_polarisability;
+
     /**
      * the polarisation cos-charge.
      */
      math::SArray m_coscharge;
-     
+
     /**
      * the polarisability damping electric field offsef @f$ E_0 @f$
      */
      math::SArray m_damping_level;
-    
+
     /**
      * the polarisabiliy damping power @f$ p @f$
      */
      math::SArray m_damping_power;
-    
+
     /**
      * the polarisability damping electric field offsef @f$ E_0 @f$
      */
@@ -1730,9 +1781,9 @@ namespace topology
      * the QM zone
      */
     std::set<qm_atom_struct> m_qm_zone;
-    
+
   }; // topology
-  
+
 } // topology
 
 #endif

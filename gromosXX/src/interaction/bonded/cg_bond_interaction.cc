@@ -32,9 +32,9 @@ template<math::boundary_enum B, math::virial_enum V>
 static int _calculate_dp_bond_interactions
 (topology::Topology & topo,
  configuration::Configuration & conf,
- simulation::Simulation & sim,
- std::vector<interaction::bond_type_struct> const & param)
+ simulation::Simulation & sim)
 {
+  std::vector<interaction::bond_type_struct> const & bondtypes=topo.bond_types_harm();
   // loop over the bonds
   std::vector<topology::two_body_term_struct>::const_iterator b_it =
     topo.solute().cgbonds().begin(),
@@ -47,7 +47,7 @@ static int _calculate_dp_bond_interactions
   //double energy, sigma2, diff2i, sigma4, diff4i, diffi;
   //double limitr = 0.3;
 
-  double energy, diff, diff2, diff4;
+  double energy, diff, diff2;
 
   math::Periodicity<B> periodicity(conf.current().box);
 
@@ -56,22 +56,21 @@ static int _calculate_dp_bond_interactions
 
     double dist = abs(v);
 
-    if (dist > param[b_it->type].r0) {
+    if (dist > bondtypes[b_it->type].r0) {
 
-      assert(unsigned(b_it->type) < param.size());
+      assert(unsigned(b_it->type) < bondtypes.size());
 
       DEBUG(7, "bond " << b_it->i << "-" << b_it->j << " type " << b_it->type);
-      DEBUG(10, "K " << param[b_it->type].K << " r0 "
-              << param[b_it->type].r0);
+      DEBUG(10, "K " << bondtypes[b_it->type].K << " r0 "
+              << bondtypes[b_it->type].r0);
       DEBUG(10, "pos i " << math::v2s(pos(b_it->i)));
       DEBUG(10, "pos j " << math::v2s(pos(b_it->j)));
       DEBUG(10, "dist " << dist);
 
-      diff = dist - param[b_it->type].r0;
+      diff = dist - bondtypes[b_it->type].r0;
       diff2 = diff * diff;
-      diff4 = diff2 * diff2;
 
-      f = (v / dist) * -0.5 * 4 * param[b_it->type].K * diff * diff2;
+      f = (v / dist) * -0.5 * 4 * bondtypes[b_it->type].K * diff * diff2;
 
       force(b_it->i) += f;
       force(b_it->j) -= f;
@@ -85,7 +84,7 @@ static int _calculate_dp_bond_interactions
       DEBUG(7, "\tatomic virial done");
       // }
 
-      energy = 0.5 * param[b_it->type].K * diff2 * diff2;
+      energy = 0.5 * bondtypes[b_it->type].K * diff2 * diff2;
       conf.current().energies.bond_energy[topo.atom_energy_group()
               [b_it->i]] += energy;
 
@@ -108,7 +107,7 @@ int interaction::DP_Bond_Interaction
   m_timer.start();
 
   SPLIT_VIRIAL_BOUNDARY(_calculate_dp_bond_interactions,
-			topo, conf, sim, m_parameter);
+			topo, conf, sim);
 
   m_timer.stop();
 

@@ -306,7 +306,7 @@ static void _update_grid
 
   // if protection radius is 0, check if the start pos is in the protein
   if (sim.param().distancefield.protect==0) {
-   for(int a =0; a <= topo.perturbed_disfield_restraints().proteinatoms; a++){
+   for(unsigned int a =0; a <= topo.perturbed_disfield_restraints().proteinatoms; a++){
     math::Vec ppos = conf.current().pos(a);
     periodicity.put_into_box(ppos);
     math::Vec d = startpos - ppos;
@@ -347,7 +347,7 @@ static void _update_grid
     distance[j] = 4*(box(0,0)+box(1,1)+box(2,2));
 
   std::set<int> protein;
-  for(int a =0; a <= topo.perturbed_disfield_restraints().proteinatoms; a++){
+  for(unsigned int a =0; a <= topo.perturbed_disfield_restraints().proteinatoms; a++){
     math::Vec ppos = conf.current().pos(a);
     periodicity.put_into_box(ppos);
     int nx_min=int(-( sim.param().distancefield.proteincutoff - ppos(0) - box(0,0)/2)/grid);

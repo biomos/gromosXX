@@ -15,9 +15,9 @@
  *
  * <table border=0 cellpadding=0>
  * <tr><td> \@topoX</td><td>&lt;molecular topology file for box X&gt; </td><td style="color:#088A08">in</td></tr>
- * <tr><td> \@pttopoX</td><td>&lt;@ref pttopoX "molecular perturbation topology file for box X"&gt; </td><td style="color:#088A08">in</td></tr>
+ * <tr><td> \@pttopoX</td><td>&lt;@ref pttopo "molecular perturbation topology file for box X"&gt; </td><td style="color:#088A08">in</td></tr>
  * <tr><td> \@confX</td><td>&lt;coordinates and restart data for box X&gt; </td><td style="color:#088A08">in</td></tr>
- * <tr><td> \@inputX</td><td>&lt;@ref inputX "input parameters for box X"&gt;</td><td style="color:#088A08">in</td></tr>
+ * <tr><td> \@inputX</td><td>&lt;@ref input "input parameters for box X"&gt;</td><td style="color:#088A08">in</td></tr>
  * <tr><td> \@finX</td><td>&lt;final configuration for box X&gt; </td><td style="color:#FF0000">out</td></tr>
  * <tr><td> \@trcX</td><td>&lt;coordinate trajectory for box X&gt; </td><td style="color:#FF0000">out</td></tr>
  * <tr><td> \@trvX</td><td>&lt;velocity trajectory for box X&gt; </td><td style="color:#FF0000">out</td></tr>

@@ -36,7 +36,7 @@ int _calculate_perturbed_qbond_interactions
   simulation::Simulation & sim,
   interaction::Quartic_Bond_Interaction const & m_interaction)
 {
-
+  std::vector<interaction::bond_type_struct> const & bondtypes=topo.bond_types_quart();
   DEBUG(7, "perturbed quartic bond interaction");
   DEBUG(8, "using the bond interaction: " << m_interaction.name);
   DEBUG(8, std::setprecision(5));
@@ -76,18 +76,18 @@ int _calculate_perturbed_qbond_interactions
 
     DEBUG(7, "dist2: " << dist2);
 
-    assert(unsigned(b_it->A_type) < m_interaction.parameter().size());
-    assert(unsigned(b_it->B_type) < m_interaction.parameter().size());
+    assert(unsigned(b_it->A_type) < bondtypes.size());
+    assert(unsigned(b_it->B_type) < bondtypes.size());
 
-    const double K = (1 - lambda) * m_interaction.parameter()[b_it->A_type].K +
-      lambda * m_interaction.parameter()[b_it->B_type].K;
+    const double K = (1 - lambda) * bondtypes[b_it->A_type].K +
+      lambda * bondtypes[b_it->B_type].K;
     
     DEBUG(7, "K: " << K);
 
     const double r0 = ((1 - lambda) *
-		       m_interaction.parameter()[b_it->A_type].r0 +
+		       bondtypes[b_it->A_type].r0 +
 		       lambda *
-		       m_interaction.parameter()[b_it->B_type].r0);
+		       bondtypes[b_it->B_type].r0);
 
     const double r02 = r0 * r0;
 
@@ -115,21 +115,21 @@ int _calculate_perturbed_qbond_interactions
 
     DEBUG(7, "energy: " << e);
 
-    const double K_diff = m_interaction.parameter()[b_it->B_type].K -
-      m_interaction.parameter()[b_it->A_type].K;
+    const double K_diff = bondtypes[b_it->B_type].K -
+      bondtypes[b_it->A_type].K;
     DEBUG(7, "K_diff: " << K_diff);
     
-    const double b_diff = m_interaction.parameter()[b_it->B_type].r0 -
-      m_interaction.parameter()[b_it->A_type].r0;
+    const double b_diff = bondtypes[b_it->B_type].r0 -
+      bondtypes[b_it->A_type].r0;
 
     DEBUG(7, "b_diff: " << b_diff);
     
-    const double b_mix = m_interaction.parameter()[b_it->A_type].r0 +
+    const double b_mix = bondtypes[b_it->A_type].r0 +
       lambda * b_diff;
     DEBUG(7, "b_mix: " << b_mix);
     
     e_lambda = 0.25 * lambda_derivative * 
-      ( -4 * (m_interaction.parameter()[b_it->A_type].K +
+      ( -4 * (bondtypes[b_it->A_type].K +
 	      lambda * K_diff) *
 	b_diff * b_mix *
 	(dist2 - b_mix * b_mix) +
@@ -152,17 +152,17 @@ int _calculate_perturbed_qbond_interactions
     // ANITA
     if (sim.param().precalclam.nr_lambdas &&
         ((sim.steps() % sim.param().write.free_energy) == 0)){
-      double KA = m_interaction.parameter()[b_it->A_type].K;
-      double KB = m_interaction.parameter()[b_it->B_type].K;
-      double b0A = m_interaction.parameter()[b_it->A_type].r0;
-      double b0B = m_interaction.parameter()[b_it->B_type].r0;
+      double KA = bondtypes[b_it->A_type].K;
+      double KB = bondtypes[b_it->B_type].K;
+      double b0A = bondtypes[b_it->A_type].r0;
+      double b0B = bondtypes[b_it->B_type].r0;
 
       double lambda_step = (sim.param().precalclam.max_lam -
                             sim.param().precalclam.min_lam) /
                             (sim.param().precalclam.nr_lambdas-1);
 
       //loop over nr_lambdas
-      for (int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
+      for (unsigned int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
 
         // determine current lambda for this index
         double lam=(lam_index * lambda_step) + sim.param().precalclam.min_lam;

@@ -54,7 +54,6 @@ int interaction::create_g96_bonded(interaction::Forcefield & ff,
 				   bool quiet)
 {
   DEBUG(8, "creating g96 bonded");
-  
   if (param.force.bond == 1){
     if (!quiet)
       os << "\tquartic bond interaction\n";
@@ -62,7 +61,6 @@ int interaction::create_g96_bonded(interaction::Forcefield & ff,
     interaction::Quartic_Bond_Interaction *b =
               new interaction::Quartic_Bond_Interaction();
 
-    it.read_g96_bonds(b->parameter());
     ff.push_back(b);
 
     if (param.perturbation.perturbation) {
@@ -80,7 +78,6 @@ int interaction::create_g96_bonded(interaction::Forcefield & ff,
     interaction::Harmonic_Bond_Interaction *b =
       new interaction::Harmonic_Bond_Interaction();
 
-    it.read_harmonic_bonds(b->parameter());
     ff.push_back(b);
 
     io::messages.add("using harmonic bond potential",
@@ -99,21 +96,27 @@ int interaction::create_g96_bonded(interaction::Forcefield & ff,
   // do the perturbed soft bonds regardless of constraints
   // the affected bonds will have been removed from bonds and constraints
   if (param.perturbation.perturbation) { 
+    if (param.force.bond) {
       if (!quiet)
         os << "\tperturbed soft harmonic bond interaction\n";   
       interaction::Perturbed_Soft_Bond_Interaction * sb =
-        new interaction::Perturbed_Soft_Bond_Interaction(it);
+        new interaction::Perturbed_Soft_Bond_Interaction();
       ff.push_back(sb);
+    }
+    if (param.force.angle) {
       if (!quiet)
         os << "\tperturbed soft harmonic angle interaction\n";   
       interaction::Perturbed_Soft_Angle_Interaction * sa =
-        new interaction::Perturbed_Soft_Angle_Interaction(it);
+        new interaction::Perturbed_Soft_Angle_Interaction();
       ff.push_back(sa);
+    }
+    if (param.force.improper) {
       if (!quiet)
         os << "\tperturbed soft improper dihedral interaction\n";   
       interaction::Perturbed_Soft_Improper_Interaction * si =
-        new interaction::Perturbed_Soft_Improper_Interaction(it);
+        new interaction::Perturbed_Soft_Improper_Interaction();
       ff.push_back(si);
+    }
   }
 
   if (param.cgrain.level > 1) {
@@ -123,7 +126,6 @@ int interaction::create_g96_bonded(interaction::Forcefield & ff,
     interaction::DP_Bond_Interaction * bcg =
       new interaction::DP_Bond_Interaction();
 
-    it.read_g96_bonds(bcg->parameter());
     ff.push_back(bcg);
 
     if (param.perturbation.perturbation) {
@@ -136,14 +138,13 @@ int interaction::create_g96_bonded(interaction::Forcefield & ff,
     }
 
   }
-  
+
   if (param.force.angle == 1){
     if (!quiet)
       os <<"\tbond angle (cosine) interaction\n";
     interaction::Angle_Interaction *a =
       new interaction::Angle_Interaction();
-    
-    it.read_angles(a->parameter());
+
     ff.push_back(a);
 
     if (param.perturbation.perturbation){
@@ -160,8 +161,7 @@ int interaction::create_g96_bonded(interaction::Forcefield & ff,
       os <<"\tharmonic bond angle interaction\n";
     interaction::Harm_Angle_Interaction *a =
       new interaction::Harm_Angle_Interaction();
-    
-    it.read_harm_angles(a->parameter());
+
     ff.push_back(a);
 
     if (param.perturbation.perturbation){
@@ -176,14 +176,13 @@ int interaction::create_g96_bonded(interaction::Forcefield & ff,
       */
     }
   }
-  
+
   if (param.force.improper == 1){
     if (!quiet)
       os << "\timproper dihedral interaction\n";
-    
+
     interaction::Improper_Dihedral_Interaction * i =
       new interaction::Improper_Dihedral_Interaction();
-    it.read_improper_dihedrals(i->parameter());
     ff.push_back(i);
 
     if (param.perturbation.perturbation){
@@ -199,10 +198,9 @@ int interaction::create_g96_bonded(interaction::Forcefield & ff,
   if (param.force.dihedral == 1){
     if (!quiet)
       os <<"\tdihedral interaction\n";
-    
+
     interaction::Dihedral_new_Interaction * d =
       new interaction::Dihedral_new_Interaction();
-    it.read_dihedrals(d->parameter());
     ff.push_back(d);
 
     if (param.perturbation.perturbation){
@@ -216,10 +214,9 @@ int interaction::create_g96_bonded(interaction::Forcefield & ff,
    if (param.force.dihedral == 2){
     if (!quiet)
       os <<"\tdihedral interaction\n";
-    
+
     interaction::Dihedral_Interaction * d =
       new interaction::Dihedral_Interaction();
-    it.read_dihedrals(d->parameter());
     ff.push_back(d);
 
     if (param.perturbation.perturbation){
@@ -236,7 +233,6 @@ int interaction::create_g96_bonded(interaction::Forcefield & ff,
 
     interaction::Crossdihedral_Interaction * c =
       new interaction::Crossdihedral_Interaction();
-    it.read_dihedrals(c->parameter());
     ff.push_back(c);
 
     /*if (param.perturbation.perturbation){
@@ -247,8 +243,7 @@ int interaction::create_g96_bonded(interaction::Forcefield & ff,
       ff.push_back(pc);
     }*/
   }
-  
+
   return 0;
 
 }
-

@@ -435,6 +435,11 @@ namespace io {
     bool m_final;
     bool m_replica;
 
+    /**
+     * true if a special trajectory has to be written
+     */
+    bool m_write_special;
+
     int m_every_pos;
     int m_every_vel;
     int m_every_force;
@@ -442,11 +447,6 @@ namespace io {
     int m_every_free_energy;
     int m_every_blockaverage;
     
-    
-    /**
-     * true if a special trajectory has to be written
-     */
-    bool m_write_special;
     int m_every_cos_pos;
     int m_every_jvalue;
     int m_every_xray;

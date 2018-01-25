@@ -6,7 +6,7 @@
  * @page disres distance restraints format
  * @date 28-10-2008
  *
- * A distance restraints specifcation file may contain the following blocks:
+ * A distance restraints specification file may contain the following blocks:
  * - @ref title
  * - @ref distanceresspec
  * - @ref pertdisresspec
@@ -43,6 +43,16 @@ namespace io {
     void read(topology::Topology &topo,
 	      simulation::Simulation & sim,
 	      std::ostream & os = std::cout);
+
+    /**
+     * read distance restraint specification block.
+     */
+    void read_DISTANCERESSPEC(topology::Topology &topo, simulation::Simulation &sim, std::ostream & os = std::cout);
+    void read_PERTDISRESSPEC(topology::Topology &topo, simulation::Simulation &sim, std::ostream & os = std::cout);
+    void read_DFRESSPEC(topology::Topology &topo, simulation::Simulation &sim, std::ostream & os = std::cout);
+    void read_PERTDFRESSPEC(topology::Topology &topo, simulation::Simulation &sim, std::ostream & os = std::cout);
+    void read_MDISRESSPEC(topology::Topology &topo, simulation::Simulation &sim, std::ostream & os = std::cout);
+
     /**
      * Maximum number of atoms that can be specified to define a virtual atom
      */

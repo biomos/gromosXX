@@ -23,108 +23,6 @@
 
 using namespace std;
 
-/**
- * @section conversion CONVERSION block
- * The CONVERSION block is read from the RDC restraint specification file.
- *
- * - Unit conversion factor from Hz to ps-1.
- * - Unit conversion factor from 10^6 (rad /T s) to (e/u).
- *
- * @verbatim
-
-CONVERSION
- # factors
- # to convert the frequency from [RDC]=(s^-1) to (ps^-1)
- # and to convert gyromagnetic ratios from [gamma]=10^6*(rad/T s)=10^6(C/kg) to (e/u)
- 0.000000000001 0.010364272
-END
-@endverbatim
-
- * @section magfieldc MAGFIELDC block
- * The MAGFIELDC block is read from the RDC restraint specification file. You need
- * this section if you choose NTRDCT 0 (cartesian representation of magnetic field
- * vectors) in your gromos configuration file.
- *
- * - Variable \c NMF is the number of magnetic field direction vectors
- * - Variables \c x, \c y, \z are the cartesian coordinates of the moveable pseudo-atoms representing
- *   the magnetic field vectors. They specify the direction of the magnetic
- *   field vector, as the other coordinate is always (0, 0, 0). The magnetic field vectors
- *   are normalised when read in.
- * - Variable \c mass is the mass of each moveable atom and can be used as a damping
- *   factor.
- *
- * @verbatim
-MAGFIELDC
-# NMF
-    2
-#      x      y      z    mass
-     1.0    0.0    0.0     1.0
-     0.0    1.0    0.0     1.0
-END
- @endverbatim
-
- * @section alignt ALIGNT block
- * The ALIGNT block is read from the RDC restraint specification file. You need
- * this section if you choose NTRDCT 1 (tensor representation of the alignment of
- * the molecule in the magnetic field) in your gromos configuration file.
- *
- * - Variables \c Axx, \c Ayy, \c Axy, \c Axz, \c Ayz, are the five independent tensor
- *   components of the 3x3 alignment tensor representing the alignment of the molecule
- *   in the magnetic field.
- * - Variable \c mass is the pseudo mass of each component and can be used as a damping
- *   factor.
- * - Variable \c vel is the velocity of each component
- *
- * @verbatim
-ALIGNT
-#    Axx mass1 Ayy mass2 Axy mass3 Axz mass4 Ayz mass5
-     0.5   1.0 0.5   1.0 0.5   1.0 0.5   1.0 0.5   1.0
-END
- @endverbatim
-
-"# For each RDC restraint the following should be specified:\n"
-"# IPRDCR, JPRDCR, KPRDCR, LPRDCR, atom numbers (defining the vector that forms the angle with the magnetic field)\n"
-"# WRDCR                           weight factor (for weighting some RDCs higher than others)\n"
-"# PRDCR0                          RDC restraint value (i.e. the experimental data)\n"
-"# RDCGI, RDCGJ                    gyromagnetic ratios for atoms i and j\n"
-"# RDCRIJ, RDCRIK                  distance between atoms i and j or i and k (RIJ = RCH for CA:HA)\n"
-"# TYPE                            code to define type of RDC\n"
-"# IPRDCR JPRDCR KPRDCR LPRDCR   WRDCR    PRDCR0      RDCGI      RDCGJ     RDCRIJ     RDCRIK    RDCTYPE\n";
-
- * @section rdcresspec RDCRESSPEC block
- * The RDCRESSPEC block is read from the RDC restraint specification file.
- *
- * - Variables \c IPRDCR, \c JPRDCR, \c KPRDCR, \c LPRDCR are atom sequence numbers
- *   defining the vector that forms the angle with the magnetic field. Only IPRDCR
- *   and JPRDCR are read in (KPRDCR and LPRDCR are used by the gromos++ program svd_fit)
- * - Variable \c WRDCR is an individual RDC restraint weight factor by which
- *   the RDC restraining term for a specific RDC may be multiplied
- * - Variable \c PRDCR0 is the experimental or reference RDC value in Hz.
- * - Variables \c RDCGI, \c RDCGJ are the gyromagnetic ratios of atoms i and j in
- *   10^6 (rad/T s)
- * - Variables \c RDCRIJ, \c RDCIK are user-defined distances between atoms i and j or i and k
- *   (these are only for use in the gromos++ program svd_fit)
- * - Variable \c TYPE is a code to specify the type of RDC. Only codes 1 (N:H),
- *   2 (CA:C) and 3 (C:N) are valid for RDC restraining.
- *
- * @verbatim
-RDCRESSPEC
-# For each RDC restraint the following is to be specified:
-# IPRDCR, JPRDCR, KPRDCR, LPRDCR    atom sequence numbers
-# WRDCR                             weight factor
-# PRDCR0                            RDC value
-# RDCGI, RDCGJ                      gyromagnetic ratios
-# RDCRIJ, RDCRIK                    inter-nuclear distances
-# TYPE                              type of RDC
-# IPRDCR JPRDCR KPRDCR LPRDCR   WRDCR    PRDCR0      RDCGI      RDCGJ     RDCRIJ     RDCRIK    RDCTYPE
-      16     17      0      0       1     -1.78      -27.12     267.52      0.104      0.104          1
-      24     25      0      0       1      7.52      -27.12     267.52      0.104      0.104          1
-      41     42      0      0       1     -6.92      -27.12     267.52      0.104      0.104          1
-      46     47      0      0       1     -6.47      -27.12     267.52      0.104      0.104          1
- * END
-@endverbatim
- */
-
 // three structs, local to this file
 struct mf_struct{
   math::VArray cart_coords;
@@ -215,6 +113,107 @@ math::VArray create_points_on_sphere(const unsigned int N){
   return coordinates;
 }
 
+
+/**
+ * @section conversion CONVERSION block
+ * The CONVERSION block is read from the RDC restraint specification file.
+ *
+ * - Unit conversion factor from Hz to ps-1.
+ * - Unit conversion factor from 10^6 (rad /T s) to (e/u).
+ *
+ * @verbatim
+CONVERSION
+ # factors
+ # to convert the frequency from [RDC]=(s^-1) to (ps^-1)
+ # and to convert gyromagnetic ratios from [gamma]=10^6*(rad/T s)=10^6(C/kg) to (e/u)
+ 0.000000000001 0.010364272
+END
+@endverbatim
+
+ * @section magfieldc MAGFIELDC block
+ * The MAGFIELDC block is read from the RDC restraint specification file. You need
+ * this section if you choose NTRDCT 0 (cartesian representation of magnetic field
+ * vectors) in your gromos configuration file.
+ *
+ * - Variable \c NMF is the number of magnetic field direction vectors
+ * - Variables \c x, \c y, \c z are the cartesian coordinates of the moveable pseudo-atoms representing
+ *   the magnetic field vectors. They specify the direction of the magnetic
+ *   field vector, as the other coordinate is always (0, 0, 0). The magnetic field vectors
+ *   are normalised when read in.
+ * - Variable \c mass is the mass of each moveable atom and can be used as a damping
+ *   factor.
+ *
+ * @verbatim
+MAGFIELDC
+# NMF
+    2
+#      x      y      z    mass
+     1.0    0.0    0.0     1.0
+     0.0    1.0    0.0     1.0
+END
+@endverbatim
+
+ * @section alignt ALIGNT block
+ * The ALIGNT block is read from the RDC restraint specification file. You need
+ * this section if you choose NTRDCT 1 (tensor representation of the alignment of
+ * the molecule in the magnetic field) in your gromos configuration file.
+ *
+ * - Variables \c Axx, \c Ayy, \c Axy, \c Axz, \c Ayz, are the five independent tensor
+ *   components of the 3x3 alignment tensor representing the alignment of the molecule
+ *   in the magnetic field.
+ * - Variable \c mass is the pseudo mass of each component and can be used as a damping
+ *   factor.
+ * - Variable \c vel is the velocity of each component
+ *
+ * @verbatim
+ALIGNT
+#    Axx mass1 Ayy mass2 Axy mass3 Axz mass4 Ayz mass5
+     0.5   1.0 0.5   1.0 0.5   1.0 0.5   1.0 0.5   1.0
+END
+@endverbatim
+
+"# For each RDC restraint the following should be specified:\n"
+"# IPRDCR, JPRDCR, KPRDCR, LPRDCR, atom numbers (defining the vector that forms the angle with the magnetic field)\n"
+"# WRDCR                           weight factor (for weighting some RDCs higher than others)\n"
+"# PRDCR0                          RDC restraint value (i.e. the experimental data)\n"
+"# RDCGI, RDCGJ                    gyromagnetic ratios for atoms i and j\n"
+"# RDCRIJ, RDCRIK                  distance between atoms i and j or i and k (RIJ = RCH for CA:HA)\n"
+"# TYPE                            code to define type of RDC\n"
+"# IPRDCR JPRDCR KPRDCR LPRDCR   WRDCR    PRDCR0      RDCGI      RDCGJ     RDCRIJ     RDCRIK    RDCTYPE\n";
+
+ * @section rdcresspec RDCRESSPEC block
+ * The RDCRESSPEC block is read from the RDC restraint specification file.
+ *
+ * - Variables \c IPRDCR, \c JPRDCR, \c KPRDCR, \c LPRDCR are atom sequence numbers
+ *   defining the vector that forms the angle with the magnetic field. Only IPRDCR
+ *   and JPRDCR are read in (KPRDCR and LPRDCR are used by the gromos++ program svd_fit)
+ * - Variable \c WRDCR is an individual RDC restraint weight factor by which
+ *   the RDC restraining term for a specific RDC may be multiplied
+ * - Variable \c PRDCR0 is the experimental or reference RDC value in Hz.
+ * - Variables \c RDCGI, \c RDCGJ are the gyromagnetic ratios of atoms i and j in
+ *   10^6 (rad/T s)
+ * - Variables \c RDCRIJ, \c RDCIK are user-defined distances between atoms i and j or i and k
+ *   (these are only for use in the gromos++ program svd_fit)
+ * - Variable \c TYPE is a code to specify the type of RDC. Only codes 1 (N:H),
+ *   2 (CA:C) and 3 (C:N) are valid for RDC restraining.
+ *
+ * @verbatim
+RDCRESSPEC
+# For each RDC restraint the following is to be specified:
+# IPRDCR, JPRDCR, KPRDCR, LPRDCR    atom sequence numbers
+# WRDCR                             weight factor
+# PRDCR0                            RDC value
+# RDCGI, RDCGJ                      gyromagnetic ratios
+# RDCRIJ, RDCRIK                    inter-nuclear distances
+# TYPE                              type of RDC
+# IPRDCR JPRDCR KPRDCR LPRDCR   WRDCR    PRDCR0      RDCGI      RDCGJ     RDCRIJ     RDCRIK    RDCTYPE
+      16     17      0      0       1     -1.78      -27.12     267.52      0.104      0.104          1
+      24     25      0      0       1      7.52      -27.12     267.52      0.104      0.104          1
+      41     42      0      0       1     -6.92      -27.12     267.52      0.104      0.104          1
+      46     47      0      0       1     -6.47      -27.12     267.52      0.104      0.104          1
+END
+@endverbatim
+ */
 
 void io::In_RDC::read(topology::Topology& topo,
         configuration::Configuration & conf,
@@ -824,8 +823,8 @@ void io::In_RDC::read(topology::Topology& topo,
 // count in how many rdc groups every rdc appears
   const int n_rdc = tmp_rdc_rest_strct.size();
   vector<int> occurrence_count(n_rdc, 0);
-  for (int i=0; i<rdc_groups.size(); ++i) {
-    for (int j=0; j<rdc_groups[i].size(); ++j) {
+  for (unsigned int i=0; i<rdc_groups.size(); ++i) {
+    for (unsigned int j=0; j<rdc_groups[i].size(); ++j) {
       occurrence_count[rdc_groups[i][j]-1]++;
     }
   }
@@ -839,7 +838,7 @@ void io::In_RDC::read(topology::Topology& topo,
  
 // check if rdc groups contain each rdc at least once
   bool ignored_rdcs_exist = false;
-  for (int i=0; i<occurrence_count.size(); ++i) {
+  for (unsigned int i=0; i<occurrence_count.size(); ++i) {
     if (occurrence_count[i] == 0) {
       ignored_rdcs_exist = true;
       DEBUG(10, "RDC #" << i << " is not part of any RDC group.")
@@ -851,7 +850,7 @@ void io::In_RDC::read(topology::Topology& topo,
   }
 
   DEBUG(10, "setting RDC weights according to occurrence in rdc groups")
-  for (int i=0; i<occurrence_count.size(); ++i) {
+  for (unsigned int i=0; i<occurrence_count.size(); ++i) {
     if(occurrence_count[i] != 0) tmp_rdc_rest_strct[i].weight /= occurrence_count[i];
   }
 

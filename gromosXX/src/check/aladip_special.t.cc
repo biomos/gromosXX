@@ -25,6 +25,7 @@
 #include "../util/parse_tcouple.h"
 #include "../io/blockinput.h"
 #include "../io/topology/in_topology.h"
+#include "../io/message.h"
 
 #include "../algorithm/integration/leap_frog.h"
 #include "../algorithm/temperature/temperature_calculation.h"
@@ -195,6 +196,8 @@ int main(int argc, char* argv[]) {
     std::cerr << "creating simulation failed!" << std::endl;
     return 1;
   }
+  io::messages.display(std::cout);
+  io::messages.clear();
 
 #ifndef HAVE_CLIPPER
   aladip_sim.sim.param().xrayrest.xrayrest = simulation::xrayrest_off;
@@ -214,12 +217,16 @@ int main(int argc, char* argv[]) {
     std::cerr << "creating forcefield failed!" << std::endl;
     return 1;
   }
+  io::messages.display(std::cout);
+  io::messages.clear();
 
   ff->init(aladip_sim.topo, aladip_sim.conf, aladip_sim.sim, std::cout,  quiet);
 
   // first check the forcefield
   total += check::check_forcefield(aladip_sim.topo, aladip_sim.conf, 
 				   aladip_sim.sim, *ff, ref_values);
+  io::messages.display(std::cout);
+  io::messages.clear();
 
   return total;
 }

@@ -105,13 +105,13 @@ static int _calculate_perturbed_dihedral_interactions
     double cosphi3 = cosphi2 * cosphi;
     double cosphi4 = cosphi3 * cosphi;
 
-    assert(unsigned(d_it->A_type) < m_interaction.parameter().size());
+    assert(unsigned(d_it->A_type) < topo.dihedral_types().size());
     
     double dcosmphi = 0;
     double cosmphi = 0;
 
     // first state A 
-    switch(m_interaction.parameter()[d_it->A_type].m){
+    switch(topo.dihedral_types()[d_it->A_type].m){
       case 0:
         cosmphi = 0.0;
         dcosmphi = 0.0;
@@ -142,8 +142,8 @@ static int _calculate_perturbed_dihedral_interactions
         break;
       
     }
-    double     K = m_interaction.parameter()[d_it->A_type].K;
-    double     cosdelta = m_interaction.parameter()[d_it->A_type].cospd;
+    double     K = topo.dihedral_types()[d_it->A_type].K;
+    double     cosdelta = topo.dihedral_types()[d_it->A_type].cospd;
     
     DEBUG(10, "dihedral K=" << K << "cos delta=" << cosdelta << " dcos=" << dcosmphi);
 
@@ -161,7 +161,7 @@ static int _calculate_perturbed_dihedral_interactions
     A_energy = K * (1 + cosdelta * cosmphi);
 
     // then state B 
-    switch(m_interaction.parameter()[d_it->B_type].m){
+    switch(topo.dihedral_types()[d_it->B_type].m){
       case 0:
         cosmphi = 0.0;
         dcosmphi = 0.0;
@@ -191,8 +191,8 @@ static int _calculate_perturbed_dihedral_interactions
         dcosmphi = 192*cosphi4*cosphi-192*cosphi3+36*cosphi;
         break;
        }
-        K = m_interaction.parameter()[d_it->B_type].K;
-    cosdelta = m_interaction.parameter()[d_it->B_type].cospd;
+        K = topo.dihedral_types()[d_it->B_type].K;
+    cosdelta = topo.dihedral_types()[d_it->B_type].cospd;
 
     DEBUG(10, "dihedral K=" << K << "cos delta=" << cosdelta << " dcos=" << dcosmphi);
 
@@ -298,10 +298,7 @@ int interaction::Perturbed_Dihedral_Interaction::init(topology::Topology &topo,
 		     std::ostream &os,
                      bool quiet) {
        
-    //std::vector<dihedral_type_struct> m_parameter;
-    //std::vector<interaction::dihedral_type_struct> const & param =m_parameter;
-    //Dihedral_Interaction & m_interaction;
-    std::vector<interaction::dihedral_type_struct> const & param = m_interaction.parameter();
+    std::vector<interaction::dihedral_type_struct> const & param = topo.dihedral_types();
     std::vector<topology::four_body_term_struct>::iterator d_it =
     topo.solute().dihedrals().begin(),
     d_to = topo.solute().dihedrals().end();

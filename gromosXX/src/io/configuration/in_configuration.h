@@ -283,7 +283,7 @@ namespace io {
      * read VELOCITY block.
      */
     bool _read_velocity(math::VArray &vel, std::vector<std::string> &buffer,
-			int const num);
+			unsigned int const num);
     
     /**
      * read LATTICESHIFTS block.
@@ -459,7 +459,7 @@ namespace io {
             simulation::Multibath & multibath);
     
     /**
-     * read ROTOTRANSREF block
+     * read ROTTRANSREFPOS block
      */
     bool _read_rottrans(std::vector<std::string> &buffer, unsigned int last,
             configuration::Configuration::special_struct::rottrans_constr_struct & rottrans);

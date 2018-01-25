@@ -331,7 +331,7 @@ namespace interaction
      * Might be a g++ bug ( https://gcc.gnu.org/bugzilla/show_bug.cgi?id=56480 ) or
      * an error in the implementation. For now, this is a workaround...
      */
-    void _lj_crf_outerloop_2(topology::Topology & topo,
+    void _lj_crf_outerloop_fast(topology::Topology & topo,
 			   configuration::Configuration & conf,
 			   simulation::Simulation & sim,
 			   Pairlist const & pairlist_solute,

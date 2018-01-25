@@ -17,7 +17,6 @@
 // interactions
 #include "../../interaction/interaction_types.h"
 #include "perturbed_soft_improper_interaction.h"
-#include "../../io/ifp.h"
 
 #include "../../util/template_split.h"
 #include "../../util/debug.h"
@@ -28,12 +27,6 @@
 #define SUBMODULE bonded
 
 
-interaction::Perturbed_Soft_Improper_Interaction::Perturbed_Soft_Improper_Interaction(io::IFP &it)
-      : Interaction("PerturbedSoftImproper")
-{
-      it.read_improper_dihedrals(m_parameter);
-}
-
 /**
  * calculate improper dihedral forces and energies and lambda derivatives.
  */
@@ -41,10 +34,10 @@ template<math::boundary_enum B, math::virial_enum V>
 static int _calculate_perturbed_soft_improper_interactions
 ( topology::Topology & topo,
   configuration::Configuration & conf,
-  simulation::Simulation & sim,
-  std::vector<interaction::improper_dihedral_type_struct> &impropertypes)
+  simulation::Simulation & sim)
 {
   // this is repeated code from Improper_Dihedral_Interaction !!!
+  std::vector<interaction::improper_dihedral_type_struct> &impropertypes = topo.impdihedral_types();
 
   DEBUG(5, "perturbed soft improper dihedral interaction");
   DEBUG(7, std::setprecision(5));
@@ -125,7 +118,6 @@ static int _calculate_perturbed_soft_improper_interactions
     double diff = q - q0;
     double diff2 = diff * diff;
 
-    const double K_diff = K_B - K_A;
     const double q_diff =
       impropertypes[i_it->B_type].q0- 
       impropertypes[i_it->A_type].q0;
@@ -196,7 +188,7 @@ static int _calculate_perturbed_soft_improper_interactions
                             (sim.param().precalclam.nr_lambdas-1);
 
       //loop over nr_lambdas
-      for (int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
+      for (unsigned int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
 
         // determine current lambda for this index
         double lam=(lam_index * lambda_step) + sim.param().precalclam.min_lam;
@@ -237,7 +229,7 @@ int interaction::Perturbed_Soft_Improper_Interaction
   m_timer.start();
   
   SPLIT_VIRIAL_BOUNDARY(_calculate_perturbed_soft_improper_interactions,
-			topo, conf, sim, m_parameter);
+			topo, conf, sim);
 
   m_timer.stop();
 
@@ -262,15 +254,15 @@ int interaction::Perturbed_Soft_Improper_Interaction
                                  bt_to = topo.perturbed_solute().softimpropers().end();
       for( ; bt_it != bt_to; ++bt_it){
           if (bt_it->A_type==INT_MAX-1) {
-            bt_it->A_type=m_parameter.size();
-            double qt = m_parameter[bt_it->B_type].q0;
-            m_parameter.push_back(interaction::improper_dihedral_type_struct(0, qt));
+            bt_it->A_type=topo.impdihedral_types().size();
+            double qt = topo.impdihedral_types()[bt_it->B_type].q0;
+            topo.impdihedral_types().push_back(interaction::improper_dihedral_type_struct(0, qt));
             DEBUG(10, "adding new improper dihedral type for soft improper perturbation: " 
                        << bt_it->A_type << " K=" << 0 << " qt=" << qt);                       
           } else if (bt_it->B_type==INT_MAX-1) {
-            bt_it->B_type=m_parameter.size();
-            double qt = m_parameter[bt_it->A_type].q0;
-            m_parameter.push_back(interaction::improper_dihedral_type_struct(0, qt));   
+            bt_it->B_type=topo.impdihedral_types().size();
+            double qt = topo.impdihedral_types()[bt_it->A_type].q0;
+            topo.impdihedral_types().push_back(interaction::improper_dihedral_type_struct(0, qt));   
             DEBUG(10, "adding new improper dihedral type for soft improper perturbation: " 
                        << bt_it->B_type << " K=" << 0 << " qt=" << qt);             
           }

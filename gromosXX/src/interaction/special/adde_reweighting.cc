@@ -33,13 +33,13 @@ int interaction::Adde_Reweighting::calculate_interactions
 { 
   unsigned int eg=sim.param().addecouple.adc_index()[0].eg;
   double vhl=0, evhl;
-  int not_adde;
+  //int not_adde;
   conf.special().adde.vhh=conf.current().energies.lj_energy[eg][eg]+
           conf.current().energies.crf_energy[eg][eg];
-  for(unsigned int i=0; i<sim.param().multibath.multibath.size(); ++i){
-    if(i!=sim.param().addecouple.adc_index()[0].tg)
-      not_adde=i;
-  }
+  //for(unsigned int i=0; i<sim.param().multibath.multibath.size(); ++i){
+  //  if(i!=sim.param().addecouple.adc_index()[0].tg)
+  //    not_adde=i;
+  //}
   for(unsigned int i=0; i<topo.energy_groups().size(); ++i){
     if(i==eg)
       continue;

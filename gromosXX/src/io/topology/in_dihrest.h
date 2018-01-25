@@ -40,6 +40,13 @@ namespace io {
     void read(topology::Topology &topo,
 	      simulation::Simulation & sim,
 	      std::ostream & os = std::cout);
+
+    void read_DIHEDRALRESSPEC(topology::Topology &topo,
+        									simulation::Simulation &sim,
+        									std::ostream & os);
+    void read_PERTDIHRESSPEC(topology::Topology &topo,
+									simulation::Simulation &sim,
+									std::ostream & os);
   };
 } // io
 

@@ -320,8 +320,7 @@ void interaction::Perturbed_Nonbonded_Pair
 				  A_f, A_e_crf, A_de_crf);
 
       // ANITA
-      if (((sim.steps()  % sim.param().write.free_energy) == 0) &&
-         sim.param().precalclam.nr_lambdas ){
+      if (sim.param().precalclam.nr_lambdas && ((sim.steps()  % sim.param().write.free_energy) == 0)){
         double A_e_rf, B_e_rf, A_de_rf, B_de_rf;
 
         // determine lambda stepsize from min,max and nr of lambdas
@@ -330,7 +329,7 @@ void interaction::Perturbed_Nonbonded_Pair
                  (sim.param().precalclam.nr_lambdas-1);
 
         //loop over nr_lambdas
-        for (int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
+        for (unsigned int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
 
           // determine current lambda for this index
           double lam=(lam_index * lambda_step) + sim.param().precalclam.min_lam;
@@ -388,8 +387,7 @@ void interaction::Perturbed_Nonbonded_Pair
 	      A_de_crf = - topo.lambda_exp() * m_perturbed_nonbonded_term.A_crf_lambda_n_1() * A_e_crf; //define before multiplication of A_e_crf with lambda!
 	      
       // ANITA
-      if (((sim.steps()  % sim.param().write.free_energy) == 0) &&
-         sim.param().precalclam.nr_lambdas ){
+      if (sim.param().precalclam.nr_lambdas && ((sim.steps()  % sim.param().write.free_energy) == 0)){
 
         // determine lambda stepsize from min,max and nr of lambdas
         double lambda_step = (sim.param().precalclam.max_lam -
@@ -397,7 +395,7 @@ void interaction::Perturbed_Nonbonded_Pair
                  (sim.param().precalclam.nr_lambdas-1);
 
         //loop over nr_lambdas
-        for (int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
+        for (unsigned int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
 
           // determine current lambda for this index
           double lam=(lam_index * lambda_step) + sim.param().precalclam.min_lam;
@@ -468,8 +466,7 @@ void interaction::Perturbed_Nonbonded_Pair
             A_f = (A_f1 + A_f6 + A_f12) * r;
             
       // ANITA
-            if (((sim.steps()  % sim.param().write.free_energy) == 0) && 
-           sim.param().precalclam.nr_lambdas ){
+            if (sim.param().precalclam.nr_lambdas && ((sim.steps()  % sim.param().write.free_energy) == 0)){
 //        if ( sim.param().precalclam.nr_lambdas ) { 
           double A_e_lj_l, B_e_lj_l, A_e_crf_l, B_e_crf_l,
               A_de_lj_l, B_de_lj_l, A_de_crf_l, B_de_crf_l;
@@ -480,7 +477,7 @@ void interaction::Perturbed_Nonbonded_Pair
                    (sim.param().precalclam.nr_lambdas-1);
 
           //loop over nr_lambdas
-          for (int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){ 
+          for (unsigned int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){ 
 
             // determine current lambda for this index
             double lam=(lam_index * lambda_step) + sim.param().precalclam.min_lam;
@@ -590,8 +587,7 @@ void interaction::Perturbed_Nonbonded_Pair
 	    
 	      
       // ANITA
-      if (((sim.steps()  % sim.param().write.free_energy) == 0) &&
-         sim.param().precalclam.nr_lambdas ){
+      if (sim.param().precalclam.nr_lambdas && ((sim.steps()  % sim.param().write.free_energy) == 0)){
 
         // determine lambda stepsize from min,max and nr of lambdas
         double lambda_step = (sim.param().precalclam.max_lam -
@@ -599,7 +595,7 @@ void interaction::Perturbed_Nonbonded_Pair
                  (sim.param().precalclam.nr_lambdas-1);
 
         //loop over nr_lambdas
-        for (int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
+        for (unsigned int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
 
           // determine current lambda for this index
           double lam=(lam_index * lambda_step) + sim.param().precalclam.min_lam;
@@ -688,8 +684,7 @@ void interaction::Perturbed_Nonbonded_Pair
             A_f = (A_f1 + A_f6 + A_f12) * r;
             
       // ANITA
-            if (((sim.steps()  % sim.param().write.free_energy) == 0) && 
-           sim.param().precalclam.nr_lambdas ){
+            if (sim.param().precalclam.nr_lambdas && ((sim.steps()  % sim.param().write.free_energy) == 0)){
 //        if ( sim.param().precalclam.nr_lambdas ) { 
           double A_e_lj_l, B_e_lj_l, A_e_crf_l, B_e_crf_l,
               A_de_lj_l, B_de_lj_l, A_de_crf_l, B_de_crf_l;
@@ -700,7 +695,7 @@ void interaction::Perturbed_Nonbonded_Pair
                    (sim.param().precalclam.nr_lambdas-1);
 
           //loop over nr_lambdas
-          for (int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){ 
+          for (unsigned int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){ 
 
             // determine current lambda for this index
             double lam=(lam_index * lambda_step) + sim.param().precalclam.min_lam;
@@ -807,8 +802,7 @@ void interaction::Perturbed_Nonbonded_Pair
 	    A_de_lj = - topo.lambda_exp() * m_perturbed_nonbonded_term.A_lj_lambda_n_1() * A_e_lj;
 	    A_de_crf = - topo.lambda_exp() * m_perturbed_nonbonded_term.A_crf_lambda_n_1() * A_e_crf;
       // ANITA
-      if (((sim.steps()  % sim.param().write.free_energy) == 0) &&
-         sim.param().precalclam.nr_lambdas ){
+      if (sim.param().precalclam.nr_lambdas && ((sim.steps()  % sim.param().write.free_energy) == 0)){
 
         // determine lambda stepsize from min,max and nr of lambdas
         double lambda_step = (sim.param().precalclam.max_lam -
@@ -816,7 +810,7 @@ void interaction::Perturbed_Nonbonded_Pair
                  (sim.param().precalclam.nr_lambdas-1);
 
         //loop over nr_lambdas
-        for (int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
+        for (unsigned int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
 
           // determine current lambda for this index
           double lam=(lam_index * lambda_step) + sim.param().precalclam.min_lam;
@@ -905,8 +899,7 @@ void interaction::Perturbed_Nonbonded_Pair
               rf_soft_interaction(r, 0, B_q, alpha_crf,
 				  B_f, B_e_crf, B_de_crf);
       // ANITA
-      if (((sim.steps()  % sim.param().write.free_energy) == 0) &&
-         sim.param().precalclam.nr_lambdas ){
+      if (sim.param().precalclam.nr_lambdas && ((sim.steps()  % sim.param().write.free_energy) == 0)){
         double A_e_rf, B_e_rf, A_de_rf, B_de_rf;
 
         // determine lambda stepsize from min,max and nr of lambdas
@@ -915,7 +908,7 @@ void interaction::Perturbed_Nonbonded_Pair
                  (sim.param().precalclam.nr_lambdas-1);
 
         //loop over nr_lambdas
-        for (int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
+        for (unsigned int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
 
           // determine current lambda for this index
           double lam=(lam_index * lambda_step) + sim.param().precalclam.min_lam;
@@ -960,8 +953,7 @@ void interaction::Perturbed_Nonbonded_Pair
 	      B_de_crf = topo.lambda_exp() * m_perturbed_nonbonded_term.B_crf_lambda_n_1() * B_e_crf;
 	      
       // ANITA
-      if (((sim.steps()  % sim.param().write.free_energy) == 0) &&
-         sim.param().precalclam.nr_lambdas ){
+      if (sim.param().precalclam.nr_lambdas && ((sim.steps()  % sim.param().write.free_energy) == 0)){
 
         // determine lambda stepsize from min,max and nr of lambdas
         double lambda_step = (sim.param().precalclam.max_lam -
@@ -969,7 +961,7 @@ void interaction::Perturbed_Nonbonded_Pair
                  (sim.param().precalclam.nr_lambdas-1);
 
         //loop over nr_lambdas
-        for (int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
+        for (unsigned int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
 
           // determine current lambda for this index
           double lam=(lam_index * lambda_step) + sim.param().precalclam.min_lam;
@@ -1031,8 +1023,7 @@ void interaction::Perturbed_Nonbonded_Pair
             
             B_f = (B_f1 + B_f6 + B_f12) * r;
            // ANITA
-            if (((sim.steps()  % sim.param().write.free_energy) == 0) &&
-           sim.param().precalclam.nr_lambdas ){
+            if (sim.param().precalclam.nr_lambdas && ((sim.steps()  % sim.param().write.free_energy) == 0)){
 //        if ( sim.param().precalclam.nr_lambdas ) { 
           double A_e_lj_l, B_e_lj_l, A_e_crf_l, B_e_crf_l,
               A_de_lj_l, B_de_lj_l, A_de_crf_l, B_de_crf_l;
@@ -1043,7 +1034,7 @@ void interaction::Perturbed_Nonbonded_Pair
                    (sim.param().precalclam.nr_lambdas-1);
 
           //loop over nr_lambdas
-          for (int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
+          for (unsigned int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
 
             // determine current lambda for this index
             double lam=(lam_index * lambda_step) + sim.param().precalclam.min_lam;
@@ -1152,8 +1143,7 @@ void interaction::Perturbed_Nonbonded_Pair
 	    B_de_crf = topo.lambda_exp() * m_perturbed_nonbonded_term.B_crf_lambda_n_1() * B_e_crf;
 	    
       // ANITA
-      if (((sim.steps()  % sim.param().write.free_energy) == 0) &&
-         sim.param().precalclam.nr_lambdas ){
+      if (sim.param().precalclam.nr_lambdas && ((sim.steps()  % sim.param().write.free_energy) == 0)){
 
         // determine lambda stepsize from min,max and nr of lambdas
         double lambda_step = (sim.param().precalclam.max_lam -
@@ -1161,7 +1151,7 @@ void interaction::Perturbed_Nonbonded_Pair
                  (sim.param().precalclam.nr_lambdas-1);
 
         //loop over nr_lambdas
-        for (int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
+        for (unsigned int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
 
           // determine current lambda for this index
           double lam=(lam_index * lambda_step) + sim.param().precalclam.min_lam;
@@ -1251,8 +1241,7 @@ void interaction::Perturbed_Nonbonded_Pair
             B_f = (B_f1 + B_f6 + B_f12) * r;
             
           // ANITA
-            if (((sim.steps()  % sim.param().write.free_energy) == 0) &&
-           sim.param().precalclam.nr_lambdas ){ 
+            if (sim.param().precalclam.nr_lambdas && ((sim.steps()  % sim.param().write.free_energy) == 0)){ 
           double A_e_lj_l, B_e_lj_l, A_e_crf_l, B_e_crf_l,
               A_de_lj_l, B_de_lj_l, A_de_crf_l, B_de_crf_l;
 
@@ -1262,7 +1251,7 @@ void interaction::Perturbed_Nonbonded_Pair
                    (sim.param().precalclam.nr_lambdas-1);
 
           //loop over nr_lambdas
-          for (int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
+          for (unsigned int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
 
             // determine current lambda for this index
             double lam=(lam_index * lambda_step) + sim.param().precalclam.min_lam;
@@ -1378,8 +1367,7 @@ void interaction::Perturbed_Nonbonded_Pair
 	    B_de_lj = topo.lambda_exp() * m_perturbed_nonbonded_term.B_lj_lambda_n_1() * B_e_lj;
 	    B_de_crf = topo.lambda_exp() * m_perturbed_nonbonded_term.B_crf_lambda_n_1() * B_e_crf;
       // ANITA
-      if (((sim.steps()  % sim.param().write.free_energy) == 0) &&
-         sim.param().precalclam.nr_lambdas ){
+      if (sim.param().precalclam.nr_lambdas && ((sim.steps()  % sim.param().write.free_energy) == 0)){
 
         // determine lambda stepsize from min,max and nr of lambdas
         double lambda_step = (sim.param().precalclam.max_lam -
@@ -1387,7 +1375,7 @@ void interaction::Perturbed_Nonbonded_Pair
                  (sim.param().precalclam.nr_lambdas-1);
 
         //loop over nr_lambdas
-        for (int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
+        for (unsigned int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
 
           // determine current lambda for this index
           double lam=(lam_index * lambda_step) + sim.param().precalclam.min_lam;

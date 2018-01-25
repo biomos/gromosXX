@@ -286,23 +286,23 @@ int algorithm::Perturbed_Flexible_Constraint::_iteration
       DEBUG(10, "m1=" << m1 << " m2=" << m2 << " mu=" << mu << " dm1=" 
 	    << dm1 << " dm2=" << dm2);
 
-      const double mr0 = (1.0 - lam) * m_parameter[it->A_type].r0 + 
-	lam * m_parameter[it->B_type].r0;
-      const double mK = (1.0 - lam) * m_parameter[it->A_type].K +
-	lam * m_parameter[it->B_type].K;
+      const double mr0 = (1.0 - lam) * topo.bond_types_harm()[it->A_type].r0 + 
+	lam * topo.bond_types_harm()[it->B_type].r0;
+      const double mK = (1.0 - lam) * topo.bond_types_harm()[it->A_type].K +
+	lam * topo.bond_types_harm()[it->B_type].K;
 
       DEBUG(10, "mixed r0=" << mr0 << " mixed K=" << mK);
 
       conf.old().perturbed_energy_derivatives.constraints_energy
 	[topo.atom_energy_group()[it->i]] +=
 	lam_derivative * (lambda / dt2  * m_perturbed_flex_len[k] *
-			  (m_parameter[it->B_type].r0 - 
-			   m_parameter[it->A_type].r0 +
+			  (topo.bond_types_harm()[it->B_type].r0 - 
+			   topo.bond_types_harm()[it->A_type].r0 +
 			   (m_perturbed_flex_len[k] -  mr0) * 
 			   ((dm1 + dm2) / (m1 * m2 * mu) -
 			    dm2 / m2 - dm1 / m1 - 
-			    (m_parameter[it->B_type].K - 
-			     m_parameter[it->A_type].K) / mK
+			    (topo.bond_types_harm()[it->B_type].K - 
+			     topo.bond_types_harm()[it->A_type].K) / mK
 			    )));
 	 
       // update positions
@@ -433,16 +433,16 @@ void algorithm::Perturbed_Flexible_Constraint::_calc_distance
     // flex_len:  flexible constraint distance
     // =================================================
 
-    // const double constr_length2 = m_parameter(it->type).r0 * m_parameter(it->type).r0;
+    // const double constr_length2 = topo.bond_types_harm()(it->type).r0 * topo.bond_types_harm()(it->type).r0;
     
     // calculate the flexible constraint distance
-    assert(m_parameter.size() > it->A_type);
-    assert(m_parameter.size() > it->B_type);
+    assert(topo.bond_types_harm().size() > it->A_type);
+    assert(topo.bond_types_harm().size() > it->B_type);
     
-    const double K = (1.0 - lam) * m_parameter[it->A_type].K +
-      lam * m_parameter[it->B_type].K;
-    const double r0 = (1.0 - lam) * m_parameter[it->A_type].r0 + 
-      lam * m_parameter[it->B_type].r0;
+    const double K = (1.0 - lam) * topo.bond_types_harm()[it->A_type].K +
+      lam * topo.bond_types_harm()[it->B_type].K;
+    const double r0 = (1.0 - lam) * topo.bond_types_harm()[it->A_type].r0 + 
+      lam * topo.bond_types_harm()[it->B_type].r0;
 
     const double new_len = force_on_constraint / K + r0;
 

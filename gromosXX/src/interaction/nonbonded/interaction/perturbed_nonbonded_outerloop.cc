@@ -2,6 +2,7 @@
  * @file perturbed_nonbonded_outerloop.cc
  * (template) methods of Perturbed_Nonbonded_Outerloop.
  */
+
 #ifdef XXMPI
 #include <mpi.h>
 #endif
@@ -168,8 +169,7 @@ void interaction::Perturbed_Nonbonded_Outerloop
 
     } // loop over 1,4 pairs
   } // loop over solute atoms
-}  
-
+}
 
 /**
  * helper function to calculate the forces and energies from the
@@ -261,10 +261,10 @@ void interaction::Perturbed_Nonbonded_Outerloop
   unsigned int size_i = unsigned(pairlist.size());
   unsigned int size_lr = size_i;
   DEBUG(11, "outerloop pairlist size " << size_i);
-  
+
   unsigned int end = size_i;
   unsigned int end_lr = size_lr;
-  
+
   if (rank == 0) {
     // compute the QM part, gather etc...
     if (sim.param().qmmm.qmmm != simulation::qmmm_off) {
@@ -290,8 +290,8 @@ void interaction::Perturbed_Nonbonded_Outerloop
   if (sim.mpi && sim.steps() == 0) {
     MPI::COMM_WORLD.Bcast(&conf.current().posV(0)(0), conf.current().posV.size() * 3, MPI::DOUBLE, 0);
   }
-#endif  
-  
+#endif
+
   // longrange ?
   if(!(sim.steps() % sim.param().pairlist.skip_step)){
 
@@ -318,10 +318,10 @@ void interaction::Perturbed_Nonbonded_Outerloop
               j_it != j_to; ++j_it){
         
         math::Vec e_eli_lr, e_elj_lr;
-        
+
         innerloop.electric_field_innerloop(topo, conf, i, *j_it,
                 e_eli_lr, e_elj_lr, periodicity);
-        
+
         storage_lr.electric_field[i] += e_eli_lr;
         storage_lr.electric_field[*j_it] += e_elj_lr;
       }
@@ -332,16 +332,15 @@ void interaction::Perturbed_Nonbonded_Outerloop
               j_it != j_to; ++j_it){
         
         math::Vec e_eli_lr, e_elj_lr;
-        
+
         innerloop.electric_field_innerloop(topo, conf, i, *j_it,
                 e_eli_lr, e_elj_lr, periodicity);
-        
+
         storage_lr.electric_field[i] += e_eli_lr;
         storage_lr.electric_field[*j_it] += e_elj_lr;
       }
     }
-    
- #ifdef XXMPI
+#ifdef XXMPI
     if (sim.mpi) {
       // reduce the longrange electric field to some temp. variable and then set this
       // variable to the longrange electric field on the master. The lr e field
@@ -416,7 +415,7 @@ void interaction::Perturbed_Nonbonded_Outerloop
         e_el_new(*j_it) += e_elj;
       }
     }
-    
+
 #ifdef XXMPI
     // also reduce the shortrange electric field the same way as the longrange
     // electric field
@@ -428,8 +427,8 @@ void interaction::Perturbed_Nonbonded_Outerloop
         e_el_new = e_el_master;
       }
     }
-#endif    
-  
+#endif
+
     if (rank == 0) {
       // get the contributions from the QM part.
       if (sim.param().qmmm.qmmm != simulation::qmmm_off) {
@@ -461,11 +460,11 @@ void interaction::Perturbed_Nonbonded_Outerloop
           
           //delta r
           math::Vec delta_r;
-          
+
           //////////////////////////////////////////////////
           // implementation of polarisability damping
           /////////////////////////////////////////////////
-          
+
           if (sim.param().polarise.damp) { // damp the polarisability
             const double e_i = sqrt(math::abs2(e_el_new(i))),
                     e_0 = damp_lev;
@@ -482,10 +481,10 @@ void interaction::Perturbed_Nonbonded_Outerloop
           }
           // store the new position
           conf.current().posV(i) = delta_r;
-          
+
           // calculation of convergence criterium
           for(int j=0; j<3; ++j) {
-            double delta_e = fabs(storage.electric_field(i)(j)-e_el_new(i)(j))* 7.911492226513023 * 0.1;
+            double delta_e = fabs(storage.electric_field(i)(j)-e_el_new(i)(j));
             if (delta_e > maxfield) {
               maxfield = delta_e;
             }
@@ -497,7 +496,7 @@ void interaction::Perturbed_Nonbonded_Outerloop
     
     turni++;
     minfield = maxfield;
-    
+
 #ifdef XXMPI
     // broadcast the new posV and also the convergence criterium (minfield)
     // to the slaves. Otherwise they don't know when to stop.

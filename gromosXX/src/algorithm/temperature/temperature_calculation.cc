@@ -184,7 +184,7 @@ int algorithm::Temperature_Calculation
                                  (sim.param().precalclam.nr_lambdas-1); 
 
             //loop over nr_lambdas
-            for (int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
+            for (unsigned int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
 
               // determine current lambda for this index
               double lam=(lam_index * lambda_step) + sim.param().precalclam.min_lam;

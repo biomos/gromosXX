@@ -25,6 +25,7 @@
 #include "../util/parse_tcouple.h"
 #include "../io/blockinput.h"
 #include "../io/topology/in_topology.h"
+#include "../io/message.h"
 
 #include "../algorithm/integration/leap_frog.h"
 #include "../algorithm/temperature/temperature_calculation.h"
@@ -142,16 +143,17 @@ int main(int argc, char* argv[]) {
   util::simulation_struct aladip_sim_on;
   util::simulation_struct aladip_sim_off;
   
-  io::In_Topology in_topo;
+  io::In_Topology in_topo_on, in_topo_off;
 
-  in_topo.quiet = quiet;
+  in_topo_on.quiet = quiet;
+  in_topo_off.quiet = quiet;
       
   if (util::create_simulation(stopo,
 			      spttopo,
 			      sconf,
 			      sinputon,
 			      aladip_sim_on,
-			      in_topo,
+			      in_topo_on,
 			      "", "", "", "", "", "", 
 			      quiet
 			      )
@@ -159,12 +161,15 @@ int main(int argc, char* argv[]) {
     std::cerr << "creating simulation (on) failed!" << std::endl;
     return 1;
   }
+  io::messages.display(std::cout);
+  io::messages.clear();
+
   if (util::create_simulation(stopo,
 			      spttopo,
 			      sconf,
 			      sinputoff,
 			      aladip_sim_off,
-			      in_topo,
+			      in_topo_off,
 			      "", "", "", "", "", "", 
 			      quiet
 			      )
@@ -172,6 +177,8 @@ int main(int argc, char* argv[]) {
     std::cerr << "creating simulation (off) failed!" << std::endl;
     return 1;
   }     
+  io::messages.display(std::cout);
+  io::messages.clear();
   
   // create a forcefield
   interaction::Forcefield *ff_on = new interaction::Forcefield;
@@ -179,7 +186,7 @@ int main(int argc, char* argv[]) {
   if (interaction::create_g96_forcefield(*ff_on, 
 					 aladip_sim_on.topo,
 					 aladip_sim_on.sim,
-					 in_topo,
+					 in_topo_on,
 					 std::cout,
 					 quiet)
       != 0){
@@ -204,7 +211,7 @@ int main(int argc, char* argv[]) {
   if (interaction::create_g96_forcefield(*ff_off, 
 					 aladip_sim_off.topo,
 					 aladip_sim_off.sim,
-					 in_topo,
+					 in_topo_off,
 					 std::cout,
 					 quiet)
       != 0){
@@ -331,7 +338,7 @@ int main(int argc, char* argv[]) {
 	// let's not claim we checked something that was zero to begin with
 	if(dE_on !=0){
 	    
-	  CHECKING("indivual lambdas ("+nm+")", res);
+	  CHECKING("individual lambdas ("+nm+")", res);
 	  CHECK_APPROX_EQUAL(E_on, E_off, 0.0000001, res);
 	  CHECK_APPROX_EQUAL(dE_on, dE_off*dLint, 0.0000001, res);
 	  RESULT(res, total);
@@ -384,6 +391,8 @@ int main(int argc, char* argv[]) {
       RESULT(res, total);
     }
   }
+  io::messages.display(std::cout);
+  io::messages.clear();
 
   return total;
 }

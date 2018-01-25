@@ -680,7 +680,7 @@ void configuration::Configuration::check_excluded_positions(topology::Topology c
     }
 
     // loop over the solute charge groups
-    int idx_cg1, idx_cg2;
+    unsigned int idx_cg1, idx_cg2;
     for (idx_cg1 = 0; idx_cg1 < num_cg; idx_cg1++) {
       for (idx_cg2 = idx_cg1 + 1; idx_cg2 < num_cg; idx_cg2++) {
         // check if they are outside of inner cut off

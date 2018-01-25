@@ -145,7 +145,7 @@ FORCE
 #      NTF array
 # bonds    angles    imp.     dihe     charge nonbonded
 # H        H         H        H
-   1 1       1 1       1 1      1 1      1  1
+  1         1         1        1      1  1
 # NEGR    NRE(1)    NRE(2)    ...      NRE(NEGR)
      1     72
 END
@@ -167,8 +167,8 @@ END
 NONBONDED
 #   NLRELE
          2
-#    APPAK      RCRF     EPSRF       NEXCL
-       0.0       1.4       1.0    1
+#    APPAK      RCRF     EPSRF  NSLFEXCL
+       0.0       1.4       1.0         1
 #   NSHAPE    ASHAPE    NA2CLC     TOLA2    EPSLS
         -1       1.4         2    0.1E-9      0.0
 #      NKX       NKY       NKZ       NK2
@@ -256,6 +256,3 @@ END
 # NTPI
 #    0
 #END
-GROMOS96COMPAT
-1 1 1 1
-END

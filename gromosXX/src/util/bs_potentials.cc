@@ -589,9 +589,9 @@ std::string util::BS_Distorted_Stick::str() {
 
 util::BS_Pipe::BS_Pipe(int id, int num_gp_long, int num_gp_perp, double force_const,
             util::BS_Pipe_Param start, util::BS_Pipe_Param end) :
-      BS_Potential(id, num_gp_long * num_gp_perp, force_const), 
-        m_num_long_gp(num_gp_long), m_num_perp_gp(num_gp_perp),
-        m_start(start), m_end(end) 
+      BS_Potential(id, num_gp_long * num_gp_perp, force_const),
+      m_start(start), m_end(end),
+      m_num_long_gp(num_gp_long), m_num_perp_gp(num_gp_perp)
 {
   m_unitLongitudinal = m_end.point - m_start.point;
   m_length = m_unitLongitudinal.normalize();

@@ -413,7 +413,7 @@ void util::BS_Lambda::addForces(configuration::Configuration& conf,
         BS_Vector& derivatives){
   assert(derivatives.size() == m_dimension);
   DEBUG(10, "Derivative: " << derivatives.str());
-  double deriv = derivatives[0];
+  //double deriv = derivatives[0];
   
   // TODO: Add biasing force
   // conf.current().lambda_force += - deriv / m_red_fac;

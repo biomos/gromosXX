@@ -213,8 +213,7 @@ void io::In_BSLEUS::read(topology::Topology &topo,
       return;
     }
 
-    std::vector<std::string>::const_iterator it = buffer.begin() + 1,
-            to = buffer.end() - 1;
+    std::vector<std::string>::const_iterator it = buffer.begin() + 1;
     DEBUG(10, "reading in BSLEUSSUB data");
     _lineStream.clear();
     _lineStream.str(*it++);

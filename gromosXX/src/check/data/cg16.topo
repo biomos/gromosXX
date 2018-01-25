@@ -141,7 +141,7 @@ IMPDIHEDRAL
 #  ICQ: improper dihedral type code
 #    IQ     JQ     KQ     LQ  ICQ
 END
-DIHEDRALTYPE
+TORSDIHEDRALTYPE
 #  NPTY: number of dihedral types
 1
 #  CP: force constant

@@ -110,14 +110,14 @@ static int _calculate_perturbed_dihedral_new_interactions
     double sign = dot(rij, rnk);
     if(sign < 0) phi*=-1.0;
     
-    assert(unsigned(d_it->A_type) < m_interaction.parameter().size());
+    assert(unsigned(d_it->A_type) < topo.dihedral_types().size());
     
     // first state A 
    
-    double     K = m_interaction.parameter()[d_it->A_type].K;
-    double cosdelta = m_interaction.parameter()[d_it->A_type].cospd;
-    double delta = m_interaction.parameter()[d_it->A_type].pd;
-    double m = m_interaction.parameter()[d_it->A_type].m;
+    double     K = topo.dihedral_types()[d_it->A_type].K;
+    double cosdelta = topo.dihedral_types()[d_it->A_type].cospd;
+    double delta = topo.dihedral_types()[d_it->A_type].pd;
+    double m = topo.dihedral_types()[d_it->A_type].m;
     
     DEBUG(10, "dihedral K=" << K << "cos delta=" << cosdelta);
 
@@ -134,10 +134,10 @@ static int _calculate_perturbed_dihedral_new_interactions
     A_energy = K * (1 + cos (m*phi - delta));
     
     // then state B 
-    K = m_interaction.parameter()[d_it->B_type].K;
-    delta = m_interaction.parameter()[d_it->B_type].pd;
-    cosdelta = m_interaction.parameter()[d_it->B_type].cospd;
-    m = m_interaction.parameter()[d_it->B_type].m;
+    K = topo.dihedral_types()[d_it->B_type].K;
+    delta = topo.dihedral_types()[d_it->B_type].pd;
+    cosdelta = topo.dihedral_types()[d_it->B_type].cospd;
+    m = topo.dihedral_types()[d_it->B_type].m;
     
     DEBUG(10, "dihedral K=" << K << "cos delta=" << cosdelta);
 

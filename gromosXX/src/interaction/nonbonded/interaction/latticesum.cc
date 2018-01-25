@@ -507,7 +507,7 @@ void interaction::Lattice_Sum::calculate_electric_field(const topology::Topology
   const double H_y = math::abs(box(1) / Ny);
   const double H_z = math::abs(box(2) / Nz);
   DEBUG(15,"H_x = " << H_x << ", H_y = " << H_y << ", H_z = " << H_z);
-  math::Matrix H_trans = math::transpose(H);
+  //math::Matrix H_trans = math::transpose(H);
   // the volume of a grid cell (Vg) MD05.32 eq. 61
   //const double cell_volume = math::det(H_trans);
   const double sqrt_grid_volume = sqrt(double(grid_volume));

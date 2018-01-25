@@ -160,12 +160,12 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
 			 io::message::warning);
       }
 
-      if (sim.param().multibath.nosehoover == 0){
+      if (sim.param().multibath.algorithm == 0){
 	algorithm::Berendsen_Thermostat * tcoup =
 	  new algorithm::Berendsen_Thermostat;
 	md_seq.push_back(tcoup);
       }
-      else if (sim.param().multibath.nosehoover >= 1){
+      else if (sim.param().multibath.algorithm >= 1){
 	algorithm::NoseHoover_Thermostat *tcoup =
 	  new algorithm::NoseHoover_Thermostat;
 	md_seq.push_back(tcoup);

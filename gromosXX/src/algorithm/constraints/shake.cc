@@ -122,7 +122,9 @@ int algorithm::Shake::apply(topology::Topology & topo,
     }
   }
 
+#ifdef XXMPI
   int transfer_size=topo.num_atoms();
+#endif
   if (!error && sim.param().system.nsm &&
           sim.param().constraint.solvent.algorithm == simulation::constr_shake) {
 
@@ -139,9 +141,11 @@ int algorithm::Shake::apply(topology::Topology & topo,
       return E_SHAKE_FAILURE_SOLVENT;
     }
   } else {
+#ifdef XXMPI
     // sum up only solute positions in the next block, otherwise things will 
     // go wrong, because all ranks still have all solvent positions
     transfer_size=topo.num_solute_atoms();
+#endif
   }
 #ifdef XXMPI
   if (sim.mpi) {
@@ -319,7 +323,7 @@ if ((topo.solute().distance_constraints().size() &&
       std::vector<unsigned int>::iterator it_end = m_constraint_groups[0].unaffected_indices.end();
 	  for (unsigned int i = 0; i < topo.num_solute_atoms(); ++i) {
 		bool is_constrained = false;
-		for(unsigned int group_id = 1; group_id < m_size; ++group_id) {
+		for(int group_id = 1; group_id < m_size; ++group_id) {
 			is_constrained |= affected_indices[group_id].find(i) != affected_indices[group_id].end();
 		}
 		if(!is_constrained) {

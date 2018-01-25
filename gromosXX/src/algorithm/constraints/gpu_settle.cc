@@ -78,8 +78,8 @@ int algorithm::GPU_Settle::init(topology::Topology & topo,
   }
 
   // the molecule must have two equal bond lengths (constraints 1 and 2)
-  if (parameter()[topo.solvent(0).distance_constraint(0).type].r0 !=
-      parameter()[topo.solvent(0).distance_constraint(1).type].r0) {
+  if (topo.bond_types_harm()[topo.solvent(0).distance_constraint(0).type].r0 !=
+      topo.bond_types_harm()[topo.solvent(0).distance_constraint(1).type].r0) {
     io::messages.add("SETTLE does only work with water like molecules (distance constraints wrong).",
             "Settle", io::message::error);
     return 1;

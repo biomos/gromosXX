@@ -94,10 +94,10 @@ void interaction::Nonbonded_Outerloop
         util::Algorithm_Timer & timer, bool master) {
   DEBUG(7, "\tcalculate interactions");
 
-  // WORKAROUND! See definition of _lj_crf_outerloop_2
+  // WORKAROUND! See definition of _lj_crf_outerloop_fast
   if (t_interaction_spec::boundary_type == math::rectangular &&
       t_interaction_spec::interaction_func == simulation::lj_crf_func) {
-    _lj_crf_outerloop_2(topo, conf, sim, pairlist_solute, pairlist_solvent,
+    _lj_crf_outerloop_fast(topo, conf, sim, pairlist_solute, pairlist_solvent,
                         storage, longrange, timer, master);
     return;
   }
@@ -113,7 +113,7 @@ void interaction::Nonbonded_Outerloop
   std::vector<unsigned int>::const_iterator j_it, j_to;
 
   unsigned int size_i = unsigned(pairlist_solute.size());
-  DEBUG(10, "outerloop pairlist size " << size_i);
+  DEBUG(10, "lj_crf_outerloop pairlist size " << size_i);
 
   const unsigned int end = topo.num_solute_atoms();
 
@@ -265,7 +265,7 @@ unsigned int i_deb;
  */
 // WORKAROUND - see definition!
 void interaction::Nonbonded_Outerloop
-::_lj_crf_outerloop_2(topology::Topology & topo,
+::_lj_crf_outerloop_fast(topology::Topology & topo,
         configuration::Configuration & conf,
         simulation::Simulation & sim,
         Pairlist const & pairlist_solute,
@@ -286,7 +286,7 @@ void interaction::Nonbonded_Outerloop
   std::vector<unsigned int>::const_iterator j_it, j_to;
 
   unsigned int size_i = unsigned(pairlist_solute.size());
-  DEBUG(10, "outerloop pairlist size " << size_i);
+  DEBUG(10, "lj_crf2 outerloop pairlist size " << size_i);
 
   const unsigned int end = topo.num_solute_atoms();
 
@@ -298,9 +298,7 @@ void interaction::Nonbonded_Outerloop
     int k = 0;
     
 
-      DEBUG(10, "\tnonbonded_interaction: i " << i << " j " << *j_it);
-
-      // shortrange, therefore store in simulation.system()
+    // shortrange, therefore store in simulation.system()
     for (j_it = pairlist_solute[i].begin(),
          j_to = pairlist_solute[i].end();
          j_it != j_to;
@@ -1479,7 +1477,7 @@ void interaction::Nonbonded_Outerloop
   unsigned int i;
   unsigned int size_i = unsigned(pairlist.size());
   unsigned int size_lr = size_i;
-  DEBUG(11, "outerloop pairlist size " << size_i);
+  DEBUG(11, "el_field outerloop pairlist size " << size_i);
 
   unsigned int end = size_i;
   unsigned int end_lr = size_lr;
@@ -1665,15 +1663,16 @@ void interaction::Nonbonded_Outerloop
 
           // calculation of convergence criterium
           for (int j = 0; j < 3; ++j) {
-            double delta_e = fabs(storage.electric_field(i)(j) - e_el_new(i)(j))* 7.911492226513023 * 0.1;
-            if (delta_e > maxfield) {
-              maxfield = delta_e;
+            double delta_field = fabs(storage.electric_field(i)(j) - e_el_new(i)(j));
+            if (delta_field > maxfield) {
+              maxfield = delta_field;
             }
           }
         }
+
         storage.electric_field(i) = e_el_new(i);
       }
-    }
+    } // end if rank==0
     turni++;
     minfield = maxfield;
 
@@ -1687,6 +1686,7 @@ void interaction::Nonbonded_Outerloop
 #endif
     DEBUG(11, "\trank: " << rank << " minfield: " << minfield << " iteration round: " << turni);
   }
+  DEBUG(5, "electric field iterations: " << turni);
 }
 
 void interaction::Nonbonded_Outerloop
@@ -1723,7 +1723,7 @@ void interaction::Nonbonded_Outerloop
   topology::excl_cont_t::value_type::const_iterator ex_it, ex_to;
 
   unsigned int size_i = unsigned(pairlist_solute.size());
-  DEBUG(10, "outerloop pairlist size " << size_i);
+  DEBUG(10, "ls_real outerloop pairlist size " << size_i);
 
   unsigned int end = topo.num_solute_atoms();
 

@@ -53,7 +53,7 @@ namespace simulation
 
   };
    /**
-    * @enum replica_exchange_interruptor
+    * @enum replica_exchange_interruptor_enum
     * mode switcher
     * of replica exchange
     */
@@ -72,7 +72,7 @@ namespace simulation
       replica_exchange_resolution = 2
   };
      /**
-    * @enum rep_ex_energy_interruptor
+    * @enum rep_ex_energy_interruptor_enum
     * mode switcher
     * of the energy
     */
@@ -943,9 +943,9 @@ namespace simulation
        * - couple false (no temperature coupling)
        * - found multibath false
        * - found tcouple false
-       * - nosehoover 0 (weak coupling)
+       * - algorithm 0 (weak coupling)
        */
-      multibath_struct() : couple(false), found_multibath(false), found_tcouple(false), nosehoover(0) {}
+      multibath_struct() : couple(false), found_multibath(false), found_tcouple(false), algorithm(0) {}
       
       /**
        * do temperature coupling?
@@ -998,12 +998,12 @@ namespace simulation
        */
       bool found_tcouple;
       /**
-       * Nose-Hoover?
+       * algorithm?
        *  0 : berendsen
        *  1 : Nose-Hoover
        * >1 : Nose-Hoover-Chains
        */
-      int nosehoover;
+      int algorithm;
 
     } /** temperature coupling parameters */ multibath;
     
@@ -2263,10 +2263,10 @@ namespace simulation
        * Default values:
        * - num_T 0
        * - num_l 0
-       * - temperature <empty>
+       * - temperature \<empty\>
        * - scale (false)
-       * - lambda <empty>
-       * - dt <empty>
+       * - lambda \<empty\>
+       * - dt \<empty\>
        * - trials 0
        * - equilibrate 0
        * - cont 0
@@ -2510,7 +2510,7 @@ namespace simulation
       /** 
        * calculate nr_lambdas extra lambda points 
        */
-       int nr_lambdas;
+       unsigned int nr_lambdas;
       /** 
        * starting from lambda 
        */
@@ -2664,7 +2664,7 @@ namespace simulation
        * - damp, no damping of polarisability
        * - output cospositions every 'write'th block to special trajectory
        */
-      polarise_struct() : cos(0), minfield(2.5), efield_site(ef_atom),
+      polarise_struct() : cos(0), minfield(37.3), efield_site(ef_atom),
                           damp(false), write(0)
       {}
       /**
@@ -3063,7 +3063,7 @@ namespace simulation
       /**
        * number of addiabatic decoupling groups
        */
-      int adgr;
+      unsigned int adgr;
 
       struct adc_struct {
 

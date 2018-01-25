@@ -48,6 +48,7 @@ m_num_solute_chargegroups(0),
 m_num_solute_molecules(0),
 m_num_solute_temperature_groups(0),
 m_num_solute_pressure_groups(0),
+m_rottrans_last_atom(0),
 m_multicell_topo(NULL),
 m_polarisability(0),
 m_coscharge(0),
@@ -64,8 +65,7 @@ m_sasa_volume_tot(0.0),
 m_sasa_first_neighbour(),
 m_sasa_second_neighbour(),
 m_sasa_third_neighbour(),
-m_sasa_higher_neighbour(),
-m_rottrans_last_atom(0) {
+m_sasa_higher_neighbour() {
   m_chargegroup.push_back(0);
   m_molecule.push_back(0);
   m_temperature_group.push_back(0);
@@ -93,6 +93,30 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
   const int num_solute = topo.num_solute_atoms();
   //assert(num_solute >= 0 && topo.m_is_perturbed.size() == unsigned(num_solute));
 
+  m_bond_types_harm = topo.bond_types_harm();
+  m_bond_types_quart = topo.bond_types_quart();
+  m_angle_types_harm = topo.angle_types_harm();
+  m_angle_types_cosharm = topo.angle_types_cosharm();
+  m_dihedral_types = topo.dihedral_types();
+  m_impdihedral_types = topo.impdihedral_types();
+    std::vector<interaction::bond_type_struct> m_bond_types_quart();
+
+    /**
+     * store all available angle types with harmonic/cosine harmonic force constant
+     */
+    std::vector<interaction::angle_type_struct> m_angle_types_harm;
+    std::vector<interaction::angle_type_struct> m_angle_types_cosharm;
+
+    /**
+     * store all available dihedral types
+     */
+    std::vector<interaction::dihedral_type_struct> m_dihedral_types;
+
+    /**
+     * store all available improper dihedral types
+     */
+    std::vector<interaction::improper_dihedral_type_struct> m_impdihedral_types;
+
   m_is_perturbed.clear();
   m_is_eds_perturbed.clear();
   m_is_polarisable.clear();
@@ -118,7 +142,7 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
   m_stochastic.clear();
   m_lj_exceptions.clear();
 
-  DEBUG(10, "solute chargegrous = " << topo.num_solute_chargegroups());
+  DEBUG(10, "solute chargegroups = " << topo.num_solute_chargegroups());
 
   m_num_solute_chargegroups = topo.num_solute_chargegroups() * mul_solute;
   m_num_solute_molecules = topo.num_solute_molecules() * mul_solute;
@@ -1130,9 +1154,6 @@ calculate_constraint_dof(simulation::Multibath &multibath,
 
   if (position_constraints) {
     DEBUG(6, "position contraints dof");
-    std::vector<topology::position_restraint_struct>::const_iterator
-    it = position_restraints().begin(),
-            to = position_restraints().end();
 
     topology::Temperaturegroup_Iterator tmpit = temperature_group_begin(),
             tmpto = temperature_group_end();

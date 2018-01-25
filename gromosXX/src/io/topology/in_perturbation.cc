@@ -293,17 +293,28 @@ io::In_Perturbation::read(topology::Topology &topo,
                     "In_Perturbation", io::message::error);
           }
           
-          if (!quiet)
+          if (!quiet){
             os << "\n\t\tbonds :                          "
-            << unsigned(topo.solute().bonds().size())
-            << "\n\t\tperturbed bonds :                "
-            << unsigned(topo.perturbed_solute().bonds().size())
-            << "\n\t\tdistance constraints :           "
-            << unsigned(topo.solute().distance_constraints().size())
-            << "\n\t\tperturbed distance constraints : "
-            << unsigned(topo.perturbed_solute().distance_constraints().size())
-            << "\n\n"
-            << "\tEND\n";
+               << unsigned(topo.solute().bonds().size())
+               << "\n\t\tperturbed bonds :                "
+               << unsigned(topo.perturbed_solute().bonds().size())
+               << "\n\t\tdistance constraints :           "
+               << unsigned(topo.solute().distance_constraints().size())
+               << "\n\t\tperturbed distance constraints : "
+               << unsigned(topo.perturbed_solute().distance_constraints().size())
+               << "\n\n";
+
+            //write a warning if we do perturbed constraints and PRECALCLAM
+            if(topo.perturbed_solute().distance_constraints().size()
+               && param.precalclam.nr_lambdas) {
+              os << "\tWARNING: Perturbed distance constraints in combination with\n\t\t precalculated lambdas will give a contribution to energy\n\t\t derivatives, but not to the energies. Use in BAR or reweighting\n\t\t in extended TI will be inappropriate\n\n";
+
+              io::messages.add("Perturbed SHAKE in combination with precalculated\n                            lambdas only contributes to derivatives not energies", "In_Perturbation", io::message::warning);
+            }
+
+            os << "\tEND\n";
+          }
+
           
         } // if block present
       }  // loop over H/non H blocks
@@ -1235,8 +1246,9 @@ io::In_Perturbation::read(topology::Topology &topo,
         int num, n;
         _lineStream >> num;
         ++it;
-        
-        int seq, res, a_iac, b_iac;
+       
+        int seq; 
+        unsigned int res, a_iac, b_iac;
         double a_mass, b_mass, a_charge, b_charge;
         double lj_soft, crf_soft;
         std::string name;

@@ -153,8 +153,6 @@ int algorithm::Shake::dih_constr_iteration
 		  );
 
       // Finally, eq 60
-      const double dt = sim.time_step_size();
-      const double dt2 = dt * dt;
 
       //////////////////////////////////////////////////
       // reference phi!

@@ -17,7 +17,6 @@
 // interactions
 #include "../../interaction/interaction_types.h"
 #include "perturbed_soft_bond_interaction.h"
-#include "../../io/ifp.h"
 
 #include "../../util/template_split.h"
 #include "../../util/debug.h"
@@ -27,16 +26,6 @@
 #define MODULE interaction
 #define SUBMODULE interaction
 
-
-
-
-interaction::Perturbed_Soft_Bond_Interaction::Perturbed_Soft_Bond_Interaction(io::IFP &it)
-      : Interaction("PerturbedSoftBond")
-{
-      it.read_harmonic_bonds(m_parameter);
-}
-
- 
 /**
  * calculate bond forces and energies and lambda derivatives.
  */
@@ -44,10 +33,10 @@ template<math::boundary_enum B, math::virial_enum V>
 static int _calculate_perturbed_soft_interactions
 (  topology::Topology & topo,
    configuration::Configuration & conf,
-   simulation::Simulation & sim,
-   std::vector<interaction::bond_type_struct> &bondtypes)
+   simulation::Simulation & sim)
 {
 
+  std::vector<interaction::bond_type_struct> const & bondtypes=topo.bond_types_harm();
   DEBUG(7, "perturbed soft bond interaction");
   DEBUG(9, std::setprecision(5));
   
@@ -179,7 +168,7 @@ static int _calculate_perturbed_soft_interactions
                             (sim.param().precalclam.nr_lambdas-1);
 
       //loop over nr_lambdas
-      for (int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
+      for (unsigned int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
 
         // determine current lambda for this index
         double lam=(lam_index * lambda_step) + sim.param().precalclam.min_lam;
@@ -220,7 +209,7 @@ int interaction::Perturbed_Soft_Bond_Interaction
   m_timer.start();
   
   SPLIT_VIRIAL_BOUNDARY(_calculate_perturbed_soft_interactions,
-			topo, conf, sim, m_parameter);
+			topo, conf, sim);
   m_timer.stop();
 
   return 0;
@@ -242,15 +231,15 @@ int interaction::Perturbed_Soft_Bond_Interaction
                                  bt_to = topo.perturbed_solute().softbonds().end();
       for( ; bt_it != bt_to; ++bt_it){
           if (bt_it->A_type==INT_MAX-1) {
-            bt_it->A_type=m_parameter.size();
-            double r = m_parameter[bt_it->B_type].r0;
-            m_parameter.push_back(interaction::bond_type_struct(0, r)); 
+            bt_it->A_type=topo.bond_types_harm().size();
+            double r = topo.bond_types_harm()[bt_it->B_type].r0;
+            topo.bond_types_harm().push_back(interaction::bond_type_struct(0, r)); 
             DEBUG(10, "adding new angle type for soft angle perturbation: " 
                        << bt_it->A_type << " K=" << 0 << " r=" << r);                     
           } else if (bt_it->B_type==INT_MAX-1) {
-            bt_it->B_type=m_parameter.size();
-            double r = m_parameter[bt_it->A_type].r0;
-            m_parameter.push_back(interaction::bond_type_struct(0, r)); 
+            bt_it->B_type=topo.bond_types_harm().size();
+            double r = topo.bond_types_harm()[bt_it->A_type].r0;
+            topo.bond_types_harm().push_back(interaction::bond_type_struct(0, r)); 
             DEBUG(10, "adding new angle type for soft angle perturbation: " 
                        << bt_it->B_type << " K=" << 0 << " r=" << r);              
           }

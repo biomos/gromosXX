@@ -39,12 +39,15 @@ int algorithm::Leap_Frog_Position
       conf.old().pos(i) + conf.current().vel(i) * sim.time_step_size();
   
   if (sim.param().polarise.cos) {
-    DEBUG(8, "leap-frog: updating cos positions");
 #ifdef OMP
 #pragma omp parallel for
 #endif
-    for(int i=0; i < num_atoms; ++i)
-      conf.current().posV(i) = conf.old().posV(i);
+    for(int i=0; i < num_atoms; ++i) {
+      // Verlet type prediction of cos displacement 
+      // conf.current() contains the oldold posV
+      conf.current().posV(i) = 2*conf.old().posV(i) - conf.current().posV(i);
+
+    }
   }
   
   m_timer.stop();

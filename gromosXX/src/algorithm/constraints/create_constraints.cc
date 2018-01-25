@@ -86,7 +86,6 @@ int algorithm::create_constraints(algorithm::Algorithm_Sequence &md_seq,
         algorithm::Shake * s =
                 new algorithm::Shake
                 (sim.param().constraint.solute.shake_tolerance);
-        it.read_harmonic_bonds(s->parameter());
         md_seq.push_back(s);
 
       } else {
@@ -94,7 +93,6 @@ int algorithm::create_constraints(algorithm::Algorithm_Sequence &md_seq,
         algorithm::Perturbed_Shake * ps =
                 new algorithm::Perturbed_Shake
                 (sim.param().constraint.solute.shake_tolerance);
-        it.read_harmonic_bonds(ps->parameter());
         md_seq.push_back(ps);
 
       }
@@ -104,7 +102,6 @@ int algorithm::create_constraints(algorithm::Algorithm_Sequence &md_seq,
     {
       algorithm::Lincs * s =
               new algorithm::Lincs;
-      it.read_harmonic_bonds(s->parameter());
       md_seq.push_back(s);
 
       if (sim.param().perturbation.perturbation) {
@@ -138,8 +135,6 @@ int algorithm::create_constraints(algorithm::Algorithm_Sequence &md_seq,
                 new algorithm::Flexible_Constraint
                 (sim.param().constraint.solute.shake_tolerance, 1000, ff);
 
-        it.read_harmonic_bonds(fs->parameter());
-
         md_seq.push_back(fs);
 
       } else {
@@ -147,8 +142,6 @@ int algorithm::create_constraints(algorithm::Algorithm_Sequence &md_seq,
         algorithm::Perturbed_Flexible_Constraint * pfc =
                 new algorithm::Perturbed_Flexible_Constraint
                 (sim.param().constraint.solute.shake_tolerance, 1000, ff);
-
-        it.read_harmonic_bonds(pfc->parameter());
 
         md_seq.push_back(pfc);
 
@@ -195,7 +188,6 @@ int algorithm::create_constraints(algorithm::Algorithm_Sequence &md_seq,
         algorithm::Shake * s =
                 new algorithm::Shake
                 (sim.param().constraint.solvent.shake_tolerance);
-        it.read_harmonic_bonds(s->parameter());
         md_seq.push_back(s);
 
         break;
@@ -204,7 +196,6 @@ int algorithm::create_constraints(algorithm::Algorithm_Sequence &md_seq,
       {
         algorithm::Lincs * s =
                 new algorithm::Lincs;
-        it.read_harmonic_bonds(s->parameter());
         md_seq.push_back(s);
 
         break;
@@ -219,7 +210,6 @@ int algorithm::create_constraints(algorithm::Algorithm_Sequence &md_seq,
       {
         algorithm::Settle * s =
                 new algorithm::Settle;
-        it.read_harmonic_bonds(s->parameter());
         md_seq.push_back(s);
 
         break;
@@ -234,7 +224,6 @@ int algorithm::create_constraints(algorithm::Algorithm_Sequence &md_seq,
         }
         algorithm::M_Shake * s =
                 new algorithm::M_Shake(sim.param().constraint.solvent.shake_tolerance);
-        it.read_harmonic_bonds(s->parameter());
         md_seq.push_back(s);
 
         break;
@@ -242,7 +231,6 @@ int algorithm::create_constraints(algorithm::Algorithm_Sequence &md_seq,
       case simulation::constr_gpu_settle :
       {
         /*algorithm::GPU_Settle * s = new algorithm::GPU_Settle;
-        it.read_harmonic_bonds(s->parameter());
         md_seq.push_back(s); */
 
         break;
@@ -257,7 +245,6 @@ int algorithm::create_constraints(algorithm::Algorithm_Sequence &md_seq,
         }
         algorithm::GPU_Shake * s =
                 new algorithm::GPU_Shake(sim.param().constraint.solvent.shake_tolerance);
-        it.read_harmonic_bonds(s->parameter());
         md_seq.push_back(s);
 
         break;
@@ -281,4 +268,3 @@ int algorithm::create_constraints(algorithm::Algorithm_Sequence &md_seq,
 
   return 0;
 }
-

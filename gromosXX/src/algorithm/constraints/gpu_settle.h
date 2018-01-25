@@ -45,20 +45,6 @@ namespace algorithm {
             bool quiet = false);
 
     /**
-     * the const bond type parameter.
-     */
-    std::vector<interaction::bond_type_struct> const &parameter()const {
-      return m_parameter;
-    }
-
-    /**
-     * the bond type parameter.
-     */
-    std::vector<interaction::bond_type_struct> & parameter() {
-      return m_parameter;
-    }
-
-    /**
      * accessor to the constrained atoms
      */
     std::set<unsigned int> & constrained_atoms() {
@@ -89,10 +75,6 @@ namespace algorithm {
             simulation::Simulation & sim,
             int & error);
 
-    /**
-     * bond parameter
-     */
-    std::vector<interaction::bond_type_struct> m_parameter;
     /**
      * the atoms that are involved in the contraints
      */
