@@ -219,7 +219,7 @@ inline void interaction::Nonbonded_Term
  * a given atom pair.
  */
 inline void interaction::Nonbonded_Term
-::lj_crf_interaction_2(double dist2,
+::lj_crf_interaction_fast(double dist2,
         double c6, double c12,
         double q,
         double &force, double &e_lj, double &e_crf, unsigned int eps) {
