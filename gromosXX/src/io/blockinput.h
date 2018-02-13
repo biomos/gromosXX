@@ -293,7 +293,7 @@ namespace io {
     * @param allowed comma-separated string of allowed values
     */
     template <class T > 
-    int get_next_parameter(std::string varname, T &var, std::string expr="", std::string allowed="");
+    int get_next_parameter(std::string varname, T &var, std::string expr="", std::string allowed="", bool allow_missing=false);
 
    /**
     * print the read parameters if there were errors
@@ -309,6 +309,7 @@ namespace io {
     std::string name() { return _blockname; }
     bool error() { return _block_error; }
     int numlines() { return _numlines; }
+    void reset_error() { _block_error = 0; }
     
     /**
      * get the block example
@@ -328,13 +329,14 @@ namespace io {
    * if unsuccessful, var is just not set!! this was also the previous behaviour
    */
   template < class T > 
-  int io::Block::get_next_parameter(std::string  varname, T &var, std::string expr, std::string allowed) {
+  int io::Block::get_next_parameter(std::string  varname, T &var, std::string expr, std::string allowed, bool allow_missing) {
     _par_names.push_back(varname);
     std::string tmp_string;
     _lineStream >> tmp_string;
   
     if (_lineStream.eof()) {
-      io::messages.add(_blockname + " block reached END before "+varname
+      if (!allow_missing)
+         io::messages.add(_blockname + " block reached END before "+varname
               +" could be read!",
 		     "BlockInput", io::message::error);
       _par_values.push_back(tmp_string);

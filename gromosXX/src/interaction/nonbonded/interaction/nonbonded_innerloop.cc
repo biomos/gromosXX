@@ -40,7 +40,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop_2
       DEBUG(11, "\tlj-parameter c6=" << lj.c6 << " c12=" << lj.c12);
       DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));
 
-      lj_crf_interaction_2(dist2, lj.c6, lj.c12,
+      lj_crf_interaction_fast(dist2, lj.c6, lj.c12,
               topo.charge(i) *
               topo.charge(j),
               f, e_lj, e_crf);

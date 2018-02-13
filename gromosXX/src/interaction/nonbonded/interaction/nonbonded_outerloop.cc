@@ -96,7 +96,8 @@ void interaction::Nonbonded_Outerloop
 
   // WORKAROUND! See definition of _lj_crf_outerloop_fast
   if (t_interaction_spec::boundary_type == math::rectangular &&
-      t_interaction_spec::interaction_func == simulation::lj_crf_func) {
+      t_interaction_spec::interaction_func == simulation::lj_crf_func &&
+      sim.param().innerloop.method != simulation::sla_cuda) {
     _lj_crf_outerloop_fast(topo, conf, sim, pairlist_solute, pairlist_solvent,
                         storage, longrange, timer, master);
     return;
@@ -272,7 +273,7 @@ void interaction::Nonbonded_Outerloop
         Pairlist const & pairlist_solvent,
         Storage & storage, bool longrange,
         util::Algorithm_Timer & timer, bool master) {
-  DEBUG(7, "\tcalculate interactions");
+  DEBUG(7, "\tcalculate interactions lj_crf_outerloop_fast");
 
   math::Periodicity<math::rectangular> periodicity(conf.current().box);
   periodicity.recalc_shift_vectors();

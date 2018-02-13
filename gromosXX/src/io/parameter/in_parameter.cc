@@ -2616,7 +2616,7 @@ void io::In_Parameter::read_INNERLOOP(simulation::Parameter &param,
                 bool fail = false;
                 for (unsigned int i = 0; i < param.innerloop.number_gpus; i++) {
                     std::string idx=io::to_string(i);
-                    block.get_next_parameter("NDEVG["+idx+"]", temp, ">0", "");
+                    block.get_next_parameter("NDEVG["+idx+"]", temp, ">0", "", true);
                     if (block.error()) {
                         fail = true;
                         break;
@@ -2624,10 +2624,13 @@ void io::In_Parameter::read_INNERLOOP(simulation::Parameter &param,
                     param.innerloop.gpu_device_number.push_back(temp);
                 }
                 if (fail) {
+                    // if not enough device numbers are given, set all numibers to -1
+                    // and do not report this as an error
                     param.innerloop.gpu_device_number.clear();
                     param.innerloop.gpu_device_number.resize(param.innerloop.number_gpus, -1);
                     io::messages.add("CUDA driver will determine devices for nonbonded interaction evaluation.",
                                      "In_Parameter", io::message::notice);
+                    block.reset_error();
                 }
             }
         } else {

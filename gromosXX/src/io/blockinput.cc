@@ -249,16 +249,21 @@ int io::Block::read_buffer(std::vector<std::string> &buffer, bool required) {
 
 void io::Block::get_final_messages(bool print_read) {
     if (_block_error && print_read) {
-      std::string readparameters = get_readparameters();
-      std::string separator="#---------------------------------------\n";
-      io::messages.add(_blockname +" block: Parameters read:\n"+readparameters+"\n"+separator+"# Example block:\n"+separator+_exampleblock+separator,
+      if (print_read) {
+          std::string readparameters = get_readparameters();
+          std::string separator="#---------------------------------------\n";
+          io::messages.add(_blockname +" block: Parameters read:\n"+readparameters+"\n"+separator+"# Example block:\n"+separator+_exampleblock+separator,
              "In_Parameter", io::message::error);
+      } else {
+             io::messages.add(_blockname +" block: not enough values or wrong value type.", 
+             "In_Parameter", io::message::error);
+      }
     } else {
-    std::string leftover;
-    _lineStream >> leftover;
-    if (!_lineStream.eof())
-      io::messages.add("Left-over parameters in "+ _blockname +" block: "+leftover+"\n",
-             "In_Parameter", io::message::warning);
+      std::string leftover;
+      _lineStream >> leftover;
+      if (!_lineStream.eof())
+        io::messages.add("Left-over parameters in "+ _blockname +" block: "+leftover+"\n",
+             "In_Parameter", io::message::error);
     }
     // temporary for debugging:
     //io::messages.add(get_readparameters()+"\n", "In_Parameter", io::message::warning);

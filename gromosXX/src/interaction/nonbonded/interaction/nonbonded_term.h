@@ -41,7 +41,7 @@ namespace interaction
      * calculate the force and energy of an atom pair.
      * New version (distance calculation in outer loop)
      */
-    void lj_crf_interaction_2(double dist2,
+    void lj_crf_interaction_fast(double dist2,
 			    double c6, double c12,
 			    double q,
 			    double & force, double & e_lj,
