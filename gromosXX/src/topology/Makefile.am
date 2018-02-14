@@ -20,6 +20,7 @@ xxinclude_HEADERS =	solute.h\
 	perturbed_atom.h\
 	perturbed_solute.h\
 	topology.h\
+        exclusions.h\
 	sd.h
 
 noinst_LTLIBRARIES = libgrotopology.la
