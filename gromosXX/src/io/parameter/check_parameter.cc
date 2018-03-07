@@ -3979,7 +3979,7 @@ int io::check_features(simulation::Simulation & sim)
   fc.unlock("precalculate_lambdas", "innerloop_method_generic");
   fc.unlock("precalculate_lambdas", "innerloop_method_hardcode");
   fc.unlock("precalculate_lambdas", "innerloop_method_table");
-//  fc.unlock("precalculate_lambdas", "innerloop_method_cuda");
+  fc.unlock("precalculate_lambdas", "innerloop_method_cuda");
   fc.unlock("precalculate_lambdas", "innerloop_solvent_topology");
   fc.unlock("precalculate_lambdas", "innerloop_solvent_spc");
   fc.unlock("precalculate_lambdas", "repex_temp");
