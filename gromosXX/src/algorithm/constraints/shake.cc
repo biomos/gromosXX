@@ -60,6 +60,87 @@ void algorithm::Shake
 }
 
 
+ /**
+ * initiate structure for writing out dih. constraint info to trs
+ */
+template<math::boundary_enum B>
+static void _init_dihres_data
+(topology::Topology & topo,
+ configuration::Configuration & conf)
+{
+   math::Periodicity<B> periodicity(conf.current().box);
+   math::VArray &pos   = conf.current().pos;
+ 
+   math::Vec rij, rkj, rkl, rmj, rnk;
+   double dkj2, dkj, dmj2, dmj, dnk2, dnk, ip, phi;
+    
+  for(std::vector<topology::dihedral_restraint_struct>::const_iterator
+        it = topo.dihedral_restraints().begin(),
+        to = topo.dihedral_restraints().end(); it != to; ++it) {
+        
+    DEBUG(9, "init: dihedral angle " << it->i << "-" << it->j << "-" << it->k << "-" << it->l);
+
+    
+    periodicity.nearest_image(pos(it->i), pos(it->j), rij);
+    periodicity.nearest_image(pos(it->k), pos(it->j), rkj);
+    periodicity.nearest_image(pos(it->k), pos(it->l), rkl);
+      
+    bool warn=false;
+    for (int i=0; i<3;  i++) {
+        if ((fabs(rij[i]) > conf.current().box(i)[i]*0.45 && abs(rij[i]) < conf.current().box(i)[i]*0.55)
+         || (fabs(rkj[i]) > conf.current().box(i)[i]*0.45 && abs(rkj[i]) < conf.current().box(i)[i]*0.55) 
+         || (fabs(rkl[i]) > conf.current().box(i)[i]*0.45 && abs(rkl[i]) < conf.current().box(i)[i]*0.55)) {
+          warn=true;
+        }
+    }
+    if (warn) {
+        std::ostringstream oss;
+        oss << "one or more vectors of your dihedral angle restraint are\n"
+          << "close to half a box length long in your initial structure, \n"
+          << "the dihedral might be calculated from other periodic copies of the atoms than you intended!\n";
+          io::messages.add(oss.str(),  "dihedral_constraint", io::message::warning);
+    }
+    
+    
+    rmj = cross(rij, rkj);
+    rnk = cross(rkj, rkl);
+    
+    dkj2 = abs2(rkj);
+    dmj2 = abs2(rmj);
+    dnk2 = abs2(rnk);
+    dkj  = sqrt(dkj2);
+    dmj  = sqrt(dmj2);
+    dnk  = sqrt(dnk2);
+    
+    DEBUG(15,"dkj="<<dkj<<" dmj="<<dmj<<" dnk="<<dnk);
+    
+    assert(dmj != 0.0);
+    assert(dnk != 0.0);
+
+    ip = dot(rmj, rnk);
+   
+    double acs = ip / (dmj*dnk);
+    if (acs > 1.0) {
+      if (acs < 1.0 + math::epsilon) {
+        acs = 1.0;
+      } else {
+        io::messages.add("improper dihedral",
+                "acs > 1.0",
+                io::message::critical);
+      }
+    }
+    
+    phi  = acos(acs);
+
+
+    DEBUG(10, "raw phi="<< 180.0 * phi / math::Pi);
+             
+    conf.special().dihedralres.d.push_back(phi);
+    conf.special().dihedralres.energy.push_back(0.0);
+  }
+}
+
+
 /**
  * apply the SHAKE algorithm
  */
@@ -229,6 +310,9 @@ int algorithm::Shake::init(topology::Topology & topo,
               << sim.param().constraint.solvent.shake_tolerance << "\n";
     } else os << "OFF\n";
   }
+  conf.special().constraints.num_solute_dist_iterations=0;
+  conf.special().constraints.num_solvent_dist_iterations=0;
+  conf.special().constraints.num_iterations=0;
 
 #ifdef XXMPI
   if (sim.mpi) {
@@ -303,6 +387,11 @@ if ((topo.solute().distance_constraints().size() &&
       topo.dihedral_restraints().begin(); it != topo.dihedral_restraints().end(); ++it){
 	  const unsigned int group_id = component[it->i] % m_size;
       m_constraint_groups[group_id].dihedral_restraints.push_back(*it);
+
+    // prepare to be able to write the values to special traj if required
+    if (conf.special().dihedralres.d.size() == 0)
+        SPLIT_BOUNDARY(_init_dihres_data, topo, conf);
+
 #ifdef XXMPI
       affected_indices[group_id].insert(it->i);
       affected_indices[group_id].insert(it->j);

@@ -381,6 +381,9 @@ solute(topology::Topology const & topo,
   error = 0;
   int my_error = error;
 
+  conf.special().constraints.num_solute_dist_iterations=0;
+  conf.special().constraints.num_dih_iterations=0;
+
   const unsigned int group_id = m_rank;
   int num_iterations = 0;
   bool convergence = false;
@@ -408,6 +411,7 @@ solute(topology::Topology const & topo,
         my_error = E_SHAKE_FAILURE_SOLUTE;
         break;
       }
+      if (!dist_convergence) conf.special().constraints.num_solute_dist_iterations++;
     }
 
     // dihedral constraints
@@ -427,6 +431,7 @@ solute(topology::Topology const & topo,
         break;
       }
     }
+    if (!dih_convergence) conf.special().constraints.num_dih_iterations++;
 
     convergence = dist_convergence && dih_convergence;
 
@@ -437,10 +442,11 @@ solute(topology::Topology const & topo,
       my_error = E_SHAKE_FAILURE_SOLUTE;
       break;
     }
-
+    conf.special().constraints.num_iterations = num_iterations;
     std::swap(skip_next, skip_now);
     skip_next.assign(skip_next.size(), true);
   } // convergence?
+  DEBUG(10, "SHAKE: num_iterations " << num_iterations << " num_dih_iterations " << conf.special().constraints.num_dih_iterations);
 
   // reduce errors
 #ifdef XXMPI
@@ -451,6 +457,51 @@ solute(topology::Topology const & topo,
 #else
   error = my_error;
 #endif
+
+  //TODO: this is just temporary to write out constrained dih.angles to trs
+  // if we want to keep it we should do it in a more efficient way probably
+  if (conf.special().dihedralres.d.size() > 0) {
+  math::VArray &pos   = conf.current().pos;
+
+  std::vector<topology::dihedral_restraint_struct>::const_iterator
+    it = m_constraint_groups[group_id].dihedral_restraints.begin(),
+    to = m_constraint_groups[group_id].dihedral_restraints.end();
+
+  for( int i=0; it != to; ++it, ++i){
+    // calculate dihedral angle
+    DEBUG(9, "dihedral angle " << it->i << "-" << it->j << "-" << it->k << "-" << it->l);
+
+    math::Vec r12, r32, r34;
+    periodicity.nearest_image(pos(it->i), pos(it->j), r12);
+    periodicity.nearest_image(pos(it->k), pos(it->j), r32);
+    periodicity.nearest_image(pos(it->k), pos(it->l), r34);
+
+    // eq 35
+    const math::Vec r52 = math::cross(r12, r32);
+    const double d52 = math::abs(r52);
+    // eq 36
+    const math::Vec r63 = math::cross(r32, r34);
+    const double d63 = math::abs(r63);
+    // eq 37
+    const int sign_phi = (math::dot(r12, r63) >= 0.0) ? 1 : -1;
+    // eq 34
+    const double cos_phi = math::dot(r52, r63) / (d52 * d63);
+
+    double phi;
+    // cos_phi can be >1 or <-1 because of precision limits
+    if (cos_phi > 1) phi=0.0;
+    else if (cos_phi < -1) phi=math::Pi;
+    else phi = sign_phi * acos(cos_phi);
+
+    while(phi < it->phi - math::Pi)
+      phi += 2 * math::Pi;
+    while(phi > it->phi + math::Pi)
+      phi -= 2 * math::Pi;
+      
+    conf.special().dihedralres.d[i] = phi;
+    conf.special().dihedralres.energy[i] = 0.0;
+  }
+  }
 
   // constraint force
   const double dt2 = sim.time_step_size() * sim.time_step_size();
@@ -489,6 +540,8 @@ void algorithm::Shake
 
   error = 0;
   int my_error = error;
+
+  conf.special().constraints.num_solvent_dist_iterations = 0;
 
   const unsigned int num_atoms = topo.num_atoms();
   math::Periodicity<B> periodicity(conf.current().box);
@@ -553,6 +606,7 @@ void algorithm::Shake
       if (my_error != error) break;
 
       tot_iterations += num_iterations;
+      conf.special().constraints.num_solvent_dist_iterations=tot_iterations;
 
     } // molecules
     if (my_error != error) break;

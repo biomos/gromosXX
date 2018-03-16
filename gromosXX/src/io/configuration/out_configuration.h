@@ -297,6 +297,11 @@ namespace io {
             configuration::Configuration const &conf,
             topology::Topology const &topo,
             std::ostream &os);
+
+    void _print_shake_iterations(
+            configuration::Configuration const &conf,
+            topology::Topology const &topo,
+            std::ostream &os);
     
     void _print_position_restraints(simulation::Simulation const &sim,
             topology::Topology const &topo,

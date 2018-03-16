@@ -35,7 +35,7 @@
 
 // Energy trajectory version
 // For details, see definition in out_configuration.cc
-const std::string io::Out_Configuration::ene_version = "2018-11-29";
+const std::string io::Out_Configuration::ene_version = "2019-07-02";
 
 // declarations
 static void _print_energyred_helper(std::ostream & os, configuration::Energy const &e);
@@ -338,6 +338,13 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       m_special_traj.flush();
     }
 
+
+    if ((m_every_disres && sim.steps() && ((sim.steps() - sim.param().analyze.stride) % m_every_disres) == 0) ||
+        (m_every_dihres && sim.steps() && ((sim.steps() - sim.param().analyze.stride) % m_every_dihres) == 0)) {
+      _print_shake_iterations(conf, topo, m_special_traj);
+      m_special_traj.flush();
+    }
+
     if (m_every_jvalue  && sim.steps() && ((sim.steps()-sim.param().analyze.stride) % m_every_jvalue) == 0) {
       _print_jvalue(sim.param(), conf, topo, m_special_traj, true);
       m_special_traj.flush();
@@ -618,6 +625,12 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
     
     if (m_every_dihres && ((sim.steps()-sim.param().analyze.stride) % m_every_dihres) == 0) {   
       _print_dihedral_restraints(conf, topo, m_special_traj);
+    }
+
+    if ((m_every_disres && ((sim.steps() - 1) % m_every_disres) == 0) ||
+        (m_every_dihres && ((sim.steps() - 1) % m_every_dihres) == 0)) {
+      _print_shake_iterations(conf, topo, m_special_traj);
+      m_special_traj.flush();
     }
     
     if (m_every_jvalue && ((sim.steps()-sim.param().analyze.stride) % m_every_jvalue) == 0) {    
@@ -2449,7 +2462,8 @@ void io::Out_Configuration::_print_dihedral_restraints(
   
   if (conf.special().dihedralres.d.size() > 0) {
     os << "DIHRESDATA" << std::endl;
-    os << conf.special().dihedralres.d.size() << "\n";
+    os << std::setw(m_width) 
+       << conf.special().dihedralres.d.size() << "\n";
     int i;
     for (i = 1; d_it != d_to; ++d_it, ++ene_it, ++i) {
        double phi = *d_it * 360 /(2 * math::Pi);
@@ -2476,6 +2490,24 @@ void io::Out_Configuration::_print_dihedral_restraints(
     }
     os << "END" << std::endl;
   }
+}
+
+void io::Out_Configuration::_print_shake_iterations(
+        configuration::Configuration const &conf,
+        topology::Topology const & topo,
+        std::ostream &os) {
+  DEBUG(10, "printing number of iterations to special trajectory");
+
+  os.setf(std::ios::fixed, std::ios::floatfield);
+  os.precision(m_dihedral_restraint_precision);
+  
+  os << "SHKITERATIONS" << std::endl;
+  os << std::setw(m_width)  
+       << conf.special().constraints.num_iterations << " "
+       << conf.special().constraints.num_solute_dist_iterations << " "
+       << conf.special().constraints.num_solvent_dist_iterations << " "
+       << conf.special().constraints.num_dih_iterations << "\n";
+  os << "END" << std::endl;
 }
 
 void io::Out_Configuration::_print_order_parameter_restraints(
