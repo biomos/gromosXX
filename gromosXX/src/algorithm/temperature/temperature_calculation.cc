@@ -149,24 +149,30 @@ int algorithm::Temperature_Calculation
 	  DEBUG(10, "\tl_deriv: " << l_deriv);
 	  
 	  // for some reason we take the new velocities here
+
           // let's take the average of the old and the new velocities (squared) to be consistent with the 
           // calculation of the kinetic energy itself
+
+          // making both E and dE part consistent (taking the average squared for Ekin and dEkin)
+          double avg_v2 = (math::abs2(old_vel(i)) + math::abs2(vel(i))) * 0.5;
 	  e_kin[bath] -= l_deriv * 
 	    (topo.perturbed_solute().atoms()[i].B_mass() -
-	     topo.perturbed_solute().atoms()[i].A_mass()) 
-	    * (math::abs2(old_vel(i)) + math::abs2(vel(i))) * 0.5;
+	     topo.perturbed_solute().atoms()[i].A_mass()) * avg_v2;
 	  
 	  DEBUG(10, "\tdE_kin/dl: " << e_kin[bath]);
 
           // ANITA
           // using average velocities for energy and new velocities for free energy!!
+
+          // again making both E and dE part consistent (taking the average squared for Ekin and dEkin)
           if (sim.param().precalclam.nr_lambdas && 
                 ((sim.steps() % sim.param().write.free_energy) == 0)){
 
             double massA = topo.perturbed_solute().atoms()[i].A_mass();
             double massB = topo.perturbed_solute().atoms()[i].B_mass();
-            double avg_v2 = (math::abs2(conf.old().vel(i)) + math::abs2(vel(i)))/2;
-            double v2 = math::abs2(vel(i));
+            //double avg_v2 = (math::abs2(conf.old().vel(i)) + math::abs2(vel(i)))/2;
+            //double v2 = math::abs2(vel(i));
+            // we have avg_v2 above and we don't need v2
             double slam = topo.individual_lambda(simulation::mass_lambda)
                           [topo.atom_energy_group()[i]][topo.atom_energy_group()[i]];
 
@@ -195,7 +201,7 @@ int algorithm::Temperature_Calculation
               conf.old().energies.AB_kinetic[lam_index] += 
                     0.5 * (mass_s2/mass_p) * avg_v2;
               conf.old().perturbed_energy_derivatives.AB_kinetic[lam_index] += 
-                   -0.5*(massB - massA)*(mass_s2/mass_p2)*v2; 
+                   -0.5*(massB - massA)*(mass_s2/mass_p2)*avg_v2; 
             } 
           } // ANITA
 	}
