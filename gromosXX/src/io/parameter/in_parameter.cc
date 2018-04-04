@@ -1577,7 +1577,7 @@ void io::In_Parameter::read_MULTIBATH(simulation::Parameter &param,
 
         for (int i = 0; i < num_dof; ++i) {
             std::string idx = io::to_string(i);
-            block.get_next_parameter("LAST["+idx+"]", last, ">1", "");
+            block.get_next_parameter("LAST["+idx+"]", last, ">=1", "");
             block.get_next_parameter("COM-BATH["+idx+"]", com_bath, ">=1 && <="+ str_bathsize, "");
             block.get_next_parameter("IR-BATH["+idx+"]", ir_bath, ">=1 && <="+ str_bathsize, "");
 
