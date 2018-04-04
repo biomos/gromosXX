@@ -68,7 +68,12 @@ int algorithm::Shake::dih_constr_iteration
     const int sign_phi = (math::dot(r12, r63) >= 0.0) ? 1 : -1;
     // eq 36
     const double cos_phi = math::dot(r52, r63) / (d52 * d63);
-    double phi = sign_phi * acos(cos_phi);
+
+    double phi;
+    // cos_phi can be >1 or <-1 because of precision limits
+    if (cos_phi > 1) phi=0.0;
+    else if (cos_phi < -1) phi=math::Pi;
+    else phi = sign_phi * acos(cos_phi);
 
     while(phi < it->phi - math::Pi)
       phi += 2 * math::Pi;
