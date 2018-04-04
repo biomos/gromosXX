@@ -81,6 +81,16 @@ static int _calculate_improper_interactions(topology::Topology & topo,
       }
     }
     
+    if (acs < -1.0) {
+      if (acs > -1.0 - math::epsilon) {
+        acs = -1.0;
+      } else {
+        io::messages.add("improper dihedral",
+                "acs < -1.0",
+                io::message::critical);
+      }
+    }
+    
     q  = acos(acs);
 
     DEBUG(10, "zeta="<<q);

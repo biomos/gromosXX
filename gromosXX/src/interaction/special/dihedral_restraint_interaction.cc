@@ -85,8 +85,17 @@ static int _calculate_dihedral_restraint_interactions
       if (acs < 1.0 + math::epsilon) {
         acs = 1.0;
       } else {
-        io::messages.add("improper dihedral",
+        io::messages.add("dihedral",
                 "acs > 1.0",
+                io::message::critical);
+      }
+    }
+    if (acs < -1.0) {
+      if (acs > -1.0 - math::epsilon) {
+        acs = -1.0;
+      } else {
+        io::messages.add("dihedral",
+                "acs < -1.0",
                 io::message::critical);
       }
     }
@@ -252,8 +261,17 @@ static void _init_dihres_data
       if (acs < 1.0 + math::epsilon) {
         acs = 1.0;
       } else {
-        io::messages.add("improper dihedral",
+        io::messages.add("dihedral",
                 "acs > 1.0",
+                io::message::critical);
+      }
+    }
+    if (acs < -1.0) {
+      if (acs > -1.0 - math::epsilon) {
+        acs = -1.0;
+      } else {
+        io::messages.add("dihedral",
+                "acs < -1.0",
                 io::message::critical);
       }
     }

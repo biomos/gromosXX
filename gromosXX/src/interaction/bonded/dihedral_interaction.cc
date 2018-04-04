@@ -155,7 +155,12 @@ static int _calculate_dihedral_interactions(topology::Topology & topo,
     if (sim.param().print.monitor_dihedrals) {
       DEBUG(8, "monitoring dihedrals");
 
+      // cos_phi can be >1 or <-1 because of precision limits
+      if (cosphi > 1) cosphi=1.0;
+      if (cosphi < -1) cosphi=-1.0;
+
       double phi = acos(cosphi);
+
       ip = dot(rij, rnk);
       if (ip < 0) phi *= -1.0;
       DEBUG(11, "dihedral angle: " << phi
