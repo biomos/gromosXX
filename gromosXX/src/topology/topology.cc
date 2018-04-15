@@ -579,6 +579,10 @@ void topology::Topology::init(simulation::Simulation const & sim,
     for (unsigned int i = 0; i < m_charge.size(); ++i) {
       m_charge(i) = 0.0;
     }
+    for (std::map<unsigned int, Perturbed_Atom>::iterator it=perturbed_solute().atoms().begin(); it!=perturbed_solute().atoms().end(); ++it) {
+      it->second.A_charge(0.0);
+      it->second.B_charge(0.0);
+    }
   }
 
   if (!sim.param().force.nonbonded_vdw) {
@@ -590,6 +594,10 @@ void topology::Topology::init(simulation::Simulation const & sim,
       int dum = m_atom_name["DUM"];
       for (unsigned int i = 0; i < m_iac.size(); ++i)
         m_iac[i] = dum;
+      for (std::map<unsigned int, Perturbed_Atom>::iterator it=perturbed_solute().atoms().begin(); it!=perturbed_solute().atoms().end(); ++it) {
+        it->second.A_IAC(dum);
+        it->second.B_IAC(dum);
+      }
     }
   }
 
