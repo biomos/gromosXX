@@ -198,8 +198,8 @@ int algorithm::Perturbed_Shake
 	(topo.bond_types_harm()[it->B_type].r0 - topo.bond_types_harm()[it->A_type].r0);
 
       //ANITA
-      if (((sim.steps()  % sim.param().write.free_energy) == 0) &&
-           sim.param().precalclam.nr_lambdas ){
+      if (sim.param().precalclam.nr_lambdas &&
+          ((sim.steps()  % sim.param().write.free_energy) == 0)){
         DEBUG(1, "AB_bond within if ");
         double r0A = topo.bond_types_harm()[it->A_type].r0;
         DEBUG(1, "AB_bond r0A " << r0A); 
