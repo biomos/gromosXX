@@ -2791,8 +2791,6 @@ _read_time_step(std::vector<std::string> &buffer,
 
   sim.steps() = i;
   sim.time() = t;
-	// if we analyze a trajectory we just keep reading until the end
-	if (sim.param().analyze.analyze) sim.param().step.number_of_steps=sim.steps()+2;
 
   return true;
 }

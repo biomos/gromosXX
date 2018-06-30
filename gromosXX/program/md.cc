@@ -175,6 +175,7 @@ int main(int argc, char *argv[]){
   int error;
 
   const double init_time = util::now() - start;
+  if (sim.param().analyze.analyze) sim.param().step.number_of_steps -= sim.param().write.position;
   while(int(sim.steps()) < sim.param().step.number_of_steps && !exit_md){
       
     traj.write(conf, topo, sim, io::reduced);
@@ -220,7 +221,7 @@ int main(int argc, char *argv[]){
     
     if ((sim.param().step.number_of_steps / 10 > 0) &&
 	(sim.steps() % (sim.param().step.number_of_steps / 10) == 0)){
-      ++percent;
+      percent=int(sim.steps())*10/sim.param().step.number_of_steps;
       const double spent = util::now() - start;
       const int hh = int(spent / 3600);
       const int mm = int((spent - hh * 3600) / 60);

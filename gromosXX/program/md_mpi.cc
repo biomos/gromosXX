@@ -201,8 +201,10 @@ int main(int argc, char *argv[]){
 
     int next_step = 1;
 
+if (sim.param().analyze.analyze) sim.param().step.number_of_steps -= sim.param().write.position;
+
     while(int(sim.steps()) < sim.param().step.number_of_steps){
-      
+
       traj.write(conf, topo, sim, io::reduced);
       
       // run a step
@@ -261,11 +263,9 @@ int main(int argc, char *argv[]){
       
       ++sim.steps();
       sim.time() = sim.param().step.t0 + sim.steps()*sim.time_step_size();
-      
-      
       if ((sim.param().step.number_of_steps / 10 > 0) &&
 	  (sim.steps() % (sim.param().step.number_of_steps / 10) == 0)){
-        ++percent;
+        percent=int(sim.steps())*10/sim.param().step.number_of_steps;
         const double spent = util::now() - start;
         const int hh = int(spent / 3600);
         const int mm = int((spent - hh * 3600) / 60);
@@ -416,6 +416,12 @@ int main(int argc, char *argv[]){
     //////////////////////////////////////////////////////////////////////////////////////////////////////
     const double init_time = util::now() - start;
     int next_step = 0 ;
+
+    if (sim.param().analyze.analyze) {
+      if (sim.param().write.position==0) std::cout << "ERROR: NTWX=0, should be the value used in the simulation that produced the output trajectory\n";
+      else if (sim.param().write.position>0) sim.param().step.number_of_steps/=sim.param().write.position;
+      else if (sim.param().write.position<0) sim.param().step.number_of_steps/=-sim.param().write.position;
+    }
 
     while(int(sim.steps()) < sim.param().step.number_of_steps){
       // run a step
