@@ -172,9 +172,9 @@ void io::Out_Configuration::_print_ene_version(std::ostream &os) {
 
 void io::Out_Configuration::init(io::Argument & args,
         simulation::Parameter const & param) {
-  if (args.count(argname_fin) > 0)
-    final_configuration(args[argname_fin]);
-  else io::messages.add("argument " + argname_fin + " for final configuration required!",
+  if (args.count(argname_fin) > 0) {
+    if (!param.analyze.analyze) final_configuration(args[argname_fin]);
+  } else io::messages.add("argument " + argname_fin + " for final configuration required!",
           "Out_Configuration",
           io::message::error);
 
@@ -468,7 +468,8 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       conf.current().averages.block().zero();
     }
 
-  } else if (form == final && m_final) {
+  } else if (form == final) {
+    if (m_final) {
     _print_timestep(sim, m_final_conf);
     _print_position(conf, topo, m_final_conf);
     _print_lattice_shifts(conf, topo, m_final_conf);
@@ -558,6 +559,10 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
 
     if (sim.param().multibath.algorithm > 1) {
       _print_nose_hoover_chain_variables(sim.multibath(), m_final_conf);
+    }
+    if (conf.special().shake_failure_occurred) {
+      _print_shake_failure(conf, topo, m_final_conf);
+    }
     }
 
     if (sim.param().eds.form == simulation::aeds_search_eir || sim.param().eds.form == simulation::aeds_search_emax_emin || sim.param().eds.form == simulation::aeds_search_all) {
@@ -675,12 +680,6 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
     
     
     //end of special traj printing
-
-
-    if (conf.special().shake_failure_occurred) {
-      _print_shake_failure(conf, topo, m_final_conf);
-    }
-
   } else {
 
     // not reduced or final (so: decorated)
