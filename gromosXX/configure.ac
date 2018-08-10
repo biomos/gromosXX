@@ -2,7 +2,7 @@ dnl configure.in for GromosXX
 
 AC_PREREQ(2.58)
 
-AC_INIT()
+AC_INIT(md++, 1.4.0)
 dnl this is a safety check to see wheter --srcdir exists
 AC_CONFIG_SRCDIR(src/math/math.cc)
 AC_CONFIG_AUX_DIR(config)
@@ -31,7 +31,7 @@ echo "${CONF_DATE}, ETH Zuerich"
 echo ""
 echo ""
 
-AM_INIT_AUTOMAKE(md++, $MD_VERSION, no-define)
+AM_INIT_AUTOMAKE([no-define subdir-objects])
 AM_CONFIG_HEADER(config.h)
 
 dnl option for production builds

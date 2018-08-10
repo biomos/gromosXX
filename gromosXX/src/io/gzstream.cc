@@ -27,7 +27,7 @@
 // ============================================================================
 
 #include <gzstream.h>
-#include "../iostream"
+#include <iostream>
 #include <string.h>  // for memcpy
 
 namespace io {
