@@ -796,8 +796,9 @@ int io::check_features(simulation::Simulation & sim)
   fc.unlock("solute_flexshake", "rdc_rest");
   fc.unlock("solute_flexshake", "perscale");
   fc.unlock("solute_flexshake", "rottrans");
-  fc.unlock("solute_flexshake", "repex_temp");
-  fc.unlock("solute_flexshake", "repex_lambda");
+// flexible_vel and flex_len are not passed between replicas: lock this combination
+//  fc.unlock("solute_flexshake", "repex_temp");
+//  fc.unlock("solute_flexshake", "repex_lambda");
   fc.unlock("solute_flexshake", "multicell");
   fc.unlock("solute_flexshake", "analysis");
   fc.unlock("solute_flexshake", "no_integration");
@@ -3255,8 +3256,10 @@ int io::check_features(simulation::Simulation & sim)
   fc.unlock("leus", "innerloop_method_cuda");
   fc.unlock("leus", "innerloop_solvent_topology");
   fc.unlock("leus", "innerloop_solvent_spc");
-  fc.unlock("leus", "repex_temp");
-  fc.unlock("leus", "repex_lambda");
+// The leus memory is not passed on between replicas (maybe it shouldn't)
+// until this is clarified we lock the combination
+//  fc.unlock("leus", "repex_temp");
+//  fc.unlock("leus", "repex_lambda");
   fc.unlock("leus", "multicell");
   fc.unlock("leus", "analysis");
   fc.unlock("leus", "no_integration");
@@ -3896,8 +3899,10 @@ int io::check_features(simulation::Simulation & sim)
   fc.unlock("bsleus", "innerloop_method_cuda");
   fc.unlock("bsleus", "innerloop_solvent_topology");
   fc.unlock("bsleus", "innerloop_solvent_spc");
-  fc.unlock("bsleus", "repex_temp");
-  fc.unlock("bsleus", "repex_lambda");
+// The leus memory is not passed on between replicas (maybe it shouldn't)
+// until this is clarified we lock the combination
+//  fc.unlock("bsleus", "repex_temp");
+//  fc.unlock("bsleus", "repex_lambda");
   fc.unlock("bsleus", "multicell");
   fc.unlock("bsleus", "analysis");
   fc.unlock("bsleus", "no_integration");
