@@ -27,7 +27,7 @@ release build.
 If you do not type make install, the programs will be in
 ARCHITECTURE/program/.
 
-to install from svn:
+to install from git:
 --------------------------------------------------
 
 create the configure script:
