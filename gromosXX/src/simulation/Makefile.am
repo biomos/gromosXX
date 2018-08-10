@@ -1,5 +1,5 @@
 AM_CXXFLAGS = @MY_CXXFLAGS@
-INCLUDES = -I$(top_srcdir)/src -I$(top_srcdir)
+AM_CPPFLAGS = -I$(top_srcdir)/src -I$(top_srcdir)
 
 xxincludedir = $(includedir)/md++/simulation
 xxinclude_HEADERS =	simulation.h\
