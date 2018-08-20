@@ -70,28 +70,11 @@ int algorithm::EDS
       }
 
       // initilize search if necessary
-      switch (sim.param().eds.form) {
-        /**case simulation::aeds_search_eir:
-        case simulation::aeds_search_all:
-        {
-          if (sim.param().eds.init_aeds_search == true) {
-            for (unsigned int is = 0; is < numstates; is++) {
-              sim.param().eds.lnexpde[is] = (sim.param().eds.eir[is] - sim.param().eds.eir[0]) * -1.0 * beta;
-            }
-          }
-        }*/
-        case simulation::aeds_search_emax_emin:
-        case simulation::aeds_search_all:
-        {
-          if (sim.param().eds.init_aeds_search == true) {
-            sim.param().eds.emax = conf.current().energies.eds_vmix;
-            sim.param().eds.emin = conf.current().energies.eds_vmix;
-            sim.param().eds.searchemax = conf.current().energies.eds_vmix;
-          }
-        }
-        default:
-        {
-          break;
+      if (sim.param().eds.form == simulation::aeds_search_emax_emin || sim.param().eds.form == simulation::aeds_search_all) {
+        if (sim.param().eds.initaedssearch == true) {
+          sim.param().eds.emax = conf.current().energies.eds_vmix;
+          sim.param().eds.emin = conf.current().energies.eds_vmix;
+          sim.param().eds.searchemax = conf.current().energies.eds_vmix;
         }
       }
 
@@ -130,7 +113,7 @@ int algorithm::EDS
         // ... to virial
         for (int a = 0; a < 3; ++a) {
           for (int b = 0; b < 3; ++b) {
-            if (emix <= sim.param().eds.emin || emix >= sim.param().eds.emax) {
+            if (conf.current().energies.eds_vmix <= sim.param().eds.emin || conf.current().energies.eds_vmix >= sim.param().eds.emax) {
               conf.current().virial_tensor(b, a) +=
                 pi * conf.special().eds.virial_tensor_endstates[state](b, a);
             }
@@ -143,167 +126,144 @@ int algorithm::EDS
       }
 
       // parameter search
-      switch (sim.param().eds.form) {
-        case simulation::aeds_search_eir:
-        case simulation::aeds_search_emax_emin:
-        case simulation::aeds_search_all:
-        {
-          // find the state we are in
-          unsigned int state = 0;
-          double min = eds_vi[0] - eir[0];
+      if (sim.param().eds.form == simulation::aeds_search_eir || sim.param().eds.form == simulation::aeds_search_emax_emin || sim.param().eds.form == simulation::aeds_search_all) {
+        // find the state we are in
+        unsigned int state = 0;
+        double min = eds_vi[0] - eir[0];
+        for (unsigned int is = 1; is < numstates; is++) {
+          if ((eds_vi[is] - eir[is]) < min) {
+            min = eds_vi[is] - eir[is];
+            state = is;
+          }
+        }
+
+        // mark the state we are in as visited
+        sim.param().eds.visitedstates[state] = true;
+
+        // OFFSET search
+        if (sim.param().eds.form == simulation::aeds_search_eir || sim.param().eds.form == simulation::aeds_search_all) {
+          double expde = 0.0;
+          double tau = double(sim.param().eds.asteps) + double(sim.param().eds.bsteps - sim.param().eds.asteps) * double(sim.steps()) / double(sim.param().step.number_of_steps);
+          double eiremin = 0.0;
+          double eiremax = 0.0;
+          double eirestar = 0.0;
+          double eirdemix = 0.0;
+          double eirkfac = 0.0;
+          double eirfkfac = 0.0;
+          for (unsigned int is = 0; is < numstates; is++) {
+            eiremin = sim.param().eds.emin + sim.param().eds.eir[is];
+            eiremax = sim.param().eds.emax + sim.param().eds.eir[is];
+            if (eds_vi[is] <= eiremin) {
+              eirestar = eds_vi[is];
+            }
+            else if (eds_vi[is] >= eiremax) {
+              eirestar = eds_vi[is] - 0.5 * (eiremax - eiremin);
+            }
+            else {
+              eirdemix = eds_vi[is] - eiremin;
+              eirkfac = 1.0 / (eiremax - eiremin);
+              eirfkfac = 1.0 - eirkfac * eirdemix;
+              eirestar = eds_vi[is] - 0.5 * kfac * demix * demix;
+            }
+            expde = -1.0 * beta * (eirestar - conf.current().energies.eds_vr);
+            sim.param().eds.lnexpde[is] += log(exp(-1.0 / tau) / (1.0 - exp(-1.0 / tau)));
+            sim.param().eds.lnexpde[is] = std::max(sim.param().eds.lnexpde[is], expde) + log(1.0 + exp(std::min(sim.param().eds.lnexpde[is], expde) - std::max(sim.param().eds.lnexpde[is], expde)));
+            sim.param().eds.lnexpde[is] += log(1.0 - exp(-1.0 / tau));
+            sim.param().eds.statefren[is] = -1.0 / beta * sim.param().eds.lnexpde[is];
+            sim.param().eds.eir[is] = sim.param().eds.statefren[is] - sim.param().eds.statefren[0];
+          }
+        }
+
+        // EMAX and EMIN search
+        if (sim.param().eds.form == simulation::aeds_search_emax_emin || sim.param().eds.form == simulation::aeds_search_all) {
+          // monitor energy landscape
+          sim.param().eds.visitcounts[state]++;
+          double tempenergy = sim.param().eds.avgenergy[state] + (eds_vi[state] - sim.param().eds.avgenergy[state]) / double(sim.param().eds.visitcounts[state]);
+          sim.param().eds.eiravgenergy[state] += (eds_vi[state] - sim.param().eds.eiravgenergy[state] - eir[state]) / double(sim.param().eds.visitcounts[state]);
+          if (sim.param().eds.visitcounts[state] > 1) {
+            sim.param().eds.bigs[state] += (eds_vi[state] - tempenergy) * (eds_vi[state] - sim.param().eds.avgenergy[state]);
+            sim.param().eds.stdevenergy[state] = sqrt(sim.param().eds.bigs[state] / (double(sim.param().eds.visitcounts[state] - 1)));
+          }
+          sim.param().eds.avgenergy[state] = tempenergy;
+          tempenergy = sim.param().eds.eiravgenergy[0];
+          // find the state with the minimum average energy
+          int targetstate = 0;
           for (unsigned int is = 1; is < numstates; is++) {
-            if ((eds_vi[is] - eir[is]) < min) {
-              min = eds_vi[is] - eir[is];
-              state = is;
+            if (tempenergy >= sim.param().eds.eiravgenergy[is]) {
+              targetstate = is;
+              tempenergy = sim.param().eds.eiravgenergy[is];
+            }
+          }
+          double globminavg = sim.param().eds.eiravgenergy[targetstate];
+          double globminfluc = sim.param().eds.stdevenergy[targetstate];
+
+          // EMAX
+          // search for the highest transition energy between states
+          if (state != sim.param().eds.oldstate && sim.param().eds.searchemax < conf.current().energies.eds_vmix) {
+            sim.param().eds.searchemax = conf.current().energies.eds_vmix;
+          }
+          // search for maximum transition energy for Emax in the beginning
+          if (sim.param().eds.emaxcounts == 0) {
+            sim.param().eds.emax = sim.param().eds.searchemax;
+          }
+          // check if we visited all the states; if so, stop updating searchemax, add it to Emax and reset
+          unsigned int statecount = 0;
+          for (unsigned int is = 0; is < numstates; is++) {
+            if (sim.param().eds.visitedstates[is] == true) {
+              statecount++;
+            }
+          }
+          if (statecount == sim.param().eds.visitedstates.size()) {
+            if (sim.param().eds.emaxcounts == 0) {
+              sim.param().eds.emax = 0.0;
+              sim.param().eds.fullemin = true;
+            }
+            sim.param().eds.emaxcounts += 1;
+            sim.param().eds.emax += (sim.param().eds.searchemax - sim.param().eds.emax) / double(sim.param().eds.emaxcounts);
+            sim.param().eds.searchemax = globminavg;
+            for (unsigned int is = 0; is < numstates; is++) {
+              sim.param().eds.visitedstates[is] = false;
             }
           }
 
-          // mark the state we are in as visited
-          sim.param().eds.visitedstates[state] = true;
-
-          switch (sim.param().eds.form) {
-            // offset search
-            case simulation::aeds_search_eir:
-            case simulation::aeds_search_all:
-            {
-              double expde = 0.0;
-              double tau = double(sim.param().eds.asteps) + double(sim.param().eds.bsteps - sim.param().eds.asteps) * double(sim.steps()) / double(sim.param().step.number_of_steps);
-              double eiremin = 0.0;
-              double eiremax = 0.0;
-              double eirestar = 0.0;
-              double eirdemix = 0.0;
-              double eirkfac = 0.0;
-              double eirfkfac = 0.0;
-              for (unsigned int is = 0; is < numstates; is++) {
-                eiremin = sim.param().eds.emin + sim.param().eds.eir[is];
-                eiremax = sim.param().eds.emax + sim.param().eds.eir[is];
-                if (eds_vi[is] <= eiremin) {
-                  eirestar = eds_vi[is];
-                }
-                else if (eds_vi[is] >= eiremax) {
-                  eirestar = eds_vi[is] - 0.5 * (eiremax - eiremin);
-                }
-                else {
-                  eirdemix = eds_vi[is] - eiremin;
-                  eirkfac = 1.0 / (eiremax - eiremin);
-                  eirfkfac = 1.0 - eirkfac * eirdemix;
-                  eirestar = eds_vi[is] - 0.5 * kfac * demix * demix;
-                }
-                expde = -1.0 * beta * (eirestar - conf.current().energies.eds_vr);
-                sim.param().eds.lnexpde[is] += log(exp(-1.0 / tau) / (1.0 - exp(-1.0 / tau)));
-                sim.param().eds.lnexpde[is] = std::max(sim.param().eds.lnexpde[is], expde) + log(1.0 + exp(std::min(sim.param().eds.lnexpde[is], expde) - std::max(sim.param().eds.lnexpde[is], expde)));
-                sim.param().eds.lnexpde[is] += log(1.0 - exp(-1.0 / tau));
-                sim.param().eds.statefren[is] = -1.0 / beta * sim.param().eds.lnexpde[is];
-                sim.param().eds.eir[is] = sim.param().eds.statefren[is] - sim.param().eds.statefren[0];
-              }
-            }
-
-            }
-            // search for emin and emax
-            case simulation::aeds_search_emax_emin:
-            case simulation::aeds_search_all:
-            {
-              // monitor energy landscape
-              sim.param().eds.visitcounts[state]++;
-              double tempenergy = sim.param().eds.avgenergy[state] + (eds_vi[state] - sim.param().eds.avgenergy[state]) / double(sim.param().eds.visitcounts[state]);
-              sim.param().eds.eiravgenergy[state] += (eds_vi[state] - sim.param().eds.eiravgenergy[state] - eir[state]) / double(sim.param().eds.visitcounts[state]);
-              if (sim.param().eds.visitcounts[state] > 1) {
-                sim.param().eds.bigs[state] += (eds_vi[state] - tempenergy) * (eds_vi[state] - sim.param().eds.avgenergy[state]);
-                sim.param().eds.stdevenergy[state] = sqrt(sim.param().eds.bigs[state] / (double(sim.param().eds.visitcounts[state] - 1)));
-              }
-              sim.param().eds.avgenergy[state] = tempenergy;
-              tempenergy = sim.param().eds.eiravgenergy[0];
-              // find the state with the minimum average energy
-              int targetstate = 0;
-              for (unsigned int is = 1; is < numstates; is++) {
-                if (tempenergy >= sim.param().eds.eiravgenergy[is]) {
-                  targetstate = is;
-                  tempenergy = sim.param().eds.eiravgenergy[is];
-                }
-              }
-              double globminavg = sim.param().eds.eiravgenergy[targetstate];
-              double globminfluc = sim.param().eds.stdevenergy[targetstate];
-
-              // EMAX
-              // search for the highest transition energy between states
-              if (state != sim.param().eds.oldstate && sim.param().eds.searchemax < conf.current().energies.eds_vmix) {
-                sim.param().eds.searchemax = conf.current().energies.eds_vmix;
-              }
-              // search for maximum transition energy for Emax in the beginning
-              if (sim.param().eds.emaxcounts == 0) {
-                sim.param().eds.emax = sim.param().eds.searchemax;
-              }
-              // check if we visited all the states; if so, stop updating searchemax, add it to Emax and reset
-              unsigned int statecount = 0;
-              for (unsigned int is = 0; is < numstates; is++) {
-                if (sim.param().eds.visitedstates[is] == true) {
-                  statecount++;
-                }
-              }
-              if (statecount == sim.param().eds.visitedstates.size()) {
-                if (sim.param().eds.emaxcounts == 0) {
-                  sim.param().eds.emax = 0.0;
-                  sim.param().eds.fullemin = true;
-                }
-                sim.param().eds.emaxcounts += 1;
-                sim.param().eds.emax += (sim.param().eds.searchemax - sim.param().eds.emax) / double(sim.param().eds.emaxcounts);
-                sim.param().eds.searchemax = globminavg;
-                for (unsigned int is = 0; is < numstates; is++) {
-                  sim.param().eds.visitedstates[is] = false;
-                }
-              }
-
-              // EMIN
-              // this implies that the fluctuations of the energies do not change with the acceleration
-              double bmax;
-              if (sim.param().eds.bmaxtype == 1)
-              {
-                bmax = sim.param().eds.stdevenergy[targetstate] * sim.param().eds.setbmax;
-              }
-              if (sim.param().eds.bmaxtype == 2)
-              {
-                bmax = sim.param().eds.setbmax;
-              }
-              if ((sim.param().eds.emax - globminavg) <= bmax) {
-                sim.param().eds.emin = sim.param().eds.emax;
-              }
-              else {
-                sim.param().eds.emin = 2.0 * (globminavg + bmax) - sim.param().eds.emax;
-                if (sim.param().eds.emin < globminavg) {
-                  sim.param().eds.emin = (-sim.param().eds.emax * sim.param().eds.emax
-                    + 2.0 * sim.param().eds.emax * bmax
-                    + 2.0 * sim.param().eds.emax * globminavg
-                    - globminavg * globminavg)
-                    / (2.0 * bmax);
-                }
-                // security measure to prevent extreme emins in the beginning of the simulation before we saw a full round-trip
-                if (sim.param().eds.fullemin == false && sim.param().eds.emin < globminavg) {
-                  sim.param().eds.emin = globminavg;
-                }
-              }
-            }
-
-            conf.current().energies.eds_globmin = globminavg;
-            conf.current().energies.eds_globminfluc = globminfluc;
-            }
-            default:
-            {
-              break;
-            }
-
-            sim.param().eds.oldstate = state;
+          // EMIN
+          // this implies that the fluctuations of the energies do not change with the acceleration
+          double bmax;
+          if (sim.param().eds.bmaxtype == 1)
+          {
+            bmax = sim.param().eds.stdevenergy[targetstate] * sim.param().eds.setbmax;
           }
+          if (sim.param().eds.bmaxtype == 2)
+          {
+            bmax = sim.param().eds.setbmax;
+          }
+          if ((sim.param().eds.emax - globminavg) <= bmax) {
+            sim.param().eds.emin = sim.param().eds.emax;
+          }
+          else {
+            sim.param().eds.emin = 2.0 * (globminavg + bmax) - sim.param().eds.emax;
+            if (sim.param().eds.emin < globminavg) {
+              sim.param().eds.emin = (-sim.param().eds.emax * sim.param().eds.emax
+                + 2.0 * sim.param().eds.emax * bmax
+                + 2.0 * sim.param().eds.emax * globminavg
+                - globminavg * globminavg)
+                / (2.0 * bmax);
+            }
+            // security measure to prevent extreme emins in the beginning of the simulation before we saw a full round-trip
+            if (sim.param().eds.fullemin == false && sim.param().eds.emin < globminavg) {
+              sim.param().eds.emin = globminavg;
+            }
+          }
+          conf.current().energies.eds_globmin = globminavg;
+          conf.current().energies.eds_globminfluc = globminfluc;
         }
-        default:
-        {
-          break;
-        }
+        sim.param().eds.oldstate = state;
       }
 
       conf.current().energies.eds_emax = sim.param().eds.emax;
       conf.current().energies.eds_emin = sim.param().eds.emin;
       for (unsigned int is = 0; is < numstates; is++) {
-        conf.current().energies.eds_ri[is] = sim.param().eds.eir[is];
+        conf.current().energies.eds_eir[is] = sim.param().eds.eir[is];
       }
 
       break;

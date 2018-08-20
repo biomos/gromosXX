@@ -2785,6 +2785,10 @@ namespace simulation
       /**
       *
       */
+      bool initaedssearch;
+      /**
+      *
+      */
       double searchemax;
       /**
       *
@@ -2830,6 +2834,10 @@ namespace simulation
       *
       */
       unsigned int bmaxtype;
+      /**
+      *
+      */
+      double setbmax;
       /**
       *
       */

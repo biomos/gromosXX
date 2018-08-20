@@ -239,9 +239,39 @@ namespace configuration
     double eds_vr;
     
     /**
+    *
+    */
+    double eds_vmix;
+
+    /**
+    *
+    */
+    double eds_emax;
+
+    /**
+    *
+    */
+    double eds_emin;
+
+    /**
+    *
+    */
+    double eds_globmin;
+
+    /**
+    *
+    */
+    double eds_globminfluc;
+
+    /**
      * nonbonded energy of the endstates in eds
      */
     std::vector<double> eds_vi;
+
+    /**
+    * offset energy of the endstates in eds
+    */
+    std::vector<double> eds_eir;
     
     /**
      * special energy of the endstates in eds
