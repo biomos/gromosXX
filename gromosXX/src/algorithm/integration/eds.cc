@@ -32,6 +32,112 @@ int algorithm::EDS
 
   const unsigned int numstates = sim.param().eds.numstates;
   switch (sim.param().eds.form) {
+    case simulation::aeds:
+    case simulation::aeds_search_eir:
+    case simulation::aeds_search_emax_emin:
+    case simulation::aeds_search_all:
+    {
+      // interactions have been calculated - now apply eds Hamiltonian
+      std::vector<double> prefactors(numstates);
+      // get beta
+      assert(sim.param().multibath.multibath.bath(0).temperature != 0.0);
+      const double beta = 1.0 / (sim.param().multibath.multibath.bath(0).temperature * math::k_Boltzmann);
+
+      std::vector<double> eds_vi = conf.current().energies.eds_vi;
+      DEBUG(7, "eds_vi[0] = " << eds_vi[0]);
+      DEBUG(7, "eds_vi[1] = " << eds_vi[1]);
+      
+      const std::vector<double> & eir = sim.param().eds.eir;
+      unsigned int state_i = 0;
+      unsigned int state_j = 1;
+      double partA = -beta * (eds_vi[state_i] - eir[state_i]);
+      double partB = -beta * (eds_vi[state_j] - eir[state_j]);
+      DEBUG(7, "partA " << partA);
+      DEBUG(7, "partB " << partB);
+      double sum_prefactors = std::max(partA, partB)
+        + log(1 + exp(std::min(partA, partB) - std::max(partA, partB)));
+      prefactors[state_i] = partA;
+      prefactors[state_j] = partB;
+
+      for (unsigned int state = 2; state < numstates; state++) {
+        double part = -beta * (eds_vi[state] - eir[state]);
+        sum_prefactors = std::max(sum_prefactors, part)
+          + log(1 + exp(std::min(sum_prefactors, part) - std::max(sum_prefactors, part)));
+        prefactors[state] = part;
+        DEBUG(7, "eds_vi[ " << state << "] = " << eds_vi[state]);
+        DEBUG(7, "eir[" << state << "]" << eir[state]);
+        DEBUG(7, "part = " << part);
+      }
+
+      // calculate eds Hamiltonian
+      double demix, kfac, fkfac = 1.0;
+      conf.current().energies.eds_vmix = -1.0 / beta * sum_prefactors;
+      DEBUG(7, "eds_vmix = " << conf.current().energies.eds_vmix);
+      if (conf.current().energies.eds_vmix <= sim.param().eds.emin) {
+        conf.current().energies.eds_vr = conf.current().energies.eds_vmix;
+      }
+      else if (conf.current().energies.eds_vmix >= sim.param().eds.emax) {
+        conf.current().energies.eds_vr = conf.current().energies.eds_vmix - 0.5 * (sim.param().eds.emax - sim.param().eds.emin);
+      }
+      else {
+        demix = conf.current().energies.eds_vmix - sim.param().eds.emin;
+        kfac = 1.0 / (sim.param().eds.emax - sim.param().eds.emin);
+        fkfac = 1.0 - kfac * demix;
+        conf.current().energies.eds_vr = conf.current().energies.eds_vmix - 0.5 * kfac * demix * demix;
+      }
+
+      // initilize search if necessary
+      case simulation::aeds_search_eir:
+      case simulation::aeds_search_all:
+      {
+        if (sim.param().eds.init_aeds_search == true) {
+          for (unsigned int is = 0; is < numstates; is++) {
+            sim.param().eds.lnexpde[is] = (sim.param().eds.eir[is] - sim.param().eds.eir[0]) * -1.0 * beta;
+          }
+        }
+      }
+      case simulation::aeds_search_emax_emin:
+      case simulation::aeds_search_all:
+      {
+        if (sim.param().eds.init_aeds_search == true) {
+          sim.param().eds.emax = conf.current().energies.eds_vmix;
+          sim.param().eds.emin = conf.current().energies.eds_vmix;
+          sim.param().eds.searchemax = conf.current().energies.eds_vmix;
+        }
+      }
+
+      // calculate eds contribution ...
+      for (unsigned int state = 0; state < numstates; state++) {
+        const long double pi = exp(prefactors[state] - sum_prefactors);
+        //std::cerr << "state = " << state << ", pi = " << pi << std::endl;
+        // ... to forces
+        DEBUG(7, "prefactor = " << pi);
+        for (unsigned int i = 0; i < topo.num_atoms(); i++) {
+          if (conf.current().energies.eds_vmix <= sim.param().eds.emin || conf.current().energies.eds_vmix >= sim.param().eds.emax) {
+            conf.current().force(i) += pi * conf.special().eds.force_endstates[state](i);
+          }
+          else {
+            conf.current().force(i) += pi * conf.special().eds.force_endstates[state](i) * fkfac;
+          }
+          DEBUG(9, "force current: " << i << " = " << math::v2s(conf.current().force(i)));
+        }
+        // ... to virial
+        for (int a = 0; a < 3; ++a) {
+          for (int b = 0; b < 3; ++b) {
+            if (emix <= sim.param().eds.emin || emix >= sim.param().eds.emax) {
+              conf.current().virial_tensor(b, a) +=
+                pi * conf.special().eds.virial_tensor_endstates[state](b, a);
+            }
+            else {
+              conf.current().virial_tensor(b, a) +=
+                pi * conf.special().eds.virial_tensor_endstates[state](b, a) * fkfac;
+            }
+          }
+        }
+      } // loop over states
+
+      break;
+    }
     case simulation::single_s:
     {
       // interactions have been calculated - now apply eds Hamiltonian
