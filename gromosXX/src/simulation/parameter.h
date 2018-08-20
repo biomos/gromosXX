@@ -562,6 +562,22 @@ namespace simulation
        @f$
      */
     pair_s = 3,
+    /**
+    * A-EDS using Emax and Emin
+    */
+    aeds = 4,
+    /**
+    * A-EDS using Emax and Emin, search for EiR
+    */
+    aeds_search_eir = 5,
+    /**
+    * A-EDS using Emax and Emin, search for Emax and Emin
+    */
+    aeds_search_emax_emin = 6,
+    /**
+    * A-EDS using Emax and Emin, search for Eir, Emax an Emin
+    */
+    aeds_search_all = 7,
   };
 
   /**
@@ -2758,6 +2774,74 @@ namespace simulation
        * energy offsets @f$E_i^R@f$ of states
        */
       std::vector<double> eir;
+      /**
+      *
+      */
+      double emax;
+      /**
+      *
+      */
+      double emin;
+      /**
+      *
+      */
+      double searchemax;
+      /**
+      *
+      */
+      unsigned int emaxcounts;
+      /**
+      *
+      */
+      std::vector<double> lnexpde;
+      /**
+      *
+      */
+      std::vector<double> statefren;
+      /**
+      *
+      */
+      std::vector<bool> visitedstates;
+      /**
+      *
+      */
+      std::vector<unsigned int> visitcounts;
+      /**
+      *
+      */
+      unsigned int oldstate;
+      /**
+      *
+      */
+      std::vector<double> avgenergy;
+      /**
+      *
+      */
+      std::vector<double> eiravgenergy;
+      /**
+      *
+      */
+      std::vector<double> bigs;
+      /**
+      *
+      */
+      std::vector<double> stdevenergy;
+      /**
+      *
+      */
+      unsigned int bmaxtype;
+      /**
+      *
+      */
+      bool fullemin;
+      /**
+      *
+      */
+      unsigned int asteps;
+      /**
+      *
+      */
+      unsigned int bsteps;
     } /** enveloping distribution sampling*/ eds;
 
     /**
