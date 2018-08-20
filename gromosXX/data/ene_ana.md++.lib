@@ -21,7 +21,7 @@ ENERTRJ
   block TIMESTEP
     subblock TIME 2 1
   block ENERGY03
-    subblock ENER 38 1
+    subblock ENER 43 1
     size NUM_BATHS
     subblock KINENER NUM_BATHS 3
     size NUM_ENERGY_GROUPS
@@ -29,7 +29,7 @@ ENERTRJ
     subblock NONBONDED matrix_NUM_ENERGY_GROUPS 4
     subblock SPECIAL NUM_ENERGY_GROUPS 11
     size NUM_EDS_STATES
-    subblock EDS NUM_EDS_STATES 3 
+    subblock EDS NUM_EDS_STATES 4 
     size NUM_LAMBDAS
     subblock PRECALCLAM NUM_LAMBDAS 8
     subblock ABDIH 1 2
@@ -60,7 +60,7 @@ FRENERTRJ
     subblock FREENONBONDED matrix_NUM_ENERGY_GROUPS 4
     subblock FREESPECIAL NUM_ENERGY_GROUPS 11
     size NUM_EDS_STATES
-    subblock FREEEDS NUM_EDS_STATES 3
+    subblock FREEEDS NUM_EDS_STATES 4 // NOT SO SURE ABOUT THIS ONE
     size NUM_LAMBDAS
     subblock FREEPRECALCLAM NUM_LAMBDAS 8
     subblock FREEABDIH 1 2
@@ -117,11 +117,16 @@ totxray = ENER[30]
 totle = ENER[31]
 totorder = ENER[32]
 totsymm = ENER[33]
-eds_vr = ENER[34]
-entropy = ENER[35]
-totqm = ENER[36]
-totbsleus = ENER[37]
-totrdc = ENER[38]
+eds_vmix = ENER[34]
+eds_vr = ENER[35]
+eds_emax = ENER[36]
+eds_emin = ENER[37]
+eds_globmin = ENER[38]
+eds_globminfluc = ENER[39]
+entropy = ENER[40]
+totqm = ENER[41]
+totbsleus = ENER[42]
+totrdc = ENER[43]
 # calculate the pressure in atm.
 pressu = PRESSURE[1] * 16.388453
 boxvol = VOLUME[1]
