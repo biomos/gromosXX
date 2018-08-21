@@ -2775,79 +2775,79 @@ namespace simulation
        */
       std::vector<double> eir;
       /**
-      *
+      * parameter emax for aeds
       */
       double emax;
       /**
-      *
+      * parameter emin for aeds
       */
       double emin;
       /**
-      *
+      * do we want to init an aeds parameter search?
       */
       bool initaedssearch;
       /**
-      *
+      * current maximum transition energy within a state round-trip
       */
       double searchemax;
       /**
-      *
+      * how many emaxes did we already find?
       */
       unsigned int emaxcounts;
       /**
-      *
+      * ln of exponential energy differences between the states and the reference state
       */
       std::vector<double> lnexpde;
       /**
-      *
+      * free energy differences between the states and the reference state
       */
       std::vector<double> statefren;
       /**
-      *
+      * states that were already visited within a state round-trip
       */
       std::vector<bool> visitedstates;
       /**
-      *
+      * how many times did we visit a state?
       */
       std::vector<unsigned int> visitcounts;
       /**
-      *
+      * state of the last simulation step
       */
       unsigned int oldstate;
       /**
-      *
+      * average energy of an end-state
       */
       std::vector<double> avgenergy;
       /**
-      *
+      * average energy including offset of an end-state
       */
       std::vector<double> eiravgenergy;
       /**
-      *
+      * helper variable for calculation of running standard deviation of the end-state energies
       */
       std::vector<double> bigs;
       /**
-      *
+      * running standard deviation of the end-state energies
       */
       std::vector<double> stdevenergy;
       /**
-      *
+      * which kind of bmax is given in the input parameters?
       */
       unsigned int bmaxtype;
       /**
-      *
+      * the maximum energy barrier parameter
       */
       double setbmax;
       /**
-      *
+      * do we want to accelerate over the minimum average energy of the end-states?
       */
       bool fullemin;
       /**
-      *
+      * half-life of the offset parameters at the beginning of the run
       */
       unsigned int asteps;
       /**
-      *
+      * half-life of the offset parameters at the beginning of the run
       */
       unsigned int bsteps;
     } /** enveloping distribution sampling*/ eds;
