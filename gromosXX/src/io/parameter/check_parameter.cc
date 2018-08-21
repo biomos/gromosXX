@@ -332,11 +332,11 @@ int io::check_features(simulation::Simulation & sim)
   add("random_gsl", "GROMOS96 random numbers",
           param.rng.rng == simulation::random_gsl);
   // EDS/AEDS block
-  if (param.eds.eds = 1) {
+  if (param.eds.eds == 1) {
     add("eds", "Enveloping distribution sampling", true);
     add("aeds", "Accelerated enveloping distribution sampling", false);
   }
-  else if (param.eds.eds = 2) {
+  else if (param.eds.eds == 2) {
     add("eds", "Enveloping distribution sampling", false);
     add("aeds", "Accelerated enveloping distribution sampling", true);
   }
