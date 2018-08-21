@@ -2699,7 +2699,7 @@ namespace simulation
        * Default values:
        * - g96
        */
-      rng_struct() : rng(random_g96), gsl_rng(-1) {}
+      rng_struct() : rng(random_gsl), gsl_rng(-1) {}
       /**
        * random number generator
        */
