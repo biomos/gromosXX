@@ -69,6 +69,11 @@ int algorithm::EDS
         DEBUG(7, "part = " << part);
       }
 
+      // calculate eds Hamiltonian
+      double demix, kfac, fkfac = 1.0;
+      conf.current().energies.eds_vmix = -1.0 / beta * sum_prefactors;
+      DEBUG(7, "eds_vmix = " << conf.current().energies.eds_vmix);
+
       // initilize search if necessary
       if (sim.param().eds.initaedssearch == true) {
         if (sim.param().eds.form == simulation::aeds_search_emax_emin || sim.param().eds.form == simulation::aeds_search_all) {
@@ -84,10 +89,7 @@ int algorithm::EDS
         sim.param().eds.initaedssearch == false;
       }
 
-      // calculate eds Hamiltonian
-      double demix, kfac, fkfac = 1.0;
-      conf.current().energies.eds_vmix = -1.0 / beta * sum_prefactors;
-      DEBUG(7, "eds_vmix = " << conf.current().energies.eds_vmix);
+      // accelerate eds Hamiltonian
       if (conf.current().energies.eds_vmix <= sim.param().eds.emin) {
         conf.current().energies.eds_vr = conf.current().energies.eds_vmix;
       }
