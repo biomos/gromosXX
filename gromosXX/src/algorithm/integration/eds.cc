@@ -239,23 +239,23 @@ int algorithm::EDS
           }
           if ((sim.param().eds.emax - globminavg) <= bmax) {
             sim.param().eds.emin = sim.param().eds.emax;
-            DEBUG(7, "emin1" + sim.param().eds.emin);
+            DEBUG(7, "emin1" << sim.param().eds.emin);
           }
           else {
             sim.param().eds.emin = 2.0 * (globminavg + bmax) - sim.param().eds.emax;
-            DEBUG(7, "emin2" + sim.param().eds.emin);
+            DEBUG(7, "emin2" << sim.param().eds.emin);
             if (sim.param().eds.emin < globminavg) {
               sim.param().eds.emin = (-sim.param().eds.emax * sim.param().eds.emax
                 + 2.0 * sim.param().eds.emax * bmax
                 + 2.0 * sim.param().eds.emax * globminavg
                 - globminavg * globminavg)
                 / (2.0 * bmax);
-              DEBUG(7, "emin3" + sim.param().eds.emin);
+              DEBUG(7, "emin3" << sim.param().eds.emin);
             }
             // security measure to prevent extreme emins in the beginning of the simulation before we saw a full round-trip
             if (sim.param().eds.fullemin == false && sim.param().eds.emin < globminavg) {
               sim.param().eds.emin = globminavg;
-              DEBUG(7, "emin4" + sim.param().eds.emin);
+              DEBUG(7, "emin4" << sim.param().eds.emin);
             }
           }
           conf.current().energies.eds_globmin = globminavg;
