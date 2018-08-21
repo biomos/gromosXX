@@ -93,7 +93,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_POLARISE(param);
   read_RANDOMNUMBERS(param);
   read_EDS(param);
-  read_AEDS(param);
+  read_AEDS(param); // needs to be called after EDS
   read_LAMBDAS(param); // needs to be called after FORCE
   read_PRECALCLAM(param); // ANITA 
   read_LOCALELEV(param);
@@ -3385,11 +3385,11 @@ void io::In_Parameter::read_EDS(simulation::Parameter & param,
 
         switch (eds) {
             case 0:
-                param.eds.eds = false;
+                param.eds.eds = 0;
                 param.eds.numstates = 0;
                 break;
             case 1:
-                param.eds.eds = true;
+                param.eds.eds = 1;
                 break;
             default:
                 break;
@@ -3513,22 +3513,28 @@ void io::In_Parameter::read_AEDS(simulation::Parameter & param,
 
     int aeds, form;
     double soft_lj, soft_crf;
-    block.get_next_parameter("AEDS", eds, "", "0,1");
+    block.get_next_parameter("AEDS", aeds, "", "0,1");
     block.get_next_parameter("ALPHLJ", soft_lj, ">=0", "");
     block.get_next_parameter("ALPHC", soft_crf, ">=0", "");
     block.get_next_parameter("FORM", form, "", "1,2,3,4");
     block.get_next_parameter("NUMSTATES", param.eds.numstates, ">=2", "");
 
-    switch (aeds) {
-    case 0:
-      param.eds.eds = false;
-      param.eds.numstates = 0;
-      break;
-    case 1:
-      param.eds.eds = true;
-      break;
-    default:
-      break;
+    if (param.eds.eds != 1) {
+      switch (aeds) {
+      case 0:
+        param.eds.eds = 0;
+        param.eds.numstates = 0;
+        break;
+      case 1:
+        param.eds.eds = 2;
+        break;
+      default:
+        break;
+      }
+    }
+    else {
+      io::messages.add("AEDS block: AEDS cannot be used in combination with EDS.",
+                                 "In_Parameter", io::message::error);
     }
 
     if (!param.eds.eds) {

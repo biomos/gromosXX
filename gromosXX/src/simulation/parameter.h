@@ -2742,7 +2742,7 @@ namespace simulation
       /**
        * do enveloping distribution sampling using the Hamiltonian:
        */
-      bool eds;
+      unsigned int eds;
       /**
        * soft core van der Waals interactions
        */
