@@ -86,7 +86,6 @@ int algorithm::EDS
             sim.param().eds.lnexpde[is] = (sim.param().eds.eir[is] - sim.param().eds.eir[0]) * -1.0 * beta;
           }
         }
-        sim.param().eds.initaedssearch == false;
       }
 
       // accelerate eds Hamiltonian
@@ -196,7 +195,10 @@ int algorithm::EDS
           }
           double globminavg = sim.param().eds.eiravgenergy[targetstate];
           double globminfluc = sim.param().eds.stdevenergy[targetstate];
-
+          // prevent rounding error in the first simulation step
+          if (sim.param().eds.initaedssearch == true) {
+            globminavg = sim.param().eds.emin;
+          }
           // EMAX
           // search for the highest transition energy between states
           if (state != sim.param().eds.oldstate && sim.param().eds.searchemax < conf.current().energies.eds_vmix) {
@@ -239,23 +241,24 @@ int algorithm::EDS
           }
           if ((sim.param().eds.emax - globminavg) <= bmax) {
             sim.param().eds.emin = sim.param().eds.emax;
-            DEBUG(7, "emin1" << sim.param().eds.emin);
+            DEBUG(7, "emin1 " << sim.param().eds.emin);
           }
           else {
             sim.param().eds.emin = 2.0 * (globminavg + bmax) - sim.param().eds.emax;
-            DEBUG(7, "emin2" << sim.param().eds.emin);
+            DEBUG(7, "emin2 " << sim.param().eds.emin);
+            DEBUG(7, "emin2 " << globminavg);
             if (sim.param().eds.emin < globminavg) {
               sim.param().eds.emin = (-sim.param().eds.emax * sim.param().eds.emax
                 + 2.0 * sim.param().eds.emax * bmax
                 + 2.0 * sim.param().eds.emax * globminavg
                 - globminavg * globminavg)
                 / (2.0 * bmax);
-              DEBUG(7, "emin3" << sim.param().eds.emin);
+              DEBUG(7, "emin3 " << sim.param().eds.emin);
             }
             // security measure to prevent extreme emins in the beginning of the simulation before we saw a full round-trip
             if (sim.param().eds.fullemin == false && sim.param().eds.emin < globminavg) {
               sim.param().eds.emin = globminavg;
-              DEBUG(7, "emin4" << sim.param().eds.emin);
+              DEBUG(7, "emin4 " << sim.param().eds.emin);
             }
           }
           conf.current().energies.eds_globmin = globminavg;
@@ -270,6 +273,10 @@ int algorithm::EDS
       conf.current().energies.eds_emin = sim.param().eds.emin;
       for (unsigned int is = 0; is < numstates; is++) {
         conf.current().energies.eds_eir[is] = sim.param().eds.eir[is];
+      }
+
+      if (sim.param().eds.initaedssearch == true) {
+        sim.param().eds.initaedssearch = false;
       }
 
       break;
