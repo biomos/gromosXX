@@ -70,11 +70,16 @@ int algorithm::EDS
       }
 
       // initilize search if necessary
-      if (sim.param().eds.form == simulation::aeds_search_emax_emin || sim.param().eds.form == simulation::aeds_search_all) {
-        if (sim.param().eds.initaedssearch == true && sim.steps() == 0) {
+      if (sim.param().eds.initaedssearch == true && sim.steps() == 0) {
+        if (sim.param().eds.form == simulation::aeds_search_emax_emin || sim.param().eds.form == simulation::aeds_search_all) {
           sim.param().eds.emax = conf.current().energies.eds_vmix;
           sim.param().eds.emin = conf.current().energies.eds_vmix;
           sim.param().eds.searchemax = conf.current().energies.eds_vmix;
+        }
+        if (sim.param().eds.form == simulation::aeds_search_eir || sim.param().eds.form == simulation::aeds_search_all) {
+          for (unsigned int is = 0; is < numstates; is++) {
+            sim.param().eds.lnexpde[is] = (sim.param().eds.eir[is] - sim.param().eds.eir[0]) * -1.0 * beta;
+          }
         }
       }
 
