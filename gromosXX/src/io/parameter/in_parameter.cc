@@ -93,6 +93,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_POLARISE(param);
   read_RANDOMNUMBERS(param);
   read_EDS(param);
+  read_AEDS(param);
   read_LAMBDAS(param); // needs to be called after FORCE
   read_PRECALCLAM(param); // ANITA 
   read_LOCALELEV(param);
@@ -3447,6 +3448,168 @@ void io::In_Parameter::read_EDS(simulation::Parameter & param,
 
         block.get_final_messages();
     }
+}
+
+/**
+* @section AEDS AEDS block
+* @snippet snippets/snippets.cc AEDS
+
+*/
+void io::In_Parameter::read_AEDS(simulation::Parameter & param,
+  std::ostream & os) {
+  DEBUG(8, "reading AEDS");
+
+  std::stringstream exampleblock;
+  // lines starting with 'exampleblock<<"' and ending with '\n";' (spaces don't matter)
+  // will be used to generate snippets that can be included in the doxygen doc;
+  // the first line should be the blockname and is used as snippet tag
+  exampleblock << "AEDS\n";
+  exampleblock << "# AEDS       0,1\n";
+  exampleblock << "#              0: no accelerated enveloping distribution sampling (A-EDS) [default]\n";
+  exampleblock << "#              1: accelerated enveloping distribution sampling\n";
+  exampleblock << "# ALPHLJ: >= 0.0 Lennard-Jones soft-core parameter\n";
+  exampleblock << "#  ALPHC: >= 0.0 Coulomb-RF soft-core parameter\n";
+  exampleblock << "# FORM       1-4\n";
+  exampleblock << "#              1: A-EDS with fixed parameters\n";
+  exampleblock << "#              2: fixed emax and emin parameters, search for offset parameters\n";
+  exampleblock << "#              3: search for emax an emin parameters, fixed offset parameters\n";
+  exampleblock << "#              3: search for emax, emin and offset parameters\n";
+  exampleblock << "# NUMSTATES >1  : number of states\n";
+  exampleblock << "# EMAX          : A-EDS parameter emax\n";
+  exampleblock << "# EMIN          : A-EDS parameter emin\n";
+  exampleblock << "# EIR           : energy offsets for states\n";
+  exampleblock << "# NTIAEDSS   0,1\n";
+  exampleblock << "#              0: read A-EDS parameter search configuration from input configuration\n";
+  exampleblock << "#              1: initialize A-EDS parameter search\n";
+  exampleblock << "# RESTREMIN  0,1\n";
+  exampleblock << "#              0: do not restrict emin >= minimum average end-state energy\n";
+  exampleblock << "#              1: restrict emin >= minimum average end-state energy before all states have been visited at least once\n";
+  exampleblock << "# BMAXTYPE   1,2\n";
+  exampleblock << "#              1: absolute maximum energy barrier between the states in energy units\n";
+  exampleblock << "#              2: multiples of stdev of the energy of the end-state with the lowest average energy\n";
+  exampleblock << "# BMAX          : maximum energy barrier parameter\n";
+  exampleblock << "# ASTEPS        : have-life in simulation steps of the exponential averaged energy difference between the end-states at the begining of the run\n";
+  exampleblock << "# BSTEPS        : have-life in simulation steps of the exponential averaged energy difference between the end-states at the end of the run\n";
+  exampleblock << "#\n";
+  exampleblock << "# AEDS\n";
+  exampleblock << "  1\n";
+  exampleblock << "# ALPHLJ  ALPHC  FORM  NUMSTATES\n";
+  exampleblock << "  0.0     0.0       4          5\n";
+  exampleblock << "# EMAX  EMIN\n";
+  exampleblock << "  10    -50\n";
+  exampleblock << "# EIR\n";
+  exampleblock << "  0   -5   -140   -560   -74\n";
+  exampleblock << "# NTIAEDSS  RESTREMIN  BMAXTYPE  BMAX  ASTEPS  BSTEPS\n";
+  exampleblock << "  1         1          2         3     500     50000\n";
+  exampleblock << "# END\n";
+
+
+
+  std::string blockname = "AEDS";
+  Block block(blockname, exampleblock.str());
+
+  if (block.read_buffer(m_block[blockname], false) == 0) {
+    block_read.insert(blockname);
+
+    int aeds, form;
+    double soft_lj, soft_crf;
+    block.get_next_parameter("AEDS", eds, "", "0,1");
+    block.get_next_parameter("ALPHLJ", soft_lj, ">=0", "");
+    block.get_next_parameter("ALPHC", soft_crf, ">=0", "");
+    block.get_next_parameter("FORM", form, "", "1,2,3,4");
+    block.get_next_parameter("NUMSTATES", param.eds.numstates, ">=2", "");
+
+    switch (aeds) {
+    case 0:
+      param.eds.eds = false;
+      param.eds.numstates = 0;
+      break;
+    case 1:
+      param.eds.eds = true;
+      break;
+    default:
+      break;
+    }
+
+    if (!param.eds.eds) {
+      block.get_final_messages();
+      return;
+    }
+
+    param.eds.soft_vdw = soft_lj;
+    param.eds.soft_crf = soft_crf;
+    if (soft_lj > 0.0 || soft_crf > 0.0)
+      param.setDevelop("Soft-core EDS is under development.");
+
+    switch (form) {
+    case 1: {
+      param.eds.form = simulation::aeds;
+      break;
+    }
+    case 2: {
+      param.eds.form = simulation::aeds_search_eir;
+      break;
+    }
+    case 3: {
+      param.eds.form = simulation::aeds_search_emax_emin;
+      break;
+    }
+    case 4: {
+      param.eds.form = simulation::aeds_search_all;
+      break;
+    }
+    default:
+      break;
+    }
+
+    block.get_next_parameter("EMAX", param.eds.emax, "", "");
+    block.get_next_parameter("EMIN", param.eds.emin, "", "");
+
+    param.eds.eir.resize(param.eds.numstates, 0.0);
+    for (unsigned int i = 0; i < param.eds.numstates; i++) {
+      std::string idx = io::to_string(i);
+      block.get_next_parameter("EIR[" + idx + "]", param.eds.eir[i], "", "");
+    }
+
+    int ntia, restremin, btype;
+    block.get_next_parameter("NTIAEDSS",ntia, "", "0,1");
+    switch (ntia) {
+    case 0:
+      param.eds.initaedssearch = false;
+      break;
+    case 1:
+      param.eds.initaedssearch = true;
+      break;
+    default:
+      break;
+    }
+    block.get_next_parameter("RESTREMIN", restremin, "", "0,1");
+    switch (restremin) {
+    case 0:
+      param.eds.fullemin = true;
+      break;
+    case 1:
+      param.eds.fullemin = false;
+      break;
+    default:
+      break;
+    }
+    block.get_next_parameter("BMAXTYPE", param.eds.bmaxtype, "", "1,2");
+    block.get_next_parameter("BMAX", param.eds.setbmax, ">0", "");
+    block.get_next_parameter("ASTEPS", param.eds.asteps, ">0", "");
+    block.get_next_parameter("BSTEPS", param.eds.bsteps, ">0", "");
+
+    param.eds.lnexpde.resize(param.eds.numstates, 0.0);
+    param.eds.statefren.resize(param.eds.numstates, 0.0);
+    param.eds.visitedstates.resize(param.eds.numstates, false);
+    param.eds.visitcounts.resize(param.eds.numstates, 0);
+    param.eds.avgenergy.resize(param.eds.numstates, 0.0);
+    param.eds.eiravgenergy.resize(param.eds.numstates, 0.0);
+    param.eds.bigs.resize(param.eds.numstates, 0.0);
+    param.eds.stdevenergy.resize(param.eds.numstates, 0.0);
+
+    block.get_final_messages();
+  }
 }
 
 /**

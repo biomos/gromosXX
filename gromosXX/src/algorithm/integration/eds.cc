@@ -127,19 +127,6 @@ int algorithm::EDS
 
       // parameter search
       if (sim.param().eds.form == simulation::aeds_search_eir || sim.param().eds.form == simulation::aeds_search_emax_emin || sim.param().eds.form == simulation::aeds_search_all) {
-        // find the state we are in
-        unsigned int state = 0;
-        double min = eds_vi[0] - eir[0];
-        for (unsigned int is = 1; is < numstates; is++) {
-          if ((eds_vi[is] - eir[is]) < min) {
-            min = eds_vi[is] - eir[is];
-            state = is;
-          }
-        }
-
-        // mark the state we are in as visited
-        sim.param().eds.visitedstates[state] = true;
-
         // OFFSET search
         if (sim.param().eds.form == simulation::aeds_search_eir || sim.param().eds.form == simulation::aeds_search_all) {
           double expde = 0.0;
@@ -176,6 +163,17 @@ int algorithm::EDS
 
         // EMAX and EMIN search
         if (sim.param().eds.form == simulation::aeds_search_emax_emin || sim.param().eds.form == simulation::aeds_search_all) {
+          // find the state we are in
+          unsigned int state = 0;
+          double min = eds_vi[0] - eir[0];
+          for (unsigned int is = 1; is < numstates; is++) {
+            if ((eds_vi[is] - eir[is]) < min) {
+              min = eds_vi[is] - eir[is];
+              state = is;
+            }
+          }
+          // mark the state we are in as visited
+          sim.param().eds.visitedstates[state] = true;
           // monitor energy landscape
           sim.param().eds.visitcounts[state]++;
           double tempenergy = sim.param().eds.avgenergy[state] + (eds_vi[state] - sim.param().eds.avgenergy[state]) / double(sim.param().eds.visitcounts[state]);
@@ -227,15 +225,15 @@ int algorithm::EDS
           }
 
           // EMIN
-          // this implies that the fluctuations of the energies do not change with the acceleration
           double bmax;
           if (sim.param().eds.bmaxtype == 1)
           {
-            bmax = sim.param().eds.stdevenergy[targetstate] * sim.param().eds.setbmax;
+            bmax = sim.param().eds.setbmax;
           }
           if (sim.param().eds.bmaxtype == 2)
           {
-            bmax = sim.param().eds.setbmax;
+            // this implies that the fluctuations of the energies do not change with the acceleration
+            bmax = sim.param().eds.stdevenergy[targetstate] * sim.param().eds.setbmax;
           }
           if ((sim.param().eds.emax - globminavg) <= bmax) {
             sim.param().eds.emin = sim.param().eds.emax;
@@ -256,8 +254,8 @@ int algorithm::EDS
           }
           conf.current().energies.eds_globmin = globminavg;
           conf.current().energies.eds_globminfluc = globminfluc;
+          sim.param().eds.oldstate = state;
         }
-        sim.param().eds.oldstate = state;
       }
 
       conf.current().energies.eds_emax = sim.param().eds.emax;
