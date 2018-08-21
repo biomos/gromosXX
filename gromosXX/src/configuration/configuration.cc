@@ -345,8 +345,10 @@ void configuration::Configuration::init(topology::Topology const & topo,
   }  
   special().eds.virial_tensor_endstates.resize(param.eds.numstates);
   current().energies.eds_vi.resize(param.eds.numstates);
+  current().energies.eds_eir.resize(param.eds.numstates);
   current().energies.eds_vi_special.resize(param.eds.numstates);
   old().energies.eds_vi.resize(param.eds.numstates);
+  old().energies.eds_eir.resize(param.eds.numstates);
   old().energies.eds_vi_special.resize(param.eds.numstates);
   
   current().energies.ewarn(param.ewarn.limit);

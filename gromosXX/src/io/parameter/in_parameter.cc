@@ -3577,7 +3577,7 @@ void io::In_Parameter::read_AEDS(simulation::Parameter & param,
       block.get_next_parameter("EIR[" + idx + "]", param.eds.eir[i], "", "");
     }
 
-    int ntia, restremin, btype;
+    int ntia, restremin;
     block.get_next_parameter("NTIAEDSS",ntia, "", "0,1");
     switch (ntia) {
     case 0:
@@ -3604,6 +3604,10 @@ void io::In_Parameter::read_AEDS(simulation::Parameter & param,
     block.get_next_parameter("BMAX", param.eds.setbmax, ">0", "");
     block.get_next_parameter("ASTEPS", param.eds.asteps, ">0", "");
     block.get_next_parameter("BSTEPS", param.eds.bsteps, ">0", "");
+
+    param.eds.searchemax = 0.0;
+    param.eds.emaxcounts = 0;
+    param.eds.oldstate = 0;
 
     param.eds.lnexpde.resize(param.eds.numstates, 0.0);
     param.eds.statefren.resize(param.eds.numstates, 0.0);

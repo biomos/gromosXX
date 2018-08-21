@@ -71,7 +71,7 @@ int algorithm::EDS
 
       // initilize search if necessary
       if (sim.param().eds.form == simulation::aeds_search_emax_emin || sim.param().eds.form == simulation::aeds_search_all) {
-        if (sim.param().eds.initaedssearch == true) {
+        if (sim.param().eds.initaedssearch == true && sim.steps() == 0) {
           sim.param().eds.emax = conf.current().energies.eds_vmix;
           sim.param().eds.emin = conf.current().energies.eds_vmix;
           sim.param().eds.searchemax = conf.current().energies.eds_vmix;
@@ -127,16 +127,11 @@ int algorithm::EDS
 
       // parameter search
       if (sim.param().eds.form == simulation::aeds_search_eir || sim.param().eds.form == simulation::aeds_search_emax_emin || sim.param().eds.form == simulation::aeds_search_all) {
+        DEBUG(7, "entering parameter search");
         // OFFSET search
         if (sim.param().eds.form == simulation::aeds_search_eir || sim.param().eds.form == simulation::aeds_search_all) {
-          double expde = 0.0;
           double tau = double(sim.param().eds.asteps) + double(sim.param().eds.bsteps - sim.param().eds.asteps) * double(sim.steps()) / double(sim.param().step.number_of_steps);
-          double eiremin = 0.0;
-          double eiremax = 0.0;
-          double eirestar = 0.0;
-          double eirdemix = 0.0;
-          double eirkfac = 0.0;
-          double eirfkfac = 0.0;
+          double expde, eiremin, eiremax, eirestar, eirdemix, eirkfac;
           for (unsigned int is = 0; is < numstates; is++) {
             eiremin = sim.param().eds.emin + sim.param().eds.eir[is];
             eiremax = sim.param().eds.emax + sim.param().eds.eir[is];
@@ -149,7 +144,6 @@ int algorithm::EDS
             else {
               eirdemix = eds_vi[is] - eiremin;
               eirkfac = 1.0 / (eiremax - eiremin);
-              eirfkfac = 1.0 - eirkfac * eirdemix;
               eirestar = eds_vi[is] - 0.5 * kfac * demix * demix;
             }
             expde = -1.0 * beta * (eirestar - conf.current().energies.eds_vr);
@@ -257,6 +251,8 @@ int algorithm::EDS
           sim.param().eds.oldstate = state;
         }
       }
+
+      DEBUG(7, "updating energy configuration");
 
       conf.current().energies.eds_emax = sim.param().eds.emax;
       conf.current().energies.eds_emin = sim.param().eds.emin;
