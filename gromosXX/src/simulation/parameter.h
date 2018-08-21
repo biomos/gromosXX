@@ -2697,7 +2697,7 @@ namespace simulation
       /**
        * Constructor
        * Default values:
-       * - g96
+       * - gsl
        */
       rng_struct() : rng(random_gsl), gsl_rng(-1) {}
       /**
