@@ -188,7 +188,7 @@ int algorithm::EDS
           // find the state with the minimum average energy
           int targetstate = 0;
           for (unsigned int is = 1; is < numstates; is++) {
-            if (tempenergy >= sim.param().eds.eiravgenergy[is]) {
+            if (tempenergy >= sim.param().eds.eiravgenergy[is] && sim.param().eds.stdevenergy[is] > 0.0) {
               targetstate = is;
               tempenergy = sim.param().eds.eiravgenergy[is];
             }
