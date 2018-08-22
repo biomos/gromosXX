@@ -3571,6 +3571,12 @@ void io::In_Parameter::read_AEDS(simulation::Parameter & param,
     block.get_next_parameter("EMAX", param.eds.emax, "", "");
     block.get_next_parameter("EMIN", param.eds.emin, "", "");
 
+    if (param.eds.emin > param.eds.emax) {
+      io::messages.add("AEDS paramater EMIN is larger than EMAX",
+        "In_Parameter", io::message::warning);
+      return;
+    }
+
     param.eds.eir.resize(param.eds.numstates, 0.0);
     for (unsigned int i = 0; i < param.eds.numstates; i++) {
       std::string idx = io::to_string(i);

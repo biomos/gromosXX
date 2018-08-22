@@ -188,7 +188,7 @@ int algorithm::EDS
           // find the state with the minimum average energy
           int targetstate = 0;
           for (unsigned int is = 1; is < numstates; is++) {
-            if (tempenergy >= sim.param().eds.eiravgenergy[is] && sim.param().eds.stdevenergy[is] > 0.0) {
+            if (tempenergy >= sim.param().eds.eiravgenergy[is] && sim.param().eds.visitcounts[is] > 1) {
               targetstate = is;
               tempenergy = sim.param().eds.eiravgenergy[is];
             }
@@ -258,6 +258,10 @@ int algorithm::EDS
             // security measure to prevent extreme emins in the beginning of the simulation before we saw a full round-trip
             if (sim.param().eds.fullemin == false && sim.param().eds.emin < globminavg) {
               sim.param().eds.emin = globminavg;
+              // globminavg can be larger than the current largest transition energy
+              if (sim.param().eds.emin > sim.param().eds.emax) {
+                sim.param().eds.emin = sim.param().eds.emax;
+              }
               DEBUG(7, "emin4 " << sim.param().eds.emin);
             }
           }
