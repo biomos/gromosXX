@@ -35,7 +35,7 @@
 
 // Energy trajectory version
 // For details, see definition in out_configuration.cc
-const std::string io::Out_Configuration::ene_version = "2017-04-06";
+const std::string io::Out_Configuration::ene_version = "2018-08-22";
 
 // declarations
 static void _print_energyred_helper(std::ostream & os, configuration::Energy const &e);
