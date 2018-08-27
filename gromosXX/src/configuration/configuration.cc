@@ -607,9 +607,9 @@ bool configuration::Configuration::check(topology::Topology const & topo, simula
     SPLIT_MY_BOUNDARY(boundary_type, check_positions, error);
     SPLIT_MY_BOUNDARY(boundary_type, check_excluded_positions, topo, sim);
   }
-  
   return error == 0;
 }
+
 
 template<math::boundary_enum B> 
 void configuration::Configuration::check_positions(int & error) const {  
@@ -646,16 +646,19 @@ void configuration::Configuration::check_excluded_positions(topology::Topology c
         // check if they are outside the inner cut off
         periodicity.nearest_image(pos(a1), pos(a2), r);
         const double d2 = math::abs2(r);
-        if (d2 > cutoff_2) {
-          // if yes, check if they are excluded
-          if (topo.all_exclusion(a1).is_excluded(a2)) {
-            // if yes, issue warning!
-            std::ostringstream msg;
-            msg << "Warning: Atoms " << a1 << " and " << a2
-                << " are excluded, but they are further apart than the"
-                << " short cut-off radius distance. Any two atoms further"
-                << " apart than this distance interact fully.";
-            io::messages.add(msg.str(), "Configuration", io::message::warning);
+        if (d2 > cutoff_2) {                 
+            if (topo.all_exclusion(a1).is_excluded(a2)) {
+                //check if reeds is on and both atoms are perturbed - then subpress the warning
+                if(sim.param().reeds.reeds){
+                    continue;
+                }
+                // if yes, issue warning!
+                std::ostringstream msg;
+                msg << "Warning: Atoms " << a1 << " and " << a2
+                    << " are excluded, but they are further apart than the"
+                    << " short cut-off radius distance. Any two atoms further"
+                    << " apart than this distance interact fully.";
+                io::messages.add(msg.str(), "Configuration", io::message::warning);
           }
         }
       } 
@@ -692,15 +695,23 @@ void configuration::Configuration::check_excluded_positions(topology::Topology c
                    a1 != a1_to; ++a1) {
             for (int a2 = topo.chargegroup(idx_cg2), a2_to = topo.chargegroup(idx_cg2 + 1);
                      a2 != a2_to; ++a2) {
-              if (topo.all_exclusion(a1).is_excluded(a2)) {
-                // if yes, issue warning!
-                std::ostringstream msg;
-                msg << "Warning: Atoms " << a1 << " and " << a2
-                    << " are excluded, but their respective charge groups "
-                    << idx_cg1 << " and " << idx_cg2 << " are further apart than the"
-                    << " short cut-off radius distance. Any two atoms whose charge"
-                    << " groups are further apart than this distance interact fully.";
-                io::messages.add(msg.str(), "Configuration", io::message::warning);
+                 
+               if (topo.all_exclusion(a1).is_excluded(a2)) {
+                //check if reeds is on and both atoms are perturbed - then subpress the warning
+                  // std::cout << "a1: "<<a1<<" count: "<<topo.perturbed_solute().atoms().count(a2) <<"\n"; // TODO: nicer criterium for jumppint over warning! ugly fix bschroed (same with atomistic)
+                  // std::cout << "a2: "<<a2<<" count: "<<topo.perturbed_solute().atoms().count(a2)<<"\n";
+                if(sim.param().reeds.reeds){
+                    continue;
+                }else{
+                    // if yes, issue warning!
+                    std::ostringstream msg;                        
+                    msg << "Warning: Atoms " << a1 << " and " << a2
+                        << " are excluded, but their respective charge groups "
+                        << idx_cg1 << " and " << idx_cg2 << " are further apart than the"
+                        << " short cut-off radius distance. Any two atoms whose charge"
+                        << " groups are further apart than this distance interact fully.";
+                    io::messages.add(msg.str(), "Configuration", io::message::warning);
+                }
               }
             } // loop over atom of cg2
           } // loop over atom of cg1

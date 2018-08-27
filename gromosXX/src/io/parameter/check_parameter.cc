@@ -303,6 +303,9 @@ int io::check_features(simulation::Simulation & sim)
   // REPLICA block
   add("repex_temp", "temperature replica exchange", param.replica.num_T > 1);
   add("repex_lambda", "lambda replica exchange", param.replica.num_l > 1);
+  // REPLICA_EDS block
+  //add("reeds", "Replica exchange - enveloped distribution sampling  ", param.reeds.reeds == 1); //Todo: could be valuable? bschroed
+
   // MULTICELL block
   add("multicell", "multiple unit cell simulation", param.multicell.multicell);
   // READTRAJ block
@@ -2375,7 +2378,7 @@ int io::check_features(simulation::Simulation & sim)
   //fc.unlock("eds", "perscale");
   fc.unlock("eds", "rottrans");
   //fc.unlock("eds", "repex_temp");
-  //fc.unlock("eds", "repex_lambda");
+  fc.unlock("eds", "repex_lambda");
   //fc.unlock("eds", "multicell");
   //fc.unlock("eds", "analysis");
   //fc.unlock("eds", "no_integration");

@@ -2884,6 +2884,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
             error = true;
           }
       
+      
       // READ:REEDS control
       int reeds_control = 0;
       _lineStream >> reeds_control;     //contains control if reedsblock is on or not
@@ -2909,6 +2910,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
        
         // READ: NRES   NUMSTATES
         _lineStream >> param.reeds.num_l >> param.reeds.num_states;     //contains the number of Svals
+        param.replica.num_l = param.reeds.num_l ;
         if (_lineStream.fail() || param.reeds.num_l < 0) {
           io::messages.add("REPLICA_EDS block: NRES must be >= 0.",
                   "In_Parameter", io::message::error);
@@ -2964,6 +2966,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
 
         // NRETRIAL
         _lineStream >> param.reeds.trials;
+        param.replica.trials = param.reeds.trials;
         if (_lineStream.fail() || param.reeds.trials < 0) {
           io::messages.add("REPLICA_EDS block: NRETRIAL must be >= 0.",
                   "In_Parameter", io::message::error);
@@ -2972,6 +2975,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
         
         // NREQUIL
         _lineStream >> param.reeds.equilibrate;
+        param.replica.equilibrate = param.reeds.equilibrate;
         if (_lineStream.fail() || param.reeds.equilibrate < 0) {
           io::messages.add("REPLICA_EDS block: NREQUIL must be >= 0.",
                   "In_Parameter", io::message::error);
@@ -2980,6 +2984,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
         
         //CONT: do continuation run
         _lineStream >> param.reeds.cont;
+        param.replica.cont = param.reeds.cont;
         if (_lineStream.fail() || param.reeds.cont < 0 || param.reeds.cont > 1 ) {
           io::messages.add("REPLICA_EDS block: CONT must be 0 or 1",
                   "In_Parameter", io::message::error);
@@ -2987,7 +2992,6 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
         }
 
         // EDS_STAT_OUT
-        // TODO: REPOUTS- DECIDE bschroed
         _lineStream >> param.reeds.eds_stat_out;
         if (_lineStream.fail() || param.reeds.eds_stat_out < 0 || param.reeds.eds_stat_out > 1 ) {
           io::messages.add("REPLICA_EDS block: EDS_STAT_OUT must be 0 or 1",
@@ -3002,11 +3006,11 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
                   "In_Parameter", io::message::error);
         }
         // check whether all baths have the same temperature (unambiguous kT)
-                param.reeds.num_T=1;
+        param.reeds.num_T = param.replica.num_T =1;
         
         // Replica temperature
         param.reeds.temperature = param.multibath.multibath.bath(0).temperature;
-        
+
         for (unsigned int i = 1; i < param.multibath.multibath.size(); i++) {
           if (param.multibath.multibath.bath(i).temperature !=
                   param.multibath.multibath.bath(0).temperature) {
@@ -3016,7 +3020,6 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
           }
           
         }
-
         if (_lineStream.fail() || error || block.error()) {
           io::messages.add("bad line in REPLICA_EDS block", "In_Parameter", io::message::error);
           io::messages.display();

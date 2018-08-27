@@ -98,10 +98,15 @@ int io::read_input_repex(io::Argument const & args,
     sim.param().eds=sim.param().reeds.eds_para[rank];//choose correct eds informations which are ID dependent. That's why this cannot be done earlier.
   }
   
-  std::cout << std::internal << "\tReading Topology\n";
+  if(!quiet){
+    std::cout << std::internal << "\tReading Topology\n";
+  }
+  
   if (read_topology(args, topo, sim, md_seq, os, quiet) != 0) return -1;
   
-  std::cout << std::internal << "\tReading Special\n";
+  if(!quiet){
+      std::cout << std::internal << "\tReading Special\n";
+  }
   // read this before configuration, as it contains topological data...
   if (read_special(args, topo, conf, sim, os, quiet) != 0) return -1;
   
@@ -118,10 +123,10 @@ int io::read_input_repex(io::Argument const & args,
 
   // check the bath parameters
   sim.multibath().check_state(topo.num_atoms());
-
-
-  std::cout << std::internal << "\tReading Configuration\n";
-  std::cout.flush();
+  if(!quiet){
+    std::cout << std::internal << "\tReading Configuration\n";
+    std::cout.flush();
+  }
   if (read_configuration(args, topo, conf, sim, os, quiet) != 0) return -1;
 
 #ifdef HAVE_HOOMD 
@@ -132,6 +137,9 @@ int io::read_input_repex(io::Argument const & args,
 	default: break;
   }
 #endif
+  if(!quiet){
+      io::messages.display(std::cout);
+  }
    
   return 0;
 }
@@ -260,12 +268,11 @@ int io::read_topology(io::Argument const & args,
 		       io::message::critical);
       return -1;
     }
-    
+    //read pertubation Topology
     io::In_Perturbation ipt(pttopo_file);
     ipt.quiet = quiet;
-    
     ipt.read(topo, sim.param(), os);
-    
+  
     sim.param().perturbation.perturbed_par=true;
     
     io::messages.add("perturbation topology read from " + args[argname_pttopo] + "\n" + util::frame_text(ipt.title),

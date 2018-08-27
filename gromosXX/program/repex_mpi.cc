@@ -57,7 +57,7 @@
 #include <util/error.h>
 
 int main(int argc, char *argv[]) {
-  
+
 #ifdef XXMPI
 
   //initializing MPI
@@ -68,7 +68,11 @@ int main(int argc, char *argv[]) {
 
   MPI_Comm_size(MPI_COMM_WORLD, &size);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
+  
+  if(rank == 0){
+    std::cout << "START REPEXMPI\n";  
+  }
+  
   // reading arguments
   util::Known knowns;
   knowns << "topo" << "conf" << "input" << "verb" << "pttopo"
@@ -106,23 +110,28 @@ int main(int argc, char *argv[]) {
   unsigned int numAtoms;
   unsigned int numReplicas;
   int cont;
-
+  
   {
     topology::Topology topo;
     configuration::Configuration conf;
     algorithm::Algorithm_Sequence md;
     simulation::Simulation sim;
     // TODO Bschroed: add nice starting message for rank 0
-    std::cout << "START REPEXMPI\n";
     // read in parameters
-    if (io::read_parameter(args,sim,std::cout,true) || io::check_parameter(sim)){
+    
+    bool quiet = true;
+    
+    if(rank == 0){
+        quiet = false;
+    }
+    
+    if (io::read_parameter(args,sim,std::cout, quiet)){
       if (rank == 0) {
         io::messages.display(std::cout);
         std::cout << "\nErrors in in_parameters!\n" << std::endl;
       }
       return -1;
     }
-    if (io::check_parameter(sim) != 0) return -1; //reactivated. 
 
     // make a copy, don't change the original args
     io::Argument args2(args);
@@ -137,11 +146,16 @@ int main(int argc, char *argv[]) {
     }
     
     // read in the rest
-    if(io::read_input_repex(args2, topo, conf, sim, md, rank, std::cout, true)){
+    if(io::read_input_repex(args2, topo, conf, sim, md, rank, std::cout, quiet)){
         std::cerr << "\nErrors during initialization!\n" << std::endl;
         io::messages.display(std::cout);
         MPI_Abort(MPI_COMM_WORLD, E_INPUT_ERROR);
         return 1;
+    }
+    
+    if (io::check_parameter(sim) != 0){
+        io::messages.display();
+        return -1; //reactivated check param at end.  
     }
 
     cont = sim.param().replica.cont;
@@ -150,8 +164,10 @@ int main(int argc, char *argv[]) {
     numReplicas = sim.param().replica.num_T * sim.param().replica.num_l;
     numAtoms = topo.num_atoms();
     //Todo bschroed: Nice Messaging
-    std::cout << "done Reading input\n";
-    std::cout.flush();
+    if(rank == 0){
+        std::cout << "done Reading input\n";
+        std::cout.flush();
+    }
   }
   
   io::messages.clear();
@@ -208,9 +224,11 @@ int main(int argc, char *argv[]) {
   MPI_Barrier(MPI_COMM_WORLD);
   
   //TODO integrate reeds with system.param().reeds.reeds
-  
-  std::cout << "Went trough MPI fun and parsing!\n"; //todo bschroed: remove!
-  std::cout.flush();//todo bschroed: remove!
+    
+  if(rank == 0){
+    std::cout << "Went trough MPI fun and parsing!\n"; //todo bschroed: remove!
+    std::cout.flush();//todo bschroed: remove!
+  }  
   //////////////////////////////
   /// Starting master-slave mode
   //////////////////////////////
