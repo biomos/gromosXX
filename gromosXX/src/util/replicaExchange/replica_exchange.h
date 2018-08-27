@@ -6,7 +6,7 @@
 #ifndef INCLUDED_REPLICA_EXCHANGE_H
 #define INCLUDED_REPLICA_EXCHANGE_H
 
-#include "replica_data.h"
+#include "replicaExchange/replica_data.h"
 
 namespace topology
 {

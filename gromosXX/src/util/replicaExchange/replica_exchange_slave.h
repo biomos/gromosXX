@@ -25,9 +25,9 @@
 #include <unistd.h>
 
 #include <io/configuration/out_configuration.h>
-#include <util/replica_exchange_base.h>
-#include <util/repex_mpi.h>
-#include <util/replica.h>
+#include <util/replicaExchange/replica_exchange_base.h>
+#include <util/replicaExchange/repex_mpi.h>
+#include <util/replicaExchange/replica.h>
 
 #ifdef XXMPI
 #include <mpi.h>

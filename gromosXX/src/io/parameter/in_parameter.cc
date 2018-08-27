@@ -61,6 +61,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_BOUNDCOND(param);
   read_REPLICA(param); // has to be read in before MULTIBATH
   read_MULTIBATH(param);
+  read_REPLICA_EDS(param); // has to be read in after MULTIBATH
   read_PRESSURESCALE(param);
   read_PRINTOUT(param);
   read_WRITETRAJ(param);
@@ -2769,6 +2770,266 @@ void io::In_Parameter::read_REPLICA(simulation::Parameter &param,
         }
         block.get_final_messages();
     }
+}
+/**
+ * @section replica REPLICA_EDS block
+ * @verbatim
+REPLICA_EDS
+#    REEDS >= 0   : turn off Reeds                             
+#             1   : turn on                                    
+#    NRES >= number of replica exchange eds smoothing values 
+#    NUMSTATES >= 2 Number of states
+#    RES > 0 for each replica smoothing value
+#    EIR (NUMSTATES X NRES): energy offsets for states and replicas
+#    NRETRIAL >= 0 number of overall exchange trials
+#    NREQUIL >= 0 number of exchange periods to equilibrate
+#               (disallow switches)
+#    CONT >= 0 continuation run
+#             0 start from one configuration file
+#             1 start from multiple configuration files
+#    EDS_STAT_OUT >= 0     creates output files for each replica, which contains for each exchange trial
+#                          the potential energies with the given coordinates for all s value. This data 
+#                           can be used to optimize the s distribution.
+#                 0 eds stat turned off
+#                 1 eds stat turned on
+#   REEDS
+    1
+#  NRES NUMSTATES
+    12  5 
+# RES(1 ... NRES)
+  1.0 0.7 0.5 0.3 0.1 0.07 0.05 0.03 0.01 0.007 0.005 0.003
+# EIR (NUMSTATES x NRES)
+  0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+  0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+  0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+  0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+  0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+# NRETRIAL   NREQUIL    CONT    EDS_STAT_OUT
+       10         0         1           1
+END
+@endverbatim
+ */
+
+void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostream & os){
+    
+    DEBUG(8, "read REPLICA_EDS");  
+  
+    //TODO: DO again! with read block funcs.!
+  
+    std::stringstream exampleblock;
+    // lines starting with 'exampleblock<<"' and ending with '\n";' (spaces don't matter)
+    // will be used to generate snippets that can be included in the doxygen doc;
+    // the first line is the tag
+    exampleblock << "REPLICA_EDS                                                    \n";
+    exampleblock << "#    REEDS >= 0   : turn off Reeds                             \n";
+                    "#             1   : turn on                                    \n";
+    exampleblock << "#    NRES >= number of replica exchange eds smoothing values   \n";
+    exampleblock << "#     RET >= 0.0 one temperature for all replica               \n";
+    exampleblock << "# NUMSTATES >= 2 Number of states                              \n";
+    exampleblock << "#     RES > 0 for each replica smoothing value                 \n";
+    exampleblock << "#   RETS() >= 0.0 timestep of each s-replica                   \n";
+    exampleblock << "# EIR (NUMSTATES X NRES): energy offsets for states and replicas   \n";
+    exampleblock << "# NRETRIAL >= 0 number of overall exchange trials                  \n";
+    exampleblock << "#  NREQUIL >= 0 number of exchange periods to equilibrate          \n";
+    exampleblock << "#               (disallow switches)                                \n";
+    exampleblock << "#     CONT >= 0 continuation run                                   \n";
+    exampleblock << "#             0 start from one configuration file                  \n";
+    exampleblock << "#             1 start from multiple configuration files            \n";
+    exampleblock << "# EDS_STAT_OUT >= 0     creates output files for each replica, which contains for each exchange trial  \n";
+    exampleblock << "#                       the potential energies with the given coordinates for all s value. This data   \n";
+    exampleblock << "#                       can be used to optimize the s distribution.                                    \n";
+    exampleblock << "#             0 eds stat turned off                                                                    \n";
+    exampleblock << "#             1 eds stat turned on                                                                     \n";
+    exampleblock << "#          \n";
+    exampleblock << "#  REEDS    \n";
+    exampleblock << "   0       \n";
+    exampleblock << "#  NRES    \n";
+    exampleblock << "   12      \n";
+    exampleblock << "# NUMSTATES        \n";
+    exampleblock << "    5              \n";
+    exampleblock << "# RES(1 ... NRES)  \n";
+    exampleblock << "  1.0 0.7 0.5 0.3 0.1 0.07 0.05 0.03 0.01 0.007 0.005 0.003    \n";
+    exampleblock << "# RETS(1 ... NRES) \n";
+    exampleblock << "  0.002 0.002 0.002 0.002 0.002 0.002 0.002 0.002 0.002 0.002 0.002 0.002  \n";
+    exampleblock << "# EIR (NUMSTATES x NRES)   \n";
+    exampleblock << "  0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0  \n";
+    exampleblock << "  0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0  \n";
+    exampleblock << "  0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0  \n";
+    exampleblock << "  0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0  \n";
+    exampleblock << "  0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0  \n";
+    exampleblock << "# NRETRIAL   NREQUIL    CONT    EDS_STAT_OUT(?)       \n";
+    exampleblock << "       10         0         1           1          \n";
+    exampleblock << "END\n";
+
+    std::string blockname = "REPLICA_EDS";
+    Block block(blockname, exampleblock.str());
+  
+    std::vector<std::string> buffer;
+    std::string s;
+
+
+    buffer = m_block["REPLICA_EDS"];
+    if (buffer.size()) {
+      block_read.insert("REPLICA_EDS");
+
+      bool error = false;
+      _lineStream.clear();
+      _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
+
+      //check that EDS Block was not read in before,because either REPLICA_EDS or EDS possible
+      if (param.eds.eds) {
+          std::ostringstream msg;
+          msg << "REPLICA_EDS block cannot be used at the same time with EDS block";
+            io::messages.add(msg.str(), "In_Parameter", io::message::error);
+            error = true;
+          }
+      
+      // READ:REEDS control
+      int reeds_control = 0;
+      _lineStream >> reeds_control;     //contains control if reedsblock is on or not
+      switch(reeds_control) {
+            case 0:
+                param.reeds.reeds = false;
+                break;
+            case 1:
+                param.reeds.reeds = true;
+                break;
+            default:
+                io::messages.add("REPLICA_EDS block: Reeds must be 0 (off) or 1 (on).\n Reeds was: "+reeds_control,
+                  "In_Parameter", io::message::error);
+                error = true;
+                break;
+        }
+
+        if (_lineStream.fail()) {
+                io::messages.add("REPLICA_EDS block: Reeds must be 0 (off) or 1 (on).",
+                  "In_Parameter", io::message::error);
+                error = true;
+        }
+       
+        // READ: NRES   NUMSTATES
+        _lineStream >> param.reeds.num_l >> param.reeds.num_states;     //contains the number of Svals
+        if (_lineStream.fail() || param.reeds.num_l < 0) {
+          io::messages.add("REPLICA_EDS block: NRES must be >= 0.",
+                  "In_Parameter", io::message::error);
+          error = true;
+        }
+
+        //set size of vectors in param.reeds
+        param.reeds.eds_para.resize(param.reeds.num_l);
+        param.reeds.dt.resize(param.reeds.num_l);
+        param.reeds.lambda.resize(param.reeds.num_l);
+
+        //Loop over all replicas in order to initialize complete eds_struct for each replica
+        for (int i = 0; i < param.reeds.num_l; ++i) {
+            //READ:NUMSTATES 
+            param.reeds.eds_para[i].eds = true;
+            param.reeds.eds_para[i].numstates=param.reeds.num_states;
+
+            //indicate only one parameter s used for reference state hamiltonian
+            param.reeds.eds_para[i].form = simulation::single_s;
+            //initialize size of EIR
+            param.reeds.eds_para[i].eir.resize(param.reeds.eds_para[i].numstates);
+            
+            //RES
+            param.reeds.eds_para[i].s.resize(1);//only one parameter s per replica
+            _lineStream >> param.reeds.eds_para[i].s[0];
+            param.reeds.lambda[i]=param.reeds.eds_para[i].s[0];
+            if (_lineStream.fail() || param.reeds.eds_para[i].s[0] < 0.0) {
+              std::ostringstream msg;
+              msg << "REPLICA_EDS block: RES(" << i + 1 << ") must be >= 0.0";
+              io::messages.add(msg.str(), "In_Parameter", io::message::error);
+              error = true;
+            }       
+        }
+
+        //EIR
+        bool eirBroke = false;
+        for (unsigned int i = 0; i < param.reeds.eds_para[0].numstates; ++i) {
+            for(unsigned int j = 0; j < param.reeds.num_l; ++j){
+              _lineStream >> param.reeds.eds_para[j].eir[i];
+                if (_lineStream.fail()) {
+                    std::ostringstream msg;
+                    msg << "REPLICA_EDS block: EIR is missing! Pos("<<i<<"/"<<j<<") \n\t\t STOP EIR reading\n" ;
+                    io::messages.add(msg.str(), "In_Parameter", io::message::error);
+                    error = true;
+                    eirBroke = true;
+                    break;
+                }
+              if(eirBroke){
+                  break;
+              }
+            }       
+        }
+
+        // NRETRIAL
+        _lineStream >> param.reeds.trials;
+        if (_lineStream.fail() || param.reeds.trials < 0) {
+          io::messages.add("REPLICA_EDS block: NRETRIAL must be >= 0.",
+                  "In_Parameter", io::message::error);
+          error = true;
+        }
+        
+        // NREQUIL
+        _lineStream >> param.reeds.equilibrate;
+        if (_lineStream.fail() || param.reeds.equilibrate < 0) {
+          io::messages.add("REPLICA_EDS block: NREQUIL must be >= 0.",
+                  "In_Parameter", io::message::error);
+          error = true;
+        }
+        
+        //CONT: do continuation run
+        _lineStream >> param.reeds.cont;
+        if (_lineStream.fail() || param.reeds.cont < 0 || param.reeds.cont > 1 ) {
+          io::messages.add("REPLICA_EDS block: CONT must be 0 or 1",
+                  "In_Parameter", io::message::error);
+          error = true;
+        }
+
+        // EDS_STAT_OUT
+        // TODO: REPOUTS- DECIDE bschroed
+        _lineStream >> param.reeds.eds_stat_out;
+        if (_lineStream.fail() || param.reeds.eds_stat_out < 0 || param.reeds.eds_stat_out > 1 ) {
+          io::messages.add("REPLICA_EDS block: EDS_STAT_OUT must be 0 or 1",
+                  "In_Parameter", io::message::error);
+          error = true;
+        }
+
+        // Some additional tests
+        // make sure we simulate at a given temperature (unambiguous kT)
+        if (!param.multibath.couple) {
+          io::messages.add("Error in RE_EDS block: EDS requires temperature coupling.",
+                  "In_Parameter", io::message::error);
+        }
+        // check whether all baths have the same temperature (unambiguous kT)
+                param.reeds.num_T=1;
+        
+        // Replica temperature
+        param.reeds.temperature = param.multibath.multibath.bath(0).temperature;
+        
+        for (unsigned int i = 1; i < param.multibath.multibath.size(); i++) {
+          if (param.multibath.multibath.bath(i).temperature !=
+                  param.multibath.multibath.bath(0).temperature) {
+            io::messages.add("Error in RE_EDS block: all baths must have the same temperature.",
+                    "In_Parameter", io::message::error);
+            error = true;
+          }
+          
+        }
+
+        if (_lineStream.fail() || error || block.error()) {
+          io::messages.add("bad line in REPLICA_EDS block", "In_Parameter", io::message::error);
+          io::messages.display();
+          block.get_final_messages();
+          param.reeds.num_T = 0;
+          param.reeds.num_l = 0;
+          param.reeds.temperature = 0;
+          param.reeds.eds_para.clear();
+          param.reeds.lambda.clear();
+          param.reeds.dt.clear();
+          return;
+        }
+      }
 }
 
 /**

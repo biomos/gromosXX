@@ -5,8 +5,8 @@
  * Created on April 29, 2011, 2:06 PM
  */
 
-#include "replica_exchange_base.h"
-#include "replica.h"
+#include "replicaExchange/replica_exchange_base.h"
+#include "replicaExchange/replica.h"
 #include <stdheader.h>
 
 #include <algorithm/algorithm.h>

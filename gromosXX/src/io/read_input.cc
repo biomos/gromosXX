@@ -89,12 +89,19 @@ int io::read_input_repex(io::Argument const & args,
 		   configuration::Configuration & conf,
 		   simulation::Simulation & sim,
 		   algorithm::Algorithm_Sequence & md_seq,
+                   int rank,
 		   std::ostream & os,
 		   bool quiet)
 {
-
+  //initialize for RE-EDS ID dependent parameters.
+  if(sim.param().reeds.reeds){
+    sim.param().eds=sim.param().reeds.eds_para[rank];//choose correct eds informations which are ID dependent. That's why this cannot be done earlier.
+  }
+  
+  std::cout << std::internal << "\tReading Topology\n";
   if (read_topology(args, topo, sim, md_seq, os, quiet) != 0) return -1;
   
+  std::cout << std::internal << "\tReading Special\n";
   // read this before configuration, as it contains topological data...
   if (read_special(args, topo, conf, sim, os, quiet) != 0) return -1;
   
@@ -105,12 +112,16 @@ int io::read_input_repex(io::Argument const & args,
       return -1;
   }
 
+
   sim.multibath().calculate_degrees_of_freedom
           (topo, sim.param().rottrans.rottrans, sim.param().posrest.posrest == simulation::posrest_const, sim.param().boundary.dof_to_subtract);
 
   // check the bath parameters
   sim.multibath().check_state(topo.num_atoms());
 
+
+  std::cout << std::internal << "\tReading Configuration\n";
+  std::cout.flush();
   if (read_configuration(args, topo, conf, sim, os, quiet) != 0) return -1;
 
 #ifdef HAVE_HOOMD 
@@ -279,7 +290,6 @@ int io::read_configuration(io::Argument const & args,
 			   bool quiet)
 {
   io::igzstream conf_file;
-
   DEBUG(7, "reading configuration");
   conf_file.open(args[argname_conf].c_str());
 
@@ -297,13 +307,13 @@ int io::read_configuration(io::Argument const & args,
 
   io::messages.add("configuration read from " + args[argname_conf] + "\n" + util::frame_text(ic.title),
 		   "read input", io::message::notice);
-
+  
   conf.init(topo, sim.param());
 
   // check for errors and abort
   if (io::messages.contains(io::message::error) || 
       io::messages.contains(io::message::critical))
     return -1;
-    
+  
   return 0;
 }

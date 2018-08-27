@@ -4,7 +4,7 @@
  * 
  * Created on April 29, 2011, 2:06 PM
  */
-#include <util/replica.h>
+#include <util/replicaExchange/replica.h>
 
 #include <io/argument.h>
 #include <util/error.h>

@@ -48,10 +48,10 @@
 #include <mpi.h>
 #endif
 
-#include <util/replica_exchange_master.h>
-#include <util/replica_exchange_slave.h>
+#include <util/replicaExchange/replica_exchange_master.h>
+#include <util/replicaExchange/replica_exchange_slave.h>
 
-#include <util/repex_mpi.h>
+#include <util/replicaExchange/repex_mpi.h>
 #include <string>
 #include <sstream>
 #include <util/error.h>
@@ -112,7 +112,8 @@ int main(int argc, char *argv[]) {
     configuration::Configuration conf;
     algorithm::Algorithm_Sequence md;
     simulation::Simulation sim;
-
+    // TODO Bschroed: add nice starting message for rank 0
+    std::cout << "START REPEXMPI\n";
     // read in parameters
     if (io::read_parameter(args,sim,std::cout,true) || io::check_parameter(sim)){
       if (rank == 0) {
@@ -121,7 +122,7 @@ int main(int argc, char *argv[]) {
       }
       return -1;
     }
-    //if (io::check_parameter(sim) != 0) return -1;
+    if (io::check_parameter(sim) != 0) return -1; //reactivated. 
 
     // make a copy, don't change the original args
     io::Argument args2(args);
@@ -136,20 +137,23 @@ int main(int argc, char *argv[]) {
     }
     
     // read in the rest
-    if(io::read_input_repex(args2, topo, conf, sim, md, std::cout, true)){
+    if(io::read_input_repex(args2, topo, conf, sim, md, rank, std::cout, true)){
         std::cerr << "\nErrors during initialization!\n" << std::endl;
         io::messages.display(std::cout);
         MPI_Abort(MPI_COMM_WORLD, E_INPUT_ERROR);
         return 1;
     }
-     
+
     cont = sim.param().replica.cont;
     equil_runs = sim.param().replica.equilibrate;
     total_runs = sim.param().replica.trials + equil_runs;
     numReplicas = sim.param().replica.num_T * sim.param().replica.num_l;
     numAtoms = topo.num_atoms();
+    //Todo bschroed: Nice Messaging
+    std::cout << "done Reading input\n";
+    std::cout.flush();
   }
- 
+  
   io::messages.clear();
 
   //////////////////////////
@@ -202,7 +206,11 @@ int main(int argc, char *argv[]) {
 
   // make sure all nodes have initialized everything
   MPI_Barrier(MPI_COMM_WORLD);
-
+  
+  //TODO integrate reeds with system.param().reeds.reeds
+  
+  std::cout << "Went trough MPI fun and parsing!\n"; //todo bschroed: remove!
+  std::cout.flush();//todo bschroed: remove!
   //////////////////////////////
   /// Starting master-slave mode
   //////////////////////////////

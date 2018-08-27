@@ -522,7 +522,6 @@ namespace simulation
      */
     xray_symrest_constr = 2,
   };
-
   /**
    * @enum eds_enum
    * eds functional form enumeration
@@ -1798,6 +1797,8 @@ namespace simulation
          */
         rep_ex_energy_interruptor_enum energy_switcher;
      }replica_exchange_parameters;
+    
+    
       /**
      * @struct overall_bfactor_struct
      * default values: 0
@@ -2722,7 +2723,7 @@ namespace simulation
        * - eds: no eds sampling
        * - form: single_s
        */
-      eds_struct() : eds(false), soft_vdw(1.0), soft_crf(1.0), form(single_s), numstates(0) {}
+      eds_struct() : eds(false), soft_vdw(0.0), soft_crf(0.0), form(single_s), numstates(0) {}
       /**
        * do enveloping distribution sampling using the Hamiltonian:
        */
@@ -2759,7 +2760,78 @@ namespace simulation
        */
       std::vector<double> eir;
     } /** enveloping distribution sampling*/ eds;
+    
+ struct reeds_struct : public replica_struct
+    {
+      /**
+       * Constructor
+       * Default values:
+       * - num_T 0
+       * - num_l 0
+       * - temperature \<empty\>
+       * - scale (false)
+       * - lambda \<empty\>
+       * - dt \<empty\>
+       * - trials 0
+       * - equilibrate 0
+       * - cont 0
+       */
+      reeds_struct() : reeds(false), 
+                       num_states(0), num_T(0),  num_l(0), 
+                       trials(0), equilibrate(0), 
+                       cont(0), eds_stat_out(true) {}
+      /**
+       * Check if this is a reed run.f
+       **/
+      bool reeds;
+      /**
+       * write output to stat_file (repdat)
+       **/
+      bool eds_stat_out;
+      /**
+       * num_states
+       */
+      int num_states;
+      /**
+       * number of replicas with different temperature
+       */
+      int num_T;
+      /**
+       * number of replicas with different lambdas in REEDS these are the smoothing values
+       */
+      int num_l;
+      /**
+       * temperatures
+       */
+      double temperature;
+      /**
+       * lambdas: contains all smoothness parameter of RE_EDS system
+       */
+      std::vector<double> lambda;
+      /**
+       * time step to use when running at corresponding lambda
+       */
+      std::vector<double> dt;
+      /**
+       * trial moves
+       */
+      int trials;
+      /**
+       * equilibrate: no switching for the first N trials
+       */
+      int equilibrate;
+      /**
+       * do continuation run
+       */
+      int cont;
+       /**
+       * for RE-EDS Sim many eds parameters have to be accessible for
+       * energy calculation.
+       */
+      std::vector<eds_struct> eds_para;
 
+    } /** replica exchange parameters */ reeds;
+    
     /**
      * @struct sasa
      * parameters for calculating the sasa and volume term

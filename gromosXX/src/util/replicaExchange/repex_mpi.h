@@ -16,7 +16,7 @@
 #define EXTERN extern
 #endif
 
-#include <util/replica.h>
+#include <util/replicaExchange/replica.h>
 
 /*
  * define some MPI datatypes

@@ -32,6 +32,7 @@ namespace io
    bool quiet = false
    );
   
+  
   /**
    * read the rest of the input files necessary for the repex simulation.
    * calls
@@ -46,10 +47,10 @@ namespace io
    configuration::Configuration &conf,
    simulation::Simulation & sim,
    algorithm::Algorithm_Sequence &md_seq,
+   int rank=0,
    std::ostream & os = std::cout,
    bool quiet = false
    );
-
   /**
    * read in simulation parameter
    */
