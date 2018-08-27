@@ -1800,6 +1800,7 @@ int io::check_features(simulation::Simulation & sim)
   fc.unlock("pairlist_standard", "parallel_omp");
   fc.unlock("pairlist_grid", "cg_martini");
   fc.unlock("pairlist_grid", "cg_gromos");
+  fc.unlock("pairlist_grid", "cutoff_atomic");
   fc.unlock("pairlist_grid", "mixed_grain");
   fc.unlock("pairlist_grid", "temp_berendsen");
   fc.unlock("pairlist_grid", "temp_nosehoover");
