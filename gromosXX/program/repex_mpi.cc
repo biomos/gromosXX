@@ -104,7 +104,8 @@ int main(int argc, char *argv[]) {
     MPI_Abort(MPI_COMM_WORLD, E_INPUT_ERROR);
     return 1;
   }
-
+  
+  bool reedsSim;
   unsigned int equil_runs;
   unsigned int total_runs;
   unsigned int numAtoms;
@@ -163,6 +164,7 @@ int main(int argc, char *argv[]) {
     total_runs = sim.param().replica.trials + equil_runs;
     numReplicas = sim.param().replica.num_T * sim.param().replica.num_l;
     numAtoms = topo.num_atoms();
+    reedsSim = sim.param().reeds.reeds;
     //Todo bschroed: Nice Messaging
     if(rank == 0){
         std::cout << "done Reading input\n";
@@ -233,43 +235,83 @@ int main(int argc, char *argv[]) {
   /// Starting master-slave mode
   //////////////////////////////
   if (rank == 0) {
+    //print Initial Master text:
+    std::cout  << "\n==================================================\n"
+               << "GROMOS REEDS:"
+               <<"\n==================================================\n"
+               << "Start Master on: " << "Node " << rank << std::endl
+               << "numreplicas:\t "<< numReplicas<<std::endl
+               << "num Slaves:\t "<< numReplicas-1<<std::endl
+               << "reeds:\t "<< reedsSim<<std::endl<<std::endl;
+    util::replica_exchange_master* Master;
+    if(reedsSim){
+        std::cout <<  "Master REEDS " << rank << std::endl;
+        std::cout.flush();
+        Master = new util::replica_exchange_master(args, cont, rank, size, numReplicas, repIDs[rank], repMap);
 
-    util::replica_exchange_master Master(args, cont, rank, size, numReplicas, repIDs[rank], repMap);
-    Master.init();
-    
-    for (unsigned int i = 0; i < total_runs; ++i) {
-      Master.run_MD();
-      if (i >= equil_runs) {
-        Master.swap();
-        Master.receive_from_all_slaves();
-
-        Master.write();
+      } else{
+        Master = new util::replica_exchange_master(args, cont, rank, size, numReplicas, repIDs[rank], repMap);
       }
-    }
-    Master.write_final_conf();
     
+    Master->init();
+    
+    //do md:
+    std::cout << "\n==================================================\n"
+              << " MAIN MD LOOP\n"
+              << "==================================================\n\n";
+    unsigned int trial;
+    for( ;trial<equil_runs; ++trial){    // for equilibrations
+        Master->run_MD();
+    }
+    for ( ; trial < total_runs; ++trial){ //for repex execution
+      Master->run_MD();
+      Master->swap();
+      Master->receive_from_all_slaves();
+      Master->write();
+    }
+    Master->write_final_conf();
+    
+    //FINAL OUTPUT - Time used:
+    double end = MPI_Wtime();
+    double duration = end - start;
+    double durationMin = duration/60;
+    double durationHour = std::floor(durationMin/60);
+    double durationMinlHour = std::floor(durationMin-durationHour*60);
+    double durationSlMin = std::floor(duration - (durationMinlHour+durationHour*60)*60);
+    
+    std::cout << "\n==================================================\n"
+              << "REPLICA EXCHANGE SIMULATION finished successfully! " << "Node " << rank << " - MASTER\n"
+              << "\n==================================================\n"
+              << "TOTAL TIME USED: \n\th:min:s\t\tseconds\n"
+              << "\t" << durationHour << ":"<<durationMinlHour << ":" << durationSlMin << "\t\t" << duration << "\n";
+    MPI_Finalize();
+
   } else {
-    util::replica_exchange_slave Slave(args, cont, rank, repIDs[rank], repMap);
-    Slave.init();
+      
+        std::cout << "Slave here: "<<rank<<std::endl;      
+        util::replica_exchange_slave* Slave;     
+        if(reedsSim){
+           std::cout <<  "Slave REEDS " << rank << std::endl;
+           Slave = new util::replica_exchange_slave(args, cont, rank, repIDs[rank], repMap);
+         } else{
+           Slave = new util::replica_exchange_slave(args, cont, rank, repIDs[rank], repMap);
+         }
 
-    for (unsigned int i = 0; i < total_runs; ++i) {
-      Slave.run_MD();
-      if (i >= equil_runs) {
-        Slave.swap();
-        Slave.send_to_master();
-      }
+    Slave->init();
+    //do md:
+    unsigned int trial;
+    for( ;trial<equil_runs; ++trial){    // for equilibrations
+        Slave->run_MD();
     }
-    Slave.write_final_conf();
+    for ( ; trial < total_runs; ++trial){ //for repex execution
+      Slave->run_MD();
+      Slave->swap();
+      Slave->send_to_master();
+    }
+    
+    Slave->write_final_conf();
+    std::cout << "\n=================== REPLICA EXCHANGE SIMULATION finished successfully! " << "Node " << rank << "\n";
   }
-  
-  std::cout << "REPLICA EXCHANGE SIMULATION finished successfully! " << "Node " << rank << std::endl;
-
-  MPI_Barrier(MPI_COMM_WORLD); // maybe not needed in the end...
-
-  if (rank == 0)
-    std::cout << "TOTAL TIME USED: " << MPI_Wtime() - start << " seconds" << std::endl;
-
-  MPI_Finalize();
   return 0;
   
 #else

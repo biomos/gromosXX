@@ -52,7 +52,7 @@ repParams(replicas[0]->sim.param().replica)
   assert(rank == 0);
   assert(numReplicas > 0);
   replicaData.resize(numReplicas);
-
+  
   //initialize data of replicas
   int ID = 0;
   for (int i = 0; i < repParams.num_l; ++i) {
@@ -64,12 +64,11 @@ repParams(replicas[0]->sim.param().replica)
       ++ID;
     }
   }
-
   // set output file
   std::string repdatName = args["repdat"];
   repOut.open(repdatName.c_str());
   repOut << "Number of temperatures:\t" << repParams.num_T << "\n"
-          << "Number of lambda values:\t" << repParams.num_l << "\n";
+         << "Number of lambda values:\t" << repParams.num_l << "\n";
 
   repOut.precision(4);
   repOut.setf(std::ios::fixed, std::ios::floatfield);

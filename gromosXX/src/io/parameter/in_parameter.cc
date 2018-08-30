@@ -2910,7 +2910,6 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
        
         // READ: NRES   NUMSTATES
         _lineStream >> param.reeds.num_l >> param.reeds.num_states;     //contains the number of Svals
-        param.replica.num_l = param.reeds.num_l ;
         if (_lineStream.fail() || param.reeds.num_l < 0) {
           io::messages.add("REPLICA_EDS block: NRES must be >= 0.",
                   "In_Parameter", io::message::error);
@@ -2923,7 +2922,12 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
         param.reeds.lambda.resize(param.reeds.num_l);
 
         //Loop over all replicas in order to initialize complete eds_struct for each replica
+        //initvars
+        std::vector<double> dtV;    //is necessary to give replicas the paramesters
+        std::vector<double> temperatureV;
         for (int i = 0; i < param.reeds.num_l; ++i) {
+            dtV.push_back(param.step.dt);
+            temperatureV.push_back(param.reeds.temperature);
             //READ:NUMSTATES 
             param.reeds.eds_para[i].eds = true;
             param.reeds.eds_para[i].numstates=param.reeds.num_states;
@@ -2966,7 +2970,6 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
 
         // NRETRIAL
         _lineStream >> param.reeds.trials;
-        param.replica.trials = param.reeds.trials;
         if (_lineStream.fail() || param.reeds.trials < 0) {
           io::messages.add("REPLICA_EDS block: NRETRIAL must be >= 0.",
                   "In_Parameter", io::message::error);
@@ -2975,7 +2978,6 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
         
         // NREQUIL
         _lineStream >> param.reeds.equilibrate;
-        param.replica.equilibrate = param.reeds.equilibrate;
         if (_lineStream.fail() || param.reeds.equilibrate < 0) {
           io::messages.add("REPLICA_EDS block: NREQUIL must be >= 0.",
                   "In_Parameter", io::message::error);
@@ -2984,7 +2986,6 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
         
         //CONT: do continuation run
         _lineStream >> param.reeds.cont;
-        param.replica.cont = param.reeds.cont;
         if (_lineStream.fail() || param.reeds.cont < 0 || param.reeds.cont > 1 ) {
           io::messages.add("REPLICA_EDS block: CONT must be 0 or 1",
                   "In_Parameter", io::message::error);
@@ -3005,9 +3006,19 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
           io::messages.add("Error in RE_EDS block: EDS requires temperature coupling.",
                   "In_Parameter", io::message::error);
         }
+        
+        //REPLICA overwritting
         // check whether all baths have the same temperature (unambiguous kT)
         param.reeds.num_T = param.replica.num_T =1;
         
+        param.replica.temperature = temperatureV;
+        param.replica.lambda = param.reeds.lambda;
+        param.replica.dt = dtV;
+        param.replica.num_l = param.reeds.num_l ;
+        param.replica.trials = param.reeds.trials;
+        param.replica.equilibrate = param.reeds.equilibrate;
+        param.replica.cont = param.reeds.cont;
+
         // Replica temperature
         param.reeds.temperature = param.multibath.multibath.bath(0).temperature;
 

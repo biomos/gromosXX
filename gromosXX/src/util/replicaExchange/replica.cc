@@ -68,7 +68,6 @@ util::replica::replica(io::Argument _args, int cont, int _ID, int _rank) : ID(_I
   T = sim.param().replica.temperature[ID % numT];
   l = sim.param().replica.lambda[ID / numT];
   dt = sim.param().replica.dt[ID / numT];
-
   set_lambda();
   set_temp();
 
@@ -147,8 +146,7 @@ util::replica::replica(io::Argument _args, int cont, int _ID, int _rank) : ID(_I
 
   *os << "==================================================\n"
       << " MAIN MD LOOP\n"
-      << "==================================================\n"
-      << std::endl;
+      << "==================================================\n\n";
 }
 
 util::replica::~replica() {

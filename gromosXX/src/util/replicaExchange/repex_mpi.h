@@ -17,6 +17,7 @@
 #endif
 
 #include <util/replicaExchange/replica.h>
+//#include <util/replicaExchange/replica_reeds.h>
 
 /*
  * define some MPI datatypes
@@ -66,6 +67,7 @@ typedef unsigned int rank_t;
  * @typedef repIterator
  */
 typedef std::vector< util::replica* >::iterator repIterator;
+//typedef std::vector< util::replica_reeds* >::iterator reedsRepIterator;
 
 
 #endif	/* REPEX_MPI_H */

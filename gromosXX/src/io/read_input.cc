@@ -117,7 +117,6 @@ int io::read_input_repex(io::Argument const & args,
       return -1;
   }
 
-
   sim.multibath().calculate_degrees_of_freedom
           (topo, sim.param().rottrans.rottrans, sim.param().posrest.posrest == simulation::posrest_const, sim.param().boundary.dof_to_subtract);
 

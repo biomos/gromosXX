@@ -36,7 +36,11 @@ xxutilrepex_HEADERS = replicaExchange/repex_mpi.h\
 	replicaExchange/replica.h\
 	replicaExchange/replica_exchange_base.h\
 	replicaExchange/replica_exchange_master.h\
-	replicaExchange/replica_exchange_slave.h
+	replicaExchange/replica_exchange_slave.h\
+	#replicaExchange/replica_eds.h\
+	#replicaExchange/replica_exchange_base_eds.h
+
+
 	
 noinst_LTLIBRARIES = libgroutil.la
 
@@ -66,7 +70,11 @@ libgroutil_la_SOURCES =	cycle_thread.cc\
 	replicaExchange/replica.cc\
 	replicaExchange/replica_exchange_base.cc\
 	replicaExchange/replica_exchange_master.cc\
-	replicaExchange/replica_exchange_slave.cc
+	replicaExchange/replica_exchange_slave.cc\
+	#replicaExchange/replica_eds.cc\
+	#replicaExchange/replica_exchange_base_eds.cc
+
+
 
 libgroutil_la_LIBADD =
 

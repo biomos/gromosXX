@@ -323,6 +323,10 @@ case "$compiler" in
 esac
 
 dnl subst compiler flags
+
+#CHEAT IN C++11 bschroed
+MY_CXXFLAGS="${MY_CXXFLAGS} -std=c++11 "
+
 AC_SUBST(MY_CXXFLAGS)
 AC_SUBST(CXX_NDEBUG_FLAGS)
 
