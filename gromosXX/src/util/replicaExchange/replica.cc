@@ -46,7 +46,7 @@ util::replica::replica(io::Argument _args, int cont, int _ID, int _rank) : ID(_I
 
   traj = new io::Out_Configuration(trajname, *os);
   
-  if (io::read_input(args, topo, conf, sim, md, *os)) {
+  if (io::read_input(args, topo, conf, sim, md, *os)) { //Todo: Would it not enough to read in topo, special and cnf? bschroed
     io::messages.display(*os);
     std::cerr << "\nErrors during initialization!\n" << std::endl;
 #ifdef XXMPI
