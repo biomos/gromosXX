@@ -50,6 +50,8 @@
 
 #include <util/replicaExchange/replica_exchange_master.h>
 #include <util/replicaExchange/replica_exchange_slave.h>
+#include <util/replicaExchange/replica_exchange_master_eds.h>
+#include <util/replicaExchange/replica_exchange_slave_eds.h>
 
 #include <util/replicaExchange/repex_mpi.h>
 #include <string>
@@ -261,7 +263,7 @@ int main(int argc, char *argv[]) {
     if(reedsSim){
         std::cout <<  "Master REEDS " << rank << std::endl;
         std::cout.flush();
-        Master = new util::replica_exchange_master(args, cont, rank, size, numReplicas, repIDs[rank], repMap);
+        Master = new util::replica_exchange_master_eds(args, cont, rank, size, numReplicas, repIDs[rank], repMap);
 
       } else{
         Master = new util::replica_exchange_master(args, cont, rank, size, numReplicas, repIDs[rank], repMap);
@@ -308,7 +310,7 @@ int main(int argc, char *argv[]) {
         util::replica_exchange_slave* Slave;     
         if(reedsSim){
            std::cout <<  "Slave REEDS " << rank << std::endl;
-           Slave = new util::replica_exchange_slave(args, cont, rank, repIDs[rank], repMap);
+           Slave = new util::replica_exchange_slave_eds(args, cont, rank, repIDs[rank], repMap);
          } else{
            Slave = new util::replica_exchange_slave(args, cont, rank, repIDs[rank], repMap);
          }

@@ -6,7 +6,7 @@
  */
 
 #define REPEX_MPI
-#include "replicaExchange/replica_exchange_slave.h"
+#include <util/replicaExchange/replica_exchange_slave.h>
 
 #include <stdheader.h>
 
