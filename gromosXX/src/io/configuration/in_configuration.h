@@ -250,7 +250,15 @@ namespace io {
                                   configuration::Configuration &conf,
                                   simulation::Simulation & sim,
                                   std::ostream & os);
-				  
+		
+    /**
+     * read configuration of aeds parameter seach simulation
+     */
+    bool read_aedssearch(topology::Topology &topo,
+                                  configuration::Configuration &conf,
+                                  simulation::Simulation & sim,
+                                  std::ostream & os);
+
     /**
      * Read in the memory function of the umbrellas (BSLEUSMEM block)
      * @param bs_umbrella
@@ -464,6 +472,11 @@ namespace io {
     bool _read_rottrans(std::vector<std::string> &buffer, unsigned int last,
             configuration::Configuration::special_struct::rottrans_constr_struct & rottrans);
     
+    /**
+     * read AEDSSEARCH block
+     */
+    bool _read_aedssearch(std::vector<std::string> &buffer,
+            simulation::Simulation & sim, unsigned int numstates);
   };
 
 } // io

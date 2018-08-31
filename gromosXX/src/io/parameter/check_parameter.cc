@@ -116,7 +116,7 @@ int io::simple_crosschecks(simulation::Simulation & sim) {
 
   // EDS: make sure we simulate at a given temperature (unambiguous kT)
     if (param.eds.eds && !param.multibath.couple) {
-        io::messages.add("EDS block: EDS requires temperature coupling.",
+        io::messages.add("EDS/AEDS block: EDS requires temperature coupling.",
                                "In_Parameter", io::message::error);
     }
 
@@ -125,7 +125,7 @@ int io::simple_crosschecks(simulation::Simulation & sim) {
       for (unsigned int i = 1; i < param.multibath.multibath.size(); i++) {
               if (param.multibath.multibath.bath(i).temperature !=
                   param.multibath.multibath.bath(0).temperature) {
-                  io::messages.add("EDS block: all baths must have the same temperature.",
+                  io::messages.add("EDS/AEDS block: all baths must have the same temperature.",
                                    "In_Parameter", io::message::error);
                   break;
               }
@@ -331,8 +331,19 @@ int io::check_features(simulation::Simulation & sim)
           param.rng.rng == simulation::random_g96);
   add("random_gsl", "GROMOS96 random numbers",
           param.rng.rng == simulation::random_gsl);
-  // EDS block
-  add("eds", "Enveloping distribution sampling", param.eds.eds);
+  // EDS/AEDS block
+  if (param.eds.eds == 1) {
+    add("eds", "Enveloping distribution sampling", true);
+    add("aeds", "Accelerated enveloping distribution sampling", false);
+  }
+  else if (param.eds.eds == 2) {
+    add("eds", "Enveloping distribution sampling", false);
+    add("aeds", "Accelerated enveloping distribution sampling", true);
+  }
+  else {
+    add("eds", "Enveloping distribution sampling", false);
+    add("aeds", "Accelerated enveloping distribution sampling", false);
+  }
 
   // parallelization
   add("parallel_mpi", "MPI parallelization", sim.mpi);
@@ -2391,6 +2402,94 @@ int io::check_features(simulation::Simulation & sim)
   fc.unlock("eds", "random_gsl");
   fc.unlock("eds", "parallel_mpi");
   fc.unlock("eds", "parallel_omp");
+
+  fc.unlock("aeds", "solute");
+  fc.unlock("aeds", "solvent");
+  fc.unlock("aeds", "solvent_only");
+  //fc.unlock("aeds", "steepest_descent");
+  fc.unlock("aeds", "solute_constraint_off");
+  fc.unlock("aeds", "solute_shake");
+  fc.unlock("aeds", "solute_lincs");
+  fc.unlock("aeds", "solute_flexshake");
+  fc.unlock("aeds", "solvent_constraint_off");
+  fc.unlock("aeds", "solvent_shake");
+  fc.unlock("aeds", "solvent_lincs");
+  fc.unlock("aeds", "solvent_settle");
+  fc.unlock("aeds", "pressure_calculation");
+  fc.unlock("aeds", "pressure_scale_berendsen");
+  fc.unlock("aeds", "virial_off");
+  fc.unlock("aeds", "virial_atomic");
+  fc.unlock("aeds", "virial_molecular");
+  fc.unlock("aeds", "vacuum");
+  fc.unlock("aeds", "pbc_r");
+  fc.unlock("aeds", "pbc_c");
+  fc.unlock("aeds", "pbc_t");
+  //fc.unlock("aeds", "perturbation");
+  //fc.unlock("aeds", "perturbation_scaling");
+  //fc.unlock("aeds", "slow_growth");
+  //fc.unlock("aeds", "individual_lambdas");
+  //fc.unlock("aeds", "precalculate_lambdas");
+  fc.unlock("aeds", "bond");
+  fc.unlock("aeds", "angle");
+  fc.unlock("aeds", "dihedral");
+  fc.unlock("aeds", "improper");
+  fc.unlock("aeds", "crf");
+  fc.unlock("aeds", "lj");
+  fc.unlock("aeds", "com_removal");
+  fc.unlock("aeds", "rf_excluded");
+  fc.unlock("aeds", "pairlist_standard");
+  fc.unlock("aeds", "pairlist_grid");
+  fc.unlock("aeds", "pairlist_gridcell");
+  fc.unlock("aeds", "cutoff_atomic");
+  fc.unlock("aeds", "cutoff_cg");
+  //fc.unlock("aeds", "cg_martini");
+  //fc.unlock("aeds", "cg_gromos");
+  //fc.unlock("aeds", "mixed_grain");
+  fc.unlock("aeds", "temp_berendsen");
+  fc.unlock("aeds", "temp_nosehoover");
+  fc.unlock("aeds", "temp_nosehoover_chains");
+  fc.unlock("aeds", "position_rest");
+  fc.unlock("aeds", "position_const");
+  fc.unlock("aeds", "position_const_scaled");
+  fc.unlock("aeds", "distance_rest");
+  fc.unlock("aeds", "distance_field");
+  fc.unlock("aeds", "dihedral_rest");
+  fc.unlock("aeds", "dihedral_const");
+  fc.unlock("aeds", "jvalue_rest");
+  fc.unlock("aeds", "rdc_rest");
+  //fc.unlock("aeds", "perscale");
+  fc.unlock("aeds", "rottrans");
+  fc.unlock("aeds", "innerloop_method_off");
+  fc.unlock("aeds", "innerloop_method_generic");
+  fc.unlock("aeds", "innerloop_method_hardcode");
+  fc.unlock("aeds", "innerloop_method_table");
+  fc.unlock("aeds", "innerloop_method_cuda");
+  fc.unlock("aeds", "innerloop_solvent_topology");
+  fc.unlock("aeds", "innerloop_solvent_spc");
+  //fc.unlock("aeds", "repex_temp");
+  //fc.unlock("aeds", "repex_lambda");
+  //fc.unlock("aeds", "multicell");
+  //fc.unlock("aeds", "analysis");
+  //fc.unlock("aeds", "no_integration");
+  fc.unlock("aeds", "stochdyn");
+  fc.unlock("aeds", "multistep");
+  //fc.unlock("aeds", "multistep_boost");
+  //fc.unlock("aeds", "montecarlo");
+  //fc.unlock("aeds", "polarisation_cos");
+  //fc.unlock("aeds", "polarisation_cos_damped");
+  //fc.unlock("aeds", "sasa");
+  //fc.unlock("aeds", "sasavol");
+  fc.unlock("aeds", "random_gromos");
+  fc.unlock("aeds", "random_gsl");
+  fc.unlock("aeds", "parallel_mpi");
+  fc.unlock("aeds", "parallel_omp");
+  fc.unlock("aeds", "mult_energy_groups");
+  //fc.unlock("aeds", "ewald");
+  //fc.unlock("aeds", "p3m");
+  //fc.unlock("aeds", "leus");
+  //fc.unlock("aeds", "bsleus");
+  //fc.unlock("aeds", "xray");
+  //fc.unlock("aeds", "force_groups");
 
   fc.unlock("mult_energy_groups", "solute");
   fc.unlock("mult_energy_groups", "solvent");
