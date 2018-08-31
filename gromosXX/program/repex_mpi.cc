@@ -110,6 +110,8 @@ int main(int argc, char *argv[]) {
   unsigned int total_runs;
   unsigned int numAtoms;
   unsigned int numReplicas;
+  unsigned int numEDSstates;
+
   int cont;
   
   {
@@ -165,6 +167,11 @@ int main(int argc, char *argv[]) {
     numReplicas = sim.param().replica.num_T * sim.param().replica.num_l;
     numAtoms = topo.num_atoms();
     reedsSim = sim.param().reeds.reeds;
+    if(reedsSim){
+        numEDSstates=sim.param().reeds.eds_para[0].numstates;//BSchr: Assume: eds.numstates is constant over all replicas;
+    }else{
+        numEDSstates=0;
+    }
     //Todo bschroed: Nice Messaging
     if(rank == 0){
         std::cout << "done Reading input\n";
@@ -199,7 +206,12 @@ int main(int argc, char *argv[]) {
   MPI_Aint disps[] = {(MPI_Aint) 0, 4 * intext};
   MPI_Type_create_struct(2, blocklen, disps, typ, &MPI_REPINFO);
   MPI_Type_commit(&MPI_REPINFO);
-
+  
+  if(reedsSim){
+    MPI_Type_contiguous(numEDSstates, MPI_DOUBLE, &MPI_EDSINFO);
+    MPI_Type_commit(&MPI_EDSINFO);
+  }
+  
   assert(numReplicas > 0);
 
   // where is which replica
