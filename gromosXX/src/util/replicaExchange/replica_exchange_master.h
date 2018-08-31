@@ -73,7 +73,7 @@ namespace util {
      */
     void write();
 
-  private:
+  protected:
     /**
      * output file stream for output file
      */

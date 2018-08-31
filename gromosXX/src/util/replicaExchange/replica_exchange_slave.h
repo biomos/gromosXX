@@ -64,7 +64,7 @@ namespace util {
      * sends information of all replicas to master
      */
     void send_to_master() const;
-  private:
+  protected:
     /**
      * copy constructor
      * not allowed (yet)

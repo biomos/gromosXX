@@ -234,7 +234,7 @@ int main(int argc, char *argv[]) {
   //////////////////////////////
   /// Starting master-slave mode
   //////////////////////////////
-  if (rank == 0) {
+  if (rank == 0) {  //MASTER
     //print Initial Master text:
     std::cout  << "\n==================================================\n"
                << "GROMOS REEDS:"
@@ -243,6 +243,8 @@ int main(int argc, char *argv[]) {
                << "numreplicas:\t "<< numReplicas<<std::endl
                << "num Slaves:\t "<< numReplicas-1<<std::endl
                << "reeds:\t "<< reedsSim<<std::endl<<std::endl;
+    
+    // Select repex Implementation
     util::replica_exchange_master* Master;
     if(reedsSim){
         std::cout <<  "Master REEDS " << rank << std::endl;
@@ -286,9 +288,11 @@ int main(int argc, char *argv[]) {
               << "\t" << durationHour << ":"<<durationMinlHour << ":" << durationSlMin << "\t\t" << duration << "\n";
     MPI_Finalize();
 
-  } else {
+  } else {  //SLAVES
       
         std::cout << "Slave here: "<<rank<<std::endl;      
+        
+        // Select repex Implementation
         util::replica_exchange_slave* Slave;     
         if(reedsSim){
            std::cout <<  "Slave REEDS " << rank << std::endl;
