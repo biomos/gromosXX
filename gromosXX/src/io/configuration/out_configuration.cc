@@ -35,7 +35,7 @@
 
 // Energy trajectory version
 // For details, see definition in out_configuration.cc
-const std::string io::Out_Configuration::ene_version = "2017-04-06";
+const std::string io::Out_Configuration::ene_version = "2018-08-22";
 
 // declarations
 static void _print_energyred_helper(std::ostream & os, configuration::Energy const &e);
@@ -558,6 +558,10 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
 
     if (sim.param().multibath.algorithm > 1) {
       _print_nose_hoover_chain_variables(sim.multibath(), m_final_conf);
+    }
+
+    if (sim.param().eds.form == simulation::aeds_search_eir || sim.param().eds.form == simulation::aeds_search_emax_emin || sim.param().eds.form == simulation::aeds_search_all) {
+      _print_aedssearch(conf, sim, m_final_conf);
     }
 
     // forces and energies still go to their trajectories
@@ -2873,11 +2877,16 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
           << std::setw(18) << e.leus_total << "\n" // 31
           << std::setw(18) << e.oparam_total << "\n" // 32
           << std::setw(18) << e.symrest_total << "\n" // 33
-          << std::setw(18) << e.eds_vr << "\n" // 34
-          << std::setw(18) << e.entropy_term << "\n" // 35
-          << std::setw(18) << e.qm_total << "\n" // 36
-          << std::setw(18) << e.bsleus_total << "\n" // 37
-          << std::setw(18) << e.rdc_total << "\n"; //38
+          << std::setw(18) << e.eds_vmix << "\n" // 34
+          << std::setw(18) << e.eds_vr << "\n" // 35
+          << std::setw(18) << e.eds_emax << "\n" // 36
+          << std::setw(18) << e.eds_emin << "\n" // 37
+          << std::setw(18) << e.eds_globmin << "\n" // 38
+          << std::setw(18) << e.eds_globminfluc << "\n" // 39
+          << std::setw(18) << e.entropy_term << "\n" // 40
+          << std::setw(18) << e.qm_total << "\n" // 41
+          << std::setw(18) << e.bsleus_total << "\n" // 42
+          << std::setw(18) << e.rdc_total << "\n"; // 43
 
   os << "# baths\n";
   os << numbaths << "\n";
@@ -2938,7 +2947,8 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
   for (unsigned i = 0; i < e.eds_vi.size(); i++) {
     os << std::setw(18) << e.eds_vi[i]
             << std::setw(18) << e.eds_vi[i] - e.eds_vi_special[i]
-            << std::setw(18) << e.eds_vi_special[i] << "\n";
+            << std::setw(18) << e.eds_vi_special[i] 
+            << std::setw(18) << e.eds_eir[i] << "\n";
   }
 
   // write eds energies (vr,{V_i}) here
@@ -3692,6 +3702,33 @@ _print_adde(simulation::Simulation const & sim,
 }
 
 void io::Out_Configuration::
+_print_aedssearch(configuration::Configuration const &conf,
+        simulation::Simulation const &sim,
+        std::ostream &os) {
+  os.setf(std::ios::fixed, std::ios::floatfield);
+  os.precision(m_precision);
+  os << "AEDSSEARCH\n";
+  os << std::setw(m_width) << sim.param().eds.emax << "\n";
+  os << std::setw(m_width) << sim.param().eds.emin << "\n";
+  os << std::setw(m_width) << sim.param().eds.searchemax << "\n";
+  os << std::setw(m_width) << sim.param().eds.emaxcounts << "\n";
+  os << std::setw(m_width) << sim.param().eds.oldstate << "\n";
+  os << std::setw(m_width) << sim.param().eds.fullemin << "\n";
+  for (unsigned int i = 0; i < sim.param().eds.numstates; i++) {
+    os << std::setw(m_width) << sim.param().eds.eir[i] << " "
+      << std::setw(m_width) << sim.param().eds.lnexpde[i] << " "
+      << std::setw(m_width) << sim.param().eds.statefren[i] << " "
+      << std::setw(m_width) << sim.param().eds.visitedstates[i] << " "
+      << std::setw(m_width) << sim.param().eds.visitcounts[i] << " "
+      << std::setw(m_width) << sim.param().eds.avgenergy[i] << " "
+      << std::setw(m_width) << sim.param().eds.eiravgenergy[i] << " "
+      << std::setw(m_width) << sim.param().eds.bigs[i] << " "
+      << std::setw(m_width) << sim.param().eds.stdevenergy[i] << "\n";
+  }
+  os << "END\n";
+}
+
+void io::Out_Configuration::
 _print_nemd(simulation::Simulation const & sim,
         topology::Topology const &topo,
         configuration::Configuration const & conf, std::ostream & os) {
@@ -3703,6 +3740,7 @@ _print_nemd(simulation::Simulation const & sim,
      * METHOD SELECTION 
      * 
      */
+
     
     int prop_vs_method;
     if (sim.param().nemd.property == 0){

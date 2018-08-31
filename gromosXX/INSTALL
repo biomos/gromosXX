@@ -27,7 +27,7 @@ release build.
 If you do not type make install, the programs will be in
 ARCHITECTURE/program/.
 
-to install from svn:
+to install from git:
 --------------------------------------------------
 
 create the configure script:
@@ -149,16 +149,16 @@ Therefore, do this:
 1. Download the GNU autoconf, automake and libtool packages
    and install them. By default they will be put under /usr/local
    which is just fine.
-(As an alternative you might just want to install the binary
- packages from FINK (http://fink.sourceforge.net/), 
- i.e. the port of the Debian APT package tools.
- You will need to have FINK installed, though).
+   (As an alternative you might just want to install the binary
+   packages from FINK (http://fink.sourceforge.net/), 
+   i.e. the port of the Debian APT package tools.
+   You will need to have FINK installed, though).
 2. Set the path to point to /usr/local/bin so that those versions
    of automake/autoconf/libtool will be used.
 3. Build the distribution as written above.
 4. In case of linking errors when using the gcc port from Apple
    build the distribution without support for shared libraries
-  (./configure --enable-shared=NO)
+   (./configure --enable-shared=NO)
    If you really need shared library support, it is possible to
    first compile and install the regular GCC from the GNU tarball
    and use that one to compile gromos++. This has been tested and
@@ -178,8 +178,7 @@ automake --version [automake (GNU automake) 1.7.9]
 libtoolize --version [libtoolize (GNU libtool) 1.5]
 GNU make --version [GNU Make version 3.79]
 
-write a ticket
-https://gromos.ethz.ch/svn/trac/gromosXXc++
+file a bug-report
 
 ===========================================================================
 

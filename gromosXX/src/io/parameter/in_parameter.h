@@ -50,6 +50,7 @@
  * - @ref  randomnumbers
  * - @ref  spc_loops
  * - @ref  EDS
+ * - @ref  AEDS
  * - @ref  LAMBDAS
  * - @ref  localelev
  * - @ref  bsleusparam
@@ -318,6 +319,10 @@ namespace io {
      * read EDS block.
      */
     void read_EDS(simulation::Parameter &param, std::ostream & os = std::cout);
+    /**
+    * read AEDS block.
+    */
+    void read_AEDS(simulation::Parameter &param, std::ostream & os = std::cout);
     /**
      * read NONBONDED block.
      */

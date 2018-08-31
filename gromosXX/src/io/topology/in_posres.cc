@@ -197,7 +197,7 @@ io::In_Refpos::read(topology::Topology& topo,
     if (sim.param().posrest.read) {
       if (!buffer.size()) {
         io::messages.add("no REFPOSITION block in position restraints "
-                         "specification file", "In_Refpos", io::message::error);
+                         "reference position file", "In_Refpos", io::message::error);
         return;
       } else {
         // remove title line.
@@ -227,7 +227,7 @@ io::In_Refpos::read(topology::Topology& topo,
         sim.param().posrest.posrest == simulation::posrest_bfactor) {
       if (!buffer.size()) {
         io::messages.add("no BFACTOR block in position restraints "
-                         "specification file", "In_Refpos", io::message::error);
+                         "reference position file", "In_Refpos", io::message::error);
         return;
       } else {
         conf.special().bfactors.resize(topo.num_atoms());
