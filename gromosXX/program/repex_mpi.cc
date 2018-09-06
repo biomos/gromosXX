@@ -276,9 +276,13 @@ int main(int argc, char *argv[]) {
               << " MAIN MD LOOP\n"
               << "==================================================\n\n";
     unsigned int trial;
+    std::cout << "EQUIL: "<< equil_runs<< std::endl;    //Todo: REMOVE LATER bschroed
+    std::cout.flush();
     for( ;trial<equil_runs; ++trial){    // for equilibrations
         Master->run_MD();
     }
+    std::cout << "MD: "<< total_runs<<std::endl;    //Todo: REMOVE LATER bschroed
+    std::cout.flush();
     for ( ; trial < total_runs; ++trial){ //for repex execution
       Master->run_MD();
       Master->swap();
@@ -295,6 +299,7 @@ int main(int argc, char *argv[]) {
     double durationMinlHour = std::floor(durationMin-durationHour*60);
     double durationSlMin = std::floor(duration - (durationMinlHour+durationHour*60)*60);
     
+    //Todo: if (cond){finished succ}else{not} bschroed
     std::cout << "\n==================================================\n"
               << "REPLICA EXCHANGE SIMULATION finished successfully! " << "Node " << rank << " - MASTER\n"
               << "\n==================================================\n"
