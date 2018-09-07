@@ -2813,9 +2813,7 @@ END
 
 void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostream & os){
     
-    DEBUG(8, "read REPLICA_EDS");  
-  
-    //TODO: DO again! with read block funcs.!
+    DEBUG(8, "read REPLICA_EDS");  //TODO: DO again! with read block funcs.!
   
     std::stringstream exampleblock;
     // lines starting with 'exampleblock<<"' and ending with '\n";' (spaces don't matter)
@@ -2858,7 +2856,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
     exampleblock << "  0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0  \n";
     exampleblock << "  0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0  \n";
     exampleblock << "  0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0  \n";
-    exampleblock << "# NRETRIAL   NREQUIL    CONT    EDS_STAT_OUT(?)       \n";
+    exampleblock << "# NRETRIAL   NREQUIL    CONT    EDS_STAT_OUT       \n";
     exampleblock << "       10         0         1           1          \n";
     exampleblock << "END\n";
 
@@ -2921,6 +2919,9 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
         param.reeds.eds_para.resize(param.reeds.num_l);
         param.reeds.dt.resize(param.reeds.num_l);
         param.reeds.lambda.resize(param.reeds.num_l);
+        // Replica temperatures - has to be the same for each replica
+        param.reeds.temperature = param.multibath.multibath.bath(0).temperature;
+
 
         //Loop over all replicas in order to initialize complete eds_struct for each replica
         //initvars
@@ -2929,6 +2930,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
         for (int i = 0; i < param.reeds.num_l; ++i) {
             dtV.push_back(param.step.dt);
             temperatureV.push_back(param.reeds.temperature);
+            
             //READ:NUMSTATES 
             param.reeds.eds_para[i].eds = true;
             param.reeds.eds_para[i].numstates=param.reeds.num_states;
@@ -2949,6 +2951,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
               error = true;
             }       
         }
+        
 
         //EIR
         bool eirBroke = false;
@@ -3012,17 +3015,14 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
         // check whether all baths have the same temperature (unambiguous kT)
         param.reeds.num_T = param.replica.num_T =1;
         
-        param.replica.temperature = temperatureV;
+        param.replica.temperature = temperatureV;        
         param.replica.lambda = param.reeds.lambda;
         param.replica.dt = dtV;
         param.replica.num_l = param.reeds.num_l ;
         param.replica.trials = param.reeds.trials;
         param.replica.equilibrate = param.reeds.equilibrate;
         param.replica.cont = param.reeds.cont;
-
-        // Replica temperature
-        param.reeds.temperature = param.multibath.multibath.bath(0).temperature;
-
+        
         for (unsigned int i = 1; i < param.multibath.multibath.size(); i++) {
           if (param.multibath.multibath.bath(i).temperature !=
                   param.multibath.multibath.bath(0).temperature) {
@@ -3030,6 +3030,9 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
                     "In_Parameter", io::message::error);
             error = true;
           }
+        // turn on eds for pertubation reading - Overwrite:
+          param.eds.eds = true;
+          param.eds.numstates = param.reeds.num_states;
           
         }
         if (_lineStream.fail() || error || block.error()) {

@@ -42,7 +42,7 @@ namespace util {
    * @class replica_exchange_master
    * Additionally to replica_exchange_base: receives and writes data to file.
    */
-  class replica_exchange_master : public replica_exchange_base {
+  class replica_exchange_master : public virtual replica_exchange_base {
   public:
     /**
      * constructor

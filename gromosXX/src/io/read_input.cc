@@ -111,7 +111,7 @@ int io::read_input_repex(io::Argument const & args,
   if (read_special(args, topo, conf, sim, os, quiet) != 0) return -1;
   
   // error if no perturbed parameters were read from pttop or restraints
-  if(!sim.param().perturbation.perturbed_par){
+  if(!sim.param().perturbation.perturbed_par && sim.param().perturbation.perturbation){
       io::messages.add("Neither perturbed restraints nor perturbed topology found - if you do not want to perturb anything, turn off PERTURBATION",
 		       "read_input", io::message::error);
       return -1;
@@ -244,13 +244,13 @@ int io::read_topology(io::Argument const & args,
     
   
   
-  if(args.count(argname_pttopo)<1 && sim.param().eds.eds){
-      io::messages.add("EDS on but no perturbation topology specified",
+  if(args.count(argname_pttopo)<1 && (sim.param().eds.eds || sim.param().reeds.reeds)){
+      io::messages.add("EDS / REEDS on but no perturbation topology specified",
 		       "read_input", io::message::critical);
       return -1;
   }
   
-  if(sim.param().perturbation.perturbation || sim.param().eds.eds){ 
+  if(sim.param().perturbation.perturbation || sim.param().eds.eds || sim.param().reeds.reeds){ 
     // if there is no perturbation topology there might still be perturbed
     // distance or df restraints, so only warn and do not abort here --MP  
     if(args.count(argname_pttopo)<1){
@@ -276,6 +276,7 @@ int io::read_topology(io::Argument const & args,
     
     io::messages.add("perturbation topology read from " + args[argname_pttopo] + "\n" + util::frame_text(ipt.title),
 		     "read input", io::message::notice);
+    io::messages.display(); //Todo:remove bschroed
     }
   }
   

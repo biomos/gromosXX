@@ -58,6 +58,12 @@
 #include <sstream>
 #include <util/error.h>
 
+
+#undef MODULE
+#undef SUBMODULE
+#define MODULE util
+#define SUBMODULE replica_exchange
+
 int main(int argc, char *argv[]) {
 
 #ifdef XXMPI
@@ -258,17 +264,18 @@ int main(int argc, char *argv[]) {
                << "num Slaves:\t "<< numReplicas-1<<std::endl
                << "reeds:\t "<< reedsSim<<std::endl<<std::endl;
     
+    DEBUG(1, "Master \t "<< rank)
     // Select repex Implementation
-    util::replica_exchange_master* Master;
+    //util::replica_exchange_master* Master;
+    util::replica_exchange_master_eds* Master;
+   
     if(reedsSim){
-        std::cout <<  "Master REEDS " << rank << std::endl;
-        std::cout.flush();
         Master = new util::replica_exchange_master_eds(args, cont, rank, size, numReplicas, repIDs[rank], repMap);
-
       } else{
-        Master = new util::replica_exchange_master(args, cont, rank, size, numReplicas, repIDs[rank], repMap);
+        // Master = new util::replica_exchange_master(args, cont, rank, size, numReplicas, repIDs[rank], repMap);
       }
     
+    DEBUG(1, "Master \t INIT")
     Master->init();
     
     //do md:
@@ -276,19 +283,19 @@ int main(int argc, char *argv[]) {
               << " MAIN MD LOOP\n"
               << "==================================================\n\n";
     unsigned int trial;
-    std::cout << "EQUIL: "<< equil_runs<< std::endl;    //Todo: REMOVE LATER bschroed
-    std::cout.flush();
+    DEBUG(1, "Master \t \t \t Equil: "<< equil_runs)
     for( ;trial<equil_runs; ++trial){    // for equilibrations
         Master->run_MD();
     }
-    std::cout << "MD: "<< total_runs<<std::endl;    //Todo: REMOVE LATER bschroed
-    std::cout.flush();
+    DEBUG(1, "Master \t \t MD: "<< total_runs)
     for ( ; trial < total_runs; ++trial){ //for repex execution
       Master->run_MD();
       Master->swap();
       Master->receive_from_all_slaves();
       Master->write();
     }
+    
+    DEBUG(1, "Master \t \t finalize ")
     Master->write_final_conf();
     
     //FINAL OUTPUT - Time used:
@@ -309,29 +316,31 @@ int main(int argc, char *argv[]) {
 
   } else {  //SLAVES
       
-        std::cout << "Slave here: "<<rank<<std::endl;      
-        
-        // Select repex Implementation
-        util::replica_exchange_slave* Slave;     
-        if(reedsSim){
-           std::cout <<  "Slave REEDS " << rank << std::endl;
-           Slave = new util::replica_exchange_slave_eds(args, cont, rank, repIDs[rank], repMap);
-         } else{
-           Slave = new util::replica_exchange_slave(args, cont, rank, repIDs[rank], repMap);
-         }
-
+    DEBUG(1, "Slave " << rank)    
+    // Select repex Implementation
+    util::replica_exchange_slave* Slave;     
+    if(reedsSim){
+       std::cout <<  "Slave REEDS " << rank << std::endl;
+       Slave = new util::replica_exchange_slave_eds(args, cont, rank, repIDs[rank], repMap);
+    } else{
+       Slave = new util::replica_exchange_slave(args, cont, rank, repIDs[rank], repMap);
+    }
+    
+    DEBUG(1, "Slave "<< rank <<" \t INIT")    
     Slave->init();
     //do md:
     unsigned int trial;
+    DEBUG(1, "Slave "<< rank <<" \t EQUIL")    
     for( ;trial<equil_runs; ++trial){    // for equilibrations
         Slave->run_MD();
     }
+    DEBUG(1, "Slave "<< rank <<" \t MDS")    
     for ( ; trial < total_runs; ++trial){ //for repex execution
       Slave->run_MD();
       Slave->swap();
       Slave->send_to_master();
     }
-    
+    DEBUG(1, "Slave "<< rank <<" \t Finalize")    
     Slave->write_final_conf();
     std::cout << "\n=================== REPLICA EXCHANGE SIMULATION finished successfully! " << "Node " << rank << "\n";
   }

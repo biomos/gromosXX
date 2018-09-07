@@ -167,6 +167,7 @@ namespace util
   extern int replica_debug_level;
   extern int leus_debug_level;
   extern int bs_leus_debug_level;
+  extern int replica_exchange_debug_level;
 }
 
   

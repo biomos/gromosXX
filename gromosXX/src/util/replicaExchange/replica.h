@@ -116,7 +116,7 @@ namespace util {
      */
     void velscale(int i);
 
-  private:
+  protected:
     /**
      * Sets lambda parameter to original value of replica
      */

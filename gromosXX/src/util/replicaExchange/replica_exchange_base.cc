@@ -40,6 +40,7 @@
 util::replica_exchange_base::replica_exchange_base(io::Argument _args, int cont, int rank,
         std::vector<int> repIDs, std::map<ID_t, rank_t> &_repMap) : args(_args), repMap(_repMap), numReplicas(repIDs.size()), rng(-1) {
   replicas.resize(numReplicas);
+  DEBUG(5,"replica_exchange_base:\t Constructor \t START");
 
   // create the number of replicas that are assigned to my node
   int i = 0;
@@ -48,6 +49,7 @@ util::replica_exchange_base::replica_exchange_base(io::Argument _args, int cont,
     // for the replica class but there seems to be something wrong with those of conf/topo/...
     *it = new util::replica(args, cont, repIDs[i], rank);
   }
+  DEBUG(5,"replica_exchange_base:\t Constructor \t Done");
 
 }
 

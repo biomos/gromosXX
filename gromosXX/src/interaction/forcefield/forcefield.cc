@@ -108,7 +108,7 @@ int interaction::Forcefield
 
   // prepare for the virial
   util::prepare_virial(topo, conf, sim);
-  //if (sim.param().eds.eds) {
+  //if (sim.param().eds.eds) {  //Todo: why no if? bschroed
   
     const unsigned int numstates = conf.special().eds.force_endstates.size();// sim.param().eds.numstates;
     DEBUG(15, "number of eds states " << numstates);

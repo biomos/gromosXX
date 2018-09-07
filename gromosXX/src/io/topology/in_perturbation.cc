@@ -115,7 +115,7 @@ io::In_Perturbation::read(topology::Topology &topo,
         std::ostream & os)
 {
 
-  if (!param.perturbation.perturbation && !param.eds.eds){
+  if (!param.perturbation.perturbation && !param.eds.eds && !param.reeds.reeds){
     io::messages.add("Ignoring perturbation topology because perturbation is not enabled.",
 		     "In_Perturbation",
 		     io::message::warning);

@@ -49,37 +49,52 @@ size(_size),
 numReplicas(_numReplicas), 
 repParams(replicas[0]->sim.param().replica)
 {
+  DEBUG(3,"replica_exchange_master:\t Constructor \t START");
   assert(rank == 0);
   assert(numReplicas > 0);
+  assert(repParams.num_l > 0);
+  assert(repParams.num_l > 0);
   replicaData.resize(numReplicas);
   
+  DEBUG(5,"replica_exchange_master:\t Init Replicas \t Next");
   //initialize data of replicas
   int ID = 0;
   for (int i = 0; i < repParams.num_l; ++i) {
     for (int j = 0; j < repParams.num_T; ++j) {
       replicaData[ID].ID = ID;
       replicaData[ID].T = repParams.temperature[j];
+      DEBUG(5,"replica_exchange_master:\t Init Replicas \t "<< repParams.temperature[j]);
       replicaData[ID].l = repParams.lambda[i];
       replicaData[ID].dt = repParams.dt[i];
       ++ID;
     }
   }
   // set output file
+  DEBUG(5,"replica_exchange_master:\t repdat init \t Next");
   std::string repdatName = args["repdat"];
   repOut.open(repdatName.c_str());
+  DEBUG(6,"replica_exchange_master:\t repdat init  \t repdat file open ");
+
   repOut << "Number of temperatures:\t" << repParams.num_T << "\n"
          << "Number of lambda values:\t" << repParams.num_l << "\n";
-
+  
+  DEBUG(6,"replica_exchange_master:\t repdat init \t set precision ");
   repOut.precision(4);
   repOut.setf(std::ios::fixed, std::ios::floatfield);
 
+  DEBUG(6,"replica_exchange_master:\t repdat init \t write Temperatures ");
   repOut << "T    \t";
-  for (int t = 0; t < repParams.num_T; ++t)
+  for (int t = 0; t < repParams.num_T; ++t){
+    DEBUG(8,"replica_exchange_master:\t repdat init \t it: "<<  t);
+    DEBUG(8,"replica_exchange_master:\t repdat init \t T: "<<  repParams.temperature[t]);
     repOut << std::setw(12) << repParams.temperature[t];
-
+  }
+  
+  DEBUG(6,"replica_exchange_master:\t repdat init \t write lambdas ");
   repOut << "\nlambda    \t";
-  for (int l = 0; l < repParams.num_l; ++l)
+  for (int l = 0; l < repParams.num_l; ++l){
     repOut << std::setw(12) << repParams.lambda[l];
+  }
 
   repOut << "\n\n";
 
@@ -98,6 +113,7 @@ repParams(replicas[0]->sim.param().replica)
           << std::setw(15) << "p"
           << std::setw(8) << "s"
           << "\n";
+ DEBUG(3,"replica_exchange_master:\t Constructor \t DONE");
 }
 
 util::replica_exchange_master::~replica_exchange_master() {

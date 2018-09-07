@@ -14,10 +14,16 @@
 #include <mpi.h>
 #endif
 
+#undef MODULE
+#undef SUBMODULE
+#define MODULE util
+#define SUBMODULE replica
+
 util::replica::replica(io::Argument _args, int cont, int _ID, int _rank) : ID(_ID), rank(_rank), args(_args) {
   // read input again. If copy constructors for topo, conf, sim, md work, one could
   // also pass them down from repex_mpi.cc ...
   
+  DEBUG(3, "replica Constructor \t START");
   // do continuation run?
   // change name of input coordinates
   if(cont == 1){
@@ -46,7 +52,9 @@ util::replica::replica(io::Argument _args, int cont, int _ID, int _rank) : ID(_I
 
   traj = new io::Out_Configuration(trajname, *os);
   
+
   if (io::read_input(args, topo, conf, sim, md, *os)) { //Todo: Would it not enough to read in topo, special and cnf? bschroed
+  //if (io::read_input_repex(args, topo, conf, sim, md, ID, *os, true)) { //Todo: Would it not enough to read in topo, special and cnf? bschroed
     io::messages.display(*os);
     std::cerr << "\nErrors during initialization!\n" << std::endl;
 #ifdef XXMPI
@@ -68,6 +76,7 @@ util::replica::replica(io::Argument _args, int cont, int _ID, int _rank) : ID(_I
   T = sim.param().replica.temperature[ID % numT];
   l = sim.param().replica.lambda[ID / numT];
   dt = sim.param().replica.dt[ID / numT];
+  
   set_lambda();
   set_temp();
 
@@ -147,6 +156,10 @@ util::replica::replica(io::Argument _args, int cont, int _ID, int _rank) : ID(_I
   *os << "==================================================\n"
       << " MAIN MD LOOP\n"
       << "==================================================\n\n";
+
+    DEBUG(5, "Temp of replica " << ID << " \t" << sim.param().multibath.multibath.bath(0).temperature);
+    DEBUG(3, "replica Constructor \t DONE");
+
 }
 
 util::replica::~replica() {

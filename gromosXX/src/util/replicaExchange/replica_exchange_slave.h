@@ -42,7 +42,7 @@ namespace util {
    * @class replica_exchange_slave
    * 
    */
-  class replica_exchange_slave : public replica_exchange_base {
+  class replica_exchange_slave : public virtual replica_exchange_base {
   public:
     /**
      * constructor
