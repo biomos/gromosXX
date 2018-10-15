@@ -3472,7 +3472,7 @@ void io::In_Parameter::read_AEDS(simulation::Parameter & param,
   exampleblock << "# FORM       1-4\n";
   exampleblock << "#              1: A-EDS with fixed parameters\n";
   exampleblock << "#              2: fixed Emax and Emin parameters, search for offset parameters\n";
-  exampleblock << "#              3: search for Emax an Emin parameters, fixed offset parameters\n";
+  exampleblock << "#              3: search for Emax and Emin parameters, fixed offset parameters\n";
   exampleblock << "#              4: search for Emax, Emin and offset parameters\n";
   exampleblock << "# NUMSTATES >1  : number of states\n";
   exampleblock << "# EMAX          : A-EDS parameter Emax\n";
