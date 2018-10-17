@@ -43,7 +43,7 @@ util::replica::replica(io::Argument _args, int cont, int _ID, int _rank) : ID(_I
   (*it).second.insert(pos, tmp.str());
   os = new std::ofstream((*it).second.c_str());
   
-  util::print_title(true, *os, true);
+  //util::print_title(true, *os, true); // printing read in.
 
   // set trajectory
   std::stringstream trajstr;
@@ -52,8 +52,7 @@ util::replica::replica(io::Argument _args, int cont, int _ID, int _rank) : ID(_I
 
   traj = new io::Out_Configuration(trajname, *os);
   
-
-  if (io::read_input(args, topo, conf, sim, md, *os)) { //Todo: Would it not enough to read in topo, special and cnf? bschroed
+  if (io::read_input(args, topo, conf, sim, md, *os, true)) { //Todo: Would it not enough to read in topo, special and cnf? bschroed
   //if (io::read_input_repex(args, topo, conf, sim, md, ID, *os, true)) { //Todo: Would it not enough to read in topo, special and cnf? bschroed
     io::messages.display(*os);
     std::cerr << "\nErrors during initialization!\n" << std::endl;
@@ -157,9 +156,8 @@ util::replica::replica(io::Argument _args, int cont, int _ID, int _rank) : ID(_I
       << " MAIN MD LOOP\n"
       << "==================================================\n\n";
 
-    DEBUG(5, "Temp of replica " << ID << " \t" << sim.param().multibath.multibath.bath(0).temperature);
+    DEBUG(4, "Temp of replica " << ID << " \t" << sim.param().multibath.multibath.bath(0).temperature);
     DEBUG(3, "replica Constructor \t DONE");
-
 }
 
 util::replica::~replica() {

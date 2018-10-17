@@ -2919,6 +2919,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
         param.reeds.eds_para.resize(param.reeds.num_l);
         param.reeds.dt.resize(param.reeds.num_l);
         param.reeds.lambda.resize(param.reeds.num_l);
+        
         // Replica temperatures - has to be the same for each replica
         param.reeds.temperature = param.multibath.multibath.bath(0).temperature;
 
@@ -3022,6 +3023,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
         param.replica.trials = param.reeds.trials;
         param.replica.equilibrate = param.reeds.equilibrate;
         param.replica.cont = param.reeds.cont;
+        
         
         for (unsigned int i = 1; i < param.multibath.multibath.size(); i++) {
           if (param.multibath.multibath.bath(i).temperature !=

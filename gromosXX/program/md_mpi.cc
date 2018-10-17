@@ -51,6 +51,7 @@ $ ../configure --enable-mpi CC=mpicc CXX=mpiCC
 
 #include <io/configuration/out_configuration.h>
 
+
 int main(int argc, char *argv[]){
 
 #ifdef XXMPI
@@ -68,20 +69,28 @@ int main(int argc, char *argv[]){
   std::string usage;
   util::get_usage(knowns, usage, argv[0]);
   usage += "#\n\n";
-
+  
   // master or slave : that's the question
   MPI::Init(argc, argv);
-  FFTW3(mpi_init());
-  
+    std::cerr << "md_mpi\t I'm here not?!" << std::endl;//Todo:remove bschroed
+  std::cerr.flush();//Todo:remove bschroed
+  //FFTW3(mpi_init());
+     std::cerr << "md_mpi\t I'm here again?!" << std::endl;//Todo:remove bschroed
+  std::cerr.flush();//Todo:remove bschroed 
+
   int rank, size;
   rank = MPI::COMM_WORLD.Get_rank();
   size = MPI::COMM_WORLD.Get_size();
 
+  std::cerr << "md_mpi\t I'm here again!" << std::endl;//Todo:remove bschroed
+  std::cerr.flush();//Todo:remove bschroed
+  
   // create an output file (for the slaves)
   std::ostringstream oss;
   oss << "slave_" << rank << ".out";
   std::ofstream ofs(oss.str().c_str());
-  
+  std::cerr << "md_mpi\t not failing here!" << std::endl;//Todo:remove bschroed
+  std::cerr.flush();//Todo:remove bschroed
   bool quiet = false;
   std::ostream * os;
   if (rank == 0){
@@ -91,7 +100,8 @@ int main(int argc, char *argv[]){
     os = &ofs;
     quiet = true;
   }
-  
+  std::cerr << "md_mpi\t start Parsing" << std::endl;//Todo:remove bschroed
+  std::cerr.flush();//Todo:remove bschroed
 
   io::Argument args;
 
@@ -117,7 +127,8 @@ int main(int argc, char *argv[]){
     MPI::Finalize();
     return 1;
   }
-
+  std::cerr << "md_mpi\t start Parsing" << std::endl;//Todo:remove bschroed
+  std::cerr.flush();//Todo:remove bschroed
   // create the simulation classes
   topology::Topology topo;
   configuration::Configuration conf;
@@ -139,14 +150,14 @@ int main(int argc, char *argv[]){
   if (sim.param().develop.develop==true && args.count("develop") < 0) { 
     io::messages.add(sim.param().develop.msg, io::message::develop); 
   } 
-  
+    std::cerr << "md_mpi\t init" << std::endl;//Todo:remove bschroed
+    std::cerr.flush(); //Todo:remove bschroed
   // initialises all algorithms (and therefore also the forcefield)
   md.init(topo, conf, sim, *os, quiet);
 
   
   int error=0;
   if(rank == 0){
-    
     std::cout << "MPI master node (of " << size << " nodes)" << std::endl;
     
     io::Out_Configuration traj(GROMOSXX "\n");

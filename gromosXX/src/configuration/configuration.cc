@@ -677,7 +677,7 @@ void configuration::Configuration::check_excluded_positions(topology::Topology c
 
     // calculate solute center of geometries
     topology::Chargegroup_Iterator
-      cg1 =   topo.chargegroup_begin();
+    cg1 =   topo.chargegroup_begin();
     unsigned int i, num_cg = topo.num_solute_chargegroups();
     
     for(i=0; i < num_cg; ++cg1, ++i){

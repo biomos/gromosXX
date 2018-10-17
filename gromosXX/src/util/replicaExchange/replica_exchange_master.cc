@@ -119,9 +119,7 @@ repParams(replicas[0]->sim.param().replica)
 util::replica_exchange_master::~replica_exchange_master() {
   repOut.close();
 }
-
 void util::replica_exchange_master::receive_from_all_slaves() {
-#ifdef XXMPI
   double start = MPI_Wtime();
 
   MPI_Status status;
@@ -154,7 +152,6 @@ void util::replica_exchange_master::receive_from_all_slaves() {
 
   std::cout << "Master:\n" << "time used for receiving all messages: " << MPI_Wtime() - start 
             << " seconds" << std::endl;
-#endif
 }
 
 void util::replica_exchange_master::write() {

@@ -64,7 +64,7 @@ void util::replica_exchange_base::run_MD() {
   // do a md run for all replica assigned to this node
   for (std::vector< util::replica * >::iterator it = replicas.begin(); it < replicas.end(); ++it) {
     (*it)->run_MD();
-    //        (*it)->printInfo("MD:");
+    (*it)->conf.current().energies.eds_vr;
   }
 }
 

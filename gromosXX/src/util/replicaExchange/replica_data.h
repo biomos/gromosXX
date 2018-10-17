@@ -35,15 +35,16 @@ namespace util
         unsigned int ID;
         double T;
         double l;
-        simulation::Parameter::eds_struct eds_state;    //new
         double dt;
         int       switched;
         unsigned int        run;
         unsigned int         partner;
         double     epot;
-        double    epot_partner;
-        std::vector<double> Vi; //SID for RE-EDS I want to give out all potential energies for each individual state in the repdat file. // todo: remove    //new
+        double     epot_partner;
         double     probability;
+
+        simulation::Parameter::eds_struct eds_state;    //new
+        std::vector<double> Vi; //SID for RE-EDS I want to give out all potential energies for each individual state in the repdat file. // todo: remove    //new
     };
    /**
    * @struct replica_stat_data

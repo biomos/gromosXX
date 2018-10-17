@@ -155,8 +155,8 @@ int io::simple_crosschecks(simulation::Simulation & sim) {
                          "In_Parameter", io::message::error);
     
     // warn if Hamiltonian repex but no perturbation
-    if (param.replica.num_l > 1 && !param.perturbation.perturbation)
-        io::messages.add("REPLICA block: Hamiltonian replica exchange but perturbation is off.",
+    if (param.replica.num_l > 1 && (!param.perturbation.perturbation || !param.eds.eds) )
+        io::messages.add("REPLICA block: Hamiltonian replica exchange but perturbation or eds is off.",
                          "In_Parameter", io::message::warning);
     
     // extended TI input
