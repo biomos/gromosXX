@@ -28,21 +28,14 @@ t_interaction_spec, t_perturbation_details>
   periodicity.nearest_image(conf.current().pos(i),
           conf.current().pos(j), r);
 
-  // speed!
   const std::vector<unsigned int> &pert_i_M_IAC = topo.eds_perturbed_solute().atoms()[i].M_IAC();
   const std::vector<double> &pert_i_M_charge = topo.eds_perturbed_solute().atoms()[i].M_charge();
-  // the following increases topo.eds_perturbed_solute().atoms().size() by 1
-  // PROBLEM: j can also be not perturbed!!!
-  /*
-  const std::vector<unsigned int> &pert_j_M_IAC = topo.eds_perturbed_solute().atoms()[j].M_IAC();
-  const std::vector<double> &pert_j_M_charge = topo.eds_perturbed_solute().atoms()[j].M_charge();
-   */
+
   assert(pert_i_M_charge.size() == numstates);
   const std::vector<std::vector<lj_parameter_struct> > &m_param_lj_parameter = m_param->lj_parameter();
 
   unsigned int iac_j = topo.iac(j);
   double charge_j = topo.charge()(j);
-  // --speed
 
   double alpha_lj = 0, alpha_crf = 0;
 
@@ -52,21 +45,23 @@ t_interaction_spec, t_perturbation_details>
     both_perturbed = 1;
   }
 
+  std::vector<math::VArray> &force_endstates = storage.force_endstates;
+  std::vector<double> & storage_energies_eds_vi = storage.energies.eds_vi;
+  std::vector<math::Matrix> & storage_virial_tensor_endstates = storage.virial_tensor_endstates;
+  double c6, c12, q, e12, e6, e1, f12, f6, f1, e_nb, f;
+  assert(abs2(r) != 0);
+  const double dist2 = abs2(r);
+  
   switch (t_interaction_spec::interaction_func) {
     case simulation::lj_crf_func:
     {
-      std::vector<math::VArray> &force_endstates = storage.force_endstates;
-      double c6, c12, q, e_nb, f;
-      assert(abs2(r) != 0);
-      const double dist2 = abs2(r);
-      const double dist6 = dist2 * dist2 * dist2;
+      // calculate the generalized interactions assuming c6 = c12 = q = 1
+      // this stores energies and forces separately for the C12, C6 and CRF term
+      eds_lj_crf_gen_interaction(dist2, f12, f6, f1, e12, e6, e1);
+ 
       switch (both_perturbed) {
         case 0:
         {
-          alpha_lj = topo.eds_perturbed_solute().atoms()[i].LJ_softcore();
-          alpha_crf = topo.eds_perturbed_solute().atoms()[i].CRF_softcore();
-          std::vector<double> & storage_energies_eds_vi = storage.energies.eds_vi;
-          std::vector<math::Matrix> & storage_virial_tensor_endstates = storage.virial_tensor_endstates;
           for (unsigned int state = 0; state < numstates; state++) {
             math::Vec & force_endstates_state_i = force_endstates[state](i);
             math::Vec & force_endstates_state_j = force_endstates[state](j);
@@ -75,10 +70,9 @@ t_interaction_spec, t_perturbation_details>
             c6 = lj.c6;
             c12 = lj.c12;
             q = pert_i_M_charge[state] * charge_j;
-
-            eds_lj_crf_interaction(dist2, dist6, c6, c12, q,
-                    alpha_lj, alpha_crf, f, e_nb);
-
+	    e_nb = c12*e12 + c6*e6 + q*e1;
+	    f = c12*f12 + c6*f6 + q*f1;
+	    
             DEBUG(10, "\t\tatomic virial");
             for (int a = 0; a < 3; ++a) {
               const double term = f * r(a);
@@ -96,16 +90,8 @@ t_interaction_spec, t_perturbation_details>
         }
         case 1:
         {
-          alpha_lj = (topo.eds_perturbed_solute().atoms()[i].LJ_softcore() +
-                  topo.eds_perturbed_solute().atoms()[j].LJ_softcore()) /
-                  2.0;
-          alpha_crf = (topo.eds_perturbed_solute().atoms()[i].CRF_softcore() +
-                  topo.eds_perturbed_solute().atoms()[j].CRF_softcore()) /
-                  2.0;
           const std::vector<unsigned int> &pert_j_M_IAC = topo.eds_perturbed_solute().atoms()[j].M_IAC();
           const std::vector<double> &pert_j_M_charge = topo.eds_perturbed_solute().atoms()[j].M_charge();
-          std::vector<double> & storage_energies_eds_vi = storage.energies.eds_vi;
-          std::vector<math::Matrix> & storage_virial_tensor_endstates = storage.virial_tensor_endstates;
           for (unsigned int state = 0; state < numstates; state++) {
             math::Vec & force_endstates_state_i = force_endstates[state](i);
             math::Vec & force_endstates_state_j = force_endstates[state](j);
@@ -116,9 +102,8 @@ t_interaction_spec, t_perturbation_details>
             c12 = lj.c12;
             q = pert_i_M_charge[state]* (pert_j_M_charge[state]);
 
-            // give numstates as reference to const int argument to avoid .size()
-            eds_lj_crf_interaction(dist2, dist6, c6, c12, q,
-                    alpha_lj, alpha_crf, f, e_nb);
+	    e_nb = c12*e12 + c6*e6 + q*e1;
+	    f = c12*f12 + c6*f6 + q*f1;
 
             DEBUG(10, "\t\tatomic virial");
             for (int a = 0; a < 3; ++a) {
@@ -146,67 +131,57 @@ t_interaction_spec, t_perturbation_details>
                 "interaction function not implemented for Gromos coarse-grained simulations!",
                 io::message::critical);
       } else if (topo.is_coarse_grained(j)) { // FG-CG
-        std::vector<math::VArray> &force_endstates = storage.force_endstates;
-        double c6, c12, q, e_nb, f;
-        assert(abs2(r) != 0);
-        const double dist2 = abs2(r);
-        const double dist6 = dist2 * dist2 * dist2;
-        switch (both_perturbed) {
+	// calculate the generalized interactions assuming c6 = c12 = q = 1
+	// this stores energies and forces separately for the C12, C6 and CRF term
+	eds_lj_crf_gen_interaction(dist2, f12, f6, f1, e12, e6, e1, 1);
+
+	switch (both_perturbed) {
           case 0:
-          {
-            alpha_lj = topo.eds_perturbed_solute().atoms()[i].LJ_softcore();
-            alpha_crf = topo.eds_perturbed_solute().atoms()[i].CRF_softcore();
-            std::vector<double> & storage_energies_eds_vi = storage.energies.eds_vi;
-            std::vector<math::Matrix> & storage_virial_tensor_endstates = storage.virial_tensor_endstates;
-            for (unsigned int state = 0; state < numstates; state++) {
-              math::Vec & force_endstates_state_i = force_endstates[state](i);
-              math::Vec & force_endstates_state_j = force_endstates[state](j);
-              math::Matrix & virial_tensor_endstates_state = storage_virial_tensor_endstates[state];
-              const lj_parameter_struct &lj = m_param_lj_parameter[(pert_i_M_IAC[state])][iac_j];
-              c6 = lj.c6;
-              c12 = lj.c12;
-              q = pert_i_M_charge[state] * charge_j;
-
-              eds_lj_crf_interaction(dist2, dist6, c6, c12, q / cgrain_eps[1],
-                      alpha_lj, alpha_crf, f, e_nb, 1);
-
-              DEBUG(10, "\t\tatomic virial");
-              for (int a = 0; a < 3; ++a) {
-                const double term = f * r(a);
-                force_endstates_state_i(a) += term;
-                force_endstates_state_j(a) -= term;
-
-                for (int b = 0; b < 3; ++b)
-                  virial_tensor_endstates_state(b, a) += r(b) * term;
-              }
-              // energy
-              assert(storage.energies.eds_vi.size() == numstates);
-              storage_energies_eds_vi[state] += e_nb;
-            }
-            break;
-          }
+	  {
+	    for (unsigned int state = 0; state < numstates; state++) {
+	      math::Vec & force_endstates_state_i = force_endstates[state](i);
+	      math::Vec & force_endstates_state_j = force_endstates[state](j);
+	      math::Matrix & virial_tensor_endstates_state = storage_virial_tensor_endstates[state];
+	      const lj_parameter_struct &lj = m_param_lj_parameter[(pert_i_M_IAC[state])][iac_j];
+	      c6 = lj.c6;
+	      c12 = lj.c12;
+	      q = pert_i_M_charge[state] * charge_j / cgrain_eps[1];
+	      e_nb = c12*e12 + c6*e6 + q*e1;
+	      f = c12*f12 + c6*f6 + q*f1;
+	      
+	      DEBUG(10, "\t\tatomic virial");
+	      for (int a = 0; a < 3; ++a) {
+		const double term = f * r(a);
+		force_endstates_state_i(a) += term;
+		force_endstates_state_j(a) -= term;
+		
+		for (int b = 0; b < 3; ++b)
+		  virial_tensor_endstates_state(b, a) += r(b) * term;
+	      }
+	      // energy
+	      assert(storage.energies.eds_vi.size() == numstates);
+	      storage_energies_eds_vi[state] += e_nb;
+	    }
+	    break;
+	  }
           case 1:
-          {
-            io::messages.add("EDS_Nonbonded_Innerloop",
-                    "interaction function not implemented for perturbed CG atoms!",
-                    io::message::critical);
-            break;
-          }
+	  {
+	    io::messages.add("EDS_Nonbonded_Innerloop",
+			     "interaction function not implemented for perturbed CG atoms!",
+			     io::message::critical);
+	    break;
+	  }
         }
       } else { // FG-FG interaction
-        std::vector<math::VArray> &force_endstates = storage.force_endstates;
-        double c6, c12, q, e_nb, f;
-        assert(abs2(r) != 0);
-        const double dist2 = abs2(r);
-        const double dist6 = dist2 * dist2 * dist2;
+
+	// calculate the generalized interactions assuming c6 = c12 = q = 1
+	// this stores energies and forces separately for the C12, C6 and CRF term
+	eds_lj_crf_gen_interaction(dist2, f12, f6, f1, e12, e6, e1, 2);
+
         switch (both_perturbed) {
           case 0:
-          {
-            alpha_lj = topo.eds_perturbed_solute().atoms()[i].LJ_softcore();
-            alpha_crf = topo.eds_perturbed_solute().atoms()[i].CRF_softcore();
-            std::vector<double> & storage_energies_eds_vi = storage.energies.eds_vi;
-            std::vector<math::Matrix> & storage_virial_tensor_endstates = storage.virial_tensor_endstates;
-            for (unsigned int state = 0; state < numstates; state++) {
+	  {
+	    for (unsigned int state = 0; state < numstates; state++) {
               math::Vec & force_endstates_state_i = force_endstates[state](i);
               math::Vec & force_endstates_state_j = force_endstates[state](j);
               math::Matrix & virial_tensor_endstates_state = storage_virial_tensor_endstates[state];
@@ -214,16 +189,15 @@ t_interaction_spec, t_perturbation_details>
               c6 = lj.c6;
               c12 = lj.c12;
               q = pert_i_M_charge[state] * charge_j;
-
-              eds_lj_crf_interaction(dist2, dist6, c6, c12, q,
-                      alpha_lj, alpha_crf, f, e_nb, 2);
-
+	      e_nb = c12*e12 + c6*e6 + q*e1;
+	      f = c12*f12 + c6*f6 + q*f1;
+	      
               DEBUG(10, "\t\tatomic virial");
               for (int a = 0; a < 3; ++a) {
                 const double term = f * r(a);
                 force_endstates_state_i(a) += term;
                 force_endstates_state_j(a) -= term;
-
+		
                 for (int b = 0; b < 3; ++b)
                   virial_tensor_endstates_state(b, a) += r(b) * term;
               }
@@ -234,45 +208,33 @@ t_interaction_spec, t_perturbation_details>
             break;
           }
           case 1:
-          {
-            alpha_lj = (topo.eds_perturbed_solute().atoms()[i].LJ_softcore() +
-                    topo.eds_perturbed_solute().atoms()[j].LJ_softcore()) /
-                    2.0;
-            alpha_crf = (topo.eds_perturbed_solute().atoms()[i].CRF_softcore() +
-                    topo.eds_perturbed_solute().atoms()[j].CRF_softcore()) /
-                    2.0;
+	  {
             const std::vector<unsigned int> &pert_j_M_IAC = topo.eds_perturbed_solute().atoms()[j].M_IAC();
             const std::vector<double> &pert_j_M_charge = topo.eds_perturbed_solute().atoms()[j].M_charge();
-            std::vector<double> & storage_energies_eds_vi = storage.energies.eds_vi;
-            std::vector<math::Matrix> & storage_virial_tensor_endstates = storage.virial_tensor_endstates;
-            for (unsigned int state = 0; state < numstates; state++) {
+	    for (unsigned int state = 0; state < numstates; state++) {
               math::Vec & force_endstates_state_i = force_endstates[state](i);
               math::Vec & force_endstates_state_j = force_endstates[state](j);
               math::Matrix & virial_tensor_endstates_state = storage_virial_tensor_endstates[state];
               const lj_parameter_struct &lj =
-                      m_param_lj_parameter[(pert_i_M_IAC[state])][(pert_j_M_IAC[state])];
+		m_param_lj_parameter[(pert_i_M_IAC[state])][(pert_j_M_IAC[state])];
               c6 = lj.c6;
               c12 = lj.c12;
               q = pert_i_M_charge[state]* (pert_j_M_charge[state]);
-
-              // give numstates as reference to const int argument to avoid .size()
-              eds_lj_crf_interaction(dist2, dist6, c6, c12, q,
-                      alpha_lj, alpha_crf, f, e_nb, 2);
+	      e_nb = c12*e12 + c6*e6 + q*e1;
+	      f = c12*f12 + c6*f6 + q*f1;
 
               DEBUG(10, "\t\tatomic virial");
               for (int a = 0; a < 3; ++a) {
                 const double term = f * r(a);
                 force_endstates_state_i(a) += term;
                 force_endstates_state_j(a) -= term;
-
+		
                 for (int b = 0; b < 3; ++b)
                   virial_tensor_endstates_state(b, a) += r(b) * term;
               }
               // energy
               assert(storage.energies.eds_vi.size() == numstates);
               storage_energies_eds_vi[state] += e_nb;
-              // }
-
             }
             break;
           }
@@ -313,21 +275,12 @@ t_interaction_spec, t_perturbation_details>
   periodicity.nearest_image(conf.current().pos(i),
           conf.current().pos(j), r);
 
-  // speed!
   const std::vector<unsigned int> &pert_i_M_IAC = topo.eds_perturbed_solute().atoms()[i].M_IAC();
   const std::vector<double> &pert_i_M_charge = topo.eds_perturbed_solute().atoms()[i].M_charge();
-  // the following increases topo.eds_perturbed_solute().atoms().size() by 1
-  // PROBLEM: j can also be not perturbed!!!
-  /*
-  const std::vector<unsigned int> &pert_j_M_IAC = topo.eds_perturbed_solute().atoms()[j].M_IAC();
-  const std::vector<double> &pert_j_M_charge = topo.eds_perturbed_solute().atoms()[j].M_charge();
-   */
-
   const std::vector<std::vector<lj_parameter_struct> > &m_param_lj_parameter = m_param->lj_parameter();
 
   unsigned int iac_j = topo.iac(j);
   double charge_j = topo.charge()(j);
-  // --speed
 
   double alpha_lj = 0, alpha_crf = 0;
 
@@ -340,29 +293,34 @@ t_interaction_spec, t_perturbation_details>
   switch (t_interaction_spec::interaction_func) {
     case simulation::lj_crf_func:
     {
-      double c6, c12, q, e_nb, f;
+      double c6, c12, q, f12, f6, f1, e12, e6, e1, e_nb, f;
       assert(abs2(r) != 0);
       const double dist2 = abs2(r);
-      const double dist6 = dist2 * dist2 * dist2;
+
+      // calculate the generalized interactions assuming c6 = c12 = q = 1
+      // this stores energies and forces separately for the C12, C6 and CRF term
+      eds_lj_crf_gen_interaction(dist2, f12, f6, f1, e12, e6, e1);
+
+      std::vector<math::VArray> & conf_special_eds_force_endstates = conf.special().eds.force_endstates;
+      std::vector<math::Matrix> & conf_special_eds_virial_tensor_endstates = conf.special().eds.virial_tensor_endstates;
+      std::vector<double> & conf_current_energies_eds_vi = conf.current().energies.eds_vi;
+
       switch (both_perturbed) {
         case 0:
         {
-          alpha_lj = topo.eds_perturbed_solute().atoms()[i].LJ_softcore();
-          alpha_crf = topo.eds_perturbed_solute().atoms()[i].CRF_softcore();
-          std::vector<math::VArray> & conf_special_eds_force_endstates = conf.special().eds.force_endstates;
-          std::vector<math::Matrix> & conf_special_eds_virial_tensor_endstates = conf.special().eds.virial_tensor_endstates;
-          std::vector<double> & conf_current_energies_eds_vi = conf.current().energies.eds_vi;
           for (unsigned int state = 0; state < numstates; state++) {
             math::Vec & conf_special_eds_force_endstates_state_i = conf_special_eds_force_endstates[state](i);
             math::Vec & conf_special_eds_force_endstates_state_j = conf_special_eds_force_endstates[state](j);
             math::Matrix & conf_special_eds_virial_tensor_endstates_state = conf_special_eds_virial_tensor_endstates[state];
+
+
             const lj_parameter_struct &lj = m_param_lj_parameter[(pert_i_M_IAC[state])][iac_j];
             c6 = lj.cs6;
             c12 = lj.cs12;
             q = pert_i_M_charge[state] * charge_j;
 
-            eds_lj_crf_interaction(dist2, dist6, c6, c12, q, alpha_lj,
-                    alpha_crf, f, e_nb);
+	    e_nb = c12*e12 + c6*e6 + q*e1;
+	    f = c12*f12 + c6*f6 + q*f1;    
 
             DEBUG(10, "\t\tatomic virial");
             for (int a = 0; a < 3; ++a) {
@@ -381,31 +339,21 @@ t_interaction_spec, t_perturbation_details>
         }
         case 1:
         {
-          alpha_lj = (topo.eds_perturbed_solute().atoms()[i].LJ_softcore() +
-                  topo.eds_perturbed_solute().atoms()[j].LJ_softcore()) /
-                  2.0;
-          alpha_crf = (topo.eds_perturbed_solute().atoms()[i].CRF_softcore() +
-                  topo.eds_perturbed_solute().atoms()[j].CRF_softcore()) /
-                  2.0;
           const std::vector<unsigned int> &pert_j_M_IAC = topo.eds_perturbed_solute().atoms()[j].M_IAC();
           const std::vector<double> &pert_j_M_charge = topo.eds_perturbed_solute().atoms()[j].M_charge();
-          std::vector<math::VArray> & conf_special_eds_force_endstates = conf.special().eds.force_endstates;
-          std::vector<math::Matrix> & conf_special_eds_virial_tensor_endstates = conf.special().eds.virial_tensor_endstates;
-          std::vector<double> & conf_current_energies_eds_vi = conf.current().energies.eds_vi;
           for (unsigned int state = 0; state < numstates; state++) {
             math::Vec & conf_special_eds_force_endstates_state_i = conf_special_eds_force_endstates[state](i);
             math::Vec & conf_special_eds_force_endstates_state_j = conf_special_eds_force_endstates[state](j);
             math::Matrix & conf_special_eds_virial_tensor_endstates_state = conf_special_eds_virial_tensor_endstates[state];
             const lj_parameter_struct &lj =
-                    m_param_lj_parameter[(pert_i_M_IAC[state])][(pert_j_M_IAC[state])];
+	      m_param_lj_parameter[(pert_i_M_IAC[state])][(pert_j_M_IAC[state])];
             c6 = lj.cs6;
             c12 = lj.cs12;
             q = pert_i_M_charge[state]* (pert_j_M_charge[state]);
 
-            // give numstates as reference to const int argument to avoid .size()
-            eds_lj_crf_interaction(dist2, dist6, c6, c12, q, alpha_lj,
-                    alpha_crf, f, e_nb);
-
+	    e_nb = c12*e12 + c6*e6 + q*e1;
+	    f = c12*f12 + c6*f6 + q*f1;
+ 
             DEBUG(10, "\t\tatomic virial");
             for (int a = 0; a < 3; ++a) {
               const double term = f * r(a);
@@ -544,6 +492,7 @@ t_interaction_spec, t_perturbation_details>
   math::VArray &pos = conf.current().pos;
   std::vector<math::VArray> &force = conf.special().eds.force_endstates;
   math::Vec r;
+  math::Vec f_rf;
   double e_rf;
 
   double alpha_crf = mit->second.CRF_softcore();
@@ -551,11 +500,12 @@ t_interaction_spec, t_perturbation_details>
   topology::excl_cont_t::value_type::const_iterator it, to;
 
   const int i = mit->second.sequence_number();
+
   // self term has already been calculated for state A, 
   // correct for that and 
   // calculate it for this lambda
   // only a distance independent part
-  math::Vec f_rf;
+
   r = 0.0;
 
   switch (t_interaction_spec::interaction_func) {
@@ -578,113 +528,198 @@ t_interaction_spec, t_perturbation_details>
               "rf excluded interaction function not implemented",
               io::message::critical);
   }
+  // this corrects for the self-term that was already computed
   conf.current().energies.crf_energy[topo.atom_energy_group(i)]
             [topo.atom_energy_group(i)] -= 0.5 * e_rf;
 
+  // now re-add the correct terms for the corresponding states
   unsigned int numstates = conf.special().eds.force_endstates.size();
   DEBUG(7, "mit->second.M_charge().size() = " << mit->second.M_charge().size());
   assert(mit->second.M_charge().size() == numstates);
 
-  for (unsigned int state = 0; state < numstates; state++) {
-    r = 0.0;
-    double q_i = mit->second.M_charge()[state];
-    // now calculate everything
+  // generic self term
+  r = 0.0;
+  
+  
+  switch (t_interaction_spec::interaction_func) {
+    case simulation::lj_crf_func:
+      {
+	eds_rf_gen_interaction(r, f_rf, e_rf);
+	for (unsigned int state = 0; state < numstates; state++) {
+	  double q_i = mit->second.M_charge()[state];
+	  conf.current().energies.eds_vi[state] += 0.5 * e_rf * q_i * q_i;
+	}
+        break;
+      }
+    case simulation::cggromos_func:
+      {
+	if (topo.is_coarse_grained(i)) { // CG-CG or CG-FG
+	  eds_rf_gen_interaction(r, f_rf, e_rf, 0);
+	  for (unsigned int state = 0; state < numstates; state++) {
+	    double q_i = mit->second.M_charge()[state];
+	    conf.current().energies.eds_vi[state] += 0.5 * e_rf * q_i*q_i / cgrain_eps[0];
+	  }
+	  
+	} else { // FG-FG
+	  eds_rf_gen_interaction(r, f_rf, e_rf, 2); 
+	  for (unsigned int state = 0; state < numstates; state++) {
+	    double q_i = mit->second.M_charge()[state];
+	    conf.current().energies.eds_vi[state] += 0.5 * e_rf* q_i * q_i;
+	  }
+	}
+        break;
+      }
+    default:
+      io::messages.add("EDS_Nonbonded_Innerloop",
+		       "rf excluded interaction function not implemented",
+		       io::message::critical);
+  }
+  DEBUG(7, "Self term for atom " << i << " in state " << state << " = " << e_rf << " (q*q = " << q_i * q_i << ")");
+
+  // now loop over the exclusions
+  // those are fortunately not in the normal exclusions!
+  it = mit->second.exclusion().begin();
+  to = mit->second.exclusion().end();
+
+  for (; it != to; ++it) {
+    periodicity.nearest_image(pos(i), pos(*it), r);
+    
+    DEBUG(8, "r2 i(" << i << "-" << *it << ") " << abs2(r));
+    
+    double q_i, q_j;
+
     switch (t_interaction_spec::interaction_func) {
       case simulation::lj_crf_func:
-      {
-        eds_rf_interaction(r, q_i*q_i, alpha_crf, f_rf, e_rf);
-        break;
-      }
-      case simulation::cggromos_func:
-      {
-        if (topo.is_coarse_grained(i)) { // CG-CG or CG-FG
-          eds_rf_interaction(r, q_i*q_i / cgrain_eps[0], alpha_crf, f_rf, e_rf, 0);
-        } else { // FG-FG
-          eds_rf_interaction(r, q_i*q_i, alpha_crf, f_rf, e_rf, 2);
-        }
-        break;
-      }
-      default:
-        io::messages.add("EDS_Nonbonded_Innerloop",
-                "rf excluded interaction function not implemented",
-                io::message::critical);
-    }
-    DEBUG(7, "Self term for atom " << i << " in state " << state << " = " << e_rf << " (q*q = " << q_i * q_i << ")");
+        { 
+	  // generic rf term
+	  eds_rf_gen_interaction(r, f_rf, e_rf);
+	  for (unsigned int state = 0; state < numstates; state++) {
+	    q_i = mit->second.M_charge()[state];
+	    if (unsigned(*it) < topo.num_solute_atoms() && topo.is_eds_perturbed(*it)) {
+	      // j perturbed
+	      q_j = topo.eds_perturbed_solute().atoms()[*it].M_charge()[state];
+	    } else {
+	      // only i perturbed
+	      q_j = topo.charge()(*it);
+	    }
+	  
+	    DEBUG(7, "excluded atoms " << i << " & " << *it << ": " << e_rf);
 
-    conf.current().energies.eds_vi[state] += 0.5 * e_rf;
-
-    // now loop over the exclusions
-    // those are fortunately not in the normal exclusions!
-    it = mit->second.exclusion().begin();
-    to = mit->second.exclusion().end();
-    //it = topo.exclusion(i).begin();
-    //to = topo.exclusion(i).end();
-
-    for (; it != to; ++it) {
-      periodicity.nearest_image(pos(i), pos(*it), r);
-
-      DEBUG(8, "r2 i(" << i << "-" << *it << ") " << abs2(r));
-
-      double q_j;
-
-      if (unsigned(*it) < topo.num_solute_atoms() && topo.is_eds_perturbed(*it)) {
-        // j perturbed
-        q_j = topo.eds_perturbed_solute().atoms()[*it].M_charge()[state];
-      } else {
-        // only i perturbed
-        q_j = topo.charge()(*it);
-      }
-
-      switch (t_interaction_spec::interaction_func) {
-        case simulation::lj_crf_func:
-        {
-          math::Vec f_rf;
-          eds_rf_interaction(r, q_i*q_j, alpha_crf, f_rf, e_rf);
-
-          DEBUG(7, "excluded atoms " << i << " & " << *it << ": " << e_rf);
-
-          // and add everything to the correct arrays
-          conf.current().energies.eds_vi[state] += e_rf;
-
-          force[state](i) += f_rf;
-          force[state](*it) -= f_rf;
-
-          // if (t_interaction_spec::do_virial != math::no_virial){
-          for (int a = 0; a < 3; ++a)
-            for (int b = 0; b < 3; ++b)
-              conf.special().eds.virial_tensor_endstates[state](a, b) +=
-                    r(a) * f_rf(b);
-
-          DEBUG(7, "\tatomic virial done");
-          // }
+	    // and add everything to the correct arrays
+	    conf.current().energies.eds_vi[state] += q_i * q_j * e_rf;
+	    f_rf *= q_i * q_j;
+	    
+	    force[state](i) += f_rf;
+	    force[state](*it) -= f_rf;
+	    
+	    // if (t_interaction_spec::do_virial != math::no_virial){
+	    for (int a = 0; a < 3; ++a)
+	      for (int b = 0; b < 3; ++b)
+		conf.special().eds.virial_tensor_endstates[state](a, b) +=
+		  r(a) * f_rf(b);
+	    
+	    DEBUG(7, "\tatomic virial done");
+          }
           break;
         }
         case simulation::cggromos_func:
         {
-          math::Vec f_rf;
-          if (topo.is_coarse_grained(i) && topo.is_coarse_grained(*it) ) { // CG-CG
-            eds_rf_interaction(r, q_i*q_j / cgrain_eps[0], alpha_crf, f_rf, e_rf, 0);
-          } else if (topo.is_coarse_grained(i) || topo.is_coarse_grained(*it)) { // FG-CG
-            eds_rf_interaction(r, q_i*q_j / cgrain_eps[1], alpha_crf, f_rf, e_rf, 1);
-          } else { // FG-FG
-            eds_rf_interaction(r, q_i*q_j, alpha_crf, f_rf, e_rf, 2);
-          }
+	  if (topo.is_coarse_grained(i) && topo.is_coarse_grained(*it) ) { // CG-CG
+	    
+	    // generic rf term
+	    eds_rf_gen_interaction(r, f_rf, e_rf, 0);
+	    
+	    for (unsigned int state = 0; state < numstates; state++) {
+	      q_i = mit->second.M_charge()[state];
+	      if (unsigned(*it) < topo.num_solute_atoms() && topo.is_eds_perturbed(*it)) {
+		// j perturbed
+		q_j = topo.eds_perturbed_solute().atoms()[*it].M_charge()[state];
+	      } else {
+		// only i perturbed
+		q_j = topo.charge()(*it);
+	      }
+	      e_rf *= q_i*q_j / cgrain_eps[0];
+	      f_rf *= q_i*q_j / cgrain_eps[0];
 
-          DEBUG(7, "excluded atoms " << i << " & " << *it << ": " << e_rf);
+	      // and add everything to the correct arrays
+	      conf.current().energies.eds_vi[state] += e_rf;
+	      
+	      force[state](i) += f_rf;
+	      force[state](*it) -= f_rf;
+	      
+	      for (int a = 0; a < 3; ++a)
+		for (int b = 0; b < 3; ++b)
+		  conf.special().eds.virial_tensor_endstates[state](a, b) +=
+		    r(a) * f_rf(b);
+	      
+	      DEBUG(7, "\tatomic virial done");
+	      
+	    }
+	    
+	  } else if (topo.is_coarse_grained(i) || topo.is_coarse_grained(*it)) { // FG-CG
 
-          // and add everything to the correct arrays
-          conf.current().energies.eds_vi[state] += e_rf;
+	    // generic rf term
+	    eds_rf_gen_interaction(r, f_rf, e_rf, 1);
+	    
+	    for (unsigned int state = 0; state < numstates; state++) {
+	      q_i = mit->second.M_charge()[state];
+	      if (unsigned(*it) < topo.num_solute_atoms() && topo.is_eds_perturbed(*it)) {
+		  // j perturbed
+		q_j = topo.eds_perturbed_solute().atoms()[*it].M_charge()[state];
+	      } else {
+		// only i perturbed
+		q_j = topo.charge()(*it);
+	      }
+	      e_rf *= q_i*q_j / cgrain_eps[1];
+	      f_rf *= q_i*q_j / cgrain_eps[1];
 
-          force[state](i) += f_rf;
-          force[state](*it) -= f_rf;
+	      // and add everything to the correct arrays
+	      conf.current().energies.eds_vi[state] += e_rf;
+	      
+	      force[state](i) += f_rf;
+	      force[state](*it) -= f_rf;
+	      
+	      for (int a = 0; a < 3; ++a)
+		for (int b = 0; b < 3; ++b)
+		  conf.special().eds.virial_tensor_endstates[state](a, b) +=
+		    r(a) * f_rf(b);
+	      
+	      DEBUG(7, "\tatomic virial done");
+	    }
+	    
+	  } else { // FG-FG
+	    // generic rf term
+	    eds_rf_gen_interaction(r, f_rf, e_rf, 2);
+	    
+	    for (unsigned int state = 0; state < numstates; state++) {
+	      q_i = mit->second.M_charge()[state];
+	      if (unsigned(*it) < topo.num_solute_atoms() && topo.is_eds_perturbed(*it)) {
+		// j perturbed
+		q_j = topo.eds_perturbed_solute().atoms()[*it].M_charge()[state];
+	      } else {
+		// only i perturbed
+		q_j = topo.charge()(*it);
+	      }
+	      e_rf *= q_i*q_j;
+	      f_rf *= q_i*q_j;
 
-          for (int a = 0; a < 3; ++a)
-            for (int b = 0; b < 3; ++b)
-              conf.special().eds.virial_tensor_endstates[state](a, b) +=
-                    r(a) * f_rf(b);
+	      // and add everything to the correct arrays
+	      conf.current().energies.eds_vi[state] += e_rf;
+	      
+	      force[state](i) += f_rf;
+	      force[state](*it) -= f_rf;
+	      
+	      for (int a = 0; a < 3; ++a)
+		for (int b = 0; b < 3; ++b)
+		  conf.special().eds.virial_tensor_endstates[state](a, b) +=
+		    r(a) * f_rf(b);
+	      
+	      DEBUG(7, "\tatomic virial done");
+	    }
+	  }
+	  
+	  DEBUG(7, "excluded atoms " << i << " & " << *it << ": " << e_rf);
 
-          DEBUG(7, "\tatomic virial done");
-          
           break;
         }
         default:
@@ -692,7 +727,6 @@ t_interaction_spec, t_perturbation_details>
                   "rf excluded interaction function not implemented",
                   io::message::critical);
       }
-    }
-  } // loopover states
+  } // loop over excluded atoms
 }
 

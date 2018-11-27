@@ -40,13 +40,24 @@ namespace interaction
 			        double const alpha_crf,
 			        double & force, double & e_nb,
                                 unsigned int eps = 0);
-
+    /**
+     * calculate generalized force and energy of an atom pair (no parameters)
+     */
+    void eds_lj_crf_gen_interaction(const double dist2, 
+				   double & force12, double & force6, double & force1, 
+				   double &e12, double &e6, double &e1, 
+				   unsigned int eps = 0);
     /**
      * calculate the reaction field force and energy of an atom pair.
      */
     void eds_rf_interaction(math::Vec const &r, double q, double const alpha_crf,
 			    math::Vec & force, double & e_rf, unsigned int eps = 0);
-   
+    /**
+     * calculate the generalized reaction field force and energy of an atom pair (no parameters)
+     */
+    void eds_rf_gen_interaction(math::Vec const &r, math::Vec & force, double &e_rf, 
+				unsigned int eps = 0);
+    
 
   protected:
     /**
@@ -60,7 +71,11 @@ namespace interaction
      * reaction field cutoff.
      */
     double m_rrf;
- 
+    /**
+     * Force:
+     * Coulomb reaction field constant divided by the reaction field cutoff to the power of 3
+     */
+    std::vector<double> m_crf_cut3i;
     
     /**
      * Energy:
@@ -68,6 +83,11 @@ namespace interaction
      * divided by reaction field cutoff.
      */
     std::vector<double> m_crf_cut;
+    /**
+     * Energy:
+     * reaction field constant / twice reaction field cutoff^3
+     */
+    std::vector<double> m_crf_2cut3i;
     
     /*
      Coarse grained dielectric permittivities*/

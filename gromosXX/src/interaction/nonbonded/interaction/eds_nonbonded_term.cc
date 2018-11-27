@@ -15,9 +15,12 @@
  */
 inline void interaction::Eds_Nonbonded_Term
 ::init(simulation::Simulation const &sim) {
-  double crf, crf_cut;
+  double crf, crf_cut, crf_cut3i, crf_2cut3i;
   m_crf_cut.clear();
+  m_crf_cut3i.clear();
   m_crf.clear();
+  m_crf_2cut3i.clear();
+  
   cgrain_eps.clear();
   switch (sim.param().force.interaction_function) {
     case simulation::lj_crf_func:
@@ -33,15 +36,20 @@ inline void interaction::Eds_Nonbonded_Term
                 (1.0 + sim.param().nonbonded.rf_kappa * m_rrf) +
                 sim.param().nonbonded.rf_epsilon * (sim.param().nonbonded.rf_kappa *
                 m_rrf * sim.param().nonbonded.rf_kappa * m_rrf);
-
+	crf_cut3i = crf / (m_rrf * m_rrf * m_rrf);
+	crf_2cut3i = crf_cut3i / 2.0;
         crf_cut = (1 - crf / 2.0) / m_rrf;
       } else { // infinity case: rf_cutoff == 0
         crf = -1;
         DEBUG(15, "nonbonded term init: m_crf: " << crf);
         m_rrf = 0.0;
+	crf_cut3i = crf / (m_rrf * m_rrf * m_rrf);
+	crf_2cut3i = crf_cut3i / 2.0;
         crf_cut = (1 - crf / 2.0) / sim.param().nonbonded.rf_cutoff;
       }
       m_crf_cut.push_back(crf_cut);
+      m_crf_cut3i.push_back(crf_cut3i);
+      m_crf_2cut3i.push_back(crf_2cut3i);
       m_crf.push_back(crf);
       break;
     case simulation::cggromos_func:
@@ -61,14 +69,20 @@ inline void interaction::Eds_Nonbonded_Term
                   (1.0 + sim.param().nonbonded.rf_kappa * m_rrf) +
                   sim.param().nonbonded.rf_epsilon * (sim.param().nonbonded.rf_kappa *
                   m_rrf * sim.param().nonbonded.rf_kappa * m_rrf);
-
+	 
+	  crf_cut3i = crf / (m_rrf * m_rrf * m_rrf);
+	  crf_2cut3i = crf_cut3i / 2.0;
           crf_cut = (1 - crf / 2.0) / m_rrf;
         } else { // infinity case: rf_cutoff == 0
           crf = -1;
           m_rrf = 0.0;
-          crf_cut = (1 - crf / 2.0) / sim.param().nonbonded.rf_cutoff;
+          crf_cut3i = crf / (m_rrf * m_rrf * m_rrf);
+	  crf_2cut3i = crf_cut3i / 2.0;
+	  crf_cut = (1 - crf / 2.0) / sim.param().nonbonded.rf_cutoff;
         }
         m_crf.push_back(crf);
+	m_crf_cut3i.push_back(crf_cut3i);
+	m_crf_2cut3i.push_back(crf_2cut3i);
         m_crf_cut.push_back(crf_cut);
       }
       break;
@@ -115,7 +129,28 @@ inline void interaction::Eds_Nonbonded_Term
     
     DEBUG(15, "nonbonded energy = " << (elj + ecrf) << ", force = " << (flj + fcrf));
 }
+/**
+ * helper function to calculate the force and energy for
+ * a given atom pair.
+ */
+inline void interaction::Eds_Nonbonded_Term
+::eds_lj_crf_gen_interaction(const double dist2, 
+			     double & force12, double & force6, double & force1, 
+			     double &e12, double &e6, double &e1, 
+			     unsigned int eps) {
+    DEBUG(14, "\t\tgeneralized nonbonded term");
 
+    const double dist2i = 1.0 / dist2;
+    const double disti = sqrt(dist2i);
+    const double dist6i = dist2i * dist2i * dist2i;
+    
+    e12 = dist6i * dist6i;
+    force12 = 12.0 * dist6i * dist6i * dist2i;
+    e6 = -dist6i;
+    force6 = -6.0 * dist6i * dist2i;
+    e1 = math::four_pi_eps_i * (disti - m_crf_2cut3i[eps] * dist2 - m_crf_cut[eps]);
+    force1 = math::four_pi_eps_i * (disti * dist2i + m_crf_cut3i[eps]);
+}
 /**
  * helper function to calculate the force and energy for
  * the reaction field contribution for a given pair
@@ -132,6 +167,24 @@ inline void interaction::Eds_Nonbonded_Term
   e_crf = q * math::four_pi_eps_i * ( -(0.5 * m_crf[eps] * ac_rrfi * dist2) - m_crf_cut[eps]);
   DEBUG(15, "dist2 " << dist2 );
   DEBUG(15, "q*q   " << q );
+  DEBUG(15, "rf energy = " << e_crf);
+  
+}
+
+/**
+ * helper function to calculate the force and energy for
+ * the reaction field contribution for a given pair
+ */
+inline void interaction::Eds_Nonbonded_Term
+::eds_rf_gen_interaction(math::Vec const &r, math::Vec & force, double &e_rf, 
+			 unsigned int eps)
+{
+  const double dist2 = abs2(r);
+  
+  force = math::four_pi_eps_i *  m_crf_cut3i[eps] * r;
+  e_rf = math::four_pi_eps_i * ( -m_crf_2cut3i[eps] * dist2 - m_crf_cut[eps]);
+
+  DEBUG(15, "dist2 " << dist2 );
   DEBUG(15, "rf energy = " << e_crf);
   
 }
