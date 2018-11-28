@@ -440,10 +440,18 @@ namespace topology
     /**
      * exclusions for atom i.
      */
-		excl_cont_t::value_type & exclusion(unsigned int const i){
+    excl_cont_t::value_type & exclusion(unsigned int const i){
       assert(i < m_exclusion.size());
       return m_exclusion[i];
     }
+    /**
+     * const exclusions for atom i.
+     */
+    excl_cont_t::value_type const & exclusion(unsigned int const i)const{
+      assert(i < m_exclusion.size());
+      return m_exclusion[i];
+    }
+
     /**
      * exclusions
      */
