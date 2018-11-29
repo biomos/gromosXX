@@ -35,7 +35,7 @@
 
 // Energy trajectory version
 // For details, see definition in out_configuration.cc
-const std::string io::Out_Configuration::ene_version = "2018-08-22";
+const std::string io::Out_Configuration::ene_version = "2018-11-29";
 
 // declarations
 static void _print_energyred_helper(std::ostream & os, configuration::Energy const &e);
@@ -2970,9 +2970,9 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
      << std::setw(18) << "AB_angle"
      << std::setw(18) << "AB_improper"
      // special interactions - Betty
-     << std::setw(18) << "AB_disres\n";
-     // << std::setw(18) << "AB_dihres"
-     // << std::setw(18) << "AB_disfld\n";
+     << std::setw(18) << "AB_disres"
+     << std::setw(18) << "AB_dihres"
+     << std::setw(18) << "AB_disfld\n";
      /*<< std::setw(18) << /"AB_dihedral\n";*/
   
   for (unsigned i = 0; i < nr_lambdas; i++) {
