@@ -120,7 +120,8 @@ static int _calculate_perturbed_distance_restraint_interactions
     const double K = sim.param().distanceres.K;
     const double r_l = sim.param().distanceres.r_linear; 
     const double D_r0 = it->B_r0 - it->A_r0;
-    
+    const double D_w0 = it->B_w0 - it->A_w0; // Betty
+
     DEBUG(9, "PERTDISTANCERES dist : " << dist << " r0 " << r0 << " rah " << rah);  
     if (sim.param().distanceres.distanceres < 0) {
       (*ave_it) = (1.0 - exponential_term) * pow(dist, -3.0) + 
@@ -241,9 +242,100 @@ static int _calculate_perturbed_distance_restraint_interactions
     conf.current().perturbed_energy_derivatives.
       distanceres_energy[topo.atom_energy_group()[it->v1.atom(0)]] += 
       energy_derivativ;
-    
-  }
 
+     /**
+     * ext_TI code - Betty
+     */
+    
+    if (sim.param().precalclam.nr_lambdas &&
+        ((sim.steps() % sim.param().write.free_energy) == 0)){
+      
+      double lambda_step = (sim.param().precalclam.max_lam -
+                            sim.param().precalclam.min_lam) /
+                            (sim.param().precalclam.nr_lambdas-1);
+
+      //loop over nr_lambdas
+      for (unsigned int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
+
+        double lam = (lam_index * lambda_step) + sim.param().precalclam.min_lam;
+	double prefactorlam = pow(2.0, it->n + it->m) * pow(lam, it->n) * pow(1.0-lam, it->m);
+	double w0lam = (1-lam) * it->A_w0 + lam * it->B_w0;
+	double r0lam = (1-lam) * it->A_r0 + lam * it->B_r0;
+	double difflam = dist - r0lam;
+	double difflam2 = difflam * difflam;
+       	
+	double en_termlam;
+	if(rah * dist < rah * (r0lam)){
+	  en_termlam = 0;
+	}    
+	else if(fabs(r0lam - dist) < r_l){
+	  en_termlam = 0.5 * K * difflam2;
+	}    
+	else
+	  if(dist < r0lam){
+	    en_termlam = -K * (dist + 0.5 * r_l - r0lam) * r_l;
+	  }
+	  else{
+	    en_termlam = K * (dist - 0.5 * r_l - r0lam) * r_l;
+	  }
+	if(abs(sim.param().distanceres.distanceres) == 1)
+	  ;      
+	else if(abs(sim.param().distanceres.distanceres) == 2){
+	  en_termlam = en_termlam * w0lam;
+	}
+	else{
+	  en_termlam = 0;
+	}
+	double energylam = prefactorlam * en_termlam;
+
+	double dlam_termlam;
+	if(rah * dist < rah * (r0lam))
+	  dlam_termlam = 0;
+	else if(abs(sim.param().distanceres.distanceres) == 1){
+	  if(fabs(r0lam - dist) < r_l){
+	    dlam_termlam = -K * difflam * D_r0;
+	  }
+	  else {
+	    if(dist < r0lam){
+	      dlam_termlam = K * D_r0 * r_l;
+	    }
+	    else{
+	      dlam_termlam = -K * D_r0 * r_l;
+	    } 
+	  }	
+	}
+	else if(abs(sim.param().distanceres.distanceres) == 2){
+	  if(fabs(r0lam - dist) < r_l){
+	 	    dlam_termlam = 0.5 * K * D_w0 * difflam2
+	      - K * w0lam * difflam * D_r0;
+	  }
+	  else {
+	    if(dist < r0lam){
+	 	      dlam_termlam = -K * D_w0 * (dist + 0.5 * r_l - r0lam) * r_l
+		+ K * w0lam * D_r0 * r_l;
+	    }
+	    else{   
+	   	      dlam_termlam =  K * D_w0 * (dist - 0.5 * r_l - r0lam) * r_l
+		- K * w0lam * D_r0 * r_l;
+	    }
+	  }
+	}
+	double dprefndlam, dprefmdlam;
+	if (it->n==0) dprefndlam = 0;
+	else dprefndlam = it->n * pow(lam, it->n-1) * pow(1.0 - lam, it->m);
+		if (it->m == 0) dprefmdlam = 0;
+	else dprefmdlam = it->m * pow(lam, it->n) * pow(1.0 - lam, it->m-1);	
+	double dprefdlam = pow(2.0, it->m + it->n) * (dprefndlam - dprefmdlam) * en_termlam;
+	double dpotdlam = prefactorlam * dlam_termlam;
+    	double energy_derivativlam = dprefdlam + dpotdlam;
+
+	conf.current().energies.AB_disres[lam_index] += energylam;
+        conf.current().perturbed_energy_derivatives.AB_disres[lam_index] += 
+	  energy_derivativlam;
+      }
+    }
+    // betty
+  }
   return 0;
 }
 

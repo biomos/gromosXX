@@ -35,7 +35,7 @@
 
 // Energy trajectory version
 // For details, see definition in out_configuration.cc
-const std::string io::Out_Configuration::ene_version = "2018-08-22";
+const std::string io::Out_Configuration::ene_version = "2018-11-29";
 
 // declarations
 static void _print_energyred_helper(std::ostream & os, configuration::Energy const &e);
@@ -2961,13 +2961,20 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
   os << "# nr_lambdas\n";
   const unsigned int nr_lambdas = e.A_lj_total.size();
   os << nr_lambdas << "\n";
-  os << std::setw(18) << "# A_e_lj" << std::setw(18)
-        << "B_e_lj" << std::setw(18) << "A_e_crf" 
-        << std::setw(18) << "B_e_crf" << std::setw(18)
-        << "AB_kinetic" << std::setw(18) << "AB_bond" 
-        << std::setw(18) << "AB_angle" << std::setw(18)
-        << "AB_improper\n"; /*<< std::setw(18) << /"AB_dihedral\n";*/
-         
+  os << std::setw(18) << "# A_e_lj"
+     << std::setw(18) << "B_e_lj"
+     << std::setw(18) << "A_e_crf" 
+     << std::setw(18) << "B_e_crf"
+     << std::setw(18) << "AB_kinetic"
+     << std::setw(18) << "AB_bond" 
+     << std::setw(18) << "AB_angle"
+     << std::setw(18) << "AB_improper"
+     // special interactions - Betty
+     << std::setw(18) << "AB_disres"
+     << std::setw(18) << "AB_dihres"
+     << std::setw(18) << "AB_disfld\n";
+     /*<< std::setw(18) << /"AB_dihedral\n";*/
+  
   for (unsigned i = 0; i < nr_lambdas; i++) {
     os << std::setw(18) << e.A_lj_total[i]
        << std::setw(18) << e.B_lj_total[i]
@@ -2977,6 +2984,10 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
        << std::setw(18) << e.AB_bond[i]
        << std::setw(18) << e.AB_angle[i]
        << std::setw(18) << e.AB_improper[i]
+       // special interations - Betty
+       << std::setw(18) << e.AB_disres[i]
+       << std::setw(18) << e.AB_dihres[i]
+       << std::setw(18) << e.AB_disfld[i]
        //<< std::setw(18) << e.AB_dihedral[i]
        << "\n";
   }

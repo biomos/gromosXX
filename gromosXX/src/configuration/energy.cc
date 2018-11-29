@@ -130,6 +130,10 @@ void configuration::Energy::zero(bool potential, bool kinetic)
     AB_improper.assign(AB_angle.size(),0.0);
     A_dihedral = 0.0;
     B_dihedral = 0.0;
+    // special interactions - Betty
+    AB_disres.assign(AB_disres.size(),0.0);
+    AB_dihres.assign(AB_dihres.size(),0.0);
+    AB_disfld.assign(AB_disfld.size(),0.0);
     //AB_dihedral.assign(AB_angle.size(),0.0);
     //
 
@@ -251,6 +255,10 @@ void configuration::Energy::resize(unsigned int energy_groups, unsigned int mult
     AB_bond.resize(nr_lambdas);
     AB_angle.resize(nr_lambdas);
     AB_improper.resize(nr_lambdas);
+    // special interactions - Betty
+    AB_disres.resize(nr_lambdas);
+    AB_dihres.resize(nr_lambdas);
+    AB_disfld.resize(nr_lambdas);
     //AB_dihedral.resize(nr_lambdas);
 
     DEBUG(8, "ANITA resizing A_lj_energy to " << nr_lambdas);

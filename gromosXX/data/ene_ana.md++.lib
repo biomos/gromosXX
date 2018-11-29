@@ -2,7 +2,7 @@ TITLE
   XX Library file for ene_ana
 END
 ENEVERSION
-  2018-08-22
+  2018-11-29
 END
 ENERTRJ
 # block definition for the energy trajectory file.
@@ -31,7 +31,7 @@ ENERTRJ
     size NUM_EDS_STATES
     subblock EDS NUM_EDS_STATES 4 
     size NUM_LAMBDAS
-    subblock PRECALCLAM NUM_LAMBDAS 8
+    subblock PRECALCLAM NUM_LAMBDAS 11
     subblock ABDIH 1 2
   block VOLUMEPRESSURE03
     subblock MASS 1 1
@@ -62,7 +62,7 @@ FRENERTRJ
     size NUM_EDS_STATES
     subblock FREEEDS NUM_EDS_STATES 3
     size NUM_LAMBDAS
-    subblock FREEPRECALCLAM NUM_LAMBDAS 8
+    subblock FREEPRECALCLAM NUM_LAMBDAS 11
     subblock FREEABDIH 1 2
 END
 VARIABLES

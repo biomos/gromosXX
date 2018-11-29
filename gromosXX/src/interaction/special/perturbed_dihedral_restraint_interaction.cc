@@ -251,8 +251,59 @@ static int _calculate_perturbed_dihedral_restraint_interactions
     conf.current().perturbed_energy_derivatives.dihrest_energy
       [topo.atom_energy_group()[it->i]] += energy_derivative;
 
+    /**
+     * ext_TI code - Betty
+     */
+    
+    if (sim.param().precalclam.nr_lambdas &&
+        ((sim.steps() % sim.param().write.free_energy) == 0)){
+
+      double lambda_step = (sim.param().precalclam.max_lam -
+                            sim.param().precalclam.min_lam) /
+                            (sim.param().precalclam.nr_lambdas-1);
+      
+     
+      //loop over nr_lambdas
+      for (unsigned int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
+
+        double lam = (lam_index * lambda_step) + sim.param().precalclam.min_lam;
+	double prefactorlam = pow(2.0, it->n + it->m) * pow(lam, it->n) * pow(1.0-lam, it->m);
+	double phi0lam = (1-lam)*phi0_A + lam * phi0_B;
+	double delta_philam = phi - phi0lam;
+	double delta_philam2 = delta_philam * delta_philam;
+	double K_diff = B_K - A_K;
+	double phi0_diff = phi0_A - phi0_B;
+
+	double en_termlam, dlam_termlam;
+	if (phi_lin >= 0.0 && fabs(delta_philam) > phi_lin){
+	  double zeta = 1;
+	  if (delta_philam < 0) zeta = -1;
+	  en_termlam = K * (zeta * delta_philam - 0.5 * phi_lin) * phi_lin;
+	  dlam_termlam = phi_lin * (K_diff * (zeta * delta_philam - 0.5 * phi_lin) + K * zeta * phi0_diff);
+	}
+	else {
+	  en_termlam = 0.5 * K * delta_philam2;
+	  dlam_termlam = 0.5 * K_diff * delta_philam2 + K * delta_philam * phi0_diff;
+	}
+	double energylam = prefactorlam * en_termlam;     
+	
+	double dprefndlam, dprefmdlam;
+	if (it->n==0) dprefndlam = 0;
+	else dprefndlam = it->n * pow(lam, it->n-1) * pow(1.0 - lam, it->m);
+	if (it->m == 0) dprefmdl = 0;
+	else dprefmdlam = it->m * pow(lam, it->n) * pow(1.0 - lam, it->m-1);
+	
+	double dprefdlam = pow(2.0, it->m + it->n) * (dprefndlam - dprefmdlam) * en_termlam;
+	double dpotdlam = prefactorlam * dlam_termlam;
+       	double energy_derivativlam = dprefdlam + dpotdlam;
+    
+	conf.current().energies.AB_dihres[lam_index] += energylam;
+        conf.current().perturbed_energy_derivatives.AB_dihres[lam_index] += 
+	  energy_derivativlam;
+      }
+    }
+    // Betty
   }
-  
   return 0;
 }
 
