@@ -10,7 +10,7 @@
 #include "../../simulation/simulation.h"
 #include "../../configuration/configuration.h"
 #include "../../simulation/parameter.h"
-
+#include "../../topology/topology.h"
 #include "../../io/parameter/check_parameter.h"
 #include "../../util/feature.h"
 
@@ -24,9 +24,9 @@
 #define SUBMODULE parameter
 
 
-int io::check_parameter(simulation::Simulation & sim){
+int io::check_parameter(simulation::Simulation & sim,topology::Topology const &topo){
   int check1 = simple_crosschecks(sim);
-  int check2 = check_features(sim);
+  int check2 = check_features(sim,topo);
   if (check1 || check2)
     return -1;
   else
@@ -175,7 +175,7 @@ int io::simple_crosschecks(simulation::Simulation & sim) {
     return 0;
 }
 
-int io::check_features(simulation::Simulation & sim)
+int io::check_features(simulation::Simulation & sim,topology::Topology const & topo)
 {
   const simulation::Parameter & param = sim.param();
   std::vector<util::Feature> features;
@@ -383,7 +383,9 @@ int io::check_features(simulation::Simulation & sim)
 
   // force groups
   add("force_groups", "force groups", param.force.force_groups);
-
+  // off-site charges
+  add("off_site","off-site charges",topo.enable_offsite==1);
+  add("LR_LJ_CORRECTION","long-range LJ correction",param.nonbonded.lj_correction);
 // we don't need the add function anymore.
 #undef add
 
@@ -4112,8 +4114,195 @@ int io::check_features(simulation::Simulation & sim)
   fc.unlock("precalculate_lambdas", "bsleus");
   fc.unlock("precalculate_lambdas", "xray");
 //  fc.unlock("precalculate_lambdas", "force_groups");
-  
-  // ANITA
+  // ANITA END
+  fc.unlock("off_site", "solute");
+  fc.unlock("off_site", "solvent");
+  fc.unlock("off_site", "solvent_only");
+  fc.unlock("off_site", "steepest_descent");
+  fc.unlock("off_site", "solute_constraint_off");
+  fc.unlock("off_site", "solute_shake");
+  fc.unlock("off_site", "solute_lincs");
+  fc.unlock("off_site", "solute_flexshake");
+  fc.unlock("off_site", "solvent_constraint_off");
+  fc.unlock("off_site", "solvent_shake");
+  fc.unlock("off_site", "solvent_lincs");
+  fc.unlock("off_site", "solvent_settle");
+  fc.unlock("off_site", "pressure_calculation");
+  fc.unlock("off_site", "pressure_scale_berendsen");
+  fc.unlock("off_site", "virial_off");
+  fc.unlock("off_site", "virial_atomic");
+  fc.unlock("off_site", "virial_molecular");
+  fc.unlock("off_site", "vacuum");
+  fc.unlock("off_site", "pbc_r");
+  fc.unlock("off_site", "pbc_c");
+  fc.unlock("off_site", "pbc_t");
+//  fc.unlock("off_site", "perturbation");
+//  fc.unlock("off_site", "perturbation_scaling");
+  fc.unlock("off_site", "slow_growth");
+  fc.unlock("off_site", "individual_lambdas");
+  fc.unlock("off_site", "precalculate_lambdas");
+  fc.unlock("off_site", "bond");
+  fc.unlock("off_site", "angle");
+  fc.unlock("off_site", "dihedral");
+  fc.unlock("off_site", "improper");
+  fc.unlock("off_site", "crf");
+  fc.unlock("off_site", "lj");
+  fc.unlock("off_site", "com_removal");
+  fc.unlock("off_site", "rf_excluded");
+  fc.unlock("off_site", "pairlist_standard");
+  fc.unlock("off_site", "pairlist_grid");
+  fc.unlock("off_site", "pairlist_gridcell");
+  fc.unlock("off_site", "cutoff_atomic");
+  fc.unlock("off_site", "cutoff_cg");
+  fc.unlock("off_site", "cg_martini");
+  fc.unlock("off_site", "cg_gromos");
+  fc.unlock("off_site", "mixed_grain");
+  fc.unlock("off_site", "temp_berendsen");
+  fc.unlock("off_site", "temp_nosehoover");
+  fc.unlock("off_site", "temp_nosehoover_chains");
+  fc.unlock("off_site", "position_rest");
+  fc.unlock("off_site", "position_const");
+  fc.unlock("off_site", "position_const_scaled");
+  fc.unlock("off_site", "distance_rest");
+  fc.unlock("off_site", "distance_field");
+  fc.unlock("off_site", "dihedral_rest");
+  fc.unlock("off_site", "dihedral_const");
+  fc.unlock("off_site", "jvalue_rest");
+  fc.unlock("off_site", "rdc_rest");
+  fc.unlock("off_site", "perscale");
+  fc.unlock("off_site", "rottrans");
+  fc.unlock("off_site", "innerloop_method_off");
+  fc.unlock("off_site", "innerloop_method_generic");
+  fc.unlock("off_site", "innerloop_method_hardcode");
+  fc.unlock("off_site", "innerloop_method_table");
+  fc.unlock("off_site", "innerloop_method_cuda");
+  fc.unlock("off_site", "innerloop_solvent_topology");
+  fc.unlock("off_site", "innerloop_solvent_spc");
+  fc.unlock("off_site", "repex_temp");
+  fc.unlock("off_site", "repex_lambda");
+  fc.unlock("off_site", "multicell");
+  fc.unlock("off_site", "analysis");
+  fc.unlock("off_site", "no_integration");
+  fc.unlock("off_site", "stochdyn");
+  fc.unlock("off_site", "multistep");
+  fc.unlock("off_site", "multistep_boost");
+  fc.unlock("off_site", "montecarlo");
+  fc.unlock("off_site", "polarisation_cos");
+  fc.unlock("off_site", "polarisation_cos_damped");
+//  fc.unlock("off_site", "sasa");
+  fc.unlock("off_site", "sasavol");
+  fc.unlock("off_site", "random_gromos");
+  fc.unlock("off_site", "random_gsl");
+// fc.unlock("off_site", "eds");
+// fc.unlock("off_site", "aeds");
+// fc.unlock("off_site", "eds");
+// fc.unlock("off_site", "aeds");
+// fc.unlock("off_site", "eds");
+// fc.unlock("off_site", "aeds");
+  fc.unlock("off_site", "parallel_mpi");
+  fc.unlock("off_site", "parallel_omp");
+  fc.unlock("off_site", "mult_energy_groups");
+  fc.unlock("off_site", "ewald");
+  fc.unlock("off_site", "p3m");
+  fc.unlock("off_site", "leus");
+  fc.unlock("off_site", "bsleus");
+  fc.unlock("off_site", "xray");
+  fc.unlock("off_site", "force_groups");
+//LJ-Long-range correction
+  fc.unlock("LR_LJ_CORRECTION", "solute");
+  fc.unlock("LR_LJ_CORRECTION", "solvent");
+  fc.unlock("LR_LJ_CORRECTION", "solvent_only");
+  fc.unlock("LR_LJ_CORRECTION", "steepest_descent");
+  fc.unlock("LR_LJ_CORRECTION", "solute_constraint_off");
+  fc.unlock("LR_LJ_CORRECTION", "solute_shake");
+  fc.unlock("LR_LJ_CORRECTION", "solute_lincs");
+  fc.unlock("LR_LJ_CORRECTION", "solute_flexshake");
+  fc.unlock("LR_LJ_CORRECTION", "solvent_constraint_off");
+  fc.unlock("LR_LJ_CORRECTION", "solvent_shake");
+  fc.unlock("LR_LJ_CORRECTION", "solvent_lincs");
+  fc.unlock("LR_LJ_CORRECTION", "solvent_settle");
+  fc.unlock("LR_LJ_CORRECTION", "pressure_calculation");
+  fc.unlock("LR_LJ_CORRECTION", "pressure_scale_berendsen");
+  fc.unlock("LR_LJ_CORRECTION", "virial_off");
+  fc.unlock("LR_LJ_CORRECTION", "virial_atomic");
+  fc.unlock("LR_LJ_CORRECTION", "virial_molecular");
+  fc.unlock("LR_LJ_CORRECTION", "vacuum");
+  fc.unlock("LR_LJ_CORRECTION", "pbc_r");
+  fc.unlock("LR_LJ_CORRECTION", "pbc_c");
+  fc.unlock("LR_LJ_CORRECTION", "pbc_t");
+ // fc.unlock("LR_LJ_CORRECTION", "perturbation");
+ // fc.unlock("LR_LJ_CORRECTION", "perturbation_scaling");
+ // fc.unlock("LR_LJ_CORRECTION", "slow_growth");
+ // fc.unlock("LR_LJ_CORRECTION", "individual_lambdas");
+ // fc.unlock("LR_LJ_CORRECTION", "precalculate_lambdas");
+  fc.unlock("LR_LJ_CORRECTION", "bond");
+  fc.unlock("LR_LJ_CORRECTION", "angle");
+  fc.unlock("LR_LJ_CORRECTION", "dihedral");
+  fc.unlock("LR_LJ_CORRECTION", "improper");
+  fc.unlock("LR_LJ_CORRECTION", "crf");
+  fc.unlock("LR_LJ_CORRECTION", "lj");
+  fc.unlock("LR_LJ_CORRECTION", "com_removal");
+  fc.unlock("LR_LJ_CORRECTION", "rf_excluded");
+  fc.unlock("LR_LJ_CORRECTION", "pairlist_standard");
+  fc.unlock("LR_LJ_CORRECTION", "pairlist_grid");
+  fc.unlock("LR_LJ_CORRECTION", "pairlist_gridcell");
+  fc.unlock("LR_LJ_CORRECTION", "cutoff_atomic");
+  fc.unlock("LR_LJ_CORRECTION", "cutoff_cg");
+  fc.unlock("LR_LJ_CORRECTION", "cg_martini");
+  fc.unlock("LR_LJ_CORRECTION", "cg_gromos");
+  fc.unlock("LR_LJ_CORRECTION", "mixed_grain");
+  fc.unlock("LR_LJ_CORRECTION", "temp_berendsen");
+  fc.unlock("LR_LJ_CORRECTION", "temp_nosehoover");
+  fc.unlock("LR_LJ_CORRECTION", "temp_nosehoover_chains");
+  fc.unlock("LR_LJ_CORRECTION", "position_rest");
+  fc.unlock("LR_LJ_CORRECTION", "position_const");
+  fc.unlock("LR_LJ_CORRECTION", "position_const_scaled");
+  fc.unlock("LR_LJ_CORRECTION", "distance_rest");
+  fc.unlock("LR_LJ_CORRECTION", "distance_field");
+  fc.unlock("LR_LJ_CORRECTION", "dihedral_rest");
+  fc.unlock("LR_LJ_CORRECTION", "dihedral_const");
+  fc.unlock("LR_LJ_CORRECTION", "jvalue_rest");
+  fc.unlock("LR_LJ_CORRECTION", "rdc_rest");
+  fc.unlock("LR_LJ_CORRECTION", "perscale");
+  fc.unlock("LR_LJ_CORRECTION", "rottrans");
+  fc.unlock("LR_LJ_CORRECTION", "innerloop_method_off");
+  fc.unlock("LR_LJ_CORRECTION", "innerloop_method_generic");
+  fc.unlock("LR_LJ_CORRECTION", "innerloop_method_hardcode");
+  fc.unlock("LR_LJ_CORRECTION", "innerloop_method_table");
+  fc.unlock("LR_LJ_CORRECTION", "innerloop_method_cuda");
+  fc.unlock("LR_LJ_CORRECTION", "innerloop_solvent_topology");
+  fc.unlock("LR_LJ_CORRECTION", "innerloop_solvent_spc");
+ // fc.unlock("LR_LJ_CORRECTION", "repex_temp");
+ // fc.unlock("LR_LJ_CORRECTION", "repex_lambda");
+ // fc.unlock("LR_LJ_CORRECTION", "multicell");
+  fc.unlock("LR_LJ_CORRECTION", "analysis");
+  fc.unlock("LR_LJ_CORRECTION", "no_integration");
+ // fc.unlock("LR_LJ_CORRECTION", "stochdyn");
+  fc.unlock("LR_LJ_CORRECTION", "multistep");
+  fc.unlock("LR_LJ_CORRECTION", "multistep_boost");
+  fc.unlock("LR_LJ_CORRECTION", "montecarlo");
+  fc.unlock("LR_LJ_CORRECTION", "polarisation_cos");
+  fc.unlock("LR_LJ_CORRECTION", "polarisation_cos_damped");
+  fc.unlock("LR_LJ_CORRECTION", "sasa");
+  fc.unlock("LR_LJ_CORRECTION", "sasavol");
+  fc.unlock("LR_LJ_CORRECTION", "random_gromos");
+  fc.unlock("LR_LJ_CORRECTION", "random_gsl");
+ // fc.unlock("LR_LJ_CORRECTION", "eds");
+ // fc.unlock("LR_LJ_CORRECTION", "aeds");
+ // fc.unlock("LR_LJ_CORRECTION", "eds");
+//  fc.unlock("LR_LJ_CORRECTION", "aeds");
+//  fc.unlock("LR_LJ_CORRECTION", "eds");
+ // fc.unlock("LR_LJ_CORRECTION", "aeds");
+  fc.unlock("LR_LJ_CORRECTION", "parallel_mpi");
+  fc.unlock("LR_LJ_CORRECTION", "parallel_omp");
+  fc.unlock("LR_LJ_CORRECTION", "mult_energy_groups");
+  fc.unlock("LR_LJ_CORRECTION", "ewald");
+  fc.unlock("LR_LJ_CORRECTION", "p3m");
+  fc.unlock("LR_LJ_CORRECTION", "leus");
+  fc.unlock("LR_LJ_CORRECTION", "bsleus");
+  fc.unlock("LR_LJ_CORRECTION", "xray");
+  fc.unlock("LR_LJ_CORRECTION", "force_groups");
+  fc.unlock("LR_LJ_CORRECTION", "off_site");
 
   if (fc.check()) 
     return 0;

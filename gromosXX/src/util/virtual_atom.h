@@ -62,7 +62,11 @@ namespace util
     /**
      * -2: centre of mass
      */
-    va_com = -2
+    va_com = -2,
+      /**
+       * 10: 5 but with charge of mass
+       */
+    va_charge = 10
   };
   
   /**
@@ -85,11 +89,17 @@ namespace util
      * Constructor
      */
     Virtual_Atom(virtual_type type, std::vector<int> atom, double dish = 0.1, 
-		 double disc = 0.153,  int orientation = 0);
+		 double disc = 0.153,  int orientation = 0, double charge=0.0);
     /**
      * calculate the position of the virtual atom
      */
     math::Vec pos(configuration::Configuration & conf, topology::Topology & topo)const;
+      /**
+       * distribute force f of virtual atom on the real atoms for off-site charges
+       */
+/*
+    math::VArray force(configuration::Configuration & conf, topology::Topology & topo, math::Vec const f, math::VArray & force);
+*/
     /**
      * distribute force f of virtual atom on the real atoms.
      */
@@ -144,6 +154,10 @@ namespace util
      * orientation
      */
     int m_orientation;
+      /**
+       * charge
+       */
+      double m_charge;
   };
 }
 

@@ -6,6 +6,8 @@
 #ifndef INCLUDED_NONBONDED_INNERLOOP_H
 #define INCLUDED_NONBONDED_INNERLOOP_H
 
+#include "../../../stdheader.h"
+
 namespace interaction
 {
   
@@ -42,7 +44,20 @@ namespace interaction
      Storage & storage,
      math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity
             );
-    
+
+      /**
+       * (normal) off-site interaction analog to lj_crf_innerloop
+       */
+      void lj_crf_innerloop_off
+              (
+                      topology::Topology & topo,
+                      configuration::Configuration & conf,
+                      double q_off,math::Vec pos_off,
+                      unsigned int j,
+                      Storage & storage,
+                      math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity,
+                      math::Vec &force,unsigned int parent
+              );
     /**
      * (normal) interaction, new version (no virial calculation)
      */
@@ -55,6 +70,18 @@ namespace interaction
      double &f,
      double &e_lj, double &e_crf
     );
+      /**
+       * off-site interaction. analog to lj_crf_innerloop_2
+       */
+    void lj_crf_innerloop_off2
+              (
+                      topology::Topology & topo,
+                      double q,
+                      unsigned int j,
+                      const double dist2,
+                      double &f,
+                      double &e_crf
+              );
 
     /**
      * sasa adjustment

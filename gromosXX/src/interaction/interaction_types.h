@@ -89,6 +89,35 @@ namespace interaction
     double cs12;
   };
 
+    struct off_site_struct : public interaction_type_struct
+  {
+      /**
+       * Constructor
+       */
+      off_site_struct(double charge, double offset,
+                      std::vector<int> parents)
+      :va(util::Virtual_Atom()) ,charge(charge),offset(offset), parents(parents)
+      {
+        va=util::Virtual_Atom(util::va_charge,parents,offset,offset,0,charge);
+      }
+      /**
+       * default constructor
+       */
+      //off_site_struct()
+      //        : va(util::Virtual_Atom()), charge(0.0106), offset(0.21) ,parents() {}
+
+
+      util::Virtual_Atom va;
+      double charge;
+      double offset;
+      int parent;
+      int halogen;
+      std::vector<int> parents;
+  };
+
+
+
+
 }
 
 #endif

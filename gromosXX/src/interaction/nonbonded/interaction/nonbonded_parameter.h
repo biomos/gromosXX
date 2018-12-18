@@ -22,7 +22,7 @@ namespace interaction
      */
     Nonbonded_Parameter(Nonbonded_Parameter const & nbp)
       : m_lj_parameter(nbp.m_lj_parameter),
-	m_cg_parameter(nbp.m_cg_parameter)
+	m_cg_parameter(nbp.m_cg_parameter), m_offsite_parameter(nbp.m_offsite_parameter)
     {
     }
 
@@ -74,6 +74,12 @@ namespace interaction
     {
       return m_cg_parameter;
     }
+      /**
+       * the offsite charges.
+       */
+      std::vector<off_site_struct>  & offsite_parameter() {
+        return m_offsite_parameter;
+      }
 
     /**
      * get the lj parameters for atom type i and j.
@@ -133,6 +139,10 @@ namespace interaction
      * the cg parameter.
      */
     std::vector< std::vector<lj_parameter_struct> > m_cg_parameter;
+     /**
+      * the offsite charges.
+     */
+    std::vector<off_site_struct> m_offsite_parameter;
 
   };
   

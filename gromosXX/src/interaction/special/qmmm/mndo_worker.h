@@ -5,6 +5,9 @@
 #ifndef MNDO_WORKER_H
 #define	MNDO_WORKER_H
 
+#include "qm_worker.h"
+
+
 namespace interaction {
   class QM_Worker;
   /**
@@ -16,7 +19,9 @@ namespace interaction {
     /**
      * Constructor
      */
-    MNDO_Worker() : QM_Worker("MNDO Worker") {}
+    MNDO_Worker() : QM_Worker("MNDO Worker") {
+        this->get_new_qmID();
+    }
     /**
      * Destructor
      */
@@ -54,6 +59,10 @@ namespace interaction {
      * file name for MNDO gradient output file
      */
     std::string output_gradient_file;
+    /**
+     * file name for MNDO header file
+     */
+    std::string header_file;
   };
 }
 

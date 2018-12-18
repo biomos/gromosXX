@@ -21,7 +21,18 @@ namespace interaction {
     /**
      * Constructor
      */
-    QM_Worker(std::string name) : m_name(name), m_timer(name) {}
+      int get_new_qmID() {
+          id_qm=qm_idGenerator;
+          qm_idGenerator++;   
+      }
+      int del_qmID() {
+          qm_idGenerator--;
+      }
+      
+      int get_qmID();  
+      
+    QM_Worker(std::string name) : m_name(name), m_timer(name) {
+    }
     /**
      * Destructor
      */
@@ -55,8 +66,8 @@ namespace interaction {
      * Get an instance of a QM worker for the provided parameters
      * @return the instance or NULL on failure
      */
-    static QM_Worker * get_instance(const simulation::Simulation & sim);
-
+    static QM_Worker * get_instance(const simulation::Simulation & sim,
+    const int iprog);
     /**
      * accessor the the name of the QM worker
      */
@@ -74,7 +85,8 @@ namespace interaction {
      * name of the QM worker
      */
     std::string m_name;
-
+    static int qm_idGenerator;
+    int id_qm; // id of the qm-worker
     /**
      * timer of this worker
      */

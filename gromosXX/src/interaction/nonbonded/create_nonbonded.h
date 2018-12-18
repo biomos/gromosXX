@@ -27,7 +27,7 @@ namespace interaction
    * Gromos96 like simulation.
    */
   int create_g96_nonbonded(interaction::Forcefield & ff,
-			   topology::Topology const & topo,
+			   topology::Topology & topo,
 			   simulation::Simulation const & sim,
 			   io::IFP & it,
 			   std::ostream & os = std::cout,

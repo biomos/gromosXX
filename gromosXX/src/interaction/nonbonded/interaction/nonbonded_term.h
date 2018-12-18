@@ -36,17 +36,34 @@ namespace interaction
 			    double & force, double & e_lj,
 			    double & e_crf,
                             unsigned int eps = 0);
+      /**
+       * calculate the force and energy for an off-site interaction
+       */
+      void off_crf_interaction(math::Vec const &r,
+                              double q,
+                              double & force,
+                              double & e_crf,
+                              unsigned int eps = 0);
 
     /**
      * calculate the force and energy of an atom pair.
      * New version (distance calculation in outer loop)
      */
-    void lj_crf_interaction_fast(double dist2,
-			    double c6, double c12,
+    void off_crf_interaction_fast(double dist2,
 			    double q,
-			    double & force, double & e_lj,
+			    double & force,
 			    double & e_crf,
                             unsigned int eps = 0);
+      /**
+       * calculate the force and energy of virtual site with an atom
+       * New version (distance calculation in outer loop)
+       */
+      void lj_crf_interaction_fast(double dist2,
+                                   double c6, double c12,
+                                   double q,
+                                   double & force, double & e_lj,
+                                   double & e_crf,
+                                   unsigned int eps = 0);
 
      /**
      * calculate the force and energy of an atom pair.

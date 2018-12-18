@@ -147,6 +147,12 @@ namespace io {
      simulation::Parameter &param,
      std::ostream & os);
 
+      /**
+      * Read in the charged virtual sites.
+      */
+      virtual void read_offsite_chg( std::vector
+                                     <interaction::off_site_struct >
+                                     & offsite_parameter,topology::Topology & topo);
     /**
      * Read in the nonbonded interaction types (lennard-jones).
      */
@@ -169,7 +175,6 @@ namespace io {
     virtual void read_sasa_parameter(topology::Topology & topo, std::vector
                                     <topology::sasa_parameter_struct>
                                     & sasa_parameter);
-
     /**
      * length of strings allowed
      */

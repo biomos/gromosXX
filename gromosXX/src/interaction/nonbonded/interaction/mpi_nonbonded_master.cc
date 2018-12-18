@@ -223,6 +223,11 @@ calculate_interactions(topology::Topology & topo,
               MPI::DOUBLE,
               MPI::SUM,
               0);
+   if (sim.param().nonbonded.lj_correction  ) {
+    for (unsigned int j = 0; j < 3; ++j) {
+       m_nonbonded_set[0]->storage().virial_tensor(j,j)+=  conf.current().energies.lj_lr;
+    }
+  }
     }
     
     if (sim.param().perturbation.perturbation){
@@ -542,6 +547,14 @@ int interaction::MPI_Nonbonded_Master::init(topology::Topology & topo,
   if (check_special_loop(topo, conf, sim, os, quiet) != 0) {
     io::messages.add("special solvent loop check failed", "Nonbonded_Interaction",
             io::message::error);
+  //LRLJ-correction
+  if (sim.param().nonbonded.lj_correction) {
+    double c6_avg=0.0;
+    for (unsigned int i = 0;i< topo.num_atoms() ;++i){
+      c6_avg+=sqrt( m_parameter.lj_parameter(topo.iac(i),topo.iac(i)).c6 );
+    }
+    sim.param().nonbonded.lrlj_fac = (-2.* math::Pi*c6_avg*c6_avg)/(3.*pow(sim.param().pairlist.cutoff_long,3));
+  }
   }
   return 0;
   

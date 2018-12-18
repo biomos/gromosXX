@@ -29,6 +29,7 @@
 #undef SUBMODULE
 #define MODULE interaction
 #define SUBMODULE special
+#define MAXPATH 10240
 
 interaction::QMMM_Interaction::~QMMM_Interaction() {
   if (worker != NULL)
@@ -56,7 +57,7 @@ int interaction::QMMM_Interaction::prepare(topology::Topology& topo,
   interaction::gather_qmzone(topo, conf, sim, qm_pos);
   interaction::gather_mm_atoms(topo, conf, sim, qm_pos, mm_atoms);
   m_timer.stop("gathering");
-  
+   
   return 0;
 }
 
@@ -130,6 +131,7 @@ int interaction::QMMM_Interaction::add_electric_field_contribution(topology::Top
   m_timer.stop();
   return 0;
 }
+int interaction::QM_Worker::qm_idGenerator=1;
 
 int interaction::QMMM_Interaction::init(topology::Topology &topo,
             configuration::Configuration &conf,
@@ -143,7 +145,7 @@ int interaction::QMMM_Interaction::init(topology::Topology &topo,
   
   storage.resize(topo.num_atoms(), topo.qm_zone().size());
   
-  worker = interaction::QM_Worker::get_instance(sim);
+  worker = interaction::QM_Worker::get_instance(sim,1);
   if (worker == NULL) return 1;
   if (worker->init(topo, conf, sim)) return 1;
   
@@ -166,6 +168,10 @@ int interaction::QMMM_Interaction::init(topology::Topology &topo,
               << sim.param().qmmm.cutoff << std::endl;
     } else {
       os << "  All atoms are included as MM atoms." << std::endl;
+    }
+    if (sim.param().qmmm.mmscal > 0) {
+      os << "  MM point charges are scaled with 2/pi atan(s*|R|) with s=  " <<
+         sim.param().qmmm.mmscal << std::endl;
     }
     os << "END" << std::endl;
   }

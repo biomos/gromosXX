@@ -387,7 +387,8 @@ namespace simulation
     /** pol_lj_crf_function */ pol_lj_crf_func,
     /** pol_off_lj_crf_function */ pol_off_lj_crf_func,
     /** cgrain_function (MARTINI)*/ cgrain_func,
-    /** cgrain_function (GROMOS) */ cggromos_func
+    /** cgrain_function (GROMOS) */ cggromos_func,
+    /** QMMM_function  */ qmmm_func
   };
   
   /**
@@ -668,7 +669,23 @@ namespace simulation
      */
     localelev_on = 1
   };
-  
+
+    /**
+     * @enum off-site enum
+     * use off-site charges or not
+     */
+    enum offsite_enum {
+        /**
+         * Don't use off-site charges
+         */
+                offsite_off = 0,
+        /**
+         * Use offsite charges
+         */
+                offsite_on = 1
+    };
+
+
   /**
    * @enum bsleus_enum
    * do B&S-LEUS or not
@@ -714,6 +731,18 @@ namespace simulation
     qmmm_on = 1
   };
 
+  enum qmmm_disp_enum {
+  /**
+     * don't apply LJ-interaction between QM and MM atoms
+     */
+    qmmm_disp_off = 0,
+    /**
+     * apply LJ-interaction between QM and MM atoms
+     */
+    qmmm_disp_on = 1
+  };
+  
+
   /**
    * @enum qmmm_software_enum
    * which QM software to use
@@ -726,7 +755,15 @@ namespace simulation
     /**
      * use Turbomole
      */
-    qmmm_software_turbomole = 1
+    qmmm_software_turbomole = 1,
+    /**
+     * use DFTB
+     */
+    qmmm_software_dftb = 2,
+      /**
+       * use MOPAC
+       */
+    qmmm_software_mopac = 3
   };
 
   /**
@@ -1580,6 +1617,9 @@ namespace simulation
        * longrange LJ correction
        */
       bool lj_correction;
+      /* factor for the LRLJ-correction
+       */
+      double lrlj_fac;
       /**
        * solvent density
        */
@@ -3410,7 +3450,6 @@ namespace simulation
     } /** RDC-parameters */ rdc;
 
 
-
     struct qmmm_struct {
       /**
        * Constructor
@@ -3431,35 +3470,146 @@ namespace simulation
       unit_factor_charge(1.0),
       cutoff(0.0),
       write(0),
+      qmmm_disp(qmmm_disp_off),
+      mmscal(-1.0),
+
+
       interaction(NULL) {}
       /**
        * apply QM/MM or not
        */
       qmmm_enum qmmm;
       /**
+       * apply LJ-interaction in QM-Zone or not
+       */
+      qmmm_disp_enum qmmm_disp;
+      int qmmm_nworker;
+      /**
        * the QM software to use
        */
       qmmm_software_enum software;
+      qmmm_software_enum software2;
+      
+      std::map<unsigned int,std::string > qmmm_at_to_num;
       /**
        * factor to convert the QM length unit to the GROMOS one
        */
-      double unit_factor_length;
+      double unit_factor_length;  //MNDO
+      double unit_factor_length2;  //TM
+      double unit_factor_length3; //DFTB
+      double unit_factor_mmlen; //DFTB
       /**
        * factor to convert the QM energy unit to the GROMOS one
        */
-      double unit_factor_energy;
+      double unit_factor_energy; // MNDO
+      double unit_factor_energy2; // Turbomole
+      double unit_factor_energy3; //DFTB
       /**
        * factor to convert the QM charge unit to the GROMOS one
        */
-      double unit_factor_charge;
+      double unit_factor_charge;  //MNDO
+      double unit_factor_charge2; //Turbomole
+      double unit_factor_charge3; //DFTB
       /**
        * cutoff to determine atoms included in QM computation as point charges.
        */
       double cutoff;
       /**
+       * scaling factor for the MM atoms in the QM/MM interaction
+       */
+      double mmscal;
+      /**
        * write QM/MM related stuff to special trajectory
        */
       unsigned int write;
+      /**
+       * parameters for the DFTB software
+       */
+      
+      struct mopac_param_struct{
+          /**
+           * path for the MOPAC binary
+           */
+          std::string binary;
+          /**
+           * path for the input file. Empty for a temporary file
+           */
+          std::string input_file;
+          /**
+           * path for the output file. Empty for a temporary file
+           */
+          std::string output_file;
+          /**
+           * path for the gradient output file. Empty for a temporary file
+           */
+          std::string output_gradient_file;
+          /**
+           * path for the molin file. Empty for a temporary file
+           */
+          std::string molin_file;
+          /**
+           * header of the MOPAC input file
+           */
+          std::string input_header;
+          /**
+           * path for the input file2. Empty for a temporary file
+           */
+          std::string input_file2;
+          /**
+           * path for the output file2. Empty for a temporary file
+           */
+          std::string output_file2;
+          /**
+           * path for the gradient output file2. Empty for a temporary file
+           */
+          std::string output_gradient_file2;
+          /**
+           * header of the MOPAC input file2
+           */
+          std::string input_header2;
+          /**
+           * path for the molin file2. Empty for a temporary file
+           */
+          std::string molin_file2;
+      }mopac;
+      struct dftb_param_struct {
+        /**
+         * path for the DFTB binary
+         */
+        std::string binary;
+        /**
+         * path for the input file. Empty for a temporary file
+         */
+        std::string input_file;
+        /**
+         * path for the output file. Empty for a temporary file
+         */
+        std::string output_file;
+        /**
+         * path for the gradient output file. Empty for a temporary file
+         */
+        std::string output_gradient_file;
+        /**
+         * path for the charges.dat file. Empty for a temporary file
+         */
+        std::string output_charg_file;
+        /**
+         * header of the DFTB input file
+         */
+        std::string input_header;
+        /**
+         * the working directory containing the control file
+         */
+        std::string working_directory;
+        /**
+         * atomic numbers 
+         */
+        std::vector<unsigned int> elements;
+        /**
+         * path of the DFTB geom file
+         */
+        std::string geom_file;
+      } dftb;
       /**
        * parameters for the MNDO software
        */

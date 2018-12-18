@@ -43,6 +43,13 @@ namespace io {
         virtual void read_sasa_parameter(topology::Topology & topo,
                 std::vector<topology::sasa_parameter_struct>
                 & sasa_parameter) = 0;
+        /**
+        * Read in the charged virtual sites.
+        */
+        virtual void read_offsite_chg(std::vector<interaction::off_site_struct >
+        & offsite_parameter,topology::Topology & topo)=0;
+
+
 
     };
 

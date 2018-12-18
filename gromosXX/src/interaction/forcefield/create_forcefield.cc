@@ -39,7 +39,7 @@
  * create a Gromos96 (like) forcefield.
  */
 int interaction::create_g96_forcefield(interaction::Forcefield & ff,
-				       topology::Topology const & topo,
+				       topology::Topology & topo,
 				       simulation::Simulation & sim,
 				       io::IFP & it,
 				       std::ostream & os,

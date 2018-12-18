@@ -12,6 +12,7 @@
 #include "../../interaction/interaction_types.h"
 #include "../../io/instream.h"
 #include "../../util/parse_tcouple.h"
+#include "../../util/virtual_atom.h"
 
 #include "../../io/blockinput.h"
 #include <vector>
@@ -479,6 +480,11 @@ void io::In_Topology::read(topology::Topology& topo,
   if (m_block["CGPARAMETERS"].size()) {
     block_read.insert("CGPARAMETERS");
   }
+  if (m_block["OFFSITE"].size()) {
+    block_read.insert("OFFSITE");
+  }
+
+
 
   // warn for unread input data
   for(std::map<std::string, std::vector<std::string> >::const_iterator
@@ -1107,6 +1113,49 @@ void io::In_Topology
   } // LJPARAMETER
 
 }
+
+void io::In_Topology
+::read_offsite_chg(std::vector<interaction::off_site_struct>
+& offsite_parameter,topology::Topology &topo ) {
+  std::vector<std::string> buffer;
+  std::vector<std::string>::const_iterator it;
+  util::virtual_type test(util::va_charge);
+  { // OFFSITE
+    DEBUG(10, "OFFSITE block");
+    buffer = m_block["OFFSITE"];
+    topo.enable_offsite=0;
+    if (buffer.size()) {
+      topo.enable_offsite=1;
+      it = buffer.begin() + 1;
+      io::messages.add("Found off-site charges in topology",
+                       "In_Topology", io::message::notice);
+      for (int n = 0; it != buffer.end() - 1; ++it, ++n) {
+        int hal, parent;
+        std::vector<int> ats;
+        double o_chg, o_dst;
+        _lineStream.clear();
+        _lineStream.str(*it);
+
+        _lineStream >> hal >> parent >> o_chg >> o_dst;
+     //   std::cout << hal << " " << parent << "  " << o_chg << "  " << o_dst << std::endl;
+        --hal;
+        --parent;
+        ats.push_back(hal);
+        ats.push_back(parent);
+        interaction::off_site_struct s(o_chg, o_dst, ats);
+        topo.charge()[hal] -= o_chg;
+        if (_lineStream.fail())
+          io::messages.add("bad line in OFFSITE block", "In_Topology",
+                           io::message::error);
+
+        offsite_parameter.push_back(s);
+      } // OFFSITE
+    }
+  }
+}
+
+
+
 
 void io::In_Topology
 ::read_cg_parameter(std::vector<std::vector

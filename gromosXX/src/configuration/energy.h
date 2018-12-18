@@ -70,6 +70,10 @@ namespace configuration
      */
     double lj_total;
     /**
+     * Long-Range Lennard-Jones correction
+     */
+    double lj_lr;
+    /**
      * total energy of the coulomb reaction-field interaction
      */
     double crf_total;
@@ -228,13 +232,6 @@ namespace configuration
     double A_dihedral;
     double B_dihedral;
 //    std::vector<double> AB_dihedral;
-
-    /** Betty
-     * special interaction energies for each lambda
-     */
-    std::vector<double> AB_disres;
-    std::vector<double> AB_dihres;
-    std::vector<double> AB_disfld;
 
     /**
      * total energy of the dipole-dipole interaction (self energy)

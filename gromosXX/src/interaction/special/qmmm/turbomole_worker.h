@@ -16,7 +16,10 @@ namespace interaction {
     /**
      * Constructor
      */
-    Turbomole_Worker() : QM_Worker("Turbomole Worker") {}
+    Turbomole_Worker() : QM_Worker("Turbomole Worker") {
+    this->get_new_qmID();
+
+    }
     /**
      * Destructor
      */
@@ -41,6 +44,12 @@ namespace interaction {
             const math::VArray & qm_pos,
             const std::vector<MM_Atom> & mm_atoms,
             interaction::QM_Storage & storage);
+    private:
+    /**
+     * file name for TM working directory
+     */
+    std::string working_directory;
+    std::vector<std::string> tool_chain;
   };
 }
 

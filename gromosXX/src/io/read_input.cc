@@ -50,10 +50,10 @@ int io::read_input(io::Argument const & args,
 {
 
   if (read_parameter(args, sim, os, quiet) != 0) return -1;
-  if (check_parameter(sim) != 0) return -1;
 
   if (read_topology(args, topo, sim, md_seq, os, quiet) != 0) return -1;
-  
+
+   if (check_parameter(sim,topo) != 0) return -1;
   // read this before configuration, as it contains topological data...
   if (read_special(args, topo, conf, sim, os, quiet) != 0) return -1;
   

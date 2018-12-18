@@ -40,6 +40,7 @@ namespace io {
      */
     void read(topology::Topology &topo,
 	      simulation::Simulation & sim,
+	      simulation::qmmm_software_enum,
 	      std::ostream & os = std::cout);
 
   };

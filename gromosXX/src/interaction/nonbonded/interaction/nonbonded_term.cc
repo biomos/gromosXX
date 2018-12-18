@@ -28,6 +28,7 @@ inline void interaction::Nonbonded_Term
     case simulation::lj_crf_func:
     case simulation::pol_lj_crf_func:
     case simulation::pol_off_lj_crf_func:
+    case simulation::qmmm_func:
       cgrain_eps.push_back(sim.param().nonbonded.epsilon);
       // Force
       if (sim.param().nonbonded.rf_cutoff > 0.0) {
@@ -211,6 +212,61 @@ inline void interaction::Nonbonded_Term
 
   DEBUG(15, "\t\tq=" << q << " 4pie=" << math::four_pi_eps_i
           << " crf_cut2i=" << m_crf_cut3i[eps]);
+
+}
+inline void interaction::Nonbonded_Term
+::off_crf_interaction(math::Vec const &r,
+                     double q,
+                     double &force,  double &e_crf, unsigned int eps) {
+  DEBUG(14, "\t\tnonbonded term");
+
+  assert(abs2(r) != 0);
+  const double dist2 = abs2(r);
+  HEAVISIDETRUNC(dist2, force = e_lj = e_crf)
+  const double dist2i = 1.0 / dist2;
+  const double q_eps = q * math::four_pi_eps_i;
+  const double disti = sqrt(dist2i);
+
+  DEBUG(10, "\t\tdist offsite-particle " << disti);
+
+  e_crf = q_eps *
+          (disti - m_crf_2cut3i[eps] * dist2 - m_crf_cut[eps]);
+
+  force = q_eps * (disti * dist2i + m_crf_cut3i[eps]);
+
+  DEBUG(10, "\t\t m_crf_cut3i " <<  m_crf_cut3i[eps])  ;
+  //double f_crf = q_eps * (disti * dist2i + m_crf_cut3i);
+  //DEBUG(1, "force = " << f_crf*r(0) << "  " << f_crf*r(1) << "  " << f_crf*r(2));
+
+  DEBUG(15, "\t\tq=" << q << " 4pie=" << math::four_pi_eps_i
+                     << " crf_cut2i=" << m_crf_cut3i[eps]);
+
+}
+
+inline void interaction::Nonbonded_Term
+::off_crf_interaction_fast(double dist2,
+                           double q,
+                           double &force,  double &e_crf, unsigned int eps) {
+  DEBUG(14, "\t\tnonbonded term");
+  assert(dist2 > 0);
+
+  HEAVISIDETRUNC(dist2, force = e_lj = e_crf)
+  const double dist2i = 1.0 / dist2;
+  const double q_eps = q * math::four_pi_eps_i;
+  const double disti = sqrt(dist2i);
+
+
+  e_crf = q_eps *
+          (disti - m_crf_2cut3i[eps] * dist2 - m_crf_cut[eps]);
+
+  force = q_eps * (disti * dist2i + m_crf_cut3i[eps]);
+
+  //double f_crf = q_eps * (disti * dist2i + m_crf_cut3i);
+  //DEBUG(1, "force = " << f_crf*r(0) << "  " << f_crf*r(1) << "  " << f_crf*r(2));
+
+  DEBUG(15, "\t\tq=" << q << " 4pie=" << math::four_pi_eps_i
+                     << " crf_cut2i=" << m_crf_cut3i[eps]);
+
 
 }
 

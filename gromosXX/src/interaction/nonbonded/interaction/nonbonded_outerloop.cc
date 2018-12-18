@@ -65,6 +65,49 @@ interaction::Nonbonded_Outerloop
 //==================================================
 // interaction loops
 //==================================================
+int interaction::Nonbonded_Outerloop::calculate_interaction_off(Nonbonded_Parameter & param,
+                  topology::Topology &topo, configuration::Configuration &conf,
+                  simulation::Simulation &sim, Pairlist const & pairlist_solute,
+                  Pairlist const & pairlist_solvent,
+                     math::VArray &force, math::VArray &virtual_f ) {
+
+  std::vector< interaction::off_site_struct>::iterator
+          off_it=param.offsite_parameter().begin(),
+          off_to=param.offsite_parameter().end();
+
+  double q1,q2;
+  double r1,r2;
+  math::Vec f,dR;
+  math::Periodicity<math::rectangular> periodicity(conf.current().box);
+  math::Vec R_off,F01,F02;
+  //compute force on virtual site due to presence of charged particles in the vicinity
+  //defined by the short-range pairlist
+  const double prefac=math::four_pi_eps_i;
+  for (;off_it!=off_to;++off_it){
+      //update positions of virtual sites
+      R_off=off_it->va.pos(conf,topo);
+      q1=off_it->charge;
+      unsigned int p;
+      p = off_it->parents[0];
+      for (unsigned int atom_j = 0;
+           atom_j < pairlist_solute[p].size(); ++atom_j) {
+        const int kk = periodicity.nearest_image(R_off, conf.current().pos(atom_j), dR);
+        q2=topo.charge(atom_j);
+        f=prefac*q1*q2*dR/(abs(dR)*abs2(dR));
+        F01=conf.current().force(p);
+        F02=conf.current().force(off_it->parents[1]);
+        off_it->va.force(conf,topo,f); //distributed force to atoms i and j
+        virtual_f[off_it->parents[0]]=conf.current().force(off_it->parents[0])-F01;
+        virtual_f[off_it->parents[1]]=conf.current().force(off_it->parents[1])-F02;
+        force[atom_j]=-f;
+        //    storage.energies.crf_energy[eg_i][eg_j] += e_crf;
+//    std::cout << "pairlist of "  << p  << m_nonbonded_set[p]->pairlist().solute_short  << std::endl;
+//        std::cout << off_it->parents[0] << "   " << off_it->parents[1] << "  " << off_it->charge << std::endl;
+      }
+    }
+
+  return  0;
+}
 
 void interaction::Nonbonded_Outerloop
 ::lj_crf_outerloop(topology::Topology & topo,
@@ -76,6 +119,18 @@ void interaction::Nonbonded_Outerloop
         bool longrange, util::Algorithm_Timer & timer, bool master) {
   SPLIT_INNERLOOP(_lj_crf_outerloop, topo, conf, sim,
           pairlist_solute, pairlist_solvent, storage, longrange, timer, master);
+}
+
+void interaction::Nonbonded_Outerloop
+::offsite_outerloop(topology::Topology & topo,
+                   configuration::Configuration & conf,
+                   simulation::Simulation & sim,
+                   Pairlist const & pairlist_solute,
+                   Pairlist const & pairlist_solvent,
+                   Storage & storage,
+                   bool longrange, util::Algorithm_Timer & timer, bool master) {
+  SPLIT_INNERLOOP(_offsite_outerloop, topo, conf, sim,
+                  pairlist_solute, pairlist_solvent, storage, longrange, timer, master);
 }
 
 /**
@@ -100,6 +155,8 @@ void interaction::Nonbonded_Outerloop
       sim.param().innerloop.method != simulation::sla_cuda) {
     _lj_crf_outerloop_fast(topo, conf, sim, pairlist_solute, pairlist_solvent,
                         storage, longrange, timer, master);
+    _offsite_outerloop_fast(topo, conf, sim, pairlist_solute, pairlist_solvent,
+                           storage, longrange, timer, master);
     return;
   }
 
@@ -344,7 +401,7 @@ void interaction::Nonbonded_Outerloop
       // shortrange, therefore store in simulation.system()
       // innerloop.lj_crf_innerloop(topo, conf, i, *j_it, storage, periodicity);
     }
-    
+
     storage.force(i) += groupForce;
     if (k != 0) {
       const math::Vec shift = periodicity.shift(k+13).pos;
@@ -2663,4 +2720,215 @@ int interaction::Nonbonded_Outerloop
   }
 
   return 0;
+}
+
+
+void interaction::Nonbonded_Outerloop
+::_offsite_outerloop_fast(topology::Topology & topo,
+                         configuration::Configuration & conf,
+                         simulation::Simulation & sim,
+                         Pairlist const & pairlist_solute,
+                         Pairlist const & pairlist_solvent,
+                         Storage & storage, bool longrange,
+                         util::Algorithm_Timer & timer, bool master) {
+  DEBUG(7, "\tcalculate interactions lj_crf_outerloop_fast");
+  double q1,q2;
+  double r1,r2;
+  math::Vec f,dR;
+  math::Vec R_off;
+
+  math::Periodicity<math::rectangular> periodicity(conf.current().box);
+  periodicity.recalc_shift_vectors();
+  Nonbonded_Innerloop<interaction::Interaction_Spec<math::rectangular, simulation::lj_crf_func> > innerloop(m_param);
+  innerloop.init(sim);
+
+  /*
+    variables for a OMP parallelizable loop.
+    outer index has to be integer...
+   */
+  std::vector<unsigned int>::const_iterator j_it, j_to;
+
+  unsigned int size_i = unsigned(pairlist_solute.size());
+  DEBUG(10, "lj_crf2 outerloop pairlist size " << size_i);
+
+  const unsigned int end = topo.num_solute_atoms();
+  std::vector< interaction::off_site_struct>::iterator
+          off_it=m_param.offsite_parameter().begin(),
+          off_to=m_param.offsite_parameter().end();
+
+
+  math::VArray virt_forces;
+  virt_forces.resize(topo.num_solute_atoms());
+  virt_forces=0.0;
+
+  unsigned int i=0;
+
+  for (;off_it!=off_to;++off_it){
+    R_off=off_it->va.pos(conf,topo);
+      q1=off_it->charge;
+
+    math::Vec groupForce(0.0);
+    int k = 0;
+    unsigned int p;
+    p = off_it->parents[0];
+    const unsigned int eg_i = topo.atom_energy_group(p);
+
+    for (unsigned int atom_j = 0;
+           atom_j < pairlist_solute[p].size(); ++atom_j) {
+
+      math::VArray temp_forces=0;
+      DEBUG(10, "\tnonbonded_interaction: i " << i << " j " << atom_j);
+      math::Vec r;
+      const int kk = periodicity.nearest_image(R_off, conf.current().pos(atom_j), r);
+
+      if (kk != k) {
+        //storage.force(i) += groupForce;
+        off_it->va.force(conf,topo,groupForce,storage.force);
+        off_it->va.force(conf,topo,groupForce,virt_forces);
+        if (k != 0) {
+          const math::Vec shift = periodicity.shift(k + 13).pos;
+          for (int a = 0; a < 3; ++a) {
+            for (int b = 0; b < 3; ++b) {
+              //storage.virial_tensor(b, a) += (posI(b) + shift(b)) * groupForce(a);
+              storage.virial_tensor(b, a) += shift(b) * groupForce(a);
+            }
+          }
+        }
+        groupForce = 0.;
+        k = kk;
+
+      }
+
+      const double dist2 = abs2(r);
+      math::Vec force;
+      double f;
+      double e_crf;
+
+      innerloop.lj_crf_innerloop_off2(topo,q1,atom_j,dist2,f,e_crf);
+      const unsigned int eg_j = topo.atom_energy_group(atom_j);
+      DEBUG(11, "\tenergy group i " << eg_i << " j " << eg_j);
+      storage.energies.crf_energy[eg_i][eg_j] += e_crf;
+
+      force = f * r;
+      storage.force(atom_j) -= force;
+      groupForce += force;
+
+      // shortrange, therefore store in simulation.system()
+      // innerloop.lj_crf_innerloop(topo, conf, i, *j_it, storage, periodicity);
+    }
+    //here we need to distribute the force, acting on the virtual particle
+    //to the parent atoms i and j
+ //   storage.force(i) += groupForce;
+    off_it->va.force(conf,topo,groupForce,storage.force);
+    off_it->va.force(conf,topo,groupForce,virt_forces);
+
+
+    if (k != 0) {
+      const math::Vec shift = periodicity.shift(k + 13).pos;
+      for (int a = 0; a < 3; ++a) {
+        for (int b = 0; b < 3; ++b) {
+          //storage.virial_tensor(b, a) += (posI(b) + shift(b)) * groupForce(a);
+          storage.virial_tensor(b, a) += shift(b) * groupForce(a);
+        }
+      }
+    }
+  }
+  for (unsigned int ii = 0; ii < topo.num_solute_atoms(); ++ii) {
+    const math::Vec pos = conf.current().pos(ii);
+    const math::Vec force = virt_forces(ii);
+    for (int a = 0; a < 3; ++a) {
+      for (int b = 0; b < 3; ++b) {
+        //storage.virial_tensor(b, a) += (posI(b) + shift(b)) * groupForce(a);
+        storage.virial_tensor(b, a) += pos(b) * force(a);
+      }
+    }
+  }
+}
+
+/**
+ * off-site charges outerloop
+ * analog to "slow" normal outerloop
+ *
+ */
+template<typename t_interaction_spec>
+void interaction::Nonbonded_Outerloop
+::_offsite_outerloop(topology::Topology & topo,
+                    configuration::Configuration & conf,
+                    simulation::Simulation & sim,
+                    Pairlist const & pairlist_solute,
+                    Pairlist const & pairlist_solvent,
+                    Storage & storage, bool longrange,
+                    util::Algorithm_Timer & timer, bool master) {
+  DEBUG(7, "\tcalculate interactions");
+
+  // WORKAROUND! See definition of _lj_crf_outerloop_fast
+  if (t_interaction_spec::boundary_type == math::rectangular &&
+      t_interaction_spec::interaction_func == simulation::lj_crf_func &&
+      sim.param().innerloop.method != simulation::sla_cuda) {
+    _offsite_outerloop_fast(topo, conf, sim, pairlist_solute, pairlist_solvent,
+                            storage, longrange, timer, master);
+    return;
+  }
+
+  math::Periodicity<t_interaction_spec::boundary_type> periodicity(conf.current().box);
+  Nonbonded_Innerloop<t_interaction_spec> innerloop(m_param);
+  innerloop.init(sim);
+
+  /*
+    variables for a OMP parallelizable loop.
+    outer index has to be integer...
+   */
+  std::vector<unsigned int>::const_iterator j_it, j_to;
+
+  unsigned int size_i = unsigned(pairlist_solute.size());
+
+  const unsigned int end = topo.num_solute_atoms();
+  DEBUG(10, "\t\t 4 epsilon pi " << math::four_pi_eps_i);
+
+  std::vector<interaction::off_site_struct>::iterator
+          off_it = m_param.offsite_parameter().begin(),
+          off_to = m_param.offsite_parameter().end();
+  double q_off;
+  math::Vec R_off;
+  math::VArray virt_forces;
+  virt_forces.resize(end);
+  virt_forces = 0.0;
+  unsigned int i;
+  for (; off_it != off_to; ++off_it) {
+    R_off = off_it->va.pos(conf, topo);
+    q_off = off_it->charge;
+    unsigned int p;
+    p = off_it->parents[0];
+    math::Vec groupForce(0.0);
+    DEBUG(12, "parent: " << p);
+    DEBUG(12, "R_off: " << R_off[0] << "  " << R_off[1] << "  " << R_off[2]);
+    for (j_it = pairlist_solute[p].begin(),
+                 j_to = pairlist_solute[p].end();
+         j_it != j_to;
+         ++j_it) {
+
+      DEBUG(10, "\toffsite interaction: i " << p << " j " << *j_it);
+
+      math::Vec force(0.0);
+      // shortrange, therefore store in simulation.system()
+      innerloop.lj_crf_innerloop_off(topo, conf, q_off, R_off, *j_it,
+                                     storage, periodicity, force, p);
+      DEBUG(12, "force_outerloop: " << force[0] << "  " << force[1] << "  " << force[2]);
+      DEBUG(12, "abs(force_outerloop): " << abs(force));
+      groupForce += force;
+    }
+    off_it->va.force(conf, topo, groupForce, storage.force);
+    off_it->va.force(conf, topo, groupForce, virt_forces);
+  }
+
+  for (unsigned int ii = 0; ii < topo.num_solute_atoms(); ++ii) {
+    const math::Vec pos = conf.current().pos(ii);
+    const math::Vec force = virt_forces(ii);
+    for (int a = 0; a < 3; ++a) {
+      for (int b = 0; b < 3; ++b) {
+//storage.virial_tensor(b, a) += (posI(b) + shift(b)) * groupForce(a);
+        storage.virial_tensor(b, a) += pos(b) * force(a);
+      }
+    }
+  }
 }

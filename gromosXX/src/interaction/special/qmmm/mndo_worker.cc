@@ -36,20 +36,27 @@ int interaction::MNDO_Worker::run_QM(topology::Topology& topo,
         const std::vector<interaction::MM_Atom> & mm_atoms,
         interaction::QM_Storage& storage) {
   
+    this->input_file = sim.param().qmmm.mndo.input_file;
+    this->output_file = sim.param().qmmm.mndo.output_file;
+    this->output_gradient_file = sim.param().qmmm.mndo.output_gradient_file;
+    this->header_file=sim.param().qmmm.mndo.input_header;
+     
+
+/*
   if (mm_atoms.empty()) {
     io::messages.add("Cannot deal with zero MM atoms yet.", "MNDO_Worker", 
             io::message::error);
     return 1;
   }
-  
-  std::ofstream inp(input_file.c_str());
+  */
+
+  std::ofstream inp(this->input_file.c_str());
   if (!inp.is_open()) {
     io::messages.add("Could not create input file for MNDO at the location "
-            + input_file, "MNDO_Worker", io::message::critical);
+            + this->input_file, "MNDO_Worker", io::message::critical);
     return 1;
   }
-
-  std::string header(sim.param().qmmm.mndo.input_header);
+  std::string header(this->header_file);
   // get the number of point charges
   unsigned int num_charge = mm_atoms.size();
   for(unsigned int i = 0; i < mm_atoms.size(); ++i) {
@@ -69,6 +76,10 @@ int interaction::MNDO_Worker::run_QM(topology::Topology& topo,
       link_atoms.push_back(li);
     }
   }
+  //std::ostringstream oss; oss << num_charge ;
+  header = io::replace_string(header, "@@NUM_ATOMS@@", oss.str());
+
+
   oss.str("");
   oss.clear();
   oss << link_atoms.size();
@@ -133,9 +144,9 @@ int interaction::MNDO_Worker::run_QM(topology::Topology& topo,
   }
   inp.close();
   
-  // staring MNDO
+  // starting MNDO
   int result = util::system_call(sim.param().qmmm.mndo.binary,
-          input_file, output_file);
+          this->input_file, this->output_file);
   if (result != 0) {
     std::ostringstream msg;
     msg << "MNDO failed with code " << result << ". See output file "
@@ -145,7 +156,8 @@ int interaction::MNDO_Worker::run_QM(topology::Topology& topo,
   }
   
   // read output
-  std::ifstream output(sim.param().qmmm.mndo.output_file.c_str());
+  std::ifstream output(this->output_file.c_str());
+ // std::ifstream output(sim.param().qmmm.mndo.output_file.c_str());
   if (!output.is_open()) {
     io::messages.add("Cannot open MNDO output file", "MNDO_Worker", 
             io::message::error);
@@ -188,7 +200,8 @@ int interaction::MNDO_Worker::run_QM(topology::Topology& topo,
   output.close();
   
   // read output in fort.15
-  output.open(output_gradient_file.c_str());
+  //output.open(output_gradient_file.c_str());
+  output.open(this->output_gradient_file.c_str());
   if (!output.is_open()) {
     io::messages.add("Cannot open MNDO energy, gradient file (fort.15)",
             "MNDO_Worker", io::message::error);

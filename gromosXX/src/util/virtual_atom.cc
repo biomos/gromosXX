@@ -29,22 +29,24 @@ static const double TETHSI=0.8164965809;
 
 
 util::Virtual_Atom::Virtual_Atom()
-  :  m_type(va_explicit),
+  :  m_type(va_charge),
      m_atom(),
      m_dish(0.1),
      m_disc(0.153),
-     m_orientation(0)
+     m_orientation(0),
+     m_charge(0.0)
 {
 }
 
 util::Virtual_Atom::Virtual_Atom(virtual_type type, std::vector<int> atom,
 				 double dish, double disc,
-                                 int orientation)
+                                 int orientation, double charge)
   :  m_type(type),
      m_atom(atom),
      m_dish(dish),
      m_disc(disc),
-     m_orientation(orientation)
+     m_orientation(orientation),
+	 m_charge(charge)
 {
   bool strict = true; // do the test?
   unsigned int expected = 0; // number of atoms expected for virtual atom
@@ -63,6 +65,7 @@ util::Virtual_Atom::Virtual_Atom(virtual_type type, std::vector<int> atom,
       expected = 3;
       break;
     case 5: // CH3
+    case 10://off-site charge. Only for arylhalogenes.
     case va_3CH3: // (CH3)3-group (one psuedosite)
       expected = 2;
       break;
@@ -161,7 +164,7 @@ void util::Virtual_Atom::_pos
       DEBUG(10, "\tDISH = " << m_dish << "\tTETHCO = " << TETHCO << "\tTETHSI = " << TETHSI);
       p =  posi + m_dish * TETHCO / math::abs(s) * s + m_dish * TETHSI / math::abs(t) * t;
       break;
-      
+    case 10:
     case 5: // CH3
       assert(m_atom.size()>1);
       periodicity.nearest_image(position(m_atom[1]), posi, posj);
@@ -570,7 +573,7 @@ void util::Virtual_Atom::_force
 						 math::dot(calc2,f),
 						 math::dot(calc3,f))));
       break;
-      
+    case 10:  //off-site
     case 5: // CH3
       assert(m_atom.size()>1);
       periodicity.nearest_image(position(m_atom[1]), posi, posj);
@@ -719,3 +722,17 @@ void util::Virtual_Atom::force
 {
   SPLIT_BOUNDARY(_force, conf.current().pos, topo , conf.current().box, f, force);
 }
+
+/*
+math::VArray util::Virtual_Atom::force
+		(
+				configuration::Configuration & conf,
+				topology::Topology & topo,
+				math::Vec const f,
+				math::VArray & force
+		)
+{
+	SPLIT_BOUNDARY(_force, conf.current().pos, topo, conf.current().box, f, force);
+	return force;
+}
+*/

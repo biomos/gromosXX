@@ -114,7 +114,7 @@ int main(int argc, char *argv[]) {
     simulation::Simulation sim;
 
     // read in parameters
-    if (io::read_parameter(args,sim,std::cout,true) || io::check_parameter(sim)){
+    if (io::read_parameter(args,sim,std::cout,true) || io::check_parameter(sim,topo)){
       if (rank == 0) {
         io::messages.display(std::cout);
         std::cout << "\nErrors in in_parameters!\n" << std::endl;

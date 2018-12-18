@@ -11,7 +11,7 @@ namespace io
   /**
    * cross checks on the parameters
    */
-  int check_parameter(simulation::Simulation &sim);
+  int check_parameter(simulation::Simulation &sim,topology::Topology const & topo);
   
   /**
    * does basic cross checks on parameters from different blocks
@@ -25,7 +25,7 @@ namespace io
    * checks each feature against all others
    * every allowed combination has to be unlocked
    */
-  int check_features(simulation::Simulation &sim);
+  int check_features(simulation::Simulation &sim,topology::Topology const &topo);
 }
 
 #endif

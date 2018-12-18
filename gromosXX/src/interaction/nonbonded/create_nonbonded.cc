@@ -57,7 +57,7 @@ using namespace std;
 int interaction::create_g96_nonbonded
 (
  interaction::Forcefield & ff,
- topology::Topology const & topo,
+ topology::Topology & topo,
  simulation::Simulation const & sim,
  io::IFP & it,
  std::ostream & os,
@@ -81,7 +81,7 @@ int interaction::create_g96_nonbonded
       if (sim.param().sasa.switch_volume)
         os << "\t" << "VOL Interaction" << "\n";
     }
-   
+
     if (sim.param().pairlist.grid == 0)
       os << "\t" << setw(20) << left << "Pairlist Algorithm" << setw(30) 
 	   << left << "Standard Pairlist Algorithm" << right << "\n";
@@ -213,8 +213,12 @@ int interaction::create_g96_nonbonded
       sim.param().force.interaction_function ==
       simulation::pol_off_lj_crf_func ||
       sim.param().force.interaction_function ==
-      simulation::lj_ls_func    )
+      simulation::lj_ls_func  || 
+      sim.param().force.interaction_function ==
+      simulation::qmmm_func    
+          )
     it.read_lj_parameter(ni->parameter().lj_parameter());
+    it.read_offsite_chg(ni->parameter().offsite_parameter(),topo);
   // and coarse-grained parameter (MARTINI model)
   if (sim.param().force.interaction_function ==
       simulation::cgrain_func)

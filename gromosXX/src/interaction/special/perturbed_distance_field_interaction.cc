@@ -239,66 +239,8 @@ static int _calculate_perturbed_field_restraint_interactions
   conf.special().distancefield.energy = energy;
   conf.special().distancefield.energy_deriv = energy_derivative;
 
-
-  /**
-   * ext_TI code - Betty
-   */
-  
-  if (sim.param().precalclam.nr_lambdas &&
-      ((sim.steps() % sim.param().write.free_energy) == 0)){
-    
-    double lambda_step = (sim.param().precalclam.max_lam -
-			  sim.param().precalclam.min_lam) /
-                          (sim.param().precalclam.nr_lambdas-1);
-    
-    //loop over nr_lambdas
-    for (unsigned int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
-      
-      double lam = (lam_index * lambda_step) + sim.param().precalclam.min_lam;
-      double prefactorlam = pow(2.0, n + m) * pow(lam, n) * pow(1.0-lam, m);
-      
-      double r0lam = (1-lam) * topo.perturbed_disfield_restraints().A_r0 + lam * topo.perturbed_disfield_restraints().B_r0;
-      double Klam = (1-lam) * topo.perturbed_disfield_restraints().K_A + lam * topo.perturbed_disfield_restraints().K_B;
-      double difflam = dist - r0lam;
-      double difflam2 = difflam * difflam;
-
-      double en_termlam;
-      if(fabs(r0lam - dist) < r_l){
-	en_termlam = 0.5 * Klam * difflam;
-      }
-      else if(dist < (r0lam - r_l)){
-	en_termlam = -Klam * (difflam + 0.5 * r_l) * r_l;
-      }
-      else if(dist > (r0lam + r_l)){
-	en_termlam = Klam * (difflam - 0.5 * r_l ) * r_l;
-      }
-      double energylam = prefactorlam * en_termlam;
-      
-      double dlam_termlam, dprefmdlam, dprefndlam;
-      if (n==0) dprefndlam = 0;
-      else dprefndlam = n * pow(lam, n-1) * pow(1.0 - lam, m);
-      if (m == 0) dprefmdlam = 0;
-      else dprefmdlam = m * pow(lam, n) * pow(1.0 - lam, m-1);
-      double dprefdlam = pow(2.0, m + n) * (dprefndlam - dprefmdlam) * en_termlam;
-      if(fabs(r0lam - dist) < r_l){
-	dlam_termlam = 0.5 * D_K * difflam2 - Klam * difflam * D_r0;
-      }
-      else if(dist < (r0lam - r_l)){
-	dlam_termlam = -D_K * (difflam + 0.5 * r_l) * r_l + Klam * D_r0 * r_l;
-      }
-      else if(dist > (r0lam + r_l)){
-	dlam_termlam = D_K * (difflam - 0.5 * r_l) * r_l - Klam * D_r0 * r_l;
-      }
-      double dpotdlam = prefactorlam * dlam_termlam;
-      double energy_derivativlam = dprefdlam + dpotdlam;
-      
-      conf.current().energies.AB_disfld[lam_index] += energylam;
-      conf.current().perturbed_energy_derivatives.AB_disfld[lam_index] += 
-	energy_derivativlam;
-    }
-  // Betty
-  }
   return 0;
+  
 }
 
 int interaction::Perturbed_Distance_Field_Interaction

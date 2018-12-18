@@ -58,6 +58,17 @@ namespace interaction
                           util::Algorithm_Timer & timer,
                           bool master);
 
+    void offsite_outerloop(topology::Topology & topo,
+							configuration::Configuration & conf,
+							simulation::Simulation & sim,
+							Pairlist const & pairlist_solute,
+							Pairlist const & pairlist_solvent,
+							Storage & storage,
+							bool longrange,
+							util::Algorithm_Timer & timer,
+							bool master);
+
+
     void cg_exclusions_outerloop(topology::Topology & topo,
 				 configuration::Configuration & conf,
 				 simulation::Simulation & sim,
@@ -308,6 +319,14 @@ namespace interaction
 			  math::Matrix & hessian,
 			  PairlistContainer const & pairlist);
 
+	  	  //* calculate the el. static interaction with off-site charges
+    int calculate_interaction_off(Nonbonded_Parameter &param,topology::Topology & topo,
+							configuration::Configuration & conf,
+						simulation::Simulation & sim,
+								  Pairlist const & pairlist_solute,
+								  Pairlist const & pairlist_solvent,
+						math::VArray &force , math::VArray &virtual_f);
+
   private:
     /**
      * the nonbonded parameter.
@@ -324,6 +343,15 @@ namespace interaction
                            bool longrange, util::Algorithm_Timer & timer,
                            bool master);
 
+	template<typename t_interaction_spec>
+    void _offsite_outerloop(topology::Topology & topo,
+                             configuration::Configuration & conf,
+                             simulation::Simulation & sim,
+                             Pairlist const & pairlist_solute,
+                             Pairlist const & pairlist_solvent,
+                             Storage & storage,
+                             bool longrange, util::Algorithm_Timer & timer,
+                             bool master);
     /**
      * In principle, this is the specialization with
      *    interaction::Interaction_Spec<math::rectangular, simulation::lj_crf_func>
@@ -339,6 +367,15 @@ namespace interaction
 			   Storage & storage,
                            bool longrange, util::Algorithm_Timer & timer,
                            bool master);
+
+	  void _offsite_outerloop_fast(topology::Topology & topo,
+								  configuration::Configuration & conf,
+								  simulation::Simulation & sim,
+								  Pairlist const & pairlist_solute,
+								  Pairlist const & pairlist_solvent,
+								  Storage & storage,
+								  bool longrange, util::Algorithm_Timer & timer,
+								  bool master);
 
     template<typename t_interaction_spec>
     void _one_four_outerloop(topology::Topology & topo,
@@ -431,7 +468,14 @@ namespace interaction
 			   unsigned int atom_i, unsigned int atom_j,
 			   math::Matrix & hessian,
 			   PairlistContainer const & pairlist);
-    
+  template<typename t_interaction_spec>
+   int _calculate_interaction_off(Nonbonded_Parameter &param,topology::Topology & topo,
+									configuration::Configuration & conf,
+									simulation::Simulation & sim,
+									Pairlist const & pairlist_solute,
+									Pairlist const & pairlist_solvent,
+									math::VArray &force , math::VArray &virial);
+
   };
   
 } // interaction
