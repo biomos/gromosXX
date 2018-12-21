@@ -2413,7 +2413,7 @@ namespace simulation
        * - copy_pos(false)
        * - trajectory("")
        */
-      analyze_struct() : analyze(false), copy_pos(false), trajectory("")
+      analyze_struct() : analyze(false), copy_pos(false), trajectory(""), stride(1)
       {
       }
       /** 
@@ -2428,6 +2428,11 @@ namespace simulation
        * trajectory filename
        */
       std::string trajectory;
+
+      /** 
+       * stride
+       */
+      int stride;
       
     } /** analyze parameter */ analyze;
 

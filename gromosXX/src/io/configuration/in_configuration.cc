@@ -165,7 +165,7 @@ bool io::In_Configuration::read_next
   block_read.clear();
 
   // ignore errors reading time step
-  read_time_step(topo, conf, sim, os);
+  //read_time_step(topo, conf, sim, os);
 
   if (!(
 	read_position(topo, conf, sim, os) &&

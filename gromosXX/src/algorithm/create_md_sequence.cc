@@ -71,11 +71,11 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
 
   // analyze trajectory:
   // overwrite current configuration with trajectory data
-  if (sim.param().analyze.analyze){
-    algorithm::Analyze_Step * as = 
-      new algorithm::Analyze_Step(sim.param().analyze.trajectory);
-    md_seq.push_back(as);
-  }
+  //if (sim.param().analyze.analyze){
+  //  algorithm::Analyze_Step * as = 
+  //    new algorithm::Analyze_Step(sim.param().analyze.trajectory);
+  //  md_seq.push_back(as);
+  //}
 
   // create a forcefield
   interaction::Forcefield *ff = new interaction::Forcefield;
@@ -130,6 +130,9 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
     md_seq.push_back(sd);
   }
   else if (sim.param().analyze.analyze){
+    algorithm::Analyze_Step * as = 
+      new algorithm::Analyze_Step(sim.param().analyze.trajectory);
+    md_seq.push_back(as);
     md_seq.push_back(new algorithm::Analyze_Exchange);
   } else {    
     // SD ?

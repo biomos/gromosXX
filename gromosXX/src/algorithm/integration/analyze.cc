@@ -16,6 +16,9 @@
 #include "../../io/configuration/inframe.h"
 #include "../../io/configuration/in_configuration.h"
 
+#include "../../math/periodicity.h"
+#include "../../util/template_split.h"
+
 #include "analyze.h"
 
 #include "../../util/error.h"
@@ -47,6 +50,17 @@ algorithm::Analyze_Step::Analyze_Step(std::string trajectory)
 }
 
 
+
+template<math::boundary_enum b>
+void _put_cg_into_box(topology::Topology &topo,
+        configuration::Configuration &conf,
+        simulation::Simulation &sim) {
+  math::Periodicity<b> p(conf.current().box);
+  // just call the function from the periodicity
+  p.put_chargegroups_into_box(conf, topo);
+}
+
+
 /**
  * analyzation step init
  */
@@ -66,13 +80,28 @@ int algorithm::Analyze_Step
        << "\tvelocities are set to 0.\n";
   }
   
-  if (!quiet)
-    os << "END\n";
-  
   // save initial configuration as old() state
   conf.exchange_state();
 
-  return 0;
+  if (m_trajectory.read_next(topo, conf, sim)){
+
+    if (sim.param().analyze.copy_pos){
+      DEBUG(9, "analyze: copy current() pos to old()");
+      conf.old().pos = conf.current().pos;
+    }
+
+    conf.old().vel = 0;
+    conf.current().vel = 0;
+
+  SPLIT_BOUNDARY(_put_cg_into_box, topo, conf, sim);    
+  
+  if (!quiet)
+    os << "END\n";
+    return 0;
+  }
+
+
+  return E_UNSPECIFIED;
 }
 
 /**
@@ -85,7 +114,14 @@ int algorithm::Analyze_Step
 {
   // just overwrite current conf
   DEBUG(8, "analyze: reading next frame!");
-  if (m_trajectory.read_next(topo, conf, sim)){
+  conf.exchange_state();
+
+  if (sim.param().step.number_of_steps == sim.steps() + sim.param().analyze.stride){
+    io::messages.add("last frame " ,
+		   "read input",
+		   io::message::notice);
+    return 0;
+  } else if (m_trajectory.read_next(topo, conf, sim)){
 
     if (sim.param().analyze.copy_pos){
       DEBUG(9, "analyze: copy current() pos to old()");
@@ -94,11 +130,17 @@ int algorithm::Analyze_Step
 
     conf.old().vel = 0;
     conf.current().vel = 0;
+  SPLIT_BOUNDARY(_put_cg_into_box, topo, conf, sim);
     
     return 0;
+  } else  {
+      io::messages.add("no more frames in the analyzed trajectory",
+		   "read input",
+		   io::message::error);
+    return E_UNSPECIFIED;
   }
   
-  return E_UNSPECIFIED;
+  //return E_UNSPECIFIED;
 }
 
 algorithm::Analyze_Exchange::Analyze_Exchange()
@@ -123,7 +165,6 @@ int algorithm::Analyze_Exchange
 ::apply(topology::Topology & topo,
 	configuration::Configuration & conf,
         simulation::Simulation &sim) {
-  conf.exchange_state();
   return 0;
 }
 

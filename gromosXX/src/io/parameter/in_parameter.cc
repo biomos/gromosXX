@@ -2876,7 +2876,7 @@ void io::In_Parameter::read_READTRAJ(simulation::Parameter & param,
     exampleblock << "# NTRD  0,1 controls trajectory-reevaluation mode\n";
     exampleblock << "#       0: do not use trajectory-reevaluation mode (default)\n";
     exampleblock << "#       1: use trajectory-reevaluation mode\n";
-    exampleblock << "# NTRN  number of files (ignored)\n";
+    exampleblock << "# NTRN  stride: should be the NTWX used to produce the analyzed traj\n";
     exampleblock << "# NTRB  read box (must be 1)\n";
     exampleblock << "# NTSHK 0,1 controls SHAKE on old coordinates\n";
     exampleblock << "#       0 perform SHAKE with respect to previous coordinates\n";
@@ -2895,7 +2895,7 @@ void io::In_Parameter::read_READTRAJ(simulation::Parameter & param,
 
         int ntrd, ntrn, ntrb, ntshk;
         block.get_next_parameter("NTRD", ntrd, "", "0,1");
-        block.get_next_parameter("NTRN", ntrn, "", "");
+        block.get_next_parameter("NTRN", param.analyze.stride, "", "");
         block.get_next_parameter("NTRB", ntrb, "", "1");
         block.get_next_parameter("NTSHK", ntshk, "", "0,1");
 
