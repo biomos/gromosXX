@@ -180,17 +180,27 @@ void io::In_Parameter::read_ENERGYMIN(simulation::Parameter &param,
     // will be used to generate snippets that can be included in the doxygen doc;
     // the first line is the tag
     exampleblock << "ENERGYMIN\n";
-    exampleblock << "# NTEM: 0..1 controls energy minimisation mode\n";
+    exampleblock << "# NTEM: 0..3 controls energy minimisation mode\n";
     exampleblock << "#       0: do not do energy minimisation (default)\n";
     exampleblock << "#       1: steepest-descent minimisation\n";
-    exampleblock << "# NCYC: >0 number of steps before resetting of conjugate-gradient search direction (not in use !!)\n";
+    exampleblock << "#       2: Fletcher-Reeves conjugate-gradient minimisation\n";
+    exampleblock << "#       3: Polak-Ribiere conjugate-gradient minimisation\n";
+    exampleblock << "# NCYC: >0 number of steps before resetting the conjugate-gradient search direction\n";
+    exampleblock << "#       =0 do not reset conjugate-gradient search direction\n";
     exampleblock << "# DELE: >0.0 energy threshold for convergence\n";
-    exampleblock << "# DX0: > 0.0 initial step size\n";
-    exampleblock << "# DXM: > 0.0 maximum step size\n";
-    exampleblock << "# NMIN > 0 minimum number of minimisation steps\n";
-    exampleblock << "# FLIM >= 0.0 limit force to maximum value (FLIM > 0.0 is not recommended).\n";
+    exampleblock << "#       >0.0 (conjugate-gradient) RMS force threshold for convergence\n";
+    exampleblock << "# DX0: >0.0 initial step size\n";
+    exampleblock << "#      >0.0 (conjugate-gradient) initial and minimum step size\n";
+    exampleblock << "# DXM: >0.0 maximum step size\n";
+    exampleblock << "# NMIN >0 minimum number of minimisation steps\n";
+    exampleblock << "# FLIM >=0.0 limit force to maximum value (FLIM > 0.0 is not recommended)\n";
+    exampleblock << "# CGIM >0 (conjugate-gradient) maximum number of cubic interpolations per step\n";
+    exampleblock << "# CGIC >0.0 (conjugate-gradient) displacement threshold after interpolation\n";
     exampleblock << "#     NTEM    NCYC    DELE    DX0     DXM    NMIN    FLIM\n";
-    exampleblock << "         1       0     0.1   0.01    0.05       1       0\n";
+    exampleblock << "         1       0     0.1   0.01    0.05       1     0.0\n";
+    exampleblock << "# ---- OR: example for NTEM > 1:\n";
+    exampleblock << "#     NTEM    NCYC    DELE    DX0     DXM    NMIN    FLIM    CGIM    CGIC\n";
+    exampleblock << "         3       0    1e-3   0.05     0.5       1     0.0       3     1e-3\n";
     exampleblock << "END\n";
 
     std::string blockname = "ENERGYMIN";
@@ -199,14 +209,18 @@ void io::In_Parameter::read_ENERGYMIN(simulation::Parameter &param,
     if (block.read_buffer(m_block[blockname], false) == 0) {
         block_read.insert("ENERGYMIN");
 
-        block.get_next_parameter("NTEM", param.minimise.ntem, "", "0,1");
-        block.get_next_parameter("NCYC", param.minimise.ncyc, ">0", "");
+        block.get_next_parameter("NTEM", param.minimise.ntem, "", "0,1,2,3");
+        block.get_next_parameter("NCYC", param.minimise.ncyc, ">=0", "");
         block.get_next_parameter("DELE", param.minimise.dele, ">0", "");
         block.get_next_parameter("DX0", param.minimise.dx0, ">0", "");
         std::string str_dx0=io::to_string(param.minimise.dx0);
         block.get_next_parameter("DXM", param.minimise.dxm, ">="+str_dx0, "");
         block.get_next_parameter("NMIN", param.minimise.nmin, ">0", "");
         block.get_next_parameter("FLIM", param.minimise.flim, ">=0", "");
+        if (param.minimise.ntem >= 2) {
+            block.get_next_parameter("CGIM", param.minimise.cgim, ">0", "");
+            block.get_next_parameter("CGIC", param.minimise.cgic, ">0", "");
+        }
 
         /* if (param.minimise.ntem == 1 && param.minimise.ncyc > 0)
            io::messages.add("ENERGYMIN block: NCYC > 0 has no effect for steepest descent",

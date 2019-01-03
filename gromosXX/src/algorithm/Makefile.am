@@ -16,6 +16,7 @@ xxalgintegration_HEADERS = integration/energy_calculation.h\
 	integration/stochastic.h\
 	integration/slow_growth.h\
 	integration/steepest_descent.h\
+	integration/conjugate_gradient.h\
 	integration/analyze.h\
 	integration/lattice_shift.h\
 	integration/multigradient.h\
@@ -78,6 +79,7 @@ libgroalgorithm_la_SOURCES = algorithm.cc\
 	integration/energy_calculation.cc\
 	integration/slow_growth.cc\
 	integration/steepest_descent.cc\
+	integration/conjugate_gradient.cc\
 	integration/analyze.cc\
 	constraints/rottrans.cc\
 	integration/lattice_shift.cc\

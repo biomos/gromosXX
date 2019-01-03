@@ -777,15 +777,19 @@ namespace simulation
        * Constructor.
        * Default values:
        * - ntem 0      (no energy minimisation)
-       * - ncyc 0      (unused, conjugate gradient not implemented)
+       * - ncyc 0      (number of steps before resetting of conjugate-gradient search direction)
        * - dele 0.0001 (minimal energy difference)
+       * -             (conjugate-gradient - RMS force threshold)
        * - dx0  0.1    (initial step size)
+       * -             (conjugate-gradient - initial and minimum step size)
        * - dxm  0.5    (maximum step size)
        * - nmin 1      (at least 1 step)
        * - flim 0.0    (no force limitation)
+       * - cgim 3      (conjugate-gradient - maximum number of interpolations)
+       * - cgic 1e-3   (conjugate-gradient - displacement threshold after interpolation)
        */
       minimise_struct() : ntem(0), ncyc(0), dele(0.0001),
-			  dx0(0.1), dxm(0.5), nmin(1), flim(0.0)
+			  dx0(0.1), dxm(0.5), nmin(1), flim(0.0), cgim(3), cgic(1e-3)
       {}
       /**
        * minimisation method.
@@ -815,6 +819,14 @@ namespace simulation
        * force limit.
        */
       double flim;
+      /**
+       * maximum interpolations.
+       */
+      double cgim;
+      /**
+       * interpolation displacement threshold.
+       */
+      double cgic;
 
     } /** energy minimisation parameters */ minimise;
 
