@@ -2,7 +2,13 @@
  * @file conjugate_gradient.cc
  * contains the implementation
  * for conjugate gradient energy minimisation
- * taken from GROMOS96 Book
+ * taken from GROMOS96 Manual
+ * 
+ * TODO:
+ * 1. Decide what to print out (as in GROMOS96?)
+ * 2. Unlock supported and meaningful features
+ * 3. Allow SHAKE
+ * 4. Test on large number of different molecular systems
  */
 
 #include "../../stdheader.h"
@@ -23,9 +29,6 @@
 #undef SUBMODULE
 #define MODULE algorithm
 #define SUBMODULE integration
-
-const unsigned int max_ints = 3; 
-const double max_dX = 1e-3;
 
 /**
  * conjugate gradient step.
@@ -231,7 +234,7 @@ int algorithm::Conjugate_Gradient
         d = sqrt(d/topo.num_atoms());
         DEBUG(10, "RMS displacement of X = " << d);
         // Accept X as new configuration, if criterion is met
-        if (d < max_dX || ints == max_ints) {
+        if (d < sim.param().minimise.cgic || ints == sim.param().minimise.cgim) {
           break;
         }
         // Calculate forces and energies of X

@@ -822,7 +822,7 @@ namespace simulation
       /**
        * maximum interpolations.
        */
-      double cgim;
+      int cgim;
       /**
        * interpolation displacement threshold.
        */
