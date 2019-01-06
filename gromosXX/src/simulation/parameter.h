@@ -3450,6 +3450,7 @@ namespace simulation
     } /** RDC-parameters */ rdc;
 
 
+
     struct qmmm_struct {
       /**
        * Constructor

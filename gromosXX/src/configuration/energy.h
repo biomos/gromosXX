@@ -233,6 +233,13 @@ namespace configuration
     double B_dihedral;
 //    std::vector<double> AB_dihedral;
 
+    /** Betty
+     * special interaction energies for each lambda
+     */
+    std::vector<double> AB_disres;
+    std::vector<double> AB_dihres;
+    std::vector<double> AB_disfld;
+
     /**
      * total energy of the dipole-dipole interaction (self energy)
      */

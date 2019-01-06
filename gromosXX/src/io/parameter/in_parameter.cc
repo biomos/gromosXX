@@ -4033,7 +4033,7 @@ void io::In_Parameter::read_NONBONDED(simulation::Parameter & param,
                              "In_Parameter", io::message::error);
 
         if (param.nonbonded.lj_correction)
-            io::messages.add("NONBONDED block: LJ long range correction Switched on."
+            io::messages.add("NONBONDED block: LJ long range correction switched on."
                              "In_Parameter", io::message::warning);
 
         block.get_final_messages();

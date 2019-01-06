@@ -445,6 +445,14 @@ namespace topology
       return m_exclusion[i];
     }
     /**
+     * const exclusions for atom i.
+     */
+    excl_cont_t::value_type const & exclusion(unsigned int const i)const{
+      assert(i < m_exclusion.size());
+      return m_exclusion[i];
+    }
+
+    /**
      * exclusions
      */
     excl_cont_t & exclusion() {return m_exclusion;}

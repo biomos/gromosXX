@@ -175,6 +175,7 @@ namespace io {
     virtual void read_sasa_parameter(topology::Topology & topo, std::vector
                                     <topology::sasa_parameter_struct>
                                     & sasa_parameter);
+                                    
     /**
      * length of strings allowed
      */

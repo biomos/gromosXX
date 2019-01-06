@@ -606,15 +606,22 @@ bool configuration::Configuration::check(topology::Topology const & topo, simula
   
   // check the positions if nonbonded forces are computed
   if (sim.param().force.nonbonded_crf || sim.param().force.nonbonded_vdw) {
-    SPLIT_MY_BOUNDARY(boundary_type, check_positions, error);
+    SPLIT_MY_BOUNDARY(boundary_type, check_positions, topo, error);
     SPLIT_MY_BOUNDARY(boundary_type, check_excluded_positions, topo, sim);
   }
+  // check the positions if (improper) dihedrals are computed
+  if(sim.param().force.improper){
+    SPLIT_MY_BOUNDARY(boundary_type, check_dihedrals, topo.solute().improper_dihedrals(), error);
+  }
+  if(sim.param().force.dihedral){
+    SPLIT_MY_BOUNDARY(boundary_type, check_dihedrals, topo.solute().dihedrals(), error);
+  }   
   
   return error == 0;
 }
 
 template<math::boundary_enum B> 
-void configuration::Configuration::check_positions(int & error) const {  
+void configuration::Configuration::check_positions(topology::Topology const & topo, int & error) const {  
   math::Periodicity<B> periodicity(current().box);
   const unsigned int num_pos = current().pos.size();
   const math::VArray & pos = current().pos;
@@ -623,12 +630,73 @@ void configuration::Configuration::check_positions(int & error) const {
     for(unsigned int j = i + 1; j < num_pos; ++j) {
       periodicity.nearest_image(pos(i), pos(j), r);
       if (math::abs2(r) < math::epsilon) {
-        ++error;
-        std::ostringstream msg;
-        msg << "Singularity: Atoms " << i+1 << " and " << j+1 << " at same position.";
-        io::messages.add(msg.str(), "Configuration", io::message::error);
+        // if they are excluded, it is a warning, if not it is an error
+	if (topo.exclusion(i).is_excluded(j)){
+	    std::ostringstream msg;
+            msg << "Singularity: Atoms " << i+1 << " and " << j+1 << " are at the same "
+		<< "position. They are excluded from nonbonded interactions.";
+            io::messages.add(msg.str(), "Configuration", io::message::warning);
+	} else {
+	  ++error;
+	  std::ostringstream msg;
+	  msg << "Singularity: Atoms " << i+1 << " and " << j+1 << " at same position.";
+	  io::messages.add(msg.str(), "Configuration", io::message::error);
+	}
       }
+      
     }
+  }
+}
+template<math::boundary_enum B> 
+void configuration::Configuration::check_dihedrals(std::vector<topology::four_body_term_struct> const & dihedrals, int & error) const { 
+  math::Periodicity<B> periodicity(current().box);
+  const math::VArray & pos = current().pos;
+  math::Vec r;
+  std::vector<topology::four_body_term_struct>::const_iterator d_it = dihedrals.begin(), d_to = dihedrals.end();
+  for( ; d_it != d_to; ++d_it){
+    periodicity.nearest_image(pos(d_it->i), pos(d_it->j), r);
+    if (math::abs2(r) < math::epsilon) {
+      ++error;
+      std::ostringstream msg;
+      msg << "Singularity: Atoms " << d_it->i+1 << " and " << d_it->j+1 << " at same position. Cannot compute (improper) dihedral.";
+      io::messages.add(msg.str(), "Configuration", io::message::error);
+    }
+    periodicity.nearest_image(pos(d_it->i), pos(d_it->k), r);
+    if (math::abs2(r) < math::epsilon) {
+      ++error;
+      std::ostringstream msg;
+      msg << "Singularity: Atoms " << d_it->i+1 << " and " << d_it->k+1 << " at same position. Cannot compute (improper) dihedral.";
+      io::messages.add(msg.str(), "Configuration", io::message::error);
+    }
+    periodicity.nearest_image(pos(d_it->i), pos(d_it->l), r);
+    if (math::abs2(r) < math::epsilon) {
+      ++error;
+      std::ostringstream msg;
+      msg << "Singularity: Atoms " << d_it->i+1 << " and " << d_it->l+1 << " at same position. Cannot compute (improper) dihedral.";
+      io::messages.add(msg.str(), "Configuration", io::message::error);
+    }
+    periodicity.nearest_image(pos(d_it->j), pos(d_it->k), r);
+    if (math::abs2(r) < math::epsilon) {
+      ++error;
+      std::ostringstream msg;
+      msg << "Singularity: Atoms " << d_it->j+1 << " and " << d_it->k+1 << " at same position. Cannot compute (improper) dihedral.";
+      io::messages.add(msg.str(), "Configuration", io::message::error);
+    }
+    periodicity.nearest_image(pos(d_it->j), pos(d_it->l), r);
+    if (math::abs2(r) < math::epsilon) {
+      ++error;
+      std::ostringstream msg;
+      msg << "Singularity: Atoms " << d_it->j+1 << " and " << d_it->l+1 << " at same position. Cannot compute (improper) dihedral.";
+      io::messages.add(msg.str(), "Configuration", io::message::error);
+    }
+    periodicity.nearest_image(pos(d_it->k), pos(d_it->l), r);
+    if (math::abs2(r) < math::epsilon) {
+      ++error;
+      std::ostringstream msg;
+      msg << "Singularity: Atoms " << d_it->k+1 << " and " << d_it->l+1 << " at same position. Cannot compute (improper) dihedral.";
+      io::messages.add(msg.str(), "Configuration", io::message::error);
+    }
+
   }
 }
 

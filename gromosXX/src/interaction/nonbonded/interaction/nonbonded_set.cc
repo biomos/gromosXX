@@ -378,6 +378,7 @@ int interaction::Nonbonded_Set::update_configuration
     DEBUG(7, "\tadd set virial");
   	conf.current().virial_tensor += m_storage.virial_tensor;
   }
+  
   return 0;
 }
 
