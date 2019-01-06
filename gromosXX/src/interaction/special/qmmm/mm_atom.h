@@ -33,6 +33,15 @@ namespace interaction {
      */
     double charge;
   };
+  class mm_idx{
+  public:
+      unsigned int index;
+    double distance;
+    bool operator < (const interaction::mm_idx& a ) const
+    {
+    return index <a.index  ;
+    }
+  };
   
   /**
    * function to determine the MM atoms to include as point charges

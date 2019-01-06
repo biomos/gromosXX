@@ -34,22 +34,32 @@ int interaction::MNDO_Worker::run_QM(topology::Topology& topo,
         simulation::Simulation& sim,
         const math::VArray & qm_pos,
         const std::vector<interaction::MM_Atom> & mm_atoms,
-        interaction::QM_Storage& storage) {
+        interaction::QM_Storage& storage,
+        interaction::QM_Storage& LA_storage,
+        const configuration::Configuration& qmmm_conf){
   
+    this->input_file = sim.param().qmmm.mndo.input_file;
+    this->output_file = sim.param().qmmm.mndo.output_file;
+    this->output_gradient_file = sim.param().qmmm.mndo.output_gradient_file;
+    this->header_file=sim.param().qmmm.mndo.input_header;
+     
+
+/*
   if (mm_atoms.empty()) {
     io::messages.add("Cannot deal with zero MM atoms yet.", "MNDO_Worker", 
             io::message::error);
     return 1;
   }
-  
-  std::ofstream inp(input_file.c_str());
+  */
+  bool verbose=false;
+
+  std::ofstream inp(this->input_file.c_str());
   if (!inp.is_open()) {
     io::messages.add("Could not create input file for MNDO at the location "
-            + input_file, "MNDO_Worker", io::message::critical);
+            + this->input_file, "MNDO_Worker", io::message::critical);
     return 1;
   }
-
-  std::string header(sim.param().qmmm.mndo.input_header);
+  std::string header(this->header_file);
   // get the number of point charges
   unsigned int num_charge = mm_atoms.size();
   for(unsigned int i = 0; i < mm_atoms.size(); ++i) {
@@ -69,6 +79,10 @@ int interaction::MNDO_Worker::run_QM(topology::Topology& topo,
       link_atoms.push_back(li);
     }
   }
+  //std::ostringstream oss; oss << num_charge ;
+  header = io::replace_string(header, "@@NUM_ATOMS@@", oss.str());
+
+
   oss.str("");
   oss.clear();
   oss << link_atoms.size();
@@ -93,21 +107,68 @@ int interaction::MNDO_Worker::run_QM(topology::Topology& topo,
     }
     inp << std::endl;
   }
+
+ pi=0;
+  
+  // append list of link-atoms to the QM coordinates
+  //   the order of the capping H atoms follows the same
+  //  order as the QM atoms in the "qmmm" file.
+  //
+  math::Vec posCap,dR;
+  unsigned int m1,q1;
+  const double rch = sim.param().qmmm.cap_dist; //Carbon-Hydrogen bond length
+  //create a conf for capped system
+  //configuration::Configuration qmmm_conf = conf;
+  //qmmm_conf.current().force=0.0;
+
+  if (verbose) {
+     std::cout << "number of link atoms: " << topo.qm_mm_pair().size()  << std::endl;
+  }
+  for (std::vector< std::pair<unsigned int,unsigned int> >::const_iterator
+    it = topo.qm_mm_pair().begin(); it != topo.qm_mm_pair().end(); ++it,++pi  )
+  {  
+     q1=it->first;
+     m1=it->second;  
+     //dR =conf.current(q1).pos - conf.current(m1).pos;
+     dR = conf.current().pos(m1) - conf.current().pos(q1);
+     posCap = (rch/abs(dR)    )    * dR + conf.current().pos(q1) ;
+    // std::cout << "modifying position of " << m1 << " from " << qmmm_conf.current().pos(m1)[0] << "to  "  <<
+    //           posCap(0) << std::endl;
+   //  qmmm_conf.current().pos(m1) = posCap;
+     inp << std::setw(5) << std::left << "1 " ;  //link_atoms[i];
+    for (unsigned int i = 0; i < 3; ++i) {
+      inp << std::setw(14) << std::right << posCap(i) * len_to_qm << " 0"  ;
+    }
+    if (++pi % 16 == 0 || pi == link_atoms.size()) {
+      inp << std::endl;
+    }
+    inp << std::endl ;
+  }  
+
   // the termination line. just a couple of zeros
   inp << std::setw(2) << std::left << 0;
   for (unsigned int i = 0; i < 3; ++i) {
     inp << std::setw(14) << std::right << 0.0 << " 0";
   }
   inp << std::endl;
-  // write link atoms
-  for(unsigned int i = 0; i < link_atoms.size();) {
-    inp << std::setw(5) << std::left << link_atoms[i];
-    if (++i % 16 == 0 || i == link_atoms.size()) {
-      inp << std::endl;
+  //write list of link atoms
+
+
+  pi=0;
+  for (std::set<topology::qm_atom_struct>::const_iterator
+       it = topo.qm_zone().begin(), to = topo.qm_zone().end(); it != to; ++it, ++pi) {
+  {
+    if (it->link == true ) {
+      inp << it->index - topo.qm_zone().begin()->index + 1 << " " ;
     }
   }
+  }
+
+  inp << std::endl;
   // write point charges
+  //  comment out for simulations in vacuum
   double chg_to_qm = 1.0 / sim.param().qmmm.unit_factor_charge;
+  
   for (unsigned int i = 0; i < mm_atoms.size(); ++i) {
     if (topo.is_polarisable(mm_atoms[i].index)) {
       inp.setf(std::ios::fixed, std::ios::floatfield);
@@ -133,9 +194,9 @@ int interaction::MNDO_Worker::run_QM(topology::Topology& topo,
   }
   inp.close();
   
-  // staring MNDO
+  // starting MNDO
   int result = util::system_call(sim.param().qmmm.mndo.binary,
-          input_file, output_file);
+          this->input_file, this->output_file);
   if (result != 0) {
     std::ostringstream msg;
     msg << "MNDO failed with code " << result << ". See output file "
@@ -145,7 +206,8 @@ int interaction::MNDO_Worker::run_QM(topology::Topology& topo,
   }
   
   // read output
-  std::ifstream output(sim.param().qmmm.mndo.output_file.c_str());
+  std::ifstream output(this->output_file.c_str());
+ // std::ifstream output(sim.param().qmmm.mndo.output_file.c_str());
   if (!output.is_open()) {
     io::messages.add("Cannot open MNDO output file", "MNDO_Worker", 
             io::message::error);
@@ -188,7 +250,8 @@ int interaction::MNDO_Worker::run_QM(topology::Topology& topo,
   output.close();
   
   // read output in fort.15
-  output.open(output_gradient_file.c_str());
+  //output.open(output_gradient_file.c_str());
+  output.open(this->output_gradient_file.c_str());
   if (!output.is_open()) {
     io::messages.add("Cannot open MNDO energy, gradient file (fort.15)",
             "MNDO_Worker", io::message::error);
@@ -238,8 +301,25 @@ int interaction::MNDO_Worker::run_QM(topology::Topology& topo,
         }
         storage.force(it->index) = gradient * (-(sim.param().qmmm.unit_factor_energy) / 
                 sim.param().qmmm.unit_factor_length);
+      } // for QM atoms
+        //read now the forces on the capping atom
+        int dummy;
+        math::Vec gradient;
+        for (unsigned int i = 0; i < topo.qm_mm_pair().size(); i++) {
+            std::istringstream is(line);
+            std::getline(output, line);
+            is >> dummy >> dummy >> gradient(0) >> gradient(1) >> gradient(2);
+            if (output.fail()) {
+                std::ostringstream msg;
+                msg << "Failed to read charge line of " << (i + 1) << "th linkatom.";
+                io::messages.add(msg.str(), "MNDO_Worker", io::message::error);
+                return 1;
+            }
+            LA_storage.force(i) = gradient * (-(sim.param().qmmm.unit_factor_energy) /
+                                              sim.param().qmmm.unit_factor_length);
+        } // for atoms
         
-      } // for QM atoms 
+
     } /* force MM atoms */ else if (line.find("CARTESIAN GRADIENT") != std::string::npos &&
                            line.find("OF MM ATOMS") != std::string::npos) {
       // read atoms
@@ -263,7 +343,7 @@ int interaction::MNDO_Worker::run_QM(topology::Topology& topo,
           io::messages.add(msg.str(), "MNDO_Worker", io::message::error);
           return 1;
         }
-        storage.force(mm_atoms[i].index) = gradient * (-(sim.param().qmmm.unit_factor_energy) / 
+        storage.force(mm_atoms[i].index) += gradient * (-(sim.param().qmmm.unit_factor_energy) /
                 sim.param().qmmm.unit_factor_length);
 
         // get force on the charge-on-spring
@@ -293,6 +373,63 @@ int interaction::MNDO_Worker::run_QM(topology::Topology& topo,
   }
   output.close();
 
+
+/*
+    for(std::vector<topology::three_body_term_struct>::const_iterator
+            it=sim.param().qmmm.QM_CAP_topo->solute().angles().begin(),
+            to=sim.param().qmmm.QM_CAP_topo->solute().angles().end();
+            it!=to;++it){
+        std::cout << "angle:" << it->i << "  " << it->j << "  "  << it->k <<
+                  "  "  << it->type << std::endl;
+
+    }
+    for(std::vector<topology::two_body_term_struct>::const_iterator
+                it=sim.param().qmmm.QM_CAP_topo->solute().bonds().begin(),
+                to=sim.param().qmmm.QM_CAP_topo->solute().bonds().end();
+        it!=to;++it){
+        std::cout << "bond:" << it->i << "  " << it->j <<
+                  "  "  << it->type << std::endl;
+
+    }
+
+
+    if (topo.qm_mm_pair().size()!=0) {
+
+        sim.param().qmmm.qmmm_newdihed_cap->calculate_interactions(*sim.param().qmmm.QM_CAP_topo,
+                                                                   qmmm_conf, sim);
+        sim.param().qmmm.qmmm_qbond_cap->calculate_interactions(*sim.param().qmmm.QM_CAP_topo,
+                                                                qmmm_conf,
+                                                                sim);//this should be zero, since we set the C-H distance to the equilibrium value
+        sim.param().qmmm.qmmm_ang_cap->calculate_interactions(*sim.param().qmmm.QM_CAP_topo,
+                                                              qmmm_conf, sim);
+        //for (std::set<topology::qm_atom_struct>::const_iterator
+        //             it = topo.qm_zone().begin(), to = topo.qm_zone().end(); it != to; ++it) {
+
+        if (verbose) {
+            for (unsigned int i = 0; i < 26; i++) {
+                std::cout << "index :   " << i << "  " << qmmm_conf.current().force(i)[0] <<
+                          "   " << qmmm_conf.current().force(i)[1] << "  "
+                          << qmmm_conf.current().force(i)[2] << std::endl;
+            }
+        }
+
+        for (std::set<topology::qm_atom_struct>::const_iterator
+                     it = topo.qm_zone().begin(), to = topo.qm_zone().end(); it != to; ++it) {
+            storage.force(it->index) -= qmmm_conf.current().force(it->index);
+        }
+    }
+    /
+*/
+  if (verbose) {
+      std::cout << "QM/MM Forces " << std::endl;
+      //print out the gradient
+      for (std::set<topology::qm_atom_struct>::const_iterator
+                   it = topo.qm_zone().begin(), to = topo.qm_zone().end(); it != to; ++it) {
+          std::cout << "index :   " << it->index << "  " << storage.force(it->index)[0] << "  "
+                    << storage.force(it->index)[1] << "   " <<
+                    storage.force(it->index)[2] << std::endl;
+      }
+  }
   return 0;
   
 }

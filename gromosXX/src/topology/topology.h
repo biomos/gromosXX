@@ -1329,6 +1329,17 @@ namespace topology
     bool in_qm_zone(unsigned int i) const {
       return m_qm_zone.count(i);
     }
+     
+     /**
+     * accessor to MM->QM link
+     */
+    std::vector< std::pair<unsigned int,unsigned int> >  & qm_mm_pair() 
+    { return qm_mm_link; }
+    /**
+     * const accessor MM->QM Link
+     */
+    const std::vector< std::pair<unsigned int,unsigned int> > & qm_mm_pair()
+    const  { return qm_mm_link; }  
   private:
     /**
      * the number of atom types
@@ -1789,6 +1800,8 @@ namespace topology
      * the QM zone
      */
     std::set<qm_atom_struct> m_qm_zone;
+        std::vector< std::pair<unsigned int,unsigned int> > qm_mm_link;
+
 
   }; // topology
 

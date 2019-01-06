@@ -60,9 +60,18 @@ namespace interaction {
     virtual int prepare(topology::Topology& topo,
         configuration::Configuration& conf,
         simulation::Simulation& sim);
+    virtual configuration::Configuration AddRemove(topology::Topology& topo,
+                               configuration::Configuration& conf,
+                               simulation::Simulation& sim);
+    virtual int AddRemove2(topology::Topology& topo,
+                           configuration::Configuration& conf,
+                           simulation::Simulation& sim);
   protected:
     QM_Worker * worker;
+    QM_Worker * worker2;
+    QM_Storage stor_link;
     QM_Storage storage;
+    QM_Storage storage2;
     math::VArray qm_pos;
     std::vector<interaction::MM_Atom> mm_atoms;
   };

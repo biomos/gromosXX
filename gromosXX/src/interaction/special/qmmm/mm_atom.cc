@@ -59,12 +59,16 @@ void determine_mm_atoms_by_cutoff(topology::Topology& topo,
     }
   }
   
-  std::set<unsigned int> atom_indices;
+  //std::set<unsigned int> atom_indices;
+  
+  std::set<interaction::mm_idx> atom_indices;
+  
+
   math::Periodicity<b> periodicity(conf.current().box);
   const unsigned int num_solute_cg = topo.num_solute_chargegroups(),
           num_cg = topo.num_chargegroups();
   math::Vec r;
-  
+  interaction::mm_idx temp;
   // get the atoms close to the QM zone
   for (std::set<topology::qm_atom_struct>::const_iterator
     it = topo.qm_zone().begin(), to = topo.qm_zone().end(); it != to; ++it) {
@@ -79,7 +83,10 @@ void determine_mm_atoms_by_cutoff(topology::Topology& topo,
         for (unsigned int a = topo.chargegroup(cg), a_to = topo.chargegroup(cg + 1);
                 a < a_to; ++a) {
           if (topo.in_qm_zone(a)) continue;
-          atom_indices.insert(a);
+          temp.index=a;
+          temp.distance=r2;
+          atom_indices.insert(temp);
+     
         } // for atoms in cg
       }
     } // for solute cgs
@@ -93,7 +100,10 @@ void determine_mm_atoms_by_cutoff(topology::Topology& topo,
         for (unsigned int a = topo.chargegroup(cg), a_to = topo.chargegroup(cg + 1);
                 a < a_to; ++a) {
           if (topo.in_qm_zone(a)) continue;
-          atom_indices.insert(a);
+          temp.index=a;
+          temp.distance=r2;
+          atom_indices.insert(temp);
+          
         } // for atoms in cg
       }
     } // for solvent cgs
@@ -101,10 +111,23 @@ void determine_mm_atoms_by_cutoff(topology::Topology& topo,
   
   // create the MM atoms
   mm_atoms.reserve(atom_indices.size());
-  for(std::set<unsigned int>::const_iterator it = atom_indices.begin(),
+  double q_scal=0.0;
+  //std::cout << "number of MM atoms: " << atom_indices.size() << std::endl;
+for(std::set<interaction::mm_idx>::const_iterator it = atom_indices.begin(),
           to = atom_indices.end(); it != to; ++it) {
-    mm_atoms.push_back(interaction::MM_Atom(*it, pos(*it), topo.charge(*it)));
+         //q_scal = topo.charge(it->index);
+  
+  // q_scal = topo.charge(it->index)*(erf(sim.param().qmmm.mmscal*it->distance ) );
+     if (sim.param().qmmm.mmscal < 0) {
+         q_scal=topo.charge(it->index);
+  }
+     else     //  2/pi
+     {  q_scal = 0.6366197723675814*topo.charge(it->index)*(atan(sim.param().qmmm.mmscal*it->distance ) );
+}
+     //std::cout << "distance: " << it->distance  << "q_scal: " << q_scal << std::endl;
+     mm_atoms.push_back(interaction::MM_Atom(it->index, pos(it->index), q_scal));
   }
 }
+
 
 
