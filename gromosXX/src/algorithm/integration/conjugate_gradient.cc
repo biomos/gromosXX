@@ -8,7 +8,9 @@
  * 1. Decide what to print out (as in GROMOS96?)
  * 2. Unlock supported and meaningful features
  * 3. Allow SHAKE
- * 4. Test on large number of different molecular systems
+ * 4. Test on different molecular systems
+ * 5. Pairlist generation issue - is warning enough?
+ * 6. No need to parallelization - this code scales with ~N, while energy calculation scales with ~N^2
  */
 
 #include "../../stdheader.h"
@@ -91,7 +93,7 @@ int algorithm::Conjugate_Gradient
   #else
     std::cout << std::scientific << std::setprecision(4);
   #endif
-  int unsigned its = 0; // Counter of interaction calculations
+  int its = 0; // Counter of interaction calculations
   DEBUG(15,"step no.:\t" << sim.steps());
   // Calculate the energies, as we need them to estimate a minimum along the search direction
   conf.current().energies.calculate_totals();
@@ -136,26 +138,27 @@ int algorithm::Conjugate_Gradient
 // Check, whether we have any non-zero old force, otherwise we dont have to calculate beta
   bool no_force = true;
   for(unsigned int i=0; i<topo.num_atoms(); ++i) {
-    if (math::abs2(conf.old().force(i)) > math::epsilon) {
+    if (math::abs2(conf.old().force(i)) > 0.0) {
       no_force = false;
       break;
     }
   }
   // If old forces are non-zero and this is not a resetting step, calculate beta
-  double beta = 0.0;
+  double beta;
   if (!no_force && (sim.param().minimise.ncyc == 0 || sim.steps() % sim.param().minimise.ncyc != 0)) {
     beta = calculate_beta(topo,conf,sim);
     DEBUG(15, "beta = " << beta);
   }
   // Otherwise reset the search direction by keeping beta = 0
   else {
-      DEBUG(1,
+    beta = 0.0;
+    DEBUG(1,
       "(Re)initializing the conjugate gradient search direction\n"
       << "beta = " << beta);
   }
   // Calculate the search direction
   double b = calculate_cgrad(topo,conf,beta);
-  // Calculate a gradient of energy along the search direction
+  // Calculate a gradient along the search direction
   double gA;
   // If beta = 0, gA is identical to b
   if (beta == 0.0) {
@@ -186,10 +189,10 @@ int algorithm::Conjugate_Gradient
   // Create confX to store intermediate configurations and evaluate interpolations
   configuration::Configuration confX = conf;
   double gB, eneB, X;
-  unsigned int doubled = 0; // Counter of interval doubling
-  unsigned int ints = 0; // Number of interpolations done
+  int doubled = 0; // Counter of interval doubling
+  int ints = 0; // Number of interpolations done
   conf.exchange_state();
-  while (true) {
+  while(true) {
     // Calculate new coordinates, energies, forces in upper boundary
     for(unsigned int i=0; i<topo.num_atoms(); ++i) {
       conf.current().pos(i) = conf.old().pos(i) + b * conf.old().cgrad(i);
@@ -205,7 +208,7 @@ int algorithm::Conjugate_Gradient
       gB += math::dot(conf.old().cgrad(i), conf.current().force(i));
     }
     DEBUG(15, "gB = " << gB);
-    // If gB < 0 or eneB > eneA, accept b as upper boundary for estimation of X
+    // If gB < 0 or eneB > eneA, accept B as upper boundary for estimation of X
     if (gB < 0 || eneB > eneA) {
       double a = 0.0;
       double Z, W;
@@ -265,7 +268,7 @@ int algorithm::Conjugate_Gradient
       }
       break;
     }
-    else { // Minimum is probably beyond b
+    else { // Minimum is probably beyond B
       DEBUG(1, "Minimum is beyond upper boundary, Doubling the interval size");
       b *= 2;
       DEBUG(15, "Increasing the next step size by 10%");
@@ -344,8 +347,8 @@ inline double algorithm::Conjugate_Gradient
   double & beta
 )
 {
-  double b = 0;
-  if (beta == 0) {
+  double b = 0.0;
+  if (beta == 0.0) {
     for(unsigned int i=0; i<topo.num_atoms(); ++i) {
         conf.current().cgrad(i) = conf.current().force(i);
         b += math::abs2(conf.current().force(i));
