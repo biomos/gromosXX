@@ -47,20 +47,20 @@ int algorithm::Conjugate_Gradient
     if (sim.param().minimise.ntem == 2) {
       os << "\tFletcher-Reeves conjugate gradient\n";
     }
-    else {
-      os << "\tPolak-Ribiere conjugate gradient\n";
+    else os << "\tPolak-Ribiere conjugate gradient\n";
+
+    os << "\tresetting search direction every n-th step : " << sim.param().minimise.ncyc;
+    if (sim.param().minimise.ncyc == 0) {
+      os << " (no forced reset)";
     }
-    os << "\tresetting search direction every n-th step : " << sim.param().minimise.ncyc << "\n"
-       << std::scientific
-       << "\trequested rms force in minimum             : " << sim.param().minimise.dele << "\n" 
-       << std::fixed
+    os << "\n" << std::scientific << std::setprecision(2)
+       << "\trequested rms force in minimum             : " << sim.param().minimise.dele << "\n"
        << "\tminimum and starting step size             : " << sim.param().minimise.dx0 << "\n"
        << "\tmaximum step size                          : " << sim.param().minimise.dxm << "\n"
        << "\tminimum steps                              : " << sim.param().minimise.nmin << "\n"
        << "\tmaximum cubic interpolations per step      : " << sim.param().minimise.cgim << "\n"
-       << std::scientific
        << "\tdisplacement criterion on interpolation    : " << sim.param().minimise.cgic << "\n"
-       << std::fixed
+       << std::fixed << std::setprecision(4);
        ;
   }
   if (!quiet) {
@@ -70,7 +70,7 @@ int algorithm::Conjugate_Gradient
     }
     os << "END\n";
     if (sim.param().pairlist.skip_step > 1 && sim.param().pairlist.skip_step < sim.param().step.number_of_steps) {
-    io::messages.add("For tight convergence, the pairlist should be generated every step",
+    io::messages.add("For tight convergence, the pairlist should be generated every step or without cut-off",
             "Algorithm::conjugate_gradient",
             io::message::warning);
     }
@@ -93,7 +93,7 @@ int algorithm::Conjugate_Gradient
   #else
     std::cout << std::scientific << std::setprecision(4);
   #endif
-  int its = 0; // Counter of interaction calculations
+  int iter_counter = 0; // Counter of interaction calculations
   DEBUG(15,"step no.:\t" << sim.steps());
   // Calculate the energies, as we need them to estimate a minimum along the search direction
   conf.current().energies.calculate_totals();
@@ -117,6 +117,7 @@ int algorithm::Conjugate_Gradient
     DEBUG(15, "Total energy = " << conf.current().energies.potential_total + conf.current().energies.special_total);
     if (f < sim.param().minimise.dele) {
       std::cout << "CONJUGATE GRADIENT:\tMINIMUM REACHED\n";
+      std::cout << "After " << sim.minimisation_iterations() + 1 << " iterations \n";
       std::cout << "Final RMS force:\t" << f << "\n";
       std::cout << "Final MAX force:\t" << f_max << "\n";
       return E_MINIMUM_REACHED;
@@ -146,7 +147,7 @@ int algorithm::Conjugate_Gradient
   // If old forces are non-zero and this is not a resetting step, calculate beta
   double beta;
   if (!no_force && (sim.param().minimise.ncyc == 0 || sim.steps() % sim.param().minimise.ncyc != 0)) {
-    beta = calculate_beta(topo,conf,sim);
+    beta = calculate_beta(topo, conf, sim);
     DEBUG(15, "beta = " << beta);
   }
   // Otherwise reset the search direction by keeping beta = 0
@@ -157,7 +158,7 @@ int algorithm::Conjugate_Gradient
       << "beta = " << beta);
   }
   // Calculate the search direction
-  double b = calculate_cgrad(topo,conf,beta);
+  double b = calculate_cgrad(topo, conf, beta);
   // Calculate a gradient along the search direction
   double gA;
   // If beta = 0, gA is identical to b
@@ -176,7 +177,7 @@ int algorithm::Conjugate_Gradient
   if (gA < 0.0) {
     DEBUG(1, "gA below zero. Resetting the search direction");
     beta = 0.0;
-    b = calculate_cgrad(topo,conf,beta);
+    b = calculate_cgrad(topo, conf, beta);
     gA = b;
     DEBUG(10, "After reset, gA = " << gA << ", beta = " << beta);
   }
@@ -189,8 +190,8 @@ int algorithm::Conjugate_Gradient
   // Create confX to store intermediate configurations and evaluate interpolations
   configuration::Configuration confX = conf;
   double gB, eneB, X;
-  int doubled = 0; // Counter of interval doubling
-  int ints = 0; // Number of interpolations done
+  int doubled_counter = 0; // Counter of interval doubling
+  int ipol_counter = 0; // Counter of interpolations
   conf.exchange_state();
   while(true) {
     // Calculate new coordinates, energies, forces in upper boundary
@@ -198,7 +199,7 @@ int algorithm::Conjugate_Gradient
       conf.current().pos(i) = conf.old().pos(i) + b * conf.old().cgrad(i);
     }
     cg_ff.apply(topo, conf, sim);    
-    its += 1;
+    iter_counter += 1;
     conf.current().energies.calculate_totals();
     eneB = conf.current().energies.potential_total + conf.current().energies.special_total;
     DEBUG(15, "eneB = " << eneB);
@@ -218,7 +219,7 @@ int algorithm::Conjugate_Gradient
         Z = (3 * (eneA - eneB) / (b - a)) - gA - gB;
         W = sqrt(Z * Z - gA * gB);
         X = b - (W - Z - gB) * (b - a) / (gA - gB + 2 * W);
-        ints += 1;
+        ipol_counter += 1;
         DEBUG(15, "X = " << X);
         if(math::gisnan(X)) {
           io::messages.add("new coordinates are NaN", "Conjugate_Gradient", io::message::error);
@@ -237,12 +238,12 @@ int algorithm::Conjugate_Gradient
         d = sqrt(d/topo.num_atoms());
         DEBUG(10, "RMS displacement of X = " << d);
         // Accept X as new configuration, if criterion is met
-        if (d < sim.param().minimise.cgic || ints == sim.param().minimise.cgim) {
+        if (d < sim.param().minimise.cgic || ipol_counter == sim.param().minimise.cgim) {
           break;
         }
         // Calculate forces and energies of X
         cg_ff.apply(topo, conf, sim);
-        its += 1;
+        iter_counter += 1;
         conf.current().energies.calculate_totals();
         eneX = conf.current().energies.potential_total + conf.current().energies.special_total;
         DEBUG(10, "eneX = " << eneX);
@@ -269,21 +270,22 @@ int algorithm::Conjugate_Gradient
       break;
     }
     else { // Minimum is probably beyond B
-      DEBUG(1, "Minimum is beyond upper boundary, Doubling the interval size");
+      DEBUG(1, "Minimum is beyond upper boundary. Doubling the interval size.");
       b *= 2;
       DEBUG(15, "Increasing the next step size by 10%");
       sim.minimisation_step_size() *= 1.1;
-      doubled += 1;
+      doubled_counter += 1;
     }
   }
+  sim.minimisation_iterations() += iter_counter + 1;
   DEBUG(7, "Minimum along the search direction accepted, X = " << X << "\n"
-  << "Times the search interval size was doubled: " << doubled << "\n"
-  << "Number of cubic interpolations: " << ints << "\n"
-  << "Total number of interactions calculation: " << its);
+        << "Times the search interval size was doubled: " << doubled_counter << "\n"
+        << "Number of cubic interpolations: " << ipol_counter << "\n"
+        << "Total number of interaction calculations: " << iter_counter);
   // If this is the last step, also perform one more calculation to print correct minimized energies
   if (sim.steps() == (unsigned(sim.param().step.number_of_steps) - 1)) {
     cg_ff.apply(topo, conf, sim);
-    its += 1;
+    iter_counter += 1;
     conf.current().energies.calculate_totals();
     double f = 0.0, f_max = 0.0;
     // Also print final RMS force
@@ -294,6 +296,7 @@ int algorithm::Conjugate_Gradient
     f = sqrt(f/topo.num_atoms());
     f_max = sqrt(f_max);
     std::cout << "CONJUGATE GRADIENT:\tMIMIMUM CRITERION NOT MET\n";
+    std::cout << "After " << sim.minimisation_iterations() + 1 << " iterations \n";
     std::cout << std::scientific << std::setprecision(4);
     std::cout << "Final RMS force:\t" << f << "\n";
     std::cout << "Final MAX force:\t" << f_max << "\n";
@@ -303,7 +306,7 @@ int algorithm::Conjugate_Gradient
       sim.minimisation_step_size() *= 0.9;
       DEBUG(15, "X below one fifth of interval. Decreasing the step size by 10 percent.");
     }
-    if (doubled && sim.minimisation_step_size() > sim.param().minimise.dxm) {
+    if (doubled_counter && sim.minimisation_step_size() > sim.param().minimise.dxm) {
       sim.minimisation_step_size() = sim.param().minimise.dxm;
     }
   }
@@ -315,9 +318,9 @@ int algorithm::Conjugate_Gradient
 inline double algorithm::Conjugate_Gradient
 ::calculate_beta
 (
-  topology::Topology & topo,
-  configuration::Configuration & conf,
-  simulation::Simulation & sim
+  const topology::Topology & topo,
+  const configuration::Configuration & conf,
+  const simulation::Simulation & sim
 )
 { 
   double f1 = 0.0, f2 = 0.0;
@@ -342,9 +345,9 @@ inline double algorithm::Conjugate_Gradient
 inline double algorithm::Conjugate_Gradient
 ::calculate_cgrad
 (
-  topology::Topology & topo,
+  const topology::Topology & topo,
   configuration::Configuration & conf,
-  double & beta
+  const double & beta
 )
 {
   double b = 0.0;

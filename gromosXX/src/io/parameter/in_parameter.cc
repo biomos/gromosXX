@@ -200,7 +200,7 @@ void io::In_Parameter::read_ENERGYMIN(simulation::Parameter &param,
     exampleblock << "         1       0     0.1   0.01    0.05       1     0.0\n";
     exampleblock << "# ---- OR: example for NTEM > 1:\n";
     exampleblock << "#     NTEM    NCYC    DELE    DX0     DXM    NMIN    FLIM    CGIM    CGIC\n";
-    exampleblock << "         3       0    1e-3   0.05     0.5       1     0.0       3     1e-3\n";
+    exampleblock << "         3       0    1e-3   0.05     0.5       1     0.0       3    1e-3\n";
     exampleblock << "END\n";
 
     std::string blockname = "ENERGYMIN";

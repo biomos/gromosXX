@@ -53,16 +53,16 @@ namespace algorithm
     /**
      * Calculates an old search direction coefficient
      */
-    double calculate_beta(topology::Topology & topo,
-         configuration::Configuration & conf,
-         simulation::Simulation & sim);
+    double calculate_beta(const topology::Topology & topo,
+         const configuration::Configuration & conf,
+         const simulation::Simulation & sim);
     
     /**
      * Updates search directions and returns sum of their squared sizes
      */
-    double calculate_cgrad(topology::Topology & topo,
+    double calculate_cgrad(const topology::Topology & topo,
          configuration::Configuration & conf,
-         double & beta);
+         const double & beta);
 
   };
   
