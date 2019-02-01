@@ -59,7 +59,7 @@ util::replica_exchange_master_eds::replica_exchange_master_eds(io::Argument _arg
 }
 
 void util::replica_exchange_master_eds::receive_from_all_slaves() {
-  DEBUG(2,"replica_exchange_master_eds:receive_from_all_slaves \t START");
+  DEBUG(2,"replica_exchange_master_eds:receive_from_all_slaves \t START\n");
 
   double start = MPI_Wtime();
 
@@ -67,30 +67,34 @@ void util::replica_exchange_master_eds::receive_from_all_slaves() {
   MPI_Status status_eds;
 
   util::repInfo info;
-  
 
   // receive all information from slaves
-  DEBUG(2,"replica_exchange_master_eds:receive_from_all_slaves \t \treceive from slaves");
-  DEBUG(2, "numReps: "<< numReplicas)
+  DEBUG(2,"\nreplica_exchange_master_eds:receive_from_all_slaves \t \treceive from slaves");
+  DEBUG(2, "\nnumReps: "<< numReplicas)
   for (unsigned int rep = 0; rep < numReplicas; ++rep) {
     unsigned int rank = repMap.find(rep)->second;
     if (rank != 0) {
-        DEBUG(2,"replica_exchange_master_eds:receive_from_all_slaves \t \t out of rank ID: " << rank);
+        DEBUG(2,"\nreplica_exchange_master_eds:receive_from_all_slaves \t \t out of rank ID: " << rank);
         MPI_Recv(&info, 1, MPI_REPINFO, rank, REPINFO, MPI_COMM_WORLD, &status);
-        DEBUG(2,"replica_exchange_master_eds:received_from_all_slaves \t \t ID: " << rank);
+        DEBUG(2,"\nreplica_exchange_master_eds:received_from_all_slaves \t \t ID: " << rank);
         replicaData[rep].run = info.run;
         replicaData[rep].epot = info.epot;
         replicaData[rep].epot_partner = info.epot_partner;
         replicaData[rep].probability = info.probability;
         replicaData[rep].switched = info.switched;
         replicaData[rep].partner = info.partner;
-        MPI_Recv(&replicaData[rep].Vi[0],1,MPI_EDSINFO, rank, EDSINFO, MPI_COMM_WORLD, &status_eds);
-        DEBUG(2,"replica_exchange_master_eds:receive_from_all_slaves \t \t edsVrank: " << replicaData[rep].Vi[0]);
+        DEBUG(2,"\nreplica_exchange_master_eds:" << rank << ":receive_from_all_slaves REP:" <<rep<< " EpotTot: "<< replicaData[rep].epot);
+
+        MPI_Recv(&replicaData[rep].Vi[0],1, MPI_EDSINFO, rank, EDSINFO, MPI_COMM_WORLD, &status_eds);
+        for(int s=0;s< replicaData[rep].Vi.size(); s++){
+            DEBUG(2,"\nreplica_exchange_master_eds:" << rank << ":receive_from_all_slaves:State "<< s << " En: "<< replicaData[rep].Vi[s]);
+        }        
+        //DEBUG(2,"\nreplica_exchange_master_eds:receive_from_all_slaves \t \t edsVrank: " << replicaData[rep].Vi[0]);
     }    
   }
   
   // write all information from master node to data structure
-  DEBUG(2,"replica_exchange_master_eds:receive_from_all_slaves \t \twrite_own data");
+  DEBUG(2,"\nreplica_exchange_master_eds:receive_from_all_slaves \t \twrite_own data");
   for (repIterator it = replicas.begin(); it < replicas.end(); it++) { //TODO: set DEBUG level higher bschroed
     int ID = (*it)->ID;
     replicaData[ID].run = 0; //(*it)->run;
@@ -99,6 +103,7 @@ void util::replica_exchange_master_eds::receive_from_all_slaves() {
     replicaData[ID].epot_partner = (*it)->epot_partner;
     replicaData[ID].probability = (*it)->probability;
     replicaData[ID].switched = (*it)->switched;
+    replicaData[ID].Vi = (*it)->conf.current().energies.eds_vi;
   }
   DEBUG(3,"replica_exchange_master_eds:receive_from_all_slaves \t Master:\n" << "time used for receiving all messages: " << MPI_Wtime() - start 
             << " seconds");
@@ -163,7 +168,7 @@ void util::replica_exchange_master_eds::write() {
               << std::setw(4) << replicaData[r].switched;
 
     for(int s=0;s<reedsParam.eds_para[0].numstates; s++){
-        DEBUG(2, "WRITE ouut POTS " <<s);
+        DEBUG(2, "WRITE out POTS " <<s<< "\t" << replicaData[r].Vi[s]);
         repOut   << std::setw(18) << std::min(replicaData[r].Vi[s], 10000000.0);//Output potential energies for each state 
     }
       repOut << std::endl;
