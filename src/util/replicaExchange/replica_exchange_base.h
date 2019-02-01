@@ -71,7 +71,7 @@ namespace util {
     /**
      * runs MD simulation for all replicas; one by one
      */
-    void run_MD();
+    virtual void run_MD();
     
     /**
      * write coordinates for all replicas to cnf
@@ -81,7 +81,7 @@ namespace util {
     /**
      * init MD simulation for all replicas; one by one
      */
-    void init();
+    virtual void init();
     /**
      * prints out configuration to a file named \<name\>_\<ID\>.cnf
      * @param name string, name of output file
@@ -91,7 +91,7 @@ namespace util {
      * Tries a swapping of configuration if possible. Calculates energies, probabilities
      * and sends information via MPI communication if necessary.
      */
-    void swap();
+    virtual void swap();
 
   protected:
     /**

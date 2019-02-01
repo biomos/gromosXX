@@ -58,8 +58,11 @@
  */
 
 util::replica_exchange_base_eds::replica_exchange_base_eds(io::Argument _args, int cont, int rank,
-        std::vector<int> repIDs, std::map<ID_t, rank_t> &_repMap): replica_exchange_base(_args, cont, rank, repIDs, _repMap){
+        std::vector<int> repIDs, std::map<ID_t, rank_t> &_repMap):  
+        replica_exchange_base(_args, cont, rank, repIDs, _repMap){
     DEBUG(3,"replica_exchange_base_eds "<< rank <<":\t Constructor \t START");
+    DEBUG(5,"replica_exchange_base_eds"<< rank <<":\t replica Type\t "<< typeid(replicas).name());
+    //DEBUG(5,"replica_exchange_base_eds"<< rank <<":\t replicaPARAMrEEDS NUMl \t "<<replicas[0]->sim.param().reeds.num_l);
     createReplicas(cont, repIDs, rank);
     DEBUG(3,"replica_exchange_base_eds "<< rank <<":\t Constructor \t DONE");
 }
@@ -69,10 +72,9 @@ void util::replica_exchange_base_eds::createReplicas(int cont, std::vector<int> 
   replicas.resize(numReplicas);
   // create the number of replicas that are assigned to my node
    int i = 0;
-   for (repIterator it = replicas.begin(); it < replicas.end(); ++it, ++i) {
-     // one could use a vector<util::replica> and therefore we needed a copy constructor
-     // for the replica class but there seems to be something wrong with those of conf/topo/...
-     *it = new util::replica_reeds(args, cont, repIDs[i++], rank);
+   //++i
+   for (repIterator it = replicas.begin(); it < replicas.end(); it++) {
+    *it = new util::replica_reeds(args, cont, repIDs[i++], rank);
     DEBUG(3, "\treplica_exchange_base_eds "<< rank <<":\tConstructor \ttopo\t" << (*it)->topo.check_state())
     DEBUG(3, "\treplica_exchange_base_eds "<< rank <<":\tConstructor \tconf:\t" << (*it)->conf.check((*it)->topo, (*it)->sim))
    }    
@@ -207,7 +209,8 @@ void util::replica_exchange_base_eds::run_MD() {
     for (repIterator it = replicas.begin(); it < replicas.end(); ++it) {
         DEBUG(3, "replica_exchange_base_eds "<< rank <<":\t run_MD \t replica "<< (*it)->ID << ":")
         DEBUG(3, "\treplica_exchange_base_eds "<< rank <<":\tsim step:\t" << (*it)->sim.time())
-        DEBUG(3, "\treplica_exchange_base_eds "<< rank <<":\ttopo\t" << (*it)->topo.check_state())
+        //DEBUG(3, "\treplica_exchange_base_eds "<< rank <<":\ttopo\t" << (*it)->topo.check_state())
+         
         DEBUG(3, "\treplica_exchange_base_eds "<< rank <<":\tconf:\t" << (*it)->conf.check((*it)->topo, (*it)->sim))
         DEBUG(3, "\treplica_exchange_base_eds "<< rank <<":\tStep\tStart")
         (*it)->run_MD();
@@ -255,7 +258,10 @@ void util::replica_exchange_base_eds::eds_stat(){
 void util::replica_exchange_base_eds::init() {
   DEBUG(3,"replica_exchange_base_eds "<< rank <<":\t init \t START");
   DEBUG(3,"replica_exchange_base_eds "<< rank <<":\t start init from baseclass \t NEXT");
-  replica_exchange_base::init();
+    for (repIterator it = replicas.begin(); it < replicas.end(); ++it) {
+    (*it)->init();
+   }
+  //replica_exchange_base::init();
   DEBUG(3,"replica_exchange_base_eds "<< rank <<":\t init_eds_stat \t NEXT");
   this->init_eds_stat();
   DEBUG(3,"replica_exchange_base_eds "<< rank <<":\t init \t DONE");

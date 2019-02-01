@@ -64,8 +64,16 @@ namespace util
          * and sends information via MPI communication if necessary. Added also reeds information
          */
         //using util::replica_exchange_base::swap;
-        void swap();
-
+        void swap() override;
+        /**
+        * runs MD simulation for all replicas; one by one
+        */
+        void run_MD() override;
+        /**
+         * inits replica_reeds
+         */
+        void init() override;
+        
          /** 
          * calculate and write out acceptance probabilities for non-neighbour
          * switching attempts. Useful to optimize replica EDS parameter choice. 
@@ -75,15 +83,7 @@ namespace util
          * Initialize file and data for eds_stat output.
          */
         void init_eds_stat();
-        /**
-        * runs MD simulation for all replicas; one by one
-        */
-        void run_MD();
-        /**
-         * inits replica_reeds
-         */
-        void init();
-
+        
     protected:
         /**
         * all replicas on this node
@@ -108,7 +108,7 @@ namespace util
         *  Other Functions:
         */
         //init Replicas - used in contstructor, initialises the replica objs.
-        void createReplicas(int cont, std::vector<int>  repIDs, int rank);
+        void createReplicas(int cont, std::vector<int>  repIDs, int rank) override;
     };
 }
 #endif /* REPLICA_EXCHANGE_BASE_EDS_H */

@@ -88,7 +88,7 @@ namespace util{
          */
         int getSValPrecision(double minLambda);
         
-        const simulation::Parameter::reeds_struct& reedsParam;
+        const simulation::Parameter::reeds_struct reedsParam;
         std::vector<util::reeds_replica_data> replicaData;
         int rank;
         std::string repoutPath;

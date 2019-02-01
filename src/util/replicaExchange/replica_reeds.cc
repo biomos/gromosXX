@@ -32,6 +32,8 @@ util::replica_reeds::replica_reeds(io::Argument _args, int cont, int _ID, int _r
   l == eds_para.s[0];
   DEBUG(4, "Temp of replica "<< rank <<" " << _ID << " \t" << sim.param().multibath.multibath.bath(0).temperature)
   DEBUG(4, "S of replica "<< rank <<" " << _ID << " \t" << sim.param().eds.s[0])
+  DEBUG(4, "S size of replica "<< rank <<" " << _ID << " \t" << sim.param().eds.s.size())
+
 
   assert(0.0 <= sim.param().multibath.multibath.bath(0).temperature);
   DEBUG(3, "replica_reeds "<< rank <<":\t constructor \t DONE"); 

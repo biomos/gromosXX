@@ -31,26 +31,29 @@ util::replica_exchange_master_eds::replica_exchange_master_eds(io::Argument _arg
         replica_exchange_master(_args, cont, rank, _size, _numReplicas, repIDs, repMap),
         reedsParam(replicas[0]->sim.param().reeds)
         {
-        
-    DEBUG(5,"replica_exchange_master_"<< rank <<":\t Init Replicas \t Next");
+    DEBUG(2,"replica_exchange_master_eds:\t Constructor \t START");
     
-    //initialize data of replicas
-    replicaData.resize(numReplicas);
+    DEBUG(5,"replica_exchange_master_eds"<< rank <<":\t Init Replicas \t Next");
+    //initialize data of replicas    
+    //bschroed Todo: doubly assigned
+    replicaData.resize(repParams.num_l);
+    DEBUG(5,"replica_exchange_master_eds"<< rank <<":\t replicaDatasize\t "<< replicaData.size());
+
+    DEBUG(5,"replica_exchange_master_eds"<< rank <<":\t reeds- lambda\t "<< replicas[0]->sim.param().reeds.num_l);
+    DEBUG(5,"replica_exchange_master_eds"<< rank <<":\t eds \t "<< replicas[0]->sim.param().eds.s.size());
+
+        
     int ID = 0;
     for (int i = 0; i < repParams.num_l; ++i) {
         replicaData[ID].ID = ID;
         replicaData[ID].T = repParams.temperature[i];
-        DEBUG(5,"replica_exchange_master:\t Init Replicas \t "<< repParams.temperature[i]);
+        DEBUG(5,"replica_exchange_master:\t Init Replicas ID"<<ID<<"\t "<< repParams.temperature[i]);
         replicaData[ID].l = repParams.lambda[i];
         replicaData[ID].dt = repParams.dt[i];
+        DEBUG(5,"replica_exchange_master_eds:\t Init Replicas eds_param"<<ID<<"\t "<< reedsParam.eds_para[0].numstates);
         replicaData[ID].Vi.assign(reedsParam.eds_para[0].numstates,0);
         ++ID;
     }
-    DEBUG(2,"replica_exchange_master_eds:\t Constructor \t START");
-    //REPDAT OUTPUT!!!
-    //prepare OUTPUT repdat file:
-    repoutPath = args["repdat"];
-    
     DEBUG(2,"replica_exchange_master_eds "<< rank <<":\t Constructor \t DONE");
 }
 

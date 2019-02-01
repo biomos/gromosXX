@@ -55,9 +55,10 @@ repParams(replicas[0]->sim.param().replica)
   assert(repParams.num_l > 0);
   assert(repParams.num_l > 0);
   
-  replicaData.resize(numReplicas);
-  
   DEBUG(5,"replica_exchange_master:\t Init Replicas \t Next");
+  replicaData.resize(numReplicas);
+  DEBUG(5,"replica_exchange_master:\t Replica_data type \t " << typeid(replicaData).name());
+
   //initialize data of replicas
   int ID = 0;
   for (int i = 0; i < repParams.num_l; ++i) {

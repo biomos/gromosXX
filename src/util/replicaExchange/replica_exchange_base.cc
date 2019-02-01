@@ -42,10 +42,10 @@ util::replica_exchange_base::replica_exchange_base(io::Argument _args, int cont,
         rank(rank), cont(cont), repIDs(repIDs){
 
   DEBUG(5,"replica_exchange_base:\t Constructor \t START ");
-  
   //construct replica objs
   DEBUG(5,"replica_exchange_base:\t\t createReplicas");
   createReplicas(cont, repIDs, rank);
+  DEBUG(5,"replica_exchange_base_eds"<< rank <<":\t replica Type\t "<< typeid(replicas).name());
 
   DEBUG(5,"replica_exchange_base:\t Constructor \t Done");
 }
@@ -58,11 +58,15 @@ util::replica_exchange_base::~replica_exchange_base() {
 }
 
 void util::replica_exchange_base::run_MD() {
+  DEBUG(5,"replica_exchange_base:\t run_MD \t START");
+
   // do a md run for all replica assigned to this node
   for (std::vector< util::replica * >::iterator it = replicas.begin(); it < replicas.end(); ++it) {
     (*it)->run_MD();
     (*it)->conf.current().energies.eds_vr;
   }
+  DEBUG(5,"replica_exchange_base:\t run_MD \t END");
+
 }
 
 void util::replica_exchange_base::write_final_conf() {
@@ -77,6 +81,7 @@ void util::replica_exchange_base::init() {
 
   // do init for all replica assigned to this node
   DEBUG(5,"replica_exchange_base:\t\t initReplicas");
+  DEBUG(5,"replica_exchange_base_eds"<< rank <<":\t initReplicas type\t "<< typeid(replicas).name());
 
   for (repIterator it = replicas.begin(); it < replicas.end(); ++it) {
     (*it)->init();
@@ -93,6 +98,8 @@ void util::replica_exchange_base::createReplicas(int cont, std::vector<int> repI
     // one could use a vector<util::replica> and theref ore we needed a copy constructor
     // for the replica class but there seems to be something wrong with those of conf/topo/...
     *it = new util::replica(args, cont, repIDs[i++], rank);
+    DEBUG(3, "\treplica_exchange_base "<< rank <<":\tConstructor \ttopo\t" << (*it)->topo.check_state())
+    DEBUG(3, "\treplica_exchange_base "<< rank <<":\tConstructor \tconf:\t" << (*it)->conf.check((*it)->topo, (*it)->sim))
   }
   DEBUG(5,"replica_exchange_base:\t initReplicas \t Done");
 }

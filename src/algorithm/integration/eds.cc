@@ -292,7 +292,9 @@ int algorithm::EDS
       // get beta
       assert(sim.param().multibath.multibath.bath(0).temperature != 0.0);
       const double beta = 1.0 / (sim.param().multibath.multibath.bath(0).temperature * math::k_Boltzmann);
+      DEBUG(7, "eds_s size " << sim.param().eds.s.size());
       assert(sim.param().eds.s.size() == 1);
+
       const double s = sim.param().eds.s[0];
       
       std::vector<double> eds_vi = conf.current().energies.eds_vi;
