@@ -31,16 +31,16 @@ util::replica_exchange_master_eds::replica_exchange_master_eds(io::Argument _arg
         replica_exchange_master(_args, cont, rank, _size, _numReplicas, repIDs, repMap),
         reedsParam(replicas[0]->sim.param().reeds)
         {
-    DEBUG(2,"replica_exchange_master_eds:\t Constructor \t START");
+    DEBUG(2,"replica_exchange_master_eds:Constructor \t START");
     
-    DEBUG(5,"replica_exchange_master_eds"<< rank <<":\t Init Replicas \t Next");
+    DEBUG(5,"replica_exchange_master_eds"<< rank <<":Init Replicas \t Next");
     //initialize data of replicas    
     //bschroed Todo: doubly assigned
     replicaData.resize(repParams.num_l);
-    DEBUG(5,"replica_exchange_master_eds"<< rank <<":\t replicaDatasize\t "<< replicaData.size());
+    DEBUG(5,"replica_exchange_master_eds"<< rank <<":replicaDatasize\t "<< replicaData.size());
 
-    DEBUG(5,"replica_exchange_master_eds"<< rank <<":\t reeds- lambda\t "<< replicas[0]->sim.param().reeds.num_l);
-    DEBUG(5,"replica_exchange_master_eds"<< rank <<":\t eds \t "<< replicas[0]->sim.param().eds.s.size());
+    DEBUG(5,"replica_exchange_master_eds"<< rank <<":reeds- lambda\t "<< replicas[0]->sim.param().reeds.num_l);
+    DEBUG(5,"replica_exchange_master_eds"<< rank <<":eds \t "<< replicas[0]->sim.param().eds.s.size());
 
         
     int ID = 0;
@@ -50,16 +50,16 @@ util::replica_exchange_master_eds::replica_exchange_master_eds(io::Argument _arg
         DEBUG(5,"replica_exchange_master:\t Init Replicas ID"<<ID<<"\t "<< repParams.temperature[i]);
         replicaData[ID].l = repParams.lambda[i];
         replicaData[ID].dt = repParams.dt[i];
-        DEBUG(5,"replica_exchange_master_eds:\t Init Replicas eds_param"<<ID<<"\t "<< reedsParam.eds_para[0].numstates);
+        DEBUG(5,"replica_exchange_master_eds:Init Replicas eds_param"<<ID<<"\t "<< reedsParam.eds_para[0].numstates);
         replicaData[ID].Vi.assign(reedsParam.eds_para[0].numstates,0);
         ++ID;
     }
-    DEBUG(2,"replica_exchange_master_eds "<< rank <<":\t Constructor \t DONE");
+    
+    DEBUG(2,"replica_exchange_master_eds "<< rank <<":Constructor \t DONE");
 }
 
-
 void util::replica_exchange_master_eds::receive_from_all_slaves() {
-  DEBUG(2,"replica_exchange_master_eds:\t receive_from_all_slaves \t START");
+  DEBUG(2,"replica_exchange_master_eds:receive_from_all_slaves \t START");
 
   double start = MPI_Wtime();
 
@@ -70,14 +70,14 @@ void util::replica_exchange_master_eds::receive_from_all_slaves() {
   
 
   // receive all information from slaves
-  DEBUG(2,"replica_exchange_master_eds:\t receive_from_all_slaves \t \treceive from slaves");
+  DEBUG(2,"replica_exchange_master_eds:receive_from_all_slaves \t \treceive from slaves");
   DEBUG(2, "numReps: "<< numReplicas)
   for (unsigned int rep = 0; rep < numReplicas; ++rep) {
     unsigned int rank = repMap.find(rep)->second;
     if (rank != 0) {
-        DEBUG(2,"replica_exchange_master_eds:\t receive_from_all_slaves \t \t out of rank ID: " << rank);
+        DEBUG(2,"replica_exchange_master_eds:receive_from_all_slaves \t \t out of rank ID: " << rank);
         MPI_Recv(&info, 1, MPI_REPINFO, rank, REPINFO, MPI_COMM_WORLD, &status);
-        DEBUG(2,"replica_exchange_master_eds:\t received_from_all_slaves \t \t ID: " << rank);
+        DEBUG(2,"replica_exchange_master_eds:received_from_all_slaves \t \t ID: " << rank);
         replicaData[rep].run = info.run;
         replicaData[rep].epot = info.epot;
         replicaData[rep].epot_partner = info.epot_partner;
@@ -85,12 +85,12 @@ void util::replica_exchange_master_eds::receive_from_all_slaves() {
         replicaData[rep].switched = info.switched;
         replicaData[rep].partner = info.partner;
         MPI_Recv(&replicaData[rep].Vi[0],1,MPI_EDSINFO, rank, EDSINFO, MPI_COMM_WORLD, &status_eds);
-        DEBUG(2,"replica_exchange_master_eds:\t receive_from_all_slaves \t \t edsVrank: " << replicaData[rep].Vi[0]);
+        DEBUG(2,"replica_exchange_master_eds:receive_from_all_slaves \t \t edsVrank: " << replicaData[rep].Vi[0]);
     }    
   }
   
   // write all information from master node to data structure
-  DEBUG(2,"replica_exchange_master_eds:\t receive_from_all_slaves \t \twrite_own data");
+  DEBUG(2,"replica_exchange_master_eds:receive_from_all_slaves \t \twrite_own data");
   for (repIterator it = replicas.begin(); it < replicas.end(); it++) { //TODO: set DEBUG level higher bschroed
     int ID = (*it)->ID;
     replicaData[ID].run = 0; //(*it)->run;
@@ -100,9 +100,9 @@ void util::replica_exchange_master_eds::receive_from_all_slaves() {
     replicaData[ID].probability = (*it)->probability;
     replicaData[ID].switched = (*it)->switched;
   }
-  DEBUG(3,"replica_exchange_master_eds:\t receive_from_all_slaves \t Master:\n" << "time used for receiving all messages: " << MPI_Wtime() - start 
+  DEBUG(3,"replica_exchange_master_eds:receive_from_all_slaves \t Master:\n" << "time used for receiving all messages: " << MPI_Wtime() - start 
             << " seconds");
-  DEBUG(2,"replica_exchange_master_eds:\t receive_from_all_slaves \t DONE");
+  DEBUG(2,"replica_exchange_master_eds:receive_from_all_slaves \t DONE");
 
 }
 
@@ -130,8 +130,8 @@ int util::replica_exchange_master_eds::getSValPrecision(double minLambda){
 }
 
 void util::replica_exchange_master_eds::write() {
-    DEBUG(2,"replica_exchange_master_eds:\t write \t START");
-    DEBUG(2,"replica_exchange_master_eds:\t write \t svalPrecision "<<svalPrecision);
+    DEBUG(2,"replica_exchange_master_eds:write \t START");
+    DEBUG(2,"replica_exchange_master_eds:write \t svalPrecision "<<svalPrecision);
     for (unsigned int r = 0; r < numReplicas; ++r) {
       //DEBUG(2, "WRITING CORRECTLY OUT " << r);
       repOut << std::setw(6) << (replicaData[r].ID + 1)
@@ -139,6 +139,8 @@ void util::replica_exchange_master_eds::write() {
               << std::setw(6) << (replicaData[r].partner + 1);
               //<< std::setw(6) << replicaData[r].run
       repOut.precision(svalPrecision);
+      DEBUG(2,"replica_exchange_master_eds:write \t s_val raus! "<<replicaData[r].l);
+
       repOut  << std::setw(13) << replicaData[r].l;
       
       repOut.precision(generalPrecision);
@@ -160,25 +162,24 @@ void util::replica_exchange_master_eds::write() {
       repOut  << std::setw(13) << replicaData[r].probability
               << std::setw(4) << replicaData[r].switched;
 
-    DEBUG(2, "START WWW")
     for(int s=0;s<reedsParam.eds_para[0].numstates; s++){
         DEBUG(2, "WRITE ouut POTS " <<s);
         repOut   << std::setw(18) << std::min(replicaData[r].Vi[s], 10000000.0);//Output potential energies for each state 
     }
       repOut << std::endl;
     }
-    DEBUG(2,"replica_exchange_master_eds:\t write \t DONE");
+    DEBUG(2,"replica_exchange_master_eds:write \t DONE");
 }
 
-void util::replica_exchange_master_eds::init_repOut_stat_file(std::string repoutPath) {
-    repOut.open(repoutPath.c_str());
-    DEBUG(6,"replica_exchange_master:\t repdat init  \t repdat file open ");
+void util::replica_exchange_master_eds::init_repOut_stat_file() {
+    repOut.open(repdatName.c_str());
+    DEBUG(6,"replica_exchange_master:repdat init  \t repdat file open ");
 
     repOut << "\tREPLICA Exchange Output \n\n"
            << "Number of temperatures:\t" << repParams.num_T << "\n"
            << "Number of s values:\t" << repParams.num_l << "\n";
 
-    DEBUG(6,"replica_exchange_master:\t repdat init \t set precision ");
+    DEBUG(6,"replica_exchange_master:repdat init \t set precision ");
     
     double minS = *(std::min_element(reedsParam.eds_para[0].s.begin(), reedsParam.eds_para[0].s.end()));
     //svalPrecision = getSValPrecision(minS);
@@ -227,7 +228,7 @@ void util::replica_exchange_master_eds::init_repOut_stat_file(std::string repout
     }
     repOut << "\n";
 
-    DEBUG(2,"replica_exchange_master_eds:\t svalPrecision \t ");
+    DEBUG(2,"replica_exchange_master_eds:svalPrecision \t ");
     //repOut.precision(svalPrecision);
     repOut.flush();    
 }

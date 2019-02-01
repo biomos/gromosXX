@@ -67,15 +67,23 @@ namespace util {
     /**
      * receives all information written to output file from the slaves
      */
-    void receive_from_all_slaves();
+    virtual void receive_from_all_slaves();
     /**
      * writes data to output file \@repdat
      */
-    void write();
-
+    virtual void write();
+    
+ 
+    virtual void init_repOut_stat_file();
+    
   protected:
     /**
-     * output file stream for output file
+     * output file Path for repdat output file
+     */
+    std::string repdatName;
+
+    /**
+     * output file stream for repdat output file
      */
     std::ofstream repOut;
     
@@ -107,7 +115,7 @@ namespace util {
      */
     std::vector<util::replica_data> replicaData;
     
-    void init_repOut_stat_file(std::string repoutPath);
+    //virtual void init_repOut_stat_file(std::string repoutPath);
 
   };
 }

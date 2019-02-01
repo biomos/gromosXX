@@ -50,7 +50,7 @@ namespace util{
         /**
         * sends information of all replicas to master
         */
-        void send_to_master();
+        void send_to_master() const override;
 
     private:
         using replica_exchange_base_eds::replicas;

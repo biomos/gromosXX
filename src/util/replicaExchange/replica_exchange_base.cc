@@ -105,6 +105,7 @@ void util::replica_exchange_base::createReplicas(int cont, std::vector<int> repI
 }
 
 void util::replica_exchange_base::swap() {
+  DEBUG(5,"replica_exchange_base:\t swap \t Start");
   // do this for all replicas; if two of them on this node, do special swap
   for (std::vector< util::replica* >::iterator it = replicas.begin(); it < replicas.end(); ++it) {
     unsigned int partner = (*it)->find_partner();
@@ -140,7 +141,6 @@ void util::replica_exchange_base::swap() {
       (*it)->probability = 0.0;
       (*it)->switched = 0;
     }
-
   }
 
   // scale the velocities?
@@ -149,6 +149,8 @@ void util::replica_exchange_base::swap() {
       (*it)->velscale((*it)->partner);
     }
   }
+  DEBUG(5,"replica_exchange_base:\t swap \t Done");
+
 }
 
 void util::replica_exchange_base::swap_on_node(repIterator it1, const unsigned int partner) {

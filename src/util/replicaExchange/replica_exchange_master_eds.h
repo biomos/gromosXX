@@ -66,10 +66,15 @@ namespace util{
          * init MD simulation for all replicas; one by one
          */
         //void init();
-        void receive_from_all_slaves();
+        void receive_from_all_slaves() override;
         
-        void write();
+        void write() override;
 
+        /**
+         * functions, for initing the repout
+         * @param repoutPath
+         */
+        void init_repOut_stat_file() override;
     protected:
         /**
          * destructor
@@ -91,13 +96,12 @@ namespace util{
         const simulation::Parameter::reeds_struct reedsParam;
         std::vector<util::reeds_replica_data> replicaData;
         int rank;
-        std::string repoutPath;
         
         /**
          * functions, for initing the repout
          * @param repoutPath
          */
-        void init_repOut_stat_file(std::string repoutPath);
+        //void init_repOut_stat_file(std::string repoutPath) override;
         
     };
 }

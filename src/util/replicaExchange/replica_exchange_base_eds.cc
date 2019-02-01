@@ -89,6 +89,7 @@ util::replica_exchange_base_eds::~replica_exchange_base_eds() {
 }
 
 void util::replica_exchange_base_eds::swap() {
+  DEBUG(5,"replica_exchange_base_eds:\t swap \t Start");
   // do this for all replicas; if two of them on this node, do special swap
   for (repIterator it = replicas.begin(); it < replicas.end(); ++it) {
     unsigned int partner = (*it)->find_partner();
@@ -98,6 +99,7 @@ void util::replica_exchange_base_eds::swap() {
     // attempt switch in this run?
     if (partner != (*it)->ID) {
       // are the replicas on the same node?
+      DEBUG(5,"replica_exchange_base_eds:\t sending "<< (*it)->ID <<" \t Start");
       if (partnerOnThisNode) {
         swap_on_node(it, partner);
         if ((*it)->switched)
@@ -125,6 +127,7 @@ void util::replica_exchange_base_eds::swap() {
       (*it)->switched = 0;
     }
   }
+    DEBUG(5,"replica_exchange_base_eds:\t swap \t Done");
 }
 void util::replica_exchange_base_eds::swap_on_node(repIterator it1, const unsigned int partner) {
   replica* rep1 = *it1;
@@ -208,10 +211,9 @@ void util::replica_exchange_base_eds::run_MD() {
      // do a md run for all replica assigned to this node
     for (repIterator it = replicas.begin(); it < replicas.end(); ++it) {
         DEBUG(3, "replica_exchange_base_eds "<< rank <<":\t run_MD \t replica "<< (*it)->ID << ":")
-        DEBUG(3, "\treplica_exchange_base_eds "<< rank <<":\tsim step:\t" << (*it)->sim.time())
+        //DEBUG(3, "\treplica_exchange_base_eds "<< rank <<":\tsim step:\t" << (*it)->sim.time())
         //DEBUG(3, "\treplica_exchange_base_eds "<< rank <<":\ttopo\t" << (*it)->topo.check_state())
-         
-        DEBUG(3, "\treplica_exchange_base_eds "<< rank <<":\tconf:\t" << (*it)->conf.check((*it)->topo, (*it)->sim))
+        //DEBUG(3, "\treplica_exchange_base_eds "<< rank <<":\tconf:\t" << (*it)->conf.check((*it)->topo, (*it)->sim))
         DEBUG(3, "\treplica_exchange_base_eds "<< rank <<":\tStep\tStart")
         (*it)->run_MD();
         DEBUG(3, "\treplica_exchange_base_eds "<< rank <<":\tStep\tDone")

@@ -31,10 +31,10 @@ util::replica_exchange_slave_eds::replica_exchange_slave_eds(io::Argument & _arg
 
     DEBUG(2,"replica_exchange_slave_eds " << rank << ":\t Constructor \t START");
    
-    DEBUG(2,"replica_exchange_slave_eds " << rank << ":\t Constructor \t END"); 
+    DEBUG(2,"replica_exchange_slave_eds " << rank << ":\t Constructor \t DONE"); 
 }
 
-void util::replica_exchange_slave_eds::send_to_master(){
+void util::replica_exchange_slave_eds::send_to_master() const{
   DEBUG(2,"replica_exchange_slave_eds " << rank << ":\t send_to_master \t START");
     DEBUG(2,"replica_exchange_slave_eds " << rank << ":\t send_to_master \t Show vPots");
     for(int s=0;s<reedsParam.eds_para[0].numstates; s++){
@@ -59,8 +59,10 @@ void util::replica_exchange_slave_eds::send_to_master(){
     DEBUG(2,"replica_exchange_slave_eds " << rank << ":\t send_to_master \t\t send MPI_EDS \t current energy: " << eds_energies[0]);
     
     MPI_Send(&eds_energies, 1, MPI_EDSINFO, 0, EDSINFO, MPI_COMM_WORLD);
+    DEBUG(2,"replica_exchange_slave_eds " << rank << ":\t send_to_master \t\t send MPI_EDS \t recived energy: " << eds_energies[0]);
     DEBUG(2,"replica_exchange_slave_eds " << rank << ":\t send_to_master \t\t send MPI_EDS \t DONE" );
+    
   }
-  DEBUG(2,"replica_exchange_slave_eds " << rank << ":\t send_to_master \t END");
+  DEBUG(2,"replica_exchange_slave_eds " << rank << ":\t send_to_master \t DONE");
 }
 

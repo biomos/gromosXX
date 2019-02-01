@@ -177,10 +177,10 @@ void util::replica::run_MD() {
   sim.steps() = steps;
   sim.time() = time;
   while ((unsigned int)(sim.steps()) < maxSteps + steps) {
-    DEBUG(3, "replica\t runMD \t Start");      
+    DEBUG(5, "replica "  << (ID+1)<<"\t runMD \t Start");      
     traj->write(conf, topo, sim, io::reduced);
     // run a step
-    DEBUG(3, "replica\t runMD \t simulation!:");
+    DEBUG(5, "replica\t runMD "  << (ID+1)<<"\t simulation!:");
     if ((error = md.run(topo, conf, sim))) {
       switch (error) {
         case E_SHAKE_FAILURE:
@@ -222,14 +222,14 @@ void util::replica::run_MD() {
       error = 0; // clear error condition
       break;
     }
-    DEBUG(3, "replica\t runMD \t clean up:");      
+    DEBUG(5, "replica\t runMD "  << (ID+1)<<"\t clean up:");      
     traj->print(topo, conf, sim);
 
     ++sim.steps();
     sim.time() = sim.param().step.t0 + sim.steps() * sim.time_step_size();
 
   } // main md loop
-  DEBUG(3, "replica\t runMD \t md done:");      
+  DEBUG(5, "replica\t runMD "  << (ID+1)<<"\t md done:");      
   // update replica information
   time = sim.time();
   steps = sim.steps();
