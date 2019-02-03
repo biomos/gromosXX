@@ -18,7 +18,10 @@ namespace algorithm
     /**
      * Constructor.
      */
-    Conjugate_Gradient(interaction::Forcefield *ff) : Algorithm("ConjugateGradient"), cg_ff(*ff) {}
+    Conjugate_Gradient(
+      algorithm::Algorithm_Sequence &md_seq
+      ) : Algorithm("ConjugateGradient"),
+          cgrad_seq(md_seq){}
 
     /**
      * Destructor.
@@ -46,26 +49,36 @@ namespace algorithm
 
   private:
     /**
-     * Forcefield
+     * MD sequence
      */
-    interaction::Forcefield & cg_ff;
+    algorithm::Algorithm_Sequence & cgrad_seq;
+
+    bool do_shake;
+    bool do_posres;
 
     /**
-     * Calculates an old search direction coefficient
+     * Calculate the search direction coefficient
      */
     double calculate_beta(const topology::Topology & topo,
          const configuration::Configuration & conf,
          const simulation::Simulation & sim);
     
     /**
-     * Updates search directions and returns sum of their squared sizes
+     * Update search directions and return sum of their squared sizes
      */
     double calculate_cgrad(const topology::Topology & topo,
          configuration::Configuration & conf,
          const double & beta);
-
-  };
+    
+    /**
+    * Calculate interactions and energies of conformation
+    * Optionally also apply constraints
+    */
+    int evaluate_conf(topology::Topology & topo,
+         configuration::Configuration & conf,
+         simulation::Simulation & sim);
   
+  };
 } // algorithm
 
 #endif

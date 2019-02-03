@@ -278,10 +278,10 @@ int algorithm::Shake::shake_iteration
 
       double sp = dot(ref_r, r);
 
-      DEBUG(5, "ref i " << math::v2s(ref_i) << " ref j " << math::v2s(ref_j));
-      DEBUG(5, "free i " << math::v2s(pos_i) << " free j " << math::v2s(pos_j));
-      DEBUG(5, "ref r " << math::v2s(ref_r));
-      DEBUG(5, "r " << math::v2s(r));
+      DEBUG(10, "ref i " << math::v2s(ref_i) << " ref j " << math::v2s(ref_j));
+      DEBUG(10, "free i " << math::v2s(pos_i) << " free j " << math::v2s(pos_j));
+      DEBUG(10, "ref r " << math::v2s(ref_r));
+      DEBUG(10, "r " << math::v2s(r));
 
       if (sp < constr_length2 * math::epsilon) {
         /*

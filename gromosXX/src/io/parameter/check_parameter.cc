@@ -4121,8 +4121,8 @@ int io::check_features(simulation::Simulation & sim)
 
   // Conjugate gradient minimisation
   fc.unlock("conjugate_gradient", "solute");
-  // fc.unlock("conjugate_gradient", "solvent"); // Not working due to SHAKE
-  // fc.unlock("conjugate_gradient", "solvent_only"); // Not working due to SHAKE
+  fc.unlock("conjugate_gradient", "solvent"); // Not working due to SHAKE
+  fc.unlock("conjugate_gradient", "solvent_only"); // Not working due to SHAKE
   fc.unlock("conjugate_gradient", "solute_constraint_off");
   fc.unlock("conjugate_gradient", "solute_shake"); // Not working yet
   // fc.unlock("conjugate_gradient", "solute_lincs"); // Not working yet
