@@ -119,6 +119,10 @@ void configuration::Energy::zero(bool potential, bool kinetic)
     AB_improper.assign(AB_angle.size(),0.0);
     A_dihedral = 0.0;
     B_dihedral = 0.0;
+    // special interactions - Betty
+    AB_disres.assign(AB_disres.size(),0.0);
+    AB_dihres.assign(AB_dihres.size(),0.0);
+    AB_disfld.assign(AB_disfld.size(),0.0);
     //AB_dihedral.assign(AB_angle.size(),0.0);
     //
 
@@ -240,6 +244,10 @@ void configuration::Energy::resize(unsigned int energy_groups, unsigned int mult
     AB_bond.resize(nr_lambdas);
     AB_angle.resize(nr_lambdas);
     AB_improper.resize(nr_lambdas);
+    // special interactions - Betty
+    AB_disres.resize(nr_lambdas);
+    AB_dihres.resize(nr_lambdas);
+    AB_disfld.resize(nr_lambdas);
     //AB_dihedral.resize(nr_lambdas);
 
     DEBUG(8, "ANITA resizing A_lj_energy to " << nr_lambdas);
@@ -543,11 +551,16 @@ double configuration::Energy::get_energy_by_index(const unsigned int & index) {
     case 31 : return leus_total;
     case 32 : return oparam_total;
     case 33 : return symrest_total;
-    case 34 : return eds_vr;
-    case 35 : return entropy_term;
-    case 36 : return qm_total;
-    case 37 : return bsleus_total;
-    case 38 : return rdc_total;
+    case 34 : return eds_vmix;
+    case 35 : return eds_vr;
+    case 36 : return eds_emax;
+    case 37 : return eds_emin;
+    case 38 : return eds_globmin;
+    case 39 : return eds_globminfluc;
+    case 40 : return entropy_term;
+    case 41 : return qm_total;
+    case 42 : return bsleus_total;
+    case 43 : return rdc_total;
   }
   return 0.0;
 }

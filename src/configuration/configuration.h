@@ -24,6 +24,7 @@
 
 namespace topology {
   class Topology;
+  struct four_body_term_struct;
 }
 
 namespace simulation {
@@ -892,10 +893,19 @@ namespace configuration {
     
     /**
      * check the positions for overlapping atoms.
+     * @param topo topology
      * @param error zero if fine, non-zero if not
      */
     template<math::boundary_enum B> 
-    void check_positions(int & error) const;
+    void check_positions(topology::Topology const & topo, int & error) const;
+
+    /** 
+     * check dihedrals for atoms at the same position
+     * @param dihedrals vector with (improper) dihedrals
+     * @param error zero if fine, non-zero if not
+     */
+    template<math::boundary_enum B> 
+    void check_dihedrals(std::vector<topology::four_body_term_struct> const & dihedrals, int & error) const;
     
     /**
      * check the positions for excluded atoms which are further away than
