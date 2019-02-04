@@ -93,10 +93,12 @@ int io::read_input_repex(io::Argument const & args,
 		   std::ostream & os,
 		   bool quiet)
 {
+    
   //initialize for RE-EDS ID dependent parameters.
   if(sim.param().reeds.reeds){
     sim.param().eds=sim.param().reeds.eds_para[rank];//choose correct eds informations which are ID dependent. That's why this cannot be done earlier.
   }
+
   
   if(!quiet){
     std::cout << std::internal << "\tReading Topology\n";
@@ -126,8 +128,35 @@ int io::read_input_repex(io::Argument const & args,
     std::cout << std::internal << "\tReading Configuration\n";
     std::cout.flush();
   }
-  if (read_configuration(args, topo, conf, sim, os, quiet) != 0) return -1;
-
+    //check if all coordinate files are present:
+    int cont = sim.param().replica.cont;  
+    if(cont == 1 && rank == 0){
+      DEBUG(4, "reading configurations for continous");
+      int numReplicas = sim.param().replica.num_T * sim.param().replica.num_l;
+      for(int x=0; x<numReplicas; x++ ){
+          
+          io::Argument tmpArgs(args);   //copy modified args
+          std::multimap< std::string, std::string >::iterator it = tmpArgs.lower_bound(("conf"));
+          size_t pos = (*it).second.find_last_of(".");
+          std::stringstream tmp;
+          tmp << "_" << (x+1);
+          (*it).second.insert(pos, tmp.str());
+          
+          if(read_configuration(tmpArgs, topo, conf, sim, os, quiet)){
+              io::messages.add("\nCould not find coordinate file: "+ std::string(it->second)+"\n\n", io::message::error);
+              return -1;
+          }
+        }
+      }
+     else if(rank == 0){
+          DEBUG(4, "reading configuration no continous");
+          std::cout << "TEST  " << args.lower_bound(("conf"))->second << "\n";
+          if (read_configuration(args, topo, conf, sim, os, quiet) != 0) {
+              io::messages.add("Could not find coordinate file: "+ std::string(args.lower_bound(("conf"))->second), io::message::error);
+              return -1;
+          }
+      }
+  
 #ifdef HAVE_HOOMD 
   // create HOOMD Processor after input files read in successfully
   switch (sim.param().hoomd.processor) {
@@ -276,7 +305,7 @@ int io::read_topology(io::Argument const & args,
     
     io::messages.add("perturbation topology read from " + args[argname_pttopo] + "\n" + util::frame_text(ipt.title),
 		     "read input", io::message::notice);
-    io::messages.display(); //Todo:remove bschroed
+    io::messages.display(os);
     }
   }
   

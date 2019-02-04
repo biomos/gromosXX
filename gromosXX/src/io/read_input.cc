@@ -276,7 +276,6 @@ int io::read_topology(io::Argument const & args,
     
     io::messages.add("perturbation topology read from " + args[argname_pttopo] + "\n" + util::frame_text(ipt.title),
 		     "read input", io::message::notice);
-    io::messages.display(); //Todo:remove bschroed
     }
   }
   

@@ -79,7 +79,9 @@ int main(int argc, char *argv[]) {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   
   if(rank == 0){
-    std::cout << "START REPEXMPI\n";  
+    std::cout  << "\n==================================================\n"
+         << "\tGROMOS Replica Exchange:"
+         <<"\n==================================================\n"
   }
   
   // reading arguments
@@ -122,13 +124,12 @@ int main(int argc, char *argv[]) {
   unsigned int numEDSstates;
 
   int cont;
-  
+
   {
     topology::Topology topo;
     configuration::Configuration conf;
     algorithm::Algorithm_Sequence md;
     simulation::Simulation sim;
-    // TODO Bschroed: add nice starting message for rank 0
     // read in parameters
     
     bool quiet = true;
@@ -160,13 +161,16 @@ int main(int argc, char *argv[]) {
     // read in the rest
     if(io::read_input_repex(args2, topo, conf, sim, md, rank, std::cout, quiet)){
         std::cerr << "\nErrors during initialization!\n" << std::endl;
+        io::messages.display(std::cerr);
         io::messages.display(std::cout);
         MPI_Abort(MPI_COMM_WORLD, E_INPUT_ERROR);
         return 1;
     }
     
     if (io::check_parameter(sim) != 0){
-        io::messages.display();
+        io::messages.display(std::cerr);
+        io::messages.display(std::cout);
+        MPI_Abort(MPI_COMM_WORLD, E_INPUT_ERROR);
         return -1; //reactivated check param at end.  
     }
 
@@ -177,13 +181,15 @@ int main(int argc, char *argv[]) {
     numAtoms = topo.num_atoms();
     reedsSim = sim.param().reeds.reeds;
     if(reedsSim){
-        numEDSstates=sim.param().reeds.eds_para[0].numstates;//BSchr: Assume: eds.numstates is constant over all replicas;
+        numEDSstates=sim.param().reeds.eds_para[0].numstates;
     }else{
         numEDSstates=0;
     }
     //Todo bschroed: Nice Messaging
     if(rank == 0){
-        std::cout << "done Reading input\n";
+        std::cout<< "\n==================================================\n" 
+                 << "\tFinished Parsing\n"
+                 << "\n==================================================\n";
         std::cout.flush();
     }
   }
@@ -260,7 +266,7 @@ int main(int argc, char *argv[]) {
   if (rank == 0) {  //MASTER
     //print Initial Master text:
     std::cout  << "\n==================================================\n"
-               << "GROMOS REEDS:"
+               << "\tStart Simulation: "
                <<"\n==================================================\n"
                << "Start Master on: " << "Node " << rank << std::endl
                << "numreplicas:\t "<< numReplicas<<std::endl
@@ -283,9 +289,6 @@ int main(int argc, char *argv[]) {
     Master->init();
     
     //do md:
-    std::cout << "\n==================================================\n"
-              << " Master Enters MD LOOP\n"
-              << "==================================================\n\n";
     unsigned int trial;
     DEBUG(1, "Master \t \t \t Equil: "<< equil_runs)
     for( ;trial<equil_runs; ++trial){    // for equilibrations

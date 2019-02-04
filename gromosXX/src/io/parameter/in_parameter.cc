@@ -3039,7 +3039,8 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
         }
         if (_lineStream.fail() || error || block.error()) {
           io::messages.add("bad line in REPLICA_EDS block", "In_Parameter", io::message::error);
-          io::messages.display();
+          io::messages.display(std::cout);
+          io::messages.display(std::cerr);
           block.get_final_messages();
           param.reeds.num_T = 0;
           param.reeds.num_l = 0;
