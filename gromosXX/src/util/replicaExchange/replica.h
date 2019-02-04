@@ -14,7 +14,7 @@
 #include <io/argument.h>
 #include <io/read_input.h>
 #include <math/random.h>
-#include <util/repex_mpi.h>
+#include <util/replicaExchange/repex_mpi.h>
 #include <util/usage.h>
 
 #ifndef REPLICA_H
@@ -116,7 +116,7 @@ namespace util {
      */
     void velscale(int i);
 
-  private:
+  protected:
     /**
      * Sets lambda parameter to original value of replica
      */

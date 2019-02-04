@@ -4,7 +4,7 @@
  * 
  * Created on April 29, 2011, 2:06 PM
  */
-#include <util/replica.h>
+#include <util/replicaExchange/replica.h>
 
 #include <io/argument.h>
 #include <util/error.h>
@@ -14,10 +14,16 @@
 #include <mpi.h>
 #endif
 
+#undef MODULE
+#undef SUBMODULE
+#define MODULE util
+#define SUBMODULE replica
+
 util::replica::replica(io::Argument _args, int cont, int _ID, int _rank) : ID(_ID), rank(_rank), args(_args) {
   // read input again. If copy constructors for topo, conf, sim, md work, one could
   // also pass them down from repex_mpi.cc ...
   
+  DEBUG(3, "replica Constructor  "<< rank <<":\t START");
   // do continuation run?
   // change name of input coordinates
   if(cont == 1){
@@ -37,7 +43,7 @@ util::replica::replica(io::Argument _args, int cont, int _ID, int _rank) : ID(_I
   (*it).second.insert(pos, tmp.str());
   os = new std::ofstream((*it).second.c_str());
   
-  util::print_title(true, *os, true);
+  util::print_title(true, *os, true); // printing read in.
 
   // set trajectory
   std::stringstream trajstr;
@@ -46,7 +52,7 @@ util::replica::replica(io::Argument _args, int cont, int _ID, int _rank) : ID(_I
 
   traj = new io::Out_Configuration(trajname, *os);
   
-  if (io::read_input(args, topo, conf, sim, md, *os)) {
+  if (io::read_input(args, topo, conf, sim, md, *os, true)) { 
     io::messages.display(*os);
     std::cerr << "\nErrors during initialization!\n" << std::endl;
 #ifdef XXMPI
@@ -68,7 +74,7 @@ util::replica::replica(io::Argument _args, int cont, int _ID, int _rank) : ID(_I
   T = sim.param().replica.temperature[ID % numT];
   l = sim.param().replica.lambda[ID / numT];
   dt = sim.param().replica.dt[ID / numT];
-
+  
   set_lambda();
   set_temp();
 
@@ -147,8 +153,10 @@ util::replica::replica(io::Argument _args, int cont, int _ID, int _rank) : ID(_I
 
   *os << "==================================================\n"
       << " MAIN MD LOOP\n"
-      << "==================================================\n"
-      << std::endl;
+      << "==================================================\n\n";
+
+    DEBUG(4, "Temp of replica  "<< rank <<": " << ID << " \t" << sim.param().multibath.multibath.bath(0).temperature);
+    DEBUG(3, "replica Constructor  "<< rank <<": \t DONE");
 }
 
 util::replica::~replica() {
@@ -168,8 +176,10 @@ void util::replica::run_MD() {
   sim.steps() = steps;
   sim.time() = time;
   while ((unsigned int)(sim.steps()) < maxSteps + steps) {
+    DEBUG(5, "replica "  << (ID+1)<<"\t runMD \t Start");      
     traj->write(conf, topo, sim, io::reduced);
     // run a step
+    DEBUG(5, "replica\t runMD "  << (ID+1)<<"\t simulation!:");
     if ((error = md.run(topo, conf, sim))) {
       switch (error) {
         case E_SHAKE_FAILURE:
@@ -211,14 +221,14 @@ void util::replica::run_MD() {
       error = 0; // clear error condition
       break;
     }
-
+    DEBUG(5, "replica\t runMD "  << (ID+1)<<"\t clean up:");      
     traj->print(topo, conf, sim);
 
     ++sim.steps();
     sim.time() = sim.param().step.t0 + sim.steps() * sim.time_step_size();
 
   } // main md loop
-  
+  DEBUG(5, "replica\t runMD "  << (ID+1)<<"\t md done:");      
   // update replica information
   time = sim.time();
   steps = sim.steps();

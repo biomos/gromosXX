@@ -25,6 +25,45 @@ namespace util
         double     epot_partner;
         double     probability;
     };
+  /**
+   * @struct replica_data
+   * contains all necessary data of a replica that is written to the output file.
+   * See util::replica.h for more information.
+   */
+    struct reeds_replica_data
+    {
+        unsigned int ID;
+        double T;
+        double l;
+        double dt;
+        int       switched;
+        unsigned int        run;
+        unsigned int         partner;
+        double     epot;
+        double     epot_partner;
+        double     probability;
+
+        simulation::Parameter::eds_struct eds_state;    //new
+        std::vector<double> Vi; //SID for RE-EDS I want to give out all potential energies for each individual state in the repdat file. // todo: remove    //new
+    };
+   /**
+   * @struct replica_stat_data
+   * contains additional data of a replica that is optionally written to the output file.
+   */
+    struct reeds_replica_stat_data
+    {
+        unsigned int ID;
+        double T;
+        double s;
+        double dt;
+        unsigned int        run;
+        //vector because of eds_stat() fct. if not used, one just stores value at the correspnding replica id position, all others are empty.
+        std::vector<double>     epot_vec;
+        std::vector<double>     prob_vec;
+        simulation::Parameter::eds_struct eds_state;
+
+    };
+
 }
 #endif	/* REPLICA_DATA_H */
 

@@ -27,9 +27,9 @@
 #include <unistd.h>
 
 #include <io/configuration/out_configuration.h>
-#include <util/replica.h>
-#include <util/replica_exchange_master.h>
-#include <util/replica_exchange_base.h>
+#include <util/replicaExchange/replica.h>
+#include <util/replicaExchange/replica_exchange_master.h>
+#include <util/replicaExchange/replica_exchange_base.h>
 #include <string>
 
 #ifdef XXMPI
@@ -46,12 +46,19 @@ util::replica_exchange_master::replica_exchange_master(io::Argument & args,
 :
 replica_exchange_base(args, cont, rank, repIDs, repMap),
 size(_size),
-numReplicas(_numReplicas), 
-repParams(replicas[0]->sim.param().replica)
+numReplicas(_numReplicas),
+repParams(replicas[0]->sim.param().replica),
+repdatName(args["repdat"])
 {
+  DEBUG(3,"replica_exchange_master:Constructor \t START");
   assert(rank == 0);
   assert(numReplicas > 0);
+  assert(repParams.num_l > 0);
+  assert(repParams.num_l > 0);
+  
+  DEBUG(5,"replica_exchange_master:Init Replicas \t Next");
   replicaData.resize(numReplicas);
+  DEBUG(5,"replica_exchange_master:Replica_data type \t " << typeid(replicaData).name());
 
   //initialize data of replicas
   int ID = 0;
@@ -59,6 +66,7 @@ repParams(replicas[0]->sim.param().replica)
     for (int j = 0; j < repParams.num_T; ++j) {
       replicaData[ID].ID = ID;
       replicaData[ID].T = repParams.temperature[j];
+      DEBUG(5,"replica_exchange_master:Init Replicas \t "<< repParams.temperature[j]);
       replicaData[ID].l = repParams.lambda[i];
       replicaData[ID].dt = repParams.dt[i];
       ++ID;
@@ -66,47 +74,16 @@ repParams(replicas[0]->sim.param().replica)
   }
 
   // set output file
-  std::string repdatName = args["repdat"];
-  repOut.open(repdatName.c_str());
-  repOut << "Number of temperatures:\t" << repParams.num_T << "\n"
-          << "Number of lambda values:\t" << repParams.num_l << "\n";
-
-  repOut.precision(4);
-  repOut.setf(std::ios::fixed, std::ios::floatfield);
-
-  repOut << "T    \t";
-  for (int t = 0; t < repParams.num_T; ++t)
-    repOut << std::setw(12) << repParams.temperature[t];
-
-  repOut << "\nlambda    \t";
-  for (int l = 0; l < repParams.num_l; ++l)
-    repOut << std::setw(12) << repParams.lambda[l];
-
-  repOut << "\n\n";
-
-  repOut << "#"
-          << std::setw(5) << "ID"
-          << " "
-          << std::setw(7) << "partner"
-          << std::setw(7) << "run"
-
-          << std::setw(13) << "li"
-          << std::setw(13) << "Ti"
-          << std::setw(14) << "Epoti"
-          << std::setw(13) << "lj"
-          << std::setw(13) << "Tj"
-          << std::setw(15) << "Epotj"
-          << std::setw(15) << "p"
-          << std::setw(8) << "s"
-          << "\n";
+ DEBUG(3,"replica_exchange_master:Constructor \t DONE");
 }
 
+
 util::replica_exchange_master::~replica_exchange_master() {
-  repOut.close();
+   repOut.close();
 }
 
 void util::replica_exchange_master::receive_from_all_slaves() {
-#ifdef XXMPI
+  DEBUG(3,"replica_exchange_master:exchange: \t START: \n");
   double start = MPI_Wtime();
 
   MPI_Status status;
@@ -137,14 +114,12 @@ void util::replica_exchange_master::receive_from_all_slaves() {
     replicaData[ID].switched = (*it)->switched;
   }
 
-  std::cout << "Master:\n" << "time used for receiving all messages: " << MPI_Wtime() - start 
-            << " seconds" << std::endl;
-#endif
+   DEBUG(3,"replica_exchange_master:exchange: \n" << "time used for receiving all messages: " << MPI_Wtime() - start << " seconds\n");
+   DEBUG(3,"replica_exchange_master:exchange: \t DONE: \n");
 }
 
 void util::replica_exchange_master::write() {
   for (unsigned int r = 0; r < numReplicas; ++r) {
-
     repOut << std::setw(6) << (replicaData[r].ID + 1)
             << " "
             << std::setw(6) << (replicaData[r].partner + 1)
@@ -156,10 +131,6 @@ void util::replica_exchange_master::write() {
             << std::setw(13) << replicaData[replicaData[r].partner].l
             << std::setw(13) << replicaData[replicaData[r].partner].T
             << " ";
-    // the following is a little bit clumsy. Because for temperature REMD, we did not have to recalculate
-    // any energies using different potentials, we could not properly store the epot_partner value (only
-    // for the first of the switching pair. Therefor we just print the epot of the partner (which is exactly
-    // what epot_partner would have been if we had taken the effort to send it back to the partner.
     if(replicaData[r].l == replicaData[replicaData[r].partner].l)
 	repOut << std::setw(18) << replicaData[replicaData[r].partner].epot;
     else
@@ -169,3 +140,50 @@ void util::replica_exchange_master::write() {
             << std::endl;
   }
 }
+  
+  
+void util::replica_exchange_master::init_repOut_stat_file() {
+  repOut.open(repdatName.c_str());
+  DEBUG(6,"replica_exchange_master:repdat init  \t repdat file open ");
+
+  repOut << "Number of temperatures:\t" << repParams.num_T << "\n"
+         << "Number of lambda values:\t" << repParams.num_l << "\n";
+  
+  DEBUG(6,"replica_exchange_master:repdat init \t set precision ");
+  repOut.precision(4);
+  repOut.setf(std::ios::fixed, std::ios::floatfield);
+  
+  DEBUG(6,"replica_exchange_master:repdat init \t write Temperatures ");
+  repOut << "T    \t";
+  for (int t = 0; t < repParams.num_T; ++t){
+    DEBUG(8,"replica_exchange_master:repdat init \t it: "<<  t);
+    DEBUG(8,"replica_exchange_master:repdat init \t T: "<<  repParams.temperature[t]);
+    repOut << std::setw(12) << repParams.temperature[t];
+  }
+  
+  DEBUG(6,"replica_exchange_master:repdat init \t write lambdas ");
+  repOut << "\nlambda    \t";
+  for (int l = 0; l < repParams.num_l; ++l){
+    repOut << std::setw(12) << repParams.lambda[l];
+  }
+
+  repOut << "\n\n";
+
+  repOut << "#"
+          << std::setw(5) << "ID"
+          << " "
+          << std::setw(7) << "partner"
+          << std::setw(7) << "run"
+
+          << std::setw(13) << "li"
+          << std::setw(13) << "Ti"
+          << std::setw(14) << "Epoti"
+          << std::setw(13) << "lj"
+          << std::setw(13) << "Tj"
+          << std::setw(15) << "Epotj"
+          << std::setw(15) << "p"
+          << std::setw(8) << "s"
+          << "\n";
+    
+}
+
