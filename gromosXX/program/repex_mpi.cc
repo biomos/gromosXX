@@ -47,17 +47,26 @@
 #ifdef XXMPI
 #include <mpi.h>
 #endif
+#define XXMPI //TODO: bschroed remove!
 
-#include <util/replica_exchange_master.h>
-#include <util/replica_exchange_slave.h>
+#include <util/replicaExchange/replica_exchange_master.h>
+#include <util/replicaExchange/replica_exchange_slave.h>
+#include <util/replicaExchange/replica_exchange_master_eds.h>
+#include <util/replicaExchange/replica_exchange_slave_eds.h>
 
-#include <util/repex_mpi.h>
+#include <util/replicaExchange/repex_mpi.h>
 #include <string>
 #include <sstream>
 #include <util/error.h>
 
+
+#undef MODULE
+#undef SUBMODULE
+#define MODULE util
+#define SUBMODULE replica_exchange
+
 int main(int argc, char *argv[]) {
-  
+
 #ifdef XXMPI
 
   //initializing MPI
@@ -68,7 +77,13 @@ int main(int argc, char *argv[]) {
 
   MPI_Comm_size(MPI_COMM_WORLD, &size);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
+  
+  if(rank == 0){
+    std::cout  << "\n==================================================\n"
+         << "\tGROMOS Replica Exchange:"
+         <<"\n==================================================\n"
+  }
+  
   // reading arguments
   util::Known knowns;
   knowns << "topo" << "conf" << "input" << "verb" << "pttopo"
@@ -100,11 +115,14 @@ int main(int argc, char *argv[]) {
     MPI_Abort(MPI_COMM_WORLD, E_INPUT_ERROR);
     return 1;
   }
-
+  
+  bool reedsSim;
   unsigned int equil_runs;
   unsigned int total_runs;
   unsigned int numAtoms;
   unsigned int numReplicas;
+  unsigned int numEDSstates;
+
   int cont;
 
   {
@@ -112,16 +130,21 @@ int main(int argc, char *argv[]) {
     configuration::Configuration conf;
     algorithm::Algorithm_Sequence md;
     simulation::Simulation sim;
-
     // read in parameters
-    if (io::read_parameter(args,sim,std::cout,true) || io::check_parameter(sim)){
+    
+    bool quiet = true;
+    
+    if(rank == 0){
+        quiet = false;
+    }
+    
+    if (io::read_parameter(args,sim,std::cout, true)){
       if (rank == 0) {
         io::messages.display(std::cout);
         std::cout << "\nErrors in in_parameters!\n" << std::endl;
       }
       return -1;
     }
-    //if (io::check_parameter(sim) != 0) return -1;
 
     // make a copy, don't change the original args
     io::Argument args2(args);
@@ -136,20 +159,41 @@ int main(int argc, char *argv[]) {
     }
     
     // read in the rest
-    if(io::read_input_repex(args2, topo, conf, sim, md, std::cout, true)){
+    if(io::read_input_repex(args2, topo, conf, sim, md, rank, std::cout, quiet)){
         std::cerr << "\nErrors during initialization!\n" << std::endl;
+        io::messages.display(std::cerr);
         io::messages.display(std::cout);
         MPI_Abort(MPI_COMM_WORLD, E_INPUT_ERROR);
         return 1;
     }
-     
+    
+    if (io::check_parameter(sim) != 0){
+        io::messages.display(std::cerr);
+        io::messages.display(std::cout);
+        MPI_Abort(MPI_COMM_WORLD, E_INPUT_ERROR);
+        return -1; //reactivated check param at end.  
+    }
+
     cont = sim.param().replica.cont;
     equil_runs = sim.param().replica.equilibrate;
     total_runs = sim.param().replica.trials + equil_runs;
     numReplicas = sim.param().replica.num_T * sim.param().replica.num_l;
     numAtoms = topo.num_atoms();
+    reedsSim = sim.param().reeds.reeds;
+    if(reedsSim){
+        numEDSstates=sim.param().reeds.eds_para[0].numstates;
+    }else{
+        numEDSstates=0;
+    }
+    //Todo bschroed: Nice Messaging
+    if(rank == 0){
+        std::cout<< "\n==================================================\n" 
+                 << "\tFinished Parsing\n"
+                 << "\n==================================================\n";
+        std::cout.flush();
+    }
   }
- 
+  
   io::messages.clear();
 
   //////////////////////////
@@ -177,7 +221,14 @@ int main(int argc, char *argv[]) {
   MPI_Aint disps[] = {(MPI_Aint) 0, 4 * intext};
   MPI_Type_create_struct(2, blocklen, disps, typ, &MPI_REPINFO);
   MPI_Type_commit(&MPI_REPINFO);
-
+  
+  MPI_Type_contiguous(numEDSstates, MPI_DOUBLE, &MPI_EDSINFO);
+  MPI_Type_commit(&MPI_EDSINFO);
+  if(reedsSim){
+    MPI_Type_contiguous(numEDSstates, MPI_DOUBLE, &MPI_EDSINFO);
+    MPI_Type_commit(&MPI_EDSINFO);
+  }
+  
   assert(numReplicas > 0);
 
   // where is which replica
@@ -202,50 +253,120 @@ int main(int argc, char *argv[]) {
 
   // make sure all nodes have initialized everything
   MPI_Barrier(MPI_COMM_WORLD);
-
+  
+  //TODO integrate reeds with system.param().reeds.reeds
+    
+  if(rank == 0){
+    std::cout << "Went trough MPI fun and parsing!\n"; //todo bschroed: remove!
+    std::cout.flush();//todo bschroed: remove!
+  }  
   //////////////////////////////
   /// Starting master-slave mode
   //////////////////////////////
-  if (rank == 0) {
-
-    util::replica_exchange_master Master(args, cont, rank, size, numReplicas, repIDs[rank], repMap);
-    Master.init();
+  if (rank == 0) {  //MASTER
+    //print Initial Master text:
+    std::cout  << "\n==================================================\n"
+               << "\tStart Simulation: "
+               <<"\n==================================================\n"
+               << "Start Master on: " << "Node " << rank << std::endl
+               << "numreplicas:\t "<< numReplicas<<std::endl
+               << "num Slaves:\t "<< numReplicas-1<<std::endl
+               << "reeds:\t "<< reedsSim<<std::endl<<std::endl;
     
-    for (unsigned int i = 0; i < total_runs; ++i) {
-      Master.run_MD();
-      if (i >= equil_runs) {
-        Master.swap();
-        Master.receive_from_all_slaves();
+    DEBUG(1, "Master \t "<< rank)
+    // Select repex Implementation
+    //util::replica_exchange_master* Master;
 
-        Master.write();
+    util::replica_exchange_master_eds* Master;
+   
+    if(reedsSim){
+        Master = new util::replica_exchange_master_eds(args, cont, rank, size, numReplicas, repIDs[rank], repMap);
+      } else{
+        // Master = new util::replica_exchange_master(args, cont, rank, size, numReplicas, repIDs[rank], repMap);
       }
-    }
-    Master.write_final_conf();
     
-  } else {
-    util::replica_exchange_slave Slave(args, cont, rank, repIDs[rank], repMap);
-    Slave.init();
-
-    for (unsigned int i = 0; i < total_runs; ++i) {
-      Slave.run_MD();
-      if (i >= equil_runs) {
-        Slave.swap();
-        Slave.send_to_master();
-      }
+    DEBUG(1, "Master \t INIT")
+    Master->init();
+    
+    //do md:
+    unsigned int trial;
+    DEBUG(1, "Master \t \t \t Equil: "<< equil_runs)
+    for( ;trial<equil_runs; ++trial){    // for equilibrations
+        Master->run_MD();
     }
-    Slave.write_final_conf();
+    DEBUG(1, "Master \t \t MD: "<< total_runs)
+    for ( ; trial < total_runs; ++trial){ //for repex execution
+      DEBUG(2, "Master "<< rank <<" \t MD trial: "<< trial << "\n")\
+      DEBUG(2, "Master "<< rank <<" \t run_MD START\n")  
+      Master->run_MD();
+      DEBUG(2, "Master "<< rank <<" \t run_MD DONE\n")  
+
+      DEBUG(2, "Master " << rank << " \t swap START\n")    
+      Master->swap();
+      DEBUG(2, "Master "<< rank <<" \t run_MD DONE\n")  
+
+      DEBUG(2, "Master " << rank << " \t receive START\n")    
+      Master->receive_from_all_slaves();
+      DEBUG(2, "Master " << rank << " \t write START\n")    
+      Master->write();
+    }
+    
+    DEBUG(1, "Master \t \t finalize ")
+    Master->write_final_conf();
+    
+    //FINAL OUTPUT - Time used:
+    double end = MPI_Wtime();
+    double duration = end - start;
+    double durationMin = duration/60;
+    double durationHour = std::floor(durationMin/60);
+    double durationMinlHour = std::floor(durationMin-durationHour*60);
+    double durationSlMin = std::floor(duration - (durationMinlHour+durationHour*60)*60);
+    
+    //Todo: if (cond){finished succ}else{not} bschroed
+    std::cout << "\n==================================================\n"
+              << "REPLICA EXCHANGE SIMULATION finished successfully! " << "Node " << rank << " - MASTER\n"
+              << "\n==================================================\n"
+              << "TOTAL TIME USED: \n\th:min:s\t\tseconds\n"
+              << "\t" << durationHour << ":"<<durationMinlHour << ":" << durationSlMin << "\t\t" << duration << "\n";
+    
+    MPI_Barrier(MPI_COMM_WORLD);    //make sure all processes finished
+    MPI_Finalize();
+
+  } else {  //SLAVES
+      
+    DEBUG(1, "Slave " << rank)    
+    // Select repex Implementation
+    util::replica_exchange_slave_eds* Slave;     
+    if(reedsSim){
+       std::cout <<  "Slave REEDS " << rank << std::endl;
+       Slave = new util::replica_exchange_slave_eds(args, cont, rank, repIDs[rank], repMap);
+    } else{
+       //Slave = new util::replica_exchange_slave(args, cont, rank, repIDs[rank], repMap);
+    }
+    
+    DEBUG(1, "Slave "<< rank <<" \t INIT")    
+    Slave->init();
+    //do md:
+    unsigned int trial;
+    DEBUG(1, "Slave "<< rank <<" \t EQUIL "<< equil_runs << " steps")    
+    for( ;trial<equil_runs; ++trial){    // for equilibrations
+        Slave->run_MD();
+    }
+    DEBUG(1, "Slave "<< rank <<" \t MD "<< total_runs << " steps")    
+    for ( ; trial < total_runs; ++trial){ //for repex execution
+      DEBUG(2, "Slave "<< rank <<" \t MD trial: "<< trial << "\n")    
+      DEBUG(2, "Slave "<< rank <<" \t run_MD START\n")    
+      Slave->run_MD();
+      DEBUG(2, "Slave "<< rank <<" \t swap START\n")    
+      Slave->swap();
+      DEBUG(2, "Slave "<< rank <<" \t send START\n")    
+      Slave->send_to_master();
+    }
+    DEBUG(1, "Slave "<< rank <<" \t Finalize")    
+    Slave->write_final_conf();
+    std::cout << "\n=================== Slave Node "<< rank << "  finished successfully!\n";
   }
-  
-  std::cout << "REPLICA EXCHANGE SIMULATION finished successfully! " << "Node " << rank << std::endl;
-
-  MPI_Barrier(MPI_COMM_WORLD); // maybe not needed in the end...
-
-  if (rank == 0)
-    std::cout << "TOTAL TIME USED: " << MPI_Wtime() - start << " seconds" << std::endl;
-
-  MPI_Finalize();
   return 0;
-  
 #else
   std::cout << argv[0] << " needs MPI to run\n\tuse --enable-mpi at configure and appropriate compilers\n" << std::endl;
   return 1;

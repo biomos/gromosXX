@@ -719,6 +719,10 @@ void configuration::Configuration::check_excluded_positions(topology::Topology c
         if (d2 > cutoff_2) {
           // if yes, check if they are excluded
           if (topo.all_exclusion(a1).is_excluded(a2)) {
+            //check if reeds is on and both atoms are perturbed - then subpress the warning
+            if(sim.param().reeds.reeds){
+                continue;
+            }
             // if yes, issue warning!
             std::ostringstream msg;
             msg << "Warning: Atoms " << a1 << " and " << a2

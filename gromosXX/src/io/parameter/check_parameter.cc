@@ -305,6 +305,9 @@ int io::check_features(simulation::Simulation & sim)
   add("repex_lambda", "lambda replica exchange", param.replica.num_l > 1);
   // MULTICELL block
   add("multicell", "multiple unit cell simulation", param.multicell.multicell);
+  // REPLICA_EDS block 
+  //add("reeds", "Replica exchange - enveloped distribution sampling  ", param.reeds.reeds == 1); //Todo: could be valuable? bschroed
+
   // READTRAJ block
   add("analysis", "trajectory reading mode", param.analyze.analyze);
   // INTEGRATE block

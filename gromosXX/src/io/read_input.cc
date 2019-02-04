@@ -89,17 +89,29 @@ int io::read_input_repex(io::Argument const & args,
 		   configuration::Configuration & conf,
 		   simulation::Simulation & sim,
 		   algorithm::Algorithm_Sequence & md_seq,
+                   int rank,
 		   std::ostream & os,
 		   bool quiet)
 {
-
+  //initialize for RE-EDS ID dependent parameters.
+  if(sim.param().reeds.reeds){
+    sim.param().eds=sim.param().reeds.eds_para[rank];//choose correct eds informations which are ID dependent. That's why this cannot be done earlier.
+  }
+  
+  if(!quiet){
+    std::cout << std::internal << "\tReading Topology\n";
+  }
+  
   if (read_topology(args, topo, sim, md_seq, os, quiet) != 0) return -1;
   
+  if(!quiet){
+      std::cout << std::internal << "\tReading Special\n";
+  }
   // read this before configuration, as it contains topological data...
   if (read_special(args, topo, conf, sim, os, quiet) != 0) return -1;
   
   // error if no perturbed parameters were read from pttop or restraints
-  if(!sim.param().perturbation.perturbed_par){
+  if(!sim.param().perturbation.perturbed_par && sim.param().perturbation.perturbation){
       io::messages.add("Neither perturbed restraints nor perturbed topology found - if you do not want to perturb anything, turn off PERTURBATION",
 		       "read_input", io::message::error);
       return -1;
@@ -110,7 +122,10 @@ int io::read_input_repex(io::Argument const & args,
 
   // check the bath parameters
   sim.multibath().check_state(topo.num_atoms());
-
+  if(!quiet){
+    std::cout << std::internal << "\tReading Configuration\n";
+    std::cout.flush();
+  }
   if (read_configuration(args, topo, conf, sim, os, quiet) != 0) return -1;
 
 #ifdef HAVE_HOOMD 
@@ -121,6 +136,9 @@ int io::read_input_repex(io::Argument const & args,
 	default: break;
   }
 #endif
+  if(!quiet){
+      io::messages.display(std::cout);
+  }
    
   return 0;
 }
