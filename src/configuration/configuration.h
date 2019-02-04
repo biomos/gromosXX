@@ -168,7 +168,7 @@ namespace configuration {
     struct special_struct {
       /**
        * @struct dihangle_trans
-       * dihedral angle transition monitoring data
+       * flexible constraint data
        */
       struct dihangle_trans_struct {
       /**

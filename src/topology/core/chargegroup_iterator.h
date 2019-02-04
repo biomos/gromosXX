@@ -36,10 +36,6 @@ namespace topology
       DEBUG(10, "cog: " << *begin() << " - " << *end() << " of " << pos.size());
       v = 0.0;
       for(Atom_Iterator it=begin(), to=end(); it!=to; ++it){
-        DEBUG(4,"AtomIterator:\t  " <<  pos.size() <<" >  " << *it);
-        if(pos.size() > *it){
-            continue;
-        }
 	assert(pos.size() > *it);
 	v += pos(int(*it));
       }

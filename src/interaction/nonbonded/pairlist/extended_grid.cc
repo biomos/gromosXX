@@ -70,80 +70,78 @@ int interaction::Extended_Grid_Pairlist_Algorithm::prepare_grid
   math::VArray &pos = conf.current().pos;
   math::Vec v, v_box, trans;
 
-  if(!sim.param().pairlist.atomic_cutoff){
-      
-    topology::Chargegroup_Iterator cg_it = topo.chargegroup_begin(),
-      cg_to = topo.chargegroup_end();
+  topology::Chargegroup_Iterator cg_it = topo.chargegroup_begin(),
+    cg_to = topo.chargegroup_end();
 
-    // solute chargegroups...
-    unsigned int i = 0;
-    for( ; i < topo.num_solute_chargegroups(); ++cg_it, ++i){
-      // cog
-      cg_it.cog(pos, v);
+  // solute chargegroups...
+  unsigned int i = 0;
+  for( ; i < topo.num_solute_chargegroups(); ++cg_it, ++i){
+    // cog
+    cg_it.cog(pos, v);
 
-      // gather on first atom...
-      v_box = v;
-      periodicity.put_into_box(v_box);
-      trans = v_box - v;
+    // gather on first atom...
+    v_box = v;
+    periodicity.put_into_box(v_box);
+    trans = v_box - v;
 
-      // now grid the cg
+    // now grid the cg
        
-      const int x = int((v_box(0) + 0.5 * abs(conf.current().box(0))) / m_grid.a);
-      const int y = int((v_box(1) + 0.5 * abs(conf.current().box(1))) / m_grid.b);
-      const int z = int((v_box(2) + 0.5 * abs(conf.current().box(2))) / m_grid.c);
+    const int x = int((v_box(0) + 0.5 * abs(conf.current().box(0))) / m_grid.a);
+    const int y = int((v_box(1) + 0.5 * abs(conf.current().box(1))) / m_grid.b);
+    const int z = int((v_box(2) + 0.5 * abs(conf.current().box(2))) / m_grid.c);
   
-      const int c = y * m_grid.Na + x;
+    const int c = y * m_grid.Na + x;
 
-      if(!(m_grid.cell_start.size() > unsigned(z) &&
-           m_grid.cell_start[z].size() > unsigned(c)))
-        return 1;
-    
-      if(!(m_grid.p_cell.size() > unsigned(z) &&
-	   m_grid.p_cell[z].size() > unsigned(m_grid.cell_start[z][c] + m_grid.count[z][c])))
-        return 1;
-
-      if(!(m_grid.count.size() > unsigned(z) &&
-	   m_grid.count[z].size() > unsigned(c)))
-        return 1;
-    
-      m_grid.p_cell[z][m_grid.cell_start[z][c] + m_grid.count[z][c]] =
-        Grid::Particle(i, v_box);
-
-      ++m_grid.count[z][c];
-    
-      // atoms in a chargegroup
-      topology::Atom_Iterator at_it = cg_it.begin(),
-        at_to = cg_it.end();
-      for( ; at_it != at_to; ++at_it){
-        pos(*at_it) += trans;
-
-      } // loop over atoms
-    } // loop over solute cg's
- 
-    // solvent chargegroups
-    for( ; cg_it != cg_to; ++cg_it, ++i){
-
-      // cog is first atom
-      v = pos(**cg_it);
-      v_box = v;
-      periodicity.put_into_box(v_box);
-      trans = v_box - v;
-
-      // now grid the cg
-      
-      const int x = int((v_box(0) + 0.5 * abs(conf.current().box(0))) / m_grid.a);
-      const int y = int((v_box(1) + 0.5 * abs(conf.current().box(1))) / m_grid.b);
-      const int z = int((v_box(2) + 0.5 * abs(conf.current().box(2))) / m_grid.c);
-    
-      const int c = y * m_grid.Na + x;
-
-      if(!(m_grid.cell_start.size() > unsigned(z) &&
+    if(!(m_grid.cell_start.size() > unsigned(z) &&
 	   m_grid.cell_start[z].size() > unsigned(c)))
-        return 1;
-      if(!(m_grid.p_cell.size() > unsigned(z))) 
-        return 1;
+      return 1;
+    
+    if(!(m_grid.p_cell.size() > unsigned(z) &&
+	   m_grid.p_cell[z].size() > unsigned(m_grid.cell_start[z][c] + m_grid.count[z][c])))
+      return 1;
 
-      if (m_grid.p_cell[z].size() <= unsigned(m_grid.cell_start[z][c] + m_grid.count[z][c])){
+    if(!(m_grid.count.size() > unsigned(z) &&
+	   m_grid.count[z].size() > unsigned(c)))
+      return 1;
+    
+    m_grid.p_cell[z][m_grid.cell_start[z][c] + m_grid.count[z][c]] =
+      Grid::Particle(i, v_box);
+
+    ++m_grid.count[z][c];
+    
+    // atoms in a chargegroup
+    topology::Atom_Iterator at_it = cg_it.begin(),
+      at_to = cg_it.end();
+    for( ; at_it != at_to; ++at_it){
+      pos(*at_it) += trans;
+
+    } // loop over atoms
+  } // loop over solute cg's
+
+  // solvent chargegroups
+  for( ; cg_it != cg_to; ++cg_it, ++i){
+
+    // cog is first atom
+    v = pos(**cg_it);
+    v_box = v;
+    periodicity.put_into_box(v_box);
+    trans = v_box - v;
+
+        // now grid the cg
+      
+    const int x = int((v_box(0) + 0.5 * abs(conf.current().box(0))) / m_grid.a);
+    const int y = int((v_box(1) + 0.5 * abs(conf.current().box(1))) / m_grid.b);
+    const int z = int((v_box(2) + 0.5 * abs(conf.current().box(2))) / m_grid.c);
+    
+    const int c = y * m_grid.Na + x;
+
+    if(!(m_grid.cell_start.size() > unsigned(z) &&
+	   m_grid.cell_start[z].size() > unsigned(c)))
+      return 1;
+    if(!(m_grid.p_cell.size() > unsigned(z))) 
+      return 1;
+
+    if (m_grid.p_cell[z].size() <= unsigned(m_grid.cell_start[z][c] + m_grid.count[z][c])){
 
       /*
       std::cout << "ERROR: " << " z=" << z
@@ -152,71 +150,27 @@ int interaction::Extended_Grid_Pairlist_Algorithm::prepare_grid
 		<< std::endl;
       */
       // don't add particle to grid. not enough space!
-      }
-      else{
-        if(!(m_grid.p_cell[z].size() > unsigned(m_grid.cell_start[z][c] + m_grid.count[z][c])))
-          return 1;
-        if(!(m_grid.count.size() > unsigned(z) &&
-	     m_grid.count[z].size() > unsigned(c)))
-          return 1;
-
-        m_grid.p_cell[z][m_grid.cell_start[z][c] + m_grid.count[z][c]] = 
-	  Grid::Particle(i, v_box);
-      }
-      ++m_grid.count[z][c];
-    
-      // loop over the atoms
-      topology::Atom_Iterator at_it = cg_it.begin(),
-        at_to = cg_it.end();
-      for( ; at_it != at_to; ++at_it){
-        pos(*at_it) += trans;
-      } // atoms
-    } // solvent cg's
-  } // charge-group based cutoff
-  else {  // atomic cutoff
-       
-    // we can do all atoms in one go ...
-    unsigned int i = 0;
-    for( ; i < topo.num_atoms(); ++i){
-
-      v=pos(i);
-      v_box = v;
-      periodicity.put_into_box(v_box);
-      trans = v_box - v;
-
-      // now grid the atom
-       
-      const int x = int((v_box(0) + 0.5 * abs(conf.current().box(0))) / m_grid.a);
-      const int y = int((v_box(1) + 0.5 * abs(conf.current().box(1))) / m_grid.b);
-      const int z = int((v_box(2) + 0.5 * abs(conf.current().box(2))) / m_grid.c);
-  
-      const int c = y * m_grid.Na + x;
-
-      if(!(m_grid.cell_start.size() > unsigned(z) &&
-           m_grid.cell_start[z].size() > unsigned(c)))
+    }
+    else{
+      if(!(m_grid.p_cell[z].size() > unsigned(m_grid.cell_start[z][c] + m_grid.count[z][c])))
         return 1;
-    
-      if(!(m_grid.p_cell.size() > unsigned(z) &&
-	   m_grid.p_cell[z].size() > unsigned(m_grid.cell_start[z][c] + m_grid.count[z][c])))
-        return 1;
-
       if(!(m_grid.count.size() > unsigned(z) &&
-	   m_grid.count[z].size() > unsigned(c)))
+	     m_grid.count[z].size() > unsigned(c)))
         return 1;
-    
-      m_grid.p_cell[z][m_grid.cell_start[z][c] + m_grid.count[z][c]] =
-        Grid::Particle(i, v_box);
 
-      ++m_grid.count[z][c];
+      m_grid.p_cell[z][m_grid.cell_start[z][c] + m_grid.count[z][c]] = 
+	Grid::Particle(i, v_box);
+    }
+    ++m_grid.count[z][c];
     
-      // move the atom back
-      pos(i) += trans;
+    // loop over the atoms
+    topology::Atom_Iterator at_it = cg_it.begin(),
+      at_to = cg_it.end();
+    for( ; at_it != at_to; ++at_it){
+      pos(*at_it) += trans;
+    } // atoms
+  } // solvent cg's
 
-    } // loop over atoms
-  } // atomic cutoff
- 
-  
-  
   // check that there was enough space
   int max = 0;
   for(int z=0; z < m_grid.Nc; ++z){
@@ -236,17 +190,11 @@ int interaction::Extended_Grid_Pairlist_Algorithm::prepare_grid
   }
 
   if (max){
-    std::string ptype;
-    if(sim.param().pairlist.atomic_cutoff)
-      ptype ="atoms";
-    else
-      ptype = "chargegroups";
-    
-    std::cout << "not enough space to put " << ptype << " into cells:\n\t"
+    std::cout << "not enough space to put chargegroups into cells:\n\t"
 	      << "available space " << space << "\n\t"
 	      << "additional space required " << max << "\n\n" << std::endl;
     
-    io::messages.add("Not enough space to put "+ptype+" into cells!",
+    io::messages.add("Not enough space to put chargegroups into cells!",
 		     "Grid Pairlist Algorithm",
 		     io::message::notice);
 
@@ -281,6 +229,7 @@ void interaction::Extended_Grid_Pairlist_Algorithm::collapse_grid()
     
     // need the index for all particles...
 
+    // i think what markus means here is this:
     // for any particle index pi we want the cell index ci,
     // _in an extended grid_.
 
@@ -348,11 +297,7 @@ void interaction::Extended_Grid_Pairlist_Algorithm::grid_properties
 
   const int Ncell = m_grid.Na * m_grid.Nb * m_grid.Nc;
   
-  double P;
-  if(sim.param().pairlist.atomic_cutoff)
-    P = topo.num_atoms();
-  else
-    P = topo.num_chargegroups();
+  const double P = topo.num_chargegroups();
   // const double V = math::volume(conf.current().box, conf.boundary_type);
   // const double Vcell = m_grid.a * m_grid.b * m_grid.c;
 

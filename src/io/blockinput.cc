@@ -6,7 +6,7 @@
 #include <cstring>
 #include "../stdheader.h"
 #include "../io/message.h"
-#include <ios>
+#include "../ios"
 #include "blockinput.h"
 
 #undef MODULE

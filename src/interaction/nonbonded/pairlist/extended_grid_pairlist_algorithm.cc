@@ -85,12 +85,7 @@ int interaction::Extended_Grid_Pairlist_Algorithm::init
     const int Ncell = m_grid.Na * m_grid.Nb * m_grid.Nc;
     const int N = m_grid.Na * m_grid.Nb;
 
-    double P;
-    if(sim.param().pairlist.atomic_cutoff)
-      P = topo.num_atoms();
-    else
-      P = topo.num_chargegroups();
-
+    const double P = topo.num_chargegroups();
     const double V = math::volume(conf.current().box, conf.boundary_type);
     // const double Vcell = m_grid.a * m_grid.b * m_grid.c;
 
@@ -218,7 +213,11 @@ void interaction::Extended_Grid_Pairlist_Algorithm::update
   }
 
   if (sim.param().pairlist.atomic_cutoff){
-    _update_atomic(topo, conf, sim, pairlist, begin, end, stride);
+    // see standard_pairlist_algorithm_atomic.cc
+    io::messages.add("Grid based pairlist with atomic cutoff not implemented",
+                     "Grid_Pairlist_Algorithm",
+                     io::message::critical);
+    assert(false);
   }
   else{
     _update(topo, conf, sim, pairlist, begin, end, stride);
@@ -539,261 +538,6 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update
                       pairlist.solute_short[a2].push_back(a1);
 		  }
 		}
-	      }
-	      
-	    }
-	    
-	  }
-
-	} // solvent - ?
-
-	// std::cout << "\n";
-	
-      } // particle in the current mask plane
-
-    } // mask levels
-
-  } // the extended planes
-  if (begin == 0) // master
-    timer().stop("pairlist");
-}
-
-void interaction::Extended_Grid_Pairlist_Algorithm::_update_atomic
-(
- topology::Topology & topo,
- configuration::Configuration & conf,
- simulation::Simulation & sim,
- interaction::PairlistContainer & pairlist,
- unsigned int begin,
- unsigned int end,
- unsigned int stride
- )
-{
-  // empty the pairlist
-  pairlist.clear();
-  if (begin == 0) // master
-    timer().start("pairlist");
-  
-  DEBUG(12, "Timer named: " << timer().name() << " begin:" << begin);
-  DEBUG(10,"Extended_Grid_Pairlist_Algorithm::_update_atomic");
-  std::vector<Grid::Particle> p_plane;
-  std::vector<int> cell_start;
-
-  const int c_ex = (m_grid.Nc_ex - m_grid.Nc) / 2;
-  const int N = m_grid.Na * m_grid.Nb;
-  //const int num_solute_cg = topo.num_solute_chargegroups();
-  const int num_solute_atoms = topo.num_solute_atoms();
-
-#ifdef HAVE_LIBCUKERNEL  
-  const bool no_cuda = sim.param().innerloop.method != simulation::sla_cuda;
-#endif
-
-  for(int z=begin; z < m_grid.Nc + c_ex; z+=stride){
-
-    prepare_plane(z, p_plane, cell_start);
-    // print_plane(z, p_plane, cell_start);
-
-    // std::cerr << "plane " << z << " printed..." << std::endl;
-    
-    if (z < m_grid.Nc){
-      // do self interaction
-      const int i_first = m_grid.cell_start[z][0];
-      const int i_last  = m_grid.cell_start[z][N];
-
-      int base = -1;
-      int start = -1;
-
-      for(int i=i_first; i < i_last; ++i){
-
-	if (base != m_grid.cell_index[z][i]){
-	  base = m_grid.cell_index[z][i];
-	  start = i;
-	}
-	else{ // more than 1 atom in the cell
-	  if (m_grid.p_cell[z][i].i < num_solute_atoms){ // solute - ?
-	    for(int j=start; j<i; ++j){
-	      DEBUG(8, "intra cell " << m_grid.p_cell[z][i].i << " - " 
-		    << m_grid.p_cell[z][j].i);
-	      
-	      if (m_grid.p_cell[z][j].i < num_solute_atoms){ // solute - solute
-
-		const int ii = (m_grid.p_cell[z][i].i < m_grid.p_cell[z][j].i) ? 
-		  m_grid.p_cell[z][i].i : m_grid.p_cell[z][j].i;
-		const int jj = (m_grid.p_cell[z][i].i < m_grid.p_cell[z][j].i) ? 
-		  m_grid.p_cell[z][j].i : m_grid.p_cell[z][i].i;
-
-		if(excluded_solute_pair(topo,ii,jj))
-		  continue;
-		pairlist.solute_short[ii].push_back(jj);
-	      }
-	      else{ // solute - solvent
-                pairlist.solute_short[m_grid.p_cell[z][i].i].push_back(m_grid.p_cell[z][j].i);
-	      }
-	    }
-	  }
-	  else{ // solvent - ?
-	    for(int j=start; j<i; ++j){
-	      DEBUG(8, "intra cell " << m_grid.p_cell[z][i].i << " - " 
-		    << m_grid.p_cell[z][j].i);
-	      
-              if (m_grid.p_cell[z][j].i >= num_solute_atoms) { //solvent-solvent
-		if(!excluded_solvent_pair(topo, m_grid.p_cell[z][j].i, m_grid.p_cell[z][i].i)){
-		  
-#ifdef HAVE_LIBCUKERNEL
-		  // do only add the atoms to the pairlist if we are not doing
-		  // CUDA
-		  if (no_cuda)
-		    pairlist.solvent_short[m_grid.p_cell[z][j].i].push_back(m_grid.p_cell[z][i].i);
-#else
-		  pairlist.solvent_short[m_grid.p_cell[z][j].i].push_back(m_grid.p_cell[z][i].i);
-#endif
-		}
-		
-	      } else
-		pairlist.solute_short[m_grid.p_cell[z][j].i].push_back(m_grid.p_cell[z][i].i);
-	      
-	    }
-	  }
-	}
-      } // loop over plane
-    } // self interaction
-
-    ////////////////////////////////////////////////////////////////////////////////
-    // 
-    // INTER CELL INTERACTIONS
-    //
-    ////////////////////////////////////////////////////////////////////////////////
-
-
-
-    // loop over all mask levels (inside box)
-    for(int mask_z=0; mask_z < int(m_grid.mask.size()); ++mask_z){
-      if (z - mask_z < 0) break;
-      if (z - mask_z >= m_grid.Nc) continue;
-      
-      const int i_level = z - mask_z;
-
-      const int i_first = m_grid.cell_start[i_level][0];
-      const int i_last  = m_grid.cell_start[i_level][N];
-
-      // loop over all particles in this level
-      for(int i=i_first; i < i_last; ++i){
-	
-	assert(m_grid.cell_index[i_level].size() > unsigned(i));
-	const int base = m_grid.cell_index[i_level][i];
-	
-	if (m_grid.p_cell[i_level][i].i < num_solute_atoms){ // solute - ?
-	  
-	  assert(m_grid.mask.size() > unsigned(mask_z));
-	  for(unsigned int m=0; m<m_grid.mask[mask_z].size(); m+=2){
-	    
-	    assert(cell_start.size() > unsigned(base + m_grid.mask[mask_z][m]));
-	  
-	    const int first = cell_start[base + m_grid.mask[mask_z][m]];
-	    const int last  = cell_start[base + m_grid.mask[mask_z][m+1]];
-	    
-	    for(int j=first; j<last; ++j){
-	      
-	      const double d2 = 
-		(m_grid.p_cell[i_level][i].x - p_plane[j].x) *
-		(m_grid.p_cell[i_level][i].x - p_plane[j].x) +
-		(m_grid.p_cell[i_level][i].y - p_plane[j].y) *
-		(m_grid.p_cell[i_level][i].y - p_plane[j].y) +
-		(m_grid.p_cell[i_level][i].z - p_plane[j].z) *
-		(m_grid.p_cell[i_level][i].z - p_plane[j].z);
-
-	      if (d2 > m_cutoff_long_2) continue;
-
-	      // no self interaction here...
-	      DEBUG(8, "inter cell: " << m_grid.p_cell[i_level][i].i << " - " << p_plane[j].i);
-	      assert(m_grid.p_cell[i_level][i].i != p_plane[j].i);
-
-	      if (p_plane[j].i < num_solute_atoms){ 
-		// solute - solute
-
-		if (d2 > m_cutoff_short_2){ // LONGRANGE
-
-		  pairlist.solute_long[m_grid.p_cell[i_level][i].i].push_back(p_plane[j].i);
-		}
-		else{ // SHORTRANGE
-		  
-		  const int ii = (m_grid.p_cell[i_level][i].i < p_plane[j].i) ? 
-		    m_grid.p_cell[i_level][i].i : p_plane[j].i;
-		  const int jj = (m_grid.p_cell[i_level][i].i < p_plane[j].i) ? 
-		    p_plane[j].i : m_grid.p_cell[i_level][i].i;
-		  
-		  DEBUG(8, "rewritten: " << ii
-			<< " - " << jj);
-		  
-		  if (excluded_solute_pair(topo, ii, jj))
-		    continue;
-		  pairlist.solute_short[ii].push_back(jj);
-		}
-	      }
-	      else{ // solute - solvent
-		if (d2 > m_cutoff_short_2){ // LONGRANGE
-
-		  pairlist.solute_long[m_grid.p_cell[i_level][i].i].push_back(p_plane[j].i);
-		}
-		else{ // SHORTRANGE
-
-		  pairlist.solute_short[m_grid.p_cell[i_level][i].i].push_back(p_plane[j].i);
-		}
-		
-	      }
-	      
-	    } // j in mask row
-	  }  // mask
-	} // solute - ?
-	else{ // solvent - ?
-	  assert(m_grid.mask.size() > unsigned(mask_z));
-	  for(unsigned int m=0; m<m_grid.mask[mask_z].size(); m+=2){
-	    
-	    assert(cell_start.size() > unsigned(base + m_grid.mask[mask_z][m]));
-	  
-	    const int first = cell_start[base + m_grid.mask[mask_z][m]];
-	    const int last  = cell_start[base + m_grid.mask[mask_z][m+1]];
-	    
-	    for(int j=first; j<last; ++j){
-
-	      const double d2 = 
-		(m_grid.p_cell[i_level][i].x - p_plane[j].x) *
-		(m_grid.p_cell[i_level][i].x - p_plane[j].x) +
-		(m_grid.p_cell[i_level][i].y - p_plane[j].y) *
-		(m_grid.p_cell[i_level][i].y - p_plane[j].y) +
-		(m_grid.p_cell[i_level][i].z - p_plane[j].z) *
-		(m_grid.p_cell[i_level][i].z - p_plane[j].z);
-
-	      if (d2 > m_cutoff_long_2) continue;
-
-	      DEBUG(8, "inter (solvent - ?): " << m_grid.p_cell[i_level][i].i << " - " << p_plane[j].i);
-	      DEBUG(8, "i_level=" << i_level << " d2=" << d2);
-	      
-	      if (d2 > m_cutoff_short_2){ // LONGRANGE
-		if (p_plane[j].i >= num_solute_atoms) { //solvent-solvent
-		  if(!excluded_solvent_pair(topo, p_plane[j].i, m_grid.p_cell[i_level][i].i)){
-#ifdef HAVE_LIBCUKERNEL
-		  if (no_cuda)
-		    pairlist.solvent_long[p_plane[j].i].push_back(m_grid.p_cell[i_level][i].i);
-#else
-		  pairlist.solvent_long[p_plane[j].i].push_back(m_grid.p_cell[i_level][i].i);
-#endif
-		  }
-		} else
-		  pairlist.solute_long[p_plane[j].i].push_back(m_grid.p_cell[i_level][i].i);
-	      }
-	      else{ // SHORTRANGE
-		if (p_plane[j].i >= num_solute_atoms) {
-		  if(!excluded_solvent_pair(topo, p_plane[j].i, m_grid.p_cell[i_level][i].i)){
-#ifdef HAVE_LIBCUKERNEL
-		    if (no_cuda)
-		      pairlist.solvent_short[p_plane[j].i].push_back(m_grid.p_cell[i_level][i].i);
-#else
-		    pairlist.solvent_short[p_plane[j].i].push_back(m_grid.p_cell[i_level][i].i);
-#endif
-		  }
-		} else
-		  pairlist.solute_short[p_plane[j].i].push_back(m_grid.p_cell[i_level][i].i);
 	      }
 	      
 	    }
@@ -1356,39 +1100,5 @@ bool interaction::Extended_Grid_Pairlist_Algorithm
 {
   DEBUG(10,"\t\t\t\texcluded solute pair?");
   return topo.all_exclusion(i).is_excluded(j);
-}
-
-bool interaction::Extended_Grid_Pairlist_Algorithm
-::excluded_solvent_pair(topology::Topology & topo,
-		       unsigned int i, unsigned int j)
-{
-  DEBUG(10,"\t\t\t\texcluded solvent pair?");
-  
-  // determine what molecule we are in
-  int ii = i - topo.num_solute_atoms();
-  int jj = j - topo.num_solute_atoms();
-  unsigned int solv_i=0;
-  unsigned int solv_j=0;
-  //DEBUG(10, "ii: " << ii << " jj: " << jj);
-  //DEBUG(10, "num_solvents " << topo.num_solvents());
-  
-  while(solv_i < topo.num_solvents() && ii > topo.num_solvent_atoms(solv_i)){
-    ii -= topo.num_solvent_atoms(solv_i);
-    ++solv_i;
-  }
-  while(solv_j < topo.num_solvents() && jj > topo.num_solvent_atoms(solv_j)){
-    jj -= topo.num_solvent_atoms(solv_j);
-    ++solv_j;
-  }
-  
-  if(solv_i!=solv_j) return false;
-  //DEBUG(10, "solv_i: " << solv_i << " solv_j: " << solv_j);
-  const int num_solv_at = topo.num_solvent_atoms(solv_i) / topo.num_solvent_molecules(solv_i);
-
-  int m_i = ii / num_solv_at;
-  int m_j = jj / num_solv_at;
-  
-  if(m_i == m_j) return true;
-  else return false;
 }
 

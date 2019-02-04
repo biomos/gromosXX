@@ -261,11 +261,6 @@ namespace io {
     void _print_dihangle_trans(configuration::Configuration const &conf,
             topology::Topology const &topo,
             std::ostream &os);
-
-    void _print_aedssearch(configuration::Configuration const &conf,
-            simulation::Simulation const &sim,
-            std::ostream &os);
-
     /**
      * perturbation (slow groth) restart data
      */

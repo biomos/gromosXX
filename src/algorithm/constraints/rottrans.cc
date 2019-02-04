@@ -165,7 +165,7 @@ static void _init(topology::Topology & topo,
     os << "\tRoto-translational constraints\tON\n";
     os << "\tusing last atom:\t" << sim.param().rottrans.last << "\n\n";
     if (sim.param().start.read_rottrans)
-      os << "\treading initial reference orientation and position from configuration";
+      os << "\treading initial reference orientation and position form configuration";
     else
       os << "\treseting initial reference orientation and position.";
     os << "\nEND\n";

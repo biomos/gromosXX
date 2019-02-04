@@ -522,6 +522,7 @@ namespace simulation
      */
     xray_symrest_constr = 2,
   };
+
   /**
    * @enum eds_enum
    * eds functional form enumeration
@@ -561,22 +562,6 @@ namespace simulation
        @f$
      */
     pair_s = 3,
-    /**
-    * A-EDS using Emax and Emin
-    */
-    aeds = 4,
-    /**
-    * A-EDS using Emax and Emin, search for EiR
-    */
-    aeds_search_eir = 5,
-    /**
-    * A-EDS using Emax and Emin, search for Emax and Emin
-    */
-    aeds_search_emax_emin = 6,
-    /**
-    * A-EDS using Emax and Emin, search for Eir, Emax an Emin
-    */
-    aeds_search_all = 7,
   };
 
   /**
@@ -1813,8 +1798,6 @@ namespace simulation
          */
         rep_ex_energy_interruptor_enum energy_switcher;
      }replica_exchange_parameters;
-    
-    
       /**
      * @struct overall_bfactor_struct
      * default values: 0
@@ -2714,9 +2697,9 @@ namespace simulation
       /**
        * Constructor
        * Default values:
-       * - gsl
+       * - g96
        */
-      rng_struct() : rng(random_gsl), gsl_rng(-1) {}
+      rng_struct() : rng(random_g96), gsl_rng(-1) {}
       /**
        * random number generator
        */
@@ -2739,11 +2722,11 @@ namespace simulation
        * - eds: no eds sampling
        * - form: single_s
        */
-      eds_struct() : eds(false), soft_vdw(0.0), soft_crf(0.0), form(single_s), numstates(0) {}
+      eds_struct() : eds(false), soft_vdw(1.0), soft_crf(1.0), form(single_s), numstates(0) {}
       /**
        * do enveloping distribution sampling using the Hamiltonian:
        */
-      unsigned int eds;
+      bool eds;
       /**
        * soft core van der Waals interactions
        */
@@ -2775,155 +2758,8 @@ namespace simulation
        * energy offsets @f$E_i^R@f$ of states
        */
       std::vector<double> eir;
-      /**
-      * parameter emax for aeds
-      */
-      double emax;
-      /**
-      * parameter emin for aeds
-      */
-      double emin;
-      /**
-      * do we want to init an aeds parameter search?
-      */
-      bool initaedssearch;
-      /**
-      * current maximum transition energy within a state round-trip
-      */
-      double searchemax;
-      /**
-      * how many emaxes did we already find?
-      */
-      unsigned int emaxcounts;
-      /**
-      * ln of exponential energy differences between the states and the reference state
-      */
-      std::vector<double> lnexpde;
-      /**
-      * free energy differences between the states and the reference state
-      */
-      std::vector<double> statefren;
-      /**
-      * states that were already visited within a state round-trip
-      */
-      std::vector<bool> visitedstates;
-      /**
-      * how many times did we visit a state?
-      */
-      std::vector<unsigned int> visitcounts;
-      /**
-      * state of the last simulation step
-      */
-      unsigned int oldstate;
-      /**
-      * average energy of an end-state
-      */
-      std::vector<double> avgenergy;
-      /**
-      * average energy including offset of an end-state
-      */
-      std::vector<double> eiravgenergy;
-      /**
-      * helper variable for calculation of running standard deviation of the end-state energies
-      */
-      std::vector<double> bigs;
-      /**
-      * running standard deviation of the end-state energies
-      */
-      std::vector<double> stdevenergy;
-      /**
-      * which kind of bmax is given in the input parameters?
-      */
-      unsigned int bmaxtype;
-      /**
-      * the maximum energy barrier parameter
-      */
-      double setbmax;
-      /**
-      * do we want to accelerate over the minimum average energy of the end-states?
-      */
-      bool fullemin;
-      /**
-      * half-life of the offset parameters at the beginning of the run
-      */
-      unsigned int asteps;
-      /**
-      * half-life of the offset parameters at the beginning of the run
-      */
-      unsigned int bsteps;
     } /** enveloping distribution sampling*/ eds;
-    
- struct reeds_struct : public replica_struct
-    {
-      /**
-       * Constructor
-       * Default values:
-       * - num_T 0
-       * - num_l 0
-       * - temperature \<empty\>
-       * - scale (false)
-       * - lambda \<empty\>
-       * - dt \<empty\>
-       * - trials 0
-       * - equilibrate 0
-       * - cont 0
-       */
-      reeds_struct() : reeds(false), 
-                       num_states(0), num_T(0),  num_l(0), 
-                       trials(0), equilibrate(0), 
-                       cont(0), eds_stat_out(true) {}
-      /**
-       * Check if this is a reed run.f
-       **/
-      bool reeds;
-      /**
-       * write output to stat_file (repdat)
-       **/
-      bool eds_stat_out;
-      /**
-       * num_states
-       */
-      int num_states;
-      /**
-       * number of replicas with different temperature
-       */
-      int num_T;
-      /**
-       * number of replicas with different lambdas in REEDS these are the smoothing values
-       */
-      int num_l;
-      /**
-       * temperatures
-       */
-      double temperature;
-      /**
-       * lambdas: contains all smoothness parameter of RE_EDS system
-       */
-      std::vector<double> lambda;
-      /**
-       * time step to use when running at corresponding lambda
-       */
-      std::vector<double> dt;
-      /**
-       * trial moves
-       */
-      int trials;
-      /**
-       * equilibrate: no switching for the first N trials
-       */
-      int equilibrate;
-      /**
-       * do continuation run
-       */
-      int cont;
-       /**
-       * for RE-EDS Sim many eds parameters have to be accessible for
-       * energy calculation.
-       */
-      std::vector<eds_struct> eds_para;
 
-    } /** replica exchange parameters */ reeds;
-    
     /**
      * @struct sasa
      * parameters for calculating the sasa and volume term

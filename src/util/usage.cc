@@ -32,7 +32,7 @@ void util::get_usage(util::Known const &knowns, std::string &usage, std::string 
   }
 
   if (knowns.count("fin")){
-    usage += "\t# output final coordinates\n";
+    usage += "\t# output finale coordinates\n";
     usage += "\t@fin         filename\n\n";
   }
   
@@ -72,12 +72,12 @@ void util::get_usage(util::Known const &knowns, std::string &usage, std::string 
   }
   
   if (knowns.count("trg")){
-    usage += "\t# output free-energy trajectory\n";
+    usage += "\t# output free energy trajectory\n";
     usage += "\t# @trg       filename\n\n";
   }
   
   if (knowns.count("bag")){
-    usage += "\t# output block averaged free-energy trajectory\n";
+    usage += "\t# output block averaged free energy trajectory\n";
     usage += "\t# @bag       filename\n\n";    
   }
   
@@ -87,7 +87,7 @@ void util::get_usage(util::Known const &knowns, std::string &usage, std::string 
   }
   
   if (knowns.count("refpos")){
-    usage += "\t# position restraints reference positions\n";
+    usage += "\t# position restraints\n";
     usage += "\t# @refpos    filename\n\n";
   }
   

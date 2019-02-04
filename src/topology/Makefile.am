@@ -1,5 +1,5 @@
 AM_CXXFLAGS = @MY_CXXFLAGS@
-AM_CPPFLAGS = -I$(top_srcdir)/src -I$(top_srcdir)
+INCLUDES = -I$(top_srcdir)/src -I$(top_srcdir)
 
 xxincludedir = $(includedir)/md++/topology
 xxcoreincludedir = $(includedir)/md++/topology/core

@@ -73,7 +73,6 @@ void io::In_Configuration::read(configuration::Configuration &conf,
   read_bsleus(topo, conf, sim, os);
   read_order_parameter_restraint_averages(topo, conf, sim, os);
   read_rdc(topo, conf, sim, os);
-  read_aedssearch(topo, conf, sim, os);
 
   // and set the boundary type!
   conf.boundary_type = param.boundary.boundary;
@@ -1308,62 +1307,6 @@ bool io::In_Configuration::read_time_step
   else{
     _read_time_step(buffer, sim);
     block_read.insert("TIMESTEP");
-  }
-  return true;
-}
-
-bool io::In_Configuration::read_aedssearch
-(
-  topology::Topology &topo,
-  configuration::Configuration &conf,
-  simulation::Simulation & sim,
-  std::ostream & os)
-{
-  std::vector<std::string> buffer;
-  if (sim.param().eds.form == simulation::aeds_search_eir || sim.param().eds.form == simulation::aeds_search_emax_emin || sim.param().eds.form == simulation::aeds_search_all) {
-
-    buffer = m_block["AEDSSEARCH"];
-    if (buffer.size()) {
-      block_read.insert("AEDSSEARCH");
-      if (!quiet)
-        os << "\treading AEDSSEARCH...\n";
-
-      if (sim.param().eds.initaedssearch == false) {
-        _read_aedssearch(buffer, sim, sim.param().eds.numstates);
-        os << "\t" << "AEDSSEARCH\n";
-
-        os << "\t" << sim.param().eds.emax << "\n";
-        os << "\t" << sim.param().eds.emin << "\n";
-        os << "\t" << sim.param().eds.searchemax << "\n";
-        os << "\t" << sim.param().eds.emaxcounts << "\n";
-        os << "\t" << sim.param().eds.oldstate << "\n";
-        os << "\t" << sim.param().eds.fullemin << "\n";
-
-        for (unsigned int i = 0; i < sim.param().eds.numstates; i++) {
-          os << "\t" << sim.param().eds.eir[i] << "\t"
-            << sim.param().eds.lnexpde[i] << "\t"
-            << sim.param().eds.statefren[i] << "\t"
-            << sim.param().eds.visitedstates[i] << "\t"
-            << sim.param().eds.visitcounts[i] << "\t"
-            << sim.param().eds.avgenergy[i] << "\t"
-            << sim.param().eds.eiravgenergy[i] << "\t"
-            << sim.param().eds.bigs[i] << "\t"
-            << sim.param().eds.stdevenergy[i] << "\n";
-        }
-
-        os << "\t" << "END\n";
-      }
-      else
-        io::messages.add("Initial settings for A-EDS parameter search simulation found but not read! This happended because NTIAEDSS = 1.",
-          "in_configuration",
-          io::message::warning);
-    }
-    else {
-      if (sim.param().eds.initaedssearch == false)
-        io::messages.add("no AEDSSEARCH block in configuration.",
-          "in_configuration",
-          io::message::error);
-    }
   }
   return true;
 }
@@ -3423,72 +3366,6 @@ _read_xray_bfactors(std::vector<std::string> &buffer,
               "In_Configuration", io::message::warning);
       return false;
     }
-  }
-  return true;
-}
-
-bool io::In_Configuration::_read_aedssearch(
-  std::vector<std::string> &buffer, simulation::Simulation & sim, unsigned int last) {
-  DEBUG(8, "read configuration for A-EDS parameter search simulation");
-  // no title in buffer!
-  std::vector<std::string>::const_iterator it = buffer.begin(),
-    to = buffer.end() - 1;
-  _lineStream.clear();
-  _lineStream.str(*it);
-  _lineStream >> sim.param().eds.emax;
-  it++;
-  _lineStream.clear();
-  _lineStream.str(*it);
-  _lineStream >> sim.param().eds.emin;
-  it++;
-  _lineStream.clear();
-  _lineStream.str(*it);
-  _lineStream >> sim.param().eds.searchemax;
-  it++;
-  _lineStream.clear();
-  _lineStream.str(*it);
-  _lineStream >> sim.param().eds.emaxcounts;
-  it++;
-  _lineStream.clear();
-  _lineStream.str(*it);
-  _lineStream >> sim.param().eds.oldstate;
-  it++;
-  int fulleminbool;
-  _lineStream.clear();
-  _lineStream.str(*it);
-  _lineStream >> fulleminbool;
-  if (fulleminbool == 1) {
-    sim.param().eds.fullemin = true;
-  }
-  else {
-    sim.param().eds.fullemin = false;
-  }
-  it++;
-  for (unsigned int i = 0; i < last; i++, it++) {
-    _lineStream.clear();
-    _lineStream.str(*it);
-    int visitedstatesbool;
-    _lineStream >> sim.param().eds.eir[i]
-      >> sim.param().eds.lnexpde[i]
-      >> sim.param().eds.statefren[i]
-      >> visitedstatesbool
-      >> sim.param().eds.visitcounts[i]
-      >> sim.param().eds.avgenergy[i]
-      >> sim.param().eds.eiravgenergy[i]
-      >> sim.param().eds.bigs[i]
-      >> sim.param().eds.stdevenergy[i];
-    if (visitedstatesbool == 1) {
-      sim.param().eds.visitedstates[i] = true;
-    }
-    else {
-      sim.param().eds.visitedstates[i] = false;
-    }
-  }
-  if (_lineStream.fail()) {
-    io::messages.add("bad line in AEDSSEARCH block",
-      "In_Configuration",
-      io::message::error);
-    return false;
   }
   return true;
 }

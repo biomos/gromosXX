@@ -268,22 +268,9 @@ namespace interaction
      );
 
     /**
-     * update the group-based pairlist
+     * update the pairlist
      */
     void _update
-    (
-     topology::Topology & topo,
-     configuration::Configuration & conf,
-     simulation::Simulation & sim,
-     interaction::PairlistContainer & pairlist,
-     unsigned int begin,
-     unsigned int end,
-     unsigned int stride
-     );
-    /**
-     * update the atomic pairlist
-     */
-    void _update_atomic
     (
      topology::Topology & topo,
      configuration::Configuration & conf,
@@ -316,13 +303,6 @@ namespace interaction
     );
     
     bool excluded_solute_pair
-    (
-     topology::Topology & topo,
-     unsigned int i,
-     unsigned int j
-     );
-    
-    bool excluded_solvent_pair
     (
      topology::Topology & topo,
      unsigned int i,

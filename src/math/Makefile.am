@@ -1,5 +1,5 @@
 AM_CXXFLAGS = @MY_CXXFLAGS@
-AM_CPPFLAGS = -I$(top_srcdir)/src
+INCLUDES = -I$(top_srcdir)/src
 
 xxincludedir = $(includedir)/md++/math
 xxinclude_HEADERS = gmath.h\
