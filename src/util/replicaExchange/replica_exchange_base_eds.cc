@@ -72,9 +72,8 @@ void util::replica_exchange_base_eds::createReplicas(int cont, std::vector<int> 
   replicas.resize(numReplicas);
   // create the number of replicas that are assigned to my node
    int i = 0;
-   //++i
-   for (repIterator it = replicas.begin(); it < replicas.end(); it++) {
-    *it = new util::replica_reeds(args, cont, repIDs[i++], rank);
+   for (repIterator it = replicas.begin(); it < replicas.end(); ++it, ++i) {
+    *it = new util::replica_reeds(args, cont, repIDs[i], rank);
     DEBUG(3, "\treplica_exchange_base_eds "<< rank <<":\tConstructor \ttopo\t" << (*it)->topo.check_state())
     DEBUG(3, "\treplica_exchange_base_eds "<< rank <<":\tConstructor \tconf:\t" << (*it)->conf.check((*it)->topo, (*it)->sim))
    }    
@@ -89,7 +88,7 @@ util::replica_exchange_base_eds::~replica_exchange_base_eds() {
 }
 
 void util::replica_exchange_base_eds::swap() {
-  DEBUG(5,"replica_exchange_base_eds:\t swap \t Start");
+  DEBUG(5,"replica_exchange_base_eds:swap Start");
   // do this for all replicas; if two of them on this node, do special swap
   for (repIterator it = replicas.begin(); it < replicas.end(); ++it) {
     unsigned int partner = (*it)->find_partner();
@@ -127,7 +126,7 @@ void util::replica_exchange_base_eds::swap() {
       (*it)->switched = 0;
     }
   }
-    DEBUG(5,"replica_exchange_base_eds:\t swap \t Done");
+    DEBUG(5,"replica_exchange_base_eds:swap  Done");
 }
 void util::replica_exchange_base_eds::swap_on_node(repIterator it1, const unsigned int partner) {
   replica* rep1 = *it1;

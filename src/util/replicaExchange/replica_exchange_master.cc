@@ -120,11 +120,10 @@ void util::replica_exchange_master::receive_from_all_slaves() {
 
 void util::replica_exchange_master::write() {
   for (unsigned int r = 0; r < numReplicas; ++r) {
-
     repOut << std::setw(6) << (replicaData[r].ID + 1)
             << " "
             << std::setw(6) << (replicaData[r].partner + 1)
-            //<< std::setw(6) << replicaData[r].run
+            << std::setw(6) << replicaData[r].run
             << std::setw(13) << replicaData[r].l
             << std::setw(13) << replicaData[r].T
             << " "
@@ -132,10 +131,6 @@ void util::replica_exchange_master::write() {
             << std::setw(13) << replicaData[replicaData[r].partner].l
             << std::setw(13) << replicaData[replicaData[r].partner].T
             << " ";
-    // the following is a little bit clumsy. Because for temperature REMD, we did not have to recalculate
-    // any energies using different potentials, we could not properly store the epot_partner value (only
-    // for the first of the switching pair. Therefor we just print the epot of the partner (which is exactly
-    // what epot_partner would have been if we had taken the effort to send it back to the partner.
     if(replicaData[r].l == replicaData[replicaData[r].partner].l)
 	repOut << std::setw(18) << replicaData[replicaData[r].partner].epot;
     else

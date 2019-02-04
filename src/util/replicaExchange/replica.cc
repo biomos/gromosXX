@@ -52,7 +52,7 @@ util::replica::replica(io::Argument _args, int cont, int _ID, int _rank) : ID(_I
 
   traj = new io::Out_Configuration(trajname, *os);
   
-  if (io::read_input(args, topo, conf, sim, md, *os, true)) { //Todo: Would it not enough to read in topo, special and cnf? bschroed
+  if (io::read_input(args, topo, conf, sim, md, *os, false)) { //Todo: Would it not enough to read in topo, special and cnf? bschroed
   //if (io::read_input_repex(args, topo, conf, sim, md, ID, *os, true)) { //Todo: Would it not enough to read in topo, special and cnf? bschroed
     io::messages.display(*os);
     std::cerr << "\nErrors during initialization!\n" << std::endl;

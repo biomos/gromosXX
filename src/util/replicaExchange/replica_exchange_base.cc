@@ -150,7 +150,6 @@ void util::replica_exchange_base::swap() {
     }
   }
   DEBUG(5,"replica_exchange_base:\t swap \t Done");
-
 }
 
 void util::replica_exchange_base::swap_on_node(repIterator it1, const unsigned int partner) {

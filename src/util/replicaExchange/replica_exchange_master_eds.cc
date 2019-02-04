@@ -97,7 +97,7 @@ void util::replica_exchange_master_eds::receive_from_all_slaves() {
   DEBUG(2,"\nreplica_exchange_master_eds:receive_from_all_slaves \t \twrite_own data");
   for (repIterator it = replicas.begin(); it < replicas.end(); it++) { //TODO: set DEBUG level higher bschroed
     int ID = (*it)->ID;
-    replicaData[ID].run = 0; //(*it)->run;
+    replicaData[ID].run = (*it)->run;
     replicaData[ID].partner = (*it)->partner;
     replicaData[ID].epot = (*it)->epot;
     replicaData[ID].epot_partner = (*it)->epot_partner;
@@ -107,8 +107,7 @@ void util::replica_exchange_master_eds::receive_from_all_slaves() {
   }
   DEBUG(3,"replica_exchange_master_eds:receive_from_all_slaves \t Master:\n" << "time used for receiving all messages: " << MPI_Wtime() - start 
             << " seconds");
-  DEBUG(2,"replica_exchange_master_eds:receive_from_all_slaves \t DONE");
-
+  DEBUG(2,"replica_exchange_master_eds:receive_from_all_slaves \t DONE")
 }
 
 int util::replica_exchange_master_eds::getSValPrecision(double minLambda){
@@ -141,8 +140,8 @@ void util::replica_exchange_master_eds::write() {
       //DEBUG(2, "WRITING CORRECTLY OUT " << r);
       repOut << std::setw(6) << (replicaData[r].ID + 1)
               << " "
-              << std::setw(6) << (replicaData[r].partner + 1);
-              //<< std::setw(6) << replicaData[r].run
+              << std::setw(6) << (replicaData[r].partner + 1)
+              << std::setw(6) << replicaData[r].run;
       repOut.precision(svalPrecision);
       DEBUG(2,"replica_exchange_master_eds:write \t s_val raus! "<<replicaData[r].l);
 
