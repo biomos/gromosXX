@@ -44,6 +44,7 @@ namespace util{
         double calc_energy_eds_stat(double s);
 
         double calculate_energy(const int partner);
+        double calculate_energy();
         
     private:
      /**

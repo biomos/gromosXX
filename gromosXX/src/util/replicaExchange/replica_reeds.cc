@@ -32,7 +32,6 @@ util::replica_reeds::replica_reeds(io::Argument _args, int cont, int _ID, int _r
   DEBUG(4, "S of replica "<< rank <<" " << _ID << " \t" << sim.param().eds.s[0])
   DEBUG(4, "S size of replica "<< rank <<" " << _ID << " \t" << sim.param().eds.s.size())
 
-
   assert(0.0 <= sim.param().multibath.multibath.bath(0).temperature);
   DEBUG(3, "replica_reeds "<< rank <<":constructor \t DONE"); 
 
@@ -138,4 +137,8 @@ double util::replica_reeds::calculate_energy(const int partner) {
     
     DEBUG(4, "replica_reeds:calculate_energy \t DONE"); 
     return energy;
+}
+
+double util::replica_reeds::calculate_energy() {
+    return calculate_energy(ID);
 }
