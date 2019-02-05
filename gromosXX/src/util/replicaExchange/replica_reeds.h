@@ -42,6 +42,7 @@ namespace util{
         * for given configuration with new smoothing parameter s.
         */
         double calc_energy_eds_stat(double s);
+
         double calculate_energy(const int partner);
         
     private:

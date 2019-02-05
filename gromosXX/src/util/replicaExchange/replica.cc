@@ -23,7 +23,7 @@ util::replica::replica(io::Argument _args, int cont, int _ID, int _rank) : ID(_I
   // read input again. If copy constructors for topo, conf, sim, md work, one could
   // also pass them down from repex_mpi.cc ...
   
-  DEBUG(3, "replica Constructor  "<< rank <<":\t START");
+  DEBUG(3, "replica:Constructor  "<< rank <<":\t START");
   // do continuation run?
   // change name of input coordinates
   if(cont == 1){
@@ -249,6 +249,8 @@ void util::replica::write_final_conf() {
 // are not on the same node
 
 void util::replica::swap(const unsigned int partnerID, const unsigned int partnerRank) {
+  DEBUG(3, "replica:swap  "<< rank <<":\t START");
+
   partner = partnerID;
   unsigned int numT = sim.param().replica.num_T;
   unsigned int numL = sim.param().replica.num_l;
@@ -325,6 +327,8 @@ void util::replica::swap(const unsigned int partnerID, const unsigned int partne
     switched = false;
     probability = 0.0;
   }
+    DEBUG(3, "replica:swap "<< rank <<":\t DONE");
+
 }
 
 int util::replica::find_partner() const {
@@ -499,6 +503,8 @@ double util::replica::calc_probability(const int partner, const int partnerRank)
 }
 
 double util::replica::calculate_energy(const int partner) {
+  DEBUG(4, "replica:calculate_energy  "<< rank <<":\t START");
+
   change_lambda(partner);
 
   double energy = 0.0;
@@ -535,6 +541,8 @@ double util::replica::calculate_energy(const int partner) {
   }
 
   set_lambda();
+  DEBUG(4, "replica:calculate_energy  "<< rank <<":\t Done");
+
   return energy;
 }
 

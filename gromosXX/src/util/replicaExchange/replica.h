@@ -75,11 +75,11 @@ namespace util {
      * @param partner ID of partner
      * @return potential energy of configuration with lambda(Hamiltonian) of partner
      */
-    double calculate_energy(const int partner);
+    virtual double calculate_energy(const int partner);
     /**
      * calculates potential energy for current configuration with own lambda
      */
-    double calculate_energy();
+    virtual double calculate_energy();
     /**
      * finds out if configurations are to be switched; sets switched to true if so
      */

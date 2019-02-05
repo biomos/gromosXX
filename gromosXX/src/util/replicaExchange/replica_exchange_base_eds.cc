@@ -98,7 +98,7 @@ void util::replica_exchange_base_eds::swap() {
     // attempt switch in this run?
     if (partner != (*it)->ID) {
       // are the replicas on the same node?
-      DEBUG(5,"replica_exchange_base_eds:\t sending "<< (*it)->ID <<" \t Start");
+      DEBUG(5,"replica_exchange_base_eds:sending "<< (*it)->ID <<" \t Start");
       if (partnerOnThisNode) {
         swap_on_node(it, partner);
         if ((*it)->switched)
