@@ -2738,7 +2738,7 @@ namespace simulation
        * - eds: no eds sampling
        * - form: single_s
        */
-      eds_struct() : eds(false), soft_vdw(1.0), soft_crf(1.0), form(single_s), numstates(0) {}
+      eds_struct() : eds(false), soft_vdw(0.0), soft_crf(0.0), form(single_s), numstates(0) {}
       /**
        * do enveloping distribution sampling using the Hamiltonian:
        */
