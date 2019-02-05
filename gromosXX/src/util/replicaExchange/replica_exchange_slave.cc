@@ -6,7 +6,7 @@
  */
 
 #define REPEX_MPI
-#include "replica_exchange_slave.h"
+#include <util/replicaExchange/replica_exchange_slave.h>
 
 #include <stdheader.h>
 
@@ -25,8 +25,8 @@
 
 #include <io/configuration/out_configuration.h>
 
-#include <util/repex_mpi.h>
-#include <util/replica_exchange_base.h>
+#include <util/replicaExchange/repex_mpi.h>
+#include <util/replicaExchange/replica_exchange_base.h>
 
 #ifdef XXMPI
 #include <mpi.h>
@@ -44,6 +44,7 @@ util::replica_exchange_slave::~replica_exchange_slave() {
 
 void util::replica_exchange_slave::send_to_master() const {
 #ifdef XXMPI
+  DEBUG(2,"replica_exchange_slave " << rank << ":send_to_master \t START");
   for (std::vector<util::replica *>::const_iterator it = replicas.begin(); it < replicas.end(); ++it) {
     util::repInfo info;
     info.run = (*it)->run;
@@ -54,5 +55,6 @@ void util::replica_exchange_slave::send_to_master() const {
     info.switched = int((*it)->switched);
     MPI_Send(&info, 1, MPI_REPINFO, 0, REPINFO, MPI_COMM_WORLD);
   }
+  DEBUG(2,"replica_exchange_slave " << rank << ":\t send_to_master \t Done");
 #endif
 }

@@ -1,12 +1,12 @@
-/* 
- * File:   replica_exchange_base.cc
- * Author: wissphil, sriniker
- * 
- * Created on April 29, 2011, 2:06 PM
+/**
+ * @file replica_exchange_base.h
+
  */
 
-#include "replicaExchange/replica_exchange_base.h"
-#include "replicaExchange/replica.h"
+#ifndef REPLICA_EXCHANGE_BASE_H
+#define	REPLICA_EXCHANGE_BASE_H
+
+
 #include <stdheader.h>
 
 #include <algorithm/algorithm.h>
@@ -29,271 +29,138 @@
 #include <unistd.h>
 
 #include <io/configuration/out_configuration.h>
-#include <math/random.h>
-#include <math/volume.h>
+
+#include <util/replicaExchange/repex_mpi.h>
+#include <util/replicaExchange/replica.h>
 #include <string>
+#include <math/random.h>
 
 #ifdef XXMPI
 #include <mpi.h>
 #endif
 
-util::replica_exchange_base::replica_exchange_base(io::Argument _args, int cont, int rank,
-        std::vector<int> repIDs, std::map<ID_t, rank_t> &_repMap) : args(_args), repMap(_repMap), numReplicas(repIDs.size()), rng(-1), 
-        rank(rank), cont(cont), repIDs(repIDs){
+namespace util {
 
-  DEBUG(5,"replica_exchange_base:\t Constructor \t START ");
-  //construct replica objs
-  DEBUG(5,"replica_exchange_base:\t\t createReplicas");
-  createReplicas(cont, repIDs, rank);
-  DEBUG(5,"replica_exchange_base_eds"<< rank <<":\t replica Type\t "<< typeid(replicas).name());
-
-  DEBUG(5,"replica_exchange_base:\t Constructor \t Done");
-}
-
-util::replica_exchange_base::~replica_exchange_base() {
-
-  for (repIterator it = replicas.begin(); it < replicas.end(); ++it) {
-    delete *it;
-  }
-}
-
-void util::replica_exchange_base::run_MD() {
-  DEBUG(5,"replica_exchange_base:\t run_MD \t START");
-
-  // do a md run for all replica assigned to this node
-  for (std::vector< util::replica * >::iterator it = replicas.begin(); it < replicas.end(); ++it) {
-    (*it)->run_MD();
-    (*it)->conf.current().energies.eds_vr;
-  }
-  DEBUG(5,"replica_exchange_base:\t run_MD \t END");
-
-}
-
-void util::replica_exchange_base::write_final_conf() {
-  // write coordinates to cnf for all replica assigned to this node
-  for (std::vector< util::replica * >::iterator it = replicas.begin(); it < replicas.end(); ++it) {
-    (*it)->write_final_conf();
-  }
-}
-
-void util::replica_exchange_base::init() {
-  DEBUG(5,"replica_exchange_base:\t init() \t START");
-
-  // do init for all replica assigned to this node
-  DEBUG(5,"replica_exchange_base:\t\t initReplicas");
-  DEBUG(5,"replica_exchange_base_eds"<< rank <<":\t initReplicas type\t "<< typeid(replicas).name());
-
-  for (repIterator it = replicas.begin(); it < replicas.end(); ++it) {
-    (*it)->init();
-  }
-  DEBUG(5,"replica_exchange_base:\t init() \t DONE");
-
-}
-void util::replica_exchange_base::createReplicas(int cont, std::vector<int> repIDs, int rank){
-  DEBUG(5,"replica_exchange_base:\t initReplicas \t START");
-  replicas.resize(numReplicas);
-  // create the number of replicas that are assigned to my node
-  int i = 0;
-  for (repIterator it = replicas.begin(); it < replicas.end(); ++it, ++i) {
-    // one could use a vector<util::replica> and theref ore we needed a copy constructor
-    // for the replica class but there seems to be something wrong with those of conf/topo/...
-    *it = new util::replica(args, cont, repIDs[i++], rank);
-    DEBUG(3, "\treplica_exchange_base "<< rank <<":\tConstructor \ttopo\t" << (*it)->topo.check_state())
-    DEBUG(3, "\treplica_exchange_base "<< rank <<":\tConstructor \tconf:\t" << (*it)->conf.check((*it)->topo, (*it)->sim))
-  }
-  DEBUG(5,"replica_exchange_base:\t initReplicas \t Done");
-}
-
-void util::replica_exchange_base::swap() {
-  DEBUG(5,"replica_exchange_base:\t swap \t Start");
-  // do this for all replicas; if two of them on this node, do special swap
-  for (std::vector< util::replica* >::iterator it = replicas.begin(); it < replicas.end(); ++it) {
-    unsigned int partner = (*it)->find_partner();
-    unsigned int partnerRank = repMap.find(partner)->second;
-    bool partnerOnThisNode = (partnerRank == (*it)->rank && (*it)->ID < partner);
-
-    // attempt switch in this run?
-    if (partner != (*it)->ID) {
-      // are the replicas on the same node?
-      if (partnerOnThisNode) {
-        swap_on_node(it, partner);
-        if ((*it)->switched)
-          switch_coords_on_node(it, partner);
-      } else if (partnerRank != (*it)->rank) // replicas on different nodes
-      {
-        (*it)->swap(partner, partnerRank);
-        if ((*it)->switched) {
-          if ((*it)->ID < partner) {
-            (*it)->send_coord(partner, partnerRank);
-            (*it)->receive_new_coord(partner, partnerRank);
-            // the averages of current and old are interchanged after calling exchange_state() and have to be switched back
-            (*it)->exchange_averages();
-          } else {
-            (*it)->receive_new_coord(partner, partnerRank);
-            (*it)->send_coord(partner, partnerRank);
-            // the averages of current and old are interchanged after calling exchange_state() and have to be switched back
-            (*it)->exchange_averages();
-          }
-        }
-      }
-    } else {
-      (*it)->partner = (*it)->ID;
-      (*it)->probability = 0.0;
-      (*it)->switched = 0;
-    }
-  }
-
-  // scale the velocities?
-  for (std::vector< util::replica* >::iterator it = replicas.begin();it < replicas.end(); ++it) {
-    if((*it)->switched && (*it)->sim.param().replica.scale) {
-      (*it)->velscale((*it)->partner);
-    }
-  }
-  DEBUG(5,"replica_exchange_base:\t swap \t Done");
-}
-
-void util::replica_exchange_base::swap_on_node(repIterator it1, const unsigned int partner) {
-  replica* rep1 = *it1;
-  replica* rep2;
-
-  // find partner of rep1 on my node
-  for (repIterator it = replicas.begin(); it < replicas.end(); ++it) {
-    if ((*it)->ID == partner) {
-      rep2 = (*it);
-      break;
-    }
-  }
-
-  rep1->probability = calc_probability(rep1, rep2);
-  rep2->probability = rep1->probability;
-
-  const double randNum = rng.get();
-
-  if (randNum < rep1->probability) {
-    rep1->switched = true;
-    rep2->switched = true;
-  } else {
-    rep1->switched = false;
-    rep2->switched = false;
-  }
-}
-
-double util::replica_exchange_base::calc_probability(replica * rep1, replica * rep2) {
-  double delta;
-  bool sameLambda = (rep2->l == rep1->l); // horizontal switch with same lambda?
-  const double b1 = 1.0 / (math::k_Boltzmann * rep1->T);
-  const double b2 = 1.0 / (math::k_Boltzmann * rep2->T);
-
-  if (sameLambda) {
-    // use simple formula
-    rep1->epot_partner = rep2->epot;
-    rep2->epot_partner = rep1->epot;
-    delta = (b1 - b2)*(rep2->epot - rep1->epot); //*  (E21 - E11=
-  } else {
-    // 2D formula
-    /*
-     * E12: Energy with lambda from 1 and configuration from 2
-     * delta = b1 * ( E22 - E11) - b2*(E21  - E12);
-     * E22 and E12 needed from partner
+  /**
+   * @class replica_exchange_base
+   * One instance of this class per node managing one or more replicas. Master and
+   * slave are derived from this class.
+   */
+  class replica_exchange_base {
+  private:
+    /**
+     * copy constructor
+     * don't allow copies because there's a bug in the copy constructor of configuration::configurtiaon
      */
-    const double E22 = rep2->epot;
-    const double E12 = rep2->calculate_energy(rep1->ID);
+    replica_exchange_base(const replica_exchange_base &);
+  public:
+    /**
+     * Constructor
+     * @param _args io::Argument, passed on to Replica
+     * @param rank integer, rank of node
+     * @param repIDs std::vector<int>, IDs of replicas the instance has to manage
+     * @param _repMap std::map<int,int>, maps replica IDs to nodes; needed for communication
+     */
+    replica_exchange_base(io::Argument _args, int cont, int rank, std::vector<int> repIDs, 
+                          std::map<ID_t, rank_t>& _repMap);
+    /**
+     * Destructor
+     */
+    ~replica_exchange_base();
 
-    const double E11 = rep1->epot;
-    const double E21 = rep1->calculate_energy(rep2->ID);
-    // Chris: I think this was wrong
-    // delta = b1 * (E22 - E11) - b2 * (E21 - E12);
-    //std::cerr << "b1: " << b1 << " b2: " << b2 << std::endl;
-    //std::cerr << "E11: " << E11 << " E22: " << E22 << std::endl;
-    //std::cerr << "E21: " << E21 << " E12: " << E12 << std::endl;
+    /**
+     * runs MD simulation for all replicas; one by one
+     */
+    virtual void run_MD();
+    
+    /**
+     * write coordinates for all replicas to cnf
+     */
+    void write_final_conf();
+    
+    /**
+     * init MD simulation for all replicas; one by one
+     */
+    virtual void init();
+    /**
+     * prints out configuration to a file named \<name\>_\<ID\>.cnf
+     * @param name string, name of output file
+     */
+    void print_coords(std::string name);
+    /**
+     * Tries a swapping of configuration if possible. Calculates energies, probabilities
+     * and sends information via MPI communication if necessary.
+     */
+    virtual void swap();
 
-    delta = b1 * (E12 - E11) - b2 * (E22 - E21);
-  }
-  
-  // NPT? add PV term
-  if (rep1->sim.param().pcouple.scale != math::pcouple_off) {
-    // isotropic! p0 is the same for rep1 and rep2
-    double pressure = (rep1->sim.param().pcouple.pres0(0,0)
-              + rep1->sim.param().pcouple.pres0(1,1)
-              + rep1->sim.param().pcouple.pres0(2,2)) / 3.0;
-    // get the volume
-    double V1 = math::volume(rep1->conf.current().box, rep1->conf.boundary_type);
-    double V2 = math::volume(rep2->conf.current().box, rep2->conf.boundary_type);
-    // add the PV term to delta
-    delta += pressure * (b1 - b2) * (V2 - V1);
-  }
+  protected:
+    /**
+     * all replicas on this node
+     */
+    typedef std::vector< util::replica* >::iterator repIterator; //iterator for loops
+    std::vector<util::replica *> replicas;
+    
+    /**
+     * Swapping routine if the replicas are on the same node, no MPI communication needed. Always called from swap().
+     * @param it repIterator, iterator to replica with lower ID
+     * @param partner integer, ID of replica with higher ID
+     */
+    void swap_on_node(repIterator it, const unsigned int partner);
+    /**
+     * switches configuration information if replicas are on same node.
+     * @param it repIterator, iterator to replica with lower ID
+     * @param partner integer, ID of replica with higher ID
+     */
+    void switch_coords_on_node(repIterator it, const unsigned int partner);
+    /**
+     * calculates switching probability of two replicas if they are on same node
+     * @param rep1 replica*, pointer to replica with lower ID
+     * @param rep2 replica*, pointer to replica with higher ID
+     * @return double, probability in [0.0,1.0]
+     */
+    double calc_probability(replica * rep1, replica * rep2);
+    /**
+     * input parameters
+     */
+    io::Argument args;
+    /**
+     * mapping of IDs and rank to know where to send data to
+     */
+    const std::map<ID_t, rank_t> repMap;
+    /**
+     * number of replicas in the system
+     */
+    const unsigned int numReplicas;
 
-  if (delta < 0.0)
-    return 1.0;
-  else {
-    return exp(-delta);
-  }
+    /**
+     * rank of this class
+     */
+    int rank;
+    /**
+     * continuation? of this class
+     */
+    int cont;
+    /**
+     * replica IDs
+     */
+    std::vector<int> repIDs;
+    
+    /**
+     * rank of this class
+     */
+    
+    /**
+     * the random number generator
+     */
+    math::RandomGeneratorGSL rng;
+
+    /**
+     *  Other Functions:
+     */
+    //init Replicas - used in contstructor, initialises the replica objs.
+    virtual void createReplicas(int cont, std::vector<int>  repIDs, int rank);
+  };
 }
 
-void util::replica_exchange_base::switch_coords_on_node(repIterator it1, const unsigned int partner) {
-  replica* rep1 = *it1;
-  replica* rep2;
+#endif	/* REPLICA_EXCHANGE_BASE_H */
 
-  // find my partner
-  for (repIterator it = replicas.begin(); it < replicas.end(); ++it) {
-    if ((*it)->ID == partner) {
-      rep2 = (*it);
-      break;
-    }
-  }
-
-  rep1->conf.exchange_state();
-
-  rep1->conf.current().pos = rep2->conf.current().pos;
-  rep2->conf.old().pos = rep1->conf.old().pos;
-
-  rep1->conf.current().posV = rep2->conf.current().posV;
-  rep2->conf.old().posV = rep1->conf.old().posV;
-
-  rep1->conf.current().vel = rep2->conf.current().vel;
-  rep2->conf.old().vel = rep1->conf.old().vel;
-
-  rep1->conf.current().stochastic_integral = rep2->conf.current().stochastic_integral;
-  rep2->conf.old().stochastic_integral = rep1->conf.old().stochastic_integral;
-
-  rep1->conf.current().box = rep2->conf.current().box;
-  rep2->conf.old().box = rep1->conf.old().box;
-
-  // temp array for lattice shifts
-  math::VArray latticeTMP(rep1->conf.special().lattice_shifts);
-
-  rep1->conf.special().lattice_shifts = rep2->conf.special().lattice_shifts; // lattice shifts?
-  rep2->conf.special().lattice_shifts = latticeTMP;
-
-  rep1->conf.current().phi = rep2->conf.current().phi;
-  rep2->conf.old().phi = rep1->conf.old().phi;
-
-  rep1->conf.current().psi = rep2->conf.current().psi;
-  rep2->conf.old().psi = rep1->conf.old().psi;
-
-  rep1->conf.current().theta = rep2->conf.current().theta;
-  rep2->conf.old().theta = rep1->conf.old().theta;
-
-  rep2->conf.exchange_state();
-  // the averages of current and old are interchanged after calling exchange_state() and have to be switched back
-  rep1->exchange_averages();
-  rep2->exchange_averages();
-}
-
-void util::replica_exchange_base::print_coords(std::string name) {
-  for (repIterator it = replicas.begin(); it < replicas.end(); ++it) {
-    io::Out_Configuration received_traj(GROMOSXX " Configuration", std::cout);
-
-    io::Argument args2(args);
-    args2.erase("fin");
-    std::stringstream tmp;
-    tmp << name << "_replica_" << (*it)->ID << "_run_" << (*it)->run;
-    std::string fin = tmp.str() + ".cnf";
-    args2.insert(std::pair<std::string, std::string > ("fin", fin));
-
-    received_traj.init(args2, (*it)->sim.param());
-
-    received_traj.title("bla");
-    received_traj.write((*it)->conf, (*it)->topo, (*it)->sim, io::final);
-  }
-}

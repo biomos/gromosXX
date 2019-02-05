@@ -64,12 +64,6 @@ typedef unsigned int ID_t;
  * rank_type
  */
 typedef unsigned int rank_t;
-/**
- * @typedef repIterator
- */
-//typedef std::vector< util::replica* >::iterator repIterator;
-//typedef std::vector< util::replica_reeds* >::iterator reedsRepIterator;
-
 
 #endif	/* REPEX_MPI_H */
 
