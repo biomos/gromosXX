@@ -54,6 +54,12 @@ _conf = ["", ""]
 # produce a file name from temperature index, run number and postfix
 ################################################################################
 def get_name(t, run, post):
+    """
+    Args:
+        t:
+        run:
+        post:
+    """
     global path, name, T
     return path + "/" + str(T[t]) + "/" + name + "_" + str(run) + post
 #
@@ -75,6 +81,17 @@ def write_ts(ID1, T01, ID2, T02, E1, E2, p, s):
     # p   exchange probability
     # s   0 / 1 : replicas exchanged?
     #
+    """
+    Args:
+        ID1:
+        T01:
+        ID2:
+        T02:
+        E1:
+        E2:
+        p:
+        s:
+    """
     nr1 = "replica_" + str(ID1) + ".dat"
     nr2 = "replica_" + str(ID2) + ".dat"
 
@@ -111,6 +128,12 @@ def write_ts(ID1, T01, ID2, T02, E1, E2, p, s):
 #
 ################################################################################
 def repex(r1, r2, run):
+    """
+    Args:
+        r1:
+        r2:
+        run:
+    """
     global max_run, path, name, program, kB, _conf
 
     b = 1
@@ -268,6 +291,13 @@ def repex(r1, r2, run):
 ################################################################################
 #
 def qrun(r1, r2, run, start=1):
+    """
+    Args:
+        r1:
+        r2:
+        run:
+        start:
+    """
     global path, name, T, _conf, scr, single
 
     if r1 == 0:
@@ -318,6 +348,10 @@ def qrun(r1, r2, run, start=1):
 ################################################################################
 #
 def srun(run):
+    """
+    Args:
+        run:
+    """
     global path, T, program, name, _conf, scr
     class item:
         def __init__(self, T, run):
@@ -392,6 +426,10 @@ def srun(run):
 #
 ################################################################################
 def setup(run):
+    """
+    Args:
+        run:
+    """
     global path, name, program, T
 
     simdir = path + "/"

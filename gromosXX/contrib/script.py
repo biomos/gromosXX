@@ -28,6 +28,11 @@ _nr = 1
 ################################################################################
 #
 def set_name(name, nr=1):
+    """
+    Args:
+        name:
+        nr:
+    """
     global _name, _nr
     _name = name
     _nr = nr
@@ -41,6 +46,10 @@ def set_name(name, nr=1):
 ################################################################################
 #
 def write(rep):
+    """
+    Args:
+        rep:
+    """
     global _name, _nr, program, simdir, workdir
 
     repdir = simdir + "/" + str(rep) + "/"
@@ -148,6 +157,12 @@ def write(rep):
 ################################################################################
 #
 def write_qmaster(rep1, rep2, T):
+    """
+    Args:
+        rep1:
+        rep2:
+        T:
+    """
     global _name, _nr, program, simdir, workdir
 
     repdir1 = simdir + "/" + str(T[rep1])

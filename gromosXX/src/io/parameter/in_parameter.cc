@@ -2842,15 +2842,11 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
     exampleblock << "#             1 eds stat turned on                                                                     \n";
     exampleblock << "#          \n";
     exampleblock << "#  REEDS    \n";
-    exampleblock << "   0       \n";
-    exampleblock << "#  NRES    \n";
-    exampleblock << "   12      \n";
-    exampleblock << "# NUMSTATES        \n";
-    exampleblock << "    5              \n";
+    exampleblock << "   1       \n";
+    exampleblock << "#  NRES  NUMSTATES  \n";
+    exampleblock << "   12    5   \n";
     exampleblock << "# RES(1 ... NRES)  \n";
     exampleblock << "  1.0 0.7 0.5 0.3 0.1 0.07 0.05 0.03 0.01 0.007 0.005 0.003    \n";
-    exampleblock << "# RETS(1 ... NRES) \n";
-    exampleblock << "  0.002 0.002 0.002 0.002 0.002 0.002 0.002 0.002 0.002 0.002 0.002 0.002  \n";
     exampleblock << "# EIR (NUMSTATES x NRES)   \n";
     exampleblock << "  0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0  \n";
     exampleblock << "  0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0  \n";
@@ -2860,18 +2856,18 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
     exampleblock << "# NRETRIAL   NREQUIL    CONT    EDS_STAT_OUT       \n";
     exampleblock << "       10         0         1           1          \n";
     exampleblock << "END\n";
-
+    
+    //TODO: bschroed give the parser a more modern look, like AEDS.
+    
     std::string blockname = "REPLICA_EDS";
-    Block block(blockname, exampleblock.str());
-  
+    Block block(blockname, exampleblock.str());    
     std::vector<std::string> buffer;
     std::string s;
-
-
     buffer = m_block["REPLICA_EDS"];
+
     if (buffer.size()) {
       block_read.insert("REPLICA_EDS");
-
+      
       bool error = false;
       _lineStream.clear();
       _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
@@ -2901,9 +2897,9 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
                 error = true;
                 break;
         }
-
+        
         if (_lineStream.fail()) {
-                io::messages.add("REPLICA_EDS block: Reeds must be 0 (off) or 1 (on).",
+                io::messages.add("REPLICA_EDS block: could not reed blocks' first line. Reeds must be 0 (off) or 1 (on).",
                   "In_Parameter", io::message::error);
                 error = true;
         }
@@ -2939,19 +2935,32 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
 
             //indicate only one parameter s used for reference state hamiltonian
             param.reeds.eds_para[i].form = simulation::single_s;
+            
             //initialize size of EIR
             param.reeds.eds_para[i].eir.resize(param.reeds.eds_para[i].numstates);
             
-            //RES
+            //RES - give s_values
             param.reeds.eds_para[i].s.resize(1);//only one parameter s per replica
             _lineStream >> param.reeds.eds_para[i].s[0];
-            param.reeds.lambda[i]=param.reeds.eds_para[i].s[0];
-            if (_lineStream.fail() || param.reeds.eds_para[i].s[0] < 0.0) {
+            param.reeds.lambda[i]=param.reeds.eds_para[i].s[0]; //lambda_will be the same as s
+            
+            //init:
+            param.reeds.eds_para[i].visitedstates.resize(param.eds.numstates, false);
+            param.reeds.eds_para[i].visitcounts.resize(param.eds.numstates, 0);
+            param.reeds.eds_para[i].avgenergy.resize(param.eds.numstates, 0.0);
+            
+            if (_lineStream.fail()) {
               std::ostringstream msg;
-              msg << "REPLICA_EDS block: RES(" << i + 1 << ") must be >= 0.0";
+              msg << "REPLICA_EDS block: You need as many s_values as NRES claims. Could not find s("<<i+1<<")!";
               io::messages.add(msg.str(), "In_Parameter", io::message::error);
               error = true;
             }       
+            else if(param.reeds.eds_para[i].s[0] < 0.0){
+                std::ostringstream msg;
+                msg << "REPLICA_EDS block: RES(" << i + 1 << ") must be >= 0.0";
+                io::messages.add(msg.str(), "In_Parameter", io::message::error);
+                error = true;
+            }
         }
 
         //EIR
@@ -3012,7 +3021,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
                   "In_Parameter", io::message::error);
         }
         
-        //REPLICA overwritting
+        //REPLICA overwritting and additions
         // check whether all baths have the same temperature (unambiguous kT)
         param.reeds.num_T = param.replica.num_T =1;
         

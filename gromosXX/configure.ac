@@ -327,7 +327,7 @@ dnl subst compiler flags
 AC_SUBST(MY_CXXFLAGS)
 AC_SUBST(CXX_NDEBUG_FLAGS)
 
-#CHEAT IN C++11 bschroed
+#TODO: CHEAT IN C++11 bschroed: probably there is a better way!
 MY_CXXFLAGS="${MY_CXXFLAGS} -std=c++11 "
 AC_PREFIX_DEFAULT(`pwd`)
 

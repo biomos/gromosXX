@@ -91,8 +91,8 @@ namespace util
         typedef std::vector< util::replica_reeds* >::iterator repIterator;   //iterator for replicas
         std::vector<util::replica_reeds*> replicas;
         
-        void switch_coords_on_node(repIterator it1, const unsigned int partner);
-        void swap_on_node(repIterator it1, const unsigned int partner);
+        void switch_coords_on_node(repIterator it1, const unsigned int partner) ;
+        void swap_on_node(repIterator it1, const unsigned int partner) ;
         virtual ~replica_exchange_base_eds();
 
        /**

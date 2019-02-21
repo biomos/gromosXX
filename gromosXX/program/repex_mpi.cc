@@ -291,7 +291,7 @@ int main(int argc, char *argv[]) {
         Master->run_MD();
     }
     DEBUG(1, "Master \t \t MD: "<< total_runs)
-    for ( ; trial < total_runs; ++trial){ //for repex execution
+    for ( ; trial < total_runs+1; ++trial){ //for repex execution
         DEBUG(2, "Master "<< rank <<" \t MD trial: "<< trial << "\n")\
         DEBUG(2, "Master "<< rank <<" \t run_MD START "<<trial<<"\n")  
         Master->run_MD();
@@ -352,7 +352,7 @@ int main(int argc, char *argv[]) {
         Slave->run_MD();
     }
     DEBUG(1, "Slave "<< rank <<" \t MD "<< total_runs << " steps")    
-    for ( ; trial < total_runs; ++trial){ //for repex execution
+    for ( ; trial < total_runs+1; ++trial){ //for repex execution
       DEBUG(2, "Slave "<< rank <<" \t MD trial: "<< trial << "\n")    
       DEBUG(2, "Slave "<< rank <<" \t run_MD START "<<trial<<"\n")    
       Slave->run_MD();

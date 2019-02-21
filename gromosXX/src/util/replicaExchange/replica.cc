@@ -615,8 +615,9 @@ void util::replica::send_coord(const int receiverID, const int receiverRank) {
 
   MPI_Send(&angles[0], angles.size(), MPI_DOUBLE, receiverRank, ANGLES, MPI_COMM_WORLD);
   MPI_Send(&conf.special().distancefield.distance[0], conf.special().distancefield.distance.size(), MPI_DOUBLE, receiverRank, DF, MPI_COMM_WORLD);
-  if ((int) ID > receiverID)
-    conf.exchange_state();
+  //if ((int) ID > receiverID){
+  //  conf.exchange_state();
+  //}
 #endif
 }
 

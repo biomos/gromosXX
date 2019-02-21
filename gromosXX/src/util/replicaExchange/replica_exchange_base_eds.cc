@@ -110,13 +110,13 @@ void util::replica_exchange_base_eds::swap() {
           if ((*it)->ID < partner) {
             (*it)->send_coord(partner, partnerRank);
             (*it)->receive_new_coord(partner, partnerRank);
-            // the averages of current and old are interchanged after calling exchange_state() and have to be switched back
-            (*it)->exchange_averages();
+            // the averages of current and old are interchanged after calling exchange_state() and have to be switched back bschroed:that is new!
+            //(*it)->exchange_averages();
           } else {
             (*it)->receive_new_coord(partner, partnerRank);
             (*it)->send_coord(partner, partnerRank);
-            // the averages of current and old are interchanged after calling exchange_state() and have to be switched back
-            (*it)->exchange_averages();
+            // the averages of current and old are interchanged after calling exchange_state() and have to be switched back bschroed:that is new!
+            //(*it)->exchange_averages();
           }
         }
       }
@@ -128,6 +128,7 @@ void util::replica_exchange_base_eds::swap() {
   }
     DEBUG(5,"replica_exchange_base_eds:swap  Done");
 }
+
 void util::replica_exchange_base_eds::swap_on_node(repIterator it1, const unsigned int partner) {
   replica* rep1 = *it1;
   replica* rep2;
@@ -153,6 +154,7 @@ void util::replica_exchange_base_eds::swap_on_node(repIterator it1, const unsign
     rep2->switched = false;
   }
 }
+
 
 void util::replica_exchange_base_eds::switch_coords_on_node(repIterator it1, const unsigned int partner) {
   replica* rep1 = *it1;
@@ -203,16 +205,13 @@ void util::replica_exchange_base_eds::switch_coords_on_node(repIterator it1, con
   rep1->exchange_averages();
   rep2->exchange_averages();
 }
-  
+ 
 void util::replica_exchange_base_eds::run_MD() {
     DEBUG(3, "replica_exchange_base_eds "<< rank <<":\t run_MD \t START")
 
      // do a md run for all replica assigned to this node
     for (repIterator it = replicas.begin(); it < replicas.end(); ++it) {
         DEBUG(3, "replica_exchange_base_eds "<< rank <<":\t run_MD \t replica "<< (*it)->ID << ":")
-        //DEBUG(3, "\treplica_exchange_base_eds "<< rank <<":\tsim step:\t" << (*it)->sim.time())
-        //DEBUG(3, "\treplica_exchange_base_eds "<< rank <<":\ttopo\t" << (*it)->topo.check_state())
-        //DEBUG(3, "\treplica_exchange_base_eds "<< rank <<":\tconf:\t" << (*it)->conf.check((*it)->topo, (*it)->sim))
         DEBUG(3, "\treplica_exchange_base_eds "<< rank <<":\tStep\tStart")
         (*it)->run_MD();
         DEBUG(3, "\treplica_exchange_base_eds "<< rank <<":\tStep\tDone")
@@ -273,27 +272,8 @@ void util::replica_exchange_base_eds::init_eds_stat(){
         DEBUG(3,"replica_exchange_base_eds "<< rank <<":\t init_eds_stat \t START");
         
         ID_t currentID=1000; //error value          
-        //std::string edsstatName = args["eds_stat_out"];//assign correct path (simulation dependent)
         for (repIterator it = replicas.begin(); it < replicas.end(); ++it) {
-        // TODO: I might not need this for loop anymore! because init_eds_stat() is called that many times... this might cause the problem;
           currentID = (*it)->ID;
-          //std::stringstream attach_num;
-          /*
-          attach_num << "_" << (currentID+1);
-          std::size_t found = edsstatName.find_last_of(".");
-          edsstatName.insert(found,attach_num.str());
-
-          typedef std::pair<ID_t, std::ofstream *> ofstreamPair;
-          std::ofstream* ospointer=new std::ofstream(); //SID probably doesn't work
-          eds_stat_out.insert(ofstreamPair(currentID, ospointer));
-          eds_stat_out[currentID]->open(edsstatName.c_str());
-          *(eds_stat_out[currentID]) << "ID" << std::setw(6) << "# exchange"
-                  << std::setw(6) << "s" << std::setw(6) << "T";
-          for(int rep=0;rep<this->numReplicas; rep++){
-              *(eds_stat_out[currentID]) << std::setw(10) << "Epot[ID="<<(rep+1)<<"]"; 
-          }
-          *(eds_stat_out[currentID])<< std::endl;
-          */
           replicaStatData[currentID].ID =currentID;
           replicaStatData[currentID].T=(*it)->T;
           replicaStatData[currentID].s=(*it)->l; //l==s because of the implementation of hamiltonian replica exchange.
