@@ -5,16 +5,10 @@
  * taken from GROMOS96 Manual
  * 
  * TODO:
- * 1. Decide what to print out (as in GROMOS96?)
- * 2. Unlock supported and meaningful features
- * 3. Allow SHAKE
- * 4. Test on different molecular systems
- * 5. Pairlist generation issue - is warning enough?
- * 6. No need to parallelization - this code scales with ~N, while energy calculation scales with ~N^2
- * 7. Test posres with shake
- * 8. For efficiency include only SHAKEN solvent/solute in constrained force calculation
- * 
- * WE SHOULD DO POSRES AND SHAKE AFTER EVERY CHANGE OF POSITIONS
+ * 1. Test on different molecular systems
+ * 2. Test posres with shake
+ * 3. Revise changes in configuration.cc
+ * 4. Unlock and test relevant feature pairs
  */
 
 #include "../../stdheader.h"
@@ -23,19 +17,15 @@
 #include "../../topology/topology.h"
 #include "../../simulation/simulation.h"
 #include "../../configuration/configuration.h"
-
 #include "../../interaction/interaction.h"
-#include "../../interaction/forcefield/forcefield.h"
 
-// TEST
-#include "../../algorithm/algorithm/algorithm_sequence.h"
-//#include "../io/topology/in_topology.h"
-//#include "../../algorithm/constraints/create_constraints.h"
-//#include "../../algorithm/constraints/create_constraints.h"
 #include "../../math/periodicity.h"
+
+#include "../../algorithm/algorithm/algorithm_sequence.h"
+#include "../../interaction/forcefield/forcefield.h"
 #include "../../algorithm/constraints/shake.h"
 #include "../../algorithm/constraints/position_constraints.h"
-// END TEST
+
 #include "conjugate_gradient.h"
 
 #include "../../util/error.h"
@@ -44,22 +34,6 @@
 #undef SUBMODULE
 #define MODULE algorithm
 #define SUBMODULE integration
-
-// Additional algorithms used in the step
-/**
- * Positional constraints 
- */
-algorithm::Position_Constraints * cgrad_posres;
-
-/**
- * SHAKE algorithm
- */
-algorithm::Shake * cgrad_shake;
-
-/**
- * Calculation of interactions
- */
-interaction::Forcefield * cgrad_ff;
 
 /**
  * conjugate gradient step.
@@ -73,18 +47,18 @@ int algorithm::Conjugate_Gradient
 {
   if (!quiet) {
     os << "ENERGY MINIMISATION\n";
-    if (sim.param().minimise.ntem == 2) {
+    if (sim.param().minimise.ntem == 2)
       os << "\tFletcher-Reeves conjugate gradient\n";
-    }
-    else os << "\tPolak-Ribiere conjugate gradient\n";
+    else if (sim.param().minimise.ntem == 3)
+      os << "\tPolak-Ribiere conjugate gradient\n";
 
     os << "\tresetting search direction every n-th step : " << sim.param().minimise.ncyc;
-    if (sim.param().minimise.ncyc == 0) {
+    if (sim.param().minimise.ncyc == 0)
       os << " (no forced reset)";
-    }
+    
     os << "\n" << std::scientific << std::setprecision(2)
        << "\trequested rms force in minimum             : " << sim.param().minimise.dele << "\n"
-       << "\tminimum and starting step size             : " << sim.param().minimise.dx0 << "\n"
+       << "\tinitial step size                          : " << sim.param().minimise.dx0 << "\n"
        << "\tmaximum step size                          : " << sim.param().minimise.dxm << "\n"
        << "\tminimum steps                              : " << sim.param().minimise.nmin << "\n"
        << "\tmaximum cubic interpolations per step      : " << sim.param().minimise.cgim << "\n"
@@ -98,26 +72,30 @@ int algorithm::Conjugate_Gradient
 	        << sim.param().minimise.flim << "\n";
     }
     os << "END\n";
-    if (sim.param().pairlist.skip_step > 1 && sim.param().pairlist.skip_step < sim.param().step.number_of_steps) {
+    if (sim.param().pairlist.skip_step > 1) {
     io::messages.add("For tight convergence, the pairlist should be generated every step or without cut-off",
             "Algorithm::conjugate_gradient",
             io::message::warning);
     }
   }
+  // Set initial step size
+  sim.minimisation_step_size() = sim.param().minimise.dx0;
+  // Zero velocities
   conf.old().vel = 0.0;
   conf.current().vel = 0.0;
 
-  // Get pointers to algorithms and perform some basic checks
+  // Get pointers to algorithms
   // Position restraints
-  do_posres = sim.param().posrest.posrest == 3;
-  cgrad_posres = dynamic_cast<algorithm::Position_Constraints *>(cgrad_seq.algorithm("Position_Constraints"));
+  do_posres = (sim.param().posrest.posrest == 3);
   if (do_posres) {
+    cgrad_posres = dynamic_cast<algorithm::Position_Constraints *>(cgrad_seq.algorithm("Position_Constraints"));
     if (cgrad_posres == NULL) {
       std::cout << "Conjugate Gradient: Could not get Position Constraints algorithm"
                 << "\n\t(internal error)" << std::endl;
       return 1;
     }
   }
+
   // Forcefield to evaluate forces and energies
   cgrad_ff = dynamic_cast<interaction::Forcefield *>(cgrad_seq.algorithm("Forcefield"));
   if (cgrad_ff == NULL) {
@@ -125,19 +103,28 @@ int algorithm::Conjugate_Gradient
               << "\n\t(internal error)" << std::endl;
     return 1;
   }
-  // Shake algorithm
+
+  // SHAKE algorithm
   do_shake = (
-    sim.param().constraint.solute.algorithm == simulation::constr_shake
+    (sim.param().constraint.solute.algorithm == simulation::constr_shake)
     || (sim.param().system.nsm && sim.param().constraint.solvent.algorithm == simulation::constr_shake)
   );
-  cgrad_shake = dynamic_cast<algorithm::Shake *>(cgrad_seq.algorithm("Shake"));
   if (do_shake) {
+    cgrad_shake = dynamic_cast<algorithm::Shake *>(cgrad_seq.algorithm("Shake"));
     if (cgrad_shake == NULL) { 
       std::cout << "Conjugate Gradient: could not get SHAKE algorithm"
                 << "\n\t(internal error)" << std::endl;
       return 1;
     }
+    // Initialise separate configuration for SHAKE
+    conf_sh_init(conf);
   }
+
+  // Initialise squared magnitude of search direction
+  p_squared = 0.0;
+  // Total number of iterations
+  total_iterations = 0;
+
   return 0;
 }
 
@@ -149,64 +136,57 @@ int algorithm::Conjugate_Gradient
 	configuration::Configuration & conf,
 	simulation::Simulation & sim)
 {
-  //int error;
   #ifndef NDEBUG
     std::cout << std::scientific << std::setprecision(12);
   #else
     std::cout << std::scientific << std::setprecision(4);
   #endif
+  DEBUG(10, "Step no. " << sim.steps());
+
   // Counter of interaction calculations
-  int counter_iter = 0;
-  DEBUG(15,"step no.:\t" << sim.steps());
+  unsigned counter_iter = 0;
   // Calculate the energies, as we need them to estimate a minimum along the search direction
   conf.current().energies.calculate_totals();
-  // Keep the step size above user defined size
-  if (sim.minimisation_step_size() < sim.param().minimise.dx0) {
-    sim.minimisation_step_size() = sim.param().minimise.dx0;
-  }
-  DEBUG(10, "Current step size = " << sim.minimisation_step_size());
+  
+  // Step size for this step
+  double step_size = sim.minimisation_step_size();
+  DEBUG(10, "Current step size = " << step_size);
 
-
+  // SHAKE forces
   if (do_shake) {
-    // Obtain initial constraint forces
-    configuration::Configuration conf_sh = conf;
-    conf_sh.exchange_state();
-    double f_squared = 0.0;
-    for(unsigned int i=0; i<topo.num_atoms(); ++i) {
-      f_squared += math::abs2(conf_sh.old().force(i));
+    double shake_step = Smin * sqrt(p_squared);
+    if (shake_step == 0.0) {
+      DEBUG(10,"Initial SHAKE of forces");
+      shake_step = step_size;
     }
-    // Special initial step with SHAKE
-    double step_sh = sim.minimisation_step_size() / sqrt(f_squared);
-    for(unsigned int i=0; i<topo.num_atoms(); ++i) {
-      conf_sh.current().pos(i) = conf_sh.old().pos(i) + step_sh * conf_sh.old().force(i);
-    }
-    // TODO: ALSO APPLY POSRES???
-    cgrad_shake->apply(topo, conf_sh, sim);
-    for(unsigned int i=0; i<topo.num_atoms(); ++i) {
-      conf.current().force(i) = (conf_sh.current().pos(i) - conf_sh.old().pos(i)) / step_sh;
+    if ( int error = shake_forces(topo, conf, sim, shake_step) ) {
+      io::messages.add("Unable to SHAKE forces of the lower boundary configuration", "Conjugate_Gradient", io::message::error);
+      return error;
     }
   }
 
   // only if minimum number of steps were made
   if (sim.steps() > unsigned(sim.param().minimise.nmin)) {
-    // check whether minimum is reached by the RMS force criterion
-    double f = 0.0, f_max = 0.0;
+    // Evaluate if the minimum RMS force criterion is met
+    double f = 0.0;
+    double f_max = 0.0;
     for(unsigned int i=0; i<topo.num_atoms(); ++i) {
       f += math::abs2(conf.current().force(i));
       f_max = std::max(f, f_max);
     }
     f = sqrt(f / topo.num_atoms());
     f_max = sqrt(f_max);
-    DEBUG(10, "RMS force = " << f << ", MAX force = " << f_max);
-    DEBUG(15, "Total energy = " << conf.current().energies.potential_total + conf.current().energies.special_total);
+    DEBUG(7, "RMS force = " << f << ", MAX force = " << f_max);
+    DEBUG(7, "Total energy = " << conf.current().energies.potential_total + conf.current().energies.special_total);
     if (f < sim.param().minimise.dele) {
       std::cout << "CONJUGATE GRADIENT:\tMINIMUM REACHED\n";
-      std::cout << "After " << sim.minimisation_iterations() + 1 << " iterations \n";
+      std::cout << "After " << total_iterations + 1 << " iterations \n";
       std::cout << "Final RMS force:\t" << f << "\n";
       std::cout << "Final MAX force:\t" << f_max << "\n";
       return E_MINIMUM_REACHED;
     }
   }
+
   // limit the maximum force
   if (sim.param().minimise.flim != 0.0) {
     for(unsigned int i=0; i<topo.num_atoms(); ++i) {
@@ -220,7 +200,14 @@ int algorithm::Conjugate_Gradient
       }
     }
   }
-// Check, whether we have any non-zero old force, otherwise we cannot calculate beta
+
+  // SHAKE search directions
+  if (do_shake && sim.steps()) {
+    DEBUG(15, "Obtaining constrained search directions");
+    shake_cgrads(topo, conf);
+  }
+
+  // Check, whether we have any non-zero old force, otherwise we cannot calculate beta
   bool no_force = true;
   for(unsigned int i=0; i<topo.num_atoms(); ++i) {
     if (math::abs2(conf.old().force(i)) > 0.0) {
@@ -228,12 +215,14 @@ int algorithm::Conjugate_Gradient
       break;
     }
   }
+
   // If old forces are non-zero and this is not a resetting step, calculate beta
   double beta;
   if (!no_force && (sim.param().minimise.ncyc == 0 || sim.steps() % sim.param().minimise.ncyc != 0)) {
     beta = calculate_beta(topo, conf, sim);
     DEBUG(15, "beta = " << beta);
   }
+
   // Otherwise reset the search direction by keeping beta = 0
   else {
     beta = 0.0;
@@ -241,103 +230,99 @@ int algorithm::Conjugate_Gradient
       "(Re)initializing the conjugate gradient search direction\n"
       << "beta = " << beta);
   }
-  // Calculate the search direction and <p|p>
-  double p_squared = calculate_cgrad(topo, conf, beta);
-  // Calculate a gradient along the search direction
-  double gradA;
-  // If beta = 0, gradA is identical to p_squared
-  if (beta == 0.0) {
-    gradA = p_squared;
-  }
-  else {
-    gradA = 0.0;
-    for(unsigned int i=0; i<topo.num_atoms(); ++i) {
-      gradA += math::dot(conf.current().cgrad(i), conf.current().force(i));
-    }
-  }
+
+  // Calculate the search direction and the gradient
+  double gradA = calculate_cgrad(topo, conf, beta);
   DEBUG(15, "gradA = " << gradA);
+
   // If gradA < 0.0, then A is beyond the minimum in the search direction,
   // so reset the search direction and calculate a new one
   if (gradA < 0.0) {
     DEBUG(1, "gradA below zero. Resetting the search direction");
     beta = 0.0;
-    p_squared = calculate_cgrad(topo, conf, beta);
-    gradA = p_squared;
+    gradA = calculate_cgrad(topo, conf, beta);
     DEBUG(10, "After reset, gradA = " << gradA << ", beta = " << beta);
   }
+
   // Calculate upper boundary in the search direction
-  double b_init = sim.minimisation_step_size() / sqrt(p_squared);
+  // <p|p> Squared magnitude of search directions
+  p_squared = 0.0;
+
+  // If beta == 0, then p = f and <p|p> = gradA 
+  if (beta == 0.0) {
+    p_squared = gradA;
+  }
+  else {
+    for(unsigned int i=0; i<topo.num_atoms(); ++i) {
+      p_squared += math::abs2(conf.current().cgrad(i));
+    }
+  }
+  DEBUG(15, "p_squared = " << p_squared);
+
+  // Initial step size (chosen so rA->rB = step_size)
+  double b_init = step_size / sqrt(p_squared);
+  
+  // Upper boundary for cubic interpolation
   double b = b_init;
-  DEBUG(10, "b = " << b);
-  // The energy of lower boundary equals the energy of initial conf
+  DEBUG(15, "b_init = " << b_init);
+
+  // The energy of lower boundary equals the energy of initial configuration
   double eneA = conf.current().energies.potential_total + conf.current().energies.special_total;
   DEBUG(15, "eneA = " << eneA);
-  // Create confX to store intermediate configurations and evaluate interpolations
-  //configuration::Configuration confB, confX = conf;
-  configuration::Configuration confX = conf;
-  double gradB, eneB;
-  // Counter of interval doubling
-  int counter_doub = 0;
-  
+
+  // Current configuration becomes old
   conf.exchange_state();
-
-  //double deltaX_uc, abs_p, abs_f_uc;
+  
+  // Store intermediate interpolated configurations just for the interpolation criterion evaluation
+  math::VArray posX_cur = conf.current().pos;
+  math::VArray posX_old = conf.old().pos;
+  
+  // Gradient and energy in the upper boundary
+  double gradB, eneB;
+  
+  // Counter of interval doubling
+  unsigned counter_doub = 0;
+  
   while(true) {
-
-    // Calculate new coordinates in upper boundary
-    // TODO: MAKE FUNCTION OF THIS update_pos(new_positions, const old_positions, const coefficient, const search_vector)
-    
+    // Calculate coordinates of the upper boundary configuration
     for(unsigned int i=0; i<topo.num_atoms(); ++i) {
       conf.current().pos(i) = conf.old().pos(i) + b * conf.old().cgrad(i);
     }
 
-    if (do_posres) {
-        // posres just simply restores old positions of restrained atoms and zeroes forces
-        DEBUG(15, "Calling Positional Restraints");
-        cgrad_posres->apply(topo, conf, sim);
+    // Perform interaction calculation
+    if ( int error = evaluate_configuration(topo, conf, sim, eneB, false) ) {
+      io::messages.add("Unable to evaluate the upper boundary configuration", "Conjugate_Gradient", io::message::error);
+      return error;
     }
 
-    cgrad_ff->apply(topo,conf,sim);
     counter_iter += 1;
+    DEBUG(15, "eneB = " << eneB);
 
     if (do_shake) {
-      configuration::Configuration conf_sh = conf;
-      conf_sh.exchange_state();
-      double step_sh, f_squared = 0.0;
-      for(unsigned int i=0; i<topo.num_atoms(); ++i) {
-        f_squared += math::abs2(conf_sh.old().force(i));
-      }
-      step_sh = b * sqrt(p_squared / f_squared);
-
-      for(unsigned int i=0; i<topo.num_atoms(); ++i) {
-        conf_sh.current().pos(i) = conf_sh.old().pos(i) + step_sh * conf_sh.old().force(i);
-      }
-      cgrad_shake->apply(topo,conf_sh,sim);
-      //conf.current().pos = conf_sh.current().pos; // TODO: SHOULD WE UPDATE POS AT B?
-        
-      for(unsigned int i=0; i<topo.num_atoms(); ++i) {
-        conf.current().force(i) = (conf_sh.current().pos(i) - conf_sh.old().pos(i)) / step_sh;
+      double shake_step = step_size;
+      if ( int error = shake_forces(topo, conf, sim, shake_step) ) {
+        io::messages.add("Unable to SHAKE forces of the upper boundary configuration", "Conjugate_Gradient", io::message::error);
+        return error;
       }
     }
-    
-    conf.current().energies.calculate_totals();
-    eneB = conf.current().energies.potential_total + conf.current().energies.special_total;
-    DEBUG(15, "eneB = " << eneB);
-    // Calculate gradient along the search direction in upper boundary as <p|f>
+
+    // Calculate gradient along the search direction in the upper boundary as <p|f>
     gradB = 0.0;
     for(unsigned int i=0; i<topo.num_atoms(); ++i) {
       gradB += math::dot(conf.old().cgrad(i), conf.current().force(i));
     }
     DEBUG(15, "gradB = " << gradB);
     // If gradB < 0 or eneB > eneA, accept B as upper boundary for estimation of X
-    if (gradB < 0 || eneB > eneA) { // TODO: ADD MAX ITERATIONS?
-      DEBUG(15, "Upper boundary accepted.");
+    if (gradB < 0 || eneB > eneA) {
+      DEBUG(10, "Upper boundary accepted.");
+      DEBUG(10, "b = " << b);
       break;
     }
-    else { // Minimum is probably beyond B
+    else {
+      // Minimum is probably beyond B
       DEBUG(1, "Minimum is beyond upper boundary. Doubling the interval size.");
       b *= 2;
-      DEBUG(15, "Increasing the next step size by 10%");
+      DEBUG(10, "Increasing size of next step by 10%");
       sim.minimisation_step_size() *= 1.1;
       counter_doub += 1;
     }
@@ -346,7 +331,7 @@ int algorithm::Conjugate_Gradient
   double Z, W;
   double X, gradX, eneX;
   // Counter of interpolations
-  int counter_ipol = 0;
+  unsigned counter_ipol = 0;
   while(true) {
     // Estimation of X by cubic interpolation
     Z = (3 * (eneA - eneB) / (b - a)) - gradA - gradB;
@@ -354,116 +339,120 @@ int algorithm::Conjugate_Gradient
     X = b - (W - Z - gradB) * (b - a) / (gradA - gradB + 2 * W);
     counter_ipol += 1;
     DEBUG(15, "X = " << X);
-    if(math::gisnan(X)) {
+    if(math::gisnan(X)) { 
       io::messages.add("new coordinates are NaN", "Conjugate_Gradient", io::message::error);
     return E_NAN;
     }
-    // Calculate new coordinates of X
-    confX.exchange_state();
+    // Calculate coordinates of the interpolated configuration
     for(unsigned int i=0; i<topo.num_atoms(); ++i) {
-      // confX is used only as reference for threshold
-      conf.current().pos(i) = confX.current().pos(i) = conf.old().pos(i) + X * conf.old().cgrad(i);
-    }
-    
-
-    if (do_posres) {
-      // posres just simply restores old positions of restrained atoms and zeroes forces
-      DEBUG(15, "Calling Positional Restraints");
-      cgrad_posres->apply(topo, conf, sim);
-    }
-    if (do_shake) {
-      cgrad_shake->apply(topo,conf,sim);
-      confX.current().pos = conf.current().pos;
+      conf.current().pos(i) = posX_cur(i) = conf.old().pos(i) + X * conf.old().cgrad(i);
     }
 
     // Calculate the X RMS displacement
     double disp_X = 0.0;
     for(unsigned int i=0; i<topo.num_atoms(); ++i) {
-      disp_X += math::abs2(confX.current().pos(i) - confX.old().pos(i));
+      disp_X += math::abs2(posX_cur(i) - posX_old(i));
     }
     disp_X = sqrt(disp_X / topo.num_atoms());
     DEBUG(10, "RMS displacement of X = " << disp_X);
+
     // Accept X as new configuration, if criterion is met
-    if (disp_X < sim.param().minimise.cgic || counter_ipol == sim.param().minimise.cgim) {
+    if (disp_X < sim.param().minimise.cgic || counter_ipol == unsigned(sim.param().minimise.cgim)) {
+      //TEST
+      /*if ( int error = evaluate_configuration(topo, conf, sim, eneX, do_shake) ) {
+        io::messages.add("Unable to evaluate the interpolated configuration", "Conjugate_Gradient", io::message::error);
+        return error;
+      }
+      // SHAKE forces of the interpolated configuration
+      if (do_shake) {
+        double shake_step = X * sqrt(p_squared);
+        if ( int error = shake_forces(topo, conf, sim, shake_step) ) {
+          io::messages.add("Unable to SHAKE forces of the interpolated configuration", "Conjugate_Gradient", io::message::error);
+          return error;
+        }
+      }
+
+      // Calculate gradient along the search direction in X
+      gradX = 0.0;
+      for(unsigned int i=0; i<topo.num_atoms(); ++i) {
+        gradX += math::dot(conf.old().cgrad(i), conf.current().force(i));
+      }
+      
+      DEBUG(10, "Interpolation accepted\n"
+        << "A = " << a << "\t eneA = " << eneA << "\t gradA = " << gradA << "\n"
+        << "X = " << X << "\t eneX = " << eneX << "\t gradX = " << gradX << "\n"
+        << "B = " << b << "\t eneB = " << eneB << "\t gradB = " << gradB
+      );*/
+      //END TEST
       break;
     }
-
-    cgrad_ff->apply(topo,conf,sim);
-    counter_iter += 1;
-    conf.current().energies.calculate_totals();
-    eneX = conf.current().energies.potential_total + conf.current().energies.special_total;
-    DEBUG(10, "eneX = " << eneX);
-    
-
-
-    // Calculate the energy of new constrained positions
-    {
-      if (do_posres) {
-          // posres just simply restores old positions of restrained atoms and zeroes forces
-          DEBUG(15, "Calling Positional Restraints");
-          cgrad_posres->apply(topo, conf, sim);
-      }
-
-      if (do_shake) {
-        configuration::Configuration conf_sh = conf;
-        conf_sh.exchange_state();
-        double step_sh, f_squared = 0.0;
-        for(unsigned int i=0; i<topo.num_atoms(); ++i) {
-          f_squared += math::abs2(conf_sh.old().force(i));
-        }
-        step_sh = X * sqrt(p_squared / f_squared);
-
-        for(unsigned int i=0; i<topo.num_atoms(); ++i) {
-          conf_sh.current().pos(i) = conf_sh.old().pos(i) + step_sh * conf_sh.old().force(i);
-        }
-        cgrad_shake->apply(topo, conf_sh, sim);
-        //conf.current().pos = conf_sh.current().pos; // TODO: SHOULD WE UPDATE POS AT B?
-        for(unsigned int i=0; i<topo.num_atoms(); ++i) {
-          conf.current().force(i) = (conf_sh.current().pos(i) - conf_sh.old().pos(i)) / step_sh;
-        }
-      }
-    }
-    // Calculate gradient along the search direction in X
-    gradX = 0.0;
-    for(unsigned int i=0; i<topo.num_atoms(); ++i) {
-      gradX += math::dot(conf.old().cgrad(i), conf.current().force(i));
-    }
-    DEBUG(10, "gradX = " << gradX);
-    // If energy descends in X and eneX < eneA, move A to X
-    if (gradX > 0 && eneX < eneA) {
-    DEBUG(2, "Moving boundary A to X");
-        a = X;
-        eneA = eneX;
-        gradA = gradX;
-    // Otherwise move B to X
-    }
     else {
-    DEBUG(2, "Moving boundary B to X");
-        b = X;
-        eneB = eneX;
-        gradB = gradX;
+      std::swap(posX_cur, posX_old);
+
+      // Calculate interactions of the interpolated configuration
+      if ( int error = evaluate_configuration(topo, conf, sim, eneX, false) ) {
+        io::messages.add("Unable to evaluate the interpolated configuration", "Conjugate_Gradient", io::message::error);
+        return error;
+      }
+      counter_iter += 1;
+      DEBUG(10, "eneX = " << eneX);
+      
+      // SHAKE forces of the interpolated configuration
+      if (do_shake) {
+        double shake_step = X * sqrt(p_squared);
+        if ( int error = shake_forces(topo, conf, sim, shake_step) ) {
+          io::messages.add("Unable to SHAKE forces of the interpolated configuration", "Conjugate_Gradient", io::message::error);
+          return error;
+        }
+      }
+
+      // Calculate gradient along the search direction in X
+      gradX = 0.0;
+      for(unsigned int i=0; i<topo.num_atoms(); ++i) {
+        gradX += math::dot(conf.old().cgrad(i), conf.current().force(i));
+      }
+      DEBUG(10, "gradX = " << gradX);
+      
+      // If energy descends in X and eneX < eneA, move A to X
+      if (gradX > 0 && eneX < eneA) {
+      DEBUG(2, "New search interval: X-B");
+          a = X;
+          eneA = eneX;
+          gradA = gradX;
+      }
+      // Otherwise move B to X
+      else {
+      DEBUG(2, "New search interval: A-X");
+          b = X;
+          eneB = eneX;
+          gradB = gradX;
+      }
     }
   }
-  if (do_shake) {
-    for(unsigned int i=0; i<topo.num_atoms(); ++i) {
-      conf.old().cgrad(i) = (conf.current().pos(i) - conf.old().pos(i)) / X;
-    }
-  }
-  sim.minimisation_iterations() += counter_iter + 1;
-  DEBUG(7, "Minimum along the search direction accepted, X = " << X << "\n"
+  total_iterations += counter_iter + 1;
+  Smin = X;
+  DEBUG(7, "Minimum along the search direction accepted, Smin = " << Smin << "\n"
         << "Number of interval doubling: " << counter_doub << "\n"
         << "Number of cubic interpolations: " << counter_ipol << "\n"
-        << "Total number of interaction calculations: " << counter_iter);
+        << "Number of interaction calculations: " << counter_iter << "\n"
+        << "Total number of iterations so far: " << total_iterations);
+        
   // If this is the last step, also perform one more calculation to print correct minimized energies
   if (sim.steps() == (unsigned(sim.param().step.number_of_steps) - 1)) {
-    cgrad_ff->apply(topo, conf, sim);
-    //if (0 != (error = evaluate_conf(topo, conf, sim))) {
-    //  return error;
-    //}
+    if ( int error = evaluate_configuration(topo, conf, sim, eneX, do_shake) ) {
+      io::messages.add("Unable to evaluate the interpolated configuration", "Conjugate_Gradient", io::message::error);
+      return error;
+    }
     counter_iter += 1;
-    conf.current().energies.calculate_totals();
-    double f = 0.0, f_max = 0.0;
+    if (do_shake) {
+      double shake_step = X * sqrt(p_squared);
+      if ( int error = shake_forces(topo, conf, sim, shake_step) ) {
+        io::messages.add("Unable to SHAKE forces of the interpolated configuration", "Conjugate_Gradient", io::message::error);
+        return error;
+      }
+    }
     // Also print final RMS force
+    double f = 0.0, f_max = 0.0;
     for(unsigned int i=0; i<topo.num_atoms(); ++i) {
       f += math::abs2(conf.current().force(i));
       f_max = std::max(f, f_max);
@@ -471,17 +460,19 @@ int algorithm::Conjugate_Gradient
     f = sqrt(f / topo.num_atoms());
     f_max = sqrt(f_max);
     std::cout << "CONJUGATE GRADIENT:\tMIMIMUM CRITERION NOT MET\n";
-    std::cout << "After " << sim.minimisation_iterations() + 1 << " iterations \n";
+    std::cout << "After " << total_iterations + 1 << " iterations \n";
     std::cout << std::scientific << std::setprecision(4);
     std::cout << "Final RMS force:\t" << f << "\n";
     std::cout << "Final MAX force:\t" << f_max << "\n";
-  } else {
+  }
+  else {
     // Modify the step size
-    if (X < b_init / 5.0) {
+    if (X < b_init / 10.0) {
       sim.minimisation_step_size() *= 0.9;
-      DEBUG(15, "X below one fifth of interval. Decreasing the step size by 10 percent.");
+
+      DEBUG(15, "X below 10% of the search interval. Decreasing the step size by 10 percent.");
     }
-    if (counter_doub && sim.minimisation_step_size() > sim.param().minimise.dxm) {
+    if (counter_doub && (sim.minimisation_step_size() > sim.param().minimise.dxm)) {
       sim.minimisation_step_size() = sim.param().minimise.dxm;
     }
   }
@@ -489,10 +480,64 @@ int algorithm::Conjugate_Gradient
   conf.current().vel = 0.0;
   return 0;
 }
+
+/**
+ * Shake current forces
+ */
+int algorithm::Conjugate_Gradient
+::shake_forces
+(
+  topology::Topology & topo,
+  configuration::Configuration & conf,
+  simulation::Simulation & sim,
+  double shake_step
+)
+{
+  DEBUG(7,"Obtaining constrained forces using SHAKE");
+  // We use a separate configuration to not mess up the main configuration
+  math::VArray & pos_old = conf_sh.old().pos;
+  math::VArray & pos_cur = conf_sh.current().pos;
+  // Forces of the main configuration
+  math::VArray & force_cur = conf.current().force;
+
+  // Copy current position
+  pos_old = conf.current().pos;
+
+  // <f|f> Squared magnitude of forces
+  double f_squared = 0.0;
+  for(unsigned int i=0; i<topo.num_atoms(); ++i) {
+    f_squared += math::abs2(force_cur(i));
+  }
+  
+  // Step size along unconstrained forces to SHAKE
+  double step_sh = shake_step / sqrt(f_squared);
+
+  DEBUG(10,"shake_forces: Total displacement = " << shake_step);
+  DEBUG(15,"shake_forces: \n"
+    << "f_squared = \t" << f_squared << "\n"
+    << "step_sh = \t" << step_sh
+  );
+  
+  for(unsigned int i=0; i<topo.num_atoms(); ++i) {
+    pos_cur(i) = pos_old(i) + step_sh * force_cur(i);
+  }
+
+  // Apply SHAKE
+  if ( int error = cgrad_shake->apply(topo, conf_sh, sim) ) {
+    io::messages.add("Unable to apply SHAKE algorithm", "Conjugate_Gradient", io::message::error);
+    return error;
+  }
+  // Obtain and write constrained forces
+  for(unsigned int i=0; i<topo.num_atoms(); ++i) {
+    force_cur(i) = (conf_sh.current().pos(i) - conf_sh.old().pos(i)) / step_sh;
+  }
+  return 0;
+}
+
 /**
  * Calculate the search direction coefficient
  */
-inline double algorithm::Conjugate_Gradient
+double algorithm::Conjugate_Gradient
 ::calculate_beta
 (
   const topology::Topology & topo,
@@ -514,20 +559,22 @@ inline double algorithm::Conjugate_Gradient
     }
   }
   // Polak-Ribiere
-  else { //sim.param().minimise.ntem == 3
+  else if (sim.param().minimise.ntem == 3) {
     for(unsigned int i=0; i<topo.num_atoms(); ++i) {
       f2 += math::dot(force_current(i) - force_old(i), force_current(i));
     }
   }
-  DEBUG(15, "f2 / f1 =" << f2 / f1);
+  DEBUG(15, "calculate_beta:" << "\n"
+    << "f1 = " << f1 << "\n"
+    << "f2 = " << f2 << "\n"
+  );
   return f2 / f1;
 }
 
 /**
- * Update search directions and also return sum of their
- * squared sizes to be used for the search interval size
+ * Update search direction and return the gradient
  */
-inline double algorithm::Conjugate_Gradient
+double algorithm::Conjugate_Gradient
 ::calculate_cgrad
 (
   const topology::Topology & topo,
@@ -536,47 +583,64 @@ inline double algorithm::Conjugate_Gradient
 )
 {
   const math::VArray & force = conf.current().force;
-  double p_squared = 0.0;
+  const math::VArray & cgrad_old = conf.old().cgrad;
+  math::VArray & cgrad_cur = conf.current().cgrad;
+  double grad = 0.0;
+  
   if (beta == 0.0) {
     for(unsigned int i=0; i<topo.num_atoms(); ++i) {
-        conf.current().cgrad(i) = force(i);
-        p_squared += math::abs2(force(i));
+      cgrad_cur(i) = force(i);
+      grad += math::abs2(force(i));
     }
   }
   else {
     for(unsigned int i=0; i<topo.num_atoms(); ++i) {
-      conf.current().cgrad(i) = force(i) + beta * conf.old().cgrad(i);
-      p_squared += math::abs2(conf.current().cgrad(i));
+      cgrad_cur(i) = force(i) + beta * cgrad_old(i);
+      grad += math::dot(cgrad_cur(i), force(i));
     }
   }
-  return p_squared;
+  return grad;
 }
+
 /**
  * Calculate interactions and energies of the conformation
  * Optionally also apply constraints
  */
-inline int algorithm::Conjugate_Gradient
-::evaluate_conf
+int algorithm::Conjugate_Gradient
+::evaluate_configuration
 (
   topology::Topology & topo,
   configuration::Configuration & conf,
-  simulation::Simulation & sim
+  simulation::Simulation & sim,
+  double & ene,
+  bool do_pos_shake
 )
 {
-  DEBUG(15,"Evaluating configuration");
-  int error;
-  if (do_posres && 0 != (error = cgrad_posres->apply(topo, conf, sim))) {
-    std::cout << "Conjugate Gradient: Error applying positional constraints" << std::endl;
+  // If positional SHAKE is requested
+  if (do_pos_shake) {
+    DEBUG(7,"Obtaining constrained positions using SHAKE");
+    if ( int error = cgrad_shake->apply(topo, conf, sim) ) {
+      io::messages.add("Unable to apply SHAKE algorithm", "Conjugate_Gradient", io::message::error);
+      return error;
+    }
+  }
+
+  DEBUG(7,"Calculating interactions");
+  if ( int error = cgrad_ff->apply(topo, conf, sim) ) {
+      io::messages.add("Unable to calculate interactions", "Conjugate_Gradient", io::message::error);
     return error;
-  };
-  if (do_shake && 0 != (error = cgrad_shake->apply(topo, conf, sim))) {
-    std::cout << "Conjugate Gradient: Error applying SHAKE algorithm" << std::endl;
-    return error;
-  };
-  if (0 != (error = cgrad_ff->apply(topo, conf, sim))) {
-    std::cout << "Conjugate Gradient: Error calculating interactions" << std::endl;
-    return error;
-  };
+  }
+  conf.current().energies.calculate_totals();
+  ene = conf.current().energies.potential_total + conf.current().energies.special_total;
+
+  if (do_posres) {
+    DEBUG(7,"Applying position restraints");
+    if ( int error = cgrad_posres->apply(topo, conf, sim) ) {
+      io::messages.add("Unable to apply positional restraints", "Conjugate_Gradient", io::message::error);
+      return error;
+    }
+  }
+
   return 0;
 }
 

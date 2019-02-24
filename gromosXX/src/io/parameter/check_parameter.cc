@@ -4121,26 +4121,25 @@ int io::check_features(simulation::Simulation & sim)
 
   // Conjugate gradient minimisation
   fc.unlock("conjugate_gradient", "solute");
-  fc.unlock("conjugate_gradient", "solvent"); // Not working due to SHAKE
-  fc.unlock("conjugate_gradient", "solvent_only"); // Not working due to SHAKE
+  fc.unlock("conjugate_gradient", "solvent");
+  fc.unlock("conjugate_gradient", "solvent_only");
   fc.unlock("conjugate_gradient", "solute_constraint_off");
-  fc.unlock("conjugate_gradient", "solute_shake"); // Not working yet
-  // fc.unlock("conjugate_gradient", "solute_lincs"); // Not working yet
-  // fc.unlock("conjugate_gradient", "solute_flexshake"); // Not working yet
+  fc.unlock("conjugate_gradient", "solute_shake");
+  // fc.unlock("conjugate_gradient", "solute_lincs");
+  // fc.unlock("conjugate_gradient", "solute_flexshake");
   fc.unlock("conjugate_gradient", "solvent_constraint_off");
-  fc.unlock("conjugate_gradient", "solvent_shake"); // Not working yet - cannot be turned off
-  // fc.unlock("conjugate_gradient", "solvent_lincs"); // Not working yet
-  // fc.unlock("conjugate_gradient", "solvent_settle"); // Not working yet
-  // This has to be evaluated
+  fc.unlock("conjugate_gradient", "solvent_shake");
+  // fc.unlock("conjugate_gradient", "solvent_lincs");
+  // fc.unlock("conjugate_gradient", "solvent_settle");
   fc.unlock("conjugate_gradient", "pressure_calculation");
-  fc.unlock("conjugate_gradient", "pressure_scale_berendsen");
+  //fc.unlock("conjugate_gradient", "pressure_scale_berendsen");
   fc.unlock("conjugate_gradient", "virial_off");
   fc.unlock("conjugate_gradient", "virial_atomic");
   fc.unlock("conjugate_gradient", "virial_molecular");
   fc.unlock("conjugate_gradient", "vacuum");
-  fc.unlock("conjugate_gradient", "pbc_r"); // To be tested
-  fc.unlock("conjugate_gradient", "pbc_c"); // To be tested
-  fc.unlock("conjugate_gradient", "pbc_t"); // To be tested
+  //fc.unlock("conjugate_gradient", "pbc_r");
+  //fc.unlock("conjugate_gradient", "pbc_c");
+  //fc.unlock("conjugate_gradient", "pbc_t");
   fc.unlock("conjugate_gradient", "perturbation");
   fc.unlock("conjugate_gradient", "perturbation_scaling");
   fc.unlock("conjugate_gradient", "slow_growth");

@@ -29,8 +29,7 @@ namespace simulation
     Simulation() : mpi(false), openmp(false),
 		   m_time_step_size(0),
 		   m_steps(0), 
-		   m_time(0),
-       m_minimisation_iterations(0) {}
+		   m_time(0) {}
     
     /**
      * the simulation parameter
@@ -86,11 +85,6 @@ namespace simulation
      * minimisation step size.
      */
     double & minimisation_step_size() { return m_minimisation_step_size; }
-    
-    /**
-     * number of energy calculations done.
-     */
-    unsigned int & minimisation_iterations() { return m_minimisation_iterations; }
 
     /**
      * enable mpi?
@@ -133,11 +127,6 @@ namespace simulation
      * the minimisation step size.
      */
     double m_minimisation_step_size;
-
-    /**
-     * the number of energy calculations done.
-     */
-    unsigned int m_minimisation_iterations;
 
   };
   

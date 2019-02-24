@@ -131,7 +131,6 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
     md_seq.push_back(sd);
   }
   else if (sim.param().minimise.ntem == 2 || sim.param().minimise.ntem == 3){
-    //algorithm::Conjugate_Gradient * cg = new algorithm::Conjugate_Gradient(ff);
     algorithm::Conjugate_Gradient * cg = new algorithm::Conjugate_Gradient(md_seq);
     md_seq.push_back(cg);
   }

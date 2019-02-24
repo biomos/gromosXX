@@ -190,7 +190,6 @@ void io::In_Parameter::read_ENERGYMIN(simulation::Parameter &param,
     exampleblock << "# DELE: >0.0 energy threshold for convergence\n";
     exampleblock << "#       >0.0 (conjugate-gradient) RMS force threshold for convergence\n";
     exampleblock << "# DX0: >0.0 initial step size\n";
-    exampleblock << "#      >0.0 (conjugate-gradient) initial and minimum step size\n";
     exampleblock << "# DXM: >0.0 maximum step size\n";
     exampleblock << "# NMIN >0 minimum number of minimisation steps\n";
     exampleblock << "# FLIM >=0.0 limit force to maximum value (FLIM > 0.0 is not recommended)\n";
@@ -200,7 +199,7 @@ void io::In_Parameter::read_ENERGYMIN(simulation::Parameter &param,
     exampleblock << "         1       0     0.1   0.01    0.05       1     0.0\n";
     exampleblock << "# ---- OR: example for NTEM > 1:\n";
     exampleblock << "#     NTEM    NCYC    DELE    DX0     DXM    NMIN    FLIM    CGIM    CGIC\n";
-    exampleblock << "         3       0    1e-3   0.05     0.5       1     0.0       3    1e-3\n";
+    exampleblock << "         3       0    1e-3  0.005    0.05       1     0.0       3    1e-3\n";
     exampleblock << "END\n";
 
     std::string blockname = "ENERGYMIN";
