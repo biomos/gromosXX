@@ -358,32 +358,6 @@ int algorithm::Conjugate_Gradient
 
     // Accept X as new configuration, if criterion is met
     if (disp_X < sim.param().minimise.cgic || counter_ipol == unsigned(sim.param().minimise.cgim)) {
-      //TEST
-      /*if ( int error = evaluate_configuration(topo, conf, sim, eneX, do_shake) ) {
-        io::messages.add("Unable to evaluate the interpolated configuration", "Conjugate_Gradient", io::message::error);
-        return error;
-      }
-      // SHAKE forces of the interpolated configuration
-      if (do_shake) {
-        double shake_step = X * sqrt(p_squared);
-        if ( int error = shake_forces(topo, conf, sim, shake_step) ) {
-          io::messages.add("Unable to SHAKE forces of the interpolated configuration", "Conjugate_Gradient", io::message::error);
-          return error;
-        }
-      }
-
-      // Calculate gradient along the search direction in X
-      gradX = 0.0;
-      for(unsigned int i=0; i<topo.num_atoms(); ++i) {
-        gradX += math::dot(conf.old().cgrad(i), conf.current().force(i));
-      }
-      
-      DEBUG(10, "Interpolation accepted\n"
-        << "A = " << a << "\t eneA = " << eneA << "\t gradA = " << gradA << "\n"
-        << "X = " << X << "\t eneX = " << eneX << "\t gradX = " << gradX << "\n"
-        << "B = " << b << "\t eneB = " << eneB << "\t gradB = " << gradB
-      );*/
-      //END TEST
       break;
     }
     else {
