@@ -182,8 +182,8 @@ void util::replica_exchange_master::init_repOut_stat_file() {
           << std::setw(13) << "Tj"
           << std::setw(15) << "Epotj"
           << std::setw(15) << "p"
-          << std::setw(8) << "s"
-          << "\n";
+          << std::setw(8) << "s";
+  repOut << "\n";
     
 }
 

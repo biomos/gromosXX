@@ -223,15 +223,10 @@ void util::replica_exchange_master_eds::init_repOut_stat_file() {
           << std::setw(15) << "Epotj"
           << std::setw(15) << "p"
           << std::setw(8) << "s";
-
-    /*
-    if(replicas[0]->eds_para.eds){
-       repOut << std::setw(13) << "si(eds)" << std::setw(13) << "sj(eds)"; 
-       for(int j=1;j<=replicas[0]->eds_para.numstates;j++){
-          repOut << std::setw(18) << "V"<< j << "R";
-       }
+    for (int x=1; x<= reedsParam.num_states; x++){
+        repOut<<std::setw(18)<<"V"<<x<<"r";
     }
-     */
+
     repOut << "\n";
 
     DEBUG(2,"replica_exchange_master_eds:svalPrecision \t ");
