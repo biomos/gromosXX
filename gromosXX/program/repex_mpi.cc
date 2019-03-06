@@ -112,6 +112,7 @@ int main(int argc, char *argv[]) {
   
   bool reedsSim;
   unsigned int equil_runs;
+  unsigned int sim_runs;
   unsigned int total_runs;
   unsigned int numAtoms;
   unsigned int numReplicas;
@@ -162,6 +163,7 @@ int main(int argc, char *argv[]) {
     //set global parameters
     cont = sim.param().replica.cont;
     equil_runs = sim.param().replica.equilibrate;
+    sim_runs = sim.param().replica.trials;
     total_runs = sim.param().replica.trials + equil_runs;
     numReplicas = sim.param().replica.num_T * sim.param().replica.num_l;
     numAtoms = topo.num_atoms();
@@ -291,7 +293,8 @@ int main(int argc, char *argv[]) {
         Master->run_MD();
     }
     DEBUG(1, "Master \t \t MD: "<< total_runs)
-    for ( ; trial < total_runs+1; ++trial){ //for repex execution
+    trial=0;
+    for ( ; trial < sim_runs; ++trial){ //for repex execution
         DEBUG(2, "Master "<< rank <<" \t MD trial: "<< trial << "\n")\
         DEBUG(2, "Master "<< rank <<" \t run_MD START "<<trial<<"\n")  
         Master->run_MD();
@@ -318,7 +321,7 @@ int main(int argc, char *argv[]) {
           std::cerr << "REPEX: spent " << hh << ":" << mm << ":" << ss << std::endl;
           std::cout << "REPEX: spent " << hh << ":" << mm << ":" << ss << std::endl;
 
-          const double eta_spent = spent / trial * total_runs - spent;
+          const double eta_spent = spent / trial * sim_runs - spent;
           const int eta_hh = int(eta_spent / 3600);
           const int eta_mm = int((eta_spent - eta_hh * 3600) / 60);
           const int eta_ss = int(eta_spent - eta_hh * 3600 - eta_mm * 60);
@@ -352,7 +355,7 @@ int main(int argc, char *argv[]) {
         Slave->run_MD();
     }
     DEBUG(1, "Slave "<< rank <<" \t MD "<< total_runs << " steps")    
-    for ( ; trial < total_runs+1; ++trial){ //for repex execution
+    for ( ; trial < total_runs; ++trial){ //for repex execution
       DEBUG(2, "Slave "<< rank <<" \t MD trial: "<< trial << "\n")    
       DEBUG(2, "Slave "<< rank <<" \t run_MD START "<<trial<<"\n")    
       Slave->run_MD();
