@@ -328,9 +328,9 @@ def qrun(r1, r2, run, start=1):
             script_name = "mj" + name + "_" + str(run) + "_" + str(T[r1]) + "_" + str(T[r2]) + ".sh"
             e = os.system(submit + script_name)
             if e != 0:
-                print "submitting master job(" + str(T[r1]) + ", " + str(T[r2]) + ") failed!"
+                print "submitting master sopt_job(" + str(T[r1]) + ", " + str(T[r2]) + ") failed!"
             else:
-                print "job ", T[r1], " - ", T[r2], " run ", run, " submitted\n"
+                print "sopt_job ", T[r1], " - ", T[r2], " run ", run, " submitted\n"
         else:
             print "queue master script written\n"
 

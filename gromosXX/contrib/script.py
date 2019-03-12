@@ -59,7 +59,7 @@ def write(rep):
 
     f = open(script_name, "w")
     f.write("#!/bin/sh\n")
-    f.write("# job script for " + _name + " (" + str(_nr) + ") \n\n")
+    f.write("# sopt_job script for " + _name + " (" + str(_nr) + ") \n\n")
     
     f.write("PROG=" + program + "\n\n")
     
@@ -176,7 +176,7 @@ def write_qmaster(rep1, rep2, T):
     
     f = open(script_name, "w")
     f.write("#!/bin/sh\n")
-    f.write("# master job script for " + _name + " (" + str(_nr) + ") \n\n")
+    f.write("# master sopt_job script for " + _name + " (" + str(_nr) + ") \n\n")
 
     f.write("# first replica\n")
     f.write(job1 + " &\n\n")
