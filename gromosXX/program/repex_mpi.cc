@@ -119,126 +119,138 @@ int main(int argc, char *argv[]) {
   unsigned int numEDSstates;
 
   int cont;
-  
-  {
-    topology::Topology topo;
-    configuration::Configuration conf;
-    algorithm::Algorithm_Sequence md;
-    simulation::Simulation sim;
-    // read in parameters
-    
-    bool quiet = true;
-    if(rank == 0){
-        quiet = true;
-    }
-   
-    if (io::read_parameter(args,sim,std::cout, true)){
-      if (rank == 0) {
-        io::messages.display(std::cout);
-        std::cout << "\nErrors in in_parameters!\n" << std::endl;
+  try{
+    {
+      topology::Topology topo;
+      configuration::Configuration conf;
+      algorithm::Algorithm_Sequence md;
+      simulation::Simulation sim;
+      // read in parameters
+
+      bool quiet = true;
+      if(rank == 0){
+          quiet = true;
       }
-      return -1;
-    }
-   
-    // read in the rest
-    if(io::read_input_repex(args, topo, conf, sim, md, rank, std::cout, quiet)){
-        std::cerr <<"\n\t########################################################\n" 
-                << "\n\t\tErrors during initial Parameter reading!\n"
-                <<"\n\t########################################################\n" ;
-        io::messages.display(std::cout);
-        io::messages.display(std::cerr);
-        
-        MPI_Abort(MPI_COMM_WORLD, E_INPUT_ERROR);
-        return 1;
-    }
-    
-    if (io::check_parameter(sim) != 0){
-        io::messages.display(std::cout);
-        io::messages.display(std::cerr);
-        MPI_Abort(MPI_COMM_WORLD, E_INPUT_ERROR);
-        return -1; //reactivated check param at end.  
-    }
-    
 
-    //set global parameters
-    cont = sim.param().replica.cont;
-    equil_runs = sim.param().replica.equilibrate;
-    sim_runs = sim.param().replica.trials;
-    total_runs = sim.param().replica.trials + equil_runs;
-    numReplicas = sim.param().replica.num_T * sim.param().replica.num_l;
-    numAtoms = topo.num_atoms();
-    reedsSim = sim.param().reeds.reeds;
-       
-    if(reedsSim){
-        numEDSstates=sim.param().reeds.eds_para[0].numstates;
-    }else{
-        numEDSstates=0;
-    }
+      if (io::read_parameter(args,sim,std::cout, true)){
+        if (rank == 0) {
+          io::messages.display(std::cout);
+          std::cout << "\nErrors in in_parameters!\n" << std::endl;
+        }
+        return -1;
+      }
 
-    if(rank == 0){  //Nice message
-        std::string msg("\n==================================================\n\tFinished Initial Parsing\n\n==================================================\n");
-        std::cout << msg;
-        std::cerr << msg;
+      // read in the rest
+      if(io::read_input_repex(args, topo, conf, sim, md, rank, std::cout, quiet)){
+          std::cerr <<"\n\t########################################################\n" 
+                  << "\n\t\tErrors during initial Parameter reading!\n"
+                  <<"\n\t########################################################\n" ;
+          io::messages.display(std::cout);
+          io::messages.display(std::cerr);
+
+          MPI_Abort(MPI_COMM_WORLD, E_INPUT_ERROR);
+          return 1;
+      }
+
+      if (io::check_parameter(sim) != 0){
+          io::messages.display(std::cout);
+          io::messages.display(std::cerr);
+          MPI_Abort(MPI_COMM_WORLD, E_INPUT_ERROR);
+          return -1; //reactivated check param at end.  
+      }
+
+
+      //set global parameters
+      cont = sim.param().replica.cont;
+      equil_runs = sim.param().replica.equilibrate;
+      sim_runs = sim.param().replica.trials;
+      total_runs = sim.param().replica.trials + equil_runs;
+      numReplicas = sim.param().replica.num_T * sim.param().replica.num_l;
+      numAtoms = topo.num_atoms();
+      reedsSim = sim.param().reeds.reeds;
+
+      if(reedsSim){
+          numEDSstates=sim.param().reeds.eds_para[0].numstates;
+      }else{
+          numEDSstates=0;
+      }
+
+      if(rank == 0){  //Nice message
+          std::string msg("\n==================================================\n\tFinished Initial Parsing\n\n==================================================\n");
+          std::cout << msg;
+          std::cerr << msg;
+      }
     }
   }
-  
+  catch (const std::exception &e){
+      std::string msg = "ERROR!\n Uh OH! Caught an Exception in initial test Parsing of the Parameters!\n\n" 
+      std::cout << msg << e.what() << std::endl;
+      std::cerr << msg << e.what() << std::endl;
+  }
+        
   io::messages.clear();
 
   //////////////////////////
   // defining MPI Datatypes
   //////////////////////////
+  try{
+    // Vector
+    MPI_Datatype MPI_VEC;
+    MPI_Type_contiguous(3, MPI_DOUBLE, &MPI_VEC);
+    MPI_Type_commit(&MPI_VEC);
 
-  // Vector
-  MPI_Datatype MPI_VEC;
-  MPI_Type_contiguous(3, MPI_DOUBLE, &MPI_VEC);
-  MPI_Type_commit(&MPI_VEC);
+    // Box
+    MPI_Type_contiguous(3, MPI_VEC, &MPI_BOX);
+    MPI_Type_commit(&MPI_BOX);
 
-  // Box
-  MPI_Type_contiguous(3, MPI_VEC, &MPI_BOX);
-  MPI_Type_commit(&MPI_BOX);
+    // VArray with size of system
+    MPI_Type_contiguous(numAtoms, MPI_VEC, &MPI_VARRAY);
+    MPI_Type_commit(&MPI_VARRAY);
 
-  // VArray with size of system
-  MPI_Type_contiguous(numAtoms, MPI_VEC, &MPI_VARRAY);
-  MPI_Type_commit(&MPI_VARRAY);
+    // defining struct with non static replica information
+    int blocklen[] = {3, 3};
+    MPI_Datatype typ[] = {MPI_INT, MPI_DOUBLE};
+    MPI_Aint intext;
+    MPI_Type_extent(MPI_INT, &intext);
+    MPI_Aint disps[] = {(MPI_Aint) 0, 4 * intext};
+    MPI_Type_create_struct(2, blocklen, disps, typ, &MPI_REPINFO);
+    MPI_Type_commit(&MPI_REPINFO);
 
-  // defining struct with non static replica information
-  int blocklen[] = {3, 3};
-  MPI_Datatype typ[] = {MPI_INT, MPI_DOUBLE};
-  MPI_Aint intext;
-  MPI_Type_extent(MPI_INT, &intext);
-  MPI_Aint disps[] = {(MPI_Aint) 0, 4 * intext};
-  MPI_Type_create_struct(2, blocklen, disps, typ, &MPI_REPINFO);
-  MPI_Type_commit(&MPI_REPINFO);
-  
-  //MPI_Type_contiguous(numEDSstates, MPI_DOUBLE, &MPI_EDSINFO);
-  //MPI_Type_commit(&MPI_EDSINFO);
-  if(reedsSim){
-    MPI_Type_contiguous(numEDSstates, MPI_DOUBLE, &MPI_EDSINFO);
-    MPI_Type_commit(&MPI_EDSINFO);
-  }
+    //MPI_Type_contiguous(numEDSstates, MPI_DOUBLE, &MPI_EDSINFO);
+    //MPI_Type_commit(&MPI_EDSINFO);
+    if(reedsSim){
+      MPI_Type_contiguous(numEDSstates, MPI_DOUBLE, &MPI_EDSINFO);
+      MPI_Type_commit(&MPI_EDSINFO);
+    }
 
-  assert(numReplicas > 0);
+    assert(numReplicas > 0);
 
-  // where is which replica
-  std::map<unsigned int, unsigned int> repMap;
+    // where is which replica
+    std::map<unsigned int, unsigned int> repMap;
 
-  // every node gets one element of that vector
-  std::vector< std::vector<int> > repIDs;
-  repIDs.resize(size);
+    // every node gets one element of that vector
+    std::vector< std::vector<int> > repIDs;
+    repIDs.resize(size);
 
-  // counts through every replica and assigns it to respective node
-  // starts at beginning if numReplicas > size
-  // could be optimized by putting neighboring replicas on same node; less communication...
-  for (int i = 0; i < ceil((float) numReplicas / (float) size); ++i) {
-    for (int j = 0; j < size; ++j) {
-      unsigned int ID = j + i*size;
-      if (ID >= numReplicas)
-        break;
-      repMap.insert(std::pair<unsigned int, unsigned int>(ID, j));
-      repIDs[j].push_back(ID);
+    // counts through every replica and assigns it to respective node
+    // starts at beginning if numReplicas > size
+    // could be optimized by putting neighboring replicas on same node; less communication...
+    for (int i = 0; i < ceil((float) numReplicas / (float) size); ++i) {
+      for (int j = 0; j < size; ++j) {
+        unsigned int ID = j + i*size;
+        if (ID >= numReplicas)
+          break;
+        repMap.insert(std::pair<unsigned int, unsigned int>(ID, j));
+        repIDs[j].push_back(ID);
+      }
     }
   }
-
+  catch (const std::exception &e){
+      std::string msg = "ERROR!\n Uh OH! Caught an Exception in MPI-Initialisation!\n\n" 
+      std::cout << msg << e.what() << std::endl;
+      std::cerr << msg << e.what() << std::endl;
+  }
+  
   // make sure all nodes have initialized everything
   MPI_Barrier(MPI_COMM_WORLD);
   
