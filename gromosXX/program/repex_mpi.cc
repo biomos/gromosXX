@@ -107,10 +107,10 @@ int main(int argc, char *argv[]) {
   if (util::parse_verbosity(args)) {
     std::cerr << "could not parse verbosity argument" << std::endl;
     MPI_Finalize();
-
     return 1;
   }
   
+  //GLOBAL SETTING VARIABLES
   bool reedsSim;
   unsigned int equil_runs;
   unsigned int sim_runs;
@@ -138,6 +138,7 @@ int main(int argc, char *argv[]) {
           io::messages.display(std::cout);
           std::cout << "\nErrors in in_parameters!\n" << std::endl;
         }
+        MPI_Finalize();
         return -1;
       }
 
@@ -148,15 +149,14 @@ int main(int argc, char *argv[]) {
                   <<"\n\t########################################################\n" ;
           io::messages.display(std::cout);
           io::messages.display(std::cerr);
-
-          MPI_Abort(MPI_COMM_WORLD, E_INPUT_ERROR);
+          MPI_Finalize();
           return 1;
       }
 
       if (io::check_parameter(sim) != 0){
           io::messages.display(std::cout);
           io::messages.display(std::cerr);
-          MPI_Abort(MPI_COMM_WORLD, E_INPUT_ERROR);
+          MPI_Finalize();
           return -1; //reactivated check param at end.  
       }
 
@@ -177,16 +177,25 @@ int main(int argc, char *argv[]) {
       }
 
       if(rank == 0){  //Nice message
-          std::string msg("\n==================================================\n\tFinished Initial Parsing\n\n==================================================\n");
+          std::ostringstream msg;
+          msg << "\t continuation:\t"<<cont<<"\n";
+          msg << "\t equilibration runs:\t"<<equil_runs<<"\n";
+          msg << "\t simulation runs:\t"<<sim_runs<<"\n";
+          if(reedsSim){
+              msg << "\t numReplicas:\t"<<numEDSstates<<"\n";
+          }
+          msg << "\t numReplicas:\t"<<numReplicas<<"\n";
+          msg << "\n==================================================\n\tFinished Initial Parsing\n\n==================================================\n";
           std::cout << msg;
           std::cerr << msg;
       }
     }
   }
   catch (const std::exception &e){
-      std::string msg = "ERROR!\n Uh OH! Caught an Exception in initial test Parsing of the Parameters!\n\n" 
+      std::string msg = "ERROR!\n Uh OH! Caught an Exception in initial test Parsing of the Parameters!\n\n";
       std::cout << msg << e.what() << std::endl;
       std::cerr << msg << e.what() << std::endl;
+      MPI_Finalize();
   }
         
   io::messages.clear();
@@ -194,9 +203,13 @@ int main(int argc, char *argv[]) {
   //////////////////////////
   // defining MPI Datatypes
   //////////////////////////
+  //GLOBAL MPI VARIABLES:
+  MPI_Datatype MPI_VEC;
+  std::map<unsigned int, unsigned int> repMap;     // where is which replica
+  std::vector< std::vector<int> > repIDs;     // set IDs for each replica
+  
   try{
     // Vector
-    MPI_Datatype MPI_VEC;
     MPI_Type_contiguous(3, MPI_DOUBLE, &MPI_VEC);
     MPI_Type_commit(&MPI_VEC);
 
@@ -217,8 +230,6 @@ int main(int argc, char *argv[]) {
     MPI_Type_create_struct(2, blocklen, disps, typ, &MPI_REPINFO);
     MPI_Type_commit(&MPI_REPINFO);
 
-    //MPI_Type_contiguous(numEDSstates, MPI_DOUBLE, &MPI_EDSINFO);
-    //MPI_Type_commit(&MPI_EDSINFO);
     if(reedsSim){
       MPI_Type_contiguous(numEDSstates, MPI_DOUBLE, &MPI_EDSINFO);
       MPI_Type_commit(&MPI_EDSINFO);
@@ -226,11 +237,8 @@ int main(int argc, char *argv[]) {
 
     assert(numReplicas > 0);
 
-    // where is which replica
-    std::map<unsigned int, unsigned int> repMap;
 
-    // every node gets one element of that vector
-    std::vector< std::vector<int> > repIDs;
+    //repIDs every node gets one element of that vector
     repIDs.resize(size);
 
     // counts through every replica and assigns it to respective node
@@ -247,7 +255,7 @@ int main(int argc, char *argv[]) {
     }
   }
   catch (const std::exception &e){
-      std::string msg = "ERROR!\n Uh OH! Caught an Exception in MPI-Initialisation!\n\n" 
+      std::string msg = "ERROR!\n Uh OH! Caught an Exception in MPI-Initialisation!\n\n";
       std::cout << msg << e.what() << std::endl;
       std::cerr << msg << e.what() << std::endl;
   }
