@@ -2813,9 +2813,6 @@ END
  */
 
 void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostream & os){
-    
-    DEBUG(8, "read REPLICA_EDS");  //TODO: DO again! with read block funcs.!
-  
     std::stringstream exampleblock;
     // lines starting with 'exampleblock<<"' and ending with '\n";' (spaces don't matter)
     // will be used to generate snippets that can be included in the doxygen doc;
@@ -2857,69 +2854,100 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
     exampleblock << "       10         0         1           1          \n";
     exampleblock << "END\n";
     
-    //TODO: bschroed give the parser a more modern look, like AEDS.
+    DEBUG(1, "REPLICA_EDS BLOCK\t START");
+    //check that EDS Block was not read in before,because either REPLICA_EDS or EDS possible
+    if (param.eds.eds) {
+        std::ostringstream msg;
+        msg << "REPLICA_EDS block cannot be used at the same time with EDS block";
+          io::messages.add(msg.str(), "In_Parameter", io::message::error);
+          return;
+        }
+         
+    // make sure we simulate at a given temperature (unambiguous kT)
+    if (!param.multibath.couple) {
+      io::messages.add("Error in RE_EDS block: EDS requires temperature coupling.",
+              "In_Parameter", io::message::error);
+      return;
+    }
     
     std::string blockname = "REPLICA_EDS";
-    Block block(blockname, exampleblock.str());    
-    std::vector<std::string> buffer;
-    std::string s;
-    buffer = m_block["REPLICA_EDS"];
+    Block block(blockname, exampleblock.str());
+    
+    if (block.read_buffer(m_block[blockname], false) == 0) {
+        block_read.insert(blockname);
+           
+        DEBUG(2, "REPLICA_EDS BLOCK: reading Block an translating to vars");
+        //init_vars
+        int reeds_control, num_l, num_states=0;
+        int ntrials, nEquilibrate, cont_run, eds_stat_out=0;
 
-    if (buffer.size()) {
-      block_read.insert("REPLICA_EDS");
-      
-      bool error = false;
-      _lineStream.clear();
-      _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
+        // GET BLOCKVARS
+        //SYS Settings
+        block.get_next_parameter("REEDS", reeds_control, "", "0,1");
+        block.get_next_parameter("NRES", num_l, ">0", "");
+        block.get_next_parameter("NUMSTATES", num_states, ">0", "");
+        
+        //get RES-Vector
+        std::vector<double> s_vals(num_l, 0.0);
+        for (unsigned int i = 0; i < num_l; i++) {
+          std::string idx = io::to_string(i);
+          block.get_next_parameter("RES[" + idx + "]", s_vals[i], "", "");
+        }
 
-      //check that EDS Block was not read in before,because either REPLICA_EDS or EDS possible
-      if (param.eds.eds) {
-          std::ostringstream msg;
-          msg << "REPLICA_EDS block cannot be used at the same time with EDS block";
-            io::messages.add(msg.str(), "In_Parameter", io::message::error);
-            error = true;
+        //get EIR-Matrix
+        std::vector<std::vector<float>> eir(num_l);
+        for (unsigned int i = 0; i < num_l; i++) {
+          std::string idx = io::to_string(i);
+          std::vector<float> eiri(num_states, 0.0);
+          eir[i] = eiri;      
+
+          for (unsigned int j=0; j< num_states; j++){
+            std::string idx2 = io::to_string(j);
+            block.get_next_parameter("EIR[" + idx + "]["+idx2+"]", eir[i][j], "", "");
           }
-      
-      
-      // READ:REEDS control
-      int reeds_control = 0;
-      _lineStream >> reeds_control;     //contains control if reedsblock is on or not
-      switch(reeds_control) {
-            case 0:
-                param.reeds.reeds = false;
-                break;
-            case 1:
-                param.reeds.reeds = true;
-                break;
-            default:
-                io::messages.add("REPLICA_EDS block: Reeds must be 0 (off) or 1 (on).\n Reeds was: "+reeds_control,
-                  "In_Parameter", io::message::error);
-                error = true;
-                break;
         }
         
-        if (!error && _lineStream.fail()) {
-                io::messages.add("REPLICA_EDS block: could not reed blocks' first line. Reeds must be 0 (off) or 1 (on).",
-                  "In_Parameter", io::message::error);
-                error = true;
-        }
-       
-        // READ: NRES   NUMSTATES
-        _lineStream >> param.reeds.num_l >> param.reeds.num_states;     //contains the number of Svals
-        if (!error && _lineStream.fail() || param.reeds.num_l < 0) {
-          io::messages.add("REPLICA_EDS block: NRES must be >= 0.",
-                  "In_Parameter", io::message::error);
-          error = true;
-        }
+        // general Settings
+        block.get_next_parameter("NRETRIAL", ntrials, ">=0", "");
+        block.get_next_parameter("NREQUIL", nEquilibrate, ">=0", "");
+        block.get_next_parameter("CONT", cont_run, "", "0,1");
+        block.get_next_parameter("EDS_STAT_OUT", eds_stat_out, "", "0,1");
 
+      
+        // SET SETTINGS
+        DEBUG(2, "REPLICA_EDS BLOCK: Set settings for sim.");
+        // READ:REEDS control
+        switch(reeds_control) {
+              case 0:
+                  param.reeds.reeds = false;
+                  break;
+              case 1:
+                  param.reeds.reeds = true;
+                  break;
+          }
+               
+        param.reeds.num_l = num_l;
+        param.reeds.num_states = num_states;
+        param.reeds.trials = ntrials;
+        
+        //param.reeds.lambda.resize();
+        param.reeds.lambda=s_vals;
+        
+        //param.reeds.lambda=s_vals;
+        param.reeds.equilibrate = nEquilibrate;
+        param.reeds.cont =cont_run;
+        param.reeds.eds_stat_out = eds_stat_out;
+
+        // Replica temperatures - has to be the same for each replica // Not sure if this is optimal? bschroed
+        param.reeds.temperature = param.multibath.multibath.bath(0).temperature;
+        
+        DEBUG(2, "REPLICA_EDS BLOCK: assigned all reeds params");
+
+        DEBUG(2, "REPLICA_EDS BLOCK: assign all eds params");
         //set size of vectors in param.reeds
         param.reeds.eds_para.resize(param.reeds.num_l);
         param.reeds.dt.resize(param.reeds.num_l);
         param.reeds.lambda.resize(param.reeds.num_l);
-        
-        // Replica temperatures - has to be the same for each replica
-        param.reeds.temperature = param.multibath.multibath.bath(0).temperature;
-
 
         //Loop over all replicas in order to initialize complete eds_struct for each replica
         //initvars
@@ -2936,92 +2964,40 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
             //indicate only one parameter s used for reference state hamiltonian
             param.reeds.eds_para[i].form = simulation::single_s;
             
-            //initialize size of EIR
-            param.reeds.eds_para[i].eir.resize(param.reeds.eds_para[i].numstates);
-            
             //RES - give s_values
             param.reeds.eds_para[i].s.resize(1);//only one parameter s per replica
-            _lineStream >> param.reeds.eds_para[i].s[0];
-            param.reeds.lambda[i]=param.reeds.eds_para[i].s[0]; //lambda_will be the same as s
+            param.reeds.eds_para[i].s[0]=s_vals[i];
             
+            //initialize size of EIR
+            param.reeds.eds_para[i].eir.resize(param.reeds.eds_para[i].numstates);
+
             //init:
             param.reeds.eds_para[i].visitedstates.resize(param.eds.numstates, false);
             param.reeds.eds_para[i].visitcounts.resize(param.eds.numstates, 0);
             param.reeds.eds_para[i].avgenergy.resize(param.eds.numstates, 0.0);
             
-            if (!error &&  _lineStream.fail()) {
-              std::ostringstream msg;
-              msg << "REPLICA_EDS block: You need as many s_values as NRES claims. Could not find s("<<i+1<<")!";
-              io::messages.add(msg.str(), "In_Parameter", io::message::error);
-              error = true;
-            }       
-            else if(param.reeds.eds_para[i].s[0] < 0.0){
+            if(param.reeds.eds_para[i].s[0] < 0.0){
                 std::ostringstream msg;
                 msg << "REPLICA_EDS block: RES(" << i + 1 << ") must be >= 0.0";
                 io::messages.add(msg.str(), "In_Parameter", io::message::error);
-                error = true;
             }
+            
+            DEBUG(3, "REPLICA_EDS BLOCK: assign all eds params - EIR");
+            for(unsigned int j = 0; j < param.reeds.eds_para[0].numstates; ++j){
+                param.reeds.eds_para[i].eir[j] = eir[i][j];
+                
+            }  
         }
 
-        //EIR
-        bool eirBroke = false;
-        for (unsigned int i = 0; i < param.reeds.eds_para[0].numstates; ++i) {
-            for(unsigned int j = 0; j < param.reeds.num_l; ++j){
-              _lineStream >> param.reeds.eds_para[j].eir[i];
-                if (!error && _lineStream.fail()) {
-                    std::ostringstream msg;
-                    msg << "REPLICA_EDS block: EIR is missing! Pos("<<i<<"/"<<j<<") \n\t\t STOP EIR reading\n" ;
-                    io::messages.add(msg.str(), "In_Parameter", io::message::error);
-                    error = true;
-                    eirBroke = true;
-                    break;
-                }
-              if(eirBroke){
-                  break;
-              }
-            }       
-        }
-
-        // NRETRIAL
-        _lineStream >> param.reeds.trials;
-        if (!error && _lineStream.fail() || param.reeds.trials < 0) {
-          io::messages.add("REPLICA_EDS block: NRETRIAL must be >= 0.",
-                  "In_Parameter", io::message::error);
-          error = true;
-        }
+        DEBUG(2, "REPLICA_EDS BLOCK: assigned all eds params");
         
-        // NREQUIL
-        _lineStream >> param.reeds.equilibrate;
-        if (!error && _lineStream.fail() || param.reeds.equilibrate < 0) {
-          io::messages.add("REPLICA_EDS block: NREQUIL must be >= 0.",
-                  "In_Parameter", io::message::error);
-          error = true;
-        }
+        // turn on eds for pertubation reading - Overwrite:
+        param.eds.eds = true;
+        param.eds.numstates = param.reeds.num_states;
         
-        //CONT: do continuation run
-        _lineStream >> param.reeds.cont;
-        if (!error && _lineStream.fail() || param.reeds.cont < 0 || param.reeds.cont > 1 ) {
-          io::messages.add("REPLICA_EDS block: CONT must be 0 or 1",
-                  "In_Parameter", io::message::error);
-          error = true;
-        }
+        //REPLICA Set replica settings:
+        DEBUG(2, "REPLICA_EDS BLOCK: assign all replicas param:");
 
-        // EDS_STAT_OUT
-        _lineStream >> param.reeds.eds_stat_out;
-        if (!error && _lineStream.fail() || param.reeds.eds_stat_out < 0 || param.reeds.eds_stat_out > 1 ) {
-          io::messages.add("REPLICA_EDS block: EDS_STAT_OUT must be 0 or 1",
-                  "In_Parameter", io::message::error);
-          error = true;
-        }
-
-        // Some additional tests
-        // make sure we simulate at a given temperature (unambiguous kT)
-        if (!param.multibath.couple) {
-          io::messages.add("Error in RE_EDS block: EDS requires temperature coupling.",
-                  "In_Parameter", io::message::error);
-        }
-        
-        //REPLICA overwritting and additions
         // check whether all baths have the same temperature (unambiguous kT)
         param.reeds.num_T = param.replica.num_T =1;
         
@@ -3033,33 +3009,22 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
         param.replica.equilibrate = param.reeds.equilibrate;
         param.replica.cont = param.reeds.cont;
         
+        DEBUG(2, "REPLICA_EDS BLOCK: assigned all replicas param");
+
+        //CHECK SETTINGS
+        DEBUG(2, "REPLICA_EDS BLOCK: Check Settings:");
         
         for (unsigned int i = 1; i < param.multibath.multibath.size(); i++) {
           if (param.multibath.multibath.bath(i).temperature !=
                   param.multibath.multibath.bath(0).temperature) {
             io::messages.add("Error in RE_EDS block: all baths must have the same temperature.",
                     "In_Parameter", io::message::error);
-            error = true;
-          }
-        // turn on eds for pertubation reading - Overwrite:
-          param.eds.eds = true;
-          param.eds.numstates = param.reeds.num_states;
-          
+          }         
         }
-        if (!error && _lineStream.fail() || error || block.error()) {
-          io::messages.add("bad line in REPLICA_EDS block", "In_Parameter", io::message::error);
-          io::messages.display(std::cout);
-          io::messages.display(std::cerr);
-          block.get_final_messages();
-          param.reeds.num_T = 0;
-          param.reeds.num_l = 0;
-          param.reeds.temperature = 0;
-          param.reeds.eds_para.clear();
-          param.reeds.lambda.clear();
-          param.reeds.dt.clear();
-          return;
-        }
-      }
+        DEBUG(2, "REPLICA_EDS BLOCK: Checked Settings");
+        block.get_final_messages();
+    }
+    DEBUG(1, "REPLICA_EDS BLOCK\t DONE");
 }
 
 /**
