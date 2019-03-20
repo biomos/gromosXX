@@ -762,13 +762,13 @@ void configuration::Configuration::check_excluded_positions(topology::Topology c
         const double d2 = math::abs2(r);
         if (d2 > cutoff_2) {
           // if yes, check if any of the atoms are excluded
-          for (int a1 = topo.chargegroup(idx_cg1), a1_to = topo.chargegroup(idx_cg1 + 1);
+            for (int a1 = topo.chargegroup(idx_cg1), a1_to = topo.chargegroup(idx_cg1 + 1);
                    a1 != a1_to; ++a1) {
             for (int a2 = topo.chargegroup(idx_cg2), a2_to = topo.chargegroup(idx_cg2 + 1);
                      a2 != a2_to; ++a2) {
-              std::cout << "a1: "<<a1<<" count: "<<topo.perturbed_solute().atoms().count(a2) <<"\n"; // TODO: nicer criterium for jumppint over warning! ugly fix bschroed (same with atomistic)
-              std::cout << "a2: "<<a2<<" count: "<<topo.perturbed_solute().atoms().count(a2)<<"\n";
-              if (topo.all_exclusion(a1).is_excluded(a2) and ! sim.param().reeds.reeds) {
+
+              bool not_excluded_via_eds= !((sim.param().reeds.reeds || sim.param().eds.eds) && (topo.eds_perturbed_solute().atoms().count(a1)>=1 && topo.eds_perturbed_solute().atoms().count(a2)>=1));
+              if (topo.all_exclusion(a1).is_excluded(a2) && not_excluded_via_eds) {
                 // if yes, issue warning!
                 std::ostringstream msg;
                 msg << "Warning: Atoms " << a1 << " and " << a2
