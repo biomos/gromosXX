@@ -766,6 +766,8 @@ void configuration::Configuration::check_excluded_positions(topology::Topology c
                    a1 != a1_to; ++a1) {
             for (int a2 = topo.chargegroup(idx_cg2), a2_to = topo.chargegroup(idx_cg2 + 1);
                      a2 != a2_to; ++a2) {
+              std::cout << "a1: "<<a1<<" count: "<<topo.perturbed_solute().atoms().count(a2) <<"\n"; // TODO: nicer criterium for jumppint over warning! ugly fix bschroed (same with atomistic)
+              std::cout << "a2: "<<a2<<" count: "<<topo.perturbed_solute().atoms().count(a2)<<"\n";
               if (topo.all_exclusion(a1).is_excluded(a2) and ! sim.param().reeds.reeds) {
                 // if yes, issue warning!
                 std::ostringstream msg;

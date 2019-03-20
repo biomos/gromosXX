@@ -2898,7 +2898,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
                 break;
         }
         
-        if (_lineStream.fail()) {
+        if (!error && _lineStream.fail()) {
                 io::messages.add("REPLICA_EDS block: could not reed blocks' first line. Reeds must be 0 (off) or 1 (on).",
                   "In_Parameter", io::message::error);
                 error = true;
@@ -2906,7 +2906,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
        
         // READ: NRES   NUMSTATES
         _lineStream >> param.reeds.num_l >> param.reeds.num_states;     //contains the number of Svals
-        if (_lineStream.fail() || param.reeds.num_l < 0) {
+        if (!error && _lineStream.fail() || param.reeds.num_l < 0) {
           io::messages.add("REPLICA_EDS block: NRES must be >= 0.",
                   "In_Parameter", io::message::error);
           error = true;
@@ -2949,7 +2949,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
             param.reeds.eds_para[i].visitcounts.resize(param.eds.numstates, 0);
             param.reeds.eds_para[i].avgenergy.resize(param.eds.numstates, 0.0);
             
-            if (_lineStream.fail()) {
+            if (!error &&  _lineStream.fail()) {
               std::ostringstream msg;
               msg << "REPLICA_EDS block: You need as many s_values as NRES claims. Could not find s("<<i+1<<")!";
               io::messages.add(msg.str(), "In_Parameter", io::message::error);
@@ -2968,7 +2968,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
         for (unsigned int i = 0; i < param.reeds.eds_para[0].numstates; ++i) {
             for(unsigned int j = 0; j < param.reeds.num_l; ++j){
               _lineStream >> param.reeds.eds_para[j].eir[i];
-                if (_lineStream.fail()) {
+                if (!error && _lineStream.fail()) {
                     std::ostringstream msg;
                     msg << "REPLICA_EDS block: EIR is missing! Pos("<<i<<"/"<<j<<") \n\t\t STOP EIR reading\n" ;
                     io::messages.add(msg.str(), "In_Parameter", io::message::error);
@@ -2984,7 +2984,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
 
         // NRETRIAL
         _lineStream >> param.reeds.trials;
-        if (_lineStream.fail() || param.reeds.trials < 0) {
+        if (!error && _lineStream.fail() || param.reeds.trials < 0) {
           io::messages.add("REPLICA_EDS block: NRETRIAL must be >= 0.",
                   "In_Parameter", io::message::error);
           error = true;
@@ -2992,7 +2992,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
         
         // NREQUIL
         _lineStream >> param.reeds.equilibrate;
-        if (_lineStream.fail() || param.reeds.equilibrate < 0) {
+        if (!error && _lineStream.fail() || param.reeds.equilibrate < 0) {
           io::messages.add("REPLICA_EDS block: NREQUIL must be >= 0.",
                   "In_Parameter", io::message::error);
           error = true;
@@ -3000,7 +3000,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
         
         //CONT: do continuation run
         _lineStream >> param.reeds.cont;
-        if (_lineStream.fail() || param.reeds.cont < 0 || param.reeds.cont > 1 ) {
+        if (!error && _lineStream.fail() || param.reeds.cont < 0 || param.reeds.cont > 1 ) {
           io::messages.add("REPLICA_EDS block: CONT must be 0 or 1",
                   "In_Parameter", io::message::error);
           error = true;
@@ -3008,7 +3008,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
 
         // EDS_STAT_OUT
         _lineStream >> param.reeds.eds_stat_out;
-        if (_lineStream.fail() || param.reeds.eds_stat_out < 0 || param.reeds.eds_stat_out > 1 ) {
+        if (!error && _lineStream.fail() || param.reeds.eds_stat_out < 0 || param.reeds.eds_stat_out > 1 ) {
           io::messages.add("REPLICA_EDS block: EDS_STAT_OUT must be 0 or 1",
                   "In_Parameter", io::message::error);
           error = true;
@@ -3046,7 +3046,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
           param.eds.numstates = param.reeds.num_states;
           
         }
-        if (_lineStream.fail() || error || block.error()) {
+        if (!error && _lineStream.fail() || error || block.error()) {
           io::messages.add("bad line in REPLICA_EDS block", "In_Parameter", io::message::error);
           io::messages.display(std::cout);
           io::messages.display(std::cerr);

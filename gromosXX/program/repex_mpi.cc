@@ -37,6 +37,7 @@
 #include <io/parameter/check_parameter.h>
 #include <io/print_block.h>
 
+#include <thread>
 #include <time.h>
 #include <unistd.h>
 
@@ -75,7 +76,6 @@ int main(int argc, char *argv[]) {
   if(rank == 0){
     std::string msg("\n==================================================\n\tGROMOS Replica Exchange:\n==================================================\n");
     std::cout << msg;
-    std::cerr << msg;
   }
   
   // reading arguments
@@ -91,23 +91,38 @@ int main(int argc, char *argv[]) {
   usage += "#\n\n";
 
   io::Argument args;
+  try{
+    if (args.parse(argc, argv, knowns)) {
+        std::cerr << usage << std::endl;
+        MPI_Abort(MPI_COMM_WORLD, E_USAGE);
+        return 1;
+      }
 
-  if (args.parse(argc, argv, knowns)) {
-    std::cerr << usage << std::endl;
-    MPI_Finalize();
-    return 1;
+      if (args.count("version") >= 0) {
+        MPI_Abort(MPI_COMM_WORLD, E_USAGE);
+        return 0;
+      }
+
+      // parse the verbosity flag and set debug levels
+      if (util::parse_verbosity(args)) {
+        std::cerr << "could not parse verbosity argument" << std::endl;
+        MPI_Abort(MPI_COMM_WORLD, E_USAGE);
+        return 1;
+      }
   }
-
-  if (args.count("version") >= 0) {
-    MPI_Finalize();
-    return 0;
+  catch (const std::exception &e){
+      std::string msg = "ERROR!\n Uh OH! Caught an Exception in initial Args parse!\n\n";
+      std::cout << msg << e.what() << std::endl;
+      std::cerr << msg << e.what() << std::endl;
+      MPI_Abort(MPI_COMM_WORLD, E_USAGE);
+      return 1;
   }
-
-  // parse the verbosity flag and set debug levels
-  if (util::parse_verbosity(args)) {
-    std::cerr << "could not parse verbosity argument" << std::endl;
-    MPI_Finalize();
-    return 1;
+  catch (...){
+      std::string msg = "ERROR!\n Uh OH! Caught an non standard Exception in initial Args parse!!\n Hit the developers!\n\n";
+      std::cout << msg << std::endl;
+      std::cerr << msg << std::endl;
+      MPI_Abort(MPI_COMM_WORLD, E_USAGE);
+      return -1;
   }
   
   //GLOBAL SETTING VARIABLES
@@ -118,8 +133,8 @@ int main(int argc, char *argv[]) {
   unsigned int numAtoms;
   unsigned int numReplicas;
   unsigned int numEDSstates;
-
   int cont;
+
   try{
     {
       topology::Topology topo;
@@ -137,30 +152,33 @@ int main(int argc, char *argv[]) {
         if (rank == 0) {
           io::messages.display(std::cout);
           std::cout << "\nErrors in in_parameters!\n" << std::endl;
+          MPI_Abort(MPI_COMM_WORLD, E_USAGE);
         }
-        MPI_Finalize();
-        return -1;
+        return 1;
       }
 
       // read in the rest
       if(io::read_input_repex(args, topo, conf, sim, md, rank, std::cout, quiet)){
-          std::cerr <<"\n\t########################################################\n" 
-                  << "\n\t\tErrors during initial Parameter reading!\n"
-                  <<"\n\t########################################################\n" ;
-          io::messages.display(std::cout);
-          io::messages.display(std::cerr);
-          MPI_Finalize();
+          if (rank == 0) {
+            std::cerr <<"\n\t########################################################\n" 
+                    << "\n\t\tErrors during initial Parameter reading!\n"
+                    <<"\n\t########################################################\n" ;
+            io::messages.display(std::cout);
+            io::messages.display(std::cerr);
+            MPI_Abort(MPI_COMM_WORLD, E_USAGE);
+            }
           return 1;
-      }
+       }
 
       if (io::check_parameter(sim) != 0){
+        if (rank == 0) {
           io::messages.display(std::cout);
           io::messages.display(std::cerr);
-          MPI_Finalize();
-          return -1; //reactivated check param at end.  
+          MPI_Abort(MPI_COMM_WORLD, E_USAGE);
+        }
+        return -1; //reactivated check param at end.  
       }
-
-
+         
       //set global parameters
       cont = sim.param().replica.cont;
       equil_runs = sim.param().replica.equilibrate;
@@ -187,7 +205,6 @@ int main(int argc, char *argv[]) {
           msg << "\t numReplicas:\t"<<numReplicas<<"\n";
           msg << "\n==================================================\n\tFinished Initial Parsing\n\n==================================================\n";
           std::cout << msg;
-          std::cerr << msg;
       }
     }
   }
@@ -195,9 +212,17 @@ int main(int argc, char *argv[]) {
       std::string msg = "ERROR!\n Uh OH! Caught an Exception in initial test Parsing of the Parameters!\n\n";
       std::cout << msg << e.what() << std::endl;
       std::cerr << msg << e.what() << std::endl;
-      MPI_Finalize();
+      MPI_Abort(MPI_COMM_WORLD, E_USAGE);
+      return 1;
   }
-        
+  catch (...){
+      std::string msg = "ERROR!\n Uh OH! Caught an non standard Exception in initial test Parsing of the Parameters!\n Hit the developers!\n\n";
+      std::cout << msg << std::endl;
+      std::cerr << msg << std::endl;
+      MPI_Abort(MPI_COMM_WORLD, E_USAGE);
+      return -1;
+  }
+  
   io::messages.clear();
 
   //////////////////////////
@@ -235,8 +260,23 @@ int main(int argc, char *argv[]) {
       MPI_Type_commit(&MPI_EDSINFO);
     }
 
-    assert(numReplicas > 0);
+    assert(numReplicas > 0);// is there a positive nonzero num of Replicas?
 
+    //check if enough threads avail
+    if( size  < numReplicas){
+        if(rank == 0){
+            std::cerr <<"\n\t########################################################\n" 
+                    << "\n\t\tErrors during initial Parameter reading!\n"
+                    <<"\n\t########################################################\n" ;
+
+            std::cerr << "\n There were not enough MPI thread assigned to this run!\n"
+                    << "FOUND THREAD: "<<size<< "\tNEED: "<<numReplicas<<"\n";
+            std::cout << "\n There were not enough MPI thread assigned to this run!\n"
+                      << "FOUND THREAD: "<<size<< "\tNEED: "<<numReplicas<<"\n";
+            MPI_Abort(MPI_COMM_WORLD, E_USAGE);
+        }
+        return -1; //reactivated check param at end.  
+    }
 
     //repIDs every node gets one element of that vector
     repIDs.resize(size);
@@ -258,8 +298,15 @@ int main(int argc, char *argv[]) {
       std::string msg = "ERROR!\n Uh OH! Caught an Exception in MPI-Initialisation!\n\n";
       std::cout << msg << e.what() << std::endl;
       std::cerr << msg << e.what() << std::endl;
+      return 1;
   }
-  
+  catch (...){
+      std::string msg = "ERROR!\n Uh OH! Caught an non standard Exception in initial test Parsing of the Parameters!\n Hit the developers!\n\n";
+      std::cout << msg << std::endl;
+      std::cerr << msg << std::endl;
+      MPI_Finalize();
+      return -1;
+  }
   // make sure all nodes have initialized everything
   MPI_Barrier(MPI_COMM_WORLD);
   
