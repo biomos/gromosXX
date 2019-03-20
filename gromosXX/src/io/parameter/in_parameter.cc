@@ -2995,6 +2995,9 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
         param.eds.eds = true;
         param.eds.numstates = param.reeds.num_states;
         
+        // turn not on Pertubation block!: hope thats ok -> killed warning
+        param.perturbation.perturbation = false;
+        
         //REPLICA Set replica settings:
         DEBUG(2, "REPLICA_EDS BLOCK: assign all replicas param:");
 

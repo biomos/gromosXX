@@ -160,9 +160,11 @@ int io::simple_crosschecks(simulation::Simulation & sim) {
                          "In_Parameter", io::message::warning);
   
       // warn if Hamiltonian reeds but no perturbation or no eds
-    if (param.reeds.reeds && param.replica.num_l > 1 && !param.perturbation.perturbation  )
-        io::messages.add("REPLICA block: Hamiltonian replica exchange for RE-EDS, but perturbation is off.",
-                         "In_Parameter", io::message::warning);
+      // CHANGED This is caught in read_input.cc if there is no pertubation file , error is thrown
+      if (param.reeds.reeds && param.replica.num_l > 1 && param.perturbation.perturbation  )
+          io::messages.add("REPLICA block: Hamiltonian replica exchange for RE-EDS, but perturbation is on.",
+                           "In_Parameter", io::message::warning);
+  
           // warn if Hamiltonian reeds but no eds
     if (param.reeds.reeds && param.replica.num_l > 1 && !param.eds.eds )
         io::messages.add("REPLICA block: Hamiltonian replica exchange for RE-EDS, but eds is off.",

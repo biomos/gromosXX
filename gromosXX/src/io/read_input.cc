@@ -271,8 +271,12 @@ int io::read_topology(io::Argument const & args,
     return -1;
     
   
-  
-  if(args.count(argname_pttopo)<1 && sim.param().eds.eds){
+   if(args.count(argname_pttopo)<1 && sim.param().reeds.reeds){
+      io::messages.add("REEDS on but no perturbation topology specified",
+		       "read_input", io::message::critical);
+      return -1;
+  }
+  else if(args.count(argname_pttopo)<1 && sim.param().eds.eds){
       io::messages.add("EDS on but no perturbation topology specified",
 		       "read_input", io::message::critical);
       return -1;
