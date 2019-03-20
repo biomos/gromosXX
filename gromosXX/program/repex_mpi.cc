@@ -94,19 +94,20 @@ int main(int argc, char *argv[]) {
 
   if (args.parse(argc, argv, knowns)) {
     std::cerr << usage << std::endl;
-    MPI_Abort(MPI_COMM_WORLD, E_USAGE);
+    MPI_Finalize();
     return 1;
   }
 
   if (args.count("version") >= 0) {
-    MPI_Abort(MPI_COMM_WORLD, E_INPUT_ERROR);
+    MPI_Finalize();
     return 0;
   }
 
   // parse the verbosity flag and set debug levels
   if (util::parse_verbosity(args)) {
     std::cerr << "could not parse verbosity argument" << std::endl;
-    MPI_Abort(MPI_COMM_WORLD, E_INPUT_ERROR);
+    MPI_Finalize();
+
     return 1;
   }
   
@@ -407,6 +408,7 @@ int main(int argc, char *argv[]) {
   MPI_Finalize();
   return 0;
 #else
+  std::cout << "\n==================================================\n\tGROMOS Replica Exchange:\n==================================================\n";
   std::cout << argv[0] << " needs MPI to run\n\tuse --enable-mpi at configure and appropriate compilers\n" << std::endl;
   return 1;
 #endif
