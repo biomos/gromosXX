@@ -69,13 +69,6 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
 				  bool quiet)
 {
 
-  // analyze trajectory:
-  // overwrite current configuration with trajectory data
-  //if (sim.param().analyze.analyze){
-  //  algorithm::Analyze_Step * as = 
-  //    new algorithm::Analyze_Step(sim.param().analyze.trajectory);
-  //  md_seq.push_back(as);
-  //}
 
   // create a forcefield
   interaction::Forcefield *ff = new interaction::Forcefield;
@@ -92,11 +85,15 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
   // center of mass motion printing / removal
   if (sim.param().centreofmass.skip_step ||
       sim.param().print.centreofmass){
-
-    algorithm::Remove_COM_Motion * rcom =
-      new algorithm::Remove_COM_Motion(os);
+      if (sim.param().analyze.analyze) {
+          io::messages.add("COM removal is ignored with anatrj",
+                "create_md_sequence", io::message::warning);
+      } else {
+          algorithm::Remove_COM_Motion * rcom =
+            new algorithm::Remove_COM_Motion(os);
       
-    md_seq.push_back(rcom);
+          md_seq.push_back(rcom);
+      }
   }
   
   // add the lattice shift tracking 
@@ -112,7 +109,7 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
   }  
               
   // position constraints?
-  if (sim.param().posrest.posrest == 3){
+  if (sim.param().posrest.posrest == 3 && !sim.param().analyze.no_constraints) {
     algorithm::Position_Constraints * pc = new algorithm::Position_Constraints;
     md_seq.push_back(pc);
   }
@@ -133,7 +130,6 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
     algorithm::Analyze_Step * as = 
       new algorithm::Analyze_Step(sim.param().analyze.trajectory);
     md_seq.push_back(as);
-    md_seq.push_back(new algorithm::Analyze_Exchange);
   } else {    
     // SD ?
     if (sim.param().stochastic.sd){

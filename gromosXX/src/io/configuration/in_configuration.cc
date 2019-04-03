@@ -154,7 +154,8 @@ bool io::In_Configuration::read_next
  topology::Topology &topo,
  configuration::Configuration &conf,
  simulation::Simulation & sim,
- std::ostream & os
+ std::ostream & os,
+ bool do_read_time
  )
 {
   if (!quiet)
@@ -165,7 +166,7 @@ bool io::In_Configuration::read_next
   block_read.clear();
 
   // ignore errors reading time step
-  //read_time_step(topo, conf, sim, os);
+  if (do_read_time)  read_time_step(topo, conf, sim, os);
 
   if (!(
 	read_position(topo, conf, sim, os) &&

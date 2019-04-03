@@ -60,9 +60,9 @@ int main(int argc, char *argv[]){
   util::Known knowns;
   knowns << "topo" << "conf" << "input" << "verb" << "pttopo"
 	 << "trc" << "fin" << "trv" << "trf" << "trs" << "tre" << "trg"
-	 << "bae" << "bag" << "posresspec" << "refpos" << "distrest"  
-         << "dihrest" << "jval" << "xray" << "sym" << "order"  << "rdc" << "lud" << "led" << "anatrj"
-         << "print" << "friction" << "qmmm" << "version" << "develop";
+	 << "bae" << "bag" << "posresspec" << "refpos" <<"distrest" << "dihrest"
+         << "jval" << "xray" << "sym" << "order" << "rdc" << "lud" << "led"
+         << "anatrj" << "print" << "friction" << "qmmm" << "version" << "develop";
   
   
   std::string usage;
@@ -134,7 +134,7 @@ int main(int argc, char *argv[]){
     MPI::Finalize();
     return 1;    
   }
-  
+
   // check for development 
   if (sim.param().develop.develop==true && args.count("develop") < 0) { 
     io::messages.add(sim.param().develop.msg, io::message::develop); 
@@ -201,10 +201,7 @@ int main(int argc, char *argv[]){
 
     int next_step = 1;
 
-if (sim.param().analyze.analyze) sim.param().step.number_of_steps -= sim.param().write.position;
-
     while(int(sim.steps()) < sim.param().step.number_of_steps){
-
       traj.write(conf, topo, sim, io::reduced);
       
       // run a step
@@ -224,7 +221,8 @@ if (sim.param().analyze.analyze) sim.param().step.number_of_steps -= sim.param()
       traj.print_final(topo, conf, sim);
 
       bool do_shake = sim.param().system.nsm &&
-        sim.param().constraint.solvent.algorithm == simulation::constr_shake;
+        sim.param().constraint.solvent.algorithm == simulation::constr_shake
+        && !sim.param().analyze.no_constraints;
 
       algorithm::Shake * shake =
         dynamic_cast<algorithm::Shake *>(md.algorithm("Shake"));
@@ -261,7 +259,7 @@ if (sim.param().analyze.analyze) sim.param().step.number_of_steps -= sim.param()
       MPI::COMM_WORLD.Bcast(&next_step, 1, MPI::INT, 0);
       traj.print(topo, conf, sim);
       
-      ++sim.steps();
+      sim.steps()=sim.steps()+sim.param().analyze.stride;
       sim.time() = sim.param().step.t0 + sim.steps()*sim.time_step_size();
       if ((sim.param().step.number_of_steps / 10 > 0) &&
 	  (sim.steps() % (sim.param().step.number_of_steps / 10) == 0)){
@@ -357,11 +355,12 @@ if (sim.param().analyze.analyze) sim.param().step.number_of_steps -= sim.param()
     }
 
     // get shake and check whether we do it for solvent
-    bool do_shake = (sim.param().system.npm && sim.param().constraint.solute.algorithm == simulation::constr_shake) ||
-      (sim.param().constraint.solvent.algorithm == simulation::constr_shake && sim.param().system.nsm);
+    bool do_shake = ((sim.param().system.npm && sim.param().constraint.solute.algorithm == simulation::constr_shake) ||
+      (sim.param().constraint.solvent.algorithm == simulation::constr_shake && sim.param().system.nsm))
+        && !sim.param().analyze.no_constraints;
 
     // for stochastic dynamics simulation we need to call SHAKE twice
-    bool do_shake_twice = sim.param().stochastic.sd;
+    bool do_shake_twice = sim.param().stochastic.sd && !sim.param().analyze.no_constraints;
 
     algorithm::Shake * shake =
       dynamic_cast<algorithm::Shake *>(md.algorithm("Shake"));
@@ -417,12 +416,6 @@ if (sim.param().analyze.analyze) sim.param().step.number_of_steps -= sim.param()
     const double init_time = util::now() - start;
     int next_step = 0 ;
 
-    if (sim.param().analyze.analyze) {
-      if (sim.param().write.position==0) std::cout << "ERROR: NTWX=0, should be the value used in the simulation that produced the output trajectory\n";
-      else if (sim.param().write.position>0) sim.param().step.number_of_steps/=sim.param().write.position;
-      else if (sim.param().write.position<0) sim.param().step.number_of_steps/=-sim.param().write.position;
-    }
-
     while(int(sim.steps()) < sim.param().step.number_of_steps){
       // run a step
       // (*os) << "waiting for master (nonbonded interaction)" << std::endl;
@@ -467,7 +460,7 @@ if (sim.param().analyze.analyze) sim.param().step.number_of_steps -= sim.param()
         break;
       }
 
-      ++sim.steps();
+      sim.steps() = sim.steps()+sim.param().analyze.stride;
       sim.time() = sim.param().step.t0 + sim.steps()*sim.time_step_size();
     }
 

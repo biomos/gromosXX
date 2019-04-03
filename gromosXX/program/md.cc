@@ -175,10 +175,7 @@ int main(int argc, char *argv[]){
   int error;
 
   const double init_time = util::now() - start;
-  //if (sim.param().analyze.analyze) sim.param().step.number_of_steps -= sim.param().write.position;
   while(int(sim.steps()) < sim.param().step.number_of_steps && !exit_md){
-  std::cout << "md1 conf old1 " << v2s(conf.old().pos[1]) << std::endl;
-  std::cout << "md1 conf cur1 " << v2s(conf.current().pos[1]) << std::endl;
       
     traj.write(conf, topo, sim, io::reduced);
 

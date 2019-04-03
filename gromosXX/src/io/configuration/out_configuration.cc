@@ -281,11 +281,8 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
      * set this to true when you print the timestep to the special traj.
      * make sure you don't print it twice. 
      */
-    //  m_special_traj << "time " << sim.time() << ", steps " << sim.steps() << "\n";
-    
+
     if (m_every_pos && ((sim.steps() % m_every_pos) == 0 || minimum_found)) {
-      // don't write starting configuration if analyzing a trajectory
-      //if (sim.steps()) {
         _print_timestep(sim, m_pos_traj);
 
         if (sim.param().write.position_solute_only)
@@ -297,7 +294,6 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
           _print_box(conf, m_pos_traj);
 
         m_pos_traj.flush();
-      //}
       // a new block begins. let's reset the minimum
       minimum_energy = conf.old().energies.get_energy_by_index(sim.param().write.energy_index);
     }

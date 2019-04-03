@@ -72,20 +72,22 @@ int algorithm::Analyze_Step
        bool quiet)
 {
   if (!quiet)
-    os << "TRAJECTORY ANALYZATION\n";
-  
-
-  if (sim.param().analyze.copy_pos){
-    os << "\tcopying current position to old\n"
-       << "\tvelocities are set to 0.\n";
-  }
+    os << "TRAJECTORY ANALYZATION\n"
+       << "\tCoordinates will be read in from a previously generated trajectory\n"
+       << "\tinstead of being calculated.\n"
+       << "\n"
+       << "\tNTSTR has to be set to the NTWX parameter\n"
+       << "\twhich was used to produce the trajectory being analyzed!\n"
+       << "\t\n";
   
   // save initial configuration as old() state
   conf.exchange_state();
 
-  if (m_trajectory.read_next(topo, conf, sim)){
+  if (m_trajectory.read_next(topo, conf, sim, os, false)){
 
     if (sim.param().analyze.copy_pos){
+      os << "\tcopying current position to old\n"
+       << "\tvelocities are set to 0.\n";
       DEBUG(9, "analyze: copy current() pos to old()");
       conf.old().pos = conf.current().pos;
     }
@@ -93,10 +95,10 @@ int algorithm::Analyze_Step
     conf.old().vel = 0;
     conf.current().vel = 0;
 
-  SPLIT_BOUNDARY(_put_cg_into_box, topo, conf, sim);    
+    SPLIT_BOUNDARY(_put_cg_into_box, topo, conf, sim);    
   
-  if (!quiet)
-    os << "END\n";
+    if (!quiet)  os << "END\n";
+    
     return 0;
   }
 
@@ -117,11 +119,10 @@ int algorithm::Analyze_Step
   conf.exchange_state();
 
   if (sim.param().step.number_of_steps == sim.steps() + sim.param().analyze.stride){
-    io::messages.add("last frame " ,
-		   "read input",
-		   io::message::notice);
+    // last frame, there is no more frame to read from the trajectory, but we still need to
+    // do the step to write out the energies
     return 0;
-  } else if (m_trajectory.read_next(topo, conf, sim)){
+  } else if (m_trajectory.read_next(topo, conf, sim, std::cout, false)){
 
     if (sim.param().analyze.copy_pos){
       DEBUG(9, "analyze: copy current() pos to old()");
@@ -130,7 +131,7 @@ int algorithm::Analyze_Step
 
     conf.old().vel = 0;
     conf.current().vel = 0;
-  SPLIT_BOUNDARY(_put_cg_into_box, topo, conf, sim);
+    SPLIT_BOUNDARY(_put_cg_into_box, topo, conf, sim);
     
     return 0;
   } else  {
@@ -139,32 +140,5 @@ int algorithm::Analyze_Step
 		   io::message::error);
     return E_UNSPECIFIED;
   }
-  
-  //return E_UNSPECIFIED;
-}
-
-algorithm::Analyze_Exchange::Analyze_Exchange()
-  : Algorithm("AnalyzeExchange")
-{
-}
-
-int algorithm::Analyze_Exchange
-::init(topology::Topology & topo,
-       configuration::Configuration & conf,
-       simulation::Simulation &sim,
-       std::ostream & os,
-       bool quiet)
-{
-  return 0;
-}
-
-/**
- * Here the states are exchanged.
- */
-int algorithm::Analyze_Exchange
-::apply(topology::Topology & topo,
-	configuration::Configuration & conf,
-        simulation::Simulation &sim) {
-  return 0;
 }
 
