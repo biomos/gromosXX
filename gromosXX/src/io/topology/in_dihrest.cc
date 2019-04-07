@@ -30,7 +30,8 @@ void io::In_Dihrest::read(topology::Topology& topo,
   DEBUG(7, "reading in a dihedral restraints file");
 
   std::ostringstream oss;
-  oss << "the dihedral is calculated from the nearest-image\n"
+  oss << "the dihedral (specified in the DIHEDRALRESSPEC block) \n"
+       << "         is calculated from the nearest-image\n"
        << "         vectors, you have to make sure that none of the vectors defining it become \n"
        << "         longer than half the box length at any point during the simulations!\n";
   io::messages.add(oss.str(), "in_dihedralres", io::message::warning);

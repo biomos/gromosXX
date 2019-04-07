@@ -71,15 +71,22 @@ int algorithm::Analyze_Step
        std::ostream & os,
        bool quiet)
 {
-  if (!quiet)
-    os << "TRAJECTORY ANALYZATION\n"
+  if (!quiet) {
+    os << "TRAJECTORY ANALYSIS\n"
        << "\tCoordinates will be read in from a previously generated trajectory\n"
        << "\tinstead of being calculated.\n"
        << "\n"
        << "\tNTSTR has to be set to the NTWX parameter\n"
        << "\twhich was used to produce the trajectory being analyzed!\n"
-       << "\t\n";
-  
+       << "\tmake sure NTWE, NTWX, NTWG, NTWB and NTWF are a multiple\n"
+       << "\tof or equal to NTSTR (or 0)!\n";
+    if (sim.param().analyze.no_constraints) {
+      os << "\n\tConstraints turned off by NTSHK=2.\n";
+    }
+    os<< "\t\n";
+  }
+    
+ 
   // save initial configuration as old() state
   conf.exchange_state();
 

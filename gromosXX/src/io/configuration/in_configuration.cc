@@ -158,8 +158,7 @@ bool io::In_Configuration::read_next
  bool do_read_time
  )
 {
-  if (!quiet)
-    os << "\nread next frame\n";
+  DEBUG(8, "Read next frame\n");
 
   read_frame();
 
@@ -184,14 +183,7 @@ bool io::In_Configuration::read_next
   }
 
   // print some information
-  if (!quiet){
-    os << "\n\t";
-    os << "time : " << sim.time()
-       << "\n\t"
-       << "step : " << sim.steps();
-
-    os << "\n\n";
-  }
+  DEBUG(8, "\n\ttime : " << sim.time()  << "\n\tstep : " << sim.steps() << "\n\n");
 
   // warn for unread input data
   for(std::map<std::string, std::vector<std::string> >::const_iterator
