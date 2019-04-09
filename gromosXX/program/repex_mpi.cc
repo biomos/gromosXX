@@ -436,7 +436,7 @@ int main(int argc, char *argv[]) {
     Slave->write_final_conf();
     std::cout << "\n=================== Slave Node "<< rank << "  finished successfully!\n";
   }
-
+  
   MPI_Barrier(MPI_COMM_WORLD);  //Make sure all processes finished.
 
   //last MASTER OUTPUT
@@ -459,7 +459,7 @@ int main(int argc, char *argv[]) {
     std::cerr<< "TOTAL TIME USED: \n\th:min:s\t\tseconds\n"
        << "\t" << durationHour << ":"<<durationMinlHour << ":" << durationSlMin << "\t\t" << duration << "\n";
   }
-  
+
   MPI_Finalize();
   return 0;
 #else
