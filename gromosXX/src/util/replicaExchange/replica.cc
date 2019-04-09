@@ -243,6 +243,7 @@ void util::replica::run_MD() {
 
 void util::replica::write_final_conf() {
     traj->write(conf, topo, sim, io::final);
+    delete  traj;   //bschroed needs to be done, so the flush functions are triggered
 }
 
 // this function is deadlock safe, because it's made sure, that the replicas
