@@ -184,6 +184,7 @@ void util::replica::run_MD() {
       switch (error) {
         case E_SHAKE_FAILURE:
           std::cerr << "SHAKE FAILURE in Replica " << (ID+1) << " on node " << rank << std::endl;
+          io::messages.display();
           print_info("Info:");
 #ifdef XXMPI
           MPI_Abort(MPI_COMM_WORLD, error);
@@ -191,6 +192,7 @@ void util::replica::run_MD() {
           break;
         case E_SHAKE_FAILURE_SOLUTE:
           std::cerr << "SHAKE FAILURE SOLUTE in Replica " << (ID+1) << " on node " << rank << std::endl;
+          io::messages.display();
           print_info("Info:");
 #ifdef XXMPI
           MPI_Abort(MPI_COMM_WORLD, error);
@@ -198,6 +200,7 @@ void util::replica::run_MD() {
           break;
         case E_SHAKE_FAILURE_SOLVENT:
           std::cerr << "SHAKE FAILURE SOLVENT in Replica " << (ID+1) << " on node " << rank << std::endl;
+          io::messages.display();
           print_info("Info:");
 #ifdef XXMPI
           MPI_Abort(MPI_COMM_WORLD, error);
@@ -205,6 +208,7 @@ void util::replica::run_MD() {
           break;
         case E_NAN:
           std::cerr << "NAN error in Replica " << (ID+1) << " on node " << rank << std::endl;
+          io::messages.display();
           print_info("Info:");
 #ifdef XXMPI
           MPI_Abort(MPI_COMM_WORLD, error);
@@ -212,6 +216,7 @@ void util::replica::run_MD() {
           break;
         default:
           std::cerr << "Unknown error in Replica " << (ID+1) << " on node " << rank << std::endl;
+          io::messages.display();
           print_info("Info:");
 #ifdef XXMPI
           MPI_Abort(MPI_COMM_WORLD, error);
