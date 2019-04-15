@@ -153,6 +153,50 @@ int io::simple_crosschecks(simulation::Simulation & sim) {
        && (param.boundary.boundary != math::triclinic && param.boundary.boundary != math::rectangular))
         io::messages.add("PRESSURESCALE block: (semi-)anisotropic pressure scaling requires a rectangular or triclinic box.",
                          "In_Parameter", io::message::error);
+
+    // pressure scaling or calculation and trajectory reading mode
+    if (param.analyze.analyze && param.pcouple.scale != math::pcouple_off) {
+        io::messages.add("PRESSURESCALE block: Pressure scaling in trajectory reading mode will lead"
+                         "to unexpected results.", "In_Parameter", io::message::warning);
+    }
+    if (param.analyze.analyze && param.pcouple.calculate) {
+        io::messages.add("PRESSURESCALE block: pressure calculation in trajectory reading\n\tmode will yield only the virial "
+                         "contribution.", "In_Parameter", io::message::warning);
+    }
+
+    // warnings for trajectory writing frequencies with trajectory reading mode
+    if (param.analyze.analyze){
+      if (param.write.energy != 0 && (abs(param.write.energy) % param.analyze.stride != 0)) {
+            io::messages.add("WRITETRAJ block: NTWE is not equal to or a multiple of NTSTR (anatrj),\n"
+                                 "\tWe can not write out more frequently or at a different frequency\n"
+                                 "\tthan the one of the input coordinate trajectory!",
+                                 "In_Parameter", io::message::warning);
+      }
+      if (param.write.position != 0 && (abs(param.write.position) % param.analyze.stride != 0)) {
+            io::messages.add("WRITETRAJ block: NTWX is not equal to or a multiple of NTSTR (anatrj),\n"
+                                 "\tWe can not write out more frequently or at a different frequency\n"
+                                 "\tthan the one of the input coordinate trajectory!",
+                                 "In_Parameter", io::message::warning);
+      }
+      if (param.write.free_energy != 0 && (abs(param.write.free_energy) % param.analyze.stride != 0)) {
+            io::messages.add("WRITETRAJ block: NTWG is not equal to or a multiple of NTSTR (anatrj),\n"
+                                 "\tWe can not write out more frequently or at a different frequency\n"
+                                 "\tthan the one of the input coordinate trajectory!",
+                                 "In_Parameter", io::message::warning);
+      }
+      if (param.write.force != 0 && (abs(param.write.force) % param.analyze.stride != 0)) {
+            io::messages.add("WRITETRAJ block: NTWF is not equal to or a multiple of NTSTR (anatrj)\n"
+                                 "\tWe can not write out more frequently or at a different frequency\n"
+                                 "\tthan the one of the input coordinate trajectory!",
+                                 "In_Parameter", io::message::warning);
+      }
+      if (param.write.block_average != 0 && (abs(param.write.block_average) % param.analyze.stride != 0)) {
+            io::messages.add("WRITETRAJ block: NTWB is not equal to or a multiple of NTSTR (anatrj)\n"
+                                 "\tWe can not write out more frequently or at a different frequency\n"
+                                 "\tthan the one of the input coordinate trajectory!",
+                                 "In_Parameter", io::message::warning);
+      }
+    }
     
     // warn if Hamiltonian repex but no perturbation
     if (param.replica.num_l > 1 && !param.perturbation.perturbation)

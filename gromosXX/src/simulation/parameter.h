@@ -2411,9 +2411,12 @@ namespace simulation
        * Default values:
        * - analyze(false)
        * - copy_pos(false)
+       * - no_constraints (false)
+       * - stride (1)
        * - trajectory("")
        */
-      analyze_struct() : analyze(false), copy_pos(false), trajectory("")
+      analyze_struct() : analyze(false), copy_pos(false), trajectory(""),
+                         stride(1), no_constraints(false)
       {
       }
       /** 
@@ -2428,6 +2431,14 @@ namespace simulation
        * trajectory filename
        */
       std::string trajectory;
+      /** 
+       * stride
+       */
+      int stride;
+      /**
+       * do not apply any constraints (also not on solvent)
+       */
+      bool no_constraints;
       
     } /** analyze parameter */ analyze;
 
