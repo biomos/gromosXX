@@ -311,12 +311,12 @@ def qrun(r1, r2, run, start=1):
     script.workdir = scr + name + "_" + str(T[r1])
     script.crd = _conf[0]
     
-    script.write(T[r1])
+    script.write_out_energy_trajs(T[r1])
 
     script.workdir = scr + name + "_" + str(T[r2])
     script.crd = _conf[1]
     
-    script.write(T[r2])
+    script.write_out_energy_trajs(T[r2])
 
     script.workdir = scr + name
     script.crd = ""
@@ -399,12 +399,12 @@ def srun(run):
             script.workdir = scr + name + "_" + str(T[r1])
             script.crd = _conf[0]
     
-            script.write(T[r1])
+            script.write_out_energy_trajs(T[r1])
 
             script.workdir = scr + name + "_" + str(T[r2])
             script.crd = _conf[1]
 
-            script.write(T[r2])
+            script.write_out_energy_trajs(T[r2])
 
             script.workdir = scr + name
             script.crd = ""
