@@ -160,6 +160,9 @@ configuration::Configuration::Configuration
   special().distancefield.energy = conf.special().distancefield.energy;
   special().distancefield.energy_deriv = conf.special().distancefield.energy_deriv;
   
+  special().angleres.energy = conf.special().angleres.energy;
+  special().angleres.d = conf.special().angleres.d;
+
   special().dihedralres.energy = conf.special().dihedralres.energy;
   special().dihedralres.d = conf.special().dihedralres.d;
   
@@ -280,6 +283,9 @@ configuration::Configuration & configuration::Configuration::operator=
   special().distancefield.dist = conf.special().distancefield.dist;
   special().distancefield.energy = conf.special().distancefield.energy;
   special().distancefield.energy_deriv = conf.special().distancefield.energy_deriv;
+  
+  special().angleres.energy = conf.special().angleres.energy;
+  special().angleres.d = conf.special().angleres.d;
   
   special().dihedralres.energy = conf.special().dihedralres.energy;
   special().dihedralres.d = conf.special().dihedralres.d;

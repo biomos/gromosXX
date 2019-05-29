@@ -18,10 +18,12 @@
 #include "../../interaction/special/position_restraint_interaction.h"
 #include "../../interaction/special/distance_restraint_interaction.h"
 #include "../../interaction/special/distance_field_interaction.h"
+#include "../../interaction/special/angle_restraint_interaction.h"
 #include "../../interaction/special/dihedral_restraint_interaction.h"
 #include "../../interaction/special/perturbed_distance_restraint_interaction.h"
 #include "../../interaction/special/perturbed_distance_field_interaction.h"
 #include "../../interaction/special/eds_distance_restraint_interaction.h"
+#include "../../interaction/special/perturbed_angle_restraint_interaction.h"
 #include "../../interaction/special/perturbed_dihedral_restraint_interaction.h"
 #include "../../interaction/special/jvalue_restraint_interaction.h"
 #include "../../util/umbrella_weight.h"
@@ -131,6 +133,29 @@ int interaction::create_special(interaction::Forcefield & ff,
 	new interaction::Perturbed_Distance_Field_Interaction;
       
       ff.push_back(pdf);
+    }
+  }
+  
+  // Angle restraints 
+  if (param.angrest.angrest == simulation::angle_restr_inst ||
+      param.angrest.angrest == simulation::angle_restr_inst_weighted){
+
+    if(!quiet)
+      os <<"\tAngle restraints\n";
+
+    interaction::Angle_Restraint_Interaction *dr =
+      new interaction::Angle_Restraint_Interaction();
+
+    ff.push_back(dr);
+    
+    if(param.perturbation.perturbation){
+      if(!quiet)
+	os <<"\tPerturbed angle restraints\n";
+      
+      interaction::Perturbed_Angle_Restraint_Interaction *pdr =
+	new interaction::Perturbed_Angle_Restraint_Interaction;
+      
+      ff.push_back(pdr); 
     }
   }
   

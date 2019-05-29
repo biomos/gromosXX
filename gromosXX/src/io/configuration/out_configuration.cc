@@ -35,7 +35,7 @@
 
 // Energy trajectory version
 // For details, see definition in out_configuration.cc
-const std::string io::Out_Configuration::ene_version = "2018-12-10";
+const std::string io::Out_Configuration::ene_version = "2021-04-12";
 
 // declarations
 static void _print_energyred_helper(std::ostream & os, configuration::Energy const &e);
@@ -70,6 +70,7 @@ m_every_jvalue(0),
 m_every_xray(0),
 m_every_disres(0),
 m_every_disfieldres(0),
+m_every_angres(0),
 m_every_dihres(0),
 m_every_dat(0),
 m_every_leus(0),
@@ -86,6 +87,7 @@ m_precision(9),
 m_force_precision(9),
 m_distance_restraint_precision(7),
 m_disfield_restraint_precision(7),
+m_angle_restraint_precision(7),
 m_dihedral_restraint_precision(7),
 m_width(15),
 m_force_width(18),
@@ -200,7 +202,8 @@ void io::Out_Configuration::init(io::Argument & args,
           io::message::error);
 
   m_write_special = param.polarise.write || param.jvalue.write || param.xrayrest.write 
-     || param.distanceres.write || param.distancefield.write || param.dihrest.write || param.print.monitor_dihedrals 
+     || param.distanceres.write || param.distancefield.write || param.angrest.write
+     || param.dihrest.write || param.print.monitor_dihedrals
      || param.localelev.write || param.electric.dip_write || param.electric.cur_write 
      || param.addecouple.write || param.nemd.write || param.orderparamrest.write || param.rdc.write
      || param.bsleus.write;    // add others if there are any
@@ -208,7 +211,8 @@ void io::Out_Configuration::init(io::Argument & args,
   if (args.count(argname_trs) > 0)
     special_trajectory(args[argname_trs], param.polarise.write, 
             param.jvalue.write, param.xrayrest.write, param.distanceres.write, 
-            param.distancefield.write, param.dihrest.write, param.print.monitor_dihedrals,param.localelev.write, 
+            param.distancefield.write, param.angrest.write, param.dihrest.write,
+            param.print.monitor_dihedrals,param.localelev.write, 
             param.electric.dip_write, param.electric.cur_write, param.addecouple.write,
             param.nemd.write, param.orderparamrest.write, param.rdc.write,
             param.bsleus.write);
@@ -333,6 +337,12 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       _print_disfield_restraints(conf, topo, m_special_traj);
       m_special_traj.flush();
     }
+
+    if (m_every_angres && sim.steps() && ((sim.steps()-sim.param().analyze.stride) % m_every_angres) == 0) {
+      _print_angle_restraints(conf, topo, m_special_traj);
+      m_special_traj.flush();
+    }
+
     if (m_every_dihres && sim.steps() && ((sim.steps()-sim.param().analyze.stride) % m_every_dihres) == 0) {
       _print_dihedral_restraints(conf, topo, m_special_traj);
       m_special_traj.flush();
@@ -616,6 +626,10 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       _print_disfield_restraints(conf, topo, m_special_traj);
     }
     
+    if (m_every_angres && ((sim.steps()-sim.param().analyze.stride) % m_every_angres) == 0) {   
+      _print_angle_restraints(conf, topo, m_special_traj);
+    }
+    
     if (m_every_dihres && ((sim.steps()-sim.param().analyze.stride) % m_every_dihres) == 0) {   
       _print_dihedral_restraints(conf, topo, m_special_traj);
     }
@@ -738,7 +752,8 @@ void io::Out_Configuration
 
 void io::Out_Configuration
 ::special_trajectory(std::string name, int every_cos, int every_jvalue, 
-                     int every_xray, int every_disres, int every_disfieldres, int every_dihres, int every_dat, 
+                     int every_xray, int every_disres, int every_disfieldres, 
+                     int every_angres, int every_dihres, int every_dat, 
                      int every_leus, int every_dipole, int every_current,
                      int every_adde, int every_nemd, int every_oparam, int every_rdc,
                      int every_bsleus) {
@@ -750,6 +765,7 @@ void io::Out_Configuration
   m_every_xray = every_xray;
   m_every_disres = every_disres;
   m_every_disfieldres = every_disfieldres;
+  m_every_angres = every_angres;
   m_every_dihres = every_dihres;
   m_every_dat = every_dat;
   m_every_leus = every_leus;
@@ -843,6 +859,7 @@ void io::Out_Configuration
                              (m_every_xray && ((sim.steps() % m_every_xray) == 0)) ||
                              (m_every_disres && ((sim.steps() % m_every_disres) == 0)) ||
                              (m_every_disfieldres && ((sim.steps() % m_every_disfieldres) == 0)) ||
+                             (m_every_angres && ((sim.steps() % m_every_angres) == 0)) ||
                              (m_every_dihres && ((sim.steps() % m_every_dihres) == 0)) ||
                              (m_every_dat && ((sim.steps() % m_every_dat) == 0)) ||
                              (m_every_leus && ((sim.steps() % m_every_leus) == 0)) ||
@@ -1534,6 +1551,7 @@ ENERGY03
    0.000000000e+00 # QM/MM total
    0.000000000e+00 # B&S-LEUS energy
    0.000000000e+00 # RDC-value total
+   0.000000000e+00 # angle restraints total
 # baths
 # number of baths
 2
@@ -1552,9 +1570,9 @@ ENERGY03
   -6.774710271e-01   4.920740888e-01   0.000000000e+00   0.000000000e+00  # 1 - 2
   -7.163386790e-01  -1.309311086e+01   0.000000000e+00   0.000000000e+00  # 2 - 2
 # special
-#  constraints       pos. restraints   dist. restraints  disfield res      dihe. restr.      SASA              SASA volume       jvalue            rdc               local elevation   path integral
-   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00 # group 1
-   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00 # group 2
+#  constraints       pos. restraints   dist. restraints  disfield res      dihe. restr.      SASA              SASA volume       jvalue            rdc               local elevation   path integral   angle restraint
+   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00 0.000000000e+00 # group 1
+   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00 0.000000000e+00 # group 2
 # eds (enveloping distribution sampling)
 # numstates
 2
@@ -2434,6 +2452,50 @@ void io::Out_Configuration::_print_disfield_grid(
   os << "END" << std::endl;
 }
 
+void io::Out_Configuration::_print_angle_restraints(
+        configuration::Configuration const &conf,
+        topology::Topology const & topo,
+        std::ostream &os) {
+  DEBUG(10, "angle restraints");
+
+  std::vector<double>::const_iterator ene_it = conf.special().angleres.energy.begin();
+  std::vector<double>::const_iterator d_it = conf.special().angleres.d.begin(), 
+                                      d_to = conf.special().angleres.d.end();
+
+  os.setf(std::ios::fixed, std::ios::floatfield);
+  os.precision(m_angle_restraint_precision);
+  
+  if (conf.special().angleres.d.size() > 0) {
+    os << "ANGRESDATA" << std::endl;
+    os << std::setw(m_width) << conf.special().angleres.d.size() << "\n";
+    int i;
+    for (i = 1; d_it != d_to; ++d_it, ++ene_it, ++i) {
+       double theta = *d_it * 180 /math::Pi;
+       os << std::setw(m_width) << theta << " "
+       << std::setw(m_width) << *ene_it;
+       os << std::endl;
+    }
+    os << "END" << std::endl;
+  }
+  
+  std::vector<double>::const_iterator pene_it = conf.special().pertangleres.energy.begin();
+  std::vector<double>::const_iterator pd_it = conf.special().pertangleres.d.begin(), 
+                                      pd_to = conf.special().pertangleres.d.end();
+  
+  if (conf.special().pertangleres.d.size() > 0) {
+    os << "PERTANGRESDATA" << std::endl;
+    os << conf.special().pertangleres.d.size() << "\n";
+    int i;
+    for (i = 1; pd_it != pd_to; ++pd_it, ++pene_it, ++i) {
+       double theta = *pd_it * 180 /math::Pi;
+       os << std::setw(m_width) << theta
+       << std::setw(m_width) << *pene_it;
+       os << std::endl;
+    }
+    os << "END" << std::endl;
+  }
+}
+
 void io::Out_Configuration::_print_dihedral_restraints(
         configuration::Configuration const &conf,
         topology::Topology const & topo,
@@ -2888,7 +2950,8 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
           << std::setw(18) << e.entropy_term << "\n" // 40
           << std::setw(18) << e.qm_total << "\n" // 41
           << std::setw(18) << e.bsleus_total << "\n" // 42
-          << std::setw(18) << e.rdc_total << "\n"; // 43
+          << std::setw(18) << e.rdc_total << "\n" // 43
+          << std::setw(18) << e.angrest_total << "\n"; // 44
 
   os << "# baths\n";
   os << numbaths << "\n";
@@ -2929,6 +2992,7 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
             << std::setw(18) << e.posrest_energy[i]
             << std::setw(18) << e.distanceres_energy[i] // disres
             << std::setw(18) << e.disfieldres_energy[i] // disfieldres
+            << std::setw(18) << e.angrest_energy[i]// angle res
             << std::setw(18) << e.dihrest_energy[i] // dihedral res
             << std::setw(18) << e.sasa_energy[i]
             << std::setw(18) << e.sasa_volume_energy[i]
@@ -2974,6 +3038,7 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
      << std::setw(18) << "AB_improper"
      // special interactions - Betty
      << std::setw(18) << "AB_disres"
+     << std::setw(18) << "AB_angres"
      << std::setw(18) << "AB_dihres"
      << std::setw(18) << "AB_disfld\n";
      /*<< std::setw(18) << /"AB_dihedral\n";*/
@@ -2989,6 +3054,7 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
        << std::setw(18) << e.AB_improper[i]
        // special interations - Betty
        << std::setw(18) << e.AB_disres[i]
+       << std::setw(18) << e.AB_angres[i]
        << std::setw(18) << e.AB_dihres[i]
        << std::setw(18) << e.AB_disfld[i]
        //<< std::setw(18) << e.AB_dihedral[i]

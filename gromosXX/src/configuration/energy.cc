@@ -45,6 +45,7 @@ special_total(0.0),
 posrest_total(0.0),
 distanceres_total(0.0),
 disfieldres_total(0.0),
+angrest_total(0.0),
 dihrest_total(0.0),
 jvalue_total(0.0),
 xray_total(0.0),
@@ -96,6 +97,7 @@ void configuration::Energy::zero(bool potential, bool kinetic)
     posrest_total = 0.0;
     distanceres_total = 0.0;
     disfieldres_total = 0.0;
+    angrest_total = 0.0;
     dihrest_total = 0.0;
     jvalue_total = 0.0;
     xray_total = 0.0;
@@ -132,6 +134,7 @@ void configuration::Energy::zero(bool potential, bool kinetic)
     B_dihedral = 0.0;
     // special interactions - Betty
     AB_disres.assign(AB_disres.size(),0.0);
+    AB_angres.assign(AB_angres.size(),0.0);
     AB_dihres.assign(AB_dihres.size(),0.0);
     AB_disfld.assign(AB_disfld.size(),0.0);
     //AB_dihedral.assign(AB_angle.size(),0.0);
@@ -145,6 +148,7 @@ void configuration::Energy::zero(bool potential, bool kinetic)
     posrest_energy.assign(posrest_energy.size(), 0.0);
     distanceres_energy.assign(distanceres_energy.size(), 0.0);
     disfieldres_energy.assign(disfieldres_energy.size(), 0.0);
+    angrest_energy.assign(angrest_energy.size(), 0.0);
     dihrest_energy.assign(dihrest_energy.size(), 0.0);
     jvalue_energy.assign(jvalue_energy.size(), 0.0);
     rdc_energy.assign(rdc_energy.size(), 0.0);  
@@ -229,6 +233,7 @@ void configuration::Energy::resize(unsigned int energy_groups, unsigned int mult
     posrest_energy.resize(energy_groups);
     distanceres_energy.resize(energy_groups);
     disfieldres_energy.resize(energy_groups);
+    angrest_energy.resize(energy_groups);
     dihrest_energy.resize(energy_groups);
     jvalue_energy.resize(energy_groups);
     rdc_energy.resize(energy_groups);  
@@ -257,6 +262,7 @@ void configuration::Energy::resize(unsigned int energy_groups, unsigned int mult
     AB_improper.resize(nr_lambdas);
     // special interactions - Betty
     AB_disres.resize(nr_lambdas);
+    AB_angres.resize(nr_lambdas);
     AB_dihres.resize(nr_lambdas);
     AB_disfld.resize(nr_lambdas);
     //AB_dihedral.resize(nr_lambdas);
@@ -318,6 +324,7 @@ int configuration::Energy::calculate_totals()
   posrest_total = 0.0; 
   distanceres_total =0.0; 
   disfieldres_total =0.0; 
+  angrest_total = 0.0;
   dihrest_total = 0.0;
   jvalue_total = 0.0; 
   rdc_total = 0.0; 
@@ -437,6 +444,10 @@ int configuration::Energy::calculate_totals()
       std::cout << "EWARN: disfieldres energy " << i+1 << " = " << disfieldres_energy[i] << "\n";
     }
     disfieldres_total     += disfieldres_energy[i];
+    if (angrest_energy[i] > m_ewarn){
+      std::cout << "EWARN: angrest energy " << i+1 << " = " << angrest_energy[i] << "\n";
+    }
+    angrest_total      += angrest_energy[i];
     if (dihrest_energy[i] > m_ewarn){
       std::cout << "EWARN: dihrest energy " << i+1 << " = " << dihrest_energy[i] << "\n";
     }
@@ -501,7 +512,7 @@ int configuration::Energy::calculate_totals()
   potential_total = nonbonded_total + bonded_total + qm_total;
   
   special_total = posrest_total + distanceres_total + disfieldres_total
-    + dihrest_total
+    + angrest_total + dihrest_total
     + constraints_total + jvalue_total + xray_total
     + eds_vr + leus_total + sasa_total + sasa_volume_total + oparam_total
     + symrest_total + bsleus_total + rdc_total;
@@ -572,6 +583,7 @@ double configuration::Energy::get_energy_by_index(const unsigned int & index) {
     case 41 : return qm_total;
     case 42 : return bsleus_total;
     case 43 : return rdc_total;
+    case 44 : return angrest_total;
   }
   return 0.0;
 }

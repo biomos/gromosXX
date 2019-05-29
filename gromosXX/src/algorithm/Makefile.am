@@ -41,6 +41,8 @@ xxalgconst_HEADERS = constraints/create_constraints.h\
 	constraints/position_constraints.h\
 	constraints/shake.h\
 	constraints/perturbed_shake.h\
+	constraints/angle_constraint.cc\
+        constraints/perturbed_angle_constraint.cc\
 	constraints/dihedral_constraint.cc\
 	constraints/perturbed_dihedral_constraint.cc\
 	constraints/lincs.h\

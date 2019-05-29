@@ -694,6 +694,91 @@ namespace topology {
 
   };
 
+  struct angle_restraint_struct {
+
+    /**
+     * Constructor.
+     */
+    angle_restraint_struct(int i, int j, int k, double theta, double w0)
+    : i(i), j(j), k(k),
+    theta(theta), cost(cos(theta)),
+    w0(w0) {
+    }
+
+    /**
+     * atom i
+     */
+    int i;
+    /**
+     * atom j
+     */
+    int j;
+    /**
+     * atom k
+     */
+    int k;
+    /**
+     * restraint angle
+     */
+    double theta;
+    double cost;
+    /**
+     * weighting factor.
+     */
+    double w0;
+  };
+
+  struct perturbed_angle_restraint_struct {
+
+    /**
+     * Constructor.
+     */
+    perturbed_angle_restraint_struct(int i, int j, int k, int m, int n,
+            double A_theta, double A_w0, double B_theta, double B_w0)
+    : i(i), j(j), k(k),
+    m(m), n(n),
+    A_theta(A_theta), A_w0(A_w0),
+    B_theta(B_theta), B_w0(B_w0) {
+    }
+
+    /**
+     * atom i
+     */
+    int i;
+    /**
+     * atom j
+     */
+    int j;
+    /**
+     * atom k
+     */
+    int k;
+    /**
+     * exponent m
+     */
+    int m;
+    /**
+     * exponent n
+     */
+    int n;
+    /**
+     * restraint angle state A
+     */
+    double A_theta;
+    /**
+     * weighting factor state A
+     */
+    double A_w0;
+    /**
+     * restraint angle state B
+     */
+    double B_theta;
+    /**
+     * weighting factor state B
+     */
+    double B_w0;
+  };
+
   struct dihedral_restraint_struct {
 
     /**

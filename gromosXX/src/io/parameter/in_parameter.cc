@@ -75,6 +75,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_POSITIONRES(param);
   read_DISTANCERES(param);
   read_DISTANCEFIELD(param); 
+  read_ANGLERES(param);
   read_DIHEDRALRES(param); // needs to be called after CONSTRAINT!
   read_PERTURBATION(param);
   read_JVALUERES(param);
@@ -1940,6 +1941,82 @@ void io::In_Parameter::read_DISTANCEFIELD(simulation::Parameter &param,
         block.get_final_messages();
     }
 } // DISTANCEFIELD
+
+
+/**
+ * @section angleres ANGLERES block
+ * @snippet snippets/snippets.cc ANGLERES
+ */
+void io::In_Parameter::read_ANGLERES(simulation::Parameter &param,
+                                        std::ostream & os) {
+    DEBUG(8, "reading ANGLERES");
+
+    std::stringstream exampleblock;
+    // lines starting with 'exampleblock<<"' and ending with '\n";' (spaces don't matter)
+    // will be used to generate snippets that can be included in the doxygen doc;
+    // the first line is the tag
+    exampleblock << "ANGLERES\n";
+    exampleblock << "# NTALR   0...3 controls angle restraining and constraining\n";
+    exampleblock << "#         0:    off [default]\n";
+    exampleblock << "#         1:    angle restraining using CALR\n";
+    exampleblock << "#         2:    angle restraining using CALR * WALR\n";
+    exampleblock << "#         3:    angle constraining\n";
+    exampleblock << "#\n";
+    exampleblock << "# CALR    >=0.0 force constant for angle restraining [kJ/mol/degree^2]\n";
+    exampleblock << "# NTWALR  >=0   write every NTWALR step angle restraint information to external file\n";
+    exampleblock << "# TOLBAC  >0    tolerance for constraint deviation (in degrees)\n";
+    exampleblock << "#\n";
+    exampleblock << "# NTALR  CALR    NTWALR  TOLBAC\n";
+    exampleblock << "  1      1.0    100      0.01\n";
+    exampleblock << "END\n";
+
+
+    std::string blockname = "ANGLERES";
+    Block block(blockname, exampleblock.str());
+
+    if (block.read_buffer(m_block[blockname], false) == 0) {
+        block_read.insert(blockname);
+
+        double K, tolerance;
+        int angrest;
+        block.get_next_parameter("NTALR", angrest, "", "0,1,2,3");
+        block.get_next_parameter("CALR", K, ">=0", "");
+        block.get_next_parameter("NTWALR", param.angrest.write, ">=0", "");
+        block.get_next_parameter("TOLBAC", tolerance, ">=0", "");
+
+        switch (angrest) {
+            case 0:
+                param.angrest.angrest = simulation::angle_restr_off;
+                break;
+            case 1:
+                param.angrest.angrest = simulation::angle_restr_inst;
+                break;
+            case 2:
+                param.angrest.angrest = simulation::angle_restr_inst_weighted;
+                break;
+            case 3:
+                param.angrest.angrest = simulation::angle_constr;
+                break;
+            default:
+                break;
+        }
+
+        param.angrest.K = K*180*180 / (math::Pi * math::Pi);
+        param.angrest.tolerance = tolerance * math::Pi / 180;
+
+        if (param.angrest.angrest == simulation::angle_constr) {
+            if (param.constraint.ntc == 1 && param.constraint.solute.algorithm == simulation::constr_off)
+                param.constraint.solute.algorithm = simulation::constr_shake;
+
+            if (param.constraint.solute.algorithm != simulation::constr_shake) {
+                io::messages.add("ANGLERES block: needs SHAKE as (solute) constraints algorithm",
+                                 "In_Parameter",
+                                 io::message::error);
+            }
+        }
+        block.get_final_messages();
+    }
+} // ANGLERES
 
 /**
  * @section dihedralres DIHEDRALRES block
@@ -3928,7 +4005,7 @@ void io::In_Parameter::read_LAMBDAS(simulation::Parameter & param,
     exampleblock << "# NTLI(1..)  interaction type to treat with individual lambda:\n";
     exampleblock << "#            bond(1), angle(2), dihedral(3), improper(4), vdw(5), vdw_soft(6),\n";
     exampleblock << "#            crf(7), crf_soft(8), distanceres(9), distancefield(10),\n";
-    exampleblock << "#            dihedralres(11), mass(12)\n";
+    exampleblock << "#            dihedralres(11), mass(12), angleres(13)\n";
     exampleblock << "# NILG1, NILG2 energy groups of interactions that are treated with individual\n";
     exampleblock << "#              lambda values\n";
     exampleblock << "# ALI, BLI, CLI, DLI, ELI polynomial coefficients linking the individual lambda-\n";
@@ -4030,6 +4107,8 @@ void io::In_Parameter::read_LAMBDAS(simulation::Parameter & param,
                 j = simulation::dihres_lambda;
             else if (nm == "mass" || nm == "12")
                 j = simulation::mass_lambda;
+            else if (nm == "angleres" || nm == "13")
+                j = simulation::angres_lambda;
             else {
                 io::messages.add("unknown lambda type in LAMBDAS block: " + nm,
                                  "In_Parameter", io::message::error);
