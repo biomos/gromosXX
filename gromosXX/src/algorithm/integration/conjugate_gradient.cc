@@ -9,6 +9,8 @@
  * 2. Test posres with shake
  * 3. Revise changes in configuration.cc
  * 4. Unlock and test relevant feature pairs
+ * 5. Apply Wolfe condition to get more efficient step size
+ * 6. Iterative cubic interpolation - converges to deeper minimum
  */
 
 #include "../../stdheader.h"
@@ -259,7 +261,7 @@ int algorithm::Conjugate_Gradient
   }
   DEBUG(15, "p_squared = " << p_squared);
 
-  // Initial step size (chosen so rA->rB = step_size)
+  // Initial step size (chosen so |rB - rA| = step_size)
   double b_init = step_size / sqrt(p_squared);
   
   // Upper boundary for cubic interpolation
@@ -311,6 +313,29 @@ int algorithm::Conjugate_Gradient
     for(unsigned int i=0; i<topo.num_atoms(); ++i) {
       gradB += math::dot(conf.old().cgrad(i), conf.current().force(i));
     }
+    
+    // TEST
+      double c1 = 1.e-4;
+      double c2 = 0.1;
+      double wolfe1L = eneB;
+      double wolfe1R = eneA - c1 * b * gradA;
+      double wolfe2L = gradB;
+      double wolfe2R = c2 * gradA;
+      DEBUG(15, "wolfe1: " << wolfe1L << " <= " << wolfe1R);
+      if (wolfe1L <= wolfe1R) {
+        DEBUG(15, "WOLFE 1 PASSED");
+      } else {
+        DEBUG(15, "WOLFE 1 FAILED");
+      }
+
+      DEBUG(15, "wolfe2: " << wolfe2L << " <= " << wolfe2R);
+      if (wolfe2L <= wolfe2R) {
+        DEBUG(15, "WOLFE 2 PASSED");
+      } else {
+        DEBUG(15, "WOLFE 2 FAILED");
+      }
+    // END TEST
+
     DEBUG(15, "gradB = " << gradB);
     // If gradB < 0 or eneB > eneA, accept B as upper boundary for estimation of X
     if (gradB < 0 || eneB > eneA) {
@@ -322,7 +347,7 @@ int algorithm::Conjugate_Gradient
       // Minimum is probably beyond B
       DEBUG(1, "Minimum is beyond upper boundary. Doubling the interval size.");
       b *= 2;
-      DEBUG(10, "Increasing size of next step by 10%");
+      DEBUG(10, "Increasing the size of next step by 10%");
       sim.minimisation_step_size() *= 1.1;
       counter_doub += 1;
     }
