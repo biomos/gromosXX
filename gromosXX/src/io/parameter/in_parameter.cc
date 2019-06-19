@@ -4046,9 +4046,8 @@ void io::In_Parameter::read_NONBONDED(simulation::Parameter & param,
                              "In_Parameter", io::message::error);
 
         if (param.nonbonded.lj_correction)
-            io::messages.add("NONBONDED block: LJ long range correction not implemented."
-                             " Set NLRLJ to 0.",
-                             "In_Parameter", io::message::error);
+            io::messages.add("NONBONDED block: LJ long range correction Switched on."
+                             "In_Parameter", io::message::warning);
 
         block.get_final_messages();
     }
@@ -4911,6 +4910,8 @@ void io::In_Parameter::read_QMMM(simulation::Parameter & param,
     exampleblock << "# NTQMSW 0 QM software package to use\n";
     exampleblock << "#    0: MNDO (default)\n";
     exampleblock << "#    1: Turbomole\n";
+    exampleblock << "#    2: DFTB\n";
+    exampleblock << "#    3: MOPAC\n";
     exampleblock << "# RCUTQ >= 0.0 cutoff for inclusion of MM charge groups\n";
     exampleblock << "#     0.0: include all atoms\n";
     exampleblock << "#    >0.0: include atoms of charge groups closer than RCUTQ\n";
@@ -4918,25 +4919,33 @@ void io::In_Parameter::read_QMMM(simulation::Parameter & param,
     exampleblock << "# NTWQMMM >= 0 write QM/MM related data to special trajectory\n";
     exampleblock << "#    0: do not write\n";
     exampleblock << "#   >0: write every NTWQMMMth step\n";
+    exampleblock << "# QMLJ 0, 1 apply LJ in QM-zone \n";
+    exampleblock << "#    0: do not apply LJ interaction in QM-zone (default)\n";
+    exampleblock << "#    1: apply LJ interaction  \n";
+    exampleblock << "# MMSCAL scale mm-charges with (2/pi)*atan(x*(r_{mm}-r_{mm}))  \n";
+    exampleblock << "#     > 0.0: scaling-factor x\n";
+    exampleblock << "#     < 0.0: don't scale (default)";
     exampleblock << "#\n";
-    exampleblock << "# NTQMMM  NTQMSW  RCUTQ  NTWQMMM\n";
-    exampleblock << "       1       0    0.0        0\n";
+    exampleblock << "# NTQMMM  NTQMSW  RCUTQ  NTWQMMM QNLJ MMSCAL\n";
+    exampleblock << "       1       0    0.0        0   0 -1.\n";
     exampleblock << "END\n";
 
 
     std::string blockname = "QMMM";
     Block block(blockname, exampleblock.str());
-
     if (block.read_buffer(m_block[blockname], false) == 0) {
         block_read.insert(blockname);
 
-        int enable, software, write;
-        double cutoff;
+
+    int enable, software,write,disp;
+    double mmscal;
+    double cutoff;
         block.get_next_parameter("NTQMMM", enable, "", "0,1");
-        block.get_next_parameter("NTQMSW", software, "", "0,1");
+        block.get_next_parameter("NTQMSW", software, "", "0,1,2,3");
         block.get_next_parameter("RCUTQ", cutoff, ">=0", "");
         block.get_next_parameter("NTWQMMM", write, ">=0", "");
-
+        block.get_next_parameter("DISP", disp, "", "0,1");
+        block.get_next_parameter("MMSCAL", mmscal, " ", "  ");
         switch(enable) {
             case 0:
                 param.qmmm.qmmm = simulation::qmmm_off;
@@ -4945,7 +4954,24 @@ void io::In_Parameter::read_QMMM(simulation::Parameter & param,
                 param.qmmm.qmmm = simulation::qmmm_on;
                 break;
             default:
+        param.qmmm.qmmm = simulation::qmmm_off;
+        io::messages.add("QMMM block: NTQMMM must be 0 or 1.",
+                    "In_Parameter", io::message::error);
+        return;
+    }
+
+    switch (disp) {
+        case 0:
+            param.qmmm.qmmm_disp= simulation::qmmm_disp_off;
+            param.force.interaction_function=simulation::qmmm_func;   
+            std::cout << "LJ excluded in QM" << std::endl;
                 break;
+        case 1:
+            param.qmmm.qmmm_disp= simulation::qmmm_disp_on;
+            break;
+        default:
+                io::messages.add("QMMM block: invalid choice of DISP",
+                    "In_Parameter", io::message::error);
         }
 
         switch (software) {
@@ -4955,9 +4981,20 @@ void io::In_Parameter::read_QMMM(simulation::Parameter & param,
             case 1:
                 param.qmmm.software = simulation::qmmm_software_turbomole;
                 break;
-            default:
+            case 2:
+                 param.qmmm.software = simulation::qmmm_software_dftb;
                 break;
-        }
+            case 3:
+                 param.qmmm.software = simulation::qmmm_software_mopac;
+            break;
+            default:
+        param.qmmm.software = simulation::qmmm_software_mndo;
+        io::messages.add("QMMM block: NTQMSW invalid choice of software",
+                    "In_Parameter", io::message::error);
+        return;
+    }
+    
+    param.qmmm.mmscal=mmscal;
 
         param.qmmm.cutoff = cutoff;
         param.qmmm.write = write;

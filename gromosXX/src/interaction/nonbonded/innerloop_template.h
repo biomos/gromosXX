@@ -22,6 +22,9 @@
     case simulation::cgrain_func : \
       f<Interaction_Spec<bound, simulation::cgrain_func> >(__VA_ARGS__); \
       break; \
+    case simulation::qmmm_func : \
+      f<Interaction_Spec<bound, simulation::qmmm_func> >(__VA_ARGS__); \
+      break; \
     case simulation::cggromos_func : \
       f<Interaction_Spec<bound, simulation::cggromos_func> >(__VA_ARGS__); \
       break; \

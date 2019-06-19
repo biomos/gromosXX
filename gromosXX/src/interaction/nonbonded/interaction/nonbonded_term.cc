@@ -28,6 +28,7 @@ inline void interaction::Nonbonded_Term
     case simulation::lj_crf_func:
     case simulation::pol_lj_crf_func:
     case simulation::pol_off_lj_crf_func:
+    case simulation::qmmm_func:
       cgrain_eps.push_back(sim.param().nonbonded.epsilon);
       // Force
       if (sim.param().nonbonded.rf_cutoff > 0.0) {

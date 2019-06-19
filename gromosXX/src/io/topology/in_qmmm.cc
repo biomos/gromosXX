@@ -145,11 +145,12 @@ END
 void
 io::In_QMMM::read(topology::Topology& topo,
         simulation::Simulation & sim,
+        simulation::qmmm_software_enum sw,
         std::ostream & os) {
 
   DEBUG(7, "reading in a QM/MM specification file");
   std::vector<std::string> buffer;
-  { // QMZONE
+  { // QMZONE/
     buffer = m_block["QMZONE"];
     DEBUG(10, "QMZONE block : " << buffer.size());
 
@@ -165,7 +166,7 @@ io::In_QMMM::read(topology::Topology& topo,
     DEBUG(10, "reading in QMZONE data");
 
     unsigned int i, nr, z;
-    int link;
+    int link, link_to;
     for (i = 0; it != to; ++i, ++it) {
 
       DEBUG(11, "\tnr " << i);
@@ -183,6 +184,9 @@ io::In_QMMM::read(topology::Topology& topo,
       _lineStream.str(line);
 
       _lineStream >> nr >> z >> link;
+      if (link > 0 ) {
+            topo.qm_mm_pair().push_back(std::make_pair(nr - 1, link - 1));
+      }
 
       DEBUG(11, "\t" << nr << "\t" << z);
 
@@ -198,17 +202,55 @@ io::In_QMMM::read(topology::Topology& topo,
         return;
       }
 
-      if (link < 0 || link > 1) {
-        io::messages.add("QMZONE block: QMLI has to be 0 or 1",
+      if (link < 0 ) {
+        io::messages.add("QMZONE block: QMLI has to > 0",
                 "In_QMMM", io::message::error);
         return;
       }
 
+
       --nr;
       topo.qm_zone().insert(topology::qm_atom_struct(nr, z, link, topo.charge(nr)));
     }
+      for (std::vector<std::pair<unsigned int, unsigned int> >::const_iterator
+                   it = topo.qm_mm_pair().begin(); it != topo.qm_mm_pair().end(); ++it) {
+        std::cout << "QM_MM link " << it->first << " linked to  " << it->second << std::endl;
+        std::cout << "charges of cleaved bond " << topo.charge(it->first) << " " <<
+                  topo.charge(it->second) << std::endl;
+      }
+    io::messages.add("read QM/MM specification file",
+                     "In_QMMM", io::message::notice);
+
   } // QMZONE
-  { // QMUNIT
+  // { // QMUNIT
+  //   buffer = m_block["QMUNIT"];
+  //   DEBUG(10, "QMUNIT block : " << buffer.size());
+
+  //   if (!buffer.size()) {
+  //    io::messages.add("no QMUNIT block in QM/MM specification file",
+  //            "In_QMMM", io::message::error);
+  //    return;
+  // }
+  // std::string s;
+  // _lineStream.clear();
+  // _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
+//
+  // _lineStream >> sim.param().qmmm.unit_factor_length
+  //          >> sim.param().qmmm.unit_factor_energy
+  //          >> sim.param().qmmm.unit_factor_charge;
+
+  //  if (_lineStream.fail()) {
+  //    io::messages.add("bad line in QMUNIT block.",
+  //            "In_QMMM", io::message::error);
+  //   return;
+  // }
+  // } // QMUNIT
+
+  // check for MNDO specific data
+  //if (sim.param().qmmm.software == simulation::qmmm_software_mndo or
+  //        sim.param().qmmm.software == simulation::qmmm_software_both)
+
+  if (sw == simulation::qmmm_software_mndo) {
     buffer = m_block["QMUNIT"];
     DEBUG(10, "QMUNIT block : " << buffer.size());
 
@@ -230,10 +272,8 @@ io::In_QMMM::read(topology::Topology& topo,
               "In_QMMM", io::message::error);
       return;
     }
-  } // QMUNIT
 
-  // check for MNDO specific data
-  if (sim.param().qmmm.software == simulation::qmmm_software_mndo) {
+
     { // MNDOFILES
       buffer = m_block["MNDOFILES"];
       DEBUG(10, "MNDOFILES block : " << buffer.size());
@@ -267,7 +307,10 @@ io::In_QMMM::read(topology::Topology& topo,
       concatenate(buffer.begin() + 1, buffer.end() - 1,
               sim.param().qmmm.mndo.input_header);
     } // MNDOHEADER
-  } else if (sim.param().qmmm.software == simulation::qmmm_software_turbomole) {
+
+  } //else if (sim.param().qmmm.software == simulation::qmmm_software_turbomole) {
+  else if (sw == simulation::qmmm_software_turbomole) {
+
     { // TURBOMOLEELEMENTS
       buffer = m_block["TURBOMOLEELEMENTS"];
       DEBUG(10, "TURBOMOLEELEMENTS block : " << buffer.size());
@@ -345,6 +388,194 @@ io::In_QMMM::read(topology::Topology& topo,
         sim.param().qmmm.turbomole.toolchain.push_back(tool);
       }
     } // TURBOMOLETOOLCHAIN  
+  }//DFTB
+  else if (sw == simulation::qmmm_software_dftb) {
+    buffer = m_block["QMUNIT"];
+    DEBUG(10, "QMUNIT block : " << buffer.size());
+
+    if (!buffer.size()) {
+      io::messages.add("no QMUNIT block in QM/MM specification file",
+                       "In_QMMM", io::message::error);
+      return;
   }
+    std::string s;
+    _lineStream.clear();
+    _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
+
+    _lineStream >> sim.param().qmmm.unit_factor_length3
+                >> sim.param().qmmm.unit_factor_energy3
+                >> sim.param().qmmm.unit_factor_charge3
+                >> sim.param().qmmm.unit_factor_mmlen;
+
+
+    if (_lineStream.fail()) {
+      io::messages.add("bad line in QMUNIT block.",
+                       "In_QMMM", io::message::error);
+      return;
 }
+    { // DFTBFILES
+      buffer = m_block["DFTBFILES"];
+      DEBUG(10, "DFTBFILES block : " << buffer.size());
+
+      if (!buffer.size()) {
+        io::messages.add("Using temporary files for DFTB input/output and assuming that the binary is in the PATH",
+                         "In_QMMM", io::message::notice);
+        sim.param().qmmm.dftb.binary = "dftb";
+      } else {
+        if (buffer.size() != 8) {
+          io::messages.add("DFTB block corrupt. Provide 6 lines.",
+                           "In_QMMM", io::message::error);
+          return;
+        }
+        sim.param().qmmm.dftb.binary = buffer[1];
+        sim.param().qmmm.dftb.working_directory = buffer[2];
+        sim.param().qmmm.dftb.input_file = buffer[3];
+        sim.param().qmmm.dftb.output_file = buffer[4];
+        sim.param().qmmm.dftb.output_charg_file = buffer[5];
+        sim.param().qmmm.dftb.geom_file = buffer[6];
+
+
+      }
+    } // DFTBFILES
+    {
+      buffer = m_block["DFTBELEMENTS"];
+      DEBUG(10, "DFTBELEMENTS block : " << buffer.size());
+
+      if (!buffer.size()) {
+        io::messages.add("no DFTBELEMENTS block in QM/MM specification file",
+                         "In_QMMM", io::message::error);
+        return;
+      }
+      // std::string s;
+      _lineStream.clear();
+      _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
+      unsigned int Z;
+
+      while (_lineStream >> Z)
+        sim.param().qmmm.dftb.elements.push_back(Z);
+
+      //sim.param().qmmm.dftb.elements[Z] = species;
+
+//      // check whether all elements have been provided
+//      bool error = false;
+//      for (std::set<topology::qm_atom_struct>::const_iterator
+//        it = topo.qm_zone().begin(), to = topo.qm_zone().end(); it != to; ++it) {
+//        if (sim.param().qmmm.dftb.elements.find(it->atomic_number) == 
+//                sim.param().qmmm.dftb.elements.end()) {
+//          std::ostringstream msg;
+//          msg << "Please provide element name for atomic number " << it->atomic_number
+//                  << " in DFTBELEMENTS block.";
+//          io::messages.add(msg.str(), "In_QMMM", io::message::error);
+//        }
+//      }
+//      if (error) 
+//        return;
+    } // DFTBELEMENTS
+    { // DFTBHEADER
+      buffer = m_block["DFTBHEADER"];
+      DEBUG(10, "DFTBHEADER block : " << buffer.size());
+      if (!buffer.size()) {
+        io::messages.add("no DFTHEADER block in QM/MM specification file",
+                         "In_QMMM", io::message::error);
+        return;
+      }
+
+      concatenate(buffer.begin() + 1, buffer.end() - 1,
+                  sim.param().qmmm.dftb.input_header);
+    } // DFTBHEADER
+  } else if (sw == simulation::qmmm_software_mopac) {
+    buffer = m_block["QMUNIT"];
+    DEBUG(10, "QMUNIT block : " << buffer.size());
+
+    if (!buffer.size()) {
+      io::messages.add("no QMUNIT block in QM/MM specification file",
+                       "In_QMMM", io::message::error);
+      return;
+    }
+    std::string s;
+    _lineStream.clear();
+    _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
+
+    _lineStream >> sim.param().qmmm.unit_factor_length
+                >> sim.param().qmmm.unit_factor_energy
+                >> sim.param().qmmm.unit_factor_charge;
+
+    if (_lineStream.fail()) {
+      io::messages.add("bad line in QMUNIT block.",
+                       "In_QMMM", io::message::error);
+      return;
+    }
+    {
+      //MOPACFILES
+      buffer = m_block["MOPACFILES"];
+      DEBUG(10, "MOPACFILES block : " << buffer.size());
+
+      if (!buffer.size()) {
+        io::messages.add("Using temporary files for MOPAC input/output and assuming that the binary is in the PATH",
+                         "In_QMMM", io::message::notice);
+        sim.param().qmmm.mopac.binary = "mopac";
+      } else {
+        if (buffer.size() != 7) {
+          io::messages.add("MOPAC block corrupt. Provide 4 lines.",
+                           "In_QMMM", io::message::error);
+          return;
+        }
+      }
+      if (this->title.find("2") == std::string::npos) {
+        sim.param().qmmm.mopac.binary = buffer[1];
+        sim.param().qmmm.mopac.input_file = buffer[2];
+        sim.param().qmmm.mopac.output_file = buffer[3];
+        sim.param().qmmm.mopac.output_gradient_file = buffer[4];
+        sim.param().qmmm.mopac.molin_file = buffer[5];
+      }
+      else{
+        sim.param().qmmm.mopac.binary = buffer[1];
+        sim.param().qmmm.mopac.input_file2 = buffer[2];
+        sim.param().qmmm.mopac.output_file2 = buffer[3];
+        sim.param().qmmm.mopac.output_gradient_file2 = buffer[4];
+        sim.param().qmmm.mopac.molin_file2 = buffer[5];
+      }
+    } // MOPACFILES
+    { // MOPACHEADER
+      buffer = m_block["MOPACHEADER"];
+      DEBUG(10, "MOPACHEADER block : " << buffer.size());
+      if (!buffer.size()) {
+        io::messages.add("no MOPACHEADER block in QM/MM specification file",
+                         "In_QMMM", io::message::error);
+        return;
+      }
+        if (this->title.find("2") == std::string::npos) {
+          concatenate(buffer.begin() + 1, buffer.end() - 1,
+                      sim.param().qmmm.mopac.input_header);
+        } else {
+          concatenate(buffer.begin() + 1, buffer.end() - 1,
+                      sim.param().qmmm.mopac.input_header2);
+        }
+      } // MOPACHEADER
+    }
+    if(topo.qm_mm_pair().size()>0 ) {
+      _lineStream.clear();
+      {
+        buffer = m_block["LINKDIST"];
+        DEBUG(10, "LINKDIST block : " << buffer.size());
+        if (!buffer.size()) {
+          io::messages.add("no LINKDIST block, despite specified link-atoms",
+                           "In_QMMM", io::message::error);
+          return;
+        }
+        double r_qm_mm;
+        for (std::vector<std::string>::const_iterator it = buffer.begin() + 1,
+                     to = buffer.end() - 1; it != to; ++it) {
+          std::string line(*it);
+          _lineStream.clear();
+          _lineStream.str(line);
+          _lineStream >> r_qm_mm;
+          sim.param().qmmm.cap_dist = r_qm_mm;
+        }
+      }
+    }
+
+
+}
+
 

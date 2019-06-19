@@ -32,6 +32,7 @@
 #define MAXPATH 10240
 
 interaction::Turbomole_Worker::~Turbomole_Worker() {
+this->del_qmID();
 }
 
 int interaction::Turbomole_Worker::init(topology::Topology& topo, 
@@ -57,7 +58,11 @@ void defortranize(std::string & str) {
 int interaction::Turbomole_Worker::run_QM(topology::Topology& topo, 
         configuration::Configuration& conf, simulation::Simulation& sim, 
         const math::VArray& qm_pos, const std::vector<MM_Atom>& mm_atoms, 
-        interaction::QM_Storage& storage) {
+        interaction::QM_Storage& storage,
+        interaction::QM_Storage& LA_storage,
+        const configuration::Configuration& qmmm_conf){
+    
+    
   char current_working_directory[MAXPATH];
 #ifdef HAVE_GETCWD
   if (getcwd(current_working_directory, MAXPATH) == NULL) {
@@ -71,7 +76,7 @@ int interaction::Turbomole_Worker::run_QM(topology::Topology& topo,
 #endif
   
 #ifdef HAVE_CHDIR
-  if (chdir(sim.param().qmmm.turbomole.working_directory.c_str()) != 0) {
+  if (chdir(this->working_directory.c_str()) != 0) {
     io::messages.add("Cannot change into Turbomole working directory",
             "Turbomole_Worker", io::message::error);
     return 1;
@@ -154,8 +159,8 @@ int interaction::Turbomole_Worker::run_QM(topology::Topology& topo,
   input_mm_coord << "$end" << std::endl;
   input_mm_coord.close();
   
-  for(std::vector<std::string>::const_iterator it = sim.param().qmmm.turbomole.toolchain.begin(),
-          to = sim.param().qmmm.turbomole.toolchain.end(); it != to; ++it) {
+  for(std::vector<std::string>::const_iterator it = this->tool_chain.begin(),
+          to = this->tool_chain.end(); it != to; ++it) {
     std::string output_file(*it + ".out"), input_file("");
     
     if (*it == "define") {
@@ -166,7 +171,7 @@ int interaction::Turbomole_Worker::run_QM(topology::Topology& topo,
             input_file, output_file) != 0) {
       std::ostringstream msg;
       msg << "Turbomole program " << *it << " failed. See " 
-              << sim.param().qmmm.turbomole.working_directory << "/" << output_file
+              << this->working_directory << "/" << output_file
               << " for details.";
       io::messages.add(msg.str(), "Turbomole_Worker", io::message::error);
       return 1;
@@ -352,12 +357,14 @@ int interaction::Turbomole_Worker::run_QM(topology::Topology& topo,
   }
   output.close();
   output.clear();
-  
+
   // remove files again
 #ifdef HAVE_REMOVE
   remove(sim.param().qmmm.turbomole.output_energy_file.c_str());
   remove(sim.param().qmmm.turbomole.output_gradient_file.c_str());
-  remove(sim.param().qmmm.turbomole.output_mm_gradient_file.c_str());
+ // if (mm_atoms.size()> 0) {
+ //    remove(sim.param().qmmm.turbomole.output_mm_gradient_file.c_str());
+ // }
 #else
   return impl("remove");
 #endif

@@ -144,11 +144,21 @@ calculate_interactions(topology::Topology & topo,
   
   DEBUG(6, "sets are done, adding things up...");
   store_set_data(*p_topo, *p_conf, sim);
+  if (sim.param().nonbonded.lj_correction && sim.param().pcouple.virial ) {
+    for (unsigned int j = 0; j < 3; ++j) {
+      conf.current().virial_tensor(j,j)+=  conf.current().energies.lj_lr;
+    }
+  }
 
   if (sim.param().multicell.multicell) {
     reduce_configuration(topo, conf, sim, *p_conf);
   }
 
+  if (sim.param().nonbonded.lj_correction && sim.param().pcouple.virial ) {
+    for (unsigned int j = 0; j < 3; ++j) {
+      conf.current().virial_tensor(j,j)+= 2.0* conf.current().energies.lj_lr;
+    }
+  }
   DEBUG(6, "Nonbonded_Interaction::calculate_interactions done");
 
   m_timer.stop();

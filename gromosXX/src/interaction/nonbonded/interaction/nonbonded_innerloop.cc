@@ -144,6 +144,43 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop
       }
       break;
     }
+
+      case simulation::qmmm_func:
+    {
+       const lj_parameter_struct & lj =
+              m_param->lj_parameter(topo.iac(i),
+              topo.iac(j));
+
+      DEBUG(11, "\tlj-parameter c6=" << lj.c6 << " c12=" << lj.c12);
+      DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));
+
+
+      if ((topo.in_qm_zone(i) +  topo.in_qm_zone(j) ) < 2 )
+      //if (topo.in_qm_zone(i)==0 && topo.in_qm_zone(j) == 0)
+      {
+         DEBUG(12, "i" << i << " j " << j )
+         lj_crf_interaction(r, lj.c6, lj.c12,
+              topo.charge(i) *
+              topo.charge(j),
+              f, e_lj, e_crf);
+         DEBUG(12, "f: " << f);
+         DEBUG(12, "e_lj: " << e_lj);
+         DEBUG(12, "e_crf: " << e_crf);
+
+         DEBUG(10, "\t\tatomic virial");
+      for (int a = 0; a < 3; ++a) {
+        force(a) = f * r(a);
+        storage.force(i)(a) += force(a);
+        storage.force(j)(a) -= force(a);
+
+        for (int b = 0; b < 3; ++b)
+          storage.virial_tensor(b, a) += r(b) * force(a);
+      }
+      }
+      else break;
+      break;
+    }
+
     case simulation::cggromos_func:
     {
       DEBUG(11, "\tiac(i) = " << topo.iac(i) << " iac(j) = " << topo.iac(j));
@@ -903,6 +940,36 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::one_four_interaction_in
               io::message::critical);
       break;
     }
+
+    case simulation::qmmm_func:
+      {
+          const lj_parameter_struct & lj =
+              m_param->lj_parameter(topo.iac(i),
+              topo.iac(j));
+
+      DEBUG(11, "\tlj-parameter cs6=" << lj.cs6 << " cs12=" << lj.cs12);
+      DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));
+      //if (topo.in_qm_zone(i) == 0 && topo.in_qm_zone(j) == 0)
+      if ((topo.in_qm_zone(i) +  topo.in_qm_zone(j) ) < 2 )
+      {
+                lj_crf_interaction(r, lj.cs6, lj.cs12,
+                        topo.charge()(i) *
+                        topo.charge()(j),
+                        f, e_lj, e_crf);
+
+                DEBUG(10, "\t\tatomic virial");
+                for (int a = 0; a < 3; ++a) {
+                    const double term = f * r(a);
+                    storage.force(i)(a) += term;
+                    storage.force(j)(a) -= term;
+
+                    for (int b = 0; b < 3; ++b)
+                        storage.virial_tensor(b, a) += r(b) * term;
+                }
+            }
+       else break;
+       break;
+      }
     case simulation::cggromos_func :
     {
       // check if...
@@ -1131,6 +1198,36 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_exception_innerloop
 	break;
       }
 
+    case simulation::qmmm_func:
+        {
+            DEBUG(11, "\tlj-parameter cs6=" << ljex.c6 << " cs12=" << ljex.c12);
+            DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));
+            //if (topo.in_qm_zone(i) == 0 && topo.in_qm_zone(j) == 0)
+            if ((topo.in_qm_zone(i) +  topo.in_qm_zone(j) ) < 2 )
+            {
+                lj_crf_interaction(r, ljex.c6, ljex.c12,
+                        topo.charge()(i) *
+                        topo.charge()(j),
+                        f, e_lj, e_crf);
+
+                DEBUG(10, "\t\tatomic virial");
+                for (int a = 0; a < 3; ++a) {
+                    const double term = f * r(a);
+                    storage.force(i)(a) += term;
+                    storage.force(j)(a) -= term;
+
+                    for (int b = 0; b < 3; ++b)
+                        storage.virial_tensor(b, a) += r(b) * term;
+                }
+
+            }
+
+            else break;
+            break;
+        }
+
+
+
     case simulation::cggromos_func :
     {
       if (topo.is_coarse_grained(i) || topo.is_coarse_grained(j)) { // CG-CG or CG-FG
@@ -1309,6 +1406,8 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
   r = 0;
 
   switch (t_nonbonded_spec::interaction_func) {
+
+    case simulation::qmmm_func:
     case simulation::lj_crf_func:
     {
       // this will only contribute in the energy, the force should be zero.
@@ -1562,6 +1661,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_solvent_interaction_inner
           at_to = cg_it.end();
 
   switch (t_nonbonded_spec::interaction_func) {
+    case simulation::qmmm_func:
     case simulation::lj_crf_func:
     {
       for (; at_it != at_to; ++at_it) {

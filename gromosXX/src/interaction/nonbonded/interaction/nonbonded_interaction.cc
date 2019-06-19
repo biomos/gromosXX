@@ -38,7 +38,7 @@
 #include "../../../interaction/nonbonded/interaction/nonbonded_interaction.h"
 
 #include "../../../util/debug.h"
-
+#include "../../../math/volume.h"
 #include "../../../math/periodicity.h"
 #include "../../../math/boundary_checks.h"
 #include "../../../util/template_split.h"
@@ -144,7 +144,6 @@ calculate_interactions(topology::Topology & topo,
 
   DEBUG(6, "sets are done, adding things up...");
   store_set_data(*p_topo, *p_conf, sim);
-
   if (sim.param().multicell.multicell) {
     reduce_configuration(topo, conf, sim, *p_conf);
   }
@@ -159,6 +158,12 @@ calculate_interactions(topology::Topology & topo,
     print_pairlist(*p_topo, *p_conf, sim);
   }
 
+//calculating LRLJ-correction
+  if (sim.param().nonbonded.lj_correction) {
+    conf.current().energies.lj_lr =sim.param().nonbonded.lrlj_fac/
+          math::volume(conf.current().box,conf.boundary_type);
+  DEBUG(10, "\tE(LR-LJ_correction)  " << conf.current().energies.lj_lr);
+  }
   DEBUG(6, "Nonbonded_Interaction::calculate_interactions done");
   m_timer.stop();
 
@@ -323,6 +328,14 @@ int interaction::Nonbonded_Interaction::init(topology::Topology & topo,
       (*it)->init(*p_topo, *p_conf, sim, os, q);
     // only print first time...
     q = true;
+  }
+  //LRLJ-correction
+  if (sim.param().nonbonded.lj_correction) {
+    double c6_avg=0.0;
+    for (unsigned int i = 0;i< topo.num_atoms() ;++i){
+      c6_avg+=sqrt( m_parameter.lj_parameter(topo.iac(i),topo.iac(i)).c6 );
+    }
+    sim.param().nonbonded.lrlj_fac = (-2.* math::Pi*c6_avg*c6_avg)/(3.*pow(sim.param().pairlist.cutoff_long,3));
   }
 
   if (check_special_loop(*p_topo, *p_conf, sim, os, quiet) != 0) {
@@ -823,6 +836,11 @@ void interaction::Nonbonded_Interaction::reduce_configuration
   e.ls_self_total += exp_e.ls_self_total;
   e.ls_surface_total += exp_e.ls_surface_total;
   
+  if (sim.param().nonbonded.lj_correction) {        
+    conf.current().energies.lj_lr =sim.param().nonbonded.lrlj_fac/
+          math::volume(conf.current().box,conf.boundary_type);
+    DEBUG(10, "\tE(LR-LJ_correction) "  << conf.current().energies.lj_lr);
+  }
   // reduce the virial
   if (sim.param().pcouple.virial) {
     DEBUG(7, "\tadd set virial");

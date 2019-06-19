@@ -17,17 +17,29 @@
 #include "qm_worker.h"
 #include "mndo_worker.h"
 #include "turbomole_worker.h"
+#include "dftb_worker.h"
+#include "mopac_worker.h"
 
+int interaction::QM_Worker::get_qmID() 
+{
+   return this->id_qm;
+}
 
-interaction::QM_Worker * interaction::QM_Worker::get_instance(const simulation::Simulation & sim) {
-  switch(sim.param().qmmm.software) {
-    case simulation::qmmm_software_mndo :
-      return new MNDO_Worker;
-    case simulation::qmmm_software_turbomole :
-      return new Turbomole_Worker;
-    default:
-      io::messages.add("QM worker not implemented", "QM_Worker", io::message::critical);
-      break;
-  }
-  return NULL;
+interaction::QM_Worker * interaction::QM_Worker::get_instance(const simulation::Simulation & sim,
+        const int iprog) {
+
+      switch (sim.param().qmmm.software) {
+        case simulation::qmmm_software_mndo :
+          return new MNDO_Worker;
+        case simulation::qmmm_software_turbomole :
+          return new Turbomole_Worker;
+        case simulation::qmmm_software_dftb :
+          return new DFTB_Worker;
+        case simulation::qmmm_software_mopac :
+          return new MOPAC_Worker;
+        default:
+          io::messages.add("QM worker not implemented", "QM_Worker", io::message::critical);
+              break;
+      }
+          return NULL;
 }
