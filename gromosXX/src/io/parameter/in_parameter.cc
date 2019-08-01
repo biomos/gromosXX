@@ -186,7 +186,7 @@ void io::In_Parameter::read_ENERGYMIN(simulation::Parameter &param,
     exampleblock << "#       2: Fletcher-Reeves conjugate-gradient minimisation\n";
     exampleblock << "#       3: Polak-Ribiere conjugate-gradient minimisation\n";
     exampleblock << "# NCYC: >0 number of steps before resetting the conjugate-gradient search direction\n";
-    exampleblock << "#       =0 do not reset conjugate-gradient search direction\n";
+    exampleblock << "#       =0 reset only if the energy grows in the search direction \n";
     exampleblock << "# DELE: >0.0 energy threshold for convergence\n";
     exampleblock << "#       >0.0 (conjugate-gradient) RMS force threshold for convergence\n";
     exampleblock << "# DX0: >0.0 initial step size\n";

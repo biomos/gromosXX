@@ -11,6 +11,9 @@
  * 4. Unlock and test relevant feature pairs
  * 5. Apply Wolfe condition to get more efficient step size
  * 6. Iterative cubic interpolation - converges to deeper minimum
+ * 7. Minimisation ping-pongs with DIHRES (RMS force stays high) - is DIHRES moving dihedral angle back to requested value every step
+ * or is it just extra deep quadratic potential? Should be taken into account in forces
+ * 8. <EMIN> is different and higher than last E_Total?!
  */
 
 #include "../../stdheader.h"
@@ -443,6 +446,11 @@ int algorithm::Conjugate_Gradient
       return error;
     }
     counter_iter += 1;
+    // TEST
+    DEBUG(7, "Total energy = " << conf.current().energies.potential_total + conf.current().energies.special_total)
+    DEBUG(7, "El (RF) = " << conf.current().energies.crf_total)
+    // END TEST
+
     if (do_shake) {
       double shake_step = X * sqrt(p_squared);
       if ( int error = shake_forces(topo, conf, sim, shake_step) ) {
