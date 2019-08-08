@@ -252,6 +252,14 @@ int algorithm::Conjugate_Gradient
 
   // If beta == 0, then p = f and <p|p> = gradA 
   if (beta == 0.0) {
+    if (gradA == 0.0) {
+      io::messages.add("Force is zero, unable to establish search direction", "Conjugate_Gradient", io::message::error);
+      return E_NAN;
+    }
+    else if (math::gisnan(gradA)) {
+      io::messages.add("Force is NaN", "Conjugate_Gradient", io::message::error);
+      return E_NAN;
+    }
     p_squared = gradA;
   }
   else {
@@ -510,7 +518,6 @@ int algorithm::Conjugate_Gradient
   
   // Step size along unconstrained forces to SHAKE
   double step_sh = shake_step / sqrt(f_squared);
-
   DEBUG(10,"shake_forces: Total displacement = " << shake_step);
   DEBUG(15,"shake_forces: \n"
     << "f_squared = \t" << f_squared << "\n"
