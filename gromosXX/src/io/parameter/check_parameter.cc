@@ -4139,9 +4139,9 @@ int io::check_features(simulation::Simulation & sim)
     fc.unlock("conjugate_gradient", "virial_atomic");
     fc.unlock("conjugate_gradient", "virial_molecular");
     fc.unlock("conjugate_gradient", "vacuum");
-    //fc.unlock("conjugate_gradient", "pbc_r");
-    //fc.unlock("conjugate_gradient", "pbc_c");
-    //fc.unlock("conjugate_gradient", "pbc_t");
+    fc.unlock("conjugate_gradient", "pbc_r"); // Should work in principle, but testing
+    fc.unlock("conjugate_gradient", "pbc_c"); // Should work in principle, but testing
+    fc.unlock("conjugate_gradient", "pbc_t"); // Should work in principle, but testing
     fc.unlock("conjugate_gradient", "perturbation");
     fc.unlock("conjugate_gradient", "perturbation_scaling");
     fc.unlock("conjugate_gradient", "slow_growth");
@@ -4166,12 +4166,12 @@ int io::check_features(simulation::Simulation & sim)
     fc.unlock("conjugate_gradient", "temp_berendsen");
     fc.unlock("conjugate_gradient", "temp_nosehoover");
     fc.unlock("conjugate_gradient", "temp_nosehoover_chains");
-    // fc.unlock("conjugate_gradient", "position_rest"); // Probably not working
-    // fc.unlock("conjugate_gradient", "position_const"); // Probably not working
+    fc.unlock("conjugate_gradient", "position_rest"); // Testing
+    fc.unlock("conjugate_gradient", "position_const"); // Probably not working
     // fc.unlock("conjugate_gradient", "position_const_scaled"); // Probably not working
     // fc.unlock("conjugate_gradient", "distance_rest"); // Probably not working
     fc.unlock("conjugate_gradient", "distance_field");
-    // fc.unlock("conjugate_gradient", "dihedral_rest"); // Not working - minimisation "ping-pongs" with DIHRES
+    fc.unlock("conjugate_gradient", "dihedral_rest"); // Not working - minimisation "ping-pongs" with DIHRES
     // fc.unlock("conjugate_gradient", "dihedral_const"); // Probably not working
     // fc.unlock("conjugate_gradient", "jvalue_rest"); // Probably not working
     // fc.unlock("conjugate_gradient", "rdc_rest"); // Probably not working
