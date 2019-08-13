@@ -207,7 +207,7 @@ int io::simple_crosschecks(simulation::Simulation & sim) {
     if (param.perturbation.perturbation == false && param.precalclam.nr_lambdas > 0)
       io::messages.add("PRECALCLAM cannot be on without perturbation",
             "In_Parameter", io::message::error);
-    if (param.precalclam.nr_lambdas > 0 & (param.write.energy == 0 || param.write.free_energy ==0 || 
+    if (param.precalclam.nr_lambdas > 0 && (param.write.energy == 0 || param.write.free_energy ==0 || 
         param.write.energy != param.write.free_energy))
       io::messages.add("PRECALCLAM requires NTWE=NTWG > 0", 
             "In_Parameter", io::message::error);
