@@ -7,7 +7,7 @@
  *
  * @anchor repex_mpi
  * @section repex_mpi replica exchange
- * @date 13.05.2011
+ * @date 20.08.2019
  *
  * Program repex_mpi is used to run replica exchange simulations.
  *
@@ -45,7 +45,6 @@
 #include <math/gmath.h>
 
 
-#define XXMPI //TODO: bschroed remove!
 #ifdef XXMPI
     #include <mpi.h>
 #endif
@@ -90,38 +89,46 @@ int main(int argc, char *argv[]) {
   util::get_usage(knowns, usage, argv[0]);
   usage += "#\n\n";
 
+  // Parse command line arguments
   io::Argument args;
   try{
     if (args.parse(argc, argv, knowns)) {
         std::cerr << usage << std::endl;
-        MPI_Abort(MPI_COMM_WORLD, E_USAGE);
+        MPI_Finalize();
         return 1;
       }
 
       if (args.count("version") >= 0) {
-        MPI_Abort(MPI_COMM_WORLD, E_USAGE);
+        MPI_Finalize();
         return 0;
       }
 
       // parse the verbosity flag and set debug levels
       if (util::parse_verbosity(args)) {
         std::cerr << "could not parse verbosity argument" << std::endl;
-        MPI_Abort(MPI_COMM_WORLD, E_USAGE);
+        MPI_Finalize();
         return 1;
       }
   }
   catch (const std::exception &e){
+      std::cerr <<"\n\t########################################################\n" 
+        << "\n\t\t Exception was thrown in Commandline Parsing!\n"
+        <<"\n\t########################################################\n" ;
       std::string msg = "ERROR!\n Uh OH! Caught an Exception in initial Args parse!\n\n";
       std::cout << msg << e.what() << std::endl;
       std::cerr << msg << e.what() << std::endl;
+      MPI_Finalize();
       MPI_Abort(MPI_COMM_WORLD, E_USAGE);
-      return 1;
+      return -1;
   }
   catch (...){
+      std::cerr <<"\n\t########################################################\n" 
+        << "\n\t\t Exception was thrown in Commandline Parsing!\n"
+        <<"\n\t########################################################\n" ;
       std::string msg = "ERROR!\n Uh OH! Caught an non standard Exception in initial Args parse!!\n Hit the developers!\n\n";
       std::cout << msg << std::endl;
       std::cerr << msg << std::endl;
-      MPI_Abort(MPI_COMM_WORLD, E_USAGE);
+      MPI_Finalize();
       return -1;
   }
   
@@ -141,8 +148,8 @@ int main(int argc, char *argv[]) {
       configuration::Configuration conf;
       algorithm::Algorithm_Sequence md;
       simulation::Simulation sim;
+      
       // read in parameters
-
       bool quiet = true;
       if(rank == 0){
           quiet = true;
@@ -150,13 +157,15 @@ int main(int argc, char *argv[]) {
 
       if (io::read_parameter(args,sim,std::cout, true)){
         if (rank == 0) {
+          std::cerr <<"\n\t########################################################\n" 
+            << "\n\t\tErrors during read Parameters reading!\n"
+            <<"\n\t########################################################\n" ;
           io::messages.display(std::cout);
-          std::cout << "\nErrors in in_parameters!\n" << std::endl;
-          MPI_Abort(MPI_COMM_WORLD, E_USAGE);
+          MPI_Finalize();
         }
         return 1;
       }
-
+      
       // read in the rest
       if(io::read_input_repex(args, topo, conf, sim, md, rank, std::cout, quiet)){
           if (rank == 0) {
@@ -165,18 +174,21 @@ int main(int argc, char *argv[]) {
                     <<"\n\t########################################################\n" ;
             io::messages.display(std::cout);
             io::messages.display(std::cerr);
-            MPI_Abort(MPI_COMM_WORLD, E_USAGE);
+            MPI_Finalize();
             }
           return 1;
        }
 
       if (io::check_parameter(sim) != 0){
         if (rank == 0) {
+          std::cerr <<"\n\t########################################################\n" 
+            << "\n\t\tErrors during initial Parameter reading!\n"
+            <<"\n\t########################################################\n" ;
           io::messages.display(std::cout);
           io::messages.display(std::cerr);
-          MPI_Abort(MPI_COMM_WORLD, E_USAGE);
+          MPI_Finalize();
         }
-        return -1; //reactivated check param at end.  
+        return 1;
       }
          
       //set global parameters
@@ -196,30 +208,43 @@ int main(int argc, char *argv[]) {
 
       if(rank == 0){  //Nice message
           std::ostringstream msg;
+          msg << "\t Short RE-Setting Overview:\n";
           msg << "\t continuation:\t"<<cont<<"\n";
           msg << "\t equilibration runs:\t"<<equil_runs<<"\n";
-          msg << "\t simulation runs:\t"<<sim_runs<<"\n";
-          if(reedsSim){
-              msg << "\t numReplicas:\t"<<numEDSstates<<"\n";
-          }
+          msg << "\t Exchange Trials runs:\t"<<sim_runs<<"\n";
+          msg << "\t Simulation Steps Between Trials:\t"<<sim.param().step.number_of_steps<<"\n";
+          msg << "\t Total Simulation Time:\t"<<sim.param().step.number_of_steps*sim_runs*sim.param().step.dt<<"ps\n";
           msg << "\t numReplicas:\t"<<numReplicas<<"\n";
+          
+          if(reedsSim){
+              msg << "\n\t RE-EDS:\n";
+              msg << "\t numSValues:\t"<<sim.param().reeds.num_l<<"\n";
+              msg << "\t numStates:\t"<<numEDSstates<<"\n";
+          }
+
           msg << "\n==================================================\n\tFinished Initial Parsing\n\n==================================================\n";
-          std::cout << msg;
+          std::cout << msg.str();
       }
     }
   }
   catch (const std::exception &e){
+      std::cerr <<"\n\t########################################################\n" 
+        << "\n\t\t Exception was thrown in initial parsing!\n"
+        <<"\n\t########################################################\n" ;
       std::string msg = "ERROR!\n Uh OH! Caught an Exception in initial test Parsing of the Parameters!\n\n";
       std::cout << msg << e.what() << std::endl;
       std::cerr << msg << e.what() << std::endl;
-      MPI_Abort(MPI_COMM_WORLD, E_USAGE);
-      return 1;
+      MPI_Finalize();
+      return -1;
   }
   catch (...){
+      std::cerr <<"\n\t########################################################\n" 
+        << "\n\t\t Exception was thrown!\n"
+        <<"\n\t########################################################\n" ;
       std::string msg = "ERROR!\n Uh OH! Caught an non standard Exception in initial test Parsing of the Parameters!\n Hit the developers!\n\n";
       std::cout << msg << std::endl;
       std::cerr << msg << std::endl;
-      MPI_Abort(MPI_COMM_WORLD, E_USAGE);
+      MPI_Finalize();
       return -1;
   }
   
@@ -228,6 +253,18 @@ int main(int argc, char *argv[]) {
   //////////////////////////
   // defining MPI Datatypes
   //////////////////////////
+  // Check replica - mpi replicas
+  if(size < numReplicas){
+    std::cerr <<"\n\t########################################################\n" 
+    << "\n\t\tErrors during CHECK MPI!\n"
+    <<"\n\t########################################################\n" ;
+    std::string msg = "\nThe ranks number was smaller than the number of Replicas! Please provide at least the number of replicas as MPI-Ranks\n\n";
+    std::cout << msg << std::endl;
+    std::cerr << msg << std::endl;
+    MPI_Finalize();
+    return 1;
+  }
+  
   //GLOBAL MPI VARIABLES:
   MPI_Datatype MPI_VEC;
   std::map<unsigned int, unsigned int> repMap;     // where is which replica
@@ -251,6 +288,9 @@ int main(int argc, char *argv[]) {
     MPI_Datatype typ[] = {MPI_INT, MPI_DOUBLE};
     MPI_Aint intext;
     MPI_Type_extent(MPI_INT, &intext);
+    int error = 0;    //collect error count
+    MPI_Type_extent(MPI_INT, &error);
+
     MPI_Aint disps[] = {(MPI_Aint) 0, 4 * intext};
     MPI_Type_create_struct(2, blocklen, disps, typ, &MPI_REPINFO);
     MPI_Type_commit(&MPI_REPINFO);
@@ -295,12 +335,18 @@ int main(int argc, char *argv[]) {
     }
   }
   catch (const std::exception &e){
+      std::cerr <<"\n\t########################################################\n" 
+        << "\n\t\tErrors during MPI-Initialisation!\n"
+        <<"\n\t########################################################\n" ;
       std::string msg = "ERROR!\n Uh OH! Caught an Exception in MPI-Initialisation!\n\n";
       std::cout << msg << e.what() << std::endl;
       std::cerr << msg << e.what() << std::endl;
       return 1;
   }
   catch (...){
+      std::cerr <<"\n\t########################################################\n" 
+        << "\n\t\tErrors during MPI-Initialisation!\n"
+        <<"\n\t########################################################\n" ;
       std::string msg = "ERROR!\n Uh OH! Caught an non standard Exception in initial test Parsing of the Parameters!\n Hit the developers!\n\n";
       std::cout << msg << std::endl;
       std::cerr << msg << std::endl;
@@ -309,29 +355,25 @@ int main(int argc, char *argv[]) {
   }
   // make sure all nodes have initialized everything
   MPI_Barrier(MPI_COMM_WORLD);
-  
-  //TODO integrate reeds with system.param().reeds.reeds
-  
+    
   //////////////////////////////
-  /// Starting master-slave mode
+  /// Starting master-slave Pattern
   //////////////////////////////
+
   if (rank == 0) {  //MASTER
-      
         //nice messages
         std::cout << "\n==================================================\n\tStart REPLICA EXCHANGE SIMULATION:\n\n==================================================\n";
-        std::cout << "Start Master on Node "<< rank << "\n";
         std::cout << "numreplicas:\t "<< numReplicas<<"\n";
         std::cout << "num Slaves:\t "<< numReplicas-1<<"\n";
 
         std::cerr << "\n==================================================\n\tStart REPLICA EXCHANGE SIMULATION:\n\n==================================================\n";
-        std::cerr << "Start Master on Node "<< rank << "\n";
         std::cerr << "numreplicas:\t "<< numReplicas<<"\n";
         std::cerr << "num Slaves:\t "<< numReplicas-1<<"\n\n";
     
     DEBUG(1, "Master \t "<< rank)
     const double init_time = util::now() - start;
     
-    // Select repex Implementation
+    // Select repex Implementation - Polymorphism
     util::replica_exchange_master* Master;
     try{
         if(reedsSim){
@@ -343,6 +385,9 @@ int main(int argc, char *argv[]) {
           }
     }
     catch(...){
+        std::cerr <<"\n\t########################################################\n" 
+            << "\n\t\tErrors during Master Class Init!\n"
+            <<"\n\t########################################################\n" ;
         std::cerr << "\nREPEX:       Failed in initialization of Replica rank: "<<rank<<"" << std::endl;
         std::cout << "\nREPEX:       Failed in initialization of Replica rank: "<<rank<<"" << std::endl;
         MPI_Abort(MPI_COMM_WORLD, E_USAGE);
@@ -354,18 +399,22 @@ int main(int argc, char *argv[]) {
     Master->init_repOut_stat_file();
     
     //do md:
-
     unsigned int trial=0;
     DEBUG(1, "Master \t \t \t Equil: "<< equil_runs)
     for( ;trial<equil_runs; ++trial){    // for equilibrations
-        Master->run_MD();
+        error+=Master->run_MD();
     }
     DEBUG(1, "Master \t \t MD: "<< total_runs)
-    trial=0;
+    
+    //Vars for timing
+    int hh, mm, ss = 0;
+    double eta_spent, percent, spent;
+    int eta_hh, eta_mm, eta_ss = 0;
+    trial=0;    //reset trials
     for ( ; trial < sim_runs; ++trial){ //for repex execution
         DEBUG(2, "Master "<< rank <<" \t MD trial: "<< trial << "\n")\
         DEBUG(2, "Master "<< rank <<" \t run_MD START "<<trial<<"\n")  
-        Master->run_MD();
+        error+=Master->run_MD();
         DEBUG(2, "Master "<< rank <<" \t run_MD DONE "<<trial<<"\n")  
 
         DEBUG(2, "Master " << rank << " \t swap START "<<trial<<"\n")    
@@ -376,24 +425,25 @@ int main(int argc, char *argv[]) {
         Master->receive_from_all_slaves();
         DEBUG(2, "Master " << rank << " \t write START "<<trial<<"\n")    
         Master->write();
-
-        if ((total_runs/ 10 > 0) && (trial % (total_runs / 10) == 0)){
-          double percent = double(trial)/double(total_runs);
-          const double spent = util::now() - start;
-          const int hh = int(spent / 3600);
-          const int mm = int((spent - hh * 3600) / 60);
-          const int ss = int(spent - hh * 3600 - mm * 60);
+        
+        if ((total_runs/ 10 > 0) && (trial % (total_runs / 10) == 0)){  //Timer 
+          percent = double(trial)/double(total_runs);
+          spent = util::now() - start;
+          hh = int(spent / 3600);
+          mm = int((spent - hh * 3600) / 60);
+          ss = int(spent - hh * 3600 - mm * 60);
 
           std::cerr << "\nREPEX:       " << std::setw(2) << percent * 100 << "% done..." << std::endl;
           std::cout << "\nREPEX:       " << std::setw(2) << percent * 100 << "% done..." << std::endl;
           std::cerr << "REPEX: spent " << hh << ":" << mm << ":" << ss << std::endl;
           std::cout << "REPEX: spent " << hh << ":" << mm << ":" << ss << std::endl;
 
-          const double eta_spent = spent / trial * sim_runs - spent;
-          const int eta_hh = int(eta_spent / 3600);
-          const int eta_mm = int((eta_spent - eta_hh * 3600) / 60);
-          const int eta_ss = int(eta_spent - eta_hh * 3600 - eta_mm * 60);
-
+          eta_spent = spent / trial * sim_runs - spent;
+          if(trial>1){
+            eta_hh = int(eta_spent / 3600);
+            eta_mm = int((eta_spent - eta_hh * 3600) / 60);
+            eta_ss = int(eta_spent - eta_hh * 3600 - eta_mm * 60);
+          }
           std::cerr << "REPEX: ETA   " << eta_hh << ":" << eta_mm << ":" << eta_ss << std::endl;
           std::cout << "REPEX: ETA   " << eta_hh << ":" << eta_mm << ":" << eta_ss << std::endl;
         }
@@ -401,14 +451,12 @@ int main(int argc, char *argv[]) {
     DEBUG(1, "Master \t \t finalize ")
     Master->write_final_conf();
        
-  } else {  //SLAVES
-      
+  } else {  //SLAVES    
     DEBUG(1, "Slave " << rank)    
             
-    // Select repex Implementation
+    // Select repex Implementation - Polymorphism
     util::replica_exchange_slave* Slave;     
     if(reedsSim){
-       std::cout <<  "Slave REEDS " << rank << std::endl;
        Slave = new util::replica_exchange_slave_eds(args, cont, rank, repIDs[rank], repMap);
     } else{
        Slave = new util::replica_exchange_slave(args, cont, rank, repIDs[rank], repMap);
@@ -416,22 +464,25 @@ int main(int argc, char *argv[]) {
     
     DEBUG(1, "Slave "<< rank <<" \t INIT")    
     Slave->init();
+    
     //do md:
     unsigned int trial=0;
     DEBUG(1, "Slave "<< rank <<" \t EQUIL "<< equil_runs << " steps")    
     for( ;trial<equil_runs; ++trial){    // for equilibrations
-        Slave->run_MD();
+        error+=Slave->run_MD();
     }
+    
     DEBUG(1, "Slave "<< rank <<" \t MD "<< total_runs << " steps")    
     for ( ; trial < total_runs; ++trial){ //for repex execution
       DEBUG(2, "Slave "<< rank <<" \t MD trial: "<< trial << "\n")    
       DEBUG(2, "Slave "<< rank <<" \t run_MD START "<<trial<<"\n")    
-      Slave->run_MD();
+      error+=Slave->run_MD();
       DEBUG(2, "Slave "<< rank <<" \t swap START "<<trial<<"\n")    
       Slave->swap();
       DEBUG(2, "Slave "<< rank <<" \t send START "<<trial<<"\n")    
       Slave->send_to_master();
     }
+    
     DEBUG(1, "Slave "<< rank <<" \t Finalize")    
     Slave->write_final_conf();
     std::cout << "\n=================== Slave Node "<< rank << "  finished successfully!\n";
@@ -441,7 +492,6 @@ int main(int argc, char *argv[]) {
 
   //last MASTER OUTPUT
   if(rank == 0){
-      
     //FINAL OUTPUT - Time used:
     double end = MPI_Wtime();
     double duration = end - start;
@@ -451,13 +501,14 @@ int main(int argc, char *argv[]) {
     int durationSlMin = int(std::floor(duration - (durationMinlHour+durationHour*60)*60));
 
     //Todo: if (cond){finished succ}else{not} bschroed
-    std::string msg("\n====================================================================================================\n\tREPLICA EXCHANGE SIMULATION finished successfully!\n====================================================================================================\n");
+    std::string msg("\n====================================================================================================\n\tREPLICA EXCHANGE SIMULATION finished!\n====================================================================================================\n");
     std::cout << msg;
     std::cerr << msg;
     std::cout<< "TOTAL TIME USED: \n\th:min:s\t\tseconds\n"
        << "\t" << durationHour << ":"<<durationMinlHour << ":" << durationSlMin << "\t\t" << duration << "\n";
     std::cerr<< "TOTAL TIME USED: \n\th:min:s\t\tseconds\n"
        << "\t" << durationHour << ":"<<durationMinlHour << ":" << durationSlMin << "\t\t" << duration << "\n";
+
   }
 
   MPI_Finalize();
