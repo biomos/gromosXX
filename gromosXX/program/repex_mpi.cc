@@ -288,8 +288,6 @@ int main(int argc, char *argv[]) {
     MPI_Datatype typ[] = {MPI_INT, MPI_DOUBLE};
     MPI_Aint intext;
     MPI_Type_extent(MPI_INT, &intext);
-    int error = 0;    //collect error count
-    MPI_Type_extent(MPI_INT, &error);
 
     MPI_Aint disps[] = {(MPI_Aint) 0, 4 * intext};
     MPI_Type_create_struct(2, blocklen, disps, typ, &MPI_REPINFO);
@@ -402,7 +400,7 @@ int main(int argc, char *argv[]) {
     unsigned int trial=0;
     DEBUG(1, "Master \t \t \t Equil: "<< equil_runs)
     for( ;trial<equil_runs; ++trial){    // for equilibrations
-        error+=Master->run_MD();
+        Master->run_MD();
     }
     DEBUG(1, "Master \t \t MD: "<< total_runs)
     
@@ -414,7 +412,7 @@ int main(int argc, char *argv[]) {
     for ( ; trial < sim_runs; ++trial){ //for repex execution
         DEBUG(2, "Master "<< rank <<" \t MD trial: "<< trial << "\n")\
         DEBUG(2, "Master "<< rank <<" \t run_MD START "<<trial<<"\n")  
-        error+=Master->run_MD();
+        Master->run_MD();
         DEBUG(2, "Master "<< rank <<" \t run_MD DONE "<<trial<<"\n")  
 
         DEBUG(2, "Master " << rank << " \t swap START "<<trial<<"\n")    
@@ -469,14 +467,14 @@ int main(int argc, char *argv[]) {
     unsigned int trial=0;
     DEBUG(1, "Slave "<< rank <<" \t EQUIL "<< equil_runs << " steps")    
     for( ;trial<equil_runs; ++trial){    // for equilibrations
-        error+=Slave->run_MD();
+        Slave->run_MD();
     }
     
     DEBUG(1, "Slave "<< rank <<" \t MD "<< total_runs << " steps")    
     for ( ; trial < total_runs; ++trial){ //for repex execution
       DEBUG(2, "Slave "<< rank <<" \t MD trial: "<< trial << "\n")    
       DEBUG(2, "Slave "<< rank <<" \t run_MD START "<<trial<<"\n")    
-      error+=Slave->run_MD();
+      Slave->run_MD();
       DEBUG(2, "Slave "<< rank <<" \t swap START "<<trial<<"\n")    
       Slave->swap();
       DEBUG(2, "Slave "<< rank <<" \t send START "<<trial<<"\n")    
