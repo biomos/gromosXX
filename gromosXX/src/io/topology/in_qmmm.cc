@@ -475,7 +475,7 @@ io::In_QMMM::read(topology::Topology& topo,
       buffer = m_block["DFTBHEADER"];
       DEBUG(10, "DFTBHEADER block : " << buffer.size());
       if (!buffer.size()) {
-        io::messages.add("no DFTHEADER block in QM/MM specification file",
+        io::messages.add("no DFTBHEADER block in QM/MM specification file",
                          "In_QMMM", io::message::error);
         return;
       }

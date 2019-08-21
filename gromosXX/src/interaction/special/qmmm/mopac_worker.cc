@@ -58,6 +58,11 @@ math::Vec interaction::MOPAC_Worker::pointchg_force(const int j,
     for (std::set<topology::qm_atom_struct>::const_iterator
             it=topo.qm_zone().begin(),to=topo.qm_zone().end();it!=to;++it,pi++){
             rij=conf.current().pos(j)-conf.current().pos(it->index);
+            // Add check of mopac output parse success, otherwise the program segfaults here
+            DEBUG(15, "rij =" << math::v2s(rij));
+            DEBUG(15, "topo.charge(j) =" << topo.charge(j));
+            DEBUG(15, "pi =" << pi);
+            DEBUG(15, "qm_chg[pi] =" << qm_chg[pi]);
             fij+=(rij/abs(rij))*topo.charge(j)*qm_chg[pi]/(abs2(rij)) ;
 
     }
