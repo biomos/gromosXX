@@ -149,7 +149,7 @@ int io::read_input_repex(io::Argument const & args,
       }
      else if(rank == 0){
           DEBUG(4, "reading configuration no continous");
-          std::cout << "TEST  " << args.lower_bound(("conf"))->second << "\n";
+          //std::cout << "TEST  " << args.lower_bound(("conf"))->second << "\n";
           if (read_configuration(args, topo, conf, sim, os, quiet) != 0) {
               io::messages.add("Could not find coordinate file: "+ std::string(args.lower_bound(("conf"))->second), io::message::error);
               return -1;
@@ -226,13 +226,13 @@ int io::read_parameter(io::Argument const & args,
       // Check output files
         if( args.count("repout") < 1 )
         {
-            io::messages.add("No output file for replica exchange specified!",
+            io::messages.add("No output file for replica exchange specified! Please provide @repout.\n",
            "read_input", io::message::critical);
           return -1;
         }
         if( args.count("repdat") < 1 )
         {
-            io::messages.add("No data file for replica exchange specified!",
+            io::messages.add("No data file for replica exchange specified! Please provide @repdat.\n",
            "read_input", io::message::critical);
           return -1;
         }

@@ -75,6 +75,7 @@ int main(int argc, char *argv[]) {
   if(rank == 0){
     std::string msg("\n==================================================\n\tGROMOS Replica Exchange:\n==================================================\n");
     std::cout << msg;
+    std::cerr << msg;
   }
   
   // reading arguments
@@ -162,6 +163,8 @@ int main(int argc, char *argv[]) {
                     << "\n\t\tErrors during read Parameters reading!\n"
                     <<"\n\t########################################################\n" ;
                   io::messages.display(std::cout);
+                  io::messages.display(std::cerr);
+
               }
               MPI_Finalize();
               return 1;
@@ -175,6 +178,7 @@ int main(int argc, char *argv[]) {
                           <<"\n\t########################################################\n" ;
                   io::messages.display(std::cout);
                   io::messages.display(std::cerr);
+                  MPI_Abort(MPI_COMM_WORLD, E_USAGE);
               }
               MPI_Finalize();
               return 1;
@@ -194,7 +198,7 @@ int main(int argc, char *argv[]) {
               return 1;
         }
       
-        if (io::check_parameter(sim) != 0){
+        if (io::check_parameter(sim)){
           if (rank == 0) {
                 std::cerr <<"\n\t########################################################\n" 
                   << "\n\t\tErrors during initial Parameter reading!\n"
@@ -228,7 +232,6 @@ int main(int argc, char *argv[]) {
               std::cerr <<"\n\t########################################################\n" 
                       << "\n\t\tErrors during initial Parameter reading!\n"
                       <<"\n\t########################################################\n" ;
-
               std::cerr << "\n There were not enough MPI thread assigned to this run!\n"
                       << "FOUND THREAD: "<<size<< "\tNEED: "<<numReplicas<<"\n";
               std::cout << "\n There were not enough MPI thread assigned to this run!\n"
@@ -257,6 +260,8 @@ int main(int argc, char *argv[]) {
 
             msg << "\n==================================================\n\tFinished Initial Parsing\n\n==================================================\n";
             std::cout << msg.str();
+            std::cerr << msg.str();
+
         }
     }
   }
@@ -369,7 +374,9 @@ int main(int argc, char *argv[]) {
         std::cout << "\n==================================================\n\tStart REPLICA EXCHANGE SIMULATION:\n\n==================================================\n";
         std::cout << "numreplicas:\t "<< numReplicas<<"\n";
         std::cout << "num Slaves:\t "<< numReplicas-1<<"\n";
-    
+        std::cerr << "\n==================================================\n\tStart REPLICA EXCHANGE SIMULATION:\n\n==================================================\n";
+        std::cerr << "numreplicas:\t "<< numReplicas<<"\n";
+        std::cerr << "num Slaves:\t "<< numReplicas-1<<"\n";
     DEBUG(1, "Master \t "<< rank)
     const double init_time = util::now() - start;
     
@@ -431,20 +438,19 @@ int main(int argc, char *argv[]) {
           hh = int(spent / 3600);
           mm = int((spent - hh * 3600) / 60);
           ss = int(spent - hh * 3600 - mm * 60);
-
-          std::cerr << "\nREPEX:       " << std::setw(2) << percent * 100 << "% done..." << std::endl;
-          std::cout << "\nREPEX:       " << std::setw(2) << percent * 100 << "% done..." << std::endl;
-          std::cerr << "REPEX: spent " << hh << ":" << mm << ":" << ss << std::endl;
-          std::cout << "REPEX: spent " << hh << ":" << mm << ":" << ss << std::endl;
-
-          if(trial >1){
+          if(trial > 10){
             eta_spent = spent / trial * sim_runs - spent;
             eta_hh = int(eta_spent / 3600);
             eta_mm = int((eta_spent - eta_hh * 3600) / 60);
             eta_ss = int(eta_spent - eta_hh * 3600 - eta_mm * 60);
           }
-          std::cerr << "REPEX: ETA   " << eta_hh << ":" << eta_mm << ":" << eta_ss << std::endl;
+           
+          std::cout << "\nREPEX:       " << std::setw(2) << percent * 100 << "% done..." << std::endl;
+          std::cout << "REPEX: spent " << hh << ":" << mm << ":" << ss << std::endl;
           std::cout << "REPEX: ETA   " << eta_hh << ":" << eta_mm << ":" << eta_ss << std::endl;
+          std::cerr << "\nREPEX:       " << std::setw(2) << percent * 100 << "% done..." << std::endl;
+          std::cerr << "REPEX: spent " << hh << ":" << mm << ":" << ss << std::endl;
+          std::cerr << "REPEX: ETA   " << eta_hh << ":" << eta_mm << ":" << eta_ss << std::endl;
         }
     }
     DEBUG(1, "Master \t \t finalize ")
