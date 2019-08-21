@@ -3143,13 +3143,14 @@ void io::In_Parameter::read_READTRAJ(simulation::Parameter & param,
     exampleblock << "# NTRD  0,1 controls trajectory-reevaluation mode\n";
     exampleblock << "#       0: do not use trajectory-reevaluation mode (default)\n";
     exampleblock << "#       1: use trajectory-reevaluation mode\n";
-    exampleblock << "# NTRN  number of files (ignored)\n";
+    exampleblock << "# NTSTR stride: should be the NTWX used to produce the analyzed trajectory\n";
     exampleblock << "# NTRB  read box (must be 1)\n";
-    exampleblock << "# NTSHK 0,1 controls SHAKE on old coordinates\n";
-    exampleblock << "#       0 perform SHAKE with respect to previous coordinates\n";
-    exampleblock << "#       1 perform SHAKE with respect to current coordinates\n";
+    exampleblock << "# NTSHK 0,1 controls application of constraints\n";
+    exampleblock << "#       0 apply constraints with respect to previous coordinates\n";
+    exampleblock << "#       1 apply constraints with respect to current coordinates\n";
+    exampleblock << "#       2 do not apply constraints (neither solute nor solvent)\n";
     exampleblock << "#\n";
-    exampleblock << "#   NTRD    NTRN    NTRB   NTSHK\n";
+    exampleblock << "#   NTRD   NTSTR    NTRB   NTSHK\n";
     exampleblock << "       0       0       1       0\n";
     exampleblock << "END\n";
 
@@ -3160,11 +3161,11 @@ void io::In_Parameter::read_READTRAJ(simulation::Parameter & param,
     if (block.read_buffer(m_block[blockname], false) == 0) {
         block_read.insert(blockname);
 
-        int ntrd, ntrn, ntrb, ntshk;
+        int ntrd, ntrb, ntshk;
         block.get_next_parameter("NTRD", ntrd, "", "0,1");
-        block.get_next_parameter("NTRN", ntrn, "", "");
+        block.get_next_parameter("NTSTR", param.analyze.stride, "", "");
         block.get_next_parameter("NTRB", ntrb, "", "1");
-        block.get_next_parameter("NTSHK", ntshk, "", "0,1");
+        block.get_next_parameter("NTSHK", ntshk, "", "0,1,2");
 
         if (block.error()) {
           block.get_final_messages();
@@ -3174,6 +3175,8 @@ void io::In_Parameter::read_READTRAJ(simulation::Parameter & param,
         switch (ntrd) {
             case 1:
                 param.analyze.analyze = true;
+                io::messages.add("READTRAJ block: make sure NTSTR is set to the value of NTWX used for writing the trajectory to be analyzed!", "In_Parameter",
+                             io::message::notice);
                 break;
             case 0:
                 param.analyze.analyze = false;
@@ -3182,10 +3185,6 @@ void io::In_Parameter::read_READTRAJ(simulation::Parameter & param,
                 break;
         }
 
-        if (ntrn)
-            io::messages.add("READTRAJ block: NTRN was ignored", "In_Parameter",
-                             io::message::warning);
-
         if (ntrb != 1)
             io::messages.add("READTRAJ block: NTRB must be 1.", "In_Parameter",
                              io::message::error);
@@ -3193,9 +3192,15 @@ void io::In_Parameter::read_READTRAJ(simulation::Parameter & param,
         switch (ntshk) {
             case 1:
                 param.analyze.copy_pos = true;
+                param.analyze.no_constraints = false;
                 break;
             case 0:
                 param.analyze.copy_pos = false;
+                param.analyze.no_constraints = false;
+                break;
+            case 2:
+                param.analyze.copy_pos = false;
+                param.analyze.no_constraints = true;
                 break;
             default:
                 break;

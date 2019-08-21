@@ -60,6 +60,11 @@ int algorithm::create_constraints(algorithm::Algorithm_Sequence &md_seq,
         io::In_Topology &it,
         bool quiet)
  {
+  if (sim.param().analyze.no_constraints) {
+      io::messages.add("Constraints turned off by NTSHK flag in block READTRAJ",
+                "create_constraints", io::message::notice);
+      return 0;
+  }
   DEBUG(7, "solute:  " << sim.param().constraint.solute.algorithm);
   DEBUG(7, "solvent: " << sim.param().constraint.solvent.algorithm);
   DEBUG(7, "\tNTC: " << sim.param().constraint.ntc);
@@ -259,11 +264,16 @@ int algorithm::create_constraints(algorithm::Algorithm_Sequence &md_seq,
 
   // roto-translational constraints
   if (sim.param().rottrans.rottrans) {
+    if (sim.param().analyze.analyze) {
+            io::messages.add("roto-translational constraints are ignored with anatrj",
+                "create_constraints", io::message::warning);
+    } else {
     DEBUG(8, "creating roto-translational constraints");
 
     algorithm::Rottrans_Constraints * rtc =
             new algorithm::Rottrans_Constraints();
     md_seq.push_back(rtc);
+    }
   }
 
   return 0;

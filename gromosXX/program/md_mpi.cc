@@ -60,9 +60,9 @@ int main(int argc, char *argv[]){
   util::Known knowns;
   knowns << "topo" << "conf" << "input" << "verb" << "pttopo"
 	 << "trc" << "fin" << "trv" << "trf" << "trs" << "tre" << "trg"
-	 << "bae" << "bag" << "posresspec" << "refpos" << "distrest"  
-         << "dihrest" << "jval" << "xray" << "sym" << "order"  << "rdc" << "lud" << "led" << "anatrj"
-         << "print" << "friction" << "qmmm" << "version" << "develop";
+	 << "bae" << "bag" << "posresspec" << "refpos" <<"distrest" << "dihrest"
+         << "jval" << "xray" << "sym" << "order" << "rdc" << "lud" << "led"
+         << "anatrj" << "print" << "friction" << "qmmm" << "version" << "develop";
   
   
   std::string usage;
@@ -134,7 +134,7 @@ int main(int argc, char *argv[]){
     MPI::Finalize();
     return 1;    
   }
-  
+
   // check for development 
   if (sim.param().develop.develop==true && args.count("develop") < 0) { 
     io::messages.add(sim.param().develop.msg, io::message::develop); 
@@ -202,7 +202,6 @@ int main(int argc, char *argv[]){
     int next_step = 1;
 
     while(int(sim.steps()) < sim.param().step.number_of_steps){
-      
       traj.write(conf, topo, sim, io::reduced);
       
       // run a step
@@ -222,7 +221,8 @@ int main(int argc, char *argv[]){
       traj.print_final(topo, conf, sim);
 
       bool do_shake = sim.param().system.nsm &&
-        sim.param().constraint.solvent.algorithm == simulation::constr_shake;
+        sim.param().constraint.solvent.algorithm == simulation::constr_shake
+        && !sim.param().analyze.no_constraints;
 
       algorithm::Shake * shake =
         dynamic_cast<algorithm::Shake *>(md.algorithm("Shake"));
@@ -259,13 +259,11 @@ int main(int argc, char *argv[]){
       MPI::COMM_WORLD.Bcast(&next_step, 1, MPI::INT, 0);
       traj.print(topo, conf, sim);
       
-      ++sim.steps();
+      sim.steps()=sim.steps()+sim.param().analyze.stride;
       sim.time() = sim.param().step.t0 + sim.steps()*sim.time_step_size();
-      
-      
       if ((sim.param().step.number_of_steps / 10 > 0) &&
 	  (sim.steps() % (sim.param().step.number_of_steps / 10) == 0)){
-        ++percent;
+        percent=int(sim.steps())*10/sim.param().step.number_of_steps;
         const double spent = util::now() - start;
         const int hh = int(spent / 3600);
         const int mm = int((spent - hh * 3600) / 60);
@@ -357,11 +355,12 @@ int main(int argc, char *argv[]){
     }
 
     // get shake and check whether we do it for solvent
-    bool do_shake = (sim.param().system.npm && sim.param().constraint.solute.algorithm == simulation::constr_shake) ||
-      (sim.param().constraint.solvent.algorithm == simulation::constr_shake && sim.param().system.nsm);
+    bool do_shake = ((sim.param().system.npm && sim.param().constraint.solute.algorithm == simulation::constr_shake) ||
+      (sim.param().constraint.solvent.algorithm == simulation::constr_shake && sim.param().system.nsm))
+        && !sim.param().analyze.no_constraints;
 
     // for stochastic dynamics simulation we need to call SHAKE twice
-    bool do_shake_twice = sim.param().stochastic.sd;
+    bool do_shake_twice = sim.param().stochastic.sd && !sim.param().analyze.no_constraints;
 
     algorithm::Shake * shake =
       dynamic_cast<algorithm::Shake *>(md.algorithm("Shake"));
@@ -461,7 +460,7 @@ int main(int argc, char *argv[]){
         break;
       }
 
-      ++sim.steps();
+      sim.steps() = sim.steps()+sim.param().analyze.stride;
       sim.time() = sim.param().step.t0 + sim.steps()*sim.time_step_size();
     }
 

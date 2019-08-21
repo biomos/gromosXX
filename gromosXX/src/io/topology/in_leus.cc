@@ -85,8 +85,11 @@ io::In_Localelevspec::read(topology::Topology& topo,
       switch(t){
 	case util::Umbrella::vt_distance:
         {
-          if (i > topo.num_atoms() || i < 0 ||
-              j > topo.num_atoms() || j < 0){
+          // i and j are unsigned int, if the user specified a negative value
+          // this is interpreted as a very large value
+          // no need to check for i<0 and j<0, as this will never happen
+          // some compilers complain about this
+          if (i > topo.num_atoms() || j > topo.num_atoms()){
             std::ostringstream msg;
             msg << "Distance (" << i+1 << "-" << j+1 
                 << ") atom indices out of range.";
@@ -99,10 +102,12 @@ io::In_Localelevspec::read(topology::Topology& topo,
         }
         case util::Umbrella::vt_dihedral:
         {
-          if (i > topo.num_atoms() || i < 0 ||
-              j > topo.num_atoms() || j < 0 ||
-              k > topo.num_atoms() || k < 0 ||
-              l > topo.num_atoms() || l < 0){
+          // i, j, k and l are unsigned int, if the user specified a negative 
+          // value this is interpreted as a very large value
+          // no need to check for i<0 and j<0, as this will never happen
+          // some compilers complain about this
+          if (i > topo.num_atoms() || j > topo.num_atoms() || 
+              k > topo.num_atoms() || l > topo.num_atoms()){
             std::ostringstream msg;
             msg << "Dihedral (" << i+1 << "-" << j+1 << "-" << k+1 << "-" << l+1
                  << ") atom indices out of range.";
