@@ -2287,10 +2287,14 @@ namespace simulation
        * - equilibrate 0
        * - cont 0
        */
-      replica_struct() : num_T(0), num_l(0), scale(false), trials(0),
+      replica_struct() : retl(false), num_T(0), num_l(0), scale(false), trials(0),
                          equilibrate(0), cont(0)
       {
       }
+      /**
+       * Shall a Replica_exchange Temperature or lambdaDep simulation be exectued
+       */
+      bool retl;
       /**
        * number of replicas with different temperature
        */

@@ -134,6 +134,7 @@ int main(int argc, char *argv[]) {
   
   //GLOBAL SETTING VARIABLES
   bool reedsSim;
+
   unsigned int equil_runs;
   unsigned int sim_runs;
   unsigned int total_runs;
@@ -144,87 +145,119 @@ int main(int argc, char *argv[]) {
 
   try{
     {
-      topology::Topology topo;
-      configuration::Configuration conf;
-      algorithm::Algorithm_Sequence md;
-      simulation::Simulation sim;
-      
-      // read in parameters
-      bool quiet = true;
-      if(rank == 0){
-          quiet = true;
-      }
+        topology::Topology topo;
+        configuration::Configuration conf;
+        algorithm::Algorithm_Sequence md;
+        simulation::Simulation sim;
 
-      if (io::read_parameter(args,sim,std::cout, true)){
-        if (rank == 0) {
-          std::cerr <<"\n\t########################################################\n" 
-            << "\n\t\tErrors during read Parameters reading!\n"
-            <<"\n\t########################################################\n" ;
-          io::messages.display(std::cout);
-          MPI_Finalize();
+        // read in parameters
+        bool quiet = true;
+        if(rank == 0){
+              quiet = true;
         }
-        return 1;
-      }
-      
-      // read in the rest
-      if(io::read_input_repex(args, topo, conf, sim, md, rank, std::cout, quiet)){
-          if (rank == 0) {
-            std::cerr <<"\n\t########################################################\n" 
-                    << "\n\t\tErrors during initial Parameter reading!\n"
+
+        if (io::read_parameter(args,sim,std::cout, true)){
+              if (rank == 0) {
+                  std::cerr <<"\n\t########################################################\n" 
+                    << "\n\t\tErrors during read Parameters reading!\n"
                     <<"\n\t########################################################\n" ;
-            io::messages.display(std::cout);
-            io::messages.display(std::cerr);
-            MPI_Finalize();
-            }
-          return 1;
-       }
-
-      if (io::check_parameter(sim) != 0){
-        if (rank == 0) {
-          std::cerr <<"\n\t########################################################\n" 
-            << "\n\t\tErrors during initial Parameter reading!\n"
-            <<"\n\t########################################################\n" ;
-          io::messages.display(std::cout);
-          io::messages.display(std::cerr);
-          MPI_Finalize();
+                  io::messages.display(std::cout);
+              }
+              MPI_Finalize();
+              return 1;
         }
-        return 1;
-      }
-         
-      //set global parameters
-      cont = sim.param().replica.cont;
-      equil_runs = sim.param().replica.equilibrate;
-      sim_runs = sim.param().replica.trials;
-      total_runs = sim.param().replica.trials + equil_runs;
-      numReplicas = sim.param().replica.num_T * sim.param().replica.num_l;
-      numAtoms = topo.num_atoms();
-      reedsSim = sim.param().reeds.reeds;
 
-      if(reedsSim){
-          numEDSstates=sim.param().reeds.eds_para[0].numstates;
-      }else{
-          numEDSstates=0;
-      }
-
-      if(rank == 0){  //Nice message
-          std::ostringstream msg;
-          msg << "\t Short RE-Setting Overview:\n";
-          msg << "\t continuation:\t"<<cont<<"\n";
-          msg << "\t equilibration runs:\t"<<equil_runs<<"\n";
-          msg << "\t Exchange Trials runs:\t"<<sim_runs<<"\n";
-          msg << "\t Simulation Steps Between Trials:\t"<<sim.param().step.number_of_steps<<"\n";
-          msg << "\t Total Simulation Time:\t"<<sim.param().step.number_of_steps*sim_runs*sim.param().step.dt<<"ps\n";
-          msg << "\t numReplicas:\t"<<numReplicas<<"\n";
-          
-          if(reedsSim){
-              msg << "\n\t RE-EDS:\n";
-              msg << "\t numSValues:\t"<<sim.param().reeds.num_l<<"\n";
-              msg << "\t numStates:\t"<<numEDSstates<<"\n";
+        // read in the rest
+        if(io::read_input_repex(args, topo, conf, sim, md, rank, std::cout, quiet)){
+              if (rank == 0) {
+                  std::cerr <<"\n\t########################################################\n" 
+                          << "\n\t\tErrors during initial Parameter reading!\n"
+                          <<"\n\t########################################################\n" ;
+                  io::messages.display(std::cout);
+                  io::messages.display(std::cerr);
+              }
+              MPI_Finalize();
+              return 1;
           }
 
-          msg << "\n==================================================\n\tFinished Initial Parsing\n\n==================================================\n";
-          std::cout << msg.str();
-      }
+        //if any replica Ex block - present   
+        if(sim.param().reeds.reeds == false && sim.param().replica.retl  == false ){
+              if(rank == 0){
+                  std::cerr <<"\n\t########################################################\n" 
+                          << "\n\t\tErrors during initial Parameter reading! "
+                          << "\n\t\t    No repex block was satisfied!\n"
+                          <<"\n\t########################################################\n" ;
+                  std::cerr << "\n Please add one RE-block (e.g.:REPLICA or REEDS) to the imd file.\n";
+                  std::cout <<  "\n Please add one RE-block (e.g.:REPLICA or REEDS)  to the imd file.\n";
+              }
+              MPI_Finalize();
+              return 1;
+        }
+      
+        if (io::check_parameter(sim) != 0){
+          if (rank == 0) {
+                std::cerr <<"\n\t########################################################\n" 
+                  << "\n\t\tErrors during initial Parameter reading!\n"
+                  <<"\n\t########################################################\n" ;
+                io::messages.display(std::cout);
+                io::messages.display(std::cerr);
+          }
+          MPI_Finalize();
+          return 1;
+        }
+
+        //set global parameters
+        cont = sim.param().replica.cont;
+        equil_runs = sim.param().replica.equilibrate;
+        sim_runs = sim.param().replica.trials;
+        total_runs = sim.param().replica.trials + equil_runs;
+        numReplicas = sim.param().replica.num_T * sim.param().replica.num_l;
+        numAtoms = topo.num_atoms();
+        reedsSim = sim.param().reeds.reeds;
+
+        if(reedsSim){
+            numEDSstates=sim.param().reeds.eds_para[0].numstates;
+        }else{
+            numEDSstates=0;
+        }
+
+        //SOME additional Checks
+        //if enough threads avail
+        if( size  < numReplicas){
+          if(rank == 0){
+              std::cerr <<"\n\t########################################################\n" 
+                      << "\n\t\tErrors during initial Parameter reading!\n"
+                      <<"\n\t########################################################\n" ;
+
+              std::cerr << "\n There were not enough MPI thread assigned to this run!\n"
+                      << "FOUND THREAD: "<<size<< "\tNEED: "<<numReplicas<<"\n";
+              std::cout << "\n There were not enough MPI thread assigned to this run!\n"
+                        << "FOUND THREAD: "<<size<< "\tNEED: "<<numReplicas<<"\n";
+              MPI_Finalize();
+
+          }
+          return -1;
+        }
+
+        if(rank == 0){  //Nice message
+            std::ostringstream msg;
+            msg << "\t Short RE-Setting Overview:\n";
+            msg << "\t continuation:\t"<<cont<<"\n";
+            msg << "\t equilibration runs:\t"<<equil_runs<<"\n";
+            msg << "\t Exchange Trials runs:\t"<<sim_runs<<"\n";
+            msg << "\t Simulation Steps Between Trials:\t"<<sim.param().step.number_of_steps<<"\n";
+            msg << "\t Total Simulation Time:\t"<<sim.param().step.number_of_steps*sim_runs*sim.param().step.dt<<"ps\n";
+            msg << "\t numReplicas:\t"<<numReplicas<<"\n";
+
+            if(reedsSim){
+                msg << "\n\t RE-EDS:\n";
+                msg << "\t numSValues:\t"<<sim.param().reeds.num_l<<"\n";
+                msg << "\t numStates:\t"<<numEDSstates<<"\n";
+            }
+
+            msg << "\n==================================================\n\tFinished Initial Parsing\n\n==================================================\n";
+            std::cout << msg.str();
+        }
     }
   }
   catch (const std::exception &e){
@@ -247,24 +280,13 @@ int main(int argc, char *argv[]) {
       MPI_Finalize();
       return -1;
   }
-  
+
+
   io::messages.clear();
 
   //////////////////////////
   // defining MPI Datatypes
   //////////////////////////
-  // Check replica - mpi replicas
-  if(size < numReplicas){
-    std::cerr <<"\n\t########################################################\n" 
-    << "\n\t\tErrors during CHECK MPI!\n"
-    <<"\n\t########################################################\n" ;
-    std::string msg = "\nThe ranks number was smaller than the number of Replicas! Please provide at least the number of replicas as MPI-Ranks\n\n";
-    std::cout << msg << std::endl;
-    std::cerr << msg << std::endl;
-    MPI_Finalize();
-    return 1;
-  }
-  
   //GLOBAL MPI VARIABLES:
   MPI_Datatype MPI_VEC;
   std::map<unsigned int, unsigned int> repMap;     // where is which replica
@@ -299,22 +321,6 @@ int main(int argc, char *argv[]) {
     }
 
     assert(numReplicas > 0);// is there a positive nonzero num of Replicas?
-
-    //check if enough threads avail
-    if( size  < numReplicas){
-        if(rank == 0){
-            std::cerr <<"\n\t########################################################\n" 
-                    << "\n\t\tErrors during initial Parameter reading!\n"
-                    <<"\n\t########################################################\n" ;
-
-            std::cerr << "\n There were not enough MPI thread assigned to this run!\n"
-                    << "FOUND THREAD: "<<size<< "\tNEED: "<<numReplicas<<"\n";
-            std::cout << "\n There were not enough MPI thread assigned to this run!\n"
-                      << "FOUND THREAD: "<<size<< "\tNEED: "<<numReplicas<<"\n";
-            MPI_Abort(MPI_COMM_WORLD, E_USAGE);
-        }
-        return -1; //reactivated check param at end.  
-    }
 
     //repIDs every node gets one element of that vector
     repIDs.resize(size);
@@ -363,10 +369,6 @@ int main(int argc, char *argv[]) {
         std::cout << "\n==================================================\n\tStart REPLICA EXCHANGE SIMULATION:\n\n==================================================\n";
         std::cout << "numreplicas:\t "<< numReplicas<<"\n";
         std::cout << "num Slaves:\t "<< numReplicas-1<<"\n";
-
-        std::cerr << "\n==================================================\n\tStart REPLICA EXCHANGE SIMULATION:\n\n==================================================\n";
-        std::cerr << "numreplicas:\t "<< numReplicas<<"\n";
-        std::cerr << "num Slaves:\t "<< numReplicas-1<<"\n\n";
     
     DEBUG(1, "Master \t "<< rank)
     const double init_time = util::now() - start;
@@ -405,9 +407,8 @@ int main(int argc, char *argv[]) {
     DEBUG(1, "Master \t \t MD: "<< total_runs)
     
     //Vars for timing
-    int hh, mm, ss = 0;
-    double eta_spent, percent, spent = 0;
-    int eta_hh, eta_mm, eta_ss = 0;
+    int hh, mm, ss, eta_hh, eta_mm, eta_ss = 0;
+    double eta_spent, percent, spent = 0.0;
     trial=0;    //reset trials
     for ( ; trial < sim_runs; ++trial){ //for repex execution
         DEBUG(2, "Master "<< rank <<" \t MD trial: "<< trial << "\n")\
@@ -436,12 +437,13 @@ int main(int argc, char *argv[]) {
           std::cerr << "REPEX: spent " << hh << ":" << mm << ":" << ss << std::endl;
           std::cout << "REPEX: spent " << hh << ":" << mm << ":" << ss << std::endl;
 
-          eta_spent = spent / trial * sim_runs - spent;
-          eta_hh = int(eta_spent / 3600);
-          eta_mm = int((eta_spent - eta_hh * 3600) / 60);
-          eta_ss = int(eta_spent - eta_hh * 3600 - eta_mm * 60);
-
-            std::cerr << "REPEX: ETA   " << eta_hh << ":" << eta_mm << ":" << eta_ss << std::endl;
+          if(trial >1){
+            eta_spent = spent / trial * sim_runs - spent;
+            eta_hh = int(eta_spent / 3600);
+            eta_mm = int((eta_spent - eta_hh * 3600) / 60);
+            eta_ss = int(eta_spent - eta_hh * 3600 - eta_mm * 60);
+          }
+          std::cerr << "REPEX: ETA   " << eta_hh << ":" << eta_mm << ":" << eta_ss << std::endl;
           std::cout << "REPEX: ETA   " << eta_hh << ":" << eta_mm << ":" << eta_ss << std::endl;
         }
     }

@@ -221,22 +221,29 @@ int io::read_parameter(io::Argument const & args,
       io::messages.contains(io::message::critical))
     return -1;
   
-  // check for replica output file
-  if (sim.param().replica.num_T > 0 && sim.param().replica.num_l > 0) {
-    if( args.count("repout") < 1 )
-    {
-        io::messages.add("No output file for replica exchange specified!",
-       "read_input", io::message::critical);
-      return -1;
+  // check for replicaExchange 
+  if (sim.param().replica.retl || sim.param().reeds.reeds) {
+      // Check output files
+        if( args.count("repout") < 1 )
+        {
+            io::messages.add("No output file for replica exchange specified!",
+           "read_input", io::message::critical);
+          return -1;
+        }
+        if( args.count("repdat") < 1 )
+        {
+            io::messages.add("No data file for replica exchange specified!",
+           "read_input", io::message::critical);
+          return -1;
+        }
+        
+        //Check if any REPEX Block was entered and only one!
+        //only one replica Ex block - present   
+        if(sim.param().reeds.reeds == true && sim.param().replica.retl  == true){
+            io::messages.add("\n Please provide only one RE-block in the imd file.\n", "read_input", io::message::critical);
+            return -1;
+        }
     }
-    if( args.count("repdat") < 1 )
-    {
-        io::messages.add("No data file for replica exchange specified!",
-       "read_input", io::message::critical);
-      return -1;
-    }
-  }
-  
   return 0;
 }
 

@@ -2657,6 +2657,8 @@ void io::In_Parameter::read_REPLICA(simulation::Parameter &param,
     // will be used to generate snippets that can be included in the doxygen doc;
     // the first line is the tag
     exampleblock << "REPLICA\n";
+    exampleblock << "#    RETL >= 0   : turn off REplica exchange - Temperature and/or Lambda Coupled";                             
+    exampleblock << "#             1   : turn on  ";     
     exampleblock << "#     NRET >= 1 number of replica exchange temperatures\n";
     exampleblock << "#    RET() >= 0.0 temperature for each replica\n";
     exampleblock << "# LRESCALE 0,1 controls temperature scaling\n";
@@ -2672,6 +2674,8 @@ void io::In_Parameter::read_REPLICA(simulation::Parameter &param,
     exampleblock << "#             0 start from one configuration file\n";
     exampleblock << "#             1 start from multiple configuration files\n";
     exampleblock << "#\n";
+    exampleblock << "# RETL\n";
+    exampleblock << "  1\n";
     exampleblock << "# NRET\n";
     exampleblock << "  10\n";
     exampleblock << "# RET(1..NRET)\n";
@@ -2695,12 +2699,15 @@ void io::In_Parameter::read_REPLICA(simulation::Parameter &param,
     exampleblock << "  0\n";
     exampleblock << "END\n";
 
+    DEBUG(1, "REPLICA BLOCK\t START");
 
     std::string blockname = "REPLICA";
     Block block(blockname, exampleblock.str());
 
     if (block.read_buffer(m_block[blockname], false) == 0) {
         block_read.insert(blockname);
+                
+        block.get_next_parameter("RETL", param.replica.retl, "0,1", "");
 
         block.get_next_parameter("NRET", param.replica.num_T, ">=1", "");
 
@@ -2771,6 +2778,8 @@ void io::In_Parameter::read_REPLICA(simulation::Parameter &param,
         }
         block.get_final_messages();
     }
+    DEBUG(1, "REPLICA BLOCK\t DONE\n");
+
 }
 
 /**
