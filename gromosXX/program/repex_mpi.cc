@@ -140,7 +140,7 @@ int main(int argc, char *argv[]) {
   unsigned int sim_runs;
   unsigned int total_runs;
   unsigned int numAtoms;
-  unsigned int numReplicas;
+  int numReplicas;
   unsigned int numEDSstates;
   int cont;
 
@@ -378,7 +378,6 @@ int main(int argc, char *argv[]) {
         std::cerr << "numreplicas:\t "<< numReplicas<<"\n";
         std::cerr << "num Slaves:\t "<< numReplicas-1<<"\n";
     DEBUG(1, "Master \t "<< rank)
-    const double init_time = util::now() - start;
     
     // Select repex Implementation - Polymorphism
     util::replica_exchange_master* Master;
@@ -509,6 +508,7 @@ int main(int argc, char *argv[]) {
     std::string msg("\n====================================================================================================\n\tREPLICA EXCHANGE SIMULATION finished!\n====================================================================================================\n");
     std::cout << msg;
     std::cerr << msg;
+ 
     std::cout<< "TOTAL TIME USED: \n\th:min:s\t\tseconds\n"
        << "\t" << durationHour << ":"<<durationMinlHour << ":" << durationSlMin << "\t\t" << duration << "\n";
     std::cerr<< "TOTAL TIME USED: \n\th:min:s\t\tseconds\n"

@@ -2880,10 +2880,6 @@ namespace simulation
        **/
       bool reeds;
       /**
-       * write output to stat_file (repdat)
-       **/
-      bool eds_stat_out;
-      /**
        * num_states
        */
       int num_states;
@@ -2919,6 +2915,10 @@ namespace simulation
        * do continuation run
        */
       int cont;
+      /**
+       * write output to stat_file (repdat)
+       **/
+      bool eds_stat_out;
        /**
        * for RE-EDS Sim many eds parameters have to be accessible for
        * energy calculation.

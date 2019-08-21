@@ -2887,8 +2887,8 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
            
         DEBUG(2, "REPLICA_EDS BLOCK: reading Block an translating to vars");
         //init_vars
-        int reeds_control, num_l, num_states=0;
-        int ntrials, nEquilibrate, cont_run, eds_stat_out=0;
+        unsigned int reeds_control, num_l, num_states=0;
+        unsigned int ntrials, nEquilibrate, cont_run, eds_stat_out=0;
 
         // GET BLOCKVARS
         //SYS Settings
