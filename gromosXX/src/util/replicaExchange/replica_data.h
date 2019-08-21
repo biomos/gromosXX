@@ -43,8 +43,8 @@ namespace util
         double     epot_partner;
         double     probability;
 
-        simulation::Parameter::eds_struct eds_state;    //new
-        std::vector<double> Vi; //SID for RE-EDS I want to give out all potential energies for each individual state in the repdat file. // todo: remove    //new
+        simulation::Parameter::eds_struct eds_state;   
+        std::vector<double> Vi; //SID for RE-EDS I want to give out all potential energies for each individual state in the repdat file. //todo_remove
     };
    /**
    * @struct replica_stat_data

@@ -14,26 +14,27 @@
 #include <util/replicaExchange/replica_reeds.h>
 
 
+
 #undef MODULE
 #undef SUBMODULE
 #define MODULE util
-#define SUBMODULE replica
+#define SUBMODULE replica_exchange
 
 util::replica_reeds::replica_reeds(io::Argument _args, int cont, int _ID, int _rank): replica(_args, cont, _ID, _rank){
   // read input again. If copy constructors for topo, conf, sim, md work, one could
   // also pass them down from repex_mpi.cc ...  
- DEBUG(3, "replica_reeds "<< rank <<":constructor \t START");
+ DEBUG(4, "replica_reeds "<< rank <<":constructor:\t START");
   eds_para=sim.param().reeds.eds_para[ID];
   sim.param().eds = eds_para;
   
   const int num_s = sim.param().reeds.num_l;
   l == eds_para.s[0];
-  DEBUG(4, "Temp of replica "<< rank <<" " << _ID << " \t" << sim.param().multibath.multibath.bath(0).temperature)
-  DEBUG(4, "S of replica "<< rank <<" " << _ID << " \t" << sim.param().eds.s[0])
-  DEBUG(4, "S size of replica "<< rank <<" " << _ID << " \t" << sim.param().eds.s.size())
+  DEBUG(5, "replica_reeds "<< rank <<":constructor:\t Temp of replica "<< rank <<" " << _ID << " \t" << sim.param().multibath.multibath.bath(0).temperature)
+  DEBUG(5, "replica_reeds "<< rank <<":constructor:\t S of replica "<< rank <<" " << _ID << " \t" << sim.param().eds.s[0])
+  DEBUG(5, "replica_reeds "<< rank <<":constructor:\t S size of replica "<< rank <<" " << _ID << " \t" << sim.param().eds.s.size())
 
   assert(0.0 <= sim.param().multibath.multibath.bath(0).temperature);
-  DEBUG(3, "replica_reeds "<< rank <<":constructor \t DONE"); 
+  DEBUG(4, "replica_reeds "<< rank <<":constructor:\t DONE"); 
 
 }
 
@@ -111,17 +112,17 @@ double util::replica_reeds::calc_energy_eds_stat(double s){
 }
 
 double util::replica_reeds::calculate_energy(const int partner) {
-    DEBUG(4, "replica_reeds:calculate_energy \t START"); 
+    DEBUG(4, "replica_reeds "<< rank <<":calculate_energy:\t START"); 
 
     double energy = 0.0;
     algorithm::Algorithm * ff;   
 
-    DEBUG(5, "replica_reeds:calculate_energy \t\t get Partner settings"); 
+    DEBUG(5, "replica_reeds "<< rank <<":calculate_energy:\t get Partner settings"); 
     if(partner!=ID) change_eds(partner);
     ff = md.algorithm("EDS");
 
     //Calculate energies    
-    DEBUG(5, "replica_reeds:calculate_energy \t\t calc energies"); 
+    DEBUG(5, "replica_reeds "<< rank <<":calculate_energy:\t calc energies"); 
     if (ff->apply(topo, conf, sim)) {
       print_info("Error in Forcefield energy calculation!");
   #ifdef XXMPI
@@ -131,11 +132,11 @@ double util::replica_reeds::calculate_energy(const int partner) {
     }
     
     //return energies
-    DEBUG(5, "replica_reeds:calculate_energy \t\t return energies"); 
+    DEBUG(5, "replica_reeds "<< rank <<":calculate_energy:\t return energies"); 
     energy=conf.current().energies.eds_vr; 
     if(partner!=ID) reset_eds();
     
-    DEBUG(4, "replica_reeds:calculate_energy \t DONE"); 
+    DEBUG(4, "replica_reeds "<< rank <<":calculate_energy:\t DONE"); 
     return energy;
 }
 

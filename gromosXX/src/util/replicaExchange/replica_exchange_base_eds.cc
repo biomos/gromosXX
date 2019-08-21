@@ -60,24 +60,23 @@
 util::replica_exchange_base_eds::replica_exchange_base_eds(io::Argument _args, int cont, int rank,
         std::vector<int> repIDs, std::map<ID_t, rank_t> &_repMap):  
         replica_exchange_base(_args, cont, rank, repIDs, _repMap){
-    DEBUG(3,"replica_exchange_base_eds "<< rank <<":\t Constructor \t START");
-    DEBUG(5,"replica_exchange_base_eds"<< rank <<":\t replica Type\t "<< typeid(replicas).name());
-    //DEBUG(5,"replica_exchange_base_eds"<< rank <<":\t replicaPARAMrEEDS NUMl \t "<<replicas[0]->sim.param().reeds.num_l);
+    DEBUG(3,"replica_exchange_base_eds "<< rank <<":Constructor:\t START");
+    DEBUG(4,"replica_exchange_base_eds "<< rank <<":Constructor:\t replica Type\t "<< typeid(replicas).name());
     createReplicas(cont, repIDs, rank);
-    DEBUG(3,"replica_exchange_base_eds "<< rank <<":\t Constructor \t DONE");
+    DEBUG(3,"replica_exchange_base_eds "<< rank <<":Constructor:\t DONE");
 }
 
 void util::replica_exchange_base_eds::createReplicas(int cont, std::vector<int>  repIDs, int rank){
-  DEBUG(3,"replica_exchange_base_eds "<<rank<<":\t initReplicas \t START");
+  DEBUG(3,"replica_exchange_base_eds "<< rank <<":initReplicas:\t START");
   replicas.resize(numReplicas);
   // create the number of replicas that are assigned to my node
    int i = 0;
    for (repIterator it = replicas.begin(); it < replicas.end(); ++it, ++i) {
     *it = new util::replica_reeds(args, cont, repIDs[i], rank);
-    DEBUG(3, "\treplica_exchange_base_eds "<< rank <<":\tConstructor \ttopo\t" << (*it)->topo.check_state())
-    DEBUG(3, "\treplica_exchange_base_eds "<< rank <<":\tConstructor \tconf:\t" << (*it)->conf.check((*it)->topo, (*it)->sim))
+    DEBUG(4, "replica_exchange_base_eds "<< rank <<":initReplicas:\tConstructor \ttopo\t" << (*it)->topo.check_state())
+    DEBUG(4, "replica_exchange_base_eds "<< rank <<":initReplicas:\tConstructor \tconf:\t" << (*it)->conf.check((*it)->topo, (*it)->sim))
    }    
-  DEBUG(3,"replica_exchange_base_eds  "<<rank<<":\t initReplicas \t Done");
+  DEBUG(3,"replica_exchange_base_eds "<< rank <<":initReplicas:\t Done");
 }
 
 
@@ -88,7 +87,7 @@ util::replica_exchange_base_eds::~replica_exchange_base_eds() {
 }
 
 void util::replica_exchange_base_eds::swap() {
-  DEBUG(5,"replica_exchange_base_eds:swap Start");
+  DEBUG(3,"replica_exchange_base_eds "<< rank <<":swap:\t Start");
   // do this for all replicas; if two of them on this node, do special swap
   for (repIterator it = replicas.begin(); it < replicas.end(); ++it) {
     unsigned int partner = (*it)->find_partner();
@@ -98,7 +97,7 @@ void util::replica_exchange_base_eds::swap() {
     // attempt switch in this run?
     if (partner != (*it)->ID) {
       // are the replicas on the same node?
-      DEBUG(5,"replica_exchange_base_eds:sending "<< (*it)->ID <<" \t Start");
+      DEBUG(4,"replica_exchange_base_eds "<< rank <<":swap:\t sending "<< (*it)->ID <<" \t Start");
       if (partnerOnThisNode) {
         swap_on_node(it, partner);
         if ((*it)->switched)
@@ -126,7 +125,7 @@ void util::replica_exchange_base_eds::swap() {
       (*it)->switched = 0;
     }
   }
-    DEBUG(5,"replica_exchange_base_eds:swap  Done");
+    DEBUG(3,"replica_exchange_base_eds "<< rank <<":swap:\t Done");
 }
 
 void util::replica_exchange_base_eds::swap_on_node(repIterator it1, const unsigned int partner) {
@@ -207,16 +206,16 @@ void util::replica_exchange_base_eds::switch_coords_on_node(repIterator it1, con
 }
  
 void util::replica_exchange_base_eds::run_MD() {
-    DEBUG(3, "replica_exchange_base_eds "<< rank <<":\t run_MD \t START")
+    DEBUG(3, "replica_exchange_base_eds "<< rank <<":run_MD:\t START")
 
      // do a md run for all replica assigned to this node
     for (repIterator it = replicas.begin(); it < replicas.end(); ++it) {
-        DEBUG(3, "replica_exchange_base_eds "<< rank <<":\t run_MD \t replica "<< (*it)->ID << ":")
-        DEBUG(3, "\treplica_exchange_base_eds "<< rank <<":\tStep\tStart")
+        DEBUG(4, "replica_exchange_base_eds "<< rank <<":run_MD:\t replica "<< (*it)->ID << ":")
+        DEBUG(4, "replica_exchange_base_eds "<< rank <<":run_MD:\t replica\t Start")
         (*it)->run_MD();
-        DEBUG(3, "\treplica_exchange_base_eds "<< rank <<":\tStep\tDone")
+        DEBUG(4, "replica_exchange_base_eds "<< rank <<":run_MD:\t replica\t Done")
     }
-    DEBUG(3, "replica_exchange_base_eds "<< rank <<":\t run_MD \t DONE")
+    DEBUG(3, "replica_exchange_base_eds "<< rank <<":run_MD:\t DONE")
 }
 
 
@@ -256,20 +255,20 @@ void util::replica_exchange_base_eds::eds_stat(){
     }
 
 void util::replica_exchange_base_eds::init() {
-  DEBUG(3,"replica_exchange_base_eds "<< rank <<":\t init \t START");
-  DEBUG(3,"replica_exchange_base_eds "<< rank <<":\t start init from baseclass \t NEXT");
+  DEBUG(3,"replica_exchange_base_eds "<< rank <<":init:\t init \t START");
+  DEBUG(3,"replica_exchange_base_eds "<< rank <<":init:\t start init from baseclass \t NEXT");
     for (repIterator it = replicas.begin(); it < replicas.end(); ++it) {
     (*it)->init();
    }
   //replica_exchange_base::init();
-  DEBUG(3,"replica_exchange_base_eds "<< rank <<":\t init_eds_stat \t NEXT");
+  DEBUG(3,"replica_exchange_base_eds "<< rank <<":init:\t init_eds_stat \t NEXT");
   this->init_eds_stat();
-  DEBUG(3,"replica_exchange_base_eds "<< rank <<":\t init \t DONE");
+  DEBUG(3,"replica_exchange_base_eds "<< rank <<":init:\t DONE");
 }
 
 //initialize output files  
 void util::replica_exchange_base_eds::init_eds_stat(){
-        DEBUG(3,"replica_exchange_base_eds "<< rank <<":\t init_eds_stat \t START");
+        DEBUG(3,"replica_exchange_base_eds "<< rank <<":init_eds_stat:\t START");
         
         ID_t currentID=1000; //error value          
         for (repIterator it = replicas.begin(); it < replicas.end(); ++it) {
@@ -282,5 +281,5 @@ void util::replica_exchange_base_eds::init_eds_stat(){
           replicaStatData[currentID].epot_vec.resize(this->numReplicas);
           replicaStatData[currentID].prob_vec.resize(this->numReplicas);
         }
-        DEBUG(3,"replica_exchange_base_eds "<< rank <<":\t init_eds_stat \t DONE");
+        DEBUG(3,"replica_exchange_base_eds "<< rank <<":init_eds_stat:\t DONE");
 }

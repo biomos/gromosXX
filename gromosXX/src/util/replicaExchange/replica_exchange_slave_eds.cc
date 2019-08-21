@@ -13,11 +13,11 @@
 
 #include <util/replicaExchange/replica_exchange_slave_eds.h>
 
+
 #undef MODULE
 #undef SUBMODULE
 #define MODULE util
 #define SUBMODULE replica_exchange
-
 
 util::replica_exchange_slave_eds::replica_exchange_slave_eds(io::Argument & _args,
             int cont,
@@ -29,14 +29,14 @@ util::replica_exchange_slave_eds::replica_exchange_slave_eds(io::Argument & _arg
             replica_exchange_base_eds(_args, cont, rank, repIDs, repMap),
             reedsParam(replicas[0]->sim.param().reeds){
 
-    DEBUG(2,"replica_exchange_slave_eds " << rank << ":\t Constructor \t START");
+    DEBUG(2,"replica_exchange_slave_eds " << rank << ":Constructor:\t START");
    
-    DEBUG(2,"replica_exchange_slave_eds " << rank << ":\t Constructor \t DONE"); 
+    DEBUG(2,"replica_exchange_slave_eds " << rank << ":Constructor:\t DONE"); 
 }
 
 void util::replica_exchange_slave_eds::send_to_master() const{
-  DEBUG(2,"replica_exchange_slave_eds " << rank << ":send_to_master \t START");
-    DEBUG(2,"replica_exchange_slave_eds " << rank << ":send_to_master \t Show vPots");
+  DEBUG(2,"replica_exchange_slave_eds " << rank << ":send_to_master:\t START");
+  DEBUG(2,"replica_exchange_slave_eds " << rank << ":send_to_master:\t Show vPots");
 
   for (std::vector<util::replica_reeds *>::const_iterator it = replicas.begin(); it < replicas.end(); ++it) {
     util::repInfo info;
@@ -47,23 +47,23 @@ void util::replica_exchange_slave_eds::send_to_master() const{
     info.partner = (*it)->partner;
     info.probability = (*it)->probability;
     info.switched = int((*it)->switched);
-    DEBUG(2,"replica_exchange_slave_eds " << rank << ":epotTot "<< info.epot);
+    DEBUG(4,"replica_exchange_slave_eds " << rank << "send_to_master:\t epotTot\t "<< info.epot);
 
-    DEBUG(2,"replica_exchange_slave_eds " << rank << ":send_to_master \t\t send MPI_REPINFO");
+    DEBUG(4,"replica_exchange_slave_eds " << rank << ":send_to_master:\t\t send MPI_REPINFO");
     MPI_Send(&info, 1, MPI_REPINFO, 0, REPINFO, MPI_COMM_WORLD);
 
-    DEBUG(2,"replica_exchange_slave_eds " << rank << ":send_to_master \t\t send MPI_EDS");
+    DEBUG(4,"replica_exchange_slave_eds " << rank << ":send_to_master:\t\t send MPI_EDS");
 
     eds_energies= (*it)->conf.current().energies.eds_vi;
         
     for(int s=0; s < (*it)->eds_para.numstates; s++){   //todo bschroed REMOVE
-        DEBUG(2, "replica_exchange_slave_eds" << rank << ":send_to_master:potEs" << s << "\t" << eds_energies[s]);
+        DEBUG(4, "replica_exchange_slave_eds" << rank << ":send_to_master:\t potEs" << s << "\t" << eds_energies[s]);
     }
     
     MPI_Send(&eds_energies[0], 1, MPI_EDSINFO, 0, EDSINFO, MPI_COMM_WORLD);
-    DEBUG(2,"replica_exchange_slave_eds " << rank << ":send_to_master \t\t send MPI_EDS \t DONE" );
+    DEBUG(4,"replica_exchange_slave_eds " << rank << ":send_to_master:\t\t send MPI_EDS \t DONE" );
     
   }
-  DEBUG(2,"replica_exchange_slave_eds " << rank << ":send_to_master \t DONE");
+  DEBUG(2,"replica_exchange_slave_eds " << rank << ":send_to_master:\t DONE");
 }
 

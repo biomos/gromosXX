@@ -17,13 +17,13 @@
 #undef MODULE
 #undef SUBMODULE
 #define MODULE util
-#define SUBMODULE replica
+#define SUBMODULE replica_exchange
 
 util::replica::replica(io::Argument _args, int cont, int _ID, int _rank) : ID(_ID), rank(_rank), args(_args) {
   // read input again. If copy constructors for topo, conf, sim, md work, one could
   // also pass them down from repex_mpi.cc ...
   
-  DEBUG(3, "replica:Constructor  "<< rank <<":\t START");
+  DEBUG(4, "replica "<< rank <<":Constructor:\t  "<< rank <<":\t START");
   // do continuation run?
   // change name of input coordinates
   if(cont == 1){
@@ -155,8 +155,8 @@ util::replica::replica(io::Argument _args, int cont, int _ID, int _rank) : ID(_I
       << " MAIN MD LOOP\n"
       << "==================================================\n\n";
 
-    DEBUG(4, "Temp of replica  "<< rank <<": " << ID << " \t" << sim.param().multibath.multibath.bath(0).temperature);
-    DEBUG(3, "replica Constructor  "<< rank <<": \t DONE");
+    DEBUG(4, "replica "<< rank <<":Constructor:\t Temp of replica  "<< rank <<": " << ID << " \t" << sim.param().multibath.multibath.bath(0).temperature);
+    DEBUG(4, "replica "<< rank <<":Constructor:\t replica Constructor  "<< rank <<": \t DONE");
 }
 
 util::replica::~replica() {
@@ -176,10 +176,10 @@ void util::replica::run_MD() {
   sim.steps() = steps;
   sim.time() = time;
   while ((unsigned int)(sim.steps()) < maxSteps + steps) {
-    DEBUG(5, "replica "  << (ID+1)<<"\t runMD \t Start");      
+    DEBUG(5, "replica "<< rank <<":run_MD:\t Start");      
     traj->write(conf, topo, sim, io::reduced);
     // run a step
-    DEBUG(5, "replica\t runMD "  << (ID+1)<<"\t simulation!:");
+    DEBUG(5, "replica "<< rank <<":run_MD:\t simulation!:");
     if ((error = md.run(topo, conf, sim))) {
       switch (error) {
         case E_SHAKE_FAILURE:
@@ -226,14 +226,14 @@ void util::replica::run_MD() {
       error = 0; // clear error condition
       break;
     }
-    DEBUG(5, "replica\t runMD "  << (ID+1)<<"\t clean up:");      
+    DEBUG(5, "replica "<< rank <<":run_MD:\t clean up:");      
     traj->print(topo, conf, sim);
 
     ++sim.steps();
     sim.time() = sim.param().step.t0 + sim.steps() * sim.time_step_size();
 
   } // main md loop
-  DEBUG(5, "replica\t runMD "  << (ID+1)<<"\t md done:");      
+  DEBUG(4, "replica "<< rank <<":run_MD:\t  DONE:");      
   // update replica information
   time = sim.time();
   steps = sim.steps();
@@ -255,7 +255,7 @@ void util::replica::write_final_conf() {
 // are not on the same node
 
 void util::replica::swap(const unsigned int partnerID, const unsigned int partnerRank) {
-  DEBUG(3, "replica:swap  "<< rank <<":\t START");
+  DEBUG(4, "replica "<< rank <<":swap:\t  START");
 
   partner = partnerID;
   unsigned int numT = sim.param().replica.num_T;
@@ -333,7 +333,7 @@ void util::replica::swap(const unsigned int partnerID, const unsigned int partne
     switched = false;
     probability = 0.0;
   }
-    DEBUG(3, "replica:swap "<< rank <<":\t DONE");
+    DEBUG(4, "replica "<< rank <<":swap:\t  DONE");
 
 }
 
@@ -509,7 +509,7 @@ double util::replica::calc_probability(const int partner, const int partnerRank)
 }
 
 double util::replica::calculate_energy(const int partner) {
-  DEBUG(4, "replica:calculate_energy  "<< rank <<":\t START");
+  DEBUG(4, "replica "<< rank <<":calculate_energy:\t  START");
 
   change_lambda(partner);
 
@@ -547,7 +547,7 @@ double util::replica::calculate_energy(const int partner) {
   }
 
   set_lambda();
-  DEBUG(4, "replica:calculate_energy  "<< rank <<":\t Done");
+  DEBUG(4, "replica "<< rank <<":calculate_energy:\t  DONE");
 
   return energy;
 }

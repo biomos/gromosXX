@@ -406,7 +406,7 @@ int main(int argc, char *argv[]) {
     
     //Vars for timing
     int hh, mm, ss = 0;
-    double eta_spent, percent, spent;
+    double eta_spent, percent, spent = 0;
     int eta_hh, eta_mm, eta_ss = 0;
     trial=0;    //reset trials
     for ( ; trial < sim_runs; ++trial){ //for repex execution
@@ -437,12 +437,11 @@ int main(int argc, char *argv[]) {
           std::cout << "REPEX: spent " << hh << ":" << mm << ":" << ss << std::endl;
 
           eta_spent = spent / trial * sim_runs - spent;
-          if(trial>1){
-            eta_hh = int(eta_spent / 3600);
-            eta_mm = int((eta_spent - eta_hh * 3600) / 60);
-            eta_ss = int(eta_spent - eta_hh * 3600 - eta_mm * 60);
-          }
-          std::cerr << "REPEX: ETA   " << eta_hh << ":" << eta_mm << ":" << eta_ss << std::endl;
+          eta_hh = int(eta_spent / 3600);
+          eta_mm = int((eta_spent - eta_hh * 3600) / 60);
+          eta_ss = int(eta_spent - eta_hh * 3600 - eta_mm * 60);
+
+            std::cerr << "REPEX: ETA   " << eta_hh << ":" << eta_mm << ":" << eta_ss << std::endl;
           std::cout << "REPEX: ETA   " << eta_hh << ":" << eta_mm << ":" << eta_ss << std::endl;
         }
     }

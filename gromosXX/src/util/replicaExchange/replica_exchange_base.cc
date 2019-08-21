@@ -37,17 +37,22 @@
 #include <mpi.h>
 #endif
 
+#undef MODULE
+#undef SUBMODULE
+#define MODULE util
+#define SUBMODULE replica_exchange
+
 util::replica_exchange_base::replica_exchange_base(io::Argument _args, int cont, int rank,
         std::vector<int> repIDs, std::map<ID_t, rank_t> &_repMap) : args(_args), repMap(_repMap), numReplicas(repIDs.size()), rng(-1), 
         rank(rank), cont(cont), repIDs(repIDs){
 
-  DEBUG(5,"replica_exchange_base:\t Constructor \t START ");
+  DEBUG(3,"replica_exchange_base "<< rank <<":Constructor:\t START ");
   //construct replica objs
-  DEBUG(5,"replica_exchange_base:\t\t createReplicas");
+  DEBUG(4,"replica_exchange_base "<< rank <<":Constructor:\t  createReplicas");
   createReplicas(cont, repIDs, rank);
-  DEBUG(5,"replica_exchange_base_eds"<< rank <<":\t replica Type\t "<< typeid(replicas).name());
+  DEBUG(4,"replica_exchange_base "<< rank <<":Constructor:\t replica Type\t "<< typeid(replicas).name());
 
-  DEBUG(5,"replica_exchange_base:\t Constructor \t Done");
+  DEBUG(3,"replica_exchange_base "<< rank <<":Constructor:\t Constructor \t DONE");
 }
 
 util::replica_exchange_base::~replica_exchange_base() {
@@ -58,14 +63,14 @@ util::replica_exchange_base::~replica_exchange_base() {
 }
 
 void util::replica_exchange_base::run_MD() {
-  DEBUG(5,"replica_exchange_base:\t run_MD \t START");
+  DEBUG(3,"replica_exchange_base "<< rank <<":run_MD:\t START");
 
   // do a md run for all replica assigned to this node
   for (std::vector< util::replica * >::iterator it = replicas.begin(); it < replicas.end(); ++it) {
     (*it)->run_MD();
     (*it)->conf.current().energies.eds_vr;
   }
-  DEBUG(5,"replica_exchange_base:\t run_MD \t END");
+  DEBUG(3,"replica_exchange_base "<< rank <<":run_MD:\t END");
 
 }
 
@@ -77,20 +82,20 @@ void util::replica_exchange_base::write_final_conf() {
 }
 
 void util::replica_exchange_base::init() {
-  DEBUG(5,"replica_exchange_base:\t init() \t START");
+  DEBUG(3, "replica_exchange_base "<< rank <<":init:\t START");
 
   // do init for all replica assigned to this node
-  DEBUG(5,"replica_exchange_base:\t\t initReplicas");
-  DEBUG(5,"replica_exchange_base_eds"<< rank <<":\t initReplicas type\t "<< typeid(replicas).name());
+  DEBUG(4,"replica_exchange_base "<< rank <<":init:\t initReplicas");
+  DEBUG(4,"replica_exchange_base "<< rank <<":init:\t initReplicas type\t "<< typeid(replicas).name());
 
   for (repIterator it = replicas.begin(); it < replicas.end(); ++it) {
     (*it)->init();
   }
-  DEBUG(5,"replica_exchange_base:\t init() \t DONE");
+  DEBUG(3,"replica_exchange_base "<< rank <<":init:\t DONE");
 
 }
 void util::replica_exchange_base::createReplicas(int cont, std::vector<int> repIDs, int rank){
-  DEBUG(5,"replica_exchange_base:\t initReplicas \t START");
+  DEBUG(3,"replica_exchange_base "<< rank <<":createReplicas:\t START");
   replicas.resize(numReplicas);
   // create the number of replicas that are assigned to my node
   int i = 0;
@@ -98,14 +103,14 @@ void util::replica_exchange_base::createReplicas(int cont, std::vector<int> repI
     // one could use a vector<util::replica> and theref ore we needed a copy constructor
     // for the replica class but there seems to be something wrong with those of conf/topo/...
     *it = new util::replica(args, cont, repIDs[i++], rank);
-    DEBUG(3, "\treplica_exchange_base "<< rank <<":\tConstructor \ttopo\t" << (*it)->topo.check_state())
-    DEBUG(3, "\treplica_exchange_base "<< rank <<":\tConstructor \tconf:\t" << (*it)->conf.check((*it)->topo, (*it)->sim))
+    DEBUG(4, "replica_exchange_base "<< rank <<":createReplicas:\t topo\t" << (*it)->topo.check_state())
+    DEBUG(4, "replica_exchange_base "<< rank <<":createReplicas:\t conf:\t" << (*it)->conf.check((*it)->topo, (*it)->sim))
   }
-  DEBUG(5,"replica_exchange_base:\t initReplicas \t Done");
+  DEBUG(3,"replica_exchange_base "<< rank <<":createReplicas:\t DONE");
 }
 
 void util::replica_exchange_base::swap() {
-  DEBUG(5,"replica_exchange_base:\t swap \t Start");
+  DEBUG(3,"replica_exchange_base "<< rank <<":swap:\t START");
   // do this for all replicas; if two of them on this node, do special swap
   for (std::vector< util::replica* >::iterator it = replicas.begin(); it < replicas.end(); ++it) {
     unsigned int partner = (*it)->find_partner();
@@ -149,7 +154,7 @@ void util::replica_exchange_base::swap() {
       (*it)->velscale((*it)->partner);
     }
   }
-  DEBUG(5,"replica_exchange_base:\t swap \t Done");
+  DEBUG(3,"replica_exchange_base "<< rank <<":swap:\t DONE");
 }
 
 void util::replica_exchange_base::swap_on_node(repIterator it1, const unsigned int partner) {
