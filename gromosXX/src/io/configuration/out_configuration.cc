@@ -1801,6 +1801,8 @@ void io::Out_Configuration
 
     _print_timestep(sim, m_output);
 
+    //print_MINIMISATION(m_output, rmsd_force, max_force, total_iterations);
+
     print_ENERGY(m_output, conf.old().energies, topo.energy_groups());
 
     if (sim.param().sasa.switch_sasa)
@@ -1814,8 +1816,9 @@ void io::Out_Configuration
       print_ENERGY(m_output, conf.old().perturbed_energy_derivatives,
               topo.energy_groups(), "dE/dLAMBDA", "dE_");
     }
-
-    print_MULTIBATH(m_output, sim.multibath(), conf.old().energies);
+    if (!sim.param().minimise.ntem) {
+      print_MULTIBATH(m_output, sim.multibath(), conf.old().energies);
+    }
 
     // flexible shake kinetic energy
     if (sim.param().constraint.solute.algorithm == simulation::constr_flexshake) {
@@ -1853,6 +1856,7 @@ void io::Out_Configuration
   double sasa_tot, sasa_totf, sasa_voltot, sasa_voltotf;
 
   if (sim.param().minimise.ntem) {
+    //print_MINIMISATION(m_output, rmsd_force, max_force, sim.minimisation);
     print_ENERGY(m_output, conf.current().energies, topo.energy_groups(), "MINIMIZED ENERGY",
             "<EMIN>_");
   }
@@ -1871,8 +1875,10 @@ void io::Out_Configuration
 
   print_ENERGY(m_output, e, topo.energy_groups(), "ENERGY AVERAGES", "<E>_");
   print_ENERGY(m_output, ef, topo.energy_groups(), "ENERGY FLUCTUATIONS", "<<E>>_");
-  print_MULTIBATH(m_output, sim.multibath(), e, "TEMPERATURE AVERAGES");
-  print_MULTIBATH(m_output, sim.multibath(), ef, "TEMPERATURE FLUCTUATIONS");
+  if (!sim.param().minimise.ntem) {
+    print_MULTIBATH(m_output, sim.multibath(), e, "TEMPERATURE AVERAGES");
+    print_MULTIBATH(m_output, sim.multibath(), ef, "TEMPERATURE FLUCTUATIONS");
+  }
 
   if (sim.param().pcouple.calculate) {
     print_MATRIX(m_output, p, "PRESSURE AVERAGE");

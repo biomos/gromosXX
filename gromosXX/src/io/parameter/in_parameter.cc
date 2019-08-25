@@ -186,7 +186,7 @@ void io::In_Parameter::read_ENERGYMIN(simulation::Parameter &param,
     exampleblock << "#       2: Fletcher-Reeves conjugate-gradient minimisation\n";
     exampleblock << "#       3: Polak-Ribiere conjugate-gradient minimisation\n";
     exampleblock << "# NCYC: >0 number of steps before resetting the conjugate-gradient search direction\n";
-    exampleblock << "#       =0 do not reset conjugate-gradient search direction\n";
+    exampleblock << "#       =0 reset only if the energy grows in the search direction\n";
     exampleblock << "# DELE: >0.0 energy threshold for convergence\n";
     exampleblock << "#       >0.0 (conjugate-gradient) RMS force threshold for convergence\n";
     exampleblock << "# DX0: >0.0 initial step size\n";
@@ -196,10 +196,10 @@ void io::In_Parameter::read_ENERGYMIN(simulation::Parameter &param,
     exampleblock << "# CGIM >0 (conjugate-gradient) maximum number of cubic interpolations per step\n";
     exampleblock << "# CGIC >0.0 (conjugate-gradient) displacement threshold after interpolation\n";
     exampleblock << "#     NTEM    NCYC    DELE    DX0     DXM    NMIN    FLIM\n";
-    exampleblock << "         1       0     0.1   0.01    0.05       1     0.0\n";
+    exampleblock << "         1       0     0.1   0.01    0.05     100     0.0\n";
     exampleblock << "# ---- OR: example for NTEM > 1:\n";
     exampleblock << "#     NTEM    NCYC    DELE    DX0     DXM    NMIN    FLIM    CGIM    CGIC\n";
-    exampleblock << "         3       0    1e-3  0.005    0.05       1     0.0       3    1e-3\n";
+    exampleblock << "         3       0    1e-3   5e-6    5e-4     100     0.0       3    1e-4\n";
     exampleblock << "END\n";
 
     std::string blockname = "ENERGYMIN";
@@ -221,10 +221,10 @@ void io::In_Parameter::read_ENERGYMIN(simulation::Parameter &param,
             block.get_next_parameter("CGIC", param.minimise.cgic, ">0", "");
         }
 
-        /* if (param.minimise.ntem == 1 && param.minimise.ncyc > 0)
+        if (param.minimise.ntem == 1 && param.minimise.ncyc > 0)
            io::messages.add("ENERGYMIN block: NCYC > 0 has no effect for steepest descent",
                "io::In_Parameter",
-               io::message::warning); */
+               io::message::warning);
 
         if (param.minimise.flim > 0)
             io::messages.add("ENERGYMIN: FLIM > 0 may result in "
