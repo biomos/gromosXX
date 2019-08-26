@@ -244,7 +244,7 @@ void util::replica::swap(const unsigned int partnerID, const unsigned int partne
   unsigned int numL = sim.param().replica.num_l;
 
   // does partner exist?
-  if (partner >= 0 && partner < numT * numL && partner != ID) {
+  if (partner < numT * numL && partner != ID) {
     // the one with lower ID does probability calculation
     if (ID < partner) {
       // posts a MPI_Recv(...) matching the MPI_Send below 
@@ -409,7 +409,7 @@ int util::replica::find_partner() const {
     }
   }
   // partner out of range ?
-  if (partner < 0 || partner > numT * numL - 1)
+  if (partner > numT * numL - 1)
     partner = ID;
 
   return partner;

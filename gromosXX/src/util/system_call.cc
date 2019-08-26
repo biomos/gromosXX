@@ -18,7 +18,7 @@ int util::system_call(const std::string & command,
   }
   if (output_file.empty()) {
 #ifdef HAVE_TMPNAM
-    char tmp[TMP_MAX];
+    char tmp[L_tmpnam];
     if (tmpnam(tmp) != 0)
       throw std::runtime_error("Could not get temporary file in system call");
     output_file = std::string(tmp);

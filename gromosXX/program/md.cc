@@ -223,12 +223,12 @@ int main(int argc, char *argv[]){
 
     traj.print(topo, conf, sim);
 
-    ++sim.steps();
+    sim.steps()=sim.steps()+sim.param().analyze.stride;
     sim.time() = sim.param().step.t0 + sim.steps()*sim.time_step_size();
     
     if ((sim.param().step.number_of_steps / 10 > 0) &&
 	(sim.steps() % (sim.param().step.number_of_steps / 10) == 0)){
-      ++percent;
+      percent=int(sim.steps())*10/sim.param().step.number_of_steps;
       const double spent = util::now() - start;
       const int hh = int(spent / 3600);
       const int mm = int((spent - hh * 3600) / 60);

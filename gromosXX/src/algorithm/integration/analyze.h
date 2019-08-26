@@ -55,41 +55,6 @@ namespace algorithm
     
   };
   
-   /**
-   * @class Analyze_Exchange
-   * implements analyzation of a trajectory. Does nothing but exchanging the
-   * states. Substitutes leap-frog in re-evaluation.
-   */
-  class Analyze_Exchange : public Algorithm
-  {
-  public:
-    /**
-     * Constructor.
-     */
-    Analyze_Exchange();
-
-    /**
-     * Destructor.
-     */
-    ~Analyze_Exchange(){}
-    
-    /**
-     * Do exchange states.
-     */
-    virtual int apply(topology::Topology &topo, 
-		      configuration::Configuration &conf,
-                      simulation::Simulation &sim);
-
-    /**
-     * Initialization
-     */
-    virtual int init(topology::Topology & topo,
-		     configuration::Configuration & conf,
-		     simulation::Simulation & sim,
-		     std::ostream & os = std::cout,
-                     bool quiet = false);
-  };
-  
 } // algorithm
 
 #endif

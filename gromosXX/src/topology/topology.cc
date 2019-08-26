@@ -99,7 +99,7 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
   m_angle_types_cosharm = topo.angle_types_cosharm();
   m_dihedral_types = topo.dihedral_types();
   m_impdihedral_types = topo.impdihedral_types();
-    std::vector<interaction::bond_type_struct> m_bond_types_quart();
+    std::vector<interaction::bond_type_struct> m_bond_types_quart;
 
     /**
      * store all available angle types with harmonic/cosine harmonic force constant

@@ -172,9 +172,9 @@ void io::Out_Configuration::_print_ene_version(std::ostream &os) {
 
 void io::Out_Configuration::init(io::Argument & args,
         simulation::Parameter const & param) {
-  if (args.count(argname_fin) > 0)
-    final_configuration(args[argname_fin]);
-  else io::messages.add("argument " + argname_fin + " for final configuration required!",
+  if (args.count(argname_fin) > 0) {
+    if (!param.analyze.analyze) final_configuration(args[argname_fin]);
+  } else io::messages.add("argument " + argname_fin + " for final configuration required!",
           "Out_Configuration",
           io::message::error);
 
@@ -281,11 +281,8 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
      * set this to true when you print the timestep to the special traj.
      * make sure you don't print it twice. 
      */
-    //  m_special_traj << "time " << sim.time() << ", steps " << sim.steps() << "\n";
 
     if (m_every_pos && ((sim.steps() % m_every_pos) == 0 || minimum_found)) {
-      // don't write starting configuration if analyzing a trajectory
-      if (sim.steps() || !sim.param().analyze.analyze) {
         _print_timestep(sim, m_pos_traj);
 
         if (sim.param().write.position_solute_only)
@@ -297,7 +294,6 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
           _print_box(conf, m_pos_traj);
 
         m_pos_traj.flush();
-      }
       // a new block begins. let's reset the minimum
       minimum_energy = conf.old().energies.get_energy_by_index(sim.param().write.energy_index);
     }
@@ -311,7 +307,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       m_vel_traj.flush();
     }
 
-    if (m_every_force && ((sim.steps() - 1) % m_every_force) == 0) {
+    if (m_every_force && ((sim.steps()-sim.param().analyze.stride) % m_every_force) == 0) {
       if (sim.steps()) {
         _print_old_timestep(sim, m_force_traj);
         if (sim.param().write.force_solute_only)
@@ -328,21 +324,21 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
     // beginning of the next step; they therefore have to be printed before 
     // _print_special_timestep is executed -- MariaP 2016/04/29
 
-    if (m_every_disres && sim.steps() && ((sim.steps() - 1) % m_every_disres) == 0) {
+    if (m_every_disres && sim.steps() && ((sim.steps()-sim.param().analyze.stride) % m_every_disres) == 0) {
       _print_distance_restraints(conf, topo, m_special_traj);
       m_special_traj.flush();
     }
 
-    if (m_every_disfieldres && sim.steps() && ((sim.steps() - 1) % m_every_disfieldres) == 0) {
+    if (m_every_disfieldres && sim.steps() && ((sim.steps()-sim.param().analyze.stride) % m_every_disfieldres) == 0) {
       _print_disfield_restraints(conf, topo, m_special_traj);
       m_special_traj.flush();
     }
-    if (m_every_dihres && sim.steps() && ((sim.steps() - 1) % m_every_dihres) == 0) {
+    if (m_every_dihres && sim.steps() && ((sim.steps()-sim.param().analyze.stride) % m_every_dihres) == 0) {
       _print_dihedral_restraints(conf, topo, m_special_traj);
       m_special_traj.flush();
     }
 
-    if (m_every_jvalue  && sim.steps() && ((sim.steps() - 1) % m_every_jvalue) == 0) {
+    if (m_every_jvalue  && sim.steps() && ((sim.steps()-sim.param().analyze.stride) % m_every_jvalue) == 0) {
       _print_jvalue(sim.param(), conf, topo, m_special_traj, true);
       m_special_traj.flush();
     }
@@ -388,19 +384,19 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       m_special_traj.flush();
     }
     
-    if (m_every_leus && sim.steps() && ((sim.steps() - 1) % m_every_leus) == 0) {
+    if (m_every_leus && sim.steps() && ((sim.steps()-sim.param().analyze.stride) % m_every_leus) == 0) {
       _print_umbrellas(conf, m_special_traj);
       m_special_traj.flush();
     }
     
     if ((sim.param().bsleus.bsleus == simulation::bsleus_on) && 
-            m_every_bsleus && sim.steps() && ((sim.steps() - 1) % m_every_bsleus) == 0) {
+            m_every_bsleus && sim.steps() && ((sim.steps()-sim.param().analyze.stride) % m_every_bsleus) == 0) {
       _print_bsleusmem(conf, m_special_traj);
       _print_bsleus(conf, m_special_traj);
       m_special_traj.flush();
     }  
 
-    if (m_every_cos_pos && sim.steps() && ((sim.steps() - 1) % m_every_cos_pos) == 0) {
+    if (m_every_cos_pos && sim.steps() && ((sim.steps()-sim.param().analyze.stride) % m_every_cos_pos) == 0) {
       _print_cos_position(conf, topo, m_special_traj);
       m_special_traj.flush();
     }
@@ -429,7 +425,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
     }    
     // end of special trajectory printing statements
     
-    if (m_every_energy && (((sim.steps() - 1) % m_every_energy) == 0 || minimum_found)) {
+    if (m_every_energy && (((sim.steps()-sim.param().analyze.stride) % m_every_energy) == 0 || minimum_found)) {
       if (sim.steps()) {
         _print_old_timestep(sim, m_energy_traj);
         _print_energyred(conf, m_energy_traj);
@@ -438,7 +434,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       }
     }
 
-    if (m_every_free_energy && ((sim.steps() - 1) % m_every_free_energy) == 0) {
+    if (m_every_free_energy && ((sim.steps()-sim.param().analyze.stride) % m_every_free_energy) == 0) {
       if (sim.steps()) {
         _print_old_timestep(sim, m_free_energy_traj);
         _print_free_energyred(conf, topo, m_free_energy_traj);
@@ -446,7 +442,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       }
     }
 
-    if (m_every_blockaverage && ((sim.steps() - 1) % m_every_blockaverage) == 0) {
+    if (m_every_blockaverage && ((sim.steps()-sim.param().analyze.stride) % m_every_blockaverage) == 0) {
 
       if (m_write_blockaverage_energy) {
         if (sim.steps()) {
@@ -468,7 +464,8 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       conf.current().averages.block().zero();
     }
 
-  } else if (form == final && m_final) {
+  } else if (form == final) {
+    if (m_final) {
     _print_timestep(sim, m_final_conf);
     _print_position(conf, topo, m_final_conf);
     _print_lattice_shifts(conf, topo, m_final_conf);
@@ -559,13 +556,17 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
     if (sim.param().multibath.algorithm > 1) {
       _print_nose_hoover_chain_variables(sim.multibath(), m_final_conf);
     }
+    if (conf.special().shake_failure_occurred) {
+      _print_shake_failure(conf, topo, m_final_conf);
+    }
+    }
 
     if (sim.param().eds.form == simulation::aeds_search_eir || sim.param().eds.form == simulation::aeds_search_emax_emin || sim.param().eds.form == simulation::aeds_search_all) {
       _print_aedssearch(conf, sim, m_final_conf);
     }
 
     // forces and energies still go to their trajectories
-    if (m_every_force && ((sim.steps() - 1) % m_every_force) == 0) {
+    if (m_every_force && ((sim.steps()-sim.param().analyze.stride) % m_every_force) == 0) {
       _print_old_timestep(sim, m_force_traj);
       if (sim.param().write.force_solute_only)
         _print_forcered(conf, topo.num_solute_atoms(), m_force_traj, constraint_force);
@@ -573,17 +574,17 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
         _print_forcered(conf, topo.num_atoms(), m_force_traj, constraint_force);
     }
 
-    if (m_every_energy && ((sim.steps() - 1) % m_every_energy) == 0) {
+    if (m_every_energy && ((sim.steps()-sim.param().analyze.stride) % m_every_energy) == 0) {
       _print_old_timestep(sim, m_energy_traj);
       _print_energyred(conf, m_energy_traj);
       _print_volumepressurered(topo, conf, sim, m_energy_traj);
     }
 
-    if (m_every_free_energy && ((sim.steps() - 1) % m_every_free_energy) == 0) {
+    if (m_every_free_energy && ((sim.steps()-sim.param().analyze.stride) % m_every_free_energy) == 0) {
       _print_old_timestep(sim, m_free_energy_traj);
       _print_free_energyred(conf, topo, m_free_energy_traj);
     }
-    if (m_every_blockaverage && ((sim.steps() - 1) % m_every_blockaverage) == 0) {
+    if (m_every_blockaverage && ((sim.steps()-sim.param().analyze.stride) % m_every_blockaverage) == 0) {
 
       if (m_write_blockaverage_energy) {
         if (sim.steps()) {
@@ -607,23 +608,23 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
     // still has to be written to the special trajectory
     // the timestep has already been printed
  
-    if (m_every_disres && ((sim.steps() - 1) % m_every_disres) == 0) {   
+    if (m_every_disres && ((sim.steps()-sim.param().analyze.stride) % m_every_disres) == 0) {   
       _print_distance_restraints(conf, topo, m_special_traj);
     }
     
-    if (m_every_disfieldres && ((sim.steps() - 1) % m_every_disfieldres) == 0) {    
+    if (m_every_disfieldres && ((sim.steps()-sim.param().analyze.stride) % m_every_disfieldres) == 0) {    
       _print_disfield_restraints(conf, topo, m_special_traj);
     }
     
-    if (m_every_dihres && ((sim.steps() - 1) % m_every_dihres) == 0) {   
+    if (m_every_dihres && ((sim.steps()-sim.param().analyze.stride) % m_every_dihres) == 0) {   
       _print_dihedral_restraints(conf, topo, m_special_traj);
     }
     
-    if (m_every_jvalue && ((sim.steps() - 1) % m_every_jvalue) == 0) {    
+    if (m_every_jvalue && ((sim.steps()-sim.param().analyze.stride) % m_every_jvalue) == 0) {    
       _print_jvalue(sim.param(), conf, topo, m_special_traj, true);
     }
     
-    if (m_every_xray && ((sim.steps() - 1) % m_every_xray) == 0) {    
+    if (m_every_xray && ((sim.steps()-sim.param().analyze.stride) % m_every_xray) == 0) {    
       _print_xray_rvalue(sim.param(), conf, m_special_traj);
       _print_xray_umbrellaweightthresholds(sim.param(), topo, m_special_traj);
       _print_xray_bfactors(sim.param(), conf, m_special_traj);
@@ -659,28 +660,22 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       _print_nemd(sim, topo, conf, m_special_traj);
     }
     
-    if (m_every_leus && ((sim.steps() - 1) % m_every_leus) == 0) {
+    if (m_every_leus && ((sim.steps()-sim.param().analyze.stride) % m_every_leus) == 0) {
       _print_umbrellas(conf, m_special_traj);
     }
 
     if ((sim.param().bsleus.bsleus == simulation::bsleus_on) &&
-              m_every_bsleus && ((sim.steps() - 1) % m_every_bsleus) == 0) {
+              m_every_bsleus && ((sim.steps()-sim.param().analyze.stride) % m_every_bsleus) == 0) {
         _print_bsleusmem(conf, m_special_traj);
         _print_bsleus(conf, m_special_traj);
     }
     
-    if (m_every_cos_pos && ((sim.steps() - 1) % m_every_cos_pos) == 0) {
+    if (m_every_cos_pos && ((sim.steps()-sim.param().analyze.stride) % m_every_cos_pos) == 0) {
       _print_cos_position(conf, topo, m_special_traj);
     }
     
     
     //end of special traj printing
-
-
-    if (conf.special().shake_failure_occurred) {
-      _print_shake_failure(conf, topo, m_final_conf);
-    }
-
   } else {
 
     // not reduced or final (so: decorated)
@@ -834,9 +829,9 @@ void io::Out_Configuration
   os.precision(m_precision);
 
   os << "TIMESTEP\n"
-          << std::setw(m_width) << sim.steps() - 1
+          << std::setw(m_width) << sim.steps()-sim.param().analyze.stride
           << " "
-          << std::setw(m_width - 1) << sim.time() - sim.time_step_size()
+          << std::setw(m_width - 1) << sim.time() - sim.time_step_size()*sim.param().analyze.stride
           << "\nEND\n";
 
 }
