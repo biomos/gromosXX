@@ -33,7 +33,7 @@
 #include <string>
 
 #ifdef XXMPI
-#include <mpi.h>
+    #include <mpi.h>
 #endif
 
 #undef MODULE
@@ -55,6 +55,7 @@ numReplicas(_numReplicas),
 repParams(replicas[0]->sim.param().replica),
 repdatName(args["repdat"])
 {
+#ifdef XXMPI
   DEBUG(2,"replica_exchange_master "<< rank <<":Constructor:\t START");
   assert(rank == 0);
   assert(numReplicas > 0);
@@ -121,6 +122,9 @@ void util::replica_exchange_master::receive_from_all_slaves() {
 
    DEBUG(2,"replica_exchange_master "<< rank <<":receive_from_all_slaves:\t " << "time used for receiving all messages: " << MPI_Wtime() - start << " seconds\n");
    DEBUG(2,"replica_exchange_master "<< rank <<":receive_from_all_slaves:\t DONE: \n");
+#else
+   throw "Cannot initialize replica_exchange_master without MPI!"; 
+#endif
 }
 
   

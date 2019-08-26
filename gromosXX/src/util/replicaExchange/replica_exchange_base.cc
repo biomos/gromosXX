@@ -45,7 +45,7 @@
 util::replica_exchange_base::replica_exchange_base(io::Argument _args, int cont, int rank,
         std::vector<int> repIDs, std::map<ID_t, rank_t> &_repMap) : args(_args), repMap(_repMap), numReplicas(repIDs.size()), rng(-1), 
         rank(rank), cont(cont), repIDs(repIDs){
-
+#ifdef XXMPI
   DEBUG(3,"replica_exchange_base "<< rank <<":Constructor:\t START ");
   //construct replica objs
   DEBUG(4,"replica_exchange_base "<< rank <<":Constructor:\t  createReplicas");
@@ -53,6 +53,9 @@ util::replica_exchange_base::replica_exchange_base(io::Argument _args, int cont,
   DEBUG(4,"replica_exchange_base "<< rank <<":Constructor:\t replica Type\t "<< typeid(replicas).name());
 
   DEBUG(3,"replica_exchange_base "<< rank <<":Constructor:\t Constructor \t DONE");
+  #else
+    throw "Cannot use send_to_master from replica_exchange_slave_eds without MPI!"; 
+  #endif
 }
 
 util::replica_exchange_base::~replica_exchange_base() {

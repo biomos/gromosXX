@@ -35,6 +35,7 @@ util::replica_exchange_slave_eds::replica_exchange_slave_eds(io::Argument & _arg
 }
 
 void util::replica_exchange_slave_eds::send_to_master() const{
+  #ifdef XXMPI
   DEBUG(2,"replica_exchange_slave_eds " << rank << ":send_to_master:\t START");
   DEBUG(2,"replica_exchange_slave_eds " << rank << ":send_to_master:\t Show vPots");
 
@@ -65,5 +66,8 @@ void util::replica_exchange_slave_eds::send_to_master() const{
     
   }
   DEBUG(2,"replica_exchange_slave_eds " << rank << ":send_to_master:\t DONE");
+  #else
+    throw "Cannot use send_to_master from replica_exchange_slave_eds without MPI!"; 
+  #endif
 }
 

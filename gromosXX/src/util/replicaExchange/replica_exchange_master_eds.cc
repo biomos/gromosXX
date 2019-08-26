@@ -31,6 +31,7 @@ util::replica_exchange_master_eds::replica_exchange_master_eds(io::Argument _arg
         replica_exchange_master(_args, cont, rank, _size, _numReplicas, repIDs, repMap),
         reedsParam(replicas[0]->sim.param().reeds)
         {
+    #ifdef XXMPI
     DEBUG(2,"replica_exchange_master_eds "<< rank <<":Constructor:\t START");
     
     DEBUG(4,"replica_exchange_master_eds "<< rank <<":Constructor:\t Next");
@@ -54,9 +55,13 @@ util::replica_exchange_master_eds::replica_exchange_master_eds(io::Argument _arg
     }
     
     DEBUG(2,"replica_exchange_master_eds "<< rank <<":Constructor:\t DONE\n");
+    #else
+   throw "Cannot initialize replica_exchange_master_eds without MPI!"; 
+    #endif
 }
 
 void util::replica_exchange_master_eds::receive_from_all_slaves() {
+  #ifdef XXMPI
   DEBUG(2,"replica_exchange_master_eds "<< rank <<":receive_from_all_slaves:\t START\n");
 
   double start = MPI_Wtime();
@@ -105,6 +110,9 @@ void util::replica_exchange_master_eds::receive_from_all_slaves() {
   DEBUG(4,"replica_exchange_master_eds "<< rank <<":receive_from_all_slaves:\t Master:\n" << "time used for receiving all messages: " << MPI_Wtime() - start 
             << " seconds");
   DEBUG(2,"replica_exchange_master_eds "<< rank <<":receive_from_all_slaves:\t DONE")
+  #else
+    throw "Cannot use receive_from_all_slaves from replica_exchange_master_eds without MPI!"; 
+  #endif
 }
 
 int util::replica_exchange_master_eds::getSValPrecision(double minLambda){
