@@ -4206,9 +4206,9 @@ int io::check_features(simulation::Simulation & sim)
   fc.unlock("conjugate_gradient", "cg_martini");
   fc.unlock("conjugate_gradient", "cg_gromos");
   fc.unlock("conjugate_gradient", "mixed_grain");
-  // fc.unlock("conjugate_gradient", "temp_berendsen");
-  // fc.unlock("conjugate_gradient", "temp_nosehoover");
-  // fc.unlock("conjugate_gradient", "temp_nosehoover_chains");
+  fc.unlock("conjugate_gradient", "temp_berendsen");
+  fc.unlock("conjugate_gradient", "temp_nosehoover");
+  fc.unlock("conjugate_gradient", "temp_nosehoover_chains");
   fc.unlock("conjugate_gradient", "position_rest");
   fc.unlock("conjugate_gradient", "position_const");
   fc.unlock("conjugate_gradient", "position_const_scaled");
@@ -4240,8 +4240,8 @@ int io::check_features(simulation::Simulation & sim)
   fc.unlock("conjugate_gradient", "polarisation_cos_damped");
   // fc.unlock("conjugate_gradient", "sasa");
   // fc.unlock("conjugate_gradient", "sasavol");
-  // fc.unlock("conjugate_gradient", "random_gromos");
-  // fc.unlock("conjugate_gradient", "random_gsl");
+  fc.unlock("conjugate_gradient", "random_gromos");
+  fc.unlock("conjugate_gradient", "random_gsl");
   // fc.unlock("conjugate_gradient", "eds");
   // fc.unlock("conjugate_gradient", "aeds");
   fc.unlock("conjugate_gradient", "parallel_mpi");
