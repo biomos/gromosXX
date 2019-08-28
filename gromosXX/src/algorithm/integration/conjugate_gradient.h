@@ -92,7 +92,17 @@ namespace algorithm
     double p_squared;
 
     /**
-    * Total number of performed energy calculations
+    * Total number of interval doubling
+    */
+    unsigned total_doubling;
+
+    /**
+    * Total number of cubic interpolations
+    */
+    unsigned total_interpolations;
+
+    /**
+    * Total number of interaction calculations
     */
     unsigned total_iterations;
 
@@ -149,7 +159,12 @@ namespace algorithm
          simulation::Simulation & sim,
          double & ene,
          bool do_pos_shake);
-  
+    /**
+    * Terminate the minimisation
+    */
+    int terminate(double rms_force,
+    double max_force,
+    int error);
   };
 } // algorithm
 

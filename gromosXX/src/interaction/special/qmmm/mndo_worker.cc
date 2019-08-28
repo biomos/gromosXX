@@ -439,7 +439,7 @@ int interaction::MNDO_Worker::init(topology::Topology& topo,
   input_file = sim.param().qmmm.mndo.input_file;
   if (input_file.empty()) {
 #ifdef HAVE_TMPNAM
-    char tmp[TMP_MAX];
+    char tmp[L_tmpnam];
     if (tmpnam(tmp) == NULL) {
       io::messages.add("Could not get temporary file",
               "MNDO_Worker", io::message::error);
@@ -457,7 +457,7 @@ int interaction::MNDO_Worker::init(topology::Topology& topo,
   output_file = sim.param().qmmm.mndo.output_file;
   if (output_file.empty()) {
 #ifdef HAVE_TMPNAM
-    char tmp[TMP_MAX];
+    char tmp[L_tmpnam];
     if (tmpnam(tmp) == NULL) {
       io::messages.add("Could not get temporary file",
               "MNDO_Worker", io::message::error);
@@ -476,7 +476,7 @@ int interaction::MNDO_Worker::init(topology::Topology& topo,
   output_gradient_file = sim.param().qmmm.mndo.output_gradient_file;
   if (output_gradient_file.empty()) {
 #ifdef HAVE_TMPNAM
-    char tmp[TMP_MAX];
+    char tmp[L_tmpnam];
     if (tmpnam(tmp) == NULL) {
       io::messages.add("Could not get temporary file",
               "MNDO_Worker", io::message::error);

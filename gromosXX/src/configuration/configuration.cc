@@ -99,10 +99,10 @@ configuration::Configuration::Configuration
   old().vel = conf.old().vel;
   current().force = conf.current().force;
   current().constraint_force = conf.current().constraint_force;
-  current().cgrad = conf.current().cgrad; // IS THIS NECESSARY?
+  current().cgrad = conf.current().cgrad;
   old().force = conf.old().force;
   old().constraint_force = conf.current().constraint_force;
-  old().cgrad = conf.old().cgrad; // IS THIS NECESSARY?
+  old().cgrad = conf.old().cgrad;
   current().stochastic_integral = conf.current().stochastic_integral;
   old().stochastic_integral = conf.old().stochastic_integral;
   current().stochastic_seed = conf.current().stochastic_seed;
@@ -222,8 +222,8 @@ configuration::Configuration & configuration::Configuration::operator=
   old().vel = conf.old().vel;
   current().force = conf.current().force;
   old().force = conf.old().force;
-  current().cgrad = conf.current().cgrad; // IS THIS NECESSARY?
-  old().cgrad = conf.old().cgrad; // IS THIS NECESSARY?
+  current().cgrad = conf.current().cgrad;
+  old().cgrad = conf.old().cgrad;
   current().stochastic_integral = conf.current().stochastic_integral;
   old().stochastic_integral = conf.old().stochastic_integral;
   current().stochastic_seed = conf.current().stochastic_seed;
@@ -501,13 +501,13 @@ void configuration::Configuration::state_struct::resize(unsigned int s)
 {
   DEBUG(7, "state struct resize: " << s);
 
-  pos.resize(s);
-  posV.resize(s);
-  vel.resize(s);
-  force.resize(s);
-  cgrad.resize(s);
-  constraint_force.resize(s);
-  stochastic_integral.resize(s);
+  pos.resize(s, math::Vec(0.0, 0.0, 0.0));
+  posV.resize(s, math::Vec(0.0, 0.0, 0.0));
+  vel.resize(s, math::Vec(0.0, 0.0, 0.0));
+  force.resize(s, math::Vec(0.0, 0.0, 0.0));
+  cgrad.resize(s, math::Vec(0.0, 0.0, 0.0));
+  constraint_force.resize(s, math::Vec(0.0, 0.0, 0.0));
+  stochastic_integral.resize(s, math::Vec(0.0, 0.0, 0.0));
 }
 
 void configuration::Configuration::lattice_sum_struct::init(topology::Topology const & topo,

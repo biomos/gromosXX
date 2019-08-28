@@ -398,7 +398,7 @@ int algorithm::Perturbed_Shake
 	configuration::Configuration & conf,
 	simulation::Simulation & sim)
 {
-  DEBUG(7, "applying SHAKE");
+  DEBUG(7, "applying perturbed SHAKE");
   
   if (!sim.mpi || m_rank == 0)
     m_timer.start();

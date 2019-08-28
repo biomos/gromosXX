@@ -3,17 +3,6 @@
  * contains the implementation
  * for conjugate gradient energy minimisation
  * taken from GROMOS96 Manual
- * 
- * TODO:
- * 1. Test on different molecular systems
- * 2. Test posres with shake
- * 3. Revise changes in configuration.cc
- * 4. Unlock and test relevant feature pairs
- * 5. Apply Wolfe condition to get more efficient step size
- * 6. Iterative cubic interpolation - converges to deeper minimum
- * 7. Minimisation ping-pongs with DIHRES (RMS force stays high) - is DIHRES moving dihedral angle back to requested value every step
- * or is it just extra deep quadratic potential? Should be taken into account in forces
- * 8. <EMIN> is different and higher than last E_Total?!
  */
 
 #include "../../stdheader.h"
@@ -78,7 +67,7 @@ int algorithm::Conjugate_Gradient
     }
     os << "END\n";
     if (sim.param().pairlist.skip_step > 1) {
-    io::messages.add("For tight convergence, the pairlist should be generated every step or without cut-off",
+    io::messages.add("For tight convergence, the pairlist should be generated every step",
             "Algorithm::conjugate_gradient",
             io::message::warning);
     }
@@ -95,8 +84,8 @@ int algorithm::Conjugate_Gradient
   if (do_posres) {
     cgrad_posres = dynamic_cast<algorithm::Position_Constraints *>(cgrad_seq.algorithm("Position_Constraints"));
     if (cgrad_posres == NULL) {
-      std::cout << "Conjugate Gradient: Could not get Position Constraints algorithm"
-                << "\n\t(internal error)" << std::endl;
+      os << "Conjugate Gradient: Could not get Position Constraints algorithm"
+                << "\n\t(internal error)\n";
       return 1;
     }
   }
@@ -104,8 +93,8 @@ int algorithm::Conjugate_Gradient
   // Forcefield to evaluate forces and energies
   cgrad_ff = dynamic_cast<interaction::Forcefield *>(cgrad_seq.algorithm("Forcefield"));
   if (cgrad_ff == NULL) {
-    std::cout << "Conjugate Gradient: could not get Interaction Calculation algorithm"
-              << "\n\t(internal error)" << std::endl;
+    os << "Conjugate Gradient: could not get Interaction Calculation algorithm"
+              << "\n\t(internal error)\n";
     return 1;
   }
 
@@ -117,8 +106,8 @@ int algorithm::Conjugate_Gradient
   if (do_shake) {
     cgrad_shake = dynamic_cast<algorithm::Shake *>(cgrad_seq.algorithm("Shake"));
     if (cgrad_shake == NULL) { 
-      std::cout << "Conjugate Gradient: could not get SHAKE algorithm"
-                << "\n\t(internal error)" << std::endl;
+      os << "Conjugate Gradient: could not get SHAKE algorithm"
+                << "\n\t(internal error)\n";
       return 1;
     }
     // Initialise separate configuration for SHAKE
@@ -127,7 +116,9 @@ int algorithm::Conjugate_Gradient
 
   // Initialise squared magnitude of search direction
   p_squared = 0.0;
-  // Total number of iterations
+  // Counters of minimisation performance
+  total_doubling = 0;
+  total_interpolations = 0;
   total_iterations = 0;
 
   return 0;
@@ -184,11 +175,7 @@ int algorithm::Conjugate_Gradient
     DEBUG(7, "RMS force = " << f << ", MAX force = " << f_max);
     DEBUG(7, "Total energy = " << conf.current().energies.potential_total + conf.current().energies.special_total);
     if (f < sim.param().minimise.dele) {
-      std::cout << "CONJUGATE GRADIENT:\tMINIMUM REACHED\n";
-      std::cout << "After " << total_iterations + 1 << " iterations \n";
-      std::cout << "Final RMS force:\t" << f << "\n";
-      std::cout << "Final MAX force:\t" << f_max << "\n";
-      return E_MINIMUM_REACHED;
+      return terminate(f, f_max, true);
     }
   }
 
@@ -236,26 +223,34 @@ int algorithm::Conjugate_Gradient
       << "beta = " << beta);
   }
 
-  // Calculate the search direction and the gradient
-  double gradA = calculate_cgrad(topo, conf, beta);
-  DEBUG(15, "gradA = " << gradA);
+  // Calculate the search direction and the slope
+  double gA = calculate_cgrad(topo, conf, beta);
+  DEBUG(15, "gA = " << gA);
 
-  // If gradA < 0.0, then A is beyond the minimum in the search direction,
+  // If gA < 0.0, then A is beyond the minimum in the search direction,
   // so reset the search direction and calculate a new one
-  if (gradA < 0.0) {
-    DEBUG(1, "gradA below zero. Resetting the search direction");
+  if (gA < 0.0) {
+    DEBUG(1, "gA below zero. Resetting the search direction");
     beta = 0.0;
-    gradA = calculate_cgrad(topo, conf, beta);
-    DEBUG(10, "After reset, gradA = " << gradA << ", beta = " << beta);
+    gA = calculate_cgrad(topo, conf, beta);
+    DEBUG(10, "After reset, gA = " << gA << ", beta = " << beta);
   }
 
   // Calculate upper boundary in the search direction
   // <p|p> Squared magnitude of search directions
   p_squared = 0.0;
 
-  // If beta == 0, then p = f and <p|p> = gradA 
+  // If beta == 0, then p = f and <p|p> = gA 
   if (beta == 0.0) {
-    p_squared = gradA;
+    if (gA == 0.0) {
+      io::messages.add("Force is zero, unable to establish search direction", "Conjugate_Gradient", io::message::error);
+      return E_NAN;
+    }
+    else if (math::gisnan(gA)) {
+      io::messages.add("Force is NaN", "Conjugate_Gradient", io::message::error);
+      return E_NAN;
+    }
+    p_squared = gA;
   }
   else {
     for(unsigned int i=0; i<topo.num_atoms(); ++i) {
@@ -278,12 +273,8 @@ int algorithm::Conjugate_Gradient
   // Current configuration becomes old
   conf.exchange_state();
   
-  // Store intermediate interpolated configurations just for the interpolation criterion evaluation
-  math::VArray posX_cur = conf.current().pos;
-  math::VArray posX_old = conf.old().pos;
-  
-  // Gradient and energy in the upper boundary
-  double gradB, eneB;
+  // Slope and energy in the upper boundary
+  double gB, eneB;
   
   // Counter of interval doubling
   unsigned counter_doub = 0;
@@ -304,44 +295,21 @@ int algorithm::Conjugate_Gradient
     DEBUG(15, "eneB = " << eneB);
 
     if (do_shake) {
-      double shake_step = step_size;
-      if ( int error = shake_forces(topo, conf, sim, shake_step) ) {
+      if ( int error = shake_forces(topo, conf, sim, step_size) ) {
         io::messages.add("Unable to SHAKE forces of the upper boundary configuration", "Conjugate_Gradient", io::message::error);
         return error;
       }
     }
 
-    // Calculate gradient along the search direction in the upper boundary as <p|f>
-    gradB = 0.0;
+    // Calculate slope along the search direction in the upper boundary as <p|f>
+    gB = 0.0;
     for(unsigned int i=0; i<topo.num_atoms(); ++i) {
-      gradB += math::dot(conf.old().cgrad(i), conf.current().force(i));
+      gB += math::dot(conf.old().cgrad(i), conf.current().force(i));
     }
-    
-    // TEST
-      double c1 = 1.e-4;
-      double c2 = 0.1;
-      double wolfe1L = eneB;
-      double wolfe1R = eneA - c1 * b * gradA;
-      double wolfe2L = gradB;
-      double wolfe2R = c2 * gradA;
-      DEBUG(15, "wolfe1: " << wolfe1L << " <= " << wolfe1R);
-      if (wolfe1L <= wolfe1R) {
-        DEBUG(15, "WOLFE 1 PASSED");
-      } else {
-        DEBUG(15, "WOLFE 1 FAILED");
-      }
 
-      DEBUG(15, "wolfe2: " << wolfe2L << " <= " << wolfe2R);
-      if (wolfe2L <= wolfe2R) {
-        DEBUG(15, "WOLFE 2 PASSED");
-      } else {
-        DEBUG(15, "WOLFE 2 FAILED");
-      }
-    // END TEST
-
-    DEBUG(15, "gradB = " << gradB);
-    // If gradB < 0 or eneB > eneA, accept B as upper boundary for estimation of X
-    if (gradB < 0 || eneB > eneA) {
+    DEBUG(15, "gB = " << gB);
+    // If gB < 0 or eneB > eneA, accept B as upper boundary for estimation of X
+    if (gB < 0 || eneB > eneA) {
       DEBUG(10, "Upper boundary accepted.");
       DEBUG(10, "b = " << b);
       break;
@@ -357,14 +325,16 @@ int algorithm::Conjugate_Gradient
   }
   double a = 0.0;
   double Z, W;
-  double X, gradX, eneX;
+  double X = 0.0;
+  double gX, eneX, old_X;
   // Counter of interpolations
   unsigned counter_ipol = 0;
   while(true) {
+    old_X = X;
     // Estimation of X by cubic interpolation
-    Z = (3 * (eneA - eneB) / (b - a)) - gradA - gradB;
-    W = sqrt(Z * Z - gradA * gradB);
-    X = b - (W - Z - gradB) * (b - a) / (gradA - gradB + 2 * W);
+    Z = (3 * (eneA - eneB) / (b - a)) - gA - gB;
+    W = sqrt(Z * Z - gA * gB);
+    X = b - (W - Z - gB) * (b - a) / (gA - gB + 2 * W);
     counter_ipol += 1;
     DEBUG(15, "X = " << X);
     if(math::gisnan(X)) { 
@@ -373,15 +343,11 @@ int algorithm::Conjugate_Gradient
     }
     // Calculate coordinates of the interpolated configuration
     for(unsigned int i=0; i<topo.num_atoms(); ++i) {
-      conf.current().pos(i) = posX_cur(i) = conf.old().pos(i) + X * conf.old().cgrad(i);
+      conf.current().pos(i) = conf.old().pos(i) + X * conf.old().cgrad(i);
     }
 
     // Calculate the X RMS displacement
-    double disp_X = 0.0;
-    for(unsigned int i=0; i<topo.num_atoms(); ++i) {
-      disp_X += math::abs2(posX_cur(i) - posX_old(i));
-    }
-    disp_X = sqrt(disp_X / topo.num_atoms());
+    double disp_X = fabs(X - old_X) * sqrt(p_squared / topo.num_atoms());
     DEBUG(10, "RMS displacement of X = " << disp_X);
 
     // Accept X as new configuration, if criterion is met
@@ -389,8 +355,6 @@ int algorithm::Conjugate_Gradient
       break;
     }
     else {
-      std::swap(posX_cur, posX_old);
-
       // Calculate interactions of the interpolated configuration
       if ( int error = evaluate_configuration(topo, conf, sim, eneX, false) ) {
         io::messages.add("Unable to evaluate the interpolated configuration", "Conjugate_Gradient", io::message::error);
@@ -408,33 +372,38 @@ int algorithm::Conjugate_Gradient
         }
       }
 
-      // Calculate gradient along the search direction in X
-      gradX = 0.0;
+      // Calculate slope along the search direction in X
+      gX = 0.0;
       for(unsigned int i=0; i<topo.num_atoms(); ++i) {
-        gradX += math::dot(conf.old().cgrad(i), conf.current().force(i));
+        gX += math::dot(conf.old().cgrad(i), conf.current().force(i));
       }
-      DEBUG(10, "gradX = " << gradX);
+      DEBUG(10, "gX = " << gX);
       
       // If energy descends in X and eneX < eneA, move A to X
-      if (gradX > 0 && eneX < eneA) {
+      if (gX > 0 && eneX < eneA) {
       DEBUG(2, "New search interval: X-B");
           a = X;
           eneA = eneX;
-          gradA = gradX;
+          gA = gX;
       }
       // Otherwise move B to X
       else {
       DEBUG(2, "New search interval: A-X");
           b = X;
           eneB = eneX;
-          gradB = gradX;
+          gB = gX;
       }
     }
   }
-  total_iterations += counter_iter + 1;
   Smin = X;
-  DEBUG(7, "Minimum along the search direction accepted, Smin = " << Smin << "\n"
-        << "Number of interval doubling: " << counter_doub << "\n"
+
+  total_doubling += counter_doub;
+  total_interpolations += counter_ipol;
+  total_iterations += counter_iter + 1;
+
+  DEBUG(7, "Minimum along the search direction accepted, Smin = " << Smin);
+  DEBUG(15,
+           "Number of interval doubling: " << counter_doub << "\n"
         << "Number of cubic interpolations: " << counter_ipol << "\n"
         << "Number of interaction calculations: " << counter_iter << "\n"
         << "Total number of iterations so far: " << total_iterations);
@@ -458,7 +427,7 @@ int algorithm::Conjugate_Gradient
         return error;
       }
     }
-    // Also print final RMS force
+    // Also print the final RMS force
     double f = 0.0, f_max = 0.0;
     for(unsigned int i=0; i<topo.num_atoms(); ++i) {
       f += math::abs2(conf.current().force(i));
@@ -466,11 +435,8 @@ int algorithm::Conjugate_Gradient
     }
     f = sqrt(f / topo.num_atoms());
     f_max = sqrt(f_max);
-    std::cout << "CONJUGATE GRADIENT:\tMIMIMUM CRITERION NOT MET\n";
-    std::cout << "After " << total_iterations + 1 << " iterations \n";
-    std::cout << std::scientific << std::setprecision(4);
-    std::cout << "Final RMS force:\t" << f << "\n";
-    std::cout << "Final MAX force:\t" << f_max << "\n";
+    // Terminate
+    return terminate(f, f_max, false);
   }
   else {
     // Modify the step size
@@ -516,17 +482,16 @@ int algorithm::Conjugate_Gradient
     f_squared += math::abs2(force_cur(i));
   }
   
-  // Step size along unconstrained forces to SHAKE
-  double step_sh = shake_step / sqrt(f_squared);
-
+  // Normalize step size along unconstrained forces
+  double shake_step_norm = shake_step / sqrt(f_squared);
   DEBUG(10,"shake_forces: Total displacement = " << shake_step);
   DEBUG(15,"shake_forces: \n"
     << "f_squared = \t" << f_squared << "\n"
-    << "step_sh = \t" << step_sh
+    << "shake_step_norm = \t" << shake_step_norm
   );
   
   for(unsigned int i=0; i<topo.num_atoms(); ++i) {
-    pos_cur(i) = pos_old(i) + step_sh * force_cur(i);
+    pos_cur(i) = pos_old(i) + shake_step_norm * force_cur(i);
   }
 
   // Apply SHAKE
@@ -536,13 +501,13 @@ int algorithm::Conjugate_Gradient
   }
   // Obtain and write constrained forces
   for(unsigned int i=0; i<topo.num_atoms(); ++i) {
-    force_cur(i) = (conf_sh.current().pos(i) - conf_sh.old().pos(i)) / step_sh;
+    force_cur(i) = (conf_sh.current().pos(i) - conf_sh.old().pos(i)) / shake_step_norm;
   }
   return 0;
 }
 
 /**
- * Calculate the search direction coefficient
+ * Calculate the search direction coefficient beta
  */
 double algorithm::Conjugate_Gradient
 ::calculate_beta
@@ -579,7 +544,7 @@ double algorithm::Conjugate_Gradient
 }
 
 /**
- * Update search direction and return the gradient
+ * Update search direction and return the slope in the search dierction
  */
 double algorithm::Conjugate_Gradient
 ::calculate_cgrad
@@ -592,21 +557,21 @@ double algorithm::Conjugate_Gradient
   const math::VArray & force = conf.current().force;
   const math::VArray & cgrad_old = conf.old().cgrad;
   math::VArray & cgrad_cur = conf.current().cgrad;
-  double grad = 0.0;
+  double slope = 0.0;
   
   if (beta == 0.0) {
     for(unsigned int i=0; i<topo.num_atoms(); ++i) {
       cgrad_cur(i) = force(i);
-      grad += math::abs2(force(i));
+      slope += math::abs2(force(i));
     }
   }
   else {
     for(unsigned int i=0; i<topo.num_atoms(); ++i) {
       cgrad_cur(i) = force(i) + beta * cgrad_old(i);
-      grad += math::dot(cgrad_cur(i), force(i));
+      slope += math::dot(cgrad_cur(i), force(i));
     }
   }
-  return grad;
+  return slope;
 }
 
 /**
@@ -649,6 +614,38 @@ int algorithm::Conjugate_Gradient
   }
 
   return 0;
+}
+
+/**
+ * Terminate the minimisation
+ */
+/** This could be done later with MINIMISATION block */
+int algorithm::Conjugate_Gradient
+::terminate
+(
+  double rms_force,
+  double max_force,
+  int minimum
+)
+{
+  int error;
+  std::cout << std::string(60, '-') << "\n";
+  if (minimum) {
+    error = E_MINIMUM_REACHED;
+    std::cout << "CONJUGATE GRADIENT:\tMINIMUM REACHED\n";
+  }
+  else {
+    error = E_MINIMUM_NOT_REACHED;
+    std::cout << "CONJUGATE GRADIENT:\tMIMIMUM CRITERION NOT MET\n";
+  }
+  std::cout << "Total interaction calculations : " << std::setw(10) << std::right << total_iterations + 1 << "\n";
+  std::cout << "Total search interval doublings: " << std::setw(10) << std::right << total_doubling << "\n";
+  std::cout << "Total interpolations           : " << std::setw(10) << std::right << total_interpolations << "\n";
+  std::cout << std::scientific << std::setprecision(4);
+  std::cout << "Final RMS force                : " << rms_force << "\n";
+  std::cout << "Final MAX force                : " << max_force << "\n";
+  std::cout << std::string(60, '-') << "\n\n";
+  return error;
 }
 
   

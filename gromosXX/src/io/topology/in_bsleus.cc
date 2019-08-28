@@ -354,17 +354,22 @@ void io::In_BSLEUS::read(topology::Topology &topo,
           break;
         }
         case util::BS_Coordinate::cartesian: {
+          int num_atoms_int;
           unsigned int num_atoms;
-          _lineStream >> num_atoms;
+          _lineStream >> num_atoms_int;
           if (_lineStream.fail()) {
             io::messages.add("bad line in BSLEUSCOORD block (Cartesian)",
                     "In_BSLEUS", io::message::error);
             return;
           }
-          if (num_atoms < 0){
+          // workaround to check for negative input, but also make sure 
+          // num_atoms is an unsigned int
+          if (num_atoms_int < 0){
             io::messages.add("Cartesian: Number of Atoms is negative!",
                     "In_BSLEUS", io::message::error);
             return;
+          } else{
+            num_atoms = (unsigned int) num_atoms_int;
           }
           bool allAtoms = true; // num_atoms == 0
           std::vector<unsigned int> atom_list;

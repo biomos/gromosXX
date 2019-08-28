@@ -66,7 +66,7 @@ std::string util::base64_encode(unsigned char const* bytes_to_encode, unsigned i
 std::string util::base64_decode(std::string const& str) {
   if (str.substr(0, 4) != "B64:") return "";
   
-  std::string encoded_string = str.substr(4, encoded_string.length() - 4);
+  std::string encoded_string = str.substr(4, str.length() - 4);
   int in_len = encoded_string.size();
   int i = 0;
   int j = 0;

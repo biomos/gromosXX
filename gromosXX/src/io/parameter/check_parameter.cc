@@ -153,6 +153,50 @@ int io::simple_crosschecks(simulation::Simulation & sim) {
        && (param.boundary.boundary != math::triclinic && param.boundary.boundary != math::rectangular))
         io::messages.add("PRESSURESCALE block: (semi-)anisotropic pressure scaling requires a rectangular or triclinic box.",
                          "In_Parameter", io::message::error);
+
+    // pressure scaling or calculation and trajectory reading mode
+    if (param.analyze.analyze && param.pcouple.scale != math::pcouple_off) {
+        io::messages.add("PRESSURESCALE block: Pressure scaling in trajectory reading mode will lead"
+                         "to unexpected results.", "In_Parameter", io::message::warning);
+    }
+    if (param.analyze.analyze && param.pcouple.calculate) {
+        io::messages.add("PRESSURESCALE block: pressure calculation in trajectory reading\n\tmode will yield only the virial "
+                         "contribution.", "In_Parameter", io::message::warning);
+    }
+
+    // warnings for trajectory writing frequencies with trajectory reading mode
+    if (param.analyze.analyze){
+      if (param.write.energy != 0 && (abs(param.write.energy) % param.analyze.stride != 0)) {
+            io::messages.add("WRITETRAJ block: NTWE is not equal to or a multiple of NTSTR (anatrj),\n"
+                                 "\tWe can not write out more frequently or at a different frequency\n"
+                                 "\tthan the one of the input coordinate trajectory!",
+                                 "In_Parameter", io::message::warning);
+      }
+      if (param.write.position != 0 && (abs(param.write.position) % param.analyze.stride != 0)) {
+            io::messages.add("WRITETRAJ block: NTWX is not equal to or a multiple of NTSTR (anatrj),\n"
+                                 "\tWe can not write out more frequently or at a different frequency\n"
+                                 "\tthan the one of the input coordinate trajectory!",
+                                 "In_Parameter", io::message::warning);
+      }
+      if (param.write.free_energy != 0 && (abs(param.write.free_energy) % param.analyze.stride != 0)) {
+            io::messages.add("WRITETRAJ block: NTWG is not equal to or a multiple of NTSTR (anatrj),\n"
+                                 "\tWe can not write out more frequently or at a different frequency\n"
+                                 "\tthan the one of the input coordinate trajectory!",
+                                 "In_Parameter", io::message::warning);
+      }
+      if (param.write.force != 0 && (abs(param.write.force) % param.analyze.stride != 0)) {
+            io::messages.add("WRITETRAJ block: NTWF is not equal to or a multiple of NTSTR (anatrj)\n"
+                                 "\tWe can not write out more frequently or at a different frequency\n"
+                                 "\tthan the one of the input coordinate trajectory!",
+                                 "In_Parameter", io::message::warning);
+      }
+      if (param.write.block_average != 0 && (abs(param.write.block_average) % param.analyze.stride != 0)) {
+            io::messages.add("WRITETRAJ block: NTWB is not equal to or a multiple of NTSTR (anatrj)\n"
+                                 "\tWe can not write out more frequently or at a different frequency\n"
+                                 "\tthan the one of the input coordinate trajectory!",
+                                 "In_Parameter", io::message::warning);
+      }
+    }
     
     // warn if Hamiltonian repex but no perturbation
     if (param.replica.num_l > 1 && !param.perturbation.perturbation)
@@ -163,7 +207,7 @@ int io::simple_crosschecks(simulation::Simulation & sim) {
     if (param.perturbation.perturbation == false && param.precalclam.nr_lambdas > 0)
       io::messages.add("PRECALCLAM cannot be on without perturbation",
             "In_Parameter", io::message::error);
-    if (param.precalclam.nr_lambdas > 0 & (param.write.energy == 0 || param.write.free_energy ==0 || 
+    if (param.precalclam.nr_lambdas > 0 && (param.write.energy == 0 || param.write.free_energy ==0 || 
         param.write.energy != param.write.free_energy))
       io::messages.add("PRECALCLAM requires NTWE=NTWG > 0", 
             "In_Parameter", io::message::error);
@@ -2281,7 +2325,8 @@ int io::check_features(simulation::Simulation & sim)
   fc.unlock("polarisation_cos", "random_gromos");
   fc.unlock("polarisation_cos", "random_gsl");
   fc.unlock("polarisation_cos", "parallel_mpi");
-  fc.unlock("polarisation_cos", "parallel_omp");
+  // There seems to be something wrong in OMP
+  // fc.unlock("polarisation_cos", "parallel_omp");
   fc.unlock("polarisation_cos_damped", "random_gromos");
   fc.unlock("polarisation_cos_damped", "random_gsl");
   fc.unlock("polarisation_cos_damped", "parallel_mpi");
@@ -4131,90 +4176,83 @@ int io::check_features(simulation::Simulation & sim)
   fc.unlock("conjugate_gradient", "solvent_shake");
   // fc.unlock("conjugate_gradient", "solvent_lincs");
   // fc.unlock("conjugate_gradient", "solvent_settle");
-  
-  // HAS TO BE TESTED
-    fc.unlock("conjugate_gradient", "pressure_calculation");
-    //fc.unlock("conjugate_gradient", "pressure_scale_berendsen");
-    fc.unlock("conjugate_gradient", "virial_off");
-    fc.unlock("conjugate_gradient", "virial_atomic");
-    fc.unlock("conjugate_gradient", "virial_molecular");
-    fc.unlock("conjugate_gradient", "vacuum");
-    fc.unlock("conjugate_gradient", "pbc_r"); // Should work in principle, but testing
-    fc.unlock("conjugate_gradient", "pbc_c"); // Should work in principle, but testing
-    fc.unlock("conjugate_gradient", "pbc_t"); // Should work in principle, but testing
-    fc.unlock("conjugate_gradient", "perturbation");
-    fc.unlock("conjugate_gradient", "perturbation_scaling");
-    fc.unlock("conjugate_gradient", "slow_growth");
-    fc.unlock("conjugate_gradient", "individual_lambdas");
-    fc.unlock("conjugate_gradient", "precalculate_lambdas");
-    fc.unlock("conjugate_gradient", "bond");
-    fc.unlock("conjugate_gradient", "angle");
-    fc.unlock("conjugate_gradient", "dihedral");
-    fc.unlock("conjugate_gradient", "improper");
-    fc.unlock("conjugate_gradient", "crf");
-    fc.unlock("conjugate_gradient", "lj");
-    fc.unlock("conjugate_gradient", "com_removal");
-    fc.unlock("conjugate_gradient", "rf_excluded");
-    fc.unlock("conjugate_gradient", "pairlist_standard");
-    fc.unlock("conjugate_gradient", "pairlist_grid");
-    fc.unlock("conjugate_gradient", "pairlist_gridcell");
-    fc.unlock("conjugate_gradient", "cutoff_atomic");
-    fc.unlock("conjugate_gradient", "cutoff_cg");
-    fc.unlock("conjugate_gradient", "cg_martini");
-    fc.unlock("conjugate_gradient", "cg_gromos");
-    fc.unlock("conjugate_gradient", "mixed_grain");
-    fc.unlock("conjugate_gradient", "temp_berendsen");
-    fc.unlock("conjugate_gradient", "temp_nosehoover");
-    fc.unlock("conjugate_gradient", "temp_nosehoover_chains");
-    fc.unlock("conjugate_gradient", "position_rest"); // Testing
-    fc.unlock("conjugate_gradient", "position_const"); // Probably not working
-    // fc.unlock("conjugate_gradient", "position_const_scaled"); // Probably not working
-    // fc.unlock("conjugate_gradient", "distance_rest"); // Probably not working
-    fc.unlock("conjugate_gradient", "distance_field");
-    fc.unlock("conjugate_gradient", "dihedral_rest"); // Not working - minimisation "ping-pongs" with DIHRES
-    // fc.unlock("conjugate_gradient", "dihedral_const"); // Probably not working
-    // fc.unlock("conjugate_gradient", "jvalue_rest"); // Probably not working
-    // fc.unlock("conjugate_gradient", "rdc_rest"); // Probably not working
-    fc.unlock("conjugate_gradient", "perscale");
-    fc.unlock("conjugate_gradient", "rottrans");
-    fc.unlock("conjugate_gradient", "innerloop_method_off");
-    fc.unlock("conjugate_gradient", "innerloop_method_generic");
-    fc.unlock("conjugate_gradient", "innerloop_method_hardcode");
-    fc.unlock("conjugate_gradient", "innerloop_method_table");
-    fc.unlock("conjugate_gradient", "innerloop_method_cuda");
-    fc.unlock("conjugate_gradient", "innerloop_solvent_topology");
-    fc.unlock("conjugate_gradient", "innerloop_solvent_spc");
-    fc.unlock("conjugate_gradient", "repex_temp");
-    fc.unlock("conjugate_gradient", "repex_lambda");
-    fc.unlock("conjugate_gradient", "multicell");
-    fc.unlock("conjugate_gradient", "analysis");
-    fc.unlock("conjugate_gradient", "no_integration");
-    fc.unlock("conjugate_gradient", "stochdyn");
-    fc.unlock("conjugate_gradient", "multistep");
-    fc.unlock("conjugate_gradient", "multistep_boost");
-    fc.unlock("conjugate_gradient", "montecarlo");
-    fc.unlock("conjugate_gradient", "polarisation_cos");
-    fc.unlock("conjugate_gradient", "polarisation_cos_damped");
-    fc.unlock("conjugate_gradient", "sasa");
-    fc.unlock("conjugate_gradient", "sasavol");
-    fc.unlock("conjugate_gradient", "random_gromos");
-    fc.unlock("conjugate_gradient", "random_gsl");
-    fc.unlock("conjugate_gradient", "eds");
-    fc.unlock("conjugate_gradient", "aeds");
-    fc.unlock("conjugate_gradient", "eds");
-    fc.unlock("conjugate_gradient", "aeds");
-    fc.unlock("conjugate_gradient", "eds");
-    fc.unlock("conjugate_gradient", "aeds");
-    fc.unlock("conjugate_gradient", "parallel_mpi");
-    fc.unlock("conjugate_gradient", "parallel_omp");
-    fc.unlock("conjugate_gradient", "mult_energy_groups");
-    fc.unlock("conjugate_gradient", "ewald");
-    fc.unlock("conjugate_gradient", "p3m");
-    fc.unlock("conjugate_gradient", "leus");
-    fc.unlock("conjugate_gradient", "bsleus");
-    fc.unlock("conjugate_gradient", "xray");
-    fc.unlock("conjugate_gradient", "force_groups");
-  // TEST END
+  fc.unlock("conjugate_gradient", "pressure_calculation");
+  //fc.unlock("conjugate_gradient", "pressure_scale_berendsen");
+  fc.unlock("conjugate_gradient", "virial_off");
+  fc.unlock("conjugate_gradient", "virial_atomic");
+  fc.unlock("conjugate_gradient", "virial_molecular");
+  fc.unlock("conjugate_gradient", "vacuum");
+  fc.unlock("conjugate_gradient", "pbc_r");
+  fc.unlock("conjugate_gradient", "pbc_c");
+  fc.unlock("conjugate_gradient", "pbc_t");
+  //fc.unlock("conjugate_gradient", "perturbation");
+  //fc.unlock("conjugate_gradient", "perturbation_scaling");
+  //fc.unlock("conjugate_gradient", "slow_growth");
+  //fc.unlock("conjugate_gradient", "individual_lambdas");
+  //fc.unlock("conjugate_gradient", "precalculate_lambdas");
+  fc.unlock("conjugate_gradient", "bond");
+  fc.unlock("conjugate_gradient", "angle");
+  fc.unlock("conjugate_gradient", "dihedral");
+  fc.unlock("conjugate_gradient", "improper");
+  fc.unlock("conjugate_gradient", "crf");
+  fc.unlock("conjugate_gradient", "lj");
+  fc.unlock("conjugate_gradient", "com_removal");
+  fc.unlock("conjugate_gradient", "rf_excluded");
+  fc.unlock("conjugate_gradient", "pairlist_standard");
+  fc.unlock("conjugate_gradient", "pairlist_grid");
+  fc.unlock("conjugate_gradient", "pairlist_gridcell");
+  fc.unlock("conjugate_gradient", "cutoff_atomic");
+  fc.unlock("conjugate_gradient", "cutoff_cg");
+  fc.unlock("conjugate_gradient", "cg_martini");
+  fc.unlock("conjugate_gradient", "cg_gromos");
+  fc.unlock("conjugate_gradient", "mixed_grain");
+  fc.unlock("conjugate_gradient", "temp_berendsen");
+  fc.unlock("conjugate_gradient", "temp_nosehoover");
+  fc.unlock("conjugate_gradient", "temp_nosehoover_chains");
+  fc.unlock("conjugate_gradient", "position_rest");
+  fc.unlock("conjugate_gradient", "position_const");
+  fc.unlock("conjugate_gradient", "position_const_scaled");
+  fc.unlock("conjugate_gradient", "distance_rest");
+  fc.unlock("conjugate_gradient", "distance_field");
+  fc.unlock("conjugate_gradient", "dihedral_rest");
+  fc.unlock("conjugate_gradient", "dihedral_const");
+  fc.unlock("conjugate_gradient", "jvalue_rest");
+  fc.unlock("conjugate_gradient", "rdc_rest");
+  fc.unlock("conjugate_gradient", "perscale");
+  fc.unlock("conjugate_gradient", "rottrans");
+  fc.unlock("conjugate_gradient", "innerloop_method_off");
+  fc.unlock("conjugate_gradient", "innerloop_method_generic");
+  fc.unlock("conjugate_gradient", "innerloop_method_hardcode");
+  fc.unlock("conjugate_gradient", "innerloop_method_table");
+  fc.unlock("conjugate_gradient", "innerloop_method_cuda");
+  fc.unlock("conjugate_gradient", "innerloop_solvent_topology");
+  fc.unlock("conjugate_gradient", "innerloop_solvent_spc");
+  // fc.unlock("conjugate_gradient", "repex_temp");
+  // fc.unlock("conjugate_gradient", "repex_lambda");
+  // fc.unlock("conjugate_gradient", "multicell");
+  fc.unlock("conjugate_gradient", "analysis");
+  fc.unlock("conjugate_gradient", "no_integration");
+  // fc.unlock("conjugate_gradient", "stochdyn");
+  // fc.unlock("conjugate_gradient", "multistep");
+  // fc.unlock("conjugate_gradient", "multistep_boost");
+  // fc.unlock("conjugate_gradient", "montecarlo");
+  fc.unlock("conjugate_gradient", "polarisation_cos");
+  fc.unlock("conjugate_gradient", "polarisation_cos_damped");
+  // fc.unlock("conjugate_gradient", "sasa");
+  // fc.unlock("conjugate_gradient", "sasavol");
+  fc.unlock("conjugate_gradient", "random_gromos");
+  fc.unlock("conjugate_gradient", "random_gsl");
+  // fc.unlock("conjugate_gradient", "eds");
+  // fc.unlock("conjugate_gradient", "aeds");
+  fc.unlock("conjugate_gradient", "parallel_mpi");
+  fc.unlock("conjugate_gradient", "parallel_omp");
+  fc.unlock("conjugate_gradient", "mult_energy_groups");
+  fc.unlock("conjugate_gradient", "ewald");
+  fc.unlock("conjugate_gradient", "p3m");
+  // fc.unlock("conjugate_gradient", "leus");
+  // fc.unlock("conjugate_gradient", "bsleus");
+  fc.unlock("conjugate_gradient", "xray");
+  fc.unlock("conjugate_gradient", "force_groups");
 
   if (fc.check()) 
     return 0;
