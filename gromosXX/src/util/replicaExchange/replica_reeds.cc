@@ -28,7 +28,7 @@ util::replica_reeds::replica_reeds(io::Argument _args, int cont, int _ID, int _r
   sim.param().eds = eds_para;
   
   const int num_s = sim.param().reeds.num_l;
-  l == eds_para.s[0];
+  l = eds_para.s[0];
   DEBUG(5, "replica_reeds "<< rank <<":constructor:\t Temp of replica "<< rank <<" " << _ID << " \t" << sim.param().multibath.multibath.bath(0).temperature)
   DEBUG(5, "replica_reeds "<< rank <<":constructor:\t S of replica "<< rank <<" " << _ID << " \t" << sim.param().eds.s[0])
   DEBUG(5, "replica_reeds "<< rank <<":constructor:\t S size of replica "<< rank <<" " << _ID << " \t" << sim.param().eds.s.size())
