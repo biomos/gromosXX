@@ -31,16 +31,16 @@ build:
     echo -e "make \n"
     make -j8 ;
     #make install;
-  artifacts:
-    paths:
-      - mybinary
+#  artifacts:
+   # paths:
+      #- mybinary
   # depending on your build setup it's most likely a good idea to cache outputs to reduce the build time
   # cache:
   #   paths:
   #     - "*.o"
 
 # run tests using the binary built before
-test:
-  stage: test
-  script:
-    - ./runmytests.sh
+#test:
+#  stage: test
+#  script:
+#    - ./runmytests.sh
