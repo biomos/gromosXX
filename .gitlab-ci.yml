@@ -1,0 +1,46 @@
+# This file is a template, and might need editing before it works on your project.
+# use the official gcc image, based on debian
+# can use verions as well, like gcc:5.2
+# see https://hub.docker.com/_/gcc/
+image: gcc
+##BSCHROED PLAYING AROUND WITH PIPELINES HERE
+build:
+  stage: build
+  # instead of calling g++ directly you can also use some build toolkit like make
+  # install the necessary build tools when needed
+  # before_script: 
+  #   - apt update && apt -y install make autoconf 
+  script: 
+    apt-get install automake;
+    echo "${PWD}";
+    rootDir="/builds/rinikerlab/reeds/";
+    buildDir="${rootDir}/gromos_versions/reeds_gromos_bschroed_31_01_18_AmberFF/build";
+    configDir="${rootDir}/gromos_versions/reeds_gromos_bschroed_31_01_18_AmberFF/LINUX";
+    mkdir ${buildDir} -p;
+    mkdir ${configDir};
+    cd ${configDir};
+    echo "a "
+    ls ;
+    echo "folder above!"
+    ls ..;
+    echo -e ".pre Config \n"
+    ../gromos_versions/reeds_gromos_bschroed_31_01_18_AmberFF/Config.sh
+    echo -e "config\n"
+    ../gromos_versions/reeds_gromos_bschroed_31_01_18_AmberFF/configure --disable-shared --disable-debug --enable-openmp  --prefix=${buildDir};
+    ls;
+    echo -e "make \n"
+    make -j8 ;
+    #make install;
+  artifacts:
+    paths:
+      - mybinary
+  # depending on your build setup it's most likely a good idea to cache outputs to reduce the build time
+  # cache:
+  #   paths:
+  #     - "*.o"
+
+# run tests using the binary built before
+test:
+  stage: test
+  script:
+    - ./runmytests.sh
