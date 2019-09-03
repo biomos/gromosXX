@@ -1,7 +1,7 @@
 
 /**
- * @file in_posres.cc
- * implements methods of In_Posresspec and In_Posres.
+ * @file in_qmmm.cc
+ * implements qm/mm methods.
  */
 
 

@@ -401,13 +401,6 @@ int interaction::MPI_Nonbonded_Slave::calculate_interactions
     // std::cout << "MULTISTEP: no recalculation...\n";
   }
 
-  if (sim.param().nonbonded.lj_correction && sim.param().pcouple.virial ) {
-    for (unsigned int j = 0; j < 3; ++j) {
-      conf.current().virial_tensor(j,j)+= conf.current().energies.lj_lr;
-    }
-  }
-
-
   DEBUG(6, "MPI_Nonbonded_Slave::calculate_interactions done");
   m_timer.stop();
   

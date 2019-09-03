@@ -1613,9 +1613,6 @@ namespace simulation
        * longrange LJ correction
        */
       bool lj_correction;
-      /* factor for the LRLJ-correction
-       */
-      double lrlj_fac;
       /**
        * solvent density
        */

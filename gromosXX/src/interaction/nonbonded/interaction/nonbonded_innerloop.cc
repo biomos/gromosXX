@@ -154,9 +154,8 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop
       DEBUG(11, "\tlj-parameter c6=" << lj.c6 << " c12=" << lj.c12);
       DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));
 
-
-      if ((topo.in_qm_zone(i) +  topo.in_qm_zone(j) ) < 2 )
-      //if (topo.in_qm_zone(i)==0 && topo.in_qm_zone(j) == 0)
+        // If one of the atoms is not in qm_zome
+      if ((!topo.in_qm_zone(i)) || (!topo.in_qm_zone(j)))
       {
          DEBUG(12, "i" << i << " j " << j )
          lj_crf_interaction(r, lj.c6, lj.c12,
@@ -950,7 +949,8 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::one_four_interaction_in
       DEBUG(11, "\tlj-parameter cs6=" << lj.cs6 << " cs12=" << lj.cs12);
       DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));
       //if (topo.in_qm_zone(i) == 0 && topo.in_qm_zone(j) == 0)
-      if ((topo.in_qm_zone(i) +  topo.in_qm_zone(j) ) < 2 )
+      
+      if ((!topo.in_qm_zone(i)) || (!topo.in_qm_zone(j)))
       {
                 lj_crf_interaction(r, lj.cs6, lj.cs12,
                         topo.charge()(i) *
@@ -1203,7 +1203,7 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_exception_innerloop
             DEBUG(11, "\tlj-parameter cs6=" << ljex.c6 << " cs12=" << ljex.c12);
             DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));
             //if (topo.in_qm_zone(i) == 0 && topo.in_qm_zone(j) == 0)
-            if ((topo.in_qm_zone(i) +  topo.in_qm_zone(j) ) < 2 )
+            if ((!topo.in_qm_zone(i)) || (!topo.in_qm_zone(j)))
             {
                 lj_crf_interaction(r, ljex.c6, ljex.c12,
                         topo.charge()(i) *

@@ -4931,7 +4931,7 @@ void io::In_Parameter::read_QMMM(simulation::Parameter & param,
     exampleblock << "#     > 0.0: scaling-factor x\n";
     exampleblock << "#     < 0.0: don't scale (default)";
     exampleblock << "#\n";
-    exampleblock << "# NTQMMM  NTQMSW  RCUTQ  NTWQMMM QNLJ MMSCAL\n";
+    exampleblock << "# NTQMMM  NTQMSW  RCUTQ  NTWQMMM QMLJ MMSCAL\n";
     exampleblock << "       1       0    0.0        0   0 -1.\n";
     exampleblock << "END\n";
 

@@ -457,7 +457,6 @@ namespace io
     os << type << "Crossdihedral        : " << std::setw(39) << e.crossdihedral_total << "\n";
     os << type << "Non-bonded           : " << std::setw(30) << e.nonbonded_total  << "\n";
     os << type << "Vdw                  : " << std::setw(39) << e.lj_total << "\n";
-    os << type << "LongRange-LJ correction: " << std::setw(39) << e.lj_lr << "\n";
     os << type << "El (RF)              : " << std::setw(39) << e.crf_total  << "\n";
     os << type << "El (LS)              : " << std::setw(39) << e.ls_total << "\n";
     os << type << "El (pair)            : " << std::setw(48) << e.ls_pair_total << "\n";

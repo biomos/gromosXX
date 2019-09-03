@@ -3,7 +3,7 @@
  * read in a QM/MM specification file
  */
 /**
- * @page qmmm QM/MM specificaiton format
+ * @page qmmm QM/MM specification format
  * @date 19-12-2011
  *
  * A QM/MM specifcation file may contain the following
