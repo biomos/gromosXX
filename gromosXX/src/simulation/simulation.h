@@ -124,7 +124,7 @@ namespace simulation
     double m_time;
 
     /**
-     * minimisation step size.
+     * the minimisation step size.
      */
     double m_minimisation_step_size;
 

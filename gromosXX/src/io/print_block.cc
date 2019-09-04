@@ -825,5 +825,37 @@ namespace io
     os << "\n";
 }
 
+  /*
+   * Print the MINIMISATION block.
+   */
+  /*void print_MINIMISATION(std::ostream &os,
+		    configuration::Forces const &f, // Here we will read force RMSD and MAX force
+		    ???, // Here we will read total number of iterations, doubling and interpolations
+		    bool last,
+		    bool minimised)
+  {
+    os << "MINIMISATION\n";
+    if (last) {
+      if (minimised) {
+        os << "MINIMUM REACHED\n";
+      }
+      else {
+        os << "MINIMUM CRITERION NOT MET\n";
+      }
+
+      //os << "Total interaction calculations : " << total_iterations + 1 << "\n";
+      //os << "Total search interval doublings: " << total_doubling << "\n";
+      //os << "Total interpolations           : " << total_interpolations << "\n";
+      os << "Final RMS force                : " << f.rms_force << "\n";
+      os << "Final MAX force                : " << f.max_force << "\n";
+    }
+    else {
+      os << "RMS force:\t" << rms_force << "\n";
+      os << "MAX force:\t" << max_force << "\n";
+    }
+    os << "END\n";
+
+  }*/
+
 
 } // io

@@ -41,16 +41,16 @@ int io::simple_crosschecks(simulation::Simulation & sim) {
     io::messages.add("WRITETRAJ: NTWV has to be 0 for energy minimization.",
                      "In_Parameter", io::message::error);
 
-  if (param.start.generate_velocities && param.minimise.ntem==1)
+  if (param.start.generate_velocities && param.minimise.ntem)
     io::messages.add("INITIALISE block: NTIVEL=1 even though we do an energy minimization",
                      "In_Parameter", io::message::warning);
 
   // no pressure or temperature coupling with energy minimization
-  if (param.pcouple.calculate && param.minimise.ntem==1)
-      io::messages.add("PRESSURESCALE block: pressure coupling not allowed with steepest descent minimization",
+  if (param.pcouple.calculate && param.minimise.ntem)
+      io::messages.add("PRESSURESCALE block: pressure coupling not allowed with steepest descent or conjugate gradient minimization",
                        "In_Parameter", io::message::error);
 
-  if (param.multibath.couple && param.minimise.ntem==1)
+  if (param.multibath.couple && param.minimise.ntem)
       io::messages.add("MULTIBATH block: temperature coupling not allowed with energy minimization",
                        "In_Parameter", io::message::error);
 
@@ -240,6 +240,10 @@ int io::check_features(simulation::Simulation & sim)
   // ENERGYMIN block
   add("steepest_descent", "steepest descent energy minimisation",
           param.minimise.ntem == 1);
+  add("conjugate_gradient", "Fletcher-Reeves conjugate gradient energy minimisation",
+          param.minimise.ntem == 2);
+  add("conjugate_gradient", "Polak-Ribiere conjugate gradient energy minimisation",
+          param.minimise.ntem == 3);
   // CONSTRAINT block
   add("solute_constraint_off", "unconstrained solute",
           param.constraint.solute.algorithm == simulation::constr_off);
@@ -4159,6 +4163,96 @@ int io::check_features(simulation::Simulation & sim)
 //  fc.unlock("precalculate_lambdas", "force_groups");
   
   // ANITA
+
+  // Conjugate gradient minimisation
+  fc.unlock("conjugate_gradient", "solute");
+  fc.unlock("conjugate_gradient", "solvent");
+  fc.unlock("conjugate_gradient", "solvent_only");
+  fc.unlock("conjugate_gradient", "solute_constraint_off");
+  fc.unlock("conjugate_gradient", "solute_shake");
+  // fc.unlock("conjugate_gradient", "solute_lincs");
+  // fc.unlock("conjugate_gradient", "solute_flexshake");
+  fc.unlock("conjugate_gradient", "solvent_constraint_off");
+  fc.unlock("conjugate_gradient", "solvent_shake");
+  // fc.unlock("conjugate_gradient", "solvent_lincs");
+  // fc.unlock("conjugate_gradient", "solvent_settle");
+  fc.unlock("conjugate_gradient", "pressure_calculation");
+  //fc.unlock("conjugate_gradient", "pressure_scale_berendsen");
+  fc.unlock("conjugate_gradient", "virial_off");
+  fc.unlock("conjugate_gradient", "virial_atomic");
+  fc.unlock("conjugate_gradient", "virial_molecular");
+  fc.unlock("conjugate_gradient", "vacuum");
+  fc.unlock("conjugate_gradient", "pbc_r");
+  fc.unlock("conjugate_gradient", "pbc_c");
+  fc.unlock("conjugate_gradient", "pbc_t");
+  //fc.unlock("conjugate_gradient", "perturbation");
+  //fc.unlock("conjugate_gradient", "perturbation_scaling");
+  //fc.unlock("conjugate_gradient", "slow_growth");
+  //fc.unlock("conjugate_gradient", "individual_lambdas");
+  //fc.unlock("conjugate_gradient", "precalculate_lambdas");
+  fc.unlock("conjugate_gradient", "bond");
+  fc.unlock("conjugate_gradient", "angle");
+  fc.unlock("conjugate_gradient", "dihedral");
+  fc.unlock("conjugate_gradient", "improper");
+  fc.unlock("conjugate_gradient", "crf");
+  fc.unlock("conjugate_gradient", "lj");
+  fc.unlock("conjugate_gradient", "com_removal");
+  fc.unlock("conjugate_gradient", "rf_excluded");
+  fc.unlock("conjugate_gradient", "pairlist_standard");
+  fc.unlock("conjugate_gradient", "pairlist_grid");
+  fc.unlock("conjugate_gradient", "pairlist_gridcell");
+  fc.unlock("conjugate_gradient", "cutoff_atomic");
+  fc.unlock("conjugate_gradient", "cutoff_cg");
+  fc.unlock("conjugate_gradient", "cg_martini");
+  fc.unlock("conjugate_gradient", "cg_gromos");
+  fc.unlock("conjugate_gradient", "mixed_grain");
+  fc.unlock("conjugate_gradient", "temp_berendsen");
+  fc.unlock("conjugate_gradient", "temp_nosehoover");
+  fc.unlock("conjugate_gradient", "temp_nosehoover_chains");
+  fc.unlock("conjugate_gradient", "position_rest");
+  fc.unlock("conjugate_gradient", "position_const");
+  fc.unlock("conjugate_gradient", "position_const_scaled");
+  fc.unlock("conjugate_gradient", "distance_rest");
+  fc.unlock("conjugate_gradient", "distance_field");
+  fc.unlock("conjugate_gradient", "dihedral_rest");
+  fc.unlock("conjugate_gradient", "dihedral_const");
+  fc.unlock("conjugate_gradient", "jvalue_rest");
+  fc.unlock("conjugate_gradient", "rdc_rest");
+  fc.unlock("conjugate_gradient", "perscale");
+  fc.unlock("conjugate_gradient", "rottrans");
+  fc.unlock("conjugate_gradient", "innerloop_method_off");
+  fc.unlock("conjugate_gradient", "innerloop_method_generic");
+  fc.unlock("conjugate_gradient", "innerloop_method_hardcode");
+  fc.unlock("conjugate_gradient", "innerloop_method_table");
+  fc.unlock("conjugate_gradient", "innerloop_method_cuda");
+  fc.unlock("conjugate_gradient", "innerloop_solvent_topology");
+  fc.unlock("conjugate_gradient", "innerloop_solvent_spc");
+  // fc.unlock("conjugate_gradient", "repex_temp");
+  // fc.unlock("conjugate_gradient", "repex_lambda");
+  // fc.unlock("conjugate_gradient", "multicell");
+  fc.unlock("conjugate_gradient", "analysis");
+  fc.unlock("conjugate_gradient", "no_integration");
+  // fc.unlock("conjugate_gradient", "stochdyn");
+  // fc.unlock("conjugate_gradient", "multistep");
+  // fc.unlock("conjugate_gradient", "multistep_boost");
+  // fc.unlock("conjugate_gradient", "montecarlo");
+  fc.unlock("conjugate_gradient", "polarisation_cos");
+  fc.unlock("conjugate_gradient", "polarisation_cos_damped");
+  // fc.unlock("conjugate_gradient", "sasa");
+  // fc.unlock("conjugate_gradient", "sasavol");
+  fc.unlock("conjugate_gradient", "random_gromos");
+  fc.unlock("conjugate_gradient", "random_gsl");
+  // fc.unlock("conjugate_gradient", "eds");
+  // fc.unlock("conjugate_gradient", "aeds");
+  fc.unlock("conjugate_gradient", "parallel_mpi");
+  fc.unlock("conjugate_gradient", "parallel_omp");
+  fc.unlock("conjugate_gradient", "mult_energy_groups");
+  fc.unlock("conjugate_gradient", "ewald");
+  fc.unlock("conjugate_gradient", "p3m");
+  // fc.unlock("conjugate_gradient", "leus");
+  // fc.unlock("conjugate_gradient", "bsleus");
+  fc.unlock("conjugate_gradient", "xray");
+  fc.unlock("conjugate_gradient", "force_groups");
 
   if (fc.check()) 
     return 0;

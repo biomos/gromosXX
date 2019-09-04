@@ -50,6 +50,7 @@
 
 #include "../algorithm/integration/slow_growth.h"
 #include "../algorithm/integration/steepest_descent.h"
+#include "../algorithm/integration/conjugate_gradient.h"
 
 #include "../io/print_block.h"
 
@@ -125,6 +126,10 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
   if (sim.param().minimise.ntem == 1){
     algorithm::Steepest_Descent * sd = new algorithm::Steepest_Descent;
     md_seq.push_back(sd);
+  }
+  else if (sim.param().minimise.ntem == 2 || sim.param().minimise.ntem == 3){
+    algorithm::Conjugate_Gradient * cg = new algorithm::Conjugate_Gradient(md_seq);
+    md_seq.push_back(cg);
   }
   else if (sim.param().analyze.analyze){
     algorithm::Analyze_Step * as = 

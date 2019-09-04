@@ -21,5 +21,6 @@
 
 // termination
 #define E_MINIMUM_REACHED 1000
+#define E_MINIMUM_NOT_REACHED 1001
 
 #endif

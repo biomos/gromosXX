@@ -207,12 +207,19 @@ int main(int argc, char *argv[]){
       // run a step
       if ((error = md.run(topo, conf, sim))){
 	
-	if (error == E_MINIMUM_REACHED){
+	if ((error == E_MINIMUM_REACHED) || (error == E_MINIMUM_NOT_REACHED)){
 	  conf.old().energies.calculate_totals();
-	  traj.print_timestep(sim, traj.output());
-	  io::print_ENERGY(traj.output(), conf.old().energies, 
-			   topo.energy_groups(),
-			   "MINIMUM ENERGY", "EMIN_");
+
+        /** This is not necessary, because it is printed in out_configuration as well
+	       *  Here could be MINIMISATION block instead
+         */
+        /* traj.print_timestep(sim, traj.output());
+        io::print_ENERGY(
+          traj.output(),
+          conf.current().energies,
+          topo.energy_groups(),
+          "MINIMUM ENERGY",
+          "EMIN_"); */
 
       // write final coordinates and then do shake once more
       // because the slaves will and otherwise get stuck

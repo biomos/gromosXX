@@ -81,6 +81,10 @@ namespace configuration {
        */
       math::VArray constraint_force;
       /**
+       * conjugate gradient search direction
+       */
+      math::VArray cgrad;
+      /**
        * stochastic integrals (SD)
        */
       math::VArray stochastic_integral;
