@@ -25,9 +25,9 @@
 #include <unistd.h>
 
 #include <io/configuration/out_configuration.h>
-#include <util/replica_exchange_base.h>
-#include <util/repex_mpi.h>
-#include <util/replica.h>
+#include <util/replicaExchange/replica_exchange_base.h>
+#include <util/replicaExchange/repex_mpi.h>
+#include <util/replicaExchange/replica.h>
 
 #ifdef XXMPI
 #include <mpi.h>
@@ -42,7 +42,7 @@ namespace util {
    * @class replica_exchange_slave
    * 
    */
-  class replica_exchange_slave : public replica_exchange_base {
+  class replica_exchange_slave : public virtual replica_exchange_base {
   public:
     /**
      * constructor
@@ -63,8 +63,8 @@ namespace util {
     /**
      * sends information of all replicas to master
      */
-    void send_to_master() const;
-  private:
+    virtual void send_to_master() const;
+  protected:
     /**
      * copy constructor
      * not allowed (yet)

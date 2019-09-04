@@ -199,10 +199,21 @@ int io::simple_crosschecks(simulation::Simulation & sim) {
     }
     
     // warn if Hamiltonian repex but no perturbation
-    if (param.replica.num_l > 1 && !param.perturbation.perturbation)
+    if (param.replica.num_l > 1 && !param.perturbation.perturbation && !param.reeds.reeds)
         io::messages.add("REPLICA block: Hamiltonian replica exchange but perturbation is off.",
                          "In_Parameter", io::message::warning);
-    
+  
+      // warn if Hamiltonian reeds but no perturbation or no eds
+      // CHANGED This is caught in read_input.cc if there is no pertubation file , error is thrown
+      if (param.reeds.reeds && param.replica.num_l > 1 && param.perturbation.perturbation  )
+          io::messages.add("REPLICA block: Hamiltonian replica exchange for RE-EDS, but perturbation is on.",
+                           "In_Parameter", io::message::warning);
+  
+          // warn if Hamiltonian reeds but no eds
+    if (param.reeds.reeds && param.replica.num_l > 1 && !param.eds.eds )
+        io::messages.add("REPLICA block: Hamiltonian replica exchange for RE-EDS, but eds is off.",
+                         "In_Parameter", io::message::warning);
+  
     // extended TI input
     if (param.perturbation.perturbation == false && param.precalclam.nr_lambdas > 0)
       io::messages.add("PRECALCLAM cannot be on without perturbation",
@@ -353,6 +364,9 @@ int io::check_features(simulation::Simulation & sim)
   add("repex_lambda", "lambda replica exchange", param.replica.num_l > 1);
   // MULTICELL block
   add("multicell", "multiple unit cell simulation", param.multicell.multicell);
+  // REPLICA_EDS block 
+  //add("reeds", "Replica exchange - enveloped distribution sampling  ", param.reeds.reeds == 1); //Todo: could be valuable? bschroed
+
   // READTRAJ block
   add("analysis", "trajectory reading mode", param.analyze.analyze);
   // INTEGRATE block
@@ -2437,7 +2451,7 @@ int io::check_features(simulation::Simulation & sim)
   //fc.unlock("eds", "perscale");
   fc.unlock("eds", "rottrans");
   //fc.unlock("eds", "repex_temp");
-  //fc.unlock("eds", "repex_lambda");
+  fc.unlock("eds", "repex_lambda");
   //fc.unlock("eds", "multicell");
   //fc.unlock("eds", "analysis");
   //fc.unlock("eds", "no_integration");

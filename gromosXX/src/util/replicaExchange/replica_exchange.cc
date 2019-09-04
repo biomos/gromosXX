@@ -49,7 +49,7 @@
 #undef MODULE
 #undef SUBMODULE
 #define MODULE util
-#define SUBMODULE replica
+#define SUBMODULE replica_exchange
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -126,7 +126,7 @@ int util::Replica_Exchange::get_configuration
   const ssize_t num_xray = sizeof(configuration::Configuration::special_struct::xray_rvalue_struct);
   const ssize_t num_xray_bfoc = conf.special().xray_bfoc.size() * sizeof(configuration::Configuration::special_struct::xray_bfoc_struct);
   const ssize_t num_xray_rest = conf.special().xray_rest.size() * sizeof(configuration::Configuration::special_struct::xray_struct);
-  DEBUG(10, "receiving " << num / sizeof(double) << " coords");
+  DEBUG(2, "Replica_Exchange:get_configuration:\t receiving " << num / sizeof(double) << " coords");
 
   if (num >= SSIZE_MAX){
     std::cerr << "chunk size not large enough to exchange configuration" << std::endl;
@@ -164,7 +164,7 @@ int util::Replica_Exchange::put_configuration
  )
 {
   // positions
-  DEBUG(9, "sending " << 3 * conf.current().pos.size() << " coords");
+  DEBUG(2, "Replica_Exchange:put_configuration:\t  send " << 3 * conf.current().pos.size() << " coords");
   const ssize_t num = 3 * conf.current().pos.size() * sizeof(double);
   const ssize_t num_xray = sizeof(configuration::Configuration::special_struct::xray_rvalue_struct);
   const ssize_t num_xray_bfoc = conf.special().xray_bfoc.size() * sizeof(configuration::Configuration::special_struct::xray_bfoc_struct);

@@ -28,6 +28,11 @@ _nr = 1
 ################################################################################
 #
 def set_name(name, nr=1):
+    """
+    Args:
+        name:
+        nr:
+    """
     global _name, _nr
     _name = name
     _nr = nr
@@ -41,6 +46,10 @@ def set_name(name, nr=1):
 ################################################################################
 #
 def write(rep):
+    """
+    Args:
+        rep:
+    """
     global _name, _nr, program, simdir, workdir
 
     repdir = simdir + "/" + str(rep) + "/"
@@ -50,7 +59,7 @@ def write(rep):
 
     f = open(script_name, "w")
     f.write("#!/bin/sh\n")
-    f.write("# job script for " + _name + " (" + str(_nr) + ") \n\n")
+    f.write("# sopt_job script for " + _name + " (" + str(_nr) + ") \n\n")
     
     f.write("PROG=" + program + "\n\n")
     
@@ -148,6 +157,12 @@ def write(rep):
 ################################################################################
 #
 def write_qmaster(rep1, rep2, T):
+    """
+    Args:
+        rep1:
+        rep2:
+        T:
+    """
     global _name, _nr, program, simdir, workdir
 
     repdir1 = simdir + "/" + str(T[rep1])
@@ -161,7 +176,7 @@ def write_qmaster(rep1, rep2, T):
     
     f = open(script_name, "w")
     f.write("#!/bin/sh\n")
-    f.write("# master job script for " + _name + " (" + str(_nr) + ") \n\n")
+    f.write("# master sopt_job script for " + _name + " (" + str(_nr) + ") \n\n")
 
     f.write("# first replica\n")
     f.write(job1 + " &\n\n")

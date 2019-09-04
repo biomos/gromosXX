@@ -16,7 +16,8 @@
 #define EXTERN extern
 #endif
 
-#include <util/replica.h>
+#include <util/replicaExchange/replica.h>
+#include <util/replicaExchange/replica_reeds.h>
 
 /*
  * define some MPI datatypes
@@ -27,13 +28,14 @@ EXTERN MPI_Datatype MPI_VARRAY;
 EXTERN MPI_Datatype MPI_CONFINFO;
 EXTERN MPI_Datatype MPI_BOX;
 EXTERN MPI_Datatype MPI_REPINFO;
+EXTERN MPI_Datatype MPI_EDSINFO;
 #endif
 
 /*
  * define message tags for MPI communication
  */
 enum {
-  INIT, CONF, POS, POSV, VEL, LATTSHIFTS, STOCHINT, BOX, ANGLES, DF, ENERGIES, SWITCHENERGIES, SENDCOORDS, REPINFO
+  INIT, CONF, POS, POSV, VEL, LATTSHIFTS, STOCHINT, BOX, ANGLES, DF, ENERGIES, SWITCHENERGIES, SENDCOORDS, REPINFO, EDSINFO
 };
 
 namespace util {
@@ -62,11 +64,6 @@ typedef unsigned int ID_t;
  * rank_type
  */
 typedef unsigned int rank_t;
-/**
- * @typedef repIterator
- */
-typedef std::vector< util::replica* >::iterator repIterator;
-
 
 #endif	/* REPEX_MPI_H */
 

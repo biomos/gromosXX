@@ -30,8 +30,8 @@
 
 #include <io/configuration/out_configuration.h>
 
-#include <util/repex_mpi.h>
-#include <util/replica.h>
+#include <util/replicaExchange/repex_mpi.h>
+#include <util/replicaExchange/replica.h>
 #include <string>
 #include <math/random.h>
 
@@ -71,7 +71,7 @@ namespace util {
     /**
      * runs MD simulation for all replicas; one by one
      */
-    void run_MD();
+    virtual void run_MD();
     
     /**
      * write coordinates for all replicas to cnf
@@ -81,7 +81,7 @@ namespace util {
     /**
      * init MD simulation for all replicas; one by one
      */
-    void init();
+    virtual void init();
     /**
      * prints out configuration to a file named \<name\>_\<ID\>.cnf
      * @param name string, name of output file
@@ -91,9 +91,15 @@ namespace util {
      * Tries a swapping of configuration if possible. Calculates energies, probabilities
      * and sends information via MPI communication if necessary.
      */
-    void swap();
+    virtual void swap();
 
   protected:
+    /**
+     * all replicas on this node
+     */
+    typedef std::vector< util::replica* >::iterator repIterator; //iterator for loops
+    std::vector<util::replica *> replicas;
+    
     /**
      * Swapping routine if the replicas are on the same node, no MPI communication needed. Always called from swap().
      * @param it repIterator, iterator to replica with lower ID
@@ -125,16 +131,34 @@ namespace util {
      * number of replicas in the system
      */
     const unsigned int numReplicas;
+
     /**
-     * all replicas on this node
+     * rank of this class
      */
-    std::vector<util::replica *> replicas;
+    int rank;
+    /**
+     * continuation? of this class
+     */
+    int cont;
+    /**
+     * replica IDs
+     */
+    std::vector<int> repIDs;
+    
+    /**
+     * rank of this class
+     */
+    
     /**
      * the random number generator
      */
     math::RandomGeneratorGSL rng;
 
-
+    /**
+     *  Other Functions:
+     */
+    //init Replicas - used in contstructor, initialises the replica objs.
+    virtual void createReplicas(int cont, std::vector<int>  repIDs, int rank);
   };
 }
 

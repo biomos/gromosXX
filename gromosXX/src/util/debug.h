@@ -62,7 +62,7 @@
  *   - integration
  * - simulation
  * - util
- *   - replica
+ *   - replica_exchange
  *   - leus
  *
  * @section Coding
@@ -164,9 +164,9 @@ namespace util
 {
   extern int debug_level;
   extern int util_debug_level;
-  extern int replica_debug_level;
   extern int leus_debug_level;
   extern int bs_leus_debug_level;
+  extern int replica_exchange_debug_level;
 }
 
   
