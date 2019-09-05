@@ -3519,7 +3519,7 @@ void io::In_Parameter::read_AEDS(simulation::Parameter & param,
   exampleblock << "  0   -5   -140   -560   -74\n";
   exampleblock << "# NTIAEDSS  RESTREMIN  BMAXTYPE  BMAX  ASTEPS  BSTEPS\n";
   exampleblock << "  1         1          2         3     500     50000\n";
-  exampleblock << "# END\n";
+  exampleblock << "END\n";
 
 
 
