@@ -3489,34 +3489,33 @@ namespace simulation
        * apply LJ-interaction in QM-Zone or not
        */
       qmmm_disp_enum qmmm_disp;
-      int qmmm_nworker;
       /**
        * the QM software to use
        */
       qmmm_software_enum software;
-      qmmm_software_enum software2;
-      topology::Topology * qmmm_topo; //=  NULL; //new topology::Topology(topo, 1);
-      topology::Topology * QM_CAP_topo; //=  NULL; //new topology::Topology(topo, 1);
+      /**
+       * Quasi periodic table. Periodic table should be implemented universally
+       */
       std::map<unsigned int,std::string > qmmm_at_to_num;
+      /**
+       * Capping atom bond length
+       */
       double cap_dist;
       /**
        * factor to convert the QM length unit to the GROMOS one
        */
       double unit_factor_length;  //MNDO
-      double unit_factor_length2;  //TM
-      double unit_factor_length3; //DFTB
+      double unit_factor_length3; //DFTB - This has to be unified - every QM worker could have its own
       double unit_factor_mmlen; //DFTB
       /**
        * factor to convert the QM energy unit to the GROMOS one
        */
       double unit_factor_energy; // MNDO
-      double unit_factor_energy2; // Turbomole
       double unit_factor_energy3; //DFTB
       /**
        * factor to convert the QM charge unit to the GROMOS one
        */
       double unit_factor_charge;  //MNDO
-      double unit_factor_charge2; //Turbomole
       double unit_factor_charge3; //DFTB
       /**
        * cutoff to determine atoms included in QM computation as point charges.

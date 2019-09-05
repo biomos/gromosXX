@@ -4968,7 +4968,10 @@ void io::In_Parameter::read_QMMM(simulation::Parameter & param,
     switch (disp) {
         case 0:
             param.qmmm.qmmm_disp= simulation::qmmm_disp_off;
-            param.force.interaction_function=simulation::qmmm_func;   
+            
+            //param.force.interaction_function=simulation::qmmm_func;   
+            // USE LJ EXCLUSION INSTEAD //
+
             std::cout << "LJ excluded in QM" << std::endl;
                 break;
         case 1:

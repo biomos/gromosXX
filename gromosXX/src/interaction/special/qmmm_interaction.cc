@@ -182,7 +182,6 @@ int interaction::QMMM_Interaction::add_electric_field_contribution(topology::Top
   m_timer.start("polarisation");
   
   storage.zero();
-  storage2.zero();
 
   if (worker->run_QM(topo, conf, sim, qm_pos, mm_atoms, storage,stor_link,conf)) {
       std::cout << "electric field contribution" << std::endl;
@@ -223,7 +222,7 @@ int interaction::QMMM_Interaction::init(topology::Topology &topo,
             bool quiet) { 
 
     quiet = false;
-    sim.param().qmmm.qmmm_topo = new topology::Topology(topo, 1); //copy topology in order to restore MM-terms
+    qmmm_topo = new topology::Topology(topo, 1); //copy topology in order to restore MM-terms
     //required for AddRemove scheme
   if (topo.qm_zone().empty()) {
     io::messages.add("No QM zone defined", "QMMM_Interaction", io::message::error);
@@ -284,7 +283,7 @@ int interaction::QMMM_Interaction::init(topology::Topology &topo,
     topo.charge()[it->index] = 0.0;
   }
     //also set charges of link atoms to zero
-    //note that bonds should only been cut between to neutral atoms anyway...
+    //note that bonds should only been cut between two neutral atoms anyway...
     for (std::vector<std::pair<unsigned int, unsigned int> >::const_iterator
                  it = topo.qm_mm_pair().begin(); it != topo.qm_mm_pair().end(); ++it){
     //    std::cout << "it->second link atoms to zero " << it->second << std::endl;
@@ -427,19 +426,19 @@ int interaction::QMMM_Interaction::init(topology::Topology &topo,
 
           //bonds
           for (std::vector<topology::two_body_term_struct>::const_iterator
-                       it2 = sim.param().qmmm.qmmm_topo->solute().bonds().begin(),
-                       to2 = sim.param().qmmm.qmmm_topo->solute().bonds().end(); it2 != to2; ++it2, i++) {
+                       it2 = qmmm_topo->solute().bonds().begin(),
+                       to2 = qmmm_topo->solute().bonds().end(); it2 != to2; ++it2, i++) {
               if (it2->i == m1 || it2->j == m1) {
                   if (topo.in_qm_zone(it2->i) == 0 && topo.in_qm_zone(it2->j) == 0) continue;
 
                   else {
                       topo.solute().bonds().push_back(
-                              topology::two_body_term_struct(sim.param().qmmm.qmmm_topo->solute().bonds()[i].i,
-                                                             sim.param().qmmm.qmmm_topo->solute().bonds()[i].j,
-                                                             sim.param().qmmm.qmmm_topo->solute().bonds()[i].type));
+                              topology::two_body_term_struct(qmmm_topo->solute().bonds()[i].i,
+                                                             qmmm_topo->solute().bonds()[i].j,
+                                                             qmmm_topo->solute().bonds()[i].type));
                       std::cout << "i:" << i << "QMMM TOPO  restored bonds: " <<
-                                sim.param().qmmm.qmmm_topo->solute().bonds()[i].i + 1 << "   " <<
-                                sim.param().qmmm.qmmm_topo->solute().bonds()[i].j + 1 << std::endl;
+                                qmmm_topo->solute().bonds()[i].i + 1 << "   " <<
+                                qmmm_topo->solute().bonds()[i].j + 1 << std::endl;
 //                 sim.param().qmmm.QM_CAP_topo->solute().push
                   }
               }
@@ -448,8 +447,8 @@ int interaction::QMMM_Interaction::init(topology::Topology &topo,
           //angles
           i = 0;
           for (std::vector<topology::three_body_term_struct>::const_iterator
-                       it2 = sim.param().qmmm.qmmm_topo->solute().angles().begin(),
-                       to2 = sim.param().qmmm.qmmm_topo->solute().angles().end(); it2 != to2; ++it2, i++) {
+                       it2 = qmmm_topo->solute().angles().begin(),
+                       to2 = qmmm_topo->solute().angles().end(); it2 != to2; ++it2, i++) {
               if (it2->i == m1 || it2->j == m1 || it2->k == m1) {
                   unsigned int mm_count = 0;
                   if (topo.in_qm_zone(it2->i) == 0) mm_count++;
@@ -459,23 +458,23 @@ int interaction::QMMM_Interaction::init(topology::Topology &topo,
                   if (mm_count > 1) continue;
                   else {
                       topo.solute().angles().push_back(
-                              topology::three_body_term_struct(sim.param().qmmm.qmmm_topo->solute().angles()[i].i,
-                                                               sim.param().qmmm.qmmm_topo->solute().angles()[i].j,
-                                                               sim.param().qmmm.qmmm_topo->solute().angles()[i].k,
-                                                               sim.param().qmmm.qmmm_topo->solute().angles()[i].type));
+                              topology::three_body_term_struct(qmmm_topo->solute().angles()[i].i,
+                                                               qmmm_topo->solute().angles()[i].j,
+                                                               qmmm_topo->solute().angles()[i].k,
+                                                               qmmm_topo->solute().angles()[i].type));
 
                       std::cout << "i:" << i << "QMMM TOPO  restored angles: " <<
-                                sim.param().qmmm.qmmm_topo->solute().angles()[i].i + 1 << "     " <<
-                                sim.param().qmmm.qmmm_topo->solute().angles()[i].j + 1 << "     " <<
-                                sim.param().qmmm.qmmm_topo->solute().angles()[i].k + 1 << ::std::endl;
+                                qmmm_topo->solute().angles()[i].i + 1 << "     " <<
+                                qmmm_topo->solute().angles()[i].j + 1 << "     " <<
+                                qmmm_topo->solute().angles()[i].k + 1 << ::std::endl;
                   }
               }
           }
           //distance constraints
           i = 0;
           for (std::vector<topology::two_body_term_struct>::const_iterator
-                       it2 = sim.param().qmmm.qmmm_topo->solute().distance_constraints().begin(),
-                       to2 = sim.param().qmmm.qmmm_topo->solute().distance_constraints().end();
+                       it2 = qmmm_topo->solute().distance_constraints().begin(),
+                       to2 = qmmm_topo->solute().distance_constraints().end();
                it2 != to2; ++it2, i++) {
               if (it2->i == m1 || it2->j == m1) {
                   if ((topo.in_qm_zone(it2->i)) == 0 && topo.in_qm_zone(it2->j) == 0) continue;
@@ -484,13 +483,13 @@ int interaction::QMMM_Interaction::init(topology::Topology &topo,
                   else {
                       topo.solute().distance_constraints().push_back(
                               topology::two_body_term_struct(
-                                      sim.param().qmmm.qmmm_topo->solute().distance_constraints()[i].i,
-                                      sim.param().qmmm.qmmm_topo->solute().distance_constraints()[i].j,
-                                      sim.param().qmmm.qmmm_topo->solute().distance_constraints()[i].type));
+                                      qmmm_topo->solute().distance_constraints()[i].i,
+                                      qmmm_topo->solute().distance_constraints()[i].j,
+                                      qmmm_topo->solute().distance_constraints()[i].type));
                       std::cout << "i:" << i << "QMMM TOPO  restored distance constraints: " <<
                                 //                 std::cout << "i:" << i  << "QMMM TOPO  removing distrance constraints: " <<
-                                sim.param().qmmm.qmmm_topo->solute().distance_constraints()[i].i << "   " <<
-                                sim.param().qmmm.qmmm_topo->solute().distance_constraints()[i].j << std::endl;
+                                qmmm_topo->solute().distance_constraints()[i].i << "   " <<
+                                qmmm_topo->solute().distance_constraints()[i].j << std::endl;
 
                   }
               }
@@ -504,24 +503,24 @@ int interaction::QMMM_Interaction::init(topology::Topology &topo,
       */
       i = 0;
       for (std::vector<topology::four_body_term_struct>::const_iterator
-                   it2 = sim.param().qmmm.qmmm_topo->solute().dihedrals().begin(),
-                   to2 = sim.param().qmmm.qmmm_topo->solute().dihedrals().end(); it2 != to2; ++it2, i++) {
+                   it2 = qmmm_topo->solute().dihedrals().begin(),
+                   to2 = qmmm_topo->solute().dihedrals().end(); it2 != to2; ++it2, i++) {
           if (((topo.in_qm_zone(it2->i) + topo.in_qm_zone(it2->j) == 2) &&
                (topo.in_qm_zone(it2->k) + topo.in_qm_zone(it2->l) == 0)) || (
                       (topo.in_qm_zone(it2->i) + topo.in_qm_zone(it2->j) == 0) &&
                       (topo.in_qm_zone(it2->k) + topo.in_qm_zone(it2->l) == 2))
                   ) {
               topo.solute().dihedrals().push_back(
-                      topology::four_body_term_struct(sim.param().qmmm.qmmm_topo->solute().dihedrals()[i].i,
-                                                      sim.param().qmmm.qmmm_topo->solute().dihedrals()[i].j,
-                                                      sim.param().qmmm.qmmm_topo->solute().dihedrals()[i].k,
-                                                      sim.param().qmmm.qmmm_topo->solute().dihedrals()[i].l,
-                                                      sim.param().qmmm.qmmm_topo->solute().dihedrals()[i].type));
+                      topology::four_body_term_struct(qmmm_topo->solute().dihedrals()[i].i,
+                                                      qmmm_topo->solute().dihedrals()[i].j,
+                                                      qmmm_topo->solute().dihedrals()[i].k,
+                                                      qmmm_topo->solute().dihedrals()[i].l,
+                                                      qmmm_topo->solute().dihedrals()[i].type));
               std::cout << "i:" << i << "QMMM TOPO  restored dihedrals: " <<
-                        sim.param().qmmm.qmmm_topo->solute().dihedrals()[i].i + 1 << "     " <<
-                        sim.param().qmmm.qmmm_topo->solute().dihedrals()[i].j + 1 << "     " <<
-                        sim.param().qmmm.qmmm_topo->solute().dihedrals()[i].k + 1 << "     " <<
-                        sim.param().qmmm.qmmm_topo->solute().dihedrals()[i].l + 1 << ::std::endl;
+                        qmmm_topo->solute().dihedrals()[i].i + 1 << "     " <<
+                        qmmm_topo->solute().dihedrals()[i].j + 1 << "     " <<
+                        qmmm_topo->solute().dihedrals()[i].k + 1 << "     " <<
+                        qmmm_topo->solute().dihedrals()[i].l + 1 << ::std::endl;
           }
       }
 
@@ -532,21 +531,21 @@ int interaction::QMMM_Interaction::init(topology::Topology &topo,
       */
       i = 0;
       for (std::vector<topology::four_body_term_struct>::const_iterator
-                   it2 = sim.param().qmmm.qmmm_topo->solute().dihedrals().begin(),
-                   to2 = sim.param().qmmm.qmmm_topo->solute().dihedrals().end(); it2 != to2; ++it2, i++) {
+                   it2 = qmmm_topo->solute().dihedrals().begin(),
+                   to2 = qmmm_topo->solute().dihedrals().end(); it2 != to2; ++it2, i++) {
           if (topo.in_qm_zone(it2->i) == 1 && topo.in_qm_zone(it2->l) == 0)
               if (topo.in_qm_zone(it2->k) + topo.in_qm_zone(it2->j) == 0) {
                   topo.solute().dihedrals().push_back(
-                          topology::four_body_term_struct(sim.param().qmmm.qmmm_topo->solute().dihedrals()[i].i,
-                                                          sim.param().qmmm.qmmm_topo->solute().dihedrals()[i].j,
-                                                          sim.param().qmmm.qmmm_topo->solute().dihedrals()[i].k,
-                                                          sim.param().qmmm.qmmm_topo->solute().dihedrals()[i].l,
-                                                          sim.param().qmmm.qmmm_topo->solute().dihedrals()[i].type));
+                          topology::four_body_term_struct(qmmm_topo->solute().dihedrals()[i].i,
+                                                          qmmm_topo->solute().dihedrals()[i].j,
+                                                          qmmm_topo->solute().dihedrals()[i].k,
+                                                          qmmm_topo->solute().dihedrals()[i].l,
+                                                          qmmm_topo->solute().dihedrals()[i].type));
                   std::cout << "i:" << i << "QMMM TOPO  restored dihedrals: " <<
-                            sim.param().qmmm.qmmm_topo->solute().dihedrals()[i].i + 1 << "     " <<
-                            sim.param().qmmm.qmmm_topo->solute().dihedrals()[i].j + 1 << "     " <<
-                            sim.param().qmmm.qmmm_topo->solute().dihedrals()[i].k + 1 << "     " <<
-                            sim.param().qmmm.qmmm_topo->solute().dihedrals()[i].l + 1 << ::std::endl;
+                            qmmm_topo->solute().dihedrals()[i].i + 1 << "     " <<
+                            qmmm_topo->solute().dihedrals()[i].j + 1 << "     " <<
+                            qmmm_topo->solute().dihedrals()[i].k + 1 << "     " <<
+                            qmmm_topo->solute().dihedrals()[i].l + 1 << ::std::endl;
               }
       }
       /*
@@ -556,21 +555,21 @@ int interaction::QMMM_Interaction::init(topology::Topology &topo,
       */
       i = 0;
       for (std::vector<topology::four_body_term_struct>::const_iterator
-                   it2 = sim.param().qmmm.qmmm_topo->solute().dihedrals().begin(),
-                   to2 = sim.param().qmmm.qmmm_topo->solute().dihedrals().end(); it2 != to2; ++it2, i++) {
+                   it2 = qmmm_topo->solute().dihedrals().begin(),
+                   to2 = qmmm_topo->solute().dihedrals().end(); it2 != to2; ++it2, i++) {
           if (topo.in_qm_zone(it2->i) == 0 && topo.in_qm_zone(it2->l) == 1)
               if (topo.in_qm_zone(it2->k) + topo.in_qm_zone(it2->j) == 0) {
                   topo.solute().dihedrals().push_back(
-                          topology::four_body_term_struct(sim.param().qmmm.qmmm_topo->solute().dihedrals()[i].i,
-                                                          sim.param().qmmm.qmmm_topo->solute().dihedrals()[i].j,
-                                                          sim.param().qmmm.qmmm_topo->solute().dihedrals()[i].k,
-                                                          sim.param().qmmm.qmmm_topo->solute().dihedrals()[i].l,
-                                                          sim.param().qmmm.qmmm_topo->solute().dihedrals()[i].type));
+                          topology::four_body_term_struct(qmmm_topo->solute().dihedrals()[i].i,
+                                                          qmmm_topo->solute().dihedrals()[i].j,
+                                                          qmmm_topo->solute().dihedrals()[i].k,
+                                                          qmmm_topo->solute().dihedrals()[i].l,
+                                                          qmmm_topo->solute().dihedrals()[i].type));
                   std::cout << "i:" << i << "QMMM TOPO  restored dihedrals: " <<
-                            sim.param().qmmm.qmmm_topo->solute().dihedrals()[i].i + 1 << "     " <<
-                            sim.param().qmmm.qmmm_topo->solute().dihedrals()[i].j + 1 << "     " <<
-                            sim.param().qmmm.qmmm_topo->solute().dihedrals()[i].k + 1 << "     " <<
-                            sim.param().qmmm.qmmm_topo->solute().dihedrals()[i].l + 1 << ::std::endl;
+                            qmmm_topo->solute().dihedrals()[i].i + 1 << "     " <<
+                            qmmm_topo->solute().dihedrals()[i].j + 1 << "     " <<
+                            qmmm_topo->solute().dihedrals()[i].k + 1 << "     " <<
+                            qmmm_topo->solute().dihedrals()[i].l + 1 << ::std::endl;
               }
       }
 
@@ -579,8 +578,8 @@ int interaction::QMMM_Interaction::init(topology::Topology &topo,
       //fixme has to be updated, but at the moment we should not cut through such bonds anyway.
       i = 0;
       for (std::vector<topology::four_body_term_struct>::const_iterator
-                   it2 = sim.param().qmmm.qmmm_topo->solute().improper_dihedrals().begin(),
-                   to2 = sim.param().qmmm.qmmm_topo->solute().improper_dihedrals().end(); it2 != to2; ++it2, i++) {
+                   it2 = qmmm_topo->solute().improper_dihedrals().begin(),
+                   to2 = qmmm_topo->solute().improper_dihedrals().end(); it2 != to2; ++it2, i++) {
           if (it2->i == m1 || it2->j == m1 || it2->k == m1 || it2->l == m1) {
               unsigned int mm_count = 0;
               if (topo.in_qm_zone(it2->i) == 0) mm_count++;
@@ -592,21 +591,23 @@ int interaction::QMMM_Interaction::init(topology::Topology &topo,
               else {
                   topo.solute().improper_dihedrals().push_back(
                           topology::four_body_term_struct(
-                                  sim.param().qmmm.qmmm_topo->solute().improper_dihedrals()[i].i,
-                                  sim.param().qmmm.qmmm_topo->solute().improper_dihedrals()[i].j,
-                                  sim.param().qmmm.qmmm_topo->solute().improper_dihedrals()[i].k,
-                                  sim.param().qmmm.qmmm_topo->solute().improper_dihedrals()[i].l,
-                                  sim.param().qmmm.qmmm_topo->solute().improper_dihedrals()[i].type));
+                                  qmmm_topo->solute().improper_dihedrals()[i].i,
+                                  qmmm_topo->solute().improper_dihedrals()[i].j,
+                                  qmmm_topo->solute().improper_dihedrals()[i].k,
+                                  qmmm_topo->solute().improper_dihedrals()[i].l,
+                                  qmmm_topo->solute().improper_dihedrals()[i].type));
 
                   std::cout << "i:" << i << "QMMM TOPO  restored improper_dihedrals: " <<
-                            sim.param().qmmm.qmmm_topo->solute().improper_dihedrals()[i].i + 1 << "     " <<
-                            sim.param().qmmm.qmmm_topo->solute().improper_dihedrals()[i].j + 1 << "     " <<
-                            sim.param().qmmm.qmmm_topo->solute().improper_dihedrals()[i].k + 1 << "     " <<
-                            sim.param().qmmm.qmmm_topo->solute().improper_dihedrals()[i].l + 1 << ::std::endl;
+                            qmmm_topo->solute().improper_dihedrals()[i].i + 1 << "     " <<
+                            qmmm_topo->solute().improper_dihedrals()[i].j + 1 << "     " <<
+                            qmmm_topo->solute().improper_dihedrals()[i].k + 1 << "     " <<
+                            qmmm_topo->solute().improper_dihedrals()[i].l + 1 << ::std::endl;
               }
           }
       }
       */
+     // Also exclude non-bonded within QM zone if asked to
+
   return 0;
 }
 

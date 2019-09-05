@@ -375,6 +375,7 @@ int interaction::DFTB_Worker::init(topology::Topology& topo,
       output_file = sim.param().qmmm.dftb.output_file;
       output_charg_file = sim.param().qmmm.dftb.output_charg_file;
       geom_file = sim.param().qmmm.dftb.geom_file;
+      // Make a global periodic table with atomic number, type, mass ...
       sim.param().qmmm.qmmm_at_to_num[1]="H";
       sim.param().qmmm.qmmm_at_to_num[6]="C";
       sim.param().qmmm.qmmm_at_to_num[7]="N";
