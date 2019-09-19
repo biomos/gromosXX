@@ -3579,6 +3579,10 @@ namespace simulation
          */
         std::string output_gradient_file;
         /**
+         * path for the density matrix file. Empty for a temporary file
+         */
+        std::string density_matrix_file;
+        /**
          * header of the MNDO input file
          */
         std::string input_header;
