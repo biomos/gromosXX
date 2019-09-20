@@ -24,7 +24,8 @@ int util::system_call(const std::string & command,
   }
   command_to_launch += " 1> " + output_file + " 2>&1 ";
 #ifdef HAVE_SYSTEM
-  return system(command_to_launch.c_str());
+  int system_return = system(command_to_launch.c_str());
+  return WEXITSTATUS(system_return);
 #else
   throw std::runtime_error("System call is not implemented for this platform.");
 #endif

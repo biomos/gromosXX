@@ -44,6 +44,7 @@ int interaction::MNDO_Worker::init(topology::Topology& topo,
         "MNDO_Worker", io::message::notice);
     }
   }
+
   output_file = sim.param().qmmm.mndo.output_file;
   if (output_file.empty()) {
     if (util::create_tmpfile(output_file) < 1) {
@@ -56,6 +57,7 @@ int interaction::MNDO_Worker::init(topology::Topology& topo,
         "MNDO_Worker", io::message::notice);
     }
   }
+
   output_gradient_file = sim.param().qmmm.mndo.output_gradient_file;
   if (output_gradient_file.empty()) {
     if (util::create_tmpfile(output_gradient_file) < 1) {
@@ -78,6 +80,8 @@ int interaction::MNDO_Worker::init(topology::Topology& topo,
     }
     of.close();
   }
+
+  density_matrix_file = sim.param().qmmm.mndo.density_matrix_file;
   if (density_matrix_file.empty()) {
     if (util::create_tmpfile(density_matrix_file) < 1) {
       io::messages.add("Unable to create temporary density matrix file: " 
@@ -241,8 +245,12 @@ int interaction::MNDO_Worker::run_QM(topology::Topology& topo,
   int result = util::system_call(sim.param().qmmm.mndo.binary,
           input_file, output_file);
   if (result != 0) {
-    io::messages.add("MNDO failed with code " + std::to_string(result) + ". See output file "
-            + output_file + " for details.", "MNDO_Worker", io::message::error);
+    std::ostringstream msg;
+    msg << "MNDO failed with code " << result;
+    if (result == 127)
+      msg << ". mndo command probably not in PATH";
+    msg << ". See output file " << output_file << " for details.";
+    io::messages.add(msg.str(), "MNDO_Worker", io::message::error);
     return 1;
   }
   
