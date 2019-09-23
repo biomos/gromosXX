@@ -4505,7 +4505,6 @@ void io::In_Parameter::read_NEMD(simulation::Parameter & param,
     }     // if block
 } // NEMD
 
-
 /**
  * @section multigradient MULTIGRADIENT block
  * @snippet snippets/snippets.cc MULTIGRADIENT
@@ -4782,118 +4781,7 @@ void io::In_Parameter::read_ADDECOUPLE(simulation::Parameter & param,
 
         block.get_final_messages();
     }
-}
-
-
-
-// two helper data types to simply unsupported block handling
-
-enum unsupported_block_type {
-    ub_unknown,     // I know it and know that I don't use it but I have no idea why
-    ub_renamed,     // it was renamed. e.g. from previous versions
-    ub_promd,     // it is a PROMD block. Tell alternative if there is any
-    ub_g96     // it is a G96 block. Tell alternative if there is any
-};
-
-// give a valid block name as an alternative and it will tell the user to
-// use it.
-
-struct unsupported_block {
-
-    unsupported_block() :
-        alternative(""), type(ub_unknown) {
-    }
-
-    unsupported_block(std::string a, unsupported_block_type t) :
-        alternative(a), type(t) {
-    }
-
-    std::string alternative;
-    unsupported_block_type type;
-};
-
-void io::In_Parameter::read_known_unsupported_blocks() {
-    std::map<std::string, unsupported_block> ub;
-    // add all those unknown blocks
-    ub["ANATRAJ"] = unsupported_block("READTRAJ", ub_renamed);
-    ub["MINIMISE"] = unsupported_block("ENERGYMIN", ub_renamed);
-    ub["STOCHASTIC"] = unsupported_block("STOCHDYN", ub_renamed);
-    ub["BOUNDARY"] = unsupported_block("BOUNDCOND", ub_renamed);
-    ub["THERMOSTAT"] = unsupported_block("MULTIBATH", ub_promd);
-    ub["TCOUPLE"] = unsupported_block("MULTIBATH", ub_g96);
-    ub["BAROSTAT"] = unsupported_block("PRESSURESCALE", ub_promd);
-    ub["VIRIAL"] = unsupported_block("PRESSURESCALE", ub_promd);
-    ub["PCOUPLE"] = unsupported_block("PRESSURESCALE", ub_g96);
-    ub["PCOUPLE03"] = unsupported_block("PRESSURESCALE", ub_renamed);
-    ub["GEOMCONSTRAINT"] = unsupported_block("CONSTRAINT", ub_promd);
-    ub["SHAKE"] = unsupported_block("CONSTRAINT", ub_g96);
-    ub["PATHINT"] = unsupported_block("", ub_promd);
-    ub["NEIGHBOURLIST"] = unsupported_block("PAIRLIST", ub_promd);
-    ub["PLIST"] = unsupported_block("PAIRLIST", ub_g96);
-    ub["PLIST03"] = unsupported_block("PAIRLIST", ub_renamed);
-    ub["LONGRANGE"] = unsupported_block("NONBONDED", ub_g96);
-    ub["START"] = unsupported_block("INITIALISE", ub_g96);
-    ub["OVERALLTRANSROT"] = unsupported_block("COMTRANSROT", ub_promd);
-    ub["CENTREOFMASS"] = unsupported_block("COMTRANSROT", ub_g96);
-    ub["POSREST"] = unsupported_block("POSITIONRES", ub_g96);
-    ub["DISTREST"] = unsupported_block("DISTANCERES", ub_g96);
-    ub["DIHEREST"] = unsupported_block("DIHEDRALRES", ub_g96);
-    ub["J-VAL"] = unsupported_block("JVALUERES", ub_g96);
-    ub["J-VAL03"] = unsupported_block("JVALUERES", ub_renamed);
-    ub["PERTURB"] = unsupported_block("PERTURBATION", ub_g96);
-    ub["PERTURB03"] = unsupported_block("PERTURBATION", ub_renamed);
-    ub["UMBRELLA"] = unsupported_block("", ub_promd);
-    ub["PRINT"] = unsupported_block("PRINTOUT", ub_g96);
-    ub["WRITE"] = unsupported_block("WRITETRAJ", ub_g96);
-#ifdef NDEBUG
-    ub["DEBUG"] = unsupported_block("--enable-debug at compile time and "
-                                    "the @verb argument", ub_promd);
-#else
-    ub["DEBUG"] = unsupported_block("the @verb argument", ub_promd);
-#endif
-    ub["FOURDIM"] = unsupported_block("", ub_g96);
-    ub["LOCALELEVATION"] = unsupported_block("LOCALELEV", ub_g96);
-    ub["SUBMOLECULES"] = unsupported_block("SOLUTEMOLECULES and moved to "
-                                           "the topology", ub_renamed);
-    ub["FORCEFIELD"] = unsupported_block("COVALENTFORM", ub_renamed);
-    ub["PSCALE"] = unsupported_block("PERSCALE", ub_renamed);
-    ub["REPLICA03"] = unsupported_block("REPLICA", ub_renamed);
-
-    std::map<std::string, unsupported_block>::const_iterator
-        it = ub.begin(),
-        to = ub.end();
-
-    // loop over unsupported blocks;
-    for (; it != to; ++it) {
-        // if it is present
-        if (m_block[it->first].size()) {
-            block_read.insert(it->first);
-
-            std::ostringstream msg;
-            msg << it->first << " block";
-
-            switch (it->second.type) {
-                case ub_renamed:
-                    msg << " was renamed to " << it->second.alternative;
-                    break;
-                case ub_promd:
-                    msg << " is PROMD specific.";
-                    if (it->second.alternative != "")
-                        msg << " Use " << it->second.alternative << " instead.";
-                    break;
-                case ub_g96:
-                    msg << " is GROMOS96 specific.";
-                    if (it->second.alternative != "")
-                        msg << " Use " << it->second.alternative << " instead.";
-                    break;
-                default:         // don't know what to do.
-                    msg << " is known to be not supported.";
-            }
-
-            io::messages.add(msg.str(), "In_Parameter", io::message::error);
-        }
-    }
-}
+} // ADDECOUPLE
 
 /**
  * @section qmmmb QMMM block
@@ -5007,6 +4895,118 @@ void io::In_Parameter::read_QMMM(simulation::Parameter & param,
     block.get_final_messages();
     }     // if block
 } // QMMM
+
+
+
+
+// two helper data types to simply unsupported block handling
+
+enum unsupported_block_type {
+    ub_unknown,     // I know it and know that I don't use it but I have no idea why
+    ub_renamed,     // it was renamed. e.g. from previous versions
+    ub_promd,     // it is a PROMD block. Tell alternative if there is any
+    ub_g96     // it is a G96 block. Tell alternative if there is any
+};
+
+// give a valid block name as an alternative and it will tell the user to
+// use it.
+
+struct unsupported_block {
+
+    unsupported_block() :
+        alternative(""), type(ub_unknown) {
+    }
+
+    unsupported_block(std::string a, unsupported_block_type t) :
+        alternative(a), type(t) {
+    }
+
+    std::string alternative;
+    unsupported_block_type type;
+};
+
+void io::In_Parameter::read_known_unsupported_blocks() {
+    std::map<std::string, unsupported_block> ub;
+    // add all those unknown blocks
+    ub["ANATRAJ"] = unsupported_block("READTRAJ", ub_renamed);
+    ub["MINIMISE"] = unsupported_block("ENERGYMIN", ub_renamed);
+    ub["STOCHASTIC"] = unsupported_block("STOCHDYN", ub_renamed);
+    ub["BOUNDARY"] = unsupported_block("BOUNDCOND", ub_renamed);
+    ub["THERMOSTAT"] = unsupported_block("MULTIBATH", ub_promd);
+    ub["TCOUPLE"] = unsupported_block("MULTIBATH", ub_g96);
+    ub["BAROSTAT"] = unsupported_block("PRESSURESCALE", ub_promd);
+    ub["VIRIAL"] = unsupported_block("PRESSURESCALE", ub_promd);
+    ub["PCOUPLE"] = unsupported_block("PRESSURESCALE", ub_g96);
+    ub["PCOUPLE03"] = unsupported_block("PRESSURESCALE", ub_renamed);
+    ub["GEOMCONSTRAINT"] = unsupported_block("CONSTRAINT", ub_promd);
+    ub["SHAKE"] = unsupported_block("CONSTRAINT", ub_g96);
+    ub["PATHINT"] = unsupported_block("", ub_promd);
+    ub["NEIGHBOURLIST"] = unsupported_block("PAIRLIST", ub_promd);
+    ub["PLIST"] = unsupported_block("PAIRLIST", ub_g96);
+    ub["PLIST03"] = unsupported_block("PAIRLIST", ub_renamed);
+    ub["LONGRANGE"] = unsupported_block("NONBONDED", ub_g96);
+    ub["START"] = unsupported_block("INITIALISE", ub_g96);
+    ub["OVERALLTRANSROT"] = unsupported_block("COMTRANSROT", ub_promd);
+    ub["CENTREOFMASS"] = unsupported_block("COMTRANSROT", ub_g96);
+    ub["POSREST"] = unsupported_block("POSITIONRES", ub_g96);
+    ub["DISTREST"] = unsupported_block("DISTANCERES", ub_g96);
+    ub["DIHEREST"] = unsupported_block("DIHEDRALRES", ub_g96);
+    ub["J-VAL"] = unsupported_block("JVALUERES", ub_g96);
+    ub["J-VAL03"] = unsupported_block("JVALUERES", ub_renamed);
+    ub["PERTURB"] = unsupported_block("PERTURBATION", ub_g96);
+    ub["PERTURB03"] = unsupported_block("PERTURBATION", ub_renamed);
+    ub["UMBRELLA"] = unsupported_block("", ub_promd);
+    ub["PRINT"] = unsupported_block("PRINTOUT", ub_g96);
+    ub["WRITE"] = unsupported_block("WRITETRAJ", ub_g96);
+#ifdef NDEBUG
+    ub["DEBUG"] = unsupported_block("--enable-debug at compile time and "
+                                    "the @verb argument", ub_promd);
+#else
+    ub["DEBUG"] = unsupported_block("the @verb argument", ub_promd);
+#endif
+    ub["FOURDIM"] = unsupported_block("", ub_g96);
+    ub["LOCALELEVATION"] = unsupported_block("LOCALELEV", ub_g96);
+    ub["SUBMOLECULES"] = unsupported_block("SOLUTEMOLECULES and moved to "
+                                           "the topology", ub_renamed);
+    ub["FORCEFIELD"] = unsupported_block("COVALENTFORM", ub_renamed);
+    ub["PSCALE"] = unsupported_block("PERSCALE", ub_renamed);
+    ub["REPLICA03"] = unsupported_block("REPLICA", ub_renamed);
+
+    std::map<std::string, unsupported_block>::const_iterator
+        it = ub.begin(),
+        to = ub.end();
+
+    // loop over unsupported blocks;
+    for (; it != to; ++it) {
+        // if it is present
+        if (m_block[it->first].size()) {
+            block_read.insert(it->first);
+
+            std::ostringstream msg;
+            msg << it->first << " block";
+
+            switch (it->second.type) {
+                case ub_renamed:
+                    msg << " was renamed to " << it->second.alternative;
+                    break;
+                case ub_promd:
+                    msg << " is PROMD specific.";
+                    if (it->second.alternative != "")
+                        msg << " Use " << it->second.alternative << " instead.";
+                    break;
+                case ub_g96:
+                    msg << " is GROMOS96 specific.";
+                    if (it->second.alternative != "")
+                        msg << " Use " << it->second.alternative << " instead.";
+                    break;
+                default:         // don't know what to do.
+                    msg << " is known to be not supported.";
+            }
+
+            io::messages.add(msg.str(), "In_Parameter", io::message::error);
+        }
+    }
+}
 
 /**
  * @section symres SYMRES block
