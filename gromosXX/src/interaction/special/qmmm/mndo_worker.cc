@@ -122,10 +122,6 @@ int interaction::MNDO_Worker::init(topology::Topology& topo,
   }
 #endif
   
-  
-#ifdef HAVE_SYMLINK
-#else
-#endif
 #ifndef HAVE_UNLINK
   {
     io::messages.add("Unlink function not supported on this platform. "
