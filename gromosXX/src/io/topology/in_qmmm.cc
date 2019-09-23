@@ -222,33 +222,6 @@ io::In_QMMM::read(topology::Topology& topo,
                      "In_QMMM", io::message::notice);
 
   } // QMZONE
-  // { // QMUNIT
-  //   buffer = m_block["QMUNIT"];
-  //   DEBUG(10, "QMUNIT block : " << buffer.size());
-
-  //   if (!buffer.size()) {
-  //    io::messages.add("no QMUNIT block in QM/MM specification file",
-  //            "In_QMMM", io::message::error);
-  //    return;
-  // }
-  // std::string s;
-  // _lineStream.clear();
-  // _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
-//
-  // _lineStream >> sim.param().qmmm.unit_factor_length
-  //          >> sim.param().qmmm.unit_factor_energy
-  //          >> sim.param().qmmm.unit_factor_charge;
-
-  //  if (_lineStream.fail()) {
-  //    io::messages.add("bad line in QMUNIT block.",
-  //            "In_QMMM", io::message::error);
-  //   return;
-  // }
-  // } // QMUNIT
-
-  // check for MNDO specific data
-  //if (sim.param().qmmm.software == simulation::qmmm_software_mndo or
-  //        sim.param().qmmm.software == simulation::qmmm_software_both)
 
   if (sw == simulation::qmmm_software_mndo) {
     buffer = m_block["QMUNIT"];
@@ -271,7 +244,7 @@ io::In_QMMM::read(topology::Topology& topo,
       io::messages.add("bad line in QMUNIT block.",
               "In_QMMM", io::message::error);
       return;
-    }
+    } // QMUNIT
 
 
     { // MNDOFILES
