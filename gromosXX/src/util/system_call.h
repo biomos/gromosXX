@@ -23,12 +23,10 @@ namespace util {
 
   /**
    * function to generate temporary file
-   * requires filename reference as input and overwrites it with the generated filename value
+   * requires filename reference as input, overwrites it with the generated filename value
    * and returns file descriptor. Last six characters of string should be XXXXXX. If empty
-   * string is given, the functions follows the TMPDIR environment variable and creates
-   * TMPDIR/gromos-XXXXXX file. If also TMPDIR is empty, it defaults to /tmp/gromos-XXXXXX.
-   * Thus usually TMPDIR should be set to shared memory filesystem (e.g. /dev/shm) to avoid
-   * slow I/O.
+   * string is given, the function gets path from util::get_tmppath() and uses default name
+   * gromos-XXXXXX.
    */
   int create_tmpfile(std::string & tmp_file);
   
@@ -36,12 +34,17 @@ namespace util {
    * function to generate temporary directory
    * requires directory name reference as input and overwrites it with the generated dirname
    * value and returns 0 on success. Last six characters of string should be XXXXXX. If empty
-   * string is given, the functions follows the TMPDIR environment variable and creates
-   * TMPDIR/gromos-XXXXXX file. If also TMPDIR is empty, it defaults to /tmp/gromos-XXXXXX.
-   * Thus usually TMPDIR should be set to shared memory filesystem (e.g. /dev/shm) to avoid
-   * slow I/O.
+   * string is given, the function gets path from util::get_tmppath() and uses default name
+   * gromos-XXXXXX.
    */
   int create_tmpdir(std::string & tmp_dir);
+
+    /**
+   * function to get system temporary directory path. If TMPDIR is defined, it returns TMPDIR,
+   * otherwise it returns default_tmp_path. TMPDIR should be set to shared memory filesystem
+   * (e.g. /dev/shm) to avoid slow I/O.
+   */
+  std::string get_tmppath();
 }
 
 #endif	/* SYSTEM_CALL_H */

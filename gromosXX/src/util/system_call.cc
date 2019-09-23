@@ -35,13 +35,7 @@ int util::create_tmpfile(std::string & tmp_file) {
 #ifdef HAVE_MKSTEMP
   std::string tmp_s;
   if (tmp_file.empty()) {
-    std::string tmp_path = getenv("TMPDIR");
-    if (tmp_path.empty()) {
-      tmp_s = default_tmp_path + "/gromos-XXXXXX";
-    }
-    else {
-      tmp_s = tmp_path + "/gromos-XXXXXX";
-    }
+      tmp_s = util::get_tmppath() + "/gromos-XXXXXX";
   }
   else {
     tmp_s = tmp_file;
@@ -61,13 +55,7 @@ int util::create_tmpdir(std::string & tmp_dir) {
 #ifdef HAVE_MKDTEMP
   std::string tmp_s;
   if (tmp_dir.empty()) {
-    std::string tmp_path = getenv("TMPDIR");
-    if (tmp_path.empty()) {
-      tmp_s = default_tmp_path + "/gromos-XXXXXX";
-    }
-    else {
-      tmp_s = tmp_path + "/gromos-XXXXXX";
-    }
+    tmp_s = util::get_tmppath() + "/gromos-XXXXXX";
   }
   else {
     tmp_s = tmp_dir;
@@ -83,5 +71,19 @@ int util::create_tmpdir(std::string & tmp_dir) {
   }
 #else
   throw std::runtime_error("mkdtemp function is not available on this platform.");
+#endif
+}
+
+std::string util::get_tmppath() {
+#ifdef HAVE_GETENV
+    char const * tmp_path = getenv("TMPDIR");
+    std::string tmp;
+    if (tmp_path == nullptr)
+      tmp = default_tmp_path;
+    else
+      tmp = tmp_path;
+    return tmp;
+#else
+  throw std::runtime_error("getenv function is not available on this platform.");
 #endif
 }
