@@ -96,14 +96,14 @@ int interaction::MNDO_Worker::init(topology::Topology& topo,
   
 #ifdef HAVE_SYMLINK
   // create fort.15 link for gradients
-  if (symlink(output_gradient_file.c_str(), "fort.15") != 0) {
+  if (symlink_err += symlink(output_gradient_file.c_str(), "fort.15") != 0) {
     io::messages.add("Unable to create symbolic link from fort.15 to "
       + output_gradient_file + " - check permissions.",
       "MNDO_Worker", io::message::critical);
     return 1;
   }
   // create fort.11 link for density matrix
-  if (symlink(density_matrix_file.c_str(), "fort.11") != 0) {
+  if (symlink_err += symlink(density_matrix_file.c_str(), "fort.11") != 0) {
     io::messages.add("Unable to create symbolic link from fort.11 to "
       + density_matrix_file + " - check permissions.",
       "MNDO_Worker", io::message::critical);
@@ -404,8 +404,10 @@ int interaction::MNDO_Worker::run_QM(topology::Topology& topo,
 interaction::MNDO_Worker::~MNDO_Worker() {
 #ifdef HAVE_UNLINK
   // Remove symbolic links
-  unlink("fort.11");
-  unlink("fort.15");
+  if (symlink_err == 0) {
+    unlink("fort.11");
+    unlink("fort.15");
+  }
   // Delete temporary files
   if (using_tmp) {
     unlink(input_file.c_str());

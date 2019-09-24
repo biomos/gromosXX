@@ -62,6 +62,10 @@ namespace interaction {
      * using temporary files
      */
     bool using_tmp = false;
+    /**
+     * symlink creation error
+     */
+    int symlink_err = 0;
   };
 }
 
