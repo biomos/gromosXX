@@ -64,13 +64,12 @@ char current_working_directory[MAXPATH];
 #endif
 
 
-   /*
+  
   if (mm_atoms.empty()) {
     io::messages.add("Cannot deal with zero MM atoms yet.", "DFTB_Worker",
             io::message::error);
     return 1;
   }
-  */
 
   std::ofstream inp(input_file.c_str());
   

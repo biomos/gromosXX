@@ -79,6 +79,14 @@ int interaction::MOPAC_Worker::run_QM(topology::Topology& topo,
                                      interaction::QM_Storage& LA_storage,
                                      const configuration::Configuration & qmmm_conf){
     {
+        
+        // Empty MM not implemented yet
+        if (mm_atoms.empty()) {
+            io::messages.add("Cannot deal with zero MM atoms yet.", "MOPAC_Worker", 
+            io::message::error);
+        return 1;
+        }
+  
 
         this->input_file = sim.param().qmmm.mopac.input_file;
         this->output_file = sim.param().qmmm.mopac.output_file;

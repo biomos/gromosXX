@@ -40,13 +40,11 @@ int interaction::MNDO_Worker::run_QM(topology::Topology& topo,
         const configuration::Configuration& qmmm_conf){
      
 
-/*
   if (mm_atoms.empty()) {
     io::messages.add("Cannot deal with zero MM atoms yet.", "MNDO_Worker", 
             io::message::error);
     return 1;
   }
-  */
 
   std::ofstream inp(this->input_file.c_str());
   if (!inp.is_open()) {

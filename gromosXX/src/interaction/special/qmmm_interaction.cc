@@ -153,7 +153,7 @@ calculate_interactions(topology::Topology& topo,
        }
        */
   if (worker->run_QM(topo, conf, sim, qm_pos, mm_atoms, storage,stor_link,qmmm_conf)) {
-    m_timer.stop("QM worker");
+    m_timer.stop();
     return 1;
   }
 
@@ -170,7 +170,6 @@ calculate_interactions(topology::Topology& topo,
   
   conf.current().energies.qm_total = storage.energy;
   m_timer.stop();
- 
   return 0;
 }
 
@@ -184,7 +183,8 @@ int interaction::QMMM_Interaction::add_electric_field_contribution(topology::Top
   storage.zero();
 
   if (worker->run_QM(topo, conf, sim, qm_pos, mm_atoms, storage,stor_link,conf)) {
-      std::cout << "electric field contribution" << std::endl;
+    m_timer.stop();
+    m_timer.stop("polarisation");
     return 1;
   }
   for(unsigned int i = 0; i < topo.num_atoms(); ++i) {
@@ -203,6 +203,8 @@ int interaction::QMMM_Interaction::add_electric_field_contribution(topology::Top
       default:
         io::messages.add("Electric field site not implemented.",
                 "QMMM_Interaction", io::message::critical);
+        m_timer.stop("polarisation");
+        m_timer.stop();
         return 1;
     }
     // add the electric field contribution
