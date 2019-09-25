@@ -1,5 +1,5 @@
 AM_CXXFLAGS = @MY_CXXFLAGS@
-AM_CPPFLAGS = -I$(top_srcdir) -I$(top_srcdir)/src
+AM_CPPFLAGS = -I$(top_srcdir) -I$(top_srcdir)/src -I$(top_srcdir)/src/util -I$(top_srcdir)/src/util/replicaExchange
 
 xxincludedir = $(includedir)/md++/util
 xxinclude_HEADERS = error.h\
@@ -17,12 +17,6 @@ xxinclude_HEADERS = error.h\
 	parse_verbosity.h\
 	prepare_virial.h\
 	create_simulation.h\
-	repex_mpi.h\
-        replica_data.h\
-	replica.h\
-	replica_exchange_base.h\
-	replica_exchange_master.h\
-	replica_exchange_slave.h\
 	template_split.h\
 	virtual_atom.h\
 	coding.h\
@@ -33,6 +27,21 @@ xxinclude_HEADERS = error.h\
 	thread.h\
 	system_call.h\
 	undirected_graph.h
+
+#include replica_exchange Files	
+
+xxutilrepexdir = $(includedir)/md++/util/replicaExchange
+xxutilrepex_HEADERS = replicaExchange/repex_mpi.h\
+        replicaExchange/replica_data.h\
+	replicaExchange/replica.h\
+	replicaExchange/replica_exchange_base.h\
+	replicaExchange/replica_exchange_master.h\
+	replicaExchange/replica_exchange_slave.h\
+	replicaExchange/replica_reeds.h\
+	replicaExchange/replica_exchange_base_eds.h\
+	replicaExchange/replica_exchange_master_eds.h\
+	replicaExchange/replica_exchange_slave_eds.h
+
 
 noinst_LTLIBRARIES = libgroutil.la
 
@@ -49,10 +58,6 @@ libgroutil_la_SOURCES =	cycle_thread.cc\
 	parse_tcouple.cc\
 	parse_verbosity.cc\
 	prepare_virial.cc\
-	replica.cc\
-	replica_exchange_base.cc\
-	replica_exchange_master.cc\
-	replica_exchange_slave.cc\
 	create_simulation.cc\
 	virtual_atom.cc\
 	coding.cc\
@@ -62,7 +67,15 @@ libgroutil_la_SOURCES =	cycle_thread.cc\
 	umbrella_weight.cc\
 	thread.cc\
 	system_call.cc\
-	undirected_graph.cc
+	undirected_graph.cc\
+	replicaExchange/replica.cc\
+	replicaExchange/replica_exchange_base.cc\
+	replicaExchange/replica_exchange_master.cc\
+	replicaExchange/replica_exchange_slave.cc\
+	replicaExchange/replica_reeds.cc\
+	replicaExchange/replica_exchange_base_eds.cc\
+	replicaExchange/replica_exchange_master_eds.cc\
+	replicaExchange/replica_exchange_slave_eds.cc
 
 libgroutil_la_LIBADD =
 
@@ -71,4 +84,3 @@ bin_PROGRAMS =
 check_PROGRAMS =
 
 TESTS =
-

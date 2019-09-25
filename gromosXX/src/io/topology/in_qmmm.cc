@@ -66,14 +66,16 @@ END
  * @section MNDO blocks for the MNDO worker
  * The MNDOFILES blocks specifies where MNDO writes the input and output files
  *
- * Temporary files are used if this block is omitted.
+ * This block is optional. If unspecified, temporary files are created using TMPDIR
+ * environment variable. User-specified files are not deleted after use.
  *
  * @verbatim
 MNDOFILES
 /path/to/mndo/binary
 /path/to/mndo.in
 /path/to/mndo.out
-/path/to/mndo_gradient.out
+/path/to/mndo_gradient.out   ##fort.15 file
+/path/to/mndo_density.bin    ##fort.11 file
 END
 @endverbatim
  *
@@ -252,12 +254,12 @@ io::In_QMMM::read(topology::Topology& topo,
       DEBUG(10, "MNDOFILES block : " << buffer.size());
 
       if (!buffer.size()) {
-        io::messages.add("Using temporary files for MNDO input/output and assuming that the binary is in the PATH",
+        io::messages.add("Using temporary files for MNDO input/output and assuming that the mndo binary is in the PATH",
                 "In_QMMM", io::message::notice);
         sim.param().qmmm.mndo.binary = "mndo";
       } else {
-        if (buffer.size() != 6) {
-          io::messages.add("MNDOFILES block corrupt. Provide 4 lines.",
+        if (buffer.size() != 7) {
+          io::messages.add("MNDOFILES block corrupt. Provide 5 lines.",
                   "In_QMMM", io::message::error);
           return;
         }
@@ -265,6 +267,7 @@ io::In_QMMM::read(topology::Topology& topo,
         sim.param().qmmm.mndo.input_file = buffer[2];
         sim.param().qmmm.mndo.output_file = buffer[3];
         sim.param().qmmm.mndo.output_gradient_file = buffer[4];
+        sim.param().qmmm.mndo.density_matrix_file = buffer[5];
       }
     } // MNDOFILES
     { // MNDOHEADER

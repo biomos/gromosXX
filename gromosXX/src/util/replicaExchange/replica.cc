@@ -4,7 +4,7 @@
  * 
  * Created on April 29, 2011, 2:06 PM
  */
-#include <util/replica.h>
+#include <util/replicaExchange/replica.h>
 
 #include <io/argument.h>
 #include <util/error.h>
@@ -14,10 +14,16 @@
 #include <mpi.h>
 #endif
 
+#undef MODULE
+#undef SUBMODULE
+#define MODULE util
+#define SUBMODULE replica_exchange
+
 util::replica::replica(io::Argument _args, int cont, int _ID, int _rank) : ID(_ID), rank(_rank), args(_args) {
   // read input again. If copy constructors for topo, conf, sim, md work, one could
   // also pass them down from repex_mpi.cc ...
   
+  DEBUG(4, "replica "<< rank <<":Constructor:\t  "<< rank <<":\t START");
   // do continuation run?
   // change name of input coordinates
   if(cont == 1){
@@ -37,7 +43,7 @@ util::replica::replica(io::Argument _args, int cont, int _ID, int _rank) : ID(_I
   (*it).second.insert(pos, tmp.str());
   os = new std::ofstream((*it).second.c_str());
   
-  util::print_title(true, *os, true);
+  util::print_title(true, *os, true); // printing read in.
 
   // set trajectory
   std::stringstream trajstr;
@@ -46,7 +52,7 @@ util::replica::replica(io::Argument _args, int cont, int _ID, int _rank) : ID(_I
 
   traj = new io::Out_Configuration(trajname, *os);
   
-  if (io::read_input(args, topo, conf, sim, md, *os)) {
+  if (io::read_input(args, topo, conf, sim, md, *os, true)) { 
     io::messages.display(*os);
     std::cerr << "\nErrors during initialization!\n" << std::endl;
 #ifdef XXMPI
@@ -68,7 +74,7 @@ util::replica::replica(io::Argument _args, int cont, int _ID, int _rank) : ID(_I
   T = sim.param().replica.temperature[ID % numT];
   l = sim.param().replica.lambda[ID / numT];
   dt = sim.param().replica.dt[ID / numT];
-
+  
   set_lambda();
   set_temp();
 
@@ -147,8 +153,10 @@ util::replica::replica(io::Argument _args, int cont, int _ID, int _rank) : ID(_I
 
   *os << "==================================================\n"
       << " MAIN MD LOOP\n"
-      << "==================================================\n"
-      << std::endl;
+      << "==================================================\n\n";
+
+    DEBUG(4, "replica "<< rank <<":Constructor:\t Temp of replica  "<< rank <<": " << ID << " \t" << sim.param().multibath.multibath.bath(0).temperature);
+    DEBUG(4, "replica "<< rank <<":Constructor:\t replica Constructor  "<< rank <<": \t DONE");
 }
 
 util::replica::~replica() {
@@ -168,12 +176,15 @@ void util::replica::run_MD() {
   sim.steps() = steps;
   sim.time() = time;
   while ((unsigned int)(sim.steps()) < maxSteps + steps) {
+    DEBUG(5, "replica "<< rank <<":run_MD:\t Start");      
     traj->write(conf, topo, sim, io::reduced);
     // run a step
+    DEBUG(5, "replica "<< rank <<":run_MD:\t simulation!:");
     if ((error = md.run(topo, conf, sim))) {
       switch (error) {
         case E_SHAKE_FAILURE:
           std::cerr << "SHAKE FAILURE in Replica " << (ID+1) << " on node " << rank << std::endl;
+          io::messages.display();
           print_info("Info:");
 #ifdef XXMPI
           MPI_Abort(MPI_COMM_WORLD, error);
@@ -181,6 +192,7 @@ void util::replica::run_MD() {
           break;
         case E_SHAKE_FAILURE_SOLUTE:
           std::cerr << "SHAKE FAILURE SOLUTE in Replica " << (ID+1) << " on node " << rank << std::endl;
+          io::messages.display();
           print_info("Info:");
 #ifdef XXMPI
           MPI_Abort(MPI_COMM_WORLD, error);
@@ -188,6 +200,7 @@ void util::replica::run_MD() {
           break;
         case E_SHAKE_FAILURE_SOLVENT:
           std::cerr << "SHAKE FAILURE SOLVENT in Replica " << (ID+1) << " on node " << rank << std::endl;
+          io::messages.display();
           print_info("Info:");
 #ifdef XXMPI
           MPI_Abort(MPI_COMM_WORLD, error);
@@ -195,6 +208,7 @@ void util::replica::run_MD() {
           break;
         case E_NAN:
           std::cerr << "NAN error in Replica " << (ID+1) << " on node " << rank << std::endl;
+          io::messages.display();
           print_info("Info:");
 #ifdef XXMPI
           MPI_Abort(MPI_COMM_WORLD, error);
@@ -202,6 +216,7 @@ void util::replica::run_MD() {
           break;
         default:
           std::cerr << "Unknown error in Replica " << (ID+1) << " on node " << rank << std::endl;
+          io::messages.display();
           print_info("Info:");
 #ifdef XXMPI
           MPI_Abort(MPI_COMM_WORLD, error);
@@ -211,14 +226,14 @@ void util::replica::run_MD() {
       error = 0; // clear error condition
       break;
     }
-
+    DEBUG(5, "replica "<< rank <<":run_MD:\t clean up:");      
     traj->print(topo, conf, sim);
 
     ++sim.steps();
     sim.time() = sim.param().step.t0 + sim.steps() * sim.time_step_size();
 
   } // main md loop
-  
+  DEBUG(4, "replica "<< rank <<":run_MD:\t  DONE:");      
   // update replica information
   time = sim.time();
   steps = sim.steps();
@@ -233,12 +248,15 @@ void util::replica::run_MD() {
 
 void util::replica::write_final_conf() {
     traj->write(conf, topo, sim, io::final);
+    delete  traj;   //bschroed needs to be done, so the flush functions are triggered
 }
 
 // this function is deadlock safe, because it's made sure, that the replicas
 // are not on the same node
 
 void util::replica::swap(const unsigned int partnerID, const unsigned int partnerRank) {
+  DEBUG(4, "replica "<< rank <<":swap:\t  START");
+
   partner = partnerID;
   unsigned int numT = sim.param().replica.num_T;
   unsigned int numL = sim.param().replica.num_l;
@@ -315,6 +333,8 @@ void util::replica::swap(const unsigned int partnerID, const unsigned int partne
     switched = false;
     probability = 0.0;
   }
+    DEBUG(4, "replica "<< rank <<":swap:\t  DONE");
+
 }
 
 int util::replica::find_partner() const {
@@ -489,6 +509,8 @@ double util::replica::calc_probability(const int partner, const int partnerRank)
 }
 
 double util::replica::calculate_energy(const int partner) {
+  DEBUG(4, "replica "<< rank <<":calculate_energy:\t  START");
+
   change_lambda(partner);
 
   double energy = 0.0;
@@ -525,6 +547,8 @@ double util::replica::calculate_energy(const int partner) {
   }
 
   set_lambda();
+  DEBUG(4, "replica "<< rank <<":calculate_energy:\t  DONE");
+
   return energy;
 }
 
@@ -597,8 +621,9 @@ void util::replica::send_coord(const int receiverID, const int receiverRank) {
 
   MPI_Send(&angles[0], angles.size(), MPI_DOUBLE, receiverRank, ANGLES, MPI_COMM_WORLD);
   MPI_Send(&conf.special().distancefield.distance[0], conf.special().distancefield.distance.size(), MPI_DOUBLE, receiverRank, DF, MPI_COMM_WORLD);
-  if ((int) ID > receiverID)
-    conf.exchange_state();
+  //if ((int) ID > receiverID){
+  //  conf.exchange_state();
+  //}
 #endif
 }
 

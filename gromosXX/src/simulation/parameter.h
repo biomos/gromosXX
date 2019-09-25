@@ -2320,10 +2320,14 @@ namespace simulation
        * - equilibrate 0
        * - cont 0
        */
-      replica_struct() : num_T(0), num_l(0), scale(false), trials(0),
+      replica_struct() : retl(false), num_T(0), num_l(0), scale(false), trials(0),
                          equilibrate(0), cont(0)
       {
       }
+      /**
+       * Shall a Replica_exchange Temperature or lambdaDep simulation be exectued
+       */
+      bool retl;
       /**
        * number of replicas with different temperature
        */
@@ -2782,7 +2786,7 @@ namespace simulation
        * - eds: no eds sampling
        * - form: single_s
        */
-      eds_struct() : eds(false), soft_vdw(1.0), soft_crf(1.0), form(single_s), numstates(0) {}
+      eds_struct() : eds(false), soft_vdw(0.0), soft_crf(0.0), form(single_s), numstates(0) {}
       /**
        * do enveloping distribution sampling using the Hamiltonian:
        */
@@ -2895,7 +2899,78 @@ namespace simulation
       */
       unsigned int bsteps;
     } /** enveloping distribution sampling*/ eds;
+   
+ struct reeds_struct : public replica_struct
+    {
+      /**
+       * Constructor
+       * Default values:
+       * - num_T 0
+       * - num_l 0
+       * - temperature \<empty\>
+       * - scale (false)
+       * - lambda \<empty\>
+       * - dt \<empty\>
+       * - trials 0
+       * - equilibrate 0
+       * - cont 0
+       */
+      reeds_struct() : reeds(false), 
+                       num_states(0), num_T(0),  num_l(0), 
+                       trials(0), equilibrate(0), 
+                       cont(0), eds_stat_out(true) {}
+      /**
+       * Check if this is a reed run.f
+       **/
+      bool reeds;
+      /**
+       * num_states
+       */
+      int num_states;
+      /**
+       * number of replicas with different temperature
+       */
+      int num_T;
+      /**
+       * number of replicas with different lambdas in REEDS these are the smoothing values
+       */
+      int num_l;
+      /**
+       * temperatures
+       */
+      double temperature;
+      /**
+       * lambdas: contains all smoothness parameter of RE_EDS system
+       */
+      std::vector<double> lambda;
+      /**
+       * time step to use when running at corresponding lambda
+       */
+      std::vector<double> dt;
+      /**
+       * trial moves
+       */
+      int trials;
+      /**
+       * equilibrate: no switching for the first N trials
+       */
+      int equilibrate;
+      /**
+       * do continuation run
+       */
+      int cont;
+      /**
+       * write output to stat_file (repdat)
+       **/
+      bool eds_stat_out;
+       /**
+       * for RE-EDS Sim many eds parameters have to be accessible for
+       * energy calculation.
+       */
+      std::vector<eds_struct> eds_para;
 
+    } /** replica exchange parameters */ reeds;
+    
     /**
      * @struct sasa
      * parameters for calculating the sasa and volume term
@@ -3637,6 +3712,10 @@ namespace simulation
          * path for the gradient output file. Empty for a temporary file
          */
         std::string output_gradient_file;
+        /**
+         * path for the density matrix file. Empty for a temporary file
+         */
+        std::string density_matrix_file;
         /**
          * header of the MNDO input file
          */

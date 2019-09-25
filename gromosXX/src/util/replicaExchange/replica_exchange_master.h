@@ -24,10 +24,10 @@
 #include <unistd.h>
 
 #include <io/configuration/out_configuration.h>
-#include <util/repex_mpi.h>
-#include <util/replica_exchange_base.h>
-#include <util/replica.h>
-#include <util/replica_data.h>
+#include <util/replicaExchange/repex_mpi.h>
+#include <util/replicaExchange/replica_exchange_base.h>
+#include <util/replicaExchange/replica.h>
+#include <util/replicaExchange/replica_data.h>
 
 #ifdef XXMPI
 #include <mpi.h>
@@ -42,7 +42,7 @@ namespace util {
    * @class replica_exchange_master
    * Additionally to replica_exchange_base: receives and writes data to file.
    */
-  class replica_exchange_master : public replica_exchange_base {
+  class replica_exchange_master : public virtual replica_exchange_base {
   public:
     /**
      * constructor
@@ -67,17 +67,26 @@ namespace util {
     /**
      * receives all information written to output file from the slaves
      */
-    void receive_from_all_slaves();
+    virtual void receive_from_all_slaves();
     /**
      * writes data to output file \@repdat
      */
-    void write();
-
-  private:
+    virtual void write();
+    
+ 
+    virtual void init_repOut_stat_file();
+    
+  protected:
     /**
-     * output file stream for output file
+     * output file Path for repdat output file
+     */
+    std::string repdatName;
+
+    /**
+     * output file stream for repdat output file
      */
     std::ofstream repOut;
+    
     /**
      *  comm world size; number of processors available
      */
@@ -105,6 +114,8 @@ namespace util {
      * information of all replicas
      */
     std::vector<util::replica_data> replicaData;
+    
+    //virtual void init_repOut_stat_file(std::string repoutPath);
 
   };
 }
