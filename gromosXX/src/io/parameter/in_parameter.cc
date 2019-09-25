@@ -5088,6 +5088,8 @@ void io::In_Parameter::read_QMMM(simulation::Parameter & param,
     Block block(blockname, exampleblock.str());
     if (block.read_buffer(m_block[blockname], false) == 0) {
         block_read.insert(blockname);
+    //Development
+    param.setDevelop("QMMM is under development.");
 
 
     int enable, software,write,disp;
