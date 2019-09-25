@@ -47,7 +47,6 @@ int interaction::MNDO_Worker::run_QM(topology::Topology& topo,
     return 1;
   }
   */
-  bool verbose=false;
 
   std::ofstream inp(this->input_file.c_str());
   if (!inp.is_open()) {
@@ -58,7 +57,7 @@ int interaction::MNDO_Worker::run_QM(topology::Topology& topo,
   std::string header(this->input_header);
   // get the number of point charges
   unsigned num_charge = mm_atoms.size();
-  for(unsigned i = 0; i < mm_atoms.size(); ++i) {
+  for(unsigned i = 0; i < num_charge; ++i) {
     if (topo.is_polarisable(mm_atoms[i].index)) {
       ++num_charge;
     }
@@ -87,17 +86,20 @@ int interaction::MNDO_Worker::run_QM(topology::Topology& topo,
 
   // write header
   inp << header << std::endl;
-
+  DEBUG(15, "Writing MNDO input header:");
+  DEBUG(15, header)
   // write QM zone
   double len_to_qm = 1.0 / sim.param().qmmm.unit_factor_length;
   unsigned int pi = 0;
+  DEBUG(15, "Writing QM atoms")
+  inp.setf(std::ios::fixed, std::ios::floatfield);
+  inp.precision(8);
   for (std::set<topology::qm_atom_struct>::const_iterator
     it = topo.qm_zone().begin(), to = topo.qm_zone().end(); it != to; ++it, ++pi) {
     
 
-    inp.setf(std::ios::fixed, std::ios::floatfield);
-    inp.precision(8);
 
+    DEBUG(15, "Atom: " << it->atomic_number << " : " << math::v2s(qm_pos(pi) * len_to_qm));
     inp << std::setw(2) << std::left << it->atomic_number;
     for (unsigned int i = 0; i < 3; ++i) {
       inp << std::setw(14) << std::right << qm_pos(pi)(i) * len_to_qm << " 0";
@@ -118,9 +120,7 @@ int interaction::MNDO_Worker::run_QM(topology::Topology& topo,
   //configuration::Configuration qmmm_conf = conf;
   //qmmm_conf.current().force=0.0;
 
-  if (verbose) {
-     std::cout << "number of link atoms: " << topo.qm_mm_pair().size()  << std::endl;
-  }
+  DEBUG(15,"number of link atoms: " << topo.qm_mm_pair().size());
   for (std::vector< std::pair<unsigned int,unsigned int> >::const_iterator
     it = topo.qm_mm_pair().begin(); it != topo.qm_mm_pair().end(); ++it,++pi  )
   {  
@@ -128,17 +128,18 @@ int interaction::MNDO_Worker::run_QM(topology::Topology& topo,
      m1=it->second;  
      //dR =conf.current(q1).pos - conf.current(m1).pos;
      dR = conf.current().pos(m1) - conf.current().pos(q1);
-     posCap = (rch/abs(dR)    )    * dR + conf.current().pos(q1) ;
+     posCap = (rch/abs(dR))    * dR + conf.current().pos(q1) ;
     // std::cout << "modifying position of " << m1 << " from " << qmmm_conf.current().pos(m1)[0] << "to  "  <<
     //           posCap(0) << std::endl;
    //  qmmm_conf.current().pos(m1) = posCap;
-     inp << std::setw(5) << std::left << "1 " ;  //link_atoms[i];
+   
+     inp << std::setw(2) << std::left << "1 " ;  //link_atoms[i];
     for (unsigned int i = 0; i < 3; ++i) {
-      inp << std::setw(14) << std::right << posCap(i) * len_to_qm << " 0"  ;
-    }
+      inp << std::setw(14) << std::right << posCap(i) * len_to_qm << " 0";
+    }/*
     if (++pi % 16 == 0 || pi == link_atoms.size()) {
       inp << std::endl;
-    }
+    }*/
     inp << std::endl ;
   }  
 
@@ -415,18 +416,15 @@ int interaction::MNDO_Worker::run_QM(topology::Topology& topo,
     }
     /
 */
-  if (verbose) {
-      std::cout << "QM/MM Forces " << std::endl;
-      //print out the gradient
-      for (std::set<topology::qm_atom_struct>::const_iterator
-                   it = topo.qm_zone().begin(), to = topo.qm_zone().end(); it != to; ++it) {
-          std::cout << "index :   " << it->index << "  " << storage.force(it->index)[0] << "  "
-                    << storage.force(it->index)[1] << "   " <<
-                    storage.force(it->index)[2] << std::endl;
-      }
+#ifndef NDEBUG
+  DEBUG(15, "QM/MM Forces");
+  //print out the gradient
+  for (std::set<topology::qm_atom_struct>::const_iterator
+                it = topo.qm_zone().begin(), to = topo.qm_zone().end(); it != to; ++it) {
+    DEBUG(15, it->index << " : " << math::v2s(storage.force(it->index)));
   }
+#endif
   return 0;
-  
 }
 
 int interaction::MNDO_Worker::init(topology::Topology& topo, 
@@ -497,14 +495,14 @@ int interaction::MNDO_Worker::init(topology::Topology& topo,
   
 #ifdef HAVE_SYMLINK
   // create fort.15 link for gradients
-  if (symlink_err += symlink(this->output_gradient_file.c_str(), "fort.15") != 0) {
+  if ((symlink_err = symlink(this->output_gradient_file.c_str(), "fort.15")) != 0) {
     io::messages.add("Unable to create symbolic link from fort.15 to "
       + this->output_gradient_file + " - check permissions.",
       "MNDO_Worker", io::message::critical);
     return 1;
   }
   // create fort.11 link for density matrix
-  if (symlink_err += symlink(this->density_matrix_file.c_str(), "fort.11") != 0) {
+  if ((symlink_err = symlink(this->density_matrix_file.c_str(), "fort.11")) != 0) {
     io::messages.add("Unable to create symbolic link from fort.11 to "
       + this->density_matrix_file + " - check permissions.",
       "MNDO_Worker", io::message::critical);
