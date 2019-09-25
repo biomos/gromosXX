@@ -13,9 +13,9 @@ namespace util
 {
   int debug_level = 0;
   int util_debug_level = 0;
-  int replica_debug_level = 0;
   int leus_debug_level = 0;
   int bs_leus_debug_level = 0;
+  int replica_exchange_debug_level = 0;
 }
 
 #endif

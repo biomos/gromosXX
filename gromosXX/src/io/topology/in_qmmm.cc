@@ -1,7 +1,7 @@
 
 /**
- * @file in_posres.cc
- * implements methods of In_Posresspec and In_Posres.
+ * @file in_qmmm.cc
+ * implements qm/mm methods.
  */
 
 
@@ -66,14 +66,16 @@ END
  * @section MNDO blocks for the MNDO worker
  * The MNDOFILES blocks specifies where MNDO writes the input and output files
  *
- * Temporary files are used if this block is omitted.
+ * This block is optional. If unspecified, temporary files are created using TMPDIR
+ * environment variable. User-specified files are not deleted after use.
  *
  * @verbatim
 MNDOFILES
 /path/to/mndo/binary
 /path/to/mndo.in
 /path/to/mndo.out
-/path/to/mndo_gradient.out
+/path/to/mndo_gradient.out   ##fort.15 file
+/path/to/mndo_density.bin    ##fort.11 file
 END
 @endverbatim
  *
@@ -222,33 +224,6 @@ io::In_QMMM::read(topology::Topology& topo,
                      "In_QMMM", io::message::notice);
 
   } // QMZONE
-  // { // QMUNIT
-  //   buffer = m_block["QMUNIT"];
-  //   DEBUG(10, "QMUNIT block : " << buffer.size());
-
-  //   if (!buffer.size()) {
-  //    io::messages.add("no QMUNIT block in QM/MM specification file",
-  //            "In_QMMM", io::message::error);
-  //    return;
-  // }
-  // std::string s;
-  // _lineStream.clear();
-  // _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
-//
-  // _lineStream >> sim.param().qmmm.unit_factor_length
-  //          >> sim.param().qmmm.unit_factor_energy
-  //          >> sim.param().qmmm.unit_factor_charge;
-
-  //  if (_lineStream.fail()) {
-  //    io::messages.add("bad line in QMUNIT block.",
-  //            "In_QMMM", io::message::error);
-  //   return;
-  // }
-  // } // QMUNIT
-
-  // check for MNDO specific data
-  //if (sim.param().qmmm.software == simulation::qmmm_software_mndo or
-  //        sim.param().qmmm.software == simulation::qmmm_software_both)
 
   if (sw == simulation::qmmm_software_mndo) {
     buffer = m_block["QMUNIT"];
@@ -271,7 +246,7 @@ io::In_QMMM::read(topology::Topology& topo,
       io::messages.add("bad line in QMUNIT block.",
               "In_QMMM", io::message::error);
       return;
-    }
+    } // QMUNIT
 
 
     { // MNDOFILES
@@ -279,12 +254,12 @@ io::In_QMMM::read(topology::Topology& topo,
       DEBUG(10, "MNDOFILES block : " << buffer.size());
 
       if (!buffer.size()) {
-        io::messages.add("Using temporary files for MNDO input/output and assuming that the binary is in the PATH",
+        io::messages.add("Using temporary files for MNDO input/output and assuming that the mndo binary is in the PATH",
                 "In_QMMM", io::message::notice);
         sim.param().qmmm.mndo.binary = "mndo";
       } else {
-        if (buffer.size() != 6) {
-          io::messages.add("MNDOFILES block corrupt. Provide 4 lines.",
+        if (buffer.size() != 7) {
+          io::messages.add("MNDOFILES block corrupt. Provide 5 lines.",
                   "In_QMMM", io::message::error);
           return;
         }
@@ -292,6 +267,7 @@ io::In_QMMM::read(topology::Topology& topo,
         sim.param().qmmm.mndo.input_file = buffer[2];
         sim.param().qmmm.mndo.output_file = buffer[3];
         sim.param().qmmm.mndo.output_gradient_file = buffer[4];
+        sim.param().qmmm.mndo.density_matrix_file = buffer[5];
       }
     } // MNDOFILES
     { // MNDOHEADER
@@ -475,7 +451,7 @@ io::In_QMMM::read(topology::Topology& topo,
       buffer = m_block["DFTBHEADER"];
       DEBUG(10, "DFTBHEADER block : " << buffer.size());
       if (!buffer.size()) {
-        io::messages.add("no DFTHEADER block in QM/MM specification file",
+        io::messages.add("no DFTBHEADER block in QM/MM specification file",
                          "In_QMMM", io::message::error);
         return;
       }

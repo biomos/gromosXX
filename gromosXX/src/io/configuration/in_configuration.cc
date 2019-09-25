@@ -154,18 +154,18 @@ bool io::In_Configuration::read_next
  topology::Topology &topo,
  configuration::Configuration &conf,
  simulation::Simulation & sim,
- std::ostream & os
+ std::ostream & os,
+ bool do_read_time
  )
 {
-  if (!quiet)
-    os << "\nread next frame\n";
+  DEBUG(8, "Read next frame\n");
 
   read_frame();
 
   block_read.clear();
 
   // ignore errors reading time step
-  read_time_step(topo, conf, sim, os);
+  if (do_read_time)  read_time_step(topo, conf, sim, os);
 
   if (!(
 	read_position(topo, conf, sim, os) &&
@@ -183,14 +183,7 @@ bool io::In_Configuration::read_next
   }
 
   // print some information
-  if (!quiet){
-    os << "\n\t";
-    os << "time : " << sim.time()
-       << "\n\t"
-       << "step : " << sim.steps();
-
-    os << "\n\n";
-  }
+  DEBUG(8, "\n\ttime : " << sim.time()  << "\n\tstep : " << sim.steps() << "\n\n");
 
   // warn for unread input data
   for(std::map<std::string, std::vector<std::string> >::const_iterator
@@ -2791,8 +2784,6 @@ _read_time_step(std::vector<std::string> &buffer,
 
   sim.steps() = i;
   sim.time() = t;
-	// if we analyze a trajectory we just keep reading until the end
-	if (sim.param().analyze.analyze) sim.param().step.number_of_steps=sim.steps()+2;
 
   return true;
 }

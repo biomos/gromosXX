@@ -61,6 +61,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_BOUNDCOND(param);
   read_REPLICA(param); // has to be read in before MULTIBATH
   read_MULTIBATH(param);
+  read_REPLICA_EDS(param); // has to be read in after MULTIBATH
   read_PRESSURESCALE(param);
   read_PRINTOUT(param);
   read_WRITETRAJ(param);
@@ -180,17 +181,26 @@ void io::In_Parameter::read_ENERGYMIN(simulation::Parameter &param,
     // will be used to generate snippets that can be included in the doxygen doc;
     // the first line is the tag
     exampleblock << "ENERGYMIN\n";
-    exampleblock << "# NTEM: 0..1 controls energy minimisation mode\n";
+    exampleblock << "# NTEM: 0..3 controls energy minimisation mode\n";
     exampleblock << "#       0: do not do energy minimisation (default)\n";
     exampleblock << "#       1: steepest-descent minimisation\n";
-    exampleblock << "# NCYC: >0 number of steps before resetting of conjugate-gradient search direction (not in use !!)\n";
+    exampleblock << "#       2: Fletcher-Reeves conjugate-gradient minimisation\n";
+    exampleblock << "#       3: Polak-Ribiere conjugate-gradient minimisation\n";
+    exampleblock << "# NCYC: >0 number of steps before resetting the conjugate-gradient search direction\n";
+    exampleblock << "#       =0 reset only if the energy grows in the search direction\n";
     exampleblock << "# DELE: >0.0 energy threshold for convergence\n";
-    exampleblock << "# DX0: > 0.0 initial step size\n";
-    exampleblock << "# DXM: > 0.0 maximum step size\n";
-    exampleblock << "# NMIN > 0 minimum number of minimisation steps\n";
-    exampleblock << "# FLIM >= 0.0 limit force to maximum value (FLIM > 0.0 is not recommended).\n";
+    exampleblock << "#       >0.0 (conjugate-gradient) RMS force threshold for convergence\n";
+    exampleblock << "# DX0: >0.0 initial step size\n";
+    exampleblock << "# DXM: >0.0 maximum step size\n";
+    exampleblock << "# NMIN >0 minimum number of minimisation steps\n";
+    exampleblock << "# FLIM >=0.0 limit force to maximum value (FLIM > 0.0 is not recommended)\n";
+    exampleblock << "# CGIM >0 (conjugate-gradient) maximum number of cubic interpolations per step\n";
+    exampleblock << "# CGIC >0.0 (conjugate-gradient) displacement threshold after interpolation\n";
     exampleblock << "#     NTEM    NCYC    DELE    DX0     DXM    NMIN    FLIM\n";
-    exampleblock << "         1       0     0.1   0.01    0.05       1       0\n";
+    exampleblock << "         1       0     0.1   0.01    0.05     100     0.0\n";
+    exampleblock << "# ---- OR: example for NTEM > 1:\n";
+    exampleblock << "#     NTEM    NCYC    DELE    DX0     DXM    NMIN    FLIM    CGIM    CGIC\n";
+    exampleblock << "         3       0    1e-3   5e-6    5e-4     100     0.0       3    1e-4\n";
     exampleblock << "END\n";
 
     std::string blockname = "ENERGYMIN";
@@ -199,19 +209,23 @@ void io::In_Parameter::read_ENERGYMIN(simulation::Parameter &param,
     if (block.read_buffer(m_block[blockname], false) == 0) {
         block_read.insert("ENERGYMIN");
 
-        block.get_next_parameter("NTEM", param.minimise.ntem, "", "0,1");
-        block.get_next_parameter("NCYC", param.minimise.ncyc, ">0", "");
+        block.get_next_parameter("NTEM", param.minimise.ntem, "", "0,1,2,3");
+        block.get_next_parameter("NCYC", param.minimise.ncyc, ">=0", "");
         block.get_next_parameter("DELE", param.minimise.dele, ">0", "");
         block.get_next_parameter("DX0", param.minimise.dx0, ">0", "");
         std::string str_dx0=io::to_string(param.minimise.dx0);
         block.get_next_parameter("DXM", param.minimise.dxm, ">="+str_dx0, "");
         block.get_next_parameter("NMIN", param.minimise.nmin, ">0", "");
         block.get_next_parameter("FLIM", param.minimise.flim, ">=0", "");
+        if (param.minimise.ntem >= 2) {
+            block.get_next_parameter("CGIM", param.minimise.cgim, ">0", "");
+            block.get_next_parameter("CGIC", param.minimise.cgic, ">0", "");
+        }
 
-        /* if (param.minimise.ntem == 1 && param.minimise.ncyc > 0)
+        if (param.minimise.ntem == 1 && param.minimise.ncyc > 0)
            io::messages.add("ENERGYMIN block: NCYC > 0 has no effect for steepest descent",
                "io::In_Parameter",
-               io::message::warning); */
+               io::message::warning);
 
         if (param.minimise.flim > 0)
             io::messages.add("ENERGYMIN: FLIM > 0 may result in "
@@ -2656,6 +2670,8 @@ void io::In_Parameter::read_REPLICA(simulation::Parameter &param,
     // will be used to generate snippets that can be included in the doxygen doc;
     // the first line is the tag
     exampleblock << "REPLICA\n";
+    exampleblock << "#    RETL >= 0   : turn off REplica exchange - Temperature and/or Lambda Coupled";                             
+    exampleblock << "#             1   : turn on  ";     
     exampleblock << "#     NRET >= 1 number of replica exchange temperatures\n";
     exampleblock << "#    RET() >= 0.0 temperature for each replica\n";
     exampleblock << "# LRESCALE 0,1 controls temperature scaling\n";
@@ -2671,6 +2687,8 @@ void io::In_Parameter::read_REPLICA(simulation::Parameter &param,
     exampleblock << "#             0 start from one configuration file\n";
     exampleblock << "#             1 start from multiple configuration files\n";
     exampleblock << "#\n";
+    exampleblock << "# RETL\n";
+    exampleblock << "  1\n";
     exampleblock << "# NRET\n";
     exampleblock << "  10\n";
     exampleblock << "# RET(1..NRET)\n";
@@ -2694,12 +2712,15 @@ void io::In_Parameter::read_REPLICA(simulation::Parameter &param,
     exampleblock << "  0\n";
     exampleblock << "END\n";
 
+    DEBUG(1, "REPLICA BLOCK\t START");
 
     std::string blockname = "REPLICA";
     Block block(blockname, exampleblock.str());
 
     if (block.read_buffer(m_block[blockname], false) == 0) {
         block_read.insert(blockname);
+                
+        block.get_next_parameter("RETL", param.replica.retl, "0,1", "");
 
         block.get_next_parameter("NRET", param.replica.num_T, ">=1", "");
 
@@ -2770,6 +2791,258 @@ void io::In_Parameter::read_REPLICA(simulation::Parameter &param,
         }
         block.get_final_messages();
     }
+    DEBUG(1, "REPLICA BLOCK\t DONE\n");
+
+}
+
+/**
+ * @section replica REPLICA_EDS block
+ * @verbatim
+REPLICA_EDS
+#    REEDS >= 0   : turn off Reeds                             
+#             1   : turn on                                    
+#    NRES >= number of replica exchange eds smoothing values 
+#    NUMSTATES >= 2 Number of states
+#    RES > 0 for each replica smoothing value
+#    EIR (NUMSTATES X NRES): energy offsets for states and replicas
+#    NRETRIAL >= 0 number of overall exchange trials
+#    NREQUIL >= 0 number of exchange periods to equilibrate
+#               (disallow switches)
+#    CONT >= 0 continuation run
+#             0 start from one configuration file
+#             1 start from multiple configuration files
+#    EDS_STAT_OUT >= 0     creates output files for each replica, which contains for each exchange trial
+#                          the potential energies with the given coordinates for all s value. This data 
+#                           can be used to optimize the s distribution.
+#                 0 eds stat turned off
+#                 1 eds stat turned on
+#   REEDS
+    1
+#  NRES NUMSTATES
+    12  5 
+# RES(1 ... NRES)
+  1.0 0.7 0.5 0.3 0.1 0.07 0.05 0.03 0.01 0.007 0.005 0.003
+# EIR (NUMSTATES x NRES)
+  0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+  0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+  0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+  0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+  0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+# NRETRIAL   NREQUIL    CONT    EDS_STAT_OUT
+       10         0         1           1
+END
+@endverbatim
+ */
+
+void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostream & os){
+    std::stringstream exampleblock;
+    // lines starting with 'exampleblock<<"' and ending with '\n";' (spaces don't matter)
+    // will be used to generate snippets that can be included in the doxygen doc;
+    // the first line is the tag
+    exampleblock << "REPLICA_EDS                                                    \n";
+    exampleblock << "#    REEDS >= 0   : turn off Reeds                             \n";
+                    "#             1   : turn on                                    \n";
+    exampleblock << "#    NRES >= number of replica exchange eds smoothing values   \n";
+    exampleblock << "#     RET >= 0.0 one temperature for all replica               \n";
+    exampleblock << "# NUMSTATES >= 2 Number of states                              \n";
+    exampleblock << "#     RES > 0 for each replica smoothing value                 \n";
+    exampleblock << "#   RETS() >= 0.0 timestep of each s-replica                   \n";
+    exampleblock << "# EIR (NUMSTATES X NRES): energy offsets for states and replicas   \n";
+    exampleblock << "# NRETRIAL >= 0 number of overall exchange trials                  \n";
+    exampleblock << "#  NREQUIL >= 0 number of exchange periods to equilibrate          \n";
+    exampleblock << "#               (disallow switches)                                \n";
+    exampleblock << "#     CONT >= 0 continuation run                                   \n";
+    exampleblock << "#             0 start from one configuration file                  \n";
+    exampleblock << "#             1 start from multiple configuration files            \n";
+    exampleblock << "# EDS_STAT_OUT >= 0     creates output files for each replica, which contains for each exchange trial  \n";
+    exampleblock << "#                       the potential energies with the given coordinates for all s value. This data   \n";
+    exampleblock << "#                       can be used to optimize the s distribution.                                    \n";
+    exampleblock << "#             0 eds stat turned off                                                                    \n";
+    exampleblock << "#             1 eds stat turned on                                                                     \n";
+    exampleblock << "#          \n";
+    exampleblock << "#  REEDS    \n";
+    exampleblock << "   1       \n";
+    exampleblock << "#  NRES  NUMSTATES  \n";
+    exampleblock << "   12    5   \n";
+    exampleblock << "# RES(1 ... NRES)  \n";
+    exampleblock << "  1.0 0.7 0.5 0.3 0.1 0.07 0.05 0.03 0.01 0.007 0.005 0.003    \n";
+    exampleblock << "# EIR (NUMSTATES x NRES)   \n";
+    exampleblock << "  0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0  \n";
+    exampleblock << "  0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0  \n";
+    exampleblock << "  0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0  \n";
+    exampleblock << "  0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0  \n";
+    exampleblock << "  0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0  \n";
+    exampleblock << "# NRETRIAL   NREQUIL    CONT    EDS_STAT_OUT       \n";
+    exampleblock << "       10         0         1           1          \n";
+    exampleblock << "END\n";
+    
+    DEBUG(1, "REPLICA_EDS BLOCK\t START");
+    //check that EDS Block was not read in before,because either REPLICA_EDS or EDS possible
+    if (param.eds.eds) {
+        std::ostringstream msg;
+        msg << "REPLICA_EDS block cannot be used at the same time with EDS block";
+          io::messages.add(msg.str(), "In_Parameter", io::message::error);
+          return;
+        }
+    
+    std::string blockname = "REPLICA_EDS";
+    Block block(blockname, exampleblock.str());
+    
+    if (block.read_buffer(m_block[blockname], false) == 0) {
+        block_read.insert(blockname);
+           
+        DEBUG(2, "REPLICA_EDS BLOCK: reading Block an translating to vars");
+        //init_vars
+        unsigned int reeds_control, num_l, num_states=0;
+        unsigned int ntrials, nEquilibrate, cont_run, eds_stat_out=0;
+
+        // GET BLOCKVARS
+        //SYS Settings
+        block.get_next_parameter("REEDS", reeds_control, "", "0,1");
+        block.get_next_parameter("NRES", num_l, ">0", "");
+        block.get_next_parameter("NUMSTATES", num_states, ">0", "");
+        
+        //get RES-Vector
+        std::vector<double> s_vals(num_l, 0.0);
+        for (unsigned int i = 0; i < num_l; i++) {
+          std::string idx = io::to_string(i);
+          block.get_next_parameter("RES[" + idx + "]", s_vals[i], "", "");
+        }
+
+        //get EIR-Matrix
+        std::vector<std::vector<float>> eir(num_l);
+        for (unsigned int i = 0; i < num_l; i++) {
+          std::string idx = io::to_string(i);
+          std::vector<float> eiri(num_states, 0.0);
+          eir[i] = eiri;      
+
+          for (unsigned int j=0; j< num_states; j++){
+            std::string idx2 = io::to_string(j);
+            block.get_next_parameter("EIR[" + idx + "]["+idx2+"]", eir[i][j], "", "");
+          }
+        }
+        
+        // general Settings
+        block.get_next_parameter("NRETRIAL", ntrials, ">=0", "");
+        block.get_next_parameter("NREQUIL", nEquilibrate, ">=0", "");
+        block.get_next_parameter("CONT", cont_run, "", "0,1");
+        block.get_next_parameter("EDS_STAT_OUT", eds_stat_out, "", "0,1");
+
+      
+        // SET SETTINGS
+        DEBUG(2, "REPLICA_EDS BLOCK: Set settings for sim.");
+        // READ:REEDS control
+        switch(reeds_control) {
+              case 0:
+                  param.reeds.reeds = false;
+                  break;
+              case 1:
+                  param.reeds.reeds = true;
+                  break;
+          }
+               
+        param.reeds.num_l = num_l;
+        param.reeds.num_states = num_states;
+        param.reeds.trials = ntrials;
+        
+        //param.reeds.lambda.resize();
+        param.reeds.lambda=s_vals;
+        
+        //param.reeds.lambda=s_vals;
+        param.reeds.equilibrate = nEquilibrate;
+        param.reeds.cont =cont_run;
+        param.reeds.eds_stat_out = eds_stat_out;
+
+        // Replica temperatures - has to be the same for each replica // Not sure if this is optimal? bschroed
+        param.reeds.temperature = param.multibath.multibath.bath(0).temperature;
+        
+        DEBUG(2, "REPLICA_EDS BLOCK: assigned all reeds params");
+
+        DEBUG(2, "REPLICA_EDS BLOCK: assign all eds params");
+        //set size of vectors in param.reeds
+        param.reeds.eds_para.resize(param.reeds.num_l);
+        param.reeds.dt.resize(param.reeds.num_l);
+        param.reeds.lambda.resize(param.reeds.num_l);
+
+        //Loop over all replicas in order to initialize complete eds_struct for each replica
+        //initvars
+        std::vector<double> dtV;    //is necessary to give replicas the paramesters
+        std::vector<double> temperatureV;
+        for (int i = 0; i < param.reeds.num_l; ++i) {
+            dtV.push_back(param.step.dt);
+            temperatureV.push_back(param.reeds.temperature);
+            
+            //READ:NUMSTATES 
+            param.reeds.eds_para[i].eds = true;
+            param.reeds.eds_para[i].numstates=param.reeds.num_states;
+
+            //indicate only one parameter s used for reference state hamiltonian
+            param.reeds.eds_para[i].form = simulation::single_s;
+            
+            //RES - give s_values
+            param.reeds.eds_para[i].s.resize(1);//only one parameter s per replica
+            param.reeds.eds_para[i].s[0]=s_vals[i];
+            
+            //initialize size of EIR
+            param.reeds.eds_para[i].eir.resize(param.reeds.eds_para[i].numstates);
+
+            //init:
+            param.reeds.eds_para[i].visitedstates.resize(param.eds.numstates, false);
+            param.reeds.eds_para[i].visitcounts.resize(param.eds.numstates, 0);
+            param.reeds.eds_para[i].avgenergy.resize(param.eds.numstates, 0.0);
+            
+            if(param.reeds.eds_para[i].s[0] < 0.0){
+                std::ostringstream msg;
+                msg << "REPLICA_EDS block: RES(" << i + 1 << ") must be >= 0.0";
+                io::messages.add(msg.str(), "In_Parameter", io::message::error);
+            }
+            
+            DEBUG(3, "REPLICA_EDS BLOCK: assign all eds params - EIR");
+            for(unsigned int j = 0; j < param.reeds.eds_para[0].numstates; ++j){
+                param.reeds.eds_para[i].eir[j] = eir[i][j];
+                
+            }  
+        }
+
+        DEBUG(2, "REPLICA_EDS BLOCK: assigned all eds params");
+        
+        // turn on eds for pertubation reading - Overwrite:
+        param.eds.eds = true;
+        param.eds.numstates = param.reeds.num_states;
+        
+        // turn not on Pertubation block!: hope thats ok -> killed warning
+        param.perturbation.perturbation = false;
+        
+        //REPLICA Set replica settings:
+        DEBUG(2, "REPLICA_EDS BLOCK: assign all replicas param:");
+
+        // check whether all baths have the same temperature (unambiguous kT)
+        param.reeds.num_T = param.replica.num_T =1;
+        
+        param.replica.temperature = temperatureV;        
+        param.replica.lambda = param.reeds.lambda;
+        param.replica.dt = dtV;
+        param.replica.num_l = param.reeds.num_l ;
+        param.replica.trials = param.reeds.trials;
+        param.replica.equilibrate = param.reeds.equilibrate;
+        param.replica.cont = param.reeds.cont;
+        
+        DEBUG(2, "REPLICA_EDS BLOCK: assigned all replicas param");
+
+        //CHECK SETTINGS
+        DEBUG(2, "REPLICA_EDS BLOCK: Check Settings:");
+        
+        for (unsigned int i = 1; i < param.multibath.multibath.size(); i++) {
+          if (param.multibath.multibath.bath(i).temperature !=
+                  param.multibath.multibath.bath(0).temperature) {
+            io::messages.add("Error in RE_EDS block: all baths must have the same temperature.",
+                    "In_Parameter", io::message::error);
+          }         
+        }
+        DEBUG(2, "REPLICA_EDS BLOCK: Checked Settings");
+        block.get_final_messages();
+    }
+    DEBUG(1, "REPLICA_EDS BLOCK\t DONE");
 }
 
 /**
@@ -2876,13 +3149,14 @@ void io::In_Parameter::read_READTRAJ(simulation::Parameter & param,
     exampleblock << "# NTRD  0,1 controls trajectory-reevaluation mode\n";
     exampleblock << "#       0: do not use trajectory-reevaluation mode (default)\n";
     exampleblock << "#       1: use trajectory-reevaluation mode\n";
-    exampleblock << "# NTRN  number of files (ignored)\n";
+    exampleblock << "# NTSTR stride: should be the NTWX used to produce the analyzed trajectory\n";
     exampleblock << "# NTRB  read box (must be 1)\n";
-    exampleblock << "# NTSHK 0,1 controls SHAKE on old coordinates\n";
-    exampleblock << "#       0 perform SHAKE with respect to previous coordinates\n";
-    exampleblock << "#       1 perform SHAKE with respect to current coordinates\n";
+    exampleblock << "# NTSHK 0,1 controls application of constraints\n";
+    exampleblock << "#       0 apply constraints with respect to previous coordinates\n";
+    exampleblock << "#       1 apply constraints with respect to current coordinates\n";
+    exampleblock << "#       2 do not apply constraints (neither solute nor solvent)\n";
     exampleblock << "#\n";
-    exampleblock << "#   NTRD    NTRN    NTRB   NTSHK\n";
+    exampleblock << "#   NTRD   NTSTR    NTRB   NTSHK\n";
     exampleblock << "       0       0       1       0\n";
     exampleblock << "END\n";
 
@@ -2893,11 +3167,11 @@ void io::In_Parameter::read_READTRAJ(simulation::Parameter & param,
     if (block.read_buffer(m_block[blockname], false) == 0) {
         block_read.insert(blockname);
 
-        int ntrd, ntrn, ntrb, ntshk;
+        int ntrd, ntrb, ntshk;
         block.get_next_parameter("NTRD", ntrd, "", "0,1");
-        block.get_next_parameter("NTRN", ntrn, "", "");
+        block.get_next_parameter("NTSTR", param.analyze.stride, "", "");
         block.get_next_parameter("NTRB", ntrb, "", "1");
-        block.get_next_parameter("NTSHK", ntshk, "", "0,1");
+        block.get_next_parameter("NTSHK", ntshk, "", "0,1,2");
 
         if (block.error()) {
           block.get_final_messages();
@@ -2907,6 +3181,8 @@ void io::In_Parameter::read_READTRAJ(simulation::Parameter & param,
         switch (ntrd) {
             case 1:
                 param.analyze.analyze = true;
+                io::messages.add("READTRAJ block: make sure NTSTR is set to the value of NTWX used for writing the trajectory to be analyzed!", "In_Parameter",
+                             io::message::notice);
                 break;
             case 0:
                 param.analyze.analyze = false;
@@ -2915,10 +3191,6 @@ void io::In_Parameter::read_READTRAJ(simulation::Parameter & param,
                 break;
         }
 
-        if (ntrn)
-            io::messages.add("READTRAJ block: NTRN was ignored", "In_Parameter",
-                             io::message::warning);
-
         if (ntrb != 1)
             io::messages.add("READTRAJ block: NTRB must be 1.", "In_Parameter",
                              io::message::error);
@@ -2926,9 +3198,15 @@ void io::In_Parameter::read_READTRAJ(simulation::Parameter & param,
         switch (ntshk) {
             case 1:
                 param.analyze.copy_pos = true;
+                param.analyze.no_constraints = false;
                 break;
             case 0:
                 param.analyze.copy_pos = false;
+                param.analyze.no_constraints = false;
+                break;
+            case 2:
+                param.analyze.copy_pos = false;
+                param.analyze.no_constraints = true;
                 break;
             default:
                 break;
@@ -3501,7 +3779,7 @@ void io::In_Parameter::read_AEDS(simulation::Parameter & param,
   exampleblock << "  0   -5   -140   -560   -74\n";
   exampleblock << "# NTIAEDSS  RESTREMIN  BMAXTYPE  BMAX  ASTEPS  BSTEPS\n";
   exampleblock << "  1         1          2         3     500     50000\n";
-  exampleblock << "# END\n";
+  exampleblock << "END\n";
 
 
 
@@ -4487,7 +4765,6 @@ void io::In_Parameter::read_NEMD(simulation::Parameter & param,
     }     // if block
 } // NEMD
 
-
 /**
  * @section multigradient MULTIGRADIENT block
  * @snippet snippets/snippets.cc MULTIGRADIENT
@@ -4764,7 +5041,121 @@ void io::In_Parameter::read_ADDECOUPLE(simulation::Parameter & param,
 
         block.get_final_messages();
     }
-}
+} // ADDECOUPLE
+
+/**
+ * @section qmmmb QMMM block
+ * @snippet snippets/snippets.cc QMMM
+
+ */
+void io::In_Parameter::read_QMMM(simulation::Parameter & param,
+                                 std::ostream & os) {
+    DEBUG(8, "reading QMMM");
+
+    std::stringstream exampleblock;
+    // lines starting with 'exampleblock<<"' and ending with '\n";' (spaces don't matter)
+    // will be used to generate snippets that can be included in the doxygen doc;
+    // the first line is the tag
+    exampleblock << "QMMM\n";
+    exampleblock << "# NTQMMM 0,1 apply QM/MM\n";
+    exampleblock << "#    0: do not apply QM/MM\n";
+    exampleblock << "#    1: apply QM/MM\n";
+    exampleblock << "# NTQMSW 0 QM software package to use\n";
+    exampleblock << "#    0: MNDO\n";
+    exampleblock << "#    1: Turbomole\n";
+    exampleblock << "#    2: DFTB\n";
+    exampleblock << "#    3: MOPAC\n";
+    exampleblock << "# RCUTQ >= 0.0 cutoff for inclusion of MM charge groups\n";
+    exampleblock << "#     0.0: include all atoms\n";
+    exampleblock << "#    >0.0: include atoms of charge groups closer than RCUTQ\n";
+    exampleblock << "#          to QM zone.\n";
+    exampleblock << "# NTWQMMM >= 0 write QM/MM related data to special trajectory\n";
+    exampleblock << "#    0: do not write\n";
+    exampleblock << "#   >0: write every NTWQMMMth step\n";
+    exampleblock << "# QMLJ 0, 1 apply LJ in QM-zone \n";
+    exampleblock << "#    0: do not apply LJ interaction in QM-zone\n";
+    exampleblock << "#    1: apply LJ interaction  \n";
+    exampleblock << "# MMSCAL scale mm-charges with (2/pi)*atan(x*(r_{mm}-r_{mm})) (optional) \n";
+    exampleblock << "#     > 0.0: scaling-factor x\n";
+    exampleblock << "#     < 0.0: don't scale (default)";
+    exampleblock << "#\n";
+    exampleblock << "# NTQMMM  NTQMSW  RCUTQ  NTWQMMM QMLJ MMSCAL\n";
+    exampleblock << "       1       0    0.0        0   0 -1.\n";
+    exampleblock << "END\n";
+
+
+    std::string blockname = "QMMM";
+    Block block(blockname, exampleblock.str());
+    if (block.read_buffer(m_block[blockname], false) == 0) {
+        block_read.insert(blockname);
+
+
+    int enable, software,write,disp;
+    double mmscal = -1.;
+    double cutoff;
+        block.get_next_parameter("NTQMMM", enable, "", "0,1");
+        block.get_next_parameter("NTQMSW", software, "", "0,1,2,3");
+        block.get_next_parameter("RCUTQ", cutoff, ">=0", "");
+        block.get_next_parameter("NTWQMMM", write, ">=0", "");
+        block.get_next_parameter("DISP", disp, "", "0,1");
+        block.get_next_parameter("MMSCAL", mmscal, "<=0 || >=0", "", true);
+
+        if (block.error()) {
+            block.get_final_messages();
+            return;
+        }
+        /** THIS SHOULD BE DONE WITH ENUMERATION */
+        switch(enable) {
+            case 0:
+                param.qmmm.qmmm = simulation::qmmm_off;
+                break;
+            case 1:
+                param.qmmm.qmmm = simulation::qmmm_on;
+                break;
+            default:
+                break;
+    }
+
+    switch (disp) {
+        case 0:
+            param.qmmm.qmmm_disp= simulation::qmmm_disp_off;
+            
+            param.force.interaction_function=simulation::qmmm_func;   
+            /** USE LJ EXCLUSION INSTEAD */
+
+            std::cout << "LJ excluded in QM" << std::endl;
+                break;
+        case 1:
+            param.qmmm.qmmm_disp= simulation::qmmm_disp_on;
+            break;
+        default:
+            break;
+        }
+
+        switch (software) {
+            case 0:
+                param.qmmm.software = simulation::qmmm_software_mndo;
+                break;
+            case 1:
+                param.qmmm.software = simulation::qmmm_software_turbomole;
+                break;
+            case 2:
+                param.qmmm.software = simulation::qmmm_software_dftb;
+                break;
+            case 3:
+                param.qmmm.software = simulation::qmmm_software_mopac;
+                break;
+            default:
+                break;
+    }
+    param.qmmm.mmscal = mmscal;
+    param.qmmm.cutoff = cutoff;
+    param.qmmm.write = write;
+
+    block.get_final_messages();
+    }     // if block
+} // QMMM
+
 
 /**
  * @section qmmmb QMMM block

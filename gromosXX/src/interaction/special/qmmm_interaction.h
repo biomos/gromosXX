@@ -30,7 +30,7 @@ namespace interaction {
      * init
      */
     virtual int init(topology::Topology &topo,
-            configuration::Configuration &conf,
+                configuration::Configuration &conf,
             simulation::Simulation &sim,
             std::ostream &os = std::cout,
             bool quiet = false);
@@ -68,12 +68,16 @@ namespace interaction {
                            simulation::Simulation& sim);
   protected:
     QM_Worker * worker;
-    QM_Worker * worker2;
     QM_Storage stor_link;
     QM_Storage storage;
-    QM_Storage storage2;
     math::VArray qm_pos;
     std::vector<interaction::MM_Atom> mm_atoms;
+  
+  private:
+    /**
+    * Topology copy to restore MM-terms in link-atom scheme
+    */
+    topology::Topology * qmmm_topo;
   };
 } // interaction
 

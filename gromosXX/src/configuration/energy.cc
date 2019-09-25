@@ -30,7 +30,6 @@ crossdihedral_total(0.0),
 bonded_total(0.0),
 nonbonded_total(0.0),
 lj_total(0.0),
-lj_lr(0.0),
 crf_total(0.0),
 ls_total(0.0),
 ls_pair_total(0.0),
@@ -496,7 +495,7 @@ int configuration::Energy::calculate_totals()
   
   nonbonded_total = lj_total + crf_total + self_total + 
           ls_realspace_total + ls_kspace_total + ls_self_total + ls_surface_total +
-          ls_a_term_total + lj_lr;
+          ls_a_term_total;
   bonded_total = bond_total + angle_total + dihedral_total + improper_total
                  + crossdihedral_total;
   potential_total = nonbonded_total + bonded_total;
@@ -573,7 +572,6 @@ double configuration::Energy::get_energy_by_index(const unsigned int & index) {
     case 41 : return qm_total;
     case 42 : return bsleus_total;
     case 43 : return rdc_total;
-    case 44 : return lj_lr;
   }
   return 0.0;
 }

@@ -70,7 +70,7 @@ int algorithm::Steepest_Descent
     conf.current().energies.calculate_totals();
 
     const double eold = conf.old().energies.potential_total + conf.old().energies.special_total;
-    const double ecur = conf.current().energies.potential_total +  conf.current().energies.special_total;
+    const double ecur = conf.current().energies.potential_total + conf.current().energies.special_total;
 
     DEBUG(10, "epot + espec: " 
 	  << ecur

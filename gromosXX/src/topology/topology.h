@@ -1800,7 +1800,7 @@ namespace topology
      * the QM zone
      */
     std::set<qm_atom_struct> m_qm_zone;
-        std::vector< std::pair<unsigned int,unsigned int> > qm_mm_link;
+    std::vector< std::pair<unsigned int,unsigned int> > qm_mm_link;
 
 
   }; // topology

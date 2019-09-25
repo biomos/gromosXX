@@ -29,6 +29,7 @@
 #define MODULE interaction
 #define SUBMODULE special
 
+
 int interaction::MNDO_Worker::run_QM(topology::Topology& topo,
         configuration::Configuration& conf,
         simulation::Simulation& sim,
@@ -37,11 +38,6 @@ int interaction::MNDO_Worker::run_QM(topology::Topology& topo,
         interaction::QM_Storage& storage,
         interaction::QM_Storage& LA_storage,
         const configuration::Configuration& qmmm_conf){
-  
-    this->input_file = sim.param().qmmm.mndo.input_file;
-    this->output_file = sim.param().qmmm.mndo.output_file;
-    this->output_gradient_file = sim.param().qmmm.mndo.output_gradient_file;
-    this->header_file=sim.param().qmmm.mndo.input_header;
      
 
 /*
@@ -55,19 +51,20 @@ int interaction::MNDO_Worker::run_QM(topology::Topology& topo,
 
   std::ofstream inp(this->input_file.c_str());
   if (!inp.is_open()) {
-    io::messages.add("Could not create input file for MNDO at the location "
+    io::messages.add("Unable to write to input file: "
             + this->input_file, "MNDO_Worker", io::message::critical);
     return 1;
   }
-  std::string header(this->header_file);
+  std::string header(this->input_header);
   // get the number of point charges
-  unsigned int num_charge = mm_atoms.size();
-  for(unsigned int i = 0; i < mm_atoms.size(); ++i) {
+  unsigned num_charge = mm_atoms.size();
+  for(unsigned i = 0; i < mm_atoms.size(); ++i) {
     if (topo.is_polarisable(mm_atoms[i].index)) {
       ++num_charge;
     }
   }
-  std::ostringstream oss; oss << num_charge;
+  std::ostringstream oss;
+  oss << num_charge;
   header = io::replace_string(header, "@@NUM_ATOMS@@", oss.str());
 
   // get the number of links
@@ -199,37 +196,43 @@ int interaction::MNDO_Worker::run_QM(topology::Topology& topo,
           this->input_file, this->output_file);
   if (result != 0) {
     std::ostringstream msg;
-    msg << "MNDO failed with code " << result << ". See output file "
-            << sim.param().qmmm.mndo.output_file << " for details.";
+    msg << "MNDO failed with code " << result;
+    if (result == 127)
+      msg << ". mndo command probably not in PATH";
+    msg << ". See output file " << this->output_file << " for details.";
     io::messages.add(msg.str(), "MNDO_Worker", io::message::error);
     return 1;
   }
   
   // read output
   std::ifstream output(this->output_file.c_str());
- // std::ifstream output(sim.param().qmmm.mndo.output_file.c_str());
   if (!output.is_open()) {
     io::messages.add("Cannot open MNDO output file", "MNDO_Worker", 
             io::message::error);
     return 1;
   }
-  while(1) {
+  while(true) {
     std::string line;
     std::getline(output, line);
     if (output.eof() || output.fail()) {
       break;
     }
+    else if (line.find("FATAL INPUT ERROR") != std::string::npos) {
+      // MNDO doesnt return 1 if it fails on input, so this is a workaround
+      io::messages.add("MNDO input error. See output file "
+        + this->output_file + " for details.", "MNDO_Worker", io::message::error);
+      return 1;
+    }
     // get charges
     if (line.find("NET ATOMIC CHARGES") != std::string::npos) {
       // skip 3 lines
-      for (unsigned int i = 0; i < 3; ++i) std::getline(output, line);
+      for (unsigned i = 0; i < 3; ++i) std::getline(output, line);
       // read atoms
-      for (unsigned int i = 0; i < topo.qm_zone().size(); ++i) {
+      for (unsigned i = 0; i < topo.qm_zone().size(); ++i) {
         std::getline(output, line);
         if (output.fail()) {
-          std::ostringstream msg;
-          msg << "Failed to read charge line of " << (i+1) << "th atom.";
-          io::messages.add(msg.str(), "MNDO_Worker", io::message::error);
+          io::messages.add("Failed to read charge line of " + std::to_string(i+1) + "th atom.",
+            "MNDO_Worker", io::message::error);
           return 1;
         }
         
@@ -238,9 +241,8 @@ int interaction::MNDO_Worker::run_QM(topology::Topology& topo,
         double charge;
         is >> dummy >> idummy >> charge;
         if (is.fail()) {
-          std::ostringstream msg;
-          msg << "Failed to parse charge line of " << (i+1) << "th atom.";
-          io::messages.add(msg.str(), "MNDO_Worker", io::message::error);
+          io::messages.add("Failed to parse charge line of " + std::to_string(i+1) + "th atom.",
+            "MNDO_Worker", io::message::error);
           return 1;
         }
         storage.charge(i) = charge * sim.param().qmmm.unit_factor_charge;
@@ -250,7 +252,6 @@ int interaction::MNDO_Worker::run_QM(topology::Topology& topo,
   output.close();
   
   // read output in fort.15
-  //output.open(output_gradient_file.c_str());
   output.open(this->output_gradient_file.c_str());
   if (!output.is_open()) {
     io::messages.add("Cannot open MNDO energy, gradient file (fort.15)",
@@ -282,9 +283,8 @@ int interaction::MNDO_Worker::run_QM(topology::Topology& topo,
         it = topo.qm_zone().begin(), to = topo.qm_zone().end(); it != to; ++it) {
         std::getline(output, line);
         if (output.fail()) {
-          std::ostringstream msg;
-          msg << "Failed to read gradient line of QM atom " << it->index+1 << " atom.";
-          io::messages.add(msg.str(), "MNDO_Worker", io::message::error);
+          io::messages.add("Failed to read gradient line of QM atom " + std::to_string(it->index+1),
+            "MNDO_Worker", io::message::error);
           return 1;
         }
         
@@ -294,9 +294,8 @@ int interaction::MNDO_Worker::run_QM(topology::Topology& topo,
         // skip atom number, Z 
         is >> dummy >> dummy >> gradient(0) >> gradient(1) >> gradient(2);
         if (is.fail()) {
-          std::ostringstream msg;
-          msg << "Failed to parse gradient line of QM atom " << it->index+1 << " atom.";
-          io::messages.add(msg.str(), "MNDO_Worker", io::message::error);
+          io::messages.add("Failed to parse gradient line of QM atom " + std::to_string(it->index+1),
+            "MNDO_Worker", io::message::error);
           return 1;
         }
         storage.force(it->index) = gradient * (-(sim.param().qmmm.unit_factor_energy) / 
@@ -326,9 +325,8 @@ int interaction::MNDO_Worker::run_QM(topology::Topology& topo,
       for (unsigned int i = 0; i < mm_atoms.size(); ++i) {        
         std::getline(output, line);
         if (output.fail()) {
-          std::ostringstream msg;
-          msg << "Failed to read gradient line of MM atom " << i+1 << ".";
-          io::messages.add(msg.str(), "MNDO_Worker", io::message::error);
+          io::messages.add("Failed to read gradient line of MM atom " + std::to_string(i+1),
+            "MNDO_Worker", io::message::error);
           return 1;
         }
         
@@ -338,9 +336,8 @@ int interaction::MNDO_Worker::run_QM(topology::Topology& topo,
         // skip atom number, Z 
         is >> dummy >> dummy >> gradient(0) >> gradient(1) >> gradient(2);
         if (is.fail()) {
-          std::ostringstream msg;
-          msg << "Failed to parse gradient line of MM atom " << i+1 << ".";
-          io::messages.add(msg.str(), "MNDO_Worker", io::message::error);
+          io::messages.add("Failed to parse gradient line of MM atom " + std::to_string(i+1),
+            "MNDO_Worker", io::message::error);
           return 1;
         }
         storage.force(mm_atoms[i].index) += gradient * (-(sim.param().qmmm.unit_factor_energy) /
@@ -350,9 +347,8 @@ int interaction::MNDO_Worker::run_QM(topology::Topology& topo,
         if (topo.is_polarisable(mm_atoms[i].index)) {
           std::getline(output, line);
           if (output.fail()) {
-            std::ostringstream msg;
-            msg << "Failed to read gradient line of COS on MM atom " << i + 1 << ".";
-            io::messages.add(msg.str(), "MNDO_Worker", io::message::error);
+            io::messages.add("Failed to read gradient line of COS on MM atom " + std::to_string(i+1),
+              "MNDO_Worker", io::message::error);
             return 1;
           }
 
@@ -360,9 +356,8 @@ int interaction::MNDO_Worker::run_QM(topology::Topology& topo,
           // skip atom number, Z 
           is >> dummy >> dummy >> gradient(0) >> gradient(1) >> gradient(2);
           if (is.fail()) {
-            std::ostringstream msg;
-            msg << "Failed to parse gradient line of COS MM atom " << i + 1 << ".";
-            io::messages.add(msg.str(), "MNDO_Worker", io::message::error);
+            io::messages.add("Failed to parse gradient line of COS MM atom " + std::to_string(i+1),
+              "MNDO_Worker", io::message::error);
             return 1;
           }
           storage.cos_force(mm_atoms[i].index) = gradient * (-(sim.param().qmmm.unit_factor_energy) /
@@ -436,94 +431,121 @@ int interaction::MNDO_Worker::run_QM(topology::Topology& topo,
 
 int interaction::MNDO_Worker::init(topology::Topology& topo, 
         configuration::Configuration& conf, simulation::Simulation& sim) {
-  input_file = sim.param().qmmm.mndo.input_file;
-  if (input_file.empty()) {
-#ifdef HAVE_TMPNAM
-    char tmp[TMP_MAX];
-    if (tmpnam(tmp) == NULL) {
-      io::messages.add("Could not get temporary file",
-              "MNDO_Worker", io::message::error);
+  this->input_file = sim.param().qmmm.mndo.input_file;
+  this->output_file = sim.param().qmmm.mndo.output_file;
+  this->output_gradient_file = sim.param().qmmm.mndo.output_gradient_file;
+  this->density_matrix_file = sim.param().qmmm.mndo.density_matrix_file;
+  this->input_header=sim.param().qmmm.mndo.input_header;
+  if (this->input_file.empty()) {
+    using_tmp = true;
+    if(util::create_tmpfile(this->input_file) < 1) {
+        io::messages.add("Unable to create temporary input file: " + this->input_file,
+        "MNDO_Worker", io::message::critical);
       return 1;
     }
-    input_file = std::string(tmp);
-#else
-    io::messages.add("Temporary files are not supported on this platform. "
-            "Please provide the file names manually using the MNDOFILES "
-            "block in the QM/MM specification file",
-            "MNDO_Worker", io::message::critical);
-    return 1;
-#endif
+    else {
+        io::messages.add("Using temporary input file: " + this->input_file,
+        "MNDO_Worker", io::message::notice);
+    }
   }
-  output_file = sim.param().qmmm.mndo.output_file;
-  if (output_file.empty()) {
-#ifdef HAVE_TMPNAM
-    char tmp[TMP_MAX];
-    if (tmpnam(tmp) == NULL) {
-      io::messages.add("Could not get temporary file",
-              "MNDO_Worker", io::message::error);
+
+  if (this->output_file.empty()) {
+    if (util::create_tmpfile(this->output_file) < 1) {
+      io::messages.add("Unable to create temporary output file: " + this->output_file,
+        "MNDO_Worker", io::message::critical);
       return 1;
     }
-    output_file = std::string(tmp);
-#else
-    io::messages.add("Temporary files are not supported on this platform. "
-            "Please provide the file names manually using the MNDOFILES "
-            "block in the QM/MM specification file",
-            "MNDO_Worker", io::message::critical);
-    return 1;
-#endif
+    else {
+        io::messages.add("Using temporary output file: " + this->output_file,
+        "MNDO_Worker", io::message::notice);
+    }
+  }
+
+  if (this->output_gradient_file.empty()) {
+    if (util::create_tmpfile(this->output_gradient_file) < 1) {
+      io::messages.add("Unable to create temporary output gradient file: " 
+        + this->output_gradient_file, "MNDO_Worker", io::message::critical);
+      return 1;
+    }
+    else {
+        io::messages.add("Using temporary output gradient file: " + this->output_gradient_file,
+        "MNDO_Worker", io::message::notice);
+    }
+  }
+  else {
+    // Create file specified by user
+    std::ofstream of(this->output_gradient_file.c_str());
+    if (!of.is_open()) {
+      io::messages.add("Unable to create output gradient file: "
+      + this->output_gradient_file, "MNDO_Worker", io::message::critical);
+      return 1;
+    }
+    of.close();
+  }
+
+  if (this->density_matrix_file.empty()) {
+    if (util::create_tmpfile(this->density_matrix_file) < 1) {
+      io::messages.add("Unable to create temporary density matrix file: " 
+        + this->density_matrix_file, "MNDO_Worker", io::message::critical);
+      return 1;
+    }
+    else {
+        io::messages.add("Using temporary density matrix file: " + this->density_matrix_file,
+        "MNDO_Worker", io::message::notice);
+    }
   }
   
-  output_gradient_file = sim.param().qmmm.mndo.output_gradient_file;
-  if (output_gradient_file.empty()) {
-#ifdef HAVE_TMPNAM
-    char tmp[TMP_MAX];
-    if (tmpnam(tmp) == NULL) {
-      io::messages.add("Could not get temporary file",
-              "MNDO_Worker", io::message::error);
-      return 1;
-    }
-    output_gradient_file = std::string(tmp);
-#else
-    io::messages.add("Temporary files are not supported on this platform. "
-            "Please provide the file names manually using the MNDOFILES "
-            "block in the QM/MM specification file",
-            "MNDO_Worker", io::message::critical);
-    return 1;
-#endif
-  }
-  
-  // create the fort.15 link for MNDO gradients
 #ifdef HAVE_SYMLINK
-  // create the file first
-  std::ofstream of(output_gradient_file.c_str());
-  if (!of.is_open()) {
-    std::ostringstream msg;
-    msg << "Cannot create file " << output_gradient_file;
-    io::messages.add(msg.str(), "MNDO_Worker", io::message::critical);
+  // create fort.15 link for gradients
+  if (symlink_err += symlink(this->output_gradient_file.c_str(), "fort.15") != 0) {
+    io::messages.add("Unable to create symbolic link from fort.15 to "
+      + this->output_gradient_file + " - check permissions.",
+      "MNDO_Worker", io::message::critical);
     return 1;
   }
-  of.close();
-  if (symlink(output_gradient_file.c_str(), "fort.15") != 0) {
-    std::ostringstream msg;
-    msg << "Cannot create symbolic link from " << output_gradient_file << " to fort.15. "
-            << "Try to do it manually.";
-    io::messages.add(msg.str(), "MNDO_Worker", io::message::critical);
+  // create fort.11 link for density matrix
+  if (symlink_err += symlink(this->density_matrix_file.c_str(), "fort.11") != 0) {
+    io::messages.add("Unable to create symbolic link from fort.11 to "
+      + this->density_matrix_file + " - check permissions.",
+      "MNDO_Worker", io::message::critical);
     return 1;
   }
 #else
   {
-    std::ostringstream msg;
-    msg << "Symbolic links are not supported in this built. Try to link "
-            << output_gradient_file << " to fort.15. "
-    io::messages.add(msg.str(), "MNDO_Worker", io::message::notice);
+    this->output_gradient_file = "fort.15";
+    this->density_matrix_file = "fort.11";
+    io::messages.add("Symbolic links are not supported in this built. "
+      + "Output gradient file is now set to fort.15",
+      "MNDO_Worker", io::message::warning);
+    io::messages.add("Symbolic links are not supported in this built. "
+      + "Density matrix file is now set to fort.11",
+      "MNDO_Worker", io::message::warning);
   }
 #endif
   
+#ifndef HAVE_UNLINK
+  {
+    io::messages.add("Unlink function not supported on this platform. "
+    + "Please delete temporary files manually.",
+    "MNDO_Worker", io::message::notice);
+  }
+#endif
   return 0;
 }
 
 interaction::MNDO_Worker::~MNDO_Worker() {
 #ifdef HAVE_UNLINK
-  unlink("fort.15");
+  // Remove symbolic links
+  if (symlink_err == 0) {
+    unlink("fort.11");
+    unlink("fort.15");
+  }
+  // Delete temporary files
+  if (using_tmp) {
+    unlink(this->input_file.c_str());
+    unlink(this->output_file.c_str());
+    unlink(this->output_gradient_file.c_str());
+    unlink(this->density_matrix_file.c_str());
+  }
 #endif
 }

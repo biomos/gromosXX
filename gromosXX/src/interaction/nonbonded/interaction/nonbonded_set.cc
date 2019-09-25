@@ -270,10 +270,6 @@ int interaction::Nonbonded_Set
     }
   }
 
-  if (sim.param().nonbonded.lj_correction) {        
-    conf.current().energies.lj_lr =sim.param().nonbonded.lrlj_fac/
-          math::volume(conf.current().box,conf.boundary_type);
-  }
   // add longrange virial
   if (sim.param().pcouple.virial){
     DEBUG(6, "\t(set) add long range virial");
@@ -364,17 +360,11 @@ int interaction::Nonbonded_Set::update_configuration
   e.ls_self_total += m_storage.energies.ls_self_total;
   e.ls_a_term_total += m_storage.energies.ls_a_term_total;
   e.ls_surface_total += m_storage.energies.ls_surface_total;
-  //Long-Range LJ-correction 
-  e.lj_lr= conf.current().energies.lj_lr;
+
 
   // (MULTISTEP: and the virial???)
   if (sim.param().pcouple.virial){
     DEBUG(7, "\tadd set virial");
-    if (sim.param().nonbonded.lj_correction) {        
-      for (unsigned int j = 0; j < 3; ++j) {
-         conf.current().virial_tensor(j,j)+=  conf.current().energies.lj_lr;
-      }
-    }
   	conf.current().virial_tensor += m_storage.virial_tensor;
   }
   

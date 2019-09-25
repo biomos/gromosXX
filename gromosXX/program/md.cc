@@ -181,16 +181,24 @@ int main(int argc, char *argv[]){
 
     // run a step
     if ((error = md.run(topo, conf, sim))){
+      
+      if ((error == E_MINIMUM_REACHED) || (error == E_MINIMUM_NOT_REACHED)){
+	      
+        //conf.current().energies.calculate_totals(); // This is done in algorithm
 
-      if (error == E_MINIMUM_REACHED){
-	conf.old().energies.calculate_totals();
-	traj.print_timestep(sim, traj.output());
-	io::print_ENERGY(traj.output(), conf.old().energies, 
-			 topo.energy_groups(),
-			 "MINIMUM ENERGY", "EMIN_");
+        /** This is not necessary, because it is printed in out_configuration as well
+	       *  Here could be MINIMISATION block instead
+         */
+        /* traj.print_timestep(sim, traj.output());
+        io::print_ENERGY(
+          traj.output(),
+          conf.current().energies,
+          topo.energy_groups(),
+          "MINIMUM ENERGY",
+          "EMIN_"); */
 	  
-	error = 0; // clear error condition
-	break;
+	      error = 0; // clear error condition
+	      break;
       }
       else { 
 	// try to print energies anyway
@@ -215,12 +223,12 @@ int main(int argc, char *argv[]){
 
     traj.print(topo, conf, sim);
 
-    ++sim.steps();
+    sim.steps()=sim.steps()+sim.param().analyze.stride;
     sim.time() = sim.param().step.t0 + sim.steps()*sim.time_step_size();
     
     if ((sim.param().step.number_of_steps / 10 > 0) &&
 	(sim.steps() % (sim.param().step.number_of_steps / 10) == 0)){
-      ++percent;
+      percent=int(sim.steps())*10/sim.param().step.number_of_steps;
       const double spent = util::now() - start;
       const int hh = int(spent / 3600);
       const int mm = int((spent - hh * 3600) / 60);

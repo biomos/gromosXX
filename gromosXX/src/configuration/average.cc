@@ -424,7 +424,6 @@ fluct.prop = old_fluct.prop + dt * e.prop * e.prop
   ENERGY_AVG(bonded_total);
   ENERGY_AVG(nonbonded_total);
   ENERGY_AVG(lj_total);
-  ENERGY_AVG(lj_lr);
   ENERGY_AVG(crf_total);
   ENERGY_AVG(ls_total);
   ENERGY_AVG(ls_pair_total);
@@ -665,7 +664,6 @@ void configuration::Average::Block_Average
 
   ENERGY_RES(nonbonded_total);
   ENERGY_RES(lj_total);
-  ENERGY_RES(lj_lr);
   ENERGY_RES(crf_total);
   ENERGY_RES(ls_total);
   ENERGY_RES(ls_pair_total);

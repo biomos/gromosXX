@@ -115,7 +115,7 @@ io::In_Perturbation::read(topology::Topology &topo,
         std::ostream & os)
 {
 
-  if (!param.perturbation.perturbation && !param.eds.eds){
+  if (!param.perturbation.perturbation && !param.eds.eds && !param.reeds.reeds){
     io::messages.add("Ignoring perturbation topology because perturbation is not enabled.",
 		     "In_Perturbation",
 		     io::message::warning);
@@ -1247,7 +1247,7 @@ io::In_Perturbation::read(topology::Topology &topo,
         _lineStream >> num;
         ++it;
        
-        int seq; 
+        int seq, a_iac_int, b_iac_int; 
         unsigned int res, a_iac, b_iac;
         double a_mass, b_mass, a_charge, b_charge;
         double lj_soft, crf_soft;
@@ -1271,8 +1271,8 @@ io::In_Perturbation::read(topology::Topology &topo,
           
           _lineStream.clear();
           _lineStream.str(*it);
-          _lineStream >> seq >> res >> name >> a_iac >> a_mass >> a_charge
-                  >> b_iac >> b_mass >> b_charge
+          _lineStream >> seq >> res >> name >> a_iac_int >> a_mass >> a_charge
+                  >> b_iac_int >> b_mass >> b_charge
                   >> lj_soft >> crf_soft;
           
           if (_lineStream.fail()){
@@ -1281,8 +1281,8 @@ io::In_Perturbation::read(topology::Topology &topo,
           }
           
           --seq;
-          --a_iac;
-          --b_iac;
+          --a_iac_int;
+          --b_iac_int;
           
           // weight by input
           lj_soft *= param.perturbation.soft_vdw;
@@ -1294,14 +1294,24 @@ io::In_Perturbation::read(topology::Topology &topo,
             return;
           }
           
-          if (a_iac < 0 || b_iac < 0 || 
-                  a_iac >= topo.atom_names().size() || b_iac >= topo.atom_names().size()){
+          if (a_iac_int < 0 || b_iac_int < 0){
+            os << "Problematic line: n=" << n+1 << " a_iac=" << a_iac_int+1 << " b_iac=" << b_iac_int+1 << std::endl;
+            io::messages.add("integer atom code wrong in PERTATOMPARAM block",
+                    "In_Perturbation", io::message::critical);
+            return;
+          }
+          else{
+            a_iac = (unsigned int)a_iac_int;
+            b_iac = (unsigned int)b_iac_int;
+          }	
+          
+          if (a_iac >= topo.atom_names().size() || b_iac >= topo.atom_names().size()){
             os << "Problematic line: n=" << n+1 << " a_iac=" << a_iac+1 << " b_iac=" << b_iac+1 << std::endl;
             io::messages.add("integer atom code wrong in PERTATOMPARAM block",
                     "In_Perturbation", io::message::critical);
             return;
           }
-          
+
           topology::Perturbed_Atom atom(seq, a_iac, a_mass, a_charge,
                   topo.polarisability(seq), topo.damping_level(seq),
                   b_iac, b_mass, b_charge,

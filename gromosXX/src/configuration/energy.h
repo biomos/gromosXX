@@ -70,10 +70,6 @@ namespace configuration
      */
     double lj_total;
     /**
-     * Long-Range Lennard-Jones correction
-     */
-    double lj_lr;
-    /**
      * total energy of the coulomb reaction-field interaction
      */
     double crf_total;

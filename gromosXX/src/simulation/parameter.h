@@ -798,15 +798,19 @@ namespace simulation
        * Constructor.
        * Default values:
        * - ntem 0      (no energy minimisation)
-       * - ncyc 0      (unused, conjugate gradient not implemented)
+       * - ncyc 0      (number of steps before resetting of conjugate-gradient search direction)
        * - dele 0.0001 (minimal energy difference)
+       * -             (conjugate-gradient - RMS force threshold)
        * - dx0  0.1    (initial step size)
+       * -             (conjugate-gradient - initial and minimum step size)
        * - dxm  0.5    (maximum step size)
        * - nmin 1      (at least 1 step)
        * - flim 0.0    (no force limitation)
+       * - cgim 3      (conjugate-gradient - maximum number of interpolations)
+       * - cgic 1e-3   (conjugate-gradient - displacement threshold after interpolation)
        */
       minimise_struct() : ntem(0), ncyc(0), dele(0.0001),
-			  dx0(0.1), dxm(0.5), nmin(1), flim(0.0)
+			  dx0(0.1), dxm(0.5), nmin(1), flim(0.0), cgim(3), cgic(1e-3)
       {}
       /**
        * minimisation method.
@@ -836,6 +840,14 @@ namespace simulation
        * force limit.
        */
       double flim;
+      /**
+       * maximum interpolations.
+       */
+      int cgim;
+      /**
+       * interpolation displacement threshold.
+       */
+      double cgic;
 
     } /** energy minimisation parameters */ minimise;
 
@@ -1601,9 +1613,6 @@ namespace simulation
        * longrange LJ correction
        */
       bool lj_correction;
-      /* factor for the LRLJ-correction
-       */
-      double lrlj_fac;
       /**
        * solvent density
        */
@@ -2311,10 +2320,14 @@ namespace simulation
        * - equilibrate 0
        * - cont 0
        */
-      replica_struct() : num_T(0), num_l(0), scale(false), trials(0),
+      replica_struct() : retl(false), num_T(0), num_l(0), scale(false), trials(0),
                          equilibrate(0), cont(0)
       {
       }
+      /**
+       * Shall a Replica_exchange Temperature or lambdaDep simulation be exectued
+       */
+      bool retl;
       /**
        * number of replicas with different temperature
        */
@@ -2435,9 +2448,12 @@ namespace simulation
        * Default values:
        * - analyze(false)
        * - copy_pos(false)
+       * - no_constraints (false)
+       * - stride (1)
        * - trajectory("")
        */
-      analyze_struct() : analyze(false), copy_pos(false), trajectory("")
+      analyze_struct() : analyze(false), copy_pos(false), trajectory(""),
+                         stride(1), no_constraints(false)
       {
       }
       /** 
@@ -2452,6 +2468,14 @@ namespace simulation
        * trajectory filename
        */
       std::string trajectory;
+      /** 
+       * stride
+       */
+      int stride;
+      /**
+       * do not apply any constraints (also not on solvent)
+       */
+      bool no_constraints;
       
     } /** analyze parameter */ analyze;
 
@@ -2762,7 +2786,7 @@ namespace simulation
        * - eds: no eds sampling
        * - form: single_s
        */
-      eds_struct() : eds(false), soft_vdw(1.0), soft_crf(1.0), form(single_s), numstates(0) {}
+      eds_struct() : eds(false), soft_vdw(0.0), soft_crf(0.0), form(single_s), numstates(0) {}
       /**
        * do enveloping distribution sampling using the Hamiltonian:
        */
@@ -2875,7 +2899,78 @@ namespace simulation
       */
       unsigned int bsteps;
     } /** enveloping distribution sampling*/ eds;
+   
+ struct reeds_struct : public replica_struct
+    {
+      /**
+       * Constructor
+       * Default values:
+       * - num_T 0
+       * - num_l 0
+       * - temperature \<empty\>
+       * - scale (false)
+       * - lambda \<empty\>
+       * - dt \<empty\>
+       * - trials 0
+       * - equilibrate 0
+       * - cont 0
+       */
+      reeds_struct() : reeds(false), 
+                       num_states(0), num_T(0),  num_l(0), 
+                       trials(0), equilibrate(0), 
+                       cont(0), eds_stat_out(true) {}
+      /**
+       * Check if this is a reed run.f
+       **/
+      bool reeds;
+      /**
+       * num_states
+       */
+      int num_states;
+      /**
+       * number of replicas with different temperature
+       */
+      int num_T;
+      /**
+       * number of replicas with different lambdas in REEDS these are the smoothing values
+       */
+      int num_l;
+      /**
+       * temperatures
+       */
+      double temperature;
+      /**
+       * lambdas: contains all smoothness parameter of RE_EDS system
+       */
+      std::vector<double> lambda;
+      /**
+       * time step to use when running at corresponding lambda
+       */
+      std::vector<double> dt;
+      /**
+       * trial moves
+       */
+      int trials;
+      /**
+       * equilibrate: no switching for the first N trials
+       */
+      int equilibrate;
+      /**
+       * do continuation run
+       */
+      int cont;
+      /**
+       * write output to stat_file (repdat)
+       **/
+      bool eds_stat_out;
+       /**
+       * for RE-EDS Sim many eds parameters have to be accessible for
+       * energy calculation.
+       */
+      std::vector<eds_struct> eds_para;
 
+    } /** replica exchange parameters */ reeds;
+    
     /**
      * @struct sasa
      * parameters for calculating the sasa and volume term
@@ -3469,34 +3564,33 @@ namespace simulation
        * apply LJ-interaction in QM-Zone or not
        */
       qmmm_disp_enum qmmm_disp;
-      int qmmm_nworker;
       /**
        * the QM software to use
        */
       qmmm_software_enum software;
-      qmmm_software_enum software2;
-      topology::Topology * qmmm_topo; //=  NULL; //new topology::Topology(topo, 1);
-      topology::Topology * QM_CAP_topo; //=  NULL; //new topology::Topology(topo, 1);
+      /**
+       * Quasi periodic table. Periodic table should be implemented universally
+       */
       std::map<unsigned int,std::string > qmmm_at_to_num;
+      /**
+       * Capping atom bond length
+       */
       double cap_dist;
       /**
        * factor to convert the QM length unit to the GROMOS one
        */
       double unit_factor_length;  //MNDO
-      double unit_factor_length2;  //TM
-      double unit_factor_length3; //DFTB
+      double unit_factor_length3; //DFTB - This has to be unified - every QM worker could have its own
       double unit_factor_mmlen; //DFTB
       /**
        * factor to convert the QM energy unit to the GROMOS one
        */
       double unit_factor_energy; // MNDO
-      double unit_factor_energy2; // Turbomole
       double unit_factor_energy3; //DFTB
       /**
        * factor to convert the QM charge unit to the GROMOS one
        */
       double unit_factor_charge;  //MNDO
-      double unit_factor_charge2; //Turbomole
       double unit_factor_charge3; //DFTB
       /**
        * cutoff to determine atoms included in QM computation as point charges.
@@ -3618,6 +3712,10 @@ namespace simulation
          * path for the gradient output file. Empty for a temporary file
          */
         std::string output_gradient_file;
+        /**
+         * path for the density matrix file. Empty for a temporary file
+         */
+        std::string density_matrix_file;
         /**
          * header of the MNDO input file
          */

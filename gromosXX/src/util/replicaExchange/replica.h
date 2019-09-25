@@ -14,7 +14,7 @@
 #include <io/argument.h>
 #include <io/read_input.h>
 #include <math/random.h>
-#include <util/repex_mpi.h>
+#include <util/replicaExchange/repex_mpi.h>
 #include <util/usage.h>
 
 #ifndef REPLICA_H
@@ -75,11 +75,11 @@ namespace util {
      * @param partner ID of partner
      * @return potential energy of configuration with lambda(Hamiltonian) of partner
      */
-    double calculate_energy(const int partner);
+    virtual double calculate_energy(const int partner);
     /**
      * calculates potential energy for current configuration with own lambda
      */
-    double calculate_energy();
+    virtual double calculate_energy();
     /**
      * finds out if configurations are to be switched; sets switched to true if so
      */
@@ -116,7 +116,7 @@ namespace util {
      */
     void velscale(int i);
 
-  private:
+  protected:
     /**
      * Sets lambda parameter to original value of replica
      */

@@ -89,17 +89,29 @@ int io::read_input_repex(io::Argument const & args,
 		   configuration::Configuration & conf,
 		   simulation::Simulation & sim,
 		   algorithm::Algorithm_Sequence & md_seq,
+                   int rank,
 		   std::ostream & os,
 		   bool quiet)
 {
-
+  //initialize for RE-EDS ID dependent parameters.
+  if(sim.param().reeds.reeds){
+    sim.param().eds=sim.param().reeds.eds_para[rank];//choose correct eds informations which are ID dependent. That's why this cannot be done earlier.
+  }
+  
+  if(!quiet){
+    std::cout << std::internal << "\tReading Topology\n";
+  }
+  
   if (read_topology(args, topo, sim, md_seq, os, quiet) != 0) return -1;
   
+  if(!quiet){
+      std::cout << std::internal << "\tReading Special\n";
+  }
   // read this before configuration, as it contains topological data...
   if (read_special(args, topo, conf, sim, os, quiet) != 0) return -1;
   
   // error if no perturbed parameters were read from pttop or restraints
-  if(!sim.param().perturbation.perturbed_par){
+  if(!sim.param().perturbation.perturbed_par && sim.param().perturbation.perturbation){
       io::messages.add("Neither perturbed restraints nor perturbed topology found - if you do not want to perturb anything, turn off PERTURBATION",
 		       "read_input", io::message::error);
       return -1;
@@ -110,8 +122,39 @@ int io::read_input_repex(io::Argument const & args,
 
   // check the bath parameters
   sim.multibath().check_state(topo.num_atoms());
+  if(!quiet){
+    std::cout << std::internal << "\tReading Configuration\n";
+    std::cout.flush();
+  }
 
-  if (read_configuration(args, topo, conf, sim, os, quiet) != 0) return -1;
+    //check if all coordinate files are present:
+    int cont = sim.param().replica.cont;  
+    if(cont == 1 && rank == 0){
+      DEBUG(4, "reading configurations for continous");
+      int numReplicas = sim.param().replica.num_T * sim.param().replica.num_l;
+      for(int x=0; x<numReplicas; x++ ){
+          
+          io::Argument tmpArgs(args);   //copy modified args
+          std::multimap< std::string, std::string >::iterator it = tmpArgs.lower_bound(("conf"));
+          size_t pos = (*it).second.find_last_of(".");
+          std::stringstream tmp;
+          tmp << "_" << (x+1);
+          (*it).second.insert(pos, tmp.str());
+          
+          if(read_configuration(tmpArgs, topo, conf, sim, os, quiet)){
+              io::messages.add("\nCould not find coordinate file: "+ std::string(it->second)+"\n\n", io::message::error);
+              return -1;
+          }
+        }
+      }
+     else if(rank == 0){
+          DEBUG(4, "reading configuration no continous");
+          //std::cout << "TEST  " << args.lower_bound(("conf"))->second << "\n";
+          if (read_configuration(args, topo, conf, sim, os, quiet) != 0) {
+              io::messages.add("Could not find coordinate file: "+ std::string(args.lower_bound(("conf"))->second), io::message::error);
+              return -1;
+          }
+      }
 
 #ifdef HAVE_HOOMD 
   // create HOOMD Processor after input files read in successfully
@@ -121,6 +164,9 @@ int io::read_input_repex(io::Argument const & args,
 	default: break;
   }
 #endif
+  if(!quiet){
+      io::messages.display(os);
+  }
    
   return 0;
 }
@@ -175,22 +221,29 @@ int io::read_parameter(io::Argument const & args,
       io::messages.contains(io::message::critical))
     return -1;
   
-  // check for replica output file
-  if (sim.param().replica.num_T > 0 && sim.param().replica.num_l > 0) {
-    if( args.count("repout") < 1 )
-    {
-        io::messages.add("No output file for replica exchange specified!",
-       "read_input", io::message::critical);
-      return -1;
+  // check for replicaExchange 
+  if (sim.param().replica.retl || sim.param().reeds.reeds) {
+      // Check output files
+        if( args.count("repout") < 1 )
+        {
+            io::messages.add("No output file for replica exchange specified! Please provide @repout.\n",
+           "read_input", io::message::critical);
+          return -1;
+        }
+        if( args.count("repdat") < 1 )
+        {
+            io::messages.add("No data file for replica exchange specified! Please provide @repdat.\n",
+           "read_input", io::message::critical);
+          return -1;
+        }
+        
+        //Check if any REPEX Block was entered and only one!
+        //only one replica Ex block - present   
+        if(sim.param().reeds.reeds == true && sim.param().replica.retl  == true){
+            io::messages.add("\n Please provide only one RE-block in the imd file.\n", "read_input", io::message::critical);
+            return -1;
+        }
     }
-    if( args.count("repdat") < 1 )
-    {
-        io::messages.add("No data file for replica exchange specified!",
-       "read_input", io::message::critical);
-      return -1;
-    }
-  }
-  
   return 0;
 }
 
@@ -225,8 +278,12 @@ int io::read_topology(io::Argument const & args,
     return -1;
     
   
-  
-  if(args.count(argname_pttopo)<1 && sim.param().eds.eds){
+   if(args.count(argname_pttopo)<1 && sim.param().reeds.reeds){
+      io::messages.add("REEDS on but no perturbation topology specified",
+		       "read_input", io::message::critical);
+      return -1;
+  }
+  else if(args.count(argname_pttopo)<1 && sim.param().eds.eds){
       io::messages.add("EDS on but no perturbation topology specified",
 		       "read_input", io::message::critical);
       return -1;

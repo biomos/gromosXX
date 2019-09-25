@@ -58,6 +58,11 @@ math::Vec interaction::MOPAC_Worker::pointchg_force(const int j,
     for (std::set<topology::qm_atom_struct>::const_iterator
             it=topo.qm_zone().begin(),to=topo.qm_zone().end();it!=to;++it,pi++){
             rij=conf.current().pos(j)-conf.current().pos(it->index);
+            // Add check of mopac output parse success, otherwise the program segfaults here
+            DEBUG(15, "rij =" << math::v2s(rij));
+            DEBUG(15, "topo.charge(j) =" << topo.charge(j));
+            DEBUG(15, "pi =" << pi);
+            DEBUG(15, "qm_chg[pi] =" << qm_chg[pi]);
             fij+=(rij/abs(rij))*topo.charge(j)*qm_chg[pi]/(abs2(rij)) ;
 
     }
@@ -224,13 +229,13 @@ int interaction::MOPAC_Worker::run_QM(topology::Topology& topo,
                        dummy >> gradient[ixyz];
                     if (output.fail()) {
                         std::ostringstream msg;
-                        msg << "Failed to read charge line of " << (it->index + 1) << "th atom.";
+                        msg << "Failed to read gradient line of " << (it->index + 1) << "th atom.";
                         io::messages.add(msg.str(), "MOPAC_Worker", io::message::error);
                         return 1;
                     }
                 }
-                DEBUG(5, "\t grad " << gradient[0] <<
-                                    gradient[1] << "  " << gradient[2] << std::endl);
+                DEBUG(5, "QM gradient [" << it->index << "]: " << gradient[0] <<
+                                    gradient[1] << "  " << gradient[2]);
                 storage.force(it->index) = gradient * (-(sim.param().qmmm.unit_factor_energy) /
                                                         sim.param().qmmm.unit_factor_length);
             }//read partial charges on QM-atoms required for force on mm-pointcharges
@@ -258,6 +263,7 @@ int interaction::MOPAC_Worker::run_QM(topology::Topology& topo,
                 std::getline(output, line);
                 std::istringstream is(line);
                 is >> dummy >> dummy >> charge;
+                DEBUG(15,"Read charge[" << it->index << "]: " << charge);
                 qm_chg.push_back(charge);
                 if (is.fail()) {
                     std::ostringstream msg;
@@ -290,7 +296,7 @@ int interaction::MOPAC_Worker::run_QM(topology::Topology& topo,
         it=mm_atoms.begin(),to=mm_atoms.end();it!=to;++it  ){
         math::Vec gradient;
         gradient=pointchg_force(it->index,qm_chg,topo,qmmm_conf);
-        DEBUG(5,"\t grad " << gradient[0] <<
+        DEBUG(5,"MM gradient from QM [" << it->index << "]: " << gradient[0] <<
                             gradient[1] << "  " << gradient[2] << std::endl);
         storage.force(it->index) += gradient ;
     }
