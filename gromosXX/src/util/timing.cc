@@ -51,7 +51,7 @@ void util::Algorithm_Timer::start(const std::string & name) {
  */
 void util::Algorithm_Timer::stop(const std::string & name) {
   if (m_current_subtimes.find(name) == m_current_subtimes.end())
-    throw std::runtime_error(name + " timer was stoppped but not stared.");
+    throw std::runtime_error(name + " timer was stopped but not started.");
   
   m_total_subtimes[name] += util::now() - m_current_subtimes[name];
 }

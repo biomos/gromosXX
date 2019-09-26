@@ -2884,13 +2884,6 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
           io::messages.add(msg.str(), "In_Parameter", io::message::error);
           return;
         }
-         
-    // make sure we simulate at a given temperature (unambiguous kT)
-    if (!param.multibath.couple) {
-      io::messages.add("Error in RE_EDS block: EDS requires temperature coupling.",
-              "In_Parameter", io::message::error);
-      return;
-    }
     
     std::string blockname = "REPLICA_EDS";
     Block block(blockname, exampleblock.str());
@@ -3786,7 +3779,7 @@ void io::In_Parameter::read_AEDS(simulation::Parameter & param,
   exampleblock << "  0   -5   -140   -560   -74\n";
   exampleblock << "# NTIAEDSS  RESTREMIN  BMAXTYPE  BMAX  ASTEPS  BSTEPS\n";
   exampleblock << "  1         1          2         3     500     50000\n";
-  exampleblock << "# END\n";
+  exampleblock << "END\n";
 
 
 
