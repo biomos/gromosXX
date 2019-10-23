@@ -100,6 +100,9 @@ else
 fi
 ])
 
+
+AC_DISABLE_SHARED
+
 dnl @synopsis AC_CXX_LIB_GSL([optional-string "required"])
 dnl
 dnl Check whether Gnu Scientific Library (GSL) is installed.
