@@ -2920,7 +2920,6 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
           for (unsigned int replicaJ=0; replicaJ< num_l; replicaJ++){  
             std::string replicaJ_idx = io::to_string(replicaJ);
             block.get_next_parameter("EIR[" + replicaJ_idx+ "]["+stateI_idx+"]", eir[replicaJ][stateI], "", "");    //Comment "this function only reads line by line! doesn't matter the indices in the string 
-            std::cout  << "EIR: rep "<< replicaJ <<", state "<< stateI << "\t" << eir[replicaJ][stateI]<< "\n";        //print out_EIR Matrix:
           }
         }
 
