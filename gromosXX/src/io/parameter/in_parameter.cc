@@ -2911,16 +2911,18 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
 
         //get EIR-Matrix
         std::vector<std::vector<float>> eir(num_l);
-        for (unsigned int i = 0; i < num_l; i++) {
-          std::string idx = io::to_string(i);
-          std::vector<float> eiri(num_states, 0.0);
-          eir[i] = eiri;      
-
-          for (unsigned int j=0; j< num_states; j++){
-            std::string idx2 = io::to_string(j);
-            block.get_next_parameter("EIR[" + idx + "]["+idx2+"]", eir[i][j], "", "");
+        for(unsigned int replicaJ=0; replicaJ<num_l; replicaJ++){//init eir vectors
+          std::vector<float> eir_vector_J(num_states, 0.0);
+          eir[replicaJ] = eir_vector_J;    
+        }
+        for (unsigned int stateI = 0; stateI < num_states; stateI++) {
+          std::string stateI_idx = io::to_string(stateI);
+          for (unsigned int replicaJ=0; replicaJ< num_l; replicaJ++){  
+            std::string replicaJ_idx = io::to_string(replicaJ);
+            block.get_next_parameter("EIR[" + replicaJ_idx+ "]["+stateI_idx+"]", eir[replicaJ][stateI], "", "");    //Comment "this function only reads line by line! doesn't matter the indices in the string 
           }
         }
+
         
         // general Settings
         block.get_next_parameter("NRETRIAL", ntrials, ">=0", "");
