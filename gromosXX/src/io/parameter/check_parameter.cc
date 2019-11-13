@@ -222,6 +222,35 @@ int io::simple_crosschecks(simulation::Simulation & sim) {
         param.write.energy != param.write.free_energy))
       io::messages.add("PRECALCLAM requires NTWE=NTWG > 0", 
             "In_Parameter", io::message::error);
+  
+    // Allow no QMMM cutoff only with the vacuum PBC
+    if (sim.param().qmmm.qmmm > simulation::qmmm_mechanical
+        && sim.param().qmmm.cutoff == 0.0
+        && sim.param().boundary.boundary != math::vacuum) {
+      io::messages.add("QMMM block: RCUTQM = 0.0 is allowed only with vacuum boundary conditions"
+              , "In_Parameter", io::message::error);
+    }
+    // The QMMM cutoff should be greater than longrange cutoff, otherwise the MM atoms could
+    // see a void in a place of QM zone periodic image
+    if (sim.param().qmmm.qmmm
+        && sim.param().boundary.boundary != math::vacuum
+        && sim.param().qmmm.cutoff < sim.param().pairlist.cutoff_long) {
+      io::messages.add("QMMM block: RCUTQM should not be less than RCUTL while using PBC"
+              , "In_Parameter", io::message::error);
+    }
+    // QMMM energy cannot be split atomwise, thus energy groups including QM zone are incomplete
+    if (sim.param().qmmm.qmmm && param.force.energy_group.size() > 1) {
+      io::messages.add("QMMM block: Energy groups will not contain QM contribution",
+                         "In_Parameter", io::message::warning);
+    }
+    // We cannot automatically apply external electric field on the QM zone
+    // It's user's responsibility to include it in the header for QM program
+    if (sim.param().qmmm.qmmm > simulation::qmmm_mechanical
+      && sim.param().electric.electric) {
+      io::messages.add("QMMM block: ELECTRIC block is applied on MM atoms only"
+                      , "In_Parameter", io::message::warning);
+    }
+
 
   if (io::messages.contains(io::message::error) ||
       io::messages.contains(io::message::critical))
@@ -406,6 +435,8 @@ int io::check_features(simulation::Simulation & sim)
     add("eds", "Enveloping distribution sampling", false);
     add("aeds", "Accelerated enveloping distribution sampling", false);
   }
+  // QMMM block
+  add("qmmm", "QMMM multiscale simulation", param.qmmm.qmmm);
 
   // parallelization
   add("parallel_mpi", "MPI parallelization", sim.mpi);
@@ -4267,6 +4298,98 @@ int io::check_features(simulation::Simulation & sim)
   // fc.unlock("conjugate_gradient", "bsleus");
   fc.unlock("conjugate_gradient", "xray");
   fc.unlock("conjugate_gradient", "force_groups");
+
+  // QMMM
+  fc.unlock("qmmm", "steepest_descent");
+  fc.unlock("qmmm", "conjugate_gradient");
+  fc.unlock("qmmm", "solute");
+  fc.unlock("qmmm", "solvent");
+  //fc.unlock("qmmm", "solvent_only"); // Not allowed
+  fc.unlock("qmmm", "solute_constraint_off");
+  fc.unlock("qmmm", "solute_shake");
+  fc.unlock("qmmm", "solute_lincs");
+  //fc.unlock("qmmm", "solute_flexshake"); // Needs Hessian, not implemented
+  fc.unlock("qmmm", "solvent_constraint_off");
+  fc.unlock("qmmm", "solvent_shake");
+  fc.unlock("qmmm", "solvent_lincs");
+  fc.unlock("qmmm", "solvent_settle");
+  fc.unlock("qmmm", "pressure_calculation");
+  fc.unlock("qmmm", "pressure_scale_berendsen");
+  fc.unlock("qmmm", "virial_off");
+  fc.unlock("qmmm", "virial_atomic");
+  fc.unlock("qmmm", "virial_molecular");
+  fc.unlock("qmmm", "vacuum");
+  fc.unlock("qmmm", "pbc_r");
+  fc.unlock("qmmm", "pbc_c");
+  fc.unlock("qmmm", "pbc_t");
+  //fc.unlock("qmmm", "perturbation");
+  //fc.unlock("qmmm", "perturbation_scaling");
+  fc.unlock("qmmm", "slow_growth");
+  //fc.unlock("qmmm", "individual_lambdas");
+  //fc.unlock("qmmm", "precalculate_lambdas");
+  fc.unlock("qmmm", "bond");
+  fc.unlock("qmmm", "angle");
+  fc.unlock("qmmm", "dihedral");
+  fc.unlock("qmmm", "improper");
+  fc.unlock("qmmm", "crf");
+  fc.unlock("qmmm", "lj");
+  fc.unlock("qmmm", "com_removal");
+  fc.unlock("qmmm", "rf_excluded");
+  fc.unlock("qmmm", "pairlist_standard");
+  fc.unlock("qmmm", "pairlist_grid");
+  fc.unlock("qmmm", "pairlist_gridcell");
+  fc.unlock("qmmm", "cutoff_atomic");
+  fc.unlock("qmmm", "cutoff_cg");
+  fc.unlock("qmmm", "cg_martini");
+  fc.unlock("qmmm", "cg_gromos");
+  fc.unlock("qmmm", "mixed_grain");
+  fc.unlock("qmmm", "temp_berendsen");
+  fc.unlock("qmmm", "temp_nosehoover");
+  fc.unlock("qmmm", "temp_nosehoover_chains");
+  fc.unlock("qmmm", "position_rest");
+  fc.unlock("qmmm", "position_const");
+  fc.unlock("qmmm", "position_const_scaled");
+  fc.unlock("qmmm", "distance_rest");
+  fc.unlock("qmmm", "distance_field");
+  fc.unlock("qmmm", "dihedral_rest");
+  fc.unlock("qmmm", "dihedral_const");
+  fc.unlock("qmmm", "jvalue_rest");
+  fc.unlock("qmmm", "rdc_rest");
+  fc.unlock("qmmm", "perscale");
+  fc.unlock("qmmm", "rottrans");
+  fc.unlock("qmmm", "innerloop_method_off");
+  fc.unlock("qmmm", "innerloop_method_generic");
+  fc.unlock("qmmm", "innerloop_method_hardcode");
+  fc.unlock("qmmm", "innerloop_method_table");
+  fc.unlock("qmmm", "innerloop_method_cuda");
+  fc.unlock("qmmm", "innerloop_solvent_topology");
+  fc.unlock("qmmm", "innerloop_solvent_spc");
+  fc.unlock("qmmm", "repex_temp");
+  fc.unlock("qmmm", "repex_lambda");
+  //fc.unlock("qmmm", "multicell");
+  fc.unlock("qmmm", "analysis");
+  fc.unlock("qmmm", "no_integration");
+  fc.unlock("qmmm", "stochdyn");
+  fc.unlock("qmmm", "multistep");
+  fc.unlock("qmmm", "multistep_boost");
+  fc.unlock("qmmm", "montecarlo");
+  // fc.unlock("qmmm", "polarisation_cos"); // polarisation temporarily not supported
+  // fc.unlock("qmmm", "polarisation_cos_damped"); // polarisation temporarily not supported
+  fc.unlock("qmmm", "sasa");
+  fc.unlock("qmmm", "sasavol");
+  fc.unlock("qmmm", "random_gromos");
+  fc.unlock("qmmm", "random_gsl");
+  //fc.unlock("qmmm", "eds");
+  //fc.unlock("qmmm", "aeds");
+  fc.unlock("qmmm", "parallel_mpi");
+  fc.unlock("qmmm", "parallel_omp");
+  fc.unlock("qmmm", "mult_energy_groups");
+  //fc.unlock("qmmm", "ewald");
+  //fc.unlock("qmmm", "p3m");
+  fc.unlock("qmmm", "leus");
+  fc.unlock("qmmm", "bsleus");
+  fc.unlock("qmmm", "xray");
+  //fc.unlock("qmmm", "force_groups");
 
   if (fc.check()) 
     return 0;

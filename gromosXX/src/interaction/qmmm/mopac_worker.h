@@ -4,8 +4,8 @@
  */
 
 
-#ifndef MOPAC_WORKER_H
-#define	MOPAC_WORKER_H
+#ifndef INCLUDED_MOPAC_WORKER_H
+#define	INCLUDED_MOPAC_WORKER_H
 
 #include "qm_worker.h"
 
@@ -13,7 +13,7 @@
 namespace interaction {
     class QM_Worker;
     /**
-     * @class MNDO_Worker
+     * @class MOPAC_Worker
      * a worker class which calls the MNDO software
      */
     class MOPAC_Worker : public QM_Worker {
@@ -22,7 +22,7 @@ namespace interaction {
          * Constructor
          */
         MOPAC_Worker() : QM_Worker("MOPAC Worker") {
-          this->get_new_qmID();
+          //this->get_new_qmID();
         }
         /**
          * Destructor
@@ -42,14 +42,10 @@ namespace interaction {
          * @param storage the energies, forces, charges obtained
          * @return 0 if successful, non-zero if not.
          */
-        virtual int run_QM(topology::Topology & topo,
-                           configuration::Configuration & conf,
-                           simulation::Simulation & sim,
-                           const math::VArray & qm_pos,
-                           const std::vector<MM_Atom> & mm_atoms,
-                           interaction::QM_Storage & storage,
-                           interaction::QM_Storage & LA_storage,
-                           const configuration::Configuration & qmmm_conf);
+        virtual int run_QM(const topology::Topology & topo,
+                           const configuration::Configuration & conf,
+                           const simulation::Simulation & sim,
+                           interaction::QM_Zone & qm_zone);
     private:
         double pointchg_pot(const int j,
                         const std::vector<MM_Atom>&mm_atoms,

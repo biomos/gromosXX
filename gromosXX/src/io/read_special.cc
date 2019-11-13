@@ -352,21 +352,21 @@ int io::read_special(io::Argument const & args,
         io::In_QMMM iq(qmmm_file);
      //   iq.quiet = quiet;
         switch (sim.param().qmmm.software) {
-            case simulation::qmmm_software_mndo:
+            case simulation::qm_mndo:
                 iq.title = "MNDO";
                 break;
-            case simulation::qmmm_software_turbomole:
+            case simulation::qm_turbomole:
                 iq.title = "TM";
                 break;
-            case simulation::qmmm_software_dftb:
+            case simulation::qm_dftb:
                 iq.title= "DFTB";
                 break;
-            case simulation::qmmm_software_mopac:
+            case simulation::qm_mopac:
                 iq.title= "MOPAC";
                 break;
         }
 
-        iq.read(topo , sim,sim.param().qmmm.software, os);
+        iq.read(topo, sim, os);
         io::messages.add("QM/MM specification read from " +
                 args["qmmm"] + "\n" + util::frame_text(iq.title),
                 "read special", io::message::notice);

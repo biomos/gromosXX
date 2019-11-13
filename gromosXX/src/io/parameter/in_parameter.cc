@@ -5044,7 +5044,7 @@ void io::In_Parameter::read_ADDECOUPLE(simulation::Parameter & param,
 } // ADDECOUPLE
 
 /**
- * @section qmmmb QMMM block
+ * @section qmmm QMMM block
  * @snippet snippets/snippets.cc QMMM
 
  */
@@ -5057,30 +5057,33 @@ void io::In_Parameter::read_QMMM(simulation::Parameter & param,
     // will be used to generate snippets that can be included in the doxygen doc;
     // the first line is the tag
     exampleblock << "QMMM\n";
-    exampleblock << "# NTQMMM 0,1 apply QM/MM\n";
+    exampleblock << "# NTQMMM 0..3 apply QM/MM\n";
     exampleblock << "#    0: do not apply QM/MM\n";
-    exampleblock << "#    1: apply QM/MM\n";
-    exampleblock << "# NTQMSW 0 QM software package to use\n";
+    exampleblock << "#    1: apply mechanical embedding scheme\n";
+    exampleblock << "#    2: apply electrostatic embedding scheme\n";
+    exampleblock << "#    3: apply polarisable embedding scheme\n";
+    exampleblock << "# NTQMSW 0..3 QM software package to use\n";
     exampleblock << "#    0: MNDO\n";
     exampleblock << "#    1: Turbomole\n";
     exampleblock << "#    2: DFTB\n";
     exampleblock << "#    3: MOPAC\n";
-    exampleblock << "# RCUTQ >= 0.0 cutoff for inclusion of MM charge groups\n";
+    exampleblock << "# RCUTQM: ABS(RCUTQM): cutoff for inclusion of MM atoms in QM calculation\n";
+    exampleblock << "#         (ignored for NTQMMM = 1)\n";
     exampleblock << "#     0.0: include all atoms\n";
-    exampleblock << "#    >0.0: include atoms of charge groups closer than RCUTQ\n";
-    exampleblock << "#          to QM zone.\n";
+    exampleblock << "#    >0.0: chargegroup-based cutoff\n";
+    exampleblock << "#    <0.0: atom-based cutoff\n";
     exampleblock << "# NTWQMMM >= 0 write QM/MM related data to special trajectory\n";
     exampleblock << "#    0: do not write\n";
     exampleblock << "#   >0: write every NTWQMMMth step\n";
-    exampleblock << "# QMLJ 0, 1 apply LJ in QM-zone \n";
-    exampleblock << "#    0: do not apply LJ interaction in QM-zone\n";
-    exampleblock << "#    1: apply LJ interaction  \n";
-    exampleblock << "# MMSCAL scale mm-charges with (2/pi)*atan(x*(r_{mm}-r_{mm})) (optional) \n";
+    exampleblock << "# QMLJ 0, 1 apply LJ between QM atoms \n";
+    exampleblock << "#    0: do not apply\n";
+    exampleblock << "#    1: apply\n";
+    exampleblock << "# MMSCALE scale mm-charges with (2/pi)*atan(x*(r_{qm}-r_{mm})) (optional) \n";
     exampleblock << "#     > 0.0: scaling-factor x\n";
     exampleblock << "#     < 0.0: don't scale (default)";
     exampleblock << "#\n";
-    exampleblock << "# NTQMMM  NTQMSW  RCUTQ  NTWQMMM QMLJ MMSCAL\n";
-    exampleblock << "       1       0    0.0        0   0 -1.\n";
+    exampleblock << "# NTQMMM  NTQMSW  RCUTQM  NTWQMMM QMLJ MMSCALE\n";
+    exampleblock << "       1       0    0.0        0   0   -1.\n";
     exampleblock << "END\n";
 
 
@@ -5092,43 +5095,43 @@ void io::In_Parameter::read_QMMM(simulation::Parameter & param,
     param.setDevelop("QMMM is under development.");
 
 
-    int enable, software,write,disp;
-    double mmscal = -1.;
+    int enable,software,write,qmlj;
+    double mm_scale = -1.;
     double cutoff;
-        block.get_next_parameter("NTQMMM", enable, "", "0,1");
-        block.get_next_parameter("NTQMSW", software, "", "0,1,2,3");
-        block.get_next_parameter("RCUTQ", cutoff, ">=0", "");
-        block.get_next_parameter("NTWQMMM", write, ">=0", "");
-        block.get_next_parameter("DISP", disp, "", "0,1");
-        block.get_next_parameter("MMSCAL", mmscal, "<=0 || >=0", "", true);
+    block.get_next_parameter("NTQMMM", enable, "", "0,1,2,3");
+    block.get_next_parameter("NTQMSW", software, "", "0,1,2,3");
+    block.get_next_parameter("RCUTQM", cutoff, "", "");
+    block.get_next_parameter("NTWQMMM", write, ">=0", "");
+    block.get_next_parameter("QMLJ", qmlj, "", "0,1");
+    block.get_next_parameter("MMSCALE", mm_scale, "", "", true);
 
-        if (block.error()) {
-            block.get_final_messages();
-            return;
-        }
-        /** THIS SHOULD BE DONE WITH ENUMERATION */
-        switch(enable) {
-            case 0:
-                param.qmmm.qmmm = simulation::qmmm_off;
-                break;
-            case 1:
-                param.qmmm.qmmm = simulation::qmmm_on;
-                break;
-            default:
-                break;
+    if (block.error()) {
+        block.get_final_messages();
+        return;
+    }
+    switch(enable) {
+        case 0:
+            param.qmmm.qmmm = simulation::qmmm_off;
+            break;
+        case 1:
+            param.qmmm.qmmm = simulation::qmmm_mechanical;
+            break;
+        case 2:
+            param.qmmm.qmmm = simulation::qmmm_electrostatic;
+            break;
+        case 3:
+            param.qmmm.qmmm = simulation::qmmm_polarisable;
+            break;
+        default:
+            break;
     }
 
-    switch (disp) {
+    switch (qmlj) {
         case 0:
-            param.qmmm.qmmm_disp= simulation::qmmm_disp_off;
-            
-            param.force.interaction_function=simulation::qmmm_func;   
-            /** USE LJ EXCLUSION INSTEAD */
-
-            std::cout << "LJ excluded in QM" << std::endl;
-                break;
+            param.qmmm.qm_lj= simulation::qm_lj_off;
+            break;
         case 1:
-            param.qmmm.qmmm_disp= simulation::qmmm_disp_on;
+            param.qmmm.qm_lj = simulation::qm_lj_on;
             break;
         default:
             break;
@@ -5136,23 +5139,29 @@ void io::In_Parameter::read_QMMM(simulation::Parameter & param,
 
         switch (software) {
             case 0:
-                param.qmmm.software = simulation::qmmm_software_mndo;
+                param.qmmm.software = simulation::qm_mndo;
                 break;
             case 1:
-                param.qmmm.software = simulation::qmmm_software_turbomole;
+                param.qmmm.software = simulation::qm_turbomole;
                 break;
             case 2:
-                param.qmmm.software = simulation::qmmm_software_dftb;
+                param.qmmm.software = simulation::qm_dftb;
                 break;
             case 3:
-                param.qmmm.software = simulation::qmmm_software_mopac;
+                param.qmmm.software = simulation::qm_mopac;
                 break;
             default:
                 break;
     }
-    param.qmmm.mmscal = mmscal;
-    param.qmmm.cutoff = cutoff;
+    param.qmmm.mm_scale = mm_scale;
+    if (cutoff < 0.0)
+        param.qmmm.atomic_cutoff = true;
+    param.qmmm.cutoff = fabs(cutoff);
     param.qmmm.write = write;
+    if (param.qmmm.qmmm == simulation::qmmm_mechanical && param.qmmm.cutoff != 0.0)
+        io::messages.add("QMMM block: RCUTQM > 0.0 has no effect for mechanical embedding scheme",
+            "io::In_Parameter",
+            io::message::warning);
 
     block.get_final_messages();
     }     // if block

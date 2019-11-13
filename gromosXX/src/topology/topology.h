@@ -422,6 +422,39 @@ namespace topology
     }
 
     /**
+     * QM all exclusions for atom i. QM Exclusions, QM 1,4 interactions and QM Lennard-Jones exceptions
+     */
+    excl_cont_t & qm_all_exclusion(){
+      return m_qm_all_exclusion;
+    }
+
+    /**
+     * QM all exclusions for atom i. QM Exclusions, QM 1,4 interactions and QM Lennard-Jones exceptions
+     */
+    excl_cont_t::value_type & qm_all_exclusion(unsigned int const i){
+      assert(i < m_qm_all_exclusion.size());
+      return m_qm_all_exclusion[i];
+    }
+
+    /**
+     * const QM all exclusions for atom i. QM Exclusions, QM 1,4 interactions and QM Lennard-Jones exceptions
+     */
+    excl_cont_t::value_type const & qm_all_exclusion(unsigned int const i)const{
+      assert(i < m_qm_all_exclusion.size());
+      return m_qm_all_exclusion[i];
+    }
+
+    /**
+     * update all exclusions - updates all_exclusion container after modification of exclusions, 1,4-pairs and LJ exceptions
+     */
+    void update_all_exclusion();
+
+    /**
+     * update chargegroup exclusion from atomic exclusion
+     */
+    void update_chargegroup_exclusion();
+
+    /**
      * chargegroup exclusions for chargegroup i.
      */
     std::set<int> & chargegroup_exclusion(unsigned int i){
@@ -468,6 +501,38 @@ namespace topology
      * 1,4 pairs
      */
     excl_cont_t & one_four_pair(){return m_one_four_pair;}
+
+    /**
+     * QM exclusions for atom i.
+     */
+    excl_cont_t::value_type & qm_exclusion(unsigned int const i){
+      assert(i < m_qm_exclusion.size());
+      return m_qm_exclusion[i];
+    }
+    /**
+     * const QM exclusions for atom i.
+     */
+    excl_cont_t::value_type const & qm_exclusion(unsigned int const i)const{
+      assert(i < m_qm_exclusion.size());
+      return m_qm_exclusion[i];
+    }
+
+    /**
+     * QM exclusions
+     */
+    excl_cont_t & qm_exclusion() {return m_qm_exclusion;}
+
+    /**
+     * QM 1,4 pairs of atom i.
+     */
+    excl_cont_t::value_type & qm_one_four_pair(unsigned int const i){
+      assert(i < m_qm_one_four_pair.size());
+      return m_qm_one_four_pair[i];
+    }
+    /**
+     * QM 1,4 pairs
+     */
+    excl_cont_t & qm_one_four_pair(){return m_qm_one_four_pair;}
 
     /**
      * chargegroup accessor.
@@ -724,6 +789,60 @@ namespace topology
      * is the atom coarse-grained?
      */
     std::vector<bool> & is_coarse_grained() { return m_is_coarse_grained;}
+
+    /**
+     * is the atom QM? - accessor
+     */
+    unsigned is_qm(const unsigned i)const {
+      assert(i < m_is_qm.size());
+      return m_is_qm[i];
+    }
+    
+    /**
+     * is the atom QM? - mutator
+     */
+    unsigned& is_qm(const unsigned i) {
+      assert(i < m_is_qm.size());
+      return m_is_qm[i];
+    }
+
+    /**
+     * QM atomic number accessor
+     */
+    const unsigned& qm_atomic_number(unsigned i) const {
+      assert(i < m_qm_atomic_number.size());
+      return m_qm_atomic_number[i]; 
+    }
+
+    /**
+     * QM atomic number mutator
+     */
+    unsigned& qm_atomic_number(unsigned i) {
+      assert(i < m_qm_atomic_number.size());
+      return m_qm_atomic_number[i]; 
+    }
+    
+    /**
+     * QM atomic number vector mutator
+     */
+    const std::vector<unsigned>& qm_atomic_number() const {
+      return m_qm_atomic_number; 
+    }
+
+    /**
+     * QM atomic number mutator
+     */
+    std::vector<unsigned> & qm_atomic_number() { return m_qm_atomic_number; }
+
+    /**
+     * QM to MM link accessor
+     */
+    const std::set< std::pair<unsigned,unsigned> > & qmmm_link() const { return m_qmmm_link; }
+
+    /**
+     * QM to MM link mutator
+     */
+    std::set< std::pair<unsigned,unsigned> > & qmmm_link() { return m_qmmm_link; }
 
     /**
      * recalculate lambda dependent properties.
@@ -1313,33 +1432,16 @@ namespace topology
      * const accessor to LJ exceptions
      */
     const std::vector<lj_exception_struct> & lj_exceptions() const { return m_lj_exceptions;}
+
     /**
-     * accessor to QM zone
+     * accessor to QM LJ exceptions
      */
-    std::set<qm_atom_struct> & qm_zone() { return m_qm_zone; }
+    std::vector<lj_exception_struct> & qm_lj_exceptions() { return m_qm_lj_exceptions;}
     /**
-     * const accessor to QM zone
+     * const accessor to QM LJ exceptions
      */
-    const std::set<qm_atom_struct> & qm_zone() const { return m_qm_zone; }
-    /**
-     * check whether an atom is in the QM zone
-     * @param i index of the atom to check
-     * @return true if in QM zone, false otherwise
-     */
-    bool in_qm_zone(unsigned int i) const {
-      return m_qm_zone.count(i);
-    }
-     
-     /**
-     * accessor to MM->QM link
-     */
-    std::vector< std::pair<unsigned int,unsigned int> >  & qm_mm_pair() 
-    { return qm_mm_link; }
-    /**
-     * const accessor MM->QM Link
-     */
-    const std::vector< std::pair<unsigned int,unsigned int> > & qm_mm_pair()
-    const  { return qm_mm_link; }  
+    const std::vector<lj_exception_struct> & qm_lj_exceptions() const { return m_qm_lj_exceptions;}
+
   private:
     /**
      * the number of atom types
@@ -1796,12 +1898,41 @@ namespace topology
      * LJ exceptions
      */
     std::vector<lj_exception_struct> m_lj_exceptions;
-    /**
-     * the QM zone
-     */
-    std::set<qm_atom_struct> m_qm_zone;
-    std::vector< std::pair<unsigned int,unsigned int> > qm_mm_link;
 
+    /**
+     * Is the atom QM
+     */
+    std::vector<unsigned> m_is_qm;
+
+    /**
+     * QM atomic number
+     */
+    std::vector<unsigned> m_qm_atomic_number;
+
+    /**
+     * links of QM to MM
+     */
+    std::set< std::pair<unsigned,unsigned> > m_qmmm_link;
+
+    /**
+     * the QMMM LJ exclusions.
+     */
+    excl_cont_t m_qm_exclusion;
+
+    /**
+     * the QMMM 1-4 interactions.
+     */
+    excl_cont_t m_qm_one_four_pair;
+     
+    /**
+     * QMMM exclusions and 1-4 interactions.
+     */
+    excl_cont_t m_qm_all_exclusion;
+     
+     /**
+     * QMMM LJ exceptions
+     */
+    std::vector<lj_exception_struct> m_qm_lj_exceptions;
 
   }; // topology
 

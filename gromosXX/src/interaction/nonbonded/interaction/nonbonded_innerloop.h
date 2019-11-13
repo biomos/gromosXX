@@ -329,6 +329,19 @@ namespace interaction
      );
     
     /**
+     * calculation of the short range lennard-jones only
+     */
+    void lj_innerloop
+    (
+     topology::Topology & topo, 
+     configuration::Configuration & conf,
+     unsigned int i,
+     unsigned int j,
+     Storage & storage,
+     math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity
+     );
+    
+    /**
      * calculation of the real space lattice sum electrostatics
      * for excluded neighbors
      */

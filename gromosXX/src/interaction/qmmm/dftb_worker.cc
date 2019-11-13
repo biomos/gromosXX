@@ -16,7 +16,6 @@
 //#include "../../../math/periodicity.h"
 
 // special interactions
-#include "qm_storage.h"
 #include "mm_atom.h"
 #include "qm_worker.h"
 #include "dftb_worker.h"
@@ -27,17 +26,13 @@
 #undef MODULE
 #undef SUBMODULE
 #define MODULE interaction
-#define SUBMODULE special
+#define SUBMODULE qmmm
 #define MAXPATH 10240
 
-int interaction::DFTB_Worker::run_QM(topology::Topology& topo,
-        configuration::Configuration& conf,
-        simulation::Simulation& sim,
-        const math::VArray & qm_pos,
-        const std::vector<interaction::MM_Atom> & mm_atoms,
-        interaction::QM_Storage& storage,
-        interaction::QM_Storage& LA_storage,
-        const configuration::Configuration& qmmm_conf){
+int interaction::DFTB_Worker::run_QM(const topology::Topology & topo,
+                                     const configuration::Configuration & conf,
+                                     const simulation::Simulation & sim,
+                                     interaction::QM_Zone & qm_zone){
 
 char current_working_directory[MAXPATH];
 #ifdef HAVE_GETCWD
@@ -125,7 +120,7 @@ char current_working_directory[MAXPATH];
 //write link atoms
     math::Vec posCap, dR;
     unsigned int m1, q1;
-    const double rch = sim.param().qmmm.cap_dist; //Carbon-Hydrogen bond length
+    const double rch = sim.param().qmmm.cap_length; //Carbon-Hydrogen bond length
     for (std::vector<std::pair<unsigned int, unsigned int> >::const_iterator
                  it = topo.qm_mm_pair().begin(); it != topo.qm_mm_pair().end(); ++it, ++pi) {
         q1 = it->first;
@@ -408,5 +403,5 @@ int interaction::DFTB_Worker::init(topology::Topology& topo,
 }
 
 interaction::DFTB_Worker::~DFTB_Worker() {
-this->del_qmID();
+//this->del_qmID();
 }

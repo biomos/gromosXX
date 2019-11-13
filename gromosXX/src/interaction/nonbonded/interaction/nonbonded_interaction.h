@@ -28,6 +28,7 @@ namespace interaction
 
   class Pairlist_Algorithm;
   class Nonbonded_Set_Interface;
+  class QMMM_Interaction;
   
   /**
    * @class Nonbonded_Interaction
@@ -105,6 +106,14 @@ namespace interaction
      * parameter
      */
     Nonbonded_Parameter & parameter() { return m_parameter; }
+
+    /**
+     * set QMMM interaction pointer
+     */
+    void qmmm_interaction(QMMM_Interaction * qmmm)
+    {
+      m_qmmm = qmmm;
+    }
 
   protected:
     /**
@@ -207,6 +216,11 @@ namespace interaction
      * the expanded configuration;
      */
     configuration::Configuration * m_exp_conf;
+
+    /**
+     * Pointer to access QMMM interaction
+     */
+    QMMM_Interaction * m_qmmm;
 
   };
   

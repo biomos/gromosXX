@@ -35,6 +35,8 @@
 #include "../../interaction/nonbonded/interaction/mpi_nonbonded_master.h"
 #include "../../interaction/nonbonded/interaction/mpi_nonbonded_slave.h"
 
+#include "../../interaction/qmmm/qmmm_interaction.h"
+
 #include "../../io/ifp.h"
 
 #include "../../interaction/nonbonded/create_nonbonded.h"
@@ -213,9 +215,9 @@ int interaction::create_g96_nonbonded
       sim.param().force.interaction_function ==
       simulation::pol_off_lj_crf_func ||
       sim.param().force.interaction_function ==
-      simulation::lj_ls_func  || 
+      simulation::lj_ls_func || 
       sim.param().force.interaction_function ==
-      simulation::qmmm_func    
+      simulation::lj_func
           )
     it.read_lj_parameter(ni->parameter().lj_parameter());
   // and coarse-grained parameter (MARTINI model)
@@ -250,6 +252,17 @@ int interaction::create_g96_nonbonded
       io::messages.add("Dummy atomtype (DUM) in topology has Lennard-Jones "
                        "interactions.", "topology", io::message::error);
     }
+  }
+
+  // We need access to QMMM to get QM electric field
+  if (sim.param().qmmm.qmmm == simulation::qmmm_polarisable) {
+    interaction::QMMM_Interaction * qmmm
+         = dynamic_cast<interaction::QMMM_Interaction *>(ff.interaction("QMMM Interaction"));
+    if (qmmm == nullptr) {
+      std::cerr << "Nonbonded Interaction: could not get pointer to QMMM interaction"
+          << "\n\t(internal error)" << std::endl;;
+    }
+    ni->qmmm_interaction(qmmm);
   }
   ff.push_back(ni);
 

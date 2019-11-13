@@ -65,7 +65,9 @@ m_sasa_volume_tot(0.0),
 m_sasa_first_neighbour(),
 m_sasa_second_neighbour(),
 m_sasa_third_neighbour(),
-m_sasa_higher_neighbour() {
+m_sasa_higher_neighbour(),
+m_is_qm(0),
+m_qm_atomic_number(0) {
   m_chargegroup.push_back(0);
   m_molecule.push_back(0);
   m_temperature_group.push_back(0);
@@ -141,6 +143,15 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
   m_chargegroup.push_back(0);
   m_stochastic.clear();
   m_lj_exceptions.clear();
+  // QMMM TEST
+  m_qm_exclusion.clear();;
+  m_qm_one_four_pair.clear();;
+  m_qm_all_exclusion.clear();;
+  m_qm_lj_exceptions.clear();;
+  // END QMMM TEST
+  m_is_qm.clear();
+  m_qm_atomic_number.clear();
+  m_qmmm_link.clear();
 
   DEBUG(10, "solute chargegroups = " << topo.num_solute_chargegroups());
 
@@ -173,6 +184,7 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
     m_is_eds_perturbed.insert(m_is_eds_perturbed.end(), topo.m_is_eds_perturbed.begin(), topo.m_is_eds_perturbed.end());
     m_is_polarisable.insert(m_is_polarisable.end(), topo.m_is_polarisable.begin(), topo.m_is_polarisable.end());
     m_is_coarse_grained.insert(m_is_coarse_grained.end(), topo.m_is_coarse_grained.begin(), topo.m_is_coarse_grained.end());
+    m_qmmm_link.insert(topo.m_qmmm_link.begin(), topo.m_qmmm_link.end());
 
     for (int i = 0; i < num_solute; ++i) {
       m_iac.push_back(topo.m_iac[i]);
@@ -187,6 +199,8 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
       m_gamma_j.push_back(topo.m_gamma_j[i]);
       m_gamma_k.push_back(topo.m_gamma_k[i]);
       m_cg_factor.push_back(topo.m_cg_factor[i]);
+      m_is_qm.push_back(topo.m_is_qm[i]);
+      m_qm_atomic_number.push_back(topo.m_qm_atomic_number[i]);
 
       topology::excl_cont_t::value_type ex;
       topology::excl_cont_t::value_type::const_iterator it = topo.m_exclusion[i].begin(),
@@ -217,6 +231,44 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
                 topology::lj_exception_struct(ljex_it->i + num_solute * m, ljex_it->j + num_solute * m,
                 ljex_it->c6, ljex_it->c12));
       }
+
+      // QMMM TEST
+      {
+        topology::excl_cont_t::value_type ex;
+        topology::excl_cont_t::value_type::const_iterator it = topo.m_qm_exclusion[i].begin(),
+                to = topo.m_qm_exclusion[i].end();
+        for (; it != to; ++it)
+          ex.insert(*it + num_solute * m);
+        m_qm_exclusion.push_back(ex);
+
+        ex.clear();
+        it = topo.m_qm_one_four_pair[i].begin();
+        to = topo.m_qm_one_four_pair[i].end();
+        for (; it != to; ++it)
+          ex.insert(*it + num_solute * m);
+        m_qm_one_four_pair.push_back(ex);
+
+        ex.clear();
+        it = topo.m_qm_all_exclusion[i].begin();
+        to = topo.m_qm_all_exclusion[i].end();
+        for (; it != to; ++it)
+          ex.insert(*it + num_solute * m);
+        m_qm_all_exclusion.push_back(ex);
+
+        std::vector<topology::lj_exception_struct>::const_iterator ljex_it =
+                topo.qm_lj_exceptions().begin(), ljex_to =
+                topo.qm_lj_exceptions().end();
+        for (; ljex_it != ljex_to; ++ljex_it) {
+          m_qm_lj_exceptions.push_back(
+                  topology::lj_exception_struct(ljex_it->i + num_solute * m, ljex_it->j + num_solute * m,
+                  ljex_it->c6, ljex_it->c12));
+        }
+      }
+      // END QMMM TEST
+
+
+
+
 
       m_atom_energy_group.push_back(topo.m_atom_energy_group[i]);
 
@@ -482,6 +534,13 @@ void topology::Topology::resize(unsigned int const atoms) {
   m_one_four_pair.resize(atoms);
   m_all_exclusion.resize(atoms);
   m_stochastic.resize(atoms);
+  //QMMM TEST
+  m_qm_exclusion.resize(atoms);
+  m_qm_one_four_pair.resize(atoms);
+  m_qm_all_exclusion.resize(atoms);
+  // END QMMM TEST
+  m_qm_atomic_number.resize(atoms, 0);
+  m_is_qm.resize(atoms, 0);
 
   m_iac.resize(atoms);
   // chargegroups???
@@ -489,6 +548,7 @@ void topology::Topology::resize(unsigned int const atoms) {
   m_is_eds_perturbed.resize(atoms, false);
   m_is_polarisable.resize(atoms, false);
   m_is_coarse_grained.resize(atoms, false);
+
 }
 
 void topology::Topology::init(simulation::Simulation const & sim,
@@ -542,38 +602,7 @@ void topology::Topology::init(simulation::Simulation const & sim,
   }
 
   // add chargegroup exclusions (a clever technique to improve pairlisting...)
-  m_chargegroup_exclusion.resize(num_solute_chargegroups());
-
-  for (size_t cg1 = 0; cg1 < num_solute_chargegroups(); ++cg1) {
-
-    m_chargegroup_exclusion[cg1].insert(cg1);
-
-    for (size_t cg2 = cg1 + 1; cg2 < num_solute_chargegroups(); ++cg2) {
-
-      // std::cerr << "\tchecking cg1=" << cg1 << " cg2=" << cg2 << std::endl;
-
-      for (int at1 = m_chargegroup[cg1]; at1 < m_chargegroup[cg1 + 1]; ++at1) {
-
-              topology::excl_cont_t::value_type::const_iterator ex = m_all_exclusion[at1].begin(),
-                ex_to = m_all_exclusion[at1].end();
-        for (; ex != ex_to; ++ex) {
-
-          // std::cerr << "cg2: " << m_chargegroup[cg2] << " - " << m_chargegroup[cg2+1]
-          // << " ex=" << *ex << std::endl;
-
-          if (m_chargegroup[cg2] <= *ex &&
-                  m_chargegroup[cg2 + 1] > *ex) {
-
-            // std::cerr << "cg1=" << cg1 << " cg2=" << cg2 << " : excluded!" << std::endl;
-
-            m_chargegroup_exclusion[cg1].insert(cg2);
-            m_chargegroup_exclusion[cg2].insert(cg1);
-
-          } // exclude cg
-        } // exclusions of at1
-      } // at1 in cg1
-    } // cg2
-  } // cg1
+  update_chargegroup_exclusion();
 
   if (!sim.param().force.nonbonded_crf) {
     for (unsigned int i = 0; i < m_charge.size(); ++i) {
@@ -1314,6 +1343,71 @@ topology::Topology::update_for_lambda() {
     DEBUG(8, "mass(" << it->second.sequence_number()
             << ") = " << mass()(it->second.sequence_number()));
   }
+}
+
+void topology::Topology::update_chargegroup_exclusion() {
+  m_chargegroup_exclusion.clear();
+  m_chargegroup_exclusion.resize(num_solute_chargegroups());
+
+  for (size_t cg1 = 0; cg1 < num_solute_chargegroups(); ++cg1) {
+
+    m_chargegroup_exclusion[cg1].insert(cg1);
+
+    for (size_t cg2 = cg1 + 1; cg2 < num_solute_chargegroups(); ++cg2) {
+
+      // std::cerr << "\tchecking cg1=" << cg1 << " cg2=" << cg2 << std::endl;
+
+      for (int at1 = m_chargegroup[cg1]; at1 < m_chargegroup[cg1 + 1]; ++at1) {
+
+              topology::excl_cont_t::value_type::const_iterator ex = m_all_exclusion[at1].begin(),
+                ex_to = m_all_exclusion[at1].end();
+        for (; ex != ex_to; ++ex) {
+
+          // std::cerr << "cg2: " << m_chargegroup[cg2] << " - " << m_chargegroup[cg2+1]
+          // << " ex=" << *ex << std::endl;
+
+          if (m_chargegroup[cg2] <= *ex &&
+                  m_chargegroup[cg2 + 1] > *ex) {
+
+            // std::cerr << "cg1=" << cg1 << " cg2=" << cg2 << " : excluded!" << std::endl;
+
+            m_chargegroup_exclusion[cg1].insert(cg2);
+            m_chargegroup_exclusion[cg2].insert(cg1);
+
+          } // exclude cg
+        } // exclusions of at1
+      } // at1 in cg1
+    } // cg2
+  } // cg1
+}
+
+void topology::Topology::update_all_exclusion() {
+  const unsigned size = m_all_exclusion.size();
+  const unsigned n_atoms = num_atoms();
+  assert(size == n_atoms
+      && size == m_exclusion.size()
+      && size == m_one_four_pair.size());
+  m_all_exclusion.clear();
+  m_all_exclusion.resize(n_atoms);
+
+  DEBUG(15, "Merging exclusions and one_four_pairs into all_exclusions");
+  // Insert exclusions and 1,4-pairs
+  for (unsigned i = 0; i < n_atoms; ++i)
+  {
+    std::set_union(m_exclusion[i].begin(), m_exclusion[i].end(),
+          m_one_four_pair[i].begin(), m_one_four_pair[i].end(),
+          std::inserter(m_all_exclusion[i], m_all_exclusion[i].end()));
+  }
+  // Insert LJ exceptions
+  DEBUG(15, "Inserting LJ exceptions");
+  for (std::vector<topology::lj_exception_struct>::const_iterator
+        it = m_lj_exceptions.begin(); it != m_lj_exceptions.end(); ++it) {
+    DEBUG(15, "LJ exception: " << it->i << " - " << it->j);
+    assert((unsigned) it->i < size && it->i < it->j);
+    m_all_exclusion[it->i].insert(it->j);
+  }
+  /// Chargegroup exclusions need to be updated too
+  update_chargegroup_exclusion();
 }
 
 /**

@@ -57,7 +57,24 @@ namespace interaction
                           bool longrange,
                           util::Algorithm_Timer & timer,
                           bool master);
+    
+    /**
+     * calculate only lj interactions.
+     */
+    void lj_outerloop(topology::Topology & topo,
+		      configuration::Configuration & conf,
+		      simulation::Simulation & sim,
+		      Pairlist const & pairlist_solute,
+                      Pairlist const & pairlist_solvent,
+		      Storage & storage,
+                      bool longrange,
+                      util::Algorithm_Timer & timer,
+                      bool master);
 
+    /**
+     * helper function to calculate the forces and energies from the
+     * 1,4 interactions.
+     */
     void cg_exclusions_outerloop(topology::Topology & topo,
 				 configuration::Configuration & conf,
 				 simulation::Simulation & sim,
@@ -308,7 +325,7 @@ namespace interaction
 			  math::Matrix & hessian,
 			  PairlistContainer const & pairlist);
 
-  private:
+  protected:
     /**
      * the nonbonded parameter.
      */
@@ -339,6 +356,15 @@ namespace interaction
 			   Storage & storage,
                            bool longrange, util::Algorithm_Timer & timer,
                            bool master);
+
+    template<typename t_interaction_spec>
+    void _lj_outerloop(topology::Topology & topo,
+                  configuration::Configuration & conf,
+                  simulation::Simulation & sim,
+                  Pairlist const & pairlist_solute,
+                  Pairlist const & pairlist_solvent,
+                  Storage & storage,
+                  bool longrange, util::Algorithm_Timer & timer, bool master);
 
     template<typename t_interaction_spec>
     void _one_four_outerloop(topology::Topology & topo,

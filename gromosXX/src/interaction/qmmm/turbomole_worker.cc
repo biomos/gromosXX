@@ -16,7 +16,6 @@
 //#include "../../../math/periodicity.h"
 
 // special interactions
-#include "qm_storage.h"
 #include "mm_atom.h"
 #include "qm_worker.h"
 #include "turbomole_worker.h"
@@ -27,12 +26,12 @@
 #undef MODULE
 #undef SUBMODULE
 #define MODULE interaction
-#define SUBMODULE special
+#define SUBMODULE qmmm
 
 #define MAXPATH 10240
 
 interaction::Turbomole_Worker::~Turbomole_Worker() {
-this->del_qmID();
+//this->del_qmID();
 }
 
 int interaction::Turbomole_Worker::init(topology::Topology& topo, 
@@ -55,12 +54,10 @@ void defortranize(std::string & str) {
   }
 }
 
-int interaction::Turbomole_Worker::run_QM(topology::Topology& topo, 
-        configuration::Configuration& conf, simulation::Simulation& sim, 
-        const math::VArray& qm_pos, const std::vector<MM_Atom>& mm_atoms, 
-        interaction::QM_Storage& storage,
-        interaction::QM_Storage& LA_storage,
-        const configuration::Configuration& qmmm_conf){
+int interaction::Turbomole_Worker::run_QM(const topology::Topology & topo,
+                                          const configuration::Configuration & conf,
+                                          const simulation::Simulation & sim,
+                                          interaction::QM_Zone & qm_zone){
     
     
   char current_working_directory[MAXPATH];
@@ -305,7 +302,7 @@ int interaction::Turbomole_Worker::run_QM(topology::Topology& topo,
     }
     // get gradient
     if (line.find("$point_charge_gradients") != std::string::npos) { 
-      for (std::vector<interaction::MM_Atom>::const_iterator
+      for (std::vector<MM_Atom>::const_iterator
         it = mm_atoms.begin(), to = mm_atoms.end(); it != to; ++it) {
         std::getline(output, line);
         if (output.fail()) {

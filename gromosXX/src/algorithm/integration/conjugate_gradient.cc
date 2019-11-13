@@ -84,8 +84,8 @@ int algorithm::Conjugate_Gradient
   if (do_posres) {
     cgrad_posres = dynamic_cast<algorithm::Position_Constraints *>(cgrad_seq.algorithm("Position_Constraints"));
     if (cgrad_posres == NULL) {
-      os << "Conjugate Gradient: Could not get Position Constraints algorithm"
-                << "\n\t(internal error)\n";
+      std::cerr << "Conjugate Gradient: Could not get Position Constraints algorithm"
+                << "\n\t(internal error)" << std::endl;
       return 1;
     }
   }
@@ -93,8 +93,8 @@ int algorithm::Conjugate_Gradient
   // Forcefield to evaluate forces and energies
   cgrad_ff = dynamic_cast<interaction::Forcefield *>(cgrad_seq.algorithm("Forcefield"));
   if (cgrad_ff == NULL) {
-    os << "Conjugate Gradient: could not get Interaction Calculation algorithm"
-              << "\n\t(internal error)\n";
+    std::cerr << "Conjugate Gradient: could not get Interaction Calculation algorithm"
+              << "\n\t(internal error)" << std::endl;
     return 1;
   }
 
@@ -106,8 +106,8 @@ int algorithm::Conjugate_Gradient
   if (do_shake) {
     cgrad_shake = dynamic_cast<algorithm::Shake *>(cgrad_seq.algorithm("Shake"));
     if (cgrad_shake == NULL) { 
-      os << "Conjugate Gradient: could not get SHAKE algorithm"
-                << "\n\t(internal error)\n";
+      std::cerr << "Conjugate Gradient: could not get SHAKE algorithm"
+                << "\n\t(internal error)" << std::endl;
       return 1;
     }
     // Initialise separate configuration for SHAKE
@@ -635,7 +635,8 @@ int algorithm::Conjugate_Gradient
     std::cout << "CONJUGATE GRADIENT:\tMINIMUM REACHED\n";
   }
   else {
-    error = E_MINIMUM_NOT_REACHED;
+    //error = E_MINIMUM_NOT_REACHED;
+    error = 0;
     std::cout << "CONJUGATE GRADIENT:\tMIMIMUM CRITERION NOT MET\n";
   }
   std::cout << "Total interaction calculations : " << std::setw(10) << std::right << total_iterations + 1 << "\n";

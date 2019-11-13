@@ -689,7 +689,22 @@ namespace math
    * @f$ \epsilon^{-1} @f$
    */
   extern double eps0_i;
-  
+
+  /**
+   * Avogadro constant
+   */
+  extern double avogadro;
+
+  /**
+   * Bohr (length a.u.)
+   */
+  extern double bohr;
+
+  /**
+   * Hartree (energy a.u.)
+   */
+  extern double hartree;
+
 #ifndef NDEBUG
   /**
    * module debug level.

@@ -36,12 +36,7 @@
 
 #include "../../../simulation/parameter.h"
 
-#include "storage.h"
-
-#include "../../special/qmmm/mm_atom.h"
-#include "../../special/qmmm/qm_storage.h"
 #include "../../interaction.h"
-#include "../../special/qmmm_interaction.h"
 
 #ifdef OMP
 #include <omp.h>
@@ -1101,6 +1096,56 @@ unsigned int i_deb;
     timer.stop(timer_name);
 }
 
+void interaction::Nonbonded_Outerloop
+::lj_outerloop(topology::Topology & topo,
+        configuration::Configuration & conf,
+        simulation::Simulation & sim,
+        Pairlist const & pairlist_solute,
+        Pairlist const & pairlist_solvent,
+        Storage & storage,
+        bool longrange, util::Algorithm_Timer & timer, bool master) {
+  SPLIT_MY_INNERLOOP(_lj_outerloop, simulation::lj_func, topo, conf, sim,
+          pairlist_solute, pairlist_solvent, storage, longrange, timer, master);
+}
+
+template<typename t_interaction_spec>
+void interaction::Nonbonded_Outerloop
+::_lj_outerloop(topology::Topology & topo,
+                configuration::Configuration & conf,
+                simulation::Simulation & sim,
+                Pairlist const & pairlist_solute,
+                Pairlist const & pairlist_solvent,
+                Storage & storage,
+                bool longrange, util::Algorithm_Timer & timer, bool master) {
+  
+  math::Periodicity<t_interaction_spec::boundary_type> periodicity(conf.current().box);
+  Nonbonded_Innerloop<t_interaction_spec> innerloop(m_param);
+
+  innerloop.init(sim,simulation::lj_func);
+
+  const unsigned end_solute = topo.num_solute_atoms();
+  for (unsigned i = 0; i < end_solute; ++i) {
+    for (std::vector<unsigned int>::const_iterator
+          j_it = pairlist_solute[i].begin()
+        , j_to = pairlist_solute[i].end()
+        ; j_it != j_to; ++j_it) {
+      DEBUG(10, "\tLJ nonbonded_interaction: i " << i << " j " << *j_it);
+
+      innerloop.lj_innerloop(topo, conf, i, *j_it, storage, periodicity);
+    }
+  }
+  const unsigned end_solvent = topo.num_atoms();
+  for (unsigned i = end_solute; i < end_solvent; ++i) {
+    for (std::vector<unsigned int>::const_iterator
+          j_it = pairlist_solvent[i].begin()
+        , j_to = pairlist_solvent[i].end()
+        ; j_it != j_to; ++j_it) {
+      DEBUG(10, "\tLJ nonbonded_interaction: i " << i << " j " << *j_it);
+
+      innerloop.lj_innerloop(topo, conf, i, *j_it, storage, periodicity);
+    }
+  }
+}
 
 // calculate sasa and volume term
 
@@ -1398,7 +1443,10 @@ void interaction::Nonbonded_Outerloop
 
   const unsigned int num_solute_atoms = topo.num_solute_atoms();
 
+  // Skip QM atoms in electrostatic or polarisable embedding
+  const bool qmmm = (sim.param().qmmm.qmmm > simulation::qmmm_mechanical);
   for (unsigned int i = rank; i < num_solute_atoms; i += size) {
+    if (qmmm && topo.is_qm(i)) continue;
     innerloop.RF_excluded_interaction_innerloop(topo, conf, i, storage, periodicity);
   } // loop over solute atoms
 
@@ -1483,12 +1531,12 @@ void interaction::Nonbonded_Outerloop
   unsigned int end = size_i;
   unsigned int end_lr = size_lr;
 
-  if (rank == 0) {
+  /*if (rank == 0) {
     // compute the QM part, gather etc...
     if (sim.param().qmmm.qmmm != simulation::qmmm_off) {
-      sim.param().qmmm.interaction->prepare(topo, conf, sim);
-    }
+      //sim.param().qmmm.interaction->prepare(topo, conf, sim);
   }
+  }*/
 
   math::VArray e_el_new(topo.num_atoms());
 #ifdef XXMPI
@@ -1620,10 +1668,9 @@ void interaction::Nonbonded_Outerloop
 
     if (rank == 0) {
       // get the contributions from the QM part.
-      if (sim.param().qmmm.qmmm != simulation::qmmm_off) {
-        sim.param().qmmm.interaction->
-                add_electric_field_contribution(topo, conf, sim, e_el_new);
-      }
+      /*if (sim.param().qmmm.qmmm != simulation::qmmm_off) {
+        //sim.param().qmmm.interaction->add_electric_field_contribution(topo, conf, sim, e_el_new);
+      }*/
       
       // If the external electric field is activated
       // then it will also act on the polarisable model

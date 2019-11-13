@@ -6,11 +6,6 @@
 #ifndef INCLUDED_PARAMETER_H
 #define INCLUDED_PARAMETER_H
 
-// forward declarations
-namespace interaction {
-  class QMMM_Interaction;
-}
-
 namespace simulation
 {
   /**
@@ -384,11 +379,12 @@ namespace simulation
   enum interaction_func_enum{
     /** lj_crf_function */ lj_crf_func,
     /** lj_ls_function */ lj_ls_func,
+    /** lj_function */ lj_func,
     /** pol_lj_crf_function */ pol_lj_crf_func,
     /** pol_off_lj_crf_function */ pol_off_lj_crf_func,
     /** cgrain_function (MARTINI)*/ cgrain_func,
     /** cgrain_function (GROMOS) */ cggromos_func,
-    /** QMMM_function  */ qmmm_func
+    /** default */ default_func
   };
   
   /**
@@ -706,24 +702,41 @@ namespace simulation
    */
   enum qmmm_enum {
     /**
-     * don't apply QM/MM
+     * disable QM/MM
      */
     qmmm_off = 0,
     /**
-     * apply QM/MM
+     * enable QM/MM - mechanical embedding
+     * QM charges are used for nonbonded QM-MM interaction.
+     * QM atoms do not see any MM atoms.
      */
-    qmmm_on = 1
+    qmmm_mechanical = 1,
+    /**
+     * enable QM/MM - electrostatic embedding
+     * Nonbonded QM-MM interaction is modelled on QM level using 
+     * MM atoms as point charges. Only LJ interactions are
+     * calculated clasically.
+     */
+    qmmm_electrostatic = 2,
+    /**
+     * enable QM/MM - polarisable embedding
+     * Nonbonded QM-MM interaction is modelled on QM level using 
+     * MM atoms and their charge-on-spring as point charges.
+     * Self-consistent field iteration is performed every step.
+     * LJ interactions are calculated clasically.
+     */
+    qmmm_polarisable = 3
   };
 
-  enum qmmm_disp_enum {
+  enum qm_lj_enum {
   /**
-     * don't apply LJ-interaction between QM and MM atoms
+     * don't apply LJ dispersion between QM atoms
      */
-    qmmm_disp_off = 0,
+    qm_lj_off = 0,
     /**
-     * apply LJ-interaction between QM and MM atoms
+     * apply LJ dispersion between QM atoms
      */
-    qmmm_disp_on = 1
+    qm_lj_on = 1
   };
   
 
@@ -731,23 +744,23 @@ namespace simulation
    * @enum qmmm_software_enum
    * which QM software to use
    */
-  enum qmmm_software_enum {
+  enum qm_software_enum {
     /**
      * use MNDO
      */
-    qmmm_software_mndo = 0,
+    qm_mndo = 0,
     /**
      * use Turbomole
      */
-    qmmm_software_turbomole = 1,
+    qm_turbomole = 1,
     /**
      * use DFTB
      */
-    qmmm_software_dftb = 2,
+    qm_dftb = 2,
       /**
        * use MOPAC
        */
-    qmmm_software_mopac = 3
+    qm_mopac = 3
   };
 
   /**
@@ -3533,130 +3546,75 @@ namespace simulation
     struct qmmm_struct {
       /**
        * Constructor
-       * defaults:
-       * - no QM/MM
-       * - software: MNDO
-       * - length factor: 0.1 (i.e. Angstrom -> nm)
-       * - energy factor: 4.184 (i.e. kcal -> kJ)
-       * - charge factor: 1.0 (i.e. e -> e)
-       * - cutoff: 0.0 (no cutoff applied)
-       * - write: 0
+       * Default values:
+       * - qmmm 0 (no QMMM)
+       * - qm_lj 0 (no LJ dispersion within QM zone)
+       * - software 0 (MNDO)
+       * - cutoff 0.0 (no cutoff)
+       * - mm_scale -1.0 (no scaling)
+       * - write(0)
        */
-      qmmm_struct() :
-      qmmm(qmmm_off),
-      software(qmmm_software_mndo),
-      unit_factor_length(0.1),
-      unit_factor_energy(4.184),
-      unit_factor_charge(1.0),
-      cutoff(0.0),
-      write(0),
-      qmmm_disp(qmmm_disp_off),
-      mmscal(-1.0),
-
-
-
-      interaction(NULL) {}
+      qmmm_struct() : qmmm(qmmm_off)
+                    , qm_lj(qm_lj_off)
+                    , software(qm_mndo)
+                    , cutoff(0.0)
+                    , atomic_cutoff(false)
+                    , cap_length(0.109)
+                    , mm_scale(-1.0)
+                    , write(0) {}
       /**
-       * apply QM/MM or not
+       * 
+       * Common QMMM parameters
+       * 
+       */
+      /**
+       * QM-MM embedding scheme or disable
        */
       qmmm_enum qmmm;
       /**
        * apply LJ-interaction in QM-Zone or not
        */
-      qmmm_disp_enum qmmm_disp;
+      qm_lj_enum qm_lj;
       /**
        * the QM software to use
        */
-      qmmm_software_enum software;
+      qm_software_enum software;
       /**
-       * Quasi periodic table. Periodic table should be implemented universally
-       */
-      std::map<unsigned int,std::string > qmmm_at_to_num;
-      /**
-       * Capping atom bond length
-       */
-      double cap_dist;
-      /**
-       * factor to convert the QM length unit to the GROMOS one
-       */
-      double unit_factor_length;  //MNDO
-      double unit_factor_length3; //DFTB - This has to be unified - every QM worker could have its own
-      double unit_factor_mmlen; //DFTB
-      /**
-       * factor to convert the QM energy unit to the GROMOS one
-       */
-      double unit_factor_energy; // MNDO
-      double unit_factor_energy3; //DFTB
-      /**
-       * factor to convert the QM charge unit to the GROMOS one
-       */
-      double unit_factor_charge;  //MNDO
-      double unit_factor_charge3; //DFTB
-      /**
-       * cutoff to determine atoms included in QM computation as point charges.
+       * cutoff to determine atoms included in QM calculation as point charges.
        */
       double cutoff;
       /**
-       * scaling factor for the MM atoms in the QM/MM interaction
+       * type of cutoff (atomic or chargegroup-based)
        */
-      double mmscal;
+      bool atomic_cutoff;
+      /**
+       * Capping atom bond length
+       */
+      double cap_length;
+
+      /**
+       * scaling factor for the MM charges in the QM/MM interaction
+       */
+      double mm_scale;
+
       /**
        * write QM/MM related stuff to special trajectory
        */
-      unsigned int write;
+      unsigned write; // What can be written here?
+
       /**
-       * parameters for the DFTB software
+       * QM program unspecific parameters
        */
-      
-      struct mopac_param_struct{
-          /**
-           * path for the MOPAC binary
-           */
-          std::string binary;
-          /**
-           * path for the input file. Empty for a temporary file
-           */
-          std::string input_file;
-          /**
-           * path for the output file. Empty for a temporary file
-           */
-          std::string output_file;
-          /**
-           * path for the gradient output file. Empty for a temporary file
-           */
-          std::string output_gradient_file;
-          /**
-           * path for the molin file. Empty for a temporary file
-           */
-          std::string molin_file;
-          /**
-           * header of the MOPAC input file
-           */
-          std::string input_header;
-          /**
-           * path for the input file2. Empty for a temporary file
-           */
-          std::string input_file2;
-          /**
-           * path for the output file2. Empty for a temporary file
-           */
-          std::string output_file2;
-          /**
-           * path for the gradient output file2. Empty for a temporary file
-           */
-          std::string output_gradient_file2;
-          /**
-           * header of the MOPAC input file2
-           */
-          std::string input_header2;
-          /**
-           * path for the molin file2. Empty for a temporary file
-           */
-          std::string molin_file2;
-      }mopac;
-      struct dftb_param_struct {
+      struct qm_param_struct{
+        qm_param_struct();
+        qm_param_struct(double ufl
+                      , double ufe
+                      , double ufc
+                      ) : unit_factor_length(ufl)
+                        , unit_factor_energy(ufe)
+                        , unit_factor_charge(ufc) {}
         /**
-         * path for the DFTB binary
+         * path for the program binary
          */
         std::string binary;
         /**
@@ -3668,46 +3626,37 @@ namespace simulation
          */
         std::string output_file;
         /**
-         * path for the gradient output file. Empty for a temporary file
-         */
-        std::string output_gradient_file;
-        /**
-         * path for the charges.dat file. Empty for a temporary file
-         */
-        std::string output_charg_file;
-        /**
-         * header of the DFTB input file
+         * header of the input file
          */
         std::string input_header;
         /**
-         * the working directory containing the control file
+         * factor to convert the QM length unit to the GROMOS one
          */
-        std::string working_directory;
+        double unit_factor_length;
         /**
-         * atomic numbers 
+         * factor to convert the QM energy unit to the GROMOS one
          */
-        std::vector<unsigned int> elements;
+        double unit_factor_energy;
         /**
-         * path of the DFTB geom file
+         * factor to convert the QM charge unit to the GROMOS one
          */
-        std::string geom_file;
-      } dftb;
+        double unit_factor_charge;
+        /**
+         * maps atomic number to elements name
+         */
+        std::map<unsigned, std::string> elements;
+      };
+
       /**
-       * parameters for the MNDO software
+       * MNDO specific parameters
        */
-      struct mndo_param_struct {
-        /**
-         * path for the MNDO binary
-         */
-        std::string binary;
-        /**
-         * path for the input file. Empty for a temporary file
-         */
-        std::string input_file;
-        /**
-         * path for the output file. Empty for a temporary file
-         */
-        std::string output_file;
+      struct mndo_param_struct : public qm_param_struct{
+        mndo_param_struct(
+                          ) : qm_param_struct(0.1 /* A -> nm */
+                                            , 4.184 /* kcal -> kJ */
+                                            , 1.0
+                                            )
+                          {}
         /**
          * path for the gradient output file. Empty for a temporary file
          */
@@ -3716,19 +3665,17 @@ namespace simulation
          * path for the density matrix file. Empty for a temporary file
          */
         std::string density_matrix_file;
-        /**
-         * header of the MNDO input file
-         */
-        std::string input_header;
       } mndo;
+
       /**
-       * parameter for the Turbomole software
+       * Turbomole specific parameters
        */
-      struct tubromole_param_struct {
-        /**
-         * the directory containing the turbomole binaries
-         */
-        std::string binary_directory;
+      struct turbomole_param_struct : public qm_param_struct{
+        turbomole_param_struct() : qm_param_struct(math::bohr /* a.u. -> nm */
+                                                , math::hartree * math::avogadro / 1000 /* a.u. -> kJmol-1 */
+                                                , 1.0
+                                                )
+                              {}
         /**
          * the tools to run in the working directory
          */
@@ -3737,6 +3684,10 @@ namespace simulation
          * the working directory containing the control file
          */
         std::string working_directory;
+        /**
+         * the directory containing the turbomole binaries
+         */
+        std::string binary_directory;
         /**
          * the input file containing the atomic coordinates
          */
@@ -3757,16 +3708,54 @@ namespace simulation
          * the output file containing the cartesion gradients of the MM atoms
          */
         std::string output_mm_gradient_file;
-        /**
-         * maps atomic number to elements name
-         */
-        std::map<unsigned int, std::string> elements;
       } turbomole;
+
+      /**
+       * DFTB specific parameters
+       */
+      struct dftb_param_struct : public qm_param_struct{
+        dftb_param_struct() : qm_param_struct(math::bohr /* a.u. -> nm */
+                                                , math::hartree * math::avogadro / 1000 /* a.u. -> kJmol-1 */
+                                                , 1.0
+                                                )
+                              {}
+        /**
+         * path for the charges.dat file. Empty for a temporary file
+         */
+        std::string output_charge_file;
+        /**
+         * the working directory containing the control file
+         */
+        std::string working_directory;
+        /**
+         * path of the DFTB geom file
+         */
+        std::string geom_file;
+      } dftb;
+
+      /**
+       * MOPAC specific parameters
+       */
+      struct mopac_param_struct : public qm_param_struct{
+        mopac_param_struct() : qm_param_struct(0.1 /* A -> nm */
+                                             , 4.184 /* kcal -> kJ */
+                                             , 1.0
+                                             )
+                          {}
+        /**
+         * path for the molin file. Empty for a temporary file
+         */
+        std::string molin_file;
+        /**
+         * path for the output gradient file. Empty for a temporary file
+         */
+        std::string output_gradient_file;
+      } mopac;
       /**
        * pointer to the interaction class such the the QM/MM interaction
        * can be easily passed to other algorithms
        */
-      interaction::QMMM_Interaction * interaction;
+      //interaction::QMMM_Interaction * interaction; // This I dont like here
     } qmmm;
     
     struct symrest_struct {

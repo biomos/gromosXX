@@ -40,9 +40,16 @@ namespace io {
      */
     void read(topology::Topology &topo,
 	      simulation::Simulation & sim,
-	      simulation::qmmm_software_enum,
 	      std::ostream & os = std::cout);
-
+    /**
+     * Read in QM/MM unit conversion factors
+     */
+    void read_units(simulation::Parameter::qmmm_struct::qm_param_struct* qm_param);
+    /**
+     * Read map of atomic numbers to element names
+     */
+    void read_elements(const topology::Topology& topo
+    , simulation::Parameter::qmmm_struct::qm_param_struct* qm_param);
   };
 } // io
 

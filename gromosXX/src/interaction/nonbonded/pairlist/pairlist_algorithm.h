@@ -114,6 +114,60 @@ namespace interaction
       return m_timer;
     }
 
+    /**
+     * Exclusion of QM atoms - for first atom of double-loop
+     */
+    static inline bool qm_excluded(const topology::Topology& topo
+                                 , const simulation::qmmm_enum qmmm
+                                 , const unsigned atom1) {
+      /** 
+       * With qmmm_mechanical, we exclude only QM-QM
+       * With others we also exclude QM-MM
+       */
+      switch (qmmm) {
+        case simulation::qmmm_off: break;
+        case simulation::qmmm_mechanical: break;
+        case simulation::qmmm_electrostatic:
+        case simulation::qmmm_polarisable: {
+          if (topo.is_qm(atom1))
+            return true;
+          break;
+        }
+        default:
+          break;
+      }
+      return false;
+    }
+
+    /**
+     * Exclusion of QM atoms - for second atom of double-loop or pair
+     */
+    static inline bool qm_excluded(const topology::Topology& topo
+                                 , const simulation::qmmm_enum qmmm
+                                 , const unsigned atom1
+                                 , const unsigned atom2) {
+      /** 
+       * With qmmm_mechanical, we exclude only QM-QM
+       * With others we also exclude QM-MM
+       */
+      switch (qmmm) {
+        case simulation::qmmm_off: break;
+        case simulation::qmmm_mechanical: {
+          if (topo.is_qm(atom1) && topo.is_qm(atom2))
+            return true;
+          break;
+        }
+        case simulation::qmmm_electrostatic:
+        case simulation::qmmm_polarisable: {
+          if (topo.is_qm(atom1) || topo.is_qm(atom2))
+            return true;
+          break;
+        }
+        default: break;
+      }
+      return false;
+    }
+
   protected:
     /**
      * nonbonded parameters (needed to construct the Innerloop).

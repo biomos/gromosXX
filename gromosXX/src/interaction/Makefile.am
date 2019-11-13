@@ -97,7 +97,6 @@ xxintnbspecial_HEADERS = special/create_special.h\
 	special/nemd.h\
 	special/order_parameter_restraint_interaction.h\
 	special/rdc_restraint_interaction.h\
-	special/qmmm_interaction.h\
 	special/symmetry_restraint_interaction.h
 
 xxintspecialxraydir = $(includedir)/md++/interaction/special/xray
@@ -105,15 +104,16 @@ xxintspecialxray_HEADERS = special/xray/dens.h\
 	special/xray/sf.h\
 	special/xray/bfactor.h
 
-xxintspecialqmmmdir = $(includedir)/md++/interaction/special/qmmm
-xxintspecialqmmm_HEADERS = special/qmmm/mm_atom.h\
-	special/qmmm/qm_storage.h\
-	special/qmmm/qm_worker.h\
-	special/qmmm/mndo_worker.h\
-	special/qmmm/dftb_worker.h\
-	special/qmmm/mopac_worker.h\
-	special/qmmm/turbomole_worker.h\
-	special/qmmm/gathering.h
+xxintqmmmdir = $(includedir)/md++/interaction/qmmm
+xxintqmmm_HEADERS = qmmm/mm_atom.h\
+	qmmm/qm_atom.h\
+	qmmm/qm_link.h\
+	qmmm/qm_zone.h\
+	qmmm/qm_worker.h\
+	qmmm/mndo_worker.h\
+	qmmm/qmmm_interaction.h\
+	qmmm/nonbonded/qmmm_nonbonded_outerloop.h \
+	qmmm/nonbonded/qmmm_nonbonded_set.h
 
 noinst_LTLIBRARIES = libgrointeraction.la
 
@@ -183,15 +183,14 @@ libgrointeraction_la_SOURCES =interaction.cc\
 	special/xray/bfactor.cc\
 	special/order_parameter_restraint_interaction.cc\
 	special/rdc_restraint_interaction.cc\
-	special/qmmm/mm_atom.cc\
-	special/qmmm/qm_worker.cc\
-	special/qmmm/mndo_worker.cc\
-	special/qmmm/dftb_worker.cc\
-	special/qmmm/mopac_worker.cc\
-	special/qmmm/turbomole_worker.cc\
-	special/qmmm/gathering.cc\
-	special/qmmm_interaction.cc\
-	special/symmetry_restraint_interaction.cc
+	special/symmetry_restraint_interaction.cc\
+	qmmm/qm_link.cc\
+	qmmm/qm_zone.cc\
+	qmmm/qm_worker.cc\
+	qmmm/mndo_worker.cc\
+	qmmm/qmmm_interaction.cc\
+	qmmm/nonbonded/qmmm_nonbonded_outerloop.cc\
+	qmmm/nonbonded/qmmm_nonbonded_set.cc
 
 bin_PROGRAMS =
 

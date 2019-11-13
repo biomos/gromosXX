@@ -16,7 +16,6 @@
 //#include "../../../math/periodicity.h"
 
 // special interactions
-#include "qm_storage.h"
 #include "mm_atom.h"
 #include "qm_worker.h"
 #include "mopac_worker.h"
@@ -27,7 +26,7 @@
 #undef MODULE
 #undef SUBMODULE
 #define MODULE interaction
-#define SUBMODULE special
+#define SUBMODULE qmmm
 #define MAXPATH 10240
 
 
@@ -36,7 +35,7 @@ double interaction::MOPAC_Worker::pointchg_pot(const int j,
                 const topology::Topology & topo,
                 const configuration::Configuration &conf) {
         double x=0.0 ;
-        for (std::vector<interaction::MM_Atom>::const_iterator
+        for (std::vector<MM_Atom>::const_iterator
                 it=mm_atoms.begin(),to=mm_atoms.end();it!=to;++it  ){
             math::Vec dR=conf.current().pos(it->index)-conf.current().pos(j);
             x+= (it->charge /abs(dR));
@@ -70,21 +69,18 @@ math::Vec interaction::MOPAC_Worker::pointchg_force(const int j,
 }
 
 
-int interaction::MOPAC_Worker::run_QM(topology::Topology& topo,
-                                     configuration::Configuration& conf,
-                                     simulation::Simulation& sim,
-                                     const math::VArray & qm_pos,
-                                     const std::vector<interaction::MM_Atom> & mm_atoms,
-                                     interaction::QM_Storage& storage,
-                                     interaction::QM_Storage& LA_storage,
-                                     const configuration::Configuration & qmmm_conf){
+int interaction::MOPAC_Worker::run_QM(const topology::Topology & topo,
+                                      const configuration::Configuration & conf,
+                                      const simulation::Simulation & sim,
+                                      interaction::QM_Zone & qm_zone) {
     {
+        //m_timer.start();
         
         // Empty MM not implemented yet
         if (mm_atoms.empty()) {
             io::messages.add("Cannot deal with zero MM atoms yet.", "MOPAC_Worker", 
             io::message::error);
-        return 1;
+            return 1;
         }
   
 
@@ -112,7 +108,14 @@ int interaction::MOPAC_Worker::run_QM(topology::Topology& topo,
         oss.str("");
         oss.clear();
  //       oss << topo.qm_mm_pair().size();
-
+        // Read density matrix from previous run - improves performance ca. by one half
+        if (sim.steps()) {
+            DEBUG(15,"Step no. " << sim.steps());
+            DEBUG(15,"header before replace:" << header);
+            // Also in second step start reading the density matrix from previous step - major speedup
+            header = io::replace_string(header, "DENOUT", "DENOUT OLDENS");
+            DEBUG(15,"header after replace:" << header);
+        }
         // write header
         inp << header << std::endl;
 
@@ -150,7 +153,7 @@ int interaction::MOPAC_Worker::run_QM(topology::Topology& topo,
 //
         math::Vec posCap, dR;
         unsigned int m1, q1;
-        const double rch = sim.param().qmmm.cap_dist; //Carbon-Hydrogen bond length
+        const double rch = sim.param().qmmm.cap_length; //Carbon-Hydrogen bond length
 
         if (verbose) {
             std::cout << "number of link atoms: " << topo.qm_mm_pair().size() << std::endl;
@@ -300,7 +303,7 @@ int interaction::MOPAC_Worker::run_QM(topology::Topology& topo,
         }
     output.close();
    //gradient on MM-pointcharges caused by QM-charges
-    for (std::vector<interaction::MM_Atom>::const_iterator
+    for (std::vector<MM_Atom>::const_iterator
         it=mm_atoms.begin(),to=mm_atoms.end();it!=to;++it  ){
         math::Vec gradient;
         gradient=pointchg_force(it->index,qm_chg,topo,qmmm_conf);
@@ -329,6 +332,7 @@ int interaction::MOPAC_Worker::run_QM(topology::Topology& topo,
         }
     }
     qm_chg.clear();
+    //m_timer.stop();
     return 0;
 }
 
@@ -338,16 +342,16 @@ int interaction::MOPAC_Worker::init(topology::Topology& topo,
     this->output_file = sim.param().qmmm.mopac.output_file;
     this->output_gradient_file = sim.param().qmmm.mopac.output_gradient_file;
     this->header_file=sim.param().qmmm.mopac.input_header;
-    if (this->get_qmID() == 2) {
+    /*if (this->get_qmID() == 2) {
         this->input_file = sim.param().qmmm.mopac.input_file2;
         this->output_file = sim.param().qmmm.mopac.output_file2;
         this->output_gradient_file = sim.param().qmmm.mopac.output_gradient_file2;
         this->header_file=sim.param().qmmm.mopac.input_header2;
-    }
+    }*/
 
     return 0;
 }
 
 interaction::MOPAC_Worker::~MOPAC_Worker() {
-    this->del_qmID();
+    //this->del_qmID();
 }
