@@ -453,6 +453,7 @@ int main(int argc, char *argv[]) {
         }
     }
     DEBUG(1, "Master \t \t finalize ")
+            
     Master->write_final_conf();
        
   } else {  //SLAVES    
@@ -487,7 +488,7 @@ int main(int argc, char *argv[]) {
       Slave->send_to_master();
     }
     
-    DEBUG(1, "Slave "<< rank <<" \t Finalize")    
+    DEBUG(1, "Slave "<< rank <<" \t Finalize") ;   
     Slave->write_final_conf();
     std::cout << "\n=================== Slave Node "<< rank << "  finished successfully!\n";
   }
