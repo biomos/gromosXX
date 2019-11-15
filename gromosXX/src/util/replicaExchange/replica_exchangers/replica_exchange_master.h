@@ -25,8 +25,8 @@
 
 #include <io/configuration/out_configuration.h>
 #include <util/replicaExchange/repex_mpi.h>
-#include <util/replicaExchange/replica_exchange_base.h>
-#include <util/replicaExchange/replica.h>
+#include <util/replicaExchange/replica_exchangers/replica_exchange_base.h>
+#include <util/replicaExchange/replica/replica.h>
 #include <util/replicaExchange/replica_data.h>
 
 #ifdef XXMPI
@@ -56,6 +56,9 @@ namespace util {
     replica_exchange_master(io::Argument & args,
             int cont,
             int rank,
+            int simulationRank,
+            int simulationID,
+            int simulationThreads,
             int _size,
             int _numReplicas,
             std::vector<int> repIDs,
@@ -77,10 +80,7 @@ namespace util {
     virtual void init_repOut_stat_file();
     
   protected:
-    /**
-     * output file Path for repdat output file
-     */
-    std::string repdatName;
+
 
     /**
      * output file stream for repdat output file
@@ -114,7 +114,10 @@ namespace util {
      * information of all replicas
      */
     std::vector<util::replica_data> replicaData;
-    
+        /**
+     * output file Path for repdat output file
+     */
+    std::string repdatName;
     //virtual void init_repOut_stat_file(std::string repoutPath);
 
   };

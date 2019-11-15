@@ -30,7 +30,15 @@ namespace simulation
 		   m_time_step_size(0),
 		   m_steps(0), 
 		   m_time(0) {}
+
     
+    /**
+     *  Constructor determening mpi flag on construction needed in repex/ 
+     */
+    Simulation(bool mpi) : mpi(mpi), openmp(false),
+               m_time_step_size(0),
+               m_steps(0), 
+               m_time(0) {}
     /**
      * the simulation parameter
      */

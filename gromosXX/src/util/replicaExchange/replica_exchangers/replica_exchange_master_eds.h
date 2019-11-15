@@ -10,11 +10,11 @@
  *
  * Created on April 18, 2018, 3:20 PM
  */
-#include <util/replicaExchange/replica_exchange_master.h>
-#include <util/replicaExchange/replica_exchange_base_eds.h>
+#include <util/replicaExchange/replica_exchangers/replica_exchange_master.h>
+#include <util/replicaExchange/replica_exchangers/replica_exchange_base_eds.h>
 
 //for the constructor
-#include <util/replicaExchange/replica_exchange_base.h>
+#include <util/replicaExchange/replica_exchangers/replica_exchange_base.h>
 #include <stdheader.h>
 
 #include <algorithm/algorithm.h>
@@ -56,6 +56,9 @@ namespace util{
         replica_exchange_master_eds(io::Argument _args,
                 int cont,
                 int rank,
+                int simulationRank,
+                int simulationID,
+                int simulationThreads,
                 int _size,
                 int _numReplicas,
                 std::vector<int> repIDs,
@@ -80,7 +83,7 @@ namespace util{
          * destructor
          */
         ~replica_exchange_master_eds(){};
-        using util::replica_exchange_base_eds::replicas;
+        //using util::replica_exchange_base_eds::replicas;
         /**
          * Column Size for redpat out-floating point nums
          */
@@ -96,6 +99,7 @@ namespace util{
         const simulation::Parameter::reeds_struct reedsParam;
         std::vector<util::reeds_replica_data> replicaData;
         int rank;
+        int simulationID;
         
         /**
          * functions, for initing the repout

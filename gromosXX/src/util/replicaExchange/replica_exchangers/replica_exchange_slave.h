@@ -25,9 +25,9 @@
 #include <unistd.h>
 
 #include <io/configuration/out_configuration.h>
-#include <util/replicaExchange/replica_exchange_base.h>
+#include <util/replicaExchange/replica_exchangers/replica_exchange_base.h>
 #include <util/replicaExchange/repex_mpi.h>
-#include <util/replicaExchange/replica.h>
+#include <util/replicaExchange/replica/replica.h>
 
 #ifdef XXMPI
 #include <mpi.h>
@@ -54,6 +54,9 @@ namespace util {
     replica_exchange_slave(io::Argument & _args,
             int cont,
             int rank,
+            int simulationRank,
+            int simulationID,
+            int simulationThreads,
             std::vector<int> repIDs,
             std::map<ID_t, rank_t> & repMap);
     /**

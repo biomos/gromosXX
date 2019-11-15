@@ -27,9 +27,10 @@
 #include <unistd.h>
 
 #include <io/configuration/out_configuration.h>
-#include <util/replicaExchange/replica.h>
-#include <util/replicaExchange/replica_exchange_master.h>
-#include <util/replicaExchange/replica_exchange_base.h>
+#include <util/replicaExchange/replica/replica.h>
+#include <util/replicaExchange/replica_exchangers/replica_exchange_base.h>
+#include <util/replicaExchange/replica_exchangers/replica_exchange_master.h>
+
 #include <string>
 
 #ifdef XXMPI
@@ -44,22 +45,29 @@
 util::replica_exchange_master::replica_exchange_master(io::Argument & args,
         int cont,
         int rank,
+        int simulationRank,
+        int simulationID,
+        int simulationThreads,
         int _size,
         int _numReplicas,
         std::vector<int> repIDs,
         std::map<ID_t, rank_t> & repMap)
 :
-replica_exchange_base(args, cont, rank, repIDs, repMap),
+replica_exchange_base(args, cont, rank, simulationRank, simulationID, simulationThreads, repIDs, repMap ),
 size(_size),
 numReplicas(_numReplicas),
-repParams(replicas[0]->sim.param().replica),
+repParams(replica->sim.param().replica),
 repdatName(args["repdat"])
 {
 #ifdef XXMPI
   DEBUG(2,"replica_exchange_master "<< rank <<":Constructor:\t START");
+
   assert(rank == 0);
   assert(numReplicas > 0);
-  assert(repParams.num_l > 0);
+  DEBUG(2,"replica_exchange_master "<< rank <<":Constructor:\t rep_params THERE?");
+  DEBUG(2,"replica_exchange_master "<< rank <<":Constructor:\t" << replica->sim.param().replica.num_l);
+  DEBUG(2,"replica_exchange_master "<< rank <<":Constructor:\t" << replica->sim.param().replica.lambda[0]);
+
   assert(repParams.num_l > 0);
   
   DEBUG(4,"replica_exchange_master "<< rank <<":Constructor:\t Init Replicas \t Next");
@@ -89,27 +97,39 @@ util::replica_exchange_master::~replica_exchange_master() {
 }
 
 void util::replica_exchange_master::receive_from_all_slaves() {
-  DEBUG(2,"replica_exchange_master "<< rank <<":receive_from_all_slaves:\t START\n");
-  double start = MPI_Wtime();
+    DEBUG(2,"replica_exchange_master "<< rank <<":receive_from_all_slaves:\t START\n");
+    double start = MPI_Wtime();
 
-  MPI_Status status;
-  util::repInfo info;
+    MPI_Status status;
+    util::repInfo info;
 
-  // receive all information from slaves
-  for (unsigned int rep = 0; rep < numReplicas; ++rep) {
-    unsigned int rank = repMap.find(rep)->second;
-    if (rank != 0) {
-      MPI_Recv(&info, 1, MPI_REPINFO, rank, REPINFO, MPI_COMM_WORLD, &status);
-      replicaData[rep].run = info.run;
-      replicaData[rep].epot = info.epot;
-      replicaData[rep].epot_partner = info.epot_partner;
-      replicaData[rep].probability = info.probability;
-      replicaData[rep].switched = info.switched;
-      replicaData[rep].partner = info.partner;
+    // receive all information from slaves
+    DEBUG(2,"replica_exchange_master "<< rank <<":receive_from_all_slaves:\t replicas"<< numReplicas <<"\n");
+
+    for (unsigned int rep = 1; rep < numReplicas; rep++) {
+      unsigned int rank = repMap.find(rep)->second;
+      if (rank != 0) {
+        MPI_Recv(&info, 1, MPI_REPINFO, rank, REPINFO, MPI_COMM_WORLD, &status);
+        replicaData[rep].run = info.run;
+        replicaData[rep].epot = info.epot;
+        replicaData[rep].epot_partner = info.epot_partner;
+        replicaData[rep].probability = info.probability;
+        replicaData[rep].switched = info.switched;
+        replicaData[rep].partner = info.partner;
+      }
     }
-  }
+    DEBUG(2,"replica_exchange_master "<< rank <<":receive_from_all_slaves:\t got all MPI reps\n");
 
-  // write all information from master node to data structure
+    // write all information from master node to data structure
+    int ID = replica->ID;
+    replicaData[ID].run = replica->run;
+    replicaData[ID].partner = replica->partner;
+    replicaData[ID].epot = replica->epot;
+    replicaData[ID].epot_partner = replica->epot_partner;
+    replicaData[ID].probability = replica->probability;
+    replicaData[ID].switched = replica->switched;
+
+    /*
   for (repIterator it = replicas.begin(); it < replicas.end(); ++it) {
     int ID = (*it)->ID;
     replicaData[ID].run = (*it)->run;
@@ -119,7 +139,7 @@ void util::replica_exchange_master::receive_from_all_slaves() {
     replicaData[ID].probability = (*it)->probability;
     replicaData[ID].switched = (*it)->switched;
   }
-
+    */
    DEBUG(2,"replica_exchange_master "<< rank <<":receive_from_all_slaves:\t " << "time used for receiving all messages: " << MPI_Wtime() - start << " seconds\n");
    DEBUG(2,"replica_exchange_master "<< rank <<":receive_from_all_slaves:\t DONE: \n");
 #else

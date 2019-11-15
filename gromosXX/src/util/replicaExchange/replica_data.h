@@ -7,6 +7,7 @@
 #define	REPLICA_DATA_H
 namespace util
 {
+
   /**
    * @struct replica_data
    * contains all necessary data of a replica that is written to the output file.

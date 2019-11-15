@@ -12,12 +12,14 @@
  */
 
 
-#include <util/replicaExchange/replica_exchange_base_eds.h>
-#include <util/replicaExchange/replica_reeds.h>
+#include <util/replicaExchange/replica_exchangers/replica_exchange_base_eds.h>
+#include <util/replicaExchange/replica/replica_reeds.h>
 
 //Constructor
-#include <util/replicaExchange/replica_exchange_base.h>
-#include <util/replicaExchange/replica.h>
+#include <util/replicaExchange/replica_exchangers/replica_exchange_base.h>
+#include <util/replicaExchange/replica/replica.h>
+#include "replicaExchange/replica/replica_MPI_master.h"
+#include "replicaExchange/replica/replica_MPI_slave.h"
 #include <stdheader.h>
 
 #include <algorithm/algorithm.h>
@@ -57,9 +59,9 @@
  * ADDITIONAL FUNCTIONS for REDS
  */
 
-util::replica_exchange_base_eds::replica_exchange_base_eds(io::Argument _args, int cont, int rank,
+util::replica_exchange_base_eds::replica_exchange_base_eds(io::Argument _args, int cont, int rank, int simulationRank, int simulationID, int simulationThreads,
         std::vector<int> repIDs, std::map<ID_t, rank_t> &_repMap):  
-        replica_exchange_base(_args, cont, rank, repIDs, _repMap){
+        replica_exchange_base(_args, cont, rank, simulationRank, simulationID, simulationThreads, repIDs, _repMap){
     DEBUG(3,"replica_exchange_base_eds "<< rank <<":Constructor:\t START");
     DEBUG(4,"replica_exchange_base_eds "<< rank <<":Constructor:\t replica Type\t "<< typeid(replicas).name());
     createReplicas(cont, repIDs, rank);
@@ -67,7 +69,27 @@ util::replica_exchange_base_eds::replica_exchange_base_eds(io::Argument _args, i
 }
 
 void util::replica_exchange_base_eds::createReplicas(int cont, std::vector<int>  repIDs, int rank){
-  DEBUG(3,"replica_exchange_base_eds "<< rank <<":initReplicas:\t START");
+  MPI_DEBUG(3,"replica_exchange_base_eds "<< rank <<":createReplicas:\t START");
+  
+  if(!replica){
+    delete replica;
+  }
+  MPI_DEBUG(3,"replica_exchange_base_eds "<< rank <<":createReplicas:\t Deleted");
+
+  // create the number of replicas that are assigned to my node
+    if(simulationThreads>1){
+        if(simulationRank == 0){
+            replica = new util::replica_MPI_Master(args, cont, simulationID, rank, simulationRank, simulationID, simulationThreads);
+        }
+        else{
+            replica = new util::replica_MPI_Slave(args, cont, simulationID, rank, simulationRank, simulationID, simulationThreads);
+        }
+    }
+    else{
+        replica = new util::replica_reeds(args, cont, simulationID, rank);
+    }
+  MPI_DEBUG(3,"replica_exchange_base_eds "<< rank <<":createReplicas:\t DONE");
+    /*
   replicas.resize(numReplicas);
   // create the number of replicas that are assigned to my node
    int i = 0;
@@ -75,19 +97,54 @@ void util::replica_exchange_base_eds::createReplicas(int cont, std::vector<int> 
     *it = new util::replica_reeds(args, cont, repIDs[i], rank);
     DEBUG(4, "replica_exchange_base_eds "<< rank <<":initReplicas:\tConstructor \ttopo\t" << (*it)->topo.check_state())
     DEBUG(4, "replica_exchange_base_eds "<< rank <<":initReplicas:\tConstructor \tconf:\t" << (*it)->conf.check((*it)->topo, (*it)->sim))
-   }    
-  DEBUG(3,"replica_exchange_base_eds "<< rank <<":initReplicas:\t Done");
+   }  
+   */
 }
 
 
 util::replica_exchange_base_eds::~replica_exchange_base_eds() {
+    delete replica;
+  /*
   for (repIterator it = replicas.begin(); it < replicas.end(); ++it) {
     delete *it;
   }
+   * */
 }
 
 void util::replica_exchange_base_eds::swap() {
   DEBUG(3,"replica_exchange_base_eds "<< rank <<":swap:\t Start");
+  
+      unsigned int partner = replica->find_partner();
+      unsigned int partnerRank = repMap.find(partner)->second;
+      if (partner != (replica)->ID) {
+      // are the replicas on the same node?
+      DEBUG(4,"replica_exchange_base_eds "<< rank <<":swap:\t sending "<< replica->ID <<" \t Start");
+      if (partnerRank != replica->rank) // replicas on different nodes
+      {
+        replica->swap(partner, partnerRank);
+        if (replica->switched) {
+          if (replica->ID < partner) {
+            replica->send_coord(partner, partnerRank);
+            replica->receive_new_coord(partner, partnerRank);
+            // the averages of current and old are interchanged after calling exchange_state() and have to be switched back bschroed:that is new!
+            //(*it)->exchange_averages();
+          } else {
+            replica->receive_new_coord(partner, partnerRank);
+            replica->send_coord(partner, partnerRank);
+            // the averages of current and old are interchanged after calling exchange_state() and have to be switched back bschroed:that is new!
+            //(*it)->exchange_averages();
+          }
+        }
+      }
+    } else {
+      replica->partner = replica->ID;
+      replica->probability = 0.0;
+      replica->switched = 0;
+    }
+  
+  
+  
+  /*
   // do this for all replicas; if two of them on this node, do special swap
   for (repIterator it = replicas.begin(); it < replicas.end(); ++it) {
     unsigned int partner = (*it)->find_partner();
@@ -125,9 +182,11 @@ void util::replica_exchange_base_eds::swap() {
       (*it)->switched = 0;
     }
   }
+   * */
     DEBUG(3,"replica_exchange_base_eds "<< rank <<":swap:\t Done");
 }
 
+/*
 void util::replica_exchange_base_eds::swap_on_node(repIterator it1, const unsigned int partner) {
   replica* rep1 = *it1;
   replica* rep2;
@@ -204,7 +263,7 @@ void util::replica_exchange_base_eds::switch_coords_on_node(repIterator it1, con
   rep1->exchange_averages();
   rep2->exchange_averages();
 }
- 
+ */
 void util::replica_exchange_base_eds::run_MD() {
     DEBUG(3, "replica_exchange_base_eds "<< rank <<":run_MD:\t START")
 
@@ -232,7 +291,7 @@ void util::replica_exchange_base_eds::eds_stat(){
          */
         for (util::replica_reeds* x : replicas){
             ID_t currentID = x->ID;
-            for(int rep=0; rep< this->numReplicas;rep++){
+            for(unsigned int rep=0; rep< this->numReplicas;rep++){
                double rep_s=x->sim.param().reeds.lambda[rep];
                replicaStatData[currentID].epot_vec[rep]= x->calc_energy_eds_stat(rep_s);
             }
@@ -245,7 +304,7 @@ void util::replica_exchange_base_eds::eds_stat(){
                   << std::setw(1) << replicaStatData[currentID].s
                   << std::setw(1) << replicaStatData[currentID].T
                   << " ";
-            for(int rep=0; rep<this->numReplicas; rep++){
+            for(unsigned int rep=0; rep<this->numReplicas; rep++){
                     *(eds_stat_out[currentID]) << std::setw(10) << replicaStatData[currentID].epot_vec[rep]
                     << " ";
             }
@@ -256,12 +315,15 @@ void util::replica_exchange_base_eds::eds_stat(){
 
 void util::replica_exchange_base_eds::init() {
   DEBUG(3,"replica_exchange_base_eds "<< rank <<":init:\t init \t START");
-  DEBUG(3,"replica_exchange_base_eds "<< rank <<":init:\t start init from baseclass \t NEXT");
-    for (repIterator it = replicas.begin(); it < replicas.end(); ++it) {
+  MPI_DEBUG(3,"replica_exchange_base_eds "<< rank <<":init:\t start init from baseclass \t NEXT");
+  replica->init();
+  /*
+  for (repIterator it = replicas.begin(); it < replicas.end(); ++it) {
     (*it)->init();
    }
+   * */
   //replica_exchange_base::init();
-  DEBUG(3,"replica_exchange_base_eds "<< rank <<":init:\t init_eds_stat \t NEXT");
+  MPI_DEBUG(3,"replica_exchange_base_eds "<< rank <<":init:\t init_eds_stat \t NEXT");
   this->init_eds_stat();
   DEBUG(3,"replica_exchange_base_eds "<< rank <<":init:\t DONE");
 }
@@ -270,7 +332,17 @@ void util::replica_exchange_base_eds::init() {
 void util::replica_exchange_base_eds::init_eds_stat(){
         DEBUG(3,"replica_exchange_base_eds "<< rank <<":init_eds_stat:\t START");
         
-        ID_t currentID=1000; //error value          
+        ID_t currentID=1000; //error value
+        currentID = replica->ID;
+        replicaStatData[currentID].ID =currentID;
+        replicaStatData[currentID].T=replica->T;
+        replicaStatData[currentID].s=replica->l; //l==s because of the implementation of hamiltonian replica exchange.
+        replicaStatData[currentID].dt=replica->dt;
+        replicaStatData[currentID].run=0;
+        replicaStatData[currentID].epot_vec.resize(this->numReplicas);
+        replicaStatData[currentID].prob_vec.resize(this->numReplicas);
+        
+        /*
         for (repIterator it = replicas.begin(); it < replicas.end(); ++it) {
           currentID = (*it)->ID;
           replicaStatData[currentID].ID =currentID;
@@ -281,5 +353,6 @@ void util::replica_exchange_base_eds::init_eds_stat(){
           replicaStatData[currentID].epot_vec.resize(this->numReplicas);
           replicaStatData[currentID].prob_vec.resize(this->numReplicas);
         }
+         * */
         DEBUG(3,"replica_exchange_base_eds "<< rank <<":init_eds_stat:\t DONE");
 }

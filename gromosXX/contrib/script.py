@@ -79,7 +79,7 @@ def write(rep):
     f.write("FIN=" + full_name + ".fin\n")
     f.write("TRJ=" + full_name + ".trj\n")
     f.write("TRV=" + full_name + ".trv\n")
-    f.write("TRE=" + full_name + ".tre\n")
+    f.write("TRE=" + full_name + ".out_tre\n")
     f.write("BAE=" + full_name + ".bae\n")
     if pert != 0:
         f.write("TRG=" + full_name + ".trg\n")
@@ -100,7 +100,7 @@ def write(rep):
     f.write("\t@fin\t${FIN} \\\n")
     f.write("\t@trj\t${TRJ} \\\n")
     f.write("\t@trv\t${TRV} \\\n")
-    f.write("\t@tre\t${TRE} \\\n")
+    f.write("\t@out_tre\t${TRE} \\\n")
     f.write("\t@bae\t${BAE} \\\n")
     if pert != 0:
         f.write("\t@trg\t${TRG} \\\n")

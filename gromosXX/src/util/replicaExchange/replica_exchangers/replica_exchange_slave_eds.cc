@@ -11,7 +11,7 @@
  * Created on August 31, 2018, 10:43 AM
  */
 
-#include <util/replicaExchange/replica_exchange_slave_eds.h>
+#include <util/replicaExchange/replica_exchangers/replica_exchange_slave_eds.h>
 
 
 #undef MODULE
@@ -22,12 +22,15 @@
 util::replica_exchange_slave_eds::replica_exchange_slave_eds(io::Argument & _args,
             int cont,
             int rank,
+            int simulationRank,
+            int simulationID,
+            int simulationThreads,
             std::vector<int> repIDs,
-            std::map<ID_t, rank_t> & repMap): 
-            replica_exchange_base(_args, cont, rank, repIDs, repMap),
-            replica_exchange_slave(_args, cont, rank, repIDs, repMap),
-            replica_exchange_base_eds(_args, cont, rank, repIDs, repMap),
-            reedsParam(replicas[0]->sim.param().reeds){
+            std::map<ID_t, rank_t> & repMap):
+            replica_exchange_base(_args, cont, rank, simulationRank, simulationID, simulationThreads, repIDs, repMap),
+            replica_exchange_slave(_args, cont, rank, simulationRank, simulationID, simulationThreads, repIDs, repMap),
+            replica_exchange_base_eds(_args, cont, rank, simulationRank, simulationID, simulationThreads, repIDs, repMap),
+            reedsParam(replica->sim.param().reeds){
 
     DEBUG(2,"replica_exchange_slave_eds " << rank << ":Constructor:\t START");
    
@@ -39,6 +42,31 @@ void util::replica_exchange_slave_eds::send_to_master() const{
   DEBUG(2,"replica_exchange_slave_eds " << rank << ":send_to_master:\t START");
   DEBUG(2,"replica_exchange_slave_eds " << rank << ":send_to_master:\t Show vPots");
 
+    util::repInfo info;
+    std::vector<double> eds_energies;
+    info.run =replica->run;
+    info.epot = replica->epot;
+    info.epot_partner = replica->epot_partner;
+    info.partner = replica->partner;
+    info.probability = replica->probability;
+    info.switched = int(replica->switched);
+    DEBUG(4,"replica_exchange_slave_eds " << rank << "send_to_master:\t epotTot\t "<< info.epot);
+
+    DEBUG(4,"replica_exchange_slave_eds " << rank << ":send_to_master:\t\t send MPI_REPINFO");
+    MPI_Send(&info, 1, MPI_REPINFO, 0, REPINFO, MPI_COMM_WORLD);
+
+    DEBUG(4,"replica_exchange_slave_eds " << rank << ":send_to_master:\t\t send MPI_EDS");
+
+    eds_energies= replica->conf.current().energies.eds_vi;
+    
+    /*
+    for(int s=0; s < replica->eds_para.numstates; s++){   //todo bschroed REMOVE
+        DEBUG(4, "replica_exchange_slave_eds" << rank << ":send_to_master:\t potEs" << s << "\t" << eds_energies[s]);
+    }*/
+    
+    MPI_Send(&eds_energies[0], 1, MPI_EDSINFO, 0, EDSINFO, MPI_COMM_WORLD);
+    DEBUG(4,"replica_exchange_slave_eds " << rank << ":send_to_master:\t\t send MPI_EDS \t DONE" );
+  /*
   for (std::vector<util::replica_reeds *>::const_iterator it = replicas.begin(); it < replicas.end(); ++it) {
     util::repInfo info;
     std::vector<double> eds_energies;
@@ -65,6 +93,7 @@ void util::replica_exchange_slave_eds::send_to_master() const{
     DEBUG(4,"replica_exchange_slave_eds " << rank << ":send_to_master:\t\t send MPI_EDS \t DONE" );
     
   }
+  */
   DEBUG(2,"replica_exchange_slave_eds " << rank << ":send_to_master:\t DONE");
   #else
     throw "Cannot use send_to_master from replica_exchange_slave_eds without MPI!"; 

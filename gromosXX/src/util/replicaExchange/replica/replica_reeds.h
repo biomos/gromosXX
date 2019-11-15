@@ -11,13 +11,15 @@
  * Created on April 23, 2018, 3:25 PM
  */
 
-#include <util/replicaExchange/replica.h>
 
 #include <io/argument.h>
 #include <util/error.h>
 #include <math/volume.h>
 #include <simulation/simulation.h>
 #include <simulation/parameter.h>
+
+#include <util/replicaExchange/replica/replica_Interface.h>
+#include <util/replicaExchange/replica/replica.h>
 
 #ifdef XXMPI
 #include <mpi.h>
@@ -27,7 +29,7 @@
 #define REPLICA_REEDS_H
 
 namespace util{
-    class replica_reeds : virtual public replica {
+    class replica_reeds : public replica {
     public:
         /**
          * Constructor
@@ -42,8 +44,8 @@ namespace util{
         * for given configuration with new smoothing parameter s.
         */
         double calc_energy_eds_stat(double s);
-
-        double calculate_energy(const int partner);
+        
+        double calculate_energy(const unsigned int partner);
         double calculate_energy();
         
     private:
@@ -52,11 +54,11 @@ namespace util{
      * don't allow copies because there's a bug in the copy constructor of configuration::configurtiaon
      */
      replica_reeds(const replica_reeds& orig);
-     /**
+     /**TODO: bring into Exchanger 
      * Sets eds_struct() parameters to original value of replica
      */
     void reset_eds();
-    /**
+    /**TODO: bring into Exchanger 
      * Sets  eds_struct() parameters to value of partner (for energy calculations)
      */
     void change_eds(const unsigned int partner);

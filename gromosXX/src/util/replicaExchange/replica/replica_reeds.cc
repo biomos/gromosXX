@@ -11,24 +11,29 @@
  * Created on April 23, 2018, 3:25 PM
  */
 
-#include <util/replicaExchange/replica_reeds.h>
+//#include <util/replicaExchange/replica/replica_reeds.h>
 
-
+#include "replica_reeds.h"
 
 #undef MODULE
 #undef SUBMODULE
 #define MODULE util
 #define SUBMODULE replica_exchange
 
-util::replica_reeds::replica_reeds(io::Argument _args, int cont, int _ID, int _rank): replica(_args, cont, _ID, _rank){
+util::replica_reeds::replica_reeds(io::Argument _args, int cont, int _ID, int _rank):  replica(_args, cont, _ID, _rank){
   // read input again. If copy constructors for topo, conf, sim, md work, one could
   // also pass them down from repex_mpi.cc ...  
  DEBUG(4, "replica_reeds "<< rank <<":constructor:\t START");
+ DEBUG(4, "replica_reeds "<< rank <<":constructor:\t ID "<< ID);
+  DEBUG(2,"reedsplica "<< rank <<":Constructor:\t" << sim.param().replica.num_l);
+  DEBUG(2,"reedsplica "<< rank <<":Constructor:\t" << sim.param().replica.lambda[0]);
   eds_para=sim.param().reeds.eds_para[ID];
   sim.param().eds = eds_para;
   
-  const int num_s = sim.param().reeds.num_l;
+  //const int num_s = sim.param().reeds.num_l;  //Todo: not used
+  
   l = eds_para.s[0];
+  
   DEBUG(5, "replica_reeds "<< rank <<":constructor:\t Temp of replica "<< rank <<" " << _ID << " \t" << sim.param().multibath.multibath.bath(0).temperature)
   DEBUG(5, "replica_reeds "<< rank <<":constructor:\t S of replica "<< rank <<" " << _ID << " \t" << sim.param().eds.s[0])
   DEBUG(5, "replica_reeds "<< rank <<":constructor:\t S size of replica "<< rank <<" " << _ID << " \t" << sim.param().eds.s.size())
@@ -111,7 +116,7 @@ double util::replica_reeds::calc_energy_eds_stat(double s){
     return energy;
 }
 
-double util::replica_reeds::calculate_energy(const int partner) {
+double util::replica_reeds::calculate_energy(const unsigned int partner) {
     DEBUG(4, "replica_reeds "<< rank <<":calculate_energy:\t START"); 
 
     double energy = 0.0;

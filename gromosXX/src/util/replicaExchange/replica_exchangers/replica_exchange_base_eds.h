@@ -10,10 +10,10 @@
  *
  * Created on April 18, 2018, 3:38 PM
  */
-#include <util/replicaExchange/replica_exchange_base.h>
+#include <util/replicaExchange/replica_exchangers/replica_exchange_base.h>
 #include <util/replicaExchange/replica_data.h>
 #include <util/replicaExchange/repex_mpi.h>
-#include <util/replicaExchange/replica_reeds.h>
+#include <util/replicaExchange/replica/replica_reeds.h>
 
 #ifndef REPLICA_EXCHANGE_BASE_EDS_H
 #define REPLICA_EXCHANGE_BASE_EDS_H
@@ -55,8 +55,8 @@ namespace util
 {
      class replica_exchange_base_eds : public virtual replica_exchange_base {
     public:
-        replica_exchange_base_eds(io::Argument _args, int cont, int rank, std::vector<int> repIDs, 
-                          std::map<ID_t, rank_t>& _repMap);
+        replica_exchange_base_eds(io::Argument _args, int cont, int rank, int simulationRank, int simulationID, int simulationThreads, 
+                std::vector<int> repIDs, std::map<ID_t, rank_t>& _repMap);
          
         /**
          * @override
@@ -91,8 +91,8 @@ namespace util
         typedef std::vector< util::replica_reeds* >::iterator repIterator;   //iterator for replicas
         std::vector<util::replica_reeds*> replicas;
         
-        void switch_coords_on_node(repIterator it1, const unsigned int partner) ;
-        void swap_on_node(repIterator it1, const unsigned int partner) ;
+        //void switch_coords_on_node(repIterator it1, const unsigned int partner) ;
+        //void swap_on_node(repIterator it1, const unsigned int partner) ;
         virtual ~replica_exchange_base_eds();
 
        /**

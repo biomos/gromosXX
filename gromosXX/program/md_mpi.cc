@@ -50,9 +50,8 @@ $ ../configure --enable-mpi CC=mpicc CXX=mpiCC
 #include <time.h>
 
 #include <io/configuration/out_configuration.h>
-
+#define XXMPI
 int main(int argc, char *argv[]){
-
 #ifdef XXMPI
 
   const double start = util::now();
@@ -206,7 +205,6 @@ int main(int argc, char *argv[]){
       
       // run a step
       if ((error = md.run(topo, conf, sim))){
-	
 	if (error == E_MINIMUM_REACHED){
 	  conf.old().energies.calculate_totals();
 	  traj.print_timestep(sim, traj.output());

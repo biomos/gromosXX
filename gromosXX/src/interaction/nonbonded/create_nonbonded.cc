@@ -36,6 +36,7 @@
 #include "../../interaction/nonbonded/interaction/mpi_nonbonded_slave.h"
 
 #include "../../io/ifp.h"
+#include "../../util/replicaExchange/mpi_tools.h"
 
 #include "../../interaction/nonbonded/create_nonbonded.h"
 
@@ -54,6 +55,39 @@
 
 using namespace std;
 
+std::vector<std::vector<int > >  util::calculate_Replica_Thread_Coordination(int rank, int totalNumberOfThreads, int numReplicas ){
+    /**calculate_Replica_Thread_Coordination
+     *  This function is calculating the Replica Simulation mapping to the threads.
+     * @param rank  this is the rank of the current thread
+     * @param totalNumberOfThreads  total number of threads 
+     * @param numReplicas   number of Replica simulations.
+     * @return 
+     */
+    std::vector<std::vector<int > > repIDs;
+    int threadsPerReplicaSimulation = totalNumberOfThreads / numReplicas;
+    int leftOverThreads = totalNumberOfThreads % numReplicas;
+
+    unsigned int threadID =0;
+    int replica_offset = 0;
+    std::cout << "left_over "<< leftOverThreads << "\n";
+    for (int replicaSimulationID = 0; replicaSimulationID < numReplicas; replicaSimulationID++) {
+
+       for (int replicaSimulationSubThread = 0; replicaSimulationSubThread < threadsPerReplicaSimulation; replicaSimulationSubThread++) {
+
+           threadID = replicaSimulationSubThread + replicaSimulationID*threadsPerReplicaSimulation+replica_offset;
+           repIDs[replicaSimulationID].push_back(threadID);
+
+       }
+       if(leftOverThreads>0 and replicaSimulationID < leftOverThreads){    //left over threads are evenly distirbuted.
+           threadID = threadsPerReplicaSimulation + replicaSimulationID*totalNumberOfThreads+replica_offset;
+           repIDs[replicaSimulationID].push_back(threadID);
+           replica_offset++;
+
+       }    
+    }            
+    return repIDs;
+    }
+    
 int interaction::create_g96_nonbonded
 (
  interaction::Forcefield & ff,
@@ -192,10 +226,80 @@ int interaction::create_g96_nonbonded
 
   if (sim.mpi){
     int rank = MPI::COMM_WORLD.Get_rank();
-    if (rank == 0)
-      ni = new MPI_Nonbonded_Master(pa);
-    else
-      ni = new MPI_Nonbonded_Slave(pa);
+    int size = MPI::COMM_WORLD.Get_size();
+    
+    bool repex = sim.param().reeds.reeds;   //not dynamic enough!
+    if(repex){
+                //translated parameters
+        int masterRank = -1;
+        int simulationID = -1;
+        
+        //translate the recieved information 
+        int num_replicas = sim.param().reeds.num_l;
+        //std::vector<std::vector<int> > replicaThreadsMapping = util::calculate_Replica_Thread_Coordination(rank, size, num_replicas);
+        
+        //FUNCTION IN FUNC
+        std::vector<std::vector<int > > replicaThreadsMapping;
+        replicaThreadsMapping.resize(num_replicas);
+
+        int threadsPerReplicaSimulation = size / num_replicas;
+        int leftOverThreads = size % num_replicas;
+        
+        MPI_DEBUG(1, "BUILD REPLICA LIST")
+        unsigned int threadID =0;
+        int replica_offset = 0;
+        std::cout << "left_over "<< leftOverThreads << "\n";
+
+        for (int replicaSimulationID = 0; replicaSimulationID < num_replicas; replicaSimulationID++) {
+           std::cout << "iters "<< replicaSimulationID << "\n";
+           for (int replicaSimulationSubThread = 0; replicaSimulationSubThread < threadsPerReplicaSimulation; replicaSimulationSubThread++) {
+               threadID = replicaSimulationSubThread + replicaSimulationID*threadsPerReplicaSimulation+replica_offset;
+               replicaThreadsMapping[replicaSimulationID].push_back(threadID);
+
+           }
+           if(leftOverThreads>0 and replicaSimulationID < leftOverThreads){    //left over threads are evenly distirbuted
+               std::cout << "fix "<< leftOverThreads << "\n";
+               threadID = threadsPerReplicaSimulation + replicaSimulationID*size+replica_offset;
+               replicaThreadsMapping[replicaSimulationID].push_back(threadID);
+               replica_offset++;
+
+           }    
+        }            
+
+        MPI_DEBUG(1, "BUILD THIS PARAMS")
+        //GET THIS PARAMS
+        int countSimulations = 0;
+        for(std::vector<int> replicaOwnsThreads: replicaThreadsMapping){
+            for(int threadID : replicaOwnsThreads){
+                if(rank == threadID){
+                    masterRank = replicaOwnsThreads[0];
+                    simulationID = countSimulations;
+                    break;
+                }
+            }
+            countSimulations++;
+        }
+        MPI_DEBUG(1, "BUILD THIS PARAMS DONE")
+
+        std::cout <<" TRY GOT ATTRIBUTE "<< masterRank << "\n";
+        std::cout <<" TRY GOT ATTRIBUTE "<< simulationID << "\n";        
+        MPI_DEBUG(1, "BEEN THERE DONE THAT")
+
+        std::cout.flush();
+        
+        if(rank == masterRank){
+            ni = new MPI_Nonbonded_Master(pa);
+        }
+        else{
+           ni = new MPI_Nonbonded_Slave(pa);       
+        }
+    }
+    else{
+        if (rank == 0)
+          ni = new MPI_Nonbonded_Master(pa);
+        else
+          ni = new MPI_Nonbonded_Slave(pa);
+    }
   }
   else
     ni = new Nonbonded_Interaction(pa);

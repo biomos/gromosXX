@@ -11,7 +11,7 @@
  * Created on April 18, 2018, 3:20 PM
  */
 
-#include <util/replicaExchange/replica_exchange_master_eds.h>
+#include <util/replicaExchange/replica_exchangers/replica_exchange_master_eds.h>
 
 #undef MODULE
 #undef SUBMODULE
@@ -22,15 +22,17 @@
 util::replica_exchange_master_eds::replica_exchange_master_eds(io::Argument _args,
         int cont,
         int rank,
+        int simulationRank,
+        int simulationID,
+        int simulationThreads,
         int _size,
         int _numReplicas,
         std::vector<int> repIDs,
         std::map<ID_t, rank_t> & repMap) :
-        replica_exchange_base(_args, cont, rank, repIDs, repMap),
-        replica_exchange_base_eds(_args, cont, rank, repIDs, repMap),
-        replica_exchange_master(_args, cont, rank, _size, _numReplicas, repIDs, repMap),
-        reedsParam(replicas[0]->sim.param().reeds)
-        {
+        replica_exchange_base(_args, cont, rank, simulationRank, simulationID, simulationThreads, repIDs, repMap),
+        replica_exchange_base_eds(_args, cont, rank, simulationRank, simulationID, simulationThreads, repIDs, repMap),
+        replica_exchange_master(_args, cont, rank, simulationRank, simulationID, simulationThreads, _size, _numReplicas, repIDs, repMap),
+        reedsParam(replica->sim.param().reeds) {
     #ifdef XXMPI
     DEBUG(2,"replica_exchange_master_eds "<< rank <<":Constructor:\t START");
     
@@ -38,8 +40,8 @@ util::replica_exchange_master_eds::replica_exchange_master_eds(io::Argument _arg
     //initialize data of replicas    
     replicaData.resize(repParams.num_l);      
     DEBUG(4,"replica_exchange_master_eds "<< rank <<":Constructor:\t replicaDatasize\t "<< replicaData.size());
-    DEBUG(4,"replica_exchange_master_eds "<< rank <<":Constructor:\t reeds- lambda\t "<< replicas[0]->sim.param().reeds.num_l);
-    DEBUG(4,"replica_exchange_master_eds "<< rank <<":Constructor:\t eds \t "<< replicas[0]->sim.param().eds.s.size());
+    //DEBUG(4,"replica_exchange_master_eds "<< rank <<":Constructor:\t reeds- lambda\t "<< replica->sim.param().reeds.num_l);
+    //DEBUG(4,"replica_exchange_master_eds "<< rank <<":Constructor:\t eds \t "<< replica->sim.param().eds.s.size());
 
         
     int ID = 0;
@@ -89,7 +91,7 @@ void util::replica_exchange_master_eds::receive_from_all_slaves() {
         DEBUG(4,"replica_exchange_master_eds "<< rank <<":receive_from_all_slaves:\t REP:" <<rep<< " EpotTot: "<< replicaData[rep].epot);
 
         MPI_Recv(&replicaData[rep].Vi[0],1, MPI_EDSINFO, rank, EDSINFO, MPI_COMM_WORLD, &status_eds);
-        for(int s=0;s< replicaData[rep].Vi.size(); s++){
+        for(unsigned int s=0;s< replicaData[rep].Vi.size(); s++){
             DEBUG(4,"replica_exchange_master_eds "<< rank <<":receive_from_all_slaves:\t "<< s << " En: "<< replicaData[rep].Vi[s]);
         }        
     }    
@@ -169,7 +171,7 @@ void util::replica_exchange_master_eds::write() {
       repOut  << std::setw(13) << replicaData[r].probability
               << std::setw(6) << replicaData[r].switched;
 
-    for(int s=0;s<reedsParam.eds_para[0].numstates; s++){
+    for(unsigned int s=0;s<reedsParam.eds_para[0].numstates; s++){
         DEBUG(2, "replica_exchange_master_eds "<< rank <<":write:\t WRITE out POTS " <<s<< "\t" << replicaData[r].Vi[s]);
         repOut   << std::setw(18) << std::min(replicaData[r].Vi[s], 10000000.0);//Output potential energies for each state 
     }
@@ -193,7 +195,7 @@ void util::replica_exchange_master_eds::init_repOut_stat_file() {
 
     DEBUG(4,"replica_exchange_master_eds "<< rank <<":init_repOut_stat_file:\t set precision ");
     
-    double minS = *(std::min_element(reedsParam.eds_para[0].s.begin(), reedsParam.eds_para[0].s.end()));
+    //double minS = *(std::min_element(reedsParam.eds_para[0].s.begin(), reedsParam.eds_para[0].s.end()));
     //svalPrecision = getSValPrecision(minS);
     repOut.setf(std::ios::fixed, std::ios::floatfield);
 

@@ -57,9 +57,8 @@
 //  exit_md = true;
 //  signal(SIGINT, SIG_DFL);
 //}
-
+#define XXMPI
 int main(int argc, char *argv[]){
-
 #ifdef XXMPI
   
   const double start = util::now();

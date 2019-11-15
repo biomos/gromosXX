@@ -31,16 +31,20 @@ xxinclude_HEADERS = error.h\
 #include replica_exchange Files	
 
 xxutilrepexdir = $(includedir)/md++/util/replicaExchange
-xxutilrepex_HEADERS = replicaExchange/repex_mpi.h\
+xxutilrepex_HEADERS = replicaExchange/mpi_tools.h\
+	replicaExchange/repex_mpi.h\
         replicaExchange/replica_data.h\
-	replicaExchange/replica.h\
-	replicaExchange/replica_exchange_base.h\
-	replicaExchange/replica_exchange_master.h\
-	replicaExchange/replica_exchange_slave.h\
-	replicaExchange/replica_reeds.h\
-	replicaExchange/replica_exchange_base_eds.h\
-	replicaExchange/replica_exchange_master_eds.h\
-	replicaExchange/replica_exchange_slave_eds.h
+	replicaExchange/replica/replica_Interface.h\
+	replicaExchange/replica/replica.h\
+	replicaExchange/replica/replica_reeds.h\
+	replicaExchange/replica/replica_MPI_master.h\
+	replicaExchange/replica/replica_MPI_slave.h\
+	replicaExchange/replica_exchangers/replica_exchange_base.h\
+	replicaExchange/replica_exchangers/replica_exchange_master.h\
+	replicaExchange/replica_exchangers/replica_exchange_slave.h\
+	replicaExchange/replica_exchangers/replica_exchange_base_eds.h\
+	replicaExchange/replica_exchangers/replica_exchange_master_eds.h\
+	replicaExchange/replica_exchangers/replica_exchange_slave_eds.h
 
 
 noinst_LTLIBRARIES = libgroutil.la
@@ -68,14 +72,18 @@ libgroutil_la_SOURCES =	cycle_thread.cc\
 	thread.cc\
 	system_call.cc\
 	undirected_graph.cc\
-	replicaExchange/replica.cc\
-	replicaExchange/replica_exchange_base.cc\
-	replicaExchange/replica_exchange_master.cc\
-	replicaExchange/replica_exchange_slave.cc\
-	replicaExchange/replica_reeds.cc\
-	replicaExchange/replica_exchange_base_eds.cc\
-	replicaExchange/replica_exchange_master_eds.cc\
-	replicaExchange/replica_exchange_slave_eds.cc
+	replicaExchange/mpi_tools.ccp\
+	replicaExchange/replica/replica_Interface.cpp\
+	replicaExchange/replica/replica.cc\
+	replicaExchange/replica/replica_reeds.cc\
+	replicaExchange/replica/replica_MPI_master.cpp\
+	replicaExchange/replica/replica_MPI_slave.cpp\
+	replicaExchange/replica_exchangers/replica_exchange_base.cc\
+	replicaExchange/replica_exchangers/replica_exchange_master.cc\
+	replicaExchange/replica_exchangers/replica_exchange_slave.cc\
+	replicaExchange/replica_exchangers/replica_exchange_base_eds.cc\
+	replicaExchange/replica_exchangers/replica_exchange_master_eds.cc\
+	replicaExchange/replica_exchangers/replica_exchange_slave_eds.cc
 
 libgroutil_la_LIBADD =
 

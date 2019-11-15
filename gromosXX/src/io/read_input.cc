@@ -89,13 +89,14 @@ int io::read_input_repex(io::Argument const & args,
 		   configuration::Configuration & conf,
 		   simulation::Simulation & sim,
 		   algorithm::Algorithm_Sequence & md_seq,
+                   int replicaID, 
                    int rank,
-		   std::ostream & os,
-		   bool quiet)
+		   std::ostream & os,  
+                   bool quiet)
 {
   //initialize for RE-EDS ID dependent parameters.
   if(sim.param().reeds.reeds){
-    sim.param().eds=sim.param().reeds.eds_para[rank];//choose correct eds informations which are ID dependent. That's why this cannot be done earlier.
+    sim.param().eds=sim.param().reeds.eds_para[replicaID];//choose correct eds informations which are ID dependent. That's why this cannot be done earlier.
   }
   
   if(!quiet){

@@ -46,6 +46,7 @@ namespace io
    configuration::Configuration &conf,
    simulation::Simulation & sim,
    algorithm::Algorithm_Sequence &md_seq,
+   int replicaID=0,
    int rank=0,
    std::ostream & os = std::cout,
    bool quiet = false

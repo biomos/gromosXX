@@ -30,8 +30,9 @@
 
 #include <io/configuration/out_configuration.h>
 
+
 #include <util/replicaExchange/repex_mpi.h>
-#include <util/replicaExchange/replica.h>
+#include <util/replicaExchange/replica/replica_Interface.h>
 #include <string>
 #include <math/random.h>
 
@@ -61,8 +62,9 @@ namespace util {
      * @param repIDs std::vector<int>, IDs of replicas the instance has to manage
      * @param _repMap std::map<int,int>, maps replica IDs to nodes; needed for communication
      */
-    replica_exchange_base(io::Argument _args, int cont, int rank, std::vector<int> repIDs, 
-                          std::map<ID_t, rank_t>& _repMap);
+    replica_exchange_base(io::Argument _args, 
+                          int cont, int rank,int simulationRank, int simulationID, int simulationThreads,
+                          std::vector<int> repIDs, std::map<ID_t, rank_t>& _repMap);
     /**
      * Destructor
      */
@@ -97,28 +99,30 @@ namespace util {
     /**
      * all replicas on this node
      */
-    typedef std::vector< util::replica* >::iterator repIterator; //iterator for loops
-    std::vector<util::replica *> replicas;
+    //typedef std::vector< util::replica* >::iterator repIterator; //iterator for loops
+    //std::vector<util::replica *> replicas;
+    util::replica_Interface *replica;
     
     /**
      * Swapping routine if the replicas are on the same node, no MPI communication needed. Always called from swap().
      * @param it repIterator, iterator to replica with lower ID
      * @param partner integer, ID of replica with higher ID
      */
-    void swap_on_node(repIterator it, const unsigned int partner);
+    //void swap_on_node(repIterator it, const unsigned int partner);
     /**
      * switches configuration information if replicas are on same node.
      * @param it repIterator, iterator to replica with lower ID
      * @param partner integer, ID of replica with higher ID
      */
-    void switch_coords_on_node(repIterator it, const unsigned int partner);
+    //repIterator it
+    //void switch_coords_on_node(util::replica * replica, const unsigned int partner);
     /**
      * calculates switching probability of two replicas if they are on same node
      * @param rep1 replica*, pointer to replica with lower ID
      * @param rep2 replica*, pointer to replica with higher ID
      * @return double, probability in [0.0,1.0]
      */
-    double calc_probability(replica * rep1, replica * rep2);
+    double calc_probability(util::replica_Interface * rep1, util::replica_Interface * rep2);
     /**
      * input parameters
      */
@@ -136,6 +140,19 @@ namespace util {
      * rank of this class
      */
     int rank;
+    
+    /**
+     *  simulation Rank - which rank has the thread in the simulation X
+     */
+    int simulationRank;
+    /**
+     *  simulation ID - to which simulation does this thread belong?
+     */
+    int simulationID;
+    /**
+     * How many threads per simulation?
+     */
+    int simulationThreads;
     /**
      * continuation? of this class
      */
