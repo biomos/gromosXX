@@ -693,17 +693,17 @@ namespace math
   /**
    * Avogadro constant
    */
-  extern double avogadro;
+  extern const double avogadro;
 
   /**
    * Bohr (length a.u.)
    */
-  extern double bohr;
+  extern const double bohr;
 
   /**
    * Hartree (energy a.u.)
    */
-  extern double hartree;
+  extern const double hartree;
 
 #ifndef NDEBUG
   /**

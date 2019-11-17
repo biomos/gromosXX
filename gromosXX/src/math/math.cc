@@ -32,9 +32,9 @@ namespace math
    * Online version (2019-) created by S. J. Chalk. ISBN 0-9678550-9-8.
    * https://doi.org/10.1351/goldbook.
    */
-  double avogadro = 6.02214179e23; /* mol-1 */
-  double bohr = 5.29177249e-2; /* nm */
-  double hartree = 4.3597482e-18; /* J */
+  extern const double avogadro = 6.02214179e23; /* mol-1 */
+  extern const double bohr = 5.29177249e-2; /* nm */
+  extern const double hartree = 4.3597482e-18; /* J */
 
 #ifndef NDEBUG
   int debug_level = 0;
