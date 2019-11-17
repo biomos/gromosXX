@@ -7,7 +7,7 @@
 #define	INCLUDED_QM_LINK_H
 
 namespace interaction {
-  class QM_Atom;
+  struct QM_Atom;
   class QM_Zone;
   /**
    * @class QM_Link

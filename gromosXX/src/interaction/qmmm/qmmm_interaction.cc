@@ -36,6 +36,8 @@
 #define MODULE interaction
 #define SUBMODULE qmmm
 
+interaction::QMMM_Interaction * interaction::QMMM_Interaction::qmmm_ptr = nullptr;
+
 interaction::QMMM_Interaction::QMMM_Interaction() : Interaction("QMMM Interaction")
                                                   , m_parameter()
                                                   , m_set_size(1)
@@ -48,7 +50,8 @@ interaction::QMMM_Interaction::QMMM_Interaction() : Interaction("QMMM Interactio
     m_rank = MPI::COMM_WORLD.Get_rank();
     m_size = MPI::COMM_WORLD.Get_size();
 #endif
-  }
+  qmmm_ptr = this;
+}
 
 interaction::QMMM_Interaction::~QMMM_Interaction() {
   for (unsigned int i = 0; i < m_qmmm_nonbonded_set.size(); ++i) {
@@ -152,16 +155,50 @@ int interaction::QMMM_Interaction::AddRemove2(topology::Topology &topo,
 }
 
 */
+int interaction::QMMM_Interaction::scf_step(topology::Topology& topo,
+                                            configuration::Configuration& conf,
+                                            simulation::Simulation& sim) {
+  // Update only COS in QM zone
+  DEBUG(15,"Updating COS in QM zone");
+  m_timer.start("QM zone update");
+  m_qm_zone->update_cos(topo, conf, sim);
+  m_timer.stop("QM zone update");
+
+  int err = 0;
+  m_timer.start(m_worker->name());
+  err = m_worker->run_QM(topo, conf, sim, *m_qm_zone);
+  m_timer.stop(m_worker->name());
+  if (err) return err;
+  return 0;
+}
+
+void interaction::QMMM_Interaction::write_qm_data(topology::Topology& topo,
+                                                  configuration::Configuration& conf,
+                                                  const simulation::Simulation& sim) {
+  // If geometry minimisation within QM is requested
+  /*if (minimise) {
+    //qm_zone->write_pos(conf.current().pos);
+  }
+  */
+  DEBUG(15,"Writing QM data");
+  m_timer.start("writing QM results");
+  m_qm_zone->write_force(conf.current().force);
+  if (sim.param().qmmm.qmmm == simulation::qmmm_mechanical)
+    m_qm_zone->write_charge(topo.charge());
+  conf.current().energies.qm_total = m_qm_zone->QM_energy();
+  m_timer.stop("writing QM results");
+}
+
 
 int interaction::QMMM_Interaction::calculate_interactions(topology::Topology& topo,
                                                           configuration::Configuration& conf,
                                                           simulation::Simulation& sim) {
   DEBUG(4, "QMMM_Interaction::calculate_interactions");
   int err = 0;
-  m_timer.start();
 
-  // Do QM only on master (MPI)
+  // Do QMMM only on master (MPI)
   if (m_rank == 0) {
+    m_timer.start();
     // Update QM Zone
     DEBUG(15,"Updating QM zone");
     m_timer.start("QM zone update");
@@ -169,56 +206,24 @@ int interaction::QMMM_Interaction::calculate_interactions(topology::Topology& to
     m_timer.stop("QM zone update");
     if (err) {m_timer.stop(); return err;}
     
-    // run QM Worker with provided QM zone
-    DEBUG(15,"Running QM worker");
     m_timer.start(m_worker->name());
-    err = m_worker->run_QM(sim, *m_qm_zone);
+    err = m_worker->run_QM(topo, conf, sim, *m_qm_zone);
     m_timer.stop(m_worker->name());
     if (err) {m_timer.stop(); return err;}
     
-    // If geometry minimisation within QM is requested
-    /*if (minimise) {
-      //qm_zone->write_pos(conf.current().pos);
+    if (sim.param().qmmm.qmmm != simulation::qmmm_polarisable) {
+      // in polarisable embedding, we will write the data after electric field evaluation
+      this->write_qm_data(topo, conf, sim);
     }
-    */
-    DEBUG(15,"Writing QM data");
-    m_timer.start("writing QM results");
-    m_qm_zone->write_force(conf.current().force);
-    if (sim.param().qmmm.qmmm == simulation::qmmm_mechanical)
-      m_qm_zone->write_charge(topo.charge());
-    conf.current().energies.qm_total = m_qm_zone->QM_energy;
-    m_timer.stop("writing QM results");
-  }
-// Run QM and nonbonded in parallel in MPI (1 node for QM, the rest for nonbonded)
-/*
-#ifdef OMP
-  assert(m_set_size == omp_get_num_threads());
-    omp_set_num_threads(m_nonbonded_set.size());
-#pragma omp parallel
-    {
-      unsigned int omp_rank = omp_get_thread_num();
-      // calculate the corresponding interactions
-      assert(m_nonbonded_set.size() > omp_rank);
-      DEBUG(4, "calculating nonbonded interactions (omp_rank "
-              << omp_rank << " of " << m_set_size << ")");
 
-      m_nonbonded_set[omp_rank]->calculate_interactions(*p_topo, *p_conf, sim);
-
+    if (sim.param().qmmm.qmmm > simulation::qmmm_mechanical
+        || sim.param().qmmm.qm_lj) {
+      this->calculate_nonbonded(topo, conf, sim);
     }
-#endif
-*/
-  if (sim.param().qmmm.qmmm > simulation::qmmm_mechanical
-      || sim.param().qmmm.qm_lj) {
-    //m_timer.start("QMMM nonbonded");
-    this->calculate_nonbonded(topo, conf, sim);
-    //m_timer.stop("QMMM nonbonded");
+    m_timer.stop();
   }
-
-  m_timer.stop();
-  if (err) return 1;
   return 0;
 }
-
 
 int interaction::QMMM_Interaction::calculate_nonbonded(topology::Topology& topo,
                                                        configuration::Configuration& conf,
@@ -241,7 +246,6 @@ int interaction::QMMM_Interaction::calculate_nonbonded(topology::Topology& topo,
   DEBUG(6, "sets are done, adding things up...");
   this->store_set_data(topo, conf, sim);
   
-
   if (sim.param().pairlist.print &&
       (!(sim.steps() % sim.param().pairlist.skip_step))) {
     DEBUG(7, "print QM-MM pairlist...");
@@ -252,49 +256,15 @@ int interaction::QMMM_Interaction::calculate_nonbonded(topology::Topology& topo,
   return 0;
 }
 
-/*
-int interaction::QMMM_Interaction::add_electric_field_contribution(topology::Topology& topo,
-        configuration::Configuration& conf, simulation::Simulation& sim, 
-        math::VArray & electric_field) {
-  
+void interaction::QMMM_Interaction::get_electric_field(const simulation::Simulation& sim
+                                                     , math::VArray & electric_field) {
+  // Write electric field
   m_timer.start();
-  m_timer.start("polarisation");
-  
-  storage.zero();
-
-  if (worker->run_QM(topo, conf, sim, m_qm_zone)) {
-    m_timer.stop();
-    m_timer.stop("polarisation");
-    return 1;
-  }
-  for(unsigned int i = 0; i < topo.num_atoms(); ++i) {
-    if (!topo.is_polarisable(i))
-      continue;
-
-    // get electric field at either the charge or the COS site.
-    math::Vec e;
-    switch (sim.param().polarise.efield_site) {
-      case simulation::ef_atom:
-        e = storage.force(i) / (topo.charge(i) - topo.coscharge(i));
-        break;
-      case simulation::ef_cos:
-        e = storage.cos_force(i) / topo.coscharge(i);
-        break;
-      default:
-        io::messages.add("Electric field site not implemented.",
-                "QMMM_Interaction", io::message::critical);
-        m_timer.stop("polarisation");
-        m_timer.stop();
-        return 1;
-    }
-    // add the electric field contribution
-    electric_field(i) += e;
-  }
-  
-  m_timer.stop("polarisation");
+  m_timer.start("Electric field writing");
+  m_qm_zone->electric_field(sim, electric_field);
+  m_timer.start("Electric field writing");
   m_timer.stop();
-  return 0;
-}*/
+}
 
 int interaction::QMMM_Interaction::init(topology::Topology& topo,
             configuration::Configuration& conf,
@@ -502,6 +472,7 @@ void interaction::QMMM_Interaction::remove_bonded_terms(
   };
   if (!quiet)
     os << "\tterms removed from topology:\n";
+  // Counter for neat printing
   unsigned count = 0;
   if (!quiet)
     os << "\t\tbonds:\n";

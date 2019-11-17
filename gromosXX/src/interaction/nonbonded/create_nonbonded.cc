@@ -254,16 +254,6 @@ int interaction::create_g96_nonbonded
     }
   }
 
-  // We need access to QMMM to get QM electric field
-  if (sim.param().qmmm.qmmm == simulation::qmmm_polarisable) {
-    interaction::QMMM_Interaction * qmmm
-         = dynamic_cast<interaction::QMMM_Interaction *>(ff.interaction("QMMM Interaction"));
-    if (qmmm == nullptr) {
-      std::cerr << "Nonbonded Interaction: could not get pointer to QMMM interaction"
-          << "\n\t(internal error)" << std::endl;;
-    }
-    ni->qmmm_interaction(qmmm);
-  }
   ff.push_back(ni);
 
   if (!quiet){

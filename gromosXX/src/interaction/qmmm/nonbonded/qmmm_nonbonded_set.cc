@@ -12,11 +12,8 @@
 #include <simulation/parameter.h>
 
 #include <interaction/interaction.h>
-#include <interaction/interaction_types.h>
-#include <interaction/nonbonded/interaction/nonbonded_parameter.h>
 
 #include <interaction/qmmm/qm_zone.h>
-#include <interaction/qmmm/qmmm_interaction.h>
 #include <interaction/qmmm/nonbonded/qmmm_nonbonded_set.h>
 
 #include <util/debug.h>

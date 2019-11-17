@@ -148,7 +148,10 @@ int interaction::MNDO_Worker::init(const simulation::Simulation& sim) {
   return 0;
 }
 
-int interaction::MNDO_Worker::write_input(const simulation::Simulation& sim, const interaction::QM_Zone& qm_zone)
+int interaction::MNDO_Worker::write_input(const topology::Topology& topo
+                                        , const configuration::Configuration& conf
+                                        , const simulation::Simulation& sim
+                                        , const interaction::QM_Zone& qm_zone)
   {
   std::ofstream ifs;
   int err;
@@ -162,10 +165,28 @@ int interaction::MNDO_Worker::write_input(const simulation::Simulation& sim, con
   
   // Get number of MM charges and replace
   unsigned num_charges;
-  if (sim.param().qmmm.qmmm > simulation::qmmm_mechanical)
-    num_charges = qm_zone.mm.size();
-  else
-    num_charges = 0;
+  switch (sim.param().qmmm.qmmm) {
+    case simulation::qmmm_mechanical: {
+      num_charges = 0;
+      break;
+    }
+    case simulation::qmmm_electrostatic: {
+      num_charges = qm_zone.mm.size();
+      break;
+    }
+    case simulation::qmmm_polarisable: {
+      num_charges = qm_zone.mm.size();
+      for (std::set<MM_Atom>::const_iterator
+          it = qm_zone.mm.begin(), to = qm_zone.mm.end(); it != to; ++it) {
+        num_charges += int(it->is_polarisable);
+      }
+      break;
+    }
+    default: {
+      io::messages.add("Uknown QMMM option", io::message::error);
+      return 1;
+    }
+  }
   header = io::replace_string(header, "@@NUM_CHARGES@@", std::to_string(num_charges));
 
   // Write header
@@ -204,9 +225,12 @@ int interaction::MNDO_Worker::write_input(const simulation::Simulation& sim, con
   if (sim.param().qmmm.qmmm > simulation::qmmm_mechanical) {
     for (std::set<MM_Atom>::const_iterator
           it = qm_zone.mm.begin(), to = qm_zone.mm.end(); it != to; ++it) {
-      this->write_mm_atom(ifs, it->pos * len_to_qm, it->charge * cha_to_qm);
-      if (it->cos_charge != 0.0) {
+      if (it->is_polarisable) {
+        this->write_mm_atom(ifs, it->pos * len_to_qm, (it->charge - it->cos_charge) * cha_to_qm);
         this->write_mm_atom(ifs, (it->pos + it->cosV) * len_to_qm, it->cos_charge * cha_to_qm);
+      }
+      else {
+        this->write_mm_atom(ifs, it->pos * len_to_qm, it->charge * cha_to_qm);
       }
     }
   }
@@ -227,7 +251,10 @@ int interaction::MNDO_Worker::system_call() {
   }
   return 0;
 }
-int interaction::MNDO_Worker::read_output(const simulation::Simulation& sim, interaction::QM_Zone& qm_zone) {
+int interaction::MNDO_Worker::read_output(topology::Topology& topo
+                                        , configuration::Configuration& conf
+                                        , simulation::Simulation& sim
+                                        , interaction::QM_Zone& qm_zone) {
   std::ifstream ofs;
   int err;
   err = this->open_output(ofs, this->param->output_file);
@@ -416,18 +443,20 @@ int interaction::MNDO_Worker::parse_energy(std::ifstream& ofs, interaction::QM_Z
   // Parse energy
   std::getline(ofs, line);
   std::istringstream iss(line);
-  iss >> qm_zone.QM_energy;
+  iss >> qm_zone.QM_energy();
   if (iss.fail()) {
     io::messages.add("Failed to parse QM energy in output file"
                       + this->param->output_gradient_file
                       , this->name(), io::message::error);
     return 1;
   }
-  qm_zone.QM_energy *= this->param->unit_factor_energy;
+  qm_zone.QM_energy() *= this->param->unit_factor_energy;
   return 0;
 }
 
-int interaction::MNDO_Worker::parse_gradients(const simulation::Simulation& sim, std::ifstream& ofs, interaction::QM_Zone& qm_zone) {
+int interaction::MNDO_Worker::parse_gradients(const simulation::Simulation& sim
+                                            , std::ifstream& ofs
+                                            , interaction::QM_Zone& qm_zone) {
   std::string& out_grad = this->param->output_gradient_file;
   std::string line;
   int err;
@@ -468,7 +497,7 @@ int interaction::MNDO_Worker::parse_gradients(const simulation::Simulation& sim,
                           this->name(), io::message::error);
       return 1;
     }
-    // Parse lines
+    // Parse MM atoms
     err = this->_parse_gradients(ofs, qm_zone.mm);
     if (err) return err;
   }
@@ -476,33 +505,64 @@ int interaction::MNDO_Worker::parse_gradients(const simulation::Simulation& sim,
 }
 
 template<class AtomType>
-// Designed for interaction::QM_Atom, interaction::MM_Atom and interaction::QM_Link
-int interaction::MNDO_Worker::_parse_gradients(std::ifstream& ofs, std::set<AtomType>& atom_set) {
+int interaction::MNDO_Worker::_parse_gradients(std::ifstream& ofs,
+                                               std::set<AtomType>& atom_set) {
+  int err = 0;
+  const double unit_factor =
+      this->param->unit_factor_energy / this->param->unit_factor_length;
+  typename std::set<AtomType>::iterator it, to;
+  for(it = atom_set.begin(), to = atom_set.end(); it != to; ++it) {
+    err = this->parse_gradient(ofs, it->index, it->force, unit_factor);
+    if (err) return err;
+  }
+  return 0;
+}
+
+template<>
+int interaction::MNDO_Worker::_parse_gradients
+                  <interaction::MM_Atom>
+                                        (std::ifstream& ofs
+                                       , std::set<interaction::MM_Atom>& atom_set) {
+  int err = 0;
+  const double unit_factor =
+      this->param->unit_factor_energy / this->param->unit_factor_length;
+  std::set<interaction::MM_Atom>::iterator it, to;
+  for(it = atom_set.begin(), to = atom_set.end(); it != to; ++it) {
+    unsigned i = it->index;
+    err = this->parse_gradient(ofs, i, it->force, unit_factor);
+    if (err) return err;
+    if (it->is_polarisable) {
+      err = this->parse_gradient(ofs, i, it->cos_force, unit_factor);
+      if (err) return err;
+    }
+  }
+  return 0;
+}
+
+int interaction::MNDO_Worker::parse_gradient(std::ifstream& ofs,
+                                             const unsigned index,
+                                             math::Vec& force,
+                                             const double unit_factor) {
   std::string line;
   math::Vec gradient;
   int dummy;
-  double unit_factor_gradient = this->param->unit_factor_energy / this->param->unit_factor_length;
-  
-  typename std::set<AtomType>::iterator it, to;
-  for(it = atom_set.begin(), to = atom_set.end(); it != to; ++it) {
-    if(!std::getline(ofs, line)) {
-      std::ostringstream msg;
-      msg << "Failed to read gradient line of atom " << (it->index + 1)
-          << " in " << this->param->output_gradient_file;
-      io::messages.add(msg.str(), this->name(), io::message::error);
-      return 1;
-    }
-    std::istringstream iss(line);
-    iss >> dummy >> dummy >> gradient(0) >> gradient(1) >> gradient(2);
-    if (iss.fail()) {
-      std::ostringstream msg;
-      msg << "Failed to parse gradient line of atom " << (it->index + 1)
-          << " in " << this->param->output_gradient_file;
-      io::messages.add(msg.str(), this->name(), io::message::error);
-      return 1;
-    }
-    it->force = - gradient * unit_factor_gradient;
+  if(!std::getline(ofs, line)) {
+    std::ostringstream msg;
+    msg << "Failed to read gradient line of atom " << (index)
+        << " in " << this->param->output_gradient_file;
+    io::messages.add(msg.str(), this->name(), io::message::error);
+    return 1;
   }
+  std::istringstream iss(line);
+  iss >> dummy >> dummy >> gradient(0) >> gradient(1) >> gradient(2);
+  if (iss.fail()) {
+    std::ostringstream msg;
+    msg << "Failed to parse gradient line of atom " << (index)
+        << " in " << this->param->output_gradient_file;
+    io::messages.add(msg.str(), this->name(), io::message::error);
+    return 1;
+  }
+  force = - gradient * unit_factor;
   return 0;
 }
 

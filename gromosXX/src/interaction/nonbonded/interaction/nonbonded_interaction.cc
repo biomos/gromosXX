@@ -37,8 +37,6 @@
 
 #include "../../../interaction/nonbonded/interaction/nonbonded_interaction.h"
 
-#include "../../../interaction/qmmm/qmmm_interaction.h"
-
 #include "../../../util/debug.h"
 
 #include "../../../math/periodicity.h"
@@ -62,8 +60,7 @@ interaction::Nonbonded_Interaction::Nonbonded_Interaction(Pairlist_Algorithm *pa
 m_pairlist_algorithm(pa),
 m_parameter(),
 m_set_size(1),
-m_exp_conf(NULL),
-m_qmmm(nullptr) {
+m_exp_conf(NULL) {
   m_pairlist_algorithm->timer_pointer(&m_timer);
 }
 

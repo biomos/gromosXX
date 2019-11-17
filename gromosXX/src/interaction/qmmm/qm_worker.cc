@@ -62,7 +62,11 @@ interaction::QM_Worker * interaction::QM_Worker::get_instance(const simulation::
   }
   return nullptr;
 }
-int interaction::QM_Worker::run_QM(const simulation::Simulation& sim, interaction::QM_Zone& qm_zone) {
+
+int interaction::QM_Worker::run_QM(topology::Topology& topo
+                                 , configuration::Configuration& conf
+                                 , simulation::Simulation& sim
+                                 , interaction::QM_Zone& qm_zone) {
   if (qm_zone.mm.empty()) {
     io::messages.add("Cannot deal with zero MM atoms yet.", this->name()
                     , io::message::error);
@@ -73,7 +77,7 @@ int interaction::QM_Worker::run_QM(const simulation::Simulation& sim, interactio
   DEBUG(15,"Running QM Worker");
   int ret = 0;
   m_timer.start("writing input");
-  if ((ret = this->write_input(sim, qm_zone)) != 0)
+  if ((ret = this->write_input(topo, conf, sim, qm_zone)) != 0)
     return ret;
   m_timer.stop("writing input");
   
@@ -83,7 +87,7 @@ int interaction::QM_Worker::run_QM(const simulation::Simulation& sim, interactio
   m_timer.stop("QM program call");
 
   m_timer.start("reading output");
-  if ((ret = this->read_output(sim, qm_zone)) != 0)
+  if ((ret = this->read_output(topo, conf, sim, qm_zone)) != 0)
     return ret;
 
   m_timer.stop("reading output");
@@ -91,7 +95,10 @@ int interaction::QM_Worker::run_QM(const simulation::Simulation& sim, interactio
   return 0;
 }
 
-int interaction::QM_Worker::write_input(const simulation::Simulation& sim, const interaction::QM_Zone& qm_zone) {
+int interaction::QM_Worker::write_input(const topology::Topology& topo
+                                      , const configuration::Configuration& conf
+                                      , const simulation::Simulation& sim
+                                      , const interaction::QM_Zone& qm_zone) {
   std::ofstream ifs;
   if (int ret = this->open_input(ifs, this->param->input_file) != 0)
     return ret;
@@ -106,7 +113,10 @@ int interaction::QM_Worker::system_call() {
   return util::system_call(this->param->binary, this->param->input_file, this->param->output_file);
 };
 
-int interaction::QM_Worker::read_output(const simulation::Simulation& sim, interaction::QM_Zone& qm_zone) {
+int interaction::QM_Worker::read_output(topology::Topology& topo
+                                      , configuration::Configuration& conf
+                                      , simulation::Simulation& sim
+                                      , interaction::QM_Zone& qm_zone) {
   std::ifstream ofs;
   if (int ret = this->open_output(ofs, this->param->output_file) != 0)
     return ret;

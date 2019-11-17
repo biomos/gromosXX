@@ -18,7 +18,7 @@ namespace simulation {
 
 namespace interaction {
   class QM_Zone;
-  class MM_Atom;
+  struct MM_Atom;
   /**
    * @class QM_Worker
    * interface for a class implementing a call to an external QM software
@@ -33,6 +33,12 @@ namespace interaction {
     virtual ~QM_Worker();
 
     /**
+     * Get an instance of a QM worker for the provided parameters
+     * @return the instance or nullptr on failure
+     */
+    static QM_Worker * get_instance(const simulation::Simulation & sim);
+
+    /**
      * initialise the QM worker
      */
     virtual int init(const simulation::Simulation & sim) = 0;
@@ -40,13 +46,10 @@ namespace interaction {
     /**
      * run the QM worker
      */
-    virtual int run_QM(const simulation::Simulation& sim, interaction::QM_Zone & qm_zone);
+    virtual int run_QM(topology::Topology& topo
+                     , configuration::Configuration& conf
+                     , simulation::Simulation& sim, interaction::QM_Zone & qm_zone);
 
-    /**
-     * Get an instance of a QM worker for the provided parameters
-     * @return the instance or nullptr on failure
-     */
-    static QM_Worker * get_instance(const simulation::Simulation & sim);
     /**
      * accessor to the name of the QM worker
      */
@@ -81,7 +84,10 @@ namespace interaction {
     /**
      * Write input file for QM
      */
-    virtual int write_input(const simulation::Simulation& sim, const interaction::QM_Zone & qm_zone);
+    virtual int write_input(const topology::Topology& topo
+                          , const configuration::Configuration& conf
+                          , const simulation::Simulation& sim
+                          , const interaction::QM_Zone & qm_zone);
     /**
      * Open input file for QM
      */
@@ -94,7 +100,10 @@ namespace interaction {
     /**
      * read QM output files
      */
-    virtual int read_output(const simulation::Simulation& sim, interaction::QM_Zone & qm_zone);
+    virtual int read_output(topology::Topology& topo
+                          , configuration::Configuration& conf
+                          , simulation::Simulation& sim
+                          , interaction::QM_Zone & qm_zone);
     /**
      * Open QM output file
      */

@@ -52,7 +52,10 @@ namespace interaction {
     /**
      * Write input file for QM
      */
-    int write_input(const simulation::Simulation& sim, const interaction::QM_Zone& qm_zone);
+    int write_input(const topology::Topology& topo
+                  , const configuration::Configuration& conf
+                  , const simulation::Simulation& sim
+                  , const interaction::QM_Zone& qm_zone);
 
     /**
      * System call
@@ -62,7 +65,10 @@ namespace interaction {
     /**
      * Read outputs
      */
-    int read_output(const simulation::Simulation& sim, interaction::QM_Zone& qm_zone);
+    int read_output(topology::Topology& topo
+                  , configuration::Configuration& conf
+                  , simulation::Simulation& sim
+                  , interaction::QM_Zone& qm_zone);
 
     /**
      * Write QM atom
@@ -96,15 +102,29 @@ namespace interaction {
     /**
      * Parse gradients wrapper
      */
-    int parse_gradients(const simulation::Simulation& sim, std::ifstream& ofs, interaction::QM_Zone& qm_zone);
+    inline int parse_gradients(const simulation::Simulation& sim, std::ifstream& ofs, interaction::QM_Zone& qm_zone);
 
     /**
-     * Parse gradients - internal function
+     * Parse gradients
      */
     template<class AtomType>
-    int _parse_gradients(std::ifstream& ofs, std::set<AtomType>& atom_set);
+    inline int _parse_gradients(std::ifstream& ofs, std::set<AtomType>& atom_set);
 
+    /**
+     * Parse gradient line
+     */
+    inline int parse_gradient(std::ifstream& ofs,
+                              const unsigned index,
+                              math::Vec& force,
+                              const double unit_factor);
   };
+
+  /**
+   * Parse gradients of polarisable MM atoms
+   */
+  template<>
+  inline int MNDO_Worker::_parse_gradients<interaction::MM_Atom>
+        (std::ifstream& ofs, std::set<interaction::MM_Atom>& atom_set);
 }
 
 #endif	/* MNDO_WORKER_H */

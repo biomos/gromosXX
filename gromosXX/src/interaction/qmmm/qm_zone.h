@@ -13,8 +13,8 @@ namespace math
 }
 
 namespace interaction {
-  class QM_Atom;
-  class MM_Atom;
+  struct QM_Atom;
+  struct MM_Atom;
   class QM_Link;
   class PairlistContainer;
   /**
@@ -48,16 +48,6 @@ namespace interaction {
      * Destructor
      */
     ~QM_Zone();
-
-    /**
-     * the QM energy of the zone
-     */
-    double QM_energy;
-
-    /**
-     * the MM energy of the zone - convenient for subtractive scheme
-     */
-    double MM_energy;
 
     /**
      * QM atoms
@@ -111,19 +101,56 @@ namespace interaction {
                        , PairlistContainer& pairlist
                        , unsigned begin, unsigned end
                        , unsigned stride) const;
+
+    /**
+     * Update charges-on-spring
+     */
+    void update_cos(const topology::Topology& topo
+                  , const configuration::Configuration& conf
+                  , const simulation::Simulation& sim);
+
+    /**
+     * Provide electric field on MM atoms
+     */
+    void electric_field(const simulation::Simulation& sim
+                      , math::VArray& electric_field);
+
+    /**
+     * QM energy accessor
+     */
+    double QM_energy() const {
+      return qm_energy;
+    }
+
+    /**
+     * QM energy mutator
+     */
+    double & QM_energy() {
+      return qm_energy;
+    }
+
   protected:
+    /**
+     * the QM energy of the zone
+     */
+    double qm_energy;
+
+    /**
+     * the MM energy of the zone - convenient for subtractive scheme
+     */
+    double mm_energy;
     /**
      * Zero energies
      */
-    void zero();
+    void inline zero();
 
     /**
      * Clear the QM zone
      */
-    void clear();
+    void inline clear();
 
     /**
-     * Scale charges with distance to nearest QM atom
+     * Scale charges with distance to the nearest QM atom
      */
     void scale_charges(const simulation::Simulation& sim);
 
@@ -155,7 +182,7 @@ namespace interaction {
                    const simulation::Simulation& sim);
     
     /**
-     * Update caps positions
+     * Update capping atoms positions
      */
     void update_links(const simulation::Simulation& sim);
 

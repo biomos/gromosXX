@@ -24,6 +24,8 @@ namespace interaction {
           , math::Vec force = {0.0,0.0,0.0}
           , double cos_charge = 0.0
           , math::Vec cosV = {0.0,0.0,0.0}
+          , math::Vec cos_force = {0.0,0.0,0.0}
+          , bool polarisable = false
           ) :
               index(index)
             , charge(charge)
@@ -31,6 +33,8 @@ namespace interaction {
             , force(force)
             , cos_charge(cos_charge)
             , cosV(cosV)
+            , cos_force(cos_force)
+            , is_polarisable(polarisable)
     {}
     
     /**
@@ -59,9 +63,19 @@ namespace interaction {
     mutable double cos_charge;
 
     /** 
-     * charge-on-spring (distance vector between cos and real atom)
+     * charge-on-spring vector (pointing from atom to cos)
      */
     mutable math::Vec cosV;
+
+    /** 
+     * charge-on-spring force
+     */
+    mutable math::Vec cos_force;
+
+    /** 
+     * charge-on-spring force
+     */
+    mutable bool is_polarisable;
     
     /**
      * less-than comparison operator

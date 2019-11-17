@@ -36,6 +36,8 @@
 
 #include "../../../simulation/parameter.h"
 
+#include "../../../interaction/qmmm/qmmm_interaction.h"
+
 #include "../../interaction.h"
 
 #ifdef OMP
@@ -1535,13 +1537,14 @@ void interaction::Nonbonded_Outerloop
 
   unsigned int end = size_i;
   unsigned int end_lr = size_lr;
+  
+  const bool do_qmmm = 
+      (rank == 0 && sim.param().qmmm.qmmm == simulation::qmmm_polarisable);
 
-  /*if (rank == 0) {
-    // compute the QM part, gather etc...
-    if (sim.param().qmmm.qmmm != simulation::qmmm_off) {
-      //sim.param().qmmm.interaction->prepare(topo, conf, sim);
+  QMMM_Interaction * qmmm = nullptr;
+  if (do_qmmm) {
+    qmmm = QMMM_Interaction::pointer();
   }
-  }*/
 
   math::VArray e_el_new(topo.num_atoms());
 #ifdef OMP
@@ -1697,10 +1700,14 @@ void interaction::Nonbonded_Outerloop
 #endif
 
     if (rank == 0) {
-      // get the contributions from the QM part.
-      /*if (sim.param().qmmm.qmmm != simulation::qmmm_off) {
-        //sim.param().qmmm.interaction->add_electric_field_contribution(topo, conf, sim, e_el_new);
-      }*/
+      if (do_qmmm) {
+        // get the contributions from the QM part
+        if (turni > 0) {
+          // First QM iteration was already performed
+          qmmm->scf_step(topo, conf, sim);
+        }
+        qmmm->get_electric_field(sim, e_el_new);
+      }
       
       // If the external electric field is activated
       // then it will also act on the polarisable model
@@ -1773,6 +1780,9 @@ void interaction::Nonbonded_Outerloop
 
     DEBUG(11, "\trank: " << rank << " minfield: " << minfield << " iteration round: " << turni);
   }
+
+  if (do_qmmm)
+    qmmm->write_qm_data(topo, conf, sim);
   DEBUG(5, "electric field iterations: " << turni);
 }
 

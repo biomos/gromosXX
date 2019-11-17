@@ -243,6 +243,18 @@ int io::simple_crosschecks(simulation::Simulation & sim) {
       io::messages.add("QMMM block: Energy groups will not contain QM contribution",
                          "In_Parameter", io::message::warning);
     }
+    // Polarisable QMMM should be only used with polarisable FF
+    if (sim.param().qmmm.qmmm == simulation::qmmm_polarisable && !param.polarise.cos) {
+      io::messages.add("QMMM block: polarisable embedding but FF is non-polarisable",
+                         "In_Parameter", io::message::error);
+    }
+    // Polarisable FF should be only used with polarisable QMMM
+    if (param.polarise.cos
+        && sim.param().qmmm.qmmm
+        && sim.param().qmmm.qmmm != simulation::qmmm_polarisable) {
+      io::messages.add("QMMM block: polarisable FF can be used only with polarisable embedding",
+                         "In_Parameter", io::message::error);
+    }
     // We cannot automatically apply external electric field on the QM zone
     // It's user's responsibility to include it in the header for QM program
     if (sim.param().qmmm.qmmm > simulation::qmmm_mechanical
@@ -4372,8 +4384,8 @@ int io::check_features(simulation::Simulation & sim)
   fc.unlock("qmmm", "multistep");
   fc.unlock("qmmm", "multistep_boost");
   fc.unlock("qmmm", "montecarlo");
-  // fc.unlock("qmmm", "polarisation_cos"); // polarisation temporarily not supported
-  // fc.unlock("qmmm", "polarisation_cos_damped"); // polarisation temporarily not supported
+  fc.unlock("qmmm", "polarisation_cos");
+  fc.unlock("qmmm", "polarisation_cos_damped");
   fc.unlock("qmmm", "sasa");
   fc.unlock("qmmm", "sasavol");
   fc.unlock("qmmm", "random_gromos");

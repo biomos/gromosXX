@@ -29,15 +29,15 @@
 
 interaction::QM_Zone::QM_Zone(int net_charge
                             , int spin_multiplicity)
-                              : QM_energy(0.0)
-                              , MM_energy(0.0)
+                              : qm_energy(0.0)
+                              , mm_energy(0.0)
 {}
 
 interaction::QM_Zone::~QM_Zone()
 {}
 
 void interaction::QM_Zone::zero() {
-  this->QM_energy = 0.0; this->MM_energy = 0.0; 
+  this->qm_energy = 0.0; this->mm_energy = 0.0; 
 }
 
 void interaction::QM_Zone::clear() {
@@ -151,17 +151,16 @@ int interaction::QM_Zone::get_qm_atoms(const topology::Topology& topo,
         io::messages.add(msg.str(), "QM Zone", io::message::error);
         return 1;
       }
-      else if (topo.is_polarisable(a)
-                || topo.is_polarisable(a)
+      if (a_is_qm) {
+        if (topo.is_polarisable(a)
                 || topo.is_coarse_grained(a)
                 || topo.is_perturbed(a)
                 || topo.is_eds_perturbed(a)) {
-        std::ostringstream msg;
-        msg << "QM atom should not be polarisable, coarse-grained or perturbed";
-        io::messages.add(msg.str(), "QM Zone", io::message::error);
-        return 1;
-      }
-      if (a_is_qm) {
+          std::ostringstream msg;
+          msg << "QM atom should not be polarisable, coarse-grained or perturbed";
+          io::messages.add(msg.str(), "QM Zone", io::message::error);
+          return 1;
+        }
         DEBUG(7,"Adding QM atom " << a << ", atomic number: " << topo.qm_atomic_number(a));
         this->qm.emplace(a, topo.qm_atomic_number(a));
       }
@@ -349,6 +348,8 @@ int interaction::QM_Zone::get_mm_atoms(const topology::Topology& topo,
       SPLIT_BOUNDARY(this->_get_mm_atoms, topo, conf, sim);
     }
   }
+  if (sim.param().qmmm.qmmm == simulation::qmmm_polarisable)
+    this->update_cos(topo, conf, sim);
   if (sim.param().qmmm.mm_scale >= 0.0)
     this->scale_charges(sim);
   return 0;
@@ -652,5 +653,44 @@ void interaction::QM_Zone::update_links(const simulation::Simulation& sim) {
     const math::Vec& mm_pos = mm_it->pos;
 
     it->update_cap_position(qm_pos, mm_pos, sim.param().qmmm.cap_length);
+  }
+}
+
+void interaction::QM_Zone::update_cos(const topology::Topology& topo
+                                    , const configuration::Configuration& conf
+                                    , const simulation::Simulation& sim) {
+  for (std::set<MM_Atom>::iterator
+      it = this->mm.begin(), to = this->mm.end(); it != to; ++it)
+    {
+    const unsigned i = it->index;
+    if (topo.is_polarisable(i)) {
+      DEBUG(9, "Updating charge-on-spring of MM atom: " << i);
+      it->is_polarisable = true;
+      it->cos_charge = topo.coscharge(i);
+      it->cosV = conf.current().posV(i);
+    }
+  }
+}
+
+void interaction::QM_Zone::electric_field(const simulation::Simulation& sim
+                                        , math::VArray& electric_field) {
+  // get electric field at either the charge or the COS site.
+  for (std::set<MM_Atom>::iterator
+      it = this->mm.begin(), to = this->mm.end(); it != to; ++it)
+    {
+    const unsigned i = it->index;
+    math::Vec e;
+    switch (sim.param().polarise.efield_site) {
+      case simulation::ef_atom:
+        e = it->force / (it->charge - it->cos_charge);
+        break;
+      case simulation::ef_cos:
+        e = it->cos_force / it->cos_charge;
+        break;
+      default:
+        io::messages.add("Electric field site not implemented.",
+                "QMMM_Interaction", io::message::critical);
+    }
+    electric_field(i) += e;
   }
 }

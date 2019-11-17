@@ -14,6 +14,7 @@ namespace io {
 }
 
 #include <interaction/nonbonded/interaction/nonbonded_parameter.h>
+#include <interaction/interaction.h>
 
 namespace interaction {
   class QM_Worker;
@@ -28,15 +29,23 @@ namespace interaction {
    */
   class QMMM_Interaction : public Interaction {
   public:
-
     /**
      * Constructor.
      */
     QMMM_Interaction();
+
     /**
      * Destructor.
      */
     virtual ~QMMM_Interaction();
+
+    /**
+     * Get the pointer to QMMM interaction
+     */
+    static inline QMMM_Interaction * pointer() {
+      return qmmm_ptr;
+    }
+    
 
     /**
      * init
@@ -46,33 +55,18 @@ namespace interaction {
                    , simulation::Simulation &sim
                    , std::ostream &os = std::cout
                    , bool quiet = false) override;
+
     /**
      * calculate the interactions.
      */
     virtual int calculate_interactions(topology::Topology & topo,
             configuration::Configuration & conf,
             simulation::Simulation & sim) override;
-    
-    /**
-     * Add the electric field contributions of the QM part
-     * to the MM atoms.
-     * 
-     * @param electric_field the electric field
-     * @return zero on success, non-zero on failure.
-     */
-    /*virtual int add_electric_field_contribution(topology::Topology & topo,
-            configuration::Configuration & conf,
-            simulation::Simulation & sim,
-            math::VArray & electric_field);*/
-
-    int update_electric_field(topology::Topology& topo,
-                              configuration::Configuration& conf,
-                              simulation::Simulation& sim) {return 0;};
 
     /**
      * QM Zone accessor
      */
-    const QM_Zone & qm_zone() const {return *m_qm_zone;}
+    //const QM_Zone & qm_zone() const {return *m_qm_zone;}
 
     /**
      * parameter accessor
@@ -94,28 +88,64 @@ namespace interaction {
      */
     virtual void print_timing(std::ostream & os);
 
-  protected:
-    int init_nonbonded(topology::Topology& topo
-                      , configuration::Configuration& conf
-                      , simulation::Simulation& sim
-                      , std::ostream &os
-                      , bool quiet);
+    /**********************************************
+     * Functions to perform polarisable embedding *
+     **********************************************/
 
+    /**
+     * run a step in self-consistent field iteration (polarisable FF)
+     */
+    int scf_step(topology::Topology& topo
+               , configuration::Configuration& conf
+               , simulation::Simulation& sim);
+
+    /**
+     * get electric field of QM zone
+     */
+    void get_electric_field(const simulation::Simulation& sim
+                          , math::VArray & electric_field);
+
+    /**
+     * write final QM data to configuration
+     */
+    void write_qm_data(topology::Topology& topo
+                  , configuration::Configuration& conf
+                  , const simulation::Simulation& sim);
+
+  protected:
+    /**
+     * initialize LJ nonbonded set
+     */
+    int init_nonbonded(topology::Topology& topo
+                     , configuration::Configuration& conf
+                     , simulation::Simulation& sim
+                     , std::ostream &os
+                     , bool quiet);
+
+    /**
+     * calculate LJ nonbonded interactions
+     */
     int calculate_nonbonded(topology::Topology& topo
                           , configuration::Configuration& conf
                           , simulation::Simulation& sim);
-    
+
+    /**
+     * helper function to remove classical bonded terms from QM zone
+     */
     void remove_bonded_terms(topology::Topology& topo
                            , std::ostream& os
                            , bool quiet);
 
+    /**
+     * helper function to remove pairlist exclusions from topology
+     */
     void remove_exclusions(topology::Topology& topo
                          , const simulation::Simulation& sim
                          , std::ostream &os
                          , bool quiet);
 
     /**
-     * store data from sets into the configuration
+     * store data from nonbonded sets into the configuration
      */
     void store_set_data(const topology::Topology& topo
                       , configuration::Configuration& conf
@@ -161,6 +191,13 @@ namespace interaction {
      * QM zone
      */
     QM_Zone * m_qm_zone;
+
+  private:
+    /**
+     * Pointer to the instance
+     */
+    static QMMM_Interaction * qmmm_ptr;
+
   };
   
 } // interaction
