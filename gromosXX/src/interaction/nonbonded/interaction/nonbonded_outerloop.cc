@@ -49,6 +49,11 @@
 #define MODULE interaction
 #define SUBMODULE nonbonded
 
+#ifdef OMP
+    math::VArray interaction::Nonbonded_Outerloop::electric_field = 0.0;
+    double interaction::Nonbonded_Outerloop::minfield = 0.0;
+#endif
+
 /**
  * Constructor.
  */
@@ -1539,6 +1544,15 @@ void interaction::Nonbonded_Outerloop
   }*/
 
   math::VArray e_el_new(topo.num_atoms());
+#ifdef OMP
+#pragma omp single
+  {
+    Nonbonded_Outerloop::electric_field.resize(e_el_new.size());
+    Nonbonded_Outerloop::electric_field = 0.0;
+  }
+#pragma omp barrier
+#endif
+
 #ifdef XXMPI
   // because we need some place to reduce the field to
   math::VArray e_el_master(topo.num_atoms());
@@ -1666,6 +1680,22 @@ void interaction::Nonbonded_Outerloop
     }
 #endif
 
+#ifdef OMP
+    // Reduce electric field from OMP threads
+    for (unsigned i = 0; i < topo.num_atoms(); ++i) {
+      for (unsigned j = 0; j < 3; ++j) {
+#pragma omp atomic
+        Nonbonded_Outerloop::electric_field[i][j] += e_el_new[i][j];
+      }
+    }
+// Wait for all writes
+#pragma omp barrier
+    if (rank == 0) {
+      e_el_new.swap(Nonbonded_Outerloop::electric_field);
+      Nonbonded_Outerloop::electric_field = 0.0;
+    }
+#endif
+
     if (rank == 0) {
       // get the contributions from the QM part.
       /*if (sim.param().qmmm.qmmm != simulation::qmmm_off) {
@@ -1732,6 +1762,15 @@ void interaction::Nonbonded_Outerloop
       MPI::COMM_WORLD.Bcast(&minfield, 1, MPI::DOUBLE, 0);
     }
 #endif
+#ifdef OMP
+  // share the convergence criterion
+    if (rank == 0)
+      Nonbonded_Outerloop::minfield = minfield;
+#pragma omp barrier
+    if (rank != 0)
+      minfield = Nonbonded_Outerloop::minfield;
+#endif
+
     DEBUG(11, "\trank: " << rank << " minfield: " << minfield << " iteration round: " << turni);
   }
   DEBUG(5, "electric field iterations: " << turni);

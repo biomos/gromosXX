@@ -331,6 +331,17 @@ namespace interaction
      */
     Nonbonded_Parameter & m_param;
 
+#ifdef OMP
+    /**
+     * OMP shared total electric field
+     */
+    static math::VArray electric_field;
+    /**
+     * OMP shared convergence criterion
+     */
+    static double minfield;
+#endif
+
     template<typename t_interaction_spec>
     void _lj_crf_outerloop(topology::Topology & topo,
 			   configuration::Configuration & conf,

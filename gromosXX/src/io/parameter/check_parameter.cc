@@ -2370,8 +2370,7 @@ int io::check_features(simulation::Simulation & sim)
   fc.unlock("polarisation_cos", "random_gromos");
   fc.unlock("polarisation_cos", "random_gsl");
   fc.unlock("polarisation_cos", "parallel_mpi");
-  // There seems to be something wrong in OMP
-  // fc.unlock("polarisation_cos", "parallel_omp");
+  fc.unlock("polarisation_cos", "parallel_omp");
   fc.unlock("polarisation_cos_damped", "random_gromos");
   fc.unlock("polarisation_cos_damped", "random_gsl");
   fc.unlock("polarisation_cos_damped", "parallel_mpi");
