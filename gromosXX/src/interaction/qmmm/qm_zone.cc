@@ -88,7 +88,7 @@ void interaction::QM_Zone::write_pos(math::VArray& pos) {
    * otherwise we may add some noise from truncated precision
   */
   for (std::set<QM_Atom>::const_iterator
-    it = this->qm.begin(), to = this->qm.end(); it != to; ++it)
+      it = this->qm.begin(), to = this->qm.end(); it != to; ++it)
     {
     pos(it->index) = it->pos;
   }
@@ -102,9 +102,15 @@ void interaction::QM_Zone::write_force(math::VArray& force) {
     it->distribute_force(*this);
   }
 
-  // Then write forces
+  // Then write QM atoms forces
   for (std::set<QM_Atom>::const_iterator
       it = this->qm.begin(), to = this->qm.end(); it != to; ++it)
+    {
+    force(it->index) += it->force;
+  }
+  // And MM atoms forces
+  for (std::set<MM_Atom>::const_iterator
+      it = this->mm.begin(), to = this->mm.end(); it != to; ++it)
     {
     force(it->index) += it->force;
   }
