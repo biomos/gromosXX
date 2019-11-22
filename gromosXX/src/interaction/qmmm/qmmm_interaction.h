@@ -45,7 +45,6 @@ namespace interaction {
     static inline QMMM_Interaction * pointer() {
       return qmmm_ptr;
     }
-    
 
     /**
      * init
@@ -62,11 +61,6 @@ namespace interaction {
     virtual int calculate_interactions(topology::Topology & topo,
             configuration::Configuration & conf,
             simulation::Simulation & sim) override;
-
-    /**
-     * QM Zone accessor
-     */
-    //const QM_Zone & qm_zone() const {return *m_qm_zone;}
 
     /**
      * parameter accessor

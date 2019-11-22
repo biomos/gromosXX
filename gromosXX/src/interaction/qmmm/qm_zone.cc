@@ -605,7 +605,8 @@ void interaction::QM_Zone::scale_charges(const simulation::Simulation& sim) {
     {
     if (mm_it->charge != 0.0) {
       // Find closest QM atom and scale accordingly
-      double min_d2;
+      // Initialize to large value
+      double min_d2 = std::numeric_limits<double>::max();
       for (std::set<QM_Atom>::const_iterator
             qm_it = this->qm.begin(), qm_to = this->qm.end();
             qm_it != qm_to; ++qm_it)

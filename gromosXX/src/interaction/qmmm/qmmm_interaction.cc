@@ -159,6 +159,7 @@ int interaction::QMMM_Interaction::scf_step(topology::Topology& topo,
                                             configuration::Configuration& conf,
                                             simulation::Simulation& sim) {
   // Update only COS in QM zone
+  m_timer.start();
   DEBUG(15,"Updating COS in QM zone");
   m_timer.start("QM zone update");
   m_qm_zone->update_cos(topo, conf, sim);
@@ -169,6 +170,7 @@ int interaction::QMMM_Interaction::scf_step(topology::Topology& topo,
   err = m_worker->run_QM(topo, conf, sim, *m_qm_zone);
   m_timer.stop(m_worker->name());
   if (err) return err;
+  m_timer.stop();
   return 0;
 }
 
@@ -204,12 +206,12 @@ int interaction::QMMM_Interaction::calculate_interactions(topology::Topology& to
     m_timer.start("QM zone update");
     err = m_qm_zone->update(topo, conf, sim);
     m_timer.stop("QM zone update");
-    if (err) {m_timer.stop(); return err;}
+    if (err) return err;
     
     m_timer.start(m_worker->name());
     err = m_worker->run_QM(topo, conf, sim, *m_qm_zone);
     m_timer.stop(m_worker->name());
-    if (err) {m_timer.stop(); return err;}
+    if (err) return err;
     
     if (sim.param().qmmm.qmmm != simulation::qmmm_polarisable) {
       // in polarisable embedding, we will write the data after electric field evaluation
@@ -262,7 +264,7 @@ void interaction::QMMM_Interaction::get_electric_field(const simulation::Simulat
   m_timer.start();
   m_timer.start("Electric field writing");
   m_qm_zone->electric_field(sim, electric_field);
-  m_timer.start("Electric field writing");
+  m_timer.stop("Electric field writing");
   m_timer.stop();
 }
 

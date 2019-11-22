@@ -1730,7 +1730,7 @@ void interaction::Nonbonded_Outerloop
           /////////////////////////////////////////////////
 
           if (sim.param().polarise.damp) { // damp the polarisability
-            const double e_i = sqrt(math::abs2(e_el_new(i))),
+            const double e_i = math::abs(e_el_new(i)),
                     e_0 = topo.damping_level(i);
             if (e_i <= e_0)
               delta_r = (topo.polarisability(i) / topo.coscharge(i)) * e_el_new(i);
@@ -2406,7 +2406,7 @@ void interaction::Nonbonded_Outerloop
               }
 
 #ifdef OMP
-#pragma omp critical
+#pragma omp critical(addup_term)
 #endif
               term += gamma_hat / k2;
               DEBUG(13, "\t\t\tgamma_hat / k2: " << gamma_hat / k2);
@@ -2415,7 +2415,7 @@ void interaction::Nonbonded_Outerloop
                 // factor 2.0 is due to symmetry
                 const double isotropic_factor = 2.0 * (ak * gamma_hat_prime - 2.0 * gamma_hat) / (k2 * k2);
 #ifdef OMP
-#pragma omp critical
+#pragma omp critical(addup_sum_gammahat)
 #endif
                 sum_gammahat += math::symmetric_tensor_product(isotropic_factor * k, k);
               } // virial?

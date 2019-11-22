@@ -53,7 +53,7 @@ int interaction::MNDO_Worker::init(const simulation::Simulation& sim) {
 
   if (inp.empty()) {
     this->using_tmp = true;
-    if(util::create_tmpfile(this->param->input_file) < 1) {
+    if(util::create_tmpfile(inp) < 1) {
         io::messages.add("Unable to create temporary input file: " + inp,
         "MNDO_Worker", io::message::critical);
       return 1;
@@ -520,7 +520,6 @@ int interaction::MNDO_Worker::_parse_gradients(std::ifstream& ofs,
 
 template<>
 int interaction::MNDO_Worker::_parse_gradients
-                  <interaction::MM_Atom>
                                         (std::ifstream& ofs
                                        , std::set<interaction::MM_Atom>& atom_set) {
   int err = 0;
