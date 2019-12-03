@@ -44,7 +44,8 @@ namespace io {
     /**
      * Read in QM/MM unit conversion factors
      */
-    void read_units(simulation::Parameter::qmmm_struct::qm_param_struct* qm_param);
+    void read_units(const simulation::Simulation & sim
+          , simulation::Parameter::qmmm_struct::qm_param_struct* qm_param);
     /**
      * Read map of atomic numbers to element names
      */

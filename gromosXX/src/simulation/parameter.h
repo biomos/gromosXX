@@ -3606,13 +3606,6 @@ namespace simulation
        * QM program unspecific parameters
        */
       struct qm_param_struct{
-        qm_param_struct();
-        qm_param_struct(double ufl
-                      , double ufe
-                      , double ufc
-                      ) : unit_factor_length(ufl)
-                        , unit_factor_energy(ufe)
-                        , unit_factor_charge(ufc) {}
         /**
          * path for the program binary
          */
@@ -3651,12 +3644,6 @@ namespace simulation
        * MNDO specific parameters
        */
       struct mndo_param_struct : public qm_param_struct{
-        mndo_param_struct(
-                          ) : qm_param_struct(0.1 /* A -> nm */
-                                            , 4.184 /* kcal -> kJ */
-                                            , 1.0
-                                            )
-                          {}
         /**
          * path for the gradient output file. Empty for a temporary file
          */
@@ -3671,11 +3658,6 @@ namespace simulation
        * Turbomole specific parameters
        */
       struct turbomole_param_struct : public qm_param_struct{
-        turbomole_param_struct() : qm_param_struct(math::bohr /* a.u. -> nm */
-                                                , math::hartree * math::avogadro / 1000 /* a.u. -> kJmol-1 */
-                                                , 1.0
-                                                )
-                              {}
         /**
          * the tools to run in the working directory
          */
@@ -3714,11 +3696,6 @@ namespace simulation
        * DFTB specific parameters
        */
       struct dftb_param_struct : public qm_param_struct{
-        dftb_param_struct() : qm_param_struct(math::bohr /* a.u. -> nm */
-                                                , math::hartree * math::avogadro / 1000 /* a.u. -> kJmol-1 */
-                                                , 1.0
-                                                )
-                              {}
         /**
          * path for the charges.dat file. Empty for a temporary file
          */
@@ -3737,11 +3714,6 @@ namespace simulation
        * MOPAC specific parameters
        */
       struct mopac_param_struct : public qm_param_struct{
-        mopac_param_struct() : qm_param_struct(0.1 /* A -> nm */
-                                             , 4.184 /* kcal -> kJ */
-                                             , 1.0
-                                             )
-                          {}
         /**
          * path for the molin file. Empty for a temporary file
          */

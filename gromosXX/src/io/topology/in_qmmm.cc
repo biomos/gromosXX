@@ -260,7 +260,7 @@ io::In_QMMM::read(topology::Topology& topo,
    * MNDO
    */
   if (sw == simulation::qm_mndo) {
-    this->read_units(&sim.param().qmmm.mndo);
+    this->read_units(sim, &sim.param().qmmm.mndo);
     { // MNDOBINARY
 
       DEBUG(15, "Reading MNDOBINARY");
@@ -316,7 +316,7 @@ io::In_QMMM::read(topology::Topology& topo,
    * Turbomole
    */
   else if (sw == simulation::qm_turbomole) {
-    this->read_units(&sim.param().qmmm.turbomole);
+    this->read_units(sim, &sim.param().qmmm.turbomole);
     this->read_elements(topo, &sim.param().qmmm.turbomole);
 
     { // TURBOMOLEFILES
@@ -368,7 +368,7 @@ io::In_QMMM::read(topology::Topology& topo,
    * DFTB
    */
   else if (sw == simulation::qm_dftb) {
-    this->read_units(&sim.param().qmmm.dftb);
+    this->read_units(sim, &sim.param().qmmm.dftb);
     this->read_elements(topo, &sim.param().qmmm.turbomole);
     { // DFTBFILES
       buffer = m_block["DFTBFILES"];
@@ -408,7 +408,7 @@ io::In_QMMM::read(topology::Topology& topo,
    * MOPAC
    */
   else if (sw == simulation::qm_mopac) {
-    this->read_units(&sim.param().qmmm.mopac);
+    this->read_units(sim, &sim.param().qmmm.mopac);
     {
       //MOPACFILES
       buffer = m_block["MOPACFILES"];
@@ -500,10 +500,35 @@ void io::In_QMMM::read_elements(const topology::Topology& topo
   }
 }
 
-void io::In_QMMM::read_units(simulation::Parameter::qmmm_struct::qm_param_struct* qm_param)
+void io::In_QMMM::read_units(const simulation::Simulation& sim
+                  , simulation::Parameter::qmmm_struct::qm_param_struct* qm_param)
   {
+  std::map<simulation::qm_software_enum, std::array<double, 3> >
+  unit_factor_defaults = {
+    {simulation::qm_mndo,
+                    { math::angstrom /* A */
+                    , math::kcal /* kcal */
+                    , math::echarge /* e */}},
+    {simulation::qm_turbomole,
+                    { math::bohr /* a.u. -> nm */
+                    , math::hartree * math::avogadro /* a.u. */
+                    , math::echarge /* e */}},
+    {simulation::qm_dftb,
+                    { math::bohr /* a.u. -> nm */
+                    , math::hartree * math::avogadro /* a.u. */
+                    , math::echarge /* e */}},
+    {simulation::qm_mopac,
+                    {math::angstrom /* A */
+                    , math::kcal /* kcal */
+                    , math::echarge /* e */}}
+  };
+
   std::vector<std::string> buffer = m_block["QMUNIT"];
   if (!buffer.size()) {
+    std::array<double, 3> defaults = unit_factor_defaults[sim.param().qmmm.software];
+    qm_param->unit_factor_length = defaults[0];
+    qm_param->unit_factor_energy = defaults[1];
+    qm_param->unit_factor_charge = defaults[2];
     std::ostringstream msg;
     msg << "Using default QMUNIT: "
         << qm_param->unit_factor_length << ", "

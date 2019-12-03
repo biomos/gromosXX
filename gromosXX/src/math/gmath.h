@@ -693,17 +693,32 @@ namespace math
   /**
    * Avogadro constant
    */
-  extern const double avogadro;
+  extern double avogadro;
 
   /**
    * Bohr (length a.u.)
    */
-  extern const double bohr;
+  extern double bohr;
 
   /**
    * Hartree (energy a.u.)
    */
-  extern const double hartree;
+  extern double hartree;
+
+  /**
+   * Value of angstrom unit
+   */
+  extern double angstrom;
+
+  /**
+   * Value of thermochemical kilocalorie
+   */
+  extern double kcal;
+
+  /**
+   * Electron charge
+   */
+  extern double echarge;
 
 #ifndef NDEBUG
   /**
