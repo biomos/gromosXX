@@ -54,6 +54,18 @@ namespace interaction {
      * file name for MNDO gradient output file
      */
     std::string output_gradient_file;
+    /**
+     * file name for MNDO density matrix file
+     */
+    std::string density_matrix_file;
+    /**
+     * using temporary files
+     */
+    bool using_tmp = false;
+    /**
+     * symlink creation error
+     */
+    int symlink_err = 0;
   };
 }
 

@@ -78,7 +78,7 @@ namespace util {
     /**
      * write coordinates for all replicas to cnf
      */
-    void write_final_conf();
+    virtual void write_final_conf();
     
     /**
      * init MD simulation for all replicas; one by one

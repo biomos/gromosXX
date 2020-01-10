@@ -84,6 +84,9 @@ namespace util
          */
         void init_eds_stat();
         
+        //overwrite also the write out.
+        void write_final_conf() override;
+        
     protected:
         /**
         * all replicas on this node

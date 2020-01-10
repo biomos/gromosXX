@@ -547,7 +547,11 @@ int main(int argc, char *argv[]) {
             DEBUG(1, "Master \t FINAL_OUT")
             dynamic_cast<util::replica_exchange_master*>(Master)->write_final_conf();
         }
-       
+    }
+    DEBUG(1, "Master \t \t finalize ")
+            
+    Master->write_final_conf();
+      
     } else { //SLAVES    
         //if(uniqueThreadID < 3){
         //std::cout << "RANK: "<< uniqueThreadID <<"\tSLEPPING SLAVE\n";
@@ -614,9 +618,44 @@ int main(int argc, char *argv[]) {
                 << "\t" << durationHour << ":" << durationMinlHour << ":" << durationSlMin << "\t\t" << duration << "\n";
 
     }
+<<<<<<< HEAD
 
     MPI_Finalize();
     return 0;
+=======
+    
+    DEBUG(1, "Slave "<< rank <<" \t Finalize") ;   
+    Slave->write_final_conf();
+    std::cout << "\n=================== Slave Node "<< rank << "  finished successfully!\n";
+  }
+  
+  MPI_Barrier(MPI_COMM_WORLD);  //Make sure all processes finished.
+
+  //last MASTER OUTPUT
+  if(rank == 0){
+    //FINAL OUTPUT - Time used:
+    double end = MPI_Wtime();
+    double duration = end - start;
+    int durationMin = int(duration/60);
+    int durationHour = int(std::floor(durationMin/60));
+    int durationMinlHour = int(std::floor(durationMin-durationHour*60));
+    int durationSlMin = int(std::floor(duration - (durationMinlHour+durationHour*60)*60));
+
+    //Todo: if (cond){finished succ}else{not} bschroed
+    std::string msg("\n====================================================================================================\n\tREPLICA EXCHANGE SIMULATION finished!\n====================================================================================================\n");
+    std::cout << msg;
+    std::cerr << msg;
+ 
+    std::cout<< "TOTAL TIME USED: \n\th:min:s\t\tseconds\n"
+       << "\t" << durationHour << ":"<<durationMinlHour << ":" << durationSlMin << "\t\t" << duration << "\n";
+    std::cerr<< "TOTAL TIME USED: \n\th:min:s\t\tseconds\n"
+       << "\t" << durationHour << ":"<<durationMinlHour << ":" << durationSlMin << "\t\t" << duration << "\n";
+
+  }
+
+  MPI_Finalize();
+  return 0;
+>>>>>>> master
 #else
     std::cout << "\n==================================================\n\tGROMOS Replica Exchange:\n==================================================\n";
     std::cout << argv[0] << " needs MPI to run\n\tuse --enable-mpi at configure and appropriate compilers\n" << std::endl;

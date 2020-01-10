@@ -89,6 +89,9 @@ repdatName(args["repdat"])
 
   // set output file
  DEBUG(2,"replica_exchange_master "<< rank <<":Constructor:\t DONE");
+#else
+   throw "Cannot initialize replica_exchange_master without MPI!"; 
+#endif
 }
 
 
@@ -97,26 +100,24 @@ util::replica_exchange_master::~replica_exchange_master() {
 }
 
 void util::replica_exchange_master::receive_from_all_slaves() {
-    DEBUG(2,"replica_exchange_master "<< rank <<":receive_from_all_slaves:\t START\n");
-    double start = MPI_Wtime();
+#ifdef XXMPI
+  DEBUG(2,"replica_exchange_master "<< rank <<":receive_from_all_slaves:\t START\n");
+  double start = MPI_Wtime();
 
-    MPI_Status status;
-    util::repInfo info;
+  MPI_Status status;
+  util::repInfo info;
 
-    // receive all information from slaves
-    DEBUG(2,"replica_exchange_master "<< rank <<":receive_from_all_slaves:\t replicas"<< numReplicas <<"\n");
-
-    for (unsigned int rep = 1; rep < numReplicas; rep++) {
-      unsigned int rank = repMap.find(rep)->second;
-      if (rank != 0) {
-        MPI_Recv(&info, 1, MPI_REPINFO, rank, REPINFO, MPI_COMM_WORLD, &status);
-        replicaData[rep].run = info.run;
-        replicaData[rep].epot = info.epot;
-        replicaData[rep].epot_partner = info.epot_partner;
-        replicaData[rep].probability = info.probability;
-        replicaData[rep].switched = info.switched;
-        replicaData[rep].partner = info.partner;
-      }
+  // receive all information from slaves
+  for (unsigned int rep = 0; rep < numReplicas; ++rep) {
+    unsigned int rank = repMap.find(rep)->second;
+    if (rank != 0) {
+      MPI_Recv(&info, 1, MPI_REPINFO, rank, REPINFO, MPI_COMM_WORLD, &status);
+      replicaData[rep].run = info.run;
+      replicaData[rep].epot = info.epot;
+      replicaData[rep].epot_partner = info.epot_partner;
+      replicaData[rep].probability = info.probability;
+      replicaData[rep].switched = info.switched;
+      replicaData[rep].partner = info.partner;
     }
     DEBUG(2,"replica_exchange_master "<< rank <<":receive_from_all_slaves:\t got all MPI reps\n");
 
@@ -143,7 +144,7 @@ void util::replica_exchange_master::receive_from_all_slaves() {
    DEBUG(2,"replica_exchange_master "<< rank <<":receive_from_all_slaves:\t " << "time used for receiving all messages: " << MPI_Wtime() - start << " seconds\n");
    DEBUG(2,"replica_exchange_master "<< rank <<":receive_from_all_slaves:\t DONE: \n");
 #else
-   throw "Cannot initialize replica_exchange_master without MPI!"; 
+   throw "Cannot use replica_exchange_master without MPI!"; 
 #endif
 }
 

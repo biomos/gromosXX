@@ -181,17 +181,26 @@ void io::In_Parameter::read_ENERGYMIN(simulation::Parameter &param,
     // will be used to generate snippets that can be included in the doxygen doc;
     // the first line is the tag
     exampleblock << "ENERGYMIN\n";
-    exampleblock << "# NTEM: 0..1 controls energy minimisation mode\n";
+    exampleblock << "# NTEM: 0..3 controls energy minimisation mode\n";
     exampleblock << "#       0: do not do energy minimisation (default)\n";
     exampleblock << "#       1: steepest-descent minimisation\n";
-    exampleblock << "# NCYC: >0 number of steps before resetting of conjugate-gradient search direction (not in use !!)\n";
+    exampleblock << "#       2: Fletcher-Reeves conjugate-gradient minimisation\n";
+    exampleblock << "#       3: Polak-Ribiere conjugate-gradient minimisation\n";
+    exampleblock << "# NCYC: >0 number of steps before resetting the conjugate-gradient search direction\n";
+    exampleblock << "#       =0 reset only if the energy grows in the search direction\n";
     exampleblock << "# DELE: >0.0 energy threshold for convergence\n";
-    exampleblock << "# DX0: > 0.0 initial step size\n";
-    exampleblock << "# DXM: > 0.0 maximum step size\n";
-    exampleblock << "# NMIN > 0 minimum number of minimisation steps\n";
-    exampleblock << "# FLIM >= 0.0 limit force to maximum value (FLIM > 0.0 is not recommended).\n";
+    exampleblock << "#       >0.0 (conjugate-gradient) RMS force threshold for convergence\n";
+    exampleblock << "# DX0: >0.0 initial step size\n";
+    exampleblock << "# DXM: >0.0 maximum step size\n";
+    exampleblock << "# NMIN >0 minimum number of minimisation steps\n";
+    exampleblock << "# FLIM >=0.0 limit force to maximum value (FLIM > 0.0 is not recommended)\n";
+    exampleblock << "# CGIM >0 (conjugate-gradient) maximum number of cubic interpolations per step\n";
+    exampleblock << "# CGIC >0.0 (conjugate-gradient) displacement threshold after interpolation\n";
     exampleblock << "#     NTEM    NCYC    DELE    DX0     DXM    NMIN    FLIM\n";
-    exampleblock << "         1       0     0.1   0.01    0.05       1       0\n";
+    exampleblock << "         1       0     0.1   0.01    0.05     100     0.0\n";
+    exampleblock << "# ---- OR: example for NTEM > 1:\n";
+    exampleblock << "#     NTEM    NCYC    DELE    DX0     DXM    NMIN    FLIM    CGIM    CGIC\n";
+    exampleblock << "         3       0    1e-3   5e-6    5e-4     100     0.0       3    1e-4\n";
     exampleblock << "END\n";
 
     std::string blockname = "ENERGYMIN";
@@ -200,19 +209,23 @@ void io::In_Parameter::read_ENERGYMIN(simulation::Parameter &param,
     if (block.read_buffer(m_block[blockname], false) == 0) {
         block_read.insert("ENERGYMIN");
 
-        block.get_next_parameter("NTEM", param.minimise.ntem, "", "0,1");
-        block.get_next_parameter("NCYC", param.minimise.ncyc, ">0", "");
+        block.get_next_parameter("NTEM", param.minimise.ntem, "", "0,1,2,3");
+        block.get_next_parameter("NCYC", param.minimise.ncyc, ">=0", "");
         block.get_next_parameter("DELE", param.minimise.dele, ">0", "");
         block.get_next_parameter("DX0", param.minimise.dx0, ">0", "");
         std::string str_dx0=io::to_string(param.minimise.dx0);
         block.get_next_parameter("DXM", param.minimise.dxm, ">="+str_dx0, "");
         block.get_next_parameter("NMIN", param.minimise.nmin, ">0", "");
         block.get_next_parameter("FLIM", param.minimise.flim, ">=0", "");
+        if (param.minimise.ntem >= 2) {
+            block.get_next_parameter("CGIM", param.minimise.cgim, ">0", "");
+            block.get_next_parameter("CGIC", param.minimise.cgic, ">0", "");
+        }
 
-        /* if (param.minimise.ntem == 1 && param.minimise.ncyc > 0)
+        if (param.minimise.ntem == 1 && param.minimise.ncyc > 0)
            io::messages.add("ENERGYMIN block: NCYC > 0 has no effect for steepest descent",
                "io::In_Parameter",
-               io::message::warning); */
+               io::message::warning);
 
         if (param.minimise.flim > 0)
             io::messages.add("ENERGYMIN: FLIM > 0 may result in "
@@ -2872,13 +2885,6 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
           io::messages.add(msg.str(), "In_Parameter", io::message::error);
           return;
         }
-         
-    // make sure we simulate at a given temperature (unambiguous kT)
-    if (!param.multibath.couple) {
-      io::messages.add("Error in RE_EDS block: EDS requires temperature coupling.",
-              "In_Parameter", io::message::error);
-      return;
-    }
     
     std::string blockname = "REPLICA_EDS";
     Block block(blockname, exampleblock.str());
@@ -2906,14 +2912,15 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
 
         //get EIR-Matrix
         std::vector<std::vector<float>> eir(num_l);
-        for (unsigned int replicaI = 0; replicaI < num_l; replicaI++) {
-          std::string replicaI_idx = io::to_string(replicaI);
-          std::vector<float> eiri(num_states, 0.0);
-          eir[replicaI] = eiri;      
-
-          for (unsigned int stateJ=0; stateJ< num_states; stateJ++){
-            std::string stateJ_idx = io::to_string(stateJ);
-            block.get_next_parameter("EIR[" + replicaI_idx + "]["+stateJ_idx+"]", eir[replicaI][stateJ], "", "");
+        for(unsigned int replicaJ=0; replicaJ<num_l; replicaJ++){//init eir vectors
+          std::vector<float> eir_vector_J(num_states, 0.0);
+          eir[replicaJ] = eir_vector_J;    
+        }
+        for (unsigned int stateI = 0; stateI < num_states; stateI++) {
+          std::string stateI_idx = io::to_string(stateI);
+          for (unsigned int replicaJ=0; replicaJ< num_l; replicaJ++){  
+            std::string replicaJ_idx = io::to_string(replicaJ);
+            block.get_next_parameter("EIR[" + replicaJ_idx+ "]["+stateI_idx+"]", eir[replicaJ][stateI], "", "");    //Comment "this function only reads line by line! doesn't matter the indices in the string 
           }
         }
 
@@ -3775,7 +3782,7 @@ void io::In_Parameter::read_AEDS(simulation::Parameter & param,
   exampleblock << "  0   -5   -140   -560   -74\n";
   exampleblock << "# NTIAEDSS  RESTREMIN  BMAXTYPE  BMAX  ASTEPS  BSTEPS\n";
   exampleblock << "  1         1          2         3     500     50000\n";
-  exampleblock << "# END\n";
+  exampleblock << "END\n";
 
 
 

@@ -186,7 +186,13 @@ void util::replica_exchange_base_eds::swap() {
     DEBUG(3,"replica_exchange_base_eds "<< rank <<":swap:\t Done");
 }
 
-/*
+void util::replica_exchange_base_eds::write_final_conf() {
+  // write coordinates to cnf for all replica assigned to this node
+  for (std::vector< util::replica_reeds * >::iterator it = replicas.begin(); it < replicas.end(); ++it) {
+    (*it)->write_final_conf();
+  }
+}
+
 void util::replica_exchange_base_eds::swap_on_node(repIterator it1, const unsigned int partner) {
   replica* rep1 = *it1;
   replica* rep2;
