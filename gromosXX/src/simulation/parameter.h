@@ -6,6 +6,8 @@
 #ifndef INCLUDED_PARAMETER_H
 #define INCLUDED_PARAMETER_H
 
+
+
 // forward declarations
 namespace interaction {
   class QMMM_Interaction;
@@ -728,6 +730,37 @@ namespace simulation
      */
     qmmm_software_turbomole = 1
   };
+  
+
+    struct mpi_control_struct
+    {
+        /**
+         * Constructor
+         * Default values:
+         * - number_of_threads 0
+         */
+        mpi_control_struct() : global_number_of_threads(-1), global_master(0), global_thread_id(-1), 
+                               local_simulation(-1), local_number_of_threads(-1), local_master(-1), local_thread_id(-1)
+        {
+        }
+          
+        //Indices
+        int global_number_of_threads;    //total_number_of_threads   
+        int global_master;   //local thread_id
+        int global_thread_id;   //local thread_id
+
+        int local_simulation; //local replica id of simulation
+        int local_number_of_threads;    //total_number_of_threads      
+        int local_master; //local master of this 
+        int local_thread_id;
+        // int local_comm; // TODO: bschroed  for later!??
+        
+        std::map<unsigned int, unsigned int> thread_id_replica_map;
+        std::vector< std::vector<int> > replica_owned_threads; 
+
+    } /** replica exchange parameters */;
+
+
 
   /**
    * @class Parameter
@@ -736,7 +769,10 @@ namespace simulation
   class Parameter
   {
   public:
-    Parameter() : title(GROMOSXX) {develop.develop = false;}
+    Parameter() : title(GROMOSXX) {
+        develop.develop = false;
+        mpi = mpi_control_struct();  //mpi test
+    }
     
     /**
      * title of the simulation (from the input file)
@@ -2335,6 +2371,13 @@ namespace simulation
     } /** replica exchange parameters */ replica;
 
     /**
+     * @struct mpi_control_struct
+     *  ToDO:
+     */
+    struct mpi_control_struct mpi;  //mpi_control_struct test
+
+
+    /**
      * @struct cgrain_struct
      * coarse grain potential
      */
@@ -3660,8 +3703,6 @@ namespace simulation
     }    
     
   };
-
-  
   
 }
 

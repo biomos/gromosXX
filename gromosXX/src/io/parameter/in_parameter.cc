@@ -2764,6 +2764,7 @@ void io::In_Parameter::read_REPLICA(simulation::Parameter &param,
 
         block.get_next_parameter("NRETRIAL", param.replica.trials, ">=0", "");
         block.get_next_parameter("NREQUIL", param.replica.equilibrate, ">=0", "");
+        
         // do continuation run
         block.get_next_parameter("", param.replica.cont, "", "0,1");
 
