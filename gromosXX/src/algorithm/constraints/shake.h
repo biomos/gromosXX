@@ -381,9 +381,6 @@ solute(topology::Topology const & topo,
   error = 0;
   int my_error = error;
 
-  conf.special().constraints.num_solute_dist_iterations=0;
-  conf.special().constraints.num_dih_iterations=0;
-
   const unsigned int group_id = m_rank;
   int num_iterations = 0;
   bool convergence = false;
@@ -411,7 +408,6 @@ solute(topology::Topology const & topo,
         my_error = E_SHAKE_FAILURE_SOLUTE;
         break;
       }
-      if (!dist_convergence) conf.special().constraints.num_solute_dist_iterations++;
     }
 
     // dihedral constraints
@@ -431,7 +427,6 @@ solute(topology::Topology const & topo,
         break;
       }
     }
-    if (!dih_convergence) conf.special().constraints.num_dih_iterations++;
 
     convergence = dist_convergence && dih_convergence;
 
@@ -442,11 +437,9 @@ solute(topology::Topology const & topo,
       my_error = E_SHAKE_FAILURE_SOLUTE;
       break;
     }
-    conf.special().constraints.num_iterations = num_iterations;
     std::swap(skip_next, skip_now);
     skip_next.assign(skip_next.size(), true);
   } // convergence?
-  DEBUG(10, "SHAKE: num_iterations " << num_iterations << " num_dih_iterations " << conf.special().constraints.num_dih_iterations);
 
   // reduce errors
 #ifdef XXMPI
@@ -541,8 +534,6 @@ void algorithm::Shake
   error = 0;
   int my_error = error;
 
-  conf.special().constraints.num_solvent_dist_iterations = 0;
-
   const unsigned int num_atoms = topo.num_atoms();
   math::Periodicity<B> periodicity(conf.current().box);
 
@@ -606,7 +597,6 @@ void algorithm::Shake
       if (my_error != error) break;
 
       tot_iterations += num_iterations;
-      conf.special().constraints.num_solvent_dist_iterations=tot_iterations;
 
     } // molecules
     if (my_error != error) break;

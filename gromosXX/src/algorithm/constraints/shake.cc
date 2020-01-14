@@ -310,9 +310,6 @@ int algorithm::Shake::init(topology::Topology & topo,
               << sim.param().constraint.solvent.shake_tolerance << "\n";
     } else os << "OFF\n";
   }
-  conf.special().constraints.num_solute_dist_iterations=0;
-  conf.special().constraints.num_solvent_dist_iterations=0;
-  conf.special().constraints.num_iterations=0;
 
 #ifdef XXMPI
   if (sim.mpi) {

@@ -338,13 +338,6 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       m_special_traj.flush();
     }
 
-
-    if ((m_every_disres && sim.steps() && ((sim.steps() - sim.param().analyze.stride) % m_every_disres) == 0) ||
-        (m_every_dihres && sim.steps() && ((sim.steps() - sim.param().analyze.stride) % m_every_dihres) == 0)) {
-      _print_shake_iterations(conf, topo, m_special_traj);
-      m_special_traj.flush();
-    }
-
     if (m_every_jvalue  && sim.steps() && ((sim.steps()-sim.param().analyze.stride) % m_every_jvalue) == 0) {
       _print_jvalue(sim.param(), conf, topo, m_special_traj, true);
       m_special_traj.flush();
@@ -625,12 +618,6 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
     
     if (m_every_dihres && ((sim.steps()-sim.param().analyze.stride) % m_every_dihres) == 0) {   
       _print_dihedral_restraints(conf, topo, m_special_traj);
-    }
-
-    if ((m_every_disres && ((sim.steps() - 1) % m_every_disres) == 0) ||
-        (m_every_dihres && ((sim.steps() - 1) % m_every_dihres) == 0)) {
-      _print_shake_iterations(conf, topo, m_special_traj);
-      m_special_traj.flush();
     }
     
     if (m_every_jvalue && ((sim.steps()-sim.param().analyze.stride) % m_every_jvalue) == 0) {    
@@ -2490,24 +2477,6 @@ void io::Out_Configuration::_print_dihedral_restraints(
     }
     os << "END" << std::endl;
   }
-}
-
-void io::Out_Configuration::_print_shake_iterations(
-        configuration::Configuration const &conf,
-        topology::Topology const & topo,
-        std::ostream &os) {
-  DEBUG(10, "printing number of iterations to special trajectory");
-
-  os.setf(std::ios::fixed, std::ios::floatfield);
-  os.precision(m_dihedral_restraint_precision);
-  
-  os << "SHKITERATIONS" << std::endl;
-  os << std::setw(m_width)  
-       << conf.special().constraints.num_iterations << " "
-       << conf.special().constraints.num_solute_dist_iterations << " "
-       << conf.special().constraints.num_solvent_dist_iterations << " "
-       << conf.special().constraints.num_dih_iterations << "\n";
-  os << "END" << std::endl;
 }
 
 void io::Out_Configuration::_print_order_parameter_restraints(

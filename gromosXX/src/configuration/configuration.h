@@ -432,30 +432,6 @@ namespace configuration {
       } /** adde information */ adde;
 
       /**
-       * @struct constraints_struct
-       * holds constraint data
-       */
-      struct constraints_struct {
-        /**
-         * total number of iterations
-         */
-        int num_iterations;
-        /**
-         * number of solute distance SHAKE iterations
-         */
-        int num_solute_dist_iterations;
-        /**
-         * number of solvent distance SHAKE iterations
-         */
-        int num_solvent_dist_iterations;
-        /**
-         * number of dih. angle SHAKE iterations
-         */
-        int num_dih_iterations;
-
-      } /** constraints informaton */ constraints;
-
-      /**
        * @struct disres_struct
        * holds the distance restraints configuration data
        */
@@ -515,18 +491,6 @@ namespace configuration {
          * the energy
          */
         std::vector<double> energy;
-        /**
-         * number of dihedral constraint iterations
-         */
-        int num_iterations;
-
-        /** 
-         * number of solute and solvent distance constraint iterations
-         * TODO: take out again
-         */
-        int num_solute_dist_iterations;
-        int num_solvent_dist_iterations;
-
       } /** dihres informaton */ dihedralres;
       dihres_struct pertdihedralres;
       
