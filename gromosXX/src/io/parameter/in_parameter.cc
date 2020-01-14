@@ -1948,7 +1948,6 @@ void io::In_Parameter::read_DISTANCEFIELD(simulation::Parameter &param,
 void io::In_Parameter::read_DIHEDRALRES(simulation::Parameter &param,
                                         std::ostream & os) {
     DEBUG(8, "reading DIHEDRALRES");
-    // TODO: remove developmental NTDLR options
     std::stringstream exampleblock;
     // lines starting with 'exampleblock<<"' and ending with '\n";' (spaces don't matter)
     // will be used to generate snippets that can be included in the doxygen doc;
@@ -1959,10 +1958,6 @@ void io::In_Parameter::read_DIHEDRALRES(simulation::Parameter &param,
     exampleblock << "#         1:    dihedral restraining using CDLR\n";
     exampleblock << "#         2:    dihedral restraining using CDLR * WDLR\n";
     exampleblock << "#         3:    dihedral constraining (using sine and cosine)\n";
-    exampleblock << "#         4:    dihedral constraining (using sine(approx d32uc) and cosine)\n";
-    exampleblock << "#         5:    dihedral constraining (using sine(approx d32ref) and cosine)\n";
-    exampleblock << "#         6:    dihedral constraining (using sine and cosine)[same as 3]\n";
-    exampleblock << "#         7:    dihedral constraining (using sine(approx dist) and cosine(approx dist))\n";
     exampleblock << "#\n";
     exampleblock << "# CDLR    >=0.0 force constant for dihedral restraining [kJ/mol/degree^2]\n";
     exampleblock << "# PHILIN  >0.0  deviation after which the potential energy function is linearized\n";
@@ -1982,7 +1977,7 @@ void io::In_Parameter::read_DIHEDRALRES(simulation::Parameter &param,
 
         double phi_lin, K, tolerance;
         int dihrest;
-        block.get_next_parameter("NTDLR", dihrest, "", "0,1,2,3,4,5,6,7");
+        block.get_next_parameter("NTDLR", dihrest, "", "0,1,2,3");
         block.get_next_parameter("CDLR", K, ">=0", "");
         block.get_next_parameter("PHILIN", phi_lin, ">0", "");
         block.get_next_parameter("NTWDLR", param.dihrest.write, ">=0", "");
@@ -2000,28 +1995,6 @@ void io::In_Parameter::read_DIHEDRALRES(simulation::Parameter &param,
                 break;
             case 3:
                 param.dihrest.dihrest = simulation::dihedral_constr;
-                param.dihrest.use_r32 = 2; // d32
-                param.setDevelop("Dihedral constraining is under development.");
-                break;
-            case 4:
-                param.dihrest.dihrest = simulation::dihedral_constr;
-                param.dihrest.use_r32 = 0; // d32uc
-                param.setDevelop("Dihedral constraining is under development.");
-                break;
-            case 5:
-                param.dihrest.dihrest = simulation::dihedral_constr;
-                param.dihrest.use_r32 = 1;// d32ref
-                param.setDevelop("Dihedral constraining is under development.");
-                break;
-            case 6:
-                param.dihrest.dihrest = simulation::dihedral_constr;
-                param.dihrest.use_r32 = 2; // d32
-                param.setDevelop("Dihedral constraining is under development.");
-                break;
-            case 7:
-                param.dihrest.dihrest = simulation::dihedral_constr;
-                param.dihrest.assume_dist_const = true;
-                param.setDevelop("Dihedral constraining is under development.");
                 break;
             default:
                 break;

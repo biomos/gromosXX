@@ -172,38 +172,12 @@ int algorithm::Perturbed_Shake::perturbed_dih_constr_iteration
           double sinphi0 = sin(phi0);
           double sin_nom, sin_denom;
           sd=-1*cos(phi0);
-
-          if (sim.param().dihrest.assume_dist_const) { // assume distances stay constant
-            sin_nom=math::dot(c5, r32) - sinphi0 * dref52 * dref63 * dref32;
-            sin_denom=math::dot(c5, am32) + math::dot(c6, r32);
-          } else { // do not assume distances stay constant, except cases for d32
-            
-            if (sim.param().dihrest.use_r32 == 2) { // do not assume d32 const
-            DEBUG(10, "not keeping d32 constant to d32ref or d32uc");
-
           sin_nom = sinphi0 * d32 * c3 - math::dot(c5, r32);
 
           double T1 = c3/d32 * math::dot(r32,am32) + c4*d32;
           double T2 = math::dot(c5,am32) + math::dot(c6, r32);
 
           sin_denom = sinphi0 * T1 - T2;
-                    
-
-            } else { //assume d32  constant
-
-          double d32x;
-          if (sim.param().dihrest.use_r32 == 1) { // assume d32 stays d32ref
-            d32x=dref32;
-            DEBUG(10, "using d32old " << d32x);
-          } else if (sim.param().dihrest.use_r32 == 0) { // assume d32 stays d32unconstrained
-            d32x=d32;
-            DEBUG(10, "using d32uc " << d32x);
-          }
-          DEBUG(9, "d32uc " << d32 << " d32old " << dref32)
-          sin_nom = sinphi0 * d32x * c3 - math::dot(c5, r32);
-          sin_denom = sinphi0 * d32x * c4 - (math::dot(c6, r32) + math::dot(c5, (a3/m3 - a2/m2)));
-
-            }
 
           // denominator might be zero
           const double epsilon = math::abs(r12) * 0.0000000001;
@@ -212,7 +186,6 @@ int algorithm::Perturbed_Shake::perturbed_dih_constr_iteration
           }
 
           l_dt2 = sin_nom / sin_denom;
-          }
 
       } else if (phi0_abs > math::Pi/4 && phi0_abs <= 3*math::Pi/4){ // cosine case
 
@@ -236,13 +209,9 @@ int algorithm::Perturbed_Shake::perturbed_dih_constr_iteration
 		  );
 
           double nominator, denominator;
-          if (sim.param().dihrest.assume_dist_const) { // assume distances stay constant
-             nominator = c1234 - cos(phi0)*dref52*dref63;
-             denominator = d1234;
-          } else { // do not assume distances stay constant
              nominator = cos(phi0)*c3 - c1234;
              denominator = cos(phi0)*c4 - d1234;
-          } 
+
           // denominator might be zero
           const double epsilon = math::abs(r12) * 0.0000000001;
           if (fabs(denominator) < epsilon) {
