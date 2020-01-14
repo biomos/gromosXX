@@ -329,8 +329,7 @@ void algorithm::Perturbed_Shake
     
     // dihedral constraints
     bool dih_convergence = true, pert_dih_convergence = true;
-    if (sim.param().dihrest.dihrest == simulation::dihedral_constr) {
-      
+    if (sim.param().dihrest.dihrest == simulation::dihedral_constr) {      
       DEBUG(7, "SHAKE: perturbed dihedral constraints iteration");
       if(perturbed_dih_constr_iteration<B, V>
 	 (topo, conf, sim, pert_dih_convergence, skip_now, skip_next, periodicity)
@@ -573,7 +572,7 @@ int algorithm::Perturbed_Shake::init(topology::Topology & topo,
   m_rank = 0;
   m_size = 1;
 #endif
-  
+
   if (sim.param().constraint.solute.algorithm == simulation::constr_shake) {
     // loop over the constraints to find out which atoms are constrained
     {

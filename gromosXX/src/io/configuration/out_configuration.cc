@@ -35,7 +35,7 @@
 
 // Energy trajectory version
 // For details, see definition in out_configuration.cc
-const std::string io::Out_Configuration::ene_version = "2018-11-29";
+const std::string io::Out_Configuration::ene_version = "2018-12-10";
 
 // declarations
 static void _print_energyred_helper(std::ostream & os, configuration::Energy const &e);
@@ -2449,7 +2449,8 @@ void io::Out_Configuration::_print_dihedral_restraints(
   
   if (conf.special().dihedralres.d.size() > 0) {
     os << "DIHRESDATA" << std::endl;
-    os << conf.special().dihedralres.d.size() << "\n";
+    os << std::setw(m_width) 
+       << conf.special().dihedralres.d.size() << "\n";
     int i;
     for (i = 1; d_it != d_to; ++d_it, ++ene_it, ++i) {
        double phi = *d_it * 360 /(2 * math::Pi);

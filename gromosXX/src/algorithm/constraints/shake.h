@@ -437,7 +437,6 @@ solute(topology::Topology const & topo,
       my_error = E_SHAKE_FAILURE_SOLUTE;
       break;
     }
-
     std::swap(skip_next, skip_now);
     skip_next.assign(skip_next.size(), true);
   } // convergence?
