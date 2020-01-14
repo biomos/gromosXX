@@ -48,152 +48,6 @@ algorithm::Perturbed_Shake::~Perturbed_Shake()
 {
 }
 
-
- /**
- * initiate structure for writing out dih. constraint info to trs
- */
-template<math::boundary_enum B>
-static void _init_dihres_data
-(topology::Topology & topo,
- configuration::Configuration & conf)
-{
-   math::Periodicity<B> periodicity(conf.current().box);
-   math::VArray &pos   = conf.current().pos;
- 
-   math::Vec rij, rkj, rkl, rmj, rnk;
-   double dkj2, dkj, dmj2, dmj, dnk2, dnk, ip, phi;
-    
-  for(std::vector<topology::dihedral_restraint_struct>::const_iterator
-        it = topo.dihedral_restraints().begin(),
-        to = topo.dihedral_restraints().end(); it != to; ++it) {
-        
-    DEBUG(9, "init: dihedral angle constraint " << it->i << "-" << it->j << "-" << it->k << "-" << it->l);
-
-    
-    periodicity.nearest_image(pos(it->i), pos(it->j), rij);
-    periodicity.nearest_image(pos(it->k), pos(it->j), rkj);
-    periodicity.nearest_image(pos(it->k), pos(it->l), rkl);
-      
-    bool warn=false;
-    for (int i=0; i<3;  i++) {
-        if ((fabs(rij[i]) > conf.current().box(i)[i]*0.45 && abs(rij[i]) < conf.current().box(i)[i]*0.55)
-         || (fabs(rkj[i]) > conf.current().box(i)[i]*0.45 && abs(rkj[i]) < conf.current().box(i)[i]*0.55) 
-         || (fabs(rkl[i]) > conf.current().box(i)[i]*0.45 && abs(rkl[i]) < conf.current().box(i)[i]*0.55)) {
-          warn=true;
-        }
-    }
-    if (warn) {
-        std::ostringstream oss;
-        oss << "one or more vectors of your dihedral angle constraint are\n"
-          << "close to half a box length long in your initial structure, \n"
-          << "the dihedral might be calculated from other periodic copies of the atoms than you intended!\n";
-          io::messages.add(oss.str(),  "dihedral_constraint", io::message::warning);
-    }
-    
-    
-    rmj = cross(rij, rkj);
-    rnk = cross(rkj, rkl);
-    
-    dkj2 = abs2(rkj);
-    dmj2 = abs2(rmj);
-    dnk2 = abs2(rnk);
-    dkj  = sqrt(dkj2);
-    dmj  = sqrt(dmj2);
-    dnk  = sqrt(dnk2);
-    
-    DEBUG(15,"dkj="<<dkj<<" dmj="<<dmj<<" dnk="<<dnk);
-    
-    assert(dmj != 0.0);
-    assert(dnk != 0.0);
-
-    ip = dot(rmj, rnk);
-   
-    double acs = ip / (dmj*dnk);
-    if (acs > 1.0) {
-      if (acs < 1.0 + math::epsilon) {
-        acs = 1.0;
-      } else {
-        io::messages.add("dihedral",
-                "acs > 1.0",
-                io::message::critical);
-      }
-    }
-    
-    phi  = acos(acs);
-
-
-    DEBUG(10, "raw phi="<< 180.0 * phi / math::Pi);
-             
-    conf.special().dihedralres.d.push_back(phi);
-    conf.special().dihedralres.energy.push_back(0.0);
-  }
-    
-  for(std::vector<topology::perturbed_dihedral_restraint_struct>::const_iterator
-        pit = topo.perturbed_dihedral_restraints().begin(),
-        pto = topo.perturbed_dihedral_restraints().end(); pit != pto; ++pit) {
-        
-    DEBUG(9, "init: perturbed dihedral angle constraint " << pit->i << "-" << pit->j << "-" << pit->k << "-" << pit->l);
-
-    
-
-    periodicity.nearest_image(pos(pit->i), pos(pit->j), rij);
-    periodicity.nearest_image(pos(pit->k), pos(pit->j), rkj);
-    periodicity.nearest_image(pos(pit->k), pos(pit->l), rkl);
-      
-    bool warn=false;
-    for (int i=0; i<3;  i++) {
-        if ((fabs(rij[i]) > conf.current().box(i)[i]*0.45 && abs(rij[i]) < conf.current().box(i)[i]*0.55)
-         || (fabs(rkj[i]) > conf.current().box(i)[i]*0.45 && abs(rkj[i]) < conf.current().box(i)[i]*0.55) 
-         || (fabs(rkl[i]) > conf.current().box(i)[i]*0.45 && abs(rkl[i]) < conf.current().box(i)[i]*0.55)) {
-          warn=true;
-        }
-    }
-    if (warn) {
-        std::ostringstream oss;
-        oss << "one or more vectors of your dihedral angle constraint are\n"
-          << "close to half a box length long in your initial structure, \n"
-          << "the dihedral might be calculated from other periodic copies of the atoms than you intended!\n";
-          io::messages.add(oss.str(),  "dihedral_restraint", io::message::warning);
-    }
-    
-    rmj = cross(rij, rkj);
-    rnk = cross(rkj, rkl);
-    
-    dkj2 = abs2(rkj);
-    dmj2 = abs2(rmj);
-    dnk2 = abs2(rnk);
-    dkj  = sqrt(dkj2);
-    dmj  = sqrt(dmj2);
-    dnk  = sqrt(dnk2);
-    
-    DEBUG(15,"dkj="<<dkj<<" dmj="<<dmj<<" dnk="<<dnk);
-    
-    assert(dmj != 0.0);
-    assert(dnk != 0.0);
-
-    ip = dot(rmj, rnk);
-   
-    double acs = ip / (dmj*dnk);
-    if (acs > 1.0) {
-      if (acs < 1.0 + math::epsilon) {
-        acs = 1.0;
-      } else {
-        io::messages.add("dihedral",
-                "acs > 1.0",
-                io::message::critical);
-      }
-    }
-    
-    phi  = acos(acs);
-
-
-    DEBUG(10, "raw phi="<< 180.0 * phi / math::Pi);
-             
-    conf.special().pertdihedralres.d.push_back(phi);
-    conf.special().pertdihedralres.energy.push_back(0.0);
-  }
-}
-
 //================================================================================
 //         PERTURBED SHAKE ITERATION
 //================================================================================
@@ -517,102 +371,6 @@ void algorithm::Perturbed_Shake
 
   } // convergence?
   
-  //TODO: this is just temporary to write out constrained dih.angles to trs
-  // if we want to keep it we should do it in a more efficient way probably
-  if (conf.special().dihedralres.d.size() > 0) {
-  math::VArray &pos   = conf.current().pos;
-
-  std::vector<topology::dihedral_restraint_struct>::const_iterator
-    it = topo.dihedral_restraints().begin(),
-    to = topo.dihedral_restraints().end();
-
-  for( int i=0; it != to; ++it, ++i){
-    // calculate dihedral angle
-    DEBUG(9, "dihedral angle " << it->i << "-" << it->j << "-" << it->k << "-" << it->l);
-
-    math::Vec r12, r32, r34;
-    periodicity.nearest_image(pos(it->i), pos(it->j), r12);
-    periodicity.nearest_image(pos(it->k), pos(it->j), r32);
-    periodicity.nearest_image(pos(it->k), pos(it->l), r34);
-
-    // eq 35
-    const math::Vec r52 = math::cross(r12, r32);
-    const double d52 = math::abs(r52);
-    // eq 36
-    const math::Vec r63 = math::cross(r32, r34);
-    const double d63 = math::abs(r63);
-    // eq 37
-    const int sign_phi = (math::dot(r12, r63) >= 0.0) ? 1 : -1;
-    // eq 34
-    const double cos_phi = math::dot(r52, r63) / (d52 * d63);
-
-    double phi;
-    // cos_phi can be >1 or <-1 because of precision limits
-    if (cos_phi > 1) phi=0.0;
-    else if (cos_phi < -1) phi=math::Pi;
-    else phi = sign_phi * acos(cos_phi);
-
-    while(phi < it->phi - math::Pi)
-      phi += 2 * math::Pi;
-    while(phi > it->phi + math::Pi)
-      phi -= 2 * math::Pi;
-      
-    conf.special().dihedralres.d[i] = phi;
-    conf.special().dihedralres.energy[i] = 0.0;
-  }
-  }
-  
-  if (conf.special().pertdihedralres.d.size() > 0) {
-  math::VArray &pos   = conf.current().pos;
-
-  std::vector<topology::perturbed_dihedral_restraint_struct>::const_iterator
-    it = topo.perturbed_dihedral_restraints().begin(),
-    to = topo.perturbed_dihedral_restraints().end();
-
-  for( int i=0; it != to; ++it, ++i){
-    // calculate dihedral angle
-    DEBUG(9, "perturbed_dihedral angle " << it->i << "-" << it->j << "-" << it->k << "-" << it->l);
-
-
-      
-    math::Vec r12, r32, r34;
-    periodicity.nearest_image(pos(it->i), pos(it->j), r12);
-    periodicity.nearest_image(pos(it->k), pos(it->j), r32);
-    periodicity.nearest_image(pos(it->k), pos(it->l), r34);
-
-    // eq 35
-    const math::Vec r52 = math::cross(r12, r32);
-    const double d52 = math::abs(r52);
-    // eq 36
-    const math::Vec r63 = math::cross(r32, r34);
-    const double d63 = math::abs(r63);
-    // eq 37
-    const int sign_phi = (math::dot(r12, r63) >= 0.0) ? 1 : -1;
-    // eq 34
-    const double cos_phi = math::dot(r52, r63) / (d52 * d63);
-
-    double phi;
-    // cos_phi can be >1 or <-1 because of precision limits
-    if (cos_phi > 1) phi=0.0;
-    else if (cos_phi < -1) phi=math::Pi;
-    else phi = sign_phi * acos(cos_phi);
-
-    // atom i determines the energy group for the output. 
-    // we use the same definition for the individual lambdas
-    // we use the bond lambda
-    const double lam = topo.individual_lambda(simulation::dihedral_lambda)
-      [topo.atom_energy_group()[it->i]][topo.atom_energy_group()[it->i]];
-    double phi0 = (1.0 - lam) * it->A_phi + lam * it->B_phi;
-    while(phi < phi0 - math::Pi)
-      phi += 2 * math::Pi;
-    while(phi > phi0 + math::Pi)
-      phi -= 2 * math::Pi;
-      
-    conf.special().pertdihedralres.d[i] = phi;
-    conf.special().pertdihedralres.energy[i] = 0.0;
-  }
-  }
-  
   // constraint force
   const double dt2 = sim.time_step_size() * sim.time_step_size();
   for (unsigned int i=0; i < num_atoms; ++i){
@@ -814,6 +572,7 @@ int algorithm::Perturbed_Shake::init(topology::Topology & topo,
   m_rank = 0;
   m_size = 1;
 #endif
+
   if (sim.param().constraint.solute.algorithm == simulation::constr_shake) {
     // loop over the constraints to find out which atoms are constrained
     {
@@ -859,11 +618,6 @@ int algorithm::Perturbed_Shake::init(topology::Topology & topo,
           constrained_atoms().insert(it->l);
         }
       }
-
-    // prepare to be able to write the values to special traj if required
-    // adds both unperturbed and perturbed dihedrals to the respective lists
-    if (conf.special().dihedralres.d.size() == 0 && conf.special().pertdihedralres.d.size() == 0)
-        SPLIT_BOUNDARY(_init_dihres_data, topo, conf);
     }
   }
   
