@@ -56,7 +56,8 @@ algorithm::GPU_Shake_Thread::GPU_Shake_Thread(topology::Topology & topo,
                                num_gpus(num_gpus), gpu_id(gpu_id),
                                mystream(&os), amIquiet(quiet) {
   shake_fail_mol = -1;
-  DEBUG(5, "Constructor of GPU_Shake_Thread " << gpu_id)
+  DEBUG(5, "Constructor of GPU_Shake_Thread " << gpu_id);
+  start();
 }
 
 /**
