@@ -147,6 +147,7 @@ void util::replica_exchange_master::receive_from_all_slaves() {
    throw "Cannot use replica_exchange_master without MPI!"; 
 #endif
 }
+}
 
   
 void util::replica_exchange_master::init_repOut_stat_file() {
@@ -192,7 +193,6 @@ void util::replica_exchange_master::init_repOut_stat_file() {
           << std::setw(13)  << "p"
           << std::setw(6) << "exch";
   repOut << "\n";
-    
 }
 
 

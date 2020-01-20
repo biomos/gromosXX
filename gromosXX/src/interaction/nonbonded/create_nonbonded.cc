@@ -36,7 +36,7 @@
 #include "../../interaction/nonbonded/interaction/mpi_nonbonded_slave.h"
 
 #include "../../io/ifp.h"
-#include "../../util/replicaExchange/mpi_tools.h"
+#include "../../util/replicaExchange/replica_mpi_tools.h"
 
 #include "../../interaction/nonbonded/create_nonbonded.h"
 

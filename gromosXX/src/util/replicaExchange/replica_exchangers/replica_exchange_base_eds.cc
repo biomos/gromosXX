@@ -193,83 +193,8 @@ void util::replica_exchange_base_eds::write_final_conf() {
   }
 }
 
-void util::replica_exchange_base_eds::swap_on_node(repIterator it1, const unsigned int partner) {
-  replica* rep1 = *it1;
-  replica* rep2;
-
-  // find partner of rep1 on my node
-  for (repIterator it = replicas.begin(); it < replicas.end(); ++it) {
-    if ((*it)->ID == partner) {
-      rep2 = (*it);
-      break;
-    }
-  }
-
-  rep1->probability = calc_probability(rep1, rep2);
-  rep2->probability = rep1->probability;
-
-  const double randNum = rng.get();
-
-  if (randNum < rep1->probability) {
-    rep1->switched = true;
-    rep2->switched = true;
-  } else {
-    rep1->switched = false;
-    rep2->switched = false;
-  }
-}
 
 
-void util::replica_exchange_base_eds::switch_coords_on_node(repIterator it1, const unsigned int partner) {
-  replica* rep1 = *it1;
-  replica* rep2;
-
-  // find my partner
-  for (repIterator it = replicas.begin(); it < replicas.end(); ++it) {
-    if ((*it)->ID == partner) {
-      rep2 = (*it);
-      break;
-    }
-  }
-
-  rep1->conf.exchange_state();
-
-  rep1->conf.current().pos = rep2->conf.current().pos;
-  rep2->conf.old().pos = rep1->conf.old().pos;
-
-  rep1->conf.current().posV = rep2->conf.current().posV;
-  rep2->conf.old().posV = rep1->conf.old().posV;
-
-  rep1->conf.current().vel = rep2->conf.current().vel;
-  rep2->conf.old().vel = rep1->conf.old().vel;
-
-  rep1->conf.current().stochastic_integral = rep2->conf.current().stochastic_integral;
-  rep2->conf.old().stochastic_integral = rep1->conf.old().stochastic_integral;
-
-  rep1->conf.current().box = rep2->conf.current().box;
-  rep2->conf.old().box = rep1->conf.old().box;
-
-  // temp array for lattice shifts
-  math::VArray latticeTMP(rep1->conf.special().lattice_shifts);
-
-  rep1->conf.special().lattice_shifts = rep2->conf.special().lattice_shifts; // lattice shifts?
-  rep2->conf.special().lattice_shifts = latticeTMP;
-
-  rep1->conf.current().phi = rep2->conf.current().phi;
-  rep2->conf.old().phi = rep1->conf.old().phi;
-
-  rep1->conf.current().psi = rep2->conf.current().psi;
-  rep2->conf.old().psi = rep1->conf.old().psi;
-
-  rep1->conf.current().theta = rep2->conf.current().theta;
-  rep2->conf.old().theta = rep1->conf.old().theta;
-
-  rep2->conf.exchange_state();
-  // the averages of current and old are interchanged after calling exchange_state() and have to be switched back
-  rep1->exchange_averages();
-  rep2->exchange_averages();
-}
- */
 void util::replica_exchange_base_eds::run_MD() {
     DEBUG(3, "replica_exchange_base_eds "<< rank <<":run_MD:\t START")
 
