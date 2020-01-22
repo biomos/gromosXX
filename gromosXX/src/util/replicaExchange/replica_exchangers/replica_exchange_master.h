@@ -54,19 +54,16 @@ namespace util {
      * @param repMap std::map<int,int>, maps replica IDs to nodes; needed for communication
      */
     replica_exchange_master(io::Argument & args,
-            int cont,
-            int rank,
-            int simulationRank,
-            int simulationID,
-            int simulationThreads,
-            int _size,
-            int _numReplicas,
-            std::vector<int> repIDs,
-            std::map<ID_t, rank_t> & repMap);
+            unsigned int cont,
+            unsigned int globalThreadID,
+            std::vector<std::vector<unsigned int> > replica_owned_threads,
+            std::map<ID_t, rank_t> & thread_id_replica_map);
     /**
-     * destructor
+     * Destructor
      */
     virtual ~replica_exchange_master();
+    
+    //Simulation functions
     /**
      * receives all information written to output file from the slaves
      */
@@ -87,14 +84,6 @@ namespace util {
      */
     std::ofstream repOut;
     
-    /**
-     *  comm world size; number of processors available
-     */
-    const unsigned int size;
-    /**
-     * total number of replicas in system
-     */
-    const unsigned int numReplicas;
     /*
      * global Parameters for replica exchange simulation
      * int num_T;
@@ -114,7 +103,7 @@ namespace util {
      * information of all replicas
      */
     std::vector<util::replica_data> replicaData;
-        /**
+    /**
      * output file Path for repdat output file
      */
     std::string repdatName;

@@ -756,7 +756,7 @@ namespace simulation
         // int local_comm; // TODO: bschroed  for later!??
         
         std::map<unsigned int, unsigned int> thread_id_replica_map;
-        std::vector< std::vector<int> > replica_owned_threads; 
+        std::vector< std::vector<unsigned int> > replica_owned_threads; 
 
     } /** replica exchange parameters */;
 

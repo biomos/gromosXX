@@ -63,24 +63,6 @@ util::replica::replica(io::Argument _args, int cont, int _ID, int _rank) : repli
     MPI_Abort(MPI_COMM_WORLD, E_INPUT_ERROR);
 #endif
   }
-  
-  // set some variables
-  maxSteps = sim.param().step.number_of_steps;
-  run = 0;
-  total_runs = sim.param().replica.trials + sim.param().replica.equilibrate;
-  partner = ID;
-  time = sim.time();
-  steps = 0;
-  switched = 0;
-
-  const int numT = sim.param().replica.num_T;
-
-  T = sim.param().replica.temperature[ID % numT];
-  l = sim.param().replica.lambda[ID / numT];
-  dt = sim.param().replica.dt[ID / numT];
-
-  set_lambda();
-  set_temp();
 
   // manipulate trajectory files
   // just inserting ID: NAME_ID.cnf
@@ -135,11 +117,9 @@ util::replica::replica(io::Argument _args, int cont, int _ID, int _rank) : repli
     (*it).second.insert(pos, tmp.str());
   }
 
-  // Chris: setting the title after init does not make much sense. The init function already prints it
   std::stringstream trajtitle;
   trajtitle << GROMOSXX << "\n" << sim.param().title << "\n\tReplica " << (ID+1) << "on Node " << rank;
   traj->title(trajtitle.str());
-
   traj->init(args, sim.param());
   
   *os << "\nMESSAGES FROM INITIALISATION\n";
@@ -155,6 +135,11 @@ util::replica::replica(io::Argument _args, int cont, int _ID, int _rank) : repli
   seed << sim.param().start.ig*ID;
   rng = new math::RandomGeneratorGSL(seed.str(), -1);
 
+  //init REPLICA ATTRIBUTES
+  curentStepNumber = 0;
+  stepsPerRun = sim.param().step.number_of_steps;
+  totalStepNumber = stepsPerRun*(sim.param().replica.trials + sim.param().replica.equilibrate);
+  
   *os << "==================================================\n"
       << " MAIN MD LOOP\n"
       << "==================================================\n\n";
@@ -171,10 +156,10 @@ void util::replica::init() {
 void util::replica::run_MD() {
   // run MD simulation
   int error;
-  sim.steps() = steps;
-  sim.time() = time;
-  while ((unsigned int)(sim.steps()) < maxSteps + steps) {
-    DEBUG(5, "replica "<< rank <<":run_MD:\t Start");      
+  DEBUG(4,  "replica "<< rank <<": run_MD:\t Start");      
+  DEBUG(5, "replica "<< rank <<":run_MD:\t doing steps: "<<stepsPerRun<< " till: "<< stepsPerRun + curentStepNumber << " starts at: " << curentStepNumber << "TOTAL RUNS: "<< totalStepNumber );      
+  
+  while ((unsigned int)(sim.steps()) < stepsPerRun + curentStepNumber) {
     traj->write(conf, topo, sim, io::reduced);
     // run a step
     DEBUG(5, "replica "<< rank <<":run_MD:\t simulation!:");
@@ -183,7 +168,6 @@ void util::replica::run_MD() {
         case E_SHAKE_FAILURE:
           std::cerr << "SHAKE FAILURE in Replica " << (ID+1) << " on node " << rank << std::endl;
           io::messages.display();
-          print_info("Info:");
 #ifdef XXMPI
           MPI_Abort(MPI_COMM_WORLD, error);
 #endif
@@ -191,7 +175,6 @@ void util::replica::run_MD() {
         case E_SHAKE_FAILURE_SOLUTE:
           std::cerr << "SHAKE FAILURE SOLUTE in Replica " << (ID+1) << " on node " << rank << std::endl;
           io::messages.display();
-          print_info("Info:");
 #ifdef XXMPI
           MPI_Abort(MPI_COMM_WORLD, error);
 #endif
@@ -199,7 +182,6 @@ void util::replica::run_MD() {
         case E_SHAKE_FAILURE_SOLVENT:
           std::cerr << "SHAKE FAILURE SOLVENT in Replica " << (ID+1) << " on node " << rank << std::endl;
           io::messages.display();
-          print_info("Info:");
 #ifdef XXMPI
           MPI_Abort(MPI_COMM_WORLD, error);
 #endif
@@ -207,7 +189,6 @@ void util::replica::run_MD() {
         case E_NAN:
           std::cerr << "NAN error in Replica " << (ID+1) << " on node " << rank << std::endl;
           io::messages.display();
-          print_info("Info:");
 #ifdef XXMPI
           MPI_Abort(MPI_COMM_WORLD, error);
 #endif
@@ -215,7 +196,6 @@ void util::replica::run_MD() {
         default:
           std::cerr << "Unknown error in Replica " << (ID+1) << " on node " << rank << std::endl;
           io::messages.display();
-          print_info("Info:");
 #ifdef XXMPI
           MPI_Abort(MPI_COMM_WORLD, error);
 #endif
@@ -234,14 +214,10 @@ void util::replica::run_MD() {
 
   } // main md loop
   DEBUG(4, "replica "<< rank <<":run_MD:\t  DONE:");      
-  // update replica information
-  time = sim.time();
-  steps = sim.steps();
-  ++run;
-  epot = calculate_energy();
-
+  
   // print final data of run
-  if (run ==  total_runs) {
+  if (curentStepNumber ==  totalStepNumber) {
     traj->print_final(topo, conf, sim);
   }
+  curentStepNumber = stepsPerRun + curentStepNumber;
 }

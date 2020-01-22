@@ -18,7 +18,7 @@
 
 namespace util{
     //tools for thred tracking
-   static std::vector<std::vector<int > > calculate_Replica_Thread_Coordination(int rank, int totalNumberOfThreads, int numReplicas);
+   std::vector<std::vector<unsigned int > > calculate_Replica_Thread_Coordination(int rank, int totalNumberOfThreads, int numReplicas);
     
 }//namespace util
 

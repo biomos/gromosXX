@@ -11,9 +11,7 @@
  * Created on April 18, 2018, 3:38 PM
  */
 
-
 #include <util/replicaExchange/replica_exchangers/replica_exchange_base_eds.h>
-#include <util/replicaExchange/replica/replica_reeds.h>
 
 //Constructor
 #include <util/replicaExchange/replica_exchangers/replica_exchange_base.h>
@@ -59,231 +57,200 @@
  * ADDITIONAL FUNCTIONS for REDS
  */
 
-util::replica_exchange_base_eds::replica_exchange_base_eds(io::Argument _args, int cont, int rank, int simulationRank, int simulationID, int simulationThreads,
-        std::vector<int> repIDs, std::map<ID_t, rank_t> &_repMap):  
-        replica_exchange_base(_args, cont, rank, simulationRank, simulationID, simulationThreads, repIDs, _repMap){
-    DEBUG(3,"replica_exchange_base_eds "<< rank <<":Constructor:\t START");
-    DEBUG(4,"replica_exchange_base_eds "<< rank <<":Constructor:\t replica Type\t "<< typeid(replicas).name());
-    createReplicas(cont, repIDs, rank);
-    DEBUG(3,"replica_exchange_base_eds "<< rank <<":Constructor:\t DONE");
+util::replica_exchange_base_eds::replica_exchange_base_eds(io::Argument _args, 
+                                                            unsigned int cont, 
+                                                            unsigned int globalThreadID, 
+                                                            std::vector<std::vector<unsigned int> >  replica_owned_threads, std::map<ID_t, rank_t> &thread_id_replica_map):  
+                            replica_exchange_base(_args, cont, globalThreadID, replica_owned_threads, thread_id_replica_map),
+                            reedsParam(replica->sim.param().reeds)
+{
+    DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":Constructor:\t START");
+    DEBUG(4,"replica_exchange_base_eds "<< globalThreadID <<":Constructor:\t replica Type\t "<< typeid(replica).name());
+    createReplicas(cont, globalThreadID);
+    DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":Constructor:\t DONE");
 }
 
-void util::replica_exchange_base_eds::createReplicas(int cont, std::vector<int>  repIDs, int rank){
-  MPI_DEBUG(3,"replica_exchange_base_eds "<< rank <<":createReplicas:\t START");
+void util::replica_exchange_base_eds::createReplicas(int cont, int globalThreadID){
+  MPI_DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":createReplicas:\t START");
   
   if(!replica){
     delete replica;
   }
-  MPI_DEBUG(3,"replica_exchange_base_eds "<< rank <<":createReplicas:\t Deleted");
+  MPI_DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":createReplicas:\t Deleted");
 
   // create the number of replicas that are assigned to my node
     if(simulationThreads>1){
-        if(simulationRank == 0){
-            replica = new util::replica_MPI_Master(args, cont, simulationID, rank, simulationRank, simulationID, simulationThreads);
+        if(simulationThreadID == 0){
+            replica = new util::replica_MPI_Master(args, cont, simulationID, globalThreadID, simulationThreadID, simulationID, simulationThreads);
         }
         else{
-            replica = new util::replica_MPI_Slave(args, cont, simulationID, rank, simulationRank, simulationID, simulationThreads);
+            replica = new util::replica_MPI_Slave(args, cont, simulationID, globalThreadID, simulationThreadID, simulationID, simulationThreads);
         }
     }
     else{
-        replica = new util::replica_reeds(args, cont, simulationID, rank);
+        replica = new util::replica(args, cont, simulationID, globalThreadID);
     }
-  MPI_DEBUG(3,"replica_exchange_base_eds "<< rank <<":createReplicas:\t DONE");
-    /*
-  replicas.resize(numReplicas);
-  // create the number of replicas that are assigned to my node
-   int i = 0;
-   for (repIterator it = replicas.begin(); it < replicas.end(); ++it, ++i) {
-    *it = new util::replica_reeds(args, cont, repIDs[i], rank);
-    DEBUG(4, "replica_exchange_base_eds "<< rank <<":initReplicas:\tConstructor \ttopo\t" << (*it)->topo.check_state())
-    DEBUG(4, "replica_exchange_base_eds "<< rank <<":initReplicas:\tConstructor \tconf:\t" << (*it)->conf.check((*it)->topo, (*it)->sim))
-   }  
-   */
+  MPI_DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":createReplicas:\t DONE");
+   
+  //give the correct replica vals to simulation
+  eds_para = replica->sim.param().reeds.eds_para[simulationID];
+  replica->sim.param().eds = eds_para;
+    //TODO: Still ugly ! l==s bschroed
+  l = replica->sim.param().eds.s[0];    //todoAssume only 1s EDS
 }
 
 
 util::replica_exchange_base_eds::~replica_exchange_base_eds() {
     delete replica;
-  /*
-  for (repIterator it = replicas.begin(); it < replicas.end(); ++it) {
-    delete *it;
-  }
-   * */
 }
-
-void util::replica_exchange_base_eds::swap() {
-  DEBUG(3,"replica_exchange_base_eds "<< rank <<":swap:\t Start");
-  
-      unsigned int partner = replica->find_partner();
-      unsigned int partnerRank = repMap.find(partner)->second;
-      if (partner != (replica)->ID) {
-      // are the replicas on the same node?
-      DEBUG(4,"replica_exchange_base_eds "<< rank <<":swap:\t sending "<< replica->ID <<" \t Start");
-      if (partnerRank != replica->rank) // replicas on different nodes
-      {
-        replica->swap(partner, partnerRank);
-        if (replica->switched) {
-          if (replica->ID < partner) {
-            replica->send_coord(partner, partnerRank);
-            replica->receive_new_coord(partner, partnerRank);
-            // the averages of current and old are interchanged after calling exchange_state() and have to be switched back bschroed:that is new!
-            //(*it)->exchange_averages();
-          } else {
-            replica->receive_new_coord(partner, partnerRank);
-            replica->send_coord(partner, partnerRank);
-            // the averages of current and old are interchanged after calling exchange_state() and have to be switched back bschroed:that is new!
-            //(*it)->exchange_averages();
-          }
-        }
-      }
-    } else {
-      replica->partner = replica->ID;
-      replica->probability = 0.0;
-      replica->switched = 0;
-    }
-  
-  
-  
-  /*
-  // do this for all replicas; if two of them on this node, do special swap
-  for (repIterator it = replicas.begin(); it < replicas.end(); ++it) {
-    unsigned int partner = (*it)->find_partner();
-    unsigned int partnerRank = repMap.find(partner)->second;
-    bool partnerOnThisNode = (partnerRank == (*it)->rank && (*it)->ID < partner);
-
-    // attempt switch in this run?
-    if (partner != (*it)->ID) {
-      // are the replicas on the same node?
-      DEBUG(4,"replica_exchange_base_eds "<< rank <<":swap:\t sending "<< (*it)->ID <<" \t Start");
-      if (partnerOnThisNode) {
-        swap_on_node(it, partner);
-        if ((*it)->switched)
-          switch_coords_on_node(it, partner);
-      } else if (partnerRank != (*it)->rank) // replicas on different nodes
-      {
-        (*it)->swap(partner, partnerRank);
-        if ((*it)->switched) {
-          if ((*it)->ID < partner) {
-            (*it)->send_coord(partner, partnerRank);
-            (*it)->receive_new_coord(partner, partnerRank);
-            // the averages of current and old are interchanged after calling exchange_state() and have to be switched back bschroed:that is new!
-            //(*it)->exchange_averages();
-          } else {
-            (*it)->receive_new_coord(partner, partnerRank);
-            (*it)->send_coord(partner, partnerRank);
-            // the averages of current and old are interchanged after calling exchange_state() and have to be switched back bschroed:that is new!
-            //(*it)->exchange_averages();
-          }
-        }
-      }
-    } else {
-      (*it)->partner = (*it)->ID;
-      (*it)->probability = 0.0;
-      (*it)->switched = 0;
-    }
-  }
-   * */
-    DEBUG(3,"replica_exchange_base_eds "<< rank <<":swap:\t Done");
-}
-
-void util::replica_exchange_base_eds::write_final_conf() {
-  // write coordinates to cnf for all replica assigned to this node
-  for (std::vector< util::replica_reeds * >::iterator it = replicas.begin(); it < replicas.end(); ++it) {
-    (*it)->write_final_conf();
-  }
-}
-
-
-
-void util::replica_exchange_base_eds::run_MD() {
-    DEBUG(3, "replica_exchange_base_eds "<< rank <<":run_MD:\t START")
-
-     // do a md run for all replica assigned to this node
-    for (repIterator it = replicas.begin(); it < replicas.end(); ++it) {
-        DEBUG(4, "replica_exchange_base_eds "<< rank <<":run_MD:\t replica "<< (*it)->ID << ":")
-        DEBUG(4, "replica_exchange_base_eds "<< rank <<":run_MD:\t replica\t Start")
-        (*it)->run_MD();
-        DEBUG(4, "replica_exchange_base_eds "<< rank <<":run_MD:\t replica\t Done")
-    }
-    DEBUG(3, "replica_exchange_base_eds "<< rank <<":run_MD:\t DONE")
-}
-
-
-/*SID: eds_stat is used to calculate and output additional acceptance
- probability information in order to develop an optimization procedure
- for the s distribution of replica exchange eds simulation.
- * This function increases the time for a replica exchange trial and should 
- * not be called if the output is not needed.
- */
-void util::replica_exchange_base_eds::eds_stat(){
-    //Calculate exchange probabilities for each replica
-        /*
-         * loop over all replica on current node
-         */
-        for (util::replica_reeds* x : replicas){
-            ID_t currentID = x->ID;
-            for(unsigned int rep=0; rep< this->numReplicas;rep++){
-               double rep_s=x->sim.param().reeds.lambda[rep];
-               replicaStatData[currentID].epot_vec[rep]= x->calc_energy_eds_stat(rep_s);
-            }
-            replicaStatData[currentID].run=replicaStatData[currentID].run +1;
-
-          //Write data to output file
-          *(eds_stat_out[currentID]) << std::setw(6) << (replicaStatData[currentID].ID + 1)
-                  << " "
-                  << std::setw(1) << replicaStatData[currentID].run
-                  << std::setw(1) << replicaStatData[currentID].s
-                  << std::setw(1) << replicaStatData[currentID].T
-                  << " ";
-            for(unsigned int rep=0; rep<this->numReplicas; rep++){
-                    *(eds_stat_out[currentID]) << std::setw(10) << replicaStatData[currentID].epot_vec[rep]
-                    << " ";
-            }
-          *(eds_stat_out[currentID])   << std::endl;
-            
-        }
-    }
 
 void util::replica_exchange_base_eds::init() {
-  DEBUG(3,"replica_exchange_base_eds "<< rank <<":init:\t init \t START");
-  MPI_DEBUG(3,"replica_exchange_base_eds "<< rank <<":init:\t start init from baseclass \t NEXT");
+  DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":init:\t init \t START");
+  MPI_DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":init:\t start init from baseclass \t NEXT");
   replica->init();
-  /*
-  for (repIterator it = replicas.begin(); it < replicas.end(); ++it) {
-    (*it)->init();
-   }
-   * */
-  //replica_exchange_base::init();
-  MPI_DEBUG(3,"replica_exchange_base_eds "<< rank <<":init:\t init_eds_stat \t NEXT");
+  MPI_DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":init:\t init_eds_stat \t NEXT");
   this->init_eds_stat();
-  DEBUG(3,"replica_exchange_base_eds "<< rank <<":init:\t DONE");
+  DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":init:\t DONE");
 }
 
 //initialize output files  
 void util::replica_exchange_base_eds::init_eds_stat(){
-        DEBUG(3,"replica_exchange_base_eds "<< rank <<":init_eds_stat:\t START");
+        DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":init_eds_stat:\t START");
         
         ID_t currentID=1000; //error value
-        currentID = replica->ID;
+        currentID = simulationID;
         replicaStatData[currentID].ID =currentID;
-        replicaStatData[currentID].T=replica->T;
-        replicaStatData[currentID].s=replica->l; //l==s because of the implementation of hamiltonian replica exchange.
-        replicaStatData[currentID].dt=replica->dt;
+        replicaStatData[currentID].T=T;
+        replicaStatData[currentID].s=l; //l==s because of the implementation of hamiltonian replica exchange.
+        replicaStatData[currentID].dt=dt;
         replicaStatData[currentID].run=0;
         replicaStatData[currentID].epot_vec.resize(this->numReplicas);
         replicaStatData[currentID].prob_vec.resize(this->numReplicas);
         
-        /*
-        for (repIterator it = replicas.begin(); it < replicas.end(); ++it) {
-          currentID = (*it)->ID;
-          replicaStatData[currentID].ID =currentID;
-          replicaStatData[currentID].T=(*it)->T;
-          replicaStatData[currentID].s=(*it)->l; //l==s because of the implementation of hamiltonian replica exchange.
-          replicaStatData[currentID].dt=(*it)->dt;
-          replicaStatData[currentID].run=0;
-          replicaStatData[currentID].epot_vec.resize(this->numReplicas);
-          replicaStatData[currentID].prob_vec.resize(this->numReplicas);
-        }
-         * */
-        DEBUG(3,"replica_exchange_base_eds "<< rank <<":init_eds_stat:\t DONE");
+        DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":init_eds_stat:\t DONE");
 }
+
+//RE
+////exchange params
+void util::replica_exchange_base_eds::reset_eds() {//only reset switched parameters of change_eds() function 
+  replica->sim.param().eds = eds_para;
+  replica->sim.param().step.dt = dt;
+  replica->conf.current().force= force_orig;
+  replica->conf.current().virial_tensor= virial_tensor_orig;
+}
+
+void util::replica_exchange_base_eds::change_eds(const unsigned int partner){//only change parameters, which are needed for energy calculation i.e. 
+  
+  int idx;
+  if (replica->sim.param().reeds.num_l == 1){
+    idx = 0;
+  }
+  else{
+    idx = partner;
+  }
+  
+  replica->sim.param().step.dt = replica->sim.param().reeds.dt[idx];
+  replica->sim.param().eds= replica->sim.param().reeds.eds_para[idx];
+  force_orig = replica->conf.current().force;
+  virial_tensor_orig = replica->conf.current().virial_tensor;
+}
+
+////calc exchange Energy
+ /*
+ * calc_energy_eds_stat() is only used for statistical purposes in eds_stat()
+ * In order to avoid any adjustment of the mpi communication and thus reducing the complexity, the 
+ * energy_calculation and probability calculations from replica.cc are not adjusted to work 
+ * for non-pairwise exchanges. Instead, calc_energy_eds_stat() calculates the potential energy
+ * of the current configuration for a new smoothing parameter s.
+ * The exchange probabilities can be calculated in a postprocessing step, using these energies
+ * given in the energy_stat output files.
+ */
+double util::replica_exchange_base_eds::calc_energy_eds_stat(double s){
+    double old_dt;
+    double old_s;
+    double old_eds_vr;
+    algorithm::Algorithm * ff;   
+    if(replica->sim.param().eds.eds){
+          //to reset old state
+          old_dt=replica->sim.param().step.dt;
+          old_s=replica->sim.param().eds.s[0];
+          old_eds_vr=replica->conf.current().energies.eds_vr;
+          force_orig = replica->conf.current().force;
+          virial_tensor_orig = replica->conf.current().virial_tensor;
+          //only temporary change
+          replica->sim.param().eds.s[0]=s;
+          
+          ff = replica->md.algorithm("EDS");
+    }
+    else {
+          print_info("eds_stat() i.e calc_energy_eds_stat() called for non EDS simulation!");
+      #ifdef XXMPI
+          MPI_Abort(MPI_COMM_WORLD, E_UNSPECIFIED);
+      #endif
+    }
+    
+    //Calculate energies
+    if (ff->apply(replica->topo, replica->conf, replica->sim)) {
+      print_info("Error in Forcefield energy calculation!");
+     #ifdef XXMPI
+      MPI_Abort(MPI_COMM_WORLD, E_UNSPECIFIED);
+     #endif
+      return 1;
+    }
+    
+    double energy=replica->conf.current().energies.eds_vr; 
+    
+    // reset old EDS state
+    replica->conf.current().energies.eds_vr=old_eds_vr;
+    replica->sim.param().eds.s[0] = old_s;
+    replica->sim.param().step.dt = old_dt;
+    replica->conf.current().force=force_orig;
+    replica->conf.current().virial_tensor=virial_tensor_orig;
+    
+    return energy;
+}
+
+double util::replica_exchange_base_eds::calculate_energy_core() {
+    
+    double energy = 0.0;
+    algorithm::Algorithm * ff;  
+    
+     ff = replica->md.algorithm("EDS");
+
+    //Calculate energies    
+    DEBUG(5, "replica_reeds "<< globalThreadID <<":calculate_energy:\t calc energies"); 
+    if (ff->apply(replica->topo, replica->conf, replica->sim)) {
+      print_info("Error in Forcefield energy calculation!");
+     #ifdef XXMPI
+      MPI_Abort(MPI_COMM_WORLD, E_UNSPECIFIED);
+    #endif
+      return 1;
+    }
+    
+    //return energies
+    DEBUG(5, "replica_reeds "<< globalThreadID <<":calculate_energy"
+            ":\t return energies"); 
+    energy=replica->conf.current().energies.eds_vr; 
+    return energy;
+}
+
+
+double util::replica_exchange_base_eds::calculate_energy(const unsigned int selectedReplicaID) {
+    DEBUG(4, "replica_reeds "<< globalThreadID <<":calculate_energy:\t START"); 
+ 
+
+    DEBUG(5, "replica_reeds "<< globalThreadID <<":calculate_energy:\t get Partner settings"); 
+    if(selectedReplicaID!=simulationID){ 
+        change_eds(selectedReplicaID);
+    }
+    
+    double energy =  calculate_energy_core();
+    
+    if(selectedReplicaID!=simulationID){
+        reset_eds();
+    }
+    DEBUG(4, "replica_reeds "<< globalThreadID <<":calculate_energy:\t DONE"); 
+    return energy;
+}
+
+

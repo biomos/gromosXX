@@ -52,13 +52,10 @@ namespace util {
      * @param _repMap std::map<int,int>, maps replica IDs to nodes; needed for communication
      */
     replica_exchange_slave(io::Argument & _args,
-            int cont,
-            int rank,
-            int simulationRank,
-            int simulationID,
-            int simulationThreads,
-            std::vector<int> repIDs,
-            std::map<ID_t, rank_t> & repMap);
+            unsigned int cont,
+            unsigned int globalThreadID,
+            std::vector<std::vector<unsigned int> > replica_owned_threads,
+            std::map<ID_t, rank_t> & thread_id_replica_map);
     /**
      * destructor
      */

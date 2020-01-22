@@ -42,7 +42,7 @@
 
 namespace util{
     
-    class replica_exchange_master_eds :  public  replica_exchange_master, public  replica_exchange_base_eds  {
+    class replica_exchange_master_eds :  public  replica_exchange_base_eds, public  replica_exchange_master  {
     public:
         /**
          * constructor
@@ -54,15 +54,10 @@ namespace util{
          * @param repMap std::map<int,int>, maps replica IDs to nodes; needed for communication
          */
         replica_exchange_master_eds(io::Argument _args,
-                int cont,
-                int rank,
-                int simulationRank,
-                int simulationID,
-                int simulationThreads,
-                int _size,
-                int _numReplicas,
-                std::vector<int> repIDs,
-                std::map<ID_t, rank_t> & repMap);
+                                    unsigned int cont,
+                                    unsigned int globalThreeadID,
+                                    std::vector<std::vector<unsigned int> > replica_owned_threads,
+                                    std::map<ID_t, rank_t> & thread_id_replica_map);
 
         /**
          * @override
@@ -95,11 +90,24 @@ namespace util{
          * determines the digits needed to represent the smalles S-value in eds sim
          */
         int getSValPrecision(double minLambda);
-        
-        const simulation::Parameter::reeds_struct reedsParam;
+        /*
+        * global Parameters for replica exchange simulation
+        * int num_T;
+        * int num_l;
+        * std::vector<double> temperature;
+        * bool scale;
+        * std::vector<double> lambda;
+        * std::vector<double> dt;
+        * int trials;
+        * int equilibrate;
+        * int slave_runs;
+        * int write;
+        */
+        /**
+        * information of all replicas
+        */
         std::vector<util::reeds_replica_data> replicaData;
-        int rank;
-        int simulationID;
+
         
         /**
          * functions, for initing the repout

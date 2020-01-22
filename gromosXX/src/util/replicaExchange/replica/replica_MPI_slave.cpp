@@ -25,7 +25,6 @@
 #undef SUBMODULE
 #define MODULE util
 #define SUBMODULE replica_exchange
-#define XXMPI
 
 util::replica_MPI_Slave::replica_MPI_Slave(io::Argument _args, int cont, int _ID, int _rank, 
         int simulation_rank, int simulation_ID, int simulation_num_threads) : replica_Interface(_ID, _rank, _args),
@@ -74,21 +73,6 @@ util::replica_MPI_Slave::replica_MPI_Slave(io::Argument _args, int cont, int _ID
     MPI_DEBUG(5, "replica_MPI_SLAVE "<< rank << "  set replica_params ");
     
     // adapt system to replica parameters
-    maxSteps = sim.param().step.number_of_steps;  //neede?
-    run = 0;  //neede?
-    total_runs = sim.param().replica.trials + sim.param().replica.equilibrate;  //neede?
-    steps = 0;  //neede?
-    switched = 0;  //neede?
-
-    const int numT = sim.param().replica.num_T;
-
-    T = sim.param().replica.temperature[simulation_ID % numT];
-    l = sim.param().replica.lambda[simulation_ID / numT];
-    dt = sim.param().replica.dt[simulation_ID / numT];
-
-    set_lambda();
-    set_temp();
-    
     MPI_DEBUG(5, "replica_MPI_SLAVE "<< rank << "  done replica_params ");
 
     MPI_DEBUG(5, "Slave "<< rank << " now make me a slave ");
@@ -174,11 +158,9 @@ util::replica_MPI_Slave::~replica_MPI_Slave() {
 
 void util::replica_MPI_Slave::run_MD(){
     int error;
-    sim.steps() = steps;
-    sim.time() = time;
     int next_step = 0 ;
 
-    while ((unsigned int)(sim.steps()) < maxSteps + steps) {
+    while ((unsigned int)(sim.steps()) < stepsPerRun + curentStepNumber) {
       // run a step
        DEBUG(4, "slave " << rank << " waiting for master");
       if (do_nonbonded && (error = nb->calculate_interactions(topo, conf, sim)) != 0){

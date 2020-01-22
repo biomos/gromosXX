@@ -59,7 +59,7 @@ util::replica_MPI_Master::replica_MPI_Master(io::Argument _args, int cont, int _
     }
     
     MPI_DEBUG(5, "replica_MPI_MASTER "<< rank <<":Constructor:\t  "<< rank <<":\t start read in");
-    //Build stryctyre
+    //Build structure
     sim.mpi = true;
     if (io::read_input(args, topo, conf, sim, md, *os, true)) { 
       io::messages.display(*os);
@@ -70,28 +70,6 @@ util::replica_MPI_Master::replica_MPI_Master(io::Argument _args, int cont, int _
     }
     MPI_DEBUG(5, "replica_MPI_MASTER "<< rank <<":Constructor:\t  "<< rank <<":\t REad in input already");
     
-    MPI_DEBUG(5, "replica_MPI_MASTER "<< rank << "  set replica_params ");
-
-    // adapt system to replica parameters
-    maxSteps = sim.param().step.number_of_steps;
-    run = 0;
-    total_runs = sim.param().replica.trials + sim.param().replica.equilibrate;
-    partner = ID;
-    time = sim.time();
-    steps = 0;
-    switched = 0;
-
-    const int numT = sim.param().replica.num_T;
-
-    T = sim.param().replica.temperature[simulation_ID % numT];
-    l = sim.param().replica.lambda[simulation_ID / numT];
-    dt = sim.param().replica.dt[simulation_ID / numT];
-
-    set_lambda();
-    set_temp();
-    
-    MPI_DEBUG(5, "replica_MPI_MASTER "<< rank << "  done replica_params ");
-
     MPI_DEBUG(5, "replica_MPI_MASTER "<< rank << " now make me master ");
     /**
      * INIT OUTPUT
@@ -209,13 +187,11 @@ util::replica_MPI_Master::~replica_MPI_Master() {
 void util::replica_MPI_Master::run_MD(){
     // run MD simulation
     int error;
-    sim.steps() = steps;
-    sim.time() = time;
-  
+    
     //next_stepf for mpi slaves  
     int next_step = 1;  //bool that signalises if next step is fine.
 
-    while ((unsigned int)(sim.steps()) < maxSteps + steps) {
+    while ((unsigned int)(sim.steps()) <  stepsPerRun + curentStepNumber) {
       DEBUG(5, "replica_MPI "<< rank <<":run_MD:\t Start");      
       traj->write(conf, topo, sim, io::reduced);
       // run a step
@@ -225,31 +201,26 @@ void util::replica_MPI_Master::run_MD(){
               case E_SHAKE_FAILURE:
                 std::cerr << "SHAKE FAILURE in Replica " << (ID+1) << " on node " << rank << std::endl;
                 io::messages.display();
-                print_info("Info:");
                 MPI_Abort(MPI_COMM_WORLD, error);
                 break;
               case E_SHAKE_FAILURE_SOLUTE:
                 std::cerr << "SHAKE FAILURE SOLUTE in Replica " << (ID+1) << " on node " << rank << std::endl;
                 io::messages.display();
-                print_info("Info:");
                 MPI_Abort(MPI_COMM_WORLD, error);
                 break;
               case E_SHAKE_FAILURE_SOLVENT:
                 std::cerr << "SHAKE FAILURE SOLVENT in Replica " << (ID+1) << " on node " << rank << std::endl;
                 io::messages.display();
-                print_info("Info:");
                 MPI_Abort(MPI_COMM_WORLD, error);
                 break;
               case E_NAN:
                 std::cerr << "NAN error in Replica " << (ID+1) << " on node " << rank << std::endl;
                 io::messages.display();
-                print_info("Info:");
                 MPI_Abort(MPI_COMM_WORLD, error);
                 break;
               default:
                 std::cerr << "Unknown error in Replica " << (ID+1) << " on node " << rank << std::endl;
                 io::messages.display();
-                print_info("Info:");
                 MPI_Abort(MPI_COMM_WORLD, error);
                 break;
             }
@@ -268,14 +239,9 @@ void util::replica_MPI_Master::run_MD(){
     } // main md loop
     
     DEBUG(4, "replica "<< rank <<":run_MD:\t  DONE:");      
-    // update replica information
-    time = sim.time();
-    steps = sim.steps();
-    ++run;
-    epot = calculate_energy();
 
     // print final data of run
-    if (run ==  total_runs) {
+    if (curentStepNumber ==  totalStepNumber) {
       traj->print_final(topo, conf, sim);
     }
 }

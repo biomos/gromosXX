@@ -43,20 +43,16 @@ namespace util{
     class replica_exchange_slave_eds: public replica_exchange_base_eds, public replica_exchange_slave {
     public:
         replica_exchange_slave_eds(io::Argument & _args,
-                int cont,
-                int rank,
-                int simulationRank,
-                int simulationID,
-                int simulationThreads,
-                std::vector<int> repIDs,
-                std::map<ID_t, rank_t> & repMap);
+                unsigned int cont,
+                unsigned int globalThreadID,
+                std::vector<std::vector<unsigned int> > replica_owned_threads,
+                std::map<ID_t, rank_t> & thread_id_replica_map);
         /**
         * sends information of all replicas to master
         */
         void send_to_master() const override;
 
     private:
-        using replica_exchange_base_eds::replicas;
         using replica_exchange_base_eds::numReplicas;
 
         //replica_exchange_slave_eds(const replica_exchange_slave_eds& orig);
@@ -64,9 +60,7 @@ namespace util{
 
         //give all information of this node to Master.
         replica_exchange_slave_eds(const replica_exchange_slave_eds& orig); //Todo: Messy method, bschroed
-        
-        const simulation::Parameter::reeds_struct& reedsParam;
-    };
+            };
 }
 #endif /* REPLICA_EXCHANGE_SLAVE_EDS_H */
 

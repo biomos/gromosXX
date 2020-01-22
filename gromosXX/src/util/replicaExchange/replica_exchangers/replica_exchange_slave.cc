@@ -33,17 +33,14 @@
 #endif
 
 util::replica_exchange_slave::replica_exchange_slave(io::Argument & _args,
-        int cont,
-        int rank,
-        int simulationRank,
-        int simulationID,
-        int simulationThreads,
-        std::vector<int> repIDs,
-        std::map<ID_t, rank_t> & repMap) : replica_exchange_base(_args, cont, rank, simulationRank, simulationID, simulationThreads, repIDs, repMap) {
-        DEBUG(4, "replica_exchange_slave "<< rank <<":Constructor:\t START");
+                                                    unsigned int cont,
+                                                    unsigned int globalThreadID,
+                                                    std::vector<std::vector<unsigned int> > replica_owned_threads,
+                                                    std::map<ID_t, rank_t> & thread_id_replica_map) : 
+    replica_exchange_base(_args, cont, globalThreadID, replica_owned_threads, thread_id_replica_map) {
+        DEBUG(4, "replica_exchange_slave "<< globalThreadID <<":Constructor:\t START");
 
-        DEBUG(4, "replica_exchange_slave "<< rank <<":Constructor:\t DONE");
-
+        DEBUG(4, "replica_exchange_slave "<< globalThreadID <<":Constructor:\t DONE");
 }
 
 util::replica_exchange_slave::~replica_exchange_slave() {
@@ -51,27 +48,16 @@ util::replica_exchange_slave::~replica_exchange_slave() {
 
 void util::replica_exchange_slave::send_to_master() const {
 #ifdef XXMPI
-  DEBUG(2,"replica_exchange_slave " << rank << ":send_to_master \t START");
+  DEBUG(2,"replica_exchange_slave " << globalThreadID << ":send_to_master \t START");
     util::repInfo info;
-    info.run = replica->run;
-    info.epot = replica->epot;
-    info.epot_partner = replica->epot_partner;
-    info.partner = replica->partner;
-    info.probability = replica->probability;
-    info.switched = int(replica->switched);
-    MPI_Send(&info, 1, MPI_REPINFO, 0, REPINFO, MPI_COMM_WORLD);
-  /*
-  for (std::vector<util::replica *>::const_iterator it = replicas.begin(); it < replicas.end(); ++it) {
-    util::repInfo info;
-    info.run = (*it)->run;
-    info.epot = (*it)->epot;
-    info.epot_partner = (*it)->epot_partner;
-    info.partner = (*it)->partner;
-    info.probability = (*it)->probability;
-    info.switched = int((*it)->switched);
-    MPI_Send(&info, 1, MPI_REPINFO, 0, REPINFO, MPI_COMM_WORLD);
-  }
-   * */
-  DEBUG(2,"replica_exchange_slave " << rank << ":\t send_to_master \t Done");
+    info.run = run;
+    info.epot = epot;
+    info.epot_partner = epot_partner;
+    info.partner = partnerReplicaID;
+    info.probability = probability;
+    info.switched = int(switched);
+    MPI_Send(&info, 1, MPI_REPINFO, globalMasterThreadID, REPINFO, MPI_COMM_WORLD);
+
+  DEBUG(2,"replica_exchange_slave " << globalThreadID << ":\t send_to_master \t Done");
 #endif
 }
