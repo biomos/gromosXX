@@ -1948,7 +1948,6 @@ void io::In_Parameter::read_DISTANCEFIELD(simulation::Parameter &param,
 void io::In_Parameter::read_DIHEDRALRES(simulation::Parameter &param,
                                         std::ostream & os) {
     DEBUG(8, "reading DIHEDRALRES");
-
     std::stringstream exampleblock;
     // lines starting with 'exampleblock<<"' and ending with '\n";' (spaces don't matter)
     // will be used to generate snippets that can be included in the doxygen doc;
@@ -1958,14 +1957,15 @@ void io::In_Parameter::read_DIHEDRALRES(simulation::Parameter &param,
     exampleblock << "#         0:    off [default]\n";
     exampleblock << "#         1:    dihedral restraining using CDLR\n";
     exampleblock << "#         2:    dihedral restraining using CDLR * WDLR\n";
-    exampleblock << "#         3:    dihedral constraining\n";
+    exampleblock << "#         3:    dihedral constraining (using sine and cosine)\n";
     exampleblock << "#\n";
     exampleblock << "# CDLR    >=0.0 force constant for dihedral restraining [kJ/mol/degree^2]\n";
     exampleblock << "# PHILIN  >0.0  deviation after which the potential energy function is linearized\n";
     exampleblock << "# NTWDLR  >=0   write every NTWDLR step dihedral information to external file\n";
+    exampleblock << "# TOLDAC  >0    tolerance for constraint deviation (in degrees)\n";
     exampleblock << "#\n";
-    exampleblock << "# NTDLR  CDLR      PHILIN  NTWDLR\n";
-    exampleblock << "  1      100.0     180.0   100\n";
+    exampleblock << "# NTDLR  CDLR      PHILIN  NTWDLR  TOLDAC\n";
+    exampleblock << "  1      100.0     180.0   100      0.01\n";
     exampleblock << "END\n";
 
 
@@ -1975,12 +1975,13 @@ void io::In_Parameter::read_DIHEDRALRES(simulation::Parameter &param,
     if (block.read_buffer(m_block[blockname], false) == 0) {
         block_read.insert(blockname);
 
-        double phi_lin, K;
+        double phi_lin, K, tolerance;
         int dihrest;
         block.get_next_parameter("NTDLR", dihrest, "", "0,1,2,3");
         block.get_next_parameter("CDLR", K, ">=0", "");
         block.get_next_parameter("PHILIN", phi_lin, ">0", "");
         block.get_next_parameter("NTWDLR", param.dihrest.write, ">=0", "");
+        block.get_next_parameter("TOLDAC", tolerance, ">=0", "");
 
         switch (dihrest) {
             case 0:
@@ -1994,7 +1995,6 @@ void io::In_Parameter::read_DIHEDRALRES(simulation::Parameter &param,
                 break;
             case 3:
                 param.dihrest.dihrest = simulation::dihedral_constr;
-                param.setDevelop("Dihedral constraining is under development.");
                 break;
             default:
                 break;
@@ -2002,6 +2002,7 @@ void io::In_Parameter::read_DIHEDRALRES(simulation::Parameter &param,
 
         param.dihrest.K = K*180*180 / (math::Pi * math::Pi);
         param.dihrest.phi_lin = phi_lin * 2 * math::Pi / 360;
+        param.dihrest.tolerance = tolerance * math::Pi / 180;
 
         if (param.dihrest.dihrest == simulation::dihedral_constr) {
             if (param.constraint.ntc == 1 && param.constraint.solute.algorithm == simulation::constr_off)

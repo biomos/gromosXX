@@ -634,7 +634,8 @@ namespace topology
      */
     void calculate_constraint_dof(simulation::Multibath & mb,
 				  bool rottrans_constraints,
-                                  bool position_constraints)const;
+                                  bool position_constraints,
+                                  bool dih_constraints)const;
 
     /**
      * check state
