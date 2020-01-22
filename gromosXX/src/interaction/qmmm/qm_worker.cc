@@ -24,6 +24,7 @@
 //#include "turbomole_worker.h"
 //#include "dftb_worker.h"
 //#include "mopac_worker.h"
+#include "nn_worker.h"
 
 #undef MODULE
 #undef SUBMODULE
@@ -56,6 +57,8 @@ interaction::QM_Worker * interaction::QM_Worker::get_instance(const simulation::
     case simulation::qm_mopac :
       //return new MOPAC_Worker; // Temporarily disabled
       return nullptr; // REMOVE
+    case simulation::qm_nn :
+      return new NN_Worker;
     default:
       io::messages.add("QM worker not implemented", "QM_Worker", io::message::critical);
       break;

@@ -80,7 +80,7 @@ namespace interaction {
     /**
      * A copy of specific QM parameters
      */
-    simulation::Parameter::qmmm_struct::qm_param_struct* param;
+    simulation::Parameter::qmmm_struct::external_qm_param_struct* param;
     /**
      * Write input file for QM
      */

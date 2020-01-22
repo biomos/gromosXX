@@ -170,6 +170,11 @@ TURBOMOLEELEMENTS
 8 o
 END
 @endverbatim
+@verbatim
+NNMODEL
+/path/to/schnetpack/model
+END
+@endverbatim
  */
 void
 io::In_QMMM::read(topology::Topology& topo,
@@ -441,6 +446,27 @@ io::In_QMMM::read(topology::Topology& topo,
                   sim.param().qmmm.mopac.input_header);
     } // MOPACHEADER
   }
+  else if (sw == simulation::qm_nn) {
+    this->read_units(sim, &sim.param().qmmm.nn);
+    //this->read_elements(topo, &sim.param().qmmm.nn);
+
+    { // NNMODEL
+      buffer = m_block["NNMODEL"];
+
+      if (!buffer.size()) {
+        io::messages.add("NNMODEL block missing",
+                "In_QMMM", io::message::error);
+        return;
+      } else {
+        if (buffer.size() != 3) {
+          io::messages.add("NNMODEL block corrupt. Provide 1 line.",
+                  "In_QMMM", io::message::error);
+          return;
+        }
+        sim.param().qmmm.nn.model_path = buffer[1];
+      }
+    } // NNMODEL
+  }
   // Cap length definition
   if(topo.qmmm_link().size() > 0 ) {
     _lineStream.clear();
@@ -520,7 +546,11 @@ void io::In_QMMM::read_units(const simulation::Simulation& sim
     {simulation::qm_mopac,
                     {math::angstrom /* A */
                     , math::kcal /* kcal */
-                    , math::echarge /* e */}}
+                    , math::echarge /* e */}},
+    {simulation::qm_nn,
+                    { math::bohr /* a.u. -> nm */
+                    , math::hartree * math::avogadro /* a.u. */
+                    , math::echarge /* e */}},
   };
 
   std::vector<std::string> buffer = m_block["QMUNIT"];

@@ -760,7 +760,11 @@ namespace simulation
       /**
        * use MOPAC
        */
-    qm_mopac = 3
+    qm_mopac = 3,
+      /**
+       * use MOPAC
+       */
+    qm_nn = 4
   };
 
   /**
@@ -3607,22 +3611,6 @@ namespace simulation
        */
       struct qm_param_struct{
         /**
-         * path for the program binary
-         */
-        std::string binary;
-        /**
-         * path for the input file. Empty for a temporary file
-         */
-        std::string input_file;
-        /**
-         * path for the output file. Empty for a temporary file
-         */
-        std::string output_file;
-        /**
-         * header of the input file
-         */
-        std::string input_header;
-        /**
          * factor to convert the QM length unit to the GROMOS one
          */
         double unit_factor_length;
@@ -3640,10 +3628,29 @@ namespace simulation
         std::map<unsigned, std::string> elements;
       };
 
+      struct external_qm_param_struct : public qm_param_struct {
+        /**
+         * path for the program binary
+         */
+        std::string binary;
+        /**
+         * path for the input file. Empty for a temporary file
+         */
+        std::string input_file;
+        /**
+         * path for the output file. Empty for a temporary file
+         */
+        std::string output_file;
+        /**
+         * header of the input file
+         */
+        std::string input_header;
+      };
+
       /**
        * MNDO specific parameters
        */
-      struct mndo_param_struct : public qm_param_struct{
+      struct mndo_param_struct : public external_qm_param_struct {
         /**
          * path for the gradient output file. Empty for a temporary file
          */
@@ -3657,7 +3664,7 @@ namespace simulation
       /**
        * Turbomole specific parameters
        */
-      struct turbomole_param_struct : public qm_param_struct{
+      struct turbomole_param_struct : public external_qm_param_struct {
         /**
          * the tools to run in the working directory
          */
@@ -3695,7 +3702,7 @@ namespace simulation
       /**
        * DFTB specific parameters
        */
-      struct dftb_param_struct : public qm_param_struct{
+      struct dftb_param_struct : public external_qm_param_struct {
         /**
          * path for the charges.dat file. Empty for a temporary file
          */
@@ -3713,7 +3720,7 @@ namespace simulation
       /**
        * MOPAC specific parameters
        */
-      struct mopac_param_struct : public qm_param_struct{
+      struct mopac_param_struct : public external_qm_param_struct {
         /**
          * path for the molin file. Empty for a temporary file
          */
@@ -3723,11 +3730,14 @@ namespace simulation
          */
         std::string output_gradient_file;
       } mopac;
+
       /**
-       * pointer to the interaction class such the the QM/MM interaction
-       * can be easily passed to other algorithms
+       * NN specific parameters
        */
-      //interaction::QMMM_Interaction * interaction; // This I dont like here
+      struct nn_param_struct : public qm_param_struct {
+        // ???
+        std::string model_path;
+      } nn;
     } qmmm;
     
     struct symrest_struct {

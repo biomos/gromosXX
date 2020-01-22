@@ -5099,7 +5099,7 @@ void io::In_Parameter::read_QMMM(simulation::Parameter & param,
     double mm_scale = -1.;
     double cutoff;
     block.get_next_parameter("NTQMMM", enable, "", "0,1,2,3");
-    block.get_next_parameter("NTQMSW", software, "", "0,1,2,3");
+    block.get_next_parameter("NTQMSW", software, "", "0,1,2,3,4");
     block.get_next_parameter("RCUTQM", cutoff, "", "");
     block.get_next_parameter("NTWQMMM", write, ">=0", "");
     block.get_next_parameter("QMLJ", qmlj, "", "0,1");
@@ -5150,6 +5150,9 @@ void io::In_Parameter::read_QMMM(simulation::Parameter & param,
             case 3:
                 param.qmmm.software = simulation::qm_mopac;
                 break;
+            case 4:
+                param.qmmm.software = simulation::qm_nn;
+                break;
             default:
                 break;
     }
@@ -5158,6 +5161,10 @@ void io::In_Parameter::read_QMMM(simulation::Parameter & param,
         param.qmmm.atomic_cutoff = true;
     param.qmmm.cutoff = fabs(cutoff);
     param.qmmm.write = write;
+    if (param.qmmm.qmmm != simulation::qmmm_mechanical && param.qmmm.software == simulation::qm_nn)
+        io::messages.add("QMMM block: Schnetpack works only with mechanical embedding scheme",
+            "io::In_Parameter",
+            io::message::error);
     if (param.qmmm.qmmm == simulation::qmmm_mechanical && param.qmmm.cutoff != 0.0)
         io::messages.add("QMMM block: RCUTQM > 0.0 has no effect for mechanical embedding scheme",
             "io::In_Parameter",

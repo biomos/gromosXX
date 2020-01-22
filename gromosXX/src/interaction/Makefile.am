@@ -1,6 +1,6 @@
-AM_CXXFLAGS = @MY_CXXFLAGS@
-AM_CPPFLAGS = -I$(top_srcdir) -I$(top_srcdir)/src -I$(top_srcdir)/src/interaction -I$(top_srcdir)/src/interaction/nonbonded -I$(top_srcdir)/src/interaction/nonbonded/pairlist -I$(top_srcdir)/src/interaction/nonbonded/interaction -I$(top_srcdir)/src/interaction/bonded -I$(top_srcdir)/src/interaction/forcefield -I$(top_srcdir)/src/interaction/qmmm -I$(top_srcdir)/src/interaction/special -I$(top_srcdir)/src/interaction/special/xray -I$(top_srcdir)/src/algorithm 
-
+AM_CXXFLAGS = -I/usr/include/python3.6/ -I/usr/local/include/pybind11 @MY_CXXFLAGS@
+AM_CPPFLAGS = -I/usr/include/python3.6/ -I/usr/local/include/pybind11 -I$(top_srcdir) -I$(top_srcdir)/src -I$(top_srcdir)/src/interaction -I$(top_srcdir)/src/interaction/nonbonded -I$(top_srcdir)/src/interaction/nonbonded/pairlist -I$(top_srcdir)/src/interaction/nonbonded/interaction -I$(top_srcdir)/src/interaction/bonded -I$(top_srcdir)/src/interaction/forcefield -I$(top_srcdir)/src/interaction/qmmm -I$(top_srcdir)/src/interaction/special -I$(top_srcdir)/src/interaction/special/xray -I$(top_srcdir)/src/algorithm 
+AM_LDFLAGS = -lpython3.6m -lpthread -ldl -lutil -lm
 
 xxincludedir = $(includedir)/md++/interaction
 xxinclude_HEADERS =	interaction.h\
@@ -111,6 +111,7 @@ xxintqmmm_HEADERS = qmmm/mm_atom.h\
 	qmmm/qm_zone.h\
 	qmmm/qm_worker.h\
 	qmmm/mndo_worker.h\
+	qmmm/nn_worker.h\
 	qmmm/qmmm_interaction.h\
 	qmmm/nonbonded/qmmm_nonbonded_outerloop.h \
 	qmmm/nonbonded/qmmm_nonbonded_set.h
@@ -188,6 +189,7 @@ libgrointeraction_la_SOURCES =interaction.cc\
 	qmmm/qm_zone.cc\
 	qmmm/qm_worker.cc\
 	qmmm/mndo_worker.cc\
+	qmmm/nn_worker.cc\
 	qmmm/qmmm_interaction.cc\
 	qmmm/nonbonded/qmmm_nonbonded_outerloop.cc\
 	qmmm/nonbonded/qmmm_nonbonded_set.cc
