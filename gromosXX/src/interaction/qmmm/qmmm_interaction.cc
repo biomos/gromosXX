@@ -386,7 +386,7 @@ int interaction::QMMM_Interaction::init(topology::Topology& topo,
 
   // Remove exclusions containing QM-QM and QM-MM interactions
   DEBUG(15, "Removing QM-QM and QM-MM exclusions");
-  this->remove_exclusions(topo, sim, os, quiet);
+  this->modify_exclusions(topo, sim, os, quiet);
 
   // Create nonbonded set for LJ interactions
   if (sim.param().force.nonbonded_vdw
@@ -700,7 +700,7 @@ void interaction::QMMM_Interaction::remove_bonded_terms(
   }
 }
 
-void interaction::QMMM_Interaction::remove_exclusions(
+void interaction::QMMM_Interaction::modify_exclusions(
                                 topology::Topology& topo
                               , const simulation::Simulation& sim
                               , std::ostream& os
@@ -727,77 +727,78 @@ void interaction::QMMM_Interaction::remove_exclusions(
   DEBUG(4, "Removing exclusions of QM atoms");
   topo.qm_all_exclusion().clear();
   topo.qm_all_exclusion().resize(topo.num_atoms());
-  // Remove QM-QM and QM-MM exclusions
+  // Remove or make a copy of QM-QM and QM-MM exclusions
+  const bool use_qm_buffer = sim.param().qmmm.use_qm_buffer;
+  
+  // Decide what to copy and what to erase
+  bool copy = false;
+  bool erase = false;
+  auto decide_copy_erase = [&](unsigned i, unsigned j)->void {
+    copy = false;
+    erase = false;
+    switch (bool(topo.is_qm(i)) + bool(topo.is_qm(j))) {
+      case 0 : { // MM-MM
+        break;
+      }
+      case 1 : { // QM-MM
+        // if MM is in QM buffer zone
+        if (topo.is_qm_buffer(i) || topo.is_qm_buffer(j)) {
+          copy = bool(sim.param().qmmm.qm_lj);
+          erase = true;
+        }
+        else if (sim.param().qmmm.qmmm > simulation::qmmm_mechanical) {
+          copy = erase = true;
+        }
+        break;
+      }
+      case 2 : { // QM-QM
+        copy = bool(sim.param().qmmm.qm_lj);
+        erase = true;
+        break;
+      }
+    }
+    return;
+  };
+  
   for (unsigned int i = 0; i < topo.num_solute_atoms(); ++i) {
     const bool i_is_qm = topo.is_qm(i);
     if (sim.param().qmmm.qmmm == simulation::qmmm_mechanical
-        && !i_is_qm) continue;
-        
+        && !i_is_qm && !use_qm_buffer) continue;
+
     // One-four pairs - they use CS6 and CS12
     for (topology::excl_cont_t::value_type::const_iterator
           it = topo.one_four_pair(i).begin()
         ; it != topo.one_four_pair(i).end(); ) {
-      switch (i_is_qm + topo.is_qm(*it)) {
-        case 0 : { // MM-MM
-          ++it;
-          break;
-        }
-        case 1 : { // QM-MM
-          if (sim.param().qmmm.qmmm > simulation::qmmm_mechanical) {
-            // Make a copy, if we want to calculate them
-            DEBUG(9, "Making copy of 1,4: " << i << " - " << *it);
-            topo.qm_one_four_pair(i).insert(*it);
-            topo.qm_all_exclusion(i).insert(*it);
-            // Erase
-            DEBUG(9, "Removing 1,4 pair: " << i << " - " << *it);
-            it = topo.one_four_pair(i).erase(it);
-          } else ++it;
-          break;
-        }
-        case 2 : { // QM-QM
-          if (sim.param().qmmm.qm_lj) {
-            DEBUG(9, "Making copy of 1,4: " << i << " - " << *it);
-            topo.qm_one_four_pair(i).insert(*it);
-            topo.qm_all_exclusion(i).insert(*it);
-          }
-          DEBUG(9, "Removing 1,4 pair: " << i << " - " << *it);
-          it = topo.one_four_pair(i).erase(it);
-        }
+      decide_copy_erase(i, *it);
+      if (copy) {
+        DEBUG(9, "Making copy of 1,4: " << i << " - " << *it);
+        topo.qm_one_four_pair(i).insert(*it);
+        topo.qm_all_exclusion(i).insert(*it);
       }
+      if (erase) {
+        DEBUG(9, "Removing 1,4 pair: " << i << " - " << *it);
+        it = topo.one_four_pair(i).erase(it);
+        continue;
+      }
+      ++it;
     }
 
     // Exclusions
     for (topology::excl_cont_t::value_type::const_iterator
           it = topo.exclusion(i).begin()
         ; it != topo.exclusion(i).end(); ) {
-      switch (i_is_qm + topo.is_qm(*it)) {
-        case 0 : { // MM-MM
-          ++it;
-          break;
-        }
-        case 1 : { // QM-MM
-          if (sim.param().qmmm.qmmm > simulation::qmmm_mechanical) {
-            // Make a copy
-            DEBUG(9, "Making copy of exclusion: " << i << " - " << *it);
-            topo.qm_exclusion(i).insert(*it);
-            topo.qm_all_exclusion(i).insert(*it);
-            // Erase
-            DEBUG(9, "Removing exclusion: " << i << " - " << *it);
-            it = topo.exclusion(i).erase(it);
-          } else ++it;
-          break;
-        }
-        case 2 : { // QM-QM
-          if (sim.param().qmmm.qm_lj) {
-            // Make a copy
-            DEBUG(9, "Making copy of exclusion: " << i << " - " << *it);
-            topo.qm_exclusion(i).insert(*it);
-            topo.qm_all_exclusion(i).insert(*it);
-          }
-          DEBUG(9, "Removing exclusion: " << i << " - " << *it);
-          it = topo.exclusion(i).erase(it);
-        }
+      decide_copy_erase(i, *it);
+      if (copy) {
+        DEBUG(9, "Making copy of exclusion: " << i << " - " << *it);
+        topo.qm_exclusion(i).insert(*it);
+        topo.qm_all_exclusion(i).insert(*it);
       }
+      if (erase) {
+        DEBUG(9, "Removing exclusion: " << i << " - " << *it);
+        it = topo.exclusion(i).erase(it);
+        continue;
+      }
+      ++it;
     }
   }
 
@@ -805,38 +806,23 @@ void interaction::QMMM_Interaction::remove_exclusions(
   for (std::vector<topology::lj_exception_struct>::const_iterator
         it = topo.lj_exceptions().begin()
       ; it != topo.lj_exceptions().end(); ) {
+    bool copy = false;
+    bool erase = false;
     const unsigned i = it->i;
     const unsigned j = it->j;
     assert(i < j);
-    switch (topo.is_qm(i) + topo.is_qm(j)) {
-      case 0 : { // MM-MM
-        ++it;
-        break;
-      }
-      case 1 : { // QM-MM
-        if (sim.param().qmmm.qmmm > simulation::qmmm_mechanical) {
-          // Make a copy
-          DEBUG(9, "Making copy of LJ exception: " << i << " - " << j);
-          topo.qm_lj_exceptions().push_back(*it);
-          topo.qm_all_exclusion(i).insert(j);
-          // Erase
-          DEBUG(9, "Removing LJ exception: " << i << " - " << j);
-          it = topo.lj_exceptions().erase(it);
-        } else ++it;
-        break;
-      }
-      case 2 : { // QM-QM
-        if (sim.param().qmmm.qm_lj) {
-          DEBUG(9, "Making copy of LJ exception: " << i << " - " << j);
-          topo.qm_lj_exceptions().push_back(*it);
-          topo.qm_all_exclusion(i).insert(j);
-        }
-        // Erase
-        DEBUG(9, "Removing LJ exception: " << i << " - " << j);
-        it = topo.lj_exceptions().erase(it);
-        break;
-      }
+    decide_copy_erase(i, j);
+    if (copy) {
+      DEBUG(9, "Making copy of LJ exception: " << i << " - " << j);
+      topo.qm_lj_exceptions().push_back(*it);
+      topo.qm_all_exclusion(i).insert(j);
     }
+    if (erase) {
+      DEBUG(9, "Removing LJ exception: " << i << " - " << j);
+      it = topo.lj_exceptions().erase(it);
+      continue;
+    }
+    ++it;
   }
   topo.update_all_exclusion();
 }

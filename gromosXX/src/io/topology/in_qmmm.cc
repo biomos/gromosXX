@@ -47,6 +47,26 @@ QMZONE
     1 H2O   HW2        3     1      0
 END
 @endverbatim
+/**
+ * @section bufferzone BUFFERZONE block
+ * The BUFFERZONE block specifies the atoms which are treated in both quantum and classical way
+ *
+ * The block is read from the QM/MM specification file
+ * (\@qmmm).
+ *
+ * @verbatim
+BUFFERZONE
+# QMI:  index of the QM atom
+# QMZ:  atomic number of the QM atom
+# QMLI: 0,1 atom is a link atom
+#
+# Warning: the first 17 characters are ignored!
+# RESIDUE   ATOM     QMI   QMZ   QMLI
+    1 H2O   OW         1     8      0
+    1 H2O   HW1        2     1      0
+    1 H2O   HW2        3     1      0
+END
+@endverbatim
  *
  * @section qmunit QMUNIT block
  * The QMUNIT block specifies conversion factors for units
@@ -178,83 +198,12 @@ io::In_QMMM::read(topology::Topology& topo,
   const simulation::qm_software_enum sw = sim.param().qmmm.software;
   io::messages.add("Reading QM/MM specification file",
                    "In_QMMM", io::message::notice);
+  //std::string blockname = "QMZONE";
+  this->read_qm_zone(topo, sim, "QMZONE");
+  //blockname = "BUFFERZONE";
+  this->read_qm_zone(topo, sim, "BUFFERZONE");
+  
   std::vector<std::string> buffer;
-
-  { // QMZONE
-    buffer = m_block["QMZONE"];
-
-    if (!buffer.size()) {
-      io::messages.add("No QMZONE block in QM/MM specification file",
-              "In_QMMM", io::message::error);
-      return;
-    }
-
-    unsigned qmi, qmz, qmli;
-    for (std::vector<std::string>::const_iterator it = buffer.begin() + 1
-                                                , to = buffer.end() - 1
-                                                ; it != to; ++it) {
-      std::string line(*it);
-      if (line.length() < 17) {
-        io::messages.add("Line too short in QMZONE block", "In_QMMM",
-                io::message::error);
-      }
-
-      // the first 17 chars are ignored
-      line.erase(line.begin(), line.begin() + 17);
-
-      _lineStream.clear();
-      _lineStream.str(line);
-
-      _lineStream >> qmi >> qmz >> qmli;
-
-      if (_lineStream.fail()) {
-        io::messages.add("Bad line in QMZONE block",
-                "In_QMMM", io::message::error);
-        return;
-      }
-
-      if (qmi < 1 || qmi > topo.num_atoms()) {
-        io::messages.add("QMZONE block: atom out of range",
-                "In_QMMM", io::message::error);
-        return;
-      }
-
-      if (qmi > topo.num_solute_atoms()) {
-        io::messages.add("QMZONE block: QM atom should be in solute",
-                "In_QMMM", io::message::error);
-        return;
-      }
-
-      if (qmz < 1) {
-        io::messages.add("QMZONE block: wrong atomic number (QMZ)",
-                "In_QMMM", io::message::error);
-        return;
-      }
-
-      if (qmli < 0 ) {
-        io::messages.add("QMZONE block: QMLI has to be 0 or index of linked MM atom",
-                "In_QMMM", io::message::error);
-        return;
-      }
-      topo.is_qm(qmi - 1) = true;
-      topo.qm_atomic_number(qmi - 1) = qmz;
-      if (qmli > 0 ) {
-        DEBUG(15, "Linking " << qmi << " to " << qmli);
-        topo.qmmm_link().insert(std::make_pair(qmi - 1, qmli - 1));
-      }
-    }
-
-    for (std::set< std::pair<unsigned,unsigned> >::const_iterator
-        it = topo.qmmm_link().begin(), to = topo.qmmm_link().end();
-        it != to; ++it)
-      {
-      if (topo.is_qm(it->second)) {
-        io::messages.add("QMZONE block: Invalid link - QMLI should be MM atom",
-                "In_QMMM", io::message::error);
-      }
-    }
-
-  } // QMZONE
 
   /**
    * MNDO
@@ -550,6 +499,101 @@ void io::In_QMMM::read_units(const simulation::Simulation& sim
     return;
   }
   DEBUG(15, "QM units read done");
+}
+
+void io::In_QMMM::read_qm_zone(topology::Topology& topo
+                              , simulation::Simulation& sim
+                              , const std::string& blockname)
+  {
+  std::vector<std::string> buffer;
+  buffer = m_block[blockname];
+
+  if (!buffer.size()) {
+    if (blockname == "QMZONE") {
+      io::messages.add("No QMZONE block in QM/MM specification file",
+              "In_QMMM", io::message::error);
+      return;
+    }
+    else if (blockname == "BUFFERZONE") {
+      return;
+    }
+  }
+
+  unsigned qmi, qmz, qmli;
+  for (std::vector<std::string>::const_iterator it = buffer.begin() + 1
+                                              , to = buffer.end() - 1
+                                              ; it != to; ++it) {
+    std::string line(*it);
+    if (line.length() < 17) {
+      std::ostringstream msg;
+      msg << "Line too short in " << blockname << " block";
+      io::messages.add(msg.str(), "In_QMMM", io::message::error);
+    }
+
+    // the first 17 chars are ignored
+    line.erase(line.begin(), line.begin() + 17);
+
+    _lineStream.clear();
+    _lineStream.str(line);
+
+    _lineStream >> qmi >> qmz >> qmli;
+
+    if (_lineStream.fail()) {
+      std::ostringstream msg;
+      msg << "Bad line in " << blockname << " block";
+      io::messages.add(msg.str(), "In_QMMM", io::message::error);
+      return;
+    }
+
+    if (qmi < 1 || qmi > topo.num_atoms()) {
+      std::ostringstream msg;
+      msg << blockname << " block: atom out of range";
+      io::messages.add(msg.str(), "In_QMMM", io::message::error);
+      return;
+    }
+
+    if (qmi > topo.num_solute_atoms()) {
+      std::ostringstream msg;
+      msg << blockname << " block: QM atom should be in solute";
+      io::messages.add(msg.str(), "In_QMMM", io::message::error);
+      return;
+    }
+
+    if (qmz < 1) {
+      std::ostringstream msg;
+      msg << blockname << " block: wrong atomic number (QMZ)";
+      io::messages.add(msg.str(), "In_QMMM", io::message::error);
+      return;
+    }
+
+    if (qmli < 0 ) {
+      std::ostringstream msg;
+      msg << blockname << " block: QMLI has to be 0 or index of linked MM atom";
+      io::messages.add(msg.str(), "In_QMMM", io::message::error);
+      return;
+    }
+    topo.is_qm(qmi - 1) = (blockname == "QMZONE");
+    const bool is_qm_buffer = (blockname == "BUFFERZONE");
+    topo.is_qm_buffer(qmi - 1) = is_qm_buffer;
+    sim.param().qmmm.use_qm_buffer = sim.param().qmmm.use_qm_buffer
+                                      || is_qm_buffer;
+    topo.qm_atomic_number(qmi - 1) = qmz;
+    if (qmli > 0 ) {
+      DEBUG(15, "Linking " << qmi << " to " << qmli);
+      topo.qmmm_link().insert(std::make_pair(qmi - 1, qmli - 1));
+    }
+  }
+
+  for (std::set< std::pair<unsigned,unsigned> >::const_iterator
+      it = topo.qmmm_link().begin(), to = topo.qmmm_link().end();
+      it != to; ++it)
+    {
+    if (topo.is_qm(it->second)) {
+      std::ostringstream msg;
+      msg << blockname << " block: Invalid link - QMLI should be MM atom";
+      io::messages.add(msg.str(), "In_QMMM", io::message::error);
+    }
+  }
 }
 
 

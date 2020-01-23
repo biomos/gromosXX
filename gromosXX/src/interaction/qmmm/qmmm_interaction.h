@@ -131,9 +131,9 @@ namespace interaction {
                            , bool quiet);
 
     /**
-     * helper function to remove pairlist exclusions from topology
+     * helper function to modify pairlist exclusions in topology
      */
-    void remove_exclusions(topology::Topology& topo
+    void modify_exclusions(topology::Topology& topo
                          , const simulation::Simulation& sim
                          , std::ostream &os
                          , bool quiet);

@@ -4,9 +4,9 @@
  */
 /**
  * @page qmmm QM/MM specification format
- * @date 19-12-2011
+ * @date 22-01-2020
  *
- * A QM/MM specifcation file may contain the following
+ * A QM/MM specification file may contain the following
  * blocks:
  * - @ref title
  * - @ref qmzone
@@ -47,10 +47,16 @@ namespace io {
     void read_units(const simulation::Simulation & sim
           , simulation::Parameter::qmmm_struct::qm_param_struct* qm_param);
     /**
-     * Read map of atomic numbers to element names
+     * Read the map of atomic numbers to element names
      */
     void read_elements(const topology::Topology& topo
     , simulation::Parameter::qmmm_struct::qm_param_struct* qm_param);
+    /**
+     * Read the list of QM atoms
+     */
+    void read_qm_zone(topology::Topology& topo
+                    , simulation::Simulation& sim
+                    , const std::string& blockname);
   };
 } // io
 

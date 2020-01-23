@@ -141,9 +141,9 @@ int interaction::QM_Zone::get_qm_atoms(const topology::Topology& topo,
     DEBUG(15, "cg: " << cg);
     DEBUG(15, "a_to: " << a_to);
     assert(a_to <= num_solute_atoms);
-    const bool cg_is_qm = topo.is_qm(a);
+    const bool cg_is_qm = topo.is_qm(a) || topo.is_qm_buffer(a);
     for (; a < a_to; ++a) {
-      const bool a_is_qm = topo.is_qm(a);
+      const bool a_is_qm = topo.is_qm(a) || topo.is_qm_buffer(a);
       if (cg_is_qm != a_is_qm) {
         std::ostringstream msg;
         msg << "Chargegroup " << cg << " is split between QM and MM zone - "
@@ -263,11 +263,14 @@ void interaction::QM_Zone::update_pairlist(
         if (counter == 0) {
           unsigned i = qm_it->index;
           unsigned j = mm_it->index;
-          if (i > j) std::swap(i,j);
-          // There should not be any QM pair in standard exclusions
-          assert(!topo.all_exclusion(i).is_excluded(j));
-          if (!topo.qm_all_exclusion(i).is_excluded(j)) {
-            pairlist.solute_short[i].push_back(j);
+          if (!topo.is_qm_buffer(j)) {
+            if (i > j) std::swap(i,j);
+            // There should not be any QM pair in standard exclusions
+            assert(!topo.all_exclusion(i).is_excluded(j));
+
+            if (!topo.qm_all_exclusion(i).is_excluded(j)) {
+              pairlist.solute_short[i].push_back(j);
+            }
           }
           counter = stride;
         }
@@ -333,7 +336,7 @@ int interaction::QM_Zone::get_mm_atoms(const topology::Topology& topo,
     // Include all - allowed only with vacuum PBC
     DEBUG(9, "Gathering all MM atoms");
     for (unsigned int i = 0; i < topo.num_atoms(); ++i) {
-      if (!topo.is_qm(i)) {
+      if (!topo.is_qm(i) && !topo.is_qm_buffer(i)) {
         DEBUG(9, "Adding atom " << i);
         this->mm.emplace(i, topo.charge(i), conf.current().pos(i));
       }

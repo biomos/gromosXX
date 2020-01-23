@@ -67,6 +67,7 @@ m_sasa_second_neighbour(),
 m_sasa_third_neighbour(),
 m_sasa_higher_neighbour(),
 m_is_qm(0),
+m_is_qm_buffer(0),
 m_qm_atomic_number(0) {
   m_chargegroup.push_back(0);
   m_molecule.push_back(0);
@@ -150,6 +151,7 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
   m_qm_lj_exceptions.clear();;
   // END QMMM TEST
   m_is_qm.clear();
+  m_is_qm_buffer.clear();
   m_qm_atomic_number.clear();
   m_qmmm_link.clear();
 
@@ -200,6 +202,7 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
       m_gamma_k.push_back(topo.m_gamma_k[i]);
       m_cg_factor.push_back(topo.m_cg_factor[i]);
       m_is_qm.push_back(topo.m_is_qm[i]);
+      m_is_qm_buffer.push_back(topo.m_is_qm_buffer[i]);
       m_qm_atomic_number.push_back(topo.m_qm_atomic_number[i]);
 
       topology::excl_cont_t::value_type ex;
@@ -541,6 +544,7 @@ void topology::Topology::resize(unsigned int const atoms) {
   // END QMMM TEST
   m_qm_atomic_number.resize(atoms, 0);
   m_is_qm.resize(atoms, 0);
+  m_is_qm_buffer.resize(atoms, 0);
 
   m_iac.resize(atoms);
   // chargegroups???

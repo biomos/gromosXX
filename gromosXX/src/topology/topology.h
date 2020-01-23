@@ -807,6 +807,22 @@ namespace topology
     }
 
     /**
+     * is the atom in the QM buffer? - accessor
+     */
+    unsigned is_qm_buffer(const unsigned i)const {
+      assert(i < m_is_qm_buffer.size());
+      return m_is_qm_buffer[i];
+    }
+    
+    /**
+     * is the atom in the QM buffer? - mutator
+     */
+    unsigned& is_qm_buffer(const unsigned i) {
+      assert(i < m_is_qm_buffer.size());
+      return m_is_qm_buffer[i];
+    }
+
+    /**
      * QM atomic number accessor
      */
     const unsigned& qm_atomic_number(unsigned i) const {
@@ -1903,6 +1919,11 @@ namespace topology
      * Is the atom QM
      */
     std::vector<unsigned> m_is_qm;
+
+    /**
+     * Is the atom QM
+     */
+    std::vector<unsigned> m_is_qm_buffer;
 
     /**
      * QM atomic number

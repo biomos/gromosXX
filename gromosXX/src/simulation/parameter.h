@@ -3554,19 +3554,33 @@ namespace simulation
        * - mm_scale -1.0 (no scaling)
        * - write(0)
        */
-      qmmm_struct() : qmmm(qmmm_off)
-                    , qm_lj(qm_lj_off)
-                    , software(qm_mndo)
-                    , cutoff(0.0)
-                    , atomic_cutoff(false)
+      qmmm_struct() : 
+                      cutoff(0.0)
                     , cap_length(0.109)
                     , mm_scale(-1.0)
-                    , write(0) {}
+                    , qmmm(qmmm_off)
+                    , qm_lj(qm_lj_off)
+                    , software(qm_mndo)
+                    , write(0)
+                    , atomic_cutoff(false)
+                    , use_qm_buffer(false) {}
       /**
        * 
        * Common QMMM parameters
        * 
        */
+      /**
+       * cutoff to determine atoms included in QM calculation as point charges.
+       */
+      double cutoff;
+      /**
+       * Capping atom bond length
+       */
+      double cap_length;
+      /**
+       * scaling factor for the MM charges in the QM/MM interaction
+       */
+      double mm_scale;
       /**
        * QM-MM embedding scheme or disable
        */
@@ -3580,27 +3594,17 @@ namespace simulation
        */
       qm_software_enum software;
       /**
-       * cutoff to determine atoms included in QM calculation as point charges.
+       * write QM/MM related stuff to special trajectory
        */
-      double cutoff;
+      unsigned write; // What can be written here?
       /**
        * type of cutoff (atomic or chargegroup-based)
        */
       bool atomic_cutoff;
       /**
-       * Capping atom bond length
+       * type of cutoff (atomic or chargegroup-based)
        */
-      double cap_length;
-
-      /**
-       * scaling factor for the MM charges in the QM/MM interaction
-       */
-      double mm_scale;
-
-      /**
-       * write QM/MM related stuff to special trajectory
-       */
-      unsigned write; // What can be written here?
+      bool use_qm_buffer;
 
       /**
        * QM program unspecific parameters
