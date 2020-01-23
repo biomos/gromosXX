@@ -739,24 +739,17 @@ namespace simulation
          * Default values:
          * - number_of_threads 0
          */
-        mpi_control_struct() : global_number_of_threads(-1), global_master(0), global_thread_id(-1), 
-                               local_simulation(-1), local_number_of_threads(-1), local_master(-1), local_thread_id(-1)
+        mpi_control_struct() : simulationID(0), simulationNumberOfThreads(-1), simulationMasterThreadID(0), simulationThisThreadID(-1)
         {
         }
           
-        //Indices
-        int global_number_of_threads;    //total_number_of_threads   
-        int global_master;   //local thread_id
-        int global_thread_id;   //local thread_id
-
-        int local_simulation; //local replica id of simulation
-        int local_number_of_threads;    //total_number_of_threads      
-        int local_master; //local master of this 
-        int local_thread_id;
+        int simulationID; //local replica id of simulation
+        int simulationNumberOfThreads;    //total_number_of_threads      
+        int simulationMasterThreadID; //local master of this 
+        int simulationThisThreadID;
         // int local_comm; // TODO: bschroed  for later!??
         
-        std::map<unsigned int, unsigned int> thread_id_replica_map;
-        std::vector< std::vector<unsigned int> > replica_owned_threads; 
+        std::vector<unsigned int> simulationOwnedThreads; 
 
     } /** replica exchange parameters */;
 

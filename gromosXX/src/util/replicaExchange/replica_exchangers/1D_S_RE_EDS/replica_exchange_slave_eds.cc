@@ -11,7 +11,7 @@
  * Created on August 31, 2018, 10:43 AM
  */
 
-#include <util/replicaExchange/replica_exchangers/replica_exchange_slave_eds.h>
+#include <util/replicaExchange/replica_exchangers/1D_S_RE_EDS/replica_exchange_slave_eds.h>
 
 
 #undef MODULE

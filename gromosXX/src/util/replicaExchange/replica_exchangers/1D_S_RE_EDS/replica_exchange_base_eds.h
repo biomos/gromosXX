@@ -10,7 +10,7 @@
  *
  * Created on April 18, 2018, 3:38 PM
  */
-#include <util/replicaExchange/replica_exchangers/replica_exchange_base.h>
+#include <util/replicaExchange/replica_exchangers/2D_T_lambda_REPEX/replica_exchange_base.h>
 #include <util/replicaExchange/replica_data.h>
 #include <util/replicaExchange/repex_mpi.h>
 
@@ -120,7 +120,7 @@ namespace util
         void createReplicas(int cont, int rank) override;
         
         //TODO
-                /*
+        /*
         * energy calculation for statistical purposes of eds_stat() in replica_exchange_base.cc
         * for given configuration with new smoothing parameter s.
         */

@@ -6,7 +6,7 @@
  */
 
 #define REPEX_MPI
-#include <util/replicaExchange/replica_exchangers/replica_exchange_slave.h>
+#include <util/replicaExchange/replica_exchangers/replica_exchange_slave_interface.h>
 
 #include <stdheader.h>
 
@@ -26,27 +26,27 @@
 #include <io/configuration/out_configuration.h>
 
 #include <util/replicaExchange/repex_mpi.h>
-#include <util/replicaExchange/replica_exchangers/replica_exchange_base.h>
+#include <util/replicaExchange/replica_exchangers/replica_exchange_base_interface.h>
 
 #ifdef XXMPI
 #include <mpi.h>
 #endif
 
-util::replica_exchange_slave::replica_exchange_slave(io::Argument & _args,
+util::replica_exchange_slave_interface::replica_exchange_slave_interface(io::Argument & _args,
                                                     unsigned int cont,
                                                     unsigned int globalThreadID,
                                                     std::vector<std::vector<unsigned int> > replica_owned_threads,
                                                     std::map<ID_t, rank_t> & thread_id_replica_map) : 
-    replica_exchange_base(_args, cont, globalThreadID, replica_owned_threads, thread_id_replica_map) {
+    replica_exchange_base_interface(_args, cont, globalThreadID, replica_owned_threads, thread_id_replica_map) {
         DEBUG(4, "replica_exchange_slave "<< globalThreadID <<":Constructor:\t START");
 
         DEBUG(4, "replica_exchange_slave "<< globalThreadID <<":Constructor:\t DONE");
 }
 
-util::replica_exchange_slave::~replica_exchange_slave() {
+util::replica_exchange_slave_interface::~replica_exchange_slave_interface() {
 }
 
-void util::replica_exchange_slave::send_to_master() const {
+void util::replica_exchange_slave_interface::send_to_master() const {
 #ifdef XXMPI
   DEBUG(2,"replica_exchange_slave " << globalThreadID << ":send_to_master \t START");
     util::repInfo info;

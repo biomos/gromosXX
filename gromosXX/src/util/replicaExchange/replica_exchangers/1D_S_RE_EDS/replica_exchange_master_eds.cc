@@ -11,7 +11,7 @@
  * Created on April 18, 2018, 3:20 PM
  */
 
-#include <util/replicaExchange/replica_exchangers/replica_exchange_master_eds.h>
+#include <util/replicaExchange/replica_exchangers/1D_S_RE_EDS/replica_exchange_master_eds.h>
 
 #undef MODULE
 #undef SUBMODULE

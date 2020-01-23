@@ -8,7 +8,7 @@
 #include "replicaExchange/replica/replica.h"
 #include "replicaExchange/replica/replica_MPI_master.h"
 #include "replicaExchange/replica/replica_MPI_slave.h"
-#include "replicaExchange/replica_exchangers/replica_exchange_base.h"
+#include "replicaExchange/replica_exchangers/2D_T_lambda_REPEX/replica_exchange_base.h"
 
 #include <stdheader.h>
 
@@ -65,33 +65,6 @@ util::replica_exchange_base::replica_exchange_base(io::Argument _args,
   createReplicas(cont, globalThreadID);
   DEBUG(4,"replica_exchange_base "<< globalThreadID <<":Constructor:\t createdReplica T");
 
-  DEBUG(3,"replica_exchange_base "<< globalThreadID <<":Constructor:\t Constructor \t DONE");
-  #else
-    throw "Cannot use send_to_master from replica_exchange_slave_eds without MPI!"; 
-  #endif
-}
-
-util::replica_exchange_base::~replica_exchange_base() {
-    delete replica;
-}
-
-void util::replica_exchange_base::createReplicas(int cont, int globalThreadID){
-  DEBUG(3,"replica_exchange_base "<< globalThreadID <<":createReplicas:\t START");
-  // create the number of replicas that are assigned to my node
-    if(simulationThreads>1){
-        if(simulationThreadID == 0){
-            replica = new util::replica_MPI_Master(args, cont, simulationID, globalThreadID, simulationThreadID, simulationID, simulationThreads);
-        }
-        else{
-            replica = new util::replica_MPI_Slave(args, cont, simulationID, globalThreadID, simulationThreadID, simulationID, simulationThreads);
-        }
-    }
-    else{
-        replica = new util::replica(args, cont, simulationID, globalThreadID);
-        //DEBUG(2,"replica_exchange_base "<< globalThreadID <<":create:\t rep" << replica->sim.param().replica.num_l);
-        //DEBUG(2,"replica_exchange_base "<< globalThreadID <<":create:\t rep" << replica->sim.param().replica.lambda[0]);
-    }
- 
   //RE-Vars
   // set some variables
   stepsPerRun = replica->sim.param().step.number_of_steps;
@@ -115,9 +88,39 @@ void util::replica_exchange_base::createReplicas(int cont, int globalThreadID){
   set_lambda();
   set_temp();
   
+  DEBUG(3,"replica_exchange_base "<< globalThreadID <<":Constructor:\t Constructor \t DONE");
+  #else
+    throw "Cannot use send_to_master from replica_exchange_slave_eds without MPI!"; 
+  #endif
+}
+
+
+util::replica_exchange_base::~replica_exchange_base() {
+    delete replica;
+}
+
+//TODO: REMOVE
+void util::replica_exchange_base::createReplicas(int cont, int globalThreadID){
+  DEBUG(3,"replica_exchange_base "<< globalThreadID <<":createReplicas:\t START");
+  // create the number of replicas that are assigned to my node
+    if(simulationThreads>1){
+        if(simulationThreadID == 0){
+            replica = new util::replica_MPI_Master(args, cont, simulationID, globalThreadID, simulationThreadID, simulationID, simulationThreads);
+        }
+        else{
+            replica = new util::replica_MPI_Slave(args, cont, simulationID, globalThreadID, simulationThreadID, simulationID, simulationThreads);
+        }
+    }
+    else{
+        replica = new util::replica(args, cont, simulationID, globalThreadID);
+        //DEBUG(2,"replica_exchange_base "<< globalThreadID <<":create:\t rep" << replica->sim.param().replica.num_l);
+        //DEBUG(2,"replica_exchange_base "<< globalThreadID <<":create:\t rep" << replica->sim.param().replica.lambda[0]);
+    }
+   
   DEBUG(3,"replica_exchange_base "<< globalThreadID <<":createReplicas:\t DONE");
 }
 
+//TODO: REMOVE
 void util::replica_exchange_base::init() {
   DEBUG(3, "replica_exchange_base "<< globalThreadID <<":init:\t START");
   // do init for all replica assigned to this node
@@ -126,6 +129,7 @@ void util::replica_exchange_base::init() {
   DEBUG(3,"replica_exchange_base "<< globalThreadID <<":init:\t DONE");
 }
 
+//TODO: REMOVE
 void util::replica_exchange_base::run_MD() {
   DEBUG(3,"replica_exchange_base "<< globalThreadID <<":run_MD:\t START");
   
@@ -135,10 +139,10 @@ void util::replica_exchange_base::run_MD() {
     replica->run_MD();
     
     updateReplica_params();
-    replica->conf.current().energies.eds_vr;
   DEBUG(3,"replica_exchange_base "<< globalThreadID <<":run_MD:\t END");
 }
 
+//TODO: REMOVE
 void util::replica_exchange_base::updateReplica_params(){
   // update replica information
   time = replica->sim.time();
@@ -150,6 +154,7 @@ void util::replica_exchange_base::updateReplica_params(){
  * REplica Exchanges
  */
 
+//TODO: REMOVE
 void util::replica_exchange_base::swap(){
   DEBUG(3,"replica_exchange_base "<< globalThreadID <<":swap:\t START");
   
@@ -157,6 +162,7 @@ void util::replica_exchange_base::swap(){
     
     if (partnerReplicaID != simulationID) // different replica?
       {
+        //TODO: RENAME 
         swap_replicas_priv(partnerReplicaID);
         if (switched) {
           if (globalThreadID < partnerReplicaID) {
@@ -183,6 +189,7 @@ void util::replica_exchange_base::swap(){
   DEBUG(3,"replica_exchange_base "<< globalThreadID <<":swap:\t DONE");
 }
 
+//TODO: REMOVE
 void util::replica_exchange_base::write_final_conf() {
   // write coordinates to cnf for all replica assigned to this node
    replica->write_final_conf();
@@ -191,7 +198,6 @@ void util::replica_exchange_base::write_final_conf() {
 
 //RE
 //SWAPPING Functions
-
 void util::replica_exchange_base::swap_replicas_priv(const unsigned int partnerReplicaID) {
   DEBUG(4, "replica "<<  globalThreadID <<":swap:\t  START");
 
@@ -539,6 +545,7 @@ double util::replica_exchange_base::calculate_energy(const unsigned int partnerT
 }
 
 
+//TODO: REMOVE
 //THIS COULD GO TO REPLICA and into the func above!
 void util::replica_exchange_base::exchange_averages() {
   // after a swap the averages of current and old are exchanged and have to be switched back
@@ -548,6 +555,7 @@ void util::replica_exchange_base::exchange_averages() {
 }
 
 //sending stuff
+//TODO: REMOVE
 void util::replica_exchange_base::send_coord(const unsigned int receiverReplicaID) {
 #ifdef XXMPI
 
@@ -583,6 +591,7 @@ void util::replica_exchange_base::send_coord(const unsigned int receiverReplicaI
 #endif
 }
 
+//TODO: REMOVE
 void util::replica_exchange_base::receive_new_coord(const unsigned int senderReplicaID) {
 #ifdef XXMPI
    
@@ -635,7 +644,6 @@ void util::replica_exchange_base::velscale(int unsigned partnerReplica){
 }
 
 //Lambda Exchange (Kinda Hamiltonian Exchange)
-// TODO: L as parameter
 void util::replica_exchange_base::set_lambda() {
   // change Lambda in simulation
   replica->sim.param().perturbation.lambda = l;
@@ -691,6 +699,7 @@ void util::replica_exchange_base::change_temp(const unsigned int partnerReplicaI
   }
 }
 
+//TODO: REMOVE
 // IO
 void util::replica_exchange_base::print_coords(std::string name) {
     
@@ -708,6 +717,7 @@ void util::replica_exchange_base::print_coords(std::string name) {
     received_traj.write(replica->conf, replica->topo, replica->sim, io::final);
 }
 
+//TODO: REMOVE
 void util::replica_exchange_base::print_info(std::string bla) const {
   std::cout << "\n" << bla << std::endl;
   std::cout << "#"

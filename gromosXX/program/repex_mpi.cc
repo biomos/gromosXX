@@ -54,10 +54,10 @@
 #include <util/replicaExchange/replica_mpi_tools.h>
 #include <util/replicaExchange/replica/replica.h>
 
-#include <util/replicaExchange/replica_exchangers/replica_exchange_master.h>
-#include <util/replicaExchange/replica_exchangers/replica_exchange_slave.h>
-#include <util/replicaExchange/replica_exchangers/replica_exchange_master_eds.h>
-#include <util/replicaExchange/replica_exchangers/replica_exchange_slave_eds.h>
+#include <util/replicaExchange/replica_exchangers/2D_T_lambda_REPEX/replica_exchange_master.h>
+#include <util/replicaExchange/replica_exchangers/2D_T_lambda_REPEX/replica_exchange_slave.h>
+#include <util/replicaExchange/replica_exchangers/1D_S_RE_EDS/replica_exchange_master_eds.h>
+#include <util/replicaExchange/replica_exchangers/1D_S_RE_EDS/replica_exchange_slave_eds.h>
 
 #include <util/replicaExchange/repex_mpi.h>
 
@@ -367,17 +367,14 @@ int main(int argc, char *argv[]) {
     //GLOBAL MPI VARIABLES:
     MPI_Datatype MPI_VEC;
     simulation::mpi_control_struct tmp_mpi = simulation::mpi_control_struct();
-    //global number of threads and unique global threadID
-    tmp_mpi.global_number_of_threads = totalNumberOfThreads;
-    tmp_mpi.global_thread_id = globalThreadID;
+
     //local threads
-    tmp_mpi.local_simulation = subThreadOfSimulation;
-    tmp_mpi.local_number_of_threads = threadsPerReplicaSimulation;
-    tmp_mpi.local_master = replica_owned_threads[thread_id_replica_map[globalThreadID]][0];
-    tmp_mpi.local_thread_id = threadIDinSimulation;
+    tmp_mpi.simulationID = subThreadOfSimulation;
+    tmp_mpi.simulationNumberOfThreads = threadsPerReplicaSimulation;
+    tmp_mpi.simulationMasterThreadID = replica_owned_threads[thread_id_replica_map[globalThreadID]][0];
+    tmp_mpi.simulationThisThreadID = threadIDinSimulation;
     //maps and structures to find everything
-    tmp_mpi.thread_id_replica_map = thread_id_replica_map;
-    tmp_mpi.replica_owned_threads = replica_owned_threads;   
+    tmp_mpi.simulationOwnedThreads = replica_owned_threads[tmp_mpi.simulationID];   
 
     try { //Exchange structures
         // Vector
@@ -429,16 +426,16 @@ int main(int argc, char *argv[]) {
     // make sure all nodes have initialized everything
     if(globalThreadID==0){  //if DEBUG TODO: remove bschroed
         std::cout<< "repIDS:\t\n";
-        for(unsigned int x=0; x < tmp_mpi.replica_owned_threads.size(); x++){
+        for(unsigned int x=0; x < replica_owned_threads.size(); x++){
             std::cout << "\t" << x << ". Replica: ";
-            for(int threadID :  tmp_mpi.replica_owned_threads[x]){
+            for(int threadID :  replica_owned_threads[x]){
                 std::cout << "\t" << threadID;
             }
             std::cout<< "\n";
         }
         std::cout<< "\n";
         std::cout<< "repMap:\n";
-        for(std::pair<unsigned int, unsigned int> p : tmp_mpi.thread_id_replica_map){
+        for(std::pair<unsigned int, unsigned int> p : thread_id_replica_map){
             std::cout << "\t " << p.first << "\t" << p.second <<"\n";
         }
         std::cout<< "\n";
@@ -446,7 +443,7 @@ int main(int argc, char *argv[]) {
 
     MPI_Barrier(MPI_COMM_WORLD);
     
-    if(tmp_mpi.local_number_of_threads > 1){
+    if(threadsPerReplicaSimulation > 1){
         throw "using more than 1 thread per replica is currently not implemented!";
     }
     
@@ -501,9 +498,9 @@ int main(int argc, char *argv[]) {
         }
         MPI_DEBUG(1, "Master \t \t MD: " << total_runs)
 
-                //Vars for timing
-                int hh, mm, ss, eta_hh, eta_mm, eta_ss = 0;
-        double eta_spent, percent, spent = 0.0;
+        //Vars for timing
+        int hh, mm, ss = 0;
+        double percent, spent = 0.0;
         trial = 0; //reset trials
         for (; trial < sim_runs; ++trial) { //for repex execution
             DEBUG(2, "Master " << globalThreadID << " \t MD trial: " << trial << "\n")\

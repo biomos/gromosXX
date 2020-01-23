@@ -11,10 +11,10 @@
  * Created on April 18, 2018, 3:38 PM
  */
 
-#include <util/replicaExchange/replica_exchangers/replica_exchange_base_eds.h>
+#include <util/replicaExchange/replica_exchangers/1D_S_RE_EDS/replica_exchange_base_eds.h>
 
 //Constructor
-#include <util/replicaExchange/replica_exchangers/replica_exchange_base.h>
+#include <util/replicaExchange/replica_exchangers/2D_T_lambda_REPEX/replica_exchange_base.h>
 #include <util/replicaExchange/replica/replica.h>
 #include "replicaExchange/replica/replica_MPI_master.h"
 #include "replicaExchange/replica/replica_MPI_slave.h"

@@ -33,6 +33,7 @@
 
 #include <util/replicaExchange/repex_mpi.h>
 #include <util/replicaExchange/replica/_replica_Interface.h>
+#include <util/replicaExchange/replica_exchangers/replica_exchange_base_interface.h>
 #include <string>
 #include <math/random.h>
 
@@ -47,7 +48,7 @@ namespace util {
    * One instance of this class per node managing one or more replicas. Master and
    * slave are derived from this class.
    */
-  class replica_exchange_base {
+  class replica_exchange_base{
   private:
     /**
      * copy constructor

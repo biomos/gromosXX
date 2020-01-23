@@ -10,11 +10,11 @@
  *
  * Created on April 18, 2018, 3:20 PM
  */
-#include <util/replicaExchange/replica_exchangers/replica_exchange_master.h>
-#include <util/replicaExchange/replica_exchangers/replica_exchange_base_eds.h>
+#include <util/replicaExchange/replica_exchangers/2D_T_lambda_REPEX/replica_exchange_master.h>
+#include <util/replicaExchange/replica_exchangers/1D_S_RE_EDS/replica_exchange_base_eds.h>
 
 //for the constructor
-#include <util/replicaExchange/replica_exchangers/replica_exchange_base.h>
+#include <util/replicaExchange/replica_exchangers/2D_T_lambda_REPEX/replica_exchange_base.h>
 #include <stdheader.h>
 
 #include <algorithm/algorithm.h>
