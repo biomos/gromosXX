@@ -7,7 +7,6 @@
 #define INCLUDED_PARAMETER_H
 
 
-
 // forward declarations
 namespace interaction {
   class QMMM_Interaction;
@@ -730,30 +729,6 @@ namespace simulation
      */
     qmmm_software_turbomole = 1
   };
-  
-
-    struct mpi_control_struct
-    {
-        /**
-         * Constructor
-         * Default values:
-         * - number_of_threads 0
-         */
-        mpi_control_struct() : simulationID(0), simulationNumberOfThreads(-1), simulationMasterThreadID(0), simulationThisThreadID(-1)
-        {
-        }
-          
-        int simulationID; //local replica id of simulation
-        int simulationNumberOfThreads;    //total_number_of_threads      
-        int simulationMasterThreadID; //local master of this 
-        int simulationThisThreadID;
-        // int local_comm; // TODO: bschroed  for later!??
-        
-        std::vector<unsigned int> simulationOwnedThreads; 
-
-    } /** replica exchange parameters */;
-
-
 
   /**
    * @class Parameter
@@ -763,8 +738,7 @@ namespace simulation
   {
   public:
     Parameter() : title(GROMOSXX) {
-        develop.develop = false;
-        mpi = mpi_control_struct();  //mpi test
+        develop.develop = false; 
     }
     
     /**
@@ -2379,13 +2353,6 @@ namespace simulation
       int cont;
 
     } /** replica exchange parameters */ replica;
-
-    /**
-     * @struct mpi_control_struct
-     *  ToDO:
-     */
-    struct mpi_control_struct mpi;  //mpi_control_struct test
-
 
     /**
      * @struct cgrain_struct

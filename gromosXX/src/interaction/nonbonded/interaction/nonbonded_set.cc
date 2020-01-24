@@ -273,11 +273,10 @@ int interaction::Nonbonded_Set
   // add longrange virial
   if (sim.param().pcouple.virial){
     DEBUG(6, "\t(set) add long range virial");
-
 	m_storage.virial_tensor += m_longrange_storage.virial_tensor;
   }
   stop_timer("longrange addition");
-  
+  DEBUG(6, "\t(set) DONE");
   return 0;
 }
 

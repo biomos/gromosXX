@@ -12,6 +12,9 @@
 #ifdef HAVE_HOOMD
 #include <HOOMD_GROMOSXX_processor.h>
 #endif
+#ifdef XXMPI
+    #include <mpi.h>
+#endif
 
 namespace simulation
 {
@@ -19,6 +22,30 @@ namespace simulation
    * @class Simulation
    * holds simulation data
    */
+     #ifdef XXMPI
+        struct mpi_control_struct
+        {
+            /**
+             * Constructor
+             * Default values:
+             * - number_of_threads 0
+             */
+            mpi_control_struct() : simulationID(0), simulationNumberOfThreads(-1), simulationMasterThreadID(0), simulationThisThreadID(-1), simulationMPIColor(1)
+            {
+            }
+
+            int simulationID; //local replica id of simulation
+            int simulationNumberOfThreads;    //total_number_of_threads      
+            int simulationMasterThreadID; //local master of this 
+            int simulationThisThreadID;
+            int simulationMPIColor;
+            MPI_Comm simulationCOMM; // TODO: bschroed  for later!??
+
+            std::vector<unsigned int> simulationOwnedThreads; 
+
+        } /** replica exchange parameters */;
+    #endif
+
   class Simulation
   {
   public:
@@ -29,7 +56,11 @@ namespace simulation
     Simulation() : mpi(false), openmp(false),
 		   m_time_step_size(0),
 		   m_steps(0), 
-		   m_time(0) {}
+		   m_time(0) {
+        #ifdef XXMPI
+            mpi_control = mpi_control_struct();  //mpi test
+        #endif
+    }
 
     
     /**
@@ -38,7 +69,11 @@ namespace simulation
     Simulation(bool mpi) : mpi(mpi), openmp(false),
                m_time_step_size(0),
                m_steps(0), 
-               m_time(0) {}
+               m_time(0) {
+            #ifdef XXMPI
+                mpi_control = mpi_control_struct();  //mpi test
+            #endif
+    }
     /**
      * the simulation parameter
      */
@@ -98,6 +133,15 @@ namespace simulation
      * enable mpi?
      */
     bool mpi;
+
+    /**
+     * @struct mpi_control_struct
+     *  ToDO:
+     */
+    #ifdef XXMPI
+        struct mpi_control_struct mpi_control;  //mpi_control_struct test
+    #endif
+
     /**
      * enable openmp?
      */

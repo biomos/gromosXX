@@ -61,10 +61,12 @@
 
 #include <util/replicaExchange/repex_mpi.h>
 
+//Debug Instructions
 #undef MODULE
 #undef SUBMODULE
-#define MODULE util
-#define SUBMODULE replica_exchange
+#define MODULE binary
+#define SUBMODULE binary
+
 
 int main(int argc, char *argv[]) {
 #ifdef XXMPI

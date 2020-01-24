@@ -16,6 +16,8 @@ namespace util
   int leus_debug_level = 0;
   int bs_leus_debug_level = 0;
   int replica_exchange_debug_level = 0;
+  int binary_debug_level = 0;
+
 }
 
 #endif

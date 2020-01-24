@@ -192,8 +192,8 @@ int interaction::create_g96_nonbonded
   Nonbonded_Interaction * ni;
 
   if (sim.mpi){
-    int rank = MPI::COMM_WORLD.Get_rank();
-    int size = MPI::COMM_WORLD.Get_size();
+    int rank = sim.mpi_control.simulationThisThreadID;
+    int size = sim.mpi_control.simulationNumberOfThreads;
     
     bool repex = sim.param().reeds.reeds;   //not dynamic enough!
     if(repex){

@@ -214,9 +214,9 @@ void algorithm::M_Shake
   if (sim.mpi) {
     // broadcast current and old coordinates and pos.
 
-    MPI::COMM_WORLD.Bcast(&pos(0)(0), pos.size() * 3, MPI::DOUBLE, 0);
-    MPI::COMM_WORLD.Bcast(&conf.old().pos(0)(0), conf.old().pos.size() * 3, MPI::DOUBLE, 0);
-    MPI::COMM_WORLD.Bcast(&conf.current().box(0)(0), 9, MPI::DOUBLE, 0);
+    MPI_Bcast(&pos(0)(0), pos.size() * 3, MPI::DOUBLE, sim.mpi_control.simulationMasterThreadID, sim.mpi_control.simulationCOMM);
+    MPI_Bcast(&conf.old().pos(0)(0), conf.old().pos.size() * 3, MPI::DOUBLE, sim.mpi_control.simulationMasterThreadID, sim.mpi_control.simulationCOMM);
+    MPI_Bcast(&conf.current().box(0)(0), 9, MPI::DOUBLE, sim.mpi_control.simulationMasterThreadID, sim.mpi_control.simulationCOMM);
 
     // set virial tensor and solute coordinates of slaves to zero
     if (m_rank) { // slave
@@ -321,40 +321,47 @@ void algorithm::M_Shake
     if (m_rank == 0) {
       // Master
       // reduce the error to all processors
-      MPI::COMM_WORLD.Allreduce(&my_error, &error, 1, MPI::INT, MPI::MAX);
+      MPI_Allreduce(&my_error, &error, 1, MPI::INT, MPI::MAX, sim.mpi_control.simulationCOMM);
       //
       // reduce current positions, store them in new_pos and assign them to current positions
       math::VArray new_pos(topo.num_atoms(), math::Vec(0.0));
-      MPI::COMM_WORLD.Reduce(&pos(0)(0), &new_pos(0)(0),
-              pos.size() * 3, MPI::DOUBLE, MPI::SUM, 0);
+      MPI_Reduce(&pos(0)(0), &new_pos(0)(0),
+              pos.size() * 3, MPI::DOUBLE, MPI::SUM, 
+              sim.mpi_control.simulationMasterThreadID, sim.mpi_control.simulationCOMM);
+      
       pos = new_pos;
 
       // reduce current virial tensor, store it in virial_new and reduce it to current tensor
       math::Matrix virial_new(0.0);
-      MPI::COMM_WORLD.Reduce(&conf.old().virial_tensor(0, 0), &virial_new(0, 0),
-              9, MPI::DOUBLE, MPI::SUM, 0);
+      MPI_Reduce(&conf.old().virial_tensor(0, 0), &virial_new(0, 0),
+              9, MPI::DOUBLE, MPI::SUM, 
+              sim.mpi_control.simulationMasterThreadID, sim.mpi_control.simulationCOMM);
       conf.old().virial_tensor = virial_new;
 
       // reduce current contraint force, store it in cons_force_new and reduce
       //it to the current constraint force
       math::VArray cons_force_new(topo.num_atoms(), math::Vec(0.0));
-      MPI::COMM_WORLD.Reduce(&conf.old().constraint_force(0)(0), &cons_force_new(0)(0),
-              conf.old().constraint_force.size() * 3, MPI::DOUBLE, MPI::SUM, 0);
+      MPI_Reduce(&conf.old().constraint_force(0)(0), &cons_force_new(0)(0),
+              conf.old().constraint_force.size() * 3, MPI::DOUBLE, MPI::SUM, 
+              sim.mpi_control.simulationMasterThreadID, sim.mpi_control.simulationCOMM);
       conf.old().constraint_force = cons_force_new;
     } else {
       // reduce the error to all processors
-      MPI::COMM_WORLD.Allreduce(&my_error, &error, 1, MPI::INT, MPI::MAX);
+      MPI_Allreduce(&my_error, &error, 1, MPI::INT, MPI::MAX, sim.mpi_control.simulationCOMM);
 
       // slave
       // reduce pos
-      MPI::COMM_WORLD.Reduce(&pos(0)(0), NULL,
-              pos.size() * 3, MPI::DOUBLE, MPI::SUM, 0);
+      MPI_Reduce(&pos(0)(0), NULL,
+              pos.size() * 3, MPI::DOUBLE, MPI::SUM,
+              sim.mpi_control.simulationMasterThreadID, sim.mpi_control.simulationCOMM);
       // reduce virial
-      MPI::COMM_WORLD.Reduce(&conf.old().virial_tensor(0, 0), NULL,
-              9, MPI::DOUBLE, MPI::SUM, 0);
+      MPI_Reduce(&conf.old().virial_tensor(0, 0), NULL,
+              9, MPI::DOUBLE, MPI::SUM, 
+              sim.mpi_control.simulationMasterThreadID, sim.mpi_control.simulationCOMM);
       // reduce constraint force
-      MPI::COMM_WORLD.Reduce(&conf.old().constraint_force(0)(0), NULL,
-              conf.old().constraint_force.size() * 3, MPI::DOUBLE, MPI::SUM, 0);
+      MPI_Reduce(&conf.old().constraint_force(0)(0), NULL,
+              conf.old().constraint_force.size() * 3, MPI::DOUBLE, MPI::SUM, 
+              sim.mpi_control.simulationMasterThreadID, sim.mpi_control.simulationCOMM);
     }
   }
 #else
@@ -473,8 +480,8 @@ int algorithm::M_Shake::init(topology::Topology & topo,
 
 #ifdef XXMPI
   if (sim.mpi) {
-    m_rank = MPI::COMM_WORLD.Get_rank();
-    m_size = MPI::COMM_WORLD.Get_size();
+    m_rank = sim.mpi_control.simulationThisThreadID;
+    m_size = sim.mpi_control.simulationNumberOfThreads;
   } else {
     m_rank = 0;
     m_size = 1;

@@ -120,7 +120,13 @@
       extern int debug_level;
       extern int math_debug_level;
     }
-
+    
+    namespace binary
+    {
+      extern int debug_level;
+      extern int binary_debug_level;
+    }
+    
     namespace interaction
     {
       extern int debug_level;

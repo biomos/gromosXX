@@ -43,7 +43,7 @@ topology::Topology & topo,
     int rank=0;
 #ifdef XXMPI
     if (sim.mpi) {
-      rank = MPI::COMM_WORLD.Get_rank();
+      rank =  sim.mpi_control.simulationThisThreadID;
     }
 #endif
     DEBUG(14,"Chemical Monte-Carlo apply, rank = " << rank);
