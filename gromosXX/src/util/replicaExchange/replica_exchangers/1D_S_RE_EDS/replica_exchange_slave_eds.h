@@ -46,7 +46,8 @@ namespace util{
                 unsigned int cont,
                 unsigned int globalThreadID,
                 std::vector<std::vector<unsigned int> > replica_owned_threads,
-                std::map<ID_t, rank_t> & thread_id_replica_map);
+                std::map<ID_t, rank_t> & thread_id_replica_map,
+                simulation::mpi_control_struct replica_mpi_control);
         /**
         * sends information of all replicas to master
         */

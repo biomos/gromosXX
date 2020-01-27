@@ -216,8 +216,6 @@ int main(int argc, char *argv[]) {
             // counts through every replica and assigns it to respective node
             // starts at beginning if numReplicas > size
             // could be optimized by putting neighboring replicas on same node; less communication...
-            //TODO: not sure if this code really does what it should.! (idea would)
-
             //MPI THREAD SPLITING ONTO Simulation - REPLICAS
             threadsPerReplicaSimulation = totalNumberOfThreads / numReplicas;
             unsigned int leftOverThreads = totalNumberOfThreads % numReplicas;
@@ -366,19 +364,27 @@ int main(int argc, char *argv[]) {
      *  MPI PARAMETERS
      */
 
-    //GLOBAL MPI VARIABLES:
     MPI_Datatype MPI_VEC;
-    simulation::mpi_control_struct tmp_mpi = simulation::mpi_control_struct();
+    MPI_Comm simulationCOMM;    //this is used for different replica simulation parallelisations
+    
+    //for RE-Graph
 
-    //local threads
-    tmp_mpi.simulationID = subThreadOfSimulation;
-    tmp_mpi.simulationNumberOfThreads = threadsPerReplicaSimulation;
-    tmp_mpi.simulationMasterThreadID = replica_owned_threads[thread_id_replica_map[globalThreadID]][0];
-    tmp_mpi.simulationThisThreadID = threadIDinSimulation;
-    //maps and structures to find everything
-    tmp_mpi.simulationOwnedThreads = replica_owned_threads[tmp_mpi.simulationID];   
+    
+    //for REPLICA SIMULATION!
+    simulation::mpi_control_struct replica_mpi_control = simulation::mpi_control_struct();
+    replica_mpi_control.simulationID = subThreadOfSimulation;
+    replica_mpi_control.simulationNumberOfThreads = threadsPerReplicaSimulation;
+    replica_mpi_control.simulationMasterThreadID = replica_owned_threads[thread_id_replica_map[globalThreadID]][0];
+    replica_mpi_control.simulationThisThreadID = threadIDinSimulation;  //id for the thread in the simulation.
+    replica_mpi_control.simulationOwnedThreads = replica_owned_threads[replica_mpi_control.simulationID]; //this vector contains all global thread IDs of a replica simulation
+    replica_mpi_control.simulationMPIColor = replica_mpi_control.simulationID // comunication color MPI
+    replica_mpi_control.simulationCOMM = simulationCOMM;
+    
+    
+    try { // SUBCOMS //Exchange structures
+        ////GENERATE SIM SPECIFIC SIMULATION COMM
+        MPI_Comm_split(MPI_COMM_WORLD, replica_mpi_control.mpi_control.simulationMPIColor, tglobalThreadID, &simulationCOMM);
 
-    try { //Exchange structures
         // Vector
         MPI_Type_contiguous(3, MPI_DOUBLE, &MPI_VEC);
         MPI_Type_commit(&MPI_VEC);
@@ -473,10 +479,12 @@ int main(int argc, char *argv[]) {
         try {
             if (reedsSim) {
                 DEBUG(1, "Master_eds \t Constructor")    
-                Master = new util::replica_exchange_master_eds(args, cont, globalThreadID, replica_owned_threads, thread_id_replica_map);
+                Master = new util::replica_exchange_master_eds(args, cont, globalThreadID, 
+                        replica_owned_threads, thread_id_replica_map, replica_mpi_control);
             } else {
                 DEBUG(1, "Master \t Constructor")
-                Master = new util::replica_exchange_master(args, cont, globalThreadID, replica_owned_threads, thread_id_replica_map);
+                Master = new util::replica_exchange_master(args, cont, globalThreadID, 
+                        replica_owned_threads, thread_id_replica_map,r eplica_mpi_control);
             }
         } catch (...) {
             std::cerr << "\n\t########################################################\n"
@@ -543,9 +551,11 @@ int main(int argc, char *argv[]) {
         // Select repex Implementation - Polymorphism
         util::replica_exchange_slave* Slave;
         if (reedsSim) {
-            Slave = new util::replica_exchange_slave_eds(args, cont, globalThreadID, replica_owned_threads, thread_id_replica_map);
+            Slave = new util::replica_exchange_slave_eds(args, cont, globalThreadID, 
+                    replica_owned_threads, thread_id_replica_map, replica_mpi_control);
         } else {
-            Slave = new util::replica_exchange_slave(args, cont, globalThreadID, replica_owned_threads, thread_id_replica_map);
+            Slave = new util::replica_exchange_slave(args, cont, globalThreadID, 
+                    replica_owned_threads, thread_id_replica_map, replica_mpi_control);
         }
 
         MPI_DEBUG(1, "Slave " << globalThreadID << " \t INIT")

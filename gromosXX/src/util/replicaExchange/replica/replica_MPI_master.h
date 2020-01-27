@@ -32,11 +32,7 @@
 
 namespace util{
     class replica_MPI_Master: public virtual replica_Interface {
-    protected:
-        int simulation_ID;
-        int simulation_rank;
-        int simulation_num_threads;
-                
+
     private:
     /**
      * copy constructor
@@ -46,7 +42,7 @@ namespace util{
         
         
     public:
-        replica_MPI_Master(io::Argument _args, int cont, int _ID, int _rank, int simulation_rank, int simulation_ID, int simulation_num_threads);
+        replica_MPI_Master(io::Argument _args, int cont, int globalThreadID, simulation::mpi_control_struct replica_mpi_control);
         virtual ~replica_MPI_Master();
         
 #ifdef XXMPI

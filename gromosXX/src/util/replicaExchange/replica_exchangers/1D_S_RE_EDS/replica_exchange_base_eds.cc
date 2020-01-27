@@ -60,7 +60,9 @@
 util::replica_exchange_base_eds::replica_exchange_base_eds(io::Argument _args, 
                                                             unsigned int cont, 
                                                             unsigned int globalThreadID, 
-                                                            std::vector<std::vector<unsigned int> >  replica_owned_threads, std::map<ID_t, rank_t> &thread_id_replica_map):  
+                                                            std::vector<std::vector<unsigned int> >  replica_owned_threads, 
+                                                            std::map<ID_t, rank_t> &thread_id_replica_map, 
+                                                            simulation::mpi_control_struct replica_mpi_control):  
                             replica_exchange_base(_args, cont, globalThreadID, replica_owned_threads, thread_id_replica_map),
                             reedsParam(replica->sim.param().reeds)
 {
@@ -70,7 +72,7 @@ util::replica_exchange_base_eds::replica_exchange_base_eds(io::Argument _args,
     DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":Constructor:\t DONE");
 }
 
-void util::replica_exchange_base_eds::createReplicas(int cont, int globalThreadID){
+void util::replica_exchange_base_eds::createReplicas(int cont, int globalThreadID, simulation::mpi_control_struct replica_mpi_control){
   MPI_DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":createReplicas:\t START");
   
   if(!replica){
@@ -81,14 +83,14 @@ void util::replica_exchange_base_eds::createReplicas(int cont, int globalThreadI
   // create the number of replicas that are assigned to my node
     if(simulationThreads>1){
         if(simulationThreadID == 0){
-            replica = new util::replica_MPI_Master(args, cont, simulationID, globalThreadID, simulationThreadID, simulationID, simulationThreads);
+            replica = new util::replica_MPI_Master(args, cont, globalThreadID, replica_mpi_control);
         }
         else{
-            replica = new util::replica_MPI_Slave(args, cont, simulationID, globalThreadID, simulationThreadID, simulationID, simulationThreads);
+            replica = new util::replica_MPI_Slave(args, cont, globalThreadID, replica_mpi_control);
         }
     }
     else{
-        replica = new util::replica(args, cont, simulationID, globalThreadID);
+        replica = new util::replica(args, cont, globalThreadID, replica_mpi_control);
     }
   MPI_DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":createReplicas:\t DONE");
    

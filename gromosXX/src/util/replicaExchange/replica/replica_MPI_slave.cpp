@@ -26,9 +26,8 @@
 #define MODULE util
 #define SUBMODULE replica_exchange
 
-util::replica_MPI_Slave::replica_MPI_Slave(io::Argument _args, int cont, int _ID, int _rank, 
-        int simulation_rank, int simulation_ID, int simulation_num_threads) : replica_Interface(_ID, _rank, _args),
-         simulation_ID(simulation_ID), simulation_rank(simulation_rank), simulation_num_threads(simulation_num_threads){
+util::replica_MPI_Slave::replica_MPI_Slave(io::Argument _args, int cont, int globalThreadID, 
+         simulation::mpi_control_struct replica_mpi_control) : replica_Interface(globalThreadID, replica_mpi_control, _args){
 #ifdef XXMPI
     /**
      * Build up replica MPI Slave - reads in the input and tries to link the replica to the Master?
@@ -36,13 +35,13 @@ util::replica_MPI_Slave::replica_MPI_Slave(io::Argument _args, int cont, int _ID
      * @param _args
      * @param cont
      * @param _ID
-     * @param _rank
-     * @param simulation_rank
+     * @param _globalThreadID
+     * @param simulation_globalThreadID
      * @param simulation_ID
      * @param simulation_num_threads
      */
     
-    MPI_DEBUG(4, "replica_MPI_SLAVE "<< rank <<":Constructor:\t  "<< rank <<":\t START");
+    MPI_DEBUG(4, "replica_MPI_SLAVE "<< globalThreadID <<":Constructor:\t  "<< globalThreadID <<":\t START");
 
     /**
      * READ INPUT
@@ -57,10 +56,11 @@ util::replica_MPI_Slave::replica_MPI_Slave(io::Argument _args, int cont, int _ID
       (*it).second.insert(pos, tmp.str());
     }
     
-    MPI_DEBUG(5, "replica_MPI_SLAVE "<< rank <<":Constructor:\t  "<< rank <<":\t start read in");
+    MPI_DEBUG(5, "replica_MPI_SLAVE "<< globalThreadID <<":Constructor:\t  "<< globalThreadID <<":\t start read in");
     //build up system:
     sim.mpi = true;
-    
+    sim.mpi_control = replica_mpi_control;
+
     if (io::read_input(args, topo, conf, sim, md, *os, true)) { 
       io::messages.display(*os);
       std::cerr << "\nErrors during initialization!\n" << std::endl;
@@ -68,32 +68,27 @@ util::replica_MPI_Slave::replica_MPI_Slave(io::Argument _args, int cont, int _ID
         MPI_Abort(MPI_COMM_WORLD, E_INPUT_ERROR);
       #endif
     }
-    MPI_DEBUG(5, "replica_MPI_SLAVE "<< rank <<":Constructor:\t  "<< rank <<":\t REad in input already");
+    MPI_DEBUG(5, "replica_MPI_SLAVE "<< globalThreadID <<":Constructor:\t  "<< globalThreadID <<":\t REad in input already");
 
-    MPI_DEBUG(5, "replica_MPI_SLAVE "<< rank << "  set replica_params ");
-    
-    // adapt system to replica parameters
-    MPI_DEBUG(5, "replica_MPI_SLAVE "<< rank << "  done replica_params ");
-
-    MPI_DEBUG(5, "Slave "<< rank << " now make me a slave ");
+    MPI_DEBUG(5, "replica_MPI_SLAVE "<< globalThreadID << "  set replica_params ");
 
     // check whether we have nonbonded interactions
     do_nonbonded = (sim.param().force.nonbonded_crf || 
                          sim.param().force.nonbonded_vdw);
-    //DEBUG(5, "Slave "<< rank << " do_non_bonded? "<<do_nonbonded);
+    //DEBUG(5, "Slave "<< globalThreadID << " do_non_bonded? "<<do_nonbonded);
 
     // let's get the forcefield
     ff = dynamic_cast<interaction::Forcefield *>(md.algorithm("Forcefield"));
     
     if (do_nonbonded && ff == NULL){
-      std::cerr << "RANK: "<< rank<<"\tMPI slave: could not access forcefield\n\t(internal error)" << std::endl;
+      std::cerr << "globalThreadID: "<< globalThreadID<<"\tMPI slave: could not access forcefield\n\t(internal error)" << std::endl;
       MPI::Finalize();
       throw "ReplicaSlave: \ttINITIALisation error in ff is NULL of slave of simulationID "+ simulation_ID;
     }
     
     nb = ff->interaction("NonBonded");
     if (do_nonbonded && nb == NULL){
-      std::cerr << "RANK: "<< rank<<"\tMPI slave: could not get NonBonded interactions from forcefield"
+      std::cerr << "globalThreadID: "<< globalThreadID<<"\tMPI slave: could not get NonBonded interactions from forcefield"
 		<< "\n\t(internal error)"
 		<< std::endl;
       MPI::Finalize();
@@ -110,13 +105,13 @@ util::replica_MPI_Slave::replica_MPI_Slave(io::Argument _args, int cont, int _ID
 
     shake = dynamic_cast<algorithm::Shake *>(md.algorithm("Shake"));
     if (do_shake && shake == NULL) {
-        std::cerr << "RANK: "<< rank<<"\tMPI slave: could not get Shake algorithm from MD sequence."
+        std::cerr << "globalThreadID: "<< globalThreadID<<"\tMPI slave: could not get Shake algorithm from MD sequence."
                 << "\n\t(internal error)"
                 << std::endl;
       MPI::Finalize();
       throw "ReplicaSlave: \tINITIALisation error in shake algorithm of slave of simulationID "+ simulation_ID;
     }
-    //DEBUG(5, "Slave "<< rank << " do_shake? "<<do_shake);
+    //DEBUG(5, "Slave "<< globalThreadID << " do_shake? "<<do_shake);
 
 
     // get m_shake and check whether we do it for solvent
@@ -125,7 +120,7 @@ util::replica_MPI_Slave::replica_MPI_Slave(io::Argument _args, int cont, int _ID
 
     m_shake = dynamic_cast<algorithm::M_Shake *>(md.algorithm("M_Shake"));
     if (do_m_shake && m_shake == NULL) {
-        std::cerr << "RANK: "<< rank<<"\tMPI slave: could not get M_Shake algorithm from MD sequence."
+        std::cerr << "globalThreadID: "<< globalThreadID<<"\tMPI slave: could not get M_Shake algorithm from MD sequence."
                 << "\n\t(internal error)"
                 << std::endl;
       MPI::Finalize();
@@ -136,13 +131,13 @@ util::replica_MPI_Slave::replica_MPI_Slave(io::Argument _args, int cont, int _ID
     do_cmc = sim.param().montecarlo.mc;
     monte_carlo = dynamic_cast<algorithm::Monte_Carlo *>(md.algorithm("MonteCarlo"));
     if(do_cmc && monte_carlo == NULL){
-      std::cerr << "RANK: "<< rank<<"\tMPI slave: could not get Monte Carlo algorithm from MD sequence."
+      std::cerr << "globalThreadID: "<< globalThreadID<<"\tMPI slave: could not get Monte Carlo algorithm from MD sequence."
               << "\n\t(internal error)"
               << std:: endl;
       MPI::Finalize();
       throw "ReplicaSlave: \tINITIALisation error in Montecarlo algorithm of slave of simulationID "+ simulation_ID;
     }
-    MPI_DEBUG(4, "replica_MPI_SLAVE "<< rank <<":Constructor:\t  "<< rank <<":\t DONE");
+    MPI_DEBUG(4, "replica_MPI_SLAVE "<< globalThreadID <<":Constructor:\t  "<< globalThreadID <<":\t DONE");
 
 #else
     throw "Can not construct Replica_MPI as MPI is not enabled!";
@@ -162,42 +157,42 @@ void util::replica_MPI_Slave::run_MD(){
 
     while ((unsigned int)(sim.steps()) < stepsPerRun + curentStepNumber) {
       // run a step
-       DEBUG(4, "slave " << rank << " waiting for master");
+       DEBUG(4, "slave " << globalThreadID << " waiting for master");
       if (do_nonbonded && (error = nb->calculate_interactions(topo, conf, sim)) != 0){
-        std::cout << "RANK: "<< rank<<"\tMPI slave " << rank << ": error in nonbonded calculation!\n" << std::endl;
+        std::cout << "Rank: "<< globalThreadID<<"\tMPI slave " << globalThreadID << ": error in nonbonded calculation!\n" << std::endl;
       }
 
-      // DEBUG(10, "slave " << rank << " step done");
+      // DEBUG(10, "slave " << globalThreadID << " step done");
       // (*os) << "step done (it really worked?)" << std::endl;
 
       if (do_cmc && (error = monte_carlo->apply(topo, conf, sim)) != 0){
-        std::cout << "RANK: "<< rank<<"\tMPI slave " << rank << ": error in Monte Carlo algorithm!\n" 
+        std::cout << "Rank: "<< globalThreadID<<"\tMPI slave " << globalThreadID << ": error in Monte Carlo algorithm!\n" 
                 << std::endl;
       }
 
       if (do_shake && (error = shake->apply(topo, conf, sim)) != 0) {
-        std::cout << "RANK: "<< rank<<"\tMPI slave " << rank << ": error in Shake algorithm!\n" << std::endl;
+        std::cout << "Rank: "<< globalThreadID<<"\tMPI slave " << globalThreadID << ": error in Shake algorithm!\n" << std::endl;
       }
 
       // if stochastic dynamics simulation, then expect second call to SHAKE
       if (do_shake && do_shake_twice && (error = shake->apply(topo, conf, sim)) != 0) {
-        std::cout << "RANK: "<< rank<<"\tMPI slave " << rank << ": error in Shake algorithm on second call!\n" << std::endl;
+        std::cout << "Rank: "<< globalThreadID<<"\tMPI slave " << globalThreadID << ": error in Shake algorithm on second call!\n" << std::endl;
       }
 
       if (do_m_shake && (error = m_shake->apply(topo, conf, sim)) != 0) {
-        std::cout << "RANK: "<< rank<<"\tMPI slave " << rank << ": error in M-Shake algorithm!\n" << std::endl;
+        std::cout << "Rank: "<< globalThreadID<<"\tMPI slave " << globalThreadID << ": error in M-Shake algorithm!\n" << std::endl;
       }
 
 
-      MPI::COMM_WORLD.Bcast(&next_step, 1, MPI::INT, 0);
+      MPI::COMM_WORLD.Bcast(&next_step, 1, MPI::INT, , sim.mpi_control.simulationMasterThreadID, sim.mpi_control.simulationCOMM);
 
       if (next_step == 2) {
-        (*os) << "RANK: "<< rank<<"\tMessage from master: Steepest descent: minimum reached." << std::endl;
+        (*os) << "globalThreadID: "<< globalThreadID<<"\tMessage from master: Steepest descent: minimum reached." << std::endl;
         error = 0;
         break;
       }
       else if (!next_step) {
-        (*os) << "RANK: "<< rank<<"\tThere was an error in the master. Check output file for details."
+        (*os) << "Rank: "<< globalThreadID<<"\tThere was an error in the master. Check output file for details."
               << "Exiting from MD main loop." << std::endl;
         error = 1;
         break;
@@ -209,11 +204,11 @@ void util::replica_MPI_Slave::run_MD(){
     }
 
     if (error){
-      (*os) << "RANK: "<< rank<<"\t\nErrors encountered during run in simulation "<< simulation_ID << " in Slave Thread "<< simulation_rank <<" - check above!\n" << std::endl;
+      (*os) << "Rank: "<< globalThreadID<<"\t\nErrors encountered during run in simulation "<< simulation_ID << " in Slave Thread "<< simulation_globalThreadID <<" - check above!\n" << std::endl;
       MPI_Abort(MPI_COMM_WORLD, E_INPUT_ERROR);
     }
     else{
-      (*os) << "RANK: "<< rank<<"\n" GROMOSXX " MPI slave " << rank << "  simulation "<< simulation_ID << " in Slave Thread "<< simulation_rank << "finished successfully\n" << std::endl;
+      (*os) << "Rank: "<< globalThreadID<<"\n" GROMOSXX " MPI slave " << globalThreadID << "  simulation "<< simulation_ID << " in Slave Thread "<< simulation_globalThreadID << "finished successfully\n" << std::endl;
     }
 }
     

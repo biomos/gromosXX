@@ -35,10 +35,6 @@
 namespace util {
     class replica_MPI_Slave: public virtual replica_Interface {
     protected:
-        int simulation_ID;
-        int simulation_rank;
-        int simulation_num_threads;
-
         /**
          * SLAVE THINGS
          */
@@ -55,11 +51,10 @@ namespace util {
         algorithm::Shake * shake;
         algorithm::M_Shake * m_shake;
         algorithm::Monte_Carlo * monte_carlo;
-                   
 
 
     public:
-        replica_MPI_Slave(io::Argument _args, int cont, int _ID, int _rank, int simulation_ID, int simulation_rank, int simulation_num_threads);
+        replica_MPI_Slave(io::Argument _args, int cont, int globalThreadID, simulation::mpi_control_struct replica_mpi_control);
         ~replica_MPI_Slave();
         
         /**

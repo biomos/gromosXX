@@ -365,7 +365,6 @@ calculate_interactions(topology::Topology & topo,
       }
 
     } // ANITA
-      DEBUG(4, "MPI_Nonbonded_Master::calculate_interactions - DONE ANITA");
 
     if (sim.param().eds.eds){
       const unsigned int numstates = sim.param().eds.numstates;

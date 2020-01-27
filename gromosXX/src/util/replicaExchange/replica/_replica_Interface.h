@@ -45,11 +45,14 @@ namespace util{
         /**
          * ID, unique identifier
          */
-        const unsigned int ID;
+        const unsigned int simulationID;
+        const unsigned int simulationThreadID;
+        simulation::mpi_control_struct replica_mpi_control;
+        
         /**
          * rank of node the replica is on
          */
-        const unsigned int rank;
+        const unsigned int globalThreadID;
         
         unsigned int curentStepNumber=0;
         unsigned int stepsPerRun=0;
@@ -108,7 +111,7 @@ namespace util{
     public:
           
         //Constructor
-        replica_Interface(int ID, int rank, io::Argument args);
+        replica_Interface(int globalThreadID, simulation::mpi_control_struct replica_mpi_control, io::Argument args);
         
         //Destructor
         virtual ~replica_Interface();

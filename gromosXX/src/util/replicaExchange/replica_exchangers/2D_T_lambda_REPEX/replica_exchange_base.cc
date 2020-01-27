@@ -49,7 +49,7 @@ util::replica_exchange_base::replica_exchange_base(io::Argument _args,
                                                    unsigned int cont, 
                                                    unsigned int globalThreadID,
                                                    std::vector<std::vector<unsigned int> >  replica_owned_threads, 
-                                                   std::map<ID_t, rank_t> &thread_id_replica_map) : 
+                                                   std::map<ID_t, rank_t> &thread_id_replica_map, simulation::mpi_control_struct replica_mpi_control) : 
         args(_args),  rng(-1),
         cont(cont), 
         globalThreadID(globalThreadID), globalMasterThreadID(0), numReplicas(replica_owned_threads.size()),
@@ -62,7 +62,7 @@ util::replica_exchange_base::replica_exchange_base(io::Argument _args,
 
   //construct replica obj
   DEBUG(4,"replica_exchange_base "<< globalThreadID <<":Constructor:\t  createReplica");
-  createReplicas(cont, globalThreadID);
+  createReplicas(cont, globalThreadID, replica_mpi_control);
   DEBUG(4,"replica_exchange_base "<< globalThreadID <<":Constructor:\t createdReplica T");
 
   //RE-Vars
@@ -100,19 +100,19 @@ util::replica_exchange_base::~replica_exchange_base() {
 }
 
 //TODO: REMOVE
-void util::replica_exchange_base::createReplicas(int cont, int globalThreadID){
+void util::replica_exchange_base::createReplicas(int cont, int globalThreadID, simulation::mpi_control_struct replica_mpi_control){
   DEBUG(3,"replica_exchange_base "<< globalThreadID <<":createReplicas:\t START");
   // create the number of replicas that are assigned to my node
     if(simulationThreads>1){
         if(simulationThreadID == 0){
-            replica = new util::replica_MPI_Master(args, cont, simulationID, globalThreadID, simulationThreadID, simulationID, simulationThreads);
+            replica = new util::replica_MPI_Master(args, cont, globalThreadID, replica_mpi_control);
         }
         else{
-            replica = new util::replica_MPI_Slave(args, cont, simulationID, globalThreadID, simulationThreadID, simulationID, simulationThreads);
+            replica = new util::replica_MPI_Slave(args, cont, globalThreadID, replica_mpi_control);
         }
     }
     else{
-        replica = new util::replica(args, cont, simulationID, globalThreadID);
+        replica = new util::replica(args, cont, globalThreadID, replica_mpi_control);
         //DEBUG(2,"replica_exchange_base "<< globalThreadID <<":create:\t rep" << replica->sim.param().replica.num_l);
         //DEBUG(2,"replica_exchange_base "<< globalThreadID <<":create:\t rep" << replica->sim.param().replica.lambda[0]);
     }

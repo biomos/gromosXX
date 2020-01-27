@@ -67,7 +67,8 @@ namespace util {
                           unsigned int cont, 
                           unsigned int globalThreadID, 
                           std::vector<std::vector<unsigned int> > replica_owned_threads, 
-                          std::map<ID_t, rank_t>& thread_id_replica_map);
+                          std::map<ID_t, rank_t>& thread_id_replica_map, 
+                          simulation::mpi_control_struct replica_mpi_control);
     /**
      * Destructor
      */
@@ -245,7 +246,7 @@ namespace util {
      * @param rank int, global Thread ID - later remove
      * @return void
      */
-    virtual void createReplicas(int cont,  int globalThreadID);
+    virtual void createReplicas(int cont,  int globalThreadID, simulation::mpi_control_struct replica_mpi_control);
     
     //Replica Exchange Functions
     ////SWAP FUNCTIONS

@@ -22,11 +22,11 @@
 #define MODULE util
 #define SUBMODULE replica_exchange
 
-util::replica::replica(io::Argument _args, int cont, int _ID, int _rank) : replica_Interface(_ID, _rank, _args){
+util::replica::replica(io::Argument _args, int cont, int globalThreadID, simulation::mpi_control_struct replica_mpi_control) : replica_Interface(globalThreadID, replica_mpi_control, _args){
   // read input again. If copy constructors for topo, conf, sim, md work, one could
   // also pass them down from repex_mpi.cc ...
   
-  DEBUG(4, "replica "<< rank <<":Constructor:\t  "<< rank <<":\t START");
+  DEBUG(4, "replica "<< globalThreadID <<":Constructor:\t  "<< globalThreadID <<":\t START");
   
   // do continuation run?
   // change name of input coordinates
@@ -118,7 +118,7 @@ util::replica::replica(io::Argument _args, int cont, int _ID, int _rank) : repli
   }
 
   std::stringstream trajtitle;
-  trajtitle << GROMOSXX << "\n" << sim.param().title << "\n\tReplica " << (ID+1) << "on Node " << rank;
+  trajtitle << GROMOSXX << "\n" << sim.param().title << "\n\tReplica " << (ID+1) << "on Node " << globalThreadID;
   traj->title(trajtitle.str());
   traj->init(args, sim.param());
   
@@ -144,8 +144,8 @@ util::replica::replica(io::Argument _args, int cont, int _ID, int _rank) : repli
       << " MAIN MD LOOP\n"
       << "==================================================\n\n";
 
-    DEBUG(4, "replica "<< rank <<":Constructor:\t Temp of replica  "<< rank <<": " << ID << " \t" << sim.param().multibath.multibath.bath(0).temperature);
-    DEBUG(4, "replica "<< rank <<":Constructor:\t replica Constructor  "<< rank <<": \t DONE");
+    DEBUG(4, "replica "<< globalThreadID <<":Constructor:\t Temp of replica  "<< globalThreadID <<": " << ID << " \t" << sim.param().multibath.multibath.bath(0).temperature);
+    DEBUG(4, "replica "<< globalThreadID <<":Constructor:\t replica Constructor  "<< globalThreadID <<": \t DONE");
 }
 
 void util::replica::init() {
@@ -156,45 +156,45 @@ void util::replica::init() {
 void util::replica::run_MD() {
   // run MD simulation
   int error;
-  DEBUG(4,  "replica "<< rank <<": run_MD:\t Start");      
-  DEBUG(5, "replica "<< rank <<":run_MD:\t doing steps: "<<stepsPerRun<< " till: "<< stepsPerRun + curentStepNumber << " starts at: " << curentStepNumber << "TOTAL RUNS: "<< totalStepNumber );      
+  DEBUG(4,  "replica "<< globalThreadID <<": run_MD:\t Start");      
+  DEBUG(5, "replica "<< globalThreadID <<":run_MD:\t doing steps: "<<stepsPerRun<< " till: "<< stepsPerRun + curentStepNumber << " starts at: " << curentStepNumber << "TOTAL RUNS: "<< totalStepNumber );      
   
   while ((unsigned int)(sim.steps()) < stepsPerRun + curentStepNumber) {
     traj->write(conf, topo, sim, io::reduced);
     // run a step
-    DEBUG(5, "replica "<< rank <<":run_MD:\t simulation!:");
+    DEBUG(5, "replica "<< globalThreadID <<":run_MD:\t simulation!:");
     if ((error = md.run(topo, conf, sim))) {
       switch (error) {
         case E_SHAKE_FAILURE:
-          std::cerr << "SHAKE FAILURE in Replica " << (ID+1) << " on node " << rank << std::endl;
+          std::cerr << "SHAKE FAILURE in Replica " << (ID+1) << " on node " << globalThreadID << std::endl;
           io::messages.display();
 #ifdef XXMPI
           MPI_Abort(MPI_COMM_WORLD, error);
 #endif
           break;
         case E_SHAKE_FAILURE_SOLUTE:
-          std::cerr << "SHAKE FAILURE SOLUTE in Replica " << (ID+1) << " on node " << rank << std::endl;
+          std::cerr << "SHAKE FAILURE SOLUTE in Replica " << (ID+1) << " on node " << globalThreadID << std::endl;
           io::messages.display();
 #ifdef XXMPI
           MPI_Abort(MPI_COMM_WORLD, error);
 #endif
           break;
         case E_SHAKE_FAILURE_SOLVENT:
-          std::cerr << "SHAKE FAILURE SOLVENT in Replica " << (ID+1) << " on node " << rank << std::endl;
+          std::cerr << "SHAKE FAILURE SOLVENT in Replica " << (ID+1) << " on node " << globalThreadID << std::endl;
           io::messages.display();
 #ifdef XXMPI
           MPI_Abort(MPI_COMM_WORLD, error);
 #endif
           break;
         case E_NAN:
-          std::cerr << "NAN error in Replica " << (ID+1) << " on node " << rank << std::endl;
+          std::cerr << "NAN error in Replica " << (ID+1) << " on node " << globalThreadID << std::endl;
           io::messages.display();
 #ifdef XXMPI
           MPI_Abort(MPI_COMM_WORLD, error);
 #endif
           break;
         default:
-          std::cerr << "Unknown error in Replica " << (ID+1) << " on node " << rank << std::endl;
+          std::cerr << "Unknown error in Replica " << (ID+1) << " on node " << globalThreadID << std::endl;
           io::messages.display();
 #ifdef XXMPI
           MPI_Abort(MPI_COMM_WORLD, error);
@@ -206,14 +206,14 @@ void util::replica::run_MD() {
     }
     
     
-    DEBUG(5, "replica "<< rank <<":run_MD:\t clean up:");      
+    DEBUG(5, "replica "<< globalThreadID <<":run_MD:\t clean up:");      
     traj->print(topo, conf, sim);
 
     ++sim.steps();
     sim.time() = sim.param().step.t0 + sim.steps() * sim.time_step_size();
 
   } // main md loop
-  DEBUG(4, "replica "<< rank <<":run_MD:\t  DONE:");      
+  DEBUG(4, "replica "<< globalThreadID <<":run_MD:\t  DONE:");      
   
   // print final data of run
   if (curentStepNumber ==  totalStepNumber) {

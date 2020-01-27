@@ -57,7 +57,9 @@ namespace util
         replica_exchange_base_eds(io::Argument _args, 
                 unsigned int cont, 
                 unsigned int globalThreadID, 
-                std::vector<std::vector<unsigned int> > replica_owned_threads, std::map<ID_t, rank_t>& thread_id_replica_map);
+                std::vector<std::vector<unsigned int> > replica_owned_threads, 
+                std::map<ID_t, rank_t>& thread_id_replica_map,
+                simulation::mpi_control_struct replica_mpi_control);
         /**
          * inits replica_reeds
          */
@@ -117,7 +119,7 @@ namespace util
        
         
         //init Replicas - used in contstructor, initialises the replica objs.
-        void createReplicas(int cont, int rank) override;
+        void createReplicas(int cont, int rank, simulation::mpi_control_struct replica_mpi_control) override;
         
         //TODO
         /*

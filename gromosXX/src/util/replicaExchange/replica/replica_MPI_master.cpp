@@ -26,9 +26,8 @@
 #define MODULE util
 #define SUBMODULE replica_exchange
 
-util::replica_MPI_Master::replica_MPI_Master(io::Argument _args, int cont, int _ID, int _rank, 
-        int simulation_rank, int simulation_ID, int simulation_num_threads) : replica_Interface(_ID, _rank, _args),
-          simulation_ID(simulation_ID), simulation_rank(simulation_rank), simulation_num_threads(simulation_num_threads){
+util::replica_MPI_Master::replica_MPI_Master(io::Argument _args, int cont,  int globalThreadID, 
+        int simulation_rank, int simulation_ID, int simulation_num_threads, simulation::mpi_control_struct replica_mpi_control) : replica_Interface( globalThreadID, replica_mpi_control, _args){
  #ifdef XXMPI
 
     /**
@@ -43,7 +42,7 @@ util::replica_MPI_Master::replica_MPI_Master(io::Argument _args, int cont, int _
      * @param simulation_num_threads
      */
     
-    MPI_DEBUG(4, "replica_MPI_MASTER "<< rank <<":Constructor:\t  "<< rank <<":\t START");
+    MPI_DEBUG(4, "replica_MPI_MASTER "<< globalThreadID <<":Constructor:\t  "<< globalThreadID <<":\t START");
     
     /**
      * READ INPUT
@@ -58,25 +57,25 @@ util::replica_MPI_Master::replica_MPI_Master(io::Argument _args, int cont, int _
       (*it).second.insert(pos, tmp.str());
     }
     
-    MPI_DEBUG(5, "replica_MPI_MASTER "<< rank <<":Constructor:\t  "<< rank <<":\t start read in");
+    MPI_DEBUG(5, "replica_MPI_MASTER "<< rank <<":Constructor:\t  "<< globalThreadID <<":\t start read in");
     //Build structure
     sim.mpi = true;
+    sim.mpi_control = replica_mpi_control;  //build MPI parallelism
+    
     if (io::read_input(args, topo, conf, sim, md, *os, true)) { 
       io::messages.display(*os);
       std::cerr << "\nErrors during initialization!\n" << std::endl;
-        #ifdef XXMPI
-            MPI_Abort(MPI_COMM_WORLD, E_INPUT_ERROR);
-        #endif
+      MPI_Abort(MPI_COMM_WORLD, E_INPUT_ERROR);
     }
-    MPI_DEBUG(5, "replica_MPI_MASTER "<< rank <<":Constructor:\t  "<< rank <<":\t REad in input already");
+    MPI_DEBUG(5, "replica_MPI_MASTER "<< globalThreadID <<":Constructor:\t  "<< globalThreadID <<":\t REad in input already");
     
-    MPI_DEBUG(5, "replica_MPI_MASTER "<< rank << " now make me master ");
+    MPI_DEBUG(5, "replica_MPI_MASTER "<< globalThreadID << " now make me master ");
     /**
      * INIT OUTPUT
      */
     // set output file
     std::stringstream tmp;
-    tmp << "_" << (ID+1);
+    tmp << "_" << (simulationID+1);
     std::string out;
     std::multimap< std::string, std::string >::iterator it = args.lower_bound(("repout"));
     size_t pos = (*it).second.find_last_of(".");
@@ -148,7 +147,7 @@ util::replica_MPI_Master::replica_MPI_Master(io::Argument _args, int cont, int _
     
     // Chris: setting the title after init does not make much sense. The init function already prints it
     std::stringstream trajtitle;
-    trajtitle << GROMOSXX << "\n" << sim.param().title << "\n\tReplica " << (ID+1) << "on Node " << rank;
+    trajtitle << GROMOSXX << "\n" << sim.param().title << "\n\tReplica " << (simulation_ID+1) << "on Node " << rank;
     
     traj->title(trajtitle.str());
     traj->init(args, sim.param());
@@ -156,9 +155,7 @@ util::replica_MPI_Master::replica_MPI_Master(io::Argument _args, int cont, int _
     *os << "\nMESSAGES FROM INITIALISATION\n";
     if (io::messages.display(*os) >= io::message::error) {
       *os << "\nErrors during initialization!\n" << std::endl;
-  #ifdef XXMPI
       MPI_Abort(MPI_COMM_WORLD, E_INPUT_ERROR);
-  #endif
     }
 
     // random generator
@@ -170,8 +167,8 @@ util::replica_MPI_Master::replica_MPI_Master(io::Argument _args, int cont, int _
         << " MAIN MD LOOP\n"
         << "==================================================\n\n";
 
-      DEBUG(5, "replica_MPI_MASTER "<< rank <<":Constructor:\t Temp of replica  "<< rank <<": " << ID << " \t" << sim.param().multibath.multibath.bath(0).temperature);
-      MPI_DEBUG(4, "replica_MPI_MASTER "<< rank <<":Constructor:\t replica Constructor  "<< rank <<": \t DONE");
+      DEBUG(5, "replica_MPI_MASTER "<< globalThreadID <<":Constructor:\t Temp of replica  "<< globalThreadID <<": " << simulation_ID << " \t" << sim.param().multibath.multibath.bath(0).temperature);
+      MPI_DEBUG(4, "replica_MPI_MASTER "<< globalThreadID <<":Constructor:\t replica Constructor  "<< globalThreadID <<": \t DONE");
 #else
     throw "Can not construct Replica_MPI as MPI is not enabled!";
 #endif    
@@ -192,34 +189,34 @@ void util::replica_MPI_Master::run_MD(){
     int next_step = 1;  //bool that signalises if next step is fine.
 
     while ((unsigned int)(sim.steps()) <  stepsPerRun + curentStepNumber) {
-      DEBUG(5, "replica_MPI "<< rank <<":run_MD:\t Start");      
+      DEBUG(5, "replica_MPI "<< globalThreadID <<":run_MD:\t Start");      
       traj->write(conf, topo, sim, io::reduced);
       // run a step
-      DEBUG(5, "replica_MPI "<< rank <<":run_MD:\t simulation!:");
+      DEBUG(5, "replica_MPI "<< globalThreadID <<":run_MD:\t simulation!:");
         if ((error = md.run(topo, conf, sim))) {
             switch (error) {
               case E_SHAKE_FAILURE:
-                std::cerr << "SHAKE FAILURE in Replica " << (ID+1) << " on node " << rank << std::endl;
+                std::cerr << "SHAKE FAILURE in Replica " << (simulationID+1) << " on node " << globalThreadID << std::endl;
                 io::messages.display();
                 MPI_Abort(MPI_COMM_WORLD, error);
                 break;
               case E_SHAKE_FAILURE_SOLUTE:
-                std::cerr << "SHAKE FAILURE SOLUTE in Replica " << (ID+1) << " on node " << rank << std::endl;
+                std::cerr << "SHAKE FAILURE SOLUTE in Replica " << (simulationID+1) << " on node " << globalThreadID << std::endl;
                 io::messages.display();
                 MPI_Abort(MPI_COMM_WORLD, error);
                 break;
               case E_SHAKE_FAILURE_SOLVENT:
-                std::cerr << "SHAKE FAILURE SOLVENT in Replica " << (ID+1) << " on node " << rank << std::endl;
+                std::cerr << "SHAKE FAILURE SOLVENT in Replica " << (simulationID+1) << " on node " << globalThreadID << std::endl;
                 io::messages.display();
                 MPI_Abort(MPI_COMM_WORLD, error);
                 break;
               case E_NAN:
-                std::cerr << "NAN error in Replica " << (ID+1) << " on node " << rank << std::endl;
+                std::cerr << "NAN error in Replica " << (simulationID+1) << " on node " << globalThreadID << std::endl;
                 io::messages.display();
                 MPI_Abort(MPI_COMM_WORLD, error);
                 break;
               default:
-                std::cerr << "Unknown error in Replica " << (ID+1) << " on node " << rank << std::endl;
+                std::cerr << "Unknown error in Replica " << (simulationID+1) << " on node " << globalThreadID << std::endl;
                 io::messages.display();
                 MPI_Abort(MPI_COMM_WORLD, error);
                 break;
@@ -229,16 +226,16 @@ void util::replica_MPI_Master::run_MD(){
         }
       
         // tell the slaves to continue
-        MPI::COMM_WORLD.Bcast(&next_step, 1, MPI::INT, 0);
+        MPI_Bcast(&next_step, 1, MPI::INT, sim.mpi_control.simulationMasterThreadID, sim.mpi_control.simulationCOMM);
 
-        DEBUG(5, "replica "<< rank <<":run_MD:\t clean up:");      
+        DEBUG(5, "replica "<< globalThreadID <<":run_MD:\t clean up:");      
         traj->print(topo, conf, sim);
 
         ++sim.steps();
         sim.time() = sim.param().step.t0 + sim.steps() * sim.time_step_size();
     } // main md loop
     
-    DEBUG(4, "replica "<< rank <<":run_MD:\t  DONE:");      
+    DEBUG(4, "replica "<< globalThreadID <<":run_MD:\t  DONE:");      
 
     // print final data of run
     if (curentStepNumber ==  totalStepNumber) {
