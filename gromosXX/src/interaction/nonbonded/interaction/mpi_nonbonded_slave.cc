@@ -135,7 +135,7 @@ int interaction::MPI_Nonbonded_Slave::calculate_interactions
     util::prepare_virial(topo, conf, sim);
     
     // calculate interactions for our rank
-    DEBUG(8, "calculating nonbonded interactions (thread " 
+    DEBUG(8, " SLAVE::calculating nonbonded interactions (thread " 
 	  << rank << " of " << num_threads << ")");
     
     m_nonbonded_set[0]->calculate_interactions(topo, conf, sim);
@@ -312,7 +312,7 @@ int interaction::MPI_Nonbonded_Slave::calculate_interactions
                sim.mpi_control.simulationMasterThreadID, sim.mpi_control.simulationCOMM);
 
     } // ANITA
-
+    
     if (sim.param().pairlist.print &&
 	 (!(sim.steps() % sim.param().pairlist.skip_step))){
       

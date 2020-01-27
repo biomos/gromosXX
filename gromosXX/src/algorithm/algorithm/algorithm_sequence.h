@@ -52,6 +52,12 @@ namespace algorithm
      */
     Algorithm * algorithm(std::string name);
     
+    /**
+     * print algorithm sequence.
+     * this is a nice debugging function.
+     */
+    void printSequence();
+    
   protected:
     bool clean;
 

@@ -128,3 +128,13 @@ algorithm::Algorithm * algorithm::Algorithm_Sequence::algorithm
 
   return NULL;
 }
+
+void algorithm::Algorithm_Sequence::printSequence(){
+      std::cout << " ALGORITHM SEQUENCE: \n";
+      for(Algorithm_Sequence::iterator it = begin(), to = end();
+      it != to;
+      ++it){
+          std::cout <<  "\t " << (*it)->name;
+      }
+      std::cout << "\n";
+}

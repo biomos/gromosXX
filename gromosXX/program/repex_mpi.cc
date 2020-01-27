@@ -64,8 +64,8 @@
 //Debug Instructions
 #undef MODULE
 #undef SUBMODULE
-#define MODULE binary
-#define SUBMODULE binary
+#define MODULE util
+#define SUBMODULE replica_exchange
 
 
 int main(int argc, char *argv[]) {

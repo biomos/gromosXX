@@ -113,10 +113,10 @@ calculate_interactions(topology::Topology & topo,
              sim.mpi_control.simulationMasterThreadID, sim.mpi_control.simulationCOMM);
    
 	 // bcast charges (for QM/MM)
-	                    MPI::COMM_WORLD.Bcast(&topo.charge()[0],
-	                                           topo.num_atoms(),
-	                                              MPI::DOUBLE,
-	                                         0);
+    MPI_Bcast(&topo.charge()[0],
+        topo.num_atoms(),
+        MPI::DOUBLE,
+        sim.mpi_control.simulationMasterThreadID, sim.mpi_control.simulationCOMM);
 
 
 
@@ -137,7 +137,7 @@ calculate_interactions(topology::Topology & topo,
     // --------------------------------------------------
     // calculate interactions
     
-    DEBUG(8, "calculating nonbonded interactions (thread "
+    DEBUG(8, "SLAVE::calculating nonbonded interactions (thread "
             << rank << " of " << num_threads << ")");
     
     // do this on the master and on the slaves...
@@ -365,6 +365,7 @@ calculate_interactions(topology::Topology & topo,
       }
 
     } // ANITA
+      DEBUG(4, "MPI_Nonbonded_Master::calculate_interactions - DONE ANITA");
 
     if (sim.param().eds.eds){
       const unsigned int numstates = sim.param().eds.numstates;
