@@ -26,8 +26,7 @@
 #define MODULE util
 #define SUBMODULE replica_exchange
 
-util::replica_MPI_Master::replica_MPI_Master(io::Argument _args, int cont,  int globalThreadID, 
-        int simulation_rank, int simulation_ID, int simulation_num_threads, simulation::mpi_control_struct replica_mpi_control) : replica_Interface( globalThreadID, replica_mpi_control, _args){
+util::replica_MPI_Master::replica_MPI_Master(io::Argument _args, int cont,  int globalThreadID, simulation::mpi_control_struct replica_mpi_control) : replica_Interface( globalThreadID, replica_mpi_control, _args){
  #ifdef XXMPI
 
     /**
@@ -36,9 +35,9 @@ util::replica_MPI_Master::replica_MPI_Master(io::Argument _args, int cont,  int 
      * @param _args
      * @param cont
      * @param _ID
-     * @param _rank
-     * @param simulation_rank
-     * @param simulation_ID
+     * @param _globalThreadID
+     * @param simulation_globalThreadID
+     * @param simulationID
      * @param simulation_num_threads
      */
     
@@ -53,11 +52,11 @@ util::replica_MPI_Master::replica_MPI_Master(io::Argument _args, int cont,  int 
       std::multimap< std::string, std::string >::iterator it = args.lower_bound(("conf"));
       size_t pos = (*it).second.find_last_of(".");
       std::stringstream tmp;
-      tmp << "_" << (simulation_ID+1);
+      tmp << "_" << (simulationID+1);
       (*it).second.insert(pos, tmp.str());
     }
     
-    MPI_DEBUG(5, "replica_MPI_MASTER "<< rank <<":Constructor:\t  "<< globalThreadID <<":\t start read in");
+    MPI_DEBUG(5, "replica_MPI_MASTER "<< globalThreadID <<":Constructor:\t  "<< simulationID <<":\t start read in");
     //Build structure
     sim.mpi = true;
     sim.mpi_control = replica_mpi_control;  //build MPI parallelism
@@ -86,7 +85,7 @@ util::replica_MPI_Master::replica_MPI_Master(io::Argument _args, int cont,  int 
 
     // set trajectory
     std::stringstream trajstr;
-    trajstr << GROMOSXX << "\n\tReplica Exchange with Replica ID " << (simulation_ID+1) << std::endl;
+    trajstr << GROMOSXX << "\n\tReplica Exchange with Replica ID " << (simulationID+1) << std::endl;
     std::string trajname = trajstr.str();
 
     traj = new io::Out_Configuration(trajname, *os);
@@ -147,7 +146,7 @@ util::replica_MPI_Master::replica_MPI_Master(io::Argument _args, int cont,  int 
     
     // Chris: setting the title after init does not make much sense. The init function already prints it
     std::stringstream trajtitle;
-    trajtitle << GROMOSXX << "\n" << sim.param().title << "\n\tReplica " << (simulation_ID+1) << "on Node " << rank;
+    trajtitle << GROMOSXX << "\n" << sim.param().title << "\n\tReplica " << (simulationID+1) << "on Node " << globalThreadID;
     
     traj->title(trajtitle.str());
     traj->init(args, sim.param());
@@ -160,14 +159,14 @@ util::replica_MPI_Master::replica_MPI_Master(io::Argument _args, int cont,  int 
 
     // random generator
     std::stringstream seed;
-    seed << sim.param().start.ig*ID;
+    seed << sim.param().start.ig*simulationID;
     rng = new math::RandomGeneratorGSL(seed.str(), -1);
 
     *os << "==================================================\n"
         << " MAIN MD LOOP\n"
         << "==================================================\n\n";
 
-      DEBUG(5, "replica_MPI_MASTER "<< globalThreadID <<":Constructor:\t Temp of replica  "<< globalThreadID <<": " << simulation_ID << " \t" << sim.param().multibath.multibath.bath(0).temperature);
+      DEBUG(5, "replica_MPI_MASTER "<< globalThreadID <<":Constructor:\t Temp of replica  "<< globalThreadID <<": " << simulationID << " \t" << sim.param().multibath.multibath.bath(0).temperature);
       MPI_DEBUG(4, "replica_MPI_MASTER "<< globalThreadID <<":Constructor:\t replica Constructor  "<< globalThreadID <<": \t DONE");
 #else
     throw "Can not construct Replica_MPI as MPI is not enabled!";

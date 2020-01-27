@@ -26,9 +26,8 @@
 #define MODULE util
 #define SUBMODULE replica_exchange
 
-util::replica_Interface::replica_Interface(int globalThreadID, simulation::mpi_control_struct replica_mpi_control, io::Argument args): globalThreadID(globalThreadID), replica_mpi_control(replica_mpi_control), args(args){
-    simulationID = replica_mpi_control.simulationID;
-    simulationThreadID = replica_mpi_control.simulationThisThreadID;
+util::replica_Interface::replica_Interface(int globalThreadID, simulation::mpi_control_struct replica_mpi_control, io::Argument args): globalThreadID(globalThreadID),  simulationID(replica_mpi_control.simulationID), simulationThreadID(replica_mpi_control.simulationThisThreadID), replica_mpi_control(replica_mpi_control), args(args){
+    
 }
 
 util::replica_Interface::~replica_Interface(){

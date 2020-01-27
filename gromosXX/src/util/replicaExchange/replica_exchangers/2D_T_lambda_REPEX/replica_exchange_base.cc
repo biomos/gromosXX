@@ -5,6 +5,7 @@
  * Created on April 29, 2011, 2:06 PM
  */
 
+#include "replicaExchange/replica_mpi_tools.h"
 #include "replicaExchange/replica/replica.h"
 #include "replicaExchange/replica/replica_MPI_master.h"
 #include "replicaExchange/replica/replica_MPI_slave.h"
@@ -707,7 +708,7 @@ void util::replica_exchange_base::print_coords(std::string name) {
     io::Argument args2(args);
     args2.erase("fin");
     std::stringstream tmp;
-    tmp << name << "_replica_" << replica->ID << "_run_" << run;
+    tmp << name << "_replica_" << replica->simulationID << "_run_" << run;
     std::string fin = tmp.str() + ".cnf";
     args2.insert(std::pair<std::string, std::string > ("fin", fin));
 

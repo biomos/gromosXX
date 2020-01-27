@@ -34,13 +34,13 @@ util::replica::replica(io::Argument _args, int cont, int globalThreadID, simulat
     std::multimap< std::string, std::string >::iterator it = args.lower_bound(("conf"));
     size_t pos = (*it).second.find_last_of(".");
     std::stringstream tmp;
-    tmp << "_" << (ID+1);
+    tmp << "_" << (simulationID+1);
     (*it).second.insert(pos, tmp.str());
   }
 
   // set output file
   std::stringstream tmp;
-  tmp << "_" << (ID+1);
+  tmp << "_" << (simulationID+1);
   std::string out;
   std::multimap< std::string, std::string >::iterator it = args.lower_bound(("repout"));
   size_t pos = (*it).second.find_last_of(".");
@@ -51,7 +51,7 @@ util::replica::replica(io::Argument _args, int cont, int globalThreadID, simulat
 
   // set trajectory
   std::stringstream trajstr;
-  trajstr << GROMOSXX << "\n\tReplica Exchange with Replica ID " << (ID+1) << std::endl;
+  trajstr << GROMOSXX << "\n\tReplica Exchange with Replica ID " << (simulationID+1) << std::endl;
   std::string trajname = trajstr.str();
 
   traj = new io::Out_Configuration(trajname, *os);
@@ -118,7 +118,7 @@ util::replica::replica(io::Argument _args, int cont, int globalThreadID, simulat
   }
 
   std::stringstream trajtitle;
-  trajtitle << GROMOSXX << "\n" << sim.param().title << "\n\tReplica " << (ID+1) << "on Node " << globalThreadID;
+  trajtitle << GROMOSXX << "\n" << sim.param().title << "\n\tReplica " << (simulationID+1) << "on Node " << globalThreadID;
   traj->title(trajtitle.str());
   traj->init(args, sim.param());
   
@@ -132,7 +132,7 @@ util::replica::replica(io::Argument _args, int cont, int globalThreadID, simulat
 
   // random generator
   std::stringstream seed;
-  seed << sim.param().start.ig*ID;
+  seed << sim.param().start.ig*simulationID;
   rng = new math::RandomGeneratorGSL(seed.str(), -1);
 
   //init REPLICA ATTRIBUTES
@@ -144,7 +144,7 @@ util::replica::replica(io::Argument _args, int cont, int globalThreadID, simulat
       << " MAIN MD LOOP\n"
       << "==================================================\n\n";
 
-    DEBUG(4, "replica "<< globalThreadID <<":Constructor:\t Temp of replica  "<< globalThreadID <<": " << ID << " \t" << sim.param().multibath.multibath.bath(0).temperature);
+    DEBUG(4, "replica "<< globalThreadID <<":Constructor:\t Temp of replica  "<< globalThreadID <<": " << simulationID << " \t" << sim.param().multibath.multibath.bath(0).temperature);
     DEBUG(4, "replica "<< globalThreadID <<":Constructor:\t replica Constructor  "<< globalThreadID <<": \t DONE");
 }
 
@@ -166,35 +166,35 @@ void util::replica::run_MD() {
     if ((error = md.run(topo, conf, sim))) {
       switch (error) {
         case E_SHAKE_FAILURE:
-          std::cerr << "SHAKE FAILURE in Replica " << (ID+1) << " on node " << globalThreadID << std::endl;
+          std::cerr << "SHAKE FAILURE in Replica " << (simulationID+1) << " on node " << globalThreadID << std::endl;
           io::messages.display();
 #ifdef XXMPI
           MPI_Abort(MPI_COMM_WORLD, error);
 #endif
           break;
         case E_SHAKE_FAILURE_SOLUTE:
-          std::cerr << "SHAKE FAILURE SOLUTE in Replica " << (ID+1) << " on node " << globalThreadID << std::endl;
+          std::cerr << "SHAKE FAILURE SOLUTE in Replica " << (simulationID+1) << " on node " << globalThreadID << std::endl;
           io::messages.display();
 #ifdef XXMPI
           MPI_Abort(MPI_COMM_WORLD, error);
 #endif
           break;
         case E_SHAKE_FAILURE_SOLVENT:
-          std::cerr << "SHAKE FAILURE SOLVENT in Replica " << (ID+1) << " on node " << globalThreadID << std::endl;
+          std::cerr << "SHAKE FAILURE SOLVENT in Replica " << (simulationID+1) << " on node " << globalThreadID << std::endl;
           io::messages.display();
 #ifdef XXMPI
           MPI_Abort(MPI_COMM_WORLD, error);
 #endif
           break;
         case E_NAN:
-          std::cerr << "NAN error in Replica " << (ID+1) << " on node " << globalThreadID << std::endl;
+          std::cerr << "NAN error in Replica " << (simulationID+1) << " on node " << globalThreadID << std::endl;
           io::messages.display();
 #ifdef XXMPI
           MPI_Abort(MPI_COMM_WORLD, error);
 #endif
           break;
         default:
-          std::cerr << "Unknown error in Replica " << (ID+1) << " on node " << globalThreadID << std::endl;
+          std::cerr << "Unknown error in Replica " << (simulationID+1) << " on node " << globalThreadID << std::endl;
           io::messages.display();
 #ifdef XXMPI
           MPI_Abort(MPI_COMM_WORLD, error);

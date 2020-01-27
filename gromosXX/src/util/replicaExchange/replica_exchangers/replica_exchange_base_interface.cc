@@ -5,6 +5,7 @@
  * Created on April 29, 2011, 2:06 PM
  */
 
+#include "replicaExchange/replica_mpi_tools.h"
 #include "replicaExchange/replica/replica.h"
 #include "replicaExchange/replica/replica_MPI_master.h"
 #include "replicaExchange/replica/replica_MPI_slave.h"
@@ -48,21 +49,19 @@
 util::replica_exchange_base_interface::replica_exchange_base_interface(io::Argument _args,
                                                    unsigned int cont, 
                                                    unsigned int globalThreadID,
-                                                   std::vector<std::vector<unsigned int> >  replica_owned_threads, 
-                                                   std::map<ID_t, rank_t> &thread_id_replica_map) : 
+                                                   util::replica_graph_mpi_control replicaGraphMpiControl,
+                                                   simulation::mpi_control_struct replica_mpi_control) : 
         args(_args),  rng(-1),
         cont(cont), 
-        globalThreadID(globalThreadID), globalMasterThreadID(0), numReplicas(replica_owned_threads.size()),
-        simulationID(thread_id_replica_map[globalThreadID]), simulationMasterID(replica_owned_threads[simulationID][0]), simulationThreads(replica_owned_threads[simulationID].size()), 
-        simulationThreadID(std::find(replica_owned_threads[simulationID].begin(), replica_owned_threads[simulationID].end(), globalThreadID) - replica_owned_threads[simulationID].begin()), 
-        replica_owned_threads(replica_owned_threads), thread_id_replica_map(thread_id_replica_map){
+        globalThreadID(globalThreadID), replicaGraphMPIControl(replicaGraphMpiControl),
+        simulationID(replica_mpi_control.simulationID){
 #ifdef XXMPI
   DEBUG(3,"replica_exchange_base "<< globalThreadID <<":Constructor:\t START ");
   DEBUG(3,"replica_exchange_base "<< globalThreadID <<":Constructor:\t SIMULATIONID:  "<< simulationID);
 
   //construct replica obj
   DEBUG(4,"replica_exchange_base "<< globalThreadID <<":Constructor:\t  createReplica");
-  createReplicas(cont, globalThreadID);
+  createReplicas(cont, globalThreadID, replica_mpi_control);
   DEBUG(4,"replica_exchange_base "<< globalThreadID <<":Constructor:\t createdReplica T");
 
   DEBUG(3,"replica_exchange_base "<< globalThreadID <<":Constructor:\t Constructor \t DONE");
@@ -75,19 +74,19 @@ util::replica_exchange_base_interface::~replica_exchange_base_interface() {
     delete replica;
 }
 
-void util::replica_exchange_base_interface::createReplicas(int cont, int globalThreadID){
+void util::replica_exchange_base_interface::createReplicas(int cont, int globalThreadID, simulation::mpi_control_struct replica_mpi_control){
   DEBUG(3,"replica_exchange_base "<< globalThreadID <<":createReplicas:\t START");
   // create the number of replicas that are assigned to my node
-    if(simulationThreads>1){
-        if(simulationThreadID == 0){
-            replica = new util::replica_MPI_Master(args, cont, simulationID, globalThreadID, simulationThreadID, simulationID, simulationThreads);
+    if(replica_mpi_control.simulationNumberOfThreads > 1){
+        if(replica_mpi_control.simulationMasterThreadID == replica_mpi_control.simulationThisThreadID){
+            replica = new util::replica_MPI_Master(args, cont, globalThreadID, replica_mpi_control);
         }
         else{
-            replica = new util::replica_MPI_Slave(args, cont, simulationID, globalThreadID, simulationThreadID, simulationID, simulationThreads);
+            replica = new util::replica_MPI_Slave(args, cont, globalThreadID, replica_mpi_control);
         }
     }
     else{
-        replica = new util::replica(args, cont, simulationID, globalThreadID);
+        replica = new util::replica(args, cont, globalThreadID, replica_mpi_control);
         //DEBUG(2,"replica_exchange_base "<< globalThreadID <<":create:\t rep" << replica->sim.param().replica.num_l);
         //DEBUG(2,"replica_exchange_base "<< globalThreadID <<":create:\t rep" << replica->sim.param().replica.lambda[0]);
     }
@@ -179,7 +178,7 @@ void util::replica_exchange_base_interface::exchange_averages() {
 void util::replica_exchange_base_interface::send_coord(const unsigned int receiverReplicaID) {
 #ifdef XXMPI
 
-  unsigned int receiverReplicaMasterThreadID = replica_owned_threads[receiverReplicaID][0];
+  unsigned int receiverReplicaMasterThreadID = receiverReplicaID; // Todo:: remove statement again ... as now id == thread ID
 
   configuration::Configuration  conf = replica->conf;
   
@@ -214,7 +213,7 @@ void util::replica_exchange_base_interface::send_coord(const unsigned int receiv
 void util::replica_exchange_base_interface::receive_new_coord(const unsigned int senderReplicaID) {
 #ifdef XXMPI
    
-  unsigned int senderReplicaMasterThreadID = replica_owned_threads[senderReplicaID][0];
+  unsigned int senderReplicaMasterThreadID = senderReplicaID;
 
   MPI_Status status;
   configuration::Configuration  conf = replica->conf;
@@ -257,7 +256,7 @@ void util::replica_exchange_base_interface::print_coords(std::string name) {
     io::Argument args2(args);
     args2.erase("fin");
     std::stringstream tmp;
-    tmp << name << "_replica_" << replica->ID << "_run_" << run;
+    tmp << name << "_replica_" << simulationID << "_run_" << run;
     std::string fin = tmp.str() + ".cnf";
     args2.insert(std::pair<std::string, std::string > ("fin", fin));
 

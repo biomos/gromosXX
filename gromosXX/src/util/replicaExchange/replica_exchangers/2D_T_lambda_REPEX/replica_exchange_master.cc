@@ -27,6 +27,7 @@
 #include <unistd.h>
 
 #include <io/configuration/out_configuration.h>
+#include "util/replicaExchange/replica_mpi_tools.h"
 #include <util/replicaExchange/replica/replica.h>
 #include <util/replicaExchange/replica_exchangers/2D_T_lambda_REPEX/replica_exchange_base.h>
 #include <util/replicaExchange/replica_exchangers/2D_T_lambda_REPEX/replica_exchange_master.h>

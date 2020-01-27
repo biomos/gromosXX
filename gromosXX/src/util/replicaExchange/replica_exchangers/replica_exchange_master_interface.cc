@@ -27,6 +27,7 @@
 #include <unistd.h>
 
 #include <io/configuration/out_configuration.h>
+#include "replicaExchange/replica_mpi_tools.h"
 #include <util/replicaExchange/replica/replica.h>
 #include <util/replicaExchange/replica_exchangers/replica_exchange_base_interface.h>
 #include <util/replicaExchange/replica_exchangers/replica_exchange_master_interface.h>
@@ -45,9 +46,9 @@
 util::replica_exchange_master_interface::replica_exchange_master_interface(io::Argument & args,
         unsigned int cont,
         unsigned int globalThreadID,
-        std::vector<std::vector<unsigned int> > replica_owned_threads,
-        std::map<ID_t, rank_t> & thread_id_replica_map) :
-        replica_exchange_base_interface(args, cont, globalThreadID, replica_owned_threads, thread_id_replica_map ),
+        replica_graph_mpi_control replicaGraphMPIControl,
+        simulation::mpi_control_struct replica_mpi_control) :
+        replica_exchange_base_interface(args, cont, globalThreadID, replicaGraphMPIControl, replica_mpi_control),
         repParams(replica->sim.param().replica),
         repdatName(args["repdat"])
 {
@@ -55,7 +56,7 @@ util::replica_exchange_master_interface::replica_exchange_master_interface(io::A
   DEBUG(2,"replica_exchange_master "<< globalThreadID <<":Constructor:\t START");
 
   assert(globalThreadID == 0);    //TODO: This can be removed in future! bscrhoed
-  assert(numReplicas > 0);
+  assert(replicaGraphMPIControl.numberOfReplicas > 0);
   DEBUG(2,"replica_exchange_master "<< globalThreadID <<":Constructor:\t rep_params THERE?");
   DEBUG(2,"replica_exchange_master "<< globalThreadID <<":Constructor:\t" << replica->sim.param().replica.num_l);
   DEBUG(2,"replica_exchange_master "<< globalThreadID <<":Constructor:\t" << replica->sim.param().replica.lambda[0]);
@@ -63,7 +64,7 @@ util::replica_exchange_master_interface::replica_exchange_master_interface(io::A
   assert(repParams.num_l > 0);
   
   DEBUG(4,"replica_exchange_master "<< globalThreadID <<":Constructor:\t Init Replicas \t Next");
-  replicaData.resize(numReplicas);
+  replicaData.resize(replicaGraphMPIControl.numberOfReplicas);
   DEBUG(4,"replica_exchange_master "<< globalThreadID <<":Constructor:\t Replica_data type \t " << typeid(replicaData).name());
 
   //initialize data of replicas
@@ -100,11 +101,10 @@ void util::replica_exchange_master_interface::receive_from_all_slaves() {
     util::repInfo info;
 
     // receive all information from slaves
-    for (unsigned int slaveReplicaID = 0; slaveReplicaID < numReplicas; ++slaveReplicaID) {
+    for (unsigned int slaveReplicaID = 0; slaveReplicaID < replicaGraphMPIControl.numberOfReplicas; ++slaveReplicaID) {
       if (slaveReplicaID != simulationID) {
-        unsigned int replicaMasterThreadID = replica_owned_threads[slaveReplicaID][0];
-        DEBUG(2,"replica_exchange_master "<< globalThreadID <<":receive_from_all_slaves:\t get_MPI replicaMasterThread: "<< replicaMasterThreadID << "\n");
-        MPI_Recv(&info, 1, MPI_REPINFO, replicaMasterThreadID, REPINFO, MPI_COMM_WORLD, &status);
+        DEBUG(2,"replica_exchange_master "<< globalThreadID <<":receive_from_all_slaves:\t get_MPI replicaMasterThread: "<< slaveReplicaID << "\n");
+        MPI_Recv(&info, 1, MPI_REPINFO, slaveReplicaID, REPINFO, replicaGraphMPIControl.replicaGraphCOMM, &status);
         replicaData[slaveReplicaID].run = info.run;
         replicaData[slaveReplicaID].epot = info.epot;
         replicaData[slaveReplicaID].epot_partner = info.epot_partner;

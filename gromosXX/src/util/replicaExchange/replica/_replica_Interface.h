@@ -45,6 +45,7 @@ namespace util{
         /**
          * ID, unique identifier
          */
+        const unsigned int globalThreadID;
         const unsigned int simulationID;
         const unsigned int simulationThreadID;
         simulation::mpi_control_struct replica_mpi_control;
@@ -52,7 +53,6 @@ namespace util{
         /**
          * rank of node the replica is on
          */
-        const unsigned int globalThreadID;
         
         unsigned int curentStepNumber=0;
         unsigned int stepsPerRun=0;

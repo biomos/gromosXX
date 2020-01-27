@@ -60,6 +60,7 @@
 #include <util/replicaExchange/replica_exchangers/1D_S_RE_EDS/replica_exchange_slave_eds.h>
 
 #include <util/replicaExchange/repex_mpi.h>
+#include <util/replicaExchange/replica_mpi_tools.h>
 
 //Debug Instructions
 #undef MODULE
@@ -366,24 +367,83 @@ int main(int argc, char *argv[]) {
 
     MPI_Datatype MPI_VEC;
     MPI_Comm simulationCOMM;    //this is used for different replica simulation parallelisations
-    
-    //for RE-Graph
+    MPI_Comm replicaGraphCOMM;    //this is used for different replica GRAPH parallelisations
 
+    //for RE-Graph
+    util::replica_graph_mpi_control reGMPI = util::replica_graph_mpi_control();
+    reGMPI.replicaGraphID = 0;
+    reGMPI.replicaGraphMasterID = 0;
+    reGMPI.replicaGraphMPIColor = 9999;
+    reGMPI.numberOfReplicas = replica_owned_threads.size();
     
+    MPI_Comm_split(MPI_COMM_WORLD, reGMPI.replicaGraphMPIColor, globalThreadID, &replicaGraphCOMM);
+    reGMPI.replicaGraphCOMM = replicaGraphCOMM;
+    MPI_Barrier(replicaGraphCOMM);    //wait for all threads to register!
+
+    int REG_rank, REG_size;
+    MPI_Comm_rank(replicaGraphCOMM, &REG_rank);
+    MPI_Comm_size(replicaGraphCOMM, &REG_size);
+    
+    reGMPI.replicaGraphThisThreadID = REG_rank;  //id for the thread in the simulation.
+
+    //
+    std::vector<unsigned int> replica_master_IDS;
+    for (auto replicaThread : replica_owned_threads){
+        replica_master_IDS.push_back(replicaThread[0]);
+    }
+    
+    reGMPI.replicaMasterIDs = replica_master_IDS;
+    reGMPI.replicaThreads = replica_owned_threads;
+    reGMPI.threadReplicaMap = thread_id_replica_map;
+
+    //replica Graph out:
+    MPI_Barrier(MPI_COMM_WORLD);    //wait for all threads to register!
+    std::cout << REG_rank << "\n";
+    MPI_Barrier(MPI_COMM_WORLD);    //wait for all threads to register!
+    if(globalThreadID == 0){
+        std::cout << "Masters of "<<reGMPI.numberOfReplicas<< "replicas \t";
+        for(int masterThreadID : replica_master_IDS){
+            std::cout << masterThreadID  << "\t";
+        }
+    }
+    std::cout << "\n";
+    
+    
+    MPI_Barrier(MPI_COMM_WORLD);    //wait for all threads to register!
+
     //for REPLICA SIMULATION!
     simulation::mpi_control_struct replica_mpi_control = simulation::mpi_control_struct();
     replica_mpi_control.simulationID = subThreadOfSimulation;
-    replica_mpi_control.simulationNumberOfThreads = threadsPerReplicaSimulation;
+    replica_mpi_control.simulationNumberOfThreads =  replica_owned_threads[replica_mpi_control.simulationID].size();
     replica_mpi_control.simulationMasterThreadID = replica_owned_threads[thread_id_replica_map[globalThreadID]][0];
-    replica_mpi_control.simulationThisThreadID = threadIDinSimulation;  //id for the thread in the simulation.
-    replica_mpi_control.simulationOwnedThreads = replica_owned_threads[replica_mpi_control.simulationID]; //this vector contains all global thread IDs of a replica simulation
-    replica_mpi_control.simulationMPIColor = replica_mpi_control.simulationID // comunication color MPI
+    replica_mpi_control.simulationMPIColor = replica_mpi_control.simulationID; // comunication color MPI
+
+    MPI_Comm_split(MPI_COMM_WORLD, replica_mpi_control.simulationMPIColor, globalThreadID, &simulationCOMM);
     replica_mpi_control.simulationCOMM = simulationCOMM;
+    MPI_Barrier(simulationCOMM);    //wait for all threads to register!
+
+    int simulation_rank, simulation_size;
+    MPI_Comm_rank(simulationCOMM, &simulation_rank);
+    MPI_Comm_size(simulationCOMM, &simulation_size);
+    if(replica_mpi_control.simulationNumberOfThreads != simulation_size){
+        std::cerr << "\n\t########################################################\n"
+                << "\n\t\tErrors during MPI-Initialisation!\n"
+                << "\n\t########################################################\n";
+        std::string msg = "ERROR!\n Uh OH! NOT ALL Threads registered correctly to the replicas!";
+        std::cerr << msg << "\n" << " simulation size: " << simulation_size << " expected: " << replica_mpi_control.simulationNumberOfThreads;
+        MPI_Comm_free(&replica_mpi_control.simulationCOMM); //Clean up
+        MPI_Finalize();
+        return 1;
+    }
+    replica_mpi_control.simulationThisThreadID = simulation_rank;  //id for the thread in the simulation.
+    replica_mpi_control.simulationOwnedThreads = replica_owned_threads[replica_mpi_control.simulationID]; //this vector contains all global thread IDs of a replica simulation
     
+    
+    ////GENERATE SIM SPECIFIC SIMULATION COMM
+    MPI_Comm_split(MPI_COMM_WORLD, replica_mpi_control.simulationMPIColor, tglobalThreadID, &replica_mpi_control.simulationCOMM);
     
     try { // SUBCOMS //Exchange structures
-        ////GENERATE SIM SPECIFIC SIMULATION COMM
-        MPI_Comm_split(MPI_COMM_WORLD, replica_mpi_control.mpi_control.simulationMPIColor, tglobalThreadID, &simulationCOMM);
+
 
         // Vector
         MPI_Type_contiguous(3, MPI_DOUBLE, &MPI_VEC);
@@ -419,6 +479,9 @@ int main(int argc, char *argv[]) {
         std::string msg = "ERROR!\n Uh OH! Caught an Exception in MPI-Initialisation!\n\nMessage:\t";
         std::cout << msg << e.what() << std::endl;
         std::cerr << msg << e.what() << std::endl;
+        MPI_Comm_free(&replica_mpi_control.simulationCOMM); //Clean up
+        MPI_Finalize();
+
         return 1;
     } catch (...) {
         std::cerr << "\n\t########################################################\n"
@@ -427,6 +490,7 @@ int main(int argc, char *argv[]) {
         std::string msg = "ERROR!\n Uh OH! Caught an non standard Exception in initial test Parsing of the MPI Parameters!\n Hit the developers!\n\nMessage:\t";
         std::cout << msg << std::endl;
         std::cerr << msg << std::endl;
+        MPI_Comm_free(&replica_mpi_control.simulationCOMM); //Clean up
         MPI_Finalize();
         return -1;
     }
@@ -450,17 +514,19 @@ int main(int argc, char *argv[]) {
     }
 
     MPI_Barrier(MPI_COMM_WORLD);
+    std::cout << globalThreadID << "\tsimulationThreadID\t"<< replica_mpi_control.simulationThisThreadID << "\n";
+    //if(threadsPerReplicaSimulation > 1){
+    //    throw "using more than 1 thread per replica is currently not implemented!";
+    //}
     
-    if(threadsPerReplicaSimulation > 1){
-        throw "using more than 1 thread per replica is currently not implemented!";
-    }
-    
-    
+    std::cout << "FINISHED MPI MAPPING!\n\n";
+    MPI_Comm_free(&replica_mpi_control.simulationCOMM); //Clean up
+    MPI_Finalize();
+    return 0;
     
     //////////////////////////////
     /// Starting master-slave Pattern
     //////////////////////////////
-
     if (globalThreadID == 0) { //MASTER
         //std::cout << "RANK: "<< uniqueThreadID <<"\tSLEPPING Master\n";
         //MPI_Barrier(MPI_COMM_WORLD);
@@ -484,7 +550,7 @@ int main(int argc, char *argv[]) {
             } else {
                 DEBUG(1, "Master \t Constructor")
                 Master = new util::replica_exchange_master(args, cont, globalThreadID, 
-                        replica_owned_threads, thread_id_replica_map,r eplica_mpi_control);
+                        replica_owned_threads, thread_id_replica_map, replica_mpi_control);
             }
         } catch (...) {
             std::cerr << "\n\t########################################################\n"
@@ -608,6 +674,7 @@ int main(int argc, char *argv[]) {
                 << "\t" << durationHour << ":" << durationMinlHour << ":" << durationSlMin << "\t\t" << duration << "\n";
     }
 
+    MPI_Comm_free(&replica_mpi_control.simulationCOMM); //Clean up
     MPI_Finalize();
     return 0;
 #else

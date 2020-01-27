@@ -6,6 +6,7 @@
  */
 
 #define REPEX_MPI
+#include "util/replicaExchange/replica_mpi_tools.h"
 #include <util/replicaExchange/replica_exchangers/2D_T_lambda_REPEX/replica_exchange_slave.h>
 
 #include <stdheader.h>

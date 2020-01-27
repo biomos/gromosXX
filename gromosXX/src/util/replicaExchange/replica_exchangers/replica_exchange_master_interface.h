@@ -56,8 +56,8 @@ namespace util {
     replica_exchange_master_interface(io::Argument & args,
             unsigned int cont,
             unsigned int globalThreadID,
-            std::vector<std::vector<unsigned int> > replica_owned_threads,
-            std::map<ID_t, rank_t> & thread_id_replica_map);
+            replica_graph_mpi_control replicaGraphMPIControl,
+            simulation::mpi_control_struct replica_mpi_control);
     /**
      * Destructor
      */

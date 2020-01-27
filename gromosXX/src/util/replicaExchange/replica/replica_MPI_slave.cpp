@@ -36,8 +36,8 @@ util::replica_MPI_Slave::replica_MPI_Slave(io::Argument _args, int cont, int glo
      * @param cont
      * @param _ID
      * @param _globalThreadID
-     * @param simulation_globalThreadID
-     * @param simulation_ID
+     * @param globalThreadID
+     * @param simulationID
      * @param simulation_num_threads
      */
     
@@ -52,7 +52,7 @@ util::replica_MPI_Slave::replica_MPI_Slave(io::Argument _args, int cont, int glo
       std::multimap< std::string, std::string >::iterator it = args.lower_bound(("conf"));
       size_t pos = (*it).second.find_last_of(".");
       std::stringstream tmp;
-      tmp << "_" << (simulation_ID+1);
+      tmp << "_" << (simulationID+1);
       (*it).second.insert(pos, tmp.str());
     }
     
@@ -83,7 +83,7 @@ util::replica_MPI_Slave::replica_MPI_Slave(io::Argument _args, int cont, int glo
     if (do_nonbonded && ff == NULL){
       std::cerr << "globalThreadID: "<< globalThreadID<<"\tMPI slave: could not access forcefield\n\t(internal error)" << std::endl;
       MPI::Finalize();
-      throw "ReplicaSlave: \ttINITIALisation error in ff is NULL of slave of simulationID "+ simulation_ID;
+      throw "ReplicaSlave: \ttINITIALisation error in ff is NULL of slave of simulationID "+ simulationID;
     }
     
     nb = ff->interaction("NonBonded");
@@ -92,7 +92,7 @@ util::replica_MPI_Slave::replica_MPI_Slave(io::Argument _args, int cont, int glo
 		<< "\n\t(internal error)"
 		<< std::endl;
       MPI::Finalize();
-      throw "ReplicaSlave: \tINITIALisation error in ff nbs are NULL of slave of simulationID "+ simulation_ID;
+      throw "ReplicaSlave: \tINITIALisation error in ff nbs are NULL of slave of simulationID "+ simulationID;
     }
 
     // get shake and check whether we do it for solvent
@@ -109,7 +109,7 @@ util::replica_MPI_Slave::replica_MPI_Slave(io::Argument _args, int cont, int glo
                 << "\n\t(internal error)"
                 << std::endl;
       MPI::Finalize();
-      throw "ReplicaSlave: \tINITIALisation error in shake algorithm of slave of simulationID "+ simulation_ID;
+      throw "ReplicaSlave: \tINITIALisation error in shake algorithm of slave of simulationID "+ simulationID;
     }
     //DEBUG(5, "Slave "<< globalThreadID << " do_shake? "<<do_shake);
 
@@ -124,7 +124,7 @@ util::replica_MPI_Slave::replica_MPI_Slave(io::Argument _args, int cont, int glo
                 << "\n\t(internal error)"
                 << std::endl;
       MPI::Finalize();
-      throw "ReplicaSlave: \tINITIALisation error in m_Shake algorithm of slave of simulationID "+ simulation_ID;
+      throw "ReplicaSlave: \tINITIALisation error in m_Shake algorithm of slave of simulationID "+ simulationID;
     }
     
     // get chemical monte carlo
@@ -135,7 +135,7 @@ util::replica_MPI_Slave::replica_MPI_Slave(io::Argument _args, int cont, int glo
               << "\n\t(internal error)"
               << std:: endl;
       MPI::Finalize();
-      throw "ReplicaSlave: \tINITIALisation error in Montecarlo algorithm of slave of simulationID "+ simulation_ID;
+      throw "ReplicaSlave: \tINITIALisation error in Montecarlo algorithm of slave of simulationID "+ simulationID;
     }
     MPI_DEBUG(4, "replica_MPI_SLAVE "<< globalThreadID <<":Constructor:\t  "<< globalThreadID <<":\t DONE");
 
@@ -184,7 +184,7 @@ void util::replica_MPI_Slave::run_MD(){
       }
 
 
-      MPI::COMM_WORLD.Bcast(&next_step, 1, MPI::INT, , sim.mpi_control.simulationMasterThreadID, sim.mpi_control.simulationCOMM);
+      MPI_Bcast(&next_step, 1, MPI::INT, sim.mpi_control.simulationMasterThreadID, sim.mpi_control.simulationCOMM);
 
       if (next_step == 2) {
         (*os) << "globalThreadID: "<< globalThreadID<<"\tMessage from master: Steepest descent: minimum reached." << std::endl;
@@ -204,11 +204,11 @@ void util::replica_MPI_Slave::run_MD(){
     }
 
     if (error){
-      (*os) << "Rank: "<< globalThreadID<<"\t\nErrors encountered during run in simulation "<< simulation_ID << " in Slave Thread "<< simulation_globalThreadID <<" - check above!\n" << std::endl;
+      (*os) << "Rank: "<< globalThreadID<<"\t\nErrors encountered during run in simulation "<< simulationID << " in Slave Thread "<< globalThreadID <<" - check above!\n" << std::endl;
       MPI_Abort(MPI_COMM_WORLD, E_INPUT_ERROR);
     }
     else{
-      (*os) << "Rank: "<< globalThreadID<<"\n" GROMOSXX " MPI slave " << globalThreadID << "  simulation "<< simulation_ID << " in Slave Thread "<< simulation_globalThreadID << "finished successfully\n" << std::endl;
+      (*os) << "Rank: "<< globalThreadID<<"\n" GROMOSXX " MPI slave " << globalThreadID << "  simulation "<< simulationID << " in Slave Thread "<< globalThreadID << "finished successfully\n" << std::endl;
     }
 }
     

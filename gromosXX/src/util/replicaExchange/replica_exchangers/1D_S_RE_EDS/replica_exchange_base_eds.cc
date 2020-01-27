@@ -10,7 +10,7 @@
  * 
  * Created on April 18, 2018, 3:38 PM
  */
-
+#include "util/replicaExchange/replica_mpi_tools.h"
 #include <util/replicaExchange/replica_exchangers/1D_S_RE_EDS/replica_exchange_base_eds.h>
 
 //Constructor
@@ -63,12 +63,12 @@ util::replica_exchange_base_eds::replica_exchange_base_eds(io::Argument _args,
                                                             std::vector<std::vector<unsigned int> >  replica_owned_threads, 
                                                             std::map<ID_t, rank_t> &thread_id_replica_map, 
                                                             simulation::mpi_control_struct replica_mpi_control):  
-                            replica_exchange_base(_args, cont, globalThreadID, replica_owned_threads, thread_id_replica_map),
+                            replica_exchange_base(_args, cont, globalThreadID, replica_owned_threads, thread_id_replica_map, replica_mpi_control),
                             reedsParam(replica->sim.param().reeds)
 {
     DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":Constructor:\t START");
     DEBUG(4,"replica_exchange_base_eds "<< globalThreadID <<":Constructor:\t replica Type\t "<< typeid(replica).name());
-    createReplicas(cont, globalThreadID);
+    createReplicas(cont, globalThreadID, replica_mpi_control);
     DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":Constructor:\t DONE");
 }
 
