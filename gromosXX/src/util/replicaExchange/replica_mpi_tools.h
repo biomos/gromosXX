@@ -23,11 +23,11 @@
             replica_graph_mpi_control() : replicaGraphID(0), replicaGraphMasterID(0), replicaGraphThisThreadID(-1), numberOfThreads(0)
             { };
 
-            int replicaGraphID;
-            int replicaGraphMasterID;
-            int replicaGraphThisThreadID;
-            int numberOfThreads;
-            int numberOfReplicas;
+            unsigned int replicaGraphID;
+            unsigned int replicaGraphMasterID;
+            unsigned int replicaGraphThisThreadID;
+            unsigned int numberOfThreads;
+            unsigned int numberOfReplicas;
 
             MPI_Comm replicaGraphCOMM;
             int replicaGraphMPIColor;
@@ -37,7 +37,7 @@
             std::map<unsigned int, unsigned int> threadReplicaMap;
         };
 
-        //tools for thred tracking
+        //tools for thread tracking
        std::vector<std::vector<unsigned int > > calculate_Replica_Thread_Coordination(int rank, int totalNumberOfThreads, int numReplicas);
 
     }//namespace util

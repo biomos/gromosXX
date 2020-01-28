@@ -45,8 +45,7 @@ namespace util{
         replica_exchange_slave_eds(io::Argument & _args,
                 unsigned int cont,
                 unsigned int globalThreadID,
-                std::vector<std::vector<unsigned int> > replica_owned_threads,
-                std::map<ID_t, rank_t> & thread_id_replica_map,
+                replica_graph_mpi_control replicaGraphMPIControl,
                 simulation::mpi_control_struct replica_mpi_control);
         /**
         * sends information of all replicas to master
@@ -54,8 +53,6 @@ namespace util{
         void send_to_master() const override;
 
     private:
-        using replica_exchange_base_eds::numReplicas;
-
         //replica_exchange_slave_eds(const replica_exchange_slave_eds& orig);
         virtual ~replica_exchange_slave_eds(){};
 

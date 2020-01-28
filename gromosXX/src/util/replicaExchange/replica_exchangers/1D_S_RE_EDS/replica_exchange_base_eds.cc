@@ -60,10 +60,9 @@
 util::replica_exchange_base_eds::replica_exchange_base_eds(io::Argument _args, 
                                                             unsigned int cont, 
                                                             unsigned int globalThreadID, 
-                                                            std::vector<std::vector<unsigned int> >  replica_owned_threads, 
-                                                            std::map<ID_t, rank_t> &thread_id_replica_map, 
+                                                            replica_graph_mpi_control replicaGraphMPIControl, 
                                                             simulation::mpi_control_struct replica_mpi_control):  
-                            replica_exchange_base(_args, cont, globalThreadID, replica_owned_threads, thread_id_replica_map, replica_mpi_control),
+                            replica_exchange_base(_args, cont, globalThreadID, replicaGraphMPIControl, replica_mpi_control),
                             reedsParam(replica->sim.param().reeds)
 {
     DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":Constructor:\t START");
@@ -126,8 +125,8 @@ void util::replica_exchange_base_eds::init_eds_stat(){
         replicaStatData[currentID].s=l; //l==s because of the implementation of hamiltonian replica exchange.
         replicaStatData[currentID].dt=dt;
         replicaStatData[currentID].run=0;
-        replicaStatData[currentID].epot_vec.resize(this->numReplicas);
-        replicaStatData[currentID].prob_vec.resize(this->numReplicas);
+        replicaStatData[currentID].epot_vec.resize(replicaGraphMPIControl.numberOfReplicas);
+        replicaStatData[currentID].prob_vec.resize(replicaGraphMPIControl.numberOfReplicas);
         
         DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":init_eds_stat:\t DONE");
 }

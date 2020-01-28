@@ -46,18 +46,17 @@
 util::replica_exchange_master::replica_exchange_master(io::Argument & args,
         unsigned int cont,
         unsigned int globalThreadID,
-        std::vector<std::vector<unsigned int> > replica_owned_threads,
-        std::map<ID_t, rank_t> & thread_id_replica_map,
+        replica_graph_mpi_control replicaGraphMPIControl,
         simulation::mpi_control_struct replica_mpi_control) :
-        replica_exchange_base(args, cont, globalThreadID, replica_owned_threads, thread_id_replica_map, replica_mpi_control),
+        replica_exchange_base(args, cont, globalThreadID, replicaGraphMPIControl, replica_mpi_control),
         repParams(replica->sim.param().replica),
         repdatName(args["repdat"])
 {
 #ifdef XXMPI
   DEBUG(2,"replica_exchange_master "<< globalThreadID <<":Constructor:\t START");
 
-  assert(globalThreadID == 0);    //TODO: This can be removed in future! bscrhoed
-  assert(numReplicas > 0);
+  assert(replicaGraphMPIControl.replicaGraphMasterID == replicaGraphMPIControl.replicaGraphThisThreadID);    //TODO: This can be removed in future! bscrhoed
+  assert(replicaGraphMPIControl.numberOfReplicas > 0);
   DEBUG(2,"replica_exchange_master "<< globalThreadID <<":Constructor:\t rep_params THERE?");
   DEBUG(2,"replica_exchange_master "<< globalThreadID <<":Constructor:\t" << replica->sim.param().replica.num_l);
   DEBUG(2,"replica_exchange_master "<< globalThreadID <<":Constructor:\t" << replica->sim.param().replica.lambda[0]);
@@ -65,7 +64,7 @@ util::replica_exchange_master::replica_exchange_master(io::Argument & args,
   assert(repParams.num_l > 0);
   
   DEBUG(4,"replica_exchange_master "<< globalThreadID <<":Constructor:\t Init Replicas \t Next");
-  replicaData.resize(numReplicas);
+  replicaData.resize(replicaGraphMPIControl.numberOfReplicas);
   DEBUG(4,"replica_exchange_master "<< globalThreadID <<":Constructor:\t Replica_data type \t " << typeid(replicaData).name());
 
   //initialize data of replicas
@@ -102,11 +101,11 @@ void util::replica_exchange_master::receive_from_all_slaves() {
     util::repInfo info;
 
     // receive all information from slaves
-    for (unsigned int slaveReplicaID = 0; slaveReplicaID < numReplicas; ++slaveReplicaID) {
+    for (unsigned int slaveReplicaID = 0; slaveReplicaID < replicaGraphMPIControl.numberOfReplicas; ++slaveReplicaID) {
       if (slaveReplicaID != simulationID) {
         unsigned int replicaMasterThreadID = replica_owned_threads[slaveReplicaID][0];
         DEBUG(2,"replica_exchange_master "<< globalThreadID <<":receive_from_all_slaves:\t get_MPI replicaMasterThread: "<< replicaMasterThreadID << "\n");
-        MPI_Recv(&info, 1, MPI_REPINFO, replicaMasterThreadID, REPINFO, MPI_COMM_WORLD, &status);
+        MPI_Recv(&info, 1, MPI_REPINFO, replicaMasterThreadID, REPINFO,  replicaGraphMPIControl.replicaGraphCOMM, &status);
         replicaData[slaveReplicaID].run = info.run;
         replicaData[slaveReplicaID].epot = info.epot;
         replicaData[slaveReplicaID].epot_partner = info.epot_partner;
@@ -181,7 +180,7 @@ void util::replica_exchange_master::init_repOut_stat_file() {
 void util::replica_exchange_master::write() {
    DEBUG(2,"replica_exchange_master "<< globalThreadID <<":write:\t START");
 
-  for (unsigned int treplicaID = 0; treplicaID < numReplicas; ++treplicaID) {
+  for (unsigned int treplicaID = 0; treplicaID < replicaGraphMPIControl.numberOfReplicas; ++treplicaID) {
     repOut << std::setw(6) << (replicaData[treplicaID].ID + 1)
             << " "
             << std::setw(6) << (replicaData[treplicaID].partner + 1)

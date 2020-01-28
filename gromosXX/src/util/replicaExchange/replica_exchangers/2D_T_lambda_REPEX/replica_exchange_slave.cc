@@ -36,10 +36,9 @@
 util::replica_exchange_slave::replica_exchange_slave(io::Argument & _args,
                                                     unsigned int cont,
                                                     unsigned int globalThreadID,
-                                                    std::vector<std::vector<unsigned int> > replica_owned_threads,
-                                                    std::map<ID_t, rank_t> & thread_id_replica_map,
+                                                    replica_graph_mpi_control replicaGraphMPIControl,
                                                     simulation::mpi_control_struct replica_mpi_control) : 
-    replica_exchange_base(_args, cont, globalThreadID, replica_owned_threads, thread_id_replica_map, replica_mpi_control) {
+    replica_exchange_base(_args, cont, globalThreadID, replicaGraphMPIControl, replica_mpi_control) {
         DEBUG(4, "replica_exchange_slave "<< globalThreadID <<":Constructor:\t START");
 
         DEBUG(4, "replica_exchange_slave "<< globalThreadID <<":Constructor:\t DONE");
@@ -58,7 +57,7 @@ void util::replica_exchange_slave::send_to_master() const {
     info.partner = partnerReplicaID;
     info.probability = probability;
     info.switched = int(switched);
-    MPI_Send(&info, 1, MPI_REPINFO, globalMasterThreadID, REPINFO, MPI_COMM_WORLD);
+    MPI_Send(&info, 1, MPI_REPINFO, replicaGraphMPIControl.replicaGraphMasterID, REPINFO, replicaGraphMPIControl.replicaGraphCOMM);
 
   DEBUG(2,"replica_exchange_slave " << globalThreadID << ":\t send_to_master \t Done");
 #endif

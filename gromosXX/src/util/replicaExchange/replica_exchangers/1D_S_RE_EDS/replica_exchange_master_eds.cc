@@ -21,12 +21,11 @@
 util::replica_exchange_master_eds::replica_exchange_master_eds(io::Argument _args,
                                                                 unsigned int cont,
                                                                 unsigned int globalThreadID,
-                                                                std::vector<std::vector<unsigned int> >  replica_owned_threads,
-                                                                std::map<ID_t, rank_t> & thread_id_replica_map,
+                                                                replica_graph_mpi_control replicaGraphMPIControl,
                                                                 simulation::mpi_control_struct replica_mpi_control) :
-        replica_exchange_base(_args, cont, globalThreadID,  replica_owned_threads, thread_id_replica_map, replica_mpi_control),
-        replica_exchange_base_eds(_args, cont, globalThreadID,  replica_owned_threads, thread_id_replica_map, replica_mpi_control),
-        replica_exchange_master(_args, cont, globalThreadID, replica_owned_threads, thread_id_replica_map, replica_mpi_control)
+        replica_exchange_base(_args, cont, globalThreadID,  replicaGraphMPIControl, replica_mpi_control),
+        replica_exchange_base_eds(_args, cont, globalThreadID,  replicaGraphMPIControl, replica_mpi_control),
+        replica_exchange_master(_args, cont, globalThreadID, replicaGraphMPIControl, replica_mpi_control)
 {
     #ifdef XXMPI
     DEBUG(2,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t START");  
@@ -68,13 +67,12 @@ void util::replica_exchange_master_eds::receive_from_all_slaves() {
 
   // receive all information from slaves
   DEBUG(4,"replica_exchange_master_eds "<< globalThreadID <<":receive_from_all_slaves:\t receive from slaves");
-  DEBUG(4, "replica_exchange_master_eds "<< globalThreadID <<":receive_from_all_slaves:\t numReps: "<< numReplicas)
-  for (unsigned int slaveReplicaID = 0; slaveReplicaID < numReplicas; ++slaveReplicaID) {
+  DEBUG(4, "replica_exchange_master_eds "<< globalThreadID <<":receive_from_all_slaves:\t numReps: "<< replicaGraphMPIControl.numberOfReplicas)
+  for (unsigned int slaveReplicaID = 0; slaveReplicaID < replicaGraphMPIControl.numberOfReplicas; ++slaveReplicaID) {
     if (slaveReplicaID != simulationID) {
-        unsigned int replicaMasterThreadID = thread_id_replica_map.find(slaveReplicaID)->second;
-        DEBUG(2,"replica_exchange_master_eds "<< globalThreadID <<":receive_from_all_slaves:\t \t out of rank ID: " << replicaMasterThreadID);
-        MPI_Recv(&info, 1, MPI_REPINFO, replicaMasterThreadID, REPINFO, MPI_COMM_WORLD, &status);
-        DEBUG(2,"replica_exchange_master_eds "<< globalThreadID <<":receive_from_all_slaves:\t \t ID: " << replicaMasterThreadID);
+        DEBUG(2,"replica_exchange_master_eds "<< globalThreadID <<":receive_from_all_slaves:\t \t out of rank ID: " << replicaGraphMPIControl.replicaGraphMasterID);
+        MPI_Recv(&info, 1, MPI_REPINFO, slaveReplicaID, REPINFO, replicaGraphMPIControl.replicaGraphCOMM, &status);
+        DEBUG(2,"replica_exchange_master_eds "<< globalThreadID <<":receive_from_all_slaves:\t \t ID: " << replicaGraphMPIControl.replicaGraphMasterID);
         replicaData[slaveReplicaID].run = info.run;
         replicaData[slaveReplicaID].epot = info.epot;
         replicaData[slaveReplicaID].epot_partner = info.epot_partner;
@@ -83,9 +81,9 @@ void util::replica_exchange_master_eds::receive_from_all_slaves() {
         replicaData[slaveReplicaID].partner = info.partner;
         DEBUG(4,"replica_exchange_master_eds "<< globalThreadID <<":receive_from_all_slaves:\t REP:" <<slaveReplicaID<< " EpotTot: "<< replicaData[slaveReplicaID].epot);
 
-        MPI_Recv(&replicaData[slaveReplicaID].Vi[0],1, MPI_EDSINFO, replicaMasterThreadID, EDSINFO, MPI_COMM_WORLD, &status_eds);
+        MPI_Recv(&replicaData[slaveReplicaID].Vi[0],1, MPI_EDSINFO, slaveReplicaID, EDSINFO, replicaGraphMPIControl.replicaGraphCOMM, &status_eds);
         for(unsigned int s=0;s< replicaData[slaveReplicaID].Vi.size(); s++){
-            DEBUG(4,"replica_exchange_master_eds "<< replicaMasterThreadID <<":receive_from_all_slaves:\t "<< s << " En: "<< replicaData[slaveReplicaID].Vi[s]);
+            DEBUG(4,"replica_exchange_master_eds "<< replicaGraphMPIControl.replicaGraphMasterID <<":receive_from_all_slaves:\t "<< s << " En: "<< replicaData[slaveReplicaID].Vi[s]);
         }        
     }    
   }
@@ -135,7 +133,7 @@ void util::replica_exchange_master_eds::write() {
     DEBUG(2,"replica_exchange_master_eds "<< globalThreadID <<":write:\t START");
     DEBUG(2,"replica_exchange_master_eds "<< globalThreadID <<":write:\t svalPrecision "<<svalPrecision);
     
-    for (unsigned int treplicaID = 0; treplicaID < numReplicas; ++treplicaID) {
+    for (unsigned int treplicaID = 0; treplicaID < replicaGraphMPIControl.numberOfReplicas; ++treplicaID) {
       repOut << std::setw(6) << (replicaData[treplicaID].ID + 1)
               << " "
               << std::setw(6) << (replicaData[treplicaID].partner + 1)

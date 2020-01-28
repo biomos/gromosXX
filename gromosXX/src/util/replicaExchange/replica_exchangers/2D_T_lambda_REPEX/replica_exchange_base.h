@@ -66,8 +66,7 @@ namespace util {
     replica_exchange_base(io::Argument _args, 
                           unsigned int cont, 
                           unsigned int globalThreadID, 
-                          std::vector<std::vector<unsigned int> > replica_owned_threads, 
-                          std::map<ID_t, rank_t>& thread_id_replica_map, 
+                          replica_graph_mpi_control replicaGraphMPIControl,
                           simulation::mpi_control_struct replica_mpi_control);
     /**
      * Destructor
@@ -131,11 +130,7 @@ namespace util {
     /**
      * ID of the Master Thread for this RE-Graph
      */
-    unsigned int globalMasterThreadID;
-    /**
-     *  simulation ID - to which simulation does this thread belong?
-     */
-    unsigned int numReplicas;
+    struct replica_graph_mpi_control replicaGraphMPIControl;
 
     
     ////Simulation_MPI
