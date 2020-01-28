@@ -545,12 +545,10 @@ int main(int argc, char *argv[]) {
         try {
             if (reedsSim) {
                 DEBUG(1, "Master_eds \t Constructor")    
-                Master = new util::replica_exchange_master_eds(args, cont, globalThreadID, 
-                        replica_owned_threads, thread_id_replica_map, replica_mpi_control);
+                Master = new util::replica_exchange_master_eds(args, cont, globalThreadID, reGMPI, replica_mpi_control);
             } else {
                 DEBUG(1, "Master \t Constructor")
-                Master = new util::replica_exchange_master(args, cont, globalThreadID, 
-                        replica_owned_threads, thread_id_replica_map, replica_mpi_control);
+                Master = new util::replica_exchange_master(args, cont, globalThreadID, reGMPI, replica_mpi_control);
             }
         } catch (...) {
             std::cerr << "\n\t########################################################\n"
@@ -618,10 +616,10 @@ int main(int argc, char *argv[]) {
         util::replica_exchange_slave* Slave;
         if (reedsSim) {
             Slave = new util::replica_exchange_slave_eds(args, cont, globalThreadID, 
-                    replica_owned_threads, thread_id_replica_map, replica_mpi_control);
+                    reGMPI, replica_mpi_control);
         } else {
             Slave = new util::replica_exchange_slave(args, cont, globalThreadID, 
-                    replica_owned_threads, thread_id_replica_map, replica_mpi_control);
+                    reGMPI, replica_mpi_control);
         }
 
         MPI_DEBUG(1, "Slave " << globalThreadID << " \t INIT")
