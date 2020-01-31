@@ -96,7 +96,7 @@ void util::replica_exchange_base_eds::createReplicas(int cont, int globalThreadI
   //give the correct replica vals to simulation
   eds_para = replica->sim.param().reeds.eds_para[simulationID];
   replica->sim.param().eds = eds_para;
-    //TODO: Still ugly ! l==s bschroed
+  //TODO: Still ugly ! l==s bschroed
   l = replica->sim.param().eds.s[0];    //todoAssume only 1s EDS
 }
 
