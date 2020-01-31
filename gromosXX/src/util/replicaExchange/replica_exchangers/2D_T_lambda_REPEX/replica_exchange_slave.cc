@@ -5,8 +5,8 @@
  * Created on April 29, 2011, 2:06 PM
  */
 
-#define REPEX_MPI
 #include "util/replicaExchange/replica_mpi_tools.h"
+#include <util/replicaExchange/replica_exchangers/replica_exchange_slave_interface.h>
 #include <util/replicaExchange/replica_exchangers/2D_T_lambda_REPEX/replica_exchange_slave.h>
 
 #include <stdheader.h>
@@ -26,8 +26,6 @@
 
 #include <io/configuration/out_configuration.h>
 
-#include <util/replicaExchange/repex_mpi.h>
-#include <util/replicaExchange/replica_exchangers/2D_T_lambda_REPEX/replica_exchange_base.h>
 
 #ifdef XXMPI
 #include <mpi.h>
@@ -38,7 +36,9 @@ util::replica_exchange_slave::replica_exchange_slave(io::Argument & _args,
                                                     unsigned int globalThreadID,
                                                     replica_graph_mpi_control replicaGraphMPIControl,
                                                     simulation::mpi_control_struct replica_mpi_control) : 
-    replica_exchange_base(_args, cont, globalThreadID, replicaGraphMPIControl, replica_mpi_control) {
+        replica_exchange_base_interface(_args, cont, globalThreadID, replicaGraphMPIControl, replica_mpi_control),
+        replica_exchange_base(_args, cont, globalThreadID, replicaGraphMPIControl, replica_mpi_control),
+        replica_exchange_slave_interface(_args, cont, globalThreadID, replicaGraphMPIControl, replica_mpi_control) {
         DEBUG(4, "replica_exchange_slave "<< globalThreadID <<":Constructor:\t START");
 
         DEBUG(4, "replica_exchange_slave "<< globalThreadID <<":Constructor:\t DONE");
@@ -47,18 +47,3 @@ util::replica_exchange_slave::replica_exchange_slave(io::Argument & _args,
 util::replica_exchange_slave::~replica_exchange_slave() {
 }
 
-void util::replica_exchange_slave::send_to_master() const {
-#ifdef XXMPI
-  DEBUG(2,"replica_exchange_slave " << globalThreadID << ":send_to_master \t START");
-    util::repInfo info;
-    info.run = run;
-    info.epot = epot;
-    info.epot_partner = epot_partner;
-    info.partner = partnerReplicaID;
-    info.probability = probability;
-    info.switched = int(switched);
-    MPI_Send(&info, 1, MPI_REPINFO, replicaGraphMPIControl.replicaGraphMasterID, REPINFO, replicaGraphMPIControl.replicaGraphCOMM);
-
-  DEBUG(2,"replica_exchange_slave " << globalThreadID << ":\t send_to_master \t Done");
-#endif
-}

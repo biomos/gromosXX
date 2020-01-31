@@ -10,7 +10,7 @@
  *
  * Created on April 18, 2018, 3:38 PM
  */
-#include <util/replicaExchange/replica_exchangers/2D_T_lambda_REPEX/replica_exchange_base.h>
+#include <util/replicaExchange/replica_exchangers/replica_exchange_base_interface.h>
 #include <util/replicaExchange/replica_data.h>
 #include <util/replicaExchange/repex_mpi.h>
 
@@ -52,7 +52,7 @@
 
 namespace util
 {
-     class replica_exchange_base_eds : public virtual replica_exchange_base {
+     class replica_exchange_base_eds : public virtual replica_exchange_base_interface {
     public:
         replica_exchange_base_eds(io::Argument _args, 
                 unsigned int cont, 
@@ -115,11 +115,7 @@ namespace util
          * Sets  eds_struct() parameters to value of partner (for energy calculations)
          */
         void change_eds(const unsigned int partner);
-       
-        
-        //init Replicas - used in contstructor, initialises the replica objs.
-        void createReplicas(int cont, int rank, simulation::mpi_control_struct replica_mpi_control) override;
-        
+               
         //TODO
         /*
         * energy calculation for statistical purposes of eds_stat() in replica_exchange_base.cc

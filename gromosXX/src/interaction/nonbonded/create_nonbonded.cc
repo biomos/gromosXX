@@ -218,14 +218,12 @@ int interaction::create_g96_nonbonded
         std::cout << "left_over "<< leftOverThreads << "\n";
 
         for (int replicaSimulationID = 0; replicaSimulationID < num_replicas; replicaSimulationID++) {
-           std::cout << "iters "<< replicaSimulationID << "\n";
            for (int replicaSimulationSubThread = 0; replicaSimulationSubThread < threadsPerReplicaSimulation; replicaSimulationSubThread++) {
                threadID = replicaSimulationSubThread + replicaSimulationID*threadsPerReplicaSimulation+replica_offset;
                replicaThreadsMapping[replicaSimulationID].push_back(threadID);
 
            }
            if(leftOverThreads>0 and replicaSimulationID < leftOverThreads){    //left over threads are evenly distirbuted
-               std::cout << "fix "<< leftOverThreads << "\n";
                threadID = threadsPerReplicaSimulation + replicaSimulationID*size+replica_offset;
                replicaThreadsMapping[replicaSimulationID].push_back(threadID);
                replica_offset++;

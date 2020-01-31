@@ -206,14 +206,14 @@ void util::replica::run_MD() {
     }
     
     
-    DEBUG(5, "replica "<< globalThreadID <<":run_MD:\t clean up:");      
+    DEBUG(6, "replica "<< globalThreadID <<":run_MD:\t clean up:");      
     traj->print(topo, conf, sim);
 
     ++sim.steps();
     sim.time() = sim.param().step.t0 + sim.steps() * sim.time_step_size();
 
   } // main md loop
-  DEBUG(4, "replica "<< globalThreadID <<":run_MD:\t  DONE:");      
+  DEBUG(6, "replica "<< globalThreadID <<":run_MD:\t  DONE:");      
   
   // print final data of run
   if (curentStepNumber ==  totalStepNumber) {

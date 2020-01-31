@@ -24,8 +24,9 @@
 #include <unistd.h>
 
 #include <io/configuration/out_configuration.h>
-#include <util/replicaExchange/repex_mpi.h>
+#include <util/replicaExchange/replica_exchangers/replica_exchange_master_interface.h>
 #include <util/replicaExchange/replica_exchangers/2D_T_lambda_REPEX/replica_exchange_base.h>
+
 #include <util/replicaExchange/replica/replica.h>
 #include <util/replicaExchange/replica_data.h>
 
@@ -42,7 +43,7 @@ namespace util {
    * @class replica_exchange_master
    * Additionally to replica_exchange_base: receives and writes data to file.
    */
-  class replica_exchange_master : public virtual replica_exchange_base {
+  class replica_exchange_master : public virtual replica_exchange_base, public virtual replica_exchange_master_interface {
   public:
     /**
      * constructor
@@ -62,52 +63,6 @@ namespace util {
      * Destructor
      */
     virtual ~replica_exchange_master();
-    
-    //Simulation functions
-    /**
-     * receives all information written to output file from the slaves
-     */
-    virtual void receive_from_all_slaves();
-    /**
-     * writes data to output file \@repdat
-     */
-    virtual void write();
-    
- 
-    virtual void init_repOut_stat_file();
-    
-  protected:
-
-
-    /**
-     * output file stream for repdat output file
-     */
-    std::ofstream repOut;
-    
-    /*
-     * global Parameters for replica exchange simulation
-     * int num_T;
-     * int num_l;
-     * std::vector<double> temperature;
-     * bool scale;
-     * std::vector<double> lambda;
-     * std::vector<double> dt;
-     * int trials;
-     * int equilibrate;
-     * int slave_runs;
-     * int write;
-     */
-    const simulation::Parameter::replica_struct& repParams;
-
-    /**
-     * information of all replicas
-     */
-    std::vector<util::replica_data> replicaData;
-    /**
-     * output file Path for repdat output file
-     */
-    std::string repdatName;
-    //virtual void init_repOut_stat_file(std::string repoutPath);
 
   };
 }

@@ -11,7 +11,6 @@
  * Created on August 31, 2018, 10:43 AM
  */
 #include "util/replicaExchange/replica_mpi_tools.h"
-
 #include <util/replicaExchange/replica_exchangers/1D_S_RE_EDS/replica_exchange_slave_eds.h>
 
 
@@ -25,9 +24,9 @@ util::replica_exchange_slave_eds::replica_exchange_slave_eds(io::Argument & _arg
                                                             unsigned int globalThreadID,
                                                             replica_graph_mpi_control replicaGraphMPIControl,
                                                             simulation::mpi_control_struct replica_mpi_control):
-            replica_exchange_base(_args, cont, globalThreadID, replicaGraphMPIControl, replica_mpi_control),
+            replica_exchange_base_interface(_args, cont, globalThreadID, replicaGraphMPIControl, replica_mpi_control),
             replica_exchange_base_eds(_args, cont, globalThreadID, replicaGraphMPIControl, replica_mpi_control),
-            replica_exchange_slave(_args, cont, globalThreadID, replicaGraphMPIControl, replica_mpi_control)
+            replica_exchange_slave_interface(_args, cont, globalThreadID, replicaGraphMPIControl, replica_mpi_control)
 {
 
     DEBUG(2,"replica_exchange_slave_eds " << globalThreadID << ":Constructor:\t START");

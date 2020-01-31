@@ -11,10 +11,9 @@
  * Created on August 31, 2018, 10:43 AM
  */
 
+#include <util/replicaExchange/replica_exchangers/replica_exchange_slave_interface.h>
 #include <util/replicaExchange/replica_exchangers/1D_S_RE_EDS/replica_exchange_base_eds.h>
-#include <util/replicaExchange/replica_exchangers/2D_T_lambda_REPEX/replica_exchange_slave.h>
 //for the constructor
-#include <util/replicaExchange/replica_exchangers/2D_T_lambda_REPEX/replica_exchange_base.h>
 #include <stdheader.h>
 
 #include <algorithm/algorithm.h>
@@ -40,7 +39,7 @@
 #define REPLICA_EXCHANGE_SLAVE_EDS_H
 
 namespace util{
-    class replica_exchange_slave_eds: public replica_exchange_base_eds, public replica_exchange_slave {
+    class replica_exchange_slave_eds: public replica_exchange_base_eds, public replica_exchange_slave_interface {
     public:
         replica_exchange_slave_eds(io::Argument & _args,
                 unsigned int cont,
