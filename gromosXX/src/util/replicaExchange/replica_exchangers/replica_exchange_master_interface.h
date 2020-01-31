@@ -25,16 +25,17 @@
 
 #include <io/configuration/out_configuration.h>
 #include <util/replicaExchange/repex_mpi.h>
-#include <util/replicaExchange/replica_exchangers/replica_exchange_base_interface.h>
 #include <util/replicaExchange/replica/replica.h>
 #include <util/replicaExchange/replica_data.h>
+#include <util/replicaExchange/replica_exchangers/replica_exchange_base_interface.h>
+
 
 #ifdef XXMPI
 #include <mpi.h>
 #endif
 
-#ifndef REPLICA_EXCHANGE_MASTER_H
-#define	REPLICA_EXCHANGE_MASTER_H
+#ifndef REPLICA_EXCHANGE_MASTER_INTERFACE_H
+#define	REPLICA_EXCHANGE_MASTER_INTERFACE_H
 
 namespace util {
 
@@ -71,10 +72,10 @@ namespace util {
     /**
      * writes data to output file \@repdat
      */
-    virtual void write() = 0;
+    virtual void write();
     
  
-    virtual void init_repOut_stat_file() = 0;
+    virtual void init_repOut_stat_file();
     
   protected:
 

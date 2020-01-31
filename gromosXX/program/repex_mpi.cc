@@ -519,10 +519,12 @@ int main(int argc, char *argv[]) {
     //    throw "using more than 1 thread per replica is currently not implemented!";
     //}
     
-    std::cout << "FINISHED MPI MAPPING!\n\n";
-    MPI_Comm_free(&replica_mpi_control.simulationCOMM); //Clean up
-    MPI_Finalize();
-    return 0;
+    MPI_DEBUG(1, "FINISHED MPI MAPPING!\n\n");
+    //MPI_Comm_free(&replica_mpi_control.simulationCOMM); //Clean up
+    //MPI_Comm_free(&reGMPI.replicaGraphCOMM); //Clean up
+
+    //MPI_Finalize();
+    //return 0;
     
     //////////////////////////////
     /// Starting master-slave Pattern
@@ -541,26 +543,19 @@ int main(int argc, char *argv[]) {
         MPI_DEBUG(1, "Master \t " << globalThreadID<< "simulation: " << subThreadOfSimulation)
 
         // Select repex Implementation - Polymorphism
-        util::replica_exchange_master* Master;
-        try {
-            if (reedsSim) {
-                DEBUG(1, "Master_eds \t Constructor")    
-                Master = new util::replica_exchange_master_eds(args, cont, globalThreadID, reGMPI, replica_mpi_control);
-            } else {
-                DEBUG(1, "Master \t Constructor")
-                Master = new util::replica_exchange_master(args, cont, globalThreadID, reGMPI, replica_mpi_control);
-            }
-        } catch (...) {
-            std::cerr << "\n\t########################################################\n"
-                    << "\n\t\tErrors during Master Class Init!\n"
-                    << "\n\t########################################################\n";
-            std::cerr << "\nREPEX:       Failed in initialization of Replica rank: " << globalThreadID << "" << std::endl;
-            std::cout << "\nREPEX:       Failed in initialization of Replica rank: " << globalThreadID << "" << std::endl;
-            MPI_Abort(MPI_COMM_WORLD, E_USAGE);
-            return 1;
+
+        util::replica_exchange_master_interface * Master;
+
+        if (reedsSim) {
+            DEBUG(1, "Master_eds \t Constructor")    
+            Master = new util::replica_exchange_master_eds(args, cont, globalThreadID, reGMPI, replica_mpi_control);
+        } else {
+            DEBUG(1, "Master \t Constructor");
+            Master = new util::replica_exchange_master(args, cont, globalThreadID, reGMPI, replica_mpi_control);
         }
 
         MPI_DEBUG(1, "Master \t INIT")
+                
         Master->init();
         Master->init_repOut_stat_file();
 
@@ -613,16 +608,16 @@ int main(int argc, char *argv[]) {
         MPI_DEBUG(1, "Slave " << globalThreadID << "simulation: " << subThreadOfSimulation)
 
         // Select repex Implementation - Polymorphism
-        util::replica_exchange_slave* Slave;
-        if (reedsSim) {
-            Slave = new util::replica_exchange_slave_eds(args, cont, globalThreadID, 
-                    reGMPI, replica_mpi_control);
-        } else {
-            Slave = new util::replica_exchange_slave(args, cont, globalThreadID, 
-                    reGMPI, replica_mpi_control);
-        }
+        util::replica_exchange_slave_interface* Slave;
 
+        if (reedsSim) {
+            Slave = new util::replica_exchange_slave_eds(args, cont, globalThreadID, reGMPI, replica_mpi_control);
+        } else {
+            Slave = new util::replica_exchange_slave(args, cont, globalThreadID, reGMPI, replica_mpi_control);
+        }
+         
         MPI_DEBUG(1, "Slave " << globalThreadID << " \t INIT")
+                
         Slave->init();
 
         //do md:
@@ -671,7 +666,8 @@ int main(int argc, char *argv[]) {
         std::cerr << "TOTAL TIME USED: \n\th:min:s\t\tseconds\n"
                 << "\t" << durationHour << ":" << durationMinlHour << ":" << durationSlMin << "\t\t" << duration << "\n";
     }
-
+    
+    MPI_Comm_free(&reGMPI.replicaGraphCOMM); //Clean up
     MPI_Comm_free(&replica_mpi_control.simulationCOMM); //Clean up
     MPI_Finalize();
     return 0;

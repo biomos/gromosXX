@@ -29,7 +29,7 @@
 #include <io/configuration/out_configuration.h>
 #include "util/replicaExchange/replica_mpi_tools.h"
 #include <util/replicaExchange/replica/replica.h>
-#include <util/replicaExchange/replica_exchangers/2D_T_lambda_REPEX/replica_exchange_base.h>
+#include <util/replicaExchange/replica_exchangers/replica_exchange_master_interface.h>
 #include <util/replicaExchange/replica_exchangers/2D_T_lambda_REPEX/replica_exchange_master.h>
 
 #include <string>
@@ -48,9 +48,9 @@ util::replica_exchange_master::replica_exchange_master(io::Argument & args,
         unsigned int globalThreadID,
         replica_graph_mpi_control replicaGraphMPIControl,
         simulation::mpi_control_struct replica_mpi_control) :
+        replica_exchange_base_interface(args, cont, globalThreadID, replicaGraphMPIControl, replica_mpi_control),
         replica_exchange_base(args, cont, globalThreadID, replicaGraphMPIControl, replica_mpi_control),
-        repParams(replica->sim.param().replica),
-        repdatName(args["repdat"])
+        replica_exchange_master_interface(args, cont, globalThreadID, replicaGraphMPIControl, replica_mpi_control)
 {
 #ifdef XXMPI
   DEBUG(2,"replica_exchange_master "<< globalThreadID <<":Constructor:\t START");
@@ -92,115 +92,3 @@ util::replica_exchange_master::~replica_exchange_master() {
    repOut.close();
 }
 
-void util::replica_exchange_master::receive_from_all_slaves() {
-    #ifdef XXMPI
-    DEBUG(2,"replica_exchange_master "<< globalThreadID <<":receive_from_all_slaves:\t START\n");
-    double start = MPI_Wtime();
-
-    MPI_Status status;
-    util::repInfo info;
-
-    // receive all information from slaves
-    for (unsigned int slaveReplicaID = 0; slaveReplicaID < replicaGraphMPIControl.numberOfReplicas; ++slaveReplicaID) {
-      if (slaveReplicaID != simulationID) {
-        unsigned int replicaMasterThreadID = replica_owned_threads[slaveReplicaID][0];
-        DEBUG(2,"replica_exchange_master "<< globalThreadID <<":receive_from_all_slaves:\t get_MPI replicaMasterThread: "<< replicaMasterThreadID << "\n");
-        MPI_Recv(&info, 1, MPI_REPINFO, replicaMasterThreadID, REPINFO,  replicaGraphMPIControl.replicaGraphCOMM, &status);
-        replicaData[slaveReplicaID].run = info.run;
-        replicaData[slaveReplicaID].epot = info.epot;
-        replicaData[slaveReplicaID].epot_partner = info.epot_partner;
-        replicaData[slaveReplicaID].probability = info.probability;
-        replicaData[slaveReplicaID].switched = info.switched;
-        replicaData[slaveReplicaID].partner = info.partner;
-      }
-      DEBUG(2,"replica_exchange_master "<< globalThreadID <<":receive_from_all_slaves:\t got all MPI reps\n");
-
-      // write all information from master node to data structure
-      replicaData[simulationID].run = run;
-      replicaData[simulationID].partner = partnerReplicaID;
-      replicaData[simulationID].epot = epot;
-      replicaData[simulationID].epot_partner = epot_partner;
-      replicaData[simulationID].probability = probability;
-      replicaData[simulationID].switched = switched;
-    }
-    DEBUG(2,"replica_exchange_master "<< globalThreadID <<":receive_from_all_slaves:\t " << "time used for receiving all messages: " << MPI_Wtime() - start << " seconds\n");
-    DEBUG(2,"replica_exchange_master "<< globalThreadID <<":receive_from_all_slaves:\t DONE: \n");
-    #else
-     throw "Cannot use replica_exchange_master without MPI!"; 
-    #endif
-}
-
-  
-void util::replica_exchange_master::init_repOut_stat_file() {
-  DEBUG(2,"replica_exchange_master "<< globalThreadID <<":init_repOut_stat_file:\t START");
-  repOut.open(repdatName.c_str());
-  DEBUG(2,"replica_exchange_master "<< globalThreadID <<":init_repOut_stat_file:\t  repdat file open ");
-
-  repOut << "Number of temperatures:\t" << repParams.num_T << "\n"
-         << "Number of lambda values:\t" << repParams.num_l << "\n";
-  
-  DEBUG(2,"replica_exchange_master "<< globalThreadID <<":init_repOut_stat_file:\t set precision ");
-  repOut.precision(4);
-  repOut.setf(std::ios::fixed, std::ios::floatfield);
-  
-  DEBUG(2,"replica_exchange_master "<< globalThreadID <<":init_repOut_stat_file:\t write Temperatures ");
-  repOut << "T    \t";
-  for (int t = 0; t < repParams.num_T; ++t){
-    DEBUG(2,"replica_exchange_master "<< globalThreadID <<":init_repOut_stat_file:\t it: "<<  t);
-    DEBUG(2,"replica_exchange_master "<< globalThreadID <<":init_repOut_stat_file:\t T: "<<  repParams.temperature[t]);
-    repOut << std::setw(12) << repParams.temperature[t];
-  }
-  
-  DEBUG(2,"replica_exchange_master "<< globalThreadID <<":init_repOut_stat_file:\t write lambdas ");
-  repOut << "\nlambda    \t";
-  for (int l = 0; l < repParams.num_l; ++l){
-    repOut << std::setw(12) << repParams.lambda[l];
-  }
-
-  repOut << "\n\n";
-
-  repOut << "#"
-          << std::setw(6) << "ID"
-          << " "
-          << std::setw(6) << "partner"
-          << std::setw(6) << "run"
-          << " "
-          << std::setw(13)  << "li"
-          << std::setw(13)  << "Ti"
-          << std::setw(18)  << "Epoti"
-          << std::setw(13)  << "lj"
-          << std::setw(13)  << "Tj"
-          << std::setw(18)  << "Epotj"
-          << std::setw(13)  << "p"
-          << std::setw(6) << "exch";
-  repOut << "\n";
-}
-
-
-void util::replica_exchange_master::write() {
-   DEBUG(2,"replica_exchange_master "<< globalThreadID <<":write:\t START");
-
-  for (unsigned int treplicaID = 0; treplicaID < replicaGraphMPIControl.numberOfReplicas; ++treplicaID) {
-    repOut << std::setw(6) << (replicaData[treplicaID].ID + 1)
-            << " "
-            << std::setw(6) << (replicaData[treplicaID].partner + 1)
-            << std::setw(6) << replicaData[treplicaID].run
-            << std::setw(13) << replicaData[treplicaID].l
-            << std::setw(13) << replicaData[treplicaID].T
-            << " "
-            << std::setw(18) << replicaData[treplicaID].epot
-            << std::setw(13) << replicaData[replicaData[treplicaID].partner].l
-            << std::setw(13) << replicaData[replicaData[treplicaID].partner].T
-            << " ";
-    if(replicaData[treplicaID].l == replicaData[replicaData[treplicaID].partner].l)
-	repOut << std::setw(18) << replicaData[replicaData[treplicaID].partner].epot;
-    else
-        repOut << std::setw(18) << replicaData[treplicaID].epot_partner;
-    repOut  << std::setw(13) << replicaData[treplicaID].probability
-            << std::setw(6) << replicaData[treplicaID].switched
-            << std::endl;
-  }
-  DEBUG(2,"replica_exchange_master "<< globalThreadID <<":write:\t DONE");
-
-}
-  

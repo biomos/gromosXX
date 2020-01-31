@@ -26,15 +26,14 @@
 
 #include <io/configuration/out_configuration.h>
 #include <util/replicaExchange/replica_exchangers/replica_exchange_base_interface.h>
-#include <util/replicaExchange/repex_mpi.h>
 #include <util/replicaExchange/replica/replica.h>
 
 #ifdef XXMPI
 #include <mpi.h>
 #endif
 
-#ifndef REPLICA_EXCHANGE_SLAVE_H
-#define	REPLICA_EXCHANGE_SLAVE_H
+#ifndef REPLICA_EXCHANGE_SLAVE_INTERFACE_H
+#define	REPLICA_EXCHANGE_SLAVE_INTERFACE_H
 
 namespace util {
 
