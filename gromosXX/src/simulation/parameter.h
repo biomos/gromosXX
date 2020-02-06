@@ -760,7 +760,11 @@ namespace simulation
       /**
        * use MOPAC
        */
-    qm_mopac = 3
+    qm_mopac = 3,
+      /**
+       * use Gaussian
+       */
+    qm_gaussian = 4
   };
 
   /**
@@ -3727,11 +3731,20 @@ namespace simulation
          */
         std::string output_gradient_file;
       } mopac;
+
       /**
-       * pointer to the interaction class such the the QM/MM interaction
-       * can be easily passed to other algorithms
+       * Gaussian specific parameters
        */
-      //interaction::QMMM_Interaction * interaction; // This I dont like here
+      struct gaussian_param_struct : public qm_param_struct{
+        /**
+         * route section of the input file
+         */
+        std::string route_section;
+        /**
+         * total charge and spin multiplicity in the input file
+         */
+        std::string chm;
+      } gaussian;
     } qmmm;
     
     struct symrest_struct {

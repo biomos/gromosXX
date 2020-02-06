@@ -1,42 +1,42 @@
 /**
- * @file mndo_worker.h
- * The worker class for the MNDO QM software
+ * @file gaussian_worker.h
+ * The worker class for the Gaussian QM software
  */
-#ifndef INCLUDED_MNDO_WORKER_H
-#define	INCLUDED_MNDO_WORKER_H
+#ifndef INCLUDED_GAUSSIAN_WORKER_H
+#define	INCLUDED_GAUSSIAN_WORKER_H
 
 //#include "qm_worker.h"
 
 //#include "../../../simulation/simulation.h"
 
 namespace simulation {
-  struct mndo_param_struct;
+  struct gaussian_param_struct;
 }
 
 namespace interaction {
   class QM_Worker;
   class QM_Zone;
   /**
-   * @class MNDO_Worker
-   * a worker class which calls the MNDO software
+   * @class Gaussian_Worker
+   * a worker class which calls the Gaussian software
    */
-  class MNDO_Worker : public QM_Worker {
+  class Gaussian_Worker : public QM_Worker {
   public:
     /**
      * Constructor
      */
-    MNDO_Worker();
+    Gaussian_Worker();
     /**
      * Destructor
      */
-    virtual ~MNDO_Worker();
+    virtual ~Gaussian_Worker();
     /**
      * initialise the QM worker
      * @return 0 if successful, non-zero on failure
      */
     virtual int init(const simulation::Simulation& sim);
     /**
-     * run a QM job in MNDO
+     * run a QM job in Gaussian
      * @param qm_pos a vector containing the QM atom positions
      * @param mm_atoms the MM atoms to include
      * @param storage the energies, forces, charges obtained
@@ -47,7 +47,7 @@ namespace interaction {
     /**
      * Make a copy of input parameters to make modifications and restrict access
      */
-    simulation::Parameter::qmmm_struct::mndo_param_struct* param;
+    simulation::Parameter::qmmm_struct::gaussian_param_struct* param;
 
     /**
      * Write input file for QM
@@ -83,6 +83,12 @@ namespace interaction {
     void write_mm_atom(std::ofstream& inputfile_stream
                       , const math::Vec& pos
                       , const double charge);
+
+    /**
+     * Write MM position
+     */
+    void write_mm_pos(std::ofstream& inputfile_stream
+                      , const math::Vec& pos);
 
     /**
      * Parse charges
@@ -125,9 +131,9 @@ namespace interaction {
    * Parse gradients of polarisable MM atoms
    */
   template<>
-  int MNDO_Worker::_parse_gradients<interaction::MM_Atom>
+  int Gaussian_Worker::_parse_gradients<interaction::MM_Atom>
         (std::ifstream& ofs, std::set<interaction::MM_Atom>& atom_set);
 }
 
-#endif	/* MNDO_WORKER_H */
+#endif	/* GAUSSIAN_WORKER_H */
 
