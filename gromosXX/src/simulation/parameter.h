@@ -762,9 +762,9 @@ namespace simulation
        */
     qm_mopac = 3,
       /**
-       * use MOPAC
+       * use Schnetpack NN
        */
-    qm_nn = 4
+    qm_nn = 5
   };
 
   /**
