@@ -3639,6 +3639,10 @@ namespace simulation
          */
         double unit_factor_energy;
         /**
+         * factor to convert the QM energy unit to the GROMOS one
+         */
+        double unit_factor_force;
+        /**
          * factor to convert the QM charge unit to the GROMOS one
          */
         double unit_factor_charge;

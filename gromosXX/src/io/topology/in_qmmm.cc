@@ -78,10 +78,11 @@ END
 QMUNIT
 # QMULEN: Conversion factor to convert the QM length unit to the GROMOS one
 # QMUENE: Conversion factor to convert the QM energy unit to the GROMOS one
+# QMUFOR: Conversion factor to convert the QM force unit to the GROMOS one
 # QMUCHR: Conversion factor to convert the QM charge unit to the GROMOS one
 #
-# QMULEN    QMUENE    QMUCHR
-     0.1     4.184       1.0
+# QMULEN    QMUENE    QMUFOR    QMUCHR
+     0.1     4.184     41.84       1.0
 END
 @endverbatim
  * @section cap_length CAPLEN block
@@ -597,40 +598,47 @@ void io::In_QMMM::read_elements(const topology::Topology& topo
 void io::In_QMMM::read_units(const simulation::Simulation& sim
                   , simulation::Parameter::qmmm_struct::qm_param_struct* qm_param)
   {
-  std::map<simulation::qm_software_enum, std::array<double, 3> >
+  std::map<simulation::qm_software_enum, std::array<double, 4> >
   unit_factor_defaults = {
     {simulation::qm_mndo,
                     { math::angstrom /* A */
                     , math::kcal /* kcal */
+                    , math::kcal / math::angstrom /* kcal/A*/
                     , math::echarge /* e */}},
     {simulation::qm_turbomole,
-                    { math::bohr /* a.u. -> nm */
+                    { math::bohr /* a.u. */
                     , math::hartree * math::avogadro /* a.u. */
+                    , math::hartree * math::avogadro / math::bohr /* a.u. */
                     , math::echarge /* e */}},
     {simulation::qm_dftb,
-                    { math::bohr /* a.u. -> nm */
+                    { math::bohr /* a.u. */
                     , math::hartree * math::avogadro /* a.u. */
+                    , math::hartree * math::avogadro / math::bohr /* a.u. */
                     , math::echarge /* e */}},
     {simulation::qm_mopac,
-                    {math::angstrom /* A */
+                    { math::angstrom /* A */
                     , math::kcal /* kcal */
+                    , math::kcal / math::angstrom /* kcal/A */
                     , math::echarge /* e */}},
     {simulation::qm_gaussian,
-                    {math::angstrom /* A */
+                    { math::angstrom /* A */
                     , math::hartree * math::avogadro /* a.u. */
+                    , math::hartree * math::avogadro / math::bohr /* a.u. */
                     , math::echarge /* e */}}
   };
 
   std::vector<std::string> buffer = m_block["QMUNIT"];
   if (!buffer.size()) {
-    std::array<double, 3> defaults = unit_factor_defaults[sim.param().qmmm.software];
+    std::array<double, 4> defaults = unit_factor_defaults[sim.param().qmmm.software];
     qm_param->unit_factor_length = defaults[0];
     qm_param->unit_factor_energy = defaults[1];
-    qm_param->unit_factor_charge = defaults[2];
+    qm_param->unit_factor_force  = defaults[2];
+    qm_param->unit_factor_charge = defaults[3];
     std::ostringstream msg;
     msg << "Using default QMUNIT: "
         << qm_param->unit_factor_length << ", "
         << qm_param->unit_factor_energy << ", "
+        << qm_param->unit_factor_force << ", "
         << qm_param->unit_factor_charge;
     io::messages.add(msg.str(),"In_QMMM", io::message::notice);
     return;
@@ -640,6 +648,7 @@ void io::In_QMMM::read_units(const simulation::Simulation& sim
 
   _lineStream >> qm_param->unit_factor_length
               >> qm_param->unit_factor_energy
+              >> qm_param->unit_factor_force
               >> qm_param->unit_factor_charge;
 
   if (_lineStream.fail()) {

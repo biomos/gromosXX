@@ -383,13 +383,12 @@ template<class AtomType>
 int interaction::Gaussian_Worker::_parse_gradients(std::ifstream& ofs,
                                                std::set<AtomType>& atom_set) {
   int err = 0;
-  const double unit_factor =
-      this->param->unit_factor_energy / this->param->unit_factor_length;
   typename std::set<AtomType>::iterator it, to;
   for(it = atom_set.begin(), to = atom_set.end(); it != to; ++it) {
-    DEBUG(15, "Parsing gradient of atom " << it->index);
-    err = this->parse_gradient(ofs, it->index, it->force, unit_factor);
+    DEBUG(15, "Parsing force of QM atom " << it->index);
+    err = this->parse_gradient(ofs, it->index, it->force, this->param->unit_factor_force);
     if (err) return err;
+    DEBUG(15, "stored force on QM atom " << it->index << ": " << math::v2s(it->force));
   }
   return 0;
 }
@@ -399,23 +398,23 @@ int interaction::Gaussian_Worker::_parse_gradients
                                         (std::ifstream& ofs
                                        , std::set<interaction::MM_Atom>& atom_set) {
   int err = 0;
-  const double unit_factor =
-      this->param->unit_factor_energy / this->param->unit_factor_length;
   std::set<interaction::MM_Atom>::iterator it, to;
   for(it = atom_set.begin(), to = atom_set.end(); it != to; ++it) {
     int i = it->index;
-    DEBUG(15, "Parsing gradient of MM atom " << i);
-    err = this->parse_gradient(ofs, i, it->force, unit_factor);
+    DEBUG(15, "Parsing electric field on MM atom " << i);
+    err = this->parse_gradient(ofs, i, it->force, this->param->unit_factor_force);
     if (err) return err;
     // We still need to multiply by charge, since here we parsed electric field only
     if (it->is_polarisable) {
       it->force *= it->charge - it->cos_charge;
-      err = this->parse_gradient(ofs, i, it->cos_force, unit_factor);
+      err = this->parse_gradient(ofs, i, it->cos_force, this->param->unit_factor_force);
       if (err) return err;
       it->cos_force *= it->cos_charge;
     }
     else {
+      DEBUG(15, "Charge of atom " << i << ": " << it->charge);
       it->force *= it->charge;
+      DEBUG(12, "stored force on MM atom " << i << ": " << math::v2s(it->force));
     }
   }
   return 0;
@@ -430,14 +429,14 @@ int interaction::Gaussian_Worker::parse_gradient(std::ifstream& ofs,
   std::string dummy;
   if(!std::getline(ofs, line)) {
     std::ostringstream msg;
-    msg << "Failed to read gradient of atom " << (index)
+    msg << "Failed to read gradient line of atom " << (index)
         << " in " << this->param->output_file;
     io::messages.add(msg.str(), this->name(), io::message::error);
     return 1;
   }
   std::istringstream iss(line);
   iss >> dummy >> dummy >> gradient(0) >> gradient(1) >> gradient(2);
-  DEBUG(15, "Parsed gradient of atom " << index << ": " << math::v2s(gradient));
+  DEBUG(12, "Parsed gradient line of atom " << index << ": " << math::v2s(gradient));
   if (iss.fail()) {
     std::ostringstream msg;
     msg << "Failed to parse gradient line of atom " << (index)

@@ -508,11 +508,9 @@ template<class AtomType>
 int interaction::MNDO_Worker::_parse_gradients(std::ifstream& ofs,
                                                std::set<AtomType>& atom_set) {
   int err = 0;
-  const double unit_factor =
-      this->param->unit_factor_energy / this->param->unit_factor_length;
   typename std::set<AtomType>::iterator it, to;
   for(it = atom_set.begin(), to = atom_set.end(); it != to; ++it) {
-    err = this->parse_gradient(ofs, it->index, it->force, unit_factor);
+    err = this->parse_gradient(ofs, it->index, it->force, this->param->unit_factor_force);
     if (err) return err;
   }
   return 0;
@@ -523,15 +521,13 @@ int interaction::MNDO_Worker::_parse_gradients
                                         (std::ifstream& ofs
                                        , std::set<interaction::MM_Atom>& atom_set) {
   int err = 0;
-  const double unit_factor =
-      this->param->unit_factor_energy / this->param->unit_factor_length;
   std::set<interaction::MM_Atom>::iterator it, to;
   for(it = atom_set.begin(), to = atom_set.end(); it != to; ++it) {
     int i = it->index;
-    err = this->parse_gradient(ofs, i, it->force, unit_factor);
+    err = this->parse_gradient(ofs, i, it->force, this->param->unit_factor_force);
     if (err) return err;
     if (it->is_polarisable) {
-      err = this->parse_gradient(ofs, i, it->cos_force, unit_factor);
+      err = this->parse_gradient(ofs, i, it->cos_force, this->param->unit_factor_force);
       if (err) return err;
     }
   }

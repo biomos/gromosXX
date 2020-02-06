@@ -37,7 +37,7 @@ namespace math
   double hartree = 4.3597482e-21; /* kJ */
   double angstrom = 0.1; /* nm */
   double kcal = 4.184; /* kJ */
-  double echarge = 1; /* e */
+  double echarge = 1.0; /* e */
 
 #ifndef NDEBUG
   int debug_level = 0;
