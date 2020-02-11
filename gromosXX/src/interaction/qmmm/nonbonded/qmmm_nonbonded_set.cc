@@ -171,7 +171,7 @@ int interaction::QMMM_Nonbonded_Set::init(const topology::Topology& topo
     if (pairs > num_atoms) pairs = num_atoms;
 
     if (!quiet)
-      os << "\n\testimated pairlist size (QMMM) : "
+      os << "\testimated pairlist size (QMMM) : "
 	       << pairs << "\n";
   }
   else pairs = num_atoms;  

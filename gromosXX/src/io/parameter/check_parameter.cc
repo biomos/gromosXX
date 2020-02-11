@@ -262,6 +262,11 @@ int io::simple_crosschecks(simulation::Simulation & sim) {
       io::messages.add("QMMM block: ELECTRIC block is applied on MM atoms only"
                       , "In_Parameter", io::message::warning);
     }
+    // If user wants to keep QM constraints, check, if they are on
+    if (sim.param().qmmm.qm_constraint && sim.param().constraint.ntc < 2) {
+      io::messages.add("QMMM block: constraints in QM requested, but no solute constraints enabled"
+                      , "In_Parameter", io::message::error);
+    }
 
 
   if (io::messages.contains(io::message::error) ||

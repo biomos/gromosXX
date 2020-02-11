@@ -67,20 +67,6 @@ interaction::QMMM_Interaction::~QMMM_Interaction() {
     delete m_qm_zone;
 }
 
-
-// Create QM here and provide pointer for polarisation?
-  /** We will create:
-   * 1. QMMM interaction, that will run QM worker, provide QMMM pairlist and
-   *    electric field for polarisation
-   *    Will be run only on rank 0, but multiple CPUs
-   * 2. QMMM LJ interaction, that will use QMMM pairlist to calculate QMMM classically
-   *    Will be run on all MPI nodes except rank 0
-   */
-
-
-
-
-
 /**
  * This should be separate class AddRemove : public QM_Link
  * 
@@ -328,6 +314,9 @@ int interaction::QMMM_Interaction::init(topology::Topology& topo,
       case simulation::qm_turbomole:
         os << "Turbomole";
         break;
+      case simulation::qm_gaussian:
+        os << "Gaussian";
+        break;
       default:
         os << "unknown";
         break;
@@ -363,9 +352,9 @@ int interaction::QMMM_Interaction::init(topology::Topology& topo,
     }
 
     if (sim.param().qmmm.qm_lj)
-      os << "\tLJ interactions between QM atoms activated" << std::endl;
+      os << "\tLJ interactions between QM atoms enabled" << std::endl;
     else
-      os << "\tno LJ interactions between QM atoms" << std::endl;
+      os << "\tLJ interactions between QM atoms disabled" << std::endl;
 
     if (sim.param().qmmm.mm_scale > 0.0) {
       os << "\tMM point charges will be scaled using 2/pi atan(s*|R|) with s = " <<
@@ -383,6 +372,14 @@ int interaction::QMMM_Interaction::init(topology::Topology& topo,
   // Remove relevant bonded terms from topo
   DEBUG(15, "Removing bonded terms");
   this->remove_bonded_terms(topo, os, quiet);
+
+  // Remove relevant constraints from topo (only if requested by user)
+  if (!sim.param().qmmm.qm_constraint) {
+    DEBUG(15, "Removing constraints");
+    this->remove_constraints(topo, os, quiet);
+  }
+  if (!quiet)
+    os << "\n";
 
   // Remove exclusions containing QM-QM and QM-MM interactions
   DEBUG(15, "Removing QM-QM and QM-MM exclusions");
@@ -442,7 +439,7 @@ int interaction::QMMM_Interaction::init_nonbonded(topology::Topology& topo,
 
   bool q = quiet;
   for (; it != to; ++it) {
-      (*it)->init(topo, conf, sim, os, q);
+    (*it)->init(topo, conf, sim, os, q);
     // only print first time...
     q = true;
   }
@@ -456,7 +453,7 @@ void interaction::QMMM_Interaction::remove_bonded_terms(
                               , bool quiet)
   {
   // Remove bonded terms that will be defined by QM
-  // Definitions to simplify code
+  // Definitions to simplify the code
   typedef std::vector<topology::two_body_term_struct> twoBodyVec;
   typedef std::vector<topology::three_body_term_struct> threeBodyVec;
   typedef std::vector<topology::four_body_term_struct> fourBodyVec;
@@ -468,16 +465,12 @@ void interaction::QMMM_Interaction::remove_bonded_terms(
   fourBodyVec& dihedrals = topo.solute().dihedrals();
   eightBodyVec& crossdihedrals = topo.solute().crossdihedrals();
 
-  // Simple lambda function to check if the QM-MM link was defined
-  auto are_linked = [&](unsigned qmi, unsigned mmi)->bool {
-    return topo.qmmm_link().count(std::make_pair( qmi, mmi ));
-  };
   if (!quiet)
-    os << "\tterms removed from topology:\n";
+    os << "\tterms removed from topology:";
   // Counter for neat printing
   unsigned count = 0;
-  if (!quiet)
-    os << "\t\tbonds:\n";
+  if (!quiet && bonds.size())
+    os << "\n\t\tbonds:\n";
   // Delete QM-QM bonded terms and check, if QM-MM links were properly defined
   for (twoBodyVec::iterator b_it = bonds.begin(); b_it != bonds.end(); ) {
     // If QM-QM
@@ -494,10 +487,10 @@ void interaction::QMMM_Interaction::remove_bonded_terms(
     }
     // If QM-MM or MM-QM and not in QM-MM link
     else if ((topo.is_qm(b_it->i)
-            && !are_linked( b_it->i, b_it->j ))
+            && !topo.are_linked( b_it->i, b_it->j ))
           ||
             (topo.is_qm(b_it->j)
-            && !are_linked( b_it->j, b_it->i ))
+            && !topo.are_linked( b_it->j, b_it->i ))
           )
       {
       std::ostringstream msg;
@@ -512,7 +505,7 @@ void interaction::QMMM_Interaction::remove_bonded_terms(
   }
 
   if (!quiet && cgbonds.size())
-    os << "\t\tcoarse-grained bonds:\n";
+    os << "\n\t\tcoarse-grained bonds:\n";
   // Delete coarse-grained bonds between QM-QM
   for (twoBodyVec::iterator b_it = cgbonds.begin(); b_it != cgbonds.end(); ) {
     // If QM-QM
@@ -525,7 +518,7 @@ void interaction::QMMM_Interaction::remove_bonded_terms(
     } else ++b_it;
   }
 
-  if (!quiet) {
+  if (!quiet && angles.size()) {
     os << "\n\t\tbond angles:\n";
     count = 0;
   }
@@ -556,11 +549,11 @@ void interaction::QMMM_Interaction::remove_bonded_terms(
         ; i_it != i_to; ++i_it, ++j_it) {
       if ((   topo.is_qm(*i_it)
           && !topo.is_qm(*j_it)
-          && !are_linked(*i_it, *j_it))
+          && !topo.are_linked(*i_it, *j_it))
         ||
           (  !topo.is_qm(*i_it)
           &&  topo.is_qm(*j_it)
-          && !are_linked(*j_it, *i_it)
+          && !topo.are_linked(*j_it, *i_it)
         ))
         {
         std::ostringstream msg;
@@ -572,7 +565,7 @@ void interaction::QMMM_Interaction::remove_bonded_terms(
     }
   }
 
-  if (!quiet) {
+  if (!quiet && dihedrals.size()) {
     os << "\n\t\tdihedral angles:\n";
     count = 0;
   }
@@ -605,11 +598,11 @@ void interaction::QMMM_Interaction::remove_bonded_terms(
         ; j_it != to; ++i_it, ++j_it) {
       if ((   topo.is_qm(*i_it)
           && !topo.is_qm(*j_it)
-          && !are_linked(*i_it, *j_it))
+          && !topo.are_linked(*i_it, *j_it))
         ||
           (  !topo.is_qm(*i_it)
           &&  topo.is_qm(*j_it)
-          && !are_linked(*j_it, *i_it)
+          && !topo.are_linked(*j_it, *i_it)
         ))
         {
         std::ostringstream msg;
@@ -622,7 +615,7 @@ void interaction::QMMM_Interaction::remove_bonded_terms(
   }
   DEBUG(15,"Dihedral angle torsion terms done");
   
-  if (!quiet) {
+  if (!quiet && improper_dihedrals.size()) {
     os << "\n\t\timproper dihedral angles:\n";
     count = 0;
   }
@@ -635,10 +628,7 @@ void interaction::QMMM_Interaction::remove_bonded_terms(
                  , l = d_it->l;
     const unsigned qm_count = topo.is_qm(i) + topo.is_qm(j) + topo.is_qm(k) + topo.is_qm(l);
     if (qm_count == 0) { ++d_it; continue; }
-    if ( topo.is_qm(d_it->i)
-      /*&& topo.is_qm(d_it->j)
-      && topo.is_qm(d_it->k)
-      && topo.is_qm(d_it->l)*/ )
+    if ( topo.is_qm(d_it->i) )
       {
       DEBUG(4,"Erased improper dihedral angle bending term: "
             << i + 1 << "-" << j + 1 << "-"
@@ -662,11 +652,11 @@ void interaction::QMMM_Interaction::remove_bonded_terms(
         ; j_it != to; ++j_it) {
       if ((   topo.is_qm(i)
           && !topo.is_qm(*j_it)
-          && !are_linked(i, *j_it))
+          && !topo.are_linked(i, *j_it))
         ||
           (  !topo.is_qm(i)
           &&  topo.is_qm(*j_it)
-          && !are_linked(*j_it, i)
+          && !topo.are_linked(*j_it, i)
         ))
         {
         std::ostringstream msg;
@@ -678,7 +668,7 @@ void interaction::QMMM_Interaction::remove_bonded_terms(
     }
   }
 
-  // Delete All-QM crossdihedrals (where are they used?)
+  // Delete All-QM crossdihedrals
   for (eightBodyVec::iterator d_it = crossdihedrals.begin(); d_it != crossdihedrals.end(); ) {
     if (   (topo.is_qm(d_it->a))
         && (topo.is_qm(d_it->b))
@@ -690,13 +680,65 @@ void interaction::QMMM_Interaction::remove_bonded_terms(
         && (topo.is_qm(d_it->h))
       )
       {
+      if (!quiet) {
       os << "\t\tremoved crossdihedral bending term: "
          << d_it->a + 1 << " " << d_it->b + 1 << " "
          << d_it->c + 1 << " " << d_it->d + 1 << " "
          << d_it->e + 1 << " " << d_it->f + 1 << " "
          << d_it->g + 1 << " " << d_it->h + 1 << std::endl;
+      }
       d_it = crossdihedrals.erase(d_it);
     } else ++d_it;
+  }
+}
+
+void interaction::QMMM_Interaction::remove_constraints(
+                                topology::Topology& topo
+                              , std::ostream& os
+                              , bool quiet)
+  {
+  // Remove distance constraints between QM atoms and in QM-MM link
+  std::vector<topology::two_body_term_struct> & dist_constr = topo.solute().distance_constraints();
+  std::vector<topology::two_body_term_struct>::const_iterator it = dist_constr.begin();
+
+  // Counter for neat printing
+  unsigned count = 0;
+  if (!quiet) {
+    os << "\n\t\tdistance constraints:\n";
+  }
+  while (it != dist_constr.end()) {
+    const unsigned qm_count = topo.is_qm(it->i) + topo.is_qm(it->j);
+    bool erase = false;
+    switch(qm_count) {
+      case 0:
+        break;
+      case 1:
+        // Remove constraints only from QM-MM links
+        if (topo.are_linked(it->i, it->j )
+            || topo.are_linked(it->j, it->i )) {
+          erase = true;
+        }
+        break;
+      case 2:
+        erase = true;
+        break;
+      default:
+        break;
+    }
+    if (erase) {
+      DEBUG(15, "Removing distance constraint: " << it->i << "-" << it->j);
+      it = dist_constr.erase(it);
+
+      // Neat printing
+      if (!quiet)
+        if (count == 0) os << "\t\t";
+          os << (it->i + 1) << "-" << (it->j + 1) << " ";
+      if (++count == 8) {
+        os << "\n";
+        count = 0;
+      }
+    }
+    else ++it;
   }
 }
 

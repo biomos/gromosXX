@@ -728,6 +728,10 @@ namespace simulation
     qmmm_polarisable = 3
   };
 
+  /**
+   * @enum qm_lj_enum
+   * apply LJ between QM atoms
+   */
   enum qm_lj_enum {
   /**
      * don't apply LJ dispersion between QM atoms
@@ -738,7 +742,21 @@ namespace simulation
      */
     qm_lj_on = 1
   };
-  
+
+  /**
+   * @enum qm_constr_enum
+   * keep distance constraints within QM region and QM-MM link
+   */
+  enum qm_constr_enum {
+  /**
+     * remove constraints in QM region and QM-MM link
+     */
+    qm_constr_off = 0,
+    /**
+     * keep constraints in QM region and QM-MM link
+     */
+    qm_constr_on = 1
+  };
 
   /**
    * @enum qmmm_software_enum
@@ -3564,6 +3582,7 @@ namespace simulation
                     , mm_scale(-1.0)
                     , qmmm(qmmm_off)
                     , qm_lj(qm_lj_off)
+                    , qm_constraint(qm_constr_off)
                     , software(qm_mndo)
                     , write(0)
                     , atomic_cutoff(false)
@@ -3590,9 +3609,13 @@ namespace simulation
        */
       qmmm_enum qmmm;
       /**
-       * apply LJ-interaction in QM-Zone or not
+       * apply LJ interaction in QM zone or not
        */
       qm_lj_enum qm_lj;
+      /**
+       * keep constraints in QM zone and QM-MM link
+       */
+      qm_constr_enum qm_constraint;
       /**
        * the QM software to use
        */

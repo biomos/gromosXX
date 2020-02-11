@@ -861,6 +861,13 @@ namespace topology
     std::set< std::pair<unsigned,unsigned> > & qmmm_link() { return m_qmmm_link; }
 
     /**
+     * if atoms are linked
+     */
+    bool are_linked(unsigned qmi, unsigned mmi) {
+      return m_qmmm_link.count(std::make_pair( qmi, mmi ));
+    }
+
+    /**
      * recalculate lambda dependent properties.
      */
     void update_for_lambda();
