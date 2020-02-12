@@ -396,7 +396,7 @@ int main(int argc, char *argv[]) {
     MPI_Comm_split(MPI_COMM_WORLD, replica_mpi_control.simulationMPIColor, globalThreadID, &simulationCOMM);
     replica_mpi_control.simulationCOMM = simulationCOMM;
     MPI_Barrier(simulationCOMM);    //wait for all threads to register!
-    MPI_DEBUG(1, "REPLICA_ID \t " << globalThreadID << "\t Simulation_ID\t"<< subThreadOfSimulation << "\t SIMCOMM ESTABLISHED"\n")
+    MPI_DEBUG(1, "REPLICA_ID \t " << globalThreadID << "\t Simulation_ID\t"<< subThreadOfSimulation << "\t SIMCOMM ESTABLISHED\n");
 
     int simulation_rank, simulation_size;
     MPI_Comm_rank(simulationCOMM, &simulation_rank);
@@ -464,7 +464,7 @@ int main(int argc, char *argv[]) {
         }
     }
     std::cout << "\n";
-    MPI_DEBUG(1, "REPLICA_ID \t " << globalThreadID << "\t Simulation_ID\t"<< subThreadOfSimulation << "\t RE_GRAPH COMM ESTABLISHED"\n")
+    MPI_DEBUG(1, "REPLICA_ID \t " << globalThreadID << "\t Simulation_ID\t"<< subThreadOfSimulation << "\t RE_GRAPH COMM ESTABLISHED"\n");
 
     MPI_Barrier(MPI_COMM_WORLD);    //wait for all threads to register!
     
