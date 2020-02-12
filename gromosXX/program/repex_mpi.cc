@@ -463,7 +463,7 @@ int main(int argc, char *argv[]) {
         }
     }
     std::cout << "\n";
-    MPI_DEBUG(1, "REPLICA_ID \t " << globalThreadID << "\t Simulation_ID\t"<< subThreadOfSimulation << "\t RE_GRAPH COMM ESTABLISHED"\n");
+    MPI_DEBUG(1, "REPLICA_ID \t " << globalThreadID << "\t Simulation_ID\t"<< subThreadOfSimulation << "\t RE_GRAPH COMM ESTABLISHED\n");
 
     MPI_Barrier(MPI_COMM_WORLD);    //wait for all threads to register!
     
