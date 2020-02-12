@@ -52,6 +52,7 @@ $ ../configure --enable-mpi CC=mpicc CXX=mpiCC
 
 #include <io/configuration/out_configuration.h>
 
+#define XXMPI
 
 int main(int argc, char *argv[]) {
 #ifdef XXMPI

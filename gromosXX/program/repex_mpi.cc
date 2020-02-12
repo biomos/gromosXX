@@ -254,7 +254,6 @@ int main(int argc, char *argv[]) {
             } 
             
             //ERROR HANDLING FOR MPI
-            //TODO: REMOVE THIS WHEN CODE MORE PARALLEL
             if (replica_owned_threads.size() > totalNumberOfThreads) {
                 if (globalThreadID == 0) {
                     std::cerr << "\n\t########################################################\n"
@@ -397,6 +396,7 @@ int main(int argc, char *argv[]) {
     MPI_Comm_split(MPI_COMM_WORLD, replica_mpi_control.simulationMPIColor, globalThreadID, &simulationCOMM);
     replica_mpi_control.simulationCOMM = simulationCOMM;
     MPI_Barrier(simulationCOMM);    //wait for all threads to register!
+    MPI_DEBUG(1, "REPLICA_ID \t " << globalThreadID << "\t Simulation_ID\t"<< subThreadOfSimulation << "\t SIMCOMM ESTABLISHED"\n")
 
     int simulation_rank, simulation_size;
     MPI_Comm_rank(simulationCOMM, &simulation_rank);
@@ -464,7 +464,8 @@ int main(int argc, char *argv[]) {
         }
     }
     std::cout << "\n";
-    
+    MPI_DEBUG(1, "REPLICA_ID \t " << globalThreadID << "\t Simulation_ID\t"<< subThreadOfSimulation << "\t RE_GRAPH COMM ESTABLISHED"\n")
+
     MPI_Barrier(MPI_COMM_WORLD);    //wait for all threads to register!
     
     
@@ -539,18 +540,8 @@ int main(int argc, char *argv[]) {
         std::cout<< "\n";
     }
 
-    MPI_Barrier(MPI_COMM_WORLD);
-    std::cout << globalThreadID << "\tsimulationThreadID\t"<< replica_mpi_control.simulationThisThreadID << "\n";
-    //if(threadsPerReplicaSimulation > 1){
-    //    throw "using more than 1 thread per replica is currently not implemented!";
-    //}
-    
+    MPI_Barrier(MPI_COMM_WORLD);    
     MPI_DEBUG(1, "FINISHED MPI MAPPING!\n\n");
-    //MPI_Comm_free(&replica_mpi_control.simulationCOMM); //Clean up
-    //MPI_Comm_free(&reGMPI.replicaGraphCOMM); //Clean up
-
-    //MPI_Finalize();
-    //return 0;
     
     //////////////////////////////
     /// Starting master-slave Pattern
