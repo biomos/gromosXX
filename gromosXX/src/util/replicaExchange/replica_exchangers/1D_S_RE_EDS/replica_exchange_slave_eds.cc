@@ -36,7 +36,7 @@ util::replica_exchange_slave_eds::replica_exchange_slave_eds(io::Argument & _arg
 
 void util::replica_exchange_slave_eds::send_to_master() const{
   #ifdef XXMPI
-  if(! not_sender){
+  if(not_sender){
   DEBUG(2,"replica_exchange_slave_eds " << globalThreadID << ":send_to_master:\t START");
   DEBUG(2,"replica_exchange_slave_eds " << globalThreadID << ":send_to_master:\t Show vPots");
 

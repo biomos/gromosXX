@@ -101,7 +101,7 @@ void util::replica_exchange_master_interface::receive_from_all_slaves() {
 
     // receive all information from slaves
     for (unsigned int slaveReplicaID = 0; slaveReplicaID < replicaGraphMPIControl.numberOfReplicas; ++slaveReplicaID) {
-      if (slaveReplicaID != simulationID) {
+      if (slaveReplicaID != replicaGraphMPIControl.replicaGraphMasterID) {
         unsigned int replicaMasterThreadID = slaveReplicaID;
         DEBUG(2,"replica_exchange_master_interface "<< globalThreadID <<":receive_from_all_slaves:\t get_MPI replicaMasterThread: "<< replicaMasterThreadID << "\n");
         MPI_Recv(&info, 1, MPI_REPINFO, replicaMasterThreadID, REPINFO,  replicaGraphMPIControl.replicaGraphCOMM, &status);

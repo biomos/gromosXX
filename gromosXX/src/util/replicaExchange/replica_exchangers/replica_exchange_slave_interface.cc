@@ -57,7 +57,7 @@ util::replica_exchange_slave_interface::~replica_exchange_slave_interface() {
 void util::replica_exchange_slave_interface::send_to_master() const {
 #ifdef XXMPI
   
-  if(! not_sender){
+  if(not_sender){
     DEBUG(2,"replica_exchange_slave_interface " << globalThreadID << ":send_to_master \t START");
       util::repInfo info;
       info.run = run;
