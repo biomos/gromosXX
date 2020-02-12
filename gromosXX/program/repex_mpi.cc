@@ -427,33 +427,35 @@ int main(int argc, char *argv[]) {
     reGMPI.replicaGraphMPIColor = 9999;
     reGMPI.numberOfReplicas = replica_owned_threads.size();
     
+    MPI_Barrier(MPI_COMM_WORLD);    //wait for all threads to register!
     if(replica_mpi_control.simulationMasterThreadID == replica_mpi_control.simulationThisThreadID){
         MPI_Comm_split(MPI_COMM_WORLD, reGMPI.replicaGraphMPIColor, globalThreadID, &replicaGraphCOMM);
         reGMPI.replicaGraphCOMM = replicaGraphCOMM;
+     
+        MPI_Barrier(replicaGraphCOMM);    //wait for all threads to register!
+        
+        int REG_rank, REG_size;
+        MPI_Comm_rank(replicaGraphCOMM, &REG_rank);
+        MPI_Comm_size(replicaGraphCOMM, &REG_size);
+
+        reGMPI.replicaGraphThisThreadID = REG_rank;  //id for the thread in the simulation.
+        std::cout << REG_rank << "\n";
+
+
     }
-
-    MPI_Barrier(replicaGraphCOMM);    //wait for all threads to register!
-
-    int REG_rank, REG_size;
-    MPI_Comm_rank(replicaGraphCOMM, &REG_rank);
-    MPI_Comm_size(replicaGraphCOMM, &REG_size);
-    
-    reGMPI.replicaGraphThisThreadID = REG_rank;  //id for the thread in the simulation.
+    MPI_Barrier(MPI_COMM_WORLD);    //wait for all threads to register!
 
     //
     std::vector<unsigned int> replica_master_IDS;
     for (auto replicaThread : replica_owned_threads){
         replica_master_IDS.push_back(replicaThread[0]);
     }
-    
+
     reGMPI.replicaMasterIDs = replica_master_IDS;
     reGMPI.replicaThreads = replica_owned_threads;
     reGMPI.threadReplicaMap = thread_id_replica_map;
 
     //replica Graph out:
-    MPI_Barrier(MPI_COMM_WORLD);    //wait for all threads to register!
-    std::cout << REG_rank << "\n";
-    MPI_Barrier(MPI_COMM_WORLD);    //wait for all threads to register!
     if(globalThreadID == 0){
         std::cout << "Masters of "<<reGMPI.numberOfReplicas<< "replicas \t";
         for(int masterThreadID : replica_master_IDS){
@@ -461,7 +463,7 @@ int main(int argc, char *argv[]) {
         }
     }
     std::cout << "\n";
-    MPI_DEBUG(1, "REPLICA_ID \t " << globalThreadID << "\t Simulation_ID\t"<< subThreadOfSimulation << "\t RE_GRAPH COMM ESTABLISHED\n");
+    MPI_DEBUG(1, "REPLICA_ID \t " << globalThreadID << "\t Simulation_ID\t"<< subThreadOfSimulation << "\t RE_GRAPH COMM ESTABLISHED"\n");
 
     MPI_Barrier(MPI_COMM_WORLD);    //wait for all threads to register!
     
