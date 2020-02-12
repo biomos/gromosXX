@@ -440,6 +440,10 @@ int main(int argc, char *argv[]) {
         reGMPI.replicaGraphThisThreadID = REG_rank;  //id for the thread in the simulation.
         std::cout << REG_rank << "\n";
     }
+    else{
+        MPI_Comm_split(MPI_COMM_WORLD, reGMPI.replicaGraphMPIColor+3, globalThreadID, &replicaGraphCOMM);
+
+    }
 
     //
     std::vector<unsigned int> replica_master_IDS;
