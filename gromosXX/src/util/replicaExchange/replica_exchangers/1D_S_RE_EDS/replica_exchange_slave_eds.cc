@@ -36,6 +36,7 @@ util::replica_exchange_slave_eds::replica_exchange_slave_eds(io::Argument & _arg
 
 void util::replica_exchange_slave_eds::send_to_master() const{
   #ifdef XXMPI
+  if(! not_sender){
   DEBUG(2,"replica_exchange_slave_eds " << globalThreadID << ":send_to_master:\t START");
   DEBUG(2,"replica_exchange_slave_eds " << globalThreadID << ":send_to_master:\t Show vPots");
 
@@ -59,8 +60,9 @@ void util::replica_exchange_slave_eds::send_to_master() const{
 
     MPI_Send(&eds_energies[0], 1, MPI_EDSINFO, replicaGraphMPIControl.replicaGraphMasterID, EDSINFO, replicaGraphMPIControl.replicaGraphCOMM);
     DEBUG(4,"replica_exchange_slave_eds " << globalThreadID << ":send_to_master:\t\t send MPI_EDS \t DONE" );
-
   DEBUG(2,"replica_exchange_slave_eds " << globalThreadID << ":send_to_master:\t DONE");
+  }
+  
   #else
     throw "Cannot use send_to_master from replica_exchange_slave_eds without MPI!"; 
   #endif

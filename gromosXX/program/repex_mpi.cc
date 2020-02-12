@@ -253,6 +253,30 @@ int main(int argc, char *argv[]) {
                 counter++;
             } 
             
+            //TODO: REMOVE THIS WHEN CODE MORE PARALLEL
+            if (replica_owned_threads[subThreadOfSimulation].size() > 1) {
+                if (globalThreadID == 0) {
+                    std::cerr << "\n\t########################################################\n"
+                            << "\n\t\tError: Having more MPI Cores than Replicas is currently not Implemented!\n"
+                            << "\n\t########################################################\n";
+                    io::messages.display(std::cout);
+                    io::messages.display(std::cerr);
+                }
+                MPI_Finalize();
+                return 1;
+            }
+            else if (replica_owned_threads.size() > totalNumberOfThreads) {
+                if (globalThreadID == 0) {
+                    std::cerr << "\n\t########################################################\n"
+                            << "\n\t\tError:  Not enough MPI Threads assigned. Please assign at least n = Number of Replica Threads!\n"
+                            << "\n\t########################################################\n";
+                    io::messages.display(std::cout);
+                    io::messages.display(std::cerr);
+                }
+                MPI_Finalize();
+                return 1;
+            }
+
             // read in the rest
             if (io::read_input_repex(args, topo, conf, sim, md, subThreadOfSimulation, globalThreadID, std::cout, quiet)) {
                 if (globalThreadID == 0) {
@@ -355,6 +379,8 @@ int main(int argc, char *argv[]) {
         MPI_Finalize();
         return -1;
     }
+    
+        
     MPI_DEBUG(1, "RANK: "<<globalThreadID<<" Done with init parse\n");    //TODO: lower verb level
    
     io::messages.clear();
@@ -368,6 +394,7 @@ int main(int argc, char *argv[]) {
     MPI_Comm simulationCOMM;    //this is used for different replica simulation parallelisations
     MPI_Comm replicaGraphCOMM;    //this is used for different replica GRAPH parallelisations
 
+    
     //////////////////////////////////////
     //for REPLICA SIMULATION!
     //////////////////////////////////////
