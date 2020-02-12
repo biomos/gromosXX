@@ -427,7 +427,6 @@ int main(int argc, char *argv[]) {
     reGMPI.replicaGraphMPIColor = 9999;
     reGMPI.numberOfReplicas = replica_owned_threads.size();
     
-    MPI_Barrier(MPI_COMM_WORLD);    //wait for all threads to register!
     if(replica_mpi_control.simulationMasterThreadID == replica_mpi_control.simulationThisThreadID){
         MPI_Comm_split(MPI_COMM_WORLD, reGMPI.replicaGraphMPIColor, globalThreadID, &replicaGraphCOMM);
         reGMPI.replicaGraphCOMM = replicaGraphCOMM;
@@ -440,10 +439,7 @@ int main(int argc, char *argv[]) {
 
         reGMPI.replicaGraphThisThreadID = REG_rank;  //id for the thread in the simulation.
         std::cout << REG_rank << "\n";
-
-
     }
-    MPI_Barrier(MPI_COMM_WORLD);    //wait for all threads to register!
 
     //
     std::vector<unsigned int> replica_master_IDS;
