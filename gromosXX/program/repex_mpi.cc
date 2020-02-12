@@ -431,9 +431,6 @@ int main(int argc, char *argv[]) {
         MPI_Comm_split(MPI_COMM_WORLD, reGMPI.replicaGraphMPIColor, globalThreadID, &replicaGraphCOMM);
         reGMPI.replicaGraphCOMM = replicaGraphCOMM;
     }
-    else{
-        reGMPI.replicaGraphCOMM = MPI_COMM_NULL;
-    }
 
     MPI_Barrier(replicaGraphCOMM);    //wait for all threads to register!
 
