@@ -253,19 +253,9 @@ int main(int argc, char *argv[]) {
                 counter++;
             } 
             
+            //ERROR HANDLING FOR MPI
             //TODO: REMOVE THIS WHEN CODE MORE PARALLEL
-            if (replica_owned_threads[subThreadOfSimulation].size() > 1) {
-                if (globalThreadID == 0) {
-                    std::cerr << "\n\t########################################################\n"
-                            << "\n\t\tError: Having more MPI Cores than Replicas is currently not Implemented!\n"
-                            << "\n\t########################################################\n";
-                    io::messages.display(std::cout);
-                    io::messages.display(std::cerr);
-                }
-                MPI_Finalize();
-                return 1;
-            }
-            else if (replica_owned_threads.size() > totalNumberOfThreads) {
+            if (replica_owned_threads.size() > totalNumberOfThreads) {
                 if (globalThreadID == 0) {
                     std::cerr << "\n\t########################################################\n"
                             << "\n\t\tError:  Not enough MPI Threads assigned. Please assign at least n = Number of Replica Threads!\n"
