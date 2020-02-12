@@ -192,6 +192,8 @@ int interaction::create_g96_nonbonded
   Nonbonded_Interaction * ni;
 
   if (sim.mpi){
+   
+    /* TODO : REMOVE THIS PART
     int rank = sim.mpi_control.simulationThisThreadID;
     int size = sim.mpi_control.simulationNumberOfThreads;
     
@@ -259,15 +261,18 @@ int interaction::create_g96_nonbonded
            ni = new MPI_Nonbonded_Slave(pa);       
         }
     }
+    
     else{
-        if (rank == 0)
-          ni = new MPI_Nonbonded_Master(pa);
-        else
-          ni = new MPI_Nonbonded_Slave(pa);
-    }
+        */
+    
+    if (sim.mpi_control.simulationThisThreadID == sim.mpi_control.simulationMasterThreadID)
+      ni = new MPI_Nonbonded_Master(pa);
+    else
+      ni = new MPI_Nonbonded_Slave(pa);
   }
-  else
+  else{
     ni = new Nonbonded_Interaction(pa);
+  }
 #else
   Nonbonded_Interaction * ni = new Nonbonded_Interaction(pa);
 #endif

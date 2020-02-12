@@ -40,7 +40,14 @@ util::replica_exchange_slave_interface::replica_exchange_slave_interface(io::Arg
                                                     simulation::mpi_control_struct replica_mpi_control) : 
         replica_exchange_base_interface(_args, cont, globalThreadID, replicaGraphMPIControl, replica_mpi_control) {
         DEBUG(4, "replica_exchange_slave_interface "<< globalThreadID <<":Constructor:\t START");
-
+        
+        if(replicaGraphMPIControl.replicaGraphCOMM != MPI_COMM_NULL){
+            not_sender = true;
+        }
+        else{
+            not_sender = false;
+        }
+        
         DEBUG(4, "replica_exchange_slave_interface "<< globalThreadID <<":Constructor:\t DONE");
 }
 
@@ -49,16 +56,19 @@ util::replica_exchange_slave_interface::~replica_exchange_slave_interface() {
 
 void util::replica_exchange_slave_interface::send_to_master() const {
 #ifdef XXMPI
-  DEBUG(2,"replica_exchange_slave_interface " << globalThreadID << ":send_to_master \t START");
-    util::repInfo info;
-    info.run = run;
-    info.epot = epot;
-    info.epot_partner = epot_partner;
-    info.partner = partnerReplicaID;
-    info.probability = probability;
-    info.switched = int(switched);
-    MPI_Send(&info, 1, MPI_REPINFO, replicaGraphMPIControl.replicaGraphMasterID, REPINFO, replicaGraphMPIControl.replicaGraphCOMM);
+  
+  if(! not_sender){
+    DEBUG(2,"replica_exchange_slave_interface " << globalThreadID << ":send_to_master \t START");
+      util::repInfo info;
+      info.run = run;
+      info.epot = epot;
+      info.epot_partner = epot_partner;
+      info.partner = partnerReplicaID;
+      info.probability = probability;
+      info.switched = int(switched);
+      MPI_Send(&info, 1, MPI_REPINFO, replicaGraphMPIControl.replicaGraphMasterID, REPINFO, replicaGraphMPIControl.replicaGraphCOMM);
 
-  DEBUG(2,"replica_exchange_slave_interface " << globalThreadID << ":\t send_to_master \t Done");
+    DEBUG(2,"replica_exchange_slave_interface " << globalThreadID << ":\t send_to_master \t Done");
+  }
 #endif
 }

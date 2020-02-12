@@ -76,35 +76,6 @@ util::replica_exchange_base_eds::replica_exchange_base_eds(io::Argument _args,
     DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":Constructor:\t DONE");
 }
 
-void util::replica_exchange_base_eds::createReplicas(int cont, int globalThreadID, simulation::mpi_control_struct replica_mpi_control){
-  MPI_DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":createReplicas:\t START");
-  
-  if(!replica){
-    delete replica;
-  }
-  MPI_DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":createReplicas:\t Deleted");
-
-  // create the number of replicas that are assigned to my node
-    if(simulationThreads>1){
-        if(simulationThreadID == 0){
-            replica = new util::replica_MPI_Master(args, cont, globalThreadID, replica_mpi_control);
-        }
-        else{
-            replica = new util::replica_MPI_Slave(args, cont, globalThreadID, replica_mpi_control);
-        }
-    }
-    else{
-        replica = new util::replica(args, cont, globalThreadID, replica_mpi_control);
-    }
-  MPI_DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":createReplicas:\t DONE");
-   
-  //give the correct replica vals to simulation
-  eds_para = replica->sim.param().reeds.eds_para[simulationID];
-  replica->sim.param().eds = eds_para;
-  //TODO: Still ugly ! l==s bschroed
-  l = replica->sim.param().eds.s[0];    //todoAssume only 1s EDS
-}
-
 
 util::replica_exchange_base_eds::~replica_exchange_base_eds() {
     delete replica;

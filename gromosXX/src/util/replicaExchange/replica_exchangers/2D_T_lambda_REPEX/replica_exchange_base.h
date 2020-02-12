@@ -71,6 +71,15 @@ namespace util {
      * Destructor
      */
     ~replica_exchange_base();
+    
+    /**
+     * Temperature of replica
+     */
+    double T;
+    /**
+     * Lambda of replica
+     */
+    double l;
 
   };
 }

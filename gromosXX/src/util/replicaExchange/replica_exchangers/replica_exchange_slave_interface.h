@@ -69,6 +69,11 @@ namespace util {
      * not allowed (yet)
      */
     replica_exchange_slave_interface(const replica_exchange_slave_interface &);
+    
+    /**
+     *  Sending data or not?
+     */
+    bool not_sender;
 
   };
 }

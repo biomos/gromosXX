@@ -129,6 +129,16 @@ namespace util {
      */
     struct replica_graph_mpi_control replicaGraphMPIControl;
 
+    //////////////////////////////////////////////////////////
+        /**
+     * Temperature of replica
+     */
+    double T;
+    /**
+     * Lambda of replica
+     */
+    double l;
+    ////////////////////////////////////////////////////////
     
     ////Simulation_MPI
     /**
@@ -183,14 +193,7 @@ namespace util {
     util::replica_Interface *replica;
 
     ////REPLICA ATTRIBUTES
-    /**
-     * Temperature of replica
-     */
-    double T;
-    /**
-     * Lambda of replica
-     */
-    double l;
+    //////Simulation TIMES
     /**
      * Timestep for current run
      */
@@ -247,8 +250,10 @@ namespace util {
     /*
      *
      */
-    void swap_replicas_priv(const unsigned int partnerReplicaID);
+    void swap_replicas_2D(const unsigned int partnerReplicaID);
     
+    void swap_replicas_1D(const unsigned int partnerReplicaID);
+
     /**
      * calculates potential energy for current configuration with current lambda
      */
