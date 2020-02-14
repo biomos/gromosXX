@@ -42,7 +42,7 @@ namespace io {
 	      simulation::Simulation & sim,
 	      std::ostream & os = std::cout);
     /**
-     * Read in QM/MM unit conversion factors
+     * Read in QM/MM units conversion factors
      */
     void read_units(const simulation::Simulation & sim
           , simulation::Parameter::qmmm_struct::qm_param_struct* qm_param);

@@ -34,7 +34,7 @@ namespace interaction {
      * initialise the QM worker
      * @return 0 if successful, non-zero on failure
      */
-    virtual int init(const simulation::Simulation& sim);
+    virtual int init(simulation::Simulation& sim);
     /**
      * run a QM job in Gaussian
      * @param qm_pos a vector containing the QM atom positions
@@ -45,7 +45,7 @@ namespace interaction {
 
   private:
     /**
-     * Make a copy of input parameters to make modifications and restrict access
+     * Pointer to simulation parameters
      */
     simulation::Parameter::qmmm_struct::gaussian_param_struct* param;
 

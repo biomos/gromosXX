@@ -37,11 +37,7 @@ interaction::QM_Worker::QM_Worker(std::string name) : m_name(name)/*, m_timer(nu
                                                       , symlink_err(0)
                                                       , minimisation(false)
                                                       , using_tmp(false) {}
-interaction::QM_Worker::~QM_Worker() {
-  if (this->param != nullptr) {
-    delete this->param;
-  }
-}
+interaction::QM_Worker::~QM_Worker() {}
 
 interaction::QM_Worker * interaction::QM_Worker::get_instance(const simulation::Simulation& sim) {
 

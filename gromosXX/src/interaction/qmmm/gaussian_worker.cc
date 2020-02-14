@@ -33,11 +33,10 @@
 
 interaction::Gaussian_Worker::Gaussian_Worker() : QM_Worker("Gaussian Worker"), param(nullptr) {};
 
-int interaction::Gaussian_Worker::init(const simulation::Simulation& sim) {
-  /** Make a copy of parameters, so QM worker can safely customize
-   * them and also noone can change them
-   */
-  this->param = new simulation::Parameter::qmmm_struct::gaussian_param_struct(sim.param().qmmm.gaussian);
+int interaction::Gaussian_Worker::init(simulation::Simulation& sim) {
+  // Get a pointer to simulation parameters
+  this->param = &(sim.param().qmmm.gaussian);
+  QM_Worker::param = this->param;
   // Aliases to shorten the code
   std::string& inp = this->param->input_file;
   std::string& out = this->param->output_file;
@@ -454,10 +453,6 @@ interaction::Gaussian_Worker::~Gaussian_Worker() {
   if (this->using_tmp) {
     unlink(this->param->input_file.c_str());
     unlink(this->param->output_file.c_str());
-  }
-  if (this->param != nullptr) {
-    delete this->param;
-    this->param = nullptr;
   }
 #endif
 }

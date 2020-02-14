@@ -35,11 +35,10 @@
 
 interaction::MNDO_Worker::MNDO_Worker() : QM_Worker("MNDO Worker"), param(nullptr) {};
 
-int interaction::MNDO_Worker::init(const simulation::Simulation& sim) {
-  /** Make a copy of parameters, so QM worker can safely customize
-   * them and also noone can change them
-   */
-  this->param = new simulation::Parameter::qmmm_struct::mndo_param_struct(sim.param().qmmm.mndo);
+int interaction::MNDO_Worker::init(simulation::Simulation& sim) {
+  // Get a pointer to simulation parameters
+  this->param = &(sim.param().qmmm.mndo);
+  QM_Worker::param = this->param;
   // Aliases to shorten the code
   std::string& inp = this->param->input_file;
   std::string& out = this->param->output_file;
@@ -574,10 +573,6 @@ interaction::MNDO_Worker::~MNDO_Worker() {
     unlink(this->param->output_file.c_str());
     unlink(this->param->output_gradient_file.c_str());
     unlink(this->param->density_matrix_file.c_str());
-  }
-  if (this->param != nullptr) {
-    delete this->param;
-    this->param = nullptr;
   }
 #endif
 }

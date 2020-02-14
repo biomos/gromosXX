@@ -5062,7 +5062,7 @@ void io::In_Parameter::read_QMMM(simulation::Parameter & param,
     exampleblock << "#    1: apply mechanical embedding scheme\n";
     exampleblock << "#    2: apply electrostatic embedding scheme\n";
     exampleblock << "#    3: apply polarisable embedding scheme\n";
-    exampleblock << "# NTQMSW 0..3 QM software package to use\n";
+    exampleblock << "# NTQMSW 0..4 QM software package to use\n";
     exampleblock << "#    0: MNDO\n";
     exampleblock << "#    1: Turbomole\n";
     exampleblock << "#    2: DFTB\n";

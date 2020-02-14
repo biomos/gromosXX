@@ -323,6 +323,9 @@ int interaction::QMMM_Interaction::init(topology::Topology& topo,
     }
     os << " program package" << std::endl;
     os.precision(3);
+    os << "\tunits conversion factors: ";
+    m_worker->print_unit_factors(os);
+    os << std::endl;
     if (sim.param().qmmm.qmmm == simulation::qmmm_mechanical) {
       os << "\tQM-MM interactions will be treated classically" << std::endl
          << "\tusing standard cutoffs (RCUTP, RCUTL)" << std::endl
@@ -357,16 +360,14 @@ int interaction::QMMM_Interaction::init(topology::Topology& topo,
       os << "\tLJ interactions between QM atoms disabled" << std::endl;
 
     if (sim.param().qmmm.mm_scale > 0.0) {
-      os << "\tMM point charges will be scaled using 2/pi atan(s*|R|) with s = " <<
+      os << "\tMM point charges will be scaled using (2/pi)*atan(s*|R|) with s = " <<
         sim.param().qmmm.mm_scale << std::endl;
-      os << "\t\t|R| is distance to closest QM atom" << std::endl;
+      os << "\t\t|R| is distance to the closest QM atom" << std::endl;
     }
 
-    os << "\tworker: " << m_worker->name() << std::endl
-    // Some information on QM worker?
-      << "\tQM zone: " << std::endl
-      << "\t\tnumber of QM atoms: \t" << m_qm_zone->qm.size() << std::endl
-      << "\t\tnumber of QM-MM links: \t" << m_qm_zone->link.size() << std::endl;
+    os << "\tQM zone: " << std::endl
+       << "\t\tnumber of QM atoms: \t" << m_qm_zone->qm.size() << std::endl
+       << "\t\tnumber of QM-MM links: \t" << m_qm_zone->link.size() << std::endl;
   }
 
   // Remove relevant bonded terms from topo
