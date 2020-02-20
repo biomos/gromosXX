@@ -80,7 +80,12 @@ namespace util {
      * Lambda of replica
      */
     double l;
-
+    
+  protected:
+       /**
+       * Setting RE-Param
+       */
+      void setParams() override;
   };
 }
 

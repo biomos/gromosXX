@@ -105,6 +105,12 @@ namespace util
        /*
         * Functions
         */
+       /**
+        * Set RE - params
+        */
+       void setParams() override;
+
+       void set_s();
        
         // RE-Exchange functions
         /**

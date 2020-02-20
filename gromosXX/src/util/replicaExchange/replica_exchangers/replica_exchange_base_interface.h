@@ -234,6 +234,12 @@ namespace util {
      */
     virtual void createReplicas(int cont,  int globalThreadID, simulation::mpi_control_struct replica_mpi_control);
     
+    /**
+     * Setting RE-Param
+     */
+    virtual void setParams(){};
+    
+    
     //Replica Exchange Functions
     ////SWAP FUNCTIONS
     /**

@@ -30,16 +30,16 @@ namespace simulation
              * Default values:
              * - number_of_threads 0
              */
-            mpi_control_struct() : simulationID(0), simulationNumberOfThreads(-1), simulationMasterThreadID(0), simulationThisThreadID(-1), simulationMPIColor(1)
+            mpi_control_struct() : simulationID(0), numberOfThreads(-1), masterID(0), threadID(-1), MPIColor(1)
             {
             }
 
             int simulationID; //local replica id of simulation
-            int simulationNumberOfThreads;    //total_number_of_threads      
-            int simulationMasterThreadID; //local master of this 
-            int simulationThisThreadID;
-            int simulationMPIColor;
-            MPI_Comm simulationCOMM; // TODO: bschroed  for later!??
+            int numberOfThreads;    //total_number_of_threads      
+            int masterID; //local master of this 
+            int threadID;
+            int MPIColor;
+            MPI_Comm COMM; 
 
             std::vector<unsigned int> simulationOwnedThreads; 
 

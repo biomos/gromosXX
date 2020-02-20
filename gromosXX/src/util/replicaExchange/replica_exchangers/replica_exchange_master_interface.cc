@@ -52,13 +52,13 @@ util::replica_exchange_master_interface::replica_exchange_master_interface(io::A
         repdatName(args["repdat"])
 {
 #ifdef XXMPI
-  DEBUG(2,"replica_exchange_master_interface "<< globalThreadID <<":Constructor:\t START");
+  MPI_DEBUG(2,"replica_exchange_master_interface "<< globalThreadID <<":Constructor:\t START");
 
   assert(replicaGraphMPIControl.replicaGraphMasterID == replicaGraphMPIControl.replicaGraphThisThreadID);    //TODO: This can be removed in future! bscrhoed
   assert(replicaGraphMPIControl.numberOfReplicas > 0);
   DEBUG(2,"replica_exchange_master_interface "<< globalThreadID <<":Constructor:\t rep_params THERE?");
-  DEBUG(2,"replica_exchange_master_interface "<< globalThreadID <<":Constructor:\t" << replica->sim.param().replica.num_l);
-  DEBUG(2,"replica_exchange_master_interface "<< globalThreadID <<":Constructor:\t" << replica->sim.param().replica.lambda[0]);
+  DEBUG(2,"replica_exchange_master_interface "<< globalThreadID <<":Constructor:\t replica Num " << replica->sim.param().replica.num_l);
+  DEBUG(2,"replica_exchange_master_interface "<< globalThreadID <<":Constructor:\t replica S" << replica->sim.param().replica.lambda[0]);
 
   assert(repParams.num_l > 0);
   
@@ -80,7 +80,7 @@ util::replica_exchange_master_interface::replica_exchange_master_interface(io::A
   }
 
   // set output file
- DEBUG(2,"replica_exchange_master_interface "<< globalThreadID <<":Constructor:\t DONE");
+ MPI_DEBUG(2,"replica_exchange_master_interface "<< globalThreadID <<":Constructor:\t DONE");
 #else
    throw "Cannot initialize replica_exchange_master without MPI!"; 
 #endif

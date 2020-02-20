@@ -28,15 +28,15 @@ util::replica_exchange_master_eds::replica_exchange_master_eds(io::Argument _arg
         replica_exchange_master_interface(_args, cont, globalThreadID, replicaGraphMPIControl, replica_mpi_control)
 {
     #ifdef XXMPI
-    DEBUG(2,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t START");  
-    DEBUG(2,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t Replicas: "<<replicaGraphMPIControl.numberOfReplicas);  
-    DEBUG(2,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t ReplicasOLD: "<<repParams.num_l);  
-    DEBUG(2,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t ReplicasMASTER: "<< replicaGraphMPIControl.replicaGraphMasterID);  
+    MPI_DEBUG(2,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t START");  
+    DEBUG(3,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t Replicas: "<<replicaGraphMPIControl.numberOfReplicas);  
+    DEBUG(3,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t ReplicasOLD: "<<repParams.num_l);  
+    DEBUG(3,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t ReplicasMASTER: "<< replicaGraphMPIControl.replicaGraphMasterID);  
 
 
     //initialize data of replicas    
     replicaData.resize(replicaGraphMPIControl.numberOfReplicas);      
-    DEBUG(4,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t replicaDatasize\t "<< replicaData.size());
+    DEBUG(3,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t replicaDatasize\t "<< replicaData.size());
     //DEBUG(4,"replica_exchange_master_eds "<< rank <<":Constructor:\t reeds- lambda\t "<< replica->sim.param().reeds.num_l);
     //DEBUG(4,"replica_exchange_master_eds "<< rank <<":Constructor:\t eds \t "<< replica->sim.param().eds.s.size());
 
@@ -44,15 +44,15 @@ util::replica_exchange_master_eds::replica_exchange_master_eds(io::Argument _arg
     for (int replicaID = 0; replicaID<  replicaData.size(); ++replicaID) {
         replicaData[replicaID].ID = replicaID;
         replicaData[replicaID].T = repParams.temperature[replicaID];
-        DEBUG(4,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t Init Replicas ID"<<replicaID<<"\t "<< repParams.temperature[replicaID]);
+        DEBUG(5,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t Init Replicas ID"<<replicaID<<"\t "<< repParams.temperature[replicaID]);
         replicaData[replicaID].l = repParams.lambda[replicaID];
         replicaData[replicaID].dt = repParams.dt[replicaID];
-        DEBUG(4,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t Init Replicas eds_param"<<replicaID<<"\t "<< reedsParam.eds_para[0].numstates);
+        DEBUG(5,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t Init Replicas eds_param"<<replicaID<<"\t "<< reedsParam.eds_para[0].numstates);
         replicaData[replicaID].Vi.assign(reedsParam.eds_para[0].numstates,0);
     }
-    DEBUG(2,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t SIMID"<< simulationID <<"\n");
+    DEBUG(3,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t SIMID"<< simulationID <<"\n");
 
-    DEBUG(2,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t DONE\n");
+    MPI_DEBUG(2,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t DONE\n");
     #else
         throw "Cannot initialize replica_exchange_master_eds without MPI!"; 
     #endif

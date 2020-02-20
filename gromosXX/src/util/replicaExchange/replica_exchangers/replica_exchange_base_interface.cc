@@ -56,37 +56,9 @@ util::replica_exchange_base_interface::replica_exchange_base_interface(io::Argum
         replicaGraphMPIControl(replicaGraphMPIControl)
 {
 #ifdef XXMPI
-  DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":Constructor:\t START ");
-  DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":Constructor:\t SIMULATIONID:  "<< simulationID);
-
-  //construct replica obj
-  DEBUG(4,"replica_exchange_base_interface "<< globalThreadID <<":Constructor:\t  createReplica");
+  MPI_DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":Constructor:\t START ");
   createReplicas(cont, globalThreadID, replica_mpi_control);
-  DEBUG(4,"replica_exchange_base_interface "<< globalThreadID <<":Constructor:\t createdReplica T");
-
-  //RE-Vars
-  // set some variables
-  stepsPerRun = replica->sim.param().step.number_of_steps;
-  run = 0;
-  total_runs = replica->sim.param().replica.trials + replica->sim.param().replica.equilibrate;
-  partnerReplicaID = simulationID;
-  time = replica->sim.time();
-  steps = 0;
-  switched = 0;
-  replica->curentStepNumber=0;
-  replica->totalStepNumber = total_runs*stepsPerRun;
-  replica->stepsPerRun= stepsPerRun;
-
-  const int numT = replica->sim.param().replica.num_T;
-
-  T = replica->sim.param().replica.temperature[simulationID % numT];
-  l = replica->sim.param().replica.lambda[simulationID / numT];
-  dt = replica->sim.param().replica.dt[simulationID / numT];
-
-  set_lambda();
-  set_temp();
-  
-  DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":Constructor:\t Constructor \t DONE");
+  MPI_DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":Constructor:\t Constructor \t DONE " << replica->sim.param().reeds.num_l);
   #else
     throw "Cannot use send_to_master from replica_exchange_slave_eds without MPI!"; 
   #endif
@@ -97,12 +69,11 @@ util::replica_exchange_base_interface::~replica_exchange_base_interface() {
     delete replica;
 }
 
-//TODO: REMOVE
 void util::replica_exchange_base_interface::createReplicas(int cont, int globalThreadID, simulation::mpi_control_struct replica_mpi_control){
-  DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":createReplicas:\t START \t THREADS "<<replica_mpi_control.simulationNumberOfThreads);
+  MPI_DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":createReplicas:\t START \t THREADS "<<replica_mpi_control.numberOfThreads);
   // create the number of replicas that are assigned to my node
-    if(replica_mpi_control.simulationNumberOfThreads>1){
-        if(replica_mpi_control.simulationThisThreadID == replica_mpi_control.simulationMasterThreadID ){
+    if(replica_mpi_control.numberOfThreads>1){
+        if(replica_mpi_control.threadID == replica_mpi_control.masterID ){
             replica = new util::replica_MPI_Master(args, cont, globalThreadID, replica_mpi_control);
         }
         else{
@@ -111,23 +82,16 @@ void util::replica_exchange_base_interface::createReplicas(int cont, int globalT
     }
     else{
         replica = new util::replica(args, cont, globalThreadID, replica_mpi_control);
-        //DEBUG(2,"replica_exchange_base_interface "<< globalThreadID <<":create:\t rep" << replica->sim.param().replica.num_l);
-        //DEBUG(2,"replica_exchange_base_interface "<< globalThreadID <<":create:\t rep" << replica->sim.param().replica.lambda[0]);
-    }
-   
-  DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":createReplicas:\t DONE");
+    }   
+  MPI_DEBUG(4,"replica_exchange_base_interface "<< globalThreadID <<":create:\t replica numS " << replica->sim.param().replica.num_l);
+  MPI_DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":createReplicas:\t DONE");
 }
 
-//TODO: REMOVE
 void util::replica_exchange_base_interface::init() {
-  DEBUG(3, "replica_exchange_base_interface "<< globalThreadID <<":init:\t START");
-  // do init for all replica assigned to this node
-  DEBUG(4,"replica_exchange_base_interface "<< globalThreadID <<":init:\t initReplicas");
-  replica->init();
+  DEBUG(3, "replica_exchange_base_interface "<< globalThreadID <<":init:\t START EMPTY");
   DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":init:\t DONE");
 }
 
-//TODO: REMOVE
 void util::replica_exchange_base_interface::run_MD() {
   DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":run_MD:\t START");
   
@@ -152,7 +116,6 @@ void util::replica_exchange_base_interface::updateReplica_params(){
  * REplica Exchanges
  */
 
-//TODO: REMOVE
 void util::replica_exchange_base_interface::swap(){
   DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":swap:\t START");
   
@@ -187,7 +150,6 @@ void util::replica_exchange_base_interface::swap(){
   DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":swap:\t DONE");
 }
 
-//TODO: REMOVE
 void util::replica_exchange_base_interface::write_final_conf() {
   // write coordinates to cnf for all replica assigned to this node
    replica->write_final_conf();
@@ -284,6 +246,7 @@ void util::replica_exchange_base_interface::swap_replicas_2D(const unsigned int 
     DEBUG(4, "replica "<< globalThreadID <<":swap:\t  DONE");
 }
 
+// TODO: THIS function NEEDS to be written! @bschroed
 void util::replica_exchange_base_interface::swap_replicas_1D(const unsigned int partnerReplicaID) {
   DEBUG(4, "replica "<<  globalThreadID <<":swap:\t  START");
 
@@ -371,6 +334,7 @@ void util::replica_exchange_base_interface::swap_replicas_1D(const unsigned int 
   }
     DEBUG(4, "replica "<< globalThreadID <<":swap:\t  DONE");
 }
+
 
 int util::replica_exchange_base_interface::find_partner() const {
     //TODO: REWRITE To get Replica ID BSCHROED
@@ -549,7 +513,7 @@ double util::replica_exchange_base_interface::calc_probability(const unsigned in
     return exp(-delta);
 }
 
-//THIS COULD GO TO REPLICA and into the func above!
+//THIS COULD GO TO REPLICA and into the func above! @bschroed
 double util::replica_exchange_base_interface::calculate_energy_core() {
   double energy = 0.0;
   //chris: you do need to re-evaluate the energy, otherwise you get the energy of before the previous step
@@ -630,9 +594,6 @@ double util::replica_exchange_base_interface::calculate_energy(const unsigned in
   return energy;
 }
 
-
-//TODO: REMOVE
-//THIS COULD GO TO REPLICA and into the func above!
 void util::replica_exchange_base_interface::exchange_averages() {
   // after a swap the averages of current and old are exchanged and have to be switched back
   configuration::Average  dummy = replica->conf.current().averages;
@@ -641,7 +602,6 @@ void util::replica_exchange_base_interface::exchange_averages() {
 }
 
 //sending stuff
-//TODO: REMOVE
 void util::replica_exchange_base_interface::send_coord(const unsigned int receiverReplicaID) {
 #ifdef XXMPI
 
@@ -677,7 +637,6 @@ void util::replica_exchange_base_interface::send_coord(const unsigned int receiv
 #endif
 }
 
-//TODO: REMOVE
 void util::replica_exchange_base_interface::receive_new_coord(const unsigned int senderReplicaID) {
 #ifdef XXMPI
    
@@ -729,6 +688,7 @@ void util::replica_exchange_base_interface::velscale(int unsigned partnerReplica
   } 
 }
 
+//TODO: mve to 2D_T_lambda ?
 //Lambda Exchange (Kinda Hamiltonian Exchange)
 void util::replica_exchange_base_interface::set_lambda() {
   // change Lambda in simulation
