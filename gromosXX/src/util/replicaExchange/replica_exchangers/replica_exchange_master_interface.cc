@@ -54,7 +54,7 @@ util::replica_exchange_master_interface::replica_exchange_master_interface(io::A
 #ifdef XXMPI
   MPI_DEBUG(2,"replica_exchange_master_interface "<< globalThreadID <<":Constructor:\t START");
 
-  assert(replicaGraphMPIControl.replicaGraphMasterID == replicaGraphMPIControl.replicaGraphThisThreadID);    //TODO: This can be removed in future! bscrhoed
+  assert(replicaGraphMPIControl.masterID == replicaGraphMPIControl.threadID);    //TODO: This can be removed in future! bscrhoed
   assert(replicaGraphMPIControl.numberOfReplicas > 0);
   DEBUG(2,"replica_exchange_master_interface "<< globalThreadID <<":Constructor:\t rep_params THERE?");
   DEBUG(2,"replica_exchange_master_interface "<< globalThreadID <<":Constructor:\t replica Num " << replica->sim.param().replica.num_l);
@@ -101,10 +101,10 @@ void util::replica_exchange_master_interface::receive_from_all_slaves() {
 
     // receive all information from slaves
     for (unsigned int slaveReplicaID = 0; slaveReplicaID < replicaGraphMPIControl.numberOfReplicas; ++slaveReplicaID) {
-      if (slaveReplicaID != replicaGraphMPIControl.replicaGraphMasterID) {
+      if (slaveReplicaID != replicaGraphMPIControl.masterID) {
         unsigned int replicaMasterThreadID = slaveReplicaID;
         DEBUG(2,"replica_exchange_master_interface "<< globalThreadID <<":receive_from_all_slaves:\t get_MPI replicaMasterThread: "<< replicaMasterThreadID << "\n");
-        MPI_Recv(&info, 1, MPI_REPINFO, replicaMasterThreadID, REPINFO,  replicaGraphMPIControl.replicaGraphCOMM, &status);
+        MPI_Recv(&info, 1, MPI_REPINFO, replicaMasterThreadID, REPINFO,  replicaGraphMPIControl.comm, &status);
         replicaData[slaveReplicaID].run = info.run;
         replicaData[slaveReplicaID].epot = info.epot;
         replicaData[slaveReplicaID].epot_partner = info.epot_partner;

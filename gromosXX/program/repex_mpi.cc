@@ -398,14 +398,14 @@ int main(int argc, char *argv[]) {
     //for RE-Graph
     //////////////////////////////////////
     util::replica_graph_mpi_control reGMPI = util::replica_graph_mpi_control();
-    reGMPI.replicaGraphID = 0;
-    reGMPI.replicaGraphMasterID = 0;
-    reGMPI.replicaGraphMPIColor = 9999;
+    reGMPI.graphID = 0;
+    reGMPI.masterID = 0;
+    reGMPI.mpiColor = 9999;
     reGMPI.numberOfReplicas = replica_owned_threads.size();
     
     if(replica_mpi_control.masterID == replica_mpi_control.threadID){
-        MPI_Comm_split(MPI_COMM_WORLD, reGMPI.replicaGraphMPIColor, globalThreadID, &replicaGraphCOMM);
-        reGMPI.replicaGraphCOMM = replicaGraphCOMM;
+        MPI_Comm_split(MPI_COMM_WORLD, reGMPI.mpiColor, globalThreadID, &replicaGraphCOMM);
+        reGMPI.comm = replicaGraphCOMM;
      
         MPI_Barrier(replicaGraphCOMM);    //wait for all threads to register!
         
@@ -413,11 +413,11 @@ int main(int argc, char *argv[]) {
         MPI_Comm_rank(replicaGraphCOMM, &REG_rank);
         MPI_Comm_size(replicaGraphCOMM, &REG_size);
 
-        reGMPI.replicaGraphThisThreadID = REG_rank;  //id for the thread in the simulation.
+        reGMPI.threadID = REG_rank;  //id for the thread in the simulation.
         std::cout << REG_rank << "\n";
     }
     else{
-        MPI_Comm_split(MPI_COMM_WORLD, reGMPI.replicaGraphMPIColor+3, globalThreadID, &replicaGraphCOMM);
+        MPI_Comm_split(MPI_COMM_WORLD, reGMPI.mpiColor+3, globalThreadID, &replicaGraphCOMM);
 
     }
 
@@ -688,7 +688,7 @@ int main(int argc, char *argv[]) {
                 << "\t" << durationHour << ":" << durationMinlHour << ":" << durationSlMin << "\t\t" << duration << "\n";
     }
     
-    MPI_Comm_free(&reGMPI.replicaGraphCOMM); //Clean up
+    MPI_Comm_free(&reGMPI.comm); //Clean up
     MPI_Comm_free(&replica_mpi_control.comm); //Clean up
     MPI_Finalize();
     return 0;

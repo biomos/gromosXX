@@ -52,13 +52,13 @@ void util::replica_exchange_slave_eds::send_to_master() const{
     DEBUG(4,"replica_exchange_slave_eds " << globalThreadID << "send_to_master:\t epotTot\t "<< info.epot);
 
     DEBUG(4,"replica_exchange_slave_eds " << globalThreadID << ":send_to_master:\t\t send MPI_REPINFO");
-    MPI_Send(&info, 1, MPI_REPINFO, replicaGraphMPIControl.replicaGraphMasterID, REPINFO, replicaGraphMPIControl.replicaGraphCOMM);
+    MPI_Send(&info, 1, MPI_REPINFO, replicaGraphMPIControl.masterID, REPINFO, replicaGraphMPIControl.comm);
 
     DEBUG(4,"replica_exchange_slave_eds " << globalThreadID << ":send_to_master:\t\t send MPI_EDS");
 
     eds_energies= replica->conf.current().energies.eds_vi;
 
-    MPI_Send(&eds_energies[0], 1, MPI_EDSINFO, replicaGraphMPIControl.replicaGraphMasterID, EDSINFO, replicaGraphMPIControl.replicaGraphCOMM);
+    MPI_Send(&eds_energies[0], 1, MPI_EDSINFO, replicaGraphMPIControl.masterID, EDSINFO, replicaGraphMPIControl.comm);
     DEBUG(4,"replica_exchange_slave_eds " << globalThreadID << ":send_to_master:\t\t send MPI_EDS \t DONE" );
     DEBUG(2,"replica_exchange_slave_eds " << globalThreadID << ":send_to_master:\t DONE");
   }

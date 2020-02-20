@@ -55,7 +55,7 @@ util::replica_exchange_master::replica_exchange_master(io::Argument & args,
 #ifdef XXMPI
   DEBUG(2,"replica_exchange_master "<< globalThreadID <<":Constructor:\t START");
 
-  assert(replicaGraphMPIControl.replicaGraphMasterID == replicaGraphMPIControl.replicaGraphThisThreadID);    //TODO: This can be removed in future! bscrhoed
+  assert(replicaGraphMPIControl.masterID == replicaGraphMPIControl.threadID);    //TODO: This can be removed in future! bscrhoed
   assert(replicaGraphMPIControl.numberOfReplicas > 0);
   DEBUG(2,"replica_exchange_master "<< globalThreadID <<":Constructor:\t rep_params THERE?");
   DEBUG(2,"replica_exchange_master "<< globalThreadID <<":Constructor:\t" << replica->sim.param().replica.num_l);
