@@ -392,7 +392,7 @@ int main(int argc, char *argv[]) {
     
     
     ////GENERATE SIM SPECIFIC SIMULATION COMM
-    MPI_Comm_split(MPI_COMM_WORLD, replica_mpi_control.mpiColor, tglobalThreadID, &replica_mpi_control.simulationCOMM);
+    MPI_Comm_split(MPI_COMM_WORLD, replica_mpi_control.mpiColor, tglobalThreadID, &replica_mpi_control.comm);
     
     //////////////////////////////////////
     //for RE-Graph

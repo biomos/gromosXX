@@ -176,7 +176,7 @@ int algorithm::Shake::apply(topology::Topology & topo,
               transfer_size * 3, MPI::DOUBLE, MPI::SUM, sim.mpi_control.masterID, sim.mpi_control.comm);
       // reduce virial
       MPI_Reduce(&conf.old().virial_tensor(0, 0), NULL,
-              9, MPI::DOUBLE, MPI::SUM, sim.mpi_control.masterID, sim.mpi_control.simulationCOMM);
+              9, MPI::DOUBLE, MPI::SUM, sim.mpi_control.masterID, sim.mpi_control.comm);
       // reduce constraint force
       MPI_Reduce(&conf.old().constraint_force(0)(0), NULL,
               transfer_size * 3, MPI::DOUBLE, MPI::SUM, sim.mpi_control.masterID, sim.mpi_control.comm);

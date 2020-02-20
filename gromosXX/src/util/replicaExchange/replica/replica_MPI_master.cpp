@@ -263,13 +263,13 @@ void util::replica_MPI_Master::send_coordinates(){
   DEBUG(4, "replica_MPI_Master " << globalThreadID << " ::send_coordinates::\t START");
 
   //EXCHANGE conf parts
-  MPI_Bcast(&conf.current().pos[0][0], 1, MPI_VARRAY, replica_mpi_control.masterID , replica_mpi_control.COMM);
-  MPI_Bcast(&conf.current().posV[0][0], 1, MPI_VARRAY, replica_mpi_control.masterID , replica_mpi_control.COMM);
-  MPI_Bcast(&conf.current().vel[0][0], 1, MPI_VARRAY, replica_mpi_control.masterID , replica_mpi_control.COMM);
+  MPI_Bcast(&conf.current().pos[0][0], 1, MPI_VARRAY, replica_mpi_control.masterID , replica_mpi_control.comm);
+  MPI_Bcast(&conf.current().posV[0][0], 1, MPI_VARRAY, replica_mpi_control.masterID , replica_mpi_control.comm);
+  MPI_Bcast(&conf.current().vel[0][0], 1, MPI_VARRAY, replica_mpi_control.masterID , replica_mpi_control.comm);
 
-  MPI_Bcast(&conf.special().lattice_shifts[0][0], 1, MPI_VARRAY, replica_mpi_control.masterID, replica_mpi_control.COMM);
-  MPI_Bcast(&conf.current().stochastic_integral[0][0], 1, MPI_VARRAY, replica_mpi_control.masterID, replica_mpi_control.COMM);
-  MPI_Bcast(&conf.current().box(0)[0], 1, MPI_BOX, replica_mpi_control.masterID, replica_mpi_control.COMM);
+  MPI_Bcast(&conf.special().lattice_shifts[0][0], 1, MPI_VARRAY, replica_mpi_control.masterID, replica_mpi_control.comm);
+  MPI_Bcast(&conf.current().stochastic_integral[0][0], 1, MPI_VARRAY, replica_mpi_control.masterID, replica_mpi_control.comm);
+  MPI_Bcast(&conf.current().box(0)[0], 1, MPI_BOX, replica_mpi_control.masterID, replica_mpi_control.comm);
 
   //EXCHANGE ANGLES
   std::vector<double> angles;
@@ -278,10 +278,10 @@ void util::replica_MPI_Master::send_coordinates(){
   angles[1] = conf.current().psi;
   angles[2] = conf.current().theta;
 
-  MPI_Bcast(&angles[0], angles.size(), MPI_DOUBLE, replica_mpi_control.masterID, replica_mpi_control.COMM);
+  MPI_Bcast(&angles[0], angles.size(), MPI_DOUBLE, replica_mpi_control.masterID, replica_mpi_control.comm);
   
   //Exchange STUFF
-  MPI_Bcast(&conf.special().distancefield.distance[0], conf.special().distancefield.distance.size(), MPI_DOUBLE, replica_mpi_control.masterID, replica_mpi_control.COMM);
+  MPI_Bcast(&conf.special().distancefield.distance[0], conf.special().distancefield.distance.size(), MPI_DOUBLE, replica_mpi_control.masterID, replica_mpi_control.comm);
   
   DEBUG(4, "replica_MPI_Master " << globalThreadID << " ::send_coordinates::\t DONE");
 

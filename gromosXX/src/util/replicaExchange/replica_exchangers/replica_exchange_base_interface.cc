@@ -70,11 +70,8 @@ util::replica_exchange_base_interface::~replica_exchange_base_interface() {
 }
 
 void util::replica_exchange_base_interface::createReplicas(int cont, int globalThreadID, simulation::mpi_control_struct replica_mpi_control){
-<<<<<<< HEAD
   MPI_DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":createReplicas:\t START \t THREADS "<<replica_mpi_control.numberOfThreads);
-=======
-  DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":createReplicas:\t START \t THREADS "<<replica_mpi_control.numberOfThreads);
->>>>>>> c152790c3d4d3232a358da35dd61d44ded034fd7
+
   // create the number of replicas that are assigned to my node
     if(replica_mpi_control.numberOfThreads>1){
         if(replica_mpi_control.threadID == replica_mpi_control.masterID ){
