@@ -20,17 +20,17 @@
     namespace util{
           struct replica_graph_mpi_control{
 
-            replica_graph_mpi_control() : replicaGraphID(0), replicaGraphMasterID(0), replicaGraphThisThreadID(-1), numberOfThreads(0)
+            replica_graph_mpi_control() : graphID(0), masterID(0), threadID(-1), numberOfThreads(0)
             { };
 
-            unsigned int replicaGraphID;
-            unsigned int replicaGraphMasterID;
-            unsigned int replicaGraphThisThreadID;
+            unsigned int graphID;
+            unsigned int masterID;
+            unsigned int threadID;
             unsigned int numberOfThreads;
             unsigned int numberOfReplicas;
 
-            MPI_Comm replicaGraphCOMM;
-            int replicaGraphMPIColor;
+            MPI_Comm comm;
+            int mpiColor;
 
             std::vector<unsigned int> replicaMasterIDs;
             std::vector<std::vector<unsigned int>> replicaThreads;

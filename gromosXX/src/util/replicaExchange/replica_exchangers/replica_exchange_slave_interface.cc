@@ -39,16 +39,18 @@ util::replica_exchange_slave_interface::replica_exchange_slave_interface(io::Arg
                                                     replica_graph_mpi_control replicaGraphMPIControl,
                                                     simulation::mpi_control_struct replica_mpi_control) : 
         replica_exchange_base_interface(_args, cont, globalThreadID, replicaGraphMPIControl, replica_mpi_control) {
-        DEBUG(4, "replica_exchange_slave_interface "<< globalThreadID <<":Constructor:\t START");
+        MPI_DEBUG(2, "replica_exchange_slave_interface "<< globalThreadID <<":Constructor:\t START");
         
-        if(replicaGraphMPIControl.replicaGraphCOMM != MPI_COMM_NULL){
+        if(replica_mpi_control.masterID == replica_mpi_control.threadID){
+            DEBUG(5, "replica_exchange_slave_interface "<< globalThreadID <<":Constructor:\t RE-Graph Sender");
             not_sender = true;
         }
         else{
+            DEBUG(5, "replica_exchange_slave_interface "<< globalThreadID <<":Constructor:\t I'm not an RE-Graph Sender");
             not_sender = false;
         }
         
-        DEBUG(4, "replica_exchange_slave_interface "<< globalThreadID <<":Constructor:\t DONE");
+        MPI_DEBUG(2, "replica_exchange_slave_interface "<< globalThreadID <<":Constructor:\t DONE");
 }
 
 util::replica_exchange_slave_interface::~replica_exchange_slave_interface() {
@@ -66,7 +68,7 @@ void util::replica_exchange_slave_interface::send_to_master() const {
       info.partner = partnerReplicaID;
       info.probability = probability;
       info.switched = int(switched);
-      MPI_Send(&info, 1, MPI_REPINFO, replicaGraphMPIControl.replicaGraphMasterID, REPINFO, replicaGraphMPIControl.replicaGraphCOMM);
+      MPI_Send(&info, 1, MPI_REPINFO, replicaGraphMPIControl.masterID, REPINFO, replicaGraphMPIControl.comm);
 
     DEBUG(2,"replica_exchange_slave_interface " << globalThreadID << ":\t send_to_master \t Done");
   }

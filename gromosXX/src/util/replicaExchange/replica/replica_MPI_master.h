@@ -55,6 +55,8 @@ namespace util{
 #endif
 
     private:
+        void send_coordinates();
+        
         /**
          * Attributes
          */

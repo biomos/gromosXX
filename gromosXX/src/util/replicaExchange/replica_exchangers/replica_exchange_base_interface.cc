@@ -56,37 +56,9 @@ util::replica_exchange_base_interface::replica_exchange_base_interface(io::Argum
         replicaGraphMPIControl(replicaGraphMPIControl)
 {
 #ifdef XXMPI
-  DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":Constructor:\t START ");
-  DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":Constructor:\t SIMULATIONID:  "<< simulationID);
-
-  //construct replica obj
-  DEBUG(4,"replica_exchange_base_interface "<< globalThreadID <<":Constructor:\t  createReplica");
+  MPI_DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":Constructor:\t START ");
   createReplicas(cont, globalThreadID, replica_mpi_control);
-  DEBUG(4,"replica_exchange_base_interface "<< globalThreadID <<":Constructor:\t createdReplica T");
-
-  //RE-Vars
-  // set some variables
-  stepsPerRun = replica->sim.param().step.number_of_steps;
-  run = 0;
-  total_runs = replica->sim.param().replica.trials + replica->sim.param().replica.equilibrate;
-  partnerReplicaID = simulationID;
-  time = replica->sim.time();
-  steps = 0;
-  switched = 0;
-  replica->curentStepNumber=0;
-  replica->totalStepNumber = total_runs*stepsPerRun;
-  replica->stepsPerRun= stepsPerRun;
-
-  const int numT = replica->sim.param().replica.num_T;
-
-  T = replica->sim.param().replica.temperature[simulationID % numT];
-  l = replica->sim.param().replica.lambda[simulationID / numT];
-  dt = replica->sim.param().replica.dt[simulationID / numT];
-
-  set_lambda();
-  set_temp();
-  
-  DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":Constructor:\t Constructor \t DONE");
+  MPI_DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":Constructor:\t Constructor \t DONE " << replica->sim.param().reeds.num_l);
   #else
     throw "Cannot use send_to_master from replica_exchange_slave_eds without MPI!"; 
   #endif
@@ -97,12 +69,12 @@ util::replica_exchange_base_interface::~replica_exchange_base_interface() {
     delete replica;
 }
 
-//TODO: REMOVE
 void util::replica_exchange_base_interface::createReplicas(int cont, int globalThreadID, simulation::mpi_control_struct replica_mpi_control){
-  DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":createReplicas:\t START \t THREADS "<<replica_mpi_control.simulationNumberOfThreads);
+  MPI_DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":createReplicas:\t START \t THREADS "<<replica_mpi_control.numberOfThreads);
+
   // create the number of replicas that are assigned to my node
-    if(replica_mpi_control.simulationNumberOfThreads>1){
-        if(replica_mpi_control.simulationThisThreadID == replica_mpi_control.simulationMasterThreadID ){
+    if(replica_mpi_control.numberOfThreads>1){
+        if(replica_mpi_control.threadID == replica_mpi_control.masterID ){
             replica = new util::replica_MPI_Master(args, cont, globalThreadID, replica_mpi_control);
         }
         else{
@@ -111,23 +83,16 @@ void util::replica_exchange_base_interface::createReplicas(int cont, int globalT
     }
     else{
         replica = new util::replica(args, cont, globalThreadID, replica_mpi_control);
-        //DEBUG(2,"replica_exchange_base_interface "<< globalThreadID <<":create:\t rep" << replica->sim.param().replica.num_l);
-        //DEBUG(2,"replica_exchange_base_interface "<< globalThreadID <<":create:\t rep" << replica->sim.param().replica.lambda[0]);
-    }
-   
-  DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":createReplicas:\t DONE");
+    }   
+  MPI_DEBUG(4,"replica_exchange_base_interface "<< globalThreadID <<":create:\t replica numS " << replica->sim.param().replica.num_l);
+  MPI_DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":createReplicas:\t DONE");
 }
 
-//TODO: REMOVE
 void util::replica_exchange_base_interface::init() {
-  DEBUG(3, "replica_exchange_base_interface "<< globalThreadID <<":init:\t START");
-  // do init for all replica assigned to this node
-  DEBUG(4,"replica_exchange_base_interface "<< globalThreadID <<":init:\t initReplicas");
-  replica->init();
+  DEBUG(3, "replica_exchange_base_interface "<< globalThreadID <<":init:\t START EMPTY");
   DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":init:\t DONE");
 }
 
-//TODO: REMOVE
 void util::replica_exchange_base_interface::run_MD() {
   DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":run_MD:\t START");
   
@@ -152,7 +117,6 @@ void util::replica_exchange_base_interface::updateReplica_params(){
  * REplica Exchanges
  */
 
-//TODO: REMOVE
 void util::replica_exchange_base_interface::swap(){
   DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":swap:\t START");
   
@@ -187,7 +151,6 @@ void util::replica_exchange_base_interface::swap(){
   DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":swap:\t DONE");
 }
 
-//TODO: REMOVE
 void util::replica_exchange_base_interface::write_final_conf() {
   // write coordinates to cnf for all replica assigned to this node
    replica->write_final_conf();
@@ -217,7 +180,7 @@ void util::replica_exchange_base_interface::swap_replicas_2D(const unsigned int 
       prob[1] = randNum;
 
 #ifdef XXMPI
-      MPI_Send(&prob[0], 2, MPI_DOUBLE, partnerReplicaMasterThreadID, SENDCOORDS, replicaGraphMPIControl.replicaGraphCOMM);
+      MPI_Send(&prob[0], 2, MPI_DOUBLE, partnerReplicaMasterThreadID, SENDCOORDS, replicaGraphMPIControl.comm);
 #endif
 
       if (randNum < probability) {
@@ -238,18 +201,18 @@ void util::replica_exchange_base_interface::swap_replicas_2D(const unsigned int 
         // send E21 and E22
         double energies[2] = {E22, E21};
         //this send operation is matched in calc_probability()
-        MPI_Send(&energies[0], 2, MPI_DOUBLE, partnerReplicaMasterThreadID, SWITCHENERGIES,  replicaGraphMPIControl.replicaGraphCOMM);
+        MPI_Send(&energies[0], 2, MPI_DOUBLE, partnerReplicaMasterThreadID, SWITCHENERGIES,  replicaGraphMPIControl.comm);
 #endif
       } else { // sameLambda
 #ifdef XXMPI
         double energies[2] = {epot, 0.0}; 
-        MPI_Send(&energies[0],2,MPI_DOUBLE, partnerReplicaMasterThreadID, SWITCHENERGIES,  replicaGraphMPIControl.replicaGraphCOMM);
+        MPI_Send(&energies[0],2,MPI_DOUBLE, partnerReplicaMasterThreadID, SWITCHENERGIES,  replicaGraphMPIControl.comm);
 #endif
      }
       if (replica->sim.param().pcouple.scale != math::pcouple_off) {
 #ifdef XXMPI
         math::Box box_replica = replica->conf.current().box;    //exchange box
-        MPI_Send(&box_replica(0)[0], 1, MPI_BOX, partnerReplicaMasterThreadID, BOX,  replicaGraphMPIControl.replicaGraphCOMM);
+        MPI_Send(&box_replica(0)[0], 1, MPI_BOX, partnerReplicaMasterThreadID, BOX,  replicaGraphMPIControl.comm);
 #endif
       }
       
@@ -259,7 +222,7 @@ void util::replica_exchange_base_interface::swap_replicas_2D(const unsigned int 
       std::vector<double> prob;
       prob.resize(2);
 #ifdef XXMPI
-      MPI_Recv(&prob[0], 2, MPI_DOUBLE, partnerReplicaMasterThreadID, SENDCOORDS,  replicaGraphMPIControl.replicaGraphCOMM, &status);
+      MPI_Recv(&prob[0], 2, MPI_DOUBLE, partnerReplicaMasterThreadID, SENDCOORDS,  replicaGraphMPIControl.comm, &status);
 #endif
       //Have we been exchanged little partner?
       probability = prob[0];
@@ -284,6 +247,7 @@ void util::replica_exchange_base_interface::swap_replicas_2D(const unsigned int 
     DEBUG(4, "replica "<< globalThreadID <<":swap:\t  DONE");
 }
 
+// TODO: THIS function NEEDS to be written! @bschroed
 void util::replica_exchange_base_interface::swap_replicas_1D(const unsigned int partnerReplicaID) {
   DEBUG(4, "replica "<<  globalThreadID <<":swap:\t  START");
 
@@ -304,7 +268,7 @@ void util::replica_exchange_base_interface::swap_replicas_1D(const unsigned int 
       prob[1] = randNum;
 
 #ifdef XXMPI
-      MPI_Send(&prob[0], 2, MPI_DOUBLE, partnerReplicaMasterThreadID, SENDCOORDS, replicaGraphMPIControl.replicaGraphCOMM);
+      MPI_Send(&prob[0], 2, MPI_DOUBLE, partnerReplicaMasterThreadID, SENDCOORDS, replicaGraphMPIControl.comm);
 #endif
 
       if (randNum < probability) {
@@ -326,18 +290,18 @@ void util::replica_exchange_base_interface::swap_replicas_1D(const unsigned int 
         // send E21 and E22
         double energies[2] = {E22, E21};
         //this send operation is matched in calc_probability()
-        MPI_Send(&energies[0], 2, MPI_DOUBLE, partnerReplicaMasterThreadID, SWITCHENERGIES,  replicaGraphMPIControl.replicaGraphCOMM);
+        MPI_Send(&energies[0], 2, MPI_DOUBLE, partnerReplicaMasterThreadID, SWITCHENERGIES,  replicaGraphMPIControl.comm);
 #endif
       } else { // sameLambda
 #ifdef XXMPI
         double energies[2] = {epot, 0.0}; 
-        MPI_Send(&energies[0],2,MPI_DOUBLE, partnerReplicaMasterThreadID, SWITCHENERGIES,  replicaGraphMPIControl.replicaGraphCOMM);
+        MPI_Send(&energies[0],2,MPI_DOUBLE, partnerReplicaMasterThreadID, SWITCHENERGIES,  replicaGraphMPIControl.comm);
 #endif
      }
       if (replica->sim.param().pcouple.scale != math::pcouple_off) {
 #ifdef XXMPI
         math::Box box_replica = replica->conf.current().box;    //exchange box
-        MPI_Send(&box_replica(0)[0], 1, MPI_BOX, partnerReplicaMasterThreadID, BOX,  replicaGraphMPIControl.replicaGraphCOMM);
+        MPI_Send(&box_replica(0)[0], 1, MPI_BOX, partnerReplicaMasterThreadID, BOX,  replicaGraphMPIControl.comm);
 #endif
       }
       
@@ -347,7 +311,7 @@ void util::replica_exchange_base_interface::swap_replicas_1D(const unsigned int 
       std::vector<double> prob;
       prob.resize(2);
 #ifdef XXMPI
-      MPI_Recv(&prob[0], 2, MPI_DOUBLE, partnerReplicaMasterThreadID, SENDCOORDS,  replicaGraphMPIControl.replicaGraphCOMM, &status);
+      MPI_Recv(&prob[0], 2, MPI_DOUBLE, partnerReplicaMasterThreadID, SENDCOORDS,  replicaGraphMPIControl.comm, &status);
 #endif
       //Have we been exchanged little partner?
       probability = prob[0];
@@ -371,6 +335,7 @@ void util::replica_exchange_base_interface::swap_replicas_1D(const unsigned int 
   }
     DEBUG(4, "replica "<< globalThreadID <<":swap:\t  DONE");
 }
+
 
 int util::replica_exchange_base_interface::find_partner() const {
     //TODO: REWRITE To get Replica ID BSCHROED
@@ -489,7 +454,7 @@ double util::replica_exchange_base_interface::calc_probability(const unsigned in
     double energies[2] = {0.0, 0.0};
 #ifdef XXMPI
     MPI_Status status;
-    MPI_Recv(&energies[0], 2, MPI_DOUBLE, partnerReplicaMasterThreadID, SWITCHENERGIES,  replicaGraphMPIControl.replicaGraphCOMM, &status);
+    MPI_Recv(&energies[0], 2, MPI_DOUBLE, partnerReplicaMasterThreadID, SWITCHENERGIES,  replicaGraphMPIControl.comm, &status);
 #endif
 
     epot_partner = energies[0];
@@ -505,7 +470,7 @@ double util::replica_exchange_base_interface::calc_probability(const unsigned in
     double energies[2] = {0.0, 0.0};
 #ifdef XXMPI
     MPI_Status status;
-    MPI_Recv(&energies[0], 2, MPI_DOUBLE, partnerReplicaMasterThreadID, SWITCHENERGIES,  replicaGraphMPIControl.replicaGraphCOMM, &status);
+    MPI_Recv(&energies[0], 2, MPI_DOUBLE, partnerReplicaMasterThreadID, SWITCHENERGIES,  replicaGraphMPIControl.comm, &status);
 #endif
     const double E22 = energies[0];
     const double E12 = energies[1];
@@ -530,7 +495,7 @@ double util::replica_exchange_base_interface::calc_probability(const unsigned in
     math::Box box_partner = replica->conf.current().box;
 #ifdef XXMPI
     MPI_Status status;
-    MPI_Recv(&box_partner(0)[0], 1, MPI_BOX, partnerReplicaMasterThreadID, BOX,  replicaGraphMPIControl.replicaGraphCOMM, &status);
+    MPI_Recv(&box_partner(0)[0], 1, MPI_BOX, partnerReplicaMasterThreadID, BOX,  replicaGraphMPIControl.comm, &status);
 #endif
     double V1 = math::volume(replica->conf.current().box, replica->conf.boundary_type);
     double V2 = math::volume(box_partner, replica->conf.boundary_type);
@@ -549,7 +514,7 @@ double util::replica_exchange_base_interface::calc_probability(const unsigned in
     return exp(-delta);
 }
 
-//THIS COULD GO TO REPLICA and into the func above!
+//THIS COULD GO TO REPLICA and into the func above! @bschroed
 double util::replica_exchange_base_interface::calculate_energy_core() {
   double energy = 0.0;
   //chris: you do need to re-evaluate the energy, otherwise you get the energy of before the previous step
@@ -558,7 +523,7 @@ double util::replica_exchange_base_interface::calculate_energy_core() {
   if (ff->apply(replica->topo, replica->conf, replica->sim)) {
     print_info("Error in energy calculation!");
  #ifdef XXMPI
-    MPI_Abort( replicaGraphMPIControl.replicaGraphCOMM, E_UNSPECIFIED);
+    MPI_Abort( replicaGraphMPIControl.comm, E_UNSPECIFIED);
 #endif
     return 1;
   }
@@ -578,7 +543,7 @@ double util::replica_exchange_base_interface::calculate_energy_core() {
     default:
       print_info("Error in energy switching!");
 #ifdef XXMPI
-      MPI_Abort(replicaGraphMPIControl.replicaGraphCOMM, E_UNSPECIFIED);
+      MPI_Abort(replicaGraphMPIControl.comm, E_UNSPECIFIED);
 #endif
   }
   return energy;
@@ -630,9 +595,6 @@ double util::replica_exchange_base_interface::calculate_energy(const unsigned in
   return energy;
 }
 
-
-//TODO: REMOVE
-//THIS COULD GO TO REPLICA and into the func above!
 void util::replica_exchange_base_interface::exchange_averages() {
   // after a swap the averages of current and old are exchanged and have to be switched back
   configuration::Average  dummy = replica->conf.current().averages;
@@ -641,7 +603,6 @@ void util::replica_exchange_base_interface::exchange_averages() {
 }
 
 //sending stuff
-//TODO: REMOVE
 void util::replica_exchange_base_interface::send_coord(const unsigned int receiverReplicaID) {
 #ifdef XXMPI
 
@@ -649,22 +610,22 @@ void util::replica_exchange_base_interface::send_coord(const unsigned int receiv
 
   configuration::Configuration  conf = replica->conf;
   
-  MPI_Send(&conf.current().pos[0][0], 1, MPI_VARRAY, receiverReplicaMasterThreadID, POS,  replicaGraphMPIControl.replicaGraphCOMM);
-  MPI_Send(&conf.current().posV[0][0], 1, MPI_VARRAY, receiverReplicaMasterThreadID, POSV,  replicaGraphMPIControl.replicaGraphCOMM);
-  MPI_Send(&conf.current().vel[0][0], 1, MPI_VARRAY, receiverReplicaMasterThreadID, VEL,  replicaGraphMPIControl.replicaGraphCOMM);
+  MPI_Send(&conf.current().pos[0][0], 1, MPI_VARRAY, receiverReplicaMasterThreadID, POS,  replicaGraphMPIControl.comm);
+  MPI_Send(&conf.current().posV[0][0], 1, MPI_VARRAY, receiverReplicaMasterThreadID, POSV,  replicaGraphMPIControl.comm);
+  MPI_Send(&conf.current().vel[0][0], 1, MPI_VARRAY, receiverReplicaMasterThreadID, VEL,  replicaGraphMPIControl.comm);
 
   // we need to store the lattice shifts from the previous configuration and to send them
   // if we are the second one to send the data
   if (simulationID < receiverReplicaID) {
-    MPI_Send(&conf.special().lattice_shifts[0][0], 1, MPI_VARRAY, receiverReplicaMasterThreadID, LATTSHIFTS,  replicaGraphMPIControl.replicaGraphCOMM);
+    MPI_Send(&conf.special().lattice_shifts[0][0], 1, MPI_VARRAY, receiverReplicaMasterThreadID, LATTSHIFTS,  replicaGraphMPIControl.comm);
   } else {
-    MPI_Send(&((*replica->latticeTMP)[0][0]), 1, MPI_VARRAY, receiverReplicaMasterThreadID, LATTSHIFTS,  replicaGraphMPIControl.replicaGraphCOMM);
+    MPI_Send(&((*replica->latticeTMP)[0][0]), 1, MPI_VARRAY, receiverReplicaMasterThreadID, LATTSHIFTS,  replicaGraphMPIControl.comm);
     delete replica->latticeTMP;
     replica->latticeTMP = NULL;
   }
 
-  MPI_Send(&conf.current().stochastic_integral[0][0], 1, MPI_VARRAY, receiverReplicaMasterThreadID, STOCHINT,  replicaGraphMPIControl.replicaGraphCOMM);
-  MPI_Send(&conf.current().box(0)[0], 1, MPI_BOX, receiverReplicaMasterThreadID, BOX,  replicaGraphMPIControl.replicaGraphCOMM);
+  MPI_Send(&conf.current().stochastic_integral[0][0], 1, MPI_VARRAY, receiverReplicaMasterThreadID, STOCHINT,  replicaGraphMPIControl.comm);
+  MPI_Send(&conf.current().box(0)[0], 1, MPI_BOX, receiverReplicaMasterThreadID, BOX,  replicaGraphMPIControl.comm);
 
   std::vector<double> angles;
   angles.resize(3);
@@ -672,12 +633,11 @@ void util::replica_exchange_base_interface::send_coord(const unsigned int receiv
   angles[1] = conf.current().psi;
   angles[2] = conf.current().theta;
 
-  MPI_Send(&angles[0], angles.size(), MPI_DOUBLE, receiverReplicaMasterThreadID, ANGLES,  replicaGraphMPIControl.replicaGraphCOMM);
-  MPI_Send(&conf.special().distancefield.distance[0], conf.special().distancefield.distance.size(), MPI_DOUBLE, receiverReplicaMasterThreadID, DF,  replicaGraphMPIControl.replicaGraphCOMM);
+  MPI_Send(&angles[0], angles.size(), MPI_DOUBLE, receiverReplicaMasterThreadID, ANGLES,  replicaGraphMPIControl.comm);
+  MPI_Send(&conf.special().distancefield.distance[0], conf.special().distancefield.distance.size(), MPI_DOUBLE, receiverReplicaMasterThreadID, DF,  replicaGraphMPIControl.comm);
 #endif
 }
 
-//TODO: REMOVE
 void util::replica_exchange_base_interface::receive_new_coord(const unsigned int senderReplicaID) {
 #ifdef XXMPI
    
@@ -687,9 +647,9 @@ void util::replica_exchange_base_interface::receive_new_coord(const unsigned int
   configuration::Configuration  conf = replica->conf;
 
   conf.exchange_state();
-  MPI_Recv(&conf.current().pos[0][0], 1, MPI_VARRAY, senderReplicaMasterThreadID, POS,  replicaGraphMPIControl.replicaGraphCOMM, &status);
-  MPI_Recv(&conf.current().posV[0][0], 1, MPI_VARRAY, senderReplicaMasterThreadID, POSV,  replicaGraphMPIControl.replicaGraphCOMM, &status);
-  MPI_Recv(&conf.current().vel[0][0], 1, MPI_VARRAY, senderReplicaMasterThreadID, VEL,  replicaGraphMPIControl.replicaGraphCOMM, &status);
+  MPI_Recv(&conf.current().pos[0][0], 1, MPI_VARRAY, senderReplicaMasterThreadID, POS,  replicaGraphMPIControl.comm, &status);
+  MPI_Recv(&conf.current().posV[0][0], 1, MPI_VARRAY, senderReplicaMasterThreadID, POSV,  replicaGraphMPIControl.comm, &status);
+  MPI_Recv(&conf.current().vel[0][0], 1, MPI_VARRAY, senderReplicaMasterThreadID, VEL,  replicaGraphMPIControl.comm, &status);
 
   // we need to store the lattice shifts from the previous configuration and to send them
   // if we are the second one to send the data
@@ -697,19 +657,19 @@ void util::replica_exchange_base_interface::receive_new_coord(const unsigned int
     replica->latticeTMP = new math::VArray(conf.special().lattice_shifts);
   }
 
-  MPI_Recv(&conf.special().lattice_shifts[0][0], 1, MPI_VARRAY, senderReplicaMasterThreadID, LATTSHIFTS,  replicaGraphMPIControl.replicaGraphCOMM, &status);
-  MPI_Recv(&conf.current().stochastic_integral[0][0], 1, MPI_VARRAY, senderReplicaMasterThreadID, STOCHINT,  replicaGraphMPIControl.replicaGraphCOMM, &status);
-  MPI_Recv(&conf.current().box(0)[0], 1, MPI_BOX, senderReplicaMasterThreadID, BOX,  replicaGraphMPIControl.replicaGraphCOMM, &status);
+  MPI_Recv(&conf.special().lattice_shifts[0][0], 1, MPI_VARRAY, senderReplicaMasterThreadID, LATTSHIFTS,  replicaGraphMPIControl.comm, &status);
+  MPI_Recv(&conf.current().stochastic_integral[0][0], 1, MPI_VARRAY, senderReplicaMasterThreadID, STOCHINT,  replicaGraphMPIControl.comm, &status);
+  MPI_Recv(&conf.current().box(0)[0], 1, MPI_BOX, senderReplicaMasterThreadID, BOX,  replicaGraphMPIControl.comm, &status);
 
   std::vector<double> angles;
   angles.resize(3);
-  MPI_Recv(&angles[0], angles.size(), MPI_DOUBLE, senderReplicaMasterThreadID, ANGLES,  replicaGraphMPIControl.replicaGraphCOMM, &status);
+  MPI_Recv(&angles[0], angles.size(), MPI_DOUBLE, senderReplicaMasterThreadID, ANGLES,  replicaGraphMPIControl.comm, &status);
 
   conf.current().phi = angles[0];
   conf.current().psi = angles[1];
   conf.current().theta = angles[2];
 
-  MPI_Recv(&conf.special().distancefield.distance[0], conf.special().distancefield.distance.size(), MPI_DOUBLE, senderReplicaMasterThreadID, DF,  replicaGraphMPIControl.replicaGraphCOMM, &status);
+  MPI_Recv(&conf.special().distancefield.distance[0], conf.special().distancefield.distance.size(), MPI_DOUBLE, senderReplicaMasterThreadID, DF,  replicaGraphMPIControl.comm, &status);
 
   if ( simulationID > senderReplicaID){
     conf.exchange_state();
@@ -729,6 +689,7 @@ void util::replica_exchange_base_interface::velscale(int unsigned partnerReplica
   } 
 }
 
+//TODO: mve to 2D_T_lambda ?
 //Lambda Exchange (Kinda Hamiltonian Exchange)
 void util::replica_exchange_base_interface::set_lambda() {
   // change Lambda in simulation

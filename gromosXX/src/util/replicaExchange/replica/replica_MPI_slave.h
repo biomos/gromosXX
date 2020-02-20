@@ -52,7 +52,8 @@ namespace util {
         algorithm::M_Shake * m_shake;
         algorithm::Monte_Carlo * monte_carlo;
 
-
+        void receive_coords();
+        
     public:
         replica_MPI_Slave(io::Argument _args, int cont, int globalThreadID, simulation::mpi_control_struct replica_mpi_control);
         ~replica_MPI_Slave();
@@ -60,7 +61,7 @@ namespace util {
         /**
          * simulation
          */
-        simulation::Simulation sim;
+        //simulation::Simulation sim;
         
 #ifdef XXMPI
        

@@ -70,7 +70,14 @@ util::replica_MPI_Slave::replica_MPI_Slave(io::Argument _args, int cont, int glo
     }
     MPI_DEBUG(5, "replica_MPI_SLAVE "<< globalThreadID <<":Constructor:\t  "<< globalThreadID <<":\t REad in input already");
 
-    MPI_DEBUG(5, "replica_MPI_SLAVE "<< globalThreadID << "  set replica_params ");
+    //TODO: HERE?
+    md.init(topo, conf, sim, *os, true);
+
+    //init();
+    
+    /**
+     * SLAVE SPECIFICs:
+     */
 
     // check whether we have nonbonded interactions
     do_nonbonded = (sim.param().force.nonbonded_crf || 
@@ -113,10 +120,8 @@ util::replica_MPI_Slave::replica_MPI_Slave(io::Argument _args, int cont, int glo
     }
     //DEBUG(5, "Slave "<< globalThreadID << " do_shake? "<<do_shake);
 
-
     // get m_shake and check whether we do it for solvent
-    do_m_shake = sim.param().system.nsm &&
-      sim.param().constraint.solvent.algorithm == simulation::constr_m_shake;
+    do_m_shake = sim.param().system.nsm && sim.param().constraint.solvent.algorithm == simulation::constr_m_shake;
 
     m_shake = dynamic_cast<algorithm::M_Shake *>(md.algorithm("M_Shake"));
     if (do_m_shake && m_shake == NULL) {
@@ -137,8 +142,10 @@ util::replica_MPI_Slave::replica_MPI_Slave(io::Argument _args, int cont, int glo
       MPI::Finalize();
       throw "ReplicaSlave: \tINITIALisation error in Montecarlo algorithm of slave of simulationID "+ simulationID;
     }
-    MPI_DEBUG(4, "replica_MPI_SLAVE "<< globalThreadID <<":Constructor:\t  "<< globalThreadID <<":\t DONE");
+   
 
+   MPI_DEBUG(4, "replica_MPI_SLAVE "<< globalThreadID <<":Constructor:\t replica Constructor  "<< globalThreadID <<": \t DONE");
+   MPI_DEBUG(5, "replica_MPI_SLAVE UOT! "<< globalThreadID <<":Constructor:\t  "<< globalThreadID <<":\t REEDS "<< sim.param().reeds.num_l);
 #else
     throw "Can not construct Replica_MPI as MPI is not enabled!";
 #endif
@@ -154,7 +161,10 @@ util::replica_MPI_Slave::~replica_MPI_Slave() {
 void util::replica_MPI_Slave::run_MD(){
     int error;
     int next_step = 0 ;
-
+    
+    //after an Replica coordinate exchange, update the coordinates of the slaves
+    receive_coords();
+    
     while ((unsigned int)(sim.steps()) < stepsPerRun + curentStepNumber) {
       // run a step
        DEBUG(4, "slave " << globalThreadID << " waiting for master");
@@ -184,7 +194,7 @@ void util::replica_MPI_Slave::run_MD(){
       }
 
 
-      MPI_Bcast(&next_step, 1, MPI::INT, sim.mpi_control.simulationMasterThreadID, sim.mpi_control.simulationCOMM);
+      MPI_Bcast(&next_step, 1, MPI::INT, sim.mpi_control.masterID, sim.mpi_control.comm);
 
       if (next_step == 2) {
         (*os) << "globalThreadID: "<< globalThreadID<<"\tMessage from master: Steepest descent: minimum reached." << std::endl;
@@ -212,3 +222,37 @@ void util::replica_MPI_Slave::run_MD(){
     }
 }
     
+void util::replica_MPI_Slave::receive_coords(){
+  #ifdef XXMPI
+  DEBUG(4, "replica_MPI_Slave " << globalThreadID << " ::receive_coords::\t START");
+
+  MPI_Status status;
+  
+  conf.exchange_state();
+  
+  MPI_Bcast(&conf.current().pos[0][0], 1, MPI_VARRAY, replica_mpi_control.masterID, replica_mpi_control.comm);
+  MPI_Bcast(&conf.current().posV[0][0], 1, MPI_VARRAY, replica_mpi_control.masterID, replica_mpi_control.comm);
+  MPI_Bcast(&conf.current().vel[0][0], 1, MPI_VARRAY, replica_mpi_control.masterID, replica_mpi_control.comm);
+
+  MPI_Bcast(&conf.special().lattice_shifts[0][0], 1, MPI_VARRAY, replica_mpi_control.masterID, replica_mpi_control.comm);
+  MPI_Bcast(&conf.current().stochastic_integral[0][0], 1, MPI_VARRAY, replica_mpi_control.masterID, replica_mpi_control.comm);
+  MPI_Bcast(&conf.current().box(0)[0], 1, MPI_BOX, replica_mpi_control.masterID, replica_mpi_control.comm);
+
+  //Exchange Angles
+  std::vector<double> angles;
+  angles.resize(3);
+  MPI_Bcast(&angles[0], angles.size(), MPI_DOUBLE, replica_mpi_control.masterID, replica_mpi_control.comm);
+
+  conf.current().phi = angles[0];
+  conf.current().psi = angles[1];
+  conf.current().theta = angles[2];
+
+  //Exchange distances
+  MPI_Bcast(&conf.special().distancefield.distance[0], conf.special().distancefield.distance.size(), MPI_DOUBLE, replica_mpi_control.masterID, replica_mpi_control.comm);
+
+  //Exchange conf?
+  conf.exchange_state();
+  DEBUG(4, "replica_MPI_Slave " << globalThreadID << " ::receive_coords::\t Done");
+
+#endif
+}

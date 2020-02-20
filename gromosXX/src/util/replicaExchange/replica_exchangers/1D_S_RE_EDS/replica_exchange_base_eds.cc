@@ -65,29 +65,70 @@ util::replica_exchange_base_eds::replica_exchange_base_eds(io::Argument _args,
                             replica_exchange_base_interface(_args, cont, globalThreadID, replicaGraphMPIControl, replica_mpi_control),
                             reedsParam(replica->sim.param().reeds)
 {
-    DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":Constructor:\t START" );
+    MPI_DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":Constructor:\t START" );
     DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":Constructor:\t simID "<<simulationID);
-      //give the correct replica vals to simulation
     
-    eds_para = replica->sim.param().reeds.eds_para[simulationID];
-    replica->sim.param().eds = eds_para;
-      //TODO: Still ugly ! l==s bschroed
-    l = replica->sim.param().eds.s[0];    //todoAssume only 1s EDS
-    DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":Constructor:\t DONE");
-}
+    //RE-Vars
+    MPI_DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":Constructor:\t setParams" );
+    setParams();
 
+    MPI_DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":Constructor:\t DONE");
+}
 
 util::replica_exchange_base_eds::~replica_exchange_base_eds() {
     delete replica;
 }
 
+void util::replica_exchange_base_eds::setParams(){
+    // set some variables
+    stepsPerRun = replica->sim.param().step.number_of_steps;
+    MPI_DEBUG(4,"replica_exchange_base_eds "<< globalThreadID <<":setParams:\t NUMBER OF STEPS "<<stepsPerRun);
+
+    run = 0;
+    total_runs = replica->sim.param().replica.trials + replica->sim.param().replica.equilibrate;
+    MPI_DEBUG(4,"replica_exchange_base_eds "<< globalThreadID <<":setParams:\t NUMBER OF total_runs "<<total_runs);
+
+    partnerReplicaID = simulationID;
+    time = replica->sim.time();
+    steps = 0;
+    switched = 0;
+    replica->curentStepNumber=0;
+    replica->totalStepNumber = total_runs*stepsPerRun;
+    replica->stepsPerRun= stepsPerRun;
+
+    MPI_DEBUG(4,"replica_exchange_base_eds "<< globalThreadID <<":setParams:\t PARAM START");
+
+    T = replica->sim.param().reeds.temperature;
+    MPI_DEBUG(4,"replica_exchange_base_eds "<< globalThreadID <<":setParams:\t got  T " << T);
+    MPI_DEBUG(4,"replica_exchange_base_eds "<< globalThreadID <<":setParams:\t got simulationID: "<< simulationID);
+
+    set_s();
+    MPI_DEBUG(4,"replica_exchange_base_eds "<< globalThreadID <<":setParams:\t got s" << l);
+
+    dt = replica->sim.param().step.dt;
+    MPI_DEBUG(4,"replica_exchange_base_eds "<< globalThreadID <<":setParams:\t dt " <<dt);
+
+    MPI_DEBUG(4,"replica_exchange_base_eds "<< globalThreadID <<":setParams:\t PARAM DONE ");    
+}
+
+void util::replica_exchange_base_eds::set_s() {
+  MPI_DEBUG(4,"replica_exchange_base_eds "<< globalThreadID <<":set_s:\t START ");
+
+  eds_para = replica->sim.param().reeds.eds_para[simulationID];
+  replica->sim.param().eds = eds_para;
+  MPI_DEBUG(4,"replica_exchange_base_eds "<< globalThreadID <<":set_s:\t eds_para s size: " << replica->sim.param().eds.s.size());
+  
+  l = replica->sim.param().eds.s[0];    //todoAssume only 1s EDS
+  MPI_DEBUG(4,"replica_exchange_base_eds "<< globalThreadID <<":set_s:\t DONE " );
+}
+
 void util::replica_exchange_base_eds::init() {
-  DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":init:\t init \t START");
-  MPI_DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":init:\t start init from baseclass \t NEXT");
-  replica->init();
-  MPI_DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":init:\t init_eds_stat \t NEXT");
-  this->init_eds_stat();
-  DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":init:\t DONE");
+  MPI_DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":init:\t init \t START");
+  DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":init:\t start init from baseclass \t NEXT");
+  //replica->init();
+  DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":init:\t init_eds_stat \t NEXT");
+  init_eds_stat();
+  MPI_DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":init:\t DONE");
 }
 
 //initialize output files  

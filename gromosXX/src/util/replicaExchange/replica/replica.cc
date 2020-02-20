@@ -146,6 +146,12 @@ util::replica::replica(io::Argument _args, int cont, int globalThreadID, simulat
 
     DEBUG(4, "replica "<< globalThreadID <<":Constructor:\t Temp of replica  "<< globalThreadID <<": " << simulationID << " \t" << sim.param().multibath.multibath.bath(0).temperature);
     DEBUG(4, "replica "<< globalThreadID <<":Constructor:\t replica Constructor  "<< globalThreadID <<": \t DONE");
+    
+     
+    //TODO: HERE?
+    // init MD simulation
+    md.init(topo, conf, sim, *os, true);
+
 }
 
 void util::replica::init() {

@@ -106,6 +106,7 @@
               MODULE::SUBLEVEL(SUBMODULE) ){ \
             MPI_Barrier(MPI_COMM_WORLD); \
             std::cout << STR(MODULE) << ": " <<  s << std::endl; \
+            std::cout.flush(); \
             MPI_Barrier(MPI_COMM_WORLD);\
           }
     #else

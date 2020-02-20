@@ -2944,7 +2944,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
                   param.reeds.reeds = true;
                   break;
           }
-               
+              
         param.reeds.num_l = num_l;
         param.reeds.num_states = num_states;
         param.reeds.trials = ntrials;
@@ -2961,8 +2961,6 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
         param.reeds.temperature = param.multibath.multibath.bath(0).temperature;
         
         DEBUG(9, "REPLICA_EDS BLOCK: assigned all reeds params");
-
-        DEBUG(9, "REPLICA_EDS BLOCK: assign all eds params");
         //set size of vectors in param.reeds
         param.reeds.eds_para.resize(param.reeds.num_l);
         param.reeds.dt.resize(param.reeds.num_l);

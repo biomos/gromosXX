@@ -26,7 +26,8 @@
 #define MODULE util
 #define SUBMODULE replica_exchange
 
-util::replica_MPI_Master::replica_MPI_Master(io::Argument _args, int cont,  int globalThreadID, simulation::mpi_control_struct replica_mpi_control) : replica_Interface( globalThreadID, replica_mpi_control, _args){
+util::replica_MPI_Master::replica_MPI_Master(io::Argument _args, int cont,  int globalThreadID, 
+        simulation::mpi_control_struct replica_mpi_control) : replica_Interface( globalThreadID, replica_mpi_control, _args){
  #ifdef XXMPI
 
     /**
@@ -68,7 +69,15 @@ util::replica_MPI_Master::replica_MPI_Master(io::Argument _args, int cont,  int 
     }
     MPI_DEBUG(5, "replica_MPI_MASTER "<< globalThreadID <<":Constructor:\t  "<< globalThreadID <<":\t REad in input already");
     
-    MPI_DEBUG(5, "replica_MPI_MASTER "<< globalThreadID << " now make me master ");
+    //TODO: HERE?
+    md.init(topo, conf, sim, *os, true);
+
+    //init();
+    
+    /**
+     * MASTER SPECIFICS:
+     */
+    
     /**
      * INIT OUTPUT
      */
@@ -165,9 +174,10 @@ util::replica_MPI_Master::replica_MPI_Master(io::Argument _args, int cont,  int 
     *os << "==================================================\n"
         << " MAIN MD LOOP\n"
         << "==================================================\n\n";
+    
 
       DEBUG(5, "replica_MPI_MASTER "<< globalThreadID <<":Constructor:\t Temp of replica  "<< globalThreadID <<": " << simulationID << " \t" << sim.param().multibath.multibath.bath(0).temperature);
-      MPI_DEBUG(4, "replica_MPI_MASTER "<< globalThreadID <<":Constructor:\t replica Constructor  "<< globalThreadID <<": \t DONE");
+    MPI_DEBUG(4, "replica_MPI_MASTER "<< globalThreadID <<":Constructor:\t replica Constructor  "<< globalThreadID <<": \t DONE");
 #else
     throw "Can not construct Replica_MPI as MPI is not enabled!";
 #endif    
@@ -179,14 +189,18 @@ util::replica_MPI_Master::~replica_MPI_Master() {
   delete os;
 }
 
- #ifdef XXMPI
 void util::replica_MPI_Master::run_MD(){
+     #ifdef XXMPI
+
     // run MD simulation
     int error;
     
     //next_stepf for mpi slaves  
     int next_step = 1;  //bool that signalises if next step is fine.
 
+    //after an Replica coordinate exchange, update the coordinates of the slaves
+    send_coordinates();
+    
     while ((unsigned int)(sim.steps()) <  stepsPerRun + curentStepNumber) {
       DEBUG(5, "replica_MPI "<< globalThreadID <<":run_MD:\t Start");      
       traj->write(conf, topo, sim, io::reduced);
@@ -225,7 +239,7 @@ void util::replica_MPI_Master::run_MD(){
         }
       
         // tell the slaves to continue
-        MPI_Bcast(&next_step, 1, MPI::INT, sim.mpi_control.simulationMasterThreadID, sim.mpi_control.simulationCOMM);
+        MPI_Bcast(&next_step, 1, MPI::INT, sim.mpi_control.masterID, sim.mpi_control.comm);
 
         DEBUG(5, "replica "<< globalThreadID <<":run_MD:\t clean up:");      
         traj->print(topo, conf, sim);
@@ -240,5 +254,36 @@ void util::replica_MPI_Master::run_MD(){
     if (curentStepNumber ==  totalStepNumber) {
       traj->print_final(topo, conf, sim);
     }
+    #endif    
+
 }
-#endif    
+
+void util::replica_MPI_Master::send_coordinates(){
+  #ifdef XXMPI
+  DEBUG(4, "replica_MPI_Master " << globalThreadID << " ::send_coordinates::\t START");
+
+  //EXCHANGE conf parts
+  MPI_Bcast(&conf.current().pos[0][0], 1, MPI_VARRAY, replica_mpi_control.masterID , replica_mpi_control.comm);
+  MPI_Bcast(&conf.current().posV[0][0], 1, MPI_VARRAY, replica_mpi_control.masterID , replica_mpi_control.comm);
+  MPI_Bcast(&conf.current().vel[0][0], 1, MPI_VARRAY, replica_mpi_control.masterID , replica_mpi_control.comm);
+
+  MPI_Bcast(&conf.special().lattice_shifts[0][0], 1, MPI_VARRAY, replica_mpi_control.masterID, replica_mpi_control.comm);
+  MPI_Bcast(&conf.current().stochastic_integral[0][0], 1, MPI_VARRAY, replica_mpi_control.masterID, replica_mpi_control.comm);
+  MPI_Bcast(&conf.current().box(0)[0], 1, MPI_BOX, replica_mpi_control.masterID, replica_mpi_control.comm);
+
+  //EXCHANGE ANGLES
+  std::vector<double> angles;
+  angles.resize(3);
+  angles[0] = conf.current().phi;
+  angles[1] = conf.current().psi;
+  angles[2] = conf.current().theta;
+
+  MPI_Bcast(&angles[0], angles.size(), MPI_DOUBLE, replica_mpi_control.masterID, replica_mpi_control.comm);
+  
+  //Exchange STUFF
+  MPI_Bcast(&conf.special().distancefield.distance[0], conf.special().distancefield.distance.size(), MPI_DOUBLE, replica_mpi_control.masterID, replica_mpi_control.comm);
+  
+  DEBUG(4, "replica_MPI_Master " << globalThreadID << " ::send_coordinates::\t DONE");
+
+  #endif
+}
