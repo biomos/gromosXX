@@ -184,7 +184,7 @@ void util::replica_MPI_Slave::run_MD(){
       }
 
 
-      MPI_Bcast(&next_step, 1, MPI::INT, sim.mpi_control.simulationMasterThreadID, sim.mpi_control.simulationCOMM);
+      MPI_Bcast(&next_step, 1, MPI::INT, sim.mpi_control.masterID, sim.mpi_control.comm);
 
       if (next_step == 2) {
         (*os) << "globalThreadID: "<< globalThreadID<<"\tMessage from master: Steepest descent: minimum reached." << std::endl;

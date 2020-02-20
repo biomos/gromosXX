@@ -61,7 +61,7 @@ util::replica_exchange_base_interface::replica_exchange_base_interface(io::Argum
 
   //construct replica obj
   DEBUG(4,"replica_exchange_base_interface "<< globalThreadID <<":Constructor:\t  createReplica");
-  createReplicas(cont, globalThreadID, replica_mpi_control);
+  //createReplicas(cont, globalThreadID, replica_mpi_control);
   DEBUG(4,"replica_exchange_base_interface "<< globalThreadID <<":Constructor:\t createdReplica T");
 
   //RE-Vars
@@ -99,10 +99,10 @@ util::replica_exchange_base_interface::~replica_exchange_base_interface() {
 
 //TODO: REMOVE
 void util::replica_exchange_base_interface::createReplicas(int cont, int globalThreadID, simulation::mpi_control_struct replica_mpi_control){
-  DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":createReplicas:\t START \t THREADS "<<replica_mpi_control.simulationNumberOfThreads);
+  DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":createReplicas:\t START \t THREADS "<<replica_mpi_control.numberOfThreads);
   // create the number of replicas that are assigned to my node
-    if(replica_mpi_control.simulationNumberOfThreads>1){
-        if(replica_mpi_control.simulationThisThreadID == replica_mpi_control.simulationMasterThreadID ){
+    if(replica_mpi_control.numberOfThreads>1){
+        if(replica_mpi_control.threadID == replica_mpi_control.masterID ){
             replica = new util::replica_MPI_Master(args, cont, globalThreadID, replica_mpi_control);
         }
         else{

@@ -167,7 +167,7 @@ util::replica_MPI_Master::replica_MPI_Master(io::Argument _args, int cont,  int 
         << "==================================================\n\n";
 
       DEBUG(5, "replica_MPI_MASTER "<< globalThreadID <<":Constructor:\t Temp of replica  "<< globalThreadID <<": " << simulationID << " \t" << sim.param().multibath.multibath.bath(0).temperature);
-      MPI_DEBUG(4, "replica_MPI_MASTER "<< globalThreadID <<":Constructor:\t replica Constructor  "<< globalThreadID <<": \t DONE");
+    MPI_DEBUG(4, "replica_MPI_MASTER "<< globalThreadID <<":Constructor:\t replica Constructor  "<< globalThreadID <<": \t DONE");
 #else
     throw "Can not construct Replica_MPI as MPI is not enabled!";
 #endif    
@@ -225,7 +225,7 @@ void util::replica_MPI_Master::run_MD(){
         }
       
         // tell the slaves to continue
-        MPI_Bcast(&next_step, 1, MPI::INT, sim.mpi_control.simulationMasterThreadID, sim.mpi_control.simulationCOMM);
+        MPI_Bcast(&next_step, 1, MPI::INT, sim.mpi_control.masterID, sim.mpi_control.comm);
 
         DEBUG(5, "replica "<< globalThreadID <<":run_MD:\t clean up:");      
         traj->print(topo, conf, sim);
