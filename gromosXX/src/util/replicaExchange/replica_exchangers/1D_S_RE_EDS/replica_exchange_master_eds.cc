@@ -50,9 +50,8 @@ util::replica_exchange_master_eds::replica_exchange_master_eds(io::Argument _arg
         DEBUG(5,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t Init Replicas eds_param"<<replicaID<<"\t "<< reedsParam.eds_para[0].numstates);
         replicaData[replicaID].Vi.assign(reedsParam.eds_para[0].numstates,0);
     }
-    DEBUG(3,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t SIMID"<< simulationID <<"\n");
-
-    MPI_DEBUG(2,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t DONE\n");
+    DEBUG(2,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t SIMID "<< simulationID <<"\n");
+    DEBUG(2,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t DONE\n");
     #else
         throw "Cannot initialize replica_exchange_master_eds without MPI!"; 
     #endif

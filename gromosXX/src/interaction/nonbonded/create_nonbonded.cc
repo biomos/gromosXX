@@ -194,7 +194,7 @@ int interaction::create_g96_nonbonded
   if (sim.mpi){
    
     /* TODO : REMOVE THIS PART
-    int rank = sim.mpi_control.simulationThisThreadID;
+    int rank = sim.mpi_control.threadID;
     int size = sim.mpi_control.simulationNumberOfThreads;
     
     bool repex = sim.param().reeds.reeds;   //not dynamic enough!
@@ -265,7 +265,7 @@ int interaction::create_g96_nonbonded
     else{
         */
     
-    if (sim.mpi_control.simulationThisThreadID == sim.mpi_control.simulationMasterThreadID)
+    if (sim.mpi_control.threadID == sim.mpi_control.masterID)
       ni = new MPI_Nonbonded_Master(pa);
     else
       ni = new MPI_Nonbonded_Slave(pa);
