@@ -193,6 +193,11 @@ namespace interaction {
      */
     QM_Zone * m_qm_zone;
 
+    /**
+     * QM buffer zone
+     */
+    QM_Zone * m_qm_buffer;
+
   private:
     /**
      * Pointer to the instance

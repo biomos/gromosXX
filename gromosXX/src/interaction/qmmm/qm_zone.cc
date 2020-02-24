@@ -28,9 +28,11 @@
 #define SUBMODULE qmmm
 
 interaction::QM_Zone::QM_Zone(int net_charge
-                            , int spin_multiplicity)
+                            , int spin_mult)
                               : qm_energy(0.0)
                               , mm_energy(0.0)
+                              , m_charge(net_charge)
+                              , m_spin_mult(spin_mult)
 {}
 
 interaction::QM_Zone::~QM_Zone()
@@ -697,4 +699,24 @@ void interaction::QM_Zone::electric_field(const simulation::Simulation& sim
     }
     electric_field(i) += e;
   }
+}
+
+interaction::QM_Zone* interaction::QM_Zone::create_buffer_zone(
+                                          const topology::Topology& topo
+                                        , const simulation::Simulation& sim
+                                          ) {
+  DEBUG(15,"Generating QM buffer zone");
+  QM_Zone* qmzone = new interaction::QM_Zone(*this);
+  qmzone->zero();
+  qmzone->charge() = sim.param().qmmm.buffer_zone.charge;
+  qmzone->spin_mult() = sim.param().qmmm.buffer_zone.spin_mult;
+
+  for (std::set<interaction::QM_Atom>::const_iterator
+        it = this->qm.begin(); it != this->qm.end(); ++it) {
+    if (topo.is_qm(it->index)) {
+      DEBUG(10,"Erasing QM atom " << it->index << " from buffer zone");
+      qmzone->qm.erase(*it);
+    }
+  }
+  return qmzone;
 }

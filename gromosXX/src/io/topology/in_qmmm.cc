@@ -27,6 +27,8 @@
 #define MODULE io
 #define SUBMODULE topology
 
+static std::set<std::string> block_read;
+
 /**
  * @section qmzone QMZONE block
  * The QMZONE block specifies the atoms which are treated quantum mechanically
@@ -56,9 +58,14 @@ END
  *
  * @verbatim
 BUFFERZONE
-# QMI:  index of the QM atom
-# QMZ:  atomic number of the QM atom
-# QMLI: 0,1 atom is a link atom
+# BUFCUT: cutoff of the adaptive buffer zone (default = 0.0, no adaptive buffer zone)
+# BUFCUT
+    1.4
+# NETCH:
+# SPINM:
+# QMI:   index of the QM atom
+# QMZ:   atomic number of the QM atom
+# QMLI:  0,1 atom is a link atom
 #
 # Warning: the first 17 characters are ignored!
 # RESIDUE   ATOM     QMI   QMZ   QMLI
@@ -133,7 +140,8 @@ END
  * 
 @verbatim
 MNDOHEADER
-kharge=0 iop=-8 +
+kharge=@@CHARGE@@ imult=@@SPINM@@ +
+iop=-8 +
 kitscf=2000 +
 idiis=1 +
 ktrial=11 +
@@ -183,16 +191,16 @@ END
  * and reuse it in subsequent steps with guess=read option.
  * 
 @verbatim
-GAUSSIANCHM
+GAUSSIANROUTE
 N hf/STO-3G nosymm pop(mk) charge(angstroms) force charge(angstroms) prop=(field,read)
 END
 @endverbatim
  *
- * The GAUSSIANCHM block specifies the total charge and the spin multiplicity of the system.
+ * The GAUSSIANCHSM block specifies the net charge and the spin multiplicity of the system.
  * 
 @verbatim
-GAUSSIANCHM
-0 1
+GAUSSIANCHSM
+@@CHARGE@@ @@SPINM@@
 END
 @endverbatim
 
@@ -255,9 +263,9 @@ io::In_QMMM::read(topology::Topology& topo,
   io::messages.add("Reading QM/MM specification file",
                    "In_QMMM", io::message::notice);
   //std::string blockname = "QMZONE";
-  this->read_qm_zone(topo, sim, "QMZONE");
+  this->read_zone(topo, sim, "QMZONE");
   //blockname = "BUFFERZONE";
-  this->read_qm_zone(topo, sim, "BUFFERZONE");
+  this->read_zone(topo, sim, "BUFFERZONE");
   
   std::vector<std::string> buffer;
 
@@ -516,24 +524,24 @@ io::In_QMMM::read(topology::Topology& topo,
       DEBUG(1, "sim.param().qmmm.gaussian.route_section:");
       DEBUG(1, sim.param().qmmm.gaussian.route_section);
     } // GAUSSIANROUTE
-    { // GAUSSIANCHM
-      buffer = m_block["GAUSSIANCHM"];
+    { // GAUSSIANCHSM
+      buffer = m_block["GAUSSIANCHSM"];
 
       if (!buffer.size()) {
-        io::messages.add("no GAUSSIANCHM block in QM/MM specification file",
+        io::messages.add("no GAUSSIANCHSM block in QM/MM specification file",
                 "In_QMMM", io::message::error);
         return;
       }
       if (buffer.size() != 3) {
-        io::messages.add("GAUSSIANCHM block corrupt. Provide 1 line.",
+        io::messages.add("GAUSSIANCHSM block corrupt. Provide 1 line.",
                 "In_QMMM", io::message::error);
         return;
       }
       concatenate(buffer.begin() + 1, buffer.end() - 1,
-              sim.param().qmmm.gaussian.chm);
-      DEBUG(1, "sim.param().qmmm.gaussian.chm:");
-      DEBUG(1, sim.param().qmmm.gaussian.chm);
-    } // GAUSSIANchm
+              sim.param().qmmm.gaussian.chsm);
+      DEBUG(1, "sim.param().qmmm.gaussian.chsm:");
+      DEBUG(1, sim.param().qmmm.gaussian.chsm);
+    } // GAUSSIANCHSM
   }
 
   // Cap length definition
@@ -659,9 +667,9 @@ void io::In_QMMM::read_units(const simulation::Simulation& sim
   DEBUG(15, "QM units read done");
 }
 
-void io::In_QMMM::read_qm_zone(topology::Topology& topo
-                              , simulation::Simulation& sim
-                              , const std::string& blockname)
+void io::In_QMMM::read_zone(topology::Topology& topo
+                           , simulation::Simulation& sim
+                           , const std::string& blockname)
   {
   std::vector<std::string> buffer;
   buffer = m_block[blockname];
@@ -677,8 +685,33 @@ void io::In_QMMM::read_qm_zone(topology::Topology& topo
     }
   }
 
+  std::string line(buffer[1]);
+  _lineStream.clear();
+  _lineStream.str(line);
+
+  int charge, spin_mult;
+  
+  _lineStream >> charge
+              >> spin_mult;
+  if (blockname == "BUFFERZONE") {
+    _lineStream >> sim.param().qmmm.buffer_zone.cutoff;
+    sim.param().qmmm.buffer_zone.charge = charge;
+    sim.param().qmmm.buffer_zone.spin_mult = spin_mult;
+  }
+  else if (blockname == "QMZONE") {
+    sim.param().qmmm.qm_zone.charge = charge;
+    sim.param().qmmm.qm_zone.spin_mult = spin_mult;
+  }
+
+  if (_lineStream.fail()) {
+    std::ostringstream msg;
+    msg << "Bad first line in " << blockname << " block";
+    io::messages.add(msg.str(), "In_QMMM", io::message::error);
+    return;
+  }
+
   unsigned qmi, qmz, qmli;
-  for (std::vector<std::string>::const_iterator it = buffer.begin() + 1
+  for (std::vector<std::string>::const_iterator it = buffer.begin() + 2
                                               , to = buffer.end() - 1
                                               ; it != to; ++it) {
     std::string line(*it);

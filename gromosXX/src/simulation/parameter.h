@@ -3574,7 +3574,10 @@ namespace simulation
        * - software 0 (MNDO)
        * - cutoff 0.0 (no cutoff)
        * - mm_scale -1.0 (no scaling)
-       * - write(0)
+       * - write 0 (no writing)
+       * - atomic_cutoff false (using charge-group based cutoff)
+       * - use_qm_buffer false (not using buffer zone)
+       * - cap_length 0.109 (capping atom distance)
        */
       qmmm_struct() : 
                       cutoff(0.0)
@@ -3634,6 +3637,46 @@ namespace simulation
       bool use_qm_buffer;
 
       /**
+       * QM zone parameters
+       */
+      struct qm_zone_struct {
+      /**
+       * Constructor
+       * Default values:
+       * - charge 0 (neutral)
+       * - spin_mult 1 (no unpaired electrons)
+       */
+      qm_zone_struct() : 
+                      charge(0)
+                    , spin_mult(1) {}
+        /**
+         * net charge
+         */
+        int charge;
+        /**
+         * spin multiplicity
+         */
+        int spin_mult;
+      } qm_zone;
+
+      /**
+       * QM buffer zone parameters
+       */
+      struct buffer_zone_struct : qm_zone_struct {
+      /**
+       * Constructor
+       * Default values:
+       * - cutoff 0.0 (no adaptive QM buffer)
+       */
+      buffer_zone_struct() : 
+                      cutoff(0.0) {}
+        /**
+         * Adaptive buffer zone cutoff
+         */
+        double cutoff;
+      } buffer_zone;
+
+      /**
        * QM program unspecific parameters
        */
       struct qm_param_struct{
@@ -3678,7 +3721,7 @@ namespace simulation
       /**
        * MNDO specific parameters
        */
-      struct mndo_param_struct : public qm_param_struct{
+      struct mndo_param_struct : public qm_param_struct {
         /**
          * path for the gradient output file. Empty for a temporary file
          */
@@ -3692,7 +3735,7 @@ namespace simulation
       /**
        * Turbomole specific parameters
        */
-      struct turbomole_param_struct : public qm_param_struct{
+      struct turbomole_param_struct : public qm_param_struct {
         /**
          * the tools to run in the working directory
          */
@@ -3730,7 +3773,7 @@ namespace simulation
       /**
        * DFTB specific parameters
        */
-      struct dftb_param_struct : public qm_param_struct{
+      struct dftb_param_struct : public qm_param_struct {
         /**
          * path for the charges.dat file. Empty for a temporary file
          */
@@ -3748,7 +3791,7 @@ namespace simulation
       /**
        * MOPAC specific parameters
        */
-      struct mopac_param_struct : public qm_param_struct{
+      struct mopac_param_struct : public qm_param_struct {
         /**
          * path for the molin file. Empty for a temporary file
          */
@@ -3770,7 +3813,7 @@ namespace simulation
         /**
          * total charge and spin multiplicity in the input file
          */
-        std::string chm;
+        std::string chsm;
       } gaussian;
     } qmmm;
     

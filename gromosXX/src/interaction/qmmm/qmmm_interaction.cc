@@ -11,6 +11,9 @@
 #include <configuration/configuration.h>
 #include <interaction/interaction.h>
 
+#include <interaction/qmmm/mm_atom.h>
+#include <interaction/qmmm/qm_atom.h>
+#include <interaction/qmmm/qm_link.h>
 #include <interaction/qmmm/qm_zone.h>
 #include <interaction/qmmm/qm_worker.h>
 #include <interaction/qmmm/nonbonded/qmmm_nonbonded_set.h>
@@ -45,6 +48,7 @@ interaction::QMMM_Interaction::QMMM_Interaction() : Interaction("QMMM Interactio
                                                   , m_size(1)
                                                   , m_worker(nullptr)
                                                   , m_qm_zone(nullptr)
+                                                  , m_qm_buffer(nullptr)
   {
 #ifdef XXMPI
     m_rank = MPI::COMM_WORLD.Get_rank();
@@ -60,11 +64,14 @@ interaction::QMMM_Interaction::~QMMM_Interaction() {
     m_qmmm_nonbonded_set[i] = nullptr;
   }
   if (m_worker != nullptr)
-    DEBUG(12, "deleting QM Worker ");
+    DEBUG(12, "deleting QM Worker");
     delete m_worker;
   if (m_qm_zone != nullptr)
-    DEBUG(12, "deleting QM Zone ");
+    DEBUG(12, "deleting QM Zone");
     delete m_qm_zone;
+  if (m_qm_buffer != nullptr)
+    DEBUG(12, "deleting QM Buffer");
+    delete m_qm_buffer;
 }
 
 /**
@@ -198,6 +205,73 @@ int interaction::QMMM_Interaction::calculate_interactions(topology::Topology& to
     err = m_worker->run_QM(topo, conf, sim, *m_qm_zone);
     m_timer.stop(m_worker->name());
     if (err) return err;
+
+
+    if (sim.param().qmmm.use_qm_buffer) {
+      DEBUG(4, "Using QM buffer");
+      /** If we are using buffer region, this region is treated as both QM and MM
+       * We construct our system from 3 subsystems:
+       * 1. Outer region (OR)
+       * 2. Buffer zone (BZ)
+       * 3. QM zone (QZ)
+       * Now we treat the interactions as follows:
+       * OR energies - classical MM interactions (possible addition of delta(BZQZ - BZ) from calculation in electrostatic embedding)
+       * OR forces - classical MM interactions (possible addition of delta(BZQZ - BZ) from calculation in electrostatic embedding)
+       * BZ energies - classical MM interactions + delta(BZQZ - BZ)
+       * BZ forces - classical MM interactions + delta(BZQZ - BZ)
+       * QZ energies - delta(BZQZ - BZ) only
+       * QZ forces - delta(BZQZ - BZ) only
+       * Energy term delta(BZQZ - BZ) from the twin QM calculation contains inseparable energy contributions
+       * 
+       * Now we can get delta(BZQZ - BZ) from
+       * a) one evaluation of BZQZ with NN trained on deltas
+       * b) from 2 QM or NN evaluations and calculating the difference here
+       * 
+       */
+      if (true /*sim.param().qmmm.software != simulation::qm_nn*/) {
+        DEBUG(4, "Creating QM buffer for separate QM calculation");
+        //create buffer zone for separate QM calculation and run it
+        if (m_qm_buffer != nullptr) delete m_qm_buffer;
+        m_qm_buffer = m_qm_zone->create_buffer_zone(topo, sim);
+        m_timer.start(m_worker->name());
+        err = m_worker->run_QM(topo, conf, sim, *m_qm_buffer);
+        m_timer.stop(m_worker->name());
+        // Calculate QM energy and QM forces as difference
+        /**
+         * this->evaluate_buffered_qm(m_qm_zone, m_qm_buffer)
+         */
+        {
+
+          DEBUG(7, "QM+Buffer Zone energy: " << m_qm_zone->QM_energy());
+          DEBUG(7, "Buffer Zone energy: " << m_qm_buffer->QM_energy());
+          DEBUG(7, "Delta: " << m_qm_zone->QM_energy() - m_qm_buffer->QM_energy());
+          m_qm_zone->QM_energy() -= m_qm_buffer->QM_energy();
+
+          for (std::set<interaction::QM_Atom>::const_iterator buf_it = m_qm_buffer->qm.begin();
+                buf_it != m_qm_buffer->qm.end(); ++buf_it) {
+            std::set<interaction::QM_Atom>::iterator qm_it = m_qm_zone->qm.find(*buf_it);
+            DEBUG(10, "QM/Buffer atom " << qm_it->index << "/" << buf_it->index);
+            DEBUG(10, "QM+Buffer force: " << math::v2s(qm_it->force));
+            DEBUG(10, "Buffer force: " <<  math::v2s(buf_it->force));
+            qm_it->force -= buf_it->force;
+            DEBUG(10, "Delta: " <<  math::v2s(qm_it->force));
+          }
+          for (std::set<interaction::MM_Atom>::const_iterator buf_it = m_qm_buffer->mm.begin();
+                buf_it != m_qm_buffer->mm.end(); ++buf_it) {
+            std::set<interaction::MM_Atom>::iterator mm_it = m_qm_zone->mm.find(*buf_it);
+            DEBUG(10, "QM/Buffer MM atom " << mm_it->index << "/" << buf_it->index);
+            DEBUG(10, "QM+Buffer force: " <<  math::v2s(mm_it->force));
+            DEBUG(10, "Buffer force: " <<  math::v2s(buf_it->force));
+            mm_it->force -= buf_it->force;
+            DEBUG(10, "Delta: " <<  math::v2s(mm_it->force));
+          }
+        }
+      } else {
+        DEBUG(0, "Skipping buffer zone calculation");
+        DEBUG(0, "Expecting deltas directly from NN");
+        // We are using NN trained on differences - here probably nothing needs to be done
+      }
+    }
     
     if (sim.param().qmmm.qmmm != simulation::qmmm_polarisable) {
       // in polarisable embedding, we will write the data after electric field evaluation
@@ -279,11 +353,23 @@ int interaction::QMMM_Interaction::init(topology::Topology& topo,
     DEBUG(15,"QM Worker initialized");
     
     // Create QM_Zone
-    m_qm_zone = new interaction::QM_Zone;
+    const int charge = sim.param().qmmm.qm_zone.charge + sim.param().qmmm.buffer_zone.charge;
+    int sm = sim.param().qmmm.qm_zone.spin_mult;
+    if (sim.param().qmmm.use_qm_buffer) {
+      // Calculate combined spin multiplicity
+      const int spin_z = (sim.param().qmmm.qm_zone.spin_mult - 1) / 2;
+      const int spin_sb = (sim.param().qmmm.buffer_zone.spin_mult - 1) / 2;
+      // let's consider that all spins are paired
+      sm = (2 * (spin_z + spin_sb)) % 2 + 1;
+    }
+    m_qm_zone = new interaction::QM_Zone(charge, sm);
+
     DEBUG(15,"QM Zone created");
+    DEBUG(15,"Net charge: " << charge);
+    DEBUG(15,"Spin multiplicity: " << sm);
 
     if (m_qm_zone->init(topo, conf, sim)) return 1;
-    DEBUG(15,"QM Zone built");
+    DEBUG(15,"QM Zone initialized");
   }
   if (!quiet) {
     switch (sim.param().qmmm.qmmm) {

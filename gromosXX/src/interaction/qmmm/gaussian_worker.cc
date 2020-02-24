@@ -85,7 +85,10 @@ int interaction::Gaussian_Worker::write_input(const topology::Topology& topo
   ifs << std::endl;
   ifs << "GROMOS generated input file" << std::endl;
   ifs << std::endl;
-  ifs << this->param->chm;
+  std::string chsm = this->param->chsm;
+  chsm = io::replace_string(chsm, "@@CHARGE@@", std::to_string(qm_zone.charge()));
+  chsm = io::replace_string(chsm, "@@SPINM@@", std::to_string(qm_zone.spin_mult()));
+  ifs << chsm;
 
   double len_to_qm = 1.0 / this->param->unit_factor_length;
   double cha_to_qm = 1.0 / this->param->unit_factor_charge;

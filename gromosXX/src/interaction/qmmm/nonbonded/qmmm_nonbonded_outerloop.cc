@@ -84,7 +84,7 @@ void interaction::QMMM_Nonbonded_Outerloop
           j_it = pairlist_solute[i].begin()
         , j_to = pairlist_solute[i].end()
         ; j_it != j_to; ++j_it) {
-      DEBUG(10, "\tQMMM LJ nonbonded_interaction: i " << i << " j " << *j_it);
+      DEBUG(15, "\tQMMM LJ nonbonded_interaction: i " << i << " j " << *j_it);
 
       innerloop.lj_innerloop(topo, conf, i, *j_it, storage, periodicity);
     }
@@ -95,7 +95,7 @@ void interaction::QMMM_Nonbonded_Outerloop
           j_it = pairlist_solvent[i].begin()
         , j_to = pairlist_solvent[i].end()
         ; j_it != j_to; ++j_it) {
-      DEBUG(10, "\tQMMM LJ nonbonded_interaction: i " << i << " j " << *j_it);
+      DEBUG(15, "\tQMMM LJ nonbonded_interaction: i " << i << " j " << *j_it);
 
       innerloop.lj_innerloop(topo, conf, i, *j_it, storage, periodicity);
     }
@@ -182,7 +182,7 @@ void interaction::QMMM_Nonbonded_Outerloop
   for (unsigned int i = rank; i < num_lj_exceptions; i += size) {
     const topology::lj_exception_struct & ljex = topo.qm_lj_exceptions()[i];
 
-    DEBUG(10, "\tQMMM LJ exception: " << ljex.i << " " << ljex.j);
+    DEBUG(15, "\tQMMM LJ exception: " << ljex.i << " " << ljex.j);
     innerloop.lj_exception_innerloop(topo, conf, ljex, storage, periodicity);
   } // loop over LJ exceptions
 }

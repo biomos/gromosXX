@@ -54,7 +54,7 @@ namespace io {
     /**
      * Read the list of QM atoms
      */
-    void read_qm_zone(topology::Topology& topo
+    void read_zone(topology::Topology& topo
                     , simulation::Simulation& sim
                     , const std::string& blockname);
   };

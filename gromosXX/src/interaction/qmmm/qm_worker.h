@@ -86,7 +86,7 @@ namespace interaction {
      */
     util::Algorithm_Timer m_timer;
     /**
-     * A copy of specific QM parameters
+     * the pointer to QM parameters
      */
     simulation::Parameter::qmmm_struct::qm_param_struct* param;
 

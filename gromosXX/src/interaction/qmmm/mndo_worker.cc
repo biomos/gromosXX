@@ -187,6 +187,8 @@ int interaction::MNDO_Worker::write_input(const topology::Topology& topo
     }
   }
   header = io::replace_string(header, "@@NUM_CHARGES@@", std::to_string(num_charges));
+  header = io::replace_string(header, "@@CHARGE@@", std::to_string(qm_zone.charge()));
+  header = io::replace_string(header, "@@SPINM@@", std::to_string(qm_zone.spin_mult()));
 
   // Write header
   ifs << header << std::endl;

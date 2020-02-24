@@ -28,16 +28,13 @@ namespace interaction {
      * Constructor
      */
     explicit QM_Zone(int net_charge = 0
-                   , int spin_multiplicity = 1
+                   , int spin_mult = 1
                   );
 
     /**
      * Copy constructor
      */
-    /*explicit QM_Zone(const QM_Zone& qmz
-                   , int net_charge
-                   , int spin_multiplicity
-                  );*/
+    //explicit QM_Zone(const QM_Zone& qmz);
 
     /**
      * Assignment operator
@@ -48,7 +45,7 @@ namespace interaction {
      * Destructor
      */
     ~QM_Zone();
-
+    
     /**
      * QM atoms
      */
@@ -116,6 +113,16 @@ namespace interaction {
                       , math::VArray& electric_field);
 
     /**
+     * Zero energies
+     */
+    void inline zero();
+
+    /**
+     * Clear the QM zone
+     */
+    void inline clear();
+
+    /**
      * QM energy accessor
      */
     double QM_energy() const {
@@ -129,6 +136,40 @@ namespace interaction {
       return qm_energy;
     }
 
+    /**
+     * net charge accessor
+     */
+    int charge() const {
+      return m_charge;
+    }
+
+    /**
+     * net charge mutator
+     */
+    int & charge() {
+      return m_charge;
+    }
+
+    /**
+     * spin multiplicity accessor
+     */
+    int spin_mult() const {
+      return m_spin_mult;
+    }
+
+    /**
+     * spin multiplicity mutator
+     */
+    int & spin_mult() {
+      return m_spin_mult;
+    }
+
+    /**
+     * Creates QM buffer zone
+     */
+    QM_Zone* create_buffer_zone(const topology::Topology& topo
+                              , const simulation::Simulation& sim);
+
   protected:
     /**
      * the QM energy of the zone
@@ -139,15 +180,16 @@ namespace interaction {
      * the MM energy of the zone - convenient for subtractive scheme
      */
     double mm_energy;
-    /**
-     * Zero energies
-     */
-    void inline zero();
 
     /**
-     * Clear the QM zone
+     * the QM zone net charge
      */
-    void inline clear();
+    int m_charge;
+
+    /**
+     * the QM zone net spin multiplicity
+     */
+    int m_spin_mult;
 
     /**
      * Scale charges with distance to the nearest QM atom
