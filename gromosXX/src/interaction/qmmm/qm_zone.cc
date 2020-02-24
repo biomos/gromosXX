@@ -336,7 +336,7 @@ int interaction::QM_Zone::get_mm_atoms(const topology::Topology& topo,
     // Include all - allowed only with vacuum PBC
     DEBUG(9, "Gathering all MM atoms");
     for (unsigned int i = 0; i < topo.num_atoms(); ++i) {
-      if (!topo.is_qm(i) && !topo.is_qm_buffer(i)) {
+      if ( !(topo.is_qm(i) || topo.is_qm_buffer(i)) ) {
         DEBUG(9, "Adding atom " << i);
         this->mm.emplace(i, topo.charge(i), conf.current().pos(i));
       }
@@ -440,7 +440,7 @@ int interaction::QM_Zone::_get_mm_atoms(const topology::Topology& topo,
         for(unsigned cg = cg_from; cg < cg_to; ++cg) {
           // If first atom is QM, then whole chargegroup is, skip
           unsigned a = topo.chargegroup(cg);
-          if (topo.is_qm(a)) continue;
+          if (topo.is_qm(a) || topo.is_qm_buffer(a)) continue;
           // get distance
           periodicity.nearest_image(qm_pos, (*cgs)(cg), r_qm_cg);
           DEBUG(15, "qm_pos: " << math::v2s(qm_pos));
@@ -535,7 +535,7 @@ int interaction::QM_Zone::_get_mm_atoms_atomic(const topology::Topology& topo,
       math::Vec r_qm_mm;
       std::set<MM_Atom>::iterator mm_it = this->mm.begin();
       for(unsigned i = 0; i < num_atoms; ++i) {
-        if (topo.is_qm(i)) continue;
+        if (topo.is_qm(i) || topo.is_qm_buffer(i)) continue;
         // get distance
         periodicity.nearest_image(qm_pos, pos(i), r_qm_mm);
         DEBUG(15, "Nearest image of atom " << i << " : " << math::v2s(r_qm_mm));
