@@ -132,7 +132,7 @@ int interaction::Gaussian_Worker::write_input(const topology::Topology& topo
       }
     }
   }
-  ifs << 3 * '\n';
+  ifs << std::string(3, '\n');
   ifs.close();
   return 0;
 }
