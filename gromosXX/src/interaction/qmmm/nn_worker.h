@@ -32,7 +32,7 @@ namespace interaction {
 
   private:
     /**
-     * Make a copy of input parameters to make modifications and restrict access
+     * Pointer to simulation parameters
      */
     simulation::Parameter::qmmm_struct::nn_param_struct* param;
 
@@ -46,9 +46,19 @@ namespace interaction {
      */
     py::scoped_interpreter guard;
 
+    /**
+     * Python modules
+     */
     std::unordered_map<std::string, py::module> py_modules;
 
+    /**
+     * Schnetpack neural network model
+     */
     py::object * ml_model;
+
+    /**
+     * ASE calculator
+     */
     py::object * ml_calculator;
 
     /**

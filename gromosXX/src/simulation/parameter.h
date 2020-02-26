@@ -3683,7 +3683,8 @@ namespace simulation
       /**
        * QM program unspecific parameters
        */
-      struct qm_param_struct{        /**
+      struct qm_param_struct{
+        /**
          * path for the program binary
          */
         std::string binary;

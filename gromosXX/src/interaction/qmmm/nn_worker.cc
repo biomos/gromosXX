@@ -43,6 +43,10 @@ using namespace py::literals;
 interaction::NN_Worker::NN_Worker() : QM_Worker("NN Worker"), param(nullptr), guard() {};
 
 int interaction::NN_Worker::init(simulation::Simulation& sim) {
+  // Get a pointer to simulation parameters
+  this->param = &(sim.param().qmmm.nn);
+  QM_Worker::param = this->param;
+
   // Initialize NN interface
   // Initialize pybind, schnetpack, python script
   std::vector<std::string> modules = {
@@ -54,17 +58,23 @@ int interaction::NN_Worker::init(simulation::Simulation& sim) {
     , "schnetpack"
   };
 
+  // Initialize Python modules
   for (size_t i = 0; i < modules.size(); ++i) {
     py_modules.emplace(modules[i], py::module::import(modules[i].c_str()));
   }
-  // use as py_modules["sys"].attr()
+  // Hint: use them as py_modules["sys"].attr()
 
-
-
-  //py::print("SPK version:    ",spk.attr("__version__")); //has no version
-  py::print("ASE version:    ",py_modules["ase"].attr("__version__"));
-  py::print("Torch version:  ",py_modules["torch"].attr("__version__"));
-  py::print("Logging version:",py_modules["logging"].attr("__version__"));
+  // Print modules versions
+  std::string version;
+  version = py_modules["sys"].attr("version").cast<std::string>();
+    io::messages.add("Python version: " + version
+            , this->name(), io::message::notice);
+  version = py_modules["ase"].attr("__version__").cast<std::string>();
+    io::messages.add("ASE module version: " + version
+            , this->name(), io::message::notice);
+  version = py_modules["torch"].attr("__version__").cast<std::string>();
+    io::messages.add("Torch module version: " + version
+            , this->name(), io::message::notice);
 
   /** Load the model */
   py::str model_path = sim.param().qmmm.nn.model_path;
@@ -82,7 +92,9 @@ int interaction::NN_Worker::init(simulation::Simulation& sim) {
 
 interaction::NN_Worker::~NN_Worker() {
   delete ml_model;
+  ml_model = nullptr;
   delete ml_calculator;
+  ml_calculator = nullptr;
 }
 
 int interaction::NN_Worker::run_QM(topology::Topology& topo

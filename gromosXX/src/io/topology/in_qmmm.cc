@@ -549,6 +549,9 @@ io::In_QMMM::read(topology::Topology& topo,
     } // GAUSSIANCHSM
   }
 
+  /**
+   * Schnetpack NN
+   */
   else if (sw == simulation::qm_nn) {
     this->read_units(sim, &sim.param().qmmm.nn);
     //this->read_elements(topo, &sim.param().qmmm.nn);
@@ -653,6 +656,7 @@ void io::In_QMMM::read_units(const simulation::Simulation& sim
     {simulation::qm_mopac,
                     { math::angstrom /* A */
                     , math::kcal /* kcal */
+                    , math::kcal / math::angstrom /* kcal/A */
                     , math::echarge /* e */}},
     {simulation::qm_gaussian,
                     { math::angstrom /* A */
@@ -660,7 +664,7 @@ void io::In_QMMM::read_units(const simulation::Simulation& sim
                     , math::hartree * math::avogadro / math::bohr /* a.u. */
                     , math::echarge /* e */}},
     {simulation::qm_nn,
-                    { math::bohr /* a.u. -> nm */
+                    { math::bohr /* a.u. */
                     , math::hartree * math::avogadro /* a.u. */
                     , math::hartree * math::avogadro / math::bohr /* a.u. */
                     , math::echarge /* e */}}
