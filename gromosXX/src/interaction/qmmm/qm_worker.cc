@@ -24,6 +24,7 @@
 //#include "turbomole_worker.h"
 //#include "dftb_worker.h"
 //#include "mopac_worker.h"
+#include "gaussian_worker.h"
 #include "nn_worker.h"
 
 #undef MODULE
@@ -37,11 +38,7 @@ interaction::QM_Worker::QM_Worker(std::string name) : m_name(name)/*, m_timer(nu
                                                       , symlink_err(0)
                                                       , minimisation(false)
                                                       , using_tmp(false) {}
-interaction::QM_Worker::~QM_Worker() {
-  if (this->param != nullptr) {
-    delete this->param;
-  }
-}
+interaction::QM_Worker::~QM_Worker() {}
 
 interaction::QM_Worker * interaction::QM_Worker::get_instance(const simulation::Simulation& sim) {
 
@@ -57,6 +54,8 @@ interaction::QM_Worker * interaction::QM_Worker::get_instance(const simulation::
     case simulation::qm_mopac :
       //return new MOPAC_Worker; // Temporarily disabled
       return nullptr; // REMOVE
+    case simulation::qm_gaussian :
+      return new Gaussian_Worker;
     case simulation::qm_nn :
       return new NN_Worker;
     default:

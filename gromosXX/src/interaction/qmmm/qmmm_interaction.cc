@@ -11,6 +11,9 @@
 #include <configuration/configuration.h>
 #include <interaction/interaction.h>
 
+#include <interaction/qmmm/mm_atom.h>
+#include <interaction/qmmm/qm_atom.h>
+#include <interaction/qmmm/qm_link.h>
 #include <interaction/qmmm/qm_zone.h>
 #include <interaction/qmmm/qm_worker.h>
 #include <interaction/qmmm/nonbonded/qmmm_nonbonded_set.h>
@@ -45,6 +48,7 @@ interaction::QMMM_Interaction::QMMM_Interaction() : Interaction("QMMM Interactio
                                                   , m_size(1)
                                                   , m_worker(nullptr)
                                                   , m_qm_zone(nullptr)
+                                                  , m_qm_buffer(nullptr)
   {
 #ifdef XXMPI
     m_rank = MPI::COMM_WORLD.Get_rank();
@@ -60,26 +64,15 @@ interaction::QMMM_Interaction::~QMMM_Interaction() {
     m_qmmm_nonbonded_set[i] = nullptr;
   }
   if (m_worker != nullptr)
-    DEBUG(12, "deleting QM Worker ");
+    DEBUG(12, "deleting QM Worker");
     delete m_worker;
   if (m_qm_zone != nullptr)
-    DEBUG(12, "deleting QM Zone ");
+    DEBUG(12, "deleting QM Zone");
     delete m_qm_zone;
+  if (m_qm_buffer != nullptr)
+    DEBUG(12, "deleting QM Buffer");
+    delete m_qm_buffer;
 }
-
-
-// Create QM here and provide pointer for polarisation?
-  /** We will create:
-   * 1. QMMM interaction, that will run QM worker, provide QMMM pairlist and
-   *    electric field for polarisation
-   *    Will be run only on rank 0, but multiple CPUs
-   * 2. QMMM LJ interaction, that will use QMMM pairlist to calculate QMMM classically
-   *    Will be run on all MPI nodes except rank 0
-   */
-
-
-
-
 
 /**
  * This should be separate class AddRemove : public QM_Link
@@ -212,6 +205,73 @@ int interaction::QMMM_Interaction::calculate_interactions(topology::Topology& to
     err = m_worker->run_QM(topo, conf, sim, *m_qm_zone);
     m_timer.stop(m_worker->name());
     if (err) return err;
+
+
+    if (sim.param().qmmm.use_qm_buffer) {
+      DEBUG(4, "Using QM buffer");
+      /** If we are using buffer region, this region is treated as both QM and MM
+       * We construct our system from 3 subsystems:
+       * 1. Outer region (OR)
+       * 2. Buffer zone (BZ)
+       * 3. QM zone (QZ)
+       * Now we treat the interactions as follows:
+       * OR energies - classical MM interactions (possible addition of delta(BZQZ - BZ) from calculation in electrostatic embedding)
+       * OR forces - classical MM interactions (possible addition of delta(BZQZ - BZ) from calculation in electrostatic embedding)
+       * BZ energies - classical MM interactions + delta(BZQZ - BZ)
+       * BZ forces - classical MM interactions + delta(BZQZ - BZ)
+       * QZ energies - delta(BZQZ - BZ) only
+       * QZ forces - delta(BZQZ - BZ) only
+       * Energy term delta(BZQZ - BZ) from the twin QM calculation contains inseparable energy contributions
+       * 
+       * Now we can get delta(BZQZ - BZ) from
+       * a) one evaluation of BZQZ with NN trained on deltas
+       * b) from 2 QM or NN evaluations and calculating the difference here
+       * 
+       */
+      if (true /*sim.param().qmmm.software != simulation::qm_nn*/) {
+        DEBUG(4, "Creating QM buffer for separate QM calculation");
+        //create buffer zone for separate QM calculation and run it
+        if (m_qm_buffer != nullptr) delete m_qm_buffer;
+        m_qm_buffer = m_qm_zone->create_buffer_zone(topo, sim);
+        m_timer.start(m_worker->name());
+        err = m_worker->run_QM(topo, conf, sim, *m_qm_buffer);
+        m_timer.stop(m_worker->name());
+        // Calculate QM energy and QM forces as difference
+        /**
+         * this->evaluate_buffered_qm(m_qm_zone, m_qm_buffer)
+         */
+        {
+
+          DEBUG(7, "QM+Buffer Zone energy: " << m_qm_zone->QM_energy());
+          DEBUG(7, "Buffer Zone energy: " << m_qm_buffer->QM_energy());
+          DEBUG(7, "Delta: " << m_qm_zone->QM_energy() - m_qm_buffer->QM_energy());
+          m_qm_zone->QM_energy() -= m_qm_buffer->QM_energy();
+
+          for (std::set<interaction::QM_Atom>::const_iterator buf_it = m_qm_buffer->qm.begin();
+                buf_it != m_qm_buffer->qm.end(); ++buf_it) {
+            std::set<interaction::QM_Atom>::iterator qm_it = m_qm_zone->qm.find(*buf_it);
+            DEBUG(10, "QM/Buffer atom " << qm_it->index << "/" << buf_it->index);
+            DEBUG(10, "QM+Buffer force: " << math::v2s(qm_it->force));
+            DEBUG(10, "Buffer force: " <<  math::v2s(buf_it->force));
+            qm_it->force -= buf_it->force;
+            DEBUG(10, "Delta: " <<  math::v2s(qm_it->force));
+          }
+          for (std::set<interaction::MM_Atom>::const_iterator buf_it = m_qm_buffer->mm.begin();
+                buf_it != m_qm_buffer->mm.end(); ++buf_it) {
+            std::set<interaction::MM_Atom>::iterator mm_it = m_qm_zone->mm.find(*buf_it);
+            DEBUG(10, "QM/Buffer MM atom " << mm_it->index << "/" << buf_it->index);
+            DEBUG(10, "QM+Buffer force: " <<  math::v2s(mm_it->force));
+            DEBUG(10, "Buffer force: " <<  math::v2s(buf_it->force));
+            mm_it->force -= buf_it->force;
+            DEBUG(10, "Delta: " <<  math::v2s(mm_it->force));
+          }
+        }
+      } else {
+        DEBUG(0, "Skipping buffer zone calculation");
+        DEBUG(0, "Expecting deltas directly from NN");
+        // We are using NN trained on differences - here probably nothing needs to be done
+      }
+    }
     
     if (sim.param().qmmm.qmmm != simulation::qmmm_polarisable) {
       // in polarisable embedding, we will write the data after electric field evaluation
@@ -293,11 +353,23 @@ int interaction::QMMM_Interaction::init(topology::Topology& topo,
     DEBUG(15,"QM Worker initialized");
     
     // Create QM_Zone
-    m_qm_zone = new interaction::QM_Zone;
+    const int charge = sim.param().qmmm.qm_zone.charge + sim.param().qmmm.buffer_zone.charge;
+    int sm = sim.param().qmmm.qm_zone.spin_mult;
+    if (sim.param().qmmm.use_qm_buffer) {
+      // Calculate combined spin multiplicity
+      const int spin_z = (sim.param().qmmm.qm_zone.spin_mult - 1) / 2;
+      const int spin_sb = (sim.param().qmmm.buffer_zone.spin_mult - 1) / 2;
+      // let's consider that all spins are paired
+      sm = (2 * (spin_z + spin_sb)) % 2 + 1;
+    }
+    m_qm_zone = new interaction::QM_Zone(charge, sm);
+
     DEBUG(15,"QM Zone created");
+    DEBUG(15,"Net charge: " << charge);
+    DEBUG(15,"Spin multiplicity: " << sm);
 
     if (m_qm_zone->init(topo, conf, sim)) return 1;
-    DEBUG(15,"QM Zone built");
+    DEBUG(15,"QM Zone initialized");
   }
   if (!quiet) {
     switch (sim.param().qmmm.qmmm) {
@@ -328,12 +400,18 @@ int interaction::QMMM_Interaction::init(topology::Topology& topo,
       case simulation::qm_turbomole:
         os << "Turbomole";
         break;
+      case simulation::qm_gaussian:
+        os << "Gaussian";
+        break;
       default:
         os << "unknown";
         break;
     }
     os << " program package" << std::endl;
     os.precision(3);
+    os << "\tunits conversion factors: ";
+    m_worker->print_unit_factors(os);
+    os << std::endl;
     if (sim.param().qmmm.qmmm == simulation::qmmm_mechanical) {
       os << "\tQM-MM interactions will be treated classically" << std::endl
          << "\tusing standard cutoffs (RCUTP, RCUTL)" << std::endl
@@ -363,30 +441,36 @@ int interaction::QMMM_Interaction::init(topology::Topology& topo,
     }
 
     if (sim.param().qmmm.qm_lj)
-      os << "\tLJ interactions between QM atoms activated" << std::endl;
+      os << "\tLJ interactions between QM atoms enabled" << std::endl;
     else
-      os << "\tno LJ interactions between QM atoms" << std::endl;
+      os << "\tLJ interactions between QM atoms disabled" << std::endl;
 
     if (sim.param().qmmm.mm_scale > 0.0) {
-      os << "\tMM point charges will be scaled using 2/pi atan(s*|R|) with s = " <<
+      os << "\tMM point charges will be scaled using (2/pi)*atan(s*|R|) with s = " <<
         sim.param().qmmm.mm_scale << std::endl;
-      os << "\t\t|R| is distance to closest QM atom" << std::endl;
+      os << "\t\t|R| is distance to the closest QM atom" << std::endl;
     }
 
-    os << "\tworker: " << m_worker->name() << std::endl
-    // Some information on QM worker?
-      << "\tQM zone: " << std::endl
-      << "\t\tnumber of QM atoms: \t" << m_qm_zone->qm.size() << std::endl
-      << "\t\tnumber of QM-MM links: \t" << m_qm_zone->link.size() << std::endl;
+    os << "\tQM zone: " << std::endl
+       << "\t\tnumber of QM atoms: \t" << m_qm_zone->qm.size() << std::endl
+       << "\t\tnumber of QM-MM links: \t" << m_qm_zone->link.size() << std::endl;
   }
 
   // Remove relevant bonded terms from topo
   DEBUG(15, "Removing bonded terms");
   this->remove_bonded_terms(topo, os, quiet);
 
+  // Remove relevant constraints from topo (only if requested by user)
+  if (!sim.param().qmmm.qm_constraint) {
+    DEBUG(15, "Removing constraints");
+    this->remove_constraints(topo, os, quiet);
+  }
+  if (!quiet)
+    os << "\n";
+
   // Remove exclusions containing QM-QM and QM-MM interactions
   DEBUG(15, "Removing QM-QM and QM-MM exclusions");
-  this->remove_exclusions(topo, sim, os, quiet);
+  this->modify_exclusions(topo, sim, os, quiet);
 
   // Create nonbonded set for LJ interactions
   if (sim.param().force.nonbonded_vdw
@@ -442,7 +526,7 @@ int interaction::QMMM_Interaction::init_nonbonded(topology::Topology& topo,
 
   bool q = quiet;
   for (; it != to; ++it) {
-      (*it)->init(topo, conf, sim, os, q);
+    (*it)->init(topo, conf, sim, os, q);
     // only print first time...
     q = true;
   }
@@ -456,7 +540,7 @@ void interaction::QMMM_Interaction::remove_bonded_terms(
                               , bool quiet)
   {
   // Remove bonded terms that will be defined by QM
-  // Definitions to simplify code
+  // Definitions to simplify the code
   typedef std::vector<topology::two_body_term_struct> twoBodyVec;
   typedef std::vector<topology::three_body_term_struct> threeBodyVec;
   typedef std::vector<topology::four_body_term_struct> fourBodyVec;
@@ -468,16 +552,12 @@ void interaction::QMMM_Interaction::remove_bonded_terms(
   fourBodyVec& dihedrals = topo.solute().dihedrals();
   eightBodyVec& crossdihedrals = topo.solute().crossdihedrals();
 
-  // Simple lambda function to check if the QM-MM link was defined
-  auto are_linked = [&](unsigned qmi, unsigned mmi)->bool {
-    return topo.qmmm_link().count(std::make_pair( qmi, mmi ));
-  };
   if (!quiet)
-    os << "\tterms removed from topology:\n";
+    os << "\tterms removed from topology:";
   // Counter for neat printing
   unsigned count = 0;
-  if (!quiet)
-    os << "\t\tbonds:\n";
+  if (!quiet && bonds.size())
+    os << "\n\t\tbonds:\n";
   // Delete QM-QM bonded terms and check, if QM-MM links were properly defined
   for (twoBodyVec::iterator b_it = bonds.begin(); b_it != bonds.end(); ) {
     // If QM-QM
@@ -494,10 +574,10 @@ void interaction::QMMM_Interaction::remove_bonded_terms(
     }
     // If QM-MM or MM-QM and not in QM-MM link
     else if ((topo.is_qm(b_it->i)
-            && !are_linked( b_it->i, b_it->j ))
+            && !topo.are_linked( b_it->i, b_it->j ))
           ||
             (topo.is_qm(b_it->j)
-            && !are_linked( b_it->j, b_it->i ))
+            && !topo.are_linked( b_it->j, b_it->i ))
           )
       {
       std::ostringstream msg;
@@ -512,7 +592,7 @@ void interaction::QMMM_Interaction::remove_bonded_terms(
   }
 
   if (!quiet && cgbonds.size())
-    os << "\t\tcoarse-grained bonds:\n";
+    os << "\n\t\tcoarse-grained bonds:\n";
   // Delete coarse-grained bonds between QM-QM
   for (twoBodyVec::iterator b_it = cgbonds.begin(); b_it != cgbonds.end(); ) {
     // If QM-QM
@@ -525,7 +605,7 @@ void interaction::QMMM_Interaction::remove_bonded_terms(
     } else ++b_it;
   }
 
-  if (!quiet) {
+  if (!quiet && angles.size()) {
     os << "\n\t\tbond angles:\n";
     count = 0;
   }
@@ -556,11 +636,11 @@ void interaction::QMMM_Interaction::remove_bonded_terms(
         ; i_it != i_to; ++i_it, ++j_it) {
       if ((   topo.is_qm(*i_it)
           && !topo.is_qm(*j_it)
-          && !are_linked(*i_it, *j_it))
+          && !topo.are_linked(*i_it, *j_it))
         ||
           (  !topo.is_qm(*i_it)
           &&  topo.is_qm(*j_it)
-          && !are_linked(*j_it, *i_it)
+          && !topo.are_linked(*j_it, *i_it)
         ))
         {
         std::ostringstream msg;
@@ -572,7 +652,7 @@ void interaction::QMMM_Interaction::remove_bonded_terms(
     }
   }
 
-  if (!quiet) {
+  if (!quiet && dihedrals.size()) {
     os << "\n\t\tdihedral angles:\n";
     count = 0;
   }
@@ -605,11 +685,11 @@ void interaction::QMMM_Interaction::remove_bonded_terms(
         ; j_it != to; ++i_it, ++j_it) {
       if ((   topo.is_qm(*i_it)
           && !topo.is_qm(*j_it)
-          && !are_linked(*i_it, *j_it))
+          && !topo.are_linked(*i_it, *j_it))
         ||
           (  !topo.is_qm(*i_it)
           &&  topo.is_qm(*j_it)
-          && !are_linked(*j_it, *i_it)
+          && !topo.are_linked(*j_it, *i_it)
         ))
         {
         std::ostringstream msg;
@@ -622,7 +702,7 @@ void interaction::QMMM_Interaction::remove_bonded_terms(
   }
   DEBUG(15,"Dihedral angle torsion terms done");
   
-  if (!quiet) {
+  if (!quiet && improper_dihedrals.size()) {
     os << "\n\t\timproper dihedral angles:\n";
     count = 0;
   }
@@ -635,10 +715,7 @@ void interaction::QMMM_Interaction::remove_bonded_terms(
                  , l = d_it->l;
     const unsigned qm_count = topo.is_qm(i) + topo.is_qm(j) + topo.is_qm(k) + topo.is_qm(l);
     if (qm_count == 0) { ++d_it; continue; }
-    if ( topo.is_qm(d_it->i)
-      /*&& topo.is_qm(d_it->j)
-      && topo.is_qm(d_it->k)
-      && topo.is_qm(d_it->l)*/ )
+    if ( topo.is_qm(d_it->i) )
       {
       DEBUG(4,"Erased improper dihedral angle bending term: "
             << i + 1 << "-" << j + 1 << "-"
@@ -662,11 +739,11 @@ void interaction::QMMM_Interaction::remove_bonded_terms(
         ; j_it != to; ++j_it) {
       if ((   topo.is_qm(i)
           && !topo.is_qm(*j_it)
-          && !are_linked(i, *j_it))
+          && !topo.are_linked(i, *j_it))
         ||
           (  !topo.is_qm(i)
           &&  topo.is_qm(*j_it)
-          && !are_linked(*j_it, i)
+          && !topo.are_linked(*j_it, i)
         ))
         {
         std::ostringstream msg;
@@ -678,7 +755,7 @@ void interaction::QMMM_Interaction::remove_bonded_terms(
     }
   }
 
-  // Delete All-QM crossdihedrals (where are they used?)
+  // Delete All-QM crossdihedrals
   for (eightBodyVec::iterator d_it = crossdihedrals.begin(); d_it != crossdihedrals.end(); ) {
     if (   (topo.is_qm(d_it->a))
         && (topo.is_qm(d_it->b))
@@ -690,17 +767,69 @@ void interaction::QMMM_Interaction::remove_bonded_terms(
         && (topo.is_qm(d_it->h))
       )
       {
+      if (!quiet) {
       os << "\t\tremoved crossdihedral bending term: "
          << d_it->a + 1 << " " << d_it->b + 1 << " "
          << d_it->c + 1 << " " << d_it->d + 1 << " "
          << d_it->e + 1 << " " << d_it->f + 1 << " "
          << d_it->g + 1 << " " << d_it->h + 1 << std::endl;
+      }
       d_it = crossdihedrals.erase(d_it);
     } else ++d_it;
   }
 }
 
-void interaction::QMMM_Interaction::remove_exclusions(
+void interaction::QMMM_Interaction::remove_constraints(
+                                topology::Topology& topo
+                              , std::ostream& os
+                              , bool quiet)
+  {
+  // Remove distance constraints between QM atoms and in QM-MM link
+  std::vector<topology::two_body_term_struct> & dist_constr = topo.solute().distance_constraints();
+  std::vector<topology::two_body_term_struct>::const_iterator it = dist_constr.begin();
+
+  // Counter for neat printing
+  unsigned count = 0;
+  if (!quiet) {
+    os << "\n\t\tdistance constraints:\n";
+  }
+  while (it != dist_constr.end()) {
+    const unsigned qm_count = topo.is_qm(it->i) + topo.is_qm(it->j);
+    bool erase = false;
+    switch(qm_count) {
+      case 0:
+        break;
+      case 1:
+        // Remove constraints only from QM-MM links
+        if (topo.are_linked(it->i, it->j )
+            || topo.are_linked(it->j, it->i )) {
+          erase = true;
+        }
+        break;
+      case 2:
+        erase = true;
+        break;
+      default:
+        break;
+    }
+    if (erase) {
+      DEBUG(15, "Removing distance constraint: " << it->i << "-" << it->j);
+      it = dist_constr.erase(it);
+
+      // Neat printing
+      if (!quiet)
+        if (count == 0) os << "\t\t";
+          os << (it->i + 1) << "-" << (it->j + 1) << " ";
+      if (++count == 8) {
+        os << "\n";
+        count = 0;
+      }
+    }
+    else ++it;
+  }
+}
+
+void interaction::QMMM_Interaction::modify_exclusions(
                                 topology::Topology& topo
                               , const simulation::Simulation& sim
                               , std::ostream& os
@@ -727,77 +856,78 @@ void interaction::QMMM_Interaction::remove_exclusions(
   DEBUG(4, "Removing exclusions of QM atoms");
   topo.qm_all_exclusion().clear();
   topo.qm_all_exclusion().resize(topo.num_atoms());
-  // Remove QM-QM and QM-MM exclusions
+  // Remove or make a copy of QM-QM and QM-MM exclusions
+  const bool use_qm_buffer = sim.param().qmmm.use_qm_buffer;
+  
+  // Decide what to copy and what to erase
+  bool copy = false;
+  bool erase = false;
+  auto decide_copy_erase = [&](unsigned i, unsigned j)->void {
+    copy = false;
+    erase = false;
+    switch (bool(topo.is_qm(i)) + bool(topo.is_qm(j))) {
+      case 0 : { // MM-MM
+        break;
+      }
+      case 1 : { // QM-MM
+        // if MM is in QM buffer zone
+        if (topo.is_qm_buffer(i) || topo.is_qm_buffer(j)) {
+          copy = bool(sim.param().qmmm.qm_lj);
+          erase = true;
+        }
+        else if (sim.param().qmmm.qmmm > simulation::qmmm_mechanical) {
+          copy = erase = true;
+        }
+        break;
+      }
+      case 2 : { // QM-QM
+        copy = bool(sim.param().qmmm.qm_lj);
+        erase = true;
+        break;
+      }
+    }
+    return;
+  };
+  
   for (unsigned int i = 0; i < topo.num_solute_atoms(); ++i) {
     const bool i_is_qm = topo.is_qm(i);
     if (sim.param().qmmm.qmmm == simulation::qmmm_mechanical
-        && !i_is_qm) continue;
-        
+        && !i_is_qm && !use_qm_buffer) continue;
+
     // One-four pairs - they use CS6 and CS12
     for (topology::excl_cont_t::value_type::const_iterator
           it = topo.one_four_pair(i).begin()
         ; it != topo.one_four_pair(i).end(); ) {
-      switch (i_is_qm + topo.is_qm(*it)) {
-        case 0 : { // MM-MM
-          ++it;
-          break;
-        }
-        case 1 : { // QM-MM
-          if (sim.param().qmmm.qmmm > simulation::qmmm_mechanical) {
-            // Make a copy, if we want to calculate them
-            DEBUG(9, "Making copy of 1,4: " << i << " - " << *it);
-            topo.qm_one_four_pair(i).insert(*it);
-            topo.qm_all_exclusion(i).insert(*it);
-            // Erase
-            DEBUG(9, "Removing 1,4 pair: " << i << " - " << *it);
-            it = topo.one_four_pair(i).erase(it);
-          } else ++it;
-          break;
-        }
-        case 2 : { // QM-QM
-          if (sim.param().qmmm.qm_lj) {
-            DEBUG(9, "Making copy of 1,4: " << i << " - " << *it);
-            topo.qm_one_four_pair(i).insert(*it);
-            topo.qm_all_exclusion(i).insert(*it);
-          }
-          DEBUG(9, "Removing 1,4 pair: " << i << " - " << *it);
-          it = topo.one_four_pair(i).erase(it);
-        }
+      decide_copy_erase(i, *it);
+      if (copy) {
+        DEBUG(9, "Making copy of 1,4: " << i << " - " << *it);
+        topo.qm_one_four_pair(i).insert(*it);
+        topo.qm_all_exclusion(i).insert(*it);
       }
+      if (erase) {
+        DEBUG(9, "Removing 1,4 pair: " << i << " - " << *it);
+        it = topo.one_four_pair(i).erase(it);
+        continue;
+      }
+      ++it;
     }
 
     // Exclusions
     for (topology::excl_cont_t::value_type::const_iterator
           it = topo.exclusion(i).begin()
         ; it != topo.exclusion(i).end(); ) {
-      switch (i_is_qm + topo.is_qm(*it)) {
-        case 0 : { // MM-MM
-          ++it;
-          break;
-        }
-        case 1 : { // QM-MM
-          if (sim.param().qmmm.qmmm > simulation::qmmm_mechanical) {
-            // Make a copy
-            DEBUG(9, "Making copy of exclusion: " << i << " - " << *it);
-            topo.qm_exclusion(i).insert(*it);
-            topo.qm_all_exclusion(i).insert(*it);
-            // Erase
-            DEBUG(9, "Removing exclusion: " << i << " - " << *it);
-            it = topo.exclusion(i).erase(it);
-          } else ++it;
-          break;
-        }
-        case 2 : { // QM-QM
-          if (sim.param().qmmm.qm_lj) {
-            // Make a copy
-            DEBUG(9, "Making copy of exclusion: " << i << " - " << *it);
-            topo.qm_exclusion(i).insert(*it);
-            topo.qm_all_exclusion(i).insert(*it);
-          }
-          DEBUG(9, "Removing exclusion: " << i << " - " << *it);
-          it = topo.exclusion(i).erase(it);
-        }
+      decide_copy_erase(i, *it);
+      if (copy) {
+        DEBUG(9, "Making copy of exclusion: " << i << " - " << *it);
+        topo.qm_exclusion(i).insert(*it);
+        topo.qm_all_exclusion(i).insert(*it);
       }
+      if (erase) {
+        DEBUG(9, "Removing exclusion: " << i << " - " << *it);
+        it = topo.exclusion(i).erase(it);
+        continue;
+      }
+      ++it;
     }
   }
 
@@ -805,38 +935,23 @@ void interaction::QMMM_Interaction::remove_exclusions(
   for (std::vector<topology::lj_exception_struct>::const_iterator
         it = topo.lj_exceptions().begin()
       ; it != topo.lj_exceptions().end(); ) {
+    bool copy = false;
+    bool erase = false;
     const unsigned i = it->i;
     const unsigned j = it->j;
     assert(i < j);
-    switch (topo.is_qm(i) + topo.is_qm(j)) {
-      case 0 : { // MM-MM
-        ++it;
-        break;
-      }
-      case 1 : { // QM-MM
-        if (sim.param().qmmm.qmmm > simulation::qmmm_mechanical) {
-          // Make a copy
-          DEBUG(9, "Making copy of LJ exception: " << i << " - " << j);
-          topo.qm_lj_exceptions().push_back(*it);
-          topo.qm_all_exclusion(i).insert(j);
-          // Erase
-          DEBUG(9, "Removing LJ exception: " << i << " - " << j);
-          it = topo.lj_exceptions().erase(it);
-        } else ++it;
-        break;
-      }
-      case 2 : { // QM-QM
-        if (sim.param().qmmm.qm_lj) {
-          DEBUG(9, "Making copy of LJ exception: " << i << " - " << j);
-          topo.qm_lj_exceptions().push_back(*it);
-          topo.qm_all_exclusion(i).insert(j);
-        }
-        // Erase
-        DEBUG(9, "Removing LJ exception: " << i << " - " << j);
-        it = topo.lj_exceptions().erase(it);
-        break;
-      }
+    decide_copy_erase(i, j);
+    if (copy) {
+      DEBUG(9, "Making copy of LJ exception: " << i << " - " << j);
+      topo.qm_lj_exceptions().push_back(*it);
+      topo.qm_all_exclusion(i).insert(j);
     }
+    if (erase) {
+      DEBUG(9, "Removing LJ exception: " << i << " - " << j);
+      it = topo.lj_exceptions().erase(it);
+      continue;
+    }
+    ++it;
   }
   topo.update_all_exclusion();
 }

@@ -5062,11 +5062,12 @@ void io::In_Parameter::read_QMMM(simulation::Parameter & param,
     exampleblock << "#    1: apply mechanical embedding scheme\n";
     exampleblock << "#    2: apply electrostatic embedding scheme\n";
     exampleblock << "#    3: apply polarisable embedding scheme\n";
-    exampleblock << "# NTQMSW 0..3 QM software package to use\n";
+    exampleblock << "# NTQMSW 0..4 QM software package to use\n";
     exampleblock << "#    0: MNDO\n";
     exampleblock << "#    1: Turbomole\n";
     exampleblock << "#    2: DFTB\n";
     exampleblock << "#    3: MOPAC\n";
+    exampleblock << "#    4: Gaussian\n";
     exampleblock << "#    5: Schnetpack NN\n";
     exampleblock << "# RCUTQM: ABS(RCUTQM): cutoff for inclusion of MM atoms in QM calculation\n";
     exampleblock << "#         (ignored for NTQMMM = 1)\n";
@@ -5079,12 +5080,15 @@ void io::In_Parameter::read_QMMM(simulation::Parameter & param,
     exampleblock << "# QMLJ 0, 1 apply LJ between QM atoms \n";
     exampleblock << "#    0: do not apply\n";
     exampleblock << "#    1: apply\n";
+    exampleblock << "# QMCON 0, 1 keep distance constraints in QM zone and QM-MM links \n";
+    exampleblock << "#    0: remove\n";
+    exampleblock << "#    1: keep\n";
     exampleblock << "# MMSCALE scale mm-charges with (2/pi)*atan(x*(r_{qm}-r_{mm})) (optional) \n";
     exampleblock << "#     > 0.0: scaling-factor x\n";
-    exampleblock << "#     < 0.0: don't scale (default)";
+    exampleblock << "#     < 0.0: don't scale (default)\n";
     exampleblock << "#\n";
-    exampleblock << "# NTQMMM  NTQMSW  RCUTQM  NTWQMMM QMLJ MMSCALE\n";
-    exampleblock << "       1       0    0.0        0   0   -1.\n";
+    exampleblock << "# NTQMMM  NTQMSW  RCUTQM  NTWQMMM QMLJ QMCON MMSCALE\n";
+    exampleblock << "       1       0     0.0        0    0     0    -1.0\n";
     exampleblock << "END\n";
 
 
@@ -5096,15 +5100,16 @@ void io::In_Parameter::read_QMMM(simulation::Parameter & param,
     param.setDevelop("QMMM is under development.");
 
 
-    int enable,software,write,qmlj;
+    int enable,software,write,qmlj,qmcon;
     double mm_scale = -1.;
     double cutoff;
     block.get_next_parameter("NTQMMM", enable, "", "0,1,2,3");
-    block.get_next_parameter("NTQMSW", software, "", "0,1,2,3,5");
+    block.get_next_parameter("NTQMSW", software, "", "0,1,2,3,4,5");
     block.get_next_parameter("RCUTQM", cutoff, "", "");
     block.get_next_parameter("NTWQMMM", write, ">=0", "");
     block.get_next_parameter("QMLJ", qmlj, "", "0,1");
-    block.get_next_parameter("MMSCALE", mm_scale, "", "", true);
+    block.get_next_parameter("QMCON", qmcon, "", "0,1");
+    block.get_next_parameter("MMSCALE", mm_scale, ">=0.0 || <0.0", "", true);
 
     if (block.error()) {
         block.get_final_messages();
@@ -5127,36 +5132,51 @@ void io::In_Parameter::read_QMMM(simulation::Parameter & param,
             break;
     }
 
+    switch (software) {
+        case 0:
+            param.qmmm.software = simulation::qm_mndo;
+            break;
+        case 1:
+            param.qmmm.software = simulation::qm_turbomole;
+            break;
+        case 2:
+            param.qmmm.software = simulation::qm_dftb;
+            break;
+        case 3:
+            param.qmmm.software = simulation::qm_mopac;
+            break;
+        case 4:
+            param.qmmm.software = simulation::qm_gaussian;
+            break;
+        case 5:
+            param.qmmm.software = simulation::qm_nn;
+            break;
+        default:
+            break;
+    }
+
     switch (qmlj) {
         case 0:
-            param.qmmm.qm_lj= simulation::qm_lj_off;
+            param.qmmm.qm_lj = simulation::qm_lj_off;
             break;
         case 1:
             param.qmmm.qm_lj = simulation::qm_lj_on;
             break;
         default:
             break;
-        }
-
-        switch (software) {
-            case 0:
-                param.qmmm.software = simulation::qm_mndo;
-                break;
-            case 1:
-                param.qmmm.software = simulation::qm_turbomole;
-                break;
-            case 2:
-                param.qmmm.software = simulation::qm_dftb;
-                break;
-            case 3:
-                param.qmmm.software = simulation::qm_mopac;
-                break;
-            case 5:
-                param.qmmm.software = simulation::qm_nn;
-                break;
-            default:
-                break;
     }
+
+    switch (qmcon) {
+        case 0:
+            param.qmmm.qm_constraint = simulation::qm_constr_off;
+            break;
+        case 1:
+            param.qmmm.qm_constraint = simulation::qm_constr_on;
+            break;
+        default:
+            break;
+    }
+
     param.qmmm.mm_scale = mm_scale;
     if (cutoff < 0.0)
         param.qmmm.atomic_cutoff = true;

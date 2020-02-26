@@ -41,7 +41,7 @@ namespace interaction {
     /**
      * initialise the QM worker
      */
-    virtual int init(const simulation::Simulation & sim) = 0;
+    virtual int init(simulation::Simulation & sim) = 0;
 
     /**
      * run the QM worker
@@ -54,33 +54,42 @@ namespace interaction {
      * accessor to the name of the QM worker
      */
     const std::string & name() const { return m_name; }
+
     /**
      * accessor to the timer
      */
     util::Algorithm_Timer & timer() { return m_timer; }
+
     /**
      * const accessor to the timer
      */
     const util::Algorithm_Timer & timer() const { return m_timer; }
 
     /**
-     * set timer pointer
+     * Print units conversion factors
      */
-    //void timer(util::Algorithm_Timer* timer) { this->m_timer = timer; }
+    virtual void print_unit_factors(std::ostream & os) const {
+      os << this->param->unit_factor_length << ", "
+         << this->param->unit_factor_energy << ", "
+         << this->param->unit_factor_force << ", "
+         << this->param->unit_factor_charge;
+      };
   
   protected:
     /**
      * name of the QM worker
      */
     std::string m_name;
+
     /**
      * the timer
      */
     util::Algorithm_Timer m_timer;
     /**
-     * A copy of specific QM parameters
+     * the pointer to QM parameters
      */
-    simulation::Parameter::qmmm_struct::external_qm_param_struct* param;
+    simulation::Parameter::qmmm_struct::qm_param_struct* param;
+
     /**
      * Write input file for QM
      */
@@ -88,6 +97,7 @@ namespace interaction {
                           , const configuration::Configuration& conf
                           , const simulation::Simulation& sim
                           , const interaction::QM_Zone & qm_zone);
+
     /**
      * Open input file for QM
      */
@@ -97,6 +107,7 @@ namespace interaction {
      * Call external QM program
      */
     virtual int system_call();
+
     /**
      * read QM output files
      */
@@ -108,20 +119,22 @@ namespace interaction {
      * Open QM output file
      */
     virtual int open_output(std::ifstream & outputfile_stream, const std::string & output_file);
+
     /**
      * symlink creation error
      */
     int symlink_err;
+
     /**
      * Flag to enable exchange of coordinates between GROMOS and QM program
      */
     bool minimisation;
+
     /**
      * using temporary files
      */
     bool using_tmp;
   private:
-
   };
 }
 

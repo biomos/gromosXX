@@ -42,7 +42,7 @@ using namespace py::literals;
 
 interaction::NN_Worker::NN_Worker() : QM_Worker("NN Worker"), param(nullptr), guard() {};
 
-int interaction::NN_Worker::init(const simulation::Simulation& sim) {
+int interaction::NN_Worker::init(simulation::Simulation& sim) {
   // Initialize NN interface
   // Initialize pybind, schnetpack, python script
   std::vector<std::string> modules = {

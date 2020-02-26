@@ -27,6 +27,8 @@
 #define MODULE io
 #define SUBMODULE topology
 
+static std::set<std::string> block_read;
+
 /**
  * @section qmzone QMZONE block
  * The QMZONE block specifies the atoms which are treated quantum mechanically
@@ -48,6 +50,31 @@ QMZONE
 END
 @endverbatim
  *
+ * @section bufferzone BUFFERZONE block
+ * The BUFFERZONE block specifies the atoms which are treated in both quantum and classical way
+ *
+ * The block is read from the QM/MM specification file
+ * (\@qmmm).
+ *
+ * @verbatim
+BUFFERZONE
+# BUFCUT: cutoff of the adaptive buffer zone (default = 0.0, no adaptive buffer zone)
+# BUFCUT
+    1.4
+# NETCH:
+# SPINM:
+# QMI:   index of the QM atom
+# QMZ:   atomic number of the QM atom
+# QMLI:  0,1 atom is a link atom
+#
+# Warning: the first 17 characters are ignored!
+# RESIDUE   ATOM     QMI   QMZ   QMLI
+    1 H2O   OW         1     8      0
+    1 H2O   HW1        2     1      0
+    1 H2O   HW2        3     1      0
+END
+@endverbatim
+ *
  * @section qmunit QMUNIT block
  * The QMUNIT block specifies conversion factors for units
  *
@@ -58,10 +85,11 @@ END
 QMUNIT
 # QMULEN: Conversion factor to convert the QM length unit to the GROMOS one
 # QMUENE: Conversion factor to convert the QM energy unit to the GROMOS one
+# QMUFOR: Conversion factor to convert the QM force unit to the GROMOS one
 # QMUCHR: Conversion factor to convert the QM charge unit to the GROMOS one
 #
-# QMULEN    QMUENE    QMUCHR
-     0.1     4.184       1.0
+# QMULEN    QMUENE    QMUFOR    QMUCHR
+     0.1     4.184     41.84       1.0
 END
 @endverbatim
  * @section cap_length CAPLEN block
@@ -112,7 +140,8 @@ END
  * 
 @verbatim
 MNDOHEADER
-kharge=0 iop=-8 +
+kharge=@@CHARGE@@ imult=@@SPINM@@ +
+iop=-8 +
 kitscf=2000 +
 idiis=1 +
 ktrial=11 +
@@ -121,6 +150,62 @@ mminp=2 mmcoup=2 mmlink=1 nlink=@@NUM_LINK@@ numatm=@@NUM_CHARGES@@
 title line
 END
 @endverbatim
+ *
+ * @section GAUSSIANBINARY block for the Gaussian worker
+ * The GAUSSIANBINARY block specifies path to GAUSSIAN binary
+ *
+ * This block is optional. If unspecified, g16 command from PATH environment variable
+ * is used.
+ *
+ * @verbatim
+GAUSSIANBINARY
+/path/to/gaussian/binary
+END
+@endverbatim
+ * @section GAUSSIANFILES block for the Gaussian worker
+ * The GAUSSIANFILES block specifies input and output files to exchange data with Gaussian
+ *
+ * This block is optional. If unspecified, temporary files are created using TMPDIR
+ * environment variable. User-specified files are not deleted after use.
+ *
+ * @verbatim
+GAUSSIANFILES
+/path/to/gaussian.gjf
+/path/to/gaussian.out
+END
+@endverbatim
+ *
+ * The GAUSSIANHEADER block specifies the header part of the Gaussian input file.
+ * 
+@verbatim
+GAUSSIANHEADER
+%nproc=8
+%mem=2GB
+%NoSave
+%chk=tmp
+END
+@endverbatim
+ *
+ * The GAUSSIANROUTE block specifies the route section of the Gaussian input file.
+ * hashsign (#) should be omitted. It is beneficial to generate an initial checkpoint file
+ * and reuse it in subsequent steps with guess=read option.
+ * 
+@verbatim
+GAUSSIANROUTE
+N hf/STO-3G nosymm pop(mk) charge(angstroms) force charge(angstroms) prop=(field,read)
+END
+@endverbatim
+ *
+ * The GAUSSIANCHSM block specifies the net charge and the spin multiplicity of the system.
+ * 
+@verbatim
+GAUSSIANCHSM
+@@CHARGE@@ @@SPINM@@
+END
+@endverbatim
+
+
+
  * 
  * @section Turbomole blocks for the Turbomole worker
  * 
@@ -180,87 +265,16 @@ void
 io::In_QMMM::read(topology::Topology& topo,
         simulation::Simulation& sim,
         std::ostream & os) {
-  const simulation::qm_software_enum sw = sim.param().qmmm.software;
   io::messages.add("Reading QM/MM specification file",
                    "In_QMMM", io::message::notice);
+  //std::string blockname = "QMZONE";
+  this->read_zone(topo, sim, "QMZONE");
+  //blockname = "BUFFERZONE";
+  this->read_zone(topo, sim, "BUFFERZONE");
+  
   std::vector<std::string> buffer;
 
-  { // QMZONE
-    buffer = m_block["QMZONE"];
-
-    if (!buffer.size()) {
-      io::messages.add("No QMZONE block in QM/MM specification file",
-              "In_QMMM", io::message::error);
-      return;
-    }
-
-    unsigned qmi, qmz, qmli;
-    for (std::vector<std::string>::const_iterator it = buffer.begin() + 1
-                                                , to = buffer.end() - 1
-                                                ; it != to; ++it) {
-      std::string line(*it);
-      if (line.length() < 17) {
-        io::messages.add("Line too short in QMZONE block", "In_QMMM",
-                io::message::error);
-      }
-
-      // the first 17 chars are ignored
-      line.erase(line.begin(), line.begin() + 17);
-
-      _lineStream.clear();
-      _lineStream.str(line);
-
-      _lineStream >> qmi >> qmz >> qmli;
-
-      if (_lineStream.fail()) {
-        io::messages.add("Bad line in QMZONE block",
-                "In_QMMM", io::message::error);
-        return;
-      }
-
-      if (qmi < 1 || qmi > topo.num_atoms()) {
-        io::messages.add("QMZONE block: atom out of range",
-                "In_QMMM", io::message::error);
-        return;
-      }
-
-      if (qmi > topo.num_solute_atoms()) {
-        io::messages.add("QMZONE block: QM atom should be in solute",
-                "In_QMMM", io::message::error);
-        return;
-      }
-
-      if (qmz < 1) {
-        io::messages.add("QMZONE block: wrong atomic number (QMZ)",
-                "In_QMMM", io::message::error);
-        return;
-      }
-
-      if (qmli < 0 ) {
-        io::messages.add("QMZONE block: QMLI has to be 0 or index of linked MM atom",
-                "In_QMMM", io::message::error);
-        return;
-      }
-      topo.is_qm(qmi - 1) = true;
-      topo.qm_atomic_number(qmi - 1) = qmz;
-      if (qmli > 0 ) {
-        DEBUG(15, "Linking " << qmi << " to " << qmli);
-        topo.qmmm_link().insert(std::make_pair(qmi - 1, qmli - 1));
-      }
-    }
-
-    for (std::set< std::pair<unsigned,unsigned> >::const_iterator
-        it = topo.qmmm_link().begin(), to = topo.qmmm_link().end();
-        it != to; ++it)
-      {
-      if (topo.is_qm(it->second)) {
-        io::messages.add("QMZONE block: Invalid link - QMLI should be MM atom",
-                "In_QMMM", io::message::error);
-      }
-    }
-
-  } // QMZONE
-
+  const simulation::qm_software_enum sw = sim.param().qmmm.software;
   /**
    * MNDO
    */
@@ -446,6 +460,95 @@ io::In_QMMM::read(topology::Topology& topo,
                   sim.param().qmmm.mopac.input_header);
     } // MOPACHEADER
   }
+
+  /**
+   * Gaussian
+   */
+  else if (sw == simulation::qm_gaussian) {
+    this->read_units(sim, &sim.param().qmmm.gaussian);
+    { // GAUSSIANBINARY
+
+      DEBUG(15, "Reading GAUSSIANBINARY");
+      buffer = m_block["GAUSSIANBINARY"];
+
+      if (!buffer.size()) {
+        io::messages.add("Assuming that the g16 binary is in the PATH",
+                "In_QMMM", io::message::notice);
+        sim.param().qmmm.gaussian.binary = "g16";
+      } else {
+        if (buffer.size() != 3) {
+          io::messages.add("GAUSSIANBINARY block corrupt. Provide 1 line.",
+                  "In_QMMM", io::message::error);
+          return;
+        }
+        sim.param().qmmm.gaussian.binary = buffer[1];
+      }
+    } // GAUSSIANBINARY
+    { // GAUSSIANFILES
+
+      DEBUG(15, "Reading GAUSSIANFILES");
+      buffer = m_block["GAUSSIANFILES"];
+
+      if (!buffer.size()) {
+        io::messages.add("Using temporary files for Gaussian input/output",
+                "In_QMMM", io::message::notice);
+      } else {
+        if (buffer.size() != 4) {
+          io::messages.add("GAUSSIANFILES block corrupt. Provide 2 lines.",
+                  "In_QMMM", io::message::error);
+          return;
+        }
+        sim.param().qmmm.gaussian.input_file = buffer[1];
+        sim.param().qmmm.gaussian.output_file = buffer[2];
+      }
+    } // GAUSSIANFILES
+    { // GAUSSIANHEADER
+      buffer = m_block["GAUSSIANHEADER"];
+
+      if (!buffer.size()) {
+        io::messages.add("no GAUSSIANHEADER block in QM/MM specification file",
+                "In_QMMM", io::message::error);
+        return;
+      }
+      concatenate(buffer.begin() + 1, buffer.end() - 1,
+              sim.param().qmmm.gaussian.input_header);
+      DEBUG(1, "sim.param().qmmm.gaussian.input_header:");
+      DEBUG(1, sim.param().qmmm.gaussian.input_header);
+    } // GAUSSIANHEADER
+    { // GAUSSIANROUTE
+      buffer = m_block["GAUSSIANROUTE"];
+
+      if (!buffer.size()) {
+        io::messages.add("no GAUSSIANROUTE block in QM/MM specification file",
+                "In_QMMM", io::message::error);
+        return;
+      }
+      concatenate(buffer.begin() + 1, buffer.end() - 1,
+              sim.param().qmmm.gaussian.route_section);
+      sim.param().qmmm.gaussian.route_section = "#" + sim.param().qmmm.gaussian.route_section;
+      DEBUG(1, "sim.param().qmmm.gaussian.route_section:");
+      DEBUG(1, sim.param().qmmm.gaussian.route_section);
+    } // GAUSSIANROUTE
+    { // GAUSSIANCHSM
+      buffer = m_block["GAUSSIANCHSM"];
+
+      if (!buffer.size()) {
+        io::messages.add("no GAUSSIANCHSM block in QM/MM specification file",
+                "In_QMMM", io::message::error);
+        return;
+      }
+      if (buffer.size() != 3) {
+        io::messages.add("GAUSSIANCHSM block corrupt. Provide 1 line.",
+                "In_QMMM", io::message::error);
+        return;
+      }
+      concatenate(buffer.begin() + 1, buffer.end() - 1,
+              sim.param().qmmm.gaussian.chsm);
+      DEBUG(1, "sim.param().qmmm.gaussian.chsm:");
+      DEBUG(1, sim.param().qmmm.gaussian.chsm);
+    } // GAUSSIANCHSM
+  }
+
   else if (sw == simulation::qm_nn) {
     this->read_units(sim, &sim.param().qmmm.nn);
     //this->read_elements(topo, &sim.param().qmmm.nn);
@@ -467,6 +570,7 @@ io::In_QMMM::read(topology::Topology& topo,
       }
     } // NNMODEL
   }
+
   // Cap length definition
   if(topo.qmmm_link().size() > 0 ) {
     _lineStream.clear();
@@ -529,40 +633,51 @@ void io::In_QMMM::read_elements(const topology::Topology& topo
 void io::In_QMMM::read_units(const simulation::Simulation& sim
                   , simulation::Parameter::qmmm_struct::qm_param_struct* qm_param)
   {
-  std::map<simulation::qm_software_enum, std::array<double, 3> >
+  std::map<simulation::qm_software_enum, std::array<double, 4> >
   unit_factor_defaults = {
     {simulation::qm_mndo,
                     { math::angstrom /* A */
                     , math::kcal /* kcal */
+                    , math::kcal / math::angstrom /* kcal/A*/
                     , math::echarge /* e */}},
     {simulation::qm_turbomole,
-                    { math::bohr /* a.u. -> nm */
+                    { math::bohr /* a.u. */
                     , math::hartree * math::avogadro /* a.u. */
+                    , math::hartree * math::avogadro / math::bohr /* a.u. */
                     , math::echarge /* e */}},
     {simulation::qm_dftb,
-                    { math::bohr /* a.u. -> nm */
+                    { math::bohr /* a.u. */
                     , math::hartree * math::avogadro /* a.u. */
+                    , math::hartree * math::avogadro / math::bohr /* a.u. */
                     , math::echarge /* e */}},
     {simulation::qm_mopac,
-                    {math::angstrom /* A */
+                    { math::angstrom /* A */
                     , math::kcal /* kcal */
+                    , math::echarge /* e */}},
+    {simulation::qm_gaussian,
+                    { math::angstrom /* A */
+                    , math::hartree * math::avogadro /* a.u. */
+                    , math::hartree * math::avogadro / math::bohr /* a.u. */
                     , math::echarge /* e */}},
     {simulation::qm_nn,
                     { math::bohr /* a.u. -> nm */
                     , math::hartree * math::avogadro /* a.u. */
-                    , math::echarge /* e */}},
+                    , math::hartree * math::avogadro / math::bohr /* a.u. */
+                    , math::echarge /* e */}}
   };
 
   std::vector<std::string> buffer = m_block["QMUNIT"];
   if (!buffer.size()) {
-    std::array<double, 3> defaults = unit_factor_defaults[sim.param().qmmm.software];
+    std::array<double, 4> defaults = unit_factor_defaults[sim.param().qmmm.software];
     qm_param->unit_factor_length = defaults[0];
     qm_param->unit_factor_energy = defaults[1];
-    qm_param->unit_factor_charge = defaults[2];
+    qm_param->unit_factor_force  = defaults[2];
+    qm_param->unit_factor_charge = defaults[3];
     std::ostringstream msg;
     msg << "Using default QMUNIT: "
         << qm_param->unit_factor_length << ", "
         << qm_param->unit_factor_energy << ", "
+        << qm_param->unit_factor_force << ", "
         << qm_param->unit_factor_charge;
     io::messages.add(msg.str(),"In_QMMM", io::message::notice);
     return;
@@ -572,6 +687,7 @@ void io::In_QMMM::read_units(const simulation::Simulation& sim
 
   _lineStream >> qm_param->unit_factor_length
               >> qm_param->unit_factor_energy
+              >> qm_param->unit_factor_force
               >> qm_param->unit_factor_charge;
 
   if (_lineStream.fail()) {
@@ -580,6 +696,126 @@ void io::In_QMMM::read_units(const simulation::Simulation& sim
     return;
   }
   DEBUG(15, "QM units read done");
+}
+
+void io::In_QMMM::read_zone(topology::Topology& topo
+                           , simulation::Simulation& sim
+                           , const std::string& blockname)
+  {
+  std::vector<std::string> buffer;
+  buffer = m_block[blockname];
+
+  if (!buffer.size()) {
+    if (blockname == "QMZONE") {
+      io::messages.add("No QMZONE block in QM/MM specification file",
+              "In_QMMM", io::message::error);
+      return;
+    }
+    else if (blockname == "BUFFERZONE") {
+      return;
+    }
+  }
+
+  std::string line(buffer[1]);
+  _lineStream.clear();
+  _lineStream.str(line);
+
+  int charge, spin_mult;
+  
+  _lineStream >> charge
+              >> spin_mult;
+  if (blockname == "BUFFERZONE") {
+    _lineStream >> sim.param().qmmm.buffer_zone.cutoff;
+    sim.param().qmmm.buffer_zone.charge = charge;
+    sim.param().qmmm.buffer_zone.spin_mult = spin_mult;
+  }
+  else if (blockname == "QMZONE") {
+    sim.param().qmmm.qm_zone.charge = charge;
+    sim.param().qmmm.qm_zone.spin_mult = spin_mult;
+  }
+
+  if (_lineStream.fail()) {
+    std::ostringstream msg;
+    msg << "Bad first line in " << blockname << " block";
+    io::messages.add(msg.str(), "In_QMMM", io::message::error);
+    return;
+  }
+
+  unsigned qmi, qmz, qmli;
+  for (std::vector<std::string>::const_iterator it = buffer.begin() + 2
+                                              , to = buffer.end() - 1
+                                              ; it != to; ++it) {
+    std::string line(*it);
+    if (line.length() < 17) {
+      std::ostringstream msg;
+      msg << "Line too short in " << blockname << " block";
+      io::messages.add(msg.str(), "In_QMMM", io::message::error);
+    }
+
+    // the first 17 chars are ignored
+    line.erase(line.begin(), line.begin() + 17);
+
+    _lineStream.clear();
+    _lineStream.str(line);
+
+    _lineStream >> qmi >> qmz >> qmli;
+
+    if (_lineStream.fail()) {
+      std::ostringstream msg;
+      msg << "Bad line in " << blockname << " block";
+      io::messages.add(msg.str(), "In_QMMM", io::message::error);
+      return;
+    }
+
+    if (qmi < 1 || qmi > topo.num_atoms()) {
+      std::ostringstream msg;
+      msg << blockname << " block: atom out of range";
+      io::messages.add(msg.str(), "In_QMMM", io::message::error);
+      return;
+    }
+
+    if (qmi > topo.num_solute_atoms()) {
+      std::ostringstream msg;
+      msg << blockname << " block: QM atom should be in solute";
+      io::messages.add(msg.str(), "In_QMMM", io::message::error);
+      return;
+    }
+
+    if (qmz < 1) {
+      std::ostringstream msg;
+      msg << blockname << " block: wrong atomic number (QMZ)";
+      io::messages.add(msg.str(), "In_QMMM", io::message::error);
+      return;
+    }
+
+    if (qmli < 0 ) {
+      std::ostringstream msg;
+      msg << blockname << " block: QMLI has to be 0 or index of linked MM atom";
+      io::messages.add(msg.str(), "In_QMMM", io::message::error);
+      return;
+    }
+    topo.is_qm(qmi - 1) = (blockname == "QMZONE");
+    const bool is_qm_buffer = (blockname == "BUFFERZONE");
+    topo.is_qm_buffer(qmi - 1) = is_qm_buffer;
+    sim.param().qmmm.use_qm_buffer = sim.param().qmmm.use_qm_buffer
+                                      || is_qm_buffer;
+    topo.qm_atomic_number(qmi - 1) = qmz;
+    if (qmli > 0 ) {
+      DEBUG(15, "Linking " << qmi << " to " << qmli);
+      topo.qmmm_link().insert(std::make_pair(qmi - 1, qmli - 1));
+    }
+  }
+
+  for (std::set< std::pair<unsigned,unsigned> >::const_iterator
+      it = topo.qmmm_link().begin(), to = topo.qmmm_link().end();
+      it != to; ++it)
+    {
+    if (topo.is_qm(it->second)) {
+      std::ostringstream msg;
+      msg << blockname << " block: Invalid link - QMLI should be MM atom";
+      io::messages.add(msg.str(), "In_QMMM", io::message::error);
+    }
+  }
 }
 
 

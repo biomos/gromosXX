@@ -131,9 +131,16 @@ namespace interaction {
                            , bool quiet);
 
     /**
-     * helper function to remove pairlist exclusions from topology
+     * helper function to remove constraints from QM zone
      */
-    void remove_exclusions(topology::Topology& topo
+    void remove_constraints(topology::Topology& topo
+                          , std::ostream& os
+                          , bool quiet);
+
+    /**
+     * helper function to modify pairlist exclusions in topology
+     */
+    void modify_exclusions(topology::Topology& topo
                          , const simulation::Simulation& sim
                          , std::ostream &os
                          , bool quiet);
@@ -185,6 +192,11 @@ namespace interaction {
      * QM zone
      */
     QM_Zone * m_qm_zone;
+
+    /**
+     * QM buffer zone
+     */
+    QM_Zone * m_qm_buffer;
 
   private:
     /**

@@ -364,6 +364,9 @@ int io::read_special(io::Argument const & args,
             case simulation::qm_mopac:
                 iq.title= "MOPAC";
                 break;
+            case simulation::qm_gaussian:
+                iq.title= "GAUSSIAN";
+                break;
             case simulation::qm_nn:
                 iq.title= "Schnetpack";
                 break;

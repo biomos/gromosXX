@@ -460,7 +460,7 @@ int interaction::Nonbonded_Set
       int(1.3 * num_atoms / vol * 4.0 / 3.0 * math::Pi * c3);
 
     if (!quiet)
-      os << "\n\testimated pairlist size (per atom) : "
+      os << "\testimated pairlist size (per atom) : "
 	 << pairs << "\n";
     
     pairlist().reserve(pairs);

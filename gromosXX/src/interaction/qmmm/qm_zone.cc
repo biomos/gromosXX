@@ -28,9 +28,11 @@
 #define SUBMODULE qmmm
 
 interaction::QM_Zone::QM_Zone(int net_charge
-                            , int spin_multiplicity)
+                            , int spin_mult)
                               : qm_energy(0.0)
                               , mm_energy(0.0)
+                              , m_charge(net_charge)
+                              , m_spin_mult(spin_mult)
 {}
 
 interaction::QM_Zone::~QM_Zone()
@@ -141,9 +143,9 @@ int interaction::QM_Zone::get_qm_atoms(const topology::Topology& topo,
     DEBUG(15, "cg: " << cg);
     DEBUG(15, "a_to: " << a_to);
     assert(a_to <= num_solute_atoms);
-    const bool cg_is_qm = topo.is_qm(a);
+    const bool cg_is_qm = topo.is_qm(a) || topo.is_qm_buffer(a);
     for (; a < a_to; ++a) {
-      const bool a_is_qm = topo.is_qm(a);
+      const bool a_is_qm = topo.is_qm(a) || topo.is_qm_buffer(a);
       if (cg_is_qm != a_is_qm) {
         std::ostringstream msg;
         msg << "Chargegroup " << cg << " is split between QM and MM zone - "
@@ -263,11 +265,14 @@ void interaction::QM_Zone::update_pairlist(
         if (counter == 0) {
           unsigned i = qm_it->index;
           unsigned j = mm_it->index;
-          if (i > j) std::swap(i,j);
-          // There should not be any QM pair in standard exclusions
-          assert(!topo.all_exclusion(i).is_excluded(j));
-          if (!topo.qm_all_exclusion(i).is_excluded(j)) {
-            pairlist.solute_short[i].push_back(j);
+          if (!topo.is_qm_buffer(j)) {
+            if (i > j) std::swap(i,j);
+            // There should not be any QM pair in standard exclusions
+            assert(!topo.all_exclusion(i).is_excluded(j));
+
+            if (!topo.qm_all_exclusion(i).is_excluded(j)) {
+              pairlist.solute_short[i].push_back(j);
+            }
           }
           counter = stride;
         }
@@ -333,7 +338,7 @@ int interaction::QM_Zone::get_mm_atoms(const topology::Topology& topo,
     // Include all - allowed only with vacuum PBC
     DEBUG(9, "Gathering all MM atoms");
     for (unsigned int i = 0; i < topo.num_atoms(); ++i) {
-      if (!topo.is_qm(i)) {
+      if ( !(topo.is_qm(i) || topo.is_qm_buffer(i)) ) {
         DEBUG(9, "Adding atom " << i);
         this->mm.emplace(i, topo.charge(i), conf.current().pos(i));
       }
@@ -437,7 +442,7 @@ int interaction::QM_Zone::_get_mm_atoms(const topology::Topology& topo,
         for(unsigned cg = cg_from; cg < cg_to; ++cg) {
           // If first atom is QM, then whole chargegroup is, skip
           unsigned a = topo.chargegroup(cg);
-          if (topo.is_qm(a)) continue;
+          if (topo.is_qm(a) || topo.is_qm_buffer(a)) continue;
           // get distance
           periodicity.nearest_image(qm_pos, (*cgs)(cg), r_qm_cg);
           DEBUG(15, "qm_pos: " << math::v2s(qm_pos));
@@ -532,7 +537,7 @@ int interaction::QM_Zone::_get_mm_atoms_atomic(const topology::Topology& topo,
       math::Vec r_qm_mm;
       std::set<MM_Atom>::iterator mm_it = this->mm.begin();
       for(unsigned i = 0; i < num_atoms; ++i) {
-        if (topo.is_qm(i)) continue;
+        if (topo.is_qm(i) || topo.is_qm_buffer(i)) continue;
         // get distance
         periodicity.nearest_image(qm_pos, pos(i), r_qm_mm);
         DEBUG(15, "Nearest image of atom " << i << " : " << math::v2s(r_qm_mm));
@@ -694,4 +699,24 @@ void interaction::QM_Zone::electric_field(const simulation::Simulation& sim
     }
     electric_field(i) += e;
   }
+}
+
+interaction::QM_Zone* interaction::QM_Zone::create_buffer_zone(
+                                          const topology::Topology& topo
+                                        , const simulation::Simulation& sim
+                                          ) {
+  DEBUG(15,"Generating QM buffer zone");
+  QM_Zone* qmzone = new interaction::QM_Zone(*this);
+  qmzone->zero();
+  qmzone->charge() = sim.param().qmmm.buffer_zone.charge;
+  qmzone->spin_mult() = sim.param().qmmm.buffer_zone.spin_mult;
+
+  for (std::set<interaction::QM_Atom>::const_iterator
+        it = this->qm.begin(); it != this->qm.end(); ++it) {
+    if (topo.is_qm(it->index)) {
+      DEBUG(10,"Erasing QM atom " << it->index << " from buffer zone");
+      qmzone->qm.erase(*it);
+    }
+  }
+  return qmzone;
 }

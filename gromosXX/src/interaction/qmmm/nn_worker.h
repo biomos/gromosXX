@@ -28,7 +28,7 @@ namespace interaction {
      * initialise the NN worker
      * @return 0 if successful, non-zero on failure
      */
-    virtual int init(const simulation::Simulation& sim);
+    virtual int init(simulation::Simulation& sim);
 
   private:
     /**

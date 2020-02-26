@@ -728,6 +728,10 @@ namespace simulation
     qmmm_polarisable = 3
   };
 
+  /**
+   * @enum qm_lj_enum
+   * apply LJ between QM atoms
+   */
   enum qm_lj_enum {
   /**
      * don't apply LJ dispersion between QM atoms
@@ -738,7 +742,21 @@ namespace simulation
      */
     qm_lj_on = 1
   };
-  
+
+  /**
+   * @enum qm_constr_enum
+   * keep distance constraints within QM region and QM-MM link
+   */
+  enum qm_constr_enum {
+  /**
+     * remove constraints in QM region and QM-MM link
+     */
+    qm_constr_off = 0,
+    /**
+     * keep constraints in QM region and QM-MM link
+     */
+    qm_constr_on = 1
+  };
 
   /**
    * @enum qmmm_software_enum
@@ -757,13 +775,17 @@ namespace simulation
      * use DFTB
      */
     qm_dftb = 2,
-      /**
-       * use MOPAC
-       */
+    /**
+     * use MOPAC
+     */
     qm_mopac = 3,
-      /**
-       * use Schnetpack NN
-       */
+    /**
+     * use Gaussian
+     */
+    qm_gaussian = 4,
+    /**
+     * use Schnetpack NN
+     */
     qm_nn = 5
   };
 
@@ -3556,80 +3578,112 @@ namespace simulation
        * - software 0 (MNDO)
        * - cutoff 0.0 (no cutoff)
        * - mm_scale -1.0 (no scaling)
-       * - write(0)
+       * - write 0 (no writing)
+       * - atomic_cutoff false (using charge-group based cutoff)
+       * - use_qm_buffer false (not using buffer zone)
+       * - cap_length 0.109 (capping atom distance)
        */
-      qmmm_struct() : qmmm(qmmm_off)
-                    , qm_lj(qm_lj_off)
-                    , software(qm_mndo)
-                    , cutoff(0.0)
-                    , atomic_cutoff(false)
+      qmmm_struct() : 
+                      cutoff(0.0)
                     , cap_length(0.109)
                     , mm_scale(-1.0)
-                    , write(0) {}
+                    , qmmm(qmmm_off)
+                    , qm_lj(qm_lj_off)
+                    , qm_constraint(qm_constr_off)
+                    , software(qm_mndo)
+                    , write(0)
+                    , atomic_cutoff(false)
+                    , use_qm_buffer(false) {}
       /**
        * 
        * Common QMMM parameters
        * 
        */
       /**
+       * cutoff to determine atoms included in QM calculation as point charges.
+       */
+      double cutoff;
+      /**
+       * Capping atom bond length
+       */
+      double cap_length;
+      /**
+       * scaling factor for the MM charges in the QM/MM interaction
+       */
+      double mm_scale;
+      /**
        * QM-MM embedding scheme or disable
        */
       qmmm_enum qmmm;
       /**
-       * apply LJ-interaction in QM-Zone or not
+       * apply LJ interaction in QM zone or not
        */
       qm_lj_enum qm_lj;
+      /**
+       * keep constraints in QM zone and QM-MM link
+       */
+      qm_constr_enum qm_constraint;
       /**
        * the QM software to use
        */
       qm_software_enum software;
       /**
-       * cutoff to determine atoms included in QM calculation as point charges.
+       * write QM/MM related stuff to special trajectory
        */
-      double cutoff;
+      unsigned write; // What can be written here?
       /**
        * type of cutoff (atomic or chargegroup-based)
        */
       bool atomic_cutoff;
       /**
-       * Capping atom bond length
+       * type of cutoff (atomic or chargegroup-based)
        */
-      double cap_length;
+      bool use_qm_buffer;
 
       /**
-       * scaling factor for the MM charges in the QM/MM interaction
+       * QM zone parameters
        */
-      double mm_scale;
+      struct qm_zone_struct {
+      /**
+       * Constructor
+       * Default values:
+       * - charge 0 (neutral)
+       * - spin_mult 1 (no unpaired electrons)
+       */
+      qm_zone_struct() : 
+                      charge(0)
+                    , spin_mult(1) {}
+        /**
+         * net charge
+         */
+        int charge;
+        /**
+         * spin multiplicity
+         */
+        int spin_mult;
+      } qm_zone;
 
       /**
-       * write QM/MM related stuff to special trajectory
+       * QM buffer zone parameters
        */
-      unsigned write; // What can be written here?
+      struct buffer_zone_struct : qm_zone_struct {
+      /**
+       * Constructor
+       * Default values:
+       * - cutoff 0.0 (no adaptive QM buffer)
+       */
+      buffer_zone_struct() : 
+                      cutoff(0.0) {}
+        /**
+         * Adaptive buffer zone cutoff
+         */
+        double cutoff;
+      } buffer_zone;
 
       /**
        * QM program unspecific parameters
        */
-      struct qm_param_struct{
-        /**
-         * factor to convert the QM length unit to the GROMOS one
-         */
-        double unit_factor_length;
-        /**
-         * factor to convert the QM energy unit to the GROMOS one
-         */
-        double unit_factor_energy;
-        /**
-         * factor to convert the QM charge unit to the GROMOS one
-         */
-        double unit_factor_charge;
-        /**
-         * maps atomic number to elements name
-         */
-        std::map<unsigned, std::string> elements;
-      };
-
-      struct external_qm_param_struct : public qm_param_struct {
-        /**
+      struct qm_param_struct{        /**
          * path for the program binary
          */
         std::string binary;
@@ -3645,12 +3699,32 @@ namespace simulation
          * header of the input file
          */
         std::string input_header;
+        /**
+         * factor to convert the QM length unit to the GROMOS one
+         */
+        double unit_factor_length;
+        /**
+         * factor to convert the QM energy unit to the GROMOS one
+         */
+        double unit_factor_energy;
+        /**
+         * factor to convert the QM energy unit to the GROMOS one
+         */
+        double unit_factor_force;
+        /**
+         * factor to convert the QM charge unit to the GROMOS one
+         */
+        double unit_factor_charge;
+        /**
+         * maps atomic number to elements name
+         */
+        std::map<unsigned, std::string> elements;
       };
 
       /**
        * MNDO specific parameters
        */
-      struct mndo_param_struct : public external_qm_param_struct {
+      struct mndo_param_struct : public qm_param_struct {
         /**
          * path for the gradient output file. Empty for a temporary file
          */
@@ -3664,7 +3738,7 @@ namespace simulation
       /**
        * Turbomole specific parameters
        */
-      struct turbomole_param_struct : public external_qm_param_struct {
+      struct turbomole_param_struct : public qm_param_struct {
         /**
          * the tools to run in the working directory
          */
@@ -3702,7 +3776,7 @@ namespace simulation
       /**
        * DFTB specific parameters
        */
-      struct dftb_param_struct : public external_qm_param_struct {
+      struct dftb_param_struct : public qm_param_struct {
         /**
          * path for the charges.dat file. Empty for a temporary file
          */
@@ -3720,7 +3794,7 @@ namespace simulation
       /**
        * MOPAC specific parameters
        */
-      struct mopac_param_struct : public external_qm_param_struct {
+      struct mopac_param_struct : public qm_param_struct {
         /**
          * path for the molin file. Empty for a temporary file
          */
@@ -3730,6 +3804,20 @@ namespace simulation
          */
         std::string output_gradient_file;
       } mopac;
+      
+      /**
+       * Gaussian specific parameters
+       */
+      struct gaussian_param_struct : public qm_param_struct{
+        /**
+         * route section of the input file
+         */
+        std::string route_section;
+        /**
+         * total charge and spin multiplicity in the input file
+         */
+        std::string chsm;
+      } gaussian;
 
       /**
        * NN specific parameters
