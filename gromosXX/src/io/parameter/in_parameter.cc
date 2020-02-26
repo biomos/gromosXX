@@ -5079,7 +5079,7 @@ void io::In_Parameter::read_QMMM(simulation::Parameter & param,
     exampleblock << "# QMLJ 0, 1 apply LJ between QM atoms \n";
     exampleblock << "#    0: do not apply\n";
     exampleblock << "#    1: apply\n";
-    exampleblock << "# QMCON 0, 1 keep distance constraints in QM zone and QM-MM links \n";
+    exampleblock << "# QMCON 0, 1 keep distance constraints in QM zone \n";
     exampleblock << "#    0: remove\n";
     exampleblock << "#    1: keep\n";
     exampleblock << "# MMSCALE scale mm-charges with (2/pi)*atan(x*(r_{qm}-r_{mm})) (optional) \n";

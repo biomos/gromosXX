@@ -800,11 +800,6 @@ void interaction::QMMM_Interaction::remove_constraints(
       case 0:
         break;
       case 1:
-        // Remove constraints only from QM-MM links
-        if (topo.are_linked(it->i, it->j )
-            || topo.are_linked(it->j, it->i )) {
-          erase = true;
-        }
         break;
       case 2:
         erase = true;
