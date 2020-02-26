@@ -14,7 +14,7 @@ namespace interaction {
    * @class NN_Worker
    * a worker class which calls the NN interface
    */
-  class NN_Worker : public QM_Worker {
+  class __attribute__((visibility("default"))) NN_Worker : public QM_Worker {
   public:
     /**
      * Constructor
