@@ -51,7 +51,12 @@ END
 @endverbatim
  *
  * @section bufferzone BUFFERZONE block
- * The BUFFERZONE block specifies the atoms which are treated in both quantum and classical way
+ * The BUFFERZONE block specifies the atoms which are treated in both quantum and
+ * classical way. They are added to QMZONE atoms to form the full QM zone. Energies
+ * and interactions are then calculated as a contribution to forcefield dE and dF
+ * dE = E(fullQM) - E(buffer)
+ * dF = F(fullQM) - F(buffer)
+ * 
  *
  * The block is read from the QM/MM specification file
  * (\@qmmm).
@@ -135,6 +140,8 @@ END
  *
  * The MNDOHEADER block specifies the header part of the MNDO input file. Variables
  * are allowed. Implemented are
+ * - CHARGE: net charge of the QM zone
+ * - SPINM: spin multiplicity of the QM zone (be aware, that MNDO uses 0 for ground-state)
  * - NUM_CHARGES: the number of MM atoms
  * - NUM_LINK: Number of link atoms
  * 
@@ -197,7 +204,9 @@ END
 @endverbatim
  *
  * The GAUSSIANCHSM block specifies the net charge and the spin multiplicity of the system.
- * 
+ * Variables are allowed. Implemented are
+ * - CHARGE: net charge of the QM zone
+ * - SPINM: spin multiplicity of the QM zone
 @verbatim
 GAUSSIANCHSM
 @@CHARGE@@ @@SPINM@@

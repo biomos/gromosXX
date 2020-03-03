@@ -452,6 +452,8 @@ int interaction::QMMM_Interaction::init(topology::Topology& topo,
     }
 
     os << "\tQM zone: " << std::endl
+       << "\t\tnet charge: \t" << m_qm_zone->charge() << std::endl
+       << "\t\tspin multiplicity: \t" << m_qm_zone->spin_mult() << std::endl
        << "\t\tnumber of QM atoms: \t" << m_qm_zone->qm.size() << std::endl
        << "\t\tnumber of QM-MM links: \t" << m_qm_zone->link.size() << std::endl;
   }
@@ -562,13 +564,14 @@ void interaction::QMMM_Interaction::remove_bonded_terms(
   for (twoBodyVec::iterator b_it = bonds.begin(); b_it != bonds.end(); ) {
     // If QM-QM
     if (topo.is_qm(b_it->i) && topo.is_qm(b_it->j)) {
-      if (!quiet)
+      if (!quiet) {
         if (count == 0) os << "\t\t";
         os << (b_it->i + 1) << "-" << (b_it->j + 1) << " ";
         if (++count == 8) {
           os << "\n";
           count = 0;
         }
+      }
       DEBUG(4,"Erased bond: " << b_it->i + 1 << " - " << b_it->j + 1);
       b_it = bonds.erase(b_it);
     }
