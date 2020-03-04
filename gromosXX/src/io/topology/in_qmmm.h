@@ -57,6 +57,10 @@ namespace io {
     void read_zone(topology::Topology& topo
                     , simulation::Simulation& sim
                     , const std::string& blockname);
+    /**
+     * helper function to remove constraints from QM atoms
+     */
+    void remove_constraints(topology::Topology& topo);
   };
 } // io
 

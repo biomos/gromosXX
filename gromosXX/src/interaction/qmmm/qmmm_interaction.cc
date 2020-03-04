@@ -463,10 +463,12 @@ int interaction::QMMM_Interaction::init(topology::Topology& topo,
   this->remove_bonded_terms(topo, os, quiet);
 
   // Remove relevant constraints from topo (only if requested by user)
+  // This had to be moved to In_QMMM, so the DOFs are calculated correctly
+  /*
   if (!sim.param().qmmm.qm_constraint) {
-    DEBUG(15, "Removing constraints");
-    this->remove_constraints(topo, os, quiet);
-  }
+    //DEBUG(15, "Removing constraints");
+    //this->remove_constraints(topo, os, quiet);
+  }*/
   if (!quiet)
     os << "\n";
 
@@ -781,13 +783,13 @@ void interaction::QMMM_Interaction::remove_bonded_terms(
     } else ++d_it;
   }
 }
-
+/*
 void interaction::QMMM_Interaction::remove_constraints(
                                 topology::Topology& topo
                               , std::ostream& os
                               , bool quiet)
   {
-  // Remove distance constraints between QM atoms and in QM-MM link
+  // Remove distance constraints between QM atoms
   std::vector<topology::two_body_term_struct> & dist_constr = topo.solute().distance_constraints();
   std::vector<topology::two_body_term_struct>::const_iterator it = dist_constr.begin();
 
@@ -815,17 +817,18 @@ void interaction::QMMM_Interaction::remove_constraints(
       it = dist_constr.erase(it);
 
       // Neat printing
-      if (!quiet)
+      if (!quiet) {
         if (count == 0) os << "\t\t";
           os << (it->i + 1) << "-" << (it->j + 1) << " ";
-      if (++count == 8) {
-        os << "\n";
-        count = 0;
+        if (++count == 8) {
+          os << "\n";
+          count = 0;
+        }
       }
     }
     else ++it;
   }
-}
+}*/
 
 void interaction::QMMM_Interaction::modify_exclusions(
                                 topology::Topology& topo
@@ -933,8 +936,6 @@ void interaction::QMMM_Interaction::modify_exclusions(
   for (std::vector<topology::lj_exception_struct>::const_iterator
         it = topo.lj_exceptions().begin()
       ; it != topo.lj_exceptions().end(); ) {
-    bool copy = false;
-    bool erase = false;
     const unsigned i = it->i;
     const unsigned j = it->j;
     assert(i < j);

@@ -274,6 +274,12 @@ io::In_QMMM::read(topology::Topology& topo,
   //std::string blockname = "QMZONE";
   this->read_zone(topo, sim, "QMZONE");
   //blockname = "BUFFERZONE";
+  if (!sim.param().qmmm.qm_constraint) {
+    DEBUG(15, "Removing constraints");
+    this->remove_constraints(topo);
+    io::messages.add("QM-QM distance constraints removed",
+        "In_QMMM", io::message::notice);
+  }
   this->read_zone(topo, sim, "BUFFERZONE");
   
   std::vector<std::string> buffer;
@@ -796,4 +802,16 @@ void io::In_QMMM::read_zone(topology::Topology& topo
   }
 }
 
-
+void io::In_QMMM::remove_constraints(topology::Topology& topo)
+  {
+  // Remove distance constraints between QM atoms
+  std::vector<topology::two_body_term_struct> & dc = topo.solute().distance_constraints();
+  std::vector<topology::two_body_term_struct>::const_iterator it = dc.begin();
+  while (it != dc.end()) {
+    if (topo.is_qm(it->i) && topo.is_qm(it->j)) {
+      DEBUG(15, "Removing distance constraint: " << it->i << "-" << it->j);
+      it = dc.erase(it);
+    }
+    else ++it;
+  }
+}
