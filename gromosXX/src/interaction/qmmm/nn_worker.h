@@ -95,5 +95,5 @@ namespace interaction {
   };
 }
 
-#endif	/* MNDO_WORKER_H */
+#endif	/* NN_WORKER_H */
 

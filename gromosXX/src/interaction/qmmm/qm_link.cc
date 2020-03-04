@@ -21,8 +21,6 @@
 #include <interaction/qmmm/qm_link.h>
 #include <interaction/qmmm/qm_zone.h>
 
-//#include <util/template_split.h>
-
 #undef MODULE
 #undef SUBMODULE
 #define MODULE interaction

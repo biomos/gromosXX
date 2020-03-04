@@ -274,6 +274,7 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update
       for(int i=i_first; i < i_last; ++i){
 
 	if (m_grid.p_cell[z][i].i < num_solute_cg){ // self interaction
+		// Exclude all QM atoms from self-interaction
 		if (!qmmm || !topo.is_qm(topo.chargegroup(m_grid.p_cell[z][i].i))) {
 	  DEBUG(8, "self " << m_grid.p_cell[z][i].i);
 	  for(int a1 = topo.chargegroups()[m_grid.p_cell[z][i].i],
