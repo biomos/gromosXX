@@ -108,12 +108,14 @@ void interaction::QM_Zone::write_force(math::VArray& force) {
   for (std::set<QM_Atom>::const_iterator
       it = this->qm.begin(), to = this->qm.end(); it != to; ++it)
     {
+    DEBUG(15, "Atom " << it->index << ", force: " << math::v2s(it->force));
     force(it->index) += it->force;
   }
   // And MM atoms forces
   for (std::set<MM_Atom>::const_iterator
       it = this->mm.begin(), to = this->mm.end(); it != to; ++it)
     {
+    DEBUG(15, "Atom " << it->index << ", force: " << math::v2s(it->force));
     force(it->index) += it->force;
   }
 }
