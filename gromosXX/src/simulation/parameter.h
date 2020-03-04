@@ -745,15 +745,15 @@ namespace simulation
 
   /**
    * @enum qm_constr_enum
-   * keep distance constraints within QM region and QM-MM link
+   * keep distance constraints within QM zone
    */
   enum qm_constr_enum {
   /**
-     * remove constraints in QM region and QM-MM link
+     * remove constraints in QM zone
      */
     qm_constr_off = 0,
     /**
-     * keep constraints in QM region and QM-MM link
+     * keep constraints in QM zone
      */
     qm_constr_on = 1
   };

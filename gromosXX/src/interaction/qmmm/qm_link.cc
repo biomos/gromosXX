@@ -48,10 +48,10 @@ void interaction::QM_Link::distribute_force(interaction::QM_Zone& qm_zone) const
   std::set<MM_Atom>::iterator mm_it = qm_zone.mm.find(this->mm_index);
   assert(qm_it != qm_zone.qm.end());
   assert(mm_it != qm_zone.mm.end());
-  math::Vec& qm_pos = qm_it->pos,
-             mm_pos = mm_it->pos,
-             qm_force = qm_it->force,
-             mm_force = mm_it->force;
+  math::Vec &qm_pos = qm_it->pos,
+            &mm_pos = mm_it->pos,
+            &qm_force = qm_it->force,
+            &mm_force = mm_it->force;
   math::Vec r_mm_qm = mm_pos - qm_pos;
 
   DEBUG(15, "QM pos: " << math::v2s(qm_pos));
@@ -66,7 +66,7 @@ void interaction::QM_Link::distribute_force(interaction::QM_Zone& qm_zone) const
          d_mm_qm = sqrt(d2_mm_qm),
          link_fraction = d_l_qm / d_mm_qm;
   
-  math::Vec lr_r_d2 = link_fraction * r_mm_qm / d2_mm_qm;
+  math::Vec lr_r_d2 = r_mm_qm * link_fraction / d2_mm_qm;
   DEBUG(15, "Force on capping atom: " << math::v2s(this->force));
   for (unsigned i = 0; i < 3; ++i) {
     DEBUG(15, "Coordinate " << i);
