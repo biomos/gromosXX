@@ -2902,14 +2902,14 @@ namespace simulation
        * - equilibrate 0
        * - cont 0
        */
-      reeds_struct() : reeds(false), 
+      reeds_struct() : reeds(0), 
                        num_states(0), num_T(0),  num_l(0), 
                        trials(0), equilibrate(0), 
                        cont(0), eds_stat_out(true) {}
       /**
-       * Check if this is a reed run.f
+       * Check what kind of reed run.f this is
        **/
-      bool reeds;
+      int reeds;
       /**
        * num_states
        */

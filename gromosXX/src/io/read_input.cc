@@ -202,7 +202,7 @@ int io::read_parameter(io::Argument const & args,
   io::messages.add("parameter read from " + args[argname_input] +
           "\n" + util::frame_text(ip.title),
           "read input", io::message::notice);
-
+  
   sim.time_step_size() = sim.param().step.dt;
   sim.time() = sim.param().step.t0;
   

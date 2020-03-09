@@ -45,14 +45,12 @@ namespace util{
         replica_MPI_Master(io::Argument _args, int cont, int globalThreadID, simulation::mpi_control_struct replica_mpi_control);
         virtual ~replica_MPI_Master();
         
-#ifdef XXMPI
         /**
          * run MD
          * @return 
          */
         void run_MD() override;
 
-#endif
 
     private:
         void send_coordinates();

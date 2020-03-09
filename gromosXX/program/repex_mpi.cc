@@ -70,19 +70,22 @@
 
 
 int main(int argc, char *argv[]) {
-#ifdef XXMPI
     //initializing MPI
-    MPI_Init(&argc, &argv);
-    const double start = MPI_Wtime();
+    //MPI_Init(&argc, &argv);
+    //const double start = MPI_Wtime();
     
     int ttotalNumberOfThreads;
     int tglobalThreadID;
 
-    MPI_Comm_size(MPI_COMM_WORLD, &ttotalNumberOfThreads);
-    MPI_Comm_rank(MPI_COMM_WORLD, &tglobalThreadID);
+    //MPI_Comm_size(MPI_COMM_WORLD, &ttotalNumberOfThreads);
+    //MPI_Comm_rank(MPI_COMM_WORLD, &tglobalThreadID);
     
-    unsigned int totalNumberOfThreads = ttotalNumberOfThreads;
-    unsigned int globalThreadID = tglobalThreadID;
+    
+    //unsigned int totalNumberOfThreads = ttotalNumberOfThreads;
+    //unsigned int globalThreadID = tglobalThreadID;
+    
+    unsigned int totalNumberOfThreads = 1;
+    unsigned int globalThreadID = 0;
     
     if (globalThreadID == 0) {
         std::string msg("\n==================================================\n\tGROMOS Replica Exchange:\n==================================================\n");
@@ -107,19 +110,19 @@ int main(int argc, char *argv[]) {
     try {
         if (args.parse(argc, argv, knowns)) {
             std::cerr << usage << std::endl;
-            MPI_Finalize();
+            //MPI_Finalize();
             return 1;
         }
 
         if (args.count("version") >= 0) {
-            MPI_Finalize();
+            //MPI_Finalize();
             return 0;
         }
 
         // parse the verbosity flag and set debug levels
         if (util::parse_verbosity(args)) {
             std::cerr << "could not parse verbosity argument" << std::endl;
-            MPI_Finalize();
+            //MPI_Finalize();
             return 1;
         }
     } catch (const std::exception &e) {
@@ -129,8 +132,8 @@ int main(int argc, char *argv[]) {
         std::string msg = "ERROR!\n Uh OH! Caught an Exception in initial Args parse!\n\n";
         std::cout << msg << e.what() << std::endl;
         std::cerr << msg << e.what() << std::endl;
-        MPI_Finalize();
-        MPI_Abort(MPI_COMM_WORLD, E_USAGE);
+        //MPI_Finalize();
+        //MPI_Abort(MPI_COMM_WORLD, E_USAGE);
         return -1;
     } catch (...) {
         std::cerr << "\n\t########################################################\n"
@@ -139,10 +142,10 @@ int main(int argc, char *argv[]) {
         std::string msg = "ERROR!\n Uh OH! Caught an non standard Exception in initial Args parse!!\n Hit the developers!\n\n";
         std::cout << msg << std::endl;
         std::cerr << msg << std::endl;
-        MPI_Finalize();
+        //MPI_Finalize();
         return -1;
     }
-    MPI_DEBUG(1, "RANK: "<<globalThreadID<<" totalRankNum: "<< totalNumberOfThreads<<": hello world!\n");
+    DEBUG(1, "RANK: "<<globalThreadID<<" totalRankNum: "<< totalNumberOfThreads<<": hello world!\n");
 
     /**
      * GLOBAL SETTING VARIABLES
@@ -187,7 +190,7 @@ int main(int argc, char *argv[]) {
                     io::messages.display(std::cout);
                     io::messages.display(std::cerr);
                 }
-                MPI_Finalize();
+                //MPI_Finalize();
                 return 1;
             }
                         
@@ -260,7 +263,7 @@ int main(int argc, char *argv[]) {
                     io::messages.display(std::cout);
                     io::messages.display(std::cerr);
                 }
-                MPI_Finalize();
+                //MPI_Finalize();
                 return 1;
             }
 
@@ -272,12 +275,12 @@ int main(int argc, char *argv[]) {
                             << "\n\t########################################################\n";
                     io::messages.display(std::cout);
                     io::messages.display(std::cerr);
-                    MPI_Abort(MPI_COMM_WORLD, E_USAGE);
+                    //MPI_Abort(MPI_COMM_WORLD, E_USAGE);
                 }
-                MPI_Finalize();
+                //MPI_Finalize();
                 return 1;
             }
-            MPI_DEBUG(2, "RANK: "<<globalThreadID<<" done with repex_in\n");    //TODO: lower verb level
+            DEBUG(2, "RANK: "<<globalThreadID<<" done with repex_in\n");    //TODO: lower verb level
             
             //if any replica Ex block - present   
             if (sim.param().reeds.reeds == false && sim.param().replica.retl == false) {
@@ -289,10 +292,10 @@ int main(int argc, char *argv[]) {
                     std::cerr << "\n Please add one RE-block (e.g.:REPLICA or REEDS) to the imd file.\n";
                     std::cout << "\n Please add one RE-block (e.g.:REPLICA or REEDS)  to the imd file.\n";
                 }
-                MPI_Finalize();
+                //MPI_Finalize();
                 return 1;
             }
-            MPI_DEBUG(2, "RANK: "<<globalThreadID<<" done with replica Ex check\n");    //TODO: lower verb level
+            DEBUG(2, "RANK: "<<globalThreadID<<" done with replica Ex check\n");    //TODO: lower verb level
             
             if (io::check_parameter(sim)) {
                 if (globalThreadID == 0) {
@@ -302,10 +305,10 @@ int main(int argc, char *argv[]) {
                     io::messages.display(std::cout);
                     io::messages.display(std::cerr);
                 }
-                MPI_Finalize();
+                //MPI_Finalize();
                 return 1;
             }
-            MPI_DEBUG(2, "RANK: "<<globalThreadID<<" done with param check\n");    //TODO: lower verb level
+            DEBUG(2, "RANK: "<<globalThreadID<<" done with param check\n");    //TODO: lower verb level
             
   
             //SOME additional Checks
@@ -319,7 +322,7 @@ int main(int argc, char *argv[]) {
                             << "FOUND THREADS: " << totalNumberOfThreads << "\tNEED: " << numReplicas << "\n";
                     std::cout << "\n There were not enough MPI thread assigned to this run!\n"
                             << "FOUND THREADS: " << totalNumberOfThreads << "\tNEED: " << numReplicas << "\n";
-                    MPI_Finalize();
+                    //MPI_Finalize();
 
                 }
                 return -1;
@@ -333,7 +336,7 @@ int main(int argc, char *argv[]) {
         std::string msg = "ERROR!\n Uh OH! Caught an Exception in initial test Parsing of the Gromos Parameters!\n\nMessage:\t";
         std::cout << msg << e.what() << std::endl;
         std::cerr << msg << e.what() << std::endl;
-        MPI_Finalize();
+        //MPI_Finalize();
         return -1;
     } catch (...) {
         std::cerr << "\n\t########################################################\n"
@@ -342,14 +345,16 @@ int main(int argc, char *argv[]) {
         std::string msg = "ERROR!\n Uh OH! Caught an non standard Exception in initial test Parsing of the  Gromos Parameters!\n Hit the developers!\n\nMessage:\t";
         std::cout << msg << std::endl;
         std::cerr << msg << std::endl;
-        MPI_Finalize();
+        //MPI_Finalize();
         return -1;
     }
     
         
-    MPI_DEBUG(1, "RANK: "<<globalThreadID<<" Done with init parse\n");    //TODO: lower verb level
+    DEBUG(1, "RANK: "<<globalThreadID<<" Done with init parse\n");    //TODO: lower verb level
     io::messages.clear();
-    MPI_DEBUG(1, "REPLICA_ID \t " << globalThreadID << "\t Simulation_ID\t"<< simulationID << "\t SimulationThread\t"<<simulationTrheadID<<"\n")
+    DEBUG(1, "REPLICA_ID \t " << globalThreadID << "\t Simulation_ID\t"<< simulationID << "\t SimulationThread\t"<<simulationTrheadID<<"\n")
+
+    #ifdef XXMPI
 
     /**
      *  MPI PARAMETERS

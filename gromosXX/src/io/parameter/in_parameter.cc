@@ -2843,7 +2843,8 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
     // the first line is the tag
     exampleblock << "REPLICA_EDS                                                    \n";
     exampleblock << "#    REEDS >= 0   : turn off Reeds                             \n";
-    exampleblock << "#             1   : turn on                                    \n";
+    exampleblock << "#             1   : turn on 1D Reeds (s)                       \n";
+    exampleblock << "#             2   : turn on 2D Reeds (s & Eoff)                \n";
     exampleblock << "#    NRES >= number of replica exchange eds smoothing values   \n";
     exampleblock << "#     RET >= 0.0 one temperature for all replica               \n";
     exampleblock << "# NUMSTATES >= 2 Number of states                              \n";
@@ -2900,7 +2901,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
 
         // GET BLOCKVARS
         //SYS Settings
-        block.get_next_parameter("REEDS", reeds_control, "", "0,1");
+        block.get_next_parameter("REEDS", reeds_control, "", "0,1,2");
         block.get_next_parameter("NRES", num_l, ">0", "");
         block.get_next_parameter("NUMSTATES", num_states, ">0", "");
         
@@ -2938,10 +2939,13 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
         // READ:REEDS control
         switch(reeds_control) {
               case 0:
-                  param.reeds.reeds = false;
+                  param.reeds.reeds = 0;
                   break;
               case 1:
-                  param.reeds.reeds = true;
+                  param.reeds.reeds = 1;
+                  break;
+              case 2:
+                  param.reeds.reeds = 2;
                   break;
           }
               

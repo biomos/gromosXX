@@ -159,6 +159,7 @@ util::replica_MPI_Slave::~replica_MPI_Slave() {
 }
 
 void util::replica_MPI_Slave::run_MD(){
+  #ifdef XXMPI
     int error;
     int next_step = 0 ;
     
@@ -220,6 +221,7 @@ void util::replica_MPI_Slave::run_MD(){
     else{
       (*os) << "Rank: "<< globalThreadID<<"\n" GROMOSXX " MPI slave " << globalThreadID << "  simulation "<< simulationID << " in Slave Thread "<< globalThreadID << "finished successfully\n" << std::endl;
     }
+#endif
 }
     
 void util::replica_MPI_Slave::receive_coords(){
