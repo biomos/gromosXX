@@ -67,7 +67,7 @@
 #undef SUBMODULE
 #define MODULE util
 #define SUBMODULE replica_exchange
-
+#define XXMPI
 
 int main(int argc, char *argv[]) {
 #ifdef XXMPI
@@ -102,6 +102,8 @@ int main(int argc, char *argv[]) {
     util::get_usage(knowns, usage, argv[0]);
     usage += "#\n\n";
     
+    MPI_DEBUG(1, "RANK: "<<globalThreadID<<" Parse ARGs \n");
+
     // Parse command line arguments
     io::Argument args;
     try {
