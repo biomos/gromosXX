@@ -292,6 +292,21 @@ int main(int argc, char *argv[]) {
                 MPI_Finalize();
                 return 1;
             }
+            
+            for(auto rep : replica_owned_threads){
+                if (rep.size() > 1) {
+                    if (globalThreadID == 0) {
+                        std::cerr << "\n\t########################################################\n"
+                                << "\n\t\tErrors during initial Parameter reading! "
+                                << "\n\t\t    Please don't use more threads than replicas!\n"
+                                << "\n\t########################################################\n";
+                        std::cerr << "\n Please add one RE-block (e.g.:REPLICA or REEDS) to the imd file.\n";
+                        std::cout << "\n Please add one RE-block (e.g.:REPLICA or REEDS)  to the imd file.\n";
+                    }
+                    MPI_Finalize();
+                    return 1;
+                }
+            }
             MPI_DEBUG(2, "RANK: "<<globalThreadID<<" done with replica Ex check\n");    //TODO: lower verb level
             
             if (io::check_parameter(sim)) {
