@@ -280,7 +280,7 @@ int main(int argc, char *argv[]) {
                 //MPI_Finalize();
                 return 1;
             }
-            DEBUG(2, "RANK: "<<globalThreadID<<" done with repex_in\n");    //TODO: lower verb level
+            DEBUG(1, "RANK: "<<globalThreadID<<" done with repex_in\n");    //TODO: lower verb level -- done by theosm
             
             //if any replica Ex block - present   
             if (sim.param().reeds.reeds == false && sim.param().replica.retl == false) {
@@ -295,7 +295,7 @@ int main(int argc, char *argv[]) {
                 //MPI_Finalize();
                 return 1;
             }
-            DEBUG(2, "RANK: "<<globalThreadID<<" done with replica Ex check\n");    //TODO: lower verb level
+            DEBUG(1, "RANK: "<<globalThreadID<<" done with replica Ex check\n");    //TODO: lower verb level -- done by theosm
             
             if (io::check_parameter(sim)) {
                 if (globalThreadID == 0) {
@@ -308,7 +308,7 @@ int main(int argc, char *argv[]) {
                 //MPI_Finalize();
                 return 1;
             }
-            DEBUG(2, "RANK: "<<globalThreadID<<" done with param check\n");    //TODO: lower verb level
+            DEBUG(1, "RANK: "<<globalThreadID<<" done with param check\n");    //TODO: lower verb level -- done by theosm
             
   
             //SOME additional Checks
@@ -350,7 +350,7 @@ int main(int argc, char *argv[]) {
     }
     
         
-    DEBUG(1, "RANK: "<<globalThreadID<<" Done with init parse\n");    //TODO: lower verb level
+    DEBUG(1, "RANK: "<<globalThreadID<<" Done with init parse\n");
     io::messages.clear();
     DEBUG(1, "REPLICA_ID \t " << globalThreadID << "\t Simulation_ID\t"<< simulationID << "\t SimulationThread\t"<<simulationTrheadID<<"\n")
 
