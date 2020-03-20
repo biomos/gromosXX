@@ -65,6 +65,8 @@ namespace util {
      * Called by the derrived class to terminate the thread
      */
     void terminate_cycle();
+  protected:
+    pthread_barrier_t barrier_init;
   private:
     pthread_barrier_t barrier_start;
     pthread_barrier_t barrier_end;
