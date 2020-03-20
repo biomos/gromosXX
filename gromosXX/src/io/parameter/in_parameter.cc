@@ -2878,8 +2878,13 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
     exampleblock << "# NRETRIAL   NREQUIL    CONT    EDS_STAT_OUT       \n";
     exampleblock << "       10         0         1           1          \n";
     exampleblock << "END\n";
+<<<<<<< HEAD
 
     DEBUG(8, "REPLICA_EDS BLOCK\t START");
+=======
+    
+    DEBUG(1, "REPLICA_EDS BLOCK\t START");
+>>>>>>> Replica_Exchange_Kernel-Further_Class_Cleaning
     //check that EDS Block was not read in before,because either REPLICA_EDS or EDS possible
     if (param.eds.eds) {
         std::ostringstream msg;
@@ -2893,8 +2898,13 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
 
     if (block.read_buffer(m_block[blockname], false) == 0) {
         block_read.insert(blockname);
+<<<<<<< HEAD
 
         DEBUG(9, "REPLICA_EDS BLOCK: reading Block an translating to vars");
+=======
+           
+        DEBUG(2, "REPLICA_EDS BLOCK: reading Block an translating to vars");
+>>>>>>> Replica_Exchange_Kernel-Further_Class_Cleaning
         //init_vars
         unsigned int reeds_control, num_l, num_states, num_eoff=0;
         unsigned int ntrials, nEquilibrate, cont_run, eds_stat_out=0;
@@ -2938,7 +2948,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
 
 
         // SET SETTINGS
-        DEBUG(9, "REPLICA_EDS BLOCK: Set settings for sim.");
+        DEBUG(2, "REPLICA_EDS BLOCK: Set settings for sim.");
         // READ:REEDS control
         switch(reeds_control) {
               case 0:
@@ -2970,8 +2980,13 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
 
         // Replica temperatures - has to be the same for each replica // Not sure if this is optimal? bschroed
         param.reeds.temperature = param.multibath.multibath.bath(0).temperature;
+<<<<<<< HEAD
 
         DEBUG(9, "REPLICA_EDS BLOCK: assigned all reeds params");
+=======
+        
+        DEBUG(2, "REPLICA_EDS BLOCK: assigned all reeds params");
+>>>>>>> Replica_Exchange_Kernel-Further_Class_Cleaning
         //set size of vectors in param.reeds
         param.reeds.eds_para.resize(param.reeds.num_l);
         param.reeds.dt.resize(param.reeds.num_l);
@@ -3010,16 +3025,26 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
                 msg << "REPLICA_EDS block: RES(" << i + 1 << ") must be >= 0.0";
                 io::messages.add(msg.str(), "In_Parameter", io::message::error);
             }
+<<<<<<< HEAD
 
             DEBUG(9, "REPLICA_EDS BLOCK: assign all eds params - EIR");
+=======
+            
+            DEBUG(2, "REPLICA_EDS BLOCK: assign all eds params - EIR");
+>>>>>>> Replica_Exchange_Kernel-Further_Class_Cleaning
             for(unsigned int j = 0; j < param.reeds.eds_para[0].numstates; ++j){
                 param.reeds.eds_para[i].eir[j] = eir[i][j];
 
             }
         }
 
+<<<<<<< HEAD
         DEBUG(9, "REPLICA_EDS BLOCK: assigned all eds params");
 
+=======
+        DEBUG(2, "REPLICA_EDS BLOCK: assigned all eds params");
+        
+>>>>>>> Replica_Exchange_Kernel-Further_Class_Cleaning
         // turn on eds for pertubation reading - Overwrite:
         param.eds.eds = true;
         param.eds.numstates = param.reeds.num_states;
@@ -3028,7 +3053,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
         param.perturbation.perturbation = false;
 
         //REPLICA Set replica settings:
-        DEBUG(9, "REPLICA_EDS BLOCK: assign all replicas param:");
+        DEBUG(2, "REPLICA_EDS BLOCK: assign all replicas param:");
 
         // check whether all baths have the same temperature (unambiguous kT)
         param.reeds.num_T = param.replica.num_T =1;
@@ -3041,12 +3066,21 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
         param.replica.trials = param.reeds.trials;
         param.replica.equilibrate = param.reeds.equilibrate;
         param.replica.cont = param.reeds.cont;
+<<<<<<< HEAD
 
         DEBUG(9, "REPLICA_EDS BLOCK: assigned all replicas param");
 
         //CHECK SETTINGS
         DEBUG(9, "REPLICA_EDS BLOCK: Check Settings:");
 
+=======
+        
+        DEBUG(2, "REPLICA_EDS BLOCK: assigned all replicas param");
+
+        //CHECK SETTINGS
+        DEBUG(2, "REPLICA_EDS BLOCK: Check Settings:");
+        
+>>>>>>> Replica_Exchange_Kernel-Further_Class_Cleaning
         for (unsigned int i = 1; i < param.multibath.multibath.size(); i++) {
           if (param.multibath.multibath.bath(i).temperature !=
                   param.multibath.multibath.bath(0).temperature) {
@@ -3054,10 +3088,10 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
                     "In_Parameter", io::message::error);
           }
         }
-        DEBUG(9, "REPLICA_EDS BLOCK: Checked Settings");
+        DEBUG(2, "REPLICA_EDS BLOCK: Checked Settings");
         block.get_final_messages();
     }
-    DEBUG(8, "REPLICA_EDS BLOCK\t DONE");
+    DEBUG(1, "REPLICA_EDS BLOCK\t DONE");
 }
 
 /**

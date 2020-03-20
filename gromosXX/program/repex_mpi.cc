@@ -67,7 +67,7 @@
 #undef SUBMODULE
 #define MODULE util
 #define SUBMODULE replica_exchange
-
+#define XXMPI
 
 int main(int argc, char *argv[]) {
 #ifdef XXMPI
@@ -102,6 +102,8 @@ int main(int argc, char *argv[]) {
     util::get_usage(knowns, usage, argv[0]);
     usage += "#\n\n";
     
+    MPI_DEBUG(1, "RANK: "<<globalThreadID<<" Parse ARGs \n");
+
     // Parse command line arguments
     io::Argument args;
     try {
@@ -292,7 +294,26 @@ int main(int argc, char *argv[]) {
                 MPI_Finalize();
                 return 1;
             }
+<<<<<<< HEAD
             MPI_DEBUG(1, "RANK: "<<globalThreadID<<" done with replica Ex check\n");    //TODO: lower verb level -- done by theosm
+=======
+            
+            for(auto rep : replica_owned_threads){
+                if (rep.size() > 1) {
+                    if (globalThreadID == 0) {
+                        std::cerr << "\n\t########################################################\n"
+                                << "\n\t\tErrors during initial Parameter reading! "
+                                << "\n\t\t    Please don't use more threads than replicas!\n"
+                                << "\n\t########################################################\n";
+                        std::cerr << "\n Please add one RE-block (e.g.:REPLICA or REEDS) to the imd file.\n";
+                        std::cout << "\n Please add one RE-block (e.g.:REPLICA or REEDS)  to the imd file.\n";
+                    }
+                    MPI_Finalize();
+                    return 1;
+                }
+            }
+            MPI_DEBUG(2, "RANK: "<<globalThreadID<<" done with replica Ex check\n");    //TODO: lower verb level
+>>>>>>> Replica_Exchange_Kernel-Further_Class_Cleaning
             
             if (io::check_parameter(sim)) {
                 if (globalThreadID == 0) {
