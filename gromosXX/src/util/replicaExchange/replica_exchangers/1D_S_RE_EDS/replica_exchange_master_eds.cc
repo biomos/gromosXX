@@ -4,10 +4,10 @@
  * and open the template in the editor.
  */
 
-/* 
+/*
  * File:   replica_exchange_master_eds.cc
  * Author: bschroed
- * 
+ *
  * Created on April 18, 2018, 3:20 PM
  */
 #include "util/replicaExchange/replica_mpi_tools.h"
@@ -28,21 +28,22 @@ util::replica_exchange_master_eds::replica_exchange_master_eds(io::Argument _arg
         replica_exchange_master_interface(_args, cont, globalThreadID, replicaGraphMPIControl, replica_mpi_control)
 {
     #ifdef XXMPI
-    MPI_DEBUG(2,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t START");  
-    DEBUG(3,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t Replicas: "<<replicaGraphMPIControl.numberOfReplicas);  
-    DEBUG(3,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t ReplicasOLD: "<<repParams.num_l);  
-    DEBUG(3,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t ReplicasMASTER: "<< replicaGraphMPIControl.masterID);  
+    MPI_DEBUG(2,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t START");
+    DEBUG(3,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t Replicas: "<<replicaGraphMPIControl.numberOfReplicas);
+    DEBUG(3,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t ReplicasOLD: "<<repParams.num_l);
+    DEBUG(3,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t ReplicasMASTER: "<< replicaGraphMPIControl.masterID);
 
 
-    //initialize data of replicas    
-    replicaData.resize(replicaGraphMPIControl.numberOfReplicas);      
+    //initialize data of replicas
+    replicaData.resize(replicaGraphMPIControl.numberOfReplicas);
     DEBUG(3,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t replicaDatasize\t "<< replicaData.size());
     //DEBUG(4,"replica_exchange_master_eds "<< rank <<":Constructor:\t reeds- lambda\t "<< replica->sim.param().reeds.num_l);
     //DEBUG(4,"replica_exchange_master_eds "<< rank <<":Constructor:\t eds \t "<< replica->sim.param().eds.s.size());
 
-    
+
     for (int replicaID = 0; replicaID<  replicaData.size(); ++replicaID) {
         replicaData[replicaID].ID = replicaID;
+        replicaData[replicaID].pos_info = std::make_pair(replicaID, replicaID);
         replicaData[replicaID].T = repParams.temperature[replicaID];
         DEBUG(5,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t Init Replicas ID"<<replicaID<<"\t "<< repParams.temperature[replicaID]);
         replicaData[replicaID].l = repParams.lambda[replicaID];
@@ -53,7 +54,7 @@ util::replica_exchange_master_eds::replica_exchange_master_eds(io::Argument _arg
     DEBUG(2,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t SIMID "<< simulationID <<"\n");
     DEBUG(2,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t DONE\n");
     #else
-        throw "Cannot initialize replica_exchange_master_eds without MPI!"; 
+        throw "Cannot initialize replica_exchange_master_eds without MPI!";
     #endif
 }
 
@@ -82,15 +83,19 @@ void util::replica_exchange_master_eds::receive_from_all_slaves() {
         replicaData[slaveReplicaID].probability = info.probability;
         replicaData[slaveReplicaID].switched = info.switched;
         replicaData[slaveReplicaID].partner = info.partner;
+        //check whether switched or not
+        if(info.switched != replicaData[slaveReplicaID].pos_info.second){
+          replicaData[slaveReplicaID].pos_info.second = info.partner;
+        }
         DEBUG(4,"replica_exchange_master_eds "<< globalThreadID <<":receive_from_all_slaves:\t REP:" <<slaveReplicaID<< " EpotTot: "<< replicaData[slaveReplicaID].epot);
 
         MPI_Recv(&replicaData[slaveReplicaID].Vi[0],1, MPI_EDSINFO, slaveReplicaID, EDSINFO, replicaGraphMPIControl.comm, &status_eds);
         for(unsigned int s=0;s< replicaData[slaveReplicaID].Vi.size(); s++){
             DEBUG(4,"replica_exchange_master_eds "<< replicaGraphMPIControl.masterID <<":receive_from_all_slaves:\t "<< s << " En: "<< replicaData[slaveReplicaID].Vi[s]);
-        }        
-    }    
+        }
+    }
   }
-  
+
   // write all information from master node to data structure
   DEBUG(2,"replica_exchange_master_eds "<< globalThreadID <<":receive_from_all_slaves:\t  t\twrite_own data");
   replicaData[simulationID].run = run;
@@ -99,13 +104,16 @@ void util::replica_exchange_master_eds::receive_from_all_slaves() {
   replicaData[simulationID].epot_partner = epot_partner;
   replicaData[simulationID].probability = probability;
   replicaData[simulationID].switched = switched;
+  if(switched != replicaData[simulationID].pos_info.second){
+    replicaData[simulationID].pos_info.second = replicaData[simulationID].partner;
+  }
   replicaData[simulationID].Vi = replica->conf.current().energies.eds_vi;
-  
-  DEBUG(4,"replica_exchange_master_eds "<< globalThreadID <<":receive_from_all_slaves:\t Master:\n" << "time used for receiving all messages: " << MPI_Wtime() - start 
+
+  DEBUG(4,"replica_exchange_master_eds "<< globalThreadID <<":receive_from_all_slaves:\t Master:\n" << "time used for receiving all messages: " << MPI_Wtime() - start
             << " seconds");
   DEBUG(2,"replica_exchange_master_eds "<< globalThreadID <<":receive_from_all_slaves:\t DONE")
   #else
-    throw "Cannot use receive_from_all_slaves from replica_exchange_master_eds without MPI!"; 
+    throw "Cannot use receive_from_all_slaves from replica_exchange_master_eds without MPI!";
   #endif
 }
 
@@ -135,25 +143,37 @@ int util::replica_exchange_master_eds::getSValPrecision(double minLambda){
 void util::replica_exchange_master_eds::write() {
     DEBUG(2,"replica_exchange_master_eds "<< globalThreadID <<":write:\t START");
     DEBUG(2,"replica_exchange_master_eds "<< globalThreadID <<":write:\t svalPrecision "<<svalPrecision);
-    
+
     for (unsigned int treplicaID = 0; treplicaID < replicaGraphMPIControl.numberOfReplicas; ++treplicaID) {
-      repOut << std::setw(6) << (replicaData[treplicaID].ID + 1)
+      repOut << std::setw(6) << (replicaData[treplicaID].ID)//removed  + 1 for consistency reasons
               << " "
-              << std::setw(6) << (replicaData[treplicaID].partner + 1)
-              << std::setw(6) << replicaData[treplicaID].run;
+              << std::setw(6) << replicaData[treplicaID].pos_info.first
+              << " "
+              << std::setw(6) << replicaData[treplicaID].pos_info.second
+              << " "
+              << std::setw(6) << (replicaData[treplicaID].partner) //removed  + 1 for consistency reasons
+              << "   "
+              << std::setw(6) << replicaData[replicaData[treplicaID].partner].pos_info.first
+              << "\t"
+              << std::setw(6) << replicaData[replicaData[treplicaID].partner].pos_info.second
+              << "\t\t"
+              << std::setw(6) << replicaData[treplicaID].run << "  ";
       repOut.precision(svalPrecision);
       DEBUG(2,"replica_exchange_master_eds "<< globalThreadID <<":write:\t s_val raus! "<<replicaData[treplicaID].l);
 
       repOut  << std::setw(13) << replicaData[treplicaID].l;
       repOut.precision(generalPrecision);
-      repOut  << std::setw(13) << replicaData[treplicaID].T
-              << " "
+      //do not use temperatures anymore
+      //repOut  << std::setw(13) << replicaData[treplicaID].T
+      //be careful when commenting in -- extra repOut
+      repOut  << " "
               << std::setw(18) << replicaData[treplicaID].epot;
       repOut.precision(svalPrecision);
       repOut  << std::setw(13) << replicaData[replicaData[treplicaID].partner].l;
-      
+
       repOut.precision(generalPrecision);
-      repOut  << std::setw(13) << replicaData[replicaData[treplicaID].partner].T;
+      //do not use temperatures anymore
+      //repOut  << std::setw(13) << replicaData[replicaData[treplicaID].partner].T;
 
       if(replicaData[treplicaID].l == replicaData[replicaData[treplicaID].partner].l){
           repOut << std::setw(18) << replicaData[replicaData[treplicaID].partner].epot;
@@ -166,7 +186,7 @@ void util::replica_exchange_master_eds::write() {
 
     for(unsigned int s=0;s<reedsParam.eds_para[0].numstates; s++){
         DEBUG(2, "replica_exchange_master_eds "<< globalThreadID <<":write:\t WRITE out POTS " <<s<< "\t" << replicaData[treplicaID].Vi[s]);
-        repOut   << std::setw(18) << std::min(replicaData[treplicaID].Vi[s], 10000000.0);//Output potential energies for each state 
+        repOut   << std::setw(18) << std::min(replicaData[treplicaID].Vi[s], 10000000.0);//Output potential energies for each state
     }
       repOut << std::endl;
     }
@@ -187,7 +207,7 @@ void util::replica_exchange_master_eds::init_repOut_stat_file() {
            << "#Number of s values:\t" << repParams.num_l << "\n";
 
     DEBUG(4,"replica_exchange_master_eds "<< globalThreadID <<":init_repOut_stat_file:\t set precision ");
-    
+
     //double minS = *(std::min_element(reedsParam.eds_para[0].s.begin(), reedsParam.eds_para[0].s.end()));
     //svalPrecision = getSValPrecision(minS);
     repOut.setf(std::ios::fixed, std::ios::floatfield);
@@ -200,7 +220,7 @@ void util::replica_exchange_master_eds::init_repOut_stat_file() {
     repOut << "\n";
     repOut << "#s\t";
     repOut.precision(svalPrecision);
-    int num_l = reedsParam.num_l;    
+    int num_l = reedsParam.num_l;
     for (int i = 0; i < num_l; ++i){
             repOut << std::setw(12) << reedsParam.eds_para[i].s[0];
     }
@@ -210,29 +230,41 @@ void util::replica_exchange_master_eds::init_repOut_stat_file() {
         repOut << "\n# E"<< (j+1)<<"R(s)\t";
         for (int i = 0; i < num_l; ++i)
             repOut << "\t" << std::setw(4) << reedsParam.eds_para[i].eir[j];
-    }  
+    }
 
     repOut << "\n#\n";
     repOut << ""
           << std::setw(6) << "ID"
           << " "
+          << std::setw(6) << "start"
+          << " "
+          << std::setw(6) << "pos"
+          << "   "
           << std::setw(6) << "partner"
+          << " "
+          << std::setw(6) << "partner_start"
+          << " "
+          << std::setw(6) << "partner_pos"
+          << "  "
           << std::setw(6) << "run"
 
           << std::setw(13) << "si"
-          << std::setw(13) << "Ti"
+          //do not use temperatures anymore
+          //<< std::setw(13) << "Ti"
           << std::setw(18) << "Epoti"
 
           << std::setw(13) << "sj"
-          << std::setw(13) << "Tj"
+          //do not use temperatures anymore
+          //<< std::setw(13) << "Tj"
           << std::setw(18) << "Epotj"
           << std::setw(13) << "p"
+          << " "
           << std::setw(6) << "exch";
     for (int x=1; x<= reedsParam.num_states; x++){
         repOut<<std::setw(17)<<"Vr"<<x;
     }
 
     repOut << "\n";
-    repOut.flush();    
+    repOut.flush();
     DEBUG(2,"replica_exchange_master_eds "<< globalThreadID <<":init_repOut_stat_file:\t DONE");
 }

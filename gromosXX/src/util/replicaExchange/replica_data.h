@@ -16,6 +16,7 @@ namespace util
     struct replica_data
     {
         unsigned int ID;
+        std::pair<int, int> pos_info;
         double T;
         double l;
         double dt;
@@ -34,6 +35,7 @@ namespace util
     struct reeds_replica_data
     {
         unsigned int ID;
+        std::pair<int, int> pos_info;
         double T;
         double l;
         double dt;
@@ -44,7 +46,7 @@ namespace util
         double     epot_partner;
         double     probability;
 
-        simulation::Parameter::eds_struct eds_state;   
+        simulation::Parameter::eds_struct eds_state;
         std::vector<double> Vi; //SID for RE-EDS I want to give out all potential energies for each individual state in the repdat file. //todo_remove
     };
    /**
@@ -54,6 +56,7 @@ namespace util
     struct reeds_replica_stat_data
     {
         unsigned int ID;
+        std::pair<int, int> pos_info;
         double T;
         double s;
         double dt;
@@ -67,4 +70,3 @@ namespace util
 
 }
 #endif	/* REPLICA_DATA_H */
-

@@ -74,7 +74,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_NONBONDED(param);
   read_POSITIONRES(param);
   read_DISTANCERES(param);
-  read_DISTANCEFIELD(param); 
+  read_DISTANCEFIELD(param);
   read_DIHEDRALRES(param); // needs to be called after CONSTRAINT!
   read_PERTURBATION(param);
   read_JVALUERES(param);
@@ -96,7 +96,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_EDS(param);
   read_AEDS(param); // needs to be called after EDS
   read_LAMBDAS(param); // needs to be called after FORCE
-  read_PRECALCLAM(param); // ANITA 
+  read_PRECALCLAM(param); // ANITA
   read_LOCALELEV(param);
   read_BSLEUS(param);
   read_ELECTRIC(param);
@@ -2671,8 +2671,8 @@ void io::In_Parameter::read_REPLICA(simulation::Parameter &param,
     // will be used to generate snippets that can be included in the doxygen doc;
     // the first line is the tag
     exampleblock << "REPLICA\n";
-    exampleblock << "#    RETL >= 0   : turn off REplica exchange - Temperature and/or Lambda Coupled";                             
-    exampleblock << "#             1   : turn on  ";     
+    exampleblock << "#    RETL >= 0   : turn off REplica exchange - Temperature and/or Lambda Coupled";
+    exampleblock << "#             1   : turn on  ";
     exampleblock << "#     NRET >= 1 number of replica exchange temperatures\n";
     exampleblock << "#    RET() >= 0.0 temperature for each replica\n";
     exampleblock << "# LRESCALE 0,1 controls temperature scaling\n";
@@ -2720,7 +2720,7 @@ void io::In_Parameter::read_REPLICA(simulation::Parameter &param,
 
     if (block.read_buffer(m_block[blockname], false) == 0) {
         block_read.insert(blockname);
-                
+
         block.get_next_parameter("RETL", param.replica.retl, "0,1", "");
 
         block.get_next_parameter("NRET", param.replica.num_T, ">=1", "");
@@ -2778,7 +2778,7 @@ void io::In_Parameter::read_REPLICA(simulation::Parameter &param,
 
         block.get_next_parameter("NRETRIAL", param.replica.trials, ">=0", "");
         block.get_next_parameter("NREQUIL", param.replica.equilibrate, ">=0", "");
-        
+
         // do continuation run
         block.get_next_parameter("", param.replica.cont, "", "0,1");
 
@@ -2801,9 +2801,9 @@ void io::In_Parameter::read_REPLICA(simulation::Parameter &param,
  * @section replica REPLICA_EDS block
  * @verbatim
 REPLICA_EDS
-#    REEDS >= 0   : turn off Reeds                             
-#             1   : turn on                                    
-#    NRES >= number of replica exchange eds smoothing values 
+#    REEDS >= 0   : turn off Reeds
+#             1   : turn on
+#    NRES >= number of replica exchange eds smoothing values
 #    NUMSTATES >= 2 Number of states
 #    RES > 0 for each replica smoothing value
 #    EIR (NUMSTATES X NRES): energy offsets for states and replicas
@@ -2814,14 +2814,14 @@ REPLICA_EDS
 #             0 start from one configuration file
 #             1 start from multiple configuration files
 #    EDS_STAT_OUT >= 0     creates output files for each replica, which contains for each exchange trial
-#                          the potential energies with the given coordinates for all s value. This data 
+#                          the potential energies with the given coordinates for all s value. This data
 #                           can be used to optimize the s distribution.
 #                 0 eds stat turned off
 #                 1 eds stat turned on
 #   REEDS
     1
 #  NRES NUMSTATES
-    12  5 
+    12  5
 # RES(1 ... NRES)
   1.0 0.7 0.5 0.3 0.1 0.07 0.05 0.03 0.01 0.007 0.005 0.003
 # EIR (NUMSTATES x NRES)
@@ -2865,11 +2865,11 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
     exampleblock << "#          \n";
     exampleblock << "#  REEDS    \n";
     exampleblock << "   1       \n";
-    exampleblock << "#  NRES  NUMSTATES  \n";
-    exampleblock << "   12    5   \n";
+    exampleblock << "#  NRES  NUMSTATES  NEOFF  \n";
+    exampleblock << "   12    5   12  \n";
     exampleblock << "# RES(1 ... NRES)  \n";
     exampleblock << "  1.0 0.7 0.5 0.3 0.1 0.07 0.05 0.03 0.01 0.007 0.005 0.003    \n";
-    exampleblock << "# EIR (NUMSTATES x NRES)   \n";
+    exampleblock << "# EIR (NUMSTATES x NEOFF)   \n";
     exampleblock << "  0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0  \n";
     exampleblock << "  0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0  \n";
     exampleblock << "  0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0  \n";
@@ -2878,7 +2878,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
     exampleblock << "# NRETRIAL   NREQUIL    CONT    EDS_STAT_OUT       \n";
     exampleblock << "       10         0         1           1          \n";
     exampleblock << "END\n";
-    
+
     DEBUG(8, "REPLICA_EDS BLOCK\t START");
     //check that EDS Block was not read in before,because either REPLICA_EDS or EDS possible
     if (param.eds.eds) {
@@ -2887,24 +2887,27 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
           io::messages.add(msg.str(), "In_Parameter", io::message::error);
           return;
         }
-    
+
     std::string blockname = "REPLICA_EDS";
     Block block(blockname, exampleblock.str());
-    
+
     if (block.read_buffer(m_block[blockname], false) == 0) {
         block_read.insert(blockname);
-           
+
         DEBUG(9, "REPLICA_EDS BLOCK: reading Block an translating to vars");
         //init_vars
-        unsigned int reeds_control, num_l, num_states=0;
+        unsigned int reeds_control, num_l, num_states, num_eoff=0;
         unsigned int ntrials, nEquilibrate, cont_run, eds_stat_out=0;
 
         // GET BLOCKVARS
         //SYS Settings
         block.get_next_parameter("REEDS", reeds_control, "", "0,1,2");
+        DEBUG(1, "REPLICA_EDS BLOCK: reeds_control= " << reeds_control);
         block.get_next_parameter("NRES", num_l, ">0", "");
         block.get_next_parameter("NUMSTATES", num_states, ">0", "");
-        
+        block.get_next_parameter("NEOFF", num_eoff, ">0", "");
+        DEBUG(1, "REPLICA_EDS BLOCK: NEOFF= " << num_eoff);
+
         //get RES-Vector
         std::vector<double> s_vals(num_l, 0.0);
         for (unsigned int i = 0; i < num_l; i++) {
@@ -2914,26 +2917,26 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
 
         //get EIR-Matrix
         std::vector<std::vector<float>> eir(num_l);
-        for(unsigned int replicaJ=0; replicaJ<num_l; replicaJ++){//init eir vectors
+        for(unsigned int replicaJ=0; replicaJ<num_eoff; replicaJ++){//init eir vectors
           std::vector<float> eir_vector_J(num_states, 0.0);
-          eir[replicaJ] = eir_vector_J;    
+          eir[replicaJ] = eir_vector_J;
         }
         for (unsigned int stateI = 0; stateI < num_states; stateI++) {
           std::string stateI_idx = io::to_string(stateI);
-          for (unsigned int replicaJ=0; replicaJ< num_l; replicaJ++){  
+          for (unsigned int replicaJ=0; replicaJ< num_eoff; replicaJ++){
             std::string replicaJ_idx = io::to_string(replicaJ);
-            block.get_next_parameter("EIR[" + replicaJ_idx+ "]["+stateI_idx+"]", eir[replicaJ][stateI], "", "");    //Comment "this function only reads line by line! doesn't matter the indices in the string 
+            block.get_next_parameter("EIR[" + replicaJ_idx+ "]["+stateI_idx+"]", eir[replicaJ][stateI], "", "");    //Comment "this function only reads line by line! doesn't matter the indices in the string
           }
         }
 
-        
+
         // general Settings
         block.get_next_parameter("NRETRIAL", ntrials, ">=0", "");
         block.get_next_parameter("NREQUIL", nEquilibrate, ">=0", "");
         block.get_next_parameter("CONT", cont_run, "", "0,1");
         block.get_next_parameter("EDS_STAT_OUT", eds_stat_out, "", "0,1");
 
-      
+
         // SET SETTINGS
         DEBUG(9, "REPLICA_EDS BLOCK: Set settings for sim.");
         // READ:REEDS control
@@ -2948,14 +2951,18 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
                   param.reeds.reeds = 2;
                   break;
           }
-              
+
+        DEBUG(1, "REPLICA_EDS BLOCK: reeds_control= " << param.reeds.reeds);
+
         param.reeds.num_l = num_l;
         param.reeds.num_states = num_states;
+        param.reeds.num_eoff = num_eoff;
+        DEBUG(1, "REPLICA_EDS BLOCK: NEOFF= " << param.reeds.num_eoff << "\n");
         param.reeds.trials = ntrials;
-        
+
         //param.reeds.lambda.resize();
         param.reeds.lambda=s_vals;
-        
+
         //param.reeds.lambda=s_vals;
         param.reeds.equilibrate = nEquilibrate;
         param.reeds.cont =cont_run;
@@ -2963,7 +2970,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
 
         // Replica temperatures - has to be the same for each replica // Not sure if this is optimal? bschroed
         param.reeds.temperature = param.multibath.multibath.bath(0).temperature;
-        
+
         DEBUG(9, "REPLICA_EDS BLOCK: assigned all reeds params");
         //set size of vectors in param.reeds
         param.reeds.eds_para.resize(param.reeds.num_l);
@@ -2977,18 +2984,19 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
         for (int i = 0; i < param.reeds.num_l; ++i) {
             dtV.push_back(param.step.dt);
             temperatureV.push_back(param.reeds.temperature);
-            
-            //READ:NUMSTATES 
+
+            //READ:NUMSTATES
             param.reeds.eds_para[i].eds = true;
             param.reeds.eds_para[i].numstates=param.reeds.num_states;
+            param.reeds.eds_para[i].num_eoff=param.reeds.num_eoff;
 
             //indicate only one parameter s used for reference state hamiltonian
             param.reeds.eds_para[i].form = simulation::single_s;
-            
+
             //RES - give s_values
             param.reeds.eds_para[i].s.resize(1);//only one parameter s per replica
             param.reeds.eds_para[i].s[0]=s_vals[i];
-            
+
             //initialize size of EIR
             param.reeds.eds_para[i].eir.resize(param.reeds.eds_para[i].numstates);
 
@@ -2996,54 +3004,55 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
             param.reeds.eds_para[i].visitedstates.resize(param.eds.numstates, false);
             param.reeds.eds_para[i].visitcounts.resize(param.eds.numstates, 0);
             param.reeds.eds_para[i].avgenergy.resize(param.eds.numstates, 0.0);
-            
+
             if(param.reeds.eds_para[i].s[0] < 0.0){
                 std::ostringstream msg;
                 msg << "REPLICA_EDS block: RES(" << i + 1 << ") must be >= 0.0";
                 io::messages.add(msg.str(), "In_Parameter", io::message::error);
             }
-            
+
             DEBUG(9, "REPLICA_EDS BLOCK: assign all eds params - EIR");
             for(unsigned int j = 0; j < param.reeds.eds_para[0].numstates; ++j){
                 param.reeds.eds_para[i].eir[j] = eir[i][j];
-                
-            }  
+
+            }
         }
 
         DEBUG(9, "REPLICA_EDS BLOCK: assigned all eds params");
-        
+
         // turn on eds for pertubation reading - Overwrite:
         param.eds.eds = true;
         param.eds.numstates = param.reeds.num_states;
-        
+
         // turn not on Pertubation block!: hope thats ok -> killed warning
         param.perturbation.perturbation = false;
-        
+
         //REPLICA Set replica settings:
         DEBUG(9, "REPLICA_EDS BLOCK: assign all replicas param:");
 
         // check whether all baths have the same temperature (unambiguous kT)
         param.reeds.num_T = param.replica.num_T =1;
-        
-        param.replica.temperature = temperatureV;        
+
+        param.replica.temperature = temperatureV;
         param.replica.lambda = param.reeds.lambda;
         param.replica.dt = dtV;
         param.replica.num_l = param.reeds.num_l ;
+        param.replica.num_eoff = param.reeds.num_eoff;
         param.replica.trials = param.reeds.trials;
         param.replica.equilibrate = param.reeds.equilibrate;
         param.replica.cont = param.reeds.cont;
-        
+
         DEBUG(9, "REPLICA_EDS BLOCK: assigned all replicas param");
 
         //CHECK SETTINGS
         DEBUG(9, "REPLICA_EDS BLOCK: Check Settings:");
-        
+
         for (unsigned int i = 1; i < param.multibath.multibath.size(); i++) {
           if (param.multibath.multibath.bath(i).temperature !=
                   param.multibath.multibath.bath(0).temperature) {
             io::messages.add("Error in RE_EDS block: all baths must have the same temperature.",
                     "In_Parameter", io::message::error);
-          }         
+          }
         }
         DEBUG(9, "REPLICA_EDS BLOCK: Checked Settings");
         block.get_final_messages();
@@ -4063,7 +4072,7 @@ void io::In_Parameter::read_LAMBDAS(simulation::Parameter & param,
     }
 }
 
-/** 
+/**
  * @section precalclam PRECALCLAM block
  * @snippet snippets/snippets.cc PRECALCLAM
  */
@@ -4089,7 +4098,7 @@ void io::In_Parameter::read_PRECALCLAM(simulation::Parameter & param,
 
     if (block.read_buffer(m_block[blockname], false) == 0) {
         block_read.insert(blockname);
-        
+
         block.get_next_parameter("NRLAM", param.precalclam.nr_lambdas, ">=0", "");
         block.get_next_parameter("MINLAM", param.precalclam.min_lam, ">=0 && <=1", "");
         block.get_next_parameter("MAXLAM", param.precalclam.max_lam, ">=0 && <=1", "");
@@ -4099,7 +4108,7 @@ void io::In_Parameter::read_PRECALCLAM(simulation::Parameter & param,
             "In_Parameter", io::message::error);
 
     block.get_final_messages();
-   
+
   }
 
 } // PRECALCLAM
