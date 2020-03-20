@@ -2957,7 +2957,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
         param.reeds.num_l = num_l;
         param.reeds.num_states = num_states;
         param.reeds.num_eoff = num_eoff;
-        DEBUG(1, "REPLICA_EDS BLOCK: NEOFF= " << param.reeds.num_eoff << "\n");
+        DEBUG(1, "REPLICA_EDS BLOCK: NEOFF= " << param.reeds.num_eoff);
         param.reeds.trials = ntrials;
 
         //param.reeds.lambda.resize();
@@ -3057,7 +3057,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
         DEBUG(2, "REPLICA_EDS BLOCK: Checked Settings");
         block.get_final_messages();
     }
-    DEBUG(1, "REPLICA_EDS BLOCK\t DONE");
+    DEBUG(1, "REPLICA_EDS BLOCK\t DONE\n");
 }
 
 /**
