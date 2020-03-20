@@ -294,9 +294,7 @@ int main(int argc, char *argv[]) {
                 MPI_Finalize();
                 return 1;
             }
-<<<<<<< HEAD
             MPI_DEBUG(1, "RANK: "<<globalThreadID<<" done with replica Ex check\n");    //TODO: lower verb level -- done by theosm
-=======
             
             for(auto rep : replica_owned_threads){
                 if (rep.size() > 1) {
@@ -312,8 +310,7 @@ int main(int argc, char *argv[]) {
                     return 1;
                 }
             }
-            MPI_DEBUG(2, "RANK: "<<globalThreadID<<" done with replica Ex check\n");    //TODO: lower verb level
->>>>>>> Replica_Exchange_Kernel-Further_Class_Cleaning
+            MPI_DEBUG(1, "RANK: "<<globalThreadID<<" done with replica Ex check\n");    //TODO: lower verb level -- done by theosm
             
             if (io::check_parameter(sim)) {
                 if (globalThreadID == 0) {
