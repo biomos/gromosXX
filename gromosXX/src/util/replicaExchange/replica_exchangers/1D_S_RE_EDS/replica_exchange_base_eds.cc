@@ -105,14 +105,11 @@ void util::replica_exchange_base_eds::setParams(){
     //set position info
     //might be wrong
     int count=0;
-    for(int i=0; i<replica->sim.param().reeds.num_eoff; ++i){
-      for(int j=0; j<replica->sim.param().replica.lambda.size(); ++j){
-        ++count;
-        replica->sim.param().reeds.eds_para[simulationID].pos_info = std::make_pair(count, count);
-        pos_info.first = replica->sim.param().reeds.eds_para[simulationID].pos_info.first;
-        pos_info.second = replica->sim.param().reeds.eds_para[simulationID].pos_info.second;
-
-      }
+    for(int j=0; j<replica->sim.param().replica.lambda.size(); ++j){
+      ++count;
+      replica->sim.param().reeds.eds_para[simulationID].pos_info = std::make_pair(count, count);
+      pos_info.first = replica->sim.param().reeds.eds_para[simulationID].pos_info.first;
+      pos_info.second = replica->sim.param().reeds.eds_para[simulationID].pos_info.second;
     }
 
     set_s();
