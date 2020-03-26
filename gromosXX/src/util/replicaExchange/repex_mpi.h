@@ -30,7 +30,7 @@ EXTERN MPI_Datatype MPI_EDSINFO;
 
 
 enum {
-  INIT, CONF, POS, POSV, VEL, LATTSHIFTS, STOCHINT, BOX, ANGLES, DF, ENERGIES, SWITCHENERGIES, SENDCOORDS, REPINFO, EDSINFO, 
+  INIT, CONF, POS, POSV, VEL, LATTSHIFTS, STOCHINT, BOX, ANGLES, DF, ENERGIES, SWITCHENERGIES, SENDCOORDS, REPINFO, EDSINFO,
 };
 
 namespace util {
@@ -40,6 +40,8 @@ namespace util {
    */
   struct repInfo {
     int switched;
+    //pos_info: contains information about start_coordinate_ID and current replicaPosition
+    //std::pair<int, int> pos_info;
     int run;
     int partner;
     double epot;
@@ -60,4 +62,3 @@ typedef unsigned int ID_t;
 typedef unsigned int rank_t;
 
 #endif	/* REPEX_MPI_H */
-

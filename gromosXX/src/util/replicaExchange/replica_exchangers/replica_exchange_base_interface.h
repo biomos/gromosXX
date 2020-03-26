@@ -63,7 +63,7 @@ namespace util {
      * @param repIDs std::vector<int>, IDs of replicas the instance has to manage
      * @param _repMap std::map<int,int>, maps replica IDs to nodes; needed for communication
      */
-    replica_exchange_base_interface(io::Argument _args, unsigned int cont, unsigned int globalThreadID, 
+    replica_exchange_base_interface(io::Argument _args, unsigned int cont, unsigned int globalThreadID,
                           replica_graph_mpi_control replicaGraphMPIControl,
                           simulation::mpi_control_struct replica_mpi_control);
     /**
@@ -76,12 +76,12 @@ namespace util {
      * runs MD simulation for all replicas; one by one
      */
     virtual void run_MD();
-    
+
     /**
      * write coordinates for all replicas to cnf
      */
     virtual void write_final_conf();
-    
+
     /**
      * init MD simulation for all replicas; one by one
      */
@@ -96,12 +96,12 @@ namespace util {
      * and sends information via MPI communication if necessary.
      */
     virtual void swap();
-    
+
     /**
      *  GET :
      */
     unsigned int get_stepsPerRun();
-    
+
   protected:
      /*ATTRIBUTES*/
       //General
@@ -117,7 +117,7 @@ namespace util {
      * continuation? of this class
      */
     unsigned int cont;
-    
+
     //MPI
     //Global MPI
     /**
@@ -139,7 +139,7 @@ namespace util {
      */
     double l;
     ////////////////////////////////////////////////////////
-    
+
     ////Simulation_MPI
     /**
      *  simulation ID - to which simulation does this thread belong?
@@ -157,7 +157,7 @@ namespace util {
      *  simulation Thread ID - which ID has the thread in the simulation X
      */
     unsigned int simulationThreadID;
-    
+
 
     //REplica Exchange:
     ////Me and my partner
@@ -175,7 +175,7 @@ namespace util {
      * potential energy of the partner Hamiltonian (for bookkeeping)
      */
     double epot_partner;
-    
+
     //Exchange?
     /**
      * probability of last switch
@@ -185,7 +185,11 @@ namespace util {
      * switched last time?
      */
     bool switched;
-    
+    /**
+     * position information fisrt: start coord; second: current position coord
+     */
+    std::pair<int, int> pos_info;
+
     //REPLICA
     /**
      * simulating unit of this Thread
@@ -220,7 +224,7 @@ namespace util {
      * current simulation time
      */
     double time;
-        
+
     /*
      * FUNCTIONS
      */
@@ -233,13 +237,13 @@ namespace util {
      * @return void
      */
     virtual void createReplicas(int cont,  int globalThreadID, simulation::mpi_control_struct replica_mpi_control);
-    
+
     /**
      * Setting RE-Param
      */
     virtual void setParams(){};
-    
-    
+
+
     //Replica Exchange Functions
     ////SWAP FUNCTIONS
     /**
@@ -252,32 +256,32 @@ namespace util {
     * finds out if configurations are to be switched; sets switched to true if so
     */
     //virtual void swap_coordinates(const unsigned int partnerReplicaID);
-    
+
     /*
      *
      */
     void swap_replicas_2D(const unsigned int partnerReplicaID);
-    
+
     void swap_replicas_1D(const unsigned int partnerReplicaID);
 
     /**
      * calculates potential energy for current configuration with current lambda
      */
-    virtual double calculate_energy_core(); 
+    virtual double calculate_energy_core();
     /**
      * calculates potential energy of current configuration with lambda(Hamiltonian) of partner with the partnerThreadID
      * @param partner ID of partner
      * @return potential energy of configuration with lambda(Hamiltonian) of partner
      */
     virtual double calculate_energy(const unsigned int partnerReplicaID);
-       
+
     /**
     * switch back the averages
     */
     virtual void exchange_averages();
- 
+
     /**
-     * TODO: bring into Exchanger 
+     * TODO: bring into Exchanger
      * calculates probability of switch with current partner, may involve MPI communication
      * @param partnerID
      * @param partnerRank
@@ -286,23 +290,23 @@ namespace util {
     virtual double calc_probability(const unsigned int partnerReplicaID);
 
     //SWAP COORDINATES FUNCTIONS
-    /**TODO: bring into Exchanger 
+    /**TODO: bring into Exchanger
     * Initiates MPI communication to receive new configuration information
     * @param senderID
     * @param senderRank
     */
    virtual void receive_new_coord(const unsigned int senderReplicaID);
-    /**TODO: bring into Exchanger 
+    /**TODO: bring into Exchanger
      * Initiates MPI communication to send new configuration information
      * @param receiverID
      * @param senderRank
      */
     virtual void send_coord(const unsigned int receiverReplicaID);
-    /**TODO: bring into Exchanger 
+    /**TODO: bring into Exchanger
      * Prints information of replica to std::cout for debugging purposes
      */
     virtual void print_info(std::string bla)const;
-    
+
     /**
      * Scales the velocities after an exchange in temperature replica exchange
      */
@@ -334,4 +338,3 @@ namespace util {
 }
 
 #endif	/* REPLICA_EXCHANGE_BASE_H */
-

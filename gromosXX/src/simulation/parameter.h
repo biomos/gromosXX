@@ -2308,7 +2308,7 @@ namespace simulation
        * - equilibrate 0
        * - cont 0
        */
-      replica_struct() : retl(false), num_T(0), num_l(0), num_eoff(0), scale(false), trials(0),
+      replica_struct() : retl(false), num_T(0), num_l(0), scale(false), trials(0),
                          equilibrate(0), cont(0)
       {
       }
@@ -2324,10 +2324,6 @@ namespace simulation
        * number of replicas with different lambdas
        */
       int num_l;
-      /**
-       * number of energy offsets param-vectors
-       */
-      int num_eoff;
       /**
        * temperatures
        */
@@ -2778,7 +2774,7 @@ namespace simulation
        * - eds: no eds sampling
        * - form: single_s
        */
-      eds_struct() : eds(false), soft_vdw(0.0), soft_crf(0.0), form(single_s), numstates(0), num_eoff(0) {}
+      eds_struct() : eds(false), soft_vdw(0.0), soft_crf(0.0), form(single_s), numstates(0) {}
       /**
        * do enveloping distribution sampling using the Hamiltonian:
        */
@@ -2799,10 +2795,6 @@ namespace simulation
        * number of eds states
        */
       unsigned int numstates;
-      /**
-       * number of energy offsets param-vectors
-       */
-      unsigned int num_eoff;
       /**
        * smoothness parameter(s) @f$ s@f$ of @f$ s_{ij}@f$ used in reference state Hamiltonian.
        */
@@ -2938,7 +2930,7 @@ namespace simulation
       int num_l;
       /**
        * * number of energy offsets param-vectors with different offsets for each state in REEDS
-       * * length of one param-vector == Numstates
+       * * length of one param-vector == NUMSTATES
        */
       int num_eoff;
       /**

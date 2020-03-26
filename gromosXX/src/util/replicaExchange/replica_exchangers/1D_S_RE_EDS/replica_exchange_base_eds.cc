@@ -103,11 +103,15 @@ void util::replica_exchange_base_eds::setParams(){
     MPI_DEBUG(4,"replica_exchange_base_eds "<< globalThreadID <<":setParams:\t got simulationID: "<< simulationID);
 
     //set position info
+    //might be wrong
     int count=0;
-    for(int i=0; i<replica->sim.param().replica.num_eoff; ++i){
+    for(int i=0; i<replica->sim.param().reeds.num_eoff; ++i){
       for(int j=0; j<replica->sim.param().replica.lambda.size(); ++j){
         ++count;
         replica->sim.param().reeds.eds_para[simulationID].pos_info = std::make_pair(count, count);
+        pos_info.first = replica->sim.param().reeds.eds_para[simulationID].pos_info.first;
+        pos_info.second = replica->sim.param().reeds.eds_para[simulationID].pos_info.second;
+
       }
     }
 
@@ -146,8 +150,10 @@ void util::replica_exchange_base_eds::init_eds_stat(){
 
         ID_t currentID=1000; //error value
         currentID = simulationID;
-        replicaStatData[currentID].ID =currentID;
-        //hier fehlt noch zuweisung der position info of each replica
+        replicaStatData[currentID].ID=currentID;
+        //assignment of position info of each replica
+        replicaStatData[currentID].pos_info.first = pos_info.first;
+        replicaStatData[currentID].pos_info.second = pos_info.second;
         replicaStatData[currentID].T=T;
         replicaStatData[currentID].s=l; //l==s because of the implementation of hamiltonian replica exchange.
         replicaStatData[currentID].dt=dt;

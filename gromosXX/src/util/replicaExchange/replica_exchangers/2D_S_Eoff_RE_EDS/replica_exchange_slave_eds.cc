@@ -4,10 +4,10 @@
  * and open the template in the editor.
  */
 
-/* 
+/*
  * File:   replica_exchange_slave_eds.cc
  * Author: bschroed
- * 
+ *
  * Created on August 31, 2018, 10:43 AM
  */
 #include "util/replicaExchange/replica_mpi_tools.h"
@@ -31,7 +31,7 @@ util::replica_exchange_slave_eds::replica_exchange_slave_eds(io::Argument & _arg
 
     MPI_DEBUG(2,"replica_exchange_slave_eds " << globalThreadID << ":Constructor:\t START");
 
-    MPI_DEBUG(2,"replica_exchange_slave_eds " << globalThreadID << ":Constructor:\t DONE"); 
+    MPI_DEBUG(2,"replica_exchange_slave_eds " << globalThreadID << ":Constructor:\t DONE");
 }
 
 void util::replica_exchange_slave_eds::send_to_master() const{
@@ -47,8 +47,19 @@ void util::replica_exchange_slave_eds::send_to_master() const{
     info.epot_partner = epot_partner;
     info.partner = partnerReplicaID;
     info.probability = probability;
-    info.switched = int(switched);
-    
+    info.switched = switched;
+    //info.pos_info = pos_info;
+
+    //assuming switched is really an int as declared which I do not think
+    /*if(switched != info.pos_info.second){
+      info.pos_info.second = info.partner;
+    }*/
+
+    //assuming switched is treated as a boolean
+    /*if(switched){
+      info.pos_info.second = info.partner;
+    }*/
+
     DEBUG(4,"replica_exchange_slave_eds " << globalThreadID << "send_to_master:\t epotTot\t "<< info.epot);
 
     DEBUG(4,"replica_exchange_slave_eds " << globalThreadID << ":send_to_master:\t\t send MPI_REPINFO");
@@ -62,9 +73,8 @@ void util::replica_exchange_slave_eds::send_to_master() const{
     DEBUG(4,"replica_exchange_slave_eds " << globalThreadID << ":send_to_master:\t\t send MPI_EDS \t DONE" );
     DEBUG(2,"replica_exchange_slave_eds " << globalThreadID << ":send_to_master:\t DONE");
   }
-  
+
   #else
-    throw "Cannot use send_to_master from replica_exchange_slave_eds without MPI!"; 
+    throw "Cannot use send_to_master from replica_exchange_slave_eds without MPI!";
   #endif
 }
-

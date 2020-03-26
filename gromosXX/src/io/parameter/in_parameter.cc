@@ -2878,7 +2878,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
     exampleblock << "# NRETRIAL   NREQUIL    CONT    EDS_STAT_OUT       \n";
     exampleblock << "       10         0         1           1          \n";
     exampleblock << "END\n";
-    
+
     DEBUG(1, "REPLICA_EDS BLOCK\t START");
     //check that EDS Block was not read in before,because either REPLICA_EDS or EDS possible
     if (param.eds.eds) {
@@ -2893,7 +2893,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
 
     if (block.read_buffer(m_block[blockname], false) == 0) {
         block_read.insert(blockname);
-           
+
         DEBUG(2, "REPLICA_EDS BLOCK: reading Block an translating to vars");
         //init_vars
         unsigned int reeds_control, num_l, num_states, num_eoff=0;
@@ -2970,7 +2970,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
 
         // Replica temperatures - has to be the same for each replica // Not sure if this is optimal? bschroed
         param.reeds.temperature = param.multibath.multibath.bath(0).temperature;
-        
+
         DEBUG(2, "REPLICA_EDS BLOCK: assigned all reeds params");
         //set size of vectors in param.reeds
         param.reeds.eds_para.resize(param.reeds.num_l);
@@ -2988,7 +2988,8 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
             //READ:NUMSTATES
             param.reeds.eds_para[i].eds = true;
             param.reeds.eds_para[i].numstates=param.reeds.num_states;
-            param.reeds.eds_para[i].num_eoff=param.reeds.num_eoff;
+            //num_eoff not used in eds_struct only in reeds_struct
+            //param.reeds.eds_para[i].num_eoff=param.reeds.num_eoff;
 
             //indicate only one parameter s used for reference state hamiltonian
             param.reeds.eds_para[i].form = simulation::single_s;
@@ -3010,7 +3011,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
                 msg << "REPLICA_EDS block: RES(" << i + 1 << ") must be >= 0.0";
                 io::messages.add(msg.str(), "In_Parameter", io::message::error);
             }
-            
+
             DEBUG(2, "REPLICA_EDS BLOCK: assign all eds params - EIR");
             for(unsigned int j = 0; j < param.reeds.eds_para[0].numstates; ++j){
                 param.reeds.eds_para[i].eir[j] = eir[i][j];
@@ -3019,7 +3020,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
         }
 
         DEBUG(2, "REPLICA_EDS BLOCK: assigned all eds params");
-        
+
         // turn on eds for pertubation reading - Overwrite:
         param.eds.eds = true;
         param.eds.numstates = param.reeds.num_states;
@@ -3037,16 +3038,17 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
         param.replica.lambda = param.reeds.lambda;
         param.replica.dt = dtV;
         param.replica.num_l = param.reeds.num_l ;
-        param.replica.num_eoff = param.reeds.num_eoff;
+        //num_eoff not used in replica_struct only in reeds_struct
+        //param.replica.num_eoff = param.reeds.num_eoff;
         param.replica.trials = param.reeds.trials;
         param.replica.equilibrate = param.reeds.equilibrate;
         param.replica.cont = param.reeds.cont;
-        
+
         DEBUG(2, "REPLICA_EDS BLOCK: assigned all replicas param");
 
         //CHECK SETTINGS
         DEBUG(2, "REPLICA_EDS BLOCK: Check Settings:");
-        
+
         for (unsigned int i = 1; i < param.multibath.multibath.size(); i++) {
           if (param.multibath.multibath.bath(i).temperature !=
                   param.multibath.multibath.bath(0).temperature) {

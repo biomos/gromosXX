@@ -83,8 +83,10 @@ void util::replica_exchange_master_eds::receive_from_all_slaves() {
         replicaData[slaveReplicaID].probability = info.probability;
         replicaData[slaveReplicaID].switched = info.switched;
         replicaData[slaveReplicaID].partner = info.partner;
+        //replicaData[slaveReplicaID].pos_info = info.pos_info;
         //check whether switched or not
-        if(info.switched != replicaData[slaveReplicaID].pos_info.second){
+        //assuming switched is treated as a boolean
+        if(info.switched){
           replicaData[slaveReplicaID].pos_info.second = info.partner;
         }
         DEBUG(4,"replica_exchange_master_eds "<< globalThreadID <<":receive_from_all_slaves:\t REP:" <<slaveReplicaID<< " EpotTot: "<< replicaData[slaveReplicaID].epot);
