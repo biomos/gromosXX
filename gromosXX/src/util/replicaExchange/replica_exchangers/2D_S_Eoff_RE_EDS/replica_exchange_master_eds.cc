@@ -106,7 +106,7 @@ void util::replica_exchange_master_eds::receive_from_all_slaves() {
   replicaData[simulationID].epot_partner = epot_partner;
   replicaData[simulationID].probability = probability;
   replicaData[simulationID].switched = switched;
-  if(switched != replicaData[simulationID].pos_info.second){
+  if(switched){
     replicaData[simulationID].pos_info.second = replicaData[simulationID].partner;
   }
   replicaData[simulationID].Vi = replica->conf.current().energies.eds_vi;
