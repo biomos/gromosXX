@@ -40,8 +40,6 @@ namespace util {
    */
   struct repInfo {
     int switched;
-    //pos_info: contains information about start_coordinate_ID and current replicaPosition
-    //std::pair<int, int> pos_info;
     int run;
     int partner;
     double epot;

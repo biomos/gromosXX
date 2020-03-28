@@ -186,7 +186,7 @@ namespace util {
      */
     bool switched;
     /**
-     * position information fisrt: start coord; second: current position coord
+     * position information first: start position; second: current position of coord_ID
      */
     std::pair<int, int> pos_info;
 

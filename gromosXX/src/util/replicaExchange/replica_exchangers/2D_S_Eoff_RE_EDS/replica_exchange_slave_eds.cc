@@ -48,17 +48,6 @@ void util::replica_exchange_slave_eds::send_to_master() const{
     info.partner = partnerReplicaID;
     info.probability = probability;
     info.switched = switched;
-    //info.pos_info = pos_info;
-
-    //assuming switched is really an int as declared which I do not think
-    /*if(switched != info.pos_info.second){
-      info.pos_info.second = info.partner;
-    }*/
-
-    //assuming switched is treated as a boolean
-    /*if(switched){
-      info.pos_info.second = info.partner;
-    }*/
 
     DEBUG(4,"replica_exchange_slave_eds " << globalThreadID << "send_to_master:\t epotTot\t "<< info.epot);
 

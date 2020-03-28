@@ -2902,11 +2902,11 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
         // GET BLOCKVARS
         //SYS Settings
         block.get_next_parameter("REEDS", reeds_control, "", "0,1,2");
-        DEBUG(1, "REPLICA_EDS BLOCK: reeds_control= " << reeds_control);
+        DEBUG(3, "REPLICA_EDS BLOCK: reeds_control= " << reeds_control);
         block.get_next_parameter("NRES", num_l, ">0", "");
         block.get_next_parameter("NUMSTATES", num_states, ">0", "");
         block.get_next_parameter("NEOFF", num_eoff, ">0", "");
-        DEBUG(1, "REPLICA_EDS BLOCK: NEOFF= " << num_eoff);
+        DEBUG(3, "REPLICA_EDS BLOCK: NEOFF= " << num_eoff);
 
         //get RES-Vector
         std::vector<double> s_vals(num_l, 0.0);
@@ -2952,12 +2952,12 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
                   break;
           }
 
-        DEBUG(1, "REPLICA_EDS BLOCK: reeds_control= " << param.reeds.reeds);
+        DEBUG(3, "REPLICA_EDS BLOCK: reeds_control= " << param.reeds.reeds);
 
         param.reeds.num_l = num_l;
         param.reeds.num_states = num_states;
         param.reeds.num_eoff = num_eoff;
-        DEBUG(1, "REPLICA_EDS BLOCK: NEOFF= " << param.reeds.num_eoff);
+        DEBUG(3, "REPLICA_EDS BLOCK: NEOFF= " << param.reeds.num_eoff);
         param.reeds.trials = ntrials;
 
         //param.reeds.lambda.resize();

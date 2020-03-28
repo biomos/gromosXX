@@ -2800,7 +2800,7 @@ namespace simulation
        */
       std::vector<double> s;
       /**
-       * pos_info: contains information about start_coordinate_ID and current replicaPosition
+       * position information first: start position; second: current position of coord_ID
        */
       std::pair<int, int> pos_info;
       /**
@@ -2942,7 +2942,7 @@ namespace simulation
        */
       std::vector<double> lambda;
       /**
-       * pos_info: contains information about start_coordinate_ID and current replicaPosition
+       * position information first: start position; second: current position of coord_ID
        */
       std::pair<int, int> pos_info;
       /**

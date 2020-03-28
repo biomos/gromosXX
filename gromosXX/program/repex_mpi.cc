@@ -532,9 +532,9 @@ int main(int argc, char *argv[]) {
 
         if (reedsSim > 0) {
             msg << "\n\t RE-EDS:\n";
-            //msg << "\t numSValues:\t" << sim.param().reeds.num_l << "\n";
             msg << "\t reeds_control:\t" << reedsSim << "\n";
             msg << "\t numStates:\t" << numEDSstates << "\n";
+            msg << "\t numSValues:\t" << numReplicas << "\n";
             msg << "\t numEoffs:\t" << numEoff << "\n\n";
         }
         msg << "mpi settings:\t\n";
