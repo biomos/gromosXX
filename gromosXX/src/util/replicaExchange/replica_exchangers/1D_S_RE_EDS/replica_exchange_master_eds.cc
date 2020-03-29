@@ -43,7 +43,17 @@ util::replica_exchange_master_eds::replica_exchange_master_eds(io::Argument _arg
 
     for (int replicaID = 0; replicaID<  replicaData.size(); ++replicaID) {
         replicaData[replicaID].ID = replicaID;
+        //set position info
         replicaData[replicaID].pos_info = std::make_pair(replicaID, replicaID);
+        DEBUG(1, "MASTER Constructor with replicaID, pos_info= " << replicaID << ", "
+        << replicaData[replicaID].pos_info.first << ", " << replicaData[replicaID].pos_info.second << "\n");
+        reedsParam.eds_para[replicaID].pos_info = replicaData[replicaID].pos_info;
+
+        //just to check
+        std::pair<int, int> a = replica->sim.param().reeds.eds_para[replicaID].pos_info;
+        DEBUG(1, "JUST TO CHECK: MASTER Constructor with replicaID, replica->pos_info= " << replicaID << ", "
+        << a.first << ", " << a.second << "\n");
+
         replicaData[replicaID].T = repParams.temperature[replicaID];
         DEBUG(5,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t Init Replicas ID"<<replicaID<<"\t "<< repParams.temperature[replicaID]);
         replicaData[replicaID].l = repParams.lambda[replicaID];
@@ -83,12 +93,22 @@ void util::replica_exchange_master_eds::receive_from_all_slaves() {
         replicaData[slaveReplicaID].probability = info.probability;
         replicaData[slaveReplicaID].switched = info.switched;
         replicaData[slaveReplicaID].partner = info.partner;
-        //replicaData[slaveReplicaID].pos_info = info.pos_info;
+        //theosm
+        //replicaData[slaveReplicaID].pos_info.second = reedsParam.eds_para[slaveReplicaID].pos_info.second;
+
+        DEBUG(1, "receive_from_all_slaves(): slaveReplicaID, info.partner= " << slaveReplicaID
+        << ", " << replicaData[slaveReplicaID].partner << "\n");
+        DEBUG(1, "receive_from_all_slaves(): slaveReplicaID, reedsParam[slaveReplicaID]->pos_info.second= " << slaveReplicaID
+        << ", " << reedsParam.eds_para[slaveReplicaID].pos_info.second << "\n");
+        DEBUG(1, "receive_from_all_slaves(): slaveReplicaID, reedsParam[info.partner]->pos_info.second= " << slaveReplicaID
+        << ", " << reedsParam.eds_para[replicaData[slaveReplicaID].partner].pos_info.second << "\n");
+
         //check whether switched or not
         //assuming switched is treated as a boolean
         if(info.switched){
-          replicaData[slaveReplicaID].pos_info.second = info.partner;
+          replicaData[slaveReplicaID].pos_info.second = reedsParam.eds_para[replicaData[slaveReplicaID].partner].pos_info.second;
         }
+
         DEBUG(4,"replica_exchange_master_eds "<< globalThreadID <<":receive_from_all_slaves:\t REP:" <<slaveReplicaID<< " EpotTot: "<< replicaData[slaveReplicaID].epot);
 
         MPI_Recv(&replicaData[slaveReplicaID].Vi[0],1, MPI_EDSINFO, slaveReplicaID, EDSINFO, replicaGraphMPIControl.comm, &status_eds);
@@ -96,6 +116,7 @@ void util::replica_exchange_master_eds::receive_from_all_slaves() {
             DEBUG(4,"replica_exchange_master_eds "<< replicaGraphMPIControl.masterID <<":receive_from_all_slaves:\t "<< s << " En: "<< replicaData[slaveReplicaID].Vi[s]);
         }
     }
+
   }
 
   // write all information from master node to data structure
@@ -106,9 +127,27 @@ void util::replica_exchange_master_eds::receive_from_all_slaves() {
   replicaData[simulationID].epot_partner = epot_partner;
   replicaData[simulationID].probability = probability;
   replicaData[simulationID].switched = switched;
+  //theosm
+  //replicaData[simulationID].pos_info.second = reedsParam.eds_para[simulationID].pos_info.second;
+
+  DEBUG(3, "receive_from_all_slaves(): write from master to data structure: simulationID, pos_info= "
+  << simulationID << ", " << reedsParam.eds_para[simulationID].pos_info.second << "\n");
+
+  //check whether switched or not
   if(switched){
+    DEBUG(1, "receive_from_all_slaves()-if switched: write from master to data structure: simulationID, partnerReplicaID= "
+    << simulationID << ", " << partnerReplicaID << "\n");
     replicaData[simulationID].pos_info.second = replicaData[simulationID].partner;
+    DEBUG(1, "receive_from_all_slaves()-if switched: write from master to data structure: simulationID, replicaData->pos_info= "
+    << simulationID << ", " << replicaData[simulationID].partner << "\n");
+    //theosm -- this approach does not work since the slave == partnerReplicaID was already updated
+    //--> have to do it via the partner
+    /*replicaData[simulationID].pos_info.second = reedsParam.eds_para[partnerReplicaID].pos_info.second;
+    DEBUG(1, "receive_from_all_slaves()-if switched: write from master to data structure: simulationID, reedsParam[partner]->pos_info= "
+    << simulationID << ", " << reedsParam.eds_para[partnerReplicaID].pos_info.second << "\n");
+    */
   }
+
   replicaData[simulationID].Vi = replica->conf.current().energies.eds_vi;
 
   DEBUG(4,"replica_exchange_master_eds "<< globalThreadID <<":receive_from_all_slaves:\t Master:\n" << "time used for receiving all messages: " << MPI_Wtime() - start
@@ -156,7 +195,7 @@ void util::replica_exchange_master_eds::write() {
               << std::setw(6) << (replicaData[treplicaID].partner) //removed  + 1 for consistency reasons
               << "   "
               << std::setw(6) << replicaData[replicaData[treplicaID].partner].pos_info.first
-              << "\t"
+              << "\t\t"
               << std::setw(6) << replicaData[replicaData[treplicaID].partner].pos_info.second
               << "\t\t"
               << std::setw(6) << replicaData[treplicaID].run << "  ";
@@ -236,17 +275,17 @@ void util::replica_exchange_master_eds::init_repOut_stat_file() {
 
     repOut << "\n#\n";
     repOut << ""
-          << std::setw(6) << "ID"
+          << std::setw(6) << "pos"
           << " "
           << std::setw(6) << "start"
           << " "
-          << std::setw(6) << "pos"
+          << std::setw(6) << "coord_ID"
           << "   "
           << std::setw(6) << "partner"
           << " "
           << std::setw(6) << "partner_start"
           << " "
-          << std::setw(6) << "partner_pos"
+          << std::setw(6) << "partner_coord_ID"
           << "  "
           << std::setw(6) << "run"
 

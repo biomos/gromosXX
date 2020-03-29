@@ -103,14 +103,19 @@ void util::replica_exchange_base_eds::setParams(){
     MPI_DEBUG(4,"replica_exchange_base_eds "<< globalThreadID <<":setParams:\t got simulationID: "<< simulationID);
 
     //set position info
-    //might be wrong
-    int count=0;
-    for(int j=0; j<replica->sim.param().replica.lambda.size(); ++j){
-      ++count;
-      replica->sim.param().reeds.eds_para[simulationID].pos_info = std::make_pair(count, count);
-      pos_info.first = replica->sim.param().reeds.eds_para[simulationID].pos_info.first;
-      pos_info.second = replica->sim.param().reeds.eds_para[simulationID].pos_info.second;
-    }
+    replica->sim.param().reeds.eds_para[simulationID].pos_info = std::make_pair(simulationID, simulationID);
+    DEBUG(1, "BASE Constructor with simulationID, replica->pos_info= " << simulationID << ", "
+    << replica->sim.param().reeds.eds_para[simulationID].pos_info.first << ", "
+    << replica->sim.param().reeds.eds_para[simulationID].pos_info.second << "\n");
+
+    pos_info = replica->sim.param().reeds.eds_para[simulationID].pos_info;
+    DEBUG(1, "BASE Constructor with simulationID, pos_info= " << simulationID << ", "
+    << pos_info.first << ", " << pos_info.second << "\n");
+
+    //just to check -- theosm
+    std::pair<int, int> a = reedsParam.eds_para[simulationID].pos_info;
+    DEBUG(1, "JUST TO CHECK: BASE Constructor with simulationID, reedsParam->pos_info= " << simulationID << ", "
+    << a.first << ", " << a.second << "\n");
 
     set_s();
     MPI_DEBUG(4,"replica_exchange_base_eds "<< globalThreadID <<":setParams:\t got s" << l);
@@ -151,6 +156,10 @@ void util::replica_exchange_base_eds::init_eds_stat(){
         //assignment of position info of each replica
         replicaStatData[currentID].pos_info.first = pos_info.first;
         replicaStatData[currentID].pos_info.second = pos_info.second;
+        DEBUG(3, "init_eds_stat(), replicaStatData[currentID].pos_info.first= " << replicaStatData[currentID].pos_info.first
+        << " with currentID= " << replicaStatData[currentID].ID << "\n");
+        DEBUG(3, "init_eds_stat(), replicaStatData[currentID].pos_info.second= " << replicaStatData[currentID].pos_info.second
+        << " with currentID= " << replicaStatData[currentID].ID << "\n");
         replicaStatData[currentID].T=T;
         replicaStatData[currentID].s=l; //l==s because of the implementation of hamiltonian replica exchange.
         replicaStatData[currentID].dt=dt;
