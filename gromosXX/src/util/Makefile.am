@@ -28,10 +28,10 @@ xxinclude_HEADERS = error.h\
 	system_call.h\
 	undirected_graph.h
 
-#include replica_exchange Files	
+#include replica_exchange Files
 
 xxutilrepexdir = $(includedir)/md++/util/replicaExchange
-xxutilrepex_HEADERS = 
+xxutilrepex_HEADERS =
 	replicaExchange/repex_mpi.h\
 	replicaExchange/replica_mpi_tools.h\
         replicaExchange/replica_data.h\
@@ -47,8 +47,11 @@ xxutilrepex_HEADERS =
 	replicaExchange/replica_exchangers/2D_T_lambda_REPEX/replica_exchange_slave.cc\
 	replicaExchange/replica_exchangers/1D_S_RE_EDS/replica_exchange_base_eds.h\
 	replicaExchange/replica_exchangers/1D_S_RE_EDS/replica_exchange_master_eds.h\
-	replicaExchange/replica_exchangers/1D_S_RE_EDS/replica_exchange_slave_eds.h
-	
+	replicaExchange/replica_exchangers/1D_S_RE_EDS/replica_exchange_slave_eds.h\
+	replicaExchange/replica_exchangers/2D_S_Eoff_RE_EDS/replica_exchange_base_eds.h\
+	replicaExchange/replica_exchangers/2D_S_Eoff_RE_EDS/replica_exchange_master_eds.h\
+	replicaExchange/replica_exchangers/2D_S_Eoff_RE_EDS/replica_exchange_slave_eds.h
+
 noinst_LTLIBRARIES = libgroutil.la
 
 libgroutil_la_SOURCES =	cycle_thread.cc\
@@ -87,11 +90,14 @@ libgroutil_la_SOURCES =	cycle_thread.cc\
 	replicaExchange/replica_exchangers/2D_T_lambda_REPEX/replica_exchange_slave.cc\
 	replicaExchange/replica_exchangers/1D_S_RE_EDS/replica_exchange_base_eds.cc\
 	replicaExchange/replica_exchangers/1D_S_RE_EDS/replica_exchange_master_eds.cc\
-	replicaExchange/replica_exchangers/1D_S_RE_EDS/replica_exchange_slave_eds.cc
-	
+	replicaExchange/replica_exchangers/1D_S_RE_EDS/replica_exchange_slave_eds.cc\
+	replicaExchange/replica_exchangers/2D_S_Eoff_RE_EDS/replica_exchange_base_eds.h\
+	replicaExchange/replica_exchangers/2D_S_Eoff_RE_EDS/replica_exchange_master_eds.h\
+	replicaExchange/replica_exchangers/2D_S_Eoff_RE_EDS/replica_exchange_slave_eds.h
+
 libgroutil_la_LIBADD =
 
-bin_PROGRAMS =			
+bin_PROGRAMS =
 
 check_PROGRAMS =
 
