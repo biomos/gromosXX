@@ -5,7 +5,7 @@
  */
 
 /*
- * File:   replica_exchange_base_eds.h
+ * File:   replica_exchange_base_2d_s_eoff_eds.h
  * Author: theosm
  *
  * Created on March 29, 2020, 11:00 AM
@@ -52,9 +52,9 @@
 
 namespace util
 {
-     class replica_exchange_base_eds : public virtual replica_exchange_base_interface {
+     class replica_exchange_base_2d_s_eoff_eds : public virtual replica_exchange_base_interface {
     public:
-        replica_exchange_base_eds(io::Argument _args,
+        replica_exchange_base_2d_s_eoff_eds(io::Argument _args,
                 unsigned int cont,
                 unsigned int globalThreadID,
                 replica_graph_mpi_control replicaGraphMPIControl,
@@ -69,7 +69,7 @@ namespace util
         void init_eds_stat();
 
     protected:
-        virtual ~replica_exchange_base_eds();
+        virtual ~replica_exchange_base_2d_s_eoff_eds();
 
        /*
        * Attributes
