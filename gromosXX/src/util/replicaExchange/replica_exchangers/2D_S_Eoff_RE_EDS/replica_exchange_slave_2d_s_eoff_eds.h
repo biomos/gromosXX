@@ -5,14 +5,14 @@
  */
 
 /*
- * File:   replica_exchange_slave_eds.h
+ * File:   replica_exchange_master_2d_s_eoff_eds.h
  * Author: bschroed
  *
  * Created on August 31, 2018, 10:43 AM
  */
 
 #include <util/replicaExchange/replica_exchangers/replica_exchange_slave_interface.h>
-#include <util/replicaExchange/replica_exchangers/2D_S_Eoff_RE_EDS/replica_exchange_base_eds.h>
+#include <util/replicaExchange/replica_exchangers/2D_S_Eoff_RE_EDS/replica_exchange_base_2d_s_eoff_eds.h>
 //for the constructor
 #include <stdheader.h>
 
@@ -39,7 +39,7 @@
 #define REPLICA_EXCHANGE_SLAVE_EDS_H
 
 namespace util{
-    class replica_exchange_slave_2d_s_eoff_eds: public replica_exchange_base_eds, public replica_exchange_slave_interface {
+    class replica_exchange_slave_2d_s_eoff_eds: public replica_exchange_base_2d_s_eoff_eds, public replica_exchange_slave_interface {
     public:
         replica_exchange_slave_2d_s_eoff_eds(io::Argument & _args,
                 unsigned int cont,

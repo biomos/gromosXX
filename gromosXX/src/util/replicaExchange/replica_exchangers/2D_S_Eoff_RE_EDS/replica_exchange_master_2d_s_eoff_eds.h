@@ -13,7 +13,7 @@
 
 #include <util/replicaExchange/replica_exchangers/replica_exchange_base_interface.h>
 #include <util/replicaExchange/replica_exchangers/replica_exchange_master_interface.h>
-#include <util/replicaExchange/replica_exchangers/2D_S_Eoff_RE_EDS/replica_exchange_base_eds.h>
+#include <util/replicaExchange/replica_exchangers/2D_S_Eoff_RE_EDS/replica_exchange_base_2d_s_eoff_eds.h>
 
 //for the constructor
 #include <stdheader.h>
@@ -43,7 +43,7 @@
 
 namespace util{
 
-    class replica_exchange_master_2d_s_eoff_eds :  public  replica_exchange_base_eds, public  replica_exchange_master_interface  {
+    class replica_exchange_master_2d_s_eoff_eds :  public  replica_exchange_base_2d_s_eoff_eds, public  replica_exchange_master_interface  {
     public:
         /**
          * constructor
@@ -79,7 +79,7 @@ namespace util{
          * destructor
          */
         ~replica_exchange_master_2d_s_eoff_eds(){};
-        //using util::replica_exchange_base_eds::replicas;
+        //using util::replica_exchange_base_2d_s_eoff_eds::replicas;
         /**
          * Column Size for redpat out-floating point nums
          */
@@ -118,4 +118,4 @@ namespace util{
 
     };
 }
-#endif /* REPLICA_EXCHANGE_MASTER_EDS_H */
+#endif /* replica_exchange_master_2d_s_eoff_eds_H */

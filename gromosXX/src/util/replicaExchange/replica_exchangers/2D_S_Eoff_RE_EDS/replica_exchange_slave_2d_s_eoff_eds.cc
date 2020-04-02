@@ -5,17 +5,17 @@
  */
 
 /*
- * File:   replica_exchange_slave_eds.cc
+ * File:   replica_exchange_master_2d_s_eoff_eds.cc
  * Author: bschroed
  *
  * Created on August 31, 2018, 10:43 AM
  */
 #include "util/replicaExchange/replica_mpi_tools.h"
-#include <util/replicaExchange/replica_exchangers/2D_S_Eoff_RE_EDS/replica_exchange_slave_eds.h>
+#include <util/replicaExchange/replica_exchangers/2D_S_Eoff_RE_EDS/replica_exchange_master_2d_s_eoff_eds.h>
 
 
 #undef MODULE
-#undef Sreplica_exchange_base_eds
+#undef SUBMODULE
 #define MODULE util
 #define SUBMODULE replica_exchange
 
@@ -25,7 +25,7 @@ util::replica_exchange_slave_2d_s_eoff_eds::replica_exchange_slave_2d_s_eoff_eds
                                                             replica_graph_mpi_control replicaGraphMPIControl,
                                                             simulation::mpi_control_struct replica_mpi_control):
             replica_exchange_base_interface(_args, cont, globalThreadID, replicaGraphMPIControl, replica_mpi_control),
-            replica_exchange_base_eds(_args, cont, globalThreadID, replicaGraphMPIControl, replica_mpi_control),
+            replica_exchange_base_2d_s_eoff_eds(_args, cont, globalThreadID, replicaGraphMPIControl, replica_mpi_control),
             replica_exchange_slave_interface(_args, cont, globalThreadID, replicaGraphMPIControl, replica_mpi_control)
 {
 
