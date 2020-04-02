@@ -14,8 +14,8 @@
 #include <util/replicaExchange/replica_data.h>
 #include <util/replicaExchange/repex_mpi.h>
 
-#ifndef REPLICA_EXCHANGE_BASE_EDS_H
-#define REPLICA_EXCHANGE_BASE_EDS_H
+#ifndef REPLICA_EXCHANGE_BASE_2D_S_EOFF_EDS_H
+#define REPLICA_EXCHANGE_BASE_2D_S_EOFF_EDS_H
 
 //const
 
@@ -132,4 +132,4 @@ namespace util
         double calculate_energy(const unsigned int partner);
     };
 }
-#endif /* REPLICA_EXCHANGE_BASE_EDS_H */
+#endif /* REPLICA_EXCHANGE_BASE_2D_S_EOFF_EDS_H */

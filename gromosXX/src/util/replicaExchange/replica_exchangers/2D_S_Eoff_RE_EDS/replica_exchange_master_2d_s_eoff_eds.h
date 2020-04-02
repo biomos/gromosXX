@@ -38,8 +38,8 @@
 #include <unistd.h>
 
 
-#ifndef REPLICA_EXCHANGE_MASTER_EDS_H
-#define REPLICA_EXCHANGE_MASTER_EDS_H
+#ifndef REPLICA_EXCHANGE_MASTER_2D_S_EOFF_EDS_H
+#define REPLICA_EXCHANGE_MASTER_2D_S_EOFF_EDS_H
 
 namespace util{
 
@@ -118,4 +118,4 @@ namespace util{
 
     };
 }
-#endif /* REPLICA_EXCHANGE_MASTER_EDS_H */
+#endif /* REPLICA_EXCHANGE_MASTER_2D_S_EOFF_EDS_H */

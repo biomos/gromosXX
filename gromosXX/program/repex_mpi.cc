@@ -58,6 +58,8 @@
 #include <util/replicaExchange/replica_exchangers/2D_T_lambda_REPEX/replica_exchange_slave.h>
 #include <util/replicaExchange/replica_exchangers/1D_S_RE_EDS/replica_exchange_master_eds.h>
 #include <util/replicaExchange/replica_exchangers/1D_S_RE_EDS/replica_exchange_slave_eds.h>
+#include <util/replicaExchange/replica_exchangers/2D_S_Eoff_RE_EDS/replica_exchange_master_2d_s_eoff_eds.h>
+#include <util/replicaExchange/replica_exchangers/2D_S_Eoff_RE_EDS/replica_exchange_slave_2d_s_eoff_eds.h>
 
 #include <util/replicaExchange/repex_mpi.h>
 #include <util/replicaExchange/replica_mpi_tools.h>
@@ -537,19 +539,19 @@ int main(int argc, char *argv[]) {
             msg << "\t numSValues:\t" << numReplicas << "\n";
             msg << "\t numEoffs:\t" << numEoff << "\n\n";
         }
-        msg << "mpi settings:\t\n";
+        msg << "\t Mpi Settings:\t\n";
 
         // make sure all nodes have initialized everything
-        msg << "repIDS:\t\n";
+        msg << "\t repIDS:\t\n";
         for(unsigned int x=0; x < replica_owned_threads.size(); x++){
-            msg << "\t" << x << ". Replica: ";
+            msg << "\t " << x << ". Replica: ";
             for(int threadID :  replica_owned_threads[x]){
                 msg << "\t" << threadID;
             }
             msg<< "\n";
         }
         msg<< "\n";
-        msg<< "repMap:\n";
+        msg<< "\t repMap:\n";
         for(std::pair<unsigned int, unsigned int> p : thread_id_replica_map){
             msg << "\t " << p.first << "\t" << p.second <<"\n";
         }
@@ -582,13 +584,23 @@ int main(int argc, char *argv[]) {
         // Select repex Implementation - Polymorphism
         MPI_DEBUG(1, "MASTER " << globalThreadID << "::Constructor: START ")
         util::replica_exchange_master_interface * Master;
-        if (reedsSim > 0) {
-            DEBUG(1, "Master_eds \t Constructor")
-            Master = new util::replica_exchange_master_eds(args, cont, globalThreadID, reGMPI, replica_mpi_control);
-        } else {
-            DEBUG(1, "Master \t Constructor");
-            Master = new util::replica_exchange_master(args, cont, globalThreadID, reGMPI, replica_mpi_control);
-        }
+        switch(reedsSim) {
+              case 0:
+                  DEBUG(1, "Master \t Constructor\n");
+                  std::cerr << "Constructor:\t Master\n";
+                  Master = new util::replica_exchange_master(args, cont, globalThreadID, reGMPI, replica_mpi_control);
+                  break;
+              case 1:
+                  DEBUG(1, "Master_eds \t Constructor\n")
+                  std::cerr << "Constructor:\t Master_eds\n";
+                  Master = new util::replica_exchange_master_eds(args, cont, globalThreadID, reGMPI, replica_mpi_control);
+                  break;
+              case 2:
+                  DEBUG(1, "Master_2d_s_eoff_eds \t Constructor\n")
+                  std::cerr << "Constructor:\t Master_2d_s_eoff_eds\n";
+                  Master = new util::replica_exchange_master_2d_s_eoff_eds(args, cont, globalThreadID, reGMPI, replica_mpi_control);
+                  break;
+          }
         MPI_DEBUG(1, "MASTER " << globalThreadID << "::Constructor: DONE ");
 
 
@@ -646,11 +658,17 @@ int main(int argc, char *argv[]) {
         // Select repex Implementation - Polymorphism
         MPI_DEBUG(1, "Slave " << globalThreadID << "::Constructor: START ")
         util::replica_exchange_slave_interface* Slave;
-        if (reedsSim > 0) {
-            Slave = new util::replica_exchange_slave_eds(args, cont, globalThreadID, reGMPI, replica_mpi_control);
-        } else {
-            Slave = new util::replica_exchange_slave(args, cont, globalThreadID, reGMPI, replica_mpi_control);
-        }
+        switch(reedsSim) {
+              case 0:
+                  Slave = new util::replica_exchange_slave(args, cont, globalThreadID, reGMPI, replica_mpi_control);
+                  break;
+              case 1:
+                  Slave = new util::replica_exchange_slave_eds(args, cont, globalThreadID, reGMPI, replica_mpi_control);
+                  break;
+              case 2:
+                  Slave = new util::replica_exchange_slave_2d_s_eoff_eds(args, cont, globalThreadID, reGMPI, replica_mpi_control);
+                  break;
+          }
         MPI_DEBUG(1, "Slave " << globalThreadID << "::Constructor: DONE ")
 
         MPI_DEBUG(1, "Slave " << globalThreadID << " \t INIT START")

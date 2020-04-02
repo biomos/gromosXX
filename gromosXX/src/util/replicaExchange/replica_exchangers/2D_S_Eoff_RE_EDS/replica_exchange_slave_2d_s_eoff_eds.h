@@ -35,8 +35,8 @@
 #include <time.h>
 #include <unistd.h>
 
-#ifndef REPLICA_EXCHANGE_SLAVE_EDS_H
-#define REPLICA_EXCHANGE_SLAVE_EDS_H
+#ifndef REPLICA_EXCHANGE_SLAVE_2D_S_EOFF_EDS_H
+#define REPLICA_EXCHANGE_SLAVE_2D_S_EOFF_EDS_H
 
 namespace util{
     class replica_exchange_slave_2d_s_eoff_eds: public replica_exchange_base_2d_s_eoff_eds, public replica_exchange_slave_interface {
@@ -59,4 +59,4 @@ namespace util{
         replica_exchange_slave_2d_s_eoff_eds(const replica_exchange_slave_2d_s_eoff_eds& orig); //Todo: Messy method, bschroed
             };
 }
-#endif /* REPLICA_EXCHANGE_SLAVE_EDS_H */
+#endif /* REPLICA_EXCHANGE_SLAVE_2D_S_EOFF_EDS_H */
