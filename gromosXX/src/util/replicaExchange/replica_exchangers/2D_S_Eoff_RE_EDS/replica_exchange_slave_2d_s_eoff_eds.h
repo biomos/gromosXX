@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-/* 
+/*
  * File:   replica_exchange_slave_eds.h
  * Author: bschroed
  *
@@ -12,7 +12,7 @@
  */
 
 #include <util/replicaExchange/replica_exchangers/replica_exchange_slave_interface.h>
-#include <util/replicaExchange/replica_exchangers/1D_S_RE_EDS/replica_exchange_base_eds.h>
+#include <util/replicaExchange/replica_exchangers/2D_S_Eoff_RE_EDS/replica_exchange_base_eds.h>
 //for the constructor
 #include <stdheader.h>
 
@@ -39,9 +39,9 @@
 #define REPLICA_EXCHANGE_SLAVE_EDS_H
 
 namespace util{
-    class replica_exchange_slave_eds: public replica_exchange_base_eds, public replica_exchange_slave_interface {
+    class replica_exchange_slave_2d_s_eoff_eds: public replica_exchange_base_eds, public replica_exchange_slave_interface {
     public:
-        replica_exchange_slave_eds(io::Argument & _args,
+        replica_exchange_slave_2d_s_eoff_eds(io::Argument & _args,
                 unsigned int cont,
                 unsigned int globalThreadID,
                 replica_graph_mpi_control replicaGraphMPIControl,
@@ -52,12 +52,11 @@ namespace util{
         void send_to_master() const override;
 
     private:
-        //replica_exchange_slave_eds(const replica_exchange_slave_eds& orig);
-        virtual ~replica_exchange_slave_eds(){};
+        //replica_exchange_slave_2d_s_eoff_eds(const replica_exchange_slave_2d_s_eoff_eds& orig);
+        virtual ~replica_exchange_slave_2d_s_eoff_eds(){};
 
         //give all information of this node to Master.
-        replica_exchange_slave_eds(const replica_exchange_slave_eds& orig); //Todo: Messy method, bschroed
+        replica_exchange_slave_2d_s_eoff_eds(const replica_exchange_slave_2d_s_eoff_eds& orig); //Todo: Messy method, bschroed
             };
 }
 #endif /* REPLICA_EXCHANGE_SLAVE_EDS_H */
-

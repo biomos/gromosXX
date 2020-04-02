@@ -4,16 +4,16 @@
  * and open the template in the editor.
  */
 
-/* 
+/*
  * File:   replica_exchange_master_eds.h
- * Author: bschroed
+ * Author: theosm
  *
- * Created on April 18, 2018, 3:20 PM
+ * Created on March 29, 2020, 11:00 AM
  */
 
 #include <util/replicaExchange/replica_exchangers/replica_exchange_base_interface.h>
 #include <util/replicaExchange/replica_exchangers/replica_exchange_master_interface.h>
-#include <util/replicaExchange/replica_exchangers/1D_S_RE_EDS/replica_exchange_base_eds.h>
+#include <util/replicaExchange/replica_exchangers/2D_S_Eoff_RE_EDS/replica_exchange_base_eds.h>
 
 //for the constructor
 #include <stdheader.h>
@@ -42,8 +42,8 @@
 #define REPLICA_EXCHANGE_MASTER_EDS_H
 
 namespace util{
-    
-    class replica_exchange_master_eds :  public  replica_exchange_base_eds, public  replica_exchange_master_interface  {
+
+    class replica_exchange_master_2d_s_eoff_eds :  public  replica_exchange_base_eds, public  replica_exchange_master_interface  {
     public:
         /**
          * constructor
@@ -54,7 +54,7 @@ namespace util{
          * @param repIDs std::vector<int>, IDs of replicas the instance has to manage
          * @param repMap std::map<int,int>, maps replica IDs to nodes; needed for communication
          */
-        replica_exchange_master_eds(io::Argument _args,
+        replica_exchange_master_2d_s_eoff_eds(io::Argument _args,
                                     unsigned int cont,
                                     unsigned int globalThreeadID,
                                     replica_graph_mpi_control replicaGraphMPIControl,
@@ -66,7 +66,7 @@ namespace util{
          */
         //void init();
         void receive_from_all_slaves() override;
-        
+
         void write() override;
 
         /**
@@ -78,7 +78,7 @@ namespace util{
         /**
          * destructor
          */
-        ~replica_exchange_master_eds(){};
+        ~replica_exchange_master_2d_s_eoff_eds(){};
         //using util::replica_exchange_base_eds::replicas;
         /**
          * Column Size for redpat out-floating point nums
@@ -86,7 +86,7 @@ namespace util{
         int svalPrecision= 5;
         int potEPrecision = 2;
         int generalPrecision = 2;
-        
+
          /**
          * determines the digits needed to represent the smalles S-value in eds sim
          */
@@ -109,14 +109,13 @@ namespace util{
         */
         std::vector<util::reeds_replica_data> replicaData;
 
-        
+
         /**
          * functions, for initing the repout
          * @param repoutPath
          */
         //void init_repOut_stat_file(std::string repoutPath) override;
-        
+
     };
 }
 #endif /* REPLICA_EXCHANGE_MASTER_EDS_H */
-

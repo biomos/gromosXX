@@ -11,15 +11,15 @@
  * Created on August 31, 2018, 10:43 AM
  */
 #include "util/replicaExchange/replica_mpi_tools.h"
-#include <util/replicaExchange/replica_exchangers/1D_S_RE_EDS/replica_exchange_slave_eds.h>
+#include <util/replicaExchange/replica_exchangers/2D_S_Eoff_RE_EDS/replica_exchange_slave_eds.h>
 
 
 #undef MODULE
-#undef SUBMODULE
+#undef Sreplica_exchange_base_eds
 #define MODULE util
 #define SUBMODULE replica_exchange
 
-util::replica_exchange_slave_eds::replica_exchange_slave_eds(io::Argument & _args,
+util::replica_exchange_slave_2d_s_eoff_eds::replica_exchange_slave_2d_s_eoff_eds(io::Argument & _args,
                                                             unsigned int cont,
                                                             unsigned int globalThreadID,
                                                             replica_graph_mpi_control replicaGraphMPIControl,
@@ -29,16 +29,16 @@ util::replica_exchange_slave_eds::replica_exchange_slave_eds(io::Argument & _arg
             replica_exchange_slave_interface(_args, cont, globalThreadID, replicaGraphMPIControl, replica_mpi_control)
 {
 
-    MPI_DEBUG(2,"replica_exchange_slave_eds " << globalThreadID << ":Constructor:\t START");
+    MPI_DEBUG(2,"replica_exchange_slave_2d_s_eoff_eds " << globalThreadID << ":Constructor:\t START");
 
-    MPI_DEBUG(2,"replica_exchange_slave_eds " << globalThreadID << ":Constructor:\t DONE");
+    MPI_DEBUG(2,"replica_exchange_slave_2d_s_eoff_eds " << globalThreadID << ":Constructor:\t DONE");
 }
 
-void util::replica_exchange_slave_eds::send_to_master() const{
+void util::replica_exchange_slave_2d_s_eoff_eds::send_to_master() const{
   #ifdef XXMPI
   if(not_sender){
-  DEBUG(2,"replica_exchange_slave_eds " << globalThreadID << ":send_to_master:\t START");
-  DEBUG(2,"replica_exchange_slave_eds " << globalThreadID << ":send_to_master:\t Show vPots");
+  DEBUG(2,"replica_exchange_slave_2d_s_eoff_eds " << globalThreadID << ":send_to_master:\t START");
+  DEBUG(2,"replica_exchange_slave_2d_s_eoff_eds " << globalThreadID << ":send_to_master:\t Show vPots");
 
     util::repInfo info;
     std::vector<double> eds_energies;
@@ -49,21 +49,21 @@ void util::replica_exchange_slave_eds::send_to_master() const{
     info.probability = probability;
     info.switched = switched;
 
-    DEBUG(4,"replica_exchange_slave_eds " << globalThreadID << "send_to_master:\t epotTot\t "<< info.epot);
+    DEBUG(4,"replica_exchange_slave_2d_s_eoff_eds " << globalThreadID << "send_to_master:\t epotTot\t "<< info.epot);
 
-    DEBUG(4,"replica_exchange_slave_eds " << globalThreadID << ":send_to_master:\t\t send MPI_REPINFO");
+    DEBUG(4,"replica_exchange_slave_2d_s_eoff_eds " << globalThreadID << ":send_to_master:\t\t send MPI_REPINFO");
     MPI_Send(&info, 1, MPI_REPINFO, replicaGraphMPIControl.masterID, REPINFO, replicaGraphMPIControl.comm);
 
-    DEBUG(4,"replica_exchange_slave_eds " << globalThreadID << ":send_to_master:\t\t send MPI_EDS");
+    DEBUG(4,"replica_exchange_slave_2d_s_eoff_eds " << globalThreadID << ":send_to_master:\t\t send MPI_EDS");
 
     eds_energies= replica->conf.current().energies.eds_vi;
 
     MPI_Send(&eds_energies[0], 1, MPI_EDSINFO, replicaGraphMPIControl.masterID, EDSINFO, replicaGraphMPIControl.comm);
-    DEBUG(4,"replica_exchange_slave_eds " << globalThreadID << ":send_to_master:\t\t send MPI_EDS \t DONE" );
-    DEBUG(2,"replica_exchange_slave_eds " << globalThreadID << ":send_to_master:\t DONE");
+    DEBUG(4,"replica_exchange_slave_2d_s_eoff_eds " << globalThreadID << ":send_to_master:\t\t send MPI_EDS \t DONE" );
+    DEBUG(2,"replica_exchange_slave_2d_s_eoff_eds " << globalThreadID << ":send_to_master:\t DONE");
   }
 
   #else
-    throw "Cannot use send_to_master from replica_exchange_slave_eds without MPI!";
+    throw "Cannot use send_to_master from replica_exchange_slave_2d_s_eoff_eds without MPI!";
   #endif
 }
