@@ -5,7 +5,7 @@
  */
 
 /*
- * File:   replica_exchange_master_2d_s_eoff_eds.h
+ * File:   replica_exchange_slave_2d_s_eoff_eds.h
  * Author: bschroed
  *
  * Created on August 31, 2018, 10:43 AM

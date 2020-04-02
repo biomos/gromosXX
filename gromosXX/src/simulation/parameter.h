@@ -2942,10 +2942,6 @@ namespace simulation
        */
       std::vector<double> lambda;
       /**
-       * position information first: start position; second: current position of coord_ID
-       */
-      std::pair<int, int> pos_info;
-      /**
        * time step to use when running at corresponding lambda
        */
       std::vector<double> dt;

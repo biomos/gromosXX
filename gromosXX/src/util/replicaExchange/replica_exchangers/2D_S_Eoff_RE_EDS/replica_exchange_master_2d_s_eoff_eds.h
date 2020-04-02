@@ -5,7 +5,7 @@
  */
 
 /*
- * File:   replica_exchange_master_eds.h
+ * File:   replica_exchange_master_2d_s_eoff_eds.h
  * Author: theosm
  *
  * Created on March 29, 2020, 11:00 AM
@@ -118,4 +118,4 @@ namespace util{
 
     };
 }
-#endif /* replica_exchange_master_2d_s_eoff_eds_H */
+#endif /* REPLICA_EXCHANGE_MASTER_EDS_H */

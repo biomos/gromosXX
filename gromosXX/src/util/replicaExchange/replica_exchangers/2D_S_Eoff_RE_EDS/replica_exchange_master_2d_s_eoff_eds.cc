@@ -199,18 +199,26 @@ void util::replica_exchange_master_2d_s_eoff_eds::write() {
               << std::setw(6) << replicaData[replicaData[treplicaID].partner].pos_info.second
               << "\t\t"
               << std::setw(6) << replicaData[treplicaID].run << "  ";
+      /*
       repOut.precision(svalPrecision);
       DEBUG(2,"replica_exchange_master_2d_s_eoff_eds "<< globalThreadID <<":write:\t s_val raus! "<<replicaData[treplicaID].l);
 
-      repOut  << std::setw(13) << replicaData[treplicaID].l;
+      //do not use it anymore since the info is in header
+      //repOut  << std::setw(13) << replicaData[treplicaID].l;
+      */
+
       repOut.precision(generalPrecision);
       //do not use temperatures anymore
       //repOut  << std::setw(13) << replicaData[treplicaID].T
       //be careful when commenting in -- extra repOut
       repOut  << " "
               << std::setw(18) << replicaData[treplicaID].epot;
+
+      /*
+      //do not use it anymore since the info is in header
       repOut.precision(svalPrecision);
       repOut  << std::setw(13) << replicaData[replicaData[treplicaID].partner].l;
+      */
 
       repOut.precision(generalPrecision);
       //do not use temperatures anymore
@@ -259,7 +267,13 @@ void util::replica_exchange_master_2d_s_eoff_eds::init_repOut_stat_file() {
         repOut << std::setw(12) << repParams.temperature[t];
     }
     repOut << "\n";
-    repOut << "#s\t";
+    repOut << "#Start coordinate == Position coordinate\n";
+    repOut << "#Position\t";
+    for(int i=0; i < replicaGraphMPIControl.numberOfReplicas; ++i){
+      repOut << std::setw(12) << i;
+    }
+    repOut << "\n";
+    repOut << "#s\t\t";
     repOut.precision(svalPrecision);
     int num_l = reedsParam.num_l;
     for (int i = 0; i < num_l; ++i){
@@ -270,7 +284,7 @@ void util::replica_exchange_master_2d_s_eoff_eds::init_repOut_stat_file() {
     for (int j = 0; j < reedsParam.num_states; ++j) {
         repOut << "\n# E"<< (j+1)<<"R(s)\t";
         for (int i = 0; i < num_l; ++i)
-            repOut << "\t" << std::setw(4) << reedsParam.eds_para[i].eir[j];
+            repOut << std::setw(12) << reedsParam.eds_para[i].eir[j];
     }
 
     repOut << "\n#\n";
@@ -289,17 +303,19 @@ void util::replica_exchange_master_2d_s_eoff_eds::init_repOut_stat_file() {
           << "  "
           << std::setw(6) << "run"
 
-          << std::setw(13) << "si"
+          //do not use it anymore since the info is in header
+          //<< std::setw(13) << "si"
           //do not use temperatures anymore
           //<< std::setw(13) << "Ti"
           << std::setw(18) << "Epoti"
-
-          << std::setw(13) << "sj"
+          //do not use it anymore since the info is in header
+          //<< std::setw(13) << "sj"
           //do not use temperatures anymore
           //<< std::setw(13) << "Tj"
+
           << std::setw(18) << "Epotj"
           << std::setw(13) << "p"
-          << " "
+          << "  "
           << std::setw(6) << "exch";
     for (int x=1; x<= reedsParam.num_states; x++){
         repOut<<std::setw(17)<<"Vr"<<x;

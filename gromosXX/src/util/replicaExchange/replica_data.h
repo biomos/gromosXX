@@ -16,7 +16,6 @@ namespace util
     struct replica_data
     {
         unsigned int ID;
-        std::pair<int, int> pos_info;
         double T;
         double l;
         double dt;
