@@ -121,6 +121,7 @@ void util::replica_exchange_base_interface::swap(){
   DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":swap:\t START");
 
     partnerReplicaID = find_partner();
+    DEBUG(1,"\n\nreplica_exchange_base_interface: SWAP\n\n");
 
     //exchanging coord_ID's
     DEBUG(3, "swap(): simulationID, partnerReplicaID= " << simulationID << ", " << partnerReplicaID << "\n");
@@ -178,6 +179,8 @@ void util::replica_exchange_base_interface::write_final_conf() {
 //SWAPPING Functions
 void util::replica_exchange_base_interface::swap_replicas_2D(const unsigned int partnerReplicaID) {
   DEBUG(4, "replica "<<  globalThreadID <<":swap:\t  START");
+
+  DEBUG(1,"\n\nreplica_exchange_base_interface: SWAP_2D\n\n");
 
   unsigned int partnerReplicaMasterThreadID = partnerReplicaID;
   unsigned int numT = replica->sim.param().replica.num_T;
@@ -267,6 +270,8 @@ void util::replica_exchange_base_interface::swap_replicas_2D(const unsigned int 
 // TODO: THIS function NEEDS to be written! @bschroed
 void util::replica_exchange_base_interface::swap_replicas_1D(const unsigned int partnerReplicaID) {
   DEBUG(4, "replica "<<  globalThreadID <<":swap:\t  START");
+
+  DEBUG(1,"\n\nreplica_exchange_base_interface: SWAP_1D\n\n");
 
   unsigned int partnerReplicaMasterThreadID = partnerReplicaID;
   unsigned int numP = replica->sim.param().replica.num_T;

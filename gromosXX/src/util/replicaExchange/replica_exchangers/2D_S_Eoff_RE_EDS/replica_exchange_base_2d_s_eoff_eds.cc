@@ -171,6 +171,58 @@ void util::replica_exchange_base_2d_s_eoff_eds::init_eds_stat(){
 }
 
 //RE
+void util::replica_exchange_base_2d_s_eoff_eds::swap(){
+    DEBUG(3,"replica_exchange_base_2d_s_eoff_eds "<< globalThreadID <<":swap:\t START");
+
+    partnerReplicaID = find_partner();
+    DEBUG(1,"\n\nreplica_exchange_base_2d_s_eoff_eds: SWAP\n\n");
+
+    //exchanging coord_ID's
+    DEBUG(3, "swap(): simulationID, partnerReplicaID= " << simulationID << ", " << partnerReplicaID << "\n");
+    //replica->sim.param().reeds.eds_para[simulationID].pos_info.second = partnerReplicaID;
+    replica->sim.param().reeds.eds_para[partnerReplicaID].pos_info.second = simulationID;
+
+    //theosm: tried several ways -- might be an alternative
+    /*
+    int tmp = replica->sim.param().reeds.eds_para[partnerReplicaID].pos_info.second;
+    replica->sim.param().reeds.eds_para[partnerReplicaID].pos_info.second = replica->sim.param().reeds.eds_para[simulationID].pos_info.second;
+    replica->sim.param().reeds.eds_para[simulationID].pos_info.second = tmp;
+
+    DEBUG(1, "swap(): simulationID, reedsParam->pos_info.second= " << simulationID << ", "
+    << replica->sim.param().reeds.eds_para[simulationID].pos_info.second << "\n");
+    DEBUG(1, "swap(): partnerReplicaID, reedsParam->pos_info.second= " << partnerReplicaID << ", "
+    << replica->sim.param().reeds.eds_para[partnerReplicaID].pos_info.second << "\n");
+    */
+
+    if (partnerReplicaID != simulationID) // different replica?
+    {
+      //TODO: RENAME
+      swap_replicas_2D(partnerReplicaID);
+      if (switched) {
+        if (globalThreadID < partnerReplicaID) {
+          send_coord(partnerReplicaID);
+          receive_new_coord(partnerReplicaID);
+          // the averages of current and old are interchanged after calling exchange_state() and have to be switched back
+          exchange_averages();
+        } else {
+          receive_new_coord(partnerReplicaID);
+          send_coord(partnerReplicaID);
+          // the averages of current and old are interchanged after calling exchange_state() and have to be switched back
+          exchange_averages();
+        }
+      }
+    }
+    else {  // no exchange with replica itself
+      probability = 0.0;
+      switched = 0;
+    }
+    if(switched && replica->sim.param().replica.scale) {
+      velscale(partnerReplicaID);
+    }
+
+  DEBUG(3,"replica_exchange_base_2d_s_eoff_eds "<< globalThreadID <<":swap:\t DONE");
+}
+
 ////exchange params
 void util::replica_exchange_base_2d_s_eoff_eds::reset_eds() {//only reset switched parameters of change_eds() function
   replica->sim.param().eds = eds_para;

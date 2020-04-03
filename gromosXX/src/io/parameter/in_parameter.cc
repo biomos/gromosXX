@@ -2916,7 +2916,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
         }
 
         //get EIR-Matrix
-        std::vector<std::vector<float>> eir(num_l);
+        std::vector<std::vector<float>> eir(num_eoff);
         for(unsigned int replicaJ=0; replicaJ<num_eoff; replicaJ++){//init eir vectors
           std::vector<float> eir_vector_J(num_states, 0.0);
           eir[replicaJ] = eir_vector_J;
@@ -2973,7 +2973,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
 
         DEBUG(2, "REPLICA_EDS BLOCK: assigned all reeds params");
         //set size of vectors in param.reeds
-        param.reeds.eds_para.resize(param.reeds.num_l);
+        param.reeds.eds_para.resize(param.reeds.num_eoff);
         param.reeds.dt.resize(param.reeds.num_l);
         param.reeds.lambda.resize(param.reeds.num_l);
 
@@ -2984,6 +2984,9 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
         for (int i = 0; i < param.reeds.num_l; ++i) {
             dtV.push_back(param.step.dt);
             temperatureV.push_back(param.reeds.temperature);
+        }
+
+        for (int i = 0; i < param.reeds.num_eoff; ++i) {
 
             //READ:NUMSTATES
             param.reeds.eds_para[i].eds = true;
@@ -3015,6 +3018,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
             DEBUG(2, "REPLICA_EDS BLOCK: assign all eds params - EIR");
             for(unsigned int j = 0; j < param.reeds.eds_para[0].numstates; ++j){
                 param.reeds.eds_para[i].eir[j] = eir[i][j];
+                DEBUG(3, "REPLICA_EDS BLOCK: eir[i][j]= " << param.reeds.eds_para[i].eir[j]);
 
             }
         }

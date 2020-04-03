@@ -114,6 +114,11 @@ namespace util
 
         // RE-Exchange functions
         /**
+        * Tries a swapping of configuration if possible. Calculates energies, probabilities
+        * and sends information via MPI communication if necessary.
+        */
+        void swap() override;
+        /**
         * Sets eds_struct() parameters to original value of replica
         */
         void reset_eds();
