@@ -72,6 +72,7 @@ util::replica_exchange_base_interface::~replica_exchange_base_interface() {
 void util::replica_exchange_base_interface::createReplicas(int cont, int globalThreadID, simulation::mpi_control_struct replica_mpi_control){
   MPI_DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":createReplicas:\t START \t THREADS "<<replica_mpi_control.numberOfThreads);
 
+  DEBUG(3,"\n\nreplica_exchange_base_interface: CREATEREPLICAS\n\n");
   // create the number of replicas that are assigned to my node
     if(replica_mpi_control.numberOfThreads>1){
         if(replica_mpi_control.threadID == replica_mpi_control.masterID ){
@@ -107,6 +108,7 @@ void util::replica_exchange_base_interface::run_MD() {
 
 //TODO: REMOVE
 void util::replica_exchange_base_interface::updateReplica_params(){
+  DEBUG(3,"\n\nreplica_exchange_base_interface: UPDATEREPLICA_PARAMS\n\n");
   // update replica information
   time = replica->sim.time();
   steps = replica->sim.steps();
@@ -171,6 +173,7 @@ void util::replica_exchange_base_interface::swap(){
 
 void util::replica_exchange_base_interface::write_final_conf() {
   // write coordinates to cnf for all replica assigned to this node
+  DEBUG(3,"\n\nreplica_exchange_base_interface: WRITE_FINAL_CONF\n\n");
    replica->write_final_conf();
 }
 
@@ -366,6 +369,8 @@ int util::replica_exchange_base_interface::find_partner() const {
 
   unsigned int ID = simulationID;
 
+  DEBUG(1,"\n\nreplica_exchange_base_interface: FIND_PARTNER\n\n");
+
   unsigned int partner = ID; //makes sense why?
   bool even = ID % 2 == 0;
   bool evenRow = (ID / numT) % 2 == 0;
@@ -461,6 +466,8 @@ int util::replica_exchange_base_interface::find_partner() const {
 }
 
 double util::replica_exchange_base_interface::calc_probability(const unsigned int partnerReplicaID) {
+
+  DEBUG(3,"\n\nreplica_exchange_base_interface: CALC_PROBABILITY\n\n");
 
   unsigned int partnerReplicaMasterThreadID = partnerReplicaID;
 
@@ -618,6 +625,7 @@ double util::replica_exchange_base_interface::calculate_energy(const unsigned in
 }
 
 void util::replica_exchange_base_interface::exchange_averages() {
+  DEBUG(3,"\n\nreplica_exchange_base_interface: EXCHANGE_AVERAGES\n\n");
   // after a swap the averages of current and old are exchanged and have to be switched back
   configuration::Average  dummy = replica->conf.current().averages;
   replica->conf.current().averages=replica->conf.old().averages;
@@ -626,6 +634,7 @@ void util::replica_exchange_base_interface::exchange_averages() {
 
 //sending stuff
 void util::replica_exchange_base_interface::send_coord(const unsigned int receiverReplicaID) {
+  DEBUG(3,"\n\nreplica_exchange_base_interface: SEND_COORD\n\n");
 #ifdef XXMPI
 
   unsigned int receiverReplicaMasterThreadID = receiverReplicaID;
@@ -661,6 +670,7 @@ void util::replica_exchange_base_interface::send_coord(const unsigned int receiv
 }
 
 void util::replica_exchange_base_interface::receive_new_coord(const unsigned int senderReplicaID) {
+  DEBUG(3,"\n\nreplica_exchange_base_interface: RECEIVE_NEW_COORD\n\n");
 #ifdef XXMPI
 
   unsigned int senderReplicaMasterThreadID = senderReplicaID;
@@ -701,6 +711,7 @@ void util::replica_exchange_base_interface::receive_new_coord(const unsigned int
 
 //TRE
 void util::replica_exchange_base_interface::velscale(int unsigned partnerReplica){
+  DEBUG(5,"\n\nreplica_exchange_base_interface: VELSCALE\n\n");
   double T1 = replica->sim.param().replica.temperature[simulationID];
   double T2 = replica->sim.param().replica.temperature[partnerReplica];
   if (T1 != T2) {
@@ -714,6 +725,7 @@ void util::replica_exchange_base_interface::velscale(int unsigned partnerReplica
 //TODO: mve to 2D_T_lambda ?
 //Lambda Exchange (Kinda Hamiltonian Exchange)
 void util::replica_exchange_base_interface::set_lambda() {
+  DEBUG(5,"\n\nreplica_exchange_base_interface: SET_LAMBDA\n\n");
   // change Lambda in simulation
   replica->sim.param().perturbation.lambda = l;
   replica->topo.lambda(l);
@@ -725,6 +737,7 @@ void util::replica_exchange_base_interface::set_lambda() {
 }
 
 void util::replica_exchange_base_interface::set_temp() {
+  DEBUG(5,"\n\nreplica_exchange_base_interface: SET_TEMP\n\n");
   // change T in simulation
   replica->sim.param().stochastic.temp = T;
 
@@ -735,6 +748,7 @@ void util::replica_exchange_base_interface::set_temp() {
 }
 
 void util::replica_exchange_base_interface::change_lambda(const unsigned int partnerReplicaID) {
+  DEBUG(5,"\n\nreplica_exchange_base_interface: CHANGE_LAMBDA\n\n");
   int idx;
   if (replica->sim.param().replica.num_l == 1)
     idx = 0;
@@ -753,6 +767,7 @@ void util::replica_exchange_base_interface::change_lambda(const unsigned int par
 }
 
 void util::replica_exchange_base_interface::change_temp(const unsigned int partnerReplicaID) {
+  DEBUG(5,"\n\nreplica_exchange_base_interface: CHANGE_TEMP\n\n");
   int idx;
   if (replica->sim.param().replica.num_T == 1)
     idx = 0;

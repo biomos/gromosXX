@@ -138,6 +138,7 @@ void util::replica_exchange_base_2d_s_eoff_eds::set_s() {
 }
 
 void util::replica_exchange_base_2d_s_eoff_eds::init() {
+  DEBUG(3,"\n\nreplica_exchange_base_2d_s_eoff_eds: INIT\n\n");
   MPI_DEBUG(3,"replica_exchange_base_2d_s_eoff_eds "<< globalThreadID <<":init:\t init \t START");
   DEBUG(3,"replica_exchange_base_2d_s_eoff_eds "<< globalThreadID <<":init:\t start init from baseclass \t NEXT");
   //replica->init();
@@ -148,6 +149,7 @@ void util::replica_exchange_base_2d_s_eoff_eds::init() {
 
 //initialize output files
 void util::replica_exchange_base_2d_s_eoff_eds::init_eds_stat(){
+        DEBUG(3,"\n\nreplica_exchange_base_2d_s_eoff_eds: INIT_EDS_STAT\n\n");
         DEBUG(3,"replica_exchange_base_2d_s_eoff_eds "<< globalThreadID <<":init_eds_stat:\t START");
 
         ID_t currentID=1000; //error value
@@ -225,6 +227,7 @@ void util::replica_exchange_base_2d_s_eoff_eds::swap(){
 
 ////exchange params
 void util::replica_exchange_base_2d_s_eoff_eds::reset_eds() {//only reset switched parameters of change_eds() function
+  DEBUG(3,"\n\nreplica_exchange_base_2d_s_eoff_eds: RESET_EDS\n\n");
   replica->sim.param().eds = eds_para;
   replica->sim.param().step.dt = dt;
   replica->conf.current().force= force_orig;
@@ -233,6 +236,7 @@ void util::replica_exchange_base_2d_s_eoff_eds::reset_eds() {//only reset switch
 
 void util::replica_exchange_base_2d_s_eoff_eds::change_eds(const unsigned int partner){//only change parameters, which are needed for energy calculation i.e.
 
+  DEBUG(3,"\n\nreplica_exchange_base_2d_s_eoff_eds: CHANGE_EDS\n\n");
   int idx;
   if (replica->sim.param().reeds.num_l == 1){
     idx = 0;
@@ -262,6 +266,7 @@ double util::replica_exchange_base_2d_s_eoff_eds::calc_energy_eds_stat(double s)
     double old_s;
     double old_eds_vr;
     algorithm::Algorithm * ff;
+    DEBUG(5,"\n\nreplica_exchange_base_2d_s_eoff_eds: CALC_ENERGY_EDS_STAT\n\n");
     if(replica->sim.param().eds.eds){
           //to reset old state
           old_dt=replica->sim.param().step.dt;
@@ -309,6 +314,8 @@ double util::replica_exchange_base_2d_s_eoff_eds::calculate_energy_core() {
 
      ff = replica->md.algorithm("EDS");
 
+     DEBUG(3,"\n\nreplica_exchange_base_2d_s_eoff_eds: CALCULATE_ENERGY_CORE\n\n");
+
     //Calculate energies
     DEBUG(5, "replica_reeds "<< globalThreadID <<":calculate_energy:\t calc energies");
     if (ff->apply(replica->topo, replica->conf, replica->sim)) {
@@ -329,6 +336,8 @@ double util::replica_exchange_base_2d_s_eoff_eds::calculate_energy_core() {
 
 double util::replica_exchange_base_2d_s_eoff_eds::calculate_energy(const unsigned int selectedReplicaID) {
     DEBUG(4, "replica_reeds "<< globalThreadID <<":calculate_energy:\t START");
+
+    DEBUG(3,"\n\nreplica_exchange_base_2d_s_eoff_eds: CALCULATE_ENERGY\n\n");
 
 
     DEBUG(5, "replica_reeds "<< globalThreadID <<":calculate_energy:\t get Partner settings");
