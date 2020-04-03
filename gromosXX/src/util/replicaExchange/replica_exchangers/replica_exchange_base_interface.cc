@@ -369,7 +369,7 @@ int util::replica_exchange_base_interface::find_partner() const {
 
   unsigned int ID = simulationID;
 
-  DEBUG(1,"\n\nreplica_exchange_base_interface: FIND_PARTNER\n\n");
+  DEBUG(3,"\n\nreplica_exchange_base_interface: FIND_PARTNER\n\n");
 
   unsigned int partner = ID; //makes sense why?
   bool even = ID % 2 == 0;

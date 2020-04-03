@@ -160,6 +160,7 @@ int main(int argc, char *argv[]) {
     unsigned int numReplicas;
     unsigned int numEDSstates;
     unsigned int numEoff;
+    unsigned int numSVals;
     unsigned int cont;
 
     //simulation dependend MPI Vars
@@ -204,14 +205,22 @@ int main(int argc, char *argv[]) {
             numAtoms = topo.num_atoms();
             reedsSim = sim.param().reeds.reeds;
             numEoff = sim.param().reeds.num_eoff;
+            numSVals = sim.param().reeds.num_l;
 
-            if (reedsSim > 0) {
-                numReplicas = sim.param().reeds.num_l;
-                numEDSstates = sim.param().reeds.eds_para[0].numstates;
-            } else {
-                numReplicas = sim.param().replica.num_T * sim.param().replica.num_l;
-                numEDSstates = 0;
-            }
+            switch(reedsSim) {
+                  case 0:
+                      numReplicas = sim.param().replica.num_T * sim.param().replica.num_l;
+                      numEDSstates = 0;
+                      break;
+                  case 1:
+                      numReplicas = numSVals;
+                      numEDSstates = sim.param().reeds.eds_para[0].numstates;
+                      break;
+                  case 2:
+                      numReplicas = numSVals;// * numEoff;
+                      numEDSstates = sim.param().reeds.eds_para[0].numstates;
+                      break;
+              }
 
             //MPI THREAD SIMULATION SPLITTING
             //needed to be calculated here
@@ -224,6 +233,9 @@ int main(int argc, char *argv[]) {
             //MPI THREAD SPLITING ONTO Simulation - REPLICAS
             threadsPerReplicaSimulation = totalNumberOfThreads / numReplicas;
             unsigned int leftOverThreads = totalNumberOfThreads % numReplicas;
+            //theosm remove
+            //std::cerr << "totalNumberOfThreads & threadsPerReplicaSimulation= " << totalNumberOfThreads << " & "
+            //<< threadsPerReplicaSimulation << std::endl;
 
             unsigned int threadID =0;
             int replica_offset = 0;
@@ -256,6 +268,8 @@ int main(int argc, char *argv[]) {
                 }
                 counter++;
             }
+            //theosm remove
+            //std::cerr << "before error handling" << std::endl;
 
             //ERROR HANDLING FOR MPI
             if (replica_owned_threads.size() > totalNumberOfThreads) {
@@ -536,7 +550,7 @@ int main(int argc, char *argv[]) {
             msg << "\n\t RE-EDS:\n";
             msg << "\t reeds_control:\t" << reedsSim << "\n";
             msg << "\t numStates:\t" << numEDSstates << "\n";
-            msg << "\t numSValues:\t" << numReplicas << "\n";
+            msg << "\t numSValues:\t" << numSVals << "\n";
             msg << "\t numEoffs:\t" << numEoff << "\n\n";
         }
         msg << "\t Mpi Settings:\t\n";
