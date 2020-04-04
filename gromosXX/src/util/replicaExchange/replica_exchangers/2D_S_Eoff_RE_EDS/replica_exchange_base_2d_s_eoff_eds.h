@@ -114,12 +114,11 @@ namespace util
 
         // RE-Exchange functions
         /**
-        * Tries a swapping of configuration if possible. Calculates energies, probabilities
-        * and sends information via MPI communication if necessary.
+        * Just a wrapper for the actual swap functions swap_s and swap_eoff. Exchanges coordinates and averages.
         */
         void swap() override;
         /**
-        * Tries a swapping of configuration if possible. Calculates energies, probabilities
+        * Tries a swapping in s dimension of configuration if possible. Calculates energies, probabilities
         * and sends information via MPI communication if necessary.
         */
         void swap_s(const unsigned int partnerReplicaID);
