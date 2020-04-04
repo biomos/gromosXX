@@ -301,7 +301,6 @@ void util::replica_exchange_base_interface::swap_replicas_1D(const unsigned int 
       } else
         switched = false;
     } else {    //The Partner sends his data to The calculating Thread
-
         //special case if lambda also needs to be exchanged
       bool sameLambda = (l == replica->sim.param().replica.lambda[partnerReplicaID / replica->sim.param().replica.num_T]);
       if(!sameLambda){      //exchange LAMBDA

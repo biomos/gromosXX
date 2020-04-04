@@ -176,53 +176,407 @@ void util::replica_exchange_base_2d_s_eoff_eds::init_eds_stat(){
 void util::replica_exchange_base_2d_s_eoff_eds::swap(){
     DEBUG(3,"replica_exchange_base_2d_s_eoff_eds "<< globalThreadID <<":swap:\t START");
 
-    partnerReplicaID = find_partner();
-    DEBUG(1,"\n\nreplica_exchange_base_2d_s_eoff_eds: SWAP\n\n");
+    //for(int trial=0; trial < 4; ++trial){
+      //idea: s-dim: 1st & 3rd trial changing
+      //2nd trial eoff-dim
 
-    //exchanging coord_ID's
-    DEBUG(3, "swap(): simulationID, partnerReplicaID= " << simulationID << ", " << partnerReplicaID << "\n");
-    //replica->sim.param().reeds.eds_para[simulationID].pos_info.second = partnerReplicaID;
-    replica->sim.param().reeds.eds_para[partnerReplicaID].pos_info.second = simulationID;
+      partnerReplicaID = find_partner();
+      DEBUG(1,"\n\nreplica_exchange_base_2d_s_eoff_eds: SWAP\n\n");
 
-    //theosm: tried several ways -- might be an alternative
-    /*
-    int tmp = replica->sim.param().reeds.eds_para[partnerReplicaID].pos_info.second;
-    replica->sim.param().reeds.eds_para[partnerReplicaID].pos_info.second = replica->sim.param().reeds.eds_para[simulationID].pos_info.second;
-    replica->sim.param().reeds.eds_para[simulationID].pos_info.second = tmp;
+      //exchanging coord_ID's
+      DEBUG(3, "swap(): simulationID, partnerReplicaID= " << simulationID << ", " << partnerReplicaID << "\n");
+      //replica->sim.param().reeds.eds_para[simulationID].pos_info.second = partnerReplicaID;
+      replica->sim.param().reeds.eds_para[partnerReplicaID].pos_info.second = simulationID;
 
-    DEBUG(1, "swap(): simulationID, reedsParam->pos_info.second= " << simulationID << ", "
-    << replica->sim.param().reeds.eds_para[simulationID].pos_info.second << "\n");
-    DEBUG(1, "swap(): partnerReplicaID, reedsParam->pos_info.second= " << partnerReplicaID << ", "
-    << replica->sim.param().reeds.eds_para[partnerReplicaID].pos_info.second << "\n");
-    */
+      //theosm: tried several ways -- might be an alternative
+      /*
+      int tmp = replica->sim.param().reeds.eds_para[partnerReplicaID].pos_info.second;
+      replica->sim.param().reeds.eds_para[partnerReplicaID].pos_info.second = replica->sim.param().reeds.eds_para[simulationID].pos_info.second;
+      replica->sim.param().reeds.eds_para[simulationID].pos_info.second = tmp;
 
-    if (partnerReplicaID != simulationID) // different replica?
-    {
-      //TODO: RENAME
-      swap_replicas_2D(partnerReplicaID);
-      if (switched) {
-        if (globalThreadID < partnerReplicaID) {
-          send_coord(partnerReplicaID);
-          receive_new_coord(partnerReplicaID);
-          // the averages of current and old are interchanged after calling exchange_state() and have to be switched back
-          exchange_averages();
-        } else {
-          receive_new_coord(partnerReplicaID);
-          send_coord(partnerReplicaID);
-          // the averages of current and old are interchanged after calling exchange_state() and have to be switched back
-          exchange_averages();
+      DEBUG(1, "swap(): simulationID, reedsParam->pos_info.second= " << simulationID << ", "
+      << replica->sim.param().reeds.eds_para[simulationID].pos_info.second << "\n");
+      DEBUG(1, "swap(): partnerReplicaID, reedsParam->pos_info.second= " << partnerReplicaID << ", "
+      << replica->sim.param().reeds.eds_para[partnerReplicaID].pos_info.second << "\n");
+      */
+
+      if (partnerReplicaID != simulationID) // different replica?
+      {
+        if(run % 2 == 1){
+          swap_s(partnerReplicaID);
+        }
+        else{
+        swap_replicas_2D(partnerReplicaID);
+        }
+        if (switched) {
+          if (globalThreadID < partnerReplicaID) {
+            send_coord(partnerReplicaID);
+            receive_new_coord(partnerReplicaID);
+            // the averages of current and old are interchanged after calling exchange_state() and have to be switched back
+            exchange_averages();
+          } else {
+            receive_new_coord(partnerReplicaID);
+            send_coord(partnerReplicaID);
+            // the averages of current and old are interchanged after calling exchange_state() and have to be switched back
+            exchange_averages();
+          }
         }
       }
-    }
-    else {  // no exchange with replica itself
-      probability = 0.0;
-      switched = 0;
-    }
-    if(switched && replica->sim.param().replica.scale) {
-      velscale(partnerReplicaID);
-    }
+      else {  // no exchange with replica itself
+        probability = 0.0;
+        switched = 0;
+      }
+      if(switched && replica->sim.param().replica.scale) {
+        velscale(partnerReplicaID);
+      }
+    //}
 
   DEBUG(3,"replica_exchange_base_2d_s_eoff_eds "<< globalThreadID <<":swap:\t DONE");
+}
+
+void util::replica_exchange_base_2d_s_eoff_eds::swap_s(const unsigned int partnerReplicaID) {
+  DEBUG(4, "replica "<<  globalThreadID <<":swap:\t  START");
+
+  DEBUG(1,"\n\nreplica_exchange_base_2d_s_eoff_eds: SWAP_S\n\n");
+
+  unsigned int partnerReplicaMasterThreadID = partnerReplicaID;
+  unsigned int numL = replica->sim.param().replica.num_l;
+
+  // does partner exist?
+  if (partnerReplicaID < numL && partnerReplicaID != simulationID) {
+    // the one with lower ID does probability calculation
+    if (simulationID < partnerReplicaID) {
+
+      // posts a MPI_Recv(...) matching the MPI_Send below
+      probability = calc_probability(partnerReplicaID);
+      const double randNum = rng.get();
+
+      std::vector<double> prob(2);
+      prob[0] = probability;
+      prob[1] = randNum;
+
+#ifdef XXMPI
+      MPI_Send(&prob[0], 2, MPI_DOUBLE, partnerReplicaMasterThreadID, SENDCOORDS, replicaGraphMPIControl.comm);
+#endif
+
+      if (randNum < probability) {
+        switched = true;
+      } else
+        switched = false;
+    } else {    //The Partner sends his data to The calculating Thread
+      //special case if lambda also needs to be exchanged
+      bool sameLambda = (l == replica->sim.param().replica.lambda[partnerReplicaID / replica->sim.param().replica.num_T]);
+      if(!sameLambda){      //exchange LAMBDA
+        // E21: Energy with configuration 2 and lambda 1(of partner)
+        const double E21 = calculate_energy(partnerReplicaMasterThreadID);
+        // this we can store as the partner energy of the current replica
+        epot_partner = E21;
+        // E22: Energy with configuration 2 and lambda 2(own one)
+#ifdef XXMPI
+        const double E22 = epot;
+        // send E21 and E22
+        double energies[2] = {E22, E21};
+        //this send operation is matched in calc_probability()
+        MPI_Send(&energies[0], 2, MPI_DOUBLE, partnerReplicaMasterThreadID, SWITCHENERGIES,  replicaGraphMPIControl.comm);
+#endif
+      } else { // sameLambda
+#ifdef XXMPI
+        double energies[2] = {epot, 0.0};
+        MPI_Send(&energies[0],2,MPI_DOUBLE, partnerReplicaMasterThreadID, SWITCHENERGIES,  replicaGraphMPIControl.comm);
+#endif
+     }
+      if (replica->sim.param().pcouple.scale != math::pcouple_off) {
+#ifdef XXMPI
+        math::Box box_replica = replica->conf.current().box;    //exchange box
+        MPI_Send(&box_replica(0)[0], 1, MPI_BOX, partnerReplicaMasterThreadID, BOX,  replicaGraphMPIControl.comm);
+#endif
+      }
+
+#ifdef XXMPI
+      MPI_Status status;
+#endif
+      std::vector<double> prob;
+      prob.resize(2);
+#ifdef XXMPI
+      MPI_Recv(&prob[0], 2, MPI_DOUBLE, partnerReplicaMasterThreadID, SENDCOORDS,  replicaGraphMPIControl.comm, &status);
+#endif
+      //Have we been exchanged little partner?
+      probability = prob[0];
+      double randNum = prob[1];
+
+      if (randNum < probability) {
+        switched = true;
+      } else {
+        switched = false;
+      }
+    }
+
+  } else {//This should be an error!
+      throw "Partner does not exist!";
+    /*
+      partner = ID;
+    switched = false;
+    probability = 0.0;
+
+    */
+  }
+    DEBUG(4, "replica "<< globalThreadID <<":swap:\t  DONE");
+}
+
+int util::replica_exchange_base_2d_s_eoff_eds::find_partner() const {
+  unsigned int num_eoff = replica->sim.param().reeds.num_eoff;
+  DEBUG(3,"find_partner: num_eoff= " << num_eoff << "\n");
+  unsigned int num_l = replica->sim.param().reeds.num_l;
+  DEBUG(3,"find_partner: num_l= " << num_l << "\n");
+  unsigned int numT = replica->sim.param().replica.num_T;
+  DEBUG(3,"find_partner: numT= " << numT << "\n");
+
+  unsigned int numReps = num_l * numT;
+  DEBUG(3,"find_partner: numReps= " << numReps << "\n");
+
+
+  unsigned int ID = simulationID;
+
+  DEBUG(1,"\n\nreplica_exchange_base_2d_s_eoff_eds: FIND_PARTNER\n\n");
+
+  //already given
+  unsigned int partner = ID;
+  bool even = ID % 2 == 0;
+  bool evenRow = (ID / numT) % 2 == 0;
+  bool firstElement = (ID % numT == 0);
+  bool lastElement = (ID % numT == numT - 1);
+  bool numTeven = (numT % 2 == 0);
+
+  //theosm
+  //edge cases for s dimension
+  bool upper = ID % num_l == 0;
+  bool lower = ID % num_l == num_l - 1;
+  //current s coord == j € [0, num_l -1)
+  unsigned int j = ID % num_l;
+  //edge cases for eoff dimension
+  bool left_edge = ID == j;
+  bool right_edge = ID == numReps - num_l + j;
+
+  //theosm: on my own
+  /*
+  switch ((run % 4) - 1) {
+    case 0: //s dimension
+    DEBUG(1,"find_partner: FIRST case\n");
+        if (even){
+          partner = ID + 1;
+          //edge case
+          if(lower)
+            partner = ID;
+        }
+        else{
+          partner = ID - 1;
+          //edge case
+          if(upper)
+            partner = ID;
+        }
+    DEBUG(1,"find_partner(first case): partner of ID=" << ID << " is " << partner << "\n");
+      break;
+
+    case 1: //eoff dimension
+    DEBUG(1,"find_partner: SECOND case -- nothing to be done right now\n");
+      partner = ID + num_l;
+      //edge case
+      if(right_edge)
+        partner = ID;
+
+      partner = ID - num_l;
+      //edge case
+      if(left_edge)
+        partner = ID;
+    DEBUG(1,"find_partner(second case): partner of ID=" << ID << " is " << partner << "\n");
+      break;
+
+    case 2: //s dimension
+    DEBUG(1,"find_partner: THIRD case\n");
+      //if (numTeven) {
+        if (even){
+          partner = ID + 1;
+          //edge case
+          if(lower)
+            partner = ID;
+        }
+        else{
+          partner = ID - 1;
+          //edge case
+          if(upper)
+          partner = ID;
+        }
+    DEBUG(1,"find_partner(third case): partner of ID=" << ID << " is " << partner << "\n");
+      break;
+
+    case -1: //eoff dimension
+    DEBUG(1,"\n find_partner: FOURTH case -- nothing to be done right now\n");
+      partner = ID - num_l;
+      //edge case
+      if(left_edge)
+        partner = ID;
+
+      partner = ID + num_l;
+      //edge case
+      if(right_edge)
+        partner = ID;
+    DEBUG(1,"\n find_partner(fourth case): partner of ID=" << ID << " is " << partner << "\n");
+      break;
+  }
+  */
+
+
+
+    // determine switch direction -- already given just modified
+    switch ((run % 4) - 1) {
+      case 0: //s dimension
+      DEBUG(1,"find_partner: FIRST case\n");
+        if (numTeven) {
+          if (even) {
+            partner = ID - 1;
+            //edge case
+            if(upper)
+              partner = ID;
+          }
+          else {
+            partner = ID + 1;
+            //edge case
+            if(lower)
+              partner = ID;
+          }
+        } else {
+          if (evenRow) {
+            if (even) {
+              partner = ID + 1;
+              DEBUG(1,"\nHERE0\n");
+              DEBUG(1,"\nHERE2\n");
+              //edge case
+              if(lower)
+                partner = ID;
+            }
+            else {
+              partner = ID - 1;
+              //edge case
+              if(upper)
+                partner = ID;
+            }
+          } else {
+            if (even) {
+              partner = ID + 1;
+              //edge case
+              if(lower)
+                partner = ID;
+            }
+            else {
+              partner = ID - 1;
+              DEBUG(1,"\nHERE1\n");
+              //edge case
+              if(upper)
+                partner = ID;
+            }
+          }
+        }
+      DEBUG(1,"find_partner(first case): partner of ID=" << ID << " is " << partner << "\n");
+        break;
+
+      case 1: //eoff dimension
+      DEBUG(1,"find_partner: SECOND case\n");
+        if (evenRow) {
+          partner = ID + num_l;
+          DEBUG(1,"\nHERE3\n");
+          DEBUG(1,"\nHERE5\n");
+          //edge case
+          if(right_edge)
+            partner = ID;
+          }
+        else {
+          partner = ID - num_l;
+          DEBUG(1,"\nHERE4\n");
+          //edge case
+          if(left_edge)
+            partner = ID;
+        }
+      DEBUG(1,"find_partner(second case): partner of ID=" << ID << " is " << partner << "\n");
+        break;
+
+      case 2: //s dimension
+      DEBUG(1,"find_partner: THIRD case\n");
+        if (numTeven) {
+          if (even) {
+            partner = ID + 1;
+            //edge case
+            if(lower)
+              partner = ID;
+          }
+          else {
+            partner = ID - 1;
+            //edge case
+            if(upper)
+              partner = ID;
+          }
+        } else {
+          if (evenRow) {
+            if (even) {
+              partner = ID + 1;
+              DEBUG(1,"\nHERE6\n");
+              DEBUG(1,"\nHERE8\n");
+              //edge case
+              if(lower)
+                partner = ID;
+            }
+            else {
+              partner = ID - 1;
+              //edge case
+              if(upper)
+                partner = ID;
+            }
+          } else {
+            if (even) {
+              partner = ID + 1;
+              //edge case
+              if(lower)
+                partner = ID;
+            }
+            else {
+              partner = ID - 1;
+              DEBUG(1,"\nHERE7\n");
+              //edge case
+              if(upper)
+                partner = ID;
+            }
+          }
+        }
+      DEBUG(1,"find_partner(third case): partner of ID=" << ID << " is " << partner << "\n");
+        break;
+
+      case -1: //eoff dimension
+      DEBUG(1,"find_partner: FOURTH case\n");
+        if (evenRow) {
+          partner = ID - num_l;
+          DEBUG(1,"\nHERE9\n");
+          DEBUG(1,"\nHERE11\n");
+          //edge case
+          if(left_edge)
+            partner = ID;
+        }
+        else {
+          partner = ID + num_l;
+          DEBUG(1,"\nHERE10\n");
+          //edge case
+          if(right_edge)
+            partner = ID;
+        }
+      DEBUG(1,"find_partner(fourth case): partner of ID=" << ID << " is " << partner << "\n");
+        break;
+    }
+
+  /*
+  // partner out of range ? - Do we really need this or is it more a hack hiding bugs?
+  if (partner > numT * num_l - 1)
+    partner = ID;
+  */
+
+  return partner;
 }
 
 ////exchange params

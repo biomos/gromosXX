@@ -119,6 +119,16 @@ namespace util
         */
         void swap() override;
         /**
+        * Tries a swapping of configuration if possible. Calculates energies, probabilities
+        * and sends information via MPI communication if necessary.
+        */
+        void swap_s(const unsigned int partnerReplicaID);
+        /**
+        * Finds partner for current switch
+        * @return ID of partner, own ID if no switching in current trial
+        */
+        int find_partner() const override;
+        /**
         * Sets eds_struct() parameters to original value of replica
         */
         void reset_eds();
