@@ -78,6 +78,9 @@ void util::replica_exchange_master_eds::receive_from_all_slaves() {
   MPI_Status status_eds;
 
   util::repInfo info;
+  //theosm -- new
+  bool begin = 0;
+  int real_pos;
 
   // receive all information from slaves
   DEBUG(4,"replica_exchange_master_eds "<< globalThreadID <<":receive_from_all_slaves:\t receive from slaves");
@@ -93,6 +96,17 @@ void util::replica_exchange_master_eds::receive_from_all_slaves() {
         replicaData[slaveReplicaID].probability = info.probability;
         replicaData[slaveReplicaID].switched = info.switched;
         replicaData[slaveReplicaID].partner = info.partner;
+        //theosm -- new
+        if(replicaData[slaveReplicaID].partner == 0 && info.run == 1){
+          begin = 1;
+          real_pos = slaveReplicaID;
+          DEBUG(1, "begin, real_pos & slaveReplicaID= " << begin << ", " << real_pos << ", " << slaveReplicaID << "\n");
+        }
+        if(replicaData[slaveReplicaID].partner == 0 && info.run != 1){
+          begin = 0;
+          real_pos = reedsParam.eds_para[slaveReplicaID].pos_info.second;
+          DEBUG(1, "begin, real_pos & slaveReplicaID= " << begin << ", " << real_pos << ", " << slaveReplicaID << "\n");
+        }
         //theosm
         //replicaData[slaveReplicaID].pos_info.second = reedsParam.eds_para[slaveReplicaID].pos_info.second;
 
@@ -108,6 +122,7 @@ void util::replica_exchange_master_eds::receive_from_all_slaves() {
         if(info.switched){
           replicaData[slaveReplicaID].pos_info.second = reedsParam.eds_para[replicaData[slaveReplicaID].partner].pos_info.second;
         }
+
 
         DEBUG(4,"replica_exchange_master_eds "<< globalThreadID <<":receive_from_all_slaves:\t REP:" <<slaveReplicaID<< " EpotTot: "<< replicaData[slaveReplicaID].epot);
 
@@ -133,20 +148,26 @@ void util::replica_exchange_master_eds::receive_from_all_slaves() {
   DEBUG(3, "receive_from_all_slaves(): write from master to data structure: simulationID, pos_info= "
   << simulationID << ", " << reedsParam.eds_para[simulationID].pos_info.second << "\n");
 
+
   //check whether switched or not
   if(switched){
     DEBUG(1, "receive_from_all_slaves()-if switched: write from master to data structure: simulationID, partnerReplicaID= "
     << simulationID << ", " << partnerReplicaID << "\n");
+    //theosm -- new
+    //replicaData[simulationID].pos_info.second = real_pos;
     replicaData[simulationID].pos_info.second = replicaData[simulationID].partner;
     DEBUG(1, "receive_from_all_slaves()-if switched: write from master to data structure: simulationID, replicaData->pos_info= "
-    << simulationID << ", " << replicaData[simulationID].partner << "\n");
+    << simulationID << ", " << replicaData[simulationID].pos_info.second << "\n");
+
     //theosm -- this approach does not work since the slave == partnerReplicaID was already updated
     //--> have to do it via the partner
     /*replicaData[simulationID].pos_info.second = reedsParam.eds_para[partnerReplicaID].pos_info.second;
     DEBUG(1, "receive_from_all_slaves()-if switched: write from master to data structure: simulationID, reedsParam[partner]->pos_info= "
     << simulationID << ", " << reedsParam.eds_para[partnerReplicaID].pos_info.second << "\n");
     */
+
   }
+
 
   replicaData[simulationID].Vi = replica->conf.current().energies.eds_vi;
 
