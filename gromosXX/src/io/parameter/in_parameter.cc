@@ -2862,6 +2862,9 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
     exampleblock << "#                       can be used to optimize the s distribution.                                    \n";
     exampleblock << "#             0 eds stat turned off                                                                    \n";
     exampleblock << "#             1 eds stat turned on                                                                     \n";
+    exampleblock << "# PERIODIC >= 0 2D periodic boundary (Eoff only)               \n";
+    exampleblock << "#             0 periodic boundary off                          \n";
+    exampleblock << "#             1 periodic boundary on                           \n";
     exampleblock << "#          \n";
     exampleblock << "#  REEDS    \n";
     exampleblock << "   1       \n";
@@ -2875,8 +2878,8 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
     exampleblock << "  0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0  \n";
     exampleblock << "  0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0  \n";
     exampleblock << "  0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0  \n";
-    exampleblock << "# NRETRIAL   NREQUIL    CONT    EDS_STAT_OUT       \n";
-    exampleblock << "       10         0         1           1          \n";
+    exampleblock << "# NRETRIAL   NREQUIL    CONT    EDS_STAT_OUT    PERIODIC       \n";
+    exampleblock << "       10         0         1           1           0          \n";
     exampleblock << "END\n";
 
     DEBUG(1, "REPLICA_EDS BLOCK\t START");
@@ -2898,6 +2901,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
         //init_vars
         unsigned int reeds_control, num_l, num_states, num_eoff=0;
         unsigned int ntrials, nEquilibrate, cont_run, eds_stat_out=0;
+        bool periodic=0;
 
         // GET BLOCKVARS
         //SYS Settings
@@ -2935,6 +2939,8 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
         block.get_next_parameter("NREQUIL", nEquilibrate, ">=0", "");
         block.get_next_parameter("CONT", cont_run, "", "0,1");
         block.get_next_parameter("EDS_STAT_OUT", eds_stat_out, "", "0,1");
+        block.get_next_parameter("PERIODIC", periodic, "", "0,1");
+        DEBUG(1, "REPLICA_EDS BLOCK: PERIODIC= " << periodic);
 
 
         // SET SETTINGS
@@ -2967,6 +2973,8 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
         param.reeds.equilibrate = nEquilibrate;
         param.reeds.cont =cont_run;
         param.reeds.eds_stat_out = eds_stat_out;
+        param.reeds.periodic = periodic;
+        DEBUG(1, "REPLICA_EDS BLOCK: PERIODIC= " << periodic);
 
         // Replica temperatures - has to be the same for each replica // Not sure if this is optimal? bschroed
         param.reeds.temperature = param.multibath.multibath.bath(0).temperature;
