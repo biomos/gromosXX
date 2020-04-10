@@ -217,7 +217,7 @@ int main(int argc, char *argv[]) {
                       numEDSstates = sim.param().reeds.eds_para[0].numstates;
                       break;
                   case 2:
-                      numReplicas = numSVals;// * numEoff;
+                      numReplicas = numSVals * numEoff;
                       numEDSstates = sim.param().reeds.eds_para[0].numstates;
                       break;
               }
@@ -233,9 +233,6 @@ int main(int argc, char *argv[]) {
             //MPI THREAD SPLITING ONTO Simulation - REPLICAS
             threadsPerReplicaSimulation = totalNumberOfThreads / numReplicas;
             unsigned int leftOverThreads = totalNumberOfThreads % numReplicas;
-            //theosm remove
-            //std::cerr << "totalNumberOfThreads & threadsPerReplicaSimulation= " << totalNumberOfThreads << " & "
-            //<< threadsPerReplicaSimulation << std::endl;
 
             unsigned int threadID =0;
             int replica_offset = 0;
@@ -268,8 +265,6 @@ int main(int argc, char *argv[]) {
                 }
                 counter++;
             }
-            //theosm remove
-            //std::cerr << "before error handling" << std::endl;
 
             //ERROR HANDLING FOR MPI
             if (replica_owned_threads.size() > totalNumberOfThreads) {
@@ -286,6 +281,7 @@ int main(int argc, char *argv[]) {
 
             // read in the rest
             if (io::read_input_repex(args, topo, conf, sim, md, simulationID, globalThreadID, std::cout, quiet)) {
+              DEBUG(1, "RANK: "<<globalThreadID<<" in read_input_repex in repex_mpi\n");
                 if (globalThreadID == 0) {
                     std::cerr << "\n\t########################################################\n"
                             << "\n\t\tErrors during initial Parameter reading!\n"
