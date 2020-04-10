@@ -438,7 +438,6 @@ int util::replica_exchange_base_2d_s_eoff_eds::find_partner() const {
   bool evenCol = (ID / num_l) % 2 == 0;//1st col is here the 0th col and therefore even!
   bool numEoffeven = num_eoff % 2 == 0;
   bool periodic = replica->sim.param().reeds.periodic;
-  DEBUG(1,"find_partner: periodic= " << periodic << "\n");
 
   //theosm
   //edge cases for s dimension
@@ -547,25 +546,34 @@ int util::replica_exchange_base_2d_s_eoff_eds::find_partner() const {
           if (evenRow) {
             if (even) {
               partner = ID + 1;
+              DEBUG(1,"\nHERE0\n");
+              DEBUG(1,"\nHERE2\n");
+              DEBUG(1,"\nHERE6\n");
+              DEBUG(1,"\nHERE8\n");
               //edge case
               if(lower)
                 partner = ID;
             }
             else {
-              partner = ID - 1;
+              partner = ID + 1;
+              DEBUG(1,"\nHERE3\n");
+              DEBUG(1,"\nHERE5\n");
               //edge case
-              if(upper)
+              if(lower)
                 partner = ID;
             }
           } else {
             if (even) {
-              partner = ID + 1;
+              partner = ID - 1;
+              DEBUG(1,"\nHERE4\n");
               //edge case
-              if(lower)
+              if(upper)
                 partner = ID;
             }
             else {
               partner = ID - 1;
+              DEBUG(1,"\nHERE1\n");
+              DEBUG(1,"\nHERE7\n");
               //edge case
               if(upper)
                 partner = ID;
