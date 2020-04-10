@@ -162,6 +162,7 @@ int main(int argc, char *argv[]) {
     unsigned int numEoff;
     unsigned int numSVals;
     unsigned int cont;
+    bool periodic;
 
     //simulation dependend MPI Vars
     unsigned  simulationID; //MPI thread belongs to replica Simulation:
@@ -206,6 +207,7 @@ int main(int argc, char *argv[]) {
             reedsSim = sim.param().reeds.reeds;
             numEoff = sim.param().reeds.num_eoff;
             numSVals = sim.param().reeds.num_l;
+            periodic = sim.param().reeds.periodic;
 
             switch(reedsSim) {
                   case 0:
@@ -547,9 +549,12 @@ int main(int argc, char *argv[]) {
             msg << "\t reeds_control:\t" << reedsSim << "\n";
             msg << "\t numStates:\t" << numEDSstates << "\n";
             msg << "\t numSValues:\t" << numSVals << "\n";
-            msg << "\t numEoffs:\t" << numEoff << "\n\n";
+            msg << "\t numEoffs:\t" << numEoff << "\n";
+            if (reedsSim == 2) {
+              msg << "\t periodic:\t" << periodic << "\n";
+            }
         }
-        msg << "\t Mpi Settings:\t\n";
+        msg << "\n\t Mpi Settings:\t\n";
 
         // make sure all nodes have initialized everything
         msg << "\t repIDS:\t\n";
