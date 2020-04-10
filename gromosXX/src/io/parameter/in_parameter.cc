@@ -2940,7 +2940,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
         block.get_next_parameter("CONT", cont_run, "", "0,1");
         block.get_next_parameter("EDS_STAT_OUT", eds_stat_out, "", "0,1");
         block.get_next_parameter("PERIODIC", periodic, "", "0,1");
-        DEBUG(1, "REPLICA_EDS BLOCK: PERIODIC= " << periodic);
+        DEBUG(3, "REPLICA_EDS BLOCK: PERIODIC= " << periodic);
 
 
         // SET SETTINGS
@@ -2956,7 +2956,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
               case 2:
                   param.reeds.reeds = 2;
                   break;
-          }
+        }
 
         DEBUG(3, "REPLICA_EDS BLOCK: reeds_control= " << param.reeds.reeds);
 
@@ -2974,62 +2974,120 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
         param.reeds.cont =cont_run;
         param.reeds.eds_stat_out = eds_stat_out;
         param.reeds.periodic = periodic;
-        DEBUG(1, "REPLICA_EDS BLOCK: PERIODIC= " << periodic);
+        DEBUG(3, "REPLICA_EDS BLOCK: PERIODIC= " << periodic);
 
         // Replica temperatures - has to be the same for each replica // Not sure if this is optimal? bschroed
         param.reeds.temperature = param.multibath.multibath.bath(0).temperature;
 
         DEBUG(2, "REPLICA_EDS BLOCK: assigned all reeds params");
         //set size of vectors in param.reeds
-        param.reeds.eds_para.resize(param.reeds.num_eoff);
-        param.reeds.dt.resize(param.reeds.num_l);
-        param.reeds.lambda.resize(param.reeds.num_l);
+        switch(reeds_control) {
+              case 0: case 1:
+                  param.reeds.eds_para.resize(param.reeds.num_l);
+                  param.reeds.dt.resize(param.reeds.num_l);
+                  param.reeds.lambda.resize(param.reeds.num_l);
+                  break;
+              case 2:
+                  param.reeds.eds_para.resize(param.reeds.num_l * param.reeds.num_eoff);
+                  param.reeds.dt.resize(param.reeds.num_l * param.reeds.num_eoff);
+                  param.reeds.lambda.resize(param.reeds.num_l * param.reeds.num_eoff);
+                  break;
+        }
+
 
         //Loop over all replicas in order to initialize complete eds_struct for each replica
         //initvars
         std::vector<double> dtV;    //is necessary to give replicas the paramesters
         std::vector<double> temperatureV;
-        for (int i = 0; i < param.reeds.num_l; ++i) {
-            dtV.push_back(param.step.dt);
-            temperatureV.push_back(param.reeds.temperature);
+        switch(reeds_control){
+          case 0: case 1:
+              for (int i = 0; i < param.reeds.num_l; ++i) {
+                  dtV.push_back(param.step.dt);
+                  temperatureV.push_back(param.reeds.temperature);
+
+                  //READ:NUMSTATES
+                  param.reeds.eds_para[i].eds = true;
+                  param.reeds.eds_para[i].numstates=param.reeds.num_states;
+                  //num_eoff not used in eds_struct only in reeds_struct
+                  //param.reeds.eds_para[i].num_eoff=param.reeds.num_eoff;
+
+                  //indicate only one parameter s used for reference state hamiltonian
+                  param.reeds.eds_para[i].form = simulation::single_s;
+
+                  //RES - give s_values
+                  param.reeds.eds_para[i].s.resize(1);//only one parameter s per replica
+                  param.reeds.eds_para[i].s[0]=s_vals[i];
+
+                  //initialize size of EIR
+                  param.reeds.eds_para[i].eir.resize(param.reeds.eds_para[i].numstates);
+
+                  //init:
+                  param.reeds.eds_para[i].visitedstates.resize(param.eds.numstates, false);
+                  param.reeds.eds_para[i].visitcounts.resize(param.eds.numstates, 0);
+                  param.reeds.eds_para[i].avgenergy.resize(param.eds.numstates, 0.0);
+
+                  if(param.reeds.eds_para[i].s[0] < 0.0){
+                      std::ostringstream msg;
+                      msg << "REPLICA_EDS block: RES(" << i + 1 << ") must be >= 0.0";
+                      io::messages.add(msg.str(), "In_Parameter", io::message::error);
+                  }
+
+                  DEBUG(2, "REPLICA_EDS BLOCK: assign all eds params - EIR");
+                  for(unsigned int j = 0; j < param.reeds.eds_para[0].numstates; ++j){
+                      param.reeds.eds_para[i].eir[j] = eir[i][j];
+                      DEBUG(3, "REPLICA_EDS BLOCK: eir[i][j]= " << param.reeds.eds_para[i].eir[j]);
+
+                  }
+              }
+              break;
+          case 2:
+              for (int i = 0; i < param.reeds.num_l * param.reeds.num_eoff; ++i) {
+                  dtV.push_back(param.step.dt);
+                  temperatureV.push_back(param.reeds.temperature);
+
+                  //READ:NUMSTATES
+                  param.reeds.eds_para[i].eds = true;
+                  param.reeds.eds_para[i].numstates=param.reeds.num_states;
+                  //num_eoff not used in eds_struct only in reeds_struct
+                  //param.reeds.eds_para[i].num_eoff=param.reeds.num_eoff;
+
+                  //indicate only one parameter s used for reference state hamiltonian
+                  param.reeds.eds_para[i].form = simulation::single_s;
+
+                  //RES - give s_values
+                  param.reeds.eds_para[i].s.resize(1);//only one parameter s per replica
+                  param.reeds.eds_para[i].s[0]=s_vals[i%num_l];
+                  DEBUG(3, "REPLICA_EDS BLOCK: s[i]= " << i << "\t" << param.reeds.eds_para[i].s[0] << "\n");
+
+                  //initialize size of EIR
+                  param.reeds.eds_para[i].eir.resize(param.reeds.eds_para[i].numstates);
+
+                  //init:
+                  param.reeds.eds_para[i].visitedstates.resize(param.eds.numstates, false);
+                  param.reeds.eds_para[i].visitcounts.resize(param.eds.numstates, 0);
+                  param.reeds.eds_para[i].avgenergy.resize(param.eds.numstates, 0.0);
+
+                  if(param.reeds.eds_para[i].s[0] < 0.0){
+                      std::ostringstream msg;
+                      msg << "REPLICA_EDS block: RES(" << i + 1 << ") must be >= 0.0";
+                      io::messages.add(msg.str(), "In_Parameter", io::message::error);
+                  }
+              }
+              DEBUG(2, "REPLICA_EDS BLOCK: assign all eds params - EIR");
+              int count = 0;
+              for(int i = 0; i < param.reeds.num_eoff; ++i){
+                for(int k = 0; k < param.reeds.num_l; ++k){
+                  for(unsigned int j = 0; j < param.reeds.eds_para[0].numstates; ++j){
+                      param.reeds.eds_para[count].eir[j] = eir[i][j];
+                      DEBUG(3, "REPLICA_EDS BLOCK: eir[i][j]= " << count << "\t" << param.reeds.eds_para[count].eir[j]);
+
+                  }
+                  ++count;
+                }
+              }
+              break;
         }
 
-        for (int i = 0; i < param.reeds.num_eoff; ++i) {
-
-            //READ:NUMSTATES
-            param.reeds.eds_para[i].eds = true;
-            param.reeds.eds_para[i].numstates=param.reeds.num_states;
-            //num_eoff not used in eds_struct only in reeds_struct
-            //param.reeds.eds_para[i].num_eoff=param.reeds.num_eoff;
-
-            //indicate only one parameter s used for reference state hamiltonian
-            param.reeds.eds_para[i].form = simulation::single_s;
-
-            //RES - give s_values
-            param.reeds.eds_para[i].s.resize(1);//only one parameter s per replica
-            param.reeds.eds_para[i].s[0]=s_vals[i];
-
-            //initialize size of EIR
-            param.reeds.eds_para[i].eir.resize(param.reeds.eds_para[i].numstates);
-
-            //init:
-            param.reeds.eds_para[i].visitedstates.resize(param.eds.numstates, false);
-            param.reeds.eds_para[i].visitcounts.resize(param.eds.numstates, 0);
-            param.reeds.eds_para[i].avgenergy.resize(param.eds.numstates, 0.0);
-
-            if(param.reeds.eds_para[i].s[0] < 0.0){
-                std::ostringstream msg;
-                msg << "REPLICA_EDS block: RES(" << i + 1 << ") must be >= 0.0";
-                io::messages.add(msg.str(), "In_Parameter", io::message::error);
-            }
-
-            DEBUG(2, "REPLICA_EDS BLOCK: assign all eds params - EIR");
-            for(unsigned int j = 0; j < param.reeds.eds_para[0].numstates; ++j){
-                param.reeds.eds_para[i].eir[j] = eir[i][j];
-                DEBUG(3, "REPLICA_EDS BLOCK: eir[i][j]= " << param.reeds.eds_para[i].eir[j]);
-
-            }
-        }
 
         DEBUG(2, "REPLICA_EDS BLOCK: assigned all eds params");
 
