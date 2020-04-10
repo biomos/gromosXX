@@ -174,14 +174,14 @@ void util::replica_exchange_base_2d_s_eoff_eds::init_eds_stat(){
 
 //RE
 void util::replica_exchange_base_2d_s_eoff_eds::swap(){
-    DEBUG(1,"replica_exchange_base_2d_s_eoff_eds "<< globalThreadID <<":swap:\t START");
+    DEBUG(3,"replica_exchange_base_2d_s_eoff_eds "<< globalThreadID <<":swap:\t START");
 
     //for(int trial=0; trial < 4; ++trial){
       //idea: s-dim: 1st & 3rd trial changing
       //2nd trial eoff-dim
 
       partnerReplicaID = find_partner();
-      DEBUG(1,"\n\nreplica_exchange_base_2d_s_eoff_eds: SWAP\n\n");
+      DEBUG(3,"\n\nreplica_exchange_base_2d_s_eoff_eds: SWAP\n\n");
 
       //exchanging coord_ID's
       DEBUG(3, "swap(): simulationID, partnerReplicaID= " << simulationID << ", " << partnerReplicaID << "\n");
@@ -231,13 +231,13 @@ void util::replica_exchange_base_2d_s_eoff_eds::swap(){
       }
     //}
 
-  DEBUG(1,"replica_exchange_base_2d_s_eoff_eds "<< globalThreadID <<":swap:\t DONE");
+  DEBUG(3,"replica_exchange_base_2d_s_eoff_eds "<< globalThreadID <<":swap:\t DONE");
 }
 
 void util::replica_exchange_base_2d_s_eoff_eds::swap_s(const unsigned int partnerReplicaID) {
   DEBUG(4, "replica "<<  globalThreadID <<":swap:\t  START");
 
-  DEBUG(1,"\n\nreplica_exchange_base_2d_s_eoff_eds: SWAP_S\n\n");
+  DEBUG(3,"\n\nreplica_exchange_base_2d_s_eoff_eds: SWAP_S\n\n");
 
   unsigned int partnerReplicaMasterThreadID = partnerReplicaID;
   unsigned int numReps = replica->sim.param().reeds.num_l * replica->sim.param().reeds.num_eoff;
@@ -265,7 +265,8 @@ void util::replica_exchange_base_2d_s_eoff_eds::swap_s(const unsigned int partne
         switched = false;
     } else {    //The Partner sends his data to The calculating Thread
       //special case if lambda also needs to be exchanged
-      bool sameLambda = (l == replica->sim.param().replica.lambda[partnerReplicaID / replica->sim.param().replica.num_T]);
+      bool sameLambda = (l == replica->sim.param().replica.lambda[partnerReplicaID]);
+      DEBUG(1, "swap_s: simID, s value= " << simulationID << ", " << l << "\n");
       DEBUG(1,"swap_s: simID, bool sameLambda= " << simulationID << ", " << sameLambda << "\n");
       if(!sameLambda){      //exchange LAMBDA
         // E21: Energy with configuration 2 and lambda 1(of partner)
@@ -327,7 +328,7 @@ void util::replica_exchange_base_2d_s_eoff_eds::swap_s(const unsigned int partne
 void util::replica_exchange_base_2d_s_eoff_eds::swap_eoff(const unsigned int partnerReplicaID) {
   DEBUG(4, "replica "<<  globalThreadID <<":swap:\t  START");
 
-  DEBUG(1,"\n\nreplica_exchange_base_2d_s_eoff_eds: SWAP_EOFF\n\n");
+  DEBUG(3,"\n\nreplica_exchange_base_2d_s_eoff_eds: SWAP_EOFF\n\n");
 
   unsigned int partnerReplicaMasterThreadID = partnerReplicaID;
   unsigned int numReps = replica->sim.param().reeds.num_l * replica->sim.param().reeds.num_eoff;
@@ -355,7 +356,8 @@ void util::replica_exchange_base_2d_s_eoff_eds::swap_eoff(const unsigned int par
         switched = false;
     } else {    //The Partner sends his data to The calculating Thread
       //special case if lambda also needs to be exchanged
-      bool sameLambda = (l == replica->sim.param().replica.lambda[partnerReplicaID / replica->sim.param().replica.num_T]);
+      bool sameLambda = (l == replica->sim.param().replica.lambda[partnerReplicaID]);
+      DEBUG(1, "swap_eoff: simID, s value= " << simulationID << ", " << l << "\n");
       DEBUG(1,"swap_eoff: simID, bool sameLambda= " << simulationID << ", " << sameLambda << "\n");
       if(!sameLambda){      //exchange LAMBDA
         // E21: Energy with configuration 2 and lambda 1(of partner)
@@ -428,7 +430,7 @@ int util::replica_exchange_base_2d_s_eoff_eds::find_partner() const {
 
   unsigned int ID = simulationID;
 
-  DEBUG(1,"\n\nreplica_exchange_base_2d_s_eoff_eds: FIND_PARTNER\n\n");
+  DEBUG(3,"\n\nreplica_exchange_base_2d_s_eoff_eds: FIND_PARTNER\n\n");
 
   //already given
   unsigned int partner = ID;
@@ -522,7 +524,7 @@ int util::replica_exchange_base_2d_s_eoff_eds::find_partner() const {
     // determine switch direction -- already given just modified
     switch ((run % 4) - 1) {
       case 0: //s dimension
-      DEBUG(1,"find_partner: FIRST case\n");
+      DEBUG(5,"find_partner: FIRST case\n");
         if (numEoffeven) {
           if (even) {
             partner = ID + 1;
@@ -576,7 +578,7 @@ int util::replica_exchange_base_2d_s_eoff_eds::find_partner() const {
         break;
 
       case 1: //eoff dimension
-      DEBUG(1,"find_partner: SECOND case\n");
+      DEBUG(5,"find_partner: SECOND case\n");
         if (evenCol) {
           partner = ID + num_l;
           DEBUG(1,"\nHERE4A\n");
@@ -597,7 +599,7 @@ int util::replica_exchange_base_2d_s_eoff_eds::find_partner() const {
         break;
 
       case 2: //s dimension
-      DEBUG(1,"find_partner: THIRD case\n");
+      DEBUG(5,"find_partner: THIRD case\n");
         if (numEoffeven) {
           if (even) {
             partner = ID + 1;
@@ -647,7 +649,7 @@ int util::replica_exchange_base_2d_s_eoff_eds::find_partner() const {
         break;
 
       case -1: //eoff dimension
-      DEBUG(1,"find_partner: FOURTH case\n");
+      DEBUG(5,"find_partner: FOURTH case\n");
         if (evenCol) {
           partner = ID - num_l;
           DEBUG(1,"\nHERE9\n");
