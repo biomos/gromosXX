@@ -281,7 +281,7 @@ int main(int argc, char *argv[]) {
 
             // read in the rest
             if (io::read_input_repex(args, topo, conf, sim, md, simulationID, globalThreadID, std::cout, quiet)) {
-              DEBUG(1, "RANK: "<<globalThreadID<<" in read_input_repex in repex_mpi\n");
+              DEBUG(7, "RANK: "<<globalThreadID<<" in read_input_repex in repex_mpi\n");
                 if (globalThreadID == 0) {
                     std::cerr << "\n\t########################################################\n"
                             << "\n\t\tErrors during initial Parameter reading!\n"
