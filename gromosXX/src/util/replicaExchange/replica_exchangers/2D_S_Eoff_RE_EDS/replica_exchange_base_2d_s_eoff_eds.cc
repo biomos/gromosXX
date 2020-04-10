@@ -174,7 +174,7 @@ void util::replica_exchange_base_2d_s_eoff_eds::init_eds_stat(){
 
 //RE
 void util::replica_exchange_base_2d_s_eoff_eds::swap(){
-    DEBUG(3,"replica_exchange_base_2d_s_eoff_eds "<< globalThreadID <<":swap:\t START");
+    DEBUG(1,"replica_exchange_base_2d_s_eoff_eds "<< globalThreadID <<":swap:\t START");
 
     //for(int trial=0; trial < 4; ++trial){
       //idea: s-dim: 1st & 3rd trial changing
@@ -206,7 +206,7 @@ void util::replica_exchange_base_2d_s_eoff_eds::swap(){
           swap_s(partnerReplicaID);
         }
         else{
-        swap_replicas_2D(partnerReplicaID);
+        swap_eoff(partnerReplicaID);
         }
         if (switched) {
           if (globalThreadID < partnerReplicaID) {
@@ -231,7 +231,7 @@ void util::replica_exchange_base_2d_s_eoff_eds::swap(){
       }
     //}
 
-  DEBUG(3,"replica_exchange_base_2d_s_eoff_eds "<< globalThreadID <<":swap:\t DONE");
+  DEBUG(1,"replica_exchange_base_2d_s_eoff_eds "<< globalThreadID <<":swap:\t DONE");
 }
 
 void util::replica_exchange_base_2d_s_eoff_eds::swap_s(const unsigned int partnerReplicaID) {
@@ -240,10 +240,10 @@ void util::replica_exchange_base_2d_s_eoff_eds::swap_s(const unsigned int partne
   DEBUG(1,"\n\nreplica_exchange_base_2d_s_eoff_eds: SWAP_S\n\n");
 
   unsigned int partnerReplicaMasterThreadID = partnerReplicaID;
-  unsigned int numL = replica->sim.param().replica.num_l;
+  unsigned int numReps = replica->sim.param().reeds.num_l * replica->sim.param().reeds.num_eoff;
 
   // does partner exist?
-  if (partnerReplicaID < numL && partnerReplicaID != simulationID) {
+  if (partnerReplicaID < numReps && partnerReplicaID != simulationID) {
     // the one with lower ID does probability calculation
     if (simulationID < partnerReplicaID) {
 
@@ -266,6 +266,97 @@ void util::replica_exchange_base_2d_s_eoff_eds::swap_s(const unsigned int partne
     } else {    //The Partner sends his data to The calculating Thread
       //special case if lambda also needs to be exchanged
       bool sameLambda = (l == replica->sim.param().replica.lambda[partnerReplicaID / replica->sim.param().replica.num_T]);
+      DEBUG(1,"swap_s: simID, bool sameLambda= " << simulationID << ", " << sameLambda << "\n");
+      if(!sameLambda){      //exchange LAMBDA
+        // E21: Energy with configuration 2 and lambda 1(of partner)
+        const double E21 = calculate_energy(partnerReplicaMasterThreadID);
+        // this we can store as the partner energy of the current replica
+        epot_partner = E21;
+        // E22: Energy with configuration 2 and lambda 2(own one)
+#ifdef XXMPI
+        const double E22 = epot;
+        // send E21 and E22
+        double energies[2] = {E22, E21};
+        //this send operation is matched in calc_probability()
+        MPI_Send(&energies[0], 2, MPI_DOUBLE, partnerReplicaMasterThreadID, SWITCHENERGIES,  replicaGraphMPIControl.comm);
+#endif
+      } else { // sameLambda
+#ifdef XXMPI
+        double energies[2] = {epot, 0.0};
+        MPI_Send(&energies[0],2,MPI_DOUBLE, partnerReplicaMasterThreadID, SWITCHENERGIES,  replicaGraphMPIControl.comm);
+#endif
+     }
+      if (replica->sim.param().pcouple.scale != math::pcouple_off) {
+#ifdef XXMPI
+        math::Box box_replica = replica->conf.current().box;    //exchange box
+        MPI_Send(&box_replica(0)[0], 1, MPI_BOX, partnerReplicaMasterThreadID, BOX,  replicaGraphMPIControl.comm);
+#endif
+      }
+
+#ifdef XXMPI
+      MPI_Status status;
+#endif
+      std::vector<double> prob;
+      prob.resize(2);
+#ifdef XXMPI
+      MPI_Recv(&prob[0], 2, MPI_DOUBLE, partnerReplicaMasterThreadID, SENDCOORDS,  replicaGraphMPIControl.comm, &status);
+#endif
+      //Have we been exchanged little partner?
+      probability = prob[0];
+      double randNum = prob[1];
+
+      if (randNum < probability) {
+        switched = true;
+      } else {
+        switched = false;
+      }
+    }
+
+  } else {//This should be an error!
+      throw "Partner does not exist!";
+    /*
+      partner = ID;
+    switched = false;
+    probability = 0.0;
+
+    */
+  }
+    DEBUG(4, "replica "<< globalThreadID <<":swap:\t  DONE");
+}
+
+void util::replica_exchange_base_2d_s_eoff_eds::swap_eoff(const unsigned int partnerReplicaID) {
+  DEBUG(4, "replica "<<  globalThreadID <<":swap:\t  START");
+
+  DEBUG(1,"\n\nreplica_exchange_base_2d_s_eoff_eds: SWAP_EOFF\n\n");
+
+  unsigned int partnerReplicaMasterThreadID = partnerReplicaID;
+  unsigned int numReps = replica->sim.param().reeds.num_l * replica->sim.param().reeds.num_eoff;
+
+  // does partner exist?
+  if (partnerReplicaID < numReps && partnerReplicaID != simulationID) {
+    // the one with lower ID does probability calculation
+    if (simulationID < partnerReplicaID) {
+
+      // posts a MPI_Recv(...) matching the MPI_Send below
+      probability = calc_probability(partnerReplicaID);
+      const double randNum = rng.get();
+
+      std::vector<double> prob(2);
+      prob[0] = probability;
+      prob[1] = randNum;
+
+#ifdef XXMPI
+      MPI_Send(&prob[0], 2, MPI_DOUBLE, partnerReplicaMasterThreadID, SENDCOORDS, replicaGraphMPIControl.comm);
+#endif
+
+      if (randNum < probability) {
+        switched = true;
+      } else
+        switched = false;
+    } else {    //The Partner sends his data to The calculating Thread
+      //special case if lambda also needs to be exchanged
+      bool sameLambda = (l == replica->sim.param().replica.lambda[partnerReplicaID / replica->sim.param().replica.num_T]);
+      DEBUG(1,"swap_eoff: simID, bool sameLambda= " << simulationID << ", " << sameLambda << "\n");
       if(!sameLambda){      //exchange LAMBDA
         // E21: Energy with configuration 2 and lambda 1(of partner)
         const double E21 = calculate_energy(partnerReplicaMasterThreadID);
@@ -331,7 +422,7 @@ int util::replica_exchange_base_2d_s_eoff_eds::find_partner() const {
   unsigned int numT = replica->sim.param().replica.num_T;
   DEBUG(3,"find_partner: numT= " << numT << "\n");
 
-  unsigned int numReps = num_l * numT;
+  unsigned int numReps = num_l * num_eoff;
   DEBUG(3,"find_partner: numReps= " << numReps << "\n");
 
 
@@ -342,10 +433,9 @@ int util::replica_exchange_base_2d_s_eoff_eds::find_partner() const {
   //already given
   unsigned int partner = ID;
   bool even = ID % 2 == 0;
-  bool evenRow = (ID / numT) % 2 == 0;
-  bool firstElement = (ID % numT == 0);
-  bool lastElement = (ID % numT == numT - 1);
-  bool numTeven = (numT % 2 == 0);
+  bool evenRow = (ID % num_l) % 2 == 0;//1st row is here the 0th row and therefore even!
+  bool evenCol = (ID / num_l) % 2 == 0;//1st col is here the 0th col and therefore even!
+  bool numEoffeven = num_eoff % 2 == 0;
 
   //theosm
   //edge cases for s dimension
@@ -355,7 +445,9 @@ int util::replica_exchange_base_2d_s_eoff_eds::find_partner() const {
   unsigned int j = ID % num_l;
   //edge cases for eoff dimension
   bool left_edge = ID == j;
-  bool right_edge = ID == numReps - num_l + j;
+  bool right_edge = ID == (numReps - num_l + j);
+  DEBUG(3,"ID, j, upper, lower, left_edge, right_edge= " << ID << ", " << j << ", " << upper << ", " << lower
+  << ", " << left_edge << ", " << right_edge << "\n");
 
   //theosm: on my own
   /*
@@ -393,7 +485,7 @@ int util::replica_exchange_base_2d_s_eoff_eds::find_partner() const {
 
     case 2: //s dimension
     DEBUG(1,"find_partner: THIRD case\n");
-      //if (numTeven) {
+      //if (numEoffeven) {
         if (even){
           partner = ID + 1;
           //edge case
@@ -431,17 +523,21 @@ int util::replica_exchange_base_2d_s_eoff_eds::find_partner() const {
     switch ((run % 4) - 1) {
       case 0: //s dimension
       DEBUG(1,"find_partner: FIRST case\n");
-        if (numTeven) {
+        if (numEoffeven) {
           if (even) {
-            partner = ID - 1;
+            partner = ID + 1;
+            DEBUG(1,"\nHERE0A\n");
+            DEBUG(1,"\nHERE2A\n");
             //edge case
-            if(upper)
+            if(lower)
               partner = ID;
           }
           else {
-            partner = ID + 1;
+            partner = ID - 1;
+            DEBUG(1,"\nHERE1A\n");
+            DEBUG(1,"\nHERE3A\n");
             //edge case
-            if(lower)
+            if(upper)
               partner = ID;
           }
         } else {
@@ -481,17 +577,18 @@ int util::replica_exchange_base_2d_s_eoff_eds::find_partner() const {
 
       case 1: //eoff dimension
       DEBUG(1,"find_partner: SECOND case\n");
-        if (evenRow) {
+        if (evenCol) {
           partner = ID + num_l;
-          DEBUG(1,"\nHERE3\n");
-          DEBUG(1,"\nHERE5\n");
+          DEBUG(1,"\nHERE4A\n");
+          DEBUG(1,"\nHERE6A\n");
           //edge case
           if(right_edge)
             partner = ID;
           }
         else {
           partner = ID - num_l;
-          DEBUG(1,"\nHERE4\n");
+          DEBUG(1,"\nHERE5A\n");
+          DEBUG(1, "\nHERE7A\n");
           //edge case
           if(left_edge)
             partner = ID;
@@ -501,7 +598,7 @@ int util::replica_exchange_base_2d_s_eoff_eds::find_partner() const {
 
       case 2: //s dimension
       DEBUG(1,"find_partner: THIRD case\n");
-        if (numTeven) {
+        if (numEoffeven) {
           if (even) {
             partner = ID + 1;
             //edge case
@@ -551,7 +648,7 @@ int util::replica_exchange_base_2d_s_eoff_eds::find_partner() const {
 
       case -1: //eoff dimension
       DEBUG(1,"find_partner: FOURTH case\n");
-        if (evenRow) {
+        if (evenCol) {
           partner = ID - num_l;
           DEBUG(1,"\nHERE9\n");
           DEBUG(1,"\nHERE11\n");

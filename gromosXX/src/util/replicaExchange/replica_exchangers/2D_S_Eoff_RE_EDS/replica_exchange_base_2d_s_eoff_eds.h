@@ -123,6 +123,11 @@ namespace util
         */
         void swap_s(const unsigned int partnerReplicaID);
         /**
+        * Tries a swapping in eoff dimension of configuration if possible. Calculates energies, probabilities
+        * and sends information via MPI communication if necessary.
+        */
+        void swap_eoff(const unsigned int partnerReplicaID);
+        /**
         * Finds partner for current switch
         * @return ID of partner, own ID if no switching in current trial
         */
