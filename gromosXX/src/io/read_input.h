@@ -31,7 +31,7 @@ namespace io
    std::ostream & os = std::cout,
    bool quiet = false
    );
-    
+
   /**
    * read the rest of the input files necessary for the repex simulation.
    * calls
@@ -48,24 +48,6 @@ namespace io
    algorithm::Algorithm_Sequence &md_seq,
    int replicaID=0,
    int rank=0,
-   std::ostream & os = std::cout,
-   bool quiet = false
-   );
-  
-  /**
-   * read the rest of the input files necessary for the repex simulation.
-   * calls
-   * - read_topology
-   * - read_special
-   * - read_configuration
-   */
-  int read_input_repex
-  (
-   io::Argument const &args,
-   topology::Topology &topo,
-   configuration::Configuration &conf,
-   simulation::Simulation & sim,
-   algorithm::Algorithm_Sequence &md_seq,
    std::ostream & os = std::cout,
    bool quiet = false
    );
