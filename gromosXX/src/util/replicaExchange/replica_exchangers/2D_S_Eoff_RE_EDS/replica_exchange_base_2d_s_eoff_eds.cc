@@ -433,153 +433,44 @@ int util::replica_exchange_base_2d_s_eoff_eds::find_partner() const {
   DEBUG(3,"\n\nreplica_exchange_base_2d_s_eoff_eds: FIND_PARTNER\n\n");
 
   unsigned int partner = ID;
-  bool even = ID % 2 == 0;
+  bool evenID = ID % 2 == 0;
   bool evenRow = (ID % num_l) % 2 == 0;//1st row is here the 0th row and therefore even!
   bool evenCol = (ID / num_l) % 2 == 0;//1st col is here the 0th col and therefore even!
-  bool numEoffeven = num_eoff % 2 == 0;
+  bool numEoffeven = num_eoff % 2 == 0;//used for periodic boundary
   bool periodic = replica->sim.param().reeds.periodic;
 
-  //theosm
+
   //edge cases for s dimension
   bool upper = ID % num_l == 0;
   bool lower = ID % num_l == num_l - 1;
+
   //current s coord == j € [0, num_l -1)
   unsigned int j = ID % num_l;
+
   //edge cases for eoff dimension
   bool left_edge = ID == j;
   bool right_edge = ID == (numReps - num_l + j);
   DEBUG(3,"ID, j, upper, lower, left_edge, right_edge= " << ID << ", " << j << ", " << upper << ", " << lower
   << ", " << left_edge << ", " << right_edge << "\n");
 
-  //theosm: on my own
-  /*
-  switch ((run % 4) - 1) {
-    case 0: //s dimension
-    DEBUG(1,"find_partner: FIRST case\n");
-        if (even){
-          partner = ID + 1;
-          //edge case
-          if(lower)
-            partner = ID;
-        }
-        else{
-          partner = ID - 1;
-          //edge case
-          if(upper)
-            partner = ID;
-        }
-    DEBUG(1,"find_partner(first case): partner of ID=" << ID << " is " << partner << "\n");
-      break;
 
-    case 1: //eoff dimension
-    DEBUG(1,"find_partner: SECOND case -- nothing to be done right now\n");
-      partner = ID + num_l;
-      //edge case
-      if(right_edge)
-        partner = ID;
-
-      partner = ID - num_l;
-      //edge case
-      if(left_edge)
-        partner = ID;
-    DEBUG(1,"find_partner(second case): partner of ID=" << ID << " is " << partner << "\n");
-      break;
-
-    case 2: //s dimension
-    DEBUG(1,"find_partner: THIRD case\n");
-      //if (numEoffeven) {
-        if (even){
-          partner = ID + 1;
-          //edge case
-          if(lower)
-            partner = ID;
-        }
-        else{
-          partner = ID - 1;
-          //edge case
-          if(upper)
-          partner = ID;
-        }
-    DEBUG(1,"find_partner(third case): partner of ID=" << ID << " is " << partner << "\n");
-      break;
-
-    case -1: //eoff dimension
-    DEBUG(1,"\n find_partner: FOURTH case -- nothing to be done right now\n");
-      partner = ID - num_l;
-      //edge case
-      if(left_edge)
-        partner = ID;
-
-      partner = ID + num_l;
-      //edge case
-      if(right_edge)
-        partner = ID;
-    DEBUG(1,"\n find_partner(fourth case): partner of ID=" << ID << " is " << partner << "\n");
-      break;
-  }
-  */
-
-
-
-    // determine switch direction -- already given just modified
+    // determine switch direction
     switch ((run % 4) - 1) {
       case 0: //s dimension
       DEBUG(5,"find_partner: FIRST case\n");
-        if (numEoffeven) {
-          if (even) {
+          if (evenRow) {
             partner = ID + 1;
-            DEBUG(1,"\nHERE0A\n");
-            DEBUG(1,"\nHERE2A\n");
             //edge case
             if(lower)
               partner = ID;
+
           }
           else {
             partner = ID - 1;
-            DEBUG(1,"\nHERE1A\n");
-            DEBUG(1,"\nHERE3A\n");
             //edge case
             if(upper)
               partner = ID;
           }
-        } else {
-          if (evenRow) {
-            if (even) {
-              partner = ID + 1;
-              DEBUG(1,"\nHERE0\n");
-              DEBUG(1,"\nHERE2\n");
-              DEBUG(1,"\nHERE6\n");
-              DEBUG(1,"\nHERE8\n");
-              //edge case
-              if(lower)
-                partner = ID;
-            }
-            else {
-              partner = ID + 1;
-              DEBUG(1,"\nHERE3\n");
-              DEBUG(1,"\nHERE5\n");
-              //edge case
-              if(lower)
-                partner = ID;
-            }
-          } else {
-            if (even) {
-              partner = ID - 1;
-              DEBUG(1,"\nHERE4\n");
-              //edge case
-              if(upper)
-                partner = ID;
-            }
-            else {
-              partner = ID - 1;
-              DEBUG(1,"\nHERE1\n");
-              DEBUG(1,"\nHERE7\n");
-              //edge case
-              if(upper)
-                partner = ID;
-            }
-          }
-        }
       DEBUG(1,"find_partner(first case): partner of ID=" << ID << " is " << partner << "\n");
         break;
 
@@ -587,65 +478,61 @@ int util::replica_exchange_base_2d_s_eoff_eds::find_partner() const {
       DEBUG(5,"find_partner: SECOND case\n");
         if (evenCol) {
           partner = ID + num_l;
-          DEBUG(1,"\nHERE4A\n");
-          DEBUG(1,"\nHERE6A\n");
           //edge case
           if(right_edge && !periodic) partner = ID;
-          if(right_edge && periodic) {partner = (ID + num_l) % numReps; DEBUG(1,"\nPERIODIC\n");}
+          if(right_edge && periodic && numEoffeven) {partner = (ID + num_l) % numReps; DEBUG(1,"\nPERIODIC\n");}
+          if(right_edge && periodic && !numEoffeven) partner = ID;
           }
         else {
           partner = ID - num_l;
-          DEBUG(1,"\nHERE5A\n");
-          DEBUG(1, "\nHERE7A\n");
           //edge case
           if(left_edge && !periodic) partner = ID;
-          if(left_edge && periodic) {partner = ID + (numReps - num_l); DEBUG(1,"\nPERIODIC\n");}
+          if(left_edge && periodic && numEoffeven) {partner = ID + (numReps - num_l); DEBUG(1,"\nPERIODIC\n");}
+          if(left_edge && periodic && !numEoffeven) partner = ID;
         }
       DEBUG(1,"find_partner(second case): partner of ID=" << ID << " is " << partner << "\n");
         break;
 
       case 2: //s dimension
       DEBUG(5,"find_partner: THIRD case\n");
-        if (numEoffeven) {
-          if (even) {
-            partner = ID + 1;
+        if (evenRow) {
+          if (evenID) {
+            partner = ID - 1;
+            DEBUG(3,"\nHERE0\n");
+            DEBUG(3,"\nHERE2\n");
+            DEBUG(3,"\nHERE6\n");
+            DEBUG(3,"\nHERE8\n");
+            DEBUG(3,"\nHERE8A\n");
+            DEBUG(3,"\nHERE10A\n");
             //edge case
-            if(lower)
+            if(upper)
               partner = ID;
           }
           else {
             partner = ID - 1;
+            DEBUG(3,"\nHERE3\n");
+            DEBUG(3,"\nHERE5\n");
             //edge case
             if(upper)
               partner = ID;
           }
         } else {
-          if (evenRow) {
-            if (even) {
-              partner = ID + 1;
-              //edge case
-              if(lower)
-                partner = ID;
-            }
-            else {
-              partner = ID - 1;
-              //edge case
-              if(upper)
-                partner = ID;
-            }
-          } else {
-            if (even) {
-              partner = ID + 1;
-              //edge case
-              if(lower)
-                partner = ID;
-            }
-            else {
-              partner = ID - 1;
-              //edge case
-              if(upper)
-                partner = ID;
-            }
+          if (evenID) {
+            partner = ID + 1;
+            DEBUG(3,"\nHERE4\n");
+            //edge case
+            if(lower)
+              partner = ID;
+          }
+          else {
+            partner = ID + 1;
+            DEBUG(3,"\nHERE1\n");
+            DEBUG(3,"\nHERE7\n");
+            DEBUG(3,"\nHERE9A\n");
+            DEBUG(3,"\nHERE11A\n");
+            //edge case
+            if(lower)
+              partner = ID;
           }
         }
       DEBUG(1,"find_partner(third case): partner of ID=" << ID << " is " << partner << "\n");
@@ -657,13 +544,15 @@ int util::replica_exchange_base_2d_s_eoff_eds::find_partner() const {
           partner = ID - num_l;
           //edge case
           if(left_edge && !periodic) partner = ID;
-          if(left_edge && periodic) {partner = ID + (numReps - num_l); DEBUG(1,"\nPERIODIC\n");}
+          if(left_edge && periodic && numEoffeven) {partner = ID + (numReps - num_l); DEBUG(1,"\nPERIODIC\n");}
+          if(left_edge && periodic && !numEoffeven) partner = ID;
         }
         else {
           partner = ID + num_l;
           //edge case
           if(right_edge && !periodic) partner = ID;
-          if(right_edge && periodic) {partner = (ID + num_l) % numReps; DEBUG(1,"\nPERIODIC\n");}
+          if(right_edge && periodic && numEoffeven) {partner = (ID + num_l) % numReps; DEBUG(1,"\nPERIODIC\n");}
+          if(right_edge && periodic && !numEoffeven) partner = ID;
         }
       DEBUG(1,"find_partner(fourth case): partner of ID=" << ID << " is " << partner << "\n");
         break;
