@@ -184,12 +184,7 @@ void util::replica_exchange_base_2d_s_eoff_eds::swap(){
       //replica->sim.param().reeds.eds_para[simulationID].pos_info.second = partnerReplicaID;
       replica->sim.param().reeds.eds_para[partnerReplicaID].pos_info.second = simulationID;
 
-      //theosm: tried several ways -- might be an alternative
       /*
-      int tmp = replica->sim.param().reeds.eds_para[partnerReplicaID].pos_info.second;
-      replica->sim.param().reeds.eds_para[partnerReplicaID].pos_info.second = replica->sim.param().reeds.eds_para[simulationID].pos_info.second;
-      replica->sim.param().reeds.eds_para[simulationID].pos_info.second = tmp;
-
       DEBUG(1, "swap(): simulationID, reedsParam->pos_info.second= " << simulationID << ", "
       << replica->sim.param().reeds.eds_para[simulationID].pos_info.second << "\n");
       DEBUG(1, "swap(): partnerReplicaID, reedsParam->pos_info.second= " << partnerReplicaID << ", "
