@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-/* 
+/*
  * File:   replica_exchange_master_eds.h
  * Author: bschroed
  *
@@ -42,7 +42,7 @@
 #define REPLICA_EXCHANGE_MASTER_EDS_H
 
 namespace util{
-    
+
     class replica_exchange_master_eds :  public  replica_exchange_base_eds, public  replica_exchange_master_interface  {
     public:
         /**
@@ -65,9 +65,11 @@ namespace util{
          * init MD simulation for all replicas; one by one
          */
         //void init();
-        void receive_from_all_slaves() override;
-        
+        void receive_from_all_slaves(int arr[]) override;
+
         void write() override;
+
+        void write_new(int arr[]) override;
 
         /**
          * functions, for initing the repout
@@ -86,7 +88,7 @@ namespace util{
         int svalPrecision= 5;
         int potEPrecision = 2;
         int generalPrecision = 2;
-        
+
          /**
          * determines the digits needed to represent the smalles S-value in eds sim
          */
@@ -109,14 +111,13 @@ namespace util{
         */
         std::vector<util::reeds_replica_data> replicaData;
 
-        
+
         /**
          * functions, for initing the repout
          * @param repoutPath
          */
         //void init_repOut_stat_file(std::string repoutPath) override;
-        
+
     };
 }
 #endif /* REPLICA_EXCHANGE_MASTER_EDS_H */
-

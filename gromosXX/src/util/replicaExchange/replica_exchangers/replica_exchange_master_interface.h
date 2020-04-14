@@ -63,20 +63,22 @@ namespace util {
      * Destructor
      */
     virtual ~replica_exchange_master_interface();
-    
+
     //Simulation functions
     /**
      * receives all information written to output file from the slaves
      */
     virtual void receive_from_all_slaves();
+    virtual void receive_from_all_slaves(int arr[]);
     /**
      * writes data to output file \@repdat
      */
     virtual void write();
-    
- 
+    virtual void write_new(int arr[]);
+
+
     virtual void init_repOut_stat_file();
-    
+
   protected:
 
 
@@ -84,7 +86,7 @@ namespace util {
      * output file stream for repdat output file
      */
     std::ofstream repOut;
-    
+
     /*
      * global Parameters for replica exchange simulation
      * int num_T;
@@ -113,4 +115,3 @@ namespace util {
   };
 }
 #endif	/* REPLICA_EXCHANGE_MASTER_H */
-

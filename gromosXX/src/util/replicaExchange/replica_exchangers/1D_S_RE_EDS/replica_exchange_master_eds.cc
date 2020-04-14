@@ -68,7 +68,7 @@ util::replica_exchange_master_eds::replica_exchange_master_eds(io::Argument _arg
     #endif
 }
 
-void util::replica_exchange_master_eds::receive_from_all_slaves() {
+void util::replica_exchange_master_eds::receive_from_all_slaves(int arr[]) {
   #ifdef XXMPI
   DEBUG(2,"replica_exchange_master_eds "<< globalThreadID <<":receive_from_all_slaves:\t START\n");
 
@@ -96,31 +96,24 @@ void util::replica_exchange_master_eds::receive_from_all_slaves() {
         replicaData[slaveReplicaID].probability = info.probability;
         replicaData[slaveReplicaID].switched = info.switched;
         replicaData[slaveReplicaID].partner = info.partner;
-        //theosm -- new
+
         if(replicaData[slaveReplicaID].partner == 0 && info.run == 1){
           begin = 1;
           real_pos = slaveReplicaID;
-          DEBUG(1, "begin, real_pos & slaveReplicaID= " << begin << ", " << real_pos << ", " << slaveReplicaID << "\n");
+          DEBUG(3, "begin, real_pos & slaveReplicaID= " << begin << ", " << real_pos << ", " << slaveReplicaID << "\n");
         }
-        if(replicaData[slaveReplicaID].partner == 0 && info.run != 1){
-          begin = 0;
-          real_pos = reedsParam.eds_para[slaveReplicaID].pos_info.second;
-          DEBUG(1, "begin, real_pos & slaveReplicaID= " << begin << ", " << real_pos << ", " << slaveReplicaID << "\n");
-        }
-        //theosm
-        //replicaData[slaveReplicaID].pos_info.second = reedsParam.eds_para[slaveReplicaID].pos_info.second;
 
-        DEBUG(1, "receive_from_all_slaves(): slaveReplicaID, info.partner= " << slaveReplicaID
-        << ", " << replicaData[slaveReplicaID].partner << "\n");
-        DEBUG(1, "receive_from_all_slaves(): slaveReplicaID, reedsParam[slaveReplicaID]->pos_info.second= " << slaveReplicaID
-        << ", " << reedsParam.eds_para[slaveReplicaID].pos_info.second << "\n");
-        DEBUG(1, "receive_from_all_slaves(): slaveReplicaID, reedsParam[info.partner]->pos_info.second= " << slaveReplicaID
-        << ", " << reedsParam.eds_para[replicaData[slaveReplicaID].partner].pos_info.second << "\n");
-
-        //check whether switched or not
+        //check whether switched or not for the first trial
         //assuming switched is treated as a boolean
-        if(info.switched){
+        if(info.switched && info.run == 1){
           replicaData[slaveReplicaID].pos_info.second = reedsParam.eds_para[replicaData[slaveReplicaID].partner].pos_info.second;
+        }
+
+
+        //normal case
+        if(info.run > 1){
+          begin = 0;
+          replicaData[slaveReplicaID].pos_info.second = arr[info.partner];
         }
 
 
@@ -143,29 +136,11 @@ void util::replica_exchange_master_eds::receive_from_all_slaves() {
   replicaData[simulationID].probability = probability;
   replicaData[simulationID].switched = switched;
   //theosm
-  //replicaData[simulationID].pos_info.second = reedsParam.eds_para[simulationID].pos_info.second;
+  replicaData[simulationID].pos_info.second = arr[partnerReplicaID];
 
-  DEBUG(3, "receive_from_all_slaves(): write from master to data structure: simulationID, pos_info= "
-  << simulationID << ", " << reedsParam.eds_para[simulationID].pos_info.second << "\n");
-
-
-  //check whether switched or not
-  if(switched){
-    DEBUG(1, "receive_from_all_slaves()-if switched: write from master to data structure: simulationID, partnerReplicaID= "
-    << simulationID << ", " << partnerReplicaID << "\n");
-    //theosm -- new
-    //replicaData[simulationID].pos_info.second = real_pos;
-    replicaData[simulationID].pos_info.second = replicaData[simulationID].partner;
-    DEBUG(1, "receive_from_all_slaves()-if switched: write from master to data structure: simulationID, replicaData->pos_info= "
-    << simulationID << ", " << replicaData[simulationID].pos_info.second << "\n");
-
-    //theosm -- this approach does not work since the slave == partnerReplicaID was already updated
-    //--> have to do it via the partner
-    /*replicaData[simulationID].pos_info.second = reedsParam.eds_para[partnerReplicaID].pos_info.second;
-    DEBUG(1, "receive_from_all_slaves()-if switched: write from master to data structure: simulationID, reedsParam[partner]->pos_info= "
-    << simulationID << ", " << reedsParam.eds_para[partnerReplicaID].pos_info.second << "\n");
-    */
-
+  //check whether switched or not for the first trial
+  if(switched && begin){
+    replicaData[simulationID].pos_info.second = real_pos;
   }
 
 
@@ -244,6 +219,52 @@ void util::replica_exchange_master_eds::write() {
       repOut.precision(generalPrecision);
       //do not use temperatures anymore
       //repOut  << std::setw(13) << replicaData[replicaData[treplicaID].partner].T;
+
+      if(replicaData[treplicaID].l == replicaData[replicaData[treplicaID].partner].l){
+          repOut << std::setw(18) << replicaData[replicaData[treplicaID].partner].epot;
+      }
+      else{
+          repOut << std::setw(18) << replicaData[treplicaID].epot_partner;
+      }
+      repOut  << std::setw(13) << replicaData[treplicaID].probability
+              << std::setw(6) << replicaData[treplicaID].switched;
+
+    for(unsigned int s=0;s<reedsParam.eds_para[0].numstates; s++){
+        DEBUG(2, "replica_exchange_master_eds "<< globalThreadID <<":write:\t WRITE out POTS " <<s<< "\t" << replicaData[treplicaID].Vi[s]);
+        repOut   << std::setw(18) << std::min(replicaData[treplicaID].Vi[s], 10000000.0);//Output potential energies for each state
+    }
+      repOut << std::endl;
+    }
+    DEBUG(2,"replica_exchange_master_eds "<< globalThreadID <<":write:\t DONE");
+}
+
+void util::replica_exchange_master_eds::write_new(int arr[]) {
+    DEBUG(2,"replica_exchange_master_eds "<< globalThreadID <<":write:\t START");
+    DEBUG(2,"replica_exchange_master_eds "<< globalThreadID <<":write:\t svalPrecision "<<svalPrecision);
+
+    for (unsigned int treplicaID = 0; treplicaID < replicaGraphMPIControl.numberOfReplicas; ++treplicaID) {
+      repOut << std::setw(6) << (replicaData[treplicaID].ID)//removed  + 1 for consistency reasons
+              << " "
+              << std::setw(6) << replicaData[treplicaID].pos_info.first
+              << " "
+              << std::setw(6) << replicaData[treplicaID].pos_info.second
+              << " "
+              << std::setw(6) << (replicaData[treplicaID].partner) //removed  + 1 for consistency reasons
+              << "   "
+              << std::setw(6) << replicaData[replicaData[treplicaID].partner].pos_info.first
+              << "\t\t"
+              << std::setw(6) << replicaData[replicaData[treplicaID].partner].pos_info.second
+              << "\t\t"
+              << std::setw(6) << replicaData[treplicaID].run << "  ";
+
+      arr[treplicaID] = replicaData[treplicaID].pos_info.second;
+      DEBUG(1,"write_new: ID, arr "<< treplicaID << ", " << arr[treplicaID] << "\n");
+
+      repOut.precision(generalPrecision);
+      repOut  << " "
+              << std::setw(18) << replicaData[treplicaID].epot;
+
+      repOut.precision(generalPrecision);
 
       if(replicaData[treplicaID].l == replicaData[replicaData[treplicaID].partner].l){
           repOut << std::setw(18) << replicaData[replicaData[treplicaID].partner].epot;
