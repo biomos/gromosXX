@@ -63,6 +63,10 @@ namespace util {
      * sends information of all replicas to master
      */
     virtual void send_to_master() const;
+      /**
+       *  Sending data or not?
+       */
+      bool not_sender;
   protected:
     /**
      * copy constructor
@@ -70,10 +74,7 @@ namespace util {
      */
     replica_exchange_slave_interface(const replica_exchange_slave_interface &);
     
-    /**
-     *  Sending data or not?
-     */
-    bool not_sender;
+
 
   };
 }

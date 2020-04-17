@@ -69,7 +69,7 @@ util::replica_exchange_base_eds::replica_exchange_base_eds(io::Argument _args,
     DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":Constructor:\t simID "<<simulationID);
     
     //RE-Vars
-    MPI_DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":Constructor:\t setParams" );
+    DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":Constructor:\t setParams" );
     setParams();
 
     MPI_DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":Constructor:\t DONE");
@@ -82,11 +82,11 @@ util::replica_exchange_base_eds::~replica_exchange_base_eds() {
 void util::replica_exchange_base_eds::setParams(){
     // set some variables
     stepsPerRun = replica->sim.param().step.number_of_steps;
-    MPI_DEBUG(4,"replica_exchange_base_eds "<< globalThreadID <<":setParams:\t NUMBER OF STEPS "<<stepsPerRun);
+    DEBUG(4,"replica_exchange_base_eds "<< globalThreadID <<":setParams:\t NUMBER OF STEPS "<<stepsPerRun);
 
     run = 0;
     total_runs = replica->sim.param().replica.trials + replica->sim.param().replica.equilibrate;
-    MPI_DEBUG(4,"replica_exchange_base_eds "<< globalThreadID <<":setParams:\t NUMBER OF total_runs "<<total_runs);
+    DEBUG(4,"replica_exchange_base_eds "<< globalThreadID <<":setParams:\t NUMBER OF total_runs "<<total_runs);
 
     partnerReplicaID = simulationID;
     time = replica->sim.time();
@@ -96,30 +96,28 @@ void util::replica_exchange_base_eds::setParams(){
     replica->totalStepNumber = total_runs*stepsPerRun;
     replica->stepsPerRun= stepsPerRun;
 
-    MPI_DEBUG(4,"replica_exchange_base_eds "<< globalThreadID <<":setParams:\t PARAM START");
+    DEBUG(4,"replica_exchange_base_eds "<< globalThreadID <<":setParams:\t PARAM START");
 
     T = replica->sim.param().reeds.temperature;
-    MPI_DEBUG(4,"replica_exchange_base_eds "<< globalThreadID <<":setParams:\t got  T " << T);
-    MPI_DEBUG(4,"replica_exchange_base_eds "<< globalThreadID <<":setParams:\t got simulationID: "<< simulationID);
+    DEBUG(4,"replica_exchange_base_eds "<< globalThreadID <<":setParams:\t got  T " << T);
+    DEBUG(4,"replica_exchange_base_eds "<< globalThreadID <<":setParams:\t got simulationID: "<< simulationID);
 
     set_s();
-    MPI_DEBUG(4,"replica_exchange_base_eds "<< globalThreadID <<":setParams:\t got s" << l);
+    DEBUG(4,"replica_exchange_base_eds "<< globalThreadID <<":setParams:\t got s" << l);
 
     dt = replica->sim.param().step.dt;
-    MPI_DEBUG(4,"replica_exchange_base_eds "<< globalThreadID <<":setParams:\t dt " <<dt);
-
-    MPI_DEBUG(4,"replica_exchange_base_eds "<< globalThreadID <<":setParams:\t PARAM DONE ");    
+    DEBUG(4,"replica_exchange_base_eds "<< globalThreadID <<":setParams:\t dt " <<dt);
+    DEBUG(4,"replica_exchange_base_eds "<< globalThreadID <<":setParams:\t PARAM DONE ");    
 }
 
 void util::replica_exchange_base_eds::set_s() {
-  MPI_DEBUG(4,"replica_exchange_base_eds "<< globalThreadID <<":set_s:\t START ");
+  DEBUG(4,"replica_exchange_base_eds "<< globalThreadID <<":set_s:\t START ");
 
   eds_para = replica->sim.param().reeds.eds_para[simulationID];
   replica->sim.param().eds = eds_para;
-  MPI_DEBUG(4,"replica_exchange_base_eds "<< globalThreadID <<":set_s:\t eds_para s size: " << replica->sim.param().eds.s.size());
-  
+  DEBUG(4,"replica_exchange_base_eds "<< globalThreadID <<":set_s:\t eds_para s size: " << replica->sim.param().eds.s.size());
   l = replica->sim.param().eds.s[0];    //todoAssume only 1s EDS
-  MPI_DEBUG(4,"replica_exchange_base_eds "<< globalThreadID <<":set_s:\t DONE " );
+  DEBUG(4,"replica_exchange_base_eds "<< globalThreadID <<":set_s:\t DONE " );
 }
 
 void util::replica_exchange_base_eds::init() {

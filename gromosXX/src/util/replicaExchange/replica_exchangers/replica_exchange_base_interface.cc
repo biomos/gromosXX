@@ -89,8 +89,8 @@ void util::replica_exchange_base_interface::createReplicas(int cont, int globalT
 }
 
 void util::replica_exchange_base_interface::init() {
-  DEBUG(3, "replica_exchange_base_interface "<< globalThreadID <<":init:\t START EMPTY");
-  DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":init:\t DONE");
+  MPI_DEBUG(3, "replica_exchange_base_interface "<< globalThreadID <<":init:\t START EMPTY");
+  MPI_DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":init:\t DONE");
 }
 
 void util::replica_exchange_base_interface::run_MD() {
@@ -516,6 +516,7 @@ double util::replica_exchange_base_interface::calc_probability(const unsigned in
 
 //THIS COULD GO TO REPLICA and into the func above! @bschroed
 double util::replica_exchange_base_interface::calculate_energy_core() {
+    DEBUG(5, "CALC energy_Core\tSTART")
   double energy = 0.0;
   //chris: you do need to re-evaluate the energy, otherwise you get the energy of before the previous step
   algorithm::Algorithm * ff = replica->md.algorithm("Forcefield");
@@ -546,6 +547,8 @@ double util::replica_exchange_base_interface::calculate_energy_core() {
       MPI_Abort(replicaGraphMPIControl.comm, E_UNSPECIFIED);
 #endif
   }
+  DEBUG(5, "CALC energy_Core\tDONE")
+
   return energy;
 }
 
