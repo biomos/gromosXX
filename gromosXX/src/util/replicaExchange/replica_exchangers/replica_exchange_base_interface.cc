@@ -30,6 +30,7 @@
 #include <io/print_block.h>
 
 #include <time.h>
+#include "util/debug.h"
 #include <unistd.h>
 
 #include <io/configuration/out_configuration.h>
@@ -118,7 +119,7 @@ void util::replica_exchange_base_interface::updateReplica_params(){
  */
 
 void util::replica_exchange_base_interface::swap(){
-  DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":swap:\t START");
+    MPI_DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":swap:\t START");
   
     partnerReplicaID = find_partner();
     
@@ -147,8 +148,8 @@ void util::replica_exchange_base_interface::swap(){
     if(switched && replica->sim.param().replica.scale) {
       velscale(partnerReplicaID);
     }
-     
-  DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":swap:\t DONE");
+
+    MPI_DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":swap:\t DONE");
 }
 
 void util::replica_exchange_base_interface::write_final_conf() {
@@ -160,7 +161,7 @@ void util::replica_exchange_base_interface::write_final_conf() {
 //RE
 //SWAPPING Functions
 void util::replica_exchange_base_interface::swap_replicas_2D(const unsigned int partnerReplicaID) {
-  DEBUG(4, "replica "<<  globalThreadID <<":swap:\t  START");
+  DEBUG(4, "replica "<<  globalThreadID <<":swap2D:\t  START");
 
   unsigned int partnerReplicaMasterThreadID = partnerReplicaID;
   unsigned int numT = replica->sim.param().replica.num_T;
@@ -244,7 +245,7 @@ void util::replica_exchange_base_interface::swap_replicas_2D(const unsigned int 
       
     */
   }
-    DEBUG(4, "replica "<< globalThreadID <<":swap:\t  DONE");
+    DEBUG(4, "replica "<< globalThreadID <<":swap2D:\t  DONE");
 }
 
 // TODO: THIS function NEEDS to be written! @bschroed
@@ -353,17 +354,21 @@ int util::replica_exchange_base_interface::find_partner() const {
 
   // only 1D-RE ?
   if (numT == 1 || numL == 1) {
-    if (run % 2 == 1) {
-      if (even)
-        partner = ID + 1;
-      else
-        partner = ID - 1;
-    } else {
-      if (even)
-        partner = ID - 1;
-      else
-        partner = ID + 1;
-    }
+      if (run % 2 == 1) {
+          if (even)
+              partner = ID + 1;
+          else
+              partner = ID - 1;
+      } else {
+          if (even)
+              partner = ID - 1;
+          else
+              partner = ID + 1;
+      }
+      if (partner > numL - 1 || partner < 0) {
+        partner = ID;
+      }
+      MPI_DEBUG(3, "SWAPPING PARTNER: \t"<<ID<<"\tpartner\t"<<partner);      //remove later
   } else { // 2D-RE
     // determine switch direction
     switch (run % 4) {
@@ -432,7 +437,7 @@ int util::replica_exchange_base_interface::find_partner() const {
     }
   }
   // partner out of range ? - Do we really need this or is it more a hack hiding bugs?
-  if (partner > numT * numL - 1)
+  if (partner > numT * numL - 1 || partner < 0)
     partner = ID;
 
   return partner;

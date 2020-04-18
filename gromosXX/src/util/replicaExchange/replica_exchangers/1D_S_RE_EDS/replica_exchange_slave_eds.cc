@@ -68,8 +68,8 @@ void util::replica_exchange_slave_eds::send_to_master() const{
   #endif
 }
 
-void util::replica_exchange_slave_eds::swap() {
-    DEBUG(3,"replica_exchange_slave_eds "<< globalThreadID <<":swap:\t START");
+void util::replica_exchange_slave_eds::swap() { //todo move into interface!?
+    MPI_DEBUG(3,"replica_exchange_slave_eds "<< globalThreadID <<":swap:\t START");
     if(not_sender){
             partnerReplicaID = find_partner();
     
@@ -100,9 +100,9 @@ void util::replica_exchange_slave_eds::swap() {
         }
 
     } else{
-        DEBUG(1, "replica_exchange_slave_eds "<< globalThreadID <<":swap:\tNOT sending")
+        MPI_DEBUG(3, "replica_exchange_slave_eds "<< globalThreadID <<":swap:\tNOT sending")
     }
-  DEBUG(3,"replica_exchange_slave_eds "<< globalThreadID <<":swap:\t DONE");
+    MPI_DEBUG(3,"replica_exchange_slave_eds "<< globalThreadID <<":swap:\t DONE");
 
 }
 
