@@ -145,7 +145,6 @@ util::replica_MPI_Slave::replica_MPI_Slave(io::Argument _args, int cont, int glo
    
 
    MPI_DEBUG(4, "replica_MPI_SLAVE "<< globalThreadID <<":Constructor:\t replica Constructor  "<< globalThreadID <<": \t DONE");
-   MPI_DEBUG(5, "replica_MPI_SLAVE UOT! "<< globalThreadID <<":Constructor:\t  "<< globalThreadID <<":\t REEDS "<< sim.param().reeds.num_l);
 #else
     throw "Can not construct Replica_MPI as MPI is not enabled!";
 #endif
@@ -159,15 +158,20 @@ util::replica_MPI_Slave::~replica_MPI_Slave() {
 }
 
 void util::replica_MPI_Slave::run_MD(){
+    #ifdef XXMPI
+    MPI_DEBUG(1, "replica_MPI_SLAVE "<< globalThreadID <<":runMD:\t thread  "<< globalThreadID <<": \t START");
     int error;
     int next_step = 0 ;
     
     //after an Replica coordinate exchange, update the coordinates of the slaves
     receive_coords();
-    
-    while ((unsigned int)(sim.steps()) < stepsPerRun + curentStepNumber) {
+    MPI_DEBUG(1, "replica_MPI_SLAVE "<< globalThreadID <<":runMD:\t\t received Coords");
+    MPI_DEBUG(1, "replica_MPI_SLAVE "<< globalThreadID <<":runMD:\t\t steps: current step: "<<sim.steps()<< "  totalsteps: "<< stepsPerRun << " + " << curentStepNumber << " + 1 = "<< stepsPerRun+curentStepNumber+1);
+
+    while ((unsigned int)(sim.steps()) < stepsPerRun + curentStepNumber+1) {
+       MPI_DEBUG(4, "replica_MPI_SLAVE " << globalThreadID << " waiting for master \t Start step: "<<sim.steps()<<" \tmaximal \t"<<curentStepNumber+stepsPerRun);
       // run a step
-       DEBUG(4, "slave " << globalThreadID << " waiting for master");
+
       if (do_nonbonded && (error = nb->calculate_interactions(topo, conf, sim)) != 0){
         std::cout << "Rank: "<< globalThreadID<<"\tMPI slave " << globalThreadID << ": error in nonbonded calculation!\n" << std::endl;
       }
@@ -210,21 +214,23 @@ void util::replica_MPI_Slave::run_MD(){
 
       ++sim.steps();
       sim.time() = sim.param().step.t0 + sim.steps() * sim.time_step_size();
-
+     DEBUG(4, "replica_SLAVE " << globalThreadID << " DONE waiting for master");
     }
+    //MPI_DEBUG(1, "replica_SLAVE " << globalThreadID << "\tOUTSIDE THE LOOP "<< error);
 
     if (error){
       (*os) << "Rank: "<< globalThreadID<<"\t\nErrors encountered during run in simulation "<< simulationID << " in Slave Thread "<< globalThreadID <<" - check above!\n" << std::endl;
       MPI_Abort(MPI_COMM_WORLD, E_INPUT_ERROR);
     }
-    else{
-      (*os) << "Rank: "<< globalThreadID<<"\n" GROMOSXX " MPI slave " << globalThreadID << "  simulation "<< simulationID << " in Slave Thread "<< globalThreadID << "finished successfully\n" << std::endl;
-    }
+    curentStepNumber +=  stepsPerRun;
+
+    MPI_DEBUG(1, "replica_MPI_SLAVE "<< globalThreadID <<":runMD:\t DONE at step= " << curentStepNumber);
+    #endif
 }
     
 void util::replica_MPI_Slave::receive_coords(){
   #ifdef XXMPI
-  DEBUG(4, "replica_MPI_Slave " << globalThreadID << " ::receive_coords::\t START");
+  MPI_DEBUG(4, "replica_MPI_Slave " << globalThreadID << " ::receive_coords::\t START");
 
   MPI_Status status;
   
@@ -252,7 +258,7 @@ void util::replica_MPI_Slave::receive_coords(){
 
   //Exchange conf?
   conf.exchange_state();
-  DEBUG(4, "replica_MPI_Slave " << globalThreadID << " ::receive_coords::\t Done");
+  MPI_DEBUG(4, "replica_MPI_Slave " << globalThreadID << " ::receive_coords::\t Done");
 
 #endif
 }

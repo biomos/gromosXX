@@ -148,14 +148,17 @@ int main(int argc, char *argv[]) {
      * GLOBAL SETTING VARIABLES
      */
 
-    bool reedsSim;    
+    unsigned int cont;
+
+    bool reedsSim;
+
     unsigned int equil_runs;
     unsigned int sim_runs;
-    unsigned int total_runs;
-    unsigned int numAtoms;
+
     unsigned int numReplicas;
     unsigned int numEDSstates;
-    unsigned int cont;
+    unsigned int numAtoms;
+
 
     //simulation dependend MPI Vars
     unsigned  simulationID; //MPI thread belongs to replica Simulation:
@@ -195,7 +198,6 @@ int main(int argc, char *argv[]) {
             cont = sim.param().replica.cont;
             equil_runs = sim.param().replica.equilibrate;
             sim_runs = sim.param().replica.trials;
-            total_runs = sim.param().replica.trials + equil_runs;
             numAtoms = topo.num_atoms();
             reedsSim = sim.param().reeds.reeds;
             
@@ -557,6 +559,7 @@ int main(int argc, char *argv[]) {
         std::cerr << "num Slaves:\t " << numReplicas - 1 << "\n";
         MPI_DEBUG(1, "Master \t " << globalThreadID<< "simulation: " << simulationID)
 
+        //CONSTRUCT
         // Select repex Implementation - Polymorphism
         MPI_DEBUG(1, "MASTER " << globalThreadID << "::Constructor: START ")
         util::replica_exchange_master_interface * Master;
@@ -569,22 +572,22 @@ int main(int argc, char *argv[]) {
         }
         MPI_DEBUG(1, "MASTER " << globalThreadID << "::Constructor: DONE ");
 
-                      
+        //INIT
         MPI_DEBUG(1, "Master \t INIT START");   
         Master->init();
         Master->init_repOut_stat_file();
         MPI_DEBUG(1, "Master \t INIT DONE")
-        
-        //MPI_Finalize();
-        //return 0;
-        //do md:
-        unsigned int trial = 0;
+
+                
+        //do EQUILIBRATION:
         MPI_DEBUG(1, "Master \t \t \t Equil: " << equil_runs<< " steps")
+        unsigned int trial = 0;
         for (; trial < equil_runs; ++trial) { // for equilibrations
             Master->run_MD();
         }
-
-        MPI_DEBUG(1, "Master \t \t MD: " << total_runs<< " steps")
+        
+        MPI_DEBUG(1, "Master \t \t MD: " << sim_runs<< " steps")
+        //do MD
         //Vars for timing
         int hh, mm, ss = 0;
         double percent, spent = 0.0;
@@ -600,8 +603,8 @@ int main(int argc, char *argv[]) {
             MPI_DEBUG(1, "Master " << globalThreadID << " \t write START " << trial << "\n")
             Master->write();
 
-            if ((total_runs / 10 > 0) && (trial % (total_runs / 10) == 0)) { //Timer 
-                percent = double(trial) / double(total_runs);
+            if ((sim_runs / 10 > 0) && (trial % (sim_runs / 10) == 0)) { //Timer
+                percent = double(trial) / double(sim_runs);
                 spent = util::now() - start;
                 hh = int(spent / 3600);
                 mm = int((spent - hh * 3600) / 60);
@@ -619,8 +622,10 @@ int main(int argc, char *argv[]) {
         std::cout << "\n=================== Master Node " << globalThreadID << "  finished successfully!\n";
 
         } else { //SLAVES    
+        
         MPI_DEBUG(1, "Slave " << globalThreadID << "simulation: " << simulationID)
-
+                
+        //CONSTRUCT
         // Select repex Implementation - Polymorphism
         MPI_DEBUG(1, "Slave " << globalThreadID << "::Constructor: START ")
         util::replica_exchange_slave_interface* Slave;
@@ -631,23 +636,24 @@ int main(int argc, char *argv[]) {
         }
         MPI_DEBUG(1, "Slave " << globalThreadID << "::Constructor: DONE ")
 
+        //INIT          
         MPI_DEBUG(1, "Slave " << globalThreadID << " \t INIT START")
         Slave->init();
-        MPI_DEBUG(1, "Slave " << globalThreadID << " \t INIT Done")
+        MPI_DEBUG(1, "Slave " << globalThreadID << " \t INIT DONE")
+                        
 
-        //MPI_Finalize();
-        //return 0;
-        
-
-        //do md:
-        unsigned int trial = 0;
+        //do EQUILIBRATION:
         MPI_DEBUG(1, "Slave " << globalThreadID << " \t EQUIL " << equil_runs << " steps")
+        unsigned int trial = 0;
         for (; trial < equil_runs; ++trial) { // for equilibrations
             Slave->run_MD();
         }
         
-        MPI_DEBUG(1, "Slave " << globalThreadID << " \t MD " << total_runs << " steps")
-        for (; trial < total_runs; ++trial) { //for repex execution
+
+        
+        //do MD
+        MPI_DEBUG(1, "Slave " << globalThreadID << " \t MD " << sim_runs << " steps")
+        for (; trial < sim_runs; ++trial) { //for repex execution
             MPI_DEBUG(1, "Slave " << globalThreadID << " \t MD trial: " << trial << "\n")
             MPI_DEBUG(1, "Slave " << globalThreadID << " \t run_MD START " << trial << "\n")
             Slave->run_MD();
@@ -660,10 +666,12 @@ int main(int argc, char *argv[]) {
         }
 
         MPI_DEBUG(1, "Slave " << globalThreadID << " \t Finalize")
-        
-        Slave->write_final_conf();
+        if(Slave->not_sender){
+            Slave->write_final_conf();
+        }
         std::cout << "\n=================== Slave Node " << globalThreadID << "  finished successfully!\n";
     }
+    MPI_DEBUG(1, "Lets end this!\n")
 
     MPI_Barrier(MPI_COMM_WORLD); //Make sure all processes finished.
 
@@ -687,9 +695,8 @@ int main(int argc, char *argv[]) {
         std::cerr << "TOTAL TIME USED: \n\th:min:s\t\tseconds\n"
                 << "\t" << durationHour << ":" << durationMinlHour << ":" << durationSlMin << "\t\t" << duration << "\n";
     }
-    
-    MPI_Comm_free(&reGMPI.comm); //Clean up
-    MPI_Comm_free(&replica_mpi_control.comm); //Clean up
+    MPI_DEBUG(1, "Everybody done!")
+
     MPI_Finalize();
     return 0;
 #else
