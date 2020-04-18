@@ -20,11 +20,11 @@ namespace interaction {
      * @param linked - the index of atom it is linked to - default is 0 (none)
      */
     QM_Atom(unsigned index
-         , unsigned atomic_number = 1
          , math::Vec pos = {0.0,0.0,0.0}
+         , unsigned atomic_number = 1
          ) : index(index)
-           , atomic_number(atomic_number)
            , pos(pos)
+           , atomic_number(atomic_number)
            , force(0.0)
            , qm_charge(0.0)
     {}
@@ -32,8 +32,8 @@ namespace interaction {
      * Copy constructor
      */
     QM_Atom(const QM_Atom & a) : index(a.index)
-                               , atomic_number(a.atomic_number)
                                , pos(a.pos)
+                               , atomic_number(a.atomic_number)
                                , force(a.force)
                                , qm_charge(a.qm_charge)
     {}
@@ -42,16 +42,16 @@ namespace interaction {
      * the index of the atom in topology - starts with 0
      */
     const unsigned index;
-    
-    /**
-     * the atomic number of the atom
-     */
-    const unsigned atomic_number;
 
     /**
      * The coordinate
      */
     mutable math::Vec pos;
+    
+    /**
+     * the atomic number of the atom
+     */
+    const unsigned atomic_number;
 
     /**
      * The force

@@ -19,8 +19,8 @@ namespace interaction {
      * @param charge the charge
      */
     MM_Atom(unsigned index
-          , double charge = 0.0
           , math::Vec pos = {0.0,0.0,0.0}
+          , double charge = 0.0
           , math::Vec force = {0.0,0.0,0.0}
           , double cos_charge = 0.0
           , math::Vec cosV = {0.0,0.0,0.0}
@@ -28,8 +28,8 @@ namespace interaction {
           , bool polarisable = false
           ) :
               index(index)
-            , charge(charge)
             , pos(pos)
+            , charge(charge)
             , force(force)
             , cos_charge(cos_charge)
             , cosV(cosV)
@@ -43,14 +43,14 @@ namespace interaction {
     unsigned int index;
 
     /**
-     * the charge
-     */
-    mutable double charge;
-
-    /**
      * the position
      */
     mutable math::Vec pos;
+
+    /**
+     * the charge
+     */
+    mutable double charge;
 
     /**
      * the force

@@ -206,7 +206,6 @@ int interaction::QMMM_Interaction::calculate_interactions(topology::Topology& to
     m_timer.stop(m_worker->name());
     if (err) return err;
 
-
     if (sim.param().qmmm.use_qm_buffer) {
       DEBUG(4, "Using QM buffer");
       /** If we are using buffer region, this region is treated as both QM and MM
@@ -228,7 +227,7 @@ int interaction::QMMM_Interaction::calculate_interactions(topology::Topology& to
        * b) from 2 QM or NN evaluations and calculating the difference here
        * 
        */
-      if (true /*sim.param().qmmm.software != simulation::qm_nn*/) {
+      if (sim.param().qmmm.software != simulation::qm_nn) {
         DEBUG(4, "Creating QM buffer for separate QM calculation");
         //create buffer zone for separate QM calculation and run it
         if (m_qm_buffer != nullptr) delete m_qm_buffer;
@@ -450,12 +449,36 @@ int interaction::QMMM_Interaction::init(topology::Topology& topo,
         sim.param().qmmm.mm_scale << std::endl;
       os << "\t\t|R| is distance to the closest QM atom" << std::endl;
     }
-
+    unsigned num_qm = 0;
+    unsigned num_buffer = 0;
+    for (unsigned i = 0; i < topo.num_atoms(); ++i) {
+      if (topo.is_qm(i))
+        ++num_qm;
+      else if (topo.is_qm_buffer(i))
+        ++num_buffer;
+    }
     os << "\tQM zone: " << std::endl
-       << "\t\tnet charge: \t" << m_qm_zone->charge() << std::endl
-       << "\t\tspin multiplicity: \t" << m_qm_zone->spin_mult() << std::endl
-       << "\t\tnumber of QM atoms: \t" << m_qm_zone->qm.size() << std::endl
-       << "\t\tnumber of QM-MM links: \t" << m_qm_zone->link.size() << std::endl;
+       << "\t\tnet charge\t\t\t\t\t\t\t: " << sim.param().qmmm.qm_zone.charge << std::endl
+       << "\t\tspin multiplicity\t\t\t\t: " << sim.param().qmmm.qm_zone.spin_mult << std::endl
+       << "\t\tnumber of QM atoms\t\t\t: " << num_qm << std::endl;
+    if (sim.param().qmmm.use_qm_buffer) {
+      os << "\t";
+      if (sim.param().qmmm.buffer_zone.cutoff)
+        os << "adaptive ";
+      else
+        os << "static ";
+      os << "buffer zone:" << std::endl;
+      if (sim.param().qmmm.buffer_zone.cutoff)
+        os << "\t\tcutoff\t\t\t\t\t\t\t\t\t: " << sim.param().qmmm.buffer_zone.cutoff <<std::endl;
+      os << "\t\tnet charge\t\t\t\t\t\t\t: " << sim.param().qmmm.buffer_zone.charge << std::endl
+         << "\t\tspin multiplicity\t\t\t\t: " << sim.param().qmmm.buffer_zone.spin_mult << std::endl
+         << "\t\tnumber of buffer atoms\t: ";
+      if (sim.param().qmmm.buffer_zone.cutoff)
+        os << "up to ";
+      os << num_buffer << std::endl;
+    }
+    os << "\tnumber of QM-MM links\t\t\t: " << m_qm_zone->link.size() << std::endl;
+
   }
 
   // Remove relevant bonded terms from topo
@@ -553,17 +576,23 @@ void interaction::QMMM_Interaction::remove_bonded_terms(
   fourBodyVec& improper_dihedrals = topo.solute().improper_dihedrals();
   fourBodyVec& dihedrals = topo.solute().dihedrals();
   eightBodyVec& crossdihedrals = topo.solute().crossdihedrals();
-
   if (!quiet)
     os << "\tterms removed from topology:";
   // Counter for neat printing
   unsigned count = 0;
   if (!quiet && bonds.size())
     os << "\n\t\tbonds:\n";
+  
+  std::string link_err_msg = "across QM-MM boundary, but no QMMM link defined between atoms ";
+  auto is_qm_or_buffer = [&topo](const unsigned i)-> bool {
+    return (topo.is_qm(i) || topo.is_qm_buffer(i));
+  };
   // Delete QM-QM bonded terms and check, if QM-MM links were properly defined
   for (twoBodyVec::iterator b_it = bonds.begin(); b_it != bonds.end(); ) {
-    // If QM-QM
-    if (topo.is_qm(b_it->i) && topo.is_qm(b_it->j)) {
+    // If QM-QM or QM-Buf
+    if ((topo.is_qm(b_it->i) && is_qm_or_buffer(b_it->j))
+        || (is_qm_or_buffer(b_it->i) && topo.is_qm(b_it->j))
+      ) {
       if (!quiet) {
         if (count == 0) os << "\t\t";
         os << (b_it->i + 1) << "-" << (b_it->j + 1) << " ";
@@ -574,32 +603,35 @@ void interaction::QMMM_Interaction::remove_bonded_terms(
       }
       DEBUG(4,"Erased bond: " << b_it->i + 1 << " - " << b_it->j + 1);
       b_it = bonds.erase(b_it);
+      continue;
     }
-    // If QM-MM or MM-QM and not in QM-MM link
-    else if ((topo.is_qm(b_it->i)
+    // If Buf-Buf
+    else if (topo.is_qm_buffer(b_it->i) && topo.is_qm_buffer(b_it->i))
+      ;
+    // If QM/Buf-MM or MM-QM/Buf and not in QM-MM link
+    else if ((is_qm_or_buffer(b_it->i)
             && !topo.are_linked( b_it->i, b_it->j ))
           ||
-            (topo.is_qm(b_it->j)
+            (is_qm_or_buffer(b_it->j)
             && !topo.are_linked( b_it->j, b_it->i ))
           )
       {
       std::ostringstream msg;
-      msg << "Bonded interaction across QM-MM boundary, but no QMMM link defined for"
-          << " atoms " << b_it->i << " and " << b_it->j;
+      msg << "Bonded interaction " << link_err_msg
+          << b_it->i << " and " << b_it->j;
       io::messages.add(msg.str(), "QMMM_interaction", io::message::warning);
-      ++b_it;
     }
-    else {
-      ++b_it;
-    }
+    ++b_it;
   }
 
   if (!quiet && cgbonds.size())
     os << "\n\t\tcoarse-grained bonds:\n";
   // Delete coarse-grained bonds between QM-QM
   for (twoBodyVec::iterator b_it = cgbonds.begin(); b_it != cgbonds.end(); ) {
-    // If QM-QM
-    if (topo.is_qm(b_it->i) && topo.is_qm(b_it->j)) {
+    // If QM-QM or QM-Buf
+    if ((topo.is_qm(b_it->i) && is_qm_or_buffer(b_it->j))
+        || (is_qm_or_buffer(b_it->i) && topo.is_qm(b_it->j))
+      ) {
       if (!quiet)
         os << "\t\t" << (b_it->i + 1) << " " << (b_it->j + 1) << "\n";
       DEBUG(4,"Erased coarse-grained bond: " << b_it->i + 1 << "-" << b_it->j + 1);
@@ -612,7 +644,9 @@ void interaction::QMMM_Interaction::remove_bonded_terms(
     os << "\n\t\tbond angles:\n";
     count = 0;
   }
-  // Delete (QM/MM)-QM-(QM/MM) bond-angle terms and check, if QM-MM links were properly defined
+  /* Delete (QM/Buf/MM)-QM-(QM/Buf/MM) bond-angle terms and check,
+   * if QM-MM links were properly defined
+   */
   for (threeBodyVec::iterator a_it = angles.begin(); a_it != angles.end(); ) {
     const unsigned i = a_it->i
                  , j = a_it->j
@@ -637,18 +671,17 @@ void interaction::QMMM_Interaction::remove_bonded_terms(
     for (std::vector<unsigned>::const_iterator
         i_it = indices.begin(), j_it = i_it + 1, i_to = indices.end() - 1
         ; i_it != i_to; ++i_it, ++j_it) {
-      if ((   topo.is_qm(*i_it)
-          && !topo.is_qm(*j_it)
+      if ((   is_qm_or_buffer(*i_it)
+          && !is_qm_or_buffer(*j_it)
           && !topo.are_linked(*i_it, *j_it))
         ||
-          (  !topo.is_qm(*i_it)
-          &&  topo.is_qm(*j_it)
+          (  !is_qm_or_buffer(*i_it)
+          &&  is_qm_or_buffer(*j_it)
           && !topo.are_linked(*j_it, *i_it)
         ))
         {
         std::ostringstream msg;
-        msg << "Bond-angle bending interaction across QM-MM boundary, "
-          << "but no QMMM link defined between atoms "
+        msg << "Bond-angle bending interaction " << link_err_msg
           << *i_it + 1 << " and " << *j_it + 1;
         io::messages.add(msg.str(), "QMMM_interaction", io::message::warning);
       }
@@ -659,7 +692,7 @@ void interaction::QMMM_Interaction::remove_bonded_terms(
     os << "\n\t\tdihedral angles:\n";
     count = 0;
   }
-  // Delete (MM/QM)-QM-QM-(MM/QM) terms - dihedrals
+  // Delete (MM/Buf/QM)-QM-QM-(MM/Buf/QM) terms - dihedrals
   for (fourBodyVec::iterator d_it = dihedrals.begin(); d_it != dihedrals.end(); ) {
     const unsigned i = d_it->i
                  , j = d_it->j
@@ -686,18 +719,17 @@ void interaction::QMMM_Interaction::remove_bonded_terms(
     for (std::vector<unsigned>::const_iterator
         i_it = indices.begin(), j_it = i_it + 1, to = indices.end()
         ; j_it != to; ++i_it, ++j_it) {
-      if ((   topo.is_qm(*i_it)
-          && !topo.is_qm(*j_it)
+      if ((   is_qm_or_buffer(*i_it)
+          && !is_qm_or_buffer(*j_it)
           && !topo.are_linked(*i_it, *j_it))
         ||
-          (  !topo.is_qm(*i_it)
-          &&  topo.is_qm(*j_it)
+          (  !is_qm_or_buffer(*i_it)
+          &&  is_qm_or_buffer(*j_it)
           && !topo.are_linked(*j_it, *i_it)
         ))
         {
         std::ostringstream msg;
-        msg << "Dihedral angle torsion interaction across QM-MM boundary, "
-            << "but no QMMM link defined between atoms "
+        msg << "Dihedral angle torsion interaction " << link_err_msg
             << *i_it + 1 << " and " << *j_it + 1;
         io::messages.add(msg.str(), "QMMM_interaction", io::message::warning);
       }
@@ -709,7 +741,7 @@ void interaction::QMMM_Interaction::remove_bonded_terms(
     os << "\n\t\timproper dihedral angles:\n";
     count = 0;
   }
-  // Delete QM-(MM/QM)-(MM/QM)-(MM/QM) improper dihedral
+  // Delete QM-(MM/Buf/QM)-(MM/Buf/QM)-(MM/Buf/QM) improper dihedral
   for (fourBodyVec::iterator
       d_it = improper_dihedrals.begin(), d_to; d_it != improper_dihedrals.end(); ) {
     const unsigned i = d_it->i
@@ -740,18 +772,17 @@ void interaction::QMMM_Interaction::remove_bonded_terms(
     for (std::vector<unsigned>::const_iterator
         j_it = indices.begin(), to = indices.end()
         ; j_it != to; ++j_it) {
-      if ((   topo.is_qm(i)
-          && !topo.is_qm(*j_it)
+      if ((   is_qm_or_buffer(i)
+          && !is_qm_or_buffer(*j_it)
           && !topo.are_linked(i, *j_it))
         ||
-          (  !topo.is_qm(i)
-          &&  topo.is_qm(*j_it)
+          (  !is_qm_or_buffer(i)
+          &&  is_qm_or_buffer(*j_it)
           && !topo.are_linked(*j_it, i)
         ))
         {
         std::ostringstream msg;
-        msg << "Improper dihedral angle bending interaction across QM-MM boundary, "
-            << "but no QMMM link defined between atoms "
+        msg << "Improper dihedral angle bending interaction " << link_err_msg
             << i + 1 << " and " << *j_it + 1;
         io::messages.add(msg.str(), "QMMM_interaction", io::message::warning);
       }
@@ -857,6 +888,17 @@ void interaction::QMMM_Interaction::modify_exclusions(
   // Remove or make a copy of QM-QM and QM-MM exclusions
   const bool use_qm_buffer = sim.param().qmmm.use_qm_buffer;
   
+  /** (K)eep or (R)emove?
+   *     QM  Buf  MM
+   * QM   R    R  R/K
+   * Buf  R    K   K
+   * MM   R    K   K
+   *
+   * R/K - keep in mechanical embedding, remove otherwise
+   * Copy QM-QM only if requested to do QM-QM LJ
+   * Copy QM-MM only if electrostatic or polarizable embedding
+   * Never copy MM-MM
+   */
   // Decide what to copy and what to erase
   bool copy = false;
   bool erase = false;
@@ -870,7 +912,7 @@ void interaction::QMMM_Interaction::modify_exclusions(
       case 1 : { // QM-MM
         // if MM is in QM buffer zone
         if (topo.is_qm_buffer(i) || topo.is_qm_buffer(j)) {
-          copy = bool(sim.param().qmmm.qm_lj);
+          copy = sim.param().qmmm.qm_lj;
           erase = true;
         }
         else if (sim.param().qmmm.qmmm > simulation::qmmm_mechanical) {
@@ -879,7 +921,7 @@ void interaction::QMMM_Interaction::modify_exclusions(
         break;
       }
       case 2 : { // QM-QM
-        copy = bool(sim.param().qmmm.qm_lj);
+        copy = sim.param().qmmm.qm_lj;
         erase = true;
         break;
       }

@@ -202,20 +202,27 @@ namespace interaction {
     int get_qm_atoms(const topology::Topology& topo, 
                      const configuration::Configuration& conf, 
                      const simulation::Simulation& sim);
+    
+    /**
+     * Gather buffer atoms in adaptive scheme
+     */
+    void get_buffer_atoms(const topology::Topology& topo, 
+                          const configuration::Configuration& conf, 
+                          const simulation::Simulation& sim);
 
     /**
      * Update positions of QM atoms - wrapper
      */
-    int update_qm_pos(const topology::Topology& topo, 
-                      const configuration::Configuration& conf, 
-                      const simulation::Simulation& sim);
+    void update_qm_pos(const topology::Topology& topo, 
+                       const configuration::Configuration& conf, 
+                       const simulation::Simulation& sim);
 
     /**
      * Gather MM atoms - wrapper
      */
-    int get_mm_atoms(const topology::Topology& topo, 
-                     const configuration::Configuration& conf, 
-                     const simulation::Simulation& sim);
+    void get_mm_atoms(const topology::Topology& topo, 
+                      const configuration::Configuration& conf, 
+                      const simulation::Simulation& sim);
     
     /**
      * Get QM-MM bonds
@@ -227,6 +234,25 @@ namespace interaction {
      * Update capping atoms positions
      */
     void update_links(const simulation::Simulation& sim);
+
+  private:  
+    /**
+     * Gather chargegroups within cutoff from QM atoms
+     */
+    template <math::boundary_enum B, class AtomType>
+    int gather_chargegroups(const topology::Topology& topo, 
+                            const configuration::Configuration& conf, 
+                            const simulation::Simulation& sim,
+                            std::set<AtomType>& atom_set,
+                            const double cutoff2);
+    
+    /**
+     * Gather buffer atoms in adaptive scheme - internal function
+     */
+    template<math::boundary_enum B>
+    int _get_buffer_atoms(const topology::Topology& topo, 
+                          const configuration::Configuration& conf, 
+                          const simulation::Simulation& sim);
 
     /**
      * Update positions of QM atoms - internal function
@@ -259,7 +285,68 @@ namespace interaction {
     void get_linked_mm_atoms(const topology::Topology& topo, 
                             const configuration::Configuration& conf,
                             const math::Periodicity<B>& periodicity);
+
+    /**
+     * Emplace the atom of proper type to the provided set - internal function
+     */
+    template<class AtomType>
+    inline void emplace_atom(std::set<AtomType>& set,
+                             typename std::set<AtomType>::const_iterator& it,
+                             const unsigned index,
+                             const math::Vec& pos,
+                             const unsigned atomic_number,
+                             const double charge,
+                             const bool is_qm_buffer);
+
+    /**
+     * Skip the chargegroup search - internal function
+     */
+    template<class AtomType>
+    inline bool skip_cg(const topology::Topology& topo,
+                        const unsigned index);
   };
+
+  /**
+   * Emplace the QM atom
+   */
+  template<>
+  inline void QM_Zone::emplace_atom<interaction::QM_Atom>
+                     (std::set<interaction::QM_Atom>& set,
+                      std::set<interaction::QM_Atom>::const_iterator& it,
+                      const unsigned index,
+                      const math::Vec& pos,
+                      const unsigned atomic_number,
+                      const double charge,
+                      const bool is_qm_buffer);
+
+  /**
+   * Emplace the MM atom
+   */
+  template<>
+  inline void QM_Zone::emplace_atom<interaction::MM_Atom>
+                     (std::set<interaction::MM_Atom>& set,
+                      std::set<interaction::MM_Atom>::const_iterator& it,
+                      const unsigned index,
+                      const math::Vec& pos,
+                      const unsigned atomic_number,
+                      const double charge,
+                      const bool is_qm_buffer);
+
+  /**
+   * Skip the chargegroup search - QM_Atom version
+   */
+  template<>
+  inline bool QM_Zone::skip_cg<interaction::QM_Atom>
+                              (const topology::Topology& topo,
+                               const unsigned index);
+
+  /**
+   * Skip the chargegroup search - MM_Atom version
+   */
+  template<>
+  inline bool QM_Zone::skip_cg<interaction::MM_Atom>
+                              (const topology::Topology& topo,
+                               const unsigned index);
 }
 #endif	/* QM_ZONE_H */
 
