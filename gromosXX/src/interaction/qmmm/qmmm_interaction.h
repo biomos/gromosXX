@@ -133,9 +133,9 @@ namespace interaction {
     /**
      * helper function to remove constraints from QM zone
      */
-    void remove_constraints(topology::Topology& topo
+    /*void remove_constraints(topology::Topology& topo
                           , std::ostream& os
-                          , bool quiet);
+                          , bool quiet);*/
 
     /**
      * helper function to modify pairlist exclusions in topology
