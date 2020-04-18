@@ -220,7 +220,13 @@ namespace util {
      * current simulation time
      */
     double time;
+      
         
+    /**
+     *  Sending data or not?
+     */
+    bool not_sender;
+    
     /*
      * FUNCTIONS
      */

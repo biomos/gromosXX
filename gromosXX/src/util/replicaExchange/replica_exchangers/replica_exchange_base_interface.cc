@@ -153,7 +153,9 @@ void util::replica_exchange_base_interface::swap(){
 
 void util::replica_exchange_base_interface::write_final_conf() {
   // write coordinates to cnf for all replica assigned to this node
-   replica->write_final_conf();
+    if(not_sender){
+       replica->write_final_conf();
+    }
 }
 
 
