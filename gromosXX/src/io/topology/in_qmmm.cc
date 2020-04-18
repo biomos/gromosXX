@@ -53,9 +53,12 @@ END
  * @section bufferzone BUFFERZONE block
  * The BUFFERZONE block specifies the atoms which are treated in both quantum and
  * classical way. They are added to QMZONE atoms to form the full QM zone. Energies
- * and interactions are then calculated as a contribution to forcefield dE and dF
- * dE = E(fullQM) - E(buffer)
- * dF = F(fullQM) - F(buffer)
+ * and interactions are then calculated as a contribution to forcefield deltaE and
+ * deltaF
+ * deltaE = E(fullQM) - E(buffer)
+ * deltaF = F(fullQM) - F(buffer)
+ * 
+ * 
  * 
  *
  * The block is read from the QM/MM specification file
@@ -64,6 +67,9 @@ END
  * @verbatim
 BUFFERZONE
 # BUFCUT: cutoff of the adaptive buffer zone (default = 0.0, no adaptive buffer zone)
+          If the specified atoms occur within BUFCUT of QM atom, they are considered
+          as buffer atoms. Otherwise they are considered solely as MM atoms. BUFCUT = 0.0
+          means that they are always considered as buffer atoms.
 # BUFCUT
     1.4
 # NETCH:
@@ -787,7 +793,8 @@ void io::In_QMMM::read_zone(topology::Topology& topo
       return;
     }
 
-    if (qmi > topo.num_solute_atoms()) {
+    if ((blockname == "QMZONE")
+        && (qmi > topo.num_solute_atoms())) {
       std::ostringstream msg;
       msg << blockname << " block: QM atom should be in solute";
       io::messages.add(msg.str(), "In_QMMM", io::message::error);
@@ -807,11 +814,19 @@ void io::In_QMMM::read_zone(topology::Topology& topo
       io::messages.add(msg.str(), "In_QMMM", io::message::error);
       return;
     }
-    topo.is_qm(qmi - 1) = (blockname == "QMZONE");
+    topo.is_qm(qmi - 1) = topo.is_qm(qmi - 1) || (blockname == "QMZONE");
     const bool is_qm_buffer = (blockname == "BUFFERZONE");
-    topo.is_qm_buffer(qmi - 1) = is_qm_buffer;
+    topo.is_qm_buffer(qmi - 1) = topo.is_qm_buffer(qmi - 1) || is_qm_buffer;
     sim.param().qmmm.use_qm_buffer = sim.param().qmmm.use_qm_buffer
                                       || is_qm_buffer;
+    if (topo.is_qm(qmi - 1) && topo.is_qm_buffer(qmi - 1)) {
+      std::ostringstream msg;
+      msg << blockname << " block: atom " << qmi
+          << " cannot be both in QM and buffer zone";
+      io::messages.add(msg.str(), "In_QMMM", io::message::error);
+      return;
+    }
+
     topo.qm_atomic_number(qmi - 1) = qmz;
     if (qmli > 0 ) {
       DEBUG(15, "Linking " << qmi << " to " << qmli);
