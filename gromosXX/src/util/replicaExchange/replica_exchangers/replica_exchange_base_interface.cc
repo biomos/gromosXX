@@ -102,7 +102,9 @@ void util::replica_exchange_base_interface::run_MD() {
 
     replica->run_MD();
     
-    updateReplica_params();
+    if(not_sender){
+        updateReplica_params();
+    }
   DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":run_MD:\t DONE");
 }
 
@@ -123,7 +125,7 @@ void util::replica_exchange_base_interface::swap(){
   
     partnerReplicaID = find_partner();
     
-    if (partnerReplicaID != simulationID) // different replica?
+    if (partnerReplicaID != simulationID && not_sender) // different replica?
     {
       //TODO: RENAME 
       swap_replicas_2D(partnerReplicaID);
