@@ -54,9 +54,6 @@ namespace util{
     private:
         //replica_exchange_slave_2d_s_eoff_eds(const replica_exchange_slave_2d_s_eoff_eds& orig);
         virtual ~replica_exchange_slave_2d_s_eoff_eds(){};
-
-        //give all information of this node to Master.
-        replica_exchange_slave_2d_s_eoff_eds(const replica_exchange_slave_2d_s_eoff_eds& orig); //Todo: Messy method, bschroed
-            };
+    };
 }
 #endif /* REPLICA_EXCHANGE_SLAVE_2D_S_EOFF_EDS_H */
