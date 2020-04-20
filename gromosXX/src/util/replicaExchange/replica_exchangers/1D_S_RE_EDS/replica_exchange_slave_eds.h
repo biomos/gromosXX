@@ -51,8 +51,6 @@ namespace util{
         */
         void send_to_master() const override;
 
-        void swap() override;
-        
     private:
         //replica_exchange_slave_eds(const replica_exchange_slave_eds& orig);
         virtual ~replica_exchange_slave_eds(){};

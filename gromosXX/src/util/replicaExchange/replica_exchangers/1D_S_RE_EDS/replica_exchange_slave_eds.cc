@@ -68,43 +68,6 @@ void util::replica_exchange_slave_eds::send_to_master() const{
   #endif
 }
 
-void util::replica_exchange_slave_eds::swap() { //todo move into interface!?
-    MPI_DEBUG(3,"replica_exchange_slave_eds "<< globalThreadID <<":swap:\t START");
-    if(not_sender){
-            partnerReplicaID = find_partner();
-    
-        if (partnerReplicaID != simulationID) // different replica?
-        {
-          //TODO: RENAME 
-          swap_replicas_2D(partnerReplicaID);
-          if (switched) {
-            if (globalThreadID < partnerReplicaID) {
-              send_coord(partnerReplicaID);
-              receive_new_coord(partnerReplicaID);
-              // the averages of current and old are interchanged after calling exchange_state() and have to be switched back
-              exchange_averages();
-            } else {
-              receive_new_coord(partnerReplicaID);
-              send_coord(partnerReplicaID);
-              // the averages of current and old are interchanged after calling exchange_state() and have to be switched back
-              exchange_averages();
-            }
-          }
-        }
-        else {  // no exchange with replica itself
-          probability = 0.0;
-          switched = 0;
-        }
-        if(switched && replica->sim.param().replica.scale) {
-          velscale(partnerReplicaID);
-        }
-
-    }   else{
-        DEBUG(3, "replica_exchange_slave_eds "<< globalThreadID <<":swap:\tNOT sending")
-    }
-    MPI_DEBUG(3,"replica_exchange_slave_eds "<< globalThreadID <<":swap:\t DONE");
-
-}
 
 
 

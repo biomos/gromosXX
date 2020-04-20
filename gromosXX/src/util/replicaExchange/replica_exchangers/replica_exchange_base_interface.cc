@@ -127,6 +127,7 @@ void util::replica_exchange_base_interface::swap(){
     
     if (partnerReplicaID != simulationID && not_sender) // different replica?
     {
+        DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":swap:\t I'm gonna swap!:)");
       //TODO: RENAME 
       swap_replicas_2D(partnerReplicaID);
       if (switched) {
