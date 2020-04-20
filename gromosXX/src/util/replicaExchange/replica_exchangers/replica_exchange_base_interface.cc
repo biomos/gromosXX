@@ -145,6 +145,7 @@ void util::replica_exchange_base_interface::swap(){
       }
     }
     else {  // no exchange with replica itself
+      DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":swap:\t No swap here!!:)");
       probability = 0.0;
       switched = 0;
     }
