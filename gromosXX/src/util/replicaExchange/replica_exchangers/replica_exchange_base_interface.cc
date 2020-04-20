@@ -242,7 +242,7 @@ void util::replica_exchange_base_interface::swap_replicas_2D(const unsigned int 
     //throw "Partner does not exist!";
     DEBUG(4, "replica "<<  globalThreadID <<":swap2D:\t  No swap because edgy");
 
-    partner = ID;
+    partnerReplicaID = ID;
     switched = false;
     probability = 0.0;
   }
