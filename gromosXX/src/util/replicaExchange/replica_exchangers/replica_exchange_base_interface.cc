@@ -368,7 +368,6 @@ int util::replica_exchange_base_interface::find_partner() const {
       if (partner > numL - 1 || partner < 0) {
         partner = ID;
       }
-      MPI_DEBUG(3, "SWAPPING PARTNER: \t"<<ID<<"\tpartner\t"<<partner);      //remove later
   } else { // 2D-RE
     // determine switch direction
     switch (run % 4) {
