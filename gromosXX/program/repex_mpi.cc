@@ -666,9 +666,7 @@ int main(int argc, char *argv[]) {
         }
 
         MPI_DEBUG(1, "Slave " << globalThreadID << " \t Finalize")
-        if(Slave->not_sender){
-            Slave->write_final_conf();
-        }
+        Slave->write_final_conf();
         std::cout << "\n=================== Slave Node " << globalThreadID << "  finished successfully!\n";
     }
     MPI_DEBUG(1, "Lets end this!\n")

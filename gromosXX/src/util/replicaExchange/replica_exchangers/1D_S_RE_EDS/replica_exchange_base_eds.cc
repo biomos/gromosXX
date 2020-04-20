@@ -234,7 +234,7 @@ double util::replica_exchange_base_eds::calculate_energy_core() {
      ff = replica->md.algorithm("EDS");
 
     //Calculate energies    
-    DEBUG(5, "replica_reeds "<< globalThreadID <<":calculate_energy:\t calc energies"); 
+    DEBUG(5, "replica_reeds_base_eds "<< globalThreadID <<":calculate_energy:\t calc energies"); 
     if (ff->apply(replica->topo, replica->conf, replica->sim)) {
       print_info("Error in Forcefield energy calculation!");
      #ifdef XXMPI
@@ -244,7 +244,7 @@ double util::replica_exchange_base_eds::calculate_energy_core() {
     }
     
     //return energies
-    DEBUG(5, "replica_reeds "<< globalThreadID <<":calculate_energy"
+    DEBUG(5, "replica_reeds_base_edsreplica_reeds "<< globalThreadID <<":calculate_energy"
             ":\t return energies"); 
     energy=replica->conf.current().energies.eds_vr; 
     return energy;
@@ -252,10 +252,10 @@ double util::replica_exchange_base_eds::calculate_energy_core() {
 
 
 double util::replica_exchange_base_eds::calculate_energy(const unsigned int selectedReplicaID) {
-    DEBUG(4, "replica_reeds "<< globalThreadID <<":calculate_energy:\t START"); 
+    DEBUG(4, "replica_reeds_base_edsreplica_reeds "<< globalThreadID <<":calculate_energy:\t START"); 
  
 
-    DEBUG(5, "replica_reeds "<< globalThreadID <<":calculate_energy:\t get Partner settings"); 
+    DEBUG(5, "replica_reeds_base_edsreplica_reeds "<< globalThreadID <<":calculate_energy:\t get Partner settings"); 
     if(selectedReplicaID!=simulationID){ 
         change_eds(selectedReplicaID);
     }
@@ -265,7 +265,7 @@ double util::replica_exchange_base_eds::calculate_energy(const unsigned int sele
     if(selectedReplicaID!=simulationID){
         reset_eds();
     }
-    DEBUG(4, "replica_reeds "<< globalThreadID <<":calculate_energy:\t DONE"); 
+    DEBUG(4, "replica_reeds_base_edsreplica_reeds "<< globalThreadID <<":calculate_energy:\t DONE"); 
     return energy;
 }
 

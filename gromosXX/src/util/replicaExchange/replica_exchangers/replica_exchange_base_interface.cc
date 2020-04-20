@@ -103,7 +103,7 @@ void util::replica_exchange_base_interface::run_MD() {
     replica->run_MD();
     
     updateReplica_params();
-  DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":run_MD:\t END");
+  DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":run_MD:\t DONE");
 }
 
 //TODO: REMOVE
@@ -239,13 +239,12 @@ void util::replica_exchange_base_interface::swap_replicas_2D(const unsigned int 
     }
 
   } else {//This should be an error!
-      throw "Partner does not exist!";
-    /*
-      partner = ID;
+    //throw "Partner does not exist!";
+    DEBUG(4, "replica "<<  globalThreadID <<":swap2D:\t  No swap because edgy");
+
+    partner = ID;
     switched = false;
     probability = 0.0;
-      
-    */
   }
     DEBUG(4, "replica "<< globalThreadID <<":swap2D:\t  DONE");
 }

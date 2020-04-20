@@ -63,10 +63,7 @@ namespace util {
      * sends information of all replicas to master
      */
     virtual void send_to_master() const;
-      /**
-       *  Sending data or not?
-       */
-      bool not_sender;
+
   protected:
     /**
      * copy constructor
