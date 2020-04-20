@@ -164,8 +164,8 @@ void util::replica_exchange_base_interface::write_final_conf() {
 //SWAPPING Functions
 void util::replica_exchange_base_interface::swap_replicas_2D(const unsigned int partnerReplicaID) {
   DEBUG(4, "replica "<<  globalThreadID <<":swap2D:\t  START");
+  DEBUG(4, "replica "<<  globalThreadID <<":swap2D:\t  sim: "<< simulationID << " \t\t "<< partnerReplicaID);
 
-  unsigned int partnerReplicaMasterThreadID = partnerReplicaID;
   unsigned int numT = replica->sim.param().replica.num_T;
   unsigned int numL = replica->sim.param().replica.num_l;
 
@@ -173,7 +173,8 @@ void util::replica_exchange_base_interface::swap_replicas_2D(const unsigned int 
   if (partnerReplicaID < numT * numL && partnerReplicaID != simulationID) {
     // the one with lower ID does probability calculation
     if (simulationID < partnerReplicaID) {
-    
+        DEBUG(4, "replica "<<  globalThreadID <<":swap2D:\t  swap because smaller :)");
+
       // posts a MPI_Recv(...) matching the MPI_Send below 
       probability = calc_probability(partnerReplicaID);
       const double randNum = rng.get();
@@ -183,7 +184,7 @@ void util::replica_exchange_base_interface::swap_replicas_2D(const unsigned int 
       prob[1] = randNum;
 
 #ifdef XXMPI
-      MPI_Send(&prob[0], 2, MPI_DOUBLE, partnerReplicaMasterThreadID, SENDCOORDS, replicaGraphMPIControl.comm);
+      MPI_Send(&prob[0], 2, MPI_DOUBLE, partnerReplicaID, SENDCOORDS, replicaGraphMPIControl.comm);
 #endif
 
       if (randNum < probability) {
@@ -195,7 +196,7 @@ void util::replica_exchange_base_interface::swap_replicas_2D(const unsigned int 
       bool sameLambda = (l == replica->sim.param().replica.lambda[partnerReplicaID / replica->sim.param().replica.num_T]);
       if(!sameLambda){      //exchange LAMBDA
         // E21: Energy with configuration 2 and lambda 1(of partner)
-        const double E21 = calculate_energy(partnerReplicaMasterThreadID);
+        const double E21 = calculate_energy(partnerReplicaID);
         // this we can store as the partner energy of the current replica
         epot_partner = E21;
         // E22: Energy with configuration 2 and lambda 2(own one)
@@ -204,18 +205,18 @@ void util::replica_exchange_base_interface::swap_replicas_2D(const unsigned int 
         // send E21 and E22
         double energies[2] = {E22, E21};
         //this send operation is matched in calc_probability()
-        MPI_Send(&energies[0], 2, MPI_DOUBLE, partnerReplicaMasterThreadID, SWITCHENERGIES,  replicaGraphMPIControl.comm);
+        MPI_Send(&energies[0], 2, MPI_DOUBLE, partnerReplicaID, SWITCHENERGIES,  replicaGraphMPIControl.comm);
 #endif
       } else { // sameLambda
 #ifdef XXMPI
         double energies[2] = {epot, 0.0}; 
-        MPI_Send(&energies[0],2,MPI_DOUBLE, partnerReplicaMasterThreadID, SWITCHENERGIES,  replicaGraphMPIControl.comm);
+        MPI_Send(&energies[0],2,MPI_DOUBLE, partnerReplicaID, SWITCHENERGIES,  replicaGraphMPIControl.comm);
 #endif
      }
       if (replica->sim.param().pcouple.scale != math::pcouple_off) {
 #ifdef XXMPI
         math::Box box_replica = replica->conf.current().box;    //exchange box
-        MPI_Send(&box_replica(0)[0], 1, MPI_BOX, partnerReplicaMasterThreadID, BOX,  replicaGraphMPIControl.comm);
+        MPI_Send(&box_replica(0)[0], 1, MPI_BOX, partnerReplicaID, BOX,  replicaGraphMPIControl.comm);
 #endif
       }
       
@@ -225,7 +226,7 @@ void util::replica_exchange_base_interface::swap_replicas_2D(const unsigned int 
       std::vector<double> prob;
       prob.resize(2);
 #ifdef XXMPI
-      MPI_Recv(&prob[0], 2, MPI_DOUBLE, partnerReplicaMasterThreadID, SENDCOORDS,  replicaGraphMPIControl.comm, &status);
+      MPI_Recv(&prob[0], 2, MPI_DOUBLE, partnerReplicaID, SENDCOORDS,  replicaGraphMPIControl.comm, &status);
 #endif
       //Have we been exchanged little partner?
       probability = prob[0];
