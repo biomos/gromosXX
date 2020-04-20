@@ -100,7 +100,7 @@ void util::replica_exchange_slave_eds::swap() { //todo move into interface!?
         }
 
     } else{
-        MPI_DEBUG(3, "replica_exchange_slave_eds "<< globalThreadID <<":swap:\tNOT sending")
+        DEBUG(3, "replica_exchange_slave_eds "<< globalThreadID <<":swap:\tNOT sending")
     }
     MPI_DEBUG(3,"replica_exchange_slave_eds "<< globalThreadID <<":swap:\t DONE");
 
