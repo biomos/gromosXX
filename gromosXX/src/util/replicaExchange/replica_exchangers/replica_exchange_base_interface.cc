@@ -85,7 +85,7 @@ void util::replica_exchange_base_interface::createReplicas(int cont, int globalT
     else{
         replica = new util::replica(args, cont, globalThreadID, replica_mpi_control);
     }   
-  MPI_DEBUG(4,"replica_exchange_base_interface "<< globalThreadID <<":create:\t replica numS " << replica->sim.param().replica.num_l);
+  DEBUG(4,"replica_exchange_base_interface "<< globalThreadID <<":create:\t replica numS " << replica->sim.param().replica.num_l);
   MPI_DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":createReplicas:\t DONE");
 }
 

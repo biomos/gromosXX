@@ -57,7 +57,7 @@ util::replica_MPI_Master::replica_MPI_Master(io::Argument _args, int cont,  int 
       (*it).second.insert(pos, tmp.str());
     }
     
-    MPI_DEBUG(5, "replica_MPI_MASTER "<< globalThreadID <<":Constructor:\t  "<< simulationID <<":\t start read in");
+    DEBUG(5, "replica_MPI_MASTER "<< globalThreadID <<":Constructor:\t  "<< simulationID <<":\t start read in");
     //Build structure
     sim.mpi = true;
     sim.mpi_control = replica_mpi_control;  //build MPI parallelism
@@ -67,7 +67,7 @@ util::replica_MPI_Master::replica_MPI_Master(io::Argument _args, int cont,  int 
       std::cerr << "\nErrors during initialization!\n" << std::endl;
       MPI_Abort(MPI_COMM_WORLD, E_INPUT_ERROR);
     }
-    MPI_DEBUG(5, "replica_MPI_MASTER "<< globalThreadID <<":Constructor:\t  "<< globalThreadID <<":\t REad in input already");
+    DEBUG(5, "replica_MPI_MASTER "<< globalThreadID <<":Constructor:\t  "<< globalThreadID <<":\t REad in input already");
     
     //TODO: HERE?
     md.init(topo, conf, sim, *os, true);
@@ -205,7 +205,7 @@ void util::replica_MPI_Master::run_MD(){
     MPI_DEBUG(1, "replica_MPI_Master "<< globalThreadID <<":runMD:\t\t steps: current step: "<<sim.steps()<< "  totalsteps: "<< stepsPerRun << " + " << curentStepNumber << " + 1 = "<< stepsPerRun+curentStepNumber+1);
 
     while ((unsigned int)(sim.steps()) <  stepsPerRun + curentStepNumber+1) {
-      MPI_DEBUG(4, "replica_MPI_MASTER "<< globalThreadID <<":run_MD:\t Start step: "<<sim.steps()<<" \tmaximal \t"<<curentStepNumber+stepsPerRun);
+      DEBUG(4, "replica_MPI_MASTER "<< globalThreadID <<":run_MD:\t Start step: "<<sim.steps()<<" \tmaximal \t"<<curentStepNumber+stepsPerRun);
       traj->write(conf, topo, sim, io::reduced);
       // run a step
       DEBUG(5, "replica_MPI_MASTER "<< globalThreadID <<":run_MD:\t simulation!:");

@@ -57,12 +57,12 @@ util::replica_exchange_base::replica_exchange_base(io::Argument _args,
   DEBUG(3,"replica_exchange_base "<< globalThreadID <<":Constructor:\t SIMULATIONID:  "<< simulationID);
 
   //construct replica obj
-  MPI_DEBUG(4,"replica_exchange_base_interface "<< globalThreadID <<":Constructor:\t  createReplica START");
+  DEBUG(4,"replica_exchange_base_interface "<< globalThreadID <<":Constructor:\t  createReplica START");
   createReplicas(cont, globalThreadID, replica_mpi_control);
-  MPI_DEBUG(4,"replica_exchange_base_interface "<< globalThreadID <<":Constructor:\t createdReplica DONE" << replica);
+  DEBUG(4,"replica_exchange_base_interface "<< globalThreadID <<":Constructor:\t createdReplica DONE" << replica);
 
   //RE-Vars
-  MPI_DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":Constructor:\t setParams" );
+  DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":Constructor:\t setParams" );
   setParams();  
   
   MPI_DEBUG(3,"replica_exchange_base "<< globalThreadID <<":Constructor:\t Constructor \t DONE");
@@ -79,11 +79,11 @@ util::replica_exchange_base::~replica_exchange_base() {
 void util::replica_exchange_base::setParams(){
     // set some variables
     stepsPerRun = replica->sim.param().step.number_of_steps;
-    MPI_DEBUG(4,"replica_exchange_base_interface "<< globalThreadID <<":setParams:\t NUMBER OF STEPS "<<stepsPerRun);
+    DEBUG(4,"replica_exchange_base_interface "<< globalThreadID <<":setParams:\t NUMBER OF STEPS "<<stepsPerRun);
 
     run = 0;
     total_runs = replica->sim.param().replica.trials + replica->sim.param().replica.equilibrate;
-    MPI_DEBUG(4,"replica_exchange_base_interface "<< globalThreadID <<":setParams:\t NUMBER OF total_runs "<<total_runs);
+    DEBUG(4,"replica_exchange_base_interface "<< globalThreadID <<":setParams:\t NUMBER OF total_runs "<<total_runs);
 
     partnerReplicaID = simulationID;
     time = replica->sim.time();
@@ -94,16 +94,16 @@ void util::replica_exchange_base::setParams(){
     replica->stepsPerRun= stepsPerRun;
 
     const int numT = replica->sim.param().replica.num_T;
-    MPI_DEBUG(4,"replica_exchange_base_interface "<< globalThreadID <<":setParams:\t PARAM START");
+    DEBUG(4,"replica_exchange_base_interface "<< globalThreadID <<":setParams:\t PARAM START");
 
     T = replica->sim.param().replica.temperature[simulationID % numT];
-    MPI_DEBUG(4,"replica_exchange_base_interface "<< globalThreadID <<":setParams:\t T START");
+    DEBUG(4,"replica_exchange_base_interface "<< globalThreadID <<":setParams:\t T START");
 
     l = replica->sim.param().replica.lambda[simulationID / numT];
-    MPI_DEBUG(4,"replica_exchange_base_interface "<< globalThreadID <<":setParams:\t Lamba");
+    DEBUG(4,"replica_exchange_base_interface "<< globalThreadID <<":setParams:\t Lamba");
 
     dt = replica->sim.param().replica.dt[simulationID / numT];
-    MPI_DEBUG(4,"replica_exchange_base_interface "<< globalThreadID <<":setParams:\t PARAM DONE ");
+    DEBUG(4,"replica_exchange_base_interface "<< globalThreadID <<":setParams:\t PARAM DONE ");
 
     set_lambda();
     set_temp();

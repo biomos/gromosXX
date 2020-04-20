@@ -214,7 +214,7 @@ int interaction::create_g96_nonbonded
         int threadsPerReplicaSimulation = size / num_replicas;
         int leftOverThreads = size % num_replicas;
         
-        MPI_DEBUG(1, "BUILD REPLICA LIST")
+        DEBUG(1, "BUILD REPLICA LIST")
         unsigned int threadID =0;
         int replica_offset = 0;
         std::cout << "left_over "<< leftOverThreads << "\n";
@@ -233,7 +233,7 @@ int interaction::create_g96_nonbonded
            }    
         }            
 
-        MPI_DEBUG(1, "BUILD THIS PARAMS")
+        DEBUG(1, "BUILD THIS PARAMS")
         //GET THIS PARAMS
         int countSimulations = 0;
         for(std::vector<int> replicaOwnsThreads: replicaThreadsMapping){
@@ -246,11 +246,11 @@ int interaction::create_g96_nonbonded
             }
             countSimulations++;
         }
-        MPI_DEBUG(1, "BUILD THIS PARAMS DONE")
+        DEBUG(1, "BUILD THIS PARAMS DONE")
 
         std::cout <<" TRY GOT ATTRIBUTE "<< masterRank << "\n";
         std::cout <<" TRY GOT ATTRIBUTE "<< simulationID << "\n";        
-        MPI_DEBUG(1, "BEEN THERE DONE THAT")
+        DEBUG(1, "BEEN THERE DONE THAT")
 
         std::cout.flush();
         

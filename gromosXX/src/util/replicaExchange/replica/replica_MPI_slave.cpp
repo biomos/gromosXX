@@ -56,7 +56,7 @@ util::replica_MPI_Slave::replica_MPI_Slave(io::Argument _args, int cont, int glo
       (*it).second.insert(pos, tmp.str());
     }
     
-    MPI_DEBUG(5, "replica_MPI_SLAVE "<< globalThreadID <<":Constructor:\t  "<< globalThreadID <<":\t start read in");
+    DEBUG(5, "replica_MPI_SLAVE "<< globalThreadID <<":Constructor:\t  "<< globalThreadID <<":\t start read in");
     //build up system:
     sim.mpi = true;
     sim.mpi_control = replica_mpi_control;
@@ -68,7 +68,7 @@ util::replica_MPI_Slave::replica_MPI_Slave(io::Argument _args, int cont, int glo
         MPI_Abort(MPI_COMM_WORLD, E_INPUT_ERROR);
       #endif
     }
-    MPI_DEBUG(5, "replica_MPI_SLAVE "<< globalThreadID <<":Constructor:\t  "<< globalThreadID <<":\t REad in input already");
+    DEBUG(5, "replica_MPI_SLAVE "<< globalThreadID <<":Constructor:\t  "<< globalThreadID <<":\t REad in input already");
 
     //TODO: HERE?
     md.init(topo, conf, sim, *os, true);
@@ -169,7 +169,7 @@ void util::replica_MPI_Slave::run_MD(){
     MPI_DEBUG(1, "replica_MPI_SLAVE "<< globalThreadID <<":runMD:\t\t steps: current step: "<<sim.steps()<< "  totalsteps: "<< stepsPerRun << " + " << curentStepNumber << " + 1 = "<< stepsPerRun+curentStepNumber+1);
 
     while ((unsigned int)(sim.steps()) < stepsPerRun + curentStepNumber+1) {
-       MPI_DEBUG(4, "replica_MPI_SLAVE " << globalThreadID << " waiting for master \t Start step: "<<sim.steps()<<" \tmaximal \t"<<curentStepNumber+stepsPerRun);
+       DEBUG(4, "replica_MPI_SLAVE " << globalThreadID << " waiting for master \t Start step: "<<sim.steps()<<" \tmaximal \t"<<curentStepNumber+stepsPerRun);
       // run a step
 
       if (do_nonbonded && (error = nb->calculate_interactions(topo, conf, sim)) != 0){
@@ -216,7 +216,6 @@ void util::replica_MPI_Slave::run_MD(){
       sim.time() = sim.param().step.t0 + sim.steps() * sim.time_step_size();
      DEBUG(4, "replica_SLAVE " << globalThreadID << " DONE waiting for master");
     }
-    //MPI_DEBUG(1, "replica_SLAVE " << globalThreadID << "\tOUTSIDE THE LOOP "<< error);
 
     if (error){
       (*os) << "Rank: "<< globalThreadID<<"\t\nErrors encountered during run in simulation "<< simulationID << " in Slave Thread "<< globalThreadID <<" - check above!\n" << std::endl;
