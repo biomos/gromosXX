@@ -41,7 +41,7 @@ util::replica_MPI_Slave::replica_MPI_Slave(io::Argument _args, int cont, int glo
      * @param simulation_num_threads
      */
     
-    DEBUG(4, "replica_MPI_SLAVE "<< globalThreadID <<":Constructor:\t  "<< globalThreadID <<":\t START");
+    MPI_DEBUG(5, "replica_MPI_SLAVE "<< globalThreadID <<":Constructor:\t  "<< globalThreadID <<":\t START");
 
     /**
      * READ INPUT
@@ -56,7 +56,7 @@ util::replica_MPI_Slave::replica_MPI_Slave(io::Argument _args, int cont, int glo
       (*it).second.insert(pos, tmp.str());
     }
     
-    DEBUG(5, "replica_MPI_SLAVE "<< globalThreadID <<":Constructor:\t  "<< globalThreadID <<":\t start read in");
+    DEBUG(6, "replica_MPI_SLAVE "<< globalThreadID <<":Constructor:\t  "<< globalThreadID <<":\t start read in");
     //build up system:
     sim.mpi = true;
     sim.mpi_control = replica_mpi_control;
@@ -68,7 +68,7 @@ util::replica_MPI_Slave::replica_MPI_Slave(io::Argument _args, int cont, int glo
         MPI_Abort(MPI_COMM_WORLD, E_INPUT_ERROR);
       #endif
     }
-    DEBUG(5, "replica_MPI_SLAVE "<< globalThreadID <<":Constructor:\t  "<< globalThreadID <<":\t REad in input already");
+    DEBUG(6, "replica_MPI_SLAVE "<< globalThreadID <<":Constructor:\t  "<< globalThreadID <<":\t REad in input already");
 
     //TODO: HERE?
     md.init(topo, conf, sim, *os, true);
@@ -144,7 +144,7 @@ util::replica_MPI_Slave::replica_MPI_Slave(io::Argument _args, int cont, int glo
     }
    
 
-   DEBUG(4, "replica_MPI_SLAVE "<< globalThreadID <<":Constructor:\t replica Constructor  "<< globalThreadID <<": \t DONE");
+   MPI_DEBUG(5, "replica_MPI_SLAVE "<< globalThreadID <<":Constructor:\t replica Constructor  "<< globalThreadID <<": \t DONE");
 #else
     throw "Can not construct Replica_MPI as MPI is not enabled!";
 #endif
@@ -159,14 +159,14 @@ util::replica_MPI_Slave::~replica_MPI_Slave() {
 
 void util::replica_MPI_Slave::run_MD(){
     #ifdef XXMPI
-    MPI_DEBUG(1, "replica_MPI_SLAVE "<< globalThreadID <<":runMD:\t thread  "<< globalThreadID <<": \t START");
+    MPI_DEBUG(5, "replica_MPI_SLAVE "<< globalThreadID <<":runMD:\t thread  "<< globalThreadID <<": \t START");
     int error;
     int next_step = 0 ;
     
     //after an Replica coordinate exchange, update the coordinates of the slaves
     receive_coords();
     DEBUG(2, "replica_MPI_SLAVE "<< globalThreadID <<":runMD:\t\t received Coords");
-    MPI_DEBUG(2, "replica_MPI_SLAVE "<< globalThreadID <<":runMD:\t\t steps: current step: "<<sim.steps()<< "  totalsteps: "<< stepsPerRun << " + " << curentStepNumber << " + 1 = "<< stepsPerRun+curentStepNumber+1);
+    MPI_DEBUG(5, "replica_MPI_SLAVE "<< globalThreadID <<":runMD:\t\t steps: current step: "<<sim.steps()<< "  totalsteps: "<< stepsPerRun << " + " << curentStepNumber << " + 1 = "<< stepsPerRun+curentStepNumber+1);
     
     if(curentStepNumber > 5){
         sim.steps() = curentStepNumber+1;
@@ -218,7 +218,7 @@ void util::replica_MPI_Slave::run_MD(){
       ++sim.steps();
       sim.time() = sim.param().step.t0 + sim.steps() * sim.time_step_size();
     }
-    MPI_DEBUG(6, "replica_MPI_SLAVE "<< globalThreadID <<":run_MD:\t after step while")
+    MPI_DEBUG(5, "replica_MPI_SLAVE "<< globalThreadID <<":run_MD:\t after step while")
 
     if (error){
       (*os) << "Rank: "<< globalThreadID<<"\t\nErrors encountered during run in simulation "<< simulationID << " in Slave Thread "<< globalThreadID <<" - check above!\n" << std::endl;
@@ -227,7 +227,7 @@ void util::replica_MPI_Slave::run_MD(){
     curentStepNumber +=  stepsPerRun;
 
     
-    MPI_DEBUG(1, "replica_MPI_SLAVE "<< globalThreadID <<":runMD:\t DONE at step= " << curentStepNumber);
+    MPI_DEBUG(5, "replica_MPI_SLAVE "<< globalThreadID <<":runMD:\t DONE at step= " << curentStepNumber);
     #endif
 }
     

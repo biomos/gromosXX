@@ -590,14 +590,14 @@ int main(int argc, char *argv[]) {
         double percent, spent = 0.0;
         trial = 0; //reset trials
         for (; trial < sim_runs; ++trial) { //for repex execution
-            MPI_DEBUG(1, "Master " << globalThreadID << " \t MD trial: " << trial << "\n")
-            MPI_DEBUG(1, "Master " << globalThreadID << " \t run_MD START " << trial << "\n")
+            MPI_DEBUG(2, "Master " << globalThreadID << " \t MD trial: " << trial << "\n")
+            MPI_DEBUG(2, "Master " << globalThreadID << " \t run_MD START " << trial << "\n")
             Master->run_MD();
-            MPI_DEBUG(1, "Master " << globalThreadID << " \t swap START " << trial << "\n")
+            MPI_DEBUG(2, "Master " << globalThreadID << " \t swap START " << trial << "\n")
             Master->swap();
-            MPI_DEBUG(1, "Master " << globalThreadID << " \t receive START " << trial << "\n")
+            MPI_DEBUG(2, "Master " << globalThreadID << " \t receive START " << trial << "\n")
             Master->receive_from_all_slaves();
-            MPI_DEBUG(1, "Master " << globalThreadID << " \t write START " << trial << "\n")
+            MPI_DEBUG(2, "Master " << globalThreadID << " \t write START " << trial << "\n")
             Master->write();
 
             if ((sim_runs / 10 > 0) && (trial % (sim_runs / 10) == 0)) { //Timer
@@ -649,14 +649,14 @@ int main(int argc, char *argv[]) {
         //do MD
         MPI_DEBUG(1, "Slave " << globalThreadID << " \t MD " << sim_runs << " steps")
         for (; trial < sim_runs; ++trial) { //for repex execution
-            MPI_DEBUG(1, "Slave " << globalThreadID << " \t MD trial: " << trial << "\n")
-            MPI_DEBUG(1, "Slave " << globalThreadID << " \t run_MD START " << trial << "\n")
+            MPI_DEBUG(2, "Slave " << globalThreadID << " \t MD trial: " << trial << "\n")
+            MPI_DEBUG(2, "Slave " << globalThreadID << " \t run_MD START " << trial << "\n")
             Slave->run_MD();
-            MPI_DEBUG(1, "Slave " << globalThreadID << " \t swap START " << trial << "\n")
+            MPI_DEBUG(2, "Slave " << globalThreadID << " \t swap START " << trial << "\n")
             Slave->swap();
-            MPI_DEBUG(1, "Slave " << globalThreadID << " \t send START " << trial << "\n")
+            MPI_DEBUG(2, "Slave " << globalThreadID << " \t send START " << trial << "\n")
             Slave->send_to_master();
-            MPI_DEBUG(1, "Slave " << globalThreadID << " \t send Done " << trial << "\n")
+            MPI_DEBUG(2, "Slave " << globalThreadID << " \t send Done " << trial << "\n")
         }
         MPI_DEBUG(1, "Slave " << globalThreadID << " \t Finalize")
 
