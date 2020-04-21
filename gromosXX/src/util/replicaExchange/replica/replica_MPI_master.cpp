@@ -191,7 +191,7 @@ util::replica_MPI_Master::~replica_MPI_Master() {
 
 void util::replica_MPI_Master::run_MD(){
      #ifdef XXMPI
-    DEBUG(1, "replica_MPI_Master "<< globalThreadID <<":runMD:\t thread  "<< globalThreadID <<": \t START");
+    MPI_DEBUG(1, "replica_MPI_Master "<< globalThreadID <<":runMD:\t thread  "<< globalThreadID <<": \t START");
 
     // run MD simulation
     int error;
@@ -261,7 +261,7 @@ void util::replica_MPI_Master::run_MD(){
       traj->print_final(topo, conf, sim);
     }
 
-    DEBUG(1, "replica_MPI_MASTER "<< globalThreadID <<":run_MD:\t  DONE: at step= " << curentStepNumber);
+    MPI_DEBUG(1, "replica_MPI_MASTER "<< globalThreadID <<":run_MD:\t  DONE: at step= " << curentStepNumber);
     #endif    
 
 }

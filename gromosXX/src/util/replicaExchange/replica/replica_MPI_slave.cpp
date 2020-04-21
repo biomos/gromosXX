@@ -159,7 +159,7 @@ util::replica_MPI_Slave::~replica_MPI_Slave() {
 
 void util::replica_MPI_Slave::run_MD(){
     #ifdef XXMPI
-    DEBUG(1, "replica_MPI_SLAVE "<< globalThreadID <<":runMD:\t thread  "<< globalThreadID <<": \t START");
+    MPI_DEBUG(1, "replica_MPI_SLAVE "<< globalThreadID <<":runMD:\t thread  "<< globalThreadID <<": \t START");
     int error;
     int next_step = 0 ;
     
@@ -223,7 +223,7 @@ void util::replica_MPI_Slave::run_MD(){
     }
     curentStepNumber +=  stepsPerRun;
 
-    DEBUG(1, "replica_MPI_SLAVE "<< globalThreadID <<":runMD:\t DONE at step= " << curentStepNumber);
+    MPI_DEBUG(1, "replica_MPI_SLAVE "<< globalThreadID <<":runMD:\t DONE at step= " << curentStepNumber);
     #endif
 }
     
