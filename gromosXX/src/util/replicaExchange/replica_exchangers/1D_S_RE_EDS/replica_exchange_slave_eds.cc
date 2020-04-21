@@ -29,9 +29,9 @@ util::replica_exchange_slave_eds::replica_exchange_slave_eds(io::Argument & _arg
             replica_exchange_slave_interface(_args, cont, globalThreadID, replicaGraphMPIControl, replica_mpi_control)
 {
 
-    //MPI_DEBUG(2,"replica_exchange_slave_eds " << globalThreadID << ":Constructor:\t START");
+    MPI_DEBUG(2,"replica_exchange_slave_eds " << globalThreadID << ":Constructor:\t START");
 
-    //MPI_DEBUG(2,"replica_exchange_slave_eds " << globalThreadID << ":Constructor:\t DONE"); 
+    MPI_DEBUG(2,"replica_exchange_slave_eds " << globalThreadID << ":Constructor:\t DONE"); 
 }
 
 void util::replica_exchange_slave_eds::send_to_master() const{

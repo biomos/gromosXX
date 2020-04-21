@@ -201,8 +201,8 @@ void util::replica_MPI_Master::run_MD(){
 
     //after an Replica coordinate exchange, update the coordinates of the slaves
     send_coordinates();
-    MPI_DEBUG(1, "replica_MPI_Master "<< globalThreadID <<":runMD:\t\t sent Coords");
-    MPI_DEBUG(1, "replica_MPI_Master "<< globalThreadID <<":runMD:\t\t steps: current step: "<<sim.steps()<< "  totalsteps: "<< stepsPerRun << " + " << curentStepNumber << " + 1 = "<< stepsPerRun+curentStepNumber+1);
+    MPI_DEBUG(2, "replica_MPI_Master "<< globalThreadID <<":runMD:\t\t sent Coords");
+    MPI_DEBUG(2, "replica_MPI_Master "<< globalThreadID <<":runMD:\t\t steps: current step: "<<sim.steps()<< "  totalsteps: "<< stepsPerRun << " + " << curentStepNumber << " + 1 = "<< stepsPerRun+curentStepNumber+1);
 
     while ((unsigned int)(sim.steps()) <  stepsPerRun + curentStepNumber+1) {
       DEBUG(4, "replica_MPI_MASTER "<< globalThreadID <<":run_MD:\t Start step: "<<sim.steps()<<" \tmaximal \t"<<curentStepNumber+stepsPerRun);
@@ -262,7 +262,6 @@ void util::replica_MPI_Master::run_MD(){
     }
 
     MPI_DEBUG(1, "replica_MPI_MASTER "<< globalThreadID <<":run_MD:\t  DONE: at step= " << curentStepNumber);
-
     #endif    
 
 }
@@ -292,6 +291,5 @@ void util::replica_MPI_Master::send_coordinates(){
   MPI_Bcast(&conf.special().distancefield.distance[0], conf.special().distancefield.distance.size(), MPI_DOUBLE, replica_mpi_control.masterID, replica_mpi_control.comm);
   
   MPI_DEBUG(4, "replica_MPI_Master " << globalThreadID << " ::send_coordinates::\t DONE");
-
   #endif
 }
