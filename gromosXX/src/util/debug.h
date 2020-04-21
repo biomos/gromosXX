@@ -84,6 +84,7 @@
  */
 
 #undef DEBUG
+#undef MPI_DEBUG
 
 #define SUBL(s) s ## _debug_level
 #define SUBLEVEL(s) SUBL(s)
@@ -93,7 +94,9 @@
 
 #ifdef NDEBUG
     #define DEBUG(level, s)
+
     #define MPI_DEBUG(level, s)
+
 #else
     #define DEBUG(level, s) \
       if (level <= ::debug_level + MODULE::debug_level + \
@@ -110,7 +113,7 @@
             std::cout.flush(); \
             MPI_Barrier(MPI_COMM_WORLD);\
           }
-    #else
+    #else   
         #define MPI_DEBUG(level, s) \
             DEBUG(level, s);
     #endif
