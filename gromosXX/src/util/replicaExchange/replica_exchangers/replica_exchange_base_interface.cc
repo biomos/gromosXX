@@ -95,7 +95,7 @@ void util::replica_exchange_base_interface::init() {
 }
 
 void util::replica_exchange_base_interface::run_MD() {
-  DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":run_MD:\t START");
+  MPI_DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":run_MD:\t START");
   
     replica->sim.steps() = steps;
     replica->sim.time() = time;
@@ -105,7 +105,7 @@ void util::replica_exchange_base_interface::run_MD() {
     if(not_sender){
         updateReplica_params();
     }
-  DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":run_MD:\t DONE");
+  MPI_DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":run_MD:\t DONE");
 }
 
 //TODO: REMOVE
