@@ -68,8 +68,8 @@ int interaction::QM_Worker::run_QM(topology::Topology& topo
                                  , interaction::QM_Zone& qm_zone) {
   if (qm_zone.mm.empty()) {
     io::messages.add("Cannot deal with zero MM atoms yet.", this->name()
-                    , io::message::error);
-    return 1;
+                    , io::message::warning);
+    //return 1;
   }
   m_timer.start();
 
