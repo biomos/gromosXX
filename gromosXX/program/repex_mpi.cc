@@ -547,8 +547,6 @@ int main(int argc, char *argv[]) {
     //////////////////////////////
     
     if (globalThreadID == 0) { //MASTER
-        //std::cout << "RANK: "<< uniqueThreadID <<"\tSLEPPING Master\n";
-        //MPI_Barrier(MPI_COMM_WORLD);
                 
         //nice messages
         std::cout << "\n==================================================\n\tStart REPLICA EXCHANGE SIMULATION:\n\n==================================================\n";
@@ -586,8 +584,8 @@ int main(int argc, char *argv[]) {
             Master->run_MD();
         }
         
-        MPI_DEBUG(1, "Master \t \t MD: " << sim_runs<< " steps")
         //do MD
+        MPI_DEBUG(1, "Master \t \t MD: " << sim_runs<< " steps")
         //Vars for timing
         int hh, mm, ss = 0;
         double percent, spent = 0.0;
@@ -620,7 +618,6 @@ int main(int argc, char *argv[]) {
 
         Master->write_final_conf();
         std::cout << "\n=================== Master Node " << globalThreadID << "  finished successfully!\n";
-
         } else { //SLAVES    
         
         MPI_DEBUG(1, "Slave " << globalThreadID << "simulation: " << simulationID)
@@ -664,8 +661,8 @@ int main(int argc, char *argv[]) {
             MPI_DEBUG(1, "Slave " << globalThreadID << " \t send Done " << trial << "\n")
 
         }
-
         MPI_DEBUG(1, "Slave " << globalThreadID << " \t Finalize")
+
         Slave->write_final_conf();
         std::cout << "\n=================== Slave Node " << globalThreadID << "  finished successfully!\n";
     }
