@@ -576,7 +576,8 @@ int main(int argc, char *argv[]) {
         Master->init_repOut_stat_file();
         MPI_DEBUG(1, "Master \t INIT DONE")
 
-                
+        MPI_Finalize();
+        return 0;
         //do EQUILIBRATION:
         MPI_DEBUG(1, "Master \t \t \t Equil: " << equil_runs<< " steps")
         unsigned int trial = 0;
@@ -637,7 +638,9 @@ int main(int argc, char *argv[]) {
         MPI_DEBUG(1, "Slave " << globalThreadID << " \t INIT START")
         Slave->init();
         MPI_DEBUG(1, "Slave " << globalThreadID << " \t INIT DONE")
-                        
+                    
+        MPI_Finalize();
+        return 0;
 
         //do EQUILIBRATION:
         MPI_DEBUG(1, "Slave " << globalThreadID << " \t EQUIL " << equil_runs << " steps")
