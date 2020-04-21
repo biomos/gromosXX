@@ -202,10 +202,10 @@ void util::replica_MPI_Master::run_MD(){
     //after an Replica coordinate exchange, update the coordinates of the slaves
     send_coordinates();
     DEBUG(2, "replica_MPI_Master "<< globalThreadID <<":runMD:\t\t sent Coords");
-    DEBUG(2, "replica_MPI_Master "<< globalThreadID <<":runMD:\t\t steps: current step: "<<sim.steps()<< "  totalsteps: "<< stepsPerRun << " + " << curentStepNumber << " + 1 = "<< stepsPerRun+curentStepNumber+1);
+    MPI_DEBUG(2, "replica_MPI_Master "<< globalThreadID <<":runMD:\t\t steps: current step: "<<sim.steps()<< "  totalsteps: "<< stepsPerRun << " + " << curentStepNumber << " + 1 = "<< stepsPerRun+curentStepNumber+1);
 
     while ((unsigned int)(sim.steps()) <  stepsPerRun + curentStepNumber+1) {
-      DEBUG(4, "replica_MPI_MASTER "<< globalThreadID <<":run_MD:\t Start step: "<<sim.steps()<<" \tmaximal \t"<<curentStepNumber+stepsPerRun);
+      MPI_DEBUG(4, "replica_MPI_MASTER "<< globalThreadID <<":run_MD:\t Start step: "<<sim.steps()<<" \tmaximal \t"<<curentStepNumber+stepsPerRun);
       traj->write(conf, topo, sim, io::reduced);
       // run a step
       DEBUG(5, "replica_MPI_MASTER "<< globalThreadID <<":run_MD:\t simulation!:");
@@ -263,7 +263,6 @@ void util::replica_MPI_Master::run_MD(){
 
     MPI_DEBUG(1, "replica_MPI_MASTER "<< globalThreadID <<":run_MD:\t  DONE: at step= " << curentStepNumber);
     #endif    
-
 }
 void util::replica_MPI_Master::send_coordinates(){
   #ifdef XXMPI
