@@ -632,7 +632,7 @@ int main(int argc, char *argv[]) {
         } else {
             Slave = new util::replica_exchange_slave(args, cont, globalThreadID, reGMPI, replica_mpi_control);
         }
-        MPI_DEBUG(1, "Slave " << globalThreadID << "::Constructor: DONE ")
+        MPI_DEBUG(1, "Slave " << globalThreadID << "::Const ructor: DONE ")
 
         //INIT          
         MPI_DEBUG(1, "Slave " << globalThreadID << " \t INIT START")
