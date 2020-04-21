@@ -576,8 +576,6 @@ int main(int argc, char *argv[]) {
         Master->init_repOut_stat_file();
         MPI_DEBUG(1, "Master \t INIT DONE")
 
-        MPI_Finalize();
-        return 0;
         //do EQUILIBRATION:
         MPI_DEBUG(1, "Master \t \t \t Equil: " << equil_runs<< " steps")
         unsigned int trial = 0;
@@ -614,6 +612,7 @@ int main(int argc, char *argv[]) {
                 std::cerr << "\nREPEX:       " << std::setw(2) << percent * 100 << "% done..." << std::endl;
                 std::cerr << "REPEX: spent " << hh << ":" << mm << ":" << ss << std::endl;
             }
+            break;
         }
         MPI_DEBUG(1, "Master \t \t finalize ")
 
@@ -662,7 +661,7 @@ int main(int argc, char *argv[]) {
             MPI_DEBUG(1, "Slave " << globalThreadID << " \t send START " << trial << "\n")
             Slave->send_to_master();
             MPI_DEBUG(1, "Slave " << globalThreadID << " \t send Done " << trial << "\n")
-
+            break;
         }
         MPI_DEBUG(1, "Slave " << globalThreadID << " \t Finalize")
 
