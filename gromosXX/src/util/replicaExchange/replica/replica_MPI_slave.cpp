@@ -41,7 +41,7 @@ util::replica_MPI_Slave::replica_MPI_Slave(io::Argument _args, int cont, int glo
      * @param simulation_num_threads
      */
     
-    MPI_DEBUG(4, "replica_MPI_SLAVE "<< globalThreadID <<":Constructor:\t  "<< globalThreadID <<":\t START");
+    DEBUG(4, "replica_MPI_SLAVE "<< globalThreadID <<":Constructor:\t  "<< globalThreadID <<":\t START");
 
     /**
      * READ INPUT
@@ -144,7 +144,7 @@ util::replica_MPI_Slave::replica_MPI_Slave(io::Argument _args, int cont, int glo
     }
    
 
-   MPI_DEBUG(4, "replica_MPI_SLAVE "<< globalThreadID <<":Constructor:\t replica Constructor  "<< globalThreadID <<": \t DONE");
+   DEBUG(4, "replica_MPI_SLAVE "<< globalThreadID <<":Constructor:\t replica Constructor  "<< globalThreadID <<": \t DONE");
 #else
     throw "Can not construct Replica_MPI as MPI is not enabled!";
 #endif
@@ -159,14 +159,14 @@ util::replica_MPI_Slave::~replica_MPI_Slave() {
 
 void util::replica_MPI_Slave::run_MD(){
     #ifdef XXMPI
-    MPI_DEBUG(1, "replica_MPI_SLAVE "<< globalThreadID <<":runMD:\t thread  "<< globalThreadID <<": \t START");
+    DEBUG(1, "replica_MPI_SLAVE "<< globalThreadID <<":runMD:\t thread  "<< globalThreadID <<": \t START");
     int error;
     int next_step = 0 ;
     
     //after an Replica coordinate exchange, update the coordinates of the slaves
     receive_coords();
-    MPI_DEBUG(2, "replica_MPI_SLAVE "<< globalThreadID <<":runMD:\t\t received Coords");
-    MPI_DEBUG(2, "replica_MPI_SLAVE "<< globalThreadID <<":runMD:\t\t steps: current step: "<<sim.steps()<< "  totalsteps: "<< stepsPerRun << " + " << curentStepNumber << " + 1 = "<< stepsPerRun+curentStepNumber+1);
+    DEBUG(2, "replica_MPI_SLAVE "<< globalThreadID <<":runMD:\t\t received Coords");
+    DEBUG(2, "replica_MPI_SLAVE "<< globalThreadID <<":runMD:\t\t steps: current step: "<<sim.steps()<< "  totalsteps: "<< stepsPerRun << " + " << curentStepNumber << " + 1 = "<< stepsPerRun+curentStepNumber+1);
 
     while ((unsigned int)(sim.steps()) < stepsPerRun + curentStepNumber+1) {
        DEBUG(4, "replica_MPI_SLAVE " << globalThreadID << " waiting for master \t Start step: "<<sim.steps()<<" \tmaximal \t"<<curentStepNumber+stepsPerRun);
@@ -223,13 +223,13 @@ void util::replica_MPI_Slave::run_MD(){
     }
     curentStepNumber +=  stepsPerRun;
 
-    MPI_DEBUG(1, "replica_MPI_SLAVE "<< globalThreadID <<":runMD:\t DONE at step= " << curentStepNumber);
+    DEBUG(1, "replica_MPI_SLAVE "<< globalThreadID <<":runMD:\t DONE at step= " << curentStepNumber);
     #endif
 }
     
 void util::replica_MPI_Slave::receive_coords(){
   #ifdef XXMPI
-  MPI_DEBUG(4, "replica_MPI_Slave " << globalThreadID << " ::receive_coords::\t START");
+  DEBUG(4, "replica_MPI_Slave " << globalThreadID << " ::receive_coords::\t START");
 
   MPI_Status status;
   
@@ -257,6 +257,6 @@ void util::replica_MPI_Slave::receive_coords(){
 
   //Exchange conf?
   conf.exchange_state();
-  MPI_DEBUG(4, "replica_MPI_Slave " << globalThreadID << " ::receive_coords::\t Done");
+  DEBUG(4, "replica_MPI_Slave " << globalThreadID << " ::receive_coords::\t Done");
 #endif
 }

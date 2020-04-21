@@ -41,7 +41,7 @@ util::replica_exchange_slave_interface::replica_exchange_slave_interface(io::Arg
         replica_exchange_base_interface(_args, cont, globalThreadID, replicaGraphMPIControl, replica_mpi_control) {
     #ifdef XXMPI
 
-        MPI_DEBUG(2, "replica_exchange_slave_interface "<< globalThreadID <<":Constructor:\t START");
+        DEBUG(2, "replica_exchange_slave_interface "<< globalThreadID <<":Constructor:\t START");
         
         if(replica_mpi_control.masterID == replica_mpi_control.threadID){
             DEBUG(5, "replica_exchange_slave_interface "<< globalThreadID <<":Constructor:\t RE-Graph Sender");
@@ -52,7 +52,7 @@ util::replica_exchange_slave_interface::replica_exchange_slave_interface(io::Arg
             not_sender = false;
         }
         
-        MPI_DEBUG(2, "replica_exchange_slave_interface "<< globalThreadID <<":Constructor:\t DONE");
+        DEBUG(2, "replica_exchange_slave_interface "<< globalThreadID <<":Constructor:\t DONE");
     #else
        throw "Cannot initialize replica_exchange_master without MPI!"; 
     #endif

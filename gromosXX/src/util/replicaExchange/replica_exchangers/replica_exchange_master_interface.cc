@@ -52,7 +52,7 @@ util::replica_exchange_master_interface::replica_exchange_master_interface(io::A
         repdatName(args["repdat"])
 {
 #ifdef XXMPI
-  MPI_DEBUG(2,"replica_exchange_master_interface "<< globalThreadID <<":Constructor:\t START");
+  DEBUG(2,"replica_exchange_master_interface "<< globalThreadID <<":Constructor:\t START");
 
   assert(replicaGraphMPIControl.masterID == replicaGraphMPIControl.threadID);    //TODO: This can be removed in future! bscrhoed
   assert(replicaGraphMPIControl.numberOfReplicas > 0);
@@ -80,7 +80,7 @@ util::replica_exchange_master_interface::replica_exchange_master_interface(io::A
   }
 
   // set output file
- MPI_DEBUG(2,"replica_exchange_master_interface "<< globalThreadID <<":Constructor:\t DONE");
+ DEBUG(2,"replica_exchange_master_interface "<< globalThreadID <<":Constructor:\t DONE");
 #else
    throw "Cannot initialize replica_exchange_master without MPI!"; 
 #endif

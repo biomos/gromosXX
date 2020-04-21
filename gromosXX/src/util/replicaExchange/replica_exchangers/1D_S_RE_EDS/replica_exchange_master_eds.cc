@@ -28,7 +28,7 @@ util::replica_exchange_master_eds::replica_exchange_master_eds(io::Argument _arg
         replica_exchange_master_interface(_args, cont, globalThreadID, replicaGraphMPIControl, replica_mpi_control)
 {
     #ifdef XXMPI
-    MPI_DEBUG(2,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t START");  
+    DEBUG(2,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t START");  
     DEBUG(3,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t Replicas: "<<replicaGraphMPIControl.numberOfReplicas);  
     DEBUG(3,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t ReplicasOLD: "<<repParams.num_l);  
     DEBUG(3,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t ReplicasMASTER: "<< replicaGraphMPIControl.masterID);  
@@ -51,7 +51,7 @@ util::replica_exchange_master_eds::replica_exchange_master_eds(io::Argument _arg
         replicaData[replicaID].Vi.assign(reedsParam.eds_para[0].numstates,0);
     }
     //DEBUG(2,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t SIMID "<< simulationID <<"\n");
-    MPI_DEBUG(2,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t DONE\n");
+    DEBUG(2,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t DONE\n");
     #else
         throw "Cannot initialize replica_exchange_master_eds without MPI!"; 
     #endif

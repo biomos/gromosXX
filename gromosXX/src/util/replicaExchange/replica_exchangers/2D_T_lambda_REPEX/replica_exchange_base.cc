@@ -53,7 +53,7 @@ util::replica_exchange_base::replica_exchange_base(io::Argument _args,
                                                    simulation::mpi_control_struct replica_mpi_control) : 
         replica_exchange_base_interface(_args, cont, globalThreadID, replicaGraphMPIControl, replica_mpi_control){
 #ifdef XXMPI
-  MPI_DEBUG(3,"replica_exchange_base "<< globalThreadID <<":Constructor:\t START ");
+  DEBUG(3,"replica_exchange_base "<< globalThreadID <<":Constructor:\t START ");
   DEBUG(3,"replica_exchange_base "<< globalThreadID <<":Constructor:\t SIMULATIONID:  "<< simulationID);
 
   //construct replica obj
@@ -65,7 +65,7 @@ util::replica_exchange_base::replica_exchange_base(io::Argument _args,
   DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":Constructor:\t setParams" );
   setParams();  
   
-  MPI_DEBUG(3,"replica_exchange_base "<< globalThreadID <<":Constructor:\t Constructor \t DONE");
+  DEBUG(3,"replica_exchange_base "<< globalThreadID <<":Constructor:\t Constructor \t DONE");
   #else
     throw "Cannot use send_to_master from replica_exchange_slave_eds without MPI!"; 
   #endif

@@ -65,14 +65,14 @@ util::replica_exchange_base_eds::replica_exchange_base_eds(io::Argument _args,
                             replica_exchange_base_interface(_args, cont, globalThreadID, replicaGraphMPIControl, replica_mpi_control),
                             reedsParam(replica->sim.param().reeds)
 {
-    MPI_DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":Constructor:\t START" );
+    DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":Constructor:\t START" );
     DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":Constructor:\t simID "<<simulationID);
     
     //RE-Vars
     DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":Constructor:\t setParams" );
     setParams();
 
-    MPI_DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":Constructor:\t DONE");
+    DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":Constructor:\t DONE");
 }
 
 util::replica_exchange_base_eds::~replica_exchange_base_eds() {
@@ -121,29 +121,29 @@ void util::replica_exchange_base_eds::set_s() {
 }
 
 void util::replica_exchange_base_eds::init() {
-  MPI_DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":init:\t init \t START");
+  DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":init:\t init \t START");
   DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":init:\t start init from baseclass \t NEXT");
   //replica->init();
   DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":init:\t init_eds_stat \t NEXT");
   init_eds_stat();
-  MPI_DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":init:\t DONE");
+  DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":init:\t DONE");
 }
 
 //initialize output files  
 void util::replica_exchange_base_eds::init_eds_stat(){
-        DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":init_eds_stat:\t START");
-        
-        ID_t currentID=1000; //error value
-        currentID = simulationID;
-        replicaStatData[currentID].ID =currentID;
-        replicaStatData[currentID].T=T;
-        replicaStatData[currentID].s=l; //l==s because of the implementation of hamiltonian replica exchange.
-        replicaStatData[currentID].dt=dt;
-        replicaStatData[currentID].run=0;
-        replicaStatData[currentID].epot_vec.resize(replicaGraphMPIControl.numberOfReplicas);
-        replicaStatData[currentID].prob_vec.resize(replicaGraphMPIControl.numberOfReplicas);
-        
-        DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":init_eds_stat:\t DONE");
+    DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":init_eds_stat:\t START");
+
+    ID_t currentID=1000; //error value
+    currentID = simulationID;
+    replicaStatData[currentID].ID =currentID;
+    replicaStatData[currentID].T=T;
+    replicaStatData[currentID].s=l; //l==s because of the implementation of hamiltonian replica exchange.
+    replicaStatData[currentID].dt=dt;
+    replicaStatData[currentID].run=0;
+    replicaStatData[currentID].epot_vec.resize(replicaGraphMPIControl.numberOfReplicas);
+    replicaStatData[currentID].prob_vec.resize(replicaGraphMPIControl.numberOfReplicas);
+
+    DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":init_eds_stat:\t DONE");
 }
 
 //RE

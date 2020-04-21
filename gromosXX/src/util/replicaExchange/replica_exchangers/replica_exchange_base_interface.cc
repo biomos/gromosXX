@@ -57,9 +57,9 @@ util::replica_exchange_base_interface::replica_exchange_base_interface(io::Argum
         replicaGraphMPIControl(replicaGraphMPIControl)
 {
 #ifdef XXMPI
-  MPI_DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":Constructor:\t START ");
+  DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":Constructor:\t START ");
   createReplicas(cont, globalThreadID, replica_mpi_control);
-  MPI_DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":Constructor:\t Constructor \t DONE " << replica->sim.param().reeds.num_l);
+  DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":Constructor:\t Constructor \t DONE " << replica->sim.param().reeds.num_l);
   #else
     throw "Cannot use send_to_master from replica_exchange_slave_eds without MPI!"; 
   #endif
@@ -71,7 +71,7 @@ util::replica_exchange_base_interface::~replica_exchange_base_interface() {
 }
 
 void util::replica_exchange_base_interface::createReplicas(int cont, int globalThreadID, simulation::mpi_control_struct replica_mpi_control){
-  MPI_DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":createReplicas:\t START \t THREADS "<<replica_mpi_control.numberOfThreads);
+  DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":createReplicas:\t START \t THREADS "<<replica_mpi_control.numberOfThreads);
 
   // create the number of replicas that are assigned to my node
     if(replica_mpi_control.numberOfThreads>1){
@@ -86,12 +86,12 @@ void util::replica_exchange_base_interface::createReplicas(int cont, int globalT
         replica = new util::replica(args, cont, globalThreadID, replica_mpi_control);
     }   
   DEBUG(4,"replica_exchange_base_interface "<< globalThreadID <<":create:\t replica numS " << replica->sim.param().replica.num_l);
-  MPI_DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":createReplicas:\t DONE");
+  DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":createReplicas:\t DONE");
 }
 
 void util::replica_exchange_base_interface::init() {
-  MPI_DEBUG(3, "replica_exchange_base_interface "<< globalThreadID <<":init:\t START EMPTY");
-  MPI_DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":init:\t DONE");
+  DEBUG(3, "replica_exchange_base_interface "<< globalThreadID <<":init:\t START EMPTY");
+  DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":init:\t DONE");
 }
 
 void util::replica_exchange_base_interface::run_MD() {
