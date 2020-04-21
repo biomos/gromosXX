@@ -167,9 +167,12 @@ void util::replica_MPI_Slave::run_MD(){
     receive_coords();
     DEBUG(2, "replica_MPI_SLAVE "<< globalThreadID <<":runMD:\t\t received Coords");
     MPI_DEBUG(2, "replica_MPI_SLAVE "<< globalThreadID <<":runMD:\t\t steps: current step: "<<sim.steps()<< "  totalsteps: "<< stepsPerRun << " + " << curentStepNumber << " + 1 = "<< stepsPerRun+curentStepNumber+1);
-
-    while ((unsigned int)(sim.steps()) < stepsPerRun + curentStepNumber+1) {
-       DEBUG(4, "replica_MPI_SLAVE " << globalThreadID << " waiting for master \t Start step: "<<sim.steps()<<" \tmaximal \t"<<curentStepNumber+stepsPerRun);
+    
+    if(curentStepNumber > 5){
+        sim.steps() = curentStepNumber+1;
+    }
+        while ((unsigned int)(sim.steps()) < stepsPerRun + curentStepNumber+1) {
+       MPI_DEBUG(6, "replica_MPI_SLAVE " << globalThreadID << " waiting for master \t step: "<<sim.steps()<<" \tmaximal \t"<<curentStepNumber+stepsPerRun);
       // run a step
 
       if (do_nonbonded && (error = nb->calculate_interactions(topo, conf, sim)) != 0){
@@ -214,9 +217,8 @@ void util::replica_MPI_Slave::run_MD(){
 
       ++sim.steps();
       sim.time() = sim.param().step.t0 + sim.steps() * sim.time_step_size();
-     DEBUG(4, "replica_SLAVE " << globalThreadID << " DONE waiting for master");
     }
-    MPI_DEBUG(1, "replica_MPI_MASTER "<< globalThreadID <<":run_MD:\t after step while")
+    MPI_DEBUG(6, "replica_MPI_SLAVE "<< globalThreadID <<":run_MD:\t after step while")
 
     if (error){
       (*os) << "Rank: "<< globalThreadID<<"\t\nErrors encountered during run in simulation "<< simulationID << " in Slave Thread "<< globalThreadID <<" - check above!\n" << std::endl;
@@ -224,6 +226,7 @@ void util::replica_MPI_Slave::run_MD(){
     }
     curentStepNumber +=  stepsPerRun;
 
+    
     MPI_DEBUG(1, "replica_MPI_SLAVE "<< globalThreadID <<":runMD:\t DONE at step= " << curentStepNumber);
     #endif
 }

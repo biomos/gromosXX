@@ -124,14 +124,16 @@ void util::replica_exchange_base_interface::swap(){
     MPI_DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":swap:\t START");
   
     partnerReplicaID = find_partner();
-    
+    MPI_DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":swap:\t Found Partner: "<< partnerReplicaID);
+
     if (partnerReplicaID != simulationID && not_sender) // different replica?
     {
         DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":swap:\t I'm gonna swap!:)");
       //TODO: RENAME 
       swap_replicas_2D(partnerReplicaID);
+      
       if (switched) {
-        if (globalThreadID < partnerReplicaID) {
+        if (simulationID < partnerReplicaID) {
           send_coord(partnerReplicaID);
           receive_new_coord(partnerReplicaID);
           // the averages of current and old are interchanged after calling exchange_state() and have to be switched back
