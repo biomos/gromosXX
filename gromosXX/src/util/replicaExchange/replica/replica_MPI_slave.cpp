@@ -216,6 +216,7 @@ void util::replica_MPI_Slave::run_MD(){
       sim.time() = sim.param().step.t0 + sim.steps() * sim.time_step_size();
      DEBUG(4, "replica_SLAVE " << globalThreadID << " DONE waiting for master");
     }
+    MPI_DEBUG(1, "replica_MPI_MASTER "<< globalThreadID <<":run_MD:\t after step while")
 
     if (error){
       (*os) << "Rank: "<< globalThreadID<<"\t\nErrors encountered during run in simulation "<< simulationID << " in Slave Thread "<< globalThreadID <<" - check above!\n" << std::endl;
