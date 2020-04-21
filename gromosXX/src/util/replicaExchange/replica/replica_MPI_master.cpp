@@ -205,7 +205,7 @@ void util::replica_MPI_Master::run_MD(){
     MPI_DEBUG(2, "replica_MPI_Master "<< globalThreadID <<":runMD:\t\t steps: current step: "<<sim.steps()<< "  totalsteps: "<< stepsPerRun << " + " << curentStepNumber << " + 1 = "<< stepsPerRun+curentStepNumber+1);
 
     while ((unsigned int)(sim.steps()) <  stepsPerRun + curentStepNumber+1) {
-      MPI_DEBUG(4, "replica_MPI_MASTER "<< globalThreadID <<":run_MD:\t Start step: "<<sim.steps()<<" \tmaximal \t"<<curentStepNumber+stepsPerRun);
+      DEBUG(4, "replica_MPI_MASTER "<< globalThreadID <<":run_MD:\t Start step: "<<sim.steps()<<" \tmaximal \t"<<curentStepNumber+stepsPerRun);
       traj->write(conf, topo, sim, io::reduced);
       // run a step
       DEBUG(5, "replica_MPI_MASTER "<< globalThreadID <<":run_MD:\t simulation!:");
@@ -254,7 +254,7 @@ void util::replica_MPI_Master::run_MD(){
         ++sim.steps();
         sim.time() = sim.param().step.t0 + sim.steps() * sim.time_step_size();
     } // main md loop
-    
+    MPI_DEBUG(1, "replica_MPI_MASTER "<< globalThreadID <<":run_MD:\t after step while")
     curentStepNumber +=  stepsPerRun;
     // print final data of run
     if (curentStepNumber >=  totalStepNumber) {

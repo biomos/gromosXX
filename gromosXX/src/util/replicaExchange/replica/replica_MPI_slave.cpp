@@ -166,7 +166,7 @@ void util::replica_MPI_Slave::run_MD(){
     //after an Replica coordinate exchange, update the coordinates of the slaves
     receive_coords();
     DEBUG(2, "replica_MPI_SLAVE "<< globalThreadID <<":runMD:\t\t received Coords");
-    MPI_DEBUG(2, "replica_MPI_SLAVE "<< globalThreadID <<":runMD:\t\t steps: current step: "<<sim.steps()<< "  totalsteps: "<< stepsPerRun << " + " << curentStepNumber << " + 1 = "<< stepsPerRun+curentStepNumber+1);
+    DEBUG(2, "replica_MPI_SLAVE "<< globalThreadID <<":runMD:\t\t steps: current step: "<<sim.steps()<< "  totalsteps: "<< stepsPerRun << " + " << curentStepNumber << " + 1 = "<< stepsPerRun+curentStepNumber+1);
 
     while ((unsigned int)(sim.steps()) < stepsPerRun + curentStepNumber+1) {
        MPI_DEBUG(4, "replica_MPI_SLAVE " << globalThreadID << " waiting for master \t Start step: "<<sim.steps()<<" \tmaximal \t"<<curentStepNumber+stepsPerRun);
