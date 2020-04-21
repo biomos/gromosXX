@@ -255,7 +255,7 @@ void util::replica_MPI_Master::run_MD(){
         ++sim.steps();
         sim.time() = sim.param().step.t0 + sim.steps() * sim.time_step_size();
     } // main md loop
-    MPI_DEBUG(5, "replica_MPI_MASTER "<< globalThreadID <<":run_MD:\t after step while")
+    MPI_DEBUG(5, "replica_MPI_MASTER "<< globalThreadID <<":run_MD:\t after step while");
     curentStepNumber +=  stepsPerRun;
     
     // print final data of run

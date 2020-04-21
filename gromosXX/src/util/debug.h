@@ -93,6 +93,7 @@
 
 #ifdef NDEBUG
     #define DEBUG(level, s)
+    #define MPI_DEBUG(level, s)
 #else
     #define DEBUG(level, s) \
       if (level <= ::debug_level + MODULE::debug_level + \
@@ -110,7 +111,8 @@
             MPI_Barrier(MPI_COMM_WORLD);\
           }
     #else
-        #define MPI_DEBUG(level, s)
+        #define MPI_DEBUG(level, s) \
+            DEBUG(level, s);
     #endif
 
     // the global one
