@@ -523,7 +523,7 @@ double util::replica_exchange_base_interface::calc_probability(const unsigned in
 }
 
 //THIS COULD GO TO REPLICA and into the func above! @bschroed
-fdouble util::replica_exchange_base_interface::calculate_energy_core() {
+double util::replica_exchange_base_interface::calculate_energy_core() {
     DEBUG(5, "CALC energy_Core\tSTART")
   double energy = 0.0;
   //chris: you do need to re-evaluate the energy, otherwise you get the energy of before the previous step
