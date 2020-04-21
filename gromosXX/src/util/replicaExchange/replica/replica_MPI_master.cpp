@@ -249,7 +249,6 @@ void util::replica_MPI_Master::run_MD(){
         // tell the slaves to continue
         MPI_Bcast(&next_step, 1, MPI::INT, sim.mpi_control.masterID, sim.mpi_control.comm);
 
-        //MPI_DEBUG(1, "replica_MPI_MASTER "<< globalThreadID <<":run_MD:\t clean up:");
         traj->print(topo, conf, sim);
 
         ++sim.steps();
