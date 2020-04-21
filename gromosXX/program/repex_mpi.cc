@@ -89,11 +89,6 @@ int main(int argc, char *argv[]) {
         std::cerr << msg;
     }
 
-    if (globalThreadID == 0) {
-        std::string msg("\n==================================================\n\tGRUMMERL\n==================================================\n");
-        std::cout << msg;
-        std::cerr << msg;
-    }
 
     // reading arguments
     util::Known knowns;
@@ -106,11 +101,6 @@ int main(int argc, char *argv[]) {
     std::string usage;
     util::get_usage(knowns, usage, argv[0]);
     usage += "#\n\n";
-    if (globalThreadID == 0) {
-        std::string msg("\n==================================================\n\tPARSE ARGS\n==================================================\n");
-        std::cout << msg;
-        std::cerr << msg;
-    }
 
     // Parse command line arguments
     io::Argument args;
@@ -159,7 +149,7 @@ int main(int argc, char *argv[]) {
         std::cerr << msg;
     }
 
-    // MPI_DEBUG(1, "RANK: "<<globalThreadID<<" totalRankNum: "<< totalNumberOfThreads<<": hello world!\n");
+    MPI_DEBUG(1, "RANK: "<<globalThreadID<<" totalRankNum: "<< totalNumberOfThreads<<": hello world!\n");
     
     if (globalThreadID == 0) {
         std::string msg("\n==================================================\n\tAFTER MPI DEBUG!\n==================================================\n");
