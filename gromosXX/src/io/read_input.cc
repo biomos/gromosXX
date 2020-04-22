@@ -92,16 +92,18 @@ int io::read_input_repex(io::Argument const & args,
 		   configuration::Configuration & conf,
 		   simulation::Simulation & sim,
 		   algorithm::Algorithm_Sequence & md_seq,
-                   int replicaID, 
+                   int simulationID,
                    int rank,
 		   std::ostream & os,  
                    bool quiet)
 {
+
+
   //initialize for RE-EDS ID dependent parameters.
   if(sim.param().reeds.reeds){
-    sim.param().eds=sim.param().reeds.eds_para[replicaID];//choose correct eds informations which are ID dependent. That's why this cannot be done earlier.
+    sim.param().eds=sim.param().reeds.eds_para[simulationID];//choose correct eds informations which are ID dependent. That's why this cannot be done earlier.jaaa?
   }
-  
+
   if(!quiet){
     std::cout << std::internal << "\tReading Topology\n";
   }
@@ -113,7 +115,7 @@ int io::read_input_repex(io::Argument const & args,
   }
   // read this before configuration, as it contains topological data...
   if (read_special(args, topo, conf, sim, os, quiet) != 0) return -1;
-  
+      
   // error if no perturbed parameters were read from pttop or restraints
   if(!sim.param().perturbation.perturbed_par && sim.param().perturbation.perturbation){
       io::messages.add("Neither perturbed restraints nor perturbed topology found - if you do not want to perturb anything, turn off PERTURBATION",
@@ -133,7 +135,7 @@ int io::read_input_repex(io::Argument const & args,
     std::cout << std::internal << "\tReading Configuration\n";
     std::cout.flush();
   }
-
+    
     //check if all coordinate files are present:
     int cont = sim.param().replica.cont;  
     if(cont == 1 && rank == 0){

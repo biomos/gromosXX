@@ -25,6 +25,8 @@
 
 
 int io::check_parameter(simulation::Simulation & sim){
+    std::cerr << "Multibath check8: " << sim.param().multibath.multibath.size() << "\n";
+
   int check1 = simple_crosschecks(sim);
   int check2 = check_features(sim);
   if (check1 || check2)
@@ -34,7 +36,10 @@ int io::check_parameter(simulation::Simulation & sim){
 }
 
 int io::simple_crosschecks(simulation::Simulation & sim) {
+        std::cerr << "Multibath check9: " << sim.param().multibath.multibath.size() << "\n";
+
   const simulation::Parameter & param = sim.param();
+        std::cerr << "Multibath check1: " << sim.param().multibath.multibath.size() << "\n";
 
   // no velocity writeout or generation with energy minimization
   if (param.minimise.ntem != 0 && param.write.velocity != 0)
@@ -122,9 +127,14 @@ int io::simple_crosschecks(simulation::Simulation & sim) {
 
     // check whether all baths have the same temperature (unambiguous kT)
     if (param.eds.eds){
-      for (unsigned int i = 1; i < param.multibath.multibath.size(); i++) {
+        std::cerr << " IN THIS NICE IF!\n";
+        std::cerr << "HAHAH : " << sim.param().multibath.multibath.size()<< "\n";
+        std::cerr << "These ar the baths!"<< "\n";
+      for (unsigned int i = 1; i <sim.param().multibath.multibath.size(); i++) {
+            std::cerr << "i: " << i;
               if (param.multibath.multibath.bath(i).temperature !=
-                  param.multibath.multibath.bath(0).temperature) {
+                  param.multibath.multibath.bath(0).temperature) 
+              {
                   io::messages.add("EDS/AEDS block: all baths must have the same temperature.",
                                    "In_Parameter", io::message::error);
                   break;
@@ -213,7 +223,7 @@ int io::simple_crosschecks(simulation::Simulation & sim) {
     if (param.reeds.reeds && param.replica.num_l > 1 && !param.eds.eds )
         io::messages.add("REPLICA block: Hamiltonian replica exchange for RE-EDS, but eds is off.",
                          "In_Parameter", io::message::warning);
-  
+
     // extended TI input
     if (param.perturbation.perturbation == false && param.precalclam.nr_lambdas > 0)
       io::messages.add("PRECALCLAM cannot be on without perturbation",

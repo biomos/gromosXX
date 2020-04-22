@@ -84,6 +84,7 @@
  */
 
 #undef DEBUG
+
 #undef MPI_DEBUG
 
 #define SUBL(s) s ## _debug_level
@@ -93,9 +94,9 @@
 #define STR(s) TOSTRING(s)
 
 #ifdef NDEBUG
-    #define DEBUG(level, s)
+    #define DEBUG(level, s) 
 
-    #define MPI_DEBUG(level, s)
+    #define MPI_DEBUG(level, s) 
 
 #else
     #define DEBUG(level, s) \
@@ -113,9 +114,11 @@
             std::cout.flush(); \
             MPI_Barrier(MPI_COMM_WORLD);\
           }
+
     #else   
-        #define MPI_DEBUG(level, s) \
-            DEBUG(level, s);
+        #define MPI_DEBUG(level, s)\
+         DEBUG(level, s)
+
     #endif
 
     // the global one

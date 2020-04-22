@@ -122,6 +122,7 @@ int main(int argc, char *argv[]) {
             MPI_Finalize();
             return 1;
         }
+        
     } catch (const std::exception &e) {
         std::cerr << "\n\t########################################################\n"
                 << "\n\t\t Exception was thrown in Commandline Parsing!\n"
@@ -142,20 +143,10 @@ int main(int argc, char *argv[]) {
         MPI_Finalize();
         return -1;
     }
-    
-    if (globalThreadID == 0) {
-        std::string msg("\n==================================================\n\tBERFORE MPI DEBUG\n==================================================\n");
-        std::cout << msg;
-        std::cerr << msg;
-    }
+
 
     MPI_DEBUG(1, "RANK: "<<globalThreadID<<" totalRankNum: "<< totalNumberOfThreads<<": hello world!\n");
     
-    if (globalThreadID == 0) {
-        std::string msg("\n==================================================\n\tAFTER MPI DEBUG!\n==================================================\n");
-        std::cout << msg;
-        std::cerr << msg;
-    }
 
     /**
      * GLOBAL SETTING VARIABLES
@@ -180,14 +171,13 @@ int main(int argc, char *argv[]) {
     
     std::map<unsigned int, unsigned int> thread_id_replica_map; // where is which replica
     std::vector<std::vector<unsigned int> > replica_owned_threads; // set IDs for each replica
-    
-    
+
+
     try {
-        {
+            simulation::Simulation sim;
             topology::Topology topo;
             configuration::Configuration conf;
             algorithm::Algorithm_Sequence md;
-            simulation::Simulation sim;
 
             // read in parameters
             bool quiet = true;
@@ -195,6 +185,7 @@ int main(int argc, char *argv[]) {
                 quiet = true;
             }
 
+                   
             if (io::read_parameter(args, sim, std::cout, true)) {
                 if (globalThreadID == 0) {
                     std::cerr << "\n\t########################################################\n"
@@ -213,6 +204,7 @@ int main(int argc, char *argv[]) {
             sim_runs = sim.param().replica.trials;
             numAtoms = topo.num_atoms();
             reedsSim = sim.param().reeds.reeds;
+            
             
             if (reedsSim) {
                 numReplicas = sim.param().reeds.num_l;
@@ -280,7 +272,7 @@ int main(int argc, char *argv[]) {
             }
 
             // read in the rest
-            if (io::read_input_repex(args, topo, conf, sim, md, simulationID, globalThreadID, std::cout, quiet)) {
+            if (io::read_input_repex(args, topo, conf, sim, md, thread_id_replica_map[globalThreadID], globalThreadID, std::cout, quiet)) {
                 if (globalThreadID == 0) {
                     std::cerr << "\n\t########################################################\n"
                             << "\n\t\tErrors during initial Parameter reading!\n"
@@ -292,8 +284,8 @@ int main(int argc, char *argv[]) {
                 MPI_Finalize();
                 return 1;
             }
-            MPI_DEBUG(2, "RANK: "<<globalThreadID<<" done with repex_in\n");    //TODO: lower verb level
-            
+            MPI_DEBUG(2, "RANK: "<<globalThreadID<<" done with repex_in\n"); 
+
             //if any replica Ex block - present   
             if (sim.param().reeds.reeds == false && sim.param().replica.retl == false) {
                 if (globalThreadID == 0) {
@@ -308,7 +300,9 @@ int main(int argc, char *argv[]) {
                 return 1;
             }
             MPI_DEBUG(2, "RANK: "<<globalThreadID<<" done with replica Ex check\n");    //TODO: lower verb level
-            
+
+            std::cerr << "Multibath check4: " << sim.param().multibath.multibath.size() << "\n";
+
             if (io::check_parameter(sim)) {
                 if (globalThreadID == 0) {
                     std::cerr << "\n\t########################################################\n"
@@ -320,9 +314,14 @@ int main(int argc, char *argv[]) {
                 MPI_Finalize();
                 return 1;
             }
+           
             MPI_DEBUG(2, "RANK: "<<globalThreadID<<" done with param check\n");    //TODO: lower verb level
-            
-  
+            {
+            std::string msg("\n==================================================\n\trTests\n==================================================\n");
+            std::cout << msg;
+            std::cerr << msg;
+            }
+
             //SOME additional Checks
             //if enough threads avail
             if (totalNumberOfThreads < numReplicas) {
@@ -339,11 +338,10 @@ int main(int argc, char *argv[]) {
                 }
                 return -1;
             }
-
-        }
+            
     } catch (const std::exception &e) {
         std::cerr << "\n\t########################################################\n"
-                << "\n\t\t Exception was thrown in initial parsing!\n"
+                << "\n\t\t Exception was thrown in initial test parsing!\n"
                 << "\n\t########################################################\n";
         std::string msg = "ERROR!\n Uh OH! Caught an Exception in initial test Parsing of the Gromos Parameters!\n\nMessage:\t";
         std::cout << msg << e.what() << std::endl;
@@ -361,7 +359,6 @@ int main(int argc, char *argv[]) {
         return -1;
     }
     
-        
     MPI_DEBUG(1, "RANK: "<<globalThreadID<<" Done with init parse\n");    //TODO: lower verb level
     io::messages.clear();
     MPI_DEBUG(1, "REPLICA_ID \t " << globalThreadID << "\t Simulation_ID\t"<< simulationID << "\t SimulationThread\t"<<simulationTrheadID<<"\n")
@@ -374,7 +371,6 @@ int main(int argc, char *argv[]) {
     MPI_Comm simulationCOMM;    //this is used for different replica simulation parallelisations
     MPI_Comm replicaGraphCOMM;    //this is used for different replica GRAPH parallelisations
 
-    
     //////////////////////////////////////
     //for REPLICA SIMULATION!
     //////////////////////////////////////
@@ -458,7 +454,7 @@ int main(int argc, char *argv[]) {
 
     MPI_Barrier(MPI_COMM_WORLD);    //wait for all threads to register!
     
-    
+        
     try { // SUBCOMS //Exchange structures
 
 
