@@ -115,7 +115,7 @@ void util::replica_exchange_master_eds::receive_from_all_slaves() {
 
 
         //normal case
-        if(info.run > 1){
+        if(info.run > 1 && info.switched){
           begin = 0;
           replicaData[slaveReplicaID].pos_info.second = coordIDPositionsVector[info.partner];
         }
@@ -140,7 +140,9 @@ void util::replica_exchange_master_eds::receive_from_all_slaves() {
   replicaData[simulationID].probability = probability;
   replicaData[simulationID].switched = switched;
   //theosm
-  replicaData[simulationID].pos_info.second = coordIDPositionsVector[partnerReplicaID];
+  if(switched){
+    replicaData[simulationID].pos_info.second = coordIDPositionsVector[partnerReplicaID];
+  }
 
   //check whether switched or not for the first trial
   if(switched && begin){
