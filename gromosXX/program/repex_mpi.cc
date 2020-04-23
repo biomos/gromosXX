@@ -47,7 +47,7 @@
 #include <math/gmath.h>
 
 #ifdef XXMPI
-#include <mpi.h>
+    #include <mpi.h>
 #endif
 
 #include <util/replicaExchange/replica_mpi_tools.h>
@@ -302,7 +302,7 @@ int main(int argc, char *argv[]) {
             MPI_DEBUG(2, "RANK: "<<globalThreadID<<" done with replica Ex check\n");    //TODO: lower verb level
 
             std::cerr << "Multibath check4: " << sim.param().multibath.multibath.size() << "\n";
-
+            
             if (io::check_parameter(sim)) {
                 if (globalThreadID == 0) {
                     std::cerr << "\n\t########################################################\n"
@@ -314,13 +314,11 @@ int main(int argc, char *argv[]) {
                 MPI_Finalize();
                 return 1;
             }
-           
+            
+            std::cerr << "Multibath check14: " << sim.param().multibath.multibath.size() << "\n";
+
             MPI_DEBUG(2, "RANK: "<<globalThreadID<<" done with param check\n");    //TODO: lower verb level
-            {
-            std::string msg("\n==================================================\n\trTests\n==================================================\n");
-            std::cout << msg;
-            std::cerr << msg;
-            }
+
 
             //SOME additional Checks
             //if enough threads avail
@@ -515,10 +513,7 @@ int main(int argc, char *argv[]) {
         msg << "\t continuation:\t" << cont << "\n";
         msg << "\t equilibration runs:\t" << equil_runs << "\n";
         msg << "\t Exchange Trials runs:\t" << sim_runs << "\n";
-        //todo: FIX OUTPUT
-        
-        //msg << "\t Simulation Steps Between Trials:\t" << sim.param().step.number_of_steps << "\n";
-        //msg << "\t Total Simulation Time:\t" << sim.param().step.number_of_steps * sim_runs * sim.param().step.dt << "ps\n";
+
         msg << "\t numReplicas:\t" << numReplicas << "\n";
 
         if (reedsSim) {

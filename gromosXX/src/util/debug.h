@@ -94,16 +94,16 @@
 #define STR(s) TOSTRING(s)
 
 #ifdef NDEBUG
-    #define DEBUG(level, s) 
+    #define DEBUG(level, s) ;
 
-    #define MPI_DEBUG(level, s) 
+    #define MPI_DEBUG(level, s) ;
 
 #else
     #define DEBUG(level, s) \
       if (level <= ::debug_level + MODULE::debug_level + \
           MODULE::SUBLEVEL(SUBMODULE) ){ \
         std::cout << STR(MODULE) << ": " <<  s << std::endl; \
-      }
+      };
 
     #ifdef XXMPI
         #define MPI_DEBUG(level, s) \
@@ -113,11 +113,11 @@
             std::cout << STR(MODULE) << ": " <<  s << std::endl; \
             std::cout.flush(); \
             MPI_Barrier(MPI_COMM_WORLD);\
-          }
+          };
 
     #else   
         #define MPI_DEBUG(level, s)\
-         DEBUG(level, s)
+         DEBUG(level, s);
 
     #endif
 
@@ -189,6 +189,5 @@
       extern int bs_leus_debug_level;
       extern int replica_exchange_debug_level;
     }
-
-  
+    
 #endif
