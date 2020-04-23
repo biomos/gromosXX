@@ -40,6 +40,10 @@ util::replica_exchange_master_2d_s_eoff_eds::replica_exchange_master_2d_s_eoff_e
     //DEBUG(4,"replica_exchange_master_2d_s_eoff_eds "<< rank <<":Constructor:\t reeds- lambda\t "<< replica->sim.param().reeds.num_l);
     //DEBUG(4,"replica_exchange_master_2d_s_eoff_eds "<< rank <<":Constructor:\t eds \t "<< replica->sim.param().eds.s.size());
 
+    //initialize bookkeeping data structure
+    coordIDPositionsVector.resize(replicaGraphMPIControl.numberOfReplicas);
+    DEBUG(3,"replica_exchange_master_2d_s_eoff_eds "<< globalThreadID <<":Constructor:\t coordIDPositionsVectorsize\t "<< coordIDPositionsVector.size());
+
 
     for (int replicaID = 0; replicaID<  replicaData.size(); ++replicaID) {
         replicaData[replicaID].ID = replicaID;
@@ -68,7 +72,7 @@ util::replica_exchange_master_2d_s_eoff_eds::replica_exchange_master_2d_s_eoff_e
     #endif
 }
 
-void util::replica_exchange_master_2d_s_eoff_eds::receive_from_all_slaves(int arr[]) {
+void util::replica_exchange_master_2d_s_eoff_eds::receive_from_all_slaves() {
   #ifdef XXMPI
   DEBUG(2,"replica_exchange_master_2d_s_eoff_eds "<< globalThreadID <<":receive_from_all_slaves:\t START\n");
 
@@ -113,7 +117,7 @@ void util::replica_exchange_master_2d_s_eoff_eds::receive_from_all_slaves(int ar
         //normal case
         if(info.run > 1){
           begin = 0;
-          replicaData[slaveReplicaID].pos_info.second = arr[info.partner];
+          replicaData[slaveReplicaID].pos_info.second = coordIDPositionsVector[info.partner];
         }
 
 
@@ -136,7 +140,7 @@ void util::replica_exchange_master_2d_s_eoff_eds::receive_from_all_slaves(int ar
   replicaData[simulationID].probability = probability;
   replicaData[simulationID].switched = switched;
   //theosm
-  replicaData[simulationID].pos_info.second = arr[partnerReplicaID];
+  replicaData[simulationID].pos_info.second = coordIDPositionsVector[partnerReplicaID];
 
   //check whether switched or not for the first trial
   if(switched && begin){
@@ -195,6 +199,9 @@ void util::replica_exchange_master_2d_s_eoff_eds::write() {
               << std::setw(6) << replicaData[replicaData[treplicaID].partner].pos_info.second
               << "\t\t"
               << std::setw(6) << replicaData[treplicaID].run << "  ";
+
+      coordIDPositionsVector[treplicaID] = replicaData[treplicaID].pos_info.second;
+      DEBUG(1,"write: ID, coordIDPositionsVector "<< treplicaID << ", " << coordIDPositionsVector[treplicaID] << "\n");
       /*
       repOut.precision(svalPrecision);
       DEBUG(2,"replica_exchange_master_2d_s_eoff_eds "<< globalThreadID <<":write:\t s_val raus! "<<replicaData[treplicaID].l);
@@ -219,52 +226,6 @@ void util::replica_exchange_master_2d_s_eoff_eds::write() {
       repOut.precision(generalPrecision);
       //do not use temperatures anymore
       //repOut  << std::setw(13) << replicaData[replicaData[treplicaID].partner].T;
-
-      if(replicaData[treplicaID].l == replicaData[replicaData[treplicaID].partner].l){
-          repOut << std::setw(18) << replicaData[replicaData[treplicaID].partner].epot;
-      }
-      else{
-          repOut << std::setw(18) << replicaData[treplicaID].epot_partner;
-      }
-      repOut  << std::setw(13) << replicaData[treplicaID].probability
-              << std::setw(6) << replicaData[treplicaID].switched;
-
-    for(unsigned int s=0;s<reedsParam.eds_para[0].numstates; s++){
-        DEBUG(2, "replica_exchange_master_2d_s_eoff_eds "<< globalThreadID <<":write:\t WRITE out POTS " <<s<< "\t" << replicaData[treplicaID].Vi[s]);
-        repOut   << std::setw(18) << std::min(replicaData[treplicaID].Vi[s], 10000000.0);//Output potential energies for each state
-    }
-      repOut << std::endl;
-    }
-    DEBUG(2,"replica_exchange_master_2d_s_eoff_eds "<< globalThreadID <<":write:\t DONE");
-}
-
-void util::replica_exchange_master_2d_s_eoff_eds::write_new(int arr[]) {
-    DEBUG(2,"replica_exchange_master_2d_s_eoff_eds "<< globalThreadID <<":write:\t START");
-    DEBUG(2,"replica_exchange_master_2d_s_eoff_eds "<< globalThreadID <<":write:\t svalPrecision "<<svalPrecision);
-
-    for (unsigned int treplicaID = 0; treplicaID < replicaGraphMPIControl.numberOfReplicas; ++treplicaID) {
-      repOut << std::setw(6) << (replicaData[treplicaID].ID)//removed  + 1 for consistency reasons
-              << " "
-              << std::setw(6) << replicaData[treplicaID].pos_info.first
-              << " "
-              << std::setw(6) << replicaData[treplicaID].pos_info.second
-              << " "
-              << std::setw(6) << (replicaData[treplicaID].partner) //removed  + 1 for consistency reasons
-              << "   "
-              << std::setw(6) << replicaData[replicaData[treplicaID].partner].pos_info.first
-              << "\t\t"
-              << std::setw(6) << replicaData[replicaData[treplicaID].partner].pos_info.second
-              << "\t\t"
-              << std::setw(6) << replicaData[treplicaID].run << "  ";
-
-      arr[treplicaID] = replicaData[treplicaID].pos_info.second;
-      DEBUG(1,"write_new: ID, arr "<< treplicaID << ", " << arr[treplicaID] << "\n");
-
-      repOut.precision(generalPrecision);
-      repOut  << " "
-              << std::setw(18) << replicaData[treplicaID].epot;
-
-      repOut.precision(generalPrecision);
 
       if(replicaData[treplicaID].l == replicaData[replicaData[treplicaID].partner].l){
           repOut << std::setw(18) << replicaData[replicaData[treplicaID].partner].epot;

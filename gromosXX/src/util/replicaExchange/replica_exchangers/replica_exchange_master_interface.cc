@@ -91,44 +91,6 @@ util::replica_exchange_master_interface::~replica_exchange_master_interface() {
    repOut.close();
 }
 
-void util::replica_exchange_master_interface::receive_from_all_slaves(int arr[]) {
-    #ifdef XXMPI
-    DEBUG(2,"replica_exchange_master_interface "<< globalThreadID <<":receive_from_all_slaves:\t START\n");
-    double start = MPI_Wtime();
-
-    MPI_Status status;
-    util::repInfo info;
-
-    // receive all information from slaves
-    for (unsigned int slaveReplicaID = 0; slaveReplicaID < replicaGraphMPIControl.numberOfReplicas; ++slaveReplicaID) {
-      if (slaveReplicaID != replicaGraphMPIControl.masterID) {
-        unsigned int replicaMasterThreadID = slaveReplicaID;
-        DEBUG(2,"replica_exchange_master_interface "<< globalThreadID <<":receive_from_all_slaves:\t get_MPI replicaMasterThread: "<< replicaMasterThreadID << "\n");
-        MPI_Recv(&info, 1, MPI_REPINFO, replicaMasterThreadID, REPINFO,  replicaGraphMPIControl.comm, &status);
-        replicaData[slaveReplicaID].run = info.run;
-        replicaData[slaveReplicaID].epot = info.epot;
-        replicaData[slaveReplicaID].epot_partner = info.epot_partner;
-        replicaData[slaveReplicaID].probability = info.probability;
-        replicaData[slaveReplicaID].switched = info.switched;
-        replicaData[slaveReplicaID].partner = info.partner;
-      }
-      DEBUG(2,"replica_exchange_master_interface "<< globalThreadID <<":receive_from_all_slaves:\t got all MPI reps\n");
-
-      // write all information from master node to data structure
-      replicaData[simulationID].run = run;
-      replicaData[simulationID].partner = partnerReplicaID;
-      replicaData[simulationID].epot = epot;
-      replicaData[simulationID].epot_partner = epot_partner;
-      replicaData[simulationID].probability = probability;
-      replicaData[simulationID].switched = switched;
-    }
-    DEBUG(2,"replica_exchange_master_interface "<< globalThreadID <<":receive_from_all_slaves:\t " << "time used for receiving all messages: " << MPI_Wtime() - start << " seconds\n");
-    DEBUG(2,"replica_exchange_master_interface "<< globalThreadID <<":receive_from_all_slaves:\t DONE: \n");
-    #else
-     throw "Cannot use replica_exchange_master without MPI!";
-    #endif
-}
-
 void util::replica_exchange_master_interface::receive_from_all_slaves() {
     #ifdef XXMPI
     DEBUG(2,"replica_exchange_master_interface "<< globalThreadID <<":receive_from_all_slaves:\t START\n");
@@ -239,27 +201,4 @@ void util::replica_exchange_master_interface::write() {
   }
   DEBUG(2,"replica_exchange_master_interface "<< globalThreadID <<":write:\t DONE");
 
-}
-
-void util::replica_exchange_master_interface::write_new(int arr[]) {
-    DEBUG(2,"replica_exchange_master_interface "<< globalThreadID <<":write:\t START");
-
-    for (unsigned int treplicaID = 0; treplicaID < replicaGraphMPIControl.numberOfReplicas; ++treplicaID) {
-      repOut << std::setw(6) << (replicaData[treplicaID].ID)//removed  + 1 for consistency reasons
-              << " "
-              << std::setw(6) << (replicaData[treplicaID].partner) //removed  + 1 for consistency reasons
-              << "   "
-              << std::setw(6) << replicaData[treplicaID].run << "  ";
-
-      if(replicaData[treplicaID].l == replicaData[replicaData[treplicaID].partner].l){
-          repOut << std::setw(18) << replicaData[replicaData[treplicaID].partner].epot;
-      }
-      else{
-          repOut << std::setw(18) << replicaData[treplicaID].epot_partner;
-      }
-      repOut  << std::setw(13) << replicaData[treplicaID].probability
-              << std::setw(6) << replicaData[treplicaID].switched;
-      repOut << std::endl;
-    }
-    DEBUG(2,"replica_exchange_master_interface "<< globalThreadID <<":write:\t DONE");
 }

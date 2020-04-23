@@ -69,12 +69,10 @@ namespace util {
      * receives all information written to output file from the slaves
      */
     virtual void receive_from_all_slaves();
-    virtual void receive_from_all_slaves(int arr[]);
     /**
      * writes data to output file \@repdat
      */
     virtual void write();
-    virtual void write_new(int arr[]);
 
 
     virtual void init_repOut_stat_file();
@@ -106,6 +104,10 @@ namespace util {
      * information of all replicas
      */
     std::vector<util::replica_data> replicaData;
+    /**
+     * keeps track of the position of the coordIDs in each trial
+     */
+    std::vector<int> coordIDPositionsVector;
     /**
      * output file Path for repdat output file
      */

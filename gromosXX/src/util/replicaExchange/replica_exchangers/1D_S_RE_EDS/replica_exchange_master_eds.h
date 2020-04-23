@@ -65,11 +65,9 @@ namespace util{
          * init MD simulation for all replicas; one by one
          */
         //void init();
-        void receive_from_all_slaves(int arr[]) override;
+        void receive_from_all_slaves() override;
 
         void write() override;
-
-        void write_new(int arr[]) override;
 
         /**
          * functions, for initing the repout

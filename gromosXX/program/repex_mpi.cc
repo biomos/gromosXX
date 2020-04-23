@@ -380,7 +380,6 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    int arr[numSVals*numEoff];
     MPI_DEBUG(1, "RANK: "<<globalThreadID<<" Done with init parse\n");
     io::messages.clear();
     MPI_DEBUG(1, "REPLICA_ID \t " << globalThreadID << "\t Simulation_ID\t"<< simulationID << "\t SimulationThread\t"<<simulationTrheadID<<"\n")
@@ -638,25 +637,17 @@ int main(int argc, char *argv[]) {
         int hh, mm, ss = 0;
         double percent, spent = 0.0;
         trial = 0; //reset trials
-        //setting it to 0
-        for(int i = 0; i < numSVals*numEoff; ++i){
-          arr[i]=0;
-        }
+
         for (; trial < sim_runs; ++trial) { //for repex execution
             MPI_DEBUG(1, "Master " << globalThreadID << " \t MD trial: " << trial << "\n")
             MPI_DEBUG(1, "Master " << globalThreadID << " \t run_MD START " << trial << "\n")
             Master->run_MD();
             MPI_DEBUG(1, "Master " << globalThreadID << " \t swap START " << trial << "\n")
-            for(int proc=1; proc<ttotalNumberOfThreads; ++proc){
-              //tag is 4
-              MPI_Send(arr, numSVals*numEoff, MPI_INT, proc, 4, MPI_COMM_WORLD);
-            }
-            MPI_DEBUG(1, "Master " << globalThreadID << " \t MPI_Send in run " << trial << "\n")
             Master->swap();
             MPI_DEBUG(1, "Master " << globalThreadID << " \t receive START " << trial << "\n")
-            Master->receive_from_all_slaves(arr);
+            Master->receive_from_all_slaves();
             MPI_DEBUG(1, "Master " << globalThreadID << " \t write START " << trial << "\n")
-            Master->write_new(arr);
+            Master->write();
 
             if ((total_runs / 10 > 0) && (trial % (total_runs / 10) == 0)) { //Timer
                 percent = double(trial) / double(total_runs);
@@ -717,9 +708,6 @@ int main(int argc, char *argv[]) {
             MPI_DEBUG(1, "Slave " << globalThreadID << " \t run_MD START " << trial << "\n")
             Slave->run_MD();
             MPI_DEBUG(1, "Slave " << globalThreadID << " \t swap START " << trial << "\n")
-            //tag is 4
-            MPI_Recv(arr, numSVals*numEoff, MPI_INT, 0, 4, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-            MPI_DEBUG(1, "Slave " << globalThreadID << " \t MPI_Recv in run " << trial << "\n")
             Slave->swap();
             MPI_DEBUG(1, "Slave " << globalThreadID << " \t send START " << trial << "\n")
             Slave->send_to_master();
