@@ -133,6 +133,26 @@ namespace util
         */
         int find_partner() const override;
         /**
+        * Finds partner for current switch in eoff dimension for even number of eoffs and trial % 4 == 1
+        * @return ID of partner, own ID if no switching in current trial
+        */
+        int partner_eoffDim_numEoffeven_firstCase() const;
+        /**
+        * Finds partner for current switch in eoff dimension for odd number of eoffs and trial % 4 == 1
+        * @return ID of partner, own ID if no switching in current trial
+        */
+        int partner_eoffDim_numEoffodd_firstCase() const;
+        /**
+        * Finds partner for current switch in eoff dimension for even number of eoffs and trial % 4 == 3
+        * @return ID of partner, own ID if no switching in current trial
+        */
+        int partner_eoffDim_numEoffeven_secondCase() const;
+        /**
+        * Finds partner for current switch in eoff dimension for odd number of eoffs and trial % 4 == 3
+        * @return ID of partner, own ID if no switching in current trial
+        */
+        int partner_eoffDim_numEoffodd_secondCase() const;
+        /**
         * Sets eds_struct() parameters to original value of replica
         */
         void reset_eds();

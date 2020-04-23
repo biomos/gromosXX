@@ -464,19 +464,14 @@ int util::replica_exchange_base_2d_s_eoff_eds::find_partner() const {
 
       case 1: //eoff dimension
       DEBUG(5,"find_partner: SECOND case\n");
-        if (evenCol) {
-          partner = ID + num_l;
-          //edge case
-          if(right_edge && !periodic) partner = ID;
-          if(right_edge && periodic && numEoffeven) {partner = (ID + num_l) % numReps; DEBUG(1,"\nPERIODIC\n");}
-          if(right_edge && periodic && !numEoffeven) partner = ID;
-          }
-        else {
-          partner = ID - num_l;
-          //edge case
-          if(left_edge && !periodic) partner = ID;
-          if(left_edge && periodic && numEoffeven) {partner = ID + (numReps - num_l); DEBUG(1,"\nPERIODIC\n");}
-          if(left_edge && periodic && !numEoffeven) partner = ID;
+        if(numEoffeven){
+          DEBUG(1,"find_partner(second case): numEoffeven_firstCase \n");
+          partner = partner_eoffDim_numEoffeven_firstCase();
+        }
+
+        else{
+          DEBUG(1,"find_partner(second case): numEoffodd_firstCase \n");
+          partner = partner_eoffDim_numEoffodd_firstCase();
         }
       DEBUG(1,"find_partner(second case): partner of ID=" << ID << " is " << partner << "\n");
         break;
@@ -500,30 +495,147 @@ int util::replica_exchange_base_2d_s_eoff_eds::find_partner() const {
 
       case -1: //eoff dimension
       DEBUG(5,"find_partner: FOURTH case\n");
-        if (evenCol) {
-          partner = ID - num_l;
-          //edge case
-          if(left_edge && !periodic) partner = ID;
-          if(left_edge && periodic && numEoffeven) {partner = ID + (numReps - num_l); DEBUG(1,"\nPERIODIC\n");}
-          if(left_edge && periodic && !numEoffeven) partner = ID;
+        if(numEoffeven){
+          DEBUG(1,"find_partner(fourth case): numEoffeven_secondCase \n");
+          partner = partner_eoffDim_numEoffeven_secondCase();
         }
-        else {
-          partner = ID + num_l;
-          //edge case
-          if(right_edge && !periodic) partner = ID;
-          if(right_edge && periodic && numEoffeven) {partner = (ID + num_l) % numReps; DEBUG(1,"\nPERIODIC\n");}
-          if(right_edge && periodic && !numEoffeven) partner = ID;
+
+        else{
+          DEBUG(1,"find_partner(fourth case): numEoffodd_secondCase \n");
+          partner = partner_eoffDim_numEoffodd_secondCase();
         }
       DEBUG(1,"find_partner(fourth case): partner of ID=" << ID << " is " << partner << "\n");
         break;
     }
 
-  /*
-  // partner out of range ? - Do we really need this or is it more a hack hiding bugs?
-  if (partner > numT * num_l - 1)
-    partner = ID;
-  */
+  return partner;
+}
 
+int util::replica_exchange_base_2d_s_eoff_eds::partner_eoffDim_numEoffeven_firstCase() const {
+  unsigned int ID = simulationID;
+  unsigned int partner = ID;
+
+  unsigned int num_eoff = replica->sim.param().reeds.num_eoff;
+  unsigned int num_l = replica->sim.param().reeds.num_l;
+  unsigned int numReps = num_l * num_eoff;
+  bool periodic = replica->sim.param().reeds.periodic;
+
+  bool evenCol = (ID / num_l) % 2 == 0;//1st col is here the 0th col and therefore even!
+  //current s coord == j € [0, num_l -1)
+  unsigned int j = ID % num_l;
+
+  //edge cases for eoff dimension
+  bool left_edge = ID == j;
+  bool right_edge = ID == (numReps - num_l + j);
+
+  if (evenCol) {
+    partner = ID + num_l;
+    //edge case
+    if(right_edge && !periodic) partner = ID;
+    if(right_edge && periodic) {partner = (ID + num_l) % numReps; DEBUG(1,"\nPERIODIC\n");}
+  }
+  else {
+    partner = ID - num_l;
+    //edge case
+    if(left_edge && !periodic) partner = ID;
+    if(left_edge && periodic) {partner = ID + (numReps - num_l); DEBUG(1,"\nPERIODIC\n");}
+  }
+  return partner;
+}
+
+int util::replica_exchange_base_2d_s_eoff_eds::partner_eoffDim_numEoffodd_firstCase() const {
+  unsigned int ID = simulationID;
+  unsigned int partner = ID;
+
+  unsigned int num_eoff = replica->sim.param().reeds.num_eoff;
+  unsigned int num_l = replica->sim.param().reeds.num_l;
+  unsigned int numReps = num_l * num_eoff;
+  bool periodic = replica->sim.param().reeds.periodic;
+
+  bool evenCol = (ID / num_l) % 2 == 0;//1st col is here the 0th col and therefore even!
+  //current s coord == j € [0, num_l -1)
+  unsigned int j = ID % num_l;
+
+  //edge cases for eoff dimension
+  bool left_edge = ID == j;
+  bool right_edge = ID == (numReps - num_l + j);
+
+  if (evenCol) {
+    partner = ID + num_l;
+    //edge case
+    if(right_edge && !periodic) partner = ID;
+    if(right_edge && periodic) partner = ID;
+  }
+  else {
+    partner = ID - num_l;
+    //edge case
+    if(left_edge && !periodic) partner = ID;
+    if(left_edge && periodic) partner = ID;
+  }
+  return partner;
+}
+
+int util::replica_exchange_base_2d_s_eoff_eds::partner_eoffDim_numEoffeven_secondCase() const {
+  unsigned int ID = simulationID;
+  unsigned int partner = ID;
+
+  unsigned int num_eoff = replica->sim.param().reeds.num_eoff;
+  unsigned int num_l = replica->sim.param().reeds.num_l;
+  unsigned int numReps = num_l * num_eoff;
+  bool periodic = replica->sim.param().reeds.periodic;
+
+  bool evenCol = (ID / num_l) % 2 == 0;//1st col is here the 0th col and therefore even!
+  //current s coord == j € [0, num_l -1)
+  unsigned int j = ID % num_l;
+
+  //edge cases for eoff dimension
+  bool left_edge = ID == j;
+  bool right_edge = ID == (numReps - num_l + j);
+
+  if (evenCol) {
+    partner = ID - num_l;
+    //edge case
+    if(left_edge && !periodic) partner = ID;
+    if(left_edge && periodic) {partner = ID + (numReps - num_l); DEBUG(1,"\nPERIODIC\n");}
+  }
+  else {
+    partner = ID + num_l;
+    //edge case
+    if(right_edge && !periodic) partner = ID;
+    if(right_edge && periodic) {partner = (ID + num_l) % numReps; DEBUG(1,"\nPERIODIC\n");}
+  }
+  return partner;
+}
+
+int util::replica_exchange_base_2d_s_eoff_eds::partner_eoffDim_numEoffodd_secondCase() const {
+  unsigned int ID = simulationID;
+  unsigned int partner = ID;
+
+  unsigned int num_eoff = replica->sim.param().reeds.num_eoff;
+  unsigned int num_l = replica->sim.param().reeds.num_l;
+  unsigned int numReps = num_l * num_eoff;
+  bool periodic = replica->sim.param().reeds.periodic;
+
+  bool evenCol = (ID / num_l) % 2 == 0;//1st col is here the 0th col and therefore even!
+  //current s coord == j € [0, num_l -1)
+  unsigned int j = ID % num_l;
+
+  //edge cases for eoff dimension
+  bool left_edge = ID == j;
+  bool right_edge = ID == (numReps - num_l + j);
+
+  if (evenCol) {
+    partner = ID - num_l;
+    //edge case
+    if(left_edge && !periodic) partner = ID;
+    if(left_edge && periodic) partner = ID;
+  }
+  else {
+    partner = ID + num_l;
+    //edge case
+    if(right_edge && !periodic) partner = ID;
+    if(right_edge && periodic) partner = ID;
+  }
   return partner;
 }
 
