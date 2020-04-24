@@ -286,40 +286,6 @@ int main(int argc, char *argv[]) {
             }
             MPI_DEBUG(2, "RANK: "<<globalThreadID<<" done with repex_in\n"); 
 
-            //if any replica Ex block - present   
-            if (sim.param().reeds.reeds == false && sim.param().replica.retl == false) {
-                if (globalThreadID == 0) {
-                    std::cerr << "\n\t########################################################\n"
-                            << "\n\t\tErrors during initial Parameter reading! "
-                            << "\n\t\t    No repex block was satisfied!\n"
-                            << "\n\t########################################################\n";
-                    std::cerr << "\n Please add one RE-block (e.g.:REPLICA or REEDS) to the imd file.\n";
-                    std::cout << "\n Please add one RE-block (e.g.:REPLICA or REEDS)  to the imd file.\n";
-                }
-                MPI_Finalize();
-                return 1;
-            }
-            MPI_DEBUG(2, "RANK: "<<globalThreadID<<" done with replica Ex check\n");    //TODO: lower verb level
-
-            std::cerr << "Multibath check4: " << sim.param().multibath.multibath.size() << "\n";
-            
-            if (io::check_parameter(sim)) {
-                if (globalThreadID == 0) {
-                    std::cerr << "\n\t########################################################\n"
-                            << "\n\t\tErrors during initial Parameter reading!\n"
-                            << "\n\t########################################################\n";
-                    io::messages.display(std::cout);
-                    io::messages.display(std::cerr);
-                }
-                MPI_Finalize();
-                return 1;
-            }
-            
-            std::cerr << "Multibath check14: " << sim.param().multibath.multibath.size() << "\n";
-
-            MPI_DEBUG(2, "RANK: "<<globalThreadID<<" done with param check\n");    //TODO: lower verb level
-
-
             //SOME additional Checks
             //if enough threads avail
             if (totalNumberOfThreads < numReplicas) {

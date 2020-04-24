@@ -96,7 +96,9 @@
 #ifdef NDEBUG
     #define DEBUG(level, s) ;
 
+
     #define MPI_DEBUG(level, s) ;
+
 
 #else
     #define DEBUG(level, s) \

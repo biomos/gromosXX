@@ -104,6 +104,20 @@ int io::read_input_repex(io::Argument const & args,
     sim.param().eds=sim.param().reeds.eds_para[simulationID];//choose correct eds informations which are ID dependent. That's why this cannot be done earlier.jaaa?
   }
 
+  if (check_parameter(sim) != 0) return -1;
+  
+    //if any replica Ex block - present   
+    if (sim.param().reeds.reeds == false && sim.param().replica.retl == false) {
+        std::cerr << "\n\t########################################################\n"
+                << "\n\t\tErrors during initial Parameter reading! "
+                << "\n\t\t    No repex block was satisfied!\n"
+                << "\n\t########################################################\n";
+        std::cerr << "\n Please add one RE-block (e.g.:REPLICA or REEDS) to the imd file.\n";
+        std::cout << "\n Please add one RE-block (e.g.:REPLICA or REEDS)  to the imd file.\n";
+        return -1;
+    }
+
+
   if(!quiet){
     std::cout << std::internal << "\tReading Topology\n";
   }
@@ -164,6 +178,7 @@ int io::read_input_repex(io::Argument const & args,
               return -1;
           }
       }
+
 
 #ifdef HAVE_HOOMD 
   // create HOOMD Processor after input files read in successfully

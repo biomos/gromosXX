@@ -25,8 +25,6 @@
 
 
 int io::check_parameter(simulation::Simulation & sim){
-    std::cerr << "Multibath check8: " << sim.param().multibath.multibath.size() << "\n";
-
   int check1 = simple_crosschecks(sim);
   int check2 = check_features(sim);
   if (check1 || check2)
@@ -36,10 +34,8 @@ int io::check_parameter(simulation::Simulation & sim){
 }
 
 int io::simple_crosschecks(simulation::Simulation & sim) {
-        std::cerr << "Multibath check9: " << sim.param().multibath.multibath.size() << "\n";
 
   const simulation::Parameter & param = sim.param();
-        std::cerr << "Multibath check1: " << sim.param().multibath.multibath.size() << "\n";
 
   // no velocity writeout or generation with energy minimization
   if (param.minimise.ntem != 0 && param.write.velocity != 0)
