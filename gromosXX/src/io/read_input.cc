@@ -198,6 +198,8 @@ int io::read_parameter(io::Argument const & args,
 {
   io::igzstream input_file;
 
+	DEBUG(2, "in io::read_parameter 0th test!!\n");
+
   input_file.open(args[argname_input].c_str());
 
   if (!input_file.is_open()){
@@ -210,7 +212,11 @@ int io::read_parameter(io::Argument const & args,
   io::In_Parameter ip(input_file);
   ip.quiet = quiet;
 
+	DEBUG(2, "in io::read_parameter 1st test A!!\n");
+
   ip.read(sim.param(), os);
+
+	DEBUG(2, "in io::read_parameter 1st test B!!\n");
 
   io::messages.add("parameter read from " + args[argname_input] +
           "\n" + util::frame_text(ip.title),
@@ -231,6 +237,8 @@ int io::read_parameter(io::Argument const & args,
       sim.param().analyze.trajectory = args["anatrj"];
   }
 
+	DEBUG(2, "in io::read_parameter 2nd test!!\n");
+
   if (args.count("print") > 0){
     if (args["print"] == "pairlist")
       sim.param().pairlist.print = true;
@@ -240,6 +248,8 @@ int io::read_parameter(io::Argument const & args,
   if (io::messages.contains(io::message::error) ||
       io::messages.contains(io::message::critical))
     return -1;
+
+	DEBUG(2, "in io::read_parameter 3rd test!!\n");
 
   // check for replicaExchange
   if (sim.param().replica.retl || sim.param().reeds.reeds) {
