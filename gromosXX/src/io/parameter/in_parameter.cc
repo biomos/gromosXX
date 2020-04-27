@@ -3033,6 +3033,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
                   }
 
                   DEBUG(2, "REPLICA_EDS BLOCK: assign all eds params - EIR");
+		  //TODO: assertion such that NEOFF = NRES must hold!!
                   for(unsigned int j = 0; j < param.reeds.eds_para[0].numstates; ++j){
                       param.reeds.eds_para[i].eir[j] = eir[i][j];
                       DEBUG(3, "REPLICA_EDS BLOCK: eir[i][j]= " << param.reeds.eds_para[i].eir[j]);
