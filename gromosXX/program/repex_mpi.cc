@@ -186,10 +186,9 @@ int main(int argc, char *argv[]) {
                 quiet = true;
             }
 
-            DEBUG(2, "before io::read_parameter!!\n");
+            DEBUG(3, "before io::read_parameter!!\n");
 
             if (io::read_parameter(args, sim, std::cout, true)) {
-                DEBUG(2, "in io::read_parameter\n");
                 if (globalThreadID == 0) {
                     std::cerr << "\n\t########################################################\n"
                             << "\n\t\tErrors during read Parameters reading!\n"
@@ -201,7 +200,7 @@ int main(int argc, char *argv[]) {
                 return 1;
             }
 
-            DEBUG(2, "after io::read_parameter!!\n");
+            DEBUG(3, "after io::read_parameter!!\n");
 
             //set global parameters
             cont = sim.param().replica.cont;
@@ -218,15 +217,17 @@ int main(int argc, char *argv[]) {
                   case 0:
                       numReplicas = sim.param().replica.num_T * sim.param().replica.num_l;
                       numEDSstates = 0;
+                      DEBUG(3, "numReps & numEDSstates: " << numReplicas << ", " << numEDSstates << "\n");
                       break;
                   case 1:
                       numReplicas = numSVals;
                       numEDSstates = sim.param().reeds.eds_para[0].numstates;
-                      DEBUG(2, "numReps & numEDSstates: " << numReplicas << ", " << numEDSstates << "\n");
+                      DEBUG(3, "numReps & numEDSstates: " << numReplicas << ", " << numEDSstates << "\n");
                       break;
                   case 2:
                       numReplicas = numSVals * numEoff;
                       numEDSstates = sim.param().reeds.eds_para[0].numstates;
+                      DEBUG(3, "numReps & numEDSstates: " << numReplicas << ", " << numEDSstates << "\n");
                       break;
               }
 
@@ -242,7 +243,7 @@ int main(int argc, char *argv[]) {
             threadsPerReplicaSimulation = totalNumberOfThreads / numReplicas;
             unsigned int leftOverThreads = totalNumberOfThreads % numReplicas;
 
-            DEBUG(2, "threadsperSim & leftOverThreads: " << threadsPerReplicaSimulation << ", " << leftOverThreads << "\n");
+            DEBUG(3, "threadsperSim & leftOverThreads: " << threadsPerReplicaSimulation << ", " << leftOverThreads << "\n");
 
             unsigned int threadID =0;
             int replica_offset = 0;
