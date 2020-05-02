@@ -92,19 +92,57 @@ int io::read_input_repex(io::Argument const & args,
 		   configuration::Configuration & conf,
 		   simulation::Simulation & sim,
 		   algorithm::Algorithm_Sequence & md_seq,
-                   int simulationID,
                    int rank,
+                   int totalNumberOfThreads,
 		   std::ostream & os,  
                    bool quiet)
 {
+    
+    if (read_parameter(args, sim, os, quiet) != 0){return -1;}
 
+    if (check_parameter(sim) != 0){return -1;}
 
-  //initialize for RE-EDS ID dependent parameters.
-  if(sim.param().reeds.reeds){
-    sim.param().eds=sim.param().reeds.eds_para[simulationID];//choose correct eds informations which are ID dependent. That's why this cannot be done earlier.jaaa?
-  }
+    //MPI THREAD SIMULATION SPLITTING.
+    unsigned int numReplicas = -1;
+    if(sim.param().reeds.reeds == 1){
+        numReplicas = sim.param().reeds.num_l;
+    }
+    else{
+        numReplicas = sim.param().replica.num_l*sim.param().replica.num_T;
+    }
 
-  if (check_parameter(sim) != 0) return -1;
+    //MPI - MAPPING
+    //MPI THREAD SPLITING ONTO Simulation - REPLICAS
+    unsigned int threadsPerReplicaSimulation = totalNumberOfThreads / numReplicas;
+    unsigned int leftOverThreads = totalNumberOfThreads % numReplicas;
+    std::map<unsigned int, unsigned int> thread_id_replica_map; // where is which replica
+
+    unsigned int threadID =0;
+    int replica_offset = 0;
+    for (unsigned int replicaSimulationID = 0; replicaSimulationID < numReplicas; replicaSimulationID++) {
+
+        for (unsigned int replicaSimulationSubThread = 0; replicaSimulationSubThread < threadsPerReplicaSimulation; replicaSimulationSubThread++) {
+
+            threadID = replicaSimulationSubThread + replicaSimulationID*threadsPerReplicaSimulation+replica_offset;
+            thread_id_replica_map.insert(std::pair<unsigned int, unsigned int>(threadID, replicaSimulationID));
+
+        }
+        if(leftOverThreads>0 and replicaSimulationID < leftOverThreads){    //left over threads are evenly distirbuted.
+
+            threadID = threadsPerReplicaSimulation + replicaSimulationID*totalNumberOfThreads+replica_offset;
+            thread_id_replica_map.insert(std::pair<unsigned int, unsigned int>(threadID, replicaSimulationID));
+            replica_offset++;
+        }    
+    }            
+    int simulationID = thread_id_replica_map[rank];
+
+    
+
+    //initialize for RE-EDS ID dependent parameters.
+    if(sim.param().reeds.reeds){
+      sim.param().eds=sim.param().reeds.eds_para[simulationID];//choose correct eds informations which are ID dependent. That's why this cannot be done earlier.jaaa?
+    }
+  
   
     //if any replica Ex block - present   
     if (sim.param().reeds.reeds == false && sim.param().replica.retl == false) {
@@ -149,21 +187,21 @@ int io::read_input_repex(io::Argument const & args,
     std::cout << std::internal << "\tReading Configuration\n";
     std::cout.flush();
   }
-    
+
     //check if all coordinate files are present:
     int cont = sim.param().replica.cont;  
     if(cont == 1 && rank == 0){
       DEBUG(4, "reading configurations for continous");
       int numReplicas = sim.param().replica.num_T * sim.param().replica.num_l;
       for(int x=0; x<numReplicas; x++ ){
-          
+
           io::Argument tmpArgs(args);   //copy modified args
           std::multimap< std::string, std::string >::iterator it = tmpArgs.lower_bound(("conf"));
           size_t pos = (*it).second.find_last_of(".");
           std::stringstream tmp;
           tmp << "_" << (x+1);
           (*it).second.insert(pos, tmp.str());
-          
+
           if(read_configuration(tmpArgs, topo, conf, sim, os, quiet)){
               io::messages.add("\nCould not find coordinate file: "+ std::string(it->second)+"\n\n", io::message::error);
               return -1;
@@ -180,17 +218,18 @@ int io::read_input_repex(io::Argument const & args,
       }
 
 
-#ifdef HAVE_HOOMD 
-  // create HOOMD Processor after input files read in successfully
-  switch (sim.param().hoomd.processor) {
-    case simulation::cpu: sim.proc = boost::shared_ptr<processor::Processor>(new processor::Processor(processor::CPU)); break;
-	case simulation::gpus: sim.proc = boost::shared_ptr<processor::Processor>(new processor::Processor(processor::GPUs)); break;
-	default: break;
-  }
-#endif
-  if(!quiet){
-      io::messages.display(os);
-  }
+    #ifdef HAVE_HOOMD 
+      // create HOOMD Processor after input files read in successfully
+      switch (sim.param().hoomd.processor) {
+        case simulation::cpu: sim.proc = boost::shared_ptr<processor::Processor>(new processor::Processor(processor::CPU)); break;
+            case simulation::gpus: sim.proc = boost::shared_ptr<processor::Processor>(new processor::Processor(processor::GPUs)); break;
+            default: break;
+      }
+    #endif
+
+    if(!quiet){
+        io::messages.display(os);
+    }
    
   return 0;
 }
@@ -245,29 +284,6 @@ int io::read_parameter(io::Argument const & args,
       io::messages.contains(io::message::critical))
     return -1;
   
-  // check for replicaExchange 
-  if (sim.param().replica.retl || sim.param().reeds.reeds) {
-      // Check output files
-        if( args.count("repout") < 1 )
-        {
-            io::messages.add("No output file for replica exchange specified! Please provide @repout.\n",
-           "read_input", io::message::critical);
-          return -1;
-        }
-        if( args.count("repdat") < 1 )
-        {
-            io::messages.add("No data file for replica exchange specified! Please provide @repdat.\n",
-           "read_input", io::message::critical);
-          return -1;
-        }
-        
-        //Check if any REPEX Block was entered and only one!
-        //only one replica Ex block - present   
-        if(sim.param().reeds.reeds == true && sim.param().replica.retl  == true){
-            io::messages.add("\n Please provide only one RE-block in the imd file.\n", "read_input", io::message::critical);
-            return -1;
-        }
-    }
   return 0;
 }
 
