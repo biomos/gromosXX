@@ -192,7 +192,7 @@ int main(int argc, char *argv[]) {
                 MPI_Finalize();
                 return 1;
             }
-                        
+                    
             //set global parameters
             cont = sim.param().replica.cont;
             equil_runs = sim.param().replica.equilibrate;
@@ -200,7 +200,9 @@ int main(int argc, char *argv[]) {
             total_runs = sim.param().replica.trials + equil_runs;
             numAtoms = topo.num_atoms();
             reedsSim = sim.param().reeds.reeds;
-            
+
+            MPI_DEBUG(1, "REEDS-SIM!"<<reedsSim)
+
             if (reedsSim) {
                 numReplicas = sim.param().reeds.num_l;
                 numEDSstates = sim.param().reeds.eds_para[0].numstates;
@@ -208,7 +210,8 @@ int main(int argc, char *argv[]) {
                 numReplicas = sim.param().replica.num_T * sim.param().replica.num_l;
                 numEDSstates = 0;
             }
-            
+            MPI_DEBUG(2, "REEDS-SIM! - DONE?")
+
             //MPI THREAD SIMULATION SPLITTING
             //needed to be calculated here
             //repIDs every node gets one element of that vector
@@ -241,7 +244,8 @@ int main(int argc, char *argv[]) {
 
                 }    
             }            
-            
+            MPI_DEBUG(2, "REEDS-SIM! - aha?")
+
             simulationID = thread_id_replica_map[globalThreadID];
             
             int counter = 0;

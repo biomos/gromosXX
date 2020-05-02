@@ -196,7 +196,7 @@ int io::read_parameter(io::Argument const & args,
   
   io::In_Parameter ip(input_file);
   ip.quiet = quiet;
-  
+
   ip.read(sim.param(), os);
 
   io::messages.add("parameter read from " + args[argname_input] +
@@ -251,6 +251,7 @@ int io::read_parameter(io::Argument const & args,
             return -1;
         }
     }
+
   return 0;
 }
 
