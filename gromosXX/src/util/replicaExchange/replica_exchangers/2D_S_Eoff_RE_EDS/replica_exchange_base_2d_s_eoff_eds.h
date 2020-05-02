@@ -153,6 +153,11 @@ namespace util
         */
         int partner_eoffDim_numEoffodd_secondCase() const;
         /**
+        * Finds partner for current switch in eoff dimension for odd number of eoffs in cyclic manner
+        * @return ID of partner, own ID if no switching in current trial
+        */
+        int partner_eoffDim_numEoffodd_cyclic() const;
+        /**
         * Sets eds_struct() parameters to original value of replica
         */
         void reset_eds();

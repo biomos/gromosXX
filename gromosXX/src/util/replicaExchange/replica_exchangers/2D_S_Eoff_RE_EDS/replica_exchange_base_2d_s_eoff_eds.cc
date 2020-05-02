@@ -426,7 +426,6 @@ int util::replica_exchange_base_2d_s_eoff_eds::find_partner() const {
   bool evenRow = (ID % num_l) % 2 == 0;//1st row is here the 0th row and therefore even!
   bool evenCol = (ID / num_l) % 2 == 0;//1st col is here the 0th col and therefore even!
   bool numEoffeven = num_eoff % 2 == 0;//used for periodic boundary
-  bool periodic = replica->sim.param().reeds.periodic;
 
 
   //edge cases for s dimension
@@ -560,17 +559,21 @@ int util::replica_exchange_base_2d_s_eoff_eds::partner_eoffDim_numEoffodd_firstC
   bool left_edge = ID == j;
   bool right_edge = ID == (numReps - num_l + j);
 
-  if (evenCol) {
-    partner = ID + num_l;
-    //edge case
-    if(right_edge && !periodic) partner = ID;
-    if(right_edge && periodic) partner = ID;
+  if(periodic){
+    partner = partner_eoffDim_numEoffodd_cyclic();
   }
-  else {
-    partner = ID - num_l;
-    //edge case
-    if(left_edge && !periodic) partner = ID;
-    if(left_edge && periodic) partner = ID;
+
+  else{
+    if (evenCol) {
+      partner = ID + num_l;
+      //edge case
+      if(right_edge) partner = ID;
+    }
+    else {
+      partner = ID - num_l;
+      //edge case
+      if(left_edge) partner = ID;
+    }
   }
   return partner;
 }
@@ -624,18 +627,90 @@ int util::replica_exchange_base_2d_s_eoff_eds::partner_eoffDim_numEoffodd_second
   bool left_edge = ID == j;
   bool right_edge = ID == (numReps - num_l + j);
 
-  if (evenCol) {
-    partner = ID - num_l;
-    //edge case
-    if(left_edge && !periodic) partner = ID;
-    if(left_edge && periodic) partner = ID;
+  if(periodic){
+    partner = partner_eoffDim_numEoffodd_cyclic();
   }
-  else {
-    partner = ID + num_l;
-    //edge case
-    if(right_edge && !periodic) partner = ID;
-    if(right_edge && periodic) partner = ID;
+
+  else{
+    if (evenCol) {
+      partner = ID - num_l;
+      //edge case
+      if(left_edge) partner = ID;
+    }
+    else {
+      partner = ID + num_l;
+      //edge case
+      if(right_edge) partner = ID;
+    }
   }
+  return partner;
+}
+
+int util::replica_exchange_base_2d_s_eoff_eds::partner_eoffDim_numEoffodd_cyclic() const {
+  //very important to keep every previous unsigned int as int bc partner might be negative during the computation
+  int ID = simulationID;
+  int partner = ID;
+
+  int num_eoff = replica->sim.param().reeds.num_eoff;
+  int num_l = replica->sim.param().reeds.num_l;
+  int numReps = num_l * num_eoff;
+
+  bool evenCol = (ID / num_l) % 2 == 0;//1st col is here the 0th col and therefore even!
+  int blocked_col = (run/2 - 1) % num_eoff;//to identify the blocked column
+  bool even_blocked_col = blocked_col % 2 == 0;//check whether blocked column is an even column
+  int border = blocked_col * num_l + (num_l - 1);//to identify if ID is in column left from blocked_col or right from it
+  bool exchanged = false;//for efficiency reasons not to compute irrelevant conditions for IDs in blocked column
+
+  DEBUG(5,"\nblocked_col, border: " << blocked_col << ", " << border << "\n");
+
+  //blocked column does not exchange
+  for(int i=0; i<num_l; ++i){
+	if(ID == (blocked_col * num_l + i)){
+		partner = ID;
+		exchanged = true;
+		break;
+	}
+  }
+
+  if(!exchanged){
+	if(ID<border){
+		if(evenCol && even_blocked_col){
+			partner = (ID + num_l) % numReps;
+			DEBUG(1,"\ncase a with ID: " << ID << "\n");
+		}
+		if(!evenCol && even_blocked_col) {
+			partner = (numReps + ((ID - num_l) % numReps)) % numReps;//to handle possible negative partner right
+			DEBUG(1,"\ncase b with ID: " << ID << "\n");
+		}
+		if(evenCol && !even_blocked_col){
+			partner = (numReps + ((ID - num_l) % numReps)) % numReps;//to handle possible negative partner right
+			DEBUG(1,"\ncase e with ID: " << ID << "\n");
+		}
+		if(!evenCol && !even_blocked_col){
+			partner = (ID + num_l) % numReps;
+			DEBUG(1,"\ncase f with ID: " << ID << "\n");
+		}
+	}
+	if(ID>border){
+		if(evenCol && even_blocked_col){
+			partner = (numReps + ((ID - num_l) % numReps)) % numReps;//to handle possible negative partner right
+			DEBUG(1,"\ncase c with ID: " << ID << "\n");
+		}
+		if(!evenCol && even_blocked_col){
+			partner = (ID + num_l) % numReps;
+			DEBUG(1,"\ncase d with ID: " << ID << "\n");
+		}
+		if(evenCol && !even_blocked_col){
+			partner = (ID + num_l) % numReps;
+			DEBUG(1,"\ncase g with ID: " << ID << "\n");
+		}
+		if(!evenCol && !even_blocked_col){
+			partner = (numReps + ((ID - num_l) % numReps)) % numReps;//to handle possible negative partner right
+			DEBUG(1,"\ncase h with ID: " << ID << "\n");
+		}
+	}
+  }
+
   return partner;
 }
 
