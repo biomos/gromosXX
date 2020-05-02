@@ -2632,7 +2632,7 @@ void io::In_Parameter::read_INNERLOOP(simulation::Parameter &param,
                 bool fail = false;
                 for (unsigned int i = 0; i < param.innerloop.number_gpus; i++) {
                     std::string idx=io::to_string(i);
-                    block.get_next_parameter("NDEVG["+idx+"]", temp, ">0", "", true);
+                    block.get_next_parameter("NDEVG["+idx+"]", temp, ">=0", "", true);
                     if (block.error()) {
                         fail = true;
                         break;
