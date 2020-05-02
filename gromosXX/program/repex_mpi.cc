@@ -172,7 +172,6 @@ int main(int argc, char *argv[]) {
     std::map<unsigned int, unsigned int> thread_id_replica_map; // where is which replica
     std::vector<std::vector<unsigned int> > replica_owned_threads; // set IDs for each replica
 
-
     try {
             simulation::Simulation sim;
             topology::Topology topo;
@@ -186,6 +185,7 @@ int main(int argc, char *argv[]) {
             }
                         
             // read in the rest
+            std::cerr << "Go Reading in: \n";
             if (io::read_input_repex(args, topo, conf, sim, md,  globalThreadID, totalNumberOfThreads, std::cout, quiet)) {
                 if (globalThreadID == 0) {
                     std::cerr << "\n\t########################################################\n"
@@ -199,7 +199,11 @@ int main(int argc, char *argv[]) {
                 return 1;
             }
             MPI_DEBUG(2, "RANK: "<<globalThreadID<<" done with repex_in\n"); 
+            std::cerr << "after READ in: "<< sim.param().multibath.multibath.size()<<"\n";
+            std::cerr << "after READ in: "<< sim.param().multibath.multibath[0].temperature<<"\n";
+            std::cerr << "DONE Reading in: \n";
 
+         
             //set global parameters
             cont = sim.param().replica.cont;
             equil_runs = sim.param().replica.equilibrate;
@@ -207,7 +211,9 @@ int main(int argc, char *argv[]) {
             numAtoms = topo.num_atoms();
             reedsSim = sim.param().reeds.reeds;
             
-            
+            /**
+             * HERE STARTS taking mapping of available threads to the replicas
+             */
             if (reedsSim) {
                 numReplicas = sim.param().reeds.num_l;
                 numEDSstates = sim.param().reeds.eds_para[0].numstates;
@@ -217,9 +223,7 @@ int main(int argc, char *argv[]) {
             }
             
             //MPI THREAD SIMULATION SPLITTING
-
             replica_owned_threads.resize(numReplicas);
-
             // counts through every replica and assigns it to respective node
             // starts at beginning if numReplicas > size
             // could be optimized by putting neighboring replicas on same node; less communication...

@@ -25,6 +25,9 @@
 
 
 int io::check_parameter(simulation::Simulation & sim){
+    std::cerr << "Go CHECKING in: "<< sim.param().multibath.multibath.size()<<"\n";
+    std::cerr << "Go Checking in: "<< sim.param().multibath.multibath[0].temperature<<"\n";
+
     int check1 = simple_crosschecks(sim);
     int check2 = check_features(sim);
     
@@ -124,7 +127,7 @@ int io::simple_crosschecks(simulation::Simulation & sim) {
 
     // check whether all baths have the same temperature (unambiguous kT)
     if (param.eds.eds){
-      for (unsigned int i = 1; i <sim.param().multibath.multibath.size(); i++) {
+      for (unsigned int i = 1; i < param.multibath.multibath.size(); i++) {
               if (param.multibath.multibath.bath(i).temperature !=
                   param.multibath.multibath.bath(0).temperature) 
               {

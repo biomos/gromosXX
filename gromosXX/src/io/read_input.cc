@@ -48,8 +48,10 @@ int io::read_input(io::Argument const & args,
 		   std::ostream & os,
 		   bool quiet)
 {
-
   if (read_parameter(args, sim, os, quiet) != 0) return -1;
+    std::cerr << "Go before checking: "<< sim.param().multibath.multibath.size()<<"\n";
+    std::cerr << "Go before checking: "<< sim.param().multibath.multibath[0].temperature<<"\n";
+
   if (check_parameter(sim) != 0) return -1;
 
   if (read_topology(args, topo, sim, md_seq, os, quiet) != 0) return -1;
@@ -99,9 +101,12 @@ int io::read_input_repex(io::Argument const & args,
 {
     
     if (read_parameter(args, sim, os, quiet) != 0){return -1;}
+    std::cerr << "Go checknig in: \n";
+    std::cerr << "Go before checking: "<< sim.param().multibath.multibath.size()<<"\n";
+    std::cerr << "Go before checking: "<< sim.param().multibath.multibath[0].temperature<<"\n";
 
     if (check_parameter(sim) != 0){return -1;}
-
+ 
     //MPI THREAD SIMULATION SPLITTING.
     unsigned int numReplicas = -1;
     if(sim.param().reeds.reeds == 1){
@@ -278,7 +283,7 @@ int io::read_parameter(io::Argument const & args,
     if (args["print"] == "pairlist")
       sim.param().pairlist.print = true;
   }
-
+   
   // check for errors and abort if there are some
   if (io::messages.contains(io::message::error) ||
       io::messages.contains(io::message::critical))
