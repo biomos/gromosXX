@@ -22,7 +22,7 @@ namespace simulation
    * @class Simulation
    * holds simulation data
    */
-     #ifdef XXMPI
+    #ifdef XXMPI
         struct mpi_control_struct
         {
             /**
@@ -35,18 +35,18 @@ namespace simulation
             }
 
             int simulationID; //local replica id of simulation
-            int numberOfThreads;    //total_number_of_threads      
-            int masterID; //local master of this 
+            int numberOfThreads;    //total_number_of_threads
+            int masterID; //local master of this
             int threadID;
             int mpiColor;
-            MPI_Comm comm; 
+            MPI_Comm comm;
 
-            std::vector<unsigned int> simulationOwnedThreads; 
+            std::vector<unsigned int> simulationOwnedThreads;
 
         } /** replica exchange parameters */;
     #else
         struct mpi_control_struct
- {
+        {
             /**
              * Constructor
              * Default values:
@@ -57,42 +57,40 @@ namespace simulation
             }
 
             int simulationID; //local replica id of simulation
-            int numberOfThreads;    //total_number_of_threads      
-            int masterID; //local master of this 
+            int numberOfThreads;    //total_number_of_threads
+            int masterID; //local master of this
             int threadID;
             int mpiColor;
 
+            std::vector<unsigned int> simulationOwnedThreads;
+
         } /** replica exchange parameters */;
     #endif
-    
 
   class Simulation
   {
   public:
-    
+
     /**
      * Constructor.
      */
     Simulation() : mpi(false), openmp(false),
 		   m_time_step_size(0),
-		   m_steps(0), 
+		   m_steps(0),
 		   m_time(0) {
-        #ifdef XXMPI
-            mpi_control = mpi_control_struct();  //mpi test
-        #endif
+        mpi_control = mpi_control_struct();  //mpi test
+
     }
 
-    
+
     /**
-     *  Constructor determening mpi flag on construction needed in repex/ 
+     *  Constructor determening mpi flag on construction needed in repex/
      */
     Simulation(bool mpi) : mpi(mpi), openmp(false),
                m_time_step_size(0),
-               m_steps(0), 
+               m_steps(0),
                m_time(0) {
-            #ifdef XXMPI
-                mpi_control = mpi_control_struct();  //mpi test
-            #endif
+        mpi_control = mpi_control_struct();  //mpi test
     }
     /**
      * the simulation parameter
@@ -111,7 +109,7 @@ namespace simulation
      * multibath as const.
      */
     simulation::Multibath const & multibath()const{
-      return m_param.multibath.multibath; 
+      return m_param.multibath.multibath;
     }
 
     /**
@@ -123,7 +121,7 @@ namespace simulation
      * time step size
      */
     double time_step_size()const { return m_time_step_size; }
-    
+
     /**
      * number of steps done.
      */
@@ -133,7 +131,7 @@ namespace simulation
      * number of steps done.
      */
     unsigned int steps()const { return m_steps; }
-    
+
     /**
      * simulation time.
      */
@@ -143,7 +141,7 @@ namespace simulation
      * simulation time.
      */
     double time()const { return m_time; }
-    
+
     /**
      * minimisation step size.
      */
@@ -158,9 +156,7 @@ namespace simulation
      * @struct mpi_control_struct
      *  ToDO:
      */
-    #ifdef XXMPI
-        struct mpi_control_struct mpi_control;  //mpi_control_struct test
-    #endif
+    struct mpi_control_struct mpi_control;  //mpi_control_struct test
 
     /**
      * enable openmp?
@@ -173,23 +169,23 @@ namespace simulation
 #ifdef HAVE_HOOMD
 	boost::shared_ptr<processor::Processor> proc;
 #endif
-    
+
   private:
     /**
      * the simulation parameters
      */
     Parameter m_param;
-    
+
     /**
      * the time step size
      */
     double m_time_step_size;
-    
+
     /**
      * the number of steps done.
      */
     unsigned int m_steps;
-    
+
     /**
      * the simulation time.
      */
@@ -201,7 +197,7 @@ namespace simulation
     double m_minimisation_step_size;
 
   };
-  
+
 } // simulation
 
 #endif
