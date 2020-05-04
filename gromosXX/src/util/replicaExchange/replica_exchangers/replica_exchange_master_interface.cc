@@ -46,7 +46,7 @@ util::replica_exchange_master_interface::replica_exchange_master_interface(io::A
         unsigned int cont,
         unsigned int globalThreadID,
         replica_graph_mpi_control replicaGraphMPIControl,
-        simulation::mpi_control_struct replica_mpi_control) :
+        simulation::MpiControl replica_mpi_control) :
         replica_exchange_base_interface(args, cont, globalThreadID, replicaGraphMPIControl, replica_mpi_control),
         repParams(replica->sim.param().replica),
         repdatName(args["repdat"])

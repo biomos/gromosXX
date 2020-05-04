@@ -65,7 +65,7 @@ namespace util {
      */
     replica_exchange_base_interface(io::Argument _args, unsigned int cont, unsigned int globalThreadID, 
                           replica_graph_mpi_control replicaGraphMPIControl,
-                          simulation::mpi_control_struct replica_mpi_control);
+                          simulation::MpiControl replica_mpi_control);
     /**
      * Destructor
      */
@@ -232,7 +232,7 @@ namespace util {
      * @param rank int, global Thread ID - later remove
      * @return void
      */
-    virtual void createReplicas(int cont,  int globalThreadID, simulation::mpi_control_struct replica_mpi_control);
+    virtual void createReplicas(int cont,  int globalThreadID, simulation::MpiControl replica_mpi_control);
     
     /**
      * Setting RE-Param

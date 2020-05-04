@@ -35,7 +35,7 @@ util::replica_exchange_slave::replica_exchange_slave(io::Argument & _args,
                                                     unsigned int cont,
                                                     unsigned int globalThreadID,
                                                     replica_graph_mpi_control replicaGraphMPIControl,
-                                                    simulation::mpi_control_struct replica_mpi_control) : 
+                                                    simulation::MpiControl replica_mpi_control) : 
         replica_exchange_base_interface(_args, cont, globalThreadID, replicaGraphMPIControl, replica_mpi_control),
         replica_exchange_base(_args, cont, globalThreadID, replicaGraphMPIControl, replica_mpi_control),
         replica_exchange_slave_interface(_args, cont, globalThreadID, replicaGraphMPIControl, replica_mpi_control) {

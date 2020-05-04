@@ -9,15 +9,16 @@
 // necessary headers
 #include "multibath.h"
 #include "parameter.h"
+#include "mpiControl.h"
 #ifdef HAVE_HOOMD
 #include <HOOMD_GROMOSXX_processor.h>
 #endif
-#ifdef XXMPI
-    #include <mpi.h>
-#endif
+
+
 
 namespace simulation
 {
+
   /**
    * @class Simulation
    * holds simulation data
@@ -32,21 +33,8 @@ namespace simulation
     Simulation() : mpi(false), openmp(false),
 		   m_time_step_size(0),
 		   m_steps(0), 
-		   m_time(0) {
-        //mpi_control = mpi_control_struct();  //mpi test
-
-    }
-
+		   m_time(0) {}
     
-    /**
-     *  Constructor determening mpi flag on construction needed in repex/ 
-     */
-    Simulation(bool mpi) : mpi(mpi), openmp(false),
-               m_time_step_size(0),
-               m_steps(0), 
-               m_time(0) {
-        //mpi_control = mpi_control_struct();  //mpi test
-    }
     /**
      * the simulation parameter
      */
@@ -60,6 +48,7 @@ namespace simulation
      * multibath.
      */
     simulation::Multibath & multibath(){return m_param.multibath.multibath; }
+    
     /**
      * multibath as const.
      */
@@ -67,6 +56,20 @@ namespace simulation
       return m_param.multibath.multibath; 
     }
 
+     /**
+     * MpiControl.
+     */
+    simulation::MpiControl & mpiControl(){
+        return m_MpiControl;
+    }
+    /** 
+     * MpiControl as const.
+     */
+    simulation::MpiControl const & mpiControl()const{
+      return m_MpiControl; 
+    }
+
+    
     /**
      * time step size
      */
@@ -108,12 +111,6 @@ namespace simulation
     bool mpi;
 
     /**
-     * @struct mpi_control_struct
-     * 
-     */
-    struct  simulation::mpi_control_struct mpi_control;  //mpi_control_struct test
-
-    /**
      * enable openmp?
      */
     bool openmp;
@@ -130,6 +127,11 @@ namespace simulation
      * the simulation parameters
      */
     Parameter m_param;
+    
+    /**
+     *  
+     */
+    simulation::MpiControl m_MpiControl;
     
     /**
      * the time step size
@@ -150,12 +152,6 @@ namespace simulation
      * the minimisation step size.
      */
     double m_minimisation_step_size;
-
-    /**
-     * @struct mpi_control_struct
-     * 
-     */
-    //struct  simulation::mpi_control_struct m_mpi_control;  //mpi_control_struct test
 
   };
   

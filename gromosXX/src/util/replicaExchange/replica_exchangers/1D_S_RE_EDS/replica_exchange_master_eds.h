@@ -58,7 +58,7 @@ namespace util{
                                     unsigned int cont,
                                     unsigned int globalThreeadID,
                                     replica_graph_mpi_control replicaGraphMPIControl,
-                                    simulation::mpi_control_struct replica_mpi_control);
+                                    simulation::MpiControl replica_mpi_control);
 
         /**
          * @override

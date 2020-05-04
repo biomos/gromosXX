@@ -22,7 +22,7 @@
 #define MODULE util
 #define SUBMODULE replica_exchange
 
-util::replica::replica(io::Argument _args, int cont, int globalThreadID, simulation::mpi_control_struct replica_mpi_control) : replica_Interface(globalThreadID, replica_mpi_control, _args){
+util::replica::replica(io::Argument _args, int cont, int globalThreadID, simulation::MpiControl replica_mpi_control) : replica_Interface(globalThreadID, replica_mpi_control, _args){
   // read input again. If copy constructors for topo, conf, sim, md work, one could
   // also pass them down from repex_mpi.cc ...
   

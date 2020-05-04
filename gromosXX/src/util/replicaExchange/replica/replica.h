@@ -31,7 +31,7 @@ namespace util {
      * @param _ID integer, unique identifier of the replica
      * @param _rank integer, for knowing where to send the data
      */
-    replica(io::Argument _args, int cont, int globalThreadID, simulation::mpi_control_struct replica_mpi_control);
+    replica(io::Argument _args, int cont, int globalThreadID, simulation::MpiControl replica_mpi_control);
 
     /**
      * runs an MD simulation

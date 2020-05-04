@@ -50,7 +50,7 @@ util::replica_exchange_base_interface::replica_exchange_base_interface(io::Argum
                                                    unsigned int cont, 
                                                    unsigned int globalThreadID,
                                                    replica_graph_mpi_control replicaGraphMPIControl,
-                                                   simulation::mpi_control_struct replica_mpi_control) :
+                                                   simulation::MpiControl replica_mpi_control) :
         args(_args), rng(-1), cont(cont), 
         globalThreadID(globalThreadID), simulationID(replica_mpi_control.simulationID),
         replicaGraphMPIControl(replicaGraphMPIControl)
@@ -69,7 +69,7 @@ util::replica_exchange_base_interface::~replica_exchange_base_interface() {
     delete replica;
 }
 
-void util::replica_exchange_base_interface::createReplicas(int cont, int globalThreadID, simulation::mpi_control_struct replica_mpi_control){
+void util::replica_exchange_base_interface::createReplicas(int cont, int globalThreadID, simulation::MpiControl replica_mpi_control){
   MPI_DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":createReplicas:\t START \t THREADS "<<replica_mpi_control.numberOfThreads);
 
   // create the number of replicas that are assigned to my node

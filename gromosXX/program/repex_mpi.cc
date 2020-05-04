@@ -193,7 +193,7 @@ int main(int argc, char *argv[]) {
             }
             std::cerr << "FUN\n"; 
             std::cerr << "mutlib: "<<sim.param().multibath.multibath.size()<<"\n";
-            std::cerr << "simID: "<<sim.mpi_control.simulationID <<"\n";
+            std::cerr << "simID: "<<sim.mpiControl().simulationID <<"\n";
 
             //set global parameters
             cont = sim.param().replica.cont;
@@ -273,9 +273,6 @@ int main(int argc, char *argv[]) {
             }
 
             // read in the rest
-            std::cerr << "repex Read\n";
-            std::cerr << "mutlib: "<<sim.param().multibath.multibath.size()<<"\n";
-            std::cerr << "simID: "<<sim.mpi_control.simulationID <<"\n";
             if (io::read_input_repex(args, topo, conf, sim, md, simulationID, globalThreadID, std::cout, quiet)) {
                 if (globalThreadID == 0) {
                     std::cerr << "\n\t########################################################\n"
@@ -321,7 +318,7 @@ int main(int argc, char *argv[]) {
             MPI_DEBUG(2, "RANK: "<<globalThreadID<<" done with replica Ex check\n");    //TODO: lower verb level
             std::cerr << "check\n";
             std::cerr << "mutlib: "<<sim.param().multibath.multibath.size()<<"\n";
-            std::cerr << "simID: "<<sim.mpi_control.simulationID <<"\n";
+            std::cerr << "simID: "<<sim.mpiControl().simulationID <<"\n";
             if (io::check_parameter(sim)) {
                 if (globalThreadID == 0) {
                     std::cerr << "\n\t########################################################\n"
@@ -391,20 +388,17 @@ int main(int argc, char *argv[]) {
     //////////////////////////////////////
     //for REPLICA SIMULATION!
     //////////////////////////////////////
-    simulation::mpi_control_struct replica_mpi_control = simulation::mpi_control_struct();
-    replica_mpi_control.simulationID = simulationID;
-    replica_mpi_control.numberOfThreads =  replica_owned_threads[replica_mpi_control.simulationID].size();
-    replica_mpi_control.threadID = 0;
-    replica_mpi_control.mpiColor = replica_mpi_control.simulationID; // comunication color MPI
 
-    MPI_Comm_split(MPI_COMM_WORLD, replica_mpi_control.mpiColor, globalThreadID, &simulationCOMM);
-    replica_mpi_control.comm = simulationCOMM;
-    MPI_Barrier(simulationCOMM);    //wait for all threads to register!
+
+    simulation::MpiControl replica_mpi_control = simulation::MpiControl(true, simulationID, replica_owned_threads[simulationID].size(),
+            -1, -1, simulationID, replica_owned_threads[simulationID], simulationCOMM );
+    MPI_Comm_split(MPI_COMM_WORLD, replica_mpi_control.mpiColor, globalThreadID, &replica_mpi_control.comm);
+    
+    MPI_Barrier(replica_mpi_control.comm);    //wait for all threads to register!
     MPI_DEBUG(1, "REPLICA_ID \t " << globalThreadID << "\t Simulation_ID\t"<< simulationID << "\t SIMCOMM ESTABLISHED\n");
-
     int simulation_rank, simulation_size;
-    MPI_Comm_rank(simulationCOMM, &simulation_rank);
-    MPI_Comm_size(simulationCOMM, &simulation_size);
+    MPI_Comm_rank(replica_mpi_control.comm, &simulation_rank);
+    MPI_Comm_size(replica_mpi_control.comm, &simulation_size);
     if(replica_mpi_control.numberOfThreads != simulation_size){
         std::cerr << "\n\t########################################################\n"
                 << "\n\t\tErrors during MPI-Initialisation!\n"
@@ -532,10 +526,6 @@ int main(int argc, char *argv[]) {
         msg << "\t continuation:\t" << cont << "\n";
         msg << "\t equilibration runs:\t" << equil_runs << "\n";
         msg << "\t Exchange Trials runs:\t" << sim_runs << "\n";
-        //todo: FIX OUTPUT
-        
-        //msg << "\t Simulation Steps Between Trials:\t" << sim.param().step.number_of_steps << "\n";
-        //msg << "\t Total Simulation Time:\t" << sim.param().step.number_of_steps * sim_runs * sim.param().step.dt << "ps\n";
         msg << "\t numReplicas:\t" << numReplicas << "\n";
 
         if (reedsSim) {

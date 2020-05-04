@@ -27,7 +27,7 @@
 #define SUBMODULE replica_exchange
 
 util::replica_MPI_Master::replica_MPI_Master(io::Argument _args, int cont,  int globalThreadID, 
-        simulation::mpi_control_struct replica_mpi_control) : replica_Interface( globalThreadID, replica_mpi_control, _args){
+        simulation::MpiControl replica_mpi_control) : replica_Interface( globalThreadID, replica_mpi_control, _args){
  #ifdef XXMPI
 
     /**
@@ -60,7 +60,7 @@ util::replica_MPI_Master::replica_MPI_Master(io::Argument _args, int cont,  int 
     MPI_DEBUG(5, "replica_MPI_MASTER "<< globalThreadID <<":Constructor:\t  "<< simulationID <<":\t start read in");
     //Build structure
     sim.mpi = true;
-    sim.mpi_control = replica_mpi_control;  //build MPI parallelism
+    sim.mpiControl() = replica_mpi_control;  //build MPI parallelism
     
     if (io::read_input(args, topo, conf, sim, md, *os, true)) { 
       io::messages.display(*os);
@@ -239,7 +239,7 @@ void util::replica_MPI_Master::run_MD(){
         }
       
         // tell the slaves to continue
-        MPI_Bcast(&next_step, 1, MPI::INT, sim.mpi_control.masterID, sim.mpi_control.comm);
+        MPI_Bcast(&next_step, 1, MPI::INT, sim.mpiControl().masterID, sim.mpiControl().comm);
 
         DEBUG(5, "replica "<< globalThreadID <<":run_MD:\t clean up:");      
         traj->print(topo, conf, sim);

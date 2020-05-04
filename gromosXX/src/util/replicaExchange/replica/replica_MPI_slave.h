@@ -55,7 +55,7 @@ namespace util {
         void receive_coords();
         
     public:
-        replica_MPI_Slave(io::Argument _args, int cont, int globalThreadID, simulation::mpi_control_struct replica_mpi_control);
+        replica_MPI_Slave(io::Argument _args, int cont, int globalThreadID, simulation::MpiControl replica_mpi_control);
         ~replica_MPI_Slave();
         
         /**

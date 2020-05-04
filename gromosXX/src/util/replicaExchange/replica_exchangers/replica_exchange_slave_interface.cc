@@ -37,7 +37,7 @@ util::replica_exchange_slave_interface::replica_exchange_slave_interface(io::Arg
                                                     unsigned int cont,
                                                     unsigned int globalThreadID,
                                                     replica_graph_mpi_control replicaGraphMPIControl,
-                                                    simulation::mpi_control_struct replica_mpi_control) : 
+                                                    simulation::MpiControl replica_mpi_control) : 
         replica_exchange_base_interface(_args, cont, globalThreadID, replicaGraphMPIControl, replica_mpi_control) {
         MPI_DEBUG(2, "replica_exchange_slave_interface "<< globalThreadID <<":Constructor:\t START");
         

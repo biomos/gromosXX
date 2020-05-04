@@ -130,7 +130,7 @@ int main(int argc, char *argv[]) {
     //Build Attributes:
     ////GENERATE SIM SPECIFIC SIMULATION COMM
     MPI_Comm simulationCOMM;
-    MPI_Comm_split(MPI_COMM_WORLD, sim.mpi_control.mpiColor, rank, &simulationCOMM);
+    MPI_Comm_split(MPI_COMM_WORLD, sim.mpiControl().mpiColor, rank, &simulationCOMM);
     MPI_Barrier(simulationCOMM);
     ////RANK and Size of thread in the simulationCOMM
     int simulation_rank, simulation_size;
@@ -140,29 +140,29 @@ int main(int argc, char *argv[]) {
     std::vector<unsigned int> simulationOwnedThreads(size);
     std::iota(std::begin(simulationOwnedThreads), std::end(simulationOwnedThreads), 0);
     //Pass the information to MPI_control Struct
-    sim.mpi_control.numberOfThreads = simulation_size;
-    sim.mpi_control.threadID = simulation_rank;
-    sim.mpi_control.simulationOwnedThreads = simulationOwnedThreads;
-    sim.mpi_control.comm = simulationCOMM;
+    sim.mpiControl().numberOfThreads = simulation_size;
+    sim.mpiControl().threadID = simulation_rank;
+    sim.mpiControl().simulationOwnedThreads = simulationOwnedThreads;
+    sim.mpiControl().comm = simulationCOMM;
 
     //Control Output
-    if (sim.mpi_control.threadID == sim.mpi_control.masterID) {
+    if (sim.mpiControl().threadID == sim.mpiControl().masterID) {
         std::cout << "MPI INFORMATION \n" <<
-                "\tSimulation ID " << sim.mpi_control.simulationID << "\n" <<
-                "\tSimulation Master Thread ID " << sim.mpi_control.masterID << "\n" <<
-                "\tSimulation Total Num Threads " << sim.mpi_control.numberOfThreads << "\n" <<
+                "\tSimulation ID " << sim.mpiControl().simulationID << "\n" <<
+                "\tSimulation Master Thread ID " << sim.mpiControl().masterID << "\n" <<
+                "\tSimulation Total Num Threads " << sim.mpiControl().numberOfThreads << "\n" <<
                 "\tSimulation All Thread IDS:  " << "\n\t\t";
-        for (auto x : sim.mpi_control.simulationOwnedThreads) {
+        for (auto x : sim.mpiControl().simulationOwnedThreads) {
             std::cout << x << "\t ";
         }
         std::cout << "\n";
     }
     std::cout.flush();
     MPI_Barrier(simulationCOMM);
-    std::cout << "Simulation This Thread ID " << sim.mpi_control.threadID << "\n";
+    std::cout << "Simulation This Thread ID " << sim.mpiControl().threadID << "\n";
     std::cout.flush();
     MPI_Barrier(simulationCOMM);
-    if (sim.mpi_control.threadID == sim.mpi_control.masterID) {
+    if (sim.mpiControl().threadID == sim.mpiControl().masterID) {
         std::cout << "END\n";
     }
     
@@ -192,7 +192,7 @@ int main(int argc, char *argv[]) {
     MPI_Barrier(simulationCOMM);
 
     int error = 0;
-    if (sim.mpi_control.threadID == sim.mpi_control.masterID) {
+    if (sim.mpiControl().threadID == sim.mpiControl().masterID) {
 
         std::cout << "MPI master node (of " << size << " nodes)" << std::endl;
 
@@ -218,7 +218,7 @@ int main(int argc, char *argv[]) {
                 std::cout << "Telling slaves to quit." << std::endl;
                 MPI::COMM_WORLD.Bcast(&error, 1, MPI::INT, 0);
                 FFTW3(mpi_cleanup());
-                MPI_Comm_free(&sim.mpi_control.comm); //Clean up
+                MPI_Comm_free(&sim.mpiControl().comm); //Clean up
                 MPI::Finalize();
                 return 1;
             } else if (iom == io::message::develop) {
@@ -226,14 +226,14 @@ int main(int argc, char *argv[]) {
                 error = 1;
                 MPI::COMM_WORLD.Bcast(&error, 1, MPI::INT, 0);
                 FFTW3(mpi_cleanup());
-                MPI_Comm_free(&sim.mpi_control.comm); //Clean up
+                MPI_Comm_free(&sim.mpiControl().comm); //Clean up
                 MPI::Finalize();
                 return 1;
             }
         }
 
         // tell slaves there were no initialization errors
-        MPI_Bcast(&error, 1, MPI::INT, sim.mpi_control.masterID, sim.mpi_control.comm);
+        MPI_Bcast(&error, 1, MPI::INT, sim.mpiControl().masterID, sim.mpiControl().comm);
 
         io::messages.clear();
 
@@ -291,7 +291,7 @@ int main(int argc, char *argv[]) {
                         std::cerr << "MPI master: could not get Shake algorithm from MD sequence."
                                 << "\n\t(internal error)"
                                 << std::endl;
-                        MPI_Comm_free(&sim.mpi_control.comm); //Clean up
+                        MPI_Comm_free(&sim.mpiControl().comm); //Clean up
                         MPI::Finalize();
                         return 1;
                     }
@@ -302,7 +302,7 @@ int main(int argc, char *argv[]) {
 
                     // signal that energy minimum is reached: exit, but without error message
                     next_step = 2;
-                    MPI_Bcast(&next_step, 1, MPI::INT, sim.mpi_control.masterID, sim.mpi_control.comm);
+                    MPI_Bcast(&next_step, 1, MPI::INT, sim.mpiControl().masterID, sim.mpiControl().comm);
                     error = 0; // clear error condition
                     break;
                 }
@@ -311,14 +311,14 @@ int main(int argc, char *argv[]) {
                 // send error status to slaves
                 next_step = 0;
                 std::cout << "Telling slaves to quit." << std::endl;
-                MPI_Bcast(&next_step, 1, MPI::INT, sim.mpi_control.masterID, sim.mpi_control.comm);
+                MPI_Bcast(&next_step, 1, MPI::INT, sim.mpiControl().masterID, sim.mpiControl().comm);
 
                 // try to save the final structures...
                 break;
             }
             std::cout << "We shall move on to the nexst step my friends!\n";
             // tell the slaves to continue
-            MPI_Bcast(&next_step, 1, MPI::INT, sim.mpi_control.masterID, sim.mpi_control.comm);
+            MPI_Bcast(&next_step, 1, MPI::INT, sim.mpiControl().masterID, sim.mpiControl().comm);
             traj.print(topo, conf, sim);
 
             sim.steps() = sim.steps() + sim.param().analyze.stride;
@@ -396,7 +396,7 @@ int main(int argc, char *argv[]) {
         std::cout.flush();
         MPI_Barrier(simulationCOMM);
         
-        MPI_Bcast(&error, 1, MPI::INT, sim.mpi_control.masterID, sim.mpi_control.comm);
+        MPI_Bcast(&error, 1, MPI::INT, sim.mpiControl().masterID, sim.mpiControl().comm);
 
         if (error) {
             (*os) << "There was an error in the master. Check output file for details." << std::endl
@@ -412,7 +412,7 @@ int main(int argc, char *argv[]) {
 
             if (do_nonbonded && ff == NULL) {
                 std::cerr << "MPI slave: could not access forcefield\n\t(internal error)" << std::endl;
-                MPI_Comm_free(&sim.mpi_control.comm); //Clean up
+                MPI_Comm_free(&sim.mpiControl().comm); //Clean up
                 MPI::Finalize();
                 return 1;
             }
@@ -422,7 +422,7 @@ int main(int argc, char *argv[]) {
                 std::cerr << "MPI slave: could not get NonBonded interactions from forcefield"
                         << "\n\t(internal error)"
                         << std::endl;
-                MPI_Comm_free(&sim.mpi_control.comm); //Clean up
+                MPI_Comm_free(&sim.mpiControl().comm); //Clean up
                 MPI::Finalize();
                 return 1;
             }
@@ -441,7 +441,7 @@ int main(int argc, char *argv[]) {
                 std::cerr << "MPI slave: could not get Shake algorithm from MD sequence."
                         << "\n\t(internal error)"
                         << std::endl;
-                MPI_Comm_free(&sim.mpi_control.comm); //Clean up
+                MPI_Comm_free(&sim.mpiControl().comm); //Clean up
                 MPI::Finalize();
                 return 1;
             }
@@ -456,7 +456,7 @@ int main(int argc, char *argv[]) {
                 std::cerr << "MPI slave: could not get M_Shake algorithm from MD sequence."
                         << "\n\t(internal error)"
                         << std::endl;
-                MPI_Comm_free(&sim.mpi_control.comm); //Clean up
+                MPI_Comm_free(&sim.mpiControl().comm); //Clean up
                 MPI::Finalize();
                 return 1;
             }
@@ -470,7 +470,7 @@ int main(int argc, char *argv[]) {
                 std::cerr << "MPI slave: could not get Monte Carlo algorithm from MD sequence."
                         << "\n\t(internal error)"
                         << std::endl;
-                MPI_Comm_free(&sim.mpi_control.comm); //Clean up
+                MPI_Comm_free(&sim.mpiControl().comm); //Clean up
                 MPI::Finalize();
                 return 1;
             }
@@ -534,7 +534,7 @@ int main(int argc, char *argv[]) {
                 std::cout << "SLAVE "<<rank<<" \t SHAKE \t DONE.\n";
 
 
-                MPI_Bcast(&next_step, 1, MPI::INT, sim.mpi_control.masterID, sim.mpi_control.comm);
+                MPI_Bcast(&next_step, 1, MPI::INT, sim.mpiControl().masterID, sim.mpiControl().comm);
 
                 if (next_step == 2) {
                     (*os) << "Message from master: Steepest descent: minimum reached." << std::endl;
@@ -590,7 +590,7 @@ int main(int argc, char *argv[]) {
     // and exit...
     FFTW3(mpi_cleanup());
 
-    MPI_Comm_free(&sim.mpi_control.comm); //Clean up
+    MPI_Comm_free(&sim.mpiControl().comm); //Clean up
     MPI::Finalize();
     return error;
 
