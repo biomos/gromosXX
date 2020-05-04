@@ -67,7 +67,6 @@
 #undef SUBMODULE
 #define MODULE util
 #define SUBMODULE replica_exchange
-#define XXMPI
 
 int main(int argc, char *argv[]) {
 #ifdef XXMPI
@@ -192,7 +191,10 @@ int main(int argc, char *argv[]) {
                 MPI_Finalize();
                 return 1;
             }
-                    
+            std::cerr << "FUN\n"; 
+            std::cerr << "mutlib: "<<sim.param().multibath.multibath.size()<<"\n";
+            std::cerr << "simID: "<<sim.mpi_control.simulationID <<"\n";
+
             //set global parameters
             cont = sim.param().replica.cont;
             equil_runs = sim.param().replica.equilibrate;
@@ -271,6 +273,9 @@ int main(int argc, char *argv[]) {
             }
 
             // read in the rest
+            std::cerr << "repex Read\n";
+            std::cerr << "mutlib: "<<sim.param().multibath.multibath.size()<<"\n";
+            std::cerr << "simID: "<<sim.mpi_control.simulationID <<"\n";
             if (io::read_input_repex(args, topo, conf, sim, md, simulationID, globalThreadID, std::cout, quiet)) {
                 if (globalThreadID == 0) {
                     std::cerr << "\n\t########################################################\n"
@@ -314,7 +319,9 @@ int main(int argc, char *argv[]) {
                 }
             }
             MPI_DEBUG(2, "RANK: "<<globalThreadID<<" done with replica Ex check\n");    //TODO: lower verb level
-            
+            std::cerr << "check\n";
+            std::cerr << "mutlib: "<<sim.param().multibath.multibath.size()<<"\n";
+            std::cerr << "simID: "<<sim.mpi_control.simulationID <<"\n";
             if (io::check_parameter(sim)) {
                 if (globalThreadID == 0) {
                     std::cerr << "\n\t########################################################\n"

@@ -22,51 +22,6 @@ namespace simulation
    * @class Simulation
    * holds simulation data
    */
-    #ifdef XXMPI
-        struct mpi_control_struct
-        {
-            /**
-             * Constructor
-             * Default values:
-             * - number_of_threads 0
-             */
-            mpi_control_struct() : simulationID(0), numberOfThreads(-1), masterID(0), threadID(-1), mpiColor(1)
-            {
-            }
-
-            int simulationID; //local replica id of simulation
-            int numberOfThreads;    //total_number_of_threads      
-            int masterID; //local master of this 
-            int threadID;
-            int mpiColor;
-            MPI_Comm comm; 
-
-            std::vector<unsigned int> simulationOwnedThreads; 
-
-        } /** replica exchange parameters */;
-    #else
-        struct mpi_control_struct
-        {
-            /**
-             * Constructor
-             * Default values:
-             * - number_of_threads 0
-             */
-            mpi_control_struct() : simulationID(0), numberOfThreads(-1), masterID(0), threadID(-1), mpiColor(1)
-            {
-            }
-
-            int simulationID; //local replica id of simulation
-            int numberOfThreads;    //total_number_of_threads      
-            int masterID; //local master of this 
-            int threadID;
-            int mpiColor;
-
-            std::vector<unsigned int> simulationOwnedThreads; 
-
-        } /** replica exchange parameters */;
-    #endif
-
   class Simulation
   {
   public:
@@ -78,7 +33,7 @@ namespace simulation
 		   m_time_step_size(0),
 		   m_steps(0), 
 		   m_time(0) {
-        mpi_control = mpi_control_struct();  //mpi test
+        //mpi_control = mpi_control_struct();  //mpi test
 
     }
 
@@ -90,7 +45,7 @@ namespace simulation
                m_time_step_size(0),
                m_steps(0), 
                m_time(0) {
-        mpi_control = mpi_control_struct();  //mpi test
+        //mpi_control = mpi_control_struct();  //mpi test
     }
     /**
      * the simulation parameter
@@ -154,9 +109,9 @@ namespace simulation
 
     /**
      * @struct mpi_control_struct
-     *  ToDO:
+     * 
      */
-    struct mpi_control_struct mpi_control;  //mpi_control_struct test
+    struct  simulation::mpi_control_struct mpi_control;  //mpi_control_struct test
 
     /**
      * enable openmp?
@@ -195,6 +150,12 @@ namespace simulation
      * the minimisation step size.
      */
     double m_minimisation_step_size;
+
+    /**
+     * @struct mpi_control_struct
+     * 
+     */
+    //struct  simulation::mpi_control_struct m_mpi_control;  //mpi_control_struct test
 
   };
   

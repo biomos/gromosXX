@@ -3,6 +3,10 @@
  * input parameters
  */
 
+#ifdef XXMPI
+    #include <mpi.h>
+#endif
+
 #ifndef INCLUDED_PARAMETER_H
 #define INCLUDED_PARAMETER_H
 
@@ -14,6 +18,30 @@ namespace interaction {
 
 namespace simulation
 {
+    
+    struct mpi_control_struct
+    {
+        /**
+         * Constructor
+         * Default values:
+         * - number_of_threads 0
+         */
+        mpi_control_struct() : simulationID(0), numberOfThreads(-1), masterID(0), threadID(-1), mpiColor(1)
+        {
+        }
+
+        int simulationID; //local replica id of simulation
+        int numberOfThreads;    //total_number_of_threads      
+        int masterID; //local master of this 
+        int threadID;
+        int mpiColor;
+        #ifdef XXMPI
+        MPI_Comm comm; 
+        #endif
+        std::vector<unsigned int> simulationOwnedThreads; 
+
+    } /** mpi_control */;
+
   /**
    * @enum constr_enum
    * constraints enumeration.

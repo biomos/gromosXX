@@ -24,13 +24,17 @@
 #define SUBMODULE parameter
 
 
-int io::check_parameter(simulation::Simulation & sim){
+int io::check_parameter(simulation::Simulation &sim){
+std::cerr << "mutlib: "<<sim.param().multibath.multibath.size()<<"\n";
+std::cerr << "simID: "<<sim.mpi_control.simulationID <<"\n";
   int check1 = simple_crosschecks(sim);
   int check2 = check_features(sim);
-  if (check1 || check2)
+  if (check1 || check2){
     return -1;
-  else
+  }
+  else{
     return 0;
+  }
 }
 
 int io::simple_crosschecks(simulation::Simulation & sim) {
@@ -230,7 +234,7 @@ int io::simple_crosschecks(simulation::Simulation & sim) {
     return 0;
 }
 
-int io::check_features(simulation::Simulation & sim)
+int io::check_features(simulation::Simulation  &sim)
 {
   const simulation::Parameter & param = sim.param();
   std::vector<util::Feature> features;
