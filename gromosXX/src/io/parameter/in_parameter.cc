@@ -2878,7 +2878,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
     exampleblock << "       10         0         1           1          \n";
     exampleblock << "END\n";
     
-    DEBUG(8, "REPLICA_EDS BLOCK\t START");
+    DEBUG(1, "REPLICA_EDS BLOCK\t START");
     //check that EDS Block was not read in before,because either REPLICA_EDS or EDS possible
     if (param.eds.eds) {
         std::ostringstream msg;
@@ -2893,7 +2893,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
     if (block.read_buffer(m_block[blockname], false) == 0) {
         block_read.insert(blockname);
            
-        DEBUG(9, "REPLICA_EDS BLOCK: reading Block an translating to vars");
+        DEBUG(2, "REPLICA_EDS BLOCK: reading Block an translating to vars");
         //init_vars
         unsigned int reeds_control, num_l, num_states=0;
         unsigned int ntrials, nEquilibrate, cont_run, eds_stat_out=0;
@@ -2934,7 +2934,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
 
       
         // SET SETTINGS
-        DEBUG(9, "REPLICA_EDS BLOCK: Set settings for sim.");
+        DEBUG(2, "REPLICA_EDS BLOCK: Set settings for sim.");
         // READ:REEDS control
         switch(reeds_control) {
               case 0:
@@ -2960,7 +2960,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
         // Replica temperatures - has to be the same for each replica // Not sure if this is optimal? bschroed
         param.reeds.temperature = param.multibath.multibath.bath(0).temperature;
         
-        DEBUG(9, "REPLICA_EDS BLOCK: assigned all reeds params");
+        DEBUG(2, "REPLICA_EDS BLOCK: assigned all reeds params");
         //set size of vectors in param.reeds
         param.reeds.eds_para.resize(param.reeds.num_l);
         param.reeds.dt.resize(param.reeds.num_l);
@@ -2999,14 +2999,14 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
                 io::messages.add(msg.str(), "In_Parameter", io::message::error);
             }
             
-            DEBUG(9, "REPLICA_EDS BLOCK: assign all eds params - EIR");
+            DEBUG(2, "REPLICA_EDS BLOCK: assign all eds params - EIR");
             for(unsigned int j = 0; j < param.reeds.eds_para[0].numstates; ++j){
                 param.reeds.eds_para[i].eir[j] = eir[i][j];
                 
             }  
         }
 
-        DEBUG(9, "REPLICA_EDS BLOCK: assigned all eds params");
+        DEBUG(2, "REPLICA_EDS BLOCK: assigned all eds params");
         
         // turn on eds for pertubation reading - Overwrite:
         param.eds.eds = true;
@@ -3016,7 +3016,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
         param.perturbation.perturbation = false;
         
         //REPLICA Set replica settings:
-        DEBUG(9, "REPLICA_EDS BLOCK: assign all replicas param:");
+        DEBUG(2, "REPLICA_EDS BLOCK: assign all replicas param:");
 
         // check whether all baths have the same temperature (unambiguous kT)
         param.reeds.num_T = param.replica.num_T =1;
@@ -3029,10 +3029,10 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
         param.replica.equilibrate = param.reeds.equilibrate;
         param.replica.cont = param.reeds.cont;
         
-        DEBUG(9, "REPLICA_EDS BLOCK: assigned all replicas param");
+        DEBUG(2, "REPLICA_EDS BLOCK: assigned all replicas param");
 
         //CHECK SETTINGS
-        DEBUG(9, "REPLICA_EDS BLOCK: Check Settings:");
+        DEBUG(2, "REPLICA_EDS BLOCK: Check Settings:");
         
         for (unsigned int i = 1; i < param.multibath.multibath.size(); i++) {
           if (param.multibath.multibath.bath(i).temperature !=
@@ -3041,10 +3041,10 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
                     "In_Parameter", io::message::error);
           }         
         }
-        DEBUG(9, "REPLICA_EDS BLOCK: Checked Settings");
+        DEBUG(2, "REPLICA_EDS BLOCK: Checked Settings");
         block.get_final_messages();
     }
-    DEBUG(8, "REPLICA_EDS BLOCK\t DONE");
+    DEBUG(1, "REPLICA_EDS BLOCK\t DONE");
 }
 
 /**

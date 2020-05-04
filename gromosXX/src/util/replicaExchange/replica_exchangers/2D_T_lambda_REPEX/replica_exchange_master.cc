@@ -46,8 +46,8 @@
 util::replica_exchange_master::replica_exchange_master(io::Argument & args,
         unsigned int cont,
         unsigned int globalThreadID,
-        replica_graph_mpi_control replicaGraphMPIControl,
-        simulation::mpi_control_struct replica_mpi_control) :
+        replica_graph_control & replicaGraphMPIControl,
+        simulation::MpiControl & replica_mpi_control) :
         replica_exchange_base_interface(args, cont, globalThreadID, replicaGraphMPIControl, replica_mpi_control),
         replica_exchange_base(args, cont, globalThreadID, replicaGraphMPIControl, replica_mpi_control),
         replica_exchange_master_interface(args, cont, globalThreadID, replicaGraphMPIControl, replica_mpi_control)

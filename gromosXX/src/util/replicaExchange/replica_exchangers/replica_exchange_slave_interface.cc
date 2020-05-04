@@ -36,8 +36,8 @@
 util::replica_exchange_slave_interface::replica_exchange_slave_interface(io::Argument & _args,
                                                     unsigned int cont,
                                                     unsigned int globalThreadID,
-                                                    replica_graph_mpi_control replicaGraphMPIControl,
-                                                    simulation::mpi_control_struct replica_mpi_control) : 
+                                                    replica_graph_control &replicaGraphMPIControl,
+                                                    simulation::MpiControl &replica_mpi_control) : 
         replica_exchange_base_interface(_args, cont, globalThreadID, replicaGraphMPIControl, replica_mpi_control) {
     #ifdef XXMPI
 
@@ -64,7 +64,8 @@ util::replica_exchange_slave_interface::~replica_exchange_slave_interface() {
 
 void util::replica_exchange_slave_interface::send_to_master() const {
 #ifdef XXMPI
-  
+                                  std::cerr << "HFFAAAA3\n";
+
   if(not_sender){
     DEBUG(2,"replica_exchange_slave_interface " << globalThreadID << ":send_to_master \t START");
       util::repInfo info;

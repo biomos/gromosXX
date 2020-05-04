@@ -50,8 +50,8 @@
 util::replica_exchange_base_interface::replica_exchange_base_interface(io::Argument _args,
                                                    unsigned int cont, 
                                                    unsigned int globalThreadID,
-                                                   replica_graph_mpi_control replicaGraphMPIControl,
-                                                   simulation::mpi_control_struct replica_mpi_control) :
+                                                   replica_graph_control &replicaGraphMPIControl,
+                                                   simulation::MpiControl &replica_mpi_control) :
         args(_args), rng(-1), cont(cont), 
         globalThreadID(globalThreadID), simulationID(replica_mpi_control.simulationID),
         replicaGraphMPIControl(replicaGraphMPIControl)
@@ -70,8 +70,8 @@ util::replica_exchange_base_interface::~replica_exchange_base_interface() {
     delete replica;
 }
 
-void util::replica_exchange_base_interface::createReplicas(int cont, int globalThreadID, simulation::mpi_control_struct replica_mpi_control){
-  DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":createReplicas:\t START \t THREADS "<<replica_mpi_control.numberOfThreads);
+void util::replica_exchange_base_interface::createReplicas(int cont, int globalThreadID, simulation::MpiControl &replica_mpi_control){
+  MPI_DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":createReplicas:\t START \t THREADS "<<replica_mpi_control.numberOfThreads);
 
   // create the number of replicas that are assigned to my node
     if(replica_mpi_control.numberOfThreads>1){
@@ -121,12 +121,16 @@ void util::replica_exchange_base_interface::updateReplica_params(){
  */
 
 void util::replica_exchange_base_interface::swap(){
-    MPI_DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":swap:\t START");
-  
-    partnerReplicaID = find_partner();
-    MPI_DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":swap:\t Found Partner: "<< partnerReplicaID);
+  DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":swap:\t START");
 
-    if (partnerReplicaID != simulationID && not_sender) // different replica?
+  std::cerr << "DFUNM "<< replicaGraphMPIControl.numberOfReplicas<<" NONOT HERE\n\n";
+  MPI_Barrier(replicaGraphMPIControl.comm);
+  std::cerr<< "DFUNM!\n\n";
+    partnerReplicaID = find_partner();
+                    std::cerr << "HFFAAAA1a\n";
+                    std::cerr.flush();
+
+    if (partnerReplicaID != simulationID) // different replica?
     {
         DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":swap:\t I'm gonna swap!:)");
       //TODO: RENAME 
@@ -154,8 +158,10 @@ void util::replica_exchange_base_interface::swap(){
     if(switched && replica->sim.param().replica.scale) {
       velscale(partnerReplicaID);
     }
+    std::cerr << "HFFAAAA1\n";
 
-    MPI_DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":swap:\t DONE");
+     
+  DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":swap:\t DONE");
 }
 
 void util::replica_exchange_base_interface::write_final_conf() {
@@ -188,10 +194,12 @@ void util::replica_exchange_base_interface::swap_replicas_2D(const unsigned int 
       std::vector<double> prob(2);
       prob[0] = probability;
       prob[1] = randNum;
-
+                std::cerr << "HFFAAAA8\n";
+                std::cerr.flush();
 #ifdef XXMPI
       MPI_Send(&prob[0], 2, MPI_DOUBLE, partnerReplicaID, SENDCOORDS, replicaGraphMPIControl.comm);
 #endif
+                std::cerr << "HFFAAAA9\n";
 
       if (randNum < probability) {
         switched = true;

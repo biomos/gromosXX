@@ -55,8 +55,8 @@ namespace util {
     replica_exchange_slave(io::Argument & _args,
             unsigned int cont,
             unsigned int globalThreadID,
-            replica_graph_mpi_control replicaGraphMPIControl,
-            simulation::mpi_control_struct replica_mpi_control);
+            replica_graph_control & replicaGraphMPIControl,
+            simulation::MpiControl & replica_mpi_control);
     /**
      * destructor
      */

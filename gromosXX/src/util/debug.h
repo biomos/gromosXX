@@ -84,6 +84,7 @@
  */
 
 #undef DEBUG
+#undef MPI_DEBUG
 
 #undef MPI_DEBUG
 
@@ -94,7 +95,7 @@
 #define STR(s) TOSTRING(s)
 
 #ifdef NDEBUG
-    #define DEBUG(level, s) ;
+#define DEBUG(level, s) ;
 
 
     #define MPI_DEBUG(level, s) ;

@@ -27,7 +27,7 @@
 #define SUBMODULE replica_exchange
 
 util::replica_MPI_Slave::replica_MPI_Slave(io::Argument _args, int cont, int globalThreadID, 
-         simulation::mpi_control_struct replica_mpi_control) : replica_Interface(globalThreadID, replica_mpi_control, _args){
+         simulation::MpiControl & replica_mpi_control) : replica_Interface(globalThreadID, replica_mpi_control, _args){
 #ifdef XXMPI
     /**
      * Build up replica MPI Slave - reads in the input and tries to link the replica to the Master?
@@ -59,7 +59,7 @@ util::replica_MPI_Slave::replica_MPI_Slave(io::Argument _args, int cont, int glo
     DEBUG(6, "replica_MPI_SLAVE "<< globalThreadID <<":Constructor:\t  "<< globalThreadID <<":\t start read in");
     //build up system:
     sim.mpi = true;
-    sim.mpi_control = replica_mpi_control;
+    sim.mpiControl() = replica_mpi_control;
 
     if (io::read_input(args, topo, conf, sim, md, *os, true)) { 
       io::messages.display(*os);
@@ -201,7 +201,7 @@ void util::replica_MPI_Slave::run_MD(){
       }
 
 
-      MPI_Bcast(&next_step, 1, MPI::INT, sim.mpi_control.masterID, sim.mpi_control.comm);
+      MPI_Bcast(&next_step, 1, MPI::INT, sim.mpiControl().masterID, sim.mpiControl().comm);
 
       if (next_step == 2) {
         (*os) << "globalThreadID: "<< globalThreadID<<"\tMessage from master: Steepest descent: minimum reached." << std::endl;

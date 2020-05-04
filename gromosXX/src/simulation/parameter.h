@@ -3,6 +3,10 @@
  * input parameters
  */
 
+#ifdef XXMPI
+    #include <mpi.h>
+#endif
+
 #ifndef INCLUDED_PARAMETER_H
 #define INCLUDED_PARAMETER_H
 
@@ -14,6 +18,7 @@ namespace interaction {
 
 namespace simulation
 {
+
   /**
    * @enum constr_enum
    * constraints enumeration.

@@ -11,6 +11,7 @@
  * Created on April 18, 2018, 3:20 PM
  */
 #include "util/replicaExchange/replica_mpi_tools.h"
+#include <util/replicaExchange/replica_graph_control.h>
 #include <util/replicaExchange/replica_exchangers/1D_S_RE_EDS/replica_exchange_master_eds.h>
 
 #undef MODULE
@@ -21,18 +22,18 @@
 util::replica_exchange_master_eds::replica_exchange_master_eds(io::Argument _args,
                                                                 unsigned int cont,
                                                                 unsigned int globalThreadID,
-                                                                replica_graph_mpi_control replicaGraphMPIControl,
-                                                                simulation::mpi_control_struct replica_mpi_control) :
+                                                                replica_graph_control & replicaGraphMPIControl,
+                                                                simulation::MpiControl & replica_mpi_control) :
         replica_exchange_base_interface(_args, cont, globalThreadID,  replicaGraphMPIControl, replica_mpi_control),
         replica_exchange_base_eds(_args, cont, globalThreadID,  replicaGraphMPIControl, replica_mpi_control),
         replica_exchange_master_interface(_args, cont, globalThreadID, replicaGraphMPIControl, replica_mpi_control)
 {
+    
     #ifdef XXMPI
     DEBUG(2,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t START");  
     DEBUG(3,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t Replicas: "<<replicaGraphMPIControl.numberOfReplicas);  
     DEBUG(3,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t ReplicasOLD: "<<repParams.num_l);  
     DEBUG(3,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t ReplicasMASTER: "<< replicaGraphMPIControl.masterID);  
-
 
     //initialize data of replicas    
     replicaData.resize(replicaGraphMPIControl.numberOfReplicas);      
@@ -40,7 +41,6 @@ util::replica_exchange_master_eds::replica_exchange_master_eds(io::Argument _arg
     //DEBUG(4,"replica_exchange_master_eds "<< rank <<":Constructor:\t reeds- lambda\t "<< replica->sim.param().reeds.num_l);
     //DEBUG(4,"replica_exchange_master_eds "<< rank <<":Constructor:\t eds \t "<< replica->sim.param().eds.s.size());
 
-    
     for (int replicaID = 0; replicaID<  replicaData.size(); ++replicaID) {
         replicaData[replicaID].ID = replicaID;
         replicaData[replicaID].T = repParams.temperature[replicaID];
@@ -55,6 +55,7 @@ util::replica_exchange_master_eds::replica_exchange_master_eds(io::Argument _arg
     #else
         throw "Cannot initialize replica_exchange_master_eds without MPI!"; 
     #endif
+
 }
 
 void util::replica_exchange_master_eds::receive_from_all_slaves() {

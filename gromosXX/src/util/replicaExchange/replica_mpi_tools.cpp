@@ -4,12 +4,11 @@
  * and open the template in the editor.
  */
 
-#include <vector>
-
+#include "stdheader.h"
 #include "replica_mpi_tools.h"
 
 
-std::vector<std::vector<int > >  util::calculate_Replica_Thread_Coordination(int rank, int totalNumberOfThreads, int numReplicas ){
+//std::vector<std::vector<int > >  util::calculate_Replica_Thread_Coordination(int rank, int totalNumberOfThreads, int numReplicas ){
         /**calculate_Replica_Thread_Coordination
          *  This function is calculating the Replica Simulation mapping to the threads.
          * @param rank  this is the rank of the current thread
@@ -17,6 +16,7 @@ std::vector<std::vector<int > >  util::calculate_Replica_Thread_Coordination(int
          * @param numReplicas   number of Replica simulations.
          * @return 
          */
+/*
        std::vector<std::vector<int > > repIDs;
        repIDs.resize(numReplicas);
 
@@ -41,5 +41,5 @@ std::vector<std::vector<int > >  util::calculate_Replica_Thread_Coordination(int
 
            }    
        }            
-        return repIDs;
-    }
+    return repIDs;
+}*/

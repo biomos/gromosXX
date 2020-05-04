@@ -24,17 +24,15 @@
 #define SUBMODULE parameter
 
 
-int io::check_parameter(simulation::Simulation & sim){
-    std::cerr << "Go CHECKING in: "<< sim.param().multibath.multibath.size()<<"\n";
-    std::cerr << "Go Checking in: "<< sim.param().multibath.multibath[0].temperature<<"\n";
-
-    int check1 = simple_crosschecks(sim);
-    int check2 = check_features(sim);
-    
-    if (check1 || check2)
-      return -1;
-    else
-      return 0;
+int io::check_parameter(simulation::Simulation &sim){
+  int check1 = simple_crosschecks(sim);
+  int check2 = check_features(sim);
+  if (check1 || check2){
+    return -1;
+  }
+  else{
+    return 0;
+  }
 }
 
 int io::simple_crosschecks(simulation::Simulation & sim) {
@@ -236,7 +234,7 @@ int io::simple_crosschecks(simulation::Simulation & sim) {
     return 0;
 }
 
-int io::check_features(simulation::Simulation & sim)
+int io::check_features(simulation::Simulation  &sim)
 {
   const simulation::Parameter & param = sim.param();
   std::vector<util::Feature> features;
