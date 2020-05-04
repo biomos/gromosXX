@@ -42,7 +42,7 @@ namespace util{
         
         
     public:
-        replica_MPI_Master(io::Argument _args, int cont, int globalThreadID, simulation::MpiControl replica_mpi_control);
+        replica_MPI_Master(io::Argument _args, int cont, int globalThreadID, simulation::MpiControl & replica_mpi_control);
         virtual ~replica_MPI_Master();
         
 #ifdef XXMPI

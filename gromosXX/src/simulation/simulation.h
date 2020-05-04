@@ -131,7 +131,7 @@ namespace simulation
     /**
      *  
      */
-    simulation::MpiControl m_MpiControl;
+    MpiControl m_MpiControl;
     
     /**
      * the time step size

@@ -22,12 +22,12 @@
 #define MODULE util
 #define SUBMODULE replica_exchange
 
-util::replica::replica(io::Argument _args, int cont, int globalThreadID, simulation::MpiControl replica_mpi_control) : replica_Interface(globalThreadID, replica_mpi_control, _args){
+util::replica::replica(io::Argument _args, int cont, int globalThreadID, simulation::MpiControl & replica_mpi_control) : replica_Interface(globalThreadID, replica_mpi_control, _args){
   // read input again. If copy constructors for topo, conf, sim, md work, one could
   // also pass them down from repex_mpi.cc ...
   
   DEBUG(4, "replica "<< globalThreadID <<":Constructor:\t  "<< globalThreadID <<":\t START");
-  
+
   // do continuation run?
   // change name of input coordinates
   if(cont == 1){
@@ -49,13 +49,15 @@ util::replica::replica(io::Argument _args, int cont, int globalThreadID, simulat
   
   util::print_title(true, *os, true); // printing read in.
 
+  
   // set trajectory
   std::stringstream trajstr;
   trajstr << GROMOSXX << "\n\tReplica Exchange with Replica ID " << (simulationID+1) << std::endl;
   std::string trajname = trajstr.str();
 
   traj = new io::Out_Configuration(trajname, *os);
-  
+    
+    //sim.mpiControl() = ;
   if (io::read_input(args, topo, conf, sim, md, *os, true)) { 
     io::messages.display(*os);
     std::cerr << "\nErrors during initialization!\n" << std::endl;
@@ -63,7 +65,7 @@ util::replica::replica(io::Argument _args, int cont, int globalThreadID, simulat
     MPI_Abort(MPI_COMM_WORLD, E_INPUT_ERROR);
 #endif
   }
-
+  
   // manipulate trajectory files
   // just inserting ID: NAME_ID.cnf
   std::string fin;
@@ -164,11 +166,12 @@ void util::replica::run_MD() {
   int error;
   DEBUG(4,  "replica "<< globalThreadID <<": run_MD:\t Start");      
   DEBUG(5, "replica "<< globalThreadID <<":run_MD:\t doing steps: "<<stepsPerRun<< " till: "<< stepsPerRun + curentStepNumber << " starts at: " << curentStepNumber << "TOTAL RUNS: "<< totalStepNumber );      
-  
+
   while ((unsigned int)(sim.steps()) < stepsPerRun + curentStepNumber) {
     traj->write(conf, topo, sim, io::reduced);
     // run a step
     DEBUG(5, "replica "<< globalThreadID <<":run_MD:\t simulation!:");
+
     if ((error = md.run(topo, conf, sim))) {
       switch (error) {
         case E_SHAKE_FAILURE:
@@ -211,7 +214,6 @@ void util::replica::run_MD() {
       break;
     }
     
-    
     DEBUG(6, "replica "<< globalThreadID <<":run_MD:\t clean up:");      
     traj->print(topo, conf, sim);
 
@@ -225,5 +227,6 @@ void util::replica::run_MD() {
   if (curentStepNumber ==  totalStepNumber) {
     traj->print_final(topo, conf, sim);
   }
+
   curentStepNumber = stepsPerRun + curentStepNumber;
 }

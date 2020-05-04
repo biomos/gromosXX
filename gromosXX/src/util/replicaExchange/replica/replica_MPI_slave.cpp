@@ -27,7 +27,7 @@
 #define SUBMODULE replica_exchange
 
 util::replica_MPI_Slave::replica_MPI_Slave(io::Argument _args, int cont, int globalThreadID, 
-         simulation::MpiControl replica_mpi_control) : replica_Interface(globalThreadID, replica_mpi_control, _args){
+         simulation::MpiControl & replica_mpi_control) : replica_Interface(globalThreadID, replica_mpi_control, _args){
 #ifdef XXMPI
     /**
      * Build up replica MPI Slave - reads in the input and tries to link the replica to the Master?

@@ -27,7 +27,7 @@
 #define SUBMODULE replica_exchange
 
 util::replica_MPI_Master::replica_MPI_Master(io::Argument _args, int cont,  int globalThreadID, 
-        simulation::MpiControl replica_mpi_control) : replica_Interface( globalThreadID, replica_mpi_control, _args){
+        simulation::MpiControl & replica_mpi_control) : replica_Interface( globalThreadID, replica_mpi_control, _args){
  #ifdef XXMPI
 
     /**

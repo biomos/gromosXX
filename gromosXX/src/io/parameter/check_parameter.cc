@@ -25,8 +25,6 @@
 
 
 int io::check_parameter(simulation::Simulation &sim){
-std::cerr << "mutlib: "<<sim.param().multibath.multibath.size()<<"\n";
-std::cerr << "simID: "<<sim.mpiControl().simulationID <<"\n";
   int check1 = simple_crosschecks(sim);
   int check2 = check_features(sim);
   if (check1 || check2){

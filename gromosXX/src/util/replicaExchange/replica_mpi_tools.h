@@ -13,35 +13,13 @@
 
 #ifndef MPI_TOOLS_H
 #define MPI_TOOLS_H
-#ifdef XXMPI
-    #include <mpi.h>
-    #include<stdheader.h>
 
-    namespace util{
-          struct replica_graph_mpi_control{
+namespace util{
 
-            replica_graph_mpi_control() : graphID(0), masterID(0), threadID(-1), numberOfThreads(0)
-            { };
+   //tools for thread tracking
+//   std::vector<std::vector<unsigned int > > calculate_Replica_Thread_Coordination(int rank, int totalNumberOfThreads, int numReplicas);
 
-            unsigned int graphID;
-            unsigned int masterID;
-            unsigned int threadID;
-            unsigned int numberOfThreads;
-            unsigned int numberOfReplicas;
+}//namespace util
 
-            MPI_Comm comm;
-            int mpiColor;
-
-            std::vector<unsigned int> replicaMasterIDs;
-            std::vector<std::vector<unsigned int>> replicaThreads;
-            std::map<unsigned int, unsigned int> threadReplicaMap;
-        };
-
-        //tools for thread tracking
-       std::vector<std::vector<unsigned int > > calculate_Replica_Thread_Coordination(int rank, int totalNumberOfThreads, int numReplicas);
-
-    }//namespace util
-
-#endif
 #endif /* MPI_TOOLS_H */
 

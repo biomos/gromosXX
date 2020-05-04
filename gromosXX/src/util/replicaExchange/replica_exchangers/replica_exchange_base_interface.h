@@ -32,7 +32,7 @@
 
 #include <io/configuration/out_configuration.h>
 
-
+#include <util/replicaExchange/replica_graph_control.h>
 #include <util/replicaExchange/repex_mpi.h>
 #include <util/replicaExchange/replica/_replica_Interface.h>
 
@@ -64,8 +64,8 @@ namespace util {
      * @param _repMap std::map<int,int>, maps replica IDs to nodes; needed for communication
      */
     replica_exchange_base_interface(io::Argument _args, unsigned int cont, unsigned int globalThreadID, 
-                          replica_graph_mpi_control replicaGraphMPIControl,
-                          simulation::MpiControl replica_mpi_control);
+                          replica_graph_control &replicaGraphMPIControl,
+                          simulation::MpiControl &replica_mpi_control);
     /**
      * Destructor
      */
@@ -127,7 +127,7 @@ namespace util {
     /**
      * ID of the Master Thread for this RE-Graph
      */
-    struct replica_graph_mpi_control replicaGraphMPIControl;
+     replica_graph_control replicaGraphMPIControl;
 
     //////////////////////////////////////////////////////////
         /**
@@ -232,7 +232,7 @@ namespace util {
      * @param rank int, global Thread ID - later remove
      * @return void
      */
-    virtual void createReplicas(int cont,  int globalThreadID, simulation::MpiControl replica_mpi_control);
+    virtual void createReplicas(int cont,  int globalThreadID, simulation::MpiControl &replica_mpi_control);
     
     /**
      * Setting RE-Param

@@ -57,8 +57,8 @@ namespace util{
         replica_exchange_master_eds(io::Argument _args,
                                     unsigned int cont,
                                     unsigned int globalThreeadID,
-                                    replica_graph_mpi_control replicaGraphMPIControl,
-                                    simulation::MpiControl replica_mpi_control);
+                                    replica_graph_control & replicaGraphMPIControl,
+                                    simulation::MpiControl & replica_mpi_control);
 
         /**
          * @override
@@ -115,6 +115,8 @@ namespace util{
          * @param repoutPath
          */
         //void init_repOut_stat_file(std::string repoutPath) override;
+        
+        
         
     };
 }
