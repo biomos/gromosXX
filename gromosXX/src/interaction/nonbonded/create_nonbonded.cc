@@ -192,7 +192,7 @@ int interaction::create_g96_nonbonded
   Nonbonded_Interaction * ni;
 
   if (sim.mpi){
-    if (sim.mpi_control.threadID == sim.mpi_control.masterID)
+    if (sim.mpiControl().threadID == sim.mpiControl().masterID)
       ni = new MPI_Nonbonded_Master(pa);
     else
       ni = new MPI_Nonbonded_Slave(pa);

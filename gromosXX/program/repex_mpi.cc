@@ -557,9 +557,6 @@ int main(int argc, char *argv[]) {
             MPI_DEBUG(2, "Master " << globalThreadID << " \t run_MD START " << trial << "\n");
             Master->run_MD();
             MPI_DEBUG(1, "Master " << globalThreadID << " \t swap START " << trial << "\n")
-            std::cerr << "HUHAHA\n";
-            MPI_Barrier(MPI_COMM_WORLD); //Make sure all processes finished.
-
             Master->swap();
             MPI_DEBUG(2, "Master " << globalThreadID << " \t receive START " << trial << "\n");
             Master->receive_from_all_slaves();

@@ -102,6 +102,19 @@ namespace util {
      */
     unsigned int get_stepsPerRun();
     
+         /**
+     * MpiControl.
+     */
+    util::replica_graph_control & replicaGraphMPIControl(){
+        return m_replicaGraphMPIControl;
+    }
+    /** 
+     * MpiControl as const.
+     */
+    util::replica_graph_control const & replicaGraphMPIControl()const{
+      return m_replicaGraphMPIControl; 
+    }
+    
   protected:
      /*ATTRIBUTES*/
       //General
@@ -127,7 +140,7 @@ namespace util {
     /**
      * ID of the Master Thread for this RE-Graph
      */
-     replica_graph_control replicaGraphMPIControl;
+     replica_graph_control m_replicaGraphMPIControl;
 
     //////////////////////////////////////////////////////////
         /**

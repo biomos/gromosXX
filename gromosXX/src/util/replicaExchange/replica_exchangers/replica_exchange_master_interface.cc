@@ -100,11 +100,11 @@ void util::replica_exchange_master_interface::receive_from_all_slaves() {
     util::repInfo info;
 
     // receive all information from slaves
-    for (unsigned int slaveReplicaID = 0; slaveReplicaID < replicaGraphMPIControl.numberOfReplicas; ++slaveReplicaID) {
-      if (slaveReplicaID != replicaGraphMPIControl.masterID) {
+    for (unsigned int slaveReplicaID = 0; slaveReplicaID < replicaGraphMPIControl().numberOfReplicas; ++slaveReplicaID) {
+      if (slaveReplicaID != replicaGraphMPIControl().masterID) {
         unsigned int replicaMasterThreadID = slaveReplicaID;
         DEBUG(2,"replica_exchange_master_interface "<< globalThreadID <<":receive_from_all_slaves:\t get_MPI replicaMasterThread: "<< replicaMasterThreadID << "\n");
-        MPI_Recv(&info, 1, MPI_REPINFO, replicaMasterThreadID, REPINFO,  replicaGraphMPIControl.comm, &status);
+        MPI_Recv(&info, 1, MPI_REPINFO, replicaMasterThreadID, REPINFO,  replicaGraphMPIControl().comm, &status);
         replicaData[slaveReplicaID].run = info.run;
         replicaData[slaveReplicaID].epot = info.epot;
         replicaData[slaveReplicaID].epot_partner = info.epot_partner;
@@ -179,7 +179,7 @@ void util::replica_exchange_master_interface::init_repOut_stat_file() {
 void util::replica_exchange_master_interface::write() {
    DEBUG(2,"replica_exchange_master_interface "<< globalThreadID <<":write:\t START");
 
-  for (unsigned int treplicaID = 0; treplicaID < replicaGraphMPIControl.numberOfReplicas; ++treplicaID) {
+  for (unsigned int treplicaID = 0; treplicaID < replicaGraphMPIControl().numberOfReplicas; ++treplicaID) {
     repOut << std::setw(6) << (replicaData[treplicaID].ID + 1)
             << " "
             << std::setw(6) << (replicaData[treplicaID].partner + 1)

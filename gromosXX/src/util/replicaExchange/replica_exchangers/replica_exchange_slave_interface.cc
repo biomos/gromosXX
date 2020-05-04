@@ -75,7 +75,7 @@ void util::replica_exchange_slave_interface::send_to_master() const {
       info.partner = partnerReplicaID;
       info.probability = probability;
       info.switched = int(switched);
-      MPI_Send(&info, 1, MPI_REPINFO, replicaGraphMPIControl.masterID, REPINFO, replicaGraphMPIControl.comm);
+      MPI_Send(&info, 1, MPI_REPINFO, replicaGraphMPIControl().masterID, REPINFO, replicaGraphMPIControl().comm);
 
     DEBUG(2,"replica_exchange_slave_interface " << globalThreadID << ":\t send_to_master \t Done");
   }
