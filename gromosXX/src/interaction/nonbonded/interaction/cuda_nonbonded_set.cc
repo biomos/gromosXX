@@ -41,7 +41,7 @@
 #undef MODULE
 #undef SUBMODULE
 #define MODULE interaction
-#define SUBMODULE nonbonded
+#define SUBMODULE cuda
 
 
 /**
@@ -248,6 +248,7 @@ void interaction::CUDA_Nonbonded_Set::cycle() {
     m_pairlist_alg.timer().start("GPU data copy");
   
   error += cudakernel::cudaCopyPositions(&myconf->current().pos(mytopo->num_solute_atoms())(0), gpu_stat);
+  DEBUG(15, "myconf->current().pos(mytopo->num_solute_atoms())(0) = " << myconf->current().pos(mytopo->num_solute_atoms())(0));
   
 
   // copy the box if pressure is coupled
@@ -271,6 +272,7 @@ void interaction::CUDA_Nonbonded_Set::cycle() {
 
   if (pairlist_update) {
     const int egroup = mytopo->atom_energy_group(mytopo->num_solute_atoms());
+    DEBUG(15, "egroup = " << egroup);
     DEBUG(8, "doing longrange calculation");
 
     // in case of LS only LJ are calculated
@@ -278,9 +280,14 @@ void interaction::CUDA_Nonbonded_Set::cycle() {
     if (mygpu_id == 0)
       m_pairlist_alg.timer().start("longrange-cuda");
     double * For = &m_longrange_storage.force(mytopo->num_solute_atoms())(0);
+    DEBUG(15, "mytopo->num_solute_atoms() = " << mytopo->num_solute_atoms());
     double * Vir = &m_longrange_storage.virial_tensor(0, 0);
     double * e_lj = &m_longrange_storage.energies.lj_energy[egroup][egroup];
     double * e_crf = &m_longrange_storage.energies.crf_energy[egroup][egroup];
+    DEBUG(15, "For = " << *For);
+    DEBUG(15, "Vir = " << *Vir);
+    DEBUG(15, "e_lj = " << *e_lj);
+    DEBUG(15, "e_crf = " << *e_crf);
     error += cudakernel::cudaCalcForces(For, Vir, e_lj, e_crf, true, gpu_stat);
     if (mygpu_id == 0)
       m_pairlist_alg.timer().stop("longrange-cuda");
