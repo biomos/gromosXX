@@ -91,6 +91,7 @@ int interaction::CUDA_Nonbonded_Set
   do_cycle();
   if (mygpu_id == 0)
     m_pairlist_alg.timer().stop("cuda set");
+  if (error) return 1;
   DEBUG(15, "Finished Cycle for GPU: " << mygpu_id);
 
   return 0;
@@ -197,7 +198,6 @@ void interaction::CUDA_Nonbonded_Set::init_run() {
 
   DEBUG(9, "CUDA_Nonbonded_Set::run : cudaInit")
   DEBUG(11, "mygpu_id: " << mygpu_id << " of " << mysim->param().innerloop.number_gpus << ". device number: " << mysim->param().innerloop.gpu_device_number.at(mygpu_id))
-  int error = 0;
   gpu_stat = cudakernel::cudaInit
           (
           //mygpu_id, /*sim.param().innerloop.cuda_device,*/
@@ -241,7 +241,6 @@ void interaction::CUDA_Nonbonded_Set::cycle() {
   // this whole function is remove is the lib is not present.
 
 #ifdef HAVE_LIBCUKERNEL
-  int error = 0;
 
   m_storage.zero();
   const bool pairlist_update = !(mysim->steps() % mysim->param().pairlist.skip_step);
