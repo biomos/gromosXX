@@ -158,6 +158,10 @@ namespace util
         */
         int partner_eoffDim_numEoffodd_cyclic() const;
         /**
+        * calculates probability of switch with current partner in eoff dimension, may involve MPI communication
+        */
+        double calc_probability_for_eoff_exchange(const unsigned int partnerReplicaID);
+        /**
         * Sets eds_struct() parameters to original value of replica
         */
         void reset_eds();

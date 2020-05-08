@@ -329,7 +329,8 @@ void util::replica_exchange_base_2d_s_eoff_eds::swap_eoff(const unsigned int par
     if (simulationID < partnerReplicaID) {
 
       // posts a MPI_Recv(...) matching the MPI_Send below
-      probability = calc_probability(partnerReplicaID);
+      probability = calc_probability_for_eoff_exchange(partnerReplicaID);
+      DEBUG(1,"\nSWAP_EOFF: ID, probability = " << simulationID << ", " << probability << "\n");
       const double randNum = rng.get();
 
       std::vector<double> prob(2);
@@ -344,12 +345,18 @@ void util::replica_exchange_base_2d_s_eoff_eds::swap_eoff(const unsigned int par
         switched = true;
       } else
         switched = false;
+      DEBUG(1,"\nreplica_exchange_base_2d_s_eoff_eds: ID, switched = " << simulationID << ", " << switched << "\n");
     } else {    //The Partner sends his data to The calculating Thread
       //special case if lambda also needs to be exchanged
-      bool sameLambda = (l == replica->sim.param().replica.lambda[partnerReplicaID]);
-      DEBUG(1, "swap_eoff: simID, s value= " << simulationID << ", " << l << "\n");
-      DEBUG(1,"swap_eoff: simID, bool sameLambda= " << simulationID << ", " << sameLambda << "\n");
-      if(!sameLambda){      //exchange LAMBDA
+      bool sameEoffvector = true;
+      for(int i=0; i<replica->sim.param().reeds.num_states; ++i){
+        if(replica->sim.param().reeds.eds_para[simulationID].eir[i] != replica->sim.param().reeds.eds_para[partnerReplicaID].eir[i]){
+          sameEoffvector = false;
+          DEBUG(1,"\nSWAP_EOFF: " << simulationID << "sets sameEoffvector to false because of " << i << "th position of Eoffvector\n");
+        }
+      }
+      DEBUG(1,"swap_eoff: simID, bool sameEoffvector= " << simulationID << ", " << sameEoffvector << "\n");
+      if(!sameEoffvector){      //exchange LAMBDA
         // E21: Energy with configuration 2 and lambda 1(of partner)
         const double E21 = calculate_energy(partnerReplicaMasterThreadID);
         // this we can store as the partner energy of the current replica
@@ -359,10 +366,10 @@ void util::replica_exchange_base_2d_s_eoff_eds::swap_eoff(const unsigned int par
         const double E22 = epot;
         // send E21 and E22
         double energies[2] = {E22, E21};
-        //this send operation is matched in calc_probability()
+        //this send operation is matched in calc_probability_for_eoff_exchange()
         MPI_Send(&energies[0], 2, MPI_DOUBLE, partnerReplicaMasterThreadID, SWITCHENERGIES,  replicaGraphMPIControl.comm);
 #endif
-      } else { // sameLambda
+      } else { // sameEoffvector
 #ifdef XXMPI
         double energies[2] = {epot, 0.0};
         MPI_Send(&energies[0],2,MPI_DOUBLE, partnerReplicaMasterThreadID, SWITCHENERGIES,  replicaGraphMPIControl.comm);
@@ -392,6 +399,7 @@ void util::replica_exchange_base_2d_s_eoff_eds::swap_eoff(const unsigned int par
       } else {
         switched = false;
       }
+      DEBUG(1,"\nreplica_exchange_base_2d_s_eoff_eds: 2nd time ID, switched = " << simulationID << ", " << switched << "\n");
     }
 
   } else {//This should be an error!
@@ -464,12 +472,12 @@ int util::replica_exchange_base_2d_s_eoff_eds::find_partner() const {
       case 1: //eoff dimension
       DEBUG(5,"find_partner: SECOND case\n");
         if(numEoffeven){
-          DEBUG(1,"find_partner(second case): numEoffeven_firstCase \n");
+          DEBUG(5,"find_partner(second case): numEoffeven_firstCase \n");
           partner = partner_eoffDim_numEoffeven_firstCase();
         }
 
         else{
-          DEBUG(1,"find_partner(second case): numEoffodd_firstCase \n");
+          DEBUG(5,"find_partner(second case): numEoffodd_firstCase \n");
           partner = partner_eoffDim_numEoffodd_firstCase();
         }
       DEBUG(1,"find_partner(second case): partner of ID=" << ID << " is " << partner << "\n");
@@ -495,12 +503,12 @@ int util::replica_exchange_base_2d_s_eoff_eds::find_partner() const {
       case -1: //eoff dimension
       DEBUG(5,"find_partner: FOURTH case\n");
         if(numEoffeven){
-          DEBUG(1,"find_partner(fourth case): numEoffeven_secondCase \n");
+          DEBUG(5,"find_partner(fourth case): numEoffeven_secondCase \n");
           partner = partner_eoffDim_numEoffeven_secondCase();
         }
 
         else{
-          DEBUG(1,"find_partner(fourth case): numEoffodd_secondCase \n");
+          DEBUG(5,"find_partner(fourth case): numEoffodd_secondCase \n");
           partner = partner_eoffDim_numEoffodd_secondCase();
         }
       DEBUG(1,"find_partner(fourth case): partner of ID=" << ID << " is " << partner << "\n");
@@ -531,13 +539,13 @@ int util::replica_exchange_base_2d_s_eoff_eds::partner_eoffDim_numEoffeven_first
     partner = ID + num_l;
     //edge case
     if(right_edge && !periodic) partner = ID;
-    if(right_edge && periodic) {partner = (ID + num_l) % numReps; DEBUG(1,"\nPERIODIC\n");}
+    if(right_edge && periodic) {partner = (ID + num_l) % numReps; DEBUG(5,"\nPERIODIC\n");}
   }
   else {
     partner = ID - num_l;
     //edge case
     if(left_edge && !periodic) partner = ID;
-    if(left_edge && periodic) {partner = ID + (numReps - num_l); DEBUG(1,"\nPERIODIC\n");}
+    if(left_edge && periodic) {partner = ID + (numReps - num_l); DEBUG(5,"\nPERIODIC\n");}
   }
   return partner;
 }
@@ -599,13 +607,13 @@ int util::replica_exchange_base_2d_s_eoff_eds::partner_eoffDim_numEoffeven_secon
     partner = ID - num_l;
     //edge case
     if(left_edge && !periodic) partner = ID;
-    if(left_edge && periodic) {partner = ID + (numReps - num_l); DEBUG(1,"\nPERIODIC\n");}
+    if(left_edge && periodic) {partner = ID + (numReps - num_l); DEBUG(5,"\nPERIODIC\n");}
   }
   else {
     partner = ID + num_l;
     //edge case
     if(right_edge && !periodic) partner = ID;
-    if(right_edge && periodic) {partner = (ID + num_l) % numReps; DEBUG(1,"\nPERIODIC\n");}
+    if(right_edge && periodic) {partner = (ID + num_l) % numReps; DEBUG(5,"\nPERIODIC\n");}
   }
   return partner;
 }
@@ -676,42 +684,127 @@ int util::replica_exchange_base_2d_s_eoff_eds::partner_eoffDim_numEoffodd_cyclic
 	if(ID<border){
 		if(evenCol && even_blocked_col){
 			partner = (ID + num_l) % numReps;
-			DEBUG(1,"\ncase a with ID: " << ID << "\n");
+			DEBUG(7,"\ncase a with ID: " << ID << "\n");
 		}
 		if(!evenCol && even_blocked_col) {
 			partner = (numReps + ((ID - num_l) % numReps)) % numReps;//to handle possible negative partner right
-			DEBUG(1,"\ncase b with ID: " << ID << "\n");
+			DEBUG(7,"\ncase b with ID: " << ID << "\n");
 		}
 		if(evenCol && !even_blocked_col){
 			partner = (numReps + ((ID - num_l) % numReps)) % numReps;//to handle possible negative partner right
-			DEBUG(1,"\ncase e with ID: " << ID << "\n");
+			DEBUG(7,"\ncase e with ID: " << ID << "\n");
 		}
 		if(!evenCol && !even_blocked_col){
 			partner = (ID + num_l) % numReps;
-			DEBUG(1,"\ncase f with ID: " << ID << "\n");
+			DEBUG(7,"\ncase f with ID: " << ID << "\n");
 		}
 	}
 	if(ID>border){
 		if(evenCol && even_blocked_col){
 			partner = (numReps + ((ID - num_l) % numReps)) % numReps;//to handle possible negative partner right
-			DEBUG(1,"\ncase c with ID: " << ID << "\n");
+			DEBUG(7,"\ncase c with ID: " << ID << "\n");
 		}
 		if(!evenCol && even_blocked_col){
 			partner = (ID + num_l) % numReps;
-			DEBUG(1,"\ncase d with ID: " << ID << "\n");
+			DEBUG(7,"\ncase d with ID: " << ID << "\n");
 		}
 		if(evenCol && !even_blocked_col){
 			partner = (ID + num_l) % numReps;
-			DEBUG(1,"\ncase g with ID: " << ID << "\n");
+			DEBUG(7,"\ncase g with ID: " << ID << "\n");
 		}
 		if(!evenCol && !even_blocked_col){
 			partner = (numReps + ((ID - num_l) % numReps)) % numReps;//to handle possible negative partner right
-			DEBUG(1,"\ncase h with ID: " << ID << "\n");
+			DEBUG(7,"\ncase h with ID: " << ID << "\n");
 		}
 	}
   }
 
   return partner;
+}
+
+double util::replica_exchange_base_2d_s_eoff_eds::calc_probability_for_eoff_exchange(const unsigned int partnerReplicaID) {
+
+  DEBUG(1,"\n\nreplica_exchange_base_2d_s_eoff_eds: CALC_PROBABILITY by ID: " << simulationID << "\n");
+
+  unsigned int partnerReplicaMasterThreadID = partnerReplicaID;
+
+  double delta;
+  const double b1 = 1.0 / (math::k_Boltzmann * T);
+  const double b2 = 1.0 / (math::k_Boltzmann * replica->sim.param().replica.temperature[partnerReplicaID % replica->sim.param().replica.num_T]);
+
+  bool sameEoffvector = true;
+  for(int i=0; i<replica->sim.param().reeds.num_states; ++i){
+    if(replica->sim.param().reeds.eds_para[simulationID].eir[i] != replica->sim.param().reeds.eds_para[partnerReplicaID].eir[i]){
+      sameEoffvector = false;
+      DEBUG(1,"\nSWAP_EOFF: " << simulationID << "sets sameEoffvector to false because of " << i << "th position of Eoffvector\n");
+    }
+  }
+  DEBUG(1,"swap_eoff: simID, bool sameEoffvector= " << simulationID << ", " << sameEoffvector << "\n");
+
+  if (sameEoffvector) {
+    // use simple formula
+    // get energy from the other partner
+    double energies[2] = {0.0, 0.0};
+#ifdef XXMPI
+    MPI_Status status;
+    MPI_Recv(&energies[0], 2, MPI_DOUBLE, partnerReplicaMasterThreadID, SWITCHENERGIES,  replicaGraphMPIControl.comm, &status);
+#endif
+
+    epot_partner = energies[0];
+    delta = (b1 - b2)*(epot_partner - epot); //*  (E21 - E11=
+
+  } else {
+    // 2D formula
+    /*
+     * E12: Energy with lambda from 1 and configuration from 2
+     * delta = b1 * ( E22 - E11) - b2*(E21  - E12);
+     * E22 and E12 needed from partner
+     */
+    double energies[2] = {0.0, 0.0};
+#ifdef XXMPI
+    MPI_Status status;
+    MPI_Recv(&energies[0], 2, MPI_DOUBLE, partnerReplicaMasterThreadID, SWITCHENERGIES,  replicaGraphMPIControl.comm, &status);
+#endif
+    const double E22 = energies[0];
+    const double E12 = energies[1];
+
+    const double E11 = epot;
+    const double E21 = calculate_energy(partnerReplicaID);
+
+    // store this as the partner energy
+    epot_partner = E21;
+
+    // Chris: I think this is wrong
+    // delta = b1 * (E22 - E11) - b2 * (E21 - E12);
+    //std::cerr << "b1: " << b1 << " b2: " << b2 << std::endl;
+    //std::cerr << "E11: " << E11 << " E22: " << E22 << std::endl;
+    //std::cerr << "E21: " << E21 << " E12: " << E12 << std::endl;
+
+    delta = b1 * (E12 - E11) - b2 * (E22 - E21);
+  }
+
+  // NPT? add PV term
+  if (replica->sim.param().pcouple.scale != math::pcouple_off) {
+    math::Box box_partner = replica->conf.current().box;
+#ifdef XXMPI
+    MPI_Status status;
+    MPI_Recv(&box_partner(0)[0], 1, MPI_BOX, partnerReplicaMasterThreadID, BOX,  replicaGraphMPIControl.comm, &status);
+#endif
+    double V1 = math::volume(replica->conf.current().box, replica->conf.boundary_type);
+    double V2 = math::volume(box_partner, replica->conf.boundary_type);
+    //std::cerr << "volumes: " << V1 << " " << V2 << std::endl;
+
+    // isotropic!
+    double pressure = (replica->sim.param().pcouple.pres0(0,0)
+              + replica->sim.param().pcouple.pres0(1,1)
+              + replica->sim.param().pcouple.pres0(2,2)) / 3.0;
+    delta += pressure * (b1 - b2) * (V2 - V1);
+  }
+
+  if (delta < 0.0)
+    return 1.0;
+  else
+    return exp(-delta);
 }
 
 ////exchange params
