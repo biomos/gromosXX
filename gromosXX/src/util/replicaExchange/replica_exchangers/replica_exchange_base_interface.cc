@@ -460,7 +460,7 @@ int util::replica_exchange_base_interface::find_partner() const {
 
 double util::replica_exchange_base_interface::calc_probability(const unsigned int partnerReplicaID) {
 
-  DEBUG(3,"\n\nreplica_exchange_base_interface: CALC_PROBABILITY\n\n");
+  DEBUG(1,"\n\nreplica_exchange_base_interface: CALC_PROBABILITY by ID:" << simulationID << "\n");
 
   unsigned int partnerReplicaMasterThreadID = partnerReplicaID;
 

@@ -347,16 +347,16 @@ void util::replica_exchange_base_2d_s_eoff_eds::swap_eoff(const unsigned int par
         switched = false;
       DEBUG(1,"\nreplica_exchange_base_2d_s_eoff_eds: ID, switched = " << simulationID << ", " << switched << "\n");
     } else {    //The Partner sends his data to The calculating Thread
-      //special case if lambda also needs to be exchanged
+      //special case if eoff vector also needs to be exchanged
       bool sameEoffvector = true;
       for(int i=0; i<replica->sim.param().reeds.num_states; ++i){
         if(replica->sim.param().reeds.eds_para[simulationID].eir[i] != replica->sim.param().reeds.eds_para[partnerReplicaID].eir[i]){
           sameEoffvector = false;
-          DEBUG(1,"\nSWAP_EOFF: " << simulationID << "sets sameEoffvector to false because of " << i << "th position of Eoffvector\n");
+          DEBUG(1,"\nSWAP_EOFF: ID " << simulationID << " sets sameEoffvector to false because of " << i << "th position of Eoffvector\n");
         }
       }
       DEBUG(1,"swap_eoff: simID, bool sameEoffvector= " << simulationID << ", " << sameEoffvector << "\n");
-      if(!sameEoffvector){      //exchange LAMBDA
+      if(!sameEoffvector){      //exchange EOFF_VEC
         // E21: Energy with configuration 2 and lambda 1(of partner)
         const double E21 = calculate_energy(partnerReplicaMasterThreadID);
         // this we can store as the partner energy of the current replica
@@ -736,7 +736,7 @@ double util::replica_exchange_base_2d_s_eoff_eds::calc_probability_for_eoff_exch
   for(int i=0; i<replica->sim.param().reeds.num_states; ++i){
     if(replica->sim.param().reeds.eds_para[simulationID].eir[i] != replica->sim.param().reeds.eds_para[partnerReplicaID].eir[i]){
       sameEoffvector = false;
-      DEBUG(1,"\nSWAP_EOFF: " << simulationID << "sets sameEoffvector to false because of " << i << "th position of Eoffvector\n");
+      DEBUG(1,"\nSWAP_EOFF: ID " << simulationID << " sets sameEoffvector to false because of " << i << "th position of Eoffvector\n");
     }
   }
   DEBUG(1,"swap_eoff: simID, bool sameEoffvector= " << simulationID << ", " << sameEoffvector << "\n");
