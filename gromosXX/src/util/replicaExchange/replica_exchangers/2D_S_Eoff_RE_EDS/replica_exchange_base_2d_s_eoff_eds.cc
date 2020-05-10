@@ -774,12 +774,6 @@ double util::replica_exchange_base_2d_s_eoff_eds::calc_probability_for_eoff_exch
     // store this as the partner energy
     epot_partner = E21;
 
-    // Chris: I think this is wrong
-    // delta = b1 * (E22 - E11) - b2 * (E21 - E12);
-    //std::cerr << "b1: " << b1 << " b2: " << b2 << std::endl;
-    //std::cerr << "E11: " << E11 << " E22: " << E22 << std::endl;
-    //std::cerr << "E21: " << E21 << " E12: " << E12 << std::endl;
-
     delta = b1 * (E12 - E11) - b2 * (E22 - E21);
   }
 
