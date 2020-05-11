@@ -353,6 +353,7 @@ void util::replica_exchange_base_2d_s_eoff_eds::swap_eoff(const unsigned int par
         if(replica->sim.param().reeds.eds_para[simulationID].eir[i] != replica->sim.param().reeds.eds_para[partnerReplicaID].eir[i]){
           sameEoffvector = false;
           DEBUG(1,"\nSWAP_EOFF: ID " << simulationID << " sets sameEoffvector to false because of " << i << "th position of Eoffvector\n");
+          break;
         }
       }
       DEBUG(1,"swap_eoff: simID, bool sameEoffvector= " << simulationID << ", " << sameEoffvector << "\n");
@@ -737,6 +738,7 @@ double util::replica_exchange_base_2d_s_eoff_eds::calc_probability_for_eoff_exch
     if(replica->sim.param().reeds.eds_para[simulationID].eir[i] != replica->sim.param().reeds.eds_para[partnerReplicaID].eir[i]){
       sameEoffvector = false;
       DEBUG(1,"\nSWAP_EOFF: ID " << simulationID << " sets sameEoffvector to false because of " << i << "th position of Eoffvector\n");
+      break;
     }
   }
   DEBUG(1,"swap_eoff: simID, bool sameEoffvector= " << simulationID << ", " << sameEoffvector << "\n");
