@@ -186,7 +186,7 @@ int main(int argc, char *argv[]) {
                 quiet = true;
             }
                         
-            // read in the rest
+            // read in (test and get initial inf)
             if (io::read_input_repex(args, topo, conf, sim, md,  globalThreadID, totalNumberOfThreads, std::cout, quiet)) {
                 if (globalThreadID == 0) {
                     std::cerr << "\n\t########################################################\n"
@@ -233,19 +233,16 @@ int main(int argc, char *argv[]) {
             int replica_offset = 0;
             for (unsigned int replicaSimulationID = 0; replicaSimulationID < numReplicas; replicaSimulationID++) {
                 for (unsigned int replicaSimulationSubThread = 0; replicaSimulationSubThread < threadsPerReplicaSimulation; replicaSimulationSubThread++) {
-
                     threadID = replicaSimulationSubThread + replicaSimulationID*threadsPerReplicaSimulation+replica_offset;
                     thread_id_replica_map.insert(std::pair<unsigned int, unsigned int>(threadID, replicaSimulationID));
                     replica_owned_threads[replicaSimulationID].push_back(threadID);
 
                 }
                 if(leftOverThreads>0 and replicaSimulationID < leftOverThreads){    //left over threads are evenly distirbuted.
-
-                    threadID = threadsPerReplicaSimulation + replicaSimulationID*totalNumberOfThreads+replica_offset;
+                    threadID = threadsPerReplicaSimulation+replicaSimulationID*threadsPerReplicaSimulation+replica_offset;
                     thread_id_replica_map.insert(std::pair<unsigned int, unsigned int>(threadID, replicaSimulationID));
                     replica_owned_threads[replicaSimulationID].push_back(threadID);
                     replica_offset++;
-
                 }    
             }            
             MPI_DEBUG(2, "REEDS-SIM! - aha?")
@@ -261,6 +258,7 @@ int main(int argc, char *argv[]) {
                 counter++;
             } 
             
+
     } catch (const std::exception &e) {
         std::cerr << "\n\t########################################################\n"
                 << "\n\t\t Exception was thrown in initial test parsing!\n"
@@ -308,18 +306,6 @@ int main(int argc, char *argv[]) {
             replica_owned_threads[simulationID], //Threads belonging to the simulatoin
             simulationCOMM );   //simComm
     
-
-    if(replica_mpi_control.numberOfThreads != simulation_size){
-        std::cerr << "\n\t########################################################\n"
-                << "\n\t\tErrors during MPI-Initialisation!\n"
-                << "\n\t########################################################\n";
-        std::string msg = "ERROR!\n Uh OH! NOT ALL Threads registered correctly to the replicas!";
-        std::cerr << msg << "\n" << " simulation size: " << simulation_size << " expected: " << replica_mpi_control.numberOfThreads;
-        MPI_Comm_free(&replica_mpi_control.comm); //Clean up
-        MPI_Finalize();
-        return 1;
-    }
-
     MPI_Barrier(replica_mpi_control.comm);    //wait for all threads to register!
     // Simulation Control DONE
     
@@ -364,6 +350,8 @@ int main(int argc, char *argv[]) {
     
     //replica Graph out:
     if(globalThreadID == 0){
+        std::cerr << "num of threads: "  << totalNumberOfThreads << "\n";
+        std::cerr << "threads per rep: " << threadsPerReplicaSimulation << "\n";
         std::cout << "Masters of "<<reGMPI.numberOfReplicas<< "replicas \t";
         for(int masterThreadID : replica_master_IDS){
             std::cout << masterThreadID  << "\t";

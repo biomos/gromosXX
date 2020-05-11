@@ -158,8 +158,9 @@ util::replica_MPI_Slave::~replica_MPI_Slave() {
 }
 
 void util::replica_MPI_Slave::run_MD(){
-    #ifdef XXMPI
     MPI_DEBUG(5, "replica_MPI_SLAVE "<< globalThreadID <<":runMD:\t thread  "<< globalThreadID <<": \t START");
+
+    #ifdef XXMPI
     int error;
     int next_step = 0 ;
     
@@ -226,14 +227,13 @@ void util::replica_MPI_Slave::run_MD(){
     }
     curentStepNumber +=  stepsPerRun;
 
-    
-    MPI_DEBUG(5, "replica_MPI_SLAVE "<< globalThreadID <<":runMD:\t DONE at step= " << curentStepNumber);
     #endif
+    MPI_DEBUG(5, "replica_MPI_SLAVE "<< globalThreadID <<":runMD:\t DONE at step= " << curentStepNumber);
 }
     
 void util::replica_MPI_Slave::receive_coords(){
-  #ifdef XXMPI
   DEBUG(4, "replica_MPI_Slave " << globalThreadID << " ::receive_coords::\t START");
+  #ifdef XXMPI
 
   MPI_Status status;
   
@@ -261,6 +261,6 @@ void util::replica_MPI_Slave::receive_coords(){
 
   //Exchange conf?
   conf.exchange_state();
+  #endif
   DEBUG(4, "replica_MPI_Slave " << globalThreadID << " ::receive_coords::\t Done");
-#endif
 }

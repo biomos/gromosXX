@@ -138,6 +138,48 @@ int main(int argc, char *argv[]){
   sim1.mpi = true;
   sim2.mpi = true;
   
+    //Build Attributes:
+    ////GENERATE SIM SPECIFIC SIMULATION COMM
+    MPI_Comm simulationCOMM;
+    MPI_Comm_split(MPI_COMM_WORLD, sim1.mpiControl().mpiColor, rank, &simulationCOMM);
+    MPI_Barrier(simulationCOMM);
+    ////RANK and Size of thread in the simulationCOMM
+    int simulation_rank, simulation_size;
+    MPI_Comm_rank(simulationCOMM, &simulation_rank);
+    MPI_Comm_size(simulationCOMM, &simulation_size);
+    ////build up vector containing the replica_ids owned by thread
+    std::vector<unsigned int> simulationOwnedThreads(size);
+    std::iota(std::begin(simulationOwnedThreads), std::end(simulationOwnedThreads), 0);
+
+    //Pass the information to MPI_control Struct
+    sim1.mpiControl().numberOfThreads = simulation_size;
+    sim1.mpiControl().threadID = simulation_rank;
+    sim1.mpiControl().simulationOwnedThreads = simulationOwnedThreads;
+    sim1.mpiControl().comm = simulationCOMM;
+
+    //Control Output
+    if (sim1.mpiControl().threadID == sim1.mpiControl().masterID) {
+      std::cout << "MPI INFORMATION \n" <<
+              "\tSimulation ID " << sim1.mpiControl().simulationID << "\n" <<
+              "\tSimulation Master Thread ID " << sim1.mpiControl().masterID << "\n" <<
+              "\tSimulation Total Num Threads " << sim1.mpiControl().numberOfThreads << "\n" <<
+              "\tSimulation All Thread IDS:  " << "\n\t\t";
+      for (auto x : sim1.mpiControl().simulationOwnedThreads) {
+          std::cout << x << "\t ";
+      }
+      std::cout << "\n";
+    }
+    std::cout.flush();
+    MPI_Barrier(sim1.mpiControl().comm);
+    std::cout << "Simulation This Thread ID " << sim1.mpiControl().threadID << "\n";
+    std::cout.flush();
+    MPI_Barrier(sim1.mpiControl().comm);
+    if (sim1.mpiControl().threadID == sim1.mpiControl().masterID) {
+      std::cout << "END\n";
+    }
+    sim2.mpiControl() = sim1.mpiControl();
+
+  
   io::Argument args1, args2;
   for(io::Argument::const_iterator it = args.begin(), to = args.end();
           it != to; ++it) {
