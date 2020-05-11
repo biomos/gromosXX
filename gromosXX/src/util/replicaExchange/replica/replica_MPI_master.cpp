@@ -41,7 +41,6 @@ util::replica_MPI_Master::replica_MPI_Master(io::Argument _args, int cont,  int 
      * @param simulationID
      * @param simulation_num_threads
      */
-    
     MPI_DEBUG(5, "replica_MPI_MASTER "<< globalThreadID <<":Constructor:\t  "<< globalThreadID <<":\t START");
     
     /**
@@ -198,7 +197,6 @@ void util::replica_MPI_Master::run_MD(){
     
     //next_stepf for mpi slaves  
     int next_step = 1;  //bool that signalises if next step is fine.
-
     //after an Replica coordinate exchange, update the coordinates of the slaves
     send_coordinates();
     DEBUG(2, "replica_MPI_Master "<< globalThreadID <<":runMD:\t\t sent Coords");
@@ -269,7 +267,6 @@ void util::replica_MPI_Master::run_MD(){
 void util::replica_MPI_Master::send_coordinates(){
   #ifdef XXMPI
   DEBUG(4, "replica_MPI_Master " << globalThreadID << " ::send_coordinates::\t START");
-
   //EXCHANGE conf parts
   MPI_Bcast(&conf.current().pos[0][0], 1, MPI_VARRAY, replica_mpi_control.masterID , replica_mpi_control.comm);
   MPI_Bcast(&conf.current().posV[0][0], 1, MPI_VARRAY, replica_mpi_control.masterID , replica_mpi_control.comm);

@@ -132,7 +132,6 @@ void util::replica_exchange_base_eds::init() {
 //initialize output files  
 void util::replica_exchange_base_eds::init_eds_stat(){
     DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":init_eds_stat:\t START");
-
     ID_t currentID=1000; //error value
     currentID = simulationID;
     replicaStatData[currentID].ID =currentID;

@@ -103,18 +103,23 @@ namespace util {
     unsigned int get_stepsPerRun();
     
          /**
-     * MpiControl.
+     * replica_graph_control.
      */
     util::replica_graph_control & replicaGraphMPIControl(){
         return m_replicaGraphMPIControl;
     }
     /** 
-     * MpiControl as const.
+     * replica_graph_control as const.
      */
     util::replica_graph_control const & replicaGraphMPIControl()const{
       return m_replicaGraphMPIControl; 
     }
-    
+     
+    /**
+     * ID of the Master Thread for this RE-Graph
+     */
+    replica_graph_control m_replicaGraphMPIControl = replica_graph_control();
+
   protected:
      /*ATTRIBUTES*/
       //General
@@ -137,10 +142,6 @@ namespace util {
      * Thead ID of this class in the global context (= MPI-Rank)
      */
     unsigned int globalThreadID;
-    /**
-     * ID of the Master Thread for this RE-Graph
-     */
-     replica_graph_control m_replicaGraphMPIControl;
 
     //////////////////////////////////////////////////////////
         /**

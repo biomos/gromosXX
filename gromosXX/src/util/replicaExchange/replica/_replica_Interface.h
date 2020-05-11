@@ -111,7 +111,7 @@ namespace util{
     public:
           
         //Constructor
-        replica_Interface(int globalThreadID, simulation::MpiControl & replica_mpi_control, io::Argument args);
+        replica_Interface(int globalThreadID, simulation::MpiControl & _replica_mpi_control, io::Argument args);
         
         //Destructor
         virtual ~replica_Interface();

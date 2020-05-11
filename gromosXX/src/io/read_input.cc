@@ -49,9 +49,6 @@ int io::read_input(io::Argument const & args,
 		   bool quiet)
 {
   if (read_parameter(args, sim, os, quiet) != 0) return -1;
-    std::cerr << "Go before checking: "<< sim.param().multibath.multibath.size()<<"\n";
-    std::cerr << "Go before checking: "<< sim.param().multibath.multibath[0].temperature<<"\n";
-
   if (check_parameter(sim) != 0) return -1;
 
   if (read_topology(args, topo, sim, md_seq, os, quiet) != 0) return -1;
@@ -99,11 +96,8 @@ int io::read_input_repex(io::Argument const & args,
 		   std::ostream & os,  
                    bool quiet)
 {
-    
+    //TODO check if enough threads
     if (read_parameter(args, sim, os, quiet) != 0){return -1;}
-    std::cerr << "Go checknig in: \n";
-    std::cerr << "Go before checking: "<< sim.param().multibath.multibath.size()<<"\n";
-    std::cerr << "Go before checking: "<< sim.param().multibath.multibath[0].temperature<<"\n";
 
     if (check_parameter(sim) != 0){return -1;}
  
@@ -141,7 +135,20 @@ int io::read_input_repex(io::Argument const & args,
     }            
     int simulationID = thread_id_replica_map[rank];
 
-    
+    //if enough threads avail
+    if (totalNumberOfThreads < numReplicas) {
+        if (rank == 0) {
+            std::cerr << "\n\t########################################################\n"
+                    << "\n\t\tErrors during initial Parameter reading!\n"
+                    << "\n\t########################################################\n";
+            std::cerr << "\n There were not enough MPI threads assigned to this run!\n"
+                    << "FOUND THREADS: " << totalNumberOfThreads << "\tNEED: " << numReplicas << "\n";
+            std::cout << "\n There were not enough MPI thread assigned to this run!\n"
+                    << "FOUND THREADS: " << totalNumberOfThreads << "\tNEED: " << numReplicas << "\n";
+            MPI_Finalize();
+        }
+        return -1;
+    }
 
     //initialize for RE-EDS ID dependent parameters.
     if(sim.param().reeds.reeds){

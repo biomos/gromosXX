@@ -57,8 +57,21 @@ util::replica_exchange_base_interface::replica_exchange_base_interface(io::Argum
         m_replicaGraphMPIControl(replicaGraphMPIControl)
 {
 #ifdef XXMPI
-  DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":Constructor:\t START ");
+  DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":Constructor:\t START ");\
   createReplicas(cont, globalThreadID, replica_mpi_control);
+
+  //Copy by hand....
+  m_replicaGraphMPIControl.graphID = replicaGraphMPIControl.graphID;
+  m_replicaGraphMPIControl.masterID = replicaGraphMPIControl.masterID;
+  m_replicaGraphMPIControl.threadID = replicaGraphMPIControl.threadID;
+  m_replicaGraphMPIControl.numberOfThreads = replicaGraphMPIControl.numberOfThreads;
+  m_replicaGraphMPIControl.numberOfReplicas = replicaGraphMPIControl.numberOfReplicas;
+  m_replicaGraphMPIControl.mpiColor = replicaGraphMPIControl.mpiColor;
+  m_replicaGraphMPIControl.replicaMasterIDs = replicaGraphMPIControl.replicaMasterIDs;
+  m_replicaGraphMPIControl.replicaThreads = replicaGraphMPIControl.replicaThreads;
+  m_replicaGraphMPIControl.threadReplicaMap = replicaGraphMPIControl.threadReplicaMap;
+  m_replicaGraphMPIControl.comm = replicaGraphMPIControl.comm;
+
   DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":Constructor:\t Constructor \t DONE " << replica->sim.param().reeds.num_l);
   #else
     throw "Cannot use send_to_master from replica_exchange_slave_eds without MPI!"; 
@@ -75,6 +88,7 @@ void util::replica_exchange_base_interface::createReplicas(int cont, int globalT
 
   // create the number of replicas that are assigned to my node
     if(replica_mpi_control.numberOfThreads>1){
+        
         if(replica_mpi_control.threadID == replica_mpi_control.masterID ){
             replica = new util::replica_MPI_Master(args, cont, globalThreadID, replica_mpi_control);
         }
@@ -96,13 +110,11 @@ void util::replica_exchange_base_interface::init() {
 
 void util::replica_exchange_base_interface::run_MD() {
   MPI_DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":run_MD:\t START");
-    std::cerr << "DFUNM "<< replicaGraphMPIControl().numberOfReplicas<<" NONOT HERE\n\n";
-
     replica->sim.steps() = steps;
     replica->sim.time() = time;
 
-    replica->run_MD();
-    
+    replica->run_MD();    
+
     if(not_sender){
         updateReplica_params();
     }
@@ -125,12 +137,8 @@ void util::replica_exchange_base_interface::swap(){
   DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":swap:\t START");
 
   // Here I'm loosing the struct again!
-  std::cerr << "DFUNM "<< replicaGraphMPIControl().numberOfReplicas<<" NONOT HERE\n\n";
-  MPI_Barrier(replicaGraphMPIControl().comm);
-  std::cerr<< "DFUNM!\n\n";
     partnerReplicaID = find_partner();
-
-    if (partnerReplicaID != simulationID) // different replica?
+    if (partnerReplicaID != simulationID && not_sender) // different replica?
     {
         DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":swap:\t I'm gonna swap!:)");
       //TODO: RENAME 
@@ -157,10 +165,7 @@ void util::replica_exchange_base_interface::swap(){
     }
     if(switched && replica->sim.param().replica.scale) {
       velscale(partnerReplicaID);
-    }
-    std::cerr << "HFFAAAA1\n";
-
-     
+    }     
   DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":swap:\t DONE");
 }
 
@@ -194,12 +199,9 @@ void util::replica_exchange_base_interface::swap_replicas_2D(const unsigned int 
       std::vector<double> prob(2);
       prob[0] = probability;
       prob[1] = randNum;
-                std::cerr << "HFFAAAA8\n";
-                std::cerr.flush();
 #ifdef XXMPI
       MPI_Send(&prob[0], 2, MPI_DOUBLE, partnerReplicaID, SENDCOORDS, replicaGraphMPIControl().comm);
 #endif
-                std::cerr << "HFFAAAA9\n";
 
       if (randNum < probability) {
         switched = true;
@@ -577,38 +579,6 @@ double util::replica_exchange_base_interface::calculate_energy(const unsigned in
   change_lambda(partnerThreadID);
 
   double energy = calculate_energy_core();
-  /*
-   //THIS COULD GO be removed!
-  algorithm::Algorithm* ff = replica->md.algorithm("Forcefield");
-
-  if (ff->apply(replica->topo, replica->conf, replica->sim)) {
-    print_info("Error in energy calculation!");
- #ifdef XXMPI
-    MPI_Abort(MPI_COMM_WORLD, E_UNSPECIFIED);
-#endif
-    return 1;
-  }
-
-  replica->conf.current().energies.calculate_totals();
-  switch (replica->sim.param().xrayrest.replica_exchange_parameters.energy_switcher) {
-    case simulation::energy_tot:
-      energy = replica->conf.current().energies.potential_total + replica->conf.current().energies.special_total;
-      break;
-    case simulation::energy_phys:
-      energy = replica->conf.current().energies.potential_total;
-      break;
-    case simulation::energy_special:
-      energy = replica->conf.current().energies.special_total;
-      break;
-    default:
-      std::cerr << "Something is wrong in energy calculation" << std::endl;
-      print_info("Error in energy calculation!");
-#ifdef XXMPI
-      MPI_Abort(MPI_COMM_WORLD, E_UNSPECIFIED);
-#endif
-      return 1;
-  }
-   * */
 
   set_lambda();
   DEBUG(4, "replica "<< globalThreadID <<":calculate_energy:\t  DONE");

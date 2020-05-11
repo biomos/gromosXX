@@ -34,7 +34,6 @@ util::replica_exchange_master_eds::replica_exchange_master_eds(io::Argument _arg
     DEBUG(3,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t Replicas: "<<replicaGraphMPIControl.numberOfReplicas);  
     DEBUG(3,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t ReplicasOLD: "<<repParams.num_l);  
     DEBUG(3,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t ReplicasMASTER: "<< replicaGraphMPIControl.masterID);  
-
     //initialize data of replicas    
     replicaData.resize(replicaGraphMPIControl.numberOfReplicas);      
     DEBUG(3,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t replicaDatasize\t "<< replicaData.size());

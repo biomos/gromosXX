@@ -42,7 +42,7 @@ util::replica_MPI_Slave::replica_MPI_Slave(io::Argument _args, int cont, int glo
      */
     
     MPI_DEBUG(5, "replica_MPI_SLAVE "<< globalThreadID <<":Constructor:\t  "<< globalThreadID <<":\t START");
-
+    
     /**
      * READ INPUT
      */
@@ -60,7 +60,7 @@ util::replica_MPI_Slave::replica_MPI_Slave(io::Argument _args, int cont, int glo
     //build up system:
     sim.mpi = true;
     sim.mpiControl() = replica_mpi_control;
-
+    
     if (io::read_input(args, topo, conf, sim, md, *os, true)) { 
       io::messages.display(*os);
       std::cerr << "\nErrors during initialization!\n" << std::endl;

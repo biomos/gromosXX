@@ -26,10 +26,22 @@
 #define MODULE util
 #define SUBMODULE replica_exchange
 
-util::replica_Interface::replica_Interface(int globalThreadID, simulation::MpiControl & replica_mpi_control, io::Argument args): 
+util::replica_Interface::replica_Interface(int globalThreadID, simulation::MpiControl & _replica_mpi_control, io::Argument args): 
         globalThreadID(globalThreadID),  
-        simulationID(replica_mpi_control.simulationID), simulationThreadID(replica_mpi_control.threadID), replica_mpi_control(replica_mpi_control), 
+        simulationID(_replica_mpi_control.simulationID), simulationThreadID(_replica_mpi_control.threadID), replica_mpi_control(_replica_mpi_control), 
         args(args){
+    
+    
+        //Attributes:  - strange Value copy
+        replica_mpi_control.mpi = _replica_mpi_control.mpi;
+        replica_mpi_control.simulationID = _replica_mpi_control.simulationID; //local replica id of simulation
+        replica_mpi_control.numberOfThreads = _replica_mpi_control.numberOfThreads;    //total_number_of_threads      
+        replica_mpi_control.masterID = _replica_mpi_control.masterID; //local master of this 
+        replica_mpi_control.threadID = _replica_mpi_control.threadID;
+        replica_mpi_control.mpiColor = _replica_mpi_control.mpiColor;
+        replica_mpi_control.simulationOwnedThreads = _replica_mpi_control.simulationOwnedThreads; 
+        replica_mpi_control.comm = _replica_mpi_control.comm; 
+
 }
 
 util::replica_Interface::~replica_Interface(){
