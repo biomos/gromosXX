@@ -38,10 +38,14 @@ static std::set<std::string> block_read;
  *
  * @verbatim
 QMZONE
+# NETCH: net charge of the QM zone
+# SPINM: net spin multiplicity of the QM zone
 # QMI:  index of the QM atom
 # QMZ:  atomic number of the QM atom
 # QMLI: 0,1 atom is a link atom
 #
+# NETCH SPINM
+      0     1
 # Warning: the first 17 characters are ignored!
 # RESIDUE   ATOM     QMI   QMZ   QMLI
     1 H2O   OW         1     8      0
@@ -57,27 +61,23 @@ END
  * deltaF
  * deltaE = E(fullQM) - E(buffer)
  * deltaF = F(fullQM) - F(buffer)
- * 
- * 
- * 
  *
  * The block is read from the QM/MM specification file
  * (\@qmmm).
  *
  * @verbatim
 BUFFERZONE
+# NETCH: net charge of the buffer zone
+# SPINM: net spin multiplicity of the buffer zone
 # BUFCUT: cutoff of the adaptive buffer zone (default = 0.0, no adaptive buffer zone)
           If the specified atoms occur within BUFCUT of QM atom, they are considered
           as buffer atoms. Otherwise they are considered solely as MM atoms. BUFCUT = 0.0
           means that they are always considered as buffer atoms.
-# BUFCUT
-    1.4
-# NETCH:
-# SPINM:
 # QMI:   index of the QM atom
 # QMZ:   atomic number of the QM atom
 # QMLI:  0,1 atom is a link atom
-#
+# NETCH SPINM BUFCUT
+      0     1    1.4
 # Warning: the first 17 characters are ignored!
 # RESIDUE   ATOM     QMI   QMZ   QMLI
     1 H2O   OW         1     8      0
