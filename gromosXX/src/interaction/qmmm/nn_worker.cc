@@ -31,6 +31,10 @@
 #include "nn_worker.h"
 
 
+#ifdef OMP
+  #include <omp.h>
+#endif
+
 #undef MODULE
 #undef SUBMODULE
 #define MODULE interaction
@@ -40,7 +44,11 @@
 namespace py = pybind11;
 using namespace py::literals;
 
-interaction::NN_Worker::NN_Worker() : QM_Worker("NN Worker"), param(nullptr), guard() {};
+interaction::NN_Worker::NN_Worker() : QM_Worker("NN Worker"),
+                                      param(nullptr),
+                                      guard(),
+                                      ml_model(),
+                                      ml_calculator() {};
 
 int interaction::NN_Worker::init(simulation::Simulation& sim) {
   // Get a pointer to simulation parameters
@@ -57,7 +65,13 @@ int interaction::NN_Worker::init(simulation::Simulation& sim) {
     , "logging"
     , "schnetpack"
   };
-
+  #ifdef OMP
+    // Python module modifies omp_num_threads value, we gonna restore it
+    unsigned num_threads;
+    #pragma omp parallel
+      #pragma omp single
+        num_threads = omp_get_num_threads();
+  #endif
   // Initialize Python modules
   for (size_t i = 0; i < modules.size(); ++i) {
     py_modules.emplace(modules[i], py::module::import(modules[i].c_str()));
@@ -78,24 +92,48 @@ int interaction::NN_Worker::init(simulation::Simulation& sim) {
 
   /** Load the model */
   py::str model_path = sim.param().qmmm.nn.model_path;
-  ml_model = new py::object(py_modules["torch"].attr("load")(model_path,"map_location"_a=py_modules["torch"].attr("device")("cpu")));
+  std::string device;
+  switch(sim.param().qmmm.nn.device) {
+    case simulation::nn_device_auto: {
+      const bool cuda_available = py::bool_(py_modules["torch"].attr("cuda").attr("is_available")());
+      if (cuda_available) {
+        device = "cuda";
+        DEBUG(1, "auto: using CUDA");
+      } else {
+        device = "cpu";
+        DEBUG(1, "auto: Using CPU");
+      }
+      break;
+    }
+    case simulation::nn_device_cuda:
+      device = "cuda";
+        DEBUG(1, "Using CUDA");
+      break;
+    case simulation::nn_device_cpu:
+      device = "cpu";
+        DEBUG(1, "Using CPU");
+      break;
+    default:
+      io::messages.add("Unknown NN device", this->name(), io::message::critical);
+      return 1;
+  }
+  ml_model = py_modules["torch"].attr("load")(model_path,"map_location"_a=py_modules["torch"].attr("device")(device));
+  
   
   //py::object conn = ase.attr("db").attr("connect")(db_path);
   // "map_location" parameter is to convert model trained on gpu to run on cpu, but seems not to work for my model
 
   /** Initialize the ML calculator */
-  ml_calculator = new py::object(py_modules["schnetpack"].attr("interfaces").attr("SpkCalculator")(*ml_model, "energy"_a="energy", "forces"_a="forces"));
+  ml_calculator = py_modules["schnetpack"].attr("interfaces").attr("SpkCalculator")(ml_model, "energy"_a="energy", "forces"_a="forces", "device"_a=device);
 
+  #ifdef OMP
+    omp_set_num_threads(num_threads);
+  #endif
 
   return 0;
 }
 
-interaction::NN_Worker::~NN_Worker() {
-  delete ml_model;
-  ml_model = nullptr;
-  delete ml_calculator;
-  ml_calculator = nullptr;
-}
+interaction::NN_Worker::~NN_Worker() {}
 
 int interaction::NN_Worker::run_QM(topology::Topology& topo
                      , configuration::Configuration& conf

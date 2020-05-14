@@ -54,12 +54,12 @@ namespace interaction {
     /**
      * Schnetpack neural network model
      */
-    py::object * ml_model;
+    py::object ml_model;
 
     /**
      * ASE calculator
      */
-    py::object * ml_calculator;
+    py::object ml_calculator;
 
     /**
      * run the NN worker

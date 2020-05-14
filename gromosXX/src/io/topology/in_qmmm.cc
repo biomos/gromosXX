@@ -262,7 +262,7 @@ END
  * The TURBOMOLEELEMENTS block specifies the element name used in Turbomole.
  * It is determined by the atomic number given in the QMZONE block.
  * 
-@verbatim
+ * @verbatim
 TURBOMOLEELEMENTS
 1 h
 6 c
@@ -270,9 +270,24 @@ TURBOMOLEELEMENTS
 8 o
 END
 @endverbatim
-@verbatim
+ *
+ * The NNMODEL block specifies the PyTorch NN model to use.
+ * 
+ * @verbatim
 NNMODEL
 /path/to/schnetpack/model
+END
+@endverbatim
+ *
+ * The NNDEVICE block specifies the device to use.
+ * Allowed are
+ * - cpu: Use CPU, a model trained on CUDA will be mapped to CPU
+ * - cuda: Use CUDA
+ * - auto: Use CUDA, if available, otherwise use CPU (this is default)
+ * 
+@verbatim
+NNDEVICE
+auto
 END
 @endverbatim
  */
@@ -593,6 +608,31 @@ io::In_QMMM::read(topology::Topology& topo,
         sim.param().qmmm.nn.model_path = buffer[1];
       }
     } // NNMODEL
+    { // NNDEVICE
+      buffer = m_block["NNDEVICE"];
+      const std::set<std::string> allowed = {"auto", "cpu", "cuda"};
+
+      if (!buffer.size()) {
+        io::messages.add("NNDEVICE not specified.",
+            "In_QMMM", io::message::notice);
+      } else {
+        if (buffer.size() != 3) {
+          io::messages.add("NNDEVICE block corrupt. Provide 1 line.",
+                  "In_QMMM", io::message::error);
+          return;
+        }
+        const std::string device = buffer[1];
+        if (device == "auto") sim.param().qmmm.nn.device = simulation::nn_device_auto;
+        else if (device == "cuda") sim.param().qmmm.nn.device = simulation::nn_device_cuda;
+        else if (device == "cpu") sim.param().qmmm.nn.device = simulation::nn_device_cpu;
+        else {
+          std::ostringstream msg;
+          msg << "NNDEVICE block corrupt. Unknown option - " << device;
+          io::messages.add(msg.str(), "In_QMMM", io::message::error);
+          return;
+        }
+      }
+    } // NNDEVICE
   }
 
   // Cap length definition

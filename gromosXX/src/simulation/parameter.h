@@ -790,6 +790,25 @@ namespace simulation
   };
 
   /**
+   * @enum qmmm_nn_device_enum
+   * which device to run NN on
+   */
+  enum qm_nn_device_enum {
+    /**
+     * Try CUDA, otherwise CPU
+     */
+    nn_device_auto = 0,
+    /**
+     * use CUDA
+     */
+    nn_device_cuda = 1,
+    /**
+     * use CPU
+     */
+    nn_device_cpu = 2
+  };
+
+  /**
    * @class Parameter
    * input parameters.
    */
@@ -3824,8 +3843,22 @@ namespace simulation
        * NN specific parameters
        */
       struct nn_param_struct : public qm_param_struct {
-        // ???
+      /**
+       * Constructor
+       * Default values:
+       * - model_path "" (empty string)
+       * - device 0 (auto)
+       */
+      nn_param_struct() : 
+                      device(nn_device_auto) {}
+        /**
+         * Schnetpack model path
+         */
         std::string model_path;
+        /**
+         * Device to run model on
+         */
+        qm_nn_device_enum device;
       } nn;
     } qmmm;
     
