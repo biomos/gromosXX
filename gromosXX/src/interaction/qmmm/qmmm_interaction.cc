@@ -178,7 +178,8 @@ void interaction::QMMM_Interaction::write_qm_data(topology::Topology& topo,
   DEBUG(15,"Writing QM data");
   m_timer.start("writing QM results");
   m_qm_zone->write_force(conf.current().force);
-  if (sim.param().qmmm.qmmm == simulation::qmmm_mechanical)
+  if (sim.param().qmmm.qmmm == simulation::qmmm_mechanical
+        && sim.param().qmmm.software != simulation::qm_nn)
     m_qm_zone->write_charge(topo.charge());
   conf.current().energies.qm_total = m_qm_zone->QM_energy();
   m_timer.stop("writing QM results");
