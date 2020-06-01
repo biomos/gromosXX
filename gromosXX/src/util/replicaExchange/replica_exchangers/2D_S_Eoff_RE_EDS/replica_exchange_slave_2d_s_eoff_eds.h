@@ -6,9 +6,9 @@
 
 /*
  * File:   replica_exchange_slave_2d_s_eoff_eds.h
- * Author: bschroed
+ * Author: theosm
  *
- * Created on August 31, 2018, 10:43 AM
+ * Created on March 29, 2020, 11:03 AM
  */
 
 #include <util/replicaExchange/replica_exchangers/replica_exchange_slave_interface.h>
