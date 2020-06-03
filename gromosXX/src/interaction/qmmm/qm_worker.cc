@@ -66,11 +66,6 @@ int interaction::QM_Worker::run_QM(topology::Topology& topo
                                  , configuration::Configuration& conf
                                  , simulation::Simulation& sim
                                  , interaction::QM_Zone& qm_zone) {
-  if (qm_zone.mm.empty()) {
-    io::messages.add("Cannot deal with zero MM atoms yet.", this->name()
-                    , io::message::warning);
-    //return 1;
-  }
   m_timer.start();
 
   DEBUG(15,"Running QM Worker");
