@@ -415,6 +415,7 @@ int main(int argc, char *argv[]) {
 
     if (globalThreadID == 0) { //Nice message
         std::ostringstream msg;
+        msg.clear();
         msg << "\t Short RE-Setting Overview:\n";
         msg << "\t continuation:\t" << cont << "\n";
         msg << "\t equilibration runs:\t" << equil_runs << "\n";
