@@ -135,7 +135,6 @@ void util::replica_exchange_base_interface::updateReplica_params(){
  * REplica Exchanges
  */
 
-<<<<<<< gromosXX/src/util/replicaExchange/replica_exchangers/replica_exchange_base_interface.cc
 void util::replica_exchange_base_interface::swap(){
   DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":swap:\t START");
 
