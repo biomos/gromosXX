@@ -132,7 +132,7 @@ namespace simulation
      */
     special_loop_spc_table = 3
   };
-  
+
   /**
    * @enum special_loop_solvent_enum
    * holds the solvent used in a special loop
@@ -147,7 +147,7 @@ namespace simulation
      */
     sls_spc
   };
-  
+
   /**
    * @enum special_loop_acceleration_enum
    * holds the acceleration method
@@ -174,7 +174,7 @@ namespace simulation
      */
     sla_cuda
   };
-  
+
 #ifdef HAVE_HOOMD
   /**
    * @enum hoomd
@@ -235,7 +235,7 @@ namespace simulation
     /**
      * biquadratic with zero weight of the average term
      */
-    jvalue_restr_biq_zero_weight = 2            
+    jvalue_restr_biq_zero_weight = 2
   };
 
     /**
@@ -299,12 +299,12 @@ namespace simulation
      */
     rdc_restr_biq_weighted = -4
   };
-  
+
   /**
    * @enum rdc_mode_enum
    * Method of updating RDC magnetic field vectors enumeration
    */
-  
+
   enum rdc_mode_enum {
       /**
        * Energy minimisation
@@ -319,12 +319,12 @@ namespace simulation
        */
       rdc_md = 2
   };
-  
+
   /**
    * @enum rdc_type_enum
    * Type of magnetic field representation
    */
-  
+
   enum rdc_type_enum {
       /**
        * Magnetic field vectors
@@ -338,7 +338,7 @@ namespace simulation
        * Spherical harmonics
        */
       rdc_sh = 2
-  };  
+  };
 
 
   /**
@@ -395,7 +395,7 @@ namespace simulation
     /** cgrain_function (MARTINI)*/ cgrain_func,
     /** cgrain_function (GROMOS) */ cggromos_func
   };
-  
+
   /**
    * @enum electrostatic_method_enum
    * which electrostatic method to use
@@ -406,7 +406,7 @@ namespace simulation
     /** particle-particle-particle mesh (P3M) */ el_p3m,
     /** smooth particle mesh Ewald */ el_spme
   };
-  
+
   /**
    * @enum ls_a2_method_enum
    * how to calculate the A2 term for lattice sum self energy
@@ -418,7 +418,7 @@ namespace simulation
     /** a2_tilde exact (ewald or mesh+coords), a2 numerical */ ls_a2t_exact_a2_numerical,
     /** a2_tilde averaged from mesh only, a2 numerical */ ls_a2t_ave_a2_numerical
   };
-  
+
   /**
    * @enum efield_site_enum
    * determines on which site the electric field is calculated
@@ -427,13 +427,13 @@ namespace simulation
     /**
      * electric field at the atom
      */
-    ef_atom = 0, 
+    ef_atom = 0,
     /**
      * electric field at the carge-on-spring
      */
     ef_cos = 1
   };
-  
+
   /**
    * @enum randomgenerator_enum
    * determines which random number generator is used
@@ -442,7 +442,7 @@ namespace simulation
     /**
      * g96 algorithm
      */
-    random_g96 = 0, 
+    random_g96 = 0,
     /**
      * GSL library
      */
@@ -539,7 +539,7 @@ namespace simulation
      * @f$ V_R = - \left(\beta s \right)^{-1} \ln \sum_i e^{-\beta s \left(V_i-E_i^R\right)} @f$
      */
     single_s = 1,
-    /** 
+    /**
      * pairwise s parameters i.e.
      * @f$ V_R = - \beta ^{-1} \ln \left\{
        \left[
@@ -607,7 +607,7 @@ namespace simulation
      * improper interaction
      */
     improper_lambda = 3,
-    /** 
+    /**
      * Van der Waals interaction
      */
     lj_lambda = 4,
@@ -630,7 +630,7 @@ namespace simulation
     /**
      * distancefield restraint interaction
      */
-    disfield_lambda = 9, 
+    disfield_lambda = 9,
     /**
      * dihedral restraint interaction
      */
@@ -644,7 +644,7 @@ namespace simulation
      */
     last_interaction_lambda=12
   };
-  
+
   /**
    * @enum nemd_enum
    * non-equilibrium molecular dynamics
@@ -674,7 +674,7 @@ namespace simulation
      */
     localelev_on = 1
   };
-  
+
   /**
    * @enum bsleus_enum
    * do B&S-LEUS or not
@@ -743,14 +743,14 @@ namespace simulation
   {
   public:
     Parameter() : title(GROMOSXX) {
-        develop.develop = false; 
+        develop.develop = false;
     }
-    
+
     /**
      * title of the simulation (from the input file)
      */
     std::string title;
-    
+
     /**
      * @struct system_struct
      * system block
@@ -764,17 +764,17 @@ namespace simulation
        * - nsm 0 (no solvent)
        */
       system_struct() : npm(1), nsm(0) {}
-      
+
       /**
        * Number of protein molecules
        */
       int npm;
-      /** 
+      /**
        * Number of solvent molecules
        */
       int nsm;
     } /** the system paramters */ system;
-    
+
     /**
      * @struct minimise_struct
      * minimise block
@@ -860,12 +860,12 @@ namespace simulation
        * - ig                       0      (random number seed)
        * - tempi                    0.0    (temperature to generate initial velocities)
        */
-      start_struct() : shake_pos(false), shake_vel(false), 
+      start_struct() : shake_pos(false), shake_vel(false),
                        remove_com_translation(false), remove_com_rotation(false),
 		       generate_velocities(false), ig(0), tempi(0.0),
                        read_nosehoover_chains(true), read_nosehoover_barostat(true),
                        read_rottrans(true), read_lattice_shifts(true) {}
-      
+
       /**
        * shake initial positions
        */
@@ -927,7 +927,7 @@ namespace simulation
        * - dt               0.0 (time step)
        */
       step_struct() : number_of_steps(0), t0(0.0), dt(0.0) {}
-      
+
       /**
        * Number of steps
        */
@@ -955,7 +955,7 @@ namespace simulation
        * - dof_to_subtract 0
        */
       boundary_struct() : boundary(math::vacuum), dof_to_subtract(0) {}
-      
+
       /**
        * NTB switch
        */
@@ -982,7 +982,7 @@ namespace simulation
        * - algorithm 0 (weak coupling)
        */
       multibath_struct() : couple(false), found_multibath(false), found_tcouple(false), algorithm(0) {}
-      
+
       /**
        * do temperature coupling?
        */
@@ -993,7 +993,7 @@ namespace simulation
       Multibath multibath;
       /**
        * tcouple struct
-       * is translated to the multibath before the 
+       * is translated to the multibath before the
        * configuration / topology is read in.
        */
       struct tcouple_struct
@@ -1010,7 +1010,7 @@ namespace simulation
 	  temp0[0] = temp0[1] = temp0[2] = 300.0;
 	  tau[0] = tau[1] = tau[2] = 0.1;
 	}
-	
+
 	/**
 	 * ntt array
 	 */
@@ -1024,7 +1024,7 @@ namespace simulation
 	 */
 	double tau[3];
       } /** TCOUPLE paramter */ tcouple;
-      
+
       /**
        * have multibath
        */
@@ -1042,7 +1042,7 @@ namespace simulation
       int algorithm;
 
     } /** temperature coupling parameters */ multibath;
-    
+
     /**
      * @struct pcouple_struct
      * PCOUPLE block
@@ -1114,7 +1114,7 @@ namespace simulation
        * - remove_trans false  (remove center of mass translation)
        */
       centreofmass_struct() : skip_step(0), remove_rot(false), remove_trans(false) {}
-      
+
       /**
        * NSCM parameter
        */
@@ -1127,7 +1127,7 @@ namespace simulation
        * remove translational momentum.
        */
       bool remove_trans;
-      
+
     } /** centre of mass motion removal parameters */ centreofmass;
 
     /**
@@ -1144,7 +1144,7 @@ namespace simulation
        * - monitor_dihedrals false   (do not monitor dihedral angle transitions)
        */
       print_struct() : stepblock(0), centreofmass(0), monitor_dihedrals(0) {}
-      
+
       /**
        * print stepblock
        */
@@ -1179,11 +1179,11 @@ namespace simulation
        * - force_solute_only false (write solute and solvent)
        * - energy_index 0    (don't write minimum energy trajectory)
        */
-      write_struct() : position(0), velocity(0), force(0), energy(0), free_energy(0), 
+      write_struct() : position(0), velocity(0), force(0), energy(0), free_energy(0),
 		       block_average(0), position_solute_only(false),
                        velocity_solute_only(false), force_solute_only(false),
                        energy_index(0) {}
-      
+
       /**
        * position.
        */
@@ -1225,7 +1225,7 @@ namespace simulation
        * trajectory
        */
       int energy_index;
-      
+
     } /** write out paramters (trajectories) */ write;
 
     /**
@@ -1240,7 +1240,7 @@ namespace simulation
        * - ntc = 1
        */
       constraint_struct() : ntc(1) {}
-      
+
       /**
        * NTC parameter (off=1, hydrogens=2, all=3, specified=4)
        * specified shakes everything in the constraint block in the topology.
@@ -1271,7 +1271,7 @@ namespace simulation
 	    flexshake_readin(false),
 	    flexshake_mode(0)
 	{}
-	
+
 	/**
 	 * constraint algorithm to use.
 	 */
@@ -1314,7 +1314,7 @@ namespace simulation
        * parameter for solvent.
        */
       constr_param_struct solvent;
-      
+
     } /** Constraint method parameters */ constraint;
 
     /**
@@ -1343,7 +1343,7 @@ namespace simulation
 		       interaction_function(lj_crf_func),
 		       force_groups(false)
       {}
-      
+
       /**
        * bonds?
        */
@@ -1388,7 +1388,7 @@ namespace simulation
        * use energy groups also for forces
        */
       bool force_groups;
-      
+
     } /** Force(field) parameters */ force;
 
 #ifdef HAVE_HOOMD
@@ -1423,7 +1423,7 @@ namespace simulation
       plist_struct() : grid(0), skip_step(5), cutoff_short(0.8),
 		       cutoff_long(1.4), grid_size(0.4),
 		       atomic_cutoff(false), print(false) {}
-      
+
       /**
        * algorithm.
        */
@@ -1432,7 +1432,7 @@ namespace simulation
        * skip step
        */
       int skip_step;
-      /** 
+      /**
        * short range cutoff
        */
       double cutoff_short;
@@ -1448,12 +1448,12 @@ namespace simulation
        * atomic cutoff
        */
       bool atomic_cutoff;
-      
+
       /**
        * print the pairlist
        */
       bool print;
-      
+
     } /** Pairlist method parameters */ pairlist;
 
     /**
@@ -1472,7 +1472,7 @@ namespace simulation
        * - rf_excluded true (new standard)
        * - epsilon     1
        */
-      nonbonded_struct() :      
+      nonbonded_struct() :
         method(el_reaction_field),
         lserf(false),
         rf_kappa(0.0),
@@ -1532,7 +1532,7 @@ namespace simulation
        * lattice-sum charge shaping function
        */
       int ls_charge_shape;
-      /** 
+      /**
        * lattice-sum charge shaping function width
        */
       double ls_charge_shape_width;
@@ -1621,7 +1621,7 @@ namespace simulation
      */
     struct posrest_struct
     {
-      /** 
+      /**
        * Constructor
        * Default values:
        * - posrest 0 (no position restraints)
@@ -1630,7 +1630,7 @@ namespace simulation
        */
       posrest_struct() : posrest(posrest_off), read(true), force_constant(1E4),
                          scale_reference_positions(false) {}
-      
+
       /**
        * posrest
        */
@@ -1817,7 +1817,7 @@ namespace simulation
         energy_switcher(energy_tot)
         {
         }
-        /**         
+        /**
          *replica exchange switcher
          */
         replica_exchange_interruptor_enum switcher;
@@ -1844,7 +1844,7 @@ namespace simulation
         B_overall_switcher(B_overall_off), init(0.0)
         {
         }
-        /**         
+        /**
          * overall B factor switching
          */
         B_overall_enum B_overall_switcher;
@@ -1910,27 +1910,27 @@ namespace simulation
           write(0)
       {
       }
-      
-      /** 
+
+      /**
        * distance restraints on/off
        */
       int distanceres;
-      
+
       /**
        * force constant K
        */
       double K;
-      
+
       /**
        * distance where potential gets linear
        */
       double r_linear;
-      
+
       /**
-       * memory time for time averaging 
+       * memory time for time averaging
        */
       double tau;
-      
+
       /**
        * read on/off (not supported)
        */
@@ -1940,17 +1940,17 @@ namespace simulation
        * compute virial contribution
        */
       unsigned int virial;
-      
+
       /**
        * force scaling according to equation 8.17
        */
       unsigned int forcescale;
-      
+
       /**
        * write on/off
        */
       unsigned int write;
-      
+
     }/** Distance restraints parameters */ distanceres;
      /**
      * @struct distancefield_struct
@@ -1984,8 +1984,8 @@ namespace simulation
           protect(0)
       {
       }
-      
-      /** 
+
+      /**
        * distance field restraints on/off
        */
       int distancefield;
@@ -2045,8 +2045,8 @@ namespace simulation
 	  K(0.0),
 	  phi_lin(0.0),
           write(0) {}
-      
-      /** 
+
+      /**
        * dihedral restraints
        * method:
        * - 0: off
@@ -2067,12 +2067,12 @@ namespace simulation
        * write on/off
        */
       unsigned int write;
-      
+
       /**
-       * tolerance 
+       * tolerance
        */
       double tolerance;
-      
+
     }/** dihedral restraint parameters */ dihrest;
 
     /**
@@ -2093,11 +2093,11 @@ namespace simulation
        * - soft_lj 0.0
        * - soft_crf 0.0
        */
-      perturb_struct() : perturbation(false), read_initial(false), 
+      perturb_struct() : perturbation(false), read_initial(false),
                          lambda(0), lambda_exponent(1),
 			 dlamt(0), scaling(false), scaled_only(false),
 			 soft_vdw(0.0), soft_crf(0.0), perturbed_par(false) {}
-      
+
       /**
        * perturbation?
        */
@@ -2139,7 +2139,7 @@ namespace simulation
        * is read in read_special  or read_topology
        */
       bool perturbed_par;
-      
+
     } /** Perturbation parameters */ perturbation;
 
     /**
@@ -2215,7 +2215,7 @@ namespace simulation
        */
       unsigned int write;
     } /** jvalue-parameters */ jvalue;
-    
+
     /**
      * @struct pscale_struct
      * periodic scaling parameters.
@@ -2236,7 +2236,7 @@ namespace simulation
       pscale_struct() : jrest(false), KDIH(1.0), KJ(1.0), T(1.0), difference(1.0), ratio(1.0), read_data(false)
       {
       }
-      
+
       /**
        * do J-Value restraints dependent periodic scaling?
        */
@@ -2265,7 +2265,7 @@ namespace simulation
        * read data for continuous runs
        */
       bool read_data;
-      
+
     } /** pscale parameters */ pscale;
 
     /**
@@ -2304,6 +2304,7 @@ namespace simulation
        * Default values:
        * - num_T 0
        * - num_l 0
+       * - num_eoff 0
        * - temperature \<empty\>
        * - scale (false)
        * - lambda \<empty\>
@@ -2448,7 +2449,7 @@ namespace simulation
                          stride(1), no_constraints(false)
       {
       }
-      /** 
+      /**
        * re-analyze trajectory
        */
       bool analyze;
@@ -2460,7 +2461,7 @@ namespace simulation
        * trajectory filename
        */
       std::string trajectory;
-      /** 
+      /**
        * stride
        */
       int stride;
@@ -2468,7 +2469,7 @@ namespace simulation
        * do not apply any constraints (also not on solvent)
        */
       bool no_constraints;
-      
+
     } /** analyze parameter */ analyze;
 
     /**
@@ -2485,14 +2486,14 @@ namespace simulation
       integrate_struct() : method(integrate_leap_frog)
       {
       }
-      /** 
+      /**
        * select integration method
        */
       integrate_enum method;
 
     } /** integration parameter */ integrate;
 
-    /** 
+    /**
      * @struct lambdas_struct
      * individual lambdas
      */
@@ -2508,7 +2509,7 @@ namespace simulation
        * - d(empty)
        * - e(empty)
        */
-      lambdas_struct() : individual_lambdas(false), 
+      lambdas_struct() : individual_lambdas(false),
 			 a(last_interaction_lambda),
 			 b(last_interaction_lambda),
 			 c(last_interaction_lambda),
@@ -2563,22 +2564,22 @@ namespace simulation
                           max_lam(1.0)
       {
       }
-      /** 
-       * calculate nr_lambdas extra lambda points 
+      /**
+       * calculate nr_lambdas extra lambda points
        */
        unsigned int nr_lambdas;
-      /** 
-       * starting from lambda 
+      /**
+       * starting from lambda
        */
        double min_lam;
-      /** 
-       * up to lambda 
+      /**
+       * up to lambda
        */
        double max_lam;
 
     } /** precalculate lambdas struct */ precalclam;
     // END ANITA
- 
+
     struct stochastic_struct
     {
       /**
@@ -2633,7 +2634,7 @@ namespace simulation
        * initially generate stochastic integral
        */
       bool generate_integral;
-      
+
     } /** stochastic dynamics */ stochastic;
 
     /**
@@ -2677,7 +2678,7 @@ namespace simulation
        * use boost method (impulse)
        */
       bool boost;
-      
+
     } /** multistep */ multistep;
 
     /**
@@ -2701,12 +2702,12 @@ namespace simulation
        */
       int steps;
       /**
-       * value of dlambda in MC move 
+       * value of dlambda in MC move
        */
       double dlambda;
     } /** chemical monte-carlo */ montecarlo;
 
-    
+
     /**
      * @struct polarise_struct
      * polarisation simulation
@@ -2727,7 +2728,7 @@ namespace simulation
        * use charge-on-spring polarisation
        */
       int cos;
-      /** 
+      /**
        * minfield
        */
       double minfield;
@@ -2744,7 +2745,7 @@ namespace simulation
        */
       int write;
     } /** polarise */ polarise;
-    
+
     /**
      * @struct rng_struct
      * random number generator settings
@@ -2760,19 +2761,19 @@ namespace simulation
        * random number generator
        */
       randomgenerator_enum rng;
-      /** 
+      /**
        * GSL random number generator
        * use the rng_gsl contrib program to find out which values are supported.
        */
       int gsl_rng;
-    } /** random number generator */ rng;    
-    
+    } /** random number generator */ rng;
+
     /**
      * @struct eds_struct
      * parameters for enveloping distribution sampling (eds)
      */
     struct eds_struct{
-      /** 
+      /**
        * Constructor:
        * Default values:
        * - eds: no eds sampling
@@ -2803,6 +2804,10 @@ namespace simulation
        * smoothness parameter(s) @f$ s@f$ of @f$ s_{ij}@f$ used in reference state Hamiltonian.
        */
       std::vector<double> s;
+      /**
+       * position information first: start position; second: current position of coord_ID
+       */
+      std::pair<int, int> pos_info;
       /**
        * vector of indices of specified pairs (for form = pair_s)
        */
@@ -2891,7 +2896,7 @@ namespace simulation
       */
       unsigned int bsteps;
     } /** enveloping distribution sampling*/ eds;
-   
+
  struct reeds_struct : public replica_struct
     {
       /**
@@ -2899,6 +2904,7 @@ namespace simulation
        * Default values:
        * - num_T 0
        * - num_l 0
+       * - num_eoff 0
        * - temperature \<empty\>
        * - scale (false)
        * - lambda \<empty\>
@@ -2907,14 +2913,14 @@ namespace simulation
        * - equilibrate 0
        * - cont 0
        */
-      reeds_struct() : reeds(false), 
-                       num_states(0), num_T(0),  num_l(0), 
-                       trials(0), equilibrate(0), 
-                       cont(0), eds_stat_out(true) {}
+      reeds_struct() : reeds(0),
+                       num_states(0), num_T(0),  num_l(0), num_eoff(0),
+                       trials(0), equilibrate(0),
+                       cont(0), eds_stat_out(true), periodic(false) {}
       /**
-       * Check if this is a reed run.f
+       * Check what kind of reed run.f this is
        **/
-      bool reeds;
+      int reeds;
       /**
        * num_states
        */
@@ -2927,6 +2933,11 @@ namespace simulation
        * number of replicas with different lambdas in REEDS these are the smoothing values
        */
       int num_l;
+      /**
+       * * number of energy offsets param-vectors with different offsets for each state in REEDS
+       * * length of one param-vector == NUMSTATES
+       */
+      int num_eoff;
       /**
        * temperatures
        */
@@ -2955,6 +2966,10 @@ namespace simulation
        * write output to stat_file (repdat)
        **/
       bool eds_stat_out;
+      /**
+       * periodic boundary?
+       **/
+      bool periodic;
        /**
        * for RE-EDS Sim many eds parameters have to be accessible for
        * energy calculation.
@@ -2962,7 +2977,7 @@ namespace simulation
       std::vector<eds_struct> eds_para;
 
     } /** replica exchange parameters */ reeds;
-    
+
     /**
      * @struct sasa
      * parameters for calculating the sasa and volume term
@@ -3015,7 +3030,7 @@ namespace simulation
       double cut_diff;
 
     } /** sasa */ sasa;
-    
+
     /**
      * @struct innerloop_struct
      * Constructor:
@@ -3077,7 +3092,7 @@ namespace simulation
        */
       std::map<int, bool> umbrellas;
     } localelev;
-    
+
     /**
      * @struct bsleus_struct
      * Constructor:
@@ -3105,7 +3120,7 @@ namespace simulation
        * Do we write the bsleus potential?
        */
       int write;
-      /** 
+      /**
        * Is this just the configuration along the transition path, which doesn't
        * need a velocity?
        */
@@ -3166,7 +3181,7 @@ namespace simulation
       unsigned int cur_write;
 
     } electric;
-    
+
     struct nemd_struct {
       /**
        * constructor
@@ -3212,7 +3227,7 @@ namespace simulation
        * write every nth timesteps (write the velocities and flux)
        */
       unsigned int write;
-     
+
     } nemd;
 
     struct multigradient_struct {
@@ -3250,7 +3265,7 @@ namespace simulation
        */
       std::vector<std::vector<std::pair<double, double> > > control_points;
     } multigradient;
-    
+
     /**
      * @struct addecouple_struct
      * Constructor:
@@ -3283,12 +3298,12 @@ namespace simulation
          * last atom of addiabatic decoupling groups
          */
         int adend;
-        /**          
-         * scaling factor mass          
+        /**
+         * scaling factor mass
          */
         double sm;
-        /**          
-         * scaling factor potential energy function          
+        /**
+         * scaling factor potential energy function
          */
         double sv;
         /**
@@ -3299,12 +3314,12 @@ namespace simulation
          * which temperature bath to scale
          */
         int tir;
-        /**          
-         * energy group of decoupled group     
+        /**
+         * energy group of decoupled group
          */
         int eg;
         /**
-         * temperature group of decoupled group     
+         * temperature group of decoupled group
          */
         unsigned int tg;
       };
@@ -3433,7 +3448,7 @@ namespace simulation
        * - biqfactor 0
        * - write 0
        */
-        
+
       rdc_struct()
 	: mode(rdc_restr_off),
           read_av(false),
@@ -3472,10 +3487,10 @@ namespace simulation
       /**
        * method of updating the magnetic field vectors
        */
-      rdc_mode_enum method;  
+      rdc_mode_enum method;
       /**
        * EM: stop if gradient is below emgradient
-       */      
+       */
       double emgradient;
       /**
        * EM: start with emstepsize
@@ -3492,7 +3507,7 @@ namespace simulation
       /**
        * reference temperature for SD and for initial velocities
        */
-      double temp;     
+      double temp;
       /**
        * half the width of the flat bottom potential
        */
@@ -3647,7 +3662,7 @@ namespace simulation
        */
       interaction::QMMM_Interaction * interaction;
     } qmmm;
-    
+
     struct symrest_struct {
       /**
        * Constructor
@@ -3670,7 +3685,7 @@ namespace simulation
        */
       std::vector<std::pair<math::Matrix, math::Vec> > symmetry_operations;
     } /* symmetry restraints */symrest;
-    
+
     /**
      A struct to mark parts of the code as "under development"
      */
@@ -3679,17 +3694,17 @@ namespace simulation
       bool develop;
       std::string msg;
     } develop;
-    
+
     /**
      set the development flag as true and specify the error message
      */
     void setDevelop(std::string s) {
       develop.develop = true;
       develop.msg = s;
-    }    
-    
+    }
+
   };
-  
+
 }
 
 #endif

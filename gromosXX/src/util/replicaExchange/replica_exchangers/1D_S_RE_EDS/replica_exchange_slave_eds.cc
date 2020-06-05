@@ -4,10 +4,10 @@
  * and open the template in the editor.
  */
 
-/* 
+/*
  * File:   replica_exchange_slave_eds.cc
  * Author: bschroed
- * 
+ *
  * Created on August 31, 2018, 10:43 AM
  */
 #include "util/replicaExchange/replica_mpi_tools.h"
@@ -47,8 +47,8 @@ void util::replica_exchange_slave_eds::send_to_master() const{
     info.epot_partner = epot_partner;
     info.partner = partnerReplicaID;
     info.probability = probability;
-    info.switched = int(switched);
-    
+    info.switched = switched;
+
     DEBUG(4,"replica_exchange_slave_eds " << globalThreadID << "send_to_master:\t epotTot\t "<< info.epot);
 
     DEBUG(4,"replica_exchange_slave_eds " << globalThreadID << ":send_to_master:\t\t send MPI_REPINFO");
@@ -64,10 +64,7 @@ void util::replica_exchange_slave_eds::send_to_master() const{
   DEBUG(2,"replica_exchange_slave_eds " << globalThreadID << ":send_to_master:\t DONE");
 
   #else
-    throw "Cannot use send_to_master from replica_exchange_slave_eds without MPI!"; 
+    throw "Cannot use send_to_master from replica_exchange_slave_eds without MPI!";
   #endif
 }
-
-
-
 

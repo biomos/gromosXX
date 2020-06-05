@@ -63,7 +63,7 @@ namespace util {
      * Destructor
      */
     virtual ~replica_exchange_master_interface();
-    
+
     //Simulation functions
     /**
      * receives all information written to output file from the slaves
@@ -73,10 +73,10 @@ namespace util {
      * writes data to output file \@repdat
      */
     virtual void write();
-    
- 
+
+
     virtual void init_repOut_stat_file();
-    
+
   protected:
 
 
@@ -84,7 +84,7 @@ namespace util {
      * output file stream for repdat output file
      */
     std::ofstream repOut;
-    
+
     /*
      * global Parameters for replica exchange simulation
      * int num_T;
@@ -105,6 +105,10 @@ namespace util {
      */
     std::vector<util::replica_data> replicaData;
     /**
+     * keeps track of the position of the coordIDs in each trial
+     */
+    std::vector<int> coordIDPositionsVector;
+    /**
      * output file Path for repdat output file
      */
     std::string repdatName;
@@ -113,4 +117,3 @@ namespace util {
   };
 }
 #endif	/* REPLICA_EXCHANGE_MASTER_H */
-

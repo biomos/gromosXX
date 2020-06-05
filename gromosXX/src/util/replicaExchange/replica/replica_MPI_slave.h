@@ -63,8 +63,6 @@ namespace util {
          */
         //simulation::Simulation sim;
         
-#ifdef XXMPI
-       
         /**
          * run MD
          * @return 
@@ -75,7 +73,6 @@ namespace util {
          *  init -  this is an intentaionally empty func.
          */
         void init() override {};
-#endif
     };
 }//namespace util
 

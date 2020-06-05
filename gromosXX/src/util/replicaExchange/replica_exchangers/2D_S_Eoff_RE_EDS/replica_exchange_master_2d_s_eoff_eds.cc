@@ -5,44 +5,44 @@
  */
 
 /*
- * File:   replica_exchange_master_eds.cc
- * Author: bschroed
+ * File:   replica_exchange_master_2d_s_eoff_eds.cc
+ * Author: theosm
  *
- * Created on April 18, 2018, 3:20 PM
+ * Created on March 29, 2020, 11:00 AM
  */
 #include "util/replicaExchange/replica_mpi_tools.h"
-#include <util/replicaExchange/replica_graph_control.h>
-#include <util/replicaExchange/replica_exchangers/1D_S_RE_EDS/replica_exchange_master_eds.h>
+#include <util/replicaExchange/replica_exchangers/2D_S_Eoff_RE_EDS/replica_exchange_master_2d_s_eoff_eds.h>
 
 #undef MODULE
 #undef SUBMODULE
 #define MODULE util
 #define SUBMODULE replica_exchange
 
-util::replica_exchange_master_eds::replica_exchange_master_eds(io::Argument _args,
+util::replica_exchange_master_2d_s_eoff_eds::replica_exchange_master_2d_s_eoff_eds(io::Argument _args,
                                                                 unsigned int cont,
                                                                 unsigned int globalThreadID,
-                                                                replica_graph_control & replicaGraphMPIControl,
-                                                                simulation::MpiControl & replica_mpi_control) :
+                                                                replica_graph_mpi_control replicaGraphMPIControl,
+                                                                simulation::mpi_control_struct replica_mpi_control) :
         replica_exchange_base_interface(_args, cont, globalThreadID,  replicaGraphMPIControl, replica_mpi_control),
-        replica_exchange_base_eds(_args, cont, globalThreadID,  replicaGraphMPIControl, replica_mpi_control),
+        replica_exchange_base_2d_s_eoff_eds(_args, cont, globalThreadID,  replicaGraphMPIControl, replica_mpi_control),
         replica_exchange_master_interface(_args, cont, globalThreadID, replicaGraphMPIControl, replica_mpi_control)
 {
-    
     #ifdef XXMPI
-    DEBUG(2,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t START");  
-    DEBUG(3,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t Replicas: "<<replicaGraphMPIControl.numberOfReplicas);  
-    DEBUG(3,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t ReplicasOLD: "<<repParams.num_l);  
-    DEBUG(3,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t ReplicasMASTER: "<< replicaGraphMPIControl.masterID);  
-    //initialize data of replicas    
-    replicaData.resize(replicaGraphMPIControl.numberOfReplicas);      
-    DEBUG(3,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t replicaDatasize\t "<< replicaData.size());
-    //DEBUG(4,"replica_exchange_master_eds "<< rank <<":Constructor:\t reeds- lambda\t "<< replica->sim.param().reeds.num_l);
-    //DEBUG(4,"replica_exchange_master_eds "<< rank <<":Constructor:\t eds \t "<< replica->sim.param().eds.s.size());
+    MPI_DEBUG(2,"replica_exchange_master_2d_s_eoff_eds "<< globalThreadID <<":Constructor:\t START");
+    DEBUG(3,"replica_exchange_master_2d_s_eoff_eds "<< globalThreadID <<":Constructor:\t Replicas: "<<replicaGraphMPIControl.numberOfReplicas);
+    DEBUG(3,"replica_exchange_master_2d_s_eoff_eds "<< globalThreadID <<":Constructor:\t ReplicasOLD: "<<repParams.num_l);
+    DEBUG(3,"replica_exchange_master_2d_s_eoff_eds "<< globalThreadID <<":Constructor:\t ReplicasMASTER: "<< replicaGraphMPIControl.masterID);
+
+
+    //initialize data of replicas
+    replicaData.resize(replicaGraphMPIControl.numberOfReplicas);
+    DEBUG(3,"replica_exchange_master_2d_s_eoff_eds "<< globalThreadID <<":Constructor:\t replicaDatasize\t "<< replicaData.size());
+    //DEBUG(4,"replica_exchange_master_2d_s_eoff_eds "<< rank <<":Constructor:\t reeds- lambda\t "<< replica->sim.param().reeds.num_l);
+    //DEBUG(4,"replica_exchange_master_2d_s_eoff_eds "<< rank <<":Constructor:\t eds \t "<< replica->sim.param().eds.s.size());
 
     //initialize bookkeeping data structure
     coordIDPositionsVector.resize(replicaGraphMPIControl.numberOfReplicas);
-    DEBUG(3,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t coordIDPositionsVectorsize\t "<< coordIDPositionsVector.size());
+    DEBUG(3,"replica_exchange_master_2d_s_eoff_eds "<< globalThreadID <<":Constructor:\t coordIDPositionsVectorsize\t "<< coordIDPositionsVector.size());
 
 
     for (int replicaID = 0; replicaID<  replicaData.size(); ++replicaID) {
@@ -59,23 +59,22 @@ util::replica_exchange_master_eds::replica_exchange_master_eds(io::Argument _arg
         << a.first << ", " << a.second << "\n");
 
         replicaData[replicaID].T = repParams.temperature[replicaID];
-        DEBUG(5,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t Init Replicas ID"<<replicaID<<"\t "<< repParams.temperature[replicaID]);
+        DEBUG(5,"replica_exchange_master_2d_s_eoff_eds "<< globalThreadID <<":Constructor:\t Init Replicas ID"<<replicaID<<"\t "<< repParams.temperature[replicaID]);
         replicaData[replicaID].l = repParams.lambda[replicaID];
         replicaData[replicaID].dt = repParams.dt[replicaID];
-        DEBUG(5,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t Init Replicas eds_param"<<replicaID<<"\t "<< reedsParam.eds_para[0].numstates);
+        DEBUG(5,"replica_exchange_master_2d_s_eoff_eds "<< globalThreadID <<":Constructor:\t Init Replicas eds_param"<<replicaID<<"\t "<< reedsParam.eds_para[0].numstates);
         replicaData[replicaID].Vi.assign(reedsParam.eds_para[0].numstates,0);
     }
-    //DEBUG(2,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t SIMID "<< simulationID <<"\n");
-    DEBUG(2,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t DONE\n");
+    DEBUG(2,"replica_exchange_master_2d_s_eoff_eds "<< globalThreadID <<":Constructor:\t SIMID "<< simulationID <<"\n");
+    DEBUG(2,"replica_exchange_master_2d_s_eoff_eds "<< globalThreadID <<":Constructor:\t DONE\n");
     #else
-        throw "Cannot initialize replica_exchange_master_eds without MPI!";
+        throw "Cannot initialize replica_exchange_master_2d_s_eoff_eds without MPI!";
     #endif
-
 }
 
-void util::replica_exchange_master_eds::receive_from_all_slaves() {
+void util::replica_exchange_master_2d_s_eoff_eds::receive_from_all_slaves() {
   #ifdef XXMPI
-  DEBUG(2,"replica_exchange_master_eds "<< globalThreadID <<":receive_from_all_slaves:\t START\n");
+  DEBUG(2,"replica_exchange_master_2d_s_eoff_eds "<< globalThreadID <<":receive_from_all_slaves:\t START\n");
 
   double start = MPI_Wtime();
 
@@ -88,13 +87,13 @@ void util::replica_exchange_master_eds::receive_from_all_slaves() {
   int real_pos;
 
   // receive all information from slaves
-  DEBUG(4,"replica_exchange_master_eds "<< globalThreadID <<":receive_from_all_slaves:\t receive from slaves");
-  DEBUG(4, "replica_exchange_master_eds "<< globalThreadID <<":receive_from_all_slaves:\t numReps: "<< replicaGraphMPIControl().numberOfReplicas)
-  for (unsigned int slaveReplicaID = 0; slaveReplicaID < replicaGraphMPIControl().numberOfReplicas; ++slaveReplicaID) {
-    if (slaveReplicaID != replicaGraphMPIControl().masterID) {
-        DEBUG(2,"replica_exchange_master_eds "<< globalThreadID <<":receive_from_all_slaves:\t \t out of rank ID: " << replicaGraphMPIControl().masterID);
-        MPI_Recv(&info, 1, MPI_REPINFO, slaveReplicaID, REPINFO, replicaGraphMPIControl().comm, &status);
-        DEBUG(2,"replica_exchange_master_eds "<< globalThreadID <<":receive_from_all_slaves:\t \t ID: " << replicaGraphMPIControl().masterID);
+  DEBUG(4,"replica_exchange_master_2d_s_eoff_eds "<< globalThreadID <<":receive_from_all_slaves:\t receive from slaves");
+  DEBUG(4, "replica_exchange_master_2d_s_eoff_eds "<< globalThreadID <<":receive_from_all_slaves:\t numReps: "<< replicaGraphMPIControl.numberOfReplicas)
+  for (unsigned int slaveReplicaID = 0; slaveReplicaID < replicaGraphMPIControl.numberOfReplicas; ++slaveReplicaID) {
+    if (slaveReplicaID != replicaGraphMPIControl.masterID) {
+        DEBUG(2,"replica_exchange_master_2d_s_eoff_eds "<< globalThreadID <<":receive_from_all_slaves:\t \t out of rank ID: " << replicaGraphMPIControl.masterID);
+        MPI_Recv(&info, 1, MPI_REPINFO, slaveReplicaID, REPINFO, replicaGraphMPIControl.comm, &status);
+        DEBUG(2,"replica_exchange_master_2d_s_eoff_eds "<< globalThreadID <<":receive_from_all_slaves:\t \t ID: " << replicaGraphMPIControl.masterID);
         replicaData[slaveReplicaID].run = info.run;
         replicaData[slaveReplicaID].epot = info.epot;
         replicaData[slaveReplicaID].epot_partner = info.epot_partner;
@@ -122,17 +121,18 @@ void util::replica_exchange_master_eds::receive_from_all_slaves() {
         }
 
 
-        DEBUG(4,"replica_exchange_master_eds "<< globalThreadID <<":receive_from_all_slaves:\t REP:" <<slaveReplicaID<< " EpotTot: "<< replicaData[slaveReplicaID].epot);
+        DEBUG(4,"replica_exchange_master_2d_s_eoff_eds "<< globalThreadID <<":receive_from_all_slaves:\t REP:" <<slaveReplicaID<< " EpotTot: "<< replicaData[slaveReplicaID].epot);
 
-        MPI_Recv(&replicaData[slaveReplicaID].Vi[0],1, MPI_EDSINFO, slaveReplicaID, EDSINFO, replicaGraphMPIControl().comm, &status_eds);
+        MPI_Recv(&replicaData[slaveReplicaID].Vi[0],1, MPI_EDSINFO, slaveReplicaID, EDSINFO, replicaGraphMPIControl.comm, &status_eds);
         for(unsigned int s=0;s< replicaData[slaveReplicaID].Vi.size(); s++){
-            DEBUG(4,"replica_exchange_master_eds "<< replicaGraphMPIControl().masterID <<":receive_from_all_slaves:\t "<< s << " En: "<< replicaData[slaveReplicaID].Vi[s]);
-        }        
-    }    
+            DEBUG(4,"replica_exchange_master_2d_s_eoff_eds "<< replicaGraphMPIControl.masterID <<":receive_from_all_slaves:\t "<< s << " En: "<< replicaData[slaveReplicaID].Vi[s]);
+        }
+    }
+
   }
 
   // write all information from master node to data structure
-  DEBUG(2,"replica_exchange_master_eds "<< globalThreadID <<":receive_from_all_slaves:\t  t\twrite_own data");
+  DEBUG(2,"replica_exchange_master_2d_s_eoff_eds "<< globalThreadID <<":receive_from_all_slaves:\t  t\twrite_own data");
   replicaData[simulationID].run = run;
   replicaData[simulationID].partner = partnerReplicaID;
   replicaData[simulationID].epot = epot;
@@ -152,15 +152,15 @@ void util::replica_exchange_master_eds::receive_from_all_slaves() {
 
   replicaData[simulationID].Vi = replica->conf.current().energies.eds_vi;
 
-  DEBUG(4,"replica_exchange_master_eds "<< globalThreadID <<":receive_from_all_slaves:\t Master:\n" << "time used for receiving all messages: " << MPI_Wtime() - start
+  DEBUG(4,"replica_exchange_master_2d_s_eoff_eds "<< globalThreadID <<":receive_from_all_slaves:\t Master:\n" << "time used for receiving all messages: " << MPI_Wtime() - start
             << " seconds");
-  DEBUG(2,"replica_exchange_master_eds "<< globalThreadID <<":receive_from_all_slaves:\t DONE")
+  DEBUG(2,"replica_exchange_master_2d_s_eoff_eds "<< globalThreadID <<":receive_from_all_slaves:\t DONE")
   #else
-    throw "Cannot use receive_from_all_slaves from replica_exchange_master_eds without MPI!";
+    throw "Cannot use receive_from_all_slaves from replica_exchange_master_2d_s_eoff_eds without MPI!";
   #endif
 }
 
-int util::replica_exchange_master_eds::getSValPrecision(double minLambda){
+int util::replica_exchange_master_2d_s_eoff_eds::getSValPrecision(double minLambda){
   // this method basically counts the zeros between the dot and the first significant digit.
   // 0.0002560 => 4 digits=2
   int numDigits = 0;
@@ -183,9 +183,9 @@ int util::replica_exchange_master_eds::getSValPrecision(double minLambda){
   return numDigits;
 }
 
-void util::replica_exchange_master_eds::write() {
-    DEBUG(2,"replica_exchange_master_eds "<< globalThreadID <<":write:\t START");
-    DEBUG(2,"replica_exchange_master_eds "<< globalThreadID <<":write:\t svalPrecision "<<svalPrecision);
+void util::replica_exchange_master_2d_s_eoff_eds::write() {
+    DEBUG(2,"replica_exchange_master_2d_s_eoff_eds "<< globalThreadID <<":write:\t START");
+    DEBUG(2,"replica_exchange_master_2d_s_eoff_eds "<< globalThreadID <<":write:\t svalPrecision "<<svalPrecision);
 
     for (unsigned int treplicaID = 0; treplicaID < replicaGraphMPIControl.numberOfReplicas; ++treplicaID) {
       repOut << std::setw(6) << (replicaData[treplicaID].ID)//removed  + 1 for consistency reasons
@@ -206,7 +206,7 @@ void util::replica_exchange_master_eds::write() {
       DEBUG(1,"write: ID, coordIDPositionsVector "<< treplicaID << ", " << coordIDPositionsVector[treplicaID] << "\n");
       /*
       repOut.precision(svalPrecision);
-      DEBUG(2,"replica_exchange_master_eds "<< globalThreadID <<":write:\t s_val raus! "<<replicaData[treplicaID].l);
+      DEBUG(2,"replica_exchange_master_2d_s_eoff_eds "<< globalThreadID <<":write:\t s_val raus! "<<replicaData[treplicaID].l);
 
       //do not use it anymore since the info is in header
       //repOut  << std::setw(13) << replicaData[treplicaID].l;
@@ -239,19 +239,19 @@ void util::replica_exchange_master_eds::write() {
               << std::setw(6) << replicaData[treplicaID].switched;
 
     for(unsigned int s=0;s<reedsParam.eds_para[0].numstates; s++){
-        DEBUG(2, "replica_exchange_master_eds "<< globalThreadID <<":write:\t WRITE out POTS " <<s<< "\t" << replicaData[treplicaID].Vi[s]);
+        DEBUG(2, "replica_exchange_master_2d_s_eoff_eds "<< globalThreadID <<":write:\t WRITE out POTS " <<s<< "\t" << replicaData[treplicaID].Vi[s]);
         repOut   << std::setw(18) << std::min(replicaData[treplicaID].Vi[s], 10000000.0);//Output potential energies for each state
     }
       repOut << std::endl;
     }
-    DEBUG(2,"replica_exchange_master_eds "<< globalThreadID <<":write:\t DONE");
+    DEBUG(2,"replica_exchange_master_2d_s_eoff_eds "<< globalThreadID <<":write:\t DONE");
 }
 
-void util::replica_exchange_master_eds::init_repOut_stat_file() {
-    DEBUG(2,"replica_exchange_master_eds "<< globalThreadID <<":init_repOut_stat_file:\t START");
+void util::replica_exchange_master_2d_s_eoff_eds::init_repOut_stat_file() {
+    DEBUG(2,"replica_exchange_master_2d_s_eoff_eds "<< globalThreadID <<":init_repOut_stat_file:\t START");
 
     repOut.open(repdatName.c_str());
-    DEBUG(2,"replica_exchange_master_eds "<< globalThreadID <<":init_repOut_stat_file:\t repdat file open ");
+    DEBUG(2,"replica_exchange_master_2d_s_eoff_eds "<< globalThreadID <<":init_repOut_stat_file:\t repdat file open ");
 
     repOut << "#=========================================================================================================\n"
            << "#\tREPLICA Exchange - Enveloping Distribution Sampling - Exchange Output\n"
@@ -260,7 +260,7 @@ void util::replica_exchange_master_eds::init_repOut_stat_file() {
            << "#Number of temperatures:\t" << repParams.num_T << "\n"
            << "#Number of s values:\t" << repParams.num_l << "\n";
 
-    DEBUG(4,"replica_exchange_master_eds "<< globalThreadID <<":init_repOut_stat_file:\t set precision ");
+    DEBUG(4,"replica_exchange_master_2d_s_eoff_eds "<< globalThreadID <<":init_repOut_stat_file:\t set precision ");
 
     //double minS = *(std::min_element(reedsParam.eds_para[0].s.begin(), reedsParam.eds_para[0].s.end()));
     //svalPrecision = getSValPrecision(minS);
@@ -281,14 +281,14 @@ void util::replica_exchange_master_eds::init_repOut_stat_file() {
     repOut << "#s\t\t";
     repOut.precision(svalPrecision);
     int num_l = reedsParam.num_l;
-    for (int i = 0; i < num_l; ++i){
+    for (int i = 0; i < replicaGraphMPIControl.numberOfReplicas; ++i){
             repOut << std::setw(12) << reedsParam.eds_para[i].s[0];
     }
 
     repOut.precision(generalPrecision);
     for (int j = 0; j < reedsParam.num_states; ++j) {
         repOut << "\n# E"<< (j+1)<<"R(s)\t";
-        for (int i = 0; i < num_l; ++i)
+        for (int i = 0; i < replicaGraphMPIControl.numberOfReplicas; ++i)
             repOut << std::setw(12) << reedsParam.eds_para[i].eir[j];
     }
 
@@ -328,5 +328,5 @@ void util::replica_exchange_master_eds::init_repOut_stat_file() {
 
     repOut << "\n";
     repOut.flush();
-    DEBUG(2,"replica_exchange_master_eds "<< globalThreadID <<":init_repOut_stat_file:\t DONE");
+    DEBUG(2,"replica_exchange_master_2d_s_eoff_eds "<< globalThreadID <<":init_repOut_stat_file:\t DONE");
 }
