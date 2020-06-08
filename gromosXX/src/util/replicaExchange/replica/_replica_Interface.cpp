@@ -40,8 +40,9 @@ util::replica_Interface::replica_Interface(int globalThreadID, simulation::MpiCo
         replica_mpi_control.threadID = _replica_mpi_control.threadID;
         replica_mpi_control.mpiColor = _replica_mpi_control.mpiColor;
         replica_mpi_control.simulationOwnedThreads = _replica_mpi_control.simulationOwnedThreads; 
+    #ifdef XXMPI
         replica_mpi_control.comm = _replica_mpi_control.comm; 
-
+    #endif
 }
 
 util::replica_Interface::~replica_Interface(){

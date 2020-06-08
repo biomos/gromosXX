@@ -96,11 +96,12 @@ int io::read_input_repex(io::Argument const & args,
 		   std::ostream & os,  
                    bool quiet)
 {
-    //TODO check if enough threads
+    //Read in Parameters
     if (read_parameter(args, sim, os, quiet) != 0){return -1;}
-
     if (check_parameter(sim) != 0){return -1;}
  
+    //Check MPI Mapping
+    //TODO check if enough threads
     //MPI THREAD SIMULATION SPLITTING.
     unsigned int numReplicas = -1;
     if(sim.param().reeds.reeds == 1){
@@ -145,7 +146,10 @@ int io::read_input_repex(io::Argument const & args,
                     << "FOUND THREADS: " << totalNumberOfThreads << "\tNEED: " << numReplicas << "\n";
             std::cout << "\n There were not enough MPI thread assigned to this run!\n"
                     << "FOUND THREADS: " << totalNumberOfThreads << "\tNEED: " << numReplicas << "\n";
+            
+        #ifdef XXMPI
             MPI_Finalize();
+        #endif
         }
         return -1;
     }
@@ -167,8 +171,7 @@ int io::read_input_repex(io::Argument const & args,
         return -1;
     }
 
-
-
+  // Read in Topology
   if(!quiet){
     std::cout << std::internal << "\tReading Topology\n";
   }

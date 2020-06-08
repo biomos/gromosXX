@@ -28,7 +28,6 @@
 
 util::replica_MPI_Master::replica_MPI_Master(io::Argument _args, int cont,  int globalThreadID, 
         simulation::MpiControl & replica_mpi_control) : replica_Interface( globalThreadID, replica_mpi_control, _args){
- #ifdef XXMPI
 
     /**
      * Build up replica - reads in the input again and build output files.
@@ -42,7 +41,7 @@ util::replica_MPI_Master::replica_MPI_Master(io::Argument _args, int cont,  int 
      * @param simulation_num_threads
      */
     MPI_DEBUG(5, "replica_MPI_MASTER "<< globalThreadID <<":Constructor:\t  "<< globalThreadID <<":\t START");
-    
+#ifdef XXMPI
     /**
      * READ INPUT
      */
@@ -189,8 +188,8 @@ util::replica_MPI_Master::~replica_MPI_Master() {
 }
 
 void util::replica_MPI_Master::run_MD(){
-     #ifdef XXMPI
     MPI_DEBUG(5, "replica_MPI_Master "<< globalThreadID <<":runMD:\t thread  "<< globalThreadID <<": \t START");
+     #ifdef XXMPI
 
     // run MD simulation
     int error;
@@ -260,9 +259,9 @@ void util::replica_MPI_Master::run_MD(){
     if (curentStepNumber >=  totalStepNumber) {
       traj->print_final(topo, conf, sim);
     }
+    #endif    
 
     MPI_DEBUG(5, "replica_MPI_MASTER "<< globalThreadID <<":run_MD:\t  DONE: at step= " << curentStepNumber);
-    #endif    
 }
 void util::replica_MPI_Master::send_coordinates(){
   #ifdef XXMPI

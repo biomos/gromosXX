@@ -62,7 +62,6 @@ namespace util {
          * simulation
          */
         //simulation::Simulation sim;
-        
         /**
          * run MD
          * @return 
