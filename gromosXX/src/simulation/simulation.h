@@ -26,7 +26,7 @@ namespace simulation
   class Simulation
   {
   public:
-    
+
     /**
      * Constructor.
      */
@@ -53,7 +53,7 @@ namespace simulation
      * multibath as const.
      */
     simulation::Multibath const & multibath()const{
-      return m_param.multibath.multibath; 
+      return m_param.multibath.multibath;
     }
 
      /**
@@ -79,7 +79,7 @@ namespace simulation
      * time step size
      */
     double time_step_size()const { return m_time_step_size; }
-    
+
     /**
      * number of steps done.
      */
@@ -89,7 +89,7 @@ namespace simulation
      * number of steps done.
      */
     unsigned int steps()const { return m_steps; }
-    
+
     /**
      * simulation time.
      */
@@ -99,7 +99,7 @@ namespace simulation
      * simulation time.
      */
     double time()const { return m_time; }
-    
+
     /**
      * minimisation step size.
      */
@@ -121,13 +121,13 @@ namespace simulation
 #ifdef HAVE_HOOMD
 	boost::shared_ptr<processor::Processor> proc;
 #endif
-    
+
   private:
     /**
      * the simulation parameters
      */
     Parameter m_param;
-    
+
     /**
      *  
      */
@@ -137,12 +137,12 @@ namespace simulation
      * the time step size
      */
     double m_time_step_size;
-    
+
     /**
      * the number of steps done.
      */
     unsigned int m_steps;
-    
+
     /**
      * the simulation time.
      */
@@ -154,7 +154,7 @@ namespace simulation
     double m_minimisation_step_size;
 
   };
-  
+
 } // simulation
 
 #endif

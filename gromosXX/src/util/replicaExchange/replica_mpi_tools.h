@@ -12,6 +12,11 @@
  */
 #include<stdheader.h>
 
+#include <vector>
+#include <map>
+
+
+
 #ifndef MPI_TOOLS_H
 #define MPI_TOOLS_H
 

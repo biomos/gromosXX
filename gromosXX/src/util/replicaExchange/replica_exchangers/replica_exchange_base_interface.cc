@@ -1,7 +1,7 @@
-/* 
+/*
  * File:   replica_exchange_base.cc
  * Author: wissphil, sriniker
- * 
+ *
  * Created on April 29, 2011, 2:06 PM
  */
 
@@ -48,7 +48,7 @@
 #define SUBMODULE replica_exchange
 
 util::replica_exchange_base_interface::replica_exchange_base_interface(io::Argument _args,
-                                                   unsigned int cont, 
+                                                   unsigned int cont,
                                                    unsigned int globalThreadID,
                                                    replica_graph_control &replicaGraphMPIControl,
                                                    simulation::MpiControl &replica_mpi_control) :
@@ -74,7 +74,7 @@ util::replica_exchange_base_interface::replica_exchange_base_interface(io::Argum
 
   DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":Constructor:\t Constructor \t DONE " << replica->sim.param().reeds.num_l);
   #else
-    throw "Cannot use send_to_master from replica_exchange_slave_eds without MPI!"; 
+    throw "Cannot use send_to_master from replica_exchange_slave_eds without MPI!";
   #endif
 }
 
@@ -86,6 +86,7 @@ util::replica_exchange_base_interface::~replica_exchange_base_interface() {
 void util::replica_exchange_base_interface::createReplicas(int cont, int globalThreadID, simulation::MpiControl &replica_mpi_control){
   MPI_DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":createReplicas:\t START \t THREADS "<<replica_mpi_control.numberOfThreads);
 
+  DEBUG(3,"\n\nreplica_exchange_base_interface: CREATEREPLICAS\n\n");
   // create the number of replicas that are assigned to my node
     if(replica_mpi_control.numberOfThreads>1){
         
@@ -123,11 +124,12 @@ void util::replica_exchange_base_interface::run_MD() {
 
 //TODO: REMOVE
 void util::replica_exchange_base_interface::updateReplica_params(){
+  DEBUG(3,"\n\nreplica_exchange_base_interface: UPDATEREPLICA_PARAMS\n\n");
   // update replica information
   time = replica->sim.time();
   steps = replica->sim.steps();
   ++run;
-  epot = calculate_energy_core();   
+  epot = calculate_energy_core();
 }
 /*
  * REplica Exchanges
@@ -176,13 +178,15 @@ void util::replica_exchange_base_interface::write_final_conf() {
     }
 }
 
-
 //RE
 //SWAPPING Functions
 void util::replica_exchange_base_interface::swap_replicas_2D(const unsigned int partnerReplicaID) {
   DEBUG(4, "replica "<<  globalThreadID <<":swap2D:\t  START");
   DEBUG(4, "replica "<<  globalThreadID <<":swap2D:\t  sim: "<< simulationID << " \t\t "<< partnerReplicaID);
 
+  DEBUG(1,"\n\nreplica_exchange_base_interface: SWAP_2D\n\n");
+
+  unsigned int partnerReplicaMasterThreadID = partnerReplicaID;
   unsigned int numT = replica->sim.param().replica.num_T;
   unsigned int numL = replica->sim.param().replica.num_l;
 
@@ -235,7 +239,7 @@ void util::replica_exchange_base_interface::swap_replicas_2D(const unsigned int 
         MPI_Send(&box_replica(0)[0], 1, MPI_BOX, partnerReplicaID, BOX,  replicaGraphMPIControl().comm);
 #endif
       }
-      
+
 #ifdef XXMPI
       MPI_Status status;
 #endif
@@ -268,6 +272,8 @@ void util::replica_exchange_base_interface::swap_replicas_2D(const unsigned int 
 void util::replica_exchange_base_interface::swap_replicas_1D(const unsigned int partnerReplicaID) {
   DEBUG(4, "replica "<<  globalThreadID <<":swap:\t  START");
 
+  DEBUG(1,"\n\nreplica_exchange_base_interface: SWAP_1D\n\n");
+
   unsigned int partnerReplicaMasterThreadID = partnerReplicaID;
   unsigned int numP = replica->sim.param().replica.num_T;
 
@@ -275,8 +281,8 @@ void util::replica_exchange_base_interface::swap_replicas_1D(const unsigned int 
   if (partnerReplicaID < numP && partnerReplicaID != simulationID) {
     // the one with lower ID does probability calculation
     if (simulationID < partnerReplicaID) {
-    
-      // posts a MPI_Recv(...) matching the MPI_Send below 
+
+      // posts a MPI_Recv(...) matching the MPI_Send below
       probability = calc_probability(partnerReplicaID);
       const double randNum = rng.get();
 
@@ -293,7 +299,6 @@ void util::replica_exchange_base_interface::swap_replicas_1D(const unsigned int 
       } else
         switched = false;
     } else {    //The Partner sends his data to The calculating Thread
-      
         //special case if lambda also needs to be exchanged
       bool sameLambda = (l == replica->sim.param().replica.lambda[partnerReplicaID / replica->sim.param().replica.num_T]);
       if(!sameLambda){      //exchange LAMBDA
@@ -321,7 +326,7 @@ void util::replica_exchange_base_interface::swap_replicas_1D(const unsigned int 
         MPI_Send(&box_replica(0)[0], 1, MPI_BOX, partnerReplicaMasterThreadID, BOX,  replicaGraphMPIControl().comm);
 #endif
       }
-      
+
 #ifdef XXMPI
       MPI_Status status;
 #endif
@@ -347,7 +352,7 @@ void util::replica_exchange_base_interface::swap_replicas_1D(const unsigned int 
       partner = ID;
     switched = false;
     probability = 0.0;
-      
+
     */
   }
     DEBUG(4, "replica "<< globalThreadID <<":swap:\t  DONE");
@@ -358,8 +363,10 @@ int util::replica_exchange_base_interface::find_partner() const {
     //TODO: REWRITE To get Replica ID BSCHROED
   unsigned int numT = replica->sim.param().replica.num_T;
   unsigned int numL = replica->sim.param().replica.num_l;
-  
+
   unsigned int ID = simulationID;
+
+  DEBUG(3,"\n\nreplica_exchange_base_interface: FIND_PARTNER\n\n");
 
   unsigned int partner = ID; //makes sense why?
   bool even = ID % 2 == 0;
@@ -387,7 +394,7 @@ int util::replica_exchange_base_interface::find_partner() const {
   } else { // 2D-RE
     // determine switch direction
     switch (run % 4) {
-      case 0: // lambda direction 
+      case 0: // lambda direction
         if (numTeven) {
           if (even)
             partner = ID - 1;
@@ -443,7 +450,7 @@ int util::replica_exchange_base_interface::find_partner() const {
             partner = ID;
         }
         break;
-      case 3:// temp-direction WHY? 
+      case 3:// temp-direction WHY?
         if (evenRow)
           partner = ID - numT;
         else
@@ -459,13 +466,15 @@ int util::replica_exchange_base_interface::find_partner() const {
 }
 
 double util::replica_exchange_base_interface::calc_probability(const unsigned int partnerReplicaID) {
-    
+
+  DEBUG(1,"\n\nreplica_exchange_base_interface: CALC_PROBABILITY by ID:" << simulationID << "\n");
+
   unsigned int partnerReplicaMasterThreadID = partnerReplicaID;
 
   double delta;
   const double b1 = 1.0 / (math::k_Boltzmann * T);
   const double b2 = 1.0 / (math::k_Boltzmann * replica->sim.param().replica.temperature[partnerReplicaID % replica->sim.param().replica.num_T]);
-  
+
   bool sameLambda = (l == replica->sim.param().replica.lambda[partnerReplicaID / replica->sim.param().replica.num_T]);// horizontal switch with same lambda?
 
   if (sameLambda) {
@@ -479,7 +488,7 @@ double util::replica_exchange_base_interface::calc_probability(const unsigned in
 
     epot_partner = energies[0];
     delta = (b1 - b2)*(epot_partner - epot); //*  (E21 - E11=
-    
+
   } else {
     // 2D formula
     /*
@@ -497,8 +506,8 @@ double util::replica_exchange_base_interface::calc_probability(const unsigned in
 
     const double E11 = epot;
     const double E21 = calculate_energy(partnerReplicaID);
-    
-    // store this as the partner energy 
+
+    // store this as the partner energy
     epot_partner = E21;
 
     // Chris: I think this is wrong
@@ -509,7 +518,7 @@ double util::replica_exchange_base_interface::calc_probability(const unsigned in
 
     delta = b1 * (E12 - E11) - b2 * (E22 - E21);
   }
-  
+
   // NPT? add PV term
   if (replica->sim.param().pcouple.scale != math::pcouple_off) {
     math::Box box_partner = replica->conf.current().box;
@@ -520,7 +529,7 @@ double util::replica_exchange_base_interface::calc_probability(const unsigned in
     double V1 = math::volume(replica->conf.current().box, replica->conf.boundary_type);
     double V2 = math::volume(box_partner, replica->conf.boundary_type);
     //std::cerr << "volumes: " << V1 << " " << V2 << std::endl;
-    
+
     // isotropic!
     double pressure = (replica->sim.param().pcouple.pres0(0,0)
               + replica->sim.param().pcouple.pres0(1,1)
@@ -587,6 +596,7 @@ double util::replica_exchange_base_interface::calculate_energy(const unsigned in
 }
 
 void util::replica_exchange_base_interface::exchange_averages() {
+  DEBUG(3,"\n\nreplica_exchange_base_interface: EXCHANGE_AVERAGES\n\n");
   // after a swap the averages of current and old are exchanged and have to be switched back
   configuration::Average  dummy = replica->conf.current().averages;
   replica->conf.current().averages=replica->conf.old().averages;
@@ -595,6 +605,7 @@ void util::replica_exchange_base_interface::exchange_averages() {
 
 //sending stuff
 void util::replica_exchange_base_interface::send_coord(const unsigned int receiverReplicaID) {
+  DEBUG(3,"\n\nreplica_exchange_base_interface: SEND_COORD\n\n");
 #ifdef XXMPI
 
   unsigned int receiverReplicaMasterThreadID = receiverReplicaID;
@@ -630,8 +641,9 @@ void util::replica_exchange_base_interface::send_coord(const unsigned int receiv
 }
 
 void util::replica_exchange_base_interface::receive_new_coord(const unsigned int senderReplicaID) {
+  DEBUG(3,"\n\nreplica_exchange_base_interface: RECEIVE_NEW_COORD\n\n");
 #ifdef XXMPI
-   
+
   unsigned int senderReplicaMasterThreadID = senderReplicaID;
 
   MPI_Status status;
@@ -669,20 +681,22 @@ void util::replica_exchange_base_interface::receive_new_coord(const unsigned int
 }
 
 //TRE
-void util::replica_exchange_base_interface::velscale(int unsigned partnerReplica){ 
-  double T1 = replica->sim.param().replica.temperature[simulationID]; 
+void util::replica_exchange_base_interface::velscale(int unsigned partnerReplica){
+  DEBUG(5,"\n\nreplica_exchange_base_interface: VELSCALE\n\n");
+  double T1 = replica->sim.param().replica.temperature[simulationID];
   double T2 = replica->sim.param().replica.temperature[partnerReplica];
   if (T1 != T2) {
     double factor = sqrt(T1/T2);
     for (unsigned int k = 0; k < replica->topo.num_atoms(); ++k) {
      replica->conf.current().vel(k) *= factor;
     }
-  } 
+  }
 }
 
 //TODO: mve to 2D_T_lambda ?
 //Lambda Exchange (Kinda Hamiltonian Exchange)
 void util::replica_exchange_base_interface::set_lambda() {
+  DEBUG(5,"\n\nreplica_exchange_base_interface: SET_LAMBDA\n\n");
   // change Lambda in simulation
   replica->sim.param().perturbation.lambda = l;
   replica->topo.lambda(l);
@@ -694,6 +708,7 @@ void util::replica_exchange_base_interface::set_lambda() {
 }
 
 void util::replica_exchange_base_interface::set_temp() {
+  DEBUG(5,"\n\nreplica_exchange_base_interface: SET_TEMP\n\n");
   // change T in simulation
   replica->sim.param().stochastic.temp = T;
 
@@ -704,6 +719,7 @@ void util::replica_exchange_base_interface::set_temp() {
 }
 
 void util::replica_exchange_base_interface::change_lambda(const unsigned int partnerReplicaID) {
+  DEBUG(5,"\n\nreplica_exchange_base_interface: CHANGE_LAMBDA\n\n");
   int idx;
   if (replica->sim.param().replica.num_l == 1)
     idx = 0;
@@ -722,6 +738,7 @@ void util::replica_exchange_base_interface::change_lambda(const unsigned int par
 }
 
 void util::replica_exchange_base_interface::change_temp(const unsigned int partnerReplicaID) {
+  DEBUG(5,"\n\nreplica_exchange_base_interface: CHANGE_TEMP\n\n");
   int idx;
   if (replica->sim.param().replica.num_T == 1)
     idx = 0;
@@ -740,7 +757,7 @@ void util::replica_exchange_base_interface::change_temp(const unsigned int partn
 //TODO: REMOVE
 // IO
 void util::replica_exchange_base_interface::print_coords(std::string name) {
-    
+
     io::Out_Configuration received_traj(GROMOSXX " Configuration", std::cout);
     io::Argument args2(args);
     args2.erase("fin");

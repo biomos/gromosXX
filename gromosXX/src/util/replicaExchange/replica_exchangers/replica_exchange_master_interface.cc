@@ -1,7 +1,7 @@
-/* 
+/*
  * File:   replica_exchange_master.cc
  * Author: wissphil, sriniker
- * 
+ *
  * Created on April 29, 2011, 2:18 PM
  */
 
@@ -61,7 +61,7 @@ util::replica_exchange_master_interface::replica_exchange_master_interface(io::A
   DEBUG(2,"replica_exchange_master_interface "<< globalThreadID <<":Constructor:\t replica S" << replica->sim.param().replica.lambda[0]);
 
   assert(repParams.num_l > 0);
-  
+
   DEBUG(4,"replica_exchange_master_interface "<< globalThreadID <<":Constructor:\t Init Replicas \t Next");
   replicaData.resize(replicaGraphMPIControl.numberOfReplicas);
   DEBUG(4,"replica_exchange_master_interface "<< globalThreadID <<":Constructor:\t Replica_data type \t " << typeid(replicaData).name());
@@ -82,7 +82,7 @@ util::replica_exchange_master_interface::replica_exchange_master_interface(io::A
   // set output file
  DEBUG(2,"replica_exchange_master_interface "<< globalThreadID <<":Constructor:\t DONE");
 #else
-   throw "Cannot initialize replica_exchange_master without MPI!"; 
+   throw "Cannot initialize replica_exchange_master without MPI!";
 #endif
 }
 
@@ -125,11 +125,11 @@ void util::replica_exchange_master_interface::receive_from_all_slaves() {
     DEBUG(2,"replica_exchange_master_interface "<< globalThreadID <<":receive_from_all_slaves:\t " << "time used for receiving all messages: " << MPI_Wtime() - start << " seconds\n");
     DEBUG(2,"replica_exchange_master_interface "<< globalThreadID <<":receive_from_all_slaves:\t DONE: \n");
     #else
-     throw "Cannot use replica_exchange_master without MPI!"; 
+     throw "Cannot use replica_exchange_master without MPI!";
     #endif
 }
 
-  
+
 void util::replica_exchange_master_interface::init_repOut_stat_file() {
   DEBUG(2,"replica_exchange_master_interface "<< globalThreadID <<":init_repOut_stat_file:\t START");
   repOut.open(repdatName.c_str());
@@ -137,11 +137,11 @@ void util::replica_exchange_master_interface::init_repOut_stat_file() {
 
   repOut << "Number of temperatures:\t" << repParams.num_T << "\n"
          << "Number of lambda values:\t" << repParams.num_l << "\n";
-  
+
   DEBUG(2,"replica_exchange_master_interface "<< globalThreadID <<":init_repOut_stat_file:\t set precision ");
   repOut.precision(4);
   repOut.setf(std::ios::fixed, std::ios::floatfield);
-  
+
   DEBUG(2,"replica_exchange_master_interface "<< globalThreadID <<":init_repOut_stat_file:\t write Temperatures ");
   repOut << "T    \t";
   for (int t = 0; t < repParams.num_T; ++t){
@@ -149,7 +149,7 @@ void util::replica_exchange_master_interface::init_repOut_stat_file() {
     DEBUG(2,"replica_exchange_master_interface "<< globalThreadID <<":init_repOut_stat_file:\t T: "<<  repParams.temperature[t]);
     repOut << std::setw(12) << repParams.temperature[t];
   }
-  
+
   DEBUG(2,"replica_exchange_master_interface "<< globalThreadID <<":init_repOut_stat_file:\t write lambdas ");
   repOut << "\nlambda    \t";
   for (int l = 0; l < repParams.num_l; ++l){
@@ -202,4 +202,3 @@ void util::replica_exchange_master_interface::write() {
   DEBUG(2,"replica_exchange_master_interface "<< globalThreadID <<":write:\t DONE");
 
 }
-  
