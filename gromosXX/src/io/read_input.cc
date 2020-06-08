@@ -201,7 +201,6 @@ int io::read_input_repex(io::Argument const & args,
     std::cout.flush();
   }
 
-	int numReplicas;
 	switch(sim.param().reeds.reeds) {
 				case 0:
 						numReplicas = sim.param().replica.num_T * sim.param().reeds.num_l;
@@ -253,7 +252,6 @@ int io::read_input_repex(io::Argument const & args,
       io::messages.display(os);
   }
 
->>>>>>> gromosXX/src/io/read_input.cc
   return 0;
 }
 

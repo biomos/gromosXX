@@ -555,7 +555,7 @@ int main(int argc, char *argv[]) {
             Master->run_MD();
         }
 
-        MPI_DEBUG(1, "Master \t MD: " << total_runs<< " steps")
+        MPI_DEBUG(1, "Master \t MD: " << sim_runs<< " steps")
 
         //Vars for timing
         int hh, mm, ss = 0;
@@ -574,8 +574,8 @@ int main(int argc, char *argv[]) {
             Master->write();
 
 
-            if ((total_runs / 10 > 0) && (trial % (total_runs / 10) == 0)) { //Timer
-                percent = double(trial) / double(total_runs);
+            if ((sim_runs / 10 > 0) && (trial % (sim_runs / 10) == 0)) { //Timer
+                percent = double(trial) / double(sim_runs);
 
                 spent = util::now() - start;
                 hh = int(spent / 3600);
@@ -634,7 +634,7 @@ int main(int argc, char *argv[]) {
 
         trial = 0; //reset trials
 
-        MPI_DEBUG(1, "Slave " << globalThreadID << " \t MD " << total_runs << " steps")
+        MPI_DEBUG(1, "Slave " << globalThreadID << " \t MD " << sim_runs << " steps")
         for (; trial < sim_runs; ++trial) { //for repex execution
             MPI_DEBUG(1, "Slave " << globalThreadID << " \t MD trial: " << trial << "\n")
             MPI_DEBUG(1, "Slave " << globalThreadID << " \t run_MD START " << trial << "\n")
@@ -677,6 +677,7 @@ int main(int argc, char *argv[]) {
                 << "\t" << durationHour << ":" << durationMinlHour << ":" << durationSlMin << "\t\t" << duration << "\n";
     }
 
+    MPI_DEBUG(1, "Before Finalize!\n")
     MPI_Comm_free(&reGMPI.comm); //Clean up
     MPI_Comm_free(&replica_mpi_control.comm); //Clean up
 

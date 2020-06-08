@@ -22,8 +22,8 @@
 util::replica_exchange_slave_2d_s_eoff_eds::replica_exchange_slave_2d_s_eoff_eds(io::Argument & _args,
                                                             unsigned int cont,
                                                             unsigned int globalThreadID,
-                                                            replica_graph_mpi_control replicaGraphMPIControl,
-                                                            simulation::mpi_control_struct replica_mpi_control):
+                                                            replica_graph_control &replicaGraphMPIControl,
+                                                            simulation::MpiControl &replica_mpi_control):
             replica_exchange_base_interface(_args, cont, globalThreadID, replicaGraphMPIControl, replica_mpi_control),
             replica_exchange_base_2d_s_eoff_eds(_args, cont, globalThreadID, replicaGraphMPIControl, replica_mpi_control),
             replica_exchange_slave_interface(_args, cont, globalThreadID, replicaGraphMPIControl, replica_mpi_control)
@@ -52,13 +52,13 @@ void util::replica_exchange_slave_2d_s_eoff_eds::send_to_master() const{
     DEBUG(4,"replica_exchange_slave_2d_s_eoff_eds " << globalThreadID << "send_to_master:\t epotTot\t "<< info.epot);
 
     DEBUG(4,"replica_exchange_slave_2d_s_eoff_eds " << globalThreadID << ":send_to_master:\t\t send MPI_REPINFO");
-    MPI_Send(&info, 1, MPI_REPINFO, replicaGraphMPIControl.masterID, REPINFO, replicaGraphMPIControl.comm);
+    MPI_Send(&info, 1, MPI_REPINFO, replicaGraphMPIControl().masterID, REPINFO, replicaGraphMPIControl().comm);
 
     DEBUG(4,"replica_exchange_slave_2d_s_eoff_eds " << globalThreadID << ":send_to_master:\t\t send MPI_EDS");
 
     eds_energies= replica->conf.current().energies.eds_vi;
 
-    MPI_Send(&eds_energies[0], 1, MPI_EDSINFO, replicaGraphMPIControl.masterID, EDSINFO, replicaGraphMPIControl.comm);
+    MPI_Send(&eds_energies[0], 1, MPI_EDSINFO, replicaGraphMPIControl().masterID, EDSINFO, replicaGraphMPIControl().comm);
     DEBUG(4,"replica_exchange_slave_2d_s_eoff_eds " << globalThreadID << ":send_to_master:\t\t send MPI_EDS \t DONE" );
     DEBUG(2,"replica_exchange_slave_2d_s_eoff_eds " << globalThreadID << ":send_to_master:\t DONE");
   }

@@ -162,8 +162,8 @@ void util::replica_exchange_base_eds::init_eds_stat(){
         replicaStatData[currentID].s=l; //l==s because of the implementation of hamiltonian replica exchange.
         replicaStatData[currentID].dt=dt;
         replicaStatData[currentID].run=0;
-        replicaStatData[currentID].epot_vec.resize(replicaGraphMPIControl.numberOfReplicas);
-        replicaStatData[currentID].prob_vec.resize(replicaGraphMPIControl.numberOfReplicas);
+        replicaStatData[currentID].epot_vec.resize(replicaGraphMPIControl().numberOfReplicas);
+        replicaStatData[currentID].prob_vec.resize(replicaGraphMPIControl().numberOfReplicas);
 
         DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":init_eds_stat:\t DONE");
 }

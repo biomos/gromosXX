@@ -187,7 +187,7 @@ void util::replica_exchange_master_eds::write() {
     DEBUG(2,"replica_exchange_master_eds "<< globalThreadID <<":write:\t START");
     DEBUG(2,"replica_exchange_master_eds "<< globalThreadID <<":write:\t svalPrecision "<<svalPrecision);
 
-    for (unsigned int treplicaID = 0; treplicaID < replicaGraphMPIControl.numberOfReplicas; ++treplicaID) {
+    for (unsigned int treplicaID = 0; treplicaID < replicaGraphMPIControl().numberOfReplicas; ++treplicaID) {
       repOut << std::setw(6) << (replicaData[treplicaID].ID)//removed  + 1 for consistency reasons
               << " "
               << std::setw(6) << replicaData[treplicaID].pos_info.first
@@ -274,7 +274,7 @@ void util::replica_exchange_master_eds::init_repOut_stat_file() {
     repOut << "\n";
     repOut << "#Start coordinate == Position coordinate\n";
     repOut << "#Position\t";
-    for(int i=0; i < replicaGraphMPIControl.numberOfReplicas; ++i){
+    for(int i=0; i < replicaGraphMPIControl().numberOfReplicas; ++i){
       repOut << std::setw(12) << i;
     }
     repOut << "\n";
