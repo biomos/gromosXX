@@ -5,15 +5,15 @@
  */
 
 /*
- * File:   replica_exchange_master_eds.h
- * Author: bschroed
+ * File:   replica_exchange_master_2d_s_eoff_eds.h
+ * Author: theosm
  *
- * Created on April 18, 2018, 3:20 PM
+ * Created on March 29, 2020, 11:00 AM
  */
 
 #include <util/replicaExchange/replica_exchangers/replica_exchange_base_interface.h>
 #include <util/replicaExchange/replica_exchangers/replica_exchange_master_interface.h>
-#include <util/replicaExchange/replica_exchangers/1D_S_RE_EDS/replica_exchange_base_eds.h>
+#include <util/replicaExchange/replica_exchangers/2D_S_Eoff_RE_EDS/replica_exchange_base_2d_s_eoff_eds.h>
 
 //for the constructor
 #include <stdheader.h>
@@ -38,12 +38,12 @@
 #include <unistd.h>
 
 
-#ifndef REPLICA_EXCHANGE_MASTER_EDS_H
-#define REPLICA_EXCHANGE_MASTER_EDS_H
+#ifndef REPLICA_EXCHANGE_MASTER_2D_S_EOFF_EDS_H
+#define REPLICA_EXCHANGE_MASTER_2D_S_EOFF_EDS_H
 
 namespace util{
 
-    class replica_exchange_master_eds :  public  replica_exchange_base_eds, public  replica_exchange_master_interface  {
+    class replica_exchange_master_2d_s_eoff_eds :  public  replica_exchange_base_2d_s_eoff_eds, public  replica_exchange_master_interface  {
     public:
         /**
          * constructor
@@ -54,11 +54,11 @@ namespace util{
          * @param repIDs std::vector<int>, IDs of replicas the instance has to manage
          * @param repMap std::map<int,int>, maps replica IDs to nodes; needed for communication
          */
-        replica_exchange_master_eds(io::Argument _args,
+        replica_exchange_master_2d_s_eoff_eds(io::Argument _args,
                                     unsigned int cont,
                                     unsigned int globalThreeadID,
-                                    replica_graph_control & replicaGraphMPIControl,
-                                    simulation::MpiControl & replica_mpi_control);
+                                    replica_graph_control &replicaGraphMPIControl,
+                                    simulation::MpiControl &replica_mpi_control);
 
         /**
          * @override
@@ -78,8 +78,8 @@ namespace util{
         /**
          * destructor
          */
-        ~replica_exchange_master_eds(){};
-        //using util::replica_exchange_base_eds::replicas;
+        ~replica_exchange_master_2d_s_eoff_eds(){};
+        //using util::replica_exchange_base_2d_s_eoff_eds::replicas;
         /**
          * Column Size for redpat out-floating point nums
          */
@@ -118,4 +118,4 @@ namespace util{
 
     };
 }
-#endif /* REPLICA_EXCHANGE_MASTER_EDS_H */
+#endif /* REPLICA_EXCHANGE_MASTER_2D_S_EOFF_EDS_H */
