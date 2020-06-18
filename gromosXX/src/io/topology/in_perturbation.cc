@@ -114,8 +114,9 @@ io::In_Perturbation::read(topology::Topology &topo,
 	simulation::Parameter &param,
         std::ostream & os)
 {
+  DEBUG(7, "edsimp pertub" << param.eds.edsimp);
 
-  if (!param.perturbation.perturbation && !param.eds.eds && !param.reeds.reeds){
+  if (!param.perturbation.perturbation && !param.eds.eds && !param.eds.edsimp && !param.reeds.reeds){
     io::messages.add("Ignoring perturbation topology because perturbation is not enabled.",
 		     "In_Perturbation",
 		     io::message::warning);
@@ -134,7 +135,7 @@ io::In_Perturbation::read(topology::Topology &topo,
   
   // let's do a warning because state A information is overwritten?
   bool warn = false;
-  if(!param.eds.eds){
+  if(!param.eds.eds && !param.eds.edsimp){
     // prepare arrays
     topo.is_perturbed().resize(topo.num_solute_atoms(), false);
     
@@ -1602,6 +1603,7 @@ io::In_Perturbation::read(topology::Topology &topo,
       
     } // PERTPOLPARAM
   } // end of if(!param.eds.eds)
+  //Shouldn't eds pertop blocks only be read if eds is turned on?: Oriol
   { // MPERTATOM
     DEBUG(10, "MPERTATOM block");
 
@@ -1787,6 +1789,146 @@ io::In_Perturbation::read(topology::Topology &topo,
     } // if block present
     
   } // MPERTATOM
+
+  { // MPERTIMPROPERDIH(H)
+    DEBUG(10, "MPERTIMPROPERDIH(H) block");
+    std::vector<std::string> mpertimproperdih;
+    mpertimproperdih.push_back("MPERTIMPROPERDIHH");
+    mpertimproperdih.push_back("MPERTIMPROPERDIH");
+    // Both blocks are treated identically, the loop is called twice
+    for (unsigned int hh=0; hh < mpertimproperdih.size(); hh++) {
+      buffer = m_block[mpertimproperdih.at(hh)];
+      if (buffer.size()){
+        block_read.insert(mpertimproperdih.at(hh));
+        
+        if (!quiet)
+          os << "\t" << mpertimproperdih.at(hh) << "\n";
+        
+        it = buffer.begin() + 1;
+        _lineStream.clear();
+        _lineStream.str(*it);
+        unsigned int numstates, numdih, n;
+        _lineStream >> numdih >> numstates;
+        ++it;
+        if (_lineStream.fail()){
+          io::messages.add("Bad line (numdih, numstates) in " + mpertimproperdih.at(hh) +  "block.",
+                          "In_Perturbation", io::message::error);
+        return;
+        }
+
+        if (numstates != param.eds.numstates) {
+          std::ostringstream msg;
+          msg << "Number of perturbed states given in perturbation topology ("
+                  << numstates << ") and input file (" << param.eds.numstates
+                  << ") do not match.";
+          io::messages.add(msg.str(),
+                  "In_Perturbation", io::message::error);
+          return;
+        }
+        // read in the name to identify the perturbation 
+        std::vector<std::string> identifier(numstates);
+        _lineStream.clear();
+        _lineStream.str(*it);
+        for (unsigned int i = 0; i < identifier.size(); i++) {
+          _lineStream >> identifier[i];
+        }
+        ++it;
+        if (_lineStream.fail()) {
+          io::messages.add("Bad line (PTNAME i.e. perturbation identifier name) in " + mpertimproperdih.at(hh) +  "block.",
+                  "In_Perturbation", io::message::error);
+          return;
+        }
+        if (!quiet) {
+          os << "\t" << std::setw(5) << "name";
+          for (unsigned int i = 0; i < identifier.size(); i++) {
+            os << std::setw(14) << identifier[i];
+          }
+          os << "\n";
+        }
+        // at this point the first two lines are loaded (aka num states and name of end states)
+        // Now load the actual perturbed impropers
+        int ia, ja, ka, la;
+        std::vector<unsigned int> t_codes(numstates); // vector of improper types
+
+        // prepare arrays NOTE: if they are already prepared nothing should happen right?
+        topo.is_eds_perturbed().resize(topo.num_solute_atoms(), false);
+
+
+        if (!quiet) {
+          os << "\t"
+                  << std::setw(10) << "i"
+                  << std::setw(10) << "j"
+                  << std::setw(10) << "k"
+                  << std::setw(10) << "l";
+
+          for (unsigned int i = 0; i < numstates; i++) {
+            os << std::setw(8) << "T_type(" << i << ")";
+          }
+        }
+
+        for (n = 0; it != buffer.end() - 1; ++it, ++n) {
+          DEBUG(10, "\treading a line: " << n);
+          DEBUG(10, "\tline content: " << *it);
+
+          _lineStream.clear();
+          _lineStream.str(*it);
+          _lineStream >> ia >> ja >> ka >> la;
+          for (unsigned int i = 0; i < numstates; i++) {
+            _lineStream >> t_codes[i];
+            DEBUG(12,"\t T_type = " << t_codes[i]);
+          }          
+          if (_lineStream.fail()) {
+            io::messages.add("Bad line in " + mpertimproperdih.at(hh) + "block.",
+                    "In_Perturbation", io::message::error);
+            return;
+          }
+
+          for (unsigned int i = 0; i < numstates; i++) {
+            --t_codes[i];
+            if (t_codes[i] < 0.0) {
+              io::messages.add("Negative dihedral type in " + mpertimproperdih.at(hh) + "block.",
+                      "In_Perturbation", io::message::critical);
+              return;
+            }
+          }
+
+          if (!quiet) {
+            os << "\t"
+                    << std::setw(5) << ia
+                    << std::setw(5) << ja
+                    << std::setw(5) << ka
+                    << std::setw(5) << la;
+            for (unsigned int i = 0; i < numstates; i++) {
+              os << std::setw(8) << t_codes[i] + 1;
+            }
+          }
+
+          // check if the improper dihedral exists
+          topology::four_body_term_struct id(ia-1, ja-1, ka-1, la-1, t_codes[0]);
+          std::vector<topology::four_body_term_struct>::iterator id_it
+          = std::find_if(topo.solute().improper_dihedrals().begin(),
+          topo.solute().improper_dihedrals().end(),
+          dihedralMatcher(id));
+          
+          if (id_it->type != id.type)
+            warn = true;
+            
+          topo.solute().improper_dihedrals().erase(id_it);
+          topology::multiple_perturbed_four_body_term_struct pid(ia-1, ja-1, ka-1, la-1,
+                    t_codes);
+
+          
+          // add perturbed impoper dihedral
+          topo.eds_perturbed_solute().improper_dihedrals().push_back(pid);
+        } // loop over all dihedrals        
+        if (n != numdih){
+          io::messages.add("Wrong number of bonds in " + mpertimproperdih.at(hh) + " block.",
+                  "In_Perturbation", io::message::error);
+        }
+        
+      } // if block present
+    } // loop over H/non H blocks
+  } // MPERTIMPROPERDIH(H)
 
   for(std::map<std::string, std::vector<std::string> >::const_iterator
 	it = m_block.begin(),

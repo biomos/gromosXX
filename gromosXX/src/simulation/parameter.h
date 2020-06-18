@@ -2776,6 +2776,10 @@ namespace simulation
        */
       unsigned int eds;
       /**
+       * functional form for the enveloping distribution sampling for improper dihedrals
+       */
+      unsigned int edsimp;
+      /**
        * soft core van der Waals interactions
        */
       double soft_vdw;
@@ -2792,6 +2796,10 @@ namespace simulation
        */
       unsigned int numstates;
       /**
+       * number of eds impropers
+       */
+      unsigned int numimpropers;
+      /**
        * smoothness parameter(s) @f$ s@f$ of @f$ s_{ij}@f$ used in reference state Hamiltonian.
        */
       std::vector<double> s;
@@ -2807,6 +2815,22 @@ namespace simulation
        */
       std::vector<double> eir;
       /**
+       * Emax values for the EDS impropers
+       */
+      std::vector<double> impemaxs;
+      /**
+       * Emin values for the EDS impropers
+       */
+      std::vector<double> impemins;
+      /**
+       * energy barriers for the EDS impropers
+       */
+      std::vector<double> impbar;
+      /**
+       * acceleration limits for the EDS impropers
+       */
+      std::vector< std::vector<double> > impaedslimit;
+      /**
       * parameter emax for aeds
       */
       double emax;
@@ -2818,6 +2842,10 @@ namespace simulation
       * do we want to init an aeds parameter search?
       */
       bool initaedssearch;
+      /**
+       * is the acceleration search for the improper dihedrals initialized?
+       */
+      bool initimpsearch;
       /**
       * current maximum transition energy within a state round-trip
       */

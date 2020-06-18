@@ -36,6 +36,9 @@
 #include "../../interaction/bonded/perturbed_dihedral_interaction.h"
 #include "../../interaction/bonded/perturbed_dihedral_new_interaction.h"
 
+// EDS interactions
+#include "../../interaction/bonded/eds_improper_dihedral_interaction.h"
+
 // #include "../../io/instream.h"
 #include "../../io/ifp.h"
 
@@ -192,7 +195,18 @@ int interaction::create_g96_bonded(interaction::Forcefield & ff,
 	new interaction::Perturbed_Improper_Dihedral_Interaction(*i);
       ff.push_back(pi);
     }
-
+    if (param.eds.edsimp){
+      if (!quiet)
+        os << "\tEDS improper dihedral interaction\n";
+      interaction::EDS_Improper_Dihedral_Interaction * ppi =
+	new interaction::EDS_Improper_Dihedral_Interaction(*i);
+      // EDS bonded interaction require initialization
+      //if(mpi->init()){
+      //  io::messages.add("EDS improper dihedral interaction initialization failed",
+		  //     "create bonded", io::message::error);
+      //}
+      ff.push_back(ppi);
+    }
   }
 
   if (param.force.dihedral == 1){

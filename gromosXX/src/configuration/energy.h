@@ -271,6 +271,11 @@ namespace configuration
     double eds_globminfluc;
 
     /**
+     * improper dihedral energy of the reference state in eds
+     */
+    double eds_it_vr;
+
+    /**
      * nonbonded energy of the endstates in eds
      */
     std::vector<double> eds_vi;

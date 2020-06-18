@@ -58,6 +58,7 @@ sasa_total(0.0),
 sasa_volume_total(0.0),
 qm_total(0.0),
 eds_vr(0.0),
+eds_it_vr(0.0),
 eds_vmix(0.0),
 eds_emax(0.0),
 eds_emin(0.0),
@@ -110,6 +111,7 @@ void configuration::Energy::zero(bool potential, bool kinetic)
     sasa_volume_total = 0.0;
     qm_total = 0.0;
     eds_vr = 0.0;
+    eds_it_vr = 0.0;
     eds_vmix = 0.0;
     eds_emax = 0.0;
     eds_emin = 0.0;
@@ -504,7 +506,7 @@ int configuration::Energy::calculate_totals()
     + dihrest_total
     + constraints_total + jvalue_total + xray_total
     + eds_vr + leus_total + sasa_total + sasa_volume_total + oparam_total
-    + symrest_total + bsleus_total + qm_total + rdc_total;
+    + symrest_total + bsleus_total + qm_total + rdc_total + eds_it_vr;
   
   total = potential_total + kinetic_total + special_total;
 
@@ -572,6 +574,7 @@ double configuration::Energy::get_energy_by_index(const unsigned int & index) {
     case 41 : return qm_total;
     case 42 : return bsleus_total;
     case 43 : return rdc_total;
+    case 44 : return eds_it_vr;
   }
   return 0.0;
 }

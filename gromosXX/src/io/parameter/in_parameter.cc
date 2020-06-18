@@ -95,6 +95,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_RANDOMNUMBERS(param);
   read_EDS(param);
   read_AEDS(param); // needs to be called after EDS
+  read_EDSIMP(param); //needs to be called after EDS and AEDS
   read_LAMBDAS(param); // needs to be called after FORCE
   read_PRECALCLAM(param); // ANITA 
   read_LOCALELEV(param);
@@ -3904,6 +3905,67 @@ void io::In_Parameter::read_AEDS(simulation::Parameter & param,
     param.eds.eiravgenergy.resize(param.eds.numstates, 0.0);
     param.eds.bigs.resize(param.eds.numstates, 0.0);
     param.eds.stdevenergy.resize(param.eds.numstates, 0.0);
+
+    block.get_final_messages();
+  }
+}
+
+/**
+* @section EDSIMP EDSIMP block
+* @snippet snippets/snippets.cc EDSIMP
+
+*/
+void io::In_Parameter::read_EDSIMP(simulation::Parameter & param,
+  std::ostream & os) {
+  DEBUG(8, "reading EDSIMP");
+
+  std::stringstream exampleblock;
+  // lines starting with 'exampleblock<<"' and ending with '\n";' (spaces don't matter)
+  // will be used to generate snippets that can be included in the doxygen doc;
+  // the first line should be the blockname and is used as snippet tag
+  exampleblock << "EDSIMP\n";
+  exampleblock << "# EDSIMP       0,1,2\n";
+  exampleblock << "#              0: no Improper dihedral EDS (EDSIMP) [default]\n";
+  exampleblock << "#              1: Independent accelerated Improper dihedral EDS  with fixed barrier\n";
+  exampleblock << "#              2: Improper dihedral EDS added to EDS (requires AEDs or EDS)\n";
+  exampleblock << "# NUMSTATES >=2 : number of states (must match EDS or AEDS block if present)\n";
+  exampleblock << "# NUMIMP    >=1  : number of improper dihedrals to EDS\n";
+  exampleblock << "# BARRIERS      : energy barrier heights for the EDS improper dihedrals\n";
+  exampleblock << "#                 specify only if EDSIMP mode is 1\n";
+  exampleblock << "END\n";
+
+  std::string blockname = "EDSIMP";
+  Block block(blockname, exampleblock.str());
+
+  if (block.read_buffer(m_block[blockname], false) == 0) {
+    block_read.insert(blockname);
+
+    block.get_next_parameter("EDSIMP", param.eds.edsimp, "", "0,1,2");
+    block.get_next_parameter("NUMSTATES", param.eds.numstates, ">=2", "");
+    block.get_next_parameter("NUMIMP", param.eds.numimpropers, ">=1", "");
+
+    if (!param.eds.eds && param.eds.edsimp == 2) {
+      io::messages.add("EDSIMP = 2 requires block EDS or AEDS.",
+                                 "In_Parameter", io::message::error);
+    }
+
+    if (param.eds.edsimp == 2)
+    {
+        param.eds.initimpsearch = false;
+    }
+    
+
+    if (param.eds.edsimp == 1){
+        param.eds.initimpsearch = true;
+        param.eds.impbar.resize(param.eds.numimpropers, 0.0);
+        param.eds.impemaxs.resize(param.eds.numimpropers, 0.0);
+        param.eds.impemins.resize(param.eds.numimpropers, 0.0);
+        param.eds.impaedslimit.resize(param.eds.numimpropers, {0.0,0.0});
+        for (unsigned int i = 0; i < param.eds.numimpropers; i++) {
+            std::string idx = io::to_string(i);
+            block.get_next_parameter("BARRIERS[" + idx + "]", param.eds.impbar[i], "", "");
+        }
+    }
 
     block.get_final_messages();
   }

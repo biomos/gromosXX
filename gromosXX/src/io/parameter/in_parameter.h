@@ -325,6 +325,10 @@ namespace io {
     */
     void read_AEDS(simulation::Parameter &param, std::ostream & os = std::cout);
     /**
+    * read EDSIMP block.
+    */
+    void read_EDSIMP(simulation::Parameter &param, std::ostream & os = std::cout); 
+    /**
      * read NONBONDED block.
      */
     void read_NONBONDED(simulation::Parameter &param, std::ostream & os = std::cout);

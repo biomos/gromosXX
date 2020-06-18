@@ -318,6 +318,20 @@ namespace topology
      * perturbed atom accessor
      */
     EDS_Perturbed_Atom & atom(unsigned int i) {return m_atom[i];}
+
+    /**
+    * const perturbed improper dihedrals.
+    */
+    std::vector<multiple_perturbed_four_body_term_struct> const & improper_dihedrals()const{
+      return m_improper_dihedral;
+    }
+    
+    /**
+     * perturbed improper dihedrals.
+     */
+    std::vector<multiple_perturbed_four_body_term_struct> & improper_dihedrals(){
+      return m_improper_dihedral;
+    }
       
   private:
      
@@ -325,6 +339,11 @@ namespace topology
      * the perturbed atoms.
      */
     std::map<unsigned int, EDS_Perturbed_Atom> m_atom; 
+
+    /**
+     * the perturbed improper dihedrals.
+     */
+    std::vector<multiple_perturbed_four_body_term_struct> m_improper_dihedral;
  
   };
       

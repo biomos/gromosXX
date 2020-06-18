@@ -115,13 +115,13 @@ int io::simple_crosschecks(simulation::Simulation & sim) {
   }
 
   // EDS: make sure we simulate at a given temperature (unambiguous kT)
-    if (param.eds.eds && !param.multibath.couple) {
+    if ( ( param.eds.eds || param.eds.edsimp ) && !param.multibath.couple) {
         io::messages.add("EDS/AEDS block: EDS requires temperature coupling.",
                                "In_Parameter", io::message::error);
     }
 
     // check whether all baths have the same temperature (unambiguous kT)
-    if (param.eds.eds){
+    if (param.eds.eds || param.eds.edsimp){
       for (unsigned int i = 1; i < param.multibath.multibath.size(); i++) {
               if (param.multibath.multibath.bath(i).temperature !=
                   param.multibath.multibath.bath(0).temperature) {
@@ -130,6 +130,12 @@ int io::simple_crosschecks(simulation::Simulation & sim) {
                   break;
               }
       }
+    }
+
+    //check that eds is turned on if eds impropers mixed energies is selected
+    if (param.eds.edsimp == 2 && !param.eds.eds){
+      io::messages.add("EDS impropers: Mixing the potential energies of the eds impropers with non bonded eds requires EDS on",
+                        "In_Parameter", io::message::error);
     }
 
     // lattice shift and pressure coupling:
@@ -406,7 +412,13 @@ int io::check_features(simulation::Simulation & sim)
     add("eds", "Enveloping distribution sampling", false);
     add("aeds", "Accelerated enveloping distribution sampling", false);
   }
-
+  //BONDED EDS
+  if (param.eds.edsimp){
+    add("edsimp", "Improper dihedrals Enveloping distirbution sampling", true);
+  }
+  else{
+    add("edsimp", "Improper dihedrals Enveloping distirbution sampling", false);
+  }
   // parallelization
   add("parallel_mpi", "MPI parallelization", sim.mpi);
   int size = 1;
@@ -2553,6 +2565,96 @@ int io::check_features(simulation::Simulation & sim)
   //fc.unlock("aeds", "bsleus");
   //fc.unlock("aeds", "xray");
   //fc.unlock("aeds", "force_groups");
+  fc.unlock("aeds", "edsimp");
+
+  fc.unlock("edsimp", "solute");
+  fc.unlock("edsimp", "solvent");
+  fc.unlock("edsimp", "solvent_only");
+  //fc.unlock("edsimp", "steepest_descent");
+  fc.unlock("edsimp", "solute_constraint_off");
+  fc.unlock("edsimp", "solute_shake");
+  fc.unlock("edsimp", "solute_lincs");
+  fc.unlock("edsimp", "solute_flexshake");
+  fc.unlock("edsimp", "solvent_constraint_off");
+  fc.unlock("edsimp", "solvent_shake");
+  fc.unlock("edsimp", "solvent_lincs");
+  fc.unlock("edsimp", "solvent_settle");
+  fc.unlock("edsimp", "pressure_calculation");
+  fc.unlock("edsimp", "pressure_scale_berendsen");
+  fc.unlock("edsimp", "virial_off");
+  fc.unlock("edsimp", "virial_atomic");
+  fc.unlock("edsimp", "virial_molecular");
+  fc.unlock("edsimp", "vacuum");
+  fc.unlock("edsimp", "pbc_r");
+  fc.unlock("edsimp", "pbc_c");
+  fc.unlock("edsimp", "pbc_t");
+  //fc.unlock("edsimp", "perturbation");
+  //fc.unlock("edsimp", "perturbation_scaling");
+  //fc.unlock("edsimp", "slow_growth");
+  //fc.unlock("edsimp", "individual_lambdas");
+  //fc.unlock("edsimp", "precalculate_lambdas");
+  fc.unlock("edsimp", "bond");
+  fc.unlock("edsimp", "angle");
+  fc.unlock("edsimp", "dihedral");
+  fc.unlock("edsimp", "improper");
+  fc.unlock("edsimp", "crf");
+  fc.unlock("edsimp", "lj");
+  fc.unlock("edsimp", "com_removal");
+  fc.unlock("edsimp", "rf_excluded");
+  fc.unlock("edsimp", "pairlist_standard");
+  fc.unlock("edsimp", "pairlist_grid");
+  fc.unlock("edsimp", "pairlist_gridcell");
+  fc.unlock("edsimp", "cutoff_atomic");
+  fc.unlock("edsimp", "cutoff_cg");
+  //fc.unlock("edsimp", "cg_martini");
+  //fc.unlock("edsimp", "cg_gromos");
+  //fc.unlock("edsimp", "mixed_grain");
+  fc.unlock("edsimp", "temp_berendsen");
+  fc.unlock("edsimp", "temp_nosehoover");
+  fc.unlock("edsimp", "temp_nosehoover_chains");
+  fc.unlock("edsimp", "position_rest");
+  fc.unlock("edsimp", "position_const");
+  fc.unlock("edsimp", "position_const_scaled");
+  fc.unlock("edsimp", "distance_rest");
+  fc.unlock("edsimp", "distance_field");
+  fc.unlock("edsimp", "dihedral_rest");
+  fc.unlock("edsimp", "dihedral_const");
+  fc.unlock("edsimp", "jvalue_rest");
+  fc.unlock("edsimp", "rdc_rest");
+  //fc.unlock("edsimp", "perscale");
+  fc.unlock("edsimp", "rottrans");
+  fc.unlock("edsimp", "innerloop_method_off");
+  fc.unlock("edsimp", "innerloop_method_generic");
+  fc.unlock("edsimp", "innerloop_method_hardcode");
+  fc.unlock("edsimp", "innerloop_method_table");
+  fc.unlock("edsimp", "innerloop_method_cuda");
+  fc.unlock("edsimp", "innerloop_solvent_topology");
+  fc.unlock("edsimp", "innerloop_solvent_spc");
+  //fc.unlock("edsimp", "repex_temp");
+  //fc.unlock("edsimp", "repex_lambda");
+  //fc.unlock("edsimp", "multicell");
+  //fc.unlock("edsimp", "analysis");
+  //fc.unlock("edsimp", "no_integration");
+  fc.unlock("edsimp", "stochdyn");
+  fc.unlock("edsimp", "multistep");
+  //fc.unlock("edsimp", "multistep_boost");
+  //fc.unlock("edsimp", "montecarlo");
+  //fc.unlock("edsimp", "polarisation_cos");
+  //fc.unlock("edsimp", "polarisation_cos_damped");
+  //fc.unlock("edsimp", "sasa");
+  //fc.unlock("edsimp", "sasavol");
+  fc.unlock("edsimp", "random_gromos");
+  fc.unlock("edsimp", "random_gsl");
+  fc.unlock("edsimp", "parallel_mpi");
+  fc.unlock("edsimp", "parallel_omp");
+  fc.unlock("edsimp", "mult_energy_groups");
+  //fc.unlock("edsimp", "ewald");
+  //fc.unlock("edsimp", "p3m");
+  //fc.unlock("edsimp", "leus");
+  //fc.unlock("edsimp", "bsleus");
+  //fc.unlock("edsimp", "xray");
+  //fc.unlock("edsimp", "force_groups");
+
 
   fc.unlock("mult_energy_groups", "solute");
   fc.unlock("mult_energy_groups", "solvent");
@@ -4258,6 +4360,7 @@ int io::check_features(simulation::Simulation & sim)
   fc.unlock("conjugate_gradient", "random_gsl");
   // fc.unlock("conjugate_gradient", "eds");
   // fc.unlock("conjugate_gradient", "aeds");
+  // fc.unlock("conjugate_gradient", edsimp);
   fc.unlock("conjugate_gradient", "parallel_mpi");
   fc.unlock("conjugate_gradient", "parallel_omp");
   fc.unlock("conjugate_gradient", "mult_energy_groups");

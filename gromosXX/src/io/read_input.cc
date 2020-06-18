@@ -295,7 +295,7 @@ int io::read_topology(io::Argument const & args,
       return -1;
   }
   
-  if(sim.param().perturbation.perturbation || sim.param().eds.eds){ 
+  if(sim.param().perturbation.perturbation || sim.param().eds.eds || sim.param().eds.edsimp){ 
     // if there is no perturbation topology there might still be perturbed
     // distance or df restraints, so only warn and do not abort here --MP  
     if(args.count(argname_pttopo)<1){

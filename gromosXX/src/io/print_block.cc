@@ -481,6 +481,7 @@ namespace io
     os << type << "RDCrest              : " << std::setw(30) << e.rdc_total << "\n";    
     os << type << "Symmetry restraints  : " << std::setw(30) << e.symrest_total << "\n";
     os << type << "EDS reference        : " << std::setw(30) << e.eds_vr << "\n";
+    os << type << "EDS reference Bonded : " << std::setw(30) << e.eds_it_vr << "\n";
     os << type << "Entropy              : " << std::setw(30) << e.entropy_term << "\n";
     os << type << "QM                   : " << std::setw(30) << e.qm_total << "\n";
     os << "\n";

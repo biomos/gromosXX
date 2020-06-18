@@ -449,6 +449,7 @@ fluct.prop = old_fluct.prop + dt * e.prop * e.prop
   ENERGY_AVG(constraints_total);
   ENERGY_AVG(self_total);
   ENERGY_AVG(eds_vr);
+  ENERGY_AVG(eds_it_vr);
   ENERGY_AVG(entropy_term);
 
   // ANITA

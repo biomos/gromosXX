@@ -99,6 +99,40 @@ namespace topology {
 
   };
 
+    /**
+   * ORIOL:
+   * @struct multiple_perturbed_one_body_term_struct
+   * perturbed one body terms (topological information) for multiple end states.
+   */
+  struct multiple_perturbed_one_body_term_struct {
+
+    /**
+     * Constructor.
+     * @param i atom i.
+     * @param t_codes vector of interaction types codes.
+     */
+    multiple_perturbed_one_body_term_struct(unsigned int i, std::vector<unsigned int> t_codes)
+    : i(i), T_types(t_codes){
+    };
+
+    /**
+     * atom i.
+     */
+    unsigned int i;
+    /**
+     * interactions types vector.
+     */
+    std::vector<unsigned int> T_types;
+
+    /**
+     * equal operator
+     */
+    bool operator==(multiple_perturbed_one_body_term_struct const & b) {
+      return (b.i == i && b.T_types == T_types);
+    }
+
+  };
+
   /**
    * @struct two_body_term_struct
    * two body term interaction topological information.
@@ -156,6 +190,36 @@ namespace topology {
      */
     bool operator==(perturbed_two_body_term_struct const & b) {
       return (perturbed_one_body_term_struct::operator==(b) && b.j == j);
+    }
+  };
+
+  /**
+   * ORIOL:
+   * @struct multiple_perturbed_two_body_term_struct
+   * perturbed two body term interaction topological information for multiple end states.
+   */
+    struct multiple_perturbed_two_body_term_struct : public multiple_perturbed_one_body_term_struct {
+
+    /**
+     * Constructor.
+     * @param i atom i.
+     * @param j atom j.
+     * @param t_codes vector of interaction types codes.
+     */
+    multiple_perturbed_two_body_term_struct(unsigned int i, unsigned int j, std::vector<unsigned int> t_codes)
+    : multiple_perturbed_one_body_term_struct(i, t_codes), j(j) {
+    };
+
+    /**
+     * atom j.
+     */
+    unsigned int j;
+
+    /**
+     * equal operator
+     */
+    bool operator==(multiple_perturbed_two_body_term_struct const & b) {
+      return (multiple_perturbed_one_body_term_struct::operator==(b) && b.j == j);
     }
   };
 
@@ -223,6 +287,38 @@ namespace topology {
   };
 
   /**
+   * ORIOL:
+   * @struct multiple_perturbed_three_body_term_struct
+   * perturbed three body term interaction topological information for multiple end states.
+   */
+  struct multiple_perturbed_three_body_term_struct : public multiple_perturbed_two_body_term_struct {
+
+    /**
+     * Constructor.
+     * @param i atom i.
+     * @param j atom j.
+     * @param k atom k.
+     * @param t_codes vector of interaction types codes.
+     */
+    multiple_perturbed_three_body_term_struct(unsigned int i, unsigned int j, unsigned int k, std::vector<unsigned int> t_codes)
+    : multiple_perturbed_two_body_term_struct(i, j, t_codes), k(k) {
+    };
+
+    /**
+     * atom k.
+     */
+    unsigned int k;
+
+    /**
+     * equal operator
+     */
+    bool operator==(multiple_perturbed_three_body_term_struct const & b) {
+      return (multiple_perturbed_two_body_term_struct::operator==(b) && b.k == k);
+    }
+  };
+
+
+  /**
    * @struct four_body_term_struct
    * four body term interaction topological information.
    */
@@ -284,6 +380,39 @@ namespace topology {
      */
     bool operator==(perturbed_four_body_term_struct const & b) {
       return (perturbed_three_body_term_struct::operator==(b) && b.l == l);
+    }
+  };
+
+  /**
+   * ORIOL:
+   * @struct multiple_perturbed_four_body_term_struct
+   * perturbed four body term interaction topological information for multiple end states.
+   */
+  struct multiple_perturbed_four_body_term_struct : public multiple_perturbed_three_body_term_struct {
+
+    /**
+     * Constructor.
+     * @param i atom i.
+     * @param j atom j.
+     * @param k atom k.
+     * @param l atom l.
+     * @param t_codes vector of interaction types codes.
+     */
+    multiple_perturbed_four_body_term_struct(unsigned int i, unsigned int j, unsigned int k, unsigned int l,
+            std::vector<unsigned int> t_codes)
+    : multiple_perturbed_three_body_term_struct(i, j, k, t_codes), l(l) {
+    };
+
+    /**
+     * atom l.
+     */
+    unsigned int l;
+
+    /**
+     * equal operator
+     */
+    bool operator==(multiple_perturbed_four_body_term_struct const & b) {
+      return (multiple_perturbed_three_body_term_struct::operator==(b) && b.l == l);
     }
   };
 
