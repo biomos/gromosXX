@@ -277,33 +277,35 @@ void interaction::QM_Zone::update_pairlist(
                 , PairlistContainer& pairlist
                 , unsigned begin, unsigned end
                 , unsigned stride) const {
+  /** This pairlist generator is not adapted for striding.
+   *  To implement parallelism, uncomment the if statement.
+   *  Since we never use more than 1 set, this is disabled
+   *  due to the performance reasons.
+   *  So we also assert...
+  **/
+  assert(begin == 0 && stride == 1);
   pairlist.clear();
   if (sim.param().qmmm.qmmm > simulation::qmmm_mechanical) {
     // Generate QM-MM pairs
-    unsigned counter = begin;
+    //unsigned counter = 0; // Not implemented
     for (std::set<QM_Atom>::const_iterator
           qm_it = this->qm.begin(), qm_to = this->qm.end();
           qm_it != qm_to; ++qm_it) {
       for (std::set<MM_Atom>::const_iterator
             mm_it = this->mm.begin(), mm_to = this->mm.end();
             mm_it != mm_to; ++mm_it) {
-        if (counter == 0) {
+        //if ((counter++ - begin) % stride == 0) { // Not implemented
           unsigned i = qm_it->index;
           unsigned j = mm_it->index;
           if (!topo.is_qm_buffer(i)) {
             if (i > j) std::swap(i,j);
             // There should not be any QM pair in standard exclusions
             assert(!topo.all_exclusion(i).is_excluded(j));
-
             if (!topo.qm_all_exclusion(i).is_excluded(j)) {
               pairlist.solute_short[i].push_back(j);
             }
           }
-          counter = stride;
-        }
-        else {
-          --counter;
-        }
+        //}
       }
     }
   }
