@@ -141,6 +141,7 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
   // run NN interface
   // create the molecule object
   py::object molecule = py_modules["ase"].attr("Atoms")();
+  double length_to_nn = 1 / this->param->unit_factor_length;
   std::set<interaction::QM_Atom>::const_iterator it, to;
   it = qm_zone.qm.begin();
   to = qm_zone.qm.end();
@@ -148,9 +149,10 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
     //unsigned atomic_number = it->atomic_number;
     uint32_t atomic_number = it->atomic_number;
     py::list py_coordinates;
-    py_coordinates.attr("append")(it->pos[0]);
-    py_coordinates.attr("append")(it->pos[1]);
-    py_coordinates.attr("append")(it->pos[2]);
+    math::Vec nn_pos = it->pos * length_to_nn;
+    py_coordinates.attr("append")(nn_pos[0]);
+    py_coordinates.attr("append")(nn_pos[1]);
+    py_coordinates.attr("append")(nn_pos[2]);
     py::object atom = py_modules["ase"].attr("Atom")("symbol"_a = atomic_number, "position"_a = py_coordinates);
     molecule.attr("append")(atom);
   }
@@ -159,7 +161,7 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
   molecule.attr("set_calculator")(ml_calculator);
   
   // Write the energy
-  qm_zone.QM_energy() = molecule.attr("get_potential_energy")().cast<double>();
+  qm_zone.QM_energy() = molecule.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
 
   // Get the forces
 
@@ -181,6 +183,7 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
     it->force[0] = molecule.attr("get_forces")().attr("item")(i,0).cast<double >();
     it->force[1] = molecule.attr("get_forces")().attr("item")(i,1).cast<double >();
     it->force[2] = molecule.attr("get_forces")().attr("item")(i,2).cast<double >();
+    it->force *= this->param->unit_factor_force;
   }
 
   return 0;
