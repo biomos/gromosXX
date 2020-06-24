@@ -146,6 +146,7 @@ int interaction::QMMM_Interaction::AddRemove2(topology::Topology &topo,
     }
 
 }
+// useless comment
 
 */
 int interaction::QMMM_Interaction::scf_step(topology::Topology& topo,
@@ -228,7 +229,7 @@ int interaction::QMMM_Interaction::calculate_interactions(topology::Topology& to
        * b) from 2 QM or NN evaluations and calculating the difference here
        * 
        */
-      if (sim.param().qmmm.software != simulation::qm_nn) {
+      if (sim.param().qmmm.software != simulation::qm_nn || sim.param().qmmm.nn.model_type) { // qmmm or combined model (b)
         DEBUG(4, "Creating QM buffer for separate QM calculation");
         //create buffer zone for separate QM calculation and run it
         if (m_qm_buffer != nullptr) delete m_qm_buffer;
@@ -266,7 +267,7 @@ int interaction::QMMM_Interaction::calculate_interactions(topology::Topology& to
             DEBUG(10, "Delta: " <<  math::v2s(mm_it->force));
           }
         }
-      } else {
+      } else { // NN delta model (a)
         DEBUG(0, "Skipping buffer zone calculation");
         DEBUG(0, "Expecting deltas directly from NN");
         // We are using NN trained on differences - here probably nothing needs to be done

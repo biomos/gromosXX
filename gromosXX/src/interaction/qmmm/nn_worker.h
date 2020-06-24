@@ -52,14 +52,14 @@ namespace interaction {
     std::unordered_map<std::string, py::module> py_modules;
 
     /**
-     * Schnetpack neural network model
-     */
-    py::object ml_model;
-
-    /**
      * ASE calculator
      */
     py::object ml_calculator;
+
+    /**
+     * ASE calculator for validation
+     */
+    py::object val_calculator;
 
     /**
      * run the NN worker

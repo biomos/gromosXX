@@ -47,8 +47,8 @@ using namespace py::literals;
 interaction::NN_Worker::NN_Worker() : QM_Worker("NN Worker"),
                                       param(nullptr),
                                       guard(),
-                                      ml_model(),
-                                      ml_calculator() {};
+                                      ml_calculator(),
+                                      val_calculator() {};
 
 int interaction::NN_Worker::init(simulation::Simulation& sim) {
   // Get a pointer to simulation parameters
@@ -117,7 +117,7 @@ int interaction::NN_Worker::init(simulation::Simulation& sim) {
       io::messages.add("Unknown NN device", this->name(), io::message::critical);
       return 1;
   }
-  ml_model = py_modules["torch"].attr("load")(model_path,"map_location"_a=py_modules["torch"].attr("device")(device));
+  py::object ml_model = py_modules["torch"].attr("load")(model_path,"map_location"_a=py_modules["torch"].attr("device")(device));
   
   
   //py::object conn = ase.attr("db").attr("connect")(db_path);
@@ -125,6 +125,12 @@ int interaction::NN_Worker::init(simulation::Simulation& sim) {
 
   /** Initialize the ML calculator */
   ml_calculator = py_modules["schnetpack"].attr("interfaces").attr("SpkCalculator")(ml_model, "energy"_a="energy", "forces"_a="forces", "device"_a=device);
+
+  if (!sim.param().qmmm.nn.val_model_path.empty()) {
+    py::str val_model_path = sim.param().qmmm.nn.val_model_path;
+    py::object val_model = py_modules["torch"].attr("load")(val_model_path,"map_location"_a=py_modules["torch"].attr("device")(device));
+    val_calculator = py_modules["schnetpack"].attr("interfaces").attr("SpkCalculator")(ml_model, "energy"_a="energy", "forces"_a="forces", "device"_a=device);
+  }
 
   #ifdef OMP
     omp_set_num_threads(num_threads);
@@ -161,7 +167,26 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
   molecule.attr("set_calculator")(ml_calculator);
   
   // Write the energy
-  qm_zone.QM_energy() = molecule.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
+  double energy = molecule.attr("get_potential_energy")().cast<double>();
+  
+  // Run validation, if asked for
+  if (!sim.param().qmmm.nn.val_model_path.empty() && sim.steps() % sim.param().qmmm.nn.val_steps == 0) {
+    py::object val_molecule(molecule);
+    val_molecule.attr("set_calculator")(val_calculator);
+    // Energy of validation model
+    double val_energy = val_molecule.attr("get_potential_energy")().cast<double>();
+    double dev = energy - val_energy;
+    DEBUG(7, "Deviation from validation model: " << dev);
+    if (fabs(dev) > sim.param().qmmm.nn.val_thresh) {
+      std::ostringstream msg;
+      msg << "Deviation from validation model above threshold: " << dev;
+      io::messages.add(msg.str(), this->name(), io::message::warning);
+    }
+  }
+
+  qm_zone.QM_energy() = energy * this->param->unit_factor_energy;
+
+  
 
   // Get the forces
 

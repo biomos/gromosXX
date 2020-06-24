@@ -3847,14 +3847,37 @@ namespace simulation
        * Constructor
        * Default values:
        * - model_path "" (empty string)
+       * - val_model_path "" (empty string)
+       * - model_type false (bool)
        * - device 0 (auto)
        */
-      nn_param_struct() : 
-                      device(nn_device_auto) {}
+      nn_param_struct() :
+                      model_path()
+                      , val_model_path() 
+                      , val_thresh(0)
+                      , val_steps(0)
+                      , model_type(false) 
+                      , device(nn_device_auto) {}
         /**
          * Schnetpack model path
          */
         std::string model_path;
+        /**
+         * Schnetpack model path
+         */
+        std::string val_model_path;
+        /**
+         * Threshold of energy validation
+         */
+        double val_thresh;
+        /**
+         * Number of steps between validations
+         */
+        unsigned val_steps;
+        /**
+         * nn model type
+         */
+        bool model_type;
         /**
          * Device to run model on
          */

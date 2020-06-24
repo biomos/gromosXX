@@ -272,10 +272,23 @@ END
 @endverbatim
  *
  * The NNMODEL block specifies the PyTorch NN model to use.
+ * It also specifies the model type (delta=0 vs. combined=1).
  * 
  * @verbatim
 NNMODEL
 /path/to/schnetpack/model
+0
+END
+@endverbatim
+ *
+ * The NNVALID block specifies the PyTorch NN model to use for validation.
+ * Second line consists of number of steps between validations and threshold (in units of the model)
+ * 
+ * @verbatim
+NNVALID
+/path/to/schnetpack/model
+# NSTEPS    THRESHOLD
+     100          5.0
 END
 @endverbatim
  *
@@ -600,14 +613,49 @@ io::In_QMMM::read(topology::Topology& topo,
                 "In_QMMM", io::message::error);
         return;
       } else {
-        if (buffer.size() != 3) {
-          io::messages.add("NNMODEL block corrupt. Provide 1 line.",
+        if (buffer.size() != 4) {
+          io::messages.add("NNMODEL block corrupt. Provide 2 lines.",
                   "In_QMMM", io::message::error);
           return;
         }
         sim.param().qmmm.nn.model_path = buffer[1];
+        std::string line(buffer[2]);
+        _lineStream.clear();
+        _lineStream.str(line);
+        bool model_type;
+        _lineStream >> model_type;
+        sim.param().qmmm.nn.model_type = model_type;
+        if (_lineStream.fail()) {
+          io::messages.add("bad line in NNMODEL block",
+                "In_QMMM", io::message::error);
+          return;
+        }
       }
     } // NNMODEL
+    { // NNVALID
+      buffer = m_block["NNVALID"];
+      if (buffer.size()) {
+        if (buffer.size() != 4) {
+          io::messages.add("NNVALID block corrupt. Provide 2 lines.",
+                  "In_QMMM", io::message::error);
+          return;
+        }
+        sim.param().qmmm.nn.val_model_path = buffer[1];
+        std::string line(buffer[2]);
+        _lineStream.clear();
+        _lineStream.str(line);
+        unsigned val_steps;
+        double val_thresh;
+        _lineStream >> val_steps >> val_thresh;
+        sim.param().qmmm.nn.val_steps = val_steps;
+        sim.param().qmmm.nn.val_thresh = val_thresh;
+        if (_lineStream.fail()) {
+          io::messages.add("bad line in NNVALID block",
+                "In_QMMM", io::message::error);
+          return;
+        }
+      }
+    } // NNVALID
     { // NNDEVICE
       buffer = m_block["NNDEVICE"];
       const std::set<std::string> allowed = {"auto", "cpu", "cuda"};
