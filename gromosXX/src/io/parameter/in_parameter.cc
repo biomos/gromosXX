@@ -2846,13 +2846,12 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
     exampleblock << "#             1   : turn on 1D Reeds (s)                       \n";
     exampleblock << "#             2   : turn on 2D Reeds (s & Eoff)                \n";
     exampleblock << "#    NRES >= number of replica exchange eds smoothing values   \n";
-    exampleblock << "#     RET >= 0.0 one temperature for all replica               \n";
-    exampleblock << "# NUMSTATES >= 2 Number of states                              \n";
-    exampleblock << "#     RES > 0 for each replica smoothing value                 \n";
-    exampleblock << "#   RETS() >= 0.0 timestep of each s-replica                   \n";
-    exampleblock << "# EIR (NUMSTATES X NRES): energy offsets for states and replicas   \n";
-    exampleblock << "# NRETRIAL >= 0 number of overall exchange trials                  \n";
-    exampleblock << "#  NREQUIL >= 0 number of exchange periods to equilibrate          \n";
+    exampleblock << "#    NEOFF >= number of replica exchange eds energy Offset vectors (only used for 2D REEDS - still needs to be present ;))   \n";
+    exampleblock << "#    NUMSTATES >= 2 Number of states                              \n";
+    exampleblock << "#    RES > 0 for each replica smoothing value                 \n";
+    exampleblock << "#    EIR (NUMSTATES X NRES): energy offsets for states and replicas   \n";
+    exampleblock << "#    NRETRIAL >= 0 number of overall exchange trials                  \n";
+    exampleblock << "#    NREQUIL >= 0 number of exchange periods to equilibrate          \n";
     exampleblock << "#               (disallow switches)                                \n";
     exampleblock << "#     CONT >= 0 continuation run                                   \n";
     exampleblock << "#             0 start from one configuration file                  \n";
@@ -2899,7 +2898,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
 
         DEBUG(2, "REPLICA_EDS BLOCK: reading Block an translating to vars");
         //init_vars
-        unsigned int reeds_control, num_l, num_states, num_eoff=0;
+        unsigned int reeds_control, num_s, num_states, num_eoff=0;
         unsigned int ntrials, nEquilibrate, cont_run, eds_stat_out=0;
         bool periodic=0;
 
@@ -2907,19 +2906,22 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
         //SYS Settings
         block.get_next_parameter("REEDS", reeds_control, "", "0,1,2");
         DEBUG(3, "REPLICA_EDS BLOCK: reeds_control= " << reeds_control);
-        block.get_next_parameter("NRES", num_l, ">0", "");
+        block.get_next_parameter("NRES", num_s, ">0", "");
         block.get_next_parameter("NUMSTATES", num_states, ">0", "");
         block.get_next_parameter("NEOFF", num_eoff, ">0", "");
         DEBUG(3, "REPLICA_EDS BLOCK: NEOFF= " << num_eoff);
 
         //get RES-Vector
-        std::vector<double> s_vals(num_l, 0.0);
-        for (unsigned int i = 0; i < num_l; i++) {
+        std::vector<double> s_vals(num_s, 0.0);
+        for (unsigned int i = 0; i < num_s; i++) {
           std::string idx = io::to_string(i);
           block.get_next_parameter("RES[" + idx + "]", s_vals[i], "", "");
         }
 
         //get EIR-Matrix
+        if(reeds_control == 1){ // in 1D REEDS case, NEOFFS must be == num_s
+            num_eoff = num_s;
+        }
         std::vector<std::vector<float>> eir(num_eoff);
         for(unsigned int replicaJ=0; replicaJ<num_eoff; replicaJ++){//init eir vectors
           std::vector<float> eir_vector_J(num_states, 0.0);
@@ -2960,7 +2962,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
 
         DEBUG(3, "REPLICA_EDS BLOCK: reeds_control= " << param.reeds.reeds);
 
-        param.reeds.num_l = num_l;
+        param.reeds.num_l = num_s;
         param.reeds.num_states = num_states;
         param.reeds.num_eoff = num_eoff;
         DEBUG(3, "REPLICA_EDS BLOCK: NEOFF= " << param.reeds.num_eoff);
@@ -3057,7 +3059,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
 
                   //RES - give s_values
                   param.reeds.eds_para[i].s.resize(1);//only one parameter s per replica
-                  param.reeds.eds_para[i].s[0]=s_vals[i%num_l];
+                  param.reeds.eds_para[i].s[0]=s_vals[i%num_s];
                   DEBUG(3, "REPLICA_EDS BLOCK: s[i]= " << i << "\t" << param.reeds.eds_para[i].s[0] << "\n");
 
                   //initialize size of EIR
