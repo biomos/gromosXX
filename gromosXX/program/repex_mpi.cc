@@ -313,6 +313,16 @@ int main(int argc, char *argv[]) {
     //////////////////////////////////////
             
     //simulation parallelization
+    if(totalNumberOfThreads%numReplicas != 0){
+        std::cerr << "\n\t########################################################\n"
+                << "\n\t\t ERROR please make sure giving the same number of threads as replicas or a multiple of these!\n"
+                << "\n\t########################################################\n";
+        std::string msg = "ERROR please make sure giving the same number of threads as replicas or a multiple of these !\n";
+        std::cout << msg  << "( "<<numReplicas<<" replica x x)\n\n" << std::endl;
+        std::cerr << msg  << "( "<<numReplicas<<" replica x x)\n\n" << std::endl;
+        MPI_Finalize();
+        MPI_Abort(MPI_COMM_WORLD, E_USAGE);
+        return -1;    }
     ////GENERATE SIM SPECIFIC SIMULATION COMM
     MPI_Comm simulationCOMM = MPI_Comm();    //this is used for different replica simulation parallelisations
     MPI_Comm_split(MPI_COMM_WORLD, simulationID, globalThreadID, &simulationCOMM);
@@ -535,27 +545,26 @@ int main(int argc, char *argv[]) {
 
         MPI_DEBUG(1, "Master \t INIT DONE")
 
-        //MPI_Finalize();
-        //return 0;
+
         //do md:
         unsigned int trial = 0;
         MPI_DEBUG(1, "Master \t Equil: " << equil_runs<< " steps")
         for (; trial < equil_runs; ++trial) { // for equilibrations
             Master->run_MD();
         }
-
-        MPI_DEBUG(1, "Master \t MD: " << sim_runs<< " steps")
-
+        //MPI_Finalize();
+        //return 0;
+        
         //Vars for timing
         int hh, mm, ss = 0;
         double percent, spent = 0.0;
         trial = 0; //reset trials
-
+        MPI_DEBUG(1, "Master \t MD: " << sim_runs<< " steps")      
         for (; trial < sim_runs; ++trial) { //for repex execution
             MPI_DEBUG(2, "Master " << globalThreadID << " \t MD trial: " << trial << "\n");
             MPI_DEBUG(2, "Master " << globalThreadID << " \t run_MD START " << trial << "\n");
             Master->run_MD();
-            MPI_DEBUG(1, "Master " << globalThreadID << " \t swap START " << trial << "\n")
+            MPI_DEBUG(2, "Master " << globalThreadID << " \t swap START " << trial << "\n")
             Master->swap();
             MPI_DEBUG(2, "Master " << globalThreadID << " \t receive START " << trial << "\n");
             Master->receive_from_all_slaves();
@@ -577,7 +586,6 @@ int main(int argc, char *argv[]) {
                 std::cerr << "REPEX: spent " << hh << ":" << mm << ":" << ss << std::endl;
             }
         }
-
         MPI_DEBUG(1, "Master \t \t finalize ")
 
         Master->write_final_conf();
@@ -611,22 +619,23 @@ int main(int argc, char *argv[]) {
 
         MPI_DEBUG(1, "Slave " << globalThreadID << " \t INIT Done")
 
-        //MPI_Finalize();
-        //return 0;
+
 
 
         //do md:
         unsigned int trial = 0;
+        MPI_DEBUG(1, "Slave \t Equil: " << equil_runs<< " steps")
         for (; trial < equil_runs; ++trial) { // for equilibrations
             Slave->run_MD();
         }
-
+        
+        //MPI_Finalize();
+        //return 0;
         trial = 0; //reset trials
-
         MPI_DEBUG(1, "Slave " << globalThreadID << " \t MD " << sim_runs << " steps")
         for (; trial < sim_runs; ++trial) { //for repex execution
-            MPI_DEBUG(1, "Slave " << globalThreadID << " \t MD trial: " << trial << "\n")
-            MPI_DEBUG(1, "Slave " << globalThreadID << " \t run_MD START " << trial << "\n")
+            MPI_DEBUG(2, "Slave " << globalThreadID << " \t MD trial: " << trial << "\n")
+            MPI_DEBUG(2, "Slave " << globalThreadID << " \t run_MD START " << trial << "\n")
             Slave->run_MD();
             MPI_DEBUG(2, "Slave " << globalThreadID << " \t swap START " << trial << "\n");
             Slave->swap();
@@ -635,8 +644,6 @@ int main(int argc, char *argv[]) {
             MPI_DEBUG(2, "Slave " << globalThreadID << " \t send Done " << trial << "\n");
         }
         MPI_DEBUG(1, "Slave " << globalThreadID << " \t Finalize");
-
-        MPI_DEBUG(1, "Slave " << globalThreadID << " \t Finalize")
 
         Slave->write_final_conf();
         std::cout << "\n=================== Slave Node " << globalThreadID << "  finished successfully!\n";

@@ -136,40 +136,29 @@ void util::replica_exchange_base_interface::updateReplica_params(){
  */
 
 void util::replica_exchange_base_interface::swap(){
-  DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":swap:\t START");
+        DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":swap:    START");
+        if (not_sender) // different replica?
+        {
+            //determine swaps
+            determine_swaps();
 
-  // Here I'm loosing the struct again!
-    partnerReplicaID = find_partner();
-    replica->sim.param().reeds.eds_para[partnerReplicaID].pos_info.second = simulationID;
-    if (partnerReplicaID != simulationID && not_sender) // different replica?
-    {
-        DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":swap:\t I'm gonna swap!:)");
-      //TODO: RENAME
-      swap_replicas_2D(partnerReplicaID);
-
-      if (switched) {
-        if (globalThreadID < partnerReplicaID) {
-          send_coord(partnerReplicaID);
-          receive_new_coord(partnerReplicaID);
-          // the averages of current and old are interchanged after calling exchange_state() and have to be switched back
-          exchange_averages();
-        } else {
-          receive_new_coord(partnerReplicaID);
-          send_coord(partnerReplicaID);
-          // the averages of current and old are interchanged after calling exchange_state() and have to be switched back
-          exchange_averages();
+            //final execution of swap
+            if (switched) {
+                execute_swap(partnerReplicaID);
+            }
+            if(switched && replica->sim.param().replica.scale) {
+                velscale(partnerReplicaID);
+            }
         }
-      }
-    }
-    else {  // no exchange with replica itself
-      DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":swap:\t No swap here!!:)");
-      probability = 0.0;
-      switched = 0;
-    }
-    if(switched && replica->sim.param().replica.scale) {
-      velscale(partnerReplicaID);
-    }
-  DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":swap:\t DONE");
+        else {  // no exchange for helper replicas (they are only used in md_mpi run)
+          DEBUG(5,"replica_exchange_base_interface "<< globalThreadID <<":swap:\t I'm not a swapper!");
+          partnerReplicaID = simulationID;
+          replica->sim.param().reeds.eds_para[partnerReplicaID].pos_info.second = simulationID;
+          
+          probability = 0.0;
+          switched = 0;
+        }
+      DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":swap:    DONE");
 }
 
 void util::replica_exchange_base_interface::write_final_conf() {
@@ -180,185 +169,34 @@ void util::replica_exchange_base_interface::write_final_conf() {
 }
 
 //RE
+
+
 //SWAPPING Functions
-void util::replica_exchange_base_interface::swap_replicas_2D(const unsigned int partnerReplicaID) {
-  DEBUG(4, "replica "<<  globalThreadID <<":swap2D:\t  START");
-  DEBUG(4, "replica "<<  globalThreadID <<":swap2D:\t  sim: "<< simulationID << " \t\t "<< partnerReplicaID);
+void util::replica_exchange_base_interface::determine_swaps() {
+    DEBUG(3,"replica_exchange_base_interface"<< globalThreadID <<":determine_swap:\t START");
 
-  DEBUG(1,"\n\nreplica_exchange_base_interface: SWAP_2D\n\n");
+    // find partner
+    partnerReplicaID = find_partner();
+    replica->sim.param().reeds.eds_para[partnerReplicaID].pos_info.second = simulationID;
+    DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":partnerID:partnerRep: "<<partnerReplicaID<<"\tsimulationID"<<simulationID);
 
-  unsigned int partnerReplicaMasterThreadID = partnerReplicaID;
-  unsigned int numT = replica->sim.param().replica.num_T;
-  unsigned int numL = replica->sim.param().replica.num_l;
-
-  // does partner exist?
-  if (partnerReplicaID < numT * numL && partnerReplicaID != simulationID) {
-    // the one with lower ID does probability calculation
-    if (simulationID < partnerReplicaID) {
-        DEBUG(4, "replica "<<  globalThreadID <<":swap2D:\t  swap because smaller :)");
-
-      // posts a MPI_Recv(...) matching the MPI_Send below
-      probability = calc_probability(partnerReplicaID);
-      const double randNum = rng.get();
-
-      std::vector<double> prob(2);
-      prob[0] = probability;
-      prob[1] = randNum;
-#ifdef XXMPI
-      MPI_Send(&prob[0], 2, MPI_DOUBLE, partnerReplicaID, SENDCOORDS, replicaGraphMPIControl().comm);
-#endif
-
-      if (randNum < probability) {
-        switched = true;
-      } else
-        switched = false;
-    } else {    //The Partner sends his data to The calculating Thread
-      //special case if lambda also needs to be exchanged
-      bool sameLambda = (l == replica->sim.param().replica.lambda[partnerReplicaID / replica->sim.param().replica.num_T]);
-      if(!sameLambda){      //exchange LAMBDA
-        // E21: Energy with configuration 2 and lambda 1(of partner)
-        const double E21 = calculate_energy(partnerReplicaID);
-        // this we can store as the partner energy of the current replica
-        epot_partner = E21;
-        // E22: Energy with configuration 2 and lambda 2(own one)
-#ifdef XXMPI
-        const double E22 = epot;
-        // send E21 and E22
-        double energies[2] = {E22, E21};
-        //this send operation is matched in calc_probability()
-        DEBUG(1,"\n\nreplica_exchange_base_interface: SWAP_2D before Send\n");
-        MPI_Send(&energies[0], 2, MPI_DOUBLE, partnerReplicaID, SWITCHENERGIES,  replicaGraphMPIControl().comm);
-        DEBUG(1,"\n\nreplica_exchange_base_interface: SWAP_2D after Send\n");
-#endif
-      } else { // sameLambda
-#ifdef XXMPI
-        double energies[2] = {epot, 0.0};
-        MPI_Send(&energies[0],2,MPI_DOUBLE, partnerReplicaID, SWITCHENERGIES,  replicaGraphMPIControl().comm);
-#endif
-     }
-      if (replica->sim.param().pcouple.scale != math::pcouple_off) {
-#ifdef XXMPI
-        math::Box box_replica = replica->conf.current().box;    //exchange box
-        MPI_Send(&box_replica(0)[0], 1, MPI_BOX, partnerReplicaID, BOX,  replicaGraphMPIControl().comm);
-#endif
-      }
-
-#ifdef XXMPI
-      MPI_Status status;
-#endif
-      std::vector<double> prob;
-      prob.resize(2);
-#ifdef XXMPI
-      MPI_Recv(&prob[0], 2, MPI_DOUBLE, partnerReplicaID, SENDCOORDS,  replicaGraphMPIControl().comm, &status);
-#endif
-      //Have we been exchanged little partner?
-      probability = prob[0];
-      double randNum = prob[1];
-
-      if (randNum < probability) {
-        switched = true;
-      } else {
-        switched = false;
-      }
+    // get swap likelihood and discretize to bool 
+    if(partnerReplicaID != simulationID ){
+        DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":swap:\t DO swap!!:)");
+        determine_switch_probabilities();
+    } else {
+        DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":swap:\t No swap here!!:)");
+        probability = 0.0;
+        switched = 0;
     }
-
-  } else {//This should be an error!
-    //throw "Partner does not exist!";
-    DEBUG(4, "replica "<<  globalThreadID <<":swap2D:\t  No swap because edgy");
-    switched = false;
-    probability = 0.0;
-  }
-    DEBUG(4, "replica "<< globalThreadID <<":swap2D:\t  DONE");
+    DEBUG(3,"replica_exchange_base_interface"<< globalThreadID <<":determine_swap:\t DONE");
 }
 
-// TODO: THIS function NEEDS to be written! @bschroed
-void util::replica_exchange_base_interface::swap_replicas_1D(const unsigned int partnerReplicaID) {
-  DEBUG(4, "replica "<<  globalThreadID <<":swap:\t  START");
-
-  DEBUG(1,"\n\nreplica_exchange_base_interface: SWAP_1D\n\n");
-
-  unsigned int partnerReplicaMasterThreadID = partnerReplicaID;
-  unsigned int numP = replica->sim.param().replica.num_T;
-
-  // does partner exist?
-  if (partnerReplicaID < numP && partnerReplicaID != simulationID) {
-    // the one with lower ID does probability calculation
-    if (simulationID < partnerReplicaID) {
-
-      // posts a MPI_Recv(...) matching the MPI_Send below
-      probability = calc_probability(partnerReplicaID);
-      const double randNum = rng.get();
-
-      std::vector<double> prob(2);
-      prob[0] = probability;
-      prob[1] = randNum;
-
-#ifdef XXMPI
-      MPI_Send(&prob[0], 2, MPI_DOUBLE, partnerReplicaMasterThreadID, SENDCOORDS, replicaGraphMPIControl().comm);
-#endif
-
-      if (randNum < probability) {
-        switched = true;
-      } else
-        switched = false;
-    } else {    //The Partner sends his data to The calculating Thread
-        //special case if lambda also needs to be exchanged
-      bool sameLambda = (l == replica->sim.param().replica.lambda[partnerReplicaID / replica->sim.param().replica.num_T]);
-      if(!sameLambda){      //exchange LAMBDA
-        // E21: Energy with configuration 2 and lambda 1(of partner)
-        const double E21 = calculate_energy(partnerReplicaMasterThreadID);
-        // this we can store as the partner energy of the current replica
-        epot_partner = E21;
-        // E22: Energy with configuration 2 and lambda 2(own one)
-#ifdef XXMPI
-        const double E22 = epot;
-        // send E21 and E22
-        double energies[2] = {E22, E21};
-        //this send operation is matched in calc_probability()
-        MPI_Send(&energies[0], 2, MPI_DOUBLE, partnerReplicaMasterThreadID, SWITCHENERGIES,  replicaGraphMPIControl().comm);
-#endif
-      } else { // sameLambda
-#ifdef XXMPI
-        double energies[2] = {epot, 0.0};
-        MPI_Send(&energies[0],2,MPI_DOUBLE, partnerReplicaMasterThreadID, SWITCHENERGIES,  replicaGraphMPIControl().comm);
-#endif
-     }
-      if (replica->sim.param().pcouple.scale != math::pcouple_off) {
-#ifdef XXMPI
-        math::Box box_replica = replica->conf.current().box;    //exchange box
-        MPI_Send(&box_replica(0)[0], 1, MPI_BOX, partnerReplicaMasterThreadID, BOX,  replicaGraphMPIControl().comm);
-#endif
-      }
-
-#ifdef XXMPI
-      MPI_Status status;
-#endif
-      std::vector<double> prob;
-      prob.resize(2);
-#ifdef XXMPI
-      MPI_Recv(&prob[0], 2, MPI_DOUBLE, partnerReplicaMasterThreadID, SENDCOORDS,  replicaGraphMPIControl().comm, &status);
-#endif
-      //Have we been exchanged little partner?
-      probability = prob[0];
-      double randNum = prob[1];
-
-      if (randNum < probability) {
-        switched = true;
-      } else {
-        switched = false;
-      }
-    }
-
-  } else {//This should be an error!
-      throw "Partner does not exist!";
-    /*
-      partner = ID;
-    switched = false;
-    probability = 0.0;
-
-    */
-  }
-    DEBUG(4, "replica "<< globalThreadID <<":swap:\t  DONE");
+/**OVERRIDE THIS NICE FUNCTION*/
+void util::replica_exchange_base_interface::determine_switch_probabilities(){
+    DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":determineSwitchPos:\t START");
+    throw "Implement the exchange probability Function!";
+    DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":determineSwitchPos:\t DONE");
 }
 
 
@@ -369,7 +207,7 @@ int util::replica_exchange_base_interface::find_partner() const {
 
   unsigned int ID = simulationID;
 
-  DEBUG(1,"\n\nreplica_exchange_base_interface: FIND_PARTNER\n\n");
+  DEBUG(1,"replica_exchange_base_interface: FIND_PARTNER\tSTART\n\n");
 
   unsigned int partner = ID; //makes sense why?
   bool even = ID % 2 == 0;
@@ -465,12 +303,32 @@ int util::replica_exchange_base_interface::find_partner() const {
   if (partner > numT * numL - 1 || partner < 0)
     partner = ID;
 
+  DEBUG(1,"replica_exchange_base_interface: FIND_PARTNER\tDONE\n\n");
+
   return partner;
 }
 
+
+//Execute Swapping
+void util::replica_exchange_base_interface::execute_swap(const unsigned int partnerReplicaID) {
+    DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":executeSwap:\t START");
+    if (simulationID < partnerReplicaID) {
+      send_coord(partnerReplicaID);
+      receive_new_coord(partnerReplicaID);
+    } else {
+      receive_new_coord(partnerReplicaID);
+      send_coord(partnerReplicaID);
+    }
+    // the averages of current and old are interchanged after calling exchange_state() and have to be switched back
+    exchange_averages();
+    DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":executeSwap:\t DONE");
+}
+
+
+
 double util::replica_exchange_base_interface::calc_probability(const unsigned int partnerReplicaID) {
 
-  DEBUG(1,"\n\nreplica_exchange_base_interface: CALC_PROBABILITY by ID:" << simulationID << "\n");
+  DEBUG(1,"\n\nreplica "<<globalThreadID<<":replica_exchange_base_interface: CALC_PROBABILITY by ID:" << simulationID << "\n");
 
   unsigned int partnerReplicaMasterThreadID = partnerReplicaID;
 
@@ -552,7 +410,7 @@ double util::replica_exchange_base_interface::calc_probability(const unsigned in
 
 //THIS COULD GO TO REPLICA and into the func above! @bschroed
 double util::replica_exchange_base_interface::calculate_energy_core() {
-    DEBUG(5, "CALC energy_Core\tSTART")
+    DEBUG(5, "replica"<<globalThreadID<<":replica_exchange_base_interface:CALC energy_Core\tSTART")
   double energy = 0.0;
   //chris: you do need to re-evaluate the energy, otherwise you get the energy of before the previous step
   algorithm::Algorithm * ff = replica->md.algorithm("Forcefield");
@@ -603,7 +461,7 @@ double util::replica_exchange_base_interface::calculate_energy(const unsigned in
 }
 
 void util::replica_exchange_base_interface::exchange_averages() {
-  DEBUG(3,"\n\nreplica_exchange_base_interface: EXCHANGE_AVERAGES\n\n");
+  DEBUG(3,"replica"<<globalThreadID<<":replica_exchange_base_interface: EXCHANGE_AVERAGES\n\n");
   // after a swap the averages of current and old are exchanged and have to be switched back
   configuration::Average  dummy = replica->conf.current().averages;
   replica->conf.current().averages=replica->conf.old().averages;
@@ -612,7 +470,7 @@ void util::replica_exchange_base_interface::exchange_averages() {
 
 //sending stuff
 void util::replica_exchange_base_interface::send_coord(const unsigned int receiverReplicaID) {
-  DEBUG(3,"\n\nreplica_exchange_base_interface: SEND_COORD\n\n");
+  DEBUG(3,"replica"<<globalThreadID<<":replica_exchange_base_interface: SEND_COORD\n\n");
 #ifdef XXMPI
 
   unsigned int receiverReplicaMasterThreadID = receiverReplicaID;
@@ -648,7 +506,7 @@ void util::replica_exchange_base_interface::send_coord(const unsigned int receiv
 }
 
 void util::replica_exchange_base_interface::receive_new_coord(const unsigned int senderReplicaID) {
-  DEBUG(3,"\n\nreplica_exchange_base_interface: RECEIVE_NEW_COORD\n\n");
+  DEBUG(3,"replica"<<globalThreadID<<":replica_exchange_base_interface: RECEIVE_NEW_COORD\n\n");
 #ifdef XXMPI
 
   unsigned int senderReplicaMasterThreadID = senderReplicaID;

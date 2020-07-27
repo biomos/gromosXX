@@ -68,6 +68,7 @@ namespace util
          */
         void init_eds_stat();
         
+        
     protected:       
         virtual ~replica_exchange_base_eds();
 
@@ -121,8 +122,11 @@ namespace util
          * Sets  eds_struct() parameters to value of partner (for energy calculations)
          */
         void change_eds(const unsigned int partner);
-               
-        //TODO
+        
+        //Build exchange probabilities
+        void determine_switch_probabilities() ;
+        void swap_replicas_1D(const unsigned int partnerReplicaID);
+        
         /*
         * energy calculation for statistical purposes of eds_stat() in replica_exchange_base.cc
         * for given configuration with new smoothing parameter s.

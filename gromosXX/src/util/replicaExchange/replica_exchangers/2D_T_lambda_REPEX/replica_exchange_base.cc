@@ -109,3 +109,101 @@ void util::replica_exchange_base::setParams(){
     set_temp();
 }
 
+//SWAPPING Functions
+void util::replica_exchange_base::determine_switch_probabilities(){
+    DEBUG(3,"replica_exchange_base "<< globalThreadID <<":determineSwitchPos:\t START");
+    swap_replicas_2D(partnerReplicaID);
+    DEBUG(3,"replica_exchange_base "<< globalThreadID <<":determineSwitchPos:\t DONE");
+}
+
+void util::replica_exchange_base::swap_replicas_2D(const unsigned int partnerReplicaID) {
+  DEBUG(4, "replica "<<  globalThreadID <<":swap2D:\t  START");
+  DEBUG(4, "replica "<<  globalThreadID <<":swap2D:\t  sim: "<< simulationID << " \t\t "<< partnerReplicaID);
+
+  DEBUG(1,"replica "<<  globalThreadID <<":replica_exchange_base_interface: SWAP_2D\n\n");
+
+  unsigned int partnerReplicaMasterThreadID = partnerReplicaID;
+  unsigned int numT = replica->sim.param().replica.num_T;
+  unsigned int numL = replica->sim.param().replica.num_l;
+
+  // does partner exist?
+  if (partnerReplicaID < numT * numL && partnerReplicaID != simulationID) {
+    // the one with lower ID does probability calculation
+    if (simulationID < partnerReplicaID) {
+        DEBUG(4, "replica "<<  globalThreadID <<":swap2D:\t  swap because smaller :)");
+
+      // posts a MPI_Recv(...) matching the MPI_Send below
+      probability = calc_probability(partnerReplicaID);
+      const double randNum = rng.get();
+
+      std::vector<double> prob(2);
+      prob[0] = probability;
+      prob[1] = randNum;
+#ifdef XXMPI
+      MPI_Send(&prob[0], 2, MPI_DOUBLE, partnerReplicaID, SENDCOORDS, replicaGraphMPIControl().comm);
+#endif
+
+      if (randNum < probability) {
+        switched = true;
+      } else
+        switched = false;
+    } else {    //The Partner sends his data to The calculating Thread
+      //special case if lambda also needs to be exchanged
+      bool sameLambda = (l == replica->sim.param().replica.lambda[partnerReplicaID / replica->sim.param().replica.num_T]);
+      if(!sameLambda){      //exchange LAMBDA
+        // E21: Energy with configuration 2 and lambda 1(of partner)
+        const double E21 = calculate_energy(partnerReplicaID);
+        // this we can store as the partner energy of the current replica
+        epot_partner = E21;
+        // E22: Energy with configuration 2 and lambda 2(own one)
+#ifdef XXMPI
+        const double E22 = epot;
+        // send E21 and E22
+        double energies[2] = {E22, E21};
+        //this send operation is matched in calc_probability()
+        DEBUG(1,"\n\nreplica "<<  globalThreadID <<"replica_exchange_base_interface: SWAP_2D before Send\n");
+        MPI_Send(&energies[0], 2, MPI_DOUBLE, partnerReplicaID, SWITCHENERGIES,  replicaGraphMPIControl().comm);
+        DEBUG(1,"\n\nreplica "<<  globalThreadID <<"replica_exchange_base_interface: SWAP_2D after Send\n");
+#endif
+      } else { // sameLambda
+#ifdef XXMPI
+        double energies[2] = {epot, 0.0};
+        MPI_Send(&energies[0],2,MPI_DOUBLE, partnerReplicaID, SWITCHENERGIES,  replicaGraphMPIControl().comm);
+#endif
+     }
+      if (replica->sim.param().pcouple.scale != math::pcouple_off) {
+#ifdef XXMPI
+        math::Box box_replica = replica->conf.current().box;    //exchange box
+        MPI_Send(&box_replica(0)[0], 1, MPI_BOX, partnerReplicaID, BOX,  replicaGraphMPIControl().comm);
+#endif
+      }
+
+#ifdef XXMPI
+      MPI_Status status;
+#endif
+      std::vector<double> prob;
+      prob.resize(2);
+#ifdef XXMPI
+      MPI_Recv(&prob[0], 2, MPI_DOUBLE, partnerReplicaID, SENDCOORDS,  replicaGraphMPIControl().comm, &status);
+#endif
+      //Have we been exchanged little partner?
+      probability = prob[0];
+      double randNum = prob[1];
+
+      if (randNum < probability) {
+        switched = true;
+      } else {
+        switched = false;
+      }
+    }
+
+  } else {//This should be an error!
+    //throw "Partner does not exist!";
+    DEBUG(1, "replica "<<  globalThreadID <<":swap2D:\t  No swap because edgy");
+    switched = false;
+    probability = 0.0;
+  }
+    DEBUG(1, "replica "<< globalThreadID <<":swap2D:\t  DONE");
+}
+
+

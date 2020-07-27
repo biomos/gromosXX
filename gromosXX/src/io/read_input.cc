@@ -96,11 +96,27 @@ int io::read_input_repex(io::Argument const & args,
 		   std::ostream & os,  
                    bool quiet)
 {
+    DEBUG(1, "read_input_repex:Start Parsing:")
     //Read in Parameters
-    if (read_parameter(args, sim, os, quiet) != 0){return -1;}
-    if (check_parameter(sim) != 0){return -1;}
+    if (read_parameter(args, sim, os, quiet) != 0){
+            std::cerr << "\n\t########################################################\n"
+                    << "\n\t\tErrors during initial Parameter reading of IMD!\n"
+                    << "\n\t########################################################\n";
+            io::messages.display(std::cout);
+            io::messages.display(std::cerr);
+            std::cout << "ERROR after read_input simID\n";
+        return -1;}
+    if (check_parameter(sim) != 0){
+                    std::cerr << "\n\t########################################################\n"
+                    << "\n\t\tErrors during initial checking of Paramters!\n"
+                    << "\n\t########################################################\n";
+            io::messages.display(std::cout);
+            io::messages.display(std::cerr);
+            std::cout << "ERROR after check parameter\n";
+            return -1;}
  
     //Check MPI Mapping
+    DEBUG(1, "read_input_repex:Specific MPI fun:")
     //TODO check if enough threads
     //MPI THREAD SIMULATION SPLITTING.
     unsigned int numReplicas = -1;

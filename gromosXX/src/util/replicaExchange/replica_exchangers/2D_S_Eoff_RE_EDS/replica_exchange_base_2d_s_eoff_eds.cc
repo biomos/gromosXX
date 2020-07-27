@@ -197,7 +197,7 @@ void util::replica_exchange_base_2d_s_eoff_eds::swap(){
           swap_s(partnerReplicaID);
         }
         else{
-        swap_eoff(partnerReplicaID);
+            swap_eoff(partnerReplicaID);
         }
         if (switched) {
           if (globalThreadID < partnerReplicaID) {

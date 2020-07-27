@@ -120,6 +120,8 @@ namespace util {
      */
     replica_graph_control m_replicaGraphMPIControl = replica_graph_control();
 
+    
+
   protected:
      /*ATTRIBUTES*/
       //General
@@ -266,24 +268,31 @@ namespace util {
 
     //Replica Exchange Functions
     ////SWAP FUNCTIONS
+        /**
+    * finds out if configurations are to be switched; sets switched to true if so
+    */
+    //virtual void swap_coordinates(const unsigned int partnerReplicaID);
+    void determine_swaps();
+    
+    //OVERRIDES:
     /**
-     * TODO: BSCHROED - REWRITE FOR PARALLEL REPLICAS
     * Finds partner for current switch
     * @return ID of partner, own ID if no switching in current trial
     */
     virtual int find_partner() const;
+    
     /**
-    * finds out if configurations are to be switched; sets switched to true if so
-    */
-    //virtual void swap_coordinates(const unsigned int partnerReplicaID);
-
-    /*
-     *
+     * This function should be overriden in subclass
      */
-    void swap_replicas_2D(const unsigned int partnerReplicaID);
+    virtual void determine_switch_probabilities();
+    
+    //EXECUTE SWAP:
+    void execute_swap(const unsigned int partnerReplicaID);
+    
 
-    void swap_replicas_1D(const unsigned int partnerReplicaID);
 
+    
+    
     /**
      * calculates potential energy for current configuration with current lambda
      */
@@ -301,7 +310,6 @@ namespace util {
     virtual void exchange_averages();
 
     /**
-     * TODO: bring into Exchanger
      * calculates probability of switch with current partner, may involve MPI communication
      * @param partnerID
      * @param partnerRank
@@ -310,7 +318,7 @@ namespace util {
     virtual double calc_probability(const unsigned int partnerReplicaID);
 
     //SWAP COORDINATES FUNCTIONS
-    /**TODO: bring into Exchanger
+    /**
     * Initiates MPI communication to receive new configuration information
     * @param senderID
     * @param senderRank

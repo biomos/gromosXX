@@ -86,6 +86,13 @@ namespace util {
        * Setting RE-Param
        */
       void setParams() override;
+      
+    /**
+     * This function should be overriden in subclass
+     */
+    virtual void determine_switch_probabilities();
+    
+      void swap_replicas_2D(const unsigned int partnerReplicaID);
   };
 }
 

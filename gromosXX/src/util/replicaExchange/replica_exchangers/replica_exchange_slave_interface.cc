@@ -64,7 +64,6 @@ util::replica_exchange_slave_interface::~replica_exchange_slave_interface() {
 
 void util::replica_exchange_slave_interface::send_to_master() const {
 #ifdef XXMPI
-                                  std::cerr << "HFFAAAA3\n";
 
   if(not_sender){
     DEBUG(2,"replica_exchange_slave_interface " << globalThreadID << ":send_to_master \t START");
@@ -76,7 +75,6 @@ void util::replica_exchange_slave_interface::send_to_master() const {
       info.probability = probability;
       info.switched = int(switched);
       MPI_Send(&info, 1, MPI_REPINFO, replicaGraphMPIControl().masterID, REPINFO, replicaGraphMPIControl().comm);
-
     DEBUG(2,"replica_exchange_slave_interface " << globalThreadID << ":\t send_to_master \t Done");
   }
 #endif
