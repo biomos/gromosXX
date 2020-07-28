@@ -28,7 +28,7 @@ util::replica_exchange_master_2d_s_eoff_eds::replica_exchange_master_2d_s_eoff_e
         replica_exchange_master_interface(_args, cont, globalThreadID, replicaGraphMPIControl, replica_mpi_control)
 {
     #ifdef XXMPI
-    MPI_DEBUG(2,"replica_exchange_master_2d_s_eoff_eds "<< globalThreadID <<":Constructor:\t START");
+    DEBUG(2,"replica_exchange_master_2d_s_eoff_eds "<< globalThreadID <<":Constructor:\t START");
     DEBUG(3,"replica_exchange_master_2d_s_eoff_eds "<< globalThreadID <<":Constructor:\t Replicas: "<<replicaGraphMPIControl.numberOfReplicas);
     DEBUG(3,"replica_exchange_master_2d_s_eoff_eds "<< globalThreadID <<":Constructor:\t ReplicasOLD: "<<repParams.num_l);
     DEBUG(3,"replica_exchange_master_2d_s_eoff_eds "<< globalThreadID <<":Constructor:\t ReplicasMASTER: "<< replicaGraphMPIControl.masterID);

@@ -82,11 +82,11 @@ util::replica_exchange_base_2d_s_eoff_eds::~replica_exchange_base_2d_s_eoff_eds(
 void util::replica_exchange_base_2d_s_eoff_eds::setParams(){
     // set some variables
     stepsPerRun = replica->sim.param().step.number_of_steps;
-    MPI_DEBUG(4,"replica_exchange_base_2d_s_eoff_eds "<< globalThreadID <<":setParams:\t NUMBER OF STEPS "<<stepsPerRun);
+    DEBUG(4,"replica_exchange_base_2d_s_eoff_eds "<< globalThreadID <<":setParams:\t NUMBER OF STEPS "<<stepsPerRun);
 
     run = 0;
     total_runs = replica->sim.param().replica.trials + replica->sim.param().replica.equilibrate;
-    MPI_DEBUG(4,"replica_exchange_base_2d_s_eoff_eds "<< globalThreadID <<":setParams:\t NUMBER OF total_runs "<<total_runs);
+    DEBUG(4,"replica_exchange_base_2d_s_eoff_eds "<< globalThreadID <<":setParams:\t NUMBER OF total_runs "<<total_runs);
 
     partnerReplicaID = simulationID;
     time = replica->sim.time();
@@ -96,55 +96,54 @@ void util::replica_exchange_base_2d_s_eoff_eds::setParams(){
     replica->totalStepNumber = total_runs*stepsPerRun;
     replica->stepsPerRun= stepsPerRun;
 
-    MPI_DEBUG(4,"replica_exchange_base_2d_s_eoff_eds "<< globalThreadID <<":setParams:\t PARAM START");
+    DEBUG(4,"replica_exchange_base_2d_s_eoff_eds "<< globalThreadID <<":setParams:\t PARAM START");
 
     T = replica->sim.param().reeds.temperature;
-    MPI_DEBUG(4,"replica_exchange_base_2d_s_eoff_eds "<< globalThreadID <<":setParams:\t got  T " << T);
-    MPI_DEBUG(4,"replica_exchange_base_2d_s_eoff_eds "<< globalThreadID <<":setParams:\t got simulationID: "<< simulationID);
+    DEBUG(4,"replica_exchange_base_2d_s_eoff_eds "<< globalThreadID <<":setParams:\t got  T " << T);
+    DEBUG(4,"replica_exchange_base_2d_s_eoff_eds "<< globalThreadID <<":setParams:\t got simulationID: "<< simulationID);
 
     //set position info
     replica->sim.param().reeds.eds_para[simulationID].pos_info = std::make_pair(simulationID, simulationID);
-    DEBUG(1, "BASE Constructor with simulationID, replica->pos_info= " << simulationID << ", "
+    DEBUG(4, "BASE Constructor with simulationID, replica->pos_info= " << simulationID << ", "
     << replica->sim.param().reeds.eds_para[simulationID].pos_info.first << ", "
     << replica->sim.param().reeds.eds_para[simulationID].pos_info.second << "\n");
 
     pos_info = replica->sim.param().reeds.eds_para[simulationID].pos_info;
-    DEBUG(1, "BASE Constructor with simulationID, pos_info= " << simulationID << ", "
+    DEBUG(4, "BASE Constructor with simulationID, pos_info= " << simulationID << ", "
     << pos_info.first << ", " << pos_info.second << "\n");
 
     //just to check -- theosm
     std::pair<int, int> a = reedsParam.eds_para[simulationID].pos_info;
-    DEBUG(1, "JUST TO CHECK: BASE Constructor with simulationID, reedsParam->pos_info= " << simulationID << ", "
+    DEBUG(4, "JUST TO CHECK: BASE Constructor with simulationID, reedsParam->pos_info= " << simulationID << ", "
     << a.first << ", " << a.second << "\n");
 
     set_s();
-    MPI_DEBUG(4,"replica_exchange_base_2d_s_eoff_eds "<< globalThreadID <<":setParams:\t got s" << l);
+    DEBUG(4,"replica_exchange_base_2d_s_eoff_eds "<< globalThreadID <<":setParams:\t got s" << l);
 
     dt = replica->sim.param().step.dt;
-    MPI_DEBUG(4,"replica_exchange_base_2d_s_eoff_eds "<< globalThreadID <<":setParams:\t dt " <<dt);
+    DEBUG(4,"replica_exchange_base_2d_s_eoff_eds "<< globalThreadID <<":setParams:\t dt " <<dt);
 
-    MPI_DEBUG(4,"replica_exchange_base_2d_s_eoff_eds "<< globalThreadID <<":setParams:\t PARAM DONE ");
+    DEBUG(4,"replica_exchange_base_2d_s_eoff_eds "<< globalThreadID <<":setParams:\t PARAM DONE ");
 }
 
 void util::replica_exchange_base_2d_s_eoff_eds::set_s() {
-  MPI_DEBUG(4,"replica_exchange_base_2d_s_eoff_eds "<< globalThreadID <<":set_s:\t START ");
+  DEBUG(4,"replica_exchange_base_2d_s_eoff_eds "<< globalThreadID <<":set_s:\t START ");
 
   eds_para = replica->sim.param().reeds.eds_para[simulationID];
   replica->sim.param().eds = eds_para;
-  MPI_DEBUG(4,"replica_exchange_base_2d_s_eoff_eds "<< globalThreadID <<":set_s:\t eds_para s size: " << replica->sim.param().eds.s.size());
+  DEBUG(4,"replica_exchange_base_2d_s_eoff_eds "<< globalThreadID <<":set_s:\t eds_para s size: " << replica->sim.param().eds.s.size());
 
   l = replica->sim.param().eds.s[0];    //todoAssume only 1s EDS
-  MPI_DEBUG(4,"replica_exchange_base_2d_s_eoff_eds "<< globalThreadID <<":set_s:\t DONE " );
+  DEBUG(4,"replica_exchange_base_2d_s_eoff_eds "<< globalThreadID <<":set_s:\t DONE " );
 }
 
 void util::replica_exchange_base_2d_s_eoff_eds::init() {
-  DEBUG(3,"\n\nreplica_exchange_base_2d_s_eoff_eds: INIT\n\n");
-  MPI_DEBUG(3,"replica_exchange_base_2d_s_eoff_eds "<< globalThreadID <<":init:\t init \t START");
+  DEBUG(3,"replica_exchange_base_2d_s_eoff_eds "<< globalThreadID <<":init:\t init \t START");
   DEBUG(3,"replica_exchange_base_2d_s_eoff_eds "<< globalThreadID <<":init:\t start init from baseclass \t NEXT");
   //replica->init();
   DEBUG(3,"replica_exchange_base_2d_s_eoff_eds "<< globalThreadID <<":init:\t init_eds_stat \t NEXT");
   init_eds_stat();
-  MPI_DEBUG(3,"replica_exchange_base_2d_s_eoff_eds "<< globalThreadID <<":init:\t DONE");
+  DEBUG(3,"replica_exchange_base_2d_s_eoff_eds "<< globalThreadID <<":init:\t DONE");
 }
 
 //initialize output files
@@ -173,273 +172,33 @@ void util::replica_exchange_base_2d_s_eoff_eds::init_eds_stat(){
 }
 
 //RE
-void util::replica_exchange_base_2d_s_eoff_eds::swap(){
-    DEBUG(3,"replica_exchange_base_2d_s_eoff_eds "<< globalThreadID <<":swap:\t START");
 
-      partnerReplicaID = find_partner();
-      DEBUG(1,"\n\nreplica_exchange_base_2d_s_eoff_eds: SWAP\n\n");
-
-      //exchanging coord_ID's
-      DEBUG(3, "swap(): simulationID, partnerReplicaID= " << simulationID << ", " << partnerReplicaID << "\n");
-      //replica->sim.param().reeds.eds_para[simulationID].pos_info.second = partnerReplicaID;
-      replica->sim.param().reeds.eds_para[partnerReplicaID].pos_info.second = simulationID;
-
-      /*
-      DEBUG(1, "swap(): simulationID, reedsParam->pos_info.second= " << simulationID << ", "
-      << replica->sim.param().reeds.eds_para[simulationID].pos_info.second << "\n");
-      DEBUG(1, "swap(): partnerReplicaID, reedsParam->pos_info.second= " << partnerReplicaID << ", "
-      << replica->sim.param().reeds.eds_para[partnerReplicaID].pos_info.second << "\n");
-      */
-
-      if (partnerReplicaID != simulationID) // different replica?
-      {
-        if(run % 2 == 1){
-          swap_s(partnerReplicaID);
-        }
-        else{
-            swap_eoff(partnerReplicaID);
-        }
-        if (switched) {
-          if (globalThreadID < partnerReplicaID) {
-            send_coord(partnerReplicaID);
-            receive_new_coord(partnerReplicaID);
-            // the averages of current and old are interchanged after calling exchange_state() and have to be switched back
-            exchange_averages();
-          } else {
-            receive_new_coord(partnerReplicaID);
-            send_coord(partnerReplicaID);
-            // the averages of current and old are interchanged after calling exchange_state() and have to be switched back
-            exchange_averages();
-          }
-        }
-      }
-      else {  // no exchange with replica itself
-        probability = 0.0;
-        switched = 0;
-      }
-      if(switched && replica->sim.param().replica.scale) {
-        velscale(partnerReplicaID);
-      }
-
-  DEBUG(1,"replica_exchange_base_2d_s_eoff_eds "<< globalThreadID <<":swap:\t DONE");
-}
-
-void util::replica_exchange_base_2d_s_eoff_eds::swap_s(const unsigned int partnerReplicaID) {
-  DEBUG(4, "replica "<<  globalThreadID <<":swap:\t  START");
-
-  DEBUG(1,"\n\nreplica_exchange_base_2d_s_eoff_eds: SWAP_S\n\n");
-
-  unsigned int partnerReplicaMasterThreadID = partnerReplicaID;
-  unsigned int numReps = replica->sim.param().reeds.num_l * replica->sim.param().reeds.num_eoff;
-
-  // does partner exist?
-  if (partnerReplicaID < numReps && partnerReplicaID != simulationID) {
-    // the one with lower ID does probability calculation
-    if (simulationID < partnerReplicaID) {
-
-      // posts a MPI_Recv(...) matching the MPI_Send below
-      probability = calc_probability(partnerReplicaID);
-      const double randNum = rng.get();
-
-      std::vector<double> prob(2);
-      prob[0] = probability;
-      prob[1] = randNum;
-
-#ifdef XXMPI
-      DEBUG(1,"\n\nreplica_exchange_base_2d_s_eoff_eds: SWAP_S before Send\n");
-      MPI_Send(&prob[0], 2, MPI_DOUBLE, partnerReplicaMasterThreadID, SENDCOORDS, replicaGraphMPIControl().comm);
-      DEBUG(1,"\n\nreplica_exchange_base_2d_s_eoff_eds: SWAP_S after Send\n");
-#endif
-
-      if (randNum < probability) {
-        switched = true;
-      } else
-        switched = false;
-    } else {    //The Partner sends his data to The calculating Thread
-      //special case if lambda also needs to be exchanged
-      bool sameLambda = (l == replica->sim.param().replica.lambda[partnerReplicaID]);
-      DEBUG(1, "swap_s: simID, s value= " << simulationID << ", " << l << "\n");
-      DEBUG(1,"swap_s: simID, bool sameLambda= " << simulationID << ", " << sameLambda << "\n");
-      if(!sameLambda){      //exchange LAMBDA
-        // E21: Energy with configuration 2 and lambda 1(of partner)
-        const double E21 = calculate_energy(partnerReplicaMasterThreadID);
-        // this we can store as the partner energy of the current replica
-        epot_partner = E21;
-        // E22: Energy with configuration 2 and lambda 2(own one)
-#ifdef XXMPI
-        const double E22 = epot;
-        // send E21 and E22
-        double energies[2] = {E22, E21};
-        //this send operation is matched in calc_probability()
-        DEBUG(1,"\n\nreplica_exchange_base_2d_s_eoff_eds: SWAP_S before Send\n");
-        MPI_Send(&energies[0], 2, MPI_DOUBLE, partnerReplicaMasterThreadID, SWITCHENERGIES,  replicaGraphMPIControl().comm);
-        DEBUG(1,"\n\nreplica_exchange_base_2d_s_eoff_eds: SWAP_S after Send\n");
-#endif
-      } else { // sameLambda
-#ifdef XXMPI
-        double energies[2] = {epot, 0.0};
-        DEBUG(1,"\n\nreplica_exchange_base_2d_s_eoff_eds: SWAP_S before Send\n");
-        MPI_Send(&energies[0],2,MPI_DOUBLE, partnerReplicaMasterThreadID, SWITCHENERGIES,  replicaGraphMPIControl().comm);
-        DEBUG(1,"\n\nreplica_exchange_base_2d_s_eoff_eds: SWAP_S after Send\n");
-#endif
-     }
-      if (replica->sim.param().pcouple.scale != math::pcouple_off) {
-#ifdef XXMPI
-        math::Box box_replica = replica->conf.current().box;    //exchange box
-        MPI_Send(&box_replica(0)[0], 1, MPI_BOX, partnerReplicaMasterThreadID, BOX,  replicaGraphMPIControl().comm);
-#endif
-      }
-
-#ifdef XXMPI
-      MPI_Status status;
-#endif
-      std::vector<double> prob;
-      prob.resize(2);
-#ifdef XXMPI
-      MPI_Recv(&prob[0], 2, MPI_DOUBLE, partnerReplicaMasterThreadID, SENDCOORDS,  replicaGraphMPIControl().comm, &status);
-#endif
-      //Have we been exchanged little partner?
-      probability = prob[0];
-      double randNum = prob[1];
-
-      if (randNum < probability) {
-        switched = true;
-      } else {
-        switched = false;
-      }
+/**
+ * Override Exchange Functions
+ */
+// top layer 
+void util::replica_exchange_base_2d_s_eoff_eds::determine_switch_probabilities(){
+    DEBUG(3,"replica_exchange_base_2d_s_eoff_eds "<< globalThreadID <<":determine_switch_probabilities:\t DONE");
+    if(run % 2 == 1){
+        swap_s(partnerReplicaID);
     }
-
-  } else {//This should be an error!
-      throw "Partner does not exist!";
-    /*
-      partner = ID;
-    switched = false;
-    probability = 0.0;
-
-    */
-  }
-    DEBUG(4, "replica "<< globalThreadID <<":swap:\t  DONE");
-}
-
-void util::replica_exchange_base_2d_s_eoff_eds::swap_eoff(const unsigned int partnerReplicaID) {
-  DEBUG(4, "replica "<<  globalThreadID <<":swap:\t  START");
-
-  DEBUG(1,"\n\nreplica_exchange_base_2d_s_eoff_eds: SWAP_EOFF\n\n");
-
-  unsigned int partnerReplicaMasterThreadID = partnerReplicaID;
-  unsigned int numReps = replica->sim.param().reeds.num_l * replica->sim.param().reeds.num_eoff;
-
-  // does partner exist?
-  if (partnerReplicaID < numReps && partnerReplicaID != simulationID) {
-    // the one with lower ID does probability calculation
-    if (simulationID < partnerReplicaID) {
-
-      // posts a MPI_Recv(...) matching the MPI_Send below
-      probability = calc_probability_for_eoff_exchange(partnerReplicaID);
-      DEBUG(1,"\nSWAP_EOFF: ID, probability = " << simulationID << ", " << probability << "\n");
-      const double randNum = rng.get();
-
-      std::vector<double> prob(2);
-      prob[0] = probability;
-      prob[1] = randNum;
-
-#ifdef XXMPI
-      DEBUG(1,"\n\nreplica_exchange_base_2d_s_eoff_eds: SWAP_EOFF before Send\n");
-      MPI_Send(&prob[0], 2, MPI_DOUBLE, partnerReplicaMasterThreadID, SENDCOORDS, replicaGraphMPIControl().comm);
-      DEBUG(1,"\n\nreplica_exchange_base_2d_s_eoff_eds: SWAP_EOFF after Send\n");
-#endif
-
-      if (randNum < probability) {
-        switched = true;
-      } else
-        switched = false;
-      DEBUG(1,"\nreplica_exchange_base_2d_s_eoff_eds: ID, switched = " << simulationID << ", " << switched << "\n");
-    } else {    //The Partner sends his data to The calculating Thread
-      //special case if eoff vector also needs to be exchanged
-      bool sameEoffvector = true;
-      for(int i=0; i<replica->sim.param().reeds.num_states; ++i){
-        if(replica->sim.param().reeds.eds_para[simulationID].eir[i] != replica->sim.param().reeds.eds_para[partnerReplicaID].eir[i]){
-          sameEoffvector = false;
-          DEBUG(1,"\nSWAP_EOFF: ID " << simulationID << " sets sameEoffvector to false because of " << i << "th position of Eoffvector\n");
-          break;
-        }
-      }
-      DEBUG(1,"swap_eoff: simID, bool sameEoffvector= " << simulationID << ", " << sameEoffvector << "\n");
-      if(!sameEoffvector){      //exchange EOFF_VEC
-        // E21: Energy with configuration 2 and lambda 1(of partner)
-        const double E21 = calculate_energy(partnerReplicaMasterThreadID);
-        // this we can store as the partner energy of the current replica
-        epot_partner = E21;
-        // E22: Energy with configuration 2 and lambda 2(own one)
-#ifdef XXMPI
-        const double E22 = epot;
-        // send E21 and E22
-        double energies[2] = {E22, E21};
-        //this send operation is matched in calc_probability_for_eoff_exchange()
-        DEBUG(1,"\n\nreplica_exchange_base_2d_s_eoff_eds: SWAP_EOFF before Send\n");
-        MPI_Send(&energies[0], 2, MPI_DOUBLE, partnerReplicaMasterThreadID, SWITCHENERGIES,  replicaGraphMPIControl().comm);
-        DEBUG(1,"\n\nreplica_exchange_base_2d_s_eoff_eds: SWAP_EOFF after Send\n");
-#endif
-      } else { // sameEoffvector
-#ifdef XXMPI
-        double energies[2] = {epot, 0.0};
-        MPI_Send(&energies[0],2,MPI_DOUBLE, partnerReplicaMasterThreadID, SWITCHENERGIES,  replicaGraphMPIControl().comm);
-#endif
-     }
-      if (replica->sim.param().pcouple.scale != math::pcouple_off) {
-#ifdef XXMPI
-        math::Box box_replica = replica->conf.current().box;    //exchange box
-        MPI_Send(&box_replica(0)[0], 1, MPI_BOX, partnerReplicaMasterThreadID, BOX,  replicaGraphMPIControl().comm);
-#endif
-      }
-
-#ifdef XXMPI
-      MPI_Status status;
-#endif
-      std::vector<double> prob;
-      prob.resize(2);
-#ifdef XXMPI
-      MPI_Recv(&prob[0], 2, MPI_DOUBLE, partnerReplicaMasterThreadID, SENDCOORDS,  replicaGraphMPIControl().comm, &status);
-#endif
-      //Have we been exchanged little partner?
-      probability = prob[0];
-      double randNum = prob[1];
-
-      if (randNum < probability) {
-        switched = true;
-      } else {
-        switched = false;
-      }
-      DEBUG(1,"\nreplica_exchange_base_2d_s_eoff_eds: 2nd time ID, switched = " << simulationID << ", " << switched << "\n");
+    else{
+        swap_eoff(partnerReplicaID);
     }
-
-  } else {//This should be an error!
-      throw "Partner does not exist!";
-    /*
-      partner = ID;
-    switched = false;
-    probability = 0.0;
-
-    */
-  }
-    DEBUG(4, "replica "<< globalThreadID <<":swap:\t  DONE");
+    
+    DEBUG(3,"replica_exchange_base_2d_s_eoff_eds "<< globalThreadID <<":determine_switch_probabilities:\t DONE");
 }
 
 int util::replica_exchange_base_2d_s_eoff_eds::find_partner() const {
   unsigned int num_eoff = replica->sim.param().reeds.num_eoff;
-  DEBUG(3,"find_partner: num_eoff= " << num_eoff << "\n");
+  DEBUG(3,"replica_exchange_base_2d_s_eoff_eds:find_partner: num_eoff= " << num_eoff << "\n");
   unsigned int num_l = replica->sim.param().reeds.num_l;
-  DEBUG(3,"find_partner: num_l= " << num_l << "\n");
+  DEBUG(3,"replica_exchange_base_2d_s_eoff_eds:find_partner: num_l= " << num_l << "\n");
   unsigned int numT = replica->sim.param().replica.num_T;
-  DEBUG(3,"find_partner: numT= " << numT << "\n");
-
+  DEBUG(3,"replica_exchange_base_2d_s_eoff_eds:find_partner: numT= " << numT << "\n");
   unsigned int numReps = num_l * num_eoff;
-  DEBUG(3,"find_partner: numReps= " << numReps << "\n");
-
-
+  DEBUG(3,"replica "<<globalThreadID<<":replica_exchange_base_2d_s_eoff_eds:find_partner: numReps= " << numReps << "\n");
   unsigned int ID = simulationID;
-
-  DEBUG(1,"\n\nreplica_exchange_base_2d_s_eoff_eds: FIND_PARTNER\n\n");
 
   unsigned int partner = ID;
   bool evenRow = (ID % num_l) % 2 == 0;//1st row is here the 0th row and therefore even!
@@ -529,6 +288,7 @@ int util::replica_exchange_base_2d_s_eoff_eds::find_partner() const {
   return partner;
 }
 
+//find partner functions
 int util::replica_exchange_base_2d_s_eoff_eds::partner_eoffDim_numEoffeven_firstCase() const {
   unsigned int ID = simulationID;
   unsigned int partner = ID;
@@ -618,7 +378,7 @@ int util::replica_exchange_base_2d_s_eoff_eds::partner_eoffDim_numEoffeven_secon
     partner = ID - num_l;
     //edge case
     if(left_edge && !periodic) partner = ID;
-    if(left_edge && periodic) {partner = ID + (numReps - num_l); DEBUG(5,"\nPERIODIC\n");}
+    if(left_edge && periodic) {partner = ID + (numReps - num_l); DEBUG(5,"replica "<<globalThreadID<<":PERIODIC\n");}
   }
   else {
     partner = ID + num_l;
@@ -733,15 +493,214 @@ int util::replica_exchange_base_2d_s_eoff_eds::partner_eoffDim_numEoffodd_cyclic
   return partner;
 }
 
-double util::replica_exchange_base_2d_s_eoff_eds::calc_probability_for_eoff_exchange(const unsigned int partnerReplicaID) {
 
-  DEBUG(1,"\n\nreplica_exchange_base_2d_s_eoff_eds: CALC_PROBABILITY by ID: " << simulationID << "\n");
+//determine swaps
+void util::replica_exchange_base_2d_s_eoff_eds::swap_s(const unsigned int partnerReplicaID) {
+  DEBUG(4, "replica "<<  globalThreadID <<":swap:\t  START");
+
+  unsigned int partnerReplicaMasterThreadID = partnerReplicaID;
+  unsigned int numReps = replica->sim.param().reeds.num_l * replica->sim.param().reeds.num_eoff;
+
+  // does partner exist?
+  if (partnerReplicaID < numReps && partnerReplicaID != simulationID) {
+    // the one with lower ID does probability calculation
+    if (simulationID < partnerReplicaID) {
+
+      // posts a MPI_Recv(...) matching the MPI_Send below
+      probability = calc_probability(partnerReplicaID);
+      const double randNum = rng.get();
+
+      std::vector<double> prob(2);
+      prob[0] = probability;
+      prob[1] = randNum;
+
+#ifdef XXMPI
+      DEBUG(4,"replica "<<globalThreadID<<":replica_exchange_base_2d_s_eoff_eds: SWAP_S before Send\n");
+      MPI_Send(&prob[0], 2, MPI_DOUBLE, partnerReplicaMasterThreadID, SENDCOORDS, replicaGraphMPIControl().comm);
+      DEBUG(4,"replica "<<globalThreadID<<":replica_exchange_base_2d_s_eoff_eds: SWAP_S after Send\n");
+#endif
+
+      if (randNum < probability) {
+        switched = true;
+      } else
+        switched = false;
+    } else {    //The Partner sends his data to The calculating Thread
+      //special case if lambda also needs to be exchanged
+      bool sameLambda = (l == replica->sim.param().replica.lambda[partnerReplicaID]);
+      DEBUG(3, "swap_s: simID, s value= " << simulationID << ", " << l << "\n");
+      DEBUG(3,"swap_s: simID, bool sameLambda= " << simulationID << ", " << sameLambda << "\n");
+      if(!sameLambda){      //exchange LAMBDA
+        // E21: Energy with configuration 2 and lambda 1(of partner)
+        const double E21 = calculate_energy(partnerReplicaMasterThreadID);
+        // this we can store as the partner energy of the current replica
+        epot_partner = E21;
+        // E22: Energy with configuration 2 and lambda 2(own one)
+#ifdef XXMPI
+        const double E22 = epot;
+        // send E21 and E22
+        double energies[2] = {E22, E21};
+        //this send operation is matched in calc_probability()
+        DEBUG(4,"replica "<<globalThreadID<<":replica_exchange_base_2d_s_eoff_eds: SWAP_S before Send\n");
+        MPI_Send(&energies[0], 2, MPI_DOUBLE, partnerReplicaMasterThreadID, SWITCHENERGIES,  replicaGraphMPIControl().comm);
+        DEBUG(4,"replica "<<globalThreadID<<":replica_exchange_base_2d_s_eoff_eds: SWAP_S after Send\n");
+#endif
+      } else { // sameLambda
+#ifdef XXMPI
+        double energies[2] = {epot, 0.0};
+        DEBUG(4,"replica "<<globalThreadID<<":replica_exchange_base_2d_s_eoff_eds: SWAP_S before Send\n");
+        MPI_Send(&energies[0],2,MPI_DOUBLE, partnerReplicaMasterThreadID, SWITCHENERGIES,  replicaGraphMPIControl().comm);
+        DEBUG(4,"replica "<<globalThreadID<<":replica_exchange_base_2d_s_eoff_eds: SWAP_S after Send\n");
+#endif
+     }
+      if (replica->sim.param().pcouple.scale != math::pcouple_off) {
+#ifdef XXMPI
+        math::Box box_replica = replica->conf.current().box;    //exchange box
+        MPI_Send(&box_replica(0)[0], 1, MPI_BOX, partnerReplicaMasterThreadID, BOX,  replicaGraphMPIControl().comm);
+#endif
+      }
+
+#ifdef XXMPI
+      MPI_Status status;
+#endif
+      std::vector<double> prob;
+      prob.resize(2);
+#ifdef XXMPI
+      MPI_Recv(&prob[0], 2, MPI_DOUBLE, partnerReplicaMasterThreadID, SENDCOORDS,  replicaGraphMPIControl().comm, &status);
+#endif
+      //Have we been exchanged little partner?
+      probability = prob[0];
+      double randNum = prob[1];
+
+      if (randNum < probability) {
+        switched = true;
+      } else {
+        switched = false;
+      }
+    }
+
+  } else {//This should be an error!
+      throw "Partner does not exist!";
+    /*
+      partner = ID;
+    switched = false;
+    probability = 0.0;
+
+    */
+  }
+    DEBUG(4, "replica "<< globalThreadID <<":replica_exchange_base_2d_s_eoff_eds:swap:\t  DONE");
+}
+
+void util::replica_exchange_base_2d_s_eoff_eds::swap_eoff(const unsigned int partnerReplicaID) {
+  DEBUG(4, "replica "<<  globalThreadID <<":swap_eoff:\t  START");
+
+
+  unsigned int partnerReplicaMasterThreadID = partnerReplicaID;
+  unsigned int numReps = replica->sim.param().reeds.num_l * replica->sim.param().reeds.num_eoff;
+
+  // does partner exist?
+  if (partnerReplicaID < numReps && partnerReplicaID != simulationID) {
+    // the one with lower ID does probability calculation
+    if (simulationID < partnerReplicaID) {
+
+      // posts a MPI_Recv(...) matching the MPI_Send below
+      probability = calc_probability_for_eoff_exchange(partnerReplicaID);
+      DEBUG(5,"SWAP_EOFF: ID, probability = " << simulationID << ", " << probability << "\n");
+      const double randNum = rng.get();
+
+      std::vector<double> prob(2);
+      prob[0] = probability;
+      prob[1] = randNum;
+
+#ifdef XXMPI
+      DEBUG(5,"replica_exchange_base_2d_s_eoff_eds: SWAP_EOFF before Send\n");
+      MPI_Send(&prob[0], 2, MPI_DOUBLE, partnerReplicaMasterThreadID, SENDCOORDS, replicaGraphMPIControl().comm);
+      DEBUG(5,"replica_exchange_base_2d_s_eoff_eds: SWAP_EOFF after Send\n");
+#endif
+
+      if (randNum < probability) {
+        switched = true;
+      } else
+        switched = false;
+      DEBUG(5,"replica_exchange_base_2d_s_eoff_eds: ID, switched = " << simulationID << ", " << switched << "\n");
+    } else {    //The Partner sends his data to The calculating Thread
+      //special case if eoff vector also needs to be exchanged
+      bool sameEoffvector = true;
+      for(int i=0; i<replica->sim.param().reeds.num_states; ++i){
+        if(replica->sim.param().reeds.eds_para[simulationID].eir[i] != replica->sim.param().reeds.eds_para[partnerReplicaID].eir[i]){
+          sameEoffvector = false;
+          DEBUG(1,"\nSWAP_EOFF: ID " << simulationID << " sets sameEoffvector to false because of " << i << "th position of Eoffvector\n");
+          break;
+        }
+      }
+      DEBUG(5,"swap_eoff: simID, bool sameEoffvector= " << simulationID << ", " << sameEoffvector << "\n");
+      if(!sameEoffvector){      //exchange EOFF_VEC
+        // E21: Energy with configuration 2 and lambda 1(of partner)
+        const double E21 = calculate_energy(partnerReplicaMasterThreadID);
+        // this we can store as the partner energy of the current replica
+        epot_partner = E21;
+        // E22: Energy with configuration 2 and lambda 2(own one)
+#ifdef XXMPI
+        const double E22 = epot;
+        // send E21 and E22
+        double energies[2] = {E22, E21};
+        //this send operation is matched in calc_probability_for_eoff_exchange()
+        DEBUG(5,"replica_exchange_base_2d_s_eoff_eds: SWAP_EOFF before Send\n");
+        MPI_Send(&energies[0], 2, MPI_DOUBLE, partnerReplicaMasterThreadID, SWITCHENERGIES,  replicaGraphMPIControl().comm);
+        DEBUG(5,"replica_exchange_base_2d_s_eoff_eds: SWAP_EOFF after Send\n");
+#endif
+      } else { // sameEoffvector
+#ifdef XXMPI
+        double energies[2] = {epot, 0.0};
+        MPI_Send(&energies[0],2,MPI_DOUBLE, partnerReplicaMasterThreadID, SWITCHENERGIES,  replicaGraphMPIControl().comm);
+#endif
+     }
+      if (replica->sim.param().pcouple.scale != math::pcouple_off) {
+#ifdef XXMPI
+        math::Box box_replica = replica->conf.current().box;    //exchange box
+        MPI_Send(&box_replica(0)[0], 1, MPI_BOX, partnerReplicaMasterThreadID, BOX,  replicaGraphMPIControl().comm);
+#endif
+      }
+
+#ifdef XXMPI
+      MPI_Status status;
+#endif
+      std::vector<double> prob;
+      prob.resize(2);
+#ifdef XXMPI
+      MPI_Recv(&prob[0], 2, MPI_DOUBLE, partnerReplicaMasterThreadID, SENDCOORDS,  replicaGraphMPIControl().comm, &status);
+#endif
+      //Have we been exchanged little partner?
+      probability = prob[0];
+      double randNum = prob[1];
+
+      if (randNum < probability) {
+        switched = true;
+      } else {
+        switched = false;
+      }
+      DEBUG(5,"\nreplica_exchange_base_2d_s_eoff_eds: 2nd time ID, switched = " << simulationID << ", " << switched << "\n");
+    }
+
+  } else {//This should be an error!
+      throw "Partner does not exist!";
+    /*
+      partner = ID;
+    switched = false;
+    probability = 0.0;
+
+    */
+  }
+    DEBUG(4, "replica "<< globalThreadID <<":swap:\t  DONE");
+}
+
+double util::replica_exchange_base_2d_s_eoff_eds::calc_probability_for_eoff_exchange(const unsigned int partnerReplicaID) {
+  DEBUG(4,"replica_exchange_base_2d_s_eoff_eds: CALC_PROBABILITY by ID: " << simulationID << "\n");
 
   unsigned int partnerReplicaMasterThreadID = partnerReplicaID;
 
   double delta;
   const double b1 = 1.0 / (math::k_Boltzmann * T);
-  const double b2 = 1.0 / (math::k_Boltzmann * replica->sim.param().replica.temperature[partnerReplicaID % replica->sim.param().replica.num_T]);
+  const double b2 = 1.0 / (math::k_Boltzmann * replica->sim.param().replica.temperature[partnerReplicaID % replica->sim.param().reeds.num_eoff]);
 
   bool sameEoffvector = true;
   for(int i=0; i<replica->sim.param().reeds.num_states; ++i){
@@ -751,7 +710,7 @@ double util::replica_exchange_base_2d_s_eoff_eds::calc_probability_for_eoff_exch
       break;
     }
   }
-  DEBUG(1,"swap_eoff in calc_prob(): simID, bool sameEoffvector= " << simulationID << ", " << sameEoffvector << "\n");
+  DEBUG(5,"swap_eoff in calc_prob(): simID, bool sameEoffvector= " << simulationID << ", " << sameEoffvector << "\n");
 
   if (sameEoffvector) {
     // use simple formula
@@ -791,7 +750,7 @@ double util::replica_exchange_base_2d_s_eoff_eds::calc_probability_for_eoff_exch
     delta = b1 * (E12 - E11) - b2 * (E22 - E21);
   }
 
-  DEBUG(1,"\n\nreplica_exchange_base_2d_s_eoff_eds: CALC_PROBABILITY before NPT\n");
+  DEBUG(5,"replica_exchange_base_2d_s_eoff_eds: CALC_PROBABILITY before NPT\n");
   // NPT? add PV term
   if (replica->sim.param().pcouple.scale != math::pcouple_off) {
     math::Box box_partner = replica->conf.current().box;
@@ -815,12 +774,13 @@ double util::replica_exchange_base_2d_s_eoff_eds::calc_probability_for_eoff_exch
   else
     return exp(-delta);
 
-  DEBUG(1,"\n\nreplica_exchange_base_2d_s_eoff_eds: CALC_PROBABILITY by ID: " << simulationID << " done\n");
+  DEBUG(4,"replica_exchange_base_2d_s_eoff_eds: CALC_PROBABILITY by ID: " << simulationID << " done\n");
 }
+
 
 ////exchange params
 void util::replica_exchange_base_2d_s_eoff_eds::reset_eds() {//only reset switched parameters of change_eds() function
-  DEBUG(3,"\n\nreplica_exchange_base_2d_s_eoff_eds: RESET_EDS\n\n");
+  DEBUG(3,"replica_exchange_base_2d_s_eoff_eds: RESET_EDS\n\n");
   replica->sim.param().eds = eds_para;
   replica->sim.param().step.dt = dt;
   replica->conf.current().force= force_orig;
@@ -829,7 +789,7 @@ void util::replica_exchange_base_2d_s_eoff_eds::reset_eds() {//only reset switch
 
 void util::replica_exchange_base_2d_s_eoff_eds::change_eds(const unsigned int partner){//only change parameters, which are needed for energy calculation i.e.
 
-  DEBUG(3,"\n\nreplica_exchange_base_2d_s_eoff_eds: CHANGE_EDS\n\n");
+  DEBUG(3,"replica_exchange_base_2d_s_eoff_eds: CHANGE_EDS\n\n");
   int idx;
   if (replica->sim.param().reeds.num_l == 1){
     idx = 0;
@@ -859,7 +819,7 @@ double util::replica_exchange_base_2d_s_eoff_eds::calc_energy_eds_stat(double s)
     double old_s;
     double old_eds_vr;
     algorithm::Algorithm * ff;
-    DEBUG(5,"\n\nreplica_exchange_base_2d_s_eoff_eds: CALC_ENERGY_EDS_STAT\n\n");
+    DEBUG(5,"replica_exchange_base_2d_s_eoff_eds: CALC_ENERGY_EDS_STAT\n\n");
     if(replica->sim.param().eds.eds){
           //to reset old state
           old_dt=replica->sim.param().step.dt;
@@ -907,8 +867,6 @@ double util::replica_exchange_base_2d_s_eoff_eds::calculate_energy_core() {
 
      ff = replica->md.algorithm("EDS");
 
-     DEBUG(3,"\n\nreplica_exchange_base_2d_s_eoff_eds: CALCULATE_ENERGY_CORE\n\n");
-
     //Calculate energies
     DEBUG(5, "replica_reeds "<< globalThreadID <<":calculate_energy:\t calc energies");
     if (ff->apply(replica->topo, replica->conf, replica->sim)) {
@@ -929,9 +887,6 @@ double util::replica_exchange_base_2d_s_eoff_eds::calculate_energy_core() {
 
 double util::replica_exchange_base_2d_s_eoff_eds::calculate_energy(const unsigned int selectedReplicaID) {
     DEBUG(4, "replica_reeds "<< globalThreadID <<":calculate_energy:\t START");
-
-    DEBUG(3,"\n\nreplica_exchange_base_2d_s_eoff_eds: CALCULATE_ENERGY\n\n");
-
 
     DEBUG(5, "replica_reeds "<< globalThreadID <<":calculate_energy:\t get Partner settings");
     if(selectedReplicaID!=simulationID){

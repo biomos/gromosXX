@@ -107,7 +107,7 @@ int main(int argc, char *argv[]) {
 
 
     MPI_DEBUG(1, "RANK: "<<globalThreadID<<" Parse ARGs \n");
-
+        
     // Parse command line arguments
     io::Argument args;
     try {
@@ -179,7 +179,7 @@ int main(int argc, char *argv[]) {
 
     std::map<unsigned int, unsigned int> thread_id_replica_map; // where is which replica
     std::vector<std::vector<unsigned int> > replica_owned_threads; // set IDs for each replica
-
+    
 
     try {
             simulation::Simulation sim;
@@ -281,6 +281,7 @@ int main(int argc, char *argv[]) {
                 }
                 counter++;
             } 
+
             
 
     } catch (const std::exception &e) {
@@ -387,9 +388,9 @@ int main(int argc, char *argv[]) {
         std::cerr << "num of threads: "  << totalNumberOfThreads << "\n";
         std::cerr << "threads per rep: " << threadsPerReplicaSimulation << "\n";
         std::cout << "Masters of "<<reGMPI.numberOfReplicas<< "replicas \t";
-        for(int masterThreadID : replica_master_IDS){
-            std::cout << masterThreadID  << "\t";
-        }
+        //for(int masterThreadID : replica_master_IDS){
+        //    std::cout << masterThreadID  << "\t";
+        //}
     }
     std::cout << "\n";
     MPI_DEBUG(1, "REPLICA_ID \t " << globalThreadID << "\t Simulation_ID\t"<< simulationID << "\t RE_GRAPH COMM ESTABLISHED\n");
@@ -483,12 +484,15 @@ int main(int argc, char *argv[]) {
             msg<< "\n";
         }
         msg<< "\n";
-        msg<< "\t repMap:\n";
+        
+        
+        /*msg<< "\t repMap:\n";
         for(std::pair<unsigned int, unsigned int> p : thread_id_replica_map){
             msg << "\t " << p.first << "\t" << p.second <<"\n";
         }
         msg << "\n";
-
+         */
+        
         msg << "\n==================================================\n\tFinished Setting Up Simulation\n\n==================================================\n";
         std::cout << msg.str();
         std::cerr << msg.str();

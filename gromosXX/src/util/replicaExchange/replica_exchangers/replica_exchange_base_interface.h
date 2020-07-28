@@ -287,7 +287,7 @@ namespace util {
     virtual void determine_switch_probabilities();
     
     //EXECUTE SWAP:
-    void execute_swap(const unsigned int partnerReplicaID);
+    virtual void execute_swap(const unsigned int partnerReplicaID);
     
 
 

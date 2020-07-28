@@ -116,7 +116,8 @@ namespace util
         /**
         * Just a wrapper for the actual swap functions swap_s and swap_eoff. Exchanges coordinates and averages.
         */
-        void swap() override;
+        //void swap() override;
+        void determine_switch_probabilities() override;
         /**
         * Tries a swapping in s dimension of configuration if possible. Calculates energies, probabilities
         * and sends information via MPI communication if necessary.

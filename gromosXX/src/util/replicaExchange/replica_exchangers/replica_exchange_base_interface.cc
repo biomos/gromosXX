@@ -122,6 +122,7 @@ void util::replica_exchange_base_interface::run_MD() {
   MPI_DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":run_MD:\t DONE");
 }
 
+
 //TODO: REMOVE
 void util::replica_exchange_base_interface::updateReplica_params(){
   DEBUG(3,"\n\nreplica_exchange_base_interface: UPDATEREPLICA_PARAMS\n\n");
@@ -199,7 +200,7 @@ void util::replica_exchange_base_interface::determine_switch_probabilities(){
     DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":determineSwitchPos:\t DONE");
 }
 
-
+/**OVERRIDE Possibly THIS NICE FUNCTION*/
 int util::replica_exchange_base_interface::find_partner() const {
     //TODO: REWRITE To get Replica ID BSCHROED
   unsigned int numT = replica->sim.param().replica.num_T;
@@ -310,6 +311,7 @@ int util::replica_exchange_base_interface::find_partner() const {
 
 
 //Execute Swapping
+/**OVERRIDE Possibly THIS NICE FUNCTION*/
 void util::replica_exchange_base_interface::execute_swap(const unsigned int partnerReplicaID) {
     DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":executeSwap:\t START");
     if (simulationID < partnerReplicaID) {
@@ -323,8 +325,6 @@ void util::replica_exchange_base_interface::execute_swap(const unsigned int part
     exchange_averages();
     DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":executeSwap:\t DONE");
 }
-
-
 
 double util::replica_exchange_base_interface::calc_probability(const unsigned int partnerReplicaID) {
 
