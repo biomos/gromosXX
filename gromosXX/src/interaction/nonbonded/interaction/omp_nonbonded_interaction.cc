@@ -116,7 +116,8 @@ calculate_interactions(topology::Topology & topo,
 
 #ifdef OMP
     omp_set_num_threads(m_nonbonded_set.size());
-#pragma omp parallel
+    int error = 0;
+#pragma omp parallel reduction(+:error)
     {
       unsigned int tid = omp_get_thread_num();
       // calculate the corresponding interactions
@@ -124,7 +125,7 @@ calculate_interactions(topology::Topology & topo,
       DEBUG(4, "calculating nonbonded interactions (thread "
               << tid << " of " << m_set_size << ")");
 
-      m_nonbonded_set[tid]->calculate_interactions(*p_topo, *p_conf, sim);
+      error += m_nonbonded_set[tid]->calculate_interactions(*p_topo, *p_conf, sim);
 
     }
 
@@ -132,6 +133,7 @@ calculate_interactions(topology::Topology & topo,
     std::cerr << "using OMP code without OMP defined..." << std::endl;
     return E_ILLEGAL;
 #endif
+    if (error) return 1;
     
     ////////////////////////////////////////////////////
     // end of multiple time stepping: calculate
