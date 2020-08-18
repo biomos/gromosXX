@@ -581,6 +581,42 @@ namespace simulation
   };
 
   /**
+   * @enum GAMD search types
+   */
+  enum gamd_search_enum{
+    /**
+     * no search
+     */
+    no_search = 0,
+    /**
+     * use conventional MD to extract potential statistics of the system
+     */
+    cmd_search = 1,
+    /**
+     * start search with updating boosting potential terms
+     */
+    gamd_search = 2,
+  };
+
+  /**
+   * @enum GAMD functional from
+   */
+  enum gamd_form_enum{
+    /**
+     * boost both the total energy and the dihedral term independently
+     */
+    dual_boost = 1,
+    /**
+     * boost the total energy term
+     */
+    tot_boost = 2,
+    /**
+     * boost only the dihedral term
+     */
+    dih_boost = 3,
+  };
+
+  /**
    * @enum interaction_lambda_enum
    * used to refer to interaction with their own lambda dependence
    */
@@ -2883,7 +2919,65 @@ namespace simulation
       */
       unsigned int bsteps;
     } /** enveloping distribution sampling*/ eds;
-   
+  /**
+   * @struct GAMD_struct
+   * Gaussian accelerated md settings
+   */
+  struct gamd_struct {
+    /**
+     * Constructor
+     * Default values:
+     * - gamd: no GAMD
+     * - form : dual acceleration
+     * - threshold: lower bound
+     * - maximum standard deviation: 10 KBT
+     */
+    gamd_struct() : gamd(false), ntigamd(no_search), form(dual_boost), thresh(1), dihstd(24.79), totstd(24.79){}
+    /**
+     * do gaussian accelerated md:
+     */
+    unsigned int gamd;
+    /**
+     * initialize search type
+     */
+    gamd_search_enum ntigamd;
+    /**
+     * functional form of the boost potential
+     */
+    gamd_form_enum form;
+    /**
+     * threshold boundary to apply acceleration
+     */
+    unsigned int thresh;
+    /**
+     * number of acceleration groups
+     */
+    unsigned int agroups;
+    /**
+     * maximum standard deviation for the dihedral potentail boost.
+     */
+    double dihstd;        
+    /**
+     * maximum standard deviation for the total potential energy boost.
+     */
+    double totstd;
+    /**
+     * vector of Vmax for each of the defined acceleration groups
+     */
+    std::vector<double> vmaxs;
+    /**
+     * vector of Vmin for each of the defined acceleration groups
+     */
+    std::vector<double> vmins;
+    /**
+     * vector of boosting potential energys for the dihedral term each of the defined acceleration groups
+     */
+    std::vector<double> dihboost;
+    /**
+     * vector of boosting potential energys for the total energy term each of the defined acceleration groups
+     */
+    std::vector<double> totboost;
+  } /** Gaussian accelerated md */ gamd;  
  struct reeds_struct : public replica_struct
     {
       /**

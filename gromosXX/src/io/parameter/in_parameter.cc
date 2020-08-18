@@ -3908,6 +3908,120 @@ void io::In_Parameter::read_AEDS(simulation::Parameter & param,
     block.get_final_messages();
   }
 }
+// In progress
+
+/**
+* @section AGMD AGMD block
+* @snippet snippets/snippets.cc AGMD
+
+*/
+void io::In_Parameter::read_GAMD(simulation::Parameter & param,
+  std::ostream & os) {
+  DEBUG(8, "reading AGMD");
+
+  std::stringstream exampleblock;
+  // lines starting with 'exampleblock<<"' and ending with '\n";' (spaces don't matter)
+  // will be used to generate snippets that can be included in the doxygen doc;
+  // the first line should be the blockname and is used as snippet tag
+  exampleblock << "GAMD\n";
+  exampleblock << "# GAMD       0,1\n";
+  exampleblock << "#              0: no Gaussian accelerated MD [default]\n";
+  exampleblock << "#              1: Gaussian accelerated MD\n";
+  exampleblock << "# NTIGAMD   0-2\n";
+  exampleblock << "#              0: Start GAMD with fixed parameters\n";
+  exampleblock << "#              1: Start parameter search without acceleration\n";
+  exampleblock << "#              2: Start parameter search with updating acceleration parameters\n";
+  exampleblock << "# FORM       1-3\n";
+  exampleblock << "#              1: GAMD with dual acceleration \n";
+  exampleblock << "#              2: GAMD with total potential energy acceleration\n";
+  exampleblock << "#              3: GAMD with dihedral potential energy acceleration\n";
+  exampleblock << "# GAMDTHRESH  1-2\n";
+  exampleblock << "#              1: Set threshold energy to the lower bound (Vmax)\n";
+  exampleblock << "#              2: Set threshold energy to the upper bound (Vmin + 1/K)\n";
+  exampleblock << "# AGROUPS    > 1: Number of different acceleration groups\n";
+  exampleblock << "# DIHSTD        : Maximum standard deviation for the dihedral boosting potential\n";
+  exampleblock << "# TOTSTD        : Maximum standard deviation for the total energy boosting potential\n";
+  exampleblock << "# VMAX          : Vmax for the different acceleration groups\n";
+  exampleblock << "# VMIN          : Vmin for the different acceleration groups\n";
+  exampleblock << "# DIHBOOST      : Boosting potentials for the dihedral term of the different acceleration groups\n";
+  exampleblock << "# TOTBOOST      : Boosting potentials for the total potential energy term of the different acceleration groups\n";
+  exampleblock << "# QSTEPS        : Number of equilibration steps\n";
+  exampleblock << "# AVSTEPS       : Number of steps used to calculate the average potential energy and standard deviation\n";
+  exampleblock << "#\n";
+  exampleblock << "# GAMD\n";
+  exampleblock << "  1\n";
+  exampleblock << "# NTIGAMD  FORM  GAMDTHRESH  AGROUPS\n";
+  exampleblock << "  0        1     1           2\n";
+  exampleblock << "# DIHSTD  TOTSTD\n";
+  exampleblock << "  24.79   24.79\n";
+  exampleblock << "# VMAX\n";
+  exampleblock << "  10   34\n";
+  exampleblock << "# VMIN\n";
+  exampleblock << "  -8   -22\n";
+  exampleblock << "# DIHBOOST\n";
+  exampleblock << "  0   0\n";
+  exampleblock << "# TOTBOOST\n";
+  exampleblock << "  0   0\n";
+  exampleblock << "# QSTEPS  AVSTEPS\n";
+  exampleblock << "  0       5000\n";
+  exampleblock << "END\n";
+
+
+
+  std::string blockname = "GAMD";
+  Block block(blockname, exampleblock.str());
+
+  if (block.read_buffer(m_block[blockname], false) == 0) {
+    block_read.insert(blockname);
+
+    int gamd, ntigamd, form, thresh;
+
+    block.get_next_parameter("GAMD", gamd, "", "0,1");
+    block.get_next_parameter("NTIGAMD", ntigamd, "", "0,1,2");
+    block.get_next_parameter("FORM", form, "", "1,2,3");
+    block.get_next_parameter("GAMDTHRESH", param.gamd.thresh, "", "1,2");
+    block.get_next_parameter("AGROUPS", param.gamd.agroups, ">=1", "");
+    switch (gamd) {
+      case 0:
+        param.gamd.gamd = 0;
+        param.gamd.agroups = 0;
+        break;
+      case 1:
+        param.gamd.gamd = 1;
+        break;
+      default:
+        break;
+      }
+    switch (ntigamd) {
+      case 0:
+        param.gamd.ntigamd= simulation::no_search;
+        break;
+      case 1:
+        param.gamd.ntigamd= simulation::cmd_search;
+        break;
+      case 2:
+        param.gamd.ntigamd= simulation::gamd_search;
+        break;
+      default:
+        break;
+      }
+    switch (form) {
+      case 1:
+        param.gamd.form= simulation::dual_boost;
+        break;
+      case 2:
+        param.gamd.form= simulation::tot_boost;
+        break;
+      case 3:
+        param.gamd.form= simulation::dih_boost;
+        break;
+      default:
+        break;
+      }
+    block.get_final_messages();
+    // DEVELOPING
+  }
+}
 
 /**
  * @section LAMBDAS LAMBDAS block
