@@ -423,8 +423,8 @@ bool io::In_Configuration::read_lattice_shifts
     if (buffer.size()) {
       io::messages.add("LATTICESHIFTS block provided but shifts reset to zero.",
               "in_configuration", io::message::warning);
-      conf.special().lattice_shifts = 0.0;
     }
+    conf.special().lattice_shifts = 0.0;
   }
   return true;
 }
