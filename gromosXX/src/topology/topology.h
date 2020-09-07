@@ -14,6 +14,7 @@
 #include "sd.h"
 #include "exclusions.h"
 #include "../interaction/interaction_types.h"
+#include "../util/virtual_atom.h"
 
 namespace simulation
 {
@@ -225,6 +226,11 @@ namespace topology
     EDS_Perturbed_Solute & eds_perturbed_solute() {return m_eds_perturbed_solute;}
 
     /**
+     * virtual solute accessor.
+     */
+    Virtual_Atoms_Group & virtual_atoms_group() {return m_virtual_atoms_group;}
+
+    /**
      * const solute accessor.
      */
     Solute const & solute()const{return m_solute;}
@@ -238,6 +244,11 @@ namespace topology
      * const eds-perturbed solute accessor.
      */
     EDS_Perturbed_Solute const & eds_perturbed_solute()const{return m_eds_perturbed_solute;}
+
+    /**
+     * virtual solute accessor.
+     */
+    Virtual_Atoms_Group const & virtual_atoms_group()const{return m_virtual_atoms_group;}
 
     /**
      * number of atom types.
@@ -1362,6 +1373,11 @@ namespace topology
      * the eds-perturbed solute
      */
     EDS_Perturbed_Solute m_eds_perturbed_solute;
+
+    /**
+     * the virtual atoms
+     */
+    Virtual_Atoms_Group m_virtual_atoms_group;
 
     /**
      * is the atom perturbed?

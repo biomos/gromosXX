@@ -155,4 +155,37 @@ namespace util
   };
 }
 
+  /**
+   * @class Virtual_Atoms_Group
+   * holds the information about Virtual atoms in topology.
+   */
+class Virtual_Atoms_Group
+{
+public:
+    
+  /**
+   * virtual atoms accessor.
+   */
+  std::map<unsigned int, Virtual_Atom> & atoms() {return m_atom;}
+
+  /**
+   * const virtual atoms accessor.
+   */
+  std::map<unsigned int, Virtual_Atom> const & atoms()const {return m_atom;}
+
+  /**
+   * virtual atom accessor
+   */
+  Virtual_Atom & atom(unsigned int i) {return m_atom[i];}
+    
+private:
+    
+  /**
+   * the virtual atoms.
+   */
+  std::map<unsigned int, Virtual_Atom> m_atom; 
+
+};
+      
+
 #endif
