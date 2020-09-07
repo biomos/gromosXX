@@ -85,7 +85,7 @@ namespace util
      * Constructor
      */
     Virtual_Atom(virtual_type type, std::vector<int> atom, double dish = 0.1, 
-		 double disc = 0.153,  int orientation = 0);
+		 double disc = 0.153,  int orientation = 0, double charge = 0.0);
     /**
      * calculate the position of the virtual atom
      */
@@ -110,6 +110,10 @@ namespace util
      * accessor to the type
      */
     virtual_type type() const { return m_type; }
+    /**
+     * accessor to the charge
+     */
+    double charge() const { return m_charge; }
     
   private:
     /**
@@ -144,6 +148,10 @@ namespace util
      * orientation
      */
     int m_orientation;
+    /**
+     * charge
+     */
+    double m_charge;
   };
 }
 
