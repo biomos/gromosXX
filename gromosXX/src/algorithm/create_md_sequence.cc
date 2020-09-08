@@ -39,6 +39,7 @@
 #include "../algorithm/temperature/berendsen_thermostat.h"
 #include "../algorithm/pressure/pressure_calculation.h"
 #include "../algorithm/pressure/berendsen_barostat.h"
+#include "../algorithm/virtualatoms/prepare_virtualatoms.h"
 
 #include "../interaction/forcefield/forcefield.h"
 #include "../interaction/forcefield/create_forcefield.h"
@@ -100,6 +101,8 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
   // add the lattice shift tracking 
   if (sim.param().boundary.boundary != math::vacuum)
     md_seq.push_back(new algorithm::Lattice_Shift_Tracker());
+
+  // TO DO :: md_seq.push_back(new algorithm::Prepare_VirtualAtoms(ff));
 
   // add the forcefield
   md_seq.push_back(ff);

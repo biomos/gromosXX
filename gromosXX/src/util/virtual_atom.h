@@ -121,12 +121,27 @@ namespace util
     /**
      * set charge
      */
-    void set_charge(double charge) { m_charge = charge;}
+    void set_charge(double charge) { m_charge = charge; }
     /**
      * set iac
      */
-    void set_iac(int iac) { m_iac = iac;}
-    
+    void set_iac(int iac) { m_iac = iac; }
+    /**
+     * returns whether this atom has nonbonded interactions
+     */
+    bool has_nonbonded() { return m_nonbond; }
+    /**
+     * nonbonded interactions setter
+     */
+    void set_nonbonded(){ m_nonbond = true; }
+    /**
+     * set atom number
+     */
+    void set_index(int index){ m_index = index; }
+    /**
+     * atom index getter
+     */
+    int atom_index(){ return m_index; }
   private:
     /**
      * calculate the position of the virtual site
@@ -168,6 +183,14 @@ namespace util
      * IAC
      */
     int m_iac;
+    /**
+     * has non bonded interactions
+     */
+    bool m_nonbond = false;
+    /**
+     * atom index
+     */
+    int m_index;
   };
 
 
