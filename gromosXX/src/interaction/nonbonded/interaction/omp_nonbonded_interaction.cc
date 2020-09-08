@@ -114,9 +114,9 @@ calculate_interactions(topology::Topology & topo,
     // shared memory do this only once
     m_pairlist_algorithm->prepare(*p_topo, *p_conf, sim);
 
+    int error = 0;
 #ifdef OMP
     omp_set_num_threads(m_nonbonded_set.size());
-    int error = 0;
 #pragma omp parallel reduction(+:error)
     {
       unsigned int tid = omp_get_thread_num();
