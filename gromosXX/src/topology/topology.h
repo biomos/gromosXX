@@ -228,7 +228,7 @@ namespace topology
     /**
      * virtual solute accessor.
      */
-    Virtual_Atoms_Group & virtual_atoms_group() {return m_virtual_atoms_group;}
+    util::Virtual_Atoms_Group & virtual_atoms_group() {return m_virtual_atoms_group;}
 
     /**
      * const solute accessor.
@@ -248,7 +248,7 @@ namespace topology
     /**
      * virtual solute accessor.
      */
-    Virtual_Atoms_Group const & virtual_atoms_group()const{return m_virtual_atoms_group;}
+    util::Virtual_Atoms_Group const & virtual_atoms_group()const{return m_virtual_atoms_group;}
 
     /**
      * number of atom types.
@@ -1377,7 +1377,7 @@ namespace topology
     /**
      * the virtual atoms
      */
-    Virtual_Atoms_Group m_virtual_atoms_group;
+    util::Virtual_Atoms_Group m_virtual_atoms_group;
 
     /**
      * is the atom perturbed?

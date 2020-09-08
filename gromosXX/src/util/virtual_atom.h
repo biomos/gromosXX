@@ -85,7 +85,7 @@ namespace util
      * Constructor
      */
     Virtual_Atom(virtual_type type, std::vector<int> atom, double dish = 0.1, 
-		 double disc = 0.153,  int orientation = 0, double charge = 0.0);
+		 double disc = 0.153,  int orientation = 0);
     /**
      * calculate the position of the virtual atom
      */
@@ -114,6 +114,18 @@ namespace util
      * accessor to the charge
      */
     double charge() const { return m_charge; }
+    /**
+     * accessor to the IAC
+     */
+    int iac() const { return m_iac; }
+    /**
+     * set charge
+     */
+    void set_charge(double charge) { m_charge = charge;}
+    /**
+     * set iac
+     */
+    void set_iac(int iac) { m_iac = iac;}
     
   private:
     /**
@@ -152,40 +164,44 @@ namespace util
      * charge
      */
     double m_charge;
+    /**
+     * IAC
+     */
+    int m_iac;
   };
-}
 
-  /**
-   * @class Virtual_Atoms_Group
-   * holds the information about Virtual atoms in topology.
-   */
-class Virtual_Atoms_Group
-{
-public:
-    
-  /**
-   * virtual atoms accessor.
-   */
-  std::map<unsigned int, Virtual_Atom> & atoms() {return m_atom;}
 
-  /**
-   * const virtual atoms accessor.
-   */
-  std::map<unsigned int, Virtual_Atom> const & atoms()const {return m_atom;}
-
-  /**
-   * virtual atom accessor
-   */
-  Virtual_Atom & atom(unsigned int i) {return m_atom[i];}
-    
-private:
-    
-  /**
-   * the virtual atoms.
-   */
-  std::map<unsigned int, Virtual_Atom> m_atom; 
-
-};
+    /**
+     * @class Virtual_Atoms_Group
+     * holds the information about Virtual atoms in topology.
+     */
+  class Virtual_Atoms_Group
+  {
+  public:
       
+    /**
+     * virtual atoms accessor.
+     */
+    std::map<unsigned int, Virtual_Atom> & atoms() {return m_atom;}
+
+    /**
+     * const virtual atoms accessor.
+     */
+    std::map<unsigned int, Virtual_Atom> const & atoms()const {return m_atom;}
+
+    /**
+     * virtual atom accessor
+     */
+    Virtual_Atom & atom(unsigned int i) {return m_atom[i];}
+      
+  private:
+      
+    /**
+     * the virtual atoms.
+     */
+    std::map<unsigned int, Virtual_Atom> m_atom; 
+
+  };
+}    
 
 #endif
