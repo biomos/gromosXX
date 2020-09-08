@@ -1750,7 +1750,7 @@ void io::In_Topology::read_block_VIRTUALATOM(topology::Topology& topo,
         //ADD ATOM
         util::Virtual_Atom atom(type, member_atoms, dish, disc, 0);
         atom.set_charge(q);
-        atom.set_iac(iac);
+        atom.set_iac(iac - 1);
         topo.virtual_atoms_group().atoms()[a_num - 1] = atom;
       }
       if (!quiet)
