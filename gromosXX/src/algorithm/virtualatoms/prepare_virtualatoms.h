@@ -34,9 +34,7 @@ namespace algorithm
      */
     virtual int apply(topology::Topology &topo, 
 		      configuration::Configuration &conf,
-		      simulation::Simulation &sim){
-            return 0;
-          }
+		      simulation::Simulation &sim);
 
     /**
      * init

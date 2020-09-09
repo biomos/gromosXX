@@ -59,6 +59,11 @@ namespace topology
     int iac(unsigned int const i)const {assert(i < m_iac.size()); return m_iac[i];}
 
     /**
+     * integer atom code array accessor
+     */
+    std::vector<int> &iac_array() { return m_iac; }
+
+    /**
      * masses accessor
      */
     math::SArray &mass() {return m_mass;}

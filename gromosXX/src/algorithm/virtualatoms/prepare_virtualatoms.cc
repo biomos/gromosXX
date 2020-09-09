@@ -1,5 +1,5 @@
 /**
- * @file thermostat.cc
+ * @file prepare_virtualatoms.cc
  * methods of the Prepare_VirtualAtoms
  */
 
@@ -21,14 +21,38 @@
 #define MODULE algorithm
 #define SUBMODULE virtualatoms
 
+
+int algorithm::Prepare_VirtualAtoms::apply(topology::Topology &topo, 
+		  configuration::Configuration &conf,
+		   simulation::Simulation &sim){
+    // loop over virtual atoms and update positions in configuration
+    std::map<unsigned int, util::Virtual_Atom>::iterator it;
+    unsigned int atom_counter = 0;
+    int num_atoms = topo.num_atoms();
+    for ( it = topo.virtual_atoms_group().atoms().begin(); it != topo.virtual_atoms_group().atoms().end(); it++ )
+    {
+        // check if atom is in the  list of atoms with nonbonded interactions
+        int atom_num = it->first;
+        util::Virtual_Atom atom = it->second;
+        if (atom.has_nonbonded()){
+            conf.current().pos[num_atoms + atom_counter] = atom.pos(conf, topo); 
+            atom_counter++;                       
+        }
+
+    }
+    return 0;
+}
+
 int algorithm::Prepare_VirtualAtoms::init(topology::Topology & topo,
         configuration::Configuration & conf,
         simulation::Simulation &sim, 
         std::ostream &os = std::cout, bool quiet = false)
     {
+
     std::map<unsigned int, util::Virtual_Atom>::iterator it;
     std::vector<util::Virtual_Atom> nonbonded_virtual;
     bool add_atom = false;
+    int num_atoms = topo.num_atoms();
     // loop over all virtual atoms to check which ones have nonbonded interactions
     for ( it = topo.virtual_atoms_group().atoms().begin(); it != topo.virtual_atoms_group().atoms().end(); it++ )
     {
@@ -71,13 +95,17 @@ int algorithm::Prepare_VirtualAtoms::init(topology::Topology & topo,
         }
     } // end loop over atoms
     // now resize the arrays
-    topo.resize(topo.num_atoms() + nonbonded_virtual.size());
-    // add the IAC and charge to the new arrays 
+    topo.resize(num_atoms + nonbonded_virtual.size());
+    conf.current().resize(num_atoms + nonbonded_virtual.size());
+    conf.old().resize(num_atoms + nonbonded_virtual.size());
+    // add the IAC and charge to the new arrays
     for ( unsigned int i = 0; i < nonbonded_virtual.size(); i++){
-        topo.charge()[nonbonded_virtual[i].atom_index()] =  nonbonded_virtual[i].charge();
-        // TO DO:: add IAC to the resized lists
-        // TO DO:: add charge groups to the resized lists ???
+        topo.charge()[num_atoms + i] =  nonbonded_virtual[i].charge();
+        topo.iac_array()[num_atoms + i] =  nonbonded_virtual[i].iac();
     }
+    os << "nonbonded virtuals " << nonbonded_virtual.size() << "\n";
+    os << "topo size " << num_atoms << "\n";
+    os << "topo size " << topo.charge().size() << "\n";
     return 0;
 
 }

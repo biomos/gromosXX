@@ -134,14 +134,7 @@ namespace util
      * nonbonded interactions setter
      */
     void set_nonbonded(){ m_nonbond = true; }
-    /**
-     * set atom number
-     */
-    void set_index(int index){ m_index = index; }
-    /**
-     * atom index getter
-     */
-    int atom_index(){ return m_index; }
+
   private:
     /**
      * calculate the position of the virtual site
@@ -187,10 +180,6 @@ namespace util
      * has non bonded interactions
      */
     bool m_nonbond = false;
-    /**
-     * atom index
-     */
-    int m_index;
   };
 
 
