@@ -103,9 +103,9 @@ int algorithm::Prepare_VirtualAtoms::init(topology::Topology & topo,
         topo.charge()[num_atoms + i] =  nonbonded_virtual[i].charge();
         topo.iac_array()[num_atoms + i] =  nonbonded_virtual[i].iac();
     }
-    os << "nonbonded virtuals " << nonbonded_virtual.size() << "\n";
-    os << "topo size " << num_atoms << "\n";
-    os << "topo size " << topo.charge().size() << "\n";
+    //os << "nonbonded virtuals " << nonbonded_virtual.size() << "\n";
+    //os << "topo size " << num_atoms << "\n";
+    //os << "topo size " << topo.charge().size() << "\n";
     return 0;
 
 }

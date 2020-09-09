@@ -102,7 +102,7 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
   if (sim.param().boundary.boundary != math::vacuum)
     md_seq.push_back(new algorithm::Lattice_Shift_Tracker());
 
-  md_seq.push_back(new algorithm::Prepare_VirtualAtoms(ff));
+  //TO DO: md_seq.push_back(new algorithm::Prepare_VirtualAtoms(ff));
 
   // add the forcefield
   md_seq.push_back(ff);
