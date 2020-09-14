@@ -115,9 +115,6 @@ fi
 if eval "test x$compiler = xnone"; then AC_PROG_CXX_SUNCC   ; fi
 if eval "test x$compiler = xnone"; then AC_PROG_CXX_PGI     ; fi
 
-dnl set some defaults to CXXFLAGS and LDFLAGS
-extra_lib=""
-
 dnl take out -O and -g from CXXFLAGS, CFLAGS, as these are set
 dnl automagically
 
@@ -336,7 +333,6 @@ AM_PATH_CCP4_CLIPPER
 AM_PATH_FFTW3
 AM_PATH_HOOMD
 AM_PATH_CUDA
-AM_PATH_CUKERNEL
 
 dnl check header files
 AC_HEADER_STDC
@@ -427,8 +423,6 @@ fi
 
 AC_CACHE_SAVE
 
-AC_SUBST(extra_lib)
-
 AC_SUBST(MD_MAJOR_VERSION)
 AC_SUBST(MD_MINOR_VERSION)
 AC_SUBST(MD_MICRO_VERSION)
@@ -440,6 +434,7 @@ AC_DEFINE_UNQUOTED(TOP_SOURCE_DIR, "$srcdir", [top src directory])
 
 AC_CONFIG_FILES([
 	src/Makefile
+  src/cukernel/Makefile
 	src/math/Makefile
 	src/topology/Makefile
 	src/configuration/Makefile

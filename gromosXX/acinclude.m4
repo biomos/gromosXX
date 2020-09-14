@@ -398,55 +398,38 @@ AC_DEFUN([AM_PATH_HOOMD],[
 ])
 
 dnl check for lib CUDA
+dnl 1. Check if enabled
+dnl 2. Check if path given and exists OR not given and default exists
+dnl 3. Check if the library links correctly (AC_CHECK_LIB)
+dnl 4. Set the variables NVCC, NVCC_FLAGS, NVCC_LDFLAGS, NVCC_LIBDIR
+dnl 5. Also try if NVCC compiler works
 AC_DEFUN([AM_PATH_CUDA],[
-  [cuda_default_path="/usr/local/cuda/lib64"]
   AC_ARG_WITH(cuda,
-    [  --with-cuda=DIR         CUDA library directory to use - necessary for static cukernel linking],
-    [cuda_path="${withval}"],
+    [  --with-cuda=DIR         CUDA library directory to use],
+    [CXXFLAGS="$CXXFLAGS -I${withval}"
+    LDFLAGS="$LDFLAGS -L${withval} -lcuda -lcudart"]
+    [with_cuda=yes
+    cuda_path="${withval}"
+    if test "x$with_cuda" == xyes; then
+	    if test "x$withval" == xyes; then
+		    cuda_prefix="/usr/local/cuda"
+	    fi
+    fi]
+    [cuda_path="${withval}"]
+    AC_CHECK_LIB([cudart], [cudaMalloc]),
     [
-      AC_MSG_WARN([CUDA path was not specified. Using default path...])
+      AC_MSG_WARN([CUDA path was not specified. CUDA support disabled.])
       [cuda_path="${cuda_default_path}"]
-      [echo "${cuda_path}"]
     ]
   )
-  AS_IF([test -d "${cuda_path}"],
-    [LIBCUDA="-L${cuda_path}"]
-    [LIBCUDART="-lcudart"],
-    [
-    AC_MSG_WARN([CUDA path does not exist. CUDA support disabled.])
-    [LIBCUDA=""]
-    [LIBCUDART=""]
-    [with_cuda=no]
-    ])
+  AC_ARG_VAR(NVCC,
+    [ NVCC       nvcc compiler command])
+  AC_ARG_VAR(NVCCFLAGS,
+    [ NVCCFLAGS       nvcc compiler flags])
+  AC_ARG_VAR(NVCCLDFLAGS,
+    [ NVCCLDFLAGS       nvcc linker flags])
+  AM_CONDITIONAL([WITH_CUDA], [test x$with_cuda = xyes])
 ])
-
-dnl check for lib CUKERNEL
-AC_DEFUN([AM_PATH_CUKERNEL],[
-  AC_ARG_WITH(cukernel,
-    [  --with-cukernel=DIR     Enable CUDA code and use the provided CUDA kernel library directory],
-    [
-      [CXXFLAGS="$CXXFLAGS -L${withval} -I${withval}"]
-      [LDFLAGS="$LDFLAGS -L${withval} $LIBCUDA -lcuda $LIBCUDART"]
-      [with_cukernel=yes]
-      AS_IF([test -f "${withval}/libcukernel.o" && test ! -f "${withval}/libcukernel.so" && test "x$with_cuda" != xno],
-        dnl static linking
-        [extra_lib+=" ${withval}/libcukernel.o"]
-        )],
-    [
-      [with_cukernel=no]
-      AC_MSG_WARN([cukernel path was not specified.])
-    ]
-  )
-  dnl check for lib with these settings and add flags automatically
-  dnl AC_CHECK_LIB([cukernel], [test],, AC_MSG_WARN([CUKERNEL library missing.]), [-lm -lcuda])
-  dnl LIBCUKERNEL=
-  AS_IF([test "x$with_cukernel" = xyes],
-    [AC_CHECK_LIB([cukernel], [test],,
-      [AC_MSG_FAILURE(
-          [--with-cukernel was given, but test program failed])],
-      [-lcuda $LIBCUDART])])
-])
-dnl [${withval}/libcukernel.a -lm -lcuda])])
 
 dnl check for lib CCP4/Clipper
 AC_DEFUN([AM_PATH_CCP4_CLIPPER],[

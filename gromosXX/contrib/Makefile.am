@@ -8,7 +8,7 @@ bin_PROGRAMS = rng_gsl tabulate_spc
 rng_gsl_SOURCES = rng_gsl.cc
 tabulate_spc_SOURCES = tabulate_spc.cc
 
-LDADD = ../src/libmdpp.la $(extra_lib)
+LDADD = ../src/libmdpp.la
 
 # EXTRA_DIST =			BUILD_NUMBER
 

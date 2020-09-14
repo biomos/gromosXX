@@ -43,7 +43,7 @@
 #include <omp.h>
 #endif
 
-#ifdef HAVE_LIBCUKERNEL
+#ifdef HAVE_LIBCUDART
 #include <cudaKernel.h>
 #endif
 
