@@ -14,8 +14,7 @@ libmdpp_la_LDFLAGS =	-no-undefined -release $(MD_VERSION)
 
 libmdpp_la_SOURCES =	
 
-libmdpp_la_LIBADD = cukernel/libgrocukernel.a\
-	algorithm/libgroalgorithm.la\
+libmdpp_la_LIBADD = algorithm/libgroalgorithm.la\
 	configuration/libgroconfiguration.la\
 	interaction/libgrointeraction.la\
 	math/libgromath.la\
@@ -25,5 +24,3 @@ libmdpp_la_LIBADD = cukernel/libgrocukernel.a\
 	io/libgroio.la\
 	$(GSL_LIBS)\
 	$(CLIPPER_LIBS)
-
-##libmdpp_la_LDADD = cukernel/libgrocukernel.la

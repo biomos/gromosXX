@@ -398,36 +398,67 @@ AC_DEFUN([AM_PATH_HOOMD],[
 ])
 
 dnl check for lib CUDA
-dnl 1. Check if enabled
-dnl 2. Check if path given and exists OR not given and default exists
-dnl 3. Check if the library links correctly (AC_CHECK_LIB)
-dnl 4. Set the variables NVCC, NVCC_FLAGS, NVCC_LDFLAGS, NVCC_LIBDIR
-dnl 5. Also try if NVCC compiler works
 AC_DEFUN([AM_PATH_CUDA],[
-  AC_ARG_WITH(cuda,
-    [  --with-cuda=DIR         CUDA library directory to use],
-    [CXXFLAGS="$CXXFLAGS -I${withval}"
-    LDFLAGS="$LDFLAGS -L${withval} -lcuda -lcudart"]
-    [with_cuda=yes
-    cuda_path="${withval}"
-    if test "x$with_cuda" == xyes; then
-	    if test "x$withval" == xyes; then
-		    cuda_prefix="/usr/local/cuda"
-	    fi
-    fi]
-    [cuda_path="${withval}"]
-    AC_CHECK_LIB([cudart], [cudaMalloc]),
-    [
-      AC_MSG_WARN([CUDA path was not specified. CUDA support disabled.])
-      [cuda_path="${cuda_default_path}"]
-    ]
-  )
+  dnl set default values
+  : ${NVCC="nvcc"}
+  : ${NVCCFLAGS="-arch sm_30"}
   AC_ARG_VAR(NVCC,
-    [ NVCC       nvcc compiler command])
+    [ NVCC       nvcc compiler path])
   AC_ARG_VAR(NVCCFLAGS,
     [ NVCCFLAGS       nvcc compiler flags])
-  AC_ARG_VAR(NVCCLDFLAGS,
-    [ NVCCLDFLAGS       nvcc linker flags])
+  AC_ARG_WITH(cuda,
+    [  --with-cuda=DIR         CUDA library directory to use],
+    [
+    if test "x${withval}" != xno; then
+      with_cuda=yes
+      if test "x${withval}" = xyes; then
+        CUDA_PATH="/usr/local/cuda/lib64"
+        echo "using default CUDA path... ${CUDA_PATH}"
+      else
+        CUDA_PATH="${withval}"
+      fi
+      CXXFLAGS="$CXXFLAGS -I${CUDA_PATH}"
+      LDFLAGS="$LDFLAGS -L${CUDA_PATH} -lcuda -lcudart"
+      AC_MSG_CHECKING([whether the NVCC compiler works])
+      working_nvcc=no
+      cat>conftest.cu<<EOF
+          __global__ static void test_cuda() {
+            __syncthreads();
+          }
+          int main() {
+            test_cuda<<<1,1>>>();
+          }
+EOF
+      if ${NVCC} conftest.cu -o conftest.o && test -f conftest.o; then
+        working_nvcc=yes
+      fi
+      rm -f conftest.cu conftest.o
+      AC_MSG_RESULT([${working_nvcc}])
+      if test "x${working_nvcc}" = xno; then
+        AC_MSG_ERROR([NVCC compiler cannot create executables])
+      fi
+      AC_CHECK_LIB([cudart], [cudaMalloc], 
+        [],
+        AC_MSG_ERROR([linking to CUDA library failed])
+      )
+      NVCC_CFLAGS="-lcuda -lcudart $CFLAGS"
+      if eval "test x$enable_profile = xyes"; then
+        NVCC_CFLAGS="-O2 -pg -D DNDEBUG $NVCC_CFLAGS"
+      elif eval "test x$enable_debug = xyes"; then
+        NVCC_CFLAGS="-O0 -g $NVCC_CFLAGS"
+      else
+        NVCC_CFLAGS="-O2 -D DNDEBUG $NVCC_CFLAGS"
+      fi
+      AC_SUBST(NVCC_CFLAGS)
+    else
+      with_cuda=no
+    fi
+    ],
+    [
+      AC_MSG_WARN([CUDA path was not specified. CUDA support disabled.])
+      [with_cuda=no]
+    ]
+  )
   AM_CONDITIONAL([WITH_CUDA], [test x$with_cuda = xyes])
 ])
 

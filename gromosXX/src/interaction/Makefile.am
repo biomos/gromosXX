@@ -192,8 +192,6 @@ libgrointeraction_la_SOURCES =interaction.cc\
 	special/qmmm_interaction.cc\
 	special/symmetry_restraint_interaction.cc
 
-libgrointeraction_la_LIBADD = ../cukernel/libgrocukernel.a
-
 bin_PROGRAMS =
 
 check_PROGRAMS =

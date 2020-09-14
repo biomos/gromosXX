@@ -11,7 +11,10 @@ repex_mpi_SOURCES = repex_mpi.cc
 eds_2box_SOURCES = eds_2box.cc
 eds_2box_mpi_SOURCES = eds_2box_mpi.cc
 
-LDADD = ../src/libmdpp.la  ../src/cukernel/libgrocukernel.a
+LDADD = ../src/libmdpp.la
+if WITH_CUDA
+  LDADD += ../src/cukernel/libgrocukernel.a
+endif
 EXTRA_DIST = BUILD_NUMBER
 
 autobuildnr :
