@@ -75,6 +75,11 @@ AC_ARG_ENABLE(heaviside,
   [ --enable-heaviside    compile with Heaviside truncation],
   ,enable_heaviside=no)
 
+dnl use empty default flags but allow user to override
+: ${CFLAGS=""}
+: ${CXXFLAGS=""}
+: ${LDFLAGS=""}
+
 if eval "test x$enable_allstatic = xyes"; then
   LDFLAGS="$LDFLAGS -all-static"
   echo "configuring for static build"
@@ -114,13 +119,6 @@ if eval "test x$compiler = xnone"; then
 fi
 if eval "test x$compiler = xnone"; then AC_PROG_CXX_SUNCC   ; fi
 if eval "test x$compiler = xnone"; then AC_PROG_CXX_PGI     ; fi
-
-dnl take out -O and -g from CXXFLAGS, CFLAGS, as these are set
-dnl automagically
-
-CXXFLAGS=`echo $CXXFLAGS | sed 's/\-O.//g' | sed 's/\-g//g'`
-CFLAGS=`echo $CFLAGS | sed 's/\-O.//g' | sed 's/\-g//g'`
-LDFLAGS=`echo $LDFLAGS | sed 's/\-O.//g' | sed 's/\-g//g'`
 
 case "$compiler" in
   intel*)             # Intel C++.  tested with version 8.0beta (precompiled headers)
@@ -319,8 +317,10 @@ case "$compiler" in
   ;;
 esac
 
-dnl subst compiler flags
+dnl set c++11 standard
+MY_CXXFLAGS="-std=c++11 ${MY_CXXFLAGS}"
 
+dnl subst compiler flags
 AC_SUBST(MY_CXXFLAGS)
 AC_SUBST(CXX_NDEBUG_FLAGS)
 
