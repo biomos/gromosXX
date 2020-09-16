@@ -130,16 +130,31 @@ static int _calculate_improper_interactions(topology::Topology & topo,
     force(i_it->j) += fj;
     force(i_it->k) += fk;
     force(i_it->l) += fl;
-    
+    // ORIOL_GAMD
+    // save a copy of the forces for gamd (should i put if)
+    conf.special().gamd.dihe_force(i_it->i) += fi;
+    conf.special().gamd.dihe_force(i_it->j) += fj;
+    conf.special().gamd.dihe_force(i_it->k) += fk;
+    conf.special().gamd.dihe_force(i_it->l) += fl;
+
     // if (V == math::atomic_virial){
       periodicity.nearest_image(pos(i_it->l), pos(i_it->j), rlj);
 
-      for(int a=0; a<3; ++a)
-	for(int bb=0; bb<3; ++bb)
+      for(int a=0; a<3; ++a){
+	for(int bb=0; bb<3; ++bb){
 	  conf.current().virial_tensor(a, bb) += 
 	    rij(a) * fi(bb) +
 	    rkj(a) * fk(bb) +
 	    rlj(a) * fl(bb);
+      
+    // save a copy of the atomic virial for gamd
+    conf.special().gamd.virial_tensor_dihe[topo.atom_energy_group()[i_it->i]](a, bb) += 
+	    rij(a) * fi(bb) +
+	    rkj(a) * fk(bb) +
+	    rlj(a) * fl(bb);
+
+  }
+      }
 
       DEBUG(11, "\tatomic virial done");
       // }

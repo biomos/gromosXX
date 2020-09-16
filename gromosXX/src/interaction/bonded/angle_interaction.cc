@@ -105,11 +105,18 @@ static int _calculate_angle_interactions(topology::Topology & topo,
     force(a_it->k) += fk;
 
     // if (V == math::atomic_virial){
-      for(int a=0; a<3; ++a)
-	for(int bb=0; bb<3; ++bb)
+      for(int a=0; a<3; ++a){
+	for(int bb=0; bb<3; ++bb){
 	  conf.current().virial_tensor(a, bb) += 
 	    rij(a) * fi(bb) +
 	    rkj(a) * fk(bb);
+
+    //ORIOL_GAMD
+	  conf.special().gamd.virial_tensor[topo.atom_energy_group()[a_it->i]](a, bb) += 
+	    rij(a) * fi(bb) +
+	    rkj(a) * fk(bb);
+    }
+      }
 
       DEBUG(11, "\tatomic virial done");
       // }

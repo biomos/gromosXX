@@ -71,10 +71,15 @@ static int _calculate_quartic_bond_interactions(topology::Topology &topo,
     force(b_it->j) -= f;
 
     // if (V == math::atomic_virial){
-      for(int a=0; a<3; ++a)
-	for(int c=0; c<3; ++c)
+      for(int a=0; a<3; ++a){
+	for(int c=0; c<3; ++c){
 	  conf.current().virial_tensor(a, c) += 
 	    v(a) * f(c);
+
+	  conf.special().gamd.virial_tensor[topo.atom_energy_group()[b_it->i]](a, c) += 
+	    v(a) * f(c);
+  }
+      }
       
       DEBUG(7, "\tatomic virial done");
       // }

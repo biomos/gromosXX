@@ -284,7 +284,26 @@ namespace configuration
      * special energy of the endstates in eds
      */
     std::vector<double> eds_vi_special;
-           
+
+    // ORIOL_GAMD
+    /**
+     * dihedral energie for each accel group (dihedral + improper + crossdihedral)
+     */
+    std::vector<double> gamd_dihedral_total;
+    /**
+     * total potential energie for each accel group
+     */
+    std::vector<double> gamd_potential_total;
+    /**
+     * boosting potential used per accel group
+     */
+    std::vector<double> gamd_DV;
+    /**
+     * total boosting potential used
+     */
+    double gamd_DV_total;
+
+       
     // this should be size of bath
     /**
      * kinetic energy term

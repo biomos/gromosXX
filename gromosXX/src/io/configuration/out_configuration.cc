@@ -565,6 +565,11 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       _print_aedssearch(conf, sim, m_final_conf);
     }
 
+    //ORIOL_GAMD
+    if (sim.param().gamd.gamd && sim.param().gamd.search){
+      _print_gamdsearch(conf, sim, m_final_conf);
+    }
+
     // forces and energies still go to their trajectories
     if (m_every_force && ((sim.steps()-sim.param().analyze.stride) % m_every_force) == 0) {
       _print_old_timestep(sim, m_force_traj);
@@ -2888,7 +2893,8 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
           << std::setw(18) << e.entropy_term << "\n" // 40
           << std::setw(18) << e.qm_total << "\n" // 41
           << std::setw(18) << e.bsleus_total << "\n" // 42
-          << std::setw(18) << e.rdc_total << "\n"; // 43
+          << std::setw(18) << e.rdc_total << "\n" // 43
+          << std::setw(18) << e.gamd_DV_total << "\n"; // 44
 
   os << "# baths\n";
   os << numbaths << "\n";
@@ -3000,6 +3006,19 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
   os << std::setw(18) << e.A_dihedral
      << std::setw(18) << e.B_dihedral << "\n";
  // ANITA
+
+
+  // ORIOL_GAMD gamd energies
+  os << "# gamd\n";
+  os << "# numaccelgroups\n";
+  const unsigned int numgroups = e.gamd_DV.size();
+  os << numgroups << "\n";
+  os << std::setw(18) << "# Boosting_Potential\n";
+  for (unsigned i = 0; i < numgroups; i++) {
+    os << std::setw(18) << e.gamd_DV[i] << "\n";
+  }  
+
+
 }
 
 static void _print_volumepressurered_helper(std::ostream &os,
@@ -3741,6 +3760,29 @@ _print_aedssearch(configuration::Configuration const &conf,
   }
   os << "END\n";
 }
+
+void io::Out_Configuration::
+_print_gamdsearch(configuration::Configuration const &conf,
+            simulation::Simulation const &sim,
+            std::ostream &os){
+  os.setf(std::ios::fixed, std::ios::floatfield);
+  os.precision(m_precision);
+  os << "GAMD\n";
+  os << "VmaxD  VmaxT  VminD  VminT  M2D  M2T  VmeanD  VmeanT  SigmaVD  SigmaVT\n";
+  for (unsigned int i = 0; i < sim.param().gamd.agroups; i++) {
+    os << std::setw(m_width) << sim.param().gamd.VmaxD[i] << " "
+      << std::setw(m_width) << sim.param().gamd.VmaxT[i] << " "
+      << std::setw(m_width) << sim.param().gamd.VminD[i] << " "
+      << std::setw(m_width) << sim.param().gamd.VminT[i] << " "
+      << std::setw(m_width) << sim.param().gamd.M2D[i] << " "
+      << std::setw(m_width) << sim.param().gamd.M2T[i] << " "
+      << std::setw(m_width) << sim.param().gamd.VmeanD[i] << " "
+      << std::setw(m_width) << sim.param().gamd.VmeanT[i] << " "
+      << std::setw(m_width) << sim.param().gamd.sigmaVD[i] << " "
+      << std::setw(m_width) << sim.param().gamd.sigmaVT[i] << "\n";
+  }
+  os << "END\n";
+            }
 
 void io::Out_Configuration::
 _print_nemd(simulation::Simulation const & sim,

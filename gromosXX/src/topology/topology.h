@@ -224,6 +224,12 @@ namespace topology
      */
     EDS_Perturbed_Solute & eds_perturbed_solute() {return m_eds_perturbed_solute;}
 
+    //ORIOL_GAMD
+    /**
+     * gamd atoms accessor.
+     */
+    std::vector<std::vector<int> > & gamd_atoms() {return m_gamd_atoms;}
+
     /**
      * const solute accessor.
      */
@@ -238,6 +244,11 @@ namespace topology
      * const eds-perturbed solute accessor.
      */
     EDS_Perturbed_Solute const & eds_perturbed_solute()const{return m_eds_perturbed_solute;}
+
+    /**
+     * const gamd atoms accessor.
+     */
+    std::vector<std::vector<int> > const & gamd_atoms() const{return m_gamd_atoms;}
 
     /**
      * number of atom types.
@@ -1362,6 +1373,12 @@ namespace topology
      * the eds-perturbed solute
      */
     EDS_Perturbed_Solute m_eds_perturbed_solute;
+
+    //ORIOL_GAMD
+    /**
+     * the gamd atoms to be accelerated
+     */
+    std::vector<std::vector<int> > m_gamd_atoms;
 
     /**
      * is the atom perturbed?

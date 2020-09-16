@@ -75,10 +75,16 @@ static int _calculate_harmonic_bond_interactions
     force(b_it->j) -= f;
 
     // if (V == math::atomic_virial){
-      for(int a=0; a<3; ++a)
-	for(int bb=0; bb<3; ++bb)
+      for(int a=0; a<3; ++a){
+	for(int bb=0; bb<3; ++bb){
 	  conf.current().virial_tensor(a, bb) += 
 	    v(a) * f(bb);
+
+    //ORIOL_GAMD
+    conf.special().gamd.virial_tensor[topo.atom_energy_group()[b_it->i]](a, bb) += 
+	    v(a) * f(bb);
+  }
+      }
 
       DEBUG(7, "\tatomic virial done");
       // }

@@ -20,7 +20,8 @@ xxalgintegration_HEADERS = integration/energy_calculation.h\
 	integration/analyze.h\
 	integration/lattice_shift.h\
 	integration/multigradient.h\
-        integration/eds.h
+        integration/eds.h\
+		integration/gamd.h
 
 xxalgtempdir = $(includedir)/md++/algorithm/temperature
 xxalgtemp_HEADERS = temperature/temperature_calculation.h\

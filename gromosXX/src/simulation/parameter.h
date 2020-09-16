@@ -617,6 +617,19 @@ namespace simulation
   };
 
   /**
+   * @enum GAMD energy threshold form
+   */
+  enum gamd_thresh_enum{
+    /**
+     * lower bound E = Vmax
+     */
+    lower_bound = 1,
+    /**
+     * upper bound E = Vmin + 1/K
+     */
+    upper_bound = 2,
+  };
+  /**
    * @enum interaction_lambda_enum
    * used to refer to interaction with their own lambda dependence
    */
@@ -2932,7 +2945,7 @@ namespace simulation
      * - threshold: lower bound
      * - maximum standard deviation: 10 KBT
      */
-    gamd_struct() : gamd(false), ntigamd(no_search), form(dual_boost), thresh(1), dihstd(24.79), totstd(24.79){}
+    gamd_struct() : gamd(false), search(no_search), form(dual_boost), thresh(lower_bound), dihstd(24.79), totstd(24.79), equilibration(0){}
     /**
      * do gaussian accelerated md:
      */
@@ -2940,7 +2953,7 @@ namespace simulation
     /**
      * initialize search type
      */
-    gamd_search_enum ntigamd;
+    gamd_search_enum search;
     /**
      * functional form of the boost potential
      */
@@ -2948,7 +2961,11 @@ namespace simulation
     /**
      * threshold boundary to apply acceleration
      */
-    unsigned int thresh;
+    gamd_thresh_enum thresh;
+    /**
+     * read parameters from configuration
+     */
+    unsigned int ntisearch; 
     /**
      * number of acceleration groups
      */
@@ -2962,13 +2979,76 @@ namespace simulation
      */
     double totstd;
     /**
+     * vector of dihedral Vmax for each of the defined acceleration groups
+     */
+    std::vector<double> VmaxD;
+    /**
      * vector of Vmax for each of the defined acceleration groups
      */
-    std::vector<double> vmaxs;
+    std::vector<double> VmaxT;
+    /**
+     * vector of dihedral Vmin for each of the defined acceleration groups
+     */
+    std::vector<double> VminD;
     /**
      * vector of Vmin for each of the defined acceleration groups
      */
-    std::vector<double> vmins;
+    std::vector<double> VminT;
+    /**
+     * required data to compute the std of the potential energy (dihedral term)
+     */
+    std::vector<double> M2D;
+    /**
+     * required data to compute the std of the potential energy (total potential energy term)
+     */
+    std::vector<double> M2T;
+
+    /**
+     * mean of the potential energy of the dihedral term
+     */
+    std::vector<double> VmeanD;
+
+    /**
+     * mean of the total potential energy
+     */
+    std::vector<double> VmeanT;
+
+    /**
+     * standard deviation of the potential energy (dihedral term)
+     */
+    std::vector<double> sigmaVD;
+
+    /**
+     * standard deviation of the total potential energy
+     */
+    std::vector<double> sigmaVT;
+
+    /**
+     * harmonic force constants for the dihedral term
+     */
+    std::vector<double> k0D;
+    /**
+     * 
+     */
+    std::vector<double> kD;
+
+    /**
+     * harmonic force constants for total potential energy
+     */
+    std::vector<double> k0T;
+    /**
+     * 
+     */
+    std::vector<double> kT;
+    /**
+     * energy threshold for the dihedral term
+     */
+    std::vector<double> ED;
+    /**
+     * energy threshold for the total potential energy term
+     */
+    std::vector<double> ET;
+
     /**
      * vector of boosting potential energys for the dihedral term each of the defined acceleration groups
      */
@@ -2977,6 +3057,10 @@ namespace simulation
      * vector of boosting potential energys for the total energy term each of the defined acceleration groups
      */
     std::vector<double> totboost;
+    /**
+     * number of equilibration steps
+     */
+    int equilibration;
   } /** Gaussian accelerated md */ gamd;  
  struct reeds_struct : public replica_struct
     {

@@ -4018,8 +4018,12 @@ void io::In_Parameter::read_GAMD(simulation::Parameter & param,
       default:
         break;
       }
+    block.get_next_parameter("DIHSTD", param.gamd.dihstd, ">0", "");
+    block.get_next_parameter("BMAX", param.gamd.totstd, ">0", "");
+    block.get_next_parameter("ASTEPS", param.eds.asteps, ">0", "");
+    block.get_next_parameter("BSTEPS", param.eds.bsteps, ">0", "");
     block.get_final_messages();
-    // DEVELOPING
+    // DEVELOPING ORIOL
   }
 }
 

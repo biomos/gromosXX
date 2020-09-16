@@ -176,6 +176,9 @@ configuration::Configuration::Configuration
  
   special().rottrans_constr = conf.special().rottrans_constr;
 
+  //ORIOL_GAMD
+  special().gamd.dihe_force = conf.special().gamd.dihe_force;
+
   // if this works just like this, why do we need to explicitly copy the virial tensor?
   special().eds = conf.special().eds;
   
@@ -358,6 +361,16 @@ void configuration::Configuration::init(topology::Topology const & topo,
   current().energies.ewarn(param.ewarn.limit);
   old().energies.ewarn(param.ewarn.limit);
 
+  //ORIOL_GAMD
+  special().gamd.virial_tensor_dihe.resize(topo.energy_groups().size());
+  special().gamd.virial_tensor.resize(topo.energy_groups().size());
+  current().energies.gamd_dihedral_total.resize(topo.gamd_atoms.size());
+  current().energies.gamd_potential_total.resize(topo.gamd_atoms.size());
+  current().energies.gamd_DV.resize(topo.gamd_atoms.size());
+  old().energies.gamd_dihedral_total.resize(topo.gamd_atoms.size());
+  old().energies.gamd_potential_total.resize(topo.gamd_atoms.size());
+  old().energies.gamd_DV.resize(topo.gamd_atoms.size());  
+  
   //ANITA
 //  current().perturbed_energy_derivatives.resize(num, numb);
 //  old().perturbed_energy_derivatives.resize(num, numb);

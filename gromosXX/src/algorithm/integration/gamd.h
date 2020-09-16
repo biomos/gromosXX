@@ -1,0 +1,62 @@
+/* 
+ * File:   gamd.h
+ * Author: Oriol
+ */
+
+#ifndef GAMD_H
+#define	GMAD_H
+namespace algorithm
+{
+  /**
+   * @class GAMD
+   * implements GAMD.
+   */
+  class GAMD : public Algorithm
+  {
+  public:
+    /**
+     * Constructor.
+     */
+    GAMD() : Algorithm("GAMD"){}
+
+    /**
+     * Destructor.
+     */
+    virtual ~GAMD(){}
+    
+    /**
+     * 
+     */
+    virtual int apply(topology::Topology &topo, 
+		      configuration::Configuration &conf,
+		      simulation::Simulation &sim);
+
+    /**
+     * init
+     */
+    virtual int init(topology::Topology &topo, 
+		     configuration::Configuration &conf,
+		     simulation::Simulation &sim,
+		     std::ostream &os = std::cout,
+		     bool quiet = false)
+    {
+      if (!quiet)
+	os << "\tGAMD\nEND\n";
+      return 0;
+    };
+
+  /**
+   * calculate the mean, std and Vmax Vmin
+   */
+  void calc_gamd_std_mean(double V, int step, double *Vmax, double *Vmin, double *Vmean, double *M2, double *sigmaV);
+  /**
+   * calculate E threshold and k0
+   */
+  int calc_gamd_E_K(simulation::gamd_thresh_enum Eform, double sigma0, double Vmax, double Vmin, double Vmean, double sigmaV,
+                   double *k0, double *k, double *E)
+  
+  };
+   
+} // algorithm
+
+#endif
