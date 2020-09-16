@@ -93,6 +93,8 @@ int util::parse_verbosity(io::Argument &args, std::string flag,
 	algorithm::temperature_debug_level = level;
       else if (submodule == "pressure") 
 	algorithm::pressure_debug_level = level;
+      else if (submodule == "virtualatoms") 
+	algorithm::virtualatoms_debug_level = level;
       else return E_NOT_IMPLEMENTED;
     }
     else if (module == "interaction"){

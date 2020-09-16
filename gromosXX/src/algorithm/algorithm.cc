@@ -20,5 +20,6 @@ namespace algorithm
   int integration_debug_level = 0;
   int temperature_debug_level = 0;
   int pressure_debug_level = 0;
+  int virtualatoms_debug_level = 0;
 #endif
 }
