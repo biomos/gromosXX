@@ -76,19 +76,11 @@ namespace interaction {
                const simulation::Simulation& sim);
 
     /**
-     * Write positions to the configuration
+     * Write data to the configuration and topology
      */
-    void write_pos(math::VArray& pos);
-
-    /**
-     * Write forces to the configuration
-     */
-    void write_force(math::VArray& force);
-
-    /**
-     * Write charges to the topology
-     */
-    void write_charge(math::SArray& charge);
+    void write(topology::Topology& topo, 
+               configuration::Configuration& conf, 
+               const simulation::Simulation& sim);
     
     /**
      * Update QM-MM pairlist
@@ -126,14 +118,14 @@ namespace interaction {
      * QM energy accessor
      */
     double QM_energy() const {
-      return qm_energy;
+      return m_qm_energy;
     }
 
     /**
      * QM energy mutator
      */
     double & QM_energy() {
-      return qm_energy;
+      return m_qm_energy;
     }
 
     /**
@@ -174,12 +166,7 @@ namespace interaction {
     /**
      * the QM energy of the zone
      */
-    double qm_energy;
-
-    /**
-     * the MM energy of the zone - convenient for subtractive scheme
-     */
-    double mm_energy;
+    double m_qm_energy;
 
     /**
      * the QM zone net charge

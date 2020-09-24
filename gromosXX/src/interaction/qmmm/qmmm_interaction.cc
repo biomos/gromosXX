@@ -170,17 +170,9 @@ int interaction::QMMM_Interaction::scf_step(topology::Topology& topo,
 void interaction::QMMM_Interaction::write_qm_data(topology::Topology& topo,
                                                   configuration::Configuration& conf,
                                                   const simulation::Simulation& sim) {
-  // If geometry minimisation within QM is requested
-  /*if (minimise) {
-    //qm_zone->write_pos(conf.current().pos);
-  }
-  */
   DEBUG(15,"Writing QM data");
   m_timer.start("writing QM results");
-  m_qm_zone->write_force(conf.current().force);
-  if (sim.param().qmmm.qmmm == simulation::qmmm_mechanical)
-    m_qm_zone->write_charge(topo.charge());
-  conf.current().energies.qm_total = m_qm_zone->QM_energy();
+  m_qm_zone->write(topo, conf, sim);
   m_timer.stop("writing QM results");
 }
 

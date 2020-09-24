@@ -127,6 +127,10 @@ int interaction::QMMM_Nonbonded_Set::update_configuration(
       }
     }
   }
+  if (sim.param().pcouple.virial) {
+    DEBUG(7, "\tadd QMMM set virial");
+  	conf.current().virial_tensor += m_storage.virial_tensor;
+  }
   return 0;
 }
 

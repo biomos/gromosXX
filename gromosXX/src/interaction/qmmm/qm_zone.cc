@@ -30,8 +30,7 @@
 
 interaction::QM_Zone::QM_Zone(int net_charge
                             , int spin_mult)
-                              : qm_energy(0.0)
-                              , mm_energy(0.0)
+                              : m_qm_energy(0.0)
                               , m_charge(net_charge)
                               , m_spin_mult(spin_mult)
 {}
@@ -40,7 +39,7 @@ interaction::QM_Zone::~QM_Zone()
 {}
 
 void interaction::QM_Zone::zero() {
-  this->qm_energy = 0.0; this->mm_energy = 0.0; 
+  this->m_qm_energy = 0.0; 
 }
 
 void interaction::QM_Zone::clear() {
@@ -92,16 +91,20 @@ int interaction::QM_Zone::update(const topology::Topology& topo,
   this->update_links(sim);
   return 0;
 }
-
-void interaction::QM_Zone::write_pos(math::VArray& pos) {
+void interaction::QM_Zone::write(topology::Topology& topo, 
+                                 configuration::Configuration& conf, 
+                                 const simulation::Simulation& sim) {
+  // Write positions
+  // If geometry minimisation within QM is requested
+  /*if (minimise) {
   for (std::set<QM_Atom>::const_iterator
       it = this->qm.begin(), to = this->qm.end(); it != to; ++it)
-    {
-    pos(it->index) = it->pos;
-  }
-}
-
-void interaction::QM_Zone::write_force(math::VArray& force) {
+      {
+      conf.current().pos(it->index) = it->pos;
+    }
+  }*/
+  
+  // Write forces
   // First distribute link atom forces
   for (std::set<QM_Link>::const_iterator
       it = this->link.begin(), to = this->link.end(); it !=to; ++it)
@@ -109,28 +112,48 @@ void interaction::QM_Zone::write_force(math::VArray& force) {
     it->distribute_force(*this);
   }
 
-  // Then write QM atoms forces
+  // Then write QM atoms forces and calculate virial
+  math::Matrix virial_tensor(0.0);
   for (std::set<QM_Atom>::const_iterator
       it = this->qm.begin(), to = this->qm.end(); it != to; ++it)
     {
     DEBUG(15, "Atom " << it->index << ", force: " << math::v2s(it->force));
-    force(it->index) += it->force;
+    conf.current().force(it->index) += it->force;
+    math::Vec& pos = conf.current().pos(it->index);
+    for (int i = 0; i < 3; ++i) {
+      for (int j = 0; j < 3; ++j) {
+        virial_tensor(j,i) += pos(j) * it->force(i);
+      }
+    }
   }
+
   // And MM atoms forces
   for (std::set<MM_Atom>::const_iterator
       it = this->mm.begin(), to = this->mm.end(); it != to; ++it)
     {
     DEBUG(15, "Atom " << it->index << ", force: " << math::v2s(it->force));
-    force(it->index) += it->force;
+    conf.current().force(it->index) += it->force;
+    math::Vec& pos = conf.current().pos(it->index);
+    for (int i = 0; i < 3; ++i) {
+      for (int j = 0; j < 3; ++j) {
+        virial_tensor(j,i) += pos(j) * it->force(i);
+      }
+    }
   }
-}
+  conf.current().virial_tensor += virial_tensor;
+  
+  // Write charges
+  if (sim.param().qmmm.qmmm == simulation::qmmm_mechanical) {
+    for (std::set<QM_Atom>::const_iterator
+          it = this->qm.begin(), to = this->qm.end(); it != to; ++it)
+      {
+      DEBUG(15, "Atom " << it->index << ", new charge: " << it->qm_charge);
+      topo.charge()(it->index) = it->qm_charge;
+    }
+  }
 
-void interaction::QM_Zone::write_charge(math::SArray& charge) {
-  for (std::set<QM_Atom>::const_iterator
-    it = this->qm.begin(), to = this->qm.end(); it != to; ++it)
-    {
-    charge(it->index) = it->qm_charge;
-  }
+  // Write energies
+  conf.current().energies.qm_total = this->m_qm_energy;
 }
 
 int interaction::QM_Zone::get_qm_atoms(const topology::Topology& topo, 
