@@ -558,6 +558,7 @@ int algorithm::Perturbed_Shake::init(topology::Topology & topo,
 	&& topo.perturbed_solute().distance_constraints().size()){    
       os << "ON\n";  
       os << "\t\ttolerance = "
+    << std::setprecision(8)
 		<< sim.param().constraint.solute.shake_tolerance << "\n";
     }
     else os << "OFF\n";

@@ -221,6 +221,7 @@ int algorithm::Shake::init(topology::Topology & topo,
     if (sim.param().constraint.solute.algorithm == simulation::constr_shake) {
       os << "ON\n";
       os << "\t\ttolerance = "
+              << std::setprecision(8)
               << sim.param().constraint.solute.shake_tolerance << "\n";
     } else os << "OFF\n";
 
@@ -232,6 +233,7 @@ int algorithm::Shake::init(topology::Topology & topo,
       else
         os << "ON\n";
       os << "\t\ttolerance = "
+              << std::setprecision(8)
               << sim.param().constraint.solvent.shake_tolerance << "\n";
     } else os << "OFF\n";
   }
