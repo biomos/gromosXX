@@ -19,7 +19,8 @@ namespace algorithm
     /**
      * Constructor.
      */
-    Perturbed_Shake(double const tolerance = 0.000001,
+    Perturbed_Shake(double const solute_tolerance = 0.000001,
+        double const solvent_tolerance = 0.000001,
 		    int const max_iterations = 1000);
     
     /**
@@ -55,6 +56,7 @@ namespace algorithm
     (
      topology::Topology const &topo,
      configuration::Configuration & conf,
+     double tolerance,
      bool & convergence,
      int first,
      std::vector<bool> &skip_now,
