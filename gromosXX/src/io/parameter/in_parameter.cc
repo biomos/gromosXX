@@ -2587,7 +2587,7 @@ void io::In_Parameter::read_INNERLOOP(simulation::Parameter &param,
             }
             case 4:
             {
-#ifdef HAVE_LIBCUKERNEL
+#ifdef HAVE_LIBCUDART
                 // cuda library
                 param.innerloop.method = simulation::sla_cuda;
 #else

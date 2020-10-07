@@ -399,54 +399,70 @@ AC_DEFUN([AM_PATH_HOOMD],[
 
 dnl check for lib CUDA
 AC_DEFUN([AM_PATH_CUDA],[
-  [cuda_default_path="/usr/local/cuda/lib64"]
+  dnl set default values
+  : ${NVCC="nvcc"}
+  : ${NVCCFLAGS="-arch sm_30"}
+  AC_ARG_VAR(NVCC,
+    [ NVCC       nvcc compiler path])
+  AC_ARG_VAR(NVCCFLAGS,
+    [ NVCCFLAGS       nvcc compiler flags])
   AC_ARG_WITH(cuda,
-    [  --with-cuda=DIR         CUDA library directory to use - necessary for static cukernel linking],
-    [cuda_path="${withval}"],
+    [  --with-cuda=DIR         CUDA library directory to use],
     [
-      AC_MSG_WARN([CUDA path was not specified. Using default path...])
-      [cuda_path="${cuda_default_path}"]
-      [echo "${cuda_path}"]
+    if test "x${withval}" != xno; then
+      with_cuda=yes
+      if test "x${withval}" = xyes; then
+        CUDA_PATH="/usr/local/cuda/lib64"
+        echo "using default CUDA path... ${CUDA_PATH}"
+      else
+        CUDA_PATH="${withval}"
+      fi
+      CXXFLAGS="$CXXFLAGS -I${CUDA_PATH}"
+      LDFLAGS="$LDFLAGS -L${CUDA_PATH} -lcuda -lcudart"
+      AC_MSG_CHECKING([whether the NVCC compiler works])
+      working_nvcc=no
+      cat>conftest.cu<<EOF
+          __global__ static void test_cuda() {
+            __syncthreads();
+          }
+          int main() {
+            test_cuda<<<1,1>>>();
+          }
+EOF
+      if ${NVCC} conftest.cu -o conftest.o && test -f conftest.o; then
+        working_nvcc=yes
+      fi
+      rm -f conftest.cu conftest.o
+      AC_MSG_RESULT([${working_nvcc}])
+      if test "x${working_nvcc}" = xno; then
+        AC_MSG_ERROR([NVCC compiler cannot create executables])
+      fi
+      AC_CHECK_LIB([cudart], [cudaMalloc], 
+        [],
+        AC_MSG_ERROR([linking to CUDA library failed])
+      )
+      NVCC_CFLAGS="-lcuda -lcudart $CFLAGS"
+      if eval "test x$enable_profile = xyes"; then
+        NVCC_CFLAGS="-O2 -pg -D DNDEBUG $NVCC_CFLAGS"
+      elif eval "test x$enable_debug = xyes"; then
+        NVCC_CFLAGS="-O0 -g $NVCC_CFLAGS"
+      else
+        NVCC_CFLAGS="-O2 -D DNDEBUG $NVCC_CFLAGS"
+      fi
+      AC_SUBST(NVCC_CFLAGS)
+    else
+      with_cuda=no
+    fi
+    ],
+    [
+      AC_MSG_WARN([CUDA path was not specified. CUDA support disabled.])
+      [with_cuda=no]
     ]
   )
-  AS_IF([test -d "${cuda_path}"],
-    [LIBCUDA="-L${cuda_path}"]
-    [LIBCUDART="-lcudart"],
-    [
-    AC_MSG_WARN([CUDA path does not exist. CUDA support disabled.])
-    [LIBCUDA=""]
-    [LIBCUDART=""]
-    [with_cuda=no]
-    ])
+  AS_IF([test "x$enable_openmp" != xyes && test "x$with_cuda" = xyes],
+          [AC_MSG_ERROR([CUDA without OpenMP is not supported.])])
+  AM_CONDITIONAL([WITH_CUDA], [test x$with_cuda = xyes])
 ])
-
-dnl check for lib CUKERNEL
-AC_DEFUN([AM_PATH_CUKERNEL],[
-  AC_ARG_WITH(cukernel,
-    [  --with-cukernel=DIR     Enable CUDA code and use the provided CUDA kernel library directory],
-    [
-      [CXXFLAGS="$CXXFLAGS -L${withval} -I${withval}"]
-      [LDFLAGS="$LDFLAGS -L${withval} $LIBCUDA -lcuda $LIBCUDART"]
-      [with_cukernel=yes]
-      AS_IF([test -f "${withval}/libcukernel.o" && test ! -f "${withval}/libcukernel.so" && test "x$with_cuda" != xno],
-        dnl static linking
-        [extra_lib+=" ${withval}/libcukernel.o"]
-        )],
-    [
-      [with_cukernel=no]
-      AC_MSG_WARN([cukernel path was not specified.])
-    ]
-  )
-  dnl check for lib with these settings and add flags automatically
-  dnl AC_CHECK_LIB([cukernel], [test],, AC_MSG_WARN([CUKERNEL library missing.]), [-lm -lcuda])
-  dnl LIBCUKERNEL=
-  AS_IF([test "x$with_cukernel" = xyes],
-    [AC_CHECK_LIB([cukernel], [test],,
-      [AC_MSG_FAILURE(
-          [--with-cukernel was given, but test program failed])],
-      [-lcuda $LIBCUDART])])
-])
-dnl [${withval}/libcukernel.a -lm -lcuda])])
 
 dnl check for lib CCP4/Clipper
 AC_DEFUN([AM_PATH_CCP4_CLIPPER],[

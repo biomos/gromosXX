@@ -33,7 +33,7 @@
 #include "storage.h"
 #include "../../../util/cycle_thread.h"
 
-#ifdef HAVE_LIBCUKERNEL
+#ifdef HAVE_LIBCUDART
 #include <cudaKernel.h>
 #endif
 
@@ -135,7 +135,7 @@ int interaction::CUDA_Nonbonded_Set
  */
 void interaction::CUDA_Nonbonded_Set::init_run() {
 
-#ifdef HAVE_LIBCUKERNEL
+#ifdef HAVE_LIBCUDART
   /////////////////////////////////
   // Calculate constants for the solvent
   //
@@ -240,7 +240,7 @@ void interaction::CUDA_Nonbonded_Set::cycle() {
   DEBUG(6, "CUDA_Nonbonded_Set::cycle start calculations. GPU: " << mygpu_id);
   // this whole function is remove is the lib is not present.
 
-#ifdef HAVE_LIBCUKERNEL
+#ifdef HAVE_LIBCUDART
 
   m_storage.zero();
   const bool pairlist_update = !(mysim->steps() % mysim->param().pairlist.skip_step);
@@ -345,7 +345,7 @@ void interaction::CUDA_Nonbonded_Set::cycle() {
  */
 void interaction::CUDA_Nonbonded_Set::end_run() {
   DEBUG(15, "CUDA_Nonbonded_Set: Cleaning up for GPU: " << mygpu_id);
-#ifdef HAVE_LIBCUKERNEL
+#ifdef HAVE_LIBCUDART
   if (cudakernel::CleanUp(gpu_stat))
     io::messages.add("GPU cleanup failed", io::message::critical);
 #endif

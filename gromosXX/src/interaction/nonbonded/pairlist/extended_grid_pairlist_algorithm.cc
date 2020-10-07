@@ -251,7 +251,7 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update
   const int num_solute_cg = topo.num_solute_chargegroups();
   const int num_solute_atoms = topo.num_solute_atoms();
 
-#ifdef HAVE_LIBCUKERNEL  
+#ifdef HAVE_LIBCUDART  
   const bool no_cuda = sim.param().innerloop.method != simulation::sla_cuda;
 #endif
 
@@ -341,7 +341,7 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update
 		      a2_to = topo.chargegroups()[m_grid.p_cell[z][j].i + 1];
 		    a2 < a2_to; ++a2) {
                   if (a2 >= num_solute_atoms) { //solvent-solvent
-#ifdef HAVE_LIBCUKERNEL
+#ifdef HAVE_LIBCUDART
                     // do only add the atoms to the pairlist if we are not doing
                     // CUDA
                     if (no_cuda)
@@ -510,7 +510,7 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update
 			a2_to = topo.chargegroups()[p_plane[j].i + 1];
 		      a2 < a2_to; ++a2) {
                     if (a2 >= num_solute_atoms) { //solvent-solvent
-#ifdef HAVE_LIBCUKERNEL
+#ifdef HAVE_LIBCUDART
                       if (no_cuda)
                         pairlist.solvent_long[a2].push_back(a1);
 #else
@@ -529,7 +529,7 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update
 			a2_to = topo.chargegroups()[p_plane[j].i + 1];
 		      a2 < a2_to; ++a2) {
                     if (a2 >= num_solute_atoms) {
-#ifdef HAVE_LIBCUKERNEL
+#ifdef HAVE_LIBCUDART
                       if (no_cuda)
                         pairlist.solvent_short[a2].push_back(a1);
 #else
@@ -584,7 +584,7 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update_atomic
   //const int num_solute_cg = topo.num_solute_chargegroups();
   const int num_solute_atoms = topo.num_solute_atoms();
 
-#ifdef HAVE_LIBCUKERNEL  
+#ifdef HAVE_LIBCUDART  
   const bool no_cuda = sim.param().innerloop.method != simulation::sla_cuda;
 #endif
 
@@ -639,7 +639,7 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update_atomic
               if (m_grid.p_cell[z][j].i >= num_solute_atoms) { //solvent-solvent
 		if(!excluded_solvent_pair(topo, m_grid.p_cell[z][j].i, m_grid.p_cell[z][i].i)){
 		  
-#ifdef HAVE_LIBCUKERNEL
+#ifdef HAVE_LIBCUDART
 		  // do only add the atoms to the pairlist if we are not doing
 		  // CUDA
 		  if (no_cuda)
@@ -772,7 +772,7 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update_atomic
 	      if (d2 > m_cutoff_short_2){ // LONGRANGE
 		if (p_plane[j].i >= num_solute_atoms) { //solvent-solvent
 		  if(!excluded_solvent_pair(topo, p_plane[j].i, m_grid.p_cell[i_level][i].i)){
-#ifdef HAVE_LIBCUKERNEL
+#ifdef HAVE_LIBCUDART
 		  if (no_cuda)
 		    pairlist.solvent_long[p_plane[j].i].push_back(m_grid.p_cell[i_level][i].i);
 #else
@@ -785,7 +785,7 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update_atomic
 	      else{ // SHORTRANGE
 		if (p_plane[j].i >= num_solute_atoms) {
 		  if(!excluded_solvent_pair(topo, p_plane[j].i, m_grid.p_cell[i_level][i].i)){
-#ifdef HAVE_LIBCUKERNEL
+#ifdef HAVE_LIBCUDART
 		    if (no_cuda)
 		      pairlist.solvent_short[p_plane[j].i].push_back(m_grid.p_cell[i_level][i].i);
 #else
@@ -871,7 +871,7 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update_perturbed
   
   DEBUG(10, "Extended_Grid_Pairlist_Algorithm::_update_perturbed");
   
-#ifdef HAVE_LIBCUKERNEL  
+#ifdef HAVE_LIBCUDART  
   const bool no_cuda = sim.param().innerloop.method != simulation::sla_cuda;
 #endif
   
@@ -1008,7 +1008,7 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update_perturbed
 		    DEBUG(10,"\t\tadded a1 to a2 solute shortrange pairlist");
                   }
                   else if (a2 >= num_solute_atoms){ //solvent-solvent
-#ifdef HAVE_LIBCUKERNEL
+#ifdef HAVE_LIBCUDART
                     // do only add the atoms to the pairlist if we are not doing
                     // CUDA
                     if (no_cuda)
@@ -1241,7 +1241,7 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update_perturbed
 		       DEBUG(10,"\t\t\tperturbed: a1 added to a2 solute longrange pairlist");
                     }
                     else if (a2 >= num_solute_atoms){ //solvent -solvent //BUG: a1 >= num_solute_atoms && a1 >= num_solute_atoms --martina
-#ifdef HAVE_LIBCUKERNEL
+#ifdef HAVE_LIBCUDART
                     // do only add the atoms to the pairlist if we are not doing
                     // CUDA
                     if (no_cuda)
@@ -1279,7 +1279,7 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update_perturbed
 		       DEBUG(10,"\t\t\tperturbed: a1 added to a2 solute shortrange pairlist");
                     }
                     else if (a2 >= num_solute_atoms){ //solvent-solvent
-#ifdef HAVE_LIBCUKERNEL
+#ifdef HAVE_LIBCUDART
                     // do only add the atoms to the pairlist if we are not doing
                     // CUDA
                       if (no_cuda)
