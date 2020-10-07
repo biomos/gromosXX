@@ -459,6 +459,8 @@ EOF
       [with_cuda=no]
     ]
   )
+  AS_IF([test "x$enable_openmp" != xyes && test "x$with_cuda" = xyes],
+          [AC_MSG_ERROR([CUDA without OpenMP is not supported.])])
   AM_CONDITIONAL([WITH_CUDA], [test x$with_cuda = xyes])
 ])
 
