@@ -251,9 +251,8 @@ int io::check_features(simulation::Simulation & sim)
   // ENERGYMIN block
   add("steepest_descent", "steepest descent energy minimisation",
           param.minimise.ntem == 1);
-  add("conjugate_gradient", "Fletcher-Reeves conjugate gradient energy minimisation",
-          param.minimise.ntem == 2);
-  add("conjugate_gradient", "Polak-Ribiere conjugate gradient energy minimisation",
+  add("conjugate_gradient", "Fletcher-Reeves or Polak-Ribiere conjugate gradient energy minimisation",
+          param.minimise.ntem == 2 ||
           param.minimise.ntem == 3);
   // CONSTRAINT block
   add("solute_constraint_off", "unconstrained solute",
