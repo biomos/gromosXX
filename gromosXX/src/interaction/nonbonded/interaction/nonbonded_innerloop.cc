@@ -104,13 +104,20 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop
       DEBUG(12, "e_crf: " << e_crf);
 
       DEBUG(10, "\t\tatomic virial");
+      //ORIOL_GAMD
       for (int a = 0; a < 3; ++a) {
         force(a) = f * r(a);
         storage.force(i)(a) += force(a);
         storage.force(j)(a) -= force(a);
+        int gamdi = topo.gamd_accel_group(i);
+        int gamdj = topo.gamd_accel_group(j);
+        storage.force_gamd[gamdi][gamdj](i)(a) += force(a);
+        storage.force_gamd[gamdi][gamdj](j)(a) -= force(a);
 
-        for (int b = 0; b < 3; ++b)
+        for (int b = 0; b < 3; ++b){
           storage.virial_tensor(b, a) += r(b) * force(a);
+          storage.virial_tensor_gamd[gamdi][gamdj](b, a) += r(b) * force(a);
+        }
       }
       break;
     }
@@ -134,13 +141,20 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop
               f, e_lj, e_crf);
 
       DEBUG(10, "\t\tatomic virial");
+      //ORIOL_GAMD
       for (int a = 0; a < 3; ++a) {
         force(a) = f * r(a);
         storage.force(i)(a) += force(a);
         storage.force(j)(a) -= force(a);
+        int gamdi = topo.gamd_accel_group(i);
+        int gamdj = topo.gamd_accel_group(j);
+        storage.force_gamd[gamdi][gamdj](i)(a) += force(a);
+        storage.force_gamd[gamdi][gamdj](j)(a) -= force(a);
 
-        for (int b = 0; b < 3; ++b)
+        for (int b = 0; b < 3; ++b){
           storage.virial_tensor(b, a) += r(b) * force(a);
+          storage.virial_tensor_gamd[gamdi][gamdj](b, a) += r(b) * force(a);
+        }
       }
       break;
     }
@@ -173,13 +187,20 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop
               f, e_lj, e_crf, 2);
         DEBUG(10, "\t\tatomic virial");
       }
+      //ORIOL_GAMD
       for (int a = 0; a < 3; ++a) {
         force(a) = f * r(a);
         storage.force(i)(a) += force(a);
         storage.force(j)(a) -= force(a);
+        int gamdi = topo.gamd_accel_group(i);
+        int gamdj = topo.gamd_accel_group(j);
+        storage.force_gamd[gamdi][gamdj](i)(a) += force(a);
+        storage.force_gamd[gamdi][gamdj](j)(a) -= force(a);
 
-        for (int b = 0; b < 3; ++b)
+        for (int b = 0; b < 3; ++b){
           storage.virial_tensor(b, a) += r(b) * force(a);
+          storage.virial_tensor_gamd[gamdi][gamdj](b, a) += r(b) * force(a);
+        }
       }
       break;
     }
@@ -342,13 +363,20 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop
       e_crf = 0.0;
 
       DEBUG(10, "\t\tatomic virial");
+      //ORIOL_GAMD
       for (int a = 0; a < 3; ++a) {
         force(a) = f * r(a);
         storage.force(i)(a) += force(a);
         storage.force(j)(a) -= force(a);
+        int gamdi = topo.gamd_accel_group(i);
+        int gamdj = topo.gamd_accel_group(j);
+        storage.force_gamd[gamdi][gamdj](i)(a) += force(a);
+        storage.force_gamd[gamdi][gamdj](j)(a) -= force(a);
 
-        for (int b = 0; b < 3; ++b)
+        for (int b = 0; b < 3; ++b){
           storage.virial_tensor(b, a) += r(b) * force(a);
+          storage.virial_tensor_gamd[gamdi][gamdj](b, a) += r(b) * force(a);
+        }
       }
       break;
     }
@@ -886,13 +914,20 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::one_four_interaction_in
               f, e_lj, e_crf);
 
       DEBUG(10, "\t\tatomic virial");
+      //ORIOL_GAMD
       for (int a = 0; a < 3; ++a) {
         const double term = f * r(a);
         storage.force(i)(a) += term;
         storage.force(j)(a) -= term;
+        int gamdi = topo.gamd_accel_group(i);
+        int gamdj = topo.gamd_accel_group(j);
+        storage.force_gamd[gamdi][gamdj](i)(a) += term;
+        storage.force_gamd[gamdi][gamdj](j)(a) -= term;
 
-        for (int b = 0; b < 3; ++b)
+        for (int b = 0; b < 3; ++b){
           storage.virial_tensor(b, a) += r(b) * term;
+          storage.virial_tensor_gamd[gamdi][gamdj](b, a) += r(b) * term;
+        }
       }
       break;
     }
@@ -924,17 +959,22 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::one_four_interaction_in
                 f, e_lj, e_crf, 2);
 
         DEBUG(10, "\t\tatomic virial");
-        for (int a = 0; a < 3; ++a) {
-          const double term = f * r(a);
-          storage.force(i)(a) += term;
-          storage.force(j)(a) -= term;
+      //ORIOL_GAMD
+      for (int a = 0; a < 3; ++a) {
+        const double term = f * r(a);
+        storage.force(i)(a) += term;
+        storage.force(j)(a) -= term;
+        int gamdi = topo.gamd_accel_group(i);
+        int gamdj = topo.gamd_accel_group(j);
+        storage.force_gamd[gamdi][gamdj](i)(a) += term;
+        storage.force_gamd[gamdi][gamdj](j)(a) -= term;
 
-          for (int b = 0; b < 3; ++b)
-            storage.virial_tensor(b, a) += r(b) * term;
+        for (int b = 0; b < 3; ++b){
+          storage.virial_tensor(b, a) += r(b) * term;
+          storage.virial_tensor_gamd[gamdi][gamdj](b, a) += r(b) * term;
         }
       }
       break;
-    
     }
     case simulation::pol_lj_crf_func :
       {
@@ -1047,13 +1087,20 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::one_four_interaction_in
       e_crf = 0.0;
 
       DEBUG(10, "\t\tatomic virial");
+      //ORIOL_GAMD
       for (int a = 0; a < 3; ++a) {
         const double term = f * r(a);
         storage.force(i)(a) += term;
         storage.force(j)(a) -= term;
+        int gamdi = topo.gamd_accel_group(i);
+        int gamdj = topo.gamd_accel_group(j);
+        storage.force_gamd[gamdi][gamdj](i)(a) += term;
+        storage.force_gamd[gamdi][gamdj](j)(a) -= term;
 
-        for (int b = 0; b < 3; ++b)
+        for (int b = 0; b < 3; ++b){
           storage.virial_tensor(b, a) += r(b) * term;
+          storage.virial_tensor_gamd[gamdi][gamdj](b, a) += r(b) * term;
+        }
       }
       break;
     }
@@ -1120,16 +1167,23 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_exception_innerloop
 			 f, e_lj, e_crf);
 
         DEBUG(10, "\t\tatomic virial");
-        for (int a=0; a<3; ++a){
-          const double term = f * r(a);
-          storage.force(i)(a) += term;
-          storage.force(j)(a) -= term;
+      //ORIOL_GAMD
+      for (int a = 0; a < 3; ++a) {
+        const double term = f * r(a);
+        storage.force(i)(a) += term;
+        storage.force(j)(a) -= term;
+        int gamdi = topo.gamd_accel_group(i);
+        int gamdj = topo.gamd_accel_group(j);
+        storage.force_gamd[gamdi][gamdj](i)(a) += term;
+        storage.force_gamd[gamdi][gamdj](j)(a) -= term;
 
-          for(int b=0; b<3; ++b)
-            storage.virial_tensor(b, a) += r(b) * term;
+        for (int b = 0; b < 3; ++b){
+          storage.virial_tensor(b, a) += r(b) * term;
+          storage.virial_tensor_gamd[gamdi][gamdj](b, a) += r(b) * term;
         }
-	break;
       }
+      break;
+    }
 
     case simulation::cggromos_func :
     {
@@ -1144,13 +1198,19 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_exception_innerloop
 			 f, e_lj, e_crf, 2);
 
         DEBUG(10, "\t\tatomic virial");
-        for (int a=0; a<3; ++a){
-          const double term = f * r(a);
-          storage.force(i)(a) += term;
-          storage.force(j)(a) -= term;
+      //ORIOL_GAMD
+      for (int a = 0; a < 3; ++a) {
+        const double term = f * r(a);
+        storage.force(i)(a) += term;
+        storage.force(j)(a) -= term;
+        int gamdi = topo.gamd_accel_group(i);
+        int gamdj = topo.gamd_accel_group(j);
+        storage.force_gamd[gamdi][gamdj](i)(a) += term;
+        storage.force_gamd[gamdi][gamdj](j)(a) -= term;
 
-          for(int b=0; b<3; ++b)
-            storage.virial_tensor(b, a) += r(b) * term;
+        for (int b = 0; b < 3; ++b){
+          storage.virial_tensor(b, a) += r(b) * term;
+          storage.virial_tensor_gamd[gamdi][gamdj](b, a) += r(b) * term;
         }
       }
       break;
@@ -1255,13 +1315,20 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_exception_innerloop
       e_crf = 0.0;
 
       DEBUG(10, "\t\tatomic virial");
-      for (int a=0; a<3; ++a){
+      //ORIOL_GAMD
+      for (int a = 0; a < 3; ++a) {
         const double term = f * r(a);
         storage.force(i)(a) += term;
         storage.force(j)(a) -= term;
+        int gamdi = topo.gamd_accel_group(i);
+        int gamdj = topo.gamd_accel_group(j);
+        storage.force_gamd[gamdi][gamdj](i)(a) += term;
+        storage.force_gamd[gamdi][gamdj](j)(a) -= term;
 
-        for(int b=0; b<3; ++b)
+        for (int b = 0; b < 3; ++b){
           storage.virial_tensor(b, a) += r(b) * term;
+          storage.virial_tensor_gamd[gamdi][gamdj](b, a) += r(b) * term;
+        }
       }
       break;
     }
@@ -1895,13 +1962,20 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_ls_real_innerloop
               f, e_lj, e_ls);
       DEBUG(12, "\t\t e_ls = " << e_ls << " f = " << f);
       DEBUG(10, "\t\tatomic virial");
+      //ORIOL_GAMD
       for (int a = 0; a < 3; ++a) {
         const double term = f * r(a);
         storage.force(i)(a) += term;
         storage.force(j)(a) -= term;
+        int gamdi = topo.gamd_accel_group(i);
+        int gamdj = topo.gamd_accel_group(j);
+        storage.force_gamd[gamdi][gamdj](i)(a) += term;
+        storage.force_gamd[gamdi][gamdj](j)(a) -= term;
 
-        for (int b = 0; b < 3; ++b)
+        for (int b = 0; b < 3; ++b){
           storage.virial_tensor(b, a) += r(b) * term;
+          storage.virial_tensor_gamd[gamdi][gamdj](b, a) += r(b) * term;
+        }
       }
       break;
     }
@@ -1958,13 +2032,20 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::ls_real_excluded_innerloop
               f, e_ls);
       DEBUG(10, "\t\t e_ls (exl. atoms) = " << e_ls);
       DEBUG(10, "\t\tatomic virial");
+      //ORIOL_GAMD
       for (int a = 0; a < 3; ++a) {
         const double term = f * r(a);
         storage.force(i)(a) += term;
         storage.force(j)(a) -= term;
+        int gamdi = topo.gamd_accel_group(i);
+        int gamdj = topo.gamd_accel_group(j);
+        storage.force_gamd[gamdi][gamdj](i)(a) += term;
+        storage.force_gamd[gamdi][gamdj](j)(a) -= term;
 
-        for (int b = 0; b < 3; ++b)
+        for (int b = 0; b < 3; ++b){
           storage.virial_tensor(b, a) += r(b) * term;
+          storage.virial_tensor_gamd[gamdi][gamdj](b, a) += r(b) * term;
+        }
       }
       break;
     }

@@ -326,8 +326,8 @@ namespace io {
     */
     void read_AEDS(simulation::Parameter &param, std::ostream & os = std::cout);
     /**
-     * read GAMD block
-     */
+    * read GAMD block.
+    */
     void read_GAMD(simulation::Parameter &param, std::ostream & os = std::cout);
     /**
      * read NONBONDED block.

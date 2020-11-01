@@ -70,12 +70,14 @@ int pthread_barrier_wait(pthread_barrier_t *barrier)
 #endif
 
 /**
- * Consttuctor
+ * Constructor
  */
-util::CycleThread::CycleThread() {
+util::CycleThread::CycleThread()
+  : error(0) {
   // For the while loop in run()
   keeprunning = true;
   // Initialize all the barriers
+  pthread_barrier_init(&barrier_init, NULL, 2);
   pthread_barrier_init(&barrier_start, NULL, 2);
   pthread_barrier_init(&barrier_end, NULL, 2);
   // The next cycle will be the first
@@ -92,6 +94,7 @@ void util::CycleThread::terminate_cycle() {
   do_cycle();
   // wait for thread to finish
   wait();
+  pthread_barrier_destroy(&barrier_init);
   pthread_barrier_destroy(&barrier_start);
   pthread_barrier_destroy(&barrier_end);
   DEBUG(15, "CycleThread: Destroyed all CycleThread variables")
@@ -102,6 +105,7 @@ void util::CycleThread::terminate_cycle() {
  */
 void util::CycleThread::run() {
   init_run();
+    pthread_barrier_wait(&barrier_init);
   while (keeprunning) {
     // wait till told to start
     pthread_barrier_wait(&barrier_start);

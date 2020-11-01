@@ -302,8 +302,7 @@ namespace configuration
      * total boosting potential used
      */
     double gamd_DV_total;
-
-       
+           
     // this should be size of bath
     /**
      * kinetic energy term

@@ -105,18 +105,11 @@ static int _calculate_angle_interactions(topology::Topology & topo,
     force(a_it->k) += fk;
 
     // if (V == math::atomic_virial){
-      for(int a=0; a<3; ++a){
-	for(int bb=0; bb<3; ++bb){
+      for(int a=0; a<3; ++a)
+	for(int bb=0; bb<3; ++bb)
 	  conf.current().virial_tensor(a, bb) += 
 	    rij(a) * fi(bb) +
 	    rkj(a) * fk(bb);
-
-    //ORIOL_GAMD
-	  conf.special().gamd.virial_tensor[topo.atom_energy_group()[a_it->i]](a, bb) += 
-	    rij(a) * fi(bb) +
-	    rkj(a) * fk(bb);
-    }
-      }
 
       DEBUG(11, "\tatomic virial done");
       // }
@@ -127,6 +120,22 @@ static int _calculate_angle_interactions(topology::Topology & topo,
       += energy;
 
     DEBUG(10, "\tenergy = " << energy);
+    // ORIOL_GAMD
+    int gamd_group = topo.gamd_accel_group(a_it->i);
+    if(gamd_group){
+      DEBUG(10, "\tGAMD group is " << gamd_group);
+      conf.special().gamd.total_force[gamd_group][gamd_group](a_it->i) += fi;
+      conf.special().gamd.total_force[gamd_group][gamd_group](a_it->j) += fj;
+      conf.special().gamd.total_force[gamd_group][gamd_group](a_it->k) += fk;
+      conf.current().energies.gamd_potential_total[gamd_group] += energy;
+      // virial
+      for(int a=0; a<3; ++a){
+        for(int bb=0; bb < 3; ++bb){
+          conf.special().gamd.virial_tensor[gamd_group][gamd_group](a, bb) += rij(a) * fi(bb) + rkj(a) * fk(bb);
+        }
+      }
+
+    } // end gamd
 
   }
 

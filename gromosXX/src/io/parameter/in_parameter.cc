@@ -95,6 +95,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_RANDOMNUMBERS(param);
   read_EDS(param);
   read_AEDS(param); // needs to be called after EDS
+  read_GAMD(param);
   read_LAMBDAS(param); // needs to be called after FORCE
   read_PRECALCLAM(param); // ANITA 
   read_LOCALELEV(param);
@@ -2587,7 +2588,7 @@ void io::In_Parameter::read_INNERLOOP(simulation::Parameter &param,
             }
             case 4:
             {
-#ifdef HAVE_LIBCUKERNEL
+#ifdef HAVE_LIBCUDART
                 // cuda library
                 param.innerloop.method = simulation::sla_cuda;
 #else
@@ -2632,7 +2633,7 @@ void io::In_Parameter::read_INNERLOOP(simulation::Parameter &param,
                 bool fail = false;
                 for (unsigned int i = 0; i < param.innerloop.number_gpus; i++) {
                     std::string idx=io::to_string(i);
-                    block.get_next_parameter("NDEVG["+idx+"]", temp, ">0", "", true);
+                    block.get_next_parameter("NDEVG["+idx+"]", temp, ">=0", "", true);
                     if (block.error()) {
                         fail = true;
                         break;
@@ -3908,62 +3909,65 @@ void io::In_Parameter::read_AEDS(simulation::Parameter & param,
     block.get_final_messages();
   }
 }
-// In progress
 
+//ORIOL_GAMD
 /**
-* @section AGMD AGMD block
-* @snippet snippets/snippets.cc AGMD
+* @section GAMD GAMD block
+* @snippet snippets/snippets.cc GAMD
 
 */
 void io::In_Parameter::read_GAMD(simulation::Parameter & param,
   std::ostream & os) {
-  DEBUG(8, "reading AGMD");
 
   std::stringstream exampleblock;
   // lines starting with 'exampleblock<<"' and ending with '\n";' (spaces don't matter)
   // will be used to generate snippets that can be included in the doxygen doc;
   // the first line should be the blockname and is used as snippet tag
   exampleblock << "GAMD\n";
-  exampleblock << "# GAMD       0,1\n";
-  exampleblock << "#              0: no Gaussian accelerated MD [default]\n";
-  exampleblock << "#              1: Gaussian accelerated MD\n";
-  exampleblock << "# NTIGAMD   0-2\n";
-  exampleblock << "#              0: Start GAMD with fixed parameters\n";
-  exampleblock << "#              1: Start parameter search without acceleration\n";
-  exampleblock << "#              2: Start parameter search with updating acceleration parameters\n";
-  exampleblock << "# FORM       1-3\n";
-  exampleblock << "#              1: GAMD with dual acceleration \n";
-  exampleblock << "#              2: GAMD with total potential energy acceleration\n";
-  exampleblock << "#              3: GAMD with dihedral potential energy acceleration\n";
-  exampleblock << "# GAMDTHRESH  1-2\n";
-  exampleblock << "#              1: Set threshold energy to the lower bound (Vmax)\n";
-  exampleblock << "#              2: Set threshold energy to the upper bound (Vmin + 1/K)\n";
-  exampleblock << "# AGROUPS    > 1: Number of different acceleration groups\n";
-  exampleblock << "# DIHSTD        : Maximum standard deviation for the dihedral boosting potential\n";
-  exampleblock << "# TOTSTD        : Maximum standard deviation for the total energy boosting potential\n";
-  exampleblock << "# VMAX          : Vmax for the different acceleration groups\n";
-  exampleblock << "# VMIN          : Vmin for the different acceleration groups\n";
-  exampleblock << "# DIHBOOST      : Boosting potentials for the dihedral term of the different acceleration groups\n";
-  exampleblock << "# TOTBOOST      : Boosting potentials for the total potential energy term of the different acceleration groups\n";
-  exampleblock << "# QSTEPS        : Number of equilibration steps\n";
-  exampleblock << "# AVSTEPS       : Number of steps used to calculate the average potential energy and standard deviation\n";
-  exampleblock << "#\n";
+  exampleblock << "# GAMD      0,1\n";
+  exampleblock << "#              0: no gaussian accelerated molecular dynamics [default]\n";
+  exampleblock << "#              1: aussian accelerated molecular dynamics\n";
+  exampleblock << "# SEARCH       0-2\n";
+  exampleblock << "#              0: no search, conventional GAMD run\n";
+  exampleblock << "#              1: initial search without acceleration\n";
+  exampleblock << "#              2: search with acceleration\n";
+  exampleblock << "# FORM         1-3\n";
+  exampleblock << "#              1: dual boost acceleration\n";
+  exampleblock << "#              2: boosting of the potential energy\n";
+  exampleblock << "#              3: boosting of the dihedral term\n";
+  exampleblock << "# THRESH       1-2: type of energy threshold to use\n";
+  exampleblock << "#              1: lower bound E=Vmax\n";
+  exampleblock << "#              2: upper bound E=Vmin/(1+K)\n";
+  exampleblock << "# NTIGAMDS   0,1\n";
+  exampleblock << "#              0: read GAMD parameter search configuration from input configuration\n";
+  exampleblock << "#              1: initialize GAMD parameter search\n";
+  exampleblock << "# AGROUPS     >0 number of acceleration groups\n";
+  exampleblock << "# DIHSTD      >0 allowed standard deviation for the dihedral boosting potential term\n";
+  exampleblock << "# TOTSTD      >0 allowed standard deviation for the potential energy boosting potential term\n";
+  exampleblock << "# ED            : energy thresholds for the dihedral boosting potential term\n";
+  exampleblock << "# ET            : energy thresholds for the potential energy boosting potential term\n";
+  exampleblock << "# KD            : force constant for the dihedral boosting potential term\n";
+  exampleblock << "# KT            : force constant for the potential energy boosting potential term\n";
+  exampleblock << "# EQSTEPS     >=0 number of equilibration steps\n";
+  exampleblock << "# \n";
   exampleblock << "# GAMD\n";
   exampleblock << "  1\n";
-  exampleblock << "# NTIGAMD  FORM  GAMDTHRESH  AGROUPS\n";
-  exampleblock << "  0        1     1           2\n";
+  exampleblock << "# SEARCH  FORM  THRESH  NTIGAMDS\n";
+  exampleblock << "    0       1      1        0\n";
+  exampleblock << "# GAMD\n";
+  exampleblock << "  2\n"; 
   exampleblock << "# DIHSTD  TOTSTD\n";
   exampleblock << "  24.79   24.79\n";
-  exampleblock << "# VMAX\n";
-  exampleblock << "  10   34\n";
-  exampleblock << "# VMIN\n";
-  exampleblock << "  -8   -22\n";
-  exampleblock << "# DIHBOOST\n";
-  exampleblock << "  0   0\n";
-  exampleblock << "# TOTBOOST\n";
-  exampleblock << "  0   0\n";
-  exampleblock << "# QSTEPS  AVSTEPS\n";
-  exampleblock << "  0       5000\n";
+  exampleblock << "# ED\n";
+  exampleblock << "  10.0   100.0\n";
+  exampleblock << "# ET\n";
+  exampleblock << "  -10.0   20.0\n";
+  exampleblock << "# KD\n";
+  exampleblock << "  10.0   100.0\n";
+  exampleblock << "# KT\n";
+  exampleblock << "  -10.0   20.0\n";
+  exampleblock << "# EQSTEPS\n";
+  exampleblock << " 5000n";
   exampleblock << "END\n";
 
 
@@ -3974,58 +3978,110 @@ void io::In_Parameter::read_GAMD(simulation::Parameter & param,
   if (block.read_buffer(m_block[blockname], false) == 0) {
     block_read.insert(blockname);
 
-    int gamd, ntigamd, form, thresh;
-
-    block.get_next_parameter("GAMD", gamd, "", "0,1");
-    block.get_next_parameter("NTIGAMD", ntigamd, "", "0,1,2");
+    int search, form, thresh, agroups;
+    block.get_next_parameter("GAMD", param.gamd.gamd, "", "0,1");
+    block.get_next_parameter("SEARCH", search, "", "0,1,2");
     block.get_next_parameter("FORM", form, "", "1,2,3");
-    block.get_next_parameter("GAMDTHRESH", param.gamd.thresh, "", "1,2");
-    block.get_next_parameter("AGROUPS", param.gamd.agroups, ">=1", "");
-    switch (gamd) {
-      case 0:
-        param.gamd.gamd = 0;
-        param.gamd.agroups = 0;
-        break;
-      case 1:
-        param.gamd.gamd = 1;
-        break;
-      default:
-        break;
-      }
-    switch (ntigamd) {
-      case 0:
-        param.gamd.ntigamd= simulation::no_search;
-        break;
-      case 1:
-        param.gamd.ntigamd= simulation::cmd_search;
-        break;
-      case 2:
-        param.gamd.ntigamd= simulation::gamd_search;
-        break;
-      default:
-        break;
-      }
+    block.get_next_parameter("THRESH", thresh, "", "1,2,3,4");
+    block.get_next_parameter("NTIGAMD", param.gamd.ntisearch , "", "0,1");
+    block.get_next_parameter("AGROUPS", agroups , ">0", "");
+    block.get_next_parameter("DIHSTD", param.gamd.dihstd , ">0", "");
+    block.get_next_parameter("TOTSTD", param.gamd.totstd , ">0", "");
+
+    param.gamd.agroups = agroups + 1;
+
+    switch (search) {
+    case 0: {
+      param.gamd.search = simulation::no_search;
+      break;
+    }
+    case 1: {
+      param.gamd.search = simulation::cmd_search;
+      break;
+    }
+    case 2: {
+      param.gamd.search = simulation::gamd_search;
+      break;
+    }
+    default:
+      break;
+    }
+
     switch (form) {
-      case 1:
-        param.gamd.form= simulation::dual_boost;
-        break;
-      case 2:
-        param.gamd.form= simulation::tot_boost;
-        break;
-      case 3:
-        param.gamd.form= simulation::dih_boost;
-        break;
-      default:
-        break;
-      }
-    block.get_next_parameter("DIHSTD", param.gamd.dihstd, ">0", "");
-    block.get_next_parameter("BMAX", param.gamd.totstd, ">0", "");
-    block.get_next_parameter("ASTEPS", param.eds.asteps, ">0", "");
-    block.get_next_parameter("BSTEPS", param.eds.bsteps, ">0", "");
+    case 1: {
+      param.gamd.form = simulation::dual_boost;
+      break;
+    }
+    case 2: {
+      param.gamd.form = simulation::tot_boost;
+      break;
+    }
+    case 3: {
+      param.gamd.form = simulation::dih_boost;
+      break;
+    }
+    default:
+      break;
+    }
+
+    switch (thresh) {
+    case 1: {
+      param.gamd.thresh = simulation::lower_bound;
+      break;
+    }
+    case 2: {
+      param.gamd.thresh = simulation::upper_bound;
+      break;
+    }
+    default:
+      break;
+    }
+
+    param.gamd.ED.resize(param.gamd.agroups, 0.0);
+    for (unsigned int i = 0; i < param.gamd.agroups; i++) {
+      std::string idx = io::to_string(i);
+      block.get_next_parameter("ED[" + idx + "]", param.gamd.ED[i+1], "", "");
+    }
+
+    param.gamd.ET.resize(param.gamd.agroups, 0.0);
+    for (unsigned int i = 0; i < param.gamd.agroups; i++) {
+      std::string idx = io::to_string(i);
+      block.get_next_parameter("ET[" + idx + "]", param.gamd.ET[i+1], "", "");
+    }
+
+    param.gamd.kD.resize(param.gamd.agroups, 0.0);
+    for (unsigned int i = 0; i < param.gamd.agroups; i++) {
+      std::string idx = io::to_string(i);
+      block.get_next_parameter("KD[" + idx + "]", param.gamd.kD[i+1], "", "");
+    }
+
+    param.gamd.kT.resize(param.gamd.agroups, 0.0);
+    for (unsigned int i = 0; i < param.gamd.agroups; i++) {
+      std::string idx = io::to_string(i);
+      block.get_next_parameter("KT[" + idx + "]", param.gamd.kT[i+1], "", "");
+    }
+
+    block.get_next_parameter("EQSTEPS", param.gamd.equilibration, ">=0", "");
+
+    // some defaults just in case
+    param.gamd.dihboost.resize(param.gamd.agroups, 0.0);
+    param.gamd.totboost.resize(param.gamd.agroups, 0.0);
+    param.gamd.k0D.resize(param.gamd.agroups, 0.0);
+    param.gamd.K0T.resize(param.gamd.agroups, 0.0);
+    param.gamd.M2D.resize(param.gamd.agroups, 0.0);
+    param.gamd.M2T.resize(param.gamd.agroups, 0.0);
+    param.gamd.VmaxD.resize(param.gamd.agroups, 0.0);
+    param.gamd.VmaxT.resize(param.gamd.agroups, 0.0);
+    param.gamd.VmeanD.resize(param.gamd.agroups, 0.0);
+    param.gamd.VmeanT.resize(param.gamd.agroups, 0.0);
+    param.gamd.VminD.resize(param.gamd.agroups, 0.0);
+    param.gamd.VminT.resize(param.gamd.agroups, 0.0);
+    param.gamd.sigmaVD.resize(param.gamd.agroups, 0.0);
+    param.gamd.sigmaVT.resize(param.gamd.agroups, 0.0);
+
     block.get_final_messages();
-    // DEVELOPING ORIOL
+    }
   }
-}
 
 /**
  * @section LAMBDAS LAMBDAS block

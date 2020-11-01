@@ -224,12 +224,6 @@ namespace topology
      */
     EDS_Perturbed_Solute & eds_perturbed_solute() {return m_eds_perturbed_solute;}
 
-    //ORIOL_GAMD
-    /**
-     * gamd atoms accessor.
-     */
-    std::vector<std::vector<int> > & gamd_atoms() {return m_gamd_atoms;}
-
     /**
      * const solute accessor.
      */
@@ -244,11 +238,6 @@ namespace topology
      * const eds-perturbed solute accessor.
      */
     EDS_Perturbed_Solute const & eds_perturbed_solute()const{return m_eds_perturbed_solute;}
-
-    /**
-     * const gamd atoms accessor.
-     */
-    std::vector<std::vector<int> > const & gamd_atoms() const{return m_gamd_atoms;}
 
     /**
      * number of atom types.
@@ -710,6 +699,21 @@ namespace topology
      * is the atom eds-perturbed?
      */
     std::vector<bool> & is_eds_perturbed() { return m_is_eds_perturbed;}
+
+    /**
+     * ORIOL_GAMD
+     * list of acceleration groups of the gaussian accelerated md atoms
+     */
+    std::vector<int> & gamd_accel_group(){ return m_gamd_accel_group;}
+
+    /**
+     * in which acceleration group is the atom (index)
+     * returns 0 if not accelerated
+     **/
+    int gamd_accel_group(unsigned int const i)const {
+      assert(i < m_gamd_accel_group.size());
+      return m_gamd_accel_group[i];
+    }
 
     /**
      * is the atom polarisable?
@@ -1374,12 +1378,6 @@ namespace topology
      */
     EDS_Perturbed_Solute m_eds_perturbed_solute;
 
-    //ORIOL_GAMD
-    /**
-     * the gamd atoms to be accelerated
-     */
-    std::vector<std::vector<int> > m_gamd_atoms;
-
     /**
      * is the atom perturbed?
      */
@@ -1389,6 +1387,11 @@ namespace topology
      * is the atom eds-perturbed?
      */
     std::vector<bool> m_is_eds_perturbed;
+
+    /**
+     * ORIOL_GAMD
+     **/
+    std::vector<int> m_gamd_accel_group;
 
     /**
      * is the atom polarisable?

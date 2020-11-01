@@ -218,8 +218,6 @@ int check::check_state(topology::Topology & mytopo,
 static void zero(configuration::Configuration & conf)
 {
   conf.current().force = 0.0;
-  //ORIOL_GAMD
-  conf.special().gamd.dihe_force = 0.0;
   conf.current().energies.zero();
   conf.current().perturbed_energy_derivatives.zero();
 

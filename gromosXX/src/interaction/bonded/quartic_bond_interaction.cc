@@ -71,15 +71,10 @@ static int _calculate_quartic_bond_interactions(topology::Topology &topo,
     force(b_it->j) -= f;
 
     // if (V == math::atomic_virial){
-      for(int a=0; a<3; ++a){
-	for(int c=0; c<3; ++c){
+      for(int a=0; a<3; ++a)
+	for(int c=0; c<3; ++c)
 	  conf.current().virial_tensor(a, c) += 
 	    v(a) * f(c);
-
-	  conf.special().gamd.virial_tensor[topo.atom_energy_group()[b_it->i]](a, c) += 
-	    v(a) * f(c);
-  }
-      }
       
       DEBUG(7, "\tatomic virial done");
       // }
@@ -95,8 +90,24 @@ static int _calculate_quartic_bond_interactions(topology::Topology &topo,
 	   topo.atom_energy_group()[b_it->i]);
     
     conf.current().energies.
-      bond_energy[topo.atom_energy_group()
-		  [b_it->i]] += e;
+      bond_energy[topo.atom_energy_group()[b_it->i]] += e;
+
+    // ORIOL_GAMD
+    // if atom 1 is in an acceleration group
+    int gamd_group = topo.gamd_accel_group(b_it->i);
+    if(gamd_group){
+      DEBUG(10, "\tGAMD group is " << gamd_group);
+      conf.special().gamd.total_force[gamd_group][gamd_group](b_it->i) += f;
+      conf.special().gamd.total_force[gamd_group][gamd_group](b_it->j) -= f;
+      conf.current().energies.gamd_potential_total[gamd_group] += e;
+      // virial
+      for(int a=0; a<3; ++a){
+        for(int bb=0; bb < 3; ++bb){
+          conf.special().gamd.virial_tensor[gamd_group][gamd_group](a, bb) +=  v(a) * f(bb);
+        }
+      }
+
+    } // end gamd
   }
  
   return 0;

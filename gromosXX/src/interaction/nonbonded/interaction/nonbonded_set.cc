@@ -269,12 +269,30 @@ int interaction::Nonbonded_Set
       } // if force groups
     }
   }
+  //ORIOL_GAMD
+  if(sim.param().gamd.gamd){
+    for (unsigned int i = 0; i < lj_e_size; ++i) {
+      for (unsigned int j = 0; j < lj_e_size; ++j) {
+      int gamdi = topo.gamd_accel_group(i);
+      int gamdj = topo.gamd_accel_group(j);
+      m_storage.force_gamd[gamdi][gamdj](i) += m_longrange_storage.force_gamd[gamdi][gamdj](i);
+      m_storage.force_gamd[gamdi][gamdj](j) += m_longrange_storage.force_gamd[gamdi][gamdj](j);
+  }
 
   // add longrange virial
   if (sim.param().pcouple.virial){
     DEBUG(6, "\t(set) add long range virial");
 
 	m_storage.virial_tensor += m_longrange_storage.virial_tensor;
+  //ORIOL_GAMD
+  if(sim.param().gamd.gamd){
+    for (unsigned int i = 0; i < lj_e_size; ++i) {
+      for (unsigned int j = 0; j < lj_e_size; ++j) {
+      int gamdi = topo.gamd_accel_group(i);
+      int gamdj = topo.gamd_accel_group(j);
+      m_storage.virial_tensor_gamd[gamdi][gamdj] += m_longrange_storage.virial_tensor_gamd[gamdi][gamdj];
+      m_storage.virial_tensor_gamd[gamdi][gamdj] += m_longrange_storage.virial_tensor_gamd[gamdi][gamdj];
+      }
   }
   stop_timer("longrange addition");
   
@@ -432,6 +450,26 @@ int interaction::Nonbonded_Set
     resize(unsigned(conf.current().energies.bond_energy.size()),
 	   unsigned(conf.current().energies.kinetic_energy.size()),
            unsigned(sim.param().precalclam.nr_lambdas)); //ANITA
+
+  // ORIOL_GAMD
+  m_storage.force_gamd.resize(sim.param().gamd.agroups);
+  m_storage.virial_tensor_gamd.resize(sim.param().gamd.agroups);
+  m_storage.energies.gamd_potential_total.resize(sim.param().gamd.agroups);
+
+  m_longrange_storage.force_gamd.resize(sim.param().gamd.agroups);
+  m_longrange_storage.virial_tensor_gamd.resize(sim.param().gamd.agroups);
+  m_longrange_storage.energies.gamd_potential_total.resize(sim.param().gamd.agroups);
+
+  for(unsigned int i = 0; i < m_storage.force_gamd.size(); i++){
+      m_storage.force_gamd[i].resize(m_storage.force_gamd.size());
+      m_longrange_storage.force_gamd[i].resize(m_storage.force_gamd.size());
+      m_longrange_storage.virial_tensor_gamd[i].resize(m_storage.force_gamd.size());
+      m_storage.virial_tensor_gamd[i].resize(m_storage.force_gamd.size());
+     for(unsigned int j = 0; j < m_storage.force_gamd.size(); j++){
+       m_storage.force_gamd[i][j].resize(topo.num_atoms());
+       m_longrange_storage.force_gamd[i][j].resize(topo.num_atoms());
+       }
+  }
   
   if (sim.param().force.force_groups) {
     m_storage.force_groups.resize(unsigned(conf.current().energies.bond_energy.size()),

@@ -110,11 +110,10 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
     md_seq.push_back(new algorithm::EDS());
   } 
 
-  //ORIOL_GAMD
-  //add GAMD
-  if (sim.param().gamd.gamd){
+  //ORIOL_GAMD add GAMD
+  if (sim.param().gamd){
     md_seq.push_back(new algorithm::GAMD());
-  }
+  } 
               
   // position constraints?
   if (sim.param().posrest.posrest == 3 && !sim.param().analyze.no_constraints) {

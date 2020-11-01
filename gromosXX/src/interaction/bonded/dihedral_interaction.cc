@@ -134,38 +134,40 @@ static int _calculate_dihedral_interactions(topology::Topology & topo,
     force(d_it->k) += fk;
     force(d_it->l) += fl;
 
-    //ORIOL_GAMD
-    //store a copy of the dihedral forces for gamd
-    conf.special().gamd.dihe_force(d_it->i) += fi;
-    conf.special().gamd.dihe_force(d_it->j) += fj;
-    conf.special().gamd.dihe_force(d_it->k) += fk;
-    conf.special().gamd.dihe_force(d_it->l) += fl;
-
     // if (V == math::atomic_virial){
     periodicity.nearest_image(pos(d_it->l), pos(d_it->j), rlj);
 
-    for (int a = 0; a < 3; ++a){
-      for (int bb = 0; bb < 3; ++bb){
+    for (int a = 0; a < 3; ++a)
+      for (int bb = 0; bb < 3; ++bb)
         conf.current().virial_tensor(a, bb) +=
               rij(a) * fi(bb) +
         rkj(a) * fk(bb) +
         rlj(a) * fl(bb);
 
-        // store a copy of the dihedral contribution to the atomic virial
-        conf.special().gamd.virial_tensor_dihe[topo.atom_energy_group()[d_it->i]](a, bb) +=
-              rij(a) * fi(bb) +
-              rkj(a) * fk(bb) +
-              rlj(a) * fl(bb);
-      }
-    }
-
-
     DEBUG(11, "\tatomic virial done");
     // }
 
     energy = K * (1 + cosdelta * cosmphi);
-    conf.current().energies.dihedral_energy
-            [topo.atom_energy_group()[d_it->i]] += energy;
+    conf.current().energies.dihedral_energy[topo.atom_energy_group()[d_it->i]] += energy;
+
+    // ORIOL_GAMD
+    // if atom 1 is in acceleration group
+    int gamd_group = topo.gamd_accel_group(d_it->i);
+    if(gamd_group){
+      DEBUG(10, "\tGAMD group is " << gamd_group);
+      conf.special().gamd.dihe_force[gamd_group][d_it->i] += fi;
+      conf.special().gamd.dihe_force[gamd_group][d_it->j] += fj;
+      conf.special().gamd.dihe_force[gamd_group][d_it->k] += fk;
+      conf.special().gamd.dihe_force[gamd_group][d_it->l] += fl;
+      conf.current().energies.gamd_dihedral_total[gamd_group] += energy;
+      // virial
+      for(int a=0; a<3; ++a){
+        for(int bb=0; bb < 3; ++bb){
+          conf.special().gamd.virial_tensor_dihe[gamd_group](a, bb) += rij(a) * fi(bb) + rkj(a) * fk(bb) +  rlj(a) * fl(bb);
+        }
+      }
+
+    } // end gamd
 
     // dihedral angle monitoring.
     if (sim.param().print.monitor_dihedrals) {

@@ -1,7 +1,7 @@
-/* 
+/*
  * File:   gamd.h
  * Author: Oriol
- */
+ **/
 
 #ifndef GAMD_H
 #define	GMAD_H

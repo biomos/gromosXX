@@ -30,6 +30,11 @@ namespace interaction
      * eds endstates (longrange) force storage.
      */
     std::vector<math::VArray> force_endstates;
+    /**
+     * ORIOL_GAMD
+     * GAMD (longrange) force storage.
+     */
+    std::vector<std::vector<math::VArray> > force_gamd;
      /**
      * (longrange) energy storage.
      */
@@ -46,6 +51,10 @@ namespace interaction
      * eds endstates (longrange) virial storage.
      */
     std::vector<math::Matrix> virial_tensor_endstates;
+    /**
+     * GAMD (longrange) virial storage.
+     */
+   std::vector<std::vector<math::Matrix> > virial_tensor_gamd;
      /**
       * (longrange) electric field storage.
       */
@@ -74,6 +83,15 @@ namespace interaction
       for(unsigned int i = 0; i< size; i++){
         force_endstates[i] = 0.0;
         virial_tensor_endstates[i] = 0.0;
+      }
+      //ORIOL_GAMD
+      assert(force_gamd.size() == virial_tensor_gamd.size());
+      unsigned int size = force_gamd.size();
+      for(unsigned int i = 0; i< size; i++){
+         for(unsigned int j = 0; j< size; j++){
+           force_gamd[i][j] = 0.0;
+           virial_tensor_gamd[i][j] = 0.0;
+           }
       }
       domain.clear();
       size = force_groups.size();

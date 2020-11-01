@@ -580,8 +580,9 @@ namespace simulation
     aeds_search_all = 7,
   };
 
-  /**
+   /**
    * @enum GAMD search types
+   * ORIOL_GAMD
    */
   enum gamd_search_enum{
     /**
@@ -629,6 +630,7 @@ namespace simulation
      */
     upper_bound = 2,
   };
+
   /**
    * @enum interaction_lambda_enum
    * used to refer to interaction with their own lambda dependence
@@ -2932,8 +2934,10 @@ namespace simulation
       */
       unsigned int bsteps;
     } /** enveloping distribution sampling*/ eds;
+
   /**
    * @struct GAMD_struct
+   * ORIOL_GAMD
    * Gaussian accelerated md settings
    */
   struct gamd_struct {
@@ -3062,6 +3066,7 @@ namespace simulation
      */
     int equilibration;
   } /** Gaussian accelerated md */ gamd;  
+   
  struct reeds_struct : public replica_struct
     {
       /**

@@ -43,7 +43,7 @@
 #include <omp.h>
 #endif
 
-#ifdef HAVE_LIBCUKERNEL
+#ifdef HAVE_LIBCUDART
 #include <cudaKernel.h>
 #endif
 
@@ -114,9 +114,10 @@ calculate_interactions(topology::Topology & topo,
     // shared memory do this only once
     m_pairlist_algorithm->prepare(*p_topo, *p_conf, sim);
 
+    int error = 0;
 #ifdef OMP
     omp_set_num_threads(m_nonbonded_set.size());
-#pragma omp parallel
+#pragma omp parallel reduction(+:error)
     {
       unsigned int tid = omp_get_thread_num();
       // calculate the corresponding interactions
@@ -124,7 +125,7 @@ calculate_interactions(topology::Topology & topo,
       DEBUG(4, "calculating nonbonded interactions (thread "
               << tid << " of " << m_set_size << ")");
 
-      m_nonbonded_set[tid]->calculate_interactions(*p_topo, *p_conf, sim);
+      error += m_nonbonded_set[tid]->calculate_interactions(*p_topo, *p_conf, sim);
 
     }
 
@@ -132,6 +133,7 @@ calculate_interactions(topology::Topology & topo,
     std::cerr << "using OMP code without OMP defined..." << std::endl;
     return E_ILLEGAL;
 #endif
+    if (error) return 1;
     
     ////////////////////////////////////////////////////
     // end of multiple time stepping: calculate

@@ -31,44 +31,42 @@ int algorithm::GAMD
   simulation::Parameter::gamd_struct params = sim.param().gamd;
   std::vector<int> used_chargegroups;
   unsigned int num_groups = unsigned(ener.bond_energy.size());
-  // to do: add asserts, move energie calculation to energie calculate totals
+  unsigned int num_atoms = topo.num_atoms();
+  // to do: add asserts
   // Calculate the energies for each acceleration group
   // loop over all the acceleration groups
-  for (unsigned int gamdgroup = 0; gamdgroup < topo.gamd_atoms().size(); gamdgroup++){
-          // loop over the atoms to be accelerated in each group
-          for (unsigned int atom : topo.gamd_atoms()[gamdgroup]){
-                  // check if the charge group has already been used
-                  std::vector<int>::iterator it = std::find(used_chargegroups.begin(), used_chargegroups.end(), atom);
-                  if (it == used_chargegroups.end()){
-                        unsigned int chargegroup = topo.atom_energy_group()[atom];
-                        // add the energies to the gamd energies for that accel group
-                        // dihedral term
-                        ener.gamd_dihedral_total[gamdgroup] += ener.dihedral_energy[chargegroup];
-                        ener.gamd_dihedral_total[gamdgroup] += ener.improper_energy[chargegroup];
-                        ener.gamd_dihedral_total[gamdgroup] += ener.crossdihedral_energy[chargegroup];
-                        // potential total bonded
-                        ener.gamd_potential_total[gamdgroup] += ener.dihedral_energy[chargegroup];
-                        ener.gamd_potential_total[gamdgroup] += ener.improper_energy[chargegroup];
-                        ener.gamd_potential_total[gamdgroup] += ener.crossdihedral_energy[chargegroup];
-                        ener.gamd_potential_total[gamdgroup] += ener.bond_energy[chargegroup];
-                        ener.gamd_potential_total[gamdgroup] += ener.angle_energy[chargegroup];
-                        // potential total non-bonded
-                        for(unsigned int j=0; j<num_groups; j++){
-                                if (j != chargegroup){
-                                        ener.gamd_potential_total[gamdgroup] +=  ener.lj_energy[chargegroup][j];
-                                        ener.gamd_potential_total[gamdgroup] +=  ener.crf_energy[chargegroup][j];
-                                }
-                        }
-                        //save the used charge group
-                        used_chargegroups.push_back(chargegroup);
-                        
-                } // endif        
-          } // loop over atoms 
-  } // loop over acceleration groups
+  for (unsigned int atom=0; atom < num_atoms; atom++){
+    unsigned int chargegroup = topo.atom_energy_group()[atom];
+    unsigned int gamdgroup = topo.gamd_accel_group(atom);
+    // check if the charge group has already been used
+    std::vector<int>::iterator it = std::find(used_chargegroups.begin(), used_chargegroups.end(), atom);
+    if (it == used_chargegroups.end()){
+        // add the energies to the gamd energies for that accel group
+        // dihedral term
+        ener.gamd_dihedral_total[gamdgroup] += ener.dihedral_energy[chargegroup];
+        ener.gamd_dihedral_total[gamdgroup] += ener.improper_energy[chargegroup];
+        ener.gamd_dihedral_total[gamdgroup] += ener.crossdihedral_energy[chargegroup];
+        // potential total bonded
+        ener.gamd_potential_total[gamdgroup] += ener.dihedral_energy[chargegroup];
+        ener.gamd_potential_total[gamdgroup] += ener.improper_energy[chargegroup];
+        ener.gamd_potential_total[gamdgroup] += ener.crossdihedral_energy[chargegroup];
+        ener.gamd_potential_total[gamdgroup] += ener.bond_energy[chargegroup];
+        ener.gamd_potential_total[gamdgroup] += ener.angle_energy[chargegroup];
+        // potential total non-bonded
+        for(unsigned int chargegroup2=0; chargegroup2<num_groups; chargegroup2++){
+            if (chargegroup2 != chargegroup){
+                ener.gamd_potential_total[gamdgroup] +=  ener.lj_energy[chargegroup][chargegroup2];
+                ener.gamd_potential_total[gamdgroup] +=  ener.crf_energy[chargegroup][chargegroup2];
+                }
+        }
+        //save the used charge group
+        used_chargegroups.push_back(chargegroup);              
+    } // endif        
+  } // loop over atoms 
 
   // total energies have been computed now calculate acceleration
   if (sim.steps() > params.equilibration){
-      for (unsigned int gg = 0; gg < topo.gamd_atoms().size(); gg++){
+      for (unsigned int gg = 1; gg < params.agroups; gg++){
           switch (params.search){
             case simulation::cmd_search:
                 switch (sim.param().gamd.form)
@@ -154,101 +152,112 @@ int algorithm::GAMD
   } // endif 
 
   // statistics updated now accelerate
-  double factor;
   double prefactor;
   if (sim.param().gamd.search != simulation::cmd_search){
-      for (unsigned int gg = 0; gg < topo.gamd_atoms().size(); gg++){
+      for (unsigned int accelgroup = 1; accelgroup < params.agroups;  accelgroup++){
+
           switch (sim.param().gamd.form)
           {
               case simulation::dih_boost:
-                  double VE = ener.gamd_dihedral_total[gg] - params.ED[gg];
+              {
+                  double VE = ener.gamd_dihedral_total[accelgroup] - params.ED[accelgroup];
                   //if V < E apply boost
                   if (VE < 0){
-                      prefactor = params.kD[gg] * params.ED[gg];
-                      factor = prefactor + 1.0;
-                      ener.gamd_DV[gg] = prefactor * VE/2;
+                      prefactor = (params.kD[accelgroup] * VE) + 1;
+                      ener.gamd_DV[accelgroup] = prefactor * VE/2;
                       // loop over atoms
-                      for (unsigned int atom : topo.gamd_atoms()[gg]){
-                              conf.current().force(atom) += conf.special().gamd.dihe_force(atom) * (factor - 1);
-                              int chargegroup = topo.atom_energy_group()[atom];
-                              /**
-                              // to virial to do: save value for charge group??
+                       for unsigned int atom=0; atom < num_atoms; atom++){
+                              conf.current().force(atom) += conf.special().gamd.dihe_force[accelgroup](atom) * (prefactor - 1);
+                              //int chargegroup = topo.atom_energy_group()[atom];
+                              // to virial
                               for (int a = 0; a < 3; ++a) {
                                 for (int b = 0; b < 3; ++b) {
-                                    conf.current().virial_tensor(b, a) += conf.special().gamd.virial_tensor_dihe[chargegroup](b, a) * (prefactor -1);
+                                    conf.current().virial_tensor(b, a) += conf.special().gamd.virial_tensor_dihe[accelgroup](b, a) * (prefactor -1);
                                 }
                               } // end virial **/
                       } // end loop over atoms
                   } // endif
                   break;
+              }
 
           case simulation::tot_boost:
-                  double VE = ener.gamd_potential_total[gg] - params.ET[gg];
+          {
+                  double VE = ener.gamd_potential_total[accelgroup] - params.ET[accelgroup];
                   //if V < E apply boost
                   if (VE < 0){
-                      prefactor = params.kT[gg] * params.ET[gg];
-                      factor = prefactor + 1.0;
-                      ener.gamd_DV[gg] = prefactor * VE/2;
-                      // loop over atoms
-                      for (unsigned int atom : topo.gamd_atoms()[gg]){
-                              conf.current().force(atom) *= factor;
-                              int chargegroup = topo.atom_energy_group()[atom];
-                              /**
-                              // to virial to do: save value for charge group check charge group is not used
+                      prefactor = (params.kT[accelgroup] * VE) + 1;
+                      ener.gamd_DV[accelgroup] = prefactor * VE/2; // 
+                      for (unsigned int accelgroup2 = 0; accelgroup2 < params.agroups;  accelgroup2++){
+                        // choose the correct interaction factor to scale forces between acceleration groups
+                        double interaction_factor = 1.0;
+                        calc_interaction_factor(accelgroup, accelgroup2, &interaction_factor);
+                        //loop over the atoms
+                        for (unsigned int atom=0; atom < num_atoms; atom++){
+
+                                conf.current().force(atom) += conf.special().gamd.total_force[accelgroup][accelgroup2](atom) * (prefactor -1);
+                                conf.current().force(atom) += conf.special().gamd.total_force[accelgroup2][accelgroup](atom) * (prefactor -1);
+
+                              // to virial 
                               for (int a = 0; a < 3; ++a) {
                                 for (int b = 0; b < 3; ++b) {
-                                    conf.current().virial_tensor(b, a) += conf.special().gamd.virial_tensor[chargegroup](b, a) * (prefactor -1); 
+                                    conf.current().virial_tensor(b, a) += conf.special().gamd.virial_tensor[accelgroup][accelgroup2](b, a) * (prefactor -1);
+                                    conf.current().virial_tensor(b, a) += conf.special().gamd.virial_tensor[accelgroup2][accelgroup](b, a) * (prefactor -1); 
                                 }
                               } // end virial **/
-                      } // end loop over atoms
+                        } // end loop over atoms
+                      }
                   } // endif
                   break;
+            }
 
           case simulation::dual_boost:
-                  double VET = ener.gamd_potential_total[gg] - params.ET[gg] - ener.gamd_dihedral_total[gg];
+          {
+                  // first total potential
+                  double VET = ener.gamd_potential_total[accelgroup] - params.ET[accelgroup] - ener.gamd_dihedral_total[accelgroup];
                   //if V < E apply boost
                   if (VET < 0){
-                      prefactor = params.kT[gg] * params.ET[gg];
-                      factor = prefactor + 1.0;
-                      ener.gamd_DV[gg] = prefactor * VET/2;
-                      // loop over atoms
-                      for (unsigned int atom : topo.gamd_atoms()[gg]){
-                              conf.current().force(atom) *= factor;
-                              int chargegroup = topo.atom_energy_group()[atom];
-                              /**
-                              // to virial to do: save value for charge group check charge group is not used
+                      prefactor = (params.kT[accelgroup] * VET) + 1;
+                      ener.gamd_DV[accelgroup] = prefactor * VET/2; // 
+                      for (unsigned int accelgroup2 = 0; accelgroup2 < params.agroups;  accelgroup2++){
+                        // choose the correct interaction factor to scale forces between acceleration groups
+                        double interaction_factor = 1.0;
+                        calc_interaction_factor(accelgroup, accelgroup2, &interaction_factor);
+                        //loop over the atoms
+                        for (unsigned int atom=0; atom < num_atoms; atom++){
+
+                                conf.current().force(atom) += conf.special().gamd.total_force[accelgroup][accelgroup2](atom) * (prefactor -1);
+                                conf.current().force(atom) += conf.special().gamd.total_force[accelgroup2][accelgroup](atom) * (prefactor -1);
+
+                              // to virial 
                               for (int a = 0; a < 3; ++a) {
                                 for (int b = 0; b < 3; ++b) {
-                                    conf.current().virial_tensor(b, a) += conf.special().gamd.virial_tensor[chargegroup](b, a) * (prefactor -1); 
+                                    conf.current().virial_tensor(b, a) += conf.special().gamd.virial_tensor[accelgroup][accelgroup2](b, a) * (prefactor -1);
+                                    conf.current().virial_tensor(b, a) += conf.special().gamd.virial_tensor[accelgroup2][accelgroup](b, a) * (prefactor -1); 
                                 }
                               } // end virial **/
+                        }
                       } // end loop over atoms
                   } // endif
-                  else{
-                      factor = 1.0;
-                  }
-
-                  double VED = ener.gamd_dihedral_total[gg] - params.ED[gg];
+                  // dihedral term
+                  double VED = ener.gamd_dihedral_total[accelgroup] - params.ED[accelgroup];
                   //if V < E apply boost
                   if (VED < 0){
-                      prefactor = params.kD[gg] * params.ED[gg];
-                      double factor_dihedral = prefactor + 1.0;
-                      ener.gamd_DV[gg] += prefactor * VED/2;
+                      prefactor = (params.kD[accelgroup] * VED) + 1;
+                      ener.gamd_DV[accelgroup] = prefactor * VED/2;
                       // loop over atoms
-                      for (unsigned int atom : topo.gamd_atoms()[gg]){
-                              conf.current().force(atom) += conf.special().gamd.dihe_force(atom) * (factor_dihedral - factor);
-                              int chargegroup = topo.atom_energy_group()[atom];
-                              /**
-                              // to virial to do: save value for charge group??
+                       for (unsigned int atom=0; atom < num_atoms; atom++){
+                              conf.current().force(atom) += conf.special().gamd.dihe_force[accelgroup](atom) * (prefactor - 1);
+                              //int chargegroup = topo.atom_energy_group()[atom];
+                              // to virial
                               for (int a = 0; a < 3; ++a) {
                                 for (int b = 0; b < 3; ++b) {
-                                    conf.current().virial_tensor(b, a) += conf.special().gamd.virial_tensor_dihe[chargegroup](b, a) * (prefactor -1);
+                                    conf.current().virial_tensor(b, a) += conf.special().gamd.virial_tensor_dihe[accelgroup](b, a) * (prefactor -1);
                                 }
                               } // end virial **/
-                      } // end loop over atoms
-                  } // endif
-
-                  break;          
+                        } // end loop over atoms
+                    } // endif
+                  break; 
+            }         
           default:
             io::messages.add("Unknown functional form of gaussian accelerated md boosting potential. Should be 1 (dual acceleration), 2 (total potential energy acceleration), or 3 (dihedral acceleration)",
                              "Forcefield", io::message::critical);
@@ -285,10 +294,12 @@ int algorithm::GAMD::calc_gamd_E_K(simulation::gamd_thresh_enum Eform, double si
                         if(*k0 > 1.0 || *k0 <= 0.0){
                                 *k0 = (sigma0 / sigmaV) * (Vmax-Vmin) / (Vmax-Vmean);
                                 *E = Vmax;
+                                *k = *k0 / (Vmax - Vmin);
                                 return 1;
                         }
                         else{
                                 *E = Vmin + (Vmax-Vmin)/(*k0);
+                                *k = *k0 / (Vmax - Vmin);
                                 return 0;
                         }
 
@@ -296,7 +307,16 @@ int algorithm::GAMD::calc_gamd_E_K(simulation::gamd_thresh_enum Eform, double si
                 else if(Eform == simulation::lower_bound){
                                 *k0 = (sigma0 / sigmaV) * (Vmax-Vmin) / (Vmax-Vmean);
                                 *E = Vmax;
+                                *k = *k0 / (Vmax - Vmin);
                                 return 0;  
 
                 }
         };
+
+
+ void algorithm::GAMD::calc_interaction_factor(int accelerationgroup, int accelerationgroup2, double *interaction_factor){
+     // different ways of treating overlaping regions should be added here
+     if (accelerationgroup2 > 0){
+         *interaction_factor = 0.5
+     }
+ }

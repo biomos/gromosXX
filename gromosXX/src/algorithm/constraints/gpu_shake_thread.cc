@@ -17,7 +17,7 @@
 
 #include "../../algorithm/constraints/gpu_shake_thread.h"
 
-#ifdef HAVE_LIBCUKERNEL
+#ifdef HAVE_LIBCUDART
 #include <cudaKernel.h>
 #endif
 
@@ -58,6 +58,7 @@ algorithm::GPU_Shake_Thread::GPU_Shake_Thread(topology::Topology & topo,
   shake_fail_mol = -1;
   DEBUG(5, "Constructor of GPU_Shake_Thread " << gpu_id);
   start();
+  pthread_barrier_wait(&barrier_init);
 }
 
 /**
@@ -85,8 +86,9 @@ int algorithm::GPU_Shake_Thread::apply(){
  */
 void algorithm::GPU_Shake_Thread::init_run() {
   DEBUG(10, "M_SHAKE : Init : Number of GPUs: " << mysim->param().constraint.solvent.number_gpus << " ID: " << mysim->param().constraint.solvent.gpu_device_number.at(gpu_id));
-#ifdef HAVE_LIBCUKERNEL
+#ifdef HAVE_LIBCUDART
   int dev = mysim->param().constraint.solvent.gpu_device_number[gpu_id];
+  int error = 0;
 
   if (mysim->param().innerloop.method == simulation::sla_cuda && dev == -1) {
     if (gpu_id < mysim->param().innerloop.number_gpus) {
@@ -101,8 +103,13 @@ void algorithm::GPU_Shake_Thread::init_run() {
           mysim->param().constraint.solvent.number_gpus,
           gpu_id,
           mytopo->num_solvent_atoms(0),
-          mytopo->num_solvent_molecules(0));
+          mytopo->num_solvent_molecules(0),
+          &error);
   mysim->param().constraint.solvent.gpu_device_number[gpu_id] = dev;
+  if (error) {
+    io::messages.add("Cannot initialize GPU for SHAKE", io::message::error);
+    return;
+  }
 #endif
   return;
 }
@@ -115,7 +122,7 @@ void algorithm::GPU_Shake_Thread::cycle(){
     shake_fail_mol = -1;
 
     DEBUG(10, "GPU_Shake_Thread : Cycle : Calculate Constraints")
-#ifdef HAVE_LIBCUKERNEL
+#ifdef HAVE_LIBCUDART
     cudakernel::cudaGPU_Shake(&(myconf->current().pos(mytopo->num_solute_atoms())(0)),
           &(myconf->old().pos(mytopo->num_solute_atoms())(0)),
           shake_fail_mol, gpu_stat);
@@ -128,7 +135,7 @@ void algorithm::GPU_Shake_Thread::cycle(){
  */
 void algorithm::GPU_Shake_Thread::end_run() {
   DEBUG(10, "GPU_Shake_Thread : Clean up");
-#ifdef HAVE_LIBCUKERNEL
+#ifdef HAVE_LIBCUDART
   cudakernel::CleanUp(gpu_stat);
 #endif
 }

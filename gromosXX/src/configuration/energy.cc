@@ -365,7 +365,10 @@ int configuration::Energy::calculate_totals()
     }
   }
           
-  //  
+  //ORIOL_GAMD
+  for(unsigned int i=0; i<gamd_DV.size(); ++i){
+    gamd_DV_total += gamd_DV[i];
+  }  
   
   for(size_t i=0; i<kinetic_energy.size(); ++i){
     if (kinetic_energy[i] > m_ewarn){
@@ -375,7 +378,7 @@ int configuration::Energy::calculate_totals()
     kinetic_total += kinetic_energy[i];
   }
 
-  
+
   for(unsigned int i=0; i<num_groups; i++){
     for(unsigned int j=i; j<num_groups; j++){
 

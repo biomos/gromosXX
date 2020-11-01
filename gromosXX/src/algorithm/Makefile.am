@@ -1,6 +1,10 @@
 AM_CXXFLAGS = @MY_CXXFLAGS@
 AM_CPPFLAGS = -I$(top_srcdir) -I$(top_srcdir)/src -I$(top_srcdir)/src/interaction -I$(top_srcdir)/src/interaction/nonbonded -I$(top_srcdir)/src/interaction/nonbonded/pairlist -I$(top_srcdir)/src/interaction/nonbonded/interaction -I$(top_srcdir)/src/interaction/bonded -I$(top_srcdir)/src/interaction/forcefield -I$(top_srcdir)/src/interaction/special
 
+if WITH_CUDA
+  AM_CPPFLAGS += -I$(top_srcdir)/src/cukernel
+endif
+
 xxincludedir = $(includedir)/md++/algorithm
 xxinclude_HEADERS =	algorithm.h\
 	create_md_sequence.h
@@ -20,8 +24,8 @@ xxalgintegration_HEADERS = integration/energy_calculation.h\
 	integration/analyze.h\
 	integration/lattice_shift.h\
 	integration/multigradient.h\
-        integration/eds.h\
-		integration/gamd.h
+    integration/eds.h\
+	integration/gamd.h
 
 xxalgtempdir = $(includedir)/md++/algorithm/temperature
 xxalgtemp_HEADERS = temperature/temperature_calculation.h\
@@ -85,7 +89,8 @@ libgroalgorithm_la_SOURCES = algorithm.cc\
 	constraints/rottrans.cc\
 	integration/lattice_shift.cc\
 	integration/multigradient.cc\
-        integration/eds.cc
+    integration/eds.cc\
+	integration/gamd.cc
 
 bin_PROGRAMS =			
 

@@ -483,7 +483,6 @@ namespace io
     os << type << "EDS reference        : " << std::setw(30) << e.eds_vr << "\n";
     os << type << "Entropy              : " << std::setw(30) << e.entropy_term << "\n";
     os << type << "QM                   : " << std::setw(30) << e.qm_total << "\n";
-    os << type << "GAMD DV              : " << std::setw(30) << e.gamd_DV_total << "\n";
     os << "\n";
 
     os << std::setw(20) << "COV";
