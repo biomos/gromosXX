@@ -228,7 +228,7 @@ OPTIMIZE_OUTPUT_VHDL   = NO
 # (default is Fortran), use: inc=Fortran f=C. Note that for custom extensions
 # you also need to set FILE_PATTERNS otherwise the files are not read by doxygen.
 
-EXTENSION_MAPPING      =
+EXTENSION_MAPPING      = cu=c
 
 # If you use STL classes (i.e. std::string, std::vector, etc.) but do not want
 # to include (a tag file for) the STL sources as input, then you should
@@ -623,6 +623,8 @@ INPUT                  = <SRCDIR> \
                          <SRCDIR>/src/io/parameter \
                          <SRCDIR>/src/io/topology \
                          <SRCDIR>/src/io/configuration \
+                         <SRCDIR>/src/cukernel \
+                         <SRCDIR>/src/cukernel/lib \
                          <SRCDIR>/program \
                          <SRCDIR>/contrib \
                          <SRCDIR>/doc
@@ -645,6 +647,7 @@ INPUT_ENCODING         = UTF-8
 
 FILE_PATTERNS          = *.h \
                          *.cc \
+                         *.cu \
                          *.inline \
                          *.macro \
                          *.tcc \
