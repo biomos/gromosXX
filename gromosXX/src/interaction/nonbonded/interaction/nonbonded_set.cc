@@ -277,6 +277,8 @@ int interaction::Nonbonded_Set
       int gamdj = topo.gamd_accel_group(j);
       m_storage.force_gamd[gamdi][gamdj](i) += m_longrange_storage.force_gamd[gamdi][gamdj](i);
       m_storage.force_gamd[gamdi][gamdj](j) += m_longrange_storage.force_gamd[gamdi][gamdj](j);
+      }
+    }
   }
 
   // add longrange virial
@@ -293,6 +295,8 @@ int interaction::Nonbonded_Set
       m_storage.virial_tensor_gamd[gamdi][gamdj] += m_longrange_storage.virial_tensor_gamd[gamdi][gamdj];
       m_storage.virial_tensor_gamd[gamdi][gamdj] += m_longrange_storage.virial_tensor_gamd[gamdi][gamdj];
       }
+    }
+  }
   }
   stop_timer("longrange addition");
   

@@ -4067,7 +4067,7 @@ void io::In_Parameter::read_GAMD(simulation::Parameter & param,
     param.gamd.dihboost.resize(param.gamd.agroups, 0.0);
     param.gamd.totboost.resize(param.gamd.agroups, 0.0);
     param.gamd.k0D.resize(param.gamd.agroups, 0.0);
-    param.gamd.K0T.resize(param.gamd.agroups, 0.0);
+    param.gamd.k0T.resize(param.gamd.agroups, 0.0);
     param.gamd.M2D.resize(param.gamd.agroups, 0.0);
     param.gamd.M2T.resize(param.gamd.agroups, 0.0);
     param.gamd.VmaxD.resize(param.gamd.agroups, 0.0);

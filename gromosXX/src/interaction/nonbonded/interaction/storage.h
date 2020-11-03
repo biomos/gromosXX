@@ -86,9 +86,9 @@ namespace interaction
       }
       //ORIOL_GAMD
       assert(force_gamd.size() == virial_tensor_gamd.size());
-      unsigned int size = force_gamd.size();
-      for(unsigned int i = 0; i< size; i++){
-         for(unsigned int j = 0; j< size; j++){
+      unsigned int gamdsize = force_gamd.size();
+      for(unsigned int i = 0; i< gamdsize; i++){
+         for(unsigned int j = 0; j< gamdsize; j++){
            force_gamd[i][j] = 0.0;
            virial_tensor_gamd[i][j] = 0.0;
            }

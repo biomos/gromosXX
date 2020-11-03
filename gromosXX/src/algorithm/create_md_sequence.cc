@@ -111,7 +111,7 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
   } 
 
   //ORIOL_GAMD add GAMD
-  if (sim.param().gamd){
+  if (sim.param().gamd.gamd){
     md_seq.push_back(new algorithm::GAMD());
   } 
               

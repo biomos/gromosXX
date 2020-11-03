@@ -52,9 +52,11 @@ namespace algorithm
   /**
    * calculate E threshold and k0
    */
-  int calc_gamd_E_K(simulation::gamd_thresh_enum Eform, double sigma0, double Vmax, double Vmin, double Vmean, double sigmaV,
-                   double *k0, double *k, double *E)
-  
+  int calc_gamd_E_K(simulation::gamd_thresh_enum Eform, double sigma0, double Vmax, double Vmin, double Vmean, double sigmaV, double *k0, double *k, double *E);
+  /**
+   * calculate interaction factor between acceleration regions
+   */
+  void calc_interaction_factor(int accelerationgroup, int accelerationgroup2, double *interaction_factor);
   };
    
 } // algorithm

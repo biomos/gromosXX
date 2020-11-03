@@ -973,6 +973,7 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::one_four_interaction_in
           storage.virial_tensor(b, a) += r(b) * term;
           storage.virial_tensor_gamd[gamdi][gamdj](b, a) += r(b) * term;
         }
+       }
       }
       break;
     }
@@ -1212,6 +1213,7 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_exception_innerloop
           storage.virial_tensor(b, a) += r(b) * term;
           storage.virial_tensor_gamd[gamdi][gamdj](b, a) += r(b) * term;
         }
+       }
       }
       break;
     }

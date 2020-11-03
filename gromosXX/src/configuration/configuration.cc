@@ -360,11 +360,11 @@ void configuration::Configuration::init(topology::Topology const & topo,
   special().gamd.dihe_force.resize(param.gamd.agroups);
   special().gamd.virial_tensor.resize(param.gamd.agroups);
   for (unsigned int i = 0; i < special().gamd.total_force.size(); i++){
-    special().gamd.total_force[i].resize(topo.num_atoms());
-    special().gamd.dihe_force[i].resize(param.gamd.agroups);
+    special().gamd.dihe_force[i].resize(topo.num_atoms());
+    special().gamd.total_force[i].resize(param.gamd.agroups);
     special().gamd.virial_tensor[i].resize(param.gamd.agroups);
     for (unsigned int j = 0; j < special().gamd.total_force.size(); j++){
-      special().gamd.dihe_force[i][j].resize(topo.num_atoms());
+      special().gamd.total_force[i][j].resize(topo.num_atoms());
     }
   }  
   special().gamd.virial_tensor_dihe.resize(param.gamd.agroups);

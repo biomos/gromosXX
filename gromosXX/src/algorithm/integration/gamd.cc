@@ -166,7 +166,7 @@ int algorithm::GAMD
                       prefactor = (params.kD[accelgroup] * VE) + 1;
                       ener.gamd_DV[accelgroup] = prefactor * VE/2;
                       // loop over atoms
-                       for unsigned int atom=0; atom < num_atoms; atom++){
+                       for (unsigned int atom=0; atom < num_atoms; atom++){
                               conf.current().force(atom) += conf.special().gamd.dihe_force[accelgroup](atom) * (prefactor - 1);
                               //int chargegroup = topo.atom_energy_group()[atom];
                               // to virial
@@ -317,6 +317,6 @@ int algorithm::GAMD::calc_gamd_E_K(simulation::gamd_thresh_enum Eform, double si
  void algorithm::GAMD::calc_interaction_factor(int accelerationgroup, int accelerationgroup2, double *interaction_factor){
      // different ways of treating overlaping regions should be added here
      if (accelerationgroup2 > 0){
-         *interaction_factor = 0.5
+         *interaction_factor = 0.5;
      }
- }
+ };
