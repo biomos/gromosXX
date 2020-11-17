@@ -164,34 +164,34 @@ title line
 END
 @endverbatim
  *
- * @section GAUSSIANBINARY block for the Gaussian worker
- * The GAUSSIANBINARY block specifies path to GAUSSIAN binary
+ * @section GAUBINARY block for the Gaussian worker
+ * The GAUBINARY block specifies path to GAUSSIAN binary
  *
  * This block is optional. If unspecified, g16 command from PATH environment variable
  * is used.
  *
  * @verbatim
-GAUSSIANBINARY
+GAUBINARY
 /path/to/gaussian/binary
 END
 @endverbatim
- * @section GAUSSIANFILES block for the Gaussian worker
- * The GAUSSIANFILES block specifies input and output files to exchange data with Gaussian
+ * @section GAUFILES block for the Gaussian worker
+ * The GAUFILES block specifies input and output files to exchange data with Gaussian
  *
  * This block is optional. If unspecified, temporary files are created using TMPDIR
  * environment variable. User-specified files are not deleted after use.
  *
  * @verbatim
-GAUSSIANFILES
+GAUFILES
 /path/to/gaussian.gjf
 /path/to/gaussian.out
 END
 @endverbatim
  *
- * The GAUSSIANHEADER block specifies the header part of the Gaussian input file.
+ * The GAUHEADER block specifies the header part of the Gaussian input file.
  * 
 @verbatim
-GAUSSIANHEADER
+GAUHEADER
 %nproc=8
 %mem=2GB
 %NoSave
@@ -199,22 +199,22 @@ GAUSSIANHEADER
 END
 @endverbatim
  *
- * The GAUSSIANROUTE block specifies the route section of the Gaussian input file.
+ * The GAUROUTE block specifies the route section of the Gaussian input file.
  * hashsign (#) should be omitted. It is beneficial to generate an initial checkpoint file
  * and reuse it in subsequent steps with guess=read option.
  * 
 @verbatim
-GAUSSIANROUTE
+GAUROUTE
 N hf/STO-3G nosymm pop(mk) charge(angstroms) force charge(angstroms) prop=(field,read)
 END
 @endverbatim
  *
- * The GAUSSIANCHSM block specifies the net charge and the spin multiplicity of the system.
+ * The GAUCHSM block specifies the net charge and the spin multiplicity of the system.
  * Variables are allowed. Implemented are
  * - CHARGE: net charge of the QM zone
  * - SPINM: spin multiplicity of the QM zone
 @verbatim
-GAUSSIANCHSM
+GAUCHSM
 @@CHARGE@@ @@SPINM@@
 END
 @endverbatim
@@ -482,10 +482,10 @@ io::In_QMMM::read(topology::Topology& topo,
    */
   else if (sw == simulation::qm_gaussian) {
     this->read_units(sim, &sim.param().qmmm.gaussian);
-    { // GAUSSIANBINARY
+    { // GAUBINARY
 
-      DEBUG(15, "Reading GAUSSIANBINARY");
-      buffer = m_block["GAUSSIANBINARY"];
+      DEBUG(15, "Reading GAUBINARY");
+      buffer = m_block["GAUBINARY"];
 
       if (!buffer.size()) {
         io::messages.add("Assuming that the g16 binary is in the PATH",
@@ -493,36 +493,36 @@ io::In_QMMM::read(topology::Topology& topo,
         sim.param().qmmm.gaussian.binary = "g16";
       } else {
         if (buffer.size() != 3) {
-          io::messages.add("GAUSSIANBINARY block corrupt. Provide 1 line.",
+          io::messages.add("GAUBINARY block corrupt. Provide 1 line.",
                   "In_QMMM", io::message::error);
           return;
         }
         sim.param().qmmm.gaussian.binary = buffer[1];
       }
-    } // GAUSSIANBINARY
-    { // GAUSSIANFILES
+    } // GAUBINARY
+    { // GAUFILES
 
-      DEBUG(15, "Reading GAUSSIANFILES");
-      buffer = m_block["GAUSSIANFILES"];
+      DEBUG(15, "Reading GAUFILES");
+      buffer = m_block["GAUFILES"];
 
       if (!buffer.size()) {
         io::messages.add("Using temporary files for Gaussian input/output",
                 "In_QMMM", io::message::notice);
       } else {
         if (buffer.size() != 4) {
-          io::messages.add("GAUSSIANFILES block corrupt. Provide 2 lines.",
+          io::messages.add("GAUFILES block corrupt. Provide 2 lines.",
                   "In_QMMM", io::message::error);
           return;
         }
         sim.param().qmmm.gaussian.input_file = buffer[1];
         sim.param().qmmm.gaussian.output_file = buffer[2];
       }
-    } // GAUSSIANFILES
-    { // GAUSSIANHEADER
-      buffer = m_block["GAUSSIANHEADER"];
+    } // GAUFILES
+    { // GAUHEADER
+      buffer = m_block["GAUHEADER"];
 
       if (!buffer.size()) {
-        io::messages.add("no GAUSSIANHEADER block in QM/MM specification file",
+        io::messages.add("no GAUHEADER block in QM/MM specification file",
                 "In_QMMM", io::message::error);
         return;
       }
@@ -530,12 +530,12 @@ io::In_QMMM::read(topology::Topology& topo,
               sim.param().qmmm.gaussian.input_header);
       DEBUG(1, "sim.param().qmmm.gaussian.input_header:");
       DEBUG(1, sim.param().qmmm.gaussian.input_header);
-    } // GAUSSIANHEADER
-    { // GAUSSIANROUTE
-      buffer = m_block["GAUSSIANROUTE"];
+    } // GAUHEADER
+    { // GAUROUTE
+      buffer = m_block["GAUROUTE"];
 
       if (!buffer.size()) {
-        io::messages.add("no GAUSSIANROUTE block in QM/MM specification file",
+        io::messages.add("no GAUROUTE block in QM/MM specification file",
                 "In_QMMM", io::message::error);
         return;
       }
@@ -544,17 +544,17 @@ io::In_QMMM::read(topology::Topology& topo,
       sim.param().qmmm.gaussian.route_section = "#" + sim.param().qmmm.gaussian.route_section;
       DEBUG(1, "sim.param().qmmm.gaussian.route_section:");
       DEBUG(1, sim.param().qmmm.gaussian.route_section);
-    } // GAUSSIANROUTE
-    { // GAUSSIANCHSM
-      buffer = m_block["GAUSSIANCHSM"];
+    } // GAUROUTE
+    { // GAUCHSM
+      buffer = m_block["GAUCHSM"];
 
       if (!buffer.size()) {
-        io::messages.add("no GAUSSIANCHSM block in QM/MM specification file",
+        io::messages.add("no GAUCHSM block in QM/MM specification file",
                 "In_QMMM", io::message::error);
         return;
       }
       if (buffer.size() != 3) {
-        io::messages.add("GAUSSIANCHSM block corrupt. Provide 1 line.",
+        io::messages.add("GAUCHSM block corrupt. Provide 1 line.",
                 "In_QMMM", io::message::error);
         return;
       }
@@ -562,7 +562,7 @@ io::In_QMMM::read(topology::Topology& topo,
               sim.param().qmmm.gaussian.chsm);
       DEBUG(1, "sim.param().qmmm.gaussian.chsm:");
       DEBUG(1, sim.param().qmmm.gaussian.chsm);
-    } // GAUSSIANCHSM
+    } // GAUCHSM
   }
 
   // Cap length definition
@@ -627,49 +627,39 @@ void io::In_QMMM::read_elements(const topology::Topology& topo
 void io::In_QMMM::read_units(const simulation::Simulation& sim
                   , simulation::Parameter::qmmm_struct::qm_param_struct* qm_param)
   {
-  std::map<simulation::qm_software_enum, std::array<double, 4> >
-  unit_factor_defaults = {
-    {simulation::qm_mndo,
-                    { math::angstrom /* A */
-                    , math::kcal /* kcal */
-                    , math::kcal / math::angstrom /* kcal/A*/
-                    , math::echarge /* e */}},
-    {simulation::qm_turbomole,
-                    { math::bohr /* a.u. */
-                    , math::hartree * math::avogadro /* a.u. */
-                    , math::hartree * math::avogadro / math::bohr /* a.u. */
-                    , math::echarge /* e */}},
-    {simulation::qm_dftb,
-                    { math::bohr /* a.u. */
-                    , math::hartree * math::avogadro /* a.u. */
-                    , math::hartree * math::avogadro / math::bohr /* a.u. */
-                    , math::echarge /* e */}},
-    {simulation::qm_mopac,
-                    { math::angstrom /* A */
-                    , math::kcal /* kcal */
-                    , math::kcal / math::angstrom /* kcal/A */
-                    , math::echarge /* e */}},
-    {simulation::qm_gaussian,
-                    { math::angstrom /* A */
-                    , math::hartree * math::avogadro /* a.u. */
-                    , math::hartree * math::avogadro / math::bohr /* a.u. */
-                    , math::echarge /* e */}}
-  };
+  // std::map<simulation::qm_software_enum, std::array<double, 4> >
+  // unit_factor_defaults = {
+  //   {simulation::qm_mndo,
+  //                   { math::angstrom /* A */
+  //                   , math::kcal /* kcal */
+  //                   , math::kcal / math::angstrom /* kcal/A*/
+  //                   , math::echarge /* e */}},
+  //   {simulation::qm_turbomole,
+  //                   { math::bohr /* a.u. */
+  //                   , math::hartree * math::avogadro /* a.u. */
+  //                   , math::hartree * math::avogadro / math::bohr /* a.u. */
+  //                   , math::echarge /* e */}},
+  //   {simulation::qm_dftb,
+  //                   { math::bohr /* a.u. */
+  //                   , math::hartree * math::avogadro /* a.u. */
+  //                   , math::hartree * math::avogadro / math::bohr /* a.u. */
+  //                   , math::echarge /* e */}},
+  //   {simulation::qm_mopac,
+  //                   { math::angstrom /* A */
+  //                   , math::kcal /* kcal */
+  //                   , math::kcal / math::angstrom /* kcal/A */
+  //                   , math::echarge /* e */}},
+  //   {simulation::qm_gaussian,
+  //                   { math::angstrom /* A */
+  //                   , math::hartree * math::avogadro /* a.u. */
+  //                   , math::hartree * math::avogadro / math::bohr /* a.u. */
+  //                   , math::echarge /* e */}}
+  // };
 
   std::vector<std::string> buffer = m_block["QMUNIT"];
   if (!buffer.size()) {
-    std::array<double, 4> defaults = unit_factor_defaults[sim.param().qmmm.software];
-    qm_param->unit_factor_length = defaults[0];
-    qm_param->unit_factor_energy = defaults[1];
-    qm_param->unit_factor_force  = defaults[2];
-    qm_param->unit_factor_charge = defaults[3];
-    std::ostringstream msg;
-    msg << "Using default QMUNIT: "
-        << qm_param->unit_factor_length << ", "
-        << qm_param->unit_factor_energy << ", "
-        << qm_param->unit_factor_force << ", "
-        << qm_param->unit_factor_charge;
-    io::messages.add(msg.str(),"In_QMMM", io::message::notice);
+    io::messages.add("no QMUNIT block in QM/MM specification file",
+            "In_QMMM", io::message::error);
     return;
   }
   _lineStream.clear();
