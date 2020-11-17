@@ -319,8 +319,8 @@ int main(int argc, char *argv[]) {
                 << "\n\t\t ERROR please make sure giving the same number of threads as replicas or a multiple of these!\n"
                 << "\n\t########################################################\n";
         std::string msg = "ERROR please make sure giving the same number of threads as replicas or a multiple of these !\n";
-        std::cout << msg  << "( "<<numReplicas<<" replica x x)\n\n" << std::endl;
-        std::cerr << msg  << "( "<<numReplicas<<" replica x x)\n\n" << std::endl;
+        std::cout << msg  << "( "<<numReplicas<<" replica * x)\n\n" << std::endl;
+        std::cerr << msg  << "( "<<numReplicas<<" replica * x)\n\n" << std::endl;
         MPI_Finalize();
         MPI_Abort(MPI_COMM_WORLD, E_USAGE);
         return -1;    }
@@ -364,7 +364,8 @@ int main(int argc, char *argv[]) {
         MPI_Comm_split(MPI_COMM_WORLD,graphMPIColor+3, globalThreadID, &replicaGraphCOMM);
     }            
 
-
+    
+    
     util::replica_graph_control reGMPI(0,   //GraphID 
                                        0,   // MasterID
                                 graphThreadID,  // This Thread
@@ -388,9 +389,6 @@ int main(int argc, char *argv[]) {
         std::cerr << "num of threads: "  << totalNumberOfThreads << "\n";
         std::cerr << "threads per rep: " << threadsPerReplicaSimulation << "\n";
         std::cout << "Masters of "<<reGMPI.numberOfReplicas<< "replicas \t";
-        //for(int masterThreadID : replica_master_IDS){
-        //    std::cout << masterThreadID  << "\t";
-        //}
     }
     std::cout << "\n";
     MPI_DEBUG(1, "REPLICA_ID \t " << globalThreadID << "\t Simulation_ID\t"<< simulationID << "\t RE_GRAPH COMM ESTABLISHED\n");

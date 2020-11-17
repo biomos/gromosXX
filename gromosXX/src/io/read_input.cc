@@ -123,6 +123,9 @@ int io::read_input_repex(io::Argument const & args,
     if(sim.param().reeds.reeds == 1){
         numReplicas = sim.param().reeds.num_l;
     }
+    else if(sim.param().reeds.reeds == 2){
+        numReplicas = sim.param().reeds.num_l *  sim.param().reeds.num_eoff;
+    }
     else{
         numReplicas = sim.param().replica.num_l*sim.param().replica.num_T;
     }

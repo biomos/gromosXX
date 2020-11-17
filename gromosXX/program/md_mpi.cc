@@ -158,10 +158,7 @@ int main(int argc, char *argv[]) {
         std::cout << "\n";
     }
     std::cout.flush();
-    MPI_Barrier(simulationCOMM);
-    std::cout << "Simulation This Thread ID " << sim.mpiControl().threadID << "\n";
-    std::cout.flush();
-    MPI_Barrier(simulationCOMM);
+
     if (sim.mpiControl().threadID == sim.mpiControl().masterID) {
         std::cout << "END\n";
     }
@@ -186,29 +183,15 @@ int main(int argc, char *argv[]) {
     // initialises all algorithms (and therefore also the forcefield)
     md.init(topo, conf, sim, *os, quiet);
 
-    MPI_Barrier(simulationCOMM);
-    std::cout << "DONE all the intialisaton fun "<<rank<<" \t  \t DONE.\n";
-    std::cout.flush();
-    MPI_Barrier(simulationCOMM);
 
     int error = 0;
     if (sim.mpiControl().threadID == sim.mpiControl().masterID) {
-
-        std::cout << "MPI master node (of " << size << " nodes)" << std::endl;
-
-        MPI_Barrier(simulationCOMM);
-        std::cout << "Master "<<rank<<" \t START \t DONE.\n";
-        std::cout.flush();
-        MPI_Barrier(simulationCOMM);
-        
+       
         io::Out_Configuration traj(GROMOSXX "\n");
         traj.title(GROMOSXX "\n" + sim.param().title);
 
         // create output files...
         traj.init(args, sim.param());
-
-        std::cout << "\nMESSAGES FROM INITIALIZATION\n";
-
 
         {
             int iom = io::messages.display(std::cout);
@@ -251,11 +234,6 @@ int main(int argc, char *argv[]) {
                 << "==================================================\n"
                 << std::endl;
    
-        MPI_Barrier(simulationCOMM);
-        std::cout << "MASTER "<<rank<<" \t INIT \t DONE.\n";
-        std::cout.flush();
-        MPI_Barrier(simulationCOMM);
-
         const double init_time = util::now() - start;
 
         int next_step = 1;
@@ -263,13 +241,6 @@ int main(int argc, char *argv[]) {
         while (int(sim.steps()) < sim.param().step.number_of_steps) {
             traj.write(conf, topo, sim, io::reduced);
             // run a stepi
-            MPI_Barrier(simulationCOMM);
-            std::cout.flush();
-            std::cout << "Master "<<rank<<" \t START MD \t DONE.\n";
-            std::cout.flush();
-            md.printSequence();
-            MPI_Barrier(simulationCOMM);
-             
             if ((error = md.run(topo, conf, sim))) {
                 if ((error == E_MINIMUM_REACHED) || (error == E_MINIMUM_NOT_REACHED)) {
                     conf.old().energies.calculate_totals();
@@ -316,7 +287,6 @@ int main(int argc, char *argv[]) {
                 // try to save the final structures...
                 break;
             }
-            std::cout << "We shall move on to the nexst step my friends!\n";
             // tell the slaves to continue
             MPI_Bcast(&next_step, 1, MPI::INT, sim.mpiControl().masterID, sim.mpiControl().comm);
             traj.print(topo, conf, sim);
@@ -344,12 +314,6 @@ int main(int argc, char *argv[]) {
                 std::cerr << "MD: ETA   " << eta_hh << ":" << eta_mm << ":" << eta_ss << std::endl;
                 std::cout << "MD: ETA   " << eta_hh << ":" << eta_mm << ":" << eta_ss << std::endl;
             }
-            
-            //TODO: REMOVE!
-            MPI_Barrier(simulationCOMM);
-            std::cout << "Master "<<rank<<" \t DONE STEP \t DONE.\n";
-            std::cout.flush();
-            MPI_Barrier(simulationCOMM);
         }
 
         // if next_step==2, we are at an energy minimum and wrote the coordinates already
@@ -390,11 +354,6 @@ int main(int argc, char *argv[]) {
 
     else {
         (*os) << "MPI slave " << rank << " of " << size << std::endl;
-        
-        MPI_Barrier(simulationCOMM);
-        std::cout << "SLAVE "<<rank<<" \t START \t DONE.\n";
-        std::cout.flush();
-        MPI_Barrier(simulationCOMM);
         
         MPI_Bcast(&error, 1, MPI::INT, sim.mpiControl().masterID, sim.mpiControl().comm);
 
@@ -486,10 +445,6 @@ int main(int argc, char *argv[]) {
                 } 
              */
 
-            MPI_Barrier(simulationCOMM);
-            std::cout << "SLAVE "<<rank<<" \t INIT \t DONE.\n";
-            std::cout.flush();
-            MPI_Barrier(simulationCOMM);
         
             //////////////////////////////////////////////////////////////////////////////////////////////////////
             // run the simulation
@@ -499,26 +454,15 @@ int main(int argc, char *argv[]) {
 
             while (int(sim.steps()) < sim.param().step.number_of_steps) {
                 // run a step
-                MPI_Barrier(simulationCOMM);
-                std::cout.flush();
-                std::cout << "Slave "<<rank<<" \t START MD \t DONE.\n";
-                std::cout.flush();
-                MPI_Barrier(simulationCOMM);
-
-                std::cout << "SLAVE "<<rank<<" \t NB \t START.\n";
                 if (do_nonbonded && (error = nb->calculate_interactions(topo, conf, sim)) != 0) {
                     std::cout << "MPI slave " << rank << ": error in nonbonded calculation!\n" << std::endl;
                 }
-                std::cout << "SLAVE "<<rank<<" \t NB \t DONE.\n";
 
-                std::cout << "SLAVE "<<rank<<" \t MC \t START.\n";
                 if (do_cmc && (error = monte_carlo->apply(topo, conf, sim)) != 0) {
                     std::cout << "MPI slave " << rank << ": error in Monte Carlo algorithm!\n"
                             << std::endl;
                 }
-                std::cout << "SLAVE "<<rank<<" \t MC \t DONE.\n";
 
-                std::cout << "SLAVE "<<rank<<" \t SHAKE \t START.\n";
                 if (do_shake && (error = shake->apply(topo, conf, sim)) != 0) {
                     std::cout << "MPI slave " << rank << ": error in Shake algorithm!\n" << std::endl;
                 }
@@ -531,8 +475,6 @@ int main(int argc, char *argv[]) {
                 if (do_m_shake && (error = m_shake->apply(topo, conf, sim)) != 0) {
                     std::cout << "MPI slave " << rank << ": error in M-Shake algorithm!\n" << std::endl;
                 }
-                std::cout << "SLAVE "<<rank<<" \t SHAKE \t DONE.\n";
-
 
                 MPI_Bcast(&next_step, 1, MPI::INT, sim.mpiControl().masterID, sim.mpiControl().comm);
 
@@ -549,12 +491,6 @@ int main(int argc, char *argv[]) {
 
                 sim.steps() = sim.steps() + sim.param().analyze.stride;
                 sim.time() = sim.param().step.t0 + sim.steps() * sim.time_step_size();
-                
-                //TODO: REMOVE!
-                MPI_Barrier(simulationCOMM);
-                std::cout << "SLAVE "<<rank<<" \t DONE STEP \t DONE.\n";
-                std::cout.flush();
-                MPI_Barrier(simulationCOMM);
             }
 
             (*os) << "\nMESSAGES FROM SIMULATION\n";

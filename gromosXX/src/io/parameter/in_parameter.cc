@@ -2861,9 +2861,9 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
     exampleblock << "#                       can be used to optimize the s distribution.                                    \n";
     exampleblock << "#             0 eds stat turned off                                                                    \n";
     exampleblock << "#             1 eds stat turned on                                                                     \n";
-    exampleblock << "# PERIODIC >= 0 2D periodic boundary (Eoff only)               \n";
-    exampleblock << "#             0 periodic boundary off                          \n";
-    exampleblock << "#             1 periodic boundary on                           \n";
+    exampleblock << "# PERIODIC >= 0 2D periodic boundary (Eoff only)               \n";  //REMOVE THIS PART @bschroed
+    exampleblock << "#             0 periodic boundary off                          \n";  //REMOVE THIS PART @bschroed
+    exampleblock << "#             1 periodic boundary on                           \n";  //REMOVE THIS PART @bschroed
     exampleblock << "#          \n";
     exampleblock << "#  REEDS    \n";
     exampleblock << "   1       \n";
@@ -2900,7 +2900,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
         //init_vars
         unsigned int reeds_control, num_s, num_states, num_eoff=0;
         unsigned int ntrials, nEquilibrate, cont_run, eds_stat_out=0;
-        bool periodic=0;
+        bool periodic=1;
 
         // GET BLOCKVARS
         //SYS Settings
@@ -2941,8 +2941,8 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
         block.get_next_parameter("NREQUIL", nEquilibrate, ">=0", "");
         block.get_next_parameter("CONT", cont_run, "", "0,1");
         block.get_next_parameter("EDS_STAT_OUT", eds_stat_out, "", "0,1");
-        block.get_next_parameter("PERIODIC", periodic, "", "0,1");
-        DEBUG(3, "REPLICA_EDS BLOCK: PERIODIC= " << periodic);
+        block.get_next_parameter("PERIODIC", periodic, "", "0,1");  //REMOVE THIS PART @bschroed
+        DEBUG(3, "REPLICA_EDS BLOCK: PERIODIC= " << periodic);  //REMOVE THIS PART @bschroed
 
 
         // SET SETTINGS
