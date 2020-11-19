@@ -711,10 +711,14 @@ namespace topology
      * returns 0 if not accelerated
      **/
     int gamd_accel_group(unsigned int const i)const {
-      assert(i < m_gamd_accel_group.size());
-      return m_gamd_accel_group[i];
+      //assert(i < m_gamd_accel_group.size());
+      if (i < m_gamd_accel_group.size()){
+        return m_gamd_accel_group[i];
+      }
+      else {
+        return 0;
+      }
     }
-
     /**
      * is the atom polarisable?
      */
