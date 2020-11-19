@@ -404,7 +404,7 @@ int io::read_special(io::Argument const & args,
 
         ig.read(topo, sim, os);
         io::messages.add("gamd atom info read from " + args["gamd"] + "\n" +
-                util::frame_text(ix.title),
+                util::frame_text(ig.title),
                 "read special", io::message::notice);
       }
     }
