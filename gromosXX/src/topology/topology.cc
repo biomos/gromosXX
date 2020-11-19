@@ -119,6 +119,7 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
 
   m_is_perturbed.clear();
   m_is_eds_perturbed.clear();
+  m_gamd_accel_group.clear();
   m_is_polarisable.clear();
   m_is_coarse_grained.clear();
   m_iac.clear();
@@ -171,6 +172,7 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
 
     m_is_perturbed.insert(m_is_perturbed.end(), topo.m_is_perturbed.begin(), topo.m_is_perturbed.end());
     m_is_eds_perturbed.insert(m_is_eds_perturbed.end(), topo.m_is_eds_perturbed.begin(), topo.m_is_eds_perturbed.end());
+    m_gamd_accel_group.insert(m_gamd_accel_group.end(), topo.m_gamd_accel_group.begin(), topo.m_gamd_accel_group.end());
     m_is_polarisable.insert(m_is_polarisable.end(), topo.m_is_polarisable.begin(), topo.m_is_polarisable.end());
     m_is_coarse_grained.insert(m_is_coarse_grained.end(), topo.m_is_coarse_grained.begin(), topo.m_is_coarse_grained.end());
 
@@ -487,6 +489,7 @@ void topology::Topology::resize(unsigned int const atoms) {
   // chargegroups???
   m_is_perturbed.resize(atoms, false);
   m_is_eds_perturbed.resize(atoms, false);
+  m_gamd_accel_group.resize(atoms, 0);
   m_is_polarisable.resize(atoms, false);
   m_is_coarse_grained.resize(atoms, false);
 }
