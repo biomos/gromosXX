@@ -27,6 +27,7 @@
 #include "../io/topology/in_jvalue.h"
 #include "../io/topology/in_friction.h"
 #include "../io/topology/in_xray.h"
+#include "../io/topology/in_gamd.h"
 #include "../io/topology/in_leus.h"
 #include "../io/topology/in_bsleus.h"
 #include "../io/topology/in_qmmm.h"
@@ -383,6 +384,31 @@ int io::read_special(io::Argument const & args,
       }
     }
   }
+
+  // ORIOL_GAMD
+  // GAMD atoms info
+  if (sim.param().gamd.gamd){
+    io::igzstream gamd_file;
+
+    if (args.count("gamd") != 1){
+      io::messages.add("gaussian accelerated MD: no data file specified (use @gamd)",
+		       "read special", io::message::error);
+    } else {
+      gamd_file.open(args["gamd"].c_str());
+      if (!gamd_file.is_open()){
+	io::messages.add("opening gaussian accelerated MD atoms file failed!\n",
+			 "read_special", io::message::error);
+      } else {
+        io::In_GAMD ig(gamd_file);
+        ig.quiet = quiet;
+
+        ig.read(topo, sim, os);
+        io::messages.add("gamd atom info read from " + args["gamd"] + "\n" +
+                util::frame_text(ix.title),
+                "read special", io::message::notice);
+      }
+    }
+  } // GAMD
 
   // check for errors and abort
   if (io::messages.contains(io::message::error) ||
