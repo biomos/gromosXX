@@ -81,7 +81,7 @@ io::In_GAMD::read(topology::Topology& topo,
 
         if (iatom > topo.num_atoms() || fatom > topo.num_atoms()){
             std::ostringstream msg;
-            msg << "GAMD atoms (" << i+1 << "-" << j+1 
+            msg << "GAMD atoms (" << iatom+1 << "-" << fatom+1 
             << ") atom indices out of range.";
             io::messages.add(msg.str(), "In_GAMD", io::message::error);
             return;
