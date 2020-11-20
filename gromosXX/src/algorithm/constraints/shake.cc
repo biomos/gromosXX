@@ -201,13 +201,6 @@ int algorithm::Shake::apply(topology::Topology & topo,
       conf.current().vel(*it) = (conf.current().pos(*it) - conf.old().pos(*it)) /
               sim.time_step_size();
     }
-    // remove shake effect on virtual atoms
-    std::map<unsigned int, util::Virtual_Atom>::iterator it;
-    for ( it = topo.virtual_atoms_group().atoms().begin(); it != topo.virtual_atoms_group().atoms().end(); it++ )
-    {
-      int atom_num = it->first;
-      conf.current().vel(atom_num) = 0.0;
-    }
   }
 
   if (!sim.mpi || m_rank == 0)
