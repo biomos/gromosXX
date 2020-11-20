@@ -1670,6 +1670,7 @@ void io::In_Parameter::read_VIRTUALATOM(simulation::Parameter &param,
         param.virtualatoms.lastatom = latom;
 
         block.get_final_messages();
+    }
  }
 
 /**
