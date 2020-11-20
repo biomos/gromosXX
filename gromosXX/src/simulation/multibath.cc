@@ -33,7 +33,7 @@ void simulation::Multibath
     add_bath(0.0);
   }
 
-  // check whether the last last is really the last_atom
+  // check whether the last last is really the last_atom ( we have to substract the virtual atoms since they do not belong to a bath)
   if ((!(m_bath_index.size() == 0))
           && (m_bath_index.end() - 1)->last_atom != topo.num_atoms() - 1) {
     io::messages.add("Last atom of last bath is not the last atom in the sytem!",

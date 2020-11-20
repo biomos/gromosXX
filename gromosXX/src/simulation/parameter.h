@@ -1641,6 +1641,32 @@ namespace simulation
       bool scale_reference_positions;
     } /** Position restraint parameters */ posrest;
 
+    struct virtualatoms_struct
+    {
+      /** 
+       * Constructor
+       * Default values:
+       * - virtualatoms 0
+       * - numatoms 0
+       * - lastatom 0
+       */
+      virtualatoms_struct() : virtualatoms(0), numatoms(0), lastatom(0){}
+      
+      /**
+       * virtualatoms
+       */
+      int virtualatoms;
+      /**
+       * number of virtual atoms
+       */
+      int numatoms;
+      /**
+       * index of the last virtual atom in topology
+       */
+      int lastatom;
+
+    } /** virtual atoms parameters */ virtualatoms;
+
 
 
     /**

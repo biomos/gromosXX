@@ -36,7 +36,8 @@ int algorithm::Prepare_VirtualAtoms::apply(topology::Topology &topo,
         util::Virtual_Atom atom = it->second;
         conf.current().pos[atom_num] = atom.pos(conf, topo);
         conf.current().vel[atom_num] = 0.0;
-        DEBUG(10 ,"Setting atom " << atom_num << " to position " << conf.current().pos[atom_num]);                     
+        DEBUG(10 ,"Setting atom " << atom_num << " to position x: " << conf.current().pos[atom_num][0] << " y: " << conf.current().pos[atom_num][1]
+                  << " z: " << conf.current().pos[atom_num][2]);                     
     }
     return 0;
 }

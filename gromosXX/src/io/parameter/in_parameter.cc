@@ -60,6 +60,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_STEP(param);
   read_BOUNDCOND(param);
   read_REPLICA(param); // has to be read in before MULTIBATH
+  read_VIRTUALATOM(param); // has to be read in before MULTIBATH
   read_MULTIBATH(param);
   read_REPLICA_EDS(param); // has to be read in after MULTIBATH
   read_PRESSURESCALE(param);
@@ -1553,18 +1554,25 @@ void io::In_Parameter::read_MULTIBATH(simulation::Parameter &param,
         // the baths
         block.get_next_parameter("NBATHS", num_baths, ">=0", "");
 
+        // if we have virtual atoms add them to an additional bath that it is not coupled
+        if (param.virtualatoms.virtualatoms) num_baths++;
+
         if (block.error()) {
           block.get_final_messages();
           return;
         }
 
         for (int i = 0; i < num_baths; ++i) {
-            std::string idx = io::to_string(i);
-            block.get_next_parameter("TEMP["+idx+"]", temp, ">=0.0", "");
-            block.get_next_parameter("TAU["+idx+"]", tau, ">=0.0", "-1");
+            if (param.virtualatoms.virtualatoms && i == num_baths - 2){
+                param.multibath.multibath.add_bath(0.0, -1);
+            }
+            else{
+                std::string idx = io::to_string(i);
+                block.get_next_parameter("TEMP["+idx+"]", temp, ">=0.0", "");
+                block.get_next_parameter("TAU["+idx+"]", tau, ">=0.0", "-1");
 
-            param.multibath.multibath.add_bath(temp, tau);
-            if (tau != -1) param.multibath.couple = true;
+                param.multibath.multibath.add_bath(temp, tau);
+                if (tau != -1) param.multibath.couple = true;
         }
 
         // now the DOF sets
@@ -1588,20 +1596,35 @@ void io::In_Parameter::read_MULTIBATH(simulation::Parameter &param,
             }
 
         }
+
+        if (param.virtualatoms.virtualatoms) num_dof++;
+
         std::string str_bathsize = io::to_string(param.multibath.multibath.size());
 
+        //to keep track of the extra virtual atoms
+        unsigned int extra_atoms = 0;
+
         for (int i = 0; i < num_dof; ++i) {
-            std::string idx = io::to_string(i);
-            block.get_next_parameter("LAST["+idx+"]", last, ">=1", "");
-            block.get_next_parameter("COM-BATH["+idx+"]", com_bath, ">=1 && <="+ str_bathsize, "");
-            block.get_next_parameter("IR-BATH["+idx+"]", ir_bath, ">=1 && <="+ str_bathsize, "");
+            if (param.virtualatoms.virtualatoms && i == num_dof - 2){
+                last = param.virtualatoms.lastatom;
+                com_bath = param.multibath.multibath.size() - 1;
+                ir_bath = param.multibath.multibath.size() - 1;
+                extra_atoms = param.virtualatoms.numatoms;
+            }
+            else{
+                std::string idx = io::to_string(i);
+                block.get_next_parameter("LAST["+idx+"]", last, ">=1", "");
+                block.get_next_parameter("COM-BATH["+idx+"]", com_bath, ">=1 && <="+ str_bathsize, "");
+                block.get_next_parameter("IR-BATH["+idx+"]", ir_bath, ">=1 && <="+ str_bathsize, "");
 
-            if (last < 1) last = 1;
-            if (com_bath < 1) com_bath = 1;
-            if (ir_bath < 1) ir_bath = 1;
+                if (last < 1) last = 1;
+                if (param.virtualatoms.virtualatoms && last) last += extra_atoms;
+                if (com_bath < 1) com_bath = 1;
+                if (ir_bath < 1) ir_bath = 1;
 
-            if (com_bath > param.multibath.multibath.size()) com_bath = param.multibath.multibath.size();
-            if (ir_bath > param.multibath.multibath.size()) ir_bath = param.multibath.multibath.size();
+                if (com_bath > param.multibath.multibath.size()) com_bath = param.multibath.multibath.size();
+                if (ir_bath > param.multibath.multibath.size()) ir_bath = param.multibath.multibath.size();
+            }
 
             param.multibath.multibath.add_bath_index(last - 1, 0, com_bath - 1, ir_bath - 1);
         }
@@ -1609,6 +1632,45 @@ void io::In_Parameter::read_MULTIBATH(simulation::Parameter &param,
         block.get_final_messages();
     }
 } // MULTIBATH
+
+/**
+ * @section positionres VIRTUALATOM block
+ * @snippet snippets/snippets.cc VIRTUALATOM
+ */
+void io::In_Parameter::read_VIRTUALATOM(simulation::Parameter &param,
+                                        std::ostream & os){
+                                    
+    DEBUG(8, "reading VIRTUALATOM");
+    std::stringstream exampleblock;
+    // lines starting with 'exampleblock<<"' and ending with '\n";' (spaces don't matter)
+    // will be used to generate snippets that can be included in the doxygen doc;
+    // the first line is the tag
+    exampleblock << "VIRTUALATOM\n";
+    exampleblock << "#  NTVIR   0,1 toggle virtual atoms.\n";
+    exampleblock << "#          0: no virtual atoms (default)\n";
+    exampleblock << "#          1: virtual atoms enabled\n";
+    exampleblock << "#  NATOM > 0 number of virtual atoms\n";
+    exampleblock << "#  LATOM > 0 index of the last virtual atom\n";
+    exampleblock << "#  NTVIR    NATOM   LATOM\n";
+    exampleblock << "        1       1      38\n";
+    exampleblock << "END\n"; 
+
+    std::string blockname = "VIRTUALATOM";
+    Block block(blockname, exampleblock.str());
+
+    if (block.read_buffer(m_block[blockname], false) == 0) {
+        block_read.insert(blockname);
+
+        int ntvir, natom, latom;
+        block.get_next_parameter("NTVIR", ntvir, "", "0,1");
+        block.get_next_parameter("NATOM", natom, ">0", "");
+        block.get_next_parameter("LATOM", latom, ">0", "");
+        param.virtualatoms.virtualatoms = ntvir;
+        param.virtualatoms.numatoms = natom;
+        param.virtualatoms.lastatom = latom;
+
+        block.get_final_messages();
+ }
 
 /**
  * @section positionres POSITIONRES block
