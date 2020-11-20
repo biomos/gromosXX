@@ -1573,6 +1573,7 @@ void io::In_Parameter::read_MULTIBATH(simulation::Parameter &param,
 
                 param.multibath.multibath.add_bath(temp, tau);
                 if (tau != -1) param.multibath.couple = true;
+            }
         }
 
         // now the DOF sets
