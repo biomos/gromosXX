@@ -28,13 +28,15 @@ int algorithm::Prepare_VirtualAtoms::apply(topology::Topology &topo,
 		  configuration::Configuration &conf,
 		   simulation::Simulation &sim){
     // loop over virtual atoms and update positions in configuration
+    DEBUG(7, "Preparing Virtual Atoms");
     std::map<unsigned int, util::Virtual_Atom>::iterator it;
     for ( it = topo.virtual_atoms_group().atoms().begin(); it != topo.virtual_atoms_group().atoms().end(); it++ )
     {
         int atom_num = it->first;
         util::Virtual_Atom atom = it->second;
         conf.current().pos[atom_num] = atom.pos(conf, topo);
-        conf.current().vel[atom_num] = 0.0;                     
+        conf.current().vel[atom_num] = 0.0;
+        DEBUG(10 ,"Setting atom " << atom_num << " to position " << conf.current().pos[atom_num]);                     
     }
     return 0;
 }

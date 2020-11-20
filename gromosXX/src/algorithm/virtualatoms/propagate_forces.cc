@@ -34,7 +34,7 @@ int algorithm::Propagate_Forces::apply(topology::Topology &topo,
                    conf.current().force[atom_num][1] << " z= " << conf.current().force[atom_num][2]);
 
         // propagate the forces assigned to the virtual atoms and set them to 0
-        //atom.force(conf, topo, conf.current().force[solute_atoms + atom_counter]);
+        atom.force(conf, topo, conf.current().force[atom_num]);
         conf.current().force[atom_num] = 0.0;
         conf.old().force[atom_num] = 0.0;            
     }
