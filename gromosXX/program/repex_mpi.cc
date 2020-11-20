@@ -313,8 +313,9 @@ int main(int argc, char *argv[]) {
     // defining struct with non static replica information
     int blocklen[] = {3, 3};
     MPI_Datatype typ[] = {MPI_INT, MPI_DOUBLE};
+    MPI_Aint lb;
     MPI_Aint intext;
-    MPI_Type_extent(MPI_INT, &intext);
+    MPI_Type_get_extent(MPI_INT, &lb, &intext);
 
     MPI_Aint disps[] = {(MPI_Aint) 0, 4 * intext};
     MPI_Type_create_struct(2, blocklen, disps, typ, &MPI_REPINFO);
