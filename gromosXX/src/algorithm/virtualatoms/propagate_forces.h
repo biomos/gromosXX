@@ -1,33 +1,29 @@
 /**
- * @file prepare_virtualatoms.h
- * Prepares the virtual atoms for the simulation
+ * @file propagat_forces.h
+ * Propagates forces of the virtual atoms
  */
 
-#ifndef PREPVIRT_H
-#define	PREPVIRT_H
+#ifndef PROPVIRT_H
+#define	PROPVIRT_H
 
-namespace interaction
-{
-  class Forcefield;
-}
 namespace algorithm
 {
    /**
    * @class Prepare_VirtualAtoms
    * calculates total energies, updates the averages
    */
-  class Prepare_VirtualAtoms : public Algorithm
+  class Propagate_Forces : public Algorithm
   {
   public:
     /**
      * Constructor.
      */
-    Prepare_VirtualAtoms(): Algorithm("PrepareVirtualAtoms") {}
+    Propagate_Forces() : Algorithm("PropagateForces"){}
 
     /**
      * Destructor.
      */
-    virtual ~Prepare_VirtualAtoms(){}
+    virtual ~Propagate_Forces(){}
     
     /**
      * calculate new positions of the virtual atoms with nonbonded interactions
@@ -41,12 +37,13 @@ namespace algorithm
      * extend force and position arrays to hold information of 
      * virtual atoms with nonbonded parameters
      */
-    virtual int init(topology::Topology & topo,
-		     configuration::Configuration & conf,
-		     simulation::Simulation & sim,
-		      std::ostream &os = std::cout, bool quiet = false){
-           return 0;
-         }
+    virtual int init(topology::Topology &topo, 
+		     configuration::Configuration &conf,
+		     simulation::Simulation &sim,
+		     std::ostream &os = std::cout,
+		     bool quiet = false){ 
+                 os << "PROPAGATE FORCES OF VIRTUAL ATOMS\nEND\n";
+                 return 0; }
   };
   
 }

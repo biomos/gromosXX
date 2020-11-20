@@ -126,14 +126,6 @@ namespace util
      * set iac
      */
     void set_iac(int iac) { m_iac = iac; }
-    /**
-     * returns whether this atom has nonbonded interactions
-     */
-    bool has_nonbonded() { return m_nonbond; }
-    /**
-     * nonbonded interactions setter
-     */
-    void set_nonbonded(){ m_nonbond = true; }
 
   private:
     /**
@@ -176,10 +168,6 @@ namespace util
      * IAC
      */
     int m_iac;
-    /**
-     * has non bonded interactions
-     */
-    bool m_nonbond = false;
   };
 
 

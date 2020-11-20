@@ -122,6 +122,7 @@ void io::In_Topology::read(topology::Topology& topo,
   read_block_RESNAME(topo, param, os);
   read_block_ATOMTYPENAME(topo, param, os);
   read_block_SOLUTEATOM(topo, param, os);
+  read_block_VIRTUALATOM(topo, param, os);
 
   // os << "time after SOLUTEATOM: " << util::now() - start << std::endl;
 
@@ -141,7 +142,6 @@ void io::In_Topology::read(topology::Topology& topo,
       }
     }//adiabatic decoupling
 
-    read_block_VIRTUALATOM(topo, param, os);
     read_block_SOLUTEPOLARISATION(topo, param, os);
     read_block_CGSOLUTE(topo, param, os);
     read_block_LJEXCEPTIONS(topo, param, os);
@@ -1649,6 +1649,7 @@ void io::In_Topology::read_block_VIRTUALATOM(topology::Topology& topo,
 
       _lineStream >> num;
       ++it;
+      topo.resize(topo.num_atoms() + num);
       _lineStream.clear();
       _lineStream.str(*it);
       _lineStream >> dish >> disc;
@@ -1675,7 +1676,7 @@ void io::In_Topology::read_block_VIRTUALATOM(topology::Topology& topo,
 
         _lineStream >> a_num >> iac >> q >> t >> num_atoms;
 
-        if (a_num != n + topo.num_solute_atoms() + 1) {
+        if (a_num != topo.num_solute_atoms() + 1) {
           io::messages.add("Error in VIRTUALATOM block: atom number not sequential.",
                   "InTopology", io::message::error);
         }
@@ -1752,6 +1753,10 @@ void io::In_Topology::read_block_VIRTUALATOM(topology::Topology& topo,
         atom.set_charge(q);
         atom.set_iac(iac - 1);
         topo.virtual_atoms_group().atoms()[a_num - 1] = atom;
+        topology::excl_cont_t::value_type ex;
+        topology::excl_cont_t::value_type ex14;
+
+        topo.add_solute_atom("VIRT", 0, iac - 1, 1.0, q, 1, ex , ex14);
       }
       if (!quiet)
         os << "\n\tEND\n";
@@ -2757,6 +2762,9 @@ void io::In_Topology::read_block_SOLUTEMOLECULES(topology::Topology& topo,
 
         for (int i = 0; i < num; ++i) {
           _lineStream >> m;
+          if (i + 1 == num){
+            m = m + topo.virtual_atoms_group().atoms().size();
+          }
           topo.molecules().push_back(m);
           DEBUG(11, "add submol " << m);
           if (m < old_m) {
@@ -2802,6 +2810,9 @@ void io::In_Topology::read_block_TEMPERATUREGROUPS(topology::Topology& topo,
 
         for (int i = 0; i < num; ++i) {
           _lineStream >> m;
+          if (i + 1 == num){
+            m = m + topo.virtual_atoms_group().atoms().size();
+          }
           topo.temperature_groups().push_back(m);
           DEBUG(11, "add temperature group " << m);
           if (m < old_m) {
@@ -2848,6 +2859,9 @@ void io::In_Topology::read_block_PRESSUREGROUPS(topology::Topology& topo,
 
         for (int i = 0; i < num; ++i) {
           _lineStream >> m;
+          if (i + 1 == num){
+            m = m + topo.virtual_atoms_group().atoms().size();
+          }
           topo.pressure_groups().push_back(m);
           DEBUG(11, "add pressure group " << m);
           if (m < old_m) {

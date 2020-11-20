@@ -50,7 +50,8 @@ xxalgconst_HEADERS = constraints/create_constraints.h\
         constraints/gpu_shake_thread.h
 
 xxalgvirtualatdir = $(includedir)/md++/algorithm/virtualatoms
-xxalgvirtualat_HEADERS = virtualatoms/prepare_virtualatoms.h
+xxalgvirtualat_HEADERS = virtualatoms/prepare_virtualatoms.h\
+	virtualatoms/propagate_forces.h
 
 noinst_LTLIBRARIES=	libgroalgorithm.la
 
@@ -88,7 +89,9 @@ libgroalgorithm_la_SOURCES = algorithm.cc\
 	integration/lattice_shift.cc\
 	integration/multigradient.cc\
         integration/eds.cc\
-	virtualatoms/prepare_virtualatoms.cc
+	virtualatoms/prepare_virtualatoms.cc\
+	virtualatoms/propagate_forces.cc
+
 
 bin_PROGRAMS =			
 
