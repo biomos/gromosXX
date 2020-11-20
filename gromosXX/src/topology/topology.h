@@ -14,6 +14,7 @@
 #include "sd.h"
 #include "exclusions.h"
 #include "../interaction/interaction_types.h"
+#include "../util/virtual_atom.h"
 
 namespace simulation
 {
@@ -56,6 +57,11 @@ namespace topology
      * integer atom code accessor.
      */
     int iac(unsigned int const i)const {assert(i < m_iac.size()); return m_iac[i];}
+
+    /**
+     * integer atom code array accessor
+     */
+    std::vector<int> &iac_array() { return m_iac; }
 
     /**
      * masses accessor
@@ -225,6 +231,11 @@ namespace topology
     EDS_Perturbed_Solute & eds_perturbed_solute() {return m_eds_perturbed_solute;}
 
     /**
+     * virtual solute accessor.
+     */
+    util::Virtual_Atoms_Group & virtual_atoms_group() {return m_virtual_atoms_group;}
+
+    /**
      * const solute accessor.
      */
     Solute const & solute()const{return m_solute;}
@@ -238,6 +249,11 @@ namespace topology
      * const eds-perturbed solute accessor.
      */
     EDS_Perturbed_Solute const & eds_perturbed_solute()const{return m_eds_perturbed_solute;}
+
+    /**
+     * virtual solute accessor.
+     */
+    util::Virtual_Atoms_Group const & virtual_atoms_group()const{return m_virtual_atoms_group;}
 
     /**
      * number of atom types.
@@ -334,6 +350,16 @@ namespace topology
      * get the total number of solvent atoms.
      */
     unsigned int num_solvent_atoms()const;
+
+    /**
+     * get the total number of virtual atoms with nonbonded interactions
+     */
+    unsigned int num_virtual_with_nonbonded()const{return m_nonbonded_virtual_atoms;}
+
+    /**
+     * set the number of virtual atoms with nonbonded interactions
+     */
+    void set_num_virtual_with_nonbonded(unsigned int num_virtuals){ m_nonbonded_virtual_atoms = num_virtuals;}
 
     /**
      * get the number of solvent molecules.
@@ -1364,6 +1390,11 @@ namespace topology
     EDS_Perturbed_Solute m_eds_perturbed_solute;
 
     /**
+     * the virtual atoms
+     */
+    util::Virtual_Atoms_Group m_virtual_atoms_group;
+
+    /**
      * is the atom perturbed?
      */
     std::vector<bool> m_is_perturbed;
@@ -1393,6 +1424,11 @@ namespace topology
      * vector for multiple solvents.
      */
     std::vector<unsigned int> m_num_solvent_atoms;
+
+    /**
+     * number of virtual atoms with nonbonded interactions
+     */
+    unsigned int m_nonbonded_virtual_atoms;
 
     /**
      * the solvents (multiple solvent).

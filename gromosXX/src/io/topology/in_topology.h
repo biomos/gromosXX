@@ -59,6 +59,8 @@ namespace io {
         simulation::Parameter &param, std::ostream & os);
     void read_block_SOLUTEATOM(topology::Topology& topo,
         simulation::Parameter &param, std::ostream & os);
+    void read_block_VIRTUALATOM(topology::Topology& topo,
+        simulation::Parameter &param, std::ostream & os);
     void read_block_SOLUTEPOLARISATION(topology::Topology& topo,
         simulation::Parameter &param, std::ostream & os);
     void read_block_CGSOLUTE(topology::Topology& topo,

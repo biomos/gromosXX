@@ -122,6 +122,7 @@ void io::In_Topology::read(topology::Topology& topo,
   read_block_RESNAME(topo, param, os);
   read_block_ATOMTYPENAME(topo, param, os);
   read_block_SOLUTEATOM(topo, param, os);
+  read_block_VIRTUALATOM(topo, param, os);
 
   // os << "time after SOLUTEATOM: " << util::now() - start << std::endl;
 
@@ -1634,6 +1635,133 @@ void io::In_Topology::read_block_SOLUTEATOM(topology::Topology& topo,
 
 } // SOLUTEATOM
 
+void io::In_Topology::read_block_VIRTUALATOM(topology::Topology& topo,
+        simulation::Parameter &param, std::ostream & os)   { // VIRTUALATOM
+      DEBUG(10, "VIRTUALATOM block");
+      std::vector<std::string> buffer = m_block["VIRTUALATOMS"];
+      block_read.insert("VIRTUALATOMS");
+
+      std::vector<std::string>::const_iterator it = buffer.begin() + 1;
+      _lineStream.clear();
+      _lineStream.str(*it);
+      int num, n;
+      double dish, disc;
+
+      _lineStream >> num;
+      ++it;
+      topo.resize(topo.num_atoms() + num);
+      _lineStream.clear();
+      _lineStream.str(*it);
+      _lineStream >> dish >> disc;
+
+
+      if (!quiet){
+        os << "\tVIRTUALATOMS\n\t" << "\tnumber of atoms : " << num << 
+        "\n\t\tDISH\tDISC\n\t\t" << dish << "\t" << disc;
+      }
+      
+      // put the rest of the block into a single stream
+      ++it;
+
+      int a_num, iac, num_atoms, member_atom, t;
+      util::virtual_type type;
+      double q;
+      std::vector<int> member_atoms;
+
+      for (n = 0; n < num; ++n) {
+
+        _lineStream.clear();
+        _lineStream.str(*it);
+        ++it;
+
+        _lineStream >> a_num >> iac >> q >> t >> num_atoms;
+
+        if (a_num != topo.num_solute_atoms() + 1) {
+          io::messages.add("Error in VIRTUALATOM block: atom number not sequential.",
+                  "InTopology", io::message::error);
+        }
+
+        if (iac < 1) {
+          io::messages.add("Error in VIRTUALATOM block: iac < 1.",
+                  "InTopology", io::message::error);
+        }
+
+        if (iac > topo.num_atomtype()) {
+          io::messages.add("Error in VIRTUALATOM block: iac > number of atom types.",
+                  "InTopology", io::message::error);
+        }
+
+        switch (t)
+        {
+        case 0:
+          type = util::virtual_type::va_explicit;
+          break;
+        case 1:
+          type = util::virtual_type::va_CH1;
+          break;
+        case 2:
+          type = util::virtual_type::va_aromatic;
+          break;
+        case 3:
+          type = util::virtual_type::va_CH2;
+          break;
+        case 4:
+          type = util::virtual_type::va_stereo_CH2;
+          break;
+        case 5:
+          type = util::virtual_type::va_stereo_CH3;
+          break;
+        case 6:
+          type = util::virtual_type::va_CH3;
+          break;
+        case 7:
+          type = util::virtual_type::va_3CH3;
+          break;
+        case -1:
+          type = util::virtual_type::va_cog;
+          break;  
+        case -2:
+          type = util::virtual_type::va_com;
+          break;      
+        default:
+          io::messages.add("Error in VIRTUALATOM block: wrong virtual atom type.",
+                           "InTopology", io::message::error);
+        }
+        
+        member_atoms.clear();
+
+        for (int i = 0; i < num_atoms; ++i) {
+          if (!(_lineStream >> member_atom)) {
+              io::messages.add("Error in VIRTUALATOM block: ATOMS "
+                               "could not be read.",
+                                "InTopology", io::message::error);
+            }
+
+
+
+          member_atoms.push_back(member_atom - 1);
+        }
+
+
+        if (_lineStream.fail())
+          io::messages.add("bad line in VIRTUALATOM block",
+                "In_Topology",
+                io::message::critical);
+
+        //ADD ATOM
+        util::Virtual_Atom atom(type, member_atoms, dish, disc, 0);
+        atom.set_charge(q);
+        atom.set_iac(iac - 1);
+        topo.virtual_atoms_group().atoms()[a_num - 1] = atom;
+        topology::excl_cont_t::value_type ex;
+        topology::excl_cont_t::value_type ex14;
+
+        topo.add_solute_atom("VIRT", 0, iac - 1, 1.0, q, 1, ex , ex14);
+      }
+      if (!quiet)
+        os << "\n\tEND\n";
+
+} // VIRTUALATOM
 
 void io::In_Topology::read_block_SOLUTEPOLARISATION(topology::Topology& topo,
         simulation::Parameter &param, std::ostream & os)
@@ -2634,6 +2762,9 @@ void io::In_Topology::read_block_SOLUTEMOLECULES(topology::Topology& topo,
 
         for (int i = 0; i < num; ++i) {
           _lineStream >> m;
+          if (i + 1 == num){
+            m = m + topo.virtual_atoms_group().atoms().size();
+          }
           topo.molecules().push_back(m);
           DEBUG(11, "add submol " << m);
           if (m < old_m) {
@@ -2679,6 +2810,9 @@ void io::In_Topology::read_block_TEMPERATUREGROUPS(topology::Topology& topo,
 
         for (int i = 0; i < num; ++i) {
           _lineStream >> m;
+          if (i + 1 == num){
+            m = m + topo.virtual_atoms_group().atoms().size();
+          }
           topo.temperature_groups().push_back(m);
           DEBUG(11, "add temperature group " << m);
           if (m < old_m) {
@@ -2725,6 +2859,9 @@ void io::In_Topology::read_block_PRESSUREGROUPS(topology::Topology& topo,
 
         for (int i = 0; i < num; ++i) {
           _lineStream >> m;
+          if (i + 1 == num){
+            m = m + topo.virtual_atoms_group().atoms().size();
+          }
           topo.pressure_groups().push_back(m);
           DEBUG(11, "add pressure group " << m);
           if (m < old_m) {
