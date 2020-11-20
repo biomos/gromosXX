@@ -35,7 +35,7 @@ void simulation::Multibath
 
   // check whether the last last is really the last_atom ( we have to substract the virtual atoms since they do not belong to a bath)
   if ((!(m_bath_index.size() == 0))
-          && (m_bath_index.end() - 1)->last_atom != topo.num_atoms() - 1) {
+          && (m_bath_index.end() - 1)->last_atom != topo.num_atoms() - 1 - topo.virtual_atoms_group.atoms().size()) {
     io::messages.add("Last atom of last bath is not the last atom in the sytem!",
             "Multibath::calculate_degrees_of_freedom",
             io::message::error);
