@@ -1,4 +1,4 @@
-GROMOSXX INSTALLATION INSTRUCTIONS
+MD++ INSTALLATION INSTRUCTIONS
 ==================================
 
 necessary compilation tools
@@ -32,8 +32,7 @@ Required libraries
 	../configure --with-fftw=/path/to/fftw3
 
 	for MPI you also need the fftw3-mpi library which you have to
-	compile with the same MPI wrapper. For the time begin this library 
-	is only available in the 3.3alpha1 version.
+	compile with the same MPI wrapper. 
 
 	If you use the clipper and ccp4 libraries you have to used
 	a patched version of FFTW3. The reason is that these libraries
@@ -94,7 +93,7 @@ Case B) To compile and install the unconfigured source tree from git
 	Info:
 	  .) See ./configure --help for options.
 	  .) OpenMP parallelization available: use --enable-openmp in step 4.
-	  .) Steps 6 and 8 are optional.
+	  .) Steps 6 and 7 are optional.
 	  .) If you leave out step 7, the programs will be in BUILD/program/.
   	  .) You may choose any other name for the BUILD directory or do multiple builds by choosing different directory names by repeating from step 2.
 	  .) ./Config.sh is a wrapper of the following commands:
