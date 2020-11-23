@@ -3954,7 +3954,7 @@ void io::In_Parameter::read_GAMD(simulation::Parameter & param,
   exampleblock << "  1\n";
   exampleblock << "# SEARCH  FORM  THRESH  NTIGAMDS\n";
   exampleblock << "    0       1      1        0\n";
-  exampleblock << "# GAMD\n";
+  exampleblock << "# AGROUPS\n";
   exampleblock << "  2\n"; 
   exampleblock << "# DIHSTD  TOTSTD\n";
   exampleblock << "  24.79   24.79\n";
@@ -3967,7 +3967,7 @@ void io::In_Parameter::read_GAMD(simulation::Parameter & param,
   exampleblock << "# KT\n";
   exampleblock << "  -10.0   20.0\n";
   exampleblock << "# EQSTEPS\n";
-  exampleblock << " 5000n";
+  exampleblock << " 5000\n";
   exampleblock << "END\n";
 
 
@@ -4038,25 +4038,25 @@ void io::In_Parameter::read_GAMD(simulation::Parameter & param,
     }
 
     param.gamd.ED.resize(param.gamd.agroups, 0.0);
-    for (unsigned int i = 0; i < param.gamd.agroups; i++) {
+    for (unsigned int i = 0; i < param.gamd.agroups - 1; i++) {
       std::string idx = io::to_string(i);
       block.get_next_parameter("ED[" + idx + "]", param.gamd.ED[i+1], "", "");
     }
 
     param.gamd.ET.resize(param.gamd.agroups, 0.0);
-    for (unsigned int i = 0; i < param.gamd.agroups; i++) {
+    for (unsigned int i = 0; i < param.gamd.agroups - 1; i++) {
       std::string idx = io::to_string(i);
       block.get_next_parameter("ET[" + idx + "]", param.gamd.ET[i+1], "", "");
     }
 
     param.gamd.kD.resize(param.gamd.agroups, 0.0);
-    for (unsigned int i = 0; i < param.gamd.agroups; i++) {
+    for (unsigned int i = 0; i < param.gamd.agroups - 1; i++) {
       std::string idx = io::to_string(i);
       block.get_next_parameter("KD[" + idx + "]", param.gamd.kD[i+1], "", "");
     }
 
     param.gamd.kT.resize(param.gamd.agroups, 0.0);
-    for (unsigned int i = 0; i < param.gamd.agroups; i++) {
+    for (unsigned int i = 0; i < param.gamd.agroups - 1; i++) {
       std::string idx = io::to_string(i);
       block.get_next_parameter("KT[" + idx + "]", param.gamd.kT[i+1], "", "");
     }
