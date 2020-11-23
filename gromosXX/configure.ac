@@ -75,6 +75,10 @@ AC_ARG_ENABLE(heaviside,
   [ --enable-heaviside    compile with Heaviside truncation],
   ,enable_heaviside=no)
 
+AC_ARG_ENABLE(shared,
+[  --enable-shared         compile with shared libraries],
+    , enable_shared=no)
+
 dnl use empty default flags but allow user to override
 : ${CFLAGS=""}
 : ${CXXFLAGS=""}
