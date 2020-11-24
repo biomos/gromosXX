@@ -27,20 +27,22 @@ int algorithm::GAMD
         simulation::Simulation &sim)
  {
   m_timer.start();
+  DEBUG(5, "GAMD: algorithm init");
   configuration::Energy ener = conf.current().energies;
   simulation::Parameter::gamd_struct params = sim.param().gamd;
   std::vector<int> used_chargegroups;
   unsigned int num_groups = unsigned(ener.bond_energy.size());
   unsigned int num_atoms = topo.num_atoms();
-  // to do: add asserts
   // Calculate the energies for each acceleration group
   // loop over all the acceleration groups
+  DEBUG(5, "GAMD: Calculate energie totals");
   for (unsigned int atom=0; atom < num_atoms; atom++){
     unsigned int chargegroup = topo.atom_energy_group()[atom];
     unsigned int gamdgroup = topo.gamd_accel_group(atom);
     // check if the charge group has already been used
     std::vector<int>::iterator it = std::find(used_chargegroups.begin(), used_chargegroups.end(), atom);
     if (it == used_chargegroups.end()){
+        DEBUG(7, "GAMD: Calculating energies of charge group " << chargegroup);
         // add the energies to the gamd energies for that accel group
         // dihedral term
         ener.gamd_dihedral_total[gamdgroup] += ener.dihedral_energy[chargegroup];
@@ -63,6 +65,7 @@ int algorithm::GAMD
         used_chargegroups.push_back(chargegroup);              
     } // endif        
   } // loop over atoms 
+  DEBUG(5, "GAMD: Energy totals calculated now calculate acceleration");
 
   // total energies have been computed now calculate acceleration
   if (sim.steps() > params.equilibration){
@@ -152,6 +155,7 @@ int algorithm::GAMD
   } // endif 
 
   // statistics updated now accelerate
+  DEBUG(5, "GAMD: Accelerating");
   double prefactor;
   if (sim.param().gamd.search != simulation::cmd_search){
       for (unsigned int accelgroup = 1; accelgroup < params.agroups;  accelgroup++){
