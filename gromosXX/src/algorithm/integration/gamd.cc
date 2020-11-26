@@ -270,7 +270,7 @@ int algorithm::GAMD
           } // end switch
       } // end loop over acceleration groups
   } // end if
-
+  return 0;
 };
 // add init in which the initial acceleration values are calculated if needed
 
