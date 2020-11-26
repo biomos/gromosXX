@@ -416,6 +416,11 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop
   storage.energies.lj_energy[eg_i][eg_j] += e_lj;
   storage.energies.crf_energy[eg_i][eg_j] += e_crf;
 
+  //ORIOL_GAMD
+  const unsigned int gamd_i = topo.gamd_accel_group(i);
+  storage.energies.gamd_potential_total[gamd_i] += e_lj;
+  storage.energies.gamd_potential_total[gamd_i] += e_crf;
+
 #ifdef XXFORCEGROUPS
   if (storage.force_groups.size()) {
     storage.force_groups[eg_i][eg_j][i] += force;
