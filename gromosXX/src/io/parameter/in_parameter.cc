@@ -2593,7 +2593,7 @@ void io::In_Parameter::read_INNERLOOP(simulation::Parameter &param,
 #else
                 param.innerloop.method = simulation::sla_off;
                 io::messages.add("INNERLOOP block: CUDA solvent loops are not available "
-                                 "in your compilation. Use --with-cukernel for compiling.",
+                                 "in your compilation. Use --with-cuda for compiling.",
                                  "In_Parameter", io::message::error);
 #endif
                 break;
