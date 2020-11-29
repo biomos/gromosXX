@@ -134,7 +134,18 @@ namespace interaction {
      * using temporary files
      */
     bool using_tmp;
-  private:
+
+  protected:
+    /**
+     * List of used temporary files to cleanup gracefully
+     */
+    std::set<std::string> tmp_files;
+
+    /**
+     * Calculate number of charges
+     */
+    virtual int get_num_charges(const simulation::Simulation& sim
+                              , const interaction::QM_Zone & qm_zone);
   };
 }
 

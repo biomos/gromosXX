@@ -140,3 +140,41 @@ int interaction::QM_Worker::open_output(std::ifstream& outputfile_stream, const 
   }
   return 0;
 }
+
+int interaction::QM_Worker::get_num_charges(const simulation::Simulation& sim
+                                          , const interaction::QM_Zone& qm_zone) {
+  unsigned num_charges = 0;
+  switch (sim.param().qmmm.qmmm) {
+    case simulation::qmmm_mechanical: {
+      num_charges = 0;
+      break;
+    }
+    case simulation::qmmm_electrostatic: {
+      num_charges = qm_zone.mm.size();
+      break;
+    }
+    case simulation::qmmm_polarisable: {
+      num_charges = qm_zone.mm.size();
+      for (std::set<MM_Atom>::const_iterator
+          it = qm_zone.mm.begin(), to = qm_zone.mm.end(); it != to; ++it) {
+        num_charges += int(it->is_polarisable);
+      }
+      break;
+    }
+    default: {
+      io::messages.add("Uknown QMMM option", this->name(), io::message::error);
+    }
+  }
+  return num_charges;
+}
+
+interaction::QM_Worker::~QM_Worker() {
+#ifdef HAVE_UNLINK
+  // Remove temporary files and links
+  while (this->tmp_files.size()) {
+    std::set<std::string>::const_iterator it = this->tmp_files.begin();
+    unlink(it->c_str());
+    this->tmp_files.erase(*it);
+  }
+#endif
+}

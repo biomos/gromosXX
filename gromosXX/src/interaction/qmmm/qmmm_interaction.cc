@@ -338,9 +338,10 @@ int interaction::QMMM_Interaction::init(topology::Topology& topo,
   if (m_rank == 0) {
     DEBUG(15,"Creating QM Worker");
     m_worker = interaction::QM_Worker::get_instance(sim);
-    if (m_worker == nullptr ||
-        m_worker->init(sim))
+    if (m_worker == nullptr || m_worker->init(sim)) {
+      io::messages.add("Error initializing QM worker", "QMMM_Interaction", io::message::error);
       return 1;
+    }
     DEBUG(15,"QM Worker initialized");
     
     // Create QM_Zone

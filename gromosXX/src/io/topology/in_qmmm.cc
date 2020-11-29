@@ -129,6 +129,7 @@ MNDOBINARY
 /path/to/mndo/binary
 END
 @endverbatim
+ *
  * @section MNDOFILES block for the MNDO worker
  * The MNDOFILES block specifies input and output files to exchange data with MNDO
  *
@@ -570,10 +571,8 @@ io::In_QMMM::read(topology::Topology& topo,
     _lineStream.clear();
     buffer = m_block["CAPLEN"];
     if (!buffer.size()) {
-      std::ostringstream msg;
-      msg << "Using default capping atom bond length - "
-          << sim.param().qmmm.cap_length;
-      io::messages.add(msg.str(),"In_QMMM", io::message::notice);
+      io::messages.add("no CAPLEN block in QM/MM specification file",
+              "In_QMMM", io::message::error);
     }
     else {
       double caplen;

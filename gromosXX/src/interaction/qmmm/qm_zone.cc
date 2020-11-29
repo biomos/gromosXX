@@ -109,7 +109,13 @@ void interaction::QM_Zone::write(topology::Topology& topo,
   for (std::set<QM_Link>::const_iterator
       it = this->link.begin(), to = this->link.end(); it !=to; ++it)
     {
-    it->distribute_force(*this);
+    DEBUG(15, "Redistributing force of capping atom");
+    DEBUG(15, "QM-MM link: " << it->qm_index << " - " << it->mm_index);
+    std::set<QM_Atom>::iterator qm_it = this->qm.find(it->qm_index);
+    std::set<MM_Atom>::iterator mm_it = this->mm.find(it->mm_index);
+    assert(qm_it != this->qm.end());
+    assert(mm_it != this->mm.end());
+    it->distribute_force(qm_it->pos, mm_it->pos, qm_it->force, mm_it->force);
   }
 
   // Then write QM atoms forces and calculate virial
@@ -149,6 +155,14 @@ void interaction::QM_Zone::write(topology::Topology& topo,
       {
       DEBUG(15, "Atom " << it->index << ", new charge: " << it->qm_charge);
       topo.charge()(it->index) = it->qm_charge;
+    // Add link atom charge to QM atom
+    for (std::set<QM_Link>::const_iterator
+          it = this->link.begin(), to = this->link.end(); it != to; ++it)
+      {
+      DEBUG(15, "Link atom " << it->qm_index << "-" << it->mm_index << ", charge: " << it->qm_charge);
+      topo.charge()(it->qm_index) += it->qm_charge;
+      DEBUG(15, "Charge added to QM atom " << it->qm_index << ", new charge: " << topo.charge(it->qm_index));
+    }
     }
   }
 
@@ -179,7 +193,7 @@ int interaction::QM_Zone::get_qm_atoms(const topology::Topology& topo,
       ) {
       std::ostringstream msg;
       msg << "QM atom " << a + 1 << " in solvent is not supported";
-      io::messages.add(msg.str(), "QM Zone", io::message::error);
+      io::messages.add(msg.str(), "QM_Zone", io::message::error);
       return E_INPUT_ERROR;
     }
     const bool cg_is_buf = topo.is_qm_buffer(a);
@@ -194,7 +208,7 @@ int interaction::QM_Zone::get_qm_atoms(const topology::Topology& topo,
         std::ostringstream msg;
         msg << "Chargegroup " << cg << " is split between QM and MM zone - "
             << "atoms " << a + 1 << " and " << a;
-        io::messages.add(msg.str(), "QM Zone", io::message::error);
+        io::messages.add(msg.str(), "QM_Zone", io::message::error);
         return E_INPUT_ERROR;
       }
       if (a_is_qm || a_is_buf
@@ -205,7 +219,7 @@ int interaction::QM_Zone::get_qm_atoms(const topology::Topology& topo,
                 || topo.is_eds_perturbed(a)) {
           std::ostringstream msg;
           msg << "QM or buffer atom should not be polarisable, coarse-grained or perturbed";
-          io::messages.add(msg.str(), "QM Zone", io::message::error);
+          io::messages.add(msg.str(), "QM_Zone", io::message::error);
           return E_INPUT_ERROR;
         }
         // Skip adaptive buffer zone
@@ -217,7 +231,7 @@ int interaction::QM_Zone::get_qm_atoms(const topology::Topology& topo,
     }
   }
   if (this->qm.size() == 0) {
-    io::messages.add("QMMM requested but no QM atoms found", "QM Zone", io::message::error);
+    io::messages.add("QMMM requested but no QM atoms found", "QM_Zone", io::message::error);
     return E_INPUT_ERROR;
   }
   DEBUG(15,"QM_Zone::get_qm_atoms: Updating QM atoms positions");
@@ -285,7 +299,7 @@ int interaction::QM_Zone::_update_qm_pos(const topology::Topology& topo,
           std::ostringstream msg;
           msg << "QM zone sees own periodic image (atoms "
               << (it1->index + 1) << " and " << (it2->index + 1) << ")";
-          io::messages.add(msg.str(), "QM Zone", io::message::error);
+          io::messages.add(msg.str(), "QM_Zone", io::message::error);
           err = 1;
         }
       }
@@ -479,7 +493,7 @@ int interaction::QM_Zone::gather_chargegroups(const topology::Topology& topo,
                 msg << "QM atom " << (qm_it->index + 1)
                     << " sees different periodic copy of MM atom "
                     << (set_it->index + 1);
-                io::messages.add(msg.str(), "QM Zone", io::message::error);
+                io::messages.add(msg.str(), "QM_Zone", io::message::error);
                 return E_BOUNDARY_ERROR;
               } // if not in the same position
             } // if already in the set
@@ -502,6 +516,7 @@ int interaction::QM_Zone::gather_chargegroups(const topology::Topology& topo,
   return 0;
 }
 
+// emplace is very similar for QM and MM atom, while also the buffer logic is flipped, so we use template here
 template<>
 void interaction::QM_Zone::emplace_atom(std::set<interaction::QM_Atom>& set,
                                         std::set<interaction::QM_Atom>::const_iterator& it,
@@ -590,11 +605,10 @@ int interaction::QM_Zone::_get_buffer_atoms(const topology::Topology& topo,
 void interaction::QM_Zone::get_mm_atoms(const topology::Topology& topo, 
                                         const configuration::Configuration& conf, 
                                         const simulation::Simulation& sim) {
-  /** Could be probably done employing standard pairlist, but we are
+  /** Standard pairlist algorithm is not enough since we are
    * using different cutoff. We also do gathering at the same time and perform
    * some checks on cutoff and periodic copy interactions so it becomes
-   * rather specific for QM and useless for other purposes, thus could
-   * be done here
+   * rather specific for QM
    */
   this->mm.clear();
   if (sim.param().boundary.boundary == math::vacuum
@@ -712,7 +726,7 @@ int interaction::QM_Zone::_get_mm_atoms_atomic(const topology::Topology& topo,
               msg << "QM atom " << (qm_it->index + 1)
                   << " sees multiple periodic copies of MM atom "
                   << (mm_it->index + 1);
-              io::messages.add(msg.str(), "QM Zone", io::message::error);
+              io::messages.add(msg.str(), "QM_Zone", io::message::error);
               return E_BOUNDARY_ERROR;
             } // if not in the same position
           } // if already in the set
@@ -787,7 +801,7 @@ void interaction::QM_Zone::get_links(const topology::Topology& topo,
     assert(this->mm.find(MM_Atom(it->second)) != this->mm.end());
 
     DEBUG(9,"Adding QM-MM link: " << it->first << " - " << it->second);
-    this->link.emplace(it->first, it->second, 0);
+    this->link.emplace(QM_Atom(0), it->first, it->second);
   }
   this->update_links(sim);
 }

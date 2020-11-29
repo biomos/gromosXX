@@ -55,7 +55,7 @@ int interaction::create_g96_forcefield(interaction::Forcefield & ff,
    */
 
   if (sim.param().qmmm.qmmm) {
-    DEBUG(8, "creating the nonbonded terms");
+    DEBUG(8, "creating the QMMM nonbonded terms");
     QMMM_Interaction * qmmm = new QMMM_Interaction;
     it.read_lj_parameter(qmmm->parameter().lj_parameter());
     ff.push_back(qmmm);

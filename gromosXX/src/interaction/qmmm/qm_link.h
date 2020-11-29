@@ -8,35 +8,34 @@
 
 namespace interaction {
   struct QM_Atom;
-  class QM_Zone;
   /**
    * @class QM_Link
    * Bonds between QM and MM atoms
    */
-  class QM_Link {
-  public:
+  struct QM_Link {
     /**
      * Constructor
-     * @param Capping atom (QM_Atom)
-     * @param Index of QM atom
-     * @param Index of MM atom
+     * @param cap_atom Capping atom (QM_Atom)
+     * @param qm_index Index of QM atom
+     * @param mm_index Index of MM atom
      */
-    QM_Link(unsigned qm_index
+    QM_Link(interaction::QM_Atom cap_atom
+          , unsigned qm_index
           , unsigned mm_index
-          , interaction::QM_Atom cap_atom
           ) : 
-              qm_index(qm_index)
+              cap_atom(cap_atom)
+            , qm_index(qm_index)
             , mm_index(mm_index)
-            , cap_atom(cap_atom)
             , atomic_number(this->cap_atom.atomic_number)
             , pos(this->cap_atom.pos)
             , force(this->cap_atom.force)
+            , qm_charge(this->cap_atom.qm_charge)
     {}
 
     /**
-     * Index (capping atom has no index)
+     * QM capping atom
      */
-    const int index = -1;
+    mutable interaction::QM_Atom cap_atom;
 
     /**
      * QM link atom index
@@ -47,16 +46,6 @@ namespace interaction {
      * MM link atom index
      */
     const unsigned mm_index;
-
-    /**
-     * QM capping atom
-     */
-    mutable interaction::QM_Atom cap_atom;
-
-    /**
-     * Reference to capping atom index (direct access)
-     */
-    //const unsigned& index;
 
     /**
      * Reference to capping atom atomic number (direct access)
@@ -74,14 +63,24 @@ namespace interaction {
     math::Vec& force;
 
     /**
+     * Reference to capping atom charge (direct access)
+     */
+    double& qm_charge;
+
+    /**
      * Update QM capping atom position
      */
-    void update_cap_position(const math::Vec& qm_pos, const math::Vec& mm_pos, const double cap_length) const;
+    void update_cap_position(const math::Vec& qm_pos
+                           , const math::Vec& mm_pos
+                           , const double cap_length) const;
 
     /**
      * Distribute force on capping atom between QM and MM atom
      */
-    void distribute_force(interaction::QM_Zone& qm_zone) const;
+    void distribute_force(const math::Vec &qm_pos
+                        , const math::Vec &mm_pos
+                        , math::Vec &qm_force
+                        , math::Vec &mm_force) const;
 
     /**
      * less-than comparison operator

@@ -5,17 +5,12 @@
 #ifndef INCLUDED_GAUSSIAN_WORKER_H
 #define	INCLUDED_GAUSSIAN_WORKER_H
 
-//#include "qm_worker.h"
+#include <simulation/simulation.h>
 
-//#include "../../../simulation/simulation.h"
-
-namespace simulation {
-  struct gaussian_param_struct;
-}
+#include <interaction/qmmm/qm_worker.h>
+#include <interaction/qmmm/qm_zone.h>
 
 namespace interaction {
-  class QM_Worker;
-  class QM_Zone;
   /**
    * @class Gaussian_Worker
    * a worker class which calls the Gaussian software
@@ -29,19 +24,12 @@ namespace interaction {
     /**
      * Destructor
      */
-    virtual ~Gaussian_Worker();
+    virtual ~Gaussian_Worker() = default;
     /**
      * initialise the QM worker
      * @return 0 if successful, non-zero on failure
      */
     virtual int init(simulation::Simulation& sim);
-    /**
-     * run a QM job in Gaussian
-     * @param qm_pos a vector containing the QM atom positions
-     * @param mm_atoms the MM atoms to include
-     * @param storage the energies, forces, charges obtained
-     * @return 0 if successful, non-zero if not.
-     */
 
   private:
     /**
@@ -51,6 +39,10 @@ namespace interaction {
 
     /**
      * Write input file for QM
+     * @param topo Topology
+     * @param conf Configuration
+     * @param sim Simulation
+     * @param qm_zone QM Zone
      */
     int write_input(const topology::Topology& topo
                   , const configuration::Configuration& conf
@@ -122,13 +114,12 @@ namespace interaction {
      * Parse gradient line
      */
     int parse_gradient(std::ifstream& ofs
-                     , const int index
                      , math::Vec& force
                      , const double unit_factor);
   };
 
   /**
-   * Parse gradients of polarisable MM atoms
+   * Parse gradients of MM atoms
    */
   template<>
   int Gaussian_Worker::_parse_gradients<interaction::MM_Atom>

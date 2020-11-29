@@ -38,18 +38,11 @@ void interaction::QM_Link::update_cap_position(const math::Vec& qm_pos, const ma
   DEBUG(15, "Capping atom position: " << math::v2s(this->pos));
 }
 
-void interaction::QM_Link::distribute_force(interaction::QM_Zone& qm_zone) const
+void interaction::QM_Link::distribute_force(const math::Vec &qm_pos
+                                          , const math::Vec &mm_pos
+                                          , math::Vec &qm_force
+                                          , math::Vec &mm_force) const
   {
-  DEBUG(15, "Redistributing force of capping atom");
-  DEBUG(15, "QM-MM link: " << this->qm_index << " - " << this->mm_index);
-  std::set<QM_Atom>::iterator qm_it = qm_zone.qm.find(this->qm_index);
-  std::set<MM_Atom>::iterator mm_it = qm_zone.mm.find(this->mm_index);
-  assert(qm_it != qm_zone.qm.end());
-  assert(mm_it != qm_zone.mm.end());
-  math::Vec &qm_pos = qm_it->pos,
-            &mm_pos = mm_it->pos,
-            &qm_force = qm_it->force,
-            &mm_force = mm_it->force;
   math::Vec r_mm_qm = mm_pos - qm_pos;
 
   DEBUG(15, "QM pos: " << math::v2s(qm_pos));
@@ -58,11 +51,10 @@ void interaction::QM_Link::distribute_force(interaction::QM_Zone& qm_zone) const
   DEBUG(15, "MM force: " << math::v2s(mm_force));
   DEBUG(15, "r_mm_qm: " << math::v2s(r_mm_qm));
   
-
-  double d_l_qm = math::abs(this->pos - qm_pos),
-         d2_mm_qm = math::abs2(r_mm_qm),
-         d_mm_qm = sqrt(d2_mm_qm),
-         link_fraction = d_l_qm / d_mm_qm;
+  double d_l_qm = math::abs(this->pos - qm_pos);
+  double d2_mm_qm = math::abs2(r_mm_qm);
+  double d_mm_qm = sqrt(d2_mm_qm);
+  double link_fraction = d_l_qm / d_mm_qm;
   
   math::Vec lr_r_d2 = r_mm_qm * link_fraction / d2_mm_qm;
   DEBUG(15, "Force on capping atom: " << math::v2s(this->force));

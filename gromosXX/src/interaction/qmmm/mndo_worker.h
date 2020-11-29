@@ -5,17 +5,12 @@
 #ifndef INCLUDED_MNDO_WORKER_H
 #define	INCLUDED_MNDO_WORKER_H
 
-//#include "qm_worker.h"
+#include <simulation/simulation.h>
 
-//#include "../../../simulation/simulation.h"
-
-namespace simulation {
-  struct mndo_param_struct;
-}
+#include <interaction/qmmm/qm_worker.h>
+#include <interaction/qmmm/qm_zone.h>
 
 namespace interaction {
-  class QM_Worker;
-  class QM_Zone;
   /**
    * @class MNDO_Worker
    * a worker class which calls the MNDO software
@@ -29,19 +24,12 @@ namespace interaction {
     /**
      * Destructor
      */
-    virtual ~MNDO_Worker();
+    virtual ~MNDO_Worker() = default;
     /**
      * initialise the QM worker
      * @return 0 if successful, non-zero on failure
      */
     virtual int init(simulation::Simulation& sim);
-    /**
-     * run a QM job in MNDO
-     * @param qm_pos a vector containing the QM atom positions
-     * @param mm_atoms the MM atoms to include
-     * @param storage the energies, forces, charges obtained
-     * @return 0 if successful, non-zero if not.
-     */
 
   private:
     /**
@@ -51,6 +39,10 @@ namespace interaction {
 
     /**
      * Write input file for QM
+     * @param topo Topology
+     * @param conf Configuration
+     * @param sim Simulation
+     * @param qm_zone QM Zone
      */
     int write_input(const topology::Topology& topo
                   , const configuration::Configuration& conf
@@ -75,7 +67,8 @@ namespace interaction {
      */
     void write_qm_atom(std::ofstream& inputfile_stream
                   , const int atomic_number
-                  , const math::Vec& pos);
+                  , const math::Vec& pos
+                  , const int opt_flag = 0);
 
     /**
      * Write MM atom
@@ -100,33 +93,18 @@ namespace interaction {
     int parse_energy(std::ifstream& ofs, interaction::QM_Zone& qm_zone);
 
     /**
-     * Parse gradients wrapper
+     * Parse gradients
      */
     int parse_gradients(const simulation::Simulation& sim
                       , std::ifstream& ofs
                       , interaction::QM_Zone& qm_zone);
 
     /**
-     * Parse gradients
-     */
-    template<class AtomType>
-    int _parse_gradients(std::ifstream& ofs, std::set<AtomType>& atom_set);
-
-    /**
      * Parse gradient line
      */
     int parse_gradient(std::ifstream& ofs
-                     , const int index
-                     , math::Vec& force
-                     , const double unit_factor);
+                     , math::Vec& force);
   };
-
-  /**
-   * Parse gradients of polarisable MM atoms
-   */
-  template<>
-  int MNDO_Worker::_parse_gradients<interaction::MM_Atom>
-        (std::ifstream& ofs, std::set<interaction::MM_Atom>& atom_set);
 }
 
 #endif	/* MNDO_WORKER_H */
