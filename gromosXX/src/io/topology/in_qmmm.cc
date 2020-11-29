@@ -165,6 +165,63 @@ title line
 END
 @endverbatim
  *
+ * @section MOPACBINARY block for the MOPAC worker
+ * The MOPACBINARY block specifies path to MOPAC binary
+ *
+ * This block is optional. If unspecified, mopac command from PATH environment variable
+ * is used.
+ *
+ * @verbatim
+MOPACBINARY
+/path/to/mopac/binary
+END
+@endverbatim
+ *
+ * @section MOPACFILES block for the MOPAC worker
+ * The MOPACFILES block specifies input and output files to exchange data with MOPAC
+ *
+ * This block is optional. If any line is not specified, temporary file is created
+ * using TMPDIR environment variable and deleted after use.
+ * User-specified files are not deleted.
+ *
+ * @verbatim
+MOPACFILES
+/path/to/mopac.mop    ##input file
+/path/to/mopac.out    ##output file
+/path/to/mopac.aux    ##auxiliary output file - MOPAC output is read from this file
+/path/to/mopac.arc    ##archive output file
+/path/to/stdout.out   ##standard output file - STDOUT and STDERR are redirected here
+/path/to/mopac.den    ##density matrix file to be reused in subsequent step
+/path/to/mol.in       ##mol.in file with external charges
+END
+@endverbatim
+ *
+ * The MOPACHEADER block specifies the header part of the MOPAC input file. Variables
+ * are allowed. Implemented are
+ * - CHARGE: net charge of the QM zone
+ * - OLDENS: will generate density file in every step using DENOUT and then reuses
+ *           it using OLDENS in subsequent step
+ * 
+@verbatim
+MOPACHEADER
+PM7 1SCF CHARGE=@@CHARGE@@ GRAD QMMM AUX(PRECISION=9) PRECISE @@OLDENS@@
+title line
+END
+@endverbatim
+ *
+ * The MOPACLINKATOM block specifies the way the link atoms are treated.
+@verbatim
+MOPACLINKATOM
+#  mode of treatment:
+#    0(none) : link atoms see no MM atom (default)
+#    1(exclude_atom) : Link atoms see all MM atoms except the MM atoms involved in the link
+#    2(exclude_chargegroup) : Link atoms see all MM atoms except the MM chargegroup involved in the link
+#    3(all) : Link atoms see all MM
+# 
+   0
+END
+@endverbatim
+ *
  * @section GAUBINARY block for the Gaussian worker
  * The GAUBINARY block specifies path to GAUSSIAN binary
  *
@@ -445,25 +502,44 @@ io::In_QMMM::read(topology::Topology& topo,
    */
   else if (sw == simulation::qm_mopac) {
     this->read_units(sim, &sim.param().qmmm.mopac);
+    { // MOPACBINARY
+
+      DEBUG(15, "Reading MOPACBINARY");
+      buffer = m_block["MOPACBINARY"];
+
+      if (!buffer.size()) {
+        io::messages.add("Assuming that the mopac binary is in the PATH",
+                "In_QMMM", io::message::notice);
+        sim.param().qmmm.mopac.binary = "mopac";
+      } else {
+        if (buffer.size() != 3) {
+          io::messages.add("MOPACBINARY block corrupt. Provide 1 line.",
+                  "In_QMMM", io::message::error);
+          return;
+        }
+        sim.param().qmmm.mopac.binary = buffer[1];
+      }
+    } // MOPACBINARY
     {
       //MOPACFILES
       buffer = m_block["MOPACFILES"];
 
       if (!buffer.size()) {
-        io::messages.add("Using temporary files for MOPAC input/output and assuming that the binary is in the PATH",
+        io::messages.add("Using temporary files for MOPAC input/output",
                          "In_QMMM", io::message::notice);
-        sim.param().qmmm.mopac.binary = "mopac";
       } else {
-        if (buffer.size() != 7) {
-          io::messages.add("MOPAC block corrupt. Provide 4 lines.",
+        if (buffer.size() != 9) {
+          io::messages.add("MOPACFILES block corrupt. Provide 7 lines.",
                            "In_QMMM", io::message::error);
           return;
         }
-      sim.param().qmmm.mopac.binary = buffer[1];
-      sim.param().qmmm.mopac.input_file = buffer[2];
-      sim.param().qmmm.mopac.output_file = buffer[3];
-      sim.param().qmmm.mopac.output_gradient_file = buffer[4];
-      sim.param().qmmm.mopac.molin_file = buffer[5];
+      sim.param().qmmm.mopac.input_file = buffer[1];
+      sim.param().qmmm.mopac.output_file = buffer[2];
+      sim.param().qmmm.mopac.output_aux_file = buffer[3];
+      sim.param().qmmm.mopac.output_arc_file = buffer[4];
+      sim.param().qmmm.mopac.stdout_file = buffer[5];
+      sim.param().qmmm.mopac.output_dens_file = buffer[6];
+      sim.param().qmmm.mopac.molin_file = buffer[7];
       }
     } // MOPACFILES
     { // MOPACHEADER
@@ -476,6 +552,26 @@ io::In_QMMM::read(topology::Topology& topo,
       concatenate(buffer.begin() + 1, buffer.end() - 1,
                   sim.param().qmmm.mopac.input_header);
     } // MOPACHEADER
+    { // MOPACLINKATOM
+      buffer = m_block["MOPACLINKATOM"];
+      if (!buffer.size()) {
+        io::messages.add("MOPAC link atoms see no MM atoms (default)",
+                         "In_QMMM", io::message::notice);
+        sim.param().qmmm.mopac.link_atom_mode = 0;
+      } else {
+        if (buffer.size() != 3) {
+          io::messages.add("MOPACLINKATOM block corrupt. Provide 1 line.",
+                           "In_QMMM", io::message::error);
+          return;
+        }
+        std::string& s = buffer[1];
+        if (s == "default" || s == "none" || s == "0") sim.param().qmmm.mopac.link_atom_mode = 0;
+        else if (s == "exclude_atom" || s == "1") sim.param().qmmm.mopac.link_atom_mode = 1;
+        else if (s == "exclude_chargegroup" || s == "2") sim.param().qmmm.mopac.link_atom_mode = 2;
+        else if (s == "all" || s == "3") sim.param().qmmm.mopac.link_atom_mode = 3;
+        else sim.param().qmmm.mopac.link_atom_mode = 0;
+      }
+    } // MOPACLINKATOM
   }
 
   /**

@@ -3680,7 +3680,7 @@ namespace simulation
        * QM program unspecific parameters
        */
       struct qm_param_struct{
-        /**
+      /**
        * Constructor
        * Default values:
        * - unit_factor_length 1.0
@@ -3806,13 +3806,36 @@ namespace simulation
        */
       struct mopac_param_struct : public qm_param_struct {
         /**
+         * Constructor
+         * Default values:
+         * - link_atom_mode 0
+         */
+        mopac_param_struct() : 
+                        link_atom_mode(0) {}
+        /**
+         * path for the output aux file. Empty for a temporary file
+         */
+        std::string output_aux_file;
+        /**
+         * path for the output arc file. Empty for a temporary file
+         */
+        std::string output_arc_file;
+        /**
+         * path for the stdout file. Empty for a temporary file
+         */
+        std::string stdout_file;
+        /**
+         * path for the output aux file. Empty for a temporary file
+         */
+        std::string output_dens_file;
+        /**
          * path for the molin file. Empty for a temporary file
          */
         std::string molin_file;
         /**
-         * path for the output gradient file. Empty for a temporary file
+         * link atom treatment mode
          */
-        std::string output_gradient_file;
+        int link_atom_mode;
       } mopac;
 
       /**
