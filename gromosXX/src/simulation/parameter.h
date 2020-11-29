@@ -3681,6 +3681,19 @@ namespace simulation
        */
       struct qm_param_struct{
         /**
+       * Constructor
+       * Default values:
+       * - unit_factor_length 1.0
+       * - unit_factor_energy 1.0
+       * - unit_factor_force 1.0
+       * - unit_factor_charge 1.0
+       */
+      qm_param_struct() : 
+                      unit_factor_length(1.0)
+                    , unit_factor_energy(1.0)
+                    , unit_factor_force(1.0)
+                    , unit_factor_charge(1.0) {}
+        /**
          * path for the program binary
          */
         std::string binary;
