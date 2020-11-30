@@ -516,7 +516,7 @@ int interaction::QM_Zone::gather_chargegroups(const topology::Topology& topo,
   return 0;
 }
 
-// emplace is very similar for QM and MM atom, while also the buffer logic is flipped, so we use template here
+// emplace is very similar for QM and MM atom, except the buffer logic is flipped, so we use template here
 template<>
 void interaction::QM_Zone::emplace_atom(std::set<interaction::QM_Atom>& set,
                                         std::set<interaction::QM_Atom>::const_iterator& it,

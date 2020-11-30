@@ -182,7 +182,7 @@ int interaction::Gaussian_Worker::read_output(topology::Topology& topo
     if (err) return err;
   }
 
-  err = this->parse_gradients(sim, ofs, qm_zone);
+  err = this->parse_forces(sim, ofs, qm_zone);
   if (err) return err;
 
   ofs.close();
@@ -334,24 +334,24 @@ int interaction::Gaussian_Worker::parse_energy(std::ifstream& ofs, interaction::
   return 0;
 }
 
-int interaction::Gaussian_Worker::parse_gradients(const simulation::Simulation& sim
+int interaction::Gaussian_Worker::parse_forces(const simulation::Simulation& sim
                                             , std::ifstream& ofs
                                             , interaction::QM_Zone& qm_zone) {
   std::string& out = this->param->output_file;
   std::string line;
   int err;
   
-  // Find MM gradients - Electric field comes first in the output
+  // Find MM forces - in the form of electric field
   if (sim.param().qmmm.qmmm > simulation::qmmm_mechanical) {
-    bool got_mm_gradients = false;
+    bool got_mm_efield = false;
     while (std::getline(ofs, line)) {
       if (line.find("-------- Electric Field --------") != std::string::npos) {
-        got_mm_gradients = true;
+        got_mm_efield = true;
         break;
       }
     }
-    if (!got_mm_gradients) {
-      io::messages.add("Unable to find MM gradients in output file " + out,
+    if (!got_mm_efield) {
+      io::messages.add("Unable to find electric field at MM charges in output file " + out,
                           this->name(), io::message::error);
       return 1;
     }
@@ -359,20 +359,38 @@ int interaction::Gaussian_Worker::parse_gradients(const simulation::Simulation& 
     for (unsigned i = 0; i < skip_lines; ++i)
       std::getline(ofs, line);
     // Parse MM atoms
-    err = this->_parse_gradients(ofs, qm_zone.mm);
-    if (err) return err;
+    std::set<interaction::MM_Atom>::iterator it, to;
+    for(std::set<interaction::MM_Atom>::iterator
+        it = qm_zone.mm.begin(), to = qm_zone.mm.end(); it != to; ++it) {
+      const int i = it->index;
+      DEBUG(15, "Parsing electric field on MM atom " << i);
+      err = this->parse_force(ofs, it->force);
+      if (err) return err;
+      // We still need to multiply by charge, since here we parsed electric field only
+      if (it->is_polarisable) {
+        it->force *= it->charge - it->cos_charge;
+        err = this->parse_force(ofs, it->cos_force);
+        if (err) return err;
+        it->cos_force *= it->cos_charge;
+      }
+      else {
+        DEBUG(15, "Charge of atom " << i << ": " << it->charge);
+        it->force *= it->charge;
+        DEBUG(15, "stored force on MM atom " << i << ": " << math::v2s(it->force));
+      }
+    }
   }
   {
-    // Find QM gradients
-    bool got_qm_gradients = false;
+    // Find QM forces
+    bool got_qm_forces = false;
     while (std::getline(ofs, line)) {
       if (line.find("Forces (Hartrees/Bohr)") != std::string::npos) {
-        got_qm_gradients = true;
+        got_qm_forces = true;
         break;
       }
     }
-    if (!got_qm_gradients) {
-      io::messages.add("Unable to find QM gradients in output file " + out,
+    if (!got_qm_forces) {
+      io::messages.add("Unable to find QM forces in output file " + out,
                           this->name(), io::message::error);
       return 1;
     }
@@ -381,75 +399,41 @@ int interaction::Gaussian_Worker::parse_gradients(const simulation::Simulation& 
     for (unsigned i = 0; i < skip_lines; ++i)
       std::getline(ofs, line);
     // Parse QM atoms
-    err = this->_parse_gradients(ofs, qm_zone.qm);
-    if (err) return err;
-    // Parse link QM atoms
-    err = this->_parse_gradients(ofs, qm_zone.link);
-    if (err) return err;
-  }
-  return 0;
-}
-
-template<class AtomType>
-int interaction::Gaussian_Worker::_parse_gradients(std::ifstream& ofs,
-                                               std::set<AtomType>& atom_set) {
-  int err = 0;
-  typename std::set<AtomType>::iterator it, to;
-  for(it = atom_set.begin(), to = atom_set.end(); it != to; ++it) {
-    err = this->parse_gradient(ofs, it->force, this->param->unit_factor_force);
-    if (err) return err;
-  }
-  return 0;
-}
-
-template<>
-int interaction::Gaussian_Worker::_parse_gradients(std::ifstream& ofs
-                                                 , std::set<interaction::MM_Atom>& atom_set) {
-  int err = 0;
-  std::set<interaction::MM_Atom>::iterator it, to;
-  for(it = atom_set.begin(), to = atom_set.end(); it != to; ++it) {
-    int i = it->index;
-    DEBUG(15, "Parsing electric field on MM atom " << i);
-    err = this->parse_gradient(ofs, it->force, this->param->unit_factor_force);
-    if (err) return err;
-    // We still need to multiply by charge, since here we parsed electric field only
-    if (it->is_polarisable) {
-      it->force *= it->charge - it->cos_charge;
-      err = this->parse_gradient(ofs, it->cos_force, this->param->unit_factor_force);
+    for(std::set<QM_Atom>::iterator
+        it = qm_zone.qm.begin(), to = qm_zone.qm.end(); it != to; ++it) {
+      err = this->parse_force(ofs, it->force);
       if (err) return err;
-      it->cos_force *= it->cos_charge;
     }
-    else {
-      DEBUG(15, "Charge of atom " << i << ": " << it->charge);
-      it->force *= it->charge;
-      DEBUG(12, "stored force on MM atom " << i << ": " << math::v2s(it->force));
+    // Parse link QM atoms
+    for(std::set<QM_Link>::iterator
+        it = qm_zone.link.begin(), to = qm_zone.link.end(); it != to; ++it) {
+      err = this->parse_force(ofs, it->force);
+      if (err) return err;
     }
   }
   return 0;
 }
 
-int interaction::Gaussian_Worker::parse_gradient(std::ifstream& ofs,
-                                             math::Vec& force,
-                                             const double unit_factor) {
+int interaction::Gaussian_Worker::parse_force(std::ifstream& ofs,
+                                              math::Vec& force) {
   std::string line;
-  math::Vec gradient;
   std::string dummy;
   if(!std::getline(ofs, line)) {
     std::ostringstream msg;
-    msg << "Failed to read gradient line"
+    msg << "Failed to read force line"
         << " in " << this->param->output_file;
     io::messages.add(msg.str(), this->name(), io::message::error);
     return 1;
   }
   std::istringstream iss(line);
-  iss >> dummy >> dummy >> gradient(0) >> gradient(1) >> gradient(2);
+  iss >> dummy >> dummy >> force(0) >> force(1) >> force(2);
   if (iss.fail()) {
     std::ostringstream msg;
-    msg << "Failed to parse gradient line of atom "
+    msg << "Failed to parse force line of atom "
         << " in " << this->param->output_file;
     io::messages.add(msg.str(), this->name(), io::message::error);
     return 1;
   }
-  force = gradient * unit_factor;
+  force *= this->param->unit_factor_force;
   return 0;
 }

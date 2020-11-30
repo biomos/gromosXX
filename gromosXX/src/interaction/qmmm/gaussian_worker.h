@@ -98,32 +98,18 @@ namespace interaction {
     int parse_energy(std::ifstream& ofs, interaction::QM_Zone& qm_zone);
 
     /**
-     * Parse gradients wrapper
+     * Parse forces
      */
-    int parse_gradients(const simulation::Simulation& sim
-                      , std::ifstream& ofs
-                      , interaction::QM_Zone& qm_zone);
-
+    int parse_forces(const simulation::Simulation& sim
+                  , std::ifstream& ofs
+                  , interaction::QM_Zone& qm_zone);
+    
     /**
-     * Parse gradients
+     * Parse force line
      */
-    template<class AtomType>
-    int _parse_gradients(std::ifstream& ofs, std::set<AtomType>& atom_set);
-
-    /**
-     * Parse gradient line
-     */
-    int parse_gradient(std::ifstream& ofs
-                     , math::Vec& force
-                     , const double unit_factor);
+    int parse_force(std::ifstream& ofs
+                  , math::Vec& force);
   };
-
-  /**
-   * Parse gradients of MM atoms
-   */
-  template<>
-  int Gaussian_Worker::_parse_gradients<interaction::MM_Atom>
-        (std::ifstream& ofs, std::set<interaction::MM_Atom>& atom_set);
 }
 
 #endif	/* GAUSSIAN_WORKER_H */

@@ -588,6 +588,7 @@ int interaction::MNDO_Worker::parse_gradient(std::ifstream& ofs,
     io::messages.add(msg.str(), this->name(), io::message::error);
     return 1;
   }
+  // force = - gradient
   force *= - this->param->unit_factor_force;
   return 0;
 }
