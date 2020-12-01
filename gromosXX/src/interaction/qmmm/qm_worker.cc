@@ -3,18 +3,18 @@
  * implements the factory function for the QM_Worker class
  */
 
-#include <stdheader.h>
+#include "../../../stdheader.h"
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <configuration/configuration.h>
-#include <interaction/interaction.h>
+#include "../../../algorithm/algorithm.h"
+#include "../../../topology/topology.h"
+#include "../../../simulation/simulation.h"
+#include "../../../configuration/configuration.h"
+#include "../../../interaction/interaction.h"
 
-#include <simulation/parameter.h>
+#include "../../../simulation/parameter.h"
 
-#include <util/timing.h>
-#include <util/system_call.h>
+#include "../../../util/timing.h"
+#include "../../../util/system_call.h"
 
 #include "qm_atom.h"
 #include "mm_atom.h"

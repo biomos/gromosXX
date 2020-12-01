@@ -2,26 +2,26 @@
  * @file qmmm_nonbonded_set.cc
  */
 
-#include <stdheader.h>
+#include "../../../stdheader.h"
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <configuration/configuration.h>
+#include "../../../algorithm/algorithm.h"
+#include "../../../topology/topology.h"
+#include "../../../simulation/simulation.h"
+#include "../../../configuration/configuration.h"
 
-#include <simulation/parameter.h>
+#include "../../../simulation/parameter.h"
 
-#include <interaction/interaction.h>
+#include "../../../interaction/interaction.h"
 
-#include <interaction/qmmm/qm_zone.h>
-#include <interaction/qmmm/nonbonded/qmmm_nonbonded_set.h>
+#include "../../../util/debug.h"
+#include "../../../util/timing.h"
 
-#include <util/debug.h>
-#include <util/timing.h>
+#include "../../../configuration/energy.h"
 
-#include <configuration/energy.h>
+#include "../../../math/volume.h"
 
-#include <math/volume.h>
+#include "qm_zone.h"
+#include "qmmm_nonbonded_set.h"
 
 #undef MODULE
 #undef SUBMODULE

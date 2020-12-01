@@ -18,9 +18,9 @@ namespace interaction
   class Nonbonded_Parameter;
 }
 
-#include <interaction/nonbonded/interaction/storage.h>
-#include <interaction/nonbonded/pairlist/pairlist.h>
-#include <interaction/qmmm/nonbonded/qmmm_nonbonded_outerloop.h>
+#include "../../../interaction/nonbonded/interaction/storage.h"
+#include "../../../interaction/nonbonded/pairlist/pairlist.h"
+#include "qmmm_nonbonded_outerloop.h"
 
 namespace interaction
 {

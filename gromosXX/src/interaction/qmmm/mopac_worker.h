@@ -5,11 +5,6 @@
 #ifndef INCLUDED_MOPAC_WORKER_H
 #define	INCLUDED_MOPAC_WORKER_H
 
-//#include "../../../simulation/simulation.h"
-
-//#include <interaction/qmmm/qm_worker.h>
-//#include <interaction/qmmm/qm_zone.h>
-
 namespace interaction {
   class QM_Worker;
   class QM_Zone;

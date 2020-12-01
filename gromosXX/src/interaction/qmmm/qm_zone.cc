@@ -2,26 +2,26 @@
  * @file qm_zone.cc
  * Implements methods of QM_Zone
  */
-#include <stdheader.h>
+#include "../../../stdheader.h"
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <configuration/configuration.h>
-#include <interaction/interaction.h>
+#include "../../../algorithm/algorithm.h"
+#include "../../../topology/topology.h"
+#include "../../../simulation/simulation.h"
+#include "../../../configuration/configuration.h"
+#include "../../../interaction/interaction.h"
 
-#include <interaction/nonbonded/pairlist/pairlist.h>
+#include "../../../interaction/nonbonded/pairlist/pairlist.h"
 
-#include <math/periodicity.h>
-#include <util/template_split.h>
+#include "../../../math/periodicity.h"
+#include "../../../util/template_split.h"
 
-#include <util/debug.h>
-#include <util/error.h>
+#include "../../../util/debug.h"
+#include "../../../util/error.h"
 
-#include <interaction/qmmm/qm_atom.h>
-#include <interaction/qmmm/mm_atom.h>
-#include <interaction/qmmm/qm_link.h>
-#include <interaction/qmmm/qm_zone.h>
+#include "qm_atom.h"
+#include "mm_atom.h"
+#include "qm_link.h"
+#include "qm_zone.h"
 
 #undef MODULE
 #undef SUBMODULE

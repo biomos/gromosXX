@@ -5,12 +5,14 @@
 #ifndef INCLUDED_GAUSSIAN_WORKER_H
 #define	INCLUDED_GAUSSIAN_WORKER_H
 
-#include <simulation/simulation.h>
-
-#include <interaction/qmmm/qm_worker.h>
-#include <interaction/qmmm/qm_zone.h>
+namespace simulation {
+  class Parameter;
+  class Simulation;
+}
 
 namespace interaction {
+  class QM_Worker;
+  class QM_Zone;
   /**
    * @class Gaussian_Worker
    * a worker class which calls the Gaussian software

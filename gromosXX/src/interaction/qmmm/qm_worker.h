@@ -9,13 +9,6 @@ namespace util {
   class Algorithm_Timer;
 }
 
-#include <util/timing.h>
-
-namespace simulation {
-  //class Parameter;
-  struct qm_param_struct;
-}
-
 namespace interaction {
   class QM_Zone;
   struct MM_Atom;

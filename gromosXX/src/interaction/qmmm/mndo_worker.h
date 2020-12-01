@@ -5,12 +5,14 @@
 #ifndef INCLUDED_MNDO_WORKER_H
 #define	INCLUDED_MNDO_WORKER_H
 
-#include <simulation/simulation.h>
-
-#include <interaction/qmmm/qm_worker.h>
-#include <interaction/qmmm/qm_zone.h>
+namespace simulation {
+  class Parameter;
+  class Simulation;
+}
 
 namespace interaction {
+  class QM_Worker;
+  class QM_Zone;
   /**
    * @class MNDO_Worker
    * a worker class which calls the MNDO software
