@@ -150,7 +150,8 @@ int interaction::Gaussian_Worker::write_input(const topology::Topology& topo
 }
 
 int interaction::Gaussian_Worker::system_call() {
-  int err = util::system_call(this->param->binary, this->param->input_file, this->param->output_file);
+  int err = util::system_call(this->param->binary + " < " + this->param->input_file
+                                + " 1> " + this->param->output_file + " 2>&1 ");
   if (err) {
     std::ostringstream msg;
     msg << "Gaussian failed with code " << err;

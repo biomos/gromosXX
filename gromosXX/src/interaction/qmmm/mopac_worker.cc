@@ -413,11 +413,10 @@ double interaction::MOPAC_Worker::pair_potential(const math::Vec& pos
 }
 
 int interaction::MOPAC_Worker::system_call() {
-  // MOPAC writes automatically to inputfilename.out, thus we redirect stdout and stderr to /dev/null
-  DEBUG(15, "calling '" << this->param->binary << " " << this->param->input_file << " 1> " << this->param->stdout_file << " 2>&1'");
-  std::string comm = this->param->binary + " " + this->param->input_file;
-  std::string stdin = "";
-  int err = util::system_call(comm, stdin, this->param->stdout_file);
+  // MOPAC writes automatically to inputfilename.out
+  // We redirect stderr to stdout and store in separate file
+  int err = util::system_call(this->param->binary + " " + this->param->input_file
+                                + " 1> " + this->param->stdout_file + " 2>&1 ");
   if (err) {
     std::ostringstream msg;
     msg << "MOPAC failed with code " << err;

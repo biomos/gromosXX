@@ -6,20 +6,13 @@
 #define	SYSTEM_CALL_H
 
 namespace util {
-  const std::string default_tmp_path = "/tmp";
+  extern const std::string default_tmp_path;
   /**
-   * function that calls an external command, provides standard input from input
-   * file and write the output to output file
-   * @param command
-   * @param input_file the file from which the input is read.
-   *        Provide an empty string to skip this.
-   * @param output_file the file to which the output is written.
-   *        Provide an empty string to let the function create a temporary file and provide its name in the string
+   * function that calls an external command
+   * @param command complete command including optional stdout and stderr pipe
    * @return 0 on success, non-zero on failure.
    */
-  int system_call(const std::string & command,
-          std::string & input_file,
-          std::string & output_file);
+  int system_call(const std::string & command);
 
   /**
    * function to generate temporary file

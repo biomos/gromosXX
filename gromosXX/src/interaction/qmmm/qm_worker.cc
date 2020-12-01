@@ -102,7 +102,8 @@ int interaction::QM_Worker::write_input(const topology::Topology& topo
 }
 
 int interaction::QM_Worker::system_call() {
-  return util::system_call(this->param->binary, this->param->input_file, this->param->output_file);
+  return util::system_call(this->param->binary + " < " + this->param->input_file
+                                + " 1> " + this->param->output_file + " 2>&1 ");
 };
 
 int interaction::QM_Worker::read_output(topology::Topology& topo
