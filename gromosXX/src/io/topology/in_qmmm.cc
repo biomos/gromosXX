@@ -263,7 +263,7 @@ END
  * 
 @verbatim
 GAUROUTE
-N hf/STO-3G nosymm pop(mk) charge(angstroms) force charge(angstroms) prop=(field,read)
+N hf/STO-3G nosymm pop(mk) force charge(angstroms) prop=(field,read)
 END
 @endverbatim
  *
