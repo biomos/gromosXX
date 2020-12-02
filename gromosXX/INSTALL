@@ -1,11 +1,12 @@
 MD++ INSTALLATION INSTRUCTIONS
 ==================================
+(also see Volume 8 of the GROMOS manuals)
 
 necessary compilation tools
 ***************************
 
 	ANSI C++ compatible compiler
-	(g++ >= 3.0; tested for gcc version up to 4.1.2)
+	(g++ >= 3.0; tested for gcc version up to 9.3)
 	(Intel C++ Compiler; tested with version 8.1)
 
 Required libraries
@@ -19,7 +20,8 @@ Required libraries
 
 	if the GSL is installed to the default location ./configure
 	will usually be able to find it.
-	Otherwise, when running configure in steps A 5. oder B 4. below, set the compilation flags accordingly:
+	Otherwise, when running configure in steps A 5. oder B 4. below, 
+        set the compilation flags accordingly:
 
 	e.g. ../configure --with-gsl=/path/to/gsl
 
@@ -33,23 +35,6 @@ Required libraries
 
 	for MPI you also need the fftw3-mpi library which you have to
 	compile with the same MPI wrapper. 
-
-	If you use the clipper and ccp4 libraries you have to used
-	a patched version of FFTW3. The reason is that these libraries
-	use an old version of FFTW and we're going to have name 
-	clashed. The configure script will automatically assume that
-	the FFTW3 library is pathed as soon as the ccp4 and clipper
-	libraries are found or specified.
-	In order to patch the FFTW3 library you have to unzip and
-	untar fftw-3.3alpha1.tar.gz. This will yield a fftw-3.3alpha1.tar.gz
-	directory.
-
-	~/tmp> tar xfz fftw-3.3alpha1.tar.gz
-
-	Then just run the path script available in the contrib directory.
-	~/tmp> perl /path/to/md++/contrib/patch-fftw.pl
-
-
 
 Case A) Installing from a tarball
 *********************************
@@ -65,11 +50,18 @@ Case A) Installing from a tarball
 
 	Info:
 	  .) See ./configure --help for options.
-	  .) OpenMP parallelization available: use --enable-openmp in step 5.
-	  .) Steps 7 and 8 are optional.
+	  .) Steps 7 and 8 are optional. Step 8 will place the programs in 
+             BUILD/bin, or in the directory specified by --prefix in step 5.
 	  .) If you leave out step 8, the programs will be in BUILD/program/.
-	  .) You may choose any other name for the BUILD directory or do multiple builds by choosing different directory names by repeating from step 3.
-	  .) you will probably want to add --disable-debug to ../configure to get a release build.
+	  .) You may choose any other name for the BUILD directory or do 
+             multiple builds by choosing different directory names by repeating 
+             from step 3.
+          .) To compile parallel code with either openMP or MPI, the 
+             appropriate options should be given in step 5 
+             (see volume 8 of the GROMOS manuals)
+          .) To compile the code with GPU acceleration for the solvent-solvent
+             interactions, use --with-cuda=<path-to-cuda-libraries>
+             (see volume 8 of the GROMOS manuals)
 
 
 
@@ -91,11 +83,6 @@ Case B) To compile and install the unconfigured source tree from git
         7. make install
 
 	Info:
-	  .) See ./configure --help for options.
-	  .) OpenMP parallelization available: use --enable-openmp in step 4.
-	  .) Steps 6 and 7 are optional.
-	  .) If you leave out step 7, the programs will be in BUILD/program/.
-  	  .) You may choose any other name for the BUILD directory or do multiple builds by choosing different directory names by repeating from step 2.
 	  .) ./Config.sh is a wrapper of the following commands:
 		    1. mkdir -p config
  		    2. aclocal
@@ -104,6 +91,18 @@ Case B) To compile and install the unconfigured source tree from git
 		    5. autoheader
 		    6. automake --add-missing --copy
 	  .) See ./configure --help for options.
+	  .) Steps 6 and 7 are optional. Step 7 will place the programs in 
+             BUILD/bin, or in the directory specified by --prefix in step 5.
+	  .) If you leave out step 7, the programs will be in BUILD/program/.
+	  .) You may choose any other name for the BUILD directory or do 
+             multiple builds by choosing different directory names by repeating 
+             from step 2.
+          .) To compile parallel code with either openMP or MPI, the 
+             appropriate options should be given in step 4
+             (see volume 8 of the GROMOS manuals)
+          .) To compile the code with GPU acceleration for the solvent-solvent
+             interactions, use --with-cuda=<path-to-cuda-libraries>
+             (see volume 8 of the GROMOS manuals)
 
 
 optimization flags
@@ -126,25 +125,7 @@ Intel C++ Compiler
 	export LD=xild
 	export AR=xiar
 
-* OpenMP parallelization available:
-      --enable-openmp configure option
-
-* GSL has to be compiled with the same compiler
-
-
-WINDOWS (Visual Studio 2003 (NET)
---------------------------------------------------
-
-	1. copy config.h.windows to config.h
-
-	2. open the solution in MS Visual Studio.net
-
-	3. add project dependency to GSL
-	   there is only commercial support to compile
-	   GSL under windows (but this at least means
-	   its possible)
-
-	4. build the solution...
+        Note that GSL has to be compiled with the same compiler
 
 
 building static-only executables
@@ -167,8 +148,8 @@ ARCHITECTURE DEPENDENT DETAILS
 	make sure that this is the case (e.g. type: 'which gcc'; 
 	if you dont get an answer it is not installed).
 
-	Unfortunately, the MacOS version of the libtoolize program (and others) does
-	sometimes not work with things you download from GNU and try to
+	Unfortunately, the MacOS version of the libtoolize program (and others)
+        does sometimes not work with things you download from GNU and try to
 	compile.
 
 	Try first, whether there is a glibtoolize, gaclocal, gautomake,
