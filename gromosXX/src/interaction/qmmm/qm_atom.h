@@ -22,36 +22,30 @@ namespace interaction {
     QM_Atom(unsigned index
          , math::Vec pos = {0.0,0.0,0.0}
          , unsigned atomic_number = 1
-         ) : index(index)
-           , pos(pos)
-           , atomic_number(atomic_number)
+         , bool is_linked = false
+         ) : pos(pos)
            , force(0.0)
            , qm_charge(0.0)
+           , index(index)
+           , atomic_number(atomic_number)
+           , is_linked(is_linked)
     {}
+    
     /**
      * Copy constructor
      */
-    QM_Atom(const QM_Atom & a) : index(a.index)
-                               , pos(a.pos)
-                               , atomic_number(a.atomic_number)
+    QM_Atom(const QM_Atom & a) : pos(a.pos)
                                , force(a.force)
                                , qm_charge(a.qm_charge)
+                               , index(a.index)
+                               , atomic_number(a.atomic_number)
+                               , is_linked(a.is_linked)
     {}
-
-    /**
-     * the index of the atom in topology - starts with 0
-     */
-    const unsigned index;
 
     /**
      * The coordinate
      */
     mutable math::Vec pos;
-    
-    /**
-     * the atomic number of the atom
-     */
-    const unsigned atomic_number;
 
     /**
      * The force
@@ -62,6 +56,21 @@ namespace interaction {
      * The charge calculated from QM
      */
     mutable double qm_charge;
+
+    /**
+     * the index of the atom in topology - starts with 0
+     */
+    const unsigned index;
+    
+    /**
+     * the atomic number of the atom
+     */
+    const unsigned atomic_number;
+    
+    /**
+     * if atom is linked to MM atom
+     */
+    mutable bool is_linked;
 
     /**
      * less-than comparison operator

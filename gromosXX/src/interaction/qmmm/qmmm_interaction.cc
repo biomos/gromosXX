@@ -420,7 +420,7 @@ int interaction::QMMM_Interaction::init(topology::Topology& topo,
     }
     os << std::endl;
 
-    if (topo.qmmm_link().size()) {
+    if (!topo.qmmm_link().empty()) {
       os << "\tusing link-atom scheme with capping atom" << std::endl
          << "\tdistance between QM link atom and capping atom: "
          << sim.param().qmmm.cap_length << std::endl

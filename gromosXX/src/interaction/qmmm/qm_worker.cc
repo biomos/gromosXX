@@ -170,7 +170,7 @@ int interaction::QM_Worker::get_num_charges(const simulation::Simulation& sim
 interaction::QM_Worker::~QM_Worker() {
 #ifdef HAVE_UNLINK
   // Remove temporary files and links
-  while (this->tmp_files.size()) {
+  while (!this->tmp_files.empty()) {
     std::set<std::string>::const_iterator it = this->tmp_files.begin();
     unlink(it->c_str());
     this->tmp_files.erase(*it);

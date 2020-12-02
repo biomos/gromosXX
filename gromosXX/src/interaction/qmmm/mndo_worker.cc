@@ -167,8 +167,8 @@ int interaction::MNDO_Worker::write_input(const topology::Topology& topo
   std::string header(this->param->input_header);
   
   // Get number of links and replace
-  unsigned num_links = qm_zone.link.size();
-  header = io::replace_string(header, "@@NUM_LINKS@@", std::to_string(num_links));
+  // *2 - include also linked QM atom
+  header = io::replace_string(header, "@@NUM_LINKS@@", std::to_string(qm_zone.link.size() * 2));
   
   // Get number of MM charges and replace
   unsigned num_charges = get_num_charges(sim, qm_zone);
@@ -202,11 +202,26 @@ int interaction::MNDO_Worker::write_input(const topology::Topology& topo
   // Write termination line
   this->write_qm_atom(ifs, 0, math::Vec(0.0));
 
-  // Write capping atom numbers - they are last in the geometry
-  const unsigned qm_size = qm_zone.qm.size();
-  unsigned last_link = num_links + qm_size;
-  for (unsigned i = qm_size + 1; i <= last_link; ++i)
+  // Write link atom indices
+  for (std::set<QM_Link>::const_iterator
+        it = qm_zone.link.begin(), to = qm_zone.link.end(); it != to; ++it) {
+    assert(qm_zone.qm.find(it->qm_index) != qm_zone.qm.end());
+    unsigned i = std::distance(qm_zone.qm.begin(), qm_zone.qm.find(it->qm_index)) + 1;
     ifs << i << " ";
+  }
+  for (std::set<QM_Atom>::const_iterator
+        it = qm_zone.qm.begin(), to = qm_zone.qm.end(); it != to; ++it) {
+    if (it->is_linked) {
+      unsigned i = std::distance(qm_zone.qm.begin(), it) + 1;
+      ifs << i << " ";
+    }
+  }
+  // Write capping atom indices - they are last in the geometry
+  const unsigned qm_size = qm_zone.qm.size();
+  const unsigned last_link = qm_zone.link.size() + qm_size;
+  for (unsigned i = qm_size + 1; i <= last_link; ++i) {
+    ifs << i << " ";
+  }
   ifs << std::endl;
   
   // Write MM coordinates and charges

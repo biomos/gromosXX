@@ -230,7 +230,7 @@ int interaction::QM_Zone::get_qm_atoms(const topology::Topology& topo,
       }
     }
   }
-  if (this->qm.size() == 0) {
+  if (this->qm.empty()) {
     io::messages.add("QMMM requested but no QM atoms found", "QM_Zone", io::message::error);
     return E_INPUT_ERROR;
   }
@@ -797,11 +797,12 @@ void interaction::QM_Zone::get_links(const topology::Topology& topo,
   for (linkset::const_iterator it = links.begin(), to = links.end(); it != to; ++it)
     {
     // assert that atoms are gathered in the sets
-    assert(this->qm.find(QM_Atom(it->first)) != this->qm.end());
-    assert(this->mm.find(MM_Atom(it->second)) != this->mm.end());
+    assert(this->qm.find(it->first) != this->qm.end());
+    assert(this->mm.find(it->second) != this->mm.end());
 
     DEBUG(9,"Adding QM-MM link: " << it->first << " - " << it->second);
     this->link.emplace(QM_Atom(0), it->first, it->second);
+    this->qm.find(it->first)->is_linked = true;
   }
   this->update_links(sim);
 }
