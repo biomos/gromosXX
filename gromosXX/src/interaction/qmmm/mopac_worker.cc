@@ -360,12 +360,12 @@ double interaction::MOPAC_Worker::total_potential(const topology::Topology& topo
   DEBUG(15,"QM atom: " << qm_atom.index);
   DEBUG(15,"is linked?: " << qm_atom.is_linked);
   if (!qm_atom.is_linked || sim.param().qmmm.mopac.link_atom_mode == 3) {
-  for (std::set<MM_Atom>::const_iterator
+    for (std::set<MM_Atom>::const_iterator
             mm_it = qm_zone.mm.begin(), mm_to = qm_zone.mm.end(); mm_it != mm_to; ++mm_it) {
       DEBUG(15,"adding potential on " << qm_atom.index << " from: " << mm_it->index << ": " << pair_potential(qm_atom.pos, *mm_it));
-    potential += pair_potential(qm_atom.pos, *mm_it);
+      potential += pair_potential(qm_atom.pos, *mm_it);
+    }
   }
-}
   else if (sim.param().qmmm.mopac.link_atom_mode == 0) {
     DEBUG(15,"QM atom is link atom, mode 0, potential 0.0");
     potential = 0.0;
@@ -381,18 +381,18 @@ double interaction::MOPAC_Worker::total_potential(const topology::Topology& topo
       }
     }
     // Optionally also collect charge groups
-  if (sim.param().qmmm.mopac.link_atom_mode == 2) {
+    if (sim.param().qmmm.mopac.link_atom_mode == 2) {
       std::set<unsigned> excluded_cgs;
       for (std::set<unsigned>::const_iterator
             it = excluded_mm.begin(), to = excluded_mm.end(); it != to; ++it) {
         // Find chargegroups of the linked MM atoms
         int it_cg = -1;
-    for (unsigned cg = 0; cg < topo.num_chargegroups(); ++cg) {
+        for (unsigned cg = 0; cg < topo.num_chargegroups(); ++cg) {
           if (*it < unsigned(topo.chargegroup(cg + 1))) {
             it_cg = cg;
-        break;
-      }
-    }
+            break;
+          }
+        }
         assert(it_cg != -1);
         excluded_cgs.insert(it_cg);
         DEBUG(15, "Excluding MM chargegroup " << it_cg);
@@ -403,9 +403,9 @@ double interaction::MOPAC_Worker::total_potential(const topology::Topology& topo
         for (int i = topo.chargegroup(*it); i < topo.chargegroup(*it + 1); ++i) {
           excluded_mm.insert(i);
         DEBUG(15, "Excluding MM atom (chargegroup-based) " << i);
-  }
-    }
         }
+      }
+    }
     // Calculate potential on link atom with exclusions
     for (std::set<MM_Atom>::const_iterator
             mm_it = qm_zone.mm.begin(), mm_to = qm_zone.mm.end(); mm_it != mm_to; ++mm_it) {
@@ -469,13 +469,13 @@ int interaction::MOPAC_Worker::read_output(topology::Topology& topo
     if (err) return err;
   }
   
-  if (sim.param().qmmm.qmmm == simulation::qmmm_mechanical) {
-    err = this->parse_charges(ofs, qm_zone);
-    if (err) return err;
-  }
-
-  err = this->parse_gradients(sim, ofs, qm_zone);
+  err = this->parse_charges(ofs, qm_zone);
   if (err) return err;
+
+  err = this->parse_qm_gradients(sim, ofs, qm_zone);
+  if (err) return err;
+
+  this->calculate_mm_forces(sim, qm_zone);
 
   ofs.close();
   return 0;
@@ -516,7 +516,7 @@ int interaction::MOPAC_Worker::parse_charges(std::ifstream& ofs, interaction::QM
   std::string line;
   /**
    * Parse charges
-   * They are used in mechanical embedding
+   * They are used in all embedding schemes
    */
   while (std::getline(ofs, line)) {
     if (line.find("ATOM_CHARGES") != std::string::npos) {
@@ -609,14 +609,14 @@ int interaction::MOPAC_Worker::parse_energy(std::ifstream& ofs, interaction::QM_
   return 1;
 }
 
-int interaction::MOPAC_Worker::parse_gradients(const simulation::Simulation& sim
+int interaction::MOPAC_Worker::parse_qm_gradients(const simulation::Simulation& sim
                                             , std::ifstream& ofs
                                             , interaction::QM_Zone& qm_zone) {
   std::string& out_aux = this->param->output_aux_file;
   std::string line;
   
   // MOPAC gradients dont contain MM contribution - this has to be calculated from
-  // the QM charges
+  // the QM and MM charges
   // TODO: CALCULATE MM GRADIENTS FROM CHARGES
   // Find QM gradients
   while (std::getline(ofs, line)) {
@@ -652,4 +652,23 @@ int interaction::MOPAC_Worker::parse_gradients(const simulation::Simulation& sim
   io::messages.add("Gradients were not found in the output aux file "
                     + out_aux, this->name(), io::message::error);
   return 1;
+}
+
+void interaction::MOPAC_Worker::calculate_mm_forces(const simulation::Simulation& sim
+                                                  , interaction::QM_Zone& qm_zone) {
+  for (std::set<QM_Atom>::iterator qm_it = qm_zone.qm.begin(), qm_to = qm_zone.qm.end();
+        qm_it != qm_to; ++qm_it) {
+    double qm_q_eps = math::four_pi_eps_i * qm_it->qm_charge;
+    for (std::set<MM_Atom>::iterator mm_it = qm_zone.mm.begin(), mm_to = qm_zone.mm.end();
+          mm_it != mm_to; ++mm_it) {
+      math::Vec r = qm_it->pos - mm_it->pos;
+      double d2 = math::abs2(r);
+      double d = sqrt(d2);
+      double d3 = d2 * d;
+      double qq_eps_d3 = qm_q_eps * mm_it->charge / d3;
+      math::Vec force = qq_eps_d3 * r;
+      qm_it->force += force;
+      mm_it->force -= force;
+    }
+  }
 }

@@ -81,7 +81,7 @@ namespace interaction {
      * Calculate total potential from MM atoms on QM atom
      */
     double total_potential(const topology::Topology& topo
-                              , const simulation::Simulation& sim
+                         , const simulation::Simulation& sim
                          , const QM_Zone& qm_zone
                          , const QM_Atom& qm_atom) const;
     
@@ -107,11 +107,17 @@ namespace interaction {
     int parse_energy(std::ifstream& ofs, interaction::QM_Zone& qm_zone);
 
     /**
-     * Parse gradients
+     * Parse gradients of QM atoms
      */
-    int parse_gradients(const simulation::Simulation& sim
-                      , std::ifstream& ofs
-                      , interaction::QM_Zone& qm_zone);
+    int parse_qm_gradients(const simulation::Simulation& sim
+                         , std::ifstream& ofs
+                         , interaction::QM_Zone& qm_zone);
+
+    /**
+     * calculate forces between QM and MM atoms
+     */
+    void calculate_mm_forces(const simulation::Simulation& sim
+                          , interaction::QM_Zone& qm_zone);
   };
 }
 
