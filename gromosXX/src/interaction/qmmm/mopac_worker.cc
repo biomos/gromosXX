@@ -75,9 +75,17 @@ int interaction::MOPAC_Worker::init(simulation::Simulation& sim) {
   std::string arc_link = fname + ".arc";
   std::string den_link = fname + ".den";
   
-  int slash_pos = inp.find_last_of("/");
-  std::string inp_path = inp.substr(0, slash_pos);
-  std::string molin_link = inp_path + "/mol.in";
+  std::string molin_link;
+  {
+    size_t last_slash_pos = inp.find_last_of("/");
+    if (last_slash_pos == std::string::npos) {
+      molin_link = "mol.in";
+    }
+    else {
+      std::string inp_path = inp.substr(0, last_slash_pos);
+      molin_link = inp_path + "/mol.in";
+    }
+  }
 
   if (out.empty()) {
     out = out_link;
