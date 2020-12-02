@@ -192,7 +192,7 @@ MOPACFILES
 /path/to/mopac.arc    ##archive output file
 /path/to/stdout.out   ##standard output file - STDOUT and STDERR are redirected here
 /path/to/mopac.den    ##density matrix file to be reused in subsequent step
-/path/to/mol.in       ##mol.in file with external charges
+/path/to/mol.in       ##mol.in file with electric potentials from external charges
 END
 @endverbatim
  *
@@ -209,14 +209,15 @@ title line
 END
 @endverbatim
  *
- * The MOPACLINKATOM block specifies the way the link atoms are treated.
+ * The MOPACLINKATOM block specifies the way the link atoms are treated. Link atoms are atoms
+ * that are bonded to MM atoms.
 @verbatim
 MOPACLINKATOM
 #  mode of treatment:
 #    0(none) : link atoms see no MM atom (default)
 #    1(exclude_atom) : Link atoms see all MM atoms except the MM atoms involved in the link
 #    2(exclude_chargegroup) : Link atoms see all MM atoms except the MM chargegroup involved in the link
-#    3(all) : Link atoms see all MM
+#    3(all) : Link atoms see all MM atoms
 # 
    0
 END

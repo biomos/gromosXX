@@ -78,18 +78,12 @@ namespace interaction {
                           , double potential) const;
     
     /**
-     * Calculate total potential from MM atoms at QM atom
+     * Calculate total potential from MM atoms on QM atom
      */
-    double total_potential(const QM_Atom& qm_atom
-                         , const std::set<MM_Atom>& mm_atoms) const;
-    
-    /**
-     * Calculate total potential from MM atoms at link atom with possible exclusions
-     */
-    double link_total_potential(const topology::Topology& topo
+    double total_potential(const topology::Topology& topo
                               , const simulation::Simulation& sim
-                              , const QM_Link& link
-                              , const std::set<MM_Atom>& mm_atoms) const;
+                         , const QM_Zone& qm_zone
+                         , const QM_Atom& qm_atom) const;
     
     /**
      * Calculate potential from MM atom at the given position

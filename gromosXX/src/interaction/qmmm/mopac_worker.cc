@@ -322,29 +322,21 @@ int interaction::MOPAC_Worker::write_input(const topology::Topology& topo
                               / this->param->unit_factor_energy;
     DEBUG(15,"four_pi_eps_i_conv: " << four_pi_eps_i_conv);
     // potential = four_psi_eps_i*SUM(qj/rij)
-    // Do this for QM and link atoms
+    
+    // Do this for QM atoms
     for (std::set<QM_Atom>::const_iterator
           qm_it = qm_zone.qm.begin(), qm_to = qm_zone.qm.end(); qm_it != qm_to; ++qm_it) {
-      double potential = four_pi_eps_i_conv * this->total_potential(*qm_it, qm_zone.mm);
-      DEBUG(15,qm_it->index << " " << qm_it->atomic_number << " "
+      double potential = four_pi_eps_i_conv * this->total_potential(topo, sim, qm_zone, *qm_it);
+      DEBUG(15,"writting potential on QM atom: " << qm_it->index << " " << qm_it->atomic_number << " "
             << math::v2s(qm_it->pos * len_to_qm) << " " << potential);
       this->write_mm_potential(ifs, qm_it->atomic_number, qm_it->pos * len_to_qm, potential);
     }
-    // In capping atoms, we should exclude some MM atoms
-    /* sim.param().qmmm.mopac.link_atom_mode value:
-    *   0: Link atoms see no MM atoms
-    *   1: Link atoms see all MM atoms except the linked MM atom
-    *   2: Link atoms see all MM atoms except the linked MM charge group
-    *   3: Link atoms see all MM atoms
-    */
+
+    // In capping atoms, we should exclude all MM atoms
     for (std::set<QM_Link>::const_iterator
           li_it = qm_zone.link.begin(), li_to = qm_zone.link.end(); li_it != li_to; ++li_it) {
       double potential = 0.0;
-      if (sim.param().qmmm.mopac.link_atom_mode > 0) {
-        potential = four_pi_eps_i_conv * this->link_total_potential(topo, sim, *li_it, qm_zone.mm);
-      }
-      DEBUG(15,li_it->qm_index << "-" << li_it->mm_index << " " << li_it->atomic_number << " "
-            << math::v2s(li_it->pos * len_to_qm) << " " << potential);
+      DEBUG(15,"writting potential on link atom: " << potential);
       this->write_mm_potential(ifs, li_it->atomic_number, li_it->pos * len_to_qm, potential);
     }
     ifs.close();
@@ -352,55 +344,78 @@ int interaction::MOPAC_Worker::write_input(const topology::Topology& topo
   return 0;
 }
 
-double interaction::MOPAC_Worker::total_potential(const QM_Atom& qm_atom
-                                                , const std::set<MM_Atom>& mm_atoms) const {
+double interaction::MOPAC_Worker::total_potential(const topology::Topology& topo
+                                                , const simulation::Simulation& sim
+                                                , const QM_Zone& qm_zone
+                                                , const QM_Atom& qm_atom) const {
   double potential = 0.0;
+  // In linked atoms, we can exclude some or all MM atoms
+  /* sim.param().qmmm.mopac.link_atom_mode value:
+  *   0: Link atoms see no MM atoms
+  *   1: Link atoms see all MM atoms except the linked MM atom
+  *   2: Link atoms see all MM atoms except the linked MM charge group
+  *   3: Link atoms see all MM atoms
+  */
+  DEBUG(15,"link_atom_mode: " << sim.param().qmmm.mopac.link_atom_mode);
+  DEBUG(15,"QM atom: " << qm_atom.index);
+  DEBUG(15,"is linked?: " << qm_atom.is_linked);
+  if (!qm_atom.is_linked || sim.param().qmmm.mopac.link_atom_mode == 3) {
   for (std::set<MM_Atom>::const_iterator
-          mm_it = mm_atoms.begin(), mm_to = mm_atoms.end(); mm_it != mm_to; ++mm_it) {
+            mm_it = qm_zone.mm.begin(), mm_to = qm_zone.mm.end(); mm_it != mm_to; ++mm_it) {
+      DEBUG(15,"adding potential on " << qm_atom.index << " from: " << mm_it->index << ": " << pair_potential(qm_atom.pos, *mm_it));
     potential += pair_potential(qm_atom.pos, *mm_it);
   }
-  return potential;
 }
-
-double interaction::MOPAC_Worker::link_total_potential(const topology::Topology& topo
-                                                     , const simulation::Simulation& sim
-                                                     , const QM_Link& link
-                                                     , const std::set<MM_Atom>& mm_atoms) const {
-  double potential = 0.0;
-  // Link atom chargegroup
-  int li_cg = -1;
+  else if (sim.param().qmmm.mopac.link_atom_mode == 0) {
+    DEBUG(15,"QM atom is link atom, mode 0, potential 0.0");
+    potential = 0.0;
+  }
+  else {
+    // get linked MM atoms
+    std::set<unsigned> excluded_mm;
+    for (std::set<QM_Link>::const_iterator
+          li_it = qm_zone.link.begin(), li_to = qm_zone.link.end(); li_it != li_to; ++li_it) {
+      if (li_it->qm_index == qm_atom.index) {
+        excluded_mm.insert(li_it->mm_index);
+        DEBUG(15, "Excluding MM atom " << li_it->mm_index);
+      }
+    }
+    // Optionally also collect charge groups
   if (sim.param().qmmm.mopac.link_atom_mode == 2) {
-    // Find chargegroup of the linked MM atom
-    int li_cg = -1;
+      std::set<unsigned> excluded_cgs;
+      for (std::set<unsigned>::const_iterator
+            it = excluded_mm.begin(), to = excluded_mm.end(); it != to; ++it) {
+        // Find chargegroups of the linked MM atoms
+        int it_cg = -1;
     for (unsigned cg = 0; cg < topo.num_chargegroups(); ++cg) {
-      if (link.mm_index < unsigned(topo.chargegroup(cg + 1))) {
-        li_cg = cg;
+          if (*it < unsigned(topo.chargegroup(cg + 1))) {
+            it_cg = cg;
         break;
       }
     }
-    assert(li_cg != -1);
-  }
-  for (std::set<MM_Atom>::const_iterator
-      mm_it = mm_atoms.begin(), mm_to = mm_atoms.end(); mm_it != mm_to; ++mm_it) {
-    // Skip if the MM atom is linked
-    if (sim.param().qmmm.mopac.link_atom_mode == 1) {
-      if (link.mm_index == mm_it->index) continue;
-    }
-    // Skip if the MM atom is in the same chargegroup as the linked MM atom
-    else if (sim.param().qmmm.mopac.link_atom_mode == 2) {
-      if (link.mm_index == mm_it->index) continue;
-      // Find the MM atom chargegroup
-      int mm_cg = -1;
-      for (unsigned cg = 0; cg < topo.num_chargegroups(); ++cg) {
-        if (link.mm_index < unsigned(topo.chargegroup(cg + 1))) {
-          mm_cg = cg;
-          break;
-        }
+        assert(it_cg != -1);
+        excluded_cgs.insert(it_cg);
+        DEBUG(15, "Excluding MM chargegroup " << it_cg);
       }
-      assert(mm_cg != -1);
-      if (mm_cg == li_cg) continue;
+      // Translate chargegroup indices into MM atom indices
+      for (std::set<unsigned>::const_iterator
+            it = excluded_cgs.begin(), to = excluded_cgs.end(); it != to; ++it) {
+        for (int i = topo.chargegroup(*it); i < topo.chargegroup(*it + 1); ++i) {
+          excluded_mm.insert(i);
+        DEBUG(15, "Excluding MM atom (chargegroup-based) " << i);
+  }
     }
-    potential += pair_potential(link.pos, *mm_it);
+        }
+    // Calculate potential on link atom with exclusions
+    for (std::set<MM_Atom>::const_iterator
+            mm_it = qm_zone.mm.begin(), mm_to = qm_zone.mm.end(); mm_it != mm_to; ++mm_it) {
+      if (excluded_mm.find(mm_it->index) == excluded_mm.end()) {
+        DEBUG(15, "Potential from MM atom " << mm_it->index << ": " << pair_potential(qm_atom.pos, *mm_it));
+        potential += pair_potential(qm_atom.pos, *mm_it);
+      } else {
+        DEBUG(15, "MM atom " << mm_it->index << " excluded");
+      }
+    }
   }
   return potential;
 }
