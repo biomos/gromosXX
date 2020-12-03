@@ -21,7 +21,7 @@
 #include "qm_zone.h"
 #include "qm_worker.h"
 #include "mndo_worker.h"
-//#include "turbomole_worker.h"
+#include "turbomole_worker.h"
 //#include "dftb_worker.h"
 #include "mopac_worker.h"
 #include "gaussian_worker.h"
@@ -44,8 +44,7 @@ interaction::QM_Worker * interaction::QM_Worker::get_instance(const simulation::
     case simulation::qm_mndo :
       return new MNDO_Worker;
     case simulation::qm_turbomole :
-      //return new Turbomole_Worker; // Temporarily disabled
-      return nullptr; // REMOVE
+      return new Turbomole_Worker;
     case simulation::qm_dftb :
       //return new DFTB_Worker; // Temporarily disabled
       return nullptr; // REMOVE
@@ -141,7 +140,7 @@ int interaction::QM_Worker::open_output(std::ifstream& outputfile_stream, const 
 }
 
 int interaction::QM_Worker::get_num_charges(const simulation::Simulation& sim
-                                          , const interaction::QM_Zone& qm_zone) {
+                                          , const interaction::QM_Zone& qm_zone) const {
   unsigned num_charges = 0;
   switch (sim.param().qmmm.qmmm) {
     case simulation::qmmm_mechanical: {

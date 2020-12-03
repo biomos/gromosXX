@@ -461,6 +461,7 @@ int interaction::MOPAC_Worker::system_call() {
   }
   return 0;
 }
+
 int interaction::MOPAC_Worker::read_output(topology::Topology& topo
                                         , configuration::Configuration& conf
                                         , simulation::Simulation& sim
@@ -610,7 +611,7 @@ int interaction::MOPAC_Worker::parse_energy(std::ifstream& ofs, interaction::QM_
   while (std::getline(ofs, line)) {
     if (line.find("TOTAL_ENERGY") != std::string::npos) {
       line = line.substr(line.find("=") + 1);
-      line.replace(line.find("D"), 1, "E");
+      this->defortranize(line);
       qm_zone.QM_energy() = this->param->unit_factor_energy * atof(line.c_str());
       return 0;
     }

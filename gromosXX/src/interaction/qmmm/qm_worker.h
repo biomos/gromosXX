@@ -133,12 +133,19 @@ namespace interaction {
      * List of used temporary files to cleanup gracefully
      */
     std::set<std::string> tmp_files;
+    
+    /**
+     * Replace exponent character to parse correctly
+     */
+    inline void defortranize(std::string& str) const {
+      std::replace(str.begin(), str.end(), 'D', 'E');
+    }
 
     /**
      * Calculate number of charges
      */
     virtual int get_num_charges(const simulation::Simulation& sim
-                              , const interaction::QM_Zone & qm_zone);
+                              , const interaction::QM_Zone & qm_zone) const;
   };
 }
 

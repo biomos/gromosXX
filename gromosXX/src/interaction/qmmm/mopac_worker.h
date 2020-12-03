@@ -37,7 +37,7 @@ namespace interaction {
     simulation::Parameter::qmmm_struct::mopac_param_struct* param;
 
     /**
-     * Write input file for QM
+     * Write input file for QM program
      * @param topo Topology
      * @param conf Configuration
      * @param sim Simulation
