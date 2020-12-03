@@ -67,7 +67,7 @@ namespace interaction {
     void write_qm_atom(std::ofstream& inputfile_stream
                   , const int atomic_number
                   , const math::Vec& pos
-                  , const int var_flag = 1);
+                  , const int var_flag = 1) const;
 
     /**
      * Write potential from MM atoms
@@ -84,7 +84,15 @@ namespace interaction {
                          , const simulation::Simulation& sim
                          , const QM_Zone& qm_zone
                          , const QM_Atom& qm_atom) const;
-    
+                         
+    /**
+     * Get a set of excluded MM atoms for link atom
+     */
+    void get_excluded_mm(const topology::Topology& topo
+                       , const simulation::Simulation& sim
+                       , const QM_Zone& qm_zone
+                       , const QM_Atom& qm_atom
+                       , std::set<unsigned> excluded) const;
     /**
      * Calculate potential from MM atom at the given position
      */
@@ -94,30 +102,40 @@ namespace interaction {
     /**
      * Parse charges
      */
-    int parse_charges(std::ifstream& ofs, interaction::QM_Zone& qm_zone);
+    int parse_charges(std::ifstream& ofs, interaction::QM_Zone& qm_zone) const;
 
     /**
      * Parse coordinates
      */
-    int parse_coordinates(std::ifstream& ofs, interaction::QM_Zone& qm_zone);
+    int parse_coordinates(std::ifstream& ofs, interaction::QM_Zone& qm_zone) const;
 
     /**
      * Parse energy
      */
-    int parse_energy(std::ifstream& ofs, interaction::QM_Zone& qm_zone);
+    int parse_energy(std::ifstream& ofs, interaction::QM_Zone& qm_zone) const;
 
     /**
      * Parse gradients of QM atoms
      */
     int parse_qm_gradients(const simulation::Simulation& sim
                          , std::ifstream& ofs
-                         , interaction::QM_Zone& qm_zone);
+                         , interaction::QM_Zone& qm_zone) const;
 
     /**
      * calculate forces between QM and MM atoms
      */
-    void calculate_mm_forces(const simulation::Simulation& sim
-                          , interaction::QM_Zone& qm_zone);
+    void calculate_mm_forces(const topology::Topology& topo
+                           , const simulation::Simulation& sim
+                           , interaction::QM_Zone& qm_zone) const;
+
+    /**
+     * calculate force of QM/MM pair
+     */
+    inline void calculate_pair_force(const math::Vec& qm_pos
+                                   , const math::Vec& mm_pos
+                                   , math::Vec& qm_force
+                                   , math::Vec& mm_force
+                                   , const double qmq_mmq_four_pi_eps_i) const;
   };
 }
 
