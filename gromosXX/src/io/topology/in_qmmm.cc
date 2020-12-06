@@ -318,11 +318,11 @@ END
  END
  @endverbatim
  *
- * The TURBOMOLEELEMENTS block specifies the element name used in Turbomole.
+ * The ELEMENTS block specifies the element names used in QM packages.
  * It is determined by the atomic number given in the QMZONE block.
  * 
 @verbatim
-TURBOMOLEELEMENTS
+ELEMENTS
 1 h
 6 c
 7 n
@@ -463,7 +463,7 @@ io::In_QMMM::read(topology::Topology& topo,
    */
   else if (sw == simulation::qm_dftb) {
     this->read_units(sim, &sim.param().qmmm.dftb);
-    this->read_elements(topo, &sim.param().qmmm.turbomole);
+    this->read_elements(topo, &sim.param().qmmm.dftb);
     { // DFTBFILES
       buffer = m_block["DFTBFILES"];
       if (!buffer.size()) {
@@ -698,13 +698,20 @@ void io::In_QMMM::read_elements(const topology::Topology& topo
     return;
   }
   _lineStream.clear();
-  _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1));
+  std::string bstr = concatenate(buffer.begin() + 1, buffer.end() - 1);
+  // Strip away the last newline character
+  bstr.pop_back();
+  _lineStream.str(bstr);
   unsigned Z;
   std::string element;
-  while(_lineStream >> Z >> element) 
+  while(!_lineStream.eof()) {
+    _lineStream >> Z >> element;
+    if (_lineStream.fail()) {
+      io::messages.add("Cannot read ELEMENTS block", "In_QMMM", io::message::error);
+      return;
+    }
     qm_param->elements[Z] = element;
-  if (_lineStream.fail())
-    io::messages.add("Cannot read ELEMENTS block", "In_QMMM", io::message::error);
+  }
 
   // check whether all elements were provided
   const std::vector<unsigned>& atomic_number = topo.qm_atomic_number();
