@@ -1,5 +1,5 @@
 /**
- * @file mndo_worker.cc
+ * @file turbomole_worker.cc
  * interface to the Turbomole software package
  */
 
@@ -101,6 +101,8 @@ void interaction::Turbomole_Worker::write_mm_atom(std::ofstream& inputfile_strea
                                                 , const math::Vec& pos
                                                 , const double charge) const
   {
+  // Turbomole skips zero charges in output
+  if (charge != 0.0) {
   inputfile_stream.setf(std::ios::fixed, std::ios::floatfield);
   inputfile_stream.precision(14);
   inputfile_stream << std::setw(20) << std::right << pos(0)
@@ -108,6 +110,7 @@ void interaction::Turbomole_Worker::write_mm_atom(std::ofstream& inputfile_strea
                    << std::setw(20) << std::right << pos(2);
   inputfile_stream.precision(8);
   inputfile_stream << std::setw(15) << std::right << charge << std::endl;
+}
 }
 
 int interaction::Turbomole_Worker::system_call()
@@ -123,19 +126,20 @@ int interaction::Turbomole_Worker::system_call()
     if (*it == "define") {
       input_file = "define.inp";
     }
-    int err = util::system_call(this->param->binary_directory + "/" + *it +
-                          " < " + input_file + " 1> " + output_file + "2>&1");
+    if (!input_file.empty()) input_file = " < " + input_file;
+    std::string comm = this->param->binary_directory + "/" + *it + input_file + " 1> " + output_file + " 2>&1";
+    int err = util::system_call(comm);
     if (err != 0) {
       std::ostringstream msg;
-      msg << "Turbomole program " << *it << " failed";
+      msg << "Turbomole program " << *it << " failed. ";
       if (err == 127)
-        msg << ". " << *it << " probably not in PATH. ";
+        msg << *it << " probably not in PATH. ";
       msg << "See " << this->param->working_directory << "/" << output_file << " for details.";
       io::messages.add(msg.str(), this->name(), io::message::error);
       return 1;
     }
     // open the output file and check whether the program ended normally
-    std::ifstream ofs(output_file.c_str());
+    std::ifstream ofs;
     err = this->open_output(ofs, output_file);
     if (err) return err;
     bool success = false;
@@ -149,7 +153,7 @@ int interaction::Turbomole_Worker::system_call()
     }
     if (!success) {
       std::ostringstream msg;
-      msg << "Turbomole program " << *it << " failed. See " 
+      msg << "Turbomole program " << *it << " ended abnormally. See " 
               << this->param->working_directory << "/" << output_file
               << " for details.";
       io::messages.add(msg.str(), this->name(), io::message::error);
@@ -273,18 +277,21 @@ int interaction::Turbomole_Worker::parse_mm_gradients(std::ifstream& ofs
   // Parse MM atoms
   for(std::set<MM_Atom>::iterator
         it = qm_zone.mm.begin(), to = qm_zone.mm.end(); it != to; ++it) {
+    // Turbomole ignores zero charges, so we have to skip them as well
+    if (it->charge != 0.0 || (it->is_polarisable && (it->charge - it->cos_charge) != 0.0)) {
     DEBUG(15,"Parsing gradient of MM atom " << it->index);
     int err = this->parse_gradient(ofs, it->force);
     if (err) {
       std::ostringstream msg;
-      msg << "Failed to parse gradient line of MM atom" << (it->index + 1)
+        msg << "Failed to parse gradient line of MM atom " << (it->index + 1)
           << " in " << this->param->output_mm_gradient_file;
       io::messages.add(msg.str(), this->name(), io::message::error);
       return 1;
     }
-    if (it->is_polarisable) {
+    }
+    if (it->is_polarisable && it->cos_charge != 0.0) {
       DEBUG(15,"Parsing gradient of MM atom " << it->index);
-      err = this->parse_gradient(ofs, it->force);
+      int err = this->parse_gradient(ofs, it->force);
       if (err) {
         std::ostringstream msg;
         msg << "Failed to parse gradient line of COS of MM atom" << (it->index + 1)
@@ -308,11 +315,7 @@ int interaction::Turbomole_Worker::parse_gradient(std::ifstream& ofs,
   this->defortranize(line);
   std::istringstream iss(line);
   iss >> force(0) >> force(1) >> force(2);
-  if (iss.fail()) {
-    io::messages.add("Failed to parse gradient line"
-                    , this->name(), io::message::error);
-    return 1;
-  }
+  if (iss.fail()) return 1;
   // force = - gradient
   force *= - this->param->unit_factor_force;
   return 0;
