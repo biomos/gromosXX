@@ -31,12 +31,21 @@
 #define MODULE interaction
 #define SUBMODULE qmmm
 
-interaction::QM_Worker::QM_Worker(std::string name) : m_name(name)/*, m_timer(nullptr)*/
-                                                      , m_timer(name)
-                                                      , param(nullptr)
-                                                      , symlink_err(0)
-                                                      , minimisation(false)
-                                                      , using_tmp(false) {}
+interaction::QM_Worker::QM_Worker(std::string name) : m_timer(name)
+                                                    , m_name(name)
+                                                    , param(nullptr)
+                                                    , minimisation(false) {}
+
+interaction::QM_Worker::~QM_Worker() {
+#ifdef HAVE_UNLINK
+  // Remove temporary files and links
+  while (!this->tmp_files.empty()) {
+    std::set<std::string>::const_iterator it = this->tmp_files.begin();
+    unlink(it->c_str());
+    this->tmp_files.erase(*it);
+  }
+#endif
+}
 
 interaction::QM_Worker * interaction::QM_Worker::get_instance(const simulation::Simulation& sim) {
 
@@ -164,15 +173,4 @@ int interaction::QM_Worker::get_num_charges(const simulation::Simulation& sim
     }
   }
   return num_charges;
-}
-
-interaction::QM_Worker::~QM_Worker() {
-#ifdef HAVE_UNLINK
-  // Remove temporary files and links
-  while (!this->tmp_files.empty()) {
-    std::set<std::string>::const_iterator it = this->tmp_files.begin();
-    unlink(it->c_str());
-    this->tmp_files.erase(*it);
-  }
-#endif
 }

@@ -103,14 +103,14 @@ void interaction::Turbomole_Worker::write_mm_atom(std::ofstream& inputfile_strea
   {
   // Turbomole skips zero charges in output
   if (charge != 0.0) {
-  inputfile_stream.setf(std::ios::fixed, std::ios::floatfield);
-  inputfile_stream.precision(14);
-  inputfile_stream << std::setw(20) << std::right << pos(0)
-                   << std::setw(20) << std::right << pos(1)
-                   << std::setw(20) << std::right << pos(2);
-  inputfile_stream.precision(8);
-  inputfile_stream << std::setw(15) << std::right << charge << std::endl;
-}
+    inputfile_stream.setf(std::ios::fixed, std::ios::floatfield);
+    inputfile_stream.precision(14);
+    inputfile_stream << std::setw(20) << std::right << pos(0)
+                    << std::setw(20) << std::right << pos(1)
+                    << std::setw(20) << std::right << pos(2);
+    inputfile_stream.precision(8);
+    inputfile_stream << std::setw(15) << std::right << charge << std::endl;
+  }
 }
 
 int interaction::Turbomole_Worker::system_call()
@@ -279,15 +279,15 @@ int interaction::Turbomole_Worker::parse_mm_gradients(std::ifstream& ofs
         it = qm_zone.mm.begin(), to = qm_zone.mm.end(); it != to; ++it) {
     // Turbomole ignores zero charges, so we have to skip them as well
     if (it->charge != 0.0 || (it->is_polarisable && (it->charge - it->cos_charge) != 0.0)) {
-    DEBUG(15,"Parsing gradient of MM atom " << it->index);
-    int err = this->parse_gradient(ofs, it->force);
-    if (err) {
-      std::ostringstream msg;
+      DEBUG(15,"Parsing gradient of MM atom " << it->index);
+      int err = this->parse_gradient(ofs, it->force);
+      if (err) {
+        std::ostringstream msg;
         msg << "Failed to parse gradient line of MM atom " << (it->index + 1)
-          << " in " << this->param->output_mm_gradient_file;
-      io::messages.add(msg.str(), this->name(), io::message::error);
-      return 1;
-    }
+            << " in " << this->param->output_mm_gradient_file;
+        io::messages.add(msg.str(), this->name(), io::message::error);
+        return 1;
+      }
     }
     if (it->is_polarisable && it->cos_charge != 0.0) {
       DEBUG(15,"Parsing gradient of MM atom " << it->index);
@@ -319,38 +319,4 @@ int interaction::Turbomole_Worker::parse_gradient(std::ifstream& ofs,
   // force = - gradient
   force *= - this->param->unit_factor_force;
   return 0;
-}
-
-
-std::string interaction::Turbomole_Worker::getcwd() {
-#ifdef HAVE_GETCWD
-  char buff[MAXPATH];
-  if (::getcwd(buff, MAXPATH) == NULL) {
-    io::messages.add("Cannot get current working directory. "
-        "Path of the current working directory is too long.", 
-        this->name(), io::message::error);
-    return "";
-  }
-  std::string cwd(buff);
-  return cwd;
-#else
-  io::messages.add("getcwd function is not available on this platform.", 
-      this->name(), io::message::error);
-  return "";
-#endif
-}
-
-int interaction::Turbomole_Worker::chdir(std::string path) {
-#ifdef HAVE_CHDIR
-  if (::chdir(path.c_str()) != 0) {
-    io::messages.add("Cannot change into Turbomole working directory",
-            "Turbomole_Worker", io::message::error);
-    return -1;
-  }
-  return 0;
-#else
-  io::messages.add("chdir function is not available on this platform.", 
-        this->name(), io::message::error);
-  return -1;
-#endif
 }

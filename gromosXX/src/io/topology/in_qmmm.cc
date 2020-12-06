@@ -283,7 +283,7 @@ END
  * 
  * @section Turbomole blocks for the Turbomole worker
  * 
- * The TURBOMOLEFILES blocks specifies where Turbomole writes the input and output files.
+ * The TMOLEFILES blocks specifies where Turbomole writes the input and output files.
  * The first line contains the directory which contains the Turbomole binaries.
  * The second line is the turbomole working directory containing the control file.
  * In this control file the relative paths for the coordinate, point charges coordinates,
@@ -291,7 +291,7 @@ END
  * these file names for GROMOS.
  *
  * @verbatim
-TURBOMOLEFILES
+TMOLEFILES
 /path/to/turbomole/binary/directory
 /path/to/working/directory/containing/control/file
 coordinate.in
@@ -302,7 +302,7 @@ mm_gradient.out
 END
 @endverbatim
  * 
- * The TURBOMOLETOOLCHAIN block specifies the Turbomole programs that are executed.
+ * The TMOLETOOLCHAIN block specifies the Turbomole programs that are executed.
  * Each line contains one program that is called. By default, it is assumed that
  * the control file is static, i.e. that the number of QM atoms cannot change. To 
  * modify the control file during the simulation the TURBOMOLE program define is 
@@ -312,7 +312,7 @@ END
  * program define is only cannot include the $point_charges directives. 
  * 
  * @verbatim
- TURBOMOLETOOLCHAIN
+ TMOLETOOLCHAIN
  ridft
  rdgrad
  END
@@ -413,16 +413,16 @@ io::In_QMMM::read(topology::Topology& topo,
     this->read_units(sim, &sim.param().qmmm.turbomole);
     this->read_elements(topo, &sim.param().qmmm.turbomole);
 
-    { // TURBOMOLEFILES
-      buffer = m_block["TURBOMOLEFILES"];
+    { // TMOLEFILES
+      buffer = m_block["TMOLEFILES"];
 
       if (!buffer.size()) {
-        io::messages.add("TURBOMOLEFILES block missing",
+        io::messages.add("TMOLEFILES block missing",
                 "In_QMMM", io::message::error);
         return;
       } else {
         if (buffer.size() != 9) {
-          io::messages.add("TURBOMOLEFILES block corrupt. Provide 7 lines.",
+          io::messages.add("TMOLEFILES block corrupt. Provide 7 lines.",
                   "In_QMMM", io::message::error);
           return;
         }
@@ -434,12 +434,12 @@ io::In_QMMM::read(topology::Topology& topo,
         sim.param().qmmm.turbomole.output_gradient_file = buffer[6];
         sim.param().qmmm.turbomole.output_mm_gradient_file = buffer[7];
       }
-    } // TURBOMOLEFILES
-    { // TURBOMOLETOOLCHAIN
-      buffer = m_block["TURBOMOLETOOLCHAIN"];
+    } // TMOLEFILES
+    { // TMOLETOOLCHAIN
+      buffer = m_block["TMOLETOOLCHAIN"];
 
       if (!buffer.size()) {
-        io::messages.add("TURBOMOLETOOLCHAIN block missing",
+        io::messages.add("TMOLETOOLCHAIN block missing",
                 "In_QMMM", io::message::error);
         return;
       } 
@@ -449,13 +449,13 @@ io::In_QMMM::read(topology::Topology& topo,
         std::string tool;
         _lineStream >> tool;
         if (_lineStream.fail()) {
-          io::messages.add("bad line in TURBOMOLETOOLCHAIN block",
+          io::messages.add("bad line in TMOLETOOLCHAIN block",
                 "In_QMMM", io::message::error);
           return;
         }
         sim.param().qmmm.turbomole.toolchain.push_back(tool);
       }
-    } // TURBOMOLETOOLCHAIN  
+    } // TMOLETOOLCHAIN  
   }
 
   /**

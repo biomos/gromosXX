@@ -5,8 +5,6 @@
 #ifndef INCLUDED_TURBOMOLE_WORKER_H
 #define	INCLUDED_TURBOMOLE_WORKER_H
 
-#define MAXPATH 4096
-
 namespace simulation {
   class Parameter;
   class Simulation;
@@ -122,17 +120,6 @@ namespace interaction {
      * @param force reference for writing the force
      */
     int parse_gradient(std::ifstream& ofs, math::Vec& force) const;
-
-    /**
-     * Get current working directory
-     */
-    inline std::string getcwd();
-
-    /**
-     * Change directory
-     * @param path directory to go to
-     */
-    inline int chdir(std::string path);
   };
 }
 #endif	/* TURBOMOLE_WORKER_H */

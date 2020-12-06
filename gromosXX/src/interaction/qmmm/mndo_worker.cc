@@ -48,7 +48,6 @@ int interaction::MNDO_Worker::init(simulation::Simulation& sim) {
    */
 
   if (inp.empty()) {
-    this->using_tmp = true;
     if(util::create_tmpfile(inp) < 1) {
       io::messages.add("Unable to create temporary input file: " + inp,
         "MNDO_Worker", io::message::critical);

@@ -5,6 +5,8 @@
 #ifndef INCLUDED_QM_WORKER_H
 #define	INCLUDED_QM_WORKER_H
 
+#define MAXPATH 4096
+
 namespace util {
   class Algorithm_Timer;
 }
@@ -70,18 +72,29 @@ namespace interaction {
   
   protected:
     /**
+     * the timer
+     */
+    util::Algorithm_Timer m_timer;
+    
+    /**
+     * List of used temporary files to cleanup gracefully
+     */
+    std::set<std::string> tmp_files;
+
+    /**
      * name of the QM worker
      */
     std::string m_name;
 
     /**
-     * the timer
-     */
-    util::Algorithm_Timer m_timer;
-    /**
      * the pointer to QM parameters
      */
     simulation::Parameter::qmmm_struct::qm_param_struct* param;
+
+    /**
+     * Flag to enable transfer of coordinates from external QM program to GROMOS
+     */
+    bool minimisation;
 
     /**
      * Write input file for QM
@@ -108,31 +121,11 @@ namespace interaction {
                           , configuration::Configuration& conf
                           , simulation::Simulation& sim
                           , interaction::QM_Zone & qm_zone);
+    
     /**
      * Open QM output file
      */
     virtual int open_output(std::ifstream & outputfile_stream, const std::string & output_file);
-
-    /**
-     * symlink creation error
-     */
-    int symlink_err;
-
-    /**
-     * Flag to enable exchange of coordinates between GROMOS and QM program
-     */
-    bool minimisation;
-
-    /**
-     * using temporary files
-     */
-    bool using_tmp;
-
-  protected:
-    /**
-     * List of used temporary files to cleanup gracefully
-     */
-    std::set<std::string> tmp_files;
     
     /**
      * Replace exponent character to parse correctly
@@ -146,6 +139,46 @@ namespace interaction {
      */
     virtual int get_num_charges(const simulation::Simulation& sim
                               , const interaction::QM_Zone & qm_zone) const;
+
+    /**
+     * Get current working directory
+     */
+    inline std::string getcwd() {
+  #ifdef HAVE_GETCWD
+      char buff[MAXPATH];
+      if (::getcwd(buff, MAXPATH) == NULL) {
+        io::messages.add("Cannot get current working directory. "
+            "Path of the current working directory is too long.", 
+            this->name(), io::message::error);
+        return "";
+      }
+      std::string cwd(buff);
+      return cwd;
+  #else
+      io::messages.add("getcwd function is not available on this platform.", 
+          this->name(), io::message::error);
+      return "";
+  #endif
+    }
+
+    /**
+     * Change directory
+     * @param path directory to go to
+     */
+    inline int chdir(std::string path){
+  #ifdef HAVE_CHDIR
+      if (::chdir(path.c_str()) != 0) {
+        io::messages.add("Cannot change into QM program working directory",
+                this->name(), io::message::error);
+        return -1;
+      }
+      return 0;
+  #else
+      io::messages.add("chdir function is not available on this platform.", 
+            this->name(), io::message::error);
+      return -1;
+  #endif
+    }
   };
 }
 
