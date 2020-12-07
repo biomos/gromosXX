@@ -115,6 +115,16 @@ void interaction::Turbomole_Worker::write_mm_atom(std::ofstream& inputfile_strea
 
 int interaction::Turbomole_Worker::system_call()
   {
+  // First delete output files, since Turbomole appends to them and we dont need old data
+#ifdef HAVE_REMOVE
+  remove(param->output_energy_file.c_str());
+  remove(param->output_gradient_file.c_str());
+#else
+  io::messages.add("remove function is not available on this platform.", 
+        this->name(), io::message::error);
+  return -1;
+#endif
+
   DEBUG(15, "Calling external Turbomole program");
   for(std::vector<std::string>::const_iterator it = this->param->toolchain.begin(),
           to = this->param->toolchain.end(); it != to; ++it) {
