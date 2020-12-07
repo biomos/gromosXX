@@ -57,6 +57,13 @@ int interaction::Turbomole_Worker::write_input(const topology::Topology& topo
   double len_to_qm = 1.0 / this->param->unit_factor_length;
   for (std::set<QM_Atom>::const_iterator
         it = qm_zone.qm.begin(), to = qm_zone.qm.end(); it != to; ++it) {
+    DEBUG(15, "Writing QM atom " << it->index << " " << it->atomic_number << " " << math::v2s(it->pos));
+    this->write_qm_atom(ifs, it->atomic_number, it->pos * len_to_qm);
+  }
+  // write capping atoms
+  for (std::set<QM_Link>::const_iterator
+        it = qm_zone.link.begin(), to = qm_zone.link.end(); it != to; ++it) {
+    DEBUG(15, "Writing link atom " << it->qm_index << "-" << it->mm_index << " " << it->atomic_number << " " << math::v2s(it->pos));
     this->write_qm_atom(ifs, it->atomic_number, it->pos * len_to_qm);
   }
   ifs << "$end" << std::endl;
@@ -249,7 +256,8 @@ int interaction::Turbomole_Worker::parse_qm_gradients(std::ifstream& ofs
   }
 
   // skip n+1 lines
-  for(unsigned int i = 0; i < qm_zone.qm.size()+1; ++i) {
+  const unsigned qm_size = qm_zone.qm.size() + qm_zone.link.size();
+  for(unsigned int i = 0; i < qm_size+1; ++i) {
     std::getline(ofs, line);
   }
   // Parse QM atoms
@@ -257,10 +265,25 @@ int interaction::Turbomole_Worker::parse_qm_gradients(std::ifstream& ofs
         it = qm_zone.qm.begin(), to = qm_zone.qm.end(); it != to; ++it) {
     DEBUG(15,"Parsing gradient of QM atom " << it->index);
     int err = this->parse_gradient(ofs, it->force);
+    DEBUG(15,"Force: " << math::v2s(it->force));
     if (err) {
       std::ostringstream msg;
-      msg << "Failed to parse gradient line of QM atom" << (it->index + 1)
+      msg << "Failed to parse gradient line of QM atom " << (it->index + 1)
           << " in " << this->param->output_gradient_file;
+      io::messages.add(msg.str(), this->name(), io::message::error);
+      return 1;
+    }
+  }
+  // Parse capping atoms
+  for(std::set<QM_Link>::iterator
+        it = qm_zone.link.begin(), to = qm_zone.link.end(); it != to; ++it) {
+    DEBUG(15,"Parsing gradient of link atom " << it->qm_index << "-" << it->mm_index);
+    int err = this->parse_gradient(ofs, it->force);
+    DEBUG(15,"Force: " << math::v2s(it->force));
+    if (err) {
+      std::ostringstream msg;
+      msg << "Failed to parse gradient line of link atom " << (it->qm_index + 1)
+          << "-" << (it->mm_index + 1) << " in " << this->param->output_gradient_file;
       io::messages.add(msg.str(), this->name(), io::message::error);
       return 1;
     }
@@ -304,7 +327,7 @@ int interaction::Turbomole_Worker::parse_mm_gradients(std::ifstream& ofs
       int err = this->parse_gradient(ofs, it->force);
       if (err) {
         std::ostringstream msg;
-        msg << "Failed to parse gradient line of COS of MM atom" << (it->index + 1)
+        msg << "Failed to parse gradient line of COS of MM atom " << (it->index + 1)
             << " in " << this->param->output_mm_gradient_file;
         io::messages.add(msg.str(), this->name(), io::message::error);
         return 1;
