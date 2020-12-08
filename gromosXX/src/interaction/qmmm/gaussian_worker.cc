@@ -418,7 +418,6 @@ int interaction::Gaussian_Worker::parse_forces(const simulation::Simulation& sim
 int interaction::Gaussian_Worker::parse_force(std::ifstream& ofs,
                                               math::Vec& force) {
   std::string line;
-  std::string dummy;
   if(!std::getline(ofs, line)) {
     std::ostringstream msg;
     msg << "Failed to read force line"
@@ -427,6 +426,7 @@ int interaction::Gaussian_Worker::parse_force(std::ifstream& ofs,
     return 1;
   }
   std::istringstream iss(line);
+  std::string dummy;
   iss >> dummy >> dummy >> force(0) >> force(1) >> force(2);
   if (iss.fail()) {
     std::ostringstream msg;

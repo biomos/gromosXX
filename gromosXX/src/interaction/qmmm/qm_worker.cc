@@ -22,7 +22,7 @@
 #include "qm_worker.h"
 #include "mndo_worker.h"
 #include "turbomole_worker.h"
-//#include "dftb_worker.h"
+#include "dftb_worker.h"
 #include "mopac_worker.h"
 #include "gaussian_worker.h"
 
@@ -55,8 +55,7 @@ interaction::QM_Worker * interaction::QM_Worker::get_instance(const simulation::
     case simulation::qm_turbomole :
       return new Turbomole_Worker;
     case simulation::qm_dftb :
-      //return new DFTB_Worker; // Temporarily disabled
-      return nullptr; // REMOVE
+      return new DFTB_Worker;
     case simulation::qm_mopac :
       return new MOPAC_Worker;
     case simulation::qm_gaussian :

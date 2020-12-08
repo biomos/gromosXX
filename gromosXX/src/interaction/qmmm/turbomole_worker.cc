@@ -151,7 +151,7 @@ int interaction::Turbomole_Worker::system_call()
       msg << "Turbomole program " << *it << " failed. ";
       if (err == 127)
         msg << *it << " probably not in PATH. ";
-      msg << "See " << this->param->working_directory << "/" << output_file << " for details.";
+      msg << "See " << output_file << " for details.";
       io::messages.add(msg.str(), this->name(), io::message::error);
       return 1;
     }
@@ -171,8 +171,7 @@ int interaction::Turbomole_Worker::system_call()
     if (!success) {
       std::ostringstream msg;
       msg << "Turbomole program " << *it << " ended abnormally. See " 
-              << this->param->working_directory << "/" << output_file
-              << " for details.";
+              << output_file << " for details.";
       io::messages.add(msg.str(), this->name(), io::message::error);
       return 1;
     }

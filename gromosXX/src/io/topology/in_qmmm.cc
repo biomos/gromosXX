@@ -118,7 +118,22 @@ CAPLEN
 END
 @endverbatim
  *
- * @section MNDOBINARY block for the MNDO worker
+ * @section The ELEMENTS block specifies the element names used in QM packages.
+ * It is determined by the atomic number given in the QMZONE block. This block
+ * is required only for Turbomole and DFTB
+ * 
+@verbatim
+ELEMENTS
+1 h
+6 c
+7 n
+8 o
+END
+@endverbatim
+ *
+ * @section MNDO blocks for the MNDO worker
+ * 
+ * MNDOBINARY block for the MNDO worker
  * The MNDOBINARY block specifies path to MNDO binary
  *
  * This block is optional. If unspecified, mndo command from PATH environment variable
@@ -130,7 +145,7 @@ MNDOBINARY
 END
 @endverbatim
  *
- * @section MNDOFILES block for the MNDO worker
+ * MNDOFILES block for the MNDO worker
  * The MNDOFILES block specifies input and output files to exchange data with MNDO
  *
  * This block is optional. If unspecified, temporary files are created using TMPDIR
@@ -165,7 +180,121 @@ title line
 END
 @endverbatim
  *
- * @section MOPACBINARY block for the MOPAC worker
+ * @section Turbomole blocks for the Turbomole worker
+ * 
+ * The TMOLEFILES block specifies where Turbomole writes the input and output files.
+ * The first line contains the directory which contains the Turbomole binaries.
+ * The second line is the turbomole working directory containing the control file.
+ * In this control file the relative paths for the coordinate, point charges coordinates,
+ * energy, gradients and point charges gradients are defined. The next lines contains
+ * these file names for GROMOS.
+ *
+ * @verbatim
+TMOLEFILES
+/path/to/turbomole/binary/directory
+/path/to/working/directory/containing/control/file
+coordinate.in
+mm_coordinate.in
+energy.out
+gradient.out
+mm_gradient.out
+END
+@endverbatim
+ * 
+ * The TMOLETOOLCHAIN block specifies the Turbomole programs that are executed.
+ * Each line contains one program that is called. By default, it is assumed that
+ * the control file is static, i.e. that the number of QM atoms cannot change. To 
+ * modify the control file during the simulation the TURBOMOLE program define is 
+ * to be used. The input for this program has to be given as a file named "define.inp" 
+ * which is in the same directory as the "control" file. 
+ * Note: You still have to provide an initial control file as at the time the 
+ * program define is only cannot include the $point_charges directives. 
+ * 
+ * @verbatim
+ TMOLETOOLCHAIN
+ ridft
+ rdgrad
+ END
+ @endverbatim
+ *
+ * @section DFTB blocks for the DFTB worker
+ * 
+ * The DFTBFILES block specifies paths necessary to run the DFTB+ program. First line is
+ * the path to DFTB binary. Second line defines path to the working directory where DFTB+
+ * will run and write all the output files.
+ * In this directory GromosXX creates dftb_in.hsd input file and fills it with
+ * the content of the DFTBINPUT block. Also hardcoded DFTB output files are written here
+ * including the details.out file used to transfer data back to GromosXX.
+ * The third line defines the coordinate file. The fourth line is the MM coordinate
+ * file containing the MM charges and is used only with electrostatic and polarisable
+ * embedding. The input coordinate file has to be specified in the DFTBINPUT block.
+ * This applies also to the MM coordinate file if used.
+ * The fifth line specifies the path, where DFTB standard output is written. This file is
+ * not used for data exchange and is usually needed for debugging purposes only.
+ * 
+ * @verbatim
+DFTBFILES
+/path/to/dftb/binary/directory
+/path/to/working/directory
+coordinate.in
+mm_coordinate.in
+stdout.out
+END
+@endverbatim 
+ *
+ * The DFTBINPUT block contains the complete content of the dftb_in.hsd file created 
+ * by GromosXX in the working directory specified in the  DFTBFILES block. The example
+ * block contains minimal settings that must be specified for proper data exchange
+ * between GromosXX and DFTB+. User may provide additional DFTB+ blocks, e.g. 
+ * Slater-Koster files path and/or other settings. Please refer to DFTB+ manual
+ * for additional information on DFTB+ input.
+ * 
+ * @verbatim
+DFTBINPUT
+Geometry = genFormat {
+ <<< "coordinate.in"   ## Always equired
+}
+Hamiltonian = DFTB {
+
+  ## For electrostatic and polarisable embedding also use this block:
+  ElectricField = {
+    PointCharges = {
+      CoordsAndCharges = {
+        <<< "mm_coordinate.in"
+      }
+    }
+  }
+}
+Analysis = {
+  ## ... optional custom settings ...
+
+  CalculateForces = Yes   ## Always required
+
+  ## For mechanical embedding also specify:
+  MullikenAnalysis = Yes
+}
+END
+@endverbatim
+ * 
+ * The TMOLETOOLCHAIN block specifies the Turbomole programs that are executed.
+ * Each line contains one program that is called. By default, it is assumed that
+ * the control file is static, i.e. that the number of QM atoms cannot change. To 
+ * modify the control file during the simulation the TURBOMOLE program define is 
+ * to be used. The input for this program has to be given as a file named "define.inp" 
+ * which is in the same directory as the "control" file. 
+ * Note: You still have to provide an initial control file as at the time the 
+ * program define is only cannot include the $point_charges directives. 
+ * 
+ * @verbatim
+ TMOLETOOLCHAIN
+ ridft
+ rdgrad
+ END
+ @endverbatim
+ *
+ * @section MOPAC blocks for the MOPAC worker
+ * 
+ * MOPACBINARY block for the MOPAC worker
  * The MOPACBINARY block specifies path to MOPAC binary
  *
  * This block is optional. If unspecified, mopac command from PATH environment variable
@@ -177,7 +306,7 @@ MOPACBINARY
 END
 @endverbatim
  *
- * @section MOPACFILES block for the MOPAC worker
+ * MOPACFILES block for the MOPAC worker
  * The MOPACFILES block specifies input and output files to exchange data with MOPAC
  *
  * This block is optional. If any line is not specified, temporary file is created
@@ -223,7 +352,9 @@ MOPACLINKATOM
 END
 @endverbatim
  *
- * @section GAUBINARY block for the Gaussian worker
+ * @section Gaussian blocks for the Gaussian worker
+ * 
+ * GAUBINARY block for the Gaussian worker
  * The GAUBINARY block specifies path to GAUSSIAN binary
  *
  * This block is optional. If unspecified, g16 command from PATH environment variable
@@ -234,7 +365,7 @@ GAUBINARY
 /path/to/gaussian/binary
 END
 @endverbatim
- * @section GAUFILES block for the Gaussian worker
+ * GAUFILES block for the Gaussian worker
  * The GAUFILES block specifies input and output files to exchange data with Gaussian
  *
  * This block is optional. If unspecified, temporary files are created using TMPDIR
@@ -275,58 +406,6 @@ END
 @verbatim
 GAUCHSM
 @@CHARGE@@ @@SPINM@@
-END
-@endverbatim
-
-
-
- * 
- * @section Turbomole blocks for the Turbomole worker
- * 
- * The TMOLEFILES blocks specifies where Turbomole writes the input and output files.
- * The first line contains the directory which contains the Turbomole binaries.
- * The second line is the turbomole working directory containing the control file.
- * In this control file the relative paths for the coordinate, point charges coordinates,
- * energy, gradients and point charges gradients are defined. The next lines contains
- * these file names for GROMOS.
- *
- * @verbatim
-TMOLEFILES
-/path/to/turbomole/binary/directory
-/path/to/working/directory/containing/control/file
-coordinate.in
-mm_coordinate.in
-energy.out
-gradient.out
-mm_gradient.out
-END
-@endverbatim
- * 
- * The TMOLETOOLCHAIN block specifies the Turbomole programs that are executed.
- * Each line contains one program that is called. By default, it is assumed that
- * the control file is static, i.e. that the number of QM atoms cannot change. To 
- * modify the control file during the simulation the TURBOMOLE program define is 
- * to be used. The input for this program has to be given as a file named "define.inp" 
- * which is in the same directory as the "control" file. 
- * Note: You still have to provide an initial control file as at the time the 
- * program define is only cannot include the $point_charges directives. 
- * 
- * @verbatim
- TMOLETOOLCHAIN
- ridft
- rdgrad
- END
- @endverbatim
- *
- * The ELEMENTS block specifies the element names used in QM packages.
- * It is determined by the atomic number given in the QMZONE block.
- * 
-@verbatim
-ELEMENTS
-1 h
-6 c
-7 n
-8 o
 END
 @endverbatim
  */
@@ -467,35 +546,32 @@ io::In_QMMM::read(topology::Topology& topo,
     { // DFTBFILES
       buffer = m_block["DFTBFILES"];
       if (!buffer.size()) {
-        io::messages.add("Using temporary files for DFTB input/output and assuming that the binary is in the PATH",
-                         "In_QMMM", io::message::notice);
-        sim.param().qmmm.dftb.binary = "dftb";
-      } else {
-        if (buffer.size() != 8) {
-          io::messages.add("DFTB block corrupt. Provide 6 lines.",
-                           "In_QMMM", io::message::error);
-          return;
-        }
-        sim.param().qmmm.dftb.binary = buffer[1];
-        sim.param().qmmm.dftb.working_directory = buffer[2];
-        sim.param().qmmm.dftb.input_file = buffer[3];
-        sim.param().qmmm.dftb.output_file = buffer[4];
-        sim.param().qmmm.dftb.output_charge_file = buffer[5];
-        sim.param().qmmm.dftb.geom_file = buffer[6];
+        io::messages.add("DFTBFILES block missing",
+                "In_QMMM", io::message::error);
+        return;
       }
+      if (buffer.size() != 8) {
+        io::messages.add("DFTB block corrupt. Provide 5 lines.",
+                          "In_QMMM", io::message::error);
+        return;
+      }
+      sim.param().qmmm.dftb.binary = buffer[1];
+      sim.param().qmmm.dftb.working_directory = buffer[2];
+      sim.param().qmmm.dftb.input_coordinate_file = buffer[3];
+      sim.param().qmmm.dftb.input_mm_coordinate_file = buffer[4];
+      sim.param().qmmm.dftb.stdout_file = buffer[5];
     } // DFTBFILES
 
-    { // DFTBHEADER
-      buffer = m_block["DFTBHEADER"];
+    { // DFTBINPUT
+      buffer = m_block["DFTBINPUT"];
       if (!buffer.size()) {
-        io::messages.add("no DFTBHEADER block in QM/MM specification file",
+        io::messages.add("no DFTBINPUT block in QM/MM specification file",
                          "In_QMMM", io::message::error);
         return;
       }
-
       concatenate(buffer.begin() + 1, buffer.end() - 1,
                   sim.param().qmmm.dftb.input_header);
-    } // DFTBHEADER
+    } // DFTBINPUT
   }
 
   /**

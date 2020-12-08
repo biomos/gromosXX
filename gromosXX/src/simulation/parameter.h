@@ -3788,17 +3788,21 @@ namespace simulation
        */
       struct dftb_param_struct : public qm_param_struct {
         /**
-         * path for the charges.dat file. Empty for a temporary file
-         */
-        std::string output_charge_file;
-        /**
-         * the working directory containing the control file
+         * the working directory containing the dftb_in.hsd
          */
         std::string working_directory;
         /**
-         * path of the DFTB geom file
+         * path of the input geometry file
          */
-        std::string geom_file;
+        std::string input_coordinate_file;
+        /**
+         * path of the input MM charges geometry file
+         */
+        std::string input_mm_coordinate_file;
+        /**
+         * path for the stdout file
+         */
+        std::string stdout_file;
       } dftb;
 
       /**
