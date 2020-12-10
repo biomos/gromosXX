@@ -158,6 +158,14 @@ void interaction::DFTB_Worker::write_mm_atom(std::ofstream& inputfile_stream
 int interaction::DFTB_Worker::system_call()
   {
   DEBUG(15, "Calling external DFTB+ program");
+  // First delete output files
+#ifdef HAVE_UNLINK
+  unlink(param->output_file.c_str());
+#else
+  io::messages.add("unlink function is not available on this platform.", 
+        this->name(), io::message::error);
+  return 1;
+#endif
   std::string comm = this->param->binary + " 1> " + this->param->stdout_file + " 2>&1";
   int err = util::system_call(comm);
   if (err != 0) {
