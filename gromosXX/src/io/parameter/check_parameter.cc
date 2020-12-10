@@ -251,9 +251,8 @@ int io::check_features(simulation::Simulation & sim)
   // ENERGYMIN block
   add("steepest_descent", "steepest descent energy minimisation",
           param.minimise.ntem == 1);
-  add("conjugate_gradient", "Fletcher-Reeves conjugate gradient energy minimisation",
-          param.minimise.ntem == 2);
-  add("conjugate_gradient", "Polak-Ribiere conjugate gradient energy minimisation",
+  add("conjugate_gradient", "Fletcher-Reeves or Polak-Ribiere conjugate gradient energy minimisation",
+          param.minimise.ntem == 2 ||
           param.minimise.ntem == 3);
   // CONSTRAINT block
   add("solute_constraint_off", "unconstrained solute",
@@ -394,18 +393,8 @@ int io::check_features(simulation::Simulation & sim)
   add("random_gsl", "GROMOS96 random numbers",
           param.rng.rng == simulation::random_gsl);
   // EDS/AEDS block
-  if (param.eds.eds == 1) {
-    add("eds", "Enveloping distribution sampling", true);
-    add("aeds", "Accelerated enveloping distribution sampling", false);
-  }
-  else if (param.eds.eds == 2) {
-    add("eds", "Enveloping distribution sampling", false);
-    add("aeds", "Accelerated enveloping distribution sampling", true);
-  }
-  else {
-    add("eds", "Enveloping distribution sampling", false);
-    add("aeds", "Accelerated enveloping distribution sampling", false);
-  }
+  add("eds", "Enveloping distribution sampling", param.eds.eds == 1);
+  add("aeds", "Accelerated enveloping distribution sampling", param.eds.eds == 2);
 
   // parallelization
   add("parallel_mpi", "MPI parallelization", sim.mpi);
