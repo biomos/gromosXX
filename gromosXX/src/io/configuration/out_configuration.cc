@@ -565,6 +565,10 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       _print_aedssearch(conf, sim, m_final_conf);
     }
 
+    if (sim.param().gamd.search == simulation::cmd_search || sim.param().gamd.search == simulation::gamd_search){
+      _print_gamdstat(conf, sim, m_final_conf);
+    }
+
     // forces and energies still go to their trajectories
     if (m_every_force && ((sim.steps()-sim.param().analyze.stride) % m_every_force) == 0) {
       _print_old_timestep(sim, m_force_traj);
@@ -3742,6 +3746,31 @@ _print_aedssearch(configuration::Configuration const &conf,
   }
   os << "END\n";
 }
+
+// ORIOL_GAMD
+void io::Out_Configuration::
+_print_gamdstat(configuration::Configuration const &conf,
+        simulation::Simulation const &sim,std::ostream &os) {
+      
+  os.setf(std::ios::fixed, std::ios::floatfield);
+  os.precision(m_precision);
+  os << "GAMDSTAT\n";
+  for (unsigned int i = 0; i < sim.param().gamd.agroups; i++) {
+    os << std::setw(m_width) << sim.param().gamd.k0D[i] << " "
+      << std::setw(m_width) << sim.param().gamd.k0T[i] << " "
+      << std::setw(m_width) << sim.param().gamd.M2D[i] << " "
+      << std::setw(m_width) << sim.param().gamd.M2T[i] << " "
+      << std::setw(m_width) << sim.param().gamd.VmaxD[i] << " "
+      << std::setw(m_width) << sim.param().gamd.VmaxT[i] << " "
+      << std::setw(m_width) << sim.param().gamd.VmeanD[i] << " "
+      << std::setw(m_width) << sim.param().gamd.VmeanT[i] << " "
+      << std::setw(m_width) << sim.param().gamd.VminD[i] << " "
+      << std::setw(m_width) << sim.param().gamd.VminT[i] << " "
+      << std::setw(m_width) << sim.param().gamd.sigmaVD[i] << " "
+      << std::setw(m_width) << sim.param().gamd.sigmaVT[i] << "\n";
+      }
+  os << "END\n";
+  }
 
 void io::Out_Configuration::
 _print_nemd(simulation::Simulation const & sim,

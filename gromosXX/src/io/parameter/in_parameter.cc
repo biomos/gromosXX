@@ -4064,8 +4064,8 @@ void io::In_Parameter::read_GAMD(simulation::Parameter & param,
     block.get_next_parameter("EQSTEPS", param.gamd.equilibration, ">=0", "");
 
     // some defaults just in case
-    param.gamd.dihboost.resize(param.gamd.agroups, 0.0);
-    param.gamd.totboost.resize(param.gamd.agroups, 0.0);
+    //param.gamd.dihboost.resize(param.gamd.agroups, 0.0);
+    //param.gamd.totboost.resize(param.gamd.agroups, 0.0);
     param.gamd.k0D.resize(param.gamd.agroups, 0.0);
     param.gamd.k0T.resize(param.gamd.agroups, 0.0);
     param.gamd.M2D.resize(param.gamd.agroups, 0.0);

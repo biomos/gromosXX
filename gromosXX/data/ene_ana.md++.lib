@@ -21,7 +21,7 @@ ENERTRJ
   block TIMESTEP
     subblock TIME 2 1
   block ENERGY03
-    subblock ENER 43 1
+    subblock ENER 44 1
     size NUM_BATHS
     subblock KINENER NUM_BATHS 3
     size NUM_ENERGY_GROUPS

@@ -2955,7 +2955,7 @@ namespace simulation
      */
     unsigned int gamd;
     /**
-     * initialize search type
+     * search type
      */
     gamd_search_enum search;
     /**
@@ -3056,11 +3056,11 @@ namespace simulation
     /**
      * vector of boosting potential energys for the dihedral term each of the defined acceleration groups
      */
-    std::vector<double> dihboost;
+    //std::vector<double> dihboost;
     /**
      * vector of boosting potential energys for the total energy term each of the defined acceleration groups
      */
-    std::vector<double> totboost;
+    //std::vector<double> totboost;
     /**
      * number of equilibration steps
      */
