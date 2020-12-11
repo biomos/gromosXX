@@ -133,18 +133,11 @@ namespace interaction {
     int parse_mm_forces(std::ifstream& ofs, interaction::QM_Zone& qm_zone) const;
 
     /**
-     * Parse force line of QM atom
+     * Parse force line of QM or MM atom
      * @param ofs ifstream from the output file
-     * @param force reference for writing the QM force
+     * @param force reference for writing the force on atom
      */
-    int parse_qm_force(std::ifstream& ofs, math::Vec& force) const;
-
-    /**
-     * Parse force line of MM atom
-     * @param ofs ifstream from the output file
-     * @param force reference for writing the MM force
-     */
-    int parse_mm_force(std::ifstream& ofs, math::Vec& force) const;
+    int parse_force(std::ifstream& ofs, math::Vec& force) const;
   };
 }
 #endif	/* DFTB_WORKER_H */

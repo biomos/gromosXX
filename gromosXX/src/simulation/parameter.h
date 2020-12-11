@@ -3687,12 +3687,17 @@ namespace simulation
        * - unit_factor_energy 1.0
        * - unit_factor_force 1.0
        * - unit_factor_charge 1.0
+       * - use_qm_charges true
        */
       qm_param_struct() : 
                       unit_factor_length(1.0)
                     , unit_factor_energy(1.0)
                     , unit_factor_force(1.0)
                     , unit_factor_charge(1.0) {}
+        /**
+         * maps atomic number to elements name
+         */
+        std::map<unsigned, std::string> elements;
         /**
          * path for the program binary
          */
@@ -3725,10 +3730,6 @@ namespace simulation
          * factor to convert the QM charge unit to the GROMOS one
          */
         double unit_factor_charge;
-        /**
-         * maps atomic number to elements name
-         */
-        std::map<unsigned, std::string> elements;
       };
 
       /**

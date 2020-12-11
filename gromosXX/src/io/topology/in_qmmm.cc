@@ -550,8 +550,8 @@ io::In_QMMM::read(topology::Topology& topo,
                 "In_QMMM", io::message::error);
         return;
       }
-      if (buffer.size() != 8) {
-        io::messages.add("DFTB block corrupt. Provide 5 lines.",
+      if (buffer.size() != 7) {
+        io::messages.add("DFTBFILES block corrupt. Provide 5 lines.",
                           "In_QMMM", io::message::error);
         return;
       }
@@ -819,7 +819,7 @@ void io::In_QMMM::read_units(const simulation::Simulation& sim
   //                   , math::hartree * math::avogadro / math::bohr /* a.u. */
   //                   , math::echarge /* e */}},
   //   {simulation::qm_dftb,
-  //                   { math::bohr /* a.u. */
+  //                   { math::angstrom /* A */
   //                   , math::hartree * math::avogadro /* a.u. */
   //                   , math::hartree * math::avogadro / math::bohr /* a.u. */
   //                   , math::echarge /* e */}},

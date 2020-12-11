@@ -38,7 +38,7 @@ int interaction::DFTB_Worker::init(simulation::Simulation& sim) {
 
   // Set input and output file, these are hardcoded in DFTB+
   this->param->input_file = "dftb_in.hsd";
-  this->param->output_file = "detailed.out";
+  this->param->output_file = "results.tag";
 
   // Change to working directory and create the input file
   if (this->chdir(this->param->working_directory) != 0) return 1;
@@ -63,7 +63,7 @@ int interaction::DFTB_Worker::write_input(const topology::Topology& topo
   if (err) return err;
 
   unsigned qm_size = qm_zone.qm.size() + qm_zone.link.size();
-  ifs << qm_size << " C" << std::endl;
+  ifs << std::setw(5) << qm_size << " C" << std::endl;
   std::map<unsigned, unsigned> type_indices;
   this->write_atom_types_list(ifs, type_indices, qm_zone);
 
@@ -84,22 +84,25 @@ int interaction::DFTB_Worker::write_input(const topology::Topology& topo
     }
   }
   ifs.close();
+  
+  if (sim.param().qmmm.qmmm > simulation::qmmm_mechanical) {
+    // write MM atoms
+    err = this->open_input(ifs, this->param->input_mm_coordinate_file);
+    if (err) return err;
 
-  err = this->open_input(ifs, this->param->input_mm_coordinate_file);
-  if (err) return err;
-
-  double cha_to_qm = 1.0 / this->param->unit_factor_charge;
-  for (std::set<MM_Atom>::const_iterator
-        it = qm_zone.mm.begin(), to = qm_zone.mm.end(); it != to; ++it) {
-    if (it->is_polarisable) {
-      this->write_mm_atom(ifs, it->pos * len_to_qm, (it->charge - it->cos_charge) * cha_to_qm);
-      this->write_mm_atom(ifs, (it->pos + it->cosV) * len_to_qm, it->cos_charge * cha_to_qm);
+    double cha_to_qm = 1.0 / this->param->unit_factor_charge;
+    for (std::set<MM_Atom>::const_iterator
+          it = qm_zone.mm.begin(), to = qm_zone.mm.end(); it != to; ++it) {
+      if (it->is_polarisable) {
+        this->write_mm_atom(ifs, it->pos * len_to_qm, (it->charge - it->cos_charge) * cha_to_qm);
+        this->write_mm_atom(ifs, (it->pos + it->cosV) * len_to_qm, it->cos_charge * cha_to_qm);
+      }
+      else {
+        this->write_mm_atom(ifs, it->pos * len_to_qm, it->charge * cha_to_qm);
+      }
     }
-    else {
-      this->write_mm_atom(ifs, it->pos * len_to_qm, it->charge * cha_to_qm);
-    }
+    ifs.close();
   }
-  ifs.close();
   return 0;
 }
 
@@ -124,6 +127,7 @@ void interaction::DFTB_Worker::write_atom_types_list(std::ofstream& input_file_s
       input_file_stream << "  " << this->param->elements[*it];
       type_indices[*it] = i;
     }
+    input_file_stream << std::endl;
   }
 }
 
@@ -136,9 +140,9 @@ void interaction::DFTB_Worker::write_qm_atom(std::ofstream& inputfile_stream
   inputfile_stream.precision(14);
   inputfile_stream << std::setw(5) << std::right << id << " "
                    << std::setw(3) << std::right << atomic_type_id << " "
-                   << std::setw(20) << std::right << pos(0)
-                   << std::setw(20) << std::right << pos(1)
-                   << std::setw(20) << std::right << pos(2)
+                   << std::setw(24) << std::right << pos(0)
+                   << std::setw(24) << std::right << pos(1)
+                   << std::setw(24) << std::right << pos(2)
                    << std::endl;
 }
 
@@ -148,11 +152,12 @@ void interaction::DFTB_Worker::write_mm_atom(std::ofstream& inputfile_stream
   {
   inputfile_stream.setf(std::ios::scientific, std::ios::floatfield);
   inputfile_stream.precision(14);
-  inputfile_stream << std::setw(20) << std::right << pos(0)
-                  << std::setw(20) << std::right << pos(1)
-                  << std::setw(20) << std::right << pos(2);
+  inputfile_stream << std::setw(24) << std::right << pos(0)
+                  << std::setw(24) << std::right << pos(1)
+                  << std::setw(24) << std::right << pos(2);
   inputfile_stream.precision(8);
-  inputfile_stream << std::setw(15) << std::right << charge << std::endl;
+  inputfile_stream.setf(std::ios::fixed, std::ios::floatfield);
+  inputfile_stream << std::setw(18) << std::right << charge << std::endl;
 }
 
 int interaction::DFTB_Worker::system_call()
@@ -177,25 +182,6 @@ int interaction::DFTB_Worker::system_call()
     io::messages.add(msg.str(), this->name(), io::message::error);
     return 1;
   }
-  // open the output file and check whether the program ended normally
-  std::ifstream ofs;
-  err = this->open_output(ofs, this->param->output_file);
-  if (err) return err;
-  bool success = false;
-  std::string line;
-  while(std::getline(ofs, line)) {
-    if (line.find("SCC converged") != std::string::npos) {
-      success = true;
-      break;
-    }
-  }
-  if (!success) {
-    std::ostringstream msg;
-    msg << "DFTB+ program ended abnormally. See " 
-        << this->param->stdout_file << " for details.";
-    io::messages.add(msg.str(), this->name(), io::message::error);
-    return 1;
-  }
   return 0;
 }
 
@@ -209,11 +195,6 @@ int interaction::DFTB_Worker::read_output(topology::Topology& topo
   err = this->open_output(ofs, this->param->output_file);
   if (err) return err;
 
-  if (sim.param().qmmm.qmmm > simulation::qmmm_mechanical) {
-    err = this->parse_charges(ofs, qm_zone);
-    if (err) return err;
-  }
-
   err = this->parse_energy(ofs, qm_zone);
   if (err) return err;
 
@@ -222,6 +203,11 @@ int interaction::DFTB_Worker::read_output(topology::Topology& topo
 
   if (sim.param().qmmm.qmmm > simulation::qmmm_mechanical) {
     err = this->parse_mm_forces(ofs, qm_zone);
+    if (err) return err;
+  }
+
+  if (sim.param().qmmm.qmmm == simulation::qmmm_mechanical) {
+    err = this->parse_charges(ofs, qm_zone);
     if (err) return err;
   }
 
@@ -242,7 +228,7 @@ int interaction::DFTB_Worker::parse_charges(std::ifstream& ofs
    */
   bool got_charges = false;
   while (std::getline(ofs, line)) {
-    if (line.find("Atomic gross charges") != std::string::npos) {
+    if (line.find("gross_atomic_charges") != std::string::npos) {
       got_charges = true;
       break;
     }
@@ -264,10 +250,8 @@ int interaction::DFTB_Worker::parse_charges(std::ifstream& ofs
       io::messages.add(msg.str(), this->name(), io::message::error);
       return 1;
     }
-    std::istringstream iss(line);
-    int dummy;
-    iss >> dummy >> it->qm_charge;
-    if (iss.fail()) {
+    ofs >> it->qm_charge;
+    if (ofs.fail()) {
       std::ostringstream msg;
       msg << "Failed to parse charge line of atom " << (it->index + 1)
           << " in " << out;
@@ -282,31 +266,21 @@ int interaction::DFTB_Worker::parse_charges(std::ifstream& ofs
 int interaction::DFTB_Worker::parse_energy(std::ifstream& ofs
                                          , interaction::QM_Zone& qm_zone) const {
   std::string line;
-  // Find energy block
-  bool got_energy = false;
+  // Find energy block and parse
   while (std::getline(ofs, line)) {
-    if (line.find("Total Electronic energy:") != std::string::npos) {
-      got_energy = true;
+    if (line.find("total_energy") != std::string::npos) {
+      ofs >> qm_zone.QM_energy();
+      qm_zone.QM_energy() *= this->param->unit_factor_energy;
+      DEBUG(15, "Parsed QM_energy: " << qm_zone.QM_energy());
       break;
     }
   }
-  if (!got_energy) {
+  if (ofs.fail() || ofs.eof()) {
     io::messages.add("Unable to find energy in output file "
                       + this->param->output_file
                       , this->name(), io::message::error);
     return 1;
   }
-  // Parse energy
-  std::istringstream iss(line);
-  std::string dummy;
-  iss >> dummy >> dummy >> dummy >> qm_zone.QM_energy();
-  if (iss.fail()) {
-    io::messages.add("Failed to parse QM energy in output file"
-                      + this->param->output_file
-                      , this->name(), io::message::error);
-    return 1;
-  }
-  qm_zone.QM_energy() *= this->param->unit_factor_energy;
   return 0;
 }
 
@@ -315,7 +289,7 @@ int interaction::DFTB_Worker::parse_qm_forces(std::ifstream& ofs
   std::string line;
   bool got_qm_forces = false;
   while(std::getline(ofs, line)) {
-    if (line.find("Total Forces") != std::string::npos) {
+    if (line.find("forces   ") != std::string::npos) {
       got_qm_forces = true;
       break;
     }
@@ -330,7 +304,7 @@ int interaction::DFTB_Worker::parse_qm_forces(std::ifstream& ofs
   for(std::set<QM_Atom>::iterator
         it = qm_zone.qm.begin(), to = qm_zone.qm.end(); it != to; ++it) {
     DEBUG(15,"Parsing force of QM atom " << it->index);
-    int err = this->parse_qm_force(ofs, it->force);
+    int err = this->parse_force(ofs, it->force);
     DEBUG(15,"Force: " << math::v2s(it->force));
     if (err) {
       std::ostringstream msg;
@@ -344,7 +318,7 @@ int interaction::DFTB_Worker::parse_qm_forces(std::ifstream& ofs
   for(std::set<QM_Link>::iterator
         it = qm_zone.link.begin(), to = qm_zone.link.end(); it != to; ++it) {
     DEBUG(15,"Parsing force of link atom " << it->qm_index << "-" << it->mm_index);
-    int err = this->parse_qm_force(ofs, it->force);
+    int err = this->parse_force(ofs, it->force);
     DEBUG(15,"Force: " << math::v2s(it->force));
     if (err) {
       std::ostringstream msg;
@@ -362,7 +336,7 @@ int interaction::DFTB_Worker::parse_mm_forces(std::ifstream& ofs
   std::string line;
   bool got_mm_forces = false;
   while(std::getline(ofs, line)) {
-    if (line.find("Forces on external charges") != std::string::npos) {
+    if (line.find("forces_ext_charges") != std::string::npos) {
       got_mm_forces = true;
       break;
     }
@@ -378,7 +352,7 @@ int interaction::DFTB_Worker::parse_mm_forces(std::ifstream& ofs
         it = qm_zone.mm.begin(), to = qm_zone.mm.end(); it != to; ++it) {
     if (it->charge != 0.0 || (it->is_polarisable && (it->charge - it->cos_charge) != 0.0)) {
       DEBUG(15,"Parsing force of MM atom " << it->index);
-      int err = this->parse_mm_force(ofs, it->force);
+      int err = this->parse_force(ofs, it->force);
       if (err) {
         std::ostringstream msg;
         msg << "Failed to parse force line of MM atom " << (it->index + 1)
@@ -389,7 +363,7 @@ int interaction::DFTB_Worker::parse_mm_forces(std::ifstream& ofs
     }
     if (it->is_polarisable && it->cos_charge != 0.0) {
       DEBUG(15,"Parsing force of MM atom " << it->index);
-      int err = this->parse_mm_force(ofs, it->force);
+      int err = this->parse_force(ofs, it->force);
       if (err) {
         std::ostringstream msg;
         msg << "Failed to parse force line of COS of MM atom " << (it->index + 1)
@@ -402,46 +376,13 @@ int interaction::DFTB_Worker::parse_mm_forces(std::ifstream& ofs
   return 0;
 }
 
-int interaction::DFTB_Worker::parse_qm_force(std::ifstream& ofs,
-                                             math::Vec& force) const {
+int interaction::DFTB_Worker::parse_force(std::ifstream& ofs,
+                                          math::Vec& force) const {
   std::string line;
-  if(!std::getline(ofs, line)) {
+  ofs >> force(0) >> force(1) >> force(2);
+  if(ofs.fail() || ofs.eof()) {
     std::ostringstream msg;
-    msg << "Failed to read force line"
-        << " in " << this->param->output_file;
-    io::messages.add(msg.str(), this->name(), io::message::error);
-    return 1;
-  }
-  std::istringstream iss(line);
-  int dummy;
-  iss >> dummy >> force(0) >> force(1) >> force(2);
-  if (iss.fail()) {
-    std::ostringstream msg;
-    msg << "Failed to parse force line of atom "
-        << " in " << this->param->output_file;
-    io::messages.add(msg.str(), this->name(), io::message::error);
-    return 1;
-  }
-  force *= this->param->unit_factor_force;
-  return 0;
-}
-
-int interaction::DFTB_Worker::parse_mm_force(std::ifstream& ofs,
-                                             math::Vec& force) const {
-  std::string line;
-  if(!std::getline(ofs, line)) {
-    std::ostringstream msg;
-    msg << "Failed to read force line"
-        << " in " << this->param->output_file;
-    io::messages.add(msg.str(), this->name(), io::message::error);
-    return 1;
-  }
-  std::istringstream iss(line);
-  iss >> force(0) >> force(1) >> force(2);
-  if (iss.fail()) {
-    std::ostringstream msg;
-    msg << "Failed to parse force line of atom "
-        << " in " << this->param->output_file;
+    msg << "Failed to parse force line in " << this->param->output_file;
     io::messages.add(msg.str(), this->name(), io::message::error);
     return 1;
   }
