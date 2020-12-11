@@ -527,13 +527,13 @@ int interaction::MNDO_Worker::parse_gradients(const simulation::Simulation& sim
       err = this->parse_gradient(ofs, it->force);
       if (err) {
         std::ostringstream msg;
-        msg << "Failed to parse gradient line of QM atom" << (it->index + 1)
+        msg << "Failed to parse gradient line of QM atom " << (it->index + 1)
             << " in " << out_grad;
         io::messages.add(msg.str(), this->name(), io::message::error);
         return 1;
       }
     }
-    // Parse link QM atoms
+    // Parse capping QM atoms
     for(std::set<QM_Link>::iterator
           it = qm_zone.link.begin(), to = qm_zone.link.end(); it != to; ++it) {
       DEBUG(15,"Parsing gradient of capping atom " << it->qm_index << "-" << it->mm_index);
@@ -572,7 +572,7 @@ int interaction::MNDO_Worker::parse_gradients(const simulation::Simulation& sim
       }
       if (err) {
         std::ostringstream msg;
-        msg << "Failed to parse gradient line of MM atom" << (it->index + 1)
+        msg << "Failed to parse gradient line of MM atom " << (it->index + 1)
             << " in " << out_grad;
         io::messages.add(msg.str(), this->name(), io::message::error);
         return 1;
@@ -585,12 +585,20 @@ int interaction::MNDO_Worker::parse_gradients(const simulation::Simulation& sim
 int interaction::MNDO_Worker::parse_gradient(std::ifstream& ofs,
                                              math::Vec& force) {
   std::string line;
+  if (!std::getline(ofs, line)) {
+    std::ostringstream msg;
+    msg << "Failed to read gradient line "
+        << " in " << this->param->output_gradient_file;
+    io::messages.add(msg.str(), this->name(), io::message::error);
+    return 1;
+  }
+  std::istringstream iss(line);
   int dummy;
-  ofs >> dummy >> dummy >> force(0) >> force(1) >> force(2);
+  iss >> dummy >> dummy >> force(0) >> force(1) >> force(2);
   if (ofs.fail()) {
     std::ostringstream msg;
-    msg << "Failed to parse gradient line"
-        << " in " << this->param->output_gradient_file;
+    msg << "Failed to parse gradient line in "
+        << this->param->output_gradient_file;
     io::messages.add(msg.str(), this->name(), io::message::error);
     return 1;
   }
