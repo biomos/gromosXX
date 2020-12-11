@@ -100,8 +100,6 @@ int interaction::Gaussian_Worker::write_input(const topology::Topology& topo
 
   double len_to_qm = 1.0 / this->param->unit_factor_length;
   double cha_to_qm = 1.0 / this->param->unit_factor_charge;
-  ifs.setf(std::ios::fixed, std::ios::floatfield);
-  ifs.precision(8);
 
   DEBUG(15,"Writing QM coordinates");
   // Write QM coordinates
@@ -196,9 +194,10 @@ void interaction::Gaussian_Worker::write_qm_atom(std::ofstream& inputfile_stream
                                         , const math::Vec& pos)
   {
   inputfile_stream << std::setw(4) << std::left << atomic_number
-                   << std::setw(20) << std::setprecision(15) << std::right << pos(0)
-                   << std::setw(20) << std::setprecision(15) << std::right << pos(1)
-                   << std::setw(20) << std::setprecision(15) << std::right << pos(2)
+                   << std::scientific << std::setprecision(17)
+                   << std::setw(25) << std::right << pos(0)
+                   << std::setw(25) << std::right << pos(1)
+                   << std::setw(25) << std::right << pos(2)
                    << std::endl;
 }
 
@@ -206,10 +205,11 @@ void interaction::Gaussian_Worker::write_mm_atom(std::ofstream& inputfile_stream
                                         , const math::Vec& pos
                                         , const double charge)
   {
-  inputfile_stream << std::setw(20) << std::setprecision(15) << std::right << pos(0)
-                   << std::setw(20) << std::setprecision(15) << std::right << pos(1)
-                   << std::setw(20) << std::setprecision(15) << std::right << pos(2)
-                   << std::setw(20) << std::setprecision(4) << std::right << charge
+  inputfile_stream << std::scientific << std::setprecision(17)
+                   << std::setw(25) << std::right << pos(0)
+                   << std::setw(25) << std::right << pos(1)
+                   << std::setw(25) << std::right << pos(2)
+                   << std::setw(25) << std::right << charge
                    << std::endl;
 }
 
@@ -217,9 +217,10 @@ void interaction::Gaussian_Worker::write_mm_pos(std::ofstream& inputfile_stream
                                         , const math::Vec& pos)
   {
   /* Format 3F20.12 */
-  inputfile_stream << std::setw(20) << std::setprecision(15) << std::right << pos(0)
-                   << std::setw(20) << std::setprecision(15) << std::right << pos(1)
-                   << std::setw(20) << std::setprecision(15) << std::right << pos(2)
+  inputfile_stream << std::scientific << std::setprecision(17)
+                   << std::setw(25) << std::right << pos(0)
+                   << std::setw(25) << std::right << pos(1)
+                   << std::setw(25) << std::right << pos(2)
                    << std::endl;
 }
 

@@ -180,8 +180,6 @@ int interaction::MNDO_Worker::write_input(const topology::Topology& topo
 
   double len_to_qm = 1.0 / this->param->unit_factor_length;
   double cha_to_qm = 1.0 / this->param->unit_factor_charge;
-  ifs.setf(std::ios::fixed, std::ios::floatfield);
-  ifs.precision(8);
 
   DEBUG(15,"Writing QM coordinates");
   // Write QM coordinates
@@ -311,13 +309,12 @@ void interaction::MNDO_Worker::write_qm_atom(std::ofstream& inputfile_stream
 */
   inputfile_stream << std::setw(2) << std::left << atomic_number
                    << std::string(2,' ')
-                   << std::setw(20) << std::setprecision(15) << std::right << pos(0)
+                   << std::scientific << std::setprecision(17)
+                   << std::setw(25) << std::right << pos(0)
                    << std::string(2,' ') << std::setw(2) << std::right << opt_flag
-                   //<< std::string(6,' ')
-                   << std::setw(20) << std::setprecision(15) << std::right << pos(1)
+                   << std::setw(25) << std::right << pos(1)
                    << std::string(2,' ') << std::setw(2) << std::right << opt_flag
-                   //<< std::string(6,' ')
-                   << std::setw(20) << std::setprecision(15) << std::right << pos(2)
+                   << std::setw(25) << std::right << pos(2)
                    << std::string(2,' ') << std::setw(2) << std::right << opt_flag
                    << std::endl;
 }
@@ -332,10 +329,11 @@ void interaction::MNDO_Worker::write_mm_atom(std::ofstream& inputfile_stream
       cm(3,m)   25-36  f12.7  z coordinate.
       qm(m)     37-44   f8.4  External point charge.
     */
-  inputfile_stream << std::setw(20) << std::setprecision(15) << std::right << pos(0)
-                   << std::setw(20) << std::setprecision(15) << std::right << pos(1)
-                   << std::setw(20) << std::setprecision(15) << std::right << pos(2)
-                   << std::setw(20) << std::setprecision(4) << std::right << charge
+  inputfile_stream << std::scientific << std::setprecision(17)
+                   << std::setw(25) << std::right << pos(0)
+                   << std::setw(25) << std::right << pos(1)
+                   << std::setw(25) << std::right << pos(2)
+                   << std::setw(25) << std::right << charge
                    << std::endl;
 }
 

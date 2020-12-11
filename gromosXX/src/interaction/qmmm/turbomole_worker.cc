@@ -93,12 +93,10 @@ void interaction::Turbomole_Worker::write_qm_atom(std::ofstream& inputfile_strea
                                                 , const int atomic_number
                                                 , const math::Vec& pos) const
   {
-  inputfile_stream.setf(std::ios::fixed, std::ios::floatfield);
-  inputfile_stream.precision(14);
-  
-  inputfile_stream << std::setw(20) << std::right << pos(0)
-                   << std::setw(20) << std::right << pos(1)
-                   << std::setw(20) << std::right << pos(2)
+  inputfile_stream << std::scientific << std::setprecision(17)
+                   << std::setw(25) << std::right << pos(0)
+                   << std::setw(25) << std::right << pos(1)
+                   << std::setw(25) << std::right << pos(2)
                    << "      " << std::left
                    << this->param->elements[atomic_number]
                    << std::endl;
@@ -110,13 +108,11 @@ void interaction::Turbomole_Worker::write_mm_atom(std::ofstream& inputfile_strea
   {
   // Turbomole skips zero charges in output
   if (charge != 0.0) {
-    inputfile_stream.setf(std::ios::fixed, std::ios::floatfield);
-    inputfile_stream.precision(14);
-    inputfile_stream << std::setw(20) << std::right << pos(0)
-                    << std::setw(20) << std::right << pos(1)
-                    << std::setw(20) << std::right << pos(2);
-    inputfile_stream.precision(8);
-    inputfile_stream << std::setw(15) << std::right << charge << std::endl;
+    inputfile_stream << std::scientific << std::setprecision(17)
+                     << std::setw(25) << std::right << pos(0)
+                     << std::setw(25) << std::right << pos(1)
+                     << std::setw(25) << std::right << pos(2)
+                     << std::setw(25) << std::right << charge << std::endl;
   }
 }
 

@@ -136,13 +136,12 @@ void interaction::DFTB_Worker::write_qm_atom(std::ofstream& inputfile_stream
                                            , const int atomic_type_id
                                            , const math::Vec& pos) const
   {
-  inputfile_stream.setf(std::ios::scientific, std::ios::floatfield);
-  inputfile_stream.precision(14);
-  inputfile_stream << std::setw(5) << std::right << id << " "
+  inputfile_stream << std::scientific << std::setprecision(17)
+                   << std::setw(5) << std::right << id << " "
                    << std::setw(3) << std::right << atomic_type_id << " "
-                   << std::setw(24) << std::right << pos(0)
-                   << std::setw(24) << std::right << pos(1)
-                   << std::setw(24) << std::right << pos(2)
+                   << std::setw(25) << std::right << pos(0)
+                   << std::setw(25) << std::right << pos(1)
+                   << std::setw(25) << std::right << pos(2)
                    << std::endl;
 }
 
@@ -150,14 +149,12 @@ void interaction::DFTB_Worker::write_mm_atom(std::ofstream& inputfile_stream
                                            , const math::Vec& pos
                                            , const double charge) const
   {
-  inputfile_stream.setf(std::ios::scientific, std::ios::floatfield);
-  inputfile_stream.precision(14);
-  inputfile_stream << std::setw(24) << std::right << pos(0)
-                  << std::setw(24) << std::right << pos(1)
-                  << std::setw(24) << std::right << pos(2);
-  inputfile_stream.precision(8);
-  inputfile_stream.setf(std::ios::fixed, std::ios::floatfield);
-  inputfile_stream << std::setw(18) << std::right << charge << std::endl;
+  inputfile_stream << std::scientific << std::setprecision(17)
+                   << std::setw(25) << std::right << pos(0)
+                   << std::setw(25) << std::right << pos(1)
+                   << std::setw(25) << std::right << pos(2)
+                   << std::setw(25) << std::right << charge
+                   << std::endl;
 }
 
 int interaction::DFTB_Worker::system_call()
@@ -241,7 +238,9 @@ int interaction::DFTB_Worker::parse_charges(std::ifstream& ofs
   }
   for(std::set<QM_Atom>::iterator
       it = qm_zone.qm.begin(), to = qm_zone.qm.end(); it != to; ++it) {
+    DEBUG(15,"Parsing charge of QM atom " << it->index);
     ofs >> it->qm_charge;
+    DEBUG(15,"Charge: " << it->qm_charge);
     if (ofs.fail()) {
       std::ostringstream msg;
       msg << "Failed to parse charge of QM atom " << (it->index + 1)
@@ -254,7 +253,9 @@ int interaction::DFTB_Worker::parse_charges(std::ifstream& ofs
   // Also for capping atoms
   for(std::set<QM_Link>::iterator
       it = qm_zone.link.begin(), to = qm_zone.link.end(); it != to; ++it) {
+    DEBUG(15,"Parsing charge of capping atom " << it->qm_index << "-" << it->mm_index);
     ofs >> it->qm_charge;
+    DEBUG(15,"Charge: " << it->qm_charge);
     if (ofs.fail()) {
       std::ostringstream msg;
       msg << "Failed to parse charge of capping atom " << (it->qm_index + 1)

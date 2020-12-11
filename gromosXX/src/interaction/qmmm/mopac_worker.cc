@@ -288,8 +288,6 @@ int interaction::MOPAC_Worker::write_input(const topology::Topology& topo
   ifs << header << std::endl;
 
   double len_to_qm = 1.0 / this->param->unit_factor_length;
-  ifs.setf(std::ios::fixed, std::ios::floatfield);
-  ifs.precision(8);
 
   DEBUG(15,"Writing QM coordinates");
   // Write QM coordinates
@@ -480,8 +478,13 @@ int interaction::MOPAC_Worker::read_output(topology::Topology& topo
     if (err) return err;
   }
   
-  err = this->parse_charges(ofs, qm_zone);
-  if (err) return err;
+  // here we always parse charges to calculate QM-MM interactions manually
+  // except for mechanical embedding and constant QM charges
+  if (!( sim.param().qmmm.qmmm == simulation::qmmm_mechanical
+          && sim.param().qmmm.qm_ch == simulation::qm_ch_constant )) {
+    err = this->parse_charges(ofs, qm_zone);
+    if (err) return err;
+  }
 
   err = this->parse_qm_gradients(sim, ofs, qm_zone);
   if (err) return err;
@@ -497,14 +500,14 @@ void interaction::MOPAC_Worker::write_qm_atom(std::ofstream& inputfile_stream
                                         , const math::Vec& pos
                                         , const int var_flag) const
   {
-  inputfile_stream << std::setw(2) << std::left << atomic_number
-                   << std::string(2,' ')
-                   << std::setw(20) << std::setprecision(15) << std::right << pos(0)
-                   << std::string(2,' ') << std::setw(2) << std::right << var_flag
-                   << std::setw(20) << std::setprecision(15) << std::right << pos(1)
-                   << std::string(2,' ') << std::setw(2) << std::right << var_flag
-                   << std::setw(20) << std::setprecision(15) << std::right << pos(2)
-                   << std::string(2,' ') << std::setw(2) << std::right << var_flag
+  inputfile_stream << std::setw(4) << std::left << atomic_number
+                   << std::scientific << std::setprecision(17)
+                   << std::setw(25) << std::right << pos(0)
+                   << std::setw(4)  << std::right << var_flag
+                   << std::setw(25) << std::right << pos(1)
+                   << std::setw(4)  << std::right << var_flag
+                   << std::setw(25) << std::right << pos(2)
+                   << std::setw(4)  << std::right << var_flag
                    << std::endl;
 }
 
@@ -513,12 +516,12 @@ void interaction::MOPAC_Worker::write_mm_potential(std::ofstream& inputfile_stre
                                                  , const math::Vec& pos
                                                  , double potential) const
   {
-  inputfile_stream << std::setw(2) << std::left << atomic_number
-                   << std::string(2,' ')
-                   << std::setw(20) << std::setprecision(15) << std::right << pos(0)
-                   << std::setw(20) << std::setprecision(15) << std::right << pos(1)
-                   << std::setw(20) << std::setprecision(15) << std::right << pos(2)
-                   << std::setw(20) << std::setprecision(15) << std::right << potential
+  inputfile_stream << std::setw(4) << std::left << atomic_number
+                   << std::scientific << std::setprecision(17)
+                   << std::setw(25) << std::right << pos(0)
+                   << std::setw(25) << std::right << pos(1)
+                   << std::setw(25) << std::right << pos(2)
+                   << std::setw(25) << std::right << potential
                    << std::endl;
 }
 
