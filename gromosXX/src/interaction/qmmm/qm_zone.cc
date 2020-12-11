@@ -149,7 +149,8 @@ void interaction::QM_Zone::write(topology::Topology& topo,
   conf.current().virial_tensor += virial_tensor;
   
   // Write charges
-  if (sim.param().qmmm.qmmm == simulation::qmmm_mechanical) {
+  if (sim.param().qmmm.qmmm == simulation::qmmm_mechanical
+      && sim.param().qmmm.qm_ch == simulation::qm_ch_dynamic) {
     for (std::set<QM_Atom>::const_iterator
           it = this->qm.begin(), to = this->qm.end(); it != to; ++it)
       {
@@ -164,7 +165,7 @@ void interaction::QM_Zone::write(topology::Topology& topo,
       topo.charge()(it->qm_index) += it->qm_charge;
       DEBUG(15, "Charge added to QM atom " << it->qm_index << ", new charge: " << topo.charge(it->qm_index));
     }
-    }
+  }
 
   // Write energies
   conf.current().energies.qm_total = this->m_qm_energy;

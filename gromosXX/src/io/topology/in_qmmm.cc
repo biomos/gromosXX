@@ -165,7 +165,7 @@ END
  * - CHARGE: net charge of the QM zone
  * - SPINM: spin multiplicity of the QM zone (be aware, that MNDO uses 0 for ground-state)
  * - NUM_CHARGES: the number of MM atoms
- * - NUM_LINK: Number of link atoms
+ * - NUM_LINK: Number of link and capping atoms atoms
  * 
 @verbatim
 MNDOHEADER
@@ -186,8 +186,13 @@ END
  * The first line contains the directory which contains the Turbomole binaries.
  * The second line is the turbomole working directory containing the control file.
  * In this control file the relative paths for the coordinate, point charges coordinates,
- * energy, gradients and point charges gradients are defined. The next lines contains
- * these file names for GROMOS.
+ * energy, gradients and point charges gradients are defined. Next lines contains
+ * these filenames. Last line is a filename containing point charges of QM atoms
+ * calculated using ESP. This is necessary only if GromosXX should obtain QM charges
+ * from the QM calculation (NTQMMM = 1). The naming format of the standard output from
+ * the Turbomole program is [program].out. Depending on your TMOLETOOLCHAIN definition
+ * you have to decide which program outputs the charges and provide its output filename.
+ * If (NTQMMM != 1), this line can be omitted.
  *
  * @verbatim
 TMOLEFILES
@@ -198,6 +203,7 @@ mm_coordinate.in
 energy.out
 gradient.out
 mm_gradient.out
+ridft.out
 END
 @endverbatim
  * 
@@ -205,10 +211,11 @@ END
  * Each line contains one program that is called. By default, it is assumed that
  * the control file is static, i.e. that the number of QM atoms cannot change. To 
  * modify the control file during the simulation the TURBOMOLE program define is 
- * to be used. The input for this program has to be given as a file named "define.inp" 
- * which is in the same directory as the "control" file. 
+ * to be used. The input for this program has to be given as a filename "define.inp" 
+ * which is in the same directory as the "control" file. Standard output of every
+ * program is written to separate file called [program].out
  * Note: You still have to provide an initial control file as at the time the 
- * program define is only cannot include the $point_charges directives. 
+ * program define it only cannot include the $point_charges directives. 
  * 
  * @verbatim
  TMOLETOOLCHAIN
@@ -275,22 +282,6 @@ Analysis = {
 }
 END
 @endverbatim
- * 
- * The TMOLETOOLCHAIN block specifies the Turbomole programs that are executed.
- * Each line contains one program that is called. By default, it is assumed that
- * the control file is static, i.e. that the number of QM atoms cannot change. To 
- * modify the control file during the simulation the TURBOMOLE program define is 
- * to be used. The input for this program has to be given as a file named "define.inp" 
- * which is in the same directory as the "control" file. 
- * Note: You still have to provide an initial control file as at the time the 
- * program define is only cannot include the $point_charges directives. 
- * 
- * @verbatim
- TMOLETOOLCHAIN
- ridft
- rdgrad
- END
- @endverbatim
  *
  * @section MOPAC blocks for the MOPAC worker
  * 
@@ -500,8 +491,9 @@ io::In_QMMM::read(topology::Topology& topo,
                 "In_QMMM", io::message::error);
         return;
       } else {
-        if (buffer.size() != 9) {
-          io::messages.add("TMOLEFILES block corrupt. Provide 7 lines.",
+        if (buffer.size() > 10
+          || buffer.size() < 9) {
+          io::messages.add("TMOLEFILES block corrupt. Provide 7 or 8 lines.",
                   "In_QMMM", io::message::error);
           return;
         }
@@ -512,6 +504,14 @@ io::In_QMMM::read(topology::Topology& topo,
         sim.param().qmmm.turbomole.output_energy_file = buffer[5];
         sim.param().qmmm.turbomole.output_gradient_file = buffer[6];
         sim.param().qmmm.turbomole.output_mm_gradient_file = buffer[7];
+        if (sim.param().qmmm.qm_ch == simulation::qm_ch_dynamic) {
+          if (buffer.size() != 10) {
+            io::messages.add("output charge filename missing in TMOLEFILES block",
+                  "In_QMMM", io::message::error);
+            return;
+          }
+          sim.param().qmmm.turbomole.output_charge_file = buffer[8];
+        }
       }
     } // TMOLEFILES
     { // TMOLETOOLCHAIN

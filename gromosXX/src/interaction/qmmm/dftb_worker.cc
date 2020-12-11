@@ -206,7 +206,8 @@ int interaction::DFTB_Worker::read_output(topology::Topology& topo
     if (err) return err;
   }
 
-  if (sim.param().qmmm.qmmm == simulation::qmmm_mechanical) {
+  if (sim.param().qmmm.qmmm == simulation::qmmm_mechanical
+      && sim.param().qmmm.qm_ch == simulation::qm_ch_dynamic) {
     err = this->parse_charges(ofs, qm_zone);
     if (err) return err;
   }

@@ -729,6 +729,22 @@ namespace simulation
   };
 
   /**
+   * @enum qm_ch_enum
+   * update charges of QM atoms from the QM calculation
+   * (only in mechanical embedding)
+   */
+  enum qm_ch_enum {
+    /**
+     * use constant charges from the topology
+     */
+    qm_ch_constant = 0,
+    /**
+     * update charges every step
+     */
+    qm_ch_dynamic = 1
+  };
+
+  /**
    * @enum qm_lj_enum
    * apply LJ between QM atoms
    */
@@ -3569,22 +3585,23 @@ namespace simulation
       /**
        * Constructor
        * Default values:
-       * - qmmm 0 (no QMMM)
-       * - qm_lj 0 (no LJ dispersion within QM zone)
-       * - software 0 (MNDO)
        * - cutoff 0.0 (no cutoff)
+       * - cap_length 0.109 (capping atom distance)
        * - mm_scale -1.0 (no scaling)
+       * - qmmm qmmm_off (no QMMM)
+       * - qm_lj qm_lj_off (no LJ dispersion within QM zone)
+       * - qm_constraint qm_constr_off (no constraints in QM zone)
+       * - software qm_mndo (MNDO)
        * - write 0 (no writing)
        * - atomic_cutoff false (using charge-group based cutoff)
        * - use_qm_buffer false (not using buffer zone)
-       * - cap_length 0.109 (capping atom distance)
        */
       qmmm_struct() : 
                       cutoff(0.0)
                     , cap_length(0.109)
                     , mm_scale(-1.0)
                     , qmmm(qmmm_off)
-                    , qm_lj(qm_lj_off)
+                    , qm_ch(qm_ch_constant)
                     , qm_constraint(qm_constr_off)
                     , software(qm_mndo)
                     , write(0)
@@ -3611,6 +3628,10 @@ namespace simulation
        * QM-MM embedding scheme or disable
        */
       qmmm_enum qmmm;
+      /**
+       * QM-MM embedding scheme or disable
+       */
+      qm_ch_enum qm_ch;
       /**
        * apply LJ interaction in QM zone or not
        */
@@ -3687,7 +3708,6 @@ namespace simulation
        * - unit_factor_energy 1.0
        * - unit_factor_force 1.0
        * - unit_factor_charge 1.0
-       * - use_qm_charges true
        */
       qm_param_struct() : 
                       unit_factor_length(1.0)
@@ -3782,6 +3802,10 @@ namespace simulation
          * the output file containing the cartesion gradients of the MM atoms
          */
         std::string output_mm_gradient_file;
+        /**
+         * the output file containing the ESP charges of the QM atoms
+         */
+        std::string output_charge_file;
       } turbomole;
 
       /**

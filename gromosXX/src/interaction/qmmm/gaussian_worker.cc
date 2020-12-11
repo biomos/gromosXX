@@ -173,7 +173,8 @@ int interaction::Gaussian_Worker::read_output(topology::Topology& topo
   err = this->parse_energy(ofs, qm_zone);
   if (err) return err;
   
-  if (sim.param().qmmm.qmmm == simulation::qmmm_mechanical) {
+  if (sim.param().qmmm.qmmm == simulation::qmmm_mechanical
+      && sim.param().qmmm.qm_ch == simulation::qm_ch_dynamic) {
     err = this->parse_charges(ofs, qm_zone);
     if (err) return err;
   }
@@ -215,6 +216,7 @@ void interaction::Gaussian_Worker::write_mm_atom(std::ofstream& inputfile_stream
 void interaction::Gaussian_Worker::write_mm_pos(std::ofstream& inputfile_stream
                                         , const math::Vec& pos)
   {
+  /* Format 3F20.12 */
   inputfile_stream << std::setw(20) << std::setprecision(15) << std::right << pos(0)
                    << std::setw(20) << std::setprecision(15) << std::right << pos(1)
                    << std::setw(20) << std::setprecision(15) << std::right << pos(2)
@@ -244,16 +246,16 @@ int interaction::Gaussian_Worker::parse_charges(std::ifstream& ofs, interaction:
   // Parse charges of QM atoms
   {
     std::string dummy;
-  for(std::set<QM_Atom>::iterator
-      it = qm_zone.qm.begin(), to = qm_zone.qm.end(); it != to; ++it) {
+    for(std::set<QM_Atom>::iterator
+        it = qm_zone.qm.begin(), to = qm_zone.qm.end(); it != to; ++it) {
       ofs >> dummy >> dummy >> it->qm_charge;
       if (ofs.fail()) {
-      std::ostringstream msg;
+          std::ostringstream msg;
           msg << "Failed to parse charge of QM atom " << (it->index + 1)
-          << " in " << out;
-      io::messages.add(msg.str(), this->name(), io::message::error);
-      return 1;
-    }
+            << " in " << out;
+        io::messages.add(msg.str(), this->name(), io::message::error);
+        return 1;
+      }
       it->qm_charge *= this->param->unit_factor_charge;
     }
     // Do the capping atoms as well
@@ -261,14 +263,14 @@ int interaction::Gaussian_Worker::parse_charges(std::ifstream& ofs, interaction:
         it = qm_zone.link.begin(), to = qm_zone.link.end(); it != to; ++it) {
       ofs >> dummy >> dummy >> it->qm_charge;
       if (ofs.fail()) {
-      std::ostringstream msg;
+        std::ostringstream msg;
         msg << "Failed to parse charge of capping atom " << (it->qm_index + 1)
           << "-" << (it->mm_index + 1) << " in " << out;
-      io::messages.add(msg.str(), this->name(), io::message::error);
-      return 1;
+        io::messages.add(msg.str(), this->name(), io::message::error);
+        return 1;
+      }
+      it->qm_charge *= this->param->unit_factor_charge;
     }
-    it->qm_charge *= this->param->unit_factor_charge;
-  }
   }
   return 0;
 }

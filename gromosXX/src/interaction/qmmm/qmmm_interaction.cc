@@ -379,6 +379,21 @@ int interaction::QMMM_Interaction::init(topology::Topology& topo,
         os << "\tunknown";
     }
     os << " embedding scheme" << std::endl;
+    if (sim.param().qmmm.qmmm == simulation::qmmm_mechanical) {
+      os << "\tcharges of QM atoms ";
+      switch (sim.param().qmmm.qm_ch) {
+        case simulation::qm_ch_constant:
+          os << "constant from the topology";
+          break;
+        case simulation::qm_ch_dynamic:
+          os << "updated every step from the QM calculation";
+          break;
+        default:
+          os << "unknown";
+          break;
+      }
+      os << std::endl;
+    }
     os << "\tusing external ";
     switch (sim.param().qmmm.software) {
       case simulation::qm_mndo:
