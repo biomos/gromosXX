@@ -257,14 +257,13 @@ int interaction::Gaussian_Worker::parse_charges(std::ifstream& ofs, interaction:
       it->qm_charge *= this->param->unit_factor_charge;
     }
     // Do the capping atoms as well
-    std::string dummy;
     for(std::set<QM_Link>::iterator
         it = qm_zone.link.begin(), to = qm_zone.link.end(); it != to; ++it) {
       ofs >> dummy >> dummy >> it->qm_charge;
       if (ofs.fail()) {
       std::ostringstream msg;
-        msg << "Failed to parse charge of capping atom " << (it->index + 1)
-          << " in " << out;
+        msg << "Failed to parse charge of capping atom " << (it->qm_index + 1)
+          << "-" << (it->mm_index + 1) << " in " << out;
       io::messages.add(msg.str(), this->name(), io::message::error);
       return 1;
     }
@@ -424,18 +423,9 @@ int interaction::Gaussian_Worker::parse_forces(const simulation::Simulation& sim
 
 int interaction::Gaussian_Worker::parse_force(std::ifstream& ofs,
                                               math::Vec& force) {
-  std::string line;
-  if(!std::getline(ofs, line)) {
-    std::ostringstream msg;
-    msg << "Failed to read force line"
-        << " in " << this->param->output_file;
-    io::messages.add(msg.str(), this->name(), io::message::error);
-    return 1;
-  }
-  std::istringstream iss(line);
   std::string dummy;
-  iss >> dummy >> dummy >> force(0) >> force(1) >> force(2);
-  if (iss.fail()) {
+  ofs >> dummy >> dummy >> force(0) >> force(1) >> force(2);
+  if (ofs.fail()) {
     std::ostringstream msg;
     msg << "Failed to parse force line of atom "
         << " in " << this->param->output_file;

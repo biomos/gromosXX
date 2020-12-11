@@ -485,10 +485,8 @@ int interaction::MNDO_Worker::parse_energy(std::ifstream& ofs, interaction::QM_Z
     return 1;
   }
   // Parse energy
-  std::getline(ofs, line);
-  std::istringstream iss(line);
-  iss >> qm_zone.QM_energy();
-  if (iss.fail()) {
+  ofs >> qm_zone.QM_energy();
+  if (ofs.fail()) {
     io::messages.add("Failed to parse QM energy in output file"
                       + this->param->output_gradient_file
                       , this->name(), io::message::error);
@@ -587,16 +585,8 @@ int interaction::MNDO_Worker::parse_gradient(std::ifstream& ofs,
                                              math::Vec& force) {
   std::string line;
   int dummy;
-  if(!std::getline(ofs, line)) {
-    std::ostringstream msg;
-    msg << "Failed to read gradient line" 
-        << " in " << this->param->output_gradient_file;
-    io::messages.add(msg.str(), this->name(), io::message::error);
-    return 1;
-  }
-  std::istringstream iss(line);
-  iss >> dummy >> dummy >> force(0) >> force(1) >> force(2);
-  if (iss.fail()) {
+  ofs >> dummy >> dummy >> force(0) >> force(1) >> force(2);
+  if (ofs.fail()) {
     std::ostringstream msg;
     msg << "Failed to parse gradient line"
         << " in " << this->param->output_gradient_file;

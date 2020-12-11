@@ -219,6 +219,7 @@ int interaction::Turbomole_Worker::read_output(topology::Topology& topo
 int interaction::Turbomole_Worker::parse_energy(std::ifstream& ofs
                                               , interaction::QM_Zone& qm_zone) const {
   std::string line;
+  bool got_energy = false;
   while(std::getline(ofs, line)) {
     // get energy section
     if (line.find("$energy") != std::string::npos) {
@@ -233,7 +234,15 @@ int interaction::Turbomole_Worker::parse_energy(std::ifstream& ofs
         return 1;
       }
       qm_zone.QM_energy() *= this->param->unit_factor_energy;  
+      got_energy = true;
+      break;
     }
+    }
+  if (!got_energy) {
+    io::messages.add("Unable to find energy in output file "
+                      + this->param->output_energy_file
+                      , this->name(), io::message::error);
+    return 1;
   }
   return 0;
 }

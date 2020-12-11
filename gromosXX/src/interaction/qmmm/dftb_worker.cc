@@ -270,15 +270,23 @@ int interaction::DFTB_Worker::parse_energy(std::ifstream& ofs
                                          , interaction::QM_Zone& qm_zone) const {
   std::string line;
   // Find energy block and parse
+  bool got_energy = false;
   while (std::getline(ofs, line)) {
     if (line.find("total_energy") != std::string::npos) {
       ofs >> qm_zone.QM_energy();
+      if (ofs.fail()) {
+        io::messages.add("Failed to parse energy in output file "
+                          + this->param->output_file
+                          , this->name(), io::message::error);
+        return 1;
+      }
+      got_energy = true;
       qm_zone.QM_energy() *= this->param->unit_factor_energy;
       DEBUG(15, "Parsed QM_energy: " << qm_zone.QM_energy());
       break;
     }
   }
-  if (ofs.fail() || ofs.eof()) {
+  if (!got_energy) {
     io::messages.add("Unable to find energy in output file "
                       + this->param->output_file
                       , this->name(), io::message::error);
@@ -383,7 +391,7 @@ int interaction::DFTB_Worker::parse_force(std::ifstream& ofs,
                                           math::Vec& force) const {
   std::string line;
   ofs >> force(0) >> force(1) >> force(2);
-  if(ofs.fail() || ofs.eof()) {
+  if(ofs.fail()) {
     std::ostringstream msg;
     msg << "Failed to parse force line in " << this->param->output_file;
     io::messages.add(msg.str(), this->name(), io::message::error);
