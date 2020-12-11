@@ -94,6 +94,13 @@ namespace interaction {
                   , interaction::QM_Zone& qm_zone);
 
     /**
+     * Parse charges
+     * @param ofs ifstream from the output file
+     * @param qm_zone QM Zone
+     */
+    int parse_charges(std::ifstream& ofs, interaction::QM_Zone& qm_zone) const;
+
+    /**
      * Parse energy
      * @param ofs ifstream from the output file
      * @param qm_zone QM Zone

@@ -211,8 +211,79 @@ int interaction::Turbomole_Worker::read_output(topology::Topology& topo
     if (err) return err;
     ofs.close();
     ofs.clear();
+  } else if (sim.param().qmmm.qmmm == simulation::qmmm_mechanical
+              && sim.param().qmmm.qm_ch == simulation::qm_ch_dynamic) {
+    err = this->open_output(ofs, this->param->output_charge_file);
+    if (err) return err;
+
+    err = this->parse_charges(ofs, qm_zone);
+    if (err) return err;
+    ofs.close();
+    ofs.clear();
   }
   if (this->chdir(this->cwd) != 0) return 1;
+  return 0;
+}
+
+int interaction::Turbomole_Worker::parse_charges(std::ifstream& ofs
+                                               , interaction::QM_Zone& qm_zone) const {
+  std::string& out = this->param->output_charge_file;
+  // Find the block
+  {
+    std::string line;
+    bool got_charges = false;
+    while(std::getline(ofs, line)) {
+      if (line.find("charges resulting from fit:") != std::string::npos) {
+        got_charges = true;
+        break;
+      }
+    }
+    if (!got_charges) {
+      io::messages.add("Unable to find QM charges in output file " + out,
+                        this->name(), io::message::error);
+      return 1;
+    }
+    const int n_lines = 3;
+    // skip n lines
+    for (int i = 0; i < n_lines; ++i) {
+      std::getline(ofs, line);
+    }
+  }
+  // Parse QM charges
+  {
+    std::string dummy;
+    // QM atoms
+    for(std::set<QM_Atom>::iterator
+          it = qm_zone.qm.begin(), to = qm_zone.qm.end(); it != to; ++it) {
+      DEBUG(15,"Parsing charge of QM atom " << it->index);
+      ofs >> dummy >> dummy >> dummy >> it->qm_charge;
+      DEBUG(15,"Charge: " << it->qm_charge);
+      if (ofs.fail()) {
+        std::ostringstream msg;
+        msg << "Failed to parse charge of QM atom " << (it->index + 1)
+            << " in " << out;
+        io::messages.add(msg.str(), this->name(), io::message::error);
+        return 1;
+      }
+      it->qm_charge *= this->param->unit_factor_charge;
+    }
+    // Capping atoms
+    for(std::set<QM_Link>::iterator
+          it = qm_zone.link.begin(), to = qm_zone.link.end(); it != to; ++it) {
+      DEBUG(15,"Parsing charge of capping atom " << it->qm_index << "-" << it->mm_index);
+      ofs >> dummy >> dummy >> dummy >> it->qm_charge;
+      DEBUG(15,"Charge: " << it->qm_charge);
+      if (ofs.fail()) {
+        std::ostringstream msg;
+        msg << "Failed to parse charge of capping atom " << (it->qm_index + 1)
+          << "-" << (it->mm_index + 1) << " in " << out;
+        io::messages.add(msg.str(), this->name(), io::message::error);
+        return 1;
+      }
+      it->qm_charge *= this->param->unit_factor_charge;
+    }
+
+  }
   return 0;
 }
 
@@ -349,7 +420,7 @@ int interaction::Turbomole_Worker::parse_mm_gradients(std::ifstream& ofs
 int interaction::Turbomole_Worker::parse_gradient(std::ifstream& ofs,
                                                   math::Vec& force) const {
   std::string line;
-  if(!std::getline(ofs, line)) {
+  if (!std::getline(ofs, line)) {
     io::messages.add("Failed to read gradient line"
                     , this->name(), io::message::error);
     return 1;
