@@ -114,7 +114,7 @@ int interaction::Gaussian_Worker::write_input(const topology::Topology& topo
   // Write capping atoms
   for (std::set<QM_Link>::const_iterator
         it = qm_zone.link.begin(), to = qm_zone.link.end(); it != to; ++it) {
-    DEBUG(15,"Link atom " << it->qm_index << "-" << it->mm_index << " " 
+    DEBUG(15,"Capping atom " << it->qm_index << "-" << it->mm_index << " " 
             << it->atomic_number << " " << math::v2s(it->pos * len_to_qm));
     this->write_qm_atom(ifs, it->atomic_number, it->pos * len_to_qm);
   }

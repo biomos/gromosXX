@@ -243,20 +243,20 @@ int interaction::DFTB_Worker::parse_charges(std::ifstream& ofs
     ofs >> it->qm_charge;
     if (ofs.fail()) {
       std::ostringstream msg;
-      msg << "Failed to parse charge of atom " << (it->index + 1)
+      msg << "Failed to parse charge of QM atom " << (it->index + 1)
           << " in " << out;
       io::messages.add(msg.str(), this->name(), io::message::error);
       return 1;
     }
     it->qm_charge *= this->param->unit_factor_charge;
   }
-  // Also for link atoms
+  // Also for capping atoms
   for(std::set<QM_Link>::iterator
       it = qm_zone.link.begin(), to = qm_zone.link.end(); it != to; ++it) {
     ofs >> it->qm_charge;
     if (ofs.fail()) {
       std::ostringstream msg;
-      msg << "Failed to parse charge of link atom " << (it->qm_index + 1)
+      msg << "Failed to parse charge of capping atom " << (it->qm_index + 1)
           << "-" << (it->mm_index + 1) << " in " << out;
       io::messages.add(msg.str(), this->name(), io::message::error);
       return 1;
@@ -328,12 +328,12 @@ int interaction::DFTB_Worker::parse_qm_forces(std::ifstream& ofs
   // Parse capping atoms
   for(std::set<QM_Link>::iterator
         it = qm_zone.link.begin(), to = qm_zone.link.end(); it != to; ++it) {
-    DEBUG(15,"Parsing force of link atom " << it->qm_index << "-" << it->mm_index);
+    DEBUG(15,"Parsing force of capping atom " << it->qm_index << "-" << it->mm_index);
     int err = this->parse_force(ofs, it->force);
     DEBUG(15,"Force: " << math::v2s(it->force));
     if (err) {
       std::ostringstream msg;
-      msg << "Failed to parse force line of link atom " << (it->qm_index + 1)
+      msg << "Failed to parse force line of capping atom " << (it->qm_index + 1)
           << "-" << (it->mm_index + 1) << " in " << this->param->output_file;
       io::messages.add(msg.str(), this->name(), io::message::error);
       return 1;

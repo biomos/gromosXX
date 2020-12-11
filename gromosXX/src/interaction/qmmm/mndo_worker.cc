@@ -194,14 +194,14 @@ int interaction::MNDO_Worker::write_input(const topology::Topology& topo
   // Write capping atoms
   for (std::set<QM_Link>::const_iterator
         it = qm_zone.link.begin(), to = qm_zone.link.end(); it != to; ++it) {
-    DEBUG(15,"Link atom " << it->qm_index << "-" << it->mm_index << " " 
+    DEBUG(15,"capping atom " << it->qm_index << "-" << it->mm_index << " " 
             << it->atomic_number << " " << math::v2s(it->pos * len_to_qm));
     this->write_qm_atom(ifs, it->atomic_number, it->pos * len_to_qm);
   }
   // Write termination line
   this->write_qm_atom(ifs, 0, math::Vec(0.0));
 
-  // Write link atom indices
+  // Write capping atom indices
   for (std::set<QM_Link>::const_iterator
         it = qm_zone.link.begin(), to = qm_zone.link.end(); it != to; ++it) {
     assert(qm_zone.qm.find(it->qm_index) != qm_zone.qm.end());
@@ -381,12 +381,12 @@ int interaction::MNDO_Worker::parse_charges(std::ifstream& ofs, interaction::QM_
     }
     it->qm_charge *= this->param->unit_factor_charge;
   }
-  // Do the same for link atoms
+  // Do the same for capping atoms
   for(std::set<QM_Link>::iterator
       it = qm_zone.link.begin(), to = qm_zone.link.end(); it != to; ++it) {
     if(!std::getline(ofs, line)) {
       std::ostringstream msg;
-      msg << "Failed to read charge line of link atom " << (it->qm_index + 1)
+      msg << "Failed to read charge line of capping atom " << (it->qm_index + 1)
           << "-" << (it->mm_index + 1) << " in " << out;
       io::messages.add(msg.str(), this->name(), io::message::error);
       return 1;
@@ -396,7 +396,7 @@ int interaction::MNDO_Worker::parse_charges(std::ifstream& ofs, interaction::QM_
     iss >> dummy >> dummy >> it->qm_charge;
     if (iss.fail()) {
       std::ostringstream msg;
-      msg << "Failed to parse charge line of link atom " << (it->qm_index + 1)
+      msg << "Failed to parse charge line of capping atom " << (it->qm_index + 1)
           << "-" << (it->mm_index + 1) << " in " << out;
       io::messages.add(msg.str(), this->name(), io::message::error);
       return 1;
@@ -444,12 +444,12 @@ int interaction::MNDO_Worker::parse_coordinates(std::ifstream& ofs, interaction:
     }
     it->pos *= this->param->unit_factor_length;
   }
-  // Do it also for link atoms
+  // Do it also for capping atoms
   for(std::set<QM_Link>::iterator
       it = qm_zone.link.begin(), to = qm_zone.link.end(); it != to; ++it) {
     if(!std::getline(ofs, line)) {
       std::ostringstream msg;
-      msg << "Failed to read coordinates line of link atom " << (it->qm_index + 1)
+      msg << "Failed to read coordinates line of capping atom " << (it->qm_index + 1)
           << "-" << (it->mm_index + 1) << " in " << out_grad;
       io::messages.add(msg.str(), this->name(), io::message::error);
       return 1;
@@ -458,7 +458,7 @@ int interaction::MNDO_Worker::parse_coordinates(std::ifstream& ofs, interaction:
     iss >> dummy >> dummy >> it->pos(0) >> it->pos(1) >> it->pos(2);
     if (iss.fail()) {
       std::ostringstream msg;
-      msg << "Failed to parse coordinate line of link atom " << (it->qm_index + 1)
+      msg << "Failed to parse coordinate line of capping atom " << (it->qm_index + 1)
           << "-" << (it->mm_index + 1) << " in " << out_grad;
       io::messages.add(msg.str(), this->name(), io::message::error);
       return 1;
@@ -535,11 +535,11 @@ int interaction::MNDO_Worker::parse_gradients(const simulation::Simulation& sim
     // Parse link QM atoms
     for(std::set<QM_Link>::iterator
           it = qm_zone.link.begin(), to = qm_zone.link.end(); it != to; ++it) {
-      DEBUG(15,"Parsing gradient of link atom " << it->qm_index << "-" << it->mm_index);
+      DEBUG(15,"Parsing gradient of capping atom " << it->qm_index << "-" << it->mm_index);
       err = this->parse_gradient(ofs, it->force);
       if (err) {
         std::ostringstream msg;
-        msg << "Failed to parse gradient line of link atom " << (it->qm_index + 1)
+        msg << "Failed to parse gradient line of capping atom " << (it->qm_index + 1)
           << "-" << (it->mm_index + 1) << " in " << out_grad;
         io::messages.add(msg.str(), this->name(), io::message::error);
         return 1;

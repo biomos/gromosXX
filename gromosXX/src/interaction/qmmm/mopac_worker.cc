@@ -302,7 +302,7 @@ int interaction::MOPAC_Worker::write_input(const topology::Topology& topo
   // Write capping atoms
   for (std::set<QM_Link>::const_iterator
         it = qm_zone.link.begin(), to = qm_zone.link.end(); it != to; ++it) {
-    DEBUG(15,"Link atom " << it->qm_index << "-" << it->mm_index << " " 
+    DEBUG(15,"Capping atom " << it->qm_index << "-" << it->mm_index << " " 
             << it->atomic_number << " " << math::v2s(it->pos * len_to_qm));
     this->write_qm_atom(ifs, it->atomic_number, it->pos * len_to_qm);
   }
@@ -336,7 +336,7 @@ int interaction::MOPAC_Worker::write_input(const topology::Topology& topo
     for (std::set<QM_Link>::const_iterator
           li_it = qm_zone.link.begin(), li_to = qm_zone.link.end(); li_it != li_to; ++li_it) {
       double potential = 0.0;
-      DEBUG(15,"writing potential on link atom "
+      DEBUG(15,"writing potential on capping atom "
                 << li_it->qm_index << "-" << li_it->mm_index << ": " << potential);
       this->write_mm_potential(ifs, li_it->atomic_number, li_it->pos * len_to_qm, potential);
     }
@@ -544,19 +544,19 @@ int interaction::MOPAC_Worker::parse_charges(std::ifstream& ofs, interaction::QM
         it->qm_charge *= this->param->unit_factor_charge;
         DEBUG(15, "QM atom " << it->index << " new charge: " << it->qm_charge);
       }
-      // Also parse link atoms
+      // Also parse capping atoms
       for(std::set<QM_Link>::iterator
             it = qm_zone.link.begin(), to = qm_zone.link.end(); it != to; ++it) {
         ofs >> it->qm_charge;
         if (ofs.fail()) {
           std::ostringstream msg;
-          msg << "Failed to parse charge of link atom " << (it->qm_index + 1)
+          msg << "Failed to parse charge of capping atom " << (it->qm_index + 1)
               << "-" << (it->mm_index + 1) << " in " << out_aux;
           io::messages.add(msg.str(), this->name(), io::message::error);
           return 1;
         }
         it->qm_charge *= this->param->unit_factor_charge;
-        DEBUG(15, "Link atom " << it->qm_index << "-" << it->mm_index << " new charge: " << it->qm_charge);
+        DEBUG(15, "Capping atom " << it->qm_index << "-" << it->mm_index << " new charge: " << it->qm_charge);
       }
       return 0;
     }
@@ -584,13 +584,13 @@ int interaction::MOPAC_Worker::parse_coordinates(std::ifstream& ofs, interaction
         }
         it->pos *= this->param->unit_factor_length;
       }
-      // Also parse link atoms
+      // Also parse capping atoms
       for(std::set<QM_Link>::iterator
             it = qm_zone.link.begin(), to = qm_zone.link.end(); it != to; ++it) {
         ofs >> it->pos(0) >> it->pos(1) >> it->pos(2);
         if (ofs.fail()) {
           std::ostringstream msg;
-          msg << "Failed to parse coordinates of link atom " << (it->qm_index + 1)
+          msg << "Failed to parse coordinates of capping atom " << (it->qm_index + 1)
               << "-" << (it->mm_index + 1) << " in " << out_aux;
           io::messages.add(msg.str(), this->name(), io::message::error);
           return 1;
@@ -645,13 +645,13 @@ int interaction::MOPAC_Worker::parse_qm_gradients(const simulation::Simulation& 
         }
         it->force *= - this->param->unit_factor_force;
       }
-      // Also parse link atoms
+      // Also parse capping atoms
       for(std::set<QM_Link>::iterator
             it = qm_zone.link.begin(), to = qm_zone.link.end(); it != to; ++it) {
         ofs >> it->force(0) >> it->force(1) >> it->force(2);
         if (ofs.fail()) {
           std::ostringstream msg;
-          msg << "Failed to parse gradient of link atom " << (it->qm_index + 1)
+          msg << "Failed to parse gradient of capping atom " << (it->qm_index + 1)
               << "-" << (it->mm_index + 1) << " in " << out_aux;
           io::messages.add(msg.str(), this->name(), io::message::error);
           return 1;

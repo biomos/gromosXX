@@ -105,7 +105,7 @@ void interaction::QM_Zone::write(topology::Topology& topo,
   }*/
   
   // Write forces
-  // First distribute link atom forces
+  // First distribute capping atom forces
   for (std::set<QM_Link>::const_iterator
       it = this->link.begin(), to = this->link.end(); it !=to; ++it)
     {
@@ -155,16 +155,16 @@ void interaction::QM_Zone::write(topology::Topology& topo,
       {
       DEBUG(15, "Atom " << it->index << ", new charge: " << it->qm_charge);
       topo.charge()(it->index) = it->qm_charge;
-    // Add link atom charge to QM atom
+    }
+    // Add capping atom charge to QM link atom
     for (std::set<QM_Link>::const_iterator
           it = this->link.begin(), to = this->link.end(); it != to; ++it)
       {
-      DEBUG(15, "Link atom " << it->qm_index << "-" << it->mm_index << ", charge: " << it->qm_charge);
+      DEBUG(15, "Capping atom " << it->qm_index << "-" << it->mm_index << ", charge: " << it->qm_charge);
       topo.charge()(it->qm_index) += it->qm_charge;
       DEBUG(15, "Charge added to QM atom " << it->qm_index << ", new charge: " << topo.charge(it->qm_index));
     }
     }
-  }
 
   // Write energies
   conf.current().energies.qm_total = this->m_qm_energy;
