@@ -238,23 +238,26 @@ int interaction::DFTB_Worker::parse_charges(std::ifstream& ofs
                       + out, this->name(), io::message::error);
     return 1;
   }
-  const unsigned skip_lines = 1;
-  for (unsigned i = 0; i < skip_lines; ++i)
-    std::getline(ofs, line);
   for(std::set<QM_Atom>::iterator
       it = qm_zone.qm.begin(), to = qm_zone.qm.end(); it != to; ++it) {
-    if(!std::getline(ofs, line)) {
+    ofs >> it->qm_charge;
+    if (ofs.fail()) {
       std::ostringstream msg;
-      msg << "Failed to read charge line of atom " << (it->index + 1)
+      msg << "Failed to parse charge of atom " << (it->index + 1)
           << " in " << out;
       io::messages.add(msg.str(), this->name(), io::message::error);
       return 1;
     }
+    it->qm_charge *= this->param->unit_factor_charge;
+  }
+  // Also for link atoms
+  for(std::set<QM_Link>::iterator
+      it = qm_zone.link.begin(), to = qm_zone.link.end(); it != to; ++it) {
     ofs >> it->qm_charge;
     if (ofs.fail()) {
       std::ostringstream msg;
-      msg << "Failed to parse charge line of atom " << (it->index + 1)
-          << " in " << out;
+      msg << "Failed to parse charge of link atom " << (it->qm_index + 1)
+          << "-" << (it->mm_index + 1) << " in " << out;
       io::messages.add(msg.str(), this->name(), io::message::error);
       return 1;
     }

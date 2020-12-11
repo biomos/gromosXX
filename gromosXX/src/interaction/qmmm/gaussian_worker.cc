@@ -223,11 +223,9 @@ void interaction::Gaussian_Worker::write_mm_pos(std::ofstream& inputfile_stream
 
 int interaction::Gaussian_Worker::parse_charges(std::ifstream& ofs, interaction::QM_Zone& qm_zone) {
   std::string& out = this->param->output_file;
+  // Find the block
+  {
   std::string line;
-  /**
-   * Parse charges
-   * They are used in mechanical embedding
-   */
   bool got_charges = false;
   while (std::getline(ofs, line)) {
     if (line.find("ESP charges:") != std::string::npos) {
@@ -240,29 +238,38 @@ int interaction::Gaussian_Worker::parse_charges(std::ifstream& ofs, interaction:
                       + out, this->name(), io::message::error);
     return 1;
   }
-  const unsigned skip_lines = 1;
-  for (unsigned i = 0; i < skip_lines; ++i)
+    // skip line
     std::getline(ofs, line);
+  }
+  // Parse charges of QM atoms
+  {
+    std::string dummy;
   for(std::set<QM_Atom>::iterator
       it = qm_zone.qm.begin(), to = qm_zone.qm.end(); it != to; ++it) {
-    if(!std::getline(ofs, line)) {
+      ofs >> dummy >> dummy >> it->qm_charge;
+      if (ofs.fail()) {
       std::ostringstream msg;
-      msg << "Failed to read charge line of atom " << (it->index + 1)
+          msg << "Failed to parse charge of QM atom " << (it->index + 1)
           << " in " << out;
       io::messages.add(msg.str(), this->name(), io::message::error);
       return 1;
     }
-    std::istringstream iss(line);
+      it->qm_charge *= this->param->unit_factor_charge;
+    }
+    // Do the capping atoms as well
     std::string dummy;
-    iss >> dummy >> dummy >> it->qm_charge;
-    if (iss.fail()) {
+    for(std::set<QM_Link>::iterator
+        it = qm_zone.link.begin(), to = qm_zone.link.end(); it != to; ++it) {
+      ofs >> dummy >> dummy >> it->qm_charge;
+      if (ofs.fail()) {
       std::ostringstream msg;
-      msg << "Failed to parse charge line of atom " << (it->index + 1)
+        msg << "Failed to parse charge of capping atom " << (it->index + 1)
           << " in " << out;
       io::messages.add(msg.str(), this->name(), io::message::error);
       return 1;
     }
     it->qm_charge *= this->param->unit_factor_charge;
+  }
   }
   return 0;
 }
