@@ -9,13 +9,16 @@
 #include "lib/double3.h"
 //#include <parameter.h>
 
+#include "../util/debug.h"
+
+#undef MODULE
+#undef SUBMODULE
+#define MODULE interaction
+#define SUBMODULE cuda
+
 #define NUM_THREADS_PER_BLOCK_SETTLE 128
 
-#ifndef DNDEBUG
-#define DEBUG(x) std::cout << x << std::endl;
-#else
-#define DEBUG(x)
-#endif
+
 
 /**
  * inititalze the gpu for the settle calculations
@@ -25,7 +28,7 @@ extern "C" gpu_status * cudaInitConstraints(unsigned int num_of_gpus, unsigned i
         unsigned int num_solvent_mol) {
   
   // let's first query the device properties and print them out
-  DEBUG("Set device properties")
+  DEBUG(4,"Set device properties")
   cudaDeviceProp devProp;
   cudaGetDeviceProperties(&devProp, gpu_id);
   cudaSetDevice(gpu_id);
@@ -55,7 +58,7 @@ extern "C" gpu_status * cudaInitConstraints(unsigned int num_of_gpus, unsigned i
   gpu_stat->host_double_new_pos = (double3 *) malloc(num_atoms * sizeof(double3));
   gpu_stat->host_double_old_pos = (double3 *) malloc(num_atoms * sizeof(double3));
 
-  DEBUG("Allocating memory on the GPU for SETTLE")
+  DEBUG(4,"Allocating memory on the GPU for SETTLE")
   cudaMalloc((void**) & gpu_stat->dev_shake_fail_mol, sizeof (int));
   cudaMemset(gpu_stat->dev_shake_fail_mol, 0, sizeof(int));
   cudaMalloc((void**) & gpu_stat->dev_parameter, sizeof (simulation_parameter));
@@ -73,9 +76,9 @@ extern "C" gpu_status * cudaInitConstraints(unsigned int num_of_gpus, unsigned i
 extern "C" int cudaConstraints(double *newpos, double *oldpos,
                     int & shake_fail_mol, gpu_status * gpu_stat) {
   
-  DEBUG("shake_fail_mol in the beginning is " << shake_fail_mol)
+  DEBUG(4,"shake_fail_mol in the beginning is " << shake_fail_mol)
   // copy the new positions
-  DEBUG("Copy the new positions")
+  DEBUG(10,"Copy the new positions")
   double3 * new_positions = (double3*) newpos;
   for (unsigned int i = 0; i < gpu_stat->host_parameter.num_atoms; i++) {
     gpu_stat->host_double_new_pos[i].x = new_positions[i].x;
@@ -84,7 +87,7 @@ extern "C" int cudaConstraints(double *newpos, double *oldpos,
   }
 
   // Copy the old positions
-  DEBUG("Copy the old positions")
+  DEBUG(10,"Copy the old positions")
   double3 * old_positions = (double3*) oldpos;
   for (unsigned int i = 0; i < gpu_stat->host_parameter.num_atoms; i++) {
     gpu_stat->host_double_old_pos[i].x = old_positions[i].x;
@@ -93,7 +96,7 @@ extern "C" int cudaConstraints(double *newpos, double *oldpos,
   }
 
   // Copy the new and old positions on the GPU
-  DEBUG("Copy the new positions on to the GPU")
+  DEBUG(10,"Copy the new positions on to the GPU")
   cudaMemcpy(gpu_stat->dev_double_new_pos, gpu_stat->host_double_new_pos, gpu_stat->host_parameter.num_atoms * sizeof (double3), cudaMemcpyHostToDevice);
   cudaMemcpy(gpu_stat->dev_double_old_pos, gpu_stat->host_double_old_pos, gpu_stat->host_parameter.num_atoms * sizeof (double3), cudaMemcpyHostToDevice);
 
@@ -111,7 +114,7 @@ extern "C" int cudaConstraints(double *newpos, double *oldpos,
   dim3 dimGrid(numBlocks, 1);
   dim3 dimBlock(NUM_THREADS_PER_BLOCK_SETTLE, 1);
 
-  DEBUG("Actually calculate the constraints on the GPU. (Fail Mol : " << shake_fail_mol << ")")
+  DEBUG(4,"Actually calculate the constraints on the GPU. (Fail Mol : " << shake_fail_mol << ")")
   kernel_CalcConstraints_Settle <<<dimGrid, dimBlock>>>
           (gpu_stat->dev_double_new_pos, gpu_stat->dev_double_old_pos,
             gpu_stat->dev_parameter,
@@ -119,24 +122,22 @@ extern "C" int cudaConstraints(double *newpos, double *oldpos,
   
   checkError("after GPU_SETTLE"); 
 
-  DEBUG("Copy the Error molecule index")
+  DEBUG(7,"Copy the Error molecule index")
   cudaMemcpy(&shake_fail_mol, gpu_stat->dev_shake_fail_mol, sizeof (int), cudaMemcpyDeviceToHost);
-  DEBUG("... which is : " << shake_fail_mol << "\n")
+  DEBUG(7,"... which is : " << shake_fail_mol << "\n")
   if (shake_fail_mol >= 0)
     return 1;
 
-    DEBUG("Copy the positions")
+    DEBUG(10,"Copy the positions")
   cudaMemcpy(gpu_stat->host_double_new_pos, gpu_stat->dev_double_new_pos, gpu_stat->host_parameter.num_atoms * sizeof (double3), cudaMemcpyDeviceToHost);
   checkError("after copying the new positions");
   for(unsigned int i = 0; i < gpu_stat->host_parameter.num_atoms; ++i) {
     newpos[3*i  ] = double(gpu_stat->host_double_new_pos[i].x);
     newpos[3*i+1] = double(gpu_stat->host_double_new_pos[i].y);
     newpos[3*i+2] = double(gpu_stat->host_double_new_pos[i].z);
-    //if (i < 20){
-      DEBUG("i : " << i << ". x : " << newpos[3*i  ])
-     // DEBUG("i : " << i << ". y : " << newpos[3*i+1])
-      //DEBUG("i : " << i << ". z : " << newpos[3*i+2])
-    //}
+    DEBUG(15,"i : " << i << ". x : " << newpos[3*i  ])
+    //DEBUG(15,"i : " << i << ". y : " << newpos[3*i+1])
+    //DEBUG(15,"i : " << i << ". z : " << newpos[3*i+2])
   }
 
   return 0;

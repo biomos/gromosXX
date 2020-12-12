@@ -2842,7 +2842,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
     // the first line is the tag
     exampleblock << "REPLICA_EDS                                                    \n";
     exampleblock << "#    REEDS >= 0   : turn off Reeds                             \n";
-                    "#             1   : turn on                                    \n";
+    exampleblock << "#             1   : turn on                                    \n";
     exampleblock << "#    NRES >= number of replica exchange eds smoothing values   \n";
     exampleblock << "#     RET >= 0.0 one temperature for all replica               \n";
     exampleblock << "# NUMSTATES >= 2 Number of states                              \n";
