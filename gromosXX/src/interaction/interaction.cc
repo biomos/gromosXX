@@ -21,6 +21,7 @@ namespace interaction
   int filter_debug_level = 0;
   int nonbonded_debug_level = 0;
   int qmmm_debug_level = 0;
+  int cuda_debug_level = 0;
   int latticesum_debug_level = 0;
   int bonded_debug_level = 0;
   int special_debug_level = 0;

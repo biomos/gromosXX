@@ -2108,7 +2108,7 @@ namespace simulation
 	: dihrest(dihedral_restr_off),
 	  K(0.0),
 	  phi_lin(0.0),
-      write(0) {}
+          write(0) {}
       
       /** 
        * dihedral restraints
@@ -2131,6 +2131,11 @@ namespace simulation
        * write on/off
        */
       unsigned int write;
+      
+      /**
+       * tolerance 
+       */
+      double tolerance;
       
     }/** dihedral restraint parameters */ dihrest;
 

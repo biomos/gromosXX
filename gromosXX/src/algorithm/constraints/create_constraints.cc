@@ -90,14 +90,16 @@ int algorithm::create_constraints(algorithm::Algorithm_Sequence &md_seq,
         // SHAKE
         algorithm::Shake * s =
                 new algorithm::Shake
-                (sim.param().constraint.solute.shake_tolerance);
+                (sim.param().constraint.solute.shake_tolerance,
+                sim.param().constraint.solvent.shake_tolerance);
         md_seq.push_back(s);
 
       } else {
         // perturbed shake also calls normal shake...
         algorithm::Perturbed_Shake * ps =
                 new algorithm::Perturbed_Shake
-                (sim.param().constraint.solute.shake_tolerance);
+                (sim.param().constraint.solute.shake_tolerance,
+                sim.param().constraint.solvent.shake_tolerance);
         md_seq.push_back(ps);
 
       }
@@ -192,7 +194,8 @@ int algorithm::create_constraints(algorithm::Algorithm_Sequence &md_seq,
         // SHAKE
         algorithm::Shake * s =
                 new algorithm::Shake
-                (sim.param().constraint.solvent.shake_tolerance);
+                (sim.param().constraint.solute.shake_tolerance,
+                sim.param().constraint.solvent.shake_tolerance);
         md_seq.push_back(s);
 
         break;

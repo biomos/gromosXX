@@ -2,7 +2,7 @@ dnl configure.in for GromosXX
 
 AC_PREREQ(2.58)
 
-AC_INIT(md++, 1.4.0)
+AC_INIT([md++], [1.5.0], [biomos@igc.phys.chem.ethz.ch], [md++], [https//www.gromos.net])
 dnl this is a safety check to see wheter --srcdir exists
 AC_CONFIG_SRCDIR(src/math/math.cc)
 AC_CONFIG_AUX_DIR(config)
@@ -75,6 +75,15 @@ AC_ARG_ENABLE(heaviside,
   [ --enable-heaviside    compile with Heaviside truncation],
   ,enable_heaviside=no)
 
+AC_ARG_ENABLE(shared,
+[  --enable-shared         compile with shared libraries],
+    , enable_shared=no)
+
+dnl use empty default flags but allow user to override
+: ${CFLAGS=""}
+: ${CXXFLAGS=""}
+: ${LDFLAGS=""}
+
 if eval "test x$enable_allstatic = xyes"; then
   LDFLAGS="$LDFLAGS -all-static"
   echo "configuring for static build"
@@ -114,16 +123,6 @@ if eval "test x$compiler = xnone"; then
 fi
 if eval "test x$compiler = xnone"; then AC_PROG_CXX_SUNCC   ; fi
 if eval "test x$compiler = xnone"; then AC_PROG_CXX_PGI     ; fi
-
-dnl set some defaults to CXXFLAGS and LDFLAGS
-extra_lib=""
-
-dnl take out -O and -g from CXXFLAGS, CFLAGS, as these are set
-dnl automagically
-
-CXXFLAGS=`echo $CXXFLAGS | sed 's/\-O.//g' | sed 's/\-g//g'`
-CFLAGS=`echo $CFLAGS | sed 's/\-O.//g' | sed 's/\-g//g'`
-LDFLAGS=`echo $LDFLAGS | sed 's/\-O.//g' | sed 's/\-g//g'`
 
 case "$compiler" in
   intel*)             # Intel C++.  tested with version 8.0beta (precompiled headers)
@@ -322,20 +321,20 @@ case "$compiler" in
   ;;
 esac
 
-dnl subst compiler flags
+dnl set c++11 standard
+MY_CXXFLAGS="-std=c++11 ${MY_CXXFLAGS}"
 
+dnl subst compiler flags
 AC_SUBST(MY_CXXFLAGS)
 AC_SUBST(CXX_NDEBUG_FLAGS)
 
-#TODO: CHEAT IN C++11 bschroed: probably there is a better way!
-MY_CXXFLAGS="${MY_CXXFLAGS} -std=c++11 "
 AC_PREFIX_DEFAULT(`pwd`)
 
 AM_PATH_GSL
 AM_PATH_CCP4_CLIPPER
 AM_PATH_FFTW3
 AM_PATH_HOOMD
-AM_PATH_CUKERNEL
+AM_PATH_CUDA
 
 dnl check header files
 AC_HEADER_STDC
@@ -425,8 +424,6 @@ fi
 
 AC_CACHE_SAVE
 
-AC_SUBST(extra_lib)
-
 AC_SUBST(MD_MAJOR_VERSION)
 AC_SUBST(MD_MINOR_VERSION)
 AC_SUBST(MD_MICRO_VERSION)
@@ -438,6 +435,7 @@ AC_DEFINE_UNQUOTED(TOP_SOURCE_DIR, "$srcdir", [top src directory])
 
 AC_CONFIG_FILES([
 	src/Makefile
+  src/cukernel/Makefile
 	src/math/Makefile
 	src/topology/Makefile
 	src/configuration/Makefile

@@ -5,7 +5,7 @@
 #ifndef _GPU_SHAKE_H
 #define	_GPU_SHAKE_H
 
-#ifdef HAVE_LIBCUKERNEL
+#ifdef HAVE_LIBCUDART
 #include <cudaKernel.h>
 #else
 #define gpu_status void

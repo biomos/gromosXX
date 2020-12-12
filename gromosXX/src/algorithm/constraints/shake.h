@@ -34,7 +34,8 @@ namespace algorithm
     /**
      * Constructor.
      */
-    Shake(double const tolerance = 0.000001, 
+    Shake(double const solute_tolerance = 0.000001,
+    double const solvent_tolerance = 0.000001,
 	  int const max_iterations = 1000,
 	  std::string const name = "Shake");
 
@@ -50,14 +51,25 @@ namespace algorithm
 		      configuration::Configuration & conf,
 		      simulation::Simulation & sim);
     /**
-     * set the tolerance.
+     * set the solute tolerance.
      */
-    void tolerance(double const tol);
+    void solute_tolerance(double const tol);
 
     /**
-     * tolerance.
+     * solute tolerance.
      */
-    double const & tolerance()const {return m_tolerance;}
+    double const & solute_tolerance()const {return m_solute_tolerance;}
+
+    /**
+     * set the solvent tolerance.
+     */
+    void solvent_tolerance(double const tol);
+
+    /**
+     * solvent tolerance.
+     */
+    double const & solvent_tolerance()const {return m_solvent_tolerance;}
+
     /**
      * max iterations.
      */
@@ -89,9 +101,14 @@ namespace algorithm
   protected:
 
     /**
+     * shake solute tolerance
+     */
+    double m_solute_tolerance;
+
+    /**
      * shake tolerance
      */
-    double m_tolerance;
+    double m_solvent_tolerance;
     /**
      * max iterations
      */
@@ -115,6 +132,7 @@ namespace algorithm
     (
      topology::Topology const &topo,
      configuration::Configuration & conf,
+     double tolerance,
      bool & convergence,
      int first,
      std::vector<bool> &skip_now,
@@ -215,6 +233,7 @@ int algorithm::Shake::shake_iteration
 (
         topology::Topology const &topo,
         configuration::Configuration & conf,
+        double tolerance,
         bool & convergence,
         int first,
         std::vector<bool> &skip_now,
@@ -263,7 +282,7 @@ int algorithm::Shake::shake_iteration
 
     DEBUG(13, "constr: " << constr_length2 << " dist2: " << dist2);
 
-    if (fabs(diff) >= constr_length2 * tolerance() * 2.0) {
+    if (fabs(diff) >= constr_length2 * tolerance * 2.0) {
       // we have to shake
       DEBUG(10, "shaking");
 
@@ -397,7 +416,7 @@ solute(topology::Topology const & topo,
       DEBUG(7, "SHAKE: distance constraints iteration");
 
       if (shake_iteration<B, V >
-              (topo, conf, dist_convergence, first, skip_now, skip_next,
+              (topo, conf, m_solute_tolerance, dist_convergence, first, skip_now, skip_next,
               m_constraint_groups[group_id].distance_restraints, sim.time_step_size(),
               periodicity)
               ) {
@@ -437,7 +456,6 @@ solute(topology::Topology const & topo,
       my_error = E_SHAKE_FAILURE_SOLUTE;
       break;
     }
-
     std::swap(skip_next, skip_now);
     skip_next.assign(skip_next.size(), true);
   } // convergence?
@@ -525,7 +543,7 @@ void algorithm::Shake
         DEBUG(9, "\titeration" << std::setw(10) << num_iterations);
 
         if (shake_iteration<B, V >
-                (topo, conf, convergence, first, skip_now, skip_next,
+                (topo, conf, m_solvent_tolerance, convergence, first, skip_now, skip_next,
                 topo.solvent(i).distance_constraints(), dt,
                 periodicity)) {
 

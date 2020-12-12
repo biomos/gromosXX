@@ -40,10 +40,11 @@
  * Constructor.
  */
 algorithm::Shake
-::Shake(double const tolerance, int const max_iterations,
-        std::string const name)
+::Shake(double const solute_tolerance, double const solvent_tolerance,
+        int const max_iterations, std::string const name)
 : Algorithm(name),
-m_tolerance(tolerance),
+m_solute_tolerance(solute_tolerance),
+m_solvent_tolerance(solvent_tolerance),
 m_max_iterations(max_iterations) {
 }
 
@@ -55,8 +56,13 @@ algorithm::Shake
 }
 
 void algorithm::Shake
-::tolerance(double const tol) {
-  m_tolerance = tol;
+::solute_tolerance(double const tol) {
+  m_solute_tolerance = tol;
+}
+
+void algorithm::Shake
+::solvent_tolerance(double const tol) {
+  m_solvent_tolerance = tol;
 }
 
 
@@ -215,6 +221,7 @@ int algorithm::Shake::init(topology::Topology & topo,
     if (sim.param().constraint.solute.algorithm == simulation::constr_shake) {
       os << "ON\n";
       os << "\t\ttolerance = "
+              << std::setprecision(8)
               << sim.param().constraint.solute.shake_tolerance << "\n";
     } else os << "OFF\n";
 
@@ -226,6 +233,7 @@ int algorithm::Shake::init(topology::Topology & topo,
       else
         os << "ON\n";
       os << "\t\ttolerance = "
+              << std::setprecision(8)
               << sim.param().constraint.solvent.shake_tolerance << "\n";
     } else os << "OFF\n";
   }

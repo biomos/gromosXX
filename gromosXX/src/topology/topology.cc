@@ -1027,7 +1027,8 @@ unsigned int topology::Topology::num_solvent_atoms()const {
 void
 topology::Topology::
 calculate_constraint_dof(simulation::Multibath &multibath,
-        bool rottrans_constraints, bool position_constraints)const {
+        bool rottrans_constraints, bool position_constraints,
+        bool dih_constraints)const {
 
   // save the positionally constrained atom inidices for fast checking
   // only make sure the distance constraints dof are not removed for
@@ -1142,7 +1143,7 @@ calculate_constraint_dof(simulation::Multibath &multibath,
     }
   }
 
-  DEBUG(7, "and the perturbd distance constraints (DOF calc)");
+  DEBUG(7, "and the perturbed distance constraints (DOF calc)");
 
   {
     // substract perturbed constraints
@@ -1185,6 +1186,59 @@ calculate_constraint_dof(simulation::Multibath &multibath,
       multibath[ir_bath_i].solute_constr_dof += 0.5;
       multibath[ir_bath_j].solute_constr_dof += 0.5;
 
+    }
+
+    for (unsigned int i = 0; i < multibath.size(); ++i) {
+      DEBUG(7, "dof           " << multibath[i].dof);
+      DEBUG(7, "solute constr " << multibath[i].solute_constr_dof);
+    }
+  }
+
+  
+
+  DEBUG(7, "and the dihedral constraints (DOF calc)");
+  //TODO: we have to check if dihedral constraints for solvent can work (not only here but especially in shake.h)
+  if (dih_constraints) {
+    std::vector<dihedral_restraint_struct>::const_iterator dihit = dihedral_restraints().begin(), 
+                                                   dihto = dihedral_restraints().end();
+    for (; dihit != dihto; ++dihit){
+      std::vector<int> not_pos_constrained;
+      if (pos_cons_atom.find(dihit->i) == pos_cons_atom.end()) not_pos_constrained.push_back(dihit->i);
+      if (pos_cons_atom.find(dihit->j) == pos_cons_atom.end()) not_pos_constrained.push_back(dihit->j);
+      if (pos_cons_atom.find(dihit->k) == pos_cons_atom.end()) not_pos_constrained.push_back(dihit->k);
+      if (pos_cons_atom.find(dihit->l) == pos_cons_atom.end()) not_pos_constrained.push_back(dihit->l);
+
+      double num_not_pos_const = not_pos_constrained.size();
+      unsigned int ir_bath, com_bath;
+
+      for (unsigned int i=0; i < num_not_pos_const; i++) {
+        double part=1/num_not_pos_const;
+        multibath.in_bath(not_pos_constrained[i], com_bath, ir_bath);
+        multibath[ir_bath].dof-=part;
+        multibath[ir_bath].ir_dof-=part;
+        multibath[ir_bath].solute_constr_dof+=part;
+      }
+    }
+
+    std::vector<perturbed_dihedral_restraint_struct>::const_iterator pdihit = perturbed_dihedral_restraints().begin(), 
+                                                   pdihto = perturbed_dihedral_restraints().end();
+    for (; pdihit != pdihto; ++pdihit){
+      std::vector<int> not_pos_constrained;
+      if (pos_cons_atom.find(pdihit->i) == pos_cons_atom.end()) not_pos_constrained.push_back(pdihit->i);
+      if (pos_cons_atom.find(pdihit->j) == pos_cons_atom.end()) not_pos_constrained.push_back(pdihit->j);
+      if (pos_cons_atom.find(pdihit->k) == pos_cons_atom.end()) not_pos_constrained.push_back(pdihit->k);
+      if (pos_cons_atom.find(pdihit->l) == pos_cons_atom.end()) not_pos_constrained.push_back(pdihit->l);
+
+      double num_not_pos_const = not_pos_constrained.size();
+      unsigned int ir_bath, com_bath;
+
+      for (unsigned int i=0; i < num_not_pos_const; i++) {
+        double part=1/num_not_pos_const;
+        multibath.in_bath(not_pos_constrained[i], com_bath, ir_bath);
+        multibath[ir_bath].dof-=part;
+        multibath[ir_bath].ir_dof-=part;
+        multibath[ir_bath].solute_constr_dof+=part;
+      }
     }
 
     for (unsigned int i = 0; i < multibath.size(); ++i) {

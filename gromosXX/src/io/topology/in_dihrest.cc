@@ -121,7 +121,7 @@ void io::In_Dihrest::read_DIHEDRALRESSPEC(topology::Topology &topo,
      		     << "\t\t(force constant K*w0)\n";
           break;
         case simulation::dihedral_constr:
-          os << "\tDihedral constraints ON\n";
+          os << "\tDihedral constraints (sine-and-cosine alg.) ON\n";
           break;
         default:
           os << "\tDihedral restraints: ERROR\n";
@@ -160,6 +160,12 @@ void io::In_Dihrest::read_DIHEDRALRESSPEC(topology::Topology &topo,
     block.get_next_parameter("PDLR", phi, "", "");
     block.get_next_parameter("DELTA", delta, "", "");
 
+    // move phi into range -180 to 180 degrees
+    double phi_input = phi;
+    while (phi > 180) phi -= 360;
+    while (phi < -180) phi += 360;
+    
+
   topo.dihedral_restraints().push_back
 (topology::dihedral_restraint_struct(i-1, j-1, k-1, l-1,
    delta * 2 * math::Pi / 360, phi * 2 * math::Pi / 360, w0));
@@ -171,8 +177,9 @@ void io::In_Dihrest::read_DIHEDRALRESSPEC(topology::Topology &topo,
          << std::setw(8) << l
          << std::setw(8) <<  w0
          << std::setw(8) << phi
-         << std::setw(8) << delta
-         << "\n";
+         << std::setw(8) << delta;
+      if (phi != phi_input) os << " # WARNING: angle was mapped to between -180 to 180 degrees";
+      os << "\n";
   }
     }
     block.get_final_messages();
@@ -294,6 +301,14 @@ void io::In_Dihrest::read_PERTDIHRESSPEC(topology::Topology &topo,
    A_phi * 2 * math::Pi / 360, A_w0,
    B_phi * 2 * math::Pi / 360, B_w0 ));
 
+    // move phi into range -180 to 180 degrees
+    double A_phi_input = A_phi;
+    while (A_phi > 180) A_phi -= 360;
+    while (A_phi < -180) A_phi += 360;
+    double B_phi_input = B_phi;
+    while (B_phi > 180) B_phi -= 360;
+    while (B_phi < -180) B_phi += 360;
+
       if (!quiet){
         os << std::setw(10) << i
           << std::setw(8) << j
@@ -306,7 +321,9 @@ void io::In_Dihrest::read_PERTDIHRESSPEC(topology::Topology &topo,
           << std::setw(8) << A_w0
           << std::setw(8) << B_phi
           << std::setw(8) << B_w0
-          << "\n";
+          ;
+      if (B_phi != B_phi_input || A_phi != A_phi_input) os << " # WARNING: angle was mapped to between -180 to 180 degrees";
+      os << "\n";
       }
     }
 
