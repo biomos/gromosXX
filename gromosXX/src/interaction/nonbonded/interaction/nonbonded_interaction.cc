@@ -144,7 +144,7 @@ calculate_interactions(topology::Topology & topo,
 
   DEBUG(6, "sets are done, adding things up...");
   store_set_data(*p_topo, *p_conf, sim);
-
+  
   if (sim.param().multicell.multicell) {
     reduce_configuration(topo, conf, sim, *p_conf);
   }

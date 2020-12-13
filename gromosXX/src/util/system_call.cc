@@ -15,16 +15,14 @@
 #define MODULE util
 #define SUBMODULE util
 
-int util::system_call(const std::string & command,
-          std::string & input_file,
-          std::string & output_file) {
-  std::string command_to_launch = command;
-  if (!input_file.empty()) {
-    command_to_launch += " < " + input_file;
-  }
-  command_to_launch += " 1> " + output_file + " 2>&1 ";
+namespace util
+{
+  const std::string default_tmp_path = ".";
+}
+
+int util::system_call(const std::string & command) {
 #ifdef HAVE_SYSTEM
-  int system_return = system(command_to_launch.c_str());
+  int system_return = system(command.c_str());
   return WEXITSTATUS(system_return);
 #else
   throw std::runtime_error("System call is not implemented for this platform.");

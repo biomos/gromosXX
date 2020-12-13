@@ -36,12 +36,9 @@
 
 #include "../../../simulation/parameter.h"
 
-#include "storage.h"
+#include "../../../interaction/qmmm/qmmm_interaction.h"
 
-#include "../../special/qmmm/mm_atom.h"
-#include "../../special/qmmm/qm_storage.h"
 #include "../../interaction.h"
-#include "../../special/qmmm_interaction.h"
 
 #ifdef OMP
 #include <omp.h>
@@ -53,6 +50,11 @@
 #undef SUBMODULE
 #define MODULE interaction
 #define SUBMODULE nonbonded
+
+#ifdef OMP
+    math::VArray interaction::Nonbonded_Outerloop::electric_field = 0.0;
+    double interaction::Nonbonded_Outerloop::minfield = 0.0;
+#endif
 
 /**
  * Constructor.
@@ -1101,6 +1103,56 @@ unsigned int i_deb;
     timer.stop(timer_name);
 }
 
+void interaction::Nonbonded_Outerloop
+::lj_outerloop(topology::Topology & topo,
+        configuration::Configuration & conf,
+        simulation::Simulation & sim,
+        Pairlist const & pairlist_solute,
+        Pairlist const & pairlist_solvent,
+        Storage & storage,
+        bool longrange, util::Algorithm_Timer & timer, bool master) {
+  SPLIT_MY_INNERLOOP(_lj_outerloop, simulation::lj_func, topo, conf, sim,
+          pairlist_solute, pairlist_solvent, storage, longrange, timer, master);
+}
+
+template<typename t_interaction_spec>
+void interaction::Nonbonded_Outerloop
+::_lj_outerloop(topology::Topology & topo,
+                configuration::Configuration & conf,
+                simulation::Simulation & sim,
+                Pairlist const & pairlist_solute,
+                Pairlist const & pairlist_solvent,
+                Storage & storage,
+                bool longrange, util::Algorithm_Timer & timer, bool master) {
+  
+  math::Periodicity<t_interaction_spec::boundary_type> periodicity(conf.current().box);
+  Nonbonded_Innerloop<t_interaction_spec> innerloop(m_param);
+
+  innerloop.init(sim,simulation::lj_func);
+
+  const unsigned end_solute = topo.num_solute_atoms();
+  for (unsigned i = 0; i < end_solute; ++i) {
+    for (std::vector<unsigned int>::const_iterator
+          j_it = pairlist_solute[i].begin()
+        , j_to = pairlist_solute[i].end()
+        ; j_it != j_to; ++j_it) {
+      DEBUG(10, "\tLJ nonbonded_interaction: i " << i << " j " << *j_it);
+
+      innerloop.lj_innerloop(topo, conf, i, *j_it, storage, periodicity);
+    }
+  }
+  const unsigned end_solvent = topo.num_atoms();
+  for (unsigned i = end_solute; i < end_solvent; ++i) {
+    for (std::vector<unsigned int>::const_iterator
+          j_it = pairlist_solvent[i].begin()
+        , j_to = pairlist_solvent[i].end()
+        ; j_it != j_to; ++j_it) {
+      DEBUG(10, "\tLJ nonbonded_interaction: i " << i << " j " << *j_it);
+
+      innerloop.lj_innerloop(topo, conf, i, *j_it, storage, periodicity);
+    }
+  }
+}
 
 // calculate sasa and volume term
 
@@ -1398,7 +1450,10 @@ void interaction::Nonbonded_Outerloop
 
   const unsigned int num_solute_atoms = topo.num_solute_atoms();
 
+  // Skip QM atoms in electrostatic or polarisable embedding
+  const bool qmmm = (sim.param().qmmm.qmmm > simulation::qmmm_mechanical);
   for (unsigned int i = rank; i < num_solute_atoms; i += size) {
+    if (qmmm && topo.is_qm(i)) continue;
     innerloop.RF_excluded_interaction_innerloop(topo, conf, i, storage, periodicity);
   } // loop over solute atoms
 
@@ -1482,15 +1537,25 @@ void interaction::Nonbonded_Outerloop
 
   unsigned int end = size_i;
   unsigned int end_lr = size_lr;
+  
+  const bool do_qmmm = 
+      (rank == 0 && sim.param().qmmm.qmmm == simulation::qmmm_polarisable);
 
-  if (rank == 0) {
-    // compute the QM part, gather etc...
-    if (sim.param().qmmm.qmmm != simulation::qmmm_off) {
-      sim.param().qmmm.interaction->prepare(topo, conf, sim);
-    }
+  QMMM_Interaction * qmmm = nullptr;
+  if (do_qmmm) {
+    qmmm = QMMM_Interaction::pointer();
   }
 
   math::VArray e_el_new(topo.num_atoms());
+#ifdef OMP
+#pragma omp single
+  {
+    Nonbonded_Outerloop::electric_field.resize(e_el_new.size());
+    Nonbonded_Outerloop::electric_field = 0.0;
+  }
+#pragma omp barrier
+#endif
+
 #ifdef XXMPI
   // because we need some place to reduce the field to
   math::VArray e_el_master(topo.num_atoms());
@@ -1618,11 +1683,30 @@ void interaction::Nonbonded_Outerloop
     }
 #endif
 
+#ifdef OMP
+    // Reduce electric field from OMP threads
+    for (unsigned i = 0; i < topo.num_atoms(); ++i) {
+      for (unsigned j = 0; j < 3; ++j) {
+#pragma omp atomic
+        Nonbonded_Outerloop::electric_field[i][j] += e_el_new[i][j];
+      }
+    }
+// Wait for all writes
+#pragma omp barrier
     if (rank == 0) {
-      // get the contributions from the QM part.
-      if (sim.param().qmmm.qmmm != simulation::qmmm_off) {
-        sim.param().qmmm.interaction->
-                add_electric_field_contribution(topo, conf, sim, e_el_new);
+      e_el_new.swap(Nonbonded_Outerloop::electric_field);
+      Nonbonded_Outerloop::electric_field = 0.0;
+    }
+#endif
+
+    if (rank == 0) {
+      if (do_qmmm) {
+        // get the contributions from the QM part
+        if (turni > 0) {
+          // First QM iteration was already performed
+          qmmm->scf_step(topo, conf, sim);
+        }
+        qmmm->get_electric_field(sim, e_el_new);
       }
       
       // If the external electric field is activated
@@ -1646,7 +1730,7 @@ void interaction::Nonbonded_Outerloop
           /////////////////////////////////////////////////
 
           if (sim.param().polarise.damp) { // damp the polarisability
-            const double e_i = sqrt(math::abs2(e_el_new(i))),
+            const double e_i = math::abs(e_el_new(i)),
                     e_0 = topo.damping_level(i);
             if (e_i <= e_0)
               delta_r = (topo.polarisability(i) / topo.coscharge(i)) * e_el_new(i);
@@ -1685,8 +1769,20 @@ void interaction::Nonbonded_Outerloop
       MPI::COMM_WORLD.Bcast(&minfield, 1, MPI::DOUBLE, 0);
     }
 #endif
+#ifdef OMP
+  // share the convergence criterion
+    if (rank == 0)
+      Nonbonded_Outerloop::minfield = minfield;
+#pragma omp barrier
+    if (rank != 0)
+      minfield = Nonbonded_Outerloop::minfield;
+#endif
+
     DEBUG(11, "\trank: " << rank << " minfield: " << minfield << " iteration round: " << turni);
   }
+
+  if (do_qmmm)
+    qmmm->write_qm_data(topo, conf, sim);
   DEBUG(5, "electric field iterations: " << turni);
 }
 
@@ -2310,7 +2406,7 @@ void interaction::Nonbonded_Outerloop
               }
 
 #ifdef OMP
-#pragma omp critical
+#pragma omp critical(addup_term)
 #endif
               term += gamma_hat / k2;
               DEBUG(13, "\t\t\tgamma_hat / k2: " << gamma_hat / k2);
@@ -2319,7 +2415,7 @@ void interaction::Nonbonded_Outerloop
                 // factor 2.0 is due to symmetry
                 const double isotropic_factor = 2.0 * (ak * gamma_hat_prime - 2.0 * gamma_hat) / (k2 * k2);
 #ifdef OMP
-#pragma omp critical
+#pragma omp critical(addup_sum_gammahat)
 #endif
                 sum_gammahat += math::symmetric_tensor_product(isotropic_factor * k, k);
               } // virial?

@@ -919,8 +919,10 @@ inline int interaction::Grid_Cell_Pairlist::pair(
         const perturbation_trait & perturbation) {
   unsigned int first = cell[n1].i;
   unsigned int second = cell[n2].i;
-  DEBUG(15, "First : " << first << " second : " << second);
 
+  const simulation::qmmm_enum qmmm = mysim->param().qmmm.qmmm;
+
+  DEBUG(15, "First : " << first << " second : " << second);
   if (first > second) {
     std::swap(first, second);
   }
@@ -931,7 +933,7 @@ inline int interaction::Grid_Cell_Pairlist::pair(
   math::Vec r;
   DEBUG(15, "Size of m_cg_cog = " << m_cg_cog.size() << " Num CG : " <<
           mytopo->num_chargegroups());
-
+  
   // Solvent - solvent
   if (first >= first_solvent) {
     DEBUG(15, "Solvent - Solvent");
@@ -948,6 +950,10 @@ inline int interaction::Grid_Cell_Pairlist::pair(
   }// Solvent - solute
   else if (second >= first_solvent) {
     DEBUG(15, "Solute - Solvent");
+    if (t_qm_excluded<cutoff_trait>(*mytopo, qmmm, first)) {
+			DEBUG(9, "Skipping pair: " << first << "-" << second);
+      return 0;
+    }
     periodicity.nearest_image(m_cg_cog(first), m_cg_cog(second), r);
     const double d = math::abs2(r);
     if (d <= cutoff_sr2)
@@ -959,16 +965,20 @@ inline int interaction::Grid_Cell_Pairlist::pair(
   }// Solute - solute
   else {
     DEBUG(15, "Solute - Solute");
+    if (t_qm_excluded<cutoff_trait>(*mytopo, qmmm, first, second)) {
+			DEBUG(9, "Skipping pair: " << first << "-" << second);
+      return 0;
+    }
     periodicity.nearest_image(m_cg_cog(first), m_cg_cog(second), r);
     // the distance
     const double d = math::abs2(r);
-    if (d <= cutoff_sr2)
+    if (d <= cutoff_sr2) 
       pair_solute(first, second, pairlist.solute_short,
             perturbed_pairlist.solute_short, cutoff, perturbation);
     else if (d <= cutoff_lr2)
       pair_solute(first, second, pairlist.solute_long,
             perturbed_pairlist.solute_long, cutoff, perturbation);
-  }
+    }
 
   return 0;
 }

@@ -250,6 +250,7 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update
   const int N = m_grid.Na * m_grid.Nb;
   const int num_solute_cg = topo.num_solute_chargegroups();
   const int num_solute_atoms = topo.num_solute_atoms();
+	const simulation::qmmm_enum qmmm = sim.param().qmmm.qmmm;
 
 #ifdef HAVE_LIBCUDART  
   const bool no_cuda = sim.param().innerloop.method != simulation::sla_cuda;
@@ -273,6 +274,8 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update
       for(int i=i_first; i < i_last; ++i){
 
 	if (m_grid.p_cell[z][i].i < num_solute_cg){ // self interaction
+		// Exclude all QM atoms from self-interaction
+		if (!qmmm || !topo.is_qm(topo.chargegroup(m_grid.p_cell[z][i].i))) {
 	  DEBUG(8, "self " << m_grid.p_cell[z][i].i);
 	  for(int a1 = topo.chargegroups()[m_grid.p_cell[z][i].i],
 		a_to = topo.chargegroups()[m_grid.p_cell[z][i].i + 1];
@@ -283,6 +286,10 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update
 	      pairlist.solute_short[a1].push_back(a2);
 	    }
 	  }
+	}
+		else {
+			DEBUG(9, "Skipping CG " << m_grid.p_cell[z][i].i);
+		}
 	}
 	
 	if (base != m_grid.cell_index[z][i]){
@@ -302,13 +309,17 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update
 		const int jj = (m_grid.p_cell[z][i].i < m_grid.p_cell[z][j].i) ? 
 		  m_grid.p_cell[z][j].i : m_grid.p_cell[z][i].i;
 
+		if (Pairlist_Algorithm::qm_excluded(
+			topo, qmmm, topo.chargegroup(ii), topo.chargegroup(jj))) {
+			DEBUG(9, "Skipping CGs " << ii << " " << jj);
+			continue;
+		}
 		for(int a1 = topo.chargegroups()[ii],
 		      a_to = topo.chargegroups()[ii + 1];
 		    a1 < a_to; ++a1){
 		  for(int a2 = topo.chargegroups()[jj],
 			a2_to = topo.chargegroups()[jj + 1];
 		      a2 < a2_to; ++a2){
-		    
 		    if (excluded_solute_pair(topo, a1, a2))
 		      continue;
 		    pairlist.solute_short[a1].push_back(a2);
@@ -316,6 +327,12 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update
 		}
 	      }
 	      else{ // solute - solvent
+				if (Pairlist_Algorithm::qm_excluded(
+						topo, qmmm
+						, topo.chargegroup(m_grid.p_cell[z][i].i))) {
+					DEBUG(9, "Skipping CGs " << m_grid.p_cell[z][i].i << "-" << m_grid.p_cell[z][j].i);
+					continue;
+				}
 		for(int a1 = topo.chargegroups()[m_grid.p_cell[z][i].i],
 		      a_to = topo.chargegroups()[m_grid.p_cell[z][i].i+1];
 		    a1 < a_to; ++a1){
@@ -349,12 +366,17 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update
 #else
                     pairlist.solvent_short[a2].push_back(a1);
 #endif
-                  } else
+                  } else {
+										if (Pairlist_Algorithm::qm_excluded(topo, qmmm, a2)) {
+											DEBUG(9, "Skipping pair: " << a1 << "-" << a2);
+											continue;
+										}
                     pairlist.solute_short[a2].push_back(a1);
+			}
+					}
+				}
+			}
 		}
-	      }
-	    }
-	  }
 	}
       } // loop over plane
     } // self interaction
@@ -410,6 +432,13 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update
 	      if (p_plane[j].i < num_solute_cg){ 
 		// solute - solute
 
+		if (Pairlist_Algorithm::qm_excluded(topo, qmmm
+				, topo.chargegroup(m_grid.p_cell[i_level][i].i)
+				, topo.chargegroup(p_plane[j].i))) {
+			DEBUG(9, "Skipping pair: " << m_grid.p_cell[i_level][i].i << "-" << p_plane[j].i);
+			continue;
+		}
+
 		if (d2 > m_cutoff_short_2){ // LONGRANGE
 
 		  for(int a1 = topo.chargegroups()[m_grid.p_cell[i_level][i].i],
@@ -447,6 +476,11 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update
 		}
 	      }
 	      else{ // solute - solvent
+		if (Pairlist_Algorithm::qm_excluded(topo, qmmm
+				, topo.chargegroup(m_grid.p_cell[i_level][i].i))) {
+			DEBUG(9, "Skipping pair: " << m_grid.p_cell[i_level][i].i << "-" << p_plane[j].i);
+			continue;
+		}
 		if (d2 > m_cutoff_short_2){ // LONGRANGE
 
 		  for(int a1 = topo.chargegroups()[m_grid.p_cell[i_level][i].i],
@@ -517,6 +551,11 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update
                       pairlist.solvent_long[a2].push_back(a1);
 #endif
                     } else
+
+											if (Pairlist_Algorithm::qm_excluded(topo, qmmm, a2)) {
+												DEBUG(9, "Skipping pair: " << a1 << "-" << a2);
+												continue;
+											}
                         pairlist.solute_long[a2].push_back(a1);
 		  }
 		}
@@ -536,6 +575,10 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update
                       pairlist.solvent_short[a2].push_back(a1);
 #endif
                     } else
+										if (Pairlist_Algorithm::qm_excluded(topo, qmmm, a2)) {
+												DEBUG(9, "Skipping pair: " << a1 << "-" << a2);
+												continue;
+											}
                       pairlist.solute_short[a2].push_back(a1);
 		  }
 		}

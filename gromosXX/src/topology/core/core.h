@@ -20,4 +20,3 @@
 #include "../../util/virtual_atom.h"
 #include "body_term.h"
 #include "compound.h"
-#include "qm_atom.h"

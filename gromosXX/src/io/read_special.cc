@@ -350,7 +350,24 @@ int io::read_special(io::Argument const & args,
                 "read_special", io::message::error);
       } else {
         io::In_QMMM iq(qmmm_file);
-        iq.quiet = quiet;
+     //   iq.quiet = quiet;
+        switch (sim.param().qmmm.software) {
+            case simulation::qm_mndo:
+                iq.title = "MNDO";
+                break;
+            case simulation::qm_turbomole:
+                iq.title = "TM";
+                break;
+            case simulation::qm_dftb:
+                iq.title= "DFTB";
+                break;
+            case simulation::qm_mopac:
+                iq.title= "MOPAC";
+                break;
+            case simulation::qm_gaussian:
+                iq.title= "GAUSSIAN";
+                break;
+        }
 
         iq.read(topo, sim, os);
         io::messages.add("QM/MM specification read from " +

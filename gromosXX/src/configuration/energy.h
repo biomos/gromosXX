@@ -108,7 +108,11 @@ namespace configuration
     /**
      * total A term energy for constant volume simulations
      */
-    double ls_a_term_total_nvt;    
+    double ls_a_term_total_nvt;
+    /**
+     * total QM energy
+     */
+    double qm_total;
     /**
      * total energy of the "special" interactions
      */
@@ -175,10 +179,6 @@ namespace configuration
      * total energy of volume term
      */
     double sasa_volume_total;
-    /**
-     * total QM energy
-     */
-    double qm_total;
 
     /** ANITA
     * total A_lj for each lambda

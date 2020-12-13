@@ -19,6 +19,9 @@
     case simulation::lj_ls_func : \
       f<Interaction_Spec<bound, simulation::lj_ls_func> >(__VA_ARGS__); \
       break; \
+    case simulation::lj_func : \
+      f<Interaction_Spec<bound, simulation::lj_func> >(__VA_ARGS__); \
+      break; \
     case simulation::cgrain_func : \
       f<Interaction_Spec<bound, simulation::cgrain_func> >(__VA_ARGS__); \
       break; \
@@ -99,6 +102,28 @@
       io::messages.add("wrong boundary type", "template_split", io::message::error); \
   } \
 
+/**
+ * call a function with specified interaction function using the correct values for
+ * boundary, virial and interaction term function for a
+ * Nonbonded_Innerloop : split the boundary
+ *
+ */
+#define SPLIT_MY_INNERLOOP(f, interaction_function, ...) \
+  switch(conf.boundary_type){ \
+    case math::vacuum : \
+      f<Interaction_Spec<math::vacuum, interaction_function> >(__VA_ARGS__); \
+      break; \
+    case math::rectangular : \
+      f<Interaction_Spec<math::rectangular, interaction_function> >(__VA_ARGS__); \
+      break; \
+    case math::truncoct : \
+    case math::triclinic : \
+      f<Interaction_Spec<math::triclinic, interaction_function> >(__VA_ARGS__); \
+      break; \
+    default: \
+      io::messages.add("wrong boundary type", "template_split", io::message::error); \
+  } \
+  
 ////////////////////////////////////////////////////////////////////////////////
 
 /**

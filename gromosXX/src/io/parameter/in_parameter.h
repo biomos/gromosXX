@@ -63,7 +63,7 @@
  * - @ref  addecouple
  * - @ref  orderparamres
  * - @ref  rdcres
- * - @ref  qmmmb
+ * - @ref  qmmm
  * - @ref  xrayres
  */
 

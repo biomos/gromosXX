@@ -118,6 +118,7 @@ namespace interaction
   extern int filter_debug_level;
   extern int bonded_debug_level;
   extern int nonbonded_debug_level;
+  extern int qmmm_debug_level;
   extern int cuda_debug_level;
   extern int latticesum_debug_level;
   extern int special_debug_level;
