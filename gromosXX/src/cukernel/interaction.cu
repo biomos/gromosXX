@@ -5,14 +5,16 @@
 
 #include "gpu_status.h"
 
+#include "../util/debug.h"
+
+#undef MODULE
+#undef SUBMODULE
+#define MODULE interaction
+#define SUBMODULE cuda
+
 
 #define NUM_THREADS_PER_BLOCK_FORCES 96
 
-#ifndef DNDEBUG
-#define DEBUG(x) std::cout << x << std::endl;
-#else
-#define DEBUG(x)
-#endif
 
 
 extern "C" int cudaCalcForces(double * forces, double * virial, double * lj_energy,
@@ -21,7 +23,7 @@ extern "C" int cudaCalcForces(double * forces, double * virial, double * lj_ener
   pairlist *dev_pl;
   int num_of_gpus = gpu_stat->host_parameter.num_of_gpus;
   int gpu_id = gpu_stat->host_parameter.gpu_id;
-  DEBUG("Num solvent atoms: " << gpu_stat->host_parameter.num_atoms);
+  DEBUG(10,"Num solvent atoms: " << gpu_stat->host_parameter.num_atoms);
   unsigned int numThreads = (gpu_stat->host_parameter.num_solvent_mol / num_of_gpus + 1) * gpu_stat->host_parameter.num_atoms_per_mol;
   unsigned int numBlocks = numThreads / NUM_THREADS_PER_BLOCK_FORCES + 1;
 
@@ -29,7 +31,7 @@ extern "C" int cudaCalcForces(double * forces, double * virial, double * lj_ener
   dim3 dimBlock(NUM_THREADS_PER_BLOCK_FORCES, 1);
 
 
-  DEBUG("Interactions: GPU: " << gpu_id << " of " << num_of_gpus << " Threads: " << numThreads << " Blocks: " << numBlocks)
+  DEBUG(10,"Interactions: GPU: " << gpu_id << " of " << num_of_gpus << " Threads: " << numThreads << " Blocks: " << numBlocks)
           
   // decide which pairlist to take.
   dev_pl = longrange ? &gpu_stat->dev_pl_long : &gpu_stat->dev_pl_short;
@@ -50,7 +52,7 @@ extern "C" int cudaCalcForces(double * forces, double * virial, double * lj_ener
 
   cudaDeviceSynchronize();
 
-  DEBUG("Interactions: Executed kernel and synchronized threads")
+  DEBUG(10,"Interactions: Executed kernel and synchronized threads")
 
   error += checkError("after calculating Forces");
   //copy forces/energies back to CPU
@@ -78,7 +80,7 @@ extern "C" int cudaCalcForces(double * forces, double * virial, double * lj_ener
     if (index >= gpu_stat->host_parameter.num_atoms)
       continue;
     //std::cout << gpu_id << " : i = " << i << " , index = " << index << std::endl;
-    DEBUG("force " << i << " index: " << (int) gpu_stat->host_forces[i].x << " ai: " << (int) gpu_stat->host_forces[i].y << " mi: " << (int) gpu_stat->host_forces[i].z);
+    DEBUG(15,"force " << i << " index: " << (int) gpu_stat->host_forces[i].x << " ai: " << (int) gpu_stat->host_forces[i].y << " mi: " << (int) gpu_stat->host_forces[i].z);
     //std::cout << "GPU: " << gpu_id << std::endl;
     pforces[index].x += gpu_stat->host_forces[i].x;
     pforces[index].y += gpu_stat->host_forces[i].y;
@@ -96,7 +98,7 @@ extern "C" int cudaCalcForces(double * forces, double * virial, double * lj_ener
     virial[8] += gpu_stat->host_virial[i].zz;
     // DEBUGGING
     //if (i%100 < 2)
-    //  DEBUG("GPU ID: " << gpu_stat->host_parameter.gpu_id << " of " << gpu_stat->host_parameter.num_of_gpus
+    //  DEBUG(15,"GPU ID: " << gpu_stat->host_parameter.gpu_id << " of " << gpu_stat->host_parameter.num_of_gpus
     //          << " Interactions: Summing up forces and virals. Atom: " << i)
   }
 
