@@ -491,7 +491,7 @@ namespace io {
      * read GAMDSTAT block
      */
     bool _read_gamdstat(std::vector<std::string> &buffer,
-            simulation::Simulation & sim, unsigned int numagroups);)
+            simulation::Simulation & sim, unsigned int numagroups);
   };
 
 } // io

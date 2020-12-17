@@ -131,7 +131,7 @@ static int _calculate_dihedral_new_interactions(topology::Topology & topo,
 
     energy = K * (1 + cos(m * phi - delta));
     conf.current().energies.dihedral_energy[topo.atom_energy_group()[d_it->i]] += energy;
-
+    
     // ORIOL_GAMD
     // if atom 1 is in acceleration group
     int gamd_group = topo.gamd_accel_group(d_it->i);

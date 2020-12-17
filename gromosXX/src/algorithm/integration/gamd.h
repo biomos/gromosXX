@@ -38,12 +38,7 @@ namespace algorithm
 		     configuration::Configuration &conf,
 		     simulation::Simulation &sim,
 		     std::ostream &os = std::cout,
-		     bool quiet = false)
-    {
-      if (!quiet)
-	os << "\tGAMD\nEND\n";
-      return 0;
-    };
+		     bool quiet = false);
 
   /**
    * calculate the mean, std and Vmax Vmin
