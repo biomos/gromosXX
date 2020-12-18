@@ -25,8 +25,8 @@ int algorithm::GAMD
 ::init(topology::Topology &topo, 
 		     configuration::Configuration &conf,
 		     simulation::Simulation &sim,
-		     std::ostream &os = std::cout,
-		     bool quiet = false)
+		     std::ostream &os,
+		     bool quiet)
  {
      // Calculate initial acceleration
      if (sim.param().gamd.search == simulation::gamd_search && sim.param().gamd.ntisearch == 0){
@@ -73,6 +73,7 @@ int algorithm::GAMD
         io::messages.add("GAMD search should be started from an cMD search with ntisearch = 0. With ntisearch = 1 the statistics will be estimated only from the GAMD search run",
          "Forcefield", io::message::warning);
     }
+    return 0;
  }
 
 
