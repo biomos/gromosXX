@@ -18,7 +18,62 @@
 #define MODULE algorithm
 #define SUBMODULE integration
 
+/**
+ * GAMD init
+ **/
+int algorithm::GAMD
+::init(topology::Topology &topo, 
+		     configuration::Configuration &conf,
+		     simulation::Simulation &sim,
+		     std::ostream &os = std::cout,
+		     bool quiet = false)
+ {
+     // Calculate initial acceleration
+     if (sim.param().gamd.search == simulation::gamd_search && sim.param().gamd.ntisearch == 0){
+      for (unsigned int gg = 1; gg < sim.param().gamd.agroups; gg++){
+        if (sim.param().gamd.kD[gg] == 0 && sim.param().gamd.kT[gg] == 0){
+            switch (sim.param().gamd.form){
+                case simulation::dih_boost:
+                    if (calc_gamd_E_K(sim.param().gamd.thresh, sim.param().gamd.dihstd, sim.param().gamd.VmaxD[gg], sim.param().gamd.VminD[gg], sim.param().gamd.VmeanD[gg],
+                        sim.param().gamd.sigmaVD[gg], &sim.param().gamd.k0D[gg], &sim.param().gamd.kD[gg], &sim.param().gamd.ED[gg])){
+                            io::messages.add("gamd: k0 < 0 or k0 > 1, switched to lower bound threshold ","Forcefield", io::message::warning);
+                            sim.param().gamd.thresh = simulation::lower_bound;
+                            }
+                    break;
 
+                case simulation::tot_boost:
+                    if (calc_gamd_E_K(sim.param().gamd.thresh, sim.param().gamd.totstd, sim.param().gamd.VmaxT[gg], sim.param().gamd.VminT[gg], sim.param().gamd.VmeanT[gg],
+                        sim.param().gamd.sigmaVT[gg], &sim.param().gamd.k0T[gg], &sim.param().gamd.kT[gg], &sim.param().gamd.ET[gg])){
+                            io::messages.add("gamd: k0 < 0 or k0 > 1, switched to lower bound threshold ","Forcefield", io::message::warning);
+                            sim.param().gamd.thresh = simulation::lower_bound;
+                            }
+                    break;
+
+                case simulation::dual_boost:
+                    if (calc_gamd_E_K(sim.param().gamd.thresh, sim.param().gamd.dihstd, sim.param().gamd.VmaxD[gg], sim.param().gamd.VminD[gg], sim.param().gamd.VmeanD[gg],
+                        sim.param().gamd.sigmaVD[gg], &sim.param().gamd.k0D[gg], &sim.param().gamd.kD[gg], &sim.param().gamd.ED[gg])){
+                            io::messages.add("gamd: k0 < 0 or k0 > 1, switched to lower bound threshold ","Forcefield", io::message::warning);
+                            sim.param().gamd.thresh = simulation::lower_bound;
+                            }
+
+                    if (calc_gamd_E_K(sim.param().gamd.thresh, sim.param().gamd.totstd, sim.param().gamd.VmaxT[gg], sim.param().gamd.VminT[gg], sim.param().gamd.VmeanT[gg],
+                        sim.param().gamd.sigmaVT[gg], &sim.param().gamd.k0T[gg], &sim.param().gamd.kT[gg], &sim.param().gamd.ET[gg])){
+                            io::messages.add("gamd: k0 < 0 or k0 > 1, switched to lower bound threshold ","Forcefield", io::message::warning);
+                            sim.param().gamd.thresh = simulation::lower_bound;
+                            }
+                    break;
+                default:
+                    io::messages.add("Unknown functional form of gaussian accelerated md boosting potential. Should be 1 (dual acceleration), 2 (total potential energy acceleration), or 3 (dihedral acceleration)",
+                                        "Forcefield", io::message::critical);
+        }
+        } // end if
+      } // loop over acceleration groups
+    } // end if
+    else if (sim.param().gamd.search == simulation::gamd_search && sim.param().gamd.ntisearch == 1){
+        io::messages.add("GAMD search should be started from an cMD search with ntisearch = 0. With ntisearch = 1 the statistics will be estimated only from the GAMD search run",
+         "Forcefield", io::message::warning);
+    }
+ }
 
 
 
