@@ -3756,9 +3756,7 @@ _print_gamdstat(configuration::Configuration const &conf,
   os.precision(m_precision);
   os << "GAMDSTAT\n";
   for (unsigned int i = 0; i < sim.param().gamd.agroups; i++) {
-    os << std::setw(m_width) << sim.param().gamd.k0D[i] << " "
-      << std::setw(m_width) << sim.param().gamd.k0T[i] << " "
-      << std::setw(m_width) << sim.param().gamd.M2D[i] << " "
+    os << std::setw(m_width) << sim.param().gamd.M2D[i] << " "
       << std::setw(m_width) << sim.param().gamd.M2T[i] << " "
       << std::setw(m_width) << sim.param().gamd.VmaxD[i] << " "
       << std::setw(m_width) << sim.param().gamd.VmaxT[i] << " "

@@ -1385,8 +1385,6 @@ bool io::In_Configuration::read_gamdstat
 
         for (unsigned int i = 0; i < sim.param().gamd.agroups; i++) {
           os << "\t" << sim.param().eds.eir[i] << "\t"
-            << sim.param().gamd.k0D[i] << "\t"
-            << sim.param().gamd.k0T[i] << "\t"
             << sim.param().gamd.M2D[i] << "\t"
             << sim.param().gamd.M2T[i] << "\t"
             << sim.param().gamd.VmaxD[i] << "\t"
