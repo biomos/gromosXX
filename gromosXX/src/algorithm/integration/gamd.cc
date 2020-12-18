@@ -18,6 +18,10 @@
 #define MODULE algorithm
 #define SUBMODULE integration
 
+
+
+
+
 /**
  * GAMD step.
  */
@@ -29,68 +33,34 @@ int algorithm::GAMD
   m_timer.start();
   DEBUG(5, "GAMD: algorithm init");
   configuration::Energy ener = conf.current().energies;
-  simulation::Parameter::gamd_struct params = sim.param().gamd;
   std::vector<int> used_chargegroups;
   unsigned int num_groups = unsigned(ener.bond_energy.size());
   unsigned int num_atoms = topo.num_atoms();
-  // Calculate the energies for each acceleration group
-  // loop over all the acceleration groups
-  /*
-  DEBUG(5, "GAMD: Calculate energie totals");
-  for (unsigned int atom=0; atom < num_atoms; atom++){
-    unsigned int chargegroup = topo.atom_energy_group()[atom];
-    unsigned int gamdgroup = topo.gamd_accel_group(atom);
-    // check if the charge group has already been used
-    std::vector<int>::iterator it = std::find(used_chargegroups.begin(), used_chargegroups.end(), chargegroup);
-    if (it == used_chargegroups.end()){
-        DEBUG(7, "GAMD: Calculating energies of charge group " << chargegroup);
-        // add the energies to the gamd energies for that accel group
-        // dihedral term
-        ener.gamd_dihedral_total[gamdgroup] += ener.dihedral_energy[chargegroup];
-        ener.gamd_dihedral_total[gamdgroup] += ener.improper_energy[chargegroup];
-        ener.gamd_dihedral_total[gamdgroup] += ener.crossdihedral_energy[chargegroup];
-        // potential total bonded
-        ener.gamd_potential_total[gamdgroup] += ener.dihedral_energy[chargegroup];
-        ener.gamd_potential_total[gamdgroup] += ener.improper_energy[chargegroup];
-        ener.gamd_potential_total[gamdgroup] += ener.crossdihedral_energy[chargegroup];
-        ener.gamd_potential_total[gamdgroup] += ener.bond_energy[chargegroup];
-        ener.gamd_potential_total[gamdgroup] += ener.angle_energy[chargegroup];
-        // potential total non-bonded
-        for(unsigned int chargegroup2=0; chargegroup2<num_groups; chargegroup2++){
-            if (chargegroup2 != chargegroup){
-                ener.gamd_potential_total[gamdgroup] +=  ener.lj_energy[chargegroup][chargegroup2];
-                ener.gamd_potential_total[gamdgroup] +=  ener.crf_energy[chargegroup][chargegroup2];
-                }
-        }
-        //save the used charge group
-        used_chargegroups.push_back(chargegroup);              
-    } // endif        
-  } // loop over atoms 
-  */
   DEBUG(5, "GAMD: Interactions calculated now calculate acceleration");
 
   // total energies have been computed now calculate acceleration
-  if (sim.steps() > params.equilibration){
-      for (unsigned int gg = 1; gg < params.agroups; gg++){
-          switch (params.search){
+  if (sim.steps() > sim.param().gamd.equilibration){
+      for (unsigned int gg = 1; gg < sim.param().gamd.agroups; gg++){
+          switch (sim.param().gamd.search){
             case simulation::cmd_search:
                 switch (sim.param().gamd.form)
                 {
                     case simulation::dih_boost:
-                        calc_gamd_std_mean(ener.gamd_dihedral_total[gg], sim.steps(), &params.VmaxD[gg], &params.VminD[gg],
-                                           &params.VmeanD[gg], &params.M2D[gg], &params.sigmaVD[gg]);  
+                        calc_gamd_std_mean(ener.gamd_dihedral_total[gg], sim.steps(), &sim.param().gamd.VmaxD[gg], &sim.param().gamd.VminD[gg],
+                                           &sim.param().gamd.VmeanD[gg], &sim.param().gamd.M2D[gg], &sim.param().gamd.sigmaVD[gg]);  
                         break;
 
                     case simulation::tot_boost:
-                        calc_gamd_std_mean(ener.gamd_potential_total[gg], sim.steps(), &params.VmaxT[gg], &params.VminT[gg],
-                                           &params.VmeanT[gg], &params.M2T[gg], &params.sigmaVT[gg]);  
+                        calc_gamd_std_mean(ener.gamd_potential_total[gg], sim.steps(), &sim.param().gamd.VmaxT[gg], &sim.param().gamd.VminT[gg],
+                                           &sim.param().gamd.VmeanT[gg], &sim.param().gamd.M2T[gg], &sim.param().gamd.sigmaVT[gg]);  
                         break;
 
                     case simulation::dual_boost:
-                        calc_gamd_std_mean(ener.gamd_dihedral_total[gg], sim.steps(), &params.VmaxD[gg], &params.VminD[gg],
-                                           &params.VmeanD[gg], &params.M2D[gg], &params.sigmaVD[gg]);
-                        calc_gamd_std_mean(ener.gamd_potential_total[gg] - ener.gamd_dihedral_total[gg], sim.steps(), &params.VmaxT[gg], &params.VminT[gg],
-                                           &params.VmeanT[gg], &params.M2T[gg], &params.sigmaVT[gg]);                                           
+                        calc_gamd_std_mean(ener.gamd_dihedral_total[gg], sim.steps(), &sim.param().gamd.VmaxD[gg], &sim.param().gamd.VminD[gg],
+                                           &sim.param().gamd.VmeanD[gg], &sim.param().gamd.M2D[gg], &sim.param().gamd.sigmaVD[gg]);
+                        calc_gamd_std_mean(ener.gamd_potential_total[gg] - ener.gamd_dihedral_total[gg], sim.steps(), &sim.param().gamd.VmaxT[gg], &sim.param().gamd.VminT[gg],
+                                           &sim.param().gamd.VmeanT[gg], &sim.param().gamd.M2T[gg], &sim.param().gamd.sigmaVT[gg]); 
+                        DEBUG(1, "group " << gg << " VmeanD " << sim.param().gamd.VmeanD[gg] <<  " VmeanT " << sim.param().gamd.VmeanT[gg] << " VmaxD " << sim.param().gamd.VmaxD[gg] <<  " VmaxT " << sim.param().gamd.VmaxT[gg]);                                       
                     break;          
                 default:
                     io::messages.add("Unknown functional form of gaussian accelerated md boosting potential. Should be 1 (dual acceleration), 2 (total potential energy acceleration), or 3 (dihedral acceleration)",
@@ -101,44 +71,44 @@ int algorithm::GAMD
             case simulation::gamd_search:
                 switch (sim.param().gamd.form){
                     case simulation::dih_boost:
-                        calc_gamd_std_mean(ener.gamd_dihedral_total[gg], sim.steps(), &params.VmaxD[gg], &params.VminD[gg],
-                                           &params.VmeanD[gg], &params.M2D[gg], &params.sigmaVD[gg]);
+                        calc_gamd_std_mean(ener.gamd_dihedral_total[gg], sim.steps(), &sim.param().gamd.VmaxD[gg], &sim.param().gamd.VminD[gg],
+                                           &sim.param().gamd.VmeanD[gg], &sim.param().gamd.M2D[gg], &sim.param().gamd.sigmaVD[gg]);
 
-                        if (calc_gamd_E_K(params.thresh, params.dihstd, params.VmaxD[gg], params.VminD[gg], params.VmeanD[gg],
-                            params.sigmaVD[gg], &params.k0D[gg], &params.kD[gg], &params.ED[gg])){
+                        if (calc_gamd_E_K(sim.param().gamd.thresh, sim.param().gamd.dihstd, sim.param().gamd.VmaxD[gg], sim.param().gamd.VminD[gg], sim.param().gamd.VmeanD[gg],
+                            sim.param().gamd.sigmaVD[gg], &sim.param().gamd.k0D[gg], &sim.param().gamd.kD[gg], &sim.param().gamd.ED[gg])){
                                 io::messages.add("gamd: k0 < 0 or k0 > 1, switched to lower bound threshold ","Forcefield", io::message::warning);
-                                params.thresh = simulation::lower_bound;
+                                sim.param().gamd.thresh = simulation::lower_bound;
                                 }
                         break;
 
                     case simulation::tot_boost:
-                        calc_gamd_std_mean(ener.gamd_potential_total[gg], sim.steps(), &params.VmaxT[gg], &params.VminT[gg],
-                                           &params.VmeanT[gg], &params.M2T[gg], &params.sigmaVT[gg]);
+                        calc_gamd_std_mean(ener.gamd_potential_total[gg], sim.steps(), &sim.param().gamd.VmaxT[gg], &sim.param().gamd.VminT[gg],
+                                           &sim.param().gamd.VmeanT[gg], &sim.param().gamd.M2T[gg], &sim.param().gamd.sigmaVT[gg]);
 
-                        if (calc_gamd_E_K(params.thresh, params.totstd, params.VmaxT[gg], params.VminT[gg], params.VmeanT[gg],
-                            params.sigmaVT[gg], &params.k0T[gg], &params.kT[gg], &params.ET[gg])){
+                        if (calc_gamd_E_K(sim.param().gamd.thresh, sim.param().gamd.totstd, sim.param().gamd.VmaxT[gg], sim.param().gamd.VminT[gg], sim.param().gamd.VmeanT[gg],
+                            sim.param().gamd.sigmaVT[gg], &sim.param().gamd.k0T[gg], &sim.param().gamd.kT[gg], &sim.param().gamd.ET[gg])){
                                 io::messages.add("gamd: k0 < 0 or k0 > 1, switched to lower bound threshold ","Forcefield", io::message::warning);
-                                params.thresh = simulation::lower_bound;
+                                sim.param().gamd.thresh = simulation::lower_bound;
                                 }
                         break;
 
                     case simulation::dual_boost:
-                        calc_gamd_std_mean(ener.gamd_dihedral_total[gg], sim.steps(), &params.VmaxD[gg], &params.VminD[gg],
-                                           &params.VmeanD[gg], &params.M2D[gg], &params.sigmaVD[gg]);
+                        calc_gamd_std_mean(ener.gamd_dihedral_total[gg], sim.steps(), &sim.param().gamd.VmaxD[gg], &sim.param().gamd.VminD[gg],
+                                           &sim.param().gamd.VmeanD[gg], &sim.param().gamd.M2D[gg], &sim.param().gamd.sigmaVD[gg]);
 
-                        calc_gamd_std_mean(ener.gamd_potential_total[gg] - ener.gamd_dihedral_total[gg], sim.steps(), &params.VmaxT[gg], &params.VminT[gg],
-                                           &params.VmeanT[gg], &params.M2T[gg], &params.sigmaVT[gg]);
+                        calc_gamd_std_mean(ener.gamd_potential_total[gg] - ener.gamd_dihedral_total[gg], sim.steps(), &sim.param().gamd.VmaxT[gg], &sim.param().gamd.VminT[gg],
+                                           &sim.param().gamd.VmeanT[gg], &sim.param().gamd.M2T[gg], &sim.param().gamd.sigmaVT[gg]);
 
-                        if (calc_gamd_E_K(params.thresh, params.dihstd, params.VmaxD[gg], params.VminD[gg], params.VmeanD[gg],
-                            params.sigmaVD[gg], &params.k0D[gg], &params.kD[gg], &params.ED[gg])){
+                        if (calc_gamd_E_K(sim.param().gamd.thresh, sim.param().gamd.dihstd, sim.param().gamd.VmaxD[gg], sim.param().gamd.VminD[gg], sim.param().gamd.VmeanD[gg],
+                            sim.param().gamd.sigmaVD[gg], &sim.param().gamd.k0D[gg], &sim.param().gamd.kD[gg], &sim.param().gamd.ED[gg])){
                                 io::messages.add("gamd: k0 < 0 or k0 > 1, switched to lower bound threshold ","Forcefield", io::message::warning);
-                                params.thresh = simulation::lower_bound;
+                                sim.param().gamd.thresh = simulation::lower_bound;
                                 }
 
-                        if (calc_gamd_E_K(params.thresh, params.totstd, params.VmaxT[gg], params.VminT[gg], params.VmeanT[gg],
-                            params.sigmaVT[gg], &params.k0T[gg], &params.kT[gg], &params.ET[gg])){
+                        if (calc_gamd_E_K(sim.param().gamd.thresh, sim.param().gamd.totstd, sim.param().gamd.VmaxT[gg], sim.param().gamd.VminT[gg], sim.param().gamd.VmeanT[gg],
+                            sim.param().gamd.sigmaVT[gg], &sim.param().gamd.k0T[gg], &sim.param().gamd.kT[gg], &sim.param().gamd.ET[gg])){
                                 io::messages.add("gamd: k0 < 0 or k0 > 1, switched to lower bound threshold ","Forcefield", io::message::warning);
-                                params.thresh = simulation::lower_bound;
+                                sim.param().gamd.thresh = simulation::lower_bound;
                                 }
                         break;
                     default:
@@ -160,16 +130,16 @@ int algorithm::GAMD
   DEBUG(5, "GAMD: Accelerating");
   double prefactor;
   if (sim.param().gamd.search != simulation::cmd_search){
-      for (unsigned int accelgroup = 1; accelgroup < params.agroups;  accelgroup++){
+      for (unsigned int accelgroup = 1; accelgroup < sim.param().gamd.agroups;  accelgroup++){
 
           switch (sim.param().gamd.form)
           {
               case simulation::dih_boost:
               {
-                  double VE = ener.gamd_dihedral_total[accelgroup] - params.ED[accelgroup];
+                  double VE = ener.gamd_dihedral_total[accelgroup] - sim.param().gamd.ED[accelgroup];
                   //if V < E apply boost
                   if (VE < 0){
-                      prefactor = (params.kD[accelgroup] * VE) + 1;
+                      prefactor = (sim.param().gamd.kD[accelgroup] * VE) + 1;
                       ener.gamd_DV[accelgroup] = prefactor * VE/2;
                       // loop over atoms
                        for (unsigned int atom=0; atom < num_atoms; atom++){
@@ -188,12 +158,12 @@ int algorithm::GAMD
 
           case simulation::tot_boost:
           {
-                  double VE = ener.gamd_potential_total[accelgroup] - params.ET[accelgroup];
+                  double VE = ener.gamd_potential_total[accelgroup] - sim.param().gamd.ET[accelgroup];
                   //if V < E apply boost
                   if (VE < 0){
-                      prefactor = (params.kT[accelgroup] * VE) + 1;
+                      prefactor = (sim.param().gamd.kT[accelgroup] * VE) + 1;
                       ener.gamd_DV[accelgroup] = prefactor * VE/2; // 
-                      for (unsigned int accelgroup2 = 0; accelgroup2 < params.agroups;  accelgroup2++){
+                      for (unsigned int accelgroup2 = 0; accelgroup2 < sim.param().gamd.agroups;  accelgroup2++){
                         // choose the correct interaction factor to scale forces between acceleration groups
                         double interaction_factor = 1.0;
                         calc_interaction_factor(accelgroup, accelgroup2, &interaction_factor);
@@ -219,12 +189,12 @@ int algorithm::GAMD
           case simulation::dual_boost:
           {
                   // first total potential
-                  double VET = ener.gamd_potential_total[accelgroup] - params.ET[accelgroup] - ener.gamd_dihedral_total[accelgroup];
+                  double VET = ener.gamd_potential_total[accelgroup] - sim.param().gamd.ET[accelgroup] - ener.gamd_dihedral_total[accelgroup];
                   //if V < E apply boost
                   if (VET < 0){
-                      prefactor = (params.kT[accelgroup] * VET) + 1;
+                      prefactor = (sim.param().gamd.kT[accelgroup] * VET) + 1;
                       ener.gamd_DV[accelgroup] = prefactor * VET/2; // 
-                      for (unsigned int accelgroup2 = 0; accelgroup2 < params.agroups;  accelgroup2++){
+                      for (unsigned int accelgroup2 = 0; accelgroup2 < sim.param().gamd.agroups;  accelgroup2++){
                         // choose the correct interaction factor to scale forces between acceleration groups
                         double interaction_factor = 1.0;
                         calc_interaction_factor(accelgroup, accelgroup2, &interaction_factor);
@@ -245,10 +215,10 @@ int algorithm::GAMD
                       } // end loop over atoms
                   } // endif
                   // dihedral term
-                  double VED = ener.gamd_dihedral_total[accelgroup] - params.ED[accelgroup];
+                  double VED = ener.gamd_dihedral_total[accelgroup] - sim.param().gamd.ED[accelgroup];
                   //if V < E apply boost
                   if (VED < 0){
-                      prefactor = (params.kD[accelgroup] * VED) + 1;
+                      prefactor = (sim.param().gamd.kD[accelgroup] * VED) + 1;
                       ener.gamd_DV[accelgroup] = prefactor * VED/2;
                       // loop over atoms
                        for (unsigned int atom=0; atom < num_atoms; atom++){
@@ -270,6 +240,7 @@ int algorithm::GAMD
           } // end switch
       } // end loop over acceleration groups
   } // end if
+  m_timer.stop();
   return 0;
 };
 // add init in which the initial acceleration values are calculated if needed
@@ -277,6 +248,10 @@ int algorithm::GAMD
 // helper gamd methods
 void algorithm::GAMD::calc_gamd_std_mean(double V, int step, double *Vmax, double *Vmin, double *Vmean, double *M2, double *sigmaV){
         double delta;
+        if(*Vmax == 0 && *Vmin == 0){
+          *Vmin = V;
+          *Vmax = V;
+        }
         if(V > *Vmax){
                 *Vmax = V;
         }

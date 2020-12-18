@@ -1380,7 +1380,7 @@ bool io::In_Configuration::read_gamdstat
         os << "\treading GAMDSTAT...\n";
 
       if (sim.param().gamd.ntisearch == false) {
-        _read_gamdstat(buffer, sim, sim.param().eds.agroups);
+        _read_gamdstat(buffer, sim, sim.param().gamd.agroups);
         os << "\t" << "GAMDSTAT\n";
 
         for (unsigned int i = 0; i < sim.param().gamd.agroups; i++) {
