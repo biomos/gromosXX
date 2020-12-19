@@ -371,9 +371,17 @@ void configuration::Configuration::init(topology::Topology const & topo,
   current().energies.gamd_dihedral_total.resize(param.gamd.agroups);
   current().energies.gamd_potential_total.resize(param.gamd.agroups);
   current().energies.gamd_DV.resize(param.gamd.agroups);
+  current().energies.gamd_ED.resize(param.gamd.agroups);
+  current().energies.gamd_ET.resize(param.gamd.agroups);
+  current().energies.gamd_KD.resize(param.gamd.agroups);
+  current().energies.gamd_KT.resize(param.gamd.agroups);
   old().energies.gamd_dihedral_total.resize(param.gamd.agroups);
   old().energies.gamd_potential_total.resize(param.gamd.agroups);
   old().energies.gamd_DV.resize(param.gamd.agroups);
+  old().energies.gamd_ED.resize(param.gamd.agroups);
+  old().energies.gamd_ET.resize(param.gamd.agroups);
+  old().energies.gamd_KD.resize(param.gamd.agroups);
+  old().energies.gamd_KT.resize(param.gamd.agroups);
   
   current().energies.ewarn(param.ewarn.limit);
   old().energies.ewarn(param.ewarn.limit);

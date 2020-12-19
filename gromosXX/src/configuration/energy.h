@@ -299,6 +299,22 @@ namespace configuration
      */
     std::vector<double> gamd_DV;
     /**
+     * Energy threshold for the dihedral acceleration per accel group
+     */
+    std::vector<double> gamd_ED;
+    /**
+     * Energy threshold for the potential energy acceleration per accel group
+     */
+    std::vector<double> gamd_ET;
+    /**
+     * Force constant for the dihedral acceleration
+     */
+    std::vector<double> gamd_KD;
+    /**
+     * Force constant for the potential energy acceleration
+     */
+    std::vector<double> gamd_KT;
+    /**
      * total boosting potential used
      */
     double gamd_DV_total;

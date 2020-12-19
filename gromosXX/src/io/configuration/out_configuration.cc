@@ -2959,6 +2959,21 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
             << std::setw(18) << e.eds_eir[i] << "\n";
   }
 
+  // GAMD thresholds and force constant used
+  os << "# gamd\n";
+  os << "# numaccelgroups\n";
+  const unsigned int numaccelgroups = e.gamd_KT.size();
+  os << numaccelgroups << "\n";
+  os << std::setw(18) << "# E_dihedral"
+          << std::setw(18) << "E_potential"
+          << std::setw(18) << "K_dihedral"
+          << std::setw(18) << "K_potential\n";
+  for (unsigned i = 0; i < numaccelgroups; i++) {
+    os << std::setw(18) << e.gamd_ED[i]
+            << std::setw(18) << e.gamd_ET[i]
+            << std::setw(18) << e.gamd_KD[i] 
+            << std::setw(18) << e.gamd_KT[i] << "\n";
+
   // write eds energies (vr,{V_i}) here
 
   // ANITA

@@ -294,6 +294,14 @@ int algorithm::GAMD
             io::messages.add("Unknown functional form of gaussian accelerated md boosting potential. Should be 1 (dual acceleration), 2 (total potential energy acceleration), or 3 (dihedral acceleration)",
                              "Forcefield", io::message::critical);
           } // end switch
+        DEBUG(5, "for acceleration group " << accelgroup << " ET: " << sim.param().gamd.ET[accelgroup] << " ED: " << sim.param().gamd.ED[accelgroup]
+              << " KT: " << sim.param().gamd.kT[accelgroup]<< " KD: " << sim.param().gamd.kD[accelgroup]);
+        //TO DO: migrate E and K to energys to avoid having to copy them.
+        ener.gamd_ED[accelgroup] = sim.param().gamd.ED[accelgroup];
+        ener.gamd_ET[accelgroup] = sim.param().gamd.ET[accelgroup];
+        ener.gamd_KD[accelgroup] = sim.param().gamd.kD[accelgroup];
+        ener.gamd_KT[accelgroup] = sim.param().gamd.kT[accelgroup];
+        
       } // end loop over acceleration groups
   } // end if
   m_timer.stop();
