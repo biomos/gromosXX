@@ -443,11 +443,11 @@ EOF
       )
       NVCC_CFLAGS="-lcuda -lcudart $CFLAGS"
       if eval "test x$enable_profile = xyes"; then
-        NVCC_CFLAGS="-O2 -pg -D DNDEBUG $NVCC_CFLAGS"
+        NVCC_CFLAGS="-O2 -pg -DNDEBUG $NVCC_CFLAGS"
       elif eval "test x$enable_debug = xyes"; then
         NVCC_CFLAGS="-O0 -g $NVCC_CFLAGS"
       else
-        NVCC_CFLAGS="-O2 -D DNDEBUG $NVCC_CFLAGS"
+        NVCC_CFLAGS="-O2 -DNDEBUG $NVCC_CFLAGS"
       fi
       AC_SUBST(NVCC_CFLAGS)
     else
