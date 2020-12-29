@@ -9,26 +9,12 @@
 #include <immintrin.h>
 #include "../../../math/avx.h"
 
-/*
-namespace topology {
-  class Topology;
-}
-
-namespace configuration {
-  class Configuration;
-}
-
-namespace simulation {
-  class Simulation;
-}
-
-namespace math {
-  class Periodicity;
-}*/
+#undef MODULE
+#undef SUBMODULE
+#define MODULE interaction
+#define SUBMODULE nonbonded
 
 namespace interaction {
-  /*class Pairlist;
-  class Storage;*/
   
   void lj_crf_fast_solute_loop_avx2(topology::Topology &topo,
                                     configuration::Configuration &conf,
@@ -66,65 +52,32 @@ namespace interaction {
     for (unsigned i = 0; i < 3; ++i) {
       m256d_ipos[i] = _mm256_set1_pd(posI[i]);
     }
-    // mask used for last iteration
-    int imask[4] = {0};
-
-    const unsigned num_full_iterations = pairlist[ai].size() / 4;
-    const unsigned size_last_iteration = pairlist[ai].size() % 4;
-    //DEBUG(1, "full_iterations:     " << num_full_iterations);
-    //DEBUG(1, "size_last_iteration: " << size_last_iteration);
 
     for (j_it = pairlist[ai].begin(), j_to = pairlist[ai].end();
          j_it < j_to; j_it += 4) {
       int remaining = j_to - j_it;
 
-      //__m128i m128i_mask = _mm_set1_epi32(-1);
       __m128i m128i_mask;
       m128i_mask = _mm_cmpeq_epi16(m128i_mask, m128i_mask); // fills vector with ones
       __m128i m128i_js;
       __m256d m256d_jpos[3];
       // load mask to 128-bit variable
       if (remaining >= 4) {
+        DEBUG(7, "Full block, remaining: " << remaining);
         // load integers of 4 atoms
         m128i_js = _mm_lddqu_si128((__m128i*)&*j_it);
+        DEBUG(10, "Loading j atoms: " << ((int*)&m128i_js)[0] << " " << ((int*)&m128i_js)[1] << " " << ((int*)&m128i_js)[2] << " " << ((int*)&m128i_js)[3]);
         // load positions based on integers
         for (unsigned i = 0; i < 3; ++i) {
           m256d_jpos[i] = _mm256_i32gather_pd(pos0 + i, m128i_js * pos_size, 1);
         }
-        // alternatively:
-        /*
-        const int* js = (int*)&m128i_js;
-        __m256d m256d_jposU[4];
-        for (unsigned i = 0; i < 4; ++i) {
-          const int j = js[i];
-          m256d_jposU[i] = _mm256_loadu_pd(pos0 + 3 * j);
-        }
-        avx::pack(m256d_jposU, m256d_jpos);*/
       }
-      else {
-        // set mask
-        /*
-        for (int i = 0; i < 4; ++i) {
-          imask[i] = -1;
-          if (remaining - i < 1) {
-            imask[i] = 0;
-          }
-        }*/
-        
-        /*m128i_mask = _mm_insert_epi32(m128i_mask, 0, remaining);
-        int imm8 = ~(~(imm8^imm8)<<remaining);
-        m128i_mask = _mm_blend_epi32(m128i_mask, _mm_cmpeq_epi64x(0));*/
+      else {        
         int cnt = 4 - remaining;
         while(cnt--) {
           m128i_mask = _mm_srli_si128(m128i_mask, 4);
         }
         // load integers of the remaining atoms
-
-        // This wouldnt work, data need to be 32B-aligned
-        //m128i_js = _mm_maskload_epi32((int*)&*j_it, m128i_mask);
-
-        // workaround
-        //_mm_mask_i32gather_epi32(__m128i src, int const* base_addr, __m128i vindex, __m128i mask, const int scale)
         const __m128i vindex = _mm_set_epi32(12, 8, 4, 0);
         m128i_js = _mm_mask_i32gather_epi32(_mm_setzero_si128(), (int*)&*j_it, vindex, m128i_mask, 1);
         
@@ -143,7 +96,8 @@ namespace interaction {
 
       // distances between atom_i and (atom_j0 ... atom_j3)
       const __m256d m256d_nim_d2 = avx::abs2(m256d_nim);
-      //DEBUG(0, "m256d_nim_d2: " << m256d_nim_d2[0] << " " << m256d_nim_d2[1] << " " << m256d_nim_d2[2] << " " << m256d_nim_d2[3]);
+      DEBUG(15, "m256d_nim_d2: " << m256d_nim_d2[0] << " " << m256d_nim_d2[1] << " " << m256d_nim_d2[2] << " " << m256d_nim_d2[3]);
+      
       // force and energies (scalars) between atom_i and (atom_j0 ... atom_j3)
       __m256d m256d_f, m256d_e_lj, m256d_e_crf;
 
@@ -151,11 +105,11 @@ namespace interaction {
 
       int* const js = (int*)&m128i_js;
       for (unsigned i = 0; i < 4; ++i) {
-        //DEBUG(1, "interaction " << ai << "-" << js[i]);
-        //DEBUG(1, "d2:    " << m256d_nim_d2[i]);
-        //DEBUG(1, "f:     " << m256d_f[i]);
-        //DEBUG(1, "e_lj:  " << m256d_e_lj[i]);
-        //DEBUG(1, "e_crf: " << m256d_e_crf[i]);
+        DEBUG(15, "interaction " << ai << "-" << js[i]);
+        DEBUG(15, "d2:    " << m256d_nim_d2[i]);
+        DEBUG(15, "f:     " << m256d_f[i]);
+        DEBUG(15, "e_lj:  " << m256d_e_lj[i]);
+        DEBUG(15, "e_crf: " << m256d_e_crf[i]);
       }
       // gather atoms energy groups and store energies
       constexpr size_t eg_size = sizeof(topo.atom_energy_group()[0]);
@@ -163,8 +117,9 @@ namespace interaction {
       int* const eg_j = (int*)&m128i_eg_j;
       double* const e_lj = (double*)&m256d_e_lj;
       double* const e_crf = (double*)&m256d_e_crf;
+      const int imask = _mm_movemask_epi8(m128i_mask);
       for (unsigned i = 0; i < 4; ++i) {
-        if (imask[i] < 0) {
+        if (imask>>i*4&1) {
           storage.energies.lj_energy[eg_i][eg_j[i]] += e_lj[i];
           storage.energies.crf_energy[eg_i][eg_j[i]] += e_crf[i];
         }
@@ -175,13 +130,11 @@ namespace interaction {
       for (unsigned i = 0; i < 3; ++i) {
         m256d_forceCP[i] = _mm256_mul_pd(m256d_f, m256d_nim[i]);
       }
-      if (ai == 3) {
       int* const js = (int*)&m128i_js;
-        for (unsigned i = 0; i < 4; ++i) {
-          DEBUG(1, "interaction " << ai << "-" << js[i]);
-          DEBUG(1, "nim: " << m256d_nim[0][i] << " " << m256d_nim[1][i] << " "  << m256d_nim[2][i]);
-          DEBUG(1, "f: " << m256d_forceCP[0][i] << " " << m256d_forceCP[1][i] << " "  << m256d_forceCP[2][i]);
-        }
+      for (unsigned i = 0; i < 4; ++i) {
+        DEBUG(15, "interaction " << ai << "-" << js[i]);
+        DEBUG(15, "nim: " << m256d_nim[0][i] << " " << m256d_nim[1][i] << " "  << m256d_nim[2][i]);
+        DEBUG(15, "f: " << m256d_forceCP[0][i] << " " << m256d_forceCP[1][i] << " "  << m256d_forceCP[2][i]);
       }
 
       // unpacked force i:(xi, yi, zi, junk)
@@ -189,23 +142,20 @@ namespace interaction {
       avx::unpackCP(m256d_forceCP, m256d_force);
       m128i_k = _mm_add_epi32(m128i_k, _mm_set1_epi32(13));
       int* const k = (int*)&m128i_k;
-      //int* const js = (int*)&m128i_js;
-
-      // TODO: Skip 0th groupforce - shift is zero
 
       for (unsigned i = 0; i < 4; ++i) {
-        if (imask[i] < 0) {
+        if (imask>>i*4&1) {
           // write i-th groupForce
           int* const ki = k + i;
           double* gf = groupForce + *ki * 3;
           __m256d m256d_gf = _mm256_loadu_pd(gf);
           m256d_gf = _mm256_add_pd(m256d_gf, m256d_force[i]);
           _mm256_storeu_pd(gf, m256d_gf);
-          //DEBUG(0, "avx::vec_mask: " << avx::vec_mask[0] << " " << avx::vec_mask[1] << " " << avx::vec_mask[2] << " " << avx::vec_mask[3]);
+          DEBUG(15, "avx::vec_mask: " << avx::vec_mask[0] << " " << avx::vec_mask[1] << " " << avx::vec_mask[2] << " " << avx::vec_mask[3]);
           // load stored j force
           int* const jsi = js + i;
           if (*ki != 13) {
-            //DEBUG(1, "*ki != 13, " << "ai: " << ai << ", aj: " << *jsi);
+            DEBUG(10, "*ki != 13, " << "ai: " << ai << ", aj: " << *jsi);
           }
           double* const f_ptr = &storage.force(*jsi)[0];
           __m256d f = _mm256_loadu_pd(f_ptr);
@@ -216,9 +166,8 @@ namespace interaction {
         }
       }
     }
-    //DEBUG(1, "GroupForce:");
     for (unsigned i = 0; i < 84; i += 4) {
-      //DEBUG(1, i << "-" << i + 3 << ":\t" << groupForce[i] << " " << groupForce[i+1] << " " << groupForce[i+2] << " " << groupForce[i+3] << " ")
+      DEBUG(15, i << "-" << i + 3 << ":\t" << groupForce[i] << " " << groupForce[i+1] << " " << groupForce[i+2] << " " << groupForce[i+3]);
     }
     // sum up groupForce, write to virial tensor and write to ai-th force
     // reduce over triples of packed transposed forces (12 packed elements)
@@ -244,9 +193,7 @@ namespace interaction {
       // transpose from x1, x2, x3, x4 ... z1, z2, z3, z4
       //             to x1, y1, z1, x2 ... z3, x4, y4, z4
       avx::transposeCP(m256d_shift[0], m256d_shift[1], m256d_shift[2]);
-      //__m256d m256d_virial_tensor[3];
       math::Matrix* virial_tensor = &storage.virial_tensor;
-      //assert(alignof(storage.virial_tensor) % 32 == 0);
       avx::outerIP<avx::mode::add>(m256d_shift, m256d_f, (double*)virial_tensor);
     }
 
@@ -267,7 +214,6 @@ namespace interaction {
   // now do the standard virial tensor - the shift part was already done
   // we will do 4 atoms at once - 12 coordinates
   // loading 4 doubles at once, 3 vectors of 4 doubles, total 12 doubles
-  //assert(alignof(storage.virial_tensor) % 32 == 0);
   math::Matrix* virial_tensor = &storage.virial_tensor;
   const unsigned num_iterations = topo.num_solute_atoms() / 4;
   const unsigned last_size = topo.num_solute_atoms() % 4;

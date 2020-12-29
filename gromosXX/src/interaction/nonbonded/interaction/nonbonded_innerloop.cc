@@ -83,9 +83,9 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop_avx
       double* lj_c6 = (double*)&m256d_c6;
       double* lj_c12 = (double*)&m256d_c12;
       const int* j_iac = (int*)&m128i_j_iac;
-      const int* imask = (int*)&m128i_mask;
+      const int imask = _mm_movemask_epi8(m128i_mask);
       for (unsigned k = 0; k < 4; ++k) {
-        if (imask[k] < 0) {
+        if (imask>>k*4&1) {
           const lj_parameter_struct & lj =
                 m_param->lj_parameter(i_iac,
                 j_iac[k]);
