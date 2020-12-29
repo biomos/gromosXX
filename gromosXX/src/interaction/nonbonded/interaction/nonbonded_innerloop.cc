@@ -58,6 +58,67 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop_2
   }
 }
 
+#ifdef __AVX2__
+template <typename t_nonbonded_spec>
+inline void
+interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop_avx
+    (
+     topology::Topology & topo, 
+     const unsigned int i,
+     const __m128i & m128i_js,
+     const __m256d & m256d_d2,
+     const __m128i & m128i_mask,
+     __m256d & m256d_f,
+     __m256d & m256d_e_lj,
+     __m256d & m256d_e_crf
+            ) {
+  switch (t_nonbonded_spec::interaction_func) {
+    case simulation::lj_crf_func:
+    {
+      const unsigned i_iac = topo.iac(i);
+      constexpr size_t iac_size = sizeof(topo.iac(0));
+      const __m128i m128i_j_iac = _mm_mask_i32gather_epi32(_mm_set1_epi64x(0), &topo.iac().at(0), m128i_js * iac_size, m128i_mask, 1);
+      __m256d m256d_c6;
+      __m256d m256d_c12;
+      double* lj_c6 = (double*)&m256d_c6;
+      double* lj_c12 = (double*)&m256d_c12;
+      const int* j_iac = (int*)&m128i_j_iac;
+      const int* imask = (int*)&m128i_mask;
+      for (unsigned k = 0; k < 4; ++k) {
+        if (imask[k] < 0) {
+          const lj_parameter_struct & lj =
+                m_param->lj_parameter(i_iac,
+                j_iac[k]);
+          lj_c6[k] = lj.c6;
+          lj_c12[k] = lj.c12;
+        } else {
+          lj_c6[k] = 0;
+          lj_c12[k] = 0;
+        }
+      }
+
+      const __m256d m256d_i_charge = _mm256_set1_pd(topo.charge(i));
+      constexpr size_t charge_size = sizeof(topo.charge(0));
+      const __m256i m256i_mask = _mm256_cvtepi32_epi64(m128i_mask);
+      const __m256d m256d_j_charge = _mm256_mask_i32gather_pd(_mm256_set1_pd(0.0)
+                                                        , &topo.charge().at(0)
+                                                        , m128i_js * charge_size
+                                                        ,_mm256_castsi256_pd(m256i_mask), 1);
+      const __m256d m256d_charge = _mm256_mul_pd(m256d_i_charge, m256d_j_charge);
+      
+      lj_crf_interaction_avx(m256d_d2, m256d_c6, m256d_c12, m256d_charge, m256d_f, m256d_e_lj, m256d_e_crf);
+
+      break;
+    }
+   
+    default:
+      io::messages.add("Nonbonded_Innerloop",
+              "interaction function not implemented (new version)",
+              io::message::critical);
+  }
+}
+#endif // __AVX2__
+
 template<typename t_nonbonded_spec>
 inline void
 interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop

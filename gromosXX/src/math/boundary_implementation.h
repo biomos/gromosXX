@@ -159,6 +159,21 @@ namespace math
      * (not the position of v2 closest to v1, like in gromos++)
      */
     int nearest_image(Vec const &v1, Vec const &v2, Vec &nim)const;
+#ifdef __AVX2__    
+    /**
+     * Get the nearest image - vectorized version
+     */
+    //int nearest_image(const double *v1, const double *v2, double *nim, int *ret, const unsigned num_vectors)const;
+    void nearest_image(const double *v1, const double *v2, double *nim
+              , const unsigned *ids1, const unsigned *ids2
+              , int *ret, const unsigned N = 1) const;
+    /**
+     * Get the nearest image - vectorized version
+     */
+    //int nearest_image(const double *v1, const double *v2, double *nim, int *ret, const unsigned num_vectors)const;
+    void nearest_image(const __m256d m256_v1[3], const __m256d m256_v2[3], __m256d nim[3]
+              , __m128i *ret) const;
+#endif // __AVX2___
     /**
      * Get the box components of v.
      * calculate the multipliers of K, L and M to represent vector v

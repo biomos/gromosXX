@@ -3,6 +3,10 @@
  * the nonbonded terms.
  */
 
+#ifdef __AVX2__
+  #include <immintrin.h>
+#endif
+
 #ifndef INCLUDED_NONBONDED_TERM_H
 #define INCLUDED_NONBONDED_TERM_H
 
@@ -49,6 +53,17 @@ namespace interaction
 			    double & force, double & e_lj,
 			    double & e_crf,
                             unsigned int eps = 0);
+
+#ifdef __AVX2__
+    /**
+     * calculate the force and energy of an atom pair.
+     * New version (vectorized)
+     */        
+    void lj_crf_interaction_avx(const __m256d &dist2,
+        const __m256d &c6, const __m256d &c12,
+        const __m256d &q,
+        __m256d &force, __m256d &e_lj, __m256d &e_crf, unsigned int eps = 0);
+#endif // __AVX2__
 
      /**
      * calculate the force and energy of an atom pair.

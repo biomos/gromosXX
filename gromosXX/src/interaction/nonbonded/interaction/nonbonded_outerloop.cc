@@ -31,6 +31,10 @@
 
 #include "../../../interaction/nonbonded/interaction_spec.h"
 
+#ifdef __AVX2__
+  #include "../../../interaction/nonbonded/interaction/avx_loops.h"
+#endif
+
 #include "../../../util/debug.h"
 #include "../../../interaction/nonbonded/innerloop_template.h"
 
@@ -98,8 +102,8 @@ void interaction::Nonbonded_Outerloop
 
   // WORKAROUND! See definition of _lj_crf_outerloop_fast
   if (t_interaction_spec::boundary_type == math::rectangular &&
-      t_interaction_spec::interaction_func == simulation::lj_crf_func &&
-      sim.param().innerloop.method != simulation::sla_cuda) {
+      t_interaction_spec::interaction_func == simulation::lj_crf_func/* &&
+      sim.param().innerloop.method != simulation::sla_cuda*/) {
     _lj_crf_outerloop_fast(topo, conf, sim, pairlist_solute, pairlist_solvent,
                         storage, longrange, timer, master);
     return;
@@ -294,6 +298,13 @@ void interaction::Nonbonded_Outerloop
   const unsigned int end = topo.num_solute_atoms();
 
   unsigned int i;
+    
+#ifdef __AVX2__
+  interaction::lj_crf_fast_solute_loop_avx2(topo, conf, sim, pairlist_solute
+                                          , storage, periodicity, innerloop);
+  i = end;
+
+#else
   for (i = 0; i < end; ++i) {
     const math::Vec posI = conf.current().pos(i);
     const unsigned int eg_i = topo.atom_energy_group(i);
@@ -393,6 +404,7 @@ unsigned int i_deb;
   }
   */
 /*DEBUG end*/
+#endif // __AVX2__
 
   // cuda doesn't do solvent-solvent here
   if (sim.param().innerloop.method == simulation::sla_cuda) return;

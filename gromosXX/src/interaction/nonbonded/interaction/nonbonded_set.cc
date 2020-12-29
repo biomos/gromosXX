@@ -423,6 +423,9 @@ int interaction::Nonbonded_Set
 
   m_storage.force.resize(num_atoms);
   m_longrange_storage.force.resize(num_atoms);
+  // add padding to allow vectorized reads/writes
+  m_storage.force.reserve(num_atoms+1);
+  m_longrange_storage.force.reserve(num_atoms+1);
 
   m_storage.energies.
     resize(unsigned(conf.current().energies.bond_energy.size()),

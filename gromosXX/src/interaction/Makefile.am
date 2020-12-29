@@ -49,6 +49,7 @@ xxintnbint_HEADERS = nonbonded/interaction/nonbonded_parameter.h\
 	nonbonded/interaction/nonbonded_innerloop.cc\
 	nonbonded/interaction/solvent_innerloop.cc\
 	nonbonded/interaction/nonbonded_outerloop.h\
+	nonbonded/interaction/avx_loops.h\
 	nonbonded/interaction/perturbed_nonbonded_term.h\
 	nonbonded/interaction/perturbed_nonbonded_term.cc\
 	nonbonded/interaction/perturbed_nonbonded_innerloop.h\

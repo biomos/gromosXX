@@ -55,6 +55,22 @@ namespace interaction
      double &f,
      double &e_lj, double &e_crf
     );
+  
+  #ifdef __AVX2__
+    /**
+     * (normal) interaction, vectorized version
+     */
+    void lj_crf_innerloop_avx
+    (
+     topology::Topology & topo, 
+     const unsigned int i,
+     const __m128i & m128i_js,
+     const __m256d & m256d_d2,
+     const __m128i & m128i_mask,
+     __m256d & m256d_f,
+     __m256d & m256d_e_lj, __m256d & m256d_e_crf
+    );
+  #endif // __AVX2__
 
     /**
      * sasa adjustment

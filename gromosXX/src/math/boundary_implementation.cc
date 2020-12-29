@@ -8,6 +8,9 @@
 #undef SUBMODULE
 #define MODULE math
 
+#ifdef __AVX2__
+  #include <immintrin.h>
+#endif
 
 #ifdef WIN32
 // Converts a floating point value to an integer, very fast.
@@ -321,6 +324,150 @@ inline int math::Boundary_Implementation<math::triclinic>
    return 0;
   */
 }
+
+#ifdef __AVX2__
+/**
+ * nearest image : rectangular
+ */
+inline void math::Boundary_Implementation<math::rectangular>
+::nearest_image(const double *v1, const double *v2, double *nim
+              , const unsigned *ids1, const unsigned *ids2
+              , int *ret, const unsigned N) const
+/** Takes 4*N vectors and calculates their nims
+ */
+{
+  // nim = v1 - v2;
+  static const int ns[3] = {9, 3, 1};
+  static const unsigned stride[4] = {0, 8*3, 8*6, 8*9};
+  __m128i vindex = _mm_loadu_si128((__m128i*)stride);
+  for (unsigned i = 0; i < N; ++i) {
+    __m256d m256_v1, m256_v2, m256_gt, m256_lt;
+    __m256i m256i_n = _mm256_set1_epi64x(0);
+    __m256d m256_nims[3];
+    for (unsigned j = 0; j < 3; ++j) {
+      // initialize box vectors
+      __m256d m256_half_box = _mm256_set1_pd(m_half_box[i]);
+      __m256d m256_2half_box = m256_half_box * 2;
+      // initialize vectors
+      m256_v1 = _mm256_i32gather_pd(v1, vindex, 1);
+      m256_v2 = _mm256_i32gather_pd(v2, vindex, 1);
+      m256_nims[j] = _mm256_sub_pd(m256_v1, m256_v2);
+
+      //greater-than, ordered, signaling
+      m256_gt = _mm256_cmp_pd(m256_nims[j], m256_half_box, _CMP_GT_OS);
+      //less-than, ordered, signaling
+      m256_lt = _mm256_cmp_pd(m256_nims[j], -m256_half_box, _CMP_LT_OS);
+      m256i_n = _mm256_add_epi64(
+                  m256i_n
+                , _mm256_and_si256(
+                    _mm256_castpd_si256(m256_gt)
+                  , _mm256_set1_epi64x(-ns[j])
+                  )
+                );
+      m256i_n = _mm256_add_epi64(
+                  m256i_n
+                , _mm256_and_si256(
+                    _mm256_castpd_si256(m256_lt)
+                  , _mm256_set1_epi64x(ns[j])
+                  )
+                );
+      __m256d m256_mask = _mm256_or_pd(m256_gt, m256_lt);
+      while (_mm256_movemask_pd(m256_mask) != 0) {
+        __m256d m256_shift_down = _mm256_and_pd(m256_gt, -m256_2half_box);
+        __m256d m256_shift_up = _mm256_and_pd(m256_lt, m256_2half_box);
+        __m256d m256_shift = _mm256_or_pd(m256_shift_up, m256_shift_down);
+        m256_nims[j] = _mm256_add_pd(m256_nims[j], m256_shift);
+        m256_gt = _mm256_cmp_pd(m256_nims[j], m256_half_box, _CMP_GT_OS);
+        m256_lt = _mm256_cmp_pd(m256_nims[j], -m256_half_box, _CMP_LT_OS);
+        m256_mask = _mm256_or_pd(m256_gt, m256_lt);
+      }
+      m256i_n = _mm256_add_epi64(
+                  m256i_n
+                , _mm256_and_si256(
+                    _mm256_castpd_si256(m256_lt)
+                  , _mm256_set1_epi64x(ns[j])
+                  )
+                );
+    }
+    for (unsigned j = 0; j < 3; ++j) {
+      // TODO: Permute
+      // current alignment nim1_x, ... , nim4_x, nim1_y, ... , nim4_y, nim1_z, ... , nim4_z
+      // should be changed to nim1_x, nim1_y, nim1_z, ..., nim4_x, nim4_y, nim4_z,
+      _mm256_storeu_pd(&nim[4*(3*i+j)], m256_nims[j]);
+    }
+    _mm256_storeu_si256((__m256i*)ret, m256i_n);
+  }
+
+/*
+  io::messages.add("AVX2 instructions not supported in this build",
+                  "Boundary_Implementation", io::message::critical);
+  return;
+*/
+}
+
+/**
+ * nearest image : rectangular
+ */
+inline void math::Boundary_Implementation<math::rectangular>
+::nearest_image(const __m256d m256_v1[3], const __m256d m256_v2[3], __m256d nim[3]
+              , __m128i *ret) const
+/** Takes 4*N vectors and calculates their nims
+ * other possible versions 
+ * direct loadu, would need rearrangement of data using _mm256_permute4x64_pd and _mm256_permute2f128_pd
+ * or use _mm256_i64gather_pd for striding (cool!)
+ *::nearest_image(VArray const &v1, VArray const &v2, VArray &nim)const
+ * single vector with 4 others
+ *::nearest_image(Vec const &v1, VArray const &v2, VArray &nim)const
+ */
+{
+  // nim = v1 - v2;
+  static const int ns[3] = {9, 3, 1};
+  __m256d m256_gt, m256_lt;
+  __m256i m256i_n = _mm256_set1_epi64x(0);
+  __m256d m256_half_box[3];
+  __m256d m256_2half_box[3];
+  for (unsigned i = 0; i < 3; ++i) {
+    m256_half_box[i] = _mm256_set1_pd(m_half_box[i]);
+    m256_2half_box[i] = m256_half_box[i] * 2;
+  }
+
+  for (unsigned i = 0; i < 3; ++i) {
+    nim[i] = _mm256_sub_pd(m256_v1[i], m256_v2[i]);
+
+    //greater-than, ordered, signaling
+    m256_gt = _mm256_cmp_pd(nim[i], m256_half_box[i], _CMP_GT_OS);
+    //less-than, ordered, signaling
+    m256_lt = _mm256_cmp_pd(nim[i], -m256_half_box[i], _CMP_LT_OS);
+    m256i_n = _mm256_sub_epi32(
+                m256i_n
+              , _mm256_and_si256(
+                  _mm256_castpd_si256(m256_gt)
+                , _mm256_set1_epi32(ns[i])
+                )
+              );
+    m256i_n = _mm256_add_epi32(
+                m256i_n
+              , _mm256_and_si256(
+                  _mm256_castpd_si256(m256_lt)
+                , _mm256_set1_epi32(ns[i])
+                )
+              );
+    __m256d m256_mask = _mm256_or_pd(m256_gt, m256_lt);
+    while (_mm256_movemask_pd(m256_mask) != 0) {
+      const __m256d m256_shift_down = _mm256_and_pd(m256_gt, -m256_2half_box[i]);
+      const __m256d m256_shift_up = _mm256_and_pd(m256_lt, m256_2half_box[i]);
+      const __m256d m256_shift = _mm256_or_pd(m256_shift_up, m256_shift_down);
+      nim[i] = _mm256_add_pd(nim[i], m256_shift);
+      m256_gt = _mm256_cmp_pd(nim[i], m256_half_box[i], _CMP_GT_OS);
+      m256_lt = _mm256_cmp_pd(nim[i], -m256_half_box[i], _CMP_LT_OS);
+      m256_mask = _mm256_or_pd(m256_gt, m256_lt);
+    }
+  }
+  static const __m256i shuffle = {(long long)2<<32|0, (long long)6<<32|4, 0, 0};
+  *ret = _mm256_castsi256_si128(_mm256_permutevar8x32_epi32(m256i_n, shuffle));
+}
+#endif // __AVX2__
+
         
 ////////////////////////////////////////////////////////////////////////////////
 // grid stuff

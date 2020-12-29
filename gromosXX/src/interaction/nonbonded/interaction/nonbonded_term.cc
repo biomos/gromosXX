@@ -12,6 +12,10 @@
 
 #include "simulation/parameter.h"
 
+#ifdef __AVX2__
+  #include <immintrin.h>
+#endif // __AVX2__
+
 /**
  * helper function to initialize the constants.
  */
@@ -257,6 +261,82 @@ inline void interaction::Nonbonded_Term
           << " crf_cut2i=" << m_crf_cut3i[eps]);
 
 }
+
+#ifdef __AVX2__
+/**
+ * helper function to calculate the force and energy for
+ *  given atom pairs.
+ */
+inline void interaction::Nonbonded_Term
+::lj_crf_interaction_avx(const __m256d &dist2,
+        const __m256d &c6, const __m256d &c12,
+        const __m256d &q,
+        __m256d &force, __m256d &e_lj, __m256d &e_crf, unsigned int eps) {
+  DEBUG(14, "\t\tnonbonded term");
+
+  //assert(abs2(r) != 0);
+  //const double dist2 = abs2(r);
+  
+  //assert(dist2 > 0);
+  assert(!_mm256_movemask_pd(_mm256_cmp_pd(dist2, _mm256_set1_pd(0.0), _CMP_LE_OS)));
+  
+  //const double dist2i = 1.0 / dist2;
+  const __m256d dist2i = _mm256_div_pd(_mm256_set1_pd(1.0), dist2);
+  //const double q_eps = q * math::four_pi_eps_i;
+  const __m256d m256d_four_pi_eps_i = _mm256_set1_pd(math::four_pi_eps_i);
+  const __m256d q_eps = _mm256_mul_pd(q, m256d_four_pi_eps_i);
+  //const double dist6i = dist2i * dist2i * dist2i;
+  const __m256d dist6i = _mm256_mul_pd(dist2i,
+                            _mm256_mul_pd(dist2i, dist2i));
+  //const double disti = sqrt(dist2i);
+  const __m256d disti = _mm256_sqrt_pd(dist2i);
+  //const double c12_dist6i = c12 * dist6i;
+  const __m256d c12_dist6i = _mm256_mul_pd(c12, dist6i);
+
+  //e_lj = (c12_dist6i - c6) * dist6i;
+
+  e_lj = _mm256_mul_pd(dist6i,
+            _mm256_sub_pd(c12_dist6i, c6));
+
+const __m256d m256d_crf_2cut3i = _mm256_set1_pd(m_crf_2cut3i[eps]);
+const __m256d m256d_crf_cut3i = _mm256_set1_pd(m_crf_cut3i[eps]);
+const __m256d m256d_crf_cut = _mm256_set1_pd(m_crf_cut[eps]);
+
+  //e_crf = q_eps *
+  //        (disti - m_crf_2cut3i[eps] * dist2 - m_crf_cut[eps]);
+#ifdef __FMA__
+  e_crf = _mm256_fmadd_pd(dist2,
+                          m256d_crf_2cut3i,
+                          m256d_crf_cut);
+#else
+  e_crf = _mm256_mul_pd(dist2,
+                        m256d_crf_2cut3i);
+  e_crf = _mm256_add_pd(e_crf,
+                        m256d_crf_cut);
+#endif // __FMA__
+  e_crf = _mm256_sub_pd(disti, e_crf);
+  e_crf = _mm256_mul_pd(e_crf, q_eps);
+
+  //force = (c12_dist6i + c12_dist6i - c6) * 6.0 * dist6i * dist2i +
+  //        q_eps * (disti * dist2i + m_crf_cut3i[eps]);
+  __m256d f_lj = _mm256_add_pd(c12_dist6i, c12_dist6i);
+  f_lj = _mm256_sub_pd(f_lj, c6);
+  f_lj = _mm256_mul_pd(f_lj, _mm256_set1_pd(6.0));
+  f_lj = _mm256_mul_pd(f_lj, dist6i);
+  f_lj = _mm256_mul_pd(f_lj, dist2i);
+
+__m256d f_crf;
+#ifdef __FMA__ 
+  f_crf = _mm256_fmadd_pd(disti, dist2i, m256d_crf_cut3i);
+  force = _mm256_fmadd_pd(f_crf, q_eps, f_lj);
+#else
+  f_crf = _mm256_mul_pd(disti, dist2i);
+  f_crf = _mm256_add_pd(f_crf, m256d_crf_cut3i);
+  f_crf = _mm256_mul_pd(f_crf, q_eps);
+  force = _mm256_add_pd(f_lj, f_crf);
+#endif // __FMA__
+}
+#endif // __AVX2__
 
 
 /**
