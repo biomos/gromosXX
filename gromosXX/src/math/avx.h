@@ -85,7 +85,7 @@ namespace avx
    * 2x _mm256_shuffle_pd       LAT 1 THR 1
    * 4x _mm256_permute2f128_pd  LAT 3 THR 1
    * 
-   * Example: store positions/forces to process with AVX2
+   * Example: store positions/forces from AVX2
    */
   inline __attribute__((always_inline)) void unpackCP(const __m256d &x
                                                     , const __m256d &y
@@ -124,7 +124,7 @@ namespace avx
    * 2x _mm256_shuffle_pd       LAT 1 THR 1
    * 4x _mm256_permute2f128_pd  LAT 3 THR 1
    * 
-   * Example: store positions/forces to process with AVX2
+   * Example: store positions/forces from AVX2
    */
   inline __attribute__((always_inline)) void unpackIP(const __m256d &v1
                                                     , const __m256d &v2
@@ -158,6 +158,8 @@ namespace avx
   /**
    * transpose CP : (x0, x1, x2, x3) ... (z0, z1, z2, z3)
    *        to IP : (x0, y0, z0, x1) ... (z2, x3, y3, z3)
+   * 
+   * in place
    * 
    * 6x _mm256_permute2f128_pd LAT 3 THR 1
    * 7x _mm256_permute4x64_pd LAT 3 THR 1
@@ -211,12 +213,12 @@ namespace avx
 
   /**
    * outer product and sum from:
-   *  IP vector v1: x10, y10, z10, x11, ... z13, x14, y14, z14
-   *  IP vector v2: x20, y20, z20, x21, ... z23, x24, y24, z24
+   *  IP vector v1: x10, y10, z10, x11, ... z12, x13, y13, z13
+   *  IP vector v2: x20, y20, z20, x21, ... z22, x23, y23, z23
    * 
-   * to: / x10*x20, x10*y20, x10*z20 \         / x14*x24, x14*y14, x14*z24 \
-   *     | y10*x20, y10*y20, y10*z20 | + ... + | y14*x24, y14*y14, y14*z24 |
-   *     \ z10*x20, z10*y20, z10*z20 /         \ z14*x24, z14*y14, z14*z24 /
+   * to: / x10*x20, x10*y20, x10*z20 \         / x13*x23, x13*y13, x13*z23 \
+   *     | y10*x20, y10*y20, y10*z20 | + ... + | y13*x23, y13*y13, y13*z23 |
+   *     \ z10*x20, z10*y20, z10*z20 /         \ z13*x23, z13*y13, z13*z23 /
    * in row major order
    * 
    * 20x permute4x64
@@ -320,6 +322,72 @@ namespace avx
     _mm256_storeu_pd(&mat[0], res1);
     _mm256_storeu_pd(&mat[4], res2);
     _mm_store_sd(&mat[8], _mm256_castpd256_pd128(res3));
+  }
+
+  /**
+   * outer product and sum from:
+   *  IP vector v1: x10, x11, x12, x13, ... z10, z11, z12, z13
+   *  IP vector v2: x20, x21, x22, x23, ... z20, z21, z22, z23
+   * 
+   * to: / x10*x20, x10*y20, x10*z20 \         / x13*x23, x13*y13, x13*z23 \
+   *     | y10*x20, y10*y20, y10*z20 | + ... + | y13*x23, y13*y13, y13*z23 |
+   *     \ z10*x20, z10*y20, z10*z20 /         \ z13*x23, z13*y13, z13*z23 /
+   * in row major order
+   * 
+   * 9x  mul          LAT 4  THR 0.5
+   * 8x  hadd         LAT 6  THR 2
+   * 5x  permute4x64  LAT 3  THR 1
+   * 
+   * 
+   * Usage: virial_tensor
+   */
+  template <mode M>
+  inline __attribute__((always_inline)) void outerCP(const __m256d v1[3], const __m256d v2[3], double mat[9]) {
+    __m256d xx = _mm256_mul_pd(v1[0], v2[0]);
+    __m256d xy = _mm256_mul_pd(v1[0], v2[1]);
+    __m256d xz = _mm256_mul_pd(v1[0], v2[2]);
+    
+    __m256d yx = _mm256_mul_pd(v1[1], v2[0]);
+    __m256d yy = _mm256_mul_pd(v1[1], v2[1]);
+    __m256d yz = _mm256_mul_pd(v1[1], v2[2]);
+    
+    __m256d zx = _mm256_mul_pd(v1[2], v2[0]);
+    __m256d zy = _mm256_mul_pd(v1[2], v2[1]);
+    __m256d zz = _mm256_mul_pd(v1[2], v2[2]);
+
+    __m256d xx_xz = _mm256_hadd_pd(xx, xz);
+    __m256d xy_yx = _mm256_hadd_pd(xy, yx);
+    __m256d yy_zx = _mm256_hadd_pd(yy, zx);
+    __m256d yz_zy = _mm256_hadd_pd(yz, zy);
+
+    xx_xz = _mm256_permute4x64_pd(xx_xz, 0xD8);
+    xy_yx = _mm256_permute4x64_pd(xy_yx, 0xD8);
+    yy_zx = _mm256_permute4x64_pd(yy_zx, 0xD8);
+    yz_zy = _mm256_permute4x64_pd(yz_zy, 0xD8);
+
+    __m256d res1 = _mm256_hadd_pd(xx_xz, xy_yx);
+    __m256d res2 = _mm256_hadd_pd(yy_zx, yz_zy);
+
+    // and the zz-case
+    zz = _m256_hadd_pd(zz, zz);
+    zz = _mm256_permute4x64_pd(zz, 0xD8);
+    __m256d res3 = _m256_hadd_pd(zz, zz);
+
+    // add-and-write or just write
+    if (M == mode::add) {
+      __m256d mat_old1 = _mm256_loadu_pd(&mat[0]);
+      __m256d mat_old2 = _mm256_loadu_pd(&mat[4]);
+      __m256d mat_old3 = _mm256_broadcast_sd(&mat[8]);
+
+      res1 = _mm256_add_pd(res1, mat_old1);
+      res2 = _mm256_add_pd(res2, mat_old2);
+      res3 = _mm256_add_pd(res3, mat_old3);
+    }
+
+    _mm256_storeu_pd(&mat[0], res1);
+    _mm256_storeu_pd(&mat[4], res2);
+    _mm_store_sd(&mat[8], _mm256_castpd256_pd128(res3));
+
   }
 } // math
 #endif // __AVX2__
