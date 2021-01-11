@@ -94,10 +94,10 @@ void interaction::Nonbonded_Outerloop
         util::Algorithm_Timer & timer, bool master) {
   DEBUG(7, "\tcalculate interactions");
 
-  // WORKAROUND! See definition of _lj_crf_outerloop_fast
+  // WORKAROUND! See definition of _lj_crf_outerloop_fast ORIOL_GAMD: TO DO fast outerloop implementation
   if (t_interaction_spec::boundary_type == math::rectangular &&
       t_interaction_spec::interaction_func == simulation::lj_crf_func &&
-      sim.param().innerloop.method != simulation::sla_cuda) {
+      sim.param().innerloop.method != simulation::sla_cuda && not sim.param().gamd.gamd) {
     _lj_crf_outerloop_fast(topo, conf, sim, pairlist_solute, pairlist_solvent,
                         storage, longrange, timer, master);
     return;
@@ -274,7 +274,6 @@ void interaction::Nonbonded_Outerloop
         Storage & storage, bool longrange,
         util::Algorithm_Timer & timer, bool master) {
   DEBUG(7, "\tcalculate interactions lj_crf_outerloop_fast");
-
   math::Periodicity<math::rectangular> periodicity(conf.current().box);
   periodicity.recalc_shift_vectors();
   Nonbonded_Innerloop<interaction::Interaction_Spec<math::rectangular, simulation::lj_crf_func> > innerloop(m_param);

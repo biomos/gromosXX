@@ -2973,6 +2973,7 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
             << std::setw(18) << e.gamd_ET[i]
             << std::setw(18) << e.gamd_KD[i] 
             << std::setw(18) << e.gamd_KT[i] << "\n";
+  }
 
   // write eds energies (vr,{V_i}) here
 

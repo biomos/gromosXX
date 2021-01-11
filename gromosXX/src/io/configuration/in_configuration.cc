@@ -1384,8 +1384,7 @@ bool io::In_Configuration::read_gamdstat
         os << "\t" << "GAMDSTAT\n";
 
         for (unsigned int i = 0; i < sim.param().gamd.agroups; i++) {
-          os << "\t" << sim.param().eds.eir[i] << "\t"
-            << sim.param().gamd.M2D[i] << "\t"
+          os << "\t" << sim.param().gamd.M2D[i] << "\t"
             << sim.param().gamd.M2T[i] << "\t"
             << sim.param().gamd.VmaxD[i] << "\t"
             << sim.param().gamd.VmaxT[i] << "\t"
@@ -3546,10 +3545,7 @@ bool io::In_Configuration::_read_gamdstat(
   for (unsigned int i = 0; i < last; i++, it++) {
     _lineStream.clear();
     _lineStream.str(*it);
-    _lineStream >>  sim.param().eds.eir[i] >> 
-                    sim.param().gamd.k0D[i] >> 
-                    sim.param().gamd.k0T[i] >>
-                    sim.param().gamd.M2D[i] >>
+    _lineStream >>  sim.param().gamd.M2D[i] >>
                     sim.param().gamd.M2T[i] >>
                     sim.param().gamd.VmaxD[i] >>
                     sim.param().gamd.VmaxT[i] >>
