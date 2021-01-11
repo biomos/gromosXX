@@ -123,6 +123,10 @@ void configuration::Energy::zero(bool potential, bool kinetic)
     gamd_DV_total = 0.0;
     gamd_dihedral_total.assign(gamd_dihedral_total.size(), 0.0);
     gamd_potential_total.assign(gamd_potential_total.size(), 0.0);
+    gamd_ED.assign(gamd_ED.size(), 0.0);
+    gamd_ET.assign(gamd_ET.size(), 0.0);
+    gamd_KD.assign(gamd_KD.size(), 0.0);
+    gamd_KT.assign(gamd_KT.size(), 0.0);
     gamd_DV.assign(gamd_DV.size(), 0.0);    
     // ANITA
     // total A_lj for each lambda set to zero
