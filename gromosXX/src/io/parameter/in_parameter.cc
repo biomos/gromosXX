@@ -4078,6 +4078,7 @@ void io::In_Parameter::read_GAMD(simulation::Parameter & param,
     param.gamd.VminT.resize(param.gamd.agroups, 0.0);
     param.gamd.sigmaVD.resize(param.gamd.agroups, 0.0);
     param.gamd.sigmaVT.resize(param.gamd.agroups, 0.0);
+    param.gamd.stepsdone = 0;
 
     block.get_final_messages();
     }

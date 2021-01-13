@@ -2949,7 +2949,7 @@ namespace simulation
      * - threshold: lower bound
      * - maximum standard deviation: 10 KBT
      */
-    gamd_struct() : gamd(false), search(no_search), form(dual_boost), thresh(lower_bound), ntisearch(0), agroups(1), dihstd(24.79), totstd(24.79), equilibration(0){}
+    gamd_struct() : gamd(false), search(no_search), form(dual_boost), thresh(lower_bound), ntisearch(0), agroups(1), dihstd(24.79), totstd(24.79), equilibration(0), stepsdone(0){}
     /**
      * do gaussian accelerated md:
      */
@@ -3065,6 +3065,10 @@ namespace simulation
      * number of equilibration steps
      */
     int equilibration;
+    /**
+     * number of steps done for statistics update
+     */
+    int stepsdone;
   } /** Gaussian accelerated md */ gamd;  
    
  struct reeds_struct : public replica_struct

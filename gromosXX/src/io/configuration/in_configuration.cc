@@ -1382,6 +1382,7 @@ bool io::In_Configuration::read_gamdstat
       if (sim.param().gamd.ntisearch == false) {
         _read_gamdstat(buffer, sim, sim.param().gamd.agroups);
         os << "\t" << "GAMDSTAT\n";
+        os << "\t" << sim.param().gamd.stepsdone;
 
         for (unsigned int i = 0; i < sim.param().gamd.agroups; i++) {
           os << "\t" << sim.param().gamd.M2D[i] << "\t"
@@ -3541,7 +3542,11 @@ bool io::In_Configuration::_read_gamdstat(
   DEBUG(8, "read configuration for GAMD parameter search simulation");
   // no title in buffer!
   std::vector<std::string>::const_iterator it = buffer.begin(),
-    to = buffer.end() - 1;
+  to = buffer.end() - 1;
+  _lineStream.clear();
+  _lineStream.str(*it);
+  _lineStream >> sim.param().gamd.stepsdone;
+  it++;
   for (unsigned int i = 0; i < last; i++, it++) {
     _lineStream.clear();
     _lineStream.str(*it);
