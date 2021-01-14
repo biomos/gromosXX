@@ -373,7 +373,19 @@ int interaction::Nonbonded_Set::update_configuration
             m_storage.energies.B_crf_energy[i][j][k];
       }
     }
-  } //ANITA 
+  } //ANITA
+
+  // ORIOL_GAMD
+  if (sim.param().gamd.gamd){
+    const unsigned int nr_agroups = unsigned(sim.param().gamd.agroups);
+    for (unsigned int agroup1=0; agroup1 < nr_agroups; ++agroup1){
+      for (unsigned int agroup2=0; agroup2 < nr_agroups; ++agroup2){
+        for(unsigned int atomn=0; atomn<num_atoms; ++atomn){
+          conf.special().gamd.total_force[agroup1][agroup2](atomn) +=  m_storage.force_gamd[agroup1][agroup2](atomn)
+        } // loop over atoms
+      } // loop over acceleration groups
+    } // loop over acceleration groups
+  } // end if
 
   // no components in lattice sum methods!
   
@@ -388,7 +400,16 @@ int interaction::Nonbonded_Set::update_configuration
   if (sim.param().pcouple.virial){
     DEBUG(7, "\tadd set virial");
   	conf.current().virial_tensor += m_storage.virial_tensor;
-  }
+      // ORIOL_GAMD
+      if (sim.param().gamd.gamd){
+        const unsigned int nr_agroups = unsigned(sim.param().gamd.agroups);
+        for (unsigned int agroup1=0; agroup1 < nr_agroups; ++agroup1){
+          for (unsigned int agroup2=0; agroup2 < nr_agroups; ++agroup2){
+            conf.special().gamd.virial_tensor[agroup1][agroup2] +=  m_storage.virial_tensor_gamd[agroup1][agroup2]
+          } // loop over acceleration groups
+        } // loop over acceleration groups
+      } // end if
+  } // end virial if
   
   return 0;
 }
