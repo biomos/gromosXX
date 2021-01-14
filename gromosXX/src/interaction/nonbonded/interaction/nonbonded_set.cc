@@ -381,7 +381,7 @@ int interaction::Nonbonded_Set::update_configuration
     for (unsigned int agroup1=0; agroup1 < nr_agroups; ++agroup1){
       for (unsigned int agroup2=0; agroup2 < nr_agroups; ++agroup2){
         for(unsigned int atomn=0; atomn<num_atoms; ++atomn){
-          conf.special().gamd.total_force[agroup1][agroup2](atomn) +=  m_storage.force_gamd[agroup1][agroup2](atomn)
+          conf.special().gamd.total_force[agroup1][agroup2](atomn) +=  m_storage.force_gamd[agroup1][agroup2](atomn);
         } // loop over atoms
       } // loop over acceleration groups
     } // loop over acceleration groups
@@ -405,7 +405,7 @@ int interaction::Nonbonded_Set::update_configuration
         const unsigned int nr_agroups = unsigned(sim.param().gamd.agroups);
         for (unsigned int agroup1=0; agroup1 < nr_agroups; ++agroup1){
           for (unsigned int agroup2=0; agroup2 < nr_agroups; ++agroup2){
-            conf.special().gamd.virial_tensor[agroup1][agroup2] +=  m_storage.virial_tensor_gamd[agroup1][agroup2]
+            conf.special().gamd.virial_tensor[agroup1][agroup2] +=  m_storage.virial_tensor_gamd[agroup1][agroup2];
           } // loop over acceleration groups
         } // loop over acceleration groups
       } // end if
