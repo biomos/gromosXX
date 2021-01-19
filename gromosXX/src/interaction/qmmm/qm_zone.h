@@ -16,7 +16,7 @@ namespace interaction {
   struct QM_Atom;
   struct MM_Atom;
   class QM_Link;
-  class PairlistContainer;
+  struct PairlistContainer;
   /**
    * @class QM_Zone
    * Holds all information on QM Zone - this will be passed between QM worker and QMMM interaction
