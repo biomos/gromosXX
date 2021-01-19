@@ -899,7 +899,8 @@ void io::In_QMMM::read_zone(topology::Topology& topo
     io::messages.add(msg.str(), "In_QMMM", io::message::error);
     return;
   }
-
+  // Count number of electrons and check consistency with charge and multiplicity
+  int num_elec = -charge;
   unsigned qmi, qmz, qmli;
   for (std::vector<std::string>::const_iterator it = buffer.begin() + 2
                                               , to = buffer.end() - 1
@@ -972,6 +973,18 @@ void io::In_QMMM::read_zone(topology::Topology& topo
       DEBUG(15, "Linking " << qmi << " to " << qmli);
       topo.qmmm_link().insert(std::make_pair(qmi - 1, qmli - 1));
     }
+
+    num_elec += qmz + (bool)qmli;
+  }
+
+  // Check charge and multiplicity consistency
+  bool open_shell = num_elec % 2;
+  // sm=0 is closed-shell in MNDO program and is in principle sm=1
+  if (!spin_mult) spin_mult = 1;
+  if (open_shell == spin_mult % 2) {
+      std::ostringstream msg;
+      msg << blockname << " block: " << num_elec << " electrons but multiplicity " << spin_mult;
+      io::messages.add(msg.str(), "In_QMMM", io::message::warning);
   }
 
   for (std::set< std::pair<unsigned,unsigned> >::const_iterator
