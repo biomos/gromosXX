@@ -288,10 +288,9 @@ int interaction::Nonbonded_Set
 	m_storage.virial_tensor += m_longrange_storage.virial_tensor;
   //ORIOL_GAMD
   if(sim.param().gamd.gamd){
-    for (unsigned int i = 0; i < lj_e_size; ++i) {
-      for (unsigned int j = 0; j < lj_e_size; ++j) {
-      int gamdi = topo.gamd_accel_group(i);
-      int gamdj = topo.gamd_accel_group(j);
+    const unsigned int nr_agroups = unsigned(sim.param().gamd.agroups);
+    for (unsigned int gamdi = 0; gamdi < nr_agroups; ++gamdi) {
+      for (unsigned int gamdj = 0; gamdj < nr_agroups; ++gamdj) {
       m_storage.virial_tensor_gamd[gamdi][gamdj] += m_longrange_storage.virial_tensor_gamd[gamdi][gamdj];
       m_storage.virial_tensor_gamd[gamdi][gamdj] += m_longrange_storage.virial_tensor_gamd[gamdi][gamdj];
       }
@@ -333,8 +332,21 @@ int interaction::Nonbonded_Set::update_configuration
     }
     
   } else{ // no multistep
-    for(unsigned int i=0; i<num_atoms; ++i)
+    for(unsigned int i=0; i<num_atoms; ++i){
       f(i) += m_storage.force(i);
+    }
+      // ORIOL_GAMD
+    if (sim.param().gamd.gamd){
+      const unsigned int nr_agroups = unsigned(sim.param().gamd.agroups);
+      for (unsigned int agroup1=0; agroup1 < nr_agroups; ++agroup1){
+        for (unsigned int agroup2=0; agroup2 < nr_agroups; ++agroup2){
+          for(unsigned int atomn=0; atomn<num_atoms; ++atomn){
+            conf.special().gamd.total_force[agroup1][agroup2](atomn) +=  m_storage.force_gamd[agroup1][agroup2](atomn);
+          } // loop over atoms
+        } // loop over acceleration groups
+      } // loop over acceleration groups
+    } // end if
+    DEBUG(5, "FINISHING UPATING FORCES");
   }
   
   // (MULTISTEP: and keep energy constant)
@@ -375,17 +387,6 @@ int interaction::Nonbonded_Set::update_configuration
     }
   } //ANITA
 
-  // ORIOL_GAMD
-  if (sim.param().gamd.gamd){
-    const unsigned int nr_agroups = unsigned(sim.param().gamd.agroups);
-    for (unsigned int agroup1=0; agroup1 < nr_agroups; ++agroup1){
-      for (unsigned int agroup2=0; agroup2 < nr_agroups; ++agroup2){
-        for(unsigned int atomn=0; atomn<num_atoms; ++atomn){
-          conf.special().gamd.total_force[agroup1][agroup2](atomn) +=  m_storage.force_gamd[agroup1][agroup2](atomn);
-        } // loop over atoms
-      } // loop over acceleration groups
-    } // loop over acceleration groups
-  } // end if
 
   // no components in lattice sum methods!
   
@@ -401,11 +402,22 @@ int interaction::Nonbonded_Set::update_configuration
     DEBUG(7, "\tadd set virial");
   	conf.current().virial_tensor += m_storage.virial_tensor;
       // ORIOL_GAMD
+      DEBUG(5, "UPDATE VIRIAL");
       if (sim.param().gamd.gamd){
         const unsigned int nr_agroups = unsigned(sim.param().gamd.agroups);
         for (unsigned int agroup1=0; agroup1 < nr_agroups; ++agroup1){
           for (unsigned int agroup2=0; agroup2 < nr_agroups; ++agroup2){
-            conf.special().gamd.virial_tensor[agroup1][agroup2] +=  m_storage.virial_tensor_gamd[agroup1][agroup2];
+            for (int a = 0; a < 3; ++a) {
+               for (int b = 0; b < 3; ++b) {
+                 if ( m_storage.virial_tensor_gamd[agroup1][agroup2](b, a) > -10 &&  m_storage.virial_tensor_gamd[agroup1][agroup2](b, a) < 1000){
+                 conf.special().gamd.virial_tensor[agroup1][agroup2](b, a) +=  m_storage.virial_tensor_gamd[agroup1][agroup2](b, a);
+                 }
+                 DEBUG(5, conf.special().gamd.virial_tensor[agroup1][agroup2](b,a));
+                 DEBUG(5,  m_storage.virial_tensor_gamd[agroup1][agroup2](b, a));   
+                 DEBUG(5, conf.special().gamd.virial_tensor[agroup1][agroup2](b, a) + m_storage.virial_tensor_gamd[agroup1][agroup2](b, a));
+               }
+            }
+            DEBUG(5, "VIRIAL CICLED COMPLETED");
           } // loop over acceleration groups
         } // loop over acceleration groups
       } // end if
