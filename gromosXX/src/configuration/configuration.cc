@@ -61,6 +61,14 @@ configuration::Configuration::Configuration() {
   for (unsigned int k = 0; k < special().eds.virial_tensor_endstates.size(); ++k) {
     special().eds.virial_tensor_endstates[k] = 0.0;
   }
+
+  //ORIOL_GAMD
+  for (unsigned int a = 0; a < special().gamd.virial_tensor.size(); ++a){
+    special().gamd.virial_tensor_dihe[a] = 0.0;
+    for (unsigned int aa = 0; aa < special().gamd.virial_tensor.size(); ++aa){
+      special().gamd.virial_tensor[a][aa] = 0.0;
+    }
+  }
   
   special().shake_failure_occurred = false;
 }
@@ -90,6 +98,13 @@ configuration::Configuration::Configuration
             conf.special().eds.virial_tensor_endstates[k];
   }
 
+  //ORIOL_GAMD
+  for (unsigned int a = 0; a < special().gamd.virial_tensor.size(); ++a){
+    special().gamd.virial_tensor_dihe[a] = conf.special().gamd.virial_tensor_dihe[a];
+    for (unsigned int aa = 0; aa < special().gamd.virial_tensor.size(); ++aa){
+      special().gamd.virial_tensor[a][aa] =  conf.special().gamd.virial_tensor[a][aa];
+    }
+  }
 
   current().pos = conf.current().pos;
   old().pos = conf.old().pos;
@@ -178,6 +193,7 @@ configuration::Configuration::Configuration
 
   // if this works just like this, why do we need to explicitly copy the virial tensor?
   special().eds = conf.special().eds;
+  special().gamd = conf.special().gamd;
   
   special().lattice_shifts = conf.special().lattice_shifts;
   
@@ -212,6 +228,15 @@ configuration::Configuration & configuration::Configuration::operator=
     special().eds.virial_tensor_endstates[k] =
             conf.special().eds.virial_tensor_endstates[k];
   }
+
+  //ORIOL_GAMD
+  for (unsigned int a = 0; a < special().gamd.virial_tensor.size(); ++a){
+    special().gamd.virial_tensor_dihe[a] = conf.special().gamd.virial_tensor_dihe[a];
+    for (unsigned int aa = 0; aa < special().gamd.virial_tensor.size(); ++aa){
+      special().gamd.virial_tensor[a][aa] =  conf.special().gamd.virial_tensor[a][aa];
+    }
+  }
+
 
   
   current().pos = conf.current().pos;
@@ -291,6 +316,7 @@ configuration::Configuration & configuration::Configuration::operator=
   special().rottrans_constr = conf.special().rottrans_constr;
 
   special().eds = conf.special().eds;
+  special().gamd = conf.special().gamd;
   
   special().lattice_shifts = conf.special().lattice_shifts;
   
