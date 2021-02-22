@@ -308,10 +308,10 @@ namespace topology
     unsigned int sequence_number()const;
     void sequence_number(unsigned int);
     
-    std::vector<unsigned int> M_IAC()const;
+    const std::vector<unsigned int>& M_IAC()const;
     void M_IAC(std::vector<unsigned int>);
 
-    std::vector<double> M_charge()const;
+    const std::vector<double>& M_charge()const;
     void M_charge(std::vector<double>);
     
     double LJ_softcore()const;
@@ -345,10 +345,10 @@ namespace topology
 inline unsigned int topology::EDS_Perturbed_Atom::sequence_number()const{
   return m_sequence_number;
 }
-inline std::vector<unsigned int> topology::EDS_Perturbed_Atom::M_IAC()const{
+inline const std::vector<unsigned int>& topology::EDS_Perturbed_Atom::M_IAC()const{
   return m_M_IAC; 
 }
-inline std::vector<double> topology::EDS_Perturbed_Atom::M_charge()const{
+inline const std::vector<double>& topology::EDS_Perturbed_Atom::M_charge()const{
   return m_M_charge; 
 }
 inline double topology::EDS_Perturbed_Atom::LJ_softcore()const{
