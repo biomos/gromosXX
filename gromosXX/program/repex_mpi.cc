@@ -65,7 +65,7 @@ int main(int argc, char *argv[]) {
 #ifdef XXMPI
   //initializing MPI
   MPI_Init(&argc, &argv);
-  const double start = MPI_Wtime();
+  const double start = util::now();
   int size;
   int rank;
 
@@ -499,7 +499,7 @@ int main(int argc, char *argv[]) {
   //last MASTER OUTPUT
   if(rank == 0){
     //FINAL OUTPUT - Time used:
-    double end = MPI_Wtime();
+    double end = util::now();
     double duration = end - start;
     int durationMin = int(duration/60);
     int durationHour = int(std::floor(durationMin/60));
