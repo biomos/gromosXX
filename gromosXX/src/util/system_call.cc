@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <iostream>
 
+#include <unistd.h>
 #include "system_call.h"
 
 #include "../../config.h"

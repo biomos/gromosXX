@@ -432,6 +432,13 @@ namespace topology
     std::vector<interaction::improper_dihedral_type_struct> const & impdihedral_types() const {return m_impdihedral_types;}
 
     /**
+     * virtual atom types
+     */
+    std::vector<interaction::virtual_atom_type_struct> & virtual_atom_types() {return m_virtual_atom_types;}
+    std::vector<interaction::virtual_atom_type_struct> const & virtual_atom_types() const {return m_virtual_atom_types;}
+	
+
+    /**
      * all exclusions for atom i. Exclusions, 1,4 interactions and Lennard-Jones exceptions
      */
     excl_cont_t::value_type & all_exclusion(unsigned int const i){
@@ -1550,6 +1557,11 @@ namespace topology
      * store all available improper dihedral types
      */
     std::vector<interaction::improper_dihedral_type_struct> m_impdihedral_types;
+
+    /**
+     * store all available improper dihedral types
+     */
+    std::vector<interaction::virtual_atom_type_struct> m_virtual_atom_types;
 
     /**
      * energy groups.

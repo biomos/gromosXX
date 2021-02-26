@@ -114,6 +114,9 @@ void io::In_Topology::read(topology::Topology& topo,
 
   read_block_IMPDIHEDRALTYPE(topo, param, os);
 
+  if (m_block.count("VIRTUALATOMTYPE") != 0)
+    read_block_VIRTUALATOMTYPE(topo, param, os);
+
   read_block_TYPE(topo, param, os);
   read_block_PHYSICALCONSTANTS(topo, param, os);
 
@@ -1030,6 +1033,42 @@ void io::In_Topology::read_block_IMPDIHEDRALTYPE(topology::Topology &topo,
 
 }
 
+void io::In_Topology::read_block_VIRTUALATOMTYPE(topology::Topology &topo,
+        simulation::Parameter &param, std::ostream & os) {
+  std::string blockname = "VIRTUALATOMTYPE";
+  Block block(blockname);
+
+  if (block.read_buffer(m_block[blockname], false) == 0) {
+    DEBUG(7, "reading in "+blockname+" block");
+
+    block_read.insert(blockname);
+
+    int num, type;
+    double dis1, dis2;
+    block.get_next_parameter("NVATY", num, ">=0", "");
+
+    if (num<=0 || block.error() ) return;
+
+    for (int i=0; i<num; i++) {
+      block.get_next_parameter("TYPE", type, "", "");
+      block.get_next_parameter("DIS1", dis1, ">=0", "");
+      block.get_next_parameter("DIS2", dis2, ">=0", "");
+      if (block.error()) {
+        std::string linenumber=io::to_string(num+1);
+        io::messages.add("Bad values in line "+linenumber+" in "+blockname+" block",
+                "In_Topology",
+                io::message::error);
+        break;
+      } else {
+        topo.virtual_atom_types().push_back(interaction::virtual_atom_type_struct(type, dis1, dis2));
+      }
+    }
+
+    block.get_final_messages(false);
+  }
+
+}
+
 void io::In_Topology
 ::read_lj_parameter(std::vector<std::vector
         <interaction::lj_parameter_struct> >
@@ -1645,19 +1684,14 @@ void io::In_Topology::read_block_VIRTUALATOM(topology::Topology& topo,
       _lineStream.clear();
       _lineStream.str(*it);
       int num, n;
-      double dish, disc;
 
       _lineStream >> num;
       ++it;
       topo.resize(topo.num_atoms() + num);
-      _lineStream.clear();
-      _lineStream.str(*it);
-      _lineStream >> dish >> disc;
 
 
       if (!quiet){
-        os << "\tVIRTUALATOMS\n\t" << "\tnumber of atoms : " << num << 
-        "\n\t\tDISH\tDISC\n\t\t" << dish << "\t" << disc;
+        os << "\tVIRTUALATOMS\n\t" << "\tnumber of atoms : " << num; 
       }
       
       // put the rest of the block into a single stream
@@ -1728,6 +1762,20 @@ void io::In_Topology::read_block_VIRTUALATOM(topology::Topology& topo,
                            "InTopology", io::message::error);
         }
         
+        //check for the distances. The virtual atom types have already been handled
+        double dis1=0.0, dis2=0.0;
+        bool found_virtual_atom_type = false;
+        for (unsigned int i=0; i < topo.virtual_atom_types().size(); i++){
+          if(topo.virtual_atom_types()[i].type == t){
+            found_virtual_atom_type = true;
+            dis1 = topo.virtual_atom_types()[i].dis1;
+            dis2 = topo.virtual_atom_types()[i].dis2;
+            break;
+          }
+        }
+        if(!found_virtual_atom_type){
+          io::messages.add("Atom in VIRTUALATOM block uses virtual atom type for which no distances are provided", "InTopology", io::message::error);
+        } 
         member_atoms.clear();
 
         for (int i = 0; i < num_atoms; ++i) {
@@ -1749,7 +1797,7 @@ void io::In_Topology::read_block_VIRTUALATOM(topology::Topology& topo,
                 io::message::critical);
 
         //ADD ATOM
-        util::Virtual_Atom atom(type, member_atoms, dish, disc, 0);
+        util::Virtual_Atom atom(type, member_atoms, dis1, dis2, 0);
         atom.set_charge(q);
         atom.set_iac(iac - 1);
         topo.virtual_atoms_group().atoms()[a_num - 1] = atom;
