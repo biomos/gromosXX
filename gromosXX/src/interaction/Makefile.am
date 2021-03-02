@@ -1,6 +1,9 @@
 AM_CXXFLAGS = @MY_CXXFLAGS@
-AM_CPPFLAGS = -I$(top_srcdir) -I$(top_srcdir)/src -I$(top_srcdir)/src/interaction -I$(top_srcdir)/src/interaction/nonbonded -I$(top_srcdir)/src/interaction/nonbonded/pairlist -I$(top_srcdir)/src/interaction/nonbonded/interaction -I$(top_srcdir)/src/interaction/bonded -I$(top_srcdir)/src/interaction/forcefield -I$(top_srcdir)/src/interaction/special -I$(top_srcdir)/src/interaction/special/xray -I$(top_srcdir)/src/interaction/special/qmmm -I$(top_srcdir)/src/algorithm 
+AM_CPPFLAGS = -I$(top_srcdir) -I$(top_srcdir)/src -I$(top_srcdir)/src/interaction -I$(top_srcdir)/src/interaction/nonbonded -I$(top_srcdir)/src/interaction/nonbonded/pairlist -I$(top_srcdir)/src/interaction/nonbonded/interaction -I$(top_srcdir)/src/interaction/bonded -I$(top_srcdir)/src/interaction/forcefield -I$(top_srcdir)/src/interaction/qmmm -I$(top_srcdir)/src/interaction/special -I$(top_srcdir)/src/interaction/special/xray -I$(top_srcdir)/src/algorithm 
 
+if WITH_CUDA
+  AM_CPPFLAGS += -I$(top_srcdir)/src/cukernel
+endif
 
 xxincludedir = $(includedir)/md++/interaction
 xxinclude_HEADERS =	interaction.h\
@@ -97,7 +100,6 @@ xxintnbspecial_HEADERS = special/create_special.h\
 	special/nemd.h\
 	special/order_parameter_restraint_interaction.h\
 	special/rdc_restraint_interaction.h\
-	special/qmmm_interaction.h\
 	special/symmetry_restraint_interaction.h
 
 xxintspecialxraydir = $(includedir)/md++/interaction/special/xray
@@ -105,13 +107,20 @@ xxintspecialxray_HEADERS = special/xray/dens.h\
 	special/xray/sf.h\
 	special/xray/bfactor.h
 
-xxintspecialqmmmdir = $(includedir)/md++/interaction/special/qmmm
-xxintspecialqmmm_HEADERS = special/qmmm/mm_atom.h\
-	special/qmmm/qm_storage.h\
-	special/qmmm/qm_worker.h\
-	special/qmmm/mndo_worker.h\
-	special/qmmm/turbomole_worker.h\
-	special/qmmm/gathering.h
+xxintqmmmdir = $(includedir)/md++/interaction/qmmm
+xxintqmmm_HEADERS = qmmm/mm_atom.h\
+	qmmm/qm_atom.h\
+	qmmm/qm_link.h\
+	qmmm/qm_zone.h\
+	qmmm/qm_worker.h\
+	qmmm/mndo_worker.h\
+	qmmm/turbomole_worker.h\
+	qmmm/dftb_worker.h\
+	qmmm/mopac_worker.h\
+	qmmm/gaussian_worker.h\
+	qmmm/qmmm_interaction.h\
+	qmmm/nonbonded/qmmm_nonbonded_outerloop.h \
+	qmmm/nonbonded/qmmm_nonbonded_set.h
 
 noinst_LTLIBRARIES = libgrointeraction.la
 
@@ -181,13 +190,18 @@ libgrointeraction_la_SOURCES =interaction.cc\
 	special/xray/bfactor.cc\
 	special/order_parameter_restraint_interaction.cc\
 	special/rdc_restraint_interaction.cc\
-	special/qmmm/mm_atom.cc\
-	special/qmmm/qm_worker.cc\
-	special/qmmm/mndo_worker.cc\
-	special/qmmm/turbomole_worker.cc\
-	special/qmmm/gathering.cc\
-	special/qmmm_interaction.cc\
-	special/symmetry_restraint_interaction.cc
+	special/symmetry_restraint_interaction.cc\
+	qmmm/qm_link.cc\
+	qmmm/qm_zone.cc\
+	qmmm/qm_worker.cc\
+	qmmm/mndo_worker.cc\
+	qmmm/turbomole_worker.cc\
+	qmmm/dftb_worker.cc\
+	qmmm/mopac_worker.cc\
+	qmmm/gaussian_worker.cc\
+	qmmm/qmmm_interaction.cc\
+	qmmm/nonbonded/qmmm_nonbonded_outerloop.cc\
+	qmmm/nonbonded/qmmm_nonbonded_set.cc
 
 bin_PROGRAMS =
 

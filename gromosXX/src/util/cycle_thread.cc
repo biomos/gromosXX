@@ -70,9 +70,10 @@ int pthread_barrier_wait(pthread_barrier_t *barrier)
 #endif
 
 /**
- * Consttuctor
+ * Constructor
  */
-util::CycleThread::CycleThread() {
+util::CycleThread::CycleThread()
+  : error(0) {
   // For the while loop in run()
   keeprunning = true;
   // Initialize all the barriers

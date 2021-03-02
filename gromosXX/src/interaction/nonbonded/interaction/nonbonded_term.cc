@@ -16,7 +16,10 @@
  * helper function to initialize the constants.
  */
 inline void interaction::Nonbonded_Term
-::init(simulation::Simulation const &sim) {
+::init(simulation::Simulation const &sim
+     , simulation::interaction_func_enum int_func) {
+  if (int_func == simulation::default_func)
+    int_func = sim.param().force.interaction_function;
   double cut3i, crf, crf_cut3i, crf_2cut3i, crf_cut;
   m_cut3i.clear();
   m_crf.clear();
@@ -24,7 +27,7 @@ inline void interaction::Nonbonded_Term
   m_crf_cut.clear();
   m_crf_2cut3i.clear();
   cgrain_eps.clear();
-  switch (sim.param().force.interaction_function) {
+  switch (int_func) {
     case simulation::lj_crf_func:
     case simulation::pol_lj_crf_func:
     case simulation::pol_off_lj_crf_func:
@@ -159,6 +162,8 @@ inline void interaction::Nonbonded_Term
       // lattice sum
       charge_shape = sim.param().nonbonded.ls_charge_shape;
       charge_width_i = 1.0 / sim.param().nonbonded.ls_charge_shape_width;
+      break;
+    case simulation::lj_func: // Do only LJ
       break;
     default:
       io::messages.add("Nonbonded_Innerloop",

@@ -41,6 +41,18 @@ namespace topology {
 		 */
 		bool find_and_remove(const value_type & j);
 
+		/**
+		 * delete atom by iterator
+		 * returns iterator to the item following the erased item
+		 */
+		inline cont_t::iterator erase(cont_t::const_iterator& it) {
+			// erase should also work with const_iterator, but somehow doesnt
+			// This is a workaround
+			cont_t::iterator nit = indeces.begin() + (it - indeces.begin());
+			cont_t::iterator new_it = indeces.erase(nit);
+			return new_it;
+		}
+
 		/*
 		 * checks if j is contained in exlusion list
 		 */
@@ -93,7 +105,7 @@ namespace topology {
 		}
 
 		/*
-		 * const interator functions
+		 * const iterator functions
 		 */
 		inline cont_t::const_iterator begin() const {
 			return indeces.begin();

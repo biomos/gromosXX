@@ -2587,13 +2587,13 @@ void io::In_Parameter::read_INNERLOOP(simulation::Parameter &param,
             }
             case 4:
             {
-#ifdef HAVE_LIBCUKERNEL
+#ifdef HAVE_LIBCUDART
                 // cuda library
                 param.innerloop.method = simulation::sla_cuda;
 #else
                 param.innerloop.method = simulation::sla_off;
                 io::messages.add("INNERLOOP block: CUDA solvent loops are not available "
-                                 "in your compilation. Use --with-cukernel for compiling.",
+                                 "in your compilation. Use --with-cuda for compiling.",
                                  "In_Parameter", io::message::error);
 #endif
                 break;
@@ -2803,6 +2803,7 @@ void io::In_Parameter::read_REPLICA(simulation::Parameter &param,
 REPLICA_EDS
 #    REEDS >= 0   : turn off Reeds
 #             1   : turn on
+#             2   : turn on 2D Reeds (s & Eoff)
 #    NRES >= number of replica exchange eds smoothing values
 #    NUMSTATES >= 2 Number of states
 #    RES > 0 for each replica smoothing value
@@ -2818,10 +2819,14 @@ REPLICA_EDS
 #                           can be used to optimize the s distribution.
 #                 0 eds stat turned off
 #                 1 eds stat turned on
+#   PERIODIC >= 0 2D periodic boundary (Eoff only)
+#               0 periodic boundary off
+#               1 periodic boundary on
+#
 #   REEDS
     1
-#  NRES NUMSTATES
-    12  5
+#  NRES NUMSTATES NUMEOFF
+    12  5 12
 # RES(1 ... NRES)
   1.0 0.7 0.5 0.3 0.1 0.07 0.05 0.03 0.01 0.007 0.005 0.003
 # EIR (NUMSTATES x NRES)
@@ -2830,8 +2835,8 @@ REPLICA_EDS
   0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
   0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
   0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
-# NRETRIAL   NREQUIL    CONT    EDS_STAT_OUT
-       10         0         1           1
+# NRETRIAL   NREQUIL    CONT    EDS_STAT_OUT PERIODIC
+       10         0         1           1      0
 END
 @endverbatim
  */
@@ -4400,9 +4405,8 @@ void io::In_Parameter::read_NONBONDED(simulation::Parameter & param,
                              "In_Parameter", io::message::error);
 
         if (param.nonbonded.lj_correction)
-            io::messages.add("NONBONDED block: LJ long range correction not implemented."
-                             " Set NLRLJ to 0.",
-                             "In_Parameter", io::message::error);
+            io::messages.add("NONBONDED block: LJ long range correction Switched on."
+                             "In_Parameter", io::message::warning);
 
         block.get_final_messages();
     }
@@ -4855,7 +4859,6 @@ void io::In_Parameter::read_NEMD(simulation::Parameter & param,
     }     // if block
 } // NEMD
 
-
 /**
  * @section multigradient MULTIGRADIENT block
  * @snippet snippets/snippets.cc MULTIGRADIENT
@@ -5132,9 +5135,155 @@ void io::In_Parameter::read_ADDECOUPLE(simulation::Parameter & param,
 
         block.get_final_messages();
     }
-}
+} // ADDECOUPLE
+
+/**
+ * @section qmmm QMMM block
+ * @snippet snippets/snippets.cc QMMM
+
+ */
+void io::In_Parameter::read_QMMM(simulation::Parameter & param,
+                                 std::ostream & os) {
+    DEBUG(8, "reading QMMM");
+
+    std::stringstream exampleblock;
+    // lines starting with 'exampleblock<<"' and ending with '\n";' (spaces don't matter)
+    // will be used to generate snippets that can be included in the doxygen doc;
+    // the first line is the tag
+    exampleblock << "QMMM\n";
+    exampleblock << "# NTQMMM -1..3 apply QM/MM\n";
+    exampleblock << "#    0: do not apply QM/MM\n";
+    exampleblock << "#   -1: apply mechanical embedding scheme with constant QM charges\n";
+    exampleblock << "#    1: apply mechanical embedding scheme with dynamic QM charges\n";
+    exampleblock << "#    2: apply electrostatic embedding scheme\n";
+    exampleblock << "#    3: apply polarisable embedding scheme\n";
+    exampleblock << "# NTQMSW 0..4 QM software package to use\n";
+    exampleblock << "#    0: MNDO\n";
+    exampleblock << "#    1: Turbomole\n";
+    exampleblock << "#    2: DFTB\n";
+    exampleblock << "#    3: MOPAC\n";
+    exampleblock << "#    4: Gaussian\n";
+    exampleblock << "# RCUTQM: ABS(RCUTQM): cutoff for inclusion of MM atoms in QM calculation\n";
+    exampleblock << "#         (ignored for NTQMMM = 1)\n";
+    exampleblock << "#     0.0: include all atoms\n";
+    exampleblock << "#    >0.0: chargegroup-based cutoff\n";
+    exampleblock << "#    <0.0: atom-based cutoff\n";
+    exampleblock << "# NTWQMMM >= 0 write QM/MM related data to special trajectory\n";
+    exampleblock << "#    0: do not write\n";
+    exampleblock << "#   >0: write every NTWQMMMth step\n";
+    exampleblock << "# QMLJ 0, 1 apply LJ between QM atoms \n";
+    exampleblock << "#    0: do not apply\n";
+    exampleblock << "#    1: apply\n";
+    exampleblock << "# QMCON 0, 1 keep distance constraints in QM zone \n";
+    exampleblock << "#    0: remove\n";
+    exampleblock << "#    1: keep\n";
+    exampleblock << "# MMSCALE scale mm-charges with (2/pi)*atan(x*(r_{qm}-r_{mm})) (optional) \n";
+    exampleblock << "#     > 0.0: scaling-factor x\n";
+    exampleblock << "#     < 0.0: don't scale (default)\n";
+    exampleblock << "#\n";
+    exampleblock << "# NTQMMM  NTQMSW  RCUTQM  NTWQMMM QMLJ QMCON MMSCALE\n";
+    exampleblock << "       1       0     0.0        0    0     0    -1.0\n";
+    exampleblock << "END\n";
 
 
+    std::string blockname = "QMMM";
+    Block block(blockname, exampleblock.str());
+    if (block.read_buffer(m_block[blockname], false) == 0) {
+        block_read.insert(blockname);
+
+
+    int enable,software,write,qmlj,qmcon;
+    double mm_scale = -1.;
+    double cutoff;
+    block.get_next_parameter("NTQMMM", enable, "", "-1,0,1,2,3");
+    block.get_next_parameter("NTQMSW", software, "", "0,1,2,3,4");
+    block.get_next_parameter("RCUTQM", cutoff, "", "");
+    block.get_next_parameter("NTWQMMM", write, ">=0", "");
+    block.get_next_parameter("QMLJ", qmlj, "", "0,1");
+    block.get_next_parameter("QMCON", qmcon, "", "0,1");
+    block.get_next_parameter("MMSCALE", mm_scale, ">=0.0 || <0.0", "", true);
+
+    if (block.error()) {
+        block.get_final_messages();
+        return;
+    }
+    switch(enable) {
+        case 0:
+            param.qmmm.qmmm = simulation::qmmm_off;
+            break;
+        case -1:
+            param.qmmm.qmmm = simulation::qmmm_mechanical;
+            param.qmmm.qm_ch = simulation::qm_ch_constant;
+            break;
+        case 1:
+            param.qmmm.qmmm = simulation::qmmm_mechanical;
+            param.qmmm.qm_ch = simulation::qm_ch_dynamic;
+            break;
+        case 2:
+            param.qmmm.qmmm = simulation::qmmm_electrostatic;
+            break;
+        case 3:
+            param.qmmm.qmmm = simulation::qmmm_polarisable;
+            break;
+        default:
+            break;
+    }
+
+    switch (software) {
+        case 0:
+            param.qmmm.software = simulation::qm_mndo;
+            break;
+        case 1:
+            param.qmmm.software = simulation::qm_turbomole;
+            break;
+        case 2:
+            param.qmmm.software = simulation::qm_dftb;
+            break;
+        case 3:
+            param.qmmm.software = simulation::qm_mopac;
+            break;
+        case 4:
+            param.qmmm.software = simulation::qm_gaussian;
+            break;
+        default:
+            break;
+    }
+
+    switch (qmlj) {
+        case 0:
+            param.qmmm.qm_lj = simulation::qm_lj_off;
+            break;
+        case 1:
+            param.qmmm.qm_lj = simulation::qm_lj_on;
+            break;
+        default:
+            break;
+    }
+
+    switch (qmcon) {
+        case 0:
+            param.qmmm.qm_constraint = simulation::qm_constr_off;
+            break;
+        case 1:
+            param.qmmm.qm_constraint = simulation::qm_constr_on;
+            break;
+        default:
+            break;
+    }
+
+    param.qmmm.mm_scale = mm_scale;
+    if (cutoff < 0.0)
+        param.qmmm.atomic_cutoff = true;
+    param.qmmm.cutoff = fabs(cutoff);
+    param.qmmm.write = write;
+    if (param.qmmm.qmmm == simulation::qmmm_mechanical && param.qmmm.cutoff != 0.0)
+        io::messages.add("QMMM block: RCUTQM > 0.0 has no effect for mechanical embedding scheme",
+            "io::In_Parameter",
+            io::message::warning);
+
+    block.get_final_messages();
+    }     // if block
+} // QMMM
 
 // two helper data types to simply unsupported block handling
 
@@ -5244,81 +5393,6 @@ void io::In_Parameter::read_known_unsupported_blocks() {
         }
     }
 }
-
-/**
- * @section qmmmb QMMM block
- * @snippet snippets/snippets.cc QMMM
-
- */
-void io::In_Parameter::read_QMMM(simulation::Parameter & param,
-                                 std::ostream & os) {
-    DEBUG(8, "reading QMMM");
-
-    std::stringstream exampleblock;
-    // lines starting with 'exampleblock<<"' and ending with '\n";' (spaces don't matter)
-    // will be used to generate snippets that can be included in the doxygen doc;
-    // the first line is the tag
-    exampleblock << "QMMM\n";
-    exampleblock << "# NTQMMM 0,1 apply QM/MM\n";
-    exampleblock << "#    0: do not apply QM/MM (default)\n";
-    exampleblock << "#    1: apply QM/MM\n";
-    exampleblock << "# NTQMSW 0 QM software package to use\n";
-    exampleblock << "#    0: MNDO (default)\n";
-    exampleblock << "#    1: Turbomole\n";
-    exampleblock << "# RCUTQ >= 0.0 cutoff for inclusion of MM charge groups\n";
-    exampleblock << "#     0.0: include all atoms\n";
-    exampleblock << "#    >0.0: include atoms of charge groups closer than RCUTQ\n";
-    exampleblock << "#          to QM zone.\n";
-    exampleblock << "# NTWQMMM >= 0 write QM/MM related data to special trajectory\n";
-    exampleblock << "#    0: do not write\n";
-    exampleblock << "#   >0: write every NTWQMMMth step\n";
-    exampleblock << "#\n";
-    exampleblock << "# NTQMMM  NTQMSW  RCUTQ  NTWQMMM\n";
-    exampleblock << "       1       0    0.0        0\n";
-    exampleblock << "END\n";
-
-
-    std::string blockname = "QMMM";
-    Block block(blockname, exampleblock.str());
-
-    if (block.read_buffer(m_block[blockname], false) == 0) {
-        block_read.insert(blockname);
-
-        int enable, software, write;
-        double cutoff;
-        block.get_next_parameter("NTQMMM", enable, "", "0,1");
-        block.get_next_parameter("NTQMSW", software, "", "0,1");
-        block.get_next_parameter("RCUTQ", cutoff, ">=0", "");
-        block.get_next_parameter("NTWQMMM", write, ">=0", "");
-
-        switch(enable) {
-            case 0:
-                param.qmmm.qmmm = simulation::qmmm_off;
-                break;
-            case 1:
-                param.qmmm.qmmm = simulation::qmmm_on;
-                break;
-            default:
-                break;
-        }
-
-        switch (software) {
-            case 0:
-                param.qmmm.software = simulation::qmmm_software_mndo;
-                break;
-            case 1:
-                param.qmmm.software = simulation::qmmm_software_turbomole;
-                break;
-            default:
-                break;
-        }
-
-        param.qmmm.cutoff = cutoff;
-        param.qmmm.write = write;
-
-        block.get_final_messages();
-    }     // if block
-} // QMMM
 
 /**
  * @section symres SYMRES block

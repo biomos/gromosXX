@@ -25,4 +25,5 @@ EXTRA_DIST = VERSION\
 	doc/doxygen.conf.in\
 	doc/install.doxy\
 	doc/install.html\
-	doc/main.doxy
+	doc/main.doxy\
+        data/ene_ana.md++.lib

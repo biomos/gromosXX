@@ -1,6 +1,10 @@
 AM_CXXFLAGS = @MY_CXXFLAGS@
 
-SUBDIRS = util simulation math topology configuration algorithm interaction io check .
+if WITH_CUDA
+  CUKERNEL = cukernel
+endif
+
+SUBDIRS = $(CUKERNEL) util simulation math topology configuration algorithm interaction io check .
 
 noinst_HEADERS = stdheader.h
 

@@ -40,6 +40,7 @@ ls_self_total_nvt(0.0),
 ls_surface_total(0.0),
 ls_a_term_total(0.0),
 ls_a_term_total_nvt(0.0),
+qm_total(0.0),
 special_total(0.0),
 posrest_total(0.0),
 distanceres_total(0.0),
@@ -56,7 +57,6 @@ constraints_total(0.0),
 self_total(0.0),
 sasa_total(0.0),
 sasa_volume_total(0.0),
-qm_total(0.0),
 eds_vr(0.0),
 eds_vmix(0.0),
 eds_emax(0.0),
@@ -498,13 +498,13 @@ int configuration::Energy::calculate_totals()
           ls_a_term_total;
   bonded_total = bond_total + angle_total + dihedral_total + improper_total
                  + crossdihedral_total;
-  potential_total = nonbonded_total + bonded_total;
+  potential_total = nonbonded_total + bonded_total + qm_total;
   
   special_total = posrest_total + distanceres_total + disfieldres_total
     + dihrest_total
     + constraints_total + jvalue_total + xray_total
     + eds_vr + leus_total + sasa_total + sasa_volume_total + oparam_total
-    + symrest_total + bsleus_total + qm_total + rdc_total;
+    + symrest_total + bsleus_total + rdc_total;
   
   total = potential_total + kinetic_total + special_total;
 

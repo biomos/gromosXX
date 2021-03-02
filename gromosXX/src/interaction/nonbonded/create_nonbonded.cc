@@ -35,6 +35,8 @@
 #include "../../interaction/nonbonded/interaction/mpi_nonbonded_master.h"
 #include "../../interaction/nonbonded/interaction/mpi_nonbonded_slave.h"
 
+#include "../../interaction/qmmm/qmmm_interaction.h"
+
 #include "../../io/ifp.h"
 #include "../../util/replicaExchange/replica_mpi_tools.h"
 
@@ -214,7 +216,10 @@ int interaction::create_g96_nonbonded
       sim.param().force.interaction_function ==
       simulation::pol_off_lj_crf_func ||
       sim.param().force.interaction_function ==
-      simulation::lj_ls_func    )
+      simulation::lj_ls_func || 
+      sim.param().force.interaction_function ==
+      simulation::lj_func
+          )
     it.read_lj_parameter(ni->parameter().lj_parameter());
   // and coarse-grained parameter (MARTINI model)
   if (sim.param().force.interaction_function ==
@@ -249,6 +254,7 @@ int interaction::create_g96_nonbonded
                        "interactions.", "topology", io::message::error);
     }
   }
+
   ff.push_back(ni);
 
   if (!quiet){

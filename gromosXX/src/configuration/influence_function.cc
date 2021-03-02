@@ -273,7 +273,7 @@ const simulation::Simulation & sim) {
       }
     }
 #ifdef OMP
-#pragma omp critical
+#pragma omp critical(crit1)
 #endif
     my_q += q_thread;
   } // loop over reciprocal space grid
@@ -485,7 +485,7 @@ const simulation::Simulation & sim) {
       }
     }
 #ifdef OMP
-#pragma omp critical
+#pragma omp critical(crit2)
 #endif
     my_q += q_thread;
   } // loop over reciprocal space grid

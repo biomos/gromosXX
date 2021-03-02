@@ -34,10 +34,7 @@
 #include "../../../util/debug.h"
 #include "../../../interaction/nonbonded/innerloop_template.h"
 
-#include "../../special/qmmm/mm_atom.h"
-#include "../../special/qmmm/qm_storage.h"
 #include "../../interaction.h"
-#include "../../special/qmmm_interaction.h"
 
 #undef MODULE
 #undef SUBMODULE
@@ -265,13 +262,6 @@ void interaction::Perturbed_Nonbonded_Outerloop
   unsigned int end = size_i;
   unsigned int end_lr = size_lr;
 
-  if (rank == 0) {
-    // compute the QM part, gather etc...
-    if (sim.param().qmmm.qmmm != simulation::qmmm_off) {
-      sim.param().qmmm.interaction->prepare(topo, conf, sim);
-    }
-  }
-
   math::VArray e_el_new(topo.num_atoms());
   
 #ifdef XXMPI
@@ -430,11 +420,6 @@ void interaction::Perturbed_Nonbonded_Outerloop
 #endif
 
     if (rank == 0) {
-      // get the contributions from the QM part.
-      if (sim.param().qmmm.qmmm != simulation::qmmm_off) {
-        sim.param().qmmm.interaction->
-                add_electric_field_contribution(topo, conf, sim, e_el_new);
-      }
       
       for (i=0; i<topo.num_atoms(); ++i) {
         double alpha = topo.polarisability(i);

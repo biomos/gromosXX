@@ -21,7 +21,7 @@
 
 #include "../../algorithm/constraints/gpu_shake.h"
 #include "../../algorithm/constraints/gpu_shake_thread.h"
-#ifdef HAVE_LIBCUKERNEL
+#ifdef HAVE_LIBCUDART
 #include <cudaKernel.h>
 #endif
 

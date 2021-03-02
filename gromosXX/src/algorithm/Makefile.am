@@ -1,6 +1,10 @@
 AM_CXXFLAGS = @MY_CXXFLAGS@
 AM_CPPFLAGS = -I$(top_srcdir) -I$(top_srcdir)/src -I$(top_srcdir)/src/interaction -I$(top_srcdir)/src/interaction/nonbonded -I$(top_srcdir)/src/interaction/nonbonded/pairlist -I$(top_srcdir)/src/interaction/nonbonded/interaction -I$(top_srcdir)/src/interaction/bonded -I$(top_srcdir)/src/interaction/forcefield -I$(top_srcdir)/src/interaction/special
 
+if WITH_CUDA
+  AM_CPPFLAGS += -I$(top_srcdir)/src/cukernel
+endif
+
 xxincludedir = $(includedir)/md++/algorithm
 xxinclude_HEADERS =	algorithm.h\
 	create_md_sequence.h

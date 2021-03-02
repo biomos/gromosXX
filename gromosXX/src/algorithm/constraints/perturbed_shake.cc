@@ -36,8 +36,10 @@
 /**
  * Constructor.
  */
-algorithm::Perturbed_Shake::Perturbed_Shake(double const tolerance, int const max_iterations)
-  : Shake(tolerance, max_iterations)
+algorithm::Perturbed_Shake::Perturbed_Shake(double const solute_tolerance,
+                                            double const solvent_tolerance,
+                                            int const max_iterations)
+  : Shake(solute_tolerance, solvent_tolerance, max_iterations)
 {
 }
 
@@ -59,6 +61,7 @@ template<math::boundary_enum B, math::virial_enum V>
 int algorithm::Perturbed_Shake
 ::perturbed_shake_iteration(topology::Topology const &topo,
 			    configuration::Configuration & conf,
+          double tolerance,
 			    bool & convergence,
 			    int const first,
 			    std::vector<bool> &skip_now,
@@ -121,7 +124,7 @@ int algorithm::Perturbed_Shake
 
     DEBUG(15, "constr: " << constr_length2 << " dist2: " << dist2);
 	  
-    if(fabs(diff) >= constr_length2 * this->tolerance() * 2.0){
+    if(fabs(diff) >= constr_length2 * tolerance * 2.0){
       // we have to shake
       DEBUG(10, "shaking");
       
@@ -295,7 +298,7 @@ void algorithm::Perturbed_Shake
 
       DEBUG(8, "perturbed shake iteration (solute distance)");
       if(perturbed_shake_iteration<B, V>
-	 (topo, conf, pert_dist_convergence, first, skip_now, skip_next,
+	 (topo, conf, m_solute_tolerance, pert_dist_convergence, first, skip_now, skip_next,
 	  topo.perturbed_solute().distance_constraints(), sim.time_step_size(),
 	  periodicity, sim)){
 	io::messages.add("Perturbed SHAKE error. vectors orthogonal",
@@ -313,7 +316,7 @@ void algorithm::Perturbed_Shake
       
       DEBUG(8, "unperturbed shake iteration (solute distance)");
       if(Shake::shake_iteration<B, V>
-	 (topo, conf, dist_convergence, 
+	 (topo, conf, m_solute_tolerance, dist_convergence, 
 	  first, skip_now, skip_next,
 	  topo.solute().distance_constraints(), sim.time_step_size(),
 	  periodicity) != 0){
@@ -555,6 +558,7 @@ int algorithm::Perturbed_Shake::init(topology::Topology & topo,
 	&& topo.perturbed_solute().distance_constraints().size()){    
       os << "ON\n";  
       os << "\t\ttolerance = "
+    << std::setprecision(8)
 		<< sim.param().constraint.solute.shake_tolerance << "\n";
     }
     else os << "OFF\n";

@@ -351,7 +351,7 @@ int io::read_special(io::Argument const & args,
       } else {
         io::In_QMMM iq(qmmm_file);
         iq.quiet = quiet;
-
+        
         iq.read(topo, sim, os);
         io::messages.add("QM/MM specification read from " +
                 args["qmmm"] + "\n" + util::frame_text(iq.title),
