@@ -22,6 +22,7 @@
 #endif
 #include <math/fft.h>
 #include <stdheader.h>
+#include <numeric>
 
 #include <algorithm/algorithm.h>
 #include <topology/topology.h>

@@ -513,6 +513,7 @@ int main(int argc, char *argv[]) {
         std::cerr << "numreplicas:\t " << numReplicas << "\n";
         std::cerr << "num Slaves:\t " << numReplicas - 1 << "\n";
         MPI_DEBUG(1, "Master \t " << globalThreadID<< "simulation: " << simulationID);
+        
 
         //CONSTRUCT
         // Select repex Implementation - Polymorphism
@@ -521,25 +522,28 @@ int main(int argc, char *argv[]) {
 
         switch(reedsSim) {
               case 0:
-                  DEBUG(1, "Master \t Constructor\n");
+                  DEBUG(1, "Master \t Constructor\n"); // Remove @bschroed
                   std::cerr << "Constructor:\t Master\n";
                   Master = new util::replica_exchange_master(args, cont, globalThreadID, reGMPI, replica_mpi_control);
                   break;
               case 1:
-                  DEBUG(1, "Master_eds \t Constructor\n")
+                  DEBUG(1, "Master_eds \t Constructor\n")// Remove @bschroed
                   std::cerr << "Constructor:\t Master_eds\n";
                   Master = new util::replica_exchange_master_eds(args, cont, globalThreadID, reGMPI, replica_mpi_control);
                   break;
               case 2:
-                  DEBUG(1, "Master_2d_s_eoff_eds \t Constructor\n")
+                  DEBUG(1, "Master_2d_s_eoff_eds \t Constructor\n")// Remove @bschroed
                   std::cerr << "Constructor:\t Master_2d_s_eoff_eds\n";
                   Master = new util::replica_exchange_master_2d_s_eoff_eds(args, cont, globalThreadID, reGMPI, replica_mpi_control);
                   break;
           }
+        MPI_Barrier(MPI_COMM_WORLD);    //wait for all threads to register!
+
         MPI_DEBUG(1, "MASTER " << globalThreadID << "::Constructor: DONE ");
 
 
         MPI_DEBUG(1, "Master \t INIT START");
+        std::cerr << "Constructor:\t Master init\n";
 
         Master->init();
 
@@ -547,6 +551,7 @@ int main(int argc, char *argv[]) {
 
         MPI_DEBUG(1, "Master \t INIT DONE")
 
+        std::cerr << "\tMaster  equil\n";
 
         //do md:
         unsigned int trial = 0;
@@ -556,6 +561,7 @@ int main(int argc, char *argv[]) {
         }
         //MPI_Finalize();
         //return 0;
+        std::cerr << "\t Master MD\n";
 
         //Vars for timing
         int hh, mm, ss, eta_hh, eta_mm, eta_ss = 0;
@@ -566,6 +572,8 @@ int main(int argc, char *argv[]) {
             MPI_DEBUG(2, "Master " << globalThreadID << " \t MD trial: " << trial << "\n");
             MPI_DEBUG(2, "Master " << globalThreadID << " \t run_MD START " << trial << "\n");
             Master->run_MD();
+            std::cerr << "\t\t Master MD_step\n";
+
             MPI_DEBUG(2, "Master " << globalThreadID << " \t swap START " << trial << "\n")
             Master->swap();
             MPI_DEBUG(2, "Master " << globalThreadID << " \t receive START " << trial << "\n");
@@ -604,7 +612,10 @@ int main(int argc, char *argv[]) {
 
         } else { //SLAVES
         MPI_DEBUG(1, "Slave " << globalThreadID << "simulation: " << simulationID);
-
+        
+        std::cerr << "Slave "<< globalThreadID << " on board\n";
+        std::cerr.flush();
+        MPI_Barrier(MPI_COMM_WORLD);    //wait for all threads to register!
 
         // Select repex Implementation - Polymorphism
         MPI_DEBUG(1, "Slave " << globalThreadID << "::Constructor: START ");

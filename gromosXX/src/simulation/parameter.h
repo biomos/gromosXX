@@ -3903,8 +3903,18 @@ namespace simulation
       /**
        * Gaussian specific parameters
        */
-      interaction::QMMM_Interaction * interaction;
+     struct gaussian_param_struct : public qm_param_struct{
+        /**
+         * route section of the input file
+         */
+        std::string route_section;
+        /**
+         * total charge and spin multiplicity in the input file
+         */
+        std::string chsm;
+      } gaussian;
     } qmmm;
+
 
     struct symrest_struct {
       /**

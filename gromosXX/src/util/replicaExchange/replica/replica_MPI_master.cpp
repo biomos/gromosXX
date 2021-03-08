@@ -150,8 +150,6 @@ util::replica_MPI_Master::replica_MPI_Master(io::Argument _args, int cont,  int 
       (*it).second.insert(pos, tmp.str());
     }
     
-    
-    // Chris: setting the title after init does not make much sense. The init function already prints it
     std::stringstream trajtitle;
     trajtitle << GROMOSXX << "\n" << sim.param().title << "\n\tReplica " << (simulationID+1) << "on Node " << globalThreadID;
     
@@ -189,7 +187,7 @@ util::replica_MPI_Master::~replica_MPI_Master() {
 
 void util::replica_MPI_Master::run_MD(){
     MPI_DEBUG(5, "replica_MPI_Master "<< globalThreadID <<":runMD:\t thread  "<< globalThreadID <<": \t START");
-     #ifdef XXMPI
+    #ifdef XXMPI
 
     // run MD simulation
     int error;
