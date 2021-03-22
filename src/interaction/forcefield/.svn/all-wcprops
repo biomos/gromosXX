@@ -1,0 +1,29 @@
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/gromosXXc++/!svn/ver/1663/trunk/gromosXX/src/interaction/forcefield
+END
+forcefield.cc
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svn/gromosXXc++/!svn/ver/1663/trunk/gromosXX/src/interaction/forcefield/forcefield.cc
+END
+forcefield.h
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svn/gromosXXc++/!svn/ver/800/trunk/gromosXX/src/interaction/forcefield/forcefield.h
+END
+create_forcefield.cc
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/svn/gromosXXc++/!svn/ver/1518/trunk/gromosXX/src/interaction/forcefield/create_forcefield.cc
+END
+create_forcefield.h
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/svn/gromosXXc++/!svn/ver/1518/trunk/gromosXX/src/interaction/forcefield/create_forcefield.h
+END

@@ -1,0 +1,239 @@
+#$Id: scaling.in 1353 2010-02-26 14:25:36Z nschmid $
+TITLE
+	alanine dipeptide test system
+END
+SYSTEM
+#      NPM      NSM 
+         1       20
+END
+INITIALISE
+# NTIVEL: 0,1 controls generation of initial velocities.
+#         0: read from configuration (default)
+#         1: generate from Maxell distribution at temperature TEMPI
+# NTISHK: 0..3 controls shaking of initial configuration
+#         0: no intial SHAKE (default)
+#         1: initial SHAKE on coordinates only
+#         2: initial SHAKE on velocities only
+#         3: initial SHAKE on coordinates and velocities
+# NTINHT/B: 0,1 controls generation of initial Nose-Hoover chain variables
+#         0: read from configuration (default)
+#         1: reset variables to zero.
+# NTISHI: 0,1 controls initial setting for lattice shift vectors
+#         0: read from configuration (default)
+#         1: reset shifts to zero.
+# NTIRTC: 0,1 controls initial setting of positions and orientations for
+#             roto-translational constraints
+#         0: read from configuration (default)
+#         1: reset based on initial configuraion of startup file
+# NTICOM: 0,1 controls initial removal of COM motion
+#         0: no initial system COM motion removal (default)
+#         1: initial COM translation is removed
+#         2: initial COM rotation is removed
+# NTISTI: 0,1 controls generation of stochastic integrals
+#         0: read stochastic integrals and IG from configuration (default)
+#         1: set stochastic integrals to zero and use IG from here.
+# IG:     randum number generator seed
+# TEMPI:  initial temperature
+#
+#  NTIVEL  NTISHK  NTINHT  NTINHB
+        0       0       0       0
+#  NTISHI  NTIRTC  NTICOM
+        1       0       0
+#  NTISTI
+        0
+#      IG   TEMPI
+   210185     0.0
+END
+STEP
+#   NSTLIM         T        DT
+         1       0.0     0.002
+END
+BOUNDCOND
+#      NTB    NDFMIN
+         1         0
+END
+MULTIBATH
+#       algorithm
+#               weak-coupling
+#               nose-hoover
+#               nose-hoover-chains      num
+#               (where num is the number of chains to use)
+    weak-coupling
+#   NBATHS: number of baths
+    2
+#   TEMP0  TAU
+    298.15 0.010
+    298.15 0.010
+#   DOFSET: different couplings
+    2
+#   LAST   COM-BATH  IR-BATH
+    12     1         1
+    72     2         2
+END
+PRESSURESCALE
+#       COUPLE: off, calc, scale
+#       SCALE:  off, iso, aniso, full
+#       VIRIAL: none, atomic, molecular
+#
+#   COUPLE  SCALE   COMP        TAUP    VIRIAL
+    scale   iso     4.575E-4    0.5     atomic
+#   aniso stuff
+    0 0 0
+#   reference pressure
+    0.06102     0.00000     0.00000
+    0.00000     0.06102     0.00000
+    0.00000     0.00000     0.06102
+END
+COMTRANSROT
+#    NSCM : controls system centre-of-mass (com) motion removal
+#           0: no com motion removal (default)
+#         < 0: com translation and rotation are removed every abs(NSCM)
+#              steps.
+#         > 0: com tranlsation is removed every NSCM steps.
+#
+#     NSCM
+    100000
+END
+PRINTOUT
+#NTPR: print out energies, etc. every NTPR steps
+#NTPP: =1 perform dihedral angle transition monitoring
+#     NTPR      NTPP
+        25         1
+END
+WRITETRAJ
+# NTWSE = configuration selection parameter
+# =0: write normal trajectory
+# >0: chose min energy for writing configurations
+#     NTWX     NTWSE      NTWV      NTWF      NTWE      NTWG      NTWB
+       100         0         0         0         0         0         0
+END
+CONSTRAINT
+#       NTC
+#               1       "solvent"       solvent only
+#               2       "hydrogen"      solvent and solute bonds containing hydrogens
+#               3       "all"           solvent and solute all bonds
+#               4       "specified"     solvent and constraints in the CONSTRAINTS block
+        1
+#       NTCP: solute algorithm
+#             - shake
+#             - lincs
+#             - flexshake
+#       NTCP
+        shake
+#       NTCP0(1)..(3): algorithm options
+#         - shake: tolerance
+#         - lincs: order
+#         - flexshake: tolerance, readin, order
+#       NTCP0(1)   NTCP0(2)   NTCP0(3)
+        0.0001
+#       NTCS: solvent algorithm
+#             - shake
+#       NTCS
+        shake
+#       NTCS0(1):  algorithm options
+#         - shake: tolerance
+#       NTCS0(1)
+        0.0001
+END
+FORCE
+#      NTF array
+# bonds    angles    imp.     dihe     charge nonbonded
+# H        H         H        H
+  1  1     1  1      1  1     1  1     1  1
+# NEGR    NRE(1)    NRE(2)    ...      NRE(NEGR)
+     3     4	12	 72
+END
+PAIRLIST
+#       ALGORITHM: standard (gromos96 like pairlist)
+#                  grid (md++ grid pairlist)
+#                  vgrid (md++ vector grid pairlist)
+#       SIZE:      grid cell size (or auto = 0.5 * RCUTP)
+#       TYPE:      chargegoup (chargegroup based cutoff)
+#                  atomic (atom based cutoff)
+#
+#       ALGORITHM       NSNB    RCUTP   RCUTL   SIZE    TYPE
+        standard        5       0.8     1.4     auto    chargegroup
+END
+#LONGRANGE
+# EPSRF     APPAK      RCRF
+#    62.0       0.0       1.4
+#END
+#
+NONBONDED
+#   NLRELE
+         1
+#    APPAK      RCRF     EPSRF
+       0.0       1.4      62.0
+#   NSHAPE    ASHAPE    NA2CLC     TOLA2    EPSLS
+        -1       1.4         2    0.1E-9      0.0
+#      NKX       NKY       NKZ       NK2
+        10        10        10      100.0
+#      NGX       NGY       NGZ    NASORD    NFDORD    NALIAS    NSPORD
+        32        32        32         3         2         3         4
+#   NQEVAL    FACCUR    NRDGRD    NWRGDR
+    100000       1.6         0         0
+#    NLRLJ    SLVDNS
+         0      33.3
+END
+POSITIONRES
+#    NTPOR 0..3 controls atom positions re(con)straining.
+#          0: no position re(con)straints.
+#          1: restraining with force constant CPOR
+#          2: restraining with force constant CPOR wieghted by
+#             atomic B-factors
+#          3: constraining
+#   NTPORB 0,1 controls reading of reference positions and
+#              B-factors
+#          0: read reference positions from startup file.
+#          1: read reference positions and B-factors from
+#             special file
+#   NTPORS 0,1 controls scaling of reference positions upon
+#              pressure scaling
+#          0: do not scale reference positions
+#          1: scale reference positions
+#     CPOR >= 0 position restraining force constant
+#
+#   NTPOR  NTPORB  NTPORS    CPOR
+        0       0       0   1.0E1
+END
+PERTURBATION
+#    NTG: 0..1 controls use of free-energy calculation.
+#         0: no free-energy calculation (default)
+#         1: calculate dH/dRLAM
+#  NRDGL: 0,1 controls reading of initial value for RLAM.
+#         0: use initial RLAM parameter from PERTURBATION block
+#         1: read from configuration
+#   RLAM: 0.0..1.0 initial value for lambda
+#  DLAMT: >= 0.0 rate of lambda increase in time.
+# ALPHLJ: >= 0.0 Lennard-Jones soft-core parameter
+#  ALPHC: >= 0.0 Coulomb-RF soft-core parameter
+#   NLAM: > 0 power dependence of lambda coupling
+# NSCALE: 0..2 controls use of interaction scaling
+#         0: no interaction scaling
+#         1: interaction scaling
+#         2: perturbation for all atom pairs with scaled
+#            interactions. No perturbation for others.
+#
+#     NTG   NRDGL    RLAM   DLAMT
+        1       0   0.125     0.0
+#  ALPHLJ   ALPHC    NLAM  NSCALE
+      1.0     1.0       1       0
+END
+
+GROMOS96COMPAT
+# NTNB96 0,1 controls use of g96-like nonbonded routines (ignored)
+#    0 : not used [default]
+#    1 : g96-like double-loop routines are used
+# NTR96 0,1 controls use of reaction field formula
+#    0 : new reaction field formula [default]
+#    1 : g96 reaction field formula
+# NTP96 0,1 controls use of g96 pressure calculation (ignored)
+#    0 : new formula using ekin a t
+#    1 : g96 formulat using ekin at t - dt / 2
+# NTG96 0,1 controls use of soft-core formula (ignored)
+#    0 : new soft-core formula
+#    1 : g96 soft-core formula [default]
+# NTNB96   NTR96     NTP96   NTG96
+    1         1       1        1
+END
+

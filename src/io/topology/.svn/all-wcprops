@@ -1,0 +1,185 @@
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/gromosXXc++/!svn/ver/1782/trunk/gromosXX/src/io/topology
+END
+in_dihrest.h
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/gromosXXc++/!svn/ver/1287/trunk/gromosXX/src/io/topology/in_dihrest.h
+END
+in_distanceres.cc
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/gromosXXc++/!svn/ver/1782/trunk/gromosXX/src/io/topology/in_distanceres.cc
+END
+in_symrest.cc
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/gromosXXc++/!svn/ver/1540/trunk/gromosXX/src/io/topology/in_symrest.cc
+END
+in_distanceres.h
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/gromosXXc++/!svn/ver/1657/trunk/gromosXX/src/io/topology/in_distanceres.h
+END
+in_qmmm.cc
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/gromosXXc++/!svn/ver/1522/trunk/gromosXX/src/io/topology/in_qmmm.cc
+END
+in_symrest.h
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/gromosXXc++/!svn/ver/1540/trunk/gromosXX/src/io/topology/in_symrest.h
+END
+in_rdc.cc
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/gromosXXc++/!svn/ver/1767/trunk/gromosXX/src/io/topology/in_rdc.cc
+END
+in_leus.cc
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/gromosXXc++/!svn/ver/1657/trunk/gromosXX/src/io/topology/in_leus.cc
+END
+in_qmmm.h
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/gromosXXc++/!svn/ver/1499/trunk/gromosXX/src/io/topology/in_qmmm.h
+END
+in_leus.h
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/gromosXXc++/!svn/ver/1241/trunk/gromosXX/src/io/topology/in_leus.h
+END
+in_rdc.h
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/gromosXXc++/!svn/ver/1767/trunk/gromosXX/src/io/topology/in_rdc.h
+END
+in_order.cc
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/gromosXXc++/!svn/ver/1520/trunk/gromosXX/src/io/topology/in_order.cc
+END
+in_posres.cc
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/gromosXXc++/!svn/ver/1731/trunk/gromosXX/src/io/topology/in_posres.cc
+END
+in_topology.cc
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/gromosXXc++/!svn/ver/1749/trunk/gromosXX/src/io/topology/in_topology.cc
+END
+in_order.h
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/gromosXXc++/!svn/ver/1520/trunk/gromosXX/src/io/topology/in_order.h
+END
+in_friction.cc
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/gromosXXc++/!svn/ver/1511/trunk/gromosXX/src/io/topology/in_friction.cc
+END
+in_posres.h
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/gromosXXc++/!svn/ver/1199/trunk/gromosXX/src/io/topology/in_posres.h
+END
+in_perturbation.cc
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/gromosXXc++/!svn/ver/1728/trunk/gromosXX/src/io/topology/in_perturbation.cc
+END
+in_topology.h
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/gromosXXc++/!svn/ver/1443/trunk/gromosXX/src/io/topology/in_topology.h
+END
+in_friction.h
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/gromosXXc++/!svn/ver/1102/trunk/gromosXX/src/io/topology/in_friction.h
+END
+in_perturbation.h
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/gromosXXc++/!svn/ver/1560/trunk/gromosXX/src/io/topology/in_perturbation.h
+END
+in_xray.cc
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/gromosXXc++/!svn/ver/1773/trunk/gromosXX/src/io/topology/in_xray.cc
+END
+in_xray.h
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/gromosXXc++/!svn/ver/1528/trunk/gromosXX/src/io/topology/in_xray.h
+END
+in_jvalue.cc
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/gromosXXc++/!svn/ver/1511/trunk/gromosXX/src/io/topology/in_jvalue.cc
+END
+in_jvalue.h
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/gromosXXc++/!svn/ver/1226/trunk/gromosXX/src/io/topology/in_jvalue.h
+END
+in_bsleus.cc
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/gromosXXc++/!svn/ver/1651/trunk/gromosXX/src/io/topology/in_bsleus.cc
+END
+in_bsleus.h
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/gromosXXc++/!svn/ver/1619/trunk/gromosXX/src/io/topology/in_bsleus.h
+END
+in_distrest.cc~
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/gromosXXc++/!svn/ver/567/trunk/gromosXX/src/io/topology/in_distrest.cc~
+END
+in_distrest.h~
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/gromosXXc++/!svn/ver/567/trunk/gromosXX/src/io/topology/in_distrest.h~
+END
+in_dihrest.cc
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/gromosXXc++/!svn/ver/1782/trunk/gromosXX/src/io/topology/in_dihrest.cc
+END

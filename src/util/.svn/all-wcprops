@@ -1,0 +1,365 @@
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/svn/gromosXXc++/!svn/ver/1790/trunk/gromosXX/src/util
+END
+parse_verbosity.cc
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/gromosXXc++/!svn/ver/1573/trunk/gromosXX/src/util/parse_verbosity.cc
+END
+replica_exchange.cc
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/gromosXXc++/!svn/ver/1601/trunk/gromosXX/src/util/replica_exchange.cc
+END
+system_call.h
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/gromosXXc++/!svn/ver/1499/trunk/gromosXX/src/util/system_call.h
+END
+parse_verbosity.h
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/gromosXXc++/!svn/ver/439/trunk/gromosXX/src/util/parse_verbosity.h
+END
+cycle_thread.cc
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/gromosXXc++/!svn/ver/1768/trunk/gromosXX/src/util/cycle_thread.cc
+END
+debug.cc
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/gromosXXc++/!svn/ver/1573/trunk/gromosXX/src/util/debug.cc
+END
+bs_umbrella.cc
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/gromosXXc++/!svn/ver/1646/trunk/gromosXX/src/util/bs_umbrella.cc
+END
+debug.h
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/gromosXXc++/!svn/ver/1573/trunk/gromosXX/src/util/debug.h
+END
+cycle_thread.h
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/gromosXXc++/!svn/ver/1768/trunk/gromosXX/src/util/cycle_thread.h
+END
+bs_subspace.cc
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/gromosXXc++/!svn/ver/1646/trunk/gromosXX/src/util/bs_subspace.cc
+END
+timing.h
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/gromosXXc++/!svn/ver/1012/trunk/gromosXX/src/util/timing.h
+END
+error.h
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/gromosXXc++/!svn/ver/550/trunk/gromosXX/src/util/error.h
+END
+replica_exchange_master.cc
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/gromosXXc++/!svn/ver/1564/trunk/gromosXX/src/util/replica_exchange_master.cc
+END
+feature.h
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/gromosXXc++/!svn/ver/1133/trunk/gromosXX/src/util/feature.h
+END
+replica_exchange_master.h
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/gromosXXc++/!svn/ver/1773/trunk/gromosXX/src/util/replica_exchange_master.h
+END
+coding.cc
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/gromosXXc++/!svn/ver/1511/trunk/gromosXX/src/util/coding.cc
+END
+umbrella.cc
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/gromosXXc++/!svn/ver/1790/trunk/gromosXX/src/util/umbrella.cc
+END
+usage.cc
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/gromosXXc++/!svn/ver/1778/trunk/gromosXX/src/util/usage.cc
+END
+usage.h
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/gromosXXc++/!svn/ver/1549/trunk/gromosXX/src/util/usage.h
+END
+virtual_atom.cc
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/gromosXXc++/!svn/ver/1511/trunk/gromosXX/src/util/virtual_atom.cc
+END
+le_coordinate.cc
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/gromosXXc++/!svn/ver/1657/trunk/gromosXX/src/util/le_coordinate.cc
+END
+create_simulation.cc
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/gromosXXc++/!svn/ver/1656/trunk/gromosXX/src/util/create_simulation.cc
+END
+parse_tcouple.h
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/gromosXXc++/!svn/ver/399/trunk/gromosXX/src/util/parse_tcouple.h
+END
+thread.cc
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/gromosXXc++/!svn/ver/1517/trunk/gromosXX/src/util/thread.cc
+END
+virtual_atom.h
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/gromosXXc++/!svn/ver/1520/trunk/gromosXX/src/util/virtual_atom.h
+END
+bs_coordinate.cc
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/gromosXXc++/!svn/ver/1777/trunk/gromosXX/src/util/bs_coordinate.cc
+END
+replica_exchange_slave.cc
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/gromosXXc++/!svn/ver/1561/trunk/gromosXX/src/util/replica_exchange_slave.cc
+END
+replica_exchange_base.h
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/gromosXXc++/!svn/ver/1773/trunk/gromosXX/src/util/replica_exchange_base.h
+END
+system_call.cc
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/gromosXXc++/!svn/ver/1513/trunk/gromosXX/src/util/system_call.cc
+END
+generate_velocities.cc
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svn/gromosXXc++/!svn/ver/1542/trunk/gromosXX/src/util/generate_velocities.cc
+END
+replica.h
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/gromosXXc++/!svn/ver/1773/trunk/gromosXX/src/util/replica.h
+END
+generate_velocities.h
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/gromosXXc++/!svn/ver/1542/trunk/gromosXX/src/util/generate_velocities.h
+END
+replica_exchange.h
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/gromosXXc++/!svn/ver/1601/trunk/gromosXX/src/util/replica_exchange.h
+END
+Makefile.am
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/gromosXXc++/!svn/ver/1601/trunk/gromosXX/src/util/Makefile.am
+END
+bs_vector.cc
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/gromosXXc++/!svn/ver/1646/trunk/gromosXX/src/util/bs_vector.cc
+END
+timing.cc
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/gromosXXc++/!svn/ver/1511/trunk/gromosXX/src/util/timing.cc
+END
+template_split.h
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/gromosXXc++/!svn/ver/1539/trunk/gromosXX/src/util/template_split.h
+END
+bs_vector.h
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/gromosXXc++/!svn/ver/1646/trunk/gromosXX/src/util/bs_vector.h
+END
+.cvsignore
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/gromosXXc++/!svn/ver/807/trunk/gromosXX/src/util/.cvsignore
+END
+bs_umbrella.h
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/gromosXXc++/!svn/ver/1646/trunk/gromosXX/src/util/bs_umbrella.h
+END
+repex_mpi.h
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/gromosXXc++/!svn/ver/1731/trunk/gromosXX/src/util/repex_mpi.h
+END
+bs_subspace.h
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/gromosXXc++/!svn/ver/1646/trunk/gromosXX/src/util/bs_subspace.h
+END
+feature.cc
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/gromosXXc++/!svn/ver/1511/trunk/gromosXX/src/util/feature.cc
+END
+prepare_virial.cc
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/gromosXXc++/!svn/ver/1511/trunk/gromosXX/src/util/prepare_virial.cc
+END
+umbrella.h
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/gromosXXc++/!svn/ver/1657/trunk/gromosXX/src/util/umbrella.h
+END
+coding.h
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/gromosXXc++/!svn/ver/1414/trunk/gromosXX/src/util/coding.h
+END
+parse_tcouple.cc
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/gromosXXc++/!svn/ver/1511/trunk/gromosXX/src/util/parse_tcouple.cc
+END
+prepare_virial.h
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/gromosXXc++/!svn/ver/1423/trunk/gromosXX/src/util/prepare_virial.h
+END
+bs_potentials.cc
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/gromosXXc++/!svn/ver/1646/trunk/gromosXX/src/util/bs_potentials.cc
+END
+bs_potentials.h
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/gromosXXc++/!svn/ver/1725/trunk/gromosXX/src/util/bs_potentials.h
+END
+thread.h
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/gromosXXc++/!svn/ver/1342/trunk/gromosXX/src/util/thread.h
+END
+create_simulation.h
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/gromosXXc++/!svn/ver/1656/trunk/gromosXX/src/util/create_simulation.h
+END
+le_coordinate.h
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/gromosXXc++/!svn/ver/1657/trunk/gromosXX/src/util/le_coordinate.h
+END
+umbrella_weight.cc
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/gromosXXc++/!svn/ver/1511/trunk/gromosXX/src/util/umbrella_weight.cc
+END
+replica_data.h
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/gromosXXc++/!svn/ver/1561/trunk/gromosXX/src/util/replica_data.h
+END
+replica_exchange_base.cc
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/gromosXXc++/!svn/ver/1773/trunk/gromosXX/src/util/replica_exchange_base.cc
+END
+umbrella_weight.h
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/gromosXXc++/!svn/ver/1419/trunk/gromosXX/src/util/umbrella_weight.h
+END
+bs_coordinate.h
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/gromosXXc++/!svn/ver/1651/trunk/gromosXX/src/util/bs_coordinate.h
+END
+replica_exchange_slave.h
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/gromosXXc++/!svn/ver/1545/trunk/gromosXX/src/util/replica_exchange_slave.h
+END
+replica.cc
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/gromosXXc++/!svn/ver/1773/trunk/gromosXX/src/util/replica.cc
+END

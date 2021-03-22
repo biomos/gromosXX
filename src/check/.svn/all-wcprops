@@ -1,0 +1,95 @@
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/gromosXXc++/!svn/ver/1788/trunk/gromosXX/src/check
+END
+check.h
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/gromosXXc++/!svn/ver/1391/trunk/gromosXX/src/check/check.h
+END
+check_state.h
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/gromosXXc++/!svn/ver/323/trunk/gromosXX/src/check/check_state.h
+END
+scaling.t.cc
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/gromosXXc++/!svn/ver/1656/trunk/gromosXX/src/check/scaling.t.cc
+END
+Makefile.am
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/gromosXXc++/!svn/ver/1786/trunk/gromosXX/src/check/Makefile.am
+END
+aladip_atomic.t.cc
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/gromosXXc++/!svn/ver/1656/trunk/gromosXX/src/check/aladip_atomic.t.cc
+END
+.cvsignore
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/gromosXXc++/!svn/ver/807/trunk/gromosXX/src/check/.cvsignore
+END
+aladip_ls.t.cc
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/gromosXXc++/!svn/ver/1675/trunk/gromosXX/src/check/aladip_ls.t.cc
+END
+aladip.t.cc
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/gromosXXc++/!svn/ver/1656/trunk/gromosXX/src/check/aladip.t.cc
+END
+aladip_special.t.cc
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/gromosXXc++/!svn/ver/1788/trunk/gromosXX/src/check/aladip_special.t.cc
+END
+check_forcefield.cc
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/gromosXXc++/!svn/ver/1656/trunk/gromosXX/src/check/check_forcefield.cc
+END
+check_forcefield.h
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/gromosXXc++/!svn/ver/1032/trunk/gromosXX/src/check/check_forcefield.h
+END
+c16_cg.t.cc
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/gromosXXc++/!svn/ver/1656/trunk/gromosXX/src/check/c16_cg.t.cc
+END
+lambdas.t.cc
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/gromosXXc++/!svn/ver/1656/trunk/gromosXX/src/check/lambdas.t.cc
+END
+aladip_unperturbed.t.cc
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/gromosXXc++/!svn/ver/1656/trunk/gromosXX/src/check/aladip_unperturbed.t.cc
+END
+check_state.cc
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/gromosXXc++/!svn/ver/1748/trunk/gromosXX/src/check/check_state.cc
+END

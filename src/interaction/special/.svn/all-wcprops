@@ -1,0 +1,257 @@
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/gromosXXc++/!svn/ver/1790/trunk/gromosXX/src/interaction/special
+END
+adde_reweighting.h
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svn/gromosXXc++/!svn/ver/1423/trunk/gromosXX/src/interaction/special/adde_reweighting.h
+END
+local_elevation_interaction.cc
+K 25
+svn:wc:ra_dav:version-url
+V 100
+/svn/gromosXXc++/!svn/ver/1790/trunk/gromosXX/src/interaction/special/local_elevation_interaction.cc
+END
+rdc_restraint_interaction.cc
+K 25
+svn:wc:ra_dav:version-url
+V 98
+/svn/gromosXXc++/!svn/ver/1767/trunk/gromosXX/src/interaction/special/rdc_restraint_interaction.cc
+END
+bs_interaction.cc
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svn/gromosXXc++/!svn/ver/1605/trunk/gromosXX/src/interaction/special/bs_interaction.cc
+END
+create_special.cc
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svn/gromosXXc++/!svn/ver/1778/trunk/gromosXX/src/interaction/special/create_special.cc
+END
+rdc_restraint_interaction.h
+K 25
+svn:wc:ra_dav:version-url
+V 97
+/svn/gromosXXc++/!svn/ver/1767/trunk/gromosXX/src/interaction/special/rdc_restraint_interaction.h
+END
+qmmm_interaction.cc
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svn/gromosXXc++/!svn/ver/1518/trunk/gromosXX/src/interaction/special/qmmm_interaction.cc
+END
+dihedral_restraint_interaction.cc
+K 25
+svn:wc:ra_dav:version-url
+V 103
+/svn/gromosXXc++/!svn/ver/1780/trunk/gromosXX/src/interaction/special/dihedral_restraint_interaction.cc
+END
+pscale.cc
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/gromosXXc++/!svn/ver/1511/trunk/gromosXX/src/interaction/special/pscale.cc
+END
+order_parameter_restraint_interaction.h
+K 25
+svn:wc:ra_dav:version-url
+V 109
+/svn/gromosXXc++/!svn/ver/1520/trunk/gromosXX/src/interaction/special/order_parameter_restraint_interaction.h
+END
+qmmm_interaction.h
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svn/gromosXXc++/!svn/ver/1518/trunk/gromosXX/src/interaction/special/qmmm_interaction.h
+END
+dihedral_restraint_interaction.h
+K 25
+svn:wc:ra_dav:version-url
+V 101
+/svn/gromosXXc++/!svn/ver/739/trunk/gromosXX/src/interaction/special/dihedral_restraint_interaction.h
+END
+eds_distance_restraint_interaction.cc
+K 25
+svn:wc:ra_dav:version-url
+V 107
+/svn/gromosXXc++/!svn/ver/1511/trunk/gromosXX/src/interaction/special/eds_distance_restraint_interaction.cc
+END
+xray_restraint_interaction.h
+K 25
+svn:wc:ra_dav:version-url
+V 98
+/svn/gromosXXc++/!svn/ver/1434/trunk/gromosXX/src/interaction/special/xray_restraint_interaction.h
+END
+perturbed_dihedral_restraint_interaction.cc
+K 25
+svn:wc:ra_dav:version-url
+V 113
+/svn/gromosXXc++/!svn/ver/1780/trunk/gromosXX/src/interaction/special/perturbed_dihedral_restraint_interaction.cc
+END
+distance_restraint_interaction.cc
+K 25
+svn:wc:ra_dav:version-url
+V 103
+/svn/gromosXXc++/!svn/ver/1778/trunk/gromosXX/src/interaction/special/distance_restraint_interaction.cc
+END
+perturbed_dihedral_restraint_interaction.h
+K 25
+svn:wc:ra_dav:version-url
+V 111
+/svn/gromosXXc++/!svn/ver/739/trunk/gromosXX/src/interaction/special/perturbed_dihedral_restraint_interaction.h
+END
+symmetry_restraint_interaction.h
+K 25
+svn:wc:ra_dav:version-url
+V 102
+/svn/gromosXXc++/!svn/ver/1540/trunk/gromosXX/src/interaction/special/symmetry_restraint_interaction.h
+END
+nemd.h
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/gromosXXc++/!svn/ver/1487/trunk/gromosXX/src/interaction/special/nemd.h
+END
+distance_restraint_interaction.h
+K 25
+svn:wc:ra_dav:version-url
+V 102
+/svn/gromosXXc++/!svn/ver/1776/trunk/gromosXX/src/interaction/special/distance_restraint_interaction.h
+END
+adde_reweighting.cc
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svn/gromosXXc++/!svn/ver/1511/trunk/gromosXX/src/interaction/special/adde_reweighting.cc
+END
+distance_field_interaction.cc
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/svn/gromosXXc++/!svn/ver/1657/trunk/gromosXX/src/interaction/special/distance_field_interaction.cc
+END
+electric_field_interaction.cc
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/svn/gromosXXc++/!svn/ver/1511/trunk/gromosXX/src/interaction/special/electric_field_interaction.cc
+END
+distance_field_interaction.h
+K 25
+svn:wc:ra_dav:version-url
+V 98
+/svn/gromosXXc++/!svn/ver/1657/trunk/gromosXX/src/interaction/special/distance_field_interaction.h
+END
+electric_field_interaction.h
+K 25
+svn:wc:ra_dav:version-url
+V 98
+/svn/gromosXXc++/!svn/ver/1423/trunk/gromosXX/src/interaction/special/electric_field_interaction.h
+END
+position_restraint_interaction.cc
+K 25
+svn:wc:ra_dav:version-url
+V 103
+/svn/gromosXXc++/!svn/ver/1511/trunk/gromosXX/src/interaction/special/position_restraint_interaction.cc
+END
+position_restraint_interaction.h
+K 25
+svn:wc:ra_dav:version-url
+V 101
+/svn/gromosXXc++/!svn/ver/545/trunk/gromosXX/src/interaction/special/position_restraint_interaction.h
+END
+perturbed_distance_restraint_interaction.cc
+K 25
+svn:wc:ra_dav:version-url
+V 113
+/svn/gromosXXc++/!svn/ver/1777/trunk/gromosXX/src/interaction/special/perturbed_distance_restraint_interaction.cc
+END
+local_elevation_interaction.h
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/svn/gromosXXc++/!svn/ver/1241/trunk/gromosXX/src/interaction/special/local_elevation_interaction.h
+END
+perturbed_distance_restraint_interaction.h
+K 25
+svn:wc:ra_dav:version-url
+V 112
+/svn/gromosXXc++/!svn/ver/1776/trunk/gromosXX/src/interaction/special/perturbed_distance_restraint_interaction.h
+END
+order_parameter_restraint_interaction.cc
+K 25
+svn:wc:ra_dav:version-url
+V 110
+/svn/gromosXXc++/!svn/ver/1654/trunk/gromosXX/src/interaction/special/order_parameter_restraint_interaction.cc
+END
+bs_interaction.h
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svn/gromosXXc++/!svn/ver/1574/trunk/gromosXX/src/interaction/special/bs_interaction.h
+END
+create_special.h
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/gromosXXc++/!svn/ver/545/trunk/gromosXX/src/interaction/special/create_special.h
+END
+perturbed_distance_field_interaction.cc
+K 25
+svn:wc:ra_dav:version-url
+V 109
+/svn/gromosXXc++/!svn/ver/1657/trunk/gromosXX/src/interaction/special/perturbed_distance_field_interaction.cc
+END
+pscale.h
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svn/gromosXXc++/!svn/ver/644/trunk/gromosXX/src/interaction/special/pscale.h
+END
+perturbed_distance_field_interaction.h
+K 25
+svn:wc:ra_dav:version-url
+V 108
+/svn/gromosXXc++/!svn/ver/1657/trunk/gromosXX/src/interaction/special/perturbed_distance_field_interaction.h
+END
+xray_restraint_interaction.cc
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/svn/gromosXXc++/!svn/ver/1528/trunk/gromosXX/src/interaction/special/xray_restraint_interaction.cc
+END
+jvalue_restraint_interaction.cc
+K 25
+svn:wc:ra_dav:version-url
+V 101
+/svn/gromosXXc++/!svn/ver/1769/trunk/gromosXX/src/interaction/special/jvalue_restraint_interaction.cc
+END
+eds_distance_restraint_interaction.h
+K 25
+svn:wc:ra_dav:version-url
+V 106
+/svn/gromosXXc++/!svn/ver/1015/trunk/gromosXX/src/interaction/special/eds_distance_restraint_interaction.h
+END
+jvalue_restraint_interaction.h
+K 25
+svn:wc:ra_dav:version-url
+V 100
+/svn/gromosXXc++/!svn/ver/1220/trunk/gromosXX/src/interaction/special/jvalue_restraint_interaction.h
+END
+nemd.cc
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svn/gromosXXc++/!svn/ver/1513/trunk/gromosXX/src/interaction/special/nemd.cc
+END
+symmetry_restraint_interaction.cc
+K 25
+svn:wc:ra_dav:version-url
+V 103
+/svn/gromosXXc++/!svn/ver/1540/trunk/gromosXX/src/interaction/special/symmetry_restraint_interaction.cc
+END

@@ -1,0 +1,29 @@
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/svn/gromosXXc++/!svn/ver/1791/trunk/gromosXX/src
+END
+Makefile.am
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/gromosXXc++/!svn/ver/1403/trunk/gromosXX/src/Makefile.am
+END
+stdheader.h
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/gromosXXc++/!svn/ver/1529/trunk/gromosXX/src/stdheader.h
+END
+.cvsignore
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/gromosXXc++/!svn/ver/807/trunk/gromosXX/src/.cvsignore
+END
+namespaces.doxy
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/gromosXXc++/!svn/ver/508/trunk/gromosXX/src/namespaces.doxy
+END

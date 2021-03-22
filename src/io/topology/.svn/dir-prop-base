@@ -1,0 +1,7 @@
+K 10
+svn:ignore
+V 31
+.in_xray.cc.swp
+.in_xray.h.swp
+
+END

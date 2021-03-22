@@ -1,0 +1,107 @@
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/svn/gromosXXc++/!svn/ver/1743/trunk/gromosXX/src/math
+END
+boundary_implementation.cc
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/gromosXXc++/!svn/ver/1537/trunk/gromosXX/src/math/boundary_implementation.cc
+END
+math.cc
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/gromosXXc++/!svn/ver/1511/trunk/gromosXX/src/math/math.cc
+END
+.cvsignore
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/gromosXXc++/!svn/ver/807/trunk/gromosXX/src/math/.cvsignore
+END
+boundary_implementation.h
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/gromosXXc++/!svn/ver/1328/trunk/gromosXX/src/math/boundary_implementation.h
+END
+gmath.h
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/gromosXXc++/!svn/ver/1743/trunk/gromosXX/src/math/gmath.h
+END
+boundary_checks.cc
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/gromosXXc++/!svn/ver/1742/trunk/gromosXX/src/math/boundary_checks.cc
+END
+boundary_checks.h
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/gromosXXc++/!svn/ver/1136/trunk/gromosXX/src/math/boundary_checks.h
+END
+transformation.cc
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/gromosXXc++/!svn/ver/1511/trunk/gromosXX/src/math/transformation.cc
+END
+volume.cc
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/gromosXXc++/!svn/ver/1511/trunk/gromosXX/src/math/volume.cc
+END
+transformation.h
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/gromosXXc++/!svn/ver/1343/trunk/gromosXX/src/math/transformation.h
+END
+volume.h
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/gromosXXc++/!svn/ver/229/trunk/gromosXX/src/math/volume.h
+END
+random.cc
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/gromosXXc++/!svn/ver/1511/trunk/gromosXX/src/math/random.cc
+END
+fft.h
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/gromosXXc++/!svn/ver/1203/trunk/gromosXX/src/math/fft.h
+END
+random.h
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/gromosXXc++/!svn/ver/1065/trunk/gromosXX/src/math/random.h
+END
+periodicity.cc
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/gromosXXc++/!svn/ver/1401/trunk/gromosXX/src/math/periodicity.cc
+END
+Makefile.am
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/gromosXXc++/!svn/ver/1403/trunk/gromosXX/src/math/Makefile.am
+END
+periodicity.h
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/gromosXXc++/!svn/ver/1059/trunk/gromosXX/src/math/periodicity.h
+END

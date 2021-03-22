@@ -1,0 +1,9 @@
+K 10
+svn:ignore
+V 51
+Makefile.in
+.deps
+.libs
+.create_md_sequence.cc.swp
+
+END

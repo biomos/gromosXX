@@ -1,0 +1,65 @@
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/svn/gromosXXc++/!svn/ver/1773/trunk/gromosXX/doc
+END
+HOOMD_GROMOSXX_interface.pdf
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/gromosXXc++/!svn/ver/1331/trunk/gromosXX/doc/HOOMD_GROMOSXX_interface.pdf
+END
+gromosXX.sty
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/gromosXXc++/!svn/ver/665/trunk/gromosXX/doc/gromosXX.sty
+END
+gromosXX.tex
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/gromosXXc++/!svn/ver/782/trunk/gromosXX/doc/gromosXX.tex
+END
+doxygen.conf.in
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/gromosXXc++/!svn/ver/1528/trunk/gromosXX/doc/doxygen.conf.in
+END
+main.doxy
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/gromosXXc++/!svn/ver/1773/trunk/gromosXX/doc/main.doxy
+END
+HOOMD_GROMOSXX_interface.lyx
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/gromosXXc++/!svn/ver/1331/trunk/gromosXX/doc/HOOMD_GROMOSXX_interface.lyx
+END
+install.doxy
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/gromosXXc++/!svn/ver/508/trunk/gromosXX/doc/install.doxy
+END
+install.html
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/gromosXXc++/!svn/ver/837/trunk/gromosXX/doc/install.html
+END
+.cvsignore
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/gromosXXc++/!svn/ver/810/trunk/gromosXX/doc/.cvsignore
+END
+doxygen.conf
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/gromosXXc++/!svn/ver/1238/trunk/gromosXX/doc/doxygen.conf
+END

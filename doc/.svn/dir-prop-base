@@ -1,0 +1,10 @@
+K 10
+svn:ignore
+V 39
+*.log
+*.aux
+*.lot
+*.lof
+.main.doxy.swp
+
+END

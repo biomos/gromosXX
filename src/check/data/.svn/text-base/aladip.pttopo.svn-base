@@ -1,0 +1,41 @@
+TITLE
+	Perturbation of aladipeptide
+END
+PERTATOMPARAM
+3
+# JLA RESNR ATNAM IACA      WMA      CGA IACB      WMB      CGB ALPHAJ  ALPHACRF
+    1     1 CB      14  15.0350    0.000   11  12.0350    1.000    0.3       0.6
+    4     1 N        5  14.0067   -0.280   19  14.0067    0.200    0.3       0.6
+   11     1 H       18   1.0080    0.280   14   2.0080    0.000    0.3       0.6
+END
+#SCALEDINTERACTIONS
+#	number of scaled interactions
+#	2
+#	energy_group_1	energy_group_2	scale_A	scale_B
+#	1               1               0.568   0.568
+#	1				2				0.568   0.568
+#END
+PERTATOMPAIR
+   1
+	7	10	2	0
+END
+PERTBONDSTRETCH
+   2
+	1	2	26	20
+	8	10	9	8
+END
+PERTBONDANGLE
+   2
+	4	6	7	12	7
+	8	10	12	30	13
+END
+PERTIMPROPERDIH
+   2
+	2	1	4	3	1	2
+	6	4	8	7	2	1
+END
+PERTPROPERDIH
+   2
+	1	2	4	6	4	14
+	4	6	8	10	20	5
+END

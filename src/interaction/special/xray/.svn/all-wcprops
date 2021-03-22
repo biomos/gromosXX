@@ -1,0 +1,41 @@
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/gromosXXc++/!svn/ver/1511/trunk/gromosXX/src/interaction/special/xray
+END
+bfactor.h
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svn/gromosXXc++/!svn/ver/1457/trunk/gromosXX/src/interaction/special/xray/bfactor.h
+END
+sf.cc
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/gromosXXc++/!svn/ver/1511/trunk/gromosXX/src/interaction/special/xray/sf.cc
+END
+dens.cc
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/gromosXXc++/!svn/ver/1511/trunk/gromosXX/src/interaction/special/xray/dens.cc
+END
+sf.h
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/gromosXXc++/!svn/ver/1457/trunk/gromosXX/src/interaction/special/xray/sf.h
+END
+dens.h
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/gromosXXc++/!svn/ver/1420/trunk/gromosXX/src/interaction/special/xray/dens.h
+END
+bfactor.cc
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/gromosXXc++/!svn/ver/1511/trunk/gromosXX/src/interaction/special/xray/bfactor.cc
+END

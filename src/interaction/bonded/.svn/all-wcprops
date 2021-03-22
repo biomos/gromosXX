@@ -1,0 +1,209 @@
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/gromosXXc++/!svn/ver/1777/trunk/gromosXX/src/interaction/bonded
+END
+perturbed_cg_bond_interaction.cc
+K 25
+svn:wc:ra_dav:version-url
+V 101
+/svn/gromosXXc++/!svn/ver/1755/trunk/gromosXX/src/interaction/bonded/perturbed_cg_bond_interaction.cc
+END
+perturbed_cg_bond_interaction.h
+K 25
+svn:wc:ra_dav:version-url
+V 100
+/svn/gromosXXc++/!svn/ver/1755/trunk/gromosXX/src/interaction/bonded/perturbed_cg_bond_interaction.h
+END
+quartic_bond_interaction.h
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/svn/gromosXXc++/!svn/ver/762/trunk/gromosXX/src/interaction/bonded/quartic_bond_interaction.h
+END
+dihedral_interaction.h
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svn/gromosXXc++/!svn/ver/1238/trunk/gromosXX/src/interaction/bonded/dihedral_interaction.h
+END
+perturbed_harmonic_bond_interaction.h
+K 25
+svn:wc:ra_dav:version-url
+V 105
+/svn/gromosXXc++/!svn/ver/762/trunk/gromosXX/src/interaction/bonded/perturbed_harmonic_bond_interaction.h
+END
+crossdihedral_interaction.cc
+K 25
+svn:wc:ra_dav:version-url
+V 97
+/svn/gromosXXc++/!svn/ver/1511/trunk/gromosXX/src/interaction/bonded/crossdihedral_interaction.cc
+END
+perturbed_quartic_bond_interaction.h
+K 25
+svn:wc:ra_dav:version-url
+V 104
+/svn/gromosXXc++/!svn/ver/762/trunk/gromosXX/src/interaction/bonded/perturbed_quartic_bond_interaction.h
+END
+angle_interaction.h
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svn/gromosXXc++/!svn/ver/762/trunk/gromosXX/src/interaction/bonded/angle_interaction.h
+END
+improper_dihedral_interaction.cc
+K 25
+svn:wc:ra_dav:version-url
+V 101
+/svn/gromosXXc++/!svn/ver/1746/trunk/gromosXX/src/interaction/bonded/improper_dihedral_interaction.cc
+END
+perturbed_dihedral_interaction.h
+K 25
+svn:wc:ra_dav:version-url
+V 101
+/svn/gromosXXc++/!svn/ver/1238/trunk/gromosXX/src/interaction/bonded/perturbed_dihedral_interaction.h
+END
+improper_dihedral_interaction.h
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/svn/gromosXXc++/!svn/ver/762/trunk/gromosXX/src/interaction/bonded/improper_dihedral_interaction.h
+END
+harm_angle_interaction.cc
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/svn/gromosXXc++/!svn/ver/1511/trunk/gromosXX/src/interaction/bonded/harm_angle_interaction.cc
+END
+harm_angle_interaction.h
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/svn/gromosXXc++/!svn/ver/834/trunk/gromosXX/src/interaction/bonded/harm_angle_interaction.h
+END
+harmonic_bond_interaction.cc
+K 25
+svn:wc:ra_dav:version-url
+V 97
+/svn/gromosXXc++/!svn/ver/1511/trunk/gromosXX/src/interaction/bonded/harmonic_bond_interaction.cc
+END
+perturbed_angle_interaction.h
+K 25
+svn:wc:ra_dav:version-url
+V 97
+/svn/gromosXXc++/!svn/ver/684/trunk/gromosXX/src/interaction/bonded/perturbed_angle_interaction.h
+END
+perturbed_improper_dihedral_interaction.cc
+K 25
+svn:wc:ra_dav:version-url
+V 111
+/svn/gromosXXc++/!svn/ver/1511/trunk/gromosXX/src/interaction/bonded/perturbed_improper_dihedral_interaction.cc
+END
+perturbed_improper_dihedral_interaction.h
+K 25
+svn:wc:ra_dav:version-url
+V 109
+/svn/gromosXXc++/!svn/ver/762/trunk/gromosXX/src/interaction/bonded/perturbed_improper_dihedral_interaction.h
+END
+quartic_bond_interaction.cc
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svn/gromosXXc++/!svn/ver/1511/trunk/gromosXX/src/interaction/bonded/quartic_bond_interaction.cc
+END
+dihedral_interaction.cc
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/svn/gromosXXc++/!svn/ver/1511/trunk/gromosXX/src/interaction/bonded/dihedral_interaction.cc
+END
+perturbed_harmonic_bond_interaction.cc
+K 25
+svn:wc:ra_dav:version-url
+V 107
+/svn/gromosXXc++/!svn/ver/1511/trunk/gromosXX/src/interaction/bonded/perturbed_harmonic_bond_interaction.cc
+END
+create_bonded.cc
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/gromosXXc++/!svn/ver/1755/trunk/gromosXX/src/interaction/bonded/create_bonded.cc
+END
+create_bonded.h
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svn/gromosXXc++/!svn/ver/545/trunk/gromosXX/src/interaction/bonded/create_bonded.h
+END
+dihedral_new_interaction.cc
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svn/gromosXXc++/!svn/ver/1746/trunk/gromosXX/src/interaction/bonded/dihedral_new_interaction.cc
+END
+perturbed_quartic_bond_interaction.cc
+K 25
+svn:wc:ra_dav:version-url
+V 106
+/svn/gromosXXc++/!svn/ver/1511/trunk/gromosXX/src/interaction/bonded/perturbed_quartic_bond_interaction.cc
+END
+angle_interaction.cc
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svn/gromosXXc++/!svn/ver/1777/trunk/gromosXX/src/interaction/bonded/angle_interaction.cc
+END
+dihedral_new_interaction.h
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/svn/gromosXXc++/!svn/ver/1238/trunk/gromosXX/src/interaction/bonded/dihedral_new_interaction.h
+END
+crossdihedral_interaction.h
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svn/gromosXXc++/!svn/ver/1292/trunk/gromosXX/src/interaction/bonded/crossdihedral_interaction.h
+END
+perturbed_dihedral_interaction.cc
+K 25
+svn:wc:ra_dav:version-url
+V 102
+/svn/gromosXXc++/!svn/ver/1706/trunk/gromosXX/src/interaction/bonded/perturbed_dihedral_interaction.cc
+END
+cg_bond_interaction.cc
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svn/gromosXXc++/!svn/ver/1754/trunk/gromosXX/src/interaction/bonded/cg_bond_interaction.cc
+END
+cg_bond_interaction.h
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn/gromosXXc++/!svn/ver/1754/trunk/gromosXX/src/interaction/bonded/cg_bond_interaction.h
+END
+perturbed_dihedral_new_interaction.cc
+K 25
+svn:wc:ra_dav:version-url
+V 106
+/svn/gromosXXc++/!svn/ver/1706/trunk/gromosXX/src/interaction/bonded/perturbed_dihedral_new_interaction.cc
+END
+perturbed_angle_interaction.cc
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/svn/gromosXXc++/!svn/ver/1511/trunk/gromosXX/src/interaction/bonded/perturbed_angle_interaction.cc
+END
+perturbed_dihedral_new_interaction.h
+K 25
+svn:wc:ra_dav:version-url
+V 105
+/svn/gromosXXc++/!svn/ver/1238/trunk/gromosXX/src/interaction/bonded/perturbed_dihedral_new_interaction.h
+END
+harmonic_bond_interaction.h
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/svn/gromosXXc++/!svn/ver/762/trunk/gromosXX/src/interaction/bonded/harmonic_bond_interaction.h
+END

@@ -1,0 +1,47 @@
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/gromosXXc++/!svn/ver/1790/trunk/gromosXX/src/interaction
+END
+interaction.h
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/gromosXXc++/!svn/ver/1012/trunk/gromosXX/src/interaction/interaction.h
+END
+Makefile.am
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/gromosXXc++/!svn/ver/1778/trunk/gromosXX/src/interaction/Makefile.am
+END
+interaction_types.h
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/gromosXXc++/!svn/ver/1443/trunk/gromosXX/src/interaction/interaction_types.h
+END
+molecular_virial_interaction.cc
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/svn/gromosXXc++/!svn/ver/1511/trunk/gromosXX/src/interaction/molecular_virial_interaction.cc
+END
+.cvsignore
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/gromosXXc++/!svn/ver/807/trunk/gromosXX/src/interaction/.cvsignore
+END
+molecular_virial_interaction.h
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svn/gromosXXc++/!svn/ver/684/trunk/gromosXX/src/interaction/molecular_virial_interaction.h
+END
+interaction.cc
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/gromosXXc++/!svn/ver/1511/trunk/gromosXX/src/interaction/interaction.cc
+END

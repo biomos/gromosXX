@@ -1,0 +1,125 @@
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/svn/gromosXXc++/!svn/ver/1790/trunk/gromosXX/src/io
+END
+read_special.cc
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/gromosXXc++/!svn/ver/1723/trunk/gromosXX/src/io/read_special.cc
+END
+blockinput.h
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/gromosXXc++/!svn/ver/1499/trunk/gromosXX/src/io/blockinput.h
+END
+read_special.h
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/gromosXXc++/!svn/ver/764/trunk/gromosXX/src/io/read_special.h
+END
+ifp.h
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/gromosXXc++/!svn/ver/1443/trunk/gromosXX/src/io/ifp.h
+END
+argument.cc
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/gromosXXc++/!svn/ver/1778/trunk/gromosXX/src/io/argument.cc
+END
+instream.cc
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/gromosXXc++/!svn/ver/1511/trunk/gromosXX/src/io/instream.cc
+END
+instream.h
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/gromosXXc++/!svn/ver/1097/trunk/gromosXX/src/io/instream.h
+END
+argument.h
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/gromosXXc++/!svn/ver/1778/trunk/gromosXX/src/io/argument.h
+END
+message.cc
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/gromosXXc++/!svn/ver/1599/trunk/gromosXX/src/io/message.cc
+END
+Makefile.am
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/gromosXXc++/!svn/ver/1723/trunk/gromosXX/src/io/Makefile.am
+END
+message.h
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/gromosXXc++/!svn/ver/1599/trunk/gromosXX/src/io/message.h
+END
+.cvsignore
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/gromosXXc++/!svn/ver/807/trunk/gromosXX/src/io/.cvsignore
+END
+read_input.cc
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/gromosXXc++/!svn/ver/1782/trunk/gromosXX/src/io/read_input.cc
+END
+read_input.h
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/gromosXXc++/!svn/ver/1542/trunk/gromosXX/src/io/read_input.h
+END
+gzstream.cc
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/gromosXXc++/!svn/ver/1511/trunk/gromosXX/src/io/gzstream.cc
+END
+gzstream.h
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/gromosXXc++/!svn/ver/1021/trunk/gromosXX/src/io/gzstream.h
+END
+print_block.cc
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/gromosXXc++/!svn/ver/1778/trunk/gromosXX/src/io/print_block.cc
+END
+io.cc
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/gromosXXc++/!svn/ver/1511/trunk/gromosXX/src/io/io.cc
+END
+print_block.h
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/gromosXXc++/!svn/ver/1542/trunk/gromosXX/src/io/print_block.h
+END
+blockinput.cc
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/gromosXXc++/!svn/ver/1511/trunk/gromosXX/src/io/blockinput.cc
+END

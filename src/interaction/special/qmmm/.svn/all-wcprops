@@ -1,0 +1,71 @@
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/gromosXXc++/!svn/ver/1586/trunk/gromosXX/src/interaction/special/qmmm
+END
+turbomole_worker.cc
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/svn/gromosXXc++/!svn/ver/1522/trunk/gromosXX/src/interaction/special/qmmm/turbomole_worker.cc
+END
+qm_storage.h
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svn/gromosXXc++/!svn/ver/1518/trunk/gromosXX/src/interaction/special/qmmm/qm_storage.h
+END
+turbomole_worker.h
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/svn/gromosXXc++/!svn/ver/1501/trunk/gromosXX/src/interaction/special/qmmm/turbomole_worker.h
+END
+mndo_worker.cc
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svn/gromosXXc++/!svn/ver/1518/trunk/gromosXX/src/interaction/special/qmmm/mndo_worker.cc
+END
+qm_worker.cc
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svn/gromosXXc++/!svn/ver/1511/trunk/gromosXX/src/interaction/special/qmmm/qm_worker.cc
+END
+gathering.cc
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svn/gromosXXc++/!svn/ver/1586/trunk/gromosXX/src/interaction/special/qmmm/gathering.cc
+END
+mndo_worker.h
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svn/gromosXXc++/!svn/ver/1501/trunk/gromosXX/src/interaction/special/qmmm/mndo_worker.h
+END
+qm_worker.h
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svn/gromosXXc++/!svn/ver/1500/trunk/gromosXX/src/interaction/special/qmmm/qm_worker.h
+END
+mm_atom.cc
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/gromosXXc++/!svn/ver/1518/trunk/gromosXX/src/interaction/special/qmmm/mm_atom.cc
+END
+gathering.h
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svn/gromosXXc++/!svn/ver/1500/trunk/gromosXX/src/interaction/special/qmmm/gathering.h
+END
+mm_atom.h
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svn/gromosXXc++/!svn/ver/1500/trunk/gromosXX/src/interaction/special/qmmm/mm_atom.h
+END

@@ -1,0 +1,29 @@
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/gromosXXc++/!svn/ver/1739/trunk/gromosXX/src/algorithm/pressure
+END
+berendsen_barostat.cc
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn/gromosXXc++/!svn/ver/1511/trunk/gromosXX/src/algorithm/pressure/berendsen_barostat.cc
+END
+berendsen_barostat.h
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svn/gromosXXc++/!svn/ver/762/trunk/gromosXX/src/algorithm/pressure/berendsen_barostat.h
+END
+pressure_calculation.cc
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/svn/gromosXXc++/!svn/ver/1739/trunk/gromosXX/src/algorithm/pressure/pressure_calculation.cc
+END
+pressure_calculation.h
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn/gromosXXc++/!svn/ver/762/trunk/gromosXX/src/algorithm/pressure/pressure_calculation.h
+END

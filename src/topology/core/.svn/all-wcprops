@@ -1,0 +1,65 @@
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/gromosXXc++/!svn/ver/1729/trunk/gromosXX/src/topology/core
+END
+temperaturegroup_iterator.h
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svn/gromosXXc++/!svn/ver/1049/trunk/gromosXX/src/topology/core/temperaturegroup_iterator.h
+END
+body_term.h
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/gromosXXc++/!svn/ver/1729/trunk/gromosXX/src/topology/core/body_term.h
+END
+compound.h
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/gromosXXc++/!svn/ver/521/trunk/gromosXX/src/topology/core/compound.h
+END
+atomgroup_iterator.h
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svn/gromosXXc++/!svn/ver/1358/trunk/gromosXX/src/topology/core/atomgroup_iterator.h
+END
+core.h
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/gromosXXc++/!svn/ver/1499/trunk/gromosXX/src/topology/core/core.h
+END
+atom_iterator.h
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/gromosXXc++/!svn/ver/398/trunk/gromosXX/src/topology/core/atom_iterator.h
+END
+qm_atom.h
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/gromosXXc++/!svn/ver/1499/trunk/gromosXX/src/topology/core/qm_atom.h
+END
+molecule_iterator.h
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/gromosXXc++/!svn/ver/398/trunk/gromosXX/src/topology/core/molecule_iterator.h
+END
+pressuregroup_iterator.h
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svn/gromosXXc++/!svn/ver/1049/trunk/gromosXX/src/topology/core/pressuregroup_iterator.h
+END
+chargegroup_iterator.h
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/gromosXXc++/!svn/ver/520/trunk/gromosXX/src/topology/core/chargegroup_iterator.h
+END

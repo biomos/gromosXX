@@ -1,0 +1,41 @@
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/gromosXXc++/!svn/ver/1791/trunk/gromosXX/src/algorithm
+END
+create_md_sequence.cc
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/gromosXXc++/!svn/ver/1554/trunk/gromosXX/src/algorithm/create_md_sequence.cc
+END
+create_md_sequence.h
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/gromosXXc++/!svn/ver/800/trunk/gromosXX/src/algorithm/create_md_sequence.h
+END
+Makefile.am
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/gromosXXc++/!svn/ver/1554/trunk/gromosXX/src/algorithm/Makefile.am
+END
+algorithm.cc
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/gromosXXc++/!svn/ver/1511/trunk/gromosXX/src/algorithm/algorithm.cc
+END
+algorithm.h
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/gromosXXc++/!svn/ver/1012/trunk/gromosXX/src/algorithm/algorithm.h
+END
+.cvsignore
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/gromosXXc++/!svn/ver/807/trunk/gromosXX/src/algorithm/.cvsignore
+END

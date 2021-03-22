@@ -1,0 +1,59 @@
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svn/gromosXXc++/!svn/ver/1573/trunk/gromosXX/contrib
+END
+unlock_features.pl
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/gromosXXc++/!svn/ver/1000/trunk/gromosXX/contrib/unlock_features.pl
+END
+Makefile.am
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/gromosXXc++/!svn/ver/1461/trunk/gromosXX/contrib/Makefile.am
+END
+split_frame.cc
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/gromosXXc++/!svn/ver/1105/trunk/gromosXX/contrib/split_frame.cc
+END
+repex.py
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/gromosXXc++/!svn/ver/468/trunk/gromosXX/contrib/repex.py
+END
+tabulate_spc.cc
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/gromosXXc++/!svn/ver/1083/trunk/gromosXX/contrib/tabulate_spc.cc
+END
+script.py
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/gromosXXc++/!svn/ver/509/trunk/gromosXX/contrib/script.py
+END
+.cvsignore
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/gromosXXc++/!svn/ver/810/trunk/gromosXX/contrib/.cvsignore
+END
+patch-fftw.pl
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/gromosXXc++/!svn/ver/1220/trunk/gromosXX/contrib/patch-fftw.pl
+END
+rng_gsl.cc
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/gromosXXc++/!svn/ver/1105/trunk/gromosXX/contrib/rng_gsl.cc
+END

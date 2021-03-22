@@ -1,0 +1,58 @@
+/**
+ * @file main.doxy
+ */
+
+/**
+ * @mainpage GROMOSXX MD++
+ * <h1>Groningen Molecular Simulation : GROMOSXX MD++</h1>
+ * <h2>Documentation</h2>
+ * <hr>
+ * <h3>MD program</h3>
+ * - Available programs
+ *  - @ref md
+ *  - @ref md_mpi
+ *  - @ref repex
+ * - Available contrib programs 
+ *  - @ref repana
+ *  - @ref tabulate_spc
+ *  - @ref rep_rewrite
+ *  - @ref split_frame
+ *  - @ref rng_gsl
+ * - File formats:
+ *  - @ref input
+ *  - topological files
+ *   - @ref pttopo
+ *   - @ref friction
+ *   - @ref bsleus
+ *  - restraint specifciation
+ *   - @ref dihrest
+ *   - @ref disres
+ *   - @ref jvalue
+ *   - @ref posres
+ *   - @ref xrayresfile
+ *   - @ref leus
+ *   - @ref leusdb
+ *
+ * <h3>Modules</h3>
+ * - @ref algorithmoverview "algorithm"
+ * - @ref simulation
+ * - @ref topology
+ * - @ref configurationoverview "configuration"
+ * - @ref interaction
+ * - @ref mathoverview "math"
+ * - @ref io
+ * - @ref util
+ * - @ref check
+ *
+ * <h3>Installation</h3>
+ * - @ref install "installation instructions"
+ *
+ *
+ * <h3>SVN webaccess</h3>
+ * - <a href="release.html#svn">SVN server</a>
+ *
+ * <h3>Bug reports</h3>
+ * - <a href="release.html#bugreport">Trac server</a>
+ */
+
+

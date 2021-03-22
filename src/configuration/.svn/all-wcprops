@@ -1,0 +1,113 @@
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/gromosXXc++/!svn/ver/1778/trunk/gromosXX/src/configuration
+END
+influence_function.cc
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/gromosXXc++/!svn/ver/1511/trunk/gromosXX/src/configuration/influence_function.cc
+END
+influence_function.h
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svn/gromosXXc++/!svn/ver/1132/trunk/gromosXX/src/configuration/influence_function.h
+END
+Makefile.am
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/gromosXXc++/!svn/ver/1403/trunk/gromosXX/src/configuration/Makefile.am
+END
+configuration_global.cc
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svn/gromosXXc++/!svn/ver/1511/trunk/gromosXX/src/configuration/configuration_global.cc
+END
+energy.cc
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/gromosXXc++/!svn/ver/1723/trunk/gromosXX/src/configuration/energy.cc
+END
+configuration_global.h
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/gromosXXc++/!svn/ver/210/trunk/gromosXX/src/configuration/configuration_global.h
+END
+.cvsignore
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/gromosXXc++/!svn/ver/807/trunk/gromosXX/src/configuration/.cvsignore
+END
+energy.h
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/gromosXXc++/!svn/ver/1723/trunk/gromosXX/src/configuration/energy.h
+END
+state_properties.cc
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svn/gromosXXc++/!svn/ver/1607/trunk/gromosXX/src/configuration/state_properties.cc
+END
+mesh.cc
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/gromosXXc++/!svn/ver/1579/trunk/gromosXX/src/configuration/mesh.cc
+END
+state_properties.h
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/gromosXXc++/!svn/ver/1484/trunk/gromosXX/src/configuration/state_properties.h
+END
+mesh.h
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/gromosXXc++/!svn/ver/1579/trunk/gromosXX/src/configuration/mesh.h
+END
+kspace.cc
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/gromosXXc++/!svn/ver/1511/trunk/gromosXX/src/configuration/kspace.cc
+END
+configuration.cc
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/gromosXXc++/!svn/ver/1778/trunk/gromosXX/src/configuration/configuration.cc
+END
+kspace.h
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/gromosXXc++/!svn/ver/1273/trunk/gromosXX/src/configuration/kspace.h
+END
+configuration.h
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/gromosXXc++/!svn/ver/1778/trunk/gromosXX/src/configuration/configuration.h
+END
+average.cc
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/gromosXXc++/!svn/ver/1734/trunk/gromosXX/src/configuration/average.cc
+END
+average.h
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/gromosXXc++/!svn/ver/1443/trunk/gromosXX/src/configuration/average.h
+END

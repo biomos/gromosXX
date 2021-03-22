@@ -1,0 +1,41 @@
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/gromosXXc++/!svn/ver/1790/trunk/gromosXX/src/io/configuration
+END
+inframe.cc
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svn/gromosXXc++/!svn/ver/1511/trunk/gromosXX/src/io/configuration/inframe.cc
+END
+inframe.h
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/gromosXXc++/!svn/ver/1096/trunk/gromosXX/src/io/configuration/inframe.h
+END
+in_configuration.cc
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svn/gromosXXc++/!svn/ver/1778/trunk/gromosXX/src/io/configuration/in_configuration.cc
+END
+out_configuration.cc
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svn/gromosXXc++/!svn/ver/1790/trunk/gromosXX/src/io/configuration/out_configuration.cc
+END
+in_configuration.h
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/gromosXXc++/!svn/ver/1729/trunk/gromosXX/src/io/configuration/in_configuration.h
+END
+out_configuration.h
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svn/gromosXXc++/!svn/ver/1787/trunk/gromosXX/src/io/configuration/out_configuration.h
+END

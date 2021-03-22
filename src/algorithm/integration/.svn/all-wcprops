@@ -1,0 +1,137 @@
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/gromosXXc++/!svn/ver/1783/trunk/gromosXX/src/algorithm/integration
+END
+multigradient.cc
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svn/gromosXXc++/!svn/ver/1520/trunk/gromosXX/src/algorithm/integration/multigradient.cc
+END
+energy_calculation.h
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svn/gromosXXc++/!svn/ver/545/trunk/gromosXX/src/algorithm/integration/energy_calculation.h
+END
+scaled_leap_frog.cc
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svn/gromosXXc++/!svn/ver/1511/trunk/gromosXX/src/algorithm/integration/scaled_leap_frog.cc
+END
+multigradient.h
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svn/gromosXXc++/!svn/ver/1474/trunk/gromosXX/src/algorithm/integration/multigradient.h
+END
+eds.cc
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/gromosXXc++/!svn/ver/1554/trunk/gromosXX/src/algorithm/integration/eds.cc
+END
+scaled_leap_frog.h
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn/gromosXXc++/!svn/ver/1423/trunk/gromosXX/src/algorithm/integration/scaled_leap_frog.h
+END
+eds.h
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svn/gromosXXc++/!svn/ver/1554/trunk/gromosXX/src/algorithm/integration/eds.h
+END
+slow_growth.cc
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svn/gromosXXc++/!svn/ver/1511/trunk/gromosXX/src/algorithm/integration/slow_growth.cc
+END
+slow_growth.h
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svn/gromosXXc++/!svn/ver/545/trunk/gromosXX/src/algorithm/integration/slow_growth.h
+END
+lattice_shift.cc
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svn/gromosXXc++/!svn/ver/1511/trunk/gromosXX/src/algorithm/integration/lattice_shift.cc
+END
+lattice_shift.h
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svn/gromosXXc++/!svn/ver/1059/trunk/gromosXX/src/algorithm/integration/lattice_shift.h
+END
+leap_frog.cc
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svn/gromosXXc++/!svn/ver/1511/trunk/gromosXX/src/algorithm/integration/leap_frog.cc
+END
+leap_frog.h
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/gromosXXc++/!svn/ver/765/trunk/gromosXX/src/algorithm/integration/leap_frog.h
+END
+steepest_descent.cc
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svn/gromosXXc++/!svn/ver/1511/trunk/gromosXX/src/algorithm/integration/steepest_descent.cc
+END
+monte_carlo.cc
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svn/gromosXXc++/!svn/ver/1511/trunk/gromosXX/src/algorithm/integration/monte_carlo.cc
+END
+analyze.cc
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/gromosXXc++/!svn/ver/1511/trunk/gromosXX/src/algorithm/integration/analyze.cc
+END
+steepest_descent.h
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn/gromosXXc++/!svn/ver/1396/trunk/gromosXX/src/algorithm/integration/steepest_descent.h
+END
+monte_carlo.h
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/gromosXXc++/!svn/ver/1000/trunk/gromosXX/src/algorithm/integration/monte_carlo.h
+END
+stochastic.cc
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/gromosXXc++/!svn/ver/1783/trunk/gromosXX/src/algorithm/integration/stochastic.cc
+END
+analyze.h
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/gromosXXc++/!svn/ver/1021/trunk/gromosXX/src/algorithm/integration/analyze.h
+END
+stochastic.h
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svn/gromosXXc++/!svn/ver/1379/trunk/gromosXX/src/algorithm/integration/stochastic.h
+END
+energy_calculation.cc
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/svn/gromosXXc++/!svn/ver/1524/trunk/gromosXX/src/algorithm/integration/energy_calculation.cc
+END

@@ -1,0 +1,53 @@
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/gromosXXc++/!svn/ver/1779/trunk/gromosXX/src/algorithm/temperature
+END
+thermostat.cc
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/gromosXXc++/!svn/ver/1511/trunk/gromosXX/src/algorithm/temperature/thermostat.cc
+END
+temperature_calculation.cc
+K 25
+svn:wc:ra_dav:version-url
+V 98
+/svn/gromosXXc++/!svn/ver/1779/trunk/gromosXX/src/algorithm/temperature/temperature_calculation.cc
+END
+thermostat.h
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svn/gromosXXc++/!svn/ver/461/trunk/gromosXX/src/algorithm/temperature/thermostat.h
+END
+temperature_calculation.h
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svn/gromosXXc++/!svn/ver/621/trunk/gromosXX/src/algorithm/temperature/temperature_calculation.h
+END
+berendsen_thermostat.cc
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/svn/gromosXXc++/!svn/ver/1511/trunk/gromosXX/src/algorithm/temperature/berendsen_thermostat.cc
+END
+berendsen_thermostat.h
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/svn/gromosXXc++/!svn/ver/545/trunk/gromosXX/src/algorithm/temperature/berendsen_thermostat.h
+END
+nosehoover_thermostat.cc
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svn/gromosXXc++/!svn/ver/1652/trunk/gromosXX/src/algorithm/temperature/nosehoover_thermostat.cc
+END
+nosehoover_thermostat.h
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/svn/gromosXXc++/!svn/ver/545/trunk/gromosXX/src/algorithm/temperature/nosehoover_thermostat.h
+END

@@ -1,0 +1,6 @@
+TITLE
+Dihedral angle definition file for local elevation.
+END
+LOCALELEVSPEC
+1 1 2 4 6 8
+END

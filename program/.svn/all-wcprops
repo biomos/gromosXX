@@ -1,0 +1,53 @@
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svn/gromosXXc++/!svn/ver/1791/trunk/gromosXX/program
+END
+Makefile.am
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/gromosXXc++/!svn/ver/1601/trunk/gromosXX/program/Makefile.am
+END
+eds_2box.cc
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/gromosXXc++/!svn/ver/1778/trunk/gromosXX/program/eds_2box.cc
+END
+md_mpi.cc
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/gromosXXc++/!svn/ver/1791/trunk/gromosXX/program/md_mpi.cc
+END
+repex_mpi.cc
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/gromosXXc++/!svn/ver/1781/trunk/gromosXX/program/repex_mpi.cc
+END
+.cvsignore
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/gromosXXc++/!svn/ver/810/trunk/gromosXX/program/.cvsignore
+END
+eds_2box_mpi.cc
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/gromosXXc++/!svn/ver/1778/trunk/gromosXX/program/eds_2box_mpi.cc
+END
+md.cc
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/gromosXXc++/!svn/ver/1778/trunk/gromosXX/program/md.cc
+END
+BUILD_NUMBER
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/gromosXXc++/!svn/ver/869/trunk/gromosXX/program/BUILD_NUMBER
+END

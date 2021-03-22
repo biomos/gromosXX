@@ -1,0 +1,29 @@
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/gromosXXc++/!svn/ver/1727/trunk/gromosXX/src/interaction/nonbonded
+END
+innerloop_template.h
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/svn/gromosXXc++/!svn/ver/1430/trunk/gromosXX/src/interaction/nonbonded/innerloop_template.h
+END
+create_nonbonded.cc
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svn/gromosXXc++/!svn/ver/1511/trunk/gromosXX/src/interaction/nonbonded/create_nonbonded.cc
+END
+create_nonbonded.h
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svn/gromosXXc++/!svn/ver/623/trunk/gromosXX/src/interaction/nonbonded/create_nonbonded.h
+END
+interaction_spec.h
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svn/gromosXXc++/!svn/ver/951/trunk/gromosXX/src/interaction/nonbonded/interaction_spec.h
+END
