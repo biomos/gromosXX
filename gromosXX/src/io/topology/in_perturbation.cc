@@ -134,7 +134,7 @@ io::In_Perturbation::read(topology::Topology &topo,
   
   // let's do a warning because state A information is overwritten?
   bool warn = false;
-  if(!param.eds.eds){
+  if(!param.eds.eds || (param.eds.eds && param.perturbation.perturbation)){
     // prepare arrays
     topo.is_perturbed().resize(topo.num_solute_atoms(), false);
     
