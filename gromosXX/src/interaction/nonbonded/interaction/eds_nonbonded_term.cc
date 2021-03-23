@@ -47,39 +47,7 @@ inline void interaction::Eds_Nonbonded_Term
       m_crf.push_back(crf);
       
       break;
-    case simulation::lj_crf_pert_eds_func:
-
-
-
-      // Force
-      if (sim.param().nonbonded.rf_cutoff > 0.0) {
-        m_rrf = sim.param().nonbonded.rf_cutoff;
-        crf = 2 * (sim.param().nonbonded.epsilon - sim.param().nonbonded.rf_epsilon) *
-                (1.0 + sim.param().nonbonded.rf_kappa * m_rrf) -
-                sim.param().nonbonded.rf_epsilon * (sim.param().nonbonded.rf_kappa *
-                m_rrf * sim.param().nonbonded.rf_kappa * m_rrf);
-
-        crf /= (sim.param().nonbonded.epsilon + 2 * sim.param().nonbonded.rf_epsilon) *
-                (1.0 + sim.param().nonbonded.rf_kappa * m_rrf) +
-                sim.param().nonbonded.rf_epsilon * (sim.param().nonbonded.rf_kappa *
-                m_rrf * sim.param().nonbonded.rf_kappa * m_rrf);
-
-        crf_cut = (1 - crf / 2.0) / m_rrf;
-        crf_2 = crf / 2.0;
-	
-      } else { // infinity case: rf_cutoff == 0
-        crf = -1;
-        DEBUG(15, "nonbonded term init: m_crf: " << crf);
-        m_rrf = 0.0;
-        crf_cut = (1 - crf / 2.0) / sim.param().nonbonded.rf_cutoff;
-	crf_2 = 0.0;
-	
-      }
-      m_crf_cut.push_back(crf_cut);
-      m_crf.push_back(crf);
-      m_crf_2.push_back(crf_2);
       
-      break;
     case simulation::cggromos_func:
       cgrain_eps.push_back(sim.param().cgrain.EPS);
       cgrain_eps.push_back(sim.param().cgrain.EPSM);

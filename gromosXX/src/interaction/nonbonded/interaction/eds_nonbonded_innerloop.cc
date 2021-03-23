@@ -64,7 +64,6 @@ t_interaction_spec, t_perturbation_details>
 
   switch (t_interaction_spec::interaction_func) {
     case simulation::lj_crf_func:
-    case simulation::lj_crf_pert_eds_func:
     {
       std::vector<math::VArray> &force_endstates = storage.force_endstates;
       double c6, c12, q, A_q, B_q, e_nb, e_lj, e_crf, f, de_lj, de_crf;
@@ -697,7 +696,6 @@ t_interaction_spec, t_perturbation_details>
 
   switch (t_interaction_spec::interaction_func) {
     case simulation::lj_crf_func:
-    case simulation::lj_crf_pert_eds_func:
     {
       double c6, c12, q, A_q, B_q, e_nb, e_lj, e_crf, f, de_lj, de_crf;
       assert(abs2(r) != 0);
@@ -1246,7 +1244,6 @@ t_interaction_spec, t_perturbation_details>
       }
       break;
     }
-    case simulation::lj_crf_pert_eds_func:
     default:
       io::messages.add("EDS_Nonbonded_Innerloop",
               "rf excluded interaction function not implemented",
@@ -1278,7 +1275,6 @@ t_interaction_spec, t_perturbation_details>
         }
         break;
       }
-      case simulation::lj_crf_pert_eds_func:
       default:
         io::messages.add("EDS_Nonbonded_Innerloop",
                 "rf excluded interaction function not implemented",
@@ -1362,7 +1358,6 @@ t_interaction_spec, t_perturbation_details>
           
           break;
         }
-	case simulation::lj_crf_pert_eds_func:
         default:
           io::messages.add("EDS_Nonbonded_Innerloop",
                   "rf excluded interaction function not implemented",
