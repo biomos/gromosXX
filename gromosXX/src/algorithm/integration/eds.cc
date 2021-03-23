@@ -117,14 +117,14 @@ int algorithm::EDS
           }
           DEBUG(9, "force current: " << i << " = " << math::v2s(conf.current().force(i)));
         }
-        
+
         // ... to lambda derivatives
         if (conf.current().energies.eds_vmix <= sim.param().eds.emin || conf.current().energies.eds_vmix >= sim.param().eds.emax) {
           conf.current().perturbed_energy_derivatives.eds_vr +=
            pi * conf.current().perturbed_energy_derivatives.eds_vi[state];
         }
         else {
-          cconf.current().perturbed_energy_derivatives.eds_vr += 
+          conf.current().perturbed_energy_derivatives.eds_vr += 
           pi * conf.current().perturbed_energy_derivatives.eds_vi[state] * fkfac;
         }
 
