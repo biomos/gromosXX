@@ -2947,7 +2947,7 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
           << std::setw(18) << "nonbonded"
           << std::setw(18) << "special"
           << std::setw(18) << "offset\n";
-  for (unsigned i = 0; i < e.eds_vi.size(); i++) {
+  for (unsigned i = 0; i < e.eds_eir.size(); i++) {
     os << std::setw(18) << e.eds_vi[i]
             << std::setw(18) << e.eds_vi[i] - e.eds_vi_special[i]
             << std::setw(18) << e.eds_vi_special[i] 
