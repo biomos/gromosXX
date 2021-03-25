@@ -377,12 +377,12 @@ int algorithm::Lincs::init(topology::Topology & topo,
   // for all solvents
   for(unsigned int i=0; i<topo.num_solvents(); ++i){  //Initialize lincs for each solvent
     if (topo.num_solvent_molecules(i) != 0){
-	    _setup_lincs(topo, topo.solvent(i).lincs(),
-			 topo.solvent(i).distance_constraints(),
-			 first);
-        first+=topo.solvent(i).num_atoms();
+      _setup_lincs(topo, topo.solvent(i).lincs(),
+		    topo.solvent(i).distance_constraints(),
+		    first);
+      first+=topo.solvent(i).num_atoms();
     } else {
-    	io::messages.add("Solvent " + std::to_string(i) + ": No molecules found; does not initialize LINCS for solvent "  + std::to_string(i) + ".", 
+      io::messages.add("Solvent " + std::to_string(i) + ": No molecules found; does not initialize LINCS for solvent "  + std::to_string(i) + ".", 
     		 	  "algorithm::Lincs::init" , io::message::warning);
     }
   }
