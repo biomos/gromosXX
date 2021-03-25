@@ -347,9 +347,9 @@ static void _init_dihres_data
       
     bool warn=false;
     for (int i=0; i<3;  i++) {
-        if ((fabs(rij[i]) > conf.current().box(i)[i]*0.45 && abs(rij[i]) < conf.current().box(i)[i]*0.55)
-         || (fabs(rkj[i]) > conf.current().box(i)[i]*0.45 && abs(rkj[i]) < conf.current().box(i)[i]*0.55) 
-         || (fabs(rkl[i]) > conf.current().box(i)[i]*0.45 && abs(rkl[i]) < conf.current().box(i)[i]*0.55)) {
+        if ((fabs(rij[i]) > conf.current().box(i)[i]*0.45 && fabs(rij[i]) < conf.current().box(i)[i]*0.55)
+         || (fabs(rkj[i]) > conf.current().box(i)[i]*0.45 && fabs(rkj[i]) < conf.current().box(i)[i]*0.55) 
+         || (fabs(rkl[i]) > conf.current().box(i)[i]*0.45 && fabs(rkl[i]) < conf.current().box(i)[i]*0.55)) {
           warn=true;
         }
     }
