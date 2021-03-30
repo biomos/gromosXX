@@ -103,14 +103,16 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
   if (sim.param().boundary.boundary != math::vacuum)
     md_seq.push_back(new algorithm::Lattice_Shift_Tracker());
 
-  // TO DO: add if condition for virtual atoms
-  md_seq.push_back(new algorithm::Prepare_VirtualAtoms());
+  // prepare virtual atoms
+  if (sim.param().virtualatoms.virtualatoms)
+    md_seq.push_back(new algorithm::Prepare_VirtualAtoms());
 
   // add the forcefield
   md_seq.push_back(ff);
 
-  // TO DO: add if condition for virtual atoms
-  md_seq.push_back(new algorithm::Propagate_Forces());
+  // propagate forces for virtual atoms
+  if (sim.param().virtualatoms.virtualatoms)
+      md_seq.push_back(new algorithm::Propagate_Forces());
   
   //add EDS
   if (sim.param().eds.eds) {

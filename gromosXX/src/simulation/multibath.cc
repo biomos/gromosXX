@@ -33,9 +33,10 @@ void simulation::Multibath
     add_bath(0.0);
   }
 
-  // check whether the last last is really the last_atom ( we have to substract the virtual atoms since they do not belong to a bath)
+  // check whether the last last is really the last_atom ( we have to substract the virtual atoms since they are not specified in the bath)
+  DEBUG(1, "las atom of bath is " << (m_bath_index.end() - 1)->last_atom << " last topo" << topo.num_atoms() << " corrected " << topo.num_atoms() - 1);
   if ((!(m_bath_index.size() == 0))
-          && (m_bath_index.end() - 1)->last_atom != topo.num_atoms() - 1 - topo.virtual_atoms_group().atoms().size()) {
+          && (m_bath_index.end() - 1)->last_atom != topo.num_atoms() - 1) {
     io::messages.add("Last atom of last bath is not the last atom in the sytem!",
             "Multibath::calculate_degrees_of_freedom",
             io::message::error);
@@ -136,7 +137,8 @@ void simulation::Multibath
     for (; a_it != a_to; ++a_it) {
       unsigned int com_i, ir_i;
       in_bath(*a_it, com_i, ir_i);
-      if (com_i != first_com || ir_i != first_ir) {
+      if ((com_i != first_com || ir_i != first_ir) && topo.virtual_atoms_group().atoms().count(*a_it) == 0) {
+        DEBUG(1, "a_it " << *a_it << "com_i " << com_i << " first_com " << first_com);
         io::messages.add("Multibath: Temperature group distributed over multiple baths.",
                 "Multibath::check_state",
                 io::message::error);

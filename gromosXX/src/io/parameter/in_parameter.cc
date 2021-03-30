@@ -1555,7 +1555,10 @@ void io::In_Parameter::read_MULTIBATH(simulation::Parameter &param,
         block.get_next_parameter("NBATHS", num_baths, ">=0", "");
 
         // if we have virtual atoms add them to an additional bath that it is not coupled
-        if (param.virtualatoms.virtualatoms) num_baths++;
+        if (param.virtualatoms.virtualatoms){
+            num_baths++;
+            io::messages.add("MULTIBATH block: Extra bath added to allocate virtual atoms", "In_Parameter", io::message::warning);
+        }
 
         if (block.error()) {
           block.get_final_messages();
@@ -1563,8 +1566,11 @@ void io::In_Parameter::read_MULTIBATH(simulation::Parameter &param,
         }
 
         for (int i = 0; i < num_baths; ++i) {
-            if (param.virtualatoms.virtualatoms && i == num_baths - 2){
-                param.multibath.multibath.add_bath(0.0, -1);
+            // if we virtual atoms then the extra bath should go 1 before the solvent ( if solvent is present) or be the last bath if solvent is not present
+            if (param.virtualatoms.virtualatoms && ((i == num_baths - 2 && param.system.nsm) || (i == num_baths - 1 && param.system.nsm == 0))){
+                param.multibath.multibath.add_bath(0.0, 0);
+                io::messages.add("MULTIBATH block: Virtual atoms added to bath " + i+1, "In_Parameter", io::message::warning);
+                io::messages.add("MULTIBATH block: Atom indexes will be shifted acordingly", "In_Parameter", io::message::warning);
             }
             else{
                 std::string idx = io::to_string(i);
@@ -1606,7 +1612,7 @@ void io::In_Parameter::read_MULTIBATH(simulation::Parameter &param,
         unsigned int extra_atoms = 0;
 
         for (int i = 0; i < num_dof; ++i) {
-            if (param.virtualatoms.virtualatoms && i == num_dof - 2){
+            if (param.virtualatoms.virtualatoms && ((i == num_dof - 2 && param.system.nsm) || (i == num_dof - 1 && param.system.nsm == 0))){
                 last = param.virtualatoms.lastatom;
                 com_bath = param.multibath.multibath.size() - 1;
                 ir_bath = param.multibath.multibath.size() - 1;
@@ -1619,10 +1625,13 @@ void io::In_Parameter::read_MULTIBATH(simulation::Parameter &param,
                 block.get_next_parameter("IR-BATH["+idx+"]", ir_bath, ">=1 && <="+ str_bathsize, "");
 
                 if (last < 1) last = 1;
-                if (param.virtualatoms.virtualatoms && last) last += extra_atoms;
+                if (param.virtualatoms.virtualatoms) last += extra_atoms;
                 if (com_bath < 1) com_bath = 1;
                 if (ir_bath < 1) ir_bath = 1;
-
+                if (param.virtualatoms.virtualatoms && extra_atoms){
+                   com_bath++;
+                   ir_bath++;
+                }
                 if (com_bath > param.multibath.multibath.size()) com_bath = param.multibath.multibath.size();
                 if (ir_bath > param.multibath.multibath.size()) ir_bath = param.multibath.multibath.size();
             }

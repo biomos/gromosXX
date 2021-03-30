@@ -125,7 +125,11 @@ void io::In_Topology::read(topology::Topology& topo,
   read_block_RESNAME(topo, param, os);
   read_block_ATOMTYPENAME(topo, param, os);
   read_block_SOLUTEATOM(topo, param, os);
-  read_block_VIRTUALATOM(topo, param, os);
+  if (param.virtualatoms.virtualatoms){
+     if (m_block.count("VIRTUALATOMS") == 0)
+         io::messages.add("Virtual atoms specified in input file but no VIRTUALATOM block found in toplogy", io::message::error);
+     read_block_VIRTUALATOM(topo, param, os);
+  }
 
   // os << "time after SOLUTEATOM: " << util::now() - start << std::endl;
 
@@ -1695,7 +1699,7 @@ void io::In_Topology::read_block_VIRTUALATOM(topology::Topology& topo,
       }
       
       // put the rest of the block into a single stream
-      ++it;
+      //++it;
 
       int a_num, iac, num_atoms, member_atom, t;
       util::virtual_type type;
@@ -1709,7 +1713,6 @@ void io::In_Topology::read_block_VIRTUALATOM(topology::Topology& topo,
         ++it;
 
         _lineStream >> a_num >> iac >> q >> t >> num_atoms;
-
         if (a_num != topo.num_solute_atoms() + 1) {
           io::messages.add("Error in VIRTUALATOM block: atom number not sequential.",
                   "InTopology", io::message::error);
