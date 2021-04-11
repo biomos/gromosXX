@@ -179,6 +179,11 @@ namespace io {
     void read_PAIRLIST(simulation::Parameter &param, std::ostream & os = std::cout);
 
     /**
+     * read VIRTUALATOM block.
+     */
+    void read_VIRTUALATOM(simulation::Parameter &param, std::ostream & os = std::cout);
+
+    /**
      * read POSRES block.
      */
     void read_POSITIONRES(simulation::Parameter &param, std::ostream & os = std::cout);

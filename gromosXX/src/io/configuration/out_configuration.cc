@@ -871,6 +871,9 @@ void _print_g96_position_bound(configuration::Configuration const &conf,
   math::VArray const &pos = state->pos;
   topology::Solute const &solute = topo.solute();
   std::vector<std::string> const &residue_name = topo.residue_names();
+  
+  // virtual atoms skiped counter
+  int virt_skip = 0;
 
 
   math::Vec v, v_box, trans, r;
@@ -901,6 +904,11 @@ void _print_g96_position_bound(configuration::Configuration const &conf,
             at_to = cg_it.end();
 
     for (; at_it != at_to; ++at_it) {
+      // Skip virtual atoms TO DO: Add condition to print them
+      if (topo.virtual_atoms_group().atoms().count(*at_it)){
+        virt_skip++;
+        continue;
+      }
       r = pos(*at_it) + trans;
       //rotate to original Cartesian coordinates
       r = math::Vec(math::product(Rmat, r));
@@ -909,7 +917,7 @@ void _print_g96_position_bound(configuration::Configuration const &conf,
               << residue_name[solute.atom(*at_it).residue_nr] << " "
               << std::setw(6) << std::left << solute.atom(*at_it).name
               << std::right
-              << std::setw(6) << *at_it + 1
+              << std::setw(6) << *at_it + 1 - virt_skip
               << std::setw(width) << r(0)
               << std::setw(width) << r(1)
               << std::setw(width) << r(2)
@@ -942,7 +950,7 @@ void _print_g96_position_bound(configuration::Configuration const &conf,
               << residue_name[topo.solvent(s).atom(atom).residue_nr] << " "
               << std::setw(6) << std::left << topo.solvent(s).atom(atom).name
               << std::right
-              << std::setw(6) << *at_it + 1
+              << std::setw(6) << *at_it + 1 - virt_skip
               << std::setw(width) << r(0)
               << std::setw(width) << r(1)
               << std::setw(width) << r(2)
@@ -1093,7 +1101,11 @@ void _print_g96_positionred_bound(configuration::Configuration const &conf,
             at_to = cg_it.end();
 
     for (; at_it != at_to; ++at_it, ++count) {
-
+      // skip virtual atoms
+      if (topo.virtual_atoms_group().atoms().count(*at_it)){
+        count--;
+        continue;
+      }
       if (*at_it >= unsigned(num)) return;
 
       DEBUG(10, "atom: " << count);
@@ -1240,6 +1252,9 @@ void io::Out_Configuration
   topology::Solute const &solute = topo.solute();
   std::vector<std::string> const &residue_name = topo.residue_names();
 
+  // skipped virtual atoms counter
+  int virt_skip = 0;
+
   os << "# first 24 chars ignored\n";
   //matrix to rotate back into orignial Cartesian Coordinat system
   math::Matrixl Rmat(math::rmat(conf.current().phi,
@@ -1249,12 +1264,17 @@ void io::Out_Configuration
 
   math::Vec vel_rot;
   for (int i = 0, to = topo.num_solute_atoms(); i < to; ++i) {
+    // skip virtual atoms
+    if (topo.virtual_atoms_group().atoms().count(i)){
+      virt_skip++;    
+      continue;
+    }
     //rotate back to original Carthesian coordinates
     vel_rot = math::Vec(math::product(Rmat, vel(i)));
     os << std::setw(5) << solute.atom(i).residue_nr + 1 << " "
             << std::setw(5) << std::left << residue_name[solute.atom(i).residue_nr] << " "
             << std::setw(6) << std::left << solute.atom(i).name << std::right
-            << std::setw(6) << i + 1
+            << std::setw(6) << i + 1 - virt_skip
             << std::setw(m_width) << vel_rot(0)
             << std::setw(m_width) << vel_rot(1)
             << std::setw(m_width) << vel_rot(2)
@@ -1274,7 +1294,7 @@ void io::Out_Configuration
                 << std::setw(5) << std::left
                 << residue_name[topo.solvent(s).atom(a).residue_nr] << " "
                 << std::setw(6) << std::left << topo.solvent(s).atom(a).name << std::right
-                << std::setw(6) << index + 1
+                << std::setw(6) << index + 1 - virt_skip
                 << std::setw(m_width) << vel_rot(0)
                 << std::setw(m_width) << vel_rot(1)
                 << std::setw(m_width) << vel_rot(2)
@@ -1294,6 +1314,9 @@ void io::Out_Configuration
   os << "LATTICESHIFTS\n";
   math::VArray const &shift = conf.special().lattice_shifts;
   for (int i = 0, to = topo.num_atoms(); i < to; ++i) {
+    // skip virtual atoms
+    if (topo.virtual_atoms_group().atoms().count(i)) continue;
+
     os << std::setw(10) << int(rint(shift(i)(0)))
             << std::setw(10) << int(rint(shift(i)(1)))
             << std::setw(10) << int(rint(shift(i)(2)))
@@ -1316,16 +1339,22 @@ void io::Out_Configuration
   if (conf.boundary_type == math::truncoct)
     Rmat = math::product(Rmat, math::truncoct_triclinic_rotmat(false));
   math::Vec vel_rot;
-
+  // skipped virtual atoms counter
+  int virt_skip = 0;
   assert(num <= int(vel.size()));
-  for (int i = 0; i < num; ++i) {
+  for (int i = 0; i < num; ++i) {     
+    // skip virtual atoms
+    if (topo.virtual_atoms_group().atoms().count(i)){
+      virt_skip++;
+      continue;
+    }
     vel_rot = math::Vec(math::product(Rmat, vel(i)));
     os << std::setw(m_width) << vel_rot(0)
             << std::setw(m_width) << vel_rot(1)
             << std::setw(m_width) << vel_rot(2)
 
             << "\n";
-    if ((i + 1) % 10 == 0) os << '#' << std::setw(10) << i + 1 << "\n";
+    if ((i + 1 - virt_skip) % 10 == 0) os << '#' << std::setw(10) << i + 1 - virt_skip<< "\n";
   }
 
   os << "END\n";
@@ -1343,6 +1372,8 @@ void io::Out_Configuration
   math::VArray const & force = conf.current().force;
   topology::Solute const &solute = topo.solute();
   std::vector<std::string> const &residue_name = topo.residue_names();
+  // skipped virtual atoms counter
+  int virt_skip = 0;
   //matrix to rotate back into orignial Cartesian Coordinat system
   math::Matrixl Rmat(math::rmat(conf.current().phi,
           conf.current().theta, conf.current().psi));
@@ -1351,11 +1382,16 @@ void io::Out_Configuration
   math::Vec force_rot;
   os << "# first 24 chars ignored\n";
   for (int i = 0, to = topo.num_solute_atoms(); i < to; ++i) {
+    // skip virtual atoms
+    if (topo.virtual_atoms_group().atoms().count(i)){
+          virt_skip++;    
+          continue;
+        }
     force_rot = math::Vec(math::product(Rmat, force(i)));
     os << std::setw(6) << solute.atom(i).residue_nr + 1
             << std::setw(5) << residue_name[solute.atom(i).residue_nr]
             << std::setw(6) << solute.atom(i).name
-            << std::setw(8) << i + 1
+            << std::setw(8) << i + 1 - virt_skip
             << std::setw(m_force_width) << force_rot(0)
             << std::setw(m_force_width) << force_rot(1)
             << std::setw(m_force_width) << force_rot(2)
@@ -1370,7 +1406,7 @@ void io::Out_Configuration
         os << std::setw(6) << topo.solvent(s).atom(a).residue_nr + 1
                 << std::setw(5) << residue_name[topo.solvent(s).atom(a).residue_nr]
                 << std::setw(6) << topo.solvent(s).atom(a).name
-                << std::setw(8) << index + 1
+                << std::setw(8) << index + 1 - virt_skip
                 << std::setw(m_force_width) << force_rot(0)
                 << std::setw(m_force_width) << force_rot(1)
                 << std::setw(m_force_width) << force_rot(2)
@@ -1382,16 +1418,23 @@ void io::Out_Configuration
 
   if (constraint_force) {
     os << "CONSFORCE\n";
+    
+    virt_skip = 0;
 
     math::VArray const & cons_force = conf.current().constraint_force;
 
     os << "# first 24 chars ignored\n";
     for (int i = 0, to = topo.num_solute_atoms(); i < to; ++i) {
+          // skip virtual atoms
+          if (topo.virtual_atoms_group().atoms().count(i)){
+            virt_skip++;    
+            continue;
+        }
       force_rot = math::Vec(math::product(Rmat, cons_force(i)));
       os << std::setw(6) << solute.atom(i).residue_nr + 1
               << std::setw(5) << residue_name[solute.atom(i).residue_nr]
               << std::setw(6) << solute.atom(i).name
-              << std::setw(8) << i + 1
+              << std::setw(8) << i + 1 - virt_skip
               << std::setw(m_force_width) << force_rot(0)
               << std::setw(m_force_width) << force_rot(1)
               << std::setw(m_force_width) << force_rot(2)
@@ -1406,7 +1449,7 @@ void io::Out_Configuration
           os << std::setw(6) << topo.solvent(s).atom(a).residue_nr + 1
                   << std::setw(5) << residue_name[topo.solvent(s).atom(a).residue_nr]
                   << std::setw(6) << topo.solvent(s).atom(a).name
-                  << std::setw(8) << index + 1
+                  << std::setw(8) << index + 1 - virt_skip
                   << std::setw(m_force_width) << force_rot(0)
                   << std::setw(m_force_width) << force_rot(1)
                   << std::setw(m_force_width) << force_rot(2)
@@ -1438,31 +1481,45 @@ void io::Out_Configuration
   
   assert(num <= int(force.size()));
 
+  // skipped virtual atoms counter
+  int virt_skip = 0;
+
   for (int i = 0; i < num; ++i) {
+    // skip virtual atoms
+    if (topo.virtual_atoms_group().atoms().count(i)){
+      virt_skip++;    
+      continue;
+    }
     force_rot = math::Vec(math::product(Rmat, force(i)));
     os << std::setw(m_force_width) << force_rot(0)
             << std::setw(m_force_width) << force_rot(1)
             << std::setw(m_force_width) << force_rot(2)
             << "\n";
 
-    if ((i + 1) % 10 == 0) os << '#' << std::setw(10) << i + 1 << "\n";
+    if ((i + 1 - virt_skip) % 10 == 0) os << '#' << std::setw(10) << i + 1 - virt_skip << "\n";
   }
 
   os << "END\n";
   // group wise forces
+  virt_skip = 0;
   if (conf.special().force_groups.size()) {
     os << "FREEFORCEGROUPRED\n";
     for(unsigned int i = 0; i < conf.special().force_groups.size(); ++i) {
       for (unsigned int j = i; j < conf.special().force_groups.size(); ++j) {
         os << "# group " << i+1 << "-" << j+1 << "\n";
         for (int k = 0; k < num; ++k) {
+          // skip virtual atoms
+          if (topo.virtual_atoms_group().atoms().count(k)){
+            virt_skip++;    
+            continue;
+          }
           force_rot = math::Vec(math::product(Rmat, conf.special().force_groups[j][i](k)));
           os << std::setw(m_force_width) << force_rot(0)
                   << std::setw(m_force_width) << force_rot(1)
                   << std::setw(m_force_width) << force_rot(2)
                   << "\n";
 
-          if ((k + 1) % 10 == 0) os << '#' << std::setw(10) << k + 1 << "\n";
+          if ((k + 1 - virt_skip) % 10 == 0) os << '#' << std::setw(10) << k + 1 - virt_skip << "\n";
         }
       }
     }
@@ -1471,18 +1528,23 @@ void io::Out_Configuration
 
   if (constraint_force) {
     os << "CONSFORCERED\n";
-
+    virt_skip = 0;
     const math::VArray & cons_force = conf.old().constraint_force;
     assert(num <= int(cons_force.size()));
     math::Vec cons_force_rot;
     for (int i = 0; i < num; ++i) {
+      // skip virtual atoms
+      if (topo.virtual_atoms_group().atoms().count(i)){
+        virt_skip++;    
+        continue;
+      }
       cons_force_rot = math::Vec(math::product(Rmat, cons_force(i)));
       os << std::setw(m_force_width) << cons_force_rot(0)
               << std::setw(m_force_width) << cons_force_rot(1)
               << std::setw(m_force_width) << cons_force_rot(2)
               << "\n";
 
-      if ((i + 1) % 10 == 0) os << '#' << std::setw(10) << i + 1 << "\n";
+      if ((i + 1 - virt_skip) % 10 == 0) os << '#' << std::setw(10) << i + 1 - virt_skip << "\n";
     }
 
     os << "END\n";
@@ -3570,6 +3632,7 @@ _print_dipole(simulation::Simulation const & sim,
      if (topo.is_polarisable(i)) 
      {
        //offset position
+       
        math::Vec rm=r;
         
        //cos dipol contribution

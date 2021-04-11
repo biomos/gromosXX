@@ -102,24 +102,26 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
   m_angle_types_cosharm = topo.angle_types_cosharm();
   m_dihedral_types = topo.dihedral_types();
   m_impdihedral_types = topo.impdihedral_types();
-    std::vector<interaction::bond_type_struct> m_bond_types_quart;
+  m_virtual_atom_types = topo.virtual_atom_types();
+
+// CHRIS: this seems to be copy-pasted piece of code?
+//    std::vector<interaction::bond_type_struct> m_bond_types_quart;
 
     /**
      * store all available angle types with harmonic/cosine harmonic force constant
      */
-    std::vector<interaction::angle_type_struct> m_angle_types_harm;
-    std::vector<interaction::angle_type_struct> m_angle_types_cosharm;
+//    std::vector<interaction::angle_type_struct> m_angle_types_harm;
+//    std::vector<interaction::angle_type_struct> m_angle_types_cosharm;
 
     /**
      * store all available dihedral types
      */
-    std::vector<interaction::dihedral_type_struct> m_dihedral_types;
+//    std::vector<interaction::dihedral_type_struct> m_dihedral_types;
 
     /**
      * store all available improper dihedral types
      */
-    std::vector<interaction::improper_dihedral_type_struct> m_impdihedral_types;
-
+//    std::vector<interaction::improper_dihedral_type_struct> m_impdihedral_types;
   m_is_perturbed.clear();
   m_is_eds_perturbed.clear();
   m_is_polarisable.clear();
