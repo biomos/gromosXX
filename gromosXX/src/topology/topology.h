@@ -352,16 +352,6 @@ namespace topology
     unsigned int num_solvent_atoms()const;
 
     /**
-     * get the total number of virtual atoms with nonbonded interactions
-     */
-    unsigned int num_virtual_with_nonbonded()const{return m_nonbonded_virtual_atoms;}
-
-    /**
-     * set the number of virtual atoms with nonbonded interactions
-     */
-    void set_num_virtual_with_nonbonded(unsigned int num_virtuals){ m_nonbonded_virtual_atoms = num_virtuals;}
-
-    /**
      * get the number of solvent molecules.
      */
     unsigned int num_solvent_molecules(unsigned int i)const {

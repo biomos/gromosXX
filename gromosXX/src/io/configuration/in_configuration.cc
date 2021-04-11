@@ -1390,6 +1390,7 @@ bool io::In_Configuration::_read_positionred(math::VArray &pos,
 		       io::message::error);
       break;
     }
+    // Add the virtual atoms because some blocks require so, the position will be overwritten afterwards
     if (topo.virtual_atoms_group().atoms().count(i)){
       pos(i)(0) = 0.0;
       pos(i)(1) = 0.0;
@@ -1498,6 +1499,7 @@ bool io::In_Configuration::_read_position(math::VArray &pos, std::vector<std::st
 		       io::message::error);
       break;
     }
+    // Add the virtual atoms because some blocks require so, the position will be overwritten afterwards
     if (topo.virtual_atoms_group().atoms().count(i)){
       pos(i)(0) = 0.0;
       pos(i)(1) = 0.0;
@@ -1553,6 +1555,7 @@ bool io::In_Configuration::_read_velocityred(math::VArray &vel,
 		       io::message::error);
       break;
     }
+    // Add the virtual atoms because some blocks require so
     if (topo.virtual_atoms_group().atoms().count(i)){
       vel(i)(0) = 0.0;
       vel(i)(1) = 0.0;
@@ -1607,7 +1610,8 @@ bool io::In_Configuration::_read_velocity(math::VArray &vel,
 		       "In_Configuration",
 		       io::message::error);
       break;
-    }    
+    } 
+    // Add the virtual atoms because some blocks require so   
     if (topo.virtual_atoms_group().atoms().count(i)){
       vel(i)(0) = 0.0;
       vel(i)(1) = 0.0;
@@ -1665,6 +1669,7 @@ bool io::In_Configuration::_read_lattice_shifts(math::VArray &shift,
 		       "In_Configuration", io::message::error);
       break;
     }
+    // Add the virtual atoms because some blocks require so
     if (topo.virtual_atoms_group().atoms().count(i)){
       shift(i)(0) = 0.0;
       shift(i)(1) = 0.0;

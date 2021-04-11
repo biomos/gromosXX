@@ -1793,6 +1793,94 @@ void io::In_Topology::read_block_VIRTUALATOM(topology::Topology& topo,
           member_atoms.push_back(member_atom - 1);
         }
 
+        // Read exclusions
+        int n_ex, a_ex;
+        topology::excl_cont_t::value_type ex;
+        topology::excl_cont_t::value_type ex14;
+
+        if (!(_lineStream >> n_ex)) {
+          if (_lineStream.eof()) {
+            _lineStream.clear();
+            _lineStream.str(*it);
+            ++it;
+            _lineStream >> n_ex;
+          } else {
+            io::messages.add("Error in VIRTUALATOM block: number of exclusions "
+                    "could not be read.",
+                    "InTopology", io::message::error);
+          }
+        }
+
+        if (n_ex < 0) {
+          io::messages.add("Error in VIRTUALATOM block: number of exclusions < 0.",
+                  "InTopology", io::message::error);
+        }
+
+        // exclusions
+        ex.clear();
+        for (int i = 0; i < n_ex; ++i) {
+          if (!(_lineStream >> a_ex)) {
+            if (_lineStream.eof()) {
+              _lineStream.clear();
+              _lineStream.str(*it);
+              ++it;
+              _lineStream >> a_ex;
+            } else {
+              io::messages.add("Error in VIRTUALATOM block: exclusion "
+                      "could not be read.",
+                      "InTopology", io::message::error);
+            }
+          }
+
+          if (a_ex <= a_num)
+            io::messages.add("Error in VIRTUALATOM block: exclusions only to "
+                  "larger atom numbers.",
+                  "InTopology", io::message::error);
+
+          ex.insert(a_ex - 1);
+        }
+
+        // 1,4 - pairs
+        if (!(_lineStream >> n_ex)) {
+          if (_lineStream.eof()) {
+            _lineStream.clear();
+            _lineStream.str(*it);
+            ++it;
+            _lineStream >> n_ex;
+          } else {
+            io::messages.add("Error in VIRTUALATOM block: number of 1,4 - exclusion "
+                    "could not be read.",
+                    "InTopology", io::message::error);
+          }
+        }
+
+        if (n_ex < 0) {
+          io::messages.add("Error in VIRTUALATOM block: number of 1,4 exclusions < 0.",
+                  "InTopology", io::message::error);
+        }
+
+        ex14.clear();
+        for (int i = 0; i < n_ex; ++i) {
+          if (!(_lineStream >> a_ex)) {
+            if (_lineStream.eof()) {
+              _lineStream.clear();
+              _lineStream.str(*it);
+              ++it;
+              _lineStream >> a_ex;
+            } else {
+              io::messages.add("Error in VIRTUALATOM block: 1,4 - exclusion "
+                      "could not be read.",
+                      "InTopology", io::message::error);
+            }
+          }
+
+          if (a_ex <= a_num)
+            io::messages.add("Error in VIRTUALATOM block: 1,4 - exclusions only to "
+                  "larger atom numbers.",
+                  "InTopology", io::message::error);
+
+          ex14.insert(a_ex - 1);
+        }
 
         if (_lineStream.fail())
           io::messages.add("bad line in VIRTUALATOM block",
@@ -1804,8 +1892,7 @@ void io::In_Topology::read_block_VIRTUALATOM(topology::Topology& topo,
         atom.set_charge(q);
         atom.set_iac(iac - 1);
         topo.virtual_atoms_group().atoms()[a_num - 1] = atom;
-        topology::excl_cont_t::value_type ex;
-        topology::excl_cont_t::value_type ex14;
+
 
         topo.add_solute_atom("VIRT", 0, iac - 1, 1.0, q, 1, ex , ex14);
       }
