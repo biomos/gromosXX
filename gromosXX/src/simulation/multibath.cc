@@ -66,13 +66,14 @@ void simulation::Multibath
     // get the number of temperature groups in the range
     int num_tg = 0;
     int tg = 0;
-
+    int last_atm = it->last_atom;
     DEBUG(8, "last atom: " << it->last_atom);
     DEBUG(8, "end of last group: " << last);
 
     // if there are virtual atoms on the bath set degrees of freedom to 0 and skip it
-    // we do this by comparing the last virtual atom in the topology with the last atom of the bath
-    if (!topo.virtual_atoms_group().empty() && topo.virtual_atoms_group().back()==it->last_atom){
+    // we do this by comparing if the last atom of the bath is virtual. 
+    // There are checks to avoid having virtual atoms scattered trough multiple baths or with regular atoms 
+    if (topo.virtual_atoms_group().atoms().count(last_atm)){
       // set dof to 0
       (*this)[it->com_bath].dof = 0;
       (*this)[it->com_bath].com_dof = 0;
@@ -127,10 +128,7 @@ void simulation::Multibath
   }
   for (simulation::Multibath::iterator it = begin(), to = end();
        it != to; ++it) {
-    // we don't want to substract dof in the virtual atoms bath
-    if (topo.virtual_atoms_group().empty() || !(topo.virtual_atoms_group().back()==it->last_atom)){
-      it->dof -= dof_to_subtract*(it->dof/dof_total);
-    }
+    it->dof -= dof_to_subtract*(it->dof/dof_total);
   }
 
   //dof_to_subtract /= double(size());

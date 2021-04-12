@@ -1597,7 +1597,7 @@ void io::In_Parameter::read_MULTIBATH(simulation::Parameter &param,
 
         }
 
-        if (param.virtualatoms.virtualatoms) num_dof++;
+        //if (param.virtualatoms.virtualatoms) num_dof++;
 
         std::string str_bathsize = io::to_string(param.multibath.multibath.size());
 

@@ -301,9 +301,9 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
     if (m_every_vel && (sim.steps() % m_every_vel) == 0) {
       _print_timestep(sim, m_vel_traj);
       if (sim.param().write.velocity_solute_only)
-        _print_velocityred(conf, topo.num_solute_atoms(), m_vel_traj);
+        _print_velocityred(conf, topo, topo.num_solute_atoms(), m_vel_traj);
       else
-        _print_velocityred(conf, topo.num_atoms(), m_vel_traj);
+        _print_velocityred(conf, topo, topo.num_atoms(), m_vel_traj);
       m_vel_traj.flush();
     }
 
@@ -311,9 +311,9 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       if (sim.steps()) {
         _print_old_timestep(sim, m_force_traj);
         if (sim.param().write.force_solute_only)
-          _print_forcered(conf, topo.num_solute_atoms(), m_force_traj, constraint_force);
+          _print_forcered(conf, topo, topo.num_solute_atoms(), m_force_traj, constraint_force);
         else
-          _print_forcered(conf, topo.num_atoms(), m_force_traj, constraint_force);
+          _print_forcered(conf, topo, topo.num_atoms(), m_force_traj, constraint_force);
         m_force_traj.flush();
       }
     }
@@ -569,9 +569,9 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
     if (m_every_force && ((sim.steps()-sim.param().analyze.stride) % m_every_force) == 0) {
       _print_old_timestep(sim, m_force_traj);
       if (sim.param().write.force_solute_only)
-        _print_forcered(conf, topo.num_solute_atoms(), m_force_traj, constraint_force);
+        _print_forcered(conf, topo, topo.num_solute_atoms(), m_force_traj, constraint_force);
       else
-        _print_forcered(conf, topo.num_atoms(), m_force_traj, constraint_force);
+        _print_forcered(conf, topo, topo.num_atoms(), m_force_traj, constraint_force);
     }
 
     if (m_every_energy && ((sim.steps()-sim.param().analyze.stride) % m_every_energy) == 0) {
@@ -1327,6 +1327,7 @@ void io::Out_Configuration
 
 void io::Out_Configuration
 ::_print_velocityred(configuration::Configuration const &conf,
+        topology::Topology const &topo,
         int num, std::ostream &os) {
   os.setf(std::ios::fixed, std::ios::floatfield);
   os.precision(m_precision);
@@ -1463,6 +1464,7 @@ void io::Out_Configuration
 
 void io::Out_Configuration
 ::_print_forcered(configuration::Configuration const &conf,
+        topology::Topology const &topo,
         int num,
         std::ostream &os,
         bool constraint_force) {

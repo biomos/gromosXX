@@ -227,10 +227,12 @@ namespace io {
             std::ostream &os);
 
     void _print_velocityred(configuration::Configuration const &conf,
+            topology::Topology const &topo,
             int num,
             std::ostream &os);
 
     void _print_forcered(configuration::Configuration const &conf,
+            topology::Topology const &topo,
             int num,
             std::ostream &os,
             bool constraint_force);
