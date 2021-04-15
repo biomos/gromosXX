@@ -242,11 +242,14 @@ ANGLERES
 #         3:    angle constraining
 #
 # CALR    >=0.0 force constant for angle restraining [kJ/mol/degree^2]
+# VARES 0,1 controls contribution to virial
+#         0: no contribution
+#         1: angle restraints contribute to virial
 # NTWALR  >=0   write every NTWALR step angle information to external file
 # TOLBAC  >0    tolerance for constraint deviation (in degrees)
 #
-# NTALR  CALR    NTWALR  TOLBAC
-  2      1.0      0      0.01
+# NTALR  CALR  VARES    NTWALR TOLBAC
+  2      1.0      0      0     0.01
 END
 DIHEDRALRES
 # NTDLR   0...3 controls dihedral-angle restraining and constraining 
@@ -256,12 +259,15 @@ DIHEDRALRES
 #         3:    dihedral constraining
 #    
 # CDLR    >=0.0 force constant for dihedral restraining
+# VDIH 0,1 controls contribution to virial
+#         0: no contribution
+#         1: dihedral restraints contribute to virial
 # PHILIN  deviation after which the potential energy function is linearizedi
 # NTWDLR >= 0  write every NTWDLR step dihedral information to external file 
 # TOLDAC  >0    tolerance for constraint deviation (in degrees)
 #
-# NTDLR  CDLR      PHILIN   NTWDLR  TOLDC
-  2      0.03046   1000.0    0      0.01
+# NTDLR  CDLR      PHILIN   VDIH NTWDLR  TOLDC
+  2      0.03046   1000.0    0      0     0.01
 END
 PERTURBATION
 #    NTG: 0..1 controls use of free-energy calculation.

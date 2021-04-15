@@ -189,7 +189,17 @@ static int _calculate_dihedral_restraint_interactions(topology::Topology &topo,
     force(it->k) += fk;
     force(it->l) += fl;
 
-    // TODO: add virial?
+    if (sim.param().dihrest.virial) { 
+      for (int a = 0; a < 3; ++a) {      
+        for (int b = 0; b < 3; ++b) {
+          conf.current().virial_tensor(a, b) +=
+                rij(a) * fi(b) +
+                rkj(a) * fk(b) +
+                rlj(a) * fl(b);
+        }
+      }
+    }
+    DEBUG(11, "\tatomic virial done");
   }
 
   return 0;

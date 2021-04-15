@@ -1963,11 +1963,14 @@ void io::In_Parameter::read_ANGLERES(simulation::Parameter &param,
     exampleblock << "#         3:    angle constraining\n";
     exampleblock << "#\n";
     exampleblock << "# CALR    >=0.0 force constant for angle restraining [kJ/mol/degree^2]\n";
+    exampleblock << "# VARES 0,1 controls contribution to virial\n";
+    exampleblock << "#         0: no contribution\n";
+    exampleblock << "#         1: angle restraints contribute to virial\n";
     exampleblock << "# NTWALR  >=0   write every NTWALR step angle restraint information to external file\n";
     exampleblock << "# TOLBAC  >0    tolerance for constraint deviation (in degrees)\n";
     exampleblock << "#\n";
-    exampleblock << "# NTALR  CALR    NTWALR  TOLBAC\n";
-    exampleblock << "  1      1.0    100      0.01\n";
+    exampleblock << "# NTALR  CALR  VARES    NTWALR TOLBAC\n";
+    exampleblock << "  1      1.0      0       100    0.01\n";
     exampleblock << "END\n";
 
 
@@ -1981,6 +1984,7 @@ void io::In_Parameter::read_ANGLERES(simulation::Parameter &param,
         int angrest;
         block.get_next_parameter("NTALR", angrest, "", "0,1,2,3");
         block.get_next_parameter("CALR", K, ">=0", "");
+        block.get_next_parameter("VARES", param.angrest.virial, "", "0,1");
         block.get_next_parameter("NTWALR", param.angrest.write, ">=0", "");
         block.get_next_parameter("TOLBAC", tolerance, ">=0", "");
 
@@ -2038,11 +2042,14 @@ void io::In_Parameter::read_DIHEDRALRES(simulation::Parameter &param,
     exampleblock << "#\n";
     exampleblock << "# CDLR    >=0.0 force constant for dihedral restraining [kJ/mol/degree^2]\n";
     exampleblock << "# PHILIN  >0.0  deviation after which the potential energy function is linearized\n";
+    exampleblock << "# VDIH 0,1 controls contribution to virial\n";
+    exampleblock << "#         0: no contribution\n";
+    exampleblock << "#         1: dihedral restraints contribute to virial\n";
     exampleblock << "# NTWDLR  >=0   write every NTWDLR step dihedral information to external file\n";
     exampleblock << "# TOLDAC  >0    tolerance for constraint deviation (in degrees)\n";
     exampleblock << "#\n";
-    exampleblock << "# NTDLR  CDLR      PHILIN  NTWDLR  TOLDAC\n";
-    exampleblock << "  1      100.0     180.0   100      0.01\n";
+    exampleblock << "# NTDLR  CDLR      PHILIN  VDIH  NTWDLR  TOLDAC\n";
+    exampleblock << "  1      100.0     180.0     0   100       0.01\n";
     exampleblock << "END\n";
 
 
@@ -2057,6 +2064,7 @@ void io::In_Parameter::read_DIHEDRALRES(simulation::Parameter &param,
         block.get_next_parameter("NTDLR", dihrest, "", "0,1,2,3");
         block.get_next_parameter("CDLR", K, ">=0", "");
         block.get_next_parameter("PHILIN", phi_lin, ">0", "");
+        block.get_next_parameter("VDIH", param.dihrest.virial, "", "0,1");
         block.get_next_parameter("NTWDLR", param.dihrest.write, ">=0", "");
         block.get_next_parameter("TOLDAC", tolerance, ">=0", "");
 

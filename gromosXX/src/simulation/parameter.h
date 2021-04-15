@@ -2134,6 +2134,7 @@ namespace simulation
       angrest_struct()
 	: angrest(angle_restr_off),
 	  K(0.0),
+	  virial(0),
       write(0) {}
       
       /** 
@@ -2158,6 +2159,11 @@ namespace simulation
        * tolerance 
        */
       double tolerance;
+
+      /**
+       * compute virial contribution
+       */
+      unsigned int virial;
       
     }/** angle restraint parameters */ angrest;
 
@@ -2177,6 +2183,7 @@ namespace simulation
 	: dihrest(dihedral_restr_off),
 	  K(0.0),
 	  phi_lin(0.0),
+	  virial(0),
           write(0) {}
       
       /** 
@@ -2205,6 +2212,11 @@ namespace simulation
        * tolerance 
        */
       double tolerance;
+
+      /**
+       * compute virial contribution
+       */
+      unsigned int virial;
       
     }/** dihedral restraint parameters */ dihrest;
 

@@ -133,7 +133,16 @@ static int _calculate_angle_restraint_interactions
     force(it->j) += fj;
     force(it->k) += fk;
 
-    // TODO: add virial?
+    if (sim.param().angrest.virial) { 
+      for (int a = 0; a < 3; ++a) {      
+        for (int b = 0; b < 3; ++b) {
+          conf.current().virial_tensor(a, b) +=
+            rij(a) * fi(b) +
+            rkj(a) * fk(b);
+        }
+      }
+    }
+    DEBUG(11, "\tatomic virial done");
 
   }
   
