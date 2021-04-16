@@ -1568,13 +1568,6 @@ void io::In_Parameter::read_MULTIBATH(simulation::Parameter &param,
             if (tau != -1) param.multibath.couple = true;    
         }
 
-        // if we have virtual atoms then we need an extra bath
-        /*if (param.virtualatoms.virtualatoms){
-            param.multibath.multibath.add_bath(0.0, -1);
-            io::messages.add("MULTIBATH block: Extra bath added to allocate virtual atoms", "In_Parameter", io::message::warning);
-
-        }*/
-
         // now the DOF sets
         block.get_next_parameter("DOFSET", num_dof, ">=0", "");
 
@@ -1597,14 +1590,10 @@ void io::In_Parameter::read_MULTIBATH(simulation::Parameter &param,
 
         }
 
-        //if (param.virtualatoms.virtualatoms) num_dof++;
-
         std::string str_bathsize = io::to_string(param.multibath.multibath.size());
 
-        //to keep track of the extra virtual atoms
-        //bool add_virtual = false;
-        //if (param.virtualatoms.virtualatoms) add_virtual = true; 
-
+        int prev_last = 0; 
+        bool virtualatm_found = false;
         for (int i = 0; i < num_dof; ++i) {
             std::string idx = io::to_string(i);
             block.get_next_parameter("LAST["+idx+"]", last, ">=1", "");
@@ -1612,18 +1601,24 @@ void io::In_Parameter::read_MULTIBATH(simulation::Parameter &param,
             block.get_next_parameter("IR-BATH["+idx+"]", ir_bath, ">=1 && <="+ str_bathsize, "");
 
             if (last < 1) last = 1;
-            /*if (last > param.virtualatoms.lastatom && add_virtual){
-                // This means that the next bath will contain virtual atoms so we should create an extra one
-                // This bath should be coupled to a DOF that no other bath has
-                param.multibath.multibath.add_bath_index(param.virtualatoms.lastatom - 1, 0, num_dof - 1, num_dof - 1);
-                add_virtual = false;
-            } */
+
+            // Virtual atom checks
+            if (param.virtualatoms.virtualatoms && last >= param.virtualatoms.lastatom && prev_last < param.virtualatoms.lastatom){
+                if ((prev_last != param.virtualatoms.lastatom - param.virtualatoms.numatoms) || last > param.virtualatoms.lastatom){
+                io::messages.add("MULTIBATH block: virtual atoms and regular atoms mixed in bath",
+                                 "In_Parameter", io::message::error);
+                }
+                if (!virtualatm_found) virtualatm_found = true;
+                else io::messages.add("MULTIBATH block: virtual atoms in multiple baths", "In_Parameter", io::message::error);
+            }
+
             if (com_bath < 1) com_bath = 1;
             if (ir_bath < 1) ir_bath = 1;
             if (com_bath > param.multibath.multibath.size()) com_bath = param.multibath.multibath.size();
             if (ir_bath > param.multibath.multibath.size()) ir_bath = param.multibath.multibath.size();
             
             param.multibath.multibath.add_bath_index(last - 1, 0, com_bath - 1, ir_bath - 1);
+            prev_last = last;
         }
 
         block.get_final_messages();
