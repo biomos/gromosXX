@@ -68,6 +68,21 @@ namespace algorithm
      simulation::Simulation & sim); //ANITA
 
     /**
+     * do a perturbed angle constraint iteration
+     */
+    template<math::boundary_enum B, math::virial_enum V>
+    int perturbed_ang_constr_iteration
+    (
+     topology::Topology const &topo,
+     configuration::Configuration & conf,
+     simulation::Simulation const & sim,
+     bool & convergence,
+     std::vector<bool> &skip_now,
+     std::vector<bool> &skip_next,
+     math::Periodicity<B> const & periodicity
+     );
+
+    /**
      * do a perturbed dihedral constraint iteration
      */
     template<math::boundary_enum B, math::virial_enum V>

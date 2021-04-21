@@ -448,6 +448,7 @@ namespace configuration {
          * the running average
          */
         std::vector<double> av;
+
       } /** disres informaton */ distanceres;
       disres_struct pertdistanceres;
 
@@ -477,6 +478,24 @@ namespace configuration {
 	 */
 	double energy_deriv;
       }  /** disfield information */ distancefield;
+  
+
+      /**
+       * @struct angres_struct
+       * holds the angle restraints configuration data
+       */
+      struct angres_struct {
+        /**
+         * the angle
+         */
+        std::vector<double> d;
+        /**
+         * the energy
+         */
+        std::vector<double> energy;
+
+      } /** angres informaton */ angleres;
+      angres_struct pertangleres;
 
       /**
        * @struct dihres_struct

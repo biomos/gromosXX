@@ -68,7 +68,8 @@ int io::read_input(io::Argument const & args,
             sim.param().rottrans.rottrans, 
             sim.param().posrest.posrest == simulation::posrest_const, 
             sim.param().boundary.dof_to_subtract,
-            sim.param().dihrest.dihrest == simulation::dihedral_constr);
+            sim.param().dihrest.dihrest == simulation::dihedral_constr,
+            sim.param().angrest.angrest == simulation::angle_constr);
 
   // check the bath parameters
   sim.multibath().check_state(topo.num_atoms());
@@ -124,7 +125,8 @@ int io::read_input_repex(io::Argument const & args,
             sim.param().rottrans.rottrans, 
             sim.param().posrest.posrest == simulation::posrest_const, 
             sim.param().boundary.dof_to_subtract,
-            sim.param().dihrest.dihrest == simulation::dihedral_constr);
+            sim.param().dihrest.dihrest == simulation::dihedral_constr,
+            sim.param().angrest.angrest == simulation::angle_constr);
 
   // check the bath parameters
   sim.multibath().check_state(topo.num_atoms());

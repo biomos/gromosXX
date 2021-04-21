@@ -153,6 +153,9 @@ int interaction::create_g96_forcefield(interaction::Forcefield & ff,
 		  case simulation::disres_lambda :
 		    os << "distance restraint :";
 		    break;
+		  case simulation::angres_lambda :
+		    os << "angle restraint :";
+		    break;
 		  case simulation::dihres_lambda :
 		    os << "dihedral restraint :";
 		    break;

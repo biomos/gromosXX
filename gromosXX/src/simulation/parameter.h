@@ -327,7 +327,30 @@ namespace simulation
        * Spherical harmonics
        */
       rdc_sh = 2
-  };  
+  }; 
+
+  /**
+   * @enum angle_restr_enum
+   * Angle restraints enumeration
+   */
+  enum angle_restr_enum{
+    /**
+     * no restraints
+     */
+    angle_restr_off = 0,
+    /**
+     * instantaneous restraints
+     */
+    angle_restr_inst = 1,
+    /**
+     * instantaneous restraints, weighted
+     */
+    angle_restr_inst_weighted = 2,
+    /**
+     * angle constraints
+     */
+    angle_constr = 3
+  }; 
 
 
   /**
@@ -631,9 +654,13 @@ namespace simulation
      */
     mass_lambda = 11,
     /**
+     * angle restraint interaction
+     */
+    angres_lambda = 12,
+    /**
      * one extra interaction for looping
      */
-    last_interaction_lambda=12
+    last_interaction_lambda=13
   };
   
   /**
@@ -2093,6 +2120,54 @@ namespace simulation
     }/** Distancefield restraints parameters */ distancefield;
 
     /**
+     * @struct angrest_struct
+     * DIHREST block
+     */
+    struct angrest_struct
+    {
+      /**
+       * Constructor
+       * Default values:
+       * - angrest 0 (no angle restraints)
+       * - K 0
+       */
+      angrest_struct()
+	: angrest(angle_restr_off),
+	  K(0.0),
+	  virial(0),
+      write(0) {}
+      
+      /** 
+       * angle restraints
+       * method:
+       * - 0: off
+       * - 1: uniform K
+       * - 2: K * Ki (weight by Ki in angle restraint file)
+       * - 3: constraints
+       */
+      angle_restr_enum angrest;
+      /**
+       * force constant K
+       */
+      double K;
+      /**
+       * write on/off
+       */
+      unsigned int write;
+      
+      /**
+       * tolerance 
+       */
+      double tolerance;
+
+      /**
+       * compute virial contribution
+       */
+      unsigned int virial;
+      
+    }/** angle restraint parameters */ angrest;
+
+    /**
      * @struct dihrest_struct
      * DIHREST block
      */
@@ -2108,6 +2183,7 @@ namespace simulation
 	: dihrest(dihedral_restr_off),
 	  K(0.0),
 	  phi_lin(0.0),
+	  virial(0),
           write(0) {}
       
       /** 
@@ -2136,6 +2212,11 @@ namespace simulation
        * tolerance 
        */
       double tolerance;
+
+      /**
+       * compute virial contribution
+       */
+      unsigned int virial;
       
     }/** dihedral restraint parameters */ dihrest;
 
