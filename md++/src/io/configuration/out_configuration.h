@@ -134,7 +134,7 @@ namespace io {
             int every_angres = 1,
             int every_dihres = 1, int every_dat = 1, int every_leus = 1, int every_dipole = 1, 
             int every_current = 1, int every_adde = 1, int every_nemd = 1,
-	    int every_oparam = 1, int every_rdc = 1, int every_bsleus = 1);
+	    int every_oparam = 1, int every_rdc = 1, int every_tfrdc = 1, int every_bsleus = 1);
     /**
      * write an energy trajectory.
      */
@@ -196,7 +196,7 @@ namespace io {
             std::ostream &os) {
       _print_timestep(sim, os);
     }
-    
+
     /**
      * print timestep to special traj if any special terms are to be written
      */
@@ -205,7 +205,7 @@ namespace io {
     // make them available for scripting!
     void _print_title(std::string title, std::string name,
             std::ostream &os);
-    
+
     /*
      * Prints the ENEVERSION block for the (free) energy trajectories
      */
@@ -330,7 +330,7 @@ namespace io {
             configuration::Configuration const &conf,
             topology::Topology const &topo,
             std::ostream &os);
-    
+
     void _print_position_restraints(simulation::Simulation const &sim,
             topology::Topology const &topo,
             configuration::Configuration const &conf,
@@ -403,6 +403,16 @@ namespace io {
             std::ostream &os,
             bool formatted = false);
 
+    void _print_tf_rdc_restraints(
+            configuration::Configuration const &conf,
+            topology::Topology const &topo,
+            std::ostream &os);
+
+    void _print_tf_rdc_restraint_averages(
+            configuration::Configuration const &conf,
+            topology::Topology const &topo,
+            std::ostream &os);
+
     void _print_blockaveraged_energyred(configuration::Configuration const & conf,
             std::ostream & os);
 
@@ -423,13 +433,13 @@ namespace io {
 
     void _print_umbrellas(configuration::Configuration const & conf,
             std::ostream & os);
-    
+
     void _print_bsleusmem(configuration::Configuration const &conf,
             std::ostream &os);
-    
+
     void _print_bsleuspos(configuration::Configuration const &conf,
             std::ostream &os);
-    
+
     void _print_bsleus(configuration::Configuration const &conf,
             std::ostream &os);
 
@@ -443,12 +453,12 @@ namespace io {
                         topology::Topology const &topo,
                         configuration::Configuration const & conf,
                         std::ostream & os);
-    
+
     void _print_adde(simulation::Simulation const & sim,
                         topology::Topology const &topo,
                         configuration::Configuration const & conf,
                         std::ostream & os);
-    
+
     void _print_nemd(simulation::Simulation const & sim,
                         topology::Topology const &topo,
                         configuration::Configuration const & conf,
@@ -484,7 +494,7 @@ namespace io {
     int m_every_energy;
     int m_every_free_energy;
     int m_every_blockaverage;
-    
+
     int m_every_cos_pos;
     int m_every_jvalue;
     int m_every_xray;
@@ -501,6 +511,7 @@ namespace io {
     int m_every_nemd;
     int m_every_oparam;
     int m_every_rdc;
+    int m_every_tfrdc;
 
     bool m_write_blockaverage_energy;
     bool m_write_blockaverage_free_energy;
@@ -527,7 +538,7 @@ namespace io {
      * If modifications in the energy trajectory are done, this version number
      * should be adapted, along with an updated version of the ene_ana library.
      * The standard for the version number is the current date, in the format
-     * YYYY-MM-DD, followed by a dash and an (incrementation) letter, for the 
+     * YYYY-MM-DD, followed by a dash and an (incrementation) letter, for the
      * case that two or more version should be comitted ona specific day.
      * Example:
      *   2015-06-23-A
@@ -540,5 +551,3 @@ namespace io {
 } // io
 
 #endif
-
-

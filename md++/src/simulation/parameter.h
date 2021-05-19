@@ -395,6 +395,24 @@ namespace simulation
       angle_constr = 3
   };
 
+  /**
+  * @enum rdc_restr_enum
+  * tensor-free RDC restraints enumeration
+  */
+  enum tfrdc_restr_enum {
+    /**
+     * no restraints
+     */
+    tfrdc_restr_off = 0,
+    /**
+     * time-averaged restraints
+     */
+    tfrdc_restr_av = 1,
+    /**
+     * time-averaged restraints, weighted
+     */
+    tfrdc_restr_av_weighted = 2,
+  };
 
   /**
    * @enum dihedral_restr_enum
@@ -4068,7 +4086,116 @@ namespace simulation
       unsigned int write;
     } /** RDC-parameters */ rdc;
 
+    /**
+     * @struct tfrdc_struct
+     * TFRDCRES block
+     */
+    struct tfrdc_struct
+    {
+      /**
+       * Constructor
+       * Default values:
+       * - mode 0 (no tensor-free RDC restraints)
+       * - K 0.0
+       * - taur 0.5
+       * - taut 5.0
+       * - read false
+       * - write 0
+       */
 
+      tfrdc_struct()
+	: mode(tfrdc_restr_off),
+	  K(0.0),
+	  taur(0.5),
+    taut(5.0),
+	  read(false),
+    write(0)
+      {
+      }
+
+      /**
+       * tensor-free RDC restraining method
+       */
+      tfrdc_restr_enum mode;
+
+      /**
+       * force constant K
+       */
+      double K;
+      /**
+       * r memory time for time averaging
+       */
+      double taur;
+      /**
+       * theta memory time for time averaging
+       */
+      double taut;
+      /**
+       * read on/off
+       */
+      bool read;
+      /**
+       * write on/off, every n-th step
+       */
+      unsigned int write;
+    }/** tensor-free RDC parameters */ tfrdc;
+
+    /**
+    * @struct zalignmentres_struct
+    * ZALIGNMENTRES block
+    */
+    struct zalignmentres_struct
+    {
+     /**
+      * Constructor
+      * Default values:
+      * - zalignmentres 0 (no z-axis angle restraints)
+      * - K 0
+      * - read 0
+      * - write 0
+      */
+
+     zalignmentres_struct()
+    : zalignmentres(0),
+    K(0),
+    read(0),
+    virial(0),
+    forcescale(0),
+         write(0)
+     {
+     }
+
+     /**
+      * z-axis angle restraints on/off
+      */
+     int zalignmentres;
+
+     /**
+      * force constant K
+      */
+     double K;
+
+     /**
+      * read on/off (not supported)
+      */
+     bool read;
+
+     /**
+      * compute virial contribution
+      */
+     unsigned int virial;
+
+     /**
+      * force scaling according to equation xxxxx
+      */
+     unsigned int forcescale;
+
+     /**
+      * write on/off
+      */
+     unsigned int write;
+
+    }/** Z-axis angle restraints parameters */ zalignmentres;
 
     struct qmmm_struct {
       /**
@@ -4544,7 +4671,6 @@ namespace simulation
       } nn;
 
     } qmmm;
-
 
     struct symrest_struct {
       /**

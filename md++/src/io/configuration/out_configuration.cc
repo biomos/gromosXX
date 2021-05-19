@@ -101,6 +101,7 @@ m_every_adde(0),
 m_every_nemd(0),
 m_every_oparam(0),
 m_every_rdc(0),
+m_every_tfrdc(0),
 m_write_blockaverage_energy(false),
 m_write_blockaverage_free_energy(false),
 m_precision(9),
@@ -119,7 +120,7 @@ minimum_energy(std::numeric_limits<double>::max()) {
 /**
  * destructor
  */
-io::Out_Configuration::~Out_Configuration() 
+io::Out_Configuration::~Out_Configuration()
 {
   // std::cout << "out_configuration destructor" << std::endl;
 
@@ -168,7 +169,7 @@ io::Out_Configuration::~Out_Configuration()
     m_blockaveraged_free_energy.close();
   }
 
-  if (m_write_special) { 
+  if (m_write_special) {
     m_special_traj.flush();
     m_special_traj.close();
   }
@@ -226,7 +227,7 @@ void io::Out_Configuration::init(io::Argument & args,
      || param.dihrest.write || param.print.monitor_dihedrals
      || param.localelev.write || param.electric.dip_write || param.electric.cur_write 
      || param.addecouple.write || param.nemd.write || param.orderparamrest.write || param.rdc.write
-     || param.bsleus.write;    // add others if there are any
+     || param.tfrdc.write || param.bsleus.write;    // add others if there are any
 
   if (args.count(argname_trs) > 0)
     special_trajectory(args[argname_trs], param.polarise.write, 
@@ -234,7 +235,7 @@ void io::Out_Configuration::init(io::Argument & args,
             param.distancefield.write, param.angrest.write, param.dihrest.write,
             param.print.monitor_dihedrals,param.localelev.write, 
             param.electric.dip_write, param.electric.cur_write, param.addecouple.write,
-            param.nemd.write, param.orderparamrest.write, param.rdc.write,
+            param.nemd.write, param.orderparamrest.write, param.rdc.write, param.tfrdc.write,
             param.bsleus.write);
   else if (m_write_special)
     io::messages.add("write special trajectory but no trs argument",
@@ -316,7 +317,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
   if (form == reduced) {
     /**
      * set this to true when you print the timestep to the special traj.
-     * make sure you don't print it twice. 
+     * make sure you don't print it twice.
      */
 
     if (m_every_pos && ((sim.steps() % m_every_pos) == 0 || minimum_found)) {
@@ -354,11 +355,11 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
         m_force_traj.flush();
       }
     }
-    
+
     // special trajectory blocks
     // IMPORTANT: because this writing is done before the md_sequence is applied
-    // most special terms for the current configuration are written at the 
-    // beginning of the next step; they therefore have to be printed before 
+    // most special terms for the current configuration are written at the
+    // beginning of the next step; they therefore have to be printed before
     // _print_special_timestep is executed -- MariaP 2016/04/29
 
     if (m_every_disres && sim.steps() && ((sim.steps()-sim.param().analyze.stride) % m_every_disres) == 0) {
@@ -417,11 +418,16 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       m_special_traj.flush();
     }
 
+    if (m_every_tfrdc && sim.steps() && ((sim.steps()-1) % m_every_tfrdc) == 0) {
+      _print_tf_rdc_restraints(conf, topo, m_special_traj);
+      m_special_traj.flush();
+    }
+
     if (m_every_adde && sim.steps() && ((sim.steps()-1) % m_every_adde) == 0) {
       _print_adde(sim, topo, conf, m_special_traj);
       m_special_traj.flush();
     }
-    
+
     if (m_every_nemd && sim.steps() && ((sim.steps()-1) % m_every_nemd) == 0) {
       _print_nemd(sim, topo, conf, m_special_traj);
       m_special_traj.flush();
@@ -437,24 +443,24 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       _print_bsleusmem(conf, m_special_traj);
       _print_bsleus(conf, m_special_traj);
       m_special_traj.flush();
-    }  
+    }
 
     if (m_every_cos_pos && sim.steps() && ((sim.steps()-sim.param().analyze.stride) % m_every_cos_pos) == 0) {
       _print_cos_position(conf, topo, m_special_traj);
       m_special_traj.flush();
     }
-    
-    // print timestep to the special trajectory if any special terms 
-    // are to be written for the current timestep (even if most printing is only 
+
+    // print timestep to the special trajectory if any special terms
+    // are to be written for the current timestep (even if most printing is only
     // done at the start of the next timestep
-    _print_special_timestep(sim);  
+    _print_special_timestep(sim);
 
     if (m_every_dat) {
       _print_dihangle_trans(conf, topo, m_special_traj);
       m_special_traj.flush();
     }
-    
-    // WARNING: with polarization it seems like _print_dipole is using 
+
+    // WARNING: with polarization it seems like _print_dipole is using
     // positions and cos-displacement that don't belong to the same configuration
     // this should be looked into -- MariaP 16/05/12
     if (m_every_dipole && (sim.steps() % m_every_dipole) == 0) {
@@ -465,7 +471,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
     if (m_every_current && (sim.steps() % m_every_current) == 0) {
       _print_current(sim, topo, conf, m_special_traj);
       m_special_traj.flush();
-    }    
+    }
     // end of special trajectory printing statements
     
     if (m_every_energy && (((sim.steps()-sim.param().analyze.stride) % m_every_energy) == 0 || minimum_found)) {
@@ -541,7 +547,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
     if(sim.param().distancefield.printgrid) {
       _print_disfield_grid(sim.param(), conf, topo, m_final_conf);
     }
-    
+
     if (sim.param().posrest.posrest != simulation::posrest_off) {
       _print_position_restraints(sim, topo, conf, m_final_conf);
     }
@@ -559,7 +565,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
     if (sim.param().localelev.localelev != simulation::localelev_off) {
       _print_umbrellas(conf, m_final_conf);
     }
-    
+
     if (sim.param().bsleus.bsleus != simulation::bsleus_off){
       _print_bsleusmem(conf, m_final_conf);
       _print_bsleuspos(conf, m_final_conf);
@@ -579,13 +585,18 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
        sim.param().rdc.mode == simulation::rdc_restr_biq_weighted) {
       io::Out_Configuration::_print_rdc_averages(sim.param(), conf, topo, m_final_conf, /*formatted*/ false);
     }
-  
+
     if(sim.param().rdc.mode != simulation::rdc_restr_off) {
       io::Out_Configuration::_print_rdc_representation(sim.param(), conf, topo, m_final_conf, /*formatted*/ false);
     }
-  
+
     if (sim.param().rdc.method == simulation::rdc_sd) {
       io::Out_Configuration::_print_rdc_stochastic_integrals(sim.param(), conf, topo, m_final_conf, /*formatted*/ false);
+    }
+
+    if (sim.param().tfrdc.mode == simulation::tfrdc_restr_av ||
+        sim.param().tfrdc.mode == simulation::tfrdc_restr_av_weighted) {
+      _print_tf_rdc_restraint_averages(conf, topo, m_final_conf);
     }
 
     if (sim.param().rottrans.rottrans) {
@@ -651,7 +662,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       }
       conf.current().averages.block().zero();
     }
-   
+
     // the last step of special terms which are printed after the md sequence
     // still has to be written to the special trajectory
     // the timestep has already been printed
@@ -704,10 +715,14 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       }
     }
 
+    if (m_every_tfrdc &&  ((sim.steps()-1) % m_every_tfrdc) == 0) {
+      _print_tf_rdc_restraints(conf, topo, m_special_traj);
+    }
+
     if (m_every_adde  && ((sim.steps()-1) % m_every_adde) == 0) {
       _print_adde(sim, topo, conf, m_special_traj);
     }
-    
+
     if (m_every_nemd && ((sim.steps()-1) % m_every_nemd) == 0) {
       _print_nemd(sim, topo, conf, m_special_traj);
     }
@@ -725,8 +740,8 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
     if (m_every_cos_pos && ((sim.steps()-sim.param().analyze.stride) % m_every_cos_pos) == 0) {
       _print_cos_position(conf, topo, m_special_traj);
     }
-    
-    
+
+
     //end of special traj printing
   } else {
 
@@ -793,7 +808,7 @@ void io::Out_Configuration
                      int every_xray, int every_disres, int every_disfieldres, 
                      int every_angres, int every_dihres, int every_dat, 
                      int every_leus, int every_dipole, int every_current,
-                     int every_adde, int every_nemd, int every_oparam, int every_rdc,
+                     int every_adde, int every_nemd, int every_oparam, int every_rdc, int every_tfrdc,
                      int every_bsleus) {
 
   m_special_traj.open(name.c_str());
@@ -812,7 +827,8 @@ void io::Out_Configuration
   m_every_adde = every_adde;
   m_every_nemd = every_nemd;
   m_every_oparam = every_oparam;
-  m_every_rdc = every_rdc; 
+  m_every_rdc = every_rdc;
+  m_every_tfrdc = every_tfrdc;
   m_every_bsleus = every_bsleus;
   _print_title(m_title, "special trajectory", m_special_traj);
 }
@@ -1535,7 +1551,7 @@ void io::Out_Configuration
   if (conf.boundary_type == math::truncoct)
     Rmat = math::product(Rmat, math::truncoct_triclinic_rotmat(false));
   math::Vec force_rot;
-  
+
   assert(num <= int(force.size()));
 
   // skipped virtual atoms counter
@@ -1609,7 +1625,7 @@ void io::Out_Configuration
 }
 
 /**
- * 
+ *
  * @section energyredhelper ENERGY03
  *
 @verbatim
@@ -1655,6 +1671,7 @@ ENERGY03
    0.000000000e+00 # RDC-value total
    0.000000000e+00 # angle restraints total
    0.000000000e+00 # NN valid
+   0.000000000e+00 # tensor-free RDC value total
 # baths
 # number of baths
 2
@@ -1718,7 +1735,7 @@ void io::Out_Configuration
 }
 
 /**
- * 
+ *
  * @section volumepressurered VOLUMEPRESSURE03
  *
 @verbatim
@@ -1799,7 +1816,7 @@ void io::Out_Configuration
   long double a = 0.0, b = 0.0, c = 0.0, alpha = 0.0, beta = 0.0, gamma = 0.0, phi = 0.0, theta = 0.0, psi = 0.0;
   math::Matrixl Rmat(math::rmat(conf.current().phi,
           conf.current().theta, conf.current().psi));
-  
+
   math::Box m(0.0);
   for (int i = 0; i < 3; ++i)
     for (int j = 0; j < 3; ++j)
@@ -1810,7 +1827,7 @@ void io::Out_Configuration
   // convert it back to truncoct
   if (conf.boundary_type == math::truncoct)
     math::truncoct_triclinic_box(box, false);
-  
+
   a = math::abs(box(0));
   b = math::abs(box(1));
   c = math::abs(box(2));
@@ -1848,7 +1865,7 @@ void io::Out_Configuration
         }
 
      */
-  
+
     if(fabs(conf.current().phi)<math::epsilon)
       phi=0.0;
     else phi=conf.current().phi;
@@ -2033,9 +2050,9 @@ void io::Out_Configuration
   // print sasa and volume averages, fluctuations
   if (sim.param().sasa.switch_sasa){
     int volume = sim.param().sasa.switch_volume;
-    print_sasa_avg(m_output, topo, sasa_a, sasa_vol, sasa_tot, sasa_voltot, 
+    print_sasa_avg(m_output, topo, sasa_a, sasa_vol, sasa_tot, sasa_voltot,
             "SASA AND BURIED VOLUME AVERAGES", volume);
-    print_sasa_fluct(m_output, topo, sasa_af, sasa_volf, sasa_totf, sasa_voltotf, 
+    print_sasa_fluct(m_output, topo, sasa_af, sasa_volf, sasa_totf, sasa_voltotf,
             "SASA AND BURIED VOLUME FLUCTUATIONS", volume);
   }
 
@@ -2430,7 +2447,7 @@ void io::Out_Configuration::_print_distance_restraints(
 
   os.setf(std::ios::fixed, std::ios::floatfield);
   os.precision(m_distance_restraint_precision);
-  
+
   if (conf.special().distanceres.d.size() > 0) {
     os << "DISRESDATA" << std::endl;
     os << conf.special().distanceres.d.size() << "\n";
@@ -2447,12 +2464,12 @@ void io::Out_Configuration::_print_distance_restraints(
     }
     os << "END" << std::endl;
   }
-  
+
   std::vector<double>::const_iterator pav_it = conf.special().pertdistanceres.av.begin(),
           pav_to = conf.special().pertdistanceres.av.end();
   std::vector<double>::const_iterator pene_it = conf.special().pertdistanceres.energy.begin();
   std::vector<double>::const_iterator pd_it = conf.special().pertdistanceres.d.begin();
-  
+
   if (conf.special().pertdistanceres.d.size() > 0) {
     os << "PERTDISRESDATA" << std::endl;
     os << conf.special().pertdistanceres.d.size() << "\n";
@@ -2479,7 +2496,7 @@ void io::Out_Configuration::_print_disfield_restraints(
 
   double distance = conf.special().distancefield.dist;
   double energy = conf.special().distancefield.energy;
-  
+
   os.setf(std::ios::fixed, std::ios::floatfield);
   os.precision(m_disfield_restraint_precision);
 
@@ -2521,36 +2538,36 @@ void io::Out_Configuration::_print_disfield_grid(
         topology::Topology const &topo,
         std::ostream &os) {
   DEBUG(10, "distancefield grid");
-  
+
   os.setf(std::ios::fixed, std::ios::floatfield);
   os.precision(m_distance_restraint_precision);
 
   os << "DISTANCEFIELDGRID" << std::endl;
- 
+
   const std::vector<int> &ngrid = conf.special().distancefield.ngrid;
   const double grid = param.distancefield.grid;
   math::Box box = conf.current().box;
-  
-  for(unsigned int j=0; j< conf.special().distancefield.distance.size(); j++){ 
+
+  for(unsigned int j=0; j< conf.special().distancefield.distance.size(); j++){
     int nz = int(double(j) / double(ngrid[0] * ngrid[1]));
     int ny = int(double( j % (ngrid[0] * ngrid[1]) ) / double(ngrid[0]));
     int nx = (j % (ngrid[0] * ngrid[1])) % ngrid[0];
     // the grid is defined for -half the box lenght to +half the box length
     math::Vec gpos(nx*grid - box(0,0)/2, ny*grid - box(1,1)/2, nz*grid - box(2,2)/2);
-    
+
     // we put it in the positive box in an ugly way because:
     // 1. distancefield only works for rectangular boxes anyway
     // 2. otherwise this function has to be templated for periodicity
     if(gpos[0] < 0.0) gpos[0] += box(0,0);
     if(gpos[1] < 0.0) gpos[1] += box(1,1);
     if(gpos[2] < 0.0) gpos[2] += box(2,2);
-    
+
     os << std::setw(m_width) << gpos[0]
        << std::setw(m_width) << gpos[1]
        << std::setw(m_width) << gpos[2]
        << std::setw(m_width) << conf.special().distancefield.distance[j]
        << std::endl;
-    
+
   }
   os << "END" << std::endl;
 }
@@ -2606,12 +2623,12 @@ void io::Out_Configuration::_print_dihedral_restraints(
   DEBUG(10, "dihedral restraints");
 
   std::vector<double>::const_iterator ene_it = conf.special().dihedralres.energy.begin();
-  std::vector<double>::const_iterator d_it = conf.special().dihedralres.d.begin(), 
+  std::vector<double>::const_iterator d_it = conf.special().dihedralres.d.begin(),
                                       d_to = conf.special().dihedralres.d.end();
 
   os.setf(std::ios::fixed, std::ios::floatfield);
   os.precision(m_dihedral_restraint_precision);
-  
+
   if (conf.special().dihedralres.d.size() > 0) {
     os << "DIHRESDATA" << std::endl;
     os << std::setw(m_width) 
@@ -2625,11 +2642,11 @@ void io::Out_Configuration::_print_dihedral_restraints(
     }
     os << "END" << std::endl;
   }
-  
+
   std::vector<double>::const_iterator pene_it = conf.special().pertdihedralres.energy.begin();
-  std::vector<double>::const_iterator pd_it = conf.special().pertdihedralres.d.begin(), 
+  std::vector<double>::const_iterator pd_it = conf.special().pertdihedralres.d.begin(),
                                       pd_to = conf.special().pertdihedralres.d.end();
-  
+
   if (conf.special().pertdihedralres.d.size() > 0) {
     os << "PERTDIHRESDATA" << std::endl;
     os << conf.special().pertdihedralres.d.size() << "\n";
@@ -2688,7 +2705,7 @@ void io::Out_Configuration::_print_order_parameter_restraint_averages(
         os << std::setw(m_width) << std::right << (*it)(i,j);
         if (++l % 5 == 0)
           os << std::endl;
-      } 
+      }
     }
     os << std::setw(m_width) << std::right << *d_it;
     if (++l % 5 == 0)
@@ -2724,7 +2741,7 @@ void io::Out_Configuration::_print_order_parameter_restraint_average_window(
           os << std::setw(m_width) << std::right << (*it)(i,j);
           if (++l % 5 == 0)
             os << std::endl;
-        } 
+        }
       }
       os << std::setw(m_width) << std::right << *D_it;
       if (++l % 5 == 0)
@@ -2789,7 +2806,7 @@ void io::Out_Configuration::_print_rdc_representation(simulation::Parameter cons
                  << std::setw(m_width) << conf.special().rdc[i].MFpoint[j](2) << std::endl;
             }
           }
-          
+
           break;
         }
         case simulation::rdc_md:
@@ -2907,6 +2924,56 @@ void io::Out_Configuration::_print_rdc_representation(simulation::Parameter cons
   }
 }
 
+void io::Out_Configuration::_print_tf_rdc_restraints(
+        configuration::Configuration const &conf,
+        topology::Topology const & topo,
+        std::ostream &os) {
+  DEBUG(10, "tensor-free RDC restraints");
+
+  std::vector<double>::const_iterator RDC_avg_it = conf.special().tfrdc.RDC_avg.begin(),
+          RDC_avg_to = conf.special().tfrdc.RDC_avg.end();
+  std::vector<double>::const_iterator e_it = conf.special().tfrdc.energy.begin();
+
+  os << "TFRDCRESDATA" << std::endl;
+  for (int i = 1; RDC_avg_it != RDC_avg_to; ++RDC_avg_it, ++e_it, ++i) {
+    os << std::setw(6) << i;
+    os.precision(m_precision);
+    os.setf(std::ios::fixed, std::ios::floatfield);
+    os << std::setw(m_width) << *RDC_avg_it/0.000000000001;
+    os.setf(std::ios::scientific, std::ios::floatfield);
+    os.precision(m_distance_restraint_precision);
+    os << std::setw(m_width) << *e_it << std::endl;
+  }
+  os << "END" << std::endl;
+}
+
+void io::Out_Configuration::_print_tf_rdc_restraint_averages(
+        configuration::Configuration const & conf,
+        topology::Topology const & topo,
+        std::ostream & os) {
+  DEBUG(10, "tensor-free RDC restraint averages");
+
+  std::vector<double>::const_iterator r_it = conf.special().tfrdc.R_avg.begin(),
+    r_it_to = conf.special().tfrdc.R_avg.end();
+  std::vector<double>::const_iterator p_it = conf.special().tfrdc.P_avg.begin();
+
+  os.setf(std::ios::scientific, std::ios::floatfield);
+  os.precision(m_distance_restraint_precision); // use a lower precision due to scientific formats
+
+  os << "TFRDCRESEXPAVE" << std::endl;
+  int l;
+  for (l = 0; r_it != r_it_to; ++r_it, ++p_it) {
+    os << std::setw(m_width) << std::right << *r_it;
+    if (++l % 5 == 0)
+        os << std::endl;
+    os << std::setw(m_width) << std::right << *p_it;
+    if (++l % 5 == 0)
+      os << std::endl;
+  }
+  if (l % 5 != 0)
+    os << std::endl;
+  os << "END" << std::endl;
+}
 
 void io::Out_Configuration::_print_rdc_stochastic_integrals(simulation::Parameter const &param,
                              configuration::Configuration const &conf,
@@ -3010,7 +3077,7 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
   // const int energy_group_size = numenergygroups * (numenergygroups + 1) /2;
 
   os << "# totals\n";
-  
+
   os << std::setw(18) << e.total << "\n"// 1
           << std::setw(18) << e.kinetic_total << "\n" // 2
           << std::setw(18) << e.potential_total << "\n" // 3
@@ -3081,16 +3148,16 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
             << std::setw(18) << e.dihedral_energy[i]
             << std::setw(18) << e.crossdihedral_energy[i] << "\n";
   }
-  
+
   os << "# nonbonded\n";
   for (int i = 0; i < numenergygroups; i++) {
     for (int j = i; j < numenergygroups; j++) {
       os << std::setw(18) << e.lj_energy[j][i]
               << std::setw(18) << e.crf_energy[j][i]
       //      << std::setw(18) << e.ls_real_energy[j][i]
-      // currently only one energy group is permitted for LS calculations. 
-      // Therefore the total LS energy is written out.        
-      // As soon as multiple energy groups are possible this has to be revised      
+      // currently only one energy group is permitted for LS calculations.
+      // Therefore the total LS energy is written out.
+      // As soon as multiple energy groups are possible this has to be revised
               << std::setw(18) << e.ls_total
               << std::setw(18) << e.ls_k_energy[j][i]
               << std::setw(18) << e.shift_extra_orig[j][i]
@@ -3468,10 +3535,10 @@ _print_umbrellas(configuration::Configuration const & conf, std::ostream & os) {
 
 /**
  * @section bsleusmem BSLEUSMEM block
- * 
- * Defines the state of the memory and the auxiliary memory as well as the 
+ *
+ * Defines the state of the memory and the auxiliary memory as well as the
  * auxiliary and the reduction counter of the B&S-LEUS scheme.
- * 
+ *
  * @verbatim
  BSMEM
 #
@@ -3534,9 +3601,9 @@ _print_umbrellas(configuration::Configuration const & conf, std::ostream & os) {
   2     1       20      0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
 END
 @endverbatim
- * 
+ *
  */
-void io::Out_Configuration::_print_bsleusmem(const configuration::Configuration &conf, 
+void io::Out_Configuration::_print_bsleusmem(const configuration::Configuration &conf,
                                           std::ostream& os)
 {
   os.setf(std::ios::fixed, std::ios::floatfield);
@@ -3583,7 +3650,7 @@ void io::Out_Configuration::_print_bsleusmem(const configuration::Configuration 
     }
     os << "\n";
   }
-  
+
   if (umb->printAuxMem()) {
     unsigned int numSubspaces = umb->getNumSubspaces();
     os << "#\n"
@@ -3634,9 +3701,9 @@ void io::Out_Configuration::_print_bsleusmem(const configuration::Configuration 
 
 /**
  * @section bsleuspos BSLEUSPOS block
- * 
+ *
  * Defines the position in the B&S-LEUS subspaces.
- * 
+ *
  * @verbatim
 BLEUSPOS
 #
@@ -3654,9 +3721,9 @@ BLEUSPOS
   1     2       300 379
 END
 @endverbatim
- * 
+ *
  */
-void io::Out_Configuration::_print_bsleuspos(const configuration::Configuration &conf, 
+void io::Out_Configuration::_print_bsleuspos(const configuration::Configuration &conf,
                                           std::ostream& os)
 {
   os.setf(std::ios::fixed, std::ios::floatfield);
@@ -3695,8 +3762,8 @@ void io::Out_Configuration::_print_bsleuspos(const configuration::Configuration 
 void io::Out_Configuration::
 _print_bsleus(const configuration::Configuration &conf, std::ostream& os)
 {
-  os << "BSLEUS\n" 
-          << conf.special().bs_umbrella.traj_str() 
+  os << "BSLEUS\n"
+          << conf.special().bs_umbrella.traj_str()
           << "END\n";
 }
 
@@ -3714,30 +3781,30 @@ _print_dipole(simulation::Simulation const & sim,
 
 
   //Calculate dipole
-  
+
 
   math::Vec box_dipole_moment(0.0);
   math::Vec box_centre = conf.current().box(0) / 2.0 +
                          conf.current().box(1) / 2.0 +
                          conf.current().box(2) / 2.0;
   math::Periodicity<b> periodicity(conf.current().box);
- 
+
 
   // Only solute
-  if(sim.param().electric.dip_groups == 0) 
+  if(sim.param().electric.dip_groups == 0)
   {
     os << "DIPOLE\n#Solute atoms\n";
-    for(unsigned int i = 0; i < topo.num_solute_atoms(); ++i) 
+    for(unsigned int i = 0; i < topo.num_solute_atoms(); ++i)
     {
       math::Vec r = conf.current().pos(i);
-      if (topo.is_polarisable(i)) 
+      if (topo.is_polarisable(i))
       {
         //offset position
 	math::Vec rm=r;
-        
+
 	//cos dipol contribution
         box_dipole_moment += topo.coscharge(i) * conf.current().posV(i);
-        
+
 	if(sim.param().polarise.cos == 2 && topo.gamma(i)!=0.0)
         {
             math::Vec rij, rik, rim;
@@ -3764,18 +3831,18 @@ _print_dipole(simulation::Simulation const & sim,
   // Only solvent
   if(sim.param().electric.dip_groups == 1) {
     os << "DIPOLE\n#Solvent atoms\n";
-    for(unsigned int i = topo.num_solute_atoms(); i < topo.num_atoms(); ++i) 
+    for(unsigned int i = topo.num_solute_atoms(); i < topo.num_atoms(); ++i)
     {
      math::Vec r = conf.current().pos(i);
-     if (topo.is_polarisable(i)) 
+     if (topo.is_polarisable(i))
      {
        //offset position
        
        math::Vec rm=r;
-        
+
        //cos dipol contribution
        box_dipole_moment += topo.coscharge(i) * conf.current().posV(i);
-        
+
        if(sim.param().polarise.cos == 2 && topo.gamma(i)!=0.0)
        {
 	 math::Vec rij, rik, rim;
@@ -3802,17 +3869,17 @@ _print_dipole(simulation::Simulation const & sim,
   // All atoms in the box
   if(sim.param().electric.dip_groups == 2) {
     os << "DIPOLE\n#All atoms\n";
-    for(unsigned int i = 0; i < topo.num_atoms(); ++i) 
+    for(unsigned int i = 0; i < topo.num_atoms(); ++i)
     {
       math::Vec r = conf.current().pos(i);
-      if (topo.is_polarisable(i)) 
+      if (topo.is_polarisable(i))
       {
 	//offset position
 	math::Vec rm=r;
-        
+
 	//cos dipol contribution
 	box_dipole_moment += topo.coscharge(i) * conf.current().posV(i);
-        
+
 	if(sim.param().polarise.cos == 2 && topo.gamma(i)!=0.0)
 	{
 	  math::Vec rij, rik, rim;
@@ -3845,9 +3912,9 @@ _print_dipole(simulation::Simulation const & sim,
      << std::setw(15) << box_dipole_moment(2)
      << std::setw(15) << math::volume(conf.current().box, conf.boundary_type)
      << "\n";
-  
+
   os << "END\n";
-  
+
 }
 
 void io::Out_Configuration::
@@ -3867,7 +3934,7 @@ _print_current(simulation::Simulation const & sim,
   os << "#GROUP        COMPONENTS\n";
 
   for (unsigned  int i = 0; i < ngroups; ++i){
-    
+
     for (unsigned int j = first; j < sim.param().electric.current_group[i]; ++j){
       math::Vec v = conf.current().vel(j);
       cur_current += scale*topo.charge(j) * v;
@@ -3910,10 +3977,10 @@ _print_adde(simulation::Simulation const & sim,
   os << "ADDEREWEIGHTING\n";
   os << "#VHH LNEVHL BETAL BETAH  \n";
 
-  os << std::setw(15) << vhh << " " << std::setw(15) << lnevhl << " " 
+  os << std::setw(15) << vhh << " " << std::setw(15) << lnevhl << " "
           << std::setw(15) << betal << std::setw(15) << betah << "\n";
   os << "END\n";
-    
+
 }
 
 void io::Out_Configuration::
@@ -3975,10 +4042,10 @@ _print_nemd(simulation::Simulation const & sim,
   os.setf(std::ios::fixed, std::ios::floatfield);
   os.precision(m_precision);
 
-  
+
   /*
-     * METHOD SELECTION 
-     * 
+     * METHOD SELECTION
+     *
      */
 
     
@@ -3991,13 +4058,13 @@ _print_nemd(simulation::Simulation const & sim,
       //enter selection for other methods for this property here
     }
     //enter selection for other properties with respective methods here
-  
-  
-  
+
+
+
 
   switch (prop_vs_method){
-    
-    
+
+
     case 0:
     {
       double k = 2 * math::Pi / conf.current().box(2)(2);
@@ -4052,11 +4119,11 @@ _print_nemd(simulation::Simulation const & sim,
           os << std::setw(15) << i + 1 << std::setw(15) << averaged << "\n";
         }
       }
-      
+
       os << "END\n";
       break;
     }
-    
+
     case 1:
     {
       os << "NEMD\n";
@@ -4075,7 +4142,7 @@ _print_nemd(simulation::Simulation const & sim,
         /*for(unsigned int i = 0; i < grid.size(); ++i) {
           grid[i].clear();
         }*/
-        
+
         //Put atom indexes into grid
         /*for(unsigned int i = 0; i < topo.num_atoms(); ++i) {
           math::Vec pos = conf.current().pos(i);
@@ -4111,7 +4178,7 @@ _print_nemd(simulation::Simulation const & sim,
       os << "END\n";
       break;
     }
-    
+
     default: break;
   }
 }

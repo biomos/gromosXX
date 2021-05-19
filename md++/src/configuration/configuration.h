@@ -84,7 +84,7 @@ namespace configuration {
        * position
        */
       math::VArray pos;
-      /** 
+      /**
        * charge-on-spring (distance vector between cos and real atom)
        */
       math::VArray posV;
@@ -144,7 +144,7 @@ namespace configuration {
       math::Box box;
 
       /**
-       * the Euler angles 
+       * the Euler angles
        */
       double phi; //yaw   (z   axis)
       double theta; //pitch (y'  axis)
@@ -232,7 +232,7 @@ namespace configuration {
       std::vector<util::Umbrella> umbrellas;
       //////////////////////////////////////////////////
       /**
-       * The Umbrella for the BS&LEUS algorithm. Contains all the B&S 
+       * The Umbrella for the BS&LEUS algorithm. Contains all the B&S
        * potentials.
        */
       util::BS_Umbrella bs_umbrella;
@@ -298,19 +298,19 @@ namespace configuration {
          */
         std::vector<double> MFpointMass;
         /**
-         * Alignment tensor components 
+         * Alignment tensor components
          */
         std::vector<double> Tensor;
         /**
          * Tensor component velocities
          */
-        std::vector<double> TensorVel;      
+        std::vector<double> TensorVel;
         /**
          * Alignment tensor component masses
          */
         std::vector<double> TensorMass;
         /**
-         * Shperical harmonics coefficients 
+         * Shperical harmonics coefficients
          */
         std::vector<double> clm;
         /**
@@ -320,7 +320,7 @@ namespace configuration {
         /**
          * Shperical harmonics coefficient velocities
          */
-        std::vector<double> clmVel;      
+        std::vector<double> clmVel;
         /**
          * Conversion of the frequency
          */
@@ -376,7 +376,7 @@ namespace configuration {
          */
         double phase_curr;
       };
-      
+
       /**
        * xray restraint averages
        */
@@ -473,6 +473,26 @@ namespace configuration {
       disres_struct pertdistanceres;
 
       /**
+       * @struct zalres_struct
+       * holds the z-alignment restraints configuration data
+       */
+      struct zalres_struct {
+        /**
+         * the angle
+         */
+        std::vector<double> d;
+        /**
+         * the energy
+         */
+        std::vector<double> energy;
+        /**
+         * the running average
+         */
+        std::vector<double> av;
+      } /** zalignmentres informaton */ zalignmentres;
+
+
+      /**
        * @struct disfield_struct
        * holds the distance field restraints grid
        */
@@ -532,8 +552,8 @@ namespace configuration {
         std::vector<double> energy;
       } /** dihres informaton */ dihedralres;
       dihres_struct pertdihedralres;
-      
-	
+
+
       /**
        * @struct pscale_struct
        * stores periodic scaling information
@@ -719,8 +739,32 @@ namespace configuration {
          * the averaging window of D
          */
         std::vector<std::list<double> > D_winavg;
-        
-      } /** disres informaton */ orderparamres;
+
+    } /** order parameter informaton */ orderparamres;
+
+
+      /**
+      * @struct tfrdc_struct
+      * holds the tensor-free RDC restraints configuration data
+      */
+      struct tfrdc_struct {
+        /**
+         * the averaged tensor-free RDC
+         */
+        std::vector<double> RDC_avg;
+        /**
+         * the energy
+         */
+        std::vector<double> energy;
+        /**
+         * the running average of R
+         */
+        std::vector<double> R_avg;
+        /**
+         * the running average of P
+         */
+        std::vector<double> P_avg;
+    } /** tensor-free RDC informaton */ tfrdc;
 
       /**
        * lattice shifts
@@ -743,7 +787,7 @@ namespace configuration {
        * position restraints bfactors
        */
       math::SArray bfactors;
-      
+
       /**
        * group-wise forces
        */
@@ -954,7 +998,7 @@ namespace configuration {
      * lattice sum information
      */
     lattice_sum_struct m_lattice_sum;
-    
+
     /**
      * check the positions for overlapping atoms.
      * @param topo topology
@@ -977,8 +1021,8 @@ namespace configuration {
      * See Gitlab issue #18.
      * Pascal, Feb 2017
      */
-    template<math::boundary_enum B> 
-    void check_excluded_positions(topology::Topology const & topo, 
+    template<math::boundary_enum B>
+    void check_excluded_positions(topology::Topology const & topo,
                                   simulation::Simulation & sim);
 
 
@@ -986,5 +1030,3 @@ namespace configuration {
 } // configuration
 
 #endif
-
-

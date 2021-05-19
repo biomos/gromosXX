@@ -35,17 +35,17 @@ void util::get_usage(util::Known const &knowns, std::string &usage, std::string 
     usage += "\t# topology data\n";
     usage += "\t@topo        filename\n\n";
   }
-  
+
   if (knowns.count("pttopo")){
     usage += "\t# perturbation topology data\n";
     usage += "\t# @pttopo    filename\n\n";
   }
-  
+
   if (knowns.count("conf")){
     usage += "\t# coordinates\n";
     usage += "\t@conf        filename\n\n";
   }
-  
+
   if (knowns.count("input")){
     usage += "\t# input parameter\n";
     usage += "\t@input       filename\n\n";
@@ -55,17 +55,17 @@ void util::get_usage(util::Known const &knowns, std::string &usage, std::string 
     usage += "\t# output final coordinates\n";
     usage += "\t@fin         filename\n\n";
   }
-  
+
   if (knowns.count("trc")){
     usage += "\t# output coordinates trajectory\n";
     usage += "\t@trc         filename\n\n";
   }
-  
+
   if (knowns.count("trv")){
     usage += "\t# output velocity trajectory\n";
     usage += "\t# @trv       filename\n\n";
   }
-  
+
   if (knowns.count("trf")){
     usage += "\t# output force trajectory\n";
     usage += "\t# @trf       filename\n\n";
@@ -74,8 +74,8 @@ void util::get_usage(util::Known const &knowns, std::string &usage, std::string 
   if (knowns.count("trs")){
     usage += "\t# output special trajectory\n";
     usage += "\t# @trs       filename\n\n";
-  }  
-  
+  }
+
   if (knowns.count("tre")){
     usage += "\t# output energy trajectory\n";
     usage += "\t# @tre       filename\n\n";
@@ -85,32 +85,32 @@ void util::get_usage(util::Known const &knowns, std::string &usage, std::string 
     usage += "\t# output replica energy trajectory (per switch)\n";
     usage += "\t# @re        filename\n\n";
   }
-  
+
   if (knowns.count("bae")){
     usage += "\t# output block averaged energy trajectory\n";
     usage += "\t# @bae       filename\n\n";
   }
-  
+
   if (knowns.count("trg")){
     usage += "\t# output free-energy trajectory\n";
     usage += "\t# @trg       filename\n\n";
   }
-  
+
   if (knowns.count("bag")){
     usage += "\t# output block averaged free-energy trajectory\n";
     usage += "\t# @bag       filename\n\n";    
   }
-  
+
   if (knowns.count("posresspec")){
     usage += "\t# position restraints specification\n";
     usage += "\t# @posresspec    filename\n\n";
   }
-  
+
   if (knowns.count("refpos")){
     usage += "\t# position restraints reference positions\n";
     usage += "\t# @refpos    filename\n\n";
   }
-  
+
   if (knowns.count("distrest")){
     usage += "\t# distance restraints specification\n";
     usage += "\t# @distrest  filename\n\n";
@@ -125,7 +125,7 @@ void util::get_usage(util::Known const &knowns, std::string &usage, std::string 
     usage += "\t# dihedral restraints specification\n";
     usage += "\t# @dihrest  filename\n\n";
   }
-  
+
   if (knowns.count("jval")){
     usage += "\t# J-value restraints specification\n";
     usage += "\t# @jval      filename\n\n";
@@ -156,7 +156,7 @@ void util::get_usage(util::Known const &knowns, std::string &usage, std::string 
     usage += "\t# local elevation coordinate definition file\n";
     usage += "\t# @led       filename\n\n";
   }
-  
+
   if (knowns.count("bsleus")) {
     usage += "\t# B&S-LEUS definition file\n";
     usage += "\t# @bsleus  filename\n\n";
@@ -166,10 +166,20 @@ void util::get_usage(util::Known const &knowns, std::string &usage, std::string 
     usage += "\t# order parameter restraints specification\n";
     usage += "\t# @order     filename\n\n";
   }
-  
+
   if (knowns.count("rdc")){
     usage += "\t# RDC restraints specification\n";
     usage += "\t# @rdc       filename\n\n";
+  }
+
+  if (knowns.count("tfrdc")){
+    usage += "\t# tensor-free RDC restraints specification\n";
+    usage += "\t# @tfrdc       filename\n\n";
+  }
+
+  if (knowns.count("zanglerest")){
+    usage += "\t# z-axis angle restraints specification\n";
+    usage += "\t# @zanglerest  filename\n\n";
   }
 
   if (knowns.count("friction")){
@@ -181,7 +191,7 @@ void util::get_usage(util::Known const &knowns, std::string &usage, std::string 
     usage += "\t# QM/MM specification file\n";
     usage += "\t# @qmmm       filename\n\n";
   }
-  
+
   if (knowns.count("repout")){
     usage += "\t# output file for replica exchange\n";
     usage += "\t# @repout    filename\n\n";
@@ -191,37 +201,37 @@ void util::get_usage(util::Known const &knowns, std::string &usage, std::string 
     usage += "\t# data file for replica exchange\n";
     usage += "\t# @repdat     filename\n\n";
   }
-  
+
   if (knowns.count("print")){
     usage += "\t# print additional information\n";
     usage += "\t# @print     <pairlist/force>\n\n";
   }
-  
+
   if (knowns.count("trp")){
     usage += "\t# write additional information to file\n";
     usage += "\t# @trp       filename\n\n";
   }
-  
+
   if (knowns.count("anatrj")){
     usage += "\t# re-analyze trajectory\n";
     usage += "\t# @anatrj    filename\n\n";
   }
-  
+
   if (knowns.count("verb")){
     usage += "\t# control verbosity (in debug builds)\n";
     usage += "\t# @verb      <[module:][submodule:]level>\n\n";
   }
-  
+
   if (knowns.count("version")){
     usage += "\t# print version information\n";
     usage += "\t# @version\n\n";
   }
-  
+
   if (knowns.count("develop")){
     usage += "\t# run untested code under development\n";
     usage += "\t# @develop\n\n";
-  } 
-  
+  }
+
   // usage += "#\n\n";
 
 }
@@ -235,7 +245,7 @@ void util::get_usage(util::Known const &knowns, std::string &usage, std::string 
 
 void util::print_title(bool mpi, std::ostream & os, bool repex)
 {
-  os << GROMOSXX << "\n" 
+  os << GROMOSXX << "\n"
      << "========\n";
 
   os << "version    :     " << MD_VERSION << "\n"
@@ -300,4 +310,3 @@ void util::print_title(bool mpi, std::ostream & os, bool repex)
 	      << ").\n\n";
   }
 }
-

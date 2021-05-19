@@ -41,7 +41,7 @@ namespace io {
    * reads in a trajectory file and parses
    * it into configuration::Configuration
    */
-  class In_Configuration : public In_Frame {  
+  class In_Configuration : public In_Frame {
 
   public:
     /**
@@ -57,8 +57,8 @@ namespace io {
     /**
      * Read in a G96 trajectory into the Configuration.
      */
-    void read(configuration::Configuration &conf, 
-	      topology::Topology &topo, 
+    void read(configuration::Configuration &conf,
+	      topology::Topology &topo,
 	      simulation::Simulation & sim,
 	      std::ostream & os = std::cout);
 
@@ -125,7 +125,7 @@ namespace io {
 		           configuration::Configuration & conf,
 		           simulation::Simulation & sim,
 		           std::ostream & os = std::cout);
-    
+
     /**
      * try to get velocities
      */
@@ -133,7 +133,7 @@ namespace io {
 		       configuration::Configuration & conf,
 		       simulation::Simulation & sim,
 		       std::ostream & os = std::cout);
-    
+
     /**
      * try to get the lattice shifts
      */
@@ -141,7 +141,7 @@ namespace io {
 		             configuration::Configuration & conf,
 		             simulation::Simulation & sim,
 		             std::ostream & os = std::cout);
-    
+
     /**
      * try to get time, step
      */
@@ -197,7 +197,7 @@ namespace io {
 		    configuration::Configuration & conf,
 		    simulation::Simulation & sim,
 		    std::ostream & os = std::cout);
-    
+
     /**
      * read stochastic integral
      */
@@ -214,30 +214,30 @@ namespace io {
     /**
      * read distance restraint averages
      */
-    bool read_distance_restraint_averages(topology::Topology &topo, 
-                                          configuration::Configuration &conf, 
+    bool read_distance_restraint_averages(topology::Topology &topo,
+                                          configuration::Configuration &conf,
                                           simulation::Simulation & sim,
                                           std::ostream & os);
     /**
      * read Nose-Hoover-Chains variables
      */
-    bool read_nose_hoover_chains(topology::Topology &topo, 
-                                 configuration::Configuration &conf, 
+    bool read_nose_hoover_chains(topology::Topology &topo,
+                                 configuration::Configuration &conf,
                                  simulation::Simulation & sim,
                                  std::ostream & os);
     /**
      * read position restraint averages and bfactors
      */
     bool read_position_restraints(topology::Topology &topo,
-                                  configuration::Configuration &conf, 
+                                  configuration::Configuration &conf,
                                   simulation::Simulation & sim,
                                   std::ostream & os);
 
     /**
      * read configuration of roto translational constraints
      */
-    bool read_rottrans(topology::Topology &topo, 
-                       configuration::Configuration &conf, 
+    bool read_rottrans(topology::Topology &topo,
+                       configuration::Configuration &conf,
                        simulation::Simulation & sim,
                        std::ostream & os);
 
@@ -256,6 +256,15 @@ namespace io {
 		    configuration::Configuration & conf,
 		    simulation::Simulation & sim,
 		    std::ostream & os = std::cout);
+
+    /**
+     * read tensor-free RDC restraint averages
+     */
+    bool read_tf_rdc_restraint_averages(topology::Topology &topo,
+            configuration::Configuration &conf,
+            simulation::Simulation & sim,
+            std::ostream & os);
+
 
     /**
      * read LE umbrella potentials
@@ -294,7 +303,7 @@ namespace io {
      * @param buffer
      * @return wheter successfull or not.
      */
-    bool _read_bsleus(util::BS_Umbrella &bs_umbrella, 
+    bool _read_bsleus(util::BS_Umbrella &bs_umbrella,
                       std::vector<std::string> buffer);
     /**
      * Read in position in the BSLEUS subspace (BSLEUSPOS block)
@@ -302,7 +311,7 @@ namespace io {
      * @param buffer
      * @return wheter successfull or not.
      */
-    bool _read_bsleuspos(util::BS_Umbrella &bs_umbrella, 
+    bool _read_bsleuspos(util::BS_Umbrella &bs_umbrella,
                       std::vector<std::string> buffer);
     /**
      * read POSITIONRED block.
@@ -315,7 +324,7 @@ namespace io {
      */
     bool _read_cos_position(math::VArray &pos, std::vector<std::string> &buffer,
 			   int const num);
-    
+
     /**
      * read VELOCITY block.
      */
@@ -336,13 +345,13 @@ namespace io {
     /**
      * read TRICLINICBOX block.
      */
-    bool _read_box(math::Box &box, double &phi, double &theta, double &psi, 
+    bool _read_box(math::Box &box, double &phi, double &theta, double &psi,
                    std::vector<std::string> &buffer,
 		   math::boundary_enum const boundary);
     /**
      * read GENBOX block.
      */
-    bool _read_genbox(math::Box &box, double &phi, double &theta, double &psi, 
+    bool _read_genbox(math::Box &box, double &phi, double &theta, double &psi,
                    std::vector<std::string> &buffer,
 		   math::boundary_enum const boundary);
     /**
@@ -371,7 +380,7 @@ namespace io {
      */
     bool _read_pertdata(topology::Topology & topo,
                         std::vector<std::string> & buffer);
-    
+
     /**
      * read DISRESEXPAVE block
      */
@@ -379,7 +388,7 @@ namespace io {
                  std::vector<std::string> &buffer,
                  const std::vector<topology::distance_restraint_struct> & distanceress,
                  std::vector<double> &distanceres_av);
-    
+
     /**
      * read JVALUE averages.
      */
@@ -414,7 +423,7 @@ namespace io {
 			 std::vector<std::vector<double> > & jvalue_epsilon,
 			 std::vector<topology::jvalue_restraint_struct> const & jval_res,
                          unsigned int const & grid_size);
-    
+
     /**
      * read Periodic Scaling (PSCALE) data.
      */
@@ -456,14 +465,14 @@ namespace io {
              std::vector<configuration::Configuration::special_struct::rdc_struct> &rdc,
 			 std::vector<std::vector<topology::rdc_restraint_struct> > const &rdc_res,
 		     std::ostream & os = std::cout);
-    
+
     /**
      * read RDC alignment tensor
      */
     bool _read_rdc_t(std::vector<std::string> &buffer,
              std::vector<configuration::Configuration::special_struct::rdc_struct> &rdc,
 		     std::ostream & os = std::cout);
-    
+
     /**
      * read RDC spherical harmonics
      */
@@ -480,6 +489,15 @@ namespace io {
 		     std::ostream & os = std::cout);
 
     /**
+    * read TFRDCRESEXPAVE block
+    */
+    bool _read_tf_rdc_restraint_averages(
+              std::vector<std::string> & buffer,
+              const std::vector<topology::tf_rdc_restraint_struct> & tfrdcres,
+              std::vector<double> & R_avg,
+              std::vector<double> & P_avg);
+
+    /**
      * read time information
      */
     bool _read_time(std::vector<std::string> &buffer,
@@ -494,7 +512,7 @@ namespace io {
      */
     bool _read_nose_hoover_chain_variables(std::vector<std::string> &buffer,
             simulation::Multibath & multibath);
-    
+
     /**
      * read ROTTRANSREFPOS block
      */

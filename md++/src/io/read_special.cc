@@ -55,6 +55,8 @@
 #include "../io/topology/in_order.h"
 #include "../io/topology/in_symrest.h"
 #include "../io/topology/in_rdc.h"
+#include "../io/topology/in_tf_rdc.h"
+#include "../io/topology/in_zaxisalignment.h"
 #include "../util/coding.h"
 
 #include "read_special.h"
@@ -78,7 +80,7 @@ int io::read_special(io::Argument const & args,
   // POSRES
   if (sim.param().posrest.posrest){
     io::igzstream posresspec_file;
-  
+
     if (args.count("posresspec") != 1){
       io::messages.add("position restraints: no data file specified (use @posresspec)",
 		       "read special", io::message::error);
@@ -86,7 +88,7 @@ int io::read_special(io::Argument const & args,
       posresspec_file.open(args["posresspec"].c_str());
       if (!posresspec_file.is_open()){
 	io::messages.add("opening posresspec file failed!\n",
-			 "read_special", 
+			 "read_special",
 			 io::message::error);
       } else {
         io::In_Posresspec ip(posresspec_file);
@@ -98,7 +100,7 @@ int io::read_special(io::Argument const & args,
                 "read special", io::message::notice);
       }
     }
-    
+
     io::igzstream refpos_file;
 
     // check whether we also need the position restraints file containing the
@@ -149,7 +151,7 @@ int io::read_special(io::Argument const & args,
                 "\n" + util::frame_text(ip.title),
                 "read special", io::message::notice);
       }
-    }    
+    }
   } // DISTANCERES
 
   // ANGREST
@@ -198,13 +200,13 @@ int io::read_special(io::Argument const & args,
                 "\n" + util::frame_text(ip.title),
                 "read special", io::message::notice);
       }
-    }    
+    }
   } // DIHREST
 
   // J-Value restraints
   if (sim.param().jvalue.mode != simulation::jvalue_restr_off){
     io::igzstream jval_file;
-    
+
     if (args.count("jval") != 1){
       io::messages.add("jvalue restraints: no data file specified (use @jval)",
 		       "read special", io::message::error);
@@ -293,10 +295,59 @@ int io::read_special(io::Argument const & args,
     }
   } // RDC
 
+	// tensor-free RDC restraints
+	if (sim.param().tfrdc.mode != simulation::tfrdc_restr_off){
+    io::igzstream tfrdc_file;
+
+    if (args.count("tfrdc") != 1){
+      io::messages.add("tensor-free RDC restraints: no data file specified (use @tfrdc)",
+		       "read special", io::message::error);
+    } else {
+      tfrdc_file.open(args["tfrdc"].c_str());
+      if (!tfrdc_file.is_open()){
+	io::messages.add("opening tensor-free RDC restraints file failed!\n",
+			 "read_special", io::message::error);
+      } else {
+        io::In_Tfrdcresspec ip(tfrdc_file);
+        ip.quiet = quiet;
+
+        ip.read(topo, sim, os);
+        io::messages.add("tensor-free RDC restraints read from " + args["tfrdc"] +
+                "\n" + util::frame_text(ip.title),
+                "read special", io::message::notice);
+      }
+    }
+  } // TFRDCRES
+
+  // ZANGLE restraints
+    if (sim.param().zalignmentres.zalignmentres){
+      io::igzstream zalignmentres_file;
+
+      if (args.count("zanglerest") != 1){
+        io::messages.add("z-axis angle restraints: no data file specified (use @zanglerest)",
+  		       "read special", io::message::error);
+      } else {
+        zalignmentres_file.open(args["zanglerest"].c_str());
+        if (!zalignmentres_file.is_open()){
+  	io::messages.add("opening zalignmentres file failed!\n",
+  			 "read_special", io::message::error);
+        } else {
+          io::In_Zaxisalignment ip(zalignmentres_file);
+          ip.quiet = quiet;
+
+          ip.read(topo, sim, os);
+          io::messages.add("z-axis angle restraints read from " + args["zanglerest"] +
+                  "\n" + util::frame_text(ip.title),
+                  "read special", io::message::notice);
+        }
+      }
+    }// ZANGLE restraints
+
+
     // FRICTION
   if (sim.param().stochastic.sd && sim.param().stochastic.ntfr == 2){
     io::igzstream friction_file;
-  
+
     if (args.count("friction") != 1){
       io::messages.add("friction specification: no data file specified (use @friction)",
 		       "read special", io::message::error);
@@ -361,7 +412,7 @@ int io::read_special(io::Argument const & args,
       } // LUD
     } // if external LUD
   } // LEUS
-  
+
   // B&S-LEUS
   if (sim.param().bsleus.bsleus == simulation::bsleus_on) {
     io::igzstream bsleus_file;
@@ -437,7 +488,7 @@ int io::read_special(io::Argument const & args,
       }
     }
   }
-  
+
   // Symmetry restraints
   if (sim.param().symrest.symrest != simulation::xray_symrest_off) {
     io::igzstream symrest_file;
@@ -491,6 +542,6 @@ int io::read_special(io::Argument const & args,
   if (io::messages.contains(io::message::error) ||
       io::messages.contains(io::message::critical))
     return -1;
-  
+
   return 0;
 }

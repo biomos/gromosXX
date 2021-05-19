@@ -66,7 +66,7 @@
  * <tr><td> \@verb</td><td>&lt;@ref debug "control verbosity"&gt;</td><td></td></tr>
  * <tr><td> \@version</td><td>&lt;print version information&gt; </td><td></td></tr>
  * </table>
- * 
+ *
  * @sa md_mpi
 */
 
@@ -109,14 +109,13 @@ int main(int argc, char *argv[]){
   signal(SIGINT, signal_handler);
 
   util::Known knowns;
-  knowns << "topo" << "conf" << "input" << "verb" << "pttopo"
-	 << "trc" << "fin" << "trv" << "trf" << "trs" << "tre" << "trg"
-	 << "bae" << "bag" << "posresspec" << "refpos" <<"distrest" 
-	 << "angrest" << "dihrest"
-         << "jval" << "xray" << "sym" << "order" << "rdc" << "lud" << "led" << "bsleus" 
-         << "anatrj" << "print" << "friction" << "qmmm" << "version" << "develop" << "gamd";
-  
-  
+  knowns << "topo" << "conf" << "input" << "verb" << "pttopo" << "trc" << "fin"
+         << "trv" << "trf" << "trs" << "tre" << "trg" << "bae" << "bag"
+         << "posresspec" << "refpos" <<"distrest" << "angrest" << "dihrest" << "jval"
+         << "xray" << "sym" << "order" << "rdc" << "tfrdc" << "zanglerest"
+         << "lud" << "led" << "bsleus" << "anatrj" << "print" << "friction"
+         << "qmmm" << "version" << "develop" << "gamd";
+
   std::string usage;
   util::get_usage(knowns, usage, argv[0]);
   usage += "#\n\n";
@@ -132,7 +131,7 @@ int main(int argc, char *argv[]){
   if (args.count("version") >= 0){
     return 0;
   }
-    
+
   // parse the verbosity flag and set debug levels
   if (util::parse_verbosity(args)){
     std::cerr << "could not parse verbosity argument" << std::endl;
@@ -153,11 +152,11 @@ int main(int argc, char *argv[]){
     return 1;
   }
 
-  // check for development 
-  if (sim.param().develop.develop==true && args.count("develop") < 0) { 
-    io::messages.add(sim.param().develop.msg, io::message::develop); 
-  } 
-  
+  // check for development
+  if (sim.param().develop.develop==true && args.count("develop") < 0) {
+    io::messages.add(sim.param().develop.msg, io::message::develop);
+  }
+
   traj.title(GROMOSXX "\n" + sim.param().title);
 
   // create output files...
@@ -177,18 +176,18 @@ int main(int argc, char *argv[]){
       return 1;
     }
   }
-      
+
   io::messages.clear();
 
   std::cout.precision(5);
   std::cout.setf(std::ios_base::fixed, std::ios_base::floatfield);
-    
+
   std::cout << "\nenter the next level of molecular "
 	    << "dynamics simulations\n" << std::endl;
 
-    
+
   int percent = 0;
-    
+
   std::cout << "==================================================\n"
 	    << " MAIN MD LOOP\n"
 	    << "==================================================\n"
@@ -198,7 +197,7 @@ int main(int argc, char *argv[]){
 
   const double init_time = util::now() - start;
   while(int(sim.steps()) < sim.param().step.number_of_steps && !exit_md){
-      
+
     traj.write(conf, topo, sim, io::reduced);
 
     // run a step
@@ -214,14 +213,14 @@ int main(int argc, char *argv[]){
         error = 0; // clear error condition
         break;
       }
-      else { 
+      else {
 	// try to print energies anyway
 	// if (error == E_NAN){
 	io::print_ENERGY(traj.output(), conf.current().energies,
 			 topo.energy_groups(),
 			 "OLDERROR", "OLDERR_");
-	
-	io::print_ENERGY(traj.output(), conf.old().energies, 
+
+	io::print_ENERGY(traj.output(), conf.old().energies,
 			 topo.energy_groups(),
 			 "ERROR", "ERR_");
       }
@@ -239,7 +238,7 @@ int main(int argc, char *argv[]){
 
     sim.steps()=sim.steps()+sim.param().analyze.stride;
     sim.time() = sim.param().step.t0 + sim.steps()*sim.time_step_size();
-    
+
     if ((sim.param().step.number_of_steps / 10 > 0) &&
 	(sim.steps() % (sim.param().step.number_of_steps / 10) == 0)){
       percent=int(sim.steps())*10/sim.param().step.number_of_steps;
@@ -257,7 +256,7 @@ int main(int argc, char *argv[]){
       const int eta_hh = int(eta_spent / 3600);
       const int eta_mm = int((eta_spent - eta_hh * 3600) / 60);
       const int eta_ss = int(eta_spent - eta_hh * 3600 - eta_mm * 60);
-      
+
       std::cerr << "MD: ETA   " << eta_hh << ":" << eta_mm << ":" << eta_ss << std::endl;
       std::cout << "MD: ETA   " << eta_hh << ":" << eta_mm << ":" << eta_ss << std::endl;
     }
@@ -294,7 +293,7 @@ int main(int argc, char *argv[]){
     
   const time_t time_now = time_t(util::now());
   std::cout << ctime(&time_now) << "\n\n";
-    
+
   if (error){
     std::cout << "\nErrors encountered during run - check above!\n" << std::endl;
     return 1;
@@ -309,8 +308,6 @@ int main(int argc, char *argv[]){
   } else{
     std::cout << "\n" GROMOSXX " finished successfully\n" << std::endl;
   }
-  
+
   return 0;
 }
-
-

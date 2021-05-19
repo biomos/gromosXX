@@ -110,7 +110,7 @@ configuration::Configuration::Configuration
 
   current().pressure_tensor = conf.current().pressure_tensor;
   old().pressure_tensor = conf.old().pressure_tensor;
-  
+
   for (unsigned int k = 0; k < special().eds.virial_tensor_endstates.size(); ++k) {
     special().eds.virial_tensor_endstates[k] =
             conf.special().eds.virial_tensor_endstates[k];
@@ -138,15 +138,15 @@ configuration::Configuration::Configuration
   old().stochastic_integral = conf.old().stochastic_integral;
   current().stochastic_seed = conf.current().stochastic_seed;
   old().stochastic_seed = conf.old().stochastic_seed;
-  
+
   current().box = conf.current().box;
   old().box = conf.old().box;
- 
+
   current().energies = conf.current().energies;
   old().energies = conf.old().energies;
   current().averages = conf.current().averages;
   old().averages = conf.old().averages;
-  
+
   current().perturbed_energy_derivatives =
     conf.current().perturbed_energy_derivatives;
   old().perturbed_energy_derivatives =
@@ -173,18 +173,18 @@ configuration::Configuration::Configuration
   special().dihangle_trans.j = conf.special().dihangle_trans.j;
   special().dihangle_trans.k = conf.special().dihangle_trans.k;
   special().dihangle_trans.l = conf.special().dihangle_trans.l;
-  
+
   special().umbrellas = conf.special().umbrellas;
   special().flexible_constraint = conf.special().flexible_constraint;
-  
+
   special().jvalue_av = conf.special().jvalue_av;
   special().jvalue_curr = conf.special().jvalue_curr;
   special().jvalue_epsilon = conf.special().jvalue_epsilon;
-  
+
   special().distanceres.av = conf.special().distanceres.av;
   special().distanceres.energy = conf.special().distanceres.energy;
   special().distanceres.d = conf.special().distanceres.d;
-  
+
   special().distancefield.ngrid = conf.special().distancefield.ngrid;
   special().distancefield.distance = conf.special().distancefield.distance;
   special().distancefield.dist = conf.special().distancefield.dist;
@@ -196,7 +196,7 @@ configuration::Configuration::Configuration
 
   special().dihedralres.energy = conf.special().dihedralres.energy;
   special().dihedralres.d = conf.special().dihedralres.d;
-  
+
   special().pscale = conf.special().pscale;
 
   special().orderparamres.S2_avg = conf.special().orderparamres.S2_avg;
@@ -207,7 +207,11 @@ configuration::Configuration::Configuration
   special().orderparamres.D_winavg = conf.special().orderparamres.D_winavg;
 
   special().rdc = conf.special().rdc;
- 
+
+  special().zalignmentres.av = conf.special().zalignmentres.av;
+  special().zalignmentres.energy = conf.special().zalignmentres.energy;
+  special().zalignmentres.d = conf.special().zalignmentres.d;
+
   special().rottrans_constr = conf.special().rottrans_constr;
 
   // if this works just like this, why do we need to explicitly copy the virial tensor?
@@ -215,11 +219,11 @@ configuration::Configuration::Configuration
   special().gamd = conf.special().gamd;
   
   special().lattice_shifts = conf.special().lattice_shifts;
-  
+
   special().shake_failure_occurred = conf.special().shake_failure_occurred;
-  
+
   special().force_groups = conf.special().force_groups;
-  
+
   boundary_type = conf.boundary_type;
 }
 
@@ -271,15 +275,15 @@ configuration::Configuration & configuration::Configuration::operator=
   old().stochastic_integral = conf.old().stochastic_integral;
   current().stochastic_seed = conf.current().stochastic_seed;
   old().stochastic_seed = conf.old().stochastic_seed;
-  
+
   current().box = conf.current().box;
   old().box = conf.old().box;
-  
+
   current().energies = conf.current().energies;
   old().energies = conf.old().energies;
   current().averages = conf.current().averages;
   old().averages = conf.old().averages;
-  
+
   current().perturbed_energy_derivatives =
     conf.current().perturbed_energy_derivatives;
   old().perturbed_energy_derivatives =
@@ -306,18 +310,18 @@ configuration::Configuration & configuration::Configuration::operator=
   special().dihangle_trans.j = conf.special().dihangle_trans.j;
   special().dihangle_trans.k = conf.special().dihangle_trans.k;
   special().dihangle_trans.l = conf.special().dihangle_trans.l;
-  
+
   special().umbrellas = conf.special().umbrellas;
   special().flexible_constraint = conf.special().flexible_constraint;
-  
+
   special().jvalue_av = conf.special().jvalue_av;
   special().jvalue_curr = conf.special().jvalue_curr;
   special().jvalue_epsilon = conf.special().jvalue_epsilon;
-  
+
   special().distanceres.av = conf.special().distanceres.av;
   special().distanceres.energy = conf.special().distanceres.energy;
   special().distanceres.d = conf.special().distanceres.d;
- 
+
   special().distancefield.ngrid = conf.special().distancefield.ngrid;
   special().distancefield.distance = conf.special().distancefield.distance;
   special().distancefield.dist = conf.special().distancefield.dist;
@@ -329,22 +333,26 @@ configuration::Configuration & configuration::Configuration::operator=
   
   special().dihedralres.energy = conf.special().dihedralres.energy;
   special().dihedralres.d = conf.special().dihedralres.d;
- 
+
   special().rdc = conf.special().rdc;
 
+  special().zalignmentres.av = conf.special().zalignmentres.av;
+  special().zalignmentres.energy = conf.special().zalignmentres.energy;
+  special().zalignmentres.d = conf.special().zalignmentres.d;
+
   special().pscale = conf.special().pscale;
-  
+
   special().rottrans_constr = conf.special().rottrans_constr;
 
   special().eds = conf.special().eds;
   special().gamd = conf.special().gamd;
-  
+
   special().lattice_shifts = conf.special().lattice_shifts;
-  
+
   special().shake_failure_occurred = conf.special().shake_failure_occurred;
-  
+
   special().force_groups = conf.special().force_groups;
-  
+
   boundary_type = conf.boundary_type;
 
   return *this;
@@ -359,19 +367,19 @@ void configuration::Configuration::init(topology::Topology const & topo,
   const unsigned int numb = unsigned(param.multibath.multibath.size());
   // ANITA
   const unsigned int numl = unsigned(param.precalclam.nr_lambdas); //
-  
-  DEBUG(5, "number of energy groups: " << num 
+
+  DEBUG(5, "number of energy groups: " << num
 	<< "\nnumber of baths: " << numb
         << "\nnumber of lambdas: " << numl); // ANITA
 
-  DEBUG(5, "ANITA resizing energies, configuration::init"); 
+  DEBUG(5, "ANITA resizing energies, configuration::init");
   current().energies.resize(num, numb,numl);
   old().energies.resize(num, numb,numl);
 
 //  current().energies.resize(num, numb);
 //  old().energies.resize(num, numb); // ANITA
   if (param.force.force_groups) {
-    special().force_groups.resize(num, 
+    special().force_groups.resize(num,
             std::vector<math::VArray>(num, math::VArray(
             topo.num_atoms(), math::Vec(0.0, 0.0, 0.0))));
   }
@@ -393,7 +401,7 @@ void configuration::Configuration::init(topology::Topology const & topo,
   special().eds.force_endstates.resize(param.eds.numstates);
   for (unsigned int i = 0; i < special().eds.force_endstates.size(); i++){
     special().eds.force_endstates[i].resize(topo.num_atoms());
-  }  
+  }
   special().eds.virial_tensor_endstates.resize(param.eds.numstates);
   current().energies.eds_vi.resize(param.eds.numstates);
   current().perturbed_energy_derivatives.eds_vi.resize(param.eds.numstates);
@@ -432,7 +440,7 @@ void configuration::Configuration::init(topology::Topology const & topo,
   old().energies.gamd_ET.resize(param.gamd.igroups);
   old().energies.gamd_KD.resize(param.gamd.igroups);
   old().energies.gamd_KT.resize(param.gamd.igroups);
-  
+
   current().energies.ewarn(param.ewarn.limit);
   old().energies.ewarn(param.ewarn.limit);
 
@@ -468,7 +476,7 @@ void configuration::Configuration::init(topology::Topology const & topo,
     special().dihangle_trans.l.resize
       (topo.solute().dihedrals().size(), 0);
   }
-  
+
   if (param.constraint.solute.algorithm == simulation::constr_flexshake &&
       special().flexible_constraint.flexible_vel.size() == 0){
 
@@ -480,7 +488,7 @@ void configuration::Configuration::init(topology::Topology const & topo,
 
   if(param.nemd.nemd != simulation::nemd_off){
     special().nemd_conf.Px = 0.0; //To accumulate the momemtum
-    special().nemd_conf.counter = 0; 
+    special().nemd_conf.counter = 0;
     unsigned int num_grid = 2 * param.nemd.slabnum;
     special().nemd_conf.stored_data_per_bin.clear();
     for(unsigned int i = 0; i < num_grid; ++i) {
@@ -491,8 +499,8 @@ void configuration::Configuration::init(topology::Topology const & topo,
       special().nemd_conf.dvx_per_atom.push_back(0.0);
     }
   }
-  
-  
+
+
   // resize the arrays
   // to make scripting easier...
   resize(topo.num_atoms());
@@ -513,7 +521,7 @@ void configuration::Configuration::init(topology::Topology const & topo,
 	  math::Periodicity<math::rectangular> periodicity(current().box);
 	  // periodicity.gather_molecules_into_box(*this, topo);
 	  periodicity.gather_chargegroups(*this, topo);
-	  
+
 	  break;
 	}
       case math::truncoct:
@@ -523,7 +531,7 @@ void configuration::Configuration::init(topology::Topology const & topo,
 	  math::Periodicity<math::triclinic> periodicity(current().box);
 	  // periodicity.gather_molecules_into_box(*this, topo);
 	  periodicity.gather_chargegroups(*this, topo);
-	  
+
 	  break;
 	}
       default:
@@ -558,10 +566,10 @@ void configuration::Configuration::init(topology::Topology const & topo,
 void configuration::Configuration::resize(unsigned int s)
 {
   DEBUG(7, "Configuration resize: " << s);
-  
+
   current().resize(s);
   old().resize(s);
-  
+
   special().lattice_shifts.resize(s);
 }
 
@@ -610,7 +618,7 @@ void configuration::Configuration::lattice_sum_struct::init(topology::Topology c
             param.nonbonded.ewald_max_k_y *
             param.nonbonded.ewald_max_k_z);
   }
-  
+
   if (param.nonbonded.method == simulation::el_p3m) {
     const unsigned int Nx = param.nonbonded.p3m_grid_points_x;
     const unsigned int Ny = param.nonbonded.p3m_grid_points_y;
@@ -666,7 +674,7 @@ void configuration::Configuration::lattice_sum_struct::init(topology::Topology c
 #ifdef XXMPI
     }
 #endif
-    
+
     influence_function.init(param);
   }
 
@@ -687,7 +695,7 @@ namespace configuration
 
 bool configuration::Configuration::check(topology::Topology const & topo, simulation::Simulation & sim) {
   int error = 0;
-  
+
   // check the positions if nonbonded forces are computed
   if (sim.param().force.nonbonded_crf || sim.param().force.nonbonded_vdw) {
     SPLIT_MY_BOUNDARY(boundary_type, check_positions, topo, error);
@@ -786,14 +794,14 @@ void configuration::Configuration::check_dihedrals(std::vector<topology::four_bo
 }
 
 
-template<math::boundary_enum B> 
+template<math::boundary_enum B>
 void configuration::Configuration::check_excluded_positions(topology::Topology const & topo, simulation::Simulation & sim) {
   math::Periodicity<B> periodicity(current().box);
   const int num_solute = topo.num_solute_atoms();
   const math::VArray & pos = current().pos;
   math::Vec r;
   const double cutoff_2 = sim.param().pairlist.cutoff_short * sim.param().pairlist.cutoff_short;
-  
+
   if (sim.param().pairlist.atomic_cutoff) {
     // loop over the solute atoms
     for(int a1 = 0 ; a1 < num_solute; ++a1) {
@@ -820,9 +828,9 @@ void configuration::Configuration::check_excluded_positions(topology::Topology c
             io::messages.add(msg.str(), "Configuration", io::message::warning);
           }
         }
-      } 
+      }
     }
-      
+
   } else {
     // first put the chargegroups into the box
     periodicity.put_chargegroups_into_box(*this, topo);
@@ -836,7 +844,7 @@ void configuration::Configuration::check_excluded_positions(topology::Topology c
     topology::Chargegroup_Iterator
       cg1 =   topo.chargegroup_begin();
     unsigned int i = 0, num_cg = topo.num_solute_chargegroups();
-    
+
     for(i=0; i < num_cg; ++cg1, ++i){
       cg1.cog(pos, cg_cog(i));
     }

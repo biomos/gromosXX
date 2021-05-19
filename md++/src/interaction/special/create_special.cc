@@ -55,6 +55,8 @@
 #include "../../interaction/special/electric_field_interaction.h"
 #include "../../interaction/special/order_parameter_restraint_interaction.h"
 #include "../../interaction/special/rdc_restraint_interaction.h"
+#include "../../interaction/special/tf_rdc_restraint_interaction.h"
+#include "../../interaction/special/zaxis_alignment_restraint_interaction.h"
 #include "../../interaction/special/symmetry_restraint_interaction.h"
 
 #include "../../interaction/bonded/dihedral_interaction.h"
@@ -84,7 +86,7 @@ int interaction::create_special(interaction::Forcefield & ff,
   }
 
   // Position restraints / constraints
-  if (param.posrest.posrest == simulation::posrest_on || 
+  if (param.posrest.posrest == simulation::posrest_on ||
       param.posrest.posrest == simulation::posrest_bfactor) {
 
     if(!quiet)
@@ -94,7 +96,7 @@ int interaction::create_special(interaction::Forcefield & ff,
       new interaction::Position_Restraint_Interaction;
 
     ff.push_back(pr);
-    
+
     if (param.pcouple.virial == math::atomic_virial)
       io::messages.add("Position restraints with atomic virial ill defined",
 		       "create_special", io::message::warning);
@@ -106,11 +108,11 @@ int interaction::create_special(interaction::Forcefield & ff,
     io::messages.add("Wrong value for position restraints",
 		     "create_special", io::message::error);
   }
-  // Distance restraints 
-  // as this function is called before read_special, we do not know if we 
+  // Distance restraints
+  // as this function is called before read_special, we do not know if we
   // really need the (perturbed) interactions
   // so we generate them, but need to check inside if we really do something
-  if (abs(param.distanceres.distanceres) == 1 || 
+  if (abs(param.distanceres.distanceres) == 1 ||
       abs(param.distanceres.distanceres) == 2){
 
     if(!quiet)
@@ -120,46 +122,46 @@ int interaction::create_special(interaction::Forcefield & ff,
       new interaction::Distance_Restraint_Interaction();
 
     ff.push_back(dr);
-    
+
     if(param.perturbation.perturbation){
       if(!quiet)
 	os <<"\tPerturbed distance restraints\n";
-      
+
       interaction::Perturbed_Distance_Restraint_Interaction *pdr =
 	new interaction::Perturbed_Distance_Restraint_Interaction;
 
-      ff.push_back(pdr); 
+      ff.push_back(pdr);
     }
     if(param.eds.eds){
       if(!quiet)
         os << "\tEDS perturbed distance restraints\n";
       interaction::Eds_Distance_Restraint_Interaction *edr =
         new interaction::Eds_Distance_Restraint_Interaction;
-      
+
       ff.push_back(edr);
     }
   }
-  
+
   // Distance field restraint
-  // as this function is called before read_special, we do not know if we 
+  // as this function is called before read_special, we do not know if we
   // really need the (perturbed) interactions
   // so we generate them, but need to check inside if we really do something
   if (param.distancefield.distancefield == 1){
     if(!quiet)
       os << "\tDistancefield restraint\n";
-    interaction::Distance_Field_Interaction *df = 
+    interaction::Distance_Field_Interaction *df =
       new interaction::Distance_Field_Interaction();
-    
+
     ff.push_back(df);
     DEBUG(10, "Distancefield interaction pushed back");
-    
+
     if (param.perturbation.perturbation){
       if(!quiet)
 	os <<"\tPerturbed distancefield restraints \n";
-      
+
       interaction::Perturbed_Distance_Field_Interaction *pdf =
 	new interaction::Perturbed_Distance_Field_Interaction;
-      
+
       ff.push_back(pdf);
     }
   }
@@ -198,15 +200,15 @@ int interaction::create_special(interaction::Forcefield & ff,
       new interaction::Dihedral_Restraint_Interaction();
 
     ff.push_back(dr);
-    
+
     if(param.perturbation.perturbation){
       if(!quiet)
 	os <<"\tPerturbed dihedral restraints\n";
-      
+
       interaction::Perturbed_Dihedral_Restraint_Interaction *pdr =
 	new interaction::Perturbed_Dihedral_Restraint_Interaction;
-      
-      ff.push_back(pdr); 
+
+      ff.push_back(pdr);
     }
   }
 
@@ -239,7 +241,7 @@ int interaction::create_special(interaction::Forcefield & ff,
 
     interaction::Jvalue_Restraint_Interaction *jr =
       new interaction::Jvalue_Restraint_Interaction;
-    
+
     ff.push_back(jr);
   }
 
@@ -329,6 +331,46 @@ int interaction::create_special(interaction::Forcefield & ff,
     ff.push_back(rdcr);
   }
 
+  // tensor-free rdc restraints
+  if (param.tfrdc.mode != simulation::tfrdc_restr_off){
+    if(!quiet){
+      os << "\tTensor-free RDC restraints (";
+      switch(param.tfrdc.mode){
+	case simulation::tfrdc_restr_av :
+	  os << "time averaged";
+	  break;
+	case simulation::tfrdc_restr_av_weighted :
+	  os << "time averaged, weighted";
+	  break;
+	default:
+	  os << "unknown mode!";
+	  break;
+      }
+      os << ")\n";
+    }
+
+    interaction::TF_RDC_Restraint_Interaction *tfr =
+      new interaction::TF_RDC_Restraint_Interaction;
+
+    ff.push_back(tfr);
+  }
+
+  // Z-axis angle restraints
+  // as this function is called before read_special, we do not know if we
+  // really need the interactions
+  // so we generate them, but need to check inside if we really do something
+  if (abs(param.zalignmentres.zalignmentres) == 1 ||
+     abs(param.zalignmentres.zalignmentres) == 2){
+
+    if(!quiet)
+      os <<"\tZ-axis angle restraints\n";
+
+    interaction::Zaxis_Alignment_Restraint_Interaction *zr =
+      new interaction::Zaxis_Alignment_Restraint_Interaction();
+
+    ff.push_back(zr);
+  }
+
   // symmetry restraints
   if (param.symrest.symrest != simulation::xray_symrest_off){
     if(!quiet){
@@ -361,7 +403,7 @@ int interaction::create_special(interaction::Forcefield & ff,
             new interaction::Local_Elevation_Interaction();
     ff.push_back(le);
   }
-  
+
   if (param.bsleus.bsleus != simulation::bsleus_off){
     if (!quiet) {
       os << "\tB&S-LEUS\n";
@@ -389,8 +431,8 @@ int interaction::create_special(interaction::Forcefield & ff,
     if(!quiet){
       os << "\tscaling based on J-Value restraints\n";
     }
-    
-    interaction::Periodic_Scaling * ps = 
+
+    interaction::Periodic_Scaling * ps =
       new interaction::Periodic_Scaling(ff, param);
 
     ff.push_back(ps);
@@ -404,7 +446,7 @@ int interaction::create_special(interaction::Forcefield & ff,
             new interaction::Adde_Reweighting();
     ff.push_back(ad);
   }
-  
+
   if (param.nemd.nemd != simulation::nemd_off) {
     if (!quiet) {
       os << "\tnemd \n";
@@ -413,6 +455,6 @@ int interaction::create_special(interaction::Forcefield & ff,
             new interaction::NEMD_Interaction();
     ff.push_back(nemd);
   }
-  
+
   return 0;
 }

@@ -51,18 +51,18 @@ void configuration::Average::zero()
   m_block_avg.zero();
 }
 
-int configuration::Average::apply(topology::Topology &topo, 
+int configuration::Average::apply(topology::Topology &topo,
 				  configuration::Configuration &conf,
 				  simulation::Simulation &sim)
 {
 
   DEBUG(7, "averaging...");
-  
+
   m_sim_avg.update(conf.old().averages.simulation(), topo, conf, sim);
 
   if (sim.param().write.block_average)
     m_block_avg.update(conf.old().averages.block(), topo, conf, sim);
-  
+
   return 0;
 
 }
@@ -75,7 +75,7 @@ void configuration::Average::resize(topology::Topology const & topo,
 
   m_sim_avg.resize(topo, conf, param);
   m_block_avg.resize(topo, conf, param);
-  
+
 }
 
 
@@ -90,7 +90,7 @@ void configuration::Average::Block_Average::zero()
 
   energy_derivative_avg.zero();
   energy_derivative_fluct.zero();
-  
+
   for(int a=0; a<3; ++a){
     for(int b=0; b<3; ++b){
       pressure_avg(a,b) = 0.0;
@@ -107,10 +107,10 @@ void configuration::Average::Block_Average::zero()
 
   mass_avg = 0.0;
   mass_fluct = 0.0;
-  
+
   temp_scaling_avg.assign(temp_scaling_avg.size(), 0.0);
   temp_scaling_fluct.assign(temp_scaling_avg.size(), 0.0);
-  
+
   volume_avg = 0.0;
   volume_fluct = 0.0;
 
@@ -123,13 +123,13 @@ void configuration::Average::Block_Average::zero()
 
   sasa_buriedvol_tot_avg = 0.0;
   sasa_buriedvol_tot_fluct = 0.0;
-  
+
   sasa_avg.assign(sasa_avg.size(), 0.0);
   sasa_fluct.assign(sasa_avg.size(), 0.0);
-  
+
   sasa_buriedvol_avg.assign(sasa_buriedvol_avg.size(), 0.0);
   sasa_buriedvol_fluct.assign(sasa_buriedvol_avg.size(), 0.0);
-  
+
 }
 
 void configuration::Average::Block_Average::
@@ -149,7 +149,7 @@ resize(topology::Topology const & topo,
 //  energy_fluct.resize(e_groups, baths);
   energy_avg.resize(e_groups, baths, nr_lambdas);
   energy_fluct.resize(e_groups, baths, nr_lambdas);
-  
+
   if (param.perturbation.perturbation){
 //    energy_derivative_avg.resize(e_groups, baths);
 //    energy_derivative_fluct.resize(e_groups, baths);
@@ -172,18 +172,18 @@ resize(topology::Topology const & topo,
 
 void configuration::Average::Block_Average::
 update(Block_Average const & old,
-      topology::Topology &topo, 
+      topology::Topology &topo,
       configuration::Configuration &conf,
       simulation::Simulation &sim)
 {
 
   DEBUG(7, "block averaging...");
-  
+
   const double dt = sim.time_step_size();
-  
+
   time = old.time + dt;
 
-  DEBUG(5, "ANITA, Block_Average::update, checking nr lambdas" 
+  DEBUG(5, "ANITA, Block_Average::update, checking nr lambdas"
             << "\n conf.old: " << conf.old().energies.A_lj_total.size());
 
   update_energies(energy_avg,
@@ -193,7 +193,7 @@ update(Block_Average const & old,
 		  old.energy_fluct,
 		  dt,
 		  0.0);
-  
+
   if (sim.param().perturbation.perturbation){
 
     const double dlamt = sim.param().perturbation.dlamt;
@@ -205,12 +205,12 @@ update(Block_Average const & old,
 		    old.energy_derivative_fluct,
 		    dt,
 		    dlamt);
-    
+
     lambda_avg = old.lambda_avg + topo.old_lambda() * dt;
     lambda_fluct = old.lambda_fluct + topo.old_lambda() * topo.old_lambda() * dt;
 
   }
-  
+
 
   // and the rest...
   update_volumepressure(topo, conf, sim, old);
@@ -229,7 +229,7 @@ update(Block_Average const & old,
 ////////////////////////////////////////////////////
 
 void configuration::Average::Block_Average
-::energy_average(configuration::Energy &energy, 
+::energy_average(configuration::Energy &energy,
 		 configuration::Energy &fluctuation)const
 {
   energy_average_helper(energy_avg,
@@ -240,7 +240,7 @@ void configuration::Average::Block_Average
 }
 
 void configuration::Average::Block_Average
-::energy_derivative_average(configuration::Energy &energy, 
+::energy_derivative_average(configuration::Energy &energy,
 			    configuration::Energy &fluctuation,
 			    double & lambda,
 			    double & lambda_fluct,
@@ -251,16 +251,16 @@ void configuration::Average::Block_Average
 			energy,
 			fluctuation,
 			dlamt);
-  
+
   lambda = lambda_avg / time;
   const double diff = this->lambda_fluct - lambda_avg * lambda_avg / time;
   if (diff > 0.0) lambda_fluct = sqrt(diff / time);
   else lambda_fluct = 0.0;
-  
+
 }
 
 void configuration::Average::Block_Average
-::pressure_average(math::Matrix &pressure, 
+::pressure_average(math::Matrix &pressure,
 		   math::Matrix &pressure_fluctuations,
 		   math::Matrix &virial,
 		   math::Matrix &virial_fluctuations,
@@ -308,7 +308,6 @@ void configuration::Average::Block_Average
 	      std::vector<double> & scaling_fluctuations)const
 {
   double diff = 0.0;
-  
   mass = mass_avg / time;
   diff = mass_fluct - mass_avg * mass_avg / time;
   if (diff > 0.0)
@@ -337,7 +336,7 @@ void configuration::Average::Block_Average
 
   scaling.resize(temp_scaling_avg.size());
   scaling_fluctuations.resize(temp_scaling_avg.size());
-  
+
   for(size_t i = 0; i < temp_scaling_avg.size(); ++i){
 
     scaling[i] = temp_scaling_avg[i] / time;
@@ -348,7 +347,7 @@ void configuration::Average::Block_Average
     else
       scaling_fluctuations[i] = 0.0;
   }
-  
+
 }
 
 void configuration::Average::Block_Average
@@ -358,7 +357,7 @@ void configuration::Average::Block_Average
 {
   sasa.resize(sasa_avg.size());
   sasa_fluctuations.resize(sasa_avg.size());
-  
+
   for (unsigned int i = 0; i < sasa_avg.size(); ++i){
     sasa[i] = sasa_avg[i] / time;
     const double diff = sasa_fluct[i] - sasa_avg[i] * sasa_avg[i] / time;
@@ -387,7 +386,7 @@ void configuration::Average::Block_Average
 {
   sasa_buriedvol.resize(sasa_buriedvol_avg.size());
   sasa_buriedvol_fluctuations.resize(sasa_buriedvol_avg.size());
-  
+
   for (unsigned int i = 0; i < sasa_buriedvol_avg.size(); ++i){
     sasa_buriedvol[i] = sasa_buriedvol_avg[i] / time;
     const double diff = sasa_buriedvol_fluct[i] - sasa_buriedvol_avg[i] * sasa_buriedvol_avg[i] / time;
@@ -423,7 +422,7 @@ void configuration::Average::Block_Average
 
   double cumu = dt;
   if (dlamt) cumu = dlamt;
-  
+
 #define ENERGY_AVG(prop) \
 avg.prop = old_avg.prop + \
 cumu * e.prop; \
@@ -467,7 +466,9 @@ fluct.prop = old_fluct.prop + dt * e.prop * e.prop
   ENERGY_AVG(xray_total);
   ENERGY_AVG(leus_total);
   ENERGY_AVG(oparam_total);
-  ENERGY_AVG(rdc_total);   
+  ENERGY_AVG(rdc_total);
+  ENERGY_AVG(tfrdc_total);
+  ENERGY_AVG(zalignmentres_total);
   ENERGY_AVG(symrest_total);
   ENERGY_AVG(constraints_total);
   ENERGY_AVG(self_total);
@@ -477,16 +478,16 @@ fluct.prop = old_fluct.prop + dt * e.prop * e.prop
 
   // ANITA
   for(size_t i=0; i < e.A_lj_total.size(); ++i){
-    ENERGY_AVG(A_lj_total[i]); 
-    ENERGY_AVG(B_lj_total[i]); 
-    ENERGY_AVG(A_crf_total[i]); 
-    ENERGY_AVG(B_crf_total[i]); 
+    ENERGY_AVG(A_lj_total[i]);
+    ENERGY_AVG(B_lj_total[i]);
+    ENERGY_AVG(A_crf_total[i]);
+    ENERGY_AVG(B_crf_total[i]);
     for(size_t j=0; j < e.A_lj_energy[i].size(); ++j){
       for(size_t k=0; k < e.A_lj_energy[i][j].size(); ++k){
-        ENERGY_AVG(A_lj_energy[i][j][k]); 
-        ENERGY_AVG(B_lj_energy[i][j][k]); 
-        ENERGY_AVG(A_crf_energy[i][j][k]); 
-        ENERGY_AVG(B_crf_energy[i][j][k]); 
+        ENERGY_AVG(A_lj_energy[i][j][k]);
+        ENERGY_AVG(B_lj_energy[i][j][k]);
+        ENERGY_AVG(A_crf_energy[i][j][k]);
+        ENERGY_AVG(B_crf_energy[i][j][k]);
       }
     }
   } // ANITA
@@ -498,7 +499,7 @@ fluct.prop = old_fluct.prop + dt * e.prop * e.prop
     assert(energy_avg.kinetic_energy.size() > i);
     assert(energy_fluct.kinetic_energy.size() > i);
     assert(e.kinetic_energy.size() > i);
-    
+
     ENERGY_AVG(kinetic_energy[i]);
 
     assert(energy_avg.com_kinetic_energy.size() > i);
@@ -543,7 +544,7 @@ fluct.prop = old_fluct.prop + dt * e.prop * e.prop
       ENERGY_AVG(ls_real_energy[i][j]);
       ENERGY_AVG(ls_k_energy[i][j]);
     }
-  
+
     // special energies
     ENERGY_AVG(sasa_energy[i]);
     ENERGY_AVG(sasa_volume_energy[i]);
@@ -554,7 +555,10 @@ fluct.prop = old_fluct.prop + dt * e.prop * e.prop
     ENERGY_AVG(disfieldres_energy[i]);
     ENERGY_AVG(constraints_energy[i]);
     ENERGY_AVG(jvalue_energy[i]);
+    ENERGY_AVG(oparam_energy[i]);
     ENERGY_AVG(rdc_energy[i]);
+    ENERGY_AVG(tfrdc_energy[i]);
+    ENERGY_AVG(zalignmentres_energy[i]);
     ENERGY_AVG(self_energy[i]);
   }
 
@@ -589,12 +593,12 @@ void configuration::Average::Block_Average
   const double volume = math::volume(conf.old().box, conf.boundary_type);
   volume_avg = old.volume_avg + dt * volume;
   volume_fluct = old.volume_fluct + dt * volume * volume;
-  
+
   simulation::Multibath const & m = sim.multibath();
 
   for(size_t i=0; i < temp_scaling_avg.size(); ++i){
 
-    temp_scaling_avg[i] = old.temp_scaling_avg[i] + 
+    temp_scaling_avg[i] = old.temp_scaling_avg[i] +
       dt * m[i].scale;
     temp_scaling_fluct[i] = old.temp_scaling_fluct[i] +
       dt * m[i].scale * m[i].scale;
@@ -620,7 +624,7 @@ void configuration::Average::Block_Average
   // average total sasa and fluctuation
   sasatot_avg = old.sasatot_avg + conf.old().sasa_tot * dt;
   sasatot_fluct = old.sasatot_fluct + conf.old().sasa_tot * conf.old().sasa_tot * dt;
-  
+
   DEBUG(10, "Updated average total SASA: " << sasatot_avg <<
           "\tand old average total SASA: " << old.sasatot_avg << "\tat time: " << time);
 }
@@ -633,7 +637,7 @@ void configuration::Average::Block_Average
 {
   const double dt = sim.time_step_size();
 
-  // average volume and fluctuation for atom i 
+  // average volume and fluctuation for atom i
   const unsigned int num_sasa_atoms = topo.sasa_parameter().size();
   for (unsigned int i = 0; i < num_sasa_atoms; ++i){
     sasa_buriedvol_avg[i] = old.sasa_buriedvol_avg[i] + dt * conf.old().sasa_buriedvol[i];
@@ -650,7 +654,7 @@ void configuration::Average::Block_Average
 void configuration::Average::Block_Average
 ::energy_average_helper(configuration::Energy const & avg,
 			configuration::Energy const & fluct,
-			configuration::Energy &energy, 
+			configuration::Energy &energy,
 			configuration::Energy &fluctuation,
 			double const dlamt)const
 {
@@ -659,7 +663,7 @@ void configuration::Average::Block_Average
   double diff = 0.0;
   double cumu = time;
   if (dlamt) cumu = 1;
-  
+
   Energy &e = energy;
   Energy &f = fluctuation;
 
@@ -677,7 +681,7 @@ void configuration::Average::Block_Average
   diff = fluct.prop - avg.prop * avg.prop / time; \
   if (diff > 0.0) f.prop = sqrt(diff / time); \
   else f.prop = 0.0
-  
+
   ENERGY_RES(total);
   ENERGY_RES(kinetic_total);
   ENERGY_RES(potential_total);
@@ -704,7 +708,7 @@ void configuration::Average::Block_Average
 
   ENERGY_RES(special_total);
   ENERGY_RES(sasa_total);
-  ENERGY_RES(sasa_volume_total);  
+  ENERGY_RES(sasa_volume_total);
   ENERGY_RES(qm_total);
   ENERGY_RES(posrest_total);
   ENERGY_RES(distanceres_total);
@@ -715,7 +719,9 @@ void configuration::Average::Block_Average
   ENERGY_RES(xray_total);
   ENERGY_RES(leus_total);
   ENERGY_RES(oparam_total);
-  ENERGY_RES(rdc_total); 
+  ENERGY_RES(rdc_total);
+  ENERGY_RES(tfrdc_total);
+  ENERGY_RES(zalignmentres_total);
   ENERGY_RES(symrest_total);
   ENERGY_RES(constraints_total);
   ENERGY_RES(entropy_term);
@@ -777,7 +783,7 @@ void configuration::Average::Block_Average
       ENERGY_RES(ls_real_energy[i][j]);
       ENERGY_RES(ls_k_energy[i][j]);
     }
-  
+
     // special energies
     ENERGY_RES(sasa_energy[i]);
     ENERGY_RES(sasa_volume_energy[i]);
@@ -788,8 +794,10 @@ void configuration::Average::Block_Average
     ENERGY_RES(disfieldres_energy[i]);
     ENERGY_RES(constraints_energy[i]);
     ENERGY_RES(jvalue_energy[i]);
+    ENERGY_RES(oparam_energy[i]);
     ENERGY_RES(rdc_energy[i]);
-    
+    ENERGY_RES(tfrdc_energy[i]);
+    ENERGY_RES(zalignmentres_energy[i]);
     ENERGY_RES(self_energy[i]);
   }
 

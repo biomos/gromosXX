@@ -1593,4 +1593,3 @@ namespace topology {
     return os;
   }
 }
-
