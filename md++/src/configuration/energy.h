@@ -43,7 +43,7 @@ namespace configuration
      * Destructor
      */
     ~Energy(){}
-    
+
     /**
      * total energy of the system
      */
@@ -148,7 +148,7 @@ namespace configuration
      * total energy of the position restraint interaction
      */
     double posrest_total;
-    /** 
+    /**
      * total energy of the distance restraint interaction
      */
     double distanceres_total;
@@ -189,6 +189,14 @@ namespace configuration
      */
     double rdc_total;
     /**
+     * total energy of the tensor-free rdc restraint interaction
+     */
+    double tfrdc_total;
+    /**
+     * total energy of the z-alignment restraint interaction
+     */
+    double zalignmentres_total;
+    /**
      * symmetry restraints energy
      */
     double symrest_total;
@@ -196,7 +204,7 @@ namespace configuration
      * total energy (=0.0) of the (distance) constraint interaction(s).
      */
     double constraints_total;
-    
+
     /**
      * total energy of the dipole-dipole interaction (self energy)
      */
@@ -410,7 +418,7 @@ namespace configuration
      * coulomb reaction field energy term
      */
     std::vector<std::vector<double> > crf_energy;
-    
+
      /**
      * coulomb LS realspace energy term
      */
@@ -445,9 +453,21 @@ namespace configuration
      */
     std::vector<double> jvalue_energy;
     /**
+     * order parameter restraint energy term
+     */
+    std::vector<double> oparam_energy;
+    /**
      * RDC restraint energy term
      */
-    std::vector<double> rdc_energy;  
+    std::vector<double> rdc_energy;
+    /**
+     * tensor-free RDC restraint energy term
+     */
+    std::vector<double> tfrdc_energy;
+    /**
+     * z-axis angle restraint energy term
+     */
+    std::vector<double> zalignmentres_energy;
     /**
      * (distance) constraints energy term
      * (has to be 0.0 always)
@@ -477,22 +497,22 @@ namespace configuration
     std::vector<double> sasa_volume_energy;
 
     /** ANITA
-     * A_lj energies for [lam][groupi][groupj]    
+     * A_lj energies for [lam][groupi][groupj]
      */
     std::vector<std::vector<std::vector<double> > > A_lj_energy;
 
     /** ANITA
-     * B_lj energies for [lam][groupi][groupj]    
+     * B_lj energies for [lam][groupi][groupj]
      */
     std::vector<std::vector<std::vector<double> > > B_lj_energy;
 
     /** ANITA
-     * A_crf energies for [lam][groupi][groupj]    
+     * A_crf energies for [lam][groupi][groupj]
      */
     std::vector<std::vector<std::vector<double> > > A_crf_energy;
 
     /** ANITA
-     * B_crf energies for [lam][groupi][groupj]    
+     * B_crf energies for [lam][groupi][groupj]
      */
     std::vector<std::vector<std::vector<double> > > B_crf_energy;
 
@@ -514,17 +534,17 @@ namespace configuration
      * set energy warning
      */
     void ewarn(double ew) { m_ewarn = ew; }
-    
+
     /**
      * gets the energy by an index
      */
     double get_energy_by_index(const unsigned int & index);
     
-    static const unsigned int MAX_ENERGY_INDEX = 44;
+    static const unsigned int MAX_ENERGY_INDEX = 46;
 
   private:
     double m_ewarn;
-    
+
   };
 
 } // configuration

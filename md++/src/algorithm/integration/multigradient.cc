@@ -314,6 +314,13 @@ bool check_variable(topology::Topology & topo,
       return false;
     }
     return true;
+  } else if (name == "CZAL") {
+    if (!sim.param().zalignmentres.zalignmentres) {
+      io::messages.add("Changing for CZAL without position restraining makes no sense",
+                "Multi_Gradient", io::message::error);
+      return false;
+    }
+    return true;
   } else if (name == "RESO") {
     if (sim.param().xrayrest.xrayrest == simulation::xrayrest_off) {
       io::messages.add("Changing for RESO without position restraining makes no sense",
@@ -362,6 +369,8 @@ int algorithm::Multi_Gradient
       sim.param().posrest.force_constant = (*it)->get_value(sim.time());
     } else if (name == "CDIR") {
       sim.param().distanceres.K = (*it)->get_value(sim.time());
+    } else if (name == "CZAL") {
+      sim.param().zalignmentres.K = (*it)->get_value(sim.time());
     } else if (name == "RESO") {
       sim.param().xrayrest.resolution = (*it)->get_value(sim.time());
     } else if (name == "CXR") {

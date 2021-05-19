@@ -55,7 +55,7 @@
 namespace io
 {
 
-  /* 
+  /*
    * Print the DOF COUPLING table of MULTIBATH block.
    */
   void print_MULTIBATH_COUPLING(std::ostream &os,
@@ -64,7 +64,7 @@ namespace io
     os << "MULTIBATHCOUPLING\n";
     os.precision(2);
     os.setf(std::ios_base::fixed, std::ios_base::floatfield);
-    
+
     os << std::setw(12) << "LAST-ATOM"
        << std::setw(12) << "LAST-MOL"
        << std::setw(12) << "COM-BATH"
@@ -73,7 +73,7 @@ namespace io
     std::vector<simulation::bath_index_struct>::const_iterator
       it = bath.bath_index().begin(),
       to = bath.bath_index().end();
-    
+
     for(; it!=to; ++it){
       os << std::setw(12) << it->last_atom + 1
 	 << std::setw(12) << it->last_temperature_group + 1
@@ -81,9 +81,9 @@ namespace io
 	 << std::setw(12) << it->ir_bath + 1
 	 << "\n";
     }
-    
+
     os << "END\n";
-    
+
   }
 
   /*
@@ -93,10 +93,10 @@ namespace io
 			      simulation::Multibath const &bath)
   {
     os << "DEGREES OF FREEDOM\n";
-  
+
     os.precision(2);
     os.setf(std::ios_base::fixed, std::ios_base::floatfield);
-    
+
     os << std::setw(10) << "BATH";
     os << std::setw( 8) << "TEMP0"
        << std::setw( 8) << "TAU"
@@ -106,7 +106,7 @@ namespace io
        << std::setw(10) << "SOLUC"
        << std::setw(10) << "SOLVC"
        << "\n";
-  
+
     double avg_temp0 = 0, avg_tau = 0, sum_dof = 0, sum_soluc = 0,
       sum_solvc = 0, tau_dof = 0,
       sum_ir_dof = 0, sum_com_dof = 0;
@@ -114,9 +114,9 @@ namespace io
     std::vector<simulation::bath_struct>::const_iterator
       it = bath.begin(),
       to = bath.end();
-  
+
     for(unsigned int i=0; it != to; ++it, ++i){
-      
+
       os << std::setw(10) << i
 	 << std::setw( 8) << it->temperature
 	 << std::setw( 8) << it->tau
@@ -151,19 +151,19 @@ namespace io
     else
       os << std::setw( 8) << "-"
 	 << std::setw( 8) << "-";
-    
+
     os << std::setw(10) << sum_dof
        << std::setw(10) << sum_com_dof
        << std::setw(10) << sum_ir_dof
        << std::setw(10) << sum_soluc
        << std::setw(10) << sum_solvc
        << "\n";
-    
+
     os << "END\n";
-    
+
   }
-  
-  /* 
+
+  /*
    * Print the MULTIBATH block.
    */
   void print_MULTIBATH(std::ostream &os,
@@ -172,10 +172,10 @@ namespace io
 		       std::string title)
   {
     os << title << "\n";
-  
+
     os.precision(2);
     os.setf(std::ios_base::fixed, std::ios_base::floatfield);
-  
+
     os << std::setw(10) << "BATH"
        << std::setw(13) << "EKIN"
        << std::setw(13) << "EKIN-MOL-TR"
@@ -185,7 +185,7 @@ namespace io
        << std::setw(10) << "T-MOL-IR"
        << std::setw(12) << "SCALE"
        << "\n";
-  
+
     double avg_temp0 = 0, avg_tau = 0, sum_dof = 0, sum_soluc = 0,
       sum_solvc = 0, sum_ekin = 0, tau_dof = 0,
       sum_com_ekin = 0, sum_ir_ekin = 0,
@@ -195,42 +195,42 @@ namespace io
     std::vector<simulation::bath_struct>::const_iterator
       it = bath.begin(),
       to = bath.end();
-  
+
     for(unsigned int i=0; it != to; ++it, ++i){
-      
+
       const double e_kin = energy.kinetic_energy[i];
       const double e_kin_com = energy.com_kinetic_energy[i];
       const double e_kin_ir = energy.ir_kinetic_energy[i];
 
       os << std::setw(10) << i
-	 << std::setw(13) << std::setprecision(4) << std::scientific 
+	 << std::setw(13) << std::setprecision(4) << std::scientific
 	 << e_kin
-	 << std::setw(13) 
+	 << std::setw(13)
 	 << e_kin_com
-	 << std::setw(13) 
+	 << std::setw(13)
 	 << e_kin_ir
 	 << std::setprecision(2) << std::fixed;
       if (it->dof == 0){
 	os << std::setw(10) << 0;
       }
       else{
-	os << std::setw(10) 
+	os << std::setw(10)
 	   << 2 * e_kin / (math::k_Boltzmann * it->dof);
       }
       if (it->com_dof == 0){
 	os << std::setw(10) << "-";
       }
       else{
-	os << std::setw(10) 
-	   << 2 * e_kin_com / 
+	os << std::setw(10)
+	   << 2 * e_kin_com /
 	  (math::k_Boltzmann * it->com_dof);
       }
       if (it->ir_dof == 0) {
 	os << std::setw(10) << "-";
       }
       else{
-	os << std::setw(10) 
-	   << 2 * e_kin_ir / 
+	os << std::setw(10)
+	   << 2 * e_kin_ir /
 	  (math::k_Boltzmann * it->ir_dof);
       }
       if (it->tau != -1){
@@ -242,7 +242,7 @@ namespace io
 	os << std::setw(12)
 	   << "-";
       }
-	  
+
       if (it->tau != -1){
 	tau_dof += it->dof;
 	avg_temp0 += it->temperature * it->dof;
@@ -288,7 +288,7 @@ namespace io
       os << std::setw(12) << std::right << "-";
 
     os << "\n";
-    
+
     os << "END\n";
 
   }
@@ -296,9 +296,9 @@ namespace io
   /*
    * Print the PCOUPLE block.
    */
-  void print_PCOUPLE(std::ostream &os, bool calc, 
+  void print_PCOUPLE(std::ostream &os, bool calc,
 		     math::pressure_scale_enum scale,
-		     math::Matrix pres0, double comp, 
+		     math::Matrix pres0, double comp,
 		     double tau, math::virial_enum vir,
                      int x_semi, int y_semi, int z_semi)
   {
@@ -312,7 +312,7 @@ namespace io
        << std::setw(12) << "TAU"
        << std::setw(12) << "VIRIAL"
        << "\n";
-    
+
     if (calc && scale != math::pcouple_off)
       os << std::setw(12) << "scale";
     else if (calc)
@@ -339,10 +339,10 @@ namespace io
       default:
         os << std::setw(12) << "unknown";
     }
-    
+
     os << std::setw(12) << comp
        << std::setw(12) << tau;
-    
+
     switch(vir){
       case math::no_virial:
 	os << std::setw(12) << "none";
@@ -373,14 +373,14 @@ namespace io
 
 
     os << "\n" << std::setw(23) << "REFERENCE PRESSURE" << "\n";
-    
+
     for(int i=0; i<3; ++i){
       for(int j=0; j<3; ++j){
 	os << std::setw(12) << pres0(i,j);
       }
       os << "\n";
     }
-    
+
     os << "END\n";
 
   }
@@ -394,14 +394,14 @@ namespace io
     os << "PRESSURE\n";
     os.precision(5);
     os.setf(std::ios_base::scientific, std::ios_base::floatfield);
-    
+
     os << "\tmolecular kinetic energy:\n\t";
     for(int i=0; i<3; ++i){
       for(int j=0; j<3; ++j)
 	os << std::setw(15) << conf.old().kinetic_energy_tensor(i,j);
       os << "\n\t";
     }
-    
+
     os << "\n\tvirial\n\t";
     // the virial is stored internally as just the outer product of positions and forces
     // so without the -0.5 prefactor.
@@ -420,21 +420,21 @@ namespace io
     }
     os << "\n\tpressure: "
        << std::setw(15)
-       << (conf.old().pressure_tensor(0,0) + 
+       << (conf.old().pressure_tensor(0,0) +
 	   conf.old().pressure_tensor(1,1) +
-	   conf.old().pressure_tensor(2,2)) / 3 
+	   conf.old().pressure_tensor(2,2)) / 3
        << "\n";
 
     os << "\tvolume:   "
        << std::setw(15)
        << math::volume(conf.old().box, conf.boundary_type)
        << "\n";
-    
+
     os << "\nEND\n";
 
     os.precision(5);
     os.setf(std::ios_base::fixed, std::ios_base::floatfield);
-    
+
   }
 
   /*
@@ -448,11 +448,11 @@ namespace io
   {
 
     unsigned int numenergygroups = unsigned(e.bond_energy.size());
- 
+
     std::vector<std::string> energroup;
-   
+
     int b=1;
-    
+
     for(unsigned int i=0; i<numenergygroups; i++){
 
       std::ostringstream ostring;
@@ -460,7 +460,7 @@ namespace io
       energroup.push_back(ostring.str());
       b = energy_groups[i]+2;
     }
-        
+
     os << title << "\n";
 
     os.precision(4);
@@ -501,8 +501,10 @@ namespace io
     os << type << "Jrest                : " << std::setw(30) << e.jvalue_total << "\n";
     os << type << "X-ray restraints     : " << std::setw(30) << e.xray_total << "\n";
     os << type << "Local elevation      : " << std::setw(30) << e.leus_total << "\n";
-    os << type << "Order-parameter rest.: " << std::setw(30) << e.oparam_total << "\n";
-    os << type << "RDCrest              : " << std::setw(30) << e.rdc_total << "\n";    
+    os << type << "Orderparamrest       : " << std::setw(30) << e.oparam_total << "\n";
+    os << type << "RDCrest              : " << std::setw(30) << e.rdc_total << "\n";
+    os << type << "TFRDCrest            : " << std::setw(30) << e.tfrdc_total << "\n";
+    os << type << "Zalignmentrest       : " << std::setw(30) << e.zalignmentres_total << "\n";
     os << type << "Symmetry restraints  : " << std::setw(30) << e.symrest_total << "\n";
     os << type << "EDS reference        : " << std::setw(30) << e.eds_vr << "\n";
     os << type << "GAMD total           : " << std::setw(30) << e.gamd_DV_total << "\n";
@@ -511,7 +513,7 @@ namespace io
     os << "\n";
 
     os << std::setw(20) << "COV";
-    
+
     for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << energroup[i];
     os << "\n" << std::setw(20) << type + "bonds";
     for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << e.bond_energy[i];
@@ -526,7 +528,7 @@ namespace io
 
     os << "\n" << "\n";
     os << std::setw(20) << type + "VDW";
-    
+
     for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << energroup[i];
     os << "\n";
     for(unsigned int j=0; j < numenergygroups; j++) {
@@ -536,13 +538,13 @@ namespace io
 	// now in calculate_totals
 	// if(i==j)
 	os << std::setw(12) << e.lj_energy[i][j];
-	// else 
+	// else
 	// os << std::setw(12) << e.lj_energy[i][j] + e.lj_energy[j][i] ;
       }
       os << "\n";
     }
     os << "\n" << std::setw(20) << type + "CRF";
-    
+
     for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << energroup[i];
     os << "\n";
     for(unsigned int j=0; j < numenergygroups; j++) {
@@ -558,6 +560,7 @@ namespace io
       os << "\n";
     }
 
+<<<<<<< HEAD:md++/src/io/print_block.cc
     // check if reaction shift or Ls is needed
     bool use_shift_orig = false;
     bool use_shift_phys = false;
@@ -619,6 +622,9 @@ namespace io
     }
 
     // ANITA 
+=======
+    // ANITA
+>>>>>>> 87fcc533 (Bartosz Stankiewicz's implementation of tensor-free RDCs and zaxis alignment):gromosXX/src/io/print_block.cc
     // print A_e_lj, B_e_lj, A_e_crf, B_e_crf for the lambda at which
     // we are simulating
 /*    double lambda_step = (simulation::Parameter().precalclam.max_lam -
@@ -668,7 +674,7 @@ namespace io
       }
       os << "\n";
     }
-    
+
     os << "\n" << "\n";
     os << std::setw(20) << type + "B_e_crf (lambda_s)";
     for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << energroup[i];
@@ -681,7 +687,7 @@ namespace io
       }
       os << "\n";
     }//ANITA
-*/    
+*/
     os << "\n" << std::setw(20) << type + "LS (real)";
 
     if (use_ls_real){
@@ -703,7 +709,7 @@ namespace io
     /*
     energy groups not implemented for k-space energy.
     os << "\n" << std::setw(20) << type + "LS (k-space)";
-    
+
     for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << energroup[i];
     os << "\n";
     for(unsigned int j=0; j < numenergygroups; j++) {
@@ -713,7 +719,7 @@ namespace io
 	os << std::setw(12) << e.ls_k_energy[i][j];
       }
       os << "\n";
-    }        
+    }
     */
     os << "\n" << std::setw(20) << type + "Self-energy";
     for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << e.self_energy[i];
@@ -750,12 +756,20 @@ namespace io
     os << "\n" << std::setw(20) << type + "Jrest";
     for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << e.jvalue_energy[i];
 
+    os << "\n" << std::setw(20) << type + "Orderparamrest";
+    for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << e.oparam_energy[i];
+
     os << "\n" << std::setw(20) << type + "RDCrest";
     for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << e.rdc_energy[i];
 
+    os << "\n" << std::setw(20) << type + "TFRDCrest";
+    for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << e.tfrdc_energy[i];
+
+    os << "\n" << std::setw(20) << type + "Zalignmentrest";
+    for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << e.zalignmentres_energy[i];
 
     os << "\nEND\n";
-    
+
   }
 
   /*
@@ -785,7 +799,7 @@ namespace io
   {
     os.setf(std::ios::fixed, std::ios::floatfield);
     os.precision(5);
-    
+
     os << "TIMESTEP"
        << std::setw(15) << steps
        << " "
@@ -797,13 +811,13 @@ namespace io
   /**
    * @todo don't print rotation in periodic system
    */
-  void print_CENTREOFMASS(std::ostream &os, 
-			  double const ekin_trans, 
+  void print_CENTREOFMASS(std::ostream &os,
+			  double const ekin_trans,
 			  double const ekin_rot)
   {
     os.setf(std::ios_base::scientific, std::ios_base::floatfield);
     os.precision(5);
-    
+
     os << "CENTREOFMASS\n"
        << std::setw(15) << "E-KIN trans " << std::setw(15) << ekin_trans <<"\n"
        << std::setw(15) << "E-KIN rot "   << std::setw(15) << ekin_rot <<"\n"
@@ -811,7 +825,7 @@ namespace io
        << "\nEND\n";
 
   }
-  
+
   void print_sasa(std::ostream &os, topology::Topology const & topo,
                     configuration::Configuration const & conf,
                     simulation::Simulation const & sim,

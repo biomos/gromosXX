@@ -103,6 +103,8 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_JVALUERES(param);
   read_ORDERPARAMRES(param);
   read_RDCRES(param);
+  read_TFRDCRES(param);
+  read_ZALIGNMENTRES(param);
   read_XRAYRES(param);
   read_PERSCALE(param);
   read_ROTTRANS(param);
@@ -2555,7 +2557,111 @@ void io::In_Parameter::read_RDCRES(simulation::Parameter &param,
     }
 } // RDCRES
 
+/**
+ * @section tfrdcres TFRDCRES block
+ * @snippet snippets/snippets.cc TFRDCRES
+ */
+void io::In_Parameter::read_TFRDCRES(simulation::Parameter &param,
+                                          std::ostream & os) {
+    DEBUG(8, "reading TFRDCRES");
 
+    std::stringstream exampleblock;
+    // lines starting with 'exampleblock<<"' and ending with '\n";' (spaces don't matter)
+    // will be used to generate snippets that can be included in the doxygen doc;
+    // the first line is the tag
+    exampleblock << "TFRDCRES\n";
+    exampleblock << "# NTTFRDC   0..2\n";
+    exampleblock << "#           0                no tensor-free RDC restraints [default]\n";
+    exampleblock << "#           1                damped time-averaged using CTFRDC\n";
+    exampleblock << "#           2                damped time-averaged using CTFRDC * WTFRDC\n";
+    exampleblock << "# NTTFRDCA  0,1              controls reading of averages from startup file\n";
+    exampleblock << "#           0                start from initial values of D0 [default]\n";
+    exampleblock << "#           1                read time averages from startup file\n";
+    exampleblock << "#                            (for continuation time-averaged run)\n";
+    exampleblock << "# CTFRDC   >= 0.0            RDC restraining force constant\n";
+    exampleblock << "#                            (weighted by individual WTFRDC)\n";
+    exampleblock << "# TAUR     >  0.0            r coupling time for time-averaging\n";
+    exampleblock << "# TAUT     >  0.0            theta coupling time for time-averaging\n";
+    exampleblock << "# NTWTFRDC >= 0              write tensor-free RDCs to special trajectory\n";
+    exampleblock << "#             0              don't write [default]\n";
+    exampleblock << "#          >  0              write every NTWTFRDC step\n";
+    exampleblock << "#\n";
+    exampleblock << "#       NTTFRDC  NTTFRDCA  CTFRDC   TAUR    TAUT    NTWTFRDC\n";
+    exampleblock << "           1       0        10.0     0.5     5.0      0\n";
+    exampleblock << "END\n";
+
+    std::string blockname = "TFRDCRES";
+    Block block(blockname, exampleblock.str());
+
+    if (block.read_buffer(m_block[blockname], false) == 0) {
+        block_read.insert(blockname);
+
+        int nttfrdc;
+
+        block.get_next_parameter("NTTFRDC", nttfrdc, "", "0,1,2");
+        block.get_next_parameter("NTTFRDCA", param.tfrdc.read, "", "0,1");
+        block.get_next_parameter("CTFRDC", param.tfrdc.K, ">=0", "");
+        block.get_next_parameter("TAUR", param.tfrdc.taur, ">0", "");
+        block.get_next_parameter("TAUT", param.tfrdc.taut, ">0", "");
+        block.get_next_parameter("NTWTFRDC", param.tfrdc.write, ">=0", "");
+
+
+        switch (nttfrdc) {
+            case 0:
+                param.tfrdc.mode = simulation::tfrdc_restr_off;
+                break;
+            case 1:
+                param.tfrdc.mode = simulation::tfrdc_restr_av;
+                break;
+            case 2:
+                param.tfrdc.mode = simulation::tfrdc_restr_av_weighted;
+                break;
+            default:
+                break;
+        }
+        block.get_final_messages();
+    }
+} // TFRDCRES
+
+/**
+ * @section zalignmentres ZALIGNMENTRES block
+ * @snippet snippets/snippets.cc ZALIGNMENTRES
+ */
+void io::In_Parameter::read_ZALIGNMENTRES(simulation::Parameter &param,
+                                        std::ostream & os) {
+    DEBUG(8, "reading ZALIGNMENTRES");
+
+    std::stringstream exampleblock;
+    // lines starting with 'exampleblock<<"' and ending with '\n";' (spaces don't matter)
+    // will be used to generate snippets that can be included in the doxygen doc;
+    // the first line is the tag
+    exampleblock << "ZALIGNMENTRES\n";
+    exampleblock << "#   NTZAL 0,1,2 controls z-axis angle restraining\n";
+    exampleblock << "#        -2: 1, but without trigonometric functions for potential/forces\n";
+    exampleblock << "#        -1: 1, but without arccos function for potential/forces\n";
+    exampleblock << "#         0: no z-axis angle restraining (default)\n";
+    exampleblock << "#         1: instantaneous, using force constant CZAL\n";
+    exampleblock << "#         2: instantaneous, using force constant CZAL x W0\n";
+    exampleblock << "#    CZAL >= 0.0 force constant for z-axis angle restraining\n";
+    exampleblock << "#  NTWZAL >= 0 write every NTWZALth step dist. restr. information to external file\n";
+    exampleblock << "#   NTZAL    CZAL    NTWZAL\n";
+    exampleblock << "        0     0.0     0\n";
+    exampleblock << "END\n";
+
+
+    std::string blockname = "ZALIGNMENTRES";
+    Block block(blockname, exampleblock.str());
+
+    if (block.read_buffer(m_block[blockname], false) == 0) {
+        block_read.insert(blockname);
+
+        block.get_next_parameter("NTZAL", param.zalignmentres.zalignmentres, "", "0, 1, -1, 2, -2");
+        block.get_next_parameter("CZAL", param.zalignmentres.K, ">=0", "");
+        block.get_next_parameter("NTWZAL", param.zalignmentres.write, ">=0", "");
+
+        block.get_final_messages();
+    }
+} // ZALIGNMENTRES
 
 /**
  * @section perscale PERSCALE block

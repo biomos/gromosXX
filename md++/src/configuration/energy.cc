@@ -73,6 +73,8 @@ leus_total(0.0),
 bsleus_total(0.0),
 oparam_total(0.0),
 rdc_total(0.0),
+tfrdc_total(0.0),
+zalignmentres_total(0.0),
 symrest_total(0.0),
 constraints_total(0.0),
 self_total(0.0),
@@ -99,7 +101,7 @@ m_ewarn(1E99){
 void configuration::Energy::zero(bool potential, bool kinetic)
 {
   DEBUG(10, "energy: zero");
-  
+
   if (potential){
     DEBUG(15, "zero potential energies");
 
@@ -130,8 +132,9 @@ void configuration::Energy::zero(bool potential, bool kinetic)
     jvalue_total = 0.0;
     xray_total = 0.0;
     leus_total = 0.0;
-    bsleus_total = 0.0,
+    bsleus_total = 0.0;
     oparam_total = 0.0;
+    tfrdc_total = 0.0;
     symrest_total = 0.0;
     constraints_total = 0.0;
     entropy_term = 0.0;
@@ -197,28 +200,31 @@ void configuration::Energy::zero(bool potential, bool kinetic)
     angrest_energy.assign(angrest_energy.size(), 0.0);
     dihrest_energy.assign(dihrest_energy.size(), 0.0);
     jvalue_energy.assign(jvalue_energy.size(), 0.0);
-    rdc_energy.assign(rdc_energy.size(), 0.0);  
+    oparam_energy.assign(oparam_energy.size(), 0.0);
+    rdc_energy.assign(rdc_energy.size(), 0.0);
+    tfrdc_energy.assign(tfrdc_energy.size(), 0.0);
+    zalignmentres_energy.assign(zalignmentres_energy.size(), 0.0);
     constraints_energy.assign(constraints_energy.size(), 0.0);
     self_energy.assign(self_energy.size(), 0.0);
     sasa_energy.assign(sasa_energy.size(), 0.0);
     sasa_volume_energy.assign(sasa_volume_energy.size(), 0.0);
 
-    DEBUG(15, "energy groups: " << unsigned(lj_energy.size()) 
+    DEBUG(15, "energy groups: " << unsigned(lj_energy.size())
 			<< " - " << unsigned(crf_energy.size()));
 
     lj_energy.assign(lj_energy.size(),
 		     std::vector<double>(lj_energy.size(), 0.0));
-    
-    crf_energy.assign(crf_energy.size(), 
+
+    crf_energy.assign(crf_energy.size(),
 		      std::vector<double>(crf_energy.size(), 0.0));
-    
+
     ls_real_energy.assign(ls_real_energy.size(),
             std::vector<double>(ls_real_energy.size(), 0.0));
-    
+
     ls_k_energy.assign(ls_k_energy.size(),
             std::vector<double>(ls_k_energy.size(), 0.0));
 
-    // ANITA  
+    // ANITA
     // TODO: only if extended TI??
     if (A_lj_total.size()){
       DEBUG(10, "ANITA: setting A_lj_energy to 0");
@@ -241,7 +247,7 @@ void configuration::Energy::zero(bool potential, bool kinetic)
   if (kinetic){
 
     DEBUG(15, "zero kinetic energies");
-    
+
     kinetic_total = 0.0;
 
     kinetic_energy.assign(kinetic_energy.size(), 0.0);
@@ -263,14 +269,14 @@ void configuration::Energy::resize(unsigned int energy_groups, unsigned int mult
      unsigned int nr_lambdas) //ANITA
 {
   DEBUG(10, "energy resize");
-  
+
   if (energy_groups){
     bond_energy.resize(energy_groups);
     angle_energy.resize(energy_groups);
     improper_energy.resize(energy_groups);
     dihedral_energy.resize(energy_groups);
     crossdihedral_energy.resize(energy_groups);
-  
+
     lj_energy.resize(energy_groups);
     crf_energy.resize(energy_groups);
     shift_extra_orig.resize(energy_groups);
@@ -284,14 +290,17 @@ void configuration::Energy::resize(unsigned int energy_groups, unsigned int mult
     angrest_energy.resize(energy_groups);
     dihrest_energy.resize(energy_groups);
     jvalue_energy.resize(energy_groups);
-    rdc_energy.resize(energy_groups);  
+    oparam_energy.resize(energy_groups);
+    rdc_energy.resize(energy_groups);
+    tfrdc_energy.resize(energy_groups);
+    zalignmentres_energy.resize(energy_groups);
     constraints_energy.resize(energy_groups);
-    
+
     self_energy.resize(energy_groups);
 
     sasa_energy.resize(energy_groups);
     sasa_volume_energy.resize(energy_groups);
-    
+
     for(unsigned int i=0; i<energy_groups; ++i){
       lj_energy[i].resize(energy_groups);
       crf_energy[i].resize(energy_groups);
@@ -348,13 +357,13 @@ void configuration::Energy::resize(unsigned int energy_groups, unsigned int mult
   }
 
   DEBUG(8, "ANITA calling zero after resizing");
-  zero();  
+  zero();
 }
 
 int configuration::Energy::calculate_totals()
 {
   DEBUG(10, "energy: calculate totals");
-  
+
   unsigned int num_groups = unsigned(bond_energy.size());
 
   kinetic_total = 0.0;
@@ -376,14 +385,15 @@ int configuration::Energy::calculate_totals()
   disfieldres_total =0.0; 
   angrest_total = 0.0;
   dihrest_total = 0.0;
-  jvalue_total = 0.0; 
-  rdc_total = 0.0; 
+  jvalue_total = 0.0;
+  rdc_total = 0.0;
+  zalignmentres_total = 0.0;
   constraints_total = 0.0;
   self_total = 0.0;
   sasa_total = 0.0;
   sasa_volume_total = 0.0;
 
-  // ANITA 
+  // ANITA
   DEBUG(10, "ANITA setting totals to zero");
   DEBUG(10, "ANITA A_lj_total.size() " << A_lj_total.size());
 
@@ -416,17 +426,17 @@ int configuration::Energy::calculate_totals()
       }
     }
   }
-          
   //ORIOL_GAMD
   for(unsigned int i=0; i<gamd_DV.size(); ++i){
     gamd_DV_total += gamd_DV[i];
   }  
   
+
   for(size_t i=0; i<kinetic_energy.size(); ++i){
     if (kinetic_energy[i] > m_ewarn){
       std::cout << "EWARN: kinetic energy " << i+1 << " = " << kinetic_energy[i] << "\n";
     }
-    
+
     kinetic_total += kinetic_energy[i];
   }
 
@@ -521,10 +531,22 @@ int configuration::Energy::calculate_totals()
       std::cout << "EWARN: jvalue energy " << i+1 << " = " << jvalue_energy[i] << "\n";
     }
     jvalue_total       += jvalue_energy[i];
+    if (oparam_energy[i] > m_ewarn){
+      std::cout << "EWARN: oparam energy " << i+1 << " = " << oparam_energy[i] << "\n";
+    }
+    oparam_total       += oparam_energy[i];
     if (rdc_energy[i] > m_ewarn){
       std::cout << "EWARN: rdc energy " << i+1 << " = " << rdc_energy[i] << "\n";
     }
     rdc_total       += rdc_energy[i];
+    if (tfrdc_energy[i] > m_ewarn){
+      std::cout << "EWARN: tfrdc energy " << i+1 << " = " << tfrdc_energy[i] << "\n";
+    }
+    tfrdc_total       += tfrdc_energy[i];
+    if (zalignmentres_energy[i] > m_ewarn){
+      std::cout << "EWARN: zalignmentres energy " << i+1 << " = " << zalignmentres_energy[i] << "\n";
+    }
+    zalignmentres_total     += zalignmentres_energy[i];
     if (constraints_energy[i] > m_ewarn){
       std::cout << "EWARN: constraints energy " << i+1 << " = " << constraints_energy[i] << "\n";
     }
@@ -559,17 +581,17 @@ int configuration::Energy::calculate_totals()
     std::cout << "EWARN: B&S-LEUS energy = " << bsleus_total << "\n";
   }
 
-  if(ls_self_total_nvt < 0){ 
-  // is only possible for constant volume simulation, otherwise it is zero. 
+  if(ls_self_total_nvt < 0){
+  // is only possible for constant volume simulation, otherwise it is zero.
      ls_self_total = ls_self_total_nvt;
      ls_a_term_total = ls_a_term_total_nvt;
   }
-  
+
   ls_pair_total = ls_realspace_total + ls_kspace_total + ls_a_term_total;
   //        E(pair) + DeltaG(self) + DeltaG(surf)
   ls_total =ls_pair_total + ls_self_total + ls_surface_total;
-  
-  nonbonded_total = lj_total + crf_total + self_total + 
+
+  nonbonded_total = lj_total + crf_total + self_total +
           ls_realspace_total + ls_kspace_total + ls_self_total + ls_surface_total +
           ls_a_term_total;
   bonded_total = bond_total + angle_total + dihedral_total + improper_total
@@ -580,7 +602,8 @@ int configuration::Energy::calculate_totals()
     + angrest_total + dihrest_total
     + constraints_total + jvalue_total + xray_total
     + eds_vr + leus_total + sasa_total + sasa_volume_total + oparam_total
-    + symrest_total + bsleus_total + rdc_total + gamd_DV_total;
+    + symrest_total + bsleus_total + rdc_total + gamd_DV_total
+    + tfrdc_total + zalignmentres_total;
   
   total = potential_total + kinetic_total + special_total;
 
@@ -594,7 +617,7 @@ int configuration::Energy::calculate_totals()
 */
   if (math::gisnan(total)) {
     io::messages.add("total energy is NaN", "energy", io::message::error);
-    return E_NAN;    
+    return E_NAN;
   }
 
   return 0;
@@ -620,7 +643,7 @@ double configuration::Energy::get_energy_by_index(const unsigned int & index) {
     case 13 : return ls_total;
     case 14 : return ls_pair_total;
     case 15 : return ls_realspace_total;
-    case 16 : return ls_kspace_total; 
+    case 16 : return ls_kspace_total;
     case 17 : return ls_a_term_total;
     case 18 : return ls_self_total;
     case 19 : return ls_surface_total;
@@ -655,6 +678,8 @@ double configuration::Energy::get_energy_by_index(const unsigned int & index) {
     case 48 : return eds_vr_shift_orig;
     case 49 : return eds_vr_shift_phys;
     case 50 : return gamd_DV_total;
+    case 51 : return tfrdc_total;
+    case 52 : return zalignmentres_total;
   }
   return 0.0;
 }

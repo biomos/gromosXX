@@ -85,6 +85,8 @@
  * - @ref  addecouple
  * - @ref  orderparamres
  * - @ref  rdcres
+ * - @ref  tfrdcres
+ * - @ref  zalignmentres
  * - @ref  qmmm
  * - @ref  xrayres
  * - @ref  amber
@@ -257,6 +259,16 @@ namespace io {
     void read_RDCRES(simulation::Parameter &param, std::ostream & os = std::cout);
 
     /**
+     * read TFRDCRES block.
+     */
+    void read_TFRDCRES(simulation::Parameter &param, std::ostream & os = std::cout);
+
+    /**
+    * read ZALIGNMENTRES block.
+    */
+    void read_ZALIGNMENTRES(simulation::Parameter &param, std::ostream & os = std::cout);
+    
+    /**
      * read PERSCALE block.
      */
     void read_PERSCALE(simulation::Parameter &param, std::ostream & os = std::cout);
@@ -340,8 +352,8 @@ namespace io {
      * read LAMBDAS block.
      */
     void read_LAMBDAS(simulation::Parameter &param, std::ostream & os = std::cout);
-    
-    /** 
+
+    /**
      * read PRECALCLAM block.
      */
     void read_PRECALCLAM(simulation::Parameter &param, std::ostream & os = std::cout);

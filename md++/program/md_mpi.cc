@@ -29,8 +29,8 @@
  * @section md_mpi parallel molecular dynamics with MPI
  * @date 28.10.2008
  *
- * Program md_mpi is used to run parallel molecular dynamics simulations using 
- * MPI. In order to use this program one has to compile GROMOS with MPI 
+ * Program md_mpi is used to run parallel molecular dynamics simulations using
+ * MPI. In order to use this program one has to compile GROMOS with MPI
  * support:
  * @verbatim
 $ ../configure --enable-mpi CC=mpicc CXX=mpiCC
@@ -78,13 +78,13 @@ int main(int argc, char *argv[]) {
     const double start = util::now();
 
   util::Known knowns;
-  knowns << "topo" << "conf" << "input" << "verb" << "pttopo"
-	 << "trc" << "fin" << "trv" << "trf" << "trs" << "tre" << "trg"
-	 << "bae" << "bag" << "posresspec" << "refpos" << "distrest"
-         << "angrest" << "dihrest" << "jval" << "xray" << "sym"
-         << "order"  << "rdc" << "lud" << "led" << "anatrj"
-         << "print" << "friction" << "qmmm" << "version" << "develop";
-  
+  knowns << "topo" << "conf" << "input" << "verb" << "pttopo" << "trc" << "fin"
+         << "trv" << "trf" << "trs" << "tre" << "trg" << "bae" << "bag"
+         << "posresspec" << "refpos" << "distrest" << "angrest" << "dihrest" << "jval"
+         << "xray" << "sym" << "order"  << "rdc" << "tfrdc" << "zanglerest"
+         << "lud" << "led" << "anatrj" << "print" << "friction" << "qmmm"
+         << "version" << "develop";
+
   std::string usage;
   util::get_usage(knowns, usage, argv[0]);
   usage += "#\n\n";
@@ -102,10 +102,10 @@ int main(int argc, char *argv[]) {
     oss << "slave_" << rank << ".out";
     std::ofstream ofs(oss.str().c_str());
 
-    bool quiet = false;
-    std::ostream * os;
-    if (rank == 0) {
-        os = &std::cout;
+  bool quiet = false;
+  std::ostream * os;
+  if (rank == 0){
+    os = &std::cout;
     } else {
         os = &ofs;
         quiet = true;

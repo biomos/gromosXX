@@ -58,7 +58,7 @@ int _calculate_order_parameter_restraint_interactions
 (topology::Topology & topo,
         configuration::Configuration & conf,
         simulation::Simulation & sim) {
-  
+
   // loop over the order parameter restraints
   std::vector<topology::order_parameter_restraint_struct>::iterator
   it = topo.order_parameter_restraints().begin(),
@@ -68,11 +68,11 @@ int _calculate_order_parameter_restraint_interactions
 
   bool weighted =
           sim.param().orderparamrest.orderparamrest == simulation::oparam_restr_av_weighted;
-  
+
   double exptau = 0.0;
   if (sim.param().orderparamrest.tau > 0.0)
     exptau = exp(-sim.time_step_size() / sim.param().orderparamrest.tau);
-  
+
 
   for(unsigned int l = 0; it != to; ++it, ++l) {
     // get the two positions and their connections
@@ -89,16 +89,16 @@ int _calculate_order_parameter_restraint_interactions
 
     const double d_r_ij = math::abs(r_ij);
     //const double d_r_ij_2 = d_r_ij_2 * d_r_ij_2; // THIS WAS THE ACTUAL BUG IN THE CODE
-    const double d_r_ij_2 = d_r_ij * d_r_ij;   
+    const double d_r_ij_2 = d_r_ij * d_r_ij;
     DEBUG(9, "d_r_ij : " << d_r_ij);
     const double inv_r_ij = 1.0 / d_r_ij;
     const double inv_r_ij_2 = inv_r_ij * inv_r_ij;
     const double inv_r_ij_3 = inv_r_ij_2 * inv_r_ij;
     const double inv_r_ij_5 = inv_r_ij_2 * inv_r_ij_3;
-    const double inv_r_ij_7 = inv_r_ij_2 * inv_r_ij_5;  
-    
+    const double inv_r_ij_7 = inv_r_ij_2 * inv_r_ij_5;
+
     const double r_eff_6 = pow(it->normalisation_distance, 6.0);
-    
+
     // get Q, dQ/dr and dD/dr
     math::Matrix Q;
     math::GenericMatrix<math::Vec> dQdr;
@@ -121,7 +121,7 @@ int _calculate_order_parameter_restraint_interactions
     }
     DEBUG(10, "Q:\n" << math::m2s(Q));
     math::Matrix & Q_avg = conf.special().orderparamres.Q_avg[l];
-    
+
     // get D
     const double D = inv_r_ij_3;
     double & D_avg = conf.special().orderparamres.D_avg[l];
@@ -171,7 +171,7 @@ int _calculate_order_parameter_restraint_interactions
         D_avg *= (1.0 / window_size);
       }
     }
-    
+
 
     // compute order parameter
     double & S2_avg = conf.special().orderparamres.S2_avg[l];
@@ -186,7 +186,7 @@ int _calculate_order_parameter_restraint_interactions
     }
     S2_avg = 0.5 * (3.0 * sum - D_avg * D_avg) * r_eff_6;
     DEBUG(8, " S2_avg: " << S2_avg);
-    
+
     DEBUG(10, "sum_force: " << math::v2s(sum_force));
 
     // compute the energy
@@ -203,11 +203,11 @@ int _calculate_order_parameter_restraint_interactions
       {
         double term = 0.0;
         if (S2_avg > it->S0 + it->dS0) {
-          term = S2_avg - it->S0 - it->dS0; 
+          term = S2_avg - it->S0 - it->dS0;
         } else if (S2_avg < it->S0 - it->dS0) {
           term = S2_avg - it->S0 + it->dS0;
         }
-        
+
         energy = 0.5 * K * term * term;
         //double force_term = 0.5 * K * term; // why not -K * term
         double force_term = -K * term;  // for the minus sign we have to use the correct definition of r_ij, the 0.5 was wrong, see eq. (55)
@@ -231,11 +231,12 @@ int _calculate_order_parameter_restraint_interactions
     DEBUG(7, "energy: " << energy);
     DEBUG(7, "f_i: " << math::v2s(f_i));
     DEBUG(7, "f_j: " << math::v2s(f_j));
-    
+
     // apply energy and force
-    conf.current().energies.oparam_total += energy;
-    it->v1.force(conf, topo, f_i); 
-    it->v2.force(conf, topo, f_j); 
+    conf.current().energies.oparam_energy[topo.atom_energy_group()
+                        [it->v1.atom(0)]] += energy;
+    it->v1.force(conf, topo, f_i);
+    it->v2.force(conf, topo, f_j);
   }
 
   return 0;
@@ -304,7 +305,7 @@ int interaction::Order_Parameter_Restraint_Interaction::init
     else
       os << "  - initialising averages to instantaneous value." << std::endl;
     os << std::endl << std::endl;
-    
+
     os << "       N:     I    J    K    L  T1   I    J    K    L  T2 S0      DS0     WOPR" << std::endl;
     os << "  --------------------------------------------------------------------------------" << std::endl;
     // loop over the order parameter restraints

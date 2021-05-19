@@ -299,32 +299,32 @@ namespace topology
      * number of bond types.
      */
     int num_bondtype()const {return m_num_bondtype;}
-    
+
     /**
      * set number of bond types.
      */
     void set_num_bondtype(int num) {m_num_bondtype = num;}
-    
+
     /**
      * number of angle types.
      */
     int num_angletype()const {return m_num_angletype;}
-    
+
     /**
      * set number of angle types.
      */
     void set_num_angletype(int num) {m_num_angletype = num;}
-    
+
     /**
      * number of improper dihedral types.
      */
     int num_impropertype()const {return m_num_impropertype;}
-    
+
     /**
      * set number of improper dihedral types.
      */
     void set_num_impropertype(int num) {m_num_impropertype = num;}
-    
+
     /**
      * solvent accessor.
      * support for multiple solvents.
@@ -1485,6 +1485,36 @@ namespace topology
       return m_rdc_restraint;
     }
 
+    /**
+     * tensor-free RDC restraints accessor.
+     */
+    std::vector<tf_rdc_restraint_struct> & tf_rdc_restraints()
+    {
+      return m_tf_rdc_restraint;
+    }
+    /**
+     * const tensor-free RDC restraints accessor.
+     */
+    std::vector<tf_rdc_restraint_struct> const & tf_rdc_restraints() const
+    {
+      return m_tf_rdc_restraint;
+    }
+
+    /**
+     * const z-axis angle restraints accessor.
+     */
+    std::vector<zalignment_restraint_struct> const & zalignment_restraints()const
+    {
+      return m_zalignment_restraint;
+    }
+
+    /**
+     *  z-axis angle restraints accessor.
+     */
+    std::vector<zalignment_restraint_struct>  & zalignment_restraints()
+    {
+      return m_zalignment_restraint;
+    }
 
     /**
      * multi cell topology accessor
@@ -1625,7 +1655,7 @@ namespace topology
      * the number of improper dihedral types
      */
     int m_num_impropertype;
-    
+
     /**
      * the solute.
      */
@@ -1946,6 +1976,14 @@ namespace topology
      * rdc restraints
      */
     std::vector<std::vector<rdc_restraint_struct> > m_rdc_restraint;
+    /**
+     * tf rdc restraints
+     */
+     std::vector<tf_rdc_restraint_struct> m_tf_rdc_restraint;
+     /**
+    * z-axis angle restraints
+    */
+    std::vector<zalignment_restraint_struct> m_zalignment_restraint;
     /**
      * xray restraints
      */

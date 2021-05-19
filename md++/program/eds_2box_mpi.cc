@@ -30,9 +30,9 @@
  * @section eds_2box_mpi parallel molecular dynamics with MPI
  * @date 16.09.2011
  *
- * Program eds_2box_mpi is used to run parallel eds simulations with 2 boxes. 
+ * Program eds_2box_mpi is used to run parallel eds simulations with 2 boxes.
  * In order to use this program one has to compile GROMOS with MPI support:
- * 
+ *
  * See @ref eds_2box for the documentation of the command line arguments
  *
 */
@@ -82,19 +82,20 @@
 
 int main(int argc, char *argv[]){
 #ifdef XXMPI
-  
+
     const double start = util::now();
     //  exit_md = false;
     //  signal(SIGINT, signal_handler);
 
     util::Known knowns;
-    knowns << "topo1" << "topo2" << "conf1" << "conf2" << "input1" << "input2" << "verb"
-         << "pttopo1" << "pttopo2" << "trc1" << "trc2" << "fin1" << "fin2"
-         << "trv1" << "trv2" << "trf1" << "trf2" << "trs1" << "trs2"
-         << "tre1" << "tre2" << "trg1" << "trg2"
-         << "bae" << "bag" << "posresspec" << "refpos" << "distrest1" << "distrest2" << "dihrest"
-         << "jval" << "xray" << "order" << "rdc" << "lud" << "led" << "anatrj" << "print" << "friction"
-         << "qmmm" << "version";
+    knowns << "topo1" << "topo2" << "conf1" << "conf2" << "input1" << "input2"
+         << "verb" << "pttopo1" << "pttopo2" << "trc1" << "trc2" << "fin1"
+         << "fin2" << "trv1" << "trv2" << "trf1" << "trf2" << "trs1" << "trs2"
+         << "tre1" << "tre2" << "trg1" << "trg2" << "bae" << "bag"
+         << "posresspec" << "refpos" << "distrest1" << "distrest2" << "dihrest"
+         << "jval" << "xray" << "order" << "rdc" << "tfrdc" << "zanglerest"
+         << "lud" << "led" << "anatrj" << "print" << "friction" << "qmmm"
+         << "version";
 
     std::string usage;
     util::get_usage(knowns, usage, argv[0]);
@@ -730,7 +731,7 @@ int main(int argc, char *argv[]){
     } // end of slave
 
   os = NULL;
-  
+
   ofs.flush();
   ofs.close();
 
@@ -745,5 +746,3 @@ int main(int argc, char *argv[]){
 #endif
 
 }
- 
-

@@ -63,7 +63,7 @@
  * <tr><td> \@verb</td><td>&lt;@ref debug "control verbosity"&gt;</td><td></td></tr>
  * <tr><td> \@version</td><td>&lt;print version information&gt; </td><td></td></tr>
  * </table>
- * 
+ *
  * @sa md_mpi
 */
 
@@ -107,15 +107,16 @@ int main(int argc, char *argv[]){
   signal(SIGINT, signal_handler);
 
   util::Known knowns;
-  knowns << "topo1" << "topo2" << "conf1" << "conf2" << "input1" << "input2" << "verb" 
-         << "pttopo1" << "pttopo2" << "trc1" << "trc2" << "fin1" << "fin2"
-	 << "trv1" << "trv2" << "trf1" << "trf2" << "trs1" << "trs2"  
-         << "tre1" << "tre2" << "trg1" << "trg2" 
-	 << "bae" << "bag" << "posresspec" << "refpos" << "distrest1" << "distrest2" << "dihrest"
-         << "jval" << "xray" << "order" << "rdc" << "lud" << "led" << "anatrj" << "print" << "friction"
-         << "qmmm" << "version";
-  
-  
+  knowns << "topo1" << "topo2" << "conf1" << "conf2" << "input1" << "input2"
+         << "verb" << "pttopo1" << "pttopo2" << "trc1" << "trc2" << "fin1"
+         << "fin2" << "trv1" << "trv2" << "trf1" << "trf2" << "trs1" << "trs2"
+         << "tre1" << "tre2" << "trg1" << "trg2" << "bae" << "bag"
+         << "posresspec" << "refpos" << "distrest1" << "distrest2" << "dihrest"
+         << "jval" << "xray" << "order" << "rdc" << "tfrdc" << "zanglerest"
+         << "lud" << "led" << "anatrj" << "print" << "friction" << "qmmm"
+         << "version";
+
+
   std::string usage;
   util::get_usage(knowns, usage, argv[0]);
   usage += "#\n\n";
@@ -131,7 +132,7 @@ int main(int argc, char *argv[]){
   if (args.count("version") >= 0){
     return 0;
   }
-    
+
   // parse the verbosity flag and set debug levels
   if (util::parse_verbosity(args)){
     std::cerr << "could not parse verbosity argument" << std::endl;
@@ -156,7 +157,7 @@ int main(int argc, char *argv[]){
       args1.insert(std::pair<std::string, std::string>(newargname, it->second));
     }
   }
-  
+
   for(io::Argument::const_iterator it = args.begin(), to = args.end();
           it != to; ++it) {
     const std::string & argname = it->first;
@@ -165,8 +166,8 @@ int main(int argc, char *argv[]){
       args2.insert(std::pair<std::string, std::string>(newargname, it->second));
     }
   }
-  
-  
+
+
   if (io::read_input(args1, topo1, conf1, sim1,  md1)){
     io::messages.display(std::cout);
     std::cout << "\nErrors during initialization of box 1!\n" << std::endl;
@@ -178,14 +179,14 @@ int main(int argc, char *argv[]){
    std::cout << "\nErrors during initialization of box 2!\n" << std::endl;
    return 1;
   }
-  
+
   traj1.title(GROMOSXX "\n" + sim1.param().title);
   traj2.title(GROMOSXX "\n" + sim2.param().title);
 
   // create output files...
   traj1.init(args1, sim1.param());
   traj2.init(args2, sim2.param());
-  
+
   algorithm::EDS * eds1 = (algorithm::EDS *) md1.algorithm("EDS");
   if (eds1 != NULL) {
       eds1->set_conf2(conf2);
@@ -194,11 +195,11 @@ int main(int argc, char *argv[]){
   if (eds2 != NULL) {
       eds2->set_conf2(conf1);
   }
-  
+
   // initialises all algorithms (and therefore also the forcefield)
   md1.init(topo1, conf1, sim1);
   md2.init(topo2, conf2, sim2);
-  
+
   bool second = false;
   for(algorithm::Algorithm_Sequence::const_iterator it = md1.begin(),
           to = md1.end(); it != to; ++it) {
@@ -206,7 +207,7 @@ int main(int argc, char *argv[]){
       second = true;
       continue;
     }
-    
+
     if (second)
       md1_second.push_back(*it);
     else
@@ -219,7 +220,7 @@ int main(int argc, char *argv[]){
       second = true;
       continue;
     }
-    
+
     if (second)
       md2_second.push_back(*it);
     else
@@ -231,18 +232,18 @@ int main(int argc, char *argv[]){
     std::cout << "\nErrors during initialisation!\n" << std::endl;
     return 1;
   }
-    
+
   io::messages.clear();
 
   std::cout.precision(5);
   std::cout.setf(std::ios_base::fixed, std::ios_base::floatfield);
-    
+
   std::cout << "\nenter the next level of molecular "
 	    << "dynamics simulations\n" << std::endl;
 
-    
+
   int percent = 0;
-    
+
   std::cout << "==================================================\n"
 	    << " MAIN MD LOOP\n"
 	    << "==================================================\n"
@@ -253,7 +254,7 @@ int main(int argc, char *argv[]){
   const double init_time = util::now() - start;
   while(int(sim1.steps()) < sim1.param().step.number_of_steps &&
           int(sim2.steps()) < sim2.param().step.number_of_steps  && !exit_md){
-      
+
     traj1.write(conf1, topo1, sim1, io::reduced);
     traj2.write(conf2, topo2, sim2, io::reduced);
 
@@ -270,29 +271,29 @@ int main(int argc, char *argv[]){
       if (error1 == E_MINIMUM_REACHED){
 	conf1.old().energies.calculate_totals();
 	traj1.print_timestep(sim1, traj1.output());
-	io::print_ENERGY(traj1.output(), conf1.old().energies, 
+	io::print_ENERGY(traj1.output(), conf1.old().energies,
 			 topo1.energy_groups(),
 			 "MINIMUM ENERGY", "EMIN_");
-	  
+
 	error1 = 0; // clear error condition
 	break;
       }
-      else { 
+      else {
 	// try to print energies anyway
 	// if (error == E_NAN){
 	io::print_ENERGY(traj1.output(), conf1.current().energies,
 			 topo1.energy_groups(),
 			 "OLDERROR", "OLDERR_");
-	
+
         io::print_ENERGY(traj2.output(), conf2.current().energies,
 			 topo2.energy_groups(),
 			 "OLDERROR", "OLDERR_");
 
-	io::print_ENERGY(traj1.output(), conf1.old().energies, 
+	io::print_ENERGY(traj1.output(), conf1.old().energies,
 			 topo1.energy_groups(),
 			 "ERROR", "ERR_");
-        
-	io::print_ENERGY(traj2.output(), conf2.old().energies, 
+
+	io::print_ENERGY(traj2.output(), conf2.old().energies,
 			 topo2.energy_groups(),
 			 "ERROR", "ERR_");
 
@@ -314,7 +315,7 @@ int main(int argc, char *argv[]){
     ++sim2.steps();
     sim1.time() = sim1.param().step.t0 + sim1.steps()*sim1.time_step_size();
     sim2.time() = sim2.param().step.t0 + sim2.steps()*sim2.time_step_size();
-    
+
     if ((sim1.param().step.number_of_steps / 10 > 0) &&
 	(sim1.steps() % (sim1.param().step.number_of_steps / 10) == 0)){
       ++percent;
@@ -332,17 +333,17 @@ int main(int argc, char *argv[]){
       const int eta_hh = int(eta_spent / 3600);
       const int eta_mm = int((eta_spent - eta_hh * 3600) / 60);
       const int eta_ss = int(eta_spent - eta_hh * 3600 - eta_mm * 60);
-      
+
       std::cerr << "MD: ETA   " << eta_hh << ":" << eta_mm << ":" << eta_ss << std::endl;
       std::cout << "MD: ETA   " << eta_hh << ":" << eta_mm << ":" << eta_ss << std::endl;
     }
   } // main md loop
-    
+
   std::cout << "writing final configuration" << std::endl;
-    
+
   traj1.write(conf1, topo1, sim1, io::final);
   traj1.print_final(topo1, conf1, sim1);
-  
+
   traj2.write(conf2, topo2, sim2, io::final);
   traj2.print_final(topo2, conf2, sim2);
 
@@ -352,7 +353,7 @@ int main(int argc, char *argv[]){
   io::message::severity_enum err_msg = io::messages.display(std::cout);
 
   std::cout << "\n\n";
-    
+
   md1.print_timing(std::cout);
 
   std::setprecision(5);
@@ -373,7 +374,7 @@ int main(int argc, char *argv[]){
 
   const time_t time_now = time_t(util::now());
   std::cout << ctime(&time_now) << "\n\n";
-    
+
   if (error1){
     std::cout << "\nErrors encountered in box 1 during run - check above!\n" << std::endl;
     return 1;
@@ -388,8 +389,6 @@ int main(int argc, char *argv[]){
   } else{
     std::cout << "\n" GROMOSXX " finished successfully\n" << std::endl;
   }
-  
+
   return 0;
 }
-
-
