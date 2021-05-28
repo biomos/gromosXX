@@ -2135,7 +2135,7 @@ namespace simulation
 	: angrest(angle_restr_off),
 	  K(0.0),
 	  virial(0),
-      write(0) {}
+          write(0) {}
       
       /** 
        * angle restraints
@@ -2146,10 +2146,17 @@ namespace simulation
        * - 3: constraints
        */
       angle_restr_enum angrest;
+      
       /**
        * force constant K
        */
       double K;
+      
+       /**
+       * compute virial contribution
+       */
+      unsigned int virial;
+      
       /**
        * write on/off
        */
@@ -2160,11 +2167,6 @@ namespace simulation
        */
       double tolerance;
 
-      /**
-       * compute virial contribution
-       */
-      unsigned int virial;
-      
     }/** angle restraint parameters */ angrest;
 
     /**
@@ -2195,14 +2197,22 @@ namespace simulation
        * - 3: constraints
        */
       dihedral_restr_enum dihrest;
+      
       /**
        * force constant K
        */
       double K;
+      
       /**
        * deviation larger phi_lin leads to linear potential
        */
       double phi_lin;
+      
+       /**
+       * compute virial contribution
+       */
+      unsigned int virial;
+      
       /**
        * write on/off
        */
@@ -2213,10 +2223,6 @@ namespace simulation
        */
       double tolerance;
 
-      /**
-       * compute virial contribution
-       */
-      unsigned int virial;
       
     }/** dihedral restraint parameters */ dihrest;
 
