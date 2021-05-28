@@ -1559,11 +1559,6 @@ namespace topology
     std::vector<unsigned int> m_num_solvent_atoms;
 
     /**
-     * number of virtual atoms with nonbonded interactions
-     */
-    unsigned int m_nonbonded_virtual_atoms;
-
-    /**
      * the solvents (multiple solvent).
      */
     std::vector<Solvent> m_solvent;
@@ -1685,7 +1680,7 @@ namespace topology
     std::vector<interaction::improper_dihedral_type_struct> m_impdihedral_types;
 
     /**
-     * store all available improper dihedral types
+     * store all available virtual atom types
      */
     std::vector<interaction::virtual_atom_type_struct> m_virtual_atom_types;
 
