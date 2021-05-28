@@ -431,6 +431,70 @@ int check_distanceres_interaction(topology::Topology & topo,
 
 }
 
+
+
+int check_angrest_interaction(topology::Topology & topo,
+        configuration::Configuration & conf,
+        simulation::Simulation & sim,
+        interaction::Interaction &term,
+        size_t atoms,
+        double const energy,
+        double const epsilon,
+        double const delta) {
+  int res, total = 0;
+
+  std::string name = term.name;
+
+  CHECKING(name + " interaction energy", res);
+
+  conf.current().force = 0;
+  conf.current().energies.zero();
+
+  term.calculate_interactions(topo, conf, sim);
+
+  conf.current().energies.calculate_totals();
+  CHECK_APPROX_EQUAL(conf.current().energies.special_total,
+          energy, delta, res);
+  RESULT(res, total);
+
+  // finite diff
+  CHECKING(name + " interaction force (finite diff)", res);
+
+  for (size_t i = 0; i < topo.angle_restraints().size(); ++i) {
+
+    std::vector<int> atom;
+    atom.push_back(topo.angle_restraints()[i].i);
+    atom.push_back(topo.angle_restraints()[i].j);
+    atom.push_back(topo.angle_restraints()[i].k);
+
+    conf.current().force = 0;
+    conf.current().energies.zero();
+
+    term.calculate_interactions(topo, conf, sim);
+
+    for (size_t j = 0; j < atom.size(); ++j) {
+
+      math::Vec f = conf.current().force(atom[j]);
+
+      math::Vec finf;
+
+      finf(0) = finite_diff(topo, conf, sim, term, atom[j], 0, epsilon);
+      finf(1) = finite_diff(topo, conf, sim, term, atom[j], 1, epsilon);
+      finf(2) = finite_diff(topo, conf, sim, term, atom[j], 2, epsilon);
+
+      CHECK_APPROX_EQUAL(f(0), finf(0), delta, res);
+      CHECK_APPROX_EQUAL(f(1), finf(1), delta, res);
+      CHECK_APPROX_EQUAL(f(2), finf(2), delta, res);
+    }
+  }
+
+
+  RESULT(res, total);
+
+  return total;
+
+}
+
 int check_dihrest_interaction(topology::Topology & topo,
         configuration::Configuration & conf,
         simulation::Simulation & sim,
@@ -493,6 +557,7 @@ int check_dihrest_interaction(topology::Topology & topo,
   return total;
 
 }
+
 int check_le_interaction(topology::Topology & topo,
         configuration::Configuration & conf,
         simulation::Simulation & sim,
@@ -889,6 +954,21 @@ int check::check_forcefield(topology::Topology & topo,
       total += check_distanceres_interaction(topo, conf, sim, **it,
               topo.num_solute_atoms(),
               ref["PerturbedDistanceRestraint"],
+              0.0000000001, 0.001);
+      total += check_lambda_derivative(topo, conf, sim, **it, 0.001, 0.001, false);
+    } else if ((*it)->name == "AngleRestraint") {
+      if (ref.find((*it)->name) == ref.end())
+        continue;
+      total += check_angrest_interaction(topo, conf, sim, **it,
+              topo.num_solute_atoms(),
+              ref["AngleRestraint"],
+              0.0000000001, 0.001);
+    } else if ((*it)->name == "PerturbedAngleRestraint") {
+      if (ref.find((*it)->name) == ref.end())
+        continue;
+      total += check_angrest_interaction(topo, conf, sim, **it,
+              topo.num_solute_atoms(),
+              ref["PerturbedAngleRestraint"],
               0.0000000001, 0.001);
       total += check_lambda_derivative(topo, conf, sim, **it, 0.001, 0.001, false);
     } else if ((*it)->name == "DihedralRestraint") {

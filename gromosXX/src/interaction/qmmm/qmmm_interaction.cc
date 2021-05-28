@@ -984,7 +984,7 @@ void interaction::QMMM_Interaction::modify_exclusions(
   }
 
   // LJ Exceptions - they use LJEX
-  for (std::vector<topology::lj_exception_struct>::const_iterator
+  for (std::vector<topology::lj_exception_struct>::iterator
         it = topo.lj_exceptions().begin()
       ; it != topo.lj_exceptions().end(); ) {
     const unsigned i = it->i;
