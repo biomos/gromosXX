@@ -281,7 +281,7 @@ const simulation::Simulation & sim) {
 
 #ifdef XXMPI
   if (sim.mpi) {
-    MPI::COMM_WORLD.Allreduce(&my_q, &q, 1, MPI::DOUBLE, MPI::SUM);
+    MPI_Allreduce(&my_q, &q, 1, MPI::DOUBLE, MPI::SUM, sim.mpiControl().comm);
   } else {
 #endif
     q = my_q;
@@ -492,7 +492,7 @@ const simulation::Simulation & sim) {
   my_q *= 16 * math::Pi * math::Pi / volume;
 #ifdef XXMPI
   if (sim.mpi) {
-    MPI::COMM_WORLD.Allreduce(&my_q, &q, 1, MPI::DOUBLE, MPI::SUM);
+    MPI_Allreduce(&my_q, &q, 1, MPI::DOUBLE, MPI::SUM, sim.mpiControl().comm);
   } else {
 #endif
     q = my_q;

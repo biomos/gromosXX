@@ -463,7 +463,7 @@ solute(topology::Topology const & topo,
   // reduce errors
 #ifdef XXMPI
   if (sim.mpi) {
-    MPI::COMM_WORLD.Allreduce(&my_error, &error, 1, MPI::INT, MPI::MAX);
+    MPI_Allreduce(&my_error, &error, 1, MPI::INT, MPI::MAX, sim.mpiControl().comm);
   } else
   error = my_error;
 #else
@@ -583,10 +583,10 @@ void algorithm::Shake
     if (m_rank == 0) {
       // Master 
       // reduce the error to all processors
-      MPI::COMM_WORLD.Allreduce(&my_error, &error, 1, MPI::INT, MPI::MAX);
+      MPI_Allreduce(&my_error, &error, 1, MPI::INT, MPI::MAX, sim.mpiControl().comm);
     } else {
       // reduce the error to all processors
-      MPI::COMM_WORLD.Allreduce(&my_error, &error, 1, MPI::INT, MPI::MAX);
+      MPI_Allreduce(&my_error, &error, 1, MPI::INT, MPI::MAX, sim.mpiControl().comm);
     }
   }
 #else
