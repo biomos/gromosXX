@@ -367,7 +367,7 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update
                     pairlist.solvent_short[a2].push_back(a1);
 #endif
                   } else {
-										if (Pairlist_Algorithm::qm_excluded(topo, qmmm, a2)) {
+										if (Pairlist_Algorithm::qm_excluded(topo, qmmm, a1, a2)) {
 											DEBUG(9, "Skipping pair: " << a1 << "-" << a2);
 											continue;
 										}
