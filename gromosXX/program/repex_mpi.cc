@@ -389,8 +389,8 @@ int main(int argc, char *argv[]) {
         std::cerr << "num of threads: "  << totalNumberOfThreads << "\n";
         std::cerr << "threads per rep: " << threadsPerReplicaSimulation << "\n";
         std::cout << "Masters of "<<reGMPI.numberOfReplicas<< "replicas \t";
+        std::cout << "\n";
     }
-    std::cout << "\n";
     MPI_DEBUG(1, "REPLICA_ID \t " << globalThreadID << "\t Simulation_ID\t"<< simulationID << "\t RE_GRAPH COMM ESTABLISHED\n");
     MPI_Barrier(MPI_COMM_WORLD);    //wait for all threads to register!
 
