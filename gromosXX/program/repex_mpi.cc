@@ -572,7 +572,7 @@ int main(int argc, char *argv[]) {
             MPI_DEBUG(2, "Master " << globalThreadID << " \t MD trial: " << trial << "\n");
             MPI_DEBUG(2, "Master " << globalThreadID << " \t run_MD START " << trial << "\n");
             Master->run_MD();
-            std::cerr << "\t\t Master MD_step\n";
+            //std::cerr << "\t\t Master MD_step\n";
 
             MPI_DEBUG(2, "Master " << globalThreadID << " \t swap START " << trial << "\n")
             Master->swap();
@@ -615,7 +615,7 @@ int main(int argc, char *argv[]) {
         
         std::cerr << "Slave "<< globalThreadID << " on board\n";
         std::cerr.flush();
-        MPI_Barrier(MPI_COMM_WORLD);    //wait for all threads to register!
+        
 
         // Select repex Implementation - Polymorphism
         MPI_DEBUG(1, "Slave " << globalThreadID << "::Constructor: START ");
@@ -633,7 +633,7 @@ int main(int argc, char *argv[]) {
                   break;
           }
         MPI_DEBUG(1, "Slave " << globalThreadID << "::Constructor: DONE ")
-
+        MPI_Barrier(MPI_COMM_WORLD);    //wait for all threads to register!
 
         //INIT
         MPI_DEBUG(1, "Slave " << globalThreadID << " \t INIT START");
