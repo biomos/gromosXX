@@ -255,6 +255,13 @@ int interaction::create_g96_nonbonded
     }
   }
 
+  // scaling factor for electrostatic 1,4-interactions
+  if (sim.param().amber.amber) {
+    ni->parameter().set_coulomb_scaling(sim.param().amber.coulomb_scaling);
+  } else {
+    ni->parameter().set_coulomb_scaling(1.0);
+  }
+
   ff.push_back(ni);
 
   if (!quiet){

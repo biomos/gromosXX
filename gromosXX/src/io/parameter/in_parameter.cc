@@ -61,6 +61,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_BOUNDCOND(param);
   read_REPLICA(param); // has to be read in before MULTIBATH
   read_MULTIBATH(param);
+  read_STOCHDYN(param); // has to be read in before REPLICA_EDS
   read_REPLICA_EDS(param); // has to be read in after MULTIBATH
   read_PRESSURESCALE(param);
   read_PRINTOUT(param);
@@ -87,7 +88,6 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_MULTICELL(param);
   read_READTRAJ(param);
   read_INTEGRATE(param);
-  read_STOCHDYN(param);
   read_EWARN(param);
   read_MULTISTEP(param);
   read_CHEMICALMONTECARLO(param);
@@ -106,6 +106,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_MULTIGRADIENT(param);
   read_QMMM(param);
   read_SYMRES(param);
+  read_AMBER(param);
 
   read_known_unsupported_blocks();
 
@@ -5443,3 +5444,63 @@ void io::In_Parameter::read_SYMRES(simulation::Parameter & param,
         block.get_final_messages();
     }     // if block
 } // SYMRES
+
+/**
+ * @section symres AMBER block
+ * @verbatim
+AMBER
+# AMBER 0..1 use AMBER topology
+#    0: GROMOS topology
+#    1: AMBER topology
+# AMBSCAL >= 0.0 scaling factor for 1,4-electrostatic-interactions
+#                (will be directly inverted when reading in)
+#                Default: 1.2
+#
+# AMBER     AMBSCAL
+      1     1.2
+END
+
+@endverbatim
+ */
+void io::In_Parameter::read_AMBER(simulation::Parameter & param,
+        std::ostream & os) {
+  DEBUG(8, "read AMBER");
+
+  std::vector<std::string> buffer;
+  std::string s;
+
+  buffer = m_block["AMBER"];
+
+  if (buffer.size()) {
+    block_read.insert("AMBER");
+    _lineStream.clear();
+    _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
+
+    bool amber;
+    double factor;
+    _lineStream >> amber >> factor;
+    
+    if (_lineStream.fail()) { //TODO: Check for real reason why is crashing
+      io::messages.add("Bad line in AMBER block MAAAAAN.",
+                    "In_Parameter", io::message::error);
+      return;
+    }
+
+    if (amber > 1 || amber < 0) {
+      io::messages.add("AMBER block: AMBER must be 0 or 1",
+                    "In_Parameter", io::message::error);
+    }
+    param.amber.amber = amber;
+
+    if (factor < 0.0) {
+      io::messages.add("AMBER block: AMBSCAL must be >= 0.0",
+                    "In_Parameter", io::message::error);
+      return;
+    } else if (factor > 0.0) {
+      param.amber.coulomb_scaling = 1.0 / factor;
+    } else {
+      param.amber.coulomb_scaling = 0.0;
+    }
+  } // if block
+
+} // AMBER

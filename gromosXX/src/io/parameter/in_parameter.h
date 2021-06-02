@@ -65,6 +65,7 @@
  * - @ref  rdcres
  * - @ref  qmmm
  * - @ref  xrayres
+ * - @ref  amber
  */
 
 
@@ -364,6 +365,10 @@ namespace io {
      * read SYMRES block
      */
     void read_SYMRES(simulation::Parameter &param, std::ostream & os = std::cout);
+    /**
+     * read AMBER block
+     */
+    void read_AMBER(simulation::Parameter &param, std::ostream & os = std::cout);
   };
 
 } // io

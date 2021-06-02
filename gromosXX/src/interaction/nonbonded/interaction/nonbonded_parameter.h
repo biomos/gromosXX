@@ -76,6 +76,13 @@ namespace interaction
     }
 
     /**
+     * get the scaling factor for electrostatic 1,4-interactions
+     */
+    double const & get_coulomb_scaling() {
+      return m_coulomb_scaling;
+    }
+
+    /**
      * get the lj parameters for atom type i and j.
      */
     lj_parameter_struct const & lj_parameter(unsigned int iac_i, unsigned int iac_j){
@@ -122,6 +129,14 @@ namespace interaction
       m_cg_parameter[iac_i][iac_j] = lj;
       m_cg_parameter[iac_j][iac_i] = lj;
     }
+
+    /**
+     * set the scaling factor for electrostatic 1,4-interactions
+     * e.g. used with Amber Forcefield
+     */
+    void set_coulomb_scaling(double factor) {
+      m_coulomb_scaling = factor;
+    }
     
   protected:
     /**
@@ -133,6 +148,8 @@ namespace interaction
      * the cg parameter.
      */
     std::vector< std::vector<lj_parameter_struct> > m_cg_parameter;
+
+    double m_coulomb_scaling;
 
   };
   

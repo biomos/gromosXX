@@ -3940,6 +3940,29 @@ namespace simulation
     } /* symmetry restraints */symrest;
 
     /**
+     * @struct amber_struct
+     * AMBER block
+     */
+    struct amber_struct {
+      /**
+       * Constructor
+       * - no AMBER topology
+       * - electrostatic interaction scaling for 1,4-interactions 1.2
+       */
+      amber_struct():
+      amber(false),
+      coulomb_scaling(1.2) {}
+      /**
+       * amber topology
+       */
+      bool amber;
+      /**
+       * electrostatic interaction scaling for 1,4-interactions
+       */
+      double coulomb_scaling;
+    } amber;
+
+    /**
      A struct to mark parts of the code as "under development"
      */
     struct develop_struct {
