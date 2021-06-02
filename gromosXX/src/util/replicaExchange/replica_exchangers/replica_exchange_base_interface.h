@@ -245,7 +245,7 @@ namespace util {
     /**
      *  Sending data or not?
      */
-    bool not_sender;
+    bool not_sender {true};
     
     /*
      * FUNCTIONS
