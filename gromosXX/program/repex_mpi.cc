@@ -358,7 +358,6 @@ int main(int argc, char *argv[]) {
         MPI_Barrier(replicaGraphCOMM);    //wait for all threads to register!
         MPI_Comm_rank(replicaGraphCOMM, &graphThreadID);
         MPI_Comm_size(replicaGraphCOMM, &graphSize);
-        std::cout << graphThreadID << "\n";
     }
     else{
         MPI_Comm_split(MPI_COMM_WORLD,graphMPIColor+3, globalThreadID, &replicaGraphCOMM);
