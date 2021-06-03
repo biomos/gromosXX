@@ -2985,7 +2985,11 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
         DEBUG(3, "REPLICA_EDS BLOCK: PERIODIC= " << periodic);
 
         // Replica temperatures - has to be the same for each replica // Not sure if this is optimal? bschroed
-        param.reeds.temperature = param.multibath.multibath.bath(0).temperature;
+        // handle case that we have a stochastic dynamics simulation
+        if(!param.stochastic.sd)
+          param.reeds.temperature = param.multibath.multibath.bath(0).temperature;
+        else
+          param.reeds.temperature = param.stochastic.temp;
 
         DEBUG(2, "REPLICA_EDS BLOCK: assigned all reeds params");
         //set size of vectors in param.reeds
@@ -3127,11 +3131,13 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
         //CHECK SETTINGS
         DEBUG(2, "REPLICA_EDS BLOCK: Check Settings:");
 
-        for (unsigned int i = 1; i < param.multibath.multibath.size(); i++) {
-          if (param.multibath.multibath.bath(i).temperature !=
-                  param.multibath.multibath.bath(0).temperature) {
-            io::messages.add("Error in RE_EDS block: all baths must have the same temperature.",
-                    "In_Parameter", io::message::error);
+        if(!param.stochastic.sd){ // only check the multibath, if we don't have stochastic dynamics
+          for (unsigned int i = 1; i < param.multibath.multibath.size(); i++) {
+            if (param.multibath.multibath.bath(i).temperature !=
+                    param.multibath.multibath.bath(0).temperature) {
+              io::messages.add("Error in RE_EDS block: all baths must have the same temperature.",
+                      "In_Parameter", io::message::error);
+            }         
           }
         }
         DEBUG(2, "REPLICA_EDS BLOCK: Checked Settings");
