@@ -4325,10 +4325,10 @@ int io::check_features(simulation::Simulation  &sim)
   fc.unlock("amber", "solvent_settle");
   fc.unlock("amber", "pressure_calculation");
   fc.unlock("amber", "pressure_scale_berendsen");
-  //fc.unlock("amber", "virial_off");
+  fc.unlock("amber", "virial_off");
   //fc.unlock("amber", "virial_atomic");
   fc.unlock("amber", "virial_molecular");
-  //fc.unlock("amber", "vacuum");
+  fc.unlock("amber", "vacuum");
   fc.unlock("amber", "pbc_r");
   //fc.unlock("amber", "pbc_c");
   //fc.unlock("amber", "pbc_t");

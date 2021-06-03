@@ -295,8 +295,14 @@ int algorithm::EDS
       // interactions have been calculated - now apply eds Hamiltonian
       std::vector<double> prefactors(numstates);
       // get beta
-      assert(sim.param().multibath.multibath.bath(0).temperature != 0.0);
-      const double beta = 1.0 / (sim.param().multibath.multibath.bath(0).temperature * math::k_Boltzmann);
+      double beta;
+      if(!sim.param().stochastic.sd){
+            assert(sim.param().multibath.multibath.bath(0).temperature != 0.0);
+            beta = 1.0 / (sim.param().multibath.multibath.bath(0).temperature * math::k_Boltzmann);
+      }
+      else
+            beta = 1.0 / (sim.param().stochastic.temp * math::k_Boltzmann);
+          
       assert(sim.param().eds.s.size() == 1);
       const double s = sim.param().eds.s[0];
       
