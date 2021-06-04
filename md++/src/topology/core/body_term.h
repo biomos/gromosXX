@@ -1253,12 +1253,12 @@ namespace topology {
     double w;
   };
 
-  struct zalignment_restraint_struct {
+  struct zaxisori_restraint_struct {
 
     /**
     * Constructor.
     */
-    zalignment_restraint_struct(util::Virtual_Atom v1,
+    zaxisori_restraint_struct(util::Virtual_Atom v1,
           util::Virtual_Atom v2,
           double a0, double w0, int rah)
     : v1(v1), v2(v2),

@@ -193,9 +193,9 @@ namespace configuration
      */
     double tfrdc_total;
     /**
-     * total energy of the z-alignment restraint interaction
+     * total energy of the z-axis orientation bias interaction
      */
-    double zalignmentres_total;
+    double zaxisoribias_total;
     /**
      * symmetry restraints energy
      */
@@ -465,9 +465,9 @@ namespace configuration
      */
     std::vector<double> tfrdc_energy;
     /**
-     * z-axis angle restraint energy term
+     * z-axis orientation bias energy term
      */
-    std::vector<double> zalignmentres_energy;
+    std::vector<double> zaxisoribias_energy;
     /**
      * (distance) constraints energy term
      * (has to be 0.0 always)

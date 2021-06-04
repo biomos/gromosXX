@@ -74,7 +74,7 @@ bsleus_total(0.0),
 oparam_total(0.0),
 rdc_total(0.0),
 tfrdc_total(0.0),
-zalignmentres_total(0.0),
+zaxisoribias_total(0.0),
 symrest_total(0.0),
 constraints_total(0.0),
 self_total(0.0),
@@ -203,7 +203,7 @@ void configuration::Energy::zero(bool potential, bool kinetic)
     oparam_energy.assign(oparam_energy.size(), 0.0);
     rdc_energy.assign(rdc_energy.size(), 0.0);
     tfrdc_energy.assign(tfrdc_energy.size(), 0.0);
-    zalignmentres_energy.assign(zalignmentres_energy.size(), 0.0);
+    zaxisoribias_energy.assign(zaxisoribias_energy.size(), 0.0);
     constraints_energy.assign(constraints_energy.size(), 0.0);
     self_energy.assign(self_energy.size(), 0.0);
     sasa_energy.assign(sasa_energy.size(), 0.0);
@@ -293,7 +293,7 @@ void configuration::Energy::resize(unsigned int energy_groups, unsigned int mult
     oparam_energy.resize(energy_groups);
     rdc_energy.resize(energy_groups);
     tfrdc_energy.resize(energy_groups);
-    zalignmentres_energy.resize(energy_groups);
+    zaxisoribias_energy.resize(energy_groups);
     constraints_energy.resize(energy_groups);
 
     self_energy.resize(energy_groups);
@@ -387,7 +387,7 @@ int configuration::Energy::calculate_totals()
   dihrest_total = 0.0;
   jvalue_total = 0.0;
   rdc_total = 0.0;
-  zalignmentres_total = 0.0;
+  zaxisoribias_total = 0.0;
   constraints_total = 0.0;
   self_total = 0.0;
   sasa_total = 0.0;
@@ -543,10 +543,10 @@ int configuration::Energy::calculate_totals()
       std::cout << "EWARN: tfrdc energy " << i+1 << " = " << tfrdc_energy[i] << "\n";
     }
     tfrdc_total       += tfrdc_energy[i];
-    if (zalignmentres_energy[i] > m_ewarn){
-      std::cout << "EWARN: zalignmentres energy " << i+1 << " = " << zalignmentres_energy[i] << "\n";
+    if (zaxisoribias_energy[i] > m_ewarn){
+      std::cout << "EWARN: zaxisoribias energy " << i+1 << " = " << zaxisoribias_energy[i] << "\n";
     }
-    zalignmentres_total     += zalignmentres_energy[i];
+    zaxisoribias_total     += zaxisoribias_energy[i];
     if (constraints_energy[i] > m_ewarn){
       std::cout << "EWARN: constraints energy " << i+1 << " = " << constraints_energy[i] << "\n";
     }
@@ -603,8 +603,8 @@ int configuration::Energy::calculate_totals()
     + constraints_total + jvalue_total + xray_total
     + eds_vr + leus_total + sasa_total + sasa_volume_total + oparam_total
     + symrest_total + bsleus_total + rdc_total + gamd_DV_total
-    + tfrdc_total + zalignmentres_total;
-  
+    + tfrdc_total + zaxisoribias_total;
+
   total = potential_total + kinetic_total + special_total;
 
 /*
@@ -679,7 +679,7 @@ double configuration::Energy::get_energy_by_index(const unsigned int & index) {
     case 49 : return eds_vr_shift_phys;
     case 50 : return gamd_DV_total;
     case 51 : return tfrdc_total;
-    case 52 : return zalignmentres_total;
+    case 52 : return zaxisoribias_total;
   }
   return 0.0;
 }

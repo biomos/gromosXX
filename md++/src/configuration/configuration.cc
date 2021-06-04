@@ -208,9 +208,9 @@ configuration::Configuration::Configuration
 
   special().rdc = conf.special().rdc;
 
-  special().zalignmentres.av = conf.special().zalignmentres.av;
-  special().zalignmentres.energy = conf.special().zalignmentres.energy;
-  special().zalignmentres.d = conf.special().zalignmentres.d;
+  special().zaxisoribias.av = conf.special().zaxisoribias.av;
+  special().zaxisoribias.energy = conf.special().zaxisoribias.energy;
+  special().zaxisoribias.d = conf.special().zaxisoribias.d;
 
   special().rottrans_constr = conf.special().rottrans_constr;
 
@@ -336,9 +336,9 @@ configuration::Configuration & configuration::Configuration::operator=
 
   special().rdc = conf.special().rdc;
 
-  special().zalignmentres.av = conf.special().zalignmentres.av;
-  special().zalignmentres.energy = conf.special().zalignmentres.energy;
-  special().zalignmentres.d = conf.special().zalignmentres.d;
+  special().zaxisoribias.av = conf.special().zaxisoribias.av;
+  special().zaxisoribias.energy = conf.special().zaxisoribias.energy;
+  special().zaxisoribias.d = conf.special().zaxisoribias.d;
 
   special().pscale = conf.special().pscale;
 
