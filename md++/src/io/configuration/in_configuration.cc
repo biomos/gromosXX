@@ -2649,6 +2649,7 @@ bool io::In_Configuration::_read_tf_rdc_restraint_averages(
     R_avg.push_back(R);
     P_avg.push_back(P);
   }
+	return true;
 }
 
 //FIXME remove rdc-res dependency

@@ -2580,8 +2580,8 @@ void io::In_Parameter::read_TFRDCRES(simulation::Parameter &param,
     exampleblock << "#                            (for continuation time-averaged run)\n";
     exampleblock << "# CTFRDC   >= 0.0            RDC restraining force constant\n";
     exampleblock << "#                            (weighted by individual WTFRDC)\n";
-    exampleblock << "# TAUR     >  0.0            r coupling time for time-averaging\n";
-    exampleblock << "# TAUT     >  0.0            theta coupling time for time-averaging\n";
+    exampleblock << "# TAUR     >= 0.0            r coupling time for time-averaging\n";
+    exampleblock << "# TAUT     >= 0.0            theta coupling time for time-averaging\n";
     exampleblock << "# NTWTFRDC >= 0              write tensor-free RDCs to special trajectory\n";
     exampleblock << "#             0              don't write [default]\n";
     exampleblock << "#          >  0              write every NTWTFRDC step\n";
@@ -2601,8 +2601,8 @@ void io::In_Parameter::read_TFRDCRES(simulation::Parameter &param,
         block.get_next_parameter("NTTFRDC", nttfrdc, "", "0,1,2");
         block.get_next_parameter("NTTFRDCA", param.tfrdc.read, "", "0,1");
         block.get_next_parameter("CTFRDC", param.tfrdc.K, ">=0", "");
-        block.get_next_parameter("TAUR", param.tfrdc.taur, ">0", "");
-        block.get_next_parameter("TAUT", param.tfrdc.taut, ">0", "");
+        block.get_next_parameter("TAUR", param.tfrdc.taur, ">=0", "");
+        block.get_next_parameter("TAUT", param.tfrdc.taut, ">=0", "");
         block.get_next_parameter("NTWTFRDC", param.tfrdc.write, ">=0", "");
 
 

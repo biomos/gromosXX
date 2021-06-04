@@ -133,6 +133,9 @@ int _calculate_tf_rdc_restraint_interactions
                 RDC_avg = interaction::D_c(it) * R_avg * P_avg;     // [1 / ps]
                 DEBUG(9, "RDC_avg (after damping): " << RDC_avg*pow(10,12));
 
+                // the not averaged RDC
+                conf.special().tfrdc.RDC[l] = interaction::D_c(it) * R * P; 
+
                 DEBUG(15, " R_avg: " << R_avg);
                 DEBUG(15, " P_avg: " << P_avg);
 
@@ -172,7 +175,11 @@ int _calculate_tf_rdc_restraint_interactions
         DEBUG(9, "dR_avg/dR: " << dRavedR);
         DEBUG(9, "dP_avg/dP: " << dPavedP);
 
-        force = term * interaction::D_c(it) * (P_avg * q_scale * dRdr + R_avg * dPdr);  // [1 / (ps^2 nm)]
+        force = term * interaction::D_c(it) * (P_avg * dRavedR * dRdr + R_avg * dPavedP * dPdr);  // [1 / (ps^2 nm)]
+        math::Vec force_rescaled = term * interaction::D_c(it) * (P_avg * q_scale * dRdr + R_avg * dPdr);  // [1 / (ps^2 nm)]                  // [kJ / mol]
+        DEBUG(9, "force           :" << math::v2s(force) );
+        DEBUG(9, "force / rescaled:" << math::v2s(force_rescaled) );
+
         energy = 0.5 * K * term * term;                         // [kJ / mol]
         DEBUG(9, "Term in [1/ps]:" << term);
         DEBUG(9, "Energy before weighting [kJ/mol]:" << energy);
@@ -234,6 +241,7 @@ int interaction::TF_RDC_Restraint_Interaction::init
   const unsigned int & num_res = topo.tf_rdc_restraints().size();
   conf.special().tfrdc.R_avg.resize(num_res);
   conf.special().tfrdc.P_avg.resize(num_res);
+  conf.special().tfrdc.RDC.resize(num_res);
   conf.special().tfrdc.RDC_avg.resize(num_res);
   conf.special().tfrdc.energy.resize(num_res);
 
