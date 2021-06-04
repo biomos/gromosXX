@@ -749,6 +749,10 @@ namespace configuration {
       */
       struct tfrdc_struct {
         /**
+         * the tensor-free RDC
+         */
+        std::vector<double> RDC;
+        /**
          * the averaged tensor-free RDC
          */
         std::vector<double> RDC_avg;

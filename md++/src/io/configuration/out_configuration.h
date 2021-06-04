@@ -522,6 +522,7 @@ namespace io {
     int m_disfield_restraint_precision;
     int m_angle_restraint_precision;
     int m_dihedral_restraint_precision;
+    int m_rdc_restraint_precision;
 
     int m_width;
     int m_force_width;
