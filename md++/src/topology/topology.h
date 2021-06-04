@@ -1525,19 +1525,19 @@ namespace topology
     }
 
     /**
-     * const z-axis angle restraints accessor.
+     * const z-axis orientation biass accessor.
      */
-    std::vector<zalignment_restraint_struct> const & zalignment_restraints()const
+    std::vector<zaxisori_restraint_struct> const & zaxisori_restraints()const
     {
-      return m_zalignment_restraint;
+      return m_zaxisori_restraint;
     }
 
     /**
-     *  z-axis angle restraints accessor.
+     *  z-axis orientation biass accessor.
      */
-    std::vector<zalignment_restraint_struct>  & zalignment_restraints()
+    std::vector<zaxisori_restraint_struct>  & zaxisori_restraints()
     {
-      return m_zalignment_restraint;
+      return m_zaxisori_restraint;
     }
 
     /**
@@ -2005,9 +2005,9 @@ namespace topology
      */
      std::vector<tf_rdc_restraint_struct> m_tf_rdc_restraint;
      /**
-    * z-axis angle restraints
+    * z-axis orientation biass
     */
-    std::vector<zalignment_restraint_struct> m_zalignment_restraint;
+    std::vector<zaxisori_restraint_struct> m_zaxisori_restraint;
     /**
      * xray restraints
      */

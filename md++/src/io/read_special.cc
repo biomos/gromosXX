@@ -56,7 +56,7 @@
 #include "../io/topology/in_symrest.h"
 #include "../io/topology/in_rdc.h"
 #include "../io/topology/in_tf_rdc.h"
-#include "../io/topology/in_zaxisalignment.h"
+#include "../io/topology/in_zaxisoribias.h"
 #include "../util/coding.h"
 
 #include "read_special.h"
@@ -299,11 +299,11 @@ int io::read_special(io::Argument const & args,
 	if (sim.param().tfrdc.mode != simulation::tfrdc_restr_off){
     io::igzstream tfrdc_file;
 
-    if (args.count("tfrdc") != 1){
-      io::messages.add("tensor-free RDC restraints: no data file specified (use @tfrdc)",
+    if (args.count("tfrdcres") != 1){
+      io::messages.add("tensor-free RDC restraints: no data file specified (use @tfrdcres)",
 		       "read special", io::message::error);
     } else {
-      tfrdc_file.open(args["tfrdc"].c_str());
+      tfrdc_file.open(args["tfrdcres"].c_str());
       if (!tfrdc_file.is_open()){
 	io::messages.add("opening tensor-free RDC restraints file failed!\n",
 			 "read_special", io::message::error);
@@ -312,7 +312,7 @@ int io::read_special(io::Argument const & args,
         ip.quiet = quiet;
 
         ip.read(topo, sim, os);
-        io::messages.add("tensor-free RDC restraints read from " + args["tfrdc"] +
+        io::messages.add("tensor-free RDC restraints read from " + args["tfrdcres"] +
                 "\n" + util::frame_text(ip.title),
                 "read special", io::message::notice);
       }
@@ -320,23 +320,23 @@ int io::read_special(io::Argument const & args,
   } // TFRDCRES
 
   // ZANGLE restraints
-    if (sim.param().zalignmentres.zalignmentres){
-      io::igzstream zalignmentres_file;
+    if (sim.param().zaxisoribias.zaxisoribias){
+      io::igzstream zaxisoribias_file;
 
-      if (args.count("zanglerest") != 1){
-        io::messages.add("z-axis angle restraints: no data file specified (use @zanglerest)",
+      if (args.count("zaxisoribias") != 1){
+        io::messages.add("z-axis orientation biass: no data file specified (use @zaxisoribias)",
   		       "read special", io::message::error);
       } else {
-        zalignmentres_file.open(args["zanglerest"].c_str());
-        if (!zalignmentres_file.is_open()){
-  	io::messages.add("opening zalignmentres file failed!\n",
+        zaxisoribias_file.open(args["zaxisoribias"].c_str());
+        if (!zaxisoribias_file.is_open()){
+  	io::messages.add("opening zaxisoribias file failed!\n",
   			 "read_special", io::message::error);
         } else {
-          io::In_Zaxisalignment ip(zalignmentres_file);
+          io::In_Zaxisoribias ip(zaxisoribias_file);
           ip.quiet = quiet;
 
           ip.read(topo, sim, os);
-          io::messages.add("z-axis angle restraints read from " + args["zanglerest"] +
+          io::messages.add("z-axis orientation biass read from " + args["zaxisoribias"] +
                   "\n" + util::frame_text(ip.title),
                   "read special", io::message::notice);
         }

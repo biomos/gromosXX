@@ -474,9 +474,9 @@ namespace configuration {
 
       /**
        * @struct zalres_struct
-       * holds the z-alignment restraints configuration data
+       * holds the z-axis orientation bias configuration data
        */
-      struct zalres_struct {
+      struct zaxisoribias_struct {
         /**
          * the angle
          */
@@ -489,7 +489,7 @@ namespace configuration {
          * the running average
          */
         std::vector<double> av;
-      } /** zalignmentres informaton */ zalignmentres;
+      } /** zaxisoribias informaton */ zaxisoribias;
 
 
       /**

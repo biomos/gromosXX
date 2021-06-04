@@ -98,7 +98,7 @@ xxintnbspecial_HEADERS = special/create_special.h\
 	special/order_parameter_restraint_interaction.h\
 	special/rdc_restraint_interaction.h\
 	special/tf_rdc_restraint_interaction.h\
-	special/zaxis_alignment_restraint_interaction.h\
+	special/zaxis_orientation_bias_interaction.h\
 	special/symmetry_restraint_interaction.h\
 	special/dfunct_interaction.h
 
@@ -198,7 +198,7 @@ libgrointeraction_la_SOURCES = interaction.cc\
 	special/order_parameter_restraint_interaction.cc\
 	special/rdc_restraint_interaction.cc\
 	special/tf_rdc_restraint_interaction.cc\
-	special/zaxis_alignment_restraint_interaction.cc\
+	special/zaxis_orientation_bias_interaction.cc\
 	special/symmetry_restraint_interaction.cc\
 	special/dfunct_interaction.cc\
 	qmmm/qm_link.cc\

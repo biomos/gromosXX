@@ -104,7 +104,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_ORDERPARAMRES(param);
   read_RDCRES(param);
   read_TFRDCRES(param);
-  read_ZALIGNMENTRES(param);
+  read_ZAXISORIBIAS(param);
   read_XRAYRES(param);
   read_PERSCALE(param);
   read_ROTTRANS(param);
@@ -2625,44 +2625,44 @@ void io::In_Parameter::read_TFRDCRES(simulation::Parameter &param,
 } // TFRDCRES
 
 /**
- * @section zalignmentres ZALIGNMENTRES block
- * @snippet snippets/snippets.cc ZALIGNMENTRES
+ * @section zaxisoribias ZAXISORIBIAS block
+ * @snippet snippets/snippets.cc ZAXISORIBIAS
  */
-void io::In_Parameter::read_ZALIGNMENTRES(simulation::Parameter &param,
+void io::In_Parameter::read_ZAXISORIBIAS(simulation::Parameter &param,
                                         std::ostream & os) {
-    DEBUG(8, "reading ZALIGNMENTRES");
+    DEBUG(8, "reading ZAXISORIBIAS");
 
     std::stringstream exampleblock;
     // lines starting with 'exampleblock<<"' and ending with '\n";' (spaces don't matter)
     // will be used to generate snippets that can be included in the doxygen doc;
     // the first line is the tag
-    exampleblock << "ZALIGNMENTRES\n";
-    exampleblock << "#   NTZAL 0,1,2 controls z-axis angle restraining\n";
+    exampleblock << "ZAXISORIBIAS\n";
+    exampleblock << "#   NTZOR 0,1,2 controls z-axis orientation biasing\n";
     exampleblock << "#        -2: 1, but without trigonometric functions for potential/forces\n";
     exampleblock << "#        -1: 1, but without arccos function for potential/forces\n";
-    exampleblock << "#         0: no z-axis angle restraining (default)\n";
-    exampleblock << "#         1: instantaneous, using force constant CZAL\n";
-    exampleblock << "#         2: instantaneous, using force constant CZAL x W0\n";
-    exampleblock << "#    CZAL >= 0.0 force constant for z-axis angle restraining\n";
-    exampleblock << "#  NTWZAL >= 0 write every NTWZALth step dist. restr. information to external file\n";
-    exampleblock << "#   NTZAL    CZAL    NTWZAL\n";
+    exampleblock << "#         0: no z-axis orientation biasing (default)\n";
+    exampleblock << "#         1: instantaneous, using force constant CZOR\n";
+    exampleblock << "#         2: instantaneous, using force constant CZOR x W0\n";
+    exampleblock << "#    CZOR >= 0.0 force constant for z-axis orientation biasing\n";
+    exampleblock << "#  NTWZOR >= 0 write every NTWZORth step dist. restr. information to external file\n";
+    exampleblock << "#   NTZOR    CZOR    NTWZOR\n";
     exampleblock << "        0     0.0     0\n";
     exampleblock << "END\n";
 
 
-    std::string blockname = "ZALIGNMENTRES";
+    std::string blockname = "ZAXISORIBIAS";
     Block block(blockname, exampleblock.str());
 
     if (block.read_buffer(m_block[blockname], false) == 0) {
         block_read.insert(blockname);
 
-        block.get_next_parameter("NTZAL", param.zalignmentres.zalignmentres, "", "0, 1, -1, 2, -2");
-        block.get_next_parameter("CZAL", param.zalignmentres.K, ">=0", "");
-        block.get_next_parameter("NTWZAL", param.zalignmentres.write, ">=0", "");
+        block.get_next_parameter("NTZOR", param.zaxisoribias.zaxisoribias, "", "0, 1, -1, 2, -2");
+        block.get_next_parameter("CZOR", param.zaxisoribias.K, ">=0", "");
+        block.get_next_parameter("NTWZOR", param.zaxisoribias.write, ">=0", "");
 
         block.get_final_messages();
     }
-} // ZALIGNMENTRES
+} // ZAXISORIBIAS
 
 /**
  * @section perscale PERSCALE block

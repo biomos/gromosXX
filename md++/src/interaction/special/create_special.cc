@@ -56,7 +56,7 @@
 #include "../../interaction/special/order_parameter_restraint_interaction.h"
 #include "../../interaction/special/rdc_restraint_interaction.h"
 #include "../../interaction/special/tf_rdc_restraint_interaction.h"
-#include "../../interaction/special/zaxis_alignment_restraint_interaction.h"
+#include "../../interaction/special/zaxis_orientation_bias_interaction.h"
 #include "../../interaction/special/symmetry_restraint_interaction.h"
 
 #include "../../interaction/bonded/dihedral_interaction.h"
@@ -355,18 +355,18 @@ int interaction::create_special(interaction::Forcefield & ff,
     ff.push_back(tfr);
   }
 
-  // Z-axis angle restraints
+  // Z-axis orientation bias
   // as this function is called before read_special, we do not know if we
   // really need the interactions
   // so we generate them, but need to check inside if we really do something
-  if (abs(param.zalignmentres.zalignmentres) == 1 ||
-     abs(param.zalignmentres.zalignmentres) == 2){
+  if (abs(param.zaxisoribias.zaxisoribias) == 1 ||
+     abs(param.zaxisoribias.zaxisoribias) == 2){
 
     if(!quiet)
-      os <<"\tZ-axis angle restraints\n";
+      os <<"\tZ-axis orientation biass\n";
 
-    interaction::Zaxis_Alignment_Restraint_Interaction *zr =
-      new interaction::Zaxis_Alignment_Restraint_Interaction();
+    interaction::Zaxis_Orientation_Bias_Interaction *zr =
+      new interaction::Zaxis_Orientation_Bias_Interaction();
 
     ff.push_back(zr);
   }

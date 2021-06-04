@@ -504,7 +504,7 @@ namespace io
     os << type << "Orderparamrest       : " << std::setw(30) << e.oparam_total << "\n";
     os << type << "RDCrest              : " << std::setw(30) << e.rdc_total << "\n";
     os << type << "TFRDCrest            : " << std::setw(30) << e.tfrdc_total << "\n";
-    os << type << "Zalignmentrest       : " << std::setw(30) << e.zalignmentres_total << "\n";
+    os << type << "Zaxisoribiasrest       : " << std::setw(30) << e.zaxisoribias_total << "\n";
     os << type << "Symmetry restraints  : " << std::setw(30) << e.symrest_total << "\n";
     os << type << "EDS reference        : " << std::setw(30) << e.eds_vr << "\n";
     os << type << "GAMD total           : " << std::setw(30) << e.gamd_DV_total << "\n";
@@ -766,8 +766,8 @@ namespace io
     os << "\n" << std::setw(20) << type + "TFRDCrest";
     for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << e.tfrdc_energy[i];
 
-    os << "\n" << std::setw(20) << type + "Zalignmentrest";
-    for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << e.zalignmentres_energy[i];
+    os << "\n" << std::setw(20) << type + "Zaxisoribiasrest";
+    for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << e.zaxisoribias_energy[i];
 
     os << "\nEND\n";
 

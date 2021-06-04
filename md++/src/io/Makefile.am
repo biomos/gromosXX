@@ -31,7 +31,7 @@ xxiotopo_HEADERS = topology/in_jvalue.h\
 	topology/in_symrest.h\
 	topology/in_rdc.h\
 	topology/in_tf_rdc.h\
-	topology/in_zaxisalignment.h
+	topology/in_zaxisoribias.h
 
 xxioconfdir = $(includedir)/md++/io/configuration
 xxioconf_HEADERS = configuration/in_configuration.h\
@@ -78,7 +78,7 @@ libgroio_la_SOURCES =	io.cc\
 	topology/in_symrest.cc\
 	topology/in_rdc.cc\
 	topology/in_tf_rdc.cc\
-	topology/in_zaxisalignment.cc
+	topology/in_zaxisoribias.cc
 
 libgroio_la_LIBADD = libgroiocheck.la
 

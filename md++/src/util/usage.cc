@@ -172,14 +172,14 @@ void util::get_usage(util::Known const &knowns, std::string &usage, std::string 
     usage += "\t# @rdc       filename\n\n";
   }
 
-  if (knowns.count("tfrdc")){
+  if (knowns.count("tfrdcres")){
     usage += "\t# tensor-free RDC restraints specification\n";
-    usage += "\t# @tfrdc       filename\n\n";
+    usage += "\t# @tfrdcres       filename\n\n";
   }
 
-  if (knowns.count("zanglerest")){
-    usage += "\t# z-axis angle restraints specification\n";
-    usage += "\t# @zanglerest  filename\n\n";
+  if (knowns.count("zaxisoribias")){
+    usage += "\t# z-axis orientation bias specification\n";
+    usage += "\t# @zaxisoribias  filename\n\n";
   }
 
   if (knowns.count("friction")){

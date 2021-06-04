@@ -468,7 +468,7 @@ fluct.prop = old_fluct.prop + dt * e.prop * e.prop
   ENERGY_AVG(oparam_total);
   ENERGY_AVG(rdc_total);
   ENERGY_AVG(tfrdc_total);
-  ENERGY_AVG(zalignmentres_total);
+  ENERGY_AVG(zaxisoribias_total);
   ENERGY_AVG(symrest_total);
   ENERGY_AVG(constraints_total);
   ENERGY_AVG(self_total);
@@ -558,7 +558,7 @@ fluct.prop = old_fluct.prop + dt * e.prop * e.prop
     ENERGY_AVG(oparam_energy[i]);
     ENERGY_AVG(rdc_energy[i]);
     ENERGY_AVG(tfrdc_energy[i]);
-    ENERGY_AVG(zalignmentres_energy[i]);
+    ENERGY_AVG(zaxisoribias_energy[i]);
     ENERGY_AVG(self_energy[i]);
   }
 
@@ -721,7 +721,7 @@ void configuration::Average::Block_Average
   ENERGY_RES(oparam_total);
   ENERGY_RES(rdc_total);
   ENERGY_RES(tfrdc_total);
-  ENERGY_RES(zalignmentres_total);
+  ENERGY_RES(zaxisoribias_total);
   ENERGY_RES(symrest_total);
   ENERGY_RES(constraints_total);
   ENERGY_RES(entropy_term);
@@ -797,7 +797,7 @@ void configuration::Average::Block_Average
     ENERGY_RES(oparam_energy[i]);
     ENERGY_RES(rdc_energy[i]);
     ENERGY_RES(tfrdc_energy[i]);
-    ENERGY_RES(zalignmentres_energy[i]);
+    ENERGY_RES(zaxisoribias_energy[i]);
     ENERGY_RES(self_energy[i]);
   }
 

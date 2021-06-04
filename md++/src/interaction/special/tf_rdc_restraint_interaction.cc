@@ -219,7 +219,7 @@ int interaction::TF_RDC_Restraint_Interaction::calculate_interactions
         topology::Topology & topo,
         configuration::Configuration & conf,
         simulation::Simulation & sim) {
-  m_timer.start();
+  m_timer.start(sim);
   SPLIT_VIRIAL_BOUNDARY(_calculate_tf_rdc_restraint_interactions,
           topo, conf, sim);
   m_timer.stop();

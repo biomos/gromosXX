@@ -4141,22 +4141,22 @@ namespace simulation
     }/** tensor-free RDC parameters */ tfrdc;
 
     /**
-    * @struct zalignmentres_struct
-    * ZALIGNMENTRES block
+    * @struct zaxisoribias_struct
+    * ZAXISORIBIAS block
     */
-    struct zalignmentres_struct
+    struct zaxisoribias_struct
     {
      /**
       * Constructor
       * Default values:
-      * - zalignmentres 0 (no z-axis angle restraints)
+      * - zaxisoribias 0 (no z-axis orientation biass)
       * - K 0
       * - read 0
       * - write 0
       */
 
-     zalignmentres_struct()
-    : zalignmentres(0),
+     zaxisoribias_struct()
+    : zaxisoribias(0),
     K(0),
     read(0),
     virial(0),
@@ -4166,9 +4166,9 @@ namespace simulation
      }
 
      /**
-      * z-axis angle restraints on/off
+      * z-axis orientation biass on/off
       */
-     int zalignmentres;
+     int zaxisoribias;
 
      /**
       * force constant K
@@ -4195,7 +4195,7 @@ namespace simulation
       */
      unsigned int write;
 
-    }/** Z-axis angle restraints parameters */ zalignmentres;
+    }/** Z-axis orientation biass parameters */ zaxisoribias;
 
     struct qmmm_struct {
       /**

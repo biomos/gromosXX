@@ -86,7 +86,7 @@
  * - @ref  orderparamres
  * - @ref  rdcres
  * - @ref  tfrdcres
- * - @ref  zalignmentres
+ * - @ref  zaxisoribias
  * - @ref  qmmm
  * - @ref  xrayres
  * - @ref  amber
@@ -264,9 +264,9 @@ namespace io {
     void read_TFRDCRES(simulation::Parameter &param, std::ostream & os = std::cout);
 
     /**
-    * read ZALIGNMENTRES block.
+    * read ZAXISORIBIAS block.
     */
-    void read_ZALIGNMENTRES(simulation::Parameter &param, std::ostream & os = std::cout);
+    void read_ZAXISORIBIAS(simulation::Parameter &param, std::ostream & os = std::cout);
     
     /**
      * read PERSCALE block.
