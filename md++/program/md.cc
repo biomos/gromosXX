@@ -61,6 +61,8 @@
  * <tr><td> \@bsleus</td><td>&lt;@ref bsleus "Ball & Stick Local Elevation topology"&gt;</td><td style="color:#088A08">in</td></tr>
  * <tr><td> \@friction</td><td>&lt;@ref friction "atomic friction coefficients"&gt;</td><td style="color:#088A08">in</td></tr>
  * <tr><td> \@qmmm</td><td>&lt;@ref qmmm "QM/MM specification"&gt;</td><td style="color:#088A08">in</td></tr>
+ * <tr><td> \@tfrdcres</td><td>&lt;@ref tfrdcres "tensor-free RDC restraints specification"&gt;</td><td style="color:#088A08">in</td></tr>
+ * <tr><td> \@zaxisoribias</td><td>&lt;@ref zaxisoribias "z-axis orientation bias specification"&gt;</td><td style="color:#088A08">in</td></tr>
  * <tr><td> \@print</td><td>&lt;print additional information&gt; </td><td></td></tr>
  * <tr><td> \@anatrj</td><td>&lt;re-analyze trajectory&gt; </td><td style="color:#088A08">in</td></tr>
  * <tr><td> \@verb</td><td>&lt;@ref debug "control verbosity"&gt;</td><td></td></tr>
@@ -112,7 +114,7 @@ int main(int argc, char *argv[]){
   knowns << "topo" << "conf" << "input" << "verb" << "pttopo" << "trc" << "fin"
          << "trv" << "trf" << "trs" << "tre" << "trg" << "bae" << "bag"
          << "posresspec" << "refpos" <<"distrest" << "angrest" << "dihrest" << "jval"
-         << "xray" << "sym" << "order" << "rdc" << "tfrdc" << "zanglerest"
+         << "xray" << "sym" << "order" << "rdc" << "tfrdcres" << "zaxisoribias"
          << "lud" << "led" << "bsleus" << "anatrj" << "print" << "friction"
          << "qmmm" << "version" << "develop" << "gamd";
 

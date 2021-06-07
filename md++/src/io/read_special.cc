@@ -299,11 +299,11 @@ int io::read_special(io::Argument const & args,
 	if (sim.param().tfrdc.mode != simulation::tfrdc_restr_off){
     io::igzstream tfrdc_file;
 
-    if (args.count("tfrdc") != 1){
-      io::messages.add("tensor-free RDC restraints: no data file specified (use @tfrdc)",
+    if (args.count("tfrdcres") != 1){
+      io::messages.add("tensor-free RDC restraints: no data file specified (use @tfrdcres)",
 		       "read special", io::message::error);
     } else {
-      tfrdc_file.open(args["tfrdc"].c_str());
+      tfrdc_file.open(args["tfrdcres"].c_str());
       if (!tfrdc_file.is_open()){
 	io::messages.add("opening tensor-free RDC restraints file failed!\n",
 			 "read_special", io::message::error);
@@ -312,7 +312,7 @@ int io::read_special(io::Argument const & args,
         ip.quiet = quiet;
 
         ip.read(topo, sim, os);
-        io::messages.add("tensor-free RDC restraints read from " + args["tfrdc"] +
+        io::messages.add("tensor-free RDC restraints read from " + args["tfrdcres"] +
                 "\n" + util::frame_text(ip.title),
                 "read special", io::message::notice);
       }
