@@ -5187,7 +5187,7 @@ void io::In_Parameter::read_QMMM(simulation::Parameter & param,
     param.qmmm.write = write;
     if (param.qmmm.qmmm == simulation::qmmm_mechanical && param.qmmm.cutoff != 0.0)
         io::messages.add("QMMM block: RCUTQM > 0.0 has no effect for mechanical embedding scheme",
-            "io::In_Parameter",
+            "In_Parameter",
             io::message::warning);
 
     block.get_final_messages();
