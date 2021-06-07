@@ -70,6 +70,21 @@ util::replica_MPI_Slave::replica_MPI_Slave(io::Argument _args, int cont, int glo
     }
     DEBUG(6, "replica_MPI_SLAVE "<< globalThreadID <<":Constructor:\t  "<< globalThreadID <<":\t REad in input already");
 
+    /**
+     * INIT OUTPUT
+     */
+    // set output file
+    std::stringstream tmp;
+    tmp << "_" << (simulationID+1);
+    std::string out;
+    std::multimap< std::string, std::string >::iterator it = args.lower_bound(("repout"));
+    size_t pos = (*it).second.find_last_of(".");
+    (*it).second.insert(pos, tmp.str());
+
+    MPI_Barrier(MPI_COMM_WORLD); // wait for parent process to create output file
+    os = new std::ofstream((*it).second.c_str(), std::ios::app);
+
+
     //TODO: HERE?
     md.init(topo, conf, sim, *os, true);
 

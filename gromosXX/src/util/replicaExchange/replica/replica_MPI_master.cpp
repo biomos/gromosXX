@@ -66,16 +66,7 @@ util::replica_MPI_Master::replica_MPI_Master(io::Argument _args, int cont,  int 
       MPI_Abort(MPI_COMM_WORLD, E_INPUT_ERROR);
     }
     DEBUG(6, "replica_MPI_MASTER "<< globalThreadID <<":Constructor:\t  "<< globalThreadID <<":\t REad in input already");
-    
-    //TODO: HERE?
-    md.init(topo, conf, sim, *os, true);
 
-    //init();
-    
-    /**
-     * MASTER SPECIFICS:
-     */
-    
     /**
      * INIT OUTPUT
      */
@@ -86,9 +77,20 @@ util::replica_MPI_Master::replica_MPI_Master(io::Argument _args, int cont,  int 
     std::multimap< std::string, std::string >::iterator it = args.lower_bound(("repout"));
     size_t pos = (*it).second.find_last_of(".");
     (*it).second.insert(pos, tmp.str());
+
     os = new std::ofstream((*it).second.c_str());
+    MPI_Barrier(MPI_COMM_WORLD); // give signal to child processes that output file was created
 
     util::print_title(true, *os, true); // printing read in.
+
+    //TODO: HERE?
+    md.init(topo, conf, sim, *os, true);
+
+    //init();
+    
+    /**
+     * MASTER SPECIFICS:
+     */
 
     // set trajectory
     std::stringstream trajstr;
