@@ -839,6 +839,11 @@ void io::In_QMMM::read_zone(topology::Topology& topo
               >> spin_mult;
   if (blockname == "BUFFERZONE") {
     _lineStream >> sim.param().qmmm.buffer_zone.cutoff;
+    if (sim.param().pairlist.skip_step > 1) {
+    // Adaptive QM buffer and skipping pairlist may suddenly appear/disappear particles
+      io::messages.add("BUFFERZONE block: With adaptive QM buffer, the pairlist should be generated every step"
+                      , "In_QMMM", io::message::warning);
+    }
     sim.param().qmmm.buffer_zone.charge = charge;
     sim.param().qmmm.buffer_zone.spin_mult = spin_mult;
   }

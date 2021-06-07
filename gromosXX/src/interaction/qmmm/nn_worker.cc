@@ -156,6 +156,7 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
     uint32_t atomic_number = it->atomic_number;
     py::list py_coordinates;
     math::Vec nn_pos = it->pos * length_to_nn;
+    DEBUG(15, "atom to NN: " << it->index << " : " << math::v2s(nn_pos));
     py_coordinates.attr("append")(nn_pos[0]);
     py_coordinates.attr("append")(nn_pos[1]);
     py_coordinates.attr("append")(nn_pos[2]);
@@ -191,6 +192,7 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
     it->force[1] = molecule.attr("get_forces")().attr("item")(i,1).cast<double >();
     it->force[2] = molecule.attr("get_forces")().attr("item")(i,2).cast<double >();
     it->force *= this->param->unit_factor_force;
+    DEBUG(15, "force from NN, atom " << it->index << " : " << math::v2s(it->force));
   }
 
   // Run validation, if asked for

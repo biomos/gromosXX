@@ -558,10 +558,17 @@ int interaction::QM_Zone::_get_buffer_atoms(topology::Topology& topo,
     if (topo.is_qm_buffer(i)) {
       if (buffer_atoms.count(i)) {
         topo.is_qm_buffer(i) = 1;
+        DEBUG(9, "Atom " << i << " in adaptive buffer");
       } else {
         topo.is_qm_buffer(i) = -1; // temporarily disabled buffer atom
+        DEBUG(9, "Atom " << i << " not in adaptive buffer");
       }
     }
+  }
+
+  DEBUG(15, "Buffer atoms:");
+  for (std::set<QM_Atom>::const_iterator it = buffer_atoms.begin(); it != buffer_atoms.end(); ++it) {
+    DEBUG(15, it->index);
   }
 
   // And merge with QM
