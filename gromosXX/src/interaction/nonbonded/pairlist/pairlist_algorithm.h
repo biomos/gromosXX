@@ -153,11 +153,11 @@ namespace interaction
       switch (qmmm) {
         case simulation::qmmm_off: break;
         case simulation::qmmm_mechanical: {
-          if (topo.is_qm(atom1) &&
-                (topo.is_qm(atom2) || topo.is_qm_buffer(atom2))
-            ||
-              topo.is_qm(atom2) &&
-                (topo.is_qm(atom1) || topo.is_qm_buffer(atom1))
+          if ((topo.is_qm(atom1) &&
+                (topo.is_qm(atom2) || topo.is_adaptive_qm_buffer(atom2)))
+              ||
+              (topo.is_qm(atom2) &&
+                (topo.is_qm(atom1) || topo.is_adaptive_qm_buffer(atom1)))
           )
             return true;
           break;

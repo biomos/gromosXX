@@ -50,7 +50,7 @@ void interaction::QM_Zone::clear() {
   this->link.clear();
 }
 
-int interaction::QM_Zone::init(const topology::Topology& topo, 
+int interaction::QM_Zone::init(topology::Topology& topo, 
                                const configuration::Configuration& conf, 
                                const simulation::Simulation& sim) {
   int err;
@@ -72,7 +72,7 @@ int interaction::QM_Zone::init(const topology::Topology& topo,
   return 0;
 }
 
-int interaction::QM_Zone::update(const topology::Topology& topo, 
+int interaction::QM_Zone::update(topology::Topology& topo, 
                                  const configuration::Configuration& conf, 
                                  const simulation::Simulation& sim) {
   this->zero();
@@ -521,14 +521,14 @@ bool interaction::QM_Zone::skip_cg<interaction::MM_Atom>
   return (topo.is_qm(index) || topo.is_qm_buffer(index));
 }
 
-void interaction::QM_Zone::get_buffer_atoms(const topology::Topology& topo, 
+void interaction::QM_Zone::get_buffer_atoms(topology::Topology& topo, 
                                             const configuration::Configuration& conf, 
                                             const simulation::Simulation& sim) {
   SPLIT_BOUNDARY(this->_get_buffer_atoms, topo, conf, sim);
 }
 
 template<math::boundary_enum B>
-int interaction::QM_Zone::_get_buffer_atoms(const topology::Topology& topo, 
+int interaction::QM_Zone::_get_buffer_atoms(topology::Topology& topo, 
                                             const configuration::Configuration& conf, 
                                             const simulation::Simulation& sim) {
   /** Here we need to iterate over all buffer atoms and see, if they are within the
@@ -553,6 +553,17 @@ int interaction::QM_Zone::_get_buffer_atoms(const topology::Topology& topo,
   if ((err = this->gather_chargegroups<B>(topo, conf, sim, buffer_atoms, cutoff2)))
     return err;
   
+  // update the QM buffer topology so the pairlist algorithm can skip them
+  for (unsigned i = 0; i < topo.num_atoms(); ++i) {
+    if (topo.is_qm_buffer(i)) {
+      if (buffer_atoms.count(i)) {
+        topo.is_qm_buffer(i) = 1;
+      } else {
+        topo.is_qm_buffer(i) = -1; // temporarily disabled buffer atom
+      }
+    }
+  }
+
   // And merge with QM
   this->qm.insert(buffer_atoms.begin(), buffer_atoms.end());
 

@@ -950,7 +950,7 @@ inline int interaction::Grid_Cell_Pairlist::pair(
   }// Solvent - solute
   else if (second >= first_solvent) {
     DEBUG(15, "Solute - Solvent");
-    if (t_qm_excluded<cutoff_trait>(*mytopo, qmmm, first)) {
+    if (t_qm_excluded<cutoff_trait>(*mytopo, qmmm, first, second)) {
 			DEBUG(9, "Skipping pair: " << first << "-" << second);
       return 0;
     }
