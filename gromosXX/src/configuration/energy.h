@@ -179,6 +179,10 @@ namespace configuration
      * total energy of volume term
      */
     double sasa_volume_total;
+    /**
+     * energy difference of validation NN model
+     */
+    double nn_valid;
 
     /** ANITA
     * total A_lj for each lambda

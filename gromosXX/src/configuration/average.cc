@@ -450,6 +450,7 @@ fluct.prop = old_fluct.prop + dt * e.prop * e.prop
   ENERGY_AVG(self_total);
   ENERGY_AVG(eds_vr);
   ENERGY_AVG(entropy_term);
+  ENERGY_AVG(nn_valid);
 
   // ANITA
   for(size_t i=0; i < e.A_lj_total.size(); ++i){
@@ -690,6 +691,7 @@ void configuration::Average::Block_Average
   ENERGY_RES(constraints_total);
   ENERGY_RES(entropy_term);
   ENERGY_RES(self_total);
+  ENERGY_RES(nn_valid);
 
   // ANITA
   for(size_t i=0; i < e.A_lj_total.size(); ++i){

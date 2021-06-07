@@ -64,6 +64,7 @@ eds_emin(0.0),
 eds_globmin(0.0),
 eds_globminfluc(0.0),
 entropy_term(0.0),
+nn_valid(0.0),
 m_ewarn(1E99){         
 }
 
@@ -572,6 +573,7 @@ double configuration::Energy::get_energy_by_index(const unsigned int & index) {
     case 41 : return qm_total;
     case 42 : return bsleus_total;
     case 43 : return rdc_total;
+    case 44 : return nn_valid;
   }
   return 0.0;
 }

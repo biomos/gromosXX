@@ -194,16 +194,19 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
   }
 
   // Run validation, if asked for
-  if (!sim.param().qmmm.nn.val_model_path.empty() && sim.steps() % sim.param().qmmm.nn.val_steps == 0) {
+  if (!sim.param().qmmm.nn.val_model_path.empty()
+      && (sim.steps() % sim.param().qmmm.nn.val_steps == 0
+       || sim.steps() % sim.param().write.energy == 0)) {
     //py::object val_molecule(molecule); we don't need to create a new (reference to a) molecule 
     molecule.attr("set_calculator")(val_calculator);
     // Energy of validation model
     double val_energy = molecule.attr("get_potential_energy")().cast<double>();
-    double dev = energy - val_energy;
+    double dev = (energy - val_energy) * this->param->unit_factor_energy;
+    conf.current().energies.nn_valid = dev;
     DEBUG(7, "Deviation from validation model: " << dev);
     if (fabs(dev) > sim.param().qmmm.nn.val_thresh) {
       std::ostringstream msg;
-      msg << "Deviation from validation model above threshold: " << dev;
+      msg << "Deviation from validation model above threshold in step " << sim.steps() << " : " << dev;
       io::messages.add(msg.str(), this->name(), io::message::warning);
     }
   }

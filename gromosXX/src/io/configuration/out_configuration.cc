@@ -2887,7 +2887,8 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
           << std::setw(18) << e.entropy_term << "\n" // 40
           << std::setw(18) << e.qm_total << "\n" // 41
           << std::setw(18) << e.bsleus_total << "\n" // 42
-          << std::setw(18) << e.rdc_total << "\n"; // 43
+          << std::setw(18) << e.rdc_total << "\n" // 43
+          << std::setw(18) << e.nn_valid << "\n"; // 44
 
   os << "# baths\n";
   os << numbaths << "\n";
