@@ -1278,7 +1278,7 @@ namespace topology {
     util::Virtual_Atom v2;
 
     /**
-    * restraint distance.
+    * restraint angle in degrees.
     */
     double a0;
     /**

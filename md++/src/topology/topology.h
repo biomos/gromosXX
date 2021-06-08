@@ -1525,7 +1525,7 @@ namespace topology
     }
 
     /**
-     * const z-axis orientation biass accessor.
+     * const z-axis orientation bias accessor.
      */
     std::vector<zaxisori_restraint_struct> const & zaxisori_restraints()const
     {
@@ -1533,7 +1533,7 @@ namespace topology
     }
 
     /**
-     *  z-axis orientation biass accessor.
+     *  z-axis orientation bias accessor.
      */
     std::vector<zaxisori_restraint_struct>  & zaxisori_restraints()
     {
@@ -2005,7 +2005,7 @@ namespace topology
      */
      std::vector<tf_rdc_restraint_struct> m_tf_rdc_restraint;
      /**
-    * z-axis orientation biass
+    * z-axis orientation bias
     */
     std::vector<zaxisori_restraint_struct> m_zaxisori_restraint;
     /**

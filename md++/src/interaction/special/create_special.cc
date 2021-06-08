@@ -363,7 +363,7 @@ int interaction::create_special(interaction::Forcefield & ff,
      abs(param.zaxisoribias.zaxisoribias) == 2){
 
     if(!quiet)
-      os <<"\tZ-axis orientation biass\n";
+      os <<"\tZ-axis orientation bias\n";
 
     interaction::Zaxis_Orientation_Bias_Interaction *zr =
       new interaction::Zaxis_Orientation_Bias_Interaction();
