@@ -37,7 +37,6 @@ int _calculate_tf_rdc_restraint_interactions
 (topology::Topology & topo,
         configuration::Configuration & conf,
         simulation::Simulation & sim) {
-    const double n_avogadro = 6.02214179e23;                    // [1 / mol]
     // loop over the tensor-free RDC restraints
     std::vector<topology::tf_rdc_restraint_struct>::iterator
     it = topo.tf_rdc_restraints().begin(),
@@ -53,7 +52,7 @@ int _calculate_tf_rdc_restraint_interactions
       exptaur = exp(-sim.time_step_size() / sim.param().tfrdc.taur);    // [-]
     if (sim.param().tfrdc.taut > 0.0)
       exptaut = exp(-sim.time_step_size() / sim.param().tfrdc.taut);    // [-]
-    const double & K = sim.param().tfrdc.K * n_avogadro;        // [kJ ps^2 / mol]
+    const double & K = sim.param().tfrdc.K * 1e24;        // [kJ ps^2 / mol]
 
     // compute constant force terms
     const double dRavedR = 1.0 - exptaur;                       // [-]
@@ -290,8 +289,8 @@ int interaction::TF_RDC_Restraint_Interaction::init
 
       os.precision(4);
       os << std::setw(10) << it->normalisation_distance << std::setw(10) << it->gyri/0.010364272 << std::setw(9)
-      << it->gyrj/0.010364272 << std::setw(12) << it->D0/0.000000000001 << std::setw(11)
-      << it->dD0/0.000000000001 << std::setw(8) << it->w << std::endl;
+      << it->gyrj/0.010364272 << std::setw(12) << it->D0*1000000000000 << std::setw(11)
+      << it->dD0*1000000000000 << std::setw(8) << it->w << std::endl;
     }
     os << "END" << std::endl;
   }

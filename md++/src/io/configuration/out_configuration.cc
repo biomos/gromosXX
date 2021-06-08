@@ -2941,8 +2941,8 @@ void io::Out_Configuration::_print_tf_rdc_restraints(
     //os << std::setw(6) << i;
     os.precision(m_rdc_restraint_precision);
     os.setf(std::ios::fixed, std::ios::floatfield);
-    os << std::setw(m_width) << *RDC_avg_it/0.000000000001;
-    os << " " << std::setw(m_width) << *RDC_it/0.000000000001;
+    os << std::setw(m_width) << *RDC_avg_it*1000000000000;
+    os << " " << std::setw(m_width) << *RDC_it*1000000000000;
     os.setf(std::ios::scientific, std::ios::floatfield);
     os.precision(m_rdc_restraint_precision);
     os << std::setw(m_width) << *e_it << std::endl;

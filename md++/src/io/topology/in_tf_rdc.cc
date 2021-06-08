@@ -32,7 +32,7 @@
  * \c G1/G2 is the gyromagnetic ratio for nucleus 1/nucleus 2 in
  * 10^6 rad /(T s)
  * \c D0 is the experimental RDC in Hz
- * \c DD0 is a deviation which is allowed
+ * \c DD0 is a deviation which is allowed (in Hz)
  * \c WTFRDC a weight factor (multiplied by the force constant specified in
  * the input file)
  * @verbatim
