@@ -179,8 +179,8 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
   molecule.attr("set_calculator")(ml_calculator);
   
   // Write the energy
-  double energy = molecule.attr("get_potential_energy")().cast<double>();
-  qm_zone.QM_energy() = energy * this->param->unit_factor_energy;
+  const double energy = molecule.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
+  qm_zone.QM_energy() = energy;
  
 
   // Get the forces
@@ -213,8 +213,8 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
     //py::object val_molecule(molecule); we don't need to create a new (reference to a) molecule 
     molecule.attr("set_calculator")(val_calculator);
     // Energy of validation model
-    double val_energy = molecule.attr("get_potential_energy")().cast<double>();
-    double dev = (energy - val_energy) * this->param->unit_factor_energy;
+    const double val_energy = molecule.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
+    const double dev = energy - val_energy;
     conf.current().energies.nn_valid = dev;
     DEBUG(7, "Deviation from validation model: " << dev);
     if (fabs(dev) > sim.param().qmmm.nn.val_thresh) {
