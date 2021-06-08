@@ -4130,7 +4130,7 @@ namespace simulation
      /**
       * Constructor
       * Default values:
-      * - zaxisoribias 0 (no z-axis orientation biass)
+      * - zaxisoribias 0 (no z-axis orientation bias)
       * - K 0
       * - read 0
       * - write 0
@@ -4147,7 +4147,7 @@ namespace simulation
      }
 
      /**
-      * z-axis orientation biass on/off
+      * z-axis orientation bias on/off
       */
      int zaxisoribias;
 
@@ -4176,7 +4176,7 @@ namespace simulation
       */
      unsigned int write;
 
-    }/** Z-axis orientation biass parameters */ zaxisoribias;
+    }/** Z-axis orientation bias parameters */ zaxisoribias;
 
     struct qmmm_struct {
       /**

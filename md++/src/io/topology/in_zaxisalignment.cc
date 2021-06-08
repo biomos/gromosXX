@@ -30,7 +30,7 @@ io::In_Zaxisoribias::read(topology::Topology& topo,
               simulation::Simulation & sim,
               std::ostream & os){
 
-  DEBUG(7, "reading in a z-axis orientation biass file");
+  DEBUG(7, "reading in a z-axis orientation bias file");
 
   if (!quiet)
     os << "Z-AXIS ORIENTATION BIAS\n";
@@ -40,19 +40,10 @@ io::In_Zaxisoribias::read(topology::Topology& topo,
 
   if (sim.param().zaxisoribias.zaxisoribias) {
     if (block_read.count("ZAXISORIBIASSPEC") == 0)
-     /**&& block_read.count("PERTDISRESSPEC") == 0
-     && block_read.count("MDISRESSPEC") == 0)*/
       io::messages.add("Z-axis orientation bias on but no ZAXISORIBIASSPEC found",
                "In_Zaxisoribias",
                io::message::error);
   }
-  /**if (sim.param().distancefield.distancefield) {
-    if (block_read.count("DFRESSPEC") == 0
-     && block_read.count("PERTDFRESSPEC") == 0)
-      io::messages.add("DF restraints on but neither DFRESSPEC nor PERTDFRESSPEC found",
-               "In_Distanceres",
-               io::message::error);
-  }*/
 
   for(std::map<std::string, std::vector<std::string> >::const_iterator
     it = m_block.begin(),
@@ -70,36 +61,12 @@ io::In_Zaxisoribias::read(topology::Topology& topo,
 }
 
 /**
- * @section distanceresspec DISTANCERESSPEC block
- * The DISTANCERESSPEC block is read from the distance restraints specification
- * file.
- *
- * \c DISH is the carbon-hydrogen, \c DISC the carbon-carbon distance.
- * See @ref util::virtual_type for valid virtual atom types.
- * \c r0 is the restraint distance, \c w0 a weight factor (multiplied by the force
- * constant specified in the input file, \c CDIR) and rah specifies the type of
- * restraint (half harmonic repulsive, full harmonic, half harmonic attractive).
- * The restraint may be applied in a reduced set of dimensions, which is also set
- * by the value of \c rah. Allowed values of rah are \c dim - 1, \c dim or
- * \c dim + 1, where dim can take the following values:
- * - dim = 0  : dimensions to apply distance restraint: X, Y, Z
- * - dim = 10 : dimensions to apply distance restraint: X, Y
- * - dim = 20 : dimensions to apply distance restraint: X, Z
- * - dim = 30 : dimensions to apply distance restraint: Y, Z
- * - dim = 40 : dimension to apply distance restraint: X
- * - dim = 50 : dimension to apply distance restraint: Y
- * - dim = 60 : dimension to apply distance restraint: Z
- *
- * The type of restraint is determined as follows:
- * - rah = dim - 1: half harmonic repulsive distance restraint
- * - rah = dim: full harmonic distance restraint
- * - rah = dim + 1: half harmonic attractive distance restraint
- *
- * @todo add documentation for further rah values for restraining only x,y,z or combinations
- *
- * @snippet snippets/snippets.cc DISTANCERESSPEC
- * @sa util::virtual_type util::Virtual_Atom
+  * @section zaxisoribiasspec ZAXISORIBIASSPEC block
+  * This block is for biasing the angle of a vector with the z-axis. It is read
+  * from the z-axis bias specifcation file.
+ * @snippet snippets/snippets.cc ZAXISORIBIASSPEC
  */
+
 void io::In_Zaxisoribias::read_ZAXISORIBIASSPEC(topology::Topology &topo,
                       simulation::Simulation &sim,
                       std::ostream & os)  { // DISTANCERES
@@ -125,7 +92,7 @@ void io::In_Zaxisoribias::read_ZAXISORIBIASSPEC(topology::Topology &topo,
   exampleblock << "# DISH  DISC\n";
   exampleblock << "  0.1   0.153\n";
   exampleblock << "# i  j  k  l  type    i  j  k  l  type    a0    w0    rah\n";
-  exampleblock << "  1  0  0  0  0       10 12 11 13 3       0.2   1.0   0\n";
+  exampleblock << "  1  0  0  0  0       10 12 11 13 3       45   1.0   0\n";
   exampleblock << "END\n";
 
   //###BARTOSZ### What has to be changed here? ^
@@ -143,26 +110,26 @@ void io::In_Zaxisoribias::read_ZAXISORIBIASSPEC(topology::Topology &topo,
     if (!quiet) {
         switch (sim.param().zaxisoribias.zaxisoribias) {
           case 0:
-            os << "\tZ-axis orientation biass OFF\n";
+            os << "\tZ-axis orientation bias OFF\n";
             // how did you get here?
             break;
           case 1:
-            os << "\tZ-axis orientation biass ON\n";
+            os << "\tZ-axis orientation bias ON\n";
             break;
           case -1:
-            os << "\tZ-axis orientation biass ON\n"
+            os << "\tZ-axis orientation bias ON\n"
                     << "\tno arccos function involved\n";
             break;
           case 2:
-            os << "\tZ-axis orientation biass ON\n"
+            os << "\tZ-axis orientation bias ON\n"
                     << "\t\t(using force constant K*w0)\n";
             break;
           case -2:
-            os << "\tZ-axis orientation biass ON\n"
+            os << "\tZ-axis orientation bias ON\n"
                     << "\tno trigonometric function involved\n";
             break;
           default:
-            os << "\tZ-axis orientation biass ERROR\n";
+            os << "\tZ-axis orientation bias ERROR\n";
         }
     }
 
@@ -237,6 +204,10 @@ void io::In_Zaxisoribias::read_ZAXISORIBIASSPEC(topology::Topology &topo,
       block.get_next_parameter("W0", w0, ">=0", "");
       block.get_next_parameter("RAH", rah, "", "");
 
+      // move into range 0 to 180 degrees
+        if (a0 < 0) a0 *= -1;
+        while (a0 > 360) a0 -= 360;
+
     // g++ 3.2 fix
       if(!block.error()){
         util::virtual_type t1 = util::virtual_type(type1);
@@ -246,7 +217,7 @@ void io::In_Zaxisoribias::read_ZAXISORIBIASSPEC(topology::Topology &topo,
         util::Virtual_Atom v2(t2, atom2, dish, disc);
 
         topo.zaxisori_restraints().push_back
-          (topology::zaxisori_restraint_struct(v1,v2,a0,w0,rah));
+          (topology::zaxisori_restraint_struct(v1,v2,a0 * math::Pi / 180,w0,rah));
 
         if (!quiet){
           for(unsigned int i = 0; i < io::In_Zaxisoribias::MAX_ATOMS; i++) {

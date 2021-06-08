@@ -20,7 +20,7 @@ namespace io {
 
   /**
    * @class In_Zaxisoribias
-   * reads in a z-axis orientation biass file
+   * reads in a z-axis orientation bias file
    */
   class In_Zaxisoribias : public GInStream {
 
@@ -34,7 +34,7 @@ namespace io {
      */
     In_Zaxisoribias(std::istream& is) : GInStream(is) { readStream(); };
     /**
-     * Read in a z-axis orientation restraints file.
+     * Read in a z-axis orientation bias file.
      */
     void read(topology::Topology &topo,
 	      simulation::Simulation & sim,

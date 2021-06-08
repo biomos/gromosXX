@@ -324,7 +324,7 @@ int io::read_special(io::Argument const & args,
       io::igzstream zaxisoribias_file;
 
       if (args.count("zaxisoribias") != 1){
-        io::messages.add("z-axis orientation biass: no data file specified (use @zaxisoribias)",
+        io::messages.add("z-axis orientation bias: no data file specified (use @zaxisoribias)",
   		       "read special", io::message::error);
       } else {
         zaxisoribias_file.open(args["zaxisoribias"].c_str());
@@ -336,7 +336,7 @@ int io::read_special(io::Argument const & args,
           ip.quiet = quiet;
 
           ip.read(topo, sim, os);
-          io::messages.add("z-axis orientation biass read from " + args["zaxisoribias"] +
+          io::messages.add("z-axis orientation bias read from " + args["zaxisoribias"] +
                   "\n" + util::frame_text(ip.title),
                   "read special", io::message::notice);
         }

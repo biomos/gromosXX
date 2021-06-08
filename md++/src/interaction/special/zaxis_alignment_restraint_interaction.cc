@@ -38,7 +38,7 @@ static int _calculate_zaxis_orientation_bias_interactions
  simulation::Simulation & sim, double exponential_term,
 std::map<int,math::Vec> &rah_map, int &error)
 {
-  // loop over the z-axis orientation biass
+  // loop over the z-axis orientation bias
   std::vector<topology::zaxisori_restraint_struct>::const_iterator
     it = topo.zaxisori_restraints().begin(),
     to = topo.zaxisori_restraints().end();
