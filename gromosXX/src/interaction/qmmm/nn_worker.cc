@@ -90,8 +90,6 @@ int interaction::NN_Worker::init(simulation::Simulation& sim) {
     io::messages.add("Torch module version: " + version
             , this->name(), io::message::notice);
 
-  /** Load the model */
-  py::str model_path = sim.param().qmmm.nn.model_path;
   std::string device;
   switch(sim.param().qmmm.nn.device) {
     case simulation::nn_device_auto: {
@@ -117,21 +115,34 @@ int interaction::NN_Worker::init(simulation::Simulation& sim) {
       io::messages.add("Unknown NN device", this->name(), io::message::critical);
       return 1;
   }
+  /** Load the model */
+  py::str model_path = sim.param().qmmm.nn.model_path;
+  py::str ml_args_path = py_modules["os"].attr("path").attr("join")(py::cast('/').attr("join")(model_path.attr("split")('/')[py::slice(0,-1,1)]), "args.json");
+  py::object ml_model_args = py_modules["schnetpack"].attr("utils").attr("read_from_json")(ml_args_path);
   py::object ml_model = py_modules["torch"].attr("load")(model_path,"map_location"_a=py_modules["torch"].attr("device")(device));
   
-  
-  //py::object conn = ase.attr("db").attr("connect")(db_path);
-  // "map_location" parameter is to convert model trained on gpu to run on cpu, but seems not to work for my model
+  if (py::bool_(ml_model_args.attr("parallel"))) {
+    ml_model = ml_model.attr("module");
+  }
+
+  py::object ml_environment = py_modules["schnetpack"].attr("utils").attr("script_utils").attr("settings").attr("get_environment_provider")(ml_model_args, "device"_a=device);
 
   /** Initialize the ML calculator */
-  ml_calculator = py_modules["schnetpack"].attr("interfaces").attr("SpkCalculator")(ml_model, "energy"_a="energy", "forces"_a="forces", "device"_a=device);
+  ml_calculator = py_modules["schnetpack"].attr("interfaces").attr("SpkCalculator")(ml_model, "energy"_a="energy", "forces"_a="forces", "device"_a=device, "environment_provider"_a=ml_environment);
 
   if (!sim.param().qmmm.nn.val_model_path.empty()) {
     py::str val_model_path = sim.param().qmmm.nn.val_model_path;
+    py::str val_args_path = py_modules["os"].attr("path").attr("join")(py::cast('/').attr("join")(val_model_path.attr("split")('/')[py::slice(0,-1,1)]), "args.json");
+    py::object val_model_args = py_modules["schnetpack"].attr("utils").attr("read_from_json")(val_args_path);
     py::object val_model = py_modules["torch"].attr("load")(val_model_path,"map_location"_a=py_modules["torch"].attr("device")(device));
-    val_calculator = py_modules["schnetpack"].attr("interfaces").attr("SpkCalculator")(val_model, "energy"_a="energy", "forces"_a="forces", "device"_a=device);
+    py::object val_environment = py_modules["schnetpack"].attr("utils").attr("script_utils").attr("settings").attr("get_environment_provider")(val_model_args, "device"_a=device);
+    if (py::bool_(val_model_args.attr("parallel"))) {
+      val_model = val_model.attr("module");
+    }
+    val_calculator = py_modules["schnetpack"].attr("interfaces").attr("SpkCalculator")(val_model, "energy"_a="energy", "forces"_a="forces", "device"_a=device, "environment_provider"_a=val_environment);
   }
 
+  // Restore omp_num_threads
   #ifdef OMP
     omp_set_num_threads(num_threads);
   #endif
@@ -168,8 +179,8 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
   molecule.attr("set_calculator")(ml_calculator);
   
   // Write the energy
-  double energy = molecule.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
-  qm_zone.QM_energy() = energy; 
+  const double energy = molecule.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
+  qm_zone.QM_energy() = energy;
  
 
   // Get the forces
@@ -202,8 +213,8 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
     //py::object val_molecule(molecule); we don't need to create a new (reference to a) molecule 
     molecule.attr("set_calculator")(val_calculator);
     // Energy of validation model
-    double val_energy = molecule.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
-    double dev = energy - val_energy;
+    const double val_energy = molecule.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
+    const double dev = energy - val_energy;
     conf.current().energies.nn_valid = dev;
     DEBUG(7, "Deviation from validation model: " << dev);
     if (fabs(dev) > sim.param().qmmm.nn.val_thresh) {
