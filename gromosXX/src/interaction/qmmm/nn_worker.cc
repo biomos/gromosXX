@@ -168,8 +168,8 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
   molecule.attr("set_calculator")(ml_calculator);
   
   // Write the energy
-  double energy = molecule.attr("get_potential_energy")().cast<double>();
-  qm_zone.QM_energy() = energy * this->param->unit_factor_energy;
+  double energy = molecule.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
+  qm_zone.QM_energy() = energy; 
  
 
   // Get the forces
@@ -202,14 +202,28 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
     //py::object val_molecule(molecule); we don't need to create a new (reference to a) molecule 
     molecule.attr("set_calculator")(val_calculator);
     // Energy of validation model
-    double val_energy = molecule.attr("get_potential_energy")().cast<double>();
-    double dev = (energy - val_energy) * this->param->unit_factor_energy;
+    double val_energy = molecule.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
+    double dev = energy - val_energy;
     conf.current().energies.nn_valid = dev;
     DEBUG(7, "Deviation from validation model: " << dev);
     if (fabs(dev) > sim.param().qmmm.nn.val_thresh) {
       std::ostringstream msg;
       msg << "Deviation from validation model above threshold in step " << sim.steps() << " : " << dev;
       io::messages.add(msg.str(), this->name(), io::message::warning);
+      if(sim.param().qmmm.nn.val_forceconstant != 0.0){
+        // add a biasing force between the two NN networks
+        double dev_squared = (dev*dev - sim.param().qmmm.nn.val_thresh * sim.param().qmmm.nn.val_thresh);
+        qm_zone.QM_energy() += 0.25 * sim.param().qmmm.nn.val_forceconstant * dev_squared * dev_squared;
+        math::Vec val_force;
+        it = qm_zone.qm.begin();
+        for (unsigned i = 0; it != to; ++it, ++i) {
+          val_force[0] = molecule.attr("get_forces")().attr("item")(i,0).cast<double >();
+          val_force[1] = molecule.attr("get_forces")().attr("item")(i,1).cast<double >();
+          val_force[2] = molecule.attr("get_forces")().attr("item")(i,2).cast<double >();
+          val_force *= this->param->unit_factor_force;
+          it->force += sim.param().qmmm.nn.val_forceconstant * dev_squared * dev * (it->force - val_force);
+        }
+      }
     }
   }
 

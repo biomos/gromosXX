@@ -3856,6 +3856,7 @@ namespace simulation
                       , val_model_path() 
                       , val_thresh(0)
                       , val_steps(0)
+                      , val_forceconstant(0)
                       , model_type(false) 
                       , device(nn_device_auto) {}
         /**
@@ -3874,6 +3875,10 @@ namespace simulation
          * Number of steps between validations
          */
         unsigned val_steps;
+        /**
+         * Force constant to enforce agreement between NN models
+         */
+        double val_forceconstant;
         /**
          * nn model type
          */

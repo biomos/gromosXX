@@ -287,8 +287,8 @@ END
  * @verbatim
 NNVALID
 /path/to/schnetpack/model
-# NSTEPS    THRESHOLD
-     100          5.0
+# NSTEPS    THRESHOLD   BIASFORCE
+     100          5.0        10.0
 END
 @endverbatim
  *
@@ -645,10 +645,11 @@ io::In_QMMM::read(topology::Topology& topo,
         _lineStream.clear();
         _lineStream.str(line);
         unsigned val_steps;
-        double val_thresh;
-        _lineStream >> val_steps >> val_thresh;
+        double val_thresh, val_forceconstant;
+        _lineStream >> val_steps >> val_thresh >> val_forceconstant;
         sim.param().qmmm.nn.val_steps = val_steps;
         sim.param().qmmm.nn.val_thresh = val_thresh;
+        sim.param().qmmm.nn.val_forceconstant = val_forceconstant;
         if (_lineStream.fail()) {
           io::messages.add("bad line in NNVALID block",
                 "In_QMMM", io::message::error);
