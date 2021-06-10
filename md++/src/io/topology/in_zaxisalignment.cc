@@ -205,8 +205,8 @@ void io::In_Zaxisoribias::read_ZAXISORIBIASSPEC(topology::Topology &topo,
       block.get_next_parameter("RAH", rah, "", "");
 
       // move into range 0 to 180 degrees
-        if (a0 < 0) a0 *= -1;
         while (a0 > 360) a0 -= 360;
+        if (a0 < 0) a0 *= -1;
 
     // g++ 3.2 fix
       if(!block.error()){
