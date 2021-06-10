@@ -911,7 +911,8 @@ void io::Out_Configuration
                              (m_every_adde && ((sim.steps() % m_every_adde) == 0)) ||
                              (m_every_nemd && ((sim.steps() % m_every_nemd) == 0)) ||
                              (m_every_oparam && ((sim.steps() % m_every_oparam) == 0)) ||
-                             (m_every_rdc && ((sim.steps() % m_every_rdc) == 0)) ))
+                             (m_every_rdc && ((sim.steps() % m_every_rdc) == 0)) ||
+                             (m_every_tfrdc && ((sim.steps() % m_every_tfrdc) == 0)) ))
         _print_timestep(sim, m_special_traj);
 }
 
