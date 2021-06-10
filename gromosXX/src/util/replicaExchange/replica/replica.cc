@@ -167,7 +167,7 @@ void util::replica::run_MD() {
   DEBUG(4,  "replica "<< globalThreadID <<": run_MD:\t Start");      
   DEBUG(5, "replica "<< globalThreadID <<":run_MD:\t doing steps: "<<stepsPerRun<< " till: "<< stepsPerRun + curentStepNumber << " starts at: " << curentStepNumber << "TOTAL RUNS: "<< totalStepNumber );      
 
-  while ((unsigned int)(sim.steps()) < stepsPerRun + curentStepNumber) {
+  while ((unsigned int)(sim.steps()) < stepsPerRun + curentStepNumber+1) {
     traj->write(conf, topo, sim, io::reduced);
     // run a step
     DEBUG(5, "replica "<< globalThreadID <<":run_MD:\t simulation!:");
