@@ -166,7 +166,7 @@ util::replica_MPI_Master::replica_MPI_Master(io::Argument _args, int cont,  int 
 
     // random generator
     std::stringstream seed;
-    seed << sim.param().start.ig*simulationID;
+    seed << sim.param().start.ig*(simulationID+1);
     rng = new math::RandomGeneratorGSL(seed.str(), -1);
 
     *os << "==================================================\n"
@@ -204,7 +204,9 @@ void util::replica_MPI_Master::run_MD(){
     while ((unsigned int)(sim.steps()) <  stepsPerRun + curentStepNumber+1) {
       MPI_DEBUG(6, "replica_MPI_SLAVE " << globalThreadID << ":run_MD:\t step: "<< sim.steps() << " \tmaximal \t" << curentStepNumber+stepsPerRun);
 
-      traj->write(conf, topo, sim, io::reduced);
+      if(sim.steps() < stepsPerRun + curentStepNumber){   // we are doing a step too much, don't print last step.
+          traj->write(conf, topo, sim, io::reduced);
+      }
       // run a step
       DEBUG(5, "replica_MPI_MASTER "<< globalThreadID <<":run_MD:\t simulation!:");
         if ((error = md.run(topo, conf, sim))) {
@@ -246,21 +248,29 @@ void util::replica_MPI_Master::run_MD(){
         
         // tell the slaves to continue
         MPI_Bcast(&next_step, 1, MPI::INT, sim.mpiControl().masterID, sim.mpiControl().comm);
-
-        traj->print(topo, conf, sim);
-
+           
+        if(sim.steps() < stepsPerRun + curentStepNumber){   // we are doing a step too much, don't print last step.
+            traj->print(topo, conf, sim);
+        }
         ++sim.steps();
         sim.time() = sim.param().step.t0 + sim.steps() * sim.time_step_size();
     } // main md loop
     MPI_DEBUG(5, "replica_MPI_MASTER "<< globalThreadID <<":run_MD:\t after step while");
     curentStepNumber +=  stepsPerRun;
     
+      
+    //Discard last step
+    conf.exchange_state(); // we are doing one step more, therefore discard last step (-> old) and bring forth the step before with coordinates, energies. 
+    --sim.steps();
+    sim.time() = sim.param().step.t0 + sim.steps() * sim.time_step_size();
+
     // print final data of run
     if (curentStepNumber >=  totalStepNumber) {
       traj->print_final(topo, conf, sim);
     }
+        
     #endif    
-
+    
     MPI_DEBUG(5, "replica_MPI_MASTER "<< globalThreadID <<":run_MD:\t  DONE: at step= " << curentStepNumber);
 }
 void util::replica_MPI_Master::send_coordinates(){

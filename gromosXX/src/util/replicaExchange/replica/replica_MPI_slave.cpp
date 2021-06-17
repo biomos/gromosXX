@@ -157,7 +157,7 @@ util::replica_MPI_Slave::replica_MPI_Slave(io::Argument _args, int cont, int glo
       MPI::Finalize();
       throw "ReplicaSlave: \tINITIALisation error in Montecarlo algorithm of slave of simulationID "+ simulationID;
     }
-   
+
 
    MPI_DEBUG(5, "replica_MPI_SLAVE "<< globalThreadID <<":Constructor:\t replica Constructor  "<< globalThreadID <<": \t DONE");
 #else
@@ -184,10 +184,9 @@ void util::replica_MPI_Slave::run_MD(){
     MPI_DEBUG(5, "replica_MPI_SLAVE "<< globalThreadID <<":runMD:\t\t received Coords");
     MPI_DEBUG(5, "replica_MPI_SLAVE "<< globalThreadID <<":runMD:\t\t steps: current step: "<<sim.steps()<< "  totalsteps: "<< stepsPerRun << " + " << curentStepNumber << " + 1 = "<< stepsPerRun+curentStepNumber+1);
     
-    if(curentStepNumber > 5){
-        sim.steps() = curentStepNumber+1;
-    }
-        while ((unsigned int)(sim.steps()) < stepsPerRun + curentStepNumber+1) {
+    sim.steps() = curentStepNumber;
+    
+    while ((unsigned int)(sim.steps()) < stepsPerRun + curentStepNumber+1) {
        MPI_DEBUG(6, "replica_MPI_SLAVE " << globalThreadID << " waiting for master \t step: "<<sim.steps()<<" \tmaximal \t"<<curentStepNumber+stepsPerRun);
       // run a step
 
@@ -241,11 +240,17 @@ void util::replica_MPI_Slave::run_MD(){
       MPI_Abort(MPI_COMM_WORLD, E_INPUT_ERROR);
     }
     curentStepNumber +=  stepsPerRun;
-
+    
+    //Discard last step
+    --sim.steps();
+    sim.time() = sim.param().step.t0 + sim.steps() * sim.time_step_size();
     #endif
     MPI_DEBUG(5, "replica_MPI_SLAVE "<< globalThreadID <<":runMD:\t DONE at step= " << curentStepNumber);
+    
 }
     
+
+
 void util::replica_MPI_Slave::receive_coords(){
   DEBUG(4, "replica_MPI_Slave " << globalThreadID << " ::receive_coords::\t START");
   #ifdef XXMPI

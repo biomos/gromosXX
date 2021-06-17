@@ -166,9 +166,11 @@ void util::replica::run_MD() {
   int error;
   DEBUG(4,  "replica "<< globalThreadID <<": run_MD:\t Start");      
   DEBUG(5, "replica "<< globalThreadID <<":run_MD:\t doing steps: "<<stepsPerRun<< " till: "<< stepsPerRun + curentStepNumber << " starts at: " << curentStepNumber << "TOTAL RUNS: "<< totalStepNumber );      
-
-  while ((unsigned int)(sim.steps()) < stepsPerRun + curentStepNumber+1) {
-    traj->write(conf, topo, sim, io::reduced);
+  
+  while ((unsigned int)(sim.steps()) < stepsPerRun + curentStepNumber+1){
+    if(sim.steps() < stepsPerRun + curentStepNumber){   // we are doing a step too much, don't print last step.
+        traj->write(conf, topo, sim, io::reduced);
+    }
     // run a step
     DEBUG(5, "replica "<< globalThreadID <<":run_MD:\t simulation!:");
 
@@ -215,18 +217,25 @@ void util::replica::run_MD() {
     }
     
     DEBUG(6, "replica "<< globalThreadID <<":run_MD:\t clean up:");      
-    traj->print(topo, conf, sim);
-
+    if(sim.steps() < stepsPerRun + curentStepNumber){   // we are doing a step too much, don't print last step.
+        traj->print(topo, conf, sim);
+    }
     ++sim.steps();
     sim.time() = sim.param().step.t0 + sim.steps() * sim.time_step_size();
 
   } // main md loop
   DEBUG(6, "replica "<< globalThreadID <<":run_MD:\t  DONE:");      
-  
   // print final data of run
+  curentStepNumber = stepsPerRun + curentStepNumber;
+  
+  //Discard last step
+  conf.exchange_state(); // we are doing one step more, therefore discard last step (-> old) and bring forth the step before with coordinates, energies. 
+  --sim.steps();
+  sim.time() = sim.param().step.t0 + sim.steps() * sim.time_step_size();
+
   if (curentStepNumber ==  totalStepNumber) {
     traj->print_final(topo, conf, sim);
   }
+  
 
-  curentStepNumber = stepsPerRun + curentStepNumber;
 }
