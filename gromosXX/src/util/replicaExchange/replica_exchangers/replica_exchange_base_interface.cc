@@ -353,7 +353,7 @@ double util::replica_exchange_base_interface::calc_probability(const unsigned in
 #ifdef XXMPI
     MPI_Status status;
     DEBUG(1,"\n\nreplica_exchange_base_interface: CALC_PROBABILITY before Recv\n");
-    std::cerr << "SwapStart: "<< energies[0] << std::endl; 
+    //std::cerr << "SwapStart: "<< energies[0] << std::endl; 
     MPI_Recv(&energies[0], 2, MPI_DOUBLE, partnerReplicaMasterThreadID, SWITCHENERGIES,  replicaGraphMPIControl().comm, &status);
     DEBUG(1,"\n\nreplica_exchange_base_interface: CALC_PROBABILITY after Recv\n");
 #endif
