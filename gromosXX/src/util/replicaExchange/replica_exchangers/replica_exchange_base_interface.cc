@@ -60,6 +60,12 @@ util::replica_exchange_base_interface::replica_exchange_base_interface(io::Argum
   DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":Constructor:\t START ");\
   createReplicas(cont, globalThreadID, replica_mpi_control);
 
+  // random generator
+  std::stringstream seed;
+  seed << replica->sim.param().start.ig*(simulationID+1);
+  rng.seed(seed.str());
+
+  
   //Copy by hand....
   m_replicaGraphMPIControl.graphID = replicaGraphMPIControl.graphID;
   m_replicaGraphMPIControl.masterID = replicaGraphMPIControl.masterID;
@@ -71,6 +77,7 @@ util::replica_exchange_base_interface::replica_exchange_base_interface(io::Argum
   m_replicaGraphMPIControl.replicaThreads = replicaGraphMPIControl.replicaThreads;
   m_replicaGraphMPIControl.threadReplicaMap = replicaGraphMPIControl.threadReplicaMap;
   m_replicaGraphMPIControl.comm = replicaGraphMPIControl.comm;
+  
 
   DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":Constructor:\t Constructor \t DONE " << replica->sim.param().reeds.num_l);
   #else
@@ -203,6 +210,7 @@ void util::replica_exchange_base_interface::determine_switch_probabilities(){
 /**OVERRIDE Possibly THIS NICE FUNCTION*/
 int util::replica_exchange_base_interface::find_partner() const {
     //TODO: REWRITE To get Replica ID BSCHROED
+    //TODO: get a 1D and a 2D function!
   unsigned int numT = replica->sim.param().replica.num_T;
   unsigned int numL = replica->sim.param().replica.num_l;
 
@@ -345,6 +353,7 @@ double util::replica_exchange_base_interface::calc_probability(const unsigned in
 #ifdef XXMPI
     MPI_Status status;
     DEBUG(1,"\n\nreplica_exchange_base_interface: CALC_PROBABILITY before Recv\n");
+    std::cerr << "SwapStart: "<< energies[0] << std::endl; 
     MPI_Recv(&energies[0], 2, MPI_DOUBLE, partnerReplicaMasterThreadID, SWITCHENERGIES,  replicaGraphMPIControl().comm, &status);
     DEBUG(1,"\n\nreplica_exchange_base_interface: CALC_PROBABILITY after Recv\n");
 #endif
@@ -472,10 +481,9 @@ void util::replica_exchange_base_interface::exchange_averages() {
 void util::replica_exchange_base_interface::send_coord(const unsigned int receiverReplicaID) {
   DEBUG(3,"replica"<<globalThreadID<<":replica_exchange_base_interface: SEND_COORD\n\n");
 #ifdef XXMPI
-
   unsigned int receiverReplicaMasterThreadID = receiverReplicaID;
 
-  configuration::Configuration  conf = replica->conf;
+  configuration::Configuration& conf = replica->conf;
 
   MPI_Send(&conf.current().pos[0][0], 1, MPI_VARRAY, receiverReplicaMasterThreadID, POS,  replicaGraphMPIControl().comm);
   MPI_Send(&conf.current().posV[0][0], 1, MPI_VARRAY, receiverReplicaMasterThreadID, POSV, replicaGraphMPIControl().comm);
@@ -502,17 +510,20 @@ void util::replica_exchange_base_interface::send_coord(const unsigned int receiv
 
   MPI_Send(&angles[0], angles.size(), MPI_DOUBLE, receiverReplicaMasterThreadID, ANGLES,  replicaGraphMPIControl().comm);
   MPI_Send(&conf.special().distancefield.distance[0], conf.special().distancefield.distance.size(), MPI_DOUBLE, receiverReplicaMasterThreadID, DF,  replicaGraphMPIControl().comm);
+  
+  if ( simulationID > receiverReplicaID){
+    conf.exchange_state();
+  }
 #endif
 }
 
 void util::replica_exchange_base_interface::receive_new_coord(const unsigned int senderReplicaID) {
   DEBUG(3,"replica"<<globalThreadID<<":replica_exchange_base_interface: RECEIVE_NEW_COORD\n\n");
 #ifdef XXMPI
-
   unsigned int senderReplicaMasterThreadID = senderReplicaID;
 
   MPI_Status status;
-  configuration::Configuration  conf = replica->conf;
+  configuration::Configuration&  conf = replica->conf;
 
   conf.exchange_state();
   MPI_Recv(&conf.current().pos[0][0], 1, MPI_VARRAY, senderReplicaMasterThreadID, POS,  replicaGraphMPIControl().comm, &status);
