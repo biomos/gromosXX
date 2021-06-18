@@ -134,7 +134,7 @@ util::replica::replica(io::Argument _args, int cont, int globalThreadID, simulat
 
   // random generator
   std::stringstream seed;
-  seed << sim.param().start.ig*simulationID;
+  seed << sim.param().start.ig*(simulationID+1);
   rng = new math::RandomGeneratorGSL(seed.str(), -1);
 
   //init REPLICA ATTRIBUTES
