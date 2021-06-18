@@ -1,14 +1,9 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 /* 
  * File:   replica_graph_control.h
  * Author: bschroed
  *
  * Created on May 4, 2020, 10:21 PM
+ * Modified June 18, 2021 - bschroed, srieder
  */
 
 #ifndef REPLICA_GRAPH_CONTROL_H
@@ -21,6 +16,10 @@
 
 namespace util{
     class replica_graph_control {
+        /*
+         * This structure is used to facilitate the MPI-Kommunikations of the Replica Graph. 
+         * it is initialized in repexMPI.a nd shall be used in all RE-Graph MPI calls.
+         */
         public:
 
             replica_graph_control();

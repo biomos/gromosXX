@@ -1,14 +1,9 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 /* 
  * File:   replica_exchange_base_eds.h
  * Author: bschroed
  *
  * Created on April 18, 2018, 3:38 PM
+ * Modified June 18, 2021 - bschroed, srieder
  */
 #include <util/replicaExchange/replica_exchangers/replica_exchange_base_interface.h>
 #include <util/replicaExchange/replica_data.h>

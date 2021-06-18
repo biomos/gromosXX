@@ -1,14 +1,9 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
-/*
  * File:   replica_exchange_slave_eds.cc
  * Author: bschroed
  *
  * Created on August 31, 2018, 10:43 AM
+ * Modified June 18, 2021 - bschroed, srieder
  */
 #include <util/replicaExchange/replica_exchangers/1D_S_RE_EDS/replica_exchange_slave_eds.h>
 

@@ -1,6 +1,7 @@
 /**
  * @file replica_exchange_slave.h
  * contains replica_exchange_slave class
+ * Modified June 18, 2021 - bschroed, srieder
  */
 
 #include <stdheader.h>

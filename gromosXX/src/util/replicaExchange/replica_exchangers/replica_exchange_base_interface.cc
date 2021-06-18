@@ -3,6 +3,7 @@
  * Author: wissphil, sriniker
  *
  * Created on April 29, 2011, 2:06 PM
+ * Modified June 18, 2021 - bschroed, srieder
  */
 
 #include "replicaExchange/replica/replica.h"
@@ -129,7 +130,7 @@ void util::replica_exchange_base_interface::run_MD() {
 }
 
 
-//TODO: REMOVE
+//TODO: Maybe REMOVE in future?
 void util::replica_exchange_base_interface::updateReplica_params(){
   DEBUG(3,"\n\nreplica_exchange_base_interface: UPDATEREPLICA_PARAMS\n\n");
   // update replica information

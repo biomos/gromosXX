@@ -1,5 +1,6 @@
 /**
  * @file replica_exchange_master.h
+ * Modified June 18, 2021 - bschroed, srieder
  */
 
 #include <stdheader.h>

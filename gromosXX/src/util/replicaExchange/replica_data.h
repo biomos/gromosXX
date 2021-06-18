@@ -1,6 +1,7 @@
 /**
  * @file replica_data.h
  * contains replica_ata struct
+ * Modified June 18, 2021 - bschroed, srieder
  */
 
 #ifndef REPLICA_DATA_H

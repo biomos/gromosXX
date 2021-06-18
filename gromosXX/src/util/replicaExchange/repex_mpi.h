@@ -1,6 +1,7 @@
 /**
  * @file repex_mpi.h
- * some definitions for MPI communication
+ * some definitions for MPI communication - types etc.
+ * Modified June 18, 2021 - bschroed, srieder
  */
 
 #ifndef REPEX_MPI_H

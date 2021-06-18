@@ -1,6 +1,6 @@
 /**
  * @file replica_exchange_base.h
-
+ * Modified June 18, 2021 - bschroed, srieder
  */
 
 #ifndef REPLICA_EXCHANGE_BASE_INTERFACE_H
