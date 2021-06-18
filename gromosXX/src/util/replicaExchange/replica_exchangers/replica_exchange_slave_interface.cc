@@ -7,7 +7,6 @@
 
 #define REPEX_MPI
 #include <util/replicaExchange/repex_mpi.h>
-#include "util/replicaExchange/replica_mpi_tools.h"
 #include <util/replicaExchange/replica_exchangers/replica_exchange_base_interface.h>
 #include <util/replicaExchange/replica_exchangers/replica_exchange_slave_interface.h>
 

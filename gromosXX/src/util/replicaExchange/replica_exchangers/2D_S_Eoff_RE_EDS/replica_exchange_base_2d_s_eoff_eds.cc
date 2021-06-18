@@ -10,7 +10,6 @@
  *
  * Created on March 29, 2020, 11:08 AM
  */
-#include "util/replicaExchange/replica_mpi_tools.h"
 #include <util/replicaExchange/replica_exchangers/2D_S_Eoff_RE_EDS/replica_exchange_base_2d_s_eoff_eds.h>
 
 //Constructor

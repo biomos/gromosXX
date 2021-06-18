@@ -7,10 +7,10 @@
 
 
 
-#include <util/replicaExchange/replica/replica.h>
 #include <io/argument.h>
 #include <util/error.h>
 #include <math/volume.h>
+#include "replica.h"
 
 #ifdef XXMPI
 #include <mpi.h>

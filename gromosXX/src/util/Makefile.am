@@ -33,7 +33,6 @@ xxinclude_HEADERS = error.h\
 xxutilrepexdir = $(includedir)/md++/util/replicaExchange
 xxutilrepex_HEADERS =
 	replicaExchange/repex_mpi.h\
-	replicaExchange/replica_mpi_tools.h\
         replicaExchange/replica_graph_control.h\
         replicaExchange/replica_data.h\
 	replicaExchange/replica/_replica_Interface.h\
@@ -78,7 +77,6 @@ libgroutil_la_SOURCES =	cycle_thread.cc\
 	thread.cc\
 	system_call.cc\
 	undirected_graph.cc\
-	replicaExchange/replica_mpi_tools.cpp\
 	replicaExchange/replica_graph_control.cpp\
 	replicaExchange/replica/_replica_Interface.cpp\
 	replicaExchange/replica/replica.cc\

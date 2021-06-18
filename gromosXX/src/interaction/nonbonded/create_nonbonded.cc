@@ -38,7 +38,6 @@
 #include "../../interaction/qmmm/qmmm_interaction.h"
 
 #include "../../io/ifp.h"
-#include "../../util/replicaExchange/replica_mpi_tools.h"
 
 #include "../../interaction/nonbonded/create_nonbonded.h"
 

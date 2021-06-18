@@ -5,7 +5,6 @@
  * Created on April 29, 2011, 2:06 PM
  */
 
-#include "util/replicaExchange/replica_mpi_tools.h"
 #include <util/replicaExchange/replica_exchangers/replica_exchange_slave_interface.h>
 #include <util/replicaExchange/replica_exchangers/2D_T_lambda_REPEX/replica_exchange_slave.h>
 

@@ -50,7 +50,6 @@
     #include <mpi.h>
 #endif
 
-#include <util/replicaExchange/replica_mpi_tools.h>
 #include <util/replicaExchange/replica/replica.h>
 
 #include <util/replicaExchange/replica_exchangers/2D_T_lambda_REPEX/replica_exchange_master.h>
@@ -61,8 +60,6 @@
 #include <util/replicaExchange/replica_exchangers/2D_S_Eoff_RE_EDS/replica_exchange_slave_2d_s_eoff_eds.h>
 
 #include <util/replicaExchange/repex_mpi.h>
-#include <util/replicaExchange/replica_mpi_tools.h>
-
 #include "util/replicaExchange/replica_graph_control.h"
 
 //Debug Instructions

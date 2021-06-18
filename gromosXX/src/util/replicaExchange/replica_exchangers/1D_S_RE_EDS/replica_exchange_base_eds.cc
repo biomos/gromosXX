@@ -10,7 +10,6 @@
  *
  * Created on April 18, 2018, 3:38 PM
  */
-#include "util/replicaExchange/replica_mpi_tools.h"
 #include <util/replicaExchange/replica_exchangers/1D_S_RE_EDS/replica_exchange_base_eds.h>
 
 //Constructor

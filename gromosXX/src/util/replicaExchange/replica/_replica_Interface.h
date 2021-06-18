@@ -1,14 +1,9 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 /* 
  * File:   replica_Interface.h
  * Author: bschroed
  *
  * Created on November 8, 2019, 12:53 PM
+ * Modified June 18, 2021 - bschroed, srieder
  */
 
 #include <stdheader.h>
