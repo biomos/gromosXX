@@ -195,12 +195,11 @@ void util::replica_MPI_Master::run_MD(){
     MPI_DEBUG(5, "replica_MPI_Master "<< globalThreadID <<":runMD:\t\t sent Coords");
     MPI_DEBUG(5, "replica_MPI_Master "<< globalThreadID <<":runMD:\t\t steps: current step: "<<sim.steps()<< "  totalsteps: "<< stepsPerRun << " + " << curentStepNumber << " + 1 = "<< stepsPerRun+curentStepNumber+1);
 
-    while ((unsigned int)(sim.steps()) <  stepsPerRun + curentStepNumber+1) {
+    while ((unsigned int)(sim.steps()) <  stepsPerRun + curentStepNumber) {
       MPI_DEBUG(6, "replica_MPI_SLAVE " << globalThreadID << ":run_MD:\t step: "<< sim.steps() << " \tmaximal \t" << curentStepNumber+stepsPerRun);
 
-      if(sim.steps() < stepsPerRun + curentStepNumber){   // we are doing a step too much, don't print last step.
-          traj->write(conf, topo, sim, io::reduced);
-      }
+      traj->write(conf, topo, sim, io::reduced);
+
       // run a step
       DEBUG(5, "replica_MPI_MASTER "<< globalThreadID <<":run_MD:\t simulation!:");
         if ((error = md.run(topo, conf, sim))) {
@@ -243,25 +242,55 @@ void util::replica_MPI_Master::run_MD(){
         // tell the slaves to continue
         MPI_Bcast(&next_step, 1, MPI::INT, sim.mpiControl().masterID, sim.mpiControl().comm);
            
-        if(sim.steps() < stepsPerRun + curentStepNumber){   // we are doing a step too much, don't print last step.
-            traj->print(topo, conf, sim);
-        }
+        traj->print(topo, conf, sim);
         ++sim.steps();
         sim.time() = sim.param().step.t0 + sim.steps() * sim.time_step_size();
     } // main md loop
     MPI_DEBUG(5, "replica_MPI_MASTER "<< globalThreadID <<":run_MD:\t after step while");
     curentStepNumber +=  stepsPerRun;
-    
       
-    //Discard last step
-    conf.exchange_state(); // we are doing one step more, therefore discard last step (-> old) and bring forth the step before with coordinates, energies. 
-    --sim.steps();
-    sim.time() = sim.param().step.t0 + sim.steps() * sim.time_step_size();
+    /*
+    call Forcefield, EDS and EnergyCalculation to make sure we're up-to-date
+    with the current coordinates for the calculation of the exchange probabilities
+    */
 
-    // print final data of run
-    if (curentStepNumber >=  totalStepNumber) {
-      traj->print_final(topo, conf, sim);
+    algorithm::Algorithm * ff;   
+    ff = md.algorithm("Forcefield");
+
+    //Calculate energies    
+    DEBUG(5, "replica_reeds "<< rank <<":calculate_energy:\t calc energies"); 
+    if (ff->apply(topo, conf, sim)) {
+        std::cerr << "Error in Forcefield calculation in Replica " << (simulationID+1) << " on node " << globalThreadID << std::endl;
+      #ifdef XXMPI
+          MPI_Abort(MPI_COMM_WORLD, E_UNSPECIFIED);
+      #endif
     }
+
+    ff = md.algorithm("EDS");
+
+    //Calculate energies    
+    DEBUG(5, "replica_reeds "<< rank <<":calculate_energy:\t calc energies"); 
+    if (ff->apply(topo, conf, sim)) {
+        std::cerr << "Error in EDS calculation in Replica " << (simulationID+1) << " on node " << globalThreadID << std::endl;
+      #ifdef XXMPI
+          MPI_Abort(MPI_COMM_WORLD, E_UNSPECIFIED);
+      #endif
+    }
+
+    conf.exchange_state();
+
+    ff = md.algorithm("EnergyCalculation");
+
+    //Calculate energies    
+    DEBUG(5, "replica_reeds "<< rank <<":calculate_energy:\t calc energies"); 
+    if (ff->apply(topo, conf, sim)) {
+        std::cerr << "Error in EnergyCalculation in Replica " << (simulationID+1) << " on node " << globalThreadID << std::endl;
+      #ifdef XXMPI
+          MPI_Abort(MPI_COMM_WORLD, E_UNSPECIFIED);
+      #endif
+    }
+
+    conf.exchange_state();
         
     #endif    
     

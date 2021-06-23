@@ -181,7 +181,7 @@ void util::replica_MPI_Slave::run_MD(){
     
     sim.steps() = curentStepNumber;
     
-    while ((unsigned int)(sim.steps()) < stepsPerRun + curentStepNumber+1) {
+    while ((unsigned int)(sim.steps()) < stepsPerRun + curentStepNumber) {
        MPI_DEBUG(6, "replica_MPI_SLAVE " << globalThreadID << " waiting for master \t step: "<<sim.steps()<<" \tmaximal \t"<<curentStepNumber+stepsPerRun);
       // run a step
 
@@ -235,10 +235,15 @@ void util::replica_MPI_Slave::run_MD(){
       MPI_Abort(MPI_COMM_WORLD, E_INPUT_ERROR);
     }
     curentStepNumber +=  stepsPerRun;
-    
-    //Discard last step
-    --sim.steps();
-    sim.time() = sim.param().step.t0 + sim.steps() * sim.time_step_size();
+
+    /*
+    calculate nonbonded interactions to make sure we're up-to-date
+    with the current coordinates for the calculation of the exchange probabilities
+    */
+    if (do_nonbonded && (error = nb->calculate_interactions(topo, conf, sim)) != 0){
+      std::cout << "Rank: "<< globalThreadID<<"\tMPI slave " << globalThreadID << ": error in nonbonded calculation!\n" << std::endl;
+    }
+
     #endif
     MPI_DEBUG(5, "replica_MPI_SLAVE "<< globalThreadID <<":runMD:\t DONE at step= " << curentStepNumber);
     

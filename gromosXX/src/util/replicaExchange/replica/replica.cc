@@ -168,10 +168,9 @@ void util::replica::run_MD() {
   DEBUG(4,  "replica "<< globalThreadID <<": run_MD:\t Start");      
   DEBUG(5, "replica "<< globalThreadID <<":run_MD:\t doing steps: "<<stepsPerRun<< " till: "<< stepsPerRun + curentStepNumber << " starts at: " << curentStepNumber << "TOTAL RUNS: "<< totalStepNumber );      
   
-  while ((unsigned int)(sim.steps()) < stepsPerRun + curentStepNumber+1){
-    if(sim.steps() < stepsPerRun + curentStepNumber){   // we are doing a step too much, don't print last step.
-        traj->write(conf, topo, sim, io::reduced);
-    }
+  while ((unsigned int)(sim.steps()) < stepsPerRun + curentStepNumber){
+    traj->write(conf, topo, sim, io::reduced);
+    
     // run a step
     DEBUG(5, "replica "<< globalThreadID <<":run_MD:\t simulation!:");
 
@@ -218,9 +217,8 @@ void util::replica::run_MD() {
     }
     
     DEBUG(6, "replica "<< globalThreadID <<":run_MD:\t clean up:");      
-    if(sim.steps() < stepsPerRun + curentStepNumber){   // we are doing a step too much, don't print last step.
-        traj->print(topo, conf, sim);
-    }
+    traj->print(topo, conf, sim);
+
     ++sim.steps();
     sim.time() = sim.param().step.t0 + sim.steps() * sim.time_step_size();
 
@@ -229,14 +227,51 @@ void util::replica::run_MD() {
   // print final data of run
   curentStepNumber = stepsPerRun + curentStepNumber;
   
-  //Discard last step
-  conf.exchange_state(); // we are doing one step more, therefore discard last step (-> old) and bring forth the step before with coordinates, energies. 
-  --sim.steps();
-  sim.time() = sim.param().step.t0 + sim.steps() * sim.time_step_size();
-
   if (curentStepNumber ==  totalStepNumber) {
     traj->print_final(topo, conf, sim);
   }
-  
+
+  /*
+  call Forcefield, EDS and EnergyCalculation to make sure we're up-to-date
+  with the current coordinates for the calculation of the exchange probabilities
+  */
+
+  algorithm::Algorithm * ff;   
+  ff = md.algorithm("Forcefield");
+
+  //Calculate energies    
+  DEBUG(5, "replica_reeds "<< rank <<":calculate_energy:\t calc energies"); 
+  if (ff->apply(topo, conf, sim)) {
+      std::cerr << "Error in Forcefield calculation in Replica " << (simulationID+1) << " on node " << globalThreadID << std::endl;
+    #ifdef XXMPI
+        MPI_Abort(MPI_COMM_WORLD, E_UNSPECIFIED);
+    #endif
+  }
+
+  ff = md.algorithm("EDS");
+
+  //Calculate energies    
+  DEBUG(5, "replica_reeds "<< rank <<":calculate_energy:\t calc energies"); 
+  if (ff->apply(topo, conf, sim)) {
+      std::cerr << "Error in EDS calculation in Replica " << (simulationID+1) << " on node " << globalThreadID << std::endl;
+    #ifdef XXMPI
+        MPI_Abort(MPI_COMM_WORLD, E_UNSPECIFIED);
+    #endif
+  }
+
+  conf.exchange_state();
+
+  ff = md.algorithm("EnergyCalculation");
+
+  //Calculate energies    
+  DEBUG(5, "replica_reeds "<< rank <<":calculate_energy:\t calc energies"); 
+  if (ff->apply(topo, conf, sim)) {
+      std::cerr << "Error in EnergyCalculation in Replica " << (simulationID+1) << " on node " << globalThreadID << std::endl;
+    #ifdef XXMPI
+        MPI_Abort(MPI_COMM_WORLD, E_UNSPECIFIED);
+    #endif
+  }
+
+  conf.exchange_state();
 
 }

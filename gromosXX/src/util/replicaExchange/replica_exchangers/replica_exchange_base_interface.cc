@@ -120,7 +120,6 @@ void util::replica_exchange_base_interface::run_MD() {
   MPI_DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":run_MD:\t START");
     replica->sim.steps() = steps;
     replica->sim.time() = time;
-
     replica->run_MD();
 
     if(not_sender){

@@ -253,8 +253,6 @@ void util::replica_exchange_base_eds::init_eds_stat(){
 void util::replica_exchange_base_eds::reset_eds() {//only reset switched parameters of change_eds() function
   replica->sim.param().eds = eds_para;
   replica->sim.param().step.dt = dt;
-  replica->conf.current().force= force_orig;
-  replica->conf.current().virial_tensor= virial_tensor_orig;
 }
 
 void util::replica_exchange_base_eds::change_eds(const unsigned int partner){//only change parameters, which are needed for energy calculation i.e.
@@ -269,8 +267,6 @@ void util::replica_exchange_base_eds::change_eds(const unsigned int partner){//o
 
   replica->sim.param().step.dt = replica->sim.param().reeds.dt[idx];
   replica->sim.param().eds= replica->sim.param().reeds.eds_para[idx];
-  force_orig = replica->conf.current().force;
-  virial_tensor_orig = replica->conf.current().virial_tensor;
 }
 
 ////calc exchange Energy
@@ -330,10 +326,13 @@ double util::replica_exchange_base_eds::calc_energy_eds_stat(double s){
 
 double util::replica_exchange_base_eds::calculate_energy_core() {
 
+    force_orig = replica->conf.current().force;
+    virial_tensor_orig = replica->conf.current().virial_tensor;
+
     double energy = 0.0;
     algorithm::Algorithm * ff;
 
-     ff = replica->md.algorithm("EDS");
+    ff = replica->md.algorithm("EDS");
 
     //Calculate energies    
     DEBUG(5, "replica_reeds_base_eds "<< globalThreadID <<":calculate_energy:\t calc energies"); 
@@ -348,7 +347,10 @@ double util::replica_exchange_base_eds::calculate_energy_core() {
     //return energies
     DEBUG(5, "replica_reeds_base_edsreplica_reeds "<< globalThreadID <<":calculate_energy"
             ":\t return energies"); 
-    energy=replica->conf.current().energies.eds_vr; 
+    energy=replica->conf.current().energies.eds_vr;
+
+    replica->conf.current().force= force_orig;
+    replica->conf.current().virial_tensor= virial_tensor_orig;
     return energy;
 }
 
@@ -366,6 +368,8 @@ double util::replica_exchange_base_eds::calculate_energy(const unsigned int sele
     if(selectedReplicaID!=simulationID){
         reset_eds();
     }
+
+
     DEBUG(4, "replica_reeds_base_edsreplica_reeds "<< globalThreadID <<":calculate_energy:\t DONE"); 
     return energy;
 }
