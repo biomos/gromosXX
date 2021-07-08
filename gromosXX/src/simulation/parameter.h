@@ -3857,7 +3857,10 @@ namespace simulation
                       , val_thresh(0)
                       , val_steps(0)
                       , val_forceconstant(0)
+                      , charge_model_path()
+                      , charge_steps(0)
                       , model_type(false) 
+                      , learning_type(1)
                       , device(nn_device_auto) {}
         /**
          * Schnetpack model path
@@ -3880,9 +3883,23 @@ namespace simulation
          */
         double val_forceconstant;
         /**
+         * Schnetpack model path
+         */
+        std::string charge_model_path;
+        /**
+         * Number of steps between validations
+         */
+        unsigned charge_steps;
+        /**
          * nn model type
          */
         bool model_type;
+        /**
+         * nn learning type
+         * 1: model was learned on all atoms (QMZONE + BUFFERZONE)
+         * 2: model was learned by assigning energies only to the QMZONE atoms
+         */
+        int learning_type;
         /**
          * Device to run model on
          */

@@ -62,6 +62,10 @@ namespace interaction {
     py::object val_calculator;
 
     /**
+     * ASE calculator for charges
+     */
+    py::object charge_calculator;
+    /**
      * run the NN worker
      */
     int run_QM(topology::Topology& topo
