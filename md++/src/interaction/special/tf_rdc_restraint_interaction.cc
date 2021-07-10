@@ -135,6 +135,12 @@ int _calculate_tf_rdc_restraint_interactions
                 // the not averaged RDC
                 conf.special().tfrdc.RDC[l] = interaction::D_c(it) * R * P; 
 
+                // the cumulative average
+                double & RDC_cumavg = conf.special().tfrdc.RDC_cumavg[l]; // [1 / ps]
+                ++conf.special().tfrdc.num_averaged;
+                RDC_cumavg += (conf.special().tfrdc.RDC[l]-RDC_cumavg)/conf.special().tfrdc.num_averaged; 
+                
+
                 DEBUG(15, " R_avg: " << R_avg);
                 DEBUG(15, " P_avg: " << P_avg);
 
@@ -175,6 +181,8 @@ int _calculate_tf_rdc_restraint_interactions
         DEBUG(9, "dP_avg/dP: " << dPavedP);
 
         force = term * interaction::D_c(it) * (P_avg * dRavedR * dRdr + R_avg * dPavedP * dPdr);  // [1 / (ps^2 nm)]
+
+        //TODO: remove the following line:
         math::Vec force_rescaled = term * interaction::D_c(it) * (P_avg * q_scale * dRdr + R_avg * dPdr);  // [1 / (ps^2 nm)]                  // [kJ / mol]
         DEBUG(9, "force           :" << math::v2s(force) );
         DEBUG(9, "force / rescaled:" << math::v2s(force_rescaled) );
@@ -242,6 +250,7 @@ int interaction::TF_RDC_Restraint_Interaction::init
   conf.special().tfrdc.P_avg.resize(num_res);
   conf.special().tfrdc.RDC.resize(num_res);
   conf.special().tfrdc.RDC_avg.resize(num_res);
+  conf.special().tfrdc.RDC_cumavg.resize(num_res);
   conf.special().tfrdc.energy.resize(num_res);
 
   if (!quiet) {

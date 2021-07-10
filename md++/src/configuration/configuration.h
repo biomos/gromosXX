@@ -489,6 +489,14 @@ namespace configuration {
          * the running average
          */
         std::vector<double> av;
+        /**
+         * distribution of the angle to the z-axis
+         */
+        std::vector<double> dist_theta;
+        /**
+         * distribution of the angle in the xy-plane
+         */
+        std::vector<double> dist_phi;
       } /** zaxisoribias informaton */ zaxisoribias;
 
 
@@ -753,9 +761,17 @@ namespace configuration {
          */
         std::vector<double> RDC;
         /**
-         * the averaged tensor-free RDC
+         * the averaged tensor-free RDC (over tau)
          */
         std::vector<double> RDC_avg;
+        /**
+         * the averaged tensor-free RDC (over the whole simulation time)
+         */
+        std::vector<double> RDC_cumavg;
+        /**
+         * the number of averaged timepoints in RDC_cumavg
+         */
+        unsigned int num_averaged;
         /**
          * the energy
          */

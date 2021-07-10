@@ -1094,7 +1094,8 @@ bool io::In_Configuration::read_tf_rdc_restraint_averages
 
       if (sim.param().tfrdc.read)
         _read_tf_rdc_restraint_averages(buffer, topo.tf_rdc_restraints(),
-              conf.special().tfrdc.R_avg, conf.special().tfrdc.P_avg);
+              conf.special().tfrdc.R_avg, conf.special().tfrdc.P_avg, 
+							conf.special().tfrdc.RDC_cumavg, conf.special().tfrdc.num_averaged);
       else
         io::messages.add("Tensor-free RDC restraint averages found but not read.",
               "In_Configuration", io::message::warning);
@@ -2619,7 +2620,9 @@ bool io::In_Configuration::_read_tf_rdc_restraint_averages(
         std::vector<std::string> &buffer,
         const std::vector<topology::tf_rdc_restraint_struct> & tfrdcres,
         std::vector<double> & R_avg,
-        std::vector<double> & P_avg) {
+        std::vector<double> & P_avg,
+        std::vector<double> & RDC_cumavg,
+				unsigned int & num_averaged) {
   DEBUG(8, "read tensor-free RDC restaint averages");
 
   std::vector<topology::tf_rdc_restraint_struct>::const_iterator
@@ -2632,6 +2635,9 @@ bool io::In_Configuration::_read_tf_rdc_restraint_averages(
 
   R_avg.clear();
   P_avg.clear();
+  RDC_cumavg.clear();
+
+  _lineStream >> num_averaged;
 
   for (; tfrdcres_it != tfrdcres_to; ++tfrdcres_it) {
     double R;
@@ -2639,6 +2645,9 @@ bool io::In_Configuration::_read_tf_rdc_restraint_averages(
 
     double P;
     _lineStream >> P;
+
+    double RDC;
+    _lineStream >> RDC;
 
     if (_lineStream.fail()) {
       io::messages.add("Could not read averages from TFRDCRESEXPAVE block",
@@ -2648,6 +2657,7 @@ bool io::In_Configuration::_read_tf_rdc_restraint_averages(
 
     R_avg.push_back(R);
     P_avg.push_back(P);
+    RDC_cumavg.push_back(RDC/1000000000000);
   }
 	return true;
 }

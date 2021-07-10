@@ -134,7 +134,7 @@ namespace io {
             int every_angres = 1,
             int every_dihres = 1, int every_dat = 1, int every_leus = 1, int every_dipole = 1, 
             int every_current = 1, int every_adde = 1, int every_nemd = 1,
-	    int every_oparam = 1, int every_rdc = 1, int every_tfrdc = 1, int every_bsleus = 1);
+	    int every_oparam = 1, int every_rdc = 1, int every_tfrdc = 1, int every_rdccumave = 1, int every_bsleus = 1);
     /**
      * write an energy trajectory.
      */
@@ -413,6 +413,16 @@ namespace io {
             topology::Topology const &topo,
             std::ostream &os);
 
+    void _print_rdc_cumaverages(
+            configuration::Configuration const &conf,
+            topology::Topology const &topo,
+            std::ostream &os);
+
+    void _print_zaxisori_distribution(simulation::Simulation const & sim,
+            configuration::Configuration const &conf,
+            topology::Topology const &topo,
+            std::ostream &os);
+
     void _print_blockaveraged_energyred(configuration::Configuration const & conf,
             std::ostream & os);
 
@@ -512,6 +522,7 @@ namespace io {
     int m_every_oparam;
     int m_every_rdc;
     int m_every_tfrdc;
+    int m_every_rdccumave;
 
     bool m_write_blockaverage_energy;
     bool m_write_blockaverage_free_energy;
