@@ -2586,9 +2586,12 @@ void io::In_Parameter::read_TFRDCRES(simulation::Parameter &param,
     exampleblock << "# NTWTFRDC >= 0              write tensor-free RDCs to special trajectory\n";
     exampleblock << "#             0              don't write [default]\n";
     exampleblock << "#          >  0              write every NTWTFRDC step\n";
+    exampleblock << "# NTWTFRAVE >= 0             write cumulative averages of RDCs to special trajectory\n";
+    exampleblock << "#             0              don't write [default]\n";
+    exampleblock << "#          >  0              write every NTWTFRAVE step\n";
     exampleblock << "#\n";
-    exampleblock << "#       NTTFRDC  NTTFRDCA  CTFRDC   TAUR    TAUT    NTWTFRDC\n";
-    exampleblock << "           1       0        10.0     0.5     5.0      0\n";
+    exampleblock << "#       NTTFRDC  NTTFRDCA  CTFRDC   TAUR    TAUT    NTWTFRDC NTWTFRAVE\n";
+    exampleblock << "           1       0        10.0     0.5     5.0      0           0\n";
     exampleblock << "END\n";
 
     std::string blockname = "TFRDCRES";
@@ -2605,6 +2608,7 @@ void io::In_Parameter::read_TFRDCRES(simulation::Parameter &param,
         block.get_next_parameter("TAUR", param.tfrdc.taur, ">=0", "");
         block.get_next_parameter("TAUT", param.tfrdc.taut, ">=0", "");
         block.get_next_parameter("NTWTFRDC", param.tfrdc.write, ">=0", "");
+        block.get_next_parameter("NTWTFRAVE", param.tfrdc.cumave_write, ">=0", "");
 
         param.tfrdc.K/=1000000;
 
@@ -2646,7 +2650,7 @@ void io::In_Parameter::read_ZAXISORIBIAS(simulation::Parameter &param,
     exampleblock << "#         1: instantaneous, using force constant CZOR\n";
     exampleblock << "#         2: instantaneous, using force constant CZOR x W0\n";
     exampleblock << "#    CZOR >= 0.0 force constant for z-axis orientation biasing\n";
-    exampleblock << "#  NTWZOR >= 0 write every NTWZORth step dist. restr. information to external file\n";
+    exampleblock << "#  NTWZOR >= 0 write every NTWZORth step z-axis orientation\n";
     exampleblock << "#   NTZOR    CZOR    NTWZOR\n";
     exampleblock << "        0     0.0     0\n";
     exampleblock << "END\n";

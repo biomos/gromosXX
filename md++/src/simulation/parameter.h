@@ -4109,7 +4109,8 @@ namespace simulation
 	  taur(0.5),
     taut(5.0),
 	  read(false),
-    write(0)
+    write(0),
+    cumave_write(0)
       {
       }
 
@@ -4138,6 +4139,7 @@ namespace simulation
        * write on/off, every n-th step
        */
       unsigned int write;
+      unsigned int cumave_write;
     }/** tensor-free RDC parameters */ tfrdc;
 
     /**
@@ -4194,6 +4196,12 @@ namespace simulation
       * write on/off
       */
      unsigned int write;
+
+     /**
+      * bins for angle distributions
+      */
+     std::vector<double> bins_theta;
+     std::vector<double> bins_phi;
 
     }/** Z-axis orientation bias parameters */ zaxisoribias;
 

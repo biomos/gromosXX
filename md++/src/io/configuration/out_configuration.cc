@@ -102,6 +102,7 @@ m_every_nemd(0),
 m_every_oparam(0),
 m_every_rdc(0),
 m_every_tfrdc(0),
+m_every_rdccumave(0),
 m_write_blockaverage_energy(false),
 m_write_blockaverage_free_energy(false),
 m_precision(9),
@@ -228,7 +229,7 @@ void io::Out_Configuration::init(io::Argument & args,
      || param.dihrest.write || param.print.monitor_dihedrals
      || param.localelev.write || param.electric.dip_write || param.electric.cur_write 
      || param.addecouple.write || param.nemd.write || param.orderparamrest.write || param.rdc.write
-     || param.tfrdc.write || param.bsleus.write;    // add others if there are any
+     || param.tfrdc.write || param.tfrdc.cumave_write|| param.bsleus.write;    // add others if there are any
 
   if (args.count(argname_trs) > 0)
     special_trajectory(args[argname_trs], param.polarise.write, 
@@ -237,7 +238,7 @@ void io::Out_Configuration::init(io::Argument & args,
             param.print.monitor_dihedrals,param.localelev.write, 
             param.electric.dip_write, param.electric.cur_write, param.addecouple.write,
             param.nemd.write, param.orderparamrest.write, param.rdc.write, param.tfrdc.write,
-            param.bsleus.write);
+            param.tfrdc.cumave_write, param.bsleus.write);
   else if (m_write_special)
     io::messages.add("write special trajectory but no trs argument",
           "Out_Configuration",
@@ -424,6 +425,11 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       m_special_traj.flush();
     }
 
+    if (m_every_rdccumave && sim.steps() && ((sim.steps()-1) % m_every_rdccumave) == 0) {
+      _print_rdc_cumaverages(conf, topo, m_special_traj);
+      m_special_traj.flush();
+    }
+    
     if (m_every_adde && sim.steps() && ((sim.steps()-1) % m_every_adde) == 0) {
       _print_adde(sim, topo, conf, m_special_traj);
       m_special_traj.flush();
@@ -720,6 +726,10 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       _print_tf_rdc_restraints(conf, topo, m_special_traj);
     }
 
+    if (m_every_rdccumave &&  ((sim.steps()-1) % m_every_rdccumave) == 0) {
+      _print_rdc_cumaverages(conf, topo, m_special_traj);
+    }
+
     if (m_every_adde  && ((sim.steps()-1) % m_every_adde) == 0) {
       _print_adde(sim, topo, conf, m_special_traj);
     }
@@ -810,7 +820,7 @@ void io::Out_Configuration
                      int every_angres, int every_dihres, int every_dat, 
                      int every_leus, int every_dipole, int every_current,
                      int every_adde, int every_nemd, int every_oparam, int every_rdc, int every_tfrdc,
-                     int every_bsleus) {
+                     int every_rdccumave, int every_bsleus) {
 
   m_special_traj.open(name.c_str());
 
@@ -830,6 +840,7 @@ void io::Out_Configuration
   m_every_oparam = every_oparam;
   m_every_rdc = every_rdc;
   m_every_tfrdc = every_tfrdc;
+  m_every_rdccumave = every_rdccumave;
   m_every_bsleus = every_bsleus;
   _print_title(m_title, "special trajectory", m_special_traj);
 }
@@ -925,7 +936,8 @@ void io::Out_Configuration
                              (m_every_nemd && ((sim.steps() % m_every_nemd) == 0)) ||
                              (m_every_oparam && ((sim.steps() % m_every_oparam) == 0)) ||
                              (m_every_rdc && ((sim.steps() % m_every_rdc) == 0)) ||
-                             (m_every_tfrdc && ((sim.steps() % m_every_tfrdc) == 0)) ))
+                             (m_every_tfrdc && ((sim.steps() % m_every_tfrdc) == 0)) ||
+                             (m_every_rdccumave && ((sim.steps() % m_every_rdccumave) == 0))))
         _print_timestep(sim, m_special_traj);
 }
 
@@ -2058,6 +2070,10 @@ void io::Out_Configuration
             "SASA AND BURIED VOLUME FLUCTUATIONS", volume);
   }
 
+  if (sim.param().zaxisoribias.zaxisoribias) {
+    _print_zaxisori_distribution(sim, conf, topo, m_output);
+  }
+
 }
 
 void io::Out_Configuration
@@ -2951,6 +2967,50 @@ void io::Out_Configuration::_print_tf_rdc_restraints(
   os << "END" << std::endl;
 }
 
+void io::Out_Configuration::_print_rdc_cumaverages(
+        configuration::Configuration const &conf,
+        topology::Topology const & topo,
+        std::ostream &os) {
+  DEBUG(10, "RDC cumulative averages");
+
+  std::vector<double>::const_iterator RDC_cumavg_it = conf.special().tfrdc.RDC_cumavg.begin(),
+          RDC_cumavg_to = conf.special().tfrdc.RDC_cumavg.end();
+
+  os << "RDCCUMAVE" << std::endl;
+  for (int i = 1; RDC_cumavg_it != RDC_cumavg_to; ++RDC_cumavg_it, ++i) {
+    //os << std::setw(6) << i;
+    os.precision(m_rdc_restraint_precision);
+    os.setf(std::ios::fixed, std::ios::floatfield);
+    os << std::setw(m_width) << *RDC_cumavg_it*1000000000000 << std::endl;
+  }
+  os << "END" << std::endl;
+}
+
+void io::Out_Configuration::_print_zaxisori_distribution(
+        simulation::Simulation const & sim,
+        configuration::Configuration const & conf,
+        topology::Topology const & topo,
+        std::ostream & os) {
+        DEBUG(10, "z-axis orientation distributions");
+       
+  os.precision(m_precision);
+  double binsize_theta = sim.param().zaxisoribias.bins_theta[1]-sim.param().zaxisoribias.bins_theta[0];
+  double binsize_phi = sim.param().zaxisoribias.bins_phi[1]-sim.param().zaxisoribias.bins_phi[0];
+  os << "ZAXISTHETADIST" << std::endl; 
+  for (unsigned int i = 0; i < conf.special().zaxisoribias.dist_theta.size()-1; i++) {
+    os  << std::setw(m_width) << sim.param().zaxisoribias.bins_theta[i]+0.5*binsize_theta << " " 
+        << std::setw(m_width) << conf.special().zaxisoribias.dist_theta[i] / (sim.steps()*binsize_theta) << std::endl;
+  }
+  os << "END" << std::endl;
+  os << "ZAXISPHIDIST" << std::endl; 
+  for (unsigned int i = 0; i < conf.special().zaxisoribias.dist_phi.size()-1; i++) {
+    os  << std::setw(m_width) << sim.param().zaxisoribias.bins_phi[i]+0.5*binsize_phi << " " 
+        << std::setw(m_width) << conf.special().zaxisoribias.dist_phi[i] / (sim.steps()*binsize_phi) << std::endl;
+  }
+  os << "END" << std::endl;
+
+}
+
 void io::Out_Configuration::_print_tf_rdc_restraint_averages(
         configuration::Configuration const & conf,
         topology::Topology const & topo,
@@ -2960,17 +3020,22 @@ void io::Out_Configuration::_print_tf_rdc_restraint_averages(
   std::vector<double>::const_iterator r_it = conf.special().tfrdc.R_avg.begin(),
     r_it_to = conf.special().tfrdc.R_avg.end();
   std::vector<double>::const_iterator p_it = conf.special().tfrdc.P_avg.begin();
+  std::vector<double>::const_iterator rdc_it = conf.special().tfrdc.RDC_cumavg.begin();
 
   os.setf(std::ios::scientific, std::ios::floatfield);
   os.precision(m_distance_restraint_precision); // use a lower precision due to scientific formats
 
   os << "TFRDCRESEXPAVE" << std::endl;
   int l;
-  for (l = 0; r_it != r_it_to; ++r_it, ++p_it) {
+  os << conf.special().tfrdc.num_averaged << std::endl;
+  for (l = 0; r_it != r_it_to; ++r_it, ++p_it, ++rdc_it) {
     os << std::setw(m_width) << std::right << *r_it;
     if (++l % 5 == 0)
         os << std::endl;
     os << std::setw(m_width) << std::right << *p_it;
+    if (++l % 5 == 0)
+      os << std::endl;
+    os << std::setw(m_width) << std::right << *rdc_it*1000000000000;
     if (++l % 5 == 0)
       os << std::endl;
   }
