@@ -45,11 +45,11 @@ util::replica_exchange_slave_interface::replica_exchange_slave_interface(io::Arg
         
         if(replica_mpi_control.masterID == replica_mpi_control.threadID){
             DEBUG(5, "replica_exchange_slave_interface "<< globalThreadID <<":Constructor:\t RE-Graph Sender");
-            not_sender = true;
+            replicaInfoSender = true;
         }
         else{
             DEBUG(5, "replica_exchange_slave_interface "<< globalThreadID <<":Constructor:\t I'm not an RE-Graph Sender");
-            not_sender = false;
+            replicaInfoSender = false;
         }
         
         DEBUG(2, "replica_exchange_slave_interface "<< globalThreadID <<":Constructor:\t DONE");
@@ -65,7 +65,7 @@ util::replica_exchange_slave_interface::~replica_exchange_slave_interface() {
 void util::replica_exchange_slave_interface::send_to_master() const {
 #ifdef XXMPI
 
-  if(not_sender){
+  if(replicaInfoSender){
     DEBUG(2,"replica_exchange_slave_interface " << globalThreadID << ":send_to_master \t START");
       util::repInfo info;
       info.run = run;

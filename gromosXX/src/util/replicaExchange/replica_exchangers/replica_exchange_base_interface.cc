@@ -122,7 +122,7 @@ void util::replica_exchange_base_interface::run_MD() {
     replica->sim.time() = time;
     replica->run_MD();
 
-    if(not_sender){
+    if(replicaInfoSender){
         updateReplica_params();
     }
   MPI_DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":run_MD:\t DONE");
@@ -144,7 +144,7 @@ void util::replica_exchange_base_interface::updateReplica_params(){
 
 void util::replica_exchange_base_interface::swap(){
         DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":swap:    START");
-        if (not_sender) // different replica?
+        if (replicaInfoSender) // different replica?
         {
             //determine swaps
             determine_swaps();
@@ -170,7 +170,7 @@ void util::replica_exchange_base_interface::swap(){
 
 void util::replica_exchange_base_interface::write_final_conf() {
   // write coordinates to cnf for all replica assigned to this node
-    if(not_sender){
+    if(replicaInfoSender){
        replica->write_final_conf();
     }
 }

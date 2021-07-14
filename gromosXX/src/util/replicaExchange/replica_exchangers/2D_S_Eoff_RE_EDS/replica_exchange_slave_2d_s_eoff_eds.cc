@@ -29,7 +29,7 @@ util::replica_exchange_slave_2d_s_eoff_eds::replica_exchange_slave_2d_s_eoff_eds
 
 void util::replica_exchange_slave_2d_s_eoff_eds::send_to_master() const{
   #ifdef XXMPI
-  if(not_sender){
+  if(replicaInfoSender){
   DEBUG(2,"replica_exchange_slave_2d_s_eoff_eds " << globalThreadID << ":send_to_master:\t START");
   DEBUG(2,"replica_exchange_slave_2d_s_eoff_eds " << globalThreadID << ":send_to_master:\t Show vPots");
 

@@ -245,7 +245,7 @@ namespace util {
     /**
      *  Sending data or not?
      */
-    bool not_sender {true};
+    bool replicaInfoSender {true};
     
     /*
      * FUNCTIONS
