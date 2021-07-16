@@ -126,10 +126,19 @@ int interaction::NN_Worker::init(simulation::Simulation& sim) {
   }
 
   py::object ml_environment = py_modules["schnetpack"].attr("utils").attr("script_utils").attr("settings").attr("get_environment_provider")(ml_model_args, "device"_a=device);
+  std::vector<int> mlmm_indices;
+  mlmm_indices.push_back(0);
 
   /** Initialize the ML calculator */
-  ml_calculator = py_modules["schnetpack"].attr("interfaces").attr("SpkCalculator")(ml_model, "energy"_a="energy", "forces"_a="forces", "device"_a=device, "environment_provider"_a=ml_environment);
-
+  if(sim.param().qmmm.nn.learning_type==1){
+    ml_calculator = py_modules["schnetpack"].attr("interfaces").attr("SpkCalculator")(ml_model, "energy"_a="energy", "forces"_a="forces", "device"_a=device, "environment_provider"_a=ml_environment);
+  } else if(sim.param().qmmm.nn.learning_type==2){
+    ml_calculator = py_modules["schnetpack"].attr("interfaces").attr("SpkCalculator")(ml_model, "energy"_a="energy", "forces"_a="forces", "device"_a=device, "environment_provider"_a=ml_environment, "mlmm"_a=mlmm_indices);
+  } else {
+      std::ostringstream msg;
+      msg << "Learning type value unknown " << sim.param().qmmm.nn.learning_type;
+      io::messages.add(msg.str(), this->name(), io::message::error);
+  }
   if (!sim.param().qmmm.nn.val_model_path.empty()) {
     py::str val_model_path = sim.param().qmmm.nn.val_model_path;
     py::str val_args_path = py_modules["os"].attr("path").attr("join")(py::cast('/').attr("join")(val_model_path.attr("split")('/')[py::slice(0,-1,1)]), "args.json");
@@ -139,7 +148,24 @@ int interaction::NN_Worker::init(simulation::Simulation& sim) {
     if (py::bool_(val_model_args.attr("parallel"))) {
       val_model = val_model.attr("module");
     }
-    val_calculator = py_modules["schnetpack"].attr("interfaces").attr("SpkCalculator")(val_model, "energy"_a="energy", "forces"_a="forces", "device"_a=device, "environment_provider"_a=val_environment);
+    if(sim.param().qmmm.nn.learning_type==1){
+      val_calculator = py_modules["schnetpack"].attr("interfaces").attr("SpkCalculator")(val_model, "energy"_a="energy", "forces"_a="forces", "device"_a=device, "environment_provider"_a=val_environment);
+    } else if(sim.param().qmmm.nn.learning_type==2){
+      val_calculator = py_modules["schnetpack"].attr("interfaces").attr("SpkCalculator")(val_model, "energy"_a="energy", "forces"_a="forces", "device"_a=device, "environment_provider"_a=val_environment, "mlmm"_a=mlmm_indices);
+    } 
+  }   
+   
+
+  if (!sim.param().qmmm.nn.charge_model_path.empty()) {
+    py::str charge_model_path = sim.param().qmmm.nn.charge_model_path;
+    py::str charge_args_path = py_modules["os"].attr("path").attr("join")(py::cast('/').attr("join")(charge_model_path.attr("split")('/')[py::slice(0,-1,1)]), "args.json");
+    py::object charge_model_args = py_modules["schnetpack"].attr("utils").attr("read_from_json")(charge_args_path);
+    py::object charge_model = py_modules["torch"].attr("load")(charge_model_path,"map_location"_a=py_modules["torch"].attr("device")(device));
+    py::object charge_environment = py_modules["schnetpack"].attr("utils").attr("script_utils").attr("settings").attr("get_environment_provider")(charge_model_args, "device"_a=device);
+    if (py::bool_(charge_model_args.attr("parallel"))) {
+      charge_model = charge_model.attr("module");
+    }
+    charge_calculator = py_modules["schnetpack"].attr("interfaces").attr("SpkCalculator")(charge_model, "charges"_a="charges", "device"_a=device, "environment_provider"_a=charge_environment);
   }
 
   // Restore omp_num_threads
@@ -236,6 +262,35 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
         }
       }
     }
+  }
+  // Assign charges for the MM calculation, if asked for
+  if (!sim.param().qmmm.nn.charge_model_path.empty()
+      && sim.steps() % sim.param().qmmm.nn.charge_steps == 0) {
+    //py::object val_molecule(molecule); we don't need to create a new (reference to a) molecule 
+    molecule.attr("set_calculator")(charge_calculator);
+    // collect the charges
+    it = qm_zone.qm.begin();
+    double totcharge=0.0;
+    for (unsigned i = 0; it != to; ++it, ++i) {
+      it->qm_charge = molecule.attr("get_charges")().attr("item")(i).cast<double >() * this->param->unit_factor_charge;
+      totcharge+=it->qm_charge;
+    }
+    if(totcharge != sim.param().qmmm.qm_zone.charge){
+      std::ostringstream msg;
+      msg << "Charges from NN model do not add up " << sim.steps() 
+          << ": requested " << sim.param().qmmm.qm_zone.charge 
+          << " predicted " << totcharge << ". Homogeneously adjusting charges";
+      io::messages.add(msg.str(), this->name(), io::message::warning);
+      // adjust?
+      double q_adjust=(sim.param().qmmm.qm_zone.charge - totcharge) / qm_zone.qm.size();
+      it = qm_zone.qm.begin();
+      for(; it!=to; ++it){
+        it->qm_charge += q_adjust;
+        DEBUG(10, "Charge adjusted for atom " << it->index << " from " << it->qm_charge - q_adjust << " to " << it->qm_charge);
+      }
+    }
+    // and write them to the topology (to be consistent, should this be done in qmmm_interaction?)
+    qm_zone.write_charge(topo.charge());
   }
 
   return 0;

@@ -273,11 +273,12 @@ END
  *
  * The NNMODEL block specifies the PyTorch NN model to use.
  * It also specifies the model type (delta=0 vs. combined=1).
- * 
+ * and if the model was learned on the QMZONE+BUFFERZONE (1) or on the QMZONE only (2) 
  * @verbatim
 NNMODEL
 /path/to/schnetpack/model
-0
+# TYPE  LEARNING
+     0         1
 END
 @endverbatim
  *
@@ -289,6 +290,17 @@ NNVALID
 /path/to/schnetpack/model
 # NSTEPS    THRESHOLD   BIASFORCE
      100          5.0        10.0
+END
+@endverbatim
+ *
+ * The NNCHARGE block specifies the PyTorch NN model to use for charge predictions.
+ * Second line consists of number of steps when charges are newly assigned
+ * 
+ * @verbatim
+NNCHARGE
+/path/to/schnetpack/model
+# NSTEPS
+     100
 END
 @endverbatim
  *
@@ -623,8 +635,10 @@ io::In_QMMM::read(topology::Topology& topo,
         _lineStream.clear();
         _lineStream.str(line);
         bool model_type;
-        _lineStream >> model_type;
+        int learning_type;
+        _lineStream >> model_type >> learning_type;
         sim.param().qmmm.nn.model_type = model_type;
+        sim.param().qmmm.nn.learning_type = learning_type;
         if (_lineStream.fail()) {
           io::messages.add("bad line in NNMODEL block",
                 "In_QMMM", io::message::error);
@@ -657,6 +671,28 @@ io::In_QMMM::read(topology::Topology& topo,
         }
       }
     } // NNVALID
+    { // NNCHARGE
+      buffer = m_block["NNCHARGE"];
+      if (buffer.size()) {
+        if (buffer.size() != 4) {
+          io::messages.add("NNCHARGE block corrupt. Provide 2 lines.",
+                  "In_QMMM", io::message::error);
+          return;
+        }
+        sim.param().qmmm.nn.charge_model_path = buffer[1];
+        std::string line(buffer[2]);
+        _lineStream.clear();
+        _lineStream.str(line);
+        unsigned charge_steps;
+        _lineStream >> charge_steps;
+        sim.param().qmmm.nn.charge_steps = charge_steps;
+        if (_lineStream.fail()) {
+          io::messages.add("bad line in NNCHARGE block",
+                "In_QMMM", io::message::error);
+          return;
+        }
+      }
+    } // NNCHARGE
     { // NNDEVICE
       buffer = m_block["NNDEVICE"];
       const std::set<std::string> allowed = {"auto", "cpu", "cuda"};
