@@ -1,3 +1,9 @@
+## Just keeping these commented-out settings as working setup for anaconda
+## This will be later implemented with extra options (--with-python, --with-pybind?)
+##AM_CXXFLAGS = -I/home/user/anaconda3/envs/schnet/include/python3.7m -I/home/user/anaconda3/envs/schnet/lib/python3.7/site-packages/pybind11/include @MY_CXXFLAGS@
+##AM_CPPFLAGS = -I/home/user/anaconda3/envs/schnet/include/python3.7m -I/home/user/anaconda3/envs/schnet/lib/python3.7/site-packages/pybind11/include -I$(top_srcdir) -I$(top_srcdir)/src -I$(top_srcdir)/src/interaction -I$(top_srcdir)/src/interaction/nonbonded -I$(top_srcdir)/src/interaction/nonbonded/pairlist -I$(top_srcdir)/src/interaction/nonbonded/interaction -I$(top_srcdir)/src/interaction/bonded -I$(top_srcdir)/src/interaction/forcefield -I$(top_srcdir)/src/interaction/qmmm -I$(top_srcdir)/src/interaction/special -I$(top_srcdir)/src/interaction/special/xray -I$(top_srcdir)/src/algorithm 
+##AM_LDFLAGS = -L/home/user/anaconda3/envs/schnet/lib/ -lpthread -ldl -lutil -lm -static -lpython3.7m
+
 AM_CXXFLAGS = -I/usr/include/python3.6/ -I/usr/local/include/pybind11 @MY_CXXFLAGS@
 AM_CPPFLAGS = -I/usr/include/python3.6/ -I/usr/local/include/pybind11 -I$(top_srcdir) -I$(top_srcdir)/src -I$(top_srcdir)/src/interaction -I$(top_srcdir)/src/interaction/nonbonded -I$(top_srcdir)/src/interaction/nonbonded/pairlist -I$(top_srcdir)/src/interaction/nonbonded/interaction -I$(top_srcdir)/src/interaction/bonded -I$(top_srcdir)/src/interaction/forcefield -I$(top_srcdir)/src/interaction/qmmm -I$(top_srcdir)/src/interaction/special -I$(top_srcdir)/src/interaction/special/xray -I$(top_srcdir)/src/algorithm 
 AM_LDFLAGS = -lpython3.6m -lpthread -ldl -lutil -lm
