@@ -17,7 +17,7 @@
 #include <io/argument.h>
 #include <io/read_input.h>
 #include <math/random.h>
-#include <util/replicaExchange/repex_mpi.h>
+#include <replicaExchange/repex_mpi.h>
 #include <util/usage.h>
 #include "_replica_Interface.h"
 

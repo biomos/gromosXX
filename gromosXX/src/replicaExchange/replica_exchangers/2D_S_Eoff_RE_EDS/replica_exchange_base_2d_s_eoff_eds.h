@@ -4,9 +4,9 @@
  *
  * Created on March 29, 2020, 11:00 AM
  */
-#include <util/replicaExchange/replica_exchangers/replica_exchange_base_interface.h>
-#include <util/replicaExchange/replica_data.h>
-#include <util/replicaExchange/repex_mpi.h>
+#include <replicaExchange/replica_exchangers/replica_exchange_base_interface.h>
+#include <replicaExchange/replica_data.h>
+#include <replicaExchange/repex_mpi.h>
 
 #ifndef REPLICA_EXCHANGE_BASE_2D_S_EOFF_EDS_H
 #define REPLICA_EXCHANGE_BASE_2D_S_EOFF_EDS_H

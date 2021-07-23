@@ -19,7 +19,7 @@
 #include <io/read_input.h>
 #include <math/random.h>
 #include <util/usage.h>
-#include <util/replicaExchange/repex_mpi.h>
+#include <replicaExchange/repex_mpi.h>
 
 #ifndef REPLICA_INTERFACE_H
 #define REPLICA_INTERFACE_H

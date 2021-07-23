@@ -5,11 +5,11 @@
  * Created on April 18, 2018, 3:38 PM
  * Modified June 18, 2021 - bschroed, srieder
  */
-#include <util/replicaExchange/replica_exchangers/1D_S_RE_EDS/replica_exchange_base_eds.h>
+#include <replicaExchange/replica_exchangers/1D_S_RE_EDS/replica_exchange_base_eds.h>
 
 //Constructor
-#include <util/replicaExchange/replica_exchangers/replica_exchange_base_interface.h>
-#include <util/replicaExchange/replica/replica.h>
+#include <replicaExchange/replica_exchangers/replica_exchange_base_interface.h>
+#include <replicaExchange/replica/replica.h>
 #include "replicaExchange/replica/replica_MPI_master.h"
 #include "replicaExchange/replica/replica_MPI_slave.h"
 #include <stdheader.h>

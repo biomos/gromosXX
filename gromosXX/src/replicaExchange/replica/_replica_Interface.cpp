@@ -19,7 +19,7 @@
 #ifdef XXMPI
 #include <mpi.h>
 #endif
-#include <util/replicaExchange/replica/_replica_Interface.h>
+#include <replicaExchange/replica/_replica_Interface.h>
 
 #undef MODULE
 #undef SUBMODULE

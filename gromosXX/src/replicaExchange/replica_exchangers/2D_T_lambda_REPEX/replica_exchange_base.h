@@ -30,9 +30,9 @@
 
 #include <io/configuration/out_configuration.h>
 
-#include <util/replicaExchange/repex_mpi.h>
-#include <util/replicaExchange/replica_exchangers/replica_exchange_base_interface.h>
-#include <util/replicaExchange/replica/_replica_Interface.h>
+#include <replicaExchange/repex_mpi.h>
+#include <replicaExchange/replica_exchangers/replica_exchange_base_interface.h>
+#include <replicaExchange/replica/_replica_Interface.h>
 #include <string>
 #include <math/random.h>
 

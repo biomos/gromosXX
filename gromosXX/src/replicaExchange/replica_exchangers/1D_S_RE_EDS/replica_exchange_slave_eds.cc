@@ -5,7 +5,7 @@
  * Created on August 31, 2018, 10:43 AM
  * Modified June 18, 2021 - bschroed, srieder
  */
-#include <util/replicaExchange/replica_exchangers/1D_S_RE_EDS/replica_exchange_slave_eds.h>
+#include <replicaExchange/replica_exchangers/1D_S_RE_EDS/replica_exchange_slave_eds.h>
 
 
 #undef MODULE

@@ -5,9 +5,9 @@
  * Created on April 18, 2018, 3:38 PM
  * Modified June 18, 2021 - bschroed, srieder
  */
-#include <util/replicaExchange/replica_exchangers/replica_exchange_base_interface.h>
-#include <util/replicaExchange/replica_data.h>
-#include <util/replicaExchange/repex_mpi.h>
+#include <replicaExchange/replica_exchangers/replica_exchange_base_interface.h>
+#include <replicaExchange/replica_data.h>
+#include <replicaExchange/repex_mpi.h>
 
 #ifndef REPLICA_EXCHANGE_BASE_EDS_H
 #define REPLICA_EXCHANGE_BASE_EDS_H

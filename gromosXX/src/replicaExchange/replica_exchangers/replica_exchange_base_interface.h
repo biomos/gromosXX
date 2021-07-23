@@ -32,9 +32,9 @@
 
 #include <io/configuration/out_configuration.h>
 
-#include <util/replicaExchange/replica_graph_control.h>
-#include <util/replicaExchange/repex_mpi.h>
-#include <util/replicaExchange/replica/_replica_Interface.h>
+#include <replicaExchange/replica_graph_control.h>
+#include <replicaExchange/repex_mpi.h>
+#include <replicaExchange/replica/_replica_Interface.h>
 
 
 #ifdef XXMPI

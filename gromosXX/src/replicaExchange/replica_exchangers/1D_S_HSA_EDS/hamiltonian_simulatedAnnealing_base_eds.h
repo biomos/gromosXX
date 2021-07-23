@@ -9,9 +9,9 @@
 #ifndef hamiltonian_simulatedAnnealing_base_eds_H
 #define hamiltonian_simulatedAnnealing_base_eds_H
 
-#include <util/replicaExchange/replica_exchangers/replica_exchange_base_interface.h>
-#include <util/replicaExchange/replica_data.h>
-#include <util/replicaExchange/repex_mpi.h>
+#include <replicaExchange/replica_exchangers/replica_exchange_base_interface.h>
+#include <replicaExchange/replica_data.h>
+#include <replicaExchange/repex_mpi.h>
 
 //const
 

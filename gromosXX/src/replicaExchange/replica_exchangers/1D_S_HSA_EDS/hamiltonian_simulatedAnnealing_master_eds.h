@@ -10,9 +10,9 @@
 #ifndef hamiltonian_simulatedAnnealing_master_eds_H
 #define hamiltonian_simulatedAnnealing_master_eds_H
 
-#include <util/replicaExchange/replica_exchangers/replica_exchange_base_interface.h>
-#include <util/replicaExchange/replica_exchangers/replica_exchange_master_interface.h>
-#include <util/replicaExchange/replica_exchangers/1D_S_HSA_EDS/hamiltonian_simulatedAnnealing_base_eds.h>
+#include <replicaExchange/replica_exchangers/replica_exchange_base_interface.h>
+#include <replicaExchange/replica_exchangers/replica_exchange_master_interface.h>
+#include <replicaExchange/replica_exchangers/1D_S_HSA_EDS/hamiltonian_simulatedAnnealing_base_eds.h>
 
 //for the constructor
 #include <stdheader.h>

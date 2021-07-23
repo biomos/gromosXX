@@ -26,9 +26,9 @@
 
 #include <io/configuration/out_configuration.h>
 
-#include <util/replicaExchange/replica/replica.h>
-#include <util/replicaExchange/replica_exchangers/replica_exchange_slave_interface.h>
-#include <util/replicaExchange/replica_exchangers/2D_T_lambda_REPEX/replica_exchange_base.h>
+#include <replicaExchange/replica/replica.h>
+#include <replicaExchange/replica_exchangers/replica_exchange_slave_interface.h>
+#include <replicaExchange/replica_exchangers/2D_T_lambda_REPEX/replica_exchange_base.h>
 
 #ifdef XXMPI
 #include <mpi.h>

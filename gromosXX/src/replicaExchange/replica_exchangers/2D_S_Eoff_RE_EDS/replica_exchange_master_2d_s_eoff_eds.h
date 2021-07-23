@@ -5,9 +5,9 @@
  * Created on March 29, 2020, 11:00 AM
  */
 
-#include <util/replicaExchange/replica_exchangers/replica_exchange_base_interface.h>
-#include <util/replicaExchange/replica_exchangers/replica_exchange_master_interface.h>
-#include <util/replicaExchange/replica_exchangers/2D_S_Eoff_RE_EDS/replica_exchange_base_2d_s_eoff_eds.h>
+#include <replicaExchange/replica_exchangers/replica_exchange_base_interface.h>
+#include <replicaExchange/replica_exchangers/replica_exchange_master_interface.h>
+#include <replicaExchange/replica_exchangers/2D_S_Eoff_RE_EDS/replica_exchange_base_2d_s_eoff_eds.h>
 
 //for the constructor
 #include <stdheader.h>

@@ -4,11 +4,11 @@
  *
  * Created on March 29, 2020, 11:08 AM
  */
-#include <util/replicaExchange/replica_exchangers/2D_S_Eoff_RE_EDS/replica_exchange_base_2d_s_eoff_eds.h>
+#include <replicaExchange/replica_exchangers/2D_S_Eoff_RE_EDS/replica_exchange_base_2d_s_eoff_eds.h>
 
 //Constructor
-#include <util/replicaExchange/replica_exchangers/replica_exchange_base_interface.h>
-#include <util/replicaExchange/replica/replica.h>
+#include <replicaExchange/replica_exchangers/replica_exchange_base_interface.h>
+#include <replicaExchange/replica/replica.h>
 #include "replicaExchange/replica/replica_MPI_master.h"
 #include "replicaExchange/replica/replica_MPI_slave.h"
 #include <stdheader.h>

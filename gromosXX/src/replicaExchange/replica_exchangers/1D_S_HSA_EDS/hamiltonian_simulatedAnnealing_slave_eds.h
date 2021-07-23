@@ -6,8 +6,8 @@
  * Modified June 18, 2021 - bschroed, srieder
  */
 
-#include <util/replicaExchange/replica_exchangers/replica_exchange_slave_interface.h>
-#include <util/replicaExchange/replica_exchangers/1D_S_HSA_EDS/hamiltonian_simulatedAnnealing_base_eds.h>
+#include <replicaExchange/replica_exchangers/replica_exchange_slave_interface.h>
+#include <replicaExchange/replica_exchangers/1D_S_HSA_EDS/hamiltonian_simulatedAnnealing_base_eds.h>
 //for the constructor
 #include <stdheader.h>
 
