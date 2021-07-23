@@ -2,8 +2,8 @@ AM_CXXFLAGS = @MY_CXXFLAGS@
 AM_CPPFLAGS = -I$(top_srcdir) -I$(top_srcdir)/src -I$(top_srcdir)/src/replicaExchange
 
 xxincludedir = $(includedir)/md++/replicaExchange
-xxinclude_HEADERS = \
-	repex_mpi.h\
+
+xxinclude_HEADERS = repex_mpi.h\
     replica_graph_control.h\
     replica_data.h\
 	replica/_replica_Interface.h\
@@ -28,8 +28,7 @@ xxinclude_HEADERS = \
 
 noinst_LTLIBRARIES = libgrorepex.la
 
-libgrorepex_la_SOURCES =	 \
-    replica_graph_control.cpp\
+libgrorepex_la_SOURCES = replica_graph_control.cpp\
     replica/_replica_Interface.cpp\
     replica/replica.cc\
     replica/replica_MPI_master.cpp\
