@@ -184,13 +184,19 @@
       extern int simulation_debug_level;
     }
 
+    namespace re
+    {
+        extern int debug_level;
+        extern int replica_exchanger_debug_level;
+        extern int replica_debug_level;
+    }
+
     namespace util
     {
       extern int debug_level;
       extern int util_debug_level;
       extern int leus_debug_level;
       extern int bs_leus_debug_level;
-      extern int replica_exchange_debug_level;
     }
 
 #endif

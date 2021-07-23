@@ -28,7 +28,8 @@ xxinclude_HEADERS = repex_mpi.h\
 
 noinst_LTLIBRARIES = libgrorepex.la
 
-libgrorepex_la_SOURCES = replica_graph_control.cpp\
+libgrorepex_la_SOURCES = replicaExchange.cpp\
+    replica_graph_control.cpp\
     replica/_replica_Interface.cpp\
     replica/replica.cc\
     replica/replica_MPI_master.cpp\

@@ -30,6 +30,12 @@
 #include <mpi.h>
 #endif
 
+#undef MODULE
+#undef SUBMODULE
+#define MODULE re
+#define SUBMODULE replica_exchanger
+
+
 re::replica_exchange_slave::replica_exchange_slave(io::Argument & _args,
                                                     unsigned int cont,
                                                     unsigned int globalThreadID,

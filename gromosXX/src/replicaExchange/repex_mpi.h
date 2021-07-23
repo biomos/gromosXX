@@ -47,6 +47,7 @@ namespace re {
     double epot_partner;
     double probability;
   };
+
 }
 
 /**

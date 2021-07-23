@@ -23,8 +23,9 @@
 
 #undef MODULE
 #undef SUBMODULE
-#define MODULE util
-#define SUBMODULE replica_exchange
+#define MODULE re
+#define SUBMODULE replica
+
 
 re::replica_Interface::replica_Interface(int globalThreadID, simulation::MpiControl & _replica_mpi_control, io::Argument args):
         globalThreadID(globalThreadID),  

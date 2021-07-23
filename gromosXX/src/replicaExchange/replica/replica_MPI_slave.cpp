@@ -18,8 +18,8 @@
 
 #undef MODULE
 #undef SUBMODULE
-#define MODULE util
-#define SUBMODULE replica_exchange
+#define MODULE re
+#define SUBMODULE replica
 
 re::replica_MPI_Slave::replica_MPI_Slave(io::Argument _args, int cont, int globalThreadID,
          simulation::MpiControl & replica_mpi_control) : replica_Interface(globalThreadID, replica_mpi_control, _args){

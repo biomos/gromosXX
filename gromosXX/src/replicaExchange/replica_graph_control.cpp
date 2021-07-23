@@ -12,6 +12,11 @@
 #include "stdheader.h"
 #include "replica_graph_control.h"
 
+#undef MODULE
+#undef SUBMODULE
+#define MODULE re
+#define SUBMODULE replica_exchanger
+
 namespace re{
     replica_graph_control::replica_graph_control() : graphID(0), masterID(0), threadID(-1), numberOfThreads(0) {
     }
@@ -61,7 +66,7 @@ namespace re{
         std::cerr << "\n";         
     }
     
-        void replica_graph_control::print_struct(){
+    void replica_graph_control::print_struct(){
         std::cerr << "\n\n REPLICA_GRAPH_CONSTRUCT\n";
         std::cerr << "\tgraphID:\t"<<graphID <<"\n";
         std::cerr << "\tmasterID:\t"<< masterID<<"\n";

@@ -44,8 +44,8 @@
 
 #undef MODULE
 #undef SUBMODULE
-#define MODULE util
-#define SUBMODULE replica_exchange
+#define MODULE re
+#define SUBMODULE replica_exchanger
 
 /*
  * ADDITIONAL FUNCTIONS for REDS

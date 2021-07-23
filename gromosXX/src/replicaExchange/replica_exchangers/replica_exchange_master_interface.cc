@@ -39,8 +39,8 @@
 
 #undef MODULE
 #undef SUBMODULE
-#define MODULE util
-#define SUBMODULE replica_exchange
+#define MODULE re
+#define SUBMODULE replica_exchanger
 
 re::replica_exchange_master_interface::replica_exchange_master_interface(io::Argument & args,
         unsigned int cont,

@@ -10,8 +10,8 @@
 
 #undef MODULE
 #undef SUBMODULE
-#define MODULE util
-#define SUBMODULE replica_exchange
+#define MODULE re
+#define SUBMODULE replica_exchanger
 
 re::hamiltonian_simulatedAnnealing_master_eds::hamiltonian_simulatedAnnealing_master_eds(io::Argument _args,
                                                                 unsigned int cont,
