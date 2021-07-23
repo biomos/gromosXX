@@ -49,6 +49,7 @@ libgrorepex_la_SOURCES = replica_graph_control.cpp\
     replica_exchangers/2D_S_Eoff_RE_EDS/replica_exchange_master_2d_s_eoff_eds.cc\
     replica_exchangers/2D_S_Eoff_RE_EDS/replica_exchange_slave_2d_s_eoff_eds.cc
 
+libgrorepex_la_CXXFLAGS = @CXX_NDEBUG_FLAGS@
 
 libgrorepex_la_LIBADD =
 
