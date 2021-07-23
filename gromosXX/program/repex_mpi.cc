@@ -50,6 +50,8 @@
     #include <mpi.h>
 #endif
 
+#include <replicaExchange/repex_mpi.h>
+#include <replicaExchange/replicaExchange.cpp>
 #include <replicaExchange/replica/replica.h>
 
 #include <replicaExchange/replica_exchangers/2D_T_lambda_REPEX/replica_exchange_master.h>
@@ -61,17 +63,13 @@
 #include <replicaExchange/replica_exchangers/1D_S_HSA_EDS/hamiltonian_simulatedAnnealing_master_eds.h>
 #include <replicaExchange/replica_exchangers/1D_S_HSA_EDS/hamiltonian_simulatedAnnealing_slave_eds.h>
 
-#include <replicaExchange/repex_mpi.h>
-#include "replicaExchange/replica_graph_control.h"
+#include <replicaExchange/replica_graph_control.h>
 
-//Debug Instructions
-#undef MODULE
-#undef SUBMODULE
-#define MODULE util
-#define SUBMODULE replica_exchange
+
 
 int main(int argc, char *argv[]) {
 #ifdef XXMPI
+
     //initializing MPI
     MPI_Init(&argc, &argv);
     const double start = util::now();

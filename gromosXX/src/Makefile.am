@@ -20,8 +20,8 @@ libmdpp_la_LIBADD = algorithm/libgroalgorithm.la\
 	math/libgromath.la\
 	simulation/libgrosimulation.la\
 	topology/libgrotopology.la\
-	util/libgroutil.la\
     replicaExchange/libgrorepex.la\
+	util/libgroutil.la\
 	io/libgroio.la\
 	$(GSL_LIBS)\
 	$(CLIPPER_LIBS)
