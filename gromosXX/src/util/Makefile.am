@@ -1,5 +1,5 @@
 AM_CXXFLAGS = @MY_CXXFLAGS@
-AM_CPPFLAGS = -I$(top_srcdir) -I$(top_srcdir)/src -I$(top_srcdir)/src/util -I$(top_srcdir)/src/util/replicaExchange
+AM_CPPFLAGS = -I$(top_srcdir) -I$(top_srcdir)/src -I$(top_srcdir)/src/util
 
 xxincludedir = $(includedir)/md++/util
 xxinclude_HEADERS = error.h\
@@ -28,30 +28,6 @@ xxinclude_HEADERS = error.h\
 	system_call.h\
 	undirected_graph.h
 
-#include replica_exchange Files
-
-xxutilrepexdir = $(includedir)/md++/util/replicaExchange
-xxutilrepex_HEADERS =
-	replicaExchange/repex_mpi.h\
-        replicaExchange/replica_graph_control.h\
-        replicaExchange/replica_data.h\
-	replicaExchange/replica/_replica_Interface.h\
-	replicaExchange/replica/replica.h\
-	replicaExchange/replica/replica_MPI_master.h\
-	replicaExchange/replica/replica_MPI_slave.h\
-	replicaExchange/replica_exchangers/replica_exchange_base_interface.h\
-	replicaExchange/replica_exchangers/replica_exchange_master_interface.h\
-	replicaExchange/replica_exchangers/replica_exchange_slave_interface.h\
-	replicaExchange/replica_exchangers/2D_T_lambda_REPEX/replica_exchange_base.cc\
-	replicaExchange/replica_exchangers/2D_T_lambda_REPEX/replica_exchange_master.cc\
-	replicaExchange/replica_exchangers/2D_T_lambda_REPEX/replica_exchange_slave.cc\
-	replicaExchange/replica_exchangers/1D_S_RE_EDS/replica_exchange_base_eds.h\
-	replicaExchange/replica_exchangers/1D_S_RE_EDS/replica_exchange_master_eds.h\
-	replicaExchange/replica_exchangers/1D_S_RE_EDS/replica_exchange_slave_eds.h\
-	replicaExchange/replica_exchangers/2D_S_Eoff_RE_EDS/replica_exchange_base_2d_s_eoff_eds.h\
-	replicaExchange/replica_exchangers/2D_S_Eoff_RE_EDS/replica_exchange_master_2d_s_eoff_eds.h\
-	replicaExchange/replica_exchangers/2D_S_Eoff_RE_EDS/replica_exchange_slave_2d_s_eoff_eds.h
-
 noinst_LTLIBRARIES = libgroutil.la
 
 libgroutil_la_SOURCES =	cycle_thread.cc\
@@ -76,24 +52,8 @@ libgroutil_la_SOURCES =	cycle_thread.cc\
 	umbrella_weight.cc\
 	thread.cc\
 	system_call.cc\
-	undirected_graph.cc\
-	replicaExchange/replica_graph_control.cpp\
-	replicaExchange/replica/_replica_Interface.cpp\
-	replicaExchange/replica/replica.cc\
-	replicaExchange/replica/replica_MPI_master.cpp\
-	replicaExchange/replica/replica_MPI_slave.cpp\
-	replicaExchange/replica_exchangers/replica_exchange_base_interface.cc\
-	replicaExchange/replica_exchangers/replica_exchange_master_interface.cc\
-	replicaExchange/replica_exchangers/replica_exchange_slave_interface.cc\
-	replicaExchange/replica_exchangers/2D_T_lambda_REPEX/replica_exchange_base.cc\
-	replicaExchange/replica_exchangers/2D_T_lambda_REPEX/replica_exchange_master.cc\
-	replicaExchange/replica_exchangers/2D_T_lambda_REPEX/replica_exchange_slave.cc\
-	replicaExchange/replica_exchangers/1D_S_RE_EDS/replica_exchange_base_eds.cc\
-	replicaExchange/replica_exchangers/1D_S_RE_EDS/replica_exchange_master_eds.cc\
-	replicaExchange/replica_exchangers/1D_S_RE_EDS/replica_exchange_slave_eds.cc\
-	replicaExchange/replica_exchangers/2D_S_Eoff_RE_EDS/replica_exchange_base_2d_s_eoff_eds.cc\
-	replicaExchange/replica_exchangers/2D_S_Eoff_RE_EDS/replica_exchange_master_2d_s_eoff_eds.cc\
-	replicaExchange/replica_exchangers/2D_S_Eoff_RE_EDS/replica_exchange_slave_2d_s_eoff_eds.cc
+	undirected_graph.cc
+
 
 libgroutil_la_LIBADD =
 
