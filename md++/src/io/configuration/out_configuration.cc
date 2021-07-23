@@ -2977,6 +2977,7 @@ void io::Out_Configuration::_print_rdc_cumaverages(
           RDC_cumavg_to = conf.special().tfrdc.RDC_cumavg.end();
 
   os << "RDCCUMAVE" << std::endl;
+  os << conf.special().tfrdc.RDC_cumavg.size() << std::endl;
   for (int i = 1; RDC_cumavg_it != RDC_cumavg_to; ++RDC_cumavg_it, ++i) {
     //os << std::setw(6) << i;
     os.precision(m_rdc_restraint_precision);
@@ -3026,21 +3027,14 @@ void io::Out_Configuration::_print_tf_rdc_restraint_averages(
   os.precision(m_distance_restraint_precision); // use a lower precision due to scientific formats
 
   os << "TFRDCRESEXPAVE" << std::endl;
-  int l;
+  
   os << conf.special().tfrdc.num_averaged << std::endl;
-  for (l = 0; r_it != r_it_to; ++r_it, ++p_it, ++rdc_it) {
-    os << std::setw(m_width) << std::right << *r_it;
-    if (++l % 5 == 0)
-        os << std::endl;
-    os << std::setw(m_width) << std::right << *p_it;
-    if (++l % 5 == 0)
-      os << std::endl;
-    os << std::setw(m_width) << std::right << *rdc_it*1000000000000;
-    if (++l % 5 == 0)
-      os << std::endl;
+  for (;r_it != r_it_to; ++r_it, ++p_it, ++rdc_it) {
+    os << std::setw(m_width) << std::right << *r_it
+       << std::setw(m_width) << std::right << *p_it
+       << std::setw(m_width) << std::right << *rdc_it*1000000000000
+       << std::endl;
   }
-  if (l % 5 != 0)
-    os << std::endl;
   os << "END" << std::endl;
 }
 
@@ -3197,7 +3191,9 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
           << std::setw(18) << e.total + e.shift_extra_phys_total << "\n" // 48
           << std::setw(18) << e.eds_vr_shift_orig << "\n" // 49
           << std::setw(18) << e.eds_vr_shift_phys << "\n"  // 50
-          << std::setw(18) << e.gamd_DV_total << "\n"; // 51
+          << std::setw(18) << e.gamd_DV_total << "\n" // 51
+          << std::setw(18) << e.tfrdc_total << "\n" // 52
+          << std::setw(18) << e.zaxisoribias_total << "\n"; // 53
 
   os << "# baths\n";
   os << numbaths << "\n";

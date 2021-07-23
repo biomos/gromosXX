@@ -771,7 +771,7 @@ namespace configuration {
         /**
          * the number of averaged timepoints in RDC_cumavg
          */
-        unsigned int num_averaged;
+        unsigned long long int num_averaged;
         /**
          * the energy
          */
