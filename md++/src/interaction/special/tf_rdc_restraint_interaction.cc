@@ -58,6 +58,7 @@ int _calculate_tf_rdc_restraint_interactions
     const double dRavedR = 1.0 - exptaur;                       // [-]
     const double dPavedP = 1.0 - exptaut;                       // [-]
     const double q_scale = dRavedR/dPavedP;                     // [-]
+    ++conf.special().tfrdc.num_averaged;
     for(unsigned int l = 0; it != to; ++it, ++l) {
         math::Vec dRdr(0.0, 0.0, 0.0), dPdr(0.0, 0.0, 0.0);
         math::Vec force(0.0, 0.0, 0.0);
@@ -137,9 +138,12 @@ int _calculate_tf_rdc_restraint_interactions
 
                 // the cumulative average
                 double & RDC_cumavg = conf.special().tfrdc.RDC_cumavg[l]; // [1 / ps]
-                ++conf.special().tfrdc.num_averaged;
                 RDC_cumavg += (conf.special().tfrdc.RDC[l]-RDC_cumavg)/conf.special().tfrdc.num_averaged; 
-                
+                if (isnan(RDC_cumavg)) {
+                  std::cerr << conf.special().tfrdc.num_averaged << " " << RDC_cumavg
+                            << " P: " << P << " R: " << R << " z " << r_ij(2) 
+                            << " t_z_inv_r_ij_2 " << t_z_inv_r_ij_2 << std::endl;
+                }
 
                 DEBUG(15, " R_avg: " << R_avg);
                 DEBUG(15, " P_avg: " << P_avg);
@@ -252,6 +256,10 @@ int interaction::TF_RDC_Restraint_Interaction::init
   conf.special().tfrdc.RDC_avg.resize(num_res);
   conf.special().tfrdc.RDC_cumavg.resize(num_res);
   conf.special().tfrdc.energy.resize(num_res);
+
+  if (!sim.param().tfrdc.read) {
+    conf.special().tfrdc.num_averaged=0;
+  }
 
   if (!quiet) {
     os << "TENSOR-FREE RDC RESTRAINT INTERACTION" << std::endl;

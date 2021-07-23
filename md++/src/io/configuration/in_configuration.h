@@ -497,7 +497,7 @@ namespace io {
               std::vector<double> & R_avg,
               std::vector<double> & P_avg,
               std::vector<double> & RDC_cumavg,
-              unsigned int & num_averaged);
+              unsigned long long int & num_averaged);
 
     /**
      * read time information

@@ -2622,7 +2622,7 @@ bool io::In_Configuration::_read_tf_rdc_restraint_averages(
         std::vector<double> & R_avg,
         std::vector<double> & P_avg,
         std::vector<double> & RDC_cumavg,
-				unsigned int & num_averaged) {
+				unsigned long long int & num_averaged) {
   DEBUG(8, "read tensor-free RDC restaint averages");
 
   std::vector<topology::tf_rdc_restraint_struct>::const_iterator
