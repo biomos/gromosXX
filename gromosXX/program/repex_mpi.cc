@@ -50,19 +50,19 @@
     #include <mpi.h>
 #endif
 
-#include <util/replicaExchange/replica/replica.h>
+#include <replicaExchange/replica/replica.h>
 
-#include <util/replicaExchange/replica_exchangers/2D_T_lambda_REPEX/replica_exchange_master.h>
-#include <util/replicaExchange/replica_exchangers/2D_T_lambda_REPEX/replica_exchange_slave.h>
-#include <util/replicaExchange/replica_exchangers/1D_S_RE_EDS/replica_exchange_master_eds.h>
-#include <util/replicaExchange/replica_exchangers/1D_S_RE_EDS/replica_exchange_slave_eds.h>
-#include <util/replicaExchange/replica_exchangers/2D_S_Eoff_RE_EDS/replica_exchange_master_2d_s_eoff_eds.h>
-#include <util/replicaExchange/replica_exchangers/2D_S_Eoff_RE_EDS/replica_exchange_slave_2d_s_eoff_eds.h>
-#include <util/replicaExchange/replica_exchangers/1D_S_HSA_EDS/hamiltonian_simulatedAnnealing_master_eds.h>
-#include <util/replicaExchange/replica_exchangers/1D_S_HSA_EDS/hamiltonian_simulatedAnnealing_slave_eds.h>
+#include <replicaExchange/replica_exchangers/2D_T_lambda_REPEX/replica_exchange_master.h>
+#include <replicaExchange/replica_exchangers/2D_T_lambda_REPEX/replica_exchange_slave.h>
+#include <replicaExchange/replica_exchangers/1D_S_RE_EDS/replica_exchange_master_eds.h>
+#include <replicaExchange/replica_exchangers/1D_S_RE_EDS/replica_exchange_slave_eds.h>
+#include <replicaExchange/replica_exchangers/2D_S_Eoff_RE_EDS/replica_exchange_master_2d_s_eoff_eds.h>
+#include <replicaExchange/replica_exchangers/2D_S_Eoff_RE_EDS/replica_exchange_slave_2d_s_eoff_eds.h>
+#include <replicaExchange/replica_exchangers/1D_S_HSA_EDS/hamiltonian_simulatedAnnealing_master_eds.h>
+#include <replicaExchange/replica_exchangers/1D_S_HSA_EDS/hamiltonian_simulatedAnnealing_slave_eds.h>
 
-#include <util/replicaExchange/repex_mpi.h>
-#include "util/replicaExchange/replica_graph_control.h"
+#include <replicaExchange/repex_mpi.h>
+#include "replicaExchange/replica_graph_control.h"
 
 //Debug Instructions
 #undef MODULE
