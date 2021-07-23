@@ -4,7 +4,7 @@ if WITH_CUDA
   CUKERNEL = cukernel
 endif
 
-SUBDIRS = $(CUKERNEL) util simulation math topology configuration algorithm interaction io check .
+SUBDIRS = $(CUKERNEL) util simulation math topology configuration algorithm interaction io check replicaExchange .
 
 noinst_HEADERS = stdheader.h
 
