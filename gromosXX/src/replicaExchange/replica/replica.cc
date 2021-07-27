@@ -172,7 +172,7 @@ void re::replica::run_MD() {
     traj->write(conf, topo, sim, io::reduced);
     
     // run a step
-    DEBUG(5, "replica "<< globalThreadID <<":run_MD:\t simulation!:");
+    DEBUG(5, "replica "<< globalThreadID <<":run_MD:\t simulation Step: "<< sim.steps());
 
     if ((error = md.run(topo, conf, sim))) {
       switch (error) {
