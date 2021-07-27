@@ -478,15 +478,17 @@ void re::replica_exchange_base_interface::exchange_averages() {
 
 //sending stuff
 void re::replica_exchange_base_interface::send_coord(const unsigned int receiverReplicaID) {
-  DEBUG(3,"replica"<<globalThreadID<<":replica_exchange_base_interface: SEND_COORD\n\n");
+  DEBUG(5,"replica"<<globalThreadID<<":replica_exchange_base_interface: SEND_COORD\n\n");
 #ifdef XXMPI
   unsigned int receiverReplicaMasterThreadID = receiverReplicaID;
 
   configuration::Configuration& conf = replica->conf;
+  DEBUG(5,"replica"<<globalThreadID<<":replica_exchange_base_interface: get conf\n\n");
 
   MPI_Send(&conf.current().pos[0][0], 1, MPI_VARRAY, receiverReplicaMasterThreadID, POS,  replicaGraphMPIControl().comm);
   MPI_Send(&conf.current().posV[0][0], 1, MPI_VARRAY, receiverReplicaMasterThreadID, POSV, replicaGraphMPIControl().comm);
   MPI_Send(&conf.current().vel[0][0], 1, MPI_VARRAY, receiverReplicaMasterThreadID, VEL,  replicaGraphMPIControl().comm);
+  DEBUG(5,"replica"<<globalThreadID<<":replica_exchange_base_interface: SEND_COORD POS,POSV, VEL\n\n");
 
   // we need to store the lattice shifts from the previous configuration and to send them
   // if we are the second one to send the data
@@ -497,6 +499,7 @@ void re::replica_exchange_base_interface::send_coord(const unsigned int receiver
     delete replica->latticeTMP;
     replica->latticeTMP = NULL;
   }
+  DEBUG(5,"replica"<<globalThreadID<<":replica_exchange_base_interface: SEND_COORD latticeShifts\n\n");
 
   MPI_Send(&conf.current().stochastic_integral[0][0], 1, MPI_VARRAY, receiverReplicaMasterThreadID, STOCHINT,  replicaGraphMPIControl().comm);
   MPI_Send(&conf.current().box(0)[0], 1, MPI_BOX, receiverReplicaMasterThreadID, BOX,  replicaGraphMPIControl().comm);
@@ -507,12 +510,15 @@ void re::replica_exchange_base_interface::send_coord(const unsigned int receiver
   angles[1] = conf.current().psi;
   angles[2] = conf.current().theta;
 
+  DEBUG(5,"replica"<<globalThreadID<<":replica_exchange_base_interface: SEND_COORD angles\n\n");
   MPI_Send(&angles[0], angles.size(), MPI_DOUBLE, receiverReplicaMasterThreadID, ANGLES,  replicaGraphMPIControl().comm);
   MPI_Send(&conf.special().distancefield.distance[0], conf.special().distancefield.distance.size(), MPI_DOUBLE, receiverReplicaMasterThreadID, DF,  replicaGraphMPIControl().comm);
   
   if ( simulationID > receiverReplicaID){
     conf.exchange_state();
   }
+  DEBUG(5,"replica"<<globalThreadID<<":replica_exchange_base_interface: DONE angles\n\n");
+
 #endif
 }
 
