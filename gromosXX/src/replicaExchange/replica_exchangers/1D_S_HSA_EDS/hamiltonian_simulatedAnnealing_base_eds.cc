@@ -83,9 +83,6 @@ void re::hamiltonian_simulatedAnnealing_base_eds::determine_switch_probabilities
 void re::hamiltonian_simulatedAnnealing_base_eds::swap_replicas_1D(const unsigned int partnerReplicaID) {
     DEBUG(4, "hamiltonian_simulatedAnnealing_base_eds:replica "<<  globalThreadID <<":swap1D - S:\t  START");
     DEBUG(4, "hamiltonian_simulatedAnnealing_base_eds:replica "<<  globalThreadID <<":swap1D - S:\t  sim: "<< simulationID << " \t\t "<< partnerReplicaID);
-    unsigned int partnerReplicaMasterThreadID = partnerReplicaID;
-    unsigned int num_s = replica->sim.param().reeds.num_l;
-
     // does partner exist?
     // the one with the higher ID does the probability calculation
 
@@ -142,7 +139,7 @@ double re::hamiltonian_simulatedAnnealing_base_eds::calc_probability(const unsig
     /*
      * This function is calculating the probability of the the coordinates to get pushed to the next higher s-Value.
      */
-    DEBUG(1,"\n\nreplica "<<globalThreadID<<":replica_exchange_base_interface: CALC_PROBABILITY by ID:" << simulationID << "\n");
+    DEBUG(1,"\n\nreplica "<<globalThreadID<<":hamiltonian_simulatedAnnealing_base_eds: CALC_PROBABILITY by ID:" << simulationID << "\n");
 
     unsigned int partnerReplicaMasterThreadID = partnerReplicaID;
 
@@ -308,16 +305,17 @@ void re::hamiltonian_simulatedAnnealing_base_eds::change_eds(const unsigned int 
 //Execute Swapping
 /**OVERRIDE Possibly THIS NICE FUNCTION*/
 void re::hamiltonian_simulatedAnnealing_base_eds::execute_swap(const unsigned int partnerReplicaID) {
-    DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":executeSwap:\t START");
+    DEBUG(3,"hamiltonian_simulatedAnnealing_base_eds "<< globalThreadID <<":executeSwap:\t START");
     if (simulationID > partnerReplicaID) {
+        replica->latticeTMP = new math::VArray(replica->conf.special().lattice_shifts);
         send_coord(partnerReplicaID);
-        replica->conf.exchange_state();
+        replica->conf.exchange_state(); //change back configs todo: bschroed this configuration juggeling should happen here! not in the send/recieve
     } else {
         receive_new_coord(partnerReplicaID);
     }
     // the averages of current and old are interchanged after calling exchange_state() and have to be switched back
     exchange_averages();
-    DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":executeSwap:\t DONE");
+    DEBUG(3,"hamiltonian_simulatedAnnealing_base_eds "<< globalThreadID <<":executeSwap:\t DONE");
 }
 
 ////calc exchange Energy
