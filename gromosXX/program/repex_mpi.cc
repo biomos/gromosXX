@@ -50,7 +50,6 @@
     #include <mpi.h>
 #endif
 
-#include <replicaExchange/repex_mpi.h>
 #include <replicaExchange/replicaExchange.cpp>
 #include <replicaExchange/replica/replica.h>
 
@@ -64,7 +63,7 @@
 #include <replicaExchange/replica_exchangers/1D_S_HSA_EDS/hamiltonian_simulatedAnnealing_slave_eds.h>
 
 #include <replicaExchange/replica_graph_control.h>
-
+#include <replicaExchange/repex_mpi.h>
 
 
 int main(int argc, char *argv[]) {
