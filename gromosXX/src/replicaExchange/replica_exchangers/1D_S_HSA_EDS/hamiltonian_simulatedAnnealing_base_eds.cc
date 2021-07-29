@@ -102,8 +102,11 @@ void re::hamiltonian_simulatedAnnealing_base_eds::swap_replicas_1D(const unsigne
 
             if (randNum < probability) {
               switched = true;
-            } else
+            } else{
               switched = false;
+            }
+            DEBUG(5,"\n\nreplica "<<globalThreadID<<":hamiltonian_simulatedAnnealing_base_eds: \tp: " << probability << "\trandN: " << randNum << "\tswitch: " << switched<< "\n");
+
       } else {    //The Partner sends his data to The calculating Thread
 
         if (replica->sim.param().pcouple.scale != math::pcouple_off) {
@@ -155,7 +158,6 @@ double re::hamiltonian_simulatedAnnealing_base_eds::calc_probability(const unsig
         delta = (b1 - b2)*(0); //*  (E21 - E11 = 0 if same lambda)
 
     } else {
-        // 2D formula
         /*
          * E12: Energy with lambda from 1 and configuration from 2
          * delta = b1 * ( E22 - E11) - b2*(E21  - E12);
@@ -165,7 +167,9 @@ double re::hamiltonian_simulatedAnnealing_base_eds::calc_probability(const unsig
         const double E21 = calculate_energy(partnerReplicaID);
 
         // store this as the partner energy
-        delta = b1 * E11 - b2 * E21;
+        delta = b2 * E21 - b1 * E11 ;
+        DEBUG(5,"\n\nreplica "<<globalThreadID<<":hamiltonian_simulatedAnnealing_base_eds: \tPotA: " << E11 << "\tPotB: " << E21 << "\tdelta: " << delta<< "\n");
+
     }
 
     // NPT? add PV term
@@ -404,9 +408,7 @@ double re::hamiltonian_simulatedAnnealing_base_eds::calculate_energy_core() {
 }
 
 double re::hamiltonian_simulatedAnnealing_base_eds::calculate_energy(const unsigned int selectedReplicaID) {
-    DEBUG(4, "replica_reeds_base_edsreplica_reeds "<< globalThreadID <<":calculate_energy:\t START"); 
- 
-
+    DEBUG(4, "replica_reeds_base_edsreplica_reeds "<< globalThreadID <<":calculate_energy:\t START");
     DEBUG(5, "replica_reeds_base_edsreplica_reeds "<< globalThreadID <<":calculate_energy:\t get Partner settings"); 
     if(selectedReplicaID!=simulationID){ 
         change_eds(selectedReplicaID);
