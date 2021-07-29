@@ -167,7 +167,7 @@ void re::replica::run_MD() {
   int error;
   DEBUG(4,  "replica "<< globalThreadID <<": run_MD:\t Start");      
   DEBUG(5, "replica "<< globalThreadID <<":run_MD:\t doing steps: "<<stepsPerRun<< " till: "<< stepsPerRun + curentStepNumber << " starts at: " << curentStepNumber << "TOTAL RUNS: "<< totalStepNumber );
-  std::cout << "START replica "<< globalThreadID << "pos " << conf.current().pos[0][0];
+  //std::cout << "START "<< sim.steps()<< " replica "<< globalThreadID << "pos " << conf.current().pos[0][0] << std::endl;
 
   while ((unsigned int)(sim.steps()) < stepsPerRun + curentStepNumber){
     traj->write(conf, topo, sim, io::reduced);
@@ -274,6 +274,6 @@ void re::replica::run_MD() {
   }
 
   conf.exchange_state();
-    std::cout << "END replica "<< globalThreadID << "pos " << conf.current().pos[0][0];
+  //std::cout << "END "<< sim.steps()<< " replica "<< globalThreadID << "pos " << conf.current().pos[0][0] << std::endl;
 
 }
