@@ -239,7 +239,6 @@ int main(int argc, char *argv[]) {
                       DEBUG(3, "numReps & numEDSstates: " << numReplicas << ", " << numEDSstates << "\n");
                       break;
                   case 3:
-                      std::cout << "HSA!" << std::endl;
                       numReplicas = numSVals;
                       numEDSstates = sim.param().reeds.eds_para[0].numstates;
                       DEBUG(3, "numReps & numEDSstates: " << numReplicas << ", " << numEDSstates << "\n");
