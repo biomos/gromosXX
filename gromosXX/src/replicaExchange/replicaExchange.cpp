@@ -12,9 +12,8 @@
 double replicaExchange_ver = 1.0;
 
 namespace re {
-#ifndef NDEBUG
     int debug_level=0;
     int replica_exchanger_debug_level=0;
     int replica_debug_level=0;
-#endif
+
 }

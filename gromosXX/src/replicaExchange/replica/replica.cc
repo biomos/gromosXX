@@ -7,15 +7,15 @@
  */
 
 
+#ifdef XXMPI
+    #include <mpi.h>
+#endif
+
 
 #include <io/argument.h>
 #include <util/error.h>
 #include <math/volume.h>
 #include "replica.h"
-
-#ifdef XXMPI
-#include <mpi.h>
-#endif
 
 
 #undef MODULE
@@ -166,14 +166,14 @@ void re::replica::run_MD() {
   // run MD simulation
   int error;
   DEBUG(4,  "replica "<< globalThreadID <<": run_MD:\t Start");      
-  DEBUG(5, "replica "<< globalThreadID <<":run_MD:\t doing steps: "<<stepsPerRun<< " till: "<< stepsPerRun + curentStepNumber << " starts at: " << curentStepNumber << "TOTAL RUNS: "<< totalStepNumber );      
-  
+  DEBUG(5, "replica "<< globalThreadID <<":run_MD:\t doing steps: "<<stepsPerRun<< " till: "<< stepsPerRun + curentStepNumber << " starts at: " << curentStepNumber << "TOTAL RUNS: "<< totalStepNumber );
+  std::cout << "START replica "<< globalThreadID << "pos " << conf.current().pos[0][0];
+
   while ((unsigned int)(sim.steps()) < stepsPerRun + curentStepNumber){
     traj->write(conf, topo, sim, io::reduced);
     
     // run a step
     DEBUG(5, "replica "<< globalThreadID <<":run_MD:\t simulation Step: "<< sim.steps());
-
     if ((error = md.run(topo, conf, sim))) {
       switch (error) {
         case E_SHAKE_FAILURE:
@@ -248,6 +248,7 @@ void re::replica::run_MD() {
     #endif
   }
 
+  //first calc energies for eds
   ff = md.algorithm("EDS");
 
   //Calculate energies    
@@ -260,7 +261,7 @@ void re::replica::run_MD() {
   }
 
   conf.exchange_state();
-
+  // energy calculation averages
   ff = md.algorithm("EnergyCalculation");
 
   //Calculate energies    
@@ -273,5 +274,6 @@ void re::replica::run_MD() {
   }
 
   conf.exchange_state();
+    std::cout << "END replica "<< globalThreadID << "pos " << conf.current().pos[0][0];
 
 }

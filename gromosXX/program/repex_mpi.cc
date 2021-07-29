@@ -18,7 +18,14 @@
  * <tr><td> \@repout</td><td>&lt;name of the replica exchange output files&gt; </td><td style="color:#088A08">in</td></tr>
  * </table>
  */
+
+#ifdef XXMPI
+#include <mpi.h>
+#endif
+
 #include <stdheader.h>
+#include <replicaExchange/repex_mpi.h>
+
 #include <algorithm/algorithm.h>
 #include <topology/topology.h>
 #include <simulation/simulation.h>
@@ -46,12 +53,9 @@
 #include <io/configuration/out_configuration.h>
 #include <math/gmath.h>
 
-#ifdef XXMPI
-    #include <mpi.h>
-#endif
 
-#include <replicaExchange/replicaExchange.cpp>
 #include <replicaExchange/replica/replica.h>
+#include <replicaExchange/replica_graph_control.h>
 
 #include <replicaExchange/replica_exchangers/2D_T_lambda_REPEX/replica_exchange_master.h>
 #include <replicaExchange/replica_exchangers/2D_T_lambda_REPEX/replica_exchange_slave.h>
@@ -62,8 +66,6 @@
 #include <replicaExchange/replica_exchangers/1D_S_HSA_EDS/hamiltonian_simulatedAnnealing_master_eds.h>
 #include <replicaExchange/replica_exchangers/1D_S_HSA_EDS/hamiltonian_simulatedAnnealing_slave_eds.h>
 
-#include <replicaExchange/replica_graph_control.h>
-#include <replicaExchange/repex_mpi.h>
 
 
 int main(int argc, char *argv[]) {
@@ -368,7 +370,7 @@ int main(int argc, char *argv[]) {
 
 
     re::replica_graph_control reGMPI(0,   //GraphID
-                                       0,   // MasterID
+                                     0,   // MasterID
                                 graphThreadID,  // This Thread
                                 totalNumberOfThreads,   //total number of threads
                                 replica_owned_threads.size(),  //replicas in the graph
