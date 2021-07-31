@@ -113,7 +113,8 @@ namespace interaction
             configuration::Configuration & conf,
             unsigned int i,
             simulation::Simulation & sim,
-            math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity
+            math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity,
+            Storage & storage
             );
 
     /**
@@ -132,7 +133,8 @@ namespace interaction
             double dg_i,
             const topology::sasa_parameter_struct & sasa_param_i,
             simulation::Simulation & sim,
-            math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity
+            math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity,
+            Storage & storage
             );
 
     /**

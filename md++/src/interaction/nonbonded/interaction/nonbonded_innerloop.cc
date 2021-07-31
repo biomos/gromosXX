@@ -758,12 +758,13 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::sasa_force_innerloop
         configuration::Configuration & conf,
         unsigned int i,
         simulation::Simulation & sim,
-        math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity) {
+        math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity,
+        Storage & storage) {
 
   double dg_i = 0.0;
   bool higher = false;
   math::Vec force_i(0.0);
-  math::VArray & force = conf.current().force;
+  math::VArray & force = storage.force;
   std::set< unsigned int >::const_iterator it, to;
   const double p12 = sim.param().sasa.p_12;
   const double p13 = sim.param().sasa.p_13;
@@ -791,7 +792,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::sasa_force_innerloop
   for (; it != to; ++it) {
     DEBUG(12, "\tFirst neighbours: sasa atoms " << i << " and " << *it);
     calculate_sasa_forces(topo, conf, higher, p12, i, *it, force_i,
-            ri_rh2o, dg_i, sasa_param_i, sim, periodicity);
+            ri_rh2o, dg_i, sasa_param_i, sim, periodicity, storage);
   } // end first neighbours
   
 
@@ -801,7 +802,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::sasa_force_innerloop
   for (; it != to; ++it) {
     DEBUG(12, "\tSecond neighbours: sasa atoms " << i << " and " << *it);
     calculate_sasa_forces(topo, conf, higher, p13, i, *it, force_i, ri_rh2o,
-            dg_i, sasa_param_i, sim, periodicity);
+            dg_i, sasa_param_i, sim, periodicity, storage);
   } // end second neighbours of i
 
   // third (1-4) neighbours
@@ -811,7 +812,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::sasa_force_innerloop
   for (; it != to; ++it) {
     DEBUG(12, "\tThird neighbours: sasa atoms " << i << " and " << *it);
     calculate_sasa_forces(topo, conf, higher, p1x, i, *it, force_i, ri_rh2o,
-            dg_i, sasa_param_i, sim, periodicity);
+            dg_i, sasa_param_i, sim, periodicity, storage);
   } // end second neighbours of i
 
   // higher (>1-4) neighbours
@@ -820,7 +821,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::sasa_force_innerloop
   for (; it != to; ++it) {
     DEBUG(12, "\tHigher neighbours: sasa atoms " << i << " and " << *it);
     calculate_sasa_forces(topo, conf, higher, p1x, i, *it, force_i, ri_rh2o,
-            dg_i, sasa_param_i, sim, periodicity);
+            dg_i, sasa_param_i, sim, periodicity, storage);
   } // higher (>1-4) neighbours of i
 
   DEBUG(12, "\tSASA/VOL forces for atom(i) " << sasa_param_i.atom << " :" << math::v2s(force_i));
@@ -846,10 +847,11 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::calculate_sasa_forces
         double dg_i,
         const topology::sasa_parameter_struct & sasa_param_i,
         simulation::Simulation & sim,
-        math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity) {
+        math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity,
+        Storage & storage) {
 
   math::VArray & pos = conf.current().pos;
-  math::VArray & force = conf.current().force;
+  math::VArray & force = storage.force;
   math::Vec rij(0.0);
   double ddf_vol = 0.0;
 

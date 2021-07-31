@@ -1192,9 +1192,10 @@ void interaction::Nonbonded_Outerloop
 ::sasa_outerloop(topology::Topology & topo,
         configuration::Configuration & conf,
         simulation::Simulation & sim,
-        Storage & storage) {
+        Storage & storage,
+        int rank, int size) {
   SPLIT_INNERLOOP(_sasa_outerloop, topo, conf, sim,
-          storage);
+          storage, rank, size);
 }
 
 /**
@@ -1206,7 +1207,8 @@ void interaction::Nonbonded_Outerloop
 ::_sasa_outerloop(topology::Topology & topo,
         configuration::Configuration & conf,
         simulation::Simulation & sim,
-        Storage & storage) {
+        Storage & storage,
+        int rank, int size) {
 
   DEBUG(7, "\tCalculating SASA/VOL interaction term");
 
@@ -1227,22 +1229,37 @@ void interaction::Nonbonded_Outerloop
     // note that i counts non-H ("sasa") atoms
     DEBUG(10, "\tInitialising surface, area and volume for sasa atom " << i);
     // get sasa parameters for atom i
-    const topology::sasa_parameter_struct & sasa_param_i = topo.sasa_parameter(i);
-    // initialise actual sasa array (size = num_sasa_atoms)
-    conf.current().sasa_area[i] = sasa_param_i.surface;
+    if (!rank) {
+        const topology::sasa_parameter_struct & sasa_param_i = topo.sasa_parameter(i);
+        // initialise actual sasa array (size = num_sasa_atoms)
+        conf.current().sasa_area[i] = sasa_param_i.surface;
+    } else {
+      conf.current().sasa_area[i]=1.0;
+    }
 
   } // end initialize surface areas
 
+
   // now compute actual sasa (reduction due to overlap)
-  for (unsigned int i = 0; i < num_sasa_atoms; ++i) {
+  for (unsigned int i = rank; i < num_sasa_atoms; i+=size) {
 
     DEBUG(10, "\tCalculating true SASA for sasa atom " << i);
     innerloop.sasa_calc_innerloop(topo, conf, i, sim, periodicity);
 
   } // end compute sasa
+  
+#ifdef XXMPI
+    if (sim.mpi) {
+      // reduce sasa areas, every thread needs a copy
+      std::vector<double> sasa_area_store = conf.current().sasa_area;
+      MPI::COMM_WORLD.Allreduce(&sasa_area_store[0], &conf.current().sasa_area[0],
+                num_sasa_atoms, MPI::DOUBLE, MPI::PROD);      
+    }
+#endif
 
   // store final and total sasas and their energy contribution,
   // compute volume term and compute forces
+  // volume not yet parallelized
   for (unsigned int i = 0; i < num_sasa_atoms; ++i) {
 
     // check for negative SASA
@@ -1280,13 +1297,13 @@ void interaction::Nonbonded_Outerloop
     } // end else
   } // end atoms i
 
+
   // finally calculate the forces (for sasa and, if used, vol)
   // has to be in a separate loop because we need the switching function derivative
   // for all atoms to have been computed
-  for (unsigned int i = 0; i < num_sasa_atoms; ++i) {
+  for (unsigned int i = rank; i < num_sasa_atoms; i+=size) {
     DEBUG(10, "\tCalculating SASA/VOL forces for sasa atom " << i);
-    innerloop.sasa_force_innerloop(topo, conf, i, sim, periodicity);
-
+    innerloop.sasa_force_innerloop(topo, conf, i, sim, periodicity, storage);
   }
 
 }
