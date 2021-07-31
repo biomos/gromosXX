@@ -127,9 +127,6 @@ int interaction::MPI_Nonbonded_Slave::calculate_interactions
         MPI_DOUBLE,
         sim.mpiControl().masterID, sim.mpiControl().comm);
 
-	
-
-
     // std::cerr << "slave: receiving box" << std::endl;
     MPI_Bcast(&conf.current().box(0)(0),
 	                  9,

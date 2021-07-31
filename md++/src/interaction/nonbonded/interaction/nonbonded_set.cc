@@ -155,7 +155,7 @@ int interaction::Nonbonded_Set
   if (sim.param().sasa.switch_sasa) {
     DEBUG(6, "\tsasa energy");
     start_subtimer("SASA energy");
-    m_outerloop.sasa_outerloop(topo, conf, sim, m_storage);
+    m_outerloop.sasa_outerloop(topo, conf, sim, m_storage, m_rank, m_num_threads);
     stop_subtimer("SASA energy");
   }
 
