@@ -2579,7 +2579,7 @@ void io::In_Parameter::read_TFRDCRES(simulation::Parameter &param,
     exampleblock << "#           0                start from initial values of D0 [default]\n";
     exampleblock << "#           1                read time averages from startup file\n";
     exampleblock << "#                            (for continuation time-averaged run)\n";
-    exampleblock << "# CTFRDC   >= 0.0            RDC restraining force constant [10^-6 kJ*s^2/ mol]\n";
+    exampleblock << "# CTFRDC   >= 0.0            RDC restraining force constant [kJ*s^2/ mol]\n";
     exampleblock << "#                            (weighted by individual WTFRDC)\n";
     exampleblock << "# TAUR     >= 0.0            r coupling time for time-averaging\n";
     exampleblock << "# TAUT     >= 0.0            theta coupling time for time-averaging\n";
@@ -2609,9 +2609,6 @@ void io::In_Parameter::read_TFRDCRES(simulation::Parameter &param,
         block.get_next_parameter("TAUT", param.tfrdc.taut, ">=0", "");
         block.get_next_parameter("NTWTFRDC", param.tfrdc.write, ">=0", "");
         block.get_next_parameter("NTWTFRAVE", param.tfrdc.cumave_write, ">=0", "");
-
-        param.tfrdc.K/=1000000;
-
 
         switch (nttfrdc) {
             case 0:
