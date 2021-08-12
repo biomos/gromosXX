@@ -56,6 +56,12 @@ namespace interaction
      */
     void eds_rf_interaction(math::Vec const &r, double q, double const alpha_crf,
 			    math::Vec & force, double & e_rf, unsigned int eps = 0);
+
+  /**
+    * calculate the reaction field force and energy of an atom pair of EDS and perturbatued atom.
+   */
+    void eds_perturbed_rf_interaction(math::Vec const &r, double const A_q, double const B_q,
+        double const alpha_crf, math::Vec & force, double &e_rf, double & de_rf, unsigned int eps = 0); 
     /**
      * Perturbation:
      * set the lambdas

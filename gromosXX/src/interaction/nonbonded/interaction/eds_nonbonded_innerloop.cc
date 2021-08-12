@@ -43,8 +43,7 @@ t_interaction_spec, t_perturbation_details>
       topo.is_perturbed(j) == true){
     both_perturbed += 2;
   }
-  DEBUG(10, "\t\tboth_perturbed " << both_perturbed);
-  
+
   math::Vec r;
   const unsigned int numstates = conf.special().eds.force_endstates.size();
   assert(storage.energies.eds_vi.size() == numstates);
@@ -445,7 +444,7 @@ t_interaction_spec, t_perturbation_details>
 	  // energy 
 	  assert(storage.energies.lj_energy.size() > n1);
 	  assert(storage.energies.lj_energy.size() > n2);
-	  
+	  DEBUG(10, "energies lj " << e_lj << " electro " << e_crf);
 	  storage.energies.lj_energy[n1][n2] += e_lj;
 	  
 	  storage.energies.crf_energy[n1][n2] += e_crf;
@@ -799,9 +798,9 @@ t_interaction_spec, t_perturbation_details>
 	      2.0;
 	  }
 	  if(topo.eds_perturbed_solute().atoms()[i].CRF_softcore() == 0){
-	    alpha_lj = topo.perturbed_solute().atoms()[j].CRF_softcore();
+	    alpha_crf = topo.perturbed_solute().atoms()[j].CRF_softcore();
 	  } else if(topo.perturbed_solute().atoms()[j].CRF_softcore() == 0){
-	    alpha_lj = topo.eds_perturbed_solute().atoms()[i].CRF_softcore();
+	    alpha_crf = topo.eds_perturbed_solute().atoms()[i].CRF_softcore();
 	  } else{
 	    alpha_crf = (topo.eds_perturbed_solute().atoms()[i].CRF_softcore() +
 			 topo.perturbed_solute().atoms()[j].CRF_softcore()) /
@@ -952,9 +951,9 @@ t_interaction_spec, t_perturbation_details>
 	      2.0;
 	  }
 	  if(topo.eds_perturbed_solute().atoms()[j].CRF_softcore() == 0){
-	    alpha_lj = topo.perturbed_solute().atoms()[i].CRF_softcore();
+	    alpha_crf = topo.perturbed_solute().atoms()[i].CRF_softcore();
 	  } else if(topo.perturbed_solute().atoms()[i].CRF_softcore() == 0){
-	    alpha_lj = topo.eds_perturbed_solute().atoms()[j].CRF_softcore();
+	    alpha_crf = topo.eds_perturbed_solute().atoms()[j].CRF_softcore();
 	  } else{
 	    alpha_crf = (topo.eds_perturbed_solute().atoms()[j].CRF_softcore() +
 			 topo.perturbed_solute().atoms()[i].CRF_softcore()) /
@@ -1220,7 +1219,6 @@ t_interaction_spec, t_perturbation_details>
   double alpha_crf = mit->second.CRF_softcore();
 
   //std::set<int>::const_iterator it, to;
-  std::vector<int>::const_iterator it, to;
 
   const int i = mit->second.sequence_number();
   // self term has already been calculated for state A, 
@@ -1282,89 +1280,492 @@ t_interaction_spec, t_perturbation_details>
                 io::message::critical);
     }
     DEBUG(7, "Self term for atom " << i << " in state " << state << " = " << e_rf << " (q*q = " << q_i * q_i << ")");
-
     conf.current().energies.eds_vi[state] += 0.5 * e_rf;
+  }
+  eds_perturbed_RF_exclusions_loop(topo, conf, i, mit->second.exclusion(), periodicity);
+}
 
-    // now loop over the exclusions
-    // those are fortunately not in the normal exclusions!
-    it = mit->second.exclusion().begin();
-    to = mit->second.exclusion().end();
-    //it = topo.exclusion(i).begin();
-    //to = topo.exclusion(i).end();
 
-    for (; it != to; ++it) {
-      periodicity.nearest_image(pos(i), pos(*it), r);
+template<typename t_interaction_spec,
+typename t_perturbation_details>
+inline void
+interaction::Eds_Nonbonded_Innerloop<
+t_interaction_spec, t_perturbation_details>
+::perturbed_RF_excluded_interaction_innerloop
+(topology::Topology & topo, configuration::Configuration & conf,
+        std::map<unsigned int, topology::Perturbed_Atom>::const_iterator const & mit,
+        Periodicity_type const & periodicity
+) {
 
-      DEBUG(8, "r2 i(" << i << "-" << *it << ") " << abs2(r));
+  math::VArray &pos = conf.current().pos;
+  math::VArray &force = conf.current().force;
 
-      double q_j;
+  math::Vec r;
+  double e_rf, de_rf;
 
-      if (unsigned(*it) < topo.num_solute_atoms() && topo.is_eds_perturbed(*it)) {
-        // j perturbed
-        q_j = topo.eds_perturbed_solute().atoms()[*it].M_charge()[state];
-      } else {
-        // only i perturbed
-        q_j = topo.charge()(*it);
+  // self term has already been calculated for state A, 
+  // correct for that and 
+  // calculate it for this lambda
+  // only a distance independent part
+  r = 0.0;
+  const int i = mit->second.sequence_number();
+  const double q_i_a = mit->second.A_charge();
+  const double q_i_b = mit->second.B_charge();
+
+  int n1 = topo.atom_energy_group(i);
+
+  // calculate all the lambda values for lj and crf interactions, softness and A and B
+  set_lambda(topo.individual_lambda(simulation::lj_lambda)[n1][n1],
+          topo.individual_lambda(simulation::lj_softness_lambda)[n1][n1],
+          topo.individual_lambda(simulation::crf_lambda)[n1][n1],
+          topo.individual_lambda(simulation::crf_softness_lambda)[n1][n1],
+          topo.individual_lambda_derivative(simulation::lj_lambda)[n1][n1],
+          topo.individual_lambda_derivative(simulation::lj_softness_lambda)[n1][n1],
+          topo.individual_lambda_derivative(simulation::crf_lambda)[n1][n1],
+          topo.individual_lambda_derivative(simulation::crf_softness_lambda)[n1][n1],
+          topo.lambda_exp());
+
+  // now calculate everything
+  // rf_interaction(r, q_i_a*q_i_a, f_old_A, e_crf_old_A);
+  switch (t_interaction_spec::interaction_func) {
+    case simulation::lj_crf_func:
+    {
+      math::Vec f_rf;
+      eds_perturbed_rf_interaction(r, q_i_a*q_i_a, q_i_b * q_i_b,
+              mit->second.CRF_softcore(),
+              f_rf, e_rf, de_rf);
+      break; 
+    }
+    case simulation::cggromos_func:
+    {
+      math::Vec f_rf;
+      // check if...
+      if (topo.is_coarse_grained(i)) { // CG-CG interaction
+        eds_perturbed_rf_interaction(r, q_i_a * q_i_a / cgrain_eps[0],
+                q_i_b * q_i_b / cgrain_eps[0],
+                mit->second.CRF_softcore(),
+                f_rf, e_rf, de_rf, 0);
+      } else { // FG-FG interaction
+        eds_perturbed_rf_interaction(r, q_i_a*q_i_a, q_i_b * q_i_b,
+                mit->second.CRF_softcore(),
+                f_rf, e_rf, de_rf, 2);
+      }
+      break;
+    }
+    default:
+      io::messages.add("Nonbonded_Innerloop",
+              "interaction function not implemented",
+              io::message::critical);
+  }
+  DEBUG(7, "Self term for atom " << i << " = "
+          << e_rf);
+
+  conf.current().energies.crf_energy[topo.atom_energy_group(i)][topo.atom_energy_group(i)] += 0.5 * e_rf;
+  conf.current().perturbed_energy_derivatives.crf_energy[topo.atom_energy_group(i)][topo.atom_energy_group(i)] += 0.5 * de_rf;
+
+  // now loop over the exclusions
+  // those are fortunately not in the normal exclusions!
+  // this handled by an extra function
+  eds_perturbed_RF_exclusions_loop(topo, conf, i, mit->second.exclusion(), periodicity);
+}
+
+
+template<typename t_interaction_spec,
+typename t_perturbation_details>
+inline void
+interaction::Eds_Nonbonded_Innerloop<
+t_interaction_spec, t_perturbation_details>
+::eds_perturbed_RF_exclusions_loop(topology::Topology & topo, configuration::Configuration & conf, int atom_i,
+                                   const topology::excl_cont_t::value_type &exclusions, Periodicity_type const & periodicity){
+  // Self term has already been accounted for
+  // now loop over all the exclusions
+  // those are fortunately not in the normal exclusions!
+  math::VArray &pos = conf.current().pos;
+  std::vector<math::VArray> &force_states = conf.special().eds.force_endstates;
+  math::VArray &force = conf.current().force;
+  math::Vec r;
+
+  std::vector<int>::const_iterator it, to;
+  it = exclusions.begin();
+  to = exclusions.end();
+
+  for (; it != to; ++it) {
+      periodicity.nearest_image(pos(atom_i), pos(*it), r);
+      DEBUG(8, "r2 i(" << atom_i << "-" << *it << ") " << abs2(r));
+
+      int both_perturbed = 0;
+      if(atom_i< topo.num_solute_atoms() && topo.is_perturbed(atom_i)){
+        both_perturbed +=3;
+      }
+      if (*it < topo.num_solute_atoms() &&
+              topo.is_eds_perturbed(*it) == true) {
+        both_perturbed += 1;
+      }
+      if (*it < topo.num_solute_atoms() &&
+          topo.is_perturbed(*it) == true){
+        both_perturbed += 2;
       }
 
       switch (t_interaction_spec::interaction_func) {
         case simulation::lj_crf_func:
         {
-          math::Vec f_rf;
-          eds_rf_interaction(r, q_i*q_j, alpha_crf, f_rf, e_rf);
+          switch (both_perturbed) {
 
-          DEBUG(7, "excluded atoms " << i << " & " << *it << ": " << e_rf);
+            case 0:
+            {
+              // EDS - normal
+              unsigned int numstates = conf.special().eds.force_endstates.size();
+              math::Vec f_rf;
+              double q_i, q_j, e_rf;
+              double alpha_crf = topo.eds_perturbed_solute().atoms()[atom_i].CRF_softcore();
 
-          // and add everything to the correct arrays
-          conf.current().energies.eds_vi[state] += e_rf;
+              for (unsigned int state = 0; state < numstates; state++) {
 
-          force[state](i) += f_rf;
-          force[state](*it) -= f_rf;
+                q_i = topo.eds_perturbed_solute().atoms()[atom_i].M_charge()[state];
+                q_j = topo.charge()(*it);
+                eds_rf_interaction(r, q_i*q_j, alpha_crf, f_rf, e_rf);
 
-          // if (t_interaction_spec::do_virial != math::no_virial){
-          for (int a = 0; a < 3; ++a)
-            for (int b = 0; b < 3; ++b)
-              conf.special().eds.virial_tensor_endstates[state](a, b) +=
-                    r(a) * f_rf(b);
+                DEBUG(7, "excluded atoms " << atom_i << " & " << *it << ": " << e_rf);
 
-          DEBUG(7, "\tatomic virial done");
-          // }
-          break;
+                // and add everything to the correct arrays
+                conf.current().energies.eds_vi[state] += e_rf;
+
+                force_states[state](atom_i) += f_rf;
+                force_states[state](*it) -= f_rf;
+
+                // if (t_interaction_spec::do_virial != math::no_virial){
+                for (int a = 0; a < 3; ++a)
+                  for (int b = 0; b < 3; ++b)
+                    conf.special().eds.virial_tensor_endstates[state](a, b) += r(a) * f_rf(b);
+
+                DEBUG(7, "\tatomic virial done");
+                // }
+              } // loop over all states
+              break;
+            }
+            case 1:
+            {
+              // EDS - EDS
+              unsigned int numstates = conf.special().eds.force_endstates.size();
+              double alpha_crf = (topo.eds_perturbed_solute().atoms()[atom_i].CRF_softcore() + 
+                                  topo.eds_perturbed_solute().atoms()[*it].CRF_softcore())/2.0;
+              math::Vec f_rf;
+              double q_i, q_j, e_rf;
+              for (unsigned int state = 0; state < numstates; state++) {
+
+                q_i = topo.eds_perturbed_solute().atoms()[atom_i].M_charge()[state];
+                q_j = topo.eds_perturbed_solute().atoms()[*it].M_charge()[state];
+                eds_rf_interaction(r, q_i*q_j, alpha_crf, f_rf, e_rf);
+
+                DEBUG(7, "excluded atoms " << atom_i << " & " << *it << ": " << e_rf);
+
+                // and add everything to the correct arrays
+                conf.current().energies.eds_vi[state] += e_rf;
+
+                force_states[state](atom_i) += f_rf;
+                force_states[state](*it) -= f_rf;
+
+                // if (t_interaction_spec::do_virial != math::no_virial){
+                for (int a = 0; a < 3; ++a)
+                  for (int b = 0; b < 3; ++b)
+                    conf.special().eds.virial_tensor_endstates[state](a, b) += r(a) * f_rf(b);
+
+                DEBUG(7, "\tatomic virial done");
+                // }
+              } // loop over all states
+              break;
+            }
+            case 2:
+            {
+            // EDS - perturbed
+              unsigned int numstates = conf.special().eds.force_endstates.size();
+              math::Vec f_rf;
+              double A_q, B_q, e_rf, de_rf, alpha_crf;
+              if(topo.eds_perturbed_solute().atoms()[atom_i].CRF_softcore() == 0){
+	              alpha_crf = topo.perturbed_solute().atoms()[*it].CRF_softcore();
+	            } else if(topo.perturbed_solute().atoms()[*it].CRF_softcore() == 0){
+	              alpha_crf = topo.eds_perturbed_solute().atoms()[atom_i].CRF_softcore();
+	            } else{
+	              alpha_crf = (topo.eds_perturbed_solute().atoms()[atom_i].CRF_softcore() +
+			                       topo.perturbed_solute().atoms()[*it].CRF_softcore()) / 2.0;
+	            }
+
+              int n1 = topo.atom_energy_group(atom_i);
+	            int n2 = topo.atom_energy_group(*it);
+
+              set_lambda(topo.individual_lambda(simulation::lj_lambda)[n1][n2],
+                    topo.individual_lambda(simulation::lj_softness_lambda)[n1][n2],
+                    topo.individual_lambda(simulation::crf_lambda)[n1][n2],
+                    topo.individual_lambda(simulation::crf_softness_lambda)[n1][n2],
+                    topo.individual_lambda_derivative(simulation::lj_lambda)[n1][n2],
+                    topo.individual_lambda_derivative(simulation::lj_softness_lambda)[n1][n2],
+                    topo.individual_lambda_derivative(simulation::crf_lambda)[n1][n2],
+                    topo.individual_lambda_derivative(simulation::crf_softness_lambda)[n1][n2],
+                    topo.lambda_exp());
+ 
+              for (unsigned int state = 0; state < numstates; state++) {
+
+                A_q = topo.eds_perturbed_solute().atoms()[atom_i].M_charge()[state] * topo.perturbed_solute().atoms()[*it].A_charge();
+                B_q = topo.eds_perturbed_solute().atoms()[atom_i].M_charge()[state] * topo.perturbed_solute().atoms()[*it].B_charge();
+
+                eds_perturbed_rf_interaction(r, A_q, B_q, alpha_crf, f_rf, e_rf, de_rf);
+
+                DEBUG(7, "excluded atoms " << atom_i << " & " << *it << ": " << e_rf);
+
+                // and add everything to the correct arrays
+                conf.current().energies.eds_vi[state] += e_rf;
+
+                force_states[state](atom_i) += f_rf;
+                force_states[state](*it) -= f_rf;
+                // energy derivatives
+                conf.current().perturbed_energy_derivatives.eds_vi[state] += de_rf;
+                
+                for (int a = 0; a < 3; ++a)
+                  for (int b = 0; b < 3; ++b)
+                    conf.special().eds.virial_tensor_endstates[state](a, b) += r(a) * f_rf(b);
+
+                DEBUG(7, "\tatomic virial done");
+                // }
+              } // loop over all states
+              break;
+            }
+            case 3:
+            {
+              // Perturbed - Normal
+              math::Vec f_rf;
+              double A_q, B_q, e_rf, de_rf, alpha_crf;
+
+              alpha_crf = topo.perturbed_solute().atoms()[atom_i].CRF_softcore();
+
+              int n1 = topo.atom_energy_group(atom_i);
+	            int n2 = topo.atom_energy_group(*it);
+
+              set_lambda(topo.individual_lambda(simulation::lj_lambda)[n1][n2],
+                    topo.individual_lambda(simulation::lj_softness_lambda)[n1][n2],
+                    topo.individual_lambda(simulation::crf_lambda)[n1][n2],
+                    topo.individual_lambda(simulation::crf_softness_lambda)[n1][n2],
+                    topo.individual_lambda_derivative(simulation::lj_lambda)[n1][n2],
+                    topo.individual_lambda_derivative(simulation::lj_softness_lambda)[n1][n2],
+                    topo.individual_lambda_derivative(simulation::crf_lambda)[n1][n2],
+                    topo.individual_lambda_derivative(simulation::crf_softness_lambda)[n1][n2],
+                    topo.lambda_exp());
+
+              A_q = topo.perturbed_solute().atoms()[atom_i].A_charge() * topo.charge()(*it);
+              B_q = topo.perturbed_solute().atoms()[atom_i].B_charge() * topo.charge()(*it);
+
+              eds_perturbed_rf_interaction(r, A_q, B_q, alpha_crf, f_rf, e_rf, de_rf);
+
+              DEBUG(7, "excluded atoms " << atom_i << " & " << *it << ": " << e_rf);
+
+              // and add everything to the correct arrays
+
+              conf.current().energies.crf_energy[topo.atom_energy_group(atom_i)][topo.atom_energy_group(*it)] += e_rf;
+              conf.current().perturbed_energy_derivatives.crf_energy[topo.atom_energy_group(atom_i)][topo.atom_energy_group(*it)] += de_rf;
+
+              force(atom_i) += f_rf;
+              force(*it) -= f_rf;
+              for (int a = 0; a < 3; ++a)
+                for (int b = 0; b < 3; ++b)
+                    conf.current().virial_tensor(a, b) += r(a) * f_rf(b);
+
+              DEBUG(7, "\tatomic virial done");
+
+              break;
+            }
+            case 4:
+            {
+              // Perturbed - EDS
+              unsigned int numstates = conf.special().eds.force_endstates.size();
+              math::Vec f_rf;
+              double A_q, B_q, e_rf, de_rf, alpha_crf;
+              if(topo.eds_perturbed_solute().atoms()[*it].CRF_softcore() == 0){
+	              alpha_crf = topo.perturbed_solute().atoms()[atom_i].CRF_softcore();
+	            } else if(topo.perturbed_solute().atoms()[atom_i].CRF_softcore() == 0){
+	              alpha_crf = topo.eds_perturbed_solute().atoms()[*it].CRF_softcore();
+	            } else{
+	              alpha_crf = (topo.eds_perturbed_solute().atoms()[*it].CRF_softcore() +
+			                       topo.perturbed_solute().atoms()[atom_i].CRF_softcore()) / 2.0;
+	            }
+
+              int n1 = topo.atom_energy_group(atom_i);
+	            int n2 = topo.atom_energy_group(*it);
+
+              set_lambda(topo.individual_lambda(simulation::lj_lambda)[n1][n2],
+                    topo.individual_lambda(simulation::lj_softness_lambda)[n1][n2],
+                    topo.individual_lambda(simulation::crf_lambda)[n1][n2],
+                    topo.individual_lambda(simulation::crf_softness_lambda)[n1][n2],
+                    topo.individual_lambda_derivative(simulation::lj_lambda)[n1][n2],
+                    topo.individual_lambda_derivative(simulation::lj_softness_lambda)[n1][n2],
+                    topo.individual_lambda_derivative(simulation::crf_lambda)[n1][n2],
+                    topo.individual_lambda_derivative(simulation::crf_softness_lambda)[n1][n2],
+                    topo.lambda_exp());
+ 
+              for (unsigned int state = 0; state < numstates; state++) {
+
+                A_q = topo.eds_perturbed_solute().atoms()[*it].M_charge()[state] * topo.perturbed_solute().atoms()[atom_i].A_charge();
+                B_q = topo.eds_perturbed_solute().atoms()[*it].M_charge()[state] * topo.perturbed_solute().atoms()[atom_i].B_charge();
+
+                eds_perturbed_rf_interaction(r, A_q, B_q, alpha_crf, f_rf, e_rf, de_rf);
+
+                DEBUG(7, "excluded atoms " << atom_i << " & " << *it << ": " << e_rf);
+
+                // and add everything to the correct arrays
+                conf.current().energies.eds_vi[state] += e_rf;
+
+                force_states[state](atom_i) += f_rf;
+                force_states[state](*it) -= f_rf;
+                // energy derivatives
+                conf.current().perturbed_energy_derivatives.eds_vi[state] += de_rf;
+                
+                for (int a = 0; a < 3; ++a)
+                  for (int b = 0; b < 3; ++b)
+                    conf.special().eds.virial_tensor_endstates[state](a, b) += r(a) * f_rf(b);
+
+                DEBUG(7, "\tatomic virial done");
+                // }
+              } // loop over all states
+              break;
+            }
+            case 5:
+            {
+              // Perturbed - Normal
+              math::Vec f_rf;
+              double A_q, B_q, e_rf, de_rf, alpha_crf;
+
+              alpha_crf = (topo.perturbed_solute().atoms()[atom_i].CRF_softcore() + topo.perturbed_solute().atoms()[*it].CRF_softcore())/2.0;
+
+              int n1 = topo.atom_energy_group(atom_i);
+	            int n2 = topo.atom_energy_group(*it);
+
+              set_lambda(topo.individual_lambda(simulation::lj_lambda)[n1][n2],
+                    topo.individual_lambda(simulation::lj_softness_lambda)[n1][n2],
+                    topo.individual_lambda(simulation::crf_lambda)[n1][n2],
+                    topo.individual_lambda(simulation::crf_softness_lambda)[n1][n2],
+                    topo.individual_lambda_derivative(simulation::lj_lambda)[n1][n2],
+                    topo.individual_lambda_derivative(simulation::lj_softness_lambda)[n1][n2],
+                    topo.individual_lambda_derivative(simulation::crf_lambda)[n1][n2],
+                    topo.individual_lambda_derivative(simulation::crf_softness_lambda)[n1][n2],
+                    topo.lambda_exp());
+
+              A_q = topo.perturbed_solute().atoms()[atom_i].A_charge() * topo.perturbed_solute().atoms()[*it].A_charge();
+              B_q = topo.perturbed_solute().atoms()[atom_i].B_charge() * topo.perturbed_solute().atoms()[*it].B_charge();
+
+              eds_perturbed_rf_interaction(r, A_q, B_q, alpha_crf, f_rf, e_rf, de_rf);
+
+              DEBUG(7, "excluded atoms " << atom_i << " & " << *it << ": " << e_rf);
+
+              // and add everything to the correct arrays
+
+              conf.current().energies.crf_energy[topo.atom_energy_group(atom_i)][topo.atom_energy_group(*it)] += e_rf;
+              conf.current().perturbed_energy_derivatives.crf_energy[topo.atom_energy_group(atom_i)][topo.atom_energy_group(*it)] += de_rf;
+
+              force(atom_i) += f_rf;
+              force(*it) -= f_rf;
+              for (int a = 0; a < 3; ++a)
+                for (int b = 0; b < 3; ++b)
+                    conf.current().virial_tensor(a, b) += r(a) * f_rf(b);
+
+              DEBUG(7, "\tatomic virial done");
+
+              break;
+            }
+          }
+         break;
         }
+
         case simulation::cggromos_func:
         {
-          math::Vec f_rf;
-          if (topo.is_coarse_grained(i) && topo.is_coarse_grained(*it) ) { // CG-CG
-            eds_rf_interaction(r, q_i*q_j / cgrain_eps[0], alpha_crf, f_rf, e_rf, 0);
-          } else if (topo.is_coarse_grained(i) || topo.is_coarse_grained(*it)) { // FG-CG
-            eds_rf_interaction(r, q_i*q_j / cgrain_eps[1], alpha_crf, f_rf, e_rf, 1);
-          } else { // FG-FG
-            eds_rf_interaction(r, q_i*q_j, alpha_crf, f_rf, e_rf, 2);
-          }
+          switch (both_perturbed){
+            case 0:
+            {
+              // EDS - normal
+              unsigned int numstates = conf.special().eds.force_endstates.size();
+              math::Vec f_rf;
+              double q_i, q_j, e_rf;
+              double alpha_crf = topo.eds_perturbed_solute().atoms()[atom_i].CRF_softcore();
 
-          DEBUG(7, "excluded atoms " << i << " & " << *it << ": " << e_rf);
+              for (unsigned int state = 0; state < numstates; state++) {
 
-          // and add everything to the correct arrays
-          conf.current().energies.eds_vi[state] += e_rf;
+                q_i = topo.eds_perturbed_solute().atoms()[atom_i].M_charge()[state];
+                q_j = topo.charge()(*it);
 
-          force[state](i) += f_rf;
-          force[state](*it) -= f_rf;
+                if (topo.is_coarse_grained(atom_i) && topo.is_coarse_grained(*it) ) { // CG-CG
+                  eds_rf_interaction(r, q_i*q_j / cgrain_eps[0], alpha_crf, f_rf, e_rf, 0);
+                } else if (topo.is_coarse_grained(atom_i) || topo.is_coarse_grained(*it)) { // FG-CG
+                  eds_rf_interaction(r, q_i*q_j / cgrain_eps[1], alpha_crf, f_rf, e_rf, 1);
+                } else { // FG-FG
+                  eds_rf_interaction(r, q_i*q_j, alpha_crf, f_rf, e_rf, 2);
+                }
 
-          for (int a = 0; a < 3; ++a)
-            for (int b = 0; b < 3; ++b)
-              conf.special().eds.virial_tensor_endstates[state](a, b) +=
-                    r(a) * f_rf(b);
+                DEBUG(7, "excluded atoms " << atom_i << " & " << *it << ": " << e_rf);
 
-          DEBUG(7, "\tatomic virial done");
-          
-          break;
-        }
-        default:
-          io::messages.add("EDS_Nonbonded_Innerloop",
+                // and add everything to the correct arrays
+                conf.current().energies.eds_vi[state] += e_rf;
+
+                force_states[state](atom_i) += f_rf;
+                force_states[state](*it) -= f_rf;
+
+                // if (t_interaction_spec::do_virial != math::no_virial){
+                for (int a = 0; a < 3; ++a)
+                  for (int b = 0; b < 3; ++b)
+                    conf.special().eds.virial_tensor_endstates[state](a, b) += r(a) * f_rf(b);
+
+                DEBUG(7, "\tatomic virial done");
+                // }
+              } // loop over all states
+              break;
+            }
+            case 1:
+            {
+              // EDS - EDS
+              unsigned int numstates = conf.special().eds.force_endstates.size();
+              double alpha_crf = (topo.eds_perturbed_solute().atoms()[atom_i].CRF_softcore() + 
+                                  topo.eds_perturbed_solute().atoms()[*it].CRF_softcore())/2.0;
+              math::Vec f_rf;
+              double q_i, q_j, e_rf;
+              for (unsigned int state = 0; state < numstates; state++) {
+
+                q_i = topo.eds_perturbed_solute().atoms()[atom_i].M_charge()[state];
+                q_j = topo.eds_perturbed_solute().atoms()[*it].M_charge()[state];
+
+
+                if (topo.is_coarse_grained(atom_i) && topo.is_coarse_grained(*it) ) { // CG-CG
+                  eds_rf_interaction(r, q_i*q_j / cgrain_eps[0], alpha_crf, f_rf, e_rf, 0);
+                } else if (topo.is_coarse_grained(atom_i) || topo.is_coarse_grained(*it)) { // FG-CG
+                  eds_rf_interaction(r, q_i*q_j / cgrain_eps[1], alpha_crf, f_rf, e_rf, 1);
+                } else { // FG-FG
+                  eds_rf_interaction(r, q_i*q_j, alpha_crf, f_rf, e_rf, 2);
+                }
+
+                DEBUG(7, "excluded atoms " << atom_i << " & " << *it << ": " << e_rf);
+
+                // and add everything to the correct arrays
+                conf.current().energies.eds_vi[state] += e_rf;
+
+                force_states[state](atom_i) += f_rf;
+                force_states[state](*it) -= f_rf;
+
+                // if (t_interaction_spec::do_virial != math::no_virial){
+                for (int a = 0; a < 3; ++a)
+                  for (int b = 0; b < 3; ++b)
+                    conf.special().eds.virial_tensor_endstates[state](a, b) += r(a) * f_rf(b);
+
+                DEBUG(7, "\tatomic virial done");
+                // }
+              } // loop over all states
+              break;
+            }
+            default:
+                  io::messages.add("EDS_Nonbonded_Innerloop",
                   "rf excluded interaction function not implemented",
                   io::message::critical);
-      }
+          }
+          break;
+        }
+      default:
+      io::messages.add("EDS_Nonbonded_Innerloop",
+      "rf excluded interaction function not implemented",
+      io::message::critical);
     }
-  } // loopover states
+  } // loop over all atoms
 }
-

@@ -284,7 +284,7 @@ inline void interaction::Eds_Nonbonded_Term
           + m_lambda_exp * (m_B_crf_lambda_n_1 * B_e_crf - m_A_crf_lambda_n_1 * A_e_crf) *
           math::four_pi_eps_i;
 
-  DEBUG(15, "nonbonded energy = " << (e_lj+e_crf) << ", force = " << (force));
+  DEBUG(10, "nonbonded energy = " << (e_lj+e_crf) << ", force = " << (force));
 }
 
 /**
@@ -305,4 +305,46 @@ inline void interaction::Eds_Nonbonded_Term
   DEBUG(15, "q*q   " << q );
   DEBUG(15, "rf energy = " << e_crf);
   
+}
+
+/**
+ * helper function to calculate the force and energy for
+ * the reaction field contribution for a given pair of perturbed atoms
+ */
+inline void interaction::Eds_Nonbonded_Term
+::eds_perturbed_rf_interaction(math::Vec const &r, double const A_q, double const B_q,
+        double const alpha_crf, math::Vec & force, double &e_rf, double & de_rf, unsigned int eps) 
+{
+  const double dist2 = abs2(r);
+
+  const double A_cut2soft = m_cut2 + alpha_crf * m_B_crfs_lambda2;
+  const double B_cut2soft = m_cut2 + alpha_crf * m_A_crfs_lambda2;
+
+  const double A_cut2soft3 = A_cut2soft * A_cut2soft * A_cut2soft;
+  const double B_cut2soft3 = B_cut2soft * B_cut2soft * B_cut2soft;
+
+  const double A_crf_2cut3i = m_crf_2[eps] / sqrt(A_cut2soft3);
+  const double B_crf_2cut3i = m_crf_2[eps] / sqrt(B_cut2soft3);
+
+  const double A_crf_cut3i = 2 * A_crf_2cut3i;
+  const double B_crf_cut3i = 2 * B_crf_2cut3i;
+
+  const double A_crf_pert = 3.0 * A_crf_2cut3i / A_cut2soft;
+  const double B_crf_pert = 3.0 * B_crf_2cut3i / B_cut2soft;
+
+  force = (m_A_crf_lambda_n * A_q * A_crf_cut3i +
+          m_B_crf_lambda_n * B_q * B_crf_cut3i) * math::four_pi_eps_i *r;
+
+  double const A_e_rf = A_q * (-A_crf_2cut3i * dist2 - m_crf_cut[eps]);
+  double const B_e_rf = B_q * (-B_crf_2cut3i * dist2 - m_crf_cut[eps]);
+
+  e_rf = (m_A_crf_lambda_n * A_e_rf + m_B_crf_lambda_n * B_e_rf) * math::four_pi_eps_i;
+
+  DEBUG(11, "A_crf_pert: " << A_crf_pert << " B_crf_pert: " << B_crf_pert);
+  DEBUG(11, "m_lambda_exp: " << m_lambda_exp);
+
+  de_rf = ((m_A_crf_lambda_n * A_q * m_B_crfs_lambda * A_crf_pert -
+          m_B_crf_lambda_n * B_q * m_A_crfs_lambda * B_crf_pert) * dist2 * alpha_crf +
+          (m_B_crf_lambda_n_1 * B_e_rf -
+          m_A_crf_lambda_n_1 * A_e_rf) * m_lambda_exp) * math::four_pi_eps_i;
 }

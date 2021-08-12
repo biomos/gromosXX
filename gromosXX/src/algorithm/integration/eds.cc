@@ -119,6 +119,7 @@ int algorithm::EDS
         }
 
         // ... to lambda derivatives
+	      DEBUG(7, "TI derivative state: " << state << " is " << conf.current().perturbed_energy_derivatives.eds_vi[state]);
         if (conf.current().energies.eds_vmix <= sim.param().eds.emin || conf.current().energies.eds_vmix >= sim.param().eds.emax) {
           conf.current().perturbed_energy_derivatives.eds_vr +=
            pi * conf.current().perturbed_energy_derivatives.eds_vi[state];

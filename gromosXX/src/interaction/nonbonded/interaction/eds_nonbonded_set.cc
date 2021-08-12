@@ -167,7 +167,6 @@ int interaction::Eds_Nonbonded_Set
       if (topo.eds_perturbed_solute().atoms().size() > 0) {
         DEBUG(6, "\teds-perturbed RF excluded interactions and self term");
         m_eds_outerloop.eds_RF_excluded_outerloop(topo, conf, sim, m_storage);
-
       }
       stop_timer("RF excluded");
     }
