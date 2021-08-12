@@ -1126,6 +1126,10 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::one_four_interaction_in
   storage.energies.ls_real_energy[topo.atom_energy_group(i)]
           [topo.atom_energy_group(j)] += e_ls;
 
+  // ORIOL_GAMD
+  storage.energies.gamd_potential_total[topo.gamd_accel_group(i)] += e_lj;
+  storage.energies.gamd_potential_total[topo.gamd_accel_group(i)] += e_crf;
+
   DEBUG(11, "\tenergy group i " << topo.atom_energy_group(i)
           << " j " << topo.atom_energy_group(j));
 
@@ -1355,6 +1359,9 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_exception_innerloop
   storage.energies.ls_real_energy[topo.atom_energy_group(i)]
     [topo.atom_energy_group(j)] += e_ls;
 
+  //ORIOL_GAMD
+  storage.energies.gamd_potential_total[topo.gamd_accel_group(i)] +=  e_lj;
+  storage.energies.gamd_potential_total[topo.gamd_accel_group(i)] +=  e_crf;
   DEBUG(11, "\tenergy group i " << topo.atom_energy_group(i)
 	<< " j " << topo.atom_energy_group(j));
 
@@ -1389,6 +1396,9 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
       rf_interaction(r, topo.charge()(i) * topo.charge()(i), f, e_crf);
       storage.energies.crf_energy[topo.atom_energy_group(i)]
               [topo.atom_energy_group(i)] += 0.5 * e_crf;
+      // ORIOL_GAMD
+      storage.energies.gamd_potential_total[topo.gamd_accel_group(i)] +=  0.5 * e_crf;
+
       DEBUG(11, "\tcontribution " << 0.5 * e_crf);
 
       for (; it != to; ++it) {
@@ -1417,6 +1427,10 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
         storage.energies.crf_energy[topo.atom_energy_group(i)]
                 [topo.atom_energy_group(*it)] += e_crf;
 
+        // ORIOL_GAMD
+        storage.energies.gamd_potential_total[topo.gamd_accel_group(i)] +=  e_crf;
+
+
         DEBUG(11, "\tcontribution " << e_crf);
 
       } // loop over excluded pairs
@@ -1441,6 +1455,10 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
       }
       storage.energies.crf_energy[topo.atom_energy_group(i)]
               [topo.atom_energy_group(i)] += 0.5 * e_crf;
+
+      // ORIOL_GAMD
+      storage.energies.gamd_potential_total[topo.gamd_accel_group(i)] +=  0.5 * e_crf;
+
       DEBUG(11, "\tcontribution " << 0.5 * e_crf);
 
       for (; it != to; ++it) {
@@ -1479,6 +1497,9 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
         storage.energies.crf_energy[topo.atom_energy_group(i)]
                 [topo.atom_energy_group(*it)] += e_crf;
 
+        // ORIOL_GAMD
+        storage.energies.gamd_potential_total[topo.gamd_accel_group(i)] +=  e_crf;
+
         DEBUG(11, "\tcontribution " << e_crf);
 
       } // loop over excluded pairs
@@ -1500,6 +1521,10 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
               topo.coscharge(i), topo.coscharge(i), f_pol, e_crf);
       storage.energies.crf_energy[topo.atom_energy_group(i)]
               [topo.atom_energy_group(i)] += 0.5 * e_crf;
+
+      // ORIOL_GAMD
+      storage.energies.gamd_potential_total[topo.gamd_accel_group(i)] +=  0.5 * e_crf; 
+
       DEBUG(11, "\tcontribution " << 0.5 * e_crf);
 
       for (; it != to; ++it) {
@@ -1527,6 +1552,9 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
         // energy
         storage.energies.crf_energy[topo.atom_energy_group(i)]
                 [topo.atom_energy_group(*it)] += e_crf;
+        
+        //ORIOL_GAMD
+        storage.energies.gamd_potential_total[topo.gamd_accel_group(i)] += e_crf;
         
         DEBUG(11, "\tcontribution " << e_crf);
       } // loop over excluded pairs
@@ -1558,6 +1586,10 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
               topo.coscharge(i), topo.coscharge(i), f_pol, e_crf);
       storage.energies.crf_energy[topo.atom_energy_group(i)]
               [topo.atom_energy_group(i)] += 0.5 * e_crf;
+
+      //ORIOL_GAMD
+      storage.energies.gamd_potential_total[topo.gamd_accel_group(i)] += 0.5 * e_crf;
+
       DEBUG(11, "\tcontribution " << 0.5*e_crf);
 
       for( ; it != to; ++it){
@@ -1602,6 +1634,9 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
         // energy
         storage.energies.crf_energy[topo.atom_energy_group(i)]
                 [topo.atom_energy_group(*it)] += e_crf;
+
+        //ORIOL_GAMD
+        storage.energies.gamd_potential_total[topo.gamd_accel_group(i)] += 0.5 * e_crf;
 
         DEBUG(11, "\tcontribution " << e_crf);
       } // loop over excluded pairs
@@ -1660,6 +1695,9 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_solvent_interaction_inner
           storage.energies.crf_energy
                   [topo.atom_energy_group(*at_it) ]
                   [topo.atom_energy_group(*at2_it)] += e_crf;
+          // ORIOL_GAMD
+          storage.energies.gamd_potential_total[topo.gamd_accel_group(*at_it)] += e_crf;
+
           DEBUG(11, "\tsolvent rf excluded contribution: " << e_crf);
         } // loop over at2_it
       } // loop over at_it
@@ -1694,6 +1732,10 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_solvent_interaction_inner
             storage.energies.crf_energy
                     [topo.atom_energy_group(*at_it) ]
                     [topo.atom_energy_group(*at2_it)] += e_crf;
+
+            // ORIOL_GAMD
+            storage.energies.gamd_potential_total[topo.gamd_accel_group(*at_it)] += e_crf;
+
             DEBUG(11, "\tsolvent rf excluded contribution: " << e_crf);
           } // loop over at2_it
         } // loop over at_it
@@ -1746,6 +1788,10 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_solvent_interaction_inner
           storage.energies.crf_energy
                   [topo.atom_energy_group(*at_it) ]
                   [topo.atom_energy_group(*at2_it)] += e_crf;
+
+          // ORIOL_GAMD
+          storage.energies.gamd_potential_total[topo.gamd_accel_group(*at_it)] += e_crf;
+
         } // loop over at2_it
       } // loop over at_it
 
@@ -1808,6 +1854,8 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_solvent_interaction_inner
           storage.energies.crf_energy
                   [topo.atom_energy_group(*at_it) ]
                   [topo.atom_energy_group(*at2_it)] += e_crf;
+          // ORIOL_GAMD
+          storage.energies.gamd_potential_total[topo.gamd_accel_group(*at_it)] += e_crf;
         } // loop over at2_it
       } // loop over at_it
 

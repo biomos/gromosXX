@@ -142,6 +142,7 @@ static int _calculate_dihedral_new_interactions(topology::Topology & topo,
       conf.special().gamd.dihe_force[gamd_group][d_it->k] += fk;
       conf.special().gamd.dihe_force[gamd_group][d_it->l] += fl;
       conf.current().energies.gamd_dihedral_total[gamd_group] += energy;
+      conf.current().energies.gamd_potential_total[gamd_group] += energy;
       // virial
       for(int a=0; a<3; ++a){
         for(int bb=0; bb < 3; ++bb){

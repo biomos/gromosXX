@@ -70,7 +70,7 @@ int algorithm::GAMD
       } // loop over acceleration groups
     } // end if
     else if (sim.param().gamd.search == simulation::gamd_search && sim.param().gamd.ntisearch == 1){
-        io::messages.add("GAMD search should be started from an cMD search with ntisearch = 0. With ntisearch = 1 the statistics will be estimated only from the GAMD search run",
+        io::messages.add("GAMD search should be started from an cMD search with ntisearch = 0. With ntisearch = 1 the statistics will be estimated only from the actual GAMD search run",
          "Forcefield", io::message::warning);
     }
     return 0;
@@ -117,7 +117,7 @@ int algorithm::GAMD
                                            &sim.param().gamd.VmeanD[gg], &sim.param().gamd.M2D[gg], &sim.param().gamd.sigmaVD[gg]);
                         calc_gamd_std_mean(ener.gamd_potential_total[gg] - ener.gamd_dihedral_total[gg], sim.param().gamd.stepsdone, &sim.param().gamd.VmaxT[gg], &sim.param().gamd.VminT[gg],
                                            &sim.param().gamd.VmeanT[gg], &sim.param().gamd.M2T[gg], &sim.param().gamd.sigmaVT[gg]); 
-                        DEBUG(1, "group " << gg << " VmeanD " << sim.param().gamd.VmeanD[gg] <<  " VmeanT " << sim.param().gamd.VmeanT[gg] << " VmaxD " << sim.param().gamd.VmaxD[gg] <<  " VmaxT " << sim.param().gamd.VmaxT[gg]);                                       
+                        DEBUG(10, "group " << gg << " VmeanD " << sim.param().gamd.VmeanD[gg] <<  " VmeanT " << sim.param().gamd.VmeanT[gg] << " VmaxD " << sim.param().gamd.VmaxD[gg] <<  " VmaxT " << sim.param().gamd.VmaxT[gg]);                                       
                     break;          
                 default:
                     io::messages.add("Unknown functional form of gaussian accelerated md boosting potential. Should be 1 (dual acceleration), 2 (total potential energy acceleration), or 3 (dihedral acceleration)",
@@ -218,7 +218,18 @@ int algorithm::GAMD
                   //if V < E apply boost
                   if (VE < 0){
                       prefactor = (sim.param().gamd.kT[accelgroup] * VE) + 1;
-                      conf.current().energies.gamd_DV[accelgroup] = prefactor * VE/2; // 
+                      conf.current().energies.gamd_DV[accelgroup] = prefactor * VE/2; 
+                      // First do the dihedral term which is stored in a different array
+                      // loop over atoms
+                      for (unsigned int atom=0; atom < num_atoms; atom++){
+                            conf.current().force(atom) += conf.special().gamd.dihe_force[accelgroup](atom) * (prefactor - 1);
+                      } // end loop over atoms
+                      // to virial
+                      for (int a = 0; a < 3; ++a) {
+                        for (int b = 0; b < 3; ++b) {
+                            conf.current().virial_tensor(b, a) += conf.special().gamd.virial_tensor_dihe[accelgroup](b, a) * (prefactor -1);
+                        }
+                      } // end virial **/
                       for (unsigned int accelgroup2 = 0; accelgroup2 < sim.param().gamd.agroups;  accelgroup2++){
                         // choose the correct interaction factor to scale forces between acceleration groups
                         double interaction_factor = 1.0;
@@ -252,9 +263,7 @@ int algorithm::GAMD
                         calc_interaction_factor(accelgroup, accelgroup2, &interaction_factor);
                         //loop over the atoms
                         for (unsigned int atom=0; atom < num_atoms; atom++){
-
                                 conf.current().force(atom) += conf.special().gamd.total_force[accelgroup][accelgroup2](atom) * (prefactor -1);
-
                         }// end loop over atoms
                         // to virial 
                         for (int a = 0; a < 3; ++a) {

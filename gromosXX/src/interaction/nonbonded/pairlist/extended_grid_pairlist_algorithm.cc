@@ -168,10 +168,10 @@ int interaction::Extended_Grid_Pairlist_Algorithm::prepare
 {
   DEBUG(7, "grid pairlist algorithm : prepare");
   timer().start("pairlist prepare");
-  
+
   set_cutoff(sim.param().pairlist.cutoff_short, 
 	     sim.param().pairlist.cutoff_long);
-  
+		 
   // first put the chargegroups into the box
   // _prepare_cog(conf, topo);
 

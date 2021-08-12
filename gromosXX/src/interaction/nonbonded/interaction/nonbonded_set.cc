@@ -308,7 +308,6 @@ int interaction::Nonbonded_Set::update_configuration
 {
   const int ljs = conf.current().energies.lj_energy.size();
   configuration::Energy & e = conf.current().energies;
-  
   // use the IMPULSE method for multiple time stepping
   const unsigned int num_atoms = topo.num_atoms();
   math::VArray & f = conf.current().force;
@@ -337,7 +336,7 @@ int interaction::Nonbonded_Set::update_configuration
     if (sim.param().gamd.gamd){
       const unsigned int nr_agroups = unsigned(sim.param().gamd.agroups);
       for (unsigned int agroup1=0; agroup1 < nr_agroups; ++agroup1){
-        DEBUG(5, "adding energy " << m_storage.energies.gamd_potential_total.size());
+        DEBUG(5, "adding energy " << m_storage.energies.gamd_potential_total[agroup1]);
         e.gamd_potential_total[agroup1] += m_storage.energies.gamd_potential_total[agroup1];
         for (unsigned int agroup2=0; agroup2 < nr_agroups; ++agroup2){
           for(unsigned int atomn=0; atomn<num_atoms; ++atomn){
@@ -371,8 +370,7 @@ int interaction::Nonbonded_Set::update_configuration
     }
     e.self_energy[i] += m_storage.energies.self_energy[i];
   }
-  DEBUG(1, "GAMD energy 0: " << e.gamd_potential_total[0] << " 1: " << e.gamd_potential_total[1]);
-  DEBUG(1, "GAMD energy dihe" << e.gamd_dihedral_total[0] << " 1: " << e.gamd_dihedral_total[1]);
+
 
   // ANITA
   const unsigned int nr_lambdas = unsigned(m_storage.energies.A_lj_total.size());
