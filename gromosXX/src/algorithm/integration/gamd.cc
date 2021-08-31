@@ -185,7 +185,8 @@ int algorithm::GAMD
 
   // statistics updated now accelerate
   DEBUG(5, "GAMD: Accelerating");
-  double prefactor;
+  double prefactor_t;
+  double prefactor_h;
   if (sim.param().gamd.search != simulation::cmd_search){
       for (unsigned int accelgroup = 1; accelgroup < sim.param().gamd.agroups;  accelgroup++){
 
@@ -196,16 +197,17 @@ int algorithm::GAMD
                   double VE = ener.gamd_dihedral_total[accelgroup] - sim.param().gamd.ED[accelgroup];
                   //if V < E apply boost
                   if (VE < 0){
-                      prefactor = (sim.param().gamd.kD[accelgroup] * VE) + 1;
-                      conf.current().energies.gamd_DV[accelgroup] = prefactor * VE/2;
+                      //check prefactor
+                      prefactor_h = (sim.param().gamd.kD[accelgroup] * VE);
+                      conf.current().energies.gamd_DV[accelgroup] = prefactor_h * VE/2;
                       // loop over atoms
                        for (unsigned int atom=0; atom < num_atoms; atom++){
-                              conf.current().force(atom) += conf.special().gamd.dihe_force[accelgroup](atom) * (prefactor - 1);
+                              conf.current().force(atom) += conf.special().gamd.dihe_force[accelgroup](atom) * (prefactor_h);
                       } // end loop over atoms
                       // to virial
                     for (int a = 0; a < 3; ++a) {
                         for (int b = 0; b < 3; ++b) {
-                            conf.current().virial_tensor(b, a) += conf.special().gamd.virial_tensor_dihe[accelgroup](b, a) * (prefactor -1);
+                            conf.current().virial_tensor(b, a) += conf.special().gamd.virial_tensor_dihe[accelgroup](b, a) * (prefactor_h);
                         }
                     } // end virial **/
                   } // endif
@@ -217,17 +219,17 @@ int algorithm::GAMD
                   double VE = ener.gamd_potential_total[accelgroup] - sim.param().gamd.ET[accelgroup];
                   //if V < E apply boost
                   if (VE < 0){
-                      prefactor = (sim.param().gamd.kT[accelgroup] * VE) + 1;
-                      conf.current().energies.gamd_DV[accelgroup] = prefactor * VE/2; 
+                      prefactor_t = (sim.param().gamd.kT[accelgroup] * VE);
+                      conf.current().energies.gamd_DV[accelgroup] = prefactor_t * VE/2; 
                       // First do the dihedral term which is stored in a different array
                       // loop over atoms
                       for (unsigned int atom=0; atom < num_atoms; atom++){
-                            conf.current().force(atom) += conf.special().gamd.dihe_force[accelgroup](atom) * (prefactor - 1);
+                            conf.current().force(atom) += conf.special().gamd.dihe_force[accelgroup](atom) * (prefactor_t);
                       } // end loop over atoms
                       // to virial
                       for (int a = 0; a < 3; ++a) {
                         for (int b = 0; b < 3; ++b) {
-                            conf.current().virial_tensor(b, a) += conf.special().gamd.virial_tensor_dihe[accelgroup](b, a) * (prefactor -1);
+                            conf.current().virial_tensor(b, a) += conf.special().gamd.virial_tensor_dihe[accelgroup](b, a) * (prefactor_t);
                         }
                       } // end virial **/
                       for (unsigned int accelgroup2 = 0; accelgroup2 < sim.param().gamd.agroups;  accelgroup2++){
@@ -236,12 +238,12 @@ int algorithm::GAMD
                         calc_interaction_factor(accelgroup, accelgroup2, &interaction_factor);
                         //loop over the atoms
                         for (unsigned int atom=0; atom < num_atoms; atom++){
-                            conf.current().force(atom) += conf.special().gamd.total_force[accelgroup][accelgroup2](atom) * (prefactor -1);
+                            conf.current().force(atom) += conf.special().gamd.total_force[accelgroup][accelgroup2](atom) * (prefactor_t);
                         } // end loop over atoms
                         // to virial 
                         for (int a = 0; a < 3; ++a) {
                             for (int b = 0; b < 3; ++b) {
-                                conf.current().virial_tensor(b, a) += conf.special().gamd.virial_tensor[accelgroup][accelgroup2](b, a) * (prefactor -1);
+                                conf.current().virial_tensor(b, a) += conf.special().gamd.virial_tensor[accelgroup][accelgroup2](b, a) * (prefactor_t);
                             }
                         } // end virial **/
                       }
@@ -255,20 +257,20 @@ int algorithm::GAMD
                   double VET = ener.gamd_potential_total[accelgroup] - sim.param().gamd.ET[accelgroup] - ener.gamd_dihedral_total[accelgroup];
                   //if V < E apply boost
                   if (VET < 0){
-                      prefactor = (sim.param().gamd.kT[accelgroup] * VET) + 1;
-                      conf.current().energies.gamd_DV[accelgroup] = prefactor * VET/2; // 
+                      prefactor_t = (sim.param().gamd.kT[accelgroup] * VET);
+                      conf.current().energies.gamd_DV[accelgroup] = prefactor_t * VET/2; // 
                       for (unsigned int accelgroup2 = 0; accelgroup2 < sim.param().gamd.agroups;  accelgroup2++){
                         // choose the correct interaction factor to scale forces between acceleration groups
                         double interaction_factor = 1.0;
                         calc_interaction_factor(accelgroup, accelgroup2, &interaction_factor);
                         //loop over the atoms
                         for (unsigned int atom=0; atom < num_atoms; atom++){
-                                conf.current().force(atom) += conf.special().gamd.total_force[accelgroup][accelgroup2](atom) * (prefactor -1);
+                                conf.current().force(atom) += conf.special().gamd.total_force[accelgroup][accelgroup2](atom) * (prefactor_t);
                         }// end loop over atoms
                         // to virial 
                         for (int a = 0; a < 3; ++a) {
                             for (int b = 0; b < 3; ++b) {
-                                conf.current().virial_tensor(b, a) += conf.special().gamd.virial_tensor[accelgroup][accelgroup2](b, a) * (prefactor -1);
+                                conf.current().virial_tensor(b, a) += conf.special().gamd.virial_tensor[accelgroup][accelgroup2](b, a) * (prefactor_t);
                                 }
                         } // end virial **/
                       } 
@@ -277,16 +279,16 @@ int algorithm::GAMD
                   double VED = ener.gamd_dihedral_total[accelgroup] - sim.param().gamd.ED[accelgroup];
                   //if V < E apply boost
                   if (VED < 0){
-                      prefactor = (sim.param().gamd.kD[accelgroup] * VED) + 1;
-                      conf.current().energies.gamd_DV[accelgroup] = prefactor * VED/2;
+                      prefactor_h = (sim.param().gamd.kD[accelgroup] * VED);
+                      conf.current().energies.gamd_DV[accelgroup] = prefactor_h * VED/2;
                       // loop over atoms
                        for (unsigned int atom=0; atom < num_atoms; atom++){
-                              conf.current().force(atom) += conf.special().gamd.dihe_force[accelgroup](atom) * (prefactor - 1);
+                              conf.current().force(atom) += conf.special().gamd.dihe_force[accelgroup](atom) * (prefactor_h);
                               //int chargegroup = topo.atom_energy_group()[atom];
                         } // end loop over atoms
                         for (int a = 0; a < 3; ++a) {
                             for (int b = 0; b < 3; ++b) {
-                                conf.current().virial_tensor(b, a) += conf.special().gamd.virial_tensor_dihe[accelgroup](b, a) * (prefactor -1);
+                                conf.current().virial_tensor(b, a) += conf.special().gamd.virial_tensor_dihe[accelgroup](b, a) * (prefactor_h);
                             }
                         } // end virial **/
                     } // endif
