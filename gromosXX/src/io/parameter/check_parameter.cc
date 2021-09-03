@@ -4345,9 +4345,9 @@ int io::check_features(simulation::Simulation  &sim)
   fc.unlock("amber", "com_removal");
   fc.unlock("amber", "rf_excluded");
   fc.unlock("amber", "pairlist_standard");
-  //fc.unlock("amber", "pairlist_grid");
-  //fc.unlock("amber", "pairlist_gridcell");
-  //fc.unlock("amber", "cutoff_atomic");
+  fc.unlock("amber", "pairlist_grid");
+  fc.unlock("amber", "pairlist_gridcell");
+  fc.unlock("amber", "cutoff_atomic");  // was locked!!!
   fc.unlock("amber", "cutoff_cg");
   //fc.unlock("amber", "cg_martini");
   //fc.unlock("amber", "cg_gromos");
