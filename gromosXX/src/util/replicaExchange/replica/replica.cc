@@ -240,7 +240,7 @@ void util::replica::run_MD() {
   ff = md.algorithm("Forcefield");
 
   //Calculate energies    
-  DEBUG(5, "replica_reeds "<< rank <<":calculate_energy:\t calc energies"); 
+  DEBUG(5, "replica_reeds "<< globalThreadID <<":calculate_energy:\t calc energies"); 
   if (ff->apply(topo, conf, sim)) {
       std::cerr << "Error in Forcefield calculation in Replica " << (simulationID+1) << " on node " << globalThreadID << std::endl;
     #ifdef XXMPI
@@ -251,7 +251,7 @@ void util::replica::run_MD() {
   ff = md.algorithm("EDS");
 
   //Calculate energies    
-  DEBUG(5, "replica_reeds "<< rank <<":calculate_energy:\t calc energies"); 
+  DEBUG(5, "replica_reeds "<< globalThreadID <<":calculate_energy:\t calc energies"); 
   if (ff->apply(topo, conf, sim)) {
       std::cerr << "Error in EDS calculation in Replica " << (simulationID+1) << " on node " << globalThreadID << std::endl;
     #ifdef XXMPI
@@ -264,7 +264,7 @@ void util::replica::run_MD() {
   ff = md.algorithm("EnergyCalculation");
 
   //Calculate energies    
-  DEBUG(5, "replica_reeds "<< rank <<":calculate_energy:\t calc energies"); 
+  DEBUG(5, "replica_reeds "<< globalThreadID <<":calculate_energy:\t calc energies"); 
   if (ff->apply(topo, conf, sim)) {
       std::cerr << "Error in EnergyCalculation in Replica " << (simulationID+1) << " on node " << globalThreadID << std::endl;
     #ifdef XXMPI
