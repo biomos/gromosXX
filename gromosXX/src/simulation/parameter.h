@@ -665,6 +665,11 @@ namespace simulation
      */
     mass_lambda = 11,
     /**
+     * angle restraint interaction
+     */
+    angres_lambda = 12,
+
+    /**
      * one extra interaction for looping
      */
     last_interaction_lambda=12
@@ -2181,47 +2186,56 @@ namespace simulation
      */
     struct dihrest_struct
     {
-      /**
-       * Constructor
-       * Default values:
-       * - dihrest 0 (no dihedral restraints)
-       * - K 0
-       */
-      dihrest_struct()
-	: dihrest(dihedral_restr_off),
-	  K(0.0),
-	  phi_lin(0.0),
-          write(0) {}
+        /**
+         * Constructor
+         * Default values:
+         * - dihrest 0 (no dihedral restraints)
+         * - K 0
+         */
+        dihrest_struct()
+        : dihrest(dihedral_restr_off),
+        K(0.0),
+        phi_lin(0.0),
+        virial(0),
+        write(0) {}
 
-      /**
-       * dihedral restraints
-       * method:
-       * - 0: off
-       * - 1: uniform K
-       * - 2: K * Ki (weight by Ki in dihedral restraint file)
-       * - 3: constraints
-       */
-      dihedral_restr_enum dihrest;
-      /**
-       * force constant K
-       */
-      double K;
-      /**
-       * deviation larger phi_lin leads to linear potential
-       */
-      double phi_lin;
-      /**
-       * write on/off
-       */
-      unsigned int write;
+        /**
+         * dihedral restraints
+         * method:
+         * - 0: off
+         * - 1: uniform K
+         * - 2: K * Ki (weight by Ki in dihedral restraint file)
+         * - 3: constraints
+         */
+        dihedral_restr_enum dihrest;
 
-      /**
-       * tolerance
-       */
-      double tolerance;
+        /**
+         * force constant K
+         */
+        double K;
 
+        /**
+         * deviation larger phi_lin leads to linear potential
+         */
+        double phi_lin;
+
+        /**
+        * compute virial contribution
+        */
+        unsigned int virial;
+
+        /**
+         * write on/off
+         */
+        unsigned int write;
+
+        /**
+         * tolerance
+         */
+        double tolerance;
 
     }/** dihedral restraint parameters */ dihrest;
+
 
     /**
      * @struct perturb_struct
