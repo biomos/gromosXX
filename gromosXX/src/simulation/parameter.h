@@ -340,6 +340,29 @@ namespace simulation
       rdc_sh = 2
   };
 
+  /**
+ * @enum angle_restr_enum
+ * Angle restraints enumeration
+ */
+  enum angle_restr_enum{
+      /**
+       * no restraints
+       */
+      angle_restr_off = 0,
+      /**
+       * instantaneous restraints
+       */
+      angle_restr_inst = 1,
+      /**
+       * instantaneous restraints, weighted
+       */
+      angle_restr_inst_weighted = 2,
+      /**
+       * angle constraints
+       */
+      angle_constr = 3
+  };
+
 
   /**
    * @enum dihedral_restr_enum
@@ -2104,6 +2127,53 @@ namespace simulation
        */
       double protect;
     }/** Distancefield restraints parameters */ distancefield;
+
+    struct angrest_struct
+            {
+        /**
+         * Constructor
+         * Default values:
+         * - angrest 0 (no angle restraints)
+         * - K 0
+         */
+        angrest_struct()
+        : angrest(angle_restr_off),
+        K(0.0),
+        virial(0),
+        write(0) {}
+
+        /**
+         * angle restraints
+         * method:
+         * - 0: off
+         * - 1: uniform K
+         * - 2: K * Ki (weight by Ki in angle restraint file)
+         * - 3: constraints
+         */
+        angle_restr_enum angrest;
+
+        /**
+         * force constant K
+         */
+        double K;
+
+        /**
+        * compute virial contribution
+        */
+        unsigned int virial;
+
+        /**
+         * write on/off
+         */
+        unsigned int write;
+
+        /**
+         * tolerance
+         */
+        double tolerance;
+
+    }/** angle restraint parameters */ angrest;
+
 
     /**
      * @struct dihrest_struct
