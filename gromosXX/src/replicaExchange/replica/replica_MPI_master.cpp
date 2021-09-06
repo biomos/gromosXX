@@ -269,7 +269,6 @@ void re::replica_MPI_Master::run_MD(){
     ff = md.algorithm("EDS");
 
     //Calculate energies    
-    DEBUG(5, "replica_reeds "<< globalThreadID <<":calculate_energy:\t calc energies");
     if (ff->apply(topo, conf, sim)) {
         std::cerr << "Error in EDS calculation in Replica " << (simulationID+1) << " on node " << globalThreadID << std::endl;
       #ifdef XXMPI
