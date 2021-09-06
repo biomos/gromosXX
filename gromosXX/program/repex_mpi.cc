@@ -18,7 +18,14 @@
  * <tr><td> \@repout</td><td>&lt;name of the replica exchange output files&gt; </td><td style="color:#088A08">in</td></tr>
  * </table>
  */
+
+#ifdef XXMPI
+#include <mpi.h>
+#endif
+
 #include <stdheader.h>
+#include <replicaExchange/repex_mpi.h>
+
 #include <algorithm/algorithm.h>
 #include <topology/topology.h>
 #include <simulation/simulation.h>
@@ -46,30 +53,24 @@
 #include <io/configuration/out_configuration.h>
 #include <math/gmath.h>
 
-#ifdef XXMPI
-    #include <mpi.h>
-#endif
 
-#include <util/replicaExchange/replica/replica.h>
+#include <replicaExchange/replica/replica.h>
+#include <replicaExchange/replica_graph_control.h>
 
-#include <util/replicaExchange/replica_exchangers/2D_T_lambda_REPEX/replica_exchange_master.h>
-#include <util/replicaExchange/replica_exchangers/2D_T_lambda_REPEX/replica_exchange_slave.h>
-#include <util/replicaExchange/replica_exchangers/1D_S_RE_EDS/replica_exchange_master_eds.h>
-#include <util/replicaExchange/replica_exchangers/1D_S_RE_EDS/replica_exchange_slave_eds.h>
-#include <util/replicaExchange/replica_exchangers/2D_S_Eoff_RE_EDS/replica_exchange_master_2d_s_eoff_eds.h>
-#include <util/replicaExchange/replica_exchangers/2D_S_Eoff_RE_EDS/replica_exchange_slave_2d_s_eoff_eds.h>
+#include <replicaExchange/replica_exchangers/2D_T_lambda_REPEX/replica_exchange_master.h>
+#include <replicaExchange/replica_exchangers/2D_T_lambda_REPEX/replica_exchange_slave.h>
+#include <replicaExchange/replica_exchangers/1D_S_RE_EDS/replica_exchange_master_eds.h>
+#include <replicaExchange/replica_exchangers/1D_S_RE_EDS/replica_exchange_slave_eds.h>
+#include <replicaExchange/replica_exchangers/2D_S_Eoff_RE_EDS/replica_exchange_master_2d_s_eoff_eds.h>
+#include <replicaExchange/replica_exchangers/2D_S_Eoff_RE_EDS/replica_exchange_slave_2d_s_eoff_eds.h>
+#include <replicaExchange/replica_exchangers/1D_S_HSA_EDS/hamiltonian_simulatedAnnealing_master_eds.h>
+#include <replicaExchange/replica_exchangers/1D_S_HSA_EDS/hamiltonian_simulatedAnnealing_slave_eds.h>
 
-#include <util/replicaExchange/repex_mpi.h>
-#include "util/replicaExchange/replica_graph_control.h"
 
-//Debug Instructions
-#undef MODULE
-#undef SUBMODULE
-#define MODULE util
-#define SUBMODULE replica_exchange
 
 int main(int argc, char *argv[]) {
 #ifdef XXMPI
+
     //initializing MPI
     MPI_Init(&argc, &argv);
     const double start = util::now();
@@ -237,6 +238,11 @@ int main(int argc, char *argv[]) {
                       numEDSstates = sim.param().reeds.eds_para[0].numstates;
                       DEBUG(3, "numReps & numEDSstates: " << numReplicas << ", " << numEDSstates << "\n");
                       break;
+                  case 3:
+                      numReplicas = numSVals;
+                      numEDSstates = sim.param().reeds.eds_para[0].numstates;
+                      DEBUG(3, "numReps & numEDSstates: " << numReplicas << ", " << numEDSstates << "\n");
+                      break;
               }
 
 
@@ -362,8 +368,8 @@ int main(int argc, char *argv[]) {
 
 
 
-    util::replica_graph_control reGMPI(0,   //GraphID
-                                       0,   // MasterID
+    re::replica_graph_control reGMPI(0,   //GraphID
+                                     0,   // MasterID
                                 graphThreadID,  // This Thread
                                 totalNumberOfThreads,   //total number of threads
                                 replica_owned_threads.size(),  //replicas in the graph
@@ -514,23 +520,28 @@ int main(int argc, char *argv[]) {
         //CONSTRUCT
         // Select repex Implementation - Polymorphism
         MPI_DEBUG(1, "MASTER " << globalThreadID << "::Constructor: START ");
-        util::replica_exchange_master_interface * Master;
+        re::replica_exchange_master_interface * Master;
 
         switch(reedsSim) {
               case 0:
                   DEBUG(1, "Master \t Constructor\n"); // Remove @bschroed
                   std::cerr << "Constructor:\t Master\n";
-                  Master = new util::replica_exchange_master(args, cont, globalThreadID, reGMPI, replica_mpi_control);
+                  Master = new re::replica_exchange_master(args, cont, globalThreadID, reGMPI, replica_mpi_control);
                   break;
               case 1:
                   DEBUG(1, "Master_eds \t Constructor\n")// Remove @bschroed
                   std::cerr << "Constructor:\t Master_eds\n";
-                  Master = new util::replica_exchange_master_eds(args, cont, globalThreadID, reGMPI, replica_mpi_control);
+                  Master = new re::replica_exchange_master_eds(args, cont, globalThreadID, reGMPI, replica_mpi_control);
                   break;
               case 2:
                   DEBUG(1, "Master_2d_s_eoff_eds \t Constructor\n")// Remove @bschroed
                   std::cerr << "Constructor:\t Master_2d_s_eoff_eds\n";
-                  Master = new util::replica_exchange_master_2d_s_eoff_eds(args, cont, globalThreadID, reGMPI, replica_mpi_control);
+                  Master = new re::replica_exchange_master_2d_s_eoff_eds(args, cont, globalThreadID, reGMPI, replica_mpi_control);
+                  break;
+              case 3:
+                  DEBUG(1, "Master_hsa_s_eoff_eds \t Constructor\n")// Remove @bschroed
+                  std::cerr << "Constructor:\t Master_hsa_s_eoff_eds\n";
+                  Master = new re::hamiltonian_simulatedAnnealing_master_eds(args, cont, globalThreadID, reGMPI, replica_mpi_control);
                   break;
           }
         MPI_Barrier(MPI_COMM_WORLD);    //wait for all threads to register!
@@ -615,17 +626,20 @@ int main(int argc, char *argv[]) {
 
         // Select repex Implementation - Polymorphism
         MPI_DEBUG(1, "Slave " << globalThreadID << "::Constructor: START ");
-        util::replica_exchange_slave_interface* Slave;
+        re::replica_exchange_slave_interface* Slave;
 
         switch(reedsSim) {
               case 0:
-                  Slave = new util::replica_exchange_slave(args, cont, globalThreadID, reGMPI, replica_mpi_control);
+                  Slave = new re::replica_exchange_slave(args, cont, globalThreadID, reGMPI, replica_mpi_control);
                   break;
               case 1:
-                  Slave = new util::replica_exchange_slave_eds(args, cont, globalThreadID, reGMPI, replica_mpi_control);
+                  Slave = new re::replica_exchange_slave_eds(args, cont, globalThreadID, reGMPI, replica_mpi_control);
                   break;
               case 2:
-                  Slave = new util::replica_exchange_slave_2d_s_eoff_eds(args, cont, globalThreadID, reGMPI, replica_mpi_control);
+                  Slave = new re::replica_exchange_slave_2d_s_eoff_eds(args, cont, globalThreadID, reGMPI, replica_mpi_control);
+                  break;
+              case 3:
+                  Slave = new re::hamiltonian_simulatedAnnealing_slave_eds(args, cont, globalThreadID, reGMPI, replica_mpi_control);
                   break;
           }
         MPI_DEBUG(1, "Slave " << globalThreadID << "::Constructor: DONE ")

@@ -2851,6 +2851,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
     exampleblock << "#    REEDS >= 0   : turn off Reeds                             \n";
     exampleblock << "#             1   : turn on 1D Reeds (s)                       \n";
     exampleblock << "#             2   : turn on 2D Reeds (s & Eoff)                \n";
+    exampleblock << "#             3   : turn on 1D Simulated Annealing-eds (s)                \n";
     exampleblock << "#    NRES >= number of replica exchange eds smoothing values   \n";
     exampleblock << "#    NEOFF >= number of replica exchange eds energy Offset vectors (only used for 2D REEDS - still needs to be present ;))   \n";
     exampleblock << "#    NUMSTATES >= 2 Number of states                              \n";
@@ -2910,7 +2911,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
 
         // GET BLOCKVARS
         //SYS Settings
-        block.get_next_parameter("REEDS", reeds_control, "", "0,1,2");
+        block.get_next_parameter("REEDS", reeds_control, "", "0,1,2,3");
         DEBUG(3, "REPLICA_EDS BLOCK: reeds_control= " << reeds_control);
         block.get_next_parameter("NRES", num_s, ">0", "");
         block.get_next_parameter("NUMSTATES", num_states, ">0", "");
@@ -2925,7 +2926,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
         }
 
         //get EIR-Matrix
-        if(reeds_control == 1){ // in 1D REEDS case, NEOFFS must be == num_s
+        if(reeds_control == 1 || reeds_control == 3){ // in 1D REEDS case, NEOFFS must be == num_s
             num_eoff = num_s;
         }
         std::vector<std::vector<float>> eir(num_eoff);
@@ -2954,18 +2955,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
         // SET SETTINGS
         DEBUG(2, "REPLICA_EDS BLOCK: Set settings for sim.");
         // READ:REEDS control
-        switch(reeds_control) {
-              case 0:
-                  param.reeds.reeds = 0;
-                  break;
-              case 1:
-                  param.reeds.reeds = 1;
-                  break;
-              case 2:
-                  param.reeds.reeds = 2;
-                  break;
-        }
-
+        param.reeds.reeds = reeds_control;
         DEBUG(3, "REPLICA_EDS BLOCK: reeds_control= " << param.reeds.reeds);
 
         param.reeds.num_l = num_s;
@@ -2994,7 +2984,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
         DEBUG(2, "REPLICA_EDS BLOCK: assigned all reeds params");
         //set size of vectors in param.reeds
         switch(reeds_control) {
-              case 0: case 1:
+              case 0: case 1: case 3:
                   param.reeds.eds_para.resize(param.reeds.num_l);
                   param.reeds.dt.resize(param.reeds.num_l);
                   param.reeds.lambda.resize(param.reeds.num_l);
@@ -3012,7 +3002,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
         std::vector<double> dtV;    //is necessary to give replicas the paramesters
         std::vector<double> temperatureV;
         switch(reeds_control){
-          case 0: case 1:
+          case 0: case 1: case 3:
               for (int i = 0; i < param.reeds.num_l; ++i) {
                   dtV.push_back(param.step.dt);
                   temperatureV.push_back(param.reeds.temperature);

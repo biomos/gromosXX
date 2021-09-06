@@ -444,6 +444,7 @@ AC_CONFIG_FILES([
 	src/simulation/Makefile
 	src/interaction/Makefile
 	src/io/Makefile
+    src/replicaExchange/Makefile
 	src/util/Makefile
 	src/check/Makefile
 	program/Makefile
