@@ -166,25 +166,25 @@ void GenericMesh<complex_type>::fft(GenericMesh<complex_type>::fft_type type) {
 template class GenericMesh<double>;
 template class GenericMesh<complex_number>;
 template class GenericMesh<math::SymmetricMatrix>;
+#ifdef XXMPI
+    ParallelMesh::ParallelMesh(unsigned int size, unsigned int arank, unsigned int acache_size, MPI_Comm comm) :
+          GenericMesh<complex_number>(), mesh_left(NULL), mesh_right(NULL), mesh_tmp(NULL),
+          num_threads(size), rank(arank), cache_size(acache_size), slice_width(0),
+          slice_end(0){
+            mpiComm = comm;
+            DEBUG(15, "Cache size: " << cache_size);
+    }
 
-ParallelMesh::ParallelMesh(unsigned int size, unsigned int arank, unsigned int acache_size, MPI_Comm comm) :
-      GenericMesh<complex_number>(), mesh_left(NULL), mesh_right(NULL), mesh_tmp(NULL),
-      num_threads(size), rank(arank), cache_size(acache_size), slice_width(0),
-      slice_end(0){
+    ParallelMesh::ParallelMesh(unsigned int size, unsigned int arank, unsigned int acache_size,
+          unsigned int x, unsigned int y, unsigned int z, MPI_Comm comm) : GenericMesh<complex_number>(),
+          mesh_left(NULL), mesh_right(NULL), mesh_tmp(NULL),
+          num_threads(size), rank(arank), cache_size(acache_size), slice_width(0),
+          slice_start(0), slice_end(0) {
+
         mpiComm = comm;
-        DEBUG(15, "Cache size: " << cache_size);
-}
-      
-ParallelMesh::ParallelMesh(unsigned int size, unsigned int arank, unsigned int acache_size,
-      unsigned int x, unsigned int y, unsigned int z, MPI_Comm comm) : GenericMesh<complex_number>(),
-      mesh_left(NULL), mesh_right(NULL), mesh_tmp(NULL),
-      num_threads(size), rank(arank), cache_size(acache_size), slice_width(0),
-      slice_start(0), slice_end(0) {
-        
-    mpiComm = comm;
-    resize(x,y,z);
-}
-      
+        resize(x,y,z);
+    }
+#endif
 ParallelMesh::~ParallelMesh() {
   // destory the plans
   if (plan_forward != NULL)
