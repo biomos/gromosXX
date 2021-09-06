@@ -42,6 +42,7 @@
  * - @ref  distanceres
  * - @ref  distancefield
  * - @ref  disres
+ * - @ref  angleres
  * - @ref  dihedralres
  * - @ref  dihrest
  * - @ref  multistep
@@ -198,6 +199,11 @@ namespace io {
      * read DISTANCEFIELD block.
      */
     void read_DISTANCEFIELD(simulation::Parameter &param, std::ostream & os = std::cout);
+
+    /**
+     * read ANGLERES block.
+     */
+    void read_ANGLERES(simulation::Parameter &param, std::ostream & os = std::cout);
 
     /**
      * read DIHEDRALRES block.

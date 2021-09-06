@@ -57,17 +57,17 @@ int main(int argc, char *argv[]) {
 
     const double start = util::now();
 
-    util::Known knowns;
-    knowns << "topo" << "conf" << "input" << "verb" << "pttopo"
-            << "trc" << "fin" << "trv" << "trf" << "trs" << "tre" << "trg"
-            << "bae" << "bag" << "posresspec" << "refpos" << "distrest" << "dihrest"
-            << "jval" << "xray" << "sym" << "order" << "rdc" << "lud" << "led"
-            << "anatrj" << "print" << "friction" << "qmmm" << "version" << "develop";
-
-
-    std::string usage;
-    util::get_usage(knowns, usage, argv[0]);
-    usage += "#\n\n";
+  util::Known knowns;
+  knowns << "topo" << "conf" << "input" << "verb" << "pttopo"
+	 << "trc" << "fin" << "trv" << "trf" << "trs" << "tre" << "trg"
+	 << "bae" << "bag" << "posresspec" << "refpos" << "distrest"
+         << "angrest" << "dihrest" << "jval" << "xray" << "sym"
+         << "order"  << "rdc" << "lud" << "led" << "anatrj"
+         << "print" << "friction" << "qmmm" << "version" << "develop";
+  
+  std::string usage;
+  util::get_usage(knowns, usage, argv[0]);
+  usage += "#\n\n";
 
     // master or slave : that's the question
     MPI::Init(argc, argv);
@@ -162,7 +162,7 @@ int main(int argc, char *argv[]) {
     if (sim.mpiControl().threadID == sim.mpiControl().masterID) {
         std::cout << "END\n";
     }
-    
+
     /**
      * READ in IMD file
      */
@@ -175,7 +175,7 @@ int main(int argc, char *argv[]) {
     }
 
 
-    // check for development 
+    // check for development
     if (sim.param().develop.develop == true && args.count("develop") < 0) {
         io::messages.add(sim.param().develop.msg, io::message::develop);
     }
@@ -186,7 +186,7 @@ int main(int argc, char *argv[]) {
 
     int error = 0;
     if (sim.mpiControl().threadID == sim.mpiControl().masterID) {
-       
+
         io::Out_Configuration traj(GROMOSXX "\n");
         traj.title(GROMOSXX "\n" + sim.param().title);
 
@@ -233,11 +233,11 @@ int main(int argc, char *argv[]) {
                 << " MAIN MD LOOP\n"
                 << "==================================================\n"
                 << std::endl;
-   
+
         const double init_time = util::now() - start;
 
         int next_step = 1;
-   
+
         while (int(sim.steps()) < sim.param().step.number_of_steps) {
             traj.write(conf, topo, sim, io::reduced);
             // run a stepi
@@ -277,7 +277,7 @@ int main(int argc, char *argv[]) {
                     error = 0; // clear error condition
                     break;
                 }
-		
+
                 std::cout << "\nError during MD run!\n" << std::endl;
                 // send error status to slaves
                 next_step = 0;
@@ -354,7 +354,7 @@ int main(int argc, char *argv[]) {
 
     else {
         (*os) << "MPI slave " << rank << " of " << size << std::endl;
-        
+
         MPI_Bcast(&error, 1, MPI::INT, sim.mpiControl().masterID, sim.mpiControl().comm);
 
         if (error) {
@@ -442,10 +442,10 @@ int main(int argc, char *argv[]) {
                   MPI::Finalize();
                   return 1;
 
-                } 
+                }
              */
 
-        
+
             //////////////////////////////////////////////////////////////////////////////////////////////////////
             // run the simulation
             //////////////////////////////////////////////////////////////////////////////////////////////////////

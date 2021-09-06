@@ -156,7 +156,7 @@ int algorithm::EDS
             else {
               eirdemix = eds_vi[is] - eiremin;
               eirkfac = 1.0 / (eiremax - eiremin);
-              eirestar = eds_vi[is] - 0.5 * kfac * demix * demix;
+              eirestar = eds_vi[is] - 0.5 * eirkfac * eirdemix * eirdemix;
             }
             expde = -1.0 * beta * (eirestar - conf.current().energies.eds_vr);
             sim.param().eds.lnexpde[is] += log(exp(-1.0 / tau) / (1.0 - exp(-1.0 / tau)));

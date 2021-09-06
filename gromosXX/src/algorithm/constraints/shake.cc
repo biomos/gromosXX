@@ -33,6 +33,8 @@
 #define MODULE algorithm
 #define SUBMODULE constraints
 
+// angle constraints template method
+#include "angle_constraint.cc"
 // dihedral constraints template method
 #include "dihedral_constraint.cc"
 
@@ -110,7 +112,8 @@ int algorithm::Shake::apply(topology::Topology & topo,
   if ((topo.solute().distance_constraints().size() &&
           sim.param().constraint.solute.algorithm == simulation::constr_shake &&
           sim.param().constraint.ntc > 1) ||
-          sim.param().dihrest.dihrest == simulation::dihedral_constr) {
+          sim.param().dihrest.dihrest == simulation::dihedral_constr ||
+          sim.param().angrest.angrest == simulation::angle_constr) {
 
     DEBUG(8, "\twe need to shake SOLUTE");
 
@@ -265,6 +268,19 @@ int algorithm::Shake::init(topology::Topology & topo,
         g.add_edge(it->i, it->j);
       }
     }
+    // also add the angle constrained atoms
+    if (sim.param().angrest.angrest == simulation::angle_constr) {
+      std::vector<topology::angle_restraint_struct>::const_iterator
+      it = topo.angle_restraints().begin(),
+              to = topo.angle_restraints().end();
+      for (; it != to; ++it) {
+        constrained_atoms().insert(it->i);
+        constrained_atoms().insert(it->j);
+        constrained_atoms().insert(it->k);
+        g.add_edge(it->i, it->j);
+        g.add_edge(it->k, it->j);
+      }
+    }
     // also add the dihedral constrained atoms
     if (sim.param().dihrest.dihrest == simulation::dihedral_constr) {
       std::vector<topology::dihedral_restraint_struct>::const_iterator
@@ -305,6 +321,20 @@ if ((topo.solute().distance_constraints().size() &&
 #endif
   }
 }
+  if (sim.param().angrest.angrest == simulation::angle_constr) {
+    // assemble angle constraints into groups
+    for(std::vector<topology::angle_restraint_struct>::const_iterator it =
+      topo.angle_restraints().begin(); it != topo.angle_restraints().end(); ++it){
+	  const unsigned int group_id = component[it->i] % m_size;
+      m_constraint_groups[group_id].angle_restraints.push_back(*it);
+
+#ifdef XXMPI
+      affected_indices[group_id].insert(it->i);
+      affected_indices[group_id].insert(it->j);
+      affected_indices[group_id].insert(it->k);
+#endif
+    }
+  }
   if (sim.param().dihrest.dihrest == simulation::dihedral_constr) {
 	// assemble dihedral constraints into groups
     for(std::vector<topology::dihedral_restraint_struct>::const_iterator it =

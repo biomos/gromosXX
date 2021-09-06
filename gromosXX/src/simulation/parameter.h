@@ -2150,6 +2150,7 @@ namespace simulation
        */
       double tolerance;
 
+
     }/** dihedral restraint parameters */ dihrest;
 
     /**

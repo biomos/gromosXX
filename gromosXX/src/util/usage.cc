@@ -96,6 +96,11 @@ void util::get_usage(util::Known const &knowns, std::string &usage, std::string 
     usage += "\t# @distrest  filename\n\n";
   }
 
+  if (knowns.count("angrest")){
+    usage += "\t# angle restraints specification\n";
+    usage += "\t# @angrest  filename\n\n";
+  }
+
   if (knowns.count("dihrest")){
     usage += "\t# dihedral restraints specification\n";
     usage += "\t# @dihrest  filename\n\n";
