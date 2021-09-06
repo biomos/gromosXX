@@ -10,6 +10,7 @@ Makefile.in
 /m4/
 INSTALL
 /doc/snippets
+**.deps
 
 # temporary files:
 *~
