@@ -23,3 +23,7 @@ INSTALL
 
 #building artefacts
 build
+
+
+#IDE-Folder:
+**.idea
