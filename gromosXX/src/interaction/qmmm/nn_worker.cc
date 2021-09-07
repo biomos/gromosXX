@@ -127,6 +127,9 @@ int interaction::NN_Worker::init(simulation::Simulation& sim) {
 
   py::object ml_environment = py_modules["schnetpack"].attr("utils").attr("script_utils").attr("settings").attr("get_environment_provider")(ml_model_args, "device"_a=device);
   std::vector<int> mlmm_indices;
+
+  // this should be filled with all the atoms that are in the qm_zone, but not in the buffer zone.
+  // currently it is hardcoded to the first atom!! FIX
   mlmm_indices.push_back(0);
 
   /** Initialize the ML calculator */

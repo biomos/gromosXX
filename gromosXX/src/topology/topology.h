@@ -831,6 +831,21 @@ namespace topology
     }
 
     /**
+     * QM buffer charge accessor
+     */
+    math::SArray &qm_buffer_charge() {return m_qm_buffer_charge;}
+
+    /**
+     * charge const accessor
+     */
+    math::SArray const & qm_buffer_charge()const{return m_qm_buffer_charge;}
+
+    /**
+     * charge accessor
+     */
+    double qm_buffer_charge(int i)const { return m_qm_buffer_charge(i); }
+
+    /**
      * QM atomic number accessor
      */
     const unsigned& qm_atomic_number(unsigned i) const {
@@ -1939,6 +1954,11 @@ namespace topology
      * Is the QM buffer (1: yes, 0: no, -1: temporarily disabled [adaptive buffer with cutoff])
      */
     std::vector<int> m_is_qm_buffer;
+
+    /**
+     * Charges to be used for interactions between buffer atoms in QM
+     */
+    math::SArray m_qm_buffer_charge;
 
     /**
      * QM atomic number

@@ -36,14 +36,21 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop_2
       const lj_parameter_struct & lj =
               m_param->lj_parameter(topo.iac(i),
               topo.iac(j));
-
       DEBUG(11, "\tlj-parameter c6=" << lj.c6 << " c12=" << lj.c12);
-      DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));
-
-      lj_crf_interaction_fast(dist2, lj.c6, lj.c12,
-              topo.charge(i) *
-              topo.charge(j),
+      // CHRIS: ugly hack that slows down everything!
+      if(topo.is_qm_buffer(i) == 1 && topo.is_qm_buffer(j) == 1){ 
+        DEBUG(11, "\tUSING QM BUFFER charges");
+        DEBUG(11, "\tcharge i=" << topo.qm_buffer_charge()(i) << " j=" << topo.qm_buffer_charge()(j));
+        lj_crf_interaction_fast(dist2, lj.c6, lj.c12,
+              topo.qm_buffer_charge(i) * topo.qm_buffer_charge(j),
               f, e_lj, e_crf);
+      }else{
+        DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));
+        lj_crf_interaction_fast(dist2, lj.c6, lj.c12,
+              topo.charge(i) * topo.charge(j),
+              f, e_lj, e_crf);
+      }
+
       DEBUG(12, "f: " << f);
       DEBUG(12, "e_lj: " << e_lj);
       DEBUG(12, "e_crf: " << e_crf);
@@ -93,12 +100,20 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop
               topo.iac(j));
 
       DEBUG(11, "\tlj-parameter c6=" << lj.c6 << " c12=" << lj.c12);
-      DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));
-
-      lj_crf_interaction(r, lj.c6, lj.c12,
-              topo.charge(i) *
-              topo.charge(j),
+      // CHRIS: ugly hack that slows down everything!
+      if(topo.is_qm_buffer(i) == 1 && topo.is_qm_buffer(j) == 1){ 
+        DEBUG(11, "\tUSING QM BUFFER charges");
+        DEBUG(11, "\tcharge i=" << topo.qm_buffer_charge()(i) << " j=" << topo.qm_buffer_charge()(j));
+        lj_crf_interaction(r, lj.c6, lj.c12,
+              topo.qm_buffer_charge(i) * topo.qm_buffer_charge(j),
               f, e_lj, e_crf);
+      }else{
+        DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));
+        lj_crf_interaction(r, lj.c6, lj.c12,
+              topo.charge(i) * topo.charge(j),
+              f, e_lj, e_crf);
+      }
+
       DEBUG(12, "f: " << f);
       DEBUG(12, "e_lj: " << e_lj);
       DEBUG(12, "e_crf: " << e_crf);
@@ -947,12 +962,19 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::one_four_interaction_in
               topo.iac(j));
 
       DEBUG(11, "\tlj-parameter cs6=" << lj.cs6 << " cs12=" << lj.cs12);
-      DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));
-
-      lj_crf_interaction(r, lj.cs6, lj.cs12,
-              topo.charge()(i) *
-              topo.charge()(j),
+      // CHRIS: ugly hack that slows down everything!
+      if(topo.is_qm_buffer(i) == 1 && topo.is_qm_buffer(j) == 1){ 
+        DEBUG(11, "\tUSING QM BUFFER charges");
+        DEBUG(11, "\tcharge i=" << topo.qm_buffer_charge()(i) << " j=" << topo.qm_buffer_charge()(j));
+        lj_crf_interaction(r, lj.c6, lj.c12,
+              topo.qm_buffer_charge(i) * topo.qm_buffer_charge(j),
               f, e_lj, e_crf);
+      }else{
+        DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));
+        lj_crf_interaction(r, lj.c6, lj.c12,
+              topo.charge(i) * topo.charge(j),
+              f, e_lj, e_crf);
+      }
 
       DEBUG(10, "\t\tatomic virial");
       for (int a = 0; a < 3; ++a) {
@@ -1420,7 +1442,19 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
                 << pos(*it)(1) << " / "
                 << pos(*it)(2));
         DEBUG(10, "\tni r " << r(0) << " / " << r(1) << " / " << r(2));
-        rf_interaction(r, topo.charge()(i) * topo.charge()(*it), f, e_crf);
+        // CHRIS: ugly hack that slows down everything!
+        if(topo.is_qm_buffer(i) == 1 && topo.is_qm_buffer(*it) == 1){ 
+          DEBUG(11, "\tUSING QM BUFFER charges");
+          DEBUG(11, "\tcharge i=" << topo.qm_buffer_charge()(i) << " j=" << topo.qm_buffer_charge()(*it));
+          rf_interaction(r,
+              topo.qm_buffer_charge()(i) * topo.qm_buffer_charge()(*it),
+              f, e_crf);
+        }else{
+          DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(*it));
+          rf_interaction(r,
+              topo.charge()(i) * topo.charge()(*it),
+              f, e_crf);
+        }
 
         force(i) += f;
         force(*it) -= f;
@@ -1669,9 +1703,19 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_solvent_interaction_inner
 
           // for solvent, we don't calculate internal forces (rigid molecules)
           // and the distance independent parts should go to zero
+
+          // CHRIS: ugly hack that slows down everything!
+          if(topo.is_qm_buffer(*at_it) == 1 && topo.is_qm_buffer(*at2_it) == 1){ 
+            DEBUG(15, "\tUSING QM BUFFER charges");
+            DEBUG(15, "\tcharge i=" << topo.qm_buffer_charge()(*at_it) << " j=" << topo.qm_buffer_charge()(*at2_it));
+            e_crf = -topo.qm_buffer_charge()(*at_it) * 
+                  topo.qm_buffer_charge()(*at2_it) *
+                  math::four_pi_eps_i * crf_2cut3i() * abs2(r);
+          }else{
+            DEBUG(15, "\tcharge i=" << topo.charge()(*at_it) << " j=" << topo.charge()(*at2_it));
           e_crf = -topo.charge()(*at_it) * topo.charge()(*at2_it) *
                   math::four_pi_eps_i * crf_2cut3i() * abs2(r);
-          DEBUG(15, "\tqi = " << topo.charge()(*at_it) << ", qj = " << topo.charge()(*at2_it));
+          }
           DEBUG(15, "\tcrf_2cut3i = " << crf_2cut3i() << ", abs2(r) = " << abs2(r));
           // energy
           storage.energies.crf_energy

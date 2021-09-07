@@ -55,6 +55,10 @@ int interaction::QM_Zone::init(topology::Topology& topo,
                                const simulation::Simulation& sim) {
   int err;
   
+  //make a backup of all the charges for the buffer
+  DEBUG(10,"Storing charges in qm_buffer_charge");
+  topo.qm_buffer_charge() = topo.charge();
+
   DEBUG(15,"Getting QM atoms");
   if ((err = this->get_qm_atoms(topo, conf, sim)))
     return err;
@@ -70,6 +74,7 @@ int interaction::QM_Zone::init(topology::Topology& topo,
   DEBUG(15,"Getting QM-MM links");
   this->get_links(topo, sim);
   return 0;
+
 }
 
 int interaction::QM_Zone::update(topology::Topology& topo, 
@@ -561,6 +566,9 @@ int interaction::QM_Zone::_get_buffer_atoms(topology::Topology& topo,
         DEBUG(9, "Atom " << i << " in adaptive buffer");
       } else {
         topo.is_qm_buffer(i) = -1; // temporarily disabled buffer atom
+        //this buffer atom may have received a new charge previously so for all buffer atoms that are not in the adaptive buffer
+        //we set back the charges
+        topo.charge()[i] = topo.qm_buffer_charge()[i];
         DEBUG(9, "Atom " << i << " not in adaptive buffer");
       }
     }
