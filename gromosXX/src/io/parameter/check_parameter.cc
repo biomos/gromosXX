@@ -118,8 +118,8 @@ int io::simple_crosschecks(simulation::Simulation & sim) {
   }
 
   // EDS: make sure we simulate at a given temperature (unambiguous kT)
-    if (param.eds.eds && !(param.multibath.couple || param.stochastic.sd)) {
-        io::messages.add("EDS/AEDS block: EDS requires temperature coupling or SD.",
+    if (param.eds.eds && !(param.multibath.couple || param.stochastic.sd || param.minimise.ntem)) {
+        io::messages.add("EDS/AEDS block: EDS requires temperature coupling, SD or an energy minimization.",
                                "In_Parameter", io::message::error);
     }
 
@@ -134,6 +134,16 @@ int io::simple_crosschecks(simulation::Simulation & sim) {
                   break;
               }
       }
+    }
+
+    // ensure "virtual" temperature defined to construct Vr 
+    // will be non zero when doing EDS energy minimization.
+    if (param.eds.eds && param.minimise.ntem){
+        if (param.start.tempi == 0){
+            io::messages.add("EDS/AEDS energy minimization: EDS requires a temperature to be set.\n"
+                             "\t\t\tPlease ensure that TEMPI in INITIALISE block in non-zero", 
+                             "In_Parameter", io::message::error);
+        }               
     }
 
     // lattice shift and pressure coupling:

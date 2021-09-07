@@ -41,9 +41,12 @@ int algorithm::EDS
       std::vector<double> prefactors(numstates);
       // get beta
       double beta;
-      if(!sim.param().stochastic.sd){
+      if(!sim.param().stochastic.sd && !sim.param().minimise.ntem){
             assert(sim.param().multibath.multibath.bath(0).temperature != 0.0);
             beta = 1.0 / (sim.param().multibath.multibath.bath(0).temperature * math::k_Boltzmann);
+      }
+      else if (sim.param().minimise.ntem){
+            beta = 1.0 / (sim.param().start.tempi * math::k_Boltzmann);
       }
       else
             beta = 1.0 / (sim.param().stochastic.temp * math::k_Boltzmann);
@@ -296,9 +299,12 @@ int algorithm::EDS
       std::vector<double> prefactors(numstates);
       // get beta
       double beta;
-      if(!sim.param().stochastic.sd){
+      if(!sim.param().stochastic.sd && !sim.param().minimise.ntem){
             assert(sim.param().multibath.multibath.bath(0).temperature != 0.0);
             beta = 1.0 / (sim.param().multibath.multibath.bath(0).temperature * math::k_Boltzmann);
+      }
+      else if (sim.param().minimise.ntem){
+            beta = 1.0 / (sim.param().start.tempi * math::k_Boltzmann);
       }
       else
             beta = 1.0 / (sim.param().stochastic.temp * math::k_Boltzmann);
