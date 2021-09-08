@@ -686,6 +686,7 @@ io::In_QMMM::read(topology::Topology& topo,
         unsigned charge_steps;
         _lineStream >> charge_steps;
         sim.param().qmmm.nn.charge_steps = charge_steps;
+        topo.using_qm_delta_charge(true);
         if (_lineStream.fail()) {
           io::messages.add("bad line in NNCHARGE block",
                 "In_QMMM", io::message::error);

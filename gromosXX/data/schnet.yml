@@ -1,4 +1,4 @@
-name: schnet_test
+name: schnet
 channels:
   - conda-forge
   - defaults

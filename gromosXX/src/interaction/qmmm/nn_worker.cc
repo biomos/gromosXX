@@ -300,7 +300,7 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
       }
     }
     // and write them to the topology (to be consistent, should this be done in qmmm_interaction?)
-    qm_zone.write_charge(topo.charge());
+    qm_zone.write_delta_charge(topo);
   }
 
   return 0;

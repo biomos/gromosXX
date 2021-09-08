@@ -831,19 +831,29 @@ namespace topology
     }
 
     /**
-     * QM buffer charge accessor
+     * QM delta charge accessor
      */
-    math::SArray &qm_buffer_charge() {return m_qm_buffer_charge;}
+    math::SArray &qm_delta_charge() {return m_qm_delta_charge;}
 
     /**
-     * charge const accessor
+     * QM delta charge const accessor
      */
-    math::SArray const & qm_buffer_charge()const{return m_qm_buffer_charge;}
+    math::SArray const & qm_delta_charge()const {return m_qm_delta_charge;}
 
     /**
-     * charge accessor
+     * QM delta charge mutator
      */
-    double qm_buffer_charge(int i)const { return m_qm_buffer_charge(i); }
+    double &qm_delta_charge(int i) { return m_qm_delta_charge[i]; }
+
+    /**
+     * using QM delta charge accessor
+     */
+    bool using_qm_delta_charge()const {return m_using_qm_delta_charge;}
+
+    /**
+     * using QM delta charge mutator
+     */
+    void using_qm_delta_charge(bool b) {m_using_qm_delta_charge = b;}
 
     /**
      * QM atomic number accessor
@@ -1956,9 +1966,9 @@ namespace topology
     std::vector<int> m_is_qm_buffer;
 
     /**
-     * Charges to be used for interactions between buffer atoms in QM
+     * Delta-charges to be added to interactions between QM/buffer and MM atoms
      */
-    math::SArray m_qm_buffer_charge;
+    math::SArray m_qm_delta_charge;
 
     /**
      * QM atomic number
@@ -1989,6 +1999,11 @@ namespace topology
      * QMMM LJ exceptions
      */
     std::vector<lj_exception_struct> m_qm_lj_exceptions;
+     
+     /**
+     * Topology contains QM delta-charges
+     */
+    bool m_using_qm_delta_charge;
 
   }; // topology
 

@@ -54,10 +54,6 @@ int interaction::QM_Zone::init(topology::Topology& topo,
                                const configuration::Configuration& conf, 
                                const simulation::Simulation& sim) {
   int err;
-  
-  //make a backup of all the charges for the buffer
-  DEBUG(10,"Storing charges in qm_buffer_charge");
-  topo.qm_buffer_charge() = topo.charge();
 
   DEBUG(15,"Getting QM atoms");
   if ((err = this->get_qm_atoms(topo, conf, sim)))
@@ -135,6 +131,17 @@ void interaction::QM_Zone::write_charge(math::SArray& charge) {
     it = this->qm.begin(), to = this->qm.end(); it != to; ++it)
     {
     charge(it->index) = it->qm_charge;
+  }
+}
+
+void interaction::QM_Zone::write_delta_charge(topology::Topology& topo) {
+  // First reset charges
+  std::fill(topo.qm_delta_charge().begin(), topo.qm_delta_charge().end(), 0.0);
+  // Fill with delta-charges
+  for (std::set<QM_Atom>::const_iterator
+    it = this->qm.begin(), to = this->qm.end(); it != to; ++it)
+    {
+      topo.qm_delta_charge(it->index) = it->qm_charge - topo.charge(it->index);
   }
 }
 
@@ -566,10 +573,7 @@ int interaction::QM_Zone::_get_buffer_atoms(topology::Topology& topo,
         DEBUG(9, "Atom " << i << " in adaptive buffer");
       } else {
         topo.is_qm_buffer(i) = -1; // temporarily disabled buffer atom
-        //this buffer atom may have received a new charge previously so for all buffer atoms that are not in the adaptive buffer
-        //we set back the charges
-        topo.charge()[i] = topo.qm_buffer_charge()[i];
-        DEBUG(9, "Atom " << i << " not in adaptive buffer");
+        DEBUG(15, "Atom " << i << " not in adaptive buffer");
       }
     }
   }

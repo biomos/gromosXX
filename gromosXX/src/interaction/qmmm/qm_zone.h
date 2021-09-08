@@ -86,9 +86,14 @@ namespace interaction {
     void write_force(math::VArray& force);
 
     /**
-     * Write charges to the topology
+     * Write charges to the array
      */
     void write_charge(math::SArray& charge);
+
+    /**
+     * Write QM delta-charges to the topology
+     */
+    void write_delta_charge(topology::Topology& topo);
     
     /**
      * Update QM-MM pairlist

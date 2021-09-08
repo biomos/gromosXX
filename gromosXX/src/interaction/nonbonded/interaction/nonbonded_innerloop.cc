@@ -38,18 +38,17 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop_2
               topo.iac(j));
       DEBUG(11, "\tlj-parameter c6=" << lj.c6 << " c12=" << lj.c12);
       // CHRIS: ugly hack that slows down everything!
-      if(topo.is_qm_buffer(i) == 1 && topo.is_qm_buffer(j) == 1){ 
-        DEBUG(11, "\tUSING QM BUFFER charges");
-        DEBUG(11, "\tcharge i=" << topo.qm_buffer_charge()(i) << " j=" << topo.qm_buffer_charge()(j));
-        lj_crf_interaction_fast(dist2, lj.c6, lj.c12,
-              topo.qm_buffer_charge(i) * topo.qm_buffer_charge(j),
-              f, e_lj, e_crf);
-      }else{
-        DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));
-        lj_crf_interaction_fast(dist2, lj.c6, lj.c12,
-              topo.charge(i) * topo.charge(j),
-              f, e_lj, e_crf);
+      // Add QM-delta charge - would be probably clever to make this a separate innerloop method for the adaptive_buffer case
+      double q = topo.charge(i) * topo.charge(j);
+      if (topo.using_qm_delta_charge() &&
+                (!topo.is_adaptive_qm_buffer(i) || !topo.is_adaptive_qm_buffer(j))) {
+        q += (topo.charge(i) * topo.qm_delta_charge(j) + topo.charge(j) * topo.qm_delta_charge(i));
+        DEBUG(5, "\tUSING QM DELTA charges: " << i << " " << j);
+        DEBUG(5, "\tcharge i=" << topo.charge(i) + topo.qm_delta_charge()(i) << " j=" << topo.charge(j) + topo.qm_delta_charge()(j));
       }
+      DEBUG(5, "\tqi*qj=" << q);
+      lj_crf_interaction_fast(dist2, lj.c6, lj.c12,
+              q, f, e_lj, e_crf);
 
       DEBUG(12, "f: " << f);
       DEBUG(12, "e_lj: " << e_lj);
@@ -101,18 +100,18 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop
 
       DEBUG(11, "\tlj-parameter c6=" << lj.c6 << " c12=" << lj.c12);
       // CHRIS: ugly hack that slows down everything!
-      if(topo.is_qm_buffer(i) == 1 && topo.is_qm_buffer(j) == 1){ 
-        DEBUG(11, "\tUSING QM BUFFER charges");
-        DEBUG(11, "\tcharge i=" << topo.qm_buffer_charge()(i) << " j=" << topo.qm_buffer_charge()(j));
-        lj_crf_interaction(r, lj.c6, lj.c12,
-              topo.qm_buffer_charge(i) * topo.qm_buffer_charge(j),
-              f, e_lj, e_crf);
-      }else{
-        DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));
-        lj_crf_interaction(r, lj.c6, lj.c12,
-              topo.charge(i) * topo.charge(j),
-              f, e_lj, e_crf);
+      // Add QM-delta charge - would be probably clever to make this a separate innerloop method for the adaptive_buffer case
+      double q = topo.charge(i) * topo.charge(j);
+        DEBUG(6, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));
+      if (topo.using_qm_delta_charge() &&
+                (!topo.is_adaptive_qm_buffer(i) || !topo.is_adaptive_qm_buffer(j))) {
+        DEBUG(6, "\tUSING QM DELTA charges: " << i << " " << j);
+        q += (topo.charge(i) * topo.qm_delta_charge(j) + topo.charge(j) * topo.qm_delta_charge(i));
+        DEBUG(6, "\tcharge i=" << topo.charge(i) + topo.qm_delta_charge()(i) << " j=" << topo.charge(j) + topo.qm_delta_charge()(j));
       }
+      DEBUG(5, "\tqi*qj=" << q);
+      lj_crf_interaction(r, lj.c6, lj.c12,
+              q, f, e_lj, e_crf);
 
       DEBUG(12, "f: " << f);
       DEBUG(12, "e_lj: " << e_lj);
@@ -963,18 +962,18 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::one_four_interaction_in
 
       DEBUG(11, "\tlj-parameter cs6=" << lj.cs6 << " cs12=" << lj.cs12);
       // CHRIS: ugly hack that slows down everything!
-      if(topo.is_qm_buffer(i) == 1 && topo.is_qm_buffer(j) == 1){ 
-        DEBUG(11, "\tUSING QM BUFFER charges");
-        DEBUG(11, "\tcharge i=" << topo.qm_buffer_charge()(i) << " j=" << topo.qm_buffer_charge()(j));
-        lj_crf_interaction(r, lj.c6, lj.c12,
-              topo.qm_buffer_charge(i) * topo.qm_buffer_charge(j),
-              f, e_lj, e_crf);
-      }else{
-        DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));
-        lj_crf_interaction(r, lj.c6, lj.c12,
-              topo.charge(i) * topo.charge(j),
-              f, e_lj, e_crf);
+      // Add QM-delta charge - would be probably clever to make this a separate innerloop method for the adaptive_buffer case
+      double q = topo.charge(i) * topo.charge(j);
+      DEBUG(6, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));
+      if (topo.using_qm_delta_charge() &&
+                (!topo.is_adaptive_qm_buffer(i) || !topo.is_adaptive_qm_buffer(j))) {
+        q += (topo.charge(i) * topo.qm_delta_charge(j) + topo.charge(j) * topo.qm_delta_charge(i));
+        DEBUG(5, "\tUSING QM DELTA charges: " << i << " " << j);
+        DEBUG(6, "\tcharge i=" << topo.charge(i) + topo.qm_delta_charge()(i) << " j=" << topo.charge(j) + topo.qm_delta_charge()(j));
       }
+      DEBUG(5, "\tqi*qj=" << q);
+      lj_crf_interaction(r, lj.c6, lj.c12,
+              q, f, e_lj, e_crf);
 
       DEBUG(10, "\t\tatomic virial");
       for (int a = 0; a < 3; ++a) {
@@ -1443,18 +1442,17 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
                 << pos(*it)(2));
         DEBUG(10, "\tni r " << r(0) << " / " << r(1) << " / " << r(2));
         // CHRIS: ugly hack that slows down everything!
-        if(topo.is_qm_buffer(i) == 1 && topo.is_qm_buffer(*it) == 1){ 
-          DEBUG(11, "\tUSING QM BUFFER charges");
-          DEBUG(11, "\tcharge i=" << topo.qm_buffer_charge()(i) << " j=" << topo.qm_buffer_charge()(*it));
-          rf_interaction(r,
-              topo.qm_buffer_charge()(i) * topo.qm_buffer_charge()(*it),
-              f, e_crf);
-        }else{
-          DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(*it));
-          rf_interaction(r,
-              topo.charge()(i) * topo.charge()(*it),
-              f, e_crf);
+        // Add QM-delta charge - would be probably clever to make this a separate innerloop method for the adaptive_buffer case
+        double q = topo.charge(i) * topo.charge(*it);
+        DEBUG(6, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(*it));
+        if (topo.using_qm_delta_charge() &&
+                (!topo.is_adaptive_qm_buffer(i) || !topo.is_adaptive_qm_buffer(*it))) {
+                q += (topo.charge(i) * topo.qm_delta_charge(*it) + topo.charge(*it) * topo.qm_delta_charge(i));
+        DEBUG(5, "\tUSING QM DELTA charges: " << i << " " << *it);
+                DEBUG(6, "\tcharge i=" << topo.charge(i) + topo.qm_delta_charge()(i) << " j=" << topo.charge(*it) + topo.qm_delta_charge()(*it));
         }
+        DEBUG(5, "\tqi*qj=" << q);
+          rf_interaction(r, q, f, e_crf);
 
         force(i) += f;
         force(*it) -= f;
@@ -1705,17 +1703,17 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_solvent_interaction_inner
           // and the distance independent parts should go to zero
 
           // CHRIS: ugly hack that slows down everything!
-          if(topo.is_qm_buffer(*at_it) == 1 && topo.is_qm_buffer(*at2_it) == 1){ 
-            DEBUG(15, "\tUSING QM BUFFER charges");
-            DEBUG(15, "\tcharge i=" << topo.qm_buffer_charge()(*at_it) << " j=" << topo.qm_buffer_charge()(*at2_it));
-            e_crf = -topo.qm_buffer_charge()(*at_it) * 
-                  topo.qm_buffer_charge()(*at2_it) *
-                  math::four_pi_eps_i * crf_2cut3i() * abs2(r);
-          }else{
-            DEBUG(15, "\tcharge i=" << topo.charge()(*at_it) << " j=" << topo.charge()(*at2_it));
-          e_crf = -topo.charge()(*at_it) * topo.charge()(*at2_it) *
-                  math::four_pi_eps_i * crf_2cut3i() * abs2(r);
+          // Add QM-delta charge - would be probably clever to make this a separate innerloop method for the adaptive_buffer case
+          double q = topo.charge(*at_it) * topo.charge(*at2_it);
+          DEBUG(6, "\tcharge i=" << topo.charge()(*at_it) << " j=" << topo.charge()(*at2_it));
+          if (topo.using_qm_delta_charge() &&
+                (!topo.is_adaptive_qm_buffer(*at_it) || !topo.is_adaptive_qm_buffer(*at2_it))) {
+                  q += (topo.charge(*at_it) * topo.qm_delta_charge(*at2_it) + topo.charge(*at2_it) * topo.qm_delta_charge(*at_it));
+        DEBUG(5, "\tUSING QM DELTA charges: " << *at_it << " " << *at2_it);
+                  DEBUG(6, "\tcharge i=" << topo.charge(*at_it) + topo.qm_delta_charge()(*at_it) << " j=" << topo.charge(*at2_it) + topo.qm_delta_charge()(*at2_it));
           }
+          DEBUG(5, "\tqi*qj=" << q);
+          e_crf = -q * math::four_pi_eps_i * crf_2cut3i() * abs2(r);
           DEBUG(15, "\tcrf_2cut3i = " << crf_2cut3i() << ", abs2(r) = " << abs2(r));
           // energy
           storage.energies.crf_energy
