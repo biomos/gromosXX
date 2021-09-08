@@ -89,6 +89,9 @@ int interaction::NN_Worker::init(simulation::Simulation& sim) {
   version = py_modules["torch"].attr("__version__").cast<std::string>();
     io::messages.add("Torch module version: " + version
             , this->name(), io::message::notice);
+  version = py_modules["schnetpack"].attr("__file__").cast<std::string>();
+    io::messages.add("Schnetpack module path: " + version
+            , this->name(), io::message::notice);
 
   std::string device;
   switch(sim.param().qmmm.nn.device) {
@@ -117,7 +120,9 @@ int interaction::NN_Worker::init(simulation::Simulation& sim) {
   }
   /** Load the model */
   py::str model_path = sim.param().qmmm.nn.model_path;
+  DEBUG(11, "model_path: " << model_path.cast<std::string>());
   py::str ml_args_path = py_modules["os"].attr("path").attr("join")(py::cast('/').attr("join")(model_path.attr("split")('/')[py::slice(0,-1,1)]), "args.json");
+  DEBUG(11, "ml_args_path: " << ml_args_path.cast<std::string>());
   py::object ml_model_args = py_modules["schnetpack"].attr("utils").attr("read_from_json")(ml_args_path);
   py::object ml_model = py_modules["torch"].attr("load")(model_path,"map_location"_a=py_modules["torch"].attr("device")(device));
   
@@ -161,7 +166,9 @@ int interaction::NN_Worker::init(simulation::Simulation& sim) {
 
   if (!sim.param().qmmm.nn.charge_model_path.empty()) {
     py::str charge_model_path = sim.param().qmmm.nn.charge_model_path;
+    DEBUG(11, "charge_model_path: " << charge_model_path.cast<std::string>());
     py::str charge_args_path = py_modules["os"].attr("path").attr("join")(py::cast('/').attr("join")(charge_model_path.attr("split")('/')[py::slice(0,-1,1)]), "args.json");
+    DEBUG(11, "charge_args_path: " << charge_args_path.cast<std::string>());
     py::object charge_model_args = py_modules["schnetpack"].attr("utils").attr("read_from_json")(charge_args_path);
     py::object charge_model = py_modules["torch"].attr("load")(charge_model_path,"map_location"_a=py_modules["torch"].attr("device")(device));
     py::object charge_environment = py_modules["schnetpack"].attr("utils").attr("script_utils").attr("settings").attr("get_environment_provider")(charge_model_args, "device"_a=device);
