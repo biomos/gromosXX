@@ -141,7 +141,7 @@ int io::simple_crosschecks(simulation::Simulation & sim) {
     if (param.eds.eds && param.minimise.ntem){
         if (param.start.tempi == 0){
             io::messages.add("EDS/AEDS energy minimization: EDS requires a temperature to be set.\n"
-                             "\t\t\tPlease ensure that TEMPI in INITIALISE block in non-zero", 
+                             "\t\t\tPlease ensure that TEMPI in INITIALISE block is non-zero", 
                              "In_Parameter", io::message::error);
         }               
     }
