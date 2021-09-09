@@ -4319,8 +4319,10 @@ int io::check_features(simulation::Simulation  &sim)
   // fc.unlock("conjugate_gradient", "bsleus");
   fc.unlock("conjugate_gradient", "xray");
   fc.unlock("conjugate_gradient", "force_groups");
+  fc.unlock("conjugate_gradient", "eds");
 
   //amber block
+  fc.unlock("amber", "conjugate_gradient");
   fc.unlock("amber", "solute");
   fc.unlock("amber", "solvent");
   fc.unlock("amber", "solvent_only");
