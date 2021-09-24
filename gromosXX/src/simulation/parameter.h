@@ -2949,7 +2949,7 @@ namespace simulation
      * - threshold: lower bound
      * - maximum standard deviation: 10 KBT
      */
-    gamd_struct() : gamd(false), search(no_search), form(dual_boost), thresh(lower_bound), ntisearch(0), agroups(1), dihstd(24.79), totstd(24.79), equilibration(0), stepsdone(0){}
+    gamd_struct() : gamd(false), search(no_search), form(dual_boost), thresh(lower_bound), ntisearch(0), agroups(0), igroups(1), dihstd(24.79), totstd(24.79), equilibration(0), stepsdone(0){}
     /**
      * do gaussian accelerated md:
      */
@@ -2971,9 +2971,13 @@ namespace simulation
      */
     unsigned int ntisearch; 
     /**
-     * number of acceleration groups
+     * number of atom acceleration groups
      */
     unsigned int agroups;
+    /**
+     * number of interaction acceleration groups
+     */
+    unsigned int igroups;
     /**
      * maximum standard deviation for the dihedral potentail boost.
      */
@@ -3001,11 +3005,11 @@ namespace simulation
     /**
      * required data to compute the std of the potential energy (dihedral term)
      */
-    std::vector<double> M2D;
+    std::vector<long double> M2D;
     /**
      * required data to compute the std of the potential energy (total potential energy term)
      */
-    std::vector<double> M2T;
+    std::vector<long double> M2T;
 
     /**
      * mean of the potential energy of the dihedral term
@@ -3020,12 +3024,12 @@ namespace simulation
     /**
      * standard deviation of the potential energy (dihedral term)
      */
-    std::vector<double> sigmaVD;
+    std::vector<long double> sigmaVD;
 
     /**
      * standard deviation of the total potential energy
      */
-    std::vector<double> sigmaVT;
+    std::vector<long double> sigmaVT;
 
     /**
      * harmonic force constants for the dihedral term

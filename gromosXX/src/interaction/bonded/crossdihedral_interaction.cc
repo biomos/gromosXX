@@ -181,7 +181,7 @@ static int _calculate_crossdihedral_interactions(topology::Topology & topo,
       conf.special().gamd.dihe_force[gamd_group][d_it->g] += fg;
       conf.special().gamd.dihe_force[gamd_group][d_it->h] += fh;
       conf.current().energies.gamd_dihedral_total[gamd_group] += energy;
-      conf.current().energies.gamd_potential_total[gamd_group] += energy;
+      //conf.current().energies.gamd_potential_total[gamd_group] += energy;
       // virial
       for(unsigned int i = 0; i < 3; ++i){
         for(unsigned int j = 0; j < 3; ++j){

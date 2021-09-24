@@ -65,9 +65,7 @@ configuration::Configuration::Configuration() {
   //ORIOL_GAMD
   for (unsigned int a = 0; a < special().gamd.virial_tensor.size(); ++a){
     special().gamd.virial_tensor_dihe[a] = 0.0;
-    for (unsigned int aa = 0; aa < special().gamd.virial_tensor.size(); ++aa){
-      special().gamd.virial_tensor[a][aa] = 0.0;
-    }
+    special().gamd.virial_tensor[a] = 0.0;
   }
   
   special().shake_failure_occurred = false;
@@ -101,9 +99,7 @@ configuration::Configuration::Configuration
   //ORIOL_GAMD
   for (unsigned int a = 0; a < special().gamd.virial_tensor.size(); ++a){
     special().gamd.virial_tensor_dihe[a] = conf.special().gamd.virial_tensor_dihe[a];
-    for (unsigned int aa = 0; aa < special().gamd.virial_tensor.size(); ++aa){
-      special().gamd.virial_tensor[a][aa] =  conf.special().gamd.virial_tensor[a][aa];
-    }
+    special().gamd.virial_tensor[a] =  conf.special().gamd.virial_tensor[a];
   }
 
   current().pos = conf.current().pos;
@@ -232,9 +228,8 @@ configuration::Configuration & configuration::Configuration::operator=
   //ORIOL_GAMD
   for (unsigned int a = 0; a < special().gamd.virial_tensor.size(); ++a){
     special().gamd.virial_tensor_dihe[a] = conf.special().gamd.virial_tensor_dihe[a];
-    for (unsigned int aa = 0; aa < special().gamd.virial_tensor.size(); ++aa){
-      special().gamd.virial_tensor[a][aa] =  conf.special().gamd.virial_tensor[a][aa];
-    }
+    special().gamd.virial_tensor[a] =  conf.special().gamd.virial_tensor[a];
+    
   }
 
 
@@ -382,32 +377,28 @@ void configuration::Configuration::init(topology::Topology const & topo,
   old().energies.eds_vi_special.resize(param.eds.numstates);
 
   // ORIOL_GAMD
-  special().gamd.total_force.resize(param.gamd.agroups);
-  special().gamd.dihe_force.resize(param.gamd.agroups);
-  special().gamd.virial_tensor.resize(param.gamd.agroups);
+  special().gamd.total_force.resize(param.gamd.igroups);
+  special().gamd.dihe_force.resize(param.gamd.igroups);
+  special().gamd.virial_tensor.resize(param.gamd.igroups);
   for (unsigned int i = 0; i < special().gamd.total_force.size(); i++){
     special().gamd.dihe_force[i].resize(topo.num_atoms());
-    special().gamd.total_force[i].resize(param.gamd.agroups);
-    special().gamd.virial_tensor[i].resize(param.gamd.agroups);
-    for (unsigned int j = 0; j < special().gamd.total_force.size(); j++){
-      special().gamd.total_force[i][j].resize(topo.num_atoms());
-    }
+    special().gamd.total_force[i].resize(topo.num_atoms());
   }  
-  special().gamd.virial_tensor_dihe.resize(param.gamd.agroups);
-  current().energies.gamd_dihedral_total.resize(param.gamd.agroups);
-  current().energies.gamd_potential_total.resize(param.gamd.agroups);
-  current().energies.gamd_DV.resize(param.gamd.agroups);
-  current().energies.gamd_ED.resize(param.gamd.agroups);
-  current().energies.gamd_ET.resize(param.gamd.agroups);
-  current().energies.gamd_KD.resize(param.gamd.agroups);
-  current().energies.gamd_KT.resize(param.gamd.agroups);
-  old().energies.gamd_dihedral_total.resize(param.gamd.agroups);
-  old().energies.gamd_potential_total.resize(param.gamd.agroups);
-  old().energies.gamd_DV.resize(param.gamd.agroups);
-  old().energies.gamd_ED.resize(param.gamd.agroups);
-  old().energies.gamd_ET.resize(param.gamd.agroups);
-  old().energies.gamd_KD.resize(param.gamd.agroups);
-  old().energies.gamd_KT.resize(param.gamd.agroups);
+  special().gamd.virial_tensor_dihe.resize(param.gamd.igroups);
+  current().energies.gamd_dihedral_total.resize(param.gamd.igroups);
+  current().energies.gamd_potential_total.resize(param.gamd.igroups);
+  current().energies.gamd_DV.resize(param.gamd.igroups);
+  current().energies.gamd_ED.resize(param.gamd.igroups);
+  current().energies.gamd_ET.resize(param.gamd.igroups);
+  current().energies.gamd_KD.resize(param.gamd.igroups);
+  current().energies.gamd_KT.resize(param.gamd.igroups);
+  old().energies.gamd_dihedral_total.resize(param.gamd.igroups);
+  old().energies.gamd_potential_total.resize(param.gamd.igroups);
+  old().energies.gamd_DV.resize(param.gamd.igroups);
+  old().energies.gamd_ED.resize(param.gamd.igroups);
+  old().energies.gamd_ET.resize(param.gamd.igroups);
+  old().energies.gamd_KD.resize(param.gamd.igroups);
+  old().energies.gamd_KT.resize(param.gamd.igroups);
   
   current().energies.ewarn(param.ewarn.limit);
   old().energies.ewarn(param.ewarn.limit);

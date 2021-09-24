@@ -291,7 +291,7 @@ namespace configuration
      */
     std::vector<double> gamd_dihedral_total;
     /**
-     * total potential energie for each accel group
+     * total potential energie for each accel group without dihedral
      */
     std::vector<double> gamd_potential_total;
     /**

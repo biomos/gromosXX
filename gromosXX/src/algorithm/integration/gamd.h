@@ -43,11 +43,11 @@ namespace algorithm
   /**
    * calculate the mean, std and Vmax Vmin
    */
-  void calc_gamd_std_mean(double V, int step, double *Vmax, double *Vmin, double *Vmean, double *M2, double *sigmaV);
+  void calc_gamd_std_mean(double V, int step, double *Vmax, double *Vmin, double *Vmean, long double *M2, long double *sigmaV);
   /**
    * calculate E threshold and k0
    */
-  int calc_gamd_E_K(simulation::gamd_thresh_enum Eform, double sigma0, double Vmax, double Vmin, double Vmean, double sigmaV, double *k0, double *k, double *E);
+  int calc_gamd_E_K(simulation::gamd_thresh_enum Eform, double sigma0, double Vmax, double Vmin, double Vmean, long double sigmaV, double *k0, double *k, double *E);
   /**
    * calculate interaction factor between acceleration regions
    */

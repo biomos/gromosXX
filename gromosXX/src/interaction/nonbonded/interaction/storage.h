@@ -34,7 +34,7 @@ namespace interaction
      * ORIOL_GAMD
      * GAMD (longrange) force storage.
      */
-    std::vector<std::vector<math::VArray> > force_gamd;
+    std::vector<math::VArray> force_gamd;
      /**
      * (longrange) energy storage.
      */
@@ -54,7 +54,7 @@ namespace interaction
     /**
      * GAMD (longrange) virial storage.
      */
-   std::vector<std::vector<math::Matrix> > virial_tensor_gamd;
+   std::vector<math::Matrix> virial_tensor_gamd;
      /**
       * (longrange) electric field storage.
       */
@@ -88,10 +88,8 @@ namespace interaction
       assert(force_gamd.size() == virial_tensor_gamd.size());
       unsigned int gamdsize = force_gamd.size();
       for(unsigned int i = 0; i< gamdsize; i++){
-         for(unsigned int j = 0; j< gamdsize; j++){
-           force_gamd[i][j] = 0.0;
-           virial_tensor_gamd[i][j] = 0.0;
-           }
+           force_gamd[i] = 0.0;
+           virial_tensor_gamd[i] = 0.0;
       }
       domain.clear();
       size = force_groups.size();

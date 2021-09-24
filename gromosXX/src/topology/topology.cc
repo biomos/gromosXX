@@ -120,6 +120,7 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
   m_is_perturbed.clear();
   m_is_eds_perturbed.clear();
   m_gamd_accel_group.clear();
+  m_gamd_interaction_pairs.clear();
   m_is_polarisable.clear();
   m_is_coarse_grained.clear();
   m_iac.clear();

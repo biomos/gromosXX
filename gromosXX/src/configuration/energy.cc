@@ -121,6 +121,7 @@ void configuration::Energy::zero(bool potential, bool kinetic)
     eds_vi_special.assign(eds_vi_special.size(), 0.0);
     //ORIOL_GAMD
     gamd_DV_total = 0.0;
+    gamd_DV.assign(gamd_DV.size(), 0.0);
     gamd_dihedral_total.assign(gamd_dihedral_total.size(), 0.0);
     gamd_potential_total.assign(gamd_potential_total.size(), 0.0);
     gamd_ED.assign(gamd_ED.size(), 0.0);

@@ -565,7 +565,7 @@ namespace configuration {
         /**
          *  force storage by pairs of acceleration groups (copy of the forces)
          */
-        std::vector<std::vector<math::VArray> > total_force;
+        std::vector<math::VArray> total_force;
         /**
          * virial tensor dihedral contribution by charge group
          */
@@ -573,7 +573,7 @@ namespace configuration {
         /**
          * virial tensor by charge group pairs
          */
-        std::vector<std::vector<math::Matrix> > virial_tensor;
+        std::vector<math::Matrix> virial_tensor;
 
       } /** enveloping distribution sampling information */ gamd;
       

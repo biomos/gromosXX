@@ -2972,7 +2972,8 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
     os << std::setw(18) << e.gamd_ED[i]
             << std::setw(18) << e.gamd_ET[i]
             << std::setw(18) << e.gamd_KD[i] 
-            << std::setw(18) << e.gamd_KT[i] << "\n";
+            << std::setw(18) << e.gamd_KT[i]
+            << std::setw(18) << e.gamd_DV[i] << "\n";
   }
 
   // write eds energies (vr,{V_i}) here
@@ -3772,7 +3773,7 @@ _print_gamdstat(configuration::Configuration const &conf,
   os.precision(m_precision);
   os << "GAMDSTAT\n";
   os << std::setw(m_width) << sim.param().gamd.stepsdone << "\n";
-  for (unsigned int i = 0; i < sim.param().gamd.agroups; i++) {
+  for (unsigned int i = 0; i < sim.param().gamd.igroups; i++) {
    os << std::setw(m_width) << sim.param().gamd.M2D[i] << " "
       << std::setw(m_width) << sim.param().gamd.M2T[i] << " "
       << std::setw(m_width) << sim.param().gamd.VmaxD[i] << " "

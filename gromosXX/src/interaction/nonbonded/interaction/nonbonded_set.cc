@@ -271,12 +271,10 @@ int interaction::Nonbonded_Set
   }
   //ORIOL_GAMD check
   if(sim.param().gamd.gamd){
-    const unsigned int nr_agroups = unsigned(sim.param().gamd.agroups);
-    for (unsigned int gamdi = 0; gamdi < nr_agroups; ++gamdi) {
-      m_storage.energies.gamd_potential_total[gamdi] += m_longrange_storage.energies.gamd_potential_total[gamdi];
-      for (unsigned int gamdj = 0; gamdj < nr_agroups; ++gamdj) {
-        m_storage.force_gamd[gamdi][gamdj] += m_longrange_storage.force_gamd[gamdi][gamdj];
-      }
+    const unsigned int nr_agroups = unsigned(sim.param().gamd.igroups);
+    for (unsigned int igroup = 0; igroup < nr_agroups; ++igroup) {
+      m_storage.energies.gamd_potential_total[igroup] += m_longrange_storage.energies.gamd_potential_total[igroup];
+      m_storage.force_gamd[igroup] += m_longrange_storage.force_gamd[igroup];
     }
   }
 
@@ -287,11 +285,9 @@ int interaction::Nonbonded_Set
 	m_storage.virial_tensor += m_longrange_storage.virial_tensor;
   //ORIOL_GAMD
   if(sim.param().gamd.gamd){
-    const unsigned int nr_agroups = unsigned(sim.param().gamd.agroups);
-    for (unsigned int gamdi = 0; gamdi < nr_agroups; ++gamdi) {
-      for (unsigned int gamdj = 0; gamdj < nr_agroups; ++gamdj) {
-      m_storage.virial_tensor_gamd[gamdi][gamdj] += m_longrange_storage.virial_tensor_gamd[gamdi][gamdj];
-      }
+    const unsigned int nr_agroups = unsigned(sim.param().gamd.igroups);
+    for (unsigned int igroup = 0; igroup < nr_agroups; ++igroup) {
+      m_storage.virial_tensor_gamd[igroup] += m_longrange_storage.virial_tensor_gamd[igroup];
     }
   }
   }
@@ -334,15 +330,13 @@ int interaction::Nonbonded_Set::update_configuration
     }
       // ORIOL_GAMD
     if (sim.param().gamd.gamd){
-      const unsigned int nr_agroups = unsigned(sim.param().gamd.agroups);
-      for (unsigned int agroup1=0; agroup1 < nr_agroups; ++agroup1){
-        DEBUG(5, "adding energy " << m_storage.energies.gamd_potential_total[agroup1]);
-        e.gamd_potential_total[agroup1] += m_storage.energies.gamd_potential_total[agroup1];
-        for (unsigned int agroup2=0; agroup2 < nr_agroups; ++agroup2){
+      const unsigned int nr_agroups = unsigned(sim.param().gamd.igroups);
+      for (unsigned int igroup=0; igroup < nr_agroups; ++igroup){
+        DEBUG(5, "adding energy " << m_storage.energies.gamd_potential_total[igroup]);
+        e.gamd_potential_total[igroup] += m_storage.energies.gamd_potential_total[igroup];
           for(unsigned int atomn=0; atomn<num_atoms; ++atomn){
-            conf.special().gamd.total_force[agroup1][agroup2](atomn) +=  m_storage.force_gamd[agroup1][agroup2](atomn);
+            conf.special().gamd.total_force[igroup](atomn) +=  m_storage.force_gamd[igroup](atomn);
           } // loop over atoms
-        } // loop over acceleration groups
       } // loop over acceleration groups
     //energies
     } // end if
@@ -406,20 +400,18 @@ int interaction::Nonbonded_Set::update_configuration
       // ORIOL_GAMD
       DEBUG(5, "UPDATE VIRIAL");
       if (sim.param().gamd.gamd){
-        const unsigned int nr_agroups = unsigned(sim.param().gamd.agroups);
-        for (unsigned int agroup1=0; agroup1 < nr_agroups; ++agroup1){
-          for (unsigned int agroup2=0; agroup2 < nr_agroups; ++agroup2){
+        const unsigned int nr_agroups = unsigned(sim.param().gamd.igroups);
+        for (unsigned int igroup=0; igroup < nr_agroups; ++igroup){
             for (int a = 0; a < 3; ++a) {
                for (int b = 0; b < 3; ++b) {
-                 conf.special().gamd.virial_tensor[agroup1][agroup2](b, a) +=  m_storage.virial_tensor_gamd[agroup1][agroup2](b, a);
-                 DEBUG(5, "GROUPS are " << agroup1 << " and " << agroup2);
-                 DEBUG(5, conf.special().gamd.virial_tensor[agroup1][agroup2](b, a));
-                 DEBUG(5, conf.special().gamd.virial_tensor_dihe[agroup1](b, a));
+                 conf.special().gamd.virial_tensor[igroup](b, a) +=  m_storage.virial_tensor_gamd[igroup](b, a);
+                 DEBUG(5, "GROUP is " << igroup);
+                 DEBUG(5, conf.special().gamd.virial_tensor[igroup](b, a));
+                 DEBUG(5, conf.special().gamd.virial_tensor_dihe[igroup](b, a));
                  DEBUG(5, conf.current().virial_tensor(b,a));
                }
             }
             DEBUG(5, "VIRIAL CICLED COMPLETED");
-          } // loop over acceleration groups
         } // loop over acceleration groups
       } // end if
   } // end virial if
@@ -490,23 +482,17 @@ int interaction::Nonbonded_Set
            unsigned(sim.param().precalclam.nr_lambdas)); //ANITA
 
   // ORIOL_GAMD
-  m_storage.force_gamd.resize(sim.param().gamd.agroups);
-  m_storage.virial_tensor_gamd.resize(sim.param().gamd.agroups);
-  m_storage.energies.gamd_potential_total.resize(sim.param().gamd.agroups);
+  m_storage.force_gamd.resize(sim.param().gamd.igroups);
+  m_storage.virial_tensor_gamd.resize(sim.param().gamd.igroups);
+  m_storage.energies.gamd_potential_total.resize(sim.param().gamd.igroups);
 
-  m_longrange_storage.force_gamd.resize(sim.param().gamd.agroups);
-  m_longrange_storage.virial_tensor_gamd.resize(sim.param().gamd.agroups);
-  m_longrange_storage.energies.gamd_potential_total.resize(sim.param().gamd.agroups);
+  m_longrange_storage.force_gamd.resize(sim.param().gamd.igroups);
+  m_longrange_storage.virial_tensor_gamd.resize(sim.param().gamd.igroups);
+  m_longrange_storage.energies.gamd_potential_total.resize(sim.param().gamd.igroups);
 
   for(unsigned int i = 0; i < m_storage.force_gamd.size(); i++){
-      m_storage.force_gamd[i].resize(m_storage.force_gamd.size());
-      m_longrange_storage.force_gamd[i].resize(m_storage.force_gamd.size());
-      m_longrange_storage.virial_tensor_gamd[i].resize(m_storage.force_gamd.size());
-      m_storage.virial_tensor_gamd[i].resize(m_storage.force_gamd.size());
-     for(unsigned int j = 0; j < m_storage.force_gamd.size(); j++){
-       m_storage.force_gamd[i][j].resize(topo.num_atoms());
-       m_longrange_storage.force_gamd[i][j].resize(topo.num_atoms());
-       }
+      m_storage.force_gamd[i].resize(topo.num_atoms());
+      m_longrange_storage.force_gamd[i].resize(topo.num_atoms());
   }
   
   if (sim.param().force.force_groups) {

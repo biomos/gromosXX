@@ -117,16 +117,12 @@ int interaction::CUDA_Nonbonded_Set
   const int num_atoms = topo.num_atoms();
 
   // ORIOL_GAMD
-  m_storage.force_gamd.resize(sim.param().gamd.agroups);
-  m_storage.virial_tensor_gamd.resize(sim.param().gamd.agroups);
-  m_storage.energies.gamd_potential_total.resize(sim.param().gamd.agroups);
+  m_storage.force_gamd.resize(sim.param().gamd.igroups);
+  m_storage.virial_tensor_gamd.resize(sim.param().gamd.igroups);
+  m_storage.energies.gamd_potential_total.resize(sim.param().gamd.igroups);
 
   for(unsigned int i = 0; i < m_storage.force_gamd.size(); i++){
-      m_storage.force_gamd[i].resize(m_storage.force_gamd.size());
-      m_storage.virial_tensor_gamd[i].resize(m_storage.force_gamd.size());
-     for(unsigned int j = 0; j < m_storage.force_gamd.size(); j++){
-       m_storage.force_gamd[i][j].resize(topo.num_atoms());
-       }
+      m_storage.force_gamd[i].resize(topo.num_atoms());
   }
 
   m_storage.force.resize(num_atoms);
@@ -329,8 +325,11 @@ void interaction::CUDA_Nonbonded_Set::cycle() {
   m_storage.force += m_longrange_storage.force;
 
   //ORIOL GAMD
-  const int gamd_group = mytopo->gamd_accel_group(mytopo->num_solute_atoms());
-  m_storage.force_gamd[gamd_group][gamd_group] += m_longrange_storage.force;
+  // CUDA gamd asumes all waters belong to the same group!
+  unsigned int gamd_group = mytopo->gamd_accel_group(mytopo->num_solute_atoms());
+  std::vector<unsigned int> key = {gamd_group, gamd_group};
+  unsigned int igroup = mytopo->gamd_interaction_group(key);
+  m_storage.force_gamd[igroup] += m_longrange_storage.force;
 
   // and long-range energies
   DEBUG(6, "\t(set) add long range energies");
@@ -342,8 +341,8 @@ void interaction::CUDA_Nonbonded_Set::cycle() {
               m_longrange_storage.energies.lj_energy[i][j];
       m_storage.energies.crf_energy[i][j] +=
               m_longrange_storage.energies.crf_energy[i][j];
-      m_storage.energies.gamd_potential_total[gamd_group] += m_longrange_storage.energies.lj_energy[i][j];
-      m_storage.energies.gamd_potential_total[gamd_group] += m_longrange_storage.energies.crf_energy[i][j];
+      m_storage.energies.gamd_potential_total[igroup] += m_longrange_storage.energies.lj_energy[i][j];
+      m_storage.energies.gamd_potential_total[igroup] += m_longrange_storage.energies.crf_energy[i][j];
     }
   }
 
@@ -352,7 +351,7 @@ void interaction::CUDA_Nonbonded_Set::cycle() {
     DEBUG(6, "\t(set) add long range virial");
 
     m_storage.virial_tensor += m_longrange_storage.virial_tensor;
-    m_storage.virial_tensor_gamd[gamd_group][gamd_group] += m_longrange_storage.virial_tensor;
+    m_storage.virial_tensor_gamd[igroup] += m_longrange_storage.virial_tensor;
   }
 #endif
 }

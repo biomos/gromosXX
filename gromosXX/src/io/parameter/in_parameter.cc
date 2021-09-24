@@ -3941,7 +3941,8 @@ void io::In_Parameter::read_GAMD(simulation::Parameter & param,
   exampleblock << "# NTIGAMDS   0,1\n";
   exampleblock << "#              0: read GAMD parameter search configuration from input configuration\n";
   exampleblock << "#              1: initialize GAMD parameter search\n";
-  exampleblock << "# AGROUPS     >0 number of acceleration groups\n";
+  exampleblock << "# AGROUPS     >0 number of atom groups to define the acceleration\n";
+  exampleblock << "# IGROUPS     >0 number of interaction acceleration groups\n";
   exampleblock << "# DIHSTD      >0 allowed standard deviation for the dihedral boosting potential term\n";
   exampleblock << "# TOTSTD      >0 allowed standard deviation for the potential energy boosting potential term\n";
   exampleblock << "# ED            : energy thresholds for the dihedral boosting potential term\n";
@@ -3978,17 +3979,19 @@ void io::In_Parameter::read_GAMD(simulation::Parameter & param,
   if (block.read_buffer(m_block[blockname], false) == 0) {
     block_read.insert(blockname);
 
-    int search, form, thresh, agroups;
+    int search, form, thresh, agroups, igroups;
     block.get_next_parameter("GAMD", param.gamd.gamd, "", "0,1");
     block.get_next_parameter("SEARCH", search, "", "0,1,2");
     block.get_next_parameter("FORM", form, "", "1,2,3");
     block.get_next_parameter("THRESH", thresh, "", "1,2,3,4");
     block.get_next_parameter("NTIGAMD", param.gamd.ntisearch , "", "0,1");
     block.get_next_parameter("AGROUPS", agroups , ">0", "");
+    block.get_next_parameter("AGROUPS", igroups , ">0", "");
     block.get_next_parameter("DIHSTD", param.gamd.dihstd , ">0", "");
     block.get_next_parameter("TOTSTD", param.gamd.totstd , ">0", "");
 
-    param.gamd.agroups = agroups + 1;
+    param.gamd.agroups = agroups;
+    param.gamd.igroups = igroups + 1;
 
     switch (search) {
     case 0: {
@@ -4037,26 +4040,26 @@ void io::In_Parameter::read_GAMD(simulation::Parameter & param,
       break;
     }
 
-    param.gamd.ED.resize(param.gamd.agroups, 0.0);
-    for (unsigned int i = 0; i < param.gamd.agroups - 1; i++) {
+    param.gamd.ED.resize(param.gamd.igroups, 0.0);
+    for (unsigned int i = 0; i < param.gamd.igroups - 1; i++) {
       std::string idx = io::to_string(i);
       block.get_next_parameter("ED[" + idx + "]", param.gamd.ED[i+1], "", "");
     }
 
-    param.gamd.ET.resize(param.gamd.agroups, 0.0);
-    for (unsigned int i = 0; i < param.gamd.agroups - 1; i++) {
+    param.gamd.ET.resize(param.gamd.igroups, 0.0);
+    for (unsigned int i = 0; i < param.gamd.igroups - 1; i++) {
       std::string idx = io::to_string(i);
       block.get_next_parameter("ET[" + idx + "]", param.gamd.ET[i+1], "", "");
     }
 
-    param.gamd.kD.resize(param.gamd.agroups, 0.0);
-    for (unsigned int i = 0; i < param.gamd.agroups - 1; i++) {
+    param.gamd.kD.resize(param.gamd.igroups, 0.0);
+    for (unsigned int i = 0; i < param.gamd.igroups - 1; i++) {
       std::string idx = io::to_string(i);
       block.get_next_parameter("KD[" + idx + "]", param.gamd.kD[i+1], "", "");
     }
 
-    param.gamd.kT.resize(param.gamd.agroups, 0.0);
-    for (unsigned int i = 0; i < param.gamd.agroups - 1; i++) {
+    param.gamd.kT.resize(param.gamd.igroups, 0.0);
+    for (unsigned int i = 0; i < param.gamd.igroups - 1; i++) {
       std::string idx = io::to_string(i);
       block.get_next_parameter("KT[" + idx + "]", param.gamd.kT[i+1], "", "");
     }
@@ -4064,20 +4067,18 @@ void io::In_Parameter::read_GAMD(simulation::Parameter & param,
     block.get_next_parameter("EQSTEPS", param.gamd.equilibration, ">=0", "");
 
     // some defaults just in case
-    //param.gamd.dihboost.resize(param.gamd.agroups, 0.0);
-    //param.gamd.totboost.resize(param.gamd.agroups, 0.0);
-    param.gamd.k0D.resize(param.gamd.agroups, 0.0);
-    param.gamd.k0T.resize(param.gamd.agroups, 0.0);
-    param.gamd.M2D.resize(param.gamd.agroups, 0.0);
-    param.gamd.M2T.resize(param.gamd.agroups, 0.0);
-    param.gamd.VmaxD.resize(param.gamd.agroups, 0.0);
-    param.gamd.VmaxT.resize(param.gamd.agroups, 0.0);
-    param.gamd.VmeanD.resize(param.gamd.agroups, 0.0);
-    param.gamd.VmeanT.resize(param.gamd.agroups, 0.0);
-    param.gamd.VminD.resize(param.gamd.agroups, 0.0);
-    param.gamd.VminT.resize(param.gamd.agroups, 0.0);
-    param.gamd.sigmaVD.resize(param.gamd.agroups, 0.0);
-    param.gamd.sigmaVT.resize(param.gamd.agroups, 0.0);
+    param.gamd.k0D.resize(param.gamd.igroups, 0.0);
+    param.gamd.k0T.resize(param.gamd.igroups, 0.0);
+    param.gamd.M2D.resize(param.gamd.igroups, 0.0);
+    param.gamd.M2T.resize(param.gamd.igroups, 0.0);
+    param.gamd.VmaxD.resize(param.gamd.igroups, 0.0);
+    param.gamd.VmaxT.resize(param.gamd.igroups, 0.0);
+    param.gamd.VmeanD.resize(param.gamd.igroups, 0.0);
+    param.gamd.VmeanT.resize(param.gamd.igroups, 0.0);
+    param.gamd.VminD.resize(param.gamd.igroups, 0.0);
+    param.gamd.VminT.resize(param.gamd.igroups, 0.0);
+    param.gamd.sigmaVD.resize(param.gamd.igroups, 0.0);
+    param.gamd.sigmaVT.resize(param.gamd.igroups, 0.0);
     param.gamd.stepsdone = 0;
 
     block.get_final_messages();
