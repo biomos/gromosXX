@@ -167,9 +167,9 @@ void util::get_usage(util::Known const &knowns, std::string &usage, std::string 
     usage += "\t# @order     filename\n\n";
   }
 
-  if (knowns.count("rdc")){
+  if (knowns.count("rdcres")){
     usage += "\t# RDC restraints specification\n";
-    usage += "\t# @rdc       filename\n\n";
+    usage += "\t# @rdcres       filename\n\n";
   }
 
   if (knowns.count("tfrdcres")){

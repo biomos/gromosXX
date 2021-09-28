@@ -280,10 +280,10 @@ int io::read_special(io::Argument const & args,
   if (sim.param().rdc.mode != simulation::rdc_restr_off){
     io::igzstream rdc_file;
 
-    if (args.count("rdc") != 1){
+    if (args.count("rdcres") != 1){
       io::messages.add("rdc restraints: no data file specified (use @rdc)", "read special", io::message::error);
     } else {
-      rdc_file.open(args["rdc"].c_str());
+      rdc_file.open(args["rdcres"].c_str());
       if (!rdc_file.is_open()){
         io::messages.add("opening rdc restraints file failed!\n", "read_special", io::message::error);
       } else {
