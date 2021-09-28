@@ -2612,7 +2612,9 @@ bool io::In_Configuration::_read_rdc_av(std::vector<std::string> &buffer,
 		 j=0;
 	 }
 	 if(!quiet){
-		 std::cout.precision(8); std::cout.width(13); std::cout.setf(std::ios_base::scientific);
+		 os.precision(8); 
+		 os.width(15); 
+     os.setf(std::ios::scientific, std::ios::floatfield);
 		 os << av << std::endl;
 	 }
  }
@@ -2627,7 +2629,7 @@ bool io::In_Configuration::_read_tf_rdc_restraint_averages(
         std::vector<double> & P_avg,
         std::vector<double> & RDC_cumavg,
 				unsigned long long int & num_averaged) {
-  DEBUG(8, "read tensor-free RDC restaint averages");
+  DEBUG(8, "read tensor-free RDC restraint averages");
 
   std::vector<topology::tf_rdc_restraint_struct>::const_iterator
   tfrdcres_it = tfrdcres.begin(), tfrdcres_to = tfrdcres.end();

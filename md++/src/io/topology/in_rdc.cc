@@ -242,7 +242,7 @@ void io::In_RDC::read(topology::Topology& topo,
 
   DEBUG(7, "reading in an RDC restraints specification file")
 
-#ifdef DEBUG
+#ifndef NDEBUG
       // Create random number generator, set seed to 0 (to make sure it's reproducible)
       math::RandomGenerator* rng = math::RandomGenerator::create(sim.param(), "0");
 #else
@@ -798,7 +798,7 @@ void io::In_RDC::read(topology::Topology& topo,
        rdc_groups[i].resize( std::distance(rdc_groups[i].begin(),it) );
     }
 
-#ifdef DEBUG
+#ifndef NDEBUG
     for(unsigned int i=0; i< rdc_groups.size(); i++){
       cout << "{";
       for(unsigned int j=0; j< rdc_groups[i].size(); j++){
@@ -848,7 +848,7 @@ void io::In_RDC::read(topology::Topology& topo,
       occurrence_count[rdc_groups[i][j]-1]++;
     }
   }
-#ifdef DEBUG
+#ifndef NDEBUG
   cout << "{";
   for(unsigned int i=0; i<occurrence_count.size(); i++){
     cout << occurrence_count[i];
