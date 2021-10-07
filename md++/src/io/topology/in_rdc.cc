@@ -270,7 +270,7 @@ void io::In_RDC::read(topology::Topology& topo,
   double factorfreq = 0.0, factorgyr = 0.0;
   {
     // get two conversion factors from (input) to ps-1 (internal)  typically input is Hz and the factor is 10^-12
-    //                        and from (input) to e/u (internal)   typically input is 10^7*rad/T*s and the factor is 0.10375
+    //                        and from (input) to e/u (internal)   typically input is 10^6*rad/T*s and the factor is 0.010375
 
     DEBUG(10, "RDC CONVERSION")
 
@@ -342,7 +342,7 @@ void io::In_RDC::read(topology::Topology& topo,
       buffer = m_block["MAGFIELDC"];
       DEBUG(10, "MAGFIELDC block: " << buffer.size())
 
-      if(input_mode==0){ // basic
+      if (input_mode==0) { // basic
         if (!buffer.size()) { // one line for nmf but no coordinates
           io::messages.add("no or empty MAGFIELDC block in RDC restraints file", "In_RDC", io::message::error);
         }
@@ -387,7 +387,7 @@ void io::In_RDC::read(topology::Topology& topo,
 //                 << setw(13) << tmpVecV[2])
           }
         }
-      }else if (input_mode==1){ // advanced
+      } else if (input_mode==1) { // advanced
 
         if (buffer.size()<3) { // one line for nmf but no coordinates
             io::messages.add("no, empty or incomplete (at least 3 vectors required) MAGFIELDC block in RDC restraints file", "In_RDC", io::message::error);
@@ -434,7 +434,7 @@ void io::In_RDC::read(topology::Topology& topo,
       buffer = m_block["ALIGNT"];
       DEBUG(10, "ALIGNT block: " << buffer.size())
 
-      if(input_mode==0){ // simple input
+      if (input_mode==0) { // simple input
 
         if (!buffer.size()) {
           io::messages.add("no or empty ALIGNT block in RDC restraints file", "In_RDC", io::message::warning);
@@ -503,7 +503,7 @@ void io::In_RDC::read(topology::Topology& topo,
 //        // of EM it is overwritten anyway.
 //        conf.special().rdc.Tensor[0] = -2;
 
-      }else if(input_mode==1){ // advanced input
+      } else if(input_mode==1) { // advanced input
 
         if (!buffer.size()) {
           io::messages.add("no or empty ALIGNT block in RDC restraints file", "In_RDC", io::message::warning);
@@ -632,7 +632,7 @@ void io::In_RDC::read(topology::Topology& topo,
         }
 
 
-      }else if (input_mode==1){ // advanced input
+      } else if (input_mode==1){ // advanced input
 
         if (!buffer.size()) {
           io::messages.add("no or empty SPHERICALHARMONICS block in RDC restraints file", "In_RDC", io::message::error);

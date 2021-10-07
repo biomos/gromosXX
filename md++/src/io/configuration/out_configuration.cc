@@ -2763,11 +2763,11 @@ void io::Out_Configuration::_print_rdc_values(simulation::Parameter const &param
                              std::ostream &os,
                              bool formatted) {
   os << "RDCVALUES" << std::endl;
-  os.setf(std::ios::scientific, std::ios::floatfield);
-  os.precision(m_precision);
+  os.setf(std::ios::fixed, std::ios::floatfield);
+  os.precision(m_rdc_restraint_precision);
   for (unsigned int i=0; i<conf.special().rdc.size(); ++i){
     for (unsigned int j=0; j<conf.special().rdc[i].curr.size(); ++j){
-      os << std::setw(m_width) << conf.special().rdc[i].curr[j] << std::endl;
+      os << std::setw(m_width) << conf.special().rdc[i].curr[j]/conf.special().rdc[i].factorFreq << std::endl;
     }
   }
   os << "END" << std::endl;
@@ -2779,11 +2779,11 @@ void io::Out_Configuration::_print_rdc_averages(simulation::Parameter const &par
                              std::ostream &os,
                              bool formatted) {
   os << "RDCAVERAGES" << std::endl;
-  os.setf(std::ios::scientific, std::ios::floatfield);
-  os.precision(m_precision);
+  os.setf(std::ios::fixed, std::ios::floatfield);
+  os.precision(m_rdc_restraint_precision);
   for (unsigned int i=0; i<conf.special().rdc.size(); ++i){
     for (unsigned int j=0; j<conf.special().rdc[i].av.size(); ++j){
-      os << std::setw(m_width) << conf.special().rdc[i].av[j] << std::endl;
+      os << std::setw(m_width) << conf.special().rdc[i].av[j]/conf.special().rdc[i].factorFreq << std::endl;
     }
   }
   os << "END" << std::endl;
