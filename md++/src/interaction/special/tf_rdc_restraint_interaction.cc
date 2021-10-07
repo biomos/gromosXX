@@ -139,7 +139,7 @@ int _calculate_tf_rdc_restraint_interactions
                 // the cumulative average
                 double & RDC_cumavg = conf.special().tfrdc.RDC_cumavg[l]; // [1 / ps]
                 RDC_cumavg += (conf.special().tfrdc.RDC[l]-RDC_cumavg)/conf.special().tfrdc.num_averaged; 
-                if (isnan(RDC_cumavg)) {
+                if (std::isnan(RDC_cumavg)) {
                   std::cerr << conf.special().tfrdc.num_averaged << " " << RDC_cumavg
                             << " P: " << P << " R: " << R << " z " << r_ij(2) 
                             << " t_z_inv_r_ij_2 " << t_z_inv_r_ij_2 << std::endl;

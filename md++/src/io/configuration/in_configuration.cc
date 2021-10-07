@@ -2602,6 +2602,7 @@ bool io::In_Configuration::_read_rdc_av(std::vector<std::string> &buffer,
 	 _lineStream.str(*buff_it);
 
 	 _lineStream >> av;
+	 av*=rdc[i].factorFreq;
 	 if (_lineStream.fail()){
 		 io::messages.add("Bad value in RDCAVERAGES block", "In_Configuration", io::message::error);
 		 return false;
