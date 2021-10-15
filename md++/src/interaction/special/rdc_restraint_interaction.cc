@@ -162,6 +162,7 @@ struct fit_param {
   vector<configuration::Configuration::special_struct::rdc_struct>::iterator conf_it;
   configuration::Configuration * conf;
   simulation::Simulation * sim;
+  topology::Topology * topo;
 };
 
 
@@ -199,10 +200,6 @@ void _calculate_forces_vectors_MF(topology::Topology & topo,
 
     // create variables
     math::Periodicity<B> periodicity(conf.current().box);
-    math::VArray &pos = conf.current().pos;
-    math::Vec ri(0.0, 0.0, 0.0);
-    math::Vec rj(0.0, 0.0, 0.0);
-    math::Vec rij(0.0, 0.0, 0.0);
     math::Vec rh(0.0, 0.0, 0.0);
 
     ///////////////
@@ -214,9 +211,10 @@ void _calculate_forces_vectors_MF(topology::Topology & topo,
       to = topo_it->end();
     for(; it!=to; ++it, ++k) {
       // Get positions of the two atoms involved in this RDC
-      ri = pos(it->i);
-      rj = pos(it->j);
-      periodicity.nearest_image(ri, rj, rij);
+      math::Vec ri = it->v1.pos(conf, topo);
+      math::Vec rij(0.0, 0.0, 0.0);
+      periodicity.nearest_image(ri, it->v2.pos(conf, topo), rij);
+      math::Vec rj(ri - rij);
       const double dij = math::abs(rij);
       const double dij2 = dij*dij;
       const double dij3 = dij2*dij;
@@ -254,13 +252,13 @@ void _calculate_forces_vectors_MF(topology::Topology & topo,
         // forces on MF vectors depending on AV mode
         if(sim.param().rdc.mode == simulation::rdc_restr_inst ||
            sim.param().rdc.mode == simulation::rdc_restr_inst_weighted){
-          const double dV_dD = force_coefficient * dflat_bottom_pot(conf_it->curr[k], it->R0, sim.param().rdc.delta); // [kJ/(nm^2*mol)]
+          const double dV_dD = force_coefficient * dflat_bottom_pot(conf_it->curr[k], it->D0, it->dD0); // [kJ/(nm^2*mol)]
           force_vectors_hfield[h] -= dV_dD * dD_dh; // [kJ/(nm*mol)]
           DEBUG(15, "dV_dD; dD_dh: " << dV_dD << ", " << scientific << "(" << dD_dh[0] << ", " << dD_dh[1] << ", " << dD_dh[2] << ")")
         }
         else if(sim.param().rdc.mode == simulation::rdc_restr_av ||
                 sim.param().rdc.mode == simulation::rdc_restr_av_weighted){
-          const double dVav_dDav = force_coefficient * dflat_bottom_pot(local_average, it->R0, sim.param().rdc.delta); // [kJ/(nm^2*mol)]
+          const double dVav_dDav = force_coefficient * dflat_bottom_pot(local_average, it->D0, it->dD0); // [kJ/(nm^2*mol)]
           // in the following we set dDav_dD to either 1.0 or [1-e^(-dt/tau)].
           // The latter is correct, the former allows for using the same K as without time AV
           const double dDav_dD = sim.param().rdc.tAVfactor ? (1.0-pow(M_E, -sim.time_step_size()/sim.param().rdc.tau)) : 1.0;
@@ -269,8 +267,8 @@ void _calculate_forces_vectors_MF(topology::Topology & topo,
         }
         else if(sim.param().rdc.mode == simulation::rdc_restr_biq ||
                 sim.param().rdc.mode == simulation::rdc_restr_biq_weighted){
-          const double dVbq_dD = 2.0 * force_coefficient * dflat_bottom_pot(conf_it->curr[k], it->R0, sim.param().rdc.delta) * flat_bottom_pot(local_average, it->R0, sim.param().rdc.delta); // [kJ/(nm^2*mol)]
-          const double dVbq_dDav = 2.0 * force_coefficient * flat_bottom_pot(conf_it->curr[k], it->R0, sim.param().rdc.delta) * dflat_bottom_pot(local_average, it->R0, sim.param().rdc.delta); // [kJ/(nm^2*mol)]
+          const double dVbq_dD = 2.0 * force_coefficient * dflat_bottom_pot(conf_it->curr[k], it->D0, it->dD0) * flat_bottom_pot(local_average, it->D0, it->dD0); // [kJ/(nm^2*mol)]
+          const double dVbq_dDav = 2.0 * force_coefficient * flat_bottom_pot(conf_it->curr[k], it->D0, it->dD0) * dflat_bottom_pot(local_average, it->D0, it->dD0); // [kJ/(nm^2*mol)]
           // in the following we set dDav_dD to either 1.0 or [1-e^(-dt/tau)] or 0.
           // The first is simple, the second correct.
           double dDav_dD = 0;  // case 2
@@ -313,10 +311,6 @@ void _calculate_forces_atoms_MF(topology::Topology & topo,
 
     // create variables
     math::Periodicity<B> periodicity(conf.current().box);
-    math::VArray &pos = conf.current().pos;
-    math::Vec ri(0.0, 0.0, 0.0);
-    math::Vec rj(0.0, 0.0, 0.0);
-    math::Vec rij(0.0, 0.0, 0.0);
     math::Vec rh(0.0, 0.0, 0.0);
 
     ///////////////
@@ -328,9 +322,10 @@ void _calculate_forces_atoms_MF(topology::Topology & topo,
       to = topo_it->end();
     for(; it!=to; ++it, ++k) {
       // Get positions of the two atoms involved in this RDC
-      ri = pos(it->i);
-      rj = pos(it->j);
-      periodicity.nearest_image(ri, rj, rij);
+      math::Vec ri = it->v1.pos(conf, topo);
+      math::Vec rij(0.0, 0.0, 0.0);
+      periodicity.nearest_image(ri, it->v2.pos(conf, topo), rij);
+      math::Vec rj(ri - rij);
       const double dij = math::abs(rij);
       const double dij2 = dij*dij;
       const double dij3 = dij2*dij;
@@ -364,29 +359,29 @@ void _calculate_forces_atoms_MF(topology::Topology & topo,
          sim.param().rdc.mode == simulation::rdc_restr_inst_weighted){
         // rdc_energy = .5 * K * (RDC - RDC_0)^2
         // split the interaction energy between the two atoms and possibly between two energy groups
-        conf.current().energies.rdc_energy[topo.atom_energy_group()[it->i]] += 0.5 * force_coefficient * flat_bottom_pot(conf_it->curr[k], it->R0, sim.param().rdc.delta); // [kJ/mol]
-        conf.current().energies.rdc_energy[topo.atom_energy_group()[it->j]] += 0.5 * force_coefficient * flat_bottom_pot(conf_it->curr[k], it->R0, sim.param().rdc.delta); // [kJ/mol]
-        DEBUG(15, "energy added to groups " << topo.atom_energy_group()[it->i] << " and " << topo.atom_energy_group()[it->j] )
-        DEBUG(15, "group energies are " << conf.current().energies.rdc_energy[topo.atom_energy_group()[it->i]] << " and " << conf.current().energies.rdc_energy[topo.atom_energy_group()[it->j]])
-        DEBUG(10, "interaction_energy (inst): " << scientific << force_coefficient * flat_bottom_pot(conf_it->curr[k], it->R0, sim.param().rdc.delta))
+        conf.current().energies.rdc_energy[topo.atom_energy_group()[it->v1.atom(0)]] += 0.5 * force_coefficient * flat_bottom_pot(conf_it->curr[k], it->D0, it->dD0); // [kJ/mol]
+        conf.current().energies.rdc_energy[topo.atom_energy_group()[it->v2.atom(0)]] += 0.5 * force_coefficient * flat_bottom_pot(conf_it->curr[k], it->D0, it->dD0); // [kJ/mol]
+        DEBUG(15, "energy added to groups " << topo.atom_energy_group()[it->v1.atom(0)] << " and " << topo.atom_energy_group()[it->v2.atom(0)] )
+        DEBUG(15, "group energies are " << conf.current().energies.rdc_energy[topo.atom_energy_group()[it->v1.atom(0)]] << " and " << conf.current().energies.rdc_energy[topo.atom_energy_group()[it->v2.atom(0)]])
+        DEBUG(10, "interaction_energy (inst): " << scientific << force_coefficient * flat_bottom_pot(conf_it->curr[k], it->D0, it->dD0))
       }
       else if(sim.param().rdc.mode == simulation::rdc_restr_av ||
               sim.param().rdc.mode == simulation::rdc_restr_av_weighted){
         // rdc_energy = .5 * K * (<RDC> - RDC_0)^2
-        conf.current().energies.rdc_energy[topo.atom_energy_group()[it->i]] += 0.5 * force_coefficient * flat_bottom_pot(conf_it->av[k], it->R0, sim.param().rdc.delta); // [kJ/mol]
-        conf.current().energies.rdc_energy[topo.atom_energy_group()[it->j]] += 0.5 * force_coefficient * flat_bottom_pot(conf_it->av[k], it->R0, sim.param().rdc.delta); // [kJ/mol]
-        DEBUG(15, "energy added to groups " << topo.atom_energy_group()[it->i] << " and " << topo.atom_energy_group()[it->j] )
-        DEBUG(15, "group energies are " << conf.current().energies.rdc_energy[topo.atom_energy_group()[it->i]] << " and " << conf.current().energies.rdc_energy[topo.atom_energy_group()[it->j]])
-        DEBUG(10, "interaction_energy (av): " << scientific << force_coefficient * flat_bottom_pot(conf_it->av[k], it->R0, sim.param().rdc.delta))
+        conf.current().energies.rdc_energy[topo.atom_energy_group()[it->v1.atom(0)]] += 0.5 * force_coefficient * flat_bottom_pot(conf_it->av[k], it->D0, it->dD0); // [kJ/mol]
+        conf.current().energies.rdc_energy[topo.atom_energy_group()[it->v2.atom(0)]] += 0.5 * force_coefficient * flat_bottom_pot(conf_it->av[k], it->D0, it->dD0); // [kJ/mol]
+        DEBUG(15, "energy added to groups " << topo.atom_energy_group()[it->v1.atom(0)] << " and " << topo.atom_energy_group()[it->v2.atom(0)] )
+        DEBUG(15, "group energies are " << conf.current().energies.rdc_energy[topo.atom_energy_group()[it->v1.atom(0)]] << " and " << conf.current().energies.rdc_energy[topo.atom_energy_group()[it->v2.atom(0)]])
+        DEBUG(10, "interaction_energy (av): " << scientific << force_coefficient * flat_bottom_pot(conf_it->av[k], it->D0, it->dD0))
       }
       else if(sim.param().rdc.mode == simulation::rdc_restr_biq ||
               sim.param().rdc.mode == simulation::rdc_restr_biq_weighted){
         // rdc_energy = .5 * K * (RDC - RDC_0)^2 * (<RDC> - RDC_0)^2
-        conf.current().energies.rdc_energy[topo.atom_energy_group()[it->i]] += 0.5 * 2.0 * force_coefficient * flat_bottom_pot(conf_it->curr[k], it->R0, sim.param().rdc.delta) * flat_bottom_pot(conf_it->av[k], it->R0, sim.param().rdc.delta); // [kJ/mol]
-        conf.current().energies.rdc_energy[topo.atom_energy_group()[it->j]] += 0.5 * 2.0 * force_coefficient * flat_bottom_pot(conf_it->curr[k], it->R0, sim.param().rdc.delta) * flat_bottom_pot(conf_it->av[k], it->R0, sim.param().rdc.delta); // [kJ/mol]
-        DEBUG(15, "energy added to groups " << topo.atom_energy_group()[it->i] << " and " << topo.atom_energy_group()[it->j] )
-        DEBUG(15, "group energies are " << conf.current().energies.rdc_energy[topo.atom_energy_group()[it->i]] << " and " << conf.current().energies.rdc_energy[topo.atom_energy_group()[it->j]])
-        DEBUG(10, "interaction_energy (biq): " << scientific << 2.0 * force_coefficient * flat_bottom_pot(conf_it->curr[k], it->R0, sim.param().rdc.delta) * flat_bottom_pot(conf_it->av[k], it->R0, sim.param().rdc.delta))
+        conf.current().energies.rdc_energy[topo.atom_energy_group()[it->v1.atom(0)]] += 0.5 * 2.0 * force_coefficient * flat_bottom_pot(conf_it->curr[k], it->D0, it->dD0) * flat_bottom_pot(conf_it->av[k], it->D0, it->dD0); // [kJ/mol]
+        conf.current().energies.rdc_energy[topo.atom_energy_group()[it->v2.atom(0)]] += 0.5 * 2.0 * force_coefficient * flat_bottom_pot(conf_it->curr[k], it->D0, it->dD0) * flat_bottom_pot(conf_it->av[k], it->D0, it->dD0); // [kJ/mol]
+        DEBUG(15, "energy added to groups " << topo.atom_energy_group()[it->v1.atom(0)] << " and " << topo.atom_energy_group()[it->v2.atom(0)] )
+        DEBUG(15, "group energies are " << conf.current().energies.rdc_energy[topo.atom_energy_group()[it->v1.atom(0)]] << " and " << conf.current().energies.rdc_energy[topo.atom_energy_group()[it->v2.atom(0)]])
+        DEBUG(10, "interaction_energy (biq): " << scientific << 2.0 * force_coefficient * flat_bottom_pot(conf_it->curr[k], it->D0, it->dD0) * flat_bottom_pot(conf_it->av[k], it->D0, it->dD0))
       }
 
       // forces on atoms
@@ -409,32 +404,32 @@ void _calculate_forces_atoms_MF(topology::Topology & topo,
       // return forces
       if(sim.param().rdc.mode == simulation::rdc_restr_inst ||
          sim.param().rdc.mode == simulation::rdc_restr_inst_weighted){
-        const double dV_dD = force_coefficient * dflat_bottom_pot(conf_it->curr[k], it->R0, sim.param().rdc.delta); // [kJ/(nm^2*mol)]
-        conf.current().force(it->i) -= dV_dD * dD_dr; // [kJ/(nm*mol)]
-        conf.current().force(it->j) += dV_dD * dD_dr; // [kJ/(nm*mol)]
+        const double dV_dD = force_coefficient * dflat_bottom_pot(conf_it->curr[k], it->D0, it->dD0); // [kJ/(nm^2*mol)]
+        conf.current().force(it->v1.atom(0)) -= dV_dD * dD_dr; // [kJ/(nm*mol)]
+        conf.current().force(it->v2.atom(0)) += dV_dD * dD_dr; // [kJ/(nm*mol)]
         DEBUG(15, "dV_dD; dD_dr: " << dV_dD << ", (" << scientific << dD_dr[0] << ", " << dD_dr[1] << ", " << dD_dr[2] << ")")
       }
       else if(sim.param().rdc.mode == simulation::rdc_restr_av ||
               sim.param().rdc.mode == simulation::rdc_restr_av_weighted){
-        const double dVav_dDav = force_coefficient * dflat_bottom_pot(conf_it->av[k], it->R0, sim.param().rdc.delta); // [kJ/(nm^2*mol)]
+        const double dVav_dDav = force_coefficient * dflat_bottom_pot(conf_it->av[k], it->D0, it->dD0); // [kJ/(nm^2*mol)]
         // in the following we set dDav_dD to either 1.0 or [1-e^(-dt/tau)].
         // The latter is correct, the former allows for using the same K as without time AV
         const double dDav_dD = sim.param().rdc.tAVfactor ? (1.0-pow(M_E, -sim.time_step_size()/sim.param().rdc.tau)) : 1.0;
-        conf.current().force(it->i) -= dVav_dDav * dDav_dD * dD_dr; // [kJ/(nm*mol)]
-        conf.current().force(it->j) += dVav_dDav * dDav_dD * dD_dr; // [kJ/(nm*mol)]
+        conf.current().force(it->v1.atom(0)) -= dVav_dDav * dDav_dD * dD_dr; // [kJ/(nm*mol)]
+        conf.current().force(it->v2.atom(0)) += dVav_dDav * dDav_dD * dD_dr; // [kJ/(nm*mol)]
         DEBUG(15, "dVav_dDav; dDav_dD; dD_dr: " << dVav_dDav << ", " << dDav_dD << ", (" << scientific << dD_dr[0] << ", " << dD_dr[1] << ", " << dD_dr[2] << ")")
       }
       else if(sim.param().rdc.mode == simulation::rdc_restr_biq ||
               sim.param().rdc.mode == simulation::rdc_restr_biq_weighted){
-        const double dVbq_dD = 2.0 * force_coefficient * dflat_bottom_pot(conf_it->curr[k], it->R0, sim.param().rdc.delta) * flat_bottom_pot(conf_it->av[k], it->R0, sim.param().rdc.delta); // [kJ/(nm^2*mol)]
-        const double dVbq_dDav = 2.0 * force_coefficient * flat_bottom_pot(conf_it->curr[k], it->R0, sim.param().rdc.delta) * dflat_bottom_pot(conf_it->av[k], it->R0, sim.param().rdc.delta); // [kJ/(nm^2*mol)]
+        const double dVbq_dD = 2.0 * force_coefficient * dflat_bottom_pot(conf_it->curr[k], it->D0, it->dD0) * flat_bottom_pot(conf_it->av[k], it->D0, it->dD0); // [kJ/(nm^2*mol)]
+        const double dVbq_dDav = 2.0 * force_coefficient * flat_bottom_pot(conf_it->curr[k], it->D0, it->dD0) * dflat_bottom_pot(conf_it->av[k], it->D0, it->dD0); // [kJ/(nm^2*mol)]
         // in the following we set dDav_dD to either 1.0 or [1-e^(-dt/tau)] or 0.
         // The first is simple, the second correct.
         double dDav_dD = 0;  // case 2
         if (sim.param().rdc.tAVfactor == 0) dDav_dD = 1.0;
         else if (sim.param().rdc.tAVfactor == 1) dDav_dD = 1.0-pow(M_E, -sim.time_step_size()/sim.param().rdc.tau);
-        conf.current().force(it->i) -= (dVbq_dD + dVbq_dDav * dDav_dD) * dD_dr; // [kJ/(nm*mol)]
-        conf.current().force(it->j) += (dVbq_dD + dVbq_dDav * dDav_dD) * dD_dr; // [kJ/(nm*mol)]
+        conf.current().force(it->v1.atom(0)) -= (dVbq_dD + dVbq_dDav * dDav_dD) * dD_dr; // [kJ/(nm*mol)]
+        conf.current().force(it->v2.atom(0)) += (dVbq_dD + dVbq_dDav * dDav_dD) * dD_dr; // [kJ/(nm*mol)]
         DEBUG(15, "dVbq_dD; dVbq_dDav; dDav_dD; dD_dr: " << dVbq_dD << ", " << dVbq_dDav << ", "<< dDav_dD << ", (" << scientific << dD_dr[0] << ", " << dD_dr[1] << ", " << dD_dr[2] << ")")
       }
     } // Loop over RDC
@@ -452,6 +447,7 @@ double mf_potential(const gsl_vector* MF, void* param){
   vector<vector<topology::rdc_restraint_struct> >::iterator topo_it = parameters.topo_it;
   vector<configuration::Configuration::special_struct::rdc_struct>::iterator conf_it = parameters.conf_it;
   configuration::Configuration & conf = *parameters.conf;
+  topology::Topology & topo = *parameters.topo;
   simulation::Simulation & sim = *parameters.sim;
 
   // number of magnetic field vectors
@@ -471,10 +467,6 @@ double mf_potential(const gsl_vector* MF, void* param){
 
   // create variables
   math::Periodicity<B> periodicity(conf.current().box);
-  math::VArray &pos = conf.current().pos;
-  math::Vec ri(0.0, 0.0, 0.0);
-  math::Vec rj(0.0, 0.0, 0.0);
-  math::Vec rij(0.0, 0.0, 0.0);
 
   double potential = 0.0;
 
@@ -485,9 +477,10 @@ double mf_potential(const gsl_vector* MF, void* param){
     to = topo_it->end();
   for(; it!=to; ++it, ++k) {
     // Get positions of the two atoms involved in this RDC
-    ri = pos(it->i);
-    rj = pos(it->j);
-    periodicity.nearest_image(ri, rj, rij);
+    math::Vec ri = it->v1.pos(conf, topo);
+    math::Vec rij(0.0, 0.0, 0.0);
+    periodicity.nearest_image(ri, it->v2.pos(conf, topo), rij);
+    math::Vec rj(ri - rij);
     const double dij = math::abs(rij);
     const double dij2 = dij*dij;
     const double dij3 = dij2*dij;
@@ -502,7 +495,7 @@ double mf_potential(const gsl_vector* MF, void* param){
     const double force_coefficient = sim.param().rdc.K * it->weight * math::n_avogadro; // [kJ*ps^2/mol]
 
     // potential V = 0.5 * K * (RDC - RDC_0)^2
-    potential += force_coefficient * flat_bottom_pot(conf_it->curr[k], it->R0, sim.param().rdc.delta); // [kJ/mol]
+    potential += force_coefficient * flat_bottom_pot(conf_it->curr[k], it->D0, it->dD0); // [kJ/mol]
     //cout << "potential: " << potential << endl;
   } // loop over RDCs
 
@@ -518,6 +511,7 @@ void mf_gradient(const gsl_vector* MF, void* param, gsl_vector* gradient) {
   vector<vector<topology::rdc_restraint_struct> >::iterator topo_it = parameters.topo_it;
   vector<configuration::Configuration::special_struct::rdc_struct>::iterator conf_it = parameters.conf_it;
   configuration::Configuration & conf = *parameters.conf;
+  topology::Topology & topo = *parameters.topo;
   simulation::Simulation & sim = *parameters.sim;
 
   // number of magnetic field vectors
@@ -536,10 +530,6 @@ void mf_gradient(const gsl_vector* MF, void* param, gsl_vector* gradient) {
   // create variables
   math::Periodicity<B> periodicity(conf.current().box);
 
-  math::VArray &pos = conf.current().pos;
-  math::Vec ri(0.0, 0.0, 0.0);
-  math::Vec rj(0.0, 0.0, 0.0);
-  math::Vec rij(0.0, 0.0, 0.0);
   math::VArray force_vectors_hfield;
 
   // initialise the vector holding hfield force vectors
@@ -556,9 +546,10 @@ void mf_gradient(const gsl_vector* MF, void* param, gsl_vector* gradient) {
     to = topo_it->end();
   for(; it!=to; ++it, ++k) {
     // Get positions of the two atoms involved in this RDC
-    ri = pos(it->i);
-    rj = pos(it->j);
-    periodicity.nearest_image(ri, rj, rij);
+    math::Vec ri = it->v1.pos(conf, topo);
+    math::Vec rij(0.0, 0.0, 0.0);
+    periodicity.nearest_image(ri, it->v2.pos(conf, topo), rij);
+    math::Vec rj(ri - rij);
     const double dij = math::abs(rij);
     const double dij2 = dij*dij; // [nm^2]
     const double dij3 = dij2*dij; // [nm^3]
@@ -575,7 +566,7 @@ void mf_gradient(const gsl_vector* MF, void* param, gsl_vector* gradient) {
 
     // f = - K * (RDC - RDC_0) [ * inner derivative]
     for(int h=0; h<number_hvectors; ++h) {
-      force_vectors_hfield[h] -= 3.0/dij5 * force_coefficient * dflat_bottom_pot(conf_it->curr[k], it->R0, sim.param().rdc.delta) * RDC_max(it) * 1.0/number_hvectors * math::dot(rij, h_vectors[h]) * rij; // [kJ/(nm*mol)]
+      force_vectors_hfield[h] -= 3.0/dij5 * force_coefficient * dflat_bottom_pot(conf_it->curr[k], it->D0, it->dD0) * RDC_max(it) * 1.0/number_hvectors * math::dot(rij, h_vectors[h]) * rij; // [kJ/(nm*mol)]
     } // Loop over MF (Vphys)
 //    DEBUG(12, "force on MF foreach rdc:" << math::v2s(force_vectors_hfield[0]) << ", " << math::v2s(force_vectors_hfield[1]) << ", "<< math::v2s(force_vectors_hfield[2]) )
   } // Loop over RDC
@@ -657,6 +648,8 @@ int _calculate_interactions_mfield(topology::Topology & topo,
         parameters.conf_it = conf_it;
         parameters.conf = &conf;
         parameters.sim = &sim;
+        parameters.topo = &topo;
+
 
         // Create the minimisation function block, define the different functions and parameters
         gsl_multimin_function_fdf potential_function;
@@ -746,8 +739,8 @@ int _calculate_interactions_mfield(topology::Topology & topo,
           it = topo_it->begin(),
           to = topo_it->end();
         for(; it!=to; ++it, ++k) {
-          enumerator += pow(conf_it->curr[k] - it->R0, 2);
-          denominator += pow(it->R0, 2);
+          enumerator += pow(conf_it->curr[k] - it->D0, 2);
+          denominator += pow(it->D0, 2);
         }
         double Q = sqrt(enumerator / denominator);
         cout << "SCRIPT " << Q << endl;
@@ -1001,8 +994,8 @@ int _calculate_interactions_mfield(topology::Topology & topo,
         it = topo_it->begin(),
         to = topo_it->end();
       for(; it!=to; ++it, ++k) {
-        enumerator += pow(conf_it->curr[k] - it->R0, 2);
-        denominator += pow(it->R0, 2);
+        enumerator += pow(conf_it->curr[k] - it->D0, 2);
+        denominator += pow(it->D0, 2);
       }
       double Q = sqrt(enumerator / denominator);
       cout << "SCRIPT " << Q << endl;
@@ -1101,8 +1094,8 @@ int _calculate_interactions_mfield(topology::Topology & topo,
           it = topo_it->begin(),
           to = topo_it->end();
         for(; it!=to; ++it, ++k) {
-          enumerator += pow(conf_it->curr[k] - it->R0, 2);
-          denominator += pow(it->R0, 2);
+          enumerator += pow(conf_it->curr[k] - it->D0, 2);
+          denominator += pow(it->D0, 2);
         }
         double Q = sqrt(enumerator / denominator);
         cout << "SCRIPT " << Q << endl;
@@ -1154,9 +1147,7 @@ void _calculate_ah(topology::Topology & topo,
 
   // create variables
   math::Periodicity<B> periodicity(conf.current().box);
-  math::VArray &pos = conf.current().pos;
   math::Vec ri(0.0, 0.0, 0.0);
-  math::Vec rj(0.0, 0.0, 0.0);
   math::Vec rij(0.0, 0.0, 0.0);
 
   const int n_ah = 5;
@@ -1185,9 +1176,10 @@ void _calculate_ah(topology::Topology & topo,
     // Loop over all RDC constraints
     for(; it!=to; ++it, ++k){
       // Get positions of the two atoms involved in this RDC, calculate d
-      ri = pos(it->i);
-      rj = pos(it->j);
-      periodicity.nearest_image(ri, rj, rij);
+      ri = it->v1.pos(conf, topo);
+      periodicity.nearest_image(ri, it->v2.pos(conf, topo), rij);
+      DEBUG(15, "rij " << v2s(rij))
+      math::Vec rj(ri - rij);
       const double dij = math::abs(rij); // [nm]
       const double dij2 = pow(dij,2); // [nm^2]
       const double dij3 = pow(dij,3); // [nm^3]
@@ -1207,7 +1199,7 @@ void _calculate_ah(topology::Topology & topo,
         for(int h=0; h<n_ah; ++h){
           matrix_array[h_prime*n_ah + h] += it->weight * ck[k][h] * ck[k][h_prime]; // [1/nm^2]
         }
-        result_array[h_prime] += it->weight * (it->R0 * dij3 / RDC_max(it)) * ck[k][h_prime]; // [1/nm]
+        result_array[h_prime] += it->weight * (it->D0 * dij3 / RDC_max(it)) * ck[k][h_prime]; // [1/nm]
       }
     } // iterate over rdcs
 
@@ -1265,9 +1257,7 @@ void _calculate_forces_tensor_T(topology::Topology & topo,
 
   // create variables
   math::Periodicity<B> periodicity(conf.current().box);
-  math::VArray &pos = conf.current().pos;
   math::Vec ri(0.0, 0.0, 0.0);
-  math::Vec rj(0.0, 0.0, 0.0);
   math::Vec rij(0.0, 0.0, 0.0);
 
   vector<configuration::Configuration::special_struct::rdc_struct>::iterator
@@ -1284,9 +1274,9 @@ void _calculate_forces_tensor_T(topology::Topology & topo,
     // Loop over all RDC constraints
     for(; it!=to; ++it, ++k){
       // Get positions of the two atoms involved in this RDC, calculate d, x, y, z
-      ri = pos(it->i);
-      rj = pos(it->j);
-      periodicity.nearest_image(ri, rj, rij);
+      ri = it->v1.pos(conf, topo);
+      periodicity.nearest_image(ri, it->v2.pos(conf, topo), rij);
+      math::Vec rj(ri - rij);
       const double dij = math::abs(rij);
       const double dij2 = dij*dij;
       const double dij3 = dij2*dij;
@@ -1330,13 +1320,13 @@ void _calculate_forces_tensor_T(topology::Topology & topo,
         // forces on clm depending on AV mode
         if(sim.param().rdc.mode == simulation::rdc_restr_inst ||
            sim.param().rdc.mode == simulation::rdc_restr_inst_weighted){
-          const double dV_dD = force_coefficient * dflat_bottom_pot(conf_it->curr[k], it->R0, sim.param().rdc.delta); // [kJ/(nm^2*mol)]
+          const double dV_dD = force_coefficient * dflat_bottom_pot(conf_it->curr[k], it->D0, it->dD0); // [kJ/(nm^2*mol)]
           force_array_tensor[i] -= dV_dD * dD_dck; // [kJ/(nm*mol)]
           DEBUG(15, "dV_dD; dD_dc: " << dV_dD << ", " << scientific << dD_dck)
         }
         else if(sim.param().rdc.mode == simulation::rdc_restr_av ||
                 sim.param().rdc.mode == simulation::rdc_restr_av_weighted){
-          const double dVav_dDav = force_coefficient * dflat_bottom_pot(local_average, it->R0, sim.param().rdc.delta); // [kJ/(nm^2*mol)]
+          const double dVav_dDav = force_coefficient * dflat_bottom_pot(local_average, it->D0, it->dD0); // [kJ/(nm^2*mol)]
           // in the following we set dDav_dD to either 1.0 or [1-e^(-dt/tau)].
           // The latter is correct, the former allows for using the same K as without time AV
           const double dDav_dD = sim.param().rdc.tAVfactor ? (1.0-pow(M_E, -sim.time_step_size()/sim.param().rdc.tau)) : 1.0;
@@ -1345,8 +1335,8 @@ void _calculate_forces_tensor_T(topology::Topology & topo,
         }
         else if(sim.param().rdc.mode == simulation::rdc_restr_biq ||
                 sim.param().rdc.mode == simulation::rdc_restr_biq_weighted){
-          const double dVbq_dD = 2.0 * force_coefficient * dflat_bottom_pot(conf_it->curr[k], it->R0, sim.param().rdc.delta) * flat_bottom_pot(local_average, it->R0, sim.param().rdc.delta); // [kJ/(nm^2*mol)]
-          const double dVbq_dDav = 2.0 * force_coefficient * flat_bottom_pot(conf_it->curr[k], it->R0, sim.param().rdc.delta) * dflat_bottom_pot(local_average, it->R0, sim.param().rdc.delta); // [kJ/(nm^2*mol)]
+          const double dVbq_dD = 2.0 * force_coefficient * dflat_bottom_pot(conf_it->curr[k], it->D0, it->dD0) * flat_bottom_pot(local_average, it->D0, it->dD0); // [kJ/(nm^2*mol)]
+          const double dVbq_dDav = 2.0 * force_coefficient * flat_bottom_pot(conf_it->curr[k], it->D0, it->dD0) * dflat_bottom_pot(local_average, it->D0, it->dD0); // [kJ/(nm^2*mol)]
           // in the following we set dDav_dD to either 1.0 or [1-e^(-dt/tau)] or 0.
           // The first is simple, the second correct.
           double dDav_dD = 0;  // case 2
@@ -1377,9 +1367,7 @@ void _calculate_forces_atoms_T(topology::Topology & topo,
 
   // create variables
   math::Periodicity<B> periodicity(conf.current().box);
-  math::VArray &pos = conf.current().pos;
   math::Vec ri(0.0, 0.0, 0.0);
-  math::Vec rj(0.0, 0.0, 0.0);
   math::Vec rij(0.0, 0.0, 0.0);
 
   vector<configuration::Configuration::special_struct::rdc_struct>::iterator
@@ -1396,9 +1384,9 @@ void _calculate_forces_atoms_T(topology::Topology & topo,
     // Loop over all RDC constraints
     for(; it!=to; ++it, ++k){
       // Get positions of the two atoms involved in this RDC, calculate dij, x, y, z
-      ri = pos(it->i);
-      rj = pos(it->j);
-      periodicity.nearest_image(ri, rj, rij);
+      ri = it->v1.pos(conf, topo);
+      periodicity.nearest_image(ri, it->v2.pos(conf, topo), rij);
+      math::Vec rj(ri - rij);
       const double dij = math::abs(rij);
       const double dij2 = dij*dij;
       const double dij3 = dij2*dij;
@@ -1433,35 +1421,32 @@ void _calculate_forces_atoms_T(topology::Topology & topo,
       }
 
       const double force_coefficient = sim.param().rdc.K * it->weight * math::n_avogadro; // [kJ*ps^2/mol]
+      double e_term;
+
+      DEBUG(15, "adding energy to groups " << topo.atom_energy_group()[it->v1.atom(0)] << " and " << topo.atom_energy_group()[it->v2.atom(0)] )
 
       if(sim.param().rdc.mode == simulation::rdc_restr_inst ||
          sim.param().rdc.mode == simulation::rdc_restr_inst_weighted){
         // rdc_energy = .5 * K * (RDC - RDC_0)^2
         // split the interaction energy between the two atoms and possibly between two energy groups
-        conf.current().energies.rdc_energy[topo.atom_energy_group()[it->i]] += 0.5 * force_coefficient * flat_bottom_pot(conf_it->curr[k], it->R0, sim.param().rdc.delta); // [kJ/mol]
-        conf.current().energies.rdc_energy[topo.atom_energy_group()[it->j]] += 0.5 * force_coefficient * flat_bottom_pot(conf_it->curr[k], it->R0, sim.param().rdc.delta); // [kJ/mol]
-        DEBUG(15, "energy added to groups " << topo.atom_energy_group()[it->i] << " and " << topo.atom_energy_group()[it->j] )
-        DEBUG(15, "group energies are " << conf.current().energies.rdc_energy[topo.atom_energy_group()[it->i]] << " and " << conf.current().energies.rdc_energy[topo.atom_energy_group()[it->j]])
-        DEBUG(10, "interaction_energy (inst): " << scientific << force_coefficient * flat_bottom_pot(conf_it->curr[k], it->R0, sim.param().rdc.delta))
+        e_term = flat_bottom_pot(conf_it->curr[k], it->D0, it->dD0); // [kJ/mol]
+        DEBUG(10, "interaction_energy (inst): " << scientific << force_coefficient * e_term)
       }
       else if(sim.param().rdc.mode == simulation::rdc_restr_av ||
               sim.param().rdc.mode == simulation::rdc_restr_av_weighted){
         // rdc_energy = .5 * K * (<RDC> - RDC_0)^2
-        conf.current().energies.rdc_energy[topo.atom_energy_group()[it->i]] += 0.5 * force_coefficient * flat_bottom_pot(conf_it->av[k], it->R0, sim.param().rdc.delta); // [kJ/mol]
-        conf.current().energies.rdc_energy[topo.atom_energy_group()[it->j]] += 0.5 * force_coefficient * flat_bottom_pot(conf_it->av[k], it->R0, sim.param().rdc.delta); // [kJ/mol]
-        DEBUG(15, "energy added to groups " << topo.atom_energy_group()[it->i] << " and " << topo.atom_energy_group()[it->j] )
-        DEBUG(15, "group energies are " << conf.current().energies.rdc_energy[topo.atom_energy_group()[it->i]] << " and " << conf.current().energies.rdc_energy[topo.atom_energy_group()[it->j]])
-        DEBUG(10, "interaction_energy (av): " << scientific << force_coefficient * flat_bottom_pot(conf_it->av[k], it->R0, sim.param().rdc.delta))
+        e_term = flat_bottom_pot(conf_it->av[k], it->D0, it->dD0); // [kJ/mol]
+        DEBUG(10, "interaction_energy (av): " << scientific << force_coefficient * e_term)
       }
       else if(sim.param().rdc.mode == simulation::rdc_restr_biq ||
               sim.param().rdc.mode == simulation::rdc_restr_biq_weighted){
         // rdc_energy = .5 * K * (RDC - RDC_0)^2 * (<RDC> - RDC_0)^2
-        conf.current().energies.rdc_energy[topo.atom_energy_group()[it->i]] += 0.5 * 2.0 * force_coefficient * flat_bottom_pot(conf_it->curr[k], it->R0, sim.param().rdc.delta) * flat_bottom_pot(conf_it->av[k], it->R0, sim.param().rdc.delta); // [kJ/mol]
-        conf.current().energies.rdc_energy[topo.atom_energy_group()[it->j]] += 0.5 * 2.0 * force_coefficient * flat_bottom_pot(conf_it->curr[k], it->R0, sim.param().rdc.delta) * flat_bottom_pot(conf_it->av[k], it->R0, sim.param().rdc.delta); // [kJ/mol]
-        DEBUG(15, "energy added to groups " << topo.atom_energy_group()[it->i] << " and " << topo.atom_energy_group()[it->j] )
-        DEBUG(15, "group energies are " << conf.current().energies.rdc_energy[topo.atom_energy_group()[it->i]] << " and " << conf.current().energies.rdc_energy[topo.atom_energy_group()[it->j]])
-        DEBUG(10, "interaction_energy (biq): " << scientific << 2.0 *force_coefficient * flat_bottom_pot(conf_it->curr[k], it->R0, sim.param().rdc.delta) * flat_bottom_pot(conf_it->av[k], it->R0, sim.param().rdc.delta))
+        e_term = 2.0 * flat_bottom_pot(conf_it->curr[k], it->D0, it->dD0) * flat_bottom_pot(conf_it->av[k], it->D0, it->dD0); // [kJ/mol]
+        DEBUG(10, "interaction_energy (biq): " << scientific << force_coefficient * e_term);
       }
+      conf.current().energies.rdc_energy[topo.atom_energy_group()[it->v1.atom(0)]] += 0.5 * force_coefficient * e_term; // [kJ/mol]
+      conf.current().energies.rdc_energy[topo.atom_energy_group()[it->v2.atom(0)]] += 0.5 * force_coefficient * e_term; // [kJ/mol]
+      DEBUG(15, "group energies are " << conf.current().energies.rdc_energy[topo.atom_energy_group()[it->v1.atom(0)]] << " and " << conf.current().energies.rdc_energy[topo.atom_energy_group()[it->v2.atom(0)]])
 
       // forces on atoms i and j
       math::VArray dQ_over_dr(n_ah);
@@ -1483,32 +1468,32 @@ void _calculate_forces_atoms_T(topology::Topology & topo,
       // return forces
       if(sim.param().rdc.mode == simulation::rdc_restr_inst ||
          sim.param().rdc.mode == simulation::rdc_restr_inst_weighted){
-        const double dV_dD = force_coefficient * dflat_bottom_pot(conf_it->curr[k], it->R0, sim.param().rdc.delta); // [kJ/(nm^2*mol)]
-        conf.current().force(it->i) -= dV_dD * dD_dr; // [kJ/(nm*mol)]
-        conf.current().force(it->j) += dV_dD * dD_dr; // [kJ/(nm*mol)]
+        const double dV_dD = force_coefficient * dflat_bottom_pot(conf_it->curr[k], it->D0, it->dD0); // [kJ/(nm^2*mol)]
+        conf.current().force(it->v1.atom(0)) -= dV_dD * dD_dr; // [kJ/(nm*mol)]
+        conf.current().force(it->v2.atom(0)) += dV_dD * dD_dr; // [kJ/(nm*mol)]
         DEBUG(15, "dV_dD; dD_dr: " << dV_dD << ", (" << scientific << dD_dr[0] << ", " << dD_dr[1] << ", " << dD_dr[2] << ")")
       }
       else if(sim.param().rdc.mode == simulation::rdc_restr_av ||
               sim.param().rdc.mode == simulation::rdc_restr_av_weighted){
-        const double dVav_dDav = force_coefficient * dflat_bottom_pot(conf_it->av[k], it->R0, sim.param().rdc.delta); // [kJ/(nm^2*mol)]
+        const double dVav_dDav = force_coefficient * dflat_bottom_pot(conf_it->av[k], it->D0, it->dD0); // [kJ/(nm^2*mol)]
         // in the following we set dDav_dD to either 1.0 or [1-e^(-dt/tau)].
         // The latter is correct, the former allows for using the same K as without time AV
         const double dDav_dD = sim.param().rdc.tAVfactor ? (1.0-pow(M_E, -sim.time_step_size()/sim.param().rdc.tau)) : 1.0;
-        conf.current().force(it->i) -= dVav_dDav * dDav_dD * dD_dr; // [kJ/(nm*mol)]
-        conf.current().force(it->j) += dVav_dDav * dDav_dD * dD_dr; // [kJ/(nm*mol)]
+        conf.current().force(it->v1.atom(0)) -= dVav_dDav * dDav_dD * dD_dr; // [kJ/(nm*mol)]
+        conf.current().force(it->v2.atom(0)) += dVav_dDav * dDav_dD * dD_dr; // [kJ/(nm*mol)]
         DEBUG(15, "dVav_dDav; dDav_dD; dD_dr: " << dVav_dDav << ", " << dDav_dD << ", (" << scientific << dD_dr[0] << ", " << dD_dr[1] << ", " << dD_dr[2] << ")")
       }
       else if(sim.param().rdc.mode == simulation::rdc_restr_biq ||
               sim.param().rdc.mode == simulation::rdc_restr_biq_weighted){
-        const double dVbq_dD = 2.0 * force_coefficient * dflat_bottom_pot(conf_it->curr[k], it->R0, sim.param().rdc.delta) * flat_bottom_pot(conf_it->av[k], it->R0, sim.param().rdc.delta); // [kJ/(nm^2*mol)]
-        const double dVbq_dDav = 2.0 * force_coefficient * flat_bottom_pot(conf_it->curr[k], it->R0, sim.param().rdc.delta) * dflat_bottom_pot(conf_it->av[k], it->R0, sim.param().rdc.delta); // [kJ/(nm^2*mol)]
+        const double dVbq_dD = 2.0 * force_coefficient * dflat_bottom_pot(conf_it->curr[k], it->D0, it->dD0) * flat_bottom_pot(conf_it->av[k], it->D0, it->dD0); // [kJ/(nm^2*mol)]
+        const double dVbq_dDav = 2.0 * force_coefficient * flat_bottom_pot(conf_it->curr[k], it->D0, it->dD0) * dflat_bottom_pot(conf_it->av[k], it->D0, it->dD0); // [kJ/(nm^2*mol)]
         // in the following we set dDav_dD to either 1.0 or [1-e^(-dt/tau)] or 0.
         // The first is simple, the second correct.
         double dDav_dD = 0;  // case 2
         if (sim.param().rdc.tAVfactor == 0) dDav_dD = 1.0;
         else if (sim.param().rdc.tAVfactor == 1) dDav_dD = 1.0-pow(M_E, -sim.time_step_size()/sim.param().rdc.tau);
-        conf.current().force(it->i) -= (dVbq_dD + dVbq_dDav * dDav_dD) * dD_dr; // [kJ/(nm*mol)]
-        conf.current().force(it->j) += (dVbq_dD + dVbq_dDav * dDav_dD) * dD_dr; // [kJ/(nm*mol)]
+        conf.current().force(it->v1.atom(0)) -= (dVbq_dD + dVbq_dDav * dDav_dD) * dD_dr; // [kJ/(nm*mol)]
+        conf.current().force(it->v2.atom(0)) += (dVbq_dD + dVbq_dDav * dDav_dD) * dD_dr; // [kJ/(nm*mol)]
         DEBUG(15, "dVbq_dD; dVbq_dDav; dDav_dD; dD_dr: " << dVbq_dD << ", " << dVbq_dDav << ", "<< dDav_dD << ", (" << scientific << dD_dr[0] << ", " << dD_dr[1] << ", " << dD_dr[2] << ")")
       }
     } // Loop over RDCs
@@ -1562,8 +1547,8 @@ int _calculate_interactions_tensor(topology::Topology & topo,
           it = topo_it->begin(),
           to = topo_it->end();
         for(; it!=to; ++it, ++k) {
-          enumerator += pow(conf_it->curr[k] - it->R0, 2);
-          denominator += pow(it->R0, 2);
+          enumerator += pow(conf_it->curr[k] - it->D0, 2);
+          denominator += pow(it->D0, 2);
         }
         double Q = sqrt(enumerator / denominator);
         cout << "SCRIPT " << conf_it->Tensor[0] << " " << conf_it->Tensor[1] << " " << conf_it->Tensor[2] << " " << conf_it->Tensor[3] << " " << conf_it->Tensor[4] << " " << Q << endl;
@@ -1802,8 +1787,8 @@ int _calculate_interactions_tensor(topology::Topology & topo,
           it = topo_it->begin(),
           to = topo_it->end();
         for(; it!=to; ++it, ++k) {
-          enumerator += pow(conf_it->curr[k] - it->R0, 2);
-          denominator += pow(it->R0, 2);
+          enumerator += pow(conf_it->curr[k] - it->D0, 2);
+          denominator += pow(it->D0, 2);
         }
         double Q = sqrt(enumerator / denominator);
         cout << "SCRIPT " << conf_it->Tensor[0] << " " << conf_it->Tensor[1] << " " << conf_it->Tensor[2] << " " << conf_it->Tensor[3] << " " << conf_it->Tensor[4] << " " <<  conf_it->Ekin << " " << Q << endl;
@@ -1890,8 +1875,8 @@ int _calculate_interactions_tensor(topology::Topology & topo,
           it = topo_it->begin(),
           to = topo_it->end();
         for(; it!=to; ++it, ++k) {
-          enumerator += pow(conf_it->curr[k] - it->R0, 2);
-          denominator += pow(it->R0, 2);
+          enumerator += pow(conf_it->curr[k] - it->D0, 2);
+          denominator += pow(it->D0, 2);
         }
         double Q = sqrt(enumerator / denominator);
         cout << "SCRIPT " << conf_it->Tensor[0] << " " << conf_it->Tensor[1] << " " << conf_it->Tensor[2] << " " << conf_it->Tensor[3] << " " << conf_it->Tensor[4] << " " <<  conf_it->Ekin << " " << Q << endl;
@@ -1966,7 +1951,6 @@ void _calculate_forces_clm_SH(topology::Topology & topo,
 
   // create variables
   math::Periodicity<B> periodicity(conf.current().box);
-  math::VArray &pos = conf.current().pos;
 
   const int l = 2;
 
@@ -2005,12 +1989,10 @@ void _calculate_forces_clm_SH(topology::Topology & topo,
     // Loop over all RDC constraints
     for( ; it!=to; ++it, ++k){
       // Get positions of the two atoms involved in this RDC, calculate d, x, y, z
-      math::Vec ri(0.0, 0.0, 0.0);
-      math::Vec rj(0.0, 0.0, 0.0);
+      math::Vec ri = it->v1.pos(conf, topo);
       math::Vec rij(0.0, 0.0, 0.0);
-      ri = pos(it->i);
-      rj = pos(it->j);
-      periodicity.nearest_image(ri, rj, rij);
+      periodicity.nearest_image(ri, it->v2.pos(conf, topo), rij);
+      math::Vec rj(ri - rij);
       const double dij = math::abs(rij); // [nm]
       const double dij2 = dij*dij; // [nm^2]
       const double dij3 = dij2*dij; // [nm^3]
@@ -2050,13 +2032,13 @@ void _calculate_forces_clm_SH(topology::Topology & topo,
         // forces on clm depending on AV mode
         if(sim.param().rdc.mode == simulation::rdc_restr_inst ||
            sim.param().rdc.mode == simulation::rdc_restr_inst_weighted){
-          const double dV_dD = force_coefficient * dflat_bottom_pot(conf_it->curr[k], it->R0, sim.param().rdc.delta); // [kJ/(nm^2*mol)]
+          const double dV_dD = force_coefficient * dflat_bottom_pot(conf_it->curr[k], it->D0, it->dD0); // [kJ/(nm^2*mol)]
           force_array_clm[l+m] -= dV_dD * dD_dc; // [kJ/(nm*mol)]
           DEBUG(15, "dV_dD; dD_dc: " << dV_dD << ", " << scientific << dD_dc)
         }
         else if(sim.param().rdc.mode == simulation::rdc_restr_av ||
                 sim.param().rdc.mode == simulation::rdc_restr_av_weighted){
-          const double dVav_dDav = force_coefficient * dflat_bottom_pot(local_average, it->R0, sim.param().rdc.delta); // [kJ/(nm^2*mol)]
+          const double dVav_dDav = force_coefficient * dflat_bottom_pot(local_average, it->D0, it->dD0); // [kJ/(nm^2*mol)]
           // in the following we set dDav_dD to either 1.0 or [1-e^(-dt/tau)].
           // The latter is correct, the former allows for using the same K as without time AV
           const double dDav_dD = sim.param().rdc.tAVfactor ? (1.0-pow(M_E, -sim.time_step_size()/sim.param().rdc.tau)) : 1.0;
@@ -2065,8 +2047,8 @@ void _calculate_forces_clm_SH(topology::Topology & topo,
         }
         else if(sim.param().rdc.mode == simulation::rdc_restr_biq ||
                 sim.param().rdc.mode == simulation::rdc_restr_biq_weighted){
-          const double dVbq_dD = 2.0 * force_coefficient * dflat_bottom_pot(conf_it->curr[k], it->R0, sim.param().rdc.delta) * flat_bottom_pot(local_average, it->R0, sim.param().rdc.delta); // [kJ/(nm^2*mol)]
-          const double dVbq_dDav = 2.0 * force_coefficient * flat_bottom_pot(conf_it->curr[k], it->R0, sim.param().rdc.delta) * dflat_bottom_pot(local_average, it->R0, sim.param().rdc.delta); // [kJ/(nm^2*mol)]
+          const double dVbq_dD = 2.0 * force_coefficient * dflat_bottom_pot(conf_it->curr[k], it->D0, it->dD0) * flat_bottom_pot(local_average, it->D0, it->dD0); // [kJ/(nm^2*mol)]
+          const double dVbq_dDav = 2.0 * force_coefficient * flat_bottom_pot(conf_it->curr[k], it->D0, it->dD0) * dflat_bottom_pot(local_average, it->D0, it->dD0); // [kJ/(nm^2*mol)]
           // in the following we set dDav_dD to either 1.0 or [1-e^(-dt/tau)] or 0.
           // The first is simple, the second correct.
           double dDav_dD = 0;  // case 2
@@ -2100,10 +2082,6 @@ void _calculate_forces_atoms_SH(topology::Topology & topo,
 
   // create variables
   math::Periodicity<B> periodicity(conf.current().box);
-  math::VArray &pos = conf.current().pos;
-  math::Vec ri(0.0, 0.0, 0.0);
-  math::Vec rj(0.0, 0.0, 0.0);
-  math::Vec rij(0.0, 0.0, 0.0);
 
   const int l = 2;
 
@@ -2142,9 +2120,10 @@ void _calculate_forces_atoms_SH(topology::Topology & topo,
     int k=0;
     for(; it!=to; ++it, ++k){
       // Get positions of the two atoms involved in this RDC, calculate dij, x, y, z
-      ri = pos(it->i);
-      rj = pos(it->j);
-      periodicity.nearest_image(ri, rj, rij);
+      math::Vec ri = it->v1.pos(conf, topo);
+      math::Vec rij(0.0, 0.0, 0.0);
+      periodicity.nearest_image(ri, it->v2.pos(conf, topo), rij);
+      math::Vec rj(ri - rij);
       const double dij = math::abs(rij);
       const double dij3 = pow(dij,3);
       const double dij5 = pow(dij,5);
@@ -2176,29 +2155,29 @@ void _calculate_forces_atoms_SH(topology::Topology & topo,
          sim.param().rdc.mode == simulation::rdc_restr_inst_weighted){
         // rdc_energy = .5 * K * (RDC - RDC_0)^2
         // split the interaction energy between the two atoms and possibly between two energy groups
-        conf.current().energies.rdc_energy[topo.atom_energy_group()[it->i]] += 0.5 * force_coefficient * flat_bottom_pot(conf_it->curr[k], it->R0, sim.param().rdc.delta); // [kJ/mol]
-        conf.current().energies.rdc_energy[topo.atom_energy_group()[it->j]] += 0.5 * force_coefficient * flat_bottom_pot(conf_it->curr[k], it->R0, sim.param().rdc.delta); // [kJ/mol]
-        DEBUG(15, "energy added to groups " << topo.atom_energy_group()[it->i] << " and " << topo.atom_energy_group()[it->j] )
-        DEBUG(15, "group energies are " << conf.current().energies.rdc_energy[topo.atom_energy_group()[it->i]] << " and " << conf.current().energies.rdc_energy[topo.atom_energy_group()[it->j]])
-        DEBUG(10, "interaction_energy (inst): " << scientific << force_coefficient * flat_bottom_pot(conf_it->curr[k], it->R0, sim.param().rdc.delta))
+        conf.current().energies.rdc_energy[topo.atom_energy_group()[it->v1.atom(0)]] += 0.5 * force_coefficient * flat_bottom_pot(conf_it->curr[k], it->D0, it->dD0); // [kJ/mol]
+        conf.current().energies.rdc_energy[topo.atom_energy_group()[it->v2.atom(0)]] += 0.5 * force_coefficient * flat_bottom_pot(conf_it->curr[k], it->D0, it->dD0); // [kJ/mol]
+        DEBUG(15, "energy added to groups " << topo.atom_energy_group()[it->v1.atom(0)] << " and " << topo.atom_energy_group()[it->v2.atom(0)] )
+        DEBUG(15, "group energies are " << conf.current().energies.rdc_energy[topo.atom_energy_group()[it->v1.atom(0)]] << " and " << conf.current().energies.rdc_energy[topo.atom_energy_group()[it->v2.atom(0)]])
+        DEBUG(10, "interaction_energy (inst): " << scientific << force_coefficient * flat_bottom_pot(conf_it->curr[k], it->D0, it->dD0))
       }
       else if(sim.param().rdc.mode == simulation::rdc_restr_av ||
               sim.param().rdc.mode == simulation::rdc_restr_av_weighted){
         // rdc_energy = .5 * K * (<RDC> - RDC_0)^2
-        conf.current().energies.rdc_energy[topo.atom_energy_group()[it->i]] += 0.5 * force_coefficient * flat_bottom_pot(conf_it->av[k], it->R0, sim.param().rdc.delta); // [kJ/mol]
-        conf.current().energies.rdc_energy[topo.atom_energy_group()[it->j]] += 0.5 * force_coefficient * flat_bottom_pot(conf_it->av[k], it->R0, sim.param().rdc.delta); // [kJ/mol]
-        DEBUG(15, "energy added to groups " << topo.atom_energy_group()[it->i] << " and " << topo.atom_energy_group()[it->j] )
-        DEBUG(15, "group energies are " << conf.current().energies.rdc_energy[topo.atom_energy_group()[it->i]] << " and " << conf.current().energies.rdc_energy[topo.atom_energy_group()[it->j]])
-        DEBUG(10, "interaction_energy (av): " << scientific << force_coefficient * flat_bottom_pot(conf_it->av[k], it->R0, sim.param().rdc.delta))
+        conf.current().energies.rdc_energy[topo.atom_energy_group()[it->v1.atom(0)]] += 0.5 * force_coefficient * flat_bottom_pot(conf_it->av[k], it->D0, it->dD0); // [kJ/mol]
+        conf.current().energies.rdc_energy[topo.atom_energy_group()[it->v2.atom(0)]] += 0.5 * force_coefficient * flat_bottom_pot(conf_it->av[k], it->D0, it->dD0); // [kJ/mol]
+        DEBUG(15, "energy added to groups " << topo.atom_energy_group()[it->v1.atom(0)] << " and " << topo.atom_energy_group()[it->v2.atom(0)] )
+        DEBUG(15, "group energies are " << conf.current().energies.rdc_energy[topo.atom_energy_group()[it->v1.atom(0)]] << " and " << conf.current().energies.rdc_energy[topo.atom_energy_group()[it->v2.atom(0)]])
+        DEBUG(10, "interaction_energy (av): " << scientific << force_coefficient * flat_bottom_pot(conf_it->av[k], it->D0, it->dD0))
       }
       else if(sim.param().rdc.mode == simulation::rdc_restr_biq ||
               sim.param().rdc.mode == simulation::rdc_restr_biq_weighted){
         // rdc_energy = .5 * K * (RDC - RDC_0)^2 * (<RDC> - RDC_0)^2
-        conf.current().energies.rdc_energy[topo.atom_energy_group()[it->i]] += 0.5 * force_coefficient * flat_bottom_pot(conf_it->curr[k], it->R0, sim.param().rdc.delta) * flat_bottom_pot(conf_it->av[k], it->R0, sim.param().rdc.delta); // [kJ/mol]
-        conf.current().energies.rdc_energy[topo.atom_energy_group()[it->j]] += 0.5 * force_coefficient * flat_bottom_pot(conf_it->curr[k], it->R0, sim.param().rdc.delta) * flat_bottom_pot(conf_it->av[k], it->R0, sim.param().rdc.delta); // [kJ/mol]
-        DEBUG(15, "energy added to groups " << topo.atom_energy_group()[it->i] << " and " << topo.atom_energy_group()[it->j] )
-        DEBUG(15, "group energies are " << conf.current().energies.rdc_energy[topo.atom_energy_group()[it->i]] << " and " << conf.current().energies.rdc_energy[topo.atom_energy_group()[it->j]])
-        DEBUG(10, "interaction_energy (biq): " << scientific << 2.0 * force_coefficient * flat_bottom_pot(conf_it->curr[k], it->R0, sim.param().rdc.delta) * flat_bottom_pot(conf_it->av[k], it->R0, sim.param().rdc.delta))
+        conf.current().energies.rdc_energy[topo.atom_energy_group()[it->v1.atom(0)]] += 0.5 * force_coefficient * flat_bottom_pot(conf_it->curr[k], it->D0, it->dD0) * flat_bottom_pot(conf_it->av[k], it->D0, it->dD0); // [kJ/mol]
+        conf.current().energies.rdc_energy[topo.atom_energy_group()[it->v2.atom(0)]] += 0.5 * force_coefficient * flat_bottom_pot(conf_it->curr[k], it->D0, it->dD0) * flat_bottom_pot(conf_it->av[k], it->D0, it->dD0); // [kJ/mol]
+        DEBUG(15, "energy added to groups " << topo.atom_energy_group()[it->v1.atom(0)] << " and " << topo.atom_energy_group()[it->v2.atom(0)] )
+        DEBUG(15, "group energies are " << conf.current().energies.rdc_energy[topo.atom_energy_group()[it->v1.atom(0)]] << " and " << conf.current().energies.rdc_energy[topo.atom_energy_group()[it->v2.atom(0)]])
+        DEBUG(10, "interaction_energy (biq): " << scientific << 2.0 * force_coefficient * flat_bottom_pot(conf_it->curr[k], it->D0, it->dD0) * flat_bottom_pot(conf_it->av[k], it->D0, it->dD0))
       }
 
       // forces on atoms
@@ -2220,32 +2199,32 @@ void _calculate_forces_atoms_SH(topology::Topology & topo,
       // return forces
       if(sim.param().rdc.mode == simulation::rdc_restr_inst ||
          sim.param().rdc.mode == simulation::rdc_restr_inst_weighted){
-        const double dV_dD = force_coefficient * dflat_bottom_pot(conf_it->curr[k], it->R0, sim.param().rdc.delta); // [kJ/(nm^2*mol)]
-        conf.current().force(it->i) -= dV_dD * dD_dr; // [kJ/(nm*mol)]
-        conf.current().force(it->j) += dV_dD * dD_dr; // [kJ/(nm*mol)]
+        const double dV_dD = force_coefficient * dflat_bottom_pot(conf_it->curr[k], it->D0, it->dD0); // [kJ/(nm^2*mol)]
+        conf.current().force(it->v1.atom(0)) -= dV_dD * dD_dr; // [kJ/(nm*mol)]
+        conf.current().force(it->v2.atom(0)) += dV_dD * dD_dr; // [kJ/(nm*mol)]
         DEBUG(15, "dV_dD; dD_dr: " << dV_dD << ", (" << scientific << dD_dr[0] << ", " << dD_dr[1] << ", " << dD_dr[2] << ")")
       }
       else if(sim.param().rdc.mode == simulation::rdc_restr_av ||
               sim.param().rdc.mode == simulation::rdc_restr_av_weighted){
-        const double dVav_dDav = force_coefficient * dflat_bottom_pot(conf_it->av[k], it->R0, sim.param().rdc.delta); // [kJ/(nm^2*mol)]
+        const double dVav_dDav = force_coefficient * dflat_bottom_pot(conf_it->av[k], it->D0, it->dD0); // [kJ/(nm^2*mol)]
         // in the following we set dDav_dD to either 1.0 or [1-e^(-dt/tau)].
         // The latter is correct, the former allows for using the same K as without time AV
         const double dDav_dD = sim.param().rdc.tAVfactor ? (1.0-pow(M_E, -sim.time_step_size()/sim.param().rdc.tau)) : 1.0;
-        conf.current().force(it->i) -= dVav_dDav * dDav_dD * dD_dr; // [kJ/(nm*mol)]
-        conf.current().force(it->j) += dVav_dDav * dDav_dD * dD_dr; // [kJ/(nm*mol)]
+        conf.current().force(it->v1.atom(0)) -= dVav_dDav * dDav_dD * dD_dr; // [kJ/(nm*mol)]
+        conf.current().force(it->v2.atom(0)) += dVav_dDav * dDav_dD * dD_dr; // [kJ/(nm*mol)]
         DEBUG(15, "dVav_dDav; dDav_dD; dD_dr: " << dVav_dDav << ", " << dDav_dD << ", (" << scientific << dD_dr[0] << ", " << dD_dr[1] << ", " << dD_dr[2] << ")")
       }
       else if(sim.param().rdc.mode == simulation::rdc_restr_biq ||
               sim.param().rdc.mode == simulation::rdc_restr_biq_weighted){
-        const double dVbq_dD = 2.0 * force_coefficient * dflat_bottom_pot(conf_it->curr[k], it->R0, sim.param().rdc.delta) * flat_bottom_pot(conf_it->av[k], it->R0, sim.param().rdc.delta); // [kJ/(nm^2*mol)]
-        const double dVbq_dDav = 2.0 * force_coefficient * flat_bottom_pot(conf_it->curr[k], it->R0, sim.param().rdc.delta) * dflat_bottom_pot(conf_it->av[k], it->R0, sim.param().rdc.delta); // [kJ/(nm^2*mol)]
+        const double dVbq_dD = 2.0 * force_coefficient * dflat_bottom_pot(conf_it->curr[k], it->D0, it->dD0) * flat_bottom_pot(conf_it->av[k], it->D0, it->dD0); // [kJ/(nm^2*mol)]
+        const double dVbq_dDav = 2.0 * force_coefficient * flat_bottom_pot(conf_it->curr[k], it->D0, it->dD0) * dflat_bottom_pot(conf_it->av[k], it->D0, it->dD0); // [kJ/(nm^2*mol)]
         // in the following we set dDav_dD to either 1.0 or [1-e^(-dt/tau)] or 0.
         // The first is simple, the second correct.
         double dDav_dD = 0;  // case 2
         if (sim.param().rdc.tAVfactor == 0) dDav_dD = 1.0;
         else if (sim.param().rdc.tAVfactor == 1) dDav_dD = 1.0-pow(M_E, -sim.time_step_size()/sim.param().rdc.tau);
-        conf.current().force(it->i) -= (dVbq_dD + dVbq_dDav * dDav_dD) * dD_dr; // [kJ/(nm*mol)]
-        conf.current().force(it->j) += (dVbq_dD + dVbq_dDav * dDav_dD) * dD_dr; // [kJ/(nm*mol)]
+        conf.current().force(it->v1.atom(0)) -= (dVbq_dD + dVbq_dDav * dDav_dD) * dD_dr; // [kJ/(nm*mol)]
+        conf.current().force(it->v2.atom(0)) += (dVbq_dD + dVbq_dDav * dDav_dD) * dD_dr; // [kJ/(nm*mol)]
         DEBUG(15, "dVbq_dD; dVbq_dDav; dDav_dD; dD_dr: " << dVbq_dD << ", " << dVbq_dDav << ", "<< dDav_dD << ", (" << scientific << dD_dr[0] << ", " << dD_dr[1] << ", " << dD_dr[2] << ")")
       }
     } // Loop over RDCs in group
@@ -2267,10 +2246,6 @@ void _calculate_clm(topology::Topology & topo,
 
   // create variables
   math::Periodicity<B> periodicity(conf.current().box);
-  math::VArray &pos = conf.current().pos;
-  math::Vec ri(0.0, 0.0, 0.0);
-  math::Vec rj(0.0, 0.0, 0.0);
-  math::Vec rij(0.0, 0.0, 0.0);
 
   const int l = 2;
   const int n_clm = 5;
@@ -2309,9 +2284,10 @@ void _calculate_clm(topology::Topology & topo,
     // Loop over all RDC constraints
     for(; it!=to; ++it, ++k){
       // Get positions of the two atoms involved in this RDC, calculate d
-      ri = pos(it->i);
-      rj = pos(it->j);
-      periodicity.nearest_image(ri, rj, rij);
+      math::Vec ri = it->v1.pos(conf, topo);
+      math::Vec rij(0.0, 0.0, 0.0);
+      periodicity.nearest_image(ri, it->v2.pos(conf, topo), rij);
+      math::Vec rj(ri - rij);
       const double dij = math::abs(rij); // [nm]
       const double dij3 =pow(dij,3); // [nm^3]
 
@@ -2335,7 +2311,7 @@ void _calculate_clm(topology::Topology & topo,
           matrix_array[(l+m_prime)*n_clm + l+m] += it->weight * alpha_klm[k][l+m] * alpha_klm[k][l+m_prime]; // [1/nm^2]
         }
         // weighting is potentially switched off by setting weight to one during initialisation
-        result_array[l+m_prime] += it->weight * (it->R0 * dij3 / RDC_max(it)) * alpha_klm[k][l+m_prime]; // [1/nm]
+        result_array[l+m_prime] += it->weight * (it->D0 * dij3 / RDC_max(it)) * alpha_klm[k][l+m_prime]; // [1/nm]
       }
     }
 
@@ -2428,8 +2404,8 @@ int _calculate_interactions_sh(topology::Topology & topo,
           it = topo_it->begin(),
           to = topo_it->end();
         for(; it!=to; ++it, ++k) {
-          enumerator += pow(conf_it->curr[k] - it->R0, 2);
-          denominator += pow(it->R0, 2);
+          enumerator += pow(conf_it->curr[k] - it->D0, 2);
+          denominator += pow(it->D0, 2);
         }
         double Q = sqrt(enumerator / denominator);
         cout << "SCRIPT " << conf_it->clm[0] << " " << conf_it->clm[1] << " " << conf_it->clm[2] << " " << conf_it->clm[3] << " " << conf_it->clm[4] << " " << Q << endl;
@@ -2674,8 +2650,8 @@ int _calculate_interactions_sh(topology::Topology & topo,
           it = topo_it->begin(),
           to = topo_it->end();
         for(; it!=to; ++it, ++k) {
-          enumerator += pow(conf_it->curr[k] - it->R0, 2);
-          denominator += pow(it->R0, 2);
+          enumerator += pow(conf_it->curr[k] - it->D0, 2);
+          denominator += pow(it->D0, 2);
         }
         double Q = sqrt(enumerator / denominator);
         cout << "SCRIPT " << conf_it->clm[0] << " " << conf_it->clm[1] << " " << conf_it->clm[2] << " " << conf_it->clm[3] << " " << conf_it->clm[4] << " " <<  conf_it->Ekin << " " << Q << endl;
@@ -2768,9 +2744,9 @@ int _calculate_interactions_sh(topology::Topology & topo,
           it = topo_it->begin(),
           to = topo_it->end();
         for(; it!=to; ++it, ++k) {
-          cout << conf_it->curr[k] << " " << it->R0 << endl;
-          enumerator += pow(conf_it->curr[k] - it->R0, 2);
-          denominator += pow(it->R0, 2);
+          cout << conf_it->curr[k] << " " << it->D0 << endl;
+          enumerator += pow(conf_it->curr[k] - it->D0, 2);
+          denominator += pow(it->D0, 2);
         }
         double Q = sqrt(enumerator / denominator);
         cout << "SCRIPT " << conf_it->clm[0] << " " << conf_it->clm[1] << " " << conf_it->clm[2] << " " << conf_it->clm[3] << " " << conf_it->clm[4] << " " <<  conf_it->Ekin << " " << Q << endl;

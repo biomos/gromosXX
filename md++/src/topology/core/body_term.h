@@ -1183,16 +1183,23 @@ namespace topology {
     /**
      * default constructor (required for creating vectors of rdc_restraint_struct and providing values later)
      */
-    rdc_restraint_struct(): i(0), j(0), weight(1.0), R0(0.0), gyri(0.0), gyrj(0.0) { }
+    rdc_restraint_struct(): v1(), v2(), weight(1.0), D0(0.0), dD0(0.0), gyri(0.0), gyrj(0.0) { }
     /**
      * constructor
      */
-    rdc_restraint_struct(int i, int j, double weight, double R0, double gyri, double gyrj)
-      : i(i), j(j), weight(weight), R0(R0), gyri(gyri), gyrj(gyrj) { }
+    rdc_restraint_struct(util::Virtual_Atom v1,
+            util::Virtual_Atom v2, double weight, double D0, double dD0, double gyri, double gyrj)
+      : v1(v1), v2(v2), weight(weight), D0(D0), dD0(dD0), gyri(gyri), gyrj(gyrj) { }
+
     /**
-     * atom sequence numbers
+     * virtual atom 1.
      */
-    unsigned int i, j;
+    util::Virtual_Atom v1;
+
+    /**
+     * virtual atom 2.
+     */
+    util::Virtual_Atom v2;
     /**
      * weight factor of individual RDCs
      */
@@ -1200,7 +1207,11 @@ namespace topology {
     /**
      * reference RDC value
      */
-    double R0;
+    double D0;
+    /**
+     * flat-bottom potential width
+     */
+    double dD0;
     /**
      * gyromagnetic ratios of atom i and j
      */
