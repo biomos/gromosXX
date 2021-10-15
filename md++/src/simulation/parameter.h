@@ -3992,7 +3992,6 @@ namespace simulation
           emmaxiter(0),
           sdfric(0.0),
           temp(0.0),
-          delta(0.0),
           K(1.0),
           tau(0),
           tAVfactor(0),
@@ -4040,10 +4039,6 @@ namespace simulation
        * reference temperature for SD and for initial velocities
        */
       double temp;
-      /**
-       * half the width of the flat bottom potential
-       */
-      double delta;
       /**
        * force constant
        * (multiplied by individual restraint weighting)

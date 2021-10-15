@@ -2413,7 +2413,6 @@ void io::In_Parameter::read_RDCRES(simulation::Parameter &param,
     exampleblock << "# EMNMAX  > 0                  (METHOD = 0, EM) maximum number of minimisation steps\n";
     exampleblock << "# SDCFRIC >= 0.0               (METHOD = 1, SD) global friction coefficient gamma\n";
     exampleblock << "# TEMP  >= 0.0                 temperature of stochastic bath (SD) and temperature used for initial velocities (MD, SD)\n";
-    exampleblock << "# DELTA   >= 0                 the flatbottom potential is 2 DELTA wide [ps^-1]\n";
     exampleblock << "# CRDCR   >= 0                 RDC restraining force constant [kJ*ps^2]\n";
     exampleblock << "#                              (weighted by individual WRDCR)\n";
     exampleblock << "# TAU     >= 0                 coupling time for time averaging [ps]\n";
@@ -2430,8 +2429,8 @@ void io::In_Parameter::read_RDCRES(simulation::Parameter &param,
     exampleblock << "#\n";
     exampleblock << "#      NTRDCR  NTRDCRA  NTRDCT  NTALR  METHOD\n";
     exampleblock << "            2        0       0      0       0\n";
-    exampleblock << "#      EMGRAD  EMDX0  EMNMAX  SDCFRIC    TEMP    DELTA  CRDCR  TAU   NRDCRTARS NRDCRBIQW   NTWRDC   NTWRDC\n";
-    exampleblock << "        0.001   0.01    1000       20     300      0      1     1           0    0          0        10000\n";
+    exampleblock << "#      EMGRAD  EMDX0  EMNMAX  SDCFRIC    TEMP     CRDCR  TAU   NRDCRTARS NRDCRBIQW   NTWRDC   NTWRDC\n";
+    exampleblock << "        0.001   0.01    1000       20     300        1     1           0    0          0        10000\n";
     exampleblock << "END\n";
 
 
@@ -2455,7 +2454,6 @@ void io::In_Parameter::read_RDCRES(simulation::Parameter &param,
         block.get_next_parameter("EMNMAX", param.rdc.emmaxiter, ">0", "");
         block.get_next_parameter("SDCFRIC", param.rdc.sdfric, ">=0", "");
         block.get_next_parameter("TEMP", param.rdc.temp, ">=0", "");
-        block.get_next_parameter("DELTA", param.rdc.delta, ">=0", "");
         block.get_next_parameter("CRDCR", param.rdc.K, ">=0", "");
         block.get_next_parameter("TAU", param.rdc.tau, ">=0", "");
         block.get_next_parameter("NRDCRTARS", param.rdc.tAVfactor, "", "0,1");

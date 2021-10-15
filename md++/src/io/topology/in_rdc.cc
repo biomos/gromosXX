@@ -43,6 +43,8 @@
 
 using namespace std;
 
+static std::set<std::string> block_read;
+
 // three structs, local to this file
 struct mf_struct{
   math::VArray cart_coords;
@@ -220,17 +222,17 @@ END
  * @verbatim
 RDCRESSPEC
 # For each RDC restraint the following is to be specified:
-# IPRDCR, JPRDCR, KPRDCR, LPRDCR    atom sequence numbers
-# WRDCR                             weight factor
-# PRDCR0                            RDC value
-# RDCGI, RDCGJ                      gyromagnetic ratios
-# RDCRIJ, RDCRIK                    inter-nuclear distances
-# TYPE                              type of RDC
-# IPRDCR JPRDCR KPRDCR LPRDCR   WRDCR    PRDCR0      RDCGI      RDCGJ     RDCRIJ     RDCRIK    RDCTYPE
-      16     17      0      0       1     -1.78      -27.12     267.52      0.104      0.104          1
-      24     25      0      0       1      7.52      -27.12     267.52      0.104      0.104          1
-      41     42      0      0       1     -6.92      -27.12     267.52      0.104      0.104          1
-      46     47      0      0       1     -6.47      -27.12     267.52      0.104      0.104          1
+# i,j,k,l  atoms comprising the virtual atom (put 0 if less than four atoms in use)
+# type   virtual atom type
+# D0                            RDC value
+# w0                             weight factor
+# gyr1, gyr2                      gyromagnetic ratios
+# R0                    inter-nuclear distance
+# i   j   k   l   type  i    j    k   l  type  R0      G1      G2      D0      DD0   WRDC
+  16  0  0  0  0     17  0  0  0  0    -1.78     1     -27.12     267.52      0.104
+  24  0  0  0  0     25  0  0  0  0     7.52     1     -27.12     267.52      0.104
+  41  0  0  0  0     42  0  0  0  0    -6.92     1     -27.12     267.52      0.104
+  46  0  0  0  0     47  0  0  0  0    -6.47     1     -27.12     267.52      0.104
 END
 @endverbatim
  */
@@ -241,6 +243,8 @@ void io::In_RDC::read(topology::Topology& topo,
         ostream & os) {
 
   DEBUG(7, "reading in an RDC restraints specification file")
+  
+  os << "RDC RESTRAINTS\n";
 
 #ifndef NDEBUG
       // Create random number generator, set seed to 0 (to make sure it's reproducible)
@@ -682,60 +686,143 @@ void io::In_RDC::read(topology::Topology& topo,
   vector<topology::rdc_restraint_struct>  tmp_rdc_rest_strct;
   { // RDCRESSPEC
     DEBUG(10, "RDCRESSPEC")
-    buffer = m_block["RDCRESSPEC"];
+    std::stringstream exampleblock;
+  // lines starting with 'exampleblock<<"' and ending with '\n";' (spaces don't matter)
+  // will be used to generate snippets that can be included in the doxygen doc;
+  // the first line is the tag
+  exampleblock << "RDCRESSPEC\n";
+  exampleblock << "# DISH, DISC carbon-hydrogen/carbon-carbon distance\n";
+  exampleblock << "# i,j,k,l  atoms comprising the virtual atom (put 0 if less than four atoms in use)\n";
+  exampleblock << "# type   virtual atom type\n";
+  exampleblock << "# D0, WRDC  target RDC and force constant weighting factor\n";
+  exampleblock << "# DD0 half the width of the flatbottom potential\n";
+  exampleblock << "# G1, G2            gyromagnetic ratios\n";
+  exampleblock << "# R0                inter-nuclear distance\n";
+  exampleblock << "# DISH  DISC\n";
+  exampleblock << "  0.1   0.153\n";
+  exampleblock << "#  i   j   k   l   type  i    j    k   l  type  R0      G1      G2      D0      DD0   WRDC\n";
+  exampleblock << "  16   0   0   0   0    17    0    0   0  0    0.104   -27.12   267.52  -1.78   2.0    1\n";
+  exampleblock << "END\n";
 
-    if (!buffer.size()){
-      io::messages.add("no RDCRESSPEC block in RDC restraints file", "In_RDC", io::message::critical);
-    }
+  std::string blockname = "RDCRESSPEC";
+  Block block(blockname, exampleblock.str());
+
+  if (block.read_buffer(m_block[blockname], false) == 0) {
+    block_read.insert(blockname);
+
+    double dish,disc;
+    block.get_next_parameter("DISH", dish, ">0", "");
+    block.get_next_parameter("DISC", disc, ">0", "");
 
     DEBUG(10, "reading in RDCRESSPEC data")
-
-    int atom_i = 0, atom_j = 0, k = 0, l = 0, type = 0;
-    double weight = 0.0, R = 0.0, gyri = 0.0, gyrj = 0.0, rij = 0.0, rik = 0.0;
 
     os.setf(ios_base::fixed, ios_base::floatfield);
 
     DEBUG(10, setw(6) << "i"
            << setw(6) << "j"
-           << setw(8) << "weight"
-           << setw(19) << "R [1/ps]"
-      //     << setw(19) << "RDCav [1/ps]"
-           << setw(12) << "GYRi [e/u]"
-           << setw(12) << "GYRj [e/u]")
+           << setw(6) << "k"
+           << setw(6) << "l"
+           << setw(6) << "type"
+           << setw(6) << "i"
+           << setw(6) << "j"
+           << setw(6) << "k"
+           << setw(6) << "l"
+           << setw(6) << "type"
+           << setw(19) << "R0"
+           << setw(12) << "G1 [e/u]"
+           << setw(12) << "G2 [e/u]"
+           << setw(8) << "D0 [1/ps]"
+           << setw(8) << "DD0 [1/ps]"
+           << setw(8) << "WRDC");
 
-    vector<string>::const_iterator it = buffer.begin()+1, to = buffer.end()-1;
+    
+    unsigned int num = block.numlines()-3;
+    for (unsigned int line_number=0; line_number < num; line_number++){
+      std::vector<int> atom1, atom2;
+      int type1, type2;
+      double weight, D, DD, gyr1, gyr2, r0;
 
-    for(int n=0; it != to; ++it, ++n){
+      DEBUG(11, "\trdc line " << line_number);
 
-      _lineStream.clear();
-      _lineStream.str(*it);
+      for (unsigned int i = 0; i < 4; i++) {
+        unsigned int atom;
+        std::string str_i = io::to_string(i);
+        block.get_next_parameter("ATOM["+str_i+"]", atom, ">=0", "");
+        DEBUG(11, "\tat " << i << " " << atom);
+        if (atom > topo.num_atoms()) {
+          std::ostringstream msg;
+          msg << blockname << " block: atom number out of range: " << atom << ", last atom is "<< topo.num_atoms();
+          io::messages.add(msg.str(), "In_RDC", io::message::error);
+        }
 
-      _lineStream >> atom_i >> atom_j >> k >> l >> weight >> R >> gyri >> gyrj >> rij >> rik >> type;
-
-      if(_lineStream.fail()){
-           io::messages.add("bad line in RDCRESSPEC block", "In_RDC", io::message::error);
+        // -1 because we directly convert to array indices
+        if (atom > 0) atom1.push_back(atom - 1);
       }
+      block.get_next_parameter("TYPE", type1, "", "-2,-1,0,1,2,3,4,5,6,7");
 
-      R *= factorfreq;
-      gyri *= factorgyr;
-      gyrj *= factorgyr;
+      for (unsigned int i = 0; i < 4; i++) {
+        unsigned int atom;
+        std::string str_i = io::to_string(i);
+        block.get_next_parameter("ATOM["+str_i+"]", atom, ">=0", "");
+        if (atom > topo.num_atoms()) {
+          std::ostringstream msg;
+          msg << blockname << " block: atom number out of range: " << atom << ", last atom is "<< topo.num_atoms();
+          io::messages.add(msg.str(), "In_RDC", io::message::error);
+        }
 
-      // check for sensible choice of RDC
-      if(abs(-( math::eps0_i * math::h_bar * gyri * gyrj )/( pow(math::spd_l,2) * 4.0 * pow(math::Pi,2)) * 1000) < abs(R)){
-        io::messages.add("The chosen RDC is larger in magnitude than RDC_max.  This is probably a mistake and may result in strange behaviour.",
-         "In_RDC", io::message::warning);
+        // -1 because we directly convert to array indices
+        if (atom > 0) atom2.push_back(atom - 1);
       }
+      block.get_next_parameter("TYPE", type2, "", "-2,-1,0,1,2,3,4,5,6,7");
 
-      tmp_rdc_rest_strct.push_back(topology::rdc_restraint_struct(atom_i-1, atom_j-1, weight, R, gyri, gyrj)); // in units of 1, 1, 1, 1/ps, e/u and e/u
+      block.get_next_parameter("R0", r0, "", "");
+      block.get_next_parameter("GYR1", gyr1, "", "");
+      block.get_next_parameter("GYR2", gyr2, "", "");
+      block.get_next_parameter("D0", D, "", "");
+      block.get_next_parameter("DD0", DD, "", "");
+      block.get_next_parameter("W0", weight, ">=0", "");
 
-      DEBUG(10,                    setw(6) << atom_i
-                                << setw(6) << atom_j
-            << setprecision(2)  << setw(8) << weight
-            << setprecision(14) << setw(19) << R
-                                //<< setw(19) << conf.special().rdc.av[n]
-            << setprecision(4)  << setw(12) << gyri
-                                << setw(12) << gyrj)
-    }
+
+      if(!block.error()){          
+
+        D *= factorfreq;
+        DD *= factorfreq;
+        gyr1 *= factorgyr;
+        gyr2 *= factorgyr;
+
+        // check for sensible choice of RDC
+        if(abs(-( math::eps0_i * math::h_bar * gyr1 * gyr2 )/( pow(math::spd_l,2) * 4.0 * pow(math::Pi,2)) * 1000) < abs(D)){
+          io::messages.add("The chosen RDC is larger in magnitude than RDC_max.  This is probably a mistake and may result in strange behaviour.",
+          "In_RDC", io::message::warning);
+        }
+
+        util::virtual_type t1 = util::virtual_type(type1);
+        util::virtual_type t2 = util::virtual_type(type2);
+
+        util::Virtual_Atom v1(t1, atom1, dish, disc);
+        util::Virtual_Atom v2(t2, atom2, dish, disc);
+
+        tmp_rdc_rest_strct.push_back(topology::rdc_restraint_struct(v1, v2, weight, D, DD, gyr1, gyr2)); // in units of 1, 1, 1, 1/ps, e/u and e/u
+
+        DEBUG(10,   setw(6) << atom1[0] 
+                    << setw(6) << atom1[1]
+                    << setw(6) << atom1[2]
+                    << setw(6) << atom1[3]
+                    << setw(6) << type1
+                    << setw(6) << atom2[0]
+                    << setw(6) << atom2[1]
+                    << setw(6) << atom2[2]
+                    << setw(6) << atom2[3]
+                    << setw(6) << type2
+                                  << setw(8) << r0
+              << setprecision(4)  << setw(12) << gyr1
+                                  << setw(12) << gyr2
+              << setprecision(14) << setw(19) << D
+              << setprecision(14) << setw(19) << DD
+              << setprecision(2)  << setw(8) << weight);
+      }
+    } // for restraint-lines
+    block.get_final_messages();
 
     if(sim.param().rdc.mode == simulation::rdc_restr_inst ||
        sim.param().rdc.mode == simulation::rdc_restr_av ||
@@ -751,7 +838,8 @@ void io::In_RDC::read(topology::Topology& topo,
 
     DEBUG(10, "END")
 
-  } // RDCRESSPEC
+  } // if block content
+} // RDCRESSPEC
 
 
   //////////////////////
@@ -764,6 +852,7 @@ void io::In_RDC::read(topology::Topology& topo,
 
     if (!buffer.size()){
       io::messages.add("no RDCGROUPS block in RDC restraints file", "In_RDC", io::message::critical);
+      return;
     }
 
     unsigned int int_buf = 0;
@@ -785,6 +874,8 @@ void io::In_RDC::read(topology::Topology& topo,
       // cannot check state of stream because it will always be eof/fail
     }
 
+    os << "  " << "number of RDCs: " << tmp_rdc_rest_strct.size() << endl;
+    os << "  " << "number of RDC groups: " << rdc_groups.size() << endl;
     DEBUG(10, "number of RDCs: " << tmp_rdc_rest_strct.size())
     DEBUG(10, "number of RDC groups: " << rdc_groups.size())
 
@@ -884,9 +975,6 @@ void io::In_RDC::read(topology::Topology& topo,
 //                                             //
 /////////////////////////////////////////////////
 
-  sim.param().rdc.delta *= factorfreq;
-  DEBUG(12, "delta (flat-bottom-pot) set to " << sim.param().rdc.delta )
-
 
   DEBUG(10, "writing parsed data to topo.rdc_restraints() and conf.special().rdc ...")
 
@@ -945,7 +1033,7 @@ void io::In_RDC::read(topology::Topology& topo,
      }
 
      for(unsigned int j=0; j!=rdc_groups[i].size(); j++){
-       conf.special().rdc[i].av[j] = topo.rdc_restraints()[i][j].R0; // init history as experimental values
+       conf.special().rdc[i].av[j] = topo.rdc_restraints()[i][j].D0; // init history as experimental values
 
        switch(sim.param().rdc.type){
          case simulation::rdc_mf: {
@@ -975,6 +1063,8 @@ void io::In_RDC::read(topology::Topology& topo,
   delete rng;
 
   DEBUG(10, "done")
+  
+  os << "END\n";
 
 } // io::In_RDC::read
 
