@@ -10,12 +10,6 @@
 #ifndef INCLUDED_PARAMETER_H
 #define INCLUDED_PARAMETER_H
 
-
-// forward declarations
-namespace interaction {
-  class QMMM_Interaction;
-}
-
 namespace simulation
 {
 

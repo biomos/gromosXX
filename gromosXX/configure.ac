@@ -328,7 +328,6 @@ dnl subst compiler flags
 AC_SUBST(MY_CXXFLAGS)
 AC_SUBST(CXX_NDEBUG_FLAGS)
 
-MY_CXXFLAGS=" -std=c++11 ${MY_CXXFLAGS}"
 AC_PREFIX_DEFAULT(`pwd`)
 
 AM_PATH_GSL
@@ -436,7 +435,7 @@ AC_DEFINE_UNQUOTED(TOP_SOURCE_DIR, "$srcdir", [top src directory])
 
 AC_CONFIG_FILES([
 	src/Makefile
-    src/cukernel/Makefile
+	src/cukernel/Makefile
 	src/math/Makefile
 	src/topology/Makefile
 	src/configuration/Makefile
@@ -444,7 +443,7 @@ AC_CONFIG_FILES([
 	src/simulation/Makefile
 	src/interaction/Makefile
 	src/io/Makefile
-    src/replicaExchange/Makefile
+	src/replicaExchange/Makefile
 	src/util/Makefile
 	src/check/Makefile
 	program/Makefile
