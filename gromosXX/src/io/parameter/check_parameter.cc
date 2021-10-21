@@ -4486,7 +4486,7 @@ int io::check_features(simulation::Simulation  &sim)
   fc.unlock("conjugate_gradient", "random_gsl");
   // fc.unlock("conjugate_gradient", "eds");
   // fc.unlock("conjugate_gradient", "aeds");
-  fc.unlock("conjugate_gradient", "parallel_mpi");
+  // fc.unlock("conjugate_gradient", "parallel_mpi");
   fc.unlock("conjugate_gradient", "parallel_omp");
   fc.unlock("conjugate_gradient", "mult_energy_groups");
   fc.unlock("conjugate_gradient", "ewald");
