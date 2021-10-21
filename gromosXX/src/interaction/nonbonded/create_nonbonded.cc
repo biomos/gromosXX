@@ -35,8 +35,6 @@
 #include "../../interaction/nonbonded/interaction/mpi_nonbonded_master.h"
 #include "../../interaction/nonbonded/interaction/mpi_nonbonded_slave.h"
 
-#include "../../interaction/qmmm/qmmm_interaction.h"
-
 #include "../../io/ifp.h"
 
 #include "../../interaction/nonbonded/create_nonbonded.h"
