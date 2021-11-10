@@ -65,8 +65,8 @@ t_interaction_spec, t_perturbation_details>
     A_qj = topo.perturbed_solute().atoms()[j].A_charge();
     B_qi = topo.perturbed_solute().atoms()[i].B_charge();
     B_qj = topo.perturbed_solute().atoms()[j].B_charge();
-    A_q =  A_qi * A_qj;
-    B_q =  B_qi * B_qj;
+    A_q = A_qi * A_qj;
+    B_q = B_qi * B_qj;
 
     alpha_lj = (topo.perturbed_solute().atoms()[i].LJ_softcore() +
             topo.perturbed_solute().atoms()[j].LJ_softcore()) /
