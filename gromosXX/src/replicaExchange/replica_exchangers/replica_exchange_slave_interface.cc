@@ -1,5 +1,5 @@
 /* 
- * File:   replica_exchange_master.cc
+ * File:   replica_exchange_master_2d_l_T_HREMD.cc
  * Author: wissphil, sriniker
  * 
  * Created on April 29, 2011, 2:06 PM
@@ -45,7 +45,6 @@ re::replica_exchange_slave_interface::replica_exchange_slave_interface(io::Argum
                                                     simulation::MpiControl &replica_mpi_control) : 
         replica_exchange_base_interface(_args, cont, globalThreadID, replicaGraphMPIControl, replica_mpi_control) {
     #ifdef XXMPI
-
         DEBUG(2, "replica_exchange_slave_interface "<< globalThreadID <<":Constructor:\t START");
         
         if(replica_mpi_control.masterID == replica_mpi_control.threadID){
@@ -59,7 +58,7 @@ re::replica_exchange_slave_interface::replica_exchange_slave_interface(io::Argum
         
         DEBUG(2, "replica_exchange_slave_interface "<< globalThreadID <<":Constructor:\t DONE");
     #else
-       throw "Cannot initialize replica_exchange_master without MPI!"; 
+       throw "Cannot initialize replica_exchange_master_2d_l_T_HREMD without MPI!";
     #endif
         
 }
@@ -69,7 +68,6 @@ re::replica_exchange_slave_interface::~replica_exchange_slave_interface() {
 
 void re::replica_exchange_slave_interface::send_to_master() const {
 #ifdef XXMPI
-
   if(replicaInfoSender){
     DEBUG(2,"replica_exchange_slave_interface " << globalThreadID << ":send_to_master \t START");
       re::repInfo info;

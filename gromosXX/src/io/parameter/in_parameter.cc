@@ -2807,7 +2807,7 @@ void io::In_Parameter::read_REPLICA(simulation::Parameter &param,
     if (block.read_buffer(m_block[blockname], false) == 0) {
         block_read.insert(blockname);
 
-        block.get_next_parameter("RETL", param.replica.retl, "0,1", "");
+        block.get_next_parameter("RETL", param.replica.retl, "", "0,1");
 
         block.get_next_parameter("NRET", param.replica.num_T, ">=1", "");
 
@@ -3043,16 +3043,16 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
         param.reeds.reeds = reeds_control;
         DEBUG(3, "REPLICA_EDS BLOCK: reeds_control= " << param.reeds.reeds);
 
-        param.reeds.num_l = num_s;
+        param.reeds.num_s = num_s;
         param.reeds.num_states = num_states;
         param.reeds.num_eoff = num_eoff;
         DEBUG(3, "REPLICA_EDS BLOCK: NEOFF= " << param.reeds.num_eoff);
         param.reeds.trials = ntrials;
 
-        //param.reeds.lambda.resize();
-        param.reeds.lambda=s_vals;
+        //param.reeds.svals.resize();
+        param.reeds.svals=s_vals;
 
-        //param.reeds.lambda=s_vals;
+        //param.reeds.svals=s_vals;
         param.reeds.equilibrate = nEquilibrate;
         param.reeds.cont =cont_run;
         param.reeds.eds_stat_out = eds_stat_out;
@@ -3070,14 +3070,14 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
         //set size of vectors in param.reeds
         switch(reeds_control) {
               case 0: case 1: case 3:
-                  param.reeds.eds_para.resize(param.reeds.num_l);
-                  param.reeds.dt.resize(param.reeds.num_l);
-                  param.reeds.lambda.resize(param.reeds.num_l);
+                  param.reeds.eds_para.resize(param.reeds.num_s);
+                  param.reeds.dt.resize(param.reeds.num_s);
+                  param.reeds.svals.resize(param.reeds.num_s);
                   break;
               case 2:
-                  param.reeds.eds_para.resize(param.reeds.num_l * param.reeds.num_eoff);
-                  param.reeds.dt.resize(param.reeds.num_l * param.reeds.num_eoff);
-                  param.reeds.lambda.resize(param.reeds.num_l * param.reeds.num_eoff);
+                  param.reeds.eds_para.resize(param.reeds.num_s * param.reeds.num_eoff);
+                  param.reeds.dt.resize(param.reeds.num_s * param.reeds.num_eoff);
+                  param.reeds.svals.resize(param.reeds.num_s * param.reeds.num_eoff);
                   break;
         }
 
@@ -3088,7 +3088,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
         std::vector<double> temperatureV;
         switch(reeds_control){
           case 0: case 1: case 3:
-              for (int i = 0; i < param.reeds.num_l; ++i) {
+              for (int i = 0; i < param.reeds.num_s; ++i) {
                   dtV.push_back(param.step.dt);
                   temperatureV.push_back(param.reeds.temperature);
 
@@ -3129,7 +3129,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
               }
               break;
           case 2:
-              for (int i = 0; i < param.reeds.num_l * param.reeds.num_eoff; ++i) {
+              for (int i = 0; i < param.reeds.num_s * param.reeds.num_eoff; ++i) {
                   dtV.push_back(param.step.dt);
                   temperatureV.push_back(param.reeds.temperature);
 
@@ -3164,7 +3164,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
               DEBUG(2, "REPLICA_EDS BLOCK: assign all eds params - EIR");
               int count = 0;
               for(int i = 0; i < param.reeds.num_eoff; ++i){
-                for(int k = 0; k < param.reeds.num_l; ++k){
+                for(int k = 0; k < param.reeds.num_s; ++k){
                   for(unsigned int j = 0; j < param.reeds.eds_para[0].numstates; ++j){
                       param.reeds.eds_para[count].eir[j] = eir[i][j];
                       DEBUG(3, "REPLICA_EDS BLOCK: eir[i][j]= " << count << "\t" << param.reeds.eds_para[count].eir[j]);
@@ -3189,14 +3189,11 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
         DEBUG(2, "REPLICA_EDS BLOCK: assign all replicas param:");
 
         // check whether all baths have the same temperature (unambiguous kT)
-        param.reeds.num_T = param.replica.num_T =1;
-
+        param.replica.num_T =1;
         param.replica.temperature = temperatureV;
-        param.replica.lambda = param.reeds.lambda;
+        param.replica.lambda = param.reeds.svals;
         param.replica.dt = dtV;
-        param.replica.num_l = param.reeds.num_l ;
-        //num_eoff not used in replica_struct only in reeds_struct
-        //param.replica.num_eoff = param.reeds.num_eoff;
+        param.replica.num_l = param.reeds.num_s ;
         param.replica.trials = param.reeds.trials;
         param.replica.equilibrate = param.reeds.equilibrate;
         param.replica.cont = param.reeds.cont;

@@ -1,5 +1,5 @@
 /**
- * @file replica_exchange_base.h
+ * @file replica_exchange_base_2d_l_T_HREMD.h
 
  */
 
@@ -43,17 +43,17 @@
 namespace re {
 
   /**
-   * @class replica_exchange_base
+   * @class replica_exchange_base_2d_l_T_HREMD
    * One instance of this class per node managing one or more replicas. Master and
    * slave are derived from this class.
    */
-  class replica_exchange_base : public virtual replica_exchange_base_interface {
+  class replica_exchange_base_2d_l_T_HREMD : public virtual replica_exchange_base_interface {
   private:
     /**
      * copy constructor
      * don't allow copies because there's a bug in the copy constructor of configuration::configurtiaon
      */
-    replica_exchange_base(const replica_exchange_base &);
+    replica_exchange_base_2d_l_T_HREMD(const replica_exchange_base_2d_l_T_HREMD &);
   public:
     /**
      * Constructor
@@ -62,37 +62,63 @@ namespace re {
      * @param repIDs std::vector<int>, IDs of replicas the instance has to manage
      * @param _repMap std::map<int,int>, maps replica IDs to nodes; needed for communication
      */
-    replica_exchange_base(io::Argument _args, 
-                          unsigned int cont, 
-                          unsigned int globalThreadID, 
-                          replica_graph_control & replicaGraphMPIControl,
-                          simulation::MpiControl & replica_mpi_control);
+    replica_exchange_base_2d_l_T_HREMD(io::Argument _args,
+                                       unsigned int cont,
+                                       unsigned int globalThreadID,
+                                       replica_graph_control & replicaGraphMPIControl,
+                                       simulation::MpiControl & replica_mpi_control);
     /**
      * Destructor
      */
-    ~replica_exchange_base();
-    
-    /**
-     * Temperature of replica
-     */
-    double T;
-    /**
-     * Lambda of replica
-     */
-    double l;
+    ~replica_exchange_base_2d_l_T_HREMD();
+
     
   protected:
        /**
        * Setting RE-Param
        */
       void setParams() override;
-      
+
+        /**
+         *
+         * @param partnerReplicaID
+         * @return
+         */
+      double calculate_energy(const unsigned int partnerReplicaID) override;
+
+      void calculate_energy_helper(const unsigned int partnerReplicaID) override;
+
+
     /**
      * This function should be overriden in subclass
      */
-    virtual void determine_switch_probabilities();
-    
-      void swap_replicas_2D(const unsigned int partnerReplicaID);
+     virtual void determine_switch_probabilities();
+
+     int find_partner() const override;
+
+     void swap_replicas_2D(const unsigned int partnerReplicaMasterThreadID);
+
+     /**
+      *    Specifics
+      */
+     /**
+        * Sets lambda parameter to original value of replica
+        */
+     void set_lambda();
+     /**
+      * Sets temperature to original value of replica
+      */
+     void set_temp();
+     /**
+      * Sets lambda parameter to value of partner (for energy calculations)
+      */
+     void change_lambda(const unsigned int partnerReplicaID);
+     /**
+      * Sets temperature to value of partner (for energy calculations)
+      */
+     void change_temp(const unsigned int partnerReplicaID);
+
+
   };
 }
 

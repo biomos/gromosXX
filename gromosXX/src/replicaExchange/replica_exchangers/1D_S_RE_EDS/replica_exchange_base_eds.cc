@@ -76,6 +76,7 @@ re::replica_exchange_base_eds::~replica_exchange_base_eds() {
 //SWAPPING Functions
 void re::replica_exchange_base_eds::determine_switch_probabilities(){
     DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":determineSwitchPos:\t START");
+    replica->sim.param().reeds.eds_para[partnerReplicaID].pos_info.second = simulationID;
     swap_replicas_1D(partnerReplicaID);
     DEBUG(3,"replica_exchange_base_eds "<< globalThreadID <<":determineSwitchPos:\t DONE");
 }
@@ -83,13 +84,12 @@ void re::replica_exchange_base_eds::determine_switch_probabilities(){
 void re::replica_exchange_base_eds::swap_replicas_1D(const unsigned int partnerReplicaID) {
     DEBUG(4, "replica_exchange_base_eds:replica "<<  globalThreadID <<":swap1D - S:\t  START");
     DEBUG(4, "replica_exchange_base_eds:replica "<<  globalThreadID <<":swap1D - S:\t  sim: "<< simulationID << " \t\t "<< partnerReplicaID);
-    unsigned int partnerReplicaMasterThreadID = partnerReplicaID;
-    unsigned int num_s = replica->sim.param().reeds.num_l;
+    unsigned int num_s = replica->sim.param().reeds.num_s;
 
     // does partner exist?
     // the one with lower ID does probability calculation
     if (simulationID < partnerReplicaID) {
-        DEBUG(4, "replica_exchange_base_eds:replica "<<  globalThreadID <<":swap1D:\t  swap prop calculation :)");
+        DEBUG(4, "replica_exchange_base_eds:replica "<<  globalThreadID <<":swap1D:\t  swap prop calculation");
 
         // posts a MPI_Recv(...) matching the MPI_Send below
         probability = calc_probability(partnerReplicaID);
@@ -158,6 +158,35 @@ void re::replica_exchange_base_eds::swap_replicas_1D(const unsigned int partnerR
     DEBUG(1, "replica_exchange_base_eds:replica_exchange_base_eds:replica "<< globalThreadID <<":swap1D:\t  DONE");
 }
 
+int re::replica_exchange_base_eds::find_partner() const{
+    DEBUG(1,"replica_exchange_base_eds: FIND_PARTNER\tSTART\n\n");
+    unsigned int numS = replica->sim.param().reeds.num_s;
+    unsigned int ID = simulationID;
+    unsigned int partner = ID;
+    bool even = ID % 2 == 0;
+
+    if (run % 2 == 1) {
+        if (even){
+            partner = ID + 1;
+        }
+        else{
+            partner = ID - 1;
+        }
+    } else {
+        if (even){
+            partner = ID - 1;
+        }
+        else{
+            partner = ID + 1;
+        }
+    }
+    if (partner > numS - 1 || partner < 0) {
+        partner = ID;
+    }
+
+    DEBUG(1,"replica_exchange_base_eds: FIND_PARTNER\tDONE \tpartner: "<< partner <<" \n\n");
+    return partner;
+}
 
 void re::replica_exchange_base_eds::setParams(){
     // set some variables
@@ -258,7 +287,7 @@ void re::replica_exchange_base_eds::reset_eds() {//only reset switched parameter
 void re::replica_exchange_base_eds::change_eds(const unsigned int partner){//only change parameters, which are needed for energy calculation i.e.
 
   int idx;
-  if (replica->sim.param().reeds.num_l == 1){
+  if (replica->sim.param().reeds.num_s == 1){
     idx = 0;
   }
   else{
@@ -267,62 +296,11 @@ void re::replica_exchange_base_eds::change_eds(const unsigned int partner){//onl
 
   replica->sim.param().step.dt = replica->sim.param().reeds.dt[idx];
   replica->sim.param().eds= replica->sim.param().reeds.eds_para[idx];
+
+  force_orig = replica->conf.current().force;
+  virial_tensor_orig = replica->conf.current().virial_tensor;
 }
 
-////calc exchange Energy
- /*
- * calc_energy_eds_stat() is only used for statistical purposes in eds_stat()
- * In order to avoid any adjustment of the mpi communication and thus reducing the complexity, the
- * energy_calculation and probability calculations from replica.cc are not adjusted to work
- * for non-pairwise exchanges. Instead, calc_energy_eds_stat() calculates the potential energy
- * of the current configuration for a new smoothing parameter s.
- * The exchange probabilities can be calculated in a postprocessing step, using these energies
- * given in the energy_stat output files.
- */
-double re::replica_exchange_base_eds::calc_energy_eds_stat(double s){
-    double old_dt;
-    double old_s;
-    double old_eds_vr;
-    algorithm::Algorithm * ff;
-    if(replica->sim.param().eds.eds){
-          //to reset old state
-          old_dt=replica->sim.param().step.dt;
-          old_s=replica->sim.param().eds.s[0];
-          old_eds_vr=replica->conf.current().energies.eds_vr;
-          force_orig = replica->conf.current().force;
-          virial_tensor_orig = replica->conf.current().virial_tensor;
-          //only temporary change
-          replica->sim.param().eds.s[0]=s;
-
-          ff = replica->md.algorithm("EDS");
-    }
-    else {
-          print_info("eds_stat() i.e calc_energy_eds_stat() called for non EDS simulation!");
-      #ifdef XXMPI
-          MPI_Abort(MPI_COMM_WORLD, E_UNSPECIFIED);
-      #endif
-    }
-
-    //Calculate energies
-    if (ff->apply(replica->topo, replica->conf, replica->sim)) {
-      print_info("Error in Forcefield energy calculation!");
-     #ifdef XXMPI
-      MPI_Abort(MPI_COMM_WORLD, E_UNSPECIFIED);
-     #endif
-      return 1;
-    }
-
-    double energy=replica->conf.current().energies.eds_vr;
-
-    // reset old EDS state
-    replica->conf.current().energies.eds_vr=old_eds_vr;
-    replica->sim.param().eds.s[0] = old_s;
-    replica->sim.param().step.dt = old_dt;
-    replica->conf.current().force=force_orig;
-    replica->conf.current().virial_tensor=virial_tensor_orig;
-
-    return energy;
-}
 
 double re::replica_exchange_base_eds::calculate_energy_core() {
 
@@ -334,19 +312,19 @@ double re::replica_exchange_base_eds::calculate_energy_core() {
 
     ff = replica->md.algorithm("EDS");
 
-    //Calculate energies    
-    DEBUG(5, "replica_reeds_base_eds "<< globalThreadID <<":calculate_energy:\t calc energies"); 
+    //Calculate energies
+    DEBUG(5, "replica_reeds_base_eds "<< globalThreadID <<":calculate_energy:\t calc energies");
     if (ff->apply(replica->topo, replica->conf, replica->sim)) {
-      print_info("Error in Forcefield energy calculation!");
+        print_info("Error in Forcefield energy calculation!");
      #ifdef XXMPI
-      MPI_Abort(MPI_COMM_WORLD, E_UNSPECIFIED);
+        MPI_Abort(MPI_COMM_WORLD, E_UNSPECIFIED);
     #endif
-      return 1;
+        return 1;
     }
 
     //return energies
     DEBUG(5, "replica_reeds_base_edsreplica_reeds "<< globalThreadID <<":calculate_energy"
-            ":\t return energies"); 
+                                                                       ":\t return energies");
     energy=replica->conf.current().energies.eds_vr;
 
     replica->conf.current().force= force_orig;
@@ -354,23 +332,22 @@ double re::replica_exchange_base_eds::calculate_energy_core() {
     return energy;
 }
 
-double re::replica_exchange_base_eds::calculate_energy(const unsigned int selectedReplicaID) {
-    DEBUG(4, "replica_reeds_base_edsreplica_reeds "<< globalThreadID <<":calculate_energy:\t START"); 
- 
 
-    DEBUG(5, "replica_reeds_base_edsreplica_reeds "<< globalThreadID <<":calculate_energy:\t get Partner settings"); 
-    if(selectedReplicaID!=simulationID){ 
-        change_eds(selectedReplicaID);
-    }
+double re::replica_exchange_base_eds::calculate_energy(const unsigned int partnerThreadID) {
+    DEBUG(4, "replica_exchange_base_eds "<< globalThreadID <<":calculate_energy:\t  START");
 
-    double energy =  calculate_energy_core();
+    change_eds(partnerThreadID);
 
-    if(selectedReplicaID!=simulationID){
-        reset_eds();
-    }
+    double energy = calculate_energy_core();
 
+    reset_eds();
+    DEBUG(4, "replica_exchange_base_eds "<< globalThreadID <<":calculate_energy:\t  DONE");
 
-    DEBUG(4, "replica_reeds_base_edsreplica_reeds "<< globalThreadID <<":calculate_energy:\t DONE"); 
     return energy;
 }
 
+void re::replica_exchange_base_eds::calculate_energy_helper(const unsigned int partnerThreadID){
+    DEBUG(4, "replica_exchange_base_eds "<< globalThreadID <<":calculate_energy_helper:\t  START");
+
+    DEBUG(4, "replica_exchange_base_eds "<< globalThreadID <<":calculate_energy_helper:\t  DONE");
+}

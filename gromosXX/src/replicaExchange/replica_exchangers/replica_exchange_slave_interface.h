@@ -1,6 +1,6 @@
 /**
- * @file replica_exchange_slave.h
- * contains replica_exchange_slave class
+ * @file replica_exchange_slave_2d_l_T_HREMD.h
+ * contains replica_exchange_slave_2d_l_T_HREMD class
  * Modified June 18, 2021 - bschroed, srieder
  */
 
@@ -39,7 +39,7 @@
 namespace re {
 
   /**
-   * @class replica_exchange_slave
+   * @class replica_exchange_slave_2d_l_T_HREMD
    * 
    */
   class replica_exchange_slave_interface : public virtual replica_exchange_base_interface {
@@ -71,9 +71,6 @@ namespace re {
      * not allowed (yet)
      */
     replica_exchange_slave_interface(const replica_exchange_slave_interface &);
-    
-
-
   };
 }
 #endif	/* REPLICA_EXCHANGE_SLAVE_H */

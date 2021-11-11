@@ -1,5 +1,5 @@
 /*
- * File:   replica_exchange_base.cc
+ * File:   replica_exchange_base_2d_l_T_HREMD.cc
  * Author: wissphil, sriniker
  *
  * Created on April 29, 2011, 2:06 PM
@@ -80,7 +80,7 @@ re::replica_exchange_base_interface::replica_exchange_base_interface(io::Argumen
   m_replicaGraphMPIControl.comm = replicaGraphMPIControl.comm;
   
 
-  DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":Constructor:\t Constructor \t DONE " << replica->sim.param().reeds.num_l);
+  DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":Constructor:\t Constructor \t DONE ");
   #else
     throw "Cannot use send_to_master from replica_exchange_slave_eds without MPI!";
   #endif
@@ -125,19 +125,23 @@ void re::replica_exchange_base_interface::run_MD() {
 
     if(replicaInfoSender){
         updateReplica_params();
+    }else{
+        re::replica_MPI_Slave * rs = dynamic_cast<re::replica_MPI_Slave* >(replica);
+        rs->calculateEnergiesHelper();
     }
+    ++run;
+
   MPI_DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":run_MD:\t DONE");
 }
 
 
 //TODO: Maybe REMOVE in future?
 void re::replica_exchange_base_interface::updateReplica_params(){
-  DEBUG(3,"\n\nreplica_exchange_base_interface: UPDATEREPLICA_PARAMS\n\n");
+    DEBUG(3,"\n\nreplica_exchange_base_interface "<< globalThreadID <<": UPDATEREPLICA_PARAMS\n\n");
   // update replica information
   time = replica->sim.time();
   steps = replica->sim.steps();
-  ++run;
-  epot = calculate_energy_core();
+  epot = replica->calculateEnergies();
 }
 /*
  * REplica Exchanges
@@ -145,28 +149,58 @@ void re::replica_exchange_base_interface::updateReplica_params(){
 
 void re::replica_exchange_base_interface::swap(){
         DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":swap:    START");
-        if (replicaInfoSender) // different replica?
-        {
-            //determine swaps
-            determine_swaps();
+        #ifdef XXMPI
+            // find partner
+            DEBUG(3,"replica_exchange_base_interface"<< globalThreadID <<":determine_swaps:\t mySwapBuddy: "<< partnerReplicaID)
+            partnerReplicaID = find_partner();
 
-            //final execution of swap
-            if (switched) {
-                execute_swap(partnerReplicaID);
+            if (replicaInfoSender) // different replica?
+            {
+                //determine swaps
+                determine_swaps();
+
+                //final execution of swap
+                if (switched) {
+                    execute_swap(partnerReplicaID);
+                }
+                if(switched && replica->sim.param().replica.scale) {
+                    velscale(partnerReplicaID);
+                }
             }
-            if(switched && replica->sim.param().replica.scale) {
-                velscale(partnerReplicaID);
+            else {  // no exchange for helper replicas (they are only used in md_mpi run)
+                swapHelper();
+            }
+        #endif
+        DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":swap:    DONE");
+}
+
+void re::replica_exchange_base_interface::swapHelper(){
+    DEBUG(5,"replica_exchange_base_interface "<< globalThreadID <<":swap:\t I'm not a swapper!");
+    #ifdef XXMPI
+        //do we potentially need to do FF calcs?
+        if(replica->sim.param().replica.num_l>1){
+            //first update
+            DEBUG(5, "replica_exchange_base_interface"<<globalThreadID<<":  Slave\texchangeSTART " << exchange)
+            MPI_Bcast(&exchange , 1, MPI_INT, replica->replica_mpi_control.masterID, replica->replica_mpi_control.comm);
+            DEBUG(5, "replica_exchange_base_interface"<<globalThreadID<<":  Slave\texchangeEND " << exchange)
+
+            if(exchange){  // TH-RE-MD
+                DEBUG(5, "replica"<<globalThreadID<<":replica_exchange_base_interface:  \t Slave\tff help_energy")
+                if((replica->sim.param().replica.num_l>1 && replica->sim.param().replica.num_T == 1) ||               //case of 1D H-RE MD
+                (replica->sim.param().replica.num_l>1 && replica->sim.param().replica.num_T>1 && this->run%4%2==1))   //case of 2D TH-RE MD only Lam ex.
+                {
+                    calculate_energy_helper(partnerReplicaID);
+                }
             }
         }
-        else {  // no exchange for helper replicas (they are only used in md_mpi run)
-          DEBUG(5,"replica_exchange_base_interface "<< globalThreadID <<":swap:\t I'm not a swapper!");
-          partnerReplicaID = simulationID;
-          replica->sim.param().reeds.eds_para[partnerReplicaID].pos_info.second = simulationID;
-          
-          probability = 0.0;
-          switched = 0;
+        if(replica->sim.param().reeds.reeds>0){   //1D/2D RE-EDS
+            replica->sim.param().reeds.eds_para[partnerReplicaID].pos_info.second = simulationID;
         }
-      DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":swap:    DONE");
+    #endif
+
+    probability = 0.0;
+    switched = 0;
+
 }
 
 void re::replica_exchange_base_interface::write_final_conf() {
@@ -177,26 +211,27 @@ void re::replica_exchange_base_interface::write_final_conf() {
 }
 
 //RE
-
-
 //SWAPPING Functions
 void re::replica_exchange_base_interface::determine_swaps() {
     DEBUG(3,"replica_exchange_base_interface"<< globalThreadID <<":determine_swap:\t START");
-
-    // find partner
-    partnerReplicaID = find_partner();
-    replica->sim.param().reeds.eds_para[partnerReplicaID].pos_info.second = simulationID;
     DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":partnerID:partnerRep: "<<partnerReplicaID<<"\tsimulationID"<<simulationID);
+    #ifdef XXMPI
+        // get swap likelihood and discretize to bool
+        exchange = int(partnerReplicaID != simulationID);
+        if(replica->sim.param().replica.num_l>1 && replica->replica_mpi_control.numberOfThreads>1){ // if lambdaSims on, we need to do a forceField eval, to calc lam change
+            DEBUG(5, "replica_exchange_base_interface"<<globalThreadID<<":  Master\texchangeSTART " << exchange);
+            MPI_Bcast(&exchange, 1, MPI_INT, replica->replica_mpi_control.masterID, replica->replica_mpi_control.comm);
+        }
 
-    // get swap likelihood and discretize to bool 
-    if(partnerReplicaID != simulationID ){
-        DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":swap:\t DO swap!!:)");
-        determine_switch_probabilities();
-    } else {
-        DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":swap:\t No swap here!!:)");
-        probability = 0.0;
-        switched = 0;
-    }
+        if(exchange){
+            DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":swap:\t DO swap!!:)");
+            determine_switch_probabilities();
+        } else {
+            DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":swap:\t No swap here!!:)");
+            probability = 0.0;
+            switched = 0;
+        }
+    #endif
     DEBUG(3,"replica_exchange_base_interface"<< globalThreadID <<":determine_swap:\t DONE");
 }
 
@@ -207,119 +242,15 @@ void re::replica_exchange_base_interface::determine_switch_probabilities(){
     DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":determineSwitchPos:\t DONE");
 }
 
-/**OVERRIDE Possibly THIS NICE FUNCTION*/
+/**OVERRIDE THIS NICE FUNCTION*/
 int re::replica_exchange_base_interface::find_partner() const {
-    //TODO: REWRITE To get Replica ID BSCHROED
-    //TODO: get a 1D and a 2D function!
-  unsigned int numT = replica->sim.param().replica.num_T;
-  unsigned int numL = replica->sim.param().replica.num_l;
-
-  unsigned int ID = simulationID;
-
-  DEBUG(1,"replica_exchange_base_interface: FIND_PARTNER\tSTART\n\n");
-
-  unsigned int partner = ID; //makes sense why?
-  bool even = ID % 2 == 0;
-  bool evenRow = (ID / numT) % 2 == 0;
-  bool firstElement = (ID % numT == 0);
-  bool lastElement = (ID % numT == numT - 1);
-  bool numTeven = (numT % 2 == 0);
-
-  // only 1D-RE ?
-  if (numT == 1 || numL == 1) {
-      if (run % 2 == 1) {
-          if (even)
-              partner = ID + 1;
-          else
-              partner = ID - 1;
-      } else {
-          if (even)
-              partner = ID - 1;
-          else
-              partner = ID + 1;
-      }
-      if (partner > numL - 1 || partner < 0) {
-        partner = ID;
-      }
-  } else { // 2D-RE
-    // determine switch direction
-    switch (run % 4) {
-      case 0: // lambda direction
-        if (numTeven) {
-          if (even)
-            partner = ID - 1;
-          else
-            partner = ID + 1;
-          if (firstElement || lastElement)
-            partner = ID;
-        } else {
-          if (evenRow) {
-            if (even)
-              partner = ID - 1;
-            else
-              partner = ID + 1;
-          } else {
-            if (even)
-              partner = ID + 1;
-            else
-              partner = ID - 1;
-          }
-          if (firstElement)
-            partner = ID;
-        }
-        break;
-
-      case 1: // temp-direction
-        if (evenRow)
-          partner = ID + numT;
-        else
-          partner = ID - numT;
-        break;
-
-      case 2: // lambda direction
-        if (numTeven) {
-          if (even)
-            partner = ID + 1;
-          else
-            partner = ID - 1;
-        } else {
-          if (evenRow) {
-            if (even)
-              partner = ID + 1;
-            else
-              partner = ID - 1;
-            if (lastElement)
-              partner = ID;
-          } else {
-            if (even)
-              partner = ID - 1;
-            else
-              partner = ID + 1;
-          }
-          if (lastElement)
-            partner = ID;
-        }
-        break;
-      case 3:// temp-direction WHY?
-        if (evenRow)
-          partner = ID - numT;
-        else
-          partner = ID + numT;
-        break;
-    }
-  }
-  // partner out of range ? - Do we really need this or is it more a hack hiding bugs?
-  if (partner > numT * numL - 1 || partner < 0)
-    partner = ID;
-
-  DEBUG(1,"replica_exchange_base_interface: FIND_PARTNER\tDONE\n\n");
-
-  return partner;
+    DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":find_partner:\t START");
+    throw "Implement the find_partner Function!";
+    DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":find_partner:\t DONE");
 }
 
 
 //Execute Swapping
-/**OVERRIDE Possibly THIS NICE FUNCTION*/
 void re::replica_exchange_base_interface::execute_swap(const unsigned int partnerReplicaID) {
     DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":executeSwap:\t START");
     if (simulationID < partnerReplicaID) {
@@ -334,17 +265,15 @@ void re::replica_exchange_base_interface::execute_swap(const unsigned int partne
     DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":executeSwap:\t DONE");
 }
 
-double re::replica_exchange_base_interface::calc_probability(const unsigned int partnerReplicaID) {
+/**OVERRIDE Possibly THIS NICE FUNCTION*/
+double re::replica_exchange_base_interface::calc_probability(const unsigned int partnerReplicaMasterThreadID) {
 
   DEBUG(1,"\n\nreplica "<<globalThreadID<<":replica_exchange_base_interface: CALC_PROBABILITY by ID:" << simulationID << "\n");
-
-  unsigned int partnerReplicaMasterThreadID = partnerReplicaID;
-
   double delta;
   const double b1 = 1.0 / (math::k_Boltzmann * T);
-  const double b2 = 1.0 / (math::k_Boltzmann * replica->sim.param().replica.temperature[partnerReplicaID % replica->sim.param().replica.num_T]);
+  const double b2 = 1.0 / (math::k_Boltzmann * replica->sim.param().replica.temperature[partnerReplicaMasterThreadID % replica->sim.param().replica.num_T]);
 
-  bool sameLambda = (l == replica->sim.param().replica.lambda[partnerReplicaID / replica->sim.param().replica.num_T]);// horizontal switch with same lambda?
+  bool sameLambda = (l == replica->sim.param().replica.lambda[partnerReplicaMasterThreadID / replica->sim.param().replica.num_T]);// horizontal switch with same lambda?
 
   if (sameLambda) {
     // use simple formula
@@ -353,14 +282,11 @@ double re::replica_exchange_base_interface::calc_probability(const unsigned int 
 #ifdef XXMPI
     MPI_Status status;
     DEBUG(1,"\n\nreplica_exchange_base_interface: CALC_PROBABILITY before Recv\n");
-    //std::cerr << "SwapStart: "<< energies[0] << std::endl; 
     MPI_Recv(&energies[0], 2, MPI_DOUBLE, partnerReplicaMasterThreadID, SWITCHENERGIES,  replicaGraphMPIControl().comm, &status);
     DEBUG(1,"\n\nreplica_exchange_base_interface: CALC_PROBABILITY after Recv\n");
 #endif
-
     epot_partner = energies[0];
     delta = (b1 - b2)*(epot_partner - epot); //*  (E21 - E11=
-
   } else {
     // 2D formula
     /*
@@ -379,7 +305,7 @@ double re::replica_exchange_base_interface::calc_probability(const unsigned int 
     const double E12 = energies[1];
 
     const double E11 = epot;
-    const double E21 = calculate_energy(partnerReplicaID);
+    const double E21 = calculate_energy(partnerReplicaMasterThreadID);
 
     // store this as the partner energy
     epot_partner = E21;
@@ -389,12 +315,16 @@ double re::replica_exchange_base_interface::calc_probability(const unsigned int 
     //std::cerr << "b1: " << b1 << " b2: " << b2 << std::endl;
     //std::cerr << "E11: " << E11 << " E22: " << E22 << std::endl;
     //std::cerr << "E21: " << E21 << " E12: " << E12 << std::endl;
+    DEBUG(8,"\nreplica_exchange_base_interface: CALC_PROBABILITY - E11 "<<E11 <<"E12 "<<E12 <<"E21 "<<E21 <<"E22"<< E22 << "\n");
+    DEBUG(8,"replica_exchange_base_interface: CALC_PROBABILITY - b1 "<<b1 <<" b2 "<<b2<< "\n");
 
     delta = b1 * (E12 - E11) - b2 * (E22 - E21);
   }
+  DEBUG(5,"replica_exchange_base_interface: CALC_PROBABILITY - before pressure delta: "<<delta << "\n");
 
   // NPT? add PV term
-  if (replica->sim.param().pcouple.scale != math::pcouple_off) {
+  if (replica->sim.param().pcouple.scale != math::pcouple_off)
+  {
     math::Box box_partner = replica->conf.current().box;
 #ifdef XXMPI
     MPI_Status status;
@@ -410,62 +340,29 @@ double re::replica_exchange_base_interface::calc_probability(const unsigned int 
               + replica->sim.param().pcouple.pres0(2,2)) / 3.0;
     delta += pressure * (b1 - b2) * (V2 - V1);
   }
+  DEBUG(5,"replica_exchange_base_interface: CALC_PROBABILITY - delta: "<<delta << "\n");
 
-  if (delta < 0.0)
+  if (delta < 0.0){
     return 1.0;
-  else
+  }
+  else {
     return exp(-delta);
+  }
 }
 
-//THIS COULD GO TO REPLICA and into the func above! @bschroed
-double re::replica_exchange_base_interface::calculate_energy_core() {
-    DEBUG(5, "replica"<<globalThreadID<<":replica_exchange_base_interface:CALC energy_Core\tSTART")
-  double energy = 0.0;
-  //chris: you do need to re-evaluate the energy, otherwise you get the energy of before the previous step
-  algorithm::Algorithm * ff = replica->md.algorithm("Forcefield");
 
-  if (ff->apply(replica->topo, replica->conf, replica->sim)) {
-    print_info("Error in energy calculation!");
- #ifdef XXMPI
-    MPI_Abort( replicaGraphMPIControl().comm, E_UNSPECIFIED);
-#endif
-    return 1;
-  }
-
-  replica->conf.current().energies.calculate_totals();
-  switch (replica->sim.param().xrayrest.replica_exchange_parameters.energy_switcher) {
-    case simulation::energy_tot:
-      energy = replica->conf.current().energies.potential_total + replica->conf.current().energies.special_total;
-      break;
-
-    case simulation::energy_phys:
-      energy = replica->conf.current().energies.potential_total;
-      break;
-    case simulation::energy_special:
-      energy = replica->conf.current().energies.special_total;
-      break;
-    default:
-      print_info("Error in energy switching!");
-#ifdef XXMPI
-      MPI_Abort(replicaGraphMPIControl().comm, E_UNSPECIFIED);
-#endif
-  }
-  DEBUG(5, "CALC energy_Core\tDONE")
-
-  return energy;
+void re::replica_exchange_base_interface::setParams(){
+    DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":setParams:\t START");
+    throw "Implement the setParams Function!";
+    DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":setParams:\t DONE");
 }
 
 double re::replica_exchange_base_interface::calculate_energy(const unsigned int partnerThreadID) {
-  DEBUG(4, "replica "<< globalThreadID <<":calculate_energy:\t  START");
+    throw "Implement the calculate_energy Function!";
+}
 
-  change_lambda(partnerThreadID);
-
-  double energy = calculate_energy_core();
-
-  set_lambda();
-  DEBUG(4, "replica "<< globalThreadID <<":calculate_energy:\t  DONE");
-
-  return energy;
+void re::replica_exchange_base_interface::calculate_energy_helper(const unsigned int partnerThreadID) {
+    throw "Implement the calculate_energy_helper Function!";
 }
 
 void re::replica_exchange_base_interface::exchange_averages() {
@@ -574,68 +471,6 @@ void re::replica_exchange_base_interface::velscale(int unsigned partnerReplica){
   }
 }
 
-//TODO: mve to 2D_T_lambda ?
-//Lambda Exchange (Kinda Hamiltonian Exchange)
-void re::replica_exchange_base_interface::set_lambda() {
-  DEBUG(5,"\n\nreplica_exchange_base_interface: SET_LAMBDA\n\n");
-  // change Lambda in simulation
-  replica->sim.param().perturbation.lambda = l;
-  replica->topo.lambda(l);
-  // twice, to set old_lambda... STILL NEEDED
-  replica->topo.lambda(l);
-  replica->topo.update_for_lambda();
-  // set corresponding timestep
-  replica->sim.param().step.dt = dt;
-}
-
-void re::replica_exchange_base_interface::set_temp() {
-  DEBUG(5,"\n\nreplica_exchange_base_interface: SET_TEMP\n\n");
-  // change T in simulation
-  replica->sim.param().stochastic.temp = T;
-
-  for (unsigned int i = 0; i < replica->sim.multibath().size(); ++i) {
-    assert(&replica->sim.multibath()[i].temperature != 0);
-    replica->sim.multibath()[i].temperature = T;
-  }
-}
-
-void re::replica_exchange_base_interface::change_lambda(const unsigned int partnerReplicaID) {
-  DEBUG(5,"\n\nreplica_exchange_base_interface: CHANGE_LAMBDA\n\n");
-  int idx;
-  if (replica->sim.param().replica.num_l == 1)
-    idx = 0;
-  else
-    idx = partnerReplicaID / replica->sim.param().replica.num_T;
-  const double lambda = replica->sim.param().replica.lambda[idx];
-  const double dt = replica->sim.param().replica.dt[idx];
-  // change Lambda in simulation
-  replica->sim.param().perturbation.lambda = lambda;
-  replica->topo.lambda(lambda);
-  // twice, to set old_lambda... STILL NEEDED
-  replica->topo.lambda(lambda);
-  replica->topo.update_for_lambda();
-  // set corresponding timestep
-  replica->sim.param().step.dt = dt;
-}
-
-void re::replica_exchange_base_interface::change_temp(const unsigned int partnerReplicaID) {
-  DEBUG(5,"\n\nreplica_exchange_base_interface: CHANGE_TEMP\n\n");
-  int idx;
-  if (replica->sim.param().replica.num_T == 1)
-    idx = 0;
-  else
-    idx = partnerReplicaID % replica->sim.param().replica.num_T;
-  const double temp = replica->sim.param().replica.temperature[idx];
-  // change T in simulation
-  replica->sim.param().stochastic.temp = temp;
-
-  for (unsigned int i = 0; i < replica->sim.multibath().size(); ++i) {
-    assert(&replica->sim.multibath()[i].temperature != 0);
-    replica->sim.multibath()[i].temperature = temp;
-  }
-}
-
-//TODO: REMOVE
 // IO
 void re::replica_exchange_base_interface::print_coords(std::string name) {
 
@@ -653,11 +488,12 @@ void re::replica_exchange_base_interface::print_coords(std::string name) {
     received_traj.write(replica->conf, replica->topo, replica->sim, io::final);
 }
 
+// Getter&Setter
 unsigned int re::replica_exchange_base_interface::get_stepsPerRun(){
     return stepsPerRun;
 };
 
-//TODO: REMOVE
+
 void re::replica_exchange_base_interface::print_info(std::string bla) const {
   std::cout << "\n" << bla << std::endl;
   std::cout << "#"
@@ -665,27 +501,18 @@ void re::replica_exchange_base_interface::print_info(std::string bla) const {
           << " "
           << std::setw(7) << "partner"
           << std::setw(7) << "run"
-
-          << std::setw(13) << "li"
-          << std::setw(13) << "Ti"
           << std::setw(14) << "Epoti"
-          << std::setw(13) << "lj"
-          << std::setw(13) << "Tj"
           << std::setw(14) << "Epotj"
           << std::setw(13) << "p"
           << std::setw(4) << "s"
           << "\n";
-  //And this makes sense why again??? todo: bschroed
+
   std::cout << std::setw(6) << (simulationID+1)
           << " "
           << std::setw(6) << partnerReplicaID
           << std::setw(6) << run
-          << std::setw(13) << l        //TODO into fitting Exchange class
-          << std::setw(13) << T        //TODO into fitting Exchange class
           << " "
           << std::setw(18) << epot
-          << std::setw(13) << l        //TODO into fitting Exchange class
-          << std::setw(13) << T        //TODO into fitting Exchange class
           << " "
           << std::setw(18) << epot_partner
           << std::setw(13) << probability

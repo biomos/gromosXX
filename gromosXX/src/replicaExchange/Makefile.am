@@ -13,15 +13,12 @@ xxinclude_HEADERS = repex_mpi.h\
 	replica_exchangers/replica_exchange_base_interface.h\
 	replica_exchangers/replica_exchange_master_interface.h\
 	replica_exchangers/replica_exchange_slave_interface.h\
-	replica_exchangers/2D_T_lambda_REPEX/replica_exchange_base.cc\
-	replica_exchangers/2D_T_lambda_REPEX/replica_exchange_master.cc\
-	replica_exchangers/2D_T_lambda_REPEX/replica_exchange_slave.cc\
+	replica_exchangers/2D_T_lambda_REPEX/replica_exchange_base_2d_l_T_HREMD.h\
+	replica_exchangers/2D_T_lambda_REPEX/replica_exchange_master_2d_l_T_HREMD.h\
+	replica_exchangers/2D_T_lambda_REPEX/replica_exchange_slave_2d_l_T_HREMD.h\
 	replica_exchangers/1D_S_RE_EDS/replica_exchange_base_eds.h\
 	replica_exchangers/1D_S_RE_EDS/replica_exchange_master_eds.h\
 	replica_exchangers/1D_S_RE_EDS/replica_exchange_slave_eds.h\
-    replica_exchangers/1D_S_HSA_EDS/hamiltonian_simulatedAnnealing_base_eds.h\
-	replica_exchangers/1D_S_HSA_EDS/hamiltonian_simulatedAnnealing_master_eds.h\
-	replica_exchangers/1D_S_HSA_EDS/hamiltonian_simulatedAnnealing_slave_eds.h\
 	replica_exchangers/2D_S_Eoff_RE_EDS/replica_exchange_base_2d_s_eoff_eds.h\
 	replica_exchangers/2D_S_Eoff_RE_EDS/replica_exchange_master_2d_s_eoff_eds.h\
 	replica_exchangers/2D_S_Eoff_RE_EDS/replica_exchange_slave_2d_s_eoff_eds.h
@@ -37,15 +34,12 @@ libgrorepex_la_SOURCES = replicaExchange.cpp\
     replica_exchangers/replica_exchange_base_interface.cc\
     replica_exchangers/replica_exchange_master_interface.cc\
     replica_exchangers/replica_exchange_slave_interface.cc\
-    replica_exchangers/2D_T_lambda_REPEX/replica_exchange_base.cc\
-    replica_exchangers/2D_T_lambda_REPEX/replica_exchange_master.cc\
-    replica_exchangers/2D_T_lambda_REPEX/replica_exchange_slave.cc\
+    replica_exchangers/2D_T_lambda_REPEX/replica_exchange_base_2d_l_T_HREMD.cc\
+    replica_exchangers/2D_T_lambda_REPEX/replica_exchange_master_2d_l_T_HREMD.cc\
+    replica_exchangers/2D_T_lambda_REPEX/replica_exchange_slave_2d_l_T_HREMD.cc\
     replica_exchangers/1D_S_RE_EDS/replica_exchange_base_eds.cc\
     replica_exchangers/1D_S_RE_EDS/replica_exchange_master_eds.cc\
     replica_exchangers/1D_S_RE_EDS/replica_exchange_slave_eds.cc\
-    replica_exchangers/1D_S_HSA_EDS/hamiltonian_simulatedAnnealing_base_eds.cc\
-    replica_exchangers/1D_S_HSA_EDS/hamiltonian_simulatedAnnealing_master_eds.cc\
-    replica_exchangers/1D_S_HSA_EDS/hamiltonian_simulatedAnnealing_slave_eds.cc\
     replica_exchangers/2D_S_Eoff_RE_EDS/replica_exchange_base_2d_s_eoff_eds.cc\
     replica_exchangers/2D_S_Eoff_RE_EDS/replica_exchange_master_2d_s_eoff_eds.cc\
     replica_exchangers/2D_S_Eoff_RE_EDS/replica_exchange_slave_2d_s_eoff_eds.cc

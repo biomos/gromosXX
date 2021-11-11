@@ -45,7 +45,7 @@ namespace re{
          * @return 
          */
         void run_MD() override;
-
+        double calculateEnergies() override;
 
     private:
         void send_coordinates();

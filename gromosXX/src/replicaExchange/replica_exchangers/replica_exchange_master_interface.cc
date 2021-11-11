@@ -1,5 +1,5 @@
 /*
- * File:   replica_exchange_master.cc
+ * File:   replica_exchange_master_2d_l_T_HREMD.cc
  * Author: wissphil, sriniker
  *
  * Created on April 29, 2011, 2:18 PM
@@ -82,7 +82,7 @@ re::replica_exchange_master_interface::replica_exchange_master_interface(io::Arg
   // set output file
  DEBUG(2,"replica_exchange_master_interface "<< globalThreadID <<":Constructor:\t DONE");
 #else
-   throw "Cannot initialize replica_exchange_master without MPI!";
+   throw "Cannot initialize replica_exchange_master_2d_l_T_HREMD without MPI!";
 #endif
 }
 
@@ -125,7 +125,7 @@ void re::replica_exchange_master_interface::receive_from_all_slaves() {
     DEBUG(2,"replica_exchange_master_interface "<< globalThreadID <<":receive_from_all_slaves:\t " << "time used for receiving all messages: " << MPI_Wtime() - start << " seconds\n");
     DEBUG(2,"replica_exchange_master_interface "<< globalThreadID <<":receive_from_all_slaves:\t DONE: \n");
     #else
-     throw "Cannot use replica_exchange_master without MPI!";
+     throw "Cannot use replica_exchange_master_2d_l_T_HREMD without MPI!";
     #endif
 }
 
@@ -191,10 +191,12 @@ void re::replica_exchange_master_interface::write() {
             << std::setw(13) << replicaData[replicaData[treplicaID].partner].l
             << std::setw(13) << replicaData[replicaData[treplicaID].partner].T
             << " ";
-    if(replicaData[treplicaID].l == replicaData[replicaData[treplicaID].partner].l)
-	repOut << std::setw(18) << replicaData[replicaData[treplicaID].partner].epot;
-    else
+    if(replicaData[treplicaID].l == replicaData[replicaData[treplicaID].partner].l){
+	    repOut << std::setw(18) << replicaData[replicaData[treplicaID].partner].epot;
+    }
+    else{
         repOut << std::setw(18) << replicaData[treplicaID].epot_partner;
+    }
     repOut  << std::setw(13) << replicaData[treplicaID].probability
             << std::setw(6) << replicaData[treplicaID].switched
             << std::endl;

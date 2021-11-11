@@ -172,6 +172,8 @@ void re::replica_exchange_base_2d_s_eoff_eds::init_eds_stat(){
 // top layer 
 void re::replica_exchange_base_2d_s_eoff_eds::determine_switch_probabilities(){
     DEBUG(3,"replica_exchange_base_2d_s_eoff_eds "<< globalThreadID <<":determine_switch_probabilities:\t DONE");
+    replica->sim.param().reeds.eds_para[partnerReplicaID].pos_info.second = simulationID;
+
     if(run % 2 == 1){
         swap_s(partnerReplicaID);
     }
@@ -185,7 +187,7 @@ void re::replica_exchange_base_2d_s_eoff_eds::determine_switch_probabilities(){
 int re::replica_exchange_base_2d_s_eoff_eds::find_partner() const {
   unsigned int num_eoff = replica->sim.param().reeds.num_eoff;
   DEBUG(3,"replica_exchange_base_2d_s_eoff_eds:find_partner: num_eoff= " << num_eoff << "\n");
-  unsigned int num_l = replica->sim.param().reeds.num_l;
+  unsigned int num_l = replica->sim.param().reeds.num_s;
   DEBUG(3,"replica_exchange_base_2d_s_eoff_eds:find_partner: num_l= " << num_l << "\n");
   unsigned int numT = replica->sim.param().replica.num_T;
   DEBUG(3,"replica_exchange_base_2d_s_eoff_eds:find_partner: numT= " << numT << "\n");
@@ -287,7 +289,7 @@ int re::replica_exchange_base_2d_s_eoff_eds::partner_eoffDim_numEoffeven_firstCa
   unsigned int partner = ID;
 
   unsigned int num_eoff = replica->sim.param().reeds.num_eoff;
-  unsigned int num_l = replica->sim.param().reeds.num_l;
+  unsigned int num_l = replica->sim.param().reeds.num_s;
   unsigned int numReps = num_l * num_eoff;
   bool periodic = replica->sim.param().reeds.periodic;
 
@@ -319,7 +321,7 @@ int re::replica_exchange_base_2d_s_eoff_eds::partner_eoffDim_numEoffodd_firstCas
   unsigned int partner = ID;
 
   unsigned int num_eoff = replica->sim.param().reeds.num_eoff;
-  unsigned int num_l = replica->sim.param().reeds.num_l;
+  unsigned int num_l = replica->sim.param().reeds.num_s;
   unsigned int numReps = num_l * num_eoff;
   bool periodic = replica->sim.param().reeds.periodic;
 
@@ -355,7 +357,7 @@ int re::replica_exchange_base_2d_s_eoff_eds::partner_eoffDim_numEoffeven_secondC
   unsigned int partner = ID;
 
   unsigned int num_eoff = replica->sim.param().reeds.num_eoff;
-  unsigned int num_l = replica->sim.param().reeds.num_l;
+  unsigned int num_l = replica->sim.param().reeds.num_s;
   unsigned int numReps = num_l * num_eoff;
   bool periodic = replica->sim.param().reeds.periodic;
 
@@ -387,7 +389,7 @@ int re::replica_exchange_base_2d_s_eoff_eds::partner_eoffDim_numEoffodd_secondCa
   unsigned int partner = ID;
 
   unsigned int num_eoff = replica->sim.param().reeds.num_eoff;
-  unsigned int num_l = replica->sim.param().reeds.num_l;
+  unsigned int num_l = replica->sim.param().reeds.num_s;
   unsigned int numReps = num_l * num_eoff;
   bool periodic = replica->sim.param().reeds.periodic;
 
@@ -424,7 +426,7 @@ int re::replica_exchange_base_2d_s_eoff_eds::partner_eoffDim_numEoffodd_cyclic()
   int partner = ID;
 
   int num_eoff = replica->sim.param().reeds.num_eoff;
-  int num_l = replica->sim.param().reeds.num_l;
+  int num_l = replica->sim.param().reeds.num_s;
   int numReps = num_l * num_eoff;
 
   bool evenCol = (ID / num_l) % 2 == 0;//1st col is here the 0th col and therefore even!
@@ -492,7 +494,7 @@ void re::replica_exchange_base_2d_s_eoff_eds::swap_s(const unsigned int partnerR
   DEBUG(4, "replica "<<  globalThreadID <<":swap:\t  START");
 
   unsigned int partnerReplicaMasterThreadID = partnerReplicaID;
-  unsigned int numReps = replica->sim.param().reeds.num_l * replica->sim.param().reeds.num_eoff;
+  unsigned int numReps = replica->sim.param().reeds.num_s * replica->sim.param().reeds.num_eoff;
 
   // does partner exist?
   if (partnerReplicaID < numReps && partnerReplicaID != simulationID) {
@@ -588,7 +590,7 @@ void re::replica_exchange_base_2d_s_eoff_eds::swap_eoff(const unsigned int partn
 
 
   unsigned int partnerReplicaMasterThreadID = partnerReplicaID;
-  unsigned int numReps = replica->sim.param().reeds.num_l * replica->sim.param().reeds.num_eoff;
+  unsigned int numReps = replica->sim.param().reeds.num_s * replica->sim.param().reeds.num_eoff;
 
   // does partner exist?
   if (partnerReplicaID < numReps && partnerReplicaID != simulationID) {
@@ -784,7 +786,7 @@ void re::replica_exchange_base_2d_s_eoff_eds::change_eds(const unsigned int part
 
   DEBUG(3,"replica_exchange_base_2d_s_eoff_eds: CHANGE_EDS\n\n");
   int idx;
-  if (replica->sim.param().reeds.num_l == 1){
+  if (replica->sim.param().reeds.num_s == 1){
     idx = 0;
   }
   else{
@@ -853,44 +855,58 @@ double re::replica_exchange_base_2d_s_eoff_eds::calc_energy_eds_stat(double s){
     return energy;
 }
 
-double re::replica_exchange_base_2d_s_eoff_eds::calculate_energy_core() {
-
-    double energy = 0.0;
-    algorithm::Algorithm * ff;
-
-     ff = replica->md.algorithm("EDS");
-
-    //Calculate energies
-    DEBUG(5, "replica_reeds "<< globalThreadID <<":calculate_energy:\t calc energies");
-    if (ff->apply(replica->topo, replica->conf, replica->sim)) {
-      print_info("Error in Forcefield energy calculation!");
-     #ifdef XXMPI
-      MPI_Abort(MPI_COMM_WORLD, E_UNSPECIFIED);
-    #endif
-      return 1;
-    }
-
-    //return energies
-    DEBUG(5, "replica_reeds "<< globalThreadID <<":calculate_energy"
-            ":\t return energies");
-    energy=replica->conf.current().energies.eds_vr;
-    return energy;
-}
-
 
 double re::replica_exchange_base_2d_s_eoff_eds::calculate_energy(const unsigned int selectedReplicaID) {
-    DEBUG(4, "replica_reeds "<< globalThreadID <<":calculate_energy:\t START");
+    DEBUG(4, "replica_exchange_base_2d_s_eoff_eds "<< globalThreadID <<":calculate_energy:\t START");
 
-    DEBUG(5, "replica_reeds "<< globalThreadID <<":calculate_energy:\t get Partner settings");
+    DEBUG(5, "replica_exchange_base_2d_s_eoff_eds "<< globalThreadID <<":calculate_energy:\t get Partner settings");
     if(selectedReplicaID!=simulationID){
         change_eds(selectedReplicaID);
     }
 
-    double energy =  calculate_energy_core();
+    double energy = calculate_energy_core();
 
     if(selectedReplicaID!=simulationID){
         reset_eds();
     }
-    DEBUG(4, "replica_reeds "<< globalThreadID <<":calculate_energy:\t DONE");
+    DEBUG(4, "replica_exchange_base_2d_s_eoff_eds "<< globalThreadID <<":calculate_energy:\t DONE");
     return energy;
+}
+
+
+double re::replica_exchange_base_2d_s_eoff_eds::calculate_energy_core() {
+
+    force_orig = replica->conf.current().force;
+    virial_tensor_orig = replica->conf.current().virial_tensor;
+
+    double energy = 0.0;
+    algorithm::Algorithm * ff;
+
+    ff = replica->md.algorithm("EDS");
+
+    //Calculate energies
+    DEBUG(5, "replica_reeds_base_eds "<< globalThreadID <<":calculate_energy:\t calc energies");
+    if (ff->apply(replica->topo, replica->conf, replica->sim)) {
+        print_info("Error in Forcefield energy calculation!");
+     #ifdef XXMPI
+        MPI_Abort(MPI_COMM_WORLD, E_UNSPECIFIED);
+    #endif
+        return 1;
+    }
+
+    //return energies
+    DEBUG(5, "replica_reeds_base_edsreplica_reeds "<< globalThreadID <<":calculate_energy"
+                                                                       ":\t return energies");
+    energy=replica->conf.current().energies.eds_vr;
+
+    replica->conf.current().force= force_orig;
+    replica->conf.current().virial_tensor= virial_tensor_orig;
+    return energy;
+}
+
+
+void re::replica_exchange_base_2d_s_eoff_eds::calculate_energy_helper(const unsigned int selectedReplicaID) {
+    DEBUG(4, "replica_exchange_base_2d_s_eoff_eds "<< globalThreadID <<":calculate_energy:\t START");
+
+    DEBUG(4, "replica_exchange_base_2d_s_eoff_eds "<< globalThreadID <<":calculate_energy:\t DONE");
 }

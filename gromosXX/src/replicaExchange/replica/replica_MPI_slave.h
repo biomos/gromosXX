@@ -62,11 +62,19 @@ namespace re {
          * simulation
          */
         //simulation::Simulation sim;
+
         /**
          * run MD
          * @return 
          */
         void run_MD() override;
+
+        /**
+         * help updating rep Energies
+         * @return
+         */
+        void calculateEnergiesHelper();
+
         
         /**
          *  init -  this is an intentaionally empty func.

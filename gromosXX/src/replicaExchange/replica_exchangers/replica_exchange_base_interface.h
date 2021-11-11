@@ -1,5 +1,5 @@
 /**
- * @file replica_exchange_base.h
+ * @file replica_exchange_base_2d_l_T_HREMD.h
  * Modified June 18, 2021 - bschroed, srieder
  */
 
@@ -44,7 +44,7 @@
 namespace re {
 
   /**
-   * @class replica_exchange_base
+   * @class replica_exchange_base_2d_l_T_HREMD
    * One instance of this class per node managing one or more replicas. Master and
    * slave are derived from this class.
    */
@@ -145,15 +145,15 @@ namespace re {
      */
     unsigned int globalThreadID;
 
-    //////////////////////////////////////////////////////////
-        /**
+    /////////////////////////////////////////////////////////
+    /**
      * Temperature of replica
      */
     double T;
     /**
      * Lambda of replica
      */
-    double l;
+    double l;   //think about removing here and putting into l_T HREMD
     ////////////////////////////////////////////////////////
 
     ////Simulation_MPI
@@ -240,10 +240,14 @@ namespace re {
      * current simulation time
      */
     double time;
-      
-        
+
     /**
-     *  Sending data or not?
+     * should an exchange happen, also for required MPI communication
+     */
+    unsigned int exchange {0};
+
+    /**
+     *  Sending data in the replica graph or not?
      */
     bool replicaInfoSender {true};
     
@@ -263,12 +267,12 @@ namespace re {
     /**
      * Setting RE-Param
      */
-    virtual void setParams(){};
+    virtual void setParams();
 
 
     //Replica Exchange Functions
     ////SWAP FUNCTIONS
-        /**
+    /**
     * finds out if configurations are to be switched; sets switched to true if so
     */
     //virtual void swap_coordinates(const unsigned int partnerReplicaID);
@@ -288,21 +292,18 @@ namespace re {
     
     //EXECUTE SWAP:
     virtual void execute_swap(const unsigned int partnerReplicaID);
-    
 
-
-    
-    
-    /**
-     * calculates potential energy for current configuration with current lambda
-     */
-    virtual double calculate_energy_core();
     /**
      * calculates potential energy of current configuration with lambda(Hamiltonian) of partner with the partnerThreadID
      * @param partner ID of partner
      * @return potential energy of configuration with lambda(Hamiltonian) of partner
      */
     virtual double calculate_energy(const unsigned int partnerReplicaID);
+
+    /**
+     * TODO: write!
+     */
+    virtual void calculate_energy_helper(const unsigned int partnerReplicaID);
 
     /**
     * switch back the averages
@@ -315,7 +316,7 @@ namespace re {
      * @param partnerRank
      * @return probability
      */
-    virtual double calc_probability(const unsigned int partnerReplicaID);
+    virtual double calc_probability(const unsigned int partnerReplicaMasterThreadID);
 
     //SWAP COORDINATES FUNCTIONS
     /**
@@ -324,12 +325,14 @@ namespace re {
     * @param senderRank
     */
    virtual void receive_new_coord(const unsigned int senderReplicaID);
-    /**TODO: bring into Exchanger
+
+    /**
      * Initiates MPI communication to send new configuration information
      * @param receiverID
      * @param senderRank
      */
     virtual void send_coord(const unsigned int receiverReplicaID);
+
     /**TODO: bring into Exchanger
      * Prints information of replica to std::cout for debugging purposes
      */
@@ -345,22 +348,12 @@ namespace re {
      /*
       */
     void updateReplica_params();
+
     /**
-     * Sets lambda parameter to original value of replica
+     * TODO: swap helper
      */
-    void set_lambda();
-    /**
-     * Sets temperature to original value of replica
-     */
-    void set_temp();
-    /**
-     * Sets lambda parameter to value of partner (for energy calculations)
-     */
-    void change_lambda(const unsigned int partnerReplicaID);
-    /**
-     * Sets temperature to value of partner (for energy calculations)
-     */
-    void change_temp(const unsigned int partnerReplicaID);
+    void swapHelper();
+
 
   };
 }

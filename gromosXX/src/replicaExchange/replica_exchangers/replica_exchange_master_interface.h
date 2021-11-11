@@ -1,5 +1,5 @@
 /**
- * @file replica_exchange_master.h
+ * @file replica_exchange_master_2d_l_T_HREMD.h
  * Modified June 18, 2021 - bschroed, srieder
  */
 
@@ -41,8 +41,8 @@
 namespace re {
 
   /**
-   * @class replica_exchange_master
-   * Additionally to replica_exchange_base: receives and writes data to file.
+   * @class replica_exchange_master_2d_l_T_HREMD
+   * Additionally to replica_exchange_base_2d_l_T_HREMD: receives and writes data to file.
    */
   class replica_exchange_master_interface : public virtual replica_exchange_base_interface {
   public:

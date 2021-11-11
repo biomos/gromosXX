@@ -2460,7 +2460,6 @@ namespace simulation
        * Default values:
        * - num_T 0
        * - num_l 0
-       * - num_eoff 0
        * - temperature \<empty\>
        * - scale (false)
        * - lambda \<empty\>
@@ -3058,19 +3057,18 @@ namespace simulation
       /**
        * Constructor
        * Default values:
-       * - num_T 0
-       * - num_l 0
+       * - num_s 0
        * - num_eoff 0
        * - temperature \<empty\>
        * - scale (false)
-       * - lambda \<empty\>
+       * - svals \<empty\>
        * - dt \<empty\>
        * - trials 0
        * - equilibrate 0
        * - cont 0
        */
       reeds_struct() : reeds(0),
-                       num_states(0), num_T(0),  num_l(0), num_eoff(0),
+                       num_states(0),  num_s(0), num_eoff(0),
                        trials(0), equilibrate(0),
                        cont(0), eds_stat_out(true), periodic(false) {}
       /**
@@ -3081,14 +3079,11 @@ namespace simulation
        * num_states
        */
       int num_states;
+
       /**
-       * number of replicas with different temperature
+       * number of replicas with different s in REEDS these are the smoothing values
        */
-      int num_T;
-      /**
-       * number of replicas with different lambdas in REEDS these are the smoothing values
-       */
-      int num_l;
+      int num_s;
       /**
        * * number of energy offsets param-vectors with different offsets for each state in REEDS
        * * length of one param-vector == NUMSTATES
@@ -3101,7 +3096,7 @@ namespace simulation
       /**
        * lambdas: contains all smoothness parameter of RE_EDS system
        */
-      std::vector<double> lambda;
+      std::vector<double> svals;
       /**
        * time step to use when running at corresponding lambda
        */

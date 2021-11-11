@@ -10,7 +10,6 @@ Makefile.in
 /m4/
 INSTALL
 /doc/snippets
-**.deps
 
 # temporary files:
 *~
@@ -22,8 +21,16 @@ INSTALL
 /.*/
 
 #building artefacts
-build
+build*
+.dirstamp
+**.deps
 
+#making results:
+**.o
+**.lo
+**.la
+**.log
+**/Makefile
 
 #IDE-Folder:
 **.idea
