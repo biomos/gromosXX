@@ -71,10 +71,10 @@ namespace re
        * Attributes
        */
 
-        /**
-         * for exchanging params easily
-         */
-        simulation::Parameter::reeds_struct& reedsParam;
+       /**
+        * for exchanging params easily
+        */
+       simulation::Parameter::reeds_struct& reedsParam;
 
        /**
        * stat information of all replicas for exchange optimisation 
@@ -121,14 +121,17 @@ namespace re
         //Build exchange probabilities
         void determine_switch_probabilities() ;
         void swap_replicas_1D(const unsigned int partnerReplicaID);
-        
+
+        int find_partner() const override;
+
         /*
-        * energy calculation for statistical purposes of eds_stat() in replica_exchange_base.cc
+        * energy calculation for statistical purposes of eds_stat() in replica_exchange_base_2d_l_T_HREMD.cc
         * for given configuration with new smoothing parameter s.
         */
         double calc_energy_eds_stat(double s);
+        double calculate_energy(const unsigned int partner) override;
         double calculate_energy_core();
-        double calculate_energy(const unsigned int partner);
+        void calculate_energy_helper(const unsigned int partnerReplicaID) override;
     };
 }
 #endif /* REPLICA_EXCHANGE_BASE_EDS_H */

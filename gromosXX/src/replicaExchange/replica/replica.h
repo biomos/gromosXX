@@ -41,6 +41,10 @@ namespace re {
      * init an MD simulation
      */
     void init();
+    /**
+     *
+     */
+    double calculateEnergies() override;
 
   };
 }

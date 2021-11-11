@@ -52,7 +52,8 @@ namespace re{
         unsigned int curentStepNumber=0;
         unsigned int stepsPerRun=0;
         unsigned int totalStepNumber=0;
-        
+
+        double energy; // not activly used currently
         /* NOTE:
          * These cannot be references, because every node has only one copy, so
          * the replicas would then reference the same conf/topo
@@ -119,9 +120,24 @@ namespace re{
          */
         virtual void run_MD() = 0;
         /**
+         * update replica energies
+         */
+        virtual double calculateEnergies();
+        /**
          * write final cnf
          */
         virtual void write_final_conf();
+
+
+        /**
+        * contains original forces which have to be reset after RE-EDS exchange energy calculation
+        */
+        math::VArray force_orig;
+        /**
+         * contains original virial which have to be reset after RE-EDS exchange energy calculation
+         */
+        math::Matrix virial_tensor_orig;
+
       };
     }//namespace re
 #endif /* REPLICA_INTERFACE_H */

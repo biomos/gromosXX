@@ -122,10 +122,10 @@ int io::read_input_repex(io::Argument const & args,
     //MPI THREAD SIMULATION SPLITTING.
     unsigned int numReplicas = -1;
     if(sim.param().reeds.reeds == 1){
-        numReplicas = sim.param().reeds.num_l;
+        numReplicas = sim.param().reeds.num_s;
     }
     else if(sim.param().reeds.reeds == 2){
-        numReplicas = sim.param().reeds.num_l *  sim.param().reeds.num_eoff;
+        numReplicas = sim.param().reeds.num_s *  sim.param().reeds.num_eoff;
     }
     else{
         numReplicas = sim.param().replica.num_l*sim.param().replica.num_T;
@@ -227,12 +227,12 @@ int io::read_input_repex(io::Argument const & args,
 
 	switch(sim.param().reeds.reeds) {
 				case 0:
-						numReplicas = sim.param().replica.num_T * sim.param().reeds.num_l;
+						numReplicas = sim.param().replica.num_T * sim.param().reeds.num_s;
 				case 1:
-						numReplicas = sim.param().replica.num_T * sim.param().reeds.num_l;
+						numReplicas = sim.param().replica.num_T * sim.param().reeds.num_s;
 						break;
 				case 2:
-						numReplicas = sim.param().reeds.num_eoff * sim.param().reeds.num_l;
+						numReplicas = sim.param().reeds.num_eoff * sim.param().reeds.num_s;
 						break;
 	}
 

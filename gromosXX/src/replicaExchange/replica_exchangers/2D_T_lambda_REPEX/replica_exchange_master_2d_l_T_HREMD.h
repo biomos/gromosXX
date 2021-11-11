@@ -1,5 +1,5 @@
 /**
- * @file replica_exchange_master.h
+ * @file replica_exchange_master_2d_l_T_HREMD.h
  */
 
 #include <stdheader.h>
@@ -25,7 +25,7 @@
 
 #include <io/configuration/out_configuration.h>
 #include <replicaExchange/replica_exchangers/replica_exchange_master_interface.h>
-#include <replicaExchange/replica_exchangers/2D_T_lambda_REPEX/replica_exchange_base.h>
+#include <replicaExchange/replica_exchangers/2D_T_lambda_REPEX/replica_exchange_base_2d_l_T_HREMD.h>
 
 #include <replicaExchange/replica/replica.h>
 #include <replicaExchange/replica_data.h>
@@ -40,10 +40,10 @@
 namespace re {
 
   /**
-   * @class replica_exchange_master
-   * Additionally to replica_exchange_base: receives and writes data to file.
+   * @class replica_exchange_master_2d_l_T_HREMD
+   * Additionally to replica_exchange_base_2d_l_T_HREMD: receives and writes data to file.
    */
-  class replica_exchange_master : public virtual replica_exchange_base, public virtual replica_exchange_master_interface {
+  class replica_exchange_master_2d_l_T_HREMD : public virtual replica_exchange_base_2d_l_T_HREMD, public virtual replica_exchange_master_interface {
   public:
     /**
      * constructor
@@ -54,15 +54,15 @@ namespace re {
      * @param repIDs std::vector<int>, IDs of replicas the instance has to manage
      * @param repMap std::map<int,int>, maps replica IDs to nodes; needed for communication
      */
-    replica_exchange_master(io::Argument & args,
-            unsigned int cont,
-            unsigned int globalThreadID,
-            replica_graph_control & replicaGraphMPIControl,
-            simulation::MpiControl & replica_mpi_control);
+    replica_exchange_master_2d_l_T_HREMD(io::Argument & args,
+                                         unsigned int cont,
+                                         unsigned int globalThreadID,
+                                         replica_graph_control & replicaGraphMPIControl,
+                                         simulation::MpiControl & replica_mpi_control);
     /**
      * Destructor
      */
-    virtual ~replica_exchange_master();
+    virtual ~replica_exchange_master_2d_l_T_HREMD();
 
   };
 }

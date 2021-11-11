@@ -236,11 +236,11 @@ void re::replica::run_MD() {
   with the current coordinates for the calculation of the exchange probabilities
   */
 
+  //Calculate energies
   algorithm::Algorithm * ff;   
   ff = md.algorithm("Forcefield");
 
-  //Calculate energies    
-  DEBUG(5, "replica_reeds "<< globalThreadID <<":calculate_energy:\t calc energies");
+  DEBUG(5, "replica "<< globalThreadID <<":calculate_energy:\t calc energies");
   if (ff->apply(topo, conf, sim)) {
       std::cerr << "Error in Forcefield calculation in Replica " << (simulationID+1) << " on node " << globalThreadID << std::endl;
     #ifdef XXMPI
@@ -249,31 +249,94 @@ void re::replica::run_MD() {
   }
 
   //first calc energies for eds
-  ff = md.algorithm("EDS");
+  if(sim.param().reeds.reeds >0)
+  {
+      ff = md.algorithm("EDS");
 
-  //Calculate energies    
-  DEBUG(5, "replica_reeds "<< globalThreadID <<":calculate_energy:\t calc energies");
-  if (ff->apply(topo, conf, sim)) {
-      std::cerr << "Error in EDS calculation in Replica " << (simulationID+1) << " on node " << globalThreadID << std::endl;
-    #ifdef XXMPI
-        MPI_Abort(MPI_COMM_WORLD, E_UNSPECIFIED);
-    #endif
+      //Calculate energies
+      DEBUG(5, "replica "<< globalThreadID <<":calculate_energy:\t calc energies");
+      if (ff->apply(topo, conf, sim)) {
+          std::cerr << "Error in EDS calculation in Replica " << (simulationID+1) << " on node " << globalThreadID << std::endl;
+        #ifdef XXMPI
+            MPI_Abort(MPI_COMM_WORLD, E_UNSPECIFIED);
+        #endif
+      }
   }
 
+  energy = calculateEnergies();
+
   conf.exchange_state();
-  // energy calculation averages
   ff = md.algorithm("EnergyCalculation");
 
-  //Calculate energies    
-  DEBUG(5, "replica_reeds "<< globalThreadID <<":calculate_energy:\t calc energies");
+  //Calculate energies
+  DEBUG(5, "replica_MPI_MASTER "<< globalThreadID <<":calculate_energy:\t  final MD calc averages");
   if (ff->apply(topo, conf, sim)) {
       std::cerr << "Error in EnergyCalculation in Replica " << (simulationID+1) << " on node " << globalThreadID << std::endl;
-    #ifdef XXMPI
-        MPI_Abort(MPI_COMM_WORLD, E_UNSPECIFIED);
-    #endif
+      #ifdef XXMPI
+      MPI_Abort(MPI_COMM_WORLD, E_UNSPECIFIED);
+      #endif
   }
 
   conf.exchange_state();
   //std::cout << "END "<< sim.steps()<< " replica "<< globalThreadID << "pos " << conf.current().pos[0][0] << std::endl;
 
+}
+
+double re::replica::calculateEnergies(){
+    double energy = 0.0;
+    algorithm::Algorithm * ff;
+
+    //Calculate energies
+    ff = md.algorithm("Forcefield");
+    DEBUG(5, "replica "<< globalThreadID <<":calculate_energy:\t calc energies");
+    if (ff->apply(topo, conf, sim)) {
+        std::cerr << "Error in Forcefield calculation in Replica " << (simulationID+1) << " on node " << globalThreadID << std::endl;
+    #ifdef XXMPI
+        MPI_Abort(MPI_COMM_WORLD, E_UNSPECIFIED);
+    #endif
+    }
+
+    //first calc energies for eds
+    if(sim.param().reeds.reeds >0)
+    {
+        force_orig = conf.current().force;
+        virial_tensor_orig = conf.current().virial_tensor;
+
+        ff = md.algorithm("EDS");
+        //Calculate energies
+        DEBUG(5, "replica "<< globalThreadID <<":calculate_energy:\t calc energies");
+        if (ff->apply(topo, conf, sim)) {
+            std::cerr << "Error in EDS calculation in Replica " << (simulationID+1) << " on node " << globalThreadID << std::endl;
+        #ifdef XXMPI
+            MPI_Abort(MPI_COMM_WORLD, E_UNSPECIFIED);
+        #endif
+        }
+
+        conf.current().energies.calculate_totals();
+        conf.current().force= force_orig;
+        conf.current().virial_tensor= virial_tensor_orig;
+        energy=conf.current().energies.eds_vr;
+        conf.current().energies.calculate_totals();
+    }
+    else {
+        conf.current().energies.calculate_totals();
+        switch ( sim.param().xrayrest.replica_exchange_parameters.energy_switcher) {
+            case simulation::energy_tot:
+                energy =  conf.current().energies.potential_total +  conf.current().energies.special_total;
+                break;
+            case simulation::energy_phys:
+                energy =  conf.current().energies.potential_total;
+                break;
+            case simulation::energy_special:
+                energy =  conf.current().energies.special_total;
+                break;
+            default:
+                std::cerr << ("Error in energy switching!");
+                #ifdef XXMPI
+                MPI_Abort(0, E_UNSPECIFIED);
+                #endif
+        }
+    }
+    DEBUG(5, "replica "<< globalThreadID <<":calculate_energy:\t energy: "<< energy);
+    return energy;
 }

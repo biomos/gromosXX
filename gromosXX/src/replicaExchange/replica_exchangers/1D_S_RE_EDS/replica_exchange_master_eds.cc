@@ -31,7 +31,7 @@ re::replica_exchange_master_eds::replica_exchange_master_eds(io::Argument _args,
     //initialize data of replicas    
     replicaData.resize(replicaGraphMPIControl.numberOfReplicas);      
     DEBUG(3,"replica_exchange_master_eds "<< globalThreadID <<":Constructor:\t replicaDatasize\t "<< replicaData.size());
-    //DEBUG(4,"replica_exchange_master_eds "<< rank <<":Constructor:\t reeds- lambda\t "<< replica->sim.param().reeds.num_l);
+    //DEBUG(4,"replica_exchange_master_eds "<< rank <<":Constructor:\t reeds- lambda\t "<< replica->sim.param().reeds.num_s);
     //DEBUG(4,"replica_exchange_master_eds "<< rank <<":Constructor:\t eds \t "<< replica->sim.param().eds.s.size());
 
     //initialize bookkeeping data structure

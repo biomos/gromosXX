@@ -240,21 +240,17 @@ void re::replica_MPI_Slave::run_MD(){
     calculate nonbonded interactions to make sure we're up-to-date
     with the current coordinates for the calculation of the exchange probabilities
     */
-    if (do_nonbonded && (error = nb->calculate_interactions(topo, conf, sim)) != 0){
-      std::cout << "Rank: "<< globalThreadID<<"\tMPI slave " << globalThreadID << ": error in nonbonded calculation!\n" << std::endl;
-    }
+    DEBUG(8, "replica_MPI_SLAVE "<< globalThreadID <<":calculate_energy:\t final MD help calc energies");
+    calculateEnergiesHelper();
 
     #endif
     MPI_DEBUG(5, "replica_MPI_SLAVE "<< globalThreadID <<":runMD:\t DONE at step= " << curentStepNumber);
-    
 }
-    
 
 
 void re::replica_MPI_Slave::receive_coords(){
   DEBUG(4, "replica_MPI_Slave " << globalThreadID << " ::receive_coords::\t START");
   #ifdef XXMPI
-
   MPI_Status status;
   
   conf.exchange_state();
@@ -284,3 +280,17 @@ void re::replica_MPI_Slave::receive_coords(){
   #endif
   DEBUG(4, "replica_MPI_Slave " << globalThreadID << " ::receive_coords::\t Done");
 }
+
+
+void re::replica_MPI_Slave::calculateEnergiesHelper(){
+    DEBUG(4, "replica_MPI_Slave " << globalThreadID << " :calculateEnergiesHelper:\t START");
+
+    //do the MPI fun! :)
+    int error;
+    if (do_nonbonded && (error = nb->calculate_interactions(topo, conf, sim)) != 0){
+        std::cout << "Rank: "<< globalThreadID<<"\tMPI slave " << globalThreadID << ": error in nonbonded calculation!\n" << std::endl;
+    }
+
+    DEBUG(4, "replica_MPI_Slave " << globalThreadID << " ::calculateEnergiesHelper::\t DONE");
+}
+

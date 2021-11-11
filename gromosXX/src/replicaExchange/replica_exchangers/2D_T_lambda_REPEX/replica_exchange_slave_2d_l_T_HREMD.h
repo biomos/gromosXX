@@ -1,6 +1,6 @@
 /**
- * @file replica_exchange_slave.h
- * contains replica_exchange_slave class
+ * @file replica_exchange_slave_2d_l_T_HREMD.h
+ * contains replica_exchange_slave_2d_l_T_HREMD class
  */
 
 #include <stdheader.h>
@@ -28,7 +28,7 @@
 
 #include <replicaExchange/replica/replica.h>
 #include <replicaExchange/replica_exchangers/replica_exchange_slave_interface.h>
-#include <replicaExchange/replica_exchangers/2D_T_lambda_REPEX/replica_exchange_base.h>
+#include <replicaExchange/replica_exchangers/2D_T_lambda_REPEX/replica_exchange_base_2d_l_T_HREMD.h>
 
 #ifdef XXMPI
 #include <mpi.h>
@@ -40,10 +40,10 @@
 namespace re {
 
   /**
-   * @class replica_exchange_slave
+   * @class replica_exchange_slave_2d_l_T_HREMD
    * 
    */
-  class replica_exchange_slave : public virtual replica_exchange_base, public virtual replica_exchange_slave_interface {
+  class replica_exchange_slave_2d_l_T_HREMD : public virtual replica_exchange_base_2d_l_T_HREMD, public virtual replica_exchange_slave_interface {
   public:
     /**
      * constructor
@@ -52,15 +52,15 @@ namespace re {
      * @param repIDs std::vector<int>, IDs of replicas the instance has to manage
      * @param _repMap std::map<int,int>, maps replica IDs to nodes; needed for communication
      */
-    replica_exchange_slave(io::Argument & _args,
-            unsigned int cont,
-            unsigned int globalThreadID,
-            replica_graph_control & replicaGraphMPIControl,
-            simulation::MpiControl & replica_mpi_control);
+    replica_exchange_slave_2d_l_T_HREMD(io::Argument & _args,
+                                        unsigned int cont,
+                                        unsigned int globalThreadID,
+                                        replica_graph_control & replicaGraphMPIControl,
+                                        simulation::MpiControl & replica_mpi_control);
     /**
      * destructor
      */
-    virtual ~replica_exchange_slave();
+    virtual ~replica_exchange_slave_2d_l_T_HREMD();
 
   };
 }

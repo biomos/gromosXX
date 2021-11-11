@@ -51,6 +51,7 @@ re::replica_Interface::~replica_Interface(){
     delete traj;
     delete os;
 }
+
 void re::replica_Interface::init() {
   // init MD simulation
   md.init(topo, conf, sim, *os, true);
@@ -59,5 +60,9 @@ void re::replica_Interface::init() {
 void re::replica_Interface::write_final_conf() {
     traj->write(conf, topo, sim, io::final);
     delete  traj;   //bschroed needs to be done, so the flush functions are triggered
+}
+/**OVERRIDE THIS NICE FUNCTION*/
+double re::replica_Interface::calculateEnergies(){
+    throw "Implement the updateEnergies Function!";
 }
 

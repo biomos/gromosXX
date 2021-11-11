@@ -57,16 +57,18 @@
 #include <replicaExchange/replica/replica.h>
 #include <replicaExchange/replica_graph_control.h>
 
-#include <replicaExchange/replica_exchangers/2D_T_lambda_REPEX/replica_exchange_master.h>
-#include <replicaExchange/replica_exchangers/2D_T_lambda_REPEX/replica_exchange_slave.h>
+#include <replicaExchange/replica_exchangers/2D_T_lambda_REPEX/replica_exchange_master_2d_l_T_HREMD.h>
+#include <replicaExchange/replica_exchangers/2D_T_lambda_REPEX/replica_exchange_slave_2d_l_T_HREMD.h>
 #include <replicaExchange/replica_exchangers/1D_S_RE_EDS/replica_exchange_master_eds.h>
 #include <replicaExchange/replica_exchangers/1D_S_RE_EDS/replica_exchange_slave_eds.h>
 #include <replicaExchange/replica_exchangers/2D_S_Eoff_RE_EDS/replica_exchange_master_2d_s_eoff_eds.h>
 #include <replicaExchange/replica_exchangers/2D_S_Eoff_RE_EDS/replica_exchange_slave_2d_s_eoff_eds.h>
-#include <replicaExchange/replica_exchangers/1D_S_HSA_EDS/hamiltonian_simulatedAnnealing_master_eds.h>
-#include <replicaExchange/replica_exchangers/1D_S_HSA_EDS/hamiltonian_simulatedAnnealing_slave_eds.h>
 
 
+#undef MODULE
+#undef SUBMODULE
+#define MODULE re
+#define SUBMODULE replica
 
 int main(int argc, char *argv[]) {
 #ifdef XXMPI
@@ -219,7 +221,7 @@ int main(int argc, char *argv[]) {
              */
 
             numEoff = sim.param().reeds.num_eoff;
-            numSVals = sim.param().reeds.num_l;
+            numSVals = sim.param().reeds.num_s;
             periodic = sim.param().reeds.periodic;
 
             switch(reedsSim) {
@@ -524,24 +526,16 @@ int main(int argc, char *argv[]) {
 
         switch(reedsSim) {
               case 0:
-                  DEBUG(1, "Master \t Constructor\n"); // Remove @bschroed
-                  std::cerr << "Constructor:\t Master\n";
-                  Master = new re::replica_exchange_master(args, cont, globalThreadID, reGMPI, replica_mpi_control);
+                  DEBUG(1, "Master \t Constructor\n");
+                  Master = new re::replica_exchange_master_2d_l_T_HREMD(args, cont, globalThreadID, reGMPI, replica_mpi_control);
                   break;
               case 1:
-                  DEBUG(1, "Master_eds \t Constructor\n")// Remove @bschroed
-                  std::cerr << "Constructor:\t Master_eds\n";
+                  DEBUG(1, "Master_eds \t Constructor\n")
                   Master = new re::replica_exchange_master_eds(args, cont, globalThreadID, reGMPI, replica_mpi_control);
                   break;
               case 2:
-                  DEBUG(1, "Master_2d_s_eoff_eds \t Constructor\n")// Remove @bschroed
-                  std::cerr << "Constructor:\t Master_2d_s_eoff_eds\n";
+                  DEBUG(1, "Master_2d_s_eoff_eds \t Constructor\n")
                   Master = new re::replica_exchange_master_2d_s_eoff_eds(args, cont, globalThreadID, reGMPI, replica_mpi_control);
-                  break;
-              case 3:
-                  DEBUG(1, "Master_hsa_s_eoff_eds \t Constructor\n")// Remove @bschroed
-                  std::cerr << "Constructor:\t Master_hsa_s_eoff_eds\n";
-                  Master = new re::hamiltonian_simulatedAnnealing_master_eds(args, cont, globalThreadID, reGMPI, replica_mpi_control);
                   break;
           }
         MPI_Barrier(MPI_COMM_WORLD);    //wait for all threads to register!
@@ -550,15 +544,13 @@ int main(int argc, char *argv[]) {
 
 
         MPI_DEBUG(1, "Master \t INIT START");
-        std::cerr << "Constructor:\t Master init\n";
-
         Master->init();
 
         Master->init_repOut_stat_file();
 
         MPI_DEBUG(1, "Master \t INIT DONE")
 
-        std::cerr << "\tMaster  equil\n";
+        //std::cerr << "\tMaster  equil\n";
 
         //do md:
         unsigned int trial = 0;
@@ -568,7 +560,7 @@ int main(int argc, char *argv[]) {
         }
         //MPI_Finalize();
         //return 0;
-        std::cerr << "\t Master MD\n";
+        //std::cerr << "\t Master MD\n";
 
         //Vars for timing
         int hh, mm, ss, eta_hh, eta_mm, eta_ss = 0;
@@ -579,8 +571,6 @@ int main(int argc, char *argv[]) {
             MPI_DEBUG(2, "Master " << globalThreadID << " \t MD trial: " << trial << "\n");
             MPI_DEBUG(2, "Master " << globalThreadID << " \t run_MD START " << trial << "\n");
             Master->run_MD();
-            //std::cerr << "\t\t Master MD_step\n";
-
             MPI_DEBUG(2, "Master " << globalThreadID << " \t swap START " << trial << "\n")
             Master->swap();
             MPI_DEBUG(2, "Master " << globalThreadID << " \t receive START " << trial << "\n");
@@ -630,16 +620,13 @@ int main(int argc, char *argv[]) {
 
         switch(reedsSim) {
               case 0:
-                  Slave = new re::replica_exchange_slave(args, cont, globalThreadID, reGMPI, replica_mpi_control);
+                  Slave = new re::replica_exchange_slave_2d_l_T_HREMD(args, cont, globalThreadID, reGMPI, replica_mpi_control);
                   break;
               case 1:
                   Slave = new re::replica_exchange_slave_eds(args, cont, globalThreadID, reGMPI, replica_mpi_control);
                   break;
               case 2:
                   Slave = new re::replica_exchange_slave_2d_s_eoff_eds(args, cont, globalThreadID, reGMPI, replica_mpi_control);
-                  break;
-              case 3:
-                  Slave = new re::hamiltonian_simulatedAnnealing_slave_eds(args, cont, globalThreadID, reGMPI, replica_mpi_control);
                   break;
           }
         MPI_DEBUG(1, "Slave " << globalThreadID << "::Constructor: DONE ")
