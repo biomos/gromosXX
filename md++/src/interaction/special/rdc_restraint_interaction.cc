@@ -241,8 +241,8 @@ void _calculate_forces_vectors_MF(topology::Topology & topo,
         DEBUG(10, "interaction " << k << ":  R-inst, R-av: " << conf_it->curr[k] << ", " << local_average )
       }
 
-      // K[kJ*ps^2], N_A[1/mol]
-      const double force_coefficient = sim.param().rdc.K * it->weight * math::n_avogadro; // [kJ*ps^2/mol]
+      // K[kJ/mol/Hz^2], N_A[1/mol]
+      const double force_coefficient = sim.param().rdc.K * it->weight * 1e24; // [kJ*ps^2/mol]
 
       // 'forces' on the MF vectors
       // f = - K * (RDC - RDC_0) [ * inner derivative]
@@ -352,8 +352,8 @@ void _calculate_forces_atoms_MF(topology::Topology & topo,
         DEBUG(10, "interaction " << k << ":  R-inst, R-av: " << conf_it->curr[k] << ", " << conf_it->av[k] )
       }
 
-      // K[kJ*ps^2], N_A[1/mol]
-      const double force_coefficient = sim.param().rdc.K * it->weight * math::n_avogadro; // [kJ*ps^2/mol]
+      // K[kJ/mol/Hz^2], N_A[1/mol]
+      const double force_coefficient = sim.param().rdc.K * it->weight * 1e24; // [kJ*ps^2/mol]
 
       if(sim.param().rdc.mode == simulation::rdc_restr_inst ||
          sim.param().rdc.mode == simulation::rdc_restr_inst_weighted){
@@ -492,7 +492,7 @@ double mf_potential(const gsl_vector* MF, void* param){
     } // Loop over MF
     conf_it->curr[k] *= RDC_max(it)/dij3 * 1.0/number_hvectors * 1.5; // [1/ps]
 
-    const double force_coefficient = sim.param().rdc.K * it->weight * math::n_avogadro; // [kJ*ps^2/mol]
+    const double force_coefficient = sim.param().rdc.K * it->weight * 1e24; // [kJ*ps^2/mol]
 
     // potential V = 0.5 * K * (RDC - RDC_0)^2
     potential += force_coefficient * flat_bottom_pot(conf_it->curr[k], it->D0, it->dD0); // [kJ/mol]
@@ -562,7 +562,7 @@ void mf_gradient(const gsl_vector* MF, void* param, gsl_vector* gradient) {
     } // Loop over MF
     conf_it->curr[k] *= RDC_max(it)/dij3 * 1.0/number_hvectors * 1.5; // [1/ps]
 
-    const double force_coefficient = sim.param().rdc.K * it->weight * math::n_avogadro; // [kJ*ps^2/mol]
+    const double force_coefficient = sim.param().rdc.K * it->weight * 1e24; // [kJ*ps^2/mol]
 
     // f = - K * (RDC - RDC_0) [ * inner derivative]
     for(int h=0; h<number_hvectors; ++h) {
@@ -1154,13 +1154,12 @@ void _calculate_ah(topology::Topology & topo,
 
   vector<configuration::Configuration::special_struct::rdc_struct>::iterator
       conf_it = conf.special().rdc.begin(),
-      conf_to = conf.special().rdc.end();
+      conf_to = conf.special().rdc.end(); // vector of groups of rdc current state
   vector<vector<topology::rdc_restraint_struct> >::iterator
-      topo_it = topo.rdc_restraints().begin();
-  for( ; conf_it!=conf_to; conf_it++, topo_it++){
+      topo_it = topo.rdc_restraints().begin(); // vector of groups of rdc specs
+  for( ; conf_it!=conf_to; conf_it++, topo_it++){  // for each RDC group
 
     const int n_rdc = topo_it->size();
-    //cout << "n_rdc in calculate ah : " << n_rdc << endl;
 
     double ck[n_rdc][n_ah];
     for(int k=0; k<n_rdc; ++k){for(int h=0; h<n_ah; ++h){ck[k][h]=0.0;}} // init
@@ -1310,7 +1309,7 @@ void _calculate_forces_tensor_T(topology::Topology & topo,
         DEBUG(10, "interaction " << k << ":  R-inst, R-av: " << conf_it->curr[k] << ", " << local_average )
       }
 
-      const double force_coefficient = sim.param().rdc.K * it->weight * math::n_avogadro; // [kJ*ps^2/mol]
+      const double force_coefficient = sim.param().rdc.K * it->weight * 1e24; // [kJ*ps^2/mol]
 
       // forces on the "tensor"
       // f = - K * (RDC - RDC_0) [ * inner derivative]
@@ -1375,7 +1374,7 @@ void _calculate_forces_atoms_T(topology::Topology & topo,
       conf_to = conf.special().rdc.end();
   vector<vector<topology::rdc_restraint_struct> >::iterator
       topo_it = topo.rdc_restraints().begin();
-  for( ; conf_it!=conf_to; conf_it++, topo_it++){
+  for( ; conf_it!=conf_to; conf_it++, topo_it++){ // loop over RDC groups
 
     int k=0;
     vector<topology::rdc_restraint_struct>::iterator
@@ -1420,7 +1419,7 @@ void _calculate_forces_atoms_T(topology::Topology & topo,
         DEBUG(10, "interaction " << k << ":  R-inst, R-av: " << conf_it->curr[k] << ", " << conf_it->av[k] )
       }
 
-      const double force_coefficient = sim.param().rdc.K * it->weight * math::n_avogadro; // [kJ*ps^2/mol]
+      const double force_coefficient = sim.param().rdc.K * it->weight * 1e24; // [kJ*ps^2/mol]
       double e_term;
 
       DEBUG(15, "adding energy to groups " << topo.atom_energy_group()[it->v1.atom(0)] << " and " << topo.atom_energy_group()[it->v2.atom(0)] )
@@ -1998,8 +1997,8 @@ void _calculate_forces_clm_SH(topology::Topology & topo,
       const double dij3 = dij2*dij; // [nm^3]
 
       // weighting is potentially switched off by setting weight to one during initialisation
-      // K[kJ*ps^2], weight[1], na[1/mol]
-      const double force_coefficient = sim.param().rdc.K * it->weight * math::n_avogadro; // [kJ*ps^2/mol]
+      // K[kJ/mol/Hz^2], weight[1], na[1/mol]
+      const double force_coefficient = sim.param().rdc.K * it->weight * 1e24; // [kJ*ps^2/mol]
 
       conf_it->curr[k] = 0.0;
       // get current RDC value
@@ -2149,7 +2148,7 @@ void _calculate_forces_atoms_SH(topology::Topology & topo,
       }
 
       // weighting is potentially switched off by setting weight to one during initialisation
-      const double force_coefficient = sim.param().rdc.K * it->weight * math::n_avogadro; // [kJ*ps^2/mol]
+      const double force_coefficient = sim.param().rdc.K * it->weight * 1e24; // [kJ*ps^2/mol]
 
       if(sim.param().rdc.mode == simulation::rdc_restr_inst ||
          sim.param().rdc.mode == simulation::rdc_restr_inst_weighted){

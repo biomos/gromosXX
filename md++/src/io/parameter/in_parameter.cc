@@ -2414,7 +2414,7 @@ void io::In_Parameter::read_RDCRES(simulation::Parameter &param,
     exampleblock << "# EMNMAX  > 0                  (METHOD = 0, EM) maximum number of minimisation steps\n";
     exampleblock << "# SDCFRIC >= 0.0               (METHOD = 1, SD) global friction coefficient gamma\n";
     exampleblock << "# TEMP  >= 0.0                 temperature of stochastic bath (SD) and temperature used for initial velocities (MD, SD)\n";
-    exampleblock << "# CRDCR   >= 0                 RDC restraining force constant [kJ*ps^2]\n";
+    exampleblock << "# CRDCR   >= 0                 RDC restraining force constant [kJ/mol/Hz^2]\n";
     exampleblock << "#                              (weighted by individual WRDCR)\n";
     exampleblock << "# TAU     >= 0                 coupling time for time averaging [ps]\n";
     exampleblock << "# NRDCRTARS 0,1                omits or includes force scaling by memory decay factor in case of time-averaging\n";
