@@ -199,7 +199,7 @@ int main(int argc, char *argv[]) {
                 std::cout << "\nErrors during initialisation!\n" << std::endl;
                 error = 1;
                 std::cout << "Telling slaves to quit." << std::endl;
-                MPI::COMM_WORLD.Bcast(&error, 1, MPI::INT, 0);
+                MPI_Bcast(&error, 1, MPI::INT, sim.mpiControl().masterID, sim.mpiControl().comm);
                 FFTW3(mpi_cleanup());
                 MPI_Comm_free(&sim.mpiControl().comm); //Clean up
                 MPI::Finalize();
@@ -207,7 +207,7 @@ int main(int argc, char *argv[]) {
             } else if (iom == io::message::develop) {
                 std::cout << "\nUse @develop to run untested code.\n" << std::endl;
                 error = 1;
-                MPI::COMM_WORLD.Bcast(&error, 1, MPI::INT, 0);
+                MPI_Bcast(&error, 1, MPI::INT, sim.mpiControl().masterID, sim.mpiControl().comm);
                 FFTW3(mpi_cleanup());
                 MPI_Comm_free(&sim.mpiControl().comm); //Clean up
                 MPI::Finalize();
