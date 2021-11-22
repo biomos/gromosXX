@@ -993,8 +993,7 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::one_four_interaction_in
         lj_crf_interaction(r, lj.cs6, lj.cs12,
                 topo.charge()(i) *
                 topo.charge()(j),
-                f, e_lj, e_crf, 2,
-                m_param->get_coulomb_scaling());
+                f, e_lj, e_crf, 2);
 
         DEBUG(10, "\t\tatomic virial");
         for (int a = 0; a < 3; ++a) {
