@@ -1,1 +1,2 @@
-GROMSRC="/home/bschroed/Documents/projects/gromosXX/gromosXX/"
+RELGROMOSDIR=../../../../
+GROMSRC=$(realpath  ${RELGROMOSDIR})
