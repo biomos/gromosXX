@@ -1,23 +1,22 @@
-
+#Load Gromos Settings
 . ../gromos_settings.sh
 
-for x in $( ls ${GROMSRC}/testbuild* -d);
+for x in $( ls ${GROMDIR}/testbuild* -d);
 do 
-
-	if [ ${x} != "*mpi*" ]; 
-	then
-		echo ${x};
+		echo "TEST BUILD: ${x}";
+		#path juggeling
 		binDIR="${x}/bin"
 		dirP=$(basename $x)
-		dirP=${dirP/build_}
+		dirP=${dirP/build}
 
-		echo ${dirP}
-		rm -r ${dirP}
+		#build testFolder
+		echo -e "\tgo to: ${dirP}"
+		rm -rf ${dirP}	#remove possible old files
 		cp -r template $dirP
 
+		#execute test
 		cd ${dirP}
-		./job.sh ${binDIR}
+		./job.sh ${binDIR} || echo "Failed with: ${binDIR}" >> FailedRund.out
 		cd ..
-        fi
 done
 

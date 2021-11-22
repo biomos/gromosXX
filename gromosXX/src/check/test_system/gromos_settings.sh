@@ -1,5 +1,8 @@
+
 #cores for parallel compiling
-np=4
+compileCores=4 #used in compiling
+maxCores=4 #used in tests
+
 
 # Paths
 RELGROMOSDIR=../../../../
