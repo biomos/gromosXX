@@ -17,7 +17,7 @@ rm -f test*
 
 echo -e "\t\t\tTesting: ${gromosBIN}"
 
-${mpibin}mpirun -np 3 ${gromosBIN}/repex_mpi  \
+${mpibin}mpirun -np ${2} ${gromosBIN}/repex_mpi  \
         @topo        ${TOPO} \
         @conf        ${INPUTCRD} \
         @input       ${IUNIT} \

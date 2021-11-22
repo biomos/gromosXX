@@ -3,8 +3,10 @@
 #Load Gromos Settings
 . ../../../gromos_settings.sh
 
-cores_per_rep=(1); #2 
-replicas=2
+replicas=3
+max_step=$((${maxCores}/${replicas}))
+cores_per_rep=($(seq 1 ${stepCores} ${max_step}));
+
 
 jobs_prefix="1DsEDSRepEx_${replicas}"
 gromosBIN=${1}
@@ -17,7 +19,7 @@ do
     cp -r template ${tmp_prefix}
 
     cd ${tmp_prefix}
-    ./job.sh ${tmp_prefix} $((i*2)) ${gromosBIN}  || echo "Failed: ${x} " >> ../Failed.log
+    ./job.sh ${tmp_prefix} $((${i}*${replicas})) ${gromosBIN}  || echo "Failed: ${x} " >> ../Failed.log
     cd ..
 
 done

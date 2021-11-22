@@ -17,7 +17,7 @@ do
     cp -r template ${tmp_prefix}
 
     cd ${tmp_prefix}
-    ./job.sh ${tmp_prefix} $((i*2)) ${gromosBIN}  || echo "Failed: ${x} " >> ../Failed.log
+    ./job.sh ${tmp_prefix} $((${i}*${replicas})) ${gromosBIN}  || echo "Failed: ${x} " >> ../Failed.log
     cd ..
 
 done

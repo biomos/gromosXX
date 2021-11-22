@@ -13,7 +13,7 @@ do
 		dirP="out_${dirP}"
 
 		echo ${dirP}
-		rm -r ${dirP}
+		rm -rf ${dirP}
 		cp -r templateDir $dirP
 
 		cd ${dirP}
