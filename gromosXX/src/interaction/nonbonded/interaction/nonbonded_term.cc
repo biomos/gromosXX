@@ -191,7 +191,8 @@ inline void interaction::Nonbonded_Term
 ::lj_crf_interaction(math::Vec const &r,
         double c6, double c12,
         double q,
-        double &force, double &e_lj, double &e_crf, unsigned int eps) {
+        double &force, double &e_lj, double &e_crf, unsigned int eps,
+        const double coulomb_scaling) {
   DEBUG(14, "\t\tnonbonded term");
 
   assert(abs2(r) != 0);
@@ -206,10 +207,10 @@ inline void interaction::Nonbonded_Term
   e_lj = (c12_dist6i - c6) * dist6i;
 
   e_crf = q_eps *
-          (disti - m_crf_2cut3i[eps] * dist2 - m_crf_cut[eps]);
+          (disti * coulomb_scaling - m_crf_2cut3i[eps] * dist2 - m_crf_cut[eps]);
 
   force = (c12_dist6i + c12_dist6i - c6) * 6.0 * dist6i * dist2i +
-          q_eps * (disti * dist2i + m_crf_cut3i[eps]);
+          q_eps * (disti * coulomb_scaling * dist2i + m_crf_cut3i[eps]);
 
   //double f_crf = q_eps * (disti * dist2i + m_crf_cut3i);
   //DEBUG(1, "force = " << f_crf*r(0) << "  " << f_crf*r(1) << "  " << f_crf*r(2));

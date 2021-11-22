@@ -362,7 +362,7 @@ t_interaction_spec, t_perturbation_details>
             q = pert_i_M_charge[state] * charge_j;
 
             eds_lj_crf_interaction(dist2, dist6, c6, c12, q, alpha_lj,
-                    alpha_crf, f, e_nb);
+                    alpha_crf, f, e_nb, 0, m_param->get_coulomb_scaling());
 
             DEBUG(10, "\t\tatomic virial");
             for (int a = 0; a < 3; ++a) {
@@ -404,7 +404,7 @@ t_interaction_spec, t_perturbation_details>
 
             // give numstates as reference to const int argument to avoid .size()
             eds_lj_crf_interaction(dist2, dist6, c6, c12, q, alpha_lj,
-                    alpha_crf, f, e_nb);
+                    alpha_crf, f, e_nb, 0, m_param->get_coulomb_scaling());
 
             DEBUG(10, "\t\tatomic virial");
             for (int a = 0; a < 3; ++a) {

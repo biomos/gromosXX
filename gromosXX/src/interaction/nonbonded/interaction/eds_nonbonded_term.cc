@@ -91,7 +91,8 @@ inline void interaction::Eds_Nonbonded_Term
         const double &c6, const double &c12,
         const double &q,
         double const alpha_lj, double const alpha_crf,
-        double & force, double & e_nb, unsigned int eps) {
+        double & force, double & e_nb, unsigned int eps,
+        const double coulomb_scaling) {
     DEBUG(14, "\t\tnonbonded term");
 
     double c126 = 0.0;
@@ -105,12 +106,12 @@ inline void interaction::Eds_Nonbonded_Term
     const double ac_rrfi = 1.0 / ((alpha_crf + m_rrf*m_rrf)* sqrt(alpha_crf + m_rrf*m_rrf));
     
     double elj = dist6i_alj_c126 * (c12_dist6i - c6);
-    double ecrf = q_eps * (ac_disti - (0.5 * m_crf[eps] * ac_rrfi * dist2) - m_crf_cut[eps]);
+    double ecrf = q_eps * (ac_disti * coulomb_scaling - (0.5 * m_crf[eps] * ac_rrfi * dist2) - m_crf_cut[eps]);
     e_nb = elj + ecrf;
 
     double flj = 6.0 * dist2 * dist2 * dist6i_alj_c126 * dist6i_alj_c126 
                  * (2.0 * c12_dist6i - c6);
-    double fcrf = q_eps * (ac_disti * ac_disti * ac_disti + m_crf[eps] * ac_rrfi);
+    double fcrf = q_eps * (ac_disti * coulomb_scaling * ac_disti * ac_disti + m_crf[eps] * ac_rrfi);
     force = flj + fcrf;
     
     DEBUG(15, "nonbonded energy = " << (elj + ecrf) << ", force = " << (flj + fcrf));
