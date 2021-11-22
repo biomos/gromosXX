@@ -1,0 +1,159 @@
+TITLE
+	Automatically generated input file
+	aalbertini Thu Sep  2 12:43:11 2021
+END
+SYSTEM
+#      NPM      NSM
+         1      421
+END
+STEP
+#   NSTLIM         T        DT
+     5         0     0.002
+END
+REPLICA
+#    RETL >= 0   : turn off REplica exchange - Temperature and/or Lambda Coupled#             1   : turn on  #     NRET >= 1 number of replica exchange temperatures
+#    RET() >= 0.0 temperature for each replica
+# LRESCALE 0,1 controls temperature scaling
+#          0 don't scale temperatures after exchange trial
+#          1 scale temperatures after exchange trial
+#   NRELAM >= 1 number of replica exchange lambda values
+#  RELAM() >= 0.0 lambda value for each lambda-replica
+#   RETS() >= 0.0 timestep of each lambda-replica
+# NRETRIAL >= 0 number of overall exchange trials
+#  NREQUIL >= 0 number of exchange periods to equilibrate
+#               (disallow switches)
+#     CONT >= 0 continuation run
+#             0 start from one configuration file
+#             1 start from multiple configuration files
+#
+# RETL
+  1
+# NRET
+  3
+# RET(1..NRET)
+  300 305   400
+# LRESCALE
+  0
+# NRELAM
+  1
+# RELAM(1..NRELAM)
+  0.1    
+# RETS(1..NRELAM)
+  0.002  
+# NRETRIAL
+  20
+# NREQUIL
+  0
+# CONT
+  0
+END
+BOUNDCOND
+#      NTB    NDFMIN
+         1         3
+END
+MULTIBATH
+# NTBTYP:
+#      weak-coupling:      use weak-coupling scheme
+#      nose-hoover:        use Nose Hoover scheme
+#      nose-hoover-chains: use Nose Hoover chains scheme
+# NUM: number of chains in Nose Hoover chains scheme
+#      !! only specify NUM when needed !!
+# NBATHS: number of temperature baths to couple to
+#          NTBTYP
+                   0
+#  NBATHS
+         2
+# TEMP0(1 ... NBATHS)  TAU(1 ... NBATHS)
+       300       0.1
+       300       0.1
+
+#   DOFSET: number of distinguishable sets of d.o.f.
+         2
+# LAST(1 ... DOFSET)  COMBATH(1 ... DOFSET)  IRBATH(1 ... DOFSET)
+       103         1         1      2208         2         2
+END
+PRESSURESCALE
+# COUPLE   SCALE    COMP    TAUP  VIRIAL
+       2       1 0.001654      0.5        2
+# SEMIANISOTROPIC COUPLINGS(X, Y, Z)
+       1        1        1
+# PRES0(1...3,1...3)
+ 0.06102       0       0
+       0 0.06102       0
+       0       0 0.06102
+END
+FORCE
+#      NTF array
+# bonds    angles   imp.     dihe     charge nonbonded
+  0        1        1        1        1        1
+# NEGR    NRE(1)    NRE(2)    ...      NRE(NEGR)
+     2
+      103     2208
+END
+COVALENTFORM
+#    NTBBH    NTBAH     NTBDN
+         0         0         0
+END
+CONSTRAINT
+# NTC
+    3
+#      NTCP  NTCP0(1)
+          1    0.0001
+#      NTCS  NTCS0(1)
+          1    0.0001
+END
+PAIRLIST
+# algorithm    NSNB   RCUTP   RCUTL    SIZE    TYPE
+          0       5     0.8     1.4     0.4       0
+END
+NONBONDED
+# NLRELE
+         1
+#  APPAK    RCRF   EPSRF    NSLFEXCL
+         0       1.4       2.6         1
+# NSHAPE  ASHAPE  NA2CLC   TOLA2   EPSLS
+         3       1.4         2     1e-10         0
+#    NKX     NKY     NKZ   KCUT
+        10        10        10       100
+#    NGX     NGY     NGZ  NASORD  NFDORD  NALIAS  NSPORD
+        32        32        32         3         2         3         4
+# NQEVAL  FACCUR  NRDGRD  NWRGRD
+    100000       1.6         0         0
+#  NLRLJ  SLVDNS
+         0      33.3
+END
+INITIALISE
+# Default values for NTI values: 0
+#   NTIVEL    NTISHK    NTINHT    NTINHB
+         1         0         0         0
+#   NTISHI    NTIRTC    NTICOM
+         1         0         0
+#   NTISTI
+         0
+#       IG     TEMPI
+    210185       300
+END
+COMTRANSROT
+#     NSCM
+      1000
+END
+PERTURBATION
+# NTG: 0 no perturbation is applied
+#    : 1 calculate dV/dRLAM perturbation
+#      NTG     NRDGL     RLAM     DLAMT
+         1         0        0         0
+#   ALPHLJ     ALPHC     NLAM
+         0         0        1
+#   NSCALE
+         0
+END
+PRINTOUT
+#NTPR: print out energies, etc. every NTPR steps
+#NTPP: =1 perform dihedral angle transition monitoring
+#     NTPR      NTPP
+      250         0
+END
+WRITETRAJ
+#    NTWX     NTWSE      NTWV      NTWF      NTWE      NTWG      NTWB
+     5         0         0         0      5         0         0
+END

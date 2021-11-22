@@ -6,7 +6,7 @@
 cores_per_rep=(1); #2 
 replicas=2
 
-jobs_prefix="1DRepEx_${replicas}"
+jobs_prefix="2DTHRepEx_${replicas}"
 gromosBIN=${1}
 
 for i in "${cores_per_rep[@]}"; 
@@ -21,4 +21,5 @@ do
     cd ..
 
 done
+
 

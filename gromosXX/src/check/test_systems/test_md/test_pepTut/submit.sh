@@ -12,7 +12,7 @@ do
 		#build testFolder
 		echo -e "\tgo to: ${dirP}"
 		rm -rf ${dirP}	#remove possible old files
-		cp -r template $dirP
+		cp -r templateDir $dirP
 
 		#execute test
 		cd ${dirP}

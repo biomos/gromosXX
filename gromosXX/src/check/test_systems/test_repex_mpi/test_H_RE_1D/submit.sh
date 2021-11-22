@@ -13,7 +13,7 @@ do
 
 		echo ${dirP}
 		rm -r ${dirP}
-		cp -r templateReeds $dirP
+		cp -r templateDir $dirP
 
 		cd ${dirP}
 		./submit_all.sh ${binDIR}  || echo "Failed: ${x} " >> Failed.log
