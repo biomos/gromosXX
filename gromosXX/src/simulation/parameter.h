@@ -666,7 +666,7 @@ namespace simulation
     /**
      * one extra interaction for looping
      */
-    last_interaction_lambda=12
+    last_interaction_lambda=13
   };
 
   /**
