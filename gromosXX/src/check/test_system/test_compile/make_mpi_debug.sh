@@ -5,8 +5,9 @@ NAME="testbuild_mpi_debug"
 
 cd ${GROMSRC}
 
-mkdir ${NAME}
+./Config.sh
 
+mkdir ${NAME}
 cd ${NAME} 
 
 ../configure --enable-debug --enable-mpi CC=mpiCC CXX=mpiCC  > ${NAME}.log || $(echo "OHOH! ->conf" && exit 1);

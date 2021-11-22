@@ -4,9 +4,9 @@ NAME="testbuild_omp"
 
 
 cd ${GROMSRC}
+./Config.sh
 
 mkdir ${NAME}
-
 cd ${NAME} 
 
 ../configure --enable-openmp  > ${NAME}.log  || $(echo "OHOH! ->conf" && exit 1);

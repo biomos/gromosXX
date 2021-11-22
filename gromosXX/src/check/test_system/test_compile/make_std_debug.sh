@@ -4,9 +4,9 @@ NAME="testbuild_standard_debug"
 
 
 cd ${GROMSRC}
+./Config.sh
 
 mkdir ${NAME}
-
 cd ${NAME} 
 
 ../configure --enable-debug  > ${NAME}.log || $(echo "OHOH! ->conf" && exit 1);

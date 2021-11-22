@@ -5,8 +5,10 @@ NAME="testbuild_cuda"
 
 cd ${GROMSRC}
 
-mkdir ${NAME}
+./Config.sh
 
+
+mkdir ${NAME}
 cd ${NAME} 
 
 ../configure --with-cuda=/usr/local/cuda-11.4/  || $(echo "OHOH! ->conf" && exit 1);

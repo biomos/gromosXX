@@ -4,9 +4,9 @@ NAME="testbuild_standard"
 
 
 cd ${GROMSRC}
+./Config.sh
 
 mkdir ${NAME}
-
 cd ${NAME} 
 
 ../configure  > ${NAME}.log  || $(echo "OHOH! ->conf" && exit 1);
