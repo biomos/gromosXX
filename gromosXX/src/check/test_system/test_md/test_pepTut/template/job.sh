@@ -1,5 +1,5 @@
 #Load Gromos Settings
-. ../../gromos_settings.sh
+. ../../../gromos_settings.sh
 
 #remove previous files
 rm -f test*;

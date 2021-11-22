@@ -1,7 +1,7 @@
 #!/usr/bin/bash 
 
 #Load Gromos Settings
-. ../../gromos_settings.sh
+. ../../../gromos_settings.sh
 
 cores_per_rep=(1); #2 
 replicas=2

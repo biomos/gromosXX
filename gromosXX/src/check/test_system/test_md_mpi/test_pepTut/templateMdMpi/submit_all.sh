@@ -1,7 +1,7 @@
 #!/usr/bin/bash 
 
 # load settings
-. ../../gromos_settings.sh
+. ../../../gromos_settings.sh
 
 #how many cares to be tested on 
 cores_per_rep=(1 2 3 4 );
