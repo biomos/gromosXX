@@ -8,6 +8,7 @@ do
 		binDIR="${x}/bin"
 		dirP=$(basename $x)
 		dirP=${dirP/build}
+		dirP="out_${dirP}"
 
 		#build testFolder
 		echo -e "\tgo to: ${dirP}"

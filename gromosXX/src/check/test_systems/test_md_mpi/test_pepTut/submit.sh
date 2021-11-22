@@ -10,6 +10,7 @@ do
 		binDIR="${x}/bin"
 		dirP=$(basename $x)
 		dirP=${dirP/build}
+		dirP="out_${dirP}"
 
 		echo "dir: ${dirP}"
 		rm -rf ${dirP} #DELETE previous data
