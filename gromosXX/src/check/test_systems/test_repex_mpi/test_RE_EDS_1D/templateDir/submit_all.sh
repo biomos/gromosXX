@@ -3,7 +3,7 @@
 #Load Gromos Settings
 . ../../../gromos_settings.sh
 
-replicas=3
+replicas=2
 max_step=$((${maxCores}/${replicas}))
 cores_per_rep=($(seq 1 ${stepCores} ${max_step}));
 
