@@ -6,7 +6,7 @@ rm -f ${out_prefix}*
 
 mpirun -n ${2} ${gromosBIN}/repex_mpi \
 	@topo input/PNMT_9lig_water.top \
-	@conf input/coord/REEDS_eoff_run.cnf \
+	@conf input/PNMT_9lig_water.cnf \
 	@input input/repex_eoff.imd \
 	@pttopo input/PNMT_9lig_water.ptp \
 	@distrest input/PNMT_9lig_water_disres.dat \
