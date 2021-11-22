@@ -1,5 +1,5 @@
 for x in $(ls make*)
 do
-	./${x} || echo "FAILED IN : ${x}" && exit 1
+	./${x} || echo "FAILED IN : ${x}" > failedComp.out
 
 done
