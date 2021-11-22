@@ -1,9 +1,10 @@
 
 out_prefix="${1}"
-gromosBIN="/home/bschroed/Documents/projects/gromosXX/gromosXX/bin/" #${3}
 gromosBIN=${3}
-rm ${out_prefix}*
-mpirun -n ${2} ${gromosBIN}repex_mpi \
+
+rm -f ${out_prefix}*
+
+mpirun -n ${2} ${gromosBIN}/repex_mpi \
 	@topo input/PNMT_9lig_water.top \
 	@conf input/coord/REEDS_eoff_run.cnf \
 	@input input/repex_eoff.imd \
