@@ -13,6 +13,6 @@ cd ${NAME}
 
 ../configure --with-cuda=/usr/local/cuda-11.4/  || $(echo "OHOH! ->conf" && exit 1);
 
-make -j${np}  || $(echo "OHOH! -> MAKE" && exit 1);
-make install  || $(echo "OHOH! -> MAKE install" && exit 1);
+make -j${compileCores}  || $(echo "OHOH! -> MAKE" && exit 1);
+make install -j${compileCores}   || $(echo "OHOH! -> MAKE install" && exit 1);
 
