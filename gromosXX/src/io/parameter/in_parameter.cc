@@ -5524,7 +5524,7 @@ void io::In_Parameter::read_SYMRES(simulation::Parameter & param,
 } // SYMRES
 
 /**
- * @section symres AMBER block
+ * @section amber AMBER block
  * @verbatim
 AMBER
 # AMBER 0..1 use AMBER topology
