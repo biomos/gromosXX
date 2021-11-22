@@ -136,7 +136,7 @@ int algorithm::EDS
       if (sim.param().eds.form == simulation::aeds_search_eir || sim.param().eds.form == simulation::aeds_search_emax_emin || sim.param().eds.form == simulation::aeds_search_all) {
         DEBUG(7, "entering parameter search");
         // OFFSET search
-        if (sim.param().eds.form == simulation::aeds_search_eir || sim.param().eds.form == simulation::aeds_search_all) {
+        if (sim.param().eds.form == simulation::aeds_search_eir || (sim.param().eds.form == simulation::aeds_search_all && sim.param().eds.mode == 1 || sim.param().eds.csteps == 0)) {
           double tau = double(sim.param().eds.asteps) + double(sim.param().eds.bsteps - sim.param().eds.asteps) * double(sim.steps()) / double(sim.param().step.number_of_steps);
           double expde, eiremin, eiremax, eirestar, eirdemix, eirkfac;
           for (unsigned int is = 0; is < numstates; is++) {
@@ -160,10 +160,18 @@ int algorithm::EDS
             sim.param().eds.statefren[is] = -1.0 / beta * sim.param().eds.lnexpde[is];
             sim.param().eds.eir[is] = sim.param().eds.statefren[is] - sim.param().eds.statefren[0];
           }
+          // changing from mode 0 to mode 1 after csteps is reached; resetting current_csteps
+          if (sim.param().eds.current_csteps == sim.param().eds.csteps){
+            sim.param().eds.current_csteps = 0;
+            sim.param().eds.mode = 0;
+          }
+          else{
+            sim.param().eds.current_csteps++;
+          } 
         }
 
         // EMAX and EMIN search
-        if (sim.param().eds.form == simulation::aeds_search_emax_emin || sim.param().eds.form == simulation::aeds_search_all) {
+        if (sim.param().eds.form == simulation::aeds_search_emax_emin || (sim.param().eds.form == simulation::aeds_search_all && sim.param().eds.mode == 0 || sim.param().eds.csteps == 0)) {
           // find the state we are in
           unsigned int state = 0;
           double min = eds_vi[0] - eir[0];
@@ -268,6 +276,15 @@ int algorithm::EDS
           conf.current().energies.eds_globmin = globminavg;
           conf.current().energies.eds_globminfluc = globminfluc;
           sim.param().eds.oldstate = state;
+
+          // changing from mode 0 to mode 1 after csteps is reached; resetting current_csteps
+          if (sim.param().eds.current_csteps == sim.param().eds.csteps){
+            sim.param().eds.current_csteps = 0;
+            sim.param().eds.mode = 1;
+          }
+          else{
+            sim.param().eds.current_csteps++;
+          } 
         }
       }
 

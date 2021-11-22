@@ -2972,7 +2972,7 @@ namespace simulation
       /**
       * parameter emin for aeds
       */
-      double emin;
+      double emin; 
       /**
       * do we want to init an aeds parameter search?
       */
@@ -3041,6 +3041,18 @@ namespace simulation
       * half-life of the offset parameters at the beginning of the run
       */
       unsigned int bsteps;
+      /**
+      * steps before changing from eds_min/max search to offset search and other way around
+      */
+      unsigned int csteps;
+      /**
+      * steps before changing from eds_min/max search to offset search and other way around
+      */
+      unsigned int current_csteps;
+      /**
+      * steps before changing from eds_min/max search to offset search and other way around
+      */
+      unsigned int mode;
     } /** enveloping distribution sampling*/ eds;
    
  struct reeds_struct : public replica_struct
