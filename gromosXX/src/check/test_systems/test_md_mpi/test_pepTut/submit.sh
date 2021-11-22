@@ -13,7 +13,7 @@ do
 
 		echo "dir: ${dirP}"
 		rm -rf ${dirP} #DELETE previous data
-		cp -r templateMdMpi ${dirP}
+		cp -r templateDir ${dirP}
 
 		cd ${dirP}
 		echo "./submit_all.sh ${binDIR}"
