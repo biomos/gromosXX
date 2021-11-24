@@ -204,7 +204,7 @@ io::In_Refpos::read(topology::Topology& topo,
         buffer.erase(buffer.begin(), buffer.begin()+1);
         conf.special().reference_positions.resize(topo.num_atoms());
         io::In_Configuration::_read_position(conf.special().reference_positions,
-                                                buffer, topo, std::string("REFPOSITION"));
+                                                buffer, topo, conf, std::string("REFPOSITION"));
         // CHRIS: this is only set in read_configuration so we cannot do this check here
         // use the value from sim.param()
         //if (conf.boundary_type == math::truncoct) {
