@@ -71,7 +71,7 @@ namespace io {
      * read POSITION block.
      */
     static bool _read_position(math::VArray &pos, std::vector<std::string> &buffer,
-			topology::Topology &topo, std::string blockname = "POSITION");
+			topology::Topology &topo, configuration::Configuration & conf, std::string blockname = "POSITION");
 
     /**
      * Just try to read the positions without any checks.
@@ -280,7 +280,7 @@ namespace io {
      * read POSITIONRED block.
      */
     bool _read_positionred(math::VArray &pos, std::vector<std::string> &buffer,
-			   topology::Topology &topo);
+			   topology::Topology &topo, configuration::Configuration & conf);
     
     /**
      * read COSDISPLACEMENTS block.
