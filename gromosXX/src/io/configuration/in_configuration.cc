@@ -1413,7 +1413,7 @@ bool io::In_Configuration::_read_positionred(math::VArray &pos,
 
   if (i != num){
     // if i is exactly the num of atoms without the virtual atoms it means that the virtual atoms are not loaded yet
-    if (i == num - topo.virtual_atoms_group().size()){
+    if (i == num - topo.virtual_atoms_group().atoms().size()){
          std::map<unsigned int, util::Virtual_Atom>::iterator it;
          for ( it = topo.virtual_atoms_group().atoms().begin(); it != topo.virtual_atoms_group().atoms().end(); it++ )
          {
@@ -1533,7 +1533,7 @@ bool io::In_Configuration::_read_position(math::VArray &pos, std::vector<std::st
 
   if (i != num){
     // if i is exactly the num of atoms without the virtual atoms it means that the virtual atoms are not loaded yet
-    if (i == num - topo.virtual_atoms_group().size()){
+    if (i == num - topo.virtual_atoms_group().atoms().size()){
          std::map<unsigned int, util::Virtual_Atom>::iterator it;
          for ( it = topo.virtual_atoms_group().atoms().begin(); it != topo.virtual_atoms_group().atoms().end(); it++ )
          {
@@ -1600,7 +1600,7 @@ bool io::In_Configuration::_read_velocityred(math::VArray &vel,
 
   if (i != num){
     // if i is exactly the num of atoms without the virtual atoms it means that the virtual atoms are not loaded yet
-    if (i == num - topo.virtual_atoms_group().size()){
+    if (i == num - topo.virtual_atoms_group().atoms().size()){
          std::map<unsigned int, util::Virtual_Atom>::iterator it;
          for ( it = topo.virtual_atoms_group().atoms().begin(); it != topo.virtual_atoms_group().atoms().end(); it++ )
          {
@@ -1672,7 +1672,7 @@ bool io::In_Configuration::_read_velocity(math::VArray &vel,
 
   if (i != num){
     // if i is exactly the num of atoms without the virtual atoms it means that the virtual atoms are not loaded yet
-    if (i == num - topo.virtual_atoms_group().size()){
+    if (i == num - topo.virtual_atoms_group().atoms().size()){
          std::map<unsigned int, util::Virtual_Atom>::iterator it;
          for ( it = topo.virtual_atoms_group().atoms().begin(); it != topo.virtual_atoms_group().atoms().end(); it++ )
          {
@@ -1740,7 +1740,7 @@ bool io::In_Configuration::_read_lattice_shifts(math::VArray &shift,
 
   if (i != num){
     // if i is exactly the num of atoms without the virtual atoms it means that the virtual atoms are not loaded yet
-    if (i == num - topo.virtual_atoms_group().size()){
+    if (i == num - topo.virtual_atoms_group().atoms().size()){
          std::map<unsigned int, util::Virtual_Atom>::iterator it;
          for ( it = topo.virtual_atoms_group().atoms().begin(); it != topo.virtual_atoms_group().atoms().end(); it++ )
          {
