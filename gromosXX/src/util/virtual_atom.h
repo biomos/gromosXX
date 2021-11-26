@@ -40,6 +40,10 @@ namespace util
      */
     va_CH2 = 3,
     /**
+     * 8: TIP4P
+     */
+    va_tip4p = 8,
+    /**
      * 4: CH2 (stereospecific)
      */
     va_stereo_CH2 = 4,

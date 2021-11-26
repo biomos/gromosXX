@@ -1753,6 +1753,9 @@ void io::In_Topology::read_block_VIRTUALATOM(topology::Topology& topo,
         case 3:
           type = util::virtual_type::va_CH2;
           break;
+        case 8:
+          type = util::virtual_type::va_tip4p;
+          break;
         case 4:
           type = util::virtual_type::va_stereo_CH2;
           break;
