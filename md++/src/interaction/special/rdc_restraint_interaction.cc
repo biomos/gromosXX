@@ -1154,13 +1154,12 @@ void _calculate_ah(topology::Topology & topo,
 
   vector<configuration::Configuration::special_struct::rdc_struct>::iterator
       conf_it = conf.special().rdc.begin(),
-      conf_to = conf.special().rdc.end();
+      conf_to = conf.special().rdc.end(); // vector of groups of rdc current state
   vector<vector<topology::rdc_restraint_struct> >::iterator
-      topo_it = topo.rdc_restraints().begin();
-  for( ; conf_it!=conf_to; conf_it++, topo_it++){
+      topo_it = topo.rdc_restraints().begin(); // vector of groups of rdc specs
+  for( ; conf_it!=conf_to; conf_it++, topo_it++){  // for each RDC group
 
     const int n_rdc = topo_it->size();
-    //cout << "n_rdc in calculate ah : " << n_rdc << endl;
 
     double ck[n_rdc][n_ah];
     for(int k=0; k<n_rdc; ++k){for(int h=0; h<n_ah; ++h){ck[k][h]=0.0;}} // init
@@ -1375,7 +1374,7 @@ void _calculate_forces_atoms_T(topology::Topology & topo,
       conf_to = conf.special().rdc.end();
   vector<vector<topology::rdc_restraint_struct> >::iterator
       topo_it = topo.rdc_restraints().begin();
-  for( ; conf_it!=conf_to; conf_it++, topo_it++){
+  for( ; conf_it!=conf_to; conf_it++, topo_it++){ // loop over RDC groups
 
     int k=0;
     vector<topology::rdc_restraint_struct>::iterator
