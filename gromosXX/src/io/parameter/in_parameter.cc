@@ -3977,11 +3977,12 @@ void io::In_Parameter::read_AEDS(simulation::Parameter & param,
     block.get_next_parameter("BMAX", param.eds.setbmax, ">0", "");
     block.get_next_parameter("ASTEPS", param.eds.asteps, ">0", "");
     block.get_next_parameter("BSTEPS", param.eds.bsteps, ">0", "");
-    block.get_next_parameter("CSTEPS", param.eds.csteps, ">0", "");
+    //block.get_next_parameter("CSTEPS", param.eds.csteps, ">0", "");
 
     param.eds.searchemax = 0.0;
     param.eds.emaxcounts = 0;
     param.eds.oldstate = 0;
+    param.eds.csteps = double(sim.param().eds.bsteps);
     param.eds.current_csteps = 0;
     param.eds.mode = 0;
 
