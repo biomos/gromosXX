@@ -3982,7 +3982,7 @@ void io::In_Parameter::read_AEDS(simulation::Parameter & param,
     param.eds.searchemax = 0.0;
     param.eds.emaxcounts = 0;
     param.eds.oldstate = 0;
-    param.eds.csteps = double(sim.param().eds.bsteps);
+    param.eds.csteps = param.eds.bsteps;
     param.eds.current_csteps = 0;
     param.eds.mode = 0;
 
