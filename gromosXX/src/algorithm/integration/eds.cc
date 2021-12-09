@@ -160,15 +160,17 @@ int algorithm::EDS
             sim.param().eds.statefren[is] = -1.0 / beta * sim.param().eds.lnexpde[is];
             sim.param().eds.eir[is] = sim.param().eds.statefren[is] - sim.param().eds.statefren[0];
           }
-          // changing from mode 0 to mode 1 after csteps is reached; resetting current_csteps
-          if (sim.param().eds.current_csteps == sim.param().eds.csteps){
-            sim.param().eds.csteps = double(sim.param().eds.bsteps) - double(sim.param().eds.asteps);
-            sim.param().eds.current_csteps = 0;
-            sim.param().eds.mode = 0;
-          }
-          else{
-            sim.param().eds.current_csteps++;
-          } 
+          if (sim.param().eds.form == simulation::aeds_search_all){
+            // changing from mode 0 to mode 1 after csteps is reached; resetting current_csteps
+            if (sim.param().eds.current_csteps == sim.param().eds.csteps){
+              sim.param().eds.csteps = double(sim.param().eds.bsteps) - double(sim.param().eds.asteps);
+              sim.param().eds.current_csteps = 0;
+              sim.param().eds.mode = 0;
+            }
+            else{
+              sim.param().eds.current_csteps++;
+            } 
+          }  
         }
 
         // EMAX and EMIN search
@@ -278,15 +280,17 @@ int algorithm::EDS
           conf.current().energies.eds_globminfluc = globminfluc;
           sim.param().eds.oldstate = state;
 
-          // changing from mode 0 to mode 1 after csteps is reached; resetting current_csteps
-          if (sim.param().eds.current_csteps == sim.param().eds.csteps){
-            //only needed if emin/emax and the offset search should have different amount of steps
-            //sim.param().eds.csteps = double(sim.param().eds.bsteps) - double(sim.param().eds.asteps);
-            sim.param().eds.current_csteps = 0;
-            sim.param().eds.mode = 1;
-          }
-          else{
-            sim.param().eds.current_csteps++;
+          if (sim.param().eds.form == simulation::aeds_search_all){
+            // changing from mode 0 to mode 1 after csteps is reached; resetting current_csteps
+            if (sim.param().eds.current_csteps == sim.param().eds.csteps){
+              //only needed if emin/emax and the offset search should have different amount of steps
+              //sim.param().eds.csteps = double(sim.param().eds.bsteps) - double(sim.param().eds.asteps);
+              sim.param().eds.current_csteps = 0;
+              sim.param().eds.mode = 1;
+            }
+            else{
+              sim.param().eds.current_csteps++;
+            }
           } 
         }
       }

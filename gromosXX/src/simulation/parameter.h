@@ -3044,7 +3044,7 @@ namespace simulation
       /**
       * steps before changing from eds_min/max search to offset search and other way around
       */
-      double csteps;
+      unsigned int csteps;
       /**
       * steps before changing from eds_min/max search to offset search and other way around
       */
