@@ -1363,7 +1363,7 @@ void _calculate_forces_atoms_T(topology::Topology & topo,
                    const simulation::Simulation & sim) {
 
   const int n_ah = 5;
-
+  
   // create variables
   math::Periodicity<B> periodicity(conf.current().box);
   math::Vec ri(0.0, 0.0, 0.0);
@@ -1374,7 +1374,8 @@ void _calculate_forces_atoms_T(topology::Topology & topo,
       conf_to = conf.special().rdc.end();
   vector<vector<topology::rdc_restraint_struct> >::iterator
       topo_it = topo.rdc_restraints().begin();
-  for( ; conf_it!=conf_to; conf_it++, topo_it++){ // loop over RDC groups
+  for(unsigned int group=0; conf_it!=conf_to; conf_it++, topo_it++, group++){ // loop over RDC groups
+    ++conf.special().rdc[group].num_averaged;
 
     int k=0;
     vector<topology::rdc_restraint_struct>::iterator
@@ -1406,6 +1407,14 @@ void _calculate_forces_atoms_T(topology::Topology & topo,
       } // Loop over tensor components
       // multiply with RDC_max to get current RDC value
       conf_it->curr[k] *= RDC_max(it) / dij3; // [1/ps]
+
+      // the cumulative average
+      
+      double & RDC_cumavg = conf_it->RDC_cumavg[k]; // [1 / ps]
+      RDC_cumavg += (conf_it->curr[k]-RDC_cumavg)/conf.special().rdc[group].num_averaged; 
+      if (std::isnan(RDC_cumavg)) {
+        std::cout << conf.special().rdc[group].num_averaged << "th step: cumavg=" << RDC_cumavg << std::endl;
+      }
 
       // update average RDC values
       if(sim.param().rdc.mode == simulation::rdc_restr_av ||

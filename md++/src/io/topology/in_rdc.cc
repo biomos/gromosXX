@@ -1003,6 +1003,8 @@ void io::In_RDC::read(topology::Topology& topo,
 
      conf.special().rdc[i].av.resize(group_size);
      conf.special().rdc[i].curr.resize(group_size);
+     conf.special().rdc[i].RDC_cumavg.resize(group_size, 0);
+     conf.special().rdc[i].num_averaged = 0;
 
      conf.special().rdc[i].factorFreq = factorfreq;
      conf.special().rdc[i].factorGyr = factorgyr;
