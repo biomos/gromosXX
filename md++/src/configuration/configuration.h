@@ -282,6 +282,14 @@ namespace configuration {
          */
         std::vector<double> av;
         /**
+         * cumulative averages
+         */
+        std::vector<double> RDC_cumavg;
+        /**
+         * the number of averaged timepoints in RDC_cumavg
+         */
+        unsigned long long int num_averaged;
+        /**
          * current RDC values
          */
         std::vector<double> curr;

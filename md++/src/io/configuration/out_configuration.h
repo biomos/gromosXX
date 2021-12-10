@@ -413,7 +413,7 @@ namespace io {
             topology::Topology const &topo,
             std::ostream &os);
 
-    void _print_rdc_cumaverages(
+    void _print_tf_rdc_cumaverages(
             configuration::Configuration const &conf,
             topology::Topology const &topo,
             std::ostream &os);

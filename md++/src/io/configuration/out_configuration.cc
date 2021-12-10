@@ -396,7 +396,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
          sim.param().rdc.mode == simulation::rdc_restr_av_weighted ||
          sim.param().rdc.mode == simulation::rdc_restr_biq ||
          sim.param().rdc.mode == simulation::rdc_restr_biq_weighted) {
-        io::Out_Configuration::_print_rdc_averages(sim.param(), conf, topo, m_special_traj, /*formatted*/ true);
+        io::Out_Configuration::_print_rdc_averages(sim.param(), conf, topo, m_special_traj, /*formatted*/ false);
       }
       if(sim.param().rdc.mode != simulation::rdc_restr_off) {
         io::Out_Configuration::_print_rdc_representation(sim.param(), conf, topo, m_special_traj, /*formatted*/ true);
@@ -413,7 +413,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
     }
 
     if (m_every_rdccumave && sim.steps() && ((sim.steps()-1) % m_every_rdccumave) == 0) {
-      _print_rdc_cumaverages(conf, topo, m_special_traj);
+      _print_tf_rdc_cumaverages(conf, topo, m_special_traj);
       m_special_traj.flush();
     }
     
@@ -577,7 +577,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
        sim.param().rdc.mode == simulation::rdc_restr_av_weighted ||
        sim.param().rdc.mode == simulation::rdc_restr_biq ||
        sim.param().rdc.mode == simulation::rdc_restr_biq_weighted) {
-      io::Out_Configuration::_print_rdc_averages(sim.param(), conf, topo, m_final_conf, /*formatted*/ false);
+      io::Out_Configuration::_print_rdc_averages(sim.param(), conf, topo, m_final_conf, /*formatted*/ true);
     }
 
     if(sim.param().rdc.mode != simulation::rdc_restr_off) {
@@ -699,7 +699,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
          sim.param().rdc.mode == simulation::rdc_restr_av_weighted ||
          sim.param().rdc.mode == simulation::rdc_restr_biq ||
          sim.param().rdc.mode == simulation::rdc_restr_biq_weighted) {
-        io::Out_Configuration::_print_rdc_averages(sim.param(), conf, topo, m_special_traj, /*formatted*/ true);
+        io::Out_Configuration::_print_rdc_averages(sim.param(), conf, topo, m_special_traj, /*formatted*/ false);
       }
       if(sim.param().rdc.mode != simulation::rdc_restr_off) {
         io::Out_Configuration::_print_rdc_representation(sim.param(), conf, topo, m_special_traj, /*formatted*/ true);
@@ -714,7 +714,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
     }
 
     if (m_every_rdccumave &&  ((sim.steps()-1) % m_every_rdccumave) == 0) {
-      _print_rdc_cumaverages(conf, topo, m_special_traj);
+      _print_tf_rdc_cumaverages(conf, topo, m_special_traj);
     }
 
     if (m_every_adde  && ((sim.steps()-1) % m_every_adde) == 0) {
@@ -2779,11 +2779,22 @@ void io::Out_Configuration::_print_rdc_averages(simulation::Parameter const &par
                              std::ostream &os,
                              bool formatted) {
   os << "RDCAVERAGES" << std::endl;
+  if (formatted) { // very ugly, I use this as flag for when printing to the final conf
+    os << conf.special().rdc[0].num_averaged << std::endl;
+  } else {
+    // when printed to the special trajectory it is useful to have the number of restraints
+    unsigned int total_num_rdcs = 0;
+    for (unsigned int i=0; i<conf.special().rdc.size(); ++i){
+      total_num_rdcs+=conf.special().rdc[i].curr.size();
+    }
+    os << total_num_rdcs << std::endl;
+  }
   os.setf(std::ios::fixed, std::ios::floatfield);
   os.precision(m_rdc_restraint_precision);
   for (unsigned int i=0; i<conf.special().rdc.size(); ++i){
     for (unsigned int j=0; j<conf.special().rdc[i].av.size(); ++j){
-      os << std::setw(m_width) << conf.special().rdc[i].av[j]/conf.special().rdc[i].factorFreq << std::endl;
+      os << std::setw(m_width) << conf.special().rdc[i].av[j]/conf.special().rdc[i].factorFreq 
+         << std::setw(m_width) << conf.special().rdc[i].RDC_cumavg[j]/conf.special().rdc[i].factorFreq << std::endl;
     }
   }
   os << "END" << std::endl;
@@ -2954,16 +2965,16 @@ void io::Out_Configuration::_print_tf_rdc_restraints(
   os << "END" << std::endl;
 }
 
-void io::Out_Configuration::_print_rdc_cumaverages(
+void io::Out_Configuration::_print_tf_rdc_cumaverages(
         configuration::Configuration const &conf,
         topology::Topology const & topo,
         std::ostream &os) {
-  DEBUG(10, "RDC cumulative averages");
+  DEBUG(10, "TFRDC cumulative averages");
 
   std::vector<double>::const_iterator RDC_cumavg_it = conf.special().tfrdc.RDC_cumavg.begin(),
           RDC_cumavg_to = conf.special().tfrdc.RDC_cumavg.end();
 
-  os << "RDCCUMAVE" << std::endl;
+  os << "TFRDCCUMAVE" << std::endl;
   os << conf.special().tfrdc.RDC_cumavg.size() << std::endl;
   for (int i = 1; RDC_cumavg_it != RDC_cumavg_to; ++RDC_cumavg_it, ++i) {
     //os << std::setw(6) << i;
@@ -2973,6 +2984,7 @@ void io::Out_Configuration::_print_rdc_cumaverages(
   }
   os << "END" << std::endl;
 }
+
 
 void io::Out_Configuration::_print_zaxisori_distribution(
         simulation::Simulation const & sim,

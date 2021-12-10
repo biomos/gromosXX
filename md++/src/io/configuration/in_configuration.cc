@@ -2572,6 +2572,7 @@ bool io::In_Configuration::_read_rdc_av(std::vector<std::string> &buffer,
  //remove average values
  for(std::vector<configuration::Configuration::special_struct::rdc_struct>::iterator it=rdc.begin(), to=rdc.end();it!=to; ++it){
 	 it->av.clear();
+	 it->RDC_cumavg.clear();
  }
 
  // check if number of saved values is correct
@@ -2580,8 +2581,8 @@ bool io::In_Configuration::_read_rdc_av(std::vector<std::string> &buffer,
  for(unsigned int i=0; i<rdc_res.size(); ++i) count += rdc_res[i].size();
  DEBUG(15,"buffer size: " << buffer.size()-1)
  DEBUG(15,"count: " << count)
- if (buffer.size()-1 != count){
-	 os << "RDCAVERAGES: " << buffer.size() - 1 << " but restraints: " << count << std::endl;
+ if (buffer.size()-2 != count){
+	 os << "RDCAVERAGES: " << buffer.size() - 2 << " but restraints: " << count << std::endl;
 	 io::messages.add("number of RDC restraints does not match with number of continuation data", "In_Configuration", io::message::error);
 	 return false;
  }
@@ -2590,20 +2591,31 @@ bool io::In_Configuration::_read_rdc_av(std::vector<std::string> &buffer,
 		 buff_it = buffer.begin(),
 		 buff_to = buffer.end()-1;
 
-  double av = 0.0;
-  unsigned int i=0,j=0; // index for rdc-groups and rdcs in groups
-  for(; buff_it != buff_to; ++buff_it, ++j){
+ double av = 0, cumav = 0;
+ unsigned int i=0,j=0; // index for rdc-groups and rdcs in groups
+ double num_averaged = 0;
+
+ _lineStream.clear();
+ _lineStream.str(*buff_it);
+ _lineStream >> num_averaged;
+ for(std::vector<configuration::Configuration::special_struct::rdc_struct>::iterator it=rdc.begin(), to=rdc.end();it!=to; ++it){
+		 it->num_averaged=num_averaged;
+ }
+ ++buff_it;
+ for(; buff_it != buff_to; ++buff_it, ++j){
 
 	 _lineStream.clear();
 	 _lineStream.str(*buff_it);
 
-	 _lineStream >> av;
+	 _lineStream >> av >> cumav;
 	 av*=rdc[i].factorFreq;
+	 cumav*=rdc[i].factorFreq;
 	 if (_lineStream.fail()){
 		 io::messages.add("Bad value in RDCAVERAGES block", "In_Configuration", io::message::error);
 		 return false;
 	 }
 	 rdc[i].av.push_back(av);
+	 rdc[i].RDC_cumavg.push_back(cumav);
 	 if(rdc_res[i].size() == j-1){
 		 ++i;
 		 j=0;
@@ -2612,7 +2624,7 @@ bool io::In_Configuration::_read_rdc_av(std::vector<std::string> &buffer,
 		 os.precision(8); 
 		 os.width(15); 
      os.setf(std::ios::scientific, std::ios::floatfield);
-		 os << av << std::endl;
+		 os << av << " " << cumav << std::endl;
 	 }
  }
  if(!quiet) os << "END\n";
