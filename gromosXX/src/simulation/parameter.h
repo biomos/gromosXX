@@ -3048,6 +3048,10 @@ namespace simulation
       /**
       * steps before changing from eds_min/max search to offset search and other way around
       */
+      unsigned int actual_csteps;
+      /**
+      * steps before changing from eds_min/max search to offset search and other way around
+      */
       unsigned int current_csteps;
       /**
       * steps before changing from eds_min/max search to offset search and other way around
