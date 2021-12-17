@@ -4079,6 +4079,10 @@ namespace simulation
        * write output to special trajectory every n-th step
        */
       unsigned int write;
+       /**
+       * use normalization distance
+       */
+      unsigned int normalize_r;
     } /** RDC-parameters */ rdc;
 
     /**

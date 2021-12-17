@@ -1179,9 +1179,15 @@ void _calculate_ah(topology::Topology & topo,
       periodicity.nearest_image(ri, it->v2.pos(conf, topo), rij);
       DEBUG(15, "rij " << v2s(rij))
       math::Vec rj(ri - rij);
-      const double dij = math::abs(rij); // [nm]
-      const double dij2 = pow(dij,2); // [nm^2]
-      const double dij3 = pow(dij,3); // [nm^3]
+
+      double dij; // [nm]
+      if (sim.param().rdc.normalize_r) {
+        dij = it->r0;
+      } else {
+        dij = math::abs(rij);
+      }
+      const double dij2 = dij*dij; // [nm^2]
+      const double dij3 = dij*dij2; // [nm^3]
       const double x = (ri - rj)[0], y = (ri - rj)[1], z = (ri - rj)[2];
 
       // Calculate the five tensor factors
@@ -1387,7 +1393,12 @@ void _calculate_forces_atoms_T(topology::Topology & topo,
       ri = it->v1.pos(conf, topo);
       periodicity.nearest_image(ri, it->v2.pos(conf, topo), rij);
       math::Vec rj(ri - rij);
-      const double dij = math::abs(rij);
+      double dij; // [nm]
+      if (sim.param().rdc.normalize_r) {
+        dij = it->r0;
+      } else {
+        dij = math::abs(rij);
+      }
       const double dij2 = dij*dij;
       const double dij3 = dij2*dij;
       const double dij5 = dij2*dij3;
@@ -1455,19 +1466,37 @@ void _calculate_forces_atoms_T(topology::Topology & topo,
       conf.current().energies.rdc_energy[topo.atom_energy_group()[it->v1.atom(0)]] += 0.5 * force_coefficient * e_term; // [kJ/mol]
       conf.current().energies.rdc_energy[topo.atom_energy_group()[it->v2.atom(0)]] += 0.5 * force_coefficient * e_term; // [kJ/mol]
       DEBUG(15, "group energies are " << conf.current().energies.rdc_energy[topo.atom_energy_group()[it->v1.atom(0)]] << " and " << conf.current().energies.rdc_energy[topo.atom_energy_group()[it->v2.atom(0)]])
+      std::cout << "fc "  << sim.param().rdc.K << " w " << it->weight <<  " e_term "<< e_term << std::endl;
+      std::cout << "group energies are "  << conf.current().energies.rdc_energy[topo.atom_energy_group()[it->v1.atom(0)]] << std::endl;
 
       // forces on atoms i and j
       math::VArray dQ_over_dr(n_ah);
       //in the following expressions a factor of r^-2 is omitted
-      dQ_over_dr[0] = math::Vec( 2*x * (1 - (x*x - z*z)/dij2), 2*y * (  - (x*x - z*z)/dij2), 2*z * (-1 - (x*x - z*z)/dij2) ); // [nm]
-      dQ_over_dr[1] = math::Vec( 2*x * (  - (y*y - z*z)/dij2), 2*y * (1 - (y*y - z*z)/dij2), 2*z * (-1 - (y*y - z*z)/dij2) ); // [nm]
-      dQ_over_dr[2] = math::Vec( 2*y * (1 - (2*x*x)/dij2),     2*x * (1 - (2*y*y)/dij2),     2*z * (   - (2*x*y)/dij2)     ); // [nm]
-      dQ_over_dr[3] = math::Vec( 2*z * (1 - (2*x*x)/dij2),     2*y * (  - (2*x*z)/dij2),     2*x * ( 1 - (2*z*z)/dij2)     ); // [nm]
-      dQ_over_dr[4] = math::Vec( 2*x * (  - (2*y*z)/dij2),     2*z * (1 - (2*y*y)/dij2),     2*y * ( 1 - (2*z*z)/dij2)     ); // [nm]
+      if (sim.param().rdc.normalize_r) {
+        dQ_over_dr[0] = math::Vec( 2*x, 0, -2*z); // [nm]
+        dQ_over_dr[1] = math::Vec( 0, 2*y, -2*z ); // [nm]
+        dQ_over_dr[2] = math::Vec( 2*y, 2*x , 0); // [nm]
+        dQ_over_dr[3] = math::Vec( 2*z , 0, 2*x); // [nm]
+        dQ_over_dr[4] = math::Vec( 0, 2*z, 2*y); // [nm]
+        std::cout << "norm " << v2s(dQ_over_dr[0])<< std::endl;
+      } else {
+        dQ_over_dr[0] = math::Vec( 2*x * (1 - (x*x - z*z)/dij2), 2*y * (  - (x*x - z*z)/dij2), 2*z * (-1 - (x*x - z*z)/dij2) ); // [nm]
+        dQ_over_dr[1] = math::Vec( 2*x * (  - (y*y - z*z)/dij2), 2*y * (1 - (y*y - z*z)/dij2), 2*z * (-1 - (y*y - z*z)/dij2) ); // [nm]
+        dQ_over_dr[2] = math::Vec( 2*y * (1 - (2*x*x)/dij2),     2*x * (1 - (2*y*y)/dij2),     2*z * (   - (2*x*y)/dij2)     ); // [nm]
+        dQ_over_dr[3] = math::Vec( 2*z * (1 - (2*x*x)/dij2),     2*y * (  - (2*x*z)/dij2),     2*x * ( 1 - (2*z*z)/dij2)     ); // [nm]
+        dQ_over_dr[4] = math::Vec( 2*x * (  - (2*y*z)/dij2),     2*z * (1 - (2*y*y)/dij2),     2*y * ( 1 - (2*z*z)/dij2)     ); // [nm]
+        std::cout << "free " << v2s(dQ_over_dr[0])<< std::endl;
+      }
 
       math::Vec force_tensor_comp(0.0, 0.0, 0.0);
-      for(int h=0; h<n_ah; ++h) {
-        force_tensor_comp += conf_it->Tensor[h] * (-3.0 * ck[h] * rij + dQ_over_dr[h]); // [nm]
+      if (sim.param().rdc.normalize_r) {
+        for(int h=0; h<n_ah; ++h) {
+          force_tensor_comp += conf_it->Tensor[h] *  dQ_over_dr[h]; // [nm]
+        }
+      } else {
+        for(int h=0; h<n_ah; ++h) {
+          force_tensor_comp += conf_it->Tensor[h] * (-3.0 * ck[h] * rij + dQ_over_dr[h]); // [nm]
+        }
       }
 
       // Add the force contribution to the forces on the atoms i and j

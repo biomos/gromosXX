@@ -1183,13 +1183,13 @@ namespace topology {
     /**
      * default constructor (required for creating vectors of rdc_restraint_struct and providing values later)
      */
-    rdc_restraint_struct(): v1(), v2(), weight(1.0), D0(0.0), dD0(0.0), gyri(0.0), gyrj(0.0) { }
+    rdc_restraint_struct(): v1(), v2(), weight(1.0), D0(0.0), dD0(0.0), gyri(0.0), gyrj(0.0), r0(0.0) { }
     /**
      * constructor
      */
     rdc_restraint_struct(util::Virtual_Atom v1,
-            util::Virtual_Atom v2, double weight, double D0, double dD0, double gyri, double gyrj)
-      : v1(v1), v2(v2), weight(weight), D0(D0), dD0(dD0), gyri(gyri), gyrj(gyrj) { }
+            util::Virtual_Atom v2, double weight, double D0, double dD0, double gyri, double gyrj, double r0)
+      : v1(v1), v2(v2), weight(weight), D0(D0), dD0(dD0), gyri(gyri), gyrj(gyrj), r0(r0) { }
 
     /**
      * virtual atom 1.
@@ -1216,6 +1216,10 @@ namespace topology {
      * gyromagnetic ratios of atom i and j
      */
     double gyri, gyrj;
+    /**
+     * normalisation distance
+     */
+    double r0;
   };
 
   /**

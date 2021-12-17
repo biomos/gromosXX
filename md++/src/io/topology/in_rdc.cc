@@ -775,11 +775,11 @@ void io::In_RDC::read(topology::Topology& topo,
       }
       block.get_next_parameter("TYPE", type2, "", "-2,-1,0,1,2,3,4,5,6,7");
 
-      block.get_next_parameter("R0", r0, "", "");
+      block.get_next_parameter("R0", r0, ">=0", "");
       block.get_next_parameter("GYR1", gyr1, "", "");
       block.get_next_parameter("GYR2", gyr2, "", "");
       block.get_next_parameter("D0", D, "", "");
-      block.get_next_parameter("DD0", DD, "", "");
+      block.get_next_parameter("DD0", DD, ">=0", "");
       block.get_next_parameter("W0", weight, ">=0", "");
 
 
@@ -802,7 +802,7 @@ void io::In_RDC::read(topology::Topology& topo,
         util::Virtual_Atom v1(t1, atom1, dish, disc);
         util::Virtual_Atom v2(t2, atom2, dish, disc);
 
-        tmp_rdc_rest_strct.push_back(topology::rdc_restraint_struct(v1, v2, weight, D, DD, gyr1, gyr2)); // in units of 1, 1, 1, 1/ps, e/u and e/u
+        tmp_rdc_rest_strct.push_back(topology::rdc_restraint_struct(v1, v2, weight, D, DD, gyr1, gyr2, r0)); // in units of 1, 1, 1, 1/ps, e/u and e/u
 
         DEBUG(10,   setw(6) << atom1[0] 
                     << setw(6) << atom1[1]
