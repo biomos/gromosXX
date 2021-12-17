@@ -2408,6 +2408,9 @@ void io::In_Parameter::read_RDCRES(simulation::Parameter &param,
     exampleblock << "#         0:                   Energy minimisation\n";
     exampleblock << "#         1:                   Stochastic dynamics\n";
     exampleblock << "#         2:                   Molecular dynamics\n";
+    exampleblock << "# RNORM  0..1                  normalized rij\n";
+    exampleblock << "#         0:                   do not normalize - use the rij(t) \n";
+    exampleblock << "#         1:                   normalize - use the r0 given in the RDC restr. spec.\n";
     exampleblock << "# EMGRAD  > 0.0                (METHOD = 0, EM) stop minimisation if gradient is below EMGRAD\n";
     exampleblock << "# EMDX0   > 0.0                (METHOD = 0, EM) initial step size\n";
     exampleblock << "# EMNMAX  > 0                  (METHOD = 0, EM) maximum number of minimisation steps\n";
@@ -2427,8 +2430,8 @@ void io::In_Parameter::read_RDCRES(simulation::Parameter &param,
     exampleblock << "#           0:                 don't write\n";
     exampleblock << "#          >0:                 write every NTWRDCth step.\n";
     exampleblock << "#\n";
-    exampleblock << "#      NTRDCR  NTRDCRA  NTRDCT  NTALR  METHOD\n";
-    exampleblock << "            2        0       0      0       0\n";
+    exampleblock << "#      NTRDCR  NTRDCRA  NTRDCT  NTALR  METHOD    RNORM\n";
+    exampleblock << "            2        0       0      0       0        0\n";
     exampleblock << "#      EMGRAD  EMDX0  EMNMAX  SDCFRIC    TEMP     CRDCR  TAU   NRDCRTARS NRDCRBIQW   NTWRDC   NTWRDC\n";
     exampleblock << "        0.001   0.01    1000       20     300        1     1           0    0          0        10000\n";
     exampleblock << "END\n";
@@ -2449,6 +2452,7 @@ void io::In_Parameter::read_RDCRES(simulation::Parameter &param,
         block.get_next_parameter("NTRDCT", ntrdct, "", "0,1,2");
         block.get_next_parameter("NTALR", param.rdc.read_align, "", "0,1");
         block.get_next_parameter("METHOD", method, "", "0,1,2");
+        block.get_next_parameter("RNORM", param.rdc.normalize_r, "", "0,1");
         block.get_next_parameter("EMGRAD", param.rdc.emgradient, ">0", "");
         block.get_next_parameter("EMDX0", param.rdc.emstepsize, ">0", "");
         block.get_next_parameter("EMNMAX", param.rdc.emmaxiter, ">0", "");
@@ -2459,6 +2463,11 @@ void io::In_Parameter::read_RDCRES(simulation::Parameter &param,
         block.get_next_parameter("NRDCRTARS", param.rdc.tAVfactor, "", "0,1");
         block.get_next_parameter("NRDCRBIQW", param.rdc.biqfactor, "", "0,1,2");
         block.get_next_parameter("NTWRDC", param.rdc.write, ">=0", "");
+
+        if ((method != 0 or ntrdct != 1) and param.rdc.normalize_r) {
+                io::messages.add("RDCRES block: RNORM only implemented for NTRDCT=1 and METHOD=0",
+                                 "In_Parameter", io::message::error);
+        }
 
         switch (ntrdct) {
             case 0:
