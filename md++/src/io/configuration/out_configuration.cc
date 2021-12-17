@@ -403,7 +403,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
 
     if (m_every_rdc && sim.steps() && ((sim.steps()-1) % m_every_rdc) == 0) {
       if(sim.param().rdc.mode != simulation::rdc_restr_off) {
-        io::Out_Configuration::_print_rdc_values(sim.param(), conf, topo, m_special_traj, /*formatted*/ true);
+        io::Out_Configuration::_print_rdc_values(sim.param(), conf, topo, m_special_traj, /*formatted*/ false);
       }
       if(sim.param().rdc.mode == simulation::rdc_restr_av ||
          sim.param().rdc.mode == simulation::rdc_restr_av_weighted ||
@@ -706,7 +706,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
 
     if (m_every_rdc && ((sim.steps()-1) % m_every_rdc) == 0) {
       if(sim.param().rdc.mode != simulation::rdc_restr_off) {
-        io::Out_Configuration::_print_rdc_values(sim.param(), conf, topo, m_special_traj, /*formatted*/ true);
+        io::Out_Configuration::_print_rdc_values(sim.param(), conf, topo, m_special_traj, /*formatted*/ false);
       }
       if(sim.param().rdc.mode == simulation::rdc_restr_av ||
          sim.param().rdc.mode == simulation::rdc_restr_av_weighted ||
@@ -2776,6 +2776,14 @@ void io::Out_Configuration::_print_rdc_values(simulation::Parameter const &param
                              std::ostream &os,
                              bool formatted) {
   os << "RDCVALUES" << std::endl;
+  if (!formatted) { // very ugly, I use the formatted flag to indicate we are printing to the final conf
+    // when printed to the special trajectory it is useful to have the number of restraints
+    unsigned int total_num_rdcs = 0;
+    for (unsigned int i=0; i<conf.special().rdc.size(); ++i){
+      total_num_rdcs+=conf.special().rdc[i].curr.size();
+    }
+    os << total_num_rdcs << std::endl;
+  }
   os.setf(std::ios::fixed, std::ios::floatfield);
   os.precision(m_rdc_restraint_precision);
   for (unsigned int i=0; i<conf.special().rdc.size(); ++i){
