@@ -391,6 +391,18 @@ namespace io {
             std::ostream &os,
             bool formatted = false);
 
+    void _print_rdc_cumaverages(simulation::Parameter const & param,
+            configuration::Configuration const &conf,
+            topology::Topology const &topo,
+            std::ostream &os,
+            bool formatted = false);
+
+    void _print_rdc_ataverage(simulation::Parameter const & param,
+            configuration::Configuration const &conf,
+            topology::Topology const &topo,
+            std::ostream &os,
+            bool formatted = false);
+
     void _print_rdc_representation(simulation::Parameter const & param,
             configuration::Configuration const &conf,
             topology::Topology const &topo,

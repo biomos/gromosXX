@@ -1019,6 +1019,7 @@ void io::In_RDC::read(topology::Topology& topo,
        }
        case simulation::rdc_t: {
          conf.special().rdc[i].Tensor.resize(group_size);
+         conf.special().rdc[i].Tensor_av.resize(group_size, 0);
          conf.special().rdc[i].TensorVel.resize(group_size);
          conf.special().rdc[i].TensorMass.resize(group_size);
          conf.special().rdc[i].stochastic_integral_t.resize(n_ah);

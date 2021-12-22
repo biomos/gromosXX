@@ -971,6 +971,32 @@ bool io::In_Configuration::read_rdc (topology::Topology &topo,
 	 }
 	 else assert(false);
 
+	 // read time-averaged alignment-tensor for continuation run if block exists
+	 if (sim.param().rdc.ataveraging) {
+		buffer = m_block["RDCTAVERAGE"];
+		if (buffer.size()) {
+			block_read.insert("RDCTAVERAGE"); // mark block read
+			if(!_read_rdc_taverage(buffer, conf.special().rdc, os)){
+				io::messages.add("problem reading RDCTAVERAGE block in input configuration", "In_Configuration", io::message::error);
+				return false;
+			}
+			sim.param().rdc.read_ataverage=true;
+		} else {
+			io::messages.add("tensor averaging is on, but no RDCTAVERAGE block in input configuration, will initialize AT averages", "In_Configuration", io::message::warning);
+		}
+	 }
+	 // read cumulative averages if block exists
+		buffer = m_block["RDCCUMAVE"];
+		if (buffer.size()) {
+			block_read.insert("RDCCUMAVE"); // mark block read
+			if(!_read_rdc_cumav(buffer, conf.special().rdc, topo.rdc_restraints(), os)){
+				io::messages.add("problem reading RDCCUMAVE block in input configuration", "In_Configuration", io::message::error);
+				return false;
+			}
+		} else {
+			io::messages.add("no RDCCUMAVE block in input configuration, starting averaging now", "In_Configuration", io::message::notice);
+		}
+
 
 	 // read_align && em does not make sense
 	 if(sim.param().rdc.method == simulation::rdc_em){
@@ -2560,7 +2586,6 @@ bool io::In_Configuration::_read_order_parameter_restraint_average_window(
  return true;
 }
 
-
 //FIXME remove rdc-res dependency
 bool io::In_Configuration::_read_rdc_av(std::vector<std::string> &buffer,
 													std::vector<configuration::Configuration::special_struct::rdc_struct> &rdc,
@@ -2572,6 +2597,66 @@ bool io::In_Configuration::_read_rdc_av(std::vector<std::string> &buffer,
  //remove average values
  for(std::vector<configuration::Configuration::special_struct::rdc_struct>::iterator it=rdc.begin(), to=rdc.end();it!=to; ++it){
 	 it->av.clear();
+ }
+
+ // check if number of saved values is correct
+ // we can only check the sum, not the individual values
+ unsigned int count=0;
+ for(unsigned int i=0; i<rdc_res.size(); ++i) count += rdc_res[i].size();
+ DEBUG(15,"buffer size: " << buffer.size()-1)
+ DEBUG(15,"count: " << count)
+ if (buffer.size()-1 != count){
+	 os << "RDCAVERAGES: " << buffer.size() - 1 << " but restraints: " << count << std::endl;
+	 io::messages.add("number of RDC restraints does not match with number of continuation data", "In_Configuration", io::message::error);
+	 return false;
+ }
+
+ std::vector<std::string>::const_iterator
+		 buff_it = buffer.begin(),
+		 buff_to = buffer.end()-1;
+
+ double av;
+ unsigned int i=0,j=0; // index for rdc-groups and rdcs in groups
+
+
+ for(; buff_it != buff_to; ++buff_it, ++j){
+
+	 _lineStream.clear();
+	 _lineStream.str(*buff_it);
+
+	 _lineStream >> av;
+	 av*=rdc[i].factorFreq;
+	 if (_lineStream.fail()){
+		 io::messages.add("Bad value in RDCAVERAGES block", "In_Configuration", io::message::error);
+		 return false;
+	 }
+	 rdc[i].av.push_back(av);
+	 if(rdc_res[i].size() == j-1){
+		 ++i;
+		 j=0;
+	 }
+	 if(!quiet){
+		 os.precision(8); 
+		 os.width(15); 
+     os.setf(std::ios::scientific, std::ios::floatfield);
+		 os << av << std::endl;
+	 }
+ }
+ if(!quiet) os << "END\n";
+ return true;
+}
+
+
+//FIXME remove rdc-res dependency
+bool io::In_Configuration::_read_rdc_cumav(std::vector<std::string> &buffer,
+													std::vector<configuration::Configuration::special_struct::rdc_struct> &rdc,
+													std::vector<std::vector<topology::rdc_restraint_struct> > const &rdc_res,
+													std::ostream & os)
+{
+ if(!quiet) os << "RDCCUMAVE from configuration ...\n";
+
+ //remove average values
+ for(std::vector<configuration::Configuration::special_struct::rdc_struct>::iterator it=rdc.begin(), to=rdc.end();it!=to; ++it){
 	 it->RDC_cumavg.clear();
  }
 
@@ -2582,7 +2667,7 @@ bool io::In_Configuration::_read_rdc_av(std::vector<std::string> &buffer,
  DEBUG(15,"buffer size: " << buffer.size()-1)
  DEBUG(15,"count: " << count)
  if (buffer.size()-2 != count){
-	 os << "RDCAVERAGES: " << buffer.size() - 2 << " but restraints: " << count << std::endl;
+	 os << "RDCCUMAVE: " << buffer.size() - 2 << " but restraints: " << count << std::endl;
 	 io::messages.add("number of RDC restraints does not match with number of continuation data", "In_Configuration", io::message::error);
 	 return false;
  }
@@ -2591,7 +2676,7 @@ bool io::In_Configuration::_read_rdc_av(std::vector<std::string> &buffer,
 		 buff_it = buffer.begin(),
 		 buff_to = buffer.end()-1;
 
- double av = 0, cumav = 0;
+ double cumav = 0;
  unsigned int i=0,j=0; // index for rdc-groups and rdcs in groups
  double num_averaged = 0;
 
@@ -2607,14 +2692,12 @@ bool io::In_Configuration::_read_rdc_av(std::vector<std::string> &buffer,
 	 _lineStream.clear();
 	 _lineStream.str(*buff_it);
 
-	 _lineStream >> av >> cumav;
-	 av*=rdc[i].factorFreq;
+	 _lineStream >> cumav;
 	 cumav*=rdc[i].factorFreq;
 	 if (_lineStream.fail()){
 		 io::messages.add("Bad value in RDCAVERAGES block", "In_Configuration", io::message::error);
 		 return false;
 	 }
-	 rdc[i].av.push_back(av);
 	 rdc[i].RDC_cumavg.push_back(cumav);
 	 if(rdc_res[i].size() == j-1){
 		 ++i;
@@ -2624,7 +2707,7 @@ bool io::In_Configuration::_read_rdc_av(std::vector<std::string> &buffer,
 		 os.precision(8); 
 		 os.width(15); 
      os.setf(std::ios::scientific, std::ios::floatfield);
-		 os << av << " " << cumav << std::endl;
+		 os << cumav << "ps^-1" << std::endl;
 	 }
  }
  if(!quiet) os << "END\n";
@@ -2743,6 +2826,66 @@ bool io::In_Configuration::_read_rdc_mf(std::vector<std::string> &buffer,
 	 if(mfv_per_rep == j-1){
 		 ++i;
 		 j=0;
+	 }
+ }
+
+ if (!quiet) os << "END\n";
+ return true;
+}
+
+bool io::In_Configuration::_read_rdc_taverage(std::vector<std::string> &buffer,
+													std::vector<configuration::Configuration::special_struct::rdc_struct> &rdc,
+													std::ostream & os)
+{
+ if(!quiet) os << "RDCTAVERAGE from configuration ...\n";
+ const int n_ah = 5;
+
+ DEBUG(15, "buffer size: " << buffer.size()-1)
+ DEBUG(15, "number of rdc groups: " << rdc.size())
+ // check for buffer size which should be one line per rdc group
+ if(rdc.size() != buffer.size()-1 ){
+	 io::messages.add("number of entries in RDCTAVERAGE block does not match number of RDCs",
+			 "In_Configuration", io::message::error);
+	 return false;
+ }
+
+ if (!quiet) {
+	 os << std::setw(13) << "Axx"
+			<< std::setw(13) << "Ayy"
+			<< std::setw(13) << "Axy"
+			<< std::setw(13) << "Axz"
+			<< std::setw(13) << "Ayz" << std::endl;
+ }
+
+ // tmp
+ std::vector<double> A(n_ah,0.0);
+
+ std::vector<std::string>::const_iterator
+		 it = buffer.begin(),
+		 to = buffer.end() - 1;
+ int i=0;
+ for (; it!=to; ++it, ++i){
+	 _lineStream.clear();
+	 _lineStream.str(*it);
+	 _lineStream >> A[0] >> A[1] >>	A[2] >>	A[3] >> A[4] ;
+
+	 if (_lineStream.fail()) {
+		 io::messages.add("error while reading RDCTAVERAGE block ... there might be too few entries", "In_Configuration", io::message::error);
+		 return false;
+	 }
+
+	 rdc[i].Tensor_av = A;
+
+	 if (!quiet) {
+//    write to output file
+		 std::cout.precision(8);
+		 std::cout.width(13);
+		 std::cout.setf(std::ios_base::fixed, std::ios_base::floatfield);
+		 os << std::setw(13)  << A[0] 
+				 << std::setw(13) << A[1] 
+				 << std::setw(13) << A[2] 
+				 << std::setw(13) << A[3] 
+				 << std::setw(13) << A[4] << std::endl;
 	 }
  }
 

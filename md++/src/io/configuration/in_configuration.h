@@ -457,6 +457,13 @@ namespace io {
              std::vector<configuration::Configuration::special_struct::rdc_struct> &rdc,
 			 std::vector<std::vector<topology::rdc_restraint_struct> > const &rdc_res,
 		     std::ostream & os = std::cout);
+    /**
+     * read RDC cumulative averages
+     */
+    bool _read_rdc_cumav(std::vector<std::string> &buffer,
+             std::vector<configuration::Configuration::special_struct::rdc_struct> &rdc,
+			 std::vector<std::vector<topology::rdc_restraint_struct> > const &rdc_res,
+		     std::ostream & os = std::cout);
 
     /**
      * read RDC magnetic field vectors
@@ -470,6 +477,13 @@ namespace io {
      * read RDC alignment tensor
      */
     bool _read_rdc_t(std::vector<std::string> &buffer,
+             std::vector<configuration::Configuration::special_struct::rdc_struct> &rdc,
+		     std::ostream & os = std::cout);
+
+    /**
+     * read RDC alignment tensor average
+     */
+    bool _read_rdc_taverage(std::vector<std::string> &buffer,
              std::vector<configuration::Configuration::special_struct::rdc_struct> &rdc,
 		     std::ostream & os = std::cout);
 
