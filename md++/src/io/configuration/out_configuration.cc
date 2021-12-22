@@ -412,7 +412,11 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
         io::Out_Configuration::_print_rdc_averages(sim.param(), conf, topo, m_special_traj, /*formatted*/ false);
       }
       if(sim.param().rdc.mode != simulation::rdc_restr_off) {
-        io::Out_Configuration::_print_rdc_representation(sim.param(), conf, topo, m_special_traj, /*formatted*/ true);
+        io::Out_Configuration::_print_rdc_cumaverages(sim.param(), conf, topo, m_special_traj, /*formatted*/ false);
+        io::Out_Configuration::_print_rdc_representation(sim.param(), conf, topo, m_special_traj, /*formatted*/ false);
+        if (sim.param().rdc.ataveraging) {
+          io::Out_Configuration::_print_rdc_ataverage(sim.param(), conf, topo, m_special_traj, /*formatted*/ false);
+        }
       }
       if (sim.param().rdc.method == simulation::rdc_sd) {
         io::Out_Configuration::_print_rdc_stochastic_integrals(sim.param(), conf, topo, m_special_traj, /*formatted*/ true);
@@ -594,7 +598,11 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
     }
 
     if(sim.param().rdc.mode != simulation::rdc_restr_off) {
-      io::Out_Configuration::_print_rdc_representation(sim.param(), conf, topo, m_final_conf, /*formatted*/ false);
+      io::Out_Configuration::_print_rdc_representation(sim.param(), conf, topo, m_final_conf, /*formatted*/ true);
+      io::Out_Configuration::_print_rdc_cumaverages(sim.param(), conf, topo, m_final_conf, /*formatted*/ true);
+      if (sim.param().rdc.ataveraging) {
+        io::Out_Configuration::_print_rdc_ataverage(sim.param(), conf, topo, m_final_conf, /*formatted*/ false);
+      }
     }
 
     if (sim.param().rdc.method == simulation::rdc_sd) {
@@ -715,7 +723,11 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
         io::Out_Configuration::_print_rdc_averages(sim.param(), conf, topo, m_special_traj, /*formatted*/ false);
       }
       if(sim.param().rdc.mode != simulation::rdc_restr_off) {
-        io::Out_Configuration::_print_rdc_representation(sim.param(), conf, topo, m_special_traj, /*formatted*/ true);
+        io::Out_Configuration::_print_rdc_representation(sim.param(), conf, topo, m_special_traj, /*formatted*/ false);
+        io::Out_Configuration::_print_rdc_cumaverages(sim.param(), conf, topo, m_special_traj, /*formatted*/ false);
+        if (sim.param().rdc.ataveraging) {
+          io::Out_Configuration::_print_rdc_ataverage(sim.param(), conf, topo, m_special_traj, /*formatted*/ false);
+        }
       }
       if (sim.param().rdc.method == simulation::rdc_sd) {
         io::Out_Configuration::_print_rdc_stochastic_integrals(sim.param(), conf, topo, m_special_traj, /*formatted*/ true);
@@ -2800,6 +2812,30 @@ void io::Out_Configuration::_print_rdc_averages(simulation::Parameter const &par
                              std::ostream &os,
                              bool formatted) {
   os << "RDCAVERAGES" << std::endl;
+  if (!formatted) { // very ugly, I use this as flag for when printing to the final conf
+    // when printed to the special trajectory it is useful to have the number of restraints
+    unsigned int total_num_rdcs = 0;
+    for (unsigned int i=0; i<conf.special().rdc.size(); ++i){
+      total_num_rdcs+=conf.special().rdc[i].curr.size();
+    }
+    os << total_num_rdcs << std::endl;
+  }
+  os.setf(std::ios::fixed, std::ios::floatfield);
+  os.precision(m_rdc_restraint_precision);
+  for (unsigned int i=0; i<conf.special().rdc.size(); ++i){
+    for (unsigned int j=0; j<conf.special().rdc[i].av.size(); ++j){
+      os << std::setw(m_width) << conf.special().rdc[i].av[j]/conf.special().rdc[i].factorFreq << std::endl;
+    }
+  }
+  os << "END" << std::endl;
+}
+
+void io::Out_Configuration::_print_rdc_cumaverages(simulation::Parameter const &param,
+                             configuration::Configuration const &conf,
+                             topology::Topology const &topo,
+                             std::ostream &os,
+                             bool formatted) {
+  os << "RDCCUMAVE" << std::endl;
   if (formatted) { // very ugly, I use this as flag for when printing to the final conf
     os << conf.special().rdc[0].num_averaged << std::endl;
   } else {
@@ -2813,12 +2849,30 @@ void io::Out_Configuration::_print_rdc_averages(simulation::Parameter const &par
   os.setf(std::ios::fixed, std::ios::floatfield);
   os.precision(m_rdc_restraint_precision);
   for (unsigned int i=0; i<conf.special().rdc.size(); ++i){
-    for (unsigned int j=0; j<conf.special().rdc[i].av.size(); ++j){
-      os << std::setw(m_width) << conf.special().rdc[i].av[j]/conf.special().rdc[i].factorFreq 
-         << std::setw(m_width) << conf.special().rdc[i].RDC_cumavg[j]/conf.special().rdc[i].factorFreq << std::endl;
+    for (unsigned int j=0; j<conf.special().rdc[i].RDC_cumavg.size(); ++j){
+      os << std::setw(m_width) << conf.special().rdc[i].RDC_cumavg[j]/conf.special().rdc[i].factorFreq << std::endl;
     }
   }
   os << "END" << std::endl;
+}
+
+void io::Out_Configuration::_print_rdc_ataverage(simulation::Parameter const &param,
+                             configuration::Configuration const &conf,
+                             topology::Topology const &topo,
+                             std::ostream &os,
+                             bool formatted) {
+      os << "RDCTAVERAGE\n";
+      const int n_ah = 5;
+      if (formatted) {
+        os << "#   Axx            Ayy            Axy            Axz            Ayz\n";
+      }
+      for (unsigned int i=0; i<conf.special().rdc.size(); ++i){
+        for (unsigned int j=0; j<n_ah; ++j) {
+          os << std::setw(m_width) << conf.special().rdc[i].Tensor_av[j];
+        }
+        os << std::endl;
+      }
+      os << "END" << std::endl;
 }
 
 void io::Out_Configuration::_print_rdc_representation(simulation::Parameter const &param,

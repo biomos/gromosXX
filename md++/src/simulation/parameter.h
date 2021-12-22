@@ -4004,6 +4004,8 @@ namespace simulation
 	: mode(rdc_restr_off),
           read_av(false),
           type(rdc_mf),
+          ataveraging(false),
+          read_ataverage(false),
           read_align(false),
           method(rdc_em),
           emgradient(0.0),
@@ -4013,6 +4015,7 @@ namespace simulation
           temp(0.0),
           K(1.0),
           tau(0),
+          tauat(0),
           tAVfactor(0),
           biqfactor(0),
           write(0)
@@ -4030,6 +4033,11 @@ namespace simulation
        * type of magnetic field vector representation
        */
       rdc_type_enum type;
+      /**
+       * read magnetic field vectors
+       */
+      bool ataveraging;
+      bool read_ataverage;
       /**
        * read magnetic field vectors
        */
@@ -4067,6 +4075,10 @@ namespace simulation
        * coupling time.
        */
       double tau;
+      /**
+       * alignment tensor coupling time.
+       */
+      double tauat;
       /**
        * choose if (1 - e^(...)) factor is omitted in time AV
        */

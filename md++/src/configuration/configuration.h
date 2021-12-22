@@ -310,6 +310,10 @@ namespace configuration {
          */
         std::vector<double> Tensor;
         /**
+         * time-averaged alignment tensor components
+         */
+        std::vector<double> Tensor_av;
+        /**
          * Tensor component velocities
          */
         std::vector<double> TensorVel;

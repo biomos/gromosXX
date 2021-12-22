@@ -2401,6 +2401,9 @@ void io::In_Parameter::read_RDCRES(simulation::Parameter &param,
     exampleblock << "#         0:                   cartesian magnetic field vectors\n";
     exampleblock << "#         1:                   alignment tensor\n";
     exampleblock << "#         2:                   spherical harmonics\n";
+    exampleblock << "# NTRDCRT 0,1                  time-averaging of alignment tensor\n";
+    exampleblock << "#         0:                   use instantaneous AT\n";
+    exampleblock << "#         1:                   time-averaged AT\n";
     exampleblock << "# NTALR   0,1                  controls reading of values in the chosen representation\n";
     exampleblock << "#         0:                   start from values given in RDC restraint file\n";
     exampleblock << "#         1:                   read values from initial coordinate file (for continuation run)\n";
@@ -2420,6 +2423,7 @@ void io::In_Parameter::read_RDCRES(simulation::Parameter &param,
     exampleblock << "# CRDCR   >= 0                 RDC restraining force constant [kJ/mol/Hz^2]\n";
     exampleblock << "#                              (weighted by individual WRDCR)\n";
     exampleblock << "# TAU     >= 0                 coupling time for time averaging [ps]\n";
+    exampleblock << "# TAUAT   >= 0                 coupling time for time averaging of the alignment tensor [ps]\n";
     exampleblock << "# NRDCRTARS 0,1                omits or includes force scaling by memory decay factor in case of time-averaging\n";
     exampleblock << "#           0                  omit factor (set (1-exp(-dt/tau))=1 )\n";
     exampleblock << "#           1                  scale force by (1-exp(-dt/tau))\n";
@@ -2431,10 +2435,12 @@ void io::In_Parameter::read_RDCRES(simulation::Parameter &param,
     exampleblock << "#           0:                 don't write\n";
     exampleblock << "#          >0:                 write every NTWRDCth step.\n";
     exampleblock << "#\n";
-    exampleblock << "#      NTRDCR  NTRDCRA  NTRDCT  NTALR  METHOD    RNORM\n";
-    exampleblock << "            2        0       0      0       0        0\n";
-    exampleblock << "#      EMGRAD  EMDX0  EMNMAX  SDCFRIC    TEMP     CRDCR  TAU   NRDCRTARS NRDCRBIQW   NTWRDC   NTWRDC\n";
-    exampleblock << "        0.001   0.01    1000       20     300        1     1           0    0          0        10000\n";
+    exampleblock << "#      NTRDCR  NTRDCRA  NTRDCT  NTRDCRT NTALR  METHOD    RNORM\n";
+    exampleblock << "            2        0       0      0      0       0        0\n";
+    exampleblock << "#      EMGRAD  EMDX0  EMNMAX  SDCFRIC    TEMP\n";
+    exampleblock << "        0.001   0.01    1000       20     300\n";
+    exampleblock << "#     CRDCR  TAU TAUAT  NRDCRTARS NRDCRBIQW   NTWRDC\n";
+    exampleblock << "         1  1000    10     0          0        10000\n";
     exampleblock << "END\n";
 
 
@@ -2451,6 +2457,7 @@ void io::In_Parameter::read_RDCRES(simulation::Parameter &param,
         block.get_next_parameter("NTRDCR", ntrdcr, "", "-4,-3,-2,-1,0,1,2");
         block.get_next_parameter("NTRDCRA", param.rdc.read_av, "", "0,1");
         block.get_next_parameter("NTRDCT", ntrdct, "", "0,1,2");
+        block.get_next_parameter("NTRDCRT", param.rdc.ataveraging, "", "0,1");
         block.get_next_parameter("NTALR", param.rdc.read_align, "", "0,1");
         block.get_next_parameter("METHOD", method, "", "0,1,2");
         block.get_next_parameter("RNORM", param.rdc.normalize_r, "", "0,1");
@@ -2461,12 +2468,17 @@ void io::In_Parameter::read_RDCRES(simulation::Parameter &param,
         block.get_next_parameter("TEMP", param.rdc.temp, ">=0", "");
         block.get_next_parameter("CRDCR", param.rdc.K, ">=0", "");
         block.get_next_parameter("TAU", param.rdc.tau, ">=0", "");
+        block.get_next_parameter("TAUAT", param.rdc.tauat, ">=0", "");
         block.get_next_parameter("NRDCRTARS", param.rdc.tAVfactor, "", "0,1");
         block.get_next_parameter("NRDCRBIQW", param.rdc.biqfactor, "", "0,1,2");
         block.get_next_parameter("NTWRDC", param.rdc.write, ">=0", "");
 
         if ((method != 0 or ntrdct != 1) and param.rdc.normalize_r) {
                 io::messages.add("RDCRES block: RNORM only implemented for NTRDCT=1 and METHOD=0",
+                                 "In_Parameter", io::message::error);
+        }
+        if ((method != 0 or ntrdct != 1) and param.rdc.ataveraging) {
+                io::messages.add("RDCRES block: AT averaging (NTRDCRT) only implemented for NTRDCT=1 and METHOD=0",
                                  "In_Parameter", io::message::error);
         }
 

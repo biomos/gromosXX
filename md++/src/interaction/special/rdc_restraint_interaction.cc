@@ -1383,6 +1383,27 @@ void _calculate_forces_atoms_T(topology::Topology & topo,
   for(unsigned int group=0; conf_it!=conf_to; conf_it++, topo_it++, group++){ // loop over RDC groups
     ++conf.special().rdc[group].num_averaged;
 
+    std::vector<double> current_tensor;
+
+    if (sim.param().rdc.ataveraging) { 
+      if(sim.steps() == 0 && !sim.param().rdc.read_ataverage) {
+        DEBUG(10, "initializing alignment-tensor time average to current tensor");
+        // initialize with current value
+        conf_it->Tensor_av = conf_it->Tensor;
+      }
+      const double exp = pow(M_E, -sim.time_step_size()/sim.param().rdc.tauat); // [1]
+      for(int i=0; i<n_ah; ++i) {
+        conf_it->Tensor_av[i] *= exp; // [1/ps]
+        conf_it->Tensor_av[i] += (1.0 - exp) * conf_it->Tensor[i]; // [1/ps]
+        current_tensor.push_back(conf_it->Tensor_av[i]);
+        DEBUG(15, "a_av[" << i << "]: " << conf_it->Tensor_av[i])
+      }
+      
+    } else {
+      current_tensor=conf_it->Tensor;
+    }
+
+
     int k=0;
     vector<topology::rdc_restraint_struct>::iterator
         it = topo_it->begin(),
@@ -1423,6 +1444,7 @@ void _calculate_forces_atoms_T(topology::Topology & topo,
       
       double & RDC_cumavg = conf_it->RDC_cumavg[k]; // [1 / ps]
       RDC_cumavg += (conf_it->curr[k]-RDC_cumavg)/conf.special().rdc[group].num_averaged; 
+      DEBUG(15, "Number of averaged RDC values: " << scientific << conf.special().rdc[group].num_averaged << ", RDC_cumavg: " <<  RDC_cumavg);
       if (std::isnan(RDC_cumavg)) {
         std::cout << conf.special().rdc[group].num_averaged << "th step: cumavg=" << RDC_cumavg << std::endl;
       }
@@ -1466,11 +1488,10 @@ void _calculate_forces_atoms_T(topology::Topology & topo,
       conf.current().energies.rdc_energy[topo.atom_energy_group()[it->v1.atom(0)]] += 0.5 * force_coefficient * e_term; // [kJ/mol]
       conf.current().energies.rdc_energy[topo.atom_energy_group()[it->v2.atom(0)]] += 0.5 * force_coefficient * e_term; // [kJ/mol]
       DEBUG(15, "group energies are " << conf.current().energies.rdc_energy[topo.atom_energy_group()[it->v1.atom(0)]] << " and " << conf.current().energies.rdc_energy[topo.atom_energy_group()[it->v2.atom(0)]])
-      std::cout << "fc "  << sim.param().rdc.K << " w " << it->weight <<  " e_term "<< e_term << std::endl;
-      std::cout << "group energies are "  << conf.current().energies.rdc_energy[topo.atom_energy_group()[it->v1.atom(0)]] << std::endl;
 
       // forces on atoms i and j
       math::VArray dQ_over_dr(n_ah);
+      math::Vec force_tensor_comp(0.0, 0.0, 0.0);
       //in the following expressions a factor of r^-2 is omitted
       if (sim.param().rdc.normalize_r) {
         dQ_over_dr[0] = math::Vec( 2*x, 0, -2*z); // [nm]
@@ -1478,24 +1499,17 @@ void _calculate_forces_atoms_T(topology::Topology & topo,
         dQ_over_dr[2] = math::Vec( 2*y, 2*x , 0); // [nm]
         dQ_over_dr[3] = math::Vec( 2*z , 0, 2*x); // [nm]
         dQ_over_dr[4] = math::Vec( 0, 2*z, 2*y); // [nm]
-        std::cout << "norm " << v2s(dQ_over_dr[0])<< std::endl;
+        for(int h=0; h<n_ah; ++h) {
+          force_tensor_comp += current_tensor[h] *  dQ_over_dr[h]; // [nm]
+        }
       } else {
         dQ_over_dr[0] = math::Vec( 2*x * (1 - (x*x - z*z)/dij2), 2*y * (  - (x*x - z*z)/dij2), 2*z * (-1 - (x*x - z*z)/dij2) ); // [nm]
         dQ_over_dr[1] = math::Vec( 2*x * (  - (y*y - z*z)/dij2), 2*y * (1 - (y*y - z*z)/dij2), 2*z * (-1 - (y*y - z*z)/dij2) ); // [nm]
         dQ_over_dr[2] = math::Vec( 2*y * (1 - (2*x*x)/dij2),     2*x * (1 - (2*y*y)/dij2),     2*z * (   - (2*x*y)/dij2)     ); // [nm]
         dQ_over_dr[3] = math::Vec( 2*z * (1 - (2*x*x)/dij2),     2*y * (  - (2*x*z)/dij2),     2*x * ( 1 - (2*z*z)/dij2)     ); // [nm]
         dQ_over_dr[4] = math::Vec( 2*x * (  - (2*y*z)/dij2),     2*z * (1 - (2*y*y)/dij2),     2*y * ( 1 - (2*z*z)/dij2)     ); // [nm]
-        std::cout << "free " << v2s(dQ_over_dr[0])<< std::endl;
-      }
-
-      math::Vec force_tensor_comp(0.0, 0.0, 0.0);
-      if (sim.param().rdc.normalize_r) {
         for(int h=0; h<n_ah; ++h) {
-          force_tensor_comp += conf_it->Tensor[h] *  dQ_over_dr[h]; // [nm]
-        }
-      } else {
-        for(int h=0; h<n_ah; ++h) {
-          force_tensor_comp += conf_it->Tensor[h] * (-3.0 * ck[h] * rij + dQ_over_dr[h]); // [nm]
+          force_tensor_comp += current_tensor[h] * (-3.0 * ck[h] * rij + dQ_over_dr[h]); // [nm]
         }
       }
 
