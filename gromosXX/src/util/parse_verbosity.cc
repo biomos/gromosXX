@@ -105,6 +105,8 @@ int util::parse_verbosity(io::Argument &args, std::string flag,
 	interaction::nonbonded_debug_level = level;
       else if (submodule == "qmmm") 
 	interaction::qmmm_debug_level = level;
+      else if (submodule == "cuda") 
+	interaction::cuda_debug_level = level;
       else if (submodule == "latticesum")
 	interaction::latticesum_debug_level = level;
       else if (submodule == "pairlist") 

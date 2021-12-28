@@ -13,8 +13,8 @@ namespace io {
   class IFP;
 }
 
-#include <interaction/nonbonded/interaction/nonbonded_parameter.h>
-#include <interaction/interaction.h>
+#include "../../../interaction/nonbonded/interaction/nonbonded_parameter.h"
+#include "../../../interaction/interaction.h"
 
 namespace interaction {
   class QM_Worker;

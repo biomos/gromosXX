@@ -5,8 +5,14 @@
 #ifndef INCLUDED_TURBOMOLE_WORKER_H
 #define	INCLUDED_TURBOMOLE_WORKER_H
 
+namespace simulation {
+  class Parameter;
+  class Simulation;
+}
+
 namespace interaction {
   class QM_Worker;
+  class QM_Zone;
   /**
    * @class Turbomole_Worker
    * a worker class which calls the Turbomole software
@@ -16,40 +22,112 @@ namespace interaction {
     /**
      * Constructor
      */
-    Turbomole_Worker() : QM_Worker("Turbomole Worker") {
-    //this->get_new_qmID();
-
-    }
+    Turbomole_Worker();
     /**
      * Destructor
      */
-    virtual ~Turbomole_Worker();
+    virtual ~Turbomole_Worker() = default;
     /**
      * initialise the QM worker
      * @return 0 if successful, non-zero on failure
      */
-    virtual int init(topology::Topology & topo,
-            configuration::Configuration & conf,
-            simulation::Simulation & sim);
-    /**
-     * run a QM job in Turbomole
-     * @param qm_pos a vector containing the QM atom positions
-     * @param mm_atoms the MM atoms to include
-     * @param storage the energies, forces, charges obtained
-     * @return 0 if successful, non-zero if not.
-     */
-    virtual int run_QM(const topology::Topology & topo,
-                       const configuration::Configuration & conf,
-                       const simulation::Simulation & sim,
-                       interaction::QM_Zone & qm_zone);
+    virtual int init(simulation::Simulation& sim);
+
     private:
     /**
-     * file name for TM working directory
+     * Current working directory (where GROMOS is called from)
      */
-    std::string working_directory;
-    std::vector<std::string> tool_chain;
+    std::string cwd;
+
+    /**
+     * Pointer to simulation parameters
+     */
+    simulation::Parameter::qmmm_struct::turbomole_param_struct* param;
+
+    /**
+     * Write input file for the QM program
+     * @param topo Topology
+     * @param conf Configuration
+     * @param sim Simulation
+     * @param qm_zone QM Zone
+     */
+    int write_input(const topology::Topology& topo
+                  , const configuration::Configuration& conf
+                  , const simulation::Simulation& sim
+                  , const interaction::QM_Zone& qm_zone);
+
+    /**
+     * Write QM atom line
+     * @param inputfile_stream ofstream to input file
+     * @param atomic_number atomic number of the atom
+     * @param pos position of the atom
+     */
+    void write_qm_atom(std::ofstream& inputfile_stream
+                     , const int atomic_number
+                     , const math::Vec& pos) const;
+
+    /**
+     * Write MM atom line
+     * @param inputfile_stream ofstream to the input file
+     * @param pos position of the atom
+     * @param charge charge of the atom
+     */
+    void write_mm_atom(std::ofstream& inputfile_stream
+                     , const math::Vec& pos
+                     , const double charge) const;
+
+    /**
+     * Call external QM program - Turbomole
+     */
+    int system_call();
+
+    /**
+     * Read output file from the QM program
+     * @param topo Topology
+     * @param conf Configuration
+     * @param sim Simulation
+     * @param qm_zone QM Zone
+     */
+    int read_output(topology::Topology& topo
+                  , configuration::Configuration& conf
+                  , simulation::Simulation& sim
+                  , interaction::QM_Zone& qm_zone);
+
+    /**
+     * Parse charges
+     * @param ofs ifstream from the output file
+     * @param qm_zone QM Zone
+     */
+    int parse_charges(std::ifstream& ofs, interaction::QM_Zone& qm_zone) const;
+
+    /**
+     * Parse energy
+     * @param ofs ifstream from the output file
+     * @param qm_zone QM Zone
+     */
+    int parse_energy(std::ifstream& ofs, interaction::QM_Zone& qm_zone) const;
+
+    /**
+     * Parse QM gradients
+     * @param ofs ifstream from the output file
+     * @param qm_zone QM Zone
+     */
+    int parse_qm_gradients(std::ifstream& ofs, interaction::QM_Zone& qm_zone) const;
+
+    /**
+     * Parse MM gradients
+     * @param ofs ifstream from the output file
+     * @param qm_zone QM Zone
+     */
+    int parse_mm_gradients(std::ifstream& ofs, interaction::QM_Zone& qm_zone) const;
+
+    /**
+     * Parse gradient line of QM or MM atom
+     * @param ofs ifstream from the output file
+     * @param force reference for writing the force
+     */
+    int parse_gradient(std::ifstream& ofs, math::Vec& force) const;
   };
 }
-
 #endif	/* TURBOMOLE_WORKER_H */
 

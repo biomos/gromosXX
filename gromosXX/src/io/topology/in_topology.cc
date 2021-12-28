@@ -1342,23 +1342,10 @@ void io::In_Topology::read_block_PHYSICALCONSTANTS(topology::Topology& topo,
       _lineStream >> four_pi_eps0_i >> math::h_bar >> math::spd_l >> math::k_Boltzmann;
       math::eps0_i = four_pi_eps0_i * 4.0 * math::Pi;
       math::four_pi_eps_i = four_pi_eps0_i / param.nonbonded.epsilon;
-      
+
       if (_lineStream.fail())
         io::messages.add("Bad line in PHYSICALCONSTANTS block",
               "InTopology", io::message::error);
-
-      // Try to read optional constants, they will be mandatory later
-      while (_lineStream.peek() == 10 /* newline character */) {
-        _lineStream.ignore();
-      }
-      if (!_lineStream.eof()) {
-        os << "Reading extra constants" << "\n";
-        _lineStream >> math::avogadro >> math::bohr >> math::hartree
-                    >> math::angstrom >> math::kcal >> math::echarge;
-        if (_lineStream.fail())
-          io::messages.add("Bad line in PHYSICALCONSTANTS block",
-                "InTopology", io::message::error);
-      }
     } else {
       io::messages.add("no PHYSICALCONSTANTS block in topology",
               "InTopology", io::message::error);

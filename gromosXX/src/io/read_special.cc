@@ -23,6 +23,7 @@
 #include "../io/parameter/in_parameter.h"
 #include "../io/topology/in_posres.h"
 #include "../io/topology/in_distanceres.h"
+#include "../io/topology/in_angrest.h"
 #include "../io/topology/in_dihrest.h"
 #include "../io/topology/in_jvalue.h"
 #include "../io/topology/in_friction.h"
@@ -129,6 +130,31 @@ int io::read_special(io::Argument const & args,
       }
     }    
   } // DISTANCERES
+
+  // ANGREST
+  if (sim.param().angrest.angrest != simulation::angle_restr_off){
+    io::igzstream angrest_file;
+
+    if (args.count("angrest") != 1){
+      io::messages.add("angle restraints: no data file specified (use @angrest)",
+		       "read special", io::message::error);
+    } else{
+      angrest_file.open(args["angrest"].c_str());
+      if (!angrest_file.is_open()){
+	io::messages.add("opening angrest file '" + args["angrest"] + "'failed!\n",
+			 "read_special", io::message::error);
+      } else {
+        io::In_Angrest ip(angrest_file);
+        ip.quiet = quiet;
+
+        ip.read(topo, sim, os);
+        io::messages.add("angle restraints read from " + args["angrest"] +
+                "\n" + util::frame_text(ip.title),
+                "read special", io::message::notice);
+      }
+    }    
+  } // ANGREST
+
 
   // DIHREST
   if (sim.param().dihrest.dihrest != simulation::dihedral_restr_off){
@@ -350,7 +376,7 @@ int io::read_special(io::Argument const & args,
                 "read_special", io::message::error);
       } else {
         io::In_QMMM iq(qmmm_file);
-     //   iq.quiet = quiet;
+        iq.quiet = quiet;
         switch (sim.param().qmmm.software) {
             case simulation::qm_mndo:
                 iq.title = "MNDO";
@@ -371,7 +397,7 @@ int io::read_special(io::Argument const & args,
                 iq.title= "Schnetpack";
                 break;
         }
-
+        
         iq.read(topo, sim, os);
         io::messages.add("QM/MM specification read from " +
                 args["qmmm"] + "\n" + util::frame_text(iq.title),

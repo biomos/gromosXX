@@ -75,7 +75,13 @@ int algorithm::create_constraints(algorithm::Algorithm_Sequence &md_seq,
   DEBUG(7, "Constrain solute?");
 
   // solute constraints have to be set to SHAKE, but NTC may be 1
-  // for dihedral constraints to be used.
+  // for dihedral or angle constraints to be used.
+  if (sim.param().angrest.angrest == simulation::angle_constr &&
+          sim.param().constraint.solute.algorithm != simulation::constr_shake) {
+    io::messages.add("angle constraints require SHAKE as solute algorithm.",
+            "create_constraints", io::message::error);
+    return 1;
+  }
   if (sim.param().dihrest.dihrest == simulation::dihedral_constr &&
           sim.param().constraint.solute.algorithm != simulation::constr_shake) {
     io::messages.add("dihedral constraints require SHAKE as solute algorithm.",
@@ -90,14 +96,16 @@ int algorithm::create_constraints(algorithm::Algorithm_Sequence &md_seq,
         // SHAKE
         algorithm::Shake * s =
                 new algorithm::Shake
-                (sim.param().constraint.solute.shake_tolerance);
+                (sim.param().constraint.solute.shake_tolerance,
+                sim.param().constraint.solvent.shake_tolerance);
         md_seq.push_back(s);
 
       } else {
         // perturbed shake also calls normal shake...
         algorithm::Perturbed_Shake * ps =
                 new algorithm::Perturbed_Shake
-                (sim.param().constraint.solute.shake_tolerance);
+                (sim.param().constraint.solute.shake_tolerance,
+                sim.param().constraint.solvent.shake_tolerance);
         md_seq.push_back(ps);
 
       }
@@ -192,7 +200,8 @@ int algorithm::create_constraints(algorithm::Algorithm_Sequence &md_seq,
         // SHAKE
         algorithm::Shake * s =
                 new algorithm::Shake
-                (sim.param().constraint.solvent.shake_tolerance);
+                (sim.param().constraint.solute.shake_tolerance,
+                sim.param().constraint.solvent.shake_tolerance);
         md_seq.push_back(s);
 
         break;

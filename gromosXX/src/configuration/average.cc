@@ -438,6 +438,7 @@ fluct.prop = old_fluct.prop + dt * e.prop * e.prop
   ENERGY_AVG(qm_total);
   ENERGY_AVG(posrest_total);
   ENERGY_AVG(distanceres_total);
+  ENERGY_AVG(angrest_total);
   ENERGY_AVG(dihrest_total);
   ENERGY_AVG(disfieldres_total);
   ENERGY_AVG(jvalue_total);
@@ -524,6 +525,7 @@ fluct.prop = old_fluct.prop + dt * e.prop * e.prop
     ENERGY_AVG(sasa_volume_energy[i]);
     ENERGY_AVG(posrest_energy[i]);
     ENERGY_AVG(distanceres_energy[i]);
+    ENERGY_AVG(angrest_energy[i]);
     ENERGY_AVG(dihrest_energy[i]);
     ENERGY_AVG(disfieldres_energy[i]);
     ENERGY_AVG(constraints_energy[i]);
@@ -680,6 +682,7 @@ void configuration::Average::Block_Average
   ENERGY_RES(qm_total);
   ENERGY_RES(posrest_total);
   ENERGY_RES(distanceres_total);
+  ENERGY_RES(angrest_total);
   ENERGY_RES(dihrest_total);
   ENERGY_RES(disfieldres_total);
   ENERGY_RES(jvalue_total);
@@ -752,6 +755,7 @@ void configuration::Average::Block_Average
     ENERGY_RES(sasa_volume_energy[i]);
     ENERGY_RES(posrest_energy[i]);
     ENERGY_RES(distanceres_energy[i]);
+    ENERGY_RES(angrest_energy[i]);
     ENERGY_RES(dihrest_energy[i]);
     ENERGY_RES(disfieldres_energy[i]);
     ENERGY_RES(constraints_energy[i]);

@@ -81,6 +81,9 @@ repdatName(args["repdat"])
 
   // set output file
  DEBUG(2,"replica_exchange_master "<< rank <<":Constructor:\t DONE");
+#else
+   throw "Cannot initialize replica_exchange_master without MPI!"; 
+#endif
 }
 
 
@@ -89,6 +92,7 @@ util::replica_exchange_master::~replica_exchange_master() {
 }
 
 void util::replica_exchange_master::receive_from_all_slaves() {
+#ifdef XXMPI
   DEBUG(2,"replica_exchange_master "<< rank <<":receive_from_all_slaves:\t START\n");
   double start = MPI_Wtime();
 
@@ -123,7 +127,7 @@ void util::replica_exchange_master::receive_from_all_slaves() {
    DEBUG(2,"replica_exchange_master "<< rank <<":receive_from_all_slaves:\t " << "time used for receiving all messages: " << MPI_Wtime() - start << " seconds\n");
    DEBUG(2,"replica_exchange_master "<< rank <<":receive_from_all_slaves:\t DONE: \n");
 #else
-   throw "Cannot initialize replica_exchange_master without MPI!"; 
+   throw "Cannot use replica_exchange_master without MPI!"; 
 #endif
 }
 

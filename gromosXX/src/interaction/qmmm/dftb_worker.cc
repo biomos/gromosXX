@@ -13,395 +13,392 @@
 #include "../../../interaction/interaction.h"
 #include "../../../util/timing.h"
 #include "../../../util/system_call.h"
-//#include "../../../math/periodicity.h"
 
-// special interactions
+#include "qm_atom.h"
 #include "mm_atom.h"
+#include "qm_link.h"
+#include "qm_zone.h"
 #include "qm_worker.h"
 #include "dftb_worker.h"
-#include "../../../util/system_call.h"
-#include "../../../io/blockinput.h"
-#include "../../../util/debug.h"
 
 #undef MODULE
 #undef SUBMODULE
 #define MODULE interaction
 #define SUBMODULE qmmm
-#define MAXPATH 10240
 
-int interaction::DFTB_Worker::run_QM(const topology::Topology & topo,
-                                     const configuration::Configuration & conf,
-                                     const simulation::Simulation & sim,
-                                     interaction::QM_Zone & qm_zone){
+interaction::DFTB_Worker::DFTB_Worker() : QM_Worker("DFTB Worker"), param(nullptr) {};
 
-char current_working_directory[MAXPATH];
-#ifdef HAVE_GETCWD
-    if (getcwd(current_working_directory, MAXPATH) == NULL) {
-        io::messages.add("Cannot get current working directory. "
-                "Increase MAXPATH in turbomole_worker.cc",
-                "dftb_Worker", io::message::error);
-        return 1;
+int interaction::DFTB_Worker::init(simulation::Simulation& sim) {
+  DEBUG(15, "Initializing " << this->name());
+  // Get a pointer to simulation parameters
+  this->param = &(sim.param().qmmm.dftb);
+  QM_Worker::param = this->param;
+  this->cwd = this->getcwd();
+  if (this->cwd == "") return 1;
+
+  // Set input and output file, these are hardcoded in DFTB+
+  this->param->input_file = "dftb_in.hsd";
+  this->param->output_file = "results.tag";
+
+  // Change to working directory and create the input file
+  if (this->chdir(this->param->working_directory) != 0) return 1;
+  std::ofstream ifs;
+  int err;
+  err = this->open_input(ifs, this->param->input_file);
+  if (err) return err;
+  ifs << this->param->input_header;
+  // Change back to GromosXX directory
+  if (this->chdir(this->cwd) != 0) return 1;
+  return 0;
+}
+
+int interaction::DFTB_Worker::write_input(const topology::Topology& topo
+                                        , const configuration::Configuration& conf
+                                        , const simulation::Simulation& sim
+                                        , const interaction::QM_Zone& qm_zone) {
+  if (this->chdir(this->param->working_directory) != 0) return 1;
+  std::ofstream ifs;
+  int err;
+  err = this->open_input(ifs, this->param->input_coordinate_file);
+  if (err) return err;
+
+  unsigned qm_size = qm_zone.qm.size() + qm_zone.link.size();
+  ifs << std::setw(5) << qm_size << " C" << std::endl;
+  std::map<unsigned, unsigned> type_indices;
+  this->write_atom_types_list(ifs, type_indices, qm_zone);
+
+  // Write QM atoms
+  double len_to_qm = 1.0 / this->param->unit_factor_length;
+  {
+    unsigned i = 1;
+    for (std::set<QM_Atom>::const_iterator
+          it = qm_zone.qm.begin(), to = qm_zone.qm.end(); it != to; ++it, ++i) {
+      this->write_qm_atom(ifs, i, type_indices[it->atomic_number]
+                            , it->pos * len_to_qm);
     }
-#else
-    return impl("getcwd");
-#endif
-    std::string tout="bla";
-   
-#ifdef HAVE_CHDIR
-    if (chdir(sim.param().qmmm.dftb.working_directory.c_str()) != 0) {
-
-        io::messages.add("Cannot change into DFTB working directory",
-                "dftb_Worker", io::message::error);
-        return 1;
+    // write capping atoms
+    for (std::set<QM_Link>::const_iterator
+          it = qm_zone.link.begin(), to = qm_zone.link.end(); it != to; ++it, ++i) {
+      this->write_qm_atom(ifs, i, type_indices[it->atomic_number]
+                            , it->pos * len_to_qm);
     }
-#else
-    return impl("chdir");
-#endif
-
-
+  }
+  ifs.close();
   
-  if (mm_atoms.empty()) {
-    io::messages.add("Cannot deal with zero MM atoms yet.", "DFTB_Worker",
-            io::message::error);
-    return 1;
-  }
+  if (sim.param().qmmm.qmmm > simulation::qmmm_mechanical) {
+    // write MM atoms
+    err = this->open_input(ifs, this->param->input_mm_coordinate_file);
+    if (err) return err;
 
-  std::ofstream inp(input_file.c_str());
-  
-  if (!inp.is_open()) {
-    io::messages.add("Could not create input file for DFTB at the location "
-            + input_file, "DFTB_Worker", io::message::critical);
-    return 1;
-  }
-  
-  std::string header(sim.param().qmmm.dftb.input_header);
-  // get the number of point charges
-  unsigned int num_charge = mm_atoms.size();
-  for(unsigned int i = 0; i < mm_atoms.size(); ++i) {
-    if (topo.is_polarisable(mm_atoms[i].index)) {
-      ++num_charge;
-    }
-  }
-  std::ostringstream oss; oss << num_charge;
-  header = io::replace_string(header, "@@NUM_ATOMS@@", oss.str());
-
-  // write header
-  inp << header << std::endl;
-  inp.close();
-  std::ofstream input_coord(sim.param().qmmm.dftb.geom_file.c_str());
-  // write QM zone
-  double len_to_qm = 1.0 / sim.param().qmmm.unit_factor_length3;
-  double len_to_qm2 = 1.0 / sim.param().qmmm.unit_factor_mmlen ; //
-  unsigned int pi = 0;
-   //map Z to spec_number of dftb
-  std::map<unsigned int,unsigned int >  map_Z;
-  input_coord << topo.qm_zone().size() << " C" << std::endl;
-   // input_coord << topo.qm_zone().size()+topo.qm_mm_pair().size() << " C" << std::endl;
-  int spec=0;
-  for (unsigned int i =0 ; i !=sim.param().qmmm.dftb.elements.size()  ;i++)
-  {    
-      spec=sim.param().qmmm.dftb.elements[i];
-      input_coord << sim.param().qmmm.qmmm_at_to_num[spec]<< " ";
-      map_Z[spec ] = i+1;
-  } 
-  input_coord << std::endl;
-
-  for (std::set<topology::qm_atom_struct>::const_iterator
-    it = topo.qm_zone().begin(), to = topo.qm_zone().end(); it != to; ++it, ++pi) {
-    input_coord.setf(std::ios::fixed, std::ios::floatfield);
-    input_coord.precision(8);
-    input_coord << std::setw(3) << std::left << pi+1 << 
-                      map_Z[it->atomic_number]<< "  ";
-    for (unsigned int i = 0; i < 3; ++i) {
-      input_coord << std::setw(9) << std::right << qm_pos(pi)(i) * len_to_qm2 << " ";
-    }
-    input_coord << std::endl;
-  }
-//write link atoms
-    math::Vec posCap, dR;
-    unsigned int m1, q1;
-    const double rch = sim.param().qmmm.cap_length; //Carbon-Hydrogen bond length
-    for (std::vector<std::pair<unsigned int, unsigned int> >::const_iterator
-                 it = topo.qm_mm_pair().begin(); it != topo.qm_mm_pair().end(); ++it, ++pi) {
-        q1 = it->first;
-        m1 = it->second;
-        dR = conf.current().pos(m1) - conf.current().pos(q1);
-        posCap = (rch / abs(dR)) * dR + conf.current().pos(q1);
-        input_coord << std::setw(3) << std::left << pi+1 <<
-                    map_Z[1]<< "  ";
-        for (unsigned int i = 0; i < 3; ++i) {
-            input_coord << std::setw(9) << std::right << posCap(i) * len_to_qm2 << " ";
-        }
-        input_coord << std::endl;
-    }
-    input_coord.close();
-    // write point charges
-
-  // write point charges
-  std::ofstream input_mm(sim.param().qmmm.dftb.output_charg_file.c_str());
-  double chg_to_qm = 1.0 / sim.param().qmmm.unit_factor_charge3;
- // std::cout << "number of mm atoms: " << mm_atoms.size() << std::endl; 
-  for (unsigned int i = 0; i < mm_atoms.size(); ++i) {
-      input_mm.setf(std::ios::fixed, std::ios::floatfield);
-      input_mm.precision(8);
-      for (unsigned int j = 0; j < 3; ++j) {
-        input_mm << std::setw(14) << std::right << mm_atoms[i].pos(j) * len_to_qm;
+    double cha_to_qm = 1.0 / this->param->unit_factor_charge;
+    for (std::set<MM_Atom>::const_iterator
+          it = qm_zone.mm.begin(), to = qm_zone.mm.end(); it != to; ++it) {
+      if (it->is_polarisable) {
+        this->write_mm_atom(ifs, it->pos * len_to_qm, (it->charge - it->cos_charge) * cha_to_qm);
+        this->write_mm_atom(ifs, (it->pos + it->cosV) * len_to_qm, it->cos_charge * cha_to_qm);
       }
-      input_mm << std::setw(14) << std::right << mm_atoms[i].charge * chg_to_qm << std::endl;
+      else {
+        this->write_mm_atom(ifs, it->pos * len_to_qm, it->charge * cha_to_qm);
+      }
     }
-  //}
-  input_mm.close();
-  
-  // starting DFTB
-
-  tout = "dftb.out";
-//  std::ostringstream command_to_launch;
-//  command_to_launch << sim.param().qmmm.dftb.binary;
-// 
-//   command_to_launch << " < " << input_file;
-// command_to_launch << " 1> " << output_file << " 2>&1 ";
-// std::cout << "starting dftb  "<<  command_to_launch.str().c_str() << std::endl;
-//  system(command_to_launch.str().c_str());
-//  
-  if (util::system_call(sim.param().qmmm.dftb.binary ,
-            input_file, output_file) != 0) {
-      std::ostringstream msg;
-      msg << "dftb program " << " failed. See " 
-              << sim.param().qmmm.dftb.binary   << " for details.";
-      io::messages.add(msg.str(), "dftb_Worker", io::message::error);
-      return 1;
+    ifs.close();
   }
-  
-  // read output
-   std::ifstream output(sim.param().qmmm.dftb.output_file.c_str());
-  if (!output.is_open()) {
-    io::messages.add("Cannot open DFTB output file", "DFTB_Worker", 
-            io::message::error);
+  return 0;
+}
+
+void interaction::DFTB_Worker::write_atom_types_list(std::ofstream& input_file_stream
+                                                   , std::map<unsigned, unsigned>& type_indices
+                                                   , const interaction::QM_Zone& qm_zone) const {
+  // Get all atom types
+  std::set<unsigned> atom_types;
+  for (std::set<QM_Atom>::const_iterator
+        it = qm_zone.qm.begin(), to = qm_zone.qm.end(); it != to; ++it) {
+    atom_types.insert(it->atomic_number);
+  }
+  for (std::set<QM_Link>::const_iterator
+        it = qm_zone.link.begin(), to = qm_zone.link.end(); it != to; ++it) {
+    atom_types.insert(it->atomic_number);
+  }
+  // Write as element names and store type index
+  {
+    unsigned i = 1;
+    for (std::set<unsigned>::const_iterator
+          it = atom_types.begin(), to = atom_types.end(); it != to; ++it, ++i) {
+      input_file_stream << "  " << this->param->elements[*it];
+      type_indices[*it] = i;
+    }
+    input_file_stream << std::endl;
+  }
+}
+
+void interaction::DFTB_Worker::write_qm_atom(std::ofstream& inputfile_stream
+                                           , const int id
+                                           , const int atomic_type_id
+                                           , const math::Vec& pos) const
+  {
+  inputfile_stream << std::scientific << std::setprecision(17)
+                   << std::setw(5) << std::right << id << " "
+                   << std::setw(3) << std::right << atomic_type_id << " "
+                   << std::setw(25) << std::right << pos(0)
+                   << std::setw(25) << std::right << pos(1)
+                   << std::setw(25) << std::right << pos(2)
+                   << std::endl;
+}
+
+void interaction::DFTB_Worker::write_mm_atom(std::ofstream& inputfile_stream
+                                           , const math::Vec& pos
+                                           , const double charge) const
+  {
+  inputfile_stream << std::scientific << std::setprecision(17)
+                   << std::setw(25) << std::right << pos(0)
+                   << std::setw(25) << std::right << pos(1)
+                   << std::setw(25) << std::right << pos(2)
+                   << std::setw(25) << std::right << charge
+                   << std::endl;
+}
+
+int interaction::DFTB_Worker::system_call()
+  {
+  DEBUG(15, "Calling external DFTB+ program");
+  // First delete output files
+#ifdef HAVE_UNLINK
+  unlink(param->output_file.c_str());
+#else
+  io::messages.add("unlink function is not available on this platform.", 
+        this->name(), io::message::error);
+  return 1;
+#endif
+  std::string comm = this->param->binary + " 1> " + this->param->stdout_file + " 2>&1";
+  int err = util::system_call(comm);
+  if (err != 0) {
+    std::ostringstream msg;
+    msg << "DFTB+ program failed. ";
+    if (err == 127)
+      msg << "Probably incorrect path to DFTB+ binary. ";
+    msg << "See " << this->param->stdout_file << " for details.";
+    io::messages.add(msg.str(), this->name(), io::message::error);
     return 1;
   }
-//  while(1) {
-//    std::string line;
-//    std::getline(output, line);
-//    if (output.eof() || output.fail()) {
-//      break;
-//    }
-//    // get charges
-////    if (line.find("NET ATOMIC CHARGES") != std::string::npos) {
-////      // skip 3 lines
-////      for (unsigned int i = 0; i < 3; ++i) std::getline(output, line);
-////      // read atoms
-////      for (unsigned int i = 0; i < topo.qm_zone().size(); ++i) {
-////        std::getline(output, line);
-////        if (output.fail()) {
-////          std::ostringstream msg;
-////          msg << "Failed to read charge line of " << (i+1) << "th atom.";
-////          io::messages.add(msg.str(), "DFTB_Worker", io::message::error);
-////          return 1;
-////        }
-////        
-////        std::istringstream is(line);
-////        std::string dummy; int idummy;
-////        double charge;
-////        is >> dummy >> idummy >> charge;
-////        if (is.fail()) {
-////          std::ostringstream msg;
-////          msg << "Failed to parse charge line of " << (i+1) << "th atom.";
-////          io::messages.add(msg.str(), "DFTB_Worker", io::message::error);
-////          return 1;
-////        }
-////        storage.charge(i) = charge * sim.param().qmmm.unit_factor_charge;
-////      } // for atoms
-////    }
-//  } // while output
-//  output.close();
-  // get gradient
-//  std::ifstream of(sim.param().qmmm.dftb.output_file.c_str());
-//  of.open(sim.param().qmmm.dftb.output_gradient_file.c_str());
-//  
-//  of.close();
-  
-  // read output in fort.15
+  return 0;
+}
 
-  //output.open(output_file.c_str());
-  //output.clear();
+int interaction::DFTB_Worker::read_output(topology::Topology& topo
+                                        , configuration::Configuration& conf
+                                        , simulation::Simulation& sim
+                                        , interaction::QM_Zone& qm_zone) {
+  std::ifstream ofs;
+  int err;
 
-  while(1) {
-    std::string line;
-    std::string dummy;
-    std::getline(output, line);
-    if (output.eof() || output.fail()) {
+  err = this->open_output(ofs, this->param->output_file);
+  if (err) return err;
+
+  err = this->parse_energy(ofs, qm_zone);
+  if (err) return err;
+
+  err = this->parse_qm_forces(ofs, qm_zone);
+  if (err) return err;
+
+  if (sim.param().qmmm.qmmm > simulation::qmmm_mechanical) {
+    err = this->parse_mm_forces(ofs, qm_zone);
+    if (err) return err;
+  }
+
+  if (sim.param().qmmm.qmmm == simulation::qmmm_mechanical
+      && sim.param().qmmm.qm_ch == simulation::qm_ch_dynamic) {
+    err = this->parse_charges(ofs, qm_zone);
+    if (err) return err;
+  }
+
+  ofs.close();
+  ofs.clear();
+
+  if (this->chdir(this->cwd) != 0) return 1;
+  return 0;
+}
+
+int interaction::DFTB_Worker::parse_charges(std::ifstream& ofs
+                                          , interaction::QM_Zone& qm_zone) const {
+  std::string& out = this->param->output_file;
+  std::string line;
+  /**
+   * Parse charges
+   * They are used in mechanical embedding
+   */
+  bool got_charges = false;
+  while (std::getline(ofs, line)) {
+    if (line.find("gross_atomic_charges") != std::string::npos) {
+      got_charges = true;
       break;
     }
-    if /* energy */(line.find("Total energy:") != std::string::npos) {
-      // next line
-      double energy;
-      int  niter;
-      std::istringstream is(line);
-      is >> dummy >> dummy >> energy;
-      if (is.fail()) {
-        io::messages.add("Failed to read energy result", "DFTB_Worker", 
-                io::message::error);
-        return 1;
-      }
-      storage.energy = energy * sim.param().qmmm.unit_factor_energy3;
-    } /* force QM atoms */
-    else if (line.find("Total Forces") != std::string::npos ) 
-    {
-       // std::cout << " foundQM forces" << std::endl;
-      // read atoms
-      for (std::set<topology::qm_atom_struct>::const_iterator
-        it = topo.qm_zone().begin(), to = topo.qm_zone().end(); it != to; ++it) {
-        std::getline(output, line);
-        if (output.fail()) {
-          std::ostringstream msg;
-          msg << "Failed to read gradient line of QM atom " << it->index+1 << " atom.";
-          io::messages.add(msg.str(), "DFTB_Worker", io::message::error);
-          return 1;
-        }
-        
-        std::istringstream is(line);
-        int dummy;
-        math::Vec gradient;
-        is >> gradient(0) >> gradient(1) >> gradient(2);
-      //  std::cout << gradient(0) <<"   " << gradient(1) << " "  << gradient(2) << std::endl;
-        if (is.fail()) {
-          std::ostringstream msg;
-          msg << "Failed to parse gradient line of QM atom " << it->index+1 << " atom.";
-          io::messages.add(msg.str(), "DFTB_Worker", io::message::error);
-          return 1;
-        }
-        storage.force(it->index) += gradient * ((sim.param().qmmm.unit_factor_energy3) /
-                sim.param().qmmm.unit_factor_length3);
-        
-      } // for QM atoms 
-        //read now the forces on the capping atom
-        math::Vec gradient;
-        for (unsigned int i = 0; i < topo.qm_mm_pair().size(); i++) {
-            std::istringstream is(line);
-            std::getline(output, line);
-            is >> gradient(0) >> gradient(1) >> gradient(2);
-            if (output.fail()) {
-                std::ostringstream msg;
-                msg << "Failed to read charge line of " << (i + 1) << "th linkatom.";
-                io::messages.add(msg.str(), "DFTB_Worker", io::message::error);
-                return 1;
-            }
-            LA_storage.force(i) = gradient * ((sim.param().qmmm.unit_factor_energy3) /
-                                              sim.param().qmmm.unit_factor_length3);
-        }
-        
-    } /* force MM atoms */ else if (line.find("Forces on external charges") != std::string::npos ) {
-      // read atoms
-    //    std::cout << " found MM forces" << std::endl;
-      for (unsigned int i = 0; i < mm_atoms.size(); ++i) {        
-        std::getline(output, line);
-        if (output.fail()) {
-          std::ostringstream msg;
-          msg << "Failed to read gradient line of MM atom " << i+1 << ".";
-          io::messages.add(msg.str(), "DFTB_Worker", io::message::error);
-          return 1;
-        }
-        
-        std::istringstream is(line);
-        int dummy;
-        math::Vec gradient;
-        // skip atom number, Z 
-        is >>  gradient(0) >> gradient(1) >> gradient(2);
-        //std::cout << gradient(0) <<"   " << gradient(1) << " "  << gradient(2) << std::endl;
-        if (is.fail()) {
-          std::ostringstream msg;
-          msg << "Failed to parse gradient line of MM atom " << i+1 << ".";
-          io::messages.add(msg.str(), "DFTB_Worker", io::message::error);
-          return 1;
-        }
-        storage.force(mm_atoms[i].index) = gradient * ((sim.param().qmmm.unit_factor_energy3) / 
-                sim.param().qmmm.unit_factor_length3);
-
-        // get force on the charge-on-spring
-//        if (topo.is_polarisable(mm_atoms[i].index)) {
-//          std::getline(output, line);
-//          if (output.fail()) {
-//            std::ostringstream msg;
-//            msg << "Failed to read gradient line of COS on MM atom " << i + 1 << ".";
-//            io::messages.add(msg.str(), "MNDO_Worker", io::message::error);
-//            return 1;
-//          }
-//
-//          std::istringstream is(line);
-//          // skip atom number, Z 
-//          is >> dummy >> dummy >> gradient(0) >> gradient(1) >> gradient(2);
-//          if (is.fail()) {
-//            std::ostringstream msg;
-//            msg << "Failed to parse gradient line of COS MM atom " << i + 1 << ".";
-//            io::messages.add(msg.str(), "MNDO_Worker", io::message::error);
-//            return 1;
-//          }
-//          storage.cos_force(mm_atoms[i].index) = gradient * (-(sim.param().qmmm.unit_factor_energy) /
-//                  sim.param().qmmm.unit_factor_length);
-//        }
-      } // for MM atoms 
-    }
-    
   }
-  output.close();
-  #ifdef HAVE_REMOVE
-  //remove(sim.param().qmmm.dftb.output_file.c_str());
-#else
-  return impl("remove");
-#endif
-#ifdef HAVE_CHDIR
-  if (chdir(current_working_directory) != 0) {
-    io::messages.add("Cannot change back from into DFTB working directory.",
-            "dftb worker", io::message::error);
+  if (!got_charges) {
+    io::messages.add("Charges were not found in the output file "
+                      + out, this->name(), io::message::error);
     return 1;
   }
-#else
-  return impl("chdir");
-#endif
-          
-  return 0;
-  
-}
-
-int interaction::DFTB_Worker::init(topology::Topology& topo, 
-        configuration::Configuration& conf, simulation::Simulation& sim) { 
-      input_file = sim.param().qmmm.dftb.input_file;
-      output_file = sim.param().qmmm.dftb.output_file;
-      output_charg_file = sim.param().qmmm.dftb.output_charg_file;
-      geom_file = sim.param().qmmm.dftb.geom_file;
-      // Make a global periodic table with atomic number, type, mass ...
-      sim.param().qmmm.qmmm_at_to_num[1]="H";
-      sim.param().qmmm.qmmm_at_to_num[6]="C";
-      sim.param().qmmm.qmmm_at_to_num[7]="N";
-      sim.param().qmmm.qmmm_at_to_num[8]="O";
-      sim.param().qmmm.qmmm_at_to_num[9]="F";
-      sim.param().qmmm.qmmm_at_to_num[15]="P";
-      sim.param().qmmm.qmmm_at_to_num[16]="S";
-      sim.param().qmmm.qmmm_at_to_num[17]="Cl";
-      sim.param().qmmm.qmmm_at_to_num[35]="Br";
-      sim.param().qmmm.qmmm_at_to_num[53]="I";
-      if (output_file.empty()) {
-          std::cout << "OUTPUTFILE EMPTY?!?!?!?" << std::endl;
-#ifdef HAVE_TMPNAM
-    char tmp[TMP_MAX];
-    if (tmpnam(tmp) == NULL) {
-      io::messages.add("Could not get temporary file",
-              "dftb_Worker", io::message::error);
+  for(std::set<QM_Atom>::iterator
+      it = qm_zone.qm.begin(), to = qm_zone.qm.end(); it != to; ++it) {
+    DEBUG(15,"Parsing charge of QM atom " << it->index);
+    ofs >> it->qm_charge;
+    DEBUG(15,"Charge: " << it->qm_charge);
+    if (ofs.fail()) {
+      std::ostringstream msg;
+      msg << "Failed to parse charge of QM atom " << (it->index + 1)
+          << " in " << out;
+      io::messages.add(msg.str(), this->name(), io::message::error);
       return 1;
     }
-    output_file = std::string(tmp);
-#else
-    io::messages.add("Temporary files are not supported on this platform. "
-            "Please provide the file names manually using the MNDOFILES "
-            "block in the QM/MM specification file",
-            "MNDO_Worker", io::message::critical);
-    return 1;
-#endif
+    it->qm_charge *= this->param->unit_factor_charge;
   }
-
-    return 0;
+  // Also for capping atoms
+  for(std::set<QM_Link>::iterator
+      it = qm_zone.link.begin(), to = qm_zone.link.end(); it != to; ++it) {
+    DEBUG(15,"Parsing charge of capping atom " << it->qm_index << "-" << it->mm_index);
+    ofs >> it->qm_charge;
+    DEBUG(15,"Charge: " << it->qm_charge);
+    if (ofs.fail()) {
+      std::ostringstream msg;
+      msg << "Failed to parse charge of capping atom " << (it->qm_index + 1)
+          << "-" << (it->mm_index + 1) << " in " << out;
+      io::messages.add(msg.str(), this->name(), io::message::error);
+      return 1;
+    }
+    it->qm_charge *= this->param->unit_factor_charge;
+  }
+  return 0;
 }
 
-interaction::DFTB_Worker::~DFTB_Worker() {
-//this->del_qmID();
+int interaction::DFTB_Worker::parse_energy(std::ifstream& ofs
+                                         , interaction::QM_Zone& qm_zone) const {
+  std::string line;
+  // Find energy block and parse
+  bool got_energy = false;
+  while (std::getline(ofs, line)) {
+    if (line.find("total_energy") != std::string::npos) {
+      ofs >> qm_zone.QM_energy();
+      if (ofs.fail()) {
+        io::messages.add("Failed to parse energy in output file "
+                          + this->param->output_file
+                          , this->name(), io::message::error);
+        return 1;
+      }
+      got_energy = true;
+      qm_zone.QM_energy() *= this->param->unit_factor_energy;
+      DEBUG(15, "Parsed QM_energy: " << qm_zone.QM_energy());
+      break;
+    }
+  }
+  if (!got_energy) {
+    io::messages.add("Unable to find energy in output file "
+                      + this->param->output_file
+                      , this->name(), io::message::error);
+    return 1;
+  }
+  return 0;
+}
+
+int interaction::DFTB_Worker::parse_qm_forces(std::ifstream& ofs
+                                            , interaction::QM_Zone& qm_zone) const {
+  std::string line;
+  bool got_qm_forces = false;
+  while(std::getline(ofs, line)) {
+    if (line.find("forces   ") != std::string::npos) {
+      got_qm_forces = true;
+      break;
+    }
+  }
+  if (!got_qm_forces) {
+    io::messages.add("Unable to find QM forces in output file "
+                      + this->param->output_file,
+                        this->name(), io::message::error);
+    return 1;
+  }
+  // Parse QM atoms
+  for(std::set<QM_Atom>::iterator
+        it = qm_zone.qm.begin(), to = qm_zone.qm.end(); it != to; ++it) {
+    DEBUG(15,"Parsing force of QM atom " << it->index);
+    int err = this->parse_force(ofs, it->force);
+    DEBUG(15,"Force: " << math::v2s(it->force));
+    if (err) {
+      std::ostringstream msg;
+      msg << "Failed to parse force line of QM atom " << (it->index + 1)
+          << " in " << this->param->output_file;
+      io::messages.add(msg.str(), this->name(), io::message::error);
+      return 1;
+    }
+  }
+  // Parse capping atoms
+  for(std::set<QM_Link>::iterator
+        it = qm_zone.link.begin(), to = qm_zone.link.end(); it != to; ++it) {
+    DEBUG(15,"Parsing force of capping atom " << it->qm_index << "-" << it->mm_index);
+    int err = this->parse_force(ofs, it->force);
+    DEBUG(15,"Force: " << math::v2s(it->force));
+    if (err) {
+      std::ostringstream msg;
+      msg << "Failed to parse force line of capping atom " << (it->qm_index + 1)
+          << "-" << (it->mm_index + 1) << " in " << this->param->output_file;
+      io::messages.add(msg.str(), this->name(), io::message::error);
+      return 1;
+    }
+  }
+  return 0;
+}
+
+int interaction::DFTB_Worker::parse_mm_forces(std::ifstream& ofs
+                                               , interaction::QM_Zone& qm_zone) const {
+  std::string line;
+  bool got_mm_forces = false;
+  while(std::getline(ofs, line)) {
+    if (line.find("forces_ext_charges") != std::string::npos) {
+      got_mm_forces = true;
+      break;
+    }
+  }
+  if (!got_mm_forces) {
+    io::messages.add("Unable to find MM forces in output file "
+                      + this->param->output_file,
+                        this->name(), io::message::error);
+    return 1;
+  }
+  // Parse MM atoms
+  for(std::set<MM_Atom>::iterator
+        it = qm_zone.mm.begin(), to = qm_zone.mm.end(); it != to; ++it) {
+    if (it->charge != 0.0 || (it->is_polarisable && (it->charge - it->cos_charge) != 0.0)) {
+      DEBUG(15,"Parsing force of MM atom " << it->index);
+      int err = this->parse_force(ofs, it->force);
+      if (err) {
+        std::ostringstream msg;
+        msg << "Failed to parse force line of MM atom " << (it->index + 1)
+            << " in " << this->param->output_file;
+        io::messages.add(msg.str(), this->name(), io::message::error);
+        return 1;
+      }
+    }
+    if (it->is_polarisable && it->cos_charge != 0.0) {
+      DEBUG(15,"Parsing force of MM atom " << it->index);
+      int err = this->parse_force(ofs, it->force);
+      if (err) {
+        std::ostringstream msg;
+        msg << "Failed to parse force line of COS of MM atom " << (it->index + 1)
+            << " in " << this->param->output_file;
+        io::messages.add(msg.str(), this->name(), io::message::error);
+        return 1;
+      }
+    }
+  }
+  return 0;
+}
+
+int interaction::DFTB_Worker::parse_force(std::ifstream& ofs,
+                                          math::Vec& force) const {
+  std::string line;
+  ofs >> force(0) >> force(1) >> force(2);
+  if(ofs.fail()) {
+    std::ostringstream msg;
+    msg << "Failed to parse force line in " << this->param->output_file;
+    io::messages.add(msg.str(), this->name(), io::message::error);
+    return 1;
+  }
+  force *= this->param->unit_factor_force;
+  return 0;
 }

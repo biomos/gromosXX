@@ -12,7 +12,7 @@ build:
 doc:	doc/doxygen.conf.in
 	sed "s/<SRCDIR>/$(top_srcdir)/g" $(top_srcdir)/doc/doxygen.conf.in > doxygen.conf
 	mkdir -p  $(top_srcdir)/doc/snippets
-	python $(top_srcdir)/doc/generate_snippets.py $(top_srcdir)/src/io/parameter/in_parameter.cc $(top_srcdir)/src/io/topology/in_distanceres.cc > $(top_srcdir)/doc/snippets/snippets.cc
+	python $(top_srcdir)/doc/generate_snippets.py $(top_srcdir)/src/io/parameter/in_parameter.cc $(top_srcdir)/src/io/topology/in_*.cc > $(top_srcdir)/doc/snippets/snippets.cc
 	mkdir -p doc
 	doxygen doxygen.conf
 
@@ -25,4 +25,5 @@ EXTRA_DIST = VERSION\
 	doc/doxygen.conf.in\
 	doc/install.doxy\
 	doc/install.html\
-	doc/main.doxy
+	doc/main.doxy\
+        data/ene_ana.md++.lib

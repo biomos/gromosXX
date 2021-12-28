@@ -19,7 +19,8 @@ namespace algorithm
     /**
      * Constructor.
      */
-    Perturbed_Shake(double const tolerance = 0.000001,
+    Perturbed_Shake(double const solute_tolerance = 0.000001,
+        double const solvent_tolerance = 0.000001,
 		    int const max_iterations = 1000);
     
     /**
@@ -55,6 +56,7 @@ namespace algorithm
     (
      topology::Topology const &topo,
      configuration::Configuration & conf,
+     double tolerance,
      bool & convergence,
      int first,
      std::vector<bool> &skip_now,
@@ -64,6 +66,21 @@ namespace algorithm
      double dt,
      math::Periodicity<B> const & periodicity,
      simulation::Simulation & sim); //ANITA
+
+    /**
+     * do a perturbed angle constraint iteration
+     */
+    template<math::boundary_enum B, math::virial_enum V>
+    int perturbed_ang_constr_iteration
+    (
+     topology::Topology const &topo,
+     configuration::Configuration & conf,
+     simulation::Simulation const & sim,
+     bool & convergence,
+     std::vector<bool> &skip_now,
+     std::vector<bool> &skip_next,
+     math::Periodicity<B> const & periodicity
+     );
 
     /**
      * do a perturbed dihedral constraint iteration

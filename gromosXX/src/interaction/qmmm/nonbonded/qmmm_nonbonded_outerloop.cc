@@ -3,36 +3,34 @@
  * template methods of QMMM_Nonbonded_Outerloop.
  */
 
-#include <stdheader.h>
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <configuration/configuration.h>
+#include "../../../stdheader.h"
 
-#include <interaction/interaction_types.h>
-#include <math/periodicity.h>
-#include <math/volume.h>
+#include "../../../algorithm/algorithm.h"
+#include "../../../topology/topology.h"
+#include "../../../simulation/simulation.h"
+#include "../../../configuration/configuration.h"
+#include "../../../interaction/interaction.h"
 
-#include <interaction/nonbonded/pairlist/pairlist.h>
-#include <interaction/nonbonded/interaction/storage.h>
-#include <interaction/nonbonded/interaction/nonbonded_parameter.h>
+#include "../../../math/periodicity.h"
+#include "../../../math/volume.h"
 
-#include <interaction/nonbonded/interaction/nonbonded_term.h>
-#include <interaction/nonbonded/interaction/nonbonded_innerloop.h>
+#include "../../../interaction/interaction_types.h"
+#include "../../../interaction/nonbonded/innerloop_template.h"
+#include "../../../interaction/nonbonded/pairlist/pairlist.h"
+#include "../../../interaction/nonbonded/interaction/storage.h"
+#include "../../../interaction/nonbonded/interaction/nonbonded_parameter.h"
 
-#include <interaction/qmmm/nonbonded/qmmm_nonbonded_outerloop.h>
+#include "../../../interaction/nonbonded/interaction/nonbonded_term.h"
+#include "../../../interaction/nonbonded/interaction/nonbonded_innerloop.h"
 
-#include <interaction/nonbonded/interaction_spec.h>
+#include "../../../interaction/nonbonded/interaction_spec.h"
 
-#include <util/debug.h>
-#include <interaction/nonbonded/innerloop_template.h>
+#include "../../../util/debug.h"
 
-#include <simulation/parameter.h>
+#include "../../../simulation/parameter.h"
 
-#include <interaction/interaction.h>
-
-#include <algorithm>
+#include "qmmm_nonbonded_outerloop.h"
 
 #undef MODULE
 #undef SUBMODULE

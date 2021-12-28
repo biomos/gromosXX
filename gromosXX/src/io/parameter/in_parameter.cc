@@ -75,6 +75,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_POSITIONRES(param);
   read_DISTANCERES(param);
   read_DISTANCEFIELD(param); 
+  read_ANGLERES(param);
   read_DIHEDRALRES(param); // needs to be called after CONSTRAINT!
   read_PERTURBATION(param);
   read_JVALUERES(param);
@@ -1941,6 +1942,86 @@ void io::In_Parameter::read_DISTANCEFIELD(simulation::Parameter &param,
     }
 } // DISTANCEFIELD
 
+
+/**
+ * @section angleres ANGLERES block
+ * @snippet snippets/snippets.cc ANGLERES
+ */
+void io::In_Parameter::read_ANGLERES(simulation::Parameter &param,
+                                        std::ostream & os) {
+    DEBUG(8, "reading ANGLERES");
+
+    std::stringstream exampleblock;
+    // lines starting with 'exampleblock<<"' and ending with '\n";' (spaces don't matter)
+    // will be used to generate snippets that can be included in the doxygen doc;
+    // the first line is the tag
+    exampleblock << "ANGLERES\n";
+    exampleblock << "# NTALR   0...3 controls angle restraining and constraining\n";
+    exampleblock << "#         0:    off [default]\n";
+    exampleblock << "#         1:    angle restraining using CALR\n";
+    exampleblock << "#         2:    angle restraining using CALR * WALR\n";
+    exampleblock << "#         3:    angle constraining\n";
+    exampleblock << "#\n";
+    exampleblock << "# CALR    >=0.0 force constant for angle restraining [kJ/mol/degree^2]\n";
+    exampleblock << "# VARES 0,1 controls contribution to virial\n";
+    exampleblock << "#         0: no contribution\n";
+    exampleblock << "#         1: angle restraints contribute to virial\n";
+    exampleblock << "# NTWALR  >=0   write every NTWALR step angle restraint information to external file\n";
+    exampleblock << "# TOLBAC  >0    tolerance for constraint deviation (in degrees)\n";
+    exampleblock << "#\n";
+    exampleblock << "# NTALR  CALR  VARES    NTWALR TOLBAC\n";
+    exampleblock << "  1      1.0      0       100    0.01\n";
+    exampleblock << "END\n";
+
+
+    std::string blockname = "ANGLERES";
+    Block block(blockname, exampleblock.str());
+
+    if (block.read_buffer(m_block[blockname], false) == 0) {
+        block_read.insert(blockname);
+
+        double K, tolerance;
+        int angrest;
+        block.get_next_parameter("NTALR", angrest, "", "0,1,2,3");
+        block.get_next_parameter("CALR", K, ">=0", "");
+        block.get_next_parameter("VARES", param.angrest.virial, "", "0,1");
+        block.get_next_parameter("NTWALR", param.angrest.write, ">=0", "");
+        block.get_next_parameter("TOLBAC", tolerance, ">=0", "");
+
+        switch (angrest) {
+            case 0:
+                param.angrest.angrest = simulation::angle_restr_off;
+                break;
+            case 1:
+                param.angrest.angrest = simulation::angle_restr_inst;
+                break;
+            case 2:
+                param.angrest.angrest = simulation::angle_restr_inst_weighted;
+                break;
+            case 3:
+                param.angrest.angrest = simulation::angle_constr;
+                break;
+            default:
+                break;
+        }
+
+        param.angrest.K = K*180*180 / (math::Pi * math::Pi);
+        param.angrest.tolerance = tolerance * math::Pi / 180;
+
+        if (param.angrest.angrest == simulation::angle_constr) {
+            if (param.constraint.ntc == 1 && param.constraint.solute.algorithm == simulation::constr_off)
+                param.constraint.solute.algorithm = simulation::constr_shake;
+
+            if (param.constraint.solute.algorithm != simulation::constr_shake) {
+                io::messages.add("ANGLERES block: needs SHAKE as (solute) constraints algorithm",
+                                 "In_Parameter",
+                                 io::message::error);
+            }
+        }
+        block.get_final_messages();
+    }
+} // ANGLERES
+
 /**
  * @section dihedralres DIHEDRALRES block
  * @snippet snippets/snippets.cc DIHEDRALRES
@@ -1948,7 +2029,6 @@ void io::In_Parameter::read_DISTANCEFIELD(simulation::Parameter &param,
 void io::In_Parameter::read_DIHEDRALRES(simulation::Parameter &param,
                                         std::ostream & os) {
     DEBUG(8, "reading DIHEDRALRES");
-
     std::stringstream exampleblock;
     // lines starting with 'exampleblock<<"' and ending with '\n";' (spaces don't matter)
     // will be used to generate snippets that can be included in the doxygen doc;
@@ -1958,14 +2038,18 @@ void io::In_Parameter::read_DIHEDRALRES(simulation::Parameter &param,
     exampleblock << "#         0:    off [default]\n";
     exampleblock << "#         1:    dihedral restraining using CDLR\n";
     exampleblock << "#         2:    dihedral restraining using CDLR * WDLR\n";
-    exampleblock << "#         3:    dihedral constraining\n";
+    exampleblock << "#         3:    dihedral constraining (using sine and cosine)\n";
     exampleblock << "#\n";
     exampleblock << "# CDLR    >=0.0 force constant for dihedral restraining [kJ/mol/degree^2]\n";
     exampleblock << "# PHILIN  >0.0  deviation after which the potential energy function is linearized\n";
+    exampleblock << "# VDIH 0,1 controls contribution to virial\n";
+    exampleblock << "#         0: no contribution\n";
+    exampleblock << "#         1: dihedral restraints contribute to virial\n";
     exampleblock << "# NTWDLR  >=0   write every NTWDLR step dihedral information to external file\n";
+    exampleblock << "# TOLDAC  >0    tolerance for constraint deviation (in degrees)\n";
     exampleblock << "#\n";
-    exampleblock << "# NTDLR  CDLR      PHILIN  NTWDLR\n";
-    exampleblock << "  1      100.0     180.0   100\n";
+    exampleblock << "# NTDLR  CDLR      PHILIN  VDIH  NTWDLR  TOLDAC\n";
+    exampleblock << "  1      100.0     180.0     0   100       0.01\n";
     exampleblock << "END\n";
 
 
@@ -1975,12 +2059,14 @@ void io::In_Parameter::read_DIHEDRALRES(simulation::Parameter &param,
     if (block.read_buffer(m_block[blockname], false) == 0) {
         block_read.insert(blockname);
 
-        double phi_lin, K;
+        double phi_lin, K, tolerance;
         int dihrest;
         block.get_next_parameter("NTDLR", dihrest, "", "0,1,2,3");
         block.get_next_parameter("CDLR", K, ">=0", "");
         block.get_next_parameter("PHILIN", phi_lin, ">0", "");
+        block.get_next_parameter("VDIH", param.dihrest.virial, "", "0,1");
         block.get_next_parameter("NTWDLR", param.dihrest.write, ">=0", "");
+        block.get_next_parameter("TOLDAC", tolerance, ">=0", "");
 
         switch (dihrest) {
             case 0:
@@ -1994,7 +2080,6 @@ void io::In_Parameter::read_DIHEDRALRES(simulation::Parameter &param,
                 break;
             case 3:
                 param.dihrest.dihrest = simulation::dihedral_constr;
-                param.setDevelop("Dihedral constraining is under development.");
                 break;
             default:
                 break;
@@ -2002,6 +2087,7 @@ void io::In_Parameter::read_DIHEDRALRES(simulation::Parameter &param,
 
         param.dihrest.K = K*180*180 / (math::Pi * math::Pi);
         param.dihrest.phi_lin = phi_lin * 2 * math::Pi / 360;
+        param.dihrest.tolerance = tolerance * math::Pi / 180;
 
         if (param.dihrest.dihrest == simulation::dihedral_constr) {
             if (param.constraint.ntc == 1 && param.constraint.solute.algorithm == simulation::constr_off)
@@ -2586,13 +2672,13 @@ void io::In_Parameter::read_INNERLOOP(simulation::Parameter &param,
             }
             case 4:
             {
-#ifdef HAVE_LIBCUKERNEL
+#ifdef HAVE_LIBCUDART
                 // cuda library
                 param.innerloop.method = simulation::sla_cuda;
 #else
                 param.innerloop.method = simulation::sla_off;
                 io::messages.add("INNERLOOP block: CUDA solvent loops are not available "
-                                 "in your compilation. Use --with-cukernel for compiling.",
+                                 "in your compilation. Use --with-cuda for compiling.",
                                  "In_Parameter", io::message::error);
 #endif
                 break;
@@ -2631,7 +2717,7 @@ void io::In_Parameter::read_INNERLOOP(simulation::Parameter &param,
                 bool fail = false;
                 for (unsigned int i = 0; i < param.innerloop.number_gpus; i++) {
                     std::string idx=io::to_string(i);
-                    block.get_next_parameter("NDEVG["+idx+"]", temp, ">0", "", true);
+                    block.get_next_parameter("NDEVG["+idx+"]", temp, ">=0", "", true);
                     if (block.error()) {
                         fail = true;
                         break;
@@ -2841,7 +2927,7 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
     // the first line is the tag
     exampleblock << "REPLICA_EDS                                                    \n";
     exampleblock << "#    REEDS >= 0   : turn off Reeds                             \n";
-                    "#             1   : turn on                                    \n";
+    exampleblock << "#             1   : turn on                                    \n";
     exampleblock << "#    NRES >= number of replica exchange eds smoothing values   \n";
     exampleblock << "#     RET >= 0.0 one temperature for all replica               \n";
     exampleblock << "# NUMSTATES >= 2 Number of states                              \n";
@@ -2911,16 +2997,18 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
 
         //get EIR-Matrix
         std::vector<std::vector<float>> eir(num_l);
-        for (unsigned int i = 0; i < num_l; i++) {
-          std::string idx = io::to_string(i);
-          std::vector<float> eiri(num_states, 0.0);
-          eir[i] = eiri;      
-
-          for (unsigned int j=0; j< num_states; j++){
-            std::string idx2 = io::to_string(j);
-            block.get_next_parameter("EIR[" + idx + "]["+idx2+"]", eir[i][j], "", "");
+        for(unsigned int replicaJ=0; replicaJ<num_l; replicaJ++){//init eir vectors
+          std::vector<float> eir_vector_J(num_states, 0.0);
+          eir[replicaJ] = eir_vector_J;    
+        }
+        for (unsigned int stateI = 0; stateI < num_states; stateI++) {
+          std::string stateI_idx = io::to_string(stateI);
+          for (unsigned int replicaJ=0; replicaJ< num_l; replicaJ++){  
+            std::string replicaJ_idx = io::to_string(replicaJ);
+            block.get_next_parameter("EIR[" + replicaJ_idx+ "]["+stateI_idx+"]", eir[replicaJ][stateI], "", "");    //Comment "this function only reads line by line! doesn't matter the indices in the string 
           }
         }
+
         
         // general Settings
         block.get_next_parameter("NRETRIAL", ntrials, ">=0", "");
@@ -3925,7 +4013,7 @@ void io::In_Parameter::read_LAMBDAS(simulation::Parameter & param,
     exampleblock << "# NTLI(1..)  interaction type to treat with individual lambda:\n";
     exampleblock << "#            bond(1), angle(2), dihedral(3), improper(4), vdw(5), vdw_soft(6),\n";
     exampleblock << "#            crf(7), crf_soft(8), distanceres(9), distancefield(10),\n";
-    exampleblock << "#            dihedralres(11), mass(12)\n";
+    exampleblock << "#            dihedralres(11), mass(12), angleres(13)\n";
     exampleblock << "# NILG1, NILG2 energy groups of interactions that are treated with individual\n";
     exampleblock << "#              lambda values\n";
     exampleblock << "# ALI, BLI, CLI, DLI, ELI polynomial coefficients linking the individual lambda-\n";
@@ -4027,6 +4115,8 @@ void io::In_Parameter::read_LAMBDAS(simulation::Parameter & param,
                 j = simulation::dihres_lambda;
             else if (nm == "mass" || nm == "12")
                 j = simulation::mass_lambda;
+            else if (nm == "angleres" || nm == "13")
+                j = simulation::angres_lambda;
             else {
                 io::messages.add("unknown lambda type in LAMBDAS block: " + nm,
                                  "In_Parameter", io::message::error);
@@ -5057,9 +5147,10 @@ void io::In_Parameter::read_QMMM(simulation::Parameter & param,
     // will be used to generate snippets that can be included in the doxygen doc;
     // the first line is the tag
     exampleblock << "QMMM\n";
-    exampleblock << "# NTQMMM 0..3 apply QM/MM\n";
+    exampleblock << "# NTQMMM -1..3 apply QM/MM\n";
     exampleblock << "#    0: do not apply QM/MM\n";
-    exampleblock << "#    1: apply mechanical embedding scheme\n";
+    exampleblock << "#   -1: apply mechanical embedding scheme with constant QM charges\n";
+    exampleblock << "#    1: apply mechanical embedding scheme with dynamic QM charges\n";
     exampleblock << "#    2: apply electrostatic embedding scheme\n";
     exampleblock << "#    3: apply polarisable embedding scheme\n";
     exampleblock << "# NTQMSW 0..5 QM software package to use\n";
@@ -5096,14 +5187,12 @@ void io::In_Parameter::read_QMMM(simulation::Parameter & param,
     Block block(blockname, exampleblock.str());
     if (block.read_buffer(m_block[blockname], false) == 0) {
         block_read.insert(blockname);
-    //Development
-    param.setDevelop("QMMM is under development.");
 
 
     int enable,software,write,qmlj,qmcon;
     double mm_scale = -1.;
     double cutoff;
-    block.get_next_parameter("NTQMMM", enable, "", "0,1,2,3");
+    block.get_next_parameter("NTQMMM", enable, "", "-1,0,1,2,3");
     block.get_next_parameter("NTQMSW", software, "", "0,1,2,3,4,5");
     block.get_next_parameter("RCUTQM", cutoff, "", "");
     block.get_next_parameter("NTWQMMM", write, ">=0", "");
@@ -5119,8 +5208,13 @@ void io::In_Parameter::read_QMMM(simulation::Parameter & param,
         case 0:
             param.qmmm.qmmm = simulation::qmmm_off;
             break;
+        case -1:
+            param.qmmm.qmmm = simulation::qmmm_mechanical;
+            param.qmmm.qm_ch = simulation::qm_ch_constant;
+            break;
         case 1:
             param.qmmm.qmmm = simulation::qmmm_mechanical;
+            param.qmmm.qm_ch = simulation::qm_ch_dynamic;
             break;
         case 2:
             param.qmmm.qmmm = simulation::qmmm_electrostatic;

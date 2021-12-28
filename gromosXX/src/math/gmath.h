@@ -689,37 +689,7 @@ namespace math
    * @f$ \epsilon^{-1} @f$
    */
   extern double eps0_i;
-
-  /**
-   * Avogadro constant
-   */
-  extern double avogadro;
-
-  /**
-   * Bohr (length a.u.)
-   */
-  extern double bohr;
-
-  /**
-   * Hartree (energy a.u.)
-   */
-  extern double hartree;
-
-  /**
-   * Value of angstrom unit
-   */
-  extern double angstrom;
-
-  /**
-   * Value of thermochemical kilocalorie
-   */
-  extern double kcal;
-
-  /**
-   * Electron charge
-   */
-  extern double echarge;
-
+  
 #ifndef NDEBUG
   /**
    * module debug level.

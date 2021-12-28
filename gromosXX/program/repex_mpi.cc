@@ -65,7 +65,7 @@ int main(int argc, char *argv[]) {
 #ifdef XXMPI
   //initializing MPI
   MPI_Init(&argc, &argv);
-  const double start = MPI_Wtime();
+  const double start = util::now();
   int size;
   int rank;
 
@@ -313,8 +313,9 @@ int main(int argc, char *argv[]) {
     // defining struct with non static replica information
     int blocklen[] = {3, 3};
     MPI_Datatype typ[] = {MPI_INT, MPI_DOUBLE};
+    MPI_Aint lb;
     MPI_Aint intext;
-    MPI_Type_extent(MPI_INT, &intext);
+    MPI_Type_get_extent(MPI_INT, &lb, &intext);
 
     MPI_Aint disps[] = {(MPI_Aint) 0, 4 * intext};
     MPI_Type_create_struct(2, blocklen, disps, typ, &MPI_REPINFO);
@@ -453,6 +454,7 @@ int main(int argc, char *argv[]) {
         }
     }
     DEBUG(1, "Master \t \t finalize ")
+            
     Master->write_final_conf();
        
   } else {  //SLAVES    
@@ -487,7 +489,7 @@ int main(int argc, char *argv[]) {
       Slave->send_to_master();
     }
     
-    DEBUG(1, "Slave "<< rank <<" \t Finalize")    
+    DEBUG(1, "Slave "<< rank <<" \t Finalize") ;   
     Slave->write_final_conf();
     std::cout << "\n=================== Slave Node "<< rank << "  finished successfully!\n";
   }
@@ -497,7 +499,7 @@ int main(int argc, char *argv[]) {
   //last MASTER OUTPUT
   if(rank == 0){
     //FINAL OUTPUT - Time used:
-    double end = MPI_Wtime();
+    double end = util::now();
     double duration = end - start;
     int durationMin = int(duration/60);
     int durationHour = int(std::floor(durationMin/60));

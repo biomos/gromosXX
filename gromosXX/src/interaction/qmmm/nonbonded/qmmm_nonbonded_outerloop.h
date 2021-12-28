@@ -6,7 +6,7 @@
 #ifndef INCLUDED_QMMM_NONBONDED_OUTERLOOP_H
 #define INCLUDED_QMMM_NONBONDED_OUTERLOOP_H
 
-#include <interaction/nonbonded/interaction/nonbonded_outerloop.h>
+#include "../../../interaction/nonbonded/interaction/nonbonded_outerloop.h"
 
 namespace interaction
 {

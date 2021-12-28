@@ -7,6 +7,9 @@ AM_LDFLAGS = -L/home/poliak/anaconda3/envs/schnet/lib/ -lpthread -ldl -lutil -lm
 #AM_CXXFLAGS = -I/usr/include/python3.6/ -I/usr/local/include/pybind11 @MY_CXXFLAGS@
 #AM_CPPFLAGS = -I/usr/include/python3.6/ -I/usr/local/include/pybind11 -I$(top_srcdir) -I$(top_srcdir)/src -I$(top_srcdir)/src/interaction -I$(top_srcdir)/src/interaction/nonbonded -I$(top_srcdir)/src/interaction/nonbonded/pairlist -I$(top_srcdir)/src/interaction/nonbonded/interaction -I$(top_srcdir)/src/interaction/bonded -I$(top_srcdir)/src/interaction/forcefield -I$(top_srcdir)/src/interaction/qmmm -I$(top_srcdir)/src/interaction/special -I$(top_srcdir)/src/interaction/special/xray -I$(top_srcdir)/src/algorithm 
 #AM_LDFLAGS = -lpython3.6m -lpthread -ldl -lutil -lm
+if WITH_CUDA
+  AM_CPPFLAGS += -I$(top_srcdir)/src/cukernel
+endif
 
 xxincludedir = $(includedir)/md++/interaction
 xxinclude_HEADERS =	interaction.h\
@@ -88,11 +91,13 @@ xxintnbspecial_HEADERS = special/create_special.h\
 	special/position_restraint_interaction.h\
 	special/distance_restraint_interaction.h\
 	special/distance_field_interaction.h\
+	special/angle_restraint_interaction.h\
 	special/dihedral_restraint_interaction.h\
 	special/perturbed_distance_restraint_interaction.h\
 	special/perturbed_distance_field_interaction.h\
 	special/eds_distance_restraint_interaction.h\
 	special/bs_interaction.h\
+	special/perturbed_angle_restraint_interaction.h\
 	special/perturbed_dihedral_restraint_interaction.h\
 	special/jvalue_restraint_interaction.h\
 	special/pscale.h\
@@ -117,6 +122,9 @@ xxintqmmm_HEADERS = qmmm/mm_atom.h\
 	qmmm/qm_zone.h\
 	qmmm/qm_worker.h\
 	qmmm/mndo_worker.h\
+	qmmm/turbomole_worker.h\
+	qmmm/dftb_worker.h\
+	qmmm/mopac_worker.h\
 	qmmm/gaussian_worker.h\
 	qmmm/nn_worker.h\
 	qmmm/qmmm_interaction.h\
@@ -173,11 +181,13 @@ libgrointeraction_la_SOURCES =interaction.cc\
 	special/position_restraint_interaction.cc\
 	special/distance_restraint_interaction.cc\
 	special/distance_field_interaction.cc\
+	special/angle_restraint_interaction.cc\
 	special/dihedral_restraint_interaction.cc\
 	special/perturbed_distance_restraint_interaction.cc\
 	special/perturbed_distance_field_interaction.cc\
 	special/eds_distance_restraint_interaction.cc\
 	special/bs_interaction.cc\
+	special/perturbed_angle_restraint_interaction.cc\
 	special/perturbed_dihedral_restraint_interaction.cc\
 	special/jvalue_restraint_interaction.cc\
 	special/pscale.cc\
@@ -196,6 +206,9 @@ libgrointeraction_la_SOURCES =interaction.cc\
 	qmmm/qm_zone.cc\
 	qmmm/qm_worker.cc\
 	qmmm/mndo_worker.cc\
+	qmmm/turbomole_worker.cc\
+	qmmm/dftb_worker.cc\
+	qmmm/mopac_worker.cc\
 	qmmm/gaussian_worker.cc\
 	qmmm/nn_worker.cc\
 	qmmm/qmmm_interaction.cc\

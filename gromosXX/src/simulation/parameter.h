@@ -327,7 +327,30 @@ namespace simulation
        * Spherical harmonics
        */
       rdc_sh = 2
-  };  
+  }; 
+
+  /**
+   * @enum angle_restr_enum
+   * Angle restraints enumeration
+   */
+  enum angle_restr_enum{
+    /**
+     * no restraints
+     */
+    angle_restr_off = 0,
+    /**
+     * instantaneous restraints
+     */
+    angle_restr_inst = 1,
+    /**
+     * instantaneous restraints, weighted
+     */
+    angle_restr_inst_weighted = 2,
+    /**
+     * angle constraints
+     */
+    angle_constr = 3
+  }; 
 
 
   /**
@@ -631,9 +654,13 @@ namespace simulation
      */
     mass_lambda = 11,
     /**
+     * angle restraint interaction
+     */
+    angres_lambda = 12,
+    /**
      * one extra interaction for looping
      */
-    last_interaction_lambda=12
+    last_interaction_lambda=13
   };
   
   /**
@@ -726,6 +753,22 @@ namespace simulation
      * LJ interactions are calculated clasically.
      */
     qmmm_polarisable = 3
+  };
+
+  /**
+   * @enum qm_ch_enum
+   * update charges of QM atoms from the QM calculation
+   * (only in mechanical embedding)
+   */
+  enum qm_ch_enum {
+    /**
+     * use constant charges from the topology
+     */
+    qm_ch_constant = 0,
+    /**
+     * update charges every step
+     */
+    qm_ch_dynamic = 1
   };
 
   /**
@@ -2100,6 +2143,56 @@ namespace simulation
     }/** Distancefield restraints parameters */ distancefield;
 
     /**
+     * @struct angrest_struct
+     * DIHREST block
+     */
+    struct angrest_struct
+    {
+      /**
+       * Constructor
+       * Default values:
+       * - angrest 0 (no angle restraints)
+       * - K 0
+       */
+      angrest_struct()
+	: angrest(angle_restr_off),
+	  K(0.0),
+	  virial(0),
+          write(0) {}
+      
+      /** 
+       * angle restraints
+       * method:
+       * - 0: off
+       * - 1: uniform K
+       * - 2: K * Ki (weight by Ki in angle restraint file)
+       * - 3: constraints
+       */
+      angle_restr_enum angrest;
+      
+      /**
+       * force constant K
+       */
+      double K;
+      
+       /**
+       * compute virial contribution
+       */
+      unsigned int virial;
+      
+      /**
+       * write on/off
+       */
+      unsigned int write;
+      
+      /**
+       * tolerance 
+       */
+      double tolerance;
+
+    }/** angle restraint parameters */ angrest;
+
+    /**
      * @struct dihrest_struct
      * DIHREST block
      */
@@ -2115,7 +2208,8 @@ namespace simulation
 	: dihrest(dihedral_restr_off),
 	  K(0.0),
 	  phi_lin(0.0),
-      write(0) {}
+	  virial(0),
+          write(0) {}
       
       /** 
        * dihedral restraints
@@ -2126,18 +2220,32 @@ namespace simulation
        * - 3: constraints
        */
       dihedral_restr_enum dihrest;
+      
       /**
        * force constant K
        */
       double K;
+      
       /**
        * deviation larger phi_lin leads to linear potential
        */
       double phi_lin;
+      
+       /**
+       * compute virial contribution
+       */
+      unsigned int virial;
+      
       /**
        * write on/off
        */
       unsigned int write;
+      
+      /**
+       * tolerance 
+       */
+      double tolerance;
+
       
     }/** dihedral restraint parameters */ dihrest;
 
@@ -3592,22 +3700,23 @@ namespace simulation
       /**
        * Constructor
        * Default values:
-       * - qmmm 0 (no QMMM)
-       * - qm_lj 0 (no LJ dispersion within QM zone)
-       * - software 0 (MNDO)
        * - cutoff 0.0 (no cutoff)
+       * - cap_length 0.109 (capping atom distance)
        * - mm_scale -1.0 (no scaling)
+       * - qmmm qmmm_off (no QMMM)
+       * - qm_lj qm_lj_off (no LJ dispersion within QM zone)
+       * - qm_constraint qm_constr_off (no constraints in QM zone)
+       * - software qm_mndo (MNDO)
        * - write 0 (no writing)
        * - atomic_cutoff false (using charge-group based cutoff)
        * - use_qm_buffer false (not using buffer zone)
-       * - cap_length 0.109 (capping atom distance)
        */
       qmmm_struct() : 
                       cutoff(0.0)
                     , cap_length(0.109)
                     , mm_scale(-1.0)
                     , qmmm(qmmm_off)
-                    , qm_lj(qm_lj_off)
+                    , qm_ch(qm_ch_constant)
                     , qm_constraint(qm_constr_off)
                     , software(qm_mndo)
                     , write(0)
@@ -3634,6 +3743,10 @@ namespace simulation
        * QM-MM embedding scheme or disable
        */
       qmmm_enum qmmm;
+      /**
+       * QM-MM embedding scheme or disable
+       */
+      qm_ch_enum qm_ch;
       /**
        * apply LJ interaction in QM zone or not
        */
@@ -3703,6 +3816,23 @@ namespace simulation
        * QM program unspecific parameters
        */
       struct qm_param_struct{
+      /**
+       * Constructor
+       * Default values:
+       * - unit_factor_length 1.0
+       * - unit_factor_energy 1.0
+       * - unit_factor_force 1.0
+       * - unit_factor_charge 1.0
+       */
+      qm_param_struct() : 
+                      unit_factor_length(1.0)
+                    , unit_factor_energy(1.0)
+                    , unit_factor_force(1.0)
+                    , unit_factor_charge(1.0) {}
+        /**
+         * maps atomic number to elements name
+         */
+        std::map<unsigned, std::string> elements;
         /**
          * path for the program binary
          */
@@ -3735,10 +3865,6 @@ namespace simulation
          * factor to convert the QM charge unit to the GROMOS one
          */
         double unit_factor_charge;
-        /**
-         * maps atomic number to elements name
-         */
-        std::map<unsigned, std::string> elements;
       };
 
       /**
@@ -3791,6 +3917,10 @@ namespace simulation
          * the output file containing the cartesion gradients of the MM atoms
          */
         std::string output_mm_gradient_file;
+        /**
+         * the output file containing the ESP charges of the QM atoms
+         */
+        std::string output_charge_file;
       } turbomole;
 
       /**
@@ -3798,17 +3928,21 @@ namespace simulation
        */
       struct dftb_param_struct : public qm_param_struct {
         /**
-         * path for the charges.dat file. Empty for a temporary file
-         */
-        std::string output_charge_file;
-        /**
-         * the working directory containing the control file
+         * the working directory containing the dftb_in.hsd
          */
         std::string working_directory;
         /**
-         * path of the DFTB geom file
+         * path of the input geometry file
          */
-        std::string geom_file;
+        std::string input_coordinate_file;
+        /**
+         * path of the input MM charges geometry file
+         */
+        std::string input_mm_coordinate_file;
+        /**
+         * path for the stdout file
+         */
+        std::string stdout_file;
       } dftb;
 
       /**
@@ -3816,13 +3950,36 @@ namespace simulation
        */
       struct mopac_param_struct : public qm_param_struct {
         /**
+         * Constructor
+         * Default values:
+         * - link_atom_mode 0
+         */
+        mopac_param_struct() : 
+                        link_atom_mode(0) {}
+        /**
+         * path for the output aux file. Empty for a temporary file
+         */
+        std::string output_aux_file;
+        /**
+         * path for the output arc file. Empty for a temporary file
+         */
+        std::string output_arc_file;
+        /**
+         * path for the stdout file. Empty for a temporary file
+         */
+        std::string stdout_file;
+        /**
+         * path for the output aux file. Empty for a temporary file
+         */
+        std::string output_dens_file;
+        /**
          * path for the molin file. Empty for a temporary file
          */
         std::string molin_file;
         /**
-         * path for the output gradient file. Empty for a temporary file
+         * link atom treatment mode
          */
-        std::string output_gradient_file;
+        int link_atom_mode;
       } mopac;
       
       /**

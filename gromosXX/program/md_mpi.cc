@@ -60,10 +60,10 @@ int main(int argc, char *argv[]){
   util::Known knowns;
   knowns << "topo" << "conf" << "input" << "verb" << "pttopo"
 	 << "trc" << "fin" << "trv" << "trf" << "trs" << "tre" << "trg"
-	 << "bae" << "bag" << "posresspec" << "refpos" <<"distrest" << "dihrest"
-         << "jval" << "xray" << "sym" << "order" << "rdc" << "lud" << "led"
-         << "anatrj" << "print" << "friction" << "qmmm" << "version" << "develop";
-  
+	 << "bae" << "bag" << "posresspec" << "refpos" << "distrest"
+         << "angrest" << "dihrest" << "jval" << "xray" << "sym"
+         << "order"  << "rdc" << "lud" << "led" << "anatrj"
+         << "print" << "friction" << "qmmm" << "version" << "develop";
   
   std::string usage;
   util::get_usage(knowns, usage, argv[0]);

@@ -130,6 +130,10 @@ namespace configuration
      */
     double disfieldres_total;
     /**
+     *  total energy of the angle restraint interaction
+     */
+    double angrest_total;
+    /**
      *  total energy of the dihedral restraint interaction
      */
     double dihrest_total;
@@ -237,6 +241,7 @@ namespace configuration
      * special interaction energies for each lambda
      */
     std::vector<double> AB_disres;
+    std::vector<double> AB_angres;
     std::vector<double> AB_dihres;
     std::vector<double> AB_disfld;
 
@@ -355,6 +360,10 @@ namespace configuration
      */
     std::vector<double> disfieldres_energy;
     /**
+     * angle restraint energy term
+     */
+    std::vector<double> angrest_energy;
+    /**
      * dihedral restraint energy term
      */
     std::vector<double> dihrest_energy;
@@ -438,7 +447,7 @@ namespace configuration
      */
     double get_energy_by_index(const unsigned int & index);
     
-    static const unsigned int MAX_ENERGY_INDEX = 38;
+    static const unsigned int MAX_ENERGY_INDEX = 44;
 
   private:
     double m_ewarn;

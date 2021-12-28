@@ -1,74 +1,144 @@
 /**
  * @file dftb_worker.h
- * The worker class for the DFTB+ software
- */ 
-
+ * The worker class for the DFTB+ QM software
+ */
 #ifndef INCLUDED_DFTB_WORKER_H
-#define INCLUDED_DFTB_WORKER_H
+#define	INCLUDED_DFTB_WORKER_H
 
-#include "qm_worker.h"
-
+namespace simulation {
+  class Parameter;
+  class Simulation;
+}
 
 namespace interaction {
   class QM_Worker;
+  class QM_Zone;
   /**
-   * @class dftb_Worker
-   * a worker class which calls the dftb software
+   * @class DFTB_Worker
+   * a worker class which calls the DFTB software
    */
   class DFTB_Worker : public QM_Worker {
   public:
     /**
      * Constructor
      */
-    DFTB_Worker() : QM_Worker("DFTB Worker") {
-        //this->get_new_qmID();
-    }
+    DFTB_Worker();
     /**
      * Destructor
      */
-    virtual ~DFTB_Worker();
+    virtual ~DFTB_Worker() = default;
     /**
      * initialise the QM worker
      * @return 0 if successful, non-zero on failure
      */
-    virtual int init(topology::Topology & topo,
-            configuration::Configuration & conf,
-            simulation::Simulation & sim);
+    virtual int init(simulation::Simulation& sim);
+
+    private:
     /**
-     * run a QM job in DFTB
-     * @param qm_pos a vector containing the QM atom positions
-     * @param mm_atoms the MM atoms to include
-     * @param storage the energies, forces, charges obtained
-     * @return 0 if successful, non-zero if not.
+     * Current working directory (where GROMOS is called from)
      */
-    virtual int run_QM(const topology::Topology & topo,
-                       const configuration::Configuration & conf,
-                       const simulation::Simulation & sim,
-                       interaction::QM_Zone & qm_zone);
-  private:
+    std::string cwd;
+
     /**
-     * file name for DFTB input file
+     * Pointer to simulation parameters
      */
-    std::string input_file;
+    simulation::Parameter::qmmm_struct::dftb_param_struct* param;
+
     /**
-     * file name for DFTB output file
+     * Write input file for the QM program
+     * @param topo Topology
+     * @param conf Configuration
+     * @param sim Simulation
+     * @param qm_zone QM Zone
      */
-    std::string output_file;
+    int write_input(const topology::Topology& topo
+                  , const configuration::Configuration& conf
+                  , const simulation::Simulation& sim
+                  , const interaction::QM_Zone& qm_zone);
+
     /**
-     * file name for DFTB gradient output file
+     * Write list of atom types and create a map
+     * @param input_file_stream Stream pointing to coordinate input file
+     * @param type_indices map of atomic numbers to atom type indices
+     * @param qm_zone QM Zone
      */
-    std::string output_gradient_file;
+    void write_atom_types_list(std::ofstream& input_file_stream
+                             , std::map<unsigned, unsigned>& type_indices
+                             , const interaction::QM_Zone& qm_zone) const;
+
     /**
-     * file name for DFTB charg file
+     * Write QM atom line
+     * @param inputfile_stream ofstream to input file
+     * @param atomic_number atomic number of the atom
+     * @param pos position of the atom
      */
-    std::string output_charg_file;
+    void write_qm_atom(std::ofstream& inputfile_stream
+                     , const int id
+                     , const int atomic_type_id
+                     , const math::Vec& pos) const;
+
     /**
-     * file name for DFTB geom file
+     * Write MM atom line
+     * @param inputfile_stream ofstream to the input file
+     * @param pos position of the atom
+     * @param charge charge of the atom
      */
-    std::string geom_file;
+    void write_mm_atom(std::ofstream& inputfile_stream
+                     , const math::Vec& pos
+                     , const double charge) const;
+
+    /**
+     * Call external QM program - DFTB
+     */
+    int system_call();
+
+    /**
+     * Read output file from the QM program
+     * @param topo Topology
+     * @param conf Configuration
+     * @param sim Simulation
+     * @param qm_zone QM Zone
+     */
+    int read_output(topology::Topology& topo
+                  , configuration::Configuration& conf
+                  , simulation::Simulation& sim
+                  , interaction::QM_Zone& qm_zone);
+
+    /**
+     * Parse charges
+     * @param ofs ifstream from the output file
+     * @param qm_zone QM Zone
+     */
+    int parse_charges(std::ifstream& ofs, interaction::QM_Zone& qm_zone) const;
+
+    /**
+     * Parse energy
+     * @param ofs ifstream from the output file
+     * @param qm_zone QM Zone
+     */
+    int parse_energy(std::ifstream& ofs, interaction::QM_Zone& qm_zone) const;
+
+    /**
+     * Parse QM forces
+     * @param ofs ifstream from the output file
+     * @param qm_zone QM Zone
+     */
+    int parse_qm_forces(std::ifstream& ofs, interaction::QM_Zone& qm_zone) const;
+
+    /**
+     * Parse MM forces
+     * @param ofs ifstream from the output file
+     * @param qm_zone QM Zone
+     */
+    int parse_mm_forces(std::ifstream& ofs, interaction::QM_Zone& qm_zone) const;
+
+    /**
+     * Parse force line of QM or MM atom
+     * @param ofs ifstream from the output file
+     * @param force reference for writing the force on atom
+     */
+    int parse_force(std::ifstream& ofs, math::Vec& force) const;
   };
 }
-
-#endif /* DFTB_WORKER_H */
-
+#endif	/* DFTB_WORKER_H */
 

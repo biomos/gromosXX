@@ -3,28 +3,29 @@
  * Implements QMMM interaction
  */
 
-#include <stdheader.h>
+#include "../../../stdheader.h"
 
-#include <algorithm/algorithm.h>
-#include <topology/topology.h>
-#include <simulation/simulation.h>
-#include <configuration/configuration.h>
-#include <interaction/interaction.h>
+#include "../../../algorithm/algorithm.h"
+#include "../../../topology/topology.h"
+#include "../../../simulation/simulation.h"
+#include "../../../configuration/configuration.h"
+#include "../../../interaction/interaction.h"
 
-#include <interaction/qmmm/mm_atom.h>
-#include <interaction/qmmm/qm_atom.h>
-#include <interaction/qmmm/qm_link.h>
-#include <interaction/qmmm/qm_zone.h>
-#include <interaction/qmmm/qm_worker.h>
-#include <interaction/qmmm/nonbonded/qmmm_nonbonded_set.h>
+#include "../../../interaction/interaction.h"
 
-#include <interaction/interaction.h>
-#include <interaction/qmmm/qmmm_interaction.h>
+#include "../../../util/debug.h"
+#include "../../../util/error.h"
 
-#include <util/debug.h>
-#include <util/error.h>
+#include "../../../math/boundary_checks.h"
 
-#include <math/boundary_checks.h>
+#include "mm_atom.h"
+#include "qm_atom.h"
+#include "qm_link.h"
+#include "qm_zone.h"
+#include "qm_worker.h"
+#include "nonbonded/qmmm_nonbonded_set.h"
+#include "qmmm_interaction.h"
+
 /*
 #ifdef OMP
 #include <omp.h>
@@ -171,18 +172,9 @@ int interaction::QMMM_Interaction::scf_step(topology::Topology& topo,
 void interaction::QMMM_Interaction::write_qm_data(topology::Topology& topo,
                                                   configuration::Configuration& conf,
                                                   const simulation::Simulation& sim) {
-  // If geometry minimisation within QM is requested
-  /*if (minimise) {
-    //qm_zone->write_pos(conf.current().pos);
-  }
-  */
   DEBUG(15,"Writing QM data");
   m_timer.start("writing QM results");
-  m_qm_zone->write_force(conf.current().force);
-  if (sim.param().qmmm.qmmm == simulation::qmmm_mechanical
-        && sim.param().qmmm.software != simulation::qm_nn)
-    m_qm_zone->write_charge(topo.charge());
-  conf.current().energies.qm_total = m_qm_zone->QM_energy();
+  m_qm_zone->write(topo, conf, sim);
   m_timer.stop("writing QM results");
 }
 
@@ -267,10 +259,9 @@ int interaction::QMMM_Interaction::calculate_interactions(topology::Topology& to
             DEBUG(10, "Delta: " <<  math::v2s(mm_it->force));
           }
         }
-      } else { // NN delta model (a)
-        DEBUG(0, "Skipping buffer zone calculation");
-        DEBUG(0, "Expecting deltas directly from NN");
-        // We are using NN trained on differences - here probably nothing needs to be done
+      } else { // BuRNN model (a)
+        DEBUG(1, "Skipping buffer zone calculation");
+        DEBUG(1, "Expecting deltas directly from NN");
       }
     }
     
@@ -348,9 +339,10 @@ int interaction::QMMM_Interaction::init(topology::Topology& topo,
   if (m_rank == 0) {
     DEBUG(15,"Creating QM Worker");
     m_worker = interaction::QM_Worker::get_instance(sim);
-    if (m_worker == nullptr ||
-        m_worker->init(sim))
+    if (m_worker == nullptr || m_worker->init(sim)) {
+      io::messages.add("Error initializing QM worker", "QMMM_Interaction", io::message::error);
       return 1;
+    }
     DEBUG(15,"QM Worker initialized");
     
     // Create QM_Zone
@@ -387,6 +379,21 @@ int interaction::QMMM_Interaction::init(topology::Topology& topo,
         os << "\tunknown";
     }
     os << " embedding scheme" << std::endl;
+    if (sim.param().qmmm.qmmm == simulation::qmmm_mechanical) {
+      os << "\tcharges of QM atoms ";
+      switch (sim.param().qmmm.qm_ch) {
+        case simulation::qm_ch_constant:
+          os << "constant from the topology";
+          break;
+        case simulation::qm_ch_dynamic:
+          os << "updated every step from the QM calculation";
+          break;
+        default:
+          os << "unknown";
+          break;
+      }
+      os << std::endl;
+    }
     os << "\tusing external ";
     switch (sim.param().qmmm.software) {
       case simulation::qm_mndo:
@@ -403,6 +410,9 @@ int interaction::QMMM_Interaction::init(topology::Topology& topo,
         break;
       case simulation::qm_gaussian:
         os << "Gaussian";
+        break;
+      case simulation::qm_nn:
+        os << "Schnet";
         break;
       default:
         os << "unknown";
@@ -428,7 +438,7 @@ int interaction::QMMM_Interaction::init(topology::Topology& topo,
     }
     os << std::endl;
 
-    if (topo.qmmm_link().size()) {
+    if (!topo.qmmm_link().empty()) {
       os << "\tusing link-atom scheme with capping atom" << std::endl
          << "\tdistance between QM link atom and capping atom: "
          << sim.param().qmmm.cap_length << std::endl
@@ -977,7 +987,7 @@ void interaction::QMMM_Interaction::modify_exclusions(
   }
 
   // LJ Exceptions - they use LJEX
-  for (std::vector<topology::lj_exception_struct>::const_iterator
+  for (std::vector<topology::lj_exception_struct>::iterator
         it = topo.lj_exceptions().begin()
       ; it != topo.lj_exceptions().end(); ) {
     const unsigned i = it->i;

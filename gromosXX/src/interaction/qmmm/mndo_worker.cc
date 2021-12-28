@@ -18,9 +18,6 @@
 #include "../../../util/system_call.h"
 #include "../../../util/debug.h"
 
-//#include "../../../math/periodicity.h"
-
-// special interactions
 #include "qm_atom.h"
 #include "mm_atom.h"
 #include "qm_link.h"
@@ -51,14 +48,14 @@ int interaction::MNDO_Worker::init(simulation::Simulation& sim) {
    */
 
   if (inp.empty()) {
-    this->using_tmp = true;
     if(util::create_tmpfile(inp) < 1) {
-        io::messages.add("Unable to create temporary input file: " + inp,
+      io::messages.add("Unable to create temporary input file: " + inp,
         "MNDO_Worker", io::message::critical);
       return 1;
     }
     else {
-        io::messages.add("Using temporary input file: " + inp,
+      this->tmp_files.insert(inp);
+      io::messages.add("Using temporary input file: " + inp,
         "MNDO_Worker", io::message::notice);
     }
   }
@@ -70,7 +67,8 @@ int interaction::MNDO_Worker::init(simulation::Simulation& sim) {
       return 1;
     }
     else {
-        io::messages.add("Using temporary output file: " + out,
+      this->tmp_files.insert(out);
+      io::messages.add("Using temporary output file: " + out,
         "MNDO_Worker", io::message::notice);
     }
   }
@@ -82,12 +80,14 @@ int interaction::MNDO_Worker::init(simulation::Simulation& sim) {
       return 1;
     }
     else {
-        io::messages.add("Using temporary output gradient file: " + out_grad,
+      this->tmp_files.insert(out_grad);
+      io::messages.add("Using temporary output gradient file: " + out_grad,
         "MNDO_Worker", io::message::notice);
     }
   }
   else {
-    // Try to create a file specified by user
+    // Try to create a file specified by user - fort.15 will be symlinked to it
+    // If it already exist, we dont want to overwrite it, exit
     std::ofstream of(out_grad.c_str());
     if (!of.is_open()) {
       io::messages.add("Unable to create output gradient file: "
@@ -104,25 +104,32 @@ int interaction::MNDO_Worker::init(simulation::Simulation& sim) {
       return 1;
     }
     else {
-        io::messages.add("Using temporary density matrix file: " + dens,
+      this->tmp_files.insert(dens);
+      io::messages.add("Using temporary density matrix file: " + dens,
         "MNDO_Worker", io::message::notice);
     }
-  }
+  } // This file might exist and might be reused so we dont raise an error if it exists
   
 #ifdef HAVE_SYMLINK
   // create fort.15 link for gradients
-  if ((this->symlink_err = symlink(out_grad.c_str(), "fort.15")) != 0) {
-    io::messages.add("Unable to create symbolic link from fort.15 to "
-      + out_grad + " - check permissions.",
-      "MNDO_Worker", io::message::critical);
-    return 1;
+  if ("fort.15" != out_grad) {
+    if (symlink(out_grad.c_str(), "fort.15") != 0) {
+      io::messages.add("Unable to create symbolic link from fort.15 to "
+        + out_grad + " - check permissions.",
+        "MNDO_Worker", io::message::critical);
+      return 1;
+    }
+    this->tmp_files.insert("fort.15");
   }
   // create fort.11 link for density matrix
-  if ((this->symlink_err = symlink(dens.c_str(), "fort.11")) != 0) {
-    io::messages.add("Unable to create symbolic link from fort.11 to "
-      + dens + " - check permissions.",
-      "MNDO_Worker", io::message::critical);
-    return 1;
+  if ("fort.11" != dens) {
+    if (symlink(dens.c_str(), "fort.11") != 0) {
+      io::messages.add("Unable to create symbolic link from fort.11 to "
+        + dens + " - check permissions.",
+        "MNDO_Worker", io::message::critical);
+      return 1;
+    }
+    this->tmp_files.insert("fort.11");
   }
 #else
   {
@@ -141,7 +148,7 @@ int interaction::MNDO_Worker::init(simulation::Simulation& sim) {
   {
     io::messages.add("Unlink function not supported on this platform. "
     + "Please delete temporary files manually.",
-    "MNDO_Worker", io::message::notice);
+    this->name(), io::message::warning);
   }
 #endif
   return 0;
@@ -159,33 +166,11 @@ int interaction::MNDO_Worker::write_input(const topology::Topology& topo
   std::string header(this->param->input_header);
   
   // Get number of links and replace
-  unsigned num_links = qm_zone.link.size();
-  header = io::replace_string(header, "@@NUM_LINKS@@", std::to_string(num_links));
+  // *2 - include also linked QM atom
+  header = io::replace_string(header, "@@NUM_LINKS@@", std::to_string(qm_zone.link.size() * 2));
   
   // Get number of MM charges and replace
-  unsigned num_charges;
-  switch (sim.param().qmmm.qmmm) {
-    case simulation::qmmm_mechanical: {
-      num_charges = 0;
-      break;
-    }
-    case simulation::qmmm_electrostatic: {
-      num_charges = qm_zone.mm.size();
-      break;
-    }
-    case simulation::qmmm_polarisable: {
-      num_charges = qm_zone.mm.size();
-      for (std::set<MM_Atom>::const_iterator
-          it = qm_zone.mm.begin(), to = qm_zone.mm.end(); it != to; ++it) {
-        num_charges += int(it->is_polarisable);
-      }
-      break;
-    }
-    default: {
-      io::messages.add("Uknown QMMM option", io::message::error);
-      return 1;
-    }
-  }
+  unsigned num_charges = get_num_charges(sim, qm_zone);
   header = io::replace_string(header, "@@NUM_CHARGES@@", std::to_string(num_charges));
   header = io::replace_string(header, "@@CHARGE@@", std::to_string(qm_zone.charge()));
   header = io::replace_string(header, "@@SPINM@@", std::to_string(qm_zone.spin_mult()));
@@ -195,8 +180,6 @@ int interaction::MNDO_Worker::write_input(const topology::Topology& topo
 
   double len_to_qm = 1.0 / this->param->unit_factor_length;
   double cha_to_qm = 1.0 / this->param->unit_factor_charge;
-  ifs.setf(std::ios::fixed, std::ios::floatfield);
-  ifs.precision(8);
 
   DEBUG(15,"Writing QM coordinates");
   // Write QM coordinates
@@ -209,17 +192,33 @@ int interaction::MNDO_Worker::write_input(const topology::Topology& topo
   // Write capping atoms
   for (std::set<QM_Link>::const_iterator
         it = qm_zone.link.begin(), to = qm_zone.link.end(); it != to; ++it) {
-    DEBUG(15,it->index << " " << it->atomic_number << " " << math::v2s(it->pos * len_to_qm));
+    DEBUG(15,"capping atom " << it->qm_index << "-" << it->mm_index << " " 
+            << it->atomic_number << " " << math::v2s(it->pos * len_to_qm));
     this->write_qm_atom(ifs, it->atomic_number, it->pos * len_to_qm);
   }
   // Write termination line
   this->write_qm_atom(ifs, 0, math::Vec(0.0));
 
-  // Write capping atom numbers - they are last in the geometry
-  const unsigned qm_size = qm_zone.qm.size();
-  unsigned last_link = num_links + qm_size;
-  for (unsigned i = qm_size + 1; i <= last_link; ++i)
+  // Write capping atom indices
+  for (std::set<QM_Link>::const_iterator
+        it = qm_zone.link.begin(), to = qm_zone.link.end(); it != to; ++it) {
+    assert(qm_zone.qm.find(it->qm_index) != qm_zone.qm.end());
+    unsigned i = std::distance(qm_zone.qm.begin(), qm_zone.qm.find(it->qm_index)) + 1;
     ifs << i << " ";
+  }
+  for (std::set<QM_Atom>::const_iterator
+        it = qm_zone.qm.begin(), to = qm_zone.qm.end(); it != to; ++it) {
+    if (it->is_linked) {
+      unsigned i = std::distance(qm_zone.qm.begin(), it) + 1;
+      ifs << i << " ";
+    }
+  }
+  // Write capping atom indices - they are last in the geometry
+  const unsigned qm_size = qm_zone.qm.size();
+  const unsigned last_link = qm_zone.link.size() + qm_size;
+  for (unsigned i = qm_size + 1; i <= last_link; ++i) {
+    ifs << i << " ";
+  }
   ifs << std::endl;
   
   // Write MM coordinates and charges
@@ -240,7 +239,8 @@ int interaction::MNDO_Worker::write_input(const topology::Topology& topo
 }
 
 int interaction::MNDO_Worker::system_call() {
-  int err = util::system_call(this->param->binary, this->param->input_file, this->param->output_file);
+  int err = util::system_call(this->param->binary + " < " + this->param->input_file
+                                + " 1> " + this->param->output_file + " 2>&1 ");
   if (err) {
     std::ostringstream msg;
     msg << "MNDO failed with code " << err;
@@ -261,7 +261,8 @@ int interaction::MNDO_Worker::read_output(topology::Topology& topo
   err = this->open_output(ofs, this->param->output_file);
   if (err) return err;
   
-  if (sim.param().qmmm.qmmm == simulation::qmmm_mechanical) {
+  if (sim.param().qmmm.qmmm == simulation::qmmm_mechanical
+      && sim.param().qmmm.qm_ch == simulation::qm_ch_dynamic) {
     err = this->parse_charges(ofs, qm_zone);
     if (err) return err;
   }
@@ -289,7 +290,8 @@ int interaction::MNDO_Worker::read_output(topology::Topology& topo
 
 void interaction::MNDO_Worker::write_qm_atom(std::ofstream& inputfile_stream
                                         , const int atomic_number
-                                        , const math::Vec& pos)
+                                        , const math::Vec& pos
+                                        , const int opt_flag)
   {
 /*
       a(1,i)    11-20  f10.5  First coordinate.
@@ -305,18 +307,14 @@ void interaction::MNDO_Worker::write_qm_atom(std::ofstream& inputfile_stream
                               = 0 a(3,i) is not optimized.
                               = 1 a(3,i) is optimized.
 */
-
-
-  bool opt_flag = 0; // optimization flag - if the atom position should be optimized
   inputfile_stream << std::setw(2) << std::left << atomic_number
                    << std::string(2,' ')
-                   << std::setw(20) << std::setprecision(15) << std::right << pos(0)
+                   << std::scientific << std::setprecision(17)
+                   << std::setw(25) << std::right << pos(0)
                    << std::string(2,' ') << std::setw(2) << std::right << opt_flag
-                   //<< std::string(6,' ')
-                   << std::setw(20) << std::setprecision(15) << std::right << pos(1)
+                   << std::setw(25) << std::right << pos(1)
                    << std::string(2,' ') << std::setw(2) << std::right << opt_flag
-                   //<< std::string(6,' ')
-                   << std::setw(20) << std::setprecision(15) << std::right << pos(2)
+                   << std::setw(25) << std::right << pos(2)
                    << std::string(2,' ') << std::setw(2) << std::right << opt_flag
                    << std::endl;
 }
@@ -331,10 +329,11 @@ void interaction::MNDO_Worker::write_mm_atom(std::ofstream& inputfile_stream
       cm(3,m)   25-36  f12.7  z coordinate.
       qm(m)     37-44   f8.4  External point charge.
     */
-  inputfile_stream << std::setw(20) << std::setprecision(15) << std::right << pos(0)
-                   << std::setw(20) << std::setprecision(15) << std::right << pos(1)
-                   << std::setw(20) << std::setprecision(15) << std::right << pos(2)
-                   << std::setw(20) << std::setprecision(4) << std::right << charge
+  inputfile_stream << std::scientific << std::setprecision(17)
+                   << std::setw(25) << std::right << pos(0)
+                   << std::setw(25) << std::right << pos(1)
+                   << std::setw(25) << std::right << pos(2)
+                   << std::setw(25) << std::right << charge
                    << std::endl;
 }
 
@@ -357,6 +356,7 @@ int interaction::MNDO_Worker::parse_charges(std::ifstream& ofs, interaction::QM_
                       + out, this->name(), io::message::error);
     return 1;
   }
+  // Skip three lines
   for (unsigned i = 0; i < 3; ++i)
     std::getline(ofs, line);
   for(std::set<QM_Atom>::iterator
@@ -375,6 +375,28 @@ int interaction::MNDO_Worker::parse_charges(std::ifstream& ofs, interaction::QM_
       std::ostringstream msg;
       msg << "Failed to parse charge line of atom " << (it->index + 1)
           << " in " << out;
+      io::messages.add(msg.str(), this->name(), io::message::error);
+      return 1;
+    }
+    it->qm_charge *= this->param->unit_factor_charge;
+  }
+  // Do the same for capping atoms
+  for(std::set<QM_Link>::iterator
+      it = qm_zone.link.begin(), to = qm_zone.link.end(); it != to; ++it) {
+    if(!std::getline(ofs, line)) {
+      std::ostringstream msg;
+      msg << "Failed to read charge line of capping atom " << (it->qm_index + 1)
+          << "-" << (it->mm_index + 1) << " in " << out;
+      io::messages.add(msg.str(), this->name(), io::message::error);
+      return 1;
+    }
+    std::istringstream iss(line);
+    std::string dummy;
+    iss >> dummy >> dummy >> it->qm_charge;
+    if (iss.fail()) {
+      std::ostringstream msg;
+      msg << "Failed to parse charge line of capping atom " << (it->qm_index + 1)
+          << "-" << (it->mm_index + 1) << " in " << out;
       io::messages.add(msg.str(), this->name(), io::message::error);
       return 1;
     }
@@ -400,7 +422,6 @@ int interaction::MNDO_Worker::parse_coordinates(std::ifstream& ofs, interaction:
     return 1;
   }
   // Parse coordinates lines
-  math::Vec pos;
   int dummy;
   for(std::set<QM_Atom>::iterator
       it = qm_zone.qm.begin(), to = qm_zone.qm.end(); it != to; ++it) {
@@ -412,7 +433,7 @@ int interaction::MNDO_Worker::parse_coordinates(std::ifstream& ofs, interaction:
       return 1;
     }
     std::istringstream iss(line);
-    iss >> dummy >> dummy >> pos(0) >> pos(1) >> pos(2);
+    iss >> dummy >> dummy >> it->pos(0) >> it->pos(1) >> it->pos(2);
     if (iss.fail()) {
       std::ostringstream msg;
       msg << "Failed to parse coordinate line of atom " << (it->index + 1)
@@ -420,7 +441,28 @@ int interaction::MNDO_Worker::parse_coordinates(std::ifstream& ofs, interaction:
       io::messages.add(msg.str(), this->name(), io::message::error);
       return 1;
     }
-    it->pos = pos * this->param->unit_factor_length;
+    it->pos *= this->param->unit_factor_length;
+  }
+  // Do it also for capping atoms
+  for(std::set<QM_Link>::iterator
+      it = qm_zone.link.begin(), to = qm_zone.link.end(); it != to; ++it) {
+    if(!std::getline(ofs, line)) {
+      std::ostringstream msg;
+      msg << "Failed to read coordinates line of capping atom " << (it->qm_index + 1)
+          << "-" << (it->mm_index + 1) << " in " << out_grad;
+      io::messages.add(msg.str(), this->name(), io::message::error);
+      return 1;
+    }
+    std::istringstream iss(line);
+    iss >> dummy >> dummy >> it->pos(0) >> it->pos(1) >> it->pos(2);
+    if (iss.fail()) {
+      std::ostringstream msg;
+      msg << "Failed to parse coordinate line of capping atom " << (it->qm_index + 1)
+          << "-" << (it->mm_index + 1) << " in " << out_grad;
+      io::messages.add(msg.str(), this->name(), io::message::error);
+      return 1;
+    }
+    it->pos *= this->param->unit_factor_length;
   }
   return 0;
 }
@@ -442,10 +484,8 @@ int interaction::MNDO_Worker::parse_energy(std::ifstream& ofs, interaction::QM_Z
     return 1;
   }
   // Parse energy
-  std::getline(ofs, line);
-  std::istringstream iss(line);
-  iss >> qm_zone.QM_energy();
-  if (iss.fail()) {
+  ofs >> qm_zone.QM_energy();
+  if (ofs.fail()) {
     io::messages.add("Failed to parse QM energy in output file"
                       + this->param->output_gradient_file
                       , this->name(), io::message::error);
@@ -477,12 +517,33 @@ int interaction::MNDO_Worker::parse_gradients(const simulation::Simulation& sim
                           this->name(), io::message::error);
       return 1;
     }
+    
     // Parse QM atoms
-    err = this->_parse_gradients(ofs, qm_zone.qm);
-    if (err) return err;
-    // Parse link QM atoms
-    err = this->_parse_gradients(ofs, qm_zone.link);
-    if (err) return err;
+    for(std::set<QM_Atom>::iterator
+          it = qm_zone.qm.begin(), to = qm_zone.qm.end(); it != to; ++it) {
+      DEBUG(15,"Parsing gradient of QM atom " << it->index);
+      err = this->parse_gradient(ofs, it->force);
+      if (err) {
+        std::ostringstream msg;
+        msg << "Failed to parse gradient line of QM atom " << (it->index + 1)
+            << " in " << out_grad;
+        io::messages.add(msg.str(), this->name(), io::message::error);
+        return 1;
+      }
+    }
+    // Parse capping QM atoms
+    for(std::set<QM_Link>::iterator
+          it = qm_zone.link.begin(), to = qm_zone.link.end(); it != to; ++it) {
+      DEBUG(15,"Parsing gradient of capping atom " << it->qm_index << "-" << it->mm_index);
+      err = this->parse_gradient(ofs, it->force);
+      if (err) {
+        std::ostringstream msg;
+        msg << "Failed to parse gradient line of capping atom " << (it->qm_index + 1)
+          << "-" << (it->mm_index + 1) << " in " << out_grad;
+        io::messages.add(msg.str(), this->name(), io::message::error);
+        return 1;
+      }
+    }
   }
   // Find MM gradients
   if (sim.param().qmmm.qmmm > simulation::qmmm_mechanical) {
@@ -499,82 +560,47 @@ int interaction::MNDO_Worker::parse_gradients(const simulation::Simulation& sim
       return 1;
     }
     // Parse MM atoms
-    err = this->_parse_gradients(ofs, qm_zone.mm);
-    if (err) return err;
-  }
-  return 0;
-}
-
-template<class AtomType>
-int interaction::MNDO_Worker::_parse_gradients(std::ifstream& ofs,
-                                               std::set<AtomType>& atom_set) {
-  int err = 0;
-  typename std::set<AtomType>::iterator it, to;
-  for(it = atom_set.begin(), to = atom_set.end(); it != to; ++it) {
-    err = this->parse_gradient(ofs, it->index, it->force, this->param->unit_factor_force);
-    if (err) return err;
-  }
-  return 0;
-}
-
-template<>
-int interaction::MNDO_Worker::_parse_gradients
-                                        (std::ifstream& ofs
-                                       , std::set<interaction::MM_Atom>& atom_set) {
-  int err = 0;
-  std::set<interaction::MM_Atom>::iterator it, to;
-  for(it = atom_set.begin(), to = atom_set.end(); it != to; ++it) {
-    int i = it->index;
-    err = this->parse_gradient(ofs, i, it->force, this->param->unit_factor_force);
-    if (err) return err;
-    if (it->is_polarisable) {
-      err = this->parse_gradient(ofs, i, it->cos_force, this->param->unit_factor_force);
-      if (err) return err;
+    for(std::set<MM_Atom>::iterator
+          it = qm_zone.mm.begin(), to = qm_zone.mm.end(); it != to; ++it) {
+      DEBUG(15,"Parsing gradient of MM atom " << it->index);
+      err = this->parse_gradient(ofs, it->force);
+      if (it->is_polarisable) {
+        DEBUG(15,"Parsing gradient on COS of MM atom " << it->index);
+        err += this->parse_gradient(ofs, it->cos_force);
+      }
+      if (err) {
+        std::ostringstream msg;
+        msg << "Failed to parse gradient line of MM atom " << (it->index + 1)
+            << " in " << out_grad;
+        io::messages.add(msg.str(), this->name(), io::message::error);
+        return 1;
+      }
     }
   }
   return 0;
 }
 
 int interaction::MNDO_Worker::parse_gradient(std::ifstream& ofs,
-                                             const int index,
-                                             math::Vec& force,
-                                             const double unit_factor) {
+                                             math::Vec& force) {
   std::string line;
-  math::Vec gradient;
-  int dummy;
-  if(!std::getline(ofs, line)) {
+  if (!std::getline(ofs, line)) {
     std::ostringstream msg;
-    msg << "Failed to read gradient line of atom " << (index)
+    msg << "Failed to read gradient line "
         << " in " << this->param->output_gradient_file;
     io::messages.add(msg.str(), this->name(), io::message::error);
     return 1;
   }
   std::istringstream iss(line);
-  iss >> dummy >> dummy >> gradient(0) >> gradient(1) >> gradient(2);
-  if (iss.fail()) {
+  int dummy;
+  iss >> dummy >> dummy >> force(0) >> force(1) >> force(2);
+  if (ofs.fail()) {
     std::ostringstream msg;
-    msg << "Failed to parse gradient line of atom " << (index)
-        << " in " << this->param->output_gradient_file;
+    msg << "Failed to parse gradient line in "
+        << this->param->output_gradient_file;
     io::messages.add(msg.str(), this->name(), io::message::error);
     return 1;
   }
-  force = - gradient * unit_factor;
+  // force = - gradient
+  force *= - this->param->unit_factor_force;
   return 0;
-}
-
-interaction::MNDO_Worker::~MNDO_Worker() {
-#ifdef HAVE_UNLINK
-  // Remove symbolic links
-  if (this->symlink_err == 0) {
-    unlink("fort.11");
-    unlink("fort.15");
-  }
-  // Delete temporary files
-  if (this->using_tmp) {
-    unlink(this->param->input_file.c_str());
-    unlink(this->param->output_file.c_str());
-    unlink(this->param->output_gradient_file.c_str());
-    unlink(this->param->density_matrix_file.c_str());
-  }
-#endif
 }

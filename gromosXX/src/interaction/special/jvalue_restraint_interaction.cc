@@ -168,6 +168,10 @@ int _calculate_jvalue_restraint_interactions
       double delta_Jav = Jav - it->J0;
       double delta_Jinst = Jcurr - it->J0;
 
+      //In Eqs 21/22 of MD16.07 we need to divide by the current simulation time
+      double curr_time = sim.time();
+      double prev_time = curr_time - sim.time_step_size();
+
       // zero potential energy within J0 +- delta
       // (flat bottom: no elevation if J is ~ correct)
       if (delta_Jav > 0){
@@ -208,7 +212,11 @@ int _calculate_jvalue_restraint_interactions
               sim.param().jvalue.mode == simulation::jvalue_restr_av_weighted)
 	delta_epsilon = delta_Jav * delta_Jav;
 
-      conf.special().jvalue_epsilon[n][bin] += delta_epsilon;
+      //apply Eq. 21/22 of MD16.07
+      if (curr_time > 0){
+        conf.special().jvalue_epsilon[n][bin] =
+          (prev_time*conf.special().jvalue_epsilon[n][bin] + delta_epsilon*sim.time_step_size())/curr_time;
+      } else conf.special().jvalue_epsilon[n][bin] = 0; 
 
       DEBUG(8, "jelevation: epsilon += " << delta_epsilon);
 

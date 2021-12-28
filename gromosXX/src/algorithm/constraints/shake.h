@@ -17,6 +17,7 @@ namespace algorithm
    * grouped constraints
    */
   struct ConstraintGroup {
+    std::vector<topology::angle_restraint_struct> angle_restraints;
     std::vector<topology::dihedral_restraint_struct> dihedral_restraints;
     std::vector<topology::two_body_term_struct> distance_restraints;
 #ifdef XXMPI
@@ -34,7 +35,8 @@ namespace algorithm
     /**
      * Constructor.
      */
-    Shake(double const tolerance = 0.000001, 
+    Shake(double const solute_tolerance = 0.000001,
+    double const solvent_tolerance = 0.000001,
 	  int const max_iterations = 1000,
 	  std::string const name = "Shake");
 
@@ -50,14 +52,25 @@ namespace algorithm
 		      configuration::Configuration & conf,
 		      simulation::Simulation & sim);
     /**
-     * set the tolerance.
+     * set the solute tolerance.
      */
-    void tolerance(double const tol);
+    void solute_tolerance(double const tol);
 
     /**
-     * tolerance.
+     * solute tolerance.
      */
-    double const & tolerance()const {return m_tolerance;}
+    double const & solute_tolerance()const {return m_solute_tolerance;}
+
+    /**
+     * set the solvent tolerance.
+     */
+    void solvent_tolerance(double const tol);
+
+    /**
+     * solvent tolerance.
+     */
+    double const & solvent_tolerance()const {return m_solvent_tolerance;}
+
     /**
      * max iterations.
      */
@@ -89,9 +102,14 @@ namespace algorithm
   protected:
 
     /**
+     * shake solute tolerance
+     */
+    double m_solute_tolerance;
+
+    /**
      * shake tolerance
      */
-    double m_tolerance;
+    double m_solvent_tolerance;
     /**
      * max iterations
      */
@@ -115,6 +133,7 @@ namespace algorithm
     (
      topology::Topology const &topo,
      configuration::Configuration & conf,
+     double tolerance,
      bool & convergence,
      int first,
      std::vector<bool> &skip_now,
@@ -124,7 +143,19 @@ namespace algorithm
      math::Periodicity<B> const & periodicity
      );
     
-    
+    template<math::boundary_enum B, math::virial_enum V>
+    int ang_constr_iteration
+    (
+     topology::Topology const & topo,
+     configuration::Configuration & conf,
+     simulation::Simulation const & sim,
+     bool & convergence,
+     std::vector<bool> & skip_now,
+     std::vector<bool> & skip_next,
+     std::vector<topology::angle_restraint_struct> const & angle_restraints,
+     math::Periodicity<B> const & periodicity
+     );
+
     template<math::boundary_enum B, math::virial_enum V>
     int dih_constr_iteration
     (
@@ -203,6 +234,8 @@ namespace algorithm
 #define MODULE algorithm
 #define SUBMODULE constraints
 
+// angle constraints template method
+#include "angle_constraint.cc"
 // dihedral constraints template method
 #include "dihedral_constraint.cc"
 
@@ -215,6 +248,7 @@ int algorithm::Shake::shake_iteration
 (
         topology::Topology const &topo,
         configuration::Configuration & conf,
+        double tolerance,
         bool & convergence,
         int first,
         std::vector<bool> &skip_now,
@@ -263,7 +297,7 @@ int algorithm::Shake::shake_iteration
 
     DEBUG(13, "constr: " << constr_length2 << " dist2: " << dist2);
 
-    if (fabs(diff) >= constr_length2 * tolerance() * 2.0) {
+    if (fabs(diff) >= constr_length2 * tolerance * 2.0) {
       // we have to shake
       DEBUG(10, "shaking");
 
@@ -393,11 +427,10 @@ solute(topology::Topology const & topo,
     if (topo.solute().distance_constraints().size() &&
             sim.param().constraint.solute.algorithm == simulation::constr_shake &&
             sim.param().constraint.ntc > 1) {
-
       DEBUG(7, "SHAKE: distance constraints iteration");
 
       if (shake_iteration<B, V >
-              (topo, conf, dist_convergence, first, skip_now, skip_next,
+              (topo, conf, m_solute_tolerance, dist_convergence, first, skip_now, skip_next,
               m_constraint_groups[group_id].distance_restraints, sim.time_step_size(),
               periodicity)
               ) {
@@ -405,6 +438,23 @@ solute(topology::Topology const & topo,
                 "Shake::solute",
                 io::message::error);
         std::cout << "SHAKE failure in solute!" << std::endl;
+        my_error = E_SHAKE_FAILURE_SOLUTE;
+        break;
+      }
+    }
+
+    // angle constraints
+    bool ang_convergence = true;
+    if (sim.param().angrest.angrest == simulation::angle_constr) {
+      DEBUG(7, "SHAKE: angle constraints iteration");
+
+      if (ang_constr_iteration<B, V >
+              (topo, conf, sim, ang_convergence, skip_now, skip_next, m_constraint_groups[group_id].angle_restraints, periodicity)
+              ) {
+        io::messages.add("SHAKE error: angle constraints",
+                "Shake::solute",
+                io::message::error);
+        std::cout << "SHAKE failure in solute angle constraints!" << std::endl;
         my_error = E_SHAKE_FAILURE_SOLUTE;
         break;
       }
@@ -428,7 +478,7 @@ solute(topology::Topology const & topo,
       }
     }
 
-    convergence = dist_convergence && dih_convergence;
+    convergence = dist_convergence && dih_convergence && ang_convergence;
 
     if (++num_iterations > max_iterations) {
       io::messages.add("SHAKE error. too many iterations",
@@ -437,10 +487,11 @@ solute(topology::Topology const & topo,
       my_error = E_SHAKE_FAILURE_SOLUTE;
       break;
     }
-
     std::swap(skip_next, skip_now);
     skip_next.assign(skip_next.size(), true);
   } // convergence?
+
+  DEBUG(10, "SHAKE: num_iterations " << num_iterations );
 
   // reduce errors
 #ifdef XXMPI
@@ -485,6 +536,7 @@ void algorithm::Shake
 
   std::vector<bool> skip_now;
   std::vector<bool> skip_next;
+
   int tot_iterations = 0;
 
   error = 0;
@@ -525,7 +577,7 @@ void algorithm::Shake
         DEBUG(9, "\titeration" << std::setw(10) << num_iterations);
 
         if (shake_iteration<B, V >
-                (topo, conf, convergence, first, skip_now, skip_next,
+                (topo, conf, m_solvent_tolerance, convergence, first, skip_now, skip_next,
                 topo.solvent(i).distance_constraints(), dt,
                 periodicity)) {
 

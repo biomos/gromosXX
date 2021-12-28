@@ -33,7 +33,7 @@
 #include "storage.h"
 #include "../../../util/cycle_thread.h"
 
-#ifdef HAVE_LIBCUKERNEL
+#ifdef HAVE_LIBCUDART
 #include <cudaKernel.h>
 #endif
 
@@ -41,7 +41,7 @@
 #undef MODULE
 #undef SUBMODULE
 #define MODULE interaction
-#define SUBMODULE nonbonded
+#define SUBMODULE cuda
 
 
 /**
@@ -91,6 +91,7 @@ int interaction::CUDA_Nonbonded_Set
   do_cycle();
   if (mygpu_id == 0)
     m_pairlist_alg.timer().stop("cuda set");
+  if (error) return 1;
   DEBUG(15, "Finished Cycle for GPU: " << mygpu_id);
 
   return 0;
@@ -125,6 +126,7 @@ int interaction::CUDA_Nonbonded_Set
           unsigned(conf.current().energies.kinetic_energy.size()));
 
   start();
+  pthread_barrier_wait(&barrier_init);
   return 0;
 }
 
@@ -133,7 +135,7 @@ int interaction::CUDA_Nonbonded_Set
  */
 void interaction::CUDA_Nonbonded_Set::init_run() {
 
-#ifdef HAVE_LIBCUKERNEL
+#ifdef HAVE_LIBCUDART
   /////////////////////////////////
   // Calculate constants for the solvent
   //
@@ -216,10 +218,15 @@ void interaction::CUDA_Nonbonded_Set::init_run() {
           m_crf_cut3i,
           pLj_crf,
           mysim->param().innerloop.number_gpus,
-          mygpu_id
+          mygpu_id,
+          &error
           );
-
+  if (error) {
+    io::messages.add("Cannot initialize GPU for nonbonded interaction", io::message::error);
+    return;
+  }
   free(pLj_crf);
+  return;
 #endif
 }
 
@@ -233,20 +240,20 @@ void interaction::CUDA_Nonbonded_Set::cycle() {
   DEBUG(6, "CUDA_Nonbonded_Set::cycle start calculations. GPU: " << mygpu_id);
   // this whole function is remove is the lib is not present.
 
-#ifdef HAVE_LIBCUKERNEL
-  int error = 0;
+#ifdef HAVE_LIBCUDART
 
   m_storage.zero();
   const bool pairlist_update = !(mysim->steps() % mysim->param().pairlist.skip_step);
   if (mygpu_id == 0)  
     m_pairlist_alg.timer().start("GPU data copy");
   
-  cudakernel::cudaCopyPositions(&myconf->current().pos(mytopo->num_solute_atoms())(0), gpu_stat);
+  error += cudakernel::cudaCopyPositions(&myconf->current().pos(mytopo->num_solute_atoms())(0), gpu_stat);
+  DEBUG(15, "myconf->current().pos(mytopo->num_solute_atoms())(0) = " << myconf->current().pos(mytopo->num_solute_atoms())(0));
   
 
   // copy the box if pressure is coupled
   if (mysim->param().pcouple.scale != math::pcouple_off) {
-    cudakernel::cudaCopyBox(gpu_stat, myconf->current().box(0)(0), myconf->current().box(1)(1), myconf->current().box(2)(2));
+    error += cudakernel::cudaCopyBox(gpu_stat, myconf->current().box(0)(0), myconf->current().box(1)(1), myconf->current().box(2)(2));
   }
   if (mygpu_id == 0)  
     m_pairlist_alg.timer().stop("GPU data copy");
@@ -265,6 +272,7 @@ void interaction::CUDA_Nonbonded_Set::cycle() {
 
   if (pairlist_update) {
     const int egroup = mytopo->atom_energy_group(mytopo->num_solute_atoms());
+    DEBUG(15, "egroup = " << egroup);
     DEBUG(8, "doing longrange calculation");
 
     // in case of LS only LJ are calculated
@@ -272,9 +280,14 @@ void interaction::CUDA_Nonbonded_Set::cycle() {
     if (mygpu_id == 0)
       m_pairlist_alg.timer().start("longrange-cuda");
     double * For = &m_longrange_storage.force(mytopo->num_solute_atoms())(0);
+    DEBUG(15, "mytopo->num_solute_atoms() = " << mytopo->num_solute_atoms());
     double * Vir = &m_longrange_storage.virial_tensor(0, 0);
     double * e_lj = &m_longrange_storage.energies.lj_energy[egroup][egroup];
     double * e_crf = &m_longrange_storage.energies.crf_energy[egroup][egroup];
+    DEBUG(15, "For = " << *For);
+    DEBUG(15, "Vir = " << *Vir);
+    DEBUG(15, "e_lj = " << *e_lj);
+    DEBUG(15, "e_crf = " << *e_crf);
     error += cudakernel::cudaCalcForces(For, Vir, e_lj, e_crf, true, gpu_stat);
     if (mygpu_id == 0)
       m_pairlist_alg.timer().stop("longrange-cuda");
@@ -289,12 +302,13 @@ void interaction::CUDA_Nonbonded_Set::cycle() {
   const int egroup = mytopo->atom_energy_group(mytopo->num_solute_atoms());
   double * e_lj = &m_storage.energies.lj_energy[egroup][egroup];
   double * e_crf = &m_storage.energies.crf_energy[egroup][egroup];
-  cudakernel::cudaCalcForces(For, Vir, e_lj, e_crf, false, gpu_stat);
+  error += cudakernel::cudaCalcForces(For, Vir, e_lj, e_crf, false, gpu_stat);
   if (mygpu_id == 0)
     m_pairlist_alg.timer().stop("shortrange-cuda");
-
-  if (m_rank == 0 && error > 0)
+  if (m_rank == 0 && error) {
+    io::messages.add("GPU: cannot calculate forces", io::message::critical);
     return;
+  }
 
   // add long-range force
   DEBUG(6, "\t(set) add long range forces");
@@ -331,7 +345,8 @@ void interaction::CUDA_Nonbonded_Set::cycle() {
  */
 void interaction::CUDA_Nonbonded_Set::end_run() {
   DEBUG(15, "CUDA_Nonbonded_Set: Cleaning up for GPU: " << mygpu_id);
-#ifdef HAVE_LIBCUKERNEL
-  cudakernel::CleanUp(gpu_stat);
+#ifdef HAVE_LIBCUDART
+  if (cudakernel::CleanUp(gpu_stat))
+    io::messages.add("GPU cleanup failed", io::message::critical);
 #endif
 }

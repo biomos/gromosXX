@@ -1,0 +1,18 @@
+TITLE
+  angle restraint specification
+END
+ANGRESSPEC
+# IPLR, JPLR, KPLR   atom sequence numbers of the atoms defining the
+#                          restrained angle i-j-k
+# WALR                     individual dihedral restraint weight factor by which
+#                          the harmonic dihedral restraining term may be multiplied.
+# PALR                     angle value (in degrees) at minimum energy of
+#                          of the harmonic dihedral restraining term.
+#  IPLR  JPLR  KPLR   WALR  PALR  
+    2       6    10    1.0  110.0
+END
+PERTANGRESSPEC
+# IPLR  JPLR  KPLR   M   N   APALR  AWALR  BPALR  BWALR
+  5     6     7      1   1    87.0   1.0   120.0   1.0
+  7     8     11     2   2    110.0   2.0   130.0   1.0
+END

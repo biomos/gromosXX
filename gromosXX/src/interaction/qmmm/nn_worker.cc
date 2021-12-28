@@ -299,8 +299,6 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
         DEBUG(10, "Charge adjusted for atom " << it->index << " from " << it->qm_charge - q_adjust << " to " << it->qm_charge);
       }
     }
-    // and write them to the topology (to be consistent, should this be done in qmmm_interaction?)
-    qm_zone.write_delta_charge(topo);
   }
 
   return 0;

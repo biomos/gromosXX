@@ -38,10 +38,14 @@ static std::set<std::string> block_read;
  *
  * @verbatim
 QMZONE
+# NETCH: net charge of the QM zone
+# SPINM: net spin multiplicity of the QM zone
 # QMI:  index of the QM atom
 # QMZ:  atomic number of the QM atom
 # QMLI: 0,1 atom is a link atom
 #
+# NETCH SPINM
+      0     1
 # Warning: the first 17 characters are ignored!
 # RESIDUE   ATOM     QMI   QMZ   QMLI
     1 H2O   OW         1     8      0
@@ -66,18 +70,17 @@ END
  *
  * @verbatim
 BUFFERZONE
+# NETCH: net charge of the buffer zone
+# SPINM: net spin multiplicity of the buffer zone
 # BUFCUT: cutoff of the adaptive buffer zone (default = 0.0, no adaptive buffer zone)
           If the specified atoms occur within BUFCUT of QM atom, they are considered
           as buffer atoms. Otherwise they are considered solely as MM atoms. BUFCUT = 0.0
           means that they are always considered as buffer atoms.
-# BUFCUT
-    1.4
-# NETCH:
-# SPINM:
 # QMI:   index of the QM atom
 # QMZ:   atomic number of the QM atom
 # QMLI:  0,1 atom is a link atom
-#
+# NETCH SPINM BUFCUT
+      0     1    1.4
 # Warning: the first 17 characters are ignored!
 # RESIDUE   ATOM     QMI   QMZ   QMLI
     1 H2O   OW         1     8      0
@@ -118,7 +121,22 @@ CAPLEN
 END
 @endverbatim
  *
- * @section MNDOBINARY block for the MNDO worker
+ * @section The ELEMENTS block specifies the element names used in QM packages.
+ * It is determined by the atomic number given in the QMZONE block. This block
+ * is required only for Turbomole and DFTB
+ * 
+@verbatim
+ELEMENTS
+1 h
+6 c
+7 n
+8 o
+END
+@endverbatim
+ *
+ * @section MNDO blocks for the MNDO worker
+ * 
+ * MNDOBINARY block for the MNDO worker
  * The MNDOBINARY block specifies path to MNDO binary
  *
  * This block is optional. If unspecified, mndo command from PATH environment variable
@@ -129,7 +147,8 @@ MNDOBINARY
 /path/to/mndo/binary
 END
 @endverbatim
- * @section MNDOFILES block for the MNDO worker
+ *
+ * MNDOFILES block for the MNDO worker
  * The MNDOFILES block specifies input and output files to exchange data with MNDO
  *
  * This block is optional. If unspecified, temporary files are created using TMPDIR
@@ -149,7 +168,7 @@ END
  * - CHARGE: net charge of the QM zone
  * - SPINM: spin multiplicity of the QM zone (be aware, that MNDO uses 0 for ground-state)
  * - NUM_CHARGES: the number of MM atoms
- * - NUM_LINK: Number of link atoms
+ * - NUM_LINK: Number of link and capping atoms atoms
  * 
 @verbatim
 MNDOHEADER
@@ -164,75 +183,22 @@ title line
 END
 @endverbatim
  *
- * @section GAUSSIANBINARY block for the Gaussian worker
- * The GAUSSIANBINARY block specifies path to GAUSSIAN binary
- *
- * This block is optional. If unspecified, g16 command from PATH environment variable
- * is used.
- *
- * @verbatim
-GAUSSIANBINARY
-/path/to/gaussian/binary
-END
-@endverbatim
- * @section GAUSSIANFILES block for the Gaussian worker
- * The GAUSSIANFILES block specifies input and output files to exchange data with Gaussian
- *
- * This block is optional. If unspecified, temporary files are created using TMPDIR
- * environment variable. User-specified files are not deleted after use.
- *
- * @verbatim
-GAUSSIANFILES
-/path/to/gaussian.gjf
-/path/to/gaussian.out
-END
-@endverbatim
- *
- * The GAUSSIANHEADER block specifies the header part of the Gaussian input file.
- * 
-@verbatim
-GAUSSIANHEADER
-%nproc=8
-%mem=2GB
-%NoSave
-%chk=tmp
-END
-@endverbatim
- *
- * The GAUSSIANROUTE block specifies the route section of the Gaussian input file.
- * hashsign (#) should be omitted. It is beneficial to generate an initial checkpoint file
- * and reuse it in subsequent steps with guess=read option.
- * 
-@verbatim
-GAUSSIANROUTE
-N hf/STO-3G nosymm pop(mk) charge(angstroms) force charge(angstroms) prop=(field,read)
-END
-@endverbatim
- *
- * The GAUSSIANCHSM block specifies the net charge and the spin multiplicity of the system.
- * Variables are allowed. Implemented are
- * - CHARGE: net charge of the QM zone
- * - SPINM: spin multiplicity of the QM zone
-@verbatim
-GAUSSIANCHSM
-@@CHARGE@@ @@SPINM@@
-END
-@endverbatim
-
-
-
- * 
  * @section Turbomole blocks for the Turbomole worker
  * 
- * The TURBOMOLEFILES blocks specifies where Turbomole writes the input and output files.
+ * The TMOLEFILES block specifies where Turbomole writes the input and output files.
  * The first line contains the directory which contains the Turbomole binaries.
  * The second line is the turbomole working directory containing the control file.
  * In this control file the relative paths for the coordinate, point charges coordinates,
- * energy, gradients and point charges gradients are defined. The next lines contains
- * these file names for GROMOS.
+ * energy, gradients and point charges gradients are defined. Next lines contains
+ * these filenames. Last line is a filename containing point charges of QM atoms
+ * calculated using ESP. This is necessary only if GromosXX should obtain QM charges
+ * from the QM calculation (NTQMMM = 1). The naming format of the standard output from
+ * the Turbomole program is [program].out. Depending on your TMOLETOOLCHAIN definition
+ * you have to decide which program outputs the charges and provide its output filename.
+ * If (NTQMMM != 1), this line can be omitted.
  *
  * @verbatim
-TURBOMOLEFILES
+TMOLEFILES
 /path/to/turbomole/binary/directory
 /path/to/working/directory/containing/control/file
 coordinate.in
@@ -240,79 +206,200 @@ mm_coordinate.in
 energy.out
 gradient.out
 mm_gradient.out
+ridft.out
 END
 @endverbatim
  * 
- * The TURBOMOLETOOLCHAIN block specifies the Turbomole programs that are executed.
+ * The TMOLETOOLCHAIN block specifies the Turbomole programs that are executed.
  * Each line contains one program that is called. By default, it is assumed that
  * the control file is static, i.e. that the number of QM atoms cannot change. To 
  * modify the control file during the simulation the TURBOMOLE program define is 
- * to be used. The input for this program has to be given as a file named "define.inp" 
- * which is in the same directory as the "control" file. 
+ * to be used. The input for this program has to be given as a filename "define.inp" 
+ * which is in the same directory as the "control" file. Standard output of every
+ * program is written to separate file called [program].out
  * Note: You still have to provide an initial control file as at the time the 
- * program define is only cannot include the $point_charges directives. 
+ * program define it only cannot include the $point_charges directives. 
  * 
  * @verbatim
- TURBOMOLETOOLCHAIN
+ TMOLETOOLCHAIN
  ridft
  rdgrad
  END
  @endverbatim
  *
- * The TURBOMOLEELEMENTS block specifies the element name used in Turbomole.
- * It is determined by the atomic number given in the QMZONE block.
+ * @section DFTB blocks for the DFTB worker
+ * 
+ * The DFTBFILES block specifies paths necessary to run the DFTB+ program. First line is
+ * the path to DFTB binary. Second line defines path to the working directory where DFTB+
+ * will run and write all the output files.
+ * In this directory GromosXX creates dftb_in.hsd input file and fills it with
+ * the content of the DFTBINPUT block. Also hardcoded DFTB output files are written here
+ * including the details.out file used to transfer data back to GromosXX.
+ * The third line defines the coordinate file. The fourth line is the MM coordinate
+ * file containing the MM charges and is used only with electrostatic and polarisable
+ * embedding. The input coordinate file has to be specified in the DFTBINPUT block.
+ * This applies also to the MM coordinate file if used.
+ * The fifth line specifies the path, where DFTB standard output is written. This file is
+ * not used for data exchange and is usually needed for debugging purposes only.
  * 
  * @verbatim
-TURBOMOLEELEMENTS
-1 h
-6 c
-7 n
-8 o
+DFTBFILES
+/path/to/dftb/binary/directory
+/path/to/working/directory
+coordinate.in
+mm_coordinate.in
+stdout.out
 END
-@endverbatim
+@endverbatim 
  *
- * The NNMODEL block specifies the PyTorch NN model to use.
- * It also specifies the model type (delta=0 vs. combined=1).
- * and if the model was learned on the QMZONE+BUFFERZONE (1) or on the QMZONE only (2) 
- * @verbatim
-NNMODEL
-/path/to/schnetpack/model
-# TYPE  LEARNING
-     0         1
-END
-@endverbatim
- *
- * The NNVALID block specifies the PyTorch NN model to use for validation.
- * Second line consists of number of steps between validations and threshold (in units of the model)
+ * The DFTBINPUT block contains the complete content of the dftb_in.hsd file created 
+ * by GromosXX in the working directory specified in the  DFTBFILES block. The example
+ * block contains minimal settings that must be specified for proper data exchange
+ * between GromosXX and DFTB+. User may provide additional DFTB+ blocks, e.g. 
+ * Slater-Koster files path and/or other settings. Please refer to DFTB+ manual
+ * for additional information on DFTB+ input.
  * 
  * @verbatim
-NNVALID
-/path/to/schnetpack/model
-# NSTEPS    THRESHOLD   BIASFORCE
-     100          5.0        10.0
+DFTBINPUT
+Geometry = genFormat {
+ <<< "coordinate.in"   ## Always equired
+}
+Hamiltonian = DFTB {
+
+  ## For electrostatic and polarisable embedding also use this block:
+  ElectricField = {
+    PointCharges = {
+      CoordsAndCharges = {
+        <<< "mm_coordinate.in"
+      }
+    }
+  }
+}
+Analysis = {
+  ## ... optional custom settings ...
+
+  CalculateForces = Yes   ## Always required
+
+  ## For mechanical embedding also specify:
+  MullikenAnalysis = Yes
+}
 END
 @endverbatim
  *
- * The NNCHARGE block specifies the PyTorch NN model to use for charge predictions.
- * Second line consists of number of steps when charges are newly assigned
+ * @section MOPAC blocks for the MOPAC worker
  * 
+ * MOPACBINARY block for the MOPAC worker
+ * The MOPACBINARY block specifies path to MOPAC binary
+ *
+ * This block is optional. If unspecified, mopac command from PATH environment variable
+ * is used.
+ *
  * @verbatim
-NNCHARGE
-/path/to/schnetpack/model
-# NSTEPS
-     100
+MOPACBINARY
+/path/to/mopac/binary
 END
 @endverbatim
  *
- * The NNDEVICE block specifies the device to use.
- * Allowed are
- * - cpu: Use CPU, a model trained on CUDA will be mapped to CPU
- * - cuda: Use CUDA
- * - auto: Use CUDA, if available, otherwise use CPU (this is default)
+ * MOPACFILES block for the MOPAC worker
+ * The MOPACFILES block specifies input and output files to exchange data with MOPAC
+ *
+ * This block is optional. If any line is not specified, temporary file is created
+ * using TMPDIR environment variable and deleted after use.
+ * User-specified files are not deleted.
+ *
+ * @verbatim
+MOPACFILES
+/path/to/mopac.mop    ##input file
+/path/to/mopac.out    ##output file
+/path/to/mopac.aux    ##auxiliary output file - MOPAC output is read from this file
+/path/to/mopac.arc    ##archive output file
+/path/to/stdout.out   ##standard output file - STDOUT and STDERR are redirected here
+/path/to/mopac.den    ##density matrix file to be reused in subsequent step
+/path/to/mol.in       ##mol.in file with electric potentials from external charges
+END
+@endverbatim
+ *
+ * The MOPACHEADER block specifies the header part of the MOPAC input file. Variables
+ * are allowed. Implemented are
+ * - CHARGE: net charge of the QM zone
+ * - OLDENS: will generate density file in every step using DENOUT and then reuses
+ *           it using OLDENS in subsequent step
  * 
 @verbatim
-NNDEVICE
-auto
+MOPACHEADER
+PM7 1SCF CHARGE=@@CHARGE@@ GRAD QMMM AUX(PRECISION=9) PRECISE @@OLDENS@@
+title line
+END
+@endverbatim
+ *
+ * The MOPACLINKATOM block specifies the way the link atoms are treated. Link atoms are atoms
+ * that are bonded to MM atoms.
+@verbatim
+MOPACLINKATOM
+#  mode of treatment:
+#    0(none) : link atoms see no MM atom (default)
+#    1(exclude_atom) : Link atoms see all MM atoms except the MM atoms involved in the link
+#    2(exclude_chargegroup) : Link atoms see all MM atoms except the MM chargegroup involved in the link
+#    3(all) : Link atoms see all MM atoms
+# 
+   0
+END
+@endverbatim
+ *
+ * @section Gaussian blocks for the Gaussian worker
+ * 
+ * GAUBINARY block for the Gaussian worker
+ * The GAUBINARY block specifies path to GAUSSIAN binary
+ *
+ * This block is optional. If unspecified, g16 command from PATH environment variable
+ * is used.
+ *
+ * @verbatim
+GAUBINARY
+/path/to/gaussian/binary
+END
+@endverbatim
+ * GAUFILES block for the Gaussian worker
+ * The GAUFILES block specifies input and output files to exchange data with Gaussian
+ *
+ * This block is optional. If unspecified, temporary files are created using TMPDIR
+ * environment variable. User-specified files are not deleted after use.
+ *
+ * @verbatim
+GAUFILES
+/path/to/gaussian.gjf
+/path/to/gaussian.out
+END
+@endverbatim
+ *
+ * The GAUHEADER block specifies the header part of the Gaussian input file.
+ * 
+@verbatim
+GAUHEADER
+%nproc=8
+%mem=2GB
+%NoSave
+%chk=tmp
+END
+@endverbatim
+ *
+ * The GAUROUTE block specifies the route section of the Gaussian input file.
+ * hashsign (#) should be omitted. It is beneficial to generate an initial checkpoint file
+ * and reuse it in subsequent steps with guess=read option.
+ * 
+@verbatim
+GAUROUTE
+N hf/STO-3G nosymm pop(mk) force charge(angstroms) prop=(field,read)
+END
+@endverbatim
+ *
+ * The GAUCHSM block specifies the net charge and the spin multiplicity of the system.
+ * Variables are allowed. Implemented are
+ * - CHARGE: net charge of the QM zone
+ * - SPINM: spin multiplicity of the QM zone
+@verbatim
+GAUCHSM
+@@CHARGE@@ @@SPINM@@
 END
 @endverbatim
  */
@@ -399,16 +486,17 @@ io::In_QMMM::read(topology::Topology& topo,
     this->read_units(sim, &sim.param().qmmm.turbomole);
     this->read_elements(topo, &sim.param().qmmm.turbomole);
 
-    { // TURBOMOLEFILES
-      buffer = m_block["TURBOMOLEFILES"];
+    { // TMOLEFILES
+      buffer = m_block["TMOLEFILES"];
 
       if (!buffer.size()) {
-        io::messages.add("TURBOMOLEFILES block missing",
+        io::messages.add("TMOLEFILES block missing",
                 "In_QMMM", io::message::error);
         return;
       } else {
-        if (buffer.size() != 9) {
-          io::messages.add("TURBOMOLEFILES block corrupt. Provide 7 lines.",
+        if (buffer.size() > 10
+          || buffer.size() < 9) {
+          io::messages.add("TMOLEFILES block corrupt. Provide 7 or 8 lines.",
                   "In_QMMM", io::message::error);
           return;
         }
@@ -419,13 +507,21 @@ io::In_QMMM::read(topology::Topology& topo,
         sim.param().qmmm.turbomole.output_energy_file = buffer[5];
         sim.param().qmmm.turbomole.output_gradient_file = buffer[6];
         sim.param().qmmm.turbomole.output_mm_gradient_file = buffer[7];
+        if (sim.param().qmmm.qm_ch == simulation::qm_ch_dynamic) {
+          if (buffer.size() != 10) {
+            io::messages.add("output charge filename missing in TMOLEFILES block",
+                  "In_QMMM", io::message::error);
+            return;
+          }
+          sim.param().qmmm.turbomole.output_charge_file = buffer[8];
+        }
       }
-    } // TURBOMOLEFILES
-    { // TURBOMOLETOOLCHAIN
-      buffer = m_block["TURBOMOLETOOLCHAIN"];
+    } // TMOLEFILES
+    { // TMOLETOOLCHAIN
+      buffer = m_block["TMOLETOOLCHAIN"];
 
       if (!buffer.size()) {
-        io::messages.add("TURBOMOLETOOLCHAIN block missing",
+        io::messages.add("TMOLETOOLCHAIN block missing",
                 "In_QMMM", io::message::error);
         return;
       } 
@@ -435,13 +531,13 @@ io::In_QMMM::read(topology::Topology& topo,
         std::string tool;
         _lineStream >> tool;
         if (_lineStream.fail()) {
-          io::messages.add("bad line in TURBOMOLETOOLCHAIN block",
+          io::messages.add("bad line in TMOLETOOLCHAIN block",
                 "In_QMMM", io::message::error);
           return;
         }
         sim.param().qmmm.turbomole.toolchain.push_back(tool);
       }
-    } // TURBOMOLETOOLCHAIN  
+    } // TMOLETOOLCHAIN  
   }
 
   /**
@@ -449,39 +545,36 @@ io::In_QMMM::read(topology::Topology& topo,
    */
   else if (sw == simulation::qm_dftb) {
     this->read_units(sim, &sim.param().qmmm.dftb);
-    this->read_elements(topo, &sim.param().qmmm.turbomole);
+    this->read_elements(topo, &sim.param().qmmm.dftb);
     { // DFTBFILES
       buffer = m_block["DFTBFILES"];
       if (!buffer.size()) {
-        io::messages.add("Using temporary files for DFTB input/output and assuming that the binary is in the PATH",
-                         "In_QMMM", io::message::notice);
-        sim.param().qmmm.dftb.binary = "dftb";
-      } else {
-        if (buffer.size() != 8) {
-          io::messages.add("DFTB block corrupt. Provide 6 lines.",
-                           "In_QMMM", io::message::error);
-          return;
-        }
-        sim.param().qmmm.dftb.binary = buffer[1];
-        sim.param().qmmm.dftb.working_directory = buffer[2];
-        sim.param().qmmm.dftb.input_file = buffer[3];
-        sim.param().qmmm.dftb.output_file = buffer[4];
-        sim.param().qmmm.dftb.output_charge_file = buffer[5];
-        sim.param().qmmm.dftb.geom_file = buffer[6];
+        io::messages.add("DFTBFILES block missing",
+                "In_QMMM", io::message::error);
+        return;
       }
+      if (buffer.size() != 7) {
+        io::messages.add("DFTBFILES block corrupt. Provide 5 lines.",
+                          "In_QMMM", io::message::error);
+        return;
+      }
+      sim.param().qmmm.dftb.binary = buffer[1];
+      sim.param().qmmm.dftb.working_directory = buffer[2];
+      sim.param().qmmm.dftb.input_coordinate_file = buffer[3];
+      sim.param().qmmm.dftb.input_mm_coordinate_file = buffer[4];
+      sim.param().qmmm.dftb.stdout_file = buffer[5];
     } // DFTBFILES
 
-    { // DFTBHEADER
-      buffer = m_block["DFTBHEADER"];
+    { // DFTBINPUT
+      buffer = m_block["DFTBINPUT"];
       if (!buffer.size()) {
-        io::messages.add("no DFTBHEADER block in QM/MM specification file",
+        io::messages.add("no DFTBINPUT block in QM/MM specification file",
                          "In_QMMM", io::message::error);
         return;
       }
-
       concatenate(buffer.begin() + 1, buffer.end() - 1,
                   sim.param().qmmm.dftb.input_header);
-    } // DFTBHEADER
+    } // DFTBINPUT
   }
 
   /**
@@ -489,25 +582,44 @@ io::In_QMMM::read(topology::Topology& topo,
    */
   else if (sw == simulation::qm_mopac) {
     this->read_units(sim, &sim.param().qmmm.mopac);
+    { // MOPACBINARY
+
+      DEBUG(15, "Reading MOPACBINARY");
+      buffer = m_block["MOPACBINARY"];
+
+      if (!buffer.size()) {
+        io::messages.add("Assuming that the mopac binary is in the PATH",
+                "In_QMMM", io::message::notice);
+        sim.param().qmmm.mopac.binary = "mopac";
+      } else {
+        if (buffer.size() != 3) {
+          io::messages.add("MOPACBINARY block corrupt. Provide 1 line.",
+                  "In_QMMM", io::message::error);
+          return;
+        }
+        sim.param().qmmm.mopac.binary = buffer[1];
+      }
+    } // MOPACBINARY
     {
       //MOPACFILES
       buffer = m_block["MOPACFILES"];
 
       if (!buffer.size()) {
-        io::messages.add("Using temporary files for MOPAC input/output and assuming that the binary is in the PATH",
+        io::messages.add("Using temporary files for MOPAC input/output",
                          "In_QMMM", io::message::notice);
-        sim.param().qmmm.mopac.binary = "mopac";
       } else {
-        if (buffer.size() != 7) {
-          io::messages.add("MOPAC block corrupt. Provide 4 lines.",
+        if (buffer.size() != 9) {
+          io::messages.add("MOPACFILES block corrupt. Provide 7 lines.",
                            "In_QMMM", io::message::error);
           return;
         }
-      sim.param().qmmm.mopac.binary = buffer[1];
-      sim.param().qmmm.mopac.input_file = buffer[2];
-      sim.param().qmmm.mopac.output_file = buffer[3];
-      sim.param().qmmm.mopac.output_gradient_file = buffer[4];
-      sim.param().qmmm.mopac.molin_file = buffer[5];
+      sim.param().qmmm.mopac.input_file = buffer[1];
+      sim.param().qmmm.mopac.output_file = buffer[2];
+      sim.param().qmmm.mopac.output_aux_file = buffer[3];
+      sim.param().qmmm.mopac.output_arc_file = buffer[4];
+      sim.param().qmmm.mopac.stdout_file = buffer[5];
+      sim.param().qmmm.mopac.output_dens_file = buffer[6];
+      sim.param().qmmm.mopac.molin_file = buffer[7];
       }
     } // MOPACFILES
     { // MOPACHEADER
@@ -520,6 +632,26 @@ io::In_QMMM::read(topology::Topology& topo,
       concatenate(buffer.begin() + 1, buffer.end() - 1,
                   sim.param().qmmm.mopac.input_header);
     } // MOPACHEADER
+    { // MOPACLINKATOM
+      buffer = m_block["MOPACLINKATOM"];
+      if (!buffer.size()) {
+        io::messages.add("MOPAC link atoms see no MM atoms (default)",
+                         "In_QMMM", io::message::notice);
+        sim.param().qmmm.mopac.link_atom_mode = 0;
+      } else {
+        if (buffer.size() != 3) {
+          io::messages.add("MOPACLINKATOM block corrupt. Provide 1 line.",
+                           "In_QMMM", io::message::error);
+          return;
+        }
+        std::string& s = buffer[1];
+        if (s == "default" || s == "none" || s == "0") sim.param().qmmm.mopac.link_atom_mode = 0;
+        else if (s == "exclude_atom" || s == "1") sim.param().qmmm.mopac.link_atom_mode = 1;
+        else if (s == "exclude_chargegroup" || s == "2") sim.param().qmmm.mopac.link_atom_mode = 2;
+        else if (s == "all" || s == "3") sim.param().qmmm.mopac.link_atom_mode = 3;
+        else sim.param().qmmm.mopac.link_atom_mode = 0;
+      }
+    } // MOPACLINKATOM
   }
 
   /**
@@ -527,10 +659,10 @@ io::In_QMMM::read(topology::Topology& topo,
    */
   else if (sw == simulation::qm_gaussian) {
     this->read_units(sim, &sim.param().qmmm.gaussian);
-    { // GAUSSIANBINARY
+    { // GAUBINARY
 
-      DEBUG(15, "Reading GAUSSIANBINARY");
-      buffer = m_block["GAUSSIANBINARY"];
+      DEBUG(15, "Reading GAUBINARY");
+      buffer = m_block["GAUBINARY"];
 
       if (!buffer.size()) {
         io::messages.add("Assuming that the g16 binary is in the PATH",
@@ -538,36 +670,36 @@ io::In_QMMM::read(topology::Topology& topo,
         sim.param().qmmm.gaussian.binary = "g16";
       } else {
         if (buffer.size() != 3) {
-          io::messages.add("GAUSSIANBINARY block corrupt. Provide 1 line.",
+          io::messages.add("GAUBINARY block corrupt. Provide 1 line.",
                   "In_QMMM", io::message::error);
           return;
         }
         sim.param().qmmm.gaussian.binary = buffer[1];
       }
-    } // GAUSSIANBINARY
-    { // GAUSSIANFILES
+    } // GAUBINARY
+    { // GAUFILES
 
-      DEBUG(15, "Reading GAUSSIANFILES");
-      buffer = m_block["GAUSSIANFILES"];
+      DEBUG(15, "Reading GAUFILES");
+      buffer = m_block["GAUFILES"];
 
       if (!buffer.size()) {
         io::messages.add("Using temporary files for Gaussian input/output",
                 "In_QMMM", io::message::notice);
       } else {
         if (buffer.size() != 4) {
-          io::messages.add("GAUSSIANFILES block corrupt. Provide 2 lines.",
+          io::messages.add("GAUFILES block corrupt. Provide 2 lines.",
                   "In_QMMM", io::message::error);
           return;
         }
         sim.param().qmmm.gaussian.input_file = buffer[1];
         sim.param().qmmm.gaussian.output_file = buffer[2];
       }
-    } // GAUSSIANFILES
-    { // GAUSSIANHEADER
-      buffer = m_block["GAUSSIANHEADER"];
+    } // GAUFILES
+    { // GAUHEADER
+      buffer = m_block["GAUHEADER"];
 
       if (!buffer.size()) {
-        io::messages.add("no GAUSSIANHEADER block in QM/MM specification file",
+        io::messages.add("no GAUHEADER block in QM/MM specification file",
                 "In_QMMM", io::message::error);
         return;
       }
@@ -575,12 +707,12 @@ io::In_QMMM::read(topology::Topology& topo,
               sim.param().qmmm.gaussian.input_header);
       DEBUG(1, "sim.param().qmmm.gaussian.input_header:");
       DEBUG(1, sim.param().qmmm.gaussian.input_header);
-    } // GAUSSIANHEADER
-    { // GAUSSIANROUTE
-      buffer = m_block["GAUSSIANROUTE"];
+    } // GAUHEADER
+    { // GAUROUTE
+      buffer = m_block["GAUROUTE"];
 
       if (!buffer.size()) {
-        io::messages.add("no GAUSSIANROUTE block in QM/MM specification file",
+        io::messages.add("no GAUROUTE block in QM/MM specification file",
                 "In_QMMM", io::message::error);
         return;
       }
@@ -589,17 +721,17 @@ io::In_QMMM::read(topology::Topology& topo,
       sim.param().qmmm.gaussian.route_section = "#" + sim.param().qmmm.gaussian.route_section;
       DEBUG(1, "sim.param().qmmm.gaussian.route_section:");
       DEBUG(1, sim.param().qmmm.gaussian.route_section);
-    } // GAUSSIANROUTE
-    { // GAUSSIANCHSM
-      buffer = m_block["GAUSSIANCHSM"];
+    } // GAUROUTE
+    { // GAUCHSM
+      buffer = m_block["GAUCHSM"];
 
       if (!buffer.size()) {
-        io::messages.add("no GAUSSIANCHSM block in QM/MM specification file",
+        io::messages.add("no GAUCHSM block in QM/MM specification file",
                 "In_QMMM", io::message::error);
         return;
       }
       if (buffer.size() != 3) {
-        io::messages.add("GAUSSIANCHSM block corrupt. Provide 1 line.",
+        io::messages.add("GAUCHSM block corrupt. Provide 1 line.",
                 "In_QMMM", io::message::error);
         return;
       }
@@ -607,7 +739,7 @@ io::In_QMMM::read(topology::Topology& topo,
               sim.param().qmmm.gaussian.chsm);
       DEBUG(1, "sim.param().qmmm.gaussian.chsm:");
       DEBUG(1, sim.param().qmmm.gaussian.chsm);
-    } // GAUSSIANCHSM
+    } // GAUCHSM
   }
 
   /**
@@ -726,10 +858,8 @@ io::In_QMMM::read(topology::Topology& topo,
     _lineStream.clear();
     buffer = m_block["CAPLEN"];
     if (!buffer.size()) {
-      std::ostringstream msg;
-      msg << "Using default capping atom bond length - "
-          << sim.param().qmmm.cap_length;
-      io::messages.add(msg.str(),"In_QMMM", io::message::notice);
+      io::messages.add("no CAPLEN block in QM/MM specification file",
+              "In_QMMM", io::message::error);
     }
     else {
       double caplen;
@@ -758,13 +888,20 @@ void io::In_QMMM::read_elements(const topology::Topology& topo
     return;
   }
   _lineStream.clear();
-  _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1));
+  std::string bstr = concatenate(buffer.begin() + 1, buffer.end() - 1);
+  // Strip away the last newline character
+  bstr.pop_back();
+  _lineStream.str(bstr);
   unsigned Z;
   std::string element;
-  while(_lineStream >> Z >> element) 
+  while(!_lineStream.eof()) {
+    _lineStream >> Z >> element;
+    if (_lineStream.fail()) {
+      io::messages.add("Cannot read ELEMENTS block", "In_QMMM", io::message::error);
+      return;
+    }
     qm_param->elements[Z] = element;
-  if (_lineStream.fail())
-    io::messages.add("Cannot read ELEMENTS block", "In_QMMM", io::message::error);
+  }
 
   // check whether all elements were provided
   const std::vector<unsigned>& atomic_number = topo.qm_atomic_number();
@@ -783,54 +920,10 @@ void io::In_QMMM::read_elements(const topology::Topology& topo
 void io::In_QMMM::read_units(const simulation::Simulation& sim
                   , simulation::Parameter::qmmm_struct::qm_param_struct* qm_param)
   {
-  std::map<simulation::qm_software_enum, std::array<double, 4> >
-  unit_factor_defaults = {
-    {simulation::qm_mndo,
-                    { math::angstrom /* A */
-                    , math::kcal /* kcal */
-                    , math::kcal / math::angstrom /* kcal/A*/
-                    , math::echarge /* e */}},
-    {simulation::qm_turbomole,
-                    { math::bohr /* a.u. */
-                    , math::hartree * math::avogadro /* a.u. */
-                    , math::hartree * math::avogadro / math::bohr /* a.u. */
-                    , math::echarge /* e */}},
-    {simulation::qm_dftb,
-                    { math::bohr /* a.u. */
-                    , math::hartree * math::avogadro /* a.u. */
-                    , math::hartree * math::avogadro / math::bohr /* a.u. */
-                    , math::echarge /* e */}},
-    {simulation::qm_mopac,
-                    { math::angstrom /* A */
-                    , math::kcal /* kcal */
-                    , math::kcal / math::angstrom /* kcal/A */
-                    , math::echarge /* e */}},
-    {simulation::qm_gaussian,
-                    { math::angstrom /* A */
-                    , math::hartree * math::avogadro /* a.u. */
-                    , math::hartree * math::avogadro / math::bohr /* a.u. */
-                    , math::echarge /* e */}},
-    {simulation::qm_nn,
-                    { math::bohr /* a.u. */
-                    , math::hartree * math::avogadro /* a.u. */
-                    , math::hartree * math::avogadro / math::bohr /* a.u. */
-                    , math::echarge /* e */}}
-  };
-
   std::vector<std::string> buffer = m_block["QMUNIT"];
   if (!buffer.size()) {
-    std::array<double, 4> defaults = unit_factor_defaults[sim.param().qmmm.software];
-    qm_param->unit_factor_length = defaults[0];
-    qm_param->unit_factor_energy = defaults[1];
-    qm_param->unit_factor_force  = defaults[2];
-    qm_param->unit_factor_charge = defaults[3];
-    std::ostringstream msg;
-    msg << "Using default QMUNIT: "
-        << qm_param->unit_factor_length << ", "
-        << qm_param->unit_factor_energy << ", "
-        << qm_param->unit_factor_force << ", "
-        << qm_param->unit_factor_charge;
-    io::messages.add(msg.str(),"In_QMMM", io::message::notice);
+    io::messages.add("no QMUNIT block in QM/MM specification file",
+            "In_QMMM", io::message::error);
     return;
   }
   _lineStream.clear();
@@ -987,7 +1080,7 @@ void io::In_QMMM::remove_constraints(topology::Topology& topo)
   {
   // Remove distance constraints between QM atoms
   std::vector<topology::two_body_term_struct> & dc = topo.solute().distance_constraints();
-  std::vector<topology::two_body_term_struct>::const_iterator it = dc.begin();
+  std::vector<topology::two_body_term_struct>::iterator it = dc.begin();
   while (it != dc.end()) {
     if (topo.is_qm(it->i) && topo.is_qm(it->j)) {
       DEBUG(15, "Removing distance constraint: " << it->i << "-" << it->j);

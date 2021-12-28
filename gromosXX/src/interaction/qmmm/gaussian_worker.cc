@@ -18,7 +18,6 @@
 #include "../../../util/system_call.h"
 #include "../../../util/debug.h"
 
-// special interactions
 #include "qm_atom.h"
 #include "mm_atom.h"
 #include "qm_link.h"
@@ -42,14 +41,14 @@ int interaction::Gaussian_Worker::init(simulation::Simulation& sim) {
   std::string& out = this->param->output_file;
 
   if (inp.empty()) {
-    this->using_tmp = true;
     if(util::create_tmpfile(inp) < 1) {
-        io::messages.add("Unable to create temporary input file: " + inp,
+      io::messages.add("Unable to create temporary input file: " + inp,
         "Gaussian_Worker", io::message::critical);
       return 1;
     }
     else {
-        io::messages.add("Using temporary input file: " + inp,
+      this->tmp_files.insert(inp);
+      io::messages.add("Using temporary input file: " + inp,
         "Gaussian_Worker", io::message::notice);
     }
   }
@@ -61,10 +60,19 @@ int interaction::Gaussian_Worker::init(simulation::Simulation& sim) {
       return 1;
     }
     else {
-        io::messages.add("Using temporary output file: " + out,
+      this->tmp_files.insert(out);
+      io::messages.add("Using temporary output file: " + out,
         "Gaussian_Worker", io::message::notice);
     }
   }
+  
+#ifndef HAVE_UNLINK
+  {
+    io::messages.add("Unlink function not supported on this platform. "
+    + "Please delete temporary files manually.",
+    this->name(), io::message::warning);
+  }
+#endif
   return 0;
 }
 
@@ -92,8 +100,6 @@ int interaction::Gaussian_Worker::write_input(const topology::Topology& topo
 
   double len_to_qm = 1.0 / this->param->unit_factor_length;
   double cha_to_qm = 1.0 / this->param->unit_factor_charge;
-  ifs.setf(std::ios::fixed, std::ios::floatfield);
-  ifs.precision(8);
 
   DEBUG(15,"Writing QM coordinates");
   // Write QM coordinates
@@ -106,7 +112,8 @@ int interaction::Gaussian_Worker::write_input(const topology::Topology& topo
   // Write capping atoms
   for (std::set<QM_Link>::const_iterator
         it = qm_zone.link.begin(), to = qm_zone.link.end(); it != to; ++it) {
-    DEBUG(15,it->index << " " << it->atomic_number << " " << math::v2s(it->pos * len_to_qm));
+    DEBUG(15,"Capping atom " << it->qm_index << "-" << it->mm_index << " " 
+            << it->atomic_number << " " << math::v2s(it->pos * len_to_qm));
     this->write_qm_atom(ifs, it->atomic_number, it->pos * len_to_qm);
   }
   ifs << std::endl;
@@ -141,7 +148,8 @@ int interaction::Gaussian_Worker::write_input(const topology::Topology& topo
 }
 
 int interaction::Gaussian_Worker::system_call() {
-  int err = util::system_call(this->param->binary, this->param->input_file, this->param->output_file);
+  int err = util::system_call(this->param->binary + " < " + this->param->input_file
+                                + " 1> " + this->param->output_file + " 2>&1 ");
   if (err) {
     std::ostringstream msg;
     msg << "Gaussian failed with code " << err;
@@ -163,7 +171,8 @@ int interaction::Gaussian_Worker::read_output(topology::Topology& topo
   err = this->parse_energy(ofs, qm_zone);
   if (err) return err;
   
-  if (sim.param().qmmm.qmmm == simulation::qmmm_mechanical) {
+  if (sim.param().qmmm.qmmm == simulation::qmmm_mechanical
+      && sim.param().qmmm.qm_ch == simulation::qm_ch_dynamic) {
     err = this->parse_charges(ofs, qm_zone);
     if (err) return err;
   }
@@ -173,7 +182,7 @@ int interaction::Gaussian_Worker::read_output(topology::Topology& topo
     if (err) return err;
   }
 
-  err = this->parse_gradients(sim, ofs, qm_zone);
+  err = this->parse_forces(sim, ofs, qm_zone);
   if (err) return err;
 
   ofs.close();
@@ -185,9 +194,10 @@ void interaction::Gaussian_Worker::write_qm_atom(std::ofstream& inputfile_stream
                                         , const math::Vec& pos)
   {
   inputfile_stream << std::setw(4) << std::left << atomic_number
-                   << std::setw(20) << std::setprecision(15) << std::right << pos(0)
-                   << std::setw(20) << std::setprecision(15) << std::right << pos(1)
-                   << std::setw(20) << std::setprecision(15) << std::right << pos(2)
+                   << std::scientific << std::setprecision(17)
+                   << std::setw(25) << std::right << pos(0)
+                   << std::setw(25) << std::right << pos(1)
+                   << std::setw(25) << std::right << pos(2)
                    << std::endl;
 }
 
@@ -195,29 +205,30 @@ void interaction::Gaussian_Worker::write_mm_atom(std::ofstream& inputfile_stream
                                         , const math::Vec& pos
                                         , const double charge)
   {
-  inputfile_stream << std::setw(20) << std::setprecision(15) << std::right << pos(0)
-                   << std::setw(20) << std::setprecision(15) << std::right << pos(1)
-                   << std::setw(20) << std::setprecision(15) << std::right << pos(2)
-                   << std::setw(20) << std::setprecision(4) << std::right << charge
+  inputfile_stream << std::scientific << std::setprecision(17)
+                   << std::setw(25) << std::right << pos(0)
+                   << std::setw(25) << std::right << pos(1)
+                   << std::setw(25) << std::right << pos(2)
+                   << std::setw(25) << std::right << charge
                    << std::endl;
 }
 
 void interaction::Gaussian_Worker::write_mm_pos(std::ofstream& inputfile_stream
                                         , const math::Vec& pos)
   {
-  inputfile_stream << std::setw(20) << std::setprecision(15) << std::right << pos(0)
-                   << std::setw(20) << std::setprecision(15) << std::right << pos(1)
-                   << std::setw(20) << std::setprecision(15) << std::right << pos(2)
+  /* Format 3F20.12 */
+  inputfile_stream << std::scientific << std::setprecision(17)
+                   << std::setw(25) << std::right << pos(0)
+                   << std::setw(25) << std::right << pos(1)
+                   << std::setw(25) << std::right << pos(2)
                    << std::endl;
 }
 
 int interaction::Gaussian_Worker::parse_charges(std::ifstream& ofs, interaction::QM_Zone& qm_zone) {
   std::string& out = this->param->output_file;
+  // Find the block
+  {
   std::string line;
-  /**
-   * Parse charges
-   * They are used in mechanical embedding
-   */
   bool got_charges = false;
   while (std::getline(ofs, line)) {
     if (line.find("ESP charges:") != std::string::npos) {
@@ -230,29 +241,37 @@ int interaction::Gaussian_Worker::parse_charges(std::ifstream& ofs, interaction:
                       + out, this->name(), io::message::error);
     return 1;
   }
-  const unsigned skip_lines = 1;
-  for (unsigned i = 0; i < skip_lines; ++i)
+    // skip line
     std::getline(ofs, line);
-  for(std::set<QM_Atom>::iterator
-      it = qm_zone.qm.begin(), to = qm_zone.qm.end(); it != to; ++it) {
-    if(!std::getline(ofs, line)) {
-      std::ostringstream msg;
-      msg << "Failed to read charge line of atom " << (it->index + 1)
-          << " in " << out;
-      io::messages.add(msg.str(), this->name(), io::message::error);
-      return 1;
-    }
-    std::istringstream iss(line);
+  }
+  // Parse charges of QM atoms
+  {
     std::string dummy;
-    iss >> dummy >> dummy >> it->qm_charge;
-    if (iss.fail()) {
-      std::ostringstream msg;
-      msg << "Failed to parse charge line of atom " << (it->index + 1)
-          << " in " << out;
-      io::messages.add(msg.str(), this->name(), io::message::error);
-      return 1;
+    for(std::set<QM_Atom>::iterator
+        it = qm_zone.qm.begin(), to = qm_zone.qm.end(); it != to; ++it) {
+      ofs >> dummy >> dummy >> it->qm_charge;
+      if (ofs.fail()) {
+          std::ostringstream msg;
+          msg << "Failed to parse charge of QM atom " << (it->index + 1)
+            << " in " << out;
+        io::messages.add(msg.str(), this->name(), io::message::error);
+        return 1;
+      }
+      it->qm_charge *= this->param->unit_factor_charge;
     }
-    it->qm_charge *= this->param->unit_factor_charge;
+    // Do the capping atoms as well
+    for(std::set<QM_Link>::iterator
+        it = qm_zone.link.begin(), to = qm_zone.link.end(); it != to; ++it) {
+      ofs >> dummy >> dummy >> it->qm_charge;
+      if (ofs.fail()) {
+        std::ostringstream msg;
+        msg << "Failed to parse charge of capping atom " << (it->qm_index + 1)
+          << "-" << (it->mm_index + 1) << " in " << out;
+        io::messages.add(msg.str(), this->name(), io::message::error);
+        return 1;
+      }
+      it->qm_charge *= this->param->unit_factor_charge;
+    }
   }
   return 0;
 }
@@ -325,24 +344,24 @@ int interaction::Gaussian_Worker::parse_energy(std::ifstream& ofs, interaction::
   return 0;
 }
 
-int interaction::Gaussian_Worker::parse_gradients(const simulation::Simulation& sim
+int interaction::Gaussian_Worker::parse_forces(const simulation::Simulation& sim
                                             , std::ifstream& ofs
                                             , interaction::QM_Zone& qm_zone) {
   std::string& out = this->param->output_file;
   std::string line;
   int err;
   
-  // Find MM gradients - Electric field comes first in the output
+  // Find MM forces - in the form of electric field
   if (sim.param().qmmm.qmmm > simulation::qmmm_mechanical) {
-    bool got_mm_gradients = false;
+    bool got_mm_efield = false;
     while (std::getline(ofs, line)) {
       if (line.find("-------- Electric Field --------") != std::string::npos) {
-        got_mm_gradients = true;
+        got_mm_efield = true;
         break;
       }
     }
-    if (!got_mm_gradients) {
-      io::messages.add("Unable to find MM gradients in output file " + out,
+    if (!got_mm_efield) {
+      io::messages.add("Unable to find electric field at MM charges in output file " + out,
                           this->name(), io::message::error);
       return 1;
     }
@@ -350,20 +369,38 @@ int interaction::Gaussian_Worker::parse_gradients(const simulation::Simulation& 
     for (unsigned i = 0; i < skip_lines; ++i)
       std::getline(ofs, line);
     // Parse MM atoms
-    err = this->_parse_gradients(ofs, qm_zone.mm);
-    if (err) return err;
+    std::set<interaction::MM_Atom>::iterator it, to;
+    for(std::set<interaction::MM_Atom>::iterator
+        it = qm_zone.mm.begin(), to = qm_zone.mm.end(); it != to; ++it) {
+      const int i = it->index;
+      DEBUG(15, "Parsing electric field on MM atom " << i);
+      err = this->parse_force(ofs, it->force);
+      if (err) return err;
+      // We still need to multiply by charge, since here we parsed electric field only
+      if (it->is_polarisable) {
+        it->force *= it->charge - it->cos_charge;
+        err = this->parse_force(ofs, it->cos_force);
+        if (err) return err;
+        it->cos_force *= it->cos_charge;
+      }
+      else {
+        DEBUG(15, "Charge of atom " << i << ": " << it->charge);
+        it->force *= it->charge;
+        DEBUG(15, "stored force on MM atom " << i << ": " << math::v2s(it->force));
+      }
+    }
   }
   {
-    // Find QM gradients
-    bool got_qm_gradients = false;
+    // Find QM forces
+    bool got_qm_forces = false;
     while (std::getline(ofs, line)) {
       if (line.find("Forces (Hartrees/Bohr)") != std::string::npos) {
-        got_qm_gradients = true;
+        got_qm_forces = true;
         break;
       }
     }
-    if (!got_qm_gradients) {
-      io::messages.add("Unable to find QM gradients in output file " + out,
+    if (!got_qm_forces) {
+      io::messages.add("Unable to find QM forces in output file " + out,
                           this->name(), io::message::error);
       return 1;
     }
@@ -372,90 +409,32 @@ int interaction::Gaussian_Worker::parse_gradients(const simulation::Simulation& 
     for (unsigned i = 0; i < skip_lines; ++i)
       std::getline(ofs, line);
     // Parse QM atoms
-    err = this->_parse_gradients(ofs, qm_zone.qm);
-    if (err) return err;
-    // Parse link QM atoms
-    err = this->_parse_gradients(ofs, qm_zone.link);
-    if (err) return err;
-  }
-  return 0;
-}
-
-template<class AtomType>
-int interaction::Gaussian_Worker::_parse_gradients(std::ifstream& ofs,
-                                               std::set<AtomType>& atom_set) {
-  int err = 0;
-  typename std::set<AtomType>::iterator it, to;
-  for(it = atom_set.begin(), to = atom_set.end(); it != to; ++it) {
-    DEBUG(15, "Parsing force of QM atom " << it->index);
-    err = this->parse_gradient(ofs, it->index, it->force, this->param->unit_factor_force);
-    if (err) return err;
-    DEBUG(15, "stored force on QM atom " << it->index << ": " << math::v2s(it->force));
-  }
-  return 0;
-}
-
-template<>
-int interaction::Gaussian_Worker::_parse_gradients
-                                        (std::ifstream& ofs
-                                       , std::set<interaction::MM_Atom>& atom_set) {
-  int err = 0;
-  std::set<interaction::MM_Atom>::iterator it, to;
-  for(it = atom_set.begin(), to = atom_set.end(); it != to; ++it) {
-    int i = it->index;
-    DEBUG(15, "Parsing electric field on MM atom " << i);
-    err = this->parse_gradient(ofs, i, it->force, this->param->unit_factor_force);
-    if (err) return err;
-    // We still need to multiply by charge, since here we parsed electric field only
-    if (it->is_polarisable) {
-      it->force *= it->charge - it->cos_charge;
-      err = this->parse_gradient(ofs, i, it->cos_force, this->param->unit_factor_force);
+    for(std::set<QM_Atom>::iterator
+        it = qm_zone.qm.begin(), to = qm_zone.qm.end(); it != to; ++it) {
+      err = this->parse_force(ofs, it->force);
       if (err) return err;
-      it->cos_force *= it->cos_charge;
     }
-    else {
-      DEBUG(15, "Charge of atom " << i << ": " << it->charge);
-      it->force *= it->charge;
-      DEBUG(12, "stored force on MM atom " << i << ": " << math::v2s(it->force));
+    // Parse link QM atoms
+    for(std::set<QM_Link>::iterator
+        it = qm_zone.link.begin(), to = qm_zone.link.end(); it != to; ++it) {
+      err = this->parse_force(ofs, it->force);
+      if (err) return err;
     }
   }
   return 0;
 }
 
-int interaction::Gaussian_Worker::parse_gradient(std::ifstream& ofs,
-                                             const int index,
-                                             math::Vec& force,
-                                             const double unit_factor) {
-  std::string line;
-  math::Vec gradient;
+int interaction::Gaussian_Worker::parse_force(std::ifstream& ofs,
+                                              math::Vec& force) {
   std::string dummy;
-  if(!std::getline(ofs, line)) {
+  ofs >> dummy >> dummy >> force(0) >> force(1) >> force(2);
+  if (ofs.fail()) {
     std::ostringstream msg;
-    msg << "Failed to read gradient line of atom " << (index)
+    msg << "Failed to parse force line of atom "
         << " in " << this->param->output_file;
     io::messages.add(msg.str(), this->name(), io::message::error);
     return 1;
   }
-  std::istringstream iss(line);
-  iss >> dummy >> dummy >> gradient(0) >> gradient(1) >> gradient(2);
-  DEBUG(12, "Parsed gradient line of atom " << index << ": " << math::v2s(gradient));
-  if (iss.fail()) {
-    std::ostringstream msg;
-    msg << "Failed to parse gradient line of atom " << (index)
-        << " in " << this->param->output_file;
-    io::messages.add(msg.str(), this->name(), io::message::error);
-    return 1;
-  }
-  force = gradient * unit_factor;
+  force *= this->param->unit_factor_force;
   return 0;
-}
-
-interaction::Gaussian_Worker::~Gaussian_Worker() {
-#ifdef HAVE_UNLINK
-  // Delete temporary files
-  if (this->using_tmp) {
-    unlink(this->param->input_file.c_str());
-    unlink(this->param->output_file.c_str());
-  }
-#endif
 }

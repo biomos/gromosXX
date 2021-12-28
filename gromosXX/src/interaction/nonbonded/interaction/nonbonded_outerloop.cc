@@ -1544,6 +1544,10 @@ void interaction::Nonbonded_Outerloop
   QMMM_Interaction * qmmm = nullptr;
   if (do_qmmm) {
     qmmm = QMMM_Interaction::pointer();
+    if (qmmm == nullptr) {
+      io::messages.add("Unable to get QMMM interaction in electric field calculation",
+                        "Nonbonded_Outerloop", io::message::critical);
+    }
   }
 
   math::VArray e_el_new(topo.num_atoms());
@@ -1609,6 +1613,25 @@ void interaction::Nonbonded_Outerloop
         storage_lr.electric_field[*j_it] += e_elj_lr;
       }
     }
+
+// Reduce longrange
+#ifdef OMP
+    // Reduce longrange electric field from OMP threads
+    for (unsigned i = 0; i < topo.num_atoms(); ++i) {
+      for (unsigned j = 0; j < 3; ++j) {
+#pragma omp atomic
+        Nonbonded_Outerloop::electric_field[i][j] += storage_lr.electric_field[i][j];
+      }
+    }
+// Wait for all writes
+#pragma omp barrier
+    if (rank == 0) {
+      storage_lr.electric_field.swap(Nonbonded_Outerloop::electric_field);
+      Nonbonded_Outerloop::electric_field = 0.0;
+    }
+#pragma omp barrier
+#endif
+
 #ifdef XXMPI
     if (sim.mpi) {
       // reduce the longrange electric field to some temp. variable and then set this

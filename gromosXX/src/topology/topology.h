@@ -699,7 +699,9 @@ namespace topology
      */
     void calculate_constraint_dof(simulation::Multibath & mb,
 				  bool rottrans_constraints,
-                                  bool position_constraints)const;
+                                  bool position_constraints,
+                                  bool dih_constraints,
+                                  bool ang_constraints)const;
 
     /**
      * check state
@@ -1301,6 +1303,35 @@ namespace topology
     }
 
     /**
+     * const angle restraints accessor.
+     */
+    std::vector<angle_restraint_struct> const & angle_restraints()const
+    {
+      return m_angle_restraint;
+    }
+    /**
+     * angle restraints accessor.
+     */
+    std::vector<angle_restraint_struct> & angle_restraints()
+    {
+      return m_angle_restraint;
+    }
+    /**
+     * const perturbed angle restraints accessor.
+     */
+    std::vector<perturbed_angle_restraint_struct> const & perturbed_angle_restraints()const
+    {
+      return m_perturbed_angle_restraint;
+    }
+    /**
+     * perturbed angle restraints accessor.
+     */
+    std::vector<perturbed_angle_restraint_struct> & perturbed_angle_restraints()
+    {
+      return m_perturbed_angle_restraint;
+    }
+
+    /**
      * const dihedral restraints accessor.
      */
     std::vector<dihedral_restraint_struct> const & dihedral_restraints()const
@@ -1796,6 +1827,14 @@ namespace topology
      * eds distance restraints
      */
     std::vector<eds_distance_restraint_struct> m_eds_distance_restraint;
+    /**
+     * angle restraints
+     */
+    std::vector<angle_restraint_struct> m_angle_restraint;
+    /**
+     * perturbed angle restraints
+     */
+    std::vector<perturbed_angle_restraint_struct> m_perturbed_angle_restraint;
     /**
      * dihedral restraints
      */

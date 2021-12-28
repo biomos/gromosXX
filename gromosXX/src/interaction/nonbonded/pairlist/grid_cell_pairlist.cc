@@ -937,7 +937,7 @@ inline int interaction::Grid_Cell_Pairlist::pair(
   // Solvent - solvent
   if (first >= first_solvent) {
     DEBUG(15, "Solvent - Solvent");
-#ifdef HAVE_LIBCUKERNEL
+#ifdef HAVE_LIBCUDART
     if (cuda)
       return 0;
 #endif

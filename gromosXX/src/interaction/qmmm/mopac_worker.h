@@ -1,85 +1,143 @@
 /**
  * @file mopac_worker.h
- * The worker class for the MOPAC software
+ * The worker class for the MOPAC QM software
  */
-
-
 #ifndef INCLUDED_MOPAC_WORKER_H
 #define	INCLUDED_MOPAC_WORKER_H
 
-#include "qm_worker.h"
-
-
 namespace interaction {
-    class QM_Worker;
+  class QM_Worker;
+  class QM_Zone;
+  /**
+   * @class MOPAC_Worker
+   * a worker class which calls the MOPAC software
+   */
+  class MOPAC_Worker : public QM_Worker {
+  public:
     /**
-     * @class MOPAC_Worker
-     * a worker class which calls the MNDO software
+     * Constructor
      */
-    class MOPAC_Worker : public QM_Worker {
-    public:
-        /**
-         * Constructor
-         */
-        MOPAC_Worker() : QM_Worker("MOPAC Worker") {
-          //this->get_new_qmID();
-        }
-        /**
-         * Destructor
-         */
-        virtual ~MOPAC_Worker();
-        /**
-         * initialise the QM worker
-         * @return 0 if successful, non-zero on failure
-         */
-        virtual int init(topology::Topology & topo,
-                         configuration::Configuration & conf,
-                         simulation::Simulation & sim);
-        /**
-         * run a QM job in MOPAC
-         * @param qm_pos a vector containing the QM atom positions
-         * @param mm_atoms the MM atoms to include
-         * @param storage the energies, forces, charges obtained
-         * @return 0 if successful, non-zero if not.
-         */
-        virtual int run_QM(const topology::Topology & topo,
-                           const configuration::Configuration & conf,
-                           const simulation::Simulation & sim,
-                           interaction::QM_Zone & qm_zone);
-    private:
-        double pointchg_pot(const int j,
-                        const std::vector<MM_Atom>&mm_atoms,
-                        const topology::Topology & topo,
-                        const configuration::Configuration &conf);
-        math::Vec pointchg_force(const int j,
-                                 std::vector< double> qm_chg,
-                            const topology::Topology & topo,
-                            const configuration::Configuration &conf);
-        /**
-         * file name for MOPAC input file
-         */
-        std::string input_file;
-        /**
-         * file name for MOPAC output file
-         */
-        std::string output_file;
-        /**
-         * file name for MOPAC gradient output file
-         */
-        std::string output_gradient_file;
-        /**
-         * file name for MOPAC header file
-         */
-        std::string header_file;
-        /**
-         * file name for MOPAC header file
-         */
-        std::string molin_file;
-        /**
-         * file name for MOPAC header file
-         */
-        std::string molin_file2;
-    };
+    MOPAC_Worker();
+
+    /**
+     * Destructor
+     */
+    virtual ~MOPAC_Worker() = default;
+
+    /**
+     * initialise the QM worker
+     * @return 0 if successful, non-zero on failure
+     */
+    virtual int init(simulation::Simulation& sim);
+
+  private:
+    /**
+     * Pointer to simulation parameters
+     */
+    simulation::Parameter::qmmm_struct::mopac_param_struct* param;
+
+    /**
+     * Write input file for QM program
+     * @param topo Topology
+     * @param conf Configuration
+     * @param sim Simulation
+     * @param qm_zone QM Zone
+     */
+    int write_input(const topology::Topology& topo
+                  , const configuration::Configuration& conf
+                  , const simulation::Simulation& sim
+                  , const interaction::QM_Zone& qm_zone);
+
+    /**
+     * System call
+     */
+    int system_call();
+
+    /**
+     * Read outputs
+     */
+    int read_output(topology::Topology& topo
+                  , configuration::Configuration& conf
+                  , simulation::Simulation& sim
+                  , interaction::QM_Zone& qm_zone);
+
+    /**
+     * Write QM atom
+     */
+    void write_qm_atom(std::ofstream& inputfile_stream
+                  , const int atomic_number
+                  , const math::Vec& pos
+                  , const int var_flag = 1) const;
+
+    /**
+     * Write potential from MM atoms
+     */
+    void write_mm_potential(std::ofstream& inputfile_stream
+                          , const int atomic_number
+                          , const math::Vec& pos
+                          , double potential) const;
+    
+    /**
+     * Calculate total potential from MM atoms on QM atom
+     */
+    double total_potential(const topology::Topology& topo
+                         , const simulation::Simulation& sim
+                         , const QM_Zone& qm_zone
+                         , const QM_Atom& qm_atom) const;
+                         
+    /**
+     * Get a set of excluded MM atoms for link atom
+     */
+    void get_excluded_mm(const topology::Topology& topo
+                       , const simulation::Simulation& sim
+                       , const QM_Zone& qm_zone
+                       , const QM_Atom& qm_atom
+                       , std::set<unsigned> excluded) const;
+    /**
+     * Calculate potential from MM atom at the given position
+     */
+    double pair_potential(const math::Vec& pos
+                        , const MM_Atom& mm_atom) const;
+
+    /**
+     * Parse charges
+     */
+    int parse_charges(std::ifstream& ofs, interaction::QM_Zone& qm_zone) const;
+
+    /**
+     * Parse coordinates
+     */
+    int parse_coordinates(std::ifstream& ofs, interaction::QM_Zone& qm_zone) const;
+
+    /**
+     * Parse energy
+     */
+    int parse_energy(std::ifstream& ofs, interaction::QM_Zone& qm_zone) const;
+
+    /**
+     * Parse gradients of QM atoms
+     */
+    int parse_qm_gradients(const simulation::Simulation& sim
+                         , std::ifstream& ofs
+                         , interaction::QM_Zone& qm_zone) const;
+
+    /**
+     * calculate forces between QM and MM atoms
+     */
+    void calculate_mm_forces(const topology::Topology& topo
+                           , const simulation::Simulation& sim
+                           , interaction::QM_Zone& qm_zone) const;
+
+    /**
+     * calculate force of QM/MM pair
+     */
+    inline void calculate_pair_force(const math::Vec& qm_pos
+                                   , const math::Vec& mm_pos
+                                   , math::Vec& qm_force
+                                   , math::Vec& mm_force
+                                   , const double qmq_mmq_four_pi_eps_i) const;
+  };
 }
 
 #endif	/* MOPAC_WORKER_H */
+

@@ -48,18 +48,18 @@ int interaction::create_g96_forcefield(interaction::Forcefield & ff,
   if (create_g96_bonded(ff, topo, sim.param(), it, os, quiet))
     return 1;
 	
-	/** create QMMM_Interaction - nonbonded can recover the pointer from ff
-	 * This has to be here, because QMMM can provide charges to calculate 
-	 * the nonbonded interactions in mechanical embedding
-	 * MPI will be split inside QMMM interaction
-	 */
+  /** create QMMM_Interaction - nonbonded can recover the pointer from ff
+   * This has to be here, because QMMM can provide charges to calculate 
+   * the nonbonded interactions in mechanical embedding
+   * MPI will be split inside QMMM interaction
+   */
 
-	if (sim.param().qmmm.qmmm) {
-  	DEBUG(8, "creating the nonbonded terms");
-  	QMMM_Interaction * qmmm = new QMMM_Interaction;
-  	it.read_lj_parameter(qmmm->parameter().lj_parameter());
-  	ff.push_back(qmmm);
-	}
+  if (sim.param().qmmm.qmmm) {
+    DEBUG(8, "creating the QMMM nonbonded terms");
+    QMMM_Interaction * qmmm = new QMMM_Interaction;
+    it.read_lj_parameter(qmmm->parameter().lj_parameter());
+    ff.push_back(qmmm);
+  }
 
   // the nonbonded
   DEBUG(8, "creating the nonbonded terms");
@@ -152,6 +152,9 @@ int interaction::create_g96_forcefield(interaction::Forcefield & ff,
 		    break;
 		  case simulation::disres_lambda :
 		    os << "distance restraint :";
+		    break;
+		  case simulation::angres_lambda :
+		    os << "angle restraint :";
 		    break;
 		  case simulation::dihres_lambda :
 		    os << "dihedral restraint :";
