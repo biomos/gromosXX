@@ -58,6 +58,7 @@ constraints_total(0.0),
 self_total(0.0),
 sasa_total(0.0),
 sasa_volume_total(0.0),
+nn_valid(0.0),
 eds_vr(0.0),
 eds_vmix(0.0),
 eds_emax(0.0),
@@ -65,7 +66,6 @@ eds_emin(0.0),
 eds_globmin(0.0),
 eds_globminfluc(0.0),
 entropy_term(0.0),
-nn_valid(0.0),
 m_ewarn(1E99){         
 }
 
@@ -111,6 +111,7 @@ void configuration::Energy::zero(bool potential, bool kinetic)
     self_total = 0.0;
     sasa_total = 0.0;
     sasa_volume_total = 0.0;
+    nn_valid = 0.0;
     qm_total = 0.0;
     eds_vr = 0.0;
     eds_vmix = 0.0;

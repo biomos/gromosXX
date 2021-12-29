@@ -36,7 +36,7 @@ namespace configuration
      * total potential energy
      */
     double potential_total;
-    
+
     /**
      * total bond stretching energy
      */
