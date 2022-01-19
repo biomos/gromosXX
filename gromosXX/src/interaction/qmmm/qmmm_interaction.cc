@@ -455,6 +455,9 @@ int interaction::QMMM_Interaction::init(topology::Topology& topo,
       os << "\tLJ interactions between QM atoms enabled" << std::endl;
     else
       os << "\tLJ interactions between QM atoms disabled" << std::endl;
+      
+    if (!sim.param().qmmm.qm_constraint)
+      os << "\tremoving QM-QM constraints" << std::endl;
 
     if (sim.param().qmmm.mm_scale > 0.0) {
       os << "\tMM point charges will be scaled using (2/pi)*atan(s*|R|) with s = " <<
@@ -470,9 +473,9 @@ int interaction::QMMM_Interaction::init(topology::Topology& topo,
         ++num_buffer;
     }
     os << "\tQM zone: " << std::endl
-       << "\t\tnet charge\t\t\t\t\t\t\t: " << sim.param().qmmm.qm_zone.charge << std::endl
-       << "\t\tspin multiplicity\t\t\t\t: " << sim.param().qmmm.qm_zone.spin_mult << std::endl
-       << "\t\tnumber of QM atoms\t\t\t: " << num_qm << std::endl;
+       << "\t\tnet charge         : " << sim.param().qmmm.qm_zone.charge << std::endl
+       << "\t\tspin multiplicity  : " << sim.param().qmmm.qm_zone.spin_mult << std::endl
+       << "\t\tnumber of QM atoms : " << num_qm << std::endl;
     if (sim.param().qmmm.use_qm_buffer) {
       os << "\t";
       if (sim.param().qmmm.buffer_zone.cutoff)
@@ -481,15 +484,15 @@ int interaction::QMMM_Interaction::init(topology::Topology& topo,
         os << "static ";
       os << "buffer zone:" << std::endl;
       if (sim.param().qmmm.buffer_zone.cutoff)
-        os << "\t\tcutoff\t\t\t\t\t\t\t\t\t: " << sim.param().qmmm.buffer_zone.cutoff <<std::endl;
-      os << "\t\tnet charge\t\t\t\t\t\t\t: " << sim.param().qmmm.buffer_zone.charge << std::endl
-         << "\t\tspin multiplicity\t\t\t\t: " << sim.param().qmmm.buffer_zone.spin_mult << std::endl
-         << "\t\tnumber of buffer atoms\t: ";
+        os << "\t\tcutoff                    : " << sim.param().qmmm.buffer_zone.cutoff <<std::endl;
+      os <<   "\t\tnet charge                : " << sim.param().qmmm.buffer_zone.charge << std::endl
+         <<   "\t\tspin multiplicity         : " << sim.param().qmmm.buffer_zone.spin_mult << std::endl
+         <<   "\t\tnumber of buffer atoms    : ";
       if (sim.param().qmmm.buffer_zone.cutoff)
         os << "up to ";
       os << num_buffer << std::endl;
     }
-    os << "\tnumber of QM-MM links\t\t\t: " << m_qm_zone->link.size() << std::endl;
+    os <<     "\tnumber of QM-MM links\t      : " << m_qm_zone->link.size() << std::endl;
 
   }
 
