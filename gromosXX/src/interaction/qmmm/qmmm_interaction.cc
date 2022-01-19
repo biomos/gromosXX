@@ -221,7 +221,8 @@ int interaction::QMMM_Interaction::calculate_interactions(topology::Topology& to
        * b) from 2 QM or NN evaluations and calculating the difference here
        * 
        */
-      if (sim.param().qmmm.software != simulation::qm_nn || sim.param().qmmm.nn.model_type) { // qmmm or combined model (b)
+      if (sim.param().qmmm.software != simulation::qm_nn
+          || sim.param().qmmm.nn.model_type == simulation::nn_model_type_standard) {
         DEBUG(4, "Creating QM buffer for separate QM calculation");
         //create buffer zone for separate QM calculation and run it
         if (m_qm_buffer != nullptr) delete m_qm_buffer;

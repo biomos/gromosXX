@@ -852,6 +852,37 @@ namespace simulation
   };
 
   /**
+   * @enum qmmm_nn_model_type_enum
+   * specify if the model was trained on both the QM+buffer region and the buffer region
+   * or on the difference of QM+buffer and buffer region
+   */
+  enum qmmm_nn_model_type_enum {
+    /**
+     * BuRNN model - trained on the difference between the QM+buffer region and the buffer region
+     */
+    nn_model_type_burnn = 0,
+    /**
+     * Standard model - trained on the QM+buffer region and the buffer region
+     */
+    nn_model_type_standard = 1
+  };
+
+  /**
+   * @enum qmmm_nn_learning_type_enum
+   * which device to run NN on
+   */
+  enum qmmm_nn_learning_type_enum {
+    /**
+     * 1: model was learned on all atoms (QMZONE + BUFFERZONE)
+     */
+    nn_learning_type_all = 1,
+    /**
+     * 2: model was learned by assigning energies only to the QMZONE atoms
+     */
+    nn_learning_type_qmonly = 2
+  };
+
+  /**
    * @class Parameter
    * input parameters.
    */
@@ -4005,19 +4036,19 @@ namespace simulation
        * Default values:
        * - model_path "" (empty string)
        * - val_model_path "" (empty string)
-       * - model_type false (bool)
+       * - model_type 0 (bool)
        * - device 0 (auto)
        */
       nn_param_struct() :
                       model_path()
                       , val_model_path() 
-                      , val_thresh(0)
+                      , val_thresh(0.0)
                       , val_steps(0)
-                      , val_forceconstant(0)
+                      , val_forceconstant(0.0)
                       , charge_model_path()
                       , charge_steps(0)
-                      , model_type(false) 
-                      , learning_type(1)
+                      , model_type(nn_model_type_burnn) 
+                      , learning_type(nn_learning_type_all)
                       , device(nn_device_auto) {}
         /**
          * Schnetpack model path
@@ -4050,13 +4081,11 @@ namespace simulation
         /**
          * nn model type
          */
-        bool model_type;
+        qmmm_nn_model_type_enum model_type;
         /**
          * nn learning type
-         * 1: model was learned on all atoms (QMZONE + BUFFERZONE)
-         * 2: model was learned by assigning energies only to the QMZONE atoms
          */
-        int learning_type;
+        qmmm_nn_learning_type_enum learning_type;
         /**
          * Device to run model on
          */

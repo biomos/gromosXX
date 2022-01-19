@@ -766,11 +766,19 @@ io::In_QMMM::read(topology::Topology& topo,
         std::string line(buffer[2]);
         _lineStream.clear();
         _lineStream.str(line);
-        bool model_type;
+        int model_type;
         int learning_type;
         _lineStream >> model_type >> learning_type;
-        sim.param().qmmm.nn.model_type = model_type;
-        sim.param().qmmm.nn.learning_type = learning_type;
+        if (model_type == 0) sim.param().qmmm.nn.model_type = simulation::nn_model_type_burnn;
+        else if (model_type == 1) sim.param().qmmm.nn.model_type = simulation::nn_model_type_standard;
+        else {
+          std::ostringstream msg;
+          msg << "NNMODEL block corrupt. Unknown option for model type - " << model_type;
+          io::messages.add(msg.str(), "In_QMMM", io::message::error);
+          return;
+        }
+        if (learning_type == 1) sim.param().qmmm.nn.learning_type = simulation::nn_learning_type_all;
+        else if (learning_type == 2) sim.param().qmmm.nn.learning_type = simulation::nn_learning_type_qmonly;
         if (_lineStream.fail()) {
           io::messages.add("bad line in NNMODEL block",
                 "In_QMMM", io::message::error);
@@ -854,24 +862,48 @@ io::In_QMMM::read(topology::Topology& topo,
   }
 
   // Cap length definition
-  if(topo.qmmm_link().size() > 0 ) {
-    _lineStream.clear();
-    buffer = m_block["CAPLEN"];
-    if (!buffer.size()) {
-      io::messages.add("no CAPLEN block in QM/MM specification file",
-              "In_QMMM", io::message::error);
-    }
-    else {
-      double caplen;
-      std::string line(*(buffer.begin() + 1));
+  { // CAPLEN
+    if(topo.qmmm_link().size() > 0 ) {
       _lineStream.clear();
-      _lineStream.str(line);
-      _lineStream >> caplen;
-      if (_lineStream.fail()) {
-        io::messages.add("bad line in CAPLEN block.",
-                          "In_QMMM", io::message::error);
+      buffer = m_block["CAPLEN"];
+      if (!buffer.size()) {
+        io::messages.add("no CAPLEN block in QM/MM specification file",
+                "In_QMMM", io::message::error);
+      }
+      else {
+        double caplen;
+        std::string line(*(buffer.begin() + 1));
+        _lineStream.clear();
+        _lineStream.str(line);
+        _lineStream >> caplen;
+        if (_lineStream.fail()) {
+          io::messages.add("bad line in CAPLEN block.",
+                            "In_QMMM", io::message::error);
+          return;
+          sim.param().qmmm.cap_length = caplen;
+        }
+      }
+    }
+  } // CAPLEN
+
+  // check if NN charge model is defined
+  if (sw == simulation::qm_nn
+        && sim.param().qmmm.qm_ch == simulation::qm_ch_dynamic
+        && sim.param().qmmm.nn.charge_model_path.empty()) {
+    io::messages.add("dynamic QM charge requested but no NN charge model specified",
+                "In_QMMM", io::message::error);
+  }
+
+  // allow learning_type == nn_learning_type_qmonly only for single-atom QM region
+  if (sw == simulation::qm_nn
+        && sim.param().qmmm.nn.learning_type == simulation::nn_learning_type_qmonly) {
+    size_t qm_size = 0;
+    for (unsigned i = 0; i < topo.num_atoms(); ++i) {
+      if (topo.is_qm(i)) ++qm_size;
+      if (qm_size > 1) {
+        io::messages.add("multi-atom QM region with learning type other than 1 is not implemented",
+                "In_QMMM", io::message::error);
         return;
-        sim.param().qmmm.cap_length = caplen;
       }
     }
   }

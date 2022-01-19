@@ -131,16 +131,17 @@ int interaction::NN_Worker::init(simulation::Simulation& sim) {
   }
 
   py::object ml_environment = py_modules["schnetpack"].attr("utils").attr("script_utils").attr("settings").attr("get_environment_provider")(ml_model_args, "device"_a=device);
+
   std::vector<int> mlmm_indices;
 
-  // this should be filled with all the atoms that are in the qm_zone, but not in the buffer zone.
-  // currently it is hardcoded to the first atom!! FIX
-  mlmm_indices.push_back(0);
-
   /** Initialize the ML calculator */
-  if(sim.param().qmmm.nn.learning_type==1){
+  if(sim.param().qmmm.nn.learning_type == simulation::nn_learning_type_all) {
     ml_calculator = py_modules["schnetpack"].attr("interfaces").attr("SpkCalculator")(ml_model, "energy"_a="energy", "forces"_a="forces", "device"_a=device, "environment_provider"_a=ml_environment);
-  } else if(sim.param().qmmm.nn.learning_type==2){
+  } else if(sim.param().qmmm.nn.learning_type == simulation::nn_learning_type_qmonly) {
+    // this should be filled with all the atoms that are in the qm_zone, but not in the buffer zone.
+    // currently it is supported only for one, the first atom
+    // for multi-atom QM region, the atoms should be ordered such that the QM atoms are always first in the list
+    mlmm_indices.push_back(0);
     ml_calculator = py_modules["schnetpack"].attr("interfaces").attr("SpkCalculator")(ml_model, "energy"_a="energy", "forces"_a="forces", "device"_a=device, "environment_provider"_a=ml_environment, "mlmm"_a=mlmm_indices);
   } else {
       std::ostringstream msg;
@@ -156,9 +157,9 @@ int interaction::NN_Worker::init(simulation::Simulation& sim) {
     if (py::bool_(val_model_args.attr("parallel"))) {
       val_model = val_model.attr("module");
     }
-    if(sim.param().qmmm.nn.learning_type==1){
+    if(sim.param().qmmm.nn.learning_type == simulation::nn_learning_type_all) {
       val_calculator = py_modules["schnetpack"].attr("interfaces").attr("SpkCalculator")(val_model, "energy"_a="energy", "forces"_a="forces", "device"_a=device, "environment_provider"_a=val_environment);
-    } else if(sim.param().qmmm.nn.learning_type==2){
+    } else if(sim.param().qmmm.nn.learning_type == simulation::nn_learning_type_qmonly) {
       val_calculator = py_modules["schnetpack"].attr("interfaces").attr("SpkCalculator")(val_model, "energy"_a="energy", "forces"_a="forces", "device"_a=device, "environment_provider"_a=val_environment, "mlmm"_a=mlmm_indices);
     } 
   }   
