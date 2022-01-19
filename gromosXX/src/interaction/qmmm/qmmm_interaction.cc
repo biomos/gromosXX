@@ -205,19 +205,19 @@ int interaction::QMMM_Interaction::calculate_interactions(topology::Topology& to
       /** If we are using buffer region, this region is treated as both QM and MM
        * We construct our system from 3 subsystems:
        * 1. Outer region (OR)
-       * 2. Buffer zone (BZ)
-       * 3. QM zone (QZ)
+       * 2. Buffer region (BR)
+       * 3. QM region (QR)
        * Now we treat the interactions as follows:
-       * OR energies - classical MM interactions (possible addition of delta(BZQZ - BZ) from calculation in electrostatic embedding)
-       * OR forces - classical MM interactions (possible addition of delta(BZQZ - BZ) from calculation in electrostatic embedding)
-       * BZ energies - classical MM interactions + delta(BZQZ - BZ)
-       * BZ forces - classical MM interactions + delta(BZQZ - BZ)
-       * QZ energies - delta(BZQZ - BZ) only
-       * QZ forces - delta(BZQZ - BZ) only
-       * Energy term delta(BZQZ - BZ) from the twin QM calculation contains inseparable energy contributions
+       * OR energies - classical MM interactions (possible addition of delta(BRQR - BR) from calculation in electrostatic embedding)
+       * OR forces - classical MM interactions (possible addition of delta(BRQR - BR) from calculation in electrostatic embedding)
+       * BR energies - classical MM interactions + delta(BRQR - BR)
+       * BR forces - classical MM interactions + delta(BRQR - BR)
+       * QR energies - delta(BRQR - BR) only
+       * QR forces - delta(BRQR - BR) only
+       * Energy term delta(BRQR - BR) from the twin QM calculation contains inseparable energy contributions
        * 
-       * Now we can get delta(BZQZ - BZ) from
-       * a) one evaluation of BZQZ with NN trained on deltas
+       * Now we can get delta(BRQR - BR) from
+       * a) one evaluation of BRQR with NN trained on deltas
        * b) from 2 QM or NN evaluations and calculating the difference here
        * 
        */
@@ -500,13 +500,6 @@ int interaction::QMMM_Interaction::init(topology::Topology& topo,
   DEBUG(15, "Removing bonded terms");
   this->remove_bonded_terms(topo, os, quiet);
 
-  // Remove relevant constraints from topo (only if requested by user)
-  // This had to be moved to In_QMMM, so the DOFs are calculated correctly
-  /*
-  if (!sim.param().qmmm.qm_constraint) {
-    //DEBUG(15, "Removing constraints");
-    //this->remove_constraints(topo, os, quiet);
-  }*/
   if (!quiet)
     os << "\n";
 
@@ -829,52 +822,6 @@ void interaction::QMMM_Interaction::remove_bonded_terms(
     } else ++d_it;
   }
 }
-/*
-void interaction::QMMM_Interaction::remove_constraints(
-                                topology::Topology& topo
-                              , std::ostream& os
-                              , bool quiet)
-  {
-  // Remove distance constraints between QM atoms
-  std::vector<topology::two_body_term_struct> & dist_constr = topo.solute().distance_constraints();
-  std::vector<topology::two_body_term_struct>::const_iterator it = dist_constr.begin();
-
-  // Counter for neat printing
-  unsigned count = 0;
-  if (!quiet) {
-    os << "\n\t\tdistance constraints:\n";
-  }
-  while (it != dist_constr.end()) {
-    const unsigned qm_count = topo.is_qm(it->i) + topo.is_qm(it->j);
-    bool erase = false;
-    switch(qm_count) {
-      case 0:
-        break;
-      case 1:
-        break;
-      case 2:
-        erase = true;
-        break;
-      default:
-        break;
-    }
-    if (erase) {
-      DEBUG(15, "Removing distance constraint: " << it->i << "-" << it->j);
-      it = dist_constr.erase(it);
-
-      // Neat printing
-      if (!quiet) {
-        if (count == 0) os << "\t\t";
-          os << (it->i + 1) << "-" << (it->j + 1) << " ";
-        if (++count == 8) {
-          os << "\n";
-          count = 0;
-        }
-      }
-    }
-    else ++it;
-  }
-}*/
 
 void interaction::QMMM_Interaction::modify_exclusions(
                                 topology::Topology& topo
