@@ -156,7 +156,9 @@ void interaction::QM_Zone::write(topology::Topology& topo,
           it = this->qm.begin(), to = this->qm.end(); it != to; ++it)
       {
       DEBUG(15, "Atom " << it->index << ", new charge: " << it->qm_charge);
-      topo.charge()(it->index) = it->qm_charge;
+      if (topo.is_qm(it->index)) {
+        topo.charge()(it->index) = it->qm_charge;
+      }
     }
     // Add capping atom charge to QM link atom
     for (std::set<QM_Link>::const_iterator
@@ -168,22 +170,25 @@ void interaction::QM_Zone::write(topology::Topology& topo,
     }
   }
 
-  // Write energies
-  conf.current().energies.qm_total = this->m_qm_energy;
-
-  // write ML delta charges - charges used only for the interactions between buffer and outer region
-  if (sim.param().qmmm.software == simulation::qm_nn
-      && !sim.param().qmmm.nn.charge_model_path.empty()
-      && sim.steps() % sim.param().qmmm.nn.charge_steps == 0) {
-    // First reset charges
+  // write separate charges for interaction between the buffer region and MM region
+  if (sim.param().qmmm.use_qm_buffer
+      && sim.param().qmmm.qm_ch == simulation::qm_ch_dynamic
+      && (sim.param().qmmm.software != simulation::qm_nn
+          || sim.steps() % sim.param().qmmm.nn.charge_steps == 0))
+    {
+    // First reset delta charges
     std::fill(topo.qm_delta_charge().begin(), topo.qm_delta_charge().end(), 0.0);
     // Fill with delta-charges
     for (std::set<QM_Atom>::const_iterator
-      it = this->qm.begin(), to = this->qm.end(); it != to; ++it)
-      {
+        it = this->qm.begin(), to = this->qm.end(); it != to; ++it) {
+      if (topo.is_adaptive_qm_buffer(it->index)) {
         topo.qm_delta_charge(it->index) = it->qm_charge - topo.charge(it->index);
+      }
     }
   }
+
+  // Write energies
+  conf.current().energies.qm_total = this->m_qm_energy;
 }
 
 int interaction::QM_Zone::get_qm_atoms(const topology::Topology& topo, 

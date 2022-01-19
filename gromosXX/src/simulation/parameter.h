@@ -449,6 +449,21 @@ namespace simulation
   };
   
   /**
+   * @enum charge_type_enum
+   * use standard MM charges or special charge of QM buffer atoms
+   */
+  enum charge_type_enum {
+    /**
+     * standard MM charge
+     */
+    mm_charge = 0, 
+    /**
+     * special charge calculation for QM buffer atoms
+     */
+    qm_buffer_charge = 1
+  };
+  
+  /**
    * @enum randomgenerator_enum
    * determines which random number generator is used
    */

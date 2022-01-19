@@ -365,6 +365,10 @@ namespace interaction
   protected:
     Nonbonded_Parameter * m_param;
     int m_charge_shape;
+  
+  private:
+    inline double charge_product(topology::Topology const & topo, 
+            unsigned i, unsigned j);
   };
 } // interaction
 

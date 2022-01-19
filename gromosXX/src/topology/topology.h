@@ -845,17 +845,12 @@ namespace topology
     /**
      * QM delta charge mutator
      */
-    double &qm_delta_charge(int i) { return m_qm_delta_charge[i]; }
+    double &qm_delta_charge(unsigned i) { return m_qm_delta_charge[i]; }
 
     /**
-     * using QM delta charge accessor
+     * QM delta charge accessor
      */
-    bool using_qm_delta_charge()const {return m_using_qm_delta_charge;}
-
-    /**
-     * using QM delta charge mutator
-     */
-    void using_qm_delta_charge(bool b) {m_using_qm_delta_charge = b;}
+    double qm_delta_charge(unsigned i) const { return m_qm_delta_charge[i]; }
 
     /**
      * QM atomic number accessor
@@ -2038,11 +2033,6 @@ namespace topology
      * QMMM LJ exceptions
      */
     std::vector<lj_exception_struct> m_qm_lj_exceptions;
-     
-     /**
-     * Topology contains QM delta-charges
-     */
-    bool m_using_qm_delta_charge;
 
   }; // topology
 

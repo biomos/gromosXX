@@ -99,6 +99,7 @@ void interaction::Nonbonded_Outerloop
   // WORKAROUND! See definition of _lj_crf_outerloop_fast
   if (t_interaction_spec::boundary_type == math::rectangular &&
       t_interaction_spec::interaction_func == simulation::lj_crf_func &&
+      t_interaction_spec::charge_type == simulation::mm_charge &&
       sim.param().innerloop.method != simulation::sla_cuda) {
     _lj_crf_outerloop_fast(topo, conf, sim, pairlist_solute, pairlist_solvent,
                         storage, longrange, timer, master);

@@ -69,8 +69,7 @@ m_sasa_higher_neighbour(),
 m_is_qm(0),
 m_is_qm_buffer(0),
 m_qm_delta_charge(0),
-m_qm_atomic_number(0),
-m_using_qm_delta_charge(false) {
+m_qm_atomic_number(0) {
   m_chargegroup.push_back(0);
   m_molecule.push_back(0);
   m_temperature_group.push_back(0);
