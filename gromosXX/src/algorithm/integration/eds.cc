@@ -161,11 +161,12 @@ int algorithm::EDS
             sim.param().eds.eir[is] = sim.param().eds.statefren[is] - sim.param().eds.statefren[0];
           }
           if (sim.param().eds.form == simulation::aeds_search_all){
-            // changing from mode 0 to mode 1 after csteps is reached; resetting current_csteps
+            // changing from mode 1 to mode 0 after csteps is reached; resetting current_csteps
             if (sim.param().eds.current_csteps == sim.param().eds.csteps){
               sim.param().eds.actual_csteps = double(sim.param().eds.csteps) - double(sim.param().eds.asteps);
               sim.param().eds.current_csteps = 0;
-              sim.param().eds.mode = 0;
+              //Not changing mode only a short emin emax and afterward only offset
+              //sim.param().eds.mode = 0;
             }
             else{
               sim.param().eds.current_csteps++;
