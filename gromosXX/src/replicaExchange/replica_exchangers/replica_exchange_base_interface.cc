@@ -252,6 +252,12 @@ int re::replica_exchange_base_interface::find_partner() const {
 
 //Execute Swapping
 void re::replica_exchange_base_interface::execute_swap(const unsigned int partnerReplicaID) {
+    
+    // Exchanging from old to current required
+    // to avoid sending previous conformation
+    replica->conf.exchange_state();
+    replica->calculateEnergies();
+
     DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":executeSwap:\t START");
     if (simulationID < partnerReplicaID) {
       send_coord(partnerReplicaID);
