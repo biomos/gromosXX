@@ -148,8 +148,9 @@ int algorithm::Shake::apply(topology::Topology & topo,
       std::cout << "SHAKE: exiting with error condition: E_SHAKE_FAILURE_SOLVENT "
               << "at step " << sim.steps() << std::endl;
       conf.special().shake_failure_occurred = true;
-      if (!sim.mpi || m_rank == 0)
+      if (!sim.mpi || m_rank == 0){
         m_timer.stop();
+      }
       return E_SHAKE_FAILURE_SOLVENT;
     }
   } else {
