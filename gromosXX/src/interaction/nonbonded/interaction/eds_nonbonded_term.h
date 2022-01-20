@@ -39,8 +39,8 @@ namespace interaction
                     double const alpha_lj,
 			        double const alpha_crf,
 			        double & force, double & e_nb,
-                    unsigned int eps = 0,
-                    const double coulomb_scaling = 1);
+                                unsigned int eps = 0,
+                                const double coulomb_scaling = 1);
 
     /**
      * calculate the reaction field force and energy of an atom pair.

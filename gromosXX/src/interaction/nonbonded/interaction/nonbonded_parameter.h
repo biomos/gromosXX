@@ -149,6 +149,10 @@ namespace interaction
      */
     std::vector< std::vector<lj_parameter_struct> > m_cg_parameter;
 
+    /**
+    * scaling factor for electrostatic 1,4-interactions
+    * e.g. used with Amber Forcefield
+    */
     double m_coulomb_scaling;
 
   };

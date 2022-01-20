@@ -91,7 +91,8 @@ inline void interaction::Eds_Nonbonded_Term
         const double &c6, const double &c12,
         const double &q,
         double const alpha_lj, double const alpha_crf,
-        double & force, double & e_nb, unsigned int eps, const double coulomb_scaling) {
+        double & force, double & e_nb, unsigned int eps,
+        const double coulomb_scaling) {
     DEBUG(14, "\t\tnonbonded term");
 
     double c126 = 0.0;

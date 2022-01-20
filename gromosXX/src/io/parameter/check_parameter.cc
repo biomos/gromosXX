@@ -3756,7 +3756,7 @@ int io::check_features(simulation::Simulation  &sim)
   fc.unlock("pairlist_gridcell", "pbc_c");
   fc.unlock("pairlist_gridcell", "pbc_t");
   fc.unlock("pairlist_gridcell", "perturbation");
-  //fc.unlock("pairlist_gridcell", "perturbation_scaling");
+  fc.unlock("pairlist_gridcell", "perturbation_scaling"); // candide: testing unlock
   fc.unlock("pairlist_gridcell", "slow_growth");
   fc.unlock("pairlist_gridcell", "individual_lambdas");
   fc.unlock("pairlist_gridcell", "bond");
@@ -4518,10 +4518,11 @@ int io::check_features(simulation::Simulation  &sim)
   fc.unlock("amber", "pbc_r");
   //fc.unlock("amber", "pbc_c");
   //fc.unlock("amber", "pbc_t");
-  //fc.unlock("amber", "perturbation");
-  //fc.unlock("amber", "perturbation_scaling");
+  fc.unlock("amber", "perturbation");
+  fc.unlock("amber", "perturbation_scaling");
   //fc.unlock("amber", "slow_growth");
   //fc.unlock("amber", "individual_lambdas");
+  fc.unlock("amber", "precalculate_lambdas");
   fc.unlock("amber", "bond");
   fc.unlock("amber", "angle");
   fc.unlock("amber", "dihedral");
@@ -4531,9 +4532,9 @@ int io::check_features(simulation::Simulation  &sim)
   fc.unlock("amber", "com_removal");
   fc.unlock("amber", "rf_excluded");
   fc.unlock("amber", "pairlist_standard");
-  //fc.unlock("amber", "pairlist_grid");
-  //fc.unlock("amber", "pairlist_gridcell");
-  //fc.unlock("amber", "cutoff_atomic");
+  fc.unlock("amber", "pairlist_grid");
+  fc.unlock("amber", "pairlist_gridcell");
+  fc.unlock("amber", "cutoff_atomic");
   fc.unlock("amber", "cutoff_cg");
   //fc.unlock("amber", "cg_martini");
   //fc.unlock("amber", "cg_gromos");

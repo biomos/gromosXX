@@ -4035,7 +4035,7 @@ namespace simulation
        */
       double coulomb_scaling;
     } amber;
-
+    
     /**
      A struct to mark parts of the code as "under development"
      */

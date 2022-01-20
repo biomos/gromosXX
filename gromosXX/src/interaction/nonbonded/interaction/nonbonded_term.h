@@ -37,8 +37,8 @@ namespace interaction
 			    double q,
 			    double & force, double & e_lj,
 			    double & e_crf,
-                unsigned int eps = 0, 
-                const double coulomb_scaling = 1);
+                            unsigned int eps = 0,
+                            const double coulomb_scaling = 1);
 
     /**
      * calculate the force and energy of an atom pair.

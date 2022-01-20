@@ -948,12 +948,12 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::one_four_interaction_in
 
       DEBUG(11, "\tlj-parameter cs6=" << lj.cs6 << " cs12=" << lj.cs12);
       DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));
-      DEBUG(11, "\t\tcoulomb scaling = " << m_param->get_coulomb_scaling());
+      DEBUG(11, "\tcoulomb scaling = " << m_param->get_coulomb_scaling());
 
       lj_crf_interaction(r, lj.cs6, lj.cs12,
               topo.charge()(i) *
               topo.charge()(j),
-              f, e_lj, e_crf, 0, 
+              f, e_lj, e_crf, 0,
               m_param->get_coulomb_scaling());
 
       DEBUG(10, "\t\tatomic virial");
