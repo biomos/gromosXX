@@ -75,12 +75,14 @@ int algorithm::Shake::apply(topology::Topology & topo,
         configuration::Configuration & conf,
         simulation::Simulation & sim) {
   DEBUG(7, "applying SHAKE");
-  if (!sim.mpi || m_rank == 0)
+  if (!sim.mpi || m_rank == 0){
     m_timer.start();
+  }
 
   int error = 0;
 
   // set the constraint force to zero
+  DEBUG(8, "SHAKE - Zero Forces");
   std::set<unsigned int>::const_iterator it = constrained_atoms().begin(),
           to = constrained_atoms().end();
   for (; it != to; ++it) {
@@ -91,10 +93,11 @@ int algorithm::Shake::apply(topology::Topology & topo,
   math::VArray & pos = conf.current().pos;
   if (sim.mpi) {
     // broadcast current and old coordinates and pos.
-
+    DEBUG(8, "SHAKE - BC - start");
     MPI_Bcast(&pos(0)(0), pos.size() * 3, MPI::DOUBLE, sim.mpiControl().masterID, sim.mpiControl().comm);
     MPI_Bcast(&conf.old().pos(0)(0), conf.old().pos.size() * 3, MPI::DOUBLE, sim.mpiControl().masterID, sim.mpiControl().comm);
     MPI_Bcast(&conf.current().box(0)(0), 9, MPI::DOUBLE, sim.mpiControl().masterID, sim.mpiControl().comm);
+    DEBUG(8, "SHAKE - BC - done");
 
     // set virial tensor and solute coordinates of slaves to zero
     if (m_rank) { // slave

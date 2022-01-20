@@ -380,13 +380,15 @@ void algorithm::M_Shake
 int algorithm::M_Shake::apply(topology::Topology & topo,
         configuration::Configuration & conf,
         simulation::Simulation & sim) {
-  DEBUG(7, "applying M_SHAKE");
-  if (!sim.mpi || m_rank == 0)
+  DEBUG(7, "applying M_SHAKE - START");
+  if (!sim.mpi || m_rank == 0){
     m_timer.start();
+  }
 
   int error = 0;
 
   // set the constraint force to zero
+  DEBUG(8, "\tset Zero F - START");
   const unsigned int num_atoms = topo.num_atoms();
   for(unsigned int i = topo.num_solute_atoms(); i < num_atoms; ++i) {
     conf.old().constraint_force(i) = 0.0;
@@ -411,6 +413,7 @@ int algorithm::M_Shake::apply(topology::Topology & topo,
   // shaken velocity:
   // stochastic dynamics, energy minimisation, analysis needs to shake without
   // velocity correction (once; it shakes twice...)
+  DEBUG(8, "\twe need to shake Velocity");
   if (!sim.param().stochastic.sd && !sim.param().minimise.ntem &&
           !sim.param().analyze.analyze) {
     const double dti = 1.0 / sim.time_step_size();
@@ -423,8 +426,9 @@ int algorithm::M_Shake::apply(topology::Topology & topo,
     }
   }
 
-  if (!sim.mpi || m_rank == 0)
+  if (!sim.mpi || m_rank == 0){
     m_timer.stop();
+  }
   // return success!
   return 0;
 

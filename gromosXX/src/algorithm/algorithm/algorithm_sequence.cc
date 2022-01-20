@@ -76,7 +76,7 @@ int algorithm::Algorithm_Sequence
       configuration::Configuration &conf,
       simulation::Simulation &sim)
 {
-  DEBUG(5, "Algorithm_Sequence: apply algorithm");
+  DEBUG(5, "Algorithm_Sequence: apply algorithm - START");
 
   for(Algorithm_Sequence::iterator 
 	it = begin(), to = end();
@@ -89,6 +89,7 @@ int algorithm::Algorithm_Sequence
       return ret;
     }
   }
+  DEBUG(5, "Algorithm_Sequence: apply algorithm - DONE");
   return 0;
 }
 
