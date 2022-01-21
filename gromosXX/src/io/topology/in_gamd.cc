@@ -123,7 +123,7 @@ io::In_GAMD::read(topology::Topology& topo,
             return;
         }
         DEBUG(1, "gamd groups" << numgroups);
-        if (agroup >= numgroups){
+        if (agroup > numgroups){
             std::ostringstream msg;
             msg << "GAMD atoms acceleration group out of range.";
             io::messages.add(msg.str(), "In_GAMD", io::message::error);

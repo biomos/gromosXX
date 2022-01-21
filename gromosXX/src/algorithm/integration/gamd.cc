@@ -99,6 +99,17 @@ int algorithm::GAMD
   if (sim.steps() > sim.param().gamd.equilibration){
       sim.param().gamd.stepsdone += 1;
       for (unsigned int gg = 1; gg < sim.param().gamd.igroups; gg++){
+          DEBUG(15, "GAMD KT " << sim.param().gamd.kT[gg]);
+          DEBUG(15, "GAMD KD " << sim.param().gamd.kD[gg]);
+          DEBUG(15, "GAMD ET " << sim.param().gamd.ET[gg]);
+          DEBUG(15, "GAMD ED " << sim.param().gamd.ED[gg]);
+          DEBUG(15, "GAMD VmaxT " << sim.param().gamd.VmaxT[gg]);
+          DEBUG(15, "GAMD VmaxD " << sim.param().gamd.VmaxD[gg]);
+          DEBUG(15, "GAMD VminT " << sim.param().gamd.VminT[gg]);
+          DEBUG(15, "GAMD VminD " << sim.param().gamd.VminD[gg]);
+          DEBUG(15, "GAMD VmeanD " << sim.param().gamd.VmeanD[gg]);
+          DEBUG(15, "GAMD VmeanT " << sim.param().gamd.VmeanT[gg]);
+          DEBUG(15, "GAMD steps " << sim.param().gamd.stepsdone);
           switch (sim.param().gamd.search){
             case simulation::cmd_search:
                 switch (sim.param().gamd.form)
@@ -246,9 +257,9 @@ int algorithm::GAMD
                   //if V < E apply boost
                   if (VET < 0){
                       prefactor_t = (sim.param().gamd.kT[gg] * VET);
-                      conf.current().energies.gamd_DV[gg] = prefactor_t * VET/2; // 
+                      conf.current().energies.gamd_DV[gg] = prefactor_t * VET/2; 
                       for (unsigned int atom=0; atom < num_atoms; atom++){
-                        conf.current().force(atom) += conf.special().gamd.total_force[gg](atom) * (prefactor_t);
+                          conf.current().force(atom) += conf.special().gamd.total_force[gg](atom) * (prefactor_t);
                         }// end loop over atoms
                         // to virial 
                       for (int a = 0; a < 3; ++a) {

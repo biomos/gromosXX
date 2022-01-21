@@ -274,6 +274,7 @@ int interaction::Nonbonded_Set
     const unsigned int nr_agroups = unsigned(sim.param().gamd.igroups);
     for (unsigned int igroup = 0; igroup < nr_agroups; ++igroup) {
       m_storage.energies.gamd_potential_total[igroup] += m_longrange_storage.energies.gamd_potential_total[igroup];
+      DEBUG(15, "Long range GAMD energys " << m_longrange_storage.energies.gamd_potential_total[igroup]);
       m_storage.force_gamd[igroup] += m_longrange_storage.force_gamd[igroup];
     }
   }

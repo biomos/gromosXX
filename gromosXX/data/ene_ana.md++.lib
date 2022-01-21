@@ -29,7 +29,9 @@ ENERTRJ
     subblock NONBONDED matrix_NUM_ENERGY_GROUPS 4
     subblock SPECIAL NUM_ENERGY_GROUPS 11
     size NUM_EDS_STATES
-    subblock EDS NUM_EDS_STATES 4 
+    subblock EDS NUM_EDS_STATES 4
+    size NUM_GAMD_GROUPS
+    subblock GAMD NUM_GAMD_GROUPS 5 
     size NUM_LAMBDAS
     subblock PRECALCLAM NUM_LAMBDAS 11
     subblock ABDIH 1 2
@@ -52,7 +54,7 @@ FRENERTRJ
     subblock TIME 2 1
   block FREEENERDERIVS03
     subblock RLAM 1 1
-    subblock FREEENER 43 1
+    subblock FREEENER 44 1
     size NUM_BATHS
     subblock FREEKINENER NUM_BATHS 3
     size NUM_ENERGY_GROUPS

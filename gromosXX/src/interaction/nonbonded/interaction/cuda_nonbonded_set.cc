@@ -278,6 +278,13 @@ void interaction::CUDA_Nonbonded_Set::cycle() {
     if (mygpu_id == 0)
       m_pairlist_alg.timer().stop("pairlist cuda");
   }
+  //ORIOL GAMD
+  // CUDA gamd asumes all waters belong to the same group!
+  unsigned int gamd_group = mytopo->gamd_accel_group(mytopo->num_solute_atoms());
+  std::vector<unsigned int> key = {gamd_group, gamd_group};
+  unsigned int igroup = mytopo->gamd_interaction_group(key);
+  DEBUG(8, "interaction group for the water (gamd) " << igroup);
+
 
   if (pairlist_update) {
     const int egroup = mytopo->atom_energy_group(mytopo->num_solute_atoms());
@@ -287,7 +294,7 @@ void interaction::CUDA_Nonbonded_Set::cycle() {
     // in case of LS only LJ are calculated
 
     if (mygpu_id == 0)
-      m_pairlist_alg.timer().start("longrange-cuda");
+    m_pairlist_alg.timer().start("longrange-cuda");
     double * For = &m_longrange_storage.force(mytopo->num_solute_atoms())(0);
     DEBUG(15, "mytopo->num_solute_atoms() = " << mytopo->num_solute_atoms());
     double * Vir = &m_longrange_storage.virial_tensor(0, 0);
@@ -324,13 +331,6 @@ void interaction::CUDA_Nonbonded_Set::cycle() {
 
   m_storage.force += m_longrange_storage.force;
 
-  //ORIOL GAMD
-  // CUDA gamd asumes all waters belong to the same group!
-  unsigned int gamd_group = mytopo->gamd_accel_group(mytopo->num_solute_atoms());
-  std::vector<unsigned int> key = {gamd_group, gamd_group};
-  unsigned int igroup = mytopo->gamd_interaction_group(key);
-  m_storage.force_gamd[igroup] += m_longrange_storage.force;
-
   // and long-range energies
   DEBUG(6, "\t(set) add long range energies");
   const unsigned int lj_e_size = unsigned(m_storage.energies.lj_energy.size());
@@ -341,17 +341,26 @@ void interaction::CUDA_Nonbonded_Set::cycle() {
               m_longrange_storage.energies.lj_energy[i][j];
       m_storage.energies.crf_energy[i][j] +=
               m_longrange_storage.energies.crf_energy[i][j];
-      m_storage.energies.gamd_potential_total[igroup] += m_longrange_storage.energies.lj_energy[i][j];
-      m_storage.energies.gamd_potential_total[igroup] += m_longrange_storage.energies.crf_energy[i][j];
     }
   }
-
+  //ORIOL GAMD add ernegies, forces
+  m_storage.force_gamd[igroup] += m_storage.force;
+  for (unsigned int i = 0; i < lj_e_size; ++i) {
+    for (unsigned int j = 0; j < lj_e_size; ++j) {
+      m_storage.energies.gamd_potential_total[igroup] +=
+              m_storage.energies.lj_energy[i][j];
+      m_storage.energies.gamd_potential_total[igroup] +=
+              m_storage.energies.crf_energy[i][j];
+    }
+  }
+   
   // add longrange virial
   if (mysim->param().pcouple.virial) {
     DEBUG(6, "\t(set) add long range virial");
 
     m_storage.virial_tensor += m_longrange_storage.virial_tensor;
-    m_storage.virial_tensor_gamd[igroup] += m_longrange_storage.virial_tensor;
+    // gamd virial
+    m_storage.virial_tensor_gamd[igroup] += m_storage.virial_tensor;
   }
 #endif
 }

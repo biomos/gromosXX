@@ -131,6 +131,8 @@ int interaction::Forcefield
     for (unsigned int group = 0; group < numaccelgroups; group++) {
       conf.special().gamd.dihe_force[group] = 0.0;
       conf.special().gamd.virial_tensor_dihe[group] = 0.0;
+      conf.special().gamd.total_force[group] = 0.0;
+      conf.special().gamd.virial_tensor[group] = 0.0;
     }
  }
  DEBUG(15, "Finished GAMD forcefield init");
