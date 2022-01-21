@@ -61,9 +61,6 @@ END
  * deltaF
  * deltaE = E(fullQM) - E(buffer)
  * deltaF = F(fullQM) - F(buffer)
- * 
- * 
- * 
  *
  * The block is read from the QM/MM specification file
  * (\@qmmm).

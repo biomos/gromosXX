@@ -1575,7 +1575,7 @@ void interaction::Nonbonded_Outerloop
   // broadcast posV to slaves. We only have to do this here at the very first step because
   // posV is also broadcasted at the end of every electric field iteration.
   if (sim.mpi && sim.steps() == 0) {
-    MPI::COMM_WORLD.Bcast(&conf.current().posV(0)(0), conf.current().posV.size() * 3, MPI::DOUBLE, 0);
+    MPI_Bcast(&conf.current().posV(0)(0), conf.current().posV.size() * 3, MPI::DOUBLE, sim.mpiControl().masterID, sim.mpiControl().comm);
   }
 #endif
 
@@ -1639,11 +1639,11 @@ void interaction::Nonbonded_Outerloop
       // variable to the longrange electric field on the master. The lr e field
       // is only needed on the master node
       if (rank) {
-        MPI::COMM_WORLD.Reduce(&storage_lr.electric_field(0)(0), NULL,
-                storage_lr.electric_field.size() * 3, MPI::DOUBLE, MPI::SUM, 0);
+        MPI_Reduce(&storage_lr.electric_field(0)(0), NULL,
+                storage_lr.electric_field.size() * 3, MPI::DOUBLE, MPI::SUM, sim.mpiControl().masterID, sim.mpiControl().comm);
       } else {
-        MPI::COMM_WORLD.Reduce(&storage_lr.electric_field(0)(0), &e_el_master(0)(0),
-                storage_lr.electric_field.size() * 3, MPI::DOUBLE, MPI::SUM, 0);
+        MPI_Reduce(&storage_lr.electric_field(0)(0), &e_el_master(0)(0),
+                storage_lr.electric_field.size() * 3, MPI::DOUBLE, MPI::SUM, sim.mpiControl().masterID, sim.mpiControl().comm);
         storage_lr.electric_field = e_el_master;
       }
     }
@@ -1699,9 +1699,9 @@ void interaction::Nonbonded_Outerloop
     // electric field
     if (sim.mpi) {
       if (rank) {
-        MPI::COMM_WORLD.Reduce(&e_el_new(0)(0), NULL, e_el_new.size() * 3, MPI::DOUBLE, MPI::SUM, 0);
+        MPI_Reduce(&e_el_new(0)(0), NULL, e_el_new.size() * 3, MPI::DOUBLE, MPI::SUM, sim.mpiControl().masterID, sim.mpiControl().comm);
       } else {
-        MPI::COMM_WORLD.Reduce(&e_el_new(0)(0), &e_el_master(0)(0), e_el_new.size() * 3, MPI::DOUBLE, MPI::SUM, 0);
+        MPI_Reduce(&e_el_new(0)(0), &e_el_master(0)(0), e_el_new.size() * 3, MPI::DOUBLE, MPI::SUM, sim.mpiControl().masterID, sim.mpiControl().comm);
         e_el_new = e_el_master;
       }
     }
@@ -1789,8 +1789,8 @@ void interaction::Nonbonded_Outerloop
     // broadcast the new posV and also the convergence criterium (minfield)
     // to the slaves. Otherwise they don't know when to stop.
     if (sim.mpi) {
-      MPI::COMM_WORLD.Bcast(&conf.current().posV(0)(0), conf.current().posV.size() * 3, MPI::DOUBLE, 0);
-      MPI::COMM_WORLD.Bcast(&minfield, 1, MPI::DOUBLE, 0);
+      MPI_Bcast(&conf.current().posV(0)(0), conf.current().posV.size() * 3, MPI::DOUBLE, sim.mpiControl().masterID, sim.mpiControl().comm);
+      MPI_Bcast(&minfield, 1, MPI::DOUBLE, sim.mpiControl().masterID, sim.mpiControl().comm);
     }
 #endif
 #ifdef OMP
@@ -2450,8 +2450,9 @@ void interaction::Nonbonded_Outerloop
         // now calculate A2 and the relative tolerance
 #ifdef XXMPI
         if (sim.mpi) {
-          const double my_term = term;
-          MPI::COMM_WORLD.Allreduce(&my_term, &term, 1, MPI::DOUBLE, MPI::SUM);
+          //TODO : CONTORL THAT CORRECT! bschroed
+          double my_term = term;
+          MPI_Allreduce(&my_term, &term, 1, MPI::DOUBLE, MPI::SUM, sim.mpiControl().comm);
         }
 #endif
 
@@ -2473,10 +2474,10 @@ void interaction::Nonbonded_Outerloop
         math::SymmetricMatrix sum_gammahat_part = sum_gammahat;
 
         if (rank) { // slave
-          MPI::COMM_WORLD.Reduce(&sum_gammahat_part(0), NULL, 6, MPI::DOUBLE, MPI::SUM, 0);
+          MPI_Reduce(&sum_gammahat_part(0), NULL, 6, MPI::DOUBLE, MPI::SUM, sim.mpiControl().masterID, sim.mpiControl().comm);
         } else { // master
-          MPI::COMM_WORLD.Reduce(&sum_gammahat_part(0), &sum_gammahat(0), 6,
-                  MPI::DOUBLE, MPI::SUM, 0);
+          MPI_Reduce(&sum_gammahat_part(0), &sum_gammahat(0), 6,
+                  MPI::DOUBLE, MPI::SUM, sim.mpiControl().masterID, sim.mpiControl().comm);
         }
       }
 #endif
@@ -2500,17 +2501,18 @@ void interaction::Nonbonded_Outerloop
           sim.param().nonbonded.ls_calculate_a2 == simulation::ls_a2t_exact_a2_numerical ||
           sim.param().nonbonded.ls_calculate_a2 == simulation::ls_a2t_ave_a2_numerical)) {
 
-    const double a2_part = conf.lattice_sum().a2_tilde;
+    //TODO: CONTROL THAT CORRECT bscrhoed
+    double a2_part = conf.lattice_sum().a2_tilde;
     math::SymmetricMatrix a2_deriv_part = conf.lattice_sum().a2_tilde_derivative;
 
-    if (rank) { // slave
-      MPI::COMM_WORLD.Reduce(&a2_part, NULL, 1, MPI::DOUBLE, MPI::SUM, 0);
-      MPI::COMM_WORLD.Reduce(&a2_deriv_part(0), NULL, 6, MPI::DOUBLE, MPI::SUM, 0);
+    if (rank) { // slave    \\TODO: WHY???? bschroed
+      MPI_Reduce(&a2_part, NULL, 1, MPI::DOUBLE, MPI::SUM, sim.mpiControl().masterID, sim.mpiControl().comm);
+      MPI_Reduce(&a2_deriv_part(0), NULL, 6, MPI::DOUBLE, MPI::SUM, sim.mpiControl().masterID, sim.mpiControl().comm);
     } else { // master
-      MPI::COMM_WORLD.Reduce(&a2_part, &conf.lattice_sum().a2_tilde, 1,
-              MPI::DOUBLE, MPI::SUM, 0);
-      MPI::COMM_WORLD.Reduce(&a2_deriv_part(0), &conf.lattice_sum().a2_tilde_derivative(0), 6,
-              MPI::DOUBLE, MPI::SUM, 0);
+      MPI_Reduce(&a2_part, &conf.lattice_sum().a2_tilde, 1,
+              MPI::DOUBLE, MPI::SUM, sim.mpiControl().masterID, sim.mpiControl().comm);
+      MPI_Reduce(&a2_deriv_part(0), &conf.lattice_sum().a2_tilde_derivative(0), 6,
+              MPI::DOUBLE, MPI::SUM, sim.mpiControl().masterID, sim.mpiControl().comm);
     }
   }
 #endif

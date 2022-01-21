@@ -175,7 +175,7 @@ t_interaction_spec, t_perturbation_details>
     // based on energy groups
     std::pair<int, int> energy_group_pair(topo.atom_energy_group(i),
             topo.atom_energy_group(j));
-
+    
     if (topo.energy_group_scaling().count(energy_group_pair)) {
 
       // YES, we do scale the interactions!
@@ -699,6 +699,11 @@ t_interaction_spec, t_perturbation_details>
     // check whether we need to do scaling
     std::pair<int, int> energy_group_pair(topo.atom_energy_group(i),
             topo.atom_energy_group(j));
+    
+    // The coulomb scaling factor corresponds to the scaling of 
+    // 1-4 interactions with the amber force field. It is not the 
+    // same as the "scaled" interaction this if checks for.
+    // note: if amber FF is used, both scaling are used.
 
     if (topo.energy_group_scaling().count(energy_group_pair)) {
 
@@ -711,8 +716,8 @@ t_interaction_spec, t_perturbation_details>
               topo.energy_group_scaling()[energy_group_pair].first,
               topo.energy_group_scaling()[energy_group_pair].second,
               f1, f6, f12,
-              e_lj, e_crf, de_lj, de_crf
-              );
+              e_lj, e_crf, de_lj, de_crf,
+              0, m_param->get_coulomb_scaling());
     } else {
       // no scaling
       lj_crf_soft_interaction
@@ -721,8 +726,8 @@ t_interaction_spec, t_perturbation_details>
               A_q, B_q,
               alpha_lj, alpha_crf,
               f1, f6, f12,
-              e_lj, e_crf, de_lj, de_crf
-              );
+              e_lj, e_crf, de_lj, de_crf, 
+              0, m_param->get_coulomb_scaling());
     }
 
     //--------------------------------------------------
@@ -764,8 +769,8 @@ t_interaction_spec, t_perturbation_details>
                 A_q, B_q,
                 alpha_lj, alpha_crf,
                 f1, f6, f12,
-                e_lj, e_crf, de_lj, de_crf
-                );
+                e_lj, e_crf, de_lj, de_crf,
+                0, m_param->get_coulomb_scaling());
 
         //---------------------------------------------------------
         //                     ANITA
@@ -796,7 +801,7 @@ t_interaction_spec, t_perturbation_details>
                 B_lj->cs6, B_lj->cs12, A_q, B_q, alpha_lj, alpha_crf,
                 A_e_lj,  B_e_lj, A_e_crf, B_e_crf,
                 A_de_lj, B_de_lj, A_de_crf, B_de_crf,
-                lam);
+                lam, 0, m_param->get_coulomb_scaling());
 
             DEBUG(8, "ANITA: perturbed one_four: precalculated energies for lambda " << lam
                    << "\n now starting storage");

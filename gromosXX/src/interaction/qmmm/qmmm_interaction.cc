@@ -1027,6 +1027,8 @@ int interaction::QMMM_Interaction::print_pairlist(const topology::Topology& topo
 
 void interaction::QMMM_Interaction::print_timing(std::ostream & os)
 {
-  m_timer.print(os);
-  m_worker->timer().print(os);
+  if (m_rank == 0) {
+    m_timer.print(os);
+    m_worker->timer().print(os);
+  }
 }

@@ -1,16 +1,18 @@
 /**
  * @file replica_data.h
  * contains replica_ata struct
+ * Modified June 18, 2021 - bschroed, srieder
  */
 
 #ifndef REPLICA_DATA_H
 #define	REPLICA_DATA_H
-namespace util
+namespace re
 {
+
   /**
    * @struct replica_data
    * contains all necessary data of a replica that is written to the output file.
-   * See util::replica.h for more information.
+   * See re::replica.h for more information.
    */
     struct replica_data
     {
@@ -28,11 +30,12 @@ namespace util
   /**
    * @struct replica_data
    * contains all necessary data of a replica that is written to the output file.
-   * See util::replica.h for more information.
+   * See re::replica.h for more information.
    */
     struct reeds_replica_data
     {
         unsigned int ID;
+        std::pair<int, int> pos_info;
         double T;
         double l;
         double dt;
@@ -43,7 +46,7 @@ namespace util
         double     epot_partner;
         double     probability;
 
-        simulation::Parameter::eds_struct eds_state;   
+        simulation::Parameter::eds_struct eds_state;
         std::vector<double> Vi; //SID for RE-EDS I want to give out all potential energies for each individual state in the repdat file. //todo_remove
     };
    /**
@@ -53,6 +56,7 @@ namespace util
     struct reeds_replica_stat_data
     {
         unsigned int ID;
+        std::pair<int, int> pos_info;
         double T;
         double s;
         double dt;
@@ -66,4 +70,3 @@ namespace util
 
 }
 #endif	/* REPLICA_DATA_H */
-
