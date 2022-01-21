@@ -5243,7 +5243,13 @@ void io::In_Parameter::read_QMMM(simulation::Parameter & param,
             param.qmmm.software = simulation::qm_gaussian;
             break;
         case 5:
+#ifdef HAVE_PYBIND11
             param.qmmm.software = simulation::qm_nn;
+#else
+            io::messages.add("QMMM block: Schnetpack NN interface is not available "
+                                "in your compilation. Use --enable-schnetpack for compiling.",
+                                "In_Parameter", io::message::error);
+#endif
             break;
         default:
             break;

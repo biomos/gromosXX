@@ -19,8 +19,11 @@
 #include "../../../util/debug.h"
 
 //#include "../../../math/periodicity.h"
-#include <pybind11/stl.h>
-#include <pybind11/pybind11.h>
+
+#ifdef HAVE_PYBIND11
+  #include <pybind11/stl.h>
+  #include <pybind11/pybind11.h>
+#endif
 
 // special interactions
 #include "qm_atom.h"
@@ -40,9 +43,9 @@
 #define MODULE interaction
 #define SUBMODULE qmmm
 
-
-namespace py = pybind11;
-using namespace py::literals;
+#ifdef HAVE_PYBIND11
+  using namespace py::literals;
+#endif
 
 interaction::NN_Worker::NN_Worker() : QM_Worker("NN Worker"),
                                       param(nullptr),
@@ -51,6 +54,7 @@ interaction::NN_Worker::NN_Worker() : QM_Worker("NN Worker"),
                                       val_calculator() {};
 
 int interaction::NN_Worker::init(simulation::Simulation& sim) {
+#ifdef HAVE_PYBIND11
   // Get a pointer to simulation parameters
   this->param = &(sim.param().qmmm.nn);
   QM_Worker::param = this->param;
@@ -184,6 +188,7 @@ int interaction::NN_Worker::init(simulation::Simulation& sim) {
     omp_set_num_threads(num_threads);
   #endif
 
+#endif
   return 0;
 }
 
@@ -192,6 +197,7 @@ interaction::NN_Worker::~NN_Worker() {}
 int interaction::NN_Worker::run_QM(topology::Topology& topo
                      , configuration::Configuration& conf
                      , simulation::Simulation& sim, interaction::QM_Zone & qm_zone) {
+#ifdef HAVE_PYBIND11
   // run NN interface
   // create the molecule object
   py::object molecule = py_modules["ase"].attr("Atoms")();
@@ -302,5 +308,6 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
     }
   }
 
+#endif
   return 0;
 }

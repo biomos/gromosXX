@@ -5,9 +5,18 @@
 #ifndef INCLUDED_NN_WORKER_H
 #define	INCLUDED_NN_WORKER_H
 
-#include <pybind11/embed.h>
-
-namespace py = pybind11;
+#ifdef HAVE_PYBIND11
+  #include <pybind11/embed.h>
+  namespace py = pybind11;
+  #define PY_SCOPED_INTERPRETER   py::scoped_interpreter
+  #define PY_MODULE_MAP           std::unordered_map<std::string, py::module>
+  #define PY_OBJECT               py::object
+#else
+  #define DUMMY_TYPE              char
+  #define PY_SCOPED_INTERPRETER   DUMMY_TYPE
+  #define PY_MODULE_MAP           DUMMY_TYPE
+  #define PY_OBJECT               DUMMY_TYPE
+#endif
 
 namespace interaction {
   /**
@@ -37,65 +46,36 @@ namespace interaction {
     simulation::Parameter::qmmm_struct::nn_param_struct* param;
 
     /**
-     * Interface to neural network
-     */
-    //interaction::NN_Interface * nn_interface;
-
-    /**
      * PyBind interpreter scope guard
      */
-    py::scoped_interpreter guard;
+    PY_SCOPED_INTERPRETER guard;
 
     /**
      * Python modules
      */
-    std::unordered_map<std::string, py::module> py_modules;
+    PY_MODULE_MAP py_modules;
 
     /**
      * ASE calculator
      */
-    py::object ml_calculator;
+    PY_OBJECT ml_calculator;
 
     /**
      * ASE calculator for validation
      */
-    py::object val_calculator;
+    PY_OBJECT val_calculator;
 
     /**
      * ASE calculator for charges
      */
-    py::object charge_calculator;
+    PY_OBJECT charge_calculator;
+
     /**
      * run the NN worker
      */
     int run_QM(topology::Topology& topo
                      , configuration::Configuration& conf
                      , simulation::Simulation& sim, interaction::QM_Zone & qm_zone);
-    
-    // int write_input(const topology::Topology& topo
-    //                       , const configuration::Configuration& conf
-    //                       , const simulation::Simulation& sim
-    //                       , const interaction::QM_Zone & qm_zone) {return 0;};
-    // /**
-    //  * Open input file for QM
-    //  */
-    // int open_input(std::ofstream & inputfile_stream, const std::string & input_file) {return 0;};
-    
-    // /**
-    //  * Call external QM program
-    //  */
-    // int system_call() {return 0;};
-    // /**
-    //  * read QM output files
-    //  */
-    // int read_output(topology::Topology& topo
-    //                       , configuration::Configuration& conf
-    //                       , simulation::Simulation& sim
-    //                       , interaction::QM_Zone & qm_zone) {return 0;};
-    // /**
-    //  * Open QM output file
-    //  */
-    // int open_output(std::ifstream & outputfile_stream, const std::string & output_file) {return 0;};
   };
 }
 
