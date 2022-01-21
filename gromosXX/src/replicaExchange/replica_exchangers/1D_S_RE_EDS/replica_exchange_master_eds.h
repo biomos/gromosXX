@@ -1,20 +1,17 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 
-/* 
+/*
  * File:   replica_exchange_master_eds.h
  * Author: bschroed
  *
  * Created on April 18, 2018, 3:20 PM
+ * Modified June 18, 2021 - bschroed, srieder
  */
-#include <util/replicaExchange/replica_exchange_master.h>
-#include <util/replicaExchange/replica_exchange_base_eds.h>
+
+#include <replicaExchange/replica_exchangers/replica_exchange_base_interface.h>
+#include <replicaExchange/replica_exchangers/replica_exchange_master_interface.h>
+#include <replicaExchange/replica_exchangers/1D_S_RE_EDS/replica_exchange_base_eds.h>
 
 //for the constructor
-#include <util/replicaExchange/replica_exchange_base.h>
 #include <stdheader.h>
 
 #include <algorithm/algorithm.h>
@@ -40,9 +37,9 @@
 #ifndef REPLICA_EXCHANGE_MASTER_EDS_H
 #define REPLICA_EXCHANGE_MASTER_EDS_H
 
-namespace util{
-    
-    class replica_exchange_master_eds :  public  replica_exchange_master, public  replica_exchange_base_eds  {
+namespace re{
+
+    class replica_exchange_master_eds :  public  replica_exchange_base_eds, public  replica_exchange_master_interface  {
     public:
         /**
          * constructor
@@ -54,12 +51,10 @@ namespace util{
          * @param repMap std::map<int,int>, maps replica IDs to nodes; needed for communication
          */
         replica_exchange_master_eds(io::Argument _args,
-                int cont,
-                int rank,
-                int _size,
-                int _numReplicas,
-                std::vector<int> repIDs,
-                std::map<ID_t, rank_t> & repMap);
+                                    unsigned int cont,
+                                    unsigned int globalThreeadID,
+                                    replica_graph_control & replicaGraphMPIControl,
+                                    simulation::MpiControl & replica_mpi_control);
 
         /**
          * @override
@@ -67,7 +62,7 @@ namespace util{
          */
         //void init();
         void receive_from_all_slaves() override;
-        
+
         void write() override;
 
         /**
@@ -80,30 +75,43 @@ namespace util{
          * destructor
          */
         ~replica_exchange_master_eds(){};
-        using util::replica_exchange_base_eds::replicas;
+        //using re::replica_exchange_base_eds::replicas;
         /**
          * Column Size for redpat out-floating point nums
          */
         int svalPrecision= 5;
         int potEPrecision = 2;
         int generalPrecision = 2;
-        
+
          /**
          * determines the digits needed to represent the smalles S-value in eds sim
          */
         int getSValPrecision(double minLambda);
-        
-        const simulation::Parameter::reeds_struct reedsParam;
-        std::vector<util::reeds_replica_data> replicaData;
-        int rank;
-        
+        /*
+        * global Parameters for replica exchange simulation
+        * int num_T;
+        * int num_l;
+        * std::vector<double> temperature;
+        * bool scale;
+        * std::vector<double> lambda;
+        * std::vector<double> dt;
+        * int trials;
+        * int equilibrate;
+        * int slave_runs;
+        * int write;
+        */
+        /**
+        * information of all replicas
+        */
+        std::vector<re::reeds_replica_data> replicaData;
+
+
         /**
          * functions, for initing the repout
          * @param repoutPath
          */
         //void init_repOut_stat_file(std::string repoutPath) override;
-        
+
     };
 }
 #endif /* REPLICA_EXCHANGE_MASTER_EDS_H */
-

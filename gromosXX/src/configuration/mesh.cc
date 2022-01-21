@@ -3,6 +3,11 @@
  * Mesh class
  */
 
+#ifdef XXMPI
+#include <mpi.h>
+#endif
+
+
 #include "../stdheader.h"
 #include "../configuration/mesh.h"
 #include "../util/error.h"
@@ -161,22 +166,25 @@ void GenericMesh<complex_type>::fft(GenericMesh<complex_type>::fft_type type) {
 template class GenericMesh<double>;
 template class GenericMesh<complex_number>;
 template class GenericMesh<math::SymmetricMatrix>;
+#ifdef XXMPI
+    ParallelMesh::ParallelMesh(unsigned int size, unsigned int arank, unsigned int acache_size, MPI_Comm comm) :
+          GenericMesh<complex_number>(), mesh_left(NULL), mesh_right(NULL), mesh_tmp(NULL),
+          num_threads(size), rank(arank), cache_size(acache_size), slice_width(0),
+          slice_end(0){
+            mpiComm = comm;
+            DEBUG(15, "Cache size: " << cache_size);
+    }
 
-ParallelMesh::ParallelMesh(unsigned int size, unsigned int arank, unsigned int acache_size) :
-      GenericMesh<complex_number>(), mesh_left(NULL), mesh_right(NULL), mesh_tmp(NULL),
-      num_threads(size), rank(arank), cache_size(acache_size), slice_width(0),
-      slice_end(0){
-        DEBUG(15, "Cache size: " << cache_size);
-}
-      
-ParallelMesh::ParallelMesh(unsigned int size, unsigned int arank, unsigned int acache_size,
-      unsigned int x, unsigned int y, unsigned int z) : GenericMesh<complex_number>(),
-      mesh_left(NULL), mesh_right(NULL), mesh_tmp(NULL),
-      num_threads(size), rank(arank), cache_size(acache_size), slice_width(0),
-      slice_start(0), slice_end(0) {
-  resize(x,y,z);
-}
-      
+    ParallelMesh::ParallelMesh(unsigned int size, unsigned int arank, unsigned int acache_size,
+          unsigned int x, unsigned int y, unsigned int z, MPI_Comm comm) : GenericMesh<complex_number>(),
+          mesh_left(NULL), mesh_right(NULL), mesh_tmp(NULL),
+          num_threads(size), rank(arank), cache_size(acache_size), slice_width(0),
+          slice_start(0), slice_end(0) {
+
+        mpiComm = comm;
+        resize(x,y,z);
+    }
+#endif
 ParallelMesh::~ParallelMesh() {
   // destory the plans
   if (plan_forward != NULL)
@@ -229,7 +237,7 @@ void ParallelMesh::resize(unsigned int x, unsigned int y, unsigned int z) {
   // local_n0: the width of the slice (along x)
   // local_0_start: the index (x) at which the slice starts
   ptrdiff_t local_alloc, local_n0, local_0_start;
-  local_alloc = FFTW3(mpi_local_size_3d(m_x, m_y, m_z, MPI::COMM_WORLD,
+  local_alloc = FFTW3(mpi_local_size_3d(m_x, m_y, m_z, mpiComm,
                                               &local_n0, &local_0_start));
   DEBUG(12,"local_n0: " << local_n0 << " local_0_start" << local_0_start);
   slice_width = local_n0;
@@ -254,14 +262,14 @@ void ParallelMesh::resize(unsigned int x, unsigned int y, unsigned int z) {
     FFTW3(destroy_plan(plan_forward));
   plan_forward = FFTW3(mpi_plan_dft_3d(m_x, m_y, m_z,
               reinterpret_cast<FFTW3(complex)*> (m_mesh), reinterpret_cast<FFTW3(complex)*> (m_mesh),
-              MPI::COMM_WORLD, FFTW_FORWARD, FFTW_ESTIMATE));
+              mpiComm, FFTW_FORWARD, FFTW_ESTIMATE));
   
   if (plan_backward != NULL)
     FFTW3(destroy_plan(plan_backward));
   
   plan_backward = FFTW3(mpi_plan_dft_3d(m_x, m_y, m_z,
               reinterpret_cast<FFTW3(complex)*> (m_mesh), reinterpret_cast<FFTW3(complex)*> (m_mesh),
-              MPI::COMM_WORLD, FFTW_BACKWARD, FFTW_ESTIMATE));
+              mpiComm, FFTW_BACKWARD, FFTW_ESTIMATE));
 #endif
 }
 
@@ -298,12 +306,14 @@ void ParallelMesh::get_neighbors() {
   }
   
   // send it to the left cpu (nonblocking)
-  MPI::Request r = MPI::COMM_WORLD.Isend(mesh_tmp, cache_volume * 2, MPI::DOUBLE, cpu_left, 0);
+  MPI_Request r;
+  MPI_Status x, i;
+  MPI_Isend(mesh_tmp, cache_volume * 2, MPI::DOUBLE, cpu_left, 0, mpiComm, &r);
   // receive the right cache (blocking)
-  MPI::COMM_WORLD.Recv(mesh_right, cache_volume * 2, MPI::DOUBLE, cpu_right, 0);
+  MPI_Recv(mesh_right, cache_volume * 2, MPI::DOUBLE, cpu_right, 0, mpiComm, &i);
   // wait before overwriting the mesh_tmp variable
-  r.Wait();
- 
+  MPI_Wait(&r, &x);
+  MPI_Request_free(&r);
   
   // create the cache for the right CPU
   for(unsigned int x = 0; x < cache_size; ++x) {
@@ -316,11 +326,13 @@ void ParallelMesh::get_neighbors() {
   }
  
   // send it to the right cpu (nonblocking)
-  r = MPI::COMM_WORLD.Isend(mesh_tmp, cache_volume * 2, MPI::DOUBLE, cpu_right, 1);
+  MPI_Isend(mesh_tmp, cache_volume * 2, MPI::DOUBLE, cpu_right, 1, mpiComm, &r);
   // receive the left cache (blocking)
-  MPI::COMM_WORLD.Recv(mesh_left, cache_volume * 2, MPI::DOUBLE, cpu_left, 1);
+  MPI_Recv(mesh_left, cache_volume * 2, MPI::DOUBLE, cpu_left, 1, mpiComm, &i);
   // wait before overwriting the mesh_tmp variable
-  r.Wait();  
+  MPI_Wait(&r, &x);
+  MPI_Request_free(&r);
+
 #endif
 }
 
@@ -329,16 +341,20 @@ void ParallelMesh::add_neighbors_caches() {
     return;
 #ifdef XXMPI
   const unsigned int cache_volume = cache_size * m_y * m_z;
+  MPI_Request r;
+  MPI_Status x, i;
   
   const unsigned int cpu_left = (rank + num_threads - 1) % num_threads;
   const unsigned int cpu_right = (rank + 1) % num_threads;
   
   // send the left cache to the left cpu (nonblocking)
-  MPI::Request r = MPI::COMM_WORLD.Isend(mesh_left, cache_volume * 2, MPI::DOUBLE, cpu_left, 2);
+  MPI_Isend(mesh_left, cache_volume * 2, MPI::DOUBLE, cpu_left, 2, mpiComm, &r);
   // receive the left cache from the right cpu (blocking)
-  MPI::COMM_WORLD.Recv(mesh_tmp, cache_volume * 2, MPI::DOUBLE, cpu_right, 2);
+  MPI_Recv(mesh_tmp, cache_volume * 2, MPI::DOUBLE, cpu_right, 2, mpiComm, &i);
   // wait before overwriting the mesh_tmp variable
-  r.Wait();
+  MPI_Wait(&r, &x);
+  MPI_Request_free(&r);
+
 
   // add the cache from the right cpu
   for(unsigned int x = 0; x < cache_size; ++x) {
@@ -350,12 +366,13 @@ void ParallelMesh::add_neighbors_caches() {
     }
   }
 
-  // send the right cache to the right cpu (nonblocking)
-  r = MPI::COMM_WORLD.Isend(mesh_right, cache_volume * 2, MPI::DOUBLE, cpu_right, 3);
+  // send the right cache to the right cpu (nonblocking)..
+  MPI_Isend(mesh_right, cache_volume * 2, MPI::DOUBLE, cpu_right, 3, mpiComm, &r);
   // receive the right cache from the left cpu (blocking)
-  MPI::COMM_WORLD.Recv(mesh_tmp, cache_volume * 2, MPI::DOUBLE, cpu_left, 3);
+  MPI_Recv(mesh_tmp, cache_volume * 2, MPI::DOUBLE, cpu_left, 3, mpiComm, &i);
   // wait before overwriting the mesh_tmp variable
-  r.Wait();
+  MPI_Wait(&r, &x);
+  MPI_Request_free(&r);
 
   // add the cache from the left cpu
   for(unsigned int x = 0; x < cache_size; ++x) {

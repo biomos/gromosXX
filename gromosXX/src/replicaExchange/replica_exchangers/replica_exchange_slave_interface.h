@@ -1,6 +1,7 @@
 /**
- * @file replica_exchange_slave.h
- * contains replica_exchange_slave class
+ * @file replica_exchange_slave_2d_l_T_HREMD.h
+ * contains replica_exchange_slave_2d_l_T_HREMD class
+ * Modified June 18, 2021 - bschroed, srieder
  */
 
 #include <stdheader.h>
@@ -25,24 +26,23 @@
 #include <unistd.h>
 
 #include <io/configuration/out_configuration.h>
-#include <util/replicaExchange/replica_exchange_base.h>
-#include <util/replicaExchange/repex_mpi.h>
-#include <util/replicaExchange/replica.h>
+#include <replicaExchange/replica_exchangers/replica_exchange_base_interface.h>
+#include <replicaExchange/replica/replica.h>
 
 #ifdef XXMPI
 #include <mpi.h>
 #endif
 
-#ifndef REPLICA_EXCHANGE_SLAVE_H
-#define	REPLICA_EXCHANGE_SLAVE_H
+#ifndef REPLICA_EXCHANGE_SLAVE_INTERFACE_H
+#define	REPLICA_EXCHANGE_SLAVE_INTERFACE_H
 
-namespace util {
+namespace re {
 
   /**
-   * @class replica_exchange_slave
+   * @class replica_exchange_slave_2d_l_T_HREMD
    * 
    */
-  class replica_exchange_slave : public virtual replica_exchange_base {
+  class replica_exchange_slave_interface : public virtual replica_exchange_base_interface {
   public:
     /**
      * constructor
@@ -51,26 +51,26 @@ namespace util {
      * @param repIDs std::vector<int>, IDs of replicas the instance has to manage
      * @param _repMap std::map<int,int>, maps replica IDs to nodes; needed for communication
      */
-    replica_exchange_slave(io::Argument & _args,
-            int cont,
-            int rank,
-            std::vector<int> repIDs,
-            std::map<ID_t, rank_t> & repMap);
+    replica_exchange_slave_interface(io::Argument & _args,
+            unsigned int cont,
+            unsigned int globalThreadID,
+            replica_graph_control &replicaGraphMPIControl,
+            simulation::MpiControl &replica_mpi_control);
     /**
      * destructor
      */
-    virtual ~replica_exchange_slave();
+    virtual ~replica_exchange_slave_interface();
     /**
      * sends information of all replicas to master
      */
     virtual void send_to_master() const;
+
   protected:
     /**
      * copy constructor
      * not allowed (yet)
      */
-    replica_exchange_slave(const replica_exchange_slave &);
-
+    replica_exchange_slave_interface(const replica_exchange_slave_interface &);
   };
 }
 #endif	/* REPLICA_EXCHANGE_SLAVE_H */

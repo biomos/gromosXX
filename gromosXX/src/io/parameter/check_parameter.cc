@@ -24,16 +24,19 @@
 #define SUBMODULE parameter
 
 
-int io::check_parameter(simulation::Simulation & sim){
+int io::check_parameter(simulation::Simulation &sim){
   int check1 = simple_crosschecks(sim);
   int check2 = check_features(sim);
-  if (check1 || check2)
+  if (check1 || check2){
     return -1;
-  else
+  }
+  else{
     return 0;
+  }
 }
 
 int io::simple_crosschecks(simulation::Simulation & sim) {
+
   const simulation::Parameter & param = sim.param();
 
   // no velocity writeout or generation with energy minimization
@@ -115,8 +118,8 @@ int io::simple_crosschecks(simulation::Simulation & sim) {
   }
 
   // EDS: make sure we simulate at a given temperature (unambiguous kT)
-    if (param.eds.eds && !param.multibath.couple) {
-        io::messages.add("EDS/AEDS block: EDS requires temperature coupling.",
+    if (param.eds.eds && !(param.multibath.couple || param.stochastic.sd)) {
+        io::messages.add("EDS/AEDS block: EDS requires temperature coupling or SD.",
                                "In_Parameter", io::message::error);
     }
 
@@ -124,7 +127,8 @@ int io::simple_crosschecks(simulation::Simulation & sim) {
     if (param.eds.eds){
       for (unsigned int i = 1; i < param.multibath.multibath.size(); i++) {
               if (param.multibath.multibath.bath(i).temperature !=
-                  param.multibath.multibath.bath(0).temperature) {
+                  param.multibath.multibath.bath(0).temperature) 
+              {
                   io::messages.add("EDS/AEDS block: all baths must have the same temperature.",
                                    "In_Parameter", io::message::error);
                   break;
@@ -213,7 +217,7 @@ int io::simple_crosschecks(simulation::Simulation & sim) {
     if (param.reeds.reeds && param.replica.num_l > 1 && !param.eds.eds )
         io::messages.add("REPLICA block: Hamiltonian replica exchange for RE-EDS, but eds is off.",
                          "In_Parameter", io::message::warning);
-  
+
     // extended TI input
     if (param.perturbation.perturbation == false && param.precalclam.nr_lambdas > 0)
       io::messages.add("PRECALCLAM cannot be on without perturbation",
@@ -276,7 +280,7 @@ int io::simple_crosschecks(simulation::Simulation & sim) {
     return 0;
 }
 
-int io::check_features(simulation::Simulation & sim)
+int io::check_features(simulation::Simulation  &sim)
 {
   const simulation::Parameter & param = sim.param();
   std::vector<util::Feature> features;
@@ -2496,7 +2500,7 @@ int io::check_features(simulation::Simulation & sim)
   //fc.unlock("eds", "multicell");
   //fc.unlock("eds", "analysis");
   //fc.unlock("eds", "no_integration");
-  //fc.unlock("eds", "stochdyn"); // test! probably works!
+  fc.unlock("eds", "stochdyn"); // test! probably works!
   //fc.unlock("eds", "multistep");
   //fc.unlock("eds", "multistep_boost");
   //fc.unlock("eds", "montecarlo");
@@ -4482,7 +4486,7 @@ int io::check_features(simulation::Simulation & sim)
   fc.unlock("conjugate_gradient", "random_gsl");
   // fc.unlock("conjugate_gradient", "eds");
   // fc.unlock("conjugate_gradient", "aeds");
-  fc.unlock("conjugate_gradient", "parallel_mpi");
+  // fc.unlock("conjugate_gradient", "parallel_mpi");
   fc.unlock("conjugate_gradient", "parallel_omp");
   fc.unlock("conjugate_gradient", "mult_energy_groups");
   fc.unlock("conjugate_gradient", "ewald");

@@ -1,20 +1,14 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 /* 
  * File:   replica_exchange_slave_eds.h
  * Author: bschroed
  *
  * Created on August 31, 2018, 10:43 AM
+ * Modified June 18, 2021 - bschroed, srieder
  */
 
-#include <util/replicaExchange/replica_exchange_base_eds.h>
-#include <util/replicaExchange/replica_exchange_slave.h>
+#include <replicaExchange/replica_exchangers/replica_exchange_slave_interface.h>
+#include <replicaExchange/replica_exchangers/1D_S_RE_EDS/replica_exchange_base_eds.h>
 //for the constructor
-#include <util/replicaExchange/replica_exchange_base.h>
 #include <stdheader.h>
 
 #include <algorithm/algorithm.h>
@@ -39,31 +33,28 @@
 #ifndef REPLICA_EXCHANGE_SLAVE_EDS_H
 #define REPLICA_EXCHANGE_SLAVE_EDS_H
 
-namespace util{
-    class replica_exchange_slave_eds: public replica_exchange_base_eds, public replica_exchange_slave {
+namespace re{
+    class replica_exchange_slave_eds: public replica_exchange_base_eds, public replica_exchange_slave_interface {
     public:
         replica_exchange_slave_eds(io::Argument & _args,
-                int cont,
-                int rank,
-                std::vector<int> repIDs,
-                std::map<ID_t, rank_t> & repMap);
+                unsigned int cont,
+                unsigned int globalThreadID,
+                replica_graph_control & replicaGraphMPIControl,
+                simulation::MpiControl & replica_mpi_control);
         /**
         * sends information of all replicas to master
         */
         void send_to_master() const override;
 
     private:
-        using replica_exchange_base_eds::replicas;
-        using replica_exchange_base_eds::numReplicas;
-
         //replica_exchange_slave_eds(const replica_exchange_slave_eds& orig);
         virtual ~replica_exchange_slave_eds(){};
 
         //give all information of this node to Master.
         replica_exchange_slave_eds(const replica_exchange_slave_eds& orig); //Todo: Messy method, bschroed
         
-        const simulation::Parameter::reeds_struct& reedsParam;
-    };
+        
+            };
 }
 #endif /* REPLICA_EXCHANGE_SLAVE_EDS_H */
 

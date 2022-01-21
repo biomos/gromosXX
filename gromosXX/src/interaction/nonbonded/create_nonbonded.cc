@@ -35,8 +35,6 @@
 #include "../../interaction/nonbonded/interaction/mpi_nonbonded_master.h"
 #include "../../interaction/nonbonded/interaction/mpi_nonbonded_slave.h"
 
-#include "../../interaction/qmmm/qmmm_interaction.h"
-
 #include "../../io/ifp.h"
 
 #include "../../interaction/nonbonded/create_nonbonded.h"
@@ -193,14 +191,14 @@ int interaction::create_g96_nonbonded
   Nonbonded_Interaction * ni;
 
   if (sim.mpi){
-    int rank = MPI::COMM_WORLD.Get_rank();
-    if (rank == 0)
+    if (sim.mpiControl().threadID == sim.mpiControl().masterID)
       ni = new MPI_Nonbonded_Master(pa);
     else
       ni = new MPI_Nonbonded_Slave(pa);
   }
-  else
+  else{
     ni = new Nonbonded_Interaction(pa);
+  }
 #else
   Nonbonded_Interaction * ni = new Nonbonded_Interaction(pa);
 #endif

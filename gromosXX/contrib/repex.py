@@ -76,8 +76,8 @@ def write_ts(ID1, T01, ID2, T02, E1, E2, p, s):
     # ID2 ID of second replica
     # T01 current temperature of first replica
     # T02 current temperature of second replica
-    # E1  current potential energy of first replica
-    # E2  current potential energy of second replica
+    # E1  current potentials energy of first replica
+    # E2  current potentials energy of second replica
     # p   exchange probability
     # s   0 / 1 : replicas exchanged?
     #
@@ -256,7 +256,7 @@ def repex(r1, r2, run):
     shutil.copy(path1 + name + ".in", t1)
     shutil.copy(path2 + name + ".in", t2)
 
-    # append the REPLICA blocks with reference temperatures
+    # append the REPLICA _blocks with reference temperatures
     f1 = open(t1, "a")
     f2 = open(t2, "a")
 

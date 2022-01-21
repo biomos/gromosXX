@@ -1,5 +1,6 @@
 /**
- * @file replica_exchange_master.h
+ * @file replica_exchange_master_2d_l_T_HREMD.h
+ * Modified June 18, 2021 - bschroed, srieder
  */
 
 #include <stdheader.h>
@@ -24,25 +25,26 @@
 #include <unistd.h>
 
 #include <io/configuration/out_configuration.h>
-#include <util/replicaExchange/repex_mpi.h>
-#include <util/replicaExchange/replica_exchange_base.h>
-#include <util/replicaExchange/replica.h>
-#include <util/replicaExchange/replica_data.h>
+#include <replicaExchange/repex_mpi.h>
+#include <replicaExchange/replica/replica.h>
+#include <replicaExchange/replica_data.h>
+#include <replicaExchange/replica_exchangers/replica_exchange_base_interface.h>
+
 
 #ifdef XXMPI
 #include <mpi.h>
 #endif
 
-#ifndef REPLICA_EXCHANGE_MASTER_H
-#define	REPLICA_EXCHANGE_MASTER_H
+#ifndef REPLICA_EXCHANGE_MASTER_INTERFACE_H
+#define	REPLICA_EXCHANGE_MASTER_INTERFACE_H
 
-namespace util {
+namespace re {
 
   /**
-   * @class replica_exchange_master
-   * Additionally to replica_exchange_base: receives and writes data to file.
+   * @class replica_exchange_master_2d_l_T_HREMD
+   * Additionally to replica_exchange_base_2d_l_T_HREMD: receives and writes data to file.
    */
-  class replica_exchange_master : public virtual replica_exchange_base {
+  class replica_exchange_master_interface : public virtual replica_exchange_base_interface {
   public:
     /**
      * constructor
@@ -53,17 +55,17 @@ namespace util {
      * @param repIDs std::vector<int>, IDs of replicas the instance has to manage
      * @param repMap std::map<int,int>, maps replica IDs to nodes; needed for communication
      */
-    replica_exchange_master(io::Argument & args,
-            int cont,
-            int rank,
-            int _size,
-            int _numReplicas,
-            std::vector<int> repIDs,
-            std::map<ID_t, rank_t> & repMap);
+    replica_exchange_master_interface(io::Argument & args,
+            unsigned int cont,
+            unsigned int globalThreadID,
+            replica_graph_control &replicaGraphMPIControl,
+            simulation::MpiControl &replica_mpi_control);
     /**
-     * destructor
+     * Destructor
      */
-    virtual ~replica_exchange_master();
+    virtual ~replica_exchange_master_interface();
+
+    //Simulation functions
     /**
      * receives all information written to output file from the slaves
      */
@@ -72,29 +74,18 @@ namespace util {
      * writes data to output file \@repdat
      */
     virtual void write();
-    
- 
+
+
     virtual void init_repOut_stat_file();
-    
+
   protected:
-    /**
-     * output file Path for repdat output file
-     */
-    std::string repdatName;
+
 
     /**
      * output file stream for repdat output file
      */
     std::ofstream repOut;
-    
-    /**
-     *  comm world size; number of processors available
-     */
-    const unsigned int size;
-    /**
-     * total number of replicas in system
-     */
-    const unsigned int numReplicas;
+
     /*
      * global Parameters for replica exchange simulation
      * int num_T;
@@ -113,11 +104,17 @@ namespace util {
     /**
      * information of all replicas
      */
-    std::vector<util::replica_data> replicaData;
-    
+    std::vector<re::replica_data> replicaData;
+    /**
+     * keeps track of the position of the coordIDs in each trial
+     */
+    std::vector<int> coordIDPositionsVector;
+    /**
+     * output file Path for repdat output file
+     */
+    std::string repdatName;
     //virtual void init_repOut_stat_file(std::string repoutPath);
 
   };
 }
 #endif	/* REPLICA_EXCHANGE_MASTER_H */
-

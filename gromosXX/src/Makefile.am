@@ -4,7 +4,7 @@ if WITH_CUDA
   CUKERNEL = cukernel
 endif
 
-SUBDIRS = $(CUKERNEL) util simulation math topology configuration algorithm interaction io check .
+SUBDIRS = $(CUKERNEL) util simulation math topology configuration algorithm interaction io check replicaExchange .
 
 noinst_HEADERS = stdheader.h
 
@@ -20,6 +20,7 @@ libmdpp_la_LIBADD = algorithm/libgroalgorithm.la\
 	math/libgromath.la\
 	simulation/libgrosimulation.la\
 	topology/libgrotopology.la\
+    replicaExchange/libgrorepex.la\
 	util/libgroutil.la\
 	io/libgroio.la\
 	$(GSL_LIBS)\

@@ -36,7 +36,7 @@ namespace interaction
     void eds_lj_crf_interaction(const double dist2, const double dist6, 
 			        const double &c6, const double &c12,
 			        const double &q,
-                                double const alpha_lj,
+                    double const alpha_lj,
 			        double const alpha_crf,
 			        double & force, double & e_nb,
                                 unsigned int eps = 0,

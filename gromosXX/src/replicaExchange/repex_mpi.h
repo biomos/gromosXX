@@ -1,6 +1,7 @@
 /**
  * @file repex_mpi.h
- * some definitions for MPI communication
+ * some definitions for MPI communication - types etc.
+ * Modified June 18, 2021 - bschroed, srieder
  */
 
 #ifndef REPEX_MPI_H
@@ -16,30 +17,24 @@
 #define EXTERN extern
 #endif
 
-#include <util/replicaExchange/replica.h>
-#include <util/replicaExchange/replica_reeds.h>
-
 /*
  * define some MPI datatypes
  */
 //  EXTERN MPI_Datatype MPI_INITVAL;
 #ifdef XXMPI
-EXTERN MPI_Datatype MPI_VARRAY;
-EXTERN MPI_Datatype MPI_CONFINFO;
-EXTERN MPI_Datatype MPI_BOX;
-EXTERN MPI_Datatype MPI_REPINFO;
-EXTERN MPI_Datatype MPI_EDSINFO;
+    EXTERN MPI_Datatype MPI_VARRAY;
+    EXTERN MPI_Datatype MPI_CONFINFO;
+    EXTERN MPI_Datatype MPI_BOX;
+    EXTERN MPI_Datatype MPI_REPINFO;
+    EXTERN MPI_Datatype MPI_EDSINFO;
 #endif
 
-/*
- * define message tags for MPI communication
- */
+
 enum {
-  INIT, CONF, POS, POSV, VEL, LATTSHIFTS, STOCHINT, BOX, ANGLES, DF, ENERGIES, SWITCHENERGIES, SENDCOORDS, REPINFO, EDSINFO
+  INIT, CONF, POS, POSV, VEL, LATTSHIFTS, STOCHINT, BOX, ANGLES, DF, ENERGIES, SWITCHENERGIES, SENDCOORDS, REPINFO, EDSINFO,
 };
 
-namespace util {
-
+namespace re {
   /**
    * @struct repInfo
    * holds the information that is sent to master after MD run
@@ -52,6 +47,7 @@ namespace util {
     double epot_partner;
     double probability;
   };
+
 }
 
 /**
@@ -66,4 +62,3 @@ typedef unsigned int ID_t;
 typedef unsigned int rank_t;
 
 #endif	/* REPEX_MPI_H */
-
