@@ -1,4 +1,3 @@
-
 /**
  * @file eds.cc
  * contains the implementation
@@ -287,6 +286,7 @@ int algorithm::EDS
               //only needed if emin/emax and the offset search should have different amount of steps
               //sim.param().eds.actual_csteps = double(sim.param().eds.csteps) - double(sim.param().eds.asteps);
               sim.param().eds.current_csteps = 0;
+              DEBUG(1, "changing mode in search run");
               sim.param().eds.mode = 1;
             }
             else{
