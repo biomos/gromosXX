@@ -252,11 +252,11 @@ int algorithm::EDS
           }
           if ((sim.param().eds.emax - globminavg) <= bmax) {
             sim.param().eds.emin = sim.param().eds.emax;
-            DEBUG(7, "emin1 " << sim.param().eds.emin);
+            DEBUG(1, "emin1 " << sim.param().eds.emin);
           }
           else {
             sim.param().eds.emin = 2.0 * (globminavg + bmax) - sim.param().eds.emax;
-            DEBUG(7, "emin2 " << sim.param().eds.emin);
+            DEBUG(1, "emin2 " << sim.param().eds.emin);
             DEBUG(7, "emin2 " << globminavg);
             if (sim.param().eds.emin < globminavg) {
               sim.param().eds.emin = (-sim.param().eds.emax * sim.param().eds.emax
