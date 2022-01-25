@@ -469,9 +469,9 @@ dnl allow for schnetpack
 AC_DEFUN([AM_WITH_SCHNETPACK],[
   AC_ARG_VAR(PYTHON,
     [python interpreter path])
-  AC_ARG_VAR(PB11FLAGS,
+  AC_ARG_VAR(PYFLAGS,
       [pybind11-related C preprocessor flags])
-  AC_ARG_VAR(PB11LDFLAGS,
+  AC_ARG_VAR(PYLDFLAGS,
       [pybind11-related linker flag])
       
   AC_ARG_ENABLE(schnetpack,
@@ -479,16 +479,18 @@ AC_DEFUN([AM_WITH_SCHNETPACK],[
               [enable schnetpack support using pybind11])],
       [
         dnl set default values
-        : ${PYTHON="python"}
-        : ${PB11FLAGS="$(${PYTHON} -m pybind11 --includes)"}
-        : ${PB11LDFLAGS="$(${PYTHON}-config --ldflags)"}
+        : ${PYTHON="python3"}
+        : ${PYFLAGS="$(${PYTHON} -m pybind11 --includes)"}
+        dnl for Python <3.8:
+        : ${PYLDFLAGS="$(${PYTHON}-config --ldflags)"}
+        dnl for Python >=3.8 : ${PYLDFLAGS="$(${PYTHON}-config --ldflags --embed)"}
         AC_MSG_CHECKING([for pybind11])
         working_pb11=no
         cat>conftest.cc<<EOF
         #include <pybind11/embed.h>
         int main() { pybind11::scoped_interpreter g; }
 EOF
-        if ${CXX} ${MY_CXXFLAGS} ${PB11FLAGS} conftest.cc -o conftest.o ${PB11LDFLAGS} && test -f conftest.o; then
+        if ${CXX} ${MY_CXXFLAGS} ${PYFLAGS} conftest.cc -o conftest.o ${PYLDFLAGS} && test -f conftest.o; then
           working_pb11=yes
         fi
         rm -f conftest.cc conftest.o
