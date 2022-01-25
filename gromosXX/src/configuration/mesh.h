@@ -7,6 +7,10 @@
 #define	INCLUDED_MESH_H
 #include "../math/fft.h"
 
+#ifdef XXMPI
+#include <mpi.h>
+#endif
+
 #undef MODULE
 #undef SUBMODULE
 #define MODULE configuration
@@ -209,15 +213,19 @@ namespace configuration{
    */
   class ParallelMesh : public GenericMesh<complex_number> {
   public:
+#ifdef XXMPI
     /**
      * constructor
      */
-    ParallelMesh(unsigned int size, unsigned int arank, unsigned int acache_size);
+    ParallelMesh(unsigned int size, unsigned int arank, unsigned int acache_size, MPI_Comm comm);
     /**
      * another constructor
      */
     ParallelMesh(unsigned int size, unsigned int arank, unsigned int acache_size,
-            unsigned int x, unsigned int y, unsigned int z);
+            unsigned int x, unsigned int y, unsigned int z, MPI_Comm comm);
+#endif
+    ParallelMesh();
+    
     /**
      * resize the mesh
      */
@@ -338,6 +346,13 @@ namespace configuration{
      * half of the box length along x
      */
     int m_x2;
+    
+#ifdef XXMPI
+    /*
+     * MPI Communicator
+     */
+    MPI_Comm mpiComm;
+#endif
   };
 }
 #endif	/* INCLUDED_MESH_H */

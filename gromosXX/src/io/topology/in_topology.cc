@@ -317,8 +317,8 @@ void io::In_Topology::read(topology::Topology& topo,
     os << "\n\t\tadding " << param.system.nsm
           << " solvents.";
 
-  // if (param.system.nsm)
-  topo.solvate(0, param.system.nsm);
+  if (param.system.nsm)
+    topo.solvate(0, param.system.nsm);
 
   if (!quiet)
     os << "\n\tEND\n";

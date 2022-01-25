@@ -278,7 +278,7 @@ void interaction::Perturbed_Nonbonded_Outerloop
   // broadcast posV to slaves. We only have to do this here at the very first step because
   // posV is also broadcasted at the end of every electric field iteration.
   if (sim.mpi && sim.steps() == 0) {
-    MPI::COMM_WORLD.Bcast(&conf.current().posV(0)(0), conf.current().posV.size() * 3, MPI::DOUBLE, 0);
+    MPI_Bcast(&conf.current().posV(0)(0), conf.current().posV.size() * 3, MPI::DOUBLE, sim.mpiControl().masterID, sim.mpiControl().comm);
   }
 #endif
 
@@ -336,11 +336,11 @@ void interaction::Perturbed_Nonbonded_Outerloop
       // variable to the longrange electric field on the master. The lr e field
       // is only needed on the master node
       if (rank) {
-        MPI::COMM_WORLD.Reduce(&storage_lr.electric_field(0)(0), NULL,
-                             storage_lr.electric_field.size() * 3, MPI::DOUBLE, MPI::SUM, 0);
+        MPI_Reduce(&storage_lr.electric_field(0)(0), NULL,
+                             storage_lr.electric_field.size() * 3, MPI::DOUBLE, MPI::SUM, sim.mpiControl().masterID, sim.mpiControl().comm);
       } else {
-        MPI::COMM_WORLD.Reduce(&storage_lr.electric_field(0)(0), &e_el_master(0)(0),
-                             storage_lr.electric_field.size() * 3, MPI::DOUBLE, MPI::SUM, 0);
+        MPI_Reduce(&storage_lr.electric_field(0)(0), &e_el_master(0)(0),
+                             storage_lr.electric_field.size() * 3, MPI::DOUBLE, MPI::SUM, sim.mpiControl().masterID, sim.mpiControl().comm);
         storage_lr.electric_field = e_el_master;
       }
     }
@@ -411,9 +411,9 @@ void interaction::Perturbed_Nonbonded_Outerloop
     // electric field
     if (sim.mpi) {
       if (rank) {
-        MPI::COMM_WORLD.Reduce(&e_el_new(0)(0), NULL, e_el_new.size() * 3, MPI::DOUBLE, MPI::SUM, 0);
+        MPI_Reduce(&e_el_new(0)(0), NULL, e_el_new.size() * 3, MPI::DOUBLE, MPI::SUM, sim.mpiControl().masterID, sim.mpiControl().comm);
       } else {
-        MPI::COMM_WORLD.Reduce(&e_el_new(0)(0), &e_el_master(0)(0), e_el_new.size() * 3, MPI::DOUBLE, MPI::SUM, 0);
+        MPI_Reduce(&e_el_new(0)(0), &e_el_master(0)(0), e_el_new.size() * 3, MPI::DOUBLE, MPI::SUM, sim.mpiControl().masterID, sim.mpiControl().comm);
         e_el_new = e_el_master;
       }
     }
@@ -486,8 +486,8 @@ void interaction::Perturbed_Nonbonded_Outerloop
     // broadcast the new posV and also the convergence criterium (minfield)
     // to the slaves. Otherwise they don't know when to stop.
     if (sim.mpi) {
-      MPI::COMM_WORLD.Bcast(&conf.current().posV(0)(0), conf.current().posV.size() * 3, MPI::DOUBLE, 0);
-      MPI::COMM_WORLD.Bcast(&minfield, 1, MPI::DOUBLE, 0);
+      MPI_Bcast(&conf.current().posV(0)(0), conf.current().posV.size() * 3, MPI::DOUBLE, sim.mpiControl().masterID, sim.mpiControl().comm);
+      MPI_Bcast(&minfield, 1, MPI::DOUBLE, sim.mpiControl().masterID, sim.mpiControl().comm);
     }
 #endif
     DEBUG(11, "\trank: " << rank << " minfield: "<<minfield<<" iteration round: "<<turni);

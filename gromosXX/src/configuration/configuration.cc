@@ -160,6 +160,9 @@ configuration::Configuration::Configuration
   special().distancefield.energy = conf.special().distancefield.energy;
   special().distancefield.energy_deriv = conf.special().distancefield.energy_deriv;
   
+  special().angleres.energy = conf.special().angleres.energy;
+  special().angleres.d = conf.special().angleres.d;
+
   special().dihedralres.energy = conf.special().dihedralres.energy;
   special().dihedralres.d = conf.special().dihedralres.d;
   
@@ -280,6 +283,9 @@ configuration::Configuration & configuration::Configuration::operator=
   special().distancefield.dist = conf.special().distancefield.dist;
   special().distancefield.energy = conf.special().distancefield.energy;
   special().distancefield.energy_deriv = conf.special().distancefield.energy_deriv;
+  
+  special().angleres.energy = conf.special().angleres.energy;
+  special().angleres.d = conf.special().angleres.d;
   
   special().dihedralres.energy = conf.special().dihedralres.energy;
   special().dihedralres.d = conf.special().dihedralres.d;
@@ -546,20 +552,22 @@ void configuration::Configuration::lattice_sum_struct::init(topology::Topology c
 
 #ifdef XXMPI
     if (sim.mpi) {
-      int rank = MPI::COMM_WORLD.Get_rank();
-      int num_threads = MPI::COMM_WORLD.Get_size();
+      int rank = sim.mpiControl().threadID;
+      int num_threads = sim.mpiControl().numberOfThreads;
+      MPI_Comm com = sim.mpiControl().comm;
+      
       const int cache_size = std::max(param.nonbonded.p3m_charge_assignment - 1,
               param.nonbonded.p3m_finite_differences_operator);
       
-      charge_density = new configuration::ParallelMesh(num_threads, rank, cache_size);
-      
-      potential = new configuration::ParallelMesh(num_threads, rank, cache_size);
-      electric_field.x = new configuration::ParallelMesh(num_threads, rank, cache_size);
-      electric_field.y = new configuration::ParallelMesh(num_threads, rank, cache_size);
-      electric_field.z = new configuration::ParallelMesh(num_threads, rank, cache_size);
+      charge_density = new configuration::ParallelMesh(num_threads, rank, cache_size, com);
+
+      potential = new configuration::ParallelMesh(num_threads, rank, cache_size, com);
+      electric_field.x = new configuration::ParallelMesh(num_threads, rank, cache_size, com);
+      electric_field.y = new configuration::ParallelMesh(num_threads, rank, cache_size, com);
+      electric_field.z = new configuration::ParallelMesh(num_threads, rank, cache_size, com);
 
       if (do_a2t)
-        squared_charge = new configuration::ParallelMesh(num_threads, rank, cache_size);
+        squared_charge = new configuration::ParallelMesh(num_threads, rank, cache_size, com);
       
       ((configuration::ParallelMesh*)charge_density)->resize(Nx, Ny, Nz);
       ((configuration::ParallelMesh*)potential)->resize(Nx, Ny, Nz);

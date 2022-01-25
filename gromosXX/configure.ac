@@ -435,7 +435,7 @@ AC_DEFINE_UNQUOTED(TOP_SOURCE_DIR, "$srcdir", [top src directory])
 
 AC_CONFIG_FILES([
 	src/Makefile
-  src/cukernel/Makefile
+	src/cukernel/Makefile
 	src/math/Makefile
 	src/topology/Makefile
 	src/configuration/Makefile
@@ -443,6 +443,7 @@ AC_CONFIG_FILES([
 	src/simulation/Makefile
 	src/interaction/Makefile
 	src/io/Makefile
+	src/replicaExchange/Makefile
 	src/util/Makefile
 	src/check/Makefile
 	program/Makefile

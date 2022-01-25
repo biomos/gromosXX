@@ -24,7 +24,8 @@ void simulation::Multibath
         bool rottrans_constraints,
         bool position_constraints,
         double dof_to_subtract,
-        bool dih_constraints) {
+        bool dih_constraints,
+        bool ang_constraints) {
   // check whether we have at least one bath
   if (size() == 0) {
     io::messages.add("Adding a bath, no temperature coupling",
@@ -115,7 +116,7 @@ void simulation::Multibath
   }
 
   // subtract constraints
-  topo.calculate_constraint_dof(*this, rottrans_constraints, position_constraints, dih_constraints);
+  topo.calculate_constraint_dof(*this, rottrans_constraints, position_constraints, dih_constraints, ang_constraints);
 
   // subtract user dof (NDFMIN in BOUNDCOND block)
   //
