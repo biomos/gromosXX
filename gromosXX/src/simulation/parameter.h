@@ -3070,9 +3070,13 @@ namespace simulation
      */
     int equilibration;
     /**
+     * Size of the memory window
+     */
+    int gamd_window;
+    /**
      * number of steps done for statistics update
      */
-    int stepsdone;
+    int stepsdone;  
   } /** Gaussian accelerated md */ gamd;  
    
  struct reeds_struct : public replica_struct

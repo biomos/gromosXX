@@ -29,7 +29,7 @@ int algorithm::GAMD
 		     bool quiet)
  {
      // Calculate initial acceleration
-     if (sim.param().gamd.search == simulation::gamd_search && sim.param().gamd.ntisearch == 0){
+     if (sim.param().gamd.search != simulation::cmd_search && sim.param().gamd.ntisearch == 0){
       for (unsigned int gg = 1; gg < sim.param().gamd.igroups; gg++){
         if (sim.param().gamd.kD[gg] == 0 && sim.param().gamd.kT[gg] == 0){
             switch (sim.param().gamd.form){
@@ -96,9 +96,17 @@ int algorithm::GAMD
   DEBUG(5, "GAMD: Interactions calculated now calculate acceleration");
 
   // total energies have been computed now calculate acceleration
-  if (sim.steps() > sim.param().gamd.equilibration){
+  if (sim.steps() >= sim.param().gamd.equilibration){
       sim.param().gamd.stepsdone += 1;
       for (unsigned int gg = 1; gg < sim.param().gamd.igroups; gg++){
+          // This part reset the statistics so that they can be obtained form the new simulation, this part is necessary every time that one changes form search mode
+          // The idea is that because after each search mode a short equilibration is performed, sim.param().gamd.equilibration will be higher than 0
+          if (sim.param().gamd.equilibration == sim.steps() && sim.param().gamd.equilibration > 0){
+             // reset parameters after equilibration
+             sim.param().gamd.VmaxT[gg] = sim.param().gamd.VminT[gg] = sim.param().gamd.VmeanT[gg];
+             sim.param().gamd.VmaxD[gg] = sim.param().gamd.VminD[gg] = sim.param().gamd.VmeanD[gg];
+             sim.param().gamd.M2T[gg] = sim.param().gamd.M2D[gg] = sim.param().gamd.sigmaVT[gg] = sim.param().gamd.sigmaVD[gg] = 0.0;
+          }
           DEBUG(15, "GAMD KT " << sim.param().gamd.kT[gg]);
           DEBUG(15, "GAMD KD " << sim.param().gamd.kD[gg]);
           DEBUG(15, "GAMD ET " << sim.param().gamd.ET[gg]);
@@ -115,21 +123,61 @@ int algorithm::GAMD
                 switch (sim.param().gamd.form)
                 {
                     case simulation::dih_boost:
+                        // reset the search values of gamd each, gamd_window steps
+                        if (sim.param().gamd.gamd_window > 0 && sim.param().gamd.stepsdone % sim.param().gamd.gamd_window == 0){
+                            if (ener.gamd_dihedral_total[gg] > sim.param().gamd.VmaxD[gg]) sim.param().gamd.VmaxD[gg] = ener.gamd_dihedral_total[gg];
+                            if (ener.gamd_dihedral_total[gg] < sim.param().gamd.VminD[gg]) sim.param().gamd.VminD[gg] = ener.gamd_dihedral_total[gg];
+                            sim.param().gamd.M2D[gg] = sim.param().gamd.sigmaVD[gg] = 0.0;
+                            sim.param().gamd.VmeanD[gg] = ener.gamd_dihedral_total[gg];
+                        }
+                        else{  
                         calc_gamd_std_mean(ener.gamd_dihedral_total[gg], sim.param().gamd.stepsdone, &sim.param().gamd.VmaxD[gg], &sim.param().gamd.VminD[gg],
-                                           &sim.param().gamd.VmeanD[gg], &sim.param().gamd.M2D[gg], &sim.param().gamd.sigmaVD[gg]);  
+                                           &sim.param().gamd.VmeanD[gg], &sim.param().gamd.M2D[gg], &sim.param().gamd.sigmaVD[gg]);
+                        }
                         break;
 
                     case simulation::tot_boost:
+                        // reset the search values of gamd each, gamd_window steps
+                        if (sim.param().gamd.gamd_window > 0 && sim.param().gamd.stepsdone % sim.param().gamd.gamd_window == 0){
+                            if (ener.gamd_potential_total[gg] + ener.gamd_dihedral_total[gg] > sim.param().gamd.VmaxT[gg]){
+                                 sim.param().gamd.VmaxT[gg] = ener.gamd_potential_total[gg] + ener.gamd_dihedral_total[gg];
+                            }
+                            if (ener.gamd_potential_total[gg] + ener.gamd_dihedral_total[gg] < sim.param().gamd.VminT[gg]){
+                                 sim.param().gamd.VminT[gg] = ener.gamd_potential_total[gg] + ener.gamd_dihedral_total[gg];
+                            }
+                            sim.param().gamd.M2T[gg] = sim.param().gamd.sigmaVT[gg] = 0.0;
+                            sim.param().gamd.VmeanT[gg] = ener.gamd_potential_total[gg] + ener.gamd_dihedral_total[gg];
+                        }
+                        else{  
                         calc_gamd_std_mean(ener.gamd_potential_total[gg] + ener.gamd_dihedral_total[gg], sim.param().gamd.stepsdone, &sim.param().gamd.VmaxT[gg], &sim.param().gamd.VminT[gg],
-                                           &sim.param().gamd.VmeanT[gg], &sim.param().gamd.M2T[gg], &sim.param().gamd.sigmaVT[gg]);  
+                                           &sim.param().gamd.VmeanT[gg], &sim.param().gamd.M2T[gg], &sim.param().gamd.sigmaVT[gg]);
+                        }  
                         break;
 
                     case simulation::dual_boost:
+                        // reset the search values of gamd each, gamd_window steps
+                        if (sim.param().gamd.gamd_window > 0 && sim.param().gamd.stepsdone % sim.param().gamd.gamd_window == 0){
+                            if (ener.gamd_dihedral_total[gg] > sim.param().gamd.VmaxD[gg]) sim.param().gamd.VmaxD[gg] = ener.gamd_dihedral_total[gg];
+                            if (ener.gamd_dihedral_total[gg] < sim.param().gamd.VminD[gg]) sim.param().gamd.VminD[gg] = ener.gamd_dihedral_total[gg];
+                            sim.param().gamd.M2D[gg] = sim.param().gamd.sigmaVD[gg] = 0.0;
+                            sim.param().gamd.VmeanD[gg] = ener.gamd_dihedral_total[gg];
+                        }
+                        else{  
                         calc_gamd_std_mean(ener.gamd_dihedral_total[gg], sim.param().gamd.stepsdone, &sim.param().gamd.VmaxD[gg], &sim.param().gamd.VminD[gg],
                                            &sim.param().gamd.VmeanD[gg], &sim.param().gamd.M2D[gg], &sim.param().gamd.sigmaVD[gg]);
+                        }
+                        // reset the search values of gamd each, gamd_window steps
+                        if (sim.param().gamd.gamd_window > 0 && sim.param().gamd.stepsdone % sim.param().gamd.gamd_window == 0){
+                            if (ener.gamd_potential_total[gg] > sim.param().gamd.VmaxT[gg]) sim.param().gamd.VmaxT[gg] = ener.gamd_potential_total[gg];
+                            if (ener.gamd_potential_total[gg] < sim.param().gamd.VminT[gg]) sim.param().gamd.VminT[gg] = ener.gamd_potential_total[gg];
+                            sim.param().gamd.M2T[gg] = sim.param().gamd.sigmaVT[gg] = 0.0;
+                            sim.param().gamd.VmeanT[gg] = ener.gamd_potential_total[gg];
+                        }
+                        else{  
                         calc_gamd_std_mean(ener.gamd_potential_total[gg], sim.param().gamd.stepsdone, &sim.param().gamd.VmaxT[gg], &sim.param().gamd.VminT[gg],
                                            &sim.param().gamd.VmeanT[gg], &sim.param().gamd.M2T[gg], &sim.param().gamd.sigmaVT[gg]); 
-                        DEBUG(10, "group " << gg << " VmeanD " << sim.param().gamd.VmeanD[gg] <<  " VmeanT " << sim.param().gamd.VmeanT[gg] << " VmaxD " << sim.param().gamd.VmaxD[gg] <<  " VmaxT " << sim.param().gamd.VmaxT[gg]);                                       
+                        DEBUG(10, "group " << gg << " VmeanD " << sim.param().gamd.VmeanD[gg] <<  " VmeanT " << sim.param().gamd.VmeanT[gg] << " VmaxD " << sim.param().gamd.VmaxD[gg] <<  " VmaxT " << sim.param().gamd.VmaxT[gg]);
+                        }                                     
                     break;          
                 default:
                     io::messages.add("Unknown functional form of gaussian accelerated md boosting potential. Should be 1 (dual acceleration), 2 (total potential energy acceleration), or 3 (dihedral acceleration)",
@@ -140,8 +188,17 @@ int algorithm::GAMD
             case simulation::gamd_search:
                 switch (sim.param().gamd.form){
                     case simulation::dih_boost:
-                        calc_gamd_std_mean(ener.gamd_dihedral_total[gg], sim.param().gamd.stepsdone, &sim.param().gamd.VmaxD[gg], &sim.param().gamd.VminD[gg],
+                        // reset the search values of gamd each, gamd_window steps
+                        if (sim.param().gamd.gamd_window > 0 && sim.param().gamd.stepsdone%sim.param().gamd.gamd_window == 0){
+                            if (ener.gamd_dihedral_total[gg] > sim.param().gamd.VmaxD[gg]) sim.param().gamd.VmaxD[gg] = ener.gamd_dihedral_total[gg];
+                            if (ener.gamd_dihedral_total[gg] < sim.param().gamd.VminD[gg]) sim.param().gamd.VminD[gg] = ener.gamd_dihedral_total[gg];
+                            sim.param().gamd.M2D[gg] = sim.param().gamd.sigmaVD[gg] = 0.0;
+                            sim.param().gamd.VmeanD[gg] = ener.gamd_dihedral_total[gg];
+                        }
+                        else{
+                            calc_gamd_std_mean(ener.gamd_dihedral_total[gg], sim.param().gamd.stepsdone, &sim.param().gamd.VmaxD[gg], &sim.param().gamd.VminD[gg],
                                            &sim.param().gamd.VmeanD[gg], &sim.param().gamd.M2D[gg], &sim.param().gamd.sigmaVD[gg]);
+                        }
 
                         if (calc_gamd_E_K(sim.param().gamd.thresh, sim.param().gamd.dihstd, sim.param().gamd.VmaxD[gg], sim.param().gamd.VminD[gg], sim.param().gamd.VmeanD[gg],
                             sim.param().gamd.sigmaVD[gg], &sim.param().gamd.k0D[gg], &sim.param().gamd.kD[gg], &sim.param().gamd.ED[gg])){
@@ -151,9 +208,21 @@ int algorithm::GAMD
                         break;
 
                     case simulation::tot_boost:
+                        // reset the search values of gamd each, gamd_window steps
+                        if (sim.param().gamd.gamd_window > 0 && sim.param().gamd.stepsdone%sim.param().gamd.gamd_window == 0){
+                            if (ener.gamd_potential_total[gg] + ener.gamd_dihedral_total[gg] > sim.param().gamd.VmaxT[gg]){
+                                 sim.param().gamd.VmaxT[gg] = ener.gamd_potential_total[gg] + ener.gamd_dihedral_total[gg];
+                            }
+                            if (ener.gamd_potential_total[gg] + ener.gamd_dihedral_total[gg] < sim.param().gamd.VminT[gg]){
+                                 sim.param().gamd.VminT[gg] = ener.gamd_potential_total[gg] + ener.gamd_dihedral_total[gg];
+                            }
+                            sim.param().gamd.M2T[gg] = sim.param().gamd.sigmaVT[gg] = 0.0;
+                            sim.param().gamd.VmeanT[gg] = ener.gamd_potential_total[gg] + ener.gamd_dihedral_total[gg];
+                        }
+                        else{
                         calc_gamd_std_mean(ener.gamd_potential_total[gg] + ener.gamd_dihedral_total[gg], sim.param().gamd.stepsdone, &sim.param().gamd.VmaxT[gg], &sim.param().gamd.VminT[gg],
                                            &sim.param().gamd.VmeanT[gg], &sim.param().gamd.M2T[gg], &sim.param().gamd.sigmaVT[gg]);
-
+                        }
                         if (calc_gamd_E_K(sim.param().gamd.thresh, sim.param().gamd.totstd, sim.param().gamd.VmaxT[gg], sim.param().gamd.VminT[gg], sim.param().gamd.VmeanT[gg],
                             sim.param().gamd.sigmaVT[gg], &sim.param().gamd.k0T[gg], &sim.param().gamd.kT[gg], &sim.param().gamd.ET[gg])){
                                 io::messages.add("gamd: k0 < 0 or k0 > 1, switched to lower bound threshold ","Forcefield", io::message::warning);
@@ -162,11 +231,28 @@ int algorithm::GAMD
                         break;
 
                     case simulation::dual_boost:
+                        // reset the search values of gamd each, gamd_window steps
+                        if (sim.param().gamd.gamd_window > 0 && sim.param().gamd.stepsdone%sim.param().gamd.gamd_window == 0){
+                            if (ener.gamd_dihedral_total[gg] > sim.param().gamd.VmaxD[gg]) sim.param().gamd.VmaxD[gg] = ener.gamd_dihedral_total[gg];
+                            if (ener.gamd_dihedral_total[gg] < sim.param().gamd.VminD[gg]) sim.param().gamd.VminD[gg] = ener.gamd_dihedral_total[gg];
+                            sim.param().gamd.M2D[gg] = sim.param().gamd.sigmaVD[gg] = 0.0;
+                            sim.param().gamd.VmeanD[gg] = ener.gamd_dihedral_total[gg];
+                        }
+                        else{
                         calc_gamd_std_mean(ener.gamd_dihedral_total[gg],sim.param().gamd.stepsdone, &sim.param().gamd.VmaxD[gg], &sim.param().gamd.VminD[gg],
                                            &sim.param().gamd.VmeanD[gg], &sim.param().gamd.M2D[gg], &sim.param().gamd.sigmaVD[gg]);
-
+                        }
+                        // reset the search values of gamd each, gamd_window steps
+                        if (sim.param().gamd.gamd_window > 0 && sim.param().gamd.stepsdone%sim.param().gamd.gamd_window == 0){
+                            if (ener.gamd_potential_total[gg] > sim.param().gamd.VmaxT[gg]) sim.param().gamd.VmaxT[gg] = ener.gamd_potential_total[gg];
+                            if (ener.gamd_potential_total[gg] < sim.param().gamd.VminT[gg]) sim.param().gamd.VminT[gg] = ener.gamd_potential_total[gg];
+                            sim.param().gamd.M2T[gg] = sim.param().gamd.sigmaVT[gg] = 0.0;
+                            sim.param().gamd.VmeanT[gg] = ener.gamd_potential_total[gg];
+                        }
+                        else{
                         calc_gamd_std_mean(ener.gamd_potential_total[gg], sim.param().gamd.stepsdone, &sim.param().gamd.VmaxT[gg], &sim.param().gamd.VminT[gg],
                                            &sim.param().gamd.VmeanT[gg], &sim.param().gamd.M2T[gg], &sim.param().gamd.sigmaVT[gg]);
+                        }
 
                         if (calc_gamd_E_K(sim.param().gamd.thresh, sim.param().gamd.dihstd, sim.param().gamd.VmaxD[gg], sim.param().gamd.VminD[gg], sim.param().gamd.VmeanD[gg],
                             sim.param().gamd.sigmaVD[gg], &sim.param().gamd.k0D[gg], &sim.param().gamd.kD[gg], &sim.param().gamd.ED[gg])){
@@ -336,6 +422,7 @@ int algorithm::GAMD::calc_gamd_E_K(simulation::gamd_thresh_enum Eform, double si
                         // k0 should be between 0 and 1 if not switch to lower bound energy threshold
                         if(*k0 > 1.0 || *k0 <= 0.0){
                                 *k0 = (sigma0 / sigmaV) * (Vmax-Vmin) / (Vmax-Vmean);
+                                if (*k0 > 1)  *k0 = 1.0;
                                 *E = Vmax;
                                 *k = *k0 / (Vmax - Vmin);
                                 return 1;
@@ -349,6 +436,7 @@ int algorithm::GAMD::calc_gamd_E_K(simulation::gamd_thresh_enum Eform, double si
                 }
                 else if(Eform == simulation::lower_bound){
                                 *k0 = (sigma0 / sigmaV) * (Vmax-Vmin) / (Vmax-Vmean);
+                                if (*k0 > 1)  *k0 = 1.0;
                                 *E = Vmax;
                                 *k = *k0 / (Vmax - Vmin);
                                 return 0;  

@@ -3939,7 +3939,7 @@ void io::In_Parameter::read_GAMD(simulation::Parameter & param,
   exampleblock << "#              1: lower bound E=Vmax\n";
   exampleblock << "#              2: upper bound E=Vmin/(1+K)\n";
   exampleblock << "# NTIGAMDS   0,1\n";
-  exampleblock << "#              0: read GAMD parameter search configuration from input configuration\n";
+  exampleblock << "#              0: read GAMD parameters from input configuration\n";
   exampleblock << "#              1: initialize GAMD parameter search\n";
   exampleblock << "# AGROUPS     >0 number of atom groups to define the acceleration\n";
   exampleblock << "# IGROUPS     >0 number of interaction acceleration groups\n";
@@ -3950,6 +3950,7 @@ void io::In_Parameter::read_GAMD(simulation::Parameter & param,
   exampleblock << "# KD            : force constant for the dihedral boosting potential term\n";
   exampleblock << "# KT            : force constant for the potential energy boosting potential term\n";
   exampleblock << "# EQSTEPS     >=0 number of equilibration steps\n";
+  exampleblock << "# GWINDOW     >=0 size in steps for the window used to calculate the statistics\n";
   exampleblock << "# \n";
   exampleblock << "# GAMD\n";
   exampleblock << "  1\n";
@@ -4065,7 +4066,7 @@ void io::In_Parameter::read_GAMD(simulation::Parameter & param,
     }
 
     block.get_next_parameter("EQSTEPS", param.gamd.equilibration, ">=0", "");
-
+    block.get_next_parameter("GWINDOW", param.gamd.gamd_window, ">=0", "");
     // some defaults just in case
     param.gamd.k0D.resize(param.gamd.igroups, 0.0);
     param.gamd.k0T.resize(param.gamd.igroups, 0.0);
