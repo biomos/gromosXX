@@ -1956,7 +1956,7 @@ void interaction::Nonbonded_Outerloop
   double a2_tilde = 0.0;
 
   // virial stuff
-  const double do_virial = sim.param().pcouple.virial != math::no_virial;
+  const bool do_virial = sim.param().pcouple.virial != math::no_virial;
   math::SymmetricMatrix virial(0.0);
   math::SymmetricMatrix sum_gammahat(0.0);
 

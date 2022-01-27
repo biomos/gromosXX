@@ -147,7 +147,10 @@ void interaction::QM_Zone::write(topology::Topology& topo,
       }
     }
   }
-  conf.current().virial_tensor += virial_tensor;
+  
+  if (sim.param().pcouple.virial) {
+    conf.current().virial_tensor += virial_tensor;
+  }
   
   // Write charges
   if (sim.param().qmmm.qmmm == simulation::qmmm_mechanical
