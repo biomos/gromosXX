@@ -544,9 +544,10 @@ void interaction::QM_Zone::emplace_atom(std::set<interaction::QM_Atom>& set,
                                         const double charge,
                                         const bool is_qm_buffer)
   {
-  if (is_qm_buffer)
+  if (is_qm_buffer) {
     DEBUG(15, "Adding QM buffer atom " << index);
     it = set.emplace_hint(it, index, pos, atomic_number);
+  }
 }
 
 template<>
@@ -558,9 +559,10 @@ void interaction::QM_Zone::emplace_atom(std::set<interaction::MM_Atom>& set,
                                         const double charge,
                                         const bool is_qm_buffer)
   {
-  if (!is_qm_buffer)
+  if (!is_qm_buffer) {
     DEBUG(15, "Adding MM atom " << index);
     it = set.emplace_hint(it, index, pos, charge);
+  }
 }
 
 template<>
