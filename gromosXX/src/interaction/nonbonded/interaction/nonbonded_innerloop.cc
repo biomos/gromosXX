@@ -1402,7 +1402,11 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
     case simulation::lj_crf_func:
     {
       // this will only contribute in the energy, the force should be zero.
-      rf_interaction(r, topo.charge()(i) * topo.charge()(i), f, e_crf);
+      double q = topo.charge()(i);
+      if (t_nonbonded_spec::charge_type == simulation::qm_buffer_charge) {
+        q += topo.qm_delta_charge(i);
+      }
+      rf_interaction(r, q * q, f, e_crf);
       storage.energies.crf_energy[topo.atom_energy_group(i)]
               [topo.atom_energy_group(i)] += 0.5 * e_crf;
       DEBUG(11, "\tcontribution " << 0.5 * e_crf);
@@ -2076,22 +2080,23 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::ls_real_excluded_innerloop
           [topo.atom_energy_group(j)] += e_ls;
 }
 
-    /**
-     * calculate the product of charges based on the charge type
-     * this function implements variable charges for the QM buffer region
-     */
-    template <typename t_nonbonded_spec>
-    double interaction::Nonbonded_Innerloop<t_nonbonded_spec>::charge_product(
+/**
+ * calculate the product of charges based on the charge type
+ * this function implements variable charges for the QM buffer region
+ */
+template <typename t_nonbonded_spec>
+double interaction::Nonbonded_Innerloop<t_nonbonded_spec>::charge_product(
         topology::Topology const & topo, 
-            unsigned i, unsigned j) {
+        unsigned i, unsigned j) {
   double q = topo.charge(i) * topo.charge(j);
   switch (t_nonbonded_spec::charge_type) {
     case simulation::mm_charge : break;
     case simulation::qm_buffer_charge : {
-      if (!topo.is_adaptive_qm_buffer(i) != !topo.is_adaptive_qm_buffer(j))
+      if (topo.is_adaptive_qm_buffer(i) != topo.is_adaptive_qm_buffer(j)) {
         DEBUG(11, "\tqm_delta_charge i=" << topo.qm_delta_charge(i) << " j=" << topo.qm_delta_charge(j));
         q +=  topo.charge(i) * topo.qm_delta_charge(j)
             + topo.charge(j) * topo.qm_delta_charge(i);
+      }
       break;
     }
     default : io::messages.add("Charge type not implemented.", "nonbonded_innerloop", io::message::warning);

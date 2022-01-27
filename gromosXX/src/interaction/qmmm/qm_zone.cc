@@ -158,8 +158,8 @@ void interaction::QM_Zone::write(topology::Topology& topo,
     for (std::set<QM_Atom>::const_iterator
           it = this->qm.begin(), to = this->qm.end(); it != to; ++it)
       {
-      DEBUG(15, "Atom " << it->index << ", new charge: " << it->qm_charge);
       if (topo.is_qm(it->index)) {
+        DEBUG(15, "Atom " << it->index << ", new charge: " << it->qm_charge);
         topo.charge()(it->index) = it->qm_charge;
       }
     }
@@ -185,7 +185,9 @@ void interaction::QM_Zone::write(topology::Topology& topo,
     for (std::set<QM_Atom>::const_iterator
         it = this->qm.begin(), to = this->qm.end(); it != to; ++it) {
       if (topo.is_adaptive_qm_buffer(it->index)) {
-        topo.qm_delta_charge(it->index) = it->qm_charge - topo.charge(it->index);
+        const double delta_charge = it->qm_charge - topo.charge(it->index);
+        DEBUG(15, "Atom " << it->index << ", new delta charge: " << delta_charge);
+        topo.qm_delta_charge(it->index) = delta_charge;
       }
     }
   }
