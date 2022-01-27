@@ -1091,6 +1091,18 @@ void io::In_QMMM::read_zone(topology::Topology& topo
       return;
     }
 
+    if (is_qm_buffer
+        && (sim.param().qmmm.qm_ch == simulation::qm_ch_dynamic)
+        && (sim.param().innerloop.method != simulation::sla_off)
+        && (qmi > topo.num_solute_atoms())) {
+      std::ostringstream msg;
+      msg << blockname 
+          << " block: dynamic QM charge for solvent atoms cannot be used"
+          << " with non-default solvent loops";
+      io::messages.add(msg.str(), "In_QMMM", io::message::error);
+      return;
+    }
+
     topo.qm_atomic_number(qmi - 1) = qmz;
     if (qmli > 0 ) {
       DEBUG(15, "Linking " << qmi << " to " << qmli);
