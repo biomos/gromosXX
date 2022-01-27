@@ -214,14 +214,6 @@ int interaction::QM_Zone::get_qm_atoms(const topology::Topology& topo,
      * on this system, but we are not excluding the QM_Buffer atoms in MM pairlist generation.
      */
     const bool cg_is_qm = topo.is_qm(a);
-    if (cg_is_qm
-        && (cg >= topo.num_solute_chargegroups())
-      ) {
-      std::ostringstream msg;
-      msg << "QM atom " << a + 1 << " in solvent is not supported";
-      io::messages.add(msg.str(), "QM_Zone", io::message::error);
-      return E_INPUT_ERROR;
-    }
     const bool cg_is_buf = topo.is_qm_buffer(a);
     assert(!(cg_is_qm && cg_is_buf));
     for (; a < a_to; ++a) {

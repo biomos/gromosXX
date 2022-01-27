@@ -976,7 +976,7 @@ void io::In_QMMM::read_zone(topology::Topology& topo
   {
   std::vector<std::string> buffer;
   buffer = m_block[blockname];
-
+  
   if (!buffer.size()) {
     if (blockname == "QMZONE") {
       io::messages.add("No QMZONE block in QM/MM specification file",
@@ -1009,6 +1009,12 @@ void io::In_QMMM::read_zone(topology::Topology& topo
   else if (blockname == "QMZONE") {
     sim.param().qmmm.qm_zone.charge = charge;
     sim.param().qmmm.qm_zone.spin_mult = spin_mult;
+  }
+  else {
+    std::ostringstream msg;
+    msg << blockname << " block not implemented";
+    io::messages.add(msg.str(), "In_QMMM", io::message::critical);
+    return;
   }
 
   if (_lineStream.fail()) {
@@ -1054,7 +1060,7 @@ void io::In_QMMM::read_zone(topology::Topology& topo
     if ((blockname == "QMZONE")
         && (qmi > topo.num_solute_atoms())) {
       std::ostringstream msg;
-      msg << blockname << " block: QM atom should be in solute";
+      msg << blockname << " block: solvent in QMZONE is not supported (atom " << qmi << ")";
       io::messages.add(msg.str(), "In_QMMM", io::message::error);
       return;
     }
