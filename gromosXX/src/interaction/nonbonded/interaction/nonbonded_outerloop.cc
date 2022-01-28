@@ -99,9 +99,9 @@ void interaction::Nonbonded_Outerloop
   // WORKAROUND! See definition of _lj_crf_outerloop_fast
   if (t_interaction_spec::boundary_type == math::rectangular &&
       t_interaction_spec::interaction_func == simulation::lj_crf_func &&
-      t_interaction_spec::charge_type == simulation::mm_charge &&
       sim.param().innerloop.method != simulation::sla_cuda) {
-    _lj_crf_outerloop_fast(topo, conf, sim, pairlist_solute, pairlist_solvent,
+    _lj_crf_outerloop_fast<t_interaction_spec::charge_type>(topo, conf, sim,
+                        pairlist_solute, pairlist_solvent,
                         storage, longrange, timer, master);
     return;
   }
@@ -268,6 +268,7 @@ unsigned int i_deb;
  * to make it usable for longrange calculations.
  */
 // WORKAROUND - see definition!
+template<simulation::charge_type_enum t_charge_type>
 void interaction::Nonbonded_Outerloop
 ::_lj_crf_outerloop_fast(topology::Topology & topo,
         configuration::Configuration & conf,
@@ -280,7 +281,9 @@ void interaction::Nonbonded_Outerloop
 
   math::Periodicity<math::rectangular> periodicity(conf.current().box);
   periodicity.recalc_shift_vectors();
-  Nonbonded_Innerloop<interaction::Interaction_Spec<math::rectangular, simulation::lj_crf_func> > innerloop(m_param);
+  Nonbonded_Innerloop<interaction::Interaction_Spec<math::rectangular,
+                      simulation::lj_crf_func,
+                      t_charge_type> > innerloop(m_param);
   innerloop.init(sim);
 
   /*

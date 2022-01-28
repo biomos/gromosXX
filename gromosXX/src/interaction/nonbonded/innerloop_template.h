@@ -14,7 +14,7 @@
 #define SPLIT_INTERACTION_FUNC(f, bound, ...) \
   switch(sim.param().force.interaction_function){ \
     case simulation::lj_crf_func : \
-      if (!sim.param().qmmm.use_qm_buffer){ \
+      if (!sim.param().qmmm.dynamic_buffer_charges){ \
         f<Interaction_Spec<bound, simulation::lj_crf_func> >(__VA_ARGS__); \
       } else { \
         f<Interaction_Spec<bound, simulation::lj_crf_func, simulation::qm_buffer_charge> >(__VA_ARGS__); \

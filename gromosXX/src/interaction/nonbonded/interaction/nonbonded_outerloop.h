@@ -359,6 +359,7 @@ namespace interaction
      * Might be a g++ bug ( https://gcc.gnu.org/bugzilla/show_bug.cgi?id=56480 ) or
      * an error in the implementation. For now, this is a workaround...
      */
+    template<simulation::charge_type_enum t_charge_type>
     void _lj_crf_outerloop_fast(topology::Topology & topo,
 			   configuration::Configuration & conf,
 			   simulation::Simulation & sim,
