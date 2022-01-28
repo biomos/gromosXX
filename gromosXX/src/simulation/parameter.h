@@ -3782,7 +3782,8 @@ namespace simulation
                     , software(qm_mndo)
                     , write(0)
                     , atomic_cutoff(false)
-                    , use_qm_buffer(false) {}
+                    , use_qm_buffer(false)
+                    , dynamic_buffer_charges(false) {}
       /**
        *
        * Common QMMM parameters
@@ -3829,9 +3830,13 @@ namespace simulation
        */
       bool atomic_cutoff;
       /**
-       * type of cutoff (atomic or chargegroup-based)
+       * if QM buffer zone is used
        */
       bool use_qm_buffer;
+      /**
+       * if dynamic charges are used with QM buffer zone
+       */
+      bool dynamic_buffer_charges;
 
       /**
        * QM zone parameters

@@ -810,23 +810,28 @@ io::In_QMMM::read(topology::Topology& topo,
     } // NNVALID
     { // NNCHARGE
       buffer = m_block["NNCHARGE"];
-      if (buffer.size()) {
-        if (buffer.size() != 4) {
-          io::messages.add("NNCHARGE block corrupt. Provide 2 lines.",
+      if (sim.param().qmmm.qm_ch == simulation::qm_ch_dynamic) {
+        if (buffer.size()) {
+          if (buffer.size() != 4) {
+            io::messages.add("NNCHARGE block corrupt. Provide 2 lines.",
+                    "In_QMMM", io::message::error);
+            return;
+          }
+          sim.param().qmmm.nn.charge_model_path = buffer[1];
+          std::string line(buffer[2]);
+          _lineStream.clear();
+          _lineStream.str(line);
+          unsigned charge_steps;
+          _lineStream >> charge_steps;
+          sim.param().qmmm.nn.charge_steps = charge_steps;
+          if (_lineStream.fail()) {
+            io::messages.add("bad line in NNCHARGE block",
                   "In_QMMM", io::message::error);
-          return;
-        }
-        sim.param().qmmm.nn.charge_model_path = buffer[1];
-        std::string line(buffer[2]);
-        _lineStream.clear();
-        _lineStream.str(line);
-        unsigned charge_steps;
-        _lineStream >> charge_steps;
-        sim.param().qmmm.nn.charge_steps = charge_steps;
-        if (_lineStream.fail()) {
-          io::messages.add("bad line in NNCHARGE block",
-                "In_QMMM", io::message::error);
-          return;
+            return;
+          }
+        } else {
+          io::messages.add("Dynamic QM charges requested but NNCHARGE is not specified.",
+              "In_QMMM", io::message::error);
         }
       }
     } // NNCHARGE
@@ -903,6 +908,10 @@ io::In_QMMM::read(topology::Topology& topo,
       }
     }
   }
+
+  // if dynamic charges for buffer will be used
+  sim.param().qmmm.dynamic_buffer_charges =
+      sim.param().qmmm.use_qm_buffer && (sim.param().qmmm.qm_ch == simulation::qm_ch_dynamic);
 }
 
 void io::In_QMMM::read_elements(const topology::Topology& topo

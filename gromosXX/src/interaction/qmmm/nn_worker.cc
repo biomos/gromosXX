@@ -168,8 +168,7 @@ int interaction::NN_Worker::init(simulation::Simulation& sim) {
     } 
   }   
    
-
-  if (!sim.param().qmmm.nn.charge_model_path.empty()) {
+  if (sim.param().qmmm.qm_ch == simulation::qm_ch_dynamic) {
     py::str charge_model_path = sim.param().qmmm.nn.charge_model_path;
     DEBUG(11, "charge_model_path: " << charge_model_path.cast<std::string>());
     py::str charge_args_path = py_modules["os"].attr("path").attr("join")(py::cast('/').attr("join")(charge_model_path.attr("split")('/')[py::slice(0,-1,1)]), "args.json");
@@ -281,7 +280,7 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
     }
   }
   // Assign charges for the MM calculation, if asked for
-  if (!sim.param().qmmm.nn.charge_model_path.empty()
+  if (sim.param().qmmm.qm_ch == simulation::qm_ch_dynamic
       && sim.steps() % sim.param().qmmm.nn.charge_steps == 0) {
     //py::object val_molecule(molecule); we don't need to create a new (reference to a) molecule 
     molecule.attr("set_calculator")(charge_calculator);
