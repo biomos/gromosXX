@@ -142,9 +142,14 @@ void re::replica_exchange_master_eds::receive_from_all_slaves() {
   if(switched && begin){
     replicaData[simulationID].pos_info.second = real_pos;
   }
-
-
-  replicaData[simulationID].Vi = replica->conf.current().energies.eds_vi;
+  
+  // If conformations were switched, the values used to determine
+  // if we want to exchange are now in conf.old()
+  if (switched){
+    replicaData[simulationID].Vi = replica->conf.old().energies.eds_vi;
+  } else {
+    replicaData[simulationID].Vi = replica->conf.current().energies.eds_vi;
+  }
 
   DEBUG(4,"replica_exchange_master_eds "<< globalThreadID <<":receive_from_all_slaves:\t Master:\n" << "time used for receiving all messages: " << MPI_Wtime() - start
             << " seconds");
