@@ -230,6 +230,7 @@ int interaction::QMMM_Interaction::calculate_interactions(topology::Topology& to
         m_timer.start(m_worker->name());
         err = m_worker->run_QM(topo, conf, sim, *m_qm_buffer);
         m_timer.stop(m_worker->name());
+        if (err) return err;
         // Calculate QM energy and QM forces as difference
         /**
          * this->evaluate_buffered_qm(m_qm_zone, m_qm_buffer)
@@ -351,10 +352,12 @@ int interaction::QMMM_Interaction::init(topology::Topology& topo,
     int sm = sim.param().qmmm.qm_zone.spin_mult;
     if (sim.param().qmmm.use_qm_buffer) {
       // Calculate combined spin multiplicity
-      const int spin_z = (sim.param().qmmm.qm_zone.spin_mult - 1) / 2;
-      const int spin_sb = (sim.param().qmmm.buffer_zone.spin_mult - 1) / 2;
-      // let's consider that all spins are paired
-      sm = (2 * (spin_z + spin_sb)) % 2 + 1;
+      // number of unpaired spins of the QM zone
+      const int spin_qm = sim.param().qmmm.qm_zone.spin_mult - 1;
+      // number of unpaired spins of the buffer zone
+      const int spin_buf = sim.param().qmmm.buffer_zone.spin_mult - 1;
+      // consider no spin pairing between the QM and buffer zone
+      sm = spin_qm + spin_buf + 1;
     }
     m_qm_zone = new interaction::QM_Zone(charge, sm);
 

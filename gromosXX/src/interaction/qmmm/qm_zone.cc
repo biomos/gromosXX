@@ -918,6 +918,7 @@ interaction::QM_Zone* interaction::QM_Zone::create_buffer_zone(
         it = this->qm.begin(); it != this->qm.end(); ++it) {
     if (topo.is_qm(it->index)) {
       DEBUG(10,"Erasing QM atom " << it->index << " from buffer zone");
+      // 'it' remains valid, since we are iterating over 'this->qm' but erasing in 'qmzone->qm'
       qmzone->qm.erase(*it);
     }
   }
