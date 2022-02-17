@@ -53,7 +53,7 @@ int io::simple_crosschecks(simulation::Simulation & sim) {
       io::messages.add("PRESSURESCALE block: pressure coupling not allowed with steepest descent or conjugate gradient minimization",
                        "In_Parameter", io::message::error);
 
-  if (param.multibath.couple && param.minimise.ntem)
+  if (param.multibath.couple && param.minimise.ntem && !param.eds.eds)
       io::messages.add("MULTIBATH block: temperature coupling not allowed with energy minimization",
                        "In_Parameter", io::message::error);
 
@@ -118,8 +118,8 @@ int io::simple_crosschecks(simulation::Simulation & sim) {
   }
 
   // EDS: make sure we simulate at a given temperature (unambiguous kT)
-    if (param.eds.eds && !(param.multibath.couple || param.stochastic.sd || param.minimise.ntem)) {
-        io::messages.add("EDS/AEDS block: EDS requires temperature coupling, SD or an energy minimization.",
+    if (param.eds.eds && !(param.multibath.couple || param.stochastic.sd)) {
+        io::messages.add("EDS/AEDS block: EDS requires temperature coupling or SD.",
                                "In_Parameter", io::message::error);
     }
 
@@ -134,17 +134,20 @@ int io::simple_crosschecks(simulation::Simulation & sim) {
                   break;
               }
       }
+      
+      if (param.multibath.multibath.bath(0).temperature == 0){
+        io::messages.add("MULTIBATH block: baths must have non zero temperature with EDS.", 
+                          "In_Parameter", io::message::error); 
+      } 
+      
+    }
+    
+    // Restrict EDS and conjugate gradients:
+    if (param.eds.eds &&  (sim.param().minimise.ntem == 2 || sim.param().minimise.ntem == 3)){
+      io::messages.add("ENERGYMIN block: Cannot run EDS and conjugate gradients. Please change value of NTEM", 
+                       "In_Parameter", io::message::error);
     }
 
-    // ensure "virtual" temperature defined to construct Vr 
-    // will be non zero when doing EDS energy minimization.
-    if (param.eds.eds && param.minimise.ntem){
-        if (param.start.tempi == 0){
-            io::messages.add("EDS/AEDS energy minimization: EDS requires a temperature to be set.\n"
-                             "\t\t\tPlease ensure that TEMPI in INITIALISE block is non-zero", 
-                             "In_Parameter", io::message::error);
-        }               
-    }
 
     // lattice shift and pressure coupling:
     if (param.pcouple.scale != math::pcouple_off
