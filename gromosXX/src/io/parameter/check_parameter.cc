@@ -53,7 +53,7 @@ int io::simple_crosschecks(simulation::Simulation & sim) {
       io::messages.add("PRESSURESCALE block: pressure coupling not allowed with steepest descent or conjugate gradient minimization",
                        "In_Parameter", io::message::error);
 
-  if (param.multibath.couple && param.minimise.ntem)
+  if (param.multibath.couple && param.minimise.ntem && !param.eds.eds)
       io::messages.add("MULTIBATH block: temperature coupling not allowed with energy minimization",
                        "In_Parameter", io::message::error);
 
@@ -134,7 +134,20 @@ int io::simple_crosschecks(simulation::Simulation & sim) {
                   break;
               }
       }
+      
+      if (param.multibath.multibath.bath(0).temperature == 0){
+        io::messages.add("MULTIBATH block: baths must have non zero temperature with EDS.", 
+                          "In_Parameter", io::message::error); 
+      } 
+      
     }
+    
+    // Restrict EDS and conjugate gradients:
+    if (param.eds.eds &&  (sim.param().minimise.ntem == 2 || sim.param().minimise.ntem == 3)){
+      io::messages.add("ENERGYMIN block: Cannot run EDS and conjugate gradients. Please change value of NTEM", 
+                       "In_Parameter", io::message::error);
+    }
+
 
     // lattice shift and pressure coupling:
     if (param.pcouple.scale != math::pcouple_off
@@ -4495,8 +4508,10 @@ int io::check_features(simulation::Simulation  &sim)
   // fc.unlock("conjugate_gradient", "bsleus");
   fc.unlock("conjugate_gradient", "xray");
   fc.unlock("conjugate_gradient", "force_groups");
+  fc.unlock("conjugate_gradient", "eds");
 
   //amber block
+  fc.unlock("amber", "conjugate_gradient");
   fc.unlock("amber", "solute");
   fc.unlock("amber", "solvent");
   fc.unlock("amber", "solvent_only");
