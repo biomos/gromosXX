@@ -4780,7 +4780,7 @@ void io::In_Parameter::read_ELECTRIC(simulation::Parameter & param,
         block.get_next_parameter("DIPGRP", param.electric.dip_groups, "", "0,1,2");
         block.get_next_parameter("NTWDIP", param.electric.dip_write, ">=0", "");
         block.get_next_parameter("NTWCUR", param.electric.cur_write, ">=0", "");
-        block.get_next_parameter("NCURGRP", ncurgrp, ">0", "");
+        block.get_next_parameter("NCURGRP", ncurgrp, ">=0", "");
 
         switch (field) {
             case 0:
