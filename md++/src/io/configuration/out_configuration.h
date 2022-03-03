@@ -417,22 +417,26 @@ namespace io {
 
     void _print_tf_rdc_restraints(
             configuration::Configuration const &conf,
-            topology::Topology const &topo,
             std::ostream &os);
 
     void _print_tf_rdc_restraint_averages(
             configuration::Configuration const &conf,
-            topology::Topology const &topo,
             std::ostream &os);
 
     void _print_tf_rdc_cumaverages(
             configuration::Configuration const &conf,
-            topology::Topology const &topo,
             std::ostream &os);
+
+    void _print_tf_rdc_mfv(
+        configuration::Configuration const & conf,
+        std::ostream & os);
+
+    void _print_tf_rdc_mfv_p(
+        configuration::Configuration const & conf,
+        std::ostream & os);
 
     void _print_zaxisori_distribution(simulation::Simulation const & sim,
             configuration::Configuration const &conf,
-            topology::Topology const &topo,
             std::ostream &os);
 
     void _print_blockaveraged_energyred(configuration::Configuration const & conf,

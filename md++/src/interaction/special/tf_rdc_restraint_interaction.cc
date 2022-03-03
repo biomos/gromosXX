@@ -17,12 +17,16 @@
 #include <interaction/interaction_types.h>
 
 #include <interaction/special/tf_rdc_restraint_interaction.h>
+#include <io/topology/in_tf_rdc.h>
 
 #include <util/template_split.h>
+#include "../../util/error.h"
 #include <util/debug.h>
+#include <util/generate_velocities.h>
 
-#include <io/topology/in_tf_rdc.h>
 #include <list>
+
+#include "../../math/random.h"
 
 #undef MODULE
 #undef SUBMODULE
@@ -92,7 +96,13 @@ int _calculate_tf_rdc_restraint_interactions
         // t_z_inv_r_ij_2 is 3*(z/r)^2
         // R and P therefore dimensionless
         const double R = r_0_3 * inv_r_ij_3;                    // [-]
-        const double P = 0.5 * (t_z_inv_r_ij_2 - 1.0);          // [-]
+
+        double P;
+        if (sim.param().tfrdc.nstsd > 0) {
+          P = conf.special().tfrdc_mfv.P_avg[l];
+        } else {
+          P = 0.5 * (t_z_inv_r_ij_2 - 1.0);   // [-]
+        }       
 
         DEBUG(15, "R: " << R);
         DEBUG(15, "P: " << P);
@@ -162,13 +172,17 @@ int _calculate_tf_rdc_restraint_interactions
                 }
 
                 dRdr = - 3.0 * r_0_3 * inv_r_ij_5 * r_ij;       // [1 / nm]
-                for(unsigned int a = 0; a < 3; ++a){
-                    if(a<2){
-                        dPdr(a) = - t_z_inv_r_ij_2 * inv_r_ij_2 * r_ij(a); // [1 / nm]
-                    } else {
-                        dPdr(a) = - 3.0 * r_ij(2) * inv_r_ij_4;     // [1 / nm]
-                        dPdr(a) *= (r_ij(2) * r_ij(2) - d_r_ij_2);  // [1 / nm]
-                    }
+                if (sim.param().tfrdc.nstsd > 0) {
+                  dPdr=conf.special().tfrdc_mfv.dPdr_avg[l];
+                } else {
+                  for(unsigned int a = 0; a < 3; ++a){
+                      if(a<2){
+                          dPdr(a) = - t_z_inv_r_ij_2 * inv_r_ij_2 * r_ij(a); // [1 / nm]
+                      } else {
+                          dPdr(a) = - 3.0 * r_ij(2) * inv_r_ij_4;     // [1 / nm]
+                          dPdr(a) *= (r_ij(2) * r_ij(2) - d_r_ij_2);  // [1 / nm]
+                      }
+                  }
                 }
                 break;
 
@@ -211,7 +225,7 @@ int _calculate_tf_rdc_restraint_interactions
 
         // apply energy and force
         conf.current().energies.tfrdc_energy[topo.atom_energy_group()
-    					    [it->v1.atom(0)]] += energy;
+                  [it->v1.atom(0)]] += energy;
         it->v1.force(conf, topo, f_i);
         it->v2.force(conf, topo, f_j);
 
@@ -225,16 +239,520 @@ int _calculate_tf_rdc_restraint_interactions
     return 0;
 }
 
+
+template<math::boundary_enum B>
+int _shake_bond(math::Box box, math::VArray &pos, const math::VArray &old_pos, double mass, double d) {
+  math::Vec r;
+  math::Periodicity<B> periodicity(box);
+  periodicity.nearest_image(pos(0), pos(1), r);
+  double dist2 = abs2(r);
+  double constr_length2 = d  * d;
+  double diff = constr_length2-dist2;
+  // hardcoded tolerance 1e-4
+  int iter=0;
+  while (fabs(diff) >= constr_length2 * 1e-4 * 2.0) {
+    DEBUG(10, "iteration number " << iter);
+    math::Vec ref_r;
+    periodicity.nearest_image(old_pos(0), old_pos(1), ref_r);
+
+    double sp = dot(ref_r, r);
+    if (sp < constr_length2 * math::epsilon) {
+      /*
+      io::messages.add("SHAKE error. vectors orthogonal",
+          "Shake::???",
+          io::message::critical);
+      */
+      std::cout << "SHAKE ERROR tfrdcres magnetic field vector\n"
+              << "\tref i     : " << math::v2s(old_pos(0)) << "\n"
+              << "\tref j     : " << math::v2s(old_pos(1)) << "\n"
+              << "\tfree i    : " << math::v2s(pos(0)) << "\n"
+              << "\tfree j    : " << math::v2s(pos(1)) << "\n"
+              << "\tref r     : " << math::v2s(ref_r) << "\n"
+              << "\tr         : " << math::v2s(r) << "\n"
+              << "\tsp        : " << sp << "\n"
+              << "\tconstr    : " << constr_length2 << "\n"
+              << "\tdiff      : " << diff << "\n";
+      io::messages.add("SHAKE error tfrdcres: vectors orthogonal",
+              "Shake::solute",
+              io::message::error);
+
+      return E_SHAKE_FAILURE;
+    }
+
+    if (iter > 1000) {
+      std::cout << "SHAKE error tfrdcres: too many iterations (>1000)\n";
+      return E_SHAKE_FAILURE;
+    }
+    // lagrange multiplier
+    double lambda = diff / (sp * 2.0 * 2/mass);
+
+    DEBUG(10, "lagrange multiplier " << lambda);
+
+    const math::Vec cons_force = lambda * ref_r;
+    // update positions
+    ref_r *= lambda;
+    pos(0) += ref_r * 1/mass;
+    pos(1) -= ref_r * 1/mass;
+
+    periodicity.nearest_image(pos(0), pos(1), r);
+    dist2 = abs2(r);
+    diff = constr_length2-dist2;
+    iter++;
+  } // shake iteration
+  return 0;
+}
+
+
+/**
+ * tensor-free RDC restraint interactions
+ */
+template<math::boundary_enum B, math::virial_enum V>
+int _magnetic_field_vector_sd
+(topology::Topology & topo,
+        configuration::Configuration & conf,
+        simulation::Simulation & sim,
+        int & err) {
+
+    math::Periodicity<B> periodicity(conf.current().box);
+
+    double exptaut = 0.0;                                       // [-]
+    if (sim.param().tfrdc.tauth > 0.0)
+      exptaut = exp(-sim.time_step_size() / sim.param().tfrdc.tauth);    // [-]
+    const double & K = sim.param().tfrdc.K * 1e24;        // [kJ ps^2 / mol]
+    const double dPavedP = 1.0 - exptaut;                       // [-]
+
+
+    // initialize
+    math::Vec & rh_i = conf.special().tfrdc_mfv.pos(0);         // [nm]
+    math::Vec rh_ij;
+    periodicity.nearest_image(rh_i, conf.special().tfrdc_mfv.pos(1), rh_ij);
+    DEBUG(9, "initial rh_i  :" << math::v2s(rh_i));
+    DEBUG(9, "initial rh_ij :" << math::v2s(rh_ij));
+    double dh_ij = math::abs(rh_ij);                  // [nm]
+    math::VArray r_ij;
+    std::vector<double> costheta;
+    std::vector<double> d_ij;
+
+    // get the RDC bond vectors once, they won't change
+    std::vector<topology::tf_rdc_restraint_struct>::iterator
+    it = topo.tf_rdc_restraints().begin(),
+          to = topo.tf_rdc_restraints().end();
+    for(unsigned int l=0; it != to; ++it, ++l) {
+      const math::Vec & r_i1 = it->v1.pos(conf, topo);         // [nm]
+      math::Vec r_ij1;
+      periodicity.nearest_image(r_i1, it->v2.pos(conf, topo), r_ij1);
+      r_ij.push_back(r_ij1);
+      d_ij.push_back(math::abs(r_ij1));                  // [nm]
+      double ct = (rh_ij(0)*r_ij[l](0)+rh_ij(1)*r_ij[l](1)+rh_ij(2)*r_ij[l](2))/(dh_ij*d_ij[l]);
+      costheta.push_back(ct);
+
+      DEBUG(9, "r_i  :" << math::v2s(r_i1));
+      DEBUG(9, "r_ij :" << math::v2s(r_ij1));
+      // compute  P, P is dimensionless
+      const double P = 0.5 * (3 * costheta[l] * costheta[l] - 1.0);          // [-]
+      DEBUG(15, "P: " << P);
+      DEBUG(15, "Theta of k1k2: " << acos(costheta[l]));
+
+
+      // time-averaging
+      // initialise average?
+      double & P_expavg = conf.special().tfrdc_mfv.P_expavg[l];         // [-]
+      if (sim.steps() == 0 && !sim.param().tfrdc.continuation) {
+          P_expavg = P;                                  // [-]
+      } else {
+          DEBUG(15, "read-in P_expavg: " << P_expavg);
+      }
+      // apply time averaging
+      P_expavg = dPavedP * P + exptaut * P_expavg;          // [-]
+      DEBUG(15, " P_expavg: " << P_expavg);
+    }
+
+    // clear P_avg
+    std::fill(conf.special().tfrdc_mfv.P_avg.begin(), conf.special().tfrdc_mfv.P_avg.end(), 0.0);
+    std::fill(conf.special().tfrdc_mfv.dPdr_avg.begin(), conf.special().tfrdc_mfv.dPdr_avg.end(), math::Vec(0.0,0.0,0.0));
+    for (int sdstep=0; sdstep < sim.param().tfrdc.nstsd; sdstep++) {
+    
+      // -----  calculate forces on magn. field vector -----
+      math::VArray forces(2, math::Vec(0.0, 0.0, 0.0));
+
+      // loop over the tensor-free RDC restraints
+      std::vector<topology::tf_rdc_restraint_struct>::iterator
+      it = topo.tf_rdc_restraints().begin(),
+            to = topo.tf_rdc_restraints().end();
+      for(unsigned int l = 0; it != to; ++it, ++l) {
+          math::Vec dPdr(0.0, 0.0, 0.0);
+          math::Vec force(0.0, 0.0, 0.0);
+          double & P_expavg = conf.special().tfrdc_mfv.P_expavg[l];         // [-]
+
+          // compute tensor-free RDC
+          double RDC_avg = interaction::D_c(it) * P_expavg;     // [1 / ps]
+          DEBUG(9, "RDC_avg (MFV): " << RDC_avg*pow(10,12));
+
+          // the not averaged RDC
+          //double RDC = interaction::D_c(it)  * P;
+
+          DEBUG(15, "RDC atom: " << it->v1.atom(0));
+          DEBUG(15, "Input D0 [Hz]: " << it->D0*pow(10,12));
+          DEBUG(15, "Input dD0 [Hz]: " << it->dD0*pow(10,12));
+          DEBUG(15, "D_k^c [Hz]: " << interaction::D_c(it)*pow(10,12));
+
+          double term = 0.0;
+          if (RDC_avg > it->D0 + it->dD0) {
+            term = RDC_avg - it->D0 - it->dD0;            // [1 / ps]
+          } else if (RDC_avg < it->D0 - it->dD0) {
+            term = RDC_avg - it->D0 + it->dD0;            // [1 / ps]
+          } else {
+            DEBUG(9, "TFRDCRES  : restraint fulfilled");
+          }
+
+          for(unsigned int a = 0; a < 3; ++a){
+            // eq 27, not to be used; TODO: remove
+            //double inv_dh_ij = 1/dh_ij;
+            //dPdr(a) = 3 * costheta * inv_dh_ij * (v_r_ij[l](a)/(d_ij) - costheta*rh_ij(a)*inv_dh_ij*inv_dh_ij); // [1 / nm]
+            // eq. 32
+            double prefix =  3 * costheta[l] / (d_ij[l]*dh_ij);
+            dPdr(a) = prefix * r_ij[l](a); // [1 / nm]
+          }
+          
+
+          DEBUG(9, "dP/dr" << math::v2s(dPdr));
+          DEBUG(9, "dP_expavg/dP: " << dPavedP);
+
+          force = term * interaction::D_c(it) * dPavedP * dPdr;  // [1 / (ps^2 nm)]
+
+          math::Vec f_i(0.0, 0.0, 0.0), f_j(0.0, 0.0, 0.0);
+          forces(0) -= K * force;              // [(kJ ps^2 / mol) * (1 / (ps^2 nm))] = [kJ / (mol nm)]
+          forces(1) -= forces(0);              // [kJ / (mol nm)]
+
+          std::cout.precision(15); // useful for debugging
+          DEBUG(7, "f_hi: " << math::v2s(forces(0)));
+          DEBUG(7, "f_hj: " << math::v2s(forces(1)));
+      }
+
+
+      configuration::Configuration::special_struct::tfrdc_mfv_struct & tfrdc_mfv = conf.special().tfrdc_mfv;
+
+      // Save old velocities and positions
+      const math::VArray old_pos(tfrdc_mfv.pos);
+      const math::VArray old_vel(tfrdc_mfv.vel);
+
+      // Create random number generator
+      std::ostringstream seed; 
+      if (!sim.param().tfrdc.continuation) {
+        // use seed from input file
+        seed << sim.param().start.ig;
+      } else {
+        // choose a remotely random random-seed
+        // TODO: do I have to have a better seed?
+        seed << time(NULL); 
+      }
+      static math::RandomGenerator* rng = math::RandomGenerator::create(sim.param(), seed.str());
+
+      // -----  SD velocity 1 -----
+      for (unsigned int i=0; i < 2; ++i){
+        if(sim.param().tfrdc.cfrich != 0.0) {
+          
+          //we sample the V'i vector from eq. 2.11.2.20 from a Gaussian with 0.0 mean
+          //and width sigma2_sq (sd1)
+          rng->stddev(tfrdc_mfv.sd.sd1);
+          tfrdc_mfv.sd.vrand1(i) = rng->get_gaussian_vec();
+          //we sample the Vi vector to be used in eq. 2.11.2.2 from a Gaussian with 0.0 mean
+          //and width rho1_sq (sd2)
+          rng->stddev(tfrdc_mfv.sd.sd2);
+          tfrdc_mfv.sd.vrand2(i) = rng->get_gaussian_vec();
+          
+          DEBUG(10, "vrand1=" <<  math::v2s(tfrdc_mfv.sd.vrand1(i)));
+          DEBUG(10, "vrand2=" << math::v2s(tfrdc_mfv.sd.vrand2(i)));
+                
+          DEBUG(9, "old vel(" << i << ") " << math::v2s(old_vel(i)));
+          DEBUG(9, "old pos(" << i << ") " << math::v2s(old_pos(i)));
+          DEBUG(9, " force(" << i << ") " << math::v2s(forces(i)));
+          DEBUG(10, "stochastic integral=" << math::v2s(tfrdc_mfv.stochastic_integral(i)));
+          
+          // svh .. V in eq. 65; vrand2 .. Yv
+          math::Vec svh = tfrdc_mfv.stochastic_integral(i) * tfrdc_mfv.sd.c5 + tfrdc_mfv.sd.vrand2(i);
+          //assign vrand to the Stochastic Integral array
+          tfrdc_mfv.stochastic_integral(i) = tfrdc_mfv.sd.vrand1(i);
+          
+          //calculate new velocity using eq. 2.11.2.2 from the GROMOS96 book
+          //CC1(NATTOT) = delivered with EXP(-GDT)  (GDT=GAM(J)*DT)
+          //CC2(NATTOT) = delivered with (1-EXP(-GDT))/GDT
+          //slightly rewritten form of first line of 2.11.2.3 minus
+          //the first term in the third line of 2.11.2.3
+          
+          DEBUG(10, "svh=" << math::v2s(svh));
+          DEBUG(10, "cf=" << tfrdc_mfv.sd.cf);
+          
+          tfrdc_mfv.vel(i) = (old_vel(i) - svh) * tfrdc_mfv.sd.c1
+          // force * m-1 * dt * (1-EXP(-GDT))/GDT, i.e.
+          + forces(i) * tfrdc_mfv.sd.cf
+          // last term of 2.11.2.2
+          + tfrdc_mfv.sd.vrand1(i);
+        
+          //we sample the R'i vector from eq. 2.11.2.25 from a Gaussian with 0.0 mean
+          //and width rho2_sq (sd3)
+          rng->stddev(tfrdc_mfv.sd.sd3);
+          tfrdc_mfv.sd.vrand3(i) = rng->get_gaussian_vec();
+          //we sample the Ri vector to be used in eq. 2.11.2.26 from a Gaussian with 0.0 mean
+          //and width rho1_sq (sd4)
+          rng->stddev(tfrdc_mfv.sd.sd4);
+          tfrdc_mfv.sd.vrand4(i) = rng->get_gaussian_vec();
+          
+          DEBUG(10, "vrand3=" << math::v2s(tfrdc_mfv.sd.vrand3(i)));
+          DEBUG(10, "vrand4=" << math::v2s(tfrdc_mfv.sd.vrand4(i)));
+        } else {
+          tfrdc_mfv.vel(i) = old_vel(i) + forces(i) * sim.time_step_size() / topo.mass(i);
+          tfrdc_mfv.sd.vrand1(i)=math::Vec(0.0, 0.0, 0.0);
+          tfrdc_mfv.sd.vrand2(i)=math::Vec(0.0, 0.0, 0.0);
+          tfrdc_mfv.sd.vrand3(i)=math::Vec(0.0, 0.0, 0.0);
+          tfrdc_mfv.sd.vrand4(i)=math::Vec(0.0, 0.0, 0.0);
+
+        }
+      } // loop over atoms
+      conf.special().tfrdc_mfv.sd.seed=rng->seed();
+
+      // sd_pos1
+      for (unsigned int i=0; i < 2; ++i){
+        //calc new positions
+        //according to step 7 in leap frog for SD (GROMOS96 book)
+        tfrdc_mfv.pos(i) = old_pos(i) 
+              + tfrdc_mfv.vel(i) * sim.time_step_size() * tfrdc_mfv.sd.c6;    
+        DEBUG(9, "old pos(" << i << ") " << math::v2s(old_pos(i)));
+        DEBUG(9, "new pos(" << i << ") " << math::v2s(tfrdc_mfv.pos(i)));      
+      } // loop over atoms
+
+      // shake (only positions)
+      err = _shake_bond<B>(conf.current().box, tfrdc_mfv.pos, old_pos, tfrdc_mfv.mass, tfrdc_mfv.d);
+      if (err) break;
+
+      // sd_vel2
+      for (unsigned int i=0; i < 2; ++i) {
+        double cinv = 1.0 / (tfrdc_mfv.sd.c6 * sim.time_step_size());
+        math::Vec r;
+        periodicity.nearest_image(tfrdc_mfv.pos(i), old_pos(i), r);
+        tfrdc_mfv.vel(i) = r * cinv;
+        DEBUG(10, "velocity SHAKEN" << math::v2s(tfrdc_mfv.vel(i)))
+      }
+
+      // sd_pos2
+      if(sim.param().tfrdc.cfrich != 0.0) {
+        for (unsigned int i=0; i < 2; ++i){
+          //this is 2.11.2.25
+          math::Vec sxh = tfrdc_mfv.stochastic_integral(i) * tfrdc_mfv.sd.c9
+          + tfrdc_mfv.sd.vrand4(i);
+          tfrdc_mfv.stochastic_integral(i) = tfrdc_mfv.sd.vrand3(i);  
+          //this is 2.11.2.26
+          tfrdc_mfv.pos(i) += tfrdc_mfv.sd.vrand3(i) - sxh;
+        } // loop over atoms
+      }     
+        
+      // shake (only positions)
+      err = _shake_bond<B>(conf.current().box, tfrdc_mfv.pos, old_pos, tfrdc_mfv.mass, tfrdc_mfv.d);
+      if (err) break;
+
+      // TODO: calculate P_avg and P_expavg
+      periodicity.nearest_image(rh_i, conf.special().tfrdc_mfv.pos(1), rh_ij);
+      dh_ij = math::abs(rh_ij);                  // [nm]
+      DEBUG(9, "rh_i  :" << math::v2s(rh_i));
+      DEBUG(9, "rh_ij :" << math::v2s(rh_ij));
+      
+      it = topo.tf_rdc_restraints().begin(),
+            to = topo.tf_rdc_restraints().end();
+      for(unsigned int l=0; it != to; ++it, ++l) {
+
+        costheta[l] = (rh_ij(0)*r_ij[l](0)+rh_ij(1)*r_ij[l](1)+rh_ij(2)*r_ij[l](2))/(dh_ij*d_ij[l]);
+ 
+        const double P = 0.5 * (3 * costheta[l] * costheta[l] - 1.0);          // [-]
+        DEBUG(15, "P: " << P);
+        DEBUG(15, "Theta of k1k2: " << acos(costheta[l]));
+
+        // apply time averaging
+        double & P_expavg = conf.special().tfrdc_mfv.P_expavg[l];         // [-]
+        P_expavg = dPavedP * P + exptaut * P_expavg;          // [-]
+        DEBUG(15, " P_expavg: " << P_expavg);
+
+        conf.special().tfrdc_mfv.P_avg[l]+=P/sim.param().tfrdc.nstsd;
+        DEBUG(15, " P_avg: " << conf.special().tfrdc_mfv.P_avg[l]);
+
+        double prefix =  3 * costheta[l] / (d_ij[l]*dh_ij);
+        // TODO: add case when bond is not constrained
+        for(unsigned int a = 0; a < 3; ++a){
+            conf.special().tfrdc_mfv.dPdr_avg[l](a)+=prefix*rh_ij(a)/sim.param().tfrdc.nstsd;
+        }
+      }
+
+      if (err) return err;
+    } // loop sd steps
+  return 0;
+}
+
 int interaction::TF_RDC_Restraint_Interaction::calculate_interactions
 (
         topology::Topology & topo,
         configuration::Configuration & conf,
         simulation::Simulation & sim) {
   m_timer.start(sim);
+  int error = 0;
+  if (sim.param().tfrdc.nstsd > 0) {
+    SPLIT_VIRIAL_BOUNDARY(_magnetic_field_vector_sd,
+          topo, conf, sim, error);
+    if (error) return error;
+  }
   SPLIT_VIRIAL_BOUNDARY(_calculate_tf_rdc_restraint_interactions,
           topo, conf, sim);
   m_timer.stop();
-  return 0;
+  return error;
+}
+
+void _init_mfv_sd(configuration::Configuration & conf, 
+                                simulation::Simulation & sim) {
+
+  configuration::Configuration::special_struct::tfrdc_mfv_struct & tfrdc_mfv = conf.special().tfrdc_mfv;
+
+  // Create random number generator
+  std::ostringstream seed; 
+  if (!sim.param().tfrdc.continuation) {
+    // use seed from input file
+    seed << sim.param().start.ig;
+  } else {
+    // choose a remotely random random-seed
+    // TODO: do I have to have a better seed?
+    seed << time(NULL); 
+  }
+  math::RandomGenerator* rng = math::RandomGenerator::create(sim.param(), seed.str());
+  rng->mean(0.0); 
+      
+  // generate SD coefficients
+  const double gg = fabs(sim.param().tfrdc.cfrich);
+  const double gdt = gg * sim.time_step_size();
+  const double gdth = gdt * 0.5;
+  
+  // TODO: maybe do not use hardcoded values here
+  tfrdc_mfv.mass = 15.035;
+  tfrdc_mfv.d = 0.153;
+  tfrdc_mfv.sd.kToverM = sqrt(math::k_Boltzmann * sim.param().tfrdc.tempsd / tfrdc_mfv.mass);
+  DEBUG(12, "kb "<< math::k_Boltzmann << "Temp " << sim.param().tfrdc.tempsd << "mass "<< tfrdc_mfv.mass);
+
+  const double emdth = exp(-gdth);
+  const double emdt  = emdth * emdth;
+  const double cdth  = gdt - 3.0 + 4.0 * emdth - emdt;
+
+  if (fabs(gdt) > 0.05){
+    DEBUG(12, "\tdoing the analytical formulas");
+    const double epdth = exp(+gdth);
+    const double epdt  = epdth * epdth;
+    const double omdt  = 1.0 - emdt;
+    const double ddth  = 2.0 - epdth - emdth;
+    const double bpdth = gdt * (epdt - 1.0) - 4.0 * (epdth - 1.0) * (epdth - 1.0);
+    const double bmdth = gdt * (1.0 - emdt) - 4.0 * (emdth -1.0) * (emdth -1.0);
+    tfrdc_mfv.sd.c1 = emdt;
+    tfrdc_mfv.sd.c2 = omdt / gdt;
+    tfrdc_mfv.sd.c3 = sqrt(fabs(omdt));
+    tfrdc_mfv.sd.c4 = sqrt(fabs(bpdth/cdth));
+    tfrdc_mfv.sd.c5 = gg * ddth/cdth;
+    tfrdc_mfv.sd.c6 = (epdth - emdth) / gdt;
+    tfrdc_mfv.sd.c7 = sqrt(fabs(cdth)) / gg;
+    tfrdc_mfv.sd.c8 = sqrt(fabs(bmdth/omdt)) / gg;
+    tfrdc_mfv.sd.c9 = -ddth/(gg * omdt);
+    
+  } else {
+    DEBUG(12, "\tdoing the power series");
+    //this is a power series expansion for the coefficients used
+    //in the SD algortihm. it should be used when gamdt < 0.05, otherwise
+    //the analytical expression from above is good enough
+    const double gdth2 = gdth * gdth;
+    const double gdth3 = gdth2 * gdth;
+    const double gdth4 = gdth2 * gdth2;
+    const double gdth5 = gdth2 * gdth3;
+    const double gdth6 = gdth3 * gdth3;
+    const double gdth7 = gdth4 * gdth3;
+
+    tfrdc_mfv.sd.c1 = exp(-gdt);
+
+    tfrdc_mfv.sd.c2 = 1.0 - gdth + gdth2 * 2.0/3.0 - gdth3/3.0 
++ gdth4 * 2.0/15.0 - gdth5 * 2.0/45.0 + gdth6 * 4.0/315.0;
+
+    tfrdc_mfv.sd.c3 = sqrt(fabs(tfrdc_mfv.sd.c2) * 2.0 * gdth);
+
+    tfrdc_mfv.sd.c4 = sqrt(fabs(gdth/2.0 + gdth2 * 7.0/8.0 + gdth3 * 367.0/480.0 + gdth4 * 857.0/1920.0 
+          + gdth5 * 52813.0/268800.0 + gdth6 * 224881.0/3225600.0 +
+          gdth7 * 1341523.0/64512000.0));
+
+    tfrdc_mfv.sd.c5 = -2.0 / sim.time_step_size() *
+(1.5 + gdth * 9.0/8.0 + gdth2 * 71.0/160.0 + gdth3 * 81.0/640.0 + gdth4 * 7807.0/268800.0 
+  + gdth5 * 1971.0/358400.0 + gdth6 * 56417.0/64512000.0);
+
+    tfrdc_mfv.sd.c6 = 1.0 + gdth2/6.0 + gdth4/10.0 + gdth6/5040.0;
+
+    tfrdc_mfv.sd.c7 = sim.time_step_size() * 0.5 * 
+sqrt(fabs(gdth * 2.0/3.0 - gdth2/2.0 + gdth3 * 7.0/30.0 -gdth4/12.0 + gdth5 * 31.0/1260.0 - 
+    gdth6/160.0 + gdth7 * 127.0/90720.0));
+
+    tfrdc_mfv.sd.c8 = sim.time_step_size() * 0.5 * 
+sqrt(fabs(gdth/6.0 - gdth3/60.0 + gdth5 * 17.0/10080.0 - gdth7 * 31.0/181440.0));
+
+    tfrdc_mfv.sd.c9 = sim.time_step_size() * 0.5 *
+(0.5 + gdth/2.0 + gdth2 * 5.0/24.0 + gdth3/24.0 + gdth4/240.0 + gdth5/720.0 + gdth6 * 5.0/8064.0);
+
+  } 
+
+
+
+  //CC2(NATTOT) = delivered with (1-EXP(-GDT))/GDT
+  tfrdc_mfv.sd.cf = sim.time_step_size() * tfrdc_mfv.sd.c2 / tfrdc_mfv.mass;
+  
+  //CC3(NATTOT) = delivered with SQRT(1-EXP(-GDT))
+  //this is 2.11.2.8
+  tfrdc_mfv.sd.sd1 = tfrdc_mfv.sd.c3 * tfrdc_mfv.sd.kToverM;
+  
+  //CC4(NATTOT) = delivered with SQRT(B(+GDT/2)/C(+GDT/2)) (SEE PAPER)
+  // this is 2.11.2.9
+  tfrdc_mfv.sd.sd2 = tfrdc_mfv.sd.kToverM * tfrdc_mfv.sd.c4;
+
+  tfrdc_mfv.sd.sd3 = tfrdc_mfv.sd.kToverM * tfrdc_mfv.sd.c7;
+  tfrdc_mfv.sd.sd4 = tfrdc_mfv.sd.kToverM * tfrdc_mfv.sd.c8;
+
+  tfrdc_mfv.sd.vrand1.resize(2);
+  tfrdc_mfv.sd.vrand2.resize(2);
+  tfrdc_mfv.sd.vrand3.resize(2);
+  tfrdc_mfv.sd.vrand4.resize(2);
+  
+  DEBUG(10, "\tkT/m: " << tfrdc_mfv.sd.kToverM <<  " sd1: " << tfrdc_mfv.sd.sd1 << " sd2: " << tfrdc_mfv.sd.sd2);
+  DEBUG(10, "sd3: " << tfrdc_mfv.sd.sd3 << " sd4: " << tfrdc_mfv.sd.sd4);
+  DEBUG(10, "c5=" << tfrdc_mfv.sd.c5);
+
+  if (!sim.param().tfrdc.continuation){
+    tfrdc_mfv.pos.resize(2);
+    tfrdc_mfv.vel.resize(2);
+    tfrdc_mfv.stochastic_integral.resize(2);
+    // set initial positions
+    tfrdc_mfv.pos(0)=math::Vec(0,0,0);
+    tfrdc_mfv.pos(1)=math::Vec(0,0,tfrdc_mfv.d);
+
+    // initialize velocities, stochastic integrals
+    for (unsigned int i = 0; i < 2; ++i){
+
+      const double sd = sqrt(math::k_Boltzmann * sim.param().tfrdc.tempsd / tfrdc_mfv.mass);
+      rng->stddev(sd);
+      for(int d=0; d<3; ++d){
+        tfrdc_mfv.vel(i)(d) = rng->get_gauss();
+      }      
+
+      DEBUG(12, "stochastic coefficient for atom i = " << i);
+      // just an initial guess. no need(?) for high precision??
+      DEBUG(10, "gdt = " << gdt << " in initial stochastic integral");
+      if (sim.param().tfrdc.cfrich < math::epsilon){
+        tfrdc_mfv.stochastic_integral(i) = 0.0;
+      }
+      else {
+        const double sd = tfrdc_mfv.sd.kToverM / sim.param().tfrdc.cfrich * sqrt(cdth); 
+        DEBUG(10, "sigma " << sd << " ktoverm "<< tfrdc_mfv.sd.kToverM);
+        rng->stddev(sd);
+        tfrdc_mfv.stochastic_integral(i) = rng->get_gaussian_vec();
+        DEBUG(10, "initial stochastic integral: " << v2s(tfrdc_mfv.stochastic_integral(i)));
+      }
+    }
+  }
 }
 
 /**
@@ -256,9 +774,16 @@ int interaction::TF_RDC_Restraint_Interaction::init
   conf.special().tfrdc.RDC_avg.resize(num_res);
   conf.special().tfrdc.RDC_cumavg.resize(num_res);
   conf.special().tfrdc.energy.resize(num_res);
+  conf.special().tfrdc_mfv.P_expavg.resize(num_res);
+  conf.special().tfrdc_mfv.P_avg.resize(num_res);
+  conf.special().tfrdc_mfv.dPdr_avg.resize(num_res);
+
 
   if (!sim.param().tfrdc.read) {
     conf.special().tfrdc.num_averaged=0;
+  }
+  if (sim.param().tfrdc.nstsd > 0) {
+    _init_mfv_sd(conf, sim);
   }
 
   if (!quiet) {
@@ -275,6 +800,9 @@ int interaction::TF_RDC_Restraint_Interaction::init
         break;
     }
     os << std::endl;
+    if (sim.param().tfrdc.nstsd > 0) {
+      os << "\tsampling magnetic-field vector orientations in " << sim.param().tfrdc.nstsd << " SD steps" << std::endl;
+    }
 
     os.precision(8);
     os << "  - Number of restraints: " << num_res << std::endl

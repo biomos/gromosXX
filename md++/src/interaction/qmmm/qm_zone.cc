@@ -43,6 +43,8 @@
 #include "qm_link.h"
 #include "qm_zone.h"
 
+#include <limits>
+
 #undef MODULE
 #undef SUBMODULE
 #define MODULE interaction
