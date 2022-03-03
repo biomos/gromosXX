@@ -2003,7 +2003,7 @@ namespace topology
     /**
      * tf rdc restraints
      */
-     std::vector<tf_rdc_restraint_struct> m_tf_rdc_restraint;
+    std::vector<tf_rdc_restraint_struct> m_tf_rdc_restraint;
      /**
     * z-axis orientation bias
     */

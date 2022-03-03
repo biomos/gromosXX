@@ -4121,7 +4121,8 @@ namespace simulation
     taut(5.0),
 	  read(false),
     write(0),
-    cumave_write(0)
+    cumave_write(0),
+    continuation(false)
       {
       }
 
@@ -4151,6 +4152,27 @@ namespace simulation
        */
       unsigned int write;
       unsigned int cumave_write;
+      /**
+       * number of SD steps of magnetic field vector sampling
+       */
+      unsigned int nstsd;
+      /**
+       * theta memory time for time averaging of 
+       * magnetic field vector restraining
+       */
+      double tauth;
+      /**
+       * friction coefficient for magn. field vector SD
+       */
+      double cfrich;
+      /**
+       * temperature of stochastic bath for magn. field vector
+       */
+      double tempsd;
+      /**
+       * generate stochastic integrals for magn. field vector SD
+       */
+      bool continuation;
     }/** tensor-free RDC parameters */ tfrdc;
 
     /**

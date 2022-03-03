@@ -93,7 +93,7 @@ void io::In_Configuration::read(configuration::Configuration &conf,
   read_bsleus(topo, conf, sim, os);
   read_order_parameter_restraint_averages(topo, conf, sim, os);
   read_rdc(topo, conf, sim, os);
-  read_tf_rdc_restraint_averages(topo, conf, sim, os);
+  read_tf_rdc(topo, conf, sim, os);
   read_aedssearch(topo, conf, sim, os);
   read_gamdstat(topo, conf, sim, os);
 
@@ -1106,7 +1106,7 @@ bool io::In_Configuration::read_rdc (topology::Topology &topo,
  return true;
 }
 
-bool io::In_Configuration::read_tf_rdc_restraint_averages
+bool io::In_Configuration::read_tf_rdc
 (
         topology::Topology &topo,
         configuration::Configuration &conf,
@@ -1135,6 +1135,47 @@ bool io::In_Configuration::read_tf_rdc_restraint_averages
               "In_Configuration", io::message::error);
     }
   }
+
+  if (sim.param().tfrdc.nstsd > 0) {
+    buffer = m_block["TFRDCMFV"];
+    if (buffer.size()) {
+      block_read.insert("TFRDCMFV");
+      if (!quiet)
+        os << "\treading TFRDCMFV...\n";
+
+      if (sim.param().tfrdc.read) {
+        _read_tf_rdc_mfv(buffer, conf.special().tfrdc_mfv, os);
+		sim.param().tfrdc.continuation = true;
+	  } else {
+        io::messages.add("TFRDCMFV block found but not read.",
+              "In_Configuration", io::message::warning);
+	  }
+    } else {
+      if (sim.param().tfrdc.read)
+        io::messages.add("No TFRDCMFV block in configuration, initializing magn. field vector (velocities, positions, stochastic integrals, SD seed).",
+              "In_Configuration", io::message::notice);
+    }
+
+    buffer = m_block["TFRDCMFVP"];
+    if (buffer.size()) {
+      block_read.insert("TFRDCMFVP");
+      if (!quiet)
+        os << "\treading TFRDCMFVP...\n";
+
+      if (sim.param().tfrdc.read){
+        _read_tf_rdc_mfv_pexp(buffer, topo.tf_rdc_restraints(), conf.special().tfrdc_mfv, os);
+	  } else {
+        io::messages.add("RFRDCMFVP block found but not read.",
+              "In_Configuration", io::message::warning);
+	  }
+
+    } else {
+      if (sim.param().tfrdc.read)
+        io::messages.add("No TFRDCMFVP block in configuration, initializing P.",
+              "In_Configuration", io::message::notice);
+    }
+  }
+
   return true;
 }
 
@@ -2761,7 +2802,113 @@ bool io::In_Configuration::_read_tf_rdc_restraint_averages(
     P_avg.push_back(P);
     RDC_cumavg.push_back(RDC/1000000000000);
   }
-	return true;
+    return true;
+}
+
+bool io::In_Configuration::_read_tf_rdc_mfv(
+        std::vector<std::string> &buffer, 
+        configuration::Configuration::special_struct::tfrdc_mfv_struct &tfrdc_mfv,
+        std::ostream & os) {
+
+    if (!quiet) os << " from configuration ...\n";
+    DEBUG(15, "buffer size: " << buffer.size()-1)
+    if(buffer.size() != 8){
+        io::messages.add("no or empty TFRDCMFV block or insufficient information in configuration file",
+                "In_Configuration", io::message::error);
+        return false;
+    }
+
+    std::vector<std::string>::const_iterator it = buffer.begin(),
+        to = buffer.end()-1;
+
+    tfrdc_mfv.pos.resize(2);
+    tfrdc_mfv.vel.resize(2);
+    tfrdc_mfv.stochastic_integral.resize(2);
+
+    math::VArray &pos = tfrdc_mfv.pos;
+    for(int i=0; i<2; ++i, ++it){
+        _lineStream.clear();
+        _lineStream.str(*it);
+        _lineStream >> pos(i)(0) >> pos(i)(1) >> pos(i)(2);
+        if(_lineStream.fail()){
+            io::messages.add("bad line in TFRDCMFV block (pos)",
+                        "In_Configuration",
+                        io::message::error);
+            return false;
+        }
+    }
+    math::VArray &vel = tfrdc_mfv.vel;
+    for(int i=0; i<2; ++i, ++it){
+        _lineStream.clear();
+        _lineStream.str(*it);
+        _lineStream >> vel(i)(0) >> vel(i)(1) >> vel(i)(2);
+        if(_lineStream.fail()){
+            io::messages.add("bad line in TFRDCMFV block (vel)",
+                        "In_Configuration",
+                        io::message::error);
+            return false;
+        }
+    }
+    math::VArray &stochint = tfrdc_mfv.stochastic_integral;
+    for(int i=0; i<2; ++i, ++it){
+        _lineStream.clear();
+        _lineStream.str(*it);
+        _lineStream >> stochint(i)(0) >> stochint(i)(1) >> stochint(i)(2);
+        if(_lineStream.fail()){
+            io::messages.add("bad line in TFRDCMFV block (stoch.int.)",
+                        "In_Configuration",
+                        io::message::error);
+            return false;
+        }
+    }
+
+    _lineStream.clear();
+    _lineStream.str(*it);
+    _lineStream >> tfrdc_mfv.sd.seed;
+    if(_lineStream.fail()){
+        io::messages.add("bad line in TFRDCMFV block (seed)",
+                    "In_Configuration",
+                    io::message::error);
+        return false;
+    }
+
+    return true;
+}
+
+
+bool io::In_Configuration::_read_tf_rdc_mfv_pexp(
+        std::vector<std::string> &buffer, 
+        const std::vector<topology::tf_rdc_restraint_struct> & tfrdcres,
+        configuration::Configuration::special_struct::tfrdc_mfv_struct &tfrdc_mfv,
+        std::ostream & os) {
+
+    if (!quiet) os << " from configuration ...\n";
+    DEBUG(15, "buffer size: " << buffer.size()-1)
+    if(buffer.size()-1 != tfrdcres.size()){
+        io::messages.add("no or empty TFRDCMFVP block or insufficient information in configuration file",
+                "In_Configuration", io::message::error);
+        return false;
+    }
+
+    std::vector<std::string>::const_iterator it = buffer.begin(),
+        to = buffer.end()-1;
+
+
+    tfrdc_mfv.P_expavg.resize(tfrdcres.size());
+
+    for(int i=0; i<tfrdcres.size()-1; ++i, ++it){
+        _lineStream.clear();
+        _lineStream.str(*it);
+        _lineStream >> tfrdc_mfv.P_expavg[i];
+        if(_lineStream.fail()){
+            io::messages.add("bad line in TFRDCMFV block (pos)",
+                        "In_Configuration",
+                        io::message::error);
+            return false;
+        }
+    }
+
+    return true;
 }
 
 //FIXME remove rdc-res dependency

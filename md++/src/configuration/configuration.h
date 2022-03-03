@@ -796,7 +796,47 @@ namespace configuration {
          * the running average of P
          */
         std::vector<double> P_avg;
-    } /** tensor-free RDC informaton */ tfrdc;
+    } /** tensor-free RDC information */ tfrdc;
+      
+      /**
+      * @struct tfrdc_mfv_struct
+      * holds magnetic field vector configuration data
+      * when the mfv orientational sampling is used with tensor-free RDC restraints
+      */
+      struct tfrdc_mfv_struct {
+        std::vector<double> P_avg;
+        std::vector<math::Vec> dPdr_avg;
+        std::vector<double> P_expavg;
+
+        /**
+         * stochastic integrals for the magnetic field vector
+         */
+        math::VArray stochastic_integral;
+        math::VArray pos;
+        math::VArray vel;
+
+        /**
+         * SD parameters
+         */
+        struct sd_struct {
+          double c1, c2, c3, c4, c5, c6, c7, c8, c9;
+          double kToverM;
+          std::string seed;
+          double cdth;
+          double cf;
+
+          double sd1, sd2, sd3, sd4;
+          math::VArray vrand1;
+          math::VArray vrand2;
+          math::VArray vrand3;
+          math::VArray vrand4;
+        } sd;
+
+        double mass;
+        double d;
+
+    } /** tensor-free RDC magnetic field vector information */ tfrdc_mfv;
+      
 
       /**
        * lattice shifts

@@ -425,12 +425,12 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
     }
 
     if (m_every_tfrdc && sim.steps() && ((sim.steps()-1) % m_every_tfrdc) == 0) {
-      _print_tf_rdc_restraints(conf, topo, m_special_traj);
+      _print_tf_rdc_restraints(conf, m_special_traj);
       m_special_traj.flush();
     }
 
     if (m_every_rdccumave && sim.steps() && ((sim.steps()-1) % m_every_rdccumave) == 0) {
-      _print_tf_rdc_cumaverages(conf, topo, m_special_traj);
+      _print_tf_rdc_cumaverages(conf, m_special_traj);
       m_special_traj.flush();
     }
     
@@ -611,7 +611,12 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
 
     if (sim.param().tfrdc.mode == simulation::tfrdc_restr_av ||
         sim.param().tfrdc.mode == simulation::tfrdc_restr_av_weighted) {
-      _print_tf_rdc_restraint_averages(conf, topo, m_final_conf);
+      _print_tf_rdc_restraint_averages(conf, m_final_conf);
+    }
+
+    if (sim.param().tfrdc.mode != simulation::tfrdc_restr_off && sim.param().tfrdc.nstsd > 0) {
+      _print_tf_rdc_mfv(conf, m_final_conf);
+      _print_tf_rdc_mfv_p(conf, m_final_conf);
     }
 
     if (sim.param().rottrans.rottrans) {
@@ -735,11 +740,11 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
     }
 
     if (m_every_tfrdc &&  ((sim.steps()-1) % m_every_tfrdc) == 0) {
-      _print_tf_rdc_restraints(conf, topo, m_special_traj);
+      _print_tf_rdc_restraints(conf, m_special_traj);
     }
 
     if (m_every_rdccumave &&  ((sim.steps()-1) % m_every_rdccumave) == 0) {
-      _print_tf_rdc_cumaverages(conf, topo, m_special_traj);
+      _print_tf_rdc_cumaverages(conf, m_special_traj);
     }
 
     if (m_every_adde  && ((sim.steps()-1) % m_every_adde) == 0) {
@@ -2083,7 +2088,7 @@ void io::Out_Configuration
   }
 
   if (sim.param().zaxisoribias.zaxisoribias) {
-    _print_zaxisori_distribution(sim, conf, topo, m_output);
+    _print_zaxisori_distribution(sim, conf, m_output);
   }
 
 }
@@ -3017,7 +3022,6 @@ void io::Out_Configuration::_print_rdc_representation(simulation::Parameter cons
 
 void io::Out_Configuration::_print_tf_rdc_restraints(
         configuration::Configuration const &conf,
-        topology::Topology const & topo,
         std::ostream &os) {
   DEBUG(10, "tensor-free RDC restraints");
 
@@ -3042,7 +3046,6 @@ void io::Out_Configuration::_print_tf_rdc_restraints(
 
 void io::Out_Configuration::_print_tf_rdc_cumaverages(
         configuration::Configuration const &conf,
-        topology::Topology const & topo,
         std::ostream &os) {
   DEBUG(10, "TFRDC cumulative averages");
 
@@ -3064,7 +3067,6 @@ void io::Out_Configuration::_print_tf_rdc_cumaverages(
 void io::Out_Configuration::_print_zaxisori_distribution(
         simulation::Simulation const & sim,
         configuration::Configuration const & conf,
-        topology::Topology const & topo,
         std::ostream & os) {
         DEBUG(10, "z-axis orientation distributions");
        
@@ -3088,7 +3090,6 @@ void io::Out_Configuration::_print_zaxisori_distribution(
 
 void io::Out_Configuration::_print_tf_rdc_restraint_averages(
         configuration::Configuration const & conf,
-        topology::Topology const & topo,
         std::ostream & os) {
   DEBUG(10, "tensor-free RDC restraint averages");
 
@@ -3107,6 +3108,57 @@ void io::Out_Configuration::_print_tf_rdc_restraint_averages(
     os << std::setw(m_width) << std::right << *r_it
        << std::setw(m_width) << std::right << *p_it
        << std::setw(m_width) << std::right << *rdc_it*1000000000000
+       << std::endl;
+  }
+  os << "END" << std::endl;
+}
+
+void io::Out_Configuration::_print_tf_rdc_mfv(
+        configuration::Configuration const & conf,
+        std::ostream & os) {
+  DEBUG(10, "tensor-free RDC magnetic field vector info");
+
+  os.setf(std::ios::scientific, std::ios::floatfield);
+  os.precision(m_precision);
+
+  os << "TFRDCMFV" << std::endl;
+  for (int a=0; a<2; a++) {
+    for (int i=0; i<3; i++){
+            os  << std::setw(m_force_width) << conf.special().tfrdc_mfv.pos[a](i);
+    }
+    os << std::endl; 
+  }
+  for (int a=0; a<2; a++) {
+    for (int i=0; i<3; i++){
+            os  << std::setw(m_force_width) << conf.special().tfrdc_mfv.vel[a](i);
+    }
+    os << std::endl; 
+  }
+  for (int a=0; a<2; a++) {
+    for (int i=0; i<3; i++){
+            os  << std::setw(m_force_width) << conf.special().tfrdc_mfv.stochastic_integral[a](i);
+    }
+    os << std::endl; 
+  }
+  os  << std::setw(m_force_width) << conf.special().tfrdc_mfv.sd.seed << std::endl;
+  os << "END" << std::endl;
+}
+
+void io::Out_Configuration::_print_tf_rdc_mfv_p(
+        configuration::Configuration const & conf,
+        std::ostream & os) {
+  DEBUG(10, "tensor-free RDC magnetic field vector P exponential average");
+
+  std::vector<double>::const_iterator p_it = conf.special().tfrdc_mfv.P_expavg.begin(),
+    p_it_to = conf.special().tfrdc_mfv.P_expavg.end();
+
+  os.setf(std::ios::scientific, std::ios::floatfield);
+  os.precision(m_distance_restraint_precision); // use a lower precision due to scientific formats
+
+  os << "TFRDCMFVP" << std::endl;
+  
+  for (;p_it != p_it_to; ++p_it) {
+    os << std::setw(m_width) << std::right << *p_it
        << std::endl;
   }
   os << "END" << std::endl;

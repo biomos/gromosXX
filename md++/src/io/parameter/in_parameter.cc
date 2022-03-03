@@ -2608,9 +2608,16 @@ void io::In_Parameter::read_TFRDCRES(simulation::Parameter &param,
     exampleblock << "# NTWTFRAVE >= 0             write cumulative averages of RDCs to special trajectory\n";
     exampleblock << "#             0              don't write [default]\n";
     exampleblock << "#          >  0              write every NTWTFRAVE step\n";
+    exampleblock << "# NSTSD    >= 0              number of SD steps of the magnetic field vector\n";
+    exampleblock << "#             0              magnetic field is fix along z\n";
+    exampleblock << "# TAUTH    >= 0.0            theta coupling time for time-averaging of restraints on the magnetic field vector\n";
+    exampleblock << "# CFRICH   >= 0.0            friction coefficient for SD on the magnetic field vector\n";
+    exampleblock << "# TEMPSD   >= 0.0            temperature of stochastic bath\n";
     exampleblock << "#\n";
     exampleblock << "#       NTTFRDC  NTTFRDCA  CTFRDC   TAUR    TAUT    NTWTFRDC NTWTFRAVE\n";
     exampleblock << "           1       0        10.0     0.5     5.0      0           0\n";
+    exampleblock << "#       NSTSD  TAUTH  CFRICH  TEMPSD   \n";
+    exampleblock << "        20000    1.0     2.4   298.0   \n";
     exampleblock << "END\n";
 
     std::string blockname = "TFRDCRES";
@@ -2628,6 +2635,10 @@ void io::In_Parameter::read_TFRDCRES(simulation::Parameter &param,
         block.get_next_parameter("TAUT", param.tfrdc.taut, ">=0", "");
         block.get_next_parameter("NTWTFRDC", param.tfrdc.write, ">=0", "");
         block.get_next_parameter("NTWTFRAVE", param.tfrdc.cumave_write, ">=0", "");
+        block.get_next_parameter("NSTSD", param.tfrdc.nstsd, ">=0", "");
+        block.get_next_parameter("TAUTH", param.tfrdc.tauth, ">=0", "");
+        block.get_next_parameter("CFRICH", param.tfrdc.cfrich, ">=0", "");
+        block.get_next_parameter("TEMPSD", param.tfrdc.tempsd, ">0", "");
 
         switch (nttfrdc) {
             case 0:

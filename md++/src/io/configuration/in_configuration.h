@@ -260,7 +260,7 @@ namespace io {
     /**
      * read tensor-free RDC restraint averages
      */
-    bool read_tf_rdc_restraint_averages(topology::Topology &topo,
+    bool read_tf_rdc(topology::Topology &topo,
             configuration::Configuration &conf,
             simulation::Simulation & sim,
             std::ostream & os);
@@ -512,6 +512,20 @@ namespace io {
               std::vector<double> & P_avg,
               std::vector<double> & RDC_cumavg,
               unsigned long long int & num_averaged);
+
+    /**
+     * read TFRDCMFV block
+     */
+    bool _read_tf_rdc_mfv(
+                std::vector<std::string> &buffer, 
+                configuration::Configuration::special_struct::tfrdc_mfv_struct &tfrdc_mfv,
+                std::ostream & os);
+
+    bool _read_tf_rdc_mfv_pexp(
+            std::vector<std::string> &buffer, 
+            const std::vector<topology::tf_rdc_restraint_struct> & tfrdcres,
+            configuration::Configuration::special_struct::tfrdc_mfv_struct &tfrdc_mfv,
+            std::ostream & os);
 
     /**
      * read time information
