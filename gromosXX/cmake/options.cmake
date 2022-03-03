@@ -4,30 +4,28 @@ if(NOT CMAKE_BUILD_TYPE)
             "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
 endif()
 
-
 # set options
-option(OMP "enable openMP" ON)
+option(OMP "enable OMP" ON)
 option(MPI "enable MPI" OFF)
+option(CUDA "enable CUDA" OFF)
 option(FORCEGROUPS "enable forcegroups" OFF)
 option(HEAVISIDE "enable heaviside" OFF)
 
 if(OMP AND MPI)
-    message(FATAL_ERROR "openMP and MPI must NOT be enabled at the same time")
+    message(FATAL_ERROR "OMP and MPI must NOT be enabled at the same time")
 endif()
 
-
 # set include directories, xtb should also live here
-include_directories(${GSL_INCLUDE_DIRS} ${ZLIB_INCLUDE_DIRS} ${FFTW_INCLUDE_DIRS}
-)
+include_directories(${GSL_INCLUDE_DIRS} ${ZLIB_INCLUDE_DIRS} ${FFTW_INCLUDE_DIRS})
 
 # set libraries, xtb should also live here
 set(EXTERNAL_LIBRARIES
-        ${EXTERNAL_LIBRARIES}
-        ${CMAKE_THREAD_LIBS_INIT}
-        ${GSL_LIBRARIES}
-        ${FFTW_LIBRARIES}
-        ${ZLIB_LIBRARIES}
-        )
+    ${EXTERNAL_LIBRARIES}
+    ${CMAKE_THREAD_LIBS_INIT}
+    ${GSL_LIBRARIES}
+    ${FFTW_LIBRARIES}
+    ${ZLIB_LIBRARIES}
+)
 
 # find option dependent packages
 if(OMP)
