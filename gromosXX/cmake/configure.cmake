@@ -122,11 +122,6 @@ endif()
 if(HEAVISIDE)
     set(XXHEAVISIDE 1)
 endif()
-if(REPEX)
-    set(REPEX \"yes\")
-elseif()
-    set(REPEX \"no\")
-endif()
 
 # generate config.h
 configure_file(${PROJECT_SOURCE_DIR}/cmake/config.h.in ${PROJECT_BINARY_DIR}/config.h)

@@ -20,9 +20,9 @@ set(GROMOS_OBJCECTS
 )
 
 if(MPI)
-    set(EXEC_NAMES md_mpi)
+    set(EXEC_NAMES md_mpi repex_mpi eds_2box_mpi)
 else()
-    set(EXEC_NAMES md)
+    set(EXEC_NAMES md eds_2box)
 endif()
 
 # executables

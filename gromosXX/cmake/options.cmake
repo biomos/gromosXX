@@ -8,7 +8,6 @@ endif()
 # set options
 option(OMP "enable openMP" ON)
 option(MPI "enable MPI" OFF)
-option(REPEX "enable replica exchange support" OFF)
 option(FORCEGROUPS "enable forcegroups" OFF)
 option(HEAVISIDE "enable heaviside" OFF)
 
