@@ -3035,6 +3035,7 @@ void io::Out_Configuration::_print_tf_rdc_restraints(
   std::vector<double>::const_iterator RDC_it = conf.special().tfrdc.RDC.begin();
 
   os << "TFRDCRESDATA" << std::endl;
+  os << std::setw(m_width) << conf.special().tfrdc.RDC_avg.size() << std::endl;
   for (int i = 1; RDC_avg_it != RDC_avg_to; ++RDC_avg_it, ++RDC_it, ++e_it, ++i) {
     //os << std::setw(6) << i;
     os.precision(m_rdc_restraint_precision);
