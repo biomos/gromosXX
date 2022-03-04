@@ -50,9 +50,7 @@ set(ALGO_CC
     integration/eds.cc
 )
 
-add_library(groalgorithm OBJECT ${ALGO_CC})
-
-target_include_directories(groalgorithm PUBLIC
+set(ALGO_INCLUDE
     algorithm
     constraints
     integration
@@ -68,3 +66,11 @@ target_include_directories(groalgorithm PUBLIC
     ../interaction/forcefield
     ../interaction/special
 )
+
+if(CUDAKERNEL)
+    set(ALGO_INCLUDE "${ALGO_INCLUDE} ../cukernel"
+endif()
+
+add_library(groalgorithm OBJECT ${ALGO_CC})
+
+target_include_directories(groalgorithm PUBLIC ${ALGO_INCLUDE})

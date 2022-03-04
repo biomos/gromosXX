@@ -3,9 +3,9 @@ set(CUDA_CC
     lib/utils.cu 
 )
 
-add_library(cukernel OBJECT ${CUDA_CC})
+add_library(libgrocukernel OBJECT ${CUDA_CC})
 
-target_include_directories(cukernel PUBLIC
+target_include_directories(libgrocukernel PUBLIC
     ${PROJECT_BINARY_DIR}
     .
     ..
