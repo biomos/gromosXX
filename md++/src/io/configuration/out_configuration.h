@@ -439,6 +439,10 @@ namespace io {
             configuration::Configuration const &conf,
             std::ostream &os);
 
+    void _print_tfrdc_mfv_orientation_distribution(simulation::Simulation const & sim,
+            configuration::Configuration const &conf,
+            std::ostream &os);
+
     void _print_blockaveraged_energyred(configuration::Configuration const & conf,
             std::ostream & os);
 

@@ -2091,6 +2091,10 @@ void io::Out_Configuration
     _print_zaxisori_distribution(sim, conf, m_output);
   }
 
+  if (sim.param().tfrdc.nstsd > 0) {
+    _print_tfrdc_mfv_orientation_distribution(sim, conf, m_output);
+  }
+
 }
 
 void io::Out_Configuration
@@ -3063,7 +3067,6 @@ void io::Out_Configuration::_print_tf_rdc_cumaverages(
   os << "END" << std::endl;
 }
 
-
 void io::Out_Configuration::_print_zaxisori_distribution(
         simulation::Simulation const & sim,
         configuration::Configuration const & conf,
@@ -3083,6 +3086,30 @@ void io::Out_Configuration::_print_zaxisori_distribution(
   for (unsigned int i = 0; i < conf.special().zaxisoribias.dist_phi.size()-1; i++) {
     os  << std::setw(m_width) << sim.param().zaxisoribias.bins_phi[i]+0.5*binsize_phi << " " 
         << std::setw(m_width) << conf.special().zaxisoribias.dist_phi[i] / (sim.steps()*binsize_phi) << std::endl;
+  }
+  os << "END" << std::endl;
+
+}
+
+void io::Out_Configuration::_print_tfrdc_mfv_orientation_distribution(
+        simulation::Simulation const & sim,
+        configuration::Configuration const & conf,
+        std::ostream & os) {
+        DEBUG(10, "tfrdc magn. field vector orientation distributions");
+       
+  os.precision(m_precision);
+  double binsize_theta = sim.param().tfrdc.bins_theta[1]-sim.param().tfrdc.bins_theta[0];
+  double binsize_phi = sim.param().tfrdc.bins_phi[1]-sim.param().tfrdc.bins_phi[0];
+  os << "TFRDCMFVTHETADIST" << std::endl; 
+  for (unsigned int i = 0; i < conf.special().tfrdc_mfv.dist_theta.size()-1; i++) {
+    os  << std::setw(m_width) << sim.param().tfrdc.bins_theta[i]+0.5*binsize_theta << " " 
+        << std::setw(m_width) << conf.special().tfrdc_mfv.dist_theta[i] / (sim.steps()*binsize_theta) << std::endl;
+  }
+  os << "END" << std::endl;
+  os << "TFRDCMFVPHIDIST" << std::endl; 
+  for (unsigned int i = 0; i < conf.special().tfrdc_mfv.dist_phi.size()-1; i++) {
+    os  << std::setw(m_width) << sim.param().tfrdc.bins_phi[i]+0.5*binsize_phi << " " 
+        << std::setw(m_width) << conf.special().tfrdc_mfv.dist_phi[i] / (sim.steps()*binsize_phi) << std::endl;
   }
   os << "END" << std::endl;
 

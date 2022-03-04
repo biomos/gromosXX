@@ -835,6 +835,15 @@ namespace configuration {
         double mass;
         double d;
 
+        /**
+         * distribution of the angle of the mfv to the z-axis
+         */
+        std::vector<double> dist_theta;
+        /**
+         * distribution of the angle in the xy-plane
+         */
+        std::vector<double> dist_phi;
+
     } /** tensor-free RDC magnetic field vector information */ tfrdc_mfv;
       
 

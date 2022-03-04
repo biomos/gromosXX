@@ -33,6 +33,34 @@
 #define MODULE interaction
 #define SUBMODULE special
 
+template<typename T>
+std::vector<double> _linspace(T start_in, T end_in, int num_in)
+{
+
+  std::vector<double> linspaced;
+
+  double start = static_cast<double>(start_in);
+  double end = static_cast<double>(end_in);
+  double num = static_cast<double>(num_in);
+
+  if (num == 0) { return linspaced; }
+  if (num == 1) 
+    {
+      linspaced.push_back(start);
+      return linspaced;
+    }
+
+  double delta = (end - start) / (num - 1);
+
+  for(int i=0; i < num-1; ++i)
+    {
+      linspaced.push_back(start + delta * i);
+    }
+  linspaced.push_back(end); // I want to ensure that start and end
+                            // are exactly the same as the input
+  return linspaced;
+}
+
 /**
  * tensor-free RDC restraint interactions
  */
@@ -302,6 +330,51 @@ int _shake_bond(math::Box box, math::VArray &pos, const math::VArray &old_pos, d
   return 0;
 }
 
+void _add_mfv_orientation_to_distribution(configuration::Configuration & conf,
+        simulation::Simulation & sim, 
+        const math::Vec v){
+
+    double theta = acos(v[2]/math::abs(v));
+
+    // just for writing angle distributions
+    double dpx = math::dot(v,math::Vec(1, 0, 0));
+    double dpy = math::dot(v,math::Vec(0, 1, 0));
+    double phi = acos(dpx / sqrt((dpx*dpx)+(dpy*dpy)));
+    if (dpy <0) {
+      phi=-phi;
+    }
+   
+    while (phi > math::Pi*2) {
+      phi-=math::Pi*2;
+    }
+    while (phi < 0) {
+      phi+=math::Pi*2;
+    }
+
+    while (theta > math::Pi*2) {
+      theta-=math::Pi*2;
+    }
+    while (theta < 0) {
+      theta+=math::Pi*2;
+    }
+
+    for (unsigned int i=0; i<sim.param().tfrdc.bins_phi.size()-1; i++) {
+      double & bin_upper = sim.param().tfrdc.bins_phi[i+1];
+       if (phi < bin_upper) {
+         conf.special().tfrdc_mfv.dist_phi.at(i)+=1;
+         break;
+       }
+    }
+
+    for (unsigned int i=0; i<sim.param().tfrdc.bins_theta.size()-1; i++) {
+      double & bin_upper = sim.param().tfrdc.bins_theta[i+1];
+      if (theta < bin_upper) {
+        conf.special().tfrdc_mfv.dist_theta.at(i)+=1;
+        break;
+      }
+    }
+}
+
 
 /**
  * tensor-free RDC restraint interactions
@@ -550,9 +623,10 @@ int _magnetic_field_vector_sd
       err = _shake_bond<B>(conf.current().box, tfrdc_mfv.pos, old_pos, tfrdc_mfv.mass, tfrdc_mfv.d);
       if (err) break;
 
-      // TODO: calculate P_avg and P_expavg
+      
       periodicity.nearest_image(rh_i, conf.special().tfrdc_mfv.pos(1), rh_ij);
       dh_ij = math::abs(rh_ij);                  // [nm]
+      _add_mfv_orientation_to_distribution(conf, sim, rh_ij)
       DEBUG(9, "rh_i  :" << math::v2s(rh_i));
       DEBUG(9, "rh_ij :" << math::v2s(rh_ij));
       
@@ -784,6 +858,11 @@ int interaction::TF_RDC_Restraint_Interaction::init
   }
   if (sim.param().tfrdc.nstsd > 0) {
     _init_mfv_sd(conf, sim);
+    sim.param().tfrdc.bins_theta = _linspace(0.0,math::Pi,101.0);
+    sim.param().tfrdc.bins_phi = _linspace(0.0,2*math::Pi,101.0);
+
+    conf.special().tfrdc_mfv.dist_theta.resize(sim.param().tfrdc.bins_theta.size(), 0.0);
+    conf.special().tfrdc_mfv.dist_phi.resize(sim.param().tfrdc.bins_phi.size(), 0.0);
   }
 
   if (!quiet) {
