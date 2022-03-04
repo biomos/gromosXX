@@ -4154,6 +4154,11 @@ namespace simulation
        * generate stochastic integrals for magn. field vector SD
        */
       bool continuation;
+      /**
+        * bins for angle distributions
+        */
+      std::vector<double> bins_theta;
+      std::vector<double> bins_phi;
     }/** tensor-free RDC parameters */ tfrdc;
 
     /**
