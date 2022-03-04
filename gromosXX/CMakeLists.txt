@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 3.21)
-project(gromosXX)
+cmake_minimum_required(VERSION 3.20)
+project(gromosXX LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 11)
 #get gromos version number
 file(READ "VERSION" VERSION_FILE)

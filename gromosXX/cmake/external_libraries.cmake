@@ -14,12 +14,12 @@ find_package(Threads REQUIRED)
 find_package(GSL REQUIRED)
 find_package(ZLIB REQUIRED)
 set(EXTERNAL_LIBRARIES
-        ${EXTERNAL_LIBRARIES}
-        ${CMAKE_THREAD_LIBS_INIT}
-        ${GSL_LIBRARIES}
-        ${FFTW_LIBRARIES}
-        ${ZLIB_LIBRARIES}
-        )
+    ${EXTERNAL_LIBRARIES}
+    ${CMAKE_THREAD_LIBS_INIT}
+    ${GSL_LIBRARIES}
+    ${FFTW_LIBRARIES}
+    ${ZLIB_LIBRARIES}
+)
 
 # find optional libraries
 find_package(Clipper QUIET)

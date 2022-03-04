@@ -7,12 +7,16 @@ endif()
 # set options
 option(OMP "enable OMP" ON)
 option(MPI "enable MPI" OFF)
-option(CUDA "enable CUDA" OFF)
+option(CUDAKERNEL "enable CUDA" OFF)
 option(FORCEGROUPS "enable forcegroups" OFF)
 option(HEAVISIDE "enable heaviside" OFF)
 
 if(OMP AND MPI)
     message(FATAL_ERROR "OMP and MPI must NOT be enabled at the same time")
+endif()
+
+if(CUDAKERNEL)
+    enable_language(CUDA)
 endif()
 
 # set include directories, xtb should also live here
