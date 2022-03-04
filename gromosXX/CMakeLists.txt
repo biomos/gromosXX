@@ -18,6 +18,9 @@ string(REGEX MATCH [0-9]+ MD_MICRO_VERSION "${MD_MICRO_VERSION}")
 # set module search path
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/cmake/modules/")
 
+# check folder
+enable_testing()
+
 # options
 include(${PROJECT_SOURCE_DIR}/cmake/options.cmake)
 # find external libraries based on options

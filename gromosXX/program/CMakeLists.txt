@@ -1,5 +1,4 @@
 # include directories for executables
-set(CMAKE_CXX_STANDARD 11)
 
 set(PROGRAM_INCLUDES
     ${PROJECT_SOURCE_DIR}/src
@@ -7,7 +6,7 @@ set(PROGRAM_INCLUDES
 )
 
 # gromos object files
-set(GROMOS_OBJCECTS
+set(GROMOS_OBJECTS
     $<TARGET_OBJECTS:groalgorithm>
     $<TARGET_OBJECTS:groconfiguration>
     $<TARGET_OBJECTS:groio>
@@ -27,9 +26,8 @@ endif()
 
 # executables
 foreach(LOOP_VAR ${EXEC_NAMES})
-    add_executable(${LOOP_VAR} "${LOOP_VAR}.cc" ${GROMOS_OBJCECTS})
+    add_executable(${LOOP_VAR} "${LOOP_VAR}.cc" ${GROMOS_OBJECTS})
     target_include_directories(${LOOP_VAR} PRIVATE ${PROGRAM_INCLUDES})
-    target_link_libraries(${LOOP_VAR} ${EXTERNAL_LIBRARIES})
     target_link_libraries(${LOOP_VAR} ${EXTERNAL_LIBRARIES})
 endforeach()
 
