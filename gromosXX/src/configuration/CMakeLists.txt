@@ -1,5 +1,3 @@
-set(CMAKE_CXX_STANDARD 11)
-
 set(CONFIG_CC
     configuration_global.cc
     configuration.cc

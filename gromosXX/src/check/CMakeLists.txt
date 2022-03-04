@@ -1,4 +1,4 @@
-set(PROGRAM_INCLUDES
+set(TEST_PROGRAM_INCLUDES
     ${PROJECT_BINARY_DIR}
     .
     ..
@@ -79,7 +79,7 @@ add_executable(lambdas ${LAMBDAS_CC} ${GROMOS_OBJECTS})
 
 # links and includes for tests
 foreach(LOOP_VAR ${EXEC_NAMES})
-    target_include_directories(${LOOP_VAR} PRIVATE ${PROGRAM_INCLUDES})
+    target_include_directories(${LOOP_VAR} PRIVATE ${TEST_PROGRAM_INCLUDES})
     target_link_libraries(${LOOP_VAR} ${EXTERNAL_LIBRARIES})
     add_test(NAME ${LOOP_VAR} COMMAND $<TARGET_FILE:${LOOP_VAR}>)
 endforeach()

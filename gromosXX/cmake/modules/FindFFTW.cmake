@@ -13,9 +13,6 @@
 
 
 #If environment variable FFTW_ROOT is specified
-#set(FFTW_ROOT "/opt/dstar/progs/gcc-4.8.5/")
-#set(FFTW_ROOT "/opt/dstar/progs/gcc-4.8.5/fftw-3.3.4/")
-#set(FFTW_INLCUDE_DIRS "/opt/dstar/progs/gcc-4.8.5/fftw-3.3.4/include")
 if(NOT FFTW_ROOT AND ENV{FFTWDIR})
     file(TO_CMAKE_PATH "$ENV{FFTW_ROOT}" FFTW_ROOT)
     set(FFTW_ROOT "${FFTW_ROOT}" CACHE PATH "Prefix for fftw3 installation.")

@@ -15,7 +15,6 @@
 #   GSL_ROOT ------------ if set, the libraries are exclusively searched under this path
 
 #If environment variable GSL_ROOT is specified
-#set(GSL_ROOT "/opt/dstar/progs/gcc-4.8.5/gsl-2.1/")
 if(NOT GSL_ROOT AND ENV{GSL_ROOT})
     file(TO_CMAKE_PATH "$ENV{GSL_ROOT}" GSL_ROOT)
     set(GSL_ROOT "${GSL_ROOT}" CACHE PATH "Prefix for GSL installation.")

@@ -1,5 +1,3 @@
-set(CMAKE_CXX_STANDARD 11)
-
 set(ALGO_CC
     algorithm.cc
     create_md_sequence.cc
