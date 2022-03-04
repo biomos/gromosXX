@@ -1,7 +1,12 @@
 cmake_minimum_required(VERSION 3.20)
+
 project(gromosXX LANGUAGES CXX)
+
 set(CMAKE_CXX_STANDARD 11)
-#get gromos version number
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# get gromos version number
 file(READ "VERSION" VERSION_FILE)
 string(REGEX MATCH MAJOR.* MD_MAJOR_VERSION "${VERSION_FILE}")
 string(REGEX MATCH [0-9]+ MD_MAJOR_VERSION "${MD_MAJOR_VERSION}")

@@ -68,7 +68,7 @@ set(ALGO_INCLUDE
 )
 
 if(CUDAKERNEL)
-    set(ALGO_INCLUDE "${ALGO_INCLUDE} ../cukernel"
+    set(ALGO_INCLUDE "${ALGO_INCLUDE} ../cukernel")
 endif()
 
 add_library(groalgorithm OBJECT ${ALGO_CC})
