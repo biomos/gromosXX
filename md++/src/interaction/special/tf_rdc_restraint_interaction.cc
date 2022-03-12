@@ -148,7 +148,8 @@ int _calculate_tf_rdc_restraint_interactions
                 // initialise average?
                 if (sim.steps() == 0 && !sim.param().tfrdc.read) {
                     R_avg = R;                                  // [-]
-                    P_avg = P;                                  // [-]
+                    // P_avg = P;                                  // [-]
+                    P_avg = it->D0 / interaction::D_c(it); // set initial value so RDC_avg will be approximately the target value to dampen forces in the first steps
                 }
                 // apply time averaging
                 R_avg = dRavedR * R + exptaur * R_avg;          // [-]
@@ -431,7 +432,8 @@ int _magnetic_field_vector_sd
       // initialise average?
       double & P_expavg = conf.special().tfrdc_mfv.P_expavg[l];         // [-]
       if (sim.steps() == 0 && !sim.param().tfrdc.continuation) {
-          P_expavg = P;                                  // [-]
+          // P_expavg = P;                                 // [-]
+          P_expavg = it->D0 / interaction::D_c(it); // set initial value to the target value
       } else {
           DEBUG(15, "read-in P_expavg: " << P_expavg);
       }
