@@ -1003,7 +1003,7 @@ void io::In_QMMM::remove_constraints(topology::Topology& topo)
   {
   // Remove distance constraints between QM atoms
   std::vector<topology::two_body_term_struct> & dc = topo.solute().distance_constraints();
-  std::vector<topology::two_body_term_struct>::const_iterator it = dc.begin();
+  std::vector<topology::two_body_term_struct>::iterator it = dc.begin();
   while (it != dc.end()) {
     if (topo.is_qm(it->i) && topo.is_qm(it->j)) {
       DEBUG(15, "Removing distance constraint: " << it->i << "-" << it->j);

@@ -6,6 +6,7 @@
 
 #include "../stdheader.h"
 #include <fstream>
+#include <numeric>
 
 #include "../algorithm/algorithm.h"
 #include "../topology/topology.h"
@@ -23,6 +24,7 @@
 #include "../io/topology/in_topology.h"
 #include "../io/topology/in_perturbation.h"
 #include "../io/topology/in_distanceres.h"
+#include "../io/topology/in_angrest.h"
 #include "../io/topology/in_dihrest.h"
 #include "../io/topology/in_xray.h"
 #include "../io/topology/in_leus.h"
@@ -48,6 +50,7 @@ int util::create_simulation(std::string topo,
 			    util::simulation_struct & sim,
 			    io::In_Topology & in_topo,
 			    std::string distanceres,
+			    std::string angrest,
 			    std::string dihrest,
                             std::string xray,
 			    std::string led,
@@ -65,8 +68,35 @@ int util::create_simulation(std::string topo,
   }
 
   io::igzstream input_file, topo_file, pttopo_file, conf_file, 
-    distanceres_file, dihrest_file, xray_file, led_file, lud_file, order_file;
-  
+    distanceres_file, angrest_file, dihrest_file, xray_file, led_file, lud_file, order_file;
+
+#ifdef XXMPI
+  int rank, size;
+  rank = MPI::COMM_WORLD.Get_rank();
+  size = MPI::COMM_WORLD.Get_size();
+
+  sim.sim.mpi = true;
+  //Build Attributes:
+  ////GENERATE SIM SPECIFIC SIMULATION COMM
+  MPI_Comm simulationCOMM;
+  MPI_Comm_split(MPI_COMM_WORLD, sim.sim.mpiControl().mpiColor, rank, &simulationCOMM);
+  MPI_Barrier(simulationCOMM);
+  ////RANK and Size of thread in the simulationCOMM
+  int simulation_rank, simulation_size;
+  MPI_Comm_rank(simulationCOMM, &simulation_rank);
+  MPI_Comm_size(simulationCOMM, &simulation_size);
+  ////build up vector containing the replica_ids owned by thread
+  std::vector<unsigned int> simulationOwnedThreads(size);
+  std::iota(std::begin(simulationOwnedThreads), std::end(simulationOwnedThreads), 0);
+  //Pass the information to MPI_control Struct
+  sim.sim.mpiControl().numberOfThreads = simulation_size;
+  sim.sim.mpiControl().threadID = simulation_rank;
+  sim.sim.mpiControl().simulationOwnedThreads = simulationOwnedThreads;
+  sim.sim.mpiControl().comm = simulationCOMM;
+#else
+  sim.sim.mpi = false;
+#endif
+
   // if we got a parameter file, try to read it...
   if (param != ""){
 
@@ -136,6 +166,23 @@ int util::create_simulation(std::string topo,
     idr.quiet = quiet;
     idr.read(sim.topo, sim.sim);
   }
+
+  if (angrest != ""){
+    
+    angrest_file.open(angrest.c_str());
+    
+    if(!angrest_file.is_open()){
+      std::cout << "\n\ncould not open " << angrest << "!\n" << std::endl;
+      io::messages.add("opening angle restraints failed", "read_input",
+		       io::message::error);
+      return -1;
+    }
+
+    io::In_Angrest idr(angrest_file);
+    idr.quiet = quiet;
+    idr.read(sim.topo, sim.sim);
+  }
+
   if (dihrest != ""){
     
     dihrest_file.open(dihrest.c_str());
@@ -151,7 +198,6 @@ int util::create_simulation(std::string topo,
     idr.quiet = quiet;
     idr.read(sim.topo, sim.sim);
   }
-
   
   if (xray != "") {
     xray_file.open(xray.c_str());
@@ -171,7 +217,8 @@ int util::create_simulation(std::string topo,
           sim.sim.param().rottrans.rottrans,
           sim.sim.param().posrest.posrest == simulation::posrest_const,
           sim.sim.param().boundary.dof_to_subtract,
-          sim.sim.param().dihrest.dihrest == simulation::dihedral_constr);
+          sim.sim.param().dihrest.dihrest == simulation::dihedral_constr,
+          sim.sim.param().angrest.angrest == simulation::angle_constr);
 
   if (conf != ""){
 

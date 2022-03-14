@@ -42,6 +42,7 @@
  * - @ref  distanceres
  * - @ref  distancefield
  * - @ref  disres
+ * - @ref  angleres
  * - @ref  dihedralres
  * - @ref  dihrest
  * - @ref  multistep
@@ -65,6 +66,7 @@
  * - @ref  rdcres
  * - @ref  qmmm
  * - @ref  xrayres
+ * - @ref  amber
  */
 
 
@@ -197,6 +199,11 @@ namespace io {
      * read DISTANCEFIELD block.
      */
     void read_DISTANCEFIELD(simulation::Parameter &param, std::ostream & os = std::cout);
+
+    /**
+     * read ANGLERES block.
+     */
+    void read_ANGLERES(simulation::Parameter &param, std::ostream & os = std::cout);
 
     /**
      * read DIHEDRALRES block.
@@ -364,6 +371,10 @@ namespace io {
      * read SYMRES block
      */
     void read_SYMRES(simulation::Parameter &param, std::ostream & os = std::cout);
+    /**
+     * read AMBER block
+     */
+    void read_AMBER(simulation::Parameter &param, std::ostream & os = std::cout);
   };
 
 } // io

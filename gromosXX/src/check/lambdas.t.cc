@@ -154,7 +154,7 @@ int main(int argc, char* argv[]) {
 			      sinputon,
 			      aladip_sim_on,
 			      in_topo_on,
-			      "", "", "", "", "", "", 
+			      "", "", "", "", "", "", "",
 			      quiet
 			      )
       != 0){
@@ -170,7 +170,7 @@ int main(int argc, char* argv[]) {
 			      sinputoff,
 			      aladip_sim_off,
 			      in_topo_off,
-			      "", "", "", "", "", "", 
+			      "", "", "", "", "", "", "",
 			      quiet
 			      )
       != 0){
@@ -312,6 +312,17 @@ int main(int argc, char* argv[]) {
 	  dE_off=aladip_sim_off.conf.current().perturbed_energy_derivatives.
 	    dihedral_energy[n1];
 	  nm="dihedral";
+	}
+	else if(i==simulation::angres_lambda){
+	  E_on=aladip_sim_on.conf.current().energies.
+	    angrest_energy[n1];
+	  E_off=aladip_sim_off.conf.current().energies.
+	    angrest_energy[n1];
+	  dE_on=aladip_sim_on.conf.current().perturbed_energy_derivatives.
+	    angrest_energy[n1];
+	  dE_off=aladip_sim_off.conf.current().perturbed_energy_derivatives.
+	    angrest_energy[n1];
+	  nm="angle restraint";
 	}
 	else if(i==simulation::dihres_lambda){
 	  E_on=aladip_sim_on.conf.current().energies.

@@ -61,6 +61,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_BOUNDCOND(param);
   read_REPLICA(param); // has to be read in before MULTIBATH
   read_MULTIBATH(param);
+  read_STOCHDYN(param); // has to be read in before REPLICA_EDS
   read_REPLICA_EDS(param); // has to be read in after MULTIBATH
   read_PRESSURESCALE(param);
   read_PRINTOUT(param);
@@ -74,7 +75,8 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_NONBONDED(param);
   read_POSITIONRES(param);
   read_DISTANCERES(param);
-  read_DISTANCEFIELD(param); 
+  read_DISTANCEFIELD(param);
+  read_ANGLERES(param);
   read_DIHEDRALRES(param); // needs to be called after CONSTRAINT!
   read_PERTURBATION(param);
   read_JVALUERES(param);
@@ -87,7 +89,6 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_MULTICELL(param);
   read_READTRAJ(param);
   read_INTEGRATE(param);
-  read_STOCHDYN(param);
   read_EWARN(param);
   read_MULTISTEP(param);
   read_CHEMICALMONTECARLO(param);
@@ -96,7 +97,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_EDS(param);
   read_AEDS(param); // needs to be called after EDS
   read_LAMBDAS(param); // needs to be called after FORCE
-  read_PRECALCLAM(param); // ANITA 
+  read_PRECALCLAM(param); // ANITA
   read_LOCALELEV(param);
   read_BSLEUS(param);
   read_ELECTRIC(param);
@@ -106,6 +107,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_MULTIGRADIENT(param);
   read_QMMM(param);
   read_SYMRES(param);
+  read_AMBER(param);
 
   read_known_unsupported_blocks();
 
@@ -1941,6 +1943,86 @@ void io::In_Parameter::read_DISTANCEFIELD(simulation::Parameter &param,
     }
 } // DISTANCEFIELD
 
+
+/**
+ * @section angleres ANGLERES block
+ * @snippet snippets/snippets.cc ANGLERES
+ */
+void io::In_Parameter::read_ANGLERES(simulation::Parameter &param,
+                                        std::ostream & os) {
+    DEBUG(8, "reading ANGLERES");
+
+    std::stringstream exampleblock;
+    // lines starting with 'exampleblock<<"' and ending with '\n";' (spaces don't matter)
+    // will be used to generate snippets that can be included in the doxygen doc;
+    // the first line is the tag
+    exampleblock << "ANGLERES\n";
+    exampleblock << "# NTALR   0...3 controls angle restraining and constraining\n";
+    exampleblock << "#         0:    off [default]\n";
+    exampleblock << "#         1:    angle restraining using CALR\n";
+    exampleblock << "#         2:    angle restraining using CALR * WALR\n";
+    exampleblock << "#         3:    angle constraining\n";
+    exampleblock << "#\n";
+    exampleblock << "# CALR    >=0.0 force constant for angle restraining [kJ/mol/degree^2]\n";
+    exampleblock << "# VARES 0,1 controls contribution to virial\n";
+    exampleblock << "#         0: no contribution\n";
+    exampleblock << "#         1: angle restraints contribute to virial\n";
+    exampleblock << "# NTWALR  >=0   write every NTWALR step angle restraint information to external file\n";
+    exampleblock << "# TOLBAC  >0    tolerance for constraint deviation (in degrees)\n";
+    exampleblock << "#\n";
+    exampleblock << "# NTALR  CALR  VARES    NTWALR TOLBAC\n";
+    exampleblock << "  1      1.0      0       100    0.01\n";
+    exampleblock << "END\n";
+
+
+    std::string blockname = "ANGLERES";
+    Block block(blockname, exampleblock.str());
+
+    if (block.read_buffer(m_block[blockname], false) == 0) {
+        block_read.insert(blockname);
+
+        double K, tolerance;
+        int angrest;
+        block.get_next_parameter("NTALR", angrest, "", "0,1,2,3");
+        block.get_next_parameter("CALR", K, ">=0", "");
+        block.get_next_parameter("VARES", param.angrest.virial, "", "0,1");
+        block.get_next_parameter("NTWALR", param.angrest.write, ">=0", "");
+        block.get_next_parameter("TOLBAC", tolerance, ">=0", "");
+
+        switch (angrest) {
+            case 0:
+                param.angrest.angrest = simulation::angle_restr_off;
+                break;
+            case 1:
+                param.angrest.angrest = simulation::angle_restr_inst;
+                break;
+            case 2:
+                param.angrest.angrest = simulation::angle_restr_inst_weighted;
+                break;
+            case 3:
+                param.angrest.angrest = simulation::angle_constr;
+                break;
+            default:
+                break;
+        }
+
+        param.angrest.K = K*180*180 / (math::Pi * math::Pi);
+        param.angrest.tolerance = tolerance * math::Pi / 180;
+
+        if (param.angrest.angrest == simulation::angle_constr) {
+            if (param.constraint.ntc == 1 && param.constraint.solute.algorithm == simulation::constr_off)
+                param.constraint.solute.algorithm = simulation::constr_shake;
+
+            if (param.constraint.solute.algorithm != simulation::constr_shake) {
+                io::messages.add("ANGLERES block: needs SHAKE as (solute) constraints algorithm",
+                                 "In_Parameter",
+                                 io::message::error);
+            }
+        }
+        block.get_final_messages();
+    }
+} // ANGLERES
+
 /**
  * @section dihedralres DIHEDRALRES block
  * @snippet snippets/snippets.cc DIHEDRALRES
@@ -1961,11 +2043,14 @@ void io::In_Parameter::read_DIHEDRALRES(simulation::Parameter &param,
     exampleblock << "#\n";
     exampleblock << "# CDLR    >=0.0 force constant for dihedral restraining [kJ/mol/degree^2]\n";
     exampleblock << "# PHILIN  >0.0  deviation after which the potential energy function is linearized\n";
+    exampleblock << "# VDIH 0,1 controls contribution to virial\n";
+    exampleblock << "#         0: no contribution\n";
+    exampleblock << "#         1: dihedral restraints contribute to virial\n";
     exampleblock << "# NTWDLR  >=0   write every NTWDLR step dihedral information to external file\n";
     exampleblock << "# TOLDAC  >0    tolerance for constraint deviation (in degrees)\n";
     exampleblock << "#\n";
-    exampleblock << "# NTDLR  CDLR      PHILIN  NTWDLR  TOLDAC\n";
-    exampleblock << "  1      100.0     180.0   100      0.01\n";
+    exampleblock << "# NTDLR  CDLR      PHILIN  VDIH  NTWDLR  TOLDAC\n";
+    exampleblock << "  1      100.0     180.0     0   100       0.01\n";
     exampleblock << "END\n";
 
 
@@ -1980,6 +2065,7 @@ void io::In_Parameter::read_DIHEDRALRES(simulation::Parameter &param,
         block.get_next_parameter("NTDLR", dihrest, "", "0,1,2,3");
         block.get_next_parameter("CDLR", K, ">=0", "");
         block.get_next_parameter("PHILIN", phi_lin, ">0", "");
+        block.get_next_parameter("VDIH", param.dihrest.virial, "", "0,1");
         block.get_next_parameter("NTWDLR", param.dihrest.write, ">=0", "");
         block.get_next_parameter("TOLDAC", tolerance, ">=0", "");
 
@@ -2671,8 +2757,8 @@ void io::In_Parameter::read_REPLICA(simulation::Parameter &param,
     // will be used to generate snippets that can be included in the doxygen doc;
     // the first line is the tag
     exampleblock << "REPLICA\n";
-    exampleblock << "#    RETL >= 0   : turn off REplica exchange - Temperature and/or Lambda Coupled";                             
-    exampleblock << "#             1   : turn on  ";     
+    exampleblock << "#    RETL >= 0   : turn off REplica exchange - Temperature and/or Lambda Coupled";
+    exampleblock << "#             1   : turn on  ";
     exampleblock << "#     NRET >= 1 number of replica exchange temperatures\n";
     exampleblock << "#    RET() >= 0.0 temperature for each replica\n";
     exampleblock << "# LRESCALE 0,1 controls temperature scaling\n";
@@ -2720,8 +2806,8 @@ void io::In_Parameter::read_REPLICA(simulation::Parameter &param,
 
     if (block.read_buffer(m_block[blockname], false) == 0) {
         block_read.insert(blockname);
-                
-        block.get_next_parameter("RETL", param.replica.retl, "0,1", "");
+
+        block.get_next_parameter("RETL", param.replica.retl, "", "0,1");
 
         block.get_next_parameter("NRET", param.replica.num_T, ">=1", "");
 
@@ -2778,6 +2864,7 @@ void io::In_Parameter::read_REPLICA(simulation::Parameter &param,
 
         block.get_next_parameter("NRETRIAL", param.replica.trials, ">=0", "");
         block.get_next_parameter("NREQUIL", param.replica.equilibrate, ">=0", "");
+
         // do continuation run
         block.get_next_parameter("", param.replica.cont, "", "0,1");
 
@@ -2800,9 +2887,10 @@ void io::In_Parameter::read_REPLICA(simulation::Parameter &param,
  * @section replica REPLICA_EDS block
  * @verbatim
 REPLICA_EDS
-#    REEDS >= 0   : turn off Reeds                             
-#             1   : turn on                                    
-#    NRES >= number of replica exchange eds smoothing values 
+#    REEDS >= 0   : turn off Reeds
+#             1   : turn on
+#             2   : turn on 2D Reeds (s & Eoff)
+#    NRES >= number of replica exchange eds smoothing values
 #    NUMSTATES >= 2 Number of states
 #    RES > 0 for each replica smoothing value
 #    EIR (NUMSTATES X NRES): energy offsets for states and replicas
@@ -2813,14 +2901,18 @@ REPLICA_EDS
 #             0 start from one configuration file
 #             1 start from multiple configuration files
 #    EDS_STAT_OUT >= 0     creates output files for each replica, which contains for each exchange trial
-#                          the potential energies with the given coordinates for all s value. This data 
+#                          the potential energies with the given coordinates for all s value. This data
 #                           can be used to optimize the s distribution.
 #                 0 eds stat turned off
 #                 1 eds stat turned on
+#   PERIODIC >= 0 2D periodic boundary (Eoff only)
+#               0 periodic boundary off
+#               1 periodic boundary on
+#
 #   REEDS
     1
-#  NRES NUMSTATES
-    12  5 
+#  NRES NUMSTATES NUMEOFF
+    12  5 12
 # RES(1 ... NRES)
   1.0 0.7 0.5 0.3 0.1 0.07 0.05 0.03 0.01 0.007 0.005 0.003
 # EIR (NUMSTATES x NRES)
@@ -2829,8 +2921,8 @@ REPLICA_EDS
   0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
   0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
   0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
-# NRETRIAL   NREQUIL    CONT    EDS_STAT_OUT
-       10         0         1           1
+# NRETRIAL   NREQUIL    CONT    EDS_STAT_OUT PERIODIC
+       10         0         1           1      0
 END
 @endverbatim
  */
@@ -2842,15 +2934,16 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
     // the first line is the tag
     exampleblock << "REPLICA_EDS                                                    \n";
     exampleblock << "#    REEDS >= 0   : turn off Reeds                             \n";
-    exampleblock << "#             1   : turn on                                    \n";
+    exampleblock << "#             1   : turn on 1D Reeds (s)                       \n";
+    exampleblock << "#             2   : turn on 2D Reeds (s & Eoff)                \n";
+    exampleblock << "#             3   : turn on 1D Simulated Annealing-eds (s)                \n";
     exampleblock << "#    NRES >= number of replica exchange eds smoothing values   \n";
-    exampleblock << "#     RET >= 0.0 one temperature for all replica               \n";
-    exampleblock << "# NUMSTATES >= 2 Number of states                              \n";
-    exampleblock << "#     RES > 0 for each replica smoothing value                 \n";
-    exampleblock << "#   RETS() >= 0.0 timestep of each s-replica                   \n";
-    exampleblock << "# EIR (NUMSTATES X NRES): energy offsets for states and replicas   \n";
-    exampleblock << "# NRETRIAL >= 0 number of overall exchange trials                  \n";
-    exampleblock << "#  NREQUIL >= 0 number of exchange periods to equilibrate          \n";
+    exampleblock << "#    NEOFF >= number of replica exchange eds energy Offset vectors (only used for 2D REEDS - still needs to be present ;))   \n";
+    exampleblock << "#    NUMSTATES >= 2 Number of states                              \n";
+    exampleblock << "#    RES > 0 for each replica smoothing value                 \n";
+    exampleblock << "#    EIR (NUMSTATES X NRES): energy offsets for states and replicas   \n";
+    exampleblock << "#    NRETRIAL >= 0 number of overall exchange trials                  \n";
+    exampleblock << "#    NREQUIL >= 0 number of exchange periods to equilibrate          \n";
     exampleblock << "#               (disallow switches)                                \n";
     exampleblock << "#     CONT >= 0 continuation run                                   \n";
     exampleblock << "#             0 start from one configuration file                  \n";
@@ -2860,23 +2953,26 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
     exampleblock << "#                       can be used to optimize the s distribution.                                    \n";
     exampleblock << "#             0 eds stat turned off                                                                    \n";
     exampleblock << "#             1 eds stat turned on                                                                     \n";
+    exampleblock << "# PERIODIC >= 0 2D periodic boundary (Eoff only)               \n";  //REMOVE THIS PART @bschroed
+    exampleblock << "#             0 periodic boundary off                          \n";  //REMOVE THIS PART @bschroed
+    exampleblock << "#             1 periodic boundary on                           \n";  //REMOVE THIS PART @bschroed
     exampleblock << "#          \n";
     exampleblock << "#  REEDS    \n";
     exampleblock << "   1       \n";
-    exampleblock << "#  NRES  NUMSTATES  \n";
-    exampleblock << "   12    5   \n";
+    exampleblock << "#  NRES  NUMSTATES  NEOFF  \n";
+    exampleblock << "   12    5   12  \n";
     exampleblock << "# RES(1 ... NRES)  \n";
     exampleblock << "  1.0 0.7 0.5 0.3 0.1 0.07 0.05 0.03 0.01 0.007 0.005 0.003    \n";
-    exampleblock << "# EIR (NUMSTATES x NRES)   \n";
+    exampleblock << "# EIR (NUMSTATES x NEOFF)   \n";
     exampleblock << "  0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0  \n";
     exampleblock << "  0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0  \n";
     exampleblock << "  0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0  \n";
     exampleblock << "  0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0  \n";
     exampleblock << "  0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0  \n";
-    exampleblock << "# NRETRIAL   NREQUIL    CONT    EDS_STAT_OUT       \n";
-    exampleblock << "       10         0         1           1          \n";
+    exampleblock << "# NRETRIAL   NREQUIL    CONT    EDS_STAT_OUT    PERIODIC       \n";
+    exampleblock << "       10         0         1           1           0          \n";
     exampleblock << "END\n";
-    
+
     DEBUG(1, "REPLICA_EDS BLOCK\t START");
     //check that EDS Block was not read in before,because either REPLICA_EDS or EDS possible
     if (param.eds.eds) {
@@ -2885,167 +2981,241 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
           io::messages.add(msg.str(), "In_Parameter", io::message::error);
           return;
         }
-    
+
     std::string blockname = "REPLICA_EDS";
     Block block(blockname, exampleblock.str());
-    
+
     if (block.read_buffer(m_block[blockname], false) == 0) {
         block_read.insert(blockname);
-           
+
         DEBUG(2, "REPLICA_EDS BLOCK: reading Block an translating to vars");
         //init_vars
-        unsigned int reeds_control, num_l, num_states=0;
+        unsigned int reeds_control, num_s, num_states, num_eoff=0;
         unsigned int ntrials, nEquilibrate, cont_run, eds_stat_out=0;
+        bool periodic=1;
 
         // GET BLOCKVARS
         //SYS Settings
-        block.get_next_parameter("REEDS", reeds_control, "", "0,1");
-        block.get_next_parameter("NRES", num_l, ">0", "");
+        block.get_next_parameter("REEDS", reeds_control, "", "0,1,2,3");
+        DEBUG(3, "REPLICA_EDS BLOCK: reeds_control= " << reeds_control);
+        block.get_next_parameter("NRES", num_s, ">0", "");
         block.get_next_parameter("NUMSTATES", num_states, ">0", "");
-        
+        block.get_next_parameter("NEOFF", num_eoff, ">0", "");
+        DEBUG(3, "REPLICA_EDS BLOCK: NEOFF= " << num_eoff);
+
         //get RES-Vector
-        std::vector<double> s_vals(num_l, 0.0);
-        for (unsigned int i = 0; i < num_l; i++) {
+        std::vector<double> s_vals(num_s, 0.0);
+        for (unsigned int i = 0; i < num_s; i++) {
           std::string idx = io::to_string(i);
           block.get_next_parameter("RES[" + idx + "]", s_vals[i], "", "");
         }
 
         //get EIR-Matrix
-        std::vector<std::vector<float>> eir(num_l);
-        for(unsigned int replicaJ=0; replicaJ<num_l; replicaJ++){//init eir vectors
+        if(reeds_control == 1 || reeds_control == 3){ // in 1D REEDS case, NEOFFS must be == num_s
+            num_eoff = num_s;
+        }
+        std::vector<std::vector<float>> eir(num_eoff);
+        for(unsigned int replicaJ=0; replicaJ<num_eoff; replicaJ++){//init eir vectors
           std::vector<float> eir_vector_J(num_states, 0.0);
-          eir[replicaJ] = eir_vector_J;    
+          eir[replicaJ] = eir_vector_J;
         }
         for (unsigned int stateI = 0; stateI < num_states; stateI++) {
           std::string stateI_idx = io::to_string(stateI);
-          for (unsigned int replicaJ=0; replicaJ< num_l; replicaJ++){  
+          for (unsigned int replicaJ=0; replicaJ< num_eoff; replicaJ++){
             std::string replicaJ_idx = io::to_string(replicaJ);
-            block.get_next_parameter("EIR[" + replicaJ_idx+ "]["+stateI_idx+"]", eir[replicaJ][stateI], "", "");    //Comment "this function only reads line by line! doesn't matter the indices in the string 
+            block.get_next_parameter("EIR[" + replicaJ_idx+ "]["+stateI_idx+"]", eir[replicaJ][stateI], "", "");    //Comment "this function only reads line by line! doesn't matter the indices in the string
           }
         }
 
-        
+
         // general Settings
         block.get_next_parameter("NRETRIAL", ntrials, ">=0", "");
         block.get_next_parameter("NREQUIL", nEquilibrate, ">=0", "");
         block.get_next_parameter("CONT", cont_run, "", "0,1");
         block.get_next_parameter("EDS_STAT_OUT", eds_stat_out, "", "0,1");
+        block.get_next_parameter("PERIODIC", periodic, "", "0,1");  //REMOVE THIS PART @bschroed
+        DEBUG(3, "REPLICA_EDS BLOCK: PERIODIC= " << periodic);  //REMOVE THIS PART @bschroed
 
-      
+
         // SET SETTINGS
         DEBUG(2, "REPLICA_EDS BLOCK: Set settings for sim.");
         // READ:REEDS control
-        switch(reeds_control) {
-              case 0:
-                  param.reeds.reeds = false;
-                  break;
-              case 1:
-                  param.reeds.reeds = true;
-                  break;
-          }
-               
-        param.reeds.num_l = num_l;
+        param.reeds.reeds = reeds_control;
+        DEBUG(3, "REPLICA_EDS BLOCK: reeds_control= " << param.reeds.reeds);
+
+        param.reeds.num_s = num_s;
         param.reeds.num_states = num_states;
+        param.reeds.num_eoff = num_eoff;
+        DEBUG(3, "REPLICA_EDS BLOCK: NEOFF= " << param.reeds.num_eoff);
         param.reeds.trials = ntrials;
-        
-        //param.reeds.lambda.resize();
-        param.reeds.lambda=s_vals;
-        
-        //param.reeds.lambda=s_vals;
+
+        //param.reeds.svals.resize();
+        param.reeds.svals=s_vals;
+
+        //param.reeds.svals=s_vals;
         param.reeds.equilibrate = nEquilibrate;
         param.reeds.cont =cont_run;
         param.reeds.eds_stat_out = eds_stat_out;
+        param.reeds.periodic = periodic;
+        DEBUG(3, "REPLICA_EDS BLOCK: PERIODIC= " << periodic);
 
         // Replica temperatures - has to be the same for each replica // Not sure if this is optimal? bschroed
-        param.reeds.temperature = param.multibath.multibath.bath(0).temperature;
-        
-        DEBUG(2, "REPLICA_EDS BLOCK: assigned all reeds params");
+        // handle case that we have a stochastic dynamics simulation
+        if(!param.stochastic.sd)
+          param.reeds.temperature = param.multibath.multibath.bath(0).temperature;
+        else
+          param.reeds.temperature = param.stochastic.temp;
 
-        DEBUG(2, "REPLICA_EDS BLOCK: assign all eds params");
+        DEBUG(2, "REPLICA_EDS BLOCK: assigned all reeds params");
         //set size of vectors in param.reeds
-        param.reeds.eds_para.resize(param.reeds.num_l);
-        param.reeds.dt.resize(param.reeds.num_l);
-        param.reeds.lambda.resize(param.reeds.num_l);
+        switch(reeds_control) {
+              case 0: case 1: case 3:
+                  param.reeds.eds_para.resize(param.reeds.num_s);
+                  param.reeds.dt.resize(param.reeds.num_s);
+                  param.reeds.svals.resize(param.reeds.num_s);
+                  break;
+              case 2:
+                  param.reeds.eds_para.resize(param.reeds.num_s * param.reeds.num_eoff);
+                  param.reeds.dt.resize(param.reeds.num_s * param.reeds.num_eoff);
+                  param.reeds.svals.resize(param.reeds.num_s * param.reeds.num_eoff);
+                  break;
+        }
+
 
         //Loop over all replicas in order to initialize complete eds_struct for each replica
         //initvars
         std::vector<double> dtV;    //is necessary to give replicas the paramesters
         std::vector<double> temperatureV;
-        for (int i = 0; i < param.reeds.num_l; ++i) {
-            dtV.push_back(param.step.dt);
-            temperatureV.push_back(param.reeds.temperature);
-            
-            //READ:NUMSTATES 
-            param.reeds.eds_para[i].eds = true;
-            param.reeds.eds_para[i].numstates=param.reeds.num_states;
+        switch(reeds_control){
+          case 0: case 1: case 3:
+              for (int i = 0; i < param.reeds.num_s; ++i) {
+                  dtV.push_back(param.step.dt);
+                  temperatureV.push_back(param.reeds.temperature);
 
-            //indicate only one parameter s used for reference state hamiltonian
-            param.reeds.eds_para[i].form = simulation::single_s;
-            
-            //RES - give s_values
-            param.reeds.eds_para[i].s.resize(1);//only one parameter s per replica
-            param.reeds.eds_para[i].s[0]=s_vals[i];
-            
-            //initialize size of EIR
-            param.reeds.eds_para[i].eir.resize(param.reeds.eds_para[i].numstates);
+                  //READ:NUMSTATES
+                  param.reeds.eds_para[i].eds = true;
+                  param.reeds.eds_para[i].numstates=param.reeds.num_states;
+                  //num_eoff not used in eds_struct only in reeds_struct
+                  //param.reeds.eds_para[i].num_eoff=param.reeds.num_eoff;
 
-            //init:
-            param.reeds.eds_para[i].visitedstates.resize(param.eds.numstates, false);
-            param.reeds.eds_para[i].visitcounts.resize(param.eds.numstates, 0);
-            param.reeds.eds_para[i].avgenergy.resize(param.eds.numstates, 0.0);
-            
-            if(param.reeds.eds_para[i].s[0] < 0.0){
-                std::ostringstream msg;
-                msg << "REPLICA_EDS block: RES(" << i + 1 << ") must be >= 0.0";
-                io::messages.add(msg.str(), "In_Parameter", io::message::error);
-            }
-            
-            DEBUG(3, "REPLICA_EDS BLOCK: assign all eds params - EIR");
-            for(unsigned int j = 0; j < param.reeds.eds_para[0].numstates; ++j){
-                param.reeds.eds_para[i].eir[j] = eir[i][j];
-                
-            }  
+                  //indicate only one parameter s used for reference state hamiltonian
+                  param.reeds.eds_para[i].form = simulation::single_s;
+
+                  //RES - give s_values
+                  param.reeds.eds_para[i].s.resize(1);//only one parameter s per replica
+                  param.reeds.eds_para[i].s[0]=s_vals[i];
+
+                  //initialize size of EIR
+                  param.reeds.eds_para[i].eir.resize(param.reeds.eds_para[i].numstates);
+
+                  //init:
+                  param.reeds.eds_para[i].visitedstates.resize(param.eds.numstates, false);
+                  param.reeds.eds_para[i].visitcounts.resize(param.eds.numstates, 0);
+                  param.reeds.eds_para[i].avgenergy.resize(param.eds.numstates, 0.0);
+
+                  if(param.reeds.eds_para[i].s[0] < 0.0){
+                      std::ostringstream msg;
+                      msg << "REPLICA_EDS block: RES(" << i + 1 << ") must be >= 0.0";
+                      io::messages.add(msg.str(), "In_Parameter", io::message::error);
+                  }
+
+                  DEBUG(2, "REPLICA_EDS BLOCK: assign all eds params - EIR");
+		  //TODO: assertion such that NEOFF = NRES must hold!!
+                  for(unsigned int j = 0; j < param.reeds.eds_para[0].numstates; ++j){
+                      param.reeds.eds_para[i].eir[j] = eir[i][j];
+                      DEBUG(3, "REPLICA_EDS BLOCK: eir[i][j]= " << param.reeds.eds_para[i].eir[j]);
+
+                  }
+              }
+              break;
+          case 2:
+              for (int i = 0; i < param.reeds.num_s * param.reeds.num_eoff; ++i) {
+                  dtV.push_back(param.step.dt);
+                  temperatureV.push_back(param.reeds.temperature);
+
+                  //READ:NUMSTATES
+                  param.reeds.eds_para[i].eds = true;
+                  param.reeds.eds_para[i].numstates=param.reeds.num_states;
+                  //num_eoff not used in eds_struct only in reeds_struct
+                  //param.reeds.eds_para[i].num_eoff=param.reeds.num_eoff;
+
+                  //indicate only one parameter s used for reference state hamiltonian
+                  param.reeds.eds_para[i].form = simulation::single_s;
+
+                  //RES - give s_values
+                  param.reeds.eds_para[i].s.resize(1);//only one parameter s per replica
+                  param.reeds.eds_para[i].s[0]=s_vals[i%num_s];
+                  DEBUG(3, "REPLICA_EDS BLOCK: s[i]= " << i << "\t" << param.reeds.eds_para[i].s[0] << "\n");
+
+                  //initialize size of EIR
+                  param.reeds.eds_para[i].eir.resize(param.reeds.eds_para[i].numstates);
+
+                  //init:
+                  param.reeds.eds_para[i].visitedstates.resize(param.eds.numstates, false);
+                  param.reeds.eds_para[i].visitcounts.resize(param.eds.numstates, 0);
+                  param.reeds.eds_para[i].avgenergy.resize(param.eds.numstates, 0.0);
+
+                  if(param.reeds.eds_para[i].s[0] < 0.0){
+                      std::ostringstream msg;
+                      msg << "REPLICA_EDS block: RES(" << i + 1 << ") must be >= 0.0";
+                      io::messages.add(msg.str(), "In_Parameter", io::message::error);
+                  }
+              }
+              DEBUG(2, "REPLICA_EDS BLOCK: assign all eds params - EIR");
+              int count = 0;
+              for(int i = 0; i < param.reeds.num_eoff; ++i){
+                for(int k = 0; k < param.reeds.num_s; ++k){
+                  for(unsigned int j = 0; j < param.reeds.eds_para[0].numstates; ++j){
+                      param.reeds.eds_para[count].eir[j] = eir[i][j];
+                      DEBUG(3, "REPLICA_EDS BLOCK: eir[i][j]= " << count << "\t" << param.reeds.eds_para[count].eir[j]);
+
+                  }
+                  ++count;
+                }
+              }
+              break;
         }
 
         DEBUG(2, "REPLICA_EDS BLOCK: assigned all eds params");
-        
+
         // turn on eds for pertubation reading - Overwrite:
         param.eds.eds = true;
         param.eds.numstates = param.reeds.num_states;
-        
+
         // turn not on Pertubation block!: hope thats ok -> killed warning
         param.perturbation.perturbation = false;
-        
+
         //REPLICA Set replica settings:
         DEBUG(2, "REPLICA_EDS BLOCK: assign all replicas param:");
 
         // check whether all baths have the same temperature (unambiguous kT)
-        param.reeds.num_T = param.replica.num_T =1;
-        
-        param.replica.temperature = temperatureV;        
-        param.replica.lambda = param.reeds.lambda;
+        param.replica.num_T =1;
+        param.replica.temperature = temperatureV;
+        param.replica.lambda = param.reeds.svals;
         param.replica.dt = dtV;
-        param.replica.num_l = param.reeds.num_l ;
+        param.replica.num_l = param.reeds.num_s ;
         param.replica.trials = param.reeds.trials;
         param.replica.equilibrate = param.reeds.equilibrate;
         param.replica.cont = param.reeds.cont;
-        
+
         DEBUG(2, "REPLICA_EDS BLOCK: assigned all replicas param");
 
         //CHECK SETTINGS
         DEBUG(2, "REPLICA_EDS BLOCK: Check Settings:");
-        
-        for (unsigned int i = 1; i < param.multibath.multibath.size(); i++) {
-          if (param.multibath.multibath.bath(i).temperature !=
-                  param.multibath.multibath.bath(0).temperature) {
-            io::messages.add("Error in RE_EDS block: all baths must have the same temperature.",
-                    "In_Parameter", io::message::error);
-          }         
+
+        if(!param.stochastic.sd){ // only check the multibath, if we don't have stochastic dynamics
+          for (unsigned int i = 1; i < param.multibath.multibath.size(); i++) {
+            if (param.multibath.multibath.bath(i).temperature !=
+                    param.multibath.multibath.bath(0).temperature) {
+              io::messages.add("Error in RE_EDS block: all baths must have the same temperature.",
+                      "In_Parameter", io::message::error);
+            }
+          }
         }
         DEBUG(2, "REPLICA_EDS BLOCK: Checked Settings");
         block.get_final_messages();
     }
-    DEBUG(1, "REPLICA_EDS BLOCK\t DONE");
+    DEBUG(1, "REPLICA_EDS BLOCK\t DONE\n");
 }
 
 /**
@@ -3928,7 +4098,7 @@ void io::In_Parameter::read_LAMBDAS(simulation::Parameter & param,
     exampleblock << "# NTLI(1..)  interaction type to treat with individual lambda:\n";
     exampleblock << "#            bond(1), angle(2), dihedral(3), improper(4), vdw(5), vdw_soft(6),\n";
     exampleblock << "#            crf(7), crf_soft(8), distanceres(9), distancefield(10),\n";
-    exampleblock << "#            dihedralres(11), mass(12)\n";
+    exampleblock << "#            dihedralres(11), mass(12), angleres(13)\n";
     exampleblock << "# NILG1, NILG2 energy groups of interactions that are treated with individual\n";
     exampleblock << "#              lambda values\n";
     exampleblock << "# ALI, BLI, CLI, DLI, ELI polynomial coefficients linking the individual lambda-\n";
@@ -4060,7 +4230,7 @@ void io::In_Parameter::read_LAMBDAS(simulation::Parameter & param,
     }
 }
 
-/** 
+/**
  * @section precalclam PRECALCLAM block
  * @snippet snippets/snippets.cc PRECALCLAM
  */
@@ -4086,7 +4256,7 @@ void io::In_Parameter::read_PRECALCLAM(simulation::Parameter & param,
 
     if (block.read_buffer(m_block[blockname], false) == 0) {
         block_read.insert(blockname);
-        
+
         block.get_next_parameter("NRLAM", param.precalclam.nr_lambdas, ">=0", "");
         block.get_next_parameter("MINLAM", param.precalclam.min_lam, ">=0 && <=1", "");
         block.get_next_parameter("MAXLAM", param.precalclam.max_lam, ">=0 && <=1", "");
@@ -4096,7 +4266,7 @@ void io::In_Parameter::read_PRECALCLAM(simulation::Parameter & param,
             "In_Parameter", io::message::error);
 
     block.get_final_messages();
-   
+
   }
 
 } // PRECALCLAM
@@ -4610,7 +4780,7 @@ void io::In_Parameter::read_ELECTRIC(simulation::Parameter & param,
         block.get_next_parameter("DIPGRP", param.electric.dip_groups, "", "0,1,2");
         block.get_next_parameter("NTWDIP", param.electric.dip_write, ">=0", "");
         block.get_next_parameter("NTWCUR", param.electric.cur_write, ">=0", "");
-        block.get_next_parameter("NCURGRP", ncurgrp, ">0", "");
+        block.get_next_parameter("NCURGRP", ncurgrp, ">=0", "");
 
         switch (field) {
             case 0:
@@ -5352,3 +5522,63 @@ void io::In_Parameter::read_SYMRES(simulation::Parameter & param,
         block.get_final_messages();
     }     // if block
 } // SYMRES
+
+/**
+ * @section amber AMBER block
+ * @verbatim
+AMBER
+# AMBER 0..1 use AMBER topology
+#    0: GROMOS topology
+#    1: AMBER topology
+# AMBSCAL >= 0.0 scaling factor for 1,4-electrostatic-interactions
+#                (will be directly inverted when reading in)
+#                Default: 1.2
+#
+# AMBER     AMBSCAL
+      1     1.2
+END
+
+@endverbatim
+ */
+void io::In_Parameter::read_AMBER(simulation::Parameter & param,
+        std::ostream & os) {
+  DEBUG(8, "read AMBER");
+
+  std::vector<std::string> buffer;
+  std::string s;
+
+  buffer = m_block["AMBER"];
+
+  if (buffer.size()) {
+    block_read.insert("AMBER");
+    _lineStream.clear();
+    _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
+
+    bool amber;
+    double factor;
+    _lineStream >> amber >> factor;
+
+    if (_lineStream.fail()) { //TODO: Check for real reason why is crashing
+      io::messages.add("Bad line in AMBER block MAAAAAN.",
+                    "In_Parameter", io::message::error);
+      return;
+    }
+
+    if (amber > 1 || amber < 0) {
+      io::messages.add("AMBER block: AMBER must be 0 or 1",
+                    "In_Parameter", io::message::error);
+    }
+    param.amber.amber = amber;
+
+    if (factor < 0.0) {
+      io::messages.add("AMBER block: AMBSCAL must be >= 0.0",
+                    "In_Parameter", io::message::error);
+      return;
+    } else if (factor > 0.0) {
+      param.amber.coulomb_scaling = 1.0 / factor;
+    } else {
+      param.amber.coulomb_scaling = 0.0;
+    }
+  } // if block
+
+} // AMBER

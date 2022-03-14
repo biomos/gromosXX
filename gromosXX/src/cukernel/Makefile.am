@@ -14,10 +14,26 @@ libgrocukernel.a: $(libgrocukernel_a_OBJECTS) libgrocukernel.o
 	$(NVCC) $(NVCCFLAGS) --lib -o $@ $^
 
 xxincludedir = $(includedir)/md++/cukernel
-xxinclude_HEADERS = cudaKernel.h
+xxinclude_HEADERS = cudaKernel.h \
+                    macros.h \
+                    parameter.h \
+                    pairlist.h \
+                    interaction.h \
+                    constraints.h \
+                    cudaShake.h \
+                    gpu_status.h \
+                    io.cu \
+                    pairlist.cu \
+                    interaction.cu \
+                    constraints.cu \
+                    cudaShake.cu
 
 xxculibdir = $(includedir)/md++/cukernel/lib
-xxculib_HEADERS = lib/utils.h
+xxculib_HEADERS = lib/utils.h \
+                  lib/math.h \
+                  lib/types.h \
+                  lib/float3.h \
+                  lib/double3.h
 
 noinst_LIBRARIES = libgrocukernel.a
 

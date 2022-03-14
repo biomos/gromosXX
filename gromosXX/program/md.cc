@@ -30,6 +30,7 @@
  * <tr><td> \@posresspec</td><td>&lt;@ref posres "position restraints specification"&gt;</td><td style="color:#088A08">in</td></tr>
  * <tr><td> \@refpos</td><td>&lt;@ref posres "position restraints"&gt;</td><td style="color:#088A08">in</td></tr>
  * <tr><td> \@distrest</td><td>&lt;@ref disres "distance restraints specification"&gt;</td><td style="color:#088A08">in</td></tr>
+ * <tr><td> \@angrest</td><td>&lt;@ref angrest "angle restraints specification"&gt; </td><td style="color:#088A08">in</td></tr>
  * <tr><td> \@dihrest</td><td>&lt;@ref dihrest "dihedral restraints specification"&gt; </td><td style="color:#088A08">in</td></tr>
  * <tr><td> \@jval</td><td>&lt;@ref jvalue "J-value restraints specification"&gt;</td><td style="color:#088A08">in</td></tr>
  * <tr><td> \@xray</td><td>&lt;@ref xrayresfile "X-ray restraints specification"&gt;</td><td style="color:#088A08">in</td></tr>
@@ -90,7 +91,8 @@ int main(int argc, char *argv[]){
   util::Known knowns;
   knowns << "topo" << "conf" << "input" << "verb" << "pttopo"
 	 << "trc" << "fin" << "trv" << "trf" << "trs" << "tre" << "trg"
-	 << "bae" << "bag" << "posresspec" << "refpos" <<"distrest" << "dihrest"
+	 << "bae" << "bag" << "posresspec" << "refpos" <<"distrest" 
+	 << "angrest" << "dihrest"
          << "jval" << "xray" << "sym" << "order" << "rdc" << "lud" << "led" << "bsleus" 
          << "anatrj" << "print" << "friction" << "qmmm" << "version" << "develop";
   

@@ -801,12 +801,8 @@ int interaction::Grid_Cell_Pairlist::make_cell(topology::Topology &topo,
 
     DEBUG(15, "After first while");
 
-    j++;
-    if (j == cell.size())
-      break;
-    DEBUG(15, "After if");
-            
-    while(cell[j].m == last_m)
+    j++;         
+    while(j < cell.size() && cell[j].m == last_m)
       j++;
     DEBUG(15, "After second while");
   } // for all charge groups
