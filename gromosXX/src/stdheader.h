@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <typeinfo>
 #include <list>
+#include <limits>
 
 #include "config.h"
 

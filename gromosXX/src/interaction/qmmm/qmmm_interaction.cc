@@ -225,7 +225,7 @@ int interaction::QMMM_Interaction::calculate_interactions(topology::Topology& to
           || sim.param().qmmm.nn.model_type == simulation::nn_model_type_standard) {
         DEBUG(4, "Creating QM buffer for separate QM calculation");
         //create buffer zone for separate QM calculation and run it
-        if (m_qm_buffer != nullptr) delete m_qm_buffer;
+        delete m_qm_buffer;
         m_qm_buffer = m_qm_zone->create_buffer_zone(topo, sim);
         m_timer.start(m_worker->name());
         err = m_worker->run_QM(topo, conf, sim, *m_qm_buffer);
@@ -359,6 +359,7 @@ int interaction::QMMM_Interaction::init(topology::Topology& topo,
       // consider no spin pairing between the QM and buffer zone
       sm = spin_qm + spin_buf + 1;
     }
+    delete m_qm_zone;
     m_qm_zone = new interaction::QM_Zone(charge, sm);
 
     DEBUG(15,"QM Zone created");

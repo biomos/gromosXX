@@ -53,7 +53,7 @@ int io::simple_crosschecks(simulation::Simulation & sim) {
       io::messages.add("PRESSURESCALE block: pressure coupling not allowed with steepest descent or conjugate gradient minimization",
                        "In_Parameter", io::message::error);
 
-  if (param.multibath.couple && param.minimise.ntem)
+  if (param.multibath.couple && param.minimise.ntem && !param.eds.eds)
       io::messages.add("MULTIBATH block: temperature coupling not allowed with energy minimization",
                        "In_Parameter", io::message::error);
 
@@ -134,7 +134,20 @@ int io::simple_crosschecks(simulation::Simulation & sim) {
                   break;
               }
       }
+      
+      if (param.multibath.multibath.bath(0).temperature == 0){
+        io::messages.add("MULTIBATH block: baths must have non zero temperature with EDS.", 
+                          "In_Parameter", io::message::error); 
+      } 
+      
     }
+    
+    // Restrict EDS and conjugate gradients:
+    if (param.eds.eds &&  (sim.param().minimise.ntem == 2 || sim.param().minimise.ntem == 3)){
+      io::messages.add("ENERGYMIN block: Cannot run EDS and conjugate gradients. Please change value of NTEM", 
+                       "In_Parameter", io::message::error);
+    }
+
 
     // lattice shift and pressure coupling:
     if (param.pcouple.scale != math::pcouple_off
@@ -228,50 +241,49 @@ int io::simple_crosschecks(simulation::Simulation & sim) {
             "In_Parameter", io::message::error);
   
     // Allow no QMMM cutoff only with the vacuum PBC
-    if (sim.param().qmmm.qmmm > simulation::qmmm_mechanical
-        && sim.param().qmmm.cutoff == 0.0
-        && sim.param().boundary.boundary != math::vacuum) {
+    if (param.qmmm.qmmm > simulation::qmmm_mechanical
+        && param.qmmm.cutoff == 0.0
+        && param.boundary.boundary != math::vacuum) {
       io::messages.add("QMMM block: RCUTQM = 0.0 is allowed only with vacuum boundary conditions"
               , "In_Parameter", io::message::error);
     }
     // The QMMM cutoff should be greater than longrange cutoff, otherwise the MM atoms could
     // see a void in a place of QM zone periodic image
-    if (sim.param().qmmm.qmmm
-        && sim.param().boundary.boundary != math::vacuum
-        && sim.param().qmmm.cutoff < sim.param().pairlist.cutoff_long) {
+    if (param.qmmm.qmmm
+        && param.boundary.boundary != math::vacuum
+        && param.qmmm.cutoff < param.pairlist.cutoff_long) {
       io::messages.add("QMMM block: RCUTQM should not be less than RCUTL while using PBC"
               , "In_Parameter", io::message::error);
     }
     // QMMM energy cannot be split atomwise, thus energy groups including QM zone are incomplete
-    if (sim.param().qmmm.qmmm && param.force.energy_group.size() > 1) {
+    if (param.qmmm.qmmm && param.force.energy_group.size() > 1) {
       io::messages.add("QMMM block: Energy groups will not contain QM contribution",
                          "In_Parameter", io::message::warning);
     }
     // Polarisable QMMM should be only used with polarisable FF
-    if (sim.param().qmmm.qmmm == simulation::qmmm_polarisable && !param.polarise.cos) {
+    if (param.qmmm.qmmm == simulation::qmmm_polarisable && !param.polarise.cos) {
       io::messages.add("QMMM block: polarisable embedding but FF is non-polarisable",
                          "In_Parameter", io::message::error);
     }
     // Polarisable FF should be only used with polarisable QMMM
     if (param.polarise.cos
-        && sim.param().qmmm.qmmm
-        && sim.param().qmmm.qmmm != simulation::qmmm_polarisable) {
+        && param.qmmm.qmmm
+        && param.qmmm.qmmm != simulation::qmmm_polarisable) {
       io::messages.add("QMMM block: polarisable FF can be used only with polarisable embedding",
                          "In_Parameter", io::message::error);
     }
     // We cannot automatically apply external electric field on the QM zone
     // It's user's responsibility to include it in the header for QM program
-    if (sim.param().qmmm.qmmm > simulation::qmmm_mechanical
-      && sim.param().electric.electric) {
+    if (param.qmmm.qmmm > simulation::qmmm_mechanical
+      && param.electric.electric) {
       io::messages.add("QMMM block: ELECTRIC block is applied on MM atoms only"
                       , "In_Parameter", io::message::warning);
     }
     // If user wants to keep QM constraints, check, if they are on
-    if (sim.param().qmmm.qm_constraint && sim.param().constraint.ntc < 2) {
+    if (param.qmmm.qm_constraint && param.constraint.ntc < 2) {
       io::messages.add("QMMM block: constraints in QM requested, but no solute constraints enabled"
                       , "In_Parameter", io::message::error);
     }
-
 
   if (io::messages.contains(io::message::error) ||
       io::messages.contains(io::message::critical))
@@ -4495,8 +4507,10 @@ int io::check_features(simulation::Simulation  &sim)
   // fc.unlock("conjugate_gradient", "bsleus");
   fc.unlock("conjugate_gradient", "xray");
   fc.unlock("conjugate_gradient", "force_groups");
+  fc.unlock("conjugate_gradient", "eds");
 
   //amber block
+  fc.unlock("amber", "conjugate_gradient");
   fc.unlock("amber", "solute");
   fc.unlock("amber", "solvent");
   fc.unlock("amber", "solvent_only");

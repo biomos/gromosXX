@@ -207,18 +207,21 @@ namespace interaction {
             topology::Topology & topo);
     
     /**
-     * QM exclusion
-    */
+     * QM exclusion inline function for the first atom/cg
+     */
     template<class cutoff_trait>
     inline bool t_qm_excluded(const topology::Topology& topo
                          , const simulation::qmmm_enum qmmm
-                         , const unsigned first);
-
+                         , unsigned first);
+    
+    /**
+     * QM exclusion inline function for a pair of atoms/cgs
+     */
     template<class cutoff_trait>
     inline bool t_qm_excluded(const topology::Topology& topo
                          , const simulation::qmmm_enum qmmm
-                         , const unsigned first
-                         , const unsigned second);
+                         , unsigned first
+                         , unsigned second);
 
     /**
      * Makes the combination table of the codes for irregular shapes aswell
@@ -460,46 +463,6 @@ namespace interaction {
     unsigned int num_atoms_per_solvent;
 
   };
-
-  /**
-   * Explicit specializations of QM exclusions for cutoff
-   */
-  template<>
-  inline bool Grid_Cell_Pairlist::t_qm_excluded<Grid_Cell_Pairlist::cg_cutoff>(
-                                            const topology::Topology& topo
-                                          , const simulation::qmmm_enum qmmm
-                                          , const unsigned first) {
-    const unsigned a1 = topo.chargegroup(first);
-    return Pairlist_Algorithm::qm_excluded(topo, qmmm, a1);
-  }
-
-  template<>
-  inline bool Grid_Cell_Pairlist::t_qm_excluded<Grid_Cell_Pairlist::atomic_cutoff>(
-                                            const topology::Topology& topo
-                                          , const simulation::qmmm_enum qmmm
-                                          , const unsigned first){
-    return Pairlist_Algorithm::qm_excluded(topo, qmmm, first);
-  }
-
-  template<>
-  inline bool Grid_Cell_Pairlist::t_qm_excluded<Grid_Cell_Pairlist::cg_cutoff>(
-                                            const topology::Topology& topo
-                                          , const simulation::qmmm_enum qmmm
-                                          , const unsigned first
-                                          , const unsigned second){
-    const unsigned a1 = topo.chargegroup(first);
-    const unsigned a2 = topo.chargegroup(second);
-    return Pairlist_Algorithm::qm_excluded(topo, qmmm, a1, a2);
-  }    
-
-  template<>
-  inline bool Grid_Cell_Pairlist::t_qm_excluded<Grid_Cell_Pairlist::atomic_cutoff>(
-                                            const topology::Topology& topo
-                                          , const simulation::qmmm_enum qmmm
-                                          , const unsigned first
-                                          , const unsigned second){
-  return Pairlist_Algorithm::qm_excluded(topo, qmmm, first, second);
-  }
 }
 
 
