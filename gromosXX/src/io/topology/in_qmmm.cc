@@ -382,11 +382,12 @@ END
  *
  * The GAUROUTE block specifies the route section of the Gaussian input file.
  * hashsign (#) should be omitted. It is beneficial to generate an initial checkpoint file
- * and reuse it in subsequent steps with guess=read option.
+ * and reuse it in subsequent steps with guess=read option. Allowed variables
+ * - GUESS: replaced by 'guess=read' after first step
  * 
 @verbatim
 GAUROUTE
-N hf/STO-3G nosymm pop(mk) force charge(angstroms) prop=(field,read)
+N hf/STO-3G @@GUESS@@ nosymm pop(mk) force charge(angstroms) prop=(field,read)
 END
 @endverbatim
  *
