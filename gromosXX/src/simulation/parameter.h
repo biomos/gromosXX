@@ -824,14 +824,18 @@ namespace simulation
      * use DFTB
      */
     qm_dftb = 2,
-      /**
-       * use MOPAC
-       */
+    /**
+     * use MOPAC
+     */
     qm_mopac = 3,
-      /**
-       * use Gaussian
-       */
-    qm_gaussian = 4
+    /**
+     * use Gaussian
+     */
+    qm_gaussian = 4,
+    /**
+     * use Orca
+     */
+    qm_orca = 6
   };
 
   /**
@@ -3987,6 +3991,12 @@ namespace simulation
          */
         std::string chsm;
       } gaussian;
+
+     /**
+       * ORCA specific parameters
+       */
+      struct orca_param_struct : public qm_param_struct { 
+      } orca; 
     } qmmm;
 
 

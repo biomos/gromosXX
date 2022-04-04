@@ -399,6 +399,55 @@ GAUCHSM
 @@CHARGE@@ @@SPINM@@
 END
 @endverbatim
+ *
+ * @section ORCA blocks for the ORCA worker
+ * 
+ * ORCABINARY block for the ORCA worker
+ * The ORCABINARY block specifies path to ORCA binary
+ *
+ * This block is optional. If unspecified, orca command from PATH environment variable
+ * is used.
+ *
+ * @verbatim
+ORCABINARY
+/path/to/orca/binary
+END
+@endverbatim
+ *
+ * ORCAFILES block for the ORCA worker
+ * The ORCAFILES block specifies input and output files to exchange data with ORCA
+ *
+ * This block is optional. If unspecified, temporary files are created using TMPDIR
+ * environment variable. User-specified files are not deleted after use.
+ *
+ * @verbatim
+ORCAFILES
+/path/to/orca.inp
+/path/to/orca.out
+/path/to/orca.engrad
+/path/to/orca.pcgrad
+END
+@endverbatim
+ *
+ * The ORCAHEADER block specifies the header part of the ORCA input file. Variables
+ * are allowed. Implemented are
+ * - CHARGE: net charge of the QM zone
+ * - SPINM: spin multiplicity of the QM zone 
+ * - NUM_CHARGES: the number of MM atoms
+ * - NUM_LINK: Number of link and capping atoms atoms
+ * 
+@verbatim
+ORCAHEADER
+! Title line
+! XTB1 EnGrad TightSCF defgrid3
+%scf
+MaxIter 1500
+DIISMaxEq 15
+end
+%pointcharges "pointcharges.pc"
+
+* xyzfile @@CHARGE@@ @@SPINM@@
+@endverbatim
  */
 void
 io::In_QMMM::read(topology::Topology& topo,
@@ -739,6 +788,62 @@ io::In_QMMM::read(topology::Topology& topo,
     } // GAUCHSM
   }
 
+  /**
+   * Orca
+   */
+  else if (sw == simulation::qm_orca) {
+    this->read_units(sim, &sim.param().qmmm.gaussian);
+    { // ORCABINARY
+
+      DEBUG(15, "Reading ORCABINARY");
+      buffer = m_block["ORCABINARY"];
+
+      if (!buffer.size()) {
+        io::messages.add("Assuming that the orca binary is in the PATH",
+                "In_QMMM", io::message::notice);
+        sim.param().qmmm.gaussian.binary = "orca";
+      } else {
+        if (buffer.size() != 3) {
+          io::messages.add("ORCABINARY block corrupt. Provide 1 line.",
+                  "In_QMMM", io::message::error);
+          return;
+        }
+        sim.param().qmmm.orca.binary = buffer[1];
+      }
+    } // ORCABINARY
+    { // ORCAFILES
+
+      DEBUG(15, "Reading ORCAFILES");
+      buffer = m_block["ORCAFILES"];
+
+      if (!buffer.size()) {
+        io::messages.add("Using temporary files for Orca input/output",
+                "In_QMMM", io::message::notice);
+      } else {
+        if (buffer.size() != 4) {
+          io::messages.add("ORCAFILES block corrupt. Provide 2 lines.",
+                  "In_QMMM", io::message::error);
+          return;
+        }
+        sim.param().qmmm.orca.input_file = buffer[1];
+        sim.param().qmmm.orca.output_file = buffer[2];
+      }
+    } // ORCAFILES
+    { // ORCAHEADER
+      buffer = m_block["ORCAHEADER"];
+
+      if (!buffer.size()) {
+        io::messages.add("no ORCAHEADER block in QM/MM specification file",
+                "In_QMMM", io::message::error);
+        return;
+      }
+      concatenate(buffer.begin() + 1, buffer.end() - 1,
+              sim.param().qmmm.orca.input_header);
+      DEBUG(1, "sim.param().qmmm.orca.input_header:");
+      DEBUG(1, sim.param().qmmm.orca.input_header);
+    } // GAUHEADER
+  }
+
   // Cap length definition
   if(topo.qmmm_link().size() > 0 ) {
     _lineStream.clear();
@@ -829,6 +934,11 @@ void io::In_QMMM::read_units(const simulation::Simulation& sim
   //                   , math::kcal / math::angstrom /* kcal/A */
   //                   , math::echarge /* e */}},
   //   {simulation::qm_gaussian,
+  //                   { math::angstrom /* A */
+  //                   , math::hartree * math::avogadro /* a.u. */
+  //                   , math::hartree * math::avogadro / math::bohr /* a.u. */
+  //                   , math::echarge /* e */}}
+  //   {simulation::qm_orca,
   //                   { math::angstrom /* A */
   //                   , math::hartree * math::avogadro /* a.u. */
   //                   , math::hartree * math::avogadro / math::bohr /* a.u. */

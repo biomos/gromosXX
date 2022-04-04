@@ -412,6 +412,8 @@ int interaction::QMMM_Interaction::init(topology::Topology& topo,
       case simulation::qm_gaussian:
         os << "Gaussian";
         break;
+      case simulation::qm_orca:
+        os << "Orca";
       default:
         os << "unknown";
         break;
