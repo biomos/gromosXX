@@ -4780,7 +4780,7 @@ void io::In_Parameter::read_ELECTRIC(simulation::Parameter & param,
         block.get_next_parameter("DIPGRP", param.electric.dip_groups, "", "0,1,2");
         block.get_next_parameter("NTWDIP", param.electric.dip_write, ">=0", "");
         block.get_next_parameter("NTWCUR", param.electric.cur_write, ">=0", "");
-        block.get_next_parameter("NCURGRP", ncurgrp, ">0", "");
+        block.get_next_parameter("NCURGRP", ncurgrp, ">=0", "");
 
         switch (field) {
             case 0:
@@ -5242,6 +5242,7 @@ void io::In_Parameter::read_QMMM(simulation::Parameter & param,
     exampleblock << "#    2: DFTB\n";
     exampleblock << "#    3: MOPAC\n";
     exampleblock << "#    4: Gaussian\n";
+    exampleblock << "#    6: Orca\n";
     exampleblock << "# RCUTQM: ABS(RCUTQM): cutoff for inclusion of MM atoms in QM calculation\n";
     exampleblock << "#         (ignored for NTQMMM = 1)\n";
     exampleblock << "#     0.0: include all atoms\n";
@@ -5275,7 +5276,7 @@ void io::In_Parameter::read_QMMM(simulation::Parameter & param,
     double mm_scale = -1.;
     double cutoff;
     block.get_next_parameter("NTQMMM", enable, "", "-1,0,1,2,3");
-    block.get_next_parameter("NTQMSW", software, "", "0,1,2,3,4");
+    block.get_next_parameter("NTQMSW", software, "", "0,1,2,3,4,6");
     block.get_next_parameter("RCUTQM", cutoff, "", "");
     block.get_next_parameter("NTWQMMM", write, ">=0", "");
     block.get_next_parameter("QMLJ", qmlj, "", "0,1");
@@ -5324,6 +5325,8 @@ void io::In_Parameter::read_QMMM(simulation::Parameter & param,
         case 4:
             param.qmmm.software = simulation::qm_gaussian;
             break;
+        case 6:
+            param.qmmm.software = simulation::qm_orca;
         default:
             break;
     }
@@ -5357,7 +5360,7 @@ void io::In_Parameter::read_QMMM(simulation::Parameter & param,
     param.qmmm.write = write;
     if (param.qmmm.qmmm == simulation::qmmm_mechanical && param.qmmm.cutoff != 0.0)
         io::messages.add("QMMM block: RCUTQM > 0.0 has no effect for mechanical embedding scheme",
-            "io::In_Parameter",
+            "In_Parameter",
             io::message::warning);
 
     block.get_final_messages();

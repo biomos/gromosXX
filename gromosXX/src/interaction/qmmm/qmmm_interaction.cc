@@ -223,7 +223,7 @@ int interaction::QMMM_Interaction::calculate_interactions(topology::Topology& to
       if (true /*sim.param().qmmm.software != simulation::qm_nn*/) {
         DEBUG(4, "Creating QM buffer for separate QM calculation");
         //create buffer zone for separate QM calculation and run it
-        if (m_qm_buffer != nullptr) delete m_qm_buffer;
+        delete m_qm_buffer;
         m_qm_buffer = m_qm_zone->create_buffer_zone(topo, sim);
         m_timer.start(m_worker->name());
         err = m_worker->run_QM(topo, conf, sim, *m_qm_buffer);
@@ -259,8 +259,8 @@ int interaction::QMMM_Interaction::calculate_interactions(topology::Topology& to
           }
         }
       } else {
-        DEBUG(0, "Skipping buffer zone calculation");
-        DEBUG(0, "Expecting deltas directly from NN");
+        DEBUG(1, "Skipping buffer zone calculation");
+        DEBUG(1, "Expecting deltas directly from NN");
         // We are using NN trained on differences - here probably nothing needs to be done
       }
     }
@@ -355,6 +355,7 @@ int interaction::QMMM_Interaction::init(topology::Topology& topo,
       // let's consider that all spins are paired
       sm = (2 * (spin_z + spin_sb)) % 2 + 1;
     }
+    delete m_qm_zone;
     m_qm_zone = new interaction::QM_Zone(charge, sm);
 
     DEBUG(15,"QM Zone created");
@@ -411,6 +412,8 @@ int interaction::QMMM_Interaction::init(topology::Topology& topo,
       case simulation::qm_gaussian:
         os << "Gaussian";
         break;
+      case simulation::qm_orca:
+        os << "Orca";
       default:
         os << "unknown";
         break;

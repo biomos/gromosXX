@@ -1285,3 +1285,28 @@ void interaction::Grid_Cell_Pairlist::restore_vacuum_box() {
   myconf->boundary_type = math::vacuum;
 }
 
+template<class cutoff_trait>
+inline bool interaction::Grid_Cell_Pairlist::t_qm_excluded(const topology::Topology& topo
+                                                         , const simulation::qmmm_enum qmmm
+                                                         , unsigned first) {
+  if (std::is_same<cutoff_trait, Grid_Cell_Pairlist::cg_cutoff>::value) {
+    first = topo.chargegroup(first);
+  } else if (! std::is_same<cutoff_trait, Grid_Cell_Pairlist::atomic_cutoff>::value)
+    io::messages.add("Cutoff trait not implemented",
+              "Grid Cell", io::message::critical);
+  return Pairlist_Algorithm::qm_excluded(topo, qmmm, first);
+}
+
+template<class cutoff_trait>
+inline bool interaction::Grid_Cell_Pairlist::t_qm_excluded(const topology::Topology& topo
+                                                         , const simulation::qmmm_enum qmmm
+                                                         , unsigned first
+                                                         , unsigned second){
+  if (std::is_same<cutoff_trait, Grid_Cell_Pairlist::cg_cutoff>::value) {
+    first = topo.chargegroup(first);
+    second = topo.chargegroup(second);
+  } else if (! std::is_same<cutoff_trait, Grid_Cell_Pairlist::atomic_cutoff>::value)
+    io::messages.add("Cutoff trait not implemented",
+              "Grid Cell", io::message::critical);
+  return Pairlist_Algorithm::qm_excluded(topo, qmmm, first, second);
+}

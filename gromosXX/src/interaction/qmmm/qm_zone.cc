@@ -872,17 +872,17 @@ interaction::QM_Zone* interaction::QM_Zone::create_buffer_zone(
                                           ) {
   DEBUG(15,"Generating QM buffer zone");
   // We make the buffer zone by copying the QM zone and deleting the QM atoms
-  QM_Zone* qmzone = new interaction::QM_Zone(*this);
-  qmzone->zero();
-  qmzone->charge() = sim.param().qmmm.buffer_zone.charge;
-  qmzone->spin_mult() = sim.param().qmmm.buffer_zone.spin_mult;
+  QM_Zone* qm_buffer = new interaction::QM_Zone(*this);
+  qm_buffer->zero();
+  qm_buffer->charge() = sim.param().qmmm.buffer_zone.charge;
+  qm_buffer->spin_mult() = sim.param().qmmm.buffer_zone.spin_mult;
 
   for (std::set<interaction::QM_Atom>::const_iterator
         it = this->qm.begin(); it != this->qm.end(); ++it) {
     if (topo.is_qm(it->index)) {
       DEBUG(10,"Erasing QM atom " << it->index << " from buffer zone");
-      qmzone->qm.erase(*it);
+      qm_buffer->qm.erase(*it);
     }
   }
-  return qmzone;
+  return qm_buffer;
 }
