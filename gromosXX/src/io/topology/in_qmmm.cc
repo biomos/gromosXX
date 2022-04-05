@@ -424,6 +424,7 @@ END
 ORCAFILES
 /path/to/orca.inp
 /path/to/orca.out
+/path/to/pointcharges.pc
 /path/to/orca.engrad
 /path/to/orca.pcgrad
 END
@@ -433,6 +434,7 @@ END
  * are allowed. Implemented are
  * - CHARGE: net charge of the QM zone
  * - SPINM: spin multiplicity of the QM zone 
+ * - POINTCHARGES: file with information on pointcharges
  * - NUM_CHARGES: the number of MM atoms
  * - NUM_LINK: Number of link and capping atoms atoms
  * 
@@ -444,7 +446,7 @@ ORCAHEADER
 MaxIter 1500
 DIISMaxEq 15
 end
-%pointcharges "pointcharges.pc"
+%pointcharges "@@POINTCHARGES@@"
 
 * xyzfile @@CHARGE@@ @@SPINM@@
 @endverbatim
@@ -469,6 +471,7 @@ io::In_QMMM::read(topology::Topology& topo,
   std::vector<std::string> buffer;
 
   const simulation::qm_software_enum sw = sim.param().qmmm.software;
+
   /**
    * MNDO
    */
@@ -792,7 +795,7 @@ io::In_QMMM::read(topology::Topology& topo,
    * Orca
    */
   else if (sw == simulation::qm_orca) {
-    this->read_units(sim, &sim.param().qmmm.gaussian);
+    this->read_units(sim, &sim.param().qmmm.orca);
     { // ORCABINARY
 
       DEBUG(15, "Reading ORCABINARY");
@@ -801,7 +804,7 @@ io::In_QMMM::read(topology::Topology& topo,
       if (!buffer.size()) {
         io::messages.add("Assuming that the orca binary is in the PATH",
                 "In_QMMM", io::message::notice);
-        sim.param().qmmm.gaussian.binary = "orca";
+        sim.param().qmmm.orca.binary = "orca";
       } else {
         if (buffer.size() != 3) {
           io::messages.add("ORCABINARY block corrupt. Provide 1 line.",
@@ -820,13 +823,16 @@ io::In_QMMM::read(topology::Topology& topo,
         io::messages.add("Using temporary files for Orca input/output",
                 "In_QMMM", io::message::notice);
       } else {
-        if (buffer.size() != 4) {
-          io::messages.add("ORCAFILES block corrupt. Provide 2 lines.",
+        if (buffer.size() != 7) {
+          io::messages.add("ORCAFILES block corrupt. Provide 5 lines.",
                   "In_QMMM", io::message::error);
           return;
         }
         sim.param().qmmm.orca.input_file = buffer[1];
         sim.param().qmmm.orca.output_file = buffer[2];
+        sim.param().qmmm.orca.input_mm_coordinate_file = buffer[3];
+        sim.param().qmmm.orca.output_gradient_file = buffer[4];
+        sim.param().qmmm.orca.output_mm_gradient_file = buffer[5];
       }
     } // ORCAFILES
     { // ORCAHEADER
@@ -841,7 +847,7 @@ io::In_QMMM::read(topology::Topology& topo,
               sim.param().qmmm.orca.input_header);
       DEBUG(1, "sim.param().qmmm.orca.input_header:");
       DEBUG(1, sim.param().qmmm.orca.input_header);
-    } // GAUHEADER
+    } // ORCAHEADER
   }
 
   // Cap length definition

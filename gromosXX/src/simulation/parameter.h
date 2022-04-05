@@ -3996,6 +3996,18 @@ namespace simulation
        * ORCA specific parameters
        */
       struct orca_param_struct : public qm_param_struct { 
+        /**
+         * the input file containing the positions and charges of the MM atoms
+         */
+        std::string input_mm_coordinate_file;
+        /**
+         * the output file containing the cartesian gradients
+         */
+        std::string output_gradient_file;
+        /**
+         * the output file containing the cartesion gradients of the MM atoms
+         */
+        std::string output_mm_gradient_file;
       } orca; 
     } qmmm;
 
