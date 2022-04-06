@@ -92,6 +92,11 @@ void re::replica_exchange_base_eds::swap_replicas_1D(const unsigned int partnerR
         DEBUG(4, "replica_exchange_base_eds:replica "<<  globalThreadID <<":swap1D:\t  swap prop calculation");
 
         // posts a MPI_Recv(...) matching the MPI_Send below
+        DEBUG(7, "\nSWAP REPLICAs: " << globalThreadID << "\n");
+        DEBUG(7, "replica "<< globalThreadID <<": Partner0 in swap Current ER  = "<< replica->conf.current().energies.eds_vr <<" \n");
+        DEBUG(7, "replica "<< globalThreadID <<": Partner0 in swap OLD ER   = "<< replica->conf.old().energies.eds_vr <<" \n");
+        DEBUG(7, "replica "<< globalThreadID <<": Partner0 in swap epot = "<< epot <<" \n");
+
         probability = calc_probability(partnerReplicaID);
         const double randNum = rng.get();
 
@@ -107,6 +112,8 @@ void re::replica_exchange_base_eds::swap_replicas_1D(const unsigned int partnerR
         } else
           switched = false;
       } else {    //The Partner sends his data to The calculating Thread
+        DEBUG(7,  "replica "<< globalThreadID <<": Partner1 in swap epot   = "<< epot <<" \n");
+
         //special case if lambda also needs to be exchanged
         bool sameLambda = (l == replica->sim.param().reeds.eds_para[partnerReplicaID].s[0]);
         if(!sameLambda){      //exchange LAMBDA
@@ -115,6 +122,7 @@ void re::replica_exchange_base_eds::swap_replicas_1D(const unsigned int partnerR
           // this we can store as the partner energy of the current replica
           epot_partner = E21;
           // E22: Energy with configuration 2 and lambda 2(own one)
+
       #ifdef XXMPI
           const double E22 = epot;
           // send E21 and E22
@@ -126,6 +134,7 @@ void re::replica_exchange_base_eds::swap_replicas_1D(const unsigned int partnerR
       #endif
         } else { // sameLambda
       #ifdef XXMPI
+
           double energies[2] = {epot, 0.0};
           MPI_Send(&energies[0],2,MPI_DOUBLE, partnerReplicaID, SWITCHENERGIES,  replicaGraphMPIControl().comm);
       #endif
