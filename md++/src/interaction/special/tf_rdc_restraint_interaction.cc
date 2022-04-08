@@ -446,6 +446,13 @@ int _magnetic_field_vector_sd
     std::fill(conf.special().tfrdc_mfv.P_avg.begin(), conf.special().tfrdc_mfv.P_avg.end(), 0.0);
     std::fill(conf.special().tfrdc_mfv.dPdr_avg.begin(), conf.special().tfrdc_mfv.dPdr_avg.end(), math::Vec(0.0,0.0,0.0));
     for (int sdstep=0; sdstep < sim.param().tfrdc.nstsd; sdstep++) {
+
+      // com translation removal
+      if ((sdstep % conf.special().tfrdc_mfv.n_com_translation_removal) == 0) {
+        math::Vec com_vel = (conf.special().tfrdc_mfv.vel[0]+conf.special().tfrdc_mfv.vel[1])/2;
+        conf.special().tfrdc_mfv.vel[0]-= com_vel;
+        conf.special().tfrdc_mfv.vel[1]-= com_vel;
+      }
     
       // -----  calculate forces on magn. field vector -----
       math::VArray forces(2, math::Vec(0.0, 0.0, 0.0));
@@ -706,6 +713,7 @@ void _init_mfv_sd(configuration::Configuration & conf,
   // TODO: maybe do not use hardcoded values here
   tfrdc_mfv.mass = 15.035;
   tfrdc_mfv.d = 0.153;
+  tfrdc_mfv.n_com_translation_removal = 1000;
   tfrdc_mfv.sd.kToverM = sqrt(math::k_Boltzmann * sim.param().tfrdc.tempsd / tfrdc_mfv.mass);
   DEBUG(12, "kb "<< math::k_Boltzmann << "Temp " << sim.param().tfrdc.tempsd << "mass "<< tfrdc_mfv.mass);
 

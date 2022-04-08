@@ -812,7 +812,13 @@ namespace configuration {
          * stochastic integrals for the magnetic field vector
          */
         math::VArray stochastic_integral;
+        /**
+         * magnetic field vector positions
+         */
         math::VArray pos;
+        /**
+         * magnetic field vector velocities
+         */
         math::VArray vel;
 
         /**
@@ -834,6 +840,7 @@ namespace configuration {
 
         double mass;
         double d;
+        unsigned int n_com_translation_removal;
 
         /**
          * distribution of the angle of the mfv to the z-axis
