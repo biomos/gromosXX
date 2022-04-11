@@ -105,11 +105,11 @@ H                              90     1     0
 END
 ORCAHEADER
 # DFT method
-# ! BP86 def2-SVP defgrid3 EnGrad TightSCF
-# %pal nprocs 4 end
-# %scf MaxIter 1500 end
-# %pointcharges "@@POINTCHARGES@@"
-# * xyzfile @@CHARGE@@ @@SPINM@@ @@COORDINATES@@
+#  ! BP86 def2-SVP defgrid3 EnGrad TightSCF
+#  %pal nprocs 4 end
+#  %scf MaxIter 1500 end
+#  %pointcharges "@@POINTCHARGES@@"
+#  * xyzfile @@CHARGE@@ @@SPINM@@ @@COORDINATES@@
 # Semi-empirical method
 ! ZINDO/1 EnGrad TightSCF
 %scf MaxIter 1500 end
@@ -120,27 +120,27 @@ ORCABINARY
 /home/fpultar/opt/orca-5.0.3/orca
 END
 # Relative filenames (works well gromos is started in the designated work folder)
-# ORCAFILES
-# xphos.inp
-# xphos.out
-# xphos.xyz
-# xphos.pc
-# xphos.engrad
-# xphos.pcgrad
-# END
-# Absolute filenames
 ORCAFILES
-/home/fpultar/src/gromos-standard/gromosXX/gromosXX/src/check/data/orca/xphos.inp
-/home/fpultar/src/gromos-standard/gromosXX/gromosXX/src/check/data/orca/xphos.out
-/home/fpultar/src/gromos-standard/gromosXX/gromosXX/src/check/data/orca/xphos.xyz
-/home/fpultar/src/gromos-standard/gromosXX/gromosXX/src/check/data/orca/xphos.pc
-/home/fpultar/src/gromos-standard/gromosXX/gromosXX/src/check/data/orca/xphos.engrad
-/home/fpultar/src/gromos-standard/gromosXX/gromosXX/src/check/data/orca/xphos.pcgrad
+xphos.inp
+xphos.out
+xphos.xyz
+xphos.pc
+xphos.engrad
+xphos.pcgrad
 END
+# Absolute filenames
+# ORCAFILES
+# /home/fpultar/src/gromos-standard/gromosXX/gromosXX/src/check/data/orca/xphos.inp
+# /home/fpultar/src/gromos-standard/gromosXX/gromosXX/src/check/data/orca/xphos.out
+# /home/fpultar/src/gromos-standard/gromosXX/gromosXX/src/check/data/orca/xphos.xyz
+# /home/fpultar/src/gromos-standard/gromosXX/gromosXX/src/check/data/orca/xphos.pc
+# /home/fpultar/src/gromos-standard/gromosXX/gromosXX/src/check/data/orca/xphos.engrad
+# /home/fpultar/src/gromos-standard/gromosXX/gromosXX/src/check/data/orca/xphos.pcgrad
+# END
 ELEMENTS
 1  H
 6  C
-8  C
+8  O
 15 P
 46 Pd
 END
