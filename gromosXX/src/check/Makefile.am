@@ -74,7 +74,7 @@ EXTRA_DIST = data/aladip.topo\
 	data/aladip.dihrest\
 	data/aladip.order\
 	data/aladip.xrs\
-        data/aladip.lud\
+  data/aladip.lud\
 	data/aladip.led\
 	data/aladip_atomic.in\
 	data/aladip_ewald.in\
@@ -88,5 +88,4 @@ EXTRA_DIST = data/aladip.topo\
 	data/scaling.in\
 	data/scaling.lambdadep.in\
 	data/scaling.lambdadep.pttopo\
-	data/scaling.pttopo\
-
+	data/scaling.pttopo
