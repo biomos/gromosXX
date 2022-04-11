@@ -34,9 +34,11 @@ interaction::Orca_Worker::Orca_Worker() : QM_Worker("Orca Worker"), param(nullpt
 
 int interaction::Orca_Worker::init(simulation::Simulation& sim) {
   DEBUG(15, "Initializing " << this->name());
+
   // Get a pointer to simulation parameters
   this->param = &(sim.param().qmmm.orca);
   QM_Worker::param = this->param;
+
   // Aliases to shorten the code
   std::string& inp = this->param->input_file;
   std::string& out = this->param->output_file;
@@ -44,10 +46,110 @@ int interaction::Orca_Worker::init(simulation::Simulation& sim) {
   std::string& pointcharges = this->param->input_pointcharges_file;
   std::string& engrad = this->param->output_gradient_file;
   std::string& pcgrad = this->param->output_mm_gradient_file;
-  // check if temporary files should be written
+
+  // input file
+  if (inp.empty()) {
+    if (util::create_tmpfile(inp) < 1) {
+      io::messages.add("Unable to create temporary input file: " + inp,
+          this->name(), io::message::critical);
+      return 1;
+    }
+    else {
+      this->tmp_files.insert(inp);
+      io::messages.add("Using temporary input file: " + inp,
+        this->name(), io::message::notice);
+    }
+  }
+  else {
+    // Try to create a file specified by user
+    std::ofstream of(inp.c_str());
+    if (!of.is_open()) {
+      io::messages.add("Unable to create input file: "
+        + inp, this->name(), io::message::critical);
+      return 1;
+    }
+    else {
+      io::messages.add("File initialized: "
+        + inp, this->name(), io::message::notice);
+    }
+    of.close();
+  }
+
+  // we need to construct the names of the orca files based on input file name
+  int ext_pos = inp.size() - 4;
+  std::string fname; // this will be the base file name
+  if (ext_pos > 0 && (inp.substr(ext_pos) == ".inp")) {
+    fname = inp.substr(0, ext_pos);
+  } else {
+    fname = inp;
+  }
+
+  // generate file names based on input file name
+  std::string out_fname = fname + ".out";
+  std::string coordinates_fname = fname + ".xyz";
+  std::string pointcharges_fname = fname + ".pc";
+  std::string engrad_fname = fname + ".engrad";
+  std::string pcgrad_fname = fname + ".pcgrad";
+
+  // other files that orca writes but we do not need
+  std::string densities_fname = fname + ".densities";
+  std::string gbw_fname = fname + ".gbw";
+  std::string ges_fname = fname + ".ges";
+  std::string properties_fname= fname + "_property.txt";
+
+
+  // initialize files
+  int err = 0;
+  err = this->initialize_file(out, out_fname);
+  if (err) return err;
+
+  err = this->initialize_file(coordinates, coordinates_fname);
+  if (err) return err; 
+
+  err = this->initialize_file(pointcharges, pointcharges_fname);
+  if (err) return err; 
+
+  err = this->initialize_file(engrad, engrad_fname);
+  if (err) return err;
+
+  err = this->initialize_file(pcgrad, pcgrad_fname);
+  if (err) return err;
+
+  // let Gromos know about temporary files so that they can be cleaned up
+  this->tmp_files.insert(densities_fname);
+  this->tmp_files.insert(gbw_fname);
+  this->tmp_files.insert(ges_fname);
+  this->tmp_files.insert(properties_fname);
+
   DEBUG(15, "Initialized " << this->name());
   return 0;
 }
+
+int interaction::Orca_Worker::initialize_file(std::string& file_name, const std::string& new_name) {
+  if (file_name.empty()) {
+    // generate temporary file
+    file_name = new_name; // update file name
+    this->tmp_files.insert(file_name);
+    io::messages.add("Using temporary output file: " + file_name,
+      this->name(), io::message::notice);
+  }
+  else {
+    // Try to create a file specified by user
+    std::ofstream of(file_name.c_str());
+    if (!of.is_open()) {
+      io::messages.add("Unable to create output file: "
+        + file_name, this->name(), io::message::critical);
+      return 1;
+    }
+    else {
+      io::messages.add("File initialized: "
+        + file_name, this->name(), io::message::notice);
+    }
+    of.close();
+  }
+  return 0;
+}
+
 
 int interaction::Orca_Worker::write_input(const topology::Topology& topo
                                         , const configuration::Configuration& conf

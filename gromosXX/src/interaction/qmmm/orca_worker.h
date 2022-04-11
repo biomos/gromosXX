@@ -37,6 +37,14 @@ namespace interaction {
     simulation::Parameter::qmmm_struct::orca_param_struct* param;
 
     /**
+     * Tests if a temporary file should be generated and performs some sanity checks
+     * @param file_name Name of the file
+     * @param file_link Link to the file
+     * @return int error code
+     */
+    int initialize_file(std::string& file_name, const std::string& new_name);
+
+    /**
      * Write input files for QM program
      * @param topo Topology
      * @param conf Configuration

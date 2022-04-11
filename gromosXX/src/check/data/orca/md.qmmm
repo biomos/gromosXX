@@ -110,7 +110,7 @@ ORCAHEADER
 # end
 
 ! ZINDO/1 EnGrad TightSCF
-% scf MaxIter 1500 end
+%scf MaxIter 1500 end
 %pointcharges "@@POINTCHARGES@@"
 * xyzfile @@CHARGE@@ @@SPINM@@ @@COORDINATES@@
 END

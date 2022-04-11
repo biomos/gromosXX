@@ -105,6 +105,9 @@
 /* Define to 1 if you have the `symlink' function. */
 #cmakedefine HAVE_SYMLINK @HAVE_SYMLINK@
 
+/* Define to 1 if you have the `getenv' function. */
+#cmakedefine HAVE_GETENV @HAVE_GETENV@
+
 /* Define to 1 if you have the `system' function. */
 #cmakedefine HAVE_SYSTEM @HAVE_SYSTEM@
 
@@ -116,6 +119,12 @@
 
 /* Define to 1 if you have the `tmpnam' function. */
 #cmakedefine HAVE_TMPNAM @HAVE_TMPNAM@
+
+/* Define to 1 if you have the `mkstemp` function. */
+#cmakedefine HAVE_MKSTEMP @HAVE_MKSTEMP@
+
+/* Define to 1 if you have the `mkdtemp` function. */
+#cmakedefine HAVE_MKDTEMP @HAVE_MKDTEMP@
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #cmakedefine HAVE_UNISTD_H @HAVE_UNISTD_H@
