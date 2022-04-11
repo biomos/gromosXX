@@ -1,0 +1,134 @@
+TITLE
+xphos-toluene-water, qmmm specification file
+
+	>>> Generated with PyGromosTools (riniker group) <<<
+END
+QMUNIT
+# QMULEN          QMUENE            QMUFOR     QMUCHR
+  0.1             2625.5            49641      0.1
+END
+QMZONE
+# NETCH   SPINM
+      0       1
+# QMEN                       QMEI  QMEZ  QMEB
+H                               1     1     0
+C                               2     6     0
+H                               3     1     0
+H                               4     1     0
+C                               5     6     0
+H                               6     1     0
+C                               7     6     0
+H                               8     1     0
+H                               9     1     0
+H                              10     1     0
+C                              11     6     0
+C                              12     6     0
+H                              13     1     0
+C                              14     6     0
+C                              15     6     0
+H                              16     1     0
+C                              17     6     0
+H                              18     1     0
+H                              19     1     0
+H                              20     1     0
+C                              21     6     0
+H                              22     1     0
+H                              23     1     0
+H                              24     1     0
+C                              25     6     0
+C                              26     6     0
+C                              27     6     0
+H                              28     1     0
+C                              29     6     0
+H                              30     1     0
+C                              31     6     0
+H                              32     1     0
+H                              33     1     0
+H                              34     1     0
+C                              35     6     0
+H                              36     1     0
+H                              37     1     0
+H                              38     1     0
+C                              39     6     0
+C                              40     6     0
+C                              41     6     0
+H                              42     1     0
+C                              43     6     0
+H                              44     1     0
+C                              45     6     0
+H                              46     1     0
+C                              47     6     0
+H                              48     1     0
+P                              49    15     0
+Pd                             50    46     0
+C                              51     6     0
+O                              52     8     0
+C                              53     6     0
+O                              54     8     0
+C                              55     6     0
+O                              56     8     0
+C                              57     6     0
+H                              58     1     0
+C                              59     6     0
+H                              60     1     0
+H                              61     1     0
+C                              62     6     0
+H                              63     1     0
+H                              64     1     0
+C                              65     6     0
+H                              66     1     0
+H                              67     1     0
+C                              68     6     0
+H                              69     1     0
+H                              70     1     0
+C                              71     6     0
+H                              72     1     0
+H                              73     1     0
+C                              74     6     0
+H                              75     1     0
+C                              76     6     0
+H                              77     1     0
+H                              78     1     0
+C                              79     6     0
+H                              80     1     0
+H                              81     1     0
+C                              82     6     0
+H                              83     1     0
+H                              84     1     0
+C                              85     6     0
+H                              86     1     0
+H                              87     1     0
+C                              88     6     0
+H                              89     1     0
+H                              90     1     0
+END
+ORCAHEADER
+# ! BP86 def2-SVP defgrid3 EnGrad TightSCF
+# %scf
+# MaxIter 1500
+# DIISMaxEq 15
+# end
+
+! ZINDO/1 EnGrad TightSCF
+% scf MaxIter 1500 end
+%pointcharges "@@POINTCHARGES@@"
+* xyzfile @@CHARGE@@ @@SPINM@@ @@COORDINATES@@
+END
+ORCABINARY
+/home/fpultar/opt/orca-5.0.3/orca
+END
+ORCAFILES
+/home/fpultar/src/gromos-standard/gromosXX/gromosXX/src/check/data/orca/xphos.inp
+/home/fpultar/src/gromos-standard/gromosXX/gromosXX/src/check/data/orca/xphos.out
+/home/fpultar/src/gromos-standard/gromosXX/gromosXX/src/check/data/orca/xphos.xyz
+/home/fpultar/src/gromos-standard/gromosXX/gromosXX/src/check/data/orca/xphos.pc
+/home/fpultar/src/gromos-standard/gromosXX/gromosXX/src/check/data/orca/xphos.engrad
+/home/fpultar/src/gromos-standard/gromosXX/gromosXX/src/check/data/orca/xphos.pcgrad
+END
+ELEMENTS
+1  H
+6  C
+8  C
+15 P
+46 Pd
+END

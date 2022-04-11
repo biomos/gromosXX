@@ -837,7 +837,7 @@ io::In_QMMM::read(topology::Topology& topo,
                 "In_QMMM", io::message::notice);
       } else {
         if (buffer.size() != 8) {
-          io::messages.add("ORCAFILES block corrupt. Provide 5 lines.",
+          io::messages.add("ORCAFILES block corrupt. Provide 6 lines.",
                   "In_QMMM", io::message::error);
           return;
         }
