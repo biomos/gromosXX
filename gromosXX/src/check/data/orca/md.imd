@@ -92,7 +92,7 @@ QMMM
 END
 STEP
 # 	 NSTLIM     T   	 DT
- 	 500        0.000000 	 0.000500 	 
+ 	 150        0.000000 	 0.000500 	 
 END
 SYSTEM
 # 	 NPM 	 NSM
