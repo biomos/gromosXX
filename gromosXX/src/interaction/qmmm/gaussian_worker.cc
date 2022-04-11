@@ -89,7 +89,12 @@ int interaction::Gaussian_Worker::write_input(const topology::Topology& topo
 
   // Write header
   ifs << this->param->input_header;
-  ifs << this->param->route_section;
+  std::string guess;
+  if (sim.steps() != 0) {
+    guess = "guess=read";
+  }
+  std::string route_section = io::replace_string(this->param->route_section, "@@GUESS@@", guess);
+  ifs << route_section;
   ifs << std::endl;
   ifs << "GROMOS generated input file" << std::endl;
   ifs << std::endl;
