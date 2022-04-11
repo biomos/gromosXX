@@ -26,6 +26,7 @@
 #include "mopac_worker.h"
 #include "gaussian_worker.h"
 #include "orca_worker.h"
+#include "xtb_worker.h"
 
 #undef MODULE
 #undef SUBMODULE
@@ -63,6 +64,8 @@ interaction::QM_Worker * interaction::QM_Worker::get_instance(const simulation::
       return new Gaussian_Worker;
     case simulation::qm_orca :
       return new Orca_Worker;
+    case simulation::qm_xtb :
+      return new XTB_Worker;
     default:
       io::messages.add("QM worker not implemented", "QM_Worker", io::message::critical);
       break;

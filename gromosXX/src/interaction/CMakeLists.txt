@@ -77,6 +77,7 @@ set(INTERACTION_CC
     qmmm/mopac_worker.cc
     qmmm/gaussian_worker.cc
     qmmm/orca_worker.cc
+    qmmm/xtb_worker.cc
     qmmm/qmmm_interaction.cc
     qmmm/nonbonded/qmmm_nonbonded_outerloop.cc
     qmmm/nonbonded/qmmm_nonbonded_set.cc

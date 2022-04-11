@@ -121,6 +121,7 @@ xxintqmmm_HEADERS = qmmm/mm_atom.h\
 	qmmm/mopac_worker.h\
 	qmmm/gaussian_worker.h\
 	qmmm/orca_worker.h\
+	qmmm/xtb_worker.h\
 	qmmm/qmmm_interaction.h\
 	qmmm/nonbonded/qmmm_nonbonded_outerloop.h \
 	qmmm/nonbonded/qmmm_nonbonded_set.h
@@ -205,6 +206,7 @@ libgrointeraction_la_SOURCES =interaction.cc\
 	qmmm/mopac_worker.cc\
 	qmmm/gaussian_worker.cc\
 	qmmm/orca_worker.cc\
+	qmmm/xtb_worker.cc\
 	qmmm/qmmm_interaction.cc\
 	qmmm/nonbonded/qmmm_nonbonded_outerloop.cc\
 	qmmm/nonbonded/qmmm_nonbonded_set.cc

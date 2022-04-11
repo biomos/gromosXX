@@ -5243,6 +5243,7 @@ void io::In_Parameter::read_QMMM(simulation::Parameter & param,
     exampleblock << "#    3: MOPAC\n";
     exampleblock << "#    4: Gaussian\n";
     exampleblock << "#    6: Orca\n";
+    exampleblock << "#    7: XTB\n";
     exampleblock << "# RCUTQM: ABS(RCUTQM): cutoff for inclusion of MM atoms in QM calculation\n";
     exampleblock << "#         (ignored for NTQMMM = 1)\n";
     exampleblock << "#     0.0: include all atoms\n";
@@ -5327,6 +5328,10 @@ void io::In_Parameter::read_QMMM(simulation::Parameter & param,
             break;
         case 6:
             param.qmmm.software = simulation::qm_orca;
+            break;
+        case 7;
+            param.qmmm.software = simulation::qm_xtb;
+            break;
         default:
             break;
     }

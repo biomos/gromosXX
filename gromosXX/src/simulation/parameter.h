@@ -835,7 +835,11 @@ namespace simulation
     /**
      * use Orca
      */
-    qm_orca = 6
+    qm_orca = 6,
+    /**
+     * use XTB
+     */
+    qm_xtb = 7
   };
 
   /**
@@ -4013,6 +4017,28 @@ namespace simulation
          */
         std::string output_mm_gradient_file;
       } orca; 
+
+      /**
+       * XTB specific parameters
+       */
+      struct xtb_param_struct : public qm_param_struct { 
+        /**
+         * the input file containing the positions and element types of the QM atoms
+         */
+        std::string input_coordinate_file;
+        /**
+         * the input file containing the positions and charges of the MM atoms
+         */
+        std::string input_pointcharges_file;
+        /**
+         * the output file containing the cartesian gradients
+         */
+        std::string output_gradient_file;
+        /**
+         * the output file containing the cartesion gradients of the MM atoms
+         */
+        std::string output_mm_gradient_file;
+      } xtb; 
     } qmmm;
 
 
