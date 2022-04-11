@@ -44,7 +44,7 @@ int interaction::Orca_Worker::init(simulation::Simulation& sim) {
   std::string& pointcharges = this->param->input_pointcharges_file;
   std::string& engrad = this->param->output_gradient_file;
   std::string& pcgrad = this->param->output_mm_gradient_file;
-
+  // check if temporary files should be written
   DEBUG(15, "Initialized " << this->name());
   return 0;
 }
@@ -188,6 +188,7 @@ void interaction::Orca_Worker::write_mm_atom(std::ofstream& inputfile_stream
 
 int interaction::Orca_Worker::system_call() {
   DEBUG(15, "Calling external Orca program");
+  // orca has to be called with full path in case several cores are requested
   int err = util::system_call(this->param->binary + " " + this->param->input_file + " > " + this->param->output_file);
   if (err) {
     std::ostringstream msg;

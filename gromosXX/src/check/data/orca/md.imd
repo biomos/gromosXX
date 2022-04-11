@@ -70,7 +70,7 @@ NONBONDED
 END
 PAIRLIST
 # 	 ALGORITHM 	 NSNB 	 RCUTP 	 RCUTL 	 SIZE 	 TYPE
- 	 0 	 5 	 0.800000 	 1.300000 	 0.4 	 0 	 
+ 	 0 	 5 	 0.800000 	 1.200000 	 0.4 	 0 	 
 END
 PRESSURESCALE
 # 	 COUPLE 	 SCALE 	 COMP 	 TAUP 	 VIRIAL
@@ -88,7 +88,7 @@ PRINTOUT
 END
 QMMM
 # 	 NTQMMM 	 NTQMSW 	 RCUTQ 	          NTWQMMM 	 QMLJ    QMCON 	 MMSCAL
- 	 2 	         6 	         1.300000 	  0 	         0 	 0       -1.000000 	 
+ 	 2 	         6 	         1.200000 	  0 	         0 	 0       -1.000000 	 
 END
 STEP
 # 	 NSTLIM     T   	 DT
