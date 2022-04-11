@@ -38,8 +38,8 @@ namespace interaction {
 
     /**
      * Tests if a temporary file should be generated and performs some sanity checks
-     * @param file_name Name of the file
-     * @param file_link Link to the file
+     * @param file_name Reference to the param structure file
+     * @param new_name Potential new name for the file (for temporary files)
      * @return int error code
      */
     int initialize_file(std::string& file_name, const std::string& new_name);

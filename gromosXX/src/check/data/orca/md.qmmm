@@ -5,12 +5,13 @@ xphos-toluene-water, qmmm specification file
 END
 QMUNIT
 # QMULEN          QMUENE            QMUFOR     QMUCHR
-  0.1             2625.5            49641      0.1
+  0.1             2625.5            49641      1.0
 END
 QMZONE
 # NETCH   SPINM
       0       1
-# QMEN                       QMEI  QMEZ  QMEB
+# QMEN                         QMI  QMZ  QMLI
+# Warning: the first 17 characters are ignored!
 H                               1     1     0
 C                               2     6     0
 H                               3     1     0
@@ -103,12 +104,13 @@ H                              89     1     0
 H                              90     1     0
 END
 ORCAHEADER
+# DFT method
 # ! BP86 def2-SVP defgrid3 EnGrad TightSCF
-# %scf
-# MaxIter 1500
-# DIISMaxEq 15
-# end
-
+# %pal nprocs 4 end
+# %scf MaxIter 1500 end
+# %pointcharges "@@POINTCHARGES@@"
+# * xyzfile @@CHARGE@@ @@SPINM@@ @@COORDINATES@@
+# Semi-empirical method
 ! ZINDO/1 EnGrad TightSCF
 %scf MaxIter 1500 end
 %pointcharges "@@POINTCHARGES@@"
@@ -117,6 +119,16 @@ END
 ORCABINARY
 /home/fpultar/opt/orca-5.0.3/orca
 END
+# Relative filenames (works well gromos is started in the designated work folder)
+# ORCAFILES
+# xphos.inp
+# xphos.out
+# xphos.xyz
+# xphos.pc
+# xphos.engrad
+# xphos.pcgrad
+# END
+# Absolute filenames
 ORCAFILES
 /home/fpultar/src/gromos-standard/gromosXX/gromosXX/src/check/data/orca/xphos.inp
 /home/fpultar/src/gromos-standard/gromosXX/gromosXX/src/check/data/orca/xphos.out

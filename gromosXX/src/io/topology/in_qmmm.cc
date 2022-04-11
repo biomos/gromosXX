@@ -442,22 +442,17 @@ END
 @verbatim
 ORCAHEADER
 ! BP86 def2-SVP defgrid3 EnGrad TightSCF
-%pal nprocs 8 end
-%maxcore 3000
-%scf
-MaxIter 1500
-DIISMaxEq 15
-end
+%pal nprocs 4 end
+%scf MaxIter 1500 end
 %pointcharges "@@POINTCHARGES@@"
-
 * xyzfile @@CHARGE@@ @@SPINM@@ @@COORDINATES@@
 END
 @endverbatim
  * Alternatively, for sempi-empiral methods:
  @verbatim
 ORCAHEADER
-! PM3 EnGrad 
-%maxcore 3000
+! ZINDO/1 EnGrad TightSCF
+%scf MaxIter 1500 end
 %pointcharges "@@POINTCHARGES@@"
 * xyzfile @@CHARGE@@ @@SPINM@@ @@COORDINATES@@
 END
