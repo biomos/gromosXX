@@ -171,7 +171,7 @@ int interaction::QM_Worker::get_num_charges(const simulation::Simulation& sim
       break;
     }
     default: {
-      io::messages.add("Uknown QMMM option", this->name(), io::message::error);
+      io::messages.add("Unknown QMMM option", this->name(), io::message::error);
     }
   }
   return num_charges;

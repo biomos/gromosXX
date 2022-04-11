@@ -3910,7 +3910,7 @@ namespace simulation
          */
         std::string output_gradient_file;
         /**
-         * the output file containing the cartesion gradients of the MM atoms
+         * the output file containing the cartesian gradients of the MM atoms
          */
         std::string output_mm_gradient_file;
         /**
@@ -3997,9 +3997,13 @@ namespace simulation
        */
       struct orca_param_struct : public qm_param_struct { 
         /**
+         * the input file containing the positions and element types of the QM atoms
+         */
+        std::string input_coordinate_file;
+        /**
          * the input file containing the positions and charges of the MM atoms
          */
-        std::string input_mm_coordinate_file;
+        std::string input_pointcharges_file;
         /**
          * the output file containing the cartesian gradients
          */

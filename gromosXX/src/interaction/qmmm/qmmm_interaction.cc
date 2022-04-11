@@ -414,6 +414,7 @@ int interaction::QMMM_Interaction::init(topology::Topology& topo,
         break;
       case simulation::qm_orca:
         os << "Orca";
+        break;
       default:
         os << "unknown";
         break;

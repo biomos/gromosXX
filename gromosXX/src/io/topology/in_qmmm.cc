@@ -120,7 +120,7 @@ END
  *
  * @section The ELEMENTS block specifies the element names used in QM packages.
  * It is determined by the atomic number given in the QMZONE block. This block
- * is required only for Turbomole and DFTB
+ * is required only for Turbomole, DFTB, and ORCA
  * 
 @verbatim
 ELEMENTS
@@ -424,6 +424,7 @@ END
 ORCAFILES
 /path/to/orca.inp
 /path/to/orca.out
+/path/to/orca.xyz
 /path/to/pointcharges.pc
 /path/to/orca.engrad
 /path/to/orca.pcgrad
@@ -435,20 +436,30 @@ END
  * - CHARGE: net charge of the QM zone
  * - SPINM: spin multiplicity of the QM zone 
  * - POINTCHARGES: file with information on pointcharges
- * - NUM_CHARGES: the number of MM atoms
- * - NUM_LINK: Number of link and capping atoms atoms
+ * - COORDINATES: coordinates of the QM zone
  * 
 @verbatim
 ORCAHEADER
-! Title line
-! XTB1 EnGrad TightSCF defgrid3
+! BP86 def2-SVP defgrid3 EnGrad TightSCF
+%pal nprocs 8 end
+%maxcore 3000
 %scf
 MaxIter 1500
 DIISMaxEq 15
 end
 %pointcharges "@@POINTCHARGES@@"
 
-* xyzfile @@CHARGE@@ @@SPINM@@
+* xyzfile @@CHARGE@@ @@SPINM@@ @@COORDINATES@@
+END
+@endverbatim
+ * Alternatively, for sempi-empiral methods:
+ @verbatim
+ORCAHEADER
+! PM3 EnGrad 
+%maxcore 3000
+%pointcharges "@@POINTCHARGES@@"
+* xyzfile @@CHARGE@@ @@SPINM@@ @@COORDINATES@@
+END
 @endverbatim
  */
 void
@@ -796,6 +807,7 @@ io::In_QMMM::read(topology::Topology& topo,
    */
   else if (sw == simulation::qm_orca) {
     this->read_units(sim, &sim.param().qmmm.orca);
+    this->read_elements(topo, &sim.param().qmmm.orca);
     { // ORCABINARY
 
       DEBUG(15, "Reading ORCABINARY");
@@ -823,16 +835,17 @@ io::In_QMMM::read(topology::Topology& topo,
         io::messages.add("Using temporary files for Orca input/output",
                 "In_QMMM", io::message::notice);
       } else {
-        if (buffer.size() != 7) {
+        if (buffer.size() != 8) {
           io::messages.add("ORCAFILES block corrupt. Provide 5 lines.",
                   "In_QMMM", io::message::error);
           return;
         }
         sim.param().qmmm.orca.input_file = buffer[1];
         sim.param().qmmm.orca.output_file = buffer[2];
-        sim.param().qmmm.orca.input_mm_coordinate_file = buffer[3];
-        sim.param().qmmm.orca.output_gradient_file = buffer[4];
-        sim.param().qmmm.orca.output_mm_gradient_file = buffer[5];
+        sim.param().qmmm.orca.input_coordinate_file = buffer[3];
+        sim.param().qmmm.orca.input_pointcharges_file = buffer[4];
+        sim.param().qmmm.orca.output_gradient_file = buffer[5];
+        sim.param().qmmm.orca.output_mm_gradient_file = buffer[6];
       }
     } // ORCAFILES
     { // ORCAHEADER

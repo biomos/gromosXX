@@ -8,7 +8,8 @@ set(TEST_PROGRAM_INCLUDES
     ../interaction/nonbonded/interaction
     ../interaction/bonded
     ../interaction/forcefield
-    ../interaction/special 
+    ../interaction/special
+    ../interaction/qmmm
     ../algorithm
 )
 

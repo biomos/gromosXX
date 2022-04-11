@@ -40,81 +40,11 @@ int interaction::Orca_Worker::init(simulation::Simulation& sim) {
   // Aliases to shorten the code
   std::string& inp = this->param->input_file;
   std::string& out = this->param->output_file;
-  std::string& pointcharges = this->param->input_mm_coordinate_file;
+  std::string& coordinates = this->param->input_coordinate_file;
+  std::string& pointcharges = this->param->input_pointcharges_file;
   std::string& engrad = this->param->output_gradient_file;
   std::string& pcgrad = this->param->output_mm_gradient_file;
 
-  // Check set filenames and generate temporary files where necessary
-  if (inp.empty()) {
-      if(util::create_tmpfile(inp) < 1) {
-        io::messages.add("Unable to create temporary input file: " + inp,
-        this->name(), io::message::critical);
-        return 1;
-      }
-      else {
-        this->tmp_files.insert(inp);
-        io::messages.add("Using temporary input file: " + inp,
-          this->name(), io::message::notice);
-      }
-  }
-
-  // create links for output files
-  // first we need to construct the names of the Orca output files from the input file name
-  int ext_pos = inp.size() - 4;
-  std::string fname;
-  if (ext_pos > 0 && (inp.substr(ext_pos) == ".out")) {
-    fname = inp.substr(0, ext_pos);
-  }
-  else {
-    fname = inp;
-  }
-  std::string out_link = fname + ".out";
-
-  if (out.empty()) {
-    out = out_link;
-    this->tmp_files.insert(out);
-    io::messages.add("Using temporary output file: " + out,
-      this->name(), io::message::notice);
-  }
-  else {
-    // Try to create a file specified by user - .out file will be symlinked to it
-    // it it already exists, we don't want to overwrite it, exit
-    std::ofstream of(out.c_str());
-    if (!of.is_open()) {
-      io::messages.add("Unable to create output file: "
-        + out, this->name(), io::message::critical);
-      return 1;
-    }
-    of.close();
-  }
-
-#ifdef HAVE_SYMLINK
-  // create .out link for output file
-  if (out_link != out) {
-    if (symlink(out.c_str(), out_link.c_str()) != 0) {
-      io::messages.add("Unable to create symbolic link from " + out_link + " to "
-      + out + " - check permissions.",
-      this->name(), io::message::critical);
-      return 1;
-    }
-    this->tmp_files.insert(out_link);
-  }
-#else
-  {
-    out = out_link;
-    io::messages.add("Symbolic links are not supported in this build. "
-    + "Output file is now set to " + out,
-    this->name(), io::message::warning);
-  }
-#endif
-
-#ifndef HAVE_UNLINK
-  {
-    io::messages.add("Unlink function not supported on this platform. "
-    + "Please delete temporary files manually.",
-    this->name(), io::message::warning);
-  }
-#endif
   DEBUG(15, "Initialized " << this->name());
   return 0;
 }
@@ -125,17 +55,61 @@ int interaction::Orca_Worker::write_input(const topology::Topology& topo
                                         , const interaction::QM_Zone& qm_zone) {
   std::ofstream ifs;
   int err;
-  // First create Orca inout file
-  err = this->open_input(ifs, this->param->input_file);
+
+  // First create Orca input file
+  err = this->write_input_parameters(ifs, topo, conf, sim, qm_zone);
   if (err) return err;
+
+  // create xyz file with QM zone coordinates
+  err = this->write_input_coordinates(ifs, topo, conf, sim, qm_zone);
+  if (err) return err;
+
+  // create external file with information on point charges
+  err = this->write_input_pointcharges(ifs, topo, conf, sim, qm_zone);
+  if (err) return err;
+
+  return 0;
+}
+
+int interaction::Orca_Worker::write_input_parameters(std::ofstream& ifs
+                                                   , const topology::Topology& topo
+                                                   , const configuration::Configuration& conf
+                                                   , const simulation::Simulation& sim
+                                                   , const interaction::QM_Zone& qm_zone) {
+  int err = this->open_input(ifs, this->param->input_file);
+  if (err) return err;
+
+  // initialize header from QM/MM specification file
   std::string header(this->param->input_header);
 
   // Replace variables in header
-  header = io::replace_string(header, "@@CHARGE@@", std::to_string(qm_zone.charge()));  
+  header = io::replace_string(header, "@@CHARGE@@", std::to_string(qm_zone.charge())); 
+  header = io::replace_string(header, "@@SPINM@@", std::to_string(qm_zone.spin_mult())); 
+  header = io::replace_string(header, "@@POINTCHARGES@@", this->param->input_pointcharges_file);
+  header = io::replace_string(header, "@@COORDINATES@@", this->param->input_coordinate_file);
+
+  // Write header and one empty line
+  ifs << header << std::endl;
+  ifs.close();
+  ifs.clear();
+
+  return 0;
+}
+
+int interaction::Orca_Worker::write_input_coordinates(std::ofstream& ifs
+                                                    , const topology::Topology& topo
+                                                    , const configuration::Configuration& conf
+                                                    , const simulation::Simulation& sim
+                                                    , const interaction::QM_Zone& qm_zone) {
+  int err = this->open_input(ifs, this->param->input_coordinate_file);
+  if (err) return err;
 
   double len_to_qm = 1.0 / this->param->unit_factor_length;
 
   DEBUG(15, "Writing QM coordinates");
+  // number of atoms and comment line
+  ifs << qm_zone.qm.size() << '\n' << "Coordinates of the QM zone (in Ångström) generated by GROMOS" << std::endl;
+
   // write QM coordinates
   for (std::set<QM_Atom>::const_iterator it = qm_zone.qm.begin(), to = qm_zone.qm.end(); it != to; ++it) {
     DEBUG(15, it->index << " " << it->atomic_number << " " << math::v2s(it->pos * len_to_qm));
@@ -148,9 +122,68 @@ int interaction::Orca_Worker::write_input(const topology::Topology& topo
       << it->atomic_number << " " << math::v2s(it->pos * len_to_qm));
     this->write_qm_atom(ifs, it->atomic_number, it->pos * len_to_qm);
   }
+
   ifs.close();
+  ifs.clear();
 
   return 0;
+}
+
+int interaction::Orca_Worker::write_input_pointcharges(std::ofstream& ifs
+                                                     , const topology::Topology& topo
+                                                     , const configuration::Configuration& conf
+                                                     , const simulation::Simulation& sim
+                                                     , const interaction::QM_Zone& qm_zone) {
+  int err = this->open_input(ifs, this->param->input_pointcharges_file);
+  if (err) return err;
+
+  // write number of charges
+  ifs << this->get_num_charges(sim, qm_zone) << std::endl;
+
+  double len_to_qm = 1.0 / this->param->unit_factor_length;
+  double cha_to_qm = 1.0 / this->param->unit_factor_charge;
+  for (std::set<MM_Atom>::const_iterator it = qm_zone.mm.begin(), to = qm_zone.mm.end();
+  it != to; ++it) {
+    if (it->is_polarisable) {
+      this->write_mm_atom(ifs, it->pos * len_to_qm, (it->charge - it->cos_charge) * cha_to_qm);
+      this->write_mm_atom(ifs, (it->pos + it->cosV) * len_to_qm, it->cos_charge * cha_to_qm);
+    }
+    else {
+      this->write_mm_atom(ifs, it->pos * len_to_qm, it->charge * cha_to_qm);
+    }
+  }
+
+  ifs.close();
+  ifs.clear();
+
+  return 0;
+}
+
+void interaction::Orca_Worker::write_qm_atom(std::ofstream& inputfile_stream
+                                           , const int atomic_number
+                                           , const math::Vec& pos) const {
+  inputfile_stream.setf(std::ios::fixed, std::ios::floatfield);
+  inputfile_stream << std::setw(6) << this->param->elements[atomic_number]
+                   << std::setprecision(17)
+                   << std::setw(25) << pos(0)
+                   << std::setw(25) << pos(1)
+                   << std::setw(25) << pos(2)
+                   << std::endl;
+}
+
+void interaction::Orca_Worker::write_mm_atom(std::ofstream& inputfile_stream
+                                                , const math::Vec& pos
+                                                , const double charge) const {
+  if (charge != 0.0) {
+    inputfile_stream.setf(std::ios::fixed, std::ios::floatfield);
+    inputfile_stream << std::setprecision(6)
+                     << std::setw(10) << charge
+                     << std::setprecision(17)
+                     << std::setw(25) << pos(0)
+                     << std::setw(25) << pos(1)
+                     << std::setw(25) << pos(2) 
+                     << std::endl;
+  }
 }
 
 int interaction::Orca_Worker::system_call() {
@@ -172,81 +205,251 @@ int interaction::Orca_Worker::read_output(topology::Topology& topo
                                         , configuration::Configuration& conf
                                         , simulation::Simulation& sim
                                         , interaction::QM_Zone& qm_zone) {
+  std::ifstream ofs;
+  int err;
 
+  // parse energy
+  err = this->open_output(ofs, this->param->output_gradient_file);
+  if (err) return err;
+  err = this->parse_energy(ofs, qm_zone);
+  if (err) return err;
+  ofs.close();
+  ofs.clear();
+
+  // parse QM gradients
+  err = this->open_output(ofs, this->param->output_gradient_file);
+  if (err) return err;
+  err = this->parse_qm_gradients(ofs, qm_zone);
+  if (err) return err;
+  ofs.close();
+  ofs.clear();
+
+  // parse MM gradients or charges
+  if (sim.param().qmmm.qmmm > simulation::qmmm_mechanical) {
+    // also parse MM gradients
+    err = this->open_output(ofs, this->param->output_mm_gradient_file);
+    if (err) return err;
+    err = this->parse_mm_gradients(ofs, qm_zone);
+    if (err) return err;
+  }
+  else if (sim.param().qmmm.qmmm == simulation::qmmm_mechanical
+             && sim.param().qmmm.qm_ch == simulation::qm_ch_dynamic) {
+    // also extract charges
+    err = this->open_output(ofs, this->param->output_file);
+    if (err) return err;
+    err = this->parse_charges(ofs, qm_zone);
+    if (err) return err;
+  }
+
+  return 0;
 }
 
-void interaction::Orca_Worker::write_qm_atom(std::ofstream& inputfile_stream
-                                           , const int atomic_number
-                                           , const math::Vec& pos
-                                           , const int var_flag) const {
-  inputfile_stream << std::setw(4) << std::left << atomic_number
-                   << std::scientific << std::setprecision(17)
-                   << std::setw(25)   << std::right << pos(0)
-                   << std::setw(4)    << std::right << var_flag
-                   << std::setw(25)   << std::right << pos(1)
-                   << std::setw(4)    << std::right << var_flag
-                   << std::setw(25)   << std::right << pos(2)
-                   << std::setw(4)    << std::right << var_flag
-                   << std::endl;
+int interaction::Orca_Worker::parse_energy(std::ifstream& ofs, interaction::QM_Zone& qm_zone) const {
+  std::string line;
+  bool got_energy = false;
+  while(std::getline(ofs, line)) {
+    // get energy section
+    if (line.find("# The current total energy in Eh") != std::string::npos) {
+      std::getline(ofs, line); // comment line
+      std::getline(ofs, line); // read energy value
+      std::istringstream iss(line);
+      iss >> qm_zone.QM_energy();
+      if (iss.fail()) {
+        std::ostringstream msg;
+        msg << "Failed to parse energy in " + this->param->output_gradient_file;
+        io::messages.add(msg.str(), this->name(), io::message::error);
+        return 1;
+      } 
+      qm_zone.QM_energy() *= this->param->unit_factor_energy;
+      got_energy = true;
+      break;
+    }
+  }
+  if (!got_energy) {
+    io::messages.add("Unable to find energy in output file "
+                  + this->param->output_gradient_file
+                  , this->name(), io::message::error);
+    return 1;
+  }
+  return 0;
 }
 
-void interaction::Orca_Worker::write_mm_potential(std::ofstream& inputfile_stream
-                                                , const int atomic_number
-                                                , const math::Vec& pos
-                                                , double potential) const {
+int interaction::Orca_Worker::parse_qm_gradients(std::ifstream& ofs, interaction::QM_Zone& qm_zone) const {
+  std::string line;
+  bool got_qm_gradients = false;
+  while (std::getline(ofs, line)) {
+    if (line.find("# The current gradient in Eh/bohr") != std::string::npos) {
+      got_qm_gradients = true;
+      break;
+    }
+  }
+  if (!got_qm_gradients) {
+    io::messages.add("Unable to find QM gradients in output file "
+                    + this->param->output_gradient_file
+                    , this->name(), io::message::error);
+    return 1;
+  }
 
+  // skip one line (comment)
+  std::getline(ofs, line);
+  // Parse QM atoms
+  for (std::set<QM_Atom>::iterator it = qm_zone.qm.begin(), to = qm_zone.qm.end();
+       it != to; ++it) {
+    DEBUG(15, "Parsing gradients of QM atom " << it->index);
+    int err = this->parse_gradient1(ofs, it->force);
+    DEBUG(15, "Force: " << math::v2s(it->force));
+    if (err) {
+      std::ostringstream msg;
+      msg << "Failed to parse gradient line of QM atom " << (it->index + 1)
+          << " in " << this->param->output_gradient_file;
+      io::messages.add(msg.str(), this->name(), io::message::error);
+      return 1;
+    }
+  }
+  // Parse capping atoms
+  for (std::set<QM_Link>::iterator
+         it = qm_zone.link.begin(), to = qm_zone.link.end(); it != to; ++it) {
+    DEBUG(15, "Parsing gradient of capping atom " << it->qm_index << "-" << it->mm_index);
+    int err = this->parse_gradient1(ofs, it->force);
+    DEBUG(15, "Force: " << math::v2s(it->force));
+    if (err) {
+      std::ostringstream msg;
+      msg << "Failed to parse gradient line of capping atom " << (it->qm_index + 1)
+          << "-" << (it->mm_index + 1) << " in " << this->param->output_gradient_file;
+      io::messages.add(msg.str(), this->name(), io::message::error);
+      return 1;
+    }
+   }
+  return 0;
 }
 
-double interaction::Orca_Worker::total_potential(const topology::Topology& topology
-                                               , const simulation::Simulation& simulation
-                                               , const QM_Zone& qm_zone
-                                               , const QM_Atom& qm_atom) const {
+int interaction::Orca_Worker::parse_charges(std::ifstream& ofs, interaction::QM_Zone& qm_zone) const {
+  std::string line;
+  bool got_charges = false;
+  while(std::getline(ofs, line)) {
+    // get Mulliken charge section
+    if (line.find("MULLIKEN ATOMIC CHARGES") != std::string::npos) {
+      got_charges = true;
+      break;
+    }
+  }
+  if (!got_charges) {
+    io::messages.add("Unable to find QM charges in output file "
+                        + this->param->output_file,
+                          this->name(), io::message::error);
+    return 1;
+  }
+  std::getline(ofs, line); // part of the block header
+  std::string dummy;
+  // QM atoms
+  for (std::set<QM_Atom>::iterator
+             it = qm_zone.qm.begin(), to = qm_zone.qm.end(); it != to; ++it) {
+    DEBUG(15, "Parsing charge of QM atom " << it->index);
+    std::getline(ofs, line); // get the actual line
+    std::istringstream iss(line);
+    // charge is last element in line - but there may be three or four tokens in the line
+    while (!iss.eof()) {
+      iss >> dummy;
+    }
+    // last element is charge
+    it->qm_charge = std::stod(dummy);
+    DEBUG(15, "Charge: " << it->qm_charge);       
+    if (iss.fail()) {
+      std::ostringstream msg;
+      msg << "Failed to parse charge of QM atom " << (it->index + 1)
+          << " in " << this->param->output_file;
+      io::messages.add(msg.str(), this->name(), io::message::error);
+      return 1;
+    }
+    it->qm_charge *= this->param->unit_factor_charge;
+  }
+  // capping atoms
+  for (std::set<QM_Link>::iterator
+         it = qm_zone.link.begin(), to = qm_zone.link.end(); it != to; ++it) {
+    DEBUG(15, "Parsing charge of capping atom " << it->qm_index << "-" << it->mm_index);
+    std::istringstream iss(line);
+    // charge is last element in line - but there may be three or four tokens in the line
+    while (!iss.eof()) {
+      iss >> dummy;
+    }
+    // last element is charge
+    it->qm_charge = std::stod(dummy);
+    DEBUG(15, "Charge: " << it->qm_charge);
+    if (iss.fail()) {
+      std::ostringstream msg;
+      msg << "Failed to parse charge of capping atom " << (it->qm_index + 1)
+        << "-" << (it->mm_index + 1) << " in " << this->param->output_file;
+      io::messages.add(msg.str(), this->name(), io::message::error);
+      return 1;
+    }
+    it->qm_charge *= this->param->unit_factor_charge;
+  }
 
+  return 0;
 }
 
-void interaction::Orca_Worker::get_excluded_mm(const topology::Topology& topo
-                                             , const simulation::Simulation& sim
-                                             , const QM_Zone& qm_zone
-                                             , const QM_Atom& qm_atom
-                                             , std::set<unsigned> excluded) const {
+int interaction::Orca_Worker::parse_mm_gradients(std::ifstream& ofs, interaction::QM_Zone& qm_zone) const {
+  std::string line;
+  std::getline(ofs, line); // number of point charges
+  // Parse MM atoms
+  for (std::set<MM_Atom>::iterator
+         it = qm_zone.mm.begin(), to = qm_zone.mm.end(); it != to; ++it) {
+    DEBUG(15,"Parsing gradient of MM atom " << it->index);
+    int err = this->parse_gradient3(ofs, it->force);
+    DEBUG(15, "Force: " << math::v2s(it->force));
+    if (err) {
+      std::ostringstream msg;
+      msg << "Failed to parse gradient line of MM atom " << (it->index + 1)
+            << " in " << this->param->output_mm_gradient_file;
+      io::messages.add(msg.str(), this->name(), io::message::error);
+      return 1;
+    }
+    if (it->is_polarisable) {
+      DEBUG(15,"Parsing gradient of MM atom " << it->index);
+      int err = this->parse_gradient3(ofs, it->force);
+      DEBUG(15, "Force: " << math::v2s(it->force));
+      if (err) {
+        std::ostringstream msg;
+        msg << "Failed to parse gradient line of COS of MM atom " << (it->index + 1)
+            << " in " << this->param->output_mm_gradient_file;
+        io::messages.add(msg.str(), this->name(), io::message::error);
+        return 1;
+      }
+    }
+  }
+  return 0;
 }
 
-double interaction::Orca_Worker::pair_potential(const math::Vec& pos
-                                              , const MM_Atom& mm_atom) const {
-
+int interaction::Orca_Worker::parse_gradient1(std::ifstream& ofs,
+                                                  math::Vec& force) const {
+  std::string line;
+  for (unsigned int i = 0; i < 3; ++i) {
+      if (!std::getline(ofs, line)) {
+      io::messages.add("Failed to read gradient line"
+                       , this->name(), io::message::error);
+      return 1;
+      }
+      std::istringstream iss(line);
+      iss >> force(i);
+      if (iss.fail()) return 1;
+    }
+    // force = -gradient
+    force *= -this->param->unit_factor_force;
+    return 0;
 }
 
-int interaction::Orca_Worker::parse_charges(std::ifstream& ofs
-                                          , interaction::QM_Zone& qm_zone) const {
-
-}
-
-int interaction::Orca_Worker::parse_coordinates(std::ifstream& ofs
-                                              , interaction::QM_Zone& qm_zone) const {
-
-}
-
-int interaction::Orca_Worker::parse_energy(std::ifstream& ofs
-                                         , interaction::QM_Zone& qm_zone) const {
-
-}
-
-int interaction::Orca_Worker::parse_qm_gradients(const simulation::Simulation& sim
-                                               , std::ifstream& ofs
-                                               , interaction::QM_Zone& qm_zone) const {
-
-}
-
-void interaction::Orca_Worker::calculate_mm_forces(const topology::Topology& topo
-                                                 , const simulation::Simulation& sim
-                                                 , interaction::QM_Zone& qm_zone) const {
-
-}
-
-void interaction::Orca_Worker::calculate_pair_force(const math::Vec& qm_pos
-                                                  , const math::Vec& mm_pos
-                                                  , math::Vec& qm_force
-                                                  , math::Vec& mm_force
-                                                  , const double qmq_mmq_four_pi_eps_i) const {
-
+int interaction::Orca_Worker::parse_gradient3(std::ifstream& ofs,
+                                                  math::Vec& force) const {
+  std::string line;
+  if (!std::getline(ofs, line)) {
+    io::messages.add("Failed to read gradient line"
+                    , this->name(), io::message::error);
+    return 1;
+  }
+  std::istringstream iss(line);
+  iss >> force(0) >> force(1) >> force(2);
+  if (iss.fail()) return 1;
+  // force = - gradient
+  force *= -this->param->unit_factor_force;
+  return 0;
 }

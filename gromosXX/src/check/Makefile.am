@@ -6,7 +6,6 @@ check_PROGRAMS =  aladip.t\
 	aladip_atomic.t\
 	aladip_special.t\
 	aladip_ls.t\
-	orca.t\
 	c16_cg.t\
 	lambdas.t
 
@@ -48,13 +47,6 @@ aladip_ls_t_SOURCES = aladip_ls.t.cc\
   check_state.cc
 aladip_ls_t_LDADD = ../libmdpp.la
 
-orca_t_SOURCES = orca.t.cc \
-	check.h\
-	check_orca.h\
-	check_orca.cc
-	
-orca_t_LDADD = ../libmdpp.la
-
 c16_cg_t_SOURCES = c16_cg.t.cc\
 	check.h\
 	check_forcefield.h\
@@ -70,7 +62,7 @@ lambdas_t_SOURCES = lambdas.t.cc\
 	check_state.cc
 
 lambdas_t_LDADD = ../libmdpp.la
-TESTS = aladip.t aladip_unperturbed.t aladip_atomic.t aladip_special.t orca.t c16_cg.t lambdas.t
+TESTS = aladip.t aladip_unperturbed.t aladip_atomic.t aladip_special.t c16_cg.t lambdas.t
 
 EXTRA_DIST = data/aladip.topo\
 	data/aladip.pttopo\
@@ -97,8 +89,4 @@ EXTRA_DIST = data/aladip.topo\
 	data/scaling.lambdadep.in\
 	data/scaling.lambdadep.pttopo\
 	data/scaling.pttopo\
-	data/orca/menthol.cnf\
-	data/orca/menthol.imd\
-	data/orca/menthol.top\
-	data/orca/menthol.qmmm
 

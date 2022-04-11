@@ -37,7 +37,7 @@ namespace interaction {
     simulation::Parameter::qmmm_struct::orca_param_struct* param;
 
     /**
-     * Write input file for QM program
+     * Write input files for QM program
      * @param topo Topology
      * @param conf Configuration
      * @param sim Simulation
@@ -49,93 +49,125 @@ namespace interaction {
                   , const interaction::QM_Zone& qm_zone);
 
     /**
-     * System call
+     * Write input parameter file
+     * @param inputfile_stream ofstream to input file
+     * @param topo Topology
+     * @param conf Configuration
+     * @param sim Simulation
+     * @return int error code
+     */
+    int write_input_parameters(std::ofstream& inputfile_stream
+                             , const topology::Topology& topo
+                             , const configuration::Configuration& conf
+                             , const simulation::Simulation& sim
+                             , const interaction::QM_Zone& qm_zone);
+
+    /**
+     * Write input coordinates file (xyz file format)
+     * @param inputfile_stream ofstream to input file
+     * @param topo Topology
+     * @param conf Configuration
+     * @param sim Simulation
+     * @return int error code
+     */
+    int write_input_coordinates(std::ofstream& inputfile_stream
+                              , const topology::Topology& topo
+                              , const configuration::Configuration& conf
+                              , const simulation::Simulation& sim
+                              , const interaction::QM_Zone& qm_zone);
+
+    /**
+     * Write input file for point charges
+     * @param inputfile_stream ofstream to input file
+     * @param topo Topology
+     * @param conf Configuration
+     * @param sim Simulation
+     * @return int error code
+     */
+    int write_input_pointcharges(std::ofstream& inputfile_stream
+                               , const topology::Topology& topo
+                               , const configuration::Configuration& conf
+                               , const simulation::Simulation& sim
+                               , const interaction::QM_Zone& qm_zone);
+
+    /**
+     * Write QM atom line
+     * @param inputfile_stream ofstream to input file
+     * @param atomic_number atomic number of the atom
+     * @param pos position of the atom
+     */
+    void write_qm_atom(std::ofstream& inputfile_stream
+                     , const int atomic_number
+                     , const math::Vec& pos) const;
+
+    /**
+     * Write MM atom line
+     * @param inputfile_stream ofstream to the input file
+     * @param pos position of the atom
+     * @param charge charge of the atom
+     */
+    void write_mm_atom(std::ofstream& inputfile_stream
+                     , const math::Vec& pos
+                     , const double charge) const;              
+
+    /**
+     * Call external QM program - Orca
      */
     int system_call();
 
     /**
-     * Read outputs
+     * Read output file from the QM program
+     * @param topo Topology
+     * @param conf Configuration
+     * @param sim Simulation
+     * @param qm_zone QM Zone
      */
     int read_output(topology::Topology& topo
                   , configuration::Configuration& conf
                   , simulation::Simulation& sim
                   , interaction::QM_Zone& qm_zone);
-
-    /**
-     * Write QM atom
-     */
-    void write_qm_atom(std::ofstream& inputfile_stream
-                  , const int atomic_number
-                  , const math::Vec& pos
-                  , const int var_flag = 1) const;
-
-    /**
-     * Write potential from MM atoms
-     */
-    void write_mm_potential(std::ofstream& inputfile_stream
-                          , const int atomic_number
-                          , const math::Vec& pos
-                          , double potential) const;
     
     /**
-     * Calculate total potential from MM atoms on QM atom
-     */
-    double total_potential(const topology::Topology& topo
-                         , const simulation::Simulation& sim
-                         , const QM_Zone& qm_zone
-                         , const QM_Atom& qm_atom) const;
-                         
-    /**
-     * Get a set of excluded MM atoms for link atom
-     */
-    void get_excluded_mm(const topology::Topology& topo
-                       , const simulation::Simulation& sim
-                       , const QM_Zone& qm_zone
-                       , const QM_Atom& qm_atom
-                       , std::set<unsigned> excluded) const;
-    /**
-     * Calculate potential from MM atom at the given position
-     */
-    double pair_potential(const math::Vec& pos
-                        , const MM_Atom& mm_atom) const;
-
-    /**
      * Parse charges
+     * @param ofs ifstream from the output file
+     * @param qm_zone QM Zone
      */
     int parse_charges(std::ifstream& ofs, interaction::QM_Zone& qm_zone) const;
 
     /**
-     * Parse coordinates
-     */
-    int parse_coordinates(std::ifstream& ofs, interaction::QM_Zone& qm_zone) const;
-
-    /**
      * Parse energy
+     * @param ofs ifstream from the output file
+     * @param qm_zone QM Zone
      */
     int parse_energy(std::ifstream& ofs, interaction::QM_Zone& qm_zone) const;
 
     /**
-     * Parse gradients of QM atoms
+     * Parse QM gradients
+     * @param ofs ifstream from the output file
+     * @param qm_zone QM Zone
      */
-    int parse_qm_gradients(const simulation::Simulation& sim
-                         , std::ifstream& ofs
-                         , interaction::QM_Zone& qm_zone) const;
+    int parse_qm_gradients(std::ifstream& ofs, interaction::QM_Zone& qm_zone) const;
 
     /**
-     * calculate forces between QM and MM atoms
+     * Parse MM gradients
+     * @param ofs ifstream from the output file
+     * @param qm_zone QM Zone
      */
-    void calculate_mm_forces(const topology::Topology& topo
-                           , const simulation::Simulation& sim
-                           , interaction::QM_Zone& qm_zone) const;
+    int parse_mm_gradients(std::ifstream& ofs, interaction::QM_Zone& qm_zone) const;
 
     /**
-     * calculate force of QM/MM pair
+     * Parse gradient line of QM or MM atom (x,y,z components in one line)
+     * @param ofs ifstream from the output file
+     * @param force reference for writing the force
      */
-    inline void calculate_pair_force(const math::Vec& qm_pos
-                                   , const math::Vec& mm_pos
-                                   , math::Vec& qm_force
-                                   , math::Vec& mm_force
-                                   , const double qmq_mmq_four_pi_eps_i) const;
+    int parse_gradient1(std::ifstream& ofs, math::Vec& force) const;
+
+    /**
+     * Parse gradient line of QM or MM atom (x,y,z components in three lines)
+     * @param ofs ifstream from the output file
+     * @param force reference for writing the force
+     */
+    int parse_gradient3(std::ifstream& ofs, math::Vec& force) const;
   };
 }
 

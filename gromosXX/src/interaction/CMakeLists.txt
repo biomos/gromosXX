@@ -76,6 +76,7 @@ set(INTERACTION_CC
     qmmm/dftb_worker.cc
     qmmm/mopac_worker.cc
     qmmm/gaussian_worker.cc
+    qmmm/orca_worker.cc
     qmmm/qmmm_interaction.cc
     qmmm/nonbonded/qmmm_nonbonded_outerloop.cc
     qmmm/nonbonded/qmmm_nonbonded_set.cc
@@ -87,6 +88,7 @@ target_include_directories(grointeraction PUBLIC
     ${PROJECT_BINARY_DIR}
     .
     ..
+    ../algorithm
     nonbonded
     nonbonded/pairlist
     nonbonded/interaction
@@ -95,5 +97,4 @@ target_include_directories(grointeraction PUBLIC
     qmmm
     special
     special/xray
-    ../algorithm
 )
