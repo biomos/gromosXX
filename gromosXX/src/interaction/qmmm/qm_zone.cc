@@ -459,6 +459,11 @@ int interaction::QM_Zone::gather_chargegroups(const topology::Topology& topo,
   for (std::set<QM_Atom>::const_iterator
       qm_it = this->qm.begin(), qm_to = this->qm.end(); qm_it != qm_to; ++qm_it)
     {
+    // Initial dumb implementation - gather only around the first atom, if
+    // AtomType == QM_Atom (true only for QM buffer atoms gathering)
+    if (std::is_same<AtomType,QM_Atom>::value && qm_it != this->qm.begin()) {
+      break;
+    }
     DEBUG(15, "Gathering around QM atom " << qm_it->index);
     const math::Vec& qm_pos = qm_it->pos;
     math::Vec r_qm_cg;
@@ -629,6 +634,7 @@ int interaction::QM_Zone::_get_buffer_atoms(topology::Topology& topo,
   DEBUG(15, "Buffer atoms:");
   for (std::set<QM_Atom>::const_iterator it = buffer_atoms.begin(); it != buffer_atoms.end(); ++it) {
     DEBUG(15, it->index);
+    DEBUG(15, "Distance to the 1st atom: " << math::abs(it->pos - this->qm.begin()->pos));
   }
 
   // And merge with QM

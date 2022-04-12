@@ -225,6 +225,7 @@ namespace interaction {
   private:  
     /**
      * Gather chargegroups within cutoff from QM atoms
+     * QM buffer atoms (QM_Atom) or MM atoms (MM_Atom)
      */
     template <math::boundary_enum B, class AtomType>
     int gather_chargegroups(const topology::Topology& topo, 
