@@ -4023,6 +4023,11 @@ namespace simulation
        */
       struct xtb_param_struct : public qm_param_struct { 
         /**
+         * the version of the XTB Hamiltonian used
+         * options are 1 and 2 (for GFN1-xTB or GFN2-xTB, respectively)
+         */
+        unsigned int hamiltonian;
+        /**
          * the input file containing the positions and element types of the QM atoms
          */
         std::string input_coordinate_file;

@@ -417,6 +417,7 @@ int interaction::QMMM_Interaction::init(topology::Topology& topo,
         break;
       case simulation::qm_xtb:
         os << "XTB";
+        break;
       default:
         os << "unknown";
         break;

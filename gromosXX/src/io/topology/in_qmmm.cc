@@ -401,65 +401,20 @@ GAUCHSM
 END
 @endverbatim
  *
- * @section ORCA blocks for the ORCA worker
+ * @section XTB blocks for the XTB worker
  * 
- * ORCABINARY block for the ORCA worker
- * The ORCABINARY block specifies path to ORCA binary
+ * XTBOPTIONS block for the XTB worker
+ * The XTBOPTIONS block specifies options for the XTB worker
+ * Supported are selection of the Hamiltonian: 1 or 2 (for GFN1-xTB or GFN2-xTB, respectively)
  *
- * This block is optional. If unspecified, orca command from PATH environment variable
- * is used.
- *
- * @verbatim
-ORCABINARY
-/path/to/orca/binary
-END
-@endverbatim
- *
- * ORCAFILES block for the ORCA worker
- * The ORCAFILES block specifies input and output files to exchange data with ORCA
- *
- * This block is optional. If unspecified, temporary files are created using TMPDIR
- * environment variable. User-specified files are not deleted after use.
- *
- * @verbatim
-ORCAFILES
-/path/to/orca.inp
-/path/to/orca.out
-/path/to/orca.xyz
-/path/to/pointcharges.pc
-/path/to/orca.engrad
-/path/to/orca.pcgrad
-END
-@endverbatim
- *
- * The ORCAHEADER block specifies the header part of the ORCA input file. Variables
- * are allowed. Implemented are
- * - CHARGE: net charge of the QM zone
- * - SPINM: spin multiplicity of the QM zone 
- * - POINTCHARGES: file with information on pointcharges
- * - COORDINATES: coordinates of the QM zone
- * 
-@verbatim
-ORCAHEADER
-! BP86 def2-SVP defgrid3 EnGrad TightSCF
-%pal nprocs 4 end
-%scf MaxIter 1500 end
-%pointcharges "@@POINTCHARGES@@"
-* xyzfile @@CHARGE@@ @@SPINM@@ @@COORDINATES@@
-END
-@endverbatim
- * Alternatively, for sempi-empiral methods:
  @verbatim
-ORCAHEADER
-! ZINDO/1 EnGrad TightSCF
-%scf MaxIter 1500 end
-%pointcharges "@@POINTCHARGES@@"
-* xyzfile @@CHARGE@@ @@SPINM@@ @@COORDINATES@@
+XTBOPTIONS
+# GFNH
+  1
 END
-@endverbatim
+ @endverbatim
  */
-void
-io::In_QMMM::read(topology::Topology& topo,
+void io::In_QMMM::read(topology::Topology& topo,
         simulation::Simulation& sim,
         std::ostream & os) {
   io::messages.add("Reading QM/MM specification file",
@@ -859,6 +814,36 @@ io::In_QMMM::read(topology::Topology& topo,
     } // ORCAHEADER
   }
 
+  /**
+   * XTB
+   */
+  else if (sw == simulation::qm_xtb) {
+    this->read_units(sim, &sim.param().qmmm.xtb);
+    { // XTBOPTIONS
+      buffer = m_block["XTBOPTIONS"];
+
+      if (!buffer.size()) {
+        io::messages.add("no XTBOPTIONS block in QM/MM specification file",
+                "In_QMMM", io::message::error);
+      }
+      else {
+        unsigned int hamiltonian;
+        std::string line(buffer[1]);
+        _lineStream.clear();
+        _lineStream.str(line);
+        _lineStream >> hamiltonian;
+        if (_lineStream.fail()) {
+          io::messages.add("bad line in XTBOPTIONS block.",
+                            "In_QMMM", io::message::error);
+          return;
+        }
+        sim.param().qmmm.xtb.hamiltonian = hamiltonian;
+      }
+      DEBUG(1, "sim.param().qmmm.xtb.hamiltonian:");
+      DEBUG(1, sim.param().qmmm.xtb.hamiltonian);
+    } // XTBOPTIONS
+  }
+
   // Cap length definition
   if(topo.qmmm_link().size() > 0 ) {
     _lineStream.clear();
@@ -955,6 +940,11 @@ void io::In_QMMM::read_units(const simulation::Simulation& sim
   //                   , math::echarge /* e */}}
   //   {simulation::qm_orca,
   //                   { math::angstrom /* A */
+  //                   , math::hartree * math::avogadro /* a.u. */
+  //                   , math::hartree * math::avogadro / math::bohr /* a.u. */
+  //                   , math::echarge /* e */}}
+//   {simulation::qm_xtb,
+  //                   { math::bohr /* a.u. */
   //                   , math::hartree * math::avogadro /* a.u. */
   //                   , math::hartree * math::avogadro / math::bohr /* a.u. */
   //                   , math::echarge /* e */}}

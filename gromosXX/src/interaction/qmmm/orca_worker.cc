@@ -150,7 +150,6 @@ int interaction::Orca_Worker::initialize_file(std::string& file_name, const std:
   return 0;
 }
 
-
 int interaction::Orca_Worker::write_input(const topology::Topology& topo
                                         , const configuration::Configuration& conf
                                         , const simulation::Simulation& sim

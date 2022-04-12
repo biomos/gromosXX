@@ -19,7 +19,12 @@ set(EXTERNAL_LIBRARIES
     ${GSL_LIBRARIES}
     ${FFTW_LIBRARIES}
     ${ZLIB_LIBRARIES}
+    xtb
 )
+
+# xtb
+include_directories(/home/fpultar/xtb/include)
+link_directories(/home/fpultar/src/xtb/build)
 
 # find optional libraries
 find_package(Clipper QUIET)
