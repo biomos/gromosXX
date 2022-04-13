@@ -28,7 +28,10 @@
 
 interaction::DFTB_Worker::DFTB_Worker() : QM_Worker("DFTB Worker"), param(nullptr) {};
 
-int interaction::DFTB_Worker::init(simulation::Simulation& sim) {
+int interaction::DFTB_Worker::init(const topology::Topology& topo
+                                 , const configuration::Configuration& conf
+                                 , simulation::Simulation& sim
+                                 , const interaction::QM_Zone& qm_zone) {
   DEBUG(15, "Initializing " << this->name());
   // Get a pointer to simulation parameters
   this->param = &(sim.param().qmmm.dftb);
@@ -52,7 +55,7 @@ int interaction::DFTB_Worker::init(simulation::Simulation& sim) {
   return 0;
 }
 
-int interaction::DFTB_Worker::write_input(const topology::Topology& topo
+int interaction::DFTB_Worker::process_input(const topology::Topology& topo
                                         , const configuration::Configuration& conf
                                         , const simulation::Simulation& sim
                                         , const interaction::QM_Zone& qm_zone) {
@@ -157,7 +160,7 @@ void interaction::DFTB_Worker::write_mm_atom(std::ofstream& inputfile_stream
                    << std::endl;
 }
 
-int interaction::DFTB_Worker::system_call()
+int interaction::DFTB_Worker::run_calculation()
   {
   DEBUG(15, "Calling external DFTB+ program");
   // First delete output files
@@ -182,7 +185,7 @@ int interaction::DFTB_Worker::system_call()
   return 0;
 }
 
-int interaction::DFTB_Worker::read_output(topology::Topology& topo
+int interaction::DFTB_Worker::process_output(topology::Topology& topo
                                         , configuration::Configuration& conf
                                         , simulation::Simulation& sim
                                         , interaction::QM_Zone& qm_zone) {

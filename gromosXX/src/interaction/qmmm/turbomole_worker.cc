@@ -32,7 +32,10 @@
 
 interaction::Turbomole_Worker::Turbomole_Worker() : QM_Worker("Turbomole Worker"), param(nullptr) {};
 
-int interaction::Turbomole_Worker::init(simulation::Simulation& sim) {
+int interaction::Turbomole_Worker::init(const topology::Topology& topo
+                                      , const configuration::Configuration& conf
+                                      , simulation::Simulation& sim
+                                      , const interaction::QM_Zone& qm_zone) {
   DEBUG(15, "Initializing " << this->name());
   // Get a pointer to simulation parameters
   this->param = &(sim.param().qmmm.turbomole);
@@ -42,7 +45,7 @@ int interaction::Turbomole_Worker::init(simulation::Simulation& sim) {
   return 0;
 }
 
-int interaction::Turbomole_Worker::write_input(const topology::Topology& topo
+int interaction::Turbomole_Worker::process_input(const topology::Topology& topo
                                              , const configuration::Configuration& conf
                                              , const simulation::Simulation& sim
                                              , const interaction::QM_Zone& qm_zone) {
@@ -116,7 +119,7 @@ void interaction::Turbomole_Worker::write_mm_atom(std::ofstream& inputfile_strea
   }
 }
 
-int interaction::Turbomole_Worker::system_call()
+int interaction::Turbomole_Worker::run_calculation()
   {
   // First delete output files, since Turbomole appends to them and we dont need old data
 #ifdef HAVE_UNLINK
@@ -176,7 +179,7 @@ int interaction::Turbomole_Worker::system_call()
   return 0;
 }
 
-int interaction::Turbomole_Worker::read_output(topology::Topology& topo
+int interaction::Turbomole_Worker::process_output(topology::Topology& topo
                                              , configuration::Configuration& conf
                                              , simulation::Simulation& sim
                                              , interaction::QM_Zone& qm_zone) {

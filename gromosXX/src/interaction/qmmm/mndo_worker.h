@@ -29,9 +29,16 @@ namespace interaction {
     virtual ~MNDO_Worker() = default;
     /**
      * initialise the QM worker
+     * @param topo Topology
+     * @param conf Configuration
+     * @param sim Simulation
+     * @param qm_zone QM Zone
      * @return 0 if successful, non-zero on failure
      */
-    virtual int init(simulation::Simulation& sim);
+    virtual int init(const topology::Topology& topo
+                   , const configuration::Configuration& conf
+                   , simulation::Simulation& sim
+                   , const interaction::QM_Zone& qm_zone); 
 
   private:
     /**
@@ -46,20 +53,20 @@ namespace interaction {
      * @param sim Simulation
      * @param qm_zone QM Zone
      */
-    int write_input(const topology::Topology& topo
+    int process_input(const topology::Topology& topo
                   , const configuration::Configuration& conf
                   , const simulation::Simulation& sim
                   , const interaction::QM_Zone& qm_zone);
 
     /**
-     * System call
+     * System call - MNDO
      */
-    int system_call();
+    int run_calculation();
 
     /**
      * Read outputs
      */
-    int read_output(topology::Topology& topo
+    int process_output(topology::Topology& topo
                   , configuration::Configuration& conf
                   , simulation::Simulation& sim
                   , interaction::QM_Zone& qm_zone);

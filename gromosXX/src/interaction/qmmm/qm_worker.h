@@ -36,14 +36,18 @@ namespace interaction {
     /**
      * initialise the QM worker
      */
-    virtual int init(simulation::Simulation & sim) = 0;
+    virtual int init(const topology::Topology& topo
+                   , const configuration::Configuration& conf
+                   , simulation::Simulation& sim
+                   , const interaction::QM_Zone& qm_zone) = 0;
 
     /**
      * run the QM worker
      */
     virtual int run_QM(topology::Topology& topo
                      , configuration::Configuration& conf
-                     , simulation::Simulation& sim, interaction::QM_Zone & qm_zone);
+                     , simulation::Simulation& sim
+                     , interaction::QM_Zone & qm_zone);
 
     /**
      * accessor to the name of the QM worker
@@ -99,7 +103,7 @@ namespace interaction {
     /**
      * Write input file for QM
      */
-    virtual int write_input(const topology::Topology& topo
+    virtual int process_input(const topology::Topology& topo
                           , const configuration::Configuration& conf
                           , const simulation::Simulation& sim
                           , const interaction::QM_Zone & qm_zone);
@@ -112,12 +116,12 @@ namespace interaction {
     /**
      * Call external QM program
      */
-    virtual int system_call();
+    virtual int run_calculation();
 
     /**
      * read QM output files
      */
-    virtual int read_output(topology::Topology& topo
+    virtual int process_output(topology::Topology& topo
                           , configuration::Configuration& conf
                           , simulation::Simulation& sim
                           , interaction::QM_Zone & qm_zone);

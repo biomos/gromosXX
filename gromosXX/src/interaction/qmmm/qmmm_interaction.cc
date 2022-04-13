@@ -336,15 +336,7 @@ int interaction::QMMM_Interaction::init(topology::Topology& topo,
     return 1;
   }
 
-  if (m_rank == 0) {
-    DEBUG(15,"Creating QM Worker");
-    m_worker = interaction::QM_Worker::get_instance(sim);
-    if (m_worker == nullptr || m_worker->init(sim)) {
-      io::messages.add("Error initializing QM worker", "QMMM_Interaction", io::message::error);
-      return 1;
-    }
-    DEBUG(15,"QM Worker initialized");
-    
+  if (m_rank == 0) {  
     // Create QM_Zone
     const int charge = sim.param().qmmm.qm_zone.charge + sim.param().qmmm.buffer_zone.charge;
     int sm = sim.param().qmmm.qm_zone.spin_mult;
@@ -364,6 +356,14 @@ int interaction::QMMM_Interaction::init(topology::Topology& topo,
 
     if (m_qm_zone->init(topo, conf, sim)) return 1;
     DEBUG(15,"QM Zone initialized");
+
+    DEBUG(15,"Creating QM Worker");
+    m_worker = interaction::QM_Worker::get_instance(sim);
+    if (m_worker == nullptr || m_worker->init(topo, conf, sim, *(m_qm_zone))) {
+      io::messages.add("Error initializing QM worker", "QMMM_Interaction", io::message::error);
+      return 1;
+    }
+    DEBUG(15,"QM Worker initialized");
   }
   if (!quiet) {
     switch (sim.param().qmmm.qmmm) {

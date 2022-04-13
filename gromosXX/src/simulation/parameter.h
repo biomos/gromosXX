@@ -4028,6 +4028,11 @@ namespace simulation
          */
         unsigned int hamiltonian;
         /**
+         * the verbosity level of XTB
+         * options are 0, 1, and 2 corresponding to muted, minimal, or full verbosity, respectively
+         */
+        unsigned int verbosity;
+        /**
          * the input file containing the positions and element types of the QM atoms
          */
         std::string input_coordinate_file;

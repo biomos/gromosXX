@@ -827,20 +827,23 @@ void io::In_QMMM::read(topology::Topology& topo,
                 "In_QMMM", io::message::error);
       }
       else {
-        unsigned int hamiltonian;
+        unsigned int hamiltonian, verbosity;
         std::string line(buffer[1]);
         _lineStream.clear();
         _lineStream.str(line);
-        _lineStream >> hamiltonian;
+        _lineStream >> hamiltonian >> verbosity;
         if (_lineStream.fail()) {
           io::messages.add("bad line in XTBOPTIONS block.",
                             "In_QMMM", io::message::error);
           return;
         }
         sim.param().qmmm.xtb.hamiltonian = hamiltonian;
+        sim.param().qmmm.xtb.verbosity = verbosity;
       }
       DEBUG(1, "sim.param().qmmm.xtb.hamiltonian:");
       DEBUG(1, sim.param().qmmm.xtb.hamiltonian);
+      DEBUG(1, "sim.param().qmmm.xtb.verbosity:");
+      DEBUG(1, sim.param().qmmm.xtb.verbosity);
     } // XTBOPTIONS
   }
 

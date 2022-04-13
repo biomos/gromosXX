@@ -32,7 +32,10 @@
 
 interaction::Gaussian_Worker::Gaussian_Worker() : QM_Worker("Gaussian Worker"), param(nullptr) {};
 
-int interaction::Gaussian_Worker::init(simulation::Simulation& sim) {
+int interaction::Gaussian_Worker::init(const topology::Topology& topo
+                                     , const configuration::Configuration& conf
+                                     , simulation::Simulation& sim
+                                     , const interaction::QM_Zone& qm_zone) {
   // Get a pointer to simulation parameters
   this->param = &(sim.param().qmmm.gaussian);
   QM_Worker::param = this->param;
@@ -76,7 +79,7 @@ int interaction::Gaussian_Worker::init(simulation::Simulation& sim) {
   return 0;
 }
 
-int interaction::Gaussian_Worker::write_input(const topology::Topology& topo
+int interaction::Gaussian_Worker::process_input(const topology::Topology& topo
                                             , const configuration::Configuration& conf
                                             , const simulation::Simulation& sim
                                             , const interaction::QM_Zone& qm_zone)
@@ -152,7 +155,7 @@ int interaction::Gaussian_Worker::write_input(const topology::Topology& topo
   return 0;
 }
 
-int interaction::Gaussian_Worker::system_call() {
+int interaction::Gaussian_Worker::run_calculation() {
   int err = util::system_call(this->param->binary + " < " + this->param->input_file
                                 + " 1> " + this->param->output_file + " 2>&1 ");
   if (err) {
@@ -164,7 +167,7 @@ int interaction::Gaussian_Worker::system_call() {
   }
   return 0;
 }
-int interaction::Gaussian_Worker::read_output(topology::Topology& topo
+int interaction::Gaussian_Worker::process_output(topology::Topology& topo
                                         , configuration::Configuration& conf
                                         , simulation::Simulation& sim
                                         , interaction::QM_Zone& qm_zone) {

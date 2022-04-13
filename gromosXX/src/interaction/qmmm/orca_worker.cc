@@ -32,7 +32,10 @@
 
 interaction::Orca_Worker::Orca_Worker() : QM_Worker("Orca Worker"), param(nullptr) {};
 
-int interaction::Orca_Worker::init(simulation::Simulation& sim) {
+int interaction::Orca_Worker::init(const topology::Topology& topo
+                                 , const configuration::Configuration& conf
+                                 , simulation::Simulation& sim
+                                 , const interaction::QM_Zone& qm_zone) {
   DEBUG(15, "Initializing " << this->name());
 
   // Get a pointer to simulation parameters
@@ -150,7 +153,7 @@ int interaction::Orca_Worker::initialize_file(std::string& file_name, const std:
   return 0;
 }
 
-int interaction::Orca_Worker::write_input(const topology::Topology& topo
+int interaction::Orca_Worker::process_input(const topology::Topology& topo
                                         , const configuration::Configuration& conf
                                         , const simulation::Simulation& sim
                                         , const interaction::QM_Zone& qm_zone) {
@@ -287,7 +290,7 @@ void interaction::Orca_Worker::write_mm_atom(std::ofstream& inputfile_stream
   }
 }
 
-int interaction::Orca_Worker::system_call() {
+int interaction::Orca_Worker::run_calculation() {
   DEBUG(15, "Calling external Orca program");
   // orca has to be called with full path in case several cores are requested
   int err = util::system_call(this->param->binary + " " + this->param->input_file + " > " + this->param->output_file);
@@ -303,7 +306,7 @@ int interaction::Orca_Worker::system_call() {
   return 0;
 }
 
-int interaction::Orca_Worker::read_output(topology::Topology& topo
+int interaction::Orca_Worker::process_output(topology::Topology& topo
                                         , configuration::Configuration& conf
                                         , simulation::Simulation& sim
                                         , interaction::QM_Zone& qm_zone) {
