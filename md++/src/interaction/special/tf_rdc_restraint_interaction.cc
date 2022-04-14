@@ -385,6 +385,7 @@ int _magnetic_field_vector_sd
 (topology::Topology & topo,
         configuration::Configuration & conf,
         simulation::Simulation & sim,
+        math::RandomGenerator* rng,
         int & err) {
 
     math::Periodicity<B> periodicity(conf.current().box);
@@ -528,7 +529,7 @@ int _magnetic_field_vector_sd
         // TODO: do I have to have a better seed?
         seed << time(NULL); 
       }
-      static math::RandomGenerator* rng = math::RandomGenerator::create(sim.param(), seed.str());
+
 
       // -----  SD velocity 1 -----
       for (unsigned int i=0; i < 2; ++i){
@@ -591,7 +592,6 @@ int _magnetic_field_vector_sd
 
         }
       } // loop over atoms
-      conf.special().tfrdc_mfv.sd.seed=rng->seed();
 
       // sd_pos1
       for (unsigned int i=0; i < 2; ++i){
@@ -604,6 +604,7 @@ int _magnetic_field_vector_sd
       } // loop over atoms
 
       // shake (only positions)
+
       err = _shake_bond<B>(conf.current().box, tfrdc_mfv.pos, old_pos, tfrdc_mfv.mass, tfrdc_mfv.d);
       if (err) break;
 
@@ -626,7 +627,7 @@ int _magnetic_field_vector_sd
           //this is 2.11.2.26
           tfrdc_mfv.pos(i) += tfrdc_mfv.sd.vrand3(i) - sxh;
         } // loop over atoms
-      }     
+      }
         
       // shake (only positions)
       err = _shake_bond<B>(conf.current().box, tfrdc_mfv.pos, old_pos, tfrdc_mfv.mass, tfrdc_mfv.d);
@@ -676,11 +677,16 @@ int interaction::TF_RDC_Restraint_Interaction::calculate_interactions
         simulation::Simulation & sim) {
   m_timer.start(sim);
   int error = 0;
+  m_timer.start("mfv");
   if (sim.param().tfrdc.nstsd > 0) {
     SPLIT_VIRIAL_BOUNDARY(_magnetic_field_vector_sd,
-          topo, conf, sim, error);
+          topo, conf, sim, m_rng, error);
     if (error) return error;
+
+      conf.special().tfrdc_mfv.sd.seed=m_rng->seed();
   }
+  m_timer.stop("mfv");
+
   SPLIT_VIRIAL_BOUNDARY(_calculate_tf_rdc_restraint_interactions,
           topo, conf, sim);
   m_timer.stop();
@@ -688,23 +694,11 @@ int interaction::TF_RDC_Restraint_Interaction::calculate_interactions
 }
 
 void _init_mfv_sd(configuration::Configuration & conf, 
-                                simulation::Simulation & sim) {
+                                simulation::Simulation & sim,
+                                math::RandomGenerator* rng) {
 
   configuration::Configuration::special_struct::tfrdc_mfv_struct & tfrdc_mfv = conf.special().tfrdc_mfv;
 
-  // Create random number generator
-  std::ostringstream seed; 
-  if (!sim.param().tfrdc.continuation) {
-    // use seed from input file
-    seed << sim.param().start.ig;
-  } else {
-    // choose a remotely random random-seed
-    // TODO: do I have to have a better seed?
-    seed << time(NULL); 
-  }
-  math::RandomGenerator* rng = math::RandomGenerator::create(sim.param(), seed.str());
-  rng->mean(0.0); 
-      
   // generate SD coefficients
   const double gg = fabs(sim.param().tfrdc.cfrich);
   const double gdt = gg * sim.time_step_size();
@@ -867,7 +861,19 @@ int interaction::TF_RDC_Restraint_Interaction::init
     conf.special().tfrdc.num_averaged=0;
   }
   if (sim.param().tfrdc.nstsd > 0) {
-    _init_mfv_sd(conf, sim);
+    // Create random number generator
+  m_rng = math::RandomGenerator::create(sim.param(), "0");
+  m_rng->mean(0.0);
+  if (!sim.param().tfrdc.continuation) {
+    // use seed from input file
+    std::ostringstream seed;
+    seed << sim.param().start.ig;
+      m_rng->seed(seed.str());
+  } else {
+      m_rng->seed(conf.special().tfrdc_mfv.sd.seed);
+  }
+
+    _init_mfv_sd(conf, sim, m_rng);
     sim.param().tfrdc.bins_theta = _linspace(0.0,math::Pi,101.0);
     sim.param().tfrdc.bins_phi = _linspace(0.0,2*math::Pi,101.0);
 
