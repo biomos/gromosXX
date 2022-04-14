@@ -5,6 +5,8 @@
 #ifndef TF_RDC_RESTRAINT_INTERACTION_H
 #define	TF_RDC_RESTRAINT_INTERACTION_H
 
+#include "../../math/random.h"
+
 namespace interaction
 {
     /**
@@ -51,6 +53,11 @@ namespace interaction
         virtual int calculate_interactions(topology::Topology & topo,
             configuration::Configuration & conf,
             simulation::Simulation & sim);
+
+        /**
+         * random number generator
+         */
+        math::RandomGenerator * m_rng;
 
   };
 } // interaction
