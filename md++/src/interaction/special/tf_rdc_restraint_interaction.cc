@@ -428,7 +428,6 @@ int _magnetic_field_vector_sd
       DEBUG(15, "P: " << P);
       DEBUG(15, "Theta of k1k2: " << acos(costheta[l]));
 
-
       // time-averaging
       // initialise average?
       double & P_expavg = conf.special().tfrdc_mfv.P_expavg[l];         // [-]
@@ -512,24 +511,11 @@ int _magnetic_field_vector_sd
           DEBUG(7, "f_hj: " << math::v2s(forces(1)));
       }
 
-
       configuration::Configuration::special_struct::tfrdc_mfv_struct & tfrdc_mfv = conf.special().tfrdc_mfv;
 
       // Save old velocities and positions
       const math::VArray old_pos(tfrdc_mfv.pos);
       const math::VArray old_vel(tfrdc_mfv.vel);
-
-      // Create random number generator
-      std::ostringstream seed; 
-      if (!sim.param().tfrdc.continuation) {
-        // use seed from input file
-        seed << sim.param().start.ig;
-      } else {
-        // choose a remotely random random-seed
-        // TODO: do I have to have a better seed?
-        seed << time(NULL); 
-      }
-
 
       // -----  SD velocity 1 -----
       for (unsigned int i=0; i < 2; ++i){
@@ -566,11 +552,11 @@ int _magnetic_field_vector_sd
           DEBUG(10, "svh=" << math::v2s(svh));
           DEBUG(10, "cf=" << tfrdc_mfv.sd.cf);
           
-          tfrdc_mfv.vel(i) = (old_vel(i) - svh) * tfrdc_mfv.sd.c1
+          tfrdc_mfv.vel(i) = (old_vel(i) - svh) * tfrdc_mfv.sd.c1;
           // force * m-1 * dt * (1-EXP(-GDT))/GDT, i.e.
-          + forces(i) * tfrdc_mfv.sd.cf
+          tfrdc_mfv.vel(i) += forces(i) * tfrdc_mfv.sd.cf;
           // last term of 2.11.2.2
-          + tfrdc_mfv.sd.vrand1(i);
+          tfrdc_mfv.vel(i) += tfrdc_mfv.sd.vrand1(i);
         
           //we sample the R'i vector from eq. 2.11.2.25 from a Gaussian with 0.0 mean
           //and width rho2_sq (sd3)
@@ -589,7 +575,6 @@ int _magnetic_field_vector_sd
           tfrdc_mfv.sd.vrand2(i)=math::Vec(0.0, 0.0, 0.0);
           tfrdc_mfv.sd.vrand3(i)=math::Vec(0.0, 0.0, 0.0);
           tfrdc_mfv.sd.vrand4(i)=math::Vec(0.0, 0.0, 0.0);
-
         }
       } // loop over atoms
 
@@ -621,14 +606,14 @@ int _magnetic_field_vector_sd
       if(sim.param().tfrdc.cfrich != 0.0) {
         for (unsigned int i=0; i < 2; ++i){
           //this is 2.11.2.25
-          math::Vec sxh = tfrdc_mfv.stochastic_integral(i) * tfrdc_mfv.sd.c9
-          + tfrdc_mfv.sd.vrand4(i);
+          math::Vec sxh = tfrdc_mfv.stochastic_integral(i) * tfrdc_mfv.sd.c9;
+          sxh += tfrdc_mfv.sd.vrand4(i);
           tfrdc_mfv.stochastic_integral(i) = tfrdc_mfv.sd.vrand3(i);  
           //this is 2.11.2.26
           tfrdc_mfv.pos(i) += tfrdc_mfv.sd.vrand3(i) - sxh;
         } // loop over atoms
       }
-        
+
       // shake (only positions)
       err = _shake_bond<B>(conf.current().box, tfrdc_mfv.pos, old_pos, tfrdc_mfv.mass, tfrdc_mfv.d);
       if (err) break;
@@ -655,18 +640,28 @@ int _magnetic_field_vector_sd
         P_expavg = dPavedP * P + exptaut * P_expavg;          // [-]
         DEBUG(15, " P_expavg: " << P_expavg);
 
-        conf.special().tfrdc_mfv.P_avg[l]+=P/sim.param().tfrdc.nstsd;
-        DEBUG(15, " P_avg: " << conf.special().tfrdc_mfv.P_avg[l]);
+        conf.special().tfrdc_mfv.P_avg[l]+=P;
+        DEBUG(15, " P_avg: " << conf.special().tfrdc_mfv.P_avg[l]/(sdstep+1));
 
         double prefix =  3 * costheta[l] / (d_ij[l]*dh_ij);
         // TODO: add case when bond is not constrained
         for(unsigned int a = 0; a < 3; ++a){
-            conf.special().tfrdc_mfv.dPdr_avg[l](a)+=prefix*rh_ij(a)/sim.param().tfrdc.nstsd;
+            conf.special().tfrdc_mfv.dPdr_avg[l](a)+=prefix*rh_ij(a);
         }
       }
 
       if (err) return err;
     } // loop sd steps
+
+    // average
+    it = topo.tf_rdc_restraints().begin(),
+          to = topo.tf_rdc_restraints().end();
+    for(unsigned int l=0; it != to; ++it, ++l) {
+      conf.special().tfrdc_mfv.P_avg[l]/=sim.param().tfrdc.nstsd;
+      for(unsigned int a = 0; a < 3; ++a){
+          conf.special().tfrdc_mfv.dPdr_avg[l](a)/=sim.param().tfrdc.nstsd;
+      }
+    }
   return 0;
 }
 
@@ -683,7 +678,7 @@ int interaction::TF_RDC_Restraint_Interaction::calculate_interactions
           topo, conf, sim, m_rng, error);
     if (error) return error;
 
-      conf.special().tfrdc_mfv.sd.seed=m_rng->seed();
+    conf.special().tfrdc_mfv.sd.seed=m_rng->seed();
   }
   m_timer.stop("mfv");
 
@@ -862,16 +857,16 @@ int interaction::TF_RDC_Restraint_Interaction::init
   }
   if (sim.param().tfrdc.nstsd > 0) {
     // Create random number generator
-  m_rng = math::RandomGenerator::create(sim.param(), "0");
-  m_rng->mean(0.0);
-  if (!sim.param().tfrdc.continuation) {
-    // use seed from input file
-    std::ostringstream seed;
-    seed << sim.param().start.ig;
-      m_rng->seed(seed.str());
-  } else {
-      m_rng->seed(conf.special().tfrdc_mfv.sd.seed);
-  }
+    m_rng = math::RandomGenerator::create(sim.param(), "0");
+    m_rng->mean(0.0);
+    if (!sim.param().tfrdc.continuation) {
+      // use seed from input file
+      std::ostringstream seed;
+      seed << sim.param().start.ig;
+        m_rng->seed(seed.str());
+    } else {
+        m_rng->seed(conf.special().tfrdc_mfv.sd.seed);
+    }
 
     _init_mfv_sd(conf, sim, m_rng);
     sim.param().tfrdc.bins_theta = _linspace(0.0,math::Pi,101.0);
