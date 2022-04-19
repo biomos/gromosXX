@@ -3834,6 +3834,10 @@ namespace simulation
          */
         std::map<unsigned, std::string> elements;
         /**
+         * maps IAC numbers to atomic numbers; 
+         */
+        std::map<unsigned, unsigned> iac_elements;
+        /**
          * path for the program binary
          */
         std::string binary;

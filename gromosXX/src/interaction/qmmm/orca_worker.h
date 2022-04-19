@@ -83,6 +83,7 @@ namespace interaction {
      * @param topo Topology
      * @param conf Configuration
      * @param sim Simulation
+     * @param qm_zone The QM zone
      * @return int error code
      */
     int write_input_coordinates(std::ofstream& inputfile_stream
@@ -97,6 +98,7 @@ namespace interaction {
      * @param topo Topology
      * @param conf Configuration
      * @param sim Simulation
+     * @param qm_zone The QM zone
      * @return int error code
      */
     int write_input_pointcharges(std::ofstream& inputfile_stream

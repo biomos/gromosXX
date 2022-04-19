@@ -131,6 +131,87 @@ ELEMENTS
 END
 @endverbatim
  *
+ * @section The IAC block specifies the atomic number that should be used for each 
+ * IAC atom type used. This block is only requiered for XTB to model point charges.
+ * Default parameters are generated for the 54a7 ff atom types if the block is omitted.
+ * IAC numbering start from "1" to match the documentation.
+ * 
+@verbatim
+IAC
+# IAC   ATMS   ATMN
+  1     O      8
+  2     O      8
+  3     O      8
+  4     O      8
+  5     O      8
+  6     N      7
+  7     N      7
+  8     N      7
+  9     N      7
+  10    N      7
+  11    N      7
+  12    C      6
+  13    C      6
+  14    C      6
+  15    C      6
+  16    C      6
+  17    C      6
+  18    C      6
+  19    C      6
+  20    H      2
+  21    H      2
+  22    Z      0
+  23    S      16
+  24    Cu     29
+  25    Cu     29
+  26    Fe     26
+  27    Zn     30
+  28    Mg     12
+  29    Ca     20
+  30    P      15
+  31    Ar     18
+  32    F      9
+  33    Cl     17
+  34    Br     35
+  35    C      6
+  36    O      8
+  37    Na     11
+  38    Cl     17
+  39    C      6
+  40    Cl     17
+  41    H      1
+  42    S      16
+  43    C      6
+  44    O      8
+  45    C      6
+  46    Cl     17
+  47    F      9
+  48    C      6
+  49    C      6
+  50    O      8
+  51    C      6
+  52    O      8
+  53    N      7
+  54    C      6
+  55    I      53
+  56    Cl     17
+  57    B      5
+  58    Se     34
+  59    H      1
+  60    Cl     17
+  61    Br     35
+  62    O      8
+  63    N      7
+  64    C      6
+  65    C      6
+  66    N      7
+  67    N      7
+  68    O      8
+  69    Si     14
+  70    P      15
+END
+@endverbatim
+ *
  * @section MNDO blocks for the MNDO worker
  * 
  * MNDOBINARY block for the MNDO worker
@@ -819,6 +900,7 @@ void io::In_QMMM::read(topology::Topology& topo,
    */
   else if (sw == simulation::qm_xtb) {
     this->read_units(sim, &sim.param().qmmm.xtb);
+    this->read_iac_elements(topo, &sim.param().qmmm.xtb);
     { // XTBOPTIONS
       buffer = m_block["XTBOPTIONS"];
 
@@ -911,6 +993,102 @@ void io::In_QMMM::read_elements(const topology::Topology& topo
   }
 }
 
+void io::In_QMMM::read_iac_elements(const topology::Topology& topo
+    , simulation::Parameter::qmmm_struct::qm_param_struct* qm_param)
+  {
+  std::vector<std::string> buffer = m_block["IAC"];
+
+  if (!buffer.size()) {
+    io::messages.add("No IAC block in QM/MM specification file. Using Gromos 54a7_ff definitions.",
+            "In_QMMM", io::message::notice);
+    // indices start with "1" to match the documentation
+    qm_param->iac_elements[1]  = 8;
+    qm_param->iac_elements[2]  = 8;
+    qm_param->iac_elements[3]  = 8;
+    qm_param->iac_elements[4]  = 8;
+    qm_param->iac_elements[5]  = 8;
+    qm_param->iac_elements[6]  = 7;
+    qm_param->iac_elements[7]  = 7;
+    qm_param->iac_elements[8]  = 7;
+    qm_param->iac_elements[9]  = 7;
+    qm_param->iac_elements[10] = 7;
+    qm_param->iac_elements[11] = 7;
+    qm_param->iac_elements[12] = 6;
+    qm_param->iac_elements[13] = 6;
+    qm_param->iac_elements[14] = 6;
+    qm_param->iac_elements[15] = 6;
+    qm_param->iac_elements[16] = 6;
+    qm_param->iac_elements[17] = 6;
+    qm_param->iac_elements[18] = 6;
+    qm_param->iac_elements[19] = 6;
+    qm_param->iac_elements[20] = 1;
+    qm_param->iac_elements[21] = 1;
+    qm_param->iac_elements[22] = 0; // dummy atom
+    qm_param->iac_elements[23] = 16;
+    qm_param->iac_elements[24] = 29;
+    qm_param->iac_elements[25] = 29;
+    qm_param->iac_elements[26] = 26;
+    qm_param->iac_elements[27] = 30;
+    qm_param->iac_elements[28] = 12;
+    qm_param->iac_elements[29] = 20;
+    qm_param->iac_elements[30] = 14; // P oder Si
+    qm_param->iac_elements[31] = 18;
+    qm_param->iac_elements[32] = 9;
+    qm_param->iac_elements[33] = 17;
+    qm_param->iac_elements[34] = 35;
+    qm_param->iac_elements[35] = 6;
+    qm_param->iac_elements[36] = 8;
+    qm_param->iac_elements[37] = 11;
+    qm_param->iac_elements[38] = 17;
+    qm_param->iac_elements[39] = 6;
+    qm_param->iac_elements[40] = 17;
+    qm_param->iac_elements[41] = 1;
+    qm_param->iac_elements[42] = 16;
+    qm_param->iac_elements[43] = 6;
+    qm_param->iac_elements[44] = 8;
+    qm_param->iac_elements[45] = 6;
+    qm_param->iac_elements[46] = 17;
+    qm_param->iac_elements[47] = 9;
+    qm_param->iac_elements[48] = 6;
+    qm_param->iac_elements[49] = 6;
+    qm_param->iac_elements[50] = 8;
+    qm_param->iac_elements[51] = 6;
+    qm_param->iac_elements[52] = 8;
+    qm_param->iac_elements[53] = 7;
+    qm_param->iac_elements[54] = 6;
+    return;
+  }
+  _lineStream.clear();
+  std::string bstr = concatenate(buffer.begin() + 1, buffer.end() - 1);
+  // Strip away the last newline character
+  bstr.pop_back();
+  _lineStream.str(bstr);
+  unsigned int iac;
+  std::string atomic_symbol; // unused
+  unsigned int atomic_number;
+  while(!_lineStream.eof()) {
+    _lineStream >> iac >> atomic_symbol >> atomic_number;
+    if (_lineStream.fail()) {
+      io::messages.add("Cannot read IAC block", "In_QMMM", io::message::error);
+      return;
+    }
+    qm_param->iac_elements[iac] = atomic_number;
+  }
+
+  // check whether all elements were provided
+  // indices start with "1" to match the documentation
+  const std::map<std::string, int>& atomic_names = topo.atom_names();
+  for (std::map<std::string, int>::const_iterator
+        it = atomic_names.begin(), to = atomic_names.end(); it != to; ++it) {
+    if (!(qm_param->iac_elements.find(it->second + 1) != qm_param->iac_elements.end())) {
+      std::ostringstream msg;
+      msg << "IAC block: No atomic number provided for IAC " << it->second;
+      io::messages.add(msg.str(), "In_QMMM", io::message::error);
+      return;
+    }
+  }
+}
+
 void io::In_QMMM::read_units(const simulation::Simulation& sim
                   , simulation::Parameter::qmmm_struct::qm_param_struct* qm_param)
   {
@@ -943,13 +1121,13 @@ void io::In_QMMM::read_units(const simulation::Simulation& sim
   //                   , math::echarge /* e */}}
   //   {simulation::qm_orca,
   //                   { math::angstrom /* A */
-  //                   , math::hartree * math::avogadro /* a.u. */
-  //                   , math::hartree * math::avogadro / math::bohr /* a.u. */
+  //                   , math::hartree /* a.u. */
+  //                   , math::hartree / math::bohr /* a.u. */
   //                   , math::echarge /* e */}}
 //   {simulation::qm_xtb,
   //                   { math::bohr /* a.u. */
-  //                   , math::hartree * math::avogadro /* a.u. */
-  //                   , math::hartree * math::avogadro / math::bohr /* a.u. */
+  //                   , math::hartree /* a.u. */
+  //                   , math::hartree / math::bohr /* a.u. */
   //                   , math::echarge /* e */}}
   // };
 

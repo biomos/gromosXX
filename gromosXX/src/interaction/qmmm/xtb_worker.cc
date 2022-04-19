@@ -56,7 +56,7 @@ int interaction::XTB_Worker::init(const topology::Topology& topo
   this->uhf = (qm_zone.spin_mult() - 1) / 2; // spin multiplicity to # unpaired electrons
 
   // size of the QM zone
-  this->natoms = qm_zone.qm.size();
+  this->natoms = qm_zone.qm.size() + qm_zone.link.size();
 
   // resize vectors
   this->attyp.resize(natoms);
@@ -89,11 +89,16 @@ int interaction::XTB_Worker::init(const topology::Topology& topo
          it = qm_zone.qm.begin(), to = qm_zone.qm.end(); it != to; ++it, ++i) {
     this->attyp[i] = it->atomic_number;
   }
+  // initialize QM links
+  for (std::set<QM_Link>::const_iterator
+         it = qm_zone.link.begin(), to = qm_zone.link.end(); it != to; ++it, ++i) {
+    this->attyp[i] = it->atomic_number;
+  }
 
-  // flatten the Vector3 to a Vector1 (which can be accessed as C style array by XTB)
-  this->initialize_qm_coordinates(qm_zone);
+  // process QM coordinates
+  this->process_input_coordinates(topo, conf, sim, qm_zone);
 
-  // initialize the molecule object
+  // Fortran API call - pass pointers
   this->mol = xtb_newMolecule(this->env, &(this->natoms), attyp.data(), coord.data(), 
                               &(this->charge), &(this->uhf), NULL, NULL);
   if (xtb_checkEnvironment(this->env)) {
@@ -128,25 +133,73 @@ int interaction::XTB_Worker::init(const topology::Topology& topo
   return 0;
 }
 
-void interaction::XTB_Worker::initialize_qm_coordinates(const interaction::QM_Zone& qm_zone) {
+int interaction::XTB_Worker::process_input(const topology::Topology& topo
+                  , const configuration::Configuration& conf
+                  , const simulation::Simulation& sim
+                  , const interaction::QM_Zone& qm_zone) {
+
+  // first process QM coordinates
+  this->process_input_coordinates(topo, conf, sim, qm_zone);
+
+  // Fortran API call - pass pointers
+  xtb_updateMolecule(this->env, this->mol, coord.data(), NULL);
+  if (xtb_checkEnvironment(this->env)) {
+      xtb_showEnvironment(this->env, NULL);
+      return 1;
+  }
+
+  // process point charges
+  this->process_input_pointcharges(topo, conf, sim, qm_zone);
+
+  // set external charges
+  xtb_setExternalCharges(this->env, this->calc, &(this->num_charges), this->numbers.data(),
+                         this->charges.data(), this->point_charges.data());
+  if (xtb_checkEnvironment(this->env)) {
+      xtb_showEnvironment(this->env, NULL);
+      return 1;
+  }
+
+  return 0;
+}
+
+void interaction::XTB_Worker::process_input_coordinates(const topology::Topology& topo
+                                                      , const configuration::Configuration& conf
+                                                      , const simulation::Simulation& sim
+                                                      , const interaction::QM_Zone& qm_zone) {
   // MM -> QM length unit is inverse of input value
   double len_to_qm = 1.0 / this->param->unit_factor_length;
+
+  // transfer QM coordinates
+  DEBUG(15, "Transfering QM coordinates to XTB");
   unsigned int i = 0;
   for (std::set<QM_Atom>::const_iterator 
          it = qm_zone.qm.begin(), to = qm_zone.qm.end(); it != to; ++it) {
-    this->coord[i] = it->pos(0);
-    this->coord[i + 1] = it->pos(1);
-    this->coord[i + 2] = it->pos(2);
+    DEBUG(15, it->index << " " << it->atomic_number << " " << math::v2s(it->pos * len_to_qm));
+    this->coord[i]     = it->pos(0) * len_to_qm;
+    this->coord[i + 1] = it->pos(1) * len_to_qm;
+    this->coord[i + 2] = it->pos(2) * len_to_qm;
     i += 3; // x, y, z component
   }
-  // scale coordinates
-  std::transform(this->coord.begin(), this->coord.end(), this->coord.begin(), [len_to_qm](double& e) { return e *= len_to_qm; });
+  // transfer capping atoms
+  DEBUG(15, "Transfering capping atoms coordinates to XTB");
+  for (std::set<QM_Link>::const_iterator it = qm_zone.link.begin(), to = qm_zone.link.end(); it != to; it++) {
+    DEBUG(15, "Capping atom " << it->qm_index << "-" << it->mm_index << " "
+      << it->atomic_number << " " << math::v2s(it->pos * len_to_qm));
+    this->coord[i]     = it->pos(0) * len_to_qm;
+    this->coord[i + 1] = it->pos(1) * len_to_qm;
+    this->coord[i + 2] = it->pos(2) * len_to_qm;
+    i += 3; 
+  } 
 }
 
-void interaction::XTB_Worker::initialize_mm_coordinates(const interaction::QM_Zone& qm_zone
-                                                      , std::vector<double>& coord) {
+void interaction::XTB_Worker::process_input_pointcharges(const topology::Topology& topo
+                                                       , const configuration::Configuration& conf
+                                                       , const simulation::Simulation& sim
+                                                       , const interaction::QM_Zone& qm_zone) {
   // MM -> QM length unit is inverse of input value
   double len_to_qm = 1.0 / this->param->unit_factor_length;
+  double cha_to_qm = 1.0 / this->param->unit_factor_charge;
+
   unsigned int i = 0;
   for (std::set<MM_Atom>::const_iterator 
          it = qm_zone.mm.begin(), to = qm_zone.mm.end(); it != to; ++it) {
@@ -172,56 +225,6 @@ int interaction::XTB_Worker::run_calculation() {
       xtb_showEnvironment(this->env, NULL);
       return 1;
   }
-  return 0;
-}
-
-int interaction::XTB_Worker::process_input(const topology::Topology& topo
-                  , const configuration::Configuration& conf
-                  , const simulation::Simulation& sim
-                  , const interaction::QM_Zone& qm_zone) {
-
-  // number of point charges
-  int num_charges = this->get_num_charges(sim, qm_zone);
-
-  // charges of the point charges
-  std::vector<double> charges(num_charges, 0.0);
-
-  // definition of chemical hardness parameters
-  // for gradients on point charges:
-  // https://xtb-docs.readthedocs.io/en/latest/pcem.html
-  std::vector<int> numbers(num_charges, 0);
-
-  // coordinates of point charges
-  std::vector<double> point_charges(num_charges * 3, 0.0);
-
-  // initialize QM atom coordinates
-  this->initialize_qm_coordinates(qm_zone);
-
-  xtb_updateMolecule(this->env, this->mol, this->coord.data(), NULL);
-  if (xtb_checkEnvironment(this->env)) {
-      xtb_showEnvironment(this->env, NULL);
-      return 1;
-  }
-
-  // initialize MM atom charges and chemical hardness
-  unsigned int i = 0;
-  for (std::set<MM_Atom>::const_iterator
-         it = qm_zone.mm.begin(), to = qm_zone.mm.end(); it != to; ++it, ++i) {
-    numbers[i] = 7; // it seems like that this is a chemical hardness ...
-    charges[i] = it->charge;
-  }
-
-  // initialize MM atom coordintes
-  this->initialize_mm_coordinates(qm_zone, point_charges);
-
-  // set external charges
-  xtb_setExternalCharges(this->env, this->calc, &num_charges, numbers.data(),
-                         charges.data(), point_charges.data());
-  if (xtb_checkEnvironment(this->env)) {
-      xtb_showEnvironment(this->env, NULL);
-      return 1;
-  }
-
   return 0;
 }
 

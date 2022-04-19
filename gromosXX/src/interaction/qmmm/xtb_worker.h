@@ -57,18 +57,29 @@ namespace interaction {
      * Extracts the coordinates of the QM zone, transfers them into a one-dimensional
      * array, and scales them according to the given conversion factor
      * 
-     * @param qm_zone QM Zone
+     * @param topo Topology
+     * @param conf Configuration
+     * @param sim Simulation
+     * @param qm_zone The QM zone
      */
-    void initialize_qm_coordinates(const interaction::QM_Zone& qm_zone);
+    void process_input_coordinates(const topology::Topology& topo
+                                 , const configuration::Configuration& conf
+                                 , const simulation::Simulation& sim
+                                 , const interaction::QM_Zone& qm_zone);
 
     /**
      * Extracts the coordinates of the MM zone, transfers them into a one-dimensional
      * array, and scales them according to the given conversion factor
      * 
-     * @param qm_zone QM Zone
+     * @param topo Topology
+     * @param conf Configuration
+     * @param sim Simulation
+     * @param qm_zone The QM zone
      */
-    void initialize_mm_coordinates(const interaction::QM_Zone& qm_zone
-                                 , std::vector<double>& coord);
+    void process_input_pointcharges(const topology::Topology& topo
+                                  , const configuration::Configuration& conf
+                                  , const simulation::Simulation& sim
+                                  , const interaction::QM_Zone& qm_zone);
 
     /**
      * Prints the coordinates to the console
@@ -167,6 +178,28 @@ namespace interaction {
      * Atom types of the QM zone
      */
     std::vector<int> attyp;
+
+    /**
+     * Number of point charges
+     */
+    int num_charges;
+
+    /**
+     * These correspond to element types - required for XTB
+     * calculations to match internally hard-coded hardness
+     * parameters: https://xtb-docs.readthedocs.io/en/latest/pcem.html 
+     */
+    std::vector<int> numbers;
+
+    /**
+     * Charges of the point charges
+     */
+    std::vector<double> charges;
+
+    /**
+     * Cartesian coordinates of the point charges
+     */
+    std::vector<double> point_charges;
   };
 }
 
