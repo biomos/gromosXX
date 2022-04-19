@@ -139,7 +139,7 @@ namespace interaction {
     int natoms;
 
     /**
-     * Coordinates of the QM zone as vector, necessary to access C style array for xtb
+     * Coordinates of the QM zone as one-dimensional vector, necessary to access C style array for xtb
      */
     std::vector<double> coord;
 
