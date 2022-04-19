@@ -54,6 +54,30 @@ namespace interaction {
                   , const interaction::QM_Zone& qm_zone);              
 
     /**
+     * Extracts the coordinates of the QM zone, transfers them into a one-dimensional
+     * array, and scales them according to the given conversion factor
+     * 
+     * @param qm_zone QM Zone
+     */
+    void initialize_qm_coordinates(const interaction::QM_Zone& qm_zone);
+
+    /**
+     * Extracts the coordinates of the MM zone, transfers them into a one-dimensional
+     * array, and scales them according to the given conversion factor
+     * 
+     * @param qm_zone QM Zone
+     */
+    void initialize_mm_coordinates(const interaction::QM_Zone& qm_zone
+                                 , std::vector<double>& coord);
+
+    /**
+     * Prints the coordinates to the console
+     * 
+     * @param coord Coordinates to be printed as one-dimensional array.
+     */
+    void print_coordinates(const std::vector<double>& coord);
+    
+    /**
      * Call external QM program - XTB
      */
     int run_calculation();
@@ -72,31 +96,27 @@ namespace interaction {
     
     /**
      * Parse charges
-     * @param ofs ifstream from the output file
      * @param qm_zone QM Zone
      */
-    int parse_charges(std::ifstream& ofs, interaction::QM_Zone& qm_zone) const;
+    int parse_charges(interaction::QM_Zone& qm_zone) const;
 
     /**
      * Parse energy
-     * @param ofs ifstream from the output file
      * @param qm_zone QM Zone
      */
-    int parse_energy(std::ifstream& ofs, interaction::QM_Zone& qm_zone) const;
+    int parse_energy(interaction::QM_Zone& qm_zone) const;
 
     /**
      * Parse QM gradients
-     * @param ofs ifstream from the output file
      * @param qm_zone QM Zone
      */
-    int parse_qm_gradients(std::ifstream& ofs, interaction::QM_Zone& qm_zone) const;
+    int parse_qm_gradients(interaction::QM_Zone& qm_zone) const;
 
     /**
      * Parse MM gradients
-     * @param ofs ifstream from the output file
      * @param qm_zone QM Zone
      */
-    int parse_mm_gradients(std::ifstream& ofs, interaction::QM_Zone& qm_zone) const;
+    int parse_mm_gradients(interaction::QM_Zone& qm_zone, const unsigned int ncharges) const;
 
     /**
      * Pointer to simulation parameters
