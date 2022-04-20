@@ -998,21 +998,22 @@ void io::In_QMMM::read_iac_elements(const topology::Topology& topo
   {
   std::vector<std::string> buffer = m_block["IAC"];
 
-  if (!buffer.size()) {
+  if (!buffer.size()) { // provide default matching
     io::messages.add("No IAC block in QM/MM specification file. Using Gromos 54a7_ff definitions.",
             "In_QMMM", io::message::notice);
-    // indices start with "1" to match the documentation
+    // indices start with "0" to match the Gromos C++ coding style
+    qm_param->iac_elements[0]  = 8;
     qm_param->iac_elements[1]  = 8;
     qm_param->iac_elements[2]  = 8;
     qm_param->iac_elements[3]  = 8;
     qm_param->iac_elements[4]  = 8;
-    qm_param->iac_elements[5]  = 8;
+    qm_param->iac_elements[5]  = 7;
     qm_param->iac_elements[6]  = 7;
     qm_param->iac_elements[7]  = 7;
     qm_param->iac_elements[8]  = 7;
-    qm_param->iac_elements[9]  = 7;
+    qm_param->iac_elements[9] = 7;
     qm_param->iac_elements[10] = 7;
-    qm_param->iac_elements[11] = 7;
+    qm_param->iac_elements[11] = 6;
     qm_param->iac_elements[12] = 6;
     qm_param->iac_elements[13] = 6;
     qm_param->iac_elements[14] = 6;
@@ -1020,73 +1021,81 @@ void io::In_QMMM::read_iac_elements(const topology::Topology& topo
     qm_param->iac_elements[16] = 6;
     qm_param->iac_elements[17] = 6;
     qm_param->iac_elements[18] = 6;
-    qm_param->iac_elements[19] = 6;
+    qm_param->iac_elements[19] = 1;
     qm_param->iac_elements[20] = 1;
-    qm_param->iac_elements[21] = 1;
-    qm_param->iac_elements[22] = 0; // dummy atom
-    qm_param->iac_elements[23] = 16;
+    qm_param->iac_elements[21] = 0; // dummy atom
+    qm_param->iac_elements[22] = 16;
+    qm_param->iac_elements[23] = 29;
     qm_param->iac_elements[24] = 29;
-    qm_param->iac_elements[25] = 29;
-    qm_param->iac_elements[26] = 26;
-    qm_param->iac_elements[27] = 30;
-    qm_param->iac_elements[28] = 12;
-    qm_param->iac_elements[29] = 20;
-    qm_param->iac_elements[30] = 14; // P oder Si
-    qm_param->iac_elements[31] = 18;
-    qm_param->iac_elements[32] = 9;
-    qm_param->iac_elements[33] = 17;
-    qm_param->iac_elements[34] = 35;
-    qm_param->iac_elements[35] = 6;
-    qm_param->iac_elements[36] = 8;
-    qm_param->iac_elements[37] = 11;
-    qm_param->iac_elements[38] = 17;
-    qm_param->iac_elements[39] = 6;
-    qm_param->iac_elements[40] = 17;
-    qm_param->iac_elements[41] = 1;
-    qm_param->iac_elements[42] = 16;
-    qm_param->iac_elements[43] = 6;
-    qm_param->iac_elements[44] = 8;
-    qm_param->iac_elements[45] = 6;
-    qm_param->iac_elements[46] = 17;
-    qm_param->iac_elements[47] = 9;
+    qm_param->iac_elements[25] = 26;
+    qm_param->iac_elements[26] = 30;
+    qm_param->iac_elements[27] = 12;
+    qm_param->iac_elements[28] = 20;
+    qm_param->iac_elements[29] = 14; // P oder Si
+    qm_param->iac_elements[30] = 18;
+    qm_param->iac_elements[31] = 9;
+    qm_param->iac_elements[32] = 17;
+    qm_param->iac_elements[33] = 35;
+    qm_param->iac_elements[34] = 6;
+    qm_param->iac_elements[35] = 8;
+    qm_param->iac_elements[36] = 11;
+    qm_param->iac_elements[37] = 17;
+    qm_param->iac_elements[38] = 6;
+    qm_param->iac_elements[39] = 17;
+    qm_param->iac_elements[40] = 1;
+    qm_param->iac_elements[41] = 16;
+    qm_param->iac_elements[42] = 6;
+    qm_param->iac_elements[43] = 8;
+    qm_param->iac_elements[44] = 6;
+    qm_param->iac_elements[45] = 17;
+    qm_param->iac_elements[46] = 9;
+    qm_param->iac_elements[47] = 6;
     qm_param->iac_elements[48] = 6;
-    qm_param->iac_elements[49] = 6;
-    qm_param->iac_elements[50] = 8;
-    qm_param->iac_elements[51] = 6;
-    qm_param->iac_elements[52] = 8;
-    qm_param->iac_elements[53] = 7;
-    qm_param->iac_elements[54] = 6;
-    return;
+    qm_param->iac_elements[49] = 8;
+    qm_param->iac_elements[50] = 6;
+    qm_param->iac_elements[51] = 8;
+    qm_param->iac_elements[52] = 7;
+    qm_param->iac_elements[53] = 6;
   }
-  _lineStream.clear();
-  std::string bstr = concatenate(buffer.begin() + 1, buffer.end() - 1);
-  // Strip away the last newline character
-  bstr.pop_back();
-  _lineStream.str(bstr);
-  unsigned int iac;
-  std::string atomic_symbol; // unused
-  unsigned int atomic_number;
-  while(!_lineStream.eof()) {
-    _lineStream >> iac >> atomic_symbol >> atomic_number;
-    if (_lineStream.fail()) {
-      io::messages.add("Cannot read IAC block", "In_QMMM", io::message::error);
-      return;
+  else {
+    io::messages.add("Reading IAC block in QMMM specification file.",
+            "In_QMMM", io::message::notice);
+    _lineStream.clear();
+    std::string bstr = concatenate(buffer.begin() + 1, buffer.end() - 1);
+    // Strip away the last newline character
+    bstr.pop_back();
+    _lineStream.str(bstr);
+    unsigned int iac;
+    std::string atomic_symbol; // unused
+    unsigned int atomic_number;
+    while(!_lineStream.eof()) {
+      _lineStream >> iac >> atomic_symbol >> atomic_number;
+      if (_lineStream.fail()) {
+        io::messages.add("Cannot read IAC block", "In_QMMM", io::message::error);
+        return;
+      }
+      iac--;
+      // IAC indices in QM/MM specification file start from "1" to match documentation
+      // IAC indices in Gromos C++ standard start from "0" to match C++ data structure layouts
+      qm_param->iac_elements[iac] = atomic_number;
     }
-    qm_param->iac_elements[iac] = atomic_number;
   }
-
-  // check whether all elements were provided
-  // indices start with "1" to match the documentation
+  
+  // check whether all atom types of the force field used have a matching atom number
   const std::map<std::string, int>& atomic_names = topo.atom_names();
   for (std::map<std::string, int>::const_iterator
         it = atomic_names.begin(), to = atomic_names.end(); it != to; ++it) {
-    if (!(qm_param->iac_elements.find(it->second + 1) != qm_param->iac_elements.end())) {
+    if (qm_param->iac_elements.find(it->second) == qm_param->iac_elements.end()) {
       std::ostringstream msg;
-      msg << "IAC block: No atomic number provided for IAC " << it->second;
+      msg << "IAC block: No atomic number provided for IAC " << (it->second + 1); // +1: match documentation for IAC atoms
       io::messages.add(msg.str(), "In_QMMM", io::message::error);
       return;
     }
+    else {
+      DEBUG(15, "IAC atom \"" << it->first << "\" (#" << (it->second + 1) << ") is mapped to element #" << qm_param->iac_elements.at(it->second)); // +1: match documentation for IAC atoms
+    }
   }
+
 }
 
 void io::In_QMMM::read_units(const simulation::Simulation& sim

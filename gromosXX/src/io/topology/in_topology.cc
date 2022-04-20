@@ -2803,7 +2803,8 @@ void io::In_Topology::read_SOLVENT_blocks(topology::Topology& topo,
                   << " is too long (> " << MAX_NAME << " characters).";
           io::messages.add(msg.str(), "InTopology", io::message::error);
         }
-
+        // IAC indices in topology file start from "1" to match documentation
+        // IAC indices in Gromos C++ standard start from "0" to match C++ data structure layouts
         s.add_atom(name, res_nr, iac - 1, mass, charge);
       }
 
