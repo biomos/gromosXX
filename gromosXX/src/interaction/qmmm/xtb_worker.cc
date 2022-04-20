@@ -52,6 +52,28 @@ int interaction::XTB_Worker::init(const topology::Topology& topo
   this->param = &(sim.param().qmmm.xtb);
   QM_Worker::param = this->param;
 
+  for (std::set<MM_Atom>::const_iterator 
+         it = qm_zone.mm.begin(), to = qm_zone.mm.end(); it != to; ++it) {
+    std::cout << it->index << std::endl;
+    std::cout << it->atomic_number << std::endl;
+    std::cout << it->charge << std::endl;
+    std::cout << math::v2s(it->pos) << std::endl;
+  }
+
+  std::cout << "size iac() : " << topo.iac().size() << std::endl;
+  for (unsigned int i = 0; i < topo.iac().size(); ++i) {
+    std::cout << "atom with index: " << i << " has IAC code: " << topo.iac(i) + 1 << " " << topo.is_qm(i) << std::endl;
+  }
+
+  std::cout << "Size of qm_atomic_number: " << topo.qm_atomic_number().size() << std::endl;
+  int items_not_zero = std::count_if(topo.qm_atomic_number().begin(), topo.qm_atomic_number().end(), [](int item) {return item != 0;});
+  int items_zero = topo.qm_atomic_number().size() - items_not_zero;
+  std::cout << "items not zero: " << items_not_zero << std::endl;
+  std::cout << "items zero: " << items_zero << std::endl;
+  for (const auto& e : topo.qm_atomic_number()) {
+    std::cout << e << std::endl;
+  }
+
   this->charge = qm_zone.charge() * this->param->unit_factor_charge;
   this->uhf = (qm_zone.spin_mult() - 1) / 2; // spin multiplicity to # unpaired electrons
 

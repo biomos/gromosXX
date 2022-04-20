@@ -520,6 +520,7 @@ void io::In_QMMM::read(topology::Topology& topo,
    */
   if (sw == simulation::qm_mndo) {
     this->read_units(sim, &sim.param().qmmm.mndo);
+    this->read_iac_elements(topo, &sim.param().qmmm.mndo);
     { // MNDOBINARY
 
       DEBUG(15, "Reading MNDOBINARY");
@@ -577,6 +578,7 @@ void io::In_QMMM::read(topology::Topology& topo,
   else if (sw == simulation::qm_turbomole) {
     this->read_units(sim, &sim.param().qmmm.turbomole);
     this->read_elements(topo, &sim.param().qmmm.turbomole);
+    this->read_iac_elements(topo, &sim.param().qmmm.turbomole);
 
     { // TMOLEFILES
       buffer = m_block["TMOLEFILES"];
@@ -638,6 +640,7 @@ void io::In_QMMM::read(topology::Topology& topo,
   else if (sw == simulation::qm_dftb) {
     this->read_units(sim, &sim.param().qmmm.dftb);
     this->read_elements(topo, &sim.param().qmmm.dftb);
+    this->read_iac_elements(topo, &sim.param().qmmm.dftb);
     { // DFTBFILES
       buffer = m_block["DFTBFILES"];
       if (!buffer.size()) {
@@ -674,6 +677,7 @@ void io::In_QMMM::read(topology::Topology& topo,
    */
   else if (sw == simulation::qm_mopac) {
     this->read_units(sim, &sim.param().qmmm.mopac);
+    this->read_iac_elements(topo, &sim.param().qmmm.mopac);
     { // MOPACBINARY
 
       DEBUG(15, "Reading MOPACBINARY");
@@ -751,6 +755,7 @@ void io::In_QMMM::read(topology::Topology& topo,
    */
   else if (sw == simulation::qm_gaussian) {
     this->read_units(sim, &sim.param().qmmm.gaussian);
+    this->read_iac_elements(topo, &sim.param().qmmm.gaussian);
     { // GAUBINARY
 
       DEBUG(15, "Reading GAUBINARY");
@@ -840,6 +845,7 @@ void io::In_QMMM::read(topology::Topology& topo,
   else if (sw == simulation::qm_orca) {
     this->read_units(sim, &sim.param().qmmm.orca);
     this->read_elements(topo, &sim.param().qmmm.orca);
+    this->read_iac_elements(topo, &sim.param().qmmm.orca);
     { // ORCABINARY
 
       DEBUG(15, "Reading ORCABINARY");
@@ -993,7 +999,7 @@ void io::In_QMMM::read_elements(const topology::Topology& topo
   }
 }
 
-void io::In_QMMM::read_iac_elements(const topology::Topology& topo
+void io::In_QMMM::read_iac_elements(topology::Topology& topo
     , simulation::Parameter::qmmm_struct::qm_param_struct* qm_param)
   {
   std::vector<std::string> buffer = m_block["IAC"];
@@ -1092,10 +1098,20 @@ void io::In_QMMM::read_iac_elements(const topology::Topology& topo
       return;
     }
     else {
-      DEBUG(15, "IAC atom \"" << it->first << "\" (#" << (it->second + 1) << ") is mapped to element #" << qm_param->iac_elements.at(it->second)); // +1: match documentation for IAC atoms
+      DEBUG(15, "IAC atom \"" << it->first << "\" (#" << (it->second + 1) << ") is mapped to element #" 
+        << qm_param->iac_elements.at(it->second)); // +1: match documentation for IAC atoms
     }
   }
-
+  // assign atoms in topology - note that this is only relevant for MM atoms
+  // this procedure allows usage of QM atom types for which no force field parametrers
+  // are available (e.g. Pd can be modelled with Si) 
+  for (unsigned int i = 0; i < topo.iac().size(); ++i) {
+    if (!topo.is_qm(i)) { // QM atoms are assigned in QMZONE block
+      DEBUG(15, "Atom #" << (i+1) << " with IAC #" << topo.iac(i) + 1 << " is assigned element symbol #"
+        << qm_param->iac_elements[topo.iac(i)]); // +1: match documentation
+      topo.qm_atomic_number(i) = qm_param->iac_elements[topo.iac(i)];
+    }
+  }
 }
 
 void io::In_QMMM::read_units(const simulation::Simulation& sim

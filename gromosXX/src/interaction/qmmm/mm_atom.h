@@ -15,13 +15,13 @@ namespace interaction {
     /**
      * Constructor
      * @param index index of MM atom in topology
-    // * @param atomic_number - the atomic number of the atom
      * @param pos the position
+     * @param atomic_number - the atomic number of the atom
      * @param charge the charge
      */
     MM_Atom(unsigned index
-          //, unsigned atomic_number
           , math::Vec pos = {0.0,0.0,0.0}
+          , unsigned atomic_number = 1
           , double charge = 0.0
           , math::Vec force = {0.0,0.0,0.0}
           , double cos_charge = 0.0
@@ -30,7 +30,7 @@ namespace interaction {
           , bool polarisable = false
           ) :
               index(index)
-          //  , atomic_number(atomic_number)
+            , atomic_number(atomic_number)
             , pos(pos)
             , charge(charge)
             , force(force)

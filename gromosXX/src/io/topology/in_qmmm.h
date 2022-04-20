@@ -54,7 +54,7 @@ namespace io {
     /**
      * Read the map of IAC codes to atomic numbers
      */
-    void read_iac_elements(const topology::Topology& topo
+    void read_iac_elements(topology::Topology& topo
     , simulation::Parameter::qmmm_struct::qm_param_struct* qm_param);
     /**
      * Read the list of QM atoms
