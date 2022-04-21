@@ -1107,9 +1107,9 @@ void io::In_QMMM::read_iac_elements(topology::Topology& topo
   // are available (e.g. Pd can be modelled with Si) 
   for (unsigned int i = 0; i < topo.iac().size(); ++i) {
     if (!topo.is_qm(i)) { // QM atoms are assigned in QMZONE block
-      DEBUG(15, "Atom #" << (i+1) << " with IAC #" << topo.iac(i) + 1 << " is assigned element symbol #"
-        << qm_param->iac_elements[topo.iac(i)]); // +1: match documentation
-      topo.qm_atomic_number(i) = qm_param->iac_elements[topo.iac(i)];
+      DEBUG(15, "Atom #" << (i+1) << " with IAC #" << topo.iac(i) + 1 << " is assigned element symbol #" // +1: match documentation
+        << qm_param->iac_elements.at(topo.iac(i))); 
+      topo.qm_atomic_number(i) = qm_param->iac_elements.at(topo.iac(i));
     }
   }
 }

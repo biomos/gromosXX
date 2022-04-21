@@ -168,9 +168,11 @@ int interaction::Orca_Worker::process_input(const topology::Topology& topo
   err = this->write_input_coordinates(ifs, topo, conf, sim, qm_zone);
   if (err) return err;
 
-  // create external file with information on point charges
-  err = this->write_input_pointcharges(ifs, topo, conf, sim, qm_zone);
-  if (err) return err;
+  if (sim.param().qmmm.qmmm > simulation::qmmm_mechanical) {
+    // create external file with information on point charges
+    err = this->write_input_pointcharges(ifs, topo, conf, sim, qm_zone);
+    if (err) return err;
+  }
 
   return 0;
 }
@@ -208,7 +210,7 @@ int interaction::Orca_Worker::write_input_coordinates(std::ofstream& ifs
   int err = this->open_input(ifs, this->param->input_coordinate_file);
   if (err) return err;
 
-  double len_to_qm = 1.0 / this->param->unit_factor_length;
+  const double len_to_qm = 1.0 / this->param->unit_factor_length;
 
   DEBUG(15, "Writing QM coordinates");
   // number of atoms and comment line
@@ -244,8 +246,8 @@ int interaction::Orca_Worker::write_input_pointcharges(std::ofstream& ifs
   // write number of charges
   ifs << this->get_num_charges(sim, qm_zone) << std::endl;
 
-  double len_to_qm = 1.0 / this->param->unit_factor_length;
-  double cha_to_qm = 1.0 / this->param->unit_factor_charge;
+  const double len_to_qm = 1.0 / this->param->unit_factor_length;
+  const double cha_to_qm = 1.0 / this->param->unit_factor_charge;
   for (std::set<MM_Atom>::const_iterator it = qm_zone.mm.begin(), to = qm_zone.mm.end();
   it != to; ++it) {
     if (it->is_polarisable) {
@@ -447,7 +449,7 @@ int interaction::Orca_Worker::parse_charges(std::ifstream& ofs, interaction::QM_
   std::getline(ofs, line); // part of the block header
   std::string dummy;
   // QM atoms
-  for (std::set<QM_Atom>::iterator
+  for (std::set<QM_Atom>::const_iterator
              it = qm_zone.qm.begin(), to = qm_zone.qm.end(); it != to; ++it) {
     DEBUG(15, "Parsing charge of QM atom " << it->index);
     std::getline(ofs, line); // get the actual line
@@ -469,7 +471,7 @@ int interaction::Orca_Worker::parse_charges(std::ifstream& ofs, interaction::QM_
     it->qm_charge *= this->param->unit_factor_charge;
   }
   // capping atoms
-  for (std::set<QM_Link>::iterator
+  for (std::set<QM_Link>::const_iterator
          it = qm_zone.link.begin(), to = qm_zone.link.end(); it != to; ++it) {
     DEBUG(15, "Parsing charge of capping atom " << it->qm_index << "-" << it->mm_index);
     std::istringstream iss(line);
@@ -510,9 +512,9 @@ int interaction::Orca_Worker::parse_mm_gradients(std::ifstream& ofs, interaction
       return 1;
     }
     if (it->is_polarisable) {
-      DEBUG(15,"Parsing gradient of MM atom " << it->index);
-      int err = this->parse_gradient3(ofs, it->force);
-      DEBUG(15, "Force: " << math::v2s(it->force));
+      DEBUG(15,"Parsing gradient of COS of MM atom " << it->index);
+      int err = this->parse_gradient3(ofs, it->cos_force);
+      DEBUG(15, "Force: " << math::v2s(it->cos_force));
       if (err) {
         std::ostringstream msg;
         msg << "Failed to parse gradient line of COS of MM atom " << (it->index + 1)

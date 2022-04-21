@@ -52,28 +52,7 @@ int interaction::XTB_Worker::init(const topology::Topology& topo
   this->param = &(sim.param().qmmm.xtb);
   QM_Worker::param = this->param;
 
-  for (std::set<MM_Atom>::const_iterator 
-         it = qm_zone.mm.begin(), to = qm_zone.mm.end(); it != to; ++it) {
-    std::cout << it->index << std::endl;
-    std::cout << it->atomic_number << std::endl;
-    std::cout << it->charge << std::endl;
-    std::cout << math::v2s(it->pos) << std::endl;
-  }
-
-  std::cout << "size iac() : " << topo.iac().size() << std::endl;
-  for (unsigned int i = 0; i < topo.iac().size(); ++i) {
-    std::cout << "atom with index: " << i << " has IAC code: " << topo.iac(i) + 1 << " " << topo.is_qm(i) << std::endl;
-  }
-
-  std::cout << "Size of qm_atomic_number: " << topo.qm_atomic_number().size() << std::endl;
-  int items_not_zero = std::count_if(topo.qm_atomic_number().begin(), topo.qm_atomic_number().end(), [](int item) {return item != 0;});
-  int items_zero = topo.qm_atomic_number().size() - items_not_zero;
-  std::cout << "items not zero: " << items_not_zero << std::endl;
-  std::cout << "items zero: " << items_zero << std::endl;
-  for (const auto& e : topo.qm_atomic_number()) {
-    std::cout << e << std::endl;
-  }
-
+  // Charge and spin
   this->charge = qm_zone.charge() * this->param->unit_factor_charge;
   this->uhf = (qm_zone.spin_mult() - 1) / 2; // spin multiplicity to # unpaired electrons
 
@@ -105,17 +84,8 @@ int interaction::XTB_Worker::init(const topology::Topology& topo
     return 1;
   }
 
-  // initialize QM atom types
-  unsigned int i = 0;
-  for (std::set<QM_Atom>::const_iterator 
-         it = qm_zone.qm.begin(), to = qm_zone.qm.end(); it != to; ++it, ++i) {
-    this->attyp[i] = it->atomic_number;
-  }
-  // initialize QM links
-  for (std::set<QM_Link>::const_iterator
-         it = qm_zone.link.begin(), to = qm_zone.link.end(); it != to; ++it, ++i) {
-    this->attyp[i] = it->atomic_number;
-  }
+  // initialize QM atoms and QM link atoms
+  this->init_input_atom_types(qm_zone);
 
   // process QM coordinates
   this->process_input_coordinates(topo, conf, sim, qm_zone);
@@ -155,6 +125,25 @@ int interaction::XTB_Worker::init(const topology::Topology& topo
   return 0;
 }
 
+void interaction::XTB_Worker::init_input_atom_types(const interaction::QM_Zone& qm_zone) {
+  unsigned int i = 0;
+  // QM atoms
+  DEBUG(15, "Initializing QM atom types");
+  for (std::set<QM_Atom>::const_iterator 
+         it = qm_zone.qm.begin(), to = qm_zone.qm.end(); it != to; ++it, ++i) {
+    DEBUG(15, it->index << " " << it->atomic_number);
+    this->attyp[i] = it->atomic_number;
+  }
+  // QM link atoms (iterator i keeps running)
+  DEBUG(15, "Initializing capping atom types");
+  for (std::set<QM_Link>::const_iterator
+         it = qm_zone.link.begin(), to = qm_zone.link.end(); it != to; ++it, ++i) {
+    DEBUG(15, "Capping atom " << it->qm_index << "-" << it->mm_index << " "
+      << it->atomic_number);
+    this->attyp[i] = it->atomic_number;
+  }
+}
+
 int interaction::XTB_Worker::process_input(const topology::Topology& topo
                   , const configuration::Configuration& conf
                   , const simulation::Simulation& sim
@@ -170,15 +159,17 @@ int interaction::XTB_Worker::process_input(const topology::Topology& topo
       return 1;
   }
 
-  // process point charges
-  this->process_input_pointcharges(topo, conf, sim, qm_zone);
+  if (sim.param().qmmm.qmmm > simulation::qmmm_mechanical) {
+    // process point charges
+    this->process_input_pointcharges(topo, conf, sim, qm_zone);
 
-  // set external charges
-  xtb_setExternalCharges(this->env, this->calc, &(this->num_charges), this->numbers.data(),
-                         this->charges.data(), this->point_charges.data());
-  if (xtb_checkEnvironment(this->env)) {
-      xtb_showEnvironment(this->env, NULL);
-      return 1;
+    // set external charges
+    xtb_setExternalCharges(this->env, this->calc, &(this->ncharges), this->numbers.data(),
+                           this->charges.data(), this->point_charges.data());
+    if (xtb_checkEnvironment(this->env)) {
+        xtb_showEnvironment(this->env, NULL);
+        return 1;
+    }
   }
 
   return 0;
@@ -188,8 +179,8 @@ void interaction::XTB_Worker::process_input_coordinates(const topology::Topology
                                                       , const configuration::Configuration& conf
                                                       , const simulation::Simulation& sim
                                                       , const interaction::QM_Zone& qm_zone) {
-  // MM -> QM length unit is inverse of input value
-  double len_to_qm = 1.0 / this->param->unit_factor_length;
+  // Gromos -> QM length unit is inverse of input value from QM/MM specification file
+  const double len_to_qm = 1.0 / this->param->unit_factor_length;
 
   // transfer QM coordinates
   DEBUG(15, "Transfering QM coordinates to XTB");
@@ -197,20 +188,16 @@ void interaction::XTB_Worker::process_input_coordinates(const topology::Topology
   for (std::set<QM_Atom>::const_iterator 
          it = qm_zone.qm.begin(), to = qm_zone.qm.end(); it != to; ++it) {
     DEBUG(15, it->index << " " << it->atomic_number << " " << math::v2s(it->pos * len_to_qm));
-    this->coord[i]     = it->pos(0) * len_to_qm;
-    this->coord[i + 1] = it->pos(1) * len_to_qm;
-    this->coord[i + 2] = it->pos(2) * len_to_qm;
-    i += 3; // x, y, z component
+    math::vector_c2f(this->coord, it->pos, i, len_to_qm);
+    ++i;
   }
-  // transfer capping atoms
+  // transfer capping atoms (index i keeps running...)
   DEBUG(15, "Transfering capping atoms coordinates to XTB");
   for (std::set<QM_Link>::const_iterator it = qm_zone.link.begin(), to = qm_zone.link.end(); it != to; it++) {
     DEBUG(15, "Capping atom " << it->qm_index << "-" << it->mm_index << " "
       << it->atomic_number << " " << math::v2s(it->pos * len_to_qm));
-    this->coord[i]     = it->pos(0) * len_to_qm;
-    this->coord[i + 1] = it->pos(1) * len_to_qm;
-    this->coord[i + 2] = it->pos(2) * len_to_qm;
-    i += 3; 
+    math::vector_c2f(this->coord, it->pos, i, len_to_qm);
+    ++i;
   } 
 }
 
@@ -219,30 +206,53 @@ void interaction::XTB_Worker::process_input_pointcharges(const topology::Topolog
                                                        , const simulation::Simulation& sim
                                                        , const interaction::QM_Zone& qm_zone) {
   // MM -> QM length unit is inverse of input value
-  double len_to_qm = 1.0 / this->param->unit_factor_length;
-  double cha_to_qm = 1.0 / this->param->unit_factor_charge;
+  const double cha_to_qm = 1.0 / this->param->unit_factor_charge;
+  const double len_to_qm = 1.0 / this->param->unit_factor_length;
 
-  unsigned int i = 0;
-  for (std::set<MM_Atom>::const_iterator 
+  this->ncharges = this->get_num_charges(sim, qm_zone); // this also checks for COS
+  this->numbers.resize(this->ncharges);
+  this->charges.resize(this->ncharges);
+  this->point_charges.resize(this->ncharges * 3);
+
+  DEBUG(15, "Transfering point charges coordinates to XTB");
+
+  unsigned int i = 0; // iterate over atoms - keep track of the offset for Fortran arrays
+  for (std::set<MM_Atom>::const_iterator
          it = qm_zone.mm.begin(), to = qm_zone.mm.end(); it != to; ++it) {
-    coord[i] = it->pos(0);
-    coord[i + 1] = it->pos(1);
-    coord[i + 2] = it->pos(2);
-    i += 3; // x, y, z component
+    // memory layout of point charge arrays: 
+    // numbers (1d), charges (1d), point_charges (3d): one-dimensional arrays 
+    // COS numbers, charges, cartesian coordinates are after MM numbers, charges, cartesian coordinates
+    if (it->is_polarisable) {
+      // MM atom minus COS
+      DEBUG(15, it->index << " " << it->atomic_number << " " 
+        << (it->charge - it->cos_charge) * cha_to_qm << " " << math::v2s(it->pos * len_to_qm));
+      this->numbers[i] = it->atomic_number;
+      this->charges[i] = (it->charge - it->cos_charge) * cha_to_qm;
+      math::vector_c2f(this->point_charges, it->pos, i, len_to_qm);
+      ++i;
+      // COS
+      DEBUG(15, it->index << " " << it->atomic_number << " " 
+        << it->cos_charge * cha_to_qm << " " << math::v2s((it->pos + it->cosV) * len_to_qm));
+      this->numbers[i] = it->atomic_number;
+      this->charges[i] = it->cos_charge * cha_to_qm;
+      math::vector_c2f(this->point_charges, it->cosV, i, len_to_qm);
+      ++i;
+    }
+    else {
+      DEBUG(15, it->index << " " << it->atomic_number << " " 
+        << it->charge * cha_to_qm << " " << math::v2s(it->pos * len_to_qm));
+      this->numbers[i] = it->atomic_number;
+      this->charges[i] = it->charge * cha_to_qm;
+      math::vector_c2f(this->point_charges, it->pos, i, len_to_qm);
+      ++i;
+    }
   }
-  // scale coordinates
-  std::transform(coord.begin(), coord.end(), coord.begin(), [len_to_qm](double& e) { return e *= len_to_qm; });
 }
 
 int interaction::XTB_Worker::run_calculation() {
+  DEBUG(15, "Call XTB singlepoint calculation");
   // run singlepoint calculation
   xtb_singlepoint(this->env, this->mol, this->calc, this->res);
-  if (xtb_checkEnvironment(this->env)) {
-      xtb_showEnvironment(this->env, NULL);
-      return 1;
-  }
-  // release charges after successful run
-  xtb_releaseExternalCharges(this->env, this->calc);
   if (xtb_checkEnvironment(this->env)) {
       xtb_showEnvironment(this->env, NULL);
       return 1;
@@ -250,19 +260,20 @@ int interaction::XTB_Worker::run_calculation() {
   return 0;
 }
 
-void interaction::XTB_Worker::print_coordinates(const std::vector<double>& coord) {
-  for (unsigned int i = 0; i < coord.size(); i += 3) {
-    std::cout << std::setw(25) << coord[i]
-              << std::setw(25) << coord[i + 1]
-              << std::setw(25) << coord[i + 2]
-              << std::endl;
-  }
-}
-
 int interaction::XTB_Worker::process_output(topology::Topology& topo
                   , configuration::Configuration& conf
                   , simulation::Simulation& sim
                   , interaction::QM_Zone& qm_zone) {
+
+  if (sim.param().qmmm.qmmm > simulation::qmmm_mechanical) {
+    // release charges after successful run
+    xtb_releaseExternalCharges(this->env, this->calc);
+    if (xtb_checkEnvironment(this->env)) {
+        xtb_showEnvironment(this->env, NULL);
+        return 1;
+    }
+  }
+
   int err;
 
   // parse energy
@@ -276,8 +287,7 @@ int interaction::XTB_Worker::process_output(topology::Topology& topo
   // parse MM gradients or charges
   if (sim.param().qmmm.qmmm > simulation::qmmm_mechanical) {
     // also parse MM gradients
-    unsigned int ncharges = this->get_num_charges(sim, qm_zone);
-    err = this->parse_mm_gradients(qm_zone, ncharges);
+    err = this->parse_mm_gradients(qm_zone);
     if (err) return err;
   }
   else if (sim.param().qmmm.qmmm == simulation::qmmm_mechanical
@@ -308,44 +318,79 @@ int interaction::XTB_Worker::parse_qm_gradients(interaction::QM_Zone& qm_zone) c
     xtb_showEnvironment(this->env, NULL);
     return 1;
   }
+  const double force_to_mm = this->param->unit_factor_force;
   unsigned int i = 0;
+  // Parse QM atoms
   for (std::set<QM_Atom>::iterator
          it = qm_zone.qm.begin(), to = qm_zone.qm.end(); it != to; ++it) {
-    it->force(0) = -this->param->unit_factor_force * gradients[i];
-    it->force(1) = -this->param->unit_factor_force * gradients[i + 1];
-    it->force(2) = -this->param->unit_factor_force * gradients[i + 2];
-    i += 3;
+    // forces = negative gradient (!)
+    DEBUG(15, "Parsing gradients of QM atom " << it->index);
+    math::vector_f2c(gradients, it->force, i, -1.0 * force_to_mm);
+    DEBUG(15, "Force: " << math::v2s(it->force));
+    ++i;
   }
-  i = 0;
+  // Parse capping atoms (index i keeps running...)
   for (std::set<QM_Link>::iterator
          it = qm_zone.link.begin(), to = qm_zone.link.end(); it != to; ++it) {
-    it->force(0) = -this->param->unit_factor_force * gradients[i];
-    it->force(1) = -this->param->unit_factor_force * gradients[i + 1];
-    it->force(2) = -this->param->unit_factor_force * gradients[i + 2];
-    i += 3;
+    DEBUG(15, "Parsing gradient of capping atom " << it->qm_index << "-" << it->mm_index);
+    math::vector_f2c(gradients, it->force, i, -1.0 * force_to_mm);
+    DEBUG(15, "Force: " << math::v2s(it->force));
+    ++i;
   }
   return 0;
 }
 
-int interaction::XTB_Worker::parse_mm_gradients(interaction::QM_Zone& qm_zone, const unsigned int ncharges) const {
-  std::vector<double> pc_gradients(ncharges * 3, 0.0); // gradients will live here
+int interaction::XTB_Worker::parse_mm_gradients(interaction::QM_Zone& qm_zone) const {
+  std::vector<double> pc_gradients(this->ncharges * 3, 0.0); // gradients will live here
   xtb_getPCGradient(this->env, this->res, pc_gradients.data());
   if (xtb_checkEnvironment(this->env)) {
     xtb_showEnvironment(this->env, NULL);
     return 1;
   }
+  const double force_to_mm = this->param->unit_factor_force;
+  // Parse MM atoms
   unsigned int i = 0;
   for (std::set<MM_Atom>::iterator
          it = qm_zone.mm.begin(), to = qm_zone.mm.end(); it != to; ++it) {
-    it->force(0) = -this->param->unit_factor_force * pc_gradients[i];
-    it->force(1) = -this->param->unit_factor_force * pc_gradients[i + 1];
-    it->force(2) = -this->param->unit_factor_force * pc_gradients[i + 2];
-    i += 3;
+    // forces = negative gradient (!)
+    DEBUG(15,"Parsing gradient of MM atom " << it->index);
+    math::vector_f2c(pc_gradients, it->force, i, -1.0 * force_to_mm);
+    DEBUG(15, "Force: " << math::v2s(it->force));
+    if (it->is_polarisable) {
+      ++i; // COS gradients live directly past the corresponding MM gradients
+      DEBUG(15, "Parsing gradient of COS of MM atom " << it->index);
+      math::vector_f2c(pc_gradients, it->cos_force, i, -1.0 * force_to_mm);
+      DEBUG(15, "Force " << math::v2s(it->cos_force));
+    }
+    ++i;
   }
   return 0;
 }
 
 int interaction::XTB_Worker::parse_charges(interaction::QM_Zone& qm_zone) const {
-  int err = 0;
-  return err;
+  std::vector<double> charges(this->natoms, 0.0); // charges will live here
+  xtb_getCharges(this->env, this->res, charges.data());
+  if (xtb_checkEnvironment(this->env)) {
+    xtb_showEnvironment(this->env, NULL);
+    return 1;
+  }
+  const double cha_to_mm = this->param->unit_factor_charge;
+  // QM atoms
+  unsigned int i = 0;
+  for (std::set<QM_Atom>::const_iterator
+             it = qm_zone.qm.begin(), to = qm_zone.qm.end(); it != to; it++) {
+    DEBUG(15, "Parsing charge of QM atom " << it->index);
+    it->qm_charge = charges[i] * cha_to_mm;
+    DEBUG(15, "Charge: " << it->qm_charge);
+    ++i;
+  }
+  // Capping atoms (iterator i keeps running)
+  for (std::set<QM_Link>::const_iterator
+             it = qm_zone.link.begin(), to = qm_zone.link.end(); it != to; it++) {
+    DEBUG(15, "Parsing charge of capping atom " << it->qm_index << "-" << it->mm_index);
+    it->qm_charge = charges[i] * cha_to_mm;
+    DEBUG(15, "Charge: " << it->qm_charge);
+    ++i;
+  }
+  return 0;
 }

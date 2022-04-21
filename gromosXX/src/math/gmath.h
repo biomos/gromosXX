@@ -818,6 +818,74 @@ namespace math
     return s.str();
   }
 
+  /**
+   * Copies a three-dimensional vector of doubles into a one-dimensional vector with the specified offset and scaling. 
+   * Useful to prepare data for Fortran API calls. No bounce checks.
+   * 
+   * @param v_f One-dimensional vector of doubles ready to go into the Fortran code
+   * @param v_c Cartesian coordinates of an atom / gradient to be copied
+   * @param offset The specified offset
+   * @param scaling The scaling factor
+   */
+  inline void vector_c2f(std::vector<double>& v_f
+                , const math::Vec& v_c
+                , const unsigned int offset
+                , const double scaling) 
+  {
+    for (unsigned int i = 0; i < 3; ++i) {
+      v_f[3 * offset + i] = v_c(i) * scaling;
+    }
+  }
+
+  /**
+   * Copies a three-dimensional vector of doubles into a one-dimensional vector with the specified offset. 
+   * Useful to prepare data for Fortran API calls. No bounce checks.
+   * 
+   * @param v_f One-dimensional vector of doubles ready to go into the Fortran code
+   * @param v_c Cartesian coordinates of an atom / gradient to be copied
+   * @param offset The specified offset
+   */
+  inline void vector_c2f(std::vector<double>& v_f
+                , const math::Vec& v_c
+                , const unsigned int offset) 
+  {
+    vector_c2f(v_f, v_c, offset, 1.0);
+  }
+
+  /**
+   * Copies a one-dimensional vector of doubles into a three-dimensional vector with the specified offset and scaling. 
+   * Useful to process data received from Fortran API calls. No bounce checks.
+   * 
+   * @param v_f One dimensional vector of doubles received from a Fortran API call
+   * @param v_c Cartesian coordinates of an atom / gradient to be copied to
+   * @param offset The specified offset
+   * @param scaling The scaling factor
+   */
+  inline void vector_f2c(const std::vector<double>& v_f
+                , math::Vec& v_c
+                , const unsigned int offset
+                , const double scaling) 
+  {
+    for (unsigned int i = 0; i < 3; ++i) {
+      v_c(i) = v_f[3 * offset + i] * scaling;
+    }
+  }
+
+  /**
+   * Copies a one-dimensional vector of doubles into a three-dimensional vector with the specified offset. 
+   * Useful to process data received from Fortran API calls. No bounce checks.
+   * 
+   * @param v_f One dimensional vector of doubles received from a Fortran API call
+   * @param v_c Cartesian coordinates of an atom / gradient to be copied to
+   * @param offset The specified offset
+   */
+  inline void vector_f2c(const std::vector<double>& v_f
+                , math::Vec& v_c
+                , const unsigned int offset) 
+  {
+    vector_f2c(v_f, v_c, offset, 1.0);
+  }
+
   inline double sum(SArray const & a)
   {
     double d = 0.0;
@@ -1217,5 +1285,4 @@ namespace math
   
 } // math
 
-#endif
-
+#endif /* INCLUDED_MATH_H */

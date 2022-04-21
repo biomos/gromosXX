@@ -54,6 +54,13 @@ namespace interaction {
                   , const interaction::QM_Zone& qm_zone);              
 
     /**
+     * Initialize the QM atoms and QM capping atoms
+     * 
+     * @param qm_zone The QM zone
+     */
+    void init_input_atom_types(const interaction::QM_Zone& qm_zone);
+    
+    /**
      * Extracts the coordinates of the QM zone, transfers them into a one-dimensional
      * array, and scales them according to the given conversion factor
      * 
@@ -80,13 +87,6 @@ namespace interaction {
                                   , const configuration::Configuration& conf
                                   , const simulation::Simulation& sim
                                   , const interaction::QM_Zone& qm_zone);
-
-    /**
-     * Prints the coordinates to the console
-     * 
-     * @param coord Coordinates to be printed as one-dimensional array.
-     */
-    void print_coordinates(const std::vector<double>& coord);
     
     /**
      * Call external QM program - XTB
@@ -127,7 +127,7 @@ namespace interaction {
      * Parse MM gradients
      * @param qm_zone QM Zone
      */
-    int parse_mm_gradients(interaction::QM_Zone& qm_zone, const unsigned int ncharges) const;
+    int parse_mm_gradients(interaction::QM_Zone& qm_zone) const;
 
     /**
      * Pointer to simulation parameters
@@ -182,7 +182,7 @@ namespace interaction {
     /**
      * Number of point charges
      */
-    int num_charges;
+    int ncharges;
 
     /**
      * These correspond to element types - required for XTB
@@ -204,4 +204,3 @@ namespace interaction {
 }
 
 #endif	/* XTB_WORKER_H */
-
