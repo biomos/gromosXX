@@ -88,7 +88,7 @@ PRINTOUT
 END
 QMMM
 # 	 NTQMMM 	 NTQMSW 	 RCUTQ 	          NTWQMMM 	 QMLJ    QMCON 	 MMSCAL
- 	 2 	         7 	         1.200000 	  0 	         0 	 0       -1.000000 	 
+ 	        2 	         7 	         1.200000 	  0 	         0 	 0       -1.000000 	 
 END
 STEP
 # 	 NSTLIM     T   	 DT

@@ -126,8 +126,8 @@ int interaction::XTB_Worker::init(const topology::Topology& topo
 }
 
 void interaction::XTB_Worker::init_input_atom_types(const interaction::QM_Zone& qm_zone) {
-  unsigned int i = 0;
   // QM atoms
+  unsigned int i = 0;
   DEBUG(15, "Initializing QM atom types");
   for (std::set<QM_Atom>::const_iterator 
          it = qm_zone.qm.begin(), to = qm_zone.qm.end(); it != to; ++it, ++i) {
