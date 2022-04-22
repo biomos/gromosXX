@@ -10,6 +10,9 @@ set(TEST_PROGRAM_INCLUDES
     ../interaction/forcefield
     ../interaction/special
     ../interaction/qmmm
+    ../topology
+    ../simulation
+    ../configuration
     ../algorithm
 )
 
@@ -53,6 +56,11 @@ set(LAMBDAS_CC
 	check_state.cc
 )
 
+set(ORCA_CC
+    orca_worker.t.cc
+    qm_worker.t.cc
+)
+
 # gromos object files
 set(GROMOS_OBJECTS
     $<TARGET_OBJECTS:groalgorithm>
@@ -67,7 +75,7 @@ set(GROMOS_OBJECTS
 )
 
 # executables
-set(EXEC_NAMES aladip aladip_unperturbed aladip_special aladip_atomic aladip_ls c16_cg lambdas)
+set(EXEC_NAMES aladip aladip_unperturbed aladip_special aladip_atomic aladip_ls c16_cg lambdas orca_worker)
 
 add_executable(aladip ${ALADIP_CC} ${GROMOS_OBJECTS})
 add_executable(aladip_unperturbed ${ALADIP_UNPERTURBED_CC} ${GROMOS_OBJECTS})
@@ -77,6 +85,8 @@ add_executable(aladip_ls ${ALADIP_LS_CC} ${GROMOS_OBJECTS})
 
 add_executable(c16_cg ${C16_CG_CC} ${GROMOS_OBJECTS})
 add_executable(lambdas ${LAMBDAS_CC} ${GROMOS_OBJECTS})
+
+add_executable(orca_worker ${ORCA_CC} ${GROMOS_OBJECTS})
 
 # links and includes for tests
 foreach(LOOP_VAR ${EXEC_NAMES})
