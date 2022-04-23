@@ -57,6 +57,7 @@ set(LAMBDAS_CC
 )
 
 set(ORCA_CC
+    test_simulation.cc
     orca_worker.t.cc
     qm_worker.t.cc
 )

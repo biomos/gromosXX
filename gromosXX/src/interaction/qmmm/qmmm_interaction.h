@@ -13,8 +13,12 @@ namespace io {
   class IFP;
 }
 
-#include "../../../interaction/nonbonded/interaction/nonbonded_parameter.h"
-#include "../../../interaction/interaction.h"
+namespace test {
+  class QM_Worker_Test;
+}
+
+#include "../../interaction/nonbonded/interaction/nonbonded_parameter.h"
+#include "../../interaction/interaction.h"
 
 namespace interaction {
   class QM_Worker;
@@ -203,6 +207,12 @@ namespace interaction {
      * Pointer to the instance
      */
     static QMMM_Interaction * qmmm_ptr;
+
+
+  /**
+   * Make private members available for testing 
+   */
+  friend class test::QM_Worker_Test;
 
   };
   

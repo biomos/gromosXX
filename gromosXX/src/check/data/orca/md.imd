@@ -84,7 +84,7 @@ PRESSURESCALE
 END
 PRINTOUT
 # 	 NTPR 	 NTPP
- 	 100 	 0 	 
+ 	 1 	 0 	 
 END
 QMMM
 # 	 NTQMMM 	 NTQMSW 	 RCUTQ 	          NTWQMMM 	 QMLJ    QMCON 	 MMSCAL
@@ -92,7 +92,7 @@ QMMM
 END
 STEP
 # 	 NSTLIM     T   	 DT
- 	 20        0.000000 	 0.000500 	 
+ 	 2        0.000000 	 0.000500 	 
 END
 SYSTEM
 # 	 NPM 	 NSM
@@ -100,5 +100,5 @@ SYSTEM
 END
 WRITETRAJ
 # 	 NTWX 	 NTWSE 	 NTWV 	 NTWF 	 NTWE 	 NTWG 	 NTWB
- 	 100 	 0 	 0 	 0 	 100 	 0 	 0 	 
+ 	 1 	 0 	 0 	 0 	 1 	 0 	 0 	 
 END

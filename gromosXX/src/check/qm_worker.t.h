@@ -7,144 +7,61 @@
 
 #include "../stdheader.h"
 
-#include "../algorithm/algorithm.h"
-#include "../algorithm/algorithm/algorithm_sequence.h"
-
-#include "../topology/topology.h"
-#include "../simulation/simulation.h"
-#include "../configuration/configuration.h"
+#include "test_simulation.h"
 
 #include "../interaction/qmmm/qmmm_interaction.h"
 #include "../interaction/qmmm/qm_worker.h"
+#include "../interaction/qmmm/qm_zone.h"
+
+
+namespace test {
 
 class QM_Worker_Test {
 
 public:
 
-  /**
-   * Construct a new qm worker test object
-   * 
-   */
   QM_Worker_Test(std::string binary_name
+               , std::string test_title
                , std::string topology_file
                , std::string simulation_file
                , std::string configuration_file
                , std::string qmmm_file
                , std::string coordinate_trajectory_file
                , std::string energy_trajectory_file
-               , std::string final_configuration_file) : binary_name(binary_name)
-                                                       , topology_file(topology_file)
-                                                       , simulation_file(simulation_file)
-                                                       , configuration_file(configuration_file)
-                                                       , qmmm_file(qmmm_file)
-                                                       , coordinate_trajectory_file(coordinate_trajectory_file)
-                                                       , energy_trajectory_file(energy_trajectory_file)
-                                                       , final_configuration_file(final_configuration_file) {}
+               , std::string final_configuration_file);
 
-  /**
-   * Destroy the qm worker test object
-   * 
-   */
-  virtual ~QM_Worker_Test();
+  virtual ~QM_Worker_Test() = default;
 
-  /**
-   * Initializes the simulation
-   * 
-   */
-  int init_simulation();
+  void test_friend();
 
 protected:
 
   /**
-   * Instance of the MD simulation
+   * Instance of a test simulation based on the input files
    * 
    */
-  algorithm::Algorithm_Sequence md;
-  
-  /**
-   * Instance of the system's topology
-   * 
-   */
-  topology::Topology topo;
+  test::Test_Simulation test_sim_;
 
   /**
-   * Instance of the system's simulation
+   * Pointer to the qmmm_interaction object of the test simulation
    * 
    */
-  simulation::Simulation sim;
+  interaction::QMMM_Interaction* qmmm_interaction_ptr;
 
   /**
-   * Instance of the system's configuration
-   * 
-   */
-  configuration::Configuration conf;
-
-  /**
-   * Store the name of the binary
-   * 
-   */
-  std::string binary_name;
-
-  /**
-   * Pointer to the QM/MM interaction
-   * 
-   */
-  interaction::QMMM_Interaction* qmmm_ptr;
-
-  /**
-   * Pointer to the QM worker
+   * Pointer to the qm_worker object of the test simulation
    * 
    */
   interaction::QM_Worker* qm_worker_ptr;
 
   /**
-   * Path to the topology file
+   * Pointer to the qm_zone object of the test simulation
    * 
    */
-  std::string topology_file;
-
-  /**
-   * Path to the simulation file
-   * 
-   */
-  std::string simulation_file;
-
-  /**
-   * Path to the configuration file
-   * 
-   */
-  std::string configuration_file;
-
-  /**
-   * Path to the qmmm specification file
-   * 
-   */
-  std::string qmmm_file;
-
-  /**
-   * Path to the coordinate trajectory file
-   * 
-   */
-  std::string coordinate_trajectory_file;
-
-  /**
-   * Path to the energy trajectory file
-   * 
-   */
-  std::string energy_trajectory_file;
-
-  /**
-   * Path to the final configuration file
-   * 
-   */
-  std::string final_configuration_file;
-
-  /**
-   * A C++ data structure for command line arguments
-   * 
-   */
-  std::vector<std::string> arguments;
+  interaction::QM_Zone* qm_zone_ptr;
 
 };
+
+}
 
 #endif	/* QM_WORKER_T_H */
