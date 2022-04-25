@@ -1,3 +1,7 @@
+/**
+ * @file test_simulation.cc
+ */
+
 #include <algorithm>
 
 #include "test_simulation.h"
@@ -7,7 +11,9 @@
 
 #include "../util/usage.h"
 
-int test::Test_Simulation::init_simulation() {
+namespace testing {
+
+int Test_Simulation::init_simulation() {
   // supported files
   std::vector<std::string> qualifiers = {"topo", "conf", "input", "qmmm", "trc", "tre", "fin"};
   util::Known knowns;
@@ -53,7 +59,7 @@ int test::Test_Simulation::init_simulation() {
   return EXIT_SUCCESS;
 }
 
-int test::Test_Simulation::run_single_step() {
+int Test_Simulation::run_single_step() {
   int err;
   if (this->sim_.steps() < this->sim_.param().step.number_of_steps) {
     // write trajectory
@@ -76,7 +82,7 @@ int test::Test_Simulation::run_single_step() {
   return err; 
 }
 
-int test::Test_Simulation::run_simulation() {
+int Test_Simulation::run_simulation() {
   int err;
 
   while (this->sim_.steps() < this->sim_.param().step.number_of_steps) {
@@ -101,4 +107,6 @@ int test::Test_Simulation::run_simulation() {
   this->traj_.print_final(this->topo_, this->conf_, this->sim_);
 
   return err;
+}
+
 }

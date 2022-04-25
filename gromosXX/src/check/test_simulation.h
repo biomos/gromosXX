@@ -15,7 +15,7 @@
 #include "../configuration/configuration.h"
 #include "../io/configuration/out_configuration.h"
 
-namespace test {
+namespace testing {
 
 class Test_Simulation {
 

@@ -1,9 +1,12 @@
 /**
- * @file qm_worker.t.h
+ * @file qm_worker_test.h
  * Base class to perform tests on QM workers
  */
 #ifndef INCLUDED_QM_WORKER_T_H
 #define	INCLUDED_QM_WORKER_T_H
+
+#include <gtest/gtest.h>
+#include <iostream>
 
 #include "../stdheader.h"
 
@@ -14,9 +17,9 @@
 #include "../interaction/qmmm/qm_zone.h"
 
 
-namespace test {
+namespace testing {
 
-class QM_Worker_Test {
+class QM_Worker_Test : public ::testing::Test {
 
 public:
 
@@ -32,15 +35,17 @@ public:
 
   virtual ~QM_Worker_Test() = default;
 
-  void test_friend();
-
 protected:
+
+  void SetUp() override;
+
+  void TearDown() override;
 
   /**
    * Instance of a test simulation based on the input files
    * 
    */
-  test::Test_Simulation test_sim_;
+  Test_Simulation test_sim_;
 
   /**
    * Pointer to the qmmm_interaction object of the test simulation

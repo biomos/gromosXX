@@ -58,8 +58,8 @@ set(LAMBDAS_CC
 
 set(ORCA_CC
     test_simulation.cc
-    orca_worker.t.cc
-    qm_worker.t.cc
+    orca_worker_test.cc
+    qm_worker_test.cc
 )
 
 # gromos object files
@@ -76,7 +76,7 @@ set(GROMOS_OBJECTS
 )
 
 # executables
-set(EXEC_NAMES aladip aladip_unperturbed aladip_special aladip_atomic aladip_ls c16_cg lambdas orca_worker)
+set(EXEC_NAMES aladip aladip_unperturbed aladip_special aladip_atomic aladip_ls c16_cg lambdas)
 
 add_executable(aladip ${ALADIP_CC} ${GROMOS_OBJECTS})
 add_executable(aladip_unperturbed ${ALADIP_UNPERTURBED_CC} ${GROMOS_OBJECTS})
@@ -87,11 +87,31 @@ add_executable(aladip_ls ${ALADIP_LS_CC} ${GROMOS_OBJECTS})
 add_executable(c16_cg ${C16_CG_CC} ${GROMOS_OBJECTS})
 add_executable(lambdas ${LAMBDAS_CC} ${GROMOS_OBJECTS})
 
-add_executable(orca_worker ${ORCA_CC} ${GROMOS_OBJECTS})
-
 # links and includes for tests
 foreach(LOOP_VAR ${EXEC_NAMES})
     target_include_directories(${LOOP_VAR} PRIVATE ${TEST_PROGRAM_INCLUDES})
     target_link_libraries(${LOOP_VAR} ${EXTERNAL_LIBRARIES})
-    add_test(NAME ${LOOP_VAR} COMMAND $<TARGET_FILE:${LOOP_VAR}>)
+    # add_test(NAME ${LOOP_VAR} COMMAND $<TARGET_FILE:${LOOP_VAR}>)
+endforeach()
+
+# newer tests build on googletest
+
+# googletest example
+add_executable(
+  orca_worker_test
+  test_simulation.cc
+  qm_worker_test.cc
+  orca_worker_test.cc
+  ${GROMOS_OBJECTS}
+)
+
+set(GTEST_NAMES orca_worker_test)
+
+include(GoogleTest)
+
+# links and includes for tests
+foreach(LOOP_VAR ${GTEST_NAMES})
+    target_include_directories(${LOOP_VAR} PRIVATE ${TEST_PROGRAM_INCLUDES})
+    target_link_libraries(${LOOP_VAR} ${EXTERNAL_LIBRARIES})
+    gtest_discover_tests(${LOOP_VAR})
 endforeach()
