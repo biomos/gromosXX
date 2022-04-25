@@ -37,8 +37,16 @@ public:
 
 protected:
 
+  /**
+   * Called before the execution of each test
+   * 
+   */
   void SetUp() override;
 
+  /**
+   * Called after the execution of each test
+   * 
+   */
   void TearDown() override;
 
   /**

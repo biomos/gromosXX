@@ -11,6 +11,8 @@
 
 #include "../util/usage.h"
 
+#include "error_codes.h"
+
 namespace testing {
 
 int Test_Simulation::init_simulation() {
@@ -43,16 +45,18 @@ int Test_Simulation::init_simulation() {
   };
 
   if (args.parse(15, c_style_args, knowns)) {
-    return EXIT_FAILURE;
+    return ERROR_PARSE_ARGUMENTS;
   }
 
   // initialize the simulation
   if (io::read_input(args, this->topo_, this->conf_, this->sim_, this->md_)) {
-    return EXIT_FAILURE;
+    return ERROR_READ_INPUT;
   }
   
   // initialize topology, configuration, and simulation objects
-  this->md_.init(this->topo_, this->conf_, this->sim_);
+  if (this->md_.init(this->topo_, this->conf_, this->sim_)) {
+    return ERROR_MD_INIT;
+  }
   // create the output files
   this->traj_.init(args, this->sim_.param());
 
@@ -75,9 +79,12 @@ int Test_Simulation::run_single_step() {
       this->traj_.write(this->conf_, this->topo_, this->sim_, io::final);
       this->traj_.print_final(this->topo_, this->conf_, this->sim_);
     }
+    else {
+      err = ERROR_MD_RUN;
+    }
   }
   else {
-    err = EXIT_FAILURE;
+    err = ERROR_STEPS;
   }
   return err; 
 }
@@ -98,7 +105,7 @@ int Test_Simulation::run_simulation() {
       this->sim_.time() = this->sim_.param().step.t0 + this->sim_.steps() * this->sim_.time_step_size();
     }
     else {
-      return err;
+      return ERROR_MD_RUN;
     }
   } // main md loop
     
