@@ -44,9 +44,9 @@ int interaction::Orca_Worker::init(const topology::Topology& topo
 
   // Aliases to shorten the code
   std::string& inp = this->param->input_file;
-  std::string& out = this->param->output_file;
   std::string& coordinates = this->param->input_coordinate_file;
   std::string& pointcharges = this->param->input_pointcharges_file;
+  std::string& out = this->param->output_file;
   std::string& engrad = this->param->output_gradient_file;
   std::string& pcgrad = this->param->output_mm_gradient_file;
 
