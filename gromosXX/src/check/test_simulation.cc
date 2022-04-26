@@ -45,32 +45,33 @@ int Test_Simulation::init_simulation() {
   };
 
   if (args.parse(15, c_style_args, knowns)) {
-    return ERROR_PARSE_ARGUMENTS;
+    return Error::parse_arguments;
   }
 
   // initialize the simulation
   if (io::read_input(args, this->topo_, this->conf_, this->sim_, this->md_)) {
-    return ERROR_READ_INPUT;
+    return Error::read_input;
   }
   
   // initialize topology, configuration, and simulation objects
   if (this->md_.init(this->topo_, this->conf_, this->sim_)) {
-    return ERROR_MD_INIT;
+    return Error::md_init;
   }
   // create the output files
   this->traj_.init(args, this->sim_.param());
 
-  return EXIT_SUCCESS;
+  return Error::success;
 }
 
 int Test_Simulation::run_single_step() {
-  int err;
+  int err = Error::md_steps; // assume there will not be enough steps provided in the imd file
   if (this->sim_.steps() < this->sim_.param().step.number_of_steps) {
     // write trajectory
     this->traj_.write(this->conf_, this->topo_, this->sim_);
     // run a step
     err = this->md_.run(this->topo_, this->conf_, this->sim_);
     if (!err) {
+      err = Error::success; // the step ran successful
       this->traj_.print(this->topo_, this->conf_, this->sim_);
       this->sim_.steps() = this->sim_.steps() + this->sim_.param().analyze.stride;
       this->sim_.time() = this->sim_.param().step.t0 + this->sim_.steps() * this->sim_.time_step_size();
@@ -80,17 +81,14 @@ int Test_Simulation::run_single_step() {
       this->traj_.print_final(this->topo_, this->conf_, this->sim_);
     }
     else {
-      err = ERROR_MD_RUN;
+      err = Error::md_run; // there was a problem with the step
     }
-  }
-  else {
-    err = ERROR_STEPS;
   }
   return err; 
 }
 
 int Test_Simulation::run_simulation() {
-  int err;
+  int err = Error::md_steps; // assume there will not be enough steps provided
 
   while (this->sim_.steps() < this->sim_.param().step.number_of_steps) {
     // write trajectory
@@ -100,18 +98,22 @@ int Test_Simulation::run_simulation() {
 
     // check for errors and potentially terminate
     if (!err) {
+      err = Error::success; // the step worked
       this->traj_.print(this->topo_, this->conf_, this->sim_);
       this->sim_.steps() = this->sim_.steps() + this->sim_.param().analyze.stride;
       this->sim_.time() = this->sim_.param().step.t0 + this->sim_.steps() * this->sim_.time_step_size();
     }
     else {
-      return ERROR_MD_RUN;
+      err = Error::md_run; // the step didn't work
+      return err; // return already
     }
   } // main md loop
     
-  // final configuration
-  this->traj_.write(this->conf_, this->topo_, this->sim_, io::final);
-  this->traj_.print_final(this->topo_, this->conf_, this->sim_);
+  // if there was no error, write final configuration
+  if (err == Error::success) {
+    this->traj_.write(this->conf_, this->topo_, this->sim_, io::final);
+    this->traj_.print_final(this->topo_, this->conf_, this->sim_);
+  }
 
   return err;
 }

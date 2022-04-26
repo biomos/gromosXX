@@ -101,7 +101,7 @@ namespace interaction {
     bool minimisation;
 
     /**
-     * Write input file for QM
+     * Process input file for QM
      */
     virtual int process_input(const topology::Topology& topo
                           , const configuration::Configuration& conf
@@ -109,12 +109,12 @@ namespace interaction {
                           , const interaction::QM_Zone & qm_zone);
 
     /**
-     * Open input file for QM
+     * Process input file for QM
      */
     virtual int open_input(std::ofstream & inputfile_stream, const std::string & input_file);
     
     /**
-     * Call external QM program
+     * Run QM calculation
      */
     virtual int run_calculation();
 

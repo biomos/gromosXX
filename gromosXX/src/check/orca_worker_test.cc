@@ -45,7 +45,7 @@ void Orca_Worker_Test::SetUp() {
   int err = this->test_sim_.init_simulation();
   ASSERT_EQ(err, 0) << "Initialization of the simulation unsuccessful. Error code: " << err;
   this->qmmm_interaction_ptr = interaction::QMMM_Interaction::pointer();
-  this->qm_worker_ptr = (interaction::Orca_Worker*)this->qmmm_interaction_ptr->m_worker;
+  this->qm_worker_ptr = dynamic_cast<interaction::Orca_Worker*>(this->qmmm_interaction_ptr->m_worker);
   this->qm_zone_ptr = this->qmmm_interaction_ptr->m_qm_zone;
 }
 
@@ -61,9 +61,9 @@ TEST_F(Orca_Worker_Test, check_init) {
   const simulation::Simulation& sim = this->test_sim_.sim();
   const configuration::Configuration& conf = this->test_sim_.conf();
   const simulation::Parameter& param = sim.param();
-  const auto& interaction = this->qmmm_interaction_ptr;
-  const auto& worker = (interaction::Orca_Worker*)this->qm_worker_ptr;
-  const auto& qm_zone = this->qm_zone_ptr;
+  const auto interaction = this->qmmm_interaction_ptr;
+  const interaction::Orca_Worker* worker = dynamic_cast<interaction::Orca_Worker*>(this->qm_worker_ptr);
+  const auto qm_zone = this->qm_zone_ptr;
 
   // check if input vile has been loaded correctly
   EXPECT_EQ(param.qmmm.qmmm, simulation::qmmm_electrostatic);
@@ -76,12 +76,12 @@ TEST_F(Orca_Worker_Test, check_init) {
 
   // units and conversion factors
   EXPECT_EQ(param.qmmm.orca.unit_factor_length, 0.1);
-  EXPECT_EQ(param.qmmm.orca.unit_factor_energy, 2625.5);
+  EXPECT_EQ(param.qmmm.orca.unit_factor_energy, 2625.5); // tolerance (float)
   EXPECT_EQ(param.qmmm.orca.unit_factor_force, 49641);
   EXPECT_EQ(param.qmmm.orca.unit_factor_charge, 1.0);
 
   // binary and input file names
-  EXPECT_EQ(param.qmmm.orca.binary, "/home/fpultar/opt/orca-5.0.3/orca"); 
+  EXPECT_EQ(param.qmmm.orca.binary, "/home/fpultar/opt/orca-5.0.3/orca"); // modify this
   EXPECT_EQ(param.qmmm.orca.input_file, "xphos.inp");
   EXPECT_EQ(param.qmmm.orca.input_coordinate_file, "xphos.xyz");
   EXPECT_EQ(param.qmmm.orca.input_pointcharges_file, "xphos.pc");

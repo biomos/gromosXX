@@ -6,11 +6,58 @@
 #ifndef INCLUDED_ERROR_CODES_H
 #define INCLUDED_ERROR_CODES_H
 
-// errors
-#define ERROR_PARSE_ARGUMENTS 10
-#define ERROR_READ_INPUT 20
-#define ERROR_MD_INIT 30
-#define ERROR_MD_RUN 40
-#define ERROR_STEPS 50
+namespace testing {
+
+/**
+ * An enum that stores error codes that may occur during testing
+ * 
+ */
+enum Error {
+
+  /**
+   * code for success
+   * 
+   */
+  success,
+
+  /**
+   * code for failure
+   * 
+   */
+  failure,
+
+  /**
+   * error during parsing of arguments
+   * 
+   */
+  parse_arguments,
+
+  /**
+   * error during reading of input files
+   * 
+   */
+  read_input,
+
+  /**
+   * error during initialization of simulation
+   * 
+   */
+  md_init,
+
+  /**
+   * error during run of simulation
+   * 
+   */
+  md_run,
+
+  /**
+   * error caused by too low number of steps provided for simulation
+   * 
+   */
+  md_steps
+
+};
+
+}
 
 #endif /* ERROR_CODES_H */
