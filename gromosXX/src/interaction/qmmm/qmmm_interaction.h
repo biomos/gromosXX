@@ -16,6 +16,7 @@ namespace io {
 namespace testing {
   class QM_Worker_Test;
   class Orca_Worker_Electrostatic_Test;
+  class Orca_Worker_Mechanical_Test;
 }
 
 #include "../../interaction/nonbonded/interaction/nonbonded_parameter.h"
@@ -215,6 +216,7 @@ namespace interaction {
    */
   friend class testing::QM_Worker_Test;
   friend class testing::Orca_Worker_Electrostatic_Test;
+  friend class testing::Orca_Worker_Mechanical_Test;
 
   };
   
