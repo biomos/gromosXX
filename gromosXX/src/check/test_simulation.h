@@ -15,6 +15,8 @@
 #include "../configuration/configuration.h"
 #include "../io/configuration/out_configuration.h"
 
+#include "test_parameters.h"
+
 namespace testing {
 
 class Test_Simulation {
@@ -24,25 +26,7 @@ public:
    * Construct a new test simulation object based on a set of initialization files
    * 
    */
-  Test_Simulation(std::string binary_name
-               , std::string test_title
-               , std::string topology_file
-               , std::string simulation_file
-               , std::string configuration_file
-               , std::string qmmm_file
-               , std::string coordinate_trajectory_file
-               , std::string energy_trajectory_file
-               , std::string final_configuration_file) : binary_name_(binary_name)
-                                                       , traj_(test_title)
-                                                       , topology_file_(topology_file)
-                                                       , simulation_file_(simulation_file)
-                                                       , configuration_file_(configuration_file)
-                                                       , qmmm_file_(qmmm_file)
-                                                       , coordinate_trajectory_file_(coordinate_trajectory_file)
-                                                       , energy_trajectory_file_(energy_trajectory_file)
-                                                       , final_configuration_file_(final_configuration_file) {}
-
-                                                       
+  Test_Simulation(const Parameter& parameter);
 
   /**
    * Destroy the test simulation object
@@ -143,6 +127,24 @@ public:
     return conf_;
   }
 
+  /**
+   * parameter const accessor
+   * 
+   * @return const Parameter& 
+   */
+  const Parameter& parameter() const {
+    return parameter_;
+  }
+
+  /**
+   * parameter accessor
+   * 
+   * @return Parameter& 
+   */
+  Parameter& parameter() {
+    return parameter_;
+  }
+
 protected:
 
   /**
@@ -176,58 +178,10 @@ protected:
   io::Out_Configuration traj_;
 
   /**
-   * Store the name of the binary
+   * Parameters of the test simulation
    * 
    */
-  std::string binary_name_;
-
-  /**
-   * Path to the topology file
-   * 
-   */
-  std::string topology_file_;
-
-  /**
-   * Path to the simulation file
-   * 
-   */
-  std::string simulation_file_;
-
-  /**
-   * Path to the configuration file
-   * 
-   */
-  std::string configuration_file_;
-
-  /**
-   * Path to the qmmm specification file
-   * 
-   */
-  std::string qmmm_file_;
-
-  /**
-   * Path to the coordinate trajectory file
-   * 
-   */
-  std::string coordinate_trajectory_file_;
-
-  /**
-   * Path to the energy trajectory file
-   * 
-   */
-  std::string energy_trajectory_file_;
-
-  /**
-   * Path to the final configuration file
-   * 
-   */
-  std::string final_configuration_file_;
-
-  /**
-   * A C++ data structure for command line arguments
-   * 
-   */
-  std::vector<std::string> arguments_;
+  testing::Parameter parameter_;
 
 };
 

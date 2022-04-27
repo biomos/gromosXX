@@ -9,7 +9,7 @@
 
 namespace testing {
 
-class Orca_Worker_Test : public QM_Worker_Test {
+class Orca_Worker_Electrostatic_Test : public QM_Worker_Test {
 
 public:
 
@@ -17,14 +17,14 @@ public:
    * Construct a new qm worker test object
    * 
    */
-  Orca_Worker_Test();
+  Orca_Worker_Electrostatic_Test();
 
 
   /**
    * Destroy the qm worker test object
    * 
    */
-  virtual ~Orca_Worker_Test() = default;
+  virtual ~Orca_Worker_Electrostatic_Test() = default;
 
 protected:
 

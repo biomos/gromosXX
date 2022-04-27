@@ -11,74 +11,70 @@
 
 #include "../util/usage.h"
 
-#include "error_codes.h"
+#include "test_parameters.h"
 
 namespace testing {
 
+Test_Simulation::Test_Simulation(const Parameter& parameter) 
+  : parameter_(parameter), traj_(parameter.name_) {} // trajectory object requires a name as argument
+
 int Test_Simulation::init_simulation() {
   // supported files
-  std::vector<std::string> qualifiers = {"topo", "conf", "input", "qmmm", "trc", "tre", "fin"};
   util::Known knowns;
-  for (std::string& e : qualifiers) { knowns << e; }
+  for (const auto& input : parameter().input_) { knowns << input.first; }
   
-  // process arguments
-  std::for_each(qualifiers.begin(), qualifiers.end(), [](std::string& s) {s.insert(0, "@"); });
-  io::Argument args;
-
   // create a C-style array of C-style strings
-  char* c_style_args[] = {
-    &this->binary_name_[0],
-    &qualifiers[0][0],
-    &this->topology_file_[0],
-    &qualifiers[1][0],
-    &this->configuration_file_[0],
-    &qualifiers[2][0],
-    &this->simulation_file_[0],
-    &qualifiers[3][0],
-    &this->qmmm_file_[0],
-    &qualifiers[4][0],
-    &this->coordinate_trajectory_file_[0],
-    &qualifiers[5][0],
-    &this->energy_trajectory_file_[0],
-    &qualifiers[6][0],
-    &this->final_configuration_file_[0]
-  };
+  std::vector<std::string> arguments(parameter().input_.size());
+  const unsigned int size = 2 * parameter().input_.size() + 1; // binary_name + n * (feature name + file name)
+  char* c_style_args[size]; 
+  unsigned int j = 0; // iterator
+  c_style_args[j] = &(parameter().binary_name_[0]); // start with binary name
+  for (std::vector<std::pair<std::string, std::string>>::iterator it = parameter().input_.begin(), 
+    end = parameter().input_.end(); it != end; ++it, ++j) {
+    // Gromos expects a '@' before feature names
+    arguments[j] = "@" + it->first;
+    c_style_args[2 * j + 1] = &(arguments[j][0]); // feature name
+    c_style_args[2 * j + 2] = &(it->second[0]); // file name
+  }
 
-  if (args.parse(15, c_style_args, knowns)) {
+  // parse arguments
+  io::Argument args;
+  if (args.parse(size, c_style_args, knowns)) {
     return Error::parse_arguments;
   }
 
   // initialize the simulation
-  if (io::read_input(args, this->topo_, this->conf_, this->sim_, this->md_)) {
+  if (io::read_input(args, topo_, conf_, sim_, md_)) {
     return Error::read_input;
   }
   
   // initialize topology, configuration, and simulation objects
-  if (this->md_.init(this->topo_, this->conf_, this->sim_)) {
+  if (md_.init(topo_, conf_, sim_)) {
     return Error::md_init;
   }
+  
   // create the output files
-  this->traj_.init(args, this->sim_.param());
+  traj_.init(args, sim_.param());
 
   return Error::success;
 }
 
 int Test_Simulation::run_single_step() {
   int err = Error::md_steps; // assume there will not be enough steps provided in the imd file
-  if (this->sim_.steps() < this->sim_.param().step.number_of_steps) {
+  if (sim_.steps() < sim_.param().step.number_of_steps) {
     // write trajectory
-    this->traj_.write(this->conf_, this->topo_, this->sim_);
+    traj_.write(conf_, topo_, sim_);
     // run a step
-    err = this->md_.run(this->topo_, this->conf_, this->sim_);
+    err = md_.run(topo_, conf_, sim_);
     if (!err) {
       err = Error::success; // the step ran successful
-      this->traj_.print(this->topo_, this->conf_, this->sim_);
-      this->sim_.steps() = this->sim_.steps() + this->sim_.param().analyze.stride;
-      this->sim_.time() = this->sim_.param().step.t0 + this->sim_.steps() * this->sim_.time_step_size();
+      traj_.print(topo_, conf_, sim_);
+      sim_.steps() = sim_.steps() + sim_.param().analyze.stride;
+      sim_.time() = sim_.param().step.t0 + sim_.steps() * sim_.time_step_size();
 
       // print final energies
-      this->traj_.write(this->conf_, this->topo_, this->sim_, io::final);
-      this->traj_.print_final(this->topo_, this->conf_, this->sim_);
+      traj_.write(conf_, topo_, sim_, io::final);
+      traj_.print_final(topo_, conf_, sim_);
     }
     else {
       err = Error::md_run; // there was a problem with the step
@@ -90,18 +86,18 @@ int Test_Simulation::run_single_step() {
 int Test_Simulation::run_simulation() {
   int err = Error::md_steps; // assume there will not be enough steps provided
 
-  while (this->sim_.steps() < this->sim_.param().step.number_of_steps) {
+  while (sim_.steps() < sim_.param().step.number_of_steps) {
     // write trajectory
-    this->traj_.write(this->conf_, this->topo_, this->sim_);
+    traj_.write(conf_, topo_, sim_);
     // run a step
-    err = this->md_.run(this->topo_, this->conf_, this->sim_);
+    err = md_.run(topo_, conf_, sim_);
 
     // check for errors and potentially terminate
     if (!err) {
       err = Error::success; // the step worked
-      this->traj_.print(this->topo_, this->conf_, this->sim_);
-      this->sim_.steps() = this->sim_.steps() + this->sim_.param().analyze.stride;
-      this->sim_.time() = this->sim_.param().step.t0 + this->sim_.steps() * this->sim_.time_step_size();
+      traj_.print(topo_, conf_, sim_);
+      sim_.steps() = sim_.steps() + sim_.param().analyze.stride;
+      sim_.time() = sim_.param().step.t0 + sim_.steps() * sim_.time_step_size();
     }
     else {
       err = Error::md_run; // the step didn't work
@@ -111,8 +107,8 @@ int Test_Simulation::run_simulation() {
     
   // if there was no error, write final configuration
   if (err == Error::success) {
-    this->traj_.write(this->conf_, this->topo_, this->sim_, io::final);
-    this->traj_.print_final(this->topo_, this->conf_, this->sim_);
+    this->traj_.write(conf_, topo_, sim_, io::final);
+    this->traj_.print_final(topo_, conf_, sim_);
   }
 
   return err;

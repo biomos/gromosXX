@@ -11,6 +11,7 @@
 #include "../stdheader.h"
 
 #include "test_simulation.h"
+#include "test_parameters.h"
 
 #include "../interaction/qmmm/qmmm_interaction.h"
 #include "../interaction/qmmm/qm_worker.h"
@@ -23,15 +24,7 @@ class QM_Worker_Test : public ::testing::Test {
 
 public:
 
-  QM_Worker_Test(std::string binary_name
-               , std::string test_title
-               , std::string topology_file
-               , std::string simulation_file
-               , std::string configuration_file
-               , std::string qmmm_file
-               , std::string coordinate_trajectory_file
-               , std::string energy_trajectory_file
-               , std::string final_configuration_file);
+  QM_Worker_Test(const Parameter& parameter);
 
   virtual ~QM_Worker_Test() = default;
 
@@ -41,13 +34,13 @@ protected:
    * Called before the execution of each test
    * 
    */
-  void SetUp() override;
+  virtual void SetUp() override = 0;
 
   /**
    * Called after the execution of each test
    * 
    */
-  void TearDown() override;
+  virtual void TearDown() override = 0;
 
   /**
    * Instance of a test simulation based on the input files

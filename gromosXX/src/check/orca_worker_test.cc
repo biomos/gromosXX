@@ -14,7 +14,7 @@
 #include "../io/configuration/out_configuration.h"
 
 #include "check.h"
-#include "error_codes.h"
+#include "test_parameters.h"
 
 #include "qm_worker_test.h"
 #include "orca_worker_test.h"
@@ -27,35 +27,31 @@
 
 namespace testing {
 
-// test files live here
-const static std::string orca_test_files = "src/check/data/orca/";
-
-Orca_Worker_Test::Orca_Worker_Test() : QM_Worker_Test(
-  "orca_worker_test"
-, "Orca QM/MM Tests"
-, TOP_SOURCE_DIR "/" + orca_test_files + "md.top"
-, TOP_SOURCE_DIR "/" + orca_test_files + "md.imd"
-, TOP_SOURCE_DIR "/" + orca_test_files + "md.cnf"
-, TOP_SOURCE_DIR "/" + orca_test_files + "md.qmmm"
-, TOP_SOURCE_DIR "/" + orca_test_files + "md.trc"
-, TOP_SOURCE_DIR "/" + orca_test_files + "md.tre"
-, TOP_SOURCE_DIR "/" + orca_test_files + "md_final.cnf") {};
-
-void Orca_Worker_Test::SetUp() {
-  int err = this->test_sim_.init_simulation();
-  ASSERT_EQ(err, 0) << "Initialization of the simulation unsuccessful. Error code: " << err;
-  this->qmmm_interaction_ptr = interaction::QMMM_Interaction::pointer();
-  this->qm_worker_ptr = dynamic_cast<interaction::Orca_Worker*>(this->qmmm_interaction_ptr->m_worker);
-  this->qm_zone_ptr = this->qmmm_interaction_ptr->m_qm_zone;
+Orca_Worker_Electrostatic_Test::Orca_Worker_Electrostatic_Test() : QM_Worker_Test(Parameter("Orca QM/MM Tests", "orca_worker_test", "src/check/data/orca")) {
+  test_sim_.parameter().add_input("topo", "md.top");
+  test_sim_.parameter().add_input("input", "md.imd");
+  test_sim_.parameter().add_input("conf", "md.cnf");
+  test_sim_.parameter().add_input("qmmm", "md.qmmm");
+  test_sim_.parameter().add_input("trc", "md.trc");
+  test_sim_.parameter().add_input("tre", "md.tre");
+  test_sim_.parameter().add_input("fin", "md_final.cnf");
 }
 
-void Orca_Worker_Test::TearDown() {}
+void Orca_Worker_Electrostatic_Test::SetUp() {
+  int err = test_sim_.init_simulation();
+  ASSERT_EQ(err, 0) << "Initialization of the simulation unsuccessful. Error code: " << err;
+  qmmm_interaction_ptr = interaction::QMMM_Interaction::pointer();
+  qm_worker_ptr = dynamic_cast<interaction::Orca_Worker*>(qmmm_interaction_ptr->m_worker);
+  qm_zone_ptr = qmmm_interaction_ptr->m_qm_zone;
+}
+
+void Orca_Worker_Electrostatic_Test::TearDown() {}
 
 /**
  * Test if initialization is successful
  * 
  */
-TEST_F(Orca_Worker_Test, check_init) {
+TEST_F(Orca_Worker_Electrostatic_Test, check_init) {
   // references to shorten the code
   const topology::Topology& topo = this->test_sim_.topo();
   const simulation::Simulation& sim = this->test_sim_.sim();
