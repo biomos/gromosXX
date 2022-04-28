@@ -74,6 +74,18 @@ protected:
    */
   void init_results_qm_zone_init() override;
 
+  /**
+   * @brief Checks if the QM atoms have been initialized correctly
+   * 
+   */
+  void check_qm_atoms_init() override;
+
+  /**
+   * @brief Checks if the MM atoms have been initialized correctly
+   * 
+   */
+  void check_mm_atoms_init() override;
+
 };
 
 }

@@ -57,6 +57,42 @@ protected:
    */
   virtual void init_results_elements() override;
 
+  /**
+   * @brief Checks if Gromos has read in the input parameters correctly
+   * 
+   */
+  virtual void check_parameter_init() override;
+
+  /**
+   * @brief Checks if element symbols and iac atoms are mapped correcly
+   * 
+   */
+  virtual void check_element_mapping();
+
+  /**
+   * @brief Checks if the binary and QM worker name have been parsed correcly
+   * 
+   */
+  virtual void check_binary_name();
+
+  /**
+   * @brief Checks if input and output files for the QM worker have been parsed correcly
+   * 
+   */
+  virtual void check_files();
+
+  /**
+   * @brief Checks if the QM atoms have been initialized correctly
+   * 
+   */
+  virtual void check_qm_atoms_init() = 0;
+
+  /**
+   * @brief Checks if the MM atoms have been initialized correcly
+   * 
+   */
+  virtual void check_mm_atoms_init() = 0;
+
 };
 
 } // namespace testing

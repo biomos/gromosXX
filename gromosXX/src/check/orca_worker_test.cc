@@ -61,4 +61,57 @@ void Orca_Worker_Test::init_results_elements() {
   results_.ints_[Key::element_46] = 46;
 }
 
+void Orca_Worker_Test::check_parameter_init() {
+  check_qmmm_parameter();
+  check_unit_conversion_factors();
+  check_element_mapping();
+  check_binary_name();
+  check_files();
+  check_qm_zone_param();
+  check_qm_interaction_ptr();
+  check_qm_atoms_init();
+  check_mm_atoms_init();
+}
+
+void Orca_Worker_Test::check_element_mapping() {
+  // references to shorten the code
+  const simulation::Parameter& param = test_sim_.sim().param();
+  std::unordered_map<Key, int>& ints_res = results_.ints_;
+  std::unordered_map<Key, std::string>& strs_res = results_.strs_;
+    // some tests for elements and iac_elements map
+  EXPECT_EQ(param.qmmm.orca.elements.at(1), strs_res[Key::symbol_h]);
+  EXPECT_EQ(param.qmmm.orca.elements.at(6), strs_res[Key::symbol_c]);
+  EXPECT_EQ(param.qmmm.orca.elements.at(8), strs_res[Key::symbol_o]);
+  EXPECT_EQ(param.qmmm.orca.elements.at(15), strs_res[Key::symbol_p]);
+  EXPECT_EQ(param.qmmm.orca.elements.at(46), strs_res[Key::symbol_pd]);
+  EXPECT_EQ(param.qmmm.orca.iac_elements.at(0), ints_res[Key::element_8]); // check if (-1) is subtracted from input file IAC
+  EXPECT_EQ(param.qmmm.orca.iac_elements.at(23), ints_res[Key::element_29]);
+  EXPECT_EQ(param.qmmm.orca.iac_elements.at(24), ints_res[Key::element_29]);
+  EXPECT_EQ(param.qmmm.orca.iac_elements.at(25), ints_res[Key::element_26]);
+  EXPECT_EQ(param.qmmm.orca.iac_elements.at(28), ints_res[Key::element_20]);
+  EXPECT_EQ(param.qmmm.orca.iac_elements.at(69), ints_res[Key::element_15]);
+}
+
+void Orca_Worker_Test::check_binary_name() {
+  // references to shorten the code
+  const simulation::Parameter& param = test_sim_.sim().param();
+  std::unordered_map<Key, std::string>& strs_res = results_.strs_;
+  // binary and input file names
+  EXPECT_EQ(param.qmmm.orca.binary, strs_res[Key::binary]); // modify this
+  // test the qm worker
+  EXPECT_EQ(qm_worker_ptr->name(), strs_res[Key::qm_worker_name]);
+}
+
+void Orca_Worker_Test::check_files() {
+  // references to shorten the code
+  const simulation::Parameter& param = test_sim_.sim().param();
+  std::unordered_map<Key, std::string>& strs_res = results_.strs_;
+  EXPECT_EQ(param.qmmm.orca.input_file, strs_res[Key::input_file]);
+  EXPECT_EQ(param.qmmm.orca.input_coordinate_file, strs_res[Key::input_coordinate_file]);
+  EXPECT_EQ(param.qmmm.orca.input_pointcharges_file, strs_res[Key::input_pointcharges_file]);
+  EXPECT_EQ(param.qmmm.orca.output_file, strs_res[Key::output_file]);
+  EXPECT_EQ(param.qmmm.orca.output_gradient_file, strs_res[Key::output_gradient_file]);
+  EXPECT_EQ(param.qmmm.orca.output_mm_gradient_file, strs_res[Key::output_mm_gradient_file]);
+}
+
 } // namespace testing

@@ -2,8 +2,12 @@
  * @file orca_worker_test_mechanical.cc
  */
 
+#include <gtest/gtest.h>
+
 #include "orca_worker_test_mechanical.h"
 #include "../interaction/qmmm/orca_worker.h"
+#include "../interaction/qmmm/qm_atom.h"
+#include "../interaction/qmmm/mm_atom.h"
 
 namespace testing {
 
@@ -81,6 +85,44 @@ void Orca_Worker_Test_Mechanical::init_results_qm_zone_init() {
   results_.doubles_[Key::qm_atom_force_init] = 0.0;
   results_.doubles_[Key::mm_atom_force_init] = 0.0;
   results_.doubles_[Key::mm_atom_cos_force_init] = 0.0;
+}
+
+void Orca_Worker_Test_Mechanical::check_qm_atoms_init() {
+  // references to shorten the code
+  std::unordered_map<Key, int>& ints_res = results_.ints_;
+  std::unordered_map<Key, double>& doubles_res = results_.doubles_;
+  // test the atoms of the QM zone
+  for (const auto& atom : qm_zone_ptr->qm) {
+    EXPECT_EQ(atom.qm_charge, doubles_res[Key::qm_atom_charge_init]);
+    for (unsigned int i = 0; i < 3; ++i) {
+      EXPECT_EQ(atom.force(i), doubles_res[Key::qm_atom_force_init]);
+    }
+    switch (atom.index) { // test some selected atoms
+      case 0:  EXPECT_EQ(atom.atomic_number, ints_res[Key::element_1]); break;
+      case 48: EXPECT_EQ(atom.atomic_number, ints_res[Key::element_15]); break;
+      case 49: EXPECT_EQ(atom.atomic_number, ints_res[Key::element_46]); break;
+      case 89: EXPECT_EQ(atom.atomic_number, ints_res[Key::element_1]); break;
+    }
+  }
+}
+
+void Orca_Worker_Test_Mechanical::check_mm_atoms_init() {
+  // references to shorten the code
+  std::unordered_map<Key, int>& ints_res = results_.ints_;
+  std::unordered_map<Key, double>& doubles_res = results_.doubles_;
+  // test the atoms of the MM zone
+  for (const auto& atom : qm_zone_ptr->mm) {
+    for (unsigned int i = 0; i < 3; ++i) {
+      EXPECT_EQ(atom.force[i], doubles_res[Key::mm_atom_force_init]);
+      EXPECT_EQ(atom.cos_force[i], doubles_res[Key::mm_atom_cos_force_init]);
+    }
+    switch (atom.index) { // test some selected atoms
+      case 105:  EXPECT_EQ(atom.atomic_number, ints_res[Key::element_1]); break; 
+      case 106:  EXPECT_EQ(atom.atomic_number, ints_res[Key::element_6]); break; 
+      case 3232: EXPECT_EQ(atom.atomic_number, ints_res[Key::element_8]); break;
+      case 3233: EXPECT_EQ(atom.atomic_number, ints_res[Key::element_1]); break;
+    }
+  }
 }
 
 /**

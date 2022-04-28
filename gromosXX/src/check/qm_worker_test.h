@@ -6,7 +6,6 @@
 #define	INCLUDED_QM_WORKER_T_H
 
 #include <gtest/gtest.h>
-#include <iostream>
 
 #include "../stdheader.h"
 
@@ -92,7 +91,31 @@ protected:
    * @brief Checks if Gromos has read in the input parameters correctly
    * 
    */
-  virtual void check_parameter_init();
+  virtual void check_parameter_init() = 0;
+
+  /**
+   * @brief Checks if the qm/mm parameter of the simulation input file have been read in correcly
+   * 
+   */
+  virtual void check_qmmm_parameter();
+
+  /**
+   * @brief Checks if the units conversion factors have been read in correctly
+   * 
+   */
+  virtual void check_unit_conversion_factors();
+
+  /**
+   * @brief Checks if the parameters for the QM zone have been read in correcly
+   * 
+   */
+  virtual void check_qm_zone_param();
+
+  /**
+   * @brief Checks if the pointers to the QM interaction object, QM worker, and QM zone have been initialized
+   * 
+   */
+  virtual void check_qm_interaction_ptr();
 
   /**
    * Instance of a test simulation based on the input files
