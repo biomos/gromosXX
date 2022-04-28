@@ -15,6 +15,7 @@ namespace io {
 
 namespace testing {
   class QM_Worker_Test;
+  class Orca_Worker_Test;
   class Orca_Worker_Test_Electrostatic;
   class Orca_Worker_Test_Mechanical;
 }
@@ -215,6 +216,7 @@ namespace interaction {
    * Make private members available for testing 
    */
   friend class testing::QM_Worker_Test;
+  friend class testing::Orca_Worker_Test;
   friend class testing::Orca_Worker_Test_Electrostatic;
   friend class testing::Orca_Worker_Test_Mechanical;
 

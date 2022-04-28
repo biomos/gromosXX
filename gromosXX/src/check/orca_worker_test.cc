@@ -29,6 +29,22 @@
 
 namespace testing {
 
+void Orca_Worker_Test::SetUp() {
+  // initialize test simulation and get a pointer to qm/mm relevant objects
+  int err = test_sim_.init_simulation();
+  ASSERT_EQ(err, 0) << "Initialization of the simulation unsuccessful. Error code: " << err;
+  qmmm_interaction_ptr = interaction::QMMM_Interaction::pointer();
+  qm_worker_ptr = dynamic_cast<interaction::Orca_Worker*>(qmmm_interaction_ptr->m_worker);
+  qm_zone_ptr = qmmm_interaction_ptr->m_qm_zone;
+}
+
+void Orca_Worker_Test::TearDown() {
+  // set all pointers to nullptr again
+  qmmm_interaction_ptr = nullptr;
+  qm_worker_ptr = nullptr;
+  qm_zone_ptr = nullptr;
+}
+
 void Orca_Worker_Test::init_results_binary_name() {
   // binary and worker name
   results_.strs_[Key::binary] = "/home/fpultar/opt/orca-5.0.3/orca"; // modify this
@@ -71,6 +87,17 @@ void Orca_Worker_Test::check_parameter_init() {
   check_qm_interaction_ptr();
   check_qm_atoms_init();
   check_mm_atoms_init();
+}
+
+void Orca_Worker_Test::check_unit_conversion_factors() {
+  // references to shorten the code
+  const simulation::Parameter& param = test_sim_.sim().param();
+  std::unordered_map<Key, double>& doubles_res = results_.doubles_;
+  // units and conversion factors
+  EXPECT_EQ(param.qmmm.orca.unit_factor_length, doubles_res[Key::unit_factor_length]);
+  EXPECT_EQ(param.qmmm.orca.unit_factor_energy, doubles_res[Key::unit_factor_energy]); // tolerance (float)
+  EXPECT_EQ(param.qmmm.orca.unit_factor_force, doubles_res[Key::unit_factor_force]);
+  EXPECT_EQ(param.qmmm.orca.unit_factor_charge, doubles_res[Key::unit_factor_charge]);
 }
 
 void Orca_Worker_Test::check_element_mapping() {

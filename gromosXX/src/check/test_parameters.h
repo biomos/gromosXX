@@ -114,7 +114,7 @@ struct Parameter {
 };
 
 /**
- * @brief An enum that stores keys for expected test results
+ * @brief An enums with keys for expected test results
  * 
  */
 
@@ -168,6 +168,24 @@ enum Key {
 
   output_mm_gradient_file,
 
+  qm_worker_name,
+
+  qm_zone_size_init,
+
+  mm_zone_size_init,
+
+  qm_zone_charge,
+
+  qm_zone_spin_mult,
+
+  qm_atom_charge_init,
+
+  qm_atom_force_init,
+
+  mm_atom_force_init,
+
+  mm_atom_cos_force_init,
+
   symbol_h,
 
   symbol_c,
@@ -192,25 +210,7 @@ enum Key {
 
   element_29,
 
-  element_46,
-
-  qm_worker_name,
-
-  qm_zone_size_init,
-
-  mm_zone_size_init,
-
-  qm_zone_charge,
-
-  qm_zone_spin_mult,
-
-  qm_atom_charge_init,
-
-  qm_atom_force_init,
-
-  mm_atom_force_init,
-
-  mm_atom_cos_force_init
+  element_46
 
 };
 

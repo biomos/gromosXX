@@ -34,6 +34,18 @@ public:
 protected:
 
   /**
+   * @brief Runs before each test
+   * 
+   */
+  void SetUp() override;
+
+  /**
+   * @brief Runs after each test
+   * 
+   */
+  void TearDown() override;
+
+  /**
    * @brief Initializes expected results for the file names
    * 
    */
@@ -62,6 +74,12 @@ protected:
    * 
    */
   virtual void check_parameter_init() override;
+
+  /**
+   * @brief Checks if the units conversion factors have been read in correctly
+   * 
+   */
+  virtual void check_unit_conversion_factors() override;
 
   /**
    * @brief Checks if element symbols and iac atoms are mapped correcly

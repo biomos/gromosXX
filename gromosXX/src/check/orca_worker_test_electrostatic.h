@@ -33,18 +33,6 @@ public:
 protected:
 
   /**
-   * @brief Runs before each test
-   * 
-   */
-  void SetUp() override;
-
-  /**
-   * @brief Runs after each test
-   * 
-   */
-  void TearDown() override;
-
-  /**
    * @brief Initializes the parameters for test test simulation
    * 
    */

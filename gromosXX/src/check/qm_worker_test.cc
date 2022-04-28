@@ -30,17 +30,6 @@ void QM_Worker_Test::check_qmmm_parameter() {
   EXPECT_EQ(param.qmmm.mm_scale, doubles_res[Key::qm_mm_scale]);
 }
 
-void QM_Worker_Test::check_unit_conversion_factors() {
-  // references to shorten the code
-  const simulation::Parameter& param = test_sim_.sim().param();
-  std::unordered_map<Key, double>& doubles_res = results_.doubles_;
-  // units and conversion factors
-  EXPECT_EQ(param.qmmm.orca.unit_factor_length, doubles_res[Key::unit_factor_length]);
-  EXPECT_EQ(param.qmmm.orca.unit_factor_energy, doubles_res[Key::unit_factor_energy]); // tolerance (float)
-  EXPECT_EQ(param.qmmm.orca.unit_factor_force, doubles_res[Key::unit_factor_force]);
-  EXPECT_EQ(param.qmmm.orca.unit_factor_charge, doubles_res[Key::unit_factor_charge]);
-}
-
 void QM_Worker_Test::check_qm_zone_param() {
   // references to shorten the code
   const simulation::Parameter& param = test_sim_.sim().param();

@@ -14,22 +14,6 @@ Orca_Worker_Test_Electrostatic::Orca_Worker_Test_Electrostatic() : Orca_Worker_T
   init_results();
 }
 
-void Orca_Worker_Test_Electrostatic::SetUp() {
-  // initialize test simulation and get a pointer to qm/mm relevant objects
-  int err = test_sim_.init_simulation();
-  ASSERT_EQ(err, 0) << "Initialization of the simulation unsuccessful. Error code: " << err;
-  qmmm_interaction_ptr = interaction::QMMM_Interaction::pointer();
-  qm_worker_ptr = dynamic_cast<interaction::Orca_Worker*>(qmmm_interaction_ptr->m_worker);
-  qm_zone_ptr = qmmm_interaction_ptr->m_qm_zone;
-}
-
-void Orca_Worker_Test_Electrostatic::TearDown() {
-  // set all pointers to nullptr again
-  qmmm_interaction_ptr = nullptr;
-  qm_worker_ptr = nullptr;
-  qm_zone_ptr = nullptr;
-}
-
 void Orca_Worker_Test_Electrostatic::init_parameters() {
   test_sim_.parameter().add_input("topo", "md.top");
   test_sim_.parameter().add_input("input", "md_el.imd");

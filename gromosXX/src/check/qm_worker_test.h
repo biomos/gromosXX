@@ -94,16 +94,16 @@ protected:
   virtual void check_parameter_init() = 0;
 
   /**
+   * @brief Checks if the units conversion factors have been read in correctly
+   * 
+   */
+  virtual void check_unit_conversion_factors() = 0;
+
+  /**
    * @brief Checks if the qm/mm parameter of the simulation input file have been read in correcly
    * 
    */
   virtual void check_qmmm_parameter();
-
-  /**
-   * @brief Checks if the units conversion factors have been read in correctly
-   * 
-   */
-  virtual void check_unit_conversion_factors();
 
   /**
    * @brief Checks if the parameters for the QM zone have been read in correcly
