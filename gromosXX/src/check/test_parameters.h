@@ -6,6 +6,8 @@
 #ifndef INCLUDED_TEST_PARAMETERS_H
 #define INCLUDED_TEST_PARAMETERS_H
 
+#include <cstdint>
+#include "../stdheader.h"
 #include "check.h"
 
 namespace testing {
@@ -110,6 +112,164 @@ struct Parameter {
   std::vector<std::pair<std::string, std::string>> input_;
 
 };
+
+/**
+ * @brief An enum that stores keys for expected test results
+ * 
+ */
+
+enum Key {
+
+  kinetic_energy_final,
+
+  potential_energy_final,
+
+  lj_potential_final,
+
+  crf_potential_final,
+
+  qm_energy_init,
+
+  qm_energy_final,
+
+  qmmm,
+
+  qm_ch,
+
+  qm_software,
+
+  qm_cutoff,
+
+  qm_lj,
+
+  qm_constraint,
+
+  qm_mm_scale,
+
+  unit_factor_length,
+
+  unit_factor_energy,
+
+  unit_factor_force,
+
+  unit_factor_charge,
+
+  binary,
+
+  input_file,
+
+  input_coordinate_file,
+
+  input_pointcharges_file,
+
+  output_file,
+
+  output_gradient_file,
+
+  output_mm_gradient_file,
+
+  symbol_h,
+
+  symbol_c,
+
+  symbol_o,
+
+  symbol_p,
+
+  symbol_pd,
+  
+  element_1,
+
+  element_6,
+
+  element_8,
+
+  element_15,
+
+  element_20,
+
+  element_26,
+
+  element_29,
+
+  element_46,
+
+  qm_worker_name,
+
+  qm_zone_size_init,
+
+  mm_zone_size_init,
+
+  qm_zone_charge,
+
+  qm_zone_spin_mult,
+
+  qm_atom_charge_init,
+
+  qm_atom_force_init,
+
+  mm_atom_force_init,
+
+  mm_atom_cos_force_init
+
+};
+
+
+/**
+ * @brief A struct that stores expected test results
+ * 
+ */
+struct Results {
+
+  /**
+   * @brief Results of type std::string
+   * 
+   */
+  std::unordered_map<Key, std::string> strs_;
+
+  /**
+   * @brief Results of type double
+   * 
+   */
+  std::unordered_map<Key, double> doubles_;
+
+  /**
+   * @brief Results of type int
+   * 
+   */
+  std::unordered_map<Key, int> ints_;
+
+  /**
+   * @brief A code for nullptr
+   * 
+   */
+  const nullptr_t UNINITIALIZED = nullptr;
+
+};
+
+/**
+ * @brief Stores parameters to test the mechanical embedding scheme with the Orca worker
+ * 
+ */
+extern Parameter orca_parameter_mechanical;
+
+/**
+ * @brief Stores expected results for tests of the mechanical embedding scheme with the Orca worker
+ * 
+ */
+extern Results orca_results_mechanical;
+
+/**
+ * @brief Stores parameters to test the electrostatic embedding scheme with the Orca worker
+ * 
+ */
+extern Parameter orca_parameter_electrostatic;
+
+/**
+ * @brief Stores expected results for tests of the electrostatic embedding scheme with the Orca worker
+ * 
+ */
+extern Results orca_results_electrostatic;
 
 } // namespace testing
 

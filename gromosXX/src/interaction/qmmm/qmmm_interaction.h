@@ -15,8 +15,8 @@ namespace io {
 
 namespace testing {
   class QM_Worker_Test;
-  class Orca_Worker_Electrostatic_Test;
-  class Orca_Worker_Mechanical_Test;
+  class Orca_Worker_Test_Electrostatic;
+  class Orca_Worker_Test_Mechanical;
 }
 
 #include "../../interaction/nonbonded/interaction/nonbonded_parameter.h"
@@ -215,8 +215,8 @@ namespace interaction {
    * Make private members available for testing 
    */
   friend class testing::QM_Worker_Test;
-  friend class testing::Orca_Worker_Electrostatic_Test;
-  friend class testing::Orca_Worker_Mechanical_Test;
+  friend class testing::Orca_Worker_Test_Electrostatic;
+  friend class testing::Orca_Worker_Test_Mechanical;
 
   };
   

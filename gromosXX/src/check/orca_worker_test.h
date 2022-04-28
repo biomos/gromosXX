@@ -10,79 +10,55 @@
 namespace testing {
 
 /**
- * @brief A class that tests the Orca_Worker using an electrostatic embedding
+ * @brief A base class for testing the Orca QM worker
  * 
  */
-class Orca_Worker_Electrostatic_Test : public QM_Worker_Test {
+class Orca_Worker_Test : public QM_Worker_Test {
 
 public:
 
   /**
-   * Construct a new qm worker test object
+   * @brief Construct a new Orca_Worker_Test object
    * 
+   * @param parameter 
+   * @param results 
    */
-  Orca_Worker_Electrostatic_Test();
-
+  Orca_Worker_Test(const Parameter& parameter, const Results& results) : QM_Worker_Test(parameter, results) {}
 
   /**
-   * Destroy the qm worker test object
+   * @brief Destroy the Orca_Worker_Test object
    * 
    */
-  virtual ~Orca_Worker_Electrostatic_Test() = default;
+  virtual ~Orca_Worker_Test() = default;
 
 protected:
 
   /**
-   * Called before the execution of each test
+   * @brief Initializes expected results for the file names
    * 
    */
-  void SetUp() override;
+  virtual void init_results_files() = 0;
 
   /**
-   * Called after the execution of each test
+   * @brief Initializes expected results for the binary and the worker name
    * 
    */
-  void TearDown() override;
+  virtual void init_results_binary_name();
+
+  /**
+   * @brief Initializes expected results for units and conversion factors
+   * 
+   */
+  virtual void init_results_units() override;
+
+  /**
+   * @brief Initializes expected results for mapping of element symbols and iac atoms
+   * 
+   */
+  virtual void init_results_elements() override;
 
 };
 
-/**
- * @brief A class that tests the Orca_Worker using an mechanical embedding
- * 
- */
-class Orca_Worker_Mechanical_Test : public QM_Worker_Test {
-
-public:
-
-  /**
-   * Construct a new qm worker test object
-   * 
-   */
-  Orca_Worker_Mechanical_Test();
-
-
-  /**
-   * Destroy the qm worker test object
-   * 
-   */
-  virtual ~Orca_Worker_Mechanical_Test() = default;
-
-protected:
-
-  /**
-   * Called before the execution of each test
-   * 
-   */
-  void SetUp() override;
-
-  /**
-   * Called after the execution of each test
-   * 
-   */
-  void TearDown() override;
-
-};
-
-}
+} // namespace testing
 
 #endif	/* ORCA_WORKER_T_H */
