@@ -92,7 +92,7 @@ void Orca_Worker_Test::check_parameter_init() {
 void Orca_Worker_Test::check_unit_conversion_factors() {
   // references to shorten the code
   const simulation::Parameter& param = test_sim_.sim().param();
-  std::unordered_map<Key, double>& doubles_res = results_.doubles_;
+  std::unordered_map<Key::keys, double>& doubles_res = results_.doubles_;
   // units and conversion factors
   EXPECT_EQ(param.qmmm.orca.unit_factor_length, doubles_res[Key::unit_factor_length]);
   EXPECT_EQ(param.qmmm.orca.unit_factor_energy, doubles_res[Key::unit_factor_energy]); // tolerance (float)
@@ -103,8 +103,8 @@ void Orca_Worker_Test::check_unit_conversion_factors() {
 void Orca_Worker_Test::check_element_mapping() {
   // references to shorten the code
   const simulation::Parameter& param = test_sim_.sim().param();
-  std::unordered_map<Key, int>& ints_res = results_.ints_;
-  std::unordered_map<Key, std::string>& strs_res = results_.strs_;
+  std::unordered_map<Key::keys, int>& ints_res = results_.ints_;
+  std::unordered_map<Key::keys, std::string>& strs_res = results_.strs_;
     // some tests for elements and iac_elements map
   EXPECT_EQ(param.qmmm.orca.elements.at(1), strs_res[Key::symbol_h]);
   EXPECT_EQ(param.qmmm.orca.elements.at(6), strs_res[Key::symbol_c]);
@@ -122,7 +122,7 @@ void Orca_Worker_Test::check_element_mapping() {
 void Orca_Worker_Test::check_binary_name() {
   // references to shorten the code
   const simulation::Parameter& param = test_sim_.sim().param();
-  std::unordered_map<Key, std::string>& strs_res = results_.strs_;
+  std::unordered_map<Key::keys, std::string>& strs_res = results_.strs_;
   // binary and input file names
   EXPECT_EQ(param.qmmm.orca.binary, strs_res[Key::binary]); // modify this
   // test the qm worker
@@ -132,7 +132,7 @@ void Orca_Worker_Test::check_binary_name() {
 void Orca_Worker_Test::check_files() {
   // references to shorten the code
   const simulation::Parameter& param = test_sim_.sim().param();
-  std::unordered_map<Key, std::string>& strs_res = results_.strs_;
+  std::unordered_map<Key::keys, std::string>& strs_res = results_.strs_;
   EXPECT_EQ(param.qmmm.orca.input_file, strs_res[Key::input_file]);
   EXPECT_EQ(param.qmmm.orca.input_coordinate_file, strs_res[Key::input_coordinate_file]);
   EXPECT_EQ(param.qmmm.orca.input_pointcharges_file, strs_res[Key::input_pointcharges_file]);

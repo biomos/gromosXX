@@ -70,8 +70,8 @@ void Orca_Worker_Test_Electrostatic::init_results_qm_zone_init() {
 
 void Orca_Worker_Test_Electrostatic::check_qm_atoms_init() {
   // references to shorten the code
-  std::unordered_map<Key, int>& ints_res = results_.ints_;
-  std::unordered_map<Key, double>& doubles_res = results_.doubles_;
+  std::unordered_map<Key::keys, int>& ints_res = results_.ints_;
+  std::unordered_map<Key::keys, double>& doubles_res = results_.doubles_;
   // test the atoms of the QM zone
   for (const auto& atom : qm_zone_ptr->qm) {
     EXPECT_EQ(atom.qm_charge, doubles_res[Key::qm_atom_charge_init]);
@@ -89,8 +89,8 @@ void Orca_Worker_Test_Electrostatic::check_qm_atoms_init() {
 
 void Orca_Worker_Test_Electrostatic::check_mm_atoms_init() {
   // references to shorten the code
-  std::unordered_map<Key, int>& ints_res = results_.ints_;
-  std::unordered_map<Key, double>& doubles_res = results_.doubles_;
+  std::unordered_map<Key::keys, int>& ints_res = results_.ints_;
+  std::unordered_map<Key::keys, double>& doubles_res = results_.doubles_;
   // test the atoms of the MM zone
   for (const auto& atom : qm_zone_ptr->mm) {
     for (unsigned int i = 0; i < 3; ++i) {

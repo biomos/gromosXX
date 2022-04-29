@@ -122,106 +122,126 @@ struct Parameter {
 };
 
 /**
- * @brief An enums with keys for expected test results
+ * @brief A struct that stores keys for all expected test results (also keeps the namespace testing clean)
  * 
  */
+struct Key {
 
-enum Key {
+  /**
+   * @brief A collection of all keys for expected test results
+   * 
+   */
+  enum keys {
 
-  kinetic_energy_final,
+    // energies that may be tested
 
-  potential_energy_final,
+    kinetic_energy_final,
 
-  lj_potential_final,
+    potential_energy_final,
 
-  crf_potential_final,
+    lj_potential_final,
 
-  qm_energy_init,
+    crf_potential_final,
 
-  qm_energy_final,
+    qm_energy_init,
 
-  qmmm,
+    qm_energy_final,
 
-  qm_ch,
+    // parameters for QM/MM simulations
 
-  qm_software,
+    qmmm,
 
-  qm_cutoff,
+    qm_ch,
 
-  qm_lj,
+    qm_software,
 
-  qm_constraint,
+    qm_cutoff,
 
-  qm_mm_scale,
+    qm_lj,
 
-  unit_factor_length,
+    qm_constraint,
 
-  unit_factor_energy,
+    qm_mm_scale,
 
-  unit_factor_force,
+    // unit conversion factors
 
-  unit_factor_charge,
+    unit_factor_length,
 
-  binary,
+    unit_factor_energy,
 
-  input_file,
+    unit_factor_force,
 
-  input_coordinate_file,
+    unit_factor_charge,
 
-  input_pointcharges_file,
+    // QM software binary name and input files
 
-  output_file,
+    binary,
 
-  output_gradient_file,
+    input_file,
 
-  output_mm_gradient_file,
+    input_coordinate_file,
 
-  qm_worker_name,
+    input_pointcharges_file,
 
-  qm_zone_size_init,
+    output_file,
 
-  mm_zone_size_init,
+    output_gradient_file,
 
-  qm_zone_charge,
+    output_mm_gradient_file,
 
-  qm_zone_spin_mult,
+    qm_worker_name,
 
-  qm_atom_charge_init,
+    // QM zone parameters
 
-  qm_atom_force_init,
+    qm_zone_size_init,
 
-  mm_atom_force_init,
+    mm_zone_size_init,
 
-  mm_atom_cos_force_init,
+    qm_zone_charge,
 
-  symbol_h,
+    qm_zone_spin_mult,
 
-  symbol_c,
+    qm_atom_charge_init,
 
-  symbol_o,
+    qm_atom_force_init,
 
-  symbol_p,
+    mm_atom_force_init,
 
-  symbol_pd,
-  
-  element_1,
+    mm_atom_cos_force_init,
 
-  element_6,
+    // element symbols
 
-  element_8,
+    symbol_h,
 
-  element_15,
+    symbol_c,
 
-  element_20,
+    symbol_o,
 
-  element_26,
+    symbol_p,
 
-  element_29,
+    symbol_pd,
 
-  element_46
+    // element numbers
+
+    element_1,
+
+    element_6,
+
+    element_8,
+
+    element_15,
+
+    element_20,
+
+    element_26,
+
+    element_29,
+
+    element_46
+
+  };
 
 };
-
 
 /**
  * @brief A struct that stores expected test results
@@ -233,19 +253,19 @@ struct Results {
    * @brief Results of type std::string
    * 
    */
-  std::unordered_map<Key, std::string> strs_;
+  std::unordered_map<Key::keys, std::string> strs_;
 
   /**
    * @brief Results of type double
    * 
    */
-  std::unordered_map<Key, double> doubles_;
+  std::unordered_map<Key::keys, double> doubles_;
 
   /**
    * @brief Results of type int
    * 
    */
-  std::unordered_map<Key, int> ints_;
+  std::unordered_map<Key::keys, int> ints_;
 
   /**
    * @brief A code for nullptr
