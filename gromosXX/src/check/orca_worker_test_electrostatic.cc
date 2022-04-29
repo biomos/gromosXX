@@ -11,7 +11,7 @@
 
 namespace testing {
 
-Orca_Worker_Test_Electrostatic::Orca_Worker_Test_Electrostatic() : Orca_Worker_Test(orca_parameter_electrostatic, orca_results_electrostatic) {
+Orca_Worker_Test_Electrostatic::Orca_Worker_Test_Electrostatic() : Orca_Worker_Test("Orca QM/MM Tests Electrostatic Embedding") {
   // initialize test files and expected results
   init_parameters();
   init_results();

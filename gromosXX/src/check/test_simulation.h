@@ -181,7 +181,7 @@ protected:
    * Parameters of the test simulation
    * 
    */
-  testing::Parameter parameter_;
+  Parameter parameter_;
 
 };
 

@@ -11,7 +11,7 @@
 
 namespace testing {
 
-Orca_Worker_Test_Mechanical::Orca_Worker_Test_Mechanical() : Orca_Worker_Test(orca_parameter_mechanical, orca_results_mechanical) {
+Orca_Worker_Test_Mechanical::Orca_Worker_Test_Mechanical() : Orca_Worker_Test("Orca QM/MM Tests Mechanical Embedding") {
   // initialize test files and expected results
   init_parameters();
   init_results();

@@ -100,7 +100,6 @@ endforeach()
 add_executable(
   orca_worker_test
   test_simulation.cc
-  test_parameters.cc
   qm_worker_test.cc
   orca_worker_test.cc
   orca_worker_test_electrostatic.cc

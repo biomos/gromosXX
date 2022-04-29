@@ -107,8 +107,8 @@ int Test_Simulation::run_simulation() {
     
   // if there was no error, write final configuration
   if (err == Error::error_success) {
-    this->traj_.write(conf_, topo_, sim_, io::final);
-    this->traj_.print_final(topo_, conf_, sim_);
+    traj_.write(conf_, topo_, sim_, io::final);
+    traj_.print_final(topo_, conf_, sim_);
   }
 
   return err;

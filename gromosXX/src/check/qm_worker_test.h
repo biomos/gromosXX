@@ -29,7 +29,7 @@ public:
    * @param parameter 
    * @param results 
    */
-  QM_Worker_Test(const Parameter& parameter, const Results& results);
+  QM_Worker_Test(const Parameter& parameter);
 
   /**
    * @brief Destroy the qm worker test object

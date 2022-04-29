@@ -23,7 +23,7 @@ public:
    * @param parameter 
    * @param results 
    */
-  Orca_Worker_Test(const Parameter& parameter, const Results& results) : QM_Worker_Test(parameter, results) {}
+  Orca_Worker_Test(const std::string& name) : QM_Worker_Test(Parameter(name, "orca_worker_test", "src/check/data/orca")) {}
 
   /**
    * @brief Destroy the Orca_Worker_Test object

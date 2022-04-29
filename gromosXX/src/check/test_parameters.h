@@ -445,30 +445,6 @@ struct Results {
 
 };
 
-/**
- * @brief Stores parameters to test the mechanical embedding scheme with the Orca worker
- * 
- */
-extern Parameter orca_parameter_mechanical;
-
-/**
- * @brief Stores expected results for tests of the mechanical embedding scheme with the Orca worker
- * 
- */
-extern Results orca_results_mechanical;
-
-/**
- * @brief Stores parameters to test the electrostatic embedding scheme with the Orca worker
- * 
- */
-extern Parameter orca_parameter_electrostatic;
-
-/**
- * @brief Stores expected results for tests of the electrostatic embedding scheme with the Orca worker
- * 
- */
-extern Results orca_results_electrostatic;
-
 } // namespace testing
 
 #endif /* INCLUDED_TEST_PARAMETERS_H */

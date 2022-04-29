@@ -14,7 +14,7 @@
 
 namespace testing {
 
-QM_Worker_Test::QM_Worker_Test(const Parameter& parameter, const Results& results) : test_sim_(parameter), results_(results) {}
+QM_Worker_Test::QM_Worker_Test(const Parameter& parameter) : test_sim_(parameter) {}
 
 void QM_Worker_Test::check_qmmm_parameter() {
   // references to shorten the code
