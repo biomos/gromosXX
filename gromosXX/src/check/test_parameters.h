@@ -13,52 +13,60 @@
 namespace testing {
 
 /**
- * An enum that stores error codes that may occur during testing
+ * @brief A struct that stores data regarding error that may occur during testing (also keeps the namespace testing clean)
  * 
  */
-enum Error {
+struct Error {
 
   /**
-   * code for success
+   * An enum that stores error codes that may occur during testing
    * 
    */
-  success,
+  enum error_codes {
 
-  /**
-   * code for failure
-   * 
-   */
-  failure,
+    /**
+     * code for success
+     * 
+     */
+    error_success,
 
-  /**
-   * error during parsing of arguments
-   * 
-   */
-  parse_arguments,
+    /**
+     * code for failure
+     * 
+     */
+    error_failure,
 
-  /**
-   * error during reading of input files
-   * 
-   */
-  read_input,
+    /**
+     * error during parsing of arguments
+     * 
+     */
+    error_parse_arguments,
 
-  /**
-   * error during initialization of simulation
-   * 
-   */
-  md_init,
+    /**
+     * error during reading of input files
+     * 
+     */
+    error_read_input,
 
-  /**
-   * error during run of simulation
-   * 
-   */
-  md_run,
+    /**
+     * error during initialization of simulation
+     * 
+     */
+    error_md_init,
 
-  /**
-   * error caused by too low number of steps provided for simulation
-   * 
-   */
-  md_steps
+    /**
+     * error during run of simulation
+     * 
+     */
+    error_md_run,
+
+    /**
+     * error caused by too low number of steps provided for simulation
+     * 
+     */
+    error_md_steps
+
+  };
 
 };
 

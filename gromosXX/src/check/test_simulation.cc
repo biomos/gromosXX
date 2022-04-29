@@ -40,34 +40,34 @@ int Test_Simulation::init_simulation() {
   // parse arguments
   io::Argument args;
   if (args.parse(size, c_style_args, knowns)) {
-    return Error::parse_arguments;
+    return Error::error_parse_arguments;
   }
 
   // initialize the simulation
   if (io::read_input(args, topo_, conf_, sim_, md_)) {
-    return Error::read_input;
+    return Error::error_read_input;
   }
   
   // initialize topology, configuration, and simulation objects
   if (md_.init(topo_, conf_, sim_)) {
-    return Error::md_init;
+    return Error::error_md_init;
   }
   
   // create the output files
   traj_.init(args, sim_.param());
 
-  return Error::success;
+  return Error::error_success;
 }
 
 int Test_Simulation::run_single_step() {
-  int err = Error::md_steps; // assume there will not be enough steps provided in the imd file
+  int err = Error::error_md_steps; // assume there will not be enough steps provided in the imd file
   if (sim_.steps() < sim_.param().step.number_of_steps) {
     // write trajectory
     traj_.write(conf_, topo_, sim_);
     // run a step
     err = md_.run(topo_, conf_, sim_);
     if (!err) {
-      err = Error::success; // the step ran successful
+      err = Error::error_success; // the step ran successful
       traj_.print(topo_, conf_, sim_);
       sim_.steps() = sim_.steps() + sim_.param().analyze.stride;
       sim_.time() = sim_.param().step.t0 + sim_.steps() * sim_.time_step_size();
@@ -77,14 +77,14 @@ int Test_Simulation::run_single_step() {
       traj_.print_final(topo_, conf_, sim_);
     }
     else {
-      err = Error::md_run; // there was a problem with the step
+      err = Error::error_md_run; // there was a problem with the step
     }
   }
   return err; 
 }
 
 int Test_Simulation::run_simulation() {
-  int err = Error::md_steps; // assume there will not be enough steps provided
+  int err = Error::error_md_steps; // assume there will not be enough steps provided
 
   while (sim_.steps() < sim_.param().step.number_of_steps) {
     // write trajectory
@@ -94,19 +94,19 @@ int Test_Simulation::run_simulation() {
 
     // check for errors and potentially terminate
     if (!err) {
-      err = Error::success; // the step worked
+      err = Error::error_success; // the step worked
       traj_.print(topo_, conf_, sim_);
       sim_.steps() = sim_.steps() + sim_.param().analyze.stride;
       sim_.time() = sim_.param().step.t0 + sim_.steps() * sim_.time_step_size();
     }
     else {
-      err = Error::md_run; // the step didn't work
+      err = Error::error_md_run; // the step didn't work
       return err; // return already
     }
   } // main md loop
     
   // if there was no error, write final configuration
-  if (err == Error::success) {
+  if (err == Error::error_success) {
     this->traj_.write(conf_, topo_, sim_, io::final);
     this->traj_.print_final(topo_, conf_, sim_);
   }
