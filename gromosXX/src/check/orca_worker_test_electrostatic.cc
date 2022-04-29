@@ -2,6 +2,8 @@
  * @file orca_worker_test_electrostatic.cc
  */
 
+#include <gtest/gtest.h>
+
 #include "orca_worker_test_electrostatic.h"
 #include "../interaction/qmmm/orca_worker.h"
 #include "../interaction/qmmm/qm_atom.h"
@@ -10,6 +12,7 @@
 namespace testing {
 
 Orca_Worker_Test_Electrostatic::Orca_Worker_Test_Electrostatic() : Orca_Worker_Test(orca_parameter_electrostatic, orca_results_electrostatic) {
+  // initialize test files and expected results
   init_parameters();
   init_results();
 }
@@ -216,6 +219,7 @@ TEST_F(Orca_Worker_Test_Electrostatic, check_init) {
  * 
  */
 TEST_F(Orca_Worker_Test_Electrostatic, check_simulation) {
+  // run the simulation specified by the parameters object
   test_sim_.run_simulation();
   check_simulation_results();
 }

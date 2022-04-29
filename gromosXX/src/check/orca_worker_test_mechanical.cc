@@ -219,6 +219,7 @@ TEST_F(Orca_Worker_Test_Mechanical, check_init) {
  * 
  */
 TEST_F(Orca_Worker_Test_Mechanical, check_simulation) {
+  // run the simulation specified by the parameters object
   test_sim_.run_simulation();
   check_simulation_results();
 }
