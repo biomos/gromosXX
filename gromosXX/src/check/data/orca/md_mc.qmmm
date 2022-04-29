@@ -113,7 +113,6 @@ ORCAHEADER
 # Semi-empirical method
 ! ZINDO/1 EnGrad TightSCF
 %scf MaxIter 1500 end
-%pointcharges "@@POINTCHARGES@@"
 * xyzfile @@CHARGE@@ @@SPINM@@ @@COORDINATES@@
 END
 ORCABINARY
@@ -121,12 +120,12 @@ ORCABINARY
 END
 # Relative filenames (works well gromos is started in the designated work folder)
 ORCAFILES
-xphos.inp
-xphos.out
-xphos.xyz
-xphos.pc
-xphos.engrad
-xphos.pcgrad
+xphos_mc.inp
+xphos_mc.out
+xphos_mc.xyz
+xphos_mc.pc
+xphos_mc.engrad
+xphos_mc.pcgrad
 END
 # Absolute filenames
 # ORCAFILES

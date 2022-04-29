@@ -135,18 +135,188 @@ struct Key {
 
     // energies that may be tested
 
-    kinetic_energy_final,
-
-    potential_energy_final,
-
-    lj_potential_final,
-
-    crf_potential_final,
-
     qm_energy_init,
 
-    qm_energy_final,
+    // "current" energies
 
+    energy_total_current,
+
+    energy_kinetic_total_current,
+
+    energy_potential_total_current,
+
+    energy_covalent_total_current,
+
+    energy_bonds_total_current,
+
+    energy_angles_total_current,
+
+    energy_impropers_total_current,
+
+    energy_dihedrals_total_current,
+
+    energy_crossdihedrals_total_current,
+
+    energy_nonbonded_total_current,
+
+    energy_lennard_jones_total_current,
+
+    energy_coulomb_reaction_field_total_current,
+
+    lattice_total_current,
+
+    lattice_sum_pair_total_current,
+
+    lattice_sum_real_space_total_current,
+
+    lattice_sum_k_reciprocal_space_total_current,
+
+    lattice_sum_A_term_total_current,
+
+    lattice_sum_self_total_current,
+
+    lattice_sum_surface_total_current,
+
+    polarisation_self_total_current,
+
+    special_total_current,
+
+    sasa_total_current,
+
+    sasa_volume_total_current,
+
+    constraints_total_current,
+
+    distance_restraints_total_current,
+
+    distancefield_restraints_total_current,
+
+    dihedral_restraints_total_current,
+
+    position_restraints_total_current,
+
+    jvalue_restraints_total_current,
+
+    xray_restraints_total_current,
+
+    local_elevation_total_current,
+
+    order_parameter_restraints_total_current,
+
+    symmetry_restraints_total_current,
+
+    eds_vmix_current,
+
+    eds_vr_current,
+
+    eds_emax_current,
+
+    eds_emin_current,
+
+    eds_glob_min_current,
+
+    eds_glob_min_fluc_current,
+    
+    entropy_current,
+
+    qmmm_total_current,
+
+    bs_leus_energy_current,
+
+    rdc_value_total_current,
+
+    angle_restraints_total_current,
+
+    // "old" energies
+
+    energy_total_old,
+
+    energy_kinetic_total_old,
+
+    energy_potential_total_old,
+
+    energy_covalent_total_old,
+
+    energy_bonds_total_old,
+
+    energy_angles_total_old,
+
+    energy_impropers_total_old,
+
+    energy_dihedrals_total_old,
+
+    energy_crossdihedrals_total_old,
+
+    energy_nonbonded_total_old,
+
+    energy_lennard_jones_total_old,
+
+    energy_coulomb_reaction_field_total_old,
+
+    lattice_total_old,
+
+    lattice_sum_pair_total_old,
+
+    lattice_sum_real_space_total_old,
+
+    lattice_sum_k_reciprocal_space_total_old,
+
+    lattice_sum_A_term_total_old,
+
+    lattice_sum_self_total_old,
+
+    lattice_sum_surface_total_old,
+
+    polarisation_self_total_old,
+
+    special_total_old,
+
+    sasa_total_old,
+
+    sasa_volume_total_old,
+
+    constraints_total_old,
+
+    distance_restraints_total_old,
+
+    distancefield_restraints_total_old,
+
+    dihedral_restraints_total_old,
+
+    position_restraints_total_old,
+
+    jvalue_restraints_total_old,
+
+    xray_restraints_total_old,
+
+    local_elevation_total_old,
+
+    order_parameter_restraints_total_old,
+
+    symmetry_restraints_total_old,
+
+    eds_vmix_old,
+
+    eds_vr_old,
+
+    eds_emax_old,
+
+    eds_emin_old,
+
+    eds_glob_min_old,
+
+    eds_glob_min_fluc_old,
+    
+    entropy_old,
+
+    qmmm_total_old,
+
+    bs_leus_energy_old,
+
+    rdc_value_total_old,
+
+    angle_restraints_total_old,
+    
     // parameters for QM/MM simulations
 
     qmmm,

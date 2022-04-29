@@ -64,6 +64,12 @@ protected:
   virtual void init_results() = 0;
 
   /**
+   * @brief Initializes the expected results for energies calculated
+   * 
+   */
+  virtual void init_results_energies() = 0;
+
+  /**
    * @brief Initializes the expected results for parameters read from the input file
    * 
    */
@@ -92,6 +98,18 @@ protected:
    * 
    */
   virtual void check_parameter_init() = 0;
+
+  /**
+   * @brief Checks if Gromos has calculated energies, forces, coordinates correctly
+   * 
+   */
+  virtual void check_simulation_results();
+
+  /**
+   * @brief Checks if Gromos has calculated energies correcly
+   * 
+   */
+  virtual void check_simulation_results_energies();
 
   /**
    * @brief Checks if the units conversion factors have been read in correctly
@@ -146,6 +164,12 @@ protected:
    * 
    */
   interaction::QM_Zone* qm_zone_ptr;
+
+  /**
+   * Absolute error tolerance for comparing floating point numbers
+   * 
+   */
+  const double epsilon_ = 0.0001;
 
 };
 

@@ -45,6 +45,12 @@ protected:
   void init_results() override;
 
   /**
+   * @brief Initializes the expected results for energies calculated
+   * 
+   */
+  void init_results_energies() override;
+
+  /**
    * @brief Initializes the expected results for parameters read from the input file
    * 
    */
