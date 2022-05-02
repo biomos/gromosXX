@@ -16,6 +16,8 @@
 #include "../interaction/qmmm/qm_worker.h"
 #include "../interaction/qmmm/qm_zone.h"
 
+#include "../configuration/configuration.h"
+
 
 namespace testing {
 
@@ -76,6 +78,18 @@ protected:
   virtual void init_results_forces() = 0;
 
   /**
+   * @brief Initializes the expected results for forces calculated
+   * 
+   */
+  virtual void init_results_velocities() = 0;
+
+  /**
+   * @brief Initializes the expected results for forces calculated
+   * 
+   */
+  virtual void init_results_positions() = 0;
+
+  /**
    * @brief Initializes the expected results for parameters read from the input file
    * 
    */
@@ -118,6 +132,24 @@ protected:
   virtual void check_simulation_results_energies();
 
   /**
+   * @brief Checks if Gromos has calculated forces correcly
+   * 
+   */
+  virtual void check_simulation_results_forces();
+
+  /**
+   * @brief Checks if Gromos has calculated velocities correcly
+   * 
+   */
+  virtual void check_simulation_results_velocities();
+
+  /**
+   * @brief Checks if Gromos has calculated positions correcly
+   * 
+   */
+  virtual void check_simulation_results_positions();
+
+  /**
    * @brief Checks if the units conversion factors have been read in correctly
    * 
    */
@@ -140,6 +172,8 @@ protected:
    * 
    */
   virtual void check_qm_interaction_ptr();
+
+  void transform_vector(math::Vec& vec, math::Vec& vec_rot, double phi, double theta, double psi, math::boundary_enum boundary_type);
 
   /**
    * Instance of a test simulation based on the input files

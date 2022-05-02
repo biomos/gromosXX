@@ -12,6 +12,9 @@
 #include "../interaction/qmmm/qm_atom.h"
 #include "../interaction/qmmm/mm_atom.h"
 
+#include "../math/gmath.h"
+#include "../math/transformation.h"
+
 namespace testing {
 
 QM_Worker_Test::QM_Worker_Test(const Parameter& parameter) : test_sim_(parameter) {}
@@ -52,6 +55,9 @@ void QM_Worker_Test::check_qm_interaction_ptr() {
 
 void QM_Worker_Test::check_simulation_results() {
   check_simulation_results_energies();
+  check_simulation_results_forces();
+  check_simulation_results_velocities();
+  check_simulation_results_positions();
 }
 
 void QM_Worker_Test::check_simulation_results_energies() {
@@ -146,6 +152,55 @@ void QM_Worker_Test::check_simulation_results_energies() {
   EXPECT_NEAR(test_sim_.conf().old().energies.bsleus_total, doubles_res[Key::bs_leus_energy_old] , epsilon_);
   EXPECT_NEAR(test_sim_.conf().old().energies.rdc_total, doubles_res[Key::rdc_value_total_old], epsilon_);
   EXPECT_NEAR(test_sim_.conf().old().energies.angrest_total, doubles_res[Key::angle_restraints_total_old], epsilon_);
+}
+
+void QM_Worker_Test::check_simulation_results_forces() {
+  std::unordered_map<Key::keys, double>& doubles_res = results_.doubles_;
+  // "current" forces
+  EXPECT_NEAR(test_sim_.conf().current().force[0][0], doubles_res[Key::force_pos_0_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().force[0][1], doubles_res[Key::force_pos_0_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().force[0][2], doubles_res[Key::force_pos_0_2_current], epsilon_);
+  // "old" forces
+  EXPECT_NEAR(test_sim_.conf().old().force[0][0], doubles_res[Key::force_pos_0_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().force[0][1], doubles_res[Key::force_pos_0_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().force[0][2], doubles_res[Key::force_pos_0_2_old], epsilon_);
+}
+
+void QM_Worker_Test::check_simulation_results_velocities() {
+  std::unordered_map<Key::keys, double>& doubles_res = results_.doubles_;
+  // "current" forces
+  // EXPECT_NEAR(test_sim_.conf().current().vel[0][0], doubles_res[Key::velocities_pos_0_0_current], epsilon_);
+  // EXPECT_NEAR(test_sim_.conf().current().vel[0][1], doubles_res[Key::velocities_pos_0_1_current], epsilon_);
+  // EXPECT_NEAR(test_sim_.conf().current().vel[0][2], doubles_res[Key::velocities_pos_0_2_current], epsilon_);
+  // "old" forces
+  EXPECT_NEAR(test_sim_.conf().old().vel[0][0], doubles_res[Key::velocities_pos_0_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().vel[0][1], doubles_res[Key::velocities_pos_0_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().vel[0][2], doubles_res[Key::velocities_pos_0_2_old], epsilon_);
+}
+
+void QM_Worker_Test::check_simulation_results_positions() {
+  std::unordered_map<Key::keys, double>& doubles_res = results_.doubles_;
+  // "current" forces
+  //EXPECT_NEAR(test_sim_.conf().current().pos[0][0], doubles_res[Key::positions_pos_0_0_current], epsilon_);
+  //EXPECT_NEAR(test_sim_.conf().current().pos[0][1], doubles_res[Key::positions_pos_0_1_current], epsilon_);
+  //EXPECT_NEAR(test_sim_.conf().current().pos[0][2], doubles_res[Key::positions_pos_0_2_current], epsilon_);
+  // "old" forces
+  double phi = test_sim_.conf().old().phi;
+  double theta = test_sim_.conf().old().theta;
+  double psi = test_sim_.conf().old().psi;
+  math::Vec vec_rot;
+  transform_vector(test_sim_.conf().old().pos[0], vec_rot, phi, theta, psi, test_sim_.conf().boundary_type);
+  EXPECT_NEAR(vec_rot(0), doubles_res[Key::positions_pos_0_0_old], epsilon_);
+  EXPECT_NEAR(vec_rot(1), doubles_res[Key::positions_pos_0_1_old], epsilon_);
+  EXPECT_NEAR(vec_rot(2), doubles_res[Key::positions_pos_0_2_old], epsilon_);
+}
+
+void QM_Worker_Test::transform_vector(math::Vec& vec, math::Vec& vec_rot, double phi, double theta, double psi, math::boundary_enum boundary_type) {
+  math::Matrixl Rmat(math::rmat(phi, theta, psi));
+  if (boundary_type == math::truncoct) {
+    Rmat = math::product(Rmat, math::truncoct_triclinic_rotmat(false));
+  }
+  vec_rot = math::Vec(math::product(Rmat, vec));
 }
 
 }

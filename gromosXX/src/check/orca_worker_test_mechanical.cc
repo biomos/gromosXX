@@ -40,6 +40,9 @@ void Orca_Worker_Test_Mechanical::init_results() {
   init_results_qm_zone_init();
   // second test (energy comparison)
   init_results_energies();
+  init_results_forces();
+  init_results_velocities();
+  init_results_positions();
 }
 
 void Orca_Worker_Test_Mechanical::init_results_parameters() {
@@ -170,7 +173,36 @@ void Orca_Worker_Test_Mechanical::init_results_energies() {
 }
 
 void Orca_Worker_Test_Mechanical::init_results_forces() {
+  // "current" forces
+  results_.doubles_[Key::force_pos_0_0_current]   =    439.218233773;
+  results_.doubles_[Key::force_pos_0_1_current]   =   -383.480941817;
+  results_.doubles_[Key::force_pos_0_2_current]   =   -357.032960733;
+  // "old" forces
+  results_.doubles_[Key::force_pos_0_0_old]       =    323.162208784;
+  results_.doubles_[Key::force_pos_0_1_old]       =    -67.550663607;
+  results_.doubles_[Key::force_pos_0_2_old]       =   -285.588989842;
+}
 
+void Orca_Worker_Test_Mechanical::init_results_velocities() {
+  // "current" forces
+  // results_.doubles_[Key::velocities_pos_0_0_current]   =    439.218233773;
+  // results_.doubles_[Key::velocities_pos_0_1_current]   =   -383.480941817;
+  // results_.doubles_[Key::velocities_pos_0_2_current]   =   -357.032960733;
+  // "old" velocities
+  results_.doubles_[Key::velocities_pos_0_0_old]       =    -0.025993535;
+  results_.doubles_[Key::velocities_pos_0_1_old]       =    -1.075499701;
+  results_.doubles_[Key::velocities_pos_0_2_old]       =    -0.190603424;
+}
+
+void Orca_Worker_Test_Mechanical::init_results_positions() {
+  // "current" forces
+  //results_.doubles_[Key::positions_pos_0_0_current]   =    -0.025993535;
+  //results_.doubles_[Key::positions_pos_0_1_current]   =    -1.075499701;
+  //results_.doubles_[Key::positions_pos_0_2_current]   =    -0.190999184;
+  //// "old" positions
+  results_.doubles_[Key::positions_pos_0_0_old]       =    3.159243410;
+  results_.doubles_[Key::positions_pos_0_1_old]       =    0.680569091;
+  results_.doubles_[Key::positions_pos_0_2_old]       =    1.245294911;
 }
 
 void Orca_Worker_Test_Mechanical::check_qm_atoms_init() {

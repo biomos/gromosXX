@@ -40,6 +40,9 @@ void Orca_Worker_Test_Electrostatic::init_results() {
   init_results_qm_zone_init();
   // second test (energy comparison)
   init_results_energies();
+  init_results_forces();
+  init_results_velocities();
+  init_results_positions();
 }
 
 void Orca_Worker_Test_Electrostatic::init_results_parameters() {
@@ -170,7 +173,36 @@ void Orca_Worker_Test_Electrostatic::init_results_energies() {
 }
 
 void Orca_Worker_Test_Electrostatic::init_results_forces() {
+  // "current" forces
+  results_.doubles_[Key::force_pos_0_0_current]   =    436.158347386;
+  results_.doubles_[Key::force_pos_0_1_current]   =   -372.599172224;
+  results_.doubles_[Key::force_pos_0_2_current]   =   -357.771249851;
+  // "old" forces
+  results_.doubles_[Key::force_pos_0_0_old]       =    322.794611469;
+  results_.doubles_[Key::force_pos_0_1_old]       =    -61.321755176;
+  results_.doubles_[Key::force_pos_0_2_old]       =   -287.529491621;
+}
 
+void Orca_Worker_Test_Electrostatic::init_results_velocities() {
+  // "current" forces
+  // results_.doubles_[Key::velocities_pos_0_0_current]   =   -0.246162528;
+  // results_.doubles_[Key::velocities_pos_0_1_current]   =   -0.878534002;
+  // results_.doubles_[Key::velocities_pos_0_2_current]   =   -0.013529510;
+  // "old" velocities
+  results_.doubles_[Key::velocities_pos_0_0_old]       =   -0.029814731;
+  results_.doubles_[Key::velocities_pos_0_1_old]       =   -1.063376043;
+  results_.doubles_[Key::velocities_pos_0_2_old]       =   -0.190999184;
+}
+
+void Orca_Worker_Test_Electrostatic::init_results_positions() {
+  // "current" forces
+  //results_.doubles_[Key::positions_pos_0_0_current]   =    3.159254531;
+  //results_.doubles_[Key::positions_pos_0_1_current]   =    0.681110048;
+  //results_.doubles_[Key::positions_pos_0_2_current]   =    1.245389912;
+  //// "old" positions
+  results_.doubles_[Key::positions_pos_0_0_old]       =    3.159240450;
+  results_.doubles_[Key::positions_pos_0_1_old]       =    0.680578538;
+  results_.doubles_[Key::positions_pos_0_2_old]       =    1.245294739;
 }
 
 void Orca_Worker_Test_Electrostatic::check_qm_atoms_init() {

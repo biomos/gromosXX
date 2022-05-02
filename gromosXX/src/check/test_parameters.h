@@ -316,6 +316,54 @@ struct Key {
     rdc_value_total_old,
 
     angle_restraints_total_old,
+
+    // "current" forces
+
+    force_pos_0_0_current,
+
+    force_pos_0_1_current,
+
+    force_pos_0_2_current,
+
+    // "old" forces
+
+    force_pos_0_0_old,
+
+    force_pos_0_1_old,
+
+    force_pos_0_2_old,
+
+    // "current" velocities
+
+    velocities_pos_0_0_current,
+
+    velocities_pos_0_1_current,
+
+    velocities_pos_0_2_current,
+
+    // "old" velocities
+
+    velocities_pos_0_0_old,
+
+    velocities_pos_0_1_old,
+
+    velocities_pos_0_2_old,
+
+    // "current" positions
+
+    positions_pos_0_0_current,
+
+    positions_pos_0_1_current,
+
+    positions_pos_0_2_current,
+
+    // "old" positions
+
+    positions_pos_0_0_old,
+
+    positions_pos_0_1_old,
+
+    positions_pos_0_2_old,
     
     // parameters for QM/MM simulations
 

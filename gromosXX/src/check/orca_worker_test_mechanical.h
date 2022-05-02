@@ -57,6 +57,18 @@ protected:
   void init_results_forces() override;
 
   /**
+   * @brief Initializes the expected results for velocities calculated
+   * 
+   */
+  void init_results_velocities() override;
+
+  /**
+   * @brief Initializes the expected results for positions calculated
+   * 
+   */
+  void init_results_positions() override;
+
+  /**
    * @brief Initializes the expected results for parameters read from the input file
    * 
    */
