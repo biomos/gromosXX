@@ -50,6 +50,12 @@ protected:
    */
   void init_results_energies() override;
 
+/**
+ * @brief Initializes the expected results for forces calculated
+ * 
+ */
+  void init_results_forces() override;
+
   /**
    * @brief Initializes the expected results for parameters read from the input file
    * 

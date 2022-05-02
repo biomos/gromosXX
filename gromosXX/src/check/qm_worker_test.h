@@ -70,6 +70,12 @@ protected:
   virtual void init_results_energies() = 0;
 
   /**
+   * @brief Initializes the expected results for forces calculated
+   * 
+   */
+  virtual void init_results_forces() = 0;
+
+  /**
    * @brief Initializes the expected results for parameters read from the input file
    * 
    */
@@ -169,7 +175,7 @@ protected:
    * Absolute error tolerance for comparing floating point numbers
    * 
    */
-  const double epsilon_ = 0.0001;
+  const double epsilon_ = 0.005;
 
 };
 

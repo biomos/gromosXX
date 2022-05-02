@@ -24,6 +24,8 @@ void Orca_Worker_Test_Electrostatic::init_parameters() {
   test_sim_.parameter().add_input("qmmm", "md_el.qmmm");
   test_sim_.parameter().add_input("trc", "md_el.trc");
   test_sim_.parameter().add_input("tre", "md_el.tre");
+  test_sim_.parameter().add_input("trv", "md_el.trv");
+  test_sim_.parameter().add_input("trf", "md_el.trf");
   test_sim_.parameter().add_input("fin", "md_el_final.cnf");
 }
 
@@ -165,6 +167,10 @@ void Orca_Worker_Test_Electrostatic::init_results_energies() {
   results_.doubles_[Key::bs_leus_energy_old]                             =   0.000000000e+00;
   results_.doubles_[Key::rdc_value_total_old]                            =   0.000000000e+00;
   results_.doubles_[Key::angle_restraints_total_old]                     =   0.000000000e+00;
+}
+
+void Orca_Worker_Test_Electrostatic::init_results_forces() {
+
 }
 
 void Orca_Worker_Test_Electrostatic::check_qm_atoms_init() {
