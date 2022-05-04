@@ -173,14 +173,32 @@ void Orca_Worker_Test_Electrostatic::init_results_energies() {
 }
 
 void Orca_Worker_Test_Electrostatic::init_results_forces() {
-  // "current" forces
+  // "current" forces (step 1)
   results_.doubles_[Key::force_pos_0_0_current]   =    436.158347386;
   results_.doubles_[Key::force_pos_0_1_current]   =   -372.599172224;
   results_.doubles_[Key::force_pos_0_2_current]   =   -357.771249851;
-  // "old" forces
+  results_.doubles_[Key::force_pos_1_0_current]   =   -853.160469825;
+  results_.doubles_[Key::force_pos_1_1_current]   =   -642.435169900;
+  results_.doubles_[Key::force_pos_1_2_current]   =   3652.335764283;
+  results_.doubles_[Key::force_pos_200_0_current] =   -169.922327428;
+  results_.doubles_[Key::force_pos_200_1_current] =   -120.092514533;
+  results_.doubles_[Key::force_pos_200_2_current] =    161.500127483;
+  results_.doubles_[Key::force_pos_210_0_current] =    239.213725210;
+  results_.doubles_[Key::force_pos_210_1_current] =   -185.061101920;
+  results_.doubles_[Key::force_pos_210_2_current] =    -51.118786278;
+  // "old" forces (step 2)
   results_.doubles_[Key::force_pos_0_0_old]       =    322.794611469;
   results_.doubles_[Key::force_pos_0_1_old]       =    -61.321755176;
   results_.doubles_[Key::force_pos_0_2_old]       =   -287.529491621;
+  results_.doubles_[Key::force_pos_1_0_old]       =   -894.924699449;
+  results_.doubles_[Key::force_pos_1_1_old]       =   -631.250853775;
+  results_.doubles_[Key::force_pos_1_2_old]       =   3173.369707558;
+  results_.doubles_[Key::force_pos_200_0_old]     =   -175.874840911;
+  results_.doubles_[Key::force_pos_200_1_old]     =   -130.311468863;
+  results_.doubles_[Key::force_pos_200_2_old]     =    170.904652248;
+  results_.doubles_[Key::force_pos_210_0_old]     =    245.611394915;
+  results_.doubles_[Key::force_pos_210_1_old]     =   -197.900427118;
+  results_.doubles_[Key::force_pos_210_2_old]     =    -48.298160058;
 }
 
 void Orca_Worker_Test_Electrostatic::init_results_velocities() {

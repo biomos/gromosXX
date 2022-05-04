@@ -325,6 +325,24 @@ struct Key {
 
     force_pos_0_2_current,
 
+    force_pos_1_0_current,
+
+    force_pos_1_1_current,
+
+    force_pos_1_2_current,
+
+    force_pos_200_0_current,
+
+    force_pos_200_1_current,
+
+    force_pos_200_2_current,
+
+    force_pos_210_0_current,
+
+    force_pos_210_1_current,
+
+    force_pos_210_2_current,
+
     // "old" forces
 
     force_pos_0_0_old,
@@ -332,6 +350,24 @@ struct Key {
     force_pos_0_1_old,
 
     force_pos_0_2_old,
+
+    force_pos_1_0_old,
+
+    force_pos_1_1_old,
+
+    force_pos_1_2_old,
+
+    force_pos_200_0_old,
+
+    force_pos_200_1_old,
+
+    force_pos_200_2_old,
+
+    force_pos_210_0_old,
+
+    force_pos_210_1_old,
+
+    force_pos_210_2_old,
 
     // "current" velocities
 

@@ -56,8 +56,8 @@ void QM_Worker_Test::check_qm_interaction_ptr() {
 void QM_Worker_Test::check_simulation_results() {
   check_simulation_results_energies();
   check_simulation_results_forces();
-  check_simulation_results_velocities();
-  check_simulation_results_positions();
+  // check_simulation_results_velocities();
+  // check_simulation_results_positions();
 }
 
 void QM_Worker_Test::check_simulation_results_energies() {
@@ -160,10 +160,28 @@ void QM_Worker_Test::check_simulation_results_forces() {
   EXPECT_NEAR(test_sim_.conf().current().force[0][0], doubles_res[Key::force_pos_0_0_current], epsilon_);
   EXPECT_NEAR(test_sim_.conf().current().force[0][1], doubles_res[Key::force_pos_0_1_current], epsilon_);
   EXPECT_NEAR(test_sim_.conf().current().force[0][2], doubles_res[Key::force_pos_0_2_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().force[1][0], doubles_res[Key::force_pos_1_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().force[1][1], doubles_res[Key::force_pos_1_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().force[1][2], doubles_res[Key::force_pos_1_2_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().force[200][0], doubles_res[Key::force_pos_200_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().force[200][1], doubles_res[Key::force_pos_200_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().force[200][2], doubles_res[Key::force_pos_200_2_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().force[210][0], doubles_res[Key::force_pos_210_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().force[210][1], doubles_res[Key::force_pos_210_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().force[210][2], doubles_res[Key::force_pos_210_2_current], epsilon_);
   // "old" forces
   EXPECT_NEAR(test_sim_.conf().old().force[0][0], doubles_res[Key::force_pos_0_0_old], epsilon_);
   EXPECT_NEAR(test_sim_.conf().old().force[0][1], doubles_res[Key::force_pos_0_1_old], epsilon_);
   EXPECT_NEAR(test_sim_.conf().old().force[0][2], doubles_res[Key::force_pos_0_2_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().force[1][0], doubles_res[Key::force_pos_1_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().force[1][1], doubles_res[Key::force_pos_1_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().force[1][2], doubles_res[Key::force_pos_1_2_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().force[200][0], doubles_res[Key::force_pos_200_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().force[200][1], doubles_res[Key::force_pos_200_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().force[200][2], doubles_res[Key::force_pos_200_2_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().force[210][0], doubles_res[Key::force_pos_210_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().force[210][1], doubles_res[Key::force_pos_210_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().force[210][2], doubles_res[Key::force_pos_210_2_old], epsilon_);
 }
 
 void QM_Worker_Test::check_simulation_results_velocities() {
