@@ -64,6 +64,7 @@ void QM_Worker_Test::check_simulation_results() {
   check_simulation_results_temperature_baths();
   check_simulation_results_bonded_terms();
   check_simulation_results_nonbonded_terms();
+  check_simulation_results_special_terms();
 }
 
 void QM_Worker_Test::check_simulation_results_energies() {
@@ -307,7 +308,85 @@ void QM_Worker_Test::check_simulation_results_nonbonded_terms() {
   EXPECT_NEAR(test_sim_.conf().current().energies.lj_energy[0][0], doubles_res[Key::lennard_jones_group_0_0_current], epsilon_);
   EXPECT_NEAR(test_sim_.conf().current().energies.lj_energy[1][0], doubles_res[Key::lennard_jones_group_1_0_current], epsilon_);
   EXPECT_NEAR(test_sim_.conf().current().energies.lj_energy[1][1], doubles_res[Key::lennard_jones_group_1_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.crf_energy[0][0], doubles_res[Key::coulomb_reaction_field_group_0_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.crf_energy[1][0], doubles_res[Key::coulomb_reaction_field_group_1_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.crf_energy[1][1], doubles_res[Key::coulomb_reaction_field_group_1_1_current], epsilon_);
+  // lattice sum energies cannot be tested like this as they are not calculated right now. values in .tre file correspond to totals
+  EXPECT_NEAR(test_sim_.conf().current().energies.ls_total, doubles_res[Key::lattice_sum_real_group_0_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.ls_total, doubles_res[Key::lattice_sum_real_group_1_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.ls_total, doubles_res[Key::lattice_sum_real_group_1_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.ls_k_energy[0][0], doubles_res[Key::lattice_sum_reciprocal_group_0_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.ls_k_energy[1][0], doubles_res[Key::lattice_sum_reciprocal_group_1_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.ls_k_energy[1][1], doubles_res[Key::lattice_sum_reciprocal_group_1_1_current], epsilon_);  
   // "old" energies
+  EXPECT_NEAR(test_sim_.conf().old().energies.lj_energy[0][0], doubles_res[Key::lennard_jones_group_0_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.lj_energy[1][0], doubles_res[Key::lennard_jones_group_1_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.lj_energy[1][1], doubles_res[Key::lennard_jones_group_1_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.crf_energy[0][0], doubles_res[Key::coulomb_reaction_field_group_0_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.crf_energy[1][0], doubles_res[Key::coulomb_reaction_field_group_1_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.crf_energy[1][1], doubles_res[Key::coulomb_reaction_field_group_1_1_old], epsilon_);
+  // lattice sum energies cannot be tested like this as they are not calculated right now. values in .tre file correspond to totals
+  EXPECT_NEAR(test_sim_.conf().old().energies.ls_total, doubles_res[Key::lattice_sum_real_group_0_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.ls_total, doubles_res[Key::lattice_sum_real_group_1_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.ls_total, doubles_res[Key::lattice_sum_real_group_1_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.ls_k_energy[0][0], doubles_res[Key::lattice_sum_reciprocal_group_0_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.ls_k_energy[1][0], doubles_res[Key::lattice_sum_reciprocal_group_1_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.ls_k_energy[1][1], doubles_res[Key::lattice_sum_reciprocal_group_1_1_old], epsilon_); 
+}
+
+void QM_Worker_Test::check_simulation_results_special_terms() {
+  std::unordered_map<Key::keys, double>& doubles_res = results_.doubles_;
+  // some values are not stored with Gromos, instead "0" is printed
+  // "current" energies
+  EXPECT_NEAR(test_sim_.conf().current().energies.constraints_energy[0], doubles_res[Key::contraints_group_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.posrest_energy[0], doubles_res[Key::pos_restraints_group_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.distanceres_energy[0], doubles_res[Key::dist_restraints_group_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.disfieldres_energy[0], doubles_res[Key::disfield_res_group_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.angrest_energy[0], doubles_res[Key::angle_restraint_group_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.dihrest_energy[0], doubles_res[Key::dihedral_restraints_group_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.sasa_energy[0], doubles_res[Key::sasa_group_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.sasa_volume_energy[0], doubles_res[Key::sasa_vol_group_0_current], epsilon_);
+  EXPECT_NEAR(0, doubles_res[Key::jvalue_group_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.rdc_energy[0], doubles_res[Key::rdc_group_0_current], epsilon_);
+  EXPECT_NEAR(0, doubles_res[Key::local_elevation_group_0_current], epsilon_);
+  EXPECT_NEAR(0, doubles_res[Key::path_integral_group_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.constraints_energy[1], doubles_res[Key::contraints_group_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.posrest_energy[1], doubles_res[Key::pos_restraints_group_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.distanceres_energy[1], doubles_res[Key::dist_restraints_group_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.disfieldres_energy[1], doubles_res[Key::disfield_res_group_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.angrest_energy[1], doubles_res[Key::angle_restraint_group_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.dihrest_energy[1], doubles_res[Key::dihedral_restraints_group_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.sasa_energy[1], doubles_res[Key::sasa_group_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.sasa_volume_energy[1], doubles_res[Key::sasa_vol_group_1_current], epsilon_);
+  EXPECT_NEAR(0, doubles_res[Key::jvalue_group_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.rdc_energy[1], doubles_res[Key::rdc_group_1_current], epsilon_);
+  EXPECT_NEAR(0, doubles_res[Key::local_elevation_group_1_current], epsilon_);
+  EXPECT_NEAR(0, doubles_res[Key::path_integral_group_1_current], epsilon_);
+  // "old" energies
+  EXPECT_NEAR(test_sim_.conf().old().energies.constraints_energy[0], doubles_res[Key::contraints_group_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.posrest_energy[0], doubles_res[Key::pos_restraints_group_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.distanceres_energy[0], doubles_res[Key::dist_restraints_group_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.disfieldres_energy[0], doubles_res[Key::disfield_res_group_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.angrest_energy[0], doubles_res[Key::angle_restraint_group_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.dihrest_energy[0], doubles_res[Key::dihedral_restraints_group_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.sasa_energy[0], doubles_res[Key::sasa_group_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.sasa_volume_energy[0], doubles_res[Key::sasa_vol_group_0_old], epsilon_);
+  EXPECT_NEAR(0, doubles_res[Key::jvalue_group_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.rdc_energy[0], doubles_res[Key::rdc_group_0_old], epsilon_);
+  EXPECT_NEAR(0, doubles_res[Key::local_elevation_group_0_old], epsilon_);
+  EXPECT_NEAR(0, doubles_res[Key::path_integral_group_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.constraints_energy[1], doubles_res[Key::contraints_group_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.posrest_energy[1], doubles_res[Key::pos_restraints_group_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.distanceres_energy[1], doubles_res[Key::dist_restraints_group_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.disfieldres_energy[1], doubles_res[Key::disfield_res_group_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.angrest_energy[1], doubles_res[Key::angle_restraint_group_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.dihrest_energy[1], doubles_res[Key::dihedral_restraints_group_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.sasa_energy[1], doubles_res[Key::sasa_group_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.sasa_volume_energy[1], doubles_res[Key::sasa_vol_group_1_old], epsilon_);
+  EXPECT_NEAR(0, doubles_res[Key::jvalue_group_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.rdc_energy[1], doubles_res[Key::rdc_group_1_old], epsilon_);
+  EXPECT_NEAR(0, doubles_res[Key::local_elevation_group_1_old], epsilon_);
+  EXPECT_NEAR(0, doubles_res[Key::path_integral_group_1_old], epsilon_);
 }
 
 }

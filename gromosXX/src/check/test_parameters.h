@@ -545,51 +545,149 @@ struct Key {
 
     lennard_jones_group_0_0_current,
     
-    lennard_jones_group_1_1_current,
-
     lennard_jones_group_1_0_current,
+
+    lennard_jones_group_1_1_current,
 
     coulomb_reaction_field_group_0_0_current,
 
-    coulomb_reaction_field_group_1_1_current,
+    coulomb_reaction_field_group_1_0_current,
 
-    coulomb_reaction_field_group_0_1_current,
+    coulomb_reaction_field_group_1_1_current,
 
     lattice_sum_real_group_0_0_current,
 
-    lattice_sum_real_group_1_1_current,
+    lattice_sum_real_group_1_0_current,
 
-    lattice_sum_real_group_0_1_current,
+    lattice_sum_real_group_1_1_current,
 
     lattice_sum_reciprocal_group_0_0_current,
 
-    lattice_sum_reciprocal_group_1_1_current,
+    lattice_sum_reciprocal_group_1_0_current,
 
-    lattice_sum_reciprocal_group_0_1_current,
+    lattice_sum_reciprocal_group_1_1_current,
 
     lennard_jones_group_0_0_old,
 
-    lennard_jones_group_1_1_old,
+    lennard_jones_group_1_0_old,
 
-    lennard_jones_group_0_1_old,
+    lennard_jones_group_1_1_old,
 
     coulomb_reaction_field_group_0_0_old,
 
-    coulomb_reaction_field_group_1_1_old,
+    coulomb_reaction_field_group_1_0_old,
 
-    coulomb_reaction_field_group_0_1_old,
+    coulomb_reaction_field_group_1_1_old,
 
     lattice_sum_real_group_0_0_old,
 
-    lattice_sum_real_group_1_1_old,
+    lattice_sum_real_group_1_0_old,
 
-    lattice_sum_real_group_0_1_old,
+    lattice_sum_real_group_1_1_old,
 
     lattice_sum_reciprocal_group_0_0_old,
 
+    lattice_sum_reciprocal_group_1_0_old,
+
     lattice_sum_reciprocal_group_1_1_old,
 
-    lattice_sum_reciprocal_group_0_1_old,
+    // special terms by force group
+
+    contraints_group_0_current,
+
+    pos_restraints_group_0_current,
+
+    dist_restraints_group_0_current,
+
+    disfield_res_group_0_current,
+
+    dihedral_restraints_group_0_current,
+
+    sasa_group_0_current,
+
+    sasa_vol_group_0_current,
+
+    jvalue_group_0_current,
+
+    rdc_group_0_current,
+
+    local_elevation_group_0_current,
+
+    path_integral_group_0_current,
+
+    angle_restraint_group_0_current,
+
+    contraints_group_1_current,
+
+    pos_restraints_group_1_current,
+
+    dist_restraints_group_1_current,
+
+    disfield_res_group_1_current,
+
+    dihedral_restraints_group_1_current,
+
+    sasa_group_1_current,
+
+    sasa_vol_group_1_current,
+
+    jvalue_group_1_current,
+
+    rdc_group_1_current,
+
+    local_elevation_group_1_current,
+
+    path_integral_group_1_current,
+
+    angle_restraint_group_1_current,
+
+    contraints_group_0_old,
+
+    pos_restraints_group_0_old,
+
+    dist_restraints_group_0_old,
+
+    disfield_res_group_0_old,
+
+    dihedral_restraints_group_0_old,
+
+    sasa_group_0_old,
+
+    sasa_vol_group_0_old,
+
+    jvalue_group_0_old,
+
+    rdc_group_0_old,
+
+    local_elevation_group_0_old,
+
+    path_integral_group_0_old,
+
+    angle_restraint_group_0_old,
+
+    contraints_group_1_old,
+
+    pos_restraints_group_1_old,
+
+    dist_restraints_group_1_old,
+
+    disfield_res_group_1_old,
+
+    dihedral_restraints_group_1_old,
+
+    sasa_group_1_old,
+
+    sasa_vol_group_1_old,
+
+    jvalue_group_1_old,
+
+    rdc_group_1_old,
+
+    local_elevation_group_1_old,
+
+    path_integral_group_1_old,
+
+    angle_restraint_group_1_old,
     
     // parameters for QM/MM simulations
 

@@ -173,6 +173,8 @@ protected:
 
   virtual void check_simulation_results_nonbonded_terms();
 
+  virtual void check_simulation_results_special_terms();
+
   /**
    * @brief Checks if the units conversion factors have been read in correctly
    * 

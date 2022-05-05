@@ -47,6 +47,7 @@ void Orca_Worker_Test_Electrostatic::init_results() {
   init_results_baths();
   init_results_bonded_terms();
   init_results_nonbonded_terms();
+  init_results_special_terms();
 }
 
 void Orca_Worker_Test_Electrostatic::init_results_parameters() {
@@ -309,33 +310,84 @@ void Orca_Worker_Test_Electrostatic::init_results_bonded_terms() {
 void Orca_Worker_Test_Electrostatic::init_results_nonbonded_terms() {
   // "current" (step 1)
   results_.doubles_[Key::lennard_jones_group_0_0_current]                =  0.000000000e+00;
-  results_.doubles_[Key::lennard_jones_group_1_1_current]                = -1.410201839e+02;
-  results_.doubles_[Key::lennard_jones_group_1_0_current]                = -4.868703494e+03;
+  results_.doubles_[Key::lennard_jones_group_1_0_current]                = -1.410201839e+02;
+  results_.doubles_[Key::lennard_jones_group_1_1_current]                = -4.868703494e+03;
   results_.doubles_[Key::coulomb_reaction_field_group_0_0_current]       =  0.000000000e+00;
-  results_.doubles_[Key::coulomb_reaction_field_group_1_1_current]       =  0.000000000e+00;
-  results_.doubles_[Key::coulomb_reaction_field_group_0_1_current]       = -2.559496780e+04;
+  results_.doubles_[Key::coulomb_reaction_field_group_1_0_current]       =  0.000000000e+00;
+  results_.doubles_[Key::coulomb_reaction_field_group_1_1_current]       = -2.559496780e+04;
   results_.doubles_[Key::lattice_sum_real_group_0_0_current]             =  0.000000000e+00;
+  results_.doubles_[Key::lattice_sum_real_group_1_0_current]             =  0.000000000e+00;
   results_.doubles_[Key::lattice_sum_real_group_1_1_current]             =  0.000000000e+00;
-  results_.doubles_[Key::lattice_sum_real_group_0_1_current]             =  0.000000000e+00;
   results_.doubles_[Key::lattice_sum_reciprocal_group_0_0_current]       =  0.000000000e+00;
+  results_.doubles_[Key::lattice_sum_reciprocal_group_1_0_current]       =  0.000000000e+00;
   results_.doubles_[Key::lattice_sum_reciprocal_group_1_1_current]       =  0.000000000e+00;
-  results_.doubles_[Key::lattice_sum_reciprocal_group_0_1_current]       =  0.000000000e+00;
   // "old" (step 2)
-  results_.doubles_[Key::lennard_jones_group_0_0_current]                =  0.000000000e+00;
-  results_.doubles_[Key::lennard_jones_group_1_1_current]                = -1.411110293e+02;
-  results_.doubles_[Key::lennard_jones_group_1_0_current]                = -4.869270312e+03;
-  results_.doubles_[Key::coulomb_reaction_field_group_0_0_current]       =  0.000000000e+00;
-  results_.doubles_[Key::coulomb_reaction_field_group_1_1_current]       =  0.000000000e+00;
-  results_.doubles_[Key::coulomb_reaction_field_group_0_1_current]       = -2.559545299e+04;
-  results_.doubles_[Key::lattice_sum_real_group_0_0_current]             =  0.000000000e+00;
-  results_.doubles_[Key::lattice_sum_real_group_1_1_current]             =  0.000000000e+00;
-  results_.doubles_[Key::lattice_sum_real_group_0_1_current]             =  0.000000000e+00;
-  results_.doubles_[Key::lattice_sum_reciprocal_group_0_0_current]       =  0.000000000e+00;
-  results_.doubles_[Key::lattice_sum_reciprocal_group_1_1_current]       =  0.000000000e+00;
-  results_.doubles_[Key::lattice_sum_reciprocal_group_0_1_current]       =  0.000000000e+00;
+  results_.doubles_[Key::lennard_jones_group_0_0_old]                    =  0.000000000e+00;
+  results_.doubles_[Key::lennard_jones_group_1_0_old]                    = -1.411110293e+02;
+  results_.doubles_[Key::lennard_jones_group_1_1_old]                    = -4.869270312e+03;
+  results_.doubles_[Key::coulomb_reaction_field_group_0_0_old]           =  0.000000000e+00;
+  results_.doubles_[Key::coulomb_reaction_field_group_1_0_old]           =  0.000000000e+00;
+  results_.doubles_[Key::coulomb_reaction_field_group_1_1_old]           = -2.559545299e+04;
+  results_.doubles_[Key::lattice_sum_real_group_0_0_old]                 =  0.000000000e+00;
+  results_.doubles_[Key::lattice_sum_real_group_1_0_old]                 =  0.000000000e+00;
+  results_.doubles_[Key::lattice_sum_real_group_1_1_old]                 =  0.000000000e+00;
+  results_.doubles_[Key::lattice_sum_reciprocal_group_0_0_old]           =  0.000000000e+00;
+  results_.doubles_[Key::lattice_sum_reciprocal_group_1_0_old]           =  0.000000000e+00;
+  results_.doubles_[Key::lattice_sum_reciprocal_group_1_1_old]           =  0.000000000e+00;
 }
 
-void Orca_Worker_Test_Electrostatic::init_results_special_terms() {}
+void Orca_Worker_Test_Electrostatic::init_results_special_terms() {
+  // "current" (step 1)
+  results_.doubles_[Key::contraints_group_0_current]          = 0.000000000e+00;
+  results_.doubles_[Key::pos_restraints_group_0_current]      = 0.000000000e+00;
+  results_.doubles_[Key::dist_restraints_group_0_current]     = 0.000000000e+00;
+  results_.doubles_[Key::disfield_res_group_0_current]        = 0.000000000e+00;
+  results_.doubles_[Key::dihedral_restraints_group_0_current] = 0.000000000e+00;
+  results_.doubles_[Key::sasa_group_0_current]                = 0.000000000e+00;
+  results_.doubles_[Key::sasa_vol_group_0_current]            = 0.000000000e+00;
+  results_.doubles_[Key::jvalue_group_0_current]              = 0.000000000e+00;
+  results_.doubles_[Key::rdc_group_0_current]                 = 0.000000000e+00;
+  results_.doubles_[Key::local_elevation_group_0_current]     = 0.000000000e+00;
+  results_.doubles_[Key::path_integral_group_0_current]       = 0.000000000e+00;
+  results_.doubles_[Key::angle_restraint_group_0_current]     = 0.000000000e+00;
+  results_.doubles_[Key::contraints_group_1_current]          = 0.000000000e+00;
+  results_.doubles_[Key::pos_restraints_group_1_current]      = 0.000000000e+00;
+  results_.doubles_[Key::dist_restraints_group_1_current]     = 0.000000000e+00;
+  results_.doubles_[Key::disfield_res_group_1_current]        = 0.000000000e+00;
+  results_.doubles_[Key::dihedral_restraints_group_1_current] = 0.000000000e+00;
+  results_.doubles_[Key::sasa_group_1_current]                = 0.000000000e+00;
+  results_.doubles_[Key::sasa_vol_group_1_current]            = 0.000000000e+00;
+  results_.doubles_[Key::jvalue_group_1_current]              = 0.000000000e+00;
+  results_.doubles_[Key::rdc_group_1_current]                 = 0.000000000e+00;
+  results_.doubles_[Key::local_elevation_group_1_current]     = 0.000000000e+00;
+  results_.doubles_[Key::path_integral_group_1_current]       = 0.000000000e+00;
+  results_.doubles_[Key::angle_restraint_group_1_current]     = 0.000000000e+00;
+  // "old" (step 2)
+  results_.doubles_[Key::contraints_group_0_old]              = 0.000000000e+00;
+  results_.doubles_[Key::pos_restraints_group_0_old]          = 0.000000000e+00;
+  results_.doubles_[Key::dist_restraints_group_0_old]         = 0.000000000e+00;
+  results_.doubles_[Key::disfield_res_group_0_old]            = 0.000000000e+00;
+  results_.doubles_[Key::dihedral_restraints_group_0_old]     = 0.000000000e+00;
+  results_.doubles_[Key::sasa_group_0_old]                    = 0.000000000e+00;
+  results_.doubles_[Key::sasa_vol_group_0_old]                = 0.000000000e+00;
+  results_.doubles_[Key::jvalue_group_0_old]                  = 0.000000000e+00;
+  results_.doubles_[Key::rdc_group_0_old]                     = 0.000000000e+00;
+  results_.doubles_[Key::local_elevation_group_0_old]         = 0.000000000e+00;
+  results_.doubles_[Key::path_integral_group_0_old]           = 0.000000000e+00;
+  results_.doubles_[Key::angle_restraint_group_0_old]         = 0.000000000e+00;
+  results_.doubles_[Key::contraints_group_1_old]              = 0.000000000e+00;
+  results_.doubles_[Key::pos_restraints_group_1_old]          = 0.000000000e+00;
+  results_.doubles_[Key::dist_restraints_group_1_old]         = 0.000000000e+00;
+  results_.doubles_[Key::disfield_res_group_1_old]            = 0.000000000e+00;
+  results_.doubles_[Key::dihedral_restraints_group_1_old]     = 0.000000000e+00;
+  results_.doubles_[Key::sasa_group_1_old]                    = 0.000000000e+00;
+  results_.doubles_[Key::sasa_vol_group_1_old]                = 0.000000000e+00;
+  results_.doubles_[Key::jvalue_group_1_old]                  = 0.000000000e+00;
+  results_.doubles_[Key::rdc_group_1_old]                     = 0.000000000e+00;
+  results_.doubles_[Key::local_elevation_group_1_old]         = 0.000000000e+00;
+  results_.doubles_[Key::path_integral_group_1_old]           = 0.000000000e+00;
+  results_.doubles_[Key::angle_restraint_group_1_old]         = 0.000000000e+00;
+}
 
 void Orca_Worker_Test_Electrostatic::init_results_mass() {}
 
