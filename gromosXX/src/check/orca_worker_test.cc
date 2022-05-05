@@ -47,7 +47,7 @@ void Orca_Worker_Test::TearDown() {
 
 void Orca_Worker_Test::init_results_binary_name() {
   // binary and worker name
-  results_.strs_[Key::binary] = "/opt/orca/orca"; // modify this
+  results_.strs_[Key::binary] = "orca";
   results_.strs_[Key::qm_worker_name] = "Orca Worker";
 }
 
