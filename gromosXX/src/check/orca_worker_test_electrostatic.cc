@@ -202,25 +202,62 @@ void Orca_Worker_Test_Electrostatic::init_results_forces() {
 }
 
 void Orca_Worker_Test_Electrostatic::init_results_velocities() {
-  // "current" forces
-  // results_.doubles_[Key::velocities_pos_0_0_current]   =   -0.246162528;
-  // results_.doubles_[Key::velocities_pos_0_1_current]   =   -0.878534002;
-  // results_.doubles_[Key::velocities_pos_0_2_current]   =   -0.013529510;
-  // "old" velocities
+  // "current" forces (step 3) -> step not written out in test by default (STEP = 2)
+  // consequence of the leap-frog algorithm
+  results_.doubles_[Key::velocities_pos_0_0_current]   =    0.130304736;
+  results_.doubles_[Key::velocities_pos_0_1_current]   =   -1.093819539;
+  results_.doubles_[Key::velocities_pos_0_2_current]   =   -0.333630857;
+  results_.doubles_[Key::velocities_pos_1_0_current]   =    0.074216900;
+  results_.doubles_[Key::velocities_pos_1_1_current]   =   -0.326119514;
+  results_.doubles_[Key::velocities_pos_1_2_current]   =    0.777797065;
+  results_.doubles_[Key::velocities_pos_200_0_current] =    0.726016950;
+  results_.doubles_[Key::velocities_pos_200_1_current] =   -0.059555086;
+  results_.doubles_[Key::velocities_pos_200_2_current] =    0.148548304;
+  results_.doubles_[Key::velocities_pos_210_0_current] =    0.128325067;
+  results_.doubles_[Key::velocities_pos_210_1_current] =    0.399790335;
+  results_.doubles_[Key::velocities_pos_210_2_current] =   -0.750546025;
+  // "old" velocities (step 2)
   results_.doubles_[Key::velocities_pos_0_0_old]       =   -0.029814731;
   results_.doubles_[Key::velocities_pos_0_1_old]       =   -1.063376043;
   results_.doubles_[Key::velocities_pos_0_2_old]       =   -0.190999184;
+  results_.doubles_[Key::velocities_pos_1_0_old]       =    0.111469518;
+  results_.doubles_[Key::velocities_pos_1_1_old]       =   -0.299833744;
+  results_.doubles_[Key::velocities_pos_1_2_old]       =    0.645675963;
+  results_.doubles_[Key::velocities_pos_200_0_old]     =    0.813240182;
+  results_.doubles_[Key::velocities_pos_200_1_old]     =    0.005084874;
+  results_.doubles_[Key::velocities_pos_200_2_old]     =    0.063770841;
+  results_.doubles_[Key::velocities_pos_210_0_old]     =    0.006491142;
+  results_.doubles_[Key::velocities_pos_210_1_old]     =    0.497946269;
+  results_.doubles_[Key::velocities_pos_210_2_old]     =   -0.726571782;
 }
 
 void Orca_Worker_Test_Electrostatic::init_results_positions() {
-  // "current" forces
-  //results_.doubles_[Key::positions_pos_0_0_current]   =    3.159254531;
-  //results_.doubles_[Key::positions_pos_0_1_current]   =    0.681110048;
-  //results_.doubles_[Key::positions_pos_0_2_current]   =    1.245389912;
-  //// "old" positions
+  // "current" positions (step 1)
+  results_.doubles_[Key::positions_pos_0_0_current]   =    3.159254531;
+  results_.doubles_[Key::positions_pos_0_1_current]   =    0.681110048;
+  results_.doubles_[Key::positions_pos_0_2_current]   =    1.245389912;
+  results_.doubles_[Key::positions_pos_1_0_current]   =    3.105987491;
+  results_.doubles_[Key::positions_pos_1_1_current]   =    0.772524833;
+  results_.doubles_[Key::positions_pos_1_2_current]   =    1.272514968;
+  results_.doubles_[Key::positions_pos_200_0_current] =    2.703872896;
+  results_.doubles_[Key::positions_pos_200_1_current] =    0.769687228;
+  results_.doubles_[Key::positions_pos_200_2_current] =    0.986185259;
+  results_.doubles_[Key::positions_pos_210_0_current] =    2.804205664;
+  results_.doubles_[Key::positions_pos_210_1_current] =    3.684085782;
+  results_.doubles_[Key::positions_pos_210_2_current] =    2.657992100;
+  //// "old" positions (step 2)
   results_.doubles_[Key::positions_pos_0_0_old]       =    3.159240450;
   results_.doubles_[Key::positions_pos_0_1_old]       =    0.680578538;
   results_.doubles_[Key::positions_pos_0_2_old]       =    1.245294739;
+  results_.doubles_[Key::positions_pos_1_0_old]       =    3.106044039;
+  results_.doubles_[Key::positions_pos_1_1_old]       =    0.772375118;
+  results_.doubles_[Key::positions_pos_1_2_old]       =    1.272838139;
+  results_.doubles_[Key::positions_pos_200_0_old]     =    2.704280224;
+  results_.doubles_[Key::positions_pos_200_1_old]     =    0.769689971;
+  results_.doubles_[Key::positions_pos_200_2_old]     =    0.986217403;
+  results_.doubles_[Key::positions_pos_210_0_old]     =    2.804209643;
+  results_.doubles_[Key::positions_pos_210_1_old]     =    3.684335719;
+  results_.doubles_[Key::positions_pos_210_2_old]     =    2.657629509;
 }
 
 void Orca_Worker_Test_Electrostatic::check_qm_atoms_init() {

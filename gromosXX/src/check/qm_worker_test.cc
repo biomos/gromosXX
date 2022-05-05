@@ -15,6 +15,9 @@
 #include "../math/gmath.h"
 #include "../math/transformation.h"
 
+#include "../topology/topology.h"
+#include "../util/template_split.h"
+
 namespace testing {
 
 QM_Worker_Test::QM_Worker_Test(const Parameter& parameter) : test_sim_(parameter) {}
@@ -56,8 +59,8 @@ void QM_Worker_Test::check_qm_interaction_ptr() {
 void QM_Worker_Test::check_simulation_results() {
   check_simulation_results_energies();
   check_simulation_results_forces();
-  // check_simulation_results_velocities();
-  // check_simulation_results_positions();
+  check_simulation_results_velocities();
+  check_simulation_results_positions();
 }
 
 void QM_Worker_Test::check_simulation_results_energies() {
@@ -186,39 +189,69 @@ void QM_Worker_Test::check_simulation_results_forces() {
 
 void QM_Worker_Test::check_simulation_results_velocities() {
   std::unordered_map<Key::keys, double>& doubles_res = results_.doubles_;
-  // "current" forces
-  // EXPECT_NEAR(test_sim_.conf().current().vel[0][0], doubles_res[Key::velocities_pos_0_0_current], epsilon_);
-  // EXPECT_NEAR(test_sim_.conf().current().vel[0][1], doubles_res[Key::velocities_pos_0_1_current], epsilon_);
-  // EXPECT_NEAR(test_sim_.conf().current().vel[0][2], doubles_res[Key::velocities_pos_0_2_current], epsilon_);
-  // "old" forces
+  // "current" velocities
+  EXPECT_NEAR(test_sim_.conf().current().vel[0][0], doubles_res[Key::velocities_pos_0_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().vel[0][1], doubles_res[Key::velocities_pos_0_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().vel[0][2], doubles_res[Key::velocities_pos_0_2_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().vel[1][0], doubles_res[Key::velocities_pos_1_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().vel[1][1], doubles_res[Key::velocities_pos_1_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().vel[1][2], doubles_res[Key::velocities_pos_1_2_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().vel[200][0], doubles_res[Key::velocities_pos_200_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().vel[200][1], doubles_res[Key::velocities_pos_200_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().vel[200][2], doubles_res[Key::velocities_pos_200_2_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().vel[210][0], doubles_res[Key::velocities_pos_210_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().vel[210][1], doubles_res[Key::velocities_pos_210_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().vel[210][2], doubles_res[Key::velocities_pos_210_2_current], epsilon_);
+  // "old" velocities
   EXPECT_NEAR(test_sim_.conf().old().vel[0][0], doubles_res[Key::velocities_pos_0_0_old], epsilon_);
   EXPECT_NEAR(test_sim_.conf().old().vel[0][1], doubles_res[Key::velocities_pos_0_1_old], epsilon_);
   EXPECT_NEAR(test_sim_.conf().old().vel[0][2], doubles_res[Key::velocities_pos_0_2_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().vel[1][0], doubles_res[Key::velocities_pos_1_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().vel[1][1], doubles_res[Key::velocities_pos_1_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().vel[1][2], doubles_res[Key::velocities_pos_1_2_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().vel[200][0], doubles_res[Key::velocities_pos_200_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().vel[200][1], doubles_res[Key::velocities_pos_200_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().vel[200][2], doubles_res[Key::velocities_pos_200_2_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().vel[210][0], doubles_res[Key::velocities_pos_210_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().vel[210][1], doubles_res[Key::velocities_pos_210_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().vel[210][2], doubles_res[Key::velocities_pos_210_2_old], epsilon_);
 }
 
 void QM_Worker_Test::check_simulation_results_positions() {
   std::unordered_map<Key::keys, double>& doubles_res = results_.doubles_;
-  // "current" forces
-  //EXPECT_NEAR(test_sim_.conf().current().pos[0][0], doubles_res[Key::positions_pos_0_0_current], epsilon_);
-  //EXPECT_NEAR(test_sim_.conf().current().pos[0][1], doubles_res[Key::positions_pos_0_1_current], epsilon_);
-  //EXPECT_NEAR(test_sim_.conf().current().pos[0][2], doubles_res[Key::positions_pos_0_2_current], epsilon_);
-  // "old" forces
-  double phi = test_sim_.conf().old().phi;
-  double theta = test_sim_.conf().old().theta;
-  double psi = test_sim_.conf().old().psi;
-  math::Vec vec_rot;
-  transform_vector(test_sim_.conf().old().pos[0], vec_rot, phi, theta, psi, test_sim_.conf().boundary_type);
-  EXPECT_NEAR(vec_rot(0), doubles_res[Key::positions_pos_0_0_old], epsilon_);
-  EXPECT_NEAR(vec_rot(1), doubles_res[Key::positions_pos_0_1_old], epsilon_);
-  EXPECT_NEAR(vec_rot(2), doubles_res[Key::positions_pos_0_2_old], epsilon_);
-}
-
-void QM_Worker_Test::transform_vector(math::Vec& vec, math::Vec& vec_rot, double phi, double theta, double psi, math::boundary_enum boundary_type) {
-  math::Matrixl Rmat(math::rmat(phi, theta, psi));
-  if (boundary_type == math::truncoct) {
-    Rmat = math::product(Rmat, math::truncoct_triclinic_rotmat(false));
-  }
-  vec_rot = math::Vec(math::product(Rmat, vec));
+  math::VArray positions_gathered_current;
+  math::VArray positions_gathered_old;
+  configuration::Configuration& conf = test_sim_.conf();
+  topology::Topology& topo = test_sim_.topo();
+  // helper function to gather positions - should be replaced with a new function in e.g. out_configuration.cc
+  SPLIT_BOUNDARY(preprocess_positions, conf, topo, conf.current().pos, positions_gathered_current);
+  SPLIT_BOUNDARY(preprocess_positions, conf, topo, conf.old().pos, positions_gathered_old);
+  // "current" positions
+  EXPECT_NEAR(positions_gathered_current[0][0], doubles_res[Key::positions_pos_0_0_current], epsilon_);
+  EXPECT_NEAR(positions_gathered_current[0][1], doubles_res[Key::positions_pos_0_1_current], epsilon_);
+  EXPECT_NEAR(positions_gathered_current[0][2], doubles_res[Key::positions_pos_0_2_current], epsilon_);
+  EXPECT_NEAR(positions_gathered_current[1][0], doubles_res[Key::positions_pos_1_0_current], epsilon_);
+  EXPECT_NEAR(positions_gathered_current[1][1], doubles_res[Key::positions_pos_1_1_current], epsilon_);
+  EXPECT_NEAR(positions_gathered_current[1][2], doubles_res[Key::positions_pos_1_2_current], epsilon_);
+  EXPECT_NEAR(positions_gathered_current[200][0], doubles_res[Key::positions_pos_200_0_current], epsilon_);
+  EXPECT_NEAR(positions_gathered_current[200][1], doubles_res[Key::positions_pos_200_1_current], epsilon_);
+  EXPECT_NEAR(positions_gathered_current[200][2], doubles_res[Key::positions_pos_200_2_current], epsilon_);
+  EXPECT_NEAR(positions_gathered_current[210][0], doubles_res[Key::positions_pos_210_0_current], epsilon_);
+  EXPECT_NEAR(positions_gathered_current[210][1], doubles_res[Key::positions_pos_210_1_current], epsilon_);
+  EXPECT_NEAR(positions_gathered_current[210][2], doubles_res[Key::positions_pos_210_2_current], epsilon_);
+  // "old" positions
+  EXPECT_NEAR(positions_gathered_old[0][0], doubles_res[Key::positions_pos_0_0_old], epsilon_);
+  EXPECT_NEAR(positions_gathered_old[0][1], doubles_res[Key::positions_pos_0_1_old], epsilon_);
+  EXPECT_NEAR(positions_gathered_old[0][2], doubles_res[Key::positions_pos_0_2_old], epsilon_);
+  EXPECT_NEAR(positions_gathered_old[1][0], doubles_res[Key::positions_pos_1_0_old], epsilon_);
+  EXPECT_NEAR(positions_gathered_old[1][1], doubles_res[Key::positions_pos_1_1_old], epsilon_);
+  EXPECT_NEAR(positions_gathered_old[1][2], doubles_res[Key::positions_pos_1_2_old], epsilon_);
+  EXPECT_NEAR(positions_gathered_old[200][0], doubles_res[Key::positions_pos_200_0_old], epsilon_);
+  EXPECT_NEAR(positions_gathered_old[200][1], doubles_res[Key::positions_pos_200_1_old], epsilon_);
+  EXPECT_NEAR(positions_gathered_old[200][2], doubles_res[Key::positions_pos_200_2_old], epsilon_);
+  EXPECT_NEAR(positions_gathered_old[210][0], doubles_res[Key::positions_pos_210_0_old], epsilon_);
+  EXPECT_NEAR(positions_gathered_old[210][1], doubles_res[Key::positions_pos_210_1_old], epsilon_);
+  EXPECT_NEAR(positions_gathered_old[210][2], doubles_res[Key::positions_pos_210_2_old], epsilon_);
 }
 
 }

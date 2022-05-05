@@ -17,7 +17,9 @@
 #include "../interaction/qmmm/qm_zone.h"
 
 #include "../configuration/configuration.h"
+#include "../topology/topology.h"
 
+#include "../math/periodicity.h"
 
 namespace testing {
 
@@ -173,7 +175,69 @@ protected:
    */
   virtual void check_qm_interaction_ptr();
 
-  void transform_vector(math::Vec& vec, math::Vec& vec_rot, double phi, double theta, double psi, math::boundary_enum boundary_type);
+  /**
+   * @brief Gathers coordinates of atoms according to out_configuration.cc. Should be implemented elsewhere, probably out_configuration.cc
+   * 
+   * @tparam b 
+   * @param conf Configuration of the simulation
+   * @param topo Topology of the simulation
+   * @param pos_init Positions as they come out of Gromos
+   * @param pos_processed Positions as they would be written out to the .trc file
+   */
+  template <math::boundary_enum b>
+  void preprocess_positions(configuration::Configuration& conf
+    , topology::Topology& topo
+    , math::VArray& pos_init
+    , math::VArray& pos_processed) {
+
+    math::Periodicity<b> periodicity(conf.current().box);
+    math::Vec v, v_box, trans, r;
+
+    // put charge groups into the box (on the fly)
+    topology::Chargegroup_Iterator cg_it = topo.chargegroup_begin(),
+      cg_to = topo.chargegroup_end();
+
+    // solute charge groups
+    unsigned int i = 0, count = 0;
+    for ( ; i < topo.num_chargegroups(); ++cg_it, ++i) {
+      // gather on first atom
+      v = pos_init(*cg_it.begin());
+      v_box = v;
+      periodicity.put_into_positive_box(v_box);
+      trans = v_box - v;
+
+      // atoms in a charge group
+      topology::Atom_Iterator at_it = cg_it.begin(),
+        at_to = cg_it.end();
+
+      for (; at_it != at_to; ++at_it, ++count) {
+        r = pos_init(*at_it) + trans;
+        pos_processed.push_back(r);
+      }
+    }
+
+    // solvent charge groups
+    unsigned int s = 0;
+    unsigned int mol = 0;
+
+    for (; cg_it != cg_to; ++cg_it, ++mol) {
+      v = pos_init(**cg_it);
+      v_box = v;
+      periodicity.put_into_positive_box(v_box);
+      trans = v_box - v;
+
+      if (mol >= topo.num_solvent_molecules(s))++s;
+
+      // loop over the atoms
+      topology::Atom_Iterator at_it = cg_it.begin(),
+        at_to = cg_it.end();
+
+      for (unsigned int atom = 0; at_it != at_to; ++at_it, ++atom) {
+        r = pos_processed(*at_it) + trans;
+        pos_processed.push_back(r);
+      }
+    }
+  }
 
   /**
    * Instance of a test simulation based on the input files

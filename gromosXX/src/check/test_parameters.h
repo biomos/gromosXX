@@ -377,6 +377,24 @@ struct Key {
 
     velocities_pos_0_2_current,
 
+    velocities_pos_1_0_current,
+
+    velocities_pos_1_1_current,
+
+    velocities_pos_1_2_current,
+
+    velocities_pos_200_0_current,
+
+    velocities_pos_200_1_current,
+
+    velocities_pos_200_2_current,
+
+    velocities_pos_210_0_current,
+
+    velocities_pos_210_1_current,
+
+    velocities_pos_210_2_current,
+
     // "old" velocities
 
     velocities_pos_0_0_old,
@@ -384,6 +402,24 @@ struct Key {
     velocities_pos_0_1_old,
 
     velocities_pos_0_2_old,
+
+    velocities_pos_1_0_old,
+
+    velocities_pos_1_1_old,
+
+    velocities_pos_1_2_old,
+
+    velocities_pos_200_0_old,
+
+    velocities_pos_200_1_old,
+
+    velocities_pos_200_2_old,
+
+    velocities_pos_210_0_old,
+
+    velocities_pos_210_1_old,
+
+    velocities_pos_210_2_old,
 
     // "current" positions
 
@@ -393,6 +429,24 @@ struct Key {
 
     positions_pos_0_2_current,
 
+    positions_pos_1_0_current,
+
+    positions_pos_1_1_current,
+
+    positions_pos_1_2_current,
+
+    positions_pos_200_0_current,
+
+    positions_pos_200_1_current,
+
+    positions_pos_200_2_current,
+
+    positions_pos_210_0_current,
+
+    positions_pos_210_1_current,
+
+    positions_pos_210_2_current,
+
     // "old" positions
 
     positions_pos_0_0_old,
@@ -400,6 +454,24 @@ struct Key {
     positions_pos_0_1_old,
 
     positions_pos_0_2_old,
+
+    positions_pos_1_0_old,
+
+    positions_pos_1_1_old,
+
+    positions_pos_1_2_old,
+
+    positions_pos_200_0_old,
+
+    positions_pos_200_1_old,
+
+    positions_pos_200_2_old,
+
+    positions_pos_210_0_old,
+
+    positions_pos_210_1_old,
+
+    positions_pos_210_2_old,
     
     // parameters for QM/MM simulations
 

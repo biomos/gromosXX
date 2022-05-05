@@ -173,36 +173,91 @@ void Orca_Worker_Test_Mechanical::init_results_energies() {
 }
 
 void Orca_Worker_Test_Mechanical::init_results_forces() {
-  // "current" forces
+  // "current" forces (step 1)
   results_.doubles_[Key::force_pos_0_0_current]   =    439.218233773;
   results_.doubles_[Key::force_pos_0_1_current]   =   -383.480941817;
   results_.doubles_[Key::force_pos_0_2_current]   =   -357.032960733;
-  // "old" forces
+  results_.doubles_[Key::force_pos_1_0_current]   =   -849.777182866;
+  results_.doubles_[Key::force_pos_1_1_current]   =   -608.168893961;
+  results_.doubles_[Key::force_pos_1_2_current]   =   3649.045083024;
+  results_.doubles_[Key::force_pos_200_0_current] =   -170.894151393;
+  results_.doubles_[Key::force_pos_200_1_current] =   -120.728440341;
+  results_.doubles_[Key::force_pos_200_2_current] =    160.678090070;
+  results_.doubles_[Key::force_pos_210_0_current] =    239.442654526;
+  results_.doubles_[Key::force_pos_210_1_current] =   -185.211523222;
+  results_.doubles_[Key::force_pos_210_2_current] =    -50.938980060;
+  // "old" forces (step 2)
   results_.doubles_[Key::force_pos_0_0_old]       =    323.162208784;
   results_.doubles_[Key::force_pos_0_1_old]       =    -67.550663607;
   results_.doubles_[Key::force_pos_0_2_old]       =   -285.588989842;
+  results_.doubles_[Key::force_pos_1_0_old]       =   -895.359865079;
+  results_.doubles_[Key::force_pos_1_1_old]       =   -609.145393347;
+  results_.doubles_[Key::force_pos_1_2_old]       =   3171.334370292;
+  results_.doubles_[Key::force_pos_200_0_old]     =   -176.758981804;
+  results_.doubles_[Key::force_pos_200_1_old]     =   -130.943962314;
+  results_.doubles_[Key::force_pos_200_2_old]     =    170.042681989;
+  results_.doubles_[Key::force_pos_210_0_old]     =    245.856723587;
+  results_.doubles_[Key::force_pos_210_1_old]     =   -198.100479582;
+  results_.doubles_[Key::force_pos_210_2_old]     =    -48.097047479;
 }
 
 void Orca_Worker_Test_Mechanical::init_results_velocities() {
-  // "current" forces
-  // results_.doubles_[Key::velocities_pos_0_0_current]   =    439.218233773;
-  // results_.doubles_[Key::velocities_pos_0_1_current]   =   -383.480941817;
-  // results_.doubles_[Key::velocities_pos_0_2_current]   =   -357.032960733;
-  // "old" velocities
-  results_.doubles_[Key::velocities_pos_0_0_old]       =    -0.025993535;
-  results_.doubles_[Key::velocities_pos_0_1_old]       =    -1.075499701;
-  results_.doubles_[Key::velocities_pos_0_2_old]       =    -0.190603424;
+  // "current" forces (step 3) -> step not written out in test by default (STEP = 2)
+  // consequence of the leap-frog algorithm
+  results_.doubles_[Key::velocities_pos_0_0_current]   =    0.134308379;
+  results_.doubles_[Key::velocities_pos_0_1_current]   =   -1.109033388;
+  results_.doubles_[Key::velocities_pos_0_2_current]   =   -0.332272542;
+  results_.doubles_[Key::velocities_pos_1_0_current]   =    0.074573336;
+  results_.doubles_[Key::velocities_pos_1_1_current]   =   -0.322044862;
+  results_.doubles_[Key::velocities_pos_1_2_current]   =    0.777399550;
+  results_.doubles_[Key::velocities_pos_200_0_current] =    0.724539015;
+  results_.doubles_[Key::velocities_pos_200_1_current] =   -0.060163276;
+  results_.doubles_[Key::velocities_pos_200_2_current] =    0.147616775;
+  results_.doubles_[Key::velocities_pos_210_0_current] =    0.128485876;
+  results_.doubles_[Key::velocities_pos_210_1_current] =    0.399433922;
+  results_.doubles_[Key::velocities_pos_210_2_current] =   -0.750472237;
+  // "old" velocities (step 2)
+  results_.doubles_[Key::velocities_pos_0_0_old]       =   -0.025993535;
+  results_.doubles_[Key::velocities_pos_0_1_old]       =   -1.075499701;
+  results_.doubles_[Key::velocities_pos_0_2_old]       =   -0.190603424;
+  results_.doubles_[Key::velocities_pos_1_0_old]       =    0.111844055;
+  results_.doubles_[Key::velocities_pos_1_1_old]       =   -0.296679378;
+  results_.doubles_[Key::velocities_pos_1_2_old]       =    0.645363120;
+  results_.doubles_[Key::velocities_pos_200_0_old]     =    0.812200842;
+  results_.doubles_[Key::velocities_pos_200_1_old]     =    0.004790434;
+  results_.doubles_[Key::velocities_pos_200_2_old]     =    0.063266898;
+  results_.doubles_[Key::velocities_pos_210_0_old]     =    0.006530257;
+  results_.doubles_[Key::velocities_pos_210_1_old]     =    0.497689096;
+  results_.doubles_[Key::velocities_pos_210_2_old]     =   -0.726597754;
 }
 
 void Orca_Worker_Test_Mechanical::init_results_positions() {
-  // "current" forces
-  //results_.doubles_[Key::positions_pos_0_0_current]   =    -0.025993535;
-  //results_.doubles_[Key::positions_pos_0_1_current]   =    -1.075499701;
-  //results_.doubles_[Key::positions_pos_0_2_current]   =    -0.190999184;
-  //// "old" positions
+  // "current" positions (step 1)
+  results_.doubles_[Key::positions_pos_0_0_current]   =    3.159255642;
+  results_.doubles_[Key::positions_pos_0_1_current]   =    0.681106676;
+  results_.doubles_[Key::positions_pos_0_2_current]   =    1.245389911;
+  results_.doubles_[Key::positions_pos_1_0_current]   =    3.105987567;
+  results_.doubles_[Key::positions_pos_1_1_current]   =    0.772525687;
+  results_.doubles_[Key::positions_pos_1_2_current]   =    1.272514864;
+  results_.doubles_[Key::positions_pos_200_0_current] =    2.703872582;
+  results_.doubles_[Key::positions_pos_200_1_current] =    0.769687228;
+  results_.doubles_[Key::positions_pos_200_2_current] =    0.986185198;
+  results_.doubles_[Key::positions_pos_210_0_current] =    2.804205682;
+  results_.doubles_[Key::positions_pos_210_1_current] =    3.684085704;
+  results_.doubles_[Key::positions_pos_210_2_current] =    2.657992106;
+    //// "old" positions (step 2)
   results_.doubles_[Key::positions_pos_0_0_old]       =    3.159243410;
   results_.doubles_[Key::positions_pos_0_1_old]       =    0.680569091;
   results_.doubles_[Key::positions_pos_0_2_old]       =    1.245294911;
+  results_.doubles_[Key::positions_pos_1_0_old]       =    3.106044242;
+  results_.doubles_[Key::positions_pos_1_1_old]       =    0.772377534;
+  results_.doubles_[Key::positions_pos_1_2_old]       =    1.272837853;
+  results_.doubles_[Key::positions_pos_200_0_old]     =    2.704279338;
+  results_.doubles_[Key::positions_pos_200_1_old]     =    0.769689810;
+  results_.doubles_[Key::positions_pos_200_2_old]     =    0.986217071;
+  results_.doubles_[Key::positions_pos_210_0_old]     =    2.804209627;
+  results_.doubles_[Key::positions_pos_210_1_old]     =    3.684335441;
+  results_.doubles_[Key::positions_pos_210_2_old]     =    2.657629451;
 }
 
 void Orca_Worker_Test_Mechanical::check_qm_atoms_init() {
