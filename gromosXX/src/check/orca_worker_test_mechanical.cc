@@ -43,6 +43,10 @@ void Orca_Worker_Test_Mechanical::init_results() {
   init_results_forces();
   init_results_velocities();
   init_results_positions();
+
+  init_results_baths();
+  init_results_bonded_terms();
+  init_results_nonbonded_terms();
 }
 
 void Orca_Worker_Test_Mechanical::init_results_parameters() {
@@ -259,6 +263,60 @@ void Orca_Worker_Test_Mechanical::init_results_positions() {
   results_.doubles_[Key::positions_pos_210_1_old]     =    3.684335441;
   results_.doubles_[Key::positions_pos_210_2_old]     =    2.657629451;
 }
+
+void Orca_Worker_Test_Mechanical::init_results_baths() {
+  // "current" (step 1)
+  results_.doubles_[Key::kinetic_total_bath_0_current]       = 3.323082462e+02;
+  results_.doubles_[Key::kinetic_total_bath_1_current]       = 7.393069712e+03;
+  results_.doubles_[Key::centre_of_mass_bath_0_current]      = 4.168582379e+00;
+  results_.doubles_[Key::centre_of_mass_bath_1_current]      = 1.184143946e+03;
+  results_.doubles_[Key::internal_rotational_bath_0_current] = 3.281396639e+02;
+  results_.doubles_[Key::internal_rotational_bath_1_current] = 6.208925767e+03;
+  // "old" (step 2)
+  results_.doubles_[Key::kinetic_total_bath_0_old]           = 4.287424173e+02;
+  results_.doubles_[Key::kinetic_total_bath_1_old]           = 7.366484192e+03;
+  results_.doubles_[Key::centre_of_mass_bath_0_old]          = 4.146932216e+00;
+  results_.doubles_[Key::centre_of_mass_bath_1_old]          = 1.185289872e+03;
+  results_.doubles_[Key::internal_rotational_bath_0_old]     = 4.245954851e+02;
+  results_.doubles_[Key::internal_rotational_bath_1_old]     = 6.181194320e+03;
+}
+
+void Orca_Worker_Test_Mechanical::init_results_bonded_terms() {
+  // "current" (step 1)
+  results_.doubles_[Key::bond_energy_group_0_current]               = 0.000000000e+00;
+  results_.doubles_[Key::bond_energy_group_1_current]               = 0.000000000e+00;
+  results_.doubles_[Key::angle_energy_group_0_current]              = 0.000000000e+00;
+  results_.doubles_[Key::angle_energy_group_1_current]              = 2.781463488e+03;
+  results_.doubles_[Key::improper_energy_group_0_current]           = 0.000000000e+00;
+  results_.doubles_[Key::improper_energy_group_1_current]           = 1.247690511e+03;
+  results_.doubles_[Key::dihedral_energy_group_0_current]           = 0.000000000e+00;
+  results_.doubles_[Key::dihedral_energy_group_1_current]           = 6.857313771e+02;
+  results_.doubles_[Key::crossdihedral_energy_group_0_current]      = 0.000000000e+00;
+  results_.doubles_[Key::crossdihedral_energy_group_1_current]      = 0.000000000e+00;
+  // "old" (step 2)
+  results_.doubles_[Key::bond_energy_group_0_old]                   = 0.000000000e+00;
+  results_.doubles_[Key::bond_energy_group_1_old]                   = 0.000000000e+00;
+  results_.doubles_[Key::angle_energy_group_0_old]                  = 0.000000000e+00;
+  results_.doubles_[Key::angle_energy_group_1_old]                  = 2.812634368e+03;
+  results_.doubles_[Key::improper_energy_group_0_old]               = 0.000000000e+00;
+  results_.doubles_[Key::improper_energy_group_1_old]               = 1.242790246e+03;
+  results_.doubles_[Key::dihedral_energy_group_0_old]               = 0.000000000e+00;
+  results_.doubles_[Key::dihedral_energy_group_1_old]               = 6.879641434e+02;
+  results_.doubles_[Key::crossdihedral_energy_group_0_old]          = 0.000000000e+00;
+  results_.doubles_[Key::crossdihedral_energy_group_1_old]          = 0.000000000e+00;
+}
+
+void Orca_Worker_Test_Mechanical::init_results_nonbonded_terms() {}
+
+void Orca_Worker_Test_Mechanical::init_results_special_terms() {}
+
+void Orca_Worker_Test_Mechanical::init_results_mass() {}
+
+void Orca_Worker_Test_Mechanical::init_results_temperature() {}
+
+void Orca_Worker_Test_Mechanical::init_results_volume() {}
+
+void Orca_Worker_Test_Mechanical::init_results_pressure() {}
 
 void Orca_Worker_Test_Mechanical::check_qm_atoms_init() {
   // references to shorten the code

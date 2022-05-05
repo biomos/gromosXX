@@ -61,6 +61,9 @@ void QM_Worker_Test::check_simulation_results() {
   check_simulation_results_forces();
   check_simulation_results_velocities();
   check_simulation_results_positions();
+  check_simulation_results_temperature_baths();
+  check_simulation_results_bonded_terms();
+  check_simulation_results_nonbonded_terms();
 }
 
 void QM_Worker_Test::check_simulation_results_energies() {
@@ -252,6 +255,59 @@ void QM_Worker_Test::check_simulation_results_positions() {
   EXPECT_NEAR(positions_gathered_old[210][0], doubles_res[Key::positions_pos_210_0_old], epsilon_);
   EXPECT_NEAR(positions_gathered_old[210][1], doubles_res[Key::positions_pos_210_1_old], epsilon_);
   EXPECT_NEAR(positions_gathered_old[210][2], doubles_res[Key::positions_pos_210_2_old], epsilon_);
+}
+
+void QM_Worker_Test::check_simulation_results_temperature_baths() {
+  std::unordered_map<Key::keys, double>& doubles_res = results_.doubles_;
+  // "current" energies
+  EXPECT_NEAR(test_sim_.conf().current().energies.kinetic_energy[0], doubles_res[Key::kinetic_total_bath_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.kinetic_energy[1], doubles_res[Key::kinetic_total_bath_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.com_kinetic_energy[0], doubles_res[Key::centre_of_mass_bath_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.com_kinetic_energy[1], doubles_res[Key::centre_of_mass_bath_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.ir_kinetic_energy[0], doubles_res[Key::internal_rotational_bath_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.ir_kinetic_energy[1], doubles_res[Key::internal_rotational_bath_1_current], epsilon_);
+  // "old" energies
+  EXPECT_NEAR(test_sim_.conf().old().energies.kinetic_energy[0], doubles_res[Key::kinetic_total_bath_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.kinetic_energy[1], doubles_res[Key::kinetic_total_bath_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.com_kinetic_energy[0], doubles_res[Key::centre_of_mass_bath_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.com_kinetic_energy[1], doubles_res[Key::centre_of_mass_bath_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.ir_kinetic_energy[0], doubles_res[Key::internal_rotational_bath_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.ir_kinetic_energy[1], doubles_res[Key::internal_rotational_bath_1_old], epsilon_);
+}
+
+void QM_Worker_Test::check_simulation_results_bonded_terms() {
+  std::unordered_map<Key::keys, double>& doubles_res = results_.doubles_;
+  // "current" energies
+  EXPECT_NEAR(test_sim_.conf().current().energies.bond_energy[0], doubles_res[Key::bond_energy_group_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.bond_energy[1], doubles_res[Key::bond_energy_group_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.angle_energy[0], doubles_res[Key::angle_energy_group_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.angle_energy[1], doubles_res[Key::angle_energy_group_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.improper_energy[0], doubles_res[Key::improper_energy_group_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.improper_energy[1], doubles_res[Key::improper_energy_group_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.dihedral_energy[0], doubles_res[Key::dihedral_energy_group_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.dihedral_energy[1], doubles_res[Key::dihedral_energy_group_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.crossdihedral_energy[0], doubles_res[Key::crossdihedral_energy_group_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.crossdihedral_energy[1], doubles_res[Key::crossdihedral_energy_group_1_current], epsilon_);
+  // "old" energies
+  EXPECT_NEAR(test_sim_.conf().old().energies.bond_energy[0], doubles_res[Key::bond_energy_group_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.bond_energy[1], doubles_res[Key::bond_energy_group_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.angle_energy[0], doubles_res[Key::angle_energy_group_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.angle_energy[1], doubles_res[Key::angle_energy_group_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.improper_energy[0], doubles_res[Key::improper_energy_group_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.improper_energy[1], doubles_res[Key::improper_energy_group_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.dihedral_energy[0], doubles_res[Key::dihedral_energy_group_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.dihedral_energy[1], doubles_res[Key::dihedral_energy_group_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.crossdihedral_energy[0], doubles_res[Key::crossdihedral_energy_group_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.crossdihedral_energy[1], doubles_res[Key::crossdihedral_energy_group_1_old], epsilon_);
+}
+
+void QM_Worker_Test::check_simulation_results_nonbonded_terms() {
+  std::unordered_map<Key::keys, double>& doubles_res = results_.doubles_;
+  // "current" energies
+  EXPECT_NEAR(test_sim_.conf().current().energies.lj_energy[0][0], doubles_res[Key::lennard_jones_group_0_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.lj_energy[1][0], doubles_res[Key::lennard_jones_group_1_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.lj_energy[1][1], doubles_res[Key::lennard_jones_group_1_1_current], epsilon_);
+  // "old" energies
 }
 
 }

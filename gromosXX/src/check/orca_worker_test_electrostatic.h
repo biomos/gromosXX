@@ -68,6 +68,22 @@ protected:
    */
   void init_results_positions() override;
 
+  void init_results_baths() override;
+
+  void init_results_bonded_terms() override;
+
+  void init_results_nonbonded_terms() override;
+
+  void init_results_special_terms() override;
+
+  void init_results_mass() override;
+
+  void init_results_temperature() override;
+
+  void init_results_volume() override;
+
+  void init_results_pressure() override;
+
   /**
    * @brief Initializes the expected results for parameters read from the input file
    * 

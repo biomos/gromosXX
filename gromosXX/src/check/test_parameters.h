@@ -472,6 +472,124 @@ struct Key {
     positions_pos_210_1_old,
 
     positions_pos_210_2_old,
+
+    // baths energies
+
+    kinetic_total_bath_0_current,
+
+    kinetic_total_bath_1_current,
+
+    centre_of_mass_bath_0_current,
+
+    centre_of_mass_bath_1_current,
+
+    internal_rotational_bath_0_current,
+
+    internal_rotational_bath_1_current,
+
+    kinetic_total_bath_0_old,
+
+    kinetic_total_bath_1_old,
+
+    centre_of_mass_bath_0_old,
+
+    centre_of_mass_bath_1_old,
+
+    internal_rotational_bath_0_old,
+
+    internal_rotational_bath_1_old,
+
+    // bonded terms by force groups
+
+    bond_energy_group_0_current,
+
+    bond_energy_group_1_current,
+
+    angle_energy_group_0_current,
+
+    angle_energy_group_1_current,
+
+    improper_energy_group_0_current,
+
+    improper_energy_group_1_current,
+
+    dihedral_energy_group_0_current,
+
+    dihedral_energy_group_1_current,
+
+    crossdihedral_energy_group_0_current,
+
+    crossdihedral_energy_group_1_current,
+
+    bond_energy_group_0_old,
+
+    bond_energy_group_1_old,
+
+    angle_energy_group_0_old,
+
+    angle_energy_group_1_old,
+
+    improper_energy_group_0_old,
+
+    improper_energy_group_1_old,
+
+    dihedral_energy_group_0_old,
+
+    dihedral_energy_group_1_old,
+
+    crossdihedral_energy_group_0_old,
+
+    crossdihedral_energy_group_1_old,
+
+    // nonbonded terms by force groups
+
+    lennard_jones_group_0_0_current,
+    
+    lennard_jones_group_1_1_current,
+
+    lennard_jones_group_1_0_current,
+
+    coulomb_reaction_field_group_0_0_current,
+
+    coulomb_reaction_field_group_1_1_current,
+
+    coulomb_reaction_field_group_0_1_current,
+
+    lattice_sum_real_group_0_0_current,
+
+    lattice_sum_real_group_1_1_current,
+
+    lattice_sum_real_group_0_1_current,
+
+    lattice_sum_reciprocal_group_0_0_current,
+
+    lattice_sum_reciprocal_group_1_1_current,
+
+    lattice_sum_reciprocal_group_0_1_current,
+
+    lennard_jones_group_0_0_old,
+
+    lennard_jones_group_1_1_old,
+
+    lennard_jones_group_0_1_old,
+
+    coulomb_reaction_field_group_0_0_old,
+
+    coulomb_reaction_field_group_1_1_old,
+
+    coulomb_reaction_field_group_0_1_old,
+
+    lattice_sum_real_group_0_0_old,
+
+    lattice_sum_real_group_1_1_old,
+
+    lattice_sum_real_group_0_1_old,
+
+    lattice_sum_reciprocal_group_0_0_old,
+
+    lattice_sum_reciprocal_group_1_1_old,
+
+    lattice_sum_reciprocal_group_0_1_old,
     
     // parameters for QM/MM simulations
 

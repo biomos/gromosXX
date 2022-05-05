@@ -91,6 +91,22 @@ protected:
    */
   virtual void init_results_positions() = 0;
 
+  virtual void init_results_baths() = 0;
+
+  virtual void init_results_bonded_terms() = 0;
+
+  virtual void init_results_nonbonded_terms() = 0;
+
+  virtual void init_results_special_terms() = 0;
+
+  virtual void init_results_mass() = 0;
+
+  virtual void init_results_temperature() = 0;
+
+  virtual void init_results_volume() = 0;
+
+  virtual void init_results_pressure() = 0;
+
   /**
    * @brief Initializes the expected results for parameters read from the input file
    * 
@@ -150,6 +166,12 @@ protected:
    * 
    */
   virtual void check_simulation_results_positions();
+
+  virtual void check_simulation_results_temperature_baths();
+
+  virtual void check_simulation_results_bonded_terms();
+
+  virtual void check_simulation_results_nonbonded_terms();
 
   /**
    * @brief Checks if the units conversion factors have been read in correctly
