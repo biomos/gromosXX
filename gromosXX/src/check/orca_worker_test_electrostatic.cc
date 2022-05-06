@@ -398,30 +398,30 @@ void Orca_Worker_Test_Electrostatic::init_results_mass() {
   // "current" (step 1)
   results_.doubles_[Key::mass_current] = 1.991781000e+04;
   // "old" (step 2)
-  results_.doubles_[Key::mass_old] = 1.991781000e+04;
+  results_.doubles_[Key::mass_old]     = 1.991781000e+04;
 }
 
 void Orca_Worker_Test_Electrostatic::init_results_temperature() {
   // "current" (step 1)
-  results_.ints_[Key::num_temperature_coupling_baths_current] = 2;
-  results_.doubles_[Key::temperature_total_bath_0_current] = 2.968677248e+02;
-  results_.doubles_[Key::temperature_total_bath_1_current] = 2.801836889e+02;
-  results_.doubles_[Key::temperature_com_bath_0_current] = 3.336222763e+02;
-  results_.doubles_[Key::temperature_com_bath_1_current] = 3.798019531e+02;
-  results_.doubles_[Key::temperature_ir_bath_0_current] = 2.963187086e+02;
-  results_.doubles_[Key::temperature_ir_bath_1_current] = 2.666979806e+02;
+  results_.ints_[Key::num_temperature_coupling_baths_current]       = 2;
+  results_.doubles_[Key::temperature_total_bath_0_current]          = 2.968677248e+02;
+  results_.doubles_[Key::temperature_total_bath_1_current]          = 2.801836889e+02;
+  results_.doubles_[Key::temperature_com_bath_0_current]            = 3.336222763e+02;
+  results_.doubles_[Key::temperature_com_bath_1_current]            = 3.798019531e+02;
+  results_.doubles_[Key::temperature_ir_bath_0_current]             = 2.963187086e+02;
+  results_.doubles_[Key::temperature_ir_bath_1_current]             = 2.666979806e+02;
   results_.doubles_[Key::temperature_scaling_factor_bath_0_current] = 1.000019771e+00;
   results_.doubles_[Key::temperature_scaling_factor_bath_1_current] = 1.000014899e+00;
   // "old" (step 2)
-  results_.ints_[Key::num_temperature_coupling_baths_old] = 2;
-  results_.doubles_[Key::temperature_total_bath_0_old] = 3.837658875e+02;
-  results_.doubles_[Key::temperature_total_bath_1_old] = 2.791741040e+02;
-  results_.doubles_[Key::temperature_com_bath_0_old] = 3.314704712e+02;
-  results_.doubles_[Key::temperature_com_bath_1_old] = 3.801787590e+02;
-  results_.doubles_[Key::temperature_ir_bath_0_old] = 3.841776103e+02;
-  results_.doubles_[Key::temperature_ir_bath_1_old] = 2.655032371e+02;
-  results_.doubles_[Key::temperature_scaling_factor_bath_0_old] = 1.000023732e+00;
-  results_.doubles_[Key::temperature_scaling_factor_bath_1_old] = 1.000022414e+00;
+  results_.ints_[Key::num_temperature_coupling_baths_old]           = 2;
+  results_.doubles_[Key::temperature_total_bath_0_old]              = 3.837658875e+02;
+  results_.doubles_[Key::temperature_total_bath_1_old]              = 2.791741040e+02;
+  results_.doubles_[Key::temperature_com_bath_0_old]                = 3.314704712e+02;
+  results_.doubles_[Key::temperature_com_bath_1_old]                = 3.801787590e+02;
+  results_.doubles_[Key::temperature_ir_bath_0_old]                 = 3.841776103e+02;
+  results_.doubles_[Key::temperature_ir_bath_1_old]                 = 2.655032371e+02;
+  results_.doubles_[Key::temperature_scaling_factor_bath_0_old]     = 1.000023732e+00;
+  results_.doubles_[Key::temperature_scaling_factor_bath_1_old]     = 1.000022414e+00;
 }
 
 void Orca_Worker_Test_Electrostatic::init_results_volume() {
@@ -437,16 +437,16 @@ void Orca_Worker_Test_Electrostatic::init_results_volume() {
   results_.doubles_[Key::box_m_1_current] = 0.000000000e+00;
   results_.doubles_[Key::box_m_2_current] = 3.706483096e+00;
   // "old" (step 2)
-  results_.doubles_[Key::volume_old]  = 5.091976752e+01;
-  results_.doubles_[Key::box_k_0_old] = 3.706484065e+00;
-  results_.doubles_[Key::box_k_1_old] = 0.000000000e+00;
-  results_.doubles_[Key::box_k_2_old] = 0.000000000e+00;
-  results_.doubles_[Key::box_l_0_old] = 0.000000000e+00;
-  results_.doubles_[Key::box_l_1_old] = 3.706484065e+00;
-  results_.doubles_[Key::box_l_2_old] = 0.000000000e+00;
-  results_.doubles_[Key::box_m_0_old] = 0.000000000e+00;
-  results_.doubles_[Key::box_m_1_old] = 0.000000000e+00;
-  results_.doubles_[Key::box_m_2_old] = 3.706484065e+00;
+  results_.doubles_[Key::volume_old]      = 5.091976752e+01;
+  results_.doubles_[Key::box_k_0_old]     = 3.706484065e+00;
+  results_.doubles_[Key::box_k_1_old]     = 0.000000000e+00;
+  results_.doubles_[Key::box_k_2_old]     = 0.000000000e+00;
+  results_.doubles_[Key::box_l_0_old]     = 0.000000000e+00;
+  results_.doubles_[Key::box_l_1_old]     = 3.706484065e+00;
+  results_.doubles_[Key::box_l_2_old]     = 0.000000000e+00;
+  results_.doubles_[Key::box_m_0_old]     = 0.000000000e+00;
+  results_.doubles_[Key::box_m_1_old]     = 0.000000000e+00;
+  results_.doubles_[Key::box_m_2_old]     = 3.706484065e+00;
 }
 
 void Orca_Worker_Test_Electrostatic::init_results_pressure() {
