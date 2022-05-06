@@ -175,6 +175,14 @@ protected:
 
   virtual void check_simulation_results_special_terms();
 
+  virtual void check_simulation_results_mass();
+
+  virtual void check_simulation_results_temperature();
+
+  virtual void check_simulation_results_volume();
+
+  virtual void check_simulation_results_pressure();
+
   /**
    * @brief Checks if the units conversion factors have been read in correctly
    * 

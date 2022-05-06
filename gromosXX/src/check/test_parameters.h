@@ -688,6 +688,208 @@ struct Key {
     path_integral_group_1_old,
 
     angle_restraint_group_1_old,
+
+    // volume pressure groups
+
+    mass_current,
+
+    num_temperature_coupling_baths_current,
+
+    temperature_total_bath_0_current,
+
+    temperature_total_bath_1_current,
+
+    temperature_com_bath_0_current,
+
+    temperature_com_bath_1_current,
+
+    temperature_ir_bath_0_current,
+
+    temperature_ir_bath_1_current,
+
+    temperature_scaling_factor_bath_0_current,
+
+    temperature_scaling_factor_bath_1_current,
+
+    volume_current,
+
+    box_k_0_current,
+
+    box_k_1_current,
+
+    box_k_2_current,
+
+    box_l_0_current,
+
+    box_l_1_current,
+
+    box_l_2_current,
+
+    box_m_0_current,
+
+    box_m_1_current,
+
+    box_m_2_current,
+
+    pressure_current,
+
+    virial_current,
+
+    molecular_kinetic_energy_current,
+
+    pressure_tensor_0_0_current,
+
+    pressure_tensor_0_1_current,
+
+    pressure_tensor_0_2_current,
+
+    pressure_tensor_1_0_current,
+
+    pressure_tensor_1_1_current,
+
+    pressure_tensor_1_2_current,
+
+    pressure_tensor_2_0_current,
+
+    pressure_tensor_2_1_current,
+
+    pressure_tensor_2_2_current,
+
+    virial_tensor_0_0_current,
+
+    virial_tensor_0_1_current,
+
+    virial_tensor_0_2_current,
+
+    virial_tensor_1_0_current,
+
+    virial_tensor_1_1_current,
+
+    virial_tensor_1_2_current,
+
+    virial_tensor_2_0_current,
+
+    virial_tensor_2_1_current,
+
+    virial_tensor_2_2_current,
+
+    molecular_kinetic_energy_tensor_0_0_current,
+
+    molecular_kinetic_energy_tensor_0_1_current,
+
+    molecular_kinetic_energy_tensor_0_2_current,
+
+    molecular_kinetic_energy_tensor_1_0_current,
+
+    molecular_kinetic_energy_tensor_1_1_current,
+
+    molecular_kinetic_energy_tensor_1_2_current,
+
+    molecular_kinetic_energy_tensor_2_0_current,
+
+    molecular_kinetic_energy_tensor_2_1_current,
+
+    molecular_kinetic_energy_tensor_2_2_current,
+
+    mass_old,
+
+    num_temperature_coupling_baths_old,
+
+    temperature_total_bath_0_old,
+
+    temperature_total_bath_1_old,
+
+    temperature_com_bath_0_old,
+
+    temperature_com_bath_1_old,
+
+    temperature_ir_bath_0_old,
+
+    temperature_ir_bath_1_old,
+
+    temperature_scaling_factor_bath_0_old,
+
+    temperature_scaling_factor_bath_1_old,
+
+    volume_old,
+
+    box_k_0_old,
+
+    box_k_1_old,
+
+    box_k_2_old,
+
+    box_l_0_old,
+
+    box_l_1_old,
+
+    box_l_2_old,
+
+    box_m_0_old,
+
+    box_m_1_old,
+
+    box_m_2_old,
+
+    pressure_old,
+
+    virial_old,
+
+    molecular_kinetic_energy_old,
+
+    pressure_tensor_0_0_old,
+
+    pressure_tensor_0_1_old,
+
+    pressure_tensor_0_2_old,
+
+    pressure_tensor_1_0_old,
+
+    pressure_tensor_1_1_old,
+
+    pressure_tensor_1_2_old,
+
+    pressure_tensor_2_0_old,
+
+    pressure_tensor_2_1_old,
+
+    pressure_tensor_2_2_old,
+
+    virial_tensor_0_0_old,
+
+    virial_tensor_0_1_old,
+
+    virial_tensor_0_2_old,
+
+    virial_tensor_1_0_old,
+
+    virial_tensor_1_1_old,
+
+    virial_tensor_1_2_old,
+
+    virial_tensor_2_0_old,
+
+    virial_tensor_2_1_old,
+
+    virial_tensor_2_2_old,
+
+    molecular_kinetic_energy_tensor_0_0_old,
+
+    molecular_kinetic_energy_tensor_0_1_old,
+
+    molecular_kinetic_energy_tensor_0_2_old,
+
+    molecular_kinetic_energy_tensor_1_0_old,
+
+    molecular_kinetic_energy_tensor_1_1_old,
+
+    molecular_kinetic_energy_tensor_1_2_old,
+
+    molecular_kinetic_energy_tensor_2_0_old,
+
+    molecular_kinetic_energy_tensor_2_1_old,
+
+    molecular_kinetic_energy_tensor_2_2_old,
     
     // parameters for QM/MM simulations
 

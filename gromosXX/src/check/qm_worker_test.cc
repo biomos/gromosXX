@@ -14,6 +14,7 @@
 
 #include "../math/gmath.h"
 #include "../math/transformation.h"
+#include "../math/volume.h"
 
 #include "../topology/topology.h"
 #include "../util/template_split.h"
@@ -65,6 +66,10 @@ void QM_Worker_Test::check_simulation_results() {
   check_simulation_results_bonded_terms();
   check_simulation_results_nonbonded_terms();
   check_simulation_results_special_terms();
+  check_simulation_results_mass();
+  check_simulation_results_temperature();
+  check_simulation_results_volume();
+  check_simulation_results_pressure();
 }
 
 void QM_Worker_Test::check_simulation_results_energies() {
@@ -387,6 +392,160 @@ void QM_Worker_Test::check_simulation_results_special_terms() {
   EXPECT_NEAR(test_sim_.conf().old().energies.rdc_energy[1], doubles_res[Key::rdc_group_1_old], epsilon_);
   EXPECT_NEAR(0, doubles_res[Key::local_elevation_group_1_old], epsilon_);
   EXPECT_NEAR(0, doubles_res[Key::path_integral_group_1_old], epsilon_);
+}
+
+void QM_Worker_Test::check_simulation_results_mass() {
+  std::unordered_map<Key::keys, double>& doubles_res = results_.doubles_;
+  // current
+  EXPECT_NEAR(math::sum(test_sim_.topo().mass()), doubles_res[Key::mass_current], epsilon_);
+  // old
+  EXPECT_NEAR(math::sum(test_sim_.topo().mass()), doubles_res[Key::mass_old], epsilon_);
+}
+
+void QM_Worker_Test::check_simulation_results_temperature() {
+  std::unordered_map<Key::keys, int>& ints_res = results_.ints_;
+  std::unordered_map<Key::keys, double>& doubles_res = results_.doubles_;
+  configuration::Energy& energies_current = test_sim_.conf().current().energies;
+  configuration::Energy& energies_old = test_sim_.conf().old().energies;
+  simulation::Multibath& baths = test_sim_.sim().multibath();
+  // lambda for quick conversion
+  auto energy_to_temperature = [](double kinetic_energy, double dof) { return 2 * kinetic_energy / math::k_Boltzmann / dof; };
+  // current
+  EXPECT_EQ(baths.size(), ints_res[Key::num_temperature_coupling_baths_current]);
+  EXPECT_NEAR(energy_to_temperature(energies_current.kinetic_energy[0], baths[0].dof), doubles_res[Key::temperature_total_bath_0_current], epsilon_);
+  EXPECT_NEAR(energy_to_temperature(energies_current.kinetic_energy[1], baths[1].dof), doubles_res[Key::temperature_total_bath_1_current], epsilon_);
+  EXPECT_NEAR(energy_to_temperature(energies_current.com_kinetic_energy[0], baths[0].com_dof), doubles_res[Key::temperature_com_bath_0_current], epsilon_);
+  EXPECT_NEAR(energy_to_temperature(energies_current.com_kinetic_energy[1], baths[1].com_dof), doubles_res[Key::temperature_com_bath_1_current], epsilon_);
+  EXPECT_NEAR(energy_to_temperature(energies_current.ir_kinetic_energy[0], baths[0].ir_dof), doubles_res[Key::temperature_ir_bath_0_current], epsilon_);
+  EXPECT_NEAR(energy_to_temperature(energies_current.ir_kinetic_energy[1], baths[1].ir_dof), doubles_res[Key::temperature_ir_bath_1_current], epsilon_);
+  EXPECT_NEAR(baths[0].scale, doubles_res[Key::temperature_scaling_factor_bath_0_current], epsilon_);
+  EXPECT_NEAR(baths[1].scale, doubles_res[Key::temperature_scaling_factor_bath_1_current], epsilon_);
+  // old
+  EXPECT_EQ(baths.size(), ints_res[Key::num_temperature_coupling_baths_current]);
+  EXPECT_NEAR(energy_to_temperature(energies_old.kinetic_energy[0], baths[0].dof), doubles_res[Key::temperature_total_bath_0_old], epsilon_);
+  EXPECT_NEAR(energy_to_temperature(energies_old.kinetic_energy[1], baths[1].dof), doubles_res[Key::temperature_total_bath_1_old], epsilon_);
+  EXPECT_NEAR(energy_to_temperature(energies_old.com_kinetic_energy[0], baths[0].com_dof), doubles_res[Key::temperature_com_bath_0_old], epsilon_);
+  EXPECT_NEAR(energy_to_temperature(energies_old.com_kinetic_energy[1], baths[1].com_dof), doubles_res[Key::temperature_com_bath_1_old], epsilon_);
+  EXPECT_NEAR(energy_to_temperature(energies_old.ir_kinetic_energy[0], baths[0].ir_dof), doubles_res[Key::temperature_ir_bath_0_old], epsilon_);
+  EXPECT_NEAR(energy_to_temperature(energies_old.ir_kinetic_energy[1], baths[1].ir_dof), doubles_res[Key::temperature_ir_bath_1_old], epsilon_);
+  EXPECT_NEAR(baths[0].scale, doubles_res[Key::temperature_scaling_factor_bath_0_old], epsilon_);
+  EXPECT_NEAR(baths[1].scale, doubles_res[Key::temperature_scaling_factor_bath_1_old], epsilon_);
+}
+
+void QM_Worker_Test::check_simulation_results_volume() {
+  std::unordered_map<Key::keys, double>& doubles_res = results_.doubles_;
+  // current
+  EXPECT_NEAR(math::volume(test_sim_.conf().current().box, test_sim_.conf().boundary_type), doubles_res[Key::volume_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().box(0)(0), doubles_res[Key::box_k_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().box(0)(1), doubles_res[Key::box_k_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().box(0)(2), doubles_res[Key::box_k_2_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().box(1)(0), doubles_res[Key::box_l_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().box(1)(1), doubles_res[Key::box_l_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().box(1)(2), doubles_res[Key::box_l_2_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().box(2)(0), doubles_res[Key::box_m_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().box(2)(1), doubles_res[Key::box_m_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().box(2)(2), doubles_res[Key::box_m_2_current], epsilon_);
+  // old
+  EXPECT_NEAR(math::volume(test_sim_.conf().old().box, test_sim_.conf().boundary_type), doubles_res[Key::volume_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().box(0)(0), doubles_res[Key::box_k_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().box(0)(1), doubles_res[Key::box_k_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().box(0)(2), doubles_res[Key::box_k_2_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().box(1)(0), doubles_res[Key::box_l_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().box(1)(1), doubles_res[Key::box_l_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().box(1)(2), doubles_res[Key::box_l_2_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().box(2)(0), doubles_res[Key::box_m_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().box(2)(1), doubles_res[Key::box_m_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().box(2)(2), doubles_res[Key::box_m_2_old], epsilon_);
+}
+
+void QM_Worker_Test::check_simulation_results_pressure() {
+  std::unordered_map<Key::keys, double>& doubles_res = results_.doubles_;
+  // current
+  double pressure_current = (test_sim_.conf().current().pressure_tensor(0, 0)
+  + test_sim_.conf().current().pressure_tensor(1, 1)
+  + test_sim_.conf().current().pressure_tensor(2, 2)) / 3.0;
+  // the virial is stored internally as just the outer product of positions and forces
+  // so without the -0.5 prefactor
+  test_sim_.conf().current().virial_tensor *= -0.5;
+  double virial_current = (test_sim_.conf().current().virial_tensor(0, 0)
+  + test_sim_.conf().current().virial_tensor(1, 1)
+  + test_sim_.conf().current().virial_tensor(2, 2)) / 3.0;
+  double molecular_kinetic_energy_current = (test_sim_.conf().current().kinetic_energy_tensor(0, 0)
+  + test_sim_.conf().current().kinetic_energy_tensor(1, 1)
+  + test_sim_.conf().current().kinetic_energy_tensor(2, 2)) / 3.0;
+  EXPECT_NEAR(pressure_current, doubles_res[Key::pressure_current], epsilon_);
+  EXPECT_NEAR(virial_current, doubles_res[Key::virial_current], epsilon_);
+  EXPECT_NEAR(molecular_kinetic_energy_current, doubles_res[Key::molecular_kinetic_energy_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().pressure_tensor(0, 0), doubles_res[Key::pressure_tensor_0_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().pressure_tensor(0, 1), doubles_res[Key::pressure_tensor_0_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().pressure_tensor(0, 2), doubles_res[Key::pressure_tensor_0_2_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().pressure_tensor(1, 0), doubles_res[Key::pressure_tensor_1_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().pressure_tensor(1, 1), doubles_res[Key::pressure_tensor_1_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().pressure_tensor(1, 2), doubles_res[Key::pressure_tensor_1_2_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().pressure_tensor(2, 0), doubles_res[Key::pressure_tensor_2_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().pressure_tensor(2, 1), doubles_res[Key::pressure_tensor_2_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().pressure_tensor(2, 2), doubles_res[Key::pressure_tensor_2_2_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().virial_tensor(0, 0), doubles_res[Key::virial_tensor_0_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().virial_tensor(0, 1), doubles_res[Key::virial_tensor_0_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().virial_tensor(0, 2), doubles_res[Key::virial_tensor_0_2_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().virial_tensor(1, 0), doubles_res[Key::virial_tensor_1_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().virial_tensor(1, 1), doubles_res[Key::virial_tensor_1_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().virial_tensor(1, 2), doubles_res[Key::virial_tensor_1_2_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().virial_tensor(2, 0), doubles_res[Key::virial_tensor_2_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().virial_tensor(2, 1), doubles_res[Key::virial_tensor_2_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().virial_tensor(2, 2), doubles_res[Key::virial_tensor_2_2_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().kinetic_energy_tensor(0, 0), doubles_res[Key::molecular_kinetic_energy_tensor_0_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().kinetic_energy_tensor(0, 1), doubles_res[Key::molecular_kinetic_energy_tensor_0_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().kinetic_energy_tensor(0, 2), doubles_res[Key::molecular_kinetic_energy_tensor_0_2_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().kinetic_energy_tensor(1, 0), doubles_res[Key::molecular_kinetic_energy_tensor_1_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().kinetic_energy_tensor(1, 1), doubles_res[Key::molecular_kinetic_energy_tensor_1_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().kinetic_energy_tensor(1, 2), doubles_res[Key::molecular_kinetic_energy_tensor_1_2_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().kinetic_energy_tensor(2, 0), doubles_res[Key::molecular_kinetic_energy_tensor_2_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().kinetic_energy_tensor(2, 1), doubles_res[Key::molecular_kinetic_energy_tensor_2_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().kinetic_energy_tensor(2, 2), doubles_res[Key::molecular_kinetic_energy_tensor_2_2_current], epsilon_);
+  // old
+  double pressure_old = (test_sim_.conf().old().pressure_tensor(0, 0)
+  + test_sim_.conf().old().pressure_tensor(1, 1)
+  + test_sim_.conf().old().pressure_tensor(2, 2)) / 3.0;
+  // the virial is stored internally as just the outer product of positions and forces
+  // so without the -0.5 prefactor
+  test_sim_.conf().old().virial_tensor *= -0.5;
+  double virial_old = (test_sim_.conf().old().virial_tensor(0, 0)
+  + test_sim_.conf().old().virial_tensor(1, 1)
+  + test_sim_.conf().old().virial_tensor(2, 2)) / 3.0;
+  double molecular_kinetic_energy_old = (test_sim_.conf().old().kinetic_energy_tensor(0, 0)
+  + test_sim_.conf().old().kinetic_energy_tensor(1, 1)
+  + test_sim_.conf().old().kinetic_energy_tensor(2, 2)) / 3.0;
+  EXPECT_NEAR(pressure_old, doubles_res[Key::pressure_old], epsilon_);
+  EXPECT_NEAR(virial_old, doubles_res[Key::virial_old], epsilon_);
+  EXPECT_NEAR(molecular_kinetic_energy_old, doubles_res[Key::molecular_kinetic_energy_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().pressure_tensor(0, 0), doubles_res[Key::pressure_tensor_0_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().pressure_tensor(0, 1), doubles_res[Key::pressure_tensor_0_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().pressure_tensor(0, 2), doubles_res[Key::pressure_tensor_0_2_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().pressure_tensor(1, 0), doubles_res[Key::pressure_tensor_1_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().pressure_tensor(1, 1), doubles_res[Key::pressure_tensor_1_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().pressure_tensor(1, 2), doubles_res[Key::pressure_tensor_1_2_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().pressure_tensor(2, 0), doubles_res[Key::pressure_tensor_2_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().pressure_tensor(2, 1), doubles_res[Key::pressure_tensor_2_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().pressure_tensor(2, 2), doubles_res[Key::pressure_tensor_2_2_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().virial_tensor(0, 0), doubles_res[Key::virial_tensor_0_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().virial_tensor(0, 1), doubles_res[Key::virial_tensor_0_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().virial_tensor(0, 2), doubles_res[Key::virial_tensor_0_2_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().virial_tensor(1, 0), doubles_res[Key::virial_tensor_1_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().virial_tensor(1, 1), doubles_res[Key::virial_tensor_1_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().virial_tensor(1, 2), doubles_res[Key::virial_tensor_1_2_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().virial_tensor(2, 0), doubles_res[Key::virial_tensor_2_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().virial_tensor(2, 1), doubles_res[Key::virial_tensor_2_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().virial_tensor(2, 2), doubles_res[Key::virial_tensor_2_2_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().kinetic_energy_tensor(0, 0), doubles_res[Key::molecular_kinetic_energy_tensor_0_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().kinetic_energy_tensor(0, 1), doubles_res[Key::molecular_kinetic_energy_tensor_0_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().kinetic_energy_tensor(0, 2), doubles_res[Key::molecular_kinetic_energy_tensor_0_2_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().kinetic_energy_tensor(1, 0), doubles_res[Key::molecular_kinetic_energy_tensor_1_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().kinetic_energy_tensor(1, 1), doubles_res[Key::molecular_kinetic_energy_tensor_1_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().kinetic_energy_tensor(1, 2), doubles_res[Key::molecular_kinetic_energy_tensor_1_2_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().kinetic_energy_tensor(2, 0), doubles_res[Key::molecular_kinetic_energy_tensor_2_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().kinetic_energy_tensor(2, 1), doubles_res[Key::molecular_kinetic_energy_tensor_2_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().kinetic_energy_tensor(2, 2), doubles_res[Key::molecular_kinetic_energy_tensor_2_2_old], epsilon_);
 }
 
 }
