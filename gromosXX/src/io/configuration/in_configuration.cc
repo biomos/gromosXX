@@ -1512,7 +1512,9 @@ bool io::In_Configuration::_read_position(math::VArray &pos, std::vector<std::st
     }
     // Add the virtual atoms because some blocks require so, the position will be overwritten afterwards
     if (topo.virtual_atoms_group().atoms().count(i)){
-      pos(i) = topo.virtual_atoms_group().atom(i).pos(conf, topo);
+      pos(i)(0) = 0.0;
+      pos(i)(1) = 0.0;
+      pos(i)(2) = 0.0;
       it--;
     }
     else{
@@ -1539,7 +1541,9 @@ bool io::In_Configuration::_read_position(math::VArray &pos, std::vector<std::st
          {
            int atom_num = it->first;
            util::Virtual_Atom atom = it->second;
-           pos(atom_num) = atom.pos(conf, topo);
+           pos(atom_num)(0) = 0.0;
+	   pos(atom_num)(1) = 0.0;
+	   pos(atom_num)(2) = 0.0;
          }
     }
     else{
