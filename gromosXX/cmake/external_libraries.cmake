@@ -24,8 +24,8 @@ set(EXTERNAL_LIBRARIES
 )
 
 # xtb
-include_directories(/home/fpultar/xtb/include)
-link_directories(/home/fpultar/src/xtb/build)
+include_directories(/cluster/project/igc/fpultar/compiler-optimization/gcc-8.2.0/xtb/include)
+link_directories(/cluster/project/igc/fpultar/compiler-optimization/gcc-8.2.0/xtb/build-gcc-openblas)
 
 # googletest
 include(FetchContent)
