@@ -24,15 +24,15 @@ class Simulation_Test : public ::testing::Test {
 public:
 
   /**
-   * @brief Construct a new qm worker test object
+   * @brief Construct a new simulation test object
    * 
    * @param parameter 
    * @param results 
    */
-  Simulation_Test(const Parameter& parameter);
+  Simulation_Test(const Parameter& parameter) : test_sim_(parameter) {}
 
   /**
-   * @brief Destroy the qm worker test object
+   * @brief Destroy the simulation test object
    * 
    */
   virtual ~Simulation_Test() = default;
@@ -87,20 +87,52 @@ protected:
    */
   virtual void init_results_positions() = 0;
 
+  /**
+   * @brief Initializes the expected results for temperature baths
+   * 
+   */
   virtual void init_results_baths() = 0;
 
+  /**
+   * @brief Initializes the expected results for bonded terms
+   * 
+   */
   virtual void init_results_bonded_terms() = 0;
 
+  /**
+   * @brief Initializes the expected results for nonbonded terms
+   * 
+   */
   virtual void init_results_nonbonded_terms() = 0;
 
+  /**
+   * @brief Initializes the expected results for special terms
+   * 
+   */
   virtual void init_results_special_terms() = 0;
 
+  /**
+   * @brief Initializes the expected results for the system's mass
+   * 
+   */
   virtual void init_results_mass() = 0;
 
+  /**
+   * @brief Initializes the expected results for the temperatures calculated
+   * 
+   */
   virtual void init_results_temperature() = 0;
 
+  /**
+   * @brief Initializes the expected results for the volume calculated
+   * 
+   */
   virtual void init_results_volume() = 0;
 
+  /**
+   * @brief Initializes the expected results for the pressure calculated
+   * 
+   */
   virtual void init_results_pressure() = 0;
 
   /**
@@ -140,43 +172,75 @@ protected:
   virtual void check_simulation_results();
 
   /**
-   * @brief Checks if Gromos has calculated energies correcly
+   * @brief Checks if Gromos has calculated energies correctly
    * 
    */
   virtual void check_simulation_results_energies();
 
   /**
-   * @brief Checks if Gromos has calculated forces correcly
+   * @brief Checks if Gromos has calculated forces correctly
    * 
    */
   virtual void check_simulation_results_forces();
 
   /**
-   * @brief Checks if Gromos has calculated velocities correcly
+   * @brief Checks if Gromos has calculated velocities correctly
    * 
    */
   virtual void check_simulation_results_velocities();
 
   /**
-   * @brief Checks if Gromos has calculated positions correcly
+   * @brief Checks if Gromos has calculated positions correctly
    * 
    */
   virtual void check_simulation_results_positions();
 
+  /**
+   * @brief Checks if Gromos has calculated temperature baths correctly
+   * 
+   */
   virtual void check_simulation_results_temperature_baths();
 
+  /**
+   * @brief Checks if Gromos has calculated bonded terms correctly
+   * 
+   */
   virtual void check_simulation_results_bonded_terms();
 
+  /**
+   * @brief Checks if Gromos has calculated nonbonded terms correctly
+   * 
+   */
   virtual void check_simulation_results_nonbonded_terms();
 
+  /**
+   * @brief Checks if Gromos has calculated special terms correctly
+   * 
+   */
   virtual void check_simulation_results_special_terms();
 
+  /**
+   * @brief Checks if Gromos has calculated the system's mass correctly
+   * 
+   */
   virtual void check_simulation_results_mass();
 
+  /**
+   * @brief Checks if Gromos has calculated temperatures correctly
+   * 
+   */
   virtual void check_simulation_results_temperature();
 
+  /**
+   * @brief Checks if Gromos has calculated the volume correctly
+   * 
+   */
   virtual void check_simulation_results_volume();
 
+  /**
+   * @brief Checks if Gromos has calculated the pressure correctly
+   * 
+   */
   virtual void check_simulation_results_pressure();
 
   /**
@@ -188,7 +252,7 @@ protected:
   /**
    * @brief Gathers coordinates of atoms according to out_configuration.cc. Should be implemented elsewhere, probably out_configuration.cc
    * 
-   * @tparam b 
+   * @tparam b Boundary condition
    * @param conf Configuration of the simulation
    * @param topo Topology of the simulation
    * @param pos_init Positions as they come out of Gromos

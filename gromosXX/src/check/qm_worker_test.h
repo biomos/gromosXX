@@ -46,12 +46,6 @@ public:
 protected:
 
   /**
-   * @brief Initializes the expected results for parameters read from the input file
-   * 
-   */
-  virtual void init_results_parameters() = 0;
-
-  /**
    * @brief Initializes the expected results for units and conversion factors
    * 
    */
@@ -68,12 +62,6 @@ protected:
    * 
    */
   virtual void init_results_qm_zone_init() = 0;
-
-  /**
-   * @brief Checks if Gromos has read in the input parameters correctly
-   * 
-   */
-  virtual void check_parameter_init() = 0;
 
   /**
    * @brief Checks if the units conversion factors have been read in correctly
