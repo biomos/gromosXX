@@ -333,6 +333,6 @@ protected:
 
 };
 
-}
+} // namespaceing testing
 
 #endif	/* INCLUDED_SIMULATION_TEST_H */

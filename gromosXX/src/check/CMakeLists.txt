@@ -105,6 +105,7 @@ add_executable(
   orca_worker_test.cc
   orca_worker_test_electrostatic.cc
   orca_worker_test_mechanical.cc
+  peptide_tutorial_eq_test.cc
   ${GROMOS_OBJECTS}
 )
 
