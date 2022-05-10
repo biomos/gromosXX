@@ -43,6 +43,10 @@ TFRDCRESSPEC
   2   0   0   0   0     4    0    0   0    0   0.1  267.513  19.331   0.136    0.05     1.0
   3   0   0   0   0     5    0    0   0    0   0.1  267.513  67.262   0.136    0.05     1.0
 END
+TFRDCMOLAXIS
+# i   j   k   l   type  i    j    k   l  type  
+  3   0   0   0   0     5    0    0   0    0  
+END
 @endverbatim
  * @sa util::virtual_type util::Virtual_Atom
  */
@@ -54,6 +58,7 @@ io::In_Tfrdcresspec::read(topology::Topology& topo,
   DEBUG(7, "reading in a tensor-free RDC restraints file");
 
   std::vector<std::string> buffer;
+  double dish, disc;
 
   { // TFRDCRESSPEC
     DEBUG(10, "TFRDCRESSPEC block");
@@ -67,7 +72,6 @@ io::In_Tfrdcresspec::read(topology::Topology& topo,
       std::vector<std::string>::const_iterator it = buffer.begin() + 1,
               to = buffer.end() - 1;
 
-      double dish, disc;
       bool nr_atoms = true;
 
       DEBUG(10, "reading in TFRDCRESSPEC data");
@@ -171,6 +175,85 @@ io::In_Tfrdcresspec::read(topology::Topology& topo,
       } // for lines
     } // if block
 } // TFRDCRESSPEC
+
+{ // TFRDCMOLAXIS
+    DEBUG(10, "TFRDCMOLAXIS block");
+    buffer = m_block["TFRDCMOLAXIS"];
+    block_read.insert("TFRDCMOLAXIS");
+    if (buffer.size() <= 2) {
+      io::messages.add("no or empty TFRDCMOLAXIS block in tensor-free "
+         "RDC restraints file", "In_Tfrdcresspec", io::message::error);
+      return;
+    } else {
+      std::vector<std::string>::const_iterator it = buffer.begin() + 1,
+              to = buffer.end() - 1;
+
+
+
+      DEBUG(10, "reading in TFRDCMOLAXIS data");
+
+      bool nr_atoms = true;
+
+
+        int type1, type2;
+        std::vector<int> atom1, atom2;
+        double dist_norm, gyri, gyrj, D0, dD0, w;
+
+        _lineStream.clear();
+        _lineStream.str(*it);
+
+        for (unsigned int i = 0; i < io::In_Tfrdcresspec::MAX_ATOMS; i++) {
+          int atom;
+          _lineStream >> atom;
+          // -1 because we directly convert to array indices
+          if (atom > 0) {
+            atom1.push_back(atom - 1);
+          } else if (atom < 0) {
+            std::ostringstream msg;
+            msg << "COM and COG type not possible for more than "
+                    << io::In_Tfrdcresspec::MAX_ATOMS << " atoms" << std::endl;
+            io::messages.add(msg.str(), "In_Tfrdcresspec", io::message::error);
+            nr_atoms = false;
+          }
+        }
+        _lineStream >> type1;
+
+        for (unsigned int i = 0; i < io::In_Tfrdcresspec::MAX_ATOMS; i++) {
+          int atom;
+          _lineStream >> atom;
+          if (atom > 0) {
+            atom2.push_back(atom - 1);
+          } else if (atom < 0) {
+            std::ostringstream msg;
+            msg << "COM and COG type not possible for more than "
+                    << io::In_Tfrdcresspec::MAX_ATOMS << " atoms" << std::endl;
+            io::messages.add(msg.str(), "In_Tfrdcresspec", io::message::error);
+            nr_atoms = false;
+          }
+        }
+        _lineStream >> type2;
+
+
+        if (_lineStream.fail()) {
+          std::ostringstream msg;
+          msg << "bad line in TFRDCMOLAXIS block: "  << std::endl
+                  << "          " << *it;
+          io::messages.add(msg.str(), "In_Tfrdcresspec", io::message::error);
+        }
+
+        if (nr_atoms) {
+          util::virtual_type t1 = util::virtual_type(type1);
+          util::virtual_type t2 = util::virtual_type(type2);
+
+          util::Virtual_Atom v1(t1, atom1, dish, disc);
+          util::Virtual_Atom v2(t2, atom2, dish, disc);
+
+
+          topo.tf_rdc_molaxis().push_back(v1);
+          topo.tf_rdc_molaxis().push_back(v2);
+        }
+    } // if block
+} // TFRDCMOLAXIS
 
 
   for (std::map<std::string, std::vector<std::string> >::const_iterator
