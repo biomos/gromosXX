@@ -331,13 +331,16 @@ int _shake_bond(math::Box box, math::VArray &pos, const math::VArray &old_pos, d
   return 0;
 }
 
-void _add_mfv_orientation_to_distribution(configuration::Configuration & conf,
+void _add_to_theta_distribution(const math::Vec axis, configuration::Configuration & conf,
         simulation::Simulation & sim, 
         const math::Vec v){
 
-    double theta = acos(v[2]/math::abs(v));
+    double d_v = math::abs(v), d_axis = math::abs(axis);
 
-    // just for writing angle distributions
+    double theta = acos((axis[0]*v[0]+axis[1]*v[1]+axis[2]*v[2])/(d_axis*d_v));
+
+    // TODO: phi here is not relative to the mfv but to the z-axis
+    // either remove or correct
     double dpx = math::dot(v,math::Vec(1, 0, 0));
     double dpy = math::dot(v,math::Vec(0, 1, 0));
     double phi = acos(dpx / sqrt((dpx*dpx)+(dpy*dpy)));
@@ -502,7 +505,6 @@ int _magnetic_field_vector_sd
 
           force = term * interaction::D_c(it) * dPavedP * dPdr;  // [1 / (ps^2 nm)]
 
-          math::Vec f_i(0.0, 0.0, 0.0), f_j(0.0, 0.0, 0.0);
           forces(0) -= K * force;              // [(kJ ps^2 / mol) * (1 / (ps^2 nm))] = [kJ / (mol nm)]
           forces(1) -= forces(0);              // [kJ / (mol nm)]
 
@@ -621,7 +623,12 @@ int _magnetic_field_vector_sd
       
       periodicity.nearest_image(rh_i, conf.special().tfrdc_mfv.pos(1), rh_ij);
       dh_ij = math::abs(rh_ij);                  // [nm]
-      _add_mfv_orientation_to_distribution(conf, sim, rh_ij)
+
+    math::Vec axis;
+    math::Vec axis1 = topo.tf_rdc_molaxis()[0].pos(conf, topo), 
+                      axis2 = topo.tf_rdc_molaxis()[1].pos(conf, topo);
+    periodicity.nearest_image(axis1, axis2, axis);
+      _add_to_theta_distribution(axis, conf, sim, rh_ij);
       DEBUG(9, "rh_i  :" << math::v2s(rh_i));
       DEBUG(9, "rh_ij :" << math::v2s(rh_ij));
       
