@@ -1,0 +1,462 @@
+Sender: LSF System <lsfadmin@eu-g1-013-1>
+Subject: Job 217867277: <eq_peptide_1> in cluster <euler> Done
+
+Job <eq_peptide_1> was submitted from host <eu-login-44> by user <fpultar> in cluster <euler> at Mon May  9 10:43:20 2022
+Job was executed on host(s) <16*eu-g1-013-1>, in queue <normal.24h>, as user <fpultar> in cluster <euler> at Mon May  9 10:43:41 2022
+</cluster/home/fpultar> was used as the home directory.
+</cluster/work/igc/fpultar/tutorials/gromos-tutorial/peptide/eq> was used as the working directory.
+Started at Mon May  9 10:43:41 2022
+Terminated at Mon May  9 10:45:21 2022
+Results reported at Mon May  9 10:45:21 2022
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+#!/bin/sh
+
+# first we set some variables
+NAME=`whoami`
+PROGRAM=/cluster/project/igc/fpultar/bin/gromosXX/bin/md_mpi
+SIMULDIR=/cluster/work/igc/fpultar/tutorials/gromos-tutorial/peptide/eq
+
+# create temporary directory
+WORKDIR=${TMPDIR}/${SIMULDIR}/running
+mkdir -p ${WORKDIR}
+cd       ${WORKDIR}
+
+# set the input files
+TOPO=${SIMULDIR}/../topo/peptide_2Cl_54a7.top
+IUNIT=${SIMULDIR}/eq_peptide_1.imd
+INPUTCRD=${SIMULDIR}/../ion/peptide_2Cl_h2o.cnf
+REFPOS=${SIMULDIR}/peptide_2Cl_h2o.rpr
+POSRESSPEC=${SIMULDIR}/peptide_2Cl_h2o.por
+
+#set the output files
+OUNIT=eq_peptide_1.omd
+OUTPUTCRD=eq_peptide_1.cnf
+OUTPUTTRX=eq_peptide_1.trc
+OUTPUTTRV=eq_peptide_1.trv
+OUTPUTTRF=eq_peptide_1.trf
+OUTPUTTRE=eq_peptide_1.tre
+
+
+MDOK=1
+
+${OPENMPI_ROOT}/bin/mpirun ${PROGRAM} \
+	@topo        ${TOPO} \
+	@conf        ${INPUTCRD} \
+	@input       ${IUNIT} \
+	@posresspec  ${POSRESSPEC} \
+	@refpos      ${REFPOS} \
+	@fin         ${OUTPUTCRD} \
+	@trc         ${OUTPUTTRX} \
+	@trv         ${OUTPUTTRV} \
+	@trf         ${OUTPUTTRF} \
+	@tre         ${OUTPUTTRE}\
+	>            ${OUNIT}
+grep "finished successfully" ${OUNIT} > /dev/null || MDOK=0
+
+uname -a >> ${OUNIT}
+
+# compress some files
+gzip ${OUTPUTTRX}
+gzip ${OUTPUTTRV}
+gzip ${OUTPUTTRF}
+
+(... more ...)
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   769.51 sec.
+    Max Memory :                                 965 MB
+    Average Memory :                             417.67 MB
+    Total Requested Memory :                     16384.00 MB
+    Delta Memory :                               15419.00 MB
+    Max Swap :                                   -
+    Max Processes :                              20
+    Max Threads :                                72
+    Run time :                                   120 sec.
+    Turnaround time :                            121 sec.
+
+The output (if any) follows:
+
+Job <217868244> is submitted to queue <normal.24h>.
+
+
+PS:
+
+Read file </cluster/work/igc/fpultar/tutorials/gromos-tutorial/peptide/eq/eq_peptide_1.err> for stderr output of this job.
+
+Sender: LSF System <lsfadmin@eu-g1-019-2>
+Subject: Job 217875558: <eq_peptide_1> in cluster <euler> Done
+
+Job <eq_peptide_1> was submitted from host <eu-login-44> by user <fpultar> in cluster <euler> at Mon May  9 11:08:07 2022
+Job was executed on host(s) <16*eu-g1-019-2>, in queue <normal.24h>, as user <fpultar> in cluster <euler> at Mon May  9 11:08:11 2022
+</cluster/home/fpultar> was used as the home directory.
+</cluster/work/igc/fpultar/tutorials/gromos-tutorial/peptide/eq> was used as the working directory.
+Started at Mon May  9 11:08:11 2022
+Terminated at Mon May  9 11:18:46 2022
+Results reported at Mon May  9 11:18:46 2022
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+#!/bin/sh
+
+# first we set some variables
+NAME=`whoami`
+PROGRAM=/cluster/project/igc/fpultar/bin/gromosXX/bin/md_mpi
+SIMULDIR=/cluster/work/igc/fpultar/tutorials/gromos-tutorial/peptide/eq
+
+# create temporary directory
+WORKDIR=${TMPDIR}/${SIMULDIR}/running
+mkdir -p ${WORKDIR}
+cd       ${WORKDIR}
+
+# set the input files
+TOPO=${SIMULDIR}/../topo/peptide_2Cl_54a7.top
+IUNIT=${SIMULDIR}/eq_peptide_1.imd
+INPUTCRD=${SIMULDIR}/../ion/peptide_2Cl_h2o.cnf
+REFPOS=${SIMULDIR}/peptide_2Cl_h2o.rpr
+POSRESSPEC=${SIMULDIR}/peptide_2Cl_h2o.por
+
+#set the output files
+OUNIT=eq_peptide_1.omd
+OUTPUTCRD=eq_peptide_1.cnf
+OUTPUTTRX=eq_peptide_1.trc
+OUTPUTTRV=eq_peptide_1.trv
+OUTPUTTRF=eq_peptide_1.trf
+OUTPUTTRE=eq_peptide_1.tre
+
+
+MDOK=1
+
+${OPENMPI_ROOT}/bin/mpirun ${PROGRAM} \
+	@topo        ${TOPO} \
+	@conf        ${INPUTCRD} \
+	@input       ${IUNIT} \
+	@posresspec  ${POSRESSPEC} \
+	@refpos      ${REFPOS} \
+	@fin         ${OUTPUTCRD} \
+	@trc         ${OUTPUTTRX} \
+	@trv         ${OUTPUTTRV} \
+	@trf         ${OUTPUTTRF} \
+	@tre         ${OUTPUTTRE}\
+	>            ${OUNIT}
+grep "finished successfully" ${OUNIT} > /dev/null || MDOK=0
+
+uname -a >> ${OUNIT}
+
+# compress some files
+gzip ${OUTPUTTRX}
+gzip ${OUTPUTTRV}
+gzip ${OUTPUTTRF}
+
+(... more ...)
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   4192.52 sec.
+    Max Memory :                                 6092 MB
+    Average Memory :                             4234.05 MB
+    Total Requested Memory :                     16384.00 MB
+    Delta Memory :                               10292.00 MB
+    Max Swap :                                   -
+    Max Processes :                              20
+    Max Threads :                                72
+    Run time :                                   638 sec.
+    Turnaround time :                            639 sec.
+
+The output (if any) follows:
+
+
+
+PS:
+
+Read file </cluster/work/igc/fpultar/tutorials/gromos-tutorial/peptide/eq/eq_peptide_1.err> for stderr output of this job.
+
+Sender: LSF System <lsfadmin@eu-c7-110-13>
+Subject: Job 218091411: <eq_peptide_1> in cluster <euler> Done
+
+Job <eq_peptide_1> was submitted from host <eu-login-27> by user <fpultar> in cluster <euler> at Tue May 10 10:21:42 2022
+Job was executed on host(s) <16*eu-c7-110-13>, in queue <normal.24h>, as user <fpultar> in cluster <euler> at Tue May 10 10:21:56 2022
+</cluster/home/fpultar> was used as the home directory.
+</cluster/work/igc/fpultar/tutorials/gromos-tutorial/peptide/eq-test-system> was used as the working directory.
+Started at Tue May 10 10:21:56 2022
+Terminated at Tue May 10 10:22:01 2022
+Results reported at Tue May 10 10:22:01 2022
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+#!/bin/sh
+
+# first we set some variables
+NAME=`whoami`
+PROGRAM=/cluster/project/igc/fpultar/bin/gromosXX/bin/md_mpi
+SIMULDIR=/cluster/work/igc/fpultar/tutorials/gromos-tutorial/peptide/eq
+
+# create temporary directory
+WORKDIR=${TMPDIR}/${SIMULDIR}/running
+mkdir -p ${WORKDIR}
+cd       ${WORKDIR}
+
+# set the input files
+TOPO=${SIMULDIR}/../topo/peptide_2Cl_54a7.top
+IUNIT=${SIMULDIR}/eq_peptide_1.imd
+INPUTCRD=${SIMULDIR}/../ion/peptide_2Cl_h2o.cnf
+REFPOS=${SIMULDIR}/peptide_2Cl_h2o.rpr
+POSRESSPEC=${SIMULDIR}/peptide_2Cl_h2o.por
+
+#set the output files
+OUNIT=eq_peptide_1.omd
+OUTPUTCRD=eq_peptide_1.cnf
+OUTPUTTRX=eq_peptide_1.trc
+OUTPUTTRV=eq_peptide_1.trv
+OUTPUTTRF=eq_peptide_1.trf
+OUTPUTTRE=eq_peptide_1.tre
+
+
+MDOK=1
+
+${OPENMPI_ROOT}/bin/mpirun ${PROGRAM} \
+	@topo        ${TOPO} \
+	@conf        ${INPUTCRD} \
+	@input       ${IUNIT} \
+	@posresspec  ${POSRESSPEC} \
+	@refpos      ${REFPOS} \
+	@fin         ${OUTPUTCRD} \
+	@trc         ${OUTPUTTRX} \
+	@trv         ${OUTPUTTRV} \
+	@trf         ${OUTPUTTRF} \
+	@tre         ${OUTPUTTRE}\
+	>            ${OUNIT}
+grep "finished successfully" ${OUNIT} > /dev/null || MDOK=0
+
+uname -a >> ${OUNIT}
+
+# compress some files
+gzip ${OUTPUTTRX}
+gzip ${OUTPUTTRV}
+gzip ${OUTPUTTRF}
+
+(... more ...)
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   0.30 sec.
+    Max Memory :                                 6 MB
+    Average Memory :                             4.67 MB
+    Total Requested Memory :                     16384.00 MB
+    Delta Memory :                               16378.00 MB
+    Max Swap :                                   -
+    Max Processes :                              2
+    Max Threads :                                2
+    Run time :                                   24 sec.
+    Turnaround time :                            19 sec.
+
+The output (if any) follows:
+
+
+
+PS:
+
+Read file </cluster/work/igc/fpultar/tutorials/gromos-tutorial/peptide/eq-test-system/eq_peptide_1.err> for stderr output of this job.
+
+Sender: LSF System <lsfadmin@eu-c7-105-09>
+Subject: Job 218091455: <eq_peptide_1> in cluster <euler> Exited
+
+Job <eq_peptide_1> was submitted from host <eu-login-27> by user <fpultar> in cluster <euler> at Tue May 10 10:26:27 2022
+Job was executed on host(s) <16*eu-c7-105-09>, in queue <normal.24h>, as user <fpultar> in cluster <euler> at Tue May 10 10:27:07 2022
+</cluster/home/fpultar> was used as the home directory.
+</cluster/work/igc/fpultar/tutorials/gromos-tutorial/peptide/eq-test-system> was used as the working directory.
+Started at Tue May 10 10:27:07 2022
+Terminated at Tue May 10 10:29:15 2022
+Results reported at Tue May 10 10:29:15 2022
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+#!/bin/sh
+
+# first we set some variables
+NAME=`whoami`
+PROGRAM=/cluster/project/igc/fpultar/bin/gromosXX/bin/md_mpi
+SIMULDIR=/cluster/work/igc/fpultar/tutorials/gromos-tutorial/peptide/eq
+
+# create temporary directory
+WORKDIR=${TMPDIR}/${SIMULDIR}/running
+mkdir -p ${WORKDIR}
+cd       ${WORKDIR}
+
+# set the input files
+TOPO=${SIMULDIR}/../topo/peptide_2Cl_54a7.top
+IUNIT=${SIMULDIR}/eq_peptide_1.imd
+INPUTCRD=${SIMULDIR}/../ion/peptide_2Cl_h2o.cnf
+REFPOS=${SIMULDIR}/peptide_2Cl_h2o.rpr
+POSRESSPEC=${SIMULDIR}/peptide_2Cl_h2o.por
+
+#set the output files
+OUNIT=eq_peptide_1.omd
+OUTPUTCRD=eq_peptide_1.cnf
+OUTPUTTRX=eq_peptide_1.trc
+OUTPUTTRV=eq_peptide_1.trv
+OUTPUTTRF=eq_peptide_1.trf
+OUTPUTTRE=eq_peptide_1.tre
+
+
+MDOK=1
+
+${OPENMPI_ROOT}/bin/mpirun ${PROGRAM} \
+	@topo        ${TOPO} \
+	@conf        ${INPUTCRD} \
+	@input       ${IUNIT} \
+	@posresspec  ${POSRESSPEC} \
+	@refpos      ${REFPOS} \
+	@fin         ${OUTPUTCRD} \
+	@trc         ${OUTPUTTRX} \
+	@trv         ${OUTPUTTRV} \
+	@trf         ${OUTPUTTRF} \
+	@tre         ${OUTPUTTRE}\
+	>            ${OUNIT}
+grep "finished successfully" ${OUNIT} > /dev/null || MDOK=0
+
+uname -a >> ${OUNIT}
+
+# compress some files
+gzip ${OUTPUTTRX}
+gzip ${OUTPUTTRV}
+gzip ${OUTPUTTRF}
+
+(... more ...)
+------------------------------------------------------------
+
+TERM_OWNER: job killed by owner.
+Exited with exit code 143.
+
+Resource usage summary:
+
+    CPU time :                                   1868.00 sec.
+    Max Memory :                                 2700 MB
+    Average Memory :                             1677.83 MB
+    Total Requested Memory :                     16384.00 MB
+    Delta Memory :                               13684.00 MB
+    Max Swap :                                   -
+    Max Processes :                              20
+    Max Threads :                                72
+    Run time :                                   128 sec.
+    Turnaround time :                            168 sec.
+
+The output (if any) follows:
+
+
+
+PS:
+
+Read file </cluster/work/igc/fpultar/tutorials/gromos-tutorial/peptide/eq-test-system/eq_peptide_1.err> for stderr output of this job.
+
+Sender: LSF System <lsfadmin@eu-c7-104-04>
+Subject: Job 218091860: <eq_peptide_1> in cluster <euler> Done
+
+Job <eq_peptide_1> was submitted from host <eu-login-27> by user <fpultar> in cluster <euler> at Tue May 10 10:29:36 2022
+Job was executed on host(s) <16*eu-c7-104-04>, in queue <normal.24h>, as user <fpultar> in cluster <euler> at Tue May 10 10:30:06 2022
+</cluster/home/fpultar> was used as the home directory.
+</cluster/work/igc/fpultar/tutorials/gromos-tutorial/peptide/eq-test-system> was used as the working directory.
+Started at Tue May 10 10:30:06 2022
+Terminated at Tue May 10 10:30:09 2022
+Results reported at Tue May 10 10:30:09 2022
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+#!/bin/sh
+
+# first we set some variables
+NAME=`whoami`
+PROGRAM=/cluster/project/igc/fpultar/bin/gromosXX/bin/md_mpi
+SIMULDIR=/cluster/work/igc/fpultar/tutorials/gromos-tutorial/peptide/eq-test-system
+
+# create temporary directory
+WORKDIR=${TMPDIR}/${SIMULDIR}/running
+mkdir -p ${WORKDIR}
+cd       ${WORKDIR}
+
+# set the input files
+TOPO=${SIMULDIR}/../topo/peptide_2Cl_54a7.top
+IUNIT=${SIMULDIR}/eq_peptide_1.imd
+INPUTCRD=${SIMULDIR}/../ion/peptide_2Cl_h2o.cnf
+REFPOS=${SIMULDIR}/peptide_2Cl_h2o.rpr
+POSRESSPEC=${SIMULDIR}/peptide_2Cl_h2o.por
+
+#set the output files
+OUNIT=eq_peptide_1.omd
+OUTPUTCRD=eq_peptide_1.cnf
+OUTPUTTRX=eq_peptide_1.trc
+OUTPUTTRV=eq_peptide_1.trv
+OUTPUTTRF=eq_peptide_1.trf
+OUTPUTTRE=eq_peptide_1.tre
+
+
+MDOK=1
+
+${OPENMPI_ROOT}/bin/mpirun ${PROGRAM} \
+	@topo        ${TOPO} \
+	@conf        ${INPUTCRD} \
+	@input       ${IUNIT} \
+	@posresspec  ${POSRESSPEC} \
+	@refpos      ${REFPOS} \
+	@fin         ${OUTPUTCRD} \
+	@trc         ${OUTPUTTRX} \
+	@trv         ${OUTPUTTRV} \
+	@trf         ${OUTPUTTRF} \
+	@tre         ${OUTPUTTRE}\
+	>            ${OUNIT}
+grep "finished successfully" ${OUNIT} > /dev/null || MDOK=0
+
+uname -a >> ${OUNIT}
+
+# compress some files
+gzip ${OUTPUTTRX}
+gzip ${OUTPUTTRV}
+gzip ${OUTPUTTRF}
+
+(... more ...)
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   5.83 sec.
+    Max Memory :                                 414 MB
+    Average Memory :                             -
+    Total Requested Memory :                     16384.00 MB
+    Delta Memory :                               15970.00 MB
+    Max Swap :                                   -
+    Max Processes :                              -
+    Max Threads :                                -
+    Run time :                                   28 sec.
+    Turnaround time :                            33 sec.
+
+The output (if any) follows:
+
+
+
+PS:
+
+Read file </cluster/work/igc/fpultar/tutorials/gromos-tutorial/peptide/eq-test-system/eq_peptide_1.err> for stderr output of this job.
+

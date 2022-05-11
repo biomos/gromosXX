@@ -1,0 +1,25 @@
+/cluster/shadow/.lsbatch/1652170902.218091411.shell: line 31: /bin/mpirun: No such file or directory
+gzip: eq_peptide_1.trc: No such file or directory
+gzip: eq_peptide_1.trv: No such file or directory
+gzip: eq_peptide_1.trf: No such file or directory
+gzip: eq_peptide_1.tre: No such file or directory
+cp: cannot stat 'eq_peptide_1.cnf': No such file or directory
+cp: cannot stat 'eq_peptide_1.trc.gz': No such file or directory
+cp: cannot stat 'eq_peptide_1.trv.gz': No such file or directory
+cp: cannot stat 'eq_peptide_1.trf.gz': No such file or directory
+cp: cannot stat 'eq_peptide_1.tre.gz': No such file or directory
+MD:         10% done...
+MD: spent 0:0:28
+MD: ETA   0:4:16
+MD:         20% done...
+MD: spent 0:0:56
+MD: ETA   0:3:47
+MD:         30% done...
+MD: spent 0:1:25
+MD: ETA   0:3:18
+MD:         40% done...
+MD: spent 0:1:53
+MD: ETA   0:2:50
+mpirun: Forwarding signal 18 to job
+mpirun: Forwarding signal 18 to job
+Terminated

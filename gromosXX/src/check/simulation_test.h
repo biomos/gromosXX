@@ -142,24 +142,6 @@ protected:
   virtual void init_results_parameters() = 0;
 
   /**
-   * @brief Initializes the expected results for units and conversion factors
-   * 
-   */
-  virtual void init_results_units() = 0;
-
-  /**
-   * @brief Initializes the expected results for element and iac atom mapping
-   * 
-   */
-  virtual void init_results_elements() = 0;
-
-  /**
-   * @brief Initializes the expected results for the initial QM zone
-   * 
-   */
-  virtual void init_results_qm_zone_init() = 0;
-
-  /**
    * @brief Checks if Gromos has read in the input parameters correctly
    * 
    */
@@ -242,12 +224,6 @@ protected:
    * 
    */
   virtual void check_simulation_results_pressure();
-
-  /**
-   * @brief Checks if the units conversion factors have been read in correctly
-   * 
-   */
-  virtual void check_unit_conversion_factors() = 0;
 
   /**
    * @brief Gathers coordinates of atoms according to out_configuration.cc. Should be implemented elsewhere, probably out_configuration.cc

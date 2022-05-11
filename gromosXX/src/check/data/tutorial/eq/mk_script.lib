@@ -1,0 +1,86 @@
+TITLE
+Library file for templates to be used with the program mkscript
+END
+#
+# This file defines some templates to be used with the program mkscript
+# so that it will write out a script that conforms to your personal wishes
+# regarding filenames and that it can be used on different architectures
+# A template is a generalized string, where part of the string can be treated
+# as variables. When running the program the filenames will then always have 
+# the same structure. In the template a variable is marked as being in between
+# %-signs
+# Variables that are supported are
+#    %system%  --  the system name as provided with the input flag @sys
+#    %number%  --  the sequential job number
+#    %start_time% -- the initial time of the simulation
+#    %end_time%   -- the time at the end of the simulation
+#    %queue       -- the queue to run as specified by the input flag @queue
+#
+FILENAMES
+#
+# This block allows you to set the templates for several file names
+# supported types are
+#    script   -- the script that is generated
+#                default: jmd%system%_%number%.sh
+#    input    -- input files that are generated
+#                also used as the input name in continuation scripts
+#                default: imd%system%_%number%.dat
+#    output   -- the output file
+#                default: omd%system%_%number%.out
+#    coord    -- a coordinates file
+#                default: o%system%sxmd_%number%.dat
+#    outtrx   -- the trajectory file 
+#                (only used if specified in the WRITE block)
+#                default: o%system%trmd_%number%.dat
+#    outtrv   -- the velocity trajectory file
+#                (only used if specified in the WRITE block)
+#                default: o%system%tvmd_%number%.dat
+#    outtre   -- the energy trajectory file
+#                (only used if specified in the WRITE block)
+#                default: o%system%temd_%number%.dat
+#    outtrg   -- the free energy trajectory file
+#                (only used if specified in the WRITE block)
+#                default: o%system%tgmd_%number%.dat
+#    and all input-file names. If a file is needed but not specified, the 
+#    program will try to open it according to the template. Exceptions are
+#    the topology and the input file which you really have to specify.
+# 
+# TYPE   TEMPLATE
+script  %system%_%number%.run
+input   %system%_%number%.imd
+output  %system%_%number%.omd
+coord   %system%_%number%.cnf
+outtrx  %system%_%number%.trc
+outtrv  %system%_%number%.trv
+outtre  %system%_%number%.tre
+outtrg  %system%_%number%.trg
+END
+MISCELLANEOUS
+#
+# This block allows you to set some features in the script
+# supported types are
+#    workdir     -- a (local) directory where the job is run
+#                   it will be created and removed by the script
+#                   default: /scrloc/${USER}_%system%_%number%
+#    lastcommand -- a final command that can be used to submit the
+#                   next job. The default template knows about most
+#                   igc-queues and takes a redefinition of the template
+#                   that determines the script name into account
+#                   default: depending on the queue: 
+#                      e.g.: ssub -s moose <script template>
+#                   
+# TYPE      TEMPLATE
+workdir     \$\{SIMULDIR\}
+lastcommand ./%system%_%number%.run
+END
+LINKADDITION
+#
+# This block allows you to add extra fortran links as input or output units
+# supported types are
+#    input  -- the file is assumed to be in the directory specified by the 
+#              @dir flag and linked to fort.LINK
+#    output -- the file is linked to fort.LINK, will be gzipped and copied to
+#              the directory specified by the @dir flag.
+#
+# TYPE   TEMPLATE                      LINK
+END
