@@ -2081,6 +2081,9 @@ void io::Out_Configuration
   if (sim.param().tfrdc.nstsd > 0) {
     _print_tfrdc_mfv_orientation_distribution(sim, conf, m_output);
   }
+  if (sim.param().rdc.mode != simulation::rdc_restr_off && sim.param().rdc.type == simulation::rdc_t) {
+    _print_rdc_alignment_distribution(sim, conf, m_output);
+  }
 
 }
 
@@ -3008,6 +3011,28 @@ void io::Out_Configuration::_print_rdc_representation(simulation::Parameter cons
       os << "END" << std::endl;
       break;
     }
+  }
+}
+
+
+void io::Out_Configuration::_print_rdc_alignment_distribution(
+        simulation::Simulation const & sim,
+        configuration::Configuration const & conf,
+        std::ostream & os) {
+        DEBUG(10, "rdc alignment theta distributions");
+       
+  os.precision(m_precision);
+  double binsize_theta = sim.param().rdc.bins_theta[1]-sim.param().rdc.bins_theta[0];
+  std::vector<configuration::Configuration::special_struct::rdc_struct>::const_iterator
+      conf_it = conf.special().rdc.begin(),
+      conf_to = conf.special().rdc.end(); // vector of groups of rdc current state
+  for(unsigned int i=1 ; conf_it!=conf_to; conf_it++, i++){  // for each RDC group
+    os << "RDCTHETADIST" << i << std::endl; 
+    for (unsigned int i = 0; i < conf_it->dist_theta.size()-1; i++) {
+      os  << std::setw(m_width) << sim.param().rdc.bins_theta[i]+0.5*binsize_theta << " " 
+          << std::setw(m_width) << conf_it->dist_theta[i] / (sim.steps()*binsize_theta) << std::endl;
+    }
+    os << "END" << std::endl;
   }
 }
 

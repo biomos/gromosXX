@@ -357,6 +357,11 @@ namespace configuration {
          * stochastic integrals for the spherical harmonic representation
          */
         std::vector<double> stochastic_integral_sh;
+        /**
+         * distribution of the angle between a chosen molecule axis and 
+         * the magn. field vector
+         */
+        std::vector<double> dist_theta;
       }; // rdc related variables
 
       /**

@@ -207,8 +207,7 @@ END
  * The RDCRESSPEC block is read from the RDC restraint specification file.
  *
  * - Variables \c IPRDCR, \c JPRDCR, \c KPRDCR, \c LPRDCR are atom sequence numbers
- *   defining the vector that forms the angle with the magnetic field. Only IPRDCR
- *   and JPRDCR are read in (KPRDCR and LPRDCR are used by the gromos++ program svd_fit)
+ *   defining the vector that forms the angle with the magnetic field. 
  * - Variable \c WRDCR is an individual RDC restraint weight factor by which
  *   the RDC restraining term for a specific RDC may be multiplied
  * - Variable \c PRDCR0 is the experimental or reference RDC value in Hz.
@@ -233,6 +232,25 @@ RDCRESSPEC
   24  0  0  0  0     25  0  0  0  0     7.52     1     -27.12     267.52      0.104
   41  0  0  0  0     42  0  0  0  0    -6.92     1     -27.12     267.52      0.104
   46  0  0  0  0     47  0  0  0  0    -6.47     1     -27.12     267.52      0.104
+END
+@endverbatim
+
+ * @section rdcmolaxis RDCMOLAXIS block
+ * The RDCMOLAXIS block is read from the RDC restraint specification file.
+ *
+ * - Variables \c IPRDCR, \c JPRDCR, \c KPRDCR, \c LPRDCR are atom sequence numbers
+ *   defining the vector that forms the angle with the magnetic field. 
+ * - Variable \c TYPE is a code to specify the type of RDC. Only codes 1 (N:H),
+ *   2 (CA:C) and 3 (C:N) are valid for RDC restraining.
+ *
+ * @verbatim
+RDCMOLAXIS
+# molecular axis used only for calculating an angle with the magn. field vector, whose
+# distribution is output at the end of a run
+# i,j,k,l  atoms comprising the virtual atom (put 0 if less than four atoms in use)
+# type   virtual atom type
+# i   j   k   l   type  i    j    k   l  type  
+  16  0  0  0  0     17  0  0  0  0    
 END
 @endverbatim
  */
@@ -684,6 +702,7 @@ void io::In_RDC::read(topology::Topology& topo,
 
   DEBUG(10, "RDC RESTRAINTS")
   vector<topology::rdc_restraint_struct>  tmp_rdc_rest_strct;
+  double dish,disc;
   { // RDCRESSPEC
     DEBUG(10, "RDCRESSPEC")
     std::stringstream exampleblock;
@@ -710,7 +729,6 @@ void io::In_RDC::read(topology::Topology& topo,
   if (block.read_buffer(m_block[blockname], false) == 0) {
     block_read.insert(blockname);
 
-    double dish,disc;
     block.get_next_parameter("DISH", dish, ">0", "");
     block.get_next_parameter("DISC", disc, ">0", "");
 
@@ -841,6 +859,83 @@ void io::In_RDC::read(topology::Topology& topo,
   } // if block content
 } // RDCRESSPEC
 
+{ // RDCMOLAXIS
+    DEBUG(10, "RDCMOLAXIS block");
+    buffer = m_block["RDCMOLAXIS"];
+    block_read.insert("RDCMOLAXIS");
+    if (buffer.size() <= 2) {
+      io::messages.add("no or empty RDCMOLAXIS block in tensor-free "
+         "RDC restraints file", "In_RDC", io::message::error);
+      return;
+    } else {
+      std::vector<std::string>::const_iterator it = buffer.begin() + 1,
+              to = buffer.end() - 1;
+
+
+
+      DEBUG(10, "reading in RDCMOLAXIS data");
+
+      bool nr_atoms = true;
+
+        int type1, type2;
+        std::vector<int> atom1, atom2;
+        double dist_norm, gyri, gyrj, D0, dD0, w;
+
+        _lineStream.clear();
+        _lineStream.str(*it);
+
+        for (unsigned int i = 0; i < io::In_RDC::MAX_ATOMS; i++) {
+          int atom;
+          _lineStream >> atom;
+          // -1 because we directly convert to array indices
+          if (atom > 0) {
+            atom1.push_back(atom - 1);
+          } else if (atom < 0) {
+            std::ostringstream msg;
+            msg << "COM and COG type not possible for more than "
+                    << io::In_RDC::MAX_ATOMS << " atoms" << std::endl;
+            io::messages.add(msg.str(), "In_RDC", io::message::error);
+            nr_atoms = false;
+          }
+        }
+        _lineStream >> type1;
+
+        for (unsigned int i = 0; i < io::In_RDC::MAX_ATOMS; i++) {
+          int atom;
+          _lineStream >> atom;
+          if (atom > 0) {
+            atom2.push_back(atom - 1);
+          } else if (atom < 0) {
+            std::ostringstream msg;
+            msg << "COM and COG type not possible for more than "
+                    << io::In_RDC::MAX_ATOMS << " atoms" << std::endl;
+            io::messages.add(msg.str(), "In_RDC", io::message::error);
+            nr_atoms = false;
+          }
+        }
+        _lineStream >> type2;
+
+
+        if (_lineStream.fail()) {
+          std::ostringstream msg;
+          msg << "bad line in RDCMOLAXIS block: "  << std::endl
+                  << "          " << *it;
+          io::messages.add(msg.str(), "In_RDC", io::message::error);
+        }
+
+        if (nr_atoms) {
+          util::virtual_type t1 = util::virtual_type(type1);
+          util::virtual_type t2 = util::virtual_type(type2);
+
+          util::Virtual_Atom v1(t1, atom1, dish, disc);
+          util::Virtual_Atom v2(t2, atom2, dish, disc);
+
+
+          topo.rdc_molaxis().push_back(v1);
+          topo.rdc_molaxis().push_back(v2);
+        }
+    } // if block
+} // RDCMOLAXIS
 
   //////////////////////
   // RDCGROUPS BLOCK //
