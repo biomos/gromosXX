@@ -180,31 +180,31 @@ void Peptide_Tutorial_Eq_Test::init_results_forces() {
 void Peptide_Tutorial_Eq_Test::init_results_velocities() {
   // "current" forces (step 3) -> step not written out in test by default (STEP = 2)
   // consequence of the leap-frog algorithm
-  results_.doubles_[Key::velocities_pos_0_0_current]   =   0;
-  results_.doubles_[Key::velocities_pos_0_1_current]   =   0;
-  results_.doubles_[Key::velocities_pos_0_2_current]   =   0;
-  results_.doubles_[Key::velocities_pos_1_0_current]   =   0;
-  results_.doubles_[Key::velocities_pos_1_1_current]   =   0;
-  results_.doubles_[Key::velocities_pos_1_2_current]   =   0;
-  results_.doubles_[Key::velocities_pos_200_0_current] =   0;
-  results_.doubles_[Key::velocities_pos_200_1_current] =   0;
-  results_.doubles_[Key::velocities_pos_200_2_current] =   0;
-  results_.doubles_[Key::velocities_pos_210_0_current] =   0;
-  results_.doubles_[Key::velocities_pos_210_1_current] =   0;
-  results_.doubles_[Key::velocities_pos_210_2_current] =   0;
+  results_.doubles_[Key::velocities_pos_0_0_current]   =   -0.656126829;
+  results_.doubles_[Key::velocities_pos_0_1_current]   =    1.936308933;
+  results_.doubles_[Key::velocities_pos_0_2_current]   =   -0.148190424;
+  results_.doubles_[Key::velocities_pos_1_0_current]   =    0.859427750;
+  results_.doubles_[Key::velocities_pos_1_1_current]   =    0.711773007;
+  results_.doubles_[Key::velocities_pos_1_2_current]   =   -0.240295154;
+  results_.doubles_[Key::velocities_pos_200_0_current] =   -0.584465051;
+  results_.doubles_[Key::velocities_pos_200_1_current] =   -0.161767579;
+  results_.doubles_[Key::velocities_pos_200_2_current] =    0.511452079;
+  results_.doubles_[Key::velocities_pos_210_0_current] =   -0.159529215;
+  results_.doubles_[Key::velocities_pos_210_1_current] =    0.985511976;
+  results_.doubles_[Key::velocities_pos_210_2_current] =    0.986575224;
   // "old" velocities (step 2)
-  results_.doubles_[Key::velocities_pos_0_0_old]       =   0;
-  results_.doubles_[Key::velocities_pos_0_1_old]       =   0;
-  results_.doubles_[Key::velocities_pos_0_2_old]       =   0;
-  results_.doubles_[Key::velocities_pos_1_0_old]       =   0;
-  results_.doubles_[Key::velocities_pos_1_1_old]       =   0;
-  results_.doubles_[Key::velocities_pos_1_2_old]       =   0;
-  results_.doubles_[Key::velocities_pos_200_0_old]     =   0;
-  results_.doubles_[Key::velocities_pos_200_1_old]     =   0;
-  results_.doubles_[Key::velocities_pos_200_2_old]     =   0;
-  results_.doubles_[Key::velocities_pos_210_0_old]     =   0;
-  results_.doubles_[Key::velocities_pos_210_1_old]     =   0;
-  results_.doubles_[Key::velocities_pos_210_2_old]     =   0;
+  results_.doubles_[Key::velocities_pos_0_0_old]       =   -0.629906415;
+  results_.doubles_[Key::velocities_pos_0_1_old]       =    2.504875818;
+  results_.doubles_[Key::velocities_pos_0_2_old]       =   -0.340773516;
+  results_.doubles_[Key::velocities_pos_1_0_old]       =    1.219334920;
+  results_.doubles_[Key::velocities_pos_1_1_old]       =    0.914175827;
+  results_.doubles_[Key::velocities_pos_1_2_old]       =    0.167492684;
+  results_.doubles_[Key::velocities_pos_200_0_old]     =   -0.270225520;
+  results_.doubles_[Key::velocities_pos_200_1_old]     =   -0.067229257;
+  results_.doubles_[Key::velocities_pos_200_2_old]     =    0.252647977;
+  results_.doubles_[Key::velocities_pos_210_0_old]     =   -0.244201577;
+  results_.doubles_[Key::velocities_pos_210_1_old]     =    0.840604480;
+  results_.doubles_[Key::velocities_pos_210_2_old]     =    1.163817230;
 }
 
 void Peptide_Tutorial_Eq_Test::init_results_positions() {
