@@ -561,6 +561,13 @@ namespace math
 
        }   
     }
+    Box(const Box& other)
+    {
+      // copy constructor
+      d_b[0] = other.d_b[0];
+      d_b[1] = other.d_b[1];
+      d_b[2] = other.d_b[2];
+    }
     Vec const & operator()(int i)const { return d_b[i]; }
     double operator()(int i, int j)const 
     {
