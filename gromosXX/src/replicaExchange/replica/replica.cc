@@ -237,8 +237,8 @@ void re::replica::run_MD() {
 
 
   //calculateEnergies(); //ONLY for Debugging
-  DEBUG(7,std::cout << "replica "<<globalThreadID<<" AfterReCAlc: Conf Current Epot" << conf.current().energies.potential_total<< "\n");
-  DEBUG(7,std::cout << "replica "<<globalThreadID<<" AfterReCAlc: Conf OLD Epot" << conf.old().energies.potential_total<< "\n");
+  DEBUG(7,"replica "<<globalThreadID<<" AfterReCAlc: Conf Current Epot" << conf.current().energies.potential_total<< "\n");
+  DEBUG(7,"replica "<<globalThreadID<<" AfterReCAlc: Conf OLD Epot" << conf.old().energies.potential_total<< "\n");
 
   // print final data of run
   curentStepNumber = stepsPerRun + curentStepNumber;
