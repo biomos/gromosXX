@@ -11,6 +11,10 @@ option(CUDAKERNEL "enable CUDA" OFF)
 option(FORCEGROUPS "enable forcegroups" OFF)
 option(HEAVISIDE "enable heaviside" OFF)
 
+set(CMAKE_CXX_FLAGS "-Wall -Wextra")
+set(CMAKE_CXX_FLAGS_DEBUG "-g")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
+
 if(OMP AND MPI)
     message(FATAL_ERROR "OMP and MPI must NOT be enabled at the same time")
 endif()
