@@ -238,73 +238,163 @@ void Peptide_Tutorial_Eq_Test::init_results_positions() {
 
 void Peptide_Tutorial_Eq_Test::init_results_baths() {
   // "current" (step 1)
-  results_.doubles_[Key::kinetic_total_bath_0_current]       = 3.330665706e+02;
-  results_.doubles_[Key::kinetic_total_bath_1_current]       = 7.393007732e+03;
-  results_.doubles_[Key::centre_of_mass_bath_0_current]      = 4.160893165e+00;
-  results_.doubles_[Key::centre_of_mass_bath_1_current]      = 1.184185934e+03;
-  results_.doubles_[Key::internal_rotational_bath_0_current] = 3.289056774e+02;
-  results_.doubles_[Key::internal_rotational_bath_1_current] = 6.208821799e+03;
+  results_.doubles_[Key::kinetic_total_bath_0_current]       = 1.567102052e+02;
+  results_.doubles_[Key::kinetic_total_bath_1_current]       = 5.424219787e+03;
+  results_.doubles_[Key::centre_of_mass_bath_0_current]      = 9.277884352e+00;
+  results_.doubles_[Key::centre_of_mass_bath_1_current]      = 2.609116032e+03;
+  results_.doubles_[Key::internal_rotational_bath_0_current] = 1.474323208e+02;
+  results_.doubles_[Key::internal_rotational_bath_1_current] = 2.815103755e+03;
   // "old" (step 2)
-  results_.doubles_[Key::kinetic_total_bath_0_old]           = 4.305606395e+02;
-  results_.doubles_[Key::kinetic_total_bath_1_old]           = 7.366368543e+03;
-  results_.doubles_[Key::centre_of_mass_bath_0_old]          = 4.134134679e+00;
-  results_.doubles_[Key::centre_of_mass_bath_1_old]          = 1.185360778e+03;
-  results_.doubles_[Key::internal_rotational_bath_0_old]     = 4.264265048e+02;
-  results_.doubles_[Key::internal_rotational_bath_1_old]     = 6.181007764e+03;
+  results_.doubles_[Key::kinetic_total_bath_0_old]           = 1.527815394e+02;
+  results_.doubles_[Key::kinetic_total_bath_1_old]           = 5.452412983e+03;
+  results_.doubles_[Key::centre_of_mass_bath_0_old]          = 9.468183733e+00;
+  results_.doubles_[Key::centre_of_mass_bath_1_old]          = 2.627749251e+03;
+  results_.doubles_[Key::internal_rotational_bath_0_old]     = 1.433133557e+02;
+  results_.doubles_[Key::internal_rotational_bath_1_old]     = 2.824663732e+03;
 }
 
 void Peptide_Tutorial_Eq_Test::init_results_bonded_terms() {
   // "current" (step 1)
   results_.doubles_[Key::bond_energy_group_0_current]               = 0.000000000e+00;
   results_.doubles_[Key::bond_energy_group_1_current]               = 0.000000000e+00;
-  results_.doubles_[Key::angle_energy_group_0_current]              = 0.000000000e+00;
-  results_.doubles_[Key::angle_energy_group_1_current]              = 2.781467266e+03;
-  results_.doubles_[Key::improper_energy_group_0_current]           = 0.000000000e+00;
-  results_.doubles_[Key::improper_energy_group_1_current]           = 1.247690747e+03;
-  results_.doubles_[Key::dihedral_energy_group_0_current]           = 0.000000000e+00;
-  results_.doubles_[Key::dihedral_energy_group_1_current]           = 6.857307867e+02;
+  results_.doubles_[Key::bond_energy_group_2_current]               = 0.000000000e+00;
+  results_.doubles_[Key::bond_energy_group_3_current]               = 0.000000000e+00;
+
+  results_.doubles_[Key::angle_energy_group_0_current]              = 1.144685558e+02;
+  results_.doubles_[Key::angle_energy_group_1_current]              = 0.000000000e+00;
+  results_.doubles_[Key::angle_energy_group_2_current]              = 0.000000000e+00;
+  results_.doubles_[Key::angle_energy_group_3_current]              = 0.000000000e+00;
+
+  results_.doubles_[Key::improper_energy_group_0_current]           = 3.273666900e+01;
+  results_.doubles_[Key::improper_energy_group_1_current]           = 0.000000000e+00;
+  results_.doubles_[Key::improper_energy_group_2_current]           = 0.000000000e+00;
+  results_.doubles_[Key::improper_energy_group_3_current]           = 0.000000000e+00;
+
+  results_.doubles_[Key::dihedral_energy_group_0_current]           = 6.521450510e+01;
+  results_.doubles_[Key::dihedral_energy_group_1_current]           = 0.000000000e+00;
+  results_.doubles_[Key::dihedral_energy_group_2_current]           = 0.000000000e+00;
+  results_.doubles_[Key::dihedral_energy_group_3_current]           = 0.000000000e+00;
+
   results_.doubles_[Key::crossdihedral_energy_group_0_current]      = 0.000000000e+00;
   results_.doubles_[Key::crossdihedral_energy_group_1_current]      = 0.000000000e+00;
+  results_.doubles_[Key::crossdihedral_energy_group_2_current]      = 0.000000000e+00;
+  results_.doubles_[Key::crossdihedral_energy_group_3_current]      = 0.000000000e+00;
   // "old" (step 2)
   results_.doubles_[Key::bond_energy_group_0_old]                   = 0.000000000e+00;
   results_.doubles_[Key::bond_energy_group_1_old]                   = 0.000000000e+00;
-  results_.doubles_[Key::angle_energy_group_0_old]                  = 0.000000000e+00;
-  results_.doubles_[Key::angle_energy_group_1_old]                  = 2.812642458e+03;
-  results_.doubles_[Key::improper_energy_group_0_old]               = 0.000000000e+00;
-  results_.doubles_[Key::improper_energy_group_1_old]               = 1.242791317e+03;
-  results_.doubles_[Key::dihedral_energy_group_0_old]               = 0.000000000e+00;
-  results_.doubles_[Key::dihedral_energy_group_1_old]               = 6.879624537e+02;
+  results_.doubles_[Key::bond_energy_group_2_old]                   = 0.000000000e+00;
+  results_.doubles_[Key::bond_energy_group_3_old]                   = 0.000000000e+00;
+
+  results_.doubles_[Key::angle_energy_group_0_old]                  = 1.182049469e+02;
+  results_.doubles_[Key::angle_energy_group_1_old]                  = 0.000000000e+00;
+  results_.doubles_[Key::angle_energy_group_2_old]                  = 0.000000000e+00;
+  results_.doubles_[Key::angle_energy_group_3_old]                  = 0.000000000e+00;
+
+  results_.doubles_[Key::improper_energy_group_0_old]               = 3.448947132e+01;
+  results_.doubles_[Key::improper_energy_group_1_old]               = 0.000000000e+00;
+  results_.doubles_[Key::improper_energy_group_2_old]               = 0.000000000e+00;
+  results_.doubles_[Key::improper_energy_group_3_old]               = 0.000000000e+00;
+
+  results_.doubles_[Key::dihedral_energy_group_0_old]               = 6.482526348e+01;
+  results_.doubles_[Key::dihedral_energy_group_1_old]               = 0.000000000e+00;
+  results_.doubles_[Key::dihedral_energy_group_2_old]               = 0.000000000e+00;
+  results_.doubles_[Key::dihedral_energy_group_3_old]               = 0.000000000e+00;
+
   results_.doubles_[Key::crossdihedral_energy_group_0_old]          = 0.000000000e+00;
   results_.doubles_[Key::crossdihedral_energy_group_1_old]          = 0.000000000e+00;
+  results_.doubles_[Key::crossdihedral_energy_group_2_old]          = 0.000000000e+00;
+  results_.doubles_[Key::crossdihedral_energy_group_3_old]          = 0.000000000e+00;
 }
 
 void Peptide_Tutorial_Eq_Test::init_results_nonbonded_terms() {
   // "current" (step 1)
-  results_.doubles_[Key::lennard_jones_group_0_0_current]                =  0.000000000e+00;
-  results_.doubles_[Key::lennard_jones_group_1_0_current]                = -1.410201839e+02;
-  results_.doubles_[Key::lennard_jones_group_1_1_current]                = -4.868703494e+03;
-  results_.doubles_[Key::coulomb_reaction_field_group_0_0_current]       =  0.000000000e+00;
-  results_.doubles_[Key::coulomb_reaction_field_group_1_0_current]       =  0.000000000e+00;
-  results_.doubles_[Key::coulomb_reaction_field_group_1_1_current]       = -2.559496780e+04;
+  results_.doubles_[Key::lennard_jones_group_0_0_current]                =  -6.778133283e+01;
+  results_.doubles_[Key::lennard_jones_group_1_0_current]                =   3.185093680e+00;
+  results_.doubles_[Key::lennard_jones_group_2_0_current]                =   5.663016353e+00;
+  results_.doubles_[Key::lennard_jones_group_3_0_current]                =  -1.173779820e+02;
+  results_.doubles_[Key::lennard_jones_group_1_1_current]                =   0.000000000e+00;
+  results_.doubles_[Key::lennard_jones_group_2_1_current]                =  -6.072268390e-03;
+  results_.doubles_[Key::lennard_jones_group_3_1_current]                =   3.388879535e+01;
+  results_.doubles_[Key::lennard_jones_group_2_2_current]                =   0.000000000e+00;
+  results_.doubles_[Key::lennard_jones_group_3_2_current]                =   3.190641029e+01;
+  results_.doubles_[Key::lennard_jones_group_3_3_current]                =   7.885499489e+03;
+
+  results_.doubles_[Key::coulomb_reaction_field_group_0_0_current]       =  -7.019423964e+02;
+  results_.doubles_[Key::coulomb_reaction_field_group_1_0_current]       =  -2.734854419e+02;
+  results_.doubles_[Key::coulomb_reaction_field_group_2_0_current]       =  -3.153413192e+02;
+  results_.doubles_[Key::coulomb_reaction_field_group_3_0_current]       =  -1.254261627e+03;
+  results_.doubles_[Key::coulomb_reaction_field_group_1_1_current]       =  -7.382455923e+01;
+  results_.doubles_[Key::coulomb_reaction_field_group_2_1_current]       =   6.731830466e+00;
+  results_.doubles_[Key::coulomb_reaction_field_group_3_1_current]       =  -4.464844477e+02;
+  results_.doubles_[Key::coulomb_reaction_field_group_2_2_current]       =  -7.382455923e+01;
+  results_.doubles_[Key::coulomb_reaction_field_group_3_2_current]       =  -3.329436188e+02;
+  results_.doubles_[Key::coulomb_reaction_field_group_3_3_current]       =  -4.778892978e+04;
+
   results_.doubles_[Key::lattice_sum_real_group_0_0_current]             =  0.000000000e+00;
   results_.doubles_[Key::lattice_sum_real_group_1_0_current]             =  0.000000000e+00;
+  results_.doubles_[Key::lattice_sum_real_group_2_0_current]             =  0.000000000e+00;
+  results_.doubles_[Key::lattice_sum_real_group_3_0_current]             =  0.000000000e+00;
   results_.doubles_[Key::lattice_sum_real_group_1_1_current]             =  0.000000000e+00;
+  results_.doubles_[Key::lattice_sum_real_group_2_1_current]             =  0.000000000e+00;
+  results_.doubles_[Key::lattice_sum_real_group_3_1_current]             =  0.000000000e+00;
+  results_.doubles_[Key::lattice_sum_real_group_2_2_current]             =  0.000000000e+00;
+  results_.doubles_[Key::lattice_sum_real_group_3_2_current]             =  0.000000000e+00;
+  results_.doubles_[Key::lattice_sum_real_group_3_3_current]             =  0.000000000e+00;
+
   results_.doubles_[Key::lattice_sum_reciprocal_group_0_0_current]       =  0.000000000e+00;
   results_.doubles_[Key::lattice_sum_reciprocal_group_1_0_current]       =  0.000000000e+00;
+  results_.doubles_[Key::lattice_sum_reciprocal_group_2_0_current]       =  0.000000000e+00;
+  results_.doubles_[Key::lattice_sum_reciprocal_group_3_0_current]       =  0.000000000e+00;
   results_.doubles_[Key::lattice_sum_reciprocal_group_1_1_current]       =  0.000000000e+00;
+  results_.doubles_[Key::lattice_sum_reciprocal_group_2_1_current]       =  0.000000000e+00;
+  results_.doubles_[Key::lattice_sum_reciprocal_group_3_1_current]       =  0.000000000e+00;
+  results_.doubles_[Key::lattice_sum_reciprocal_group_2_2_current]       =  0.000000000e+00;
+  results_.doubles_[Key::lattice_sum_reciprocal_group_3_2_current]       =  0.000000000e+00;
+  results_.doubles_[Key::lattice_sum_reciprocal_group_3_3_current]       =  0.000000000e+00;
   // "old" (step 2)
-  results_.doubles_[Key::lennard_jones_group_0_0_old]                    =  0.000000000e+00;
-  results_.doubles_[Key::lennard_jones_group_1_0_old]                    = -1.411110293e+02;
-  results_.doubles_[Key::lennard_jones_group_1_1_old]                    = -4.869270312e+03;
-  results_.doubles_[Key::coulomb_reaction_field_group_0_0_old]           =  0.000000000e+00;
-  results_.doubles_[Key::coulomb_reaction_field_group_1_0_old]           =  0.000000000e+00;
-  results_.doubles_[Key::coulomb_reaction_field_group_1_1_old]           = -2.559545299e+04;
-  results_.doubles_[Key::lattice_sum_real_group_0_0_old]                 =  0.000000000e+00;
-  results_.doubles_[Key::lattice_sum_real_group_1_0_old]                 =  0.000000000e+00;
-  results_.doubles_[Key::lattice_sum_real_group_1_1_old]                 =  0.000000000e+00;
-  results_.doubles_[Key::lattice_sum_reciprocal_group_0_0_old]           =  0.000000000e+00;
-  results_.doubles_[Key::lattice_sum_reciprocal_group_1_0_old]           =  0.000000000e+00;
-  results_.doubles_[Key::lattice_sum_reciprocal_group_1_1_old]           =  0.000000000e+00;
+  results_.doubles_[Key::lennard_jones_group_0_0_old]                =  -6.768001068e+01;
+  results_.doubles_[Key::lennard_jones_group_1_0_old]                =   3.192585454e+00;
+  results_.doubles_[Key::lennard_jones_group_2_0_old]                =   5.404158079e+00;
+  results_.doubles_[Key::lennard_jones_group_3_0_old]                =  -1.174791683e+02;
+  results_.doubles_[Key::lennard_jones_group_1_1_old]                =   0.000000000e+00;
+  results_.doubles_[Key::lennard_jones_group_2_1_old]                =  -6.072268390e-03;
+  results_.doubles_[Key::lennard_jones_group_3_1_old]                =   3.399752090e+01;
+  results_.doubles_[Key::lennard_jones_group_2_2_old]                =   0.000000000e+00;
+  results_.doubles_[Key::lennard_jones_group_3_2_old]                =   3.141642517e+01;
+  results_.doubles_[Key::lennard_jones_group_3_3_old]                =   7.876549677e+03;
+
+  results_.doubles_[Key::coulomb_reaction_field_group_0_0_old]       =  -7.037190949e+02;
+  results_.doubles_[Key::coulomb_reaction_field_group_1_0_old]       =  -2.721257313e+02;
+  results_.doubles_[Key::coulomb_reaction_field_group_2_0_old]       =  -3.178743149e+02;
+  results_.doubles_[Key::coulomb_reaction_field_group_3_0_old]       =  -1.245086074e+03;
+  results_.doubles_[Key::coulomb_reaction_field_group_1_1_old]       =  -7.382455923e+01;
+  results_.doubles_[Key::coulomb_reaction_field_group_2_1_old]       =   6.731830466e+00;
+  results_.doubles_[Key::coulomb_reaction_field_group_3_1_old]       =  -4.523458248e+02;
+  results_.doubles_[Key::coulomb_reaction_field_group_2_2_old]       =  -7.382455923e+01;
+  results_.doubles_[Key::coulomb_reaction_field_group_3_2_old]       =  -3.269145127e+02;
+  results_.doubles_[Key::coulomb_reaction_field_group_3_3_old]       =  -4.778612059e+04;
+
+  results_.doubles_[Key::lattice_sum_real_group_0_0_old]             =  0.000000000e+00;
+  results_.doubles_[Key::lattice_sum_real_group_1_0_old]             =  0.000000000e+00;
+  results_.doubles_[Key::lattice_sum_real_group_2_0_old]             =  0.000000000e+00;
+  results_.doubles_[Key::lattice_sum_real_group_3_0_old]             =  0.000000000e+00;
+  results_.doubles_[Key::lattice_sum_real_group_1_1_old]             =  0.000000000e+00;
+  results_.doubles_[Key::lattice_sum_real_group_2_1_old]             =  0.000000000e+00;
+  results_.doubles_[Key::lattice_sum_real_group_3_1_old]             =  0.000000000e+00;
+  results_.doubles_[Key::lattice_sum_real_group_2_2_old]             =  0.000000000e+00;
+  results_.doubles_[Key::lattice_sum_real_group_3_2_old]             =  0.000000000e+00;
+  results_.doubles_[Key::lattice_sum_real_group_3_3_old]             =  0.000000000e+00;
+
+  results_.doubles_[Key::lattice_sum_reciprocal_group_0_0_old]       =  0.000000000e+00;
+  results_.doubles_[Key::lattice_sum_reciprocal_group_1_0_old]       =  0.000000000e+00;
+  results_.doubles_[Key::lattice_sum_reciprocal_group_2_0_old]       =  0.000000000e+00;
+  results_.doubles_[Key::lattice_sum_reciprocal_group_3_0_old]       =  0.000000000e+00;
+  results_.doubles_[Key::lattice_sum_reciprocal_group_1_1_old]       =  0.000000000e+00;
+  results_.doubles_[Key::lattice_sum_reciprocal_group_2_1_old]       =  0.000000000e+00;
+  results_.doubles_[Key::lattice_sum_reciprocal_group_3_1_old]       =  0.000000000e+00;
+  results_.doubles_[Key::lattice_sum_reciprocal_group_2_2_old]       =  0.000000000e+00;
+  results_.doubles_[Key::lattice_sum_reciprocal_group_3_2_old]       =  0.000000000e+00;
+  results_.doubles_[Key::lattice_sum_reciprocal_group_3_3_old]       =  0.000000000e+00;
 }
 
 void Peptide_Tutorial_Eq_Test::init_results_special_terms() {
@@ -333,6 +423,30 @@ void Peptide_Tutorial_Eq_Test::init_results_special_terms() {
   results_.doubles_[Key::local_elevation_group_1_current]     = 0.000000000e+00;
   results_.doubles_[Key::path_integral_group_1_current]       = 0.000000000e+00;
   results_.doubles_[Key::angle_restraint_group_1_current]     = 0.000000000e+00;
+  results_.doubles_[Key::contraints_group_2_current]          = 0.000000000e+00;
+  results_.doubles_[Key::pos_restraints_group_2_current]      = 0.000000000e+00;
+  results_.doubles_[Key::dist_restraints_group_2_current]     = 0.000000000e+00;
+  results_.doubles_[Key::disfield_res_group_2_current]        = 0.000000000e+00;
+  results_.doubles_[Key::dihedral_restraints_group_2_current] = 0.000000000e+00;
+  results_.doubles_[Key::sasa_group_2_current]                = 0.000000000e+00;
+  results_.doubles_[Key::sasa_vol_group_2_current]            = 0.000000000e+00;
+  results_.doubles_[Key::jvalue_group_2_current]              = 0.000000000e+00;
+  results_.doubles_[Key::rdc_group_2_current]                 = 0.000000000e+00;
+  results_.doubles_[Key::local_elevation_group_2_current]     = 0.000000000e+00;
+  results_.doubles_[Key::path_integral_group_2_current]       = 0.000000000e+00;
+  results_.doubles_[Key::angle_restraint_group_2_current]     = 0.000000000e+00;
+  results_.doubles_[Key::contraints_group_3_current]          = 0.000000000e+00;
+  results_.doubles_[Key::pos_restraints_group_3_current]      = 0.000000000e+00;
+  results_.doubles_[Key::dist_restraints_group_3_current]     = 0.000000000e+00;
+  results_.doubles_[Key::disfield_res_group_3_current]        = 0.000000000e+00;
+  results_.doubles_[Key::dihedral_restraints_group_3_current] = 0.000000000e+00;
+  results_.doubles_[Key::sasa_group_3_current]                = 0.000000000e+00;
+  results_.doubles_[Key::sasa_vol_group_3_current]            = 0.000000000e+00;
+  results_.doubles_[Key::jvalue_group_3_current]              = 0.000000000e+00;
+  results_.doubles_[Key::rdc_group_3_current]                 = 0.000000000e+00;
+  results_.doubles_[Key::local_elevation_group_3_current]     = 0.000000000e+00;
+  results_.doubles_[Key::path_integral_group_3_current]       = 0.000000000e+00;
+  results_.doubles_[Key::angle_restraint_group_3_current]     = 0.000000000e+00;
   // "old" (step 2)
   results_.doubles_[Key::contraints_group_0_old]              = 0.000000000e+00;
   results_.doubles_[Key::pos_restraints_group_0_old]          = 0.000000000e+00;
@@ -358,130 +472,404 @@ void Peptide_Tutorial_Eq_Test::init_results_special_terms() {
   results_.doubles_[Key::local_elevation_group_1_old]         = 0.000000000e+00;
   results_.doubles_[Key::path_integral_group_1_old]           = 0.000000000e+00;
   results_.doubles_[Key::angle_restraint_group_1_old]         = 0.000000000e+00;
+  results_.doubles_[Key::contraints_group_2_old]              = 0.000000000e+00;
+  results_.doubles_[Key::pos_restraints_group_2_old]          = 0.000000000e+00;
+  results_.doubles_[Key::dist_restraints_group_2_old]         = 0.000000000e+00;
+  results_.doubles_[Key::disfield_res_group_2_old]            = 0.000000000e+00;
+  results_.doubles_[Key::dihedral_restraints_group_2_old]     = 0.000000000e+00;
+  results_.doubles_[Key::sasa_group_2_old]                    = 0.000000000e+00;
+  results_.doubles_[Key::sasa_vol_group_2_old]                = 0.000000000e+00;
+  results_.doubles_[Key::jvalue_group_2_old]                  = 0.000000000e+00;
+  results_.doubles_[Key::rdc_group_2_old]                     = 0.000000000e+00;
+  results_.doubles_[Key::local_elevation_group_2_old]         = 0.000000000e+00;
+  results_.doubles_[Key::path_integral_group_2_old]           = 0.000000000e+00;
+  results_.doubles_[Key::angle_restraint_group_2_old]         = 0.000000000e+00;
+  results_.doubles_[Key::contraints_group_3_old]              = 0.000000000e+00;
+  results_.doubles_[Key::pos_restraints_group_3_old]          = 0.000000000e+00;
+  results_.doubles_[Key::dist_restraints_group_3_old]         = 0.000000000e+00;
+  results_.doubles_[Key::disfield_res_group_3_old]            = 0.000000000e+00;
+  results_.doubles_[Key::dihedral_restraints_group_3_old]     = 0.000000000e+00;
+  results_.doubles_[Key::sasa_group_3_old]                    = 0.000000000e+00;
+  results_.doubles_[Key::sasa_vol_group_3_old]                = 0.000000000e+00;
+  results_.doubles_[Key::jvalue_group_3_old]                  = 0.000000000e+00;
+  results_.doubles_[Key::rdc_group_3_old]                     = 0.000000000e+00;
+  results_.doubles_[Key::local_elevation_group_3_old]         = 0.000000000e+00;
+  results_.doubles_[Key::path_integral_group_3_old]           = 0.000000000e+00;
+  results_.doubles_[Key::angle_restraint_group_3_old]         = 0.000000000e+00;
 }
 
 void Peptide_Tutorial_Eq_Test::init_results_mass() {
   // "current" (step 1)
-  results_.doubles_[Key::mass_current] = 1.991781000e+04;
+  results_.doubles_[Key::mass_current] = 1.712372440e+04;
   // "old" (step 2)
-  results_.doubles_[Key::mass_old]     = 1.991781000e+04;
+  results_.doubles_[Key::mass_old]     = 1.712372440e+04;
 }
 
 void Peptide_Tutorial_Eq_Test::init_results_temperature() {
   // "current" (step 1)
   results_.ints_[Key::num_temperature_coupling_baths_current]       = 2;
-  results_.doubles_[Key::temperature_total_bath_0_current]          = 2.968677248e+02;
-  results_.doubles_[Key::temperature_total_bath_1_current]          = 2.801836889e+02;
-  results_.doubles_[Key::temperature_com_bath_0_current]            = 3.336222763e+02;
-  results_.doubles_[Key::temperature_com_bath_1_current]            = 3.798019531e+02;
-  results_.doubles_[Key::temperature_ir_bath_0_current]             = 2.963187086e+02;
-  results_.doubles_[Key::temperature_ir_bath_1_current]             = 2.666979806e+02;
-  results_.doubles_[Key::temperature_scaling_factor_bath_0_current] = 1.000019771e+00;
-  results_.doubles_[Key::temperature_scaling_factor_bath_1_current] = 1.000014899e+00;
+  results_.doubles_[Key::temperature_total_bath_0_current]          = 2.548396555e+02;
+  results_.doubles_[Key::temperature_total_bath_1_current]          = 2.396247238e+02;
+  results_.doubles_[Key::temperature_com_bath_0_current]            = 2.479733473e+02;
+  results_.doubles_[Key::temperature_com_bath_1_current]            = 2.304012597e+02;
+  results_.doubles_[Key::temperature_ir_bath_0_current]             = 2.551387720e+02;
+  results_.doubles_[Key::temperature_ir_bath_1_current]             = 2.485912636e+02;
+  results_.doubles_[Key::temperature_scaling_factor_bath_0_current] = 1.001508485e+00;
+  results_.doubles_[Key::temperature_scaling_factor_bath_1_current] = 1.002539348e+00;
   // "old" (step 2)
   results_.ints_[Key::num_temperature_coupling_baths_old]           = 2;
-  results_.doubles_[Key::temperature_total_bath_0_old]              = 3.837658875e+02;
-  results_.doubles_[Key::temperature_total_bath_1_old]              = 2.791741040e+02;
-  results_.doubles_[Key::temperature_com_bath_0_old]                = 3.314704712e+02;
-  results_.doubles_[Key::temperature_com_bath_1_old]                = 3.801787590e+02;
-  results_.doubles_[Key::temperature_ir_bath_0_old]                 = 3.841776103e+02;
-  results_.doubles_[Key::temperature_ir_bath_1_old]                 = 2.655032371e+02;
-  results_.doubles_[Key::temperature_scaling_factor_bath_0_old]     = 1.000023732e+00;
-  results_.doubles_[Key::temperature_scaling_factor_bath_1_old]     = 1.000022414e+00;
+  results_.doubles_[Key::temperature_total_bath_0_old]              = 2.484509215e+02;
+  results_.doubles_[Key::temperature_total_bath_1_old]              = 2.408702092e+02;
+  results_.doubles_[Key::temperature_com_bath_0_old]                = 2.530595472e+02;
+  results_.doubles_[Key::temperature_com_bath_1_old]                = 2.320466894e+02;
+  results_.doubles_[Key::temperature_ir_bath_0_old]                 = 2.480107033e+02;
+  results_.doubles_[Key::temperature_ir_bath_1_old]                 = 2.494354693e+02;
+  results_.doubles_[Key::temperature_scaling_factor_bath_0_old]     = 1.002044754e+00;
+  results_.doubles_[Key::temperature_scaling_factor_bath_1_old]     = 1.002493556e+00;
 }
 
 void Peptide_Tutorial_Eq_Test::init_results_volume() {
   // "current" (step 1)
-  results_.doubles_[Key::volume_current]  = 5.091972755e+01;
-  results_.doubles_[Key::box_k_0_current] = 3.706483096e+00;
+  results_.doubles_[Key::volume_current]  = 2.893999506e+01;
+  results_.doubles_[Key::box_k_0_current] = 3.070196349e+00;
   results_.doubles_[Key::box_k_1_current] = 0.000000000e+00;
   results_.doubles_[Key::box_k_2_current] = 0.000000000e+00;
   results_.doubles_[Key::box_l_0_current] = 0.000000000e+00;
-  results_.doubles_[Key::box_l_1_current] = 3.706483096e+00;
+  results_.doubles_[Key::box_l_1_current] = 3.070196349e+00;
   results_.doubles_[Key::box_l_2_current] = 0.000000000e+00;
   results_.doubles_[Key::box_m_0_current] = 0.000000000e+00;
   results_.doubles_[Key::box_m_1_current] = 0.000000000e+00;
-  results_.doubles_[Key::box_m_2_current] = 3.706483096e+00;
+  results_.doubles_[Key::box_m_2_current] = 3.070196349e+00;
   // "old" (step 2)
-  results_.doubles_[Key::volume_old]      = 5.091976752e+01;
-  results_.doubles_[Key::box_k_0_old]     = 3.706484065e+00;
+  results_.doubles_[Key::volume_old]      = 2.893999506e+01;
+  results_.doubles_[Key::box_k_0_old]     = 3.070196349e+00;
   results_.doubles_[Key::box_k_1_old]     = 0.000000000e+00;
   results_.doubles_[Key::box_k_2_old]     = 0.000000000e+00;
   results_.doubles_[Key::box_l_0_old]     = 0.000000000e+00;
-  results_.doubles_[Key::box_l_1_old]     = 3.706484065e+00;
+  results_.doubles_[Key::box_l_1_old]     = 3.070196349e+00;
   results_.doubles_[Key::box_l_2_old]     = 0.000000000e+00;
   results_.doubles_[Key::box_m_0_old]     = 0.000000000e+00;
   results_.doubles_[Key::box_m_1_old]     = 0.000000000e+00;
-  results_.doubles_[Key::box_m_2_old]     = 3.706484065e+00;
+  results_.doubles_[Key::box_m_2_old]     = 3.070196349e+00;
 }
 
 void Peptide_Tutorial_Eq_Test::init_results_pressure() {
   // "current" (step 1)
-  results_.doubles_[Key::pressure_current]                            =  1.774560087e+00;
-  results_.doubles_[Key::virial_current]                              =  3.507492242e+02;
-  results_.doubles_[Key::molecular_kinetic_energy_current]            =  3.959292823e+02;
-  results_.doubles_[Key::pressure_tensor_0_0_current]                 = -3.087931850e+00;
-  results_.doubles_[Key::pressure_tensor_0_1_current]                 =  8.257587370e+00;
-  results_.doubles_[Key::pressure_tensor_0_2_current]                 = -1.101848872e+01;
-  results_.doubles_[Key::pressure_tensor_1_0_current]                 =  1.307025805e+01;
-  results_.doubles_[Key::pressure_tensor_1_1_current]                 = -2.212711333e+00;
-  results_.doubles_[Key::pressure_tensor_1_2_current]                 = -1.464952771e+01;
-  results_.doubles_[Key::pressure_tensor_2_0_current]                 = -5.037615305e+00;
-  results_.doubles_[Key::pressure_tensor_2_1_current]                 = -6.298825539e+00;
-  results_.doubles_[Key::pressure_tensor_2_2_current]                 =  1.062432344e+01;
-  results_.doubles_[Key::virial_tensor_0_0_current]                   =  5.050716577e+02;
-  results_.doubles_[Key::virial_tensor_0_1_current]                   = -1.937614474e+02;
-  results_.doubles_[Key::virial_tensor_0_2_current]                   =  2.745860522e+02;
-  results_.doubles_[Key::virial_tensor_1_0_current]                   = -3.162913873e+02;
-  results_.doubles_[Key::virial_tensor_1_1_current]                   =  4.637087300e+02;
-  results_.doubles_[Key::virial_tensor_1_2_current]                   =  3.558157852e+02;
-  results_.doubles_[Key::virial_tensor_2_0_current]                   =  1.223138298e+02;
-  results_.doubles_[Key::virial_tensor_2_1_current]                   =  1.432080454e+02;
-  results_.doubles_[Key::virial_tensor_2_2_current]                   =  8.346728497e+01;
-  results_.doubles_[Key::molecular_kinetic_energy_tensor_0_0_current] =  4.264533335e+02;
-  results_.doubles_[Key::molecular_kinetic_energy_tensor_0_1_current] =  1.647560216e+01;
-  results_.doubles_[Key::molecular_kinetic_energy_tensor_0_2_current] = -5.943169643e+00;
-  results_.doubles_[Key::molecular_kinetic_energy_tensor_1_0_current] =  1.647560216e+01;
-  results_.doubles_[Key::molecular_kinetic_energy_tensor_1_1_current] =  4.073734009e+02;
-  results_.doubles_[Key::molecular_kinetic_energy_tensor_1_2_current] = -1.715919472e+01;
-  results_.doubles_[Key::molecular_kinetic_energy_tensor_2_0_current] = -5.943169643e+00;
-  results_.doubles_[Key::molecular_kinetic_energy_tensor_2_1_current] = -1.715919472e+01;
-  results_.doubles_[Key::molecular_kinetic_energy_tensor_2_2_current] =  3.539611126e+02;
+  results_.doubles_[Key::pressure_current]                            =  0.000000000e+00;
+  results_.doubles_[Key::virial_current]                              =  7.105427358e-15;
+  results_.doubles_[Key::molecular_kinetic_energy_current]            =  0.000000000e+00;
+  results_.doubles_[Key::pressure_tensor_0_0_current]                 =  0.000000000e+00;
+  results_.doubles_[Key::pressure_tensor_0_1_current]                 =  0.000000000e+00;
+  results_.doubles_[Key::pressure_tensor_0_2_current]                 =  0.000000000e+00;
+  results_.doubles_[Key::pressure_tensor_1_0_current]                 =  0.000000000e+00;
+  results_.doubles_[Key::pressure_tensor_1_1_current]                 =  0.000000000e+00;
+  results_.doubles_[Key::pressure_tensor_1_2_current]                 =  0.000000000e+00;
+  results_.doubles_[Key::pressure_tensor_2_0_current]                 =  0.000000000e+00;
+  results_.doubles_[Key::pressure_tensor_2_1_current]                 =  0.000000000e+00;
+  results_.doubles_[Key::pressure_tensor_2_2_current]                 =  0.000000000e+00;
+  results_.doubles_[Key::virial_tensor_0_0_current]                   = -1.064009562e+02;
+  results_.doubles_[Key::virial_tensor_0_1_current]                   =  6.617571422e+01;
+  results_.doubles_[Key::virial_tensor_0_2_current]                   =  2.514787226e+01;
+  results_.doubles_[Key::virial_tensor_1_0_current]                   =  6.617571422e+01;
+  results_.doubles_[Key::virial_tensor_1_1_current]                   =  4.446228639e+01;
+  results_.doubles_[Key::virial_tensor_1_2_current]                   = -3.401802863e+01;
+  results_.doubles_[Key::virial_tensor_2_0_current]                   =  2.514787226e+01;
+  results_.doubles_[Key::virial_tensor_2_1_current]                   = -3.401802863e+01;
+  results_.doubles_[Key::virial_tensor_2_2_current]                   =  6.193866985e+01;
+  results_.doubles_[Key::molecular_kinetic_energy_tensor_0_0_current] =  0.000000000e+00;
+  results_.doubles_[Key::molecular_kinetic_energy_tensor_0_1_current] =  0.000000000e+00;
+  results_.doubles_[Key::molecular_kinetic_energy_tensor_0_2_current] =  0.000000000e+00;
+  results_.doubles_[Key::molecular_kinetic_energy_tensor_1_0_current] =  0.000000000e+00;
+  results_.doubles_[Key::molecular_kinetic_energy_tensor_1_1_current] =  0.000000000e+00;
+  results_.doubles_[Key::molecular_kinetic_energy_tensor_1_2_current] =  0.000000000e+00;
+  results_.doubles_[Key::molecular_kinetic_energy_tensor_2_0_current] =  0.000000000e+00;
+  results_.doubles_[Key::molecular_kinetic_energy_tensor_2_1_current] =  0.000000000e+00;
+  results_.doubles_[Key::molecular_kinetic_energy_tensor_2_2_current] =  0.000000000e+00;
   // "old" (step 2)
-  results_.doubles_[Key::pressure_old]                            =  1.581469292e+00;
-  results_.doubles_[Key::virial_old]                              =  3.560431584e+02;
-  results_.doubles_[Key::molecular_kinetic_energy_old]            =  3.963071828e+02;
-  results_.doubles_[Key::pressure_tensor_0_0_old]                 = -3.120251261e+00;
-  results_.doubles_[Key::pressure_tensor_0_1_old]                 =  8.399222892e+00;
-  results_.doubles_[Key::pressure_tensor_0_2_old]                 = -1.109642505e+01;
-  results_.doubles_[Key::pressure_tensor_1_0_old]                 =  1.295917267e+01;
-  results_.doubles_[Key::pressure_tensor_1_1_old]                 = -2.700620433e+00;
-  results_.doubles_[Key::pressure_tensor_1_2_old]                 = -1.490663574e+01;
-  results_.doubles_[Key::pressure_tensor_2_0_old]                 = -5.347501517e+00;
-  results_.doubles_[Key::pressure_tensor_2_1_old]                 = -6.223445946e+00;
-  results_.doubles_[Key::pressure_tensor_2_2_old]                 =  1.056527957e+01;
-  results_.doubles_[Key::virial_tensor_0_0_old]                   =  5.061933042e+02;
-  results_.doubles_[Key::virial_tensor_0_1_old]                   = -1.971145922e+02;
-  results_.doubles_[Key::virial_tensor_0_2_old]                   =  2.762657115e+02;
-  results_.doubles_[Key::virial_tensor_1_0_old]                   = -3.132103835e+02;
-  results_.doubles_[Key::virial_tensor_1_1_old]                   =  4.764302609e+02;
-  results_.doubles_[Key::virial_tensor_1_2_old]                   =  3.623069342e+02;
-  results_.doubles_[Key::virial_tensor_2_0_old]                   =  1.298987867e+02;
-  results_.doubles_[Key::virial_tensor_2_1_old]                   =  1.412339313e+02;
-  results_.doubles_[Key::virial_tensor_2_2_old]                   =  8.550591018e+01;
-  results_.doubles_[Key::molecular_kinetic_energy_tensor_0_0_old] =  4.267520698e+02;
-  results_.doubles_[Key::molecular_kinetic_energy_tensor_0_1_old] =  1.672864624e+01;
-  results_.doubles_[Key::molecular_kinetic_energy_tensor_0_2_old] = -6.247980288e+00;
-  results_.doubles_[Key::molecular_kinetic_energy_tensor_1_0_old] =  1.672864624e+01;
-  results_.doubles_[Key::molecular_kinetic_energy_tensor_1_1_old] =  4.076727786e+02;
-  results_.doubles_[Key::molecular_kinetic_energy_tensor_1_2_old] = -1.721427904e+01;
-  results_.doubles_[Key::molecular_kinetic_energy_tensor_2_0_old] = -6.247980288e+00;
-  results_.doubles_[Key::molecular_kinetic_energy_tensor_2_1_old] = -1.721427904e+01;
-  results_.doubles_[Key::molecular_kinetic_energy_tensor_2_2_old] =  3.544966999e+02;
+  results_.doubles_[Key::pressure_old]                            =  0.000000000e+00;
+  results_.doubles_[Key::virial_old]                              = -1.421085472e-14;
+  results_.doubles_[Key::molecular_kinetic_energy_old]            =  0.000000000e+00;
+  results_.doubles_[Key::pressure_tensor_0_0_old]                 =  0.000000000e+00;
+  results_.doubles_[Key::pressure_tensor_0_1_old]                 =  0.000000000e+00;
+  results_.doubles_[Key::pressure_tensor_0_2_old]                 =  0.000000000e+00;
+  results_.doubles_[Key::pressure_tensor_1_0_old]                 =  0.000000000e+00;
+  results_.doubles_[Key::pressure_tensor_1_1_old]                 =  0.000000000e+00;
+  results_.doubles_[Key::pressure_tensor_1_2_old]                 =  0.000000000e+00;
+  results_.doubles_[Key::pressure_tensor_2_0_old]                 =  0.000000000e+00;
+  results_.doubles_[Key::pressure_tensor_2_1_old]                 =  0.000000000e+00;
+  results_.doubles_[Key::pressure_tensor_2_2_old]                 =  0.000000000e+00;
+  results_.doubles_[Key::virial_tensor_0_0_old]                   = -1.286827355e+02;
+  results_.doubles_[Key::virial_tensor_0_1_old]                   =  9.400657447e+01;
+  results_.doubles_[Key::virial_tensor_0_2_old]                   =  1.579647032e+00;
+  results_.doubles_[Key::virial_tensor_1_0_old]                   =  9.400657447e+01;
+  results_.doubles_[Key::virial_tensor_1_1_old]                   =  6.373544397e+01;
+  results_.doubles_[Key::virial_tensor_1_2_old]                   = -3.618618363e+01;
+  results_.doubles_[Key::virial_tensor_2_0_old]                   =  1.579647032e+00;
+  results_.doubles_[Key::virial_tensor_2_1_old]                   = -3.618618363e+01;
+  results_.doubles_[Key::virial_tensor_2_2_old]                   =  6.494729151e+01;
+  results_.doubles_[Key::molecular_kinetic_energy_tensor_0_0_old] =  0.000000000e+00;
+  results_.doubles_[Key::molecular_kinetic_energy_tensor_0_1_old] =  0.000000000e+00;
+  results_.doubles_[Key::molecular_kinetic_energy_tensor_0_2_old] =  0.000000000e+00;
+  results_.doubles_[Key::molecular_kinetic_energy_tensor_1_0_old] =  0.000000000e+00;
+  results_.doubles_[Key::molecular_kinetic_energy_tensor_1_1_old] =  0.000000000e+00;
+  results_.doubles_[Key::molecular_kinetic_energy_tensor_1_2_old] =  0.000000000e+00;
+  results_.doubles_[Key::molecular_kinetic_energy_tensor_2_0_old] =  0.000000000e+00;
+  results_.doubles_[Key::molecular_kinetic_energy_tensor_2_1_old] =  0.000000000e+00;
+  results_.doubles_[Key::molecular_kinetic_energy_tensor_2_2_old] =  0.000000000e+00;
 }
 
 void Peptide_Tutorial_Eq_Test::check_parameter_init() {
 
+}
+
+void Peptide_Tutorial_Eq_Test::check_simulation_results_bonded_terms() {
+  std::unordered_map<Key::keys, double>& doubles_res = results_.doubles_;
+  // "current" energies
+  EXPECT_NEAR(test_sim_.conf().current().energies.bond_energy[0], doubles_res[Key::bond_energy_group_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.bond_energy[1], doubles_res[Key::bond_energy_group_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.bond_energy[2], doubles_res[Key::bond_energy_group_2_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.bond_energy[3], doubles_res[Key::bond_energy_group_3_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.angle_energy[0], doubles_res[Key::angle_energy_group_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.angle_energy[1], doubles_res[Key::angle_energy_group_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.angle_energy[2], doubles_res[Key::angle_energy_group_2_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.angle_energy[3], doubles_res[Key::angle_energy_group_3_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.improper_energy[0], doubles_res[Key::improper_energy_group_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.improper_energy[1], doubles_res[Key::improper_energy_group_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.improper_energy[2], doubles_res[Key::improper_energy_group_2_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.improper_energy[3], doubles_res[Key::improper_energy_group_3_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.dihedral_energy[0], doubles_res[Key::dihedral_energy_group_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.dihedral_energy[1], doubles_res[Key::dihedral_energy_group_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.dihedral_energy[2], doubles_res[Key::dihedral_energy_group_2_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.dihedral_energy[3], doubles_res[Key::dihedral_energy_group_3_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.crossdihedral_energy[0], doubles_res[Key::crossdihedral_energy_group_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.crossdihedral_energy[1], doubles_res[Key::crossdihedral_energy_group_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.crossdihedral_energy[2], doubles_res[Key::crossdihedral_energy_group_2_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.crossdihedral_energy[3], doubles_res[Key::crossdihedral_energy_group_3_current], epsilon_);
+  // "old" energies
+  EXPECT_NEAR(test_sim_.conf().old().energies.bond_energy[0], doubles_res[Key::bond_energy_group_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.bond_energy[1], doubles_res[Key::bond_energy_group_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.bond_energy[2], doubles_res[Key::bond_energy_group_2_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.bond_energy[3], doubles_res[Key::bond_energy_group_3_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.angle_energy[0], doubles_res[Key::angle_energy_group_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.angle_energy[1], doubles_res[Key::angle_energy_group_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.angle_energy[2], doubles_res[Key::angle_energy_group_2_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.angle_energy[3], doubles_res[Key::angle_energy_group_3_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.improper_energy[0], doubles_res[Key::improper_energy_group_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.improper_energy[1], doubles_res[Key::improper_energy_group_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.improper_energy[2], doubles_res[Key::improper_energy_group_2_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.improper_energy[3], doubles_res[Key::improper_energy_group_3_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.dihedral_energy[0], doubles_res[Key::dihedral_energy_group_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.dihedral_energy[1], doubles_res[Key::dihedral_energy_group_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.dihedral_energy[2], doubles_res[Key::dihedral_energy_group_2_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.dihedral_energy[3], doubles_res[Key::dihedral_energy_group_3_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.crossdihedral_energy[0], doubles_res[Key::crossdihedral_energy_group_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.crossdihedral_energy[1], doubles_res[Key::crossdihedral_energy_group_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.crossdihedral_energy[2], doubles_res[Key::crossdihedral_energy_group_2_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.crossdihedral_energy[3], doubles_res[Key::crossdihedral_energy_group_3_old], epsilon_);
+}
+
+void Peptide_Tutorial_Eq_Test::check_simulation_results_nonbonded_terms() {
+  std::unordered_map<Key::keys, double>& doubles_res = results_.doubles_;
+  // "current" energies
+  EXPECT_NEAR(test_sim_.conf().current().energies.lj_energy[0][0], doubles_res[Key::lennard_jones_group_0_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.lj_energy[1][0], doubles_res[Key::lennard_jones_group_1_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.lj_energy[2][0], doubles_res[Key::lennard_jones_group_2_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.lj_energy[3][0], doubles_res[Key::lennard_jones_group_3_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.lj_energy[1][1], doubles_res[Key::lennard_jones_group_1_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.lj_energy[2][1], doubles_res[Key::lennard_jones_group_2_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.lj_energy[3][1], doubles_res[Key::lennard_jones_group_3_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.lj_energy[2][2], doubles_res[Key::lennard_jones_group_2_2_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.lj_energy[3][2], doubles_res[Key::lennard_jones_group_3_2_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.lj_energy[3][3], doubles_res[Key::lennard_jones_group_3_3_current], epsilon_);
+
+  EXPECT_NEAR(test_sim_.conf().current().energies.crf_energy[0][0], doubles_res[Key::coulomb_reaction_field_group_0_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.crf_energy[1][0], doubles_res[Key::coulomb_reaction_field_group_1_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.crf_energy[2][0], doubles_res[Key::coulomb_reaction_field_group_2_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.crf_energy[3][0], doubles_res[Key::coulomb_reaction_field_group_3_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.crf_energy[1][1], doubles_res[Key::coulomb_reaction_field_group_1_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.crf_energy[2][1], doubles_res[Key::coulomb_reaction_field_group_2_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.crf_energy[3][1], doubles_res[Key::coulomb_reaction_field_group_3_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.crf_energy[2][2], doubles_res[Key::coulomb_reaction_field_group_2_2_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.crf_energy[3][2], doubles_res[Key::coulomb_reaction_field_group_3_2_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.crf_energy[3][3], doubles_res[Key::coulomb_reaction_field_group_3_3_current], epsilon_);
+
+  // lattice sum energies cannot be tested like this as they are not calculated right now. values in .tre file correspond to totals
+  EXPECT_NEAR(test_sim_.conf().current().energies.ls_total, doubles_res[Key::lattice_sum_real_group_0_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.ls_total, doubles_res[Key::lattice_sum_real_group_1_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.ls_total, doubles_res[Key::lattice_sum_real_group_2_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.ls_total, doubles_res[Key::lattice_sum_real_group_3_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.ls_total, doubles_res[Key::lattice_sum_real_group_1_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.ls_total, doubles_res[Key::lattice_sum_real_group_2_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.ls_total, doubles_res[Key::lattice_sum_real_group_3_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.ls_total, doubles_res[Key::lattice_sum_real_group_2_2_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.ls_total, doubles_res[Key::lattice_sum_real_group_3_2_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.ls_total, doubles_res[Key::lattice_sum_real_group_3_3_current], epsilon_);
+
+  EXPECT_NEAR(test_sim_.conf().current().energies.ls_k_energy[0][0], doubles_res[Key::lattice_sum_reciprocal_group_0_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.ls_k_energy[1][0], doubles_res[Key::lattice_sum_reciprocal_group_1_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.ls_k_energy[2][0], doubles_res[Key::lattice_sum_reciprocal_group_2_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.ls_k_energy[3][0], doubles_res[Key::lattice_sum_reciprocal_group_3_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.ls_k_energy[1][1], doubles_res[Key::lattice_sum_reciprocal_group_1_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.ls_k_energy[2][1], doubles_res[Key::lattice_sum_reciprocal_group_2_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.ls_k_energy[3][1], doubles_res[Key::lattice_sum_reciprocal_group_3_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.ls_k_energy[2][2], doubles_res[Key::lattice_sum_reciprocal_group_2_2_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.ls_k_energy[3][2], doubles_res[Key::lattice_sum_reciprocal_group_3_2_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.ls_k_energy[3][3], doubles_res[Key::lattice_sum_reciprocal_group_3_3_current], epsilon_); 
+  // "old" energies
+  EXPECT_NEAR(test_sim_.conf().old().energies.lj_energy[0][0], doubles_res[Key::lennard_jones_group_0_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.lj_energy[1][0], doubles_res[Key::lennard_jones_group_1_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.lj_energy[2][0], doubles_res[Key::lennard_jones_group_2_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.lj_energy[3][0], doubles_res[Key::lennard_jones_group_3_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.lj_energy[1][1], doubles_res[Key::lennard_jones_group_1_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.lj_energy[2][1], doubles_res[Key::lennard_jones_group_2_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.lj_energy[3][1], doubles_res[Key::lennard_jones_group_3_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.lj_energy[2][2], doubles_res[Key::lennard_jones_group_2_2_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.lj_energy[3][2], doubles_res[Key::lennard_jones_group_3_2_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.lj_energy[3][3], doubles_res[Key::lennard_jones_group_3_3_old], epsilon_);
+
+  EXPECT_NEAR(test_sim_.conf().old().energies.crf_energy[0][0], doubles_res[Key::coulomb_reaction_field_group_0_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.crf_energy[1][0], doubles_res[Key::coulomb_reaction_field_group_1_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.crf_energy[2][0], doubles_res[Key::coulomb_reaction_field_group_2_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.crf_energy[3][0], doubles_res[Key::coulomb_reaction_field_group_3_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.crf_energy[1][1], doubles_res[Key::coulomb_reaction_field_group_1_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.crf_energy[2][1], doubles_res[Key::coulomb_reaction_field_group_2_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.crf_energy[3][1], doubles_res[Key::coulomb_reaction_field_group_3_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.crf_energy[2][2], doubles_res[Key::coulomb_reaction_field_group_2_2_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.crf_energy[3][2], doubles_res[Key::coulomb_reaction_field_group_3_2_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.crf_energy[3][3], doubles_res[Key::coulomb_reaction_field_group_3_3_old], epsilon_);
+
+  // lattice sum energies cannot be tested like this as they are not calculated right now. values in .tre file correspond to totals
+  EXPECT_NEAR(test_sim_.conf().old().energies.ls_total, doubles_res[Key::lattice_sum_real_group_0_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.ls_total, doubles_res[Key::lattice_sum_real_group_1_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.ls_total, doubles_res[Key::lattice_sum_real_group_2_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.ls_total, doubles_res[Key::lattice_sum_real_group_3_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.ls_total, doubles_res[Key::lattice_sum_real_group_1_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.ls_total, doubles_res[Key::lattice_sum_real_group_2_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.ls_total, doubles_res[Key::lattice_sum_real_group_3_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.ls_total, doubles_res[Key::lattice_sum_real_group_2_2_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.ls_total, doubles_res[Key::lattice_sum_real_group_3_2_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.ls_total, doubles_res[Key::lattice_sum_real_group_3_3_old], epsilon_);
+
+  EXPECT_NEAR(test_sim_.conf().old().energies.ls_k_energy[0][0], doubles_res[Key::lattice_sum_reciprocal_group_0_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.ls_k_energy[1][0], doubles_res[Key::lattice_sum_reciprocal_group_1_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.ls_k_energy[2][0], doubles_res[Key::lattice_sum_reciprocal_group_2_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.ls_k_energy[3][0], doubles_res[Key::lattice_sum_reciprocal_group_3_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.ls_k_energy[1][1], doubles_res[Key::lattice_sum_reciprocal_group_1_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.ls_k_energy[2][1], doubles_res[Key::lattice_sum_reciprocal_group_2_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.ls_k_energy[3][1], doubles_res[Key::lattice_sum_reciprocal_group_3_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.ls_k_energy[2][2], doubles_res[Key::lattice_sum_reciprocal_group_2_2_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.ls_k_energy[3][2], doubles_res[Key::lattice_sum_reciprocal_group_3_2_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.ls_k_energy[3][3], doubles_res[Key::lattice_sum_reciprocal_group_3_3_old], epsilon_);
+}
+
+void Peptide_Tutorial_Eq_Test::check_simulation_results_special_terms() {
+  std::unordered_map<Key::keys, double>& doubles_res = results_.doubles_;
+  // some values are not stored with Gromos, instead "0" is printed
+  // "current" energies
+  EXPECT_NEAR(test_sim_.conf().current().energies.constraints_energy[0], doubles_res[Key::contraints_group_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.posrest_energy[0], doubles_res[Key::pos_restraints_group_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.distanceres_energy[0], doubles_res[Key::dist_restraints_group_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.disfieldres_energy[0], doubles_res[Key::disfield_res_group_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.angrest_energy[0], doubles_res[Key::angle_restraint_group_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.dihrest_energy[0], doubles_res[Key::dihedral_restraints_group_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.sasa_energy[0], doubles_res[Key::sasa_group_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.sasa_volume_energy[0], doubles_res[Key::sasa_vol_group_0_current], epsilon_);
+  EXPECT_NEAR(0, doubles_res[Key::jvalue_group_0_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.rdc_energy[0], doubles_res[Key::rdc_group_0_current], epsilon_);
+  EXPECT_NEAR(0, doubles_res[Key::local_elevation_group_0_current], epsilon_);
+  EXPECT_NEAR(0, doubles_res[Key::path_integral_group_0_current], epsilon_);
+
+  EXPECT_NEAR(test_sim_.conf().current().energies.constraints_energy[1], doubles_res[Key::contraints_group_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.posrest_energy[1], doubles_res[Key::pos_restraints_group_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.distanceres_energy[1], doubles_res[Key::dist_restraints_group_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.disfieldres_energy[1], doubles_res[Key::disfield_res_group_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.angrest_energy[1], doubles_res[Key::angle_restraint_group_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.dihrest_energy[1], doubles_res[Key::dihedral_restraints_group_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.sasa_energy[1], doubles_res[Key::sasa_group_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.sasa_volume_energy[1], doubles_res[Key::sasa_vol_group_1_current], epsilon_);
+  EXPECT_NEAR(0, doubles_res[Key::jvalue_group_1_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.rdc_energy[1], doubles_res[Key::rdc_group_1_current], epsilon_);
+  EXPECT_NEAR(0, doubles_res[Key::local_elevation_group_1_current], epsilon_);
+  EXPECT_NEAR(0, doubles_res[Key::path_integral_group_1_current], epsilon_);
+
+  EXPECT_NEAR(test_sim_.conf().current().energies.constraints_energy[2], doubles_res[Key::contraints_group_2_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.posrest_energy[2], doubles_res[Key::pos_restraints_group_2_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.distanceres_energy[2], doubles_res[Key::dist_restraints_group_2_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.disfieldres_energy[2], doubles_res[Key::disfield_res_group_2_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.angrest_energy[2], doubles_res[Key::angle_restraint_group_2_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.dihrest_energy[2], doubles_res[Key::dihedral_restraints_group_2_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.sasa_energy[2], doubles_res[Key::sasa_group_2_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.sasa_volume_energy[2], doubles_res[Key::sasa_vol_group_2_current], epsilon_);
+  EXPECT_NEAR(0, doubles_res[Key::jvalue_group_2_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.rdc_energy[2], doubles_res[Key::rdc_group_2_current], epsilon_);
+  EXPECT_NEAR(0, doubles_res[Key::local_elevation_group_2_current], epsilon_);
+  EXPECT_NEAR(0, doubles_res[Key::path_integral_group_2_current], epsilon_);
+  
+  EXPECT_NEAR(test_sim_.conf().current().energies.constraints_energy[3], doubles_res[Key::contraints_group_3_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.posrest_energy[3], doubles_res[Key::pos_restraints_group_3_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.distanceres_energy[3], doubles_res[Key::dist_restraints_group_3_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.disfieldres_energy[3], doubles_res[Key::disfield_res_group_3_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.angrest_energy[3], doubles_res[Key::angle_restraint_group_3_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.dihrest_energy[3], doubles_res[Key::dihedral_restraints_group_3_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.sasa_energy[3], doubles_res[Key::sasa_group_3_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.sasa_volume_energy[3], doubles_res[Key::sasa_vol_group_3_current], epsilon_);
+  EXPECT_NEAR(0, doubles_res[Key::jvalue_group_3_current], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().current().energies.rdc_energy[3], doubles_res[Key::rdc_group_3_current], epsilon_);
+  EXPECT_NEAR(0, doubles_res[Key::local_elevation_group_3_current], epsilon_);
+  EXPECT_NEAR(0, doubles_res[Key::path_integral_group_3_current], epsilon_);
+
+  // "old" energies
+  EXPECT_NEAR(test_sim_.conf().old().energies.constraints_energy[0], doubles_res[Key::contraints_group_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.posrest_energy[0], doubles_res[Key::pos_restraints_group_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.distanceres_energy[0], doubles_res[Key::dist_restraints_group_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.disfieldres_energy[0], doubles_res[Key::disfield_res_group_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.angrest_energy[0], doubles_res[Key::angle_restraint_group_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.dihrest_energy[0], doubles_res[Key::dihedral_restraints_group_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.sasa_energy[0], doubles_res[Key::sasa_group_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.sasa_volume_energy[0], doubles_res[Key::sasa_vol_group_0_old], epsilon_);
+  EXPECT_NEAR(0, doubles_res[Key::jvalue_group_0_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.rdc_energy[0], doubles_res[Key::rdc_group_0_old], epsilon_);
+  EXPECT_NEAR(0, doubles_res[Key::local_elevation_group_0_old], epsilon_);
+  EXPECT_NEAR(0, doubles_res[Key::path_integral_group_0_old], epsilon_);
+
+  EXPECT_NEAR(test_sim_.conf().old().energies.constraints_energy[1], doubles_res[Key::contraints_group_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.posrest_energy[1], doubles_res[Key::pos_restraints_group_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.distanceres_energy[1], doubles_res[Key::dist_restraints_group_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.disfieldres_energy[1], doubles_res[Key::disfield_res_group_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.angrest_energy[1], doubles_res[Key::angle_restraint_group_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.dihrest_energy[1], doubles_res[Key::dihedral_restraints_group_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.sasa_energy[1], doubles_res[Key::sasa_group_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.sasa_volume_energy[1], doubles_res[Key::sasa_vol_group_1_old], epsilon_);
+  EXPECT_NEAR(0, doubles_res[Key::jvalue_group_1_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.rdc_energy[1], doubles_res[Key::rdc_group_1_old], epsilon_);
+  EXPECT_NEAR(0, doubles_res[Key::local_elevation_group_1_old], epsilon_);
+  EXPECT_NEAR(0, doubles_res[Key::path_integral_group_1_old], epsilon_);
+
+  EXPECT_NEAR(test_sim_.conf().old().energies.constraints_energy[2], doubles_res[Key::contraints_group_2_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.posrest_energy[2], doubles_res[Key::pos_restraints_group_2_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.distanceres_energy[2], doubles_res[Key::dist_restraints_group_2_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.disfieldres_energy[2], doubles_res[Key::disfield_res_group_2_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.angrest_energy[2], doubles_res[Key::angle_restraint_group_2_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.dihrest_energy[2], doubles_res[Key::dihedral_restraints_group_2_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.sasa_energy[2], doubles_res[Key::sasa_group_2_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.sasa_volume_energy[2], doubles_res[Key::sasa_vol_group_2_old], epsilon_);
+  EXPECT_NEAR(0, doubles_res[Key::jvalue_group_2_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.rdc_energy[2], doubles_res[Key::rdc_group_2_old], epsilon_);
+  EXPECT_NEAR(0, doubles_res[Key::local_elevation_group_2_old], epsilon_);
+  EXPECT_NEAR(0, doubles_res[Key::path_integral_group_2_old], epsilon_);
+  
+  EXPECT_NEAR(test_sim_.conf().old().energies.constraints_energy[3], doubles_res[Key::contraints_group_3_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.posrest_energy[3], doubles_res[Key::pos_restraints_group_3_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.distanceres_energy[3], doubles_res[Key::dist_restraints_group_3_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.disfieldres_energy[3], doubles_res[Key::disfield_res_group_3_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.angrest_energy[3], doubles_res[Key::angle_restraint_group_3_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.dihrest_energy[3], doubles_res[Key::dihedral_restraints_group_3_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.sasa_energy[3], doubles_res[Key::sasa_group_3_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.sasa_volume_energy[3], doubles_res[Key::sasa_vol_group_3_old], epsilon_);
+  EXPECT_NEAR(0, doubles_res[Key::jvalue_group_3_old], epsilon_);
+  EXPECT_NEAR(test_sim_.conf().old().energies.rdc_energy[3], doubles_res[Key::rdc_group_3_old], epsilon_);
+  EXPECT_NEAR(0, doubles_res[Key::local_elevation_group_3_old], epsilon_);
+  EXPECT_NEAR(0, doubles_res[Key::path_integral_group_3_old], epsilon_);
 }
 
 TEST_F(Peptide_Tutorial_Eq_Test, check_init) {

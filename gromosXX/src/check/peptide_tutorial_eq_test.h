@@ -92,6 +92,12 @@ protected:
 
   void check_parameter_init() override;
 
+  void check_simulation_results_bonded_terms() override;
+
+  void check_simulation_results_nonbonded_terms() override;
+
+  void check_simulation_results_special_terms() override;
+
 };
 
 

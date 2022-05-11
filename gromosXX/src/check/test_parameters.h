@@ -505,41 +505,81 @@ struct Key {
 
     bond_energy_group_1_current,
 
+    bond_energy_group_2_current,
+
+    bond_energy_group_3_current,
+
     angle_energy_group_0_current,
 
     angle_energy_group_1_current,
+
+    angle_energy_group_2_current,
+
+    angle_energy_group_3_current,
 
     improper_energy_group_0_current,
 
     improper_energy_group_1_current,
 
+    improper_energy_group_2_current,
+
+    improper_energy_group_3_current,
+
     dihedral_energy_group_0_current,
 
     dihedral_energy_group_1_current,
+
+    dihedral_energy_group_2_current,
+
+    dihedral_energy_group_3_current,
 
     crossdihedral_energy_group_0_current,
 
     crossdihedral_energy_group_1_current,
 
+    crossdihedral_energy_group_2_current,
+
+    crossdihedral_energy_group_3_current,
+
     bond_energy_group_0_old,
 
     bond_energy_group_1_old,
+
+    bond_energy_group_2_old,
+
+    bond_energy_group_3_old,
 
     angle_energy_group_0_old,
 
     angle_energy_group_1_old,
 
+    angle_energy_group_2_old,
+
+    angle_energy_group_3_old,
+
     improper_energy_group_0_old,
 
     improper_energy_group_1_old,
+
+    improper_energy_group_2_old,
+
+    improper_energy_group_3_old,
 
     dihedral_energy_group_0_old,
 
     dihedral_energy_group_1_old,
 
+    dihedral_energy_group_2_old,
+
+    dihedral_energy_group_3_old,
+
     crossdihedral_energy_group_0_old,
 
     crossdihedral_energy_group_1_old,
+
+    crossdihedral_energy_group_2_old,
+
+    crossdihedral_energy_group_3_old,
 
     // nonbonded terms by force groups
 
@@ -547,49 +587,161 @@ struct Key {
     
     lennard_jones_group_1_0_current,
 
+    lennard_jones_group_2_0_current,
+
+    lennard_jones_group_3_0_current,
+
     lennard_jones_group_1_1_current,
+
+    lennard_jones_group_2_1_current,
+
+    lennard_jones_group_3_1_current,
+
+    lennard_jones_group_2_2_current,
+
+    lennard_jones_group_3_2_current,
+
+    lennard_jones_group_3_3_current,
 
     coulomb_reaction_field_group_0_0_current,
 
     coulomb_reaction_field_group_1_0_current,
 
+    coulomb_reaction_field_group_2_0_current,
+
+    coulomb_reaction_field_group_3_0_current,
+
     coulomb_reaction_field_group_1_1_current,
 
-    lattice_sum_real_group_0_0_current,
+    coulomb_reaction_field_group_2_1_current,
 
+    coulomb_reaction_field_group_3_1_current,
+
+    coulomb_reaction_field_group_2_2_current,
+
+    coulomb_reaction_field_group_3_2_current,
+
+    coulomb_reaction_field_group_3_3_current,
+
+    lattice_sum_real_group_0_0_current,
+    
     lattice_sum_real_group_1_0_current,
+
+    lattice_sum_real_group_2_0_current,
+
+    lattice_sum_real_group_3_0_current,
 
     lattice_sum_real_group_1_1_current,
 
-    lattice_sum_reciprocal_group_0_0_current,
+    lattice_sum_real_group_2_1_current,
 
+    lattice_sum_real_group_3_1_current,
+
+    lattice_sum_real_group_2_2_current,
+
+    lattice_sum_real_group_3_2_current,
+
+    lattice_sum_real_group_3_3_current,
+
+    lattice_sum_reciprocal_group_0_0_current,
+    
     lattice_sum_reciprocal_group_1_0_current,
+
+    lattice_sum_reciprocal_group_2_0_current,
+
+    lattice_sum_reciprocal_group_3_0_current,
 
     lattice_sum_reciprocal_group_1_1_current,
 
-    lennard_jones_group_0_0_old,
+    lattice_sum_reciprocal_group_2_1_current,
 
+    lattice_sum_reciprocal_group_3_1_current,
+
+    lattice_sum_reciprocal_group_2_2_current,
+
+    lattice_sum_reciprocal_group_3_2_current,
+
+    lattice_sum_reciprocal_group_3_3_current,
+
+    lennard_jones_group_0_0_old,
+    
     lennard_jones_group_1_0_old,
 
+    lennard_jones_group_2_0_old,
+
+    lennard_jones_group_3_0_old,
+
     lennard_jones_group_1_1_old,
+
+    lennard_jones_group_2_1_old,
+
+    lennard_jones_group_3_1_old,
+
+    lennard_jones_group_2_2_old,
+
+    lennard_jones_group_3_2_old,
+
+    lennard_jones_group_3_3_old,
 
     coulomb_reaction_field_group_0_0_old,
 
     coulomb_reaction_field_group_1_0_old,
 
+    coulomb_reaction_field_group_2_0_old,
+
+    coulomb_reaction_field_group_3_0_old,
+
     coulomb_reaction_field_group_1_1_old,
 
-    lattice_sum_real_group_0_0_old,
+    coulomb_reaction_field_group_2_1_old,
 
+    coulomb_reaction_field_group_3_1_old,
+
+    coulomb_reaction_field_group_2_2_old,
+
+    coulomb_reaction_field_group_3_2_old,
+
+    coulomb_reaction_field_group_3_3_old,
+
+    lattice_sum_real_group_0_0_old,
+    
     lattice_sum_real_group_1_0_old,
+
+    lattice_sum_real_group_2_0_old,
+
+    lattice_sum_real_group_3_0_old,
 
     lattice_sum_real_group_1_1_old,
 
-    lattice_sum_reciprocal_group_0_0_old,
+    lattice_sum_real_group_2_1_old,
 
+    lattice_sum_real_group_3_1_old,
+
+    lattice_sum_real_group_2_2_old,
+
+    lattice_sum_real_group_3_2_old,
+
+    lattice_sum_real_group_3_3_old,
+
+    lattice_sum_reciprocal_group_0_0_old,
+    
     lattice_sum_reciprocal_group_1_0_old,
 
+    lattice_sum_reciprocal_group_2_0_old,
+
+    lattice_sum_reciprocal_group_3_0_old,
+
     lattice_sum_reciprocal_group_1_1_old,
+
+    lattice_sum_reciprocal_group_2_1_old,
+
+    lattice_sum_reciprocal_group_3_1_old,
+
+    lattice_sum_reciprocal_group_2_2_old,
+
+    lattice_sum_reciprocal_group_3_2_old,
+
+    lattice_sum_reciprocal_group_3_3_old,
 
     // special terms by force group
 
@@ -641,6 +793,54 @@ struct Key {
 
     angle_restraint_group_1_current,
 
+    contraints_group_2_current,
+
+    pos_restraints_group_2_current,
+
+    dist_restraints_group_2_current,
+
+    disfield_res_group_2_current,
+
+    dihedral_restraints_group_2_current,
+
+    sasa_group_2_current,
+
+    sasa_vol_group_2_current,
+
+    jvalue_group_2_current,
+
+    rdc_group_2_current,
+
+    local_elevation_group_2_current,
+
+    path_integral_group_2_current,
+
+    angle_restraint_group_2_current,
+
+    contraints_group_3_current,
+
+    pos_restraints_group_3_current,
+
+    dist_restraints_group_3_current,
+
+    disfield_res_group_3_current,
+
+    dihedral_restraints_group_3_current,
+
+    sasa_group_3_current,
+
+    sasa_vol_group_3_current,
+
+    jvalue_group_3_current,
+
+    rdc_group_3_current,
+
+    local_elevation_group_3_current,
+
+    path_integral_group_3_current,
+
+    angle_restraint_group_3_current,
+
     contraints_group_0_old,
 
     pos_restraints_group_0_old,
@@ -688,6 +888,54 @@ struct Key {
     path_integral_group_1_old,
 
     angle_restraint_group_1_old,
+
+    contraints_group_2_old,
+
+    pos_restraints_group_2_old,
+
+    dist_restraints_group_2_old,
+
+    disfield_res_group_2_old,
+
+    dihedral_restraints_group_2_old,
+
+    sasa_group_2_old,
+
+    sasa_vol_group_2_old,
+
+    jvalue_group_2_old,
+
+    rdc_group_2_old,
+
+    local_elevation_group_2_old,
+
+    path_integral_group_2_old,
+
+    angle_restraint_group_2_old,
+
+    contraints_group_3_old,
+
+    pos_restraints_group_3_old,
+
+    dist_restraints_group_3_old,
+
+    disfield_res_group_3_old,
+
+    dihedral_restraints_group_3_old,
+
+    sasa_group_3_old,
+
+    sasa_vol_group_3_old,
+
+    jvalue_group_3_old,
+
+    rdc_group_3_old,
+
+    local_elevation_group_3_old,
+
+    path_integral_group_3_old,
+
+    angle_restraint_group_3_old,
 
     // volume pressure groups
 

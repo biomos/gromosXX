@@ -20,15 +20,15 @@ void Simulation_Test::check_simulation_results() {
   check_simulation_results_energies();
   check_simulation_results_forces();
   //check_simulation_results_velocities();
-  check_simulation_results_positions();
-  // check_simulation_results_temperature_baths();
-  // check_simulation_results_bonded_terms();
-  // check_simulation_results_nonbonded_terms();
-  // check_simulation_results_special_terms();
-  // check_simulation_results_mass();
-  // check_simulation_results_temperature();
-  // check_simulation_results_volume();
-  // check_simulation_results_pressure();
+  // check_simulation_results_positions();
+  check_simulation_results_temperature_baths();
+  check_simulation_results_bonded_terms();
+  check_simulation_results_nonbonded_terms();
+  check_simulation_results_special_terms();
+  check_simulation_results_mass();
+  check_simulation_results_temperature();
+  check_simulation_results_volume();
+  check_simulation_results_pressure();
 }
 
 void Simulation_Test::check_simulation_results_energies() {
