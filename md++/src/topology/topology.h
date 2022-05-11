@@ -1508,6 +1508,21 @@ namespace topology
     {
       return m_rdc_restraint;
     }
+    /**
+     *  RDC restraints molecular axis accessor.
+     */
+    std::vector<util::Virtual_Atom> & rdc_molaxis()
+    {
+      return m_rdc_molaxis;
+    }
+    /**
+     * const  RDC restraints molecular axis accessor.
+     */
+    std::vector<util::Virtual_Atom>  const & rdc_molaxis() const
+    {
+      return m_rdc_molaxis;
+    }
+
 
     /**
      * tensor-free RDC restraints accessor.
@@ -2014,6 +2029,10 @@ namespace topology
      * rdc restraints
      */
     std::vector<std::vector<rdc_restraint_struct> > m_rdc_restraint;
+    /**
+     * rdc molecular axis (for output of alignment distribution)
+     */
+    std::vector<util::Virtual_Atom> m_rdc_molaxis;
     /**
      * tf rdc restraints
      */

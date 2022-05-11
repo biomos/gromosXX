@@ -64,6 +64,10 @@ namespace io {
 	      configuration::Configuration & conf,
 	      simulation::Simulation & sim,
 	      std::ostream & os = std::cout);
+    /**
+     * Maximum number of atoms that can be specified to define a virtual atom
+     */
+    static const unsigned int MAX_ATOMS = 4;
 
   };
 

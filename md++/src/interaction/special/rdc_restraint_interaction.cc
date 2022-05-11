@@ -62,6 +62,34 @@
 
 using namespace std;
 
+template<typename T>
+std::vector<double> _linspace(T start_in, T end_in, int num_in)
+{
+
+  std::vector<double> linspaced;
+
+  double start = static_cast<double>(start_in);
+  double end = static_cast<double>(end_in);
+  double num = static_cast<double>(num_in);
+
+  if (num == 0) { return linspaced; }
+  if (num == 1) 
+    {
+      linspaced.push_back(start);
+      return linspaced;
+    }
+
+  double delta = (end - start) / (num - 1);
+
+  for(int i=0; i < num-1; ++i)
+    {
+      linspaced.push_back(start + delta * i);
+    }
+  linspaced.push_back(end); // I want to ensure that start and end
+                            // are exactly the same as the input
+  return linspaced;
+}
+
 namespace math{
   //E.R. Cohen, T. Cvitas, J.G. Frey, B. Holmström, K. Kuchitsu,
   //R. Marquardt, I. Mills, F. Pavese, M. Quack, J. Stohner,
@@ -1235,6 +1263,29 @@ void _calculate_ah(topology::Topology & topo,
         conf_it->Tensor[h] = gsl_vector_get(x, h); // [nm]
         DEBUG(15, "a[" << h << "]: " << conf_it->Tensor[h])
       }
+      // molecule axis
+      math::Vec ma;      
+      periodicity.nearest_image(topo.rdc_molaxis()[0].pos(conf, topo), topo.rdc_molaxis()[1].pos(conf, topo), ma);
+      double d_ma=math::abs(ma);
+      // magn. field vector orientation
+      double b1 = sqrt((2*(conf_it->Tensor[0]+0.5)/3));
+      double b2 = sqrt((2*(conf_it->Tensor[1]+0.5)/3));
+      double b3 = 2*conf_it->Tensor[3]/(3*b1);
+      double theta = acos((ma[0]*b1+ma[1]*b2+ma[2]*b3)/d_ma);
+      while (theta > math::Pi*2) {
+        theta-=math::Pi*2;
+      }
+      while (theta < 0) {
+        theta+=math::Pi*2;
+      }
+      for (unsigned int i=0; i<sim.param().rdc.bins_theta.size()-1; i++) {
+        const double & bin_upper = sim.param().rdc.bins_theta[i+1];
+        if (theta < bin_upper) {
+          conf_it->dist_theta.at(i)+=1;
+          break;
+        }
+      }
+
     }else if(status == GSL_EDOM){
       // ignore singular matrices which could very rarely occur
       // do not update a_h
@@ -2861,6 +2912,14 @@ int RDC_Restraint_Interaction::init(
                 simulation::Simulation &sim,
                 ostream &os,
                 bool quiet) {
+
+    sim.param().rdc.bins_theta = _linspace(0.0,math::Pi,101.0);
+    vector<configuration::Configuration::special_struct::rdc_struct>::iterator
+        conf_it = conf.special().rdc.begin(),
+        conf_to = conf.special().rdc.end(); // vector of groups of rdc current state
+    for( ; conf_it!=conf_to; conf_it++){  // for each RDC group
+      conf_it->dist_theta.resize(sim.param().rdc.bins_theta.size(), 0.0);
+    }
     if (!quiet) {
     os << "RDC RESTRAINT INTERACTION\n";
     switch (sim.param().rdc.mode) {

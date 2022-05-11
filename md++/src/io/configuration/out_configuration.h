@@ -415,6 +415,10 @@ namespace io {
             std::ostream &os,
             bool formatted = false);
 
+    void _print_rdc_alignment_distribution(simulation::Simulation const & sim,
+            configuration::Configuration const &conf,
+            std::ostream &os);
+
     void _print_tf_rdc_restraints(
             configuration::Configuration const &conf,
             std::ostream &os);

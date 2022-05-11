@@ -4095,6 +4095,11 @@ namespace simulation
        * use normalization distance
        */
       unsigned int normalize_r;
+      /**
+        * bins for distribution of the angle between magn. field vector and 
+        * a chosen molecule axis
+        */
+      std::vector<double> bins_theta;
     } /** RDC-parameters */ rdc;
 
     /**
