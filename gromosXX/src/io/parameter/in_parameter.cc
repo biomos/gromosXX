@@ -5109,8 +5109,8 @@ void io::In_Parameter::read_ADDECOUPLE(simulation::Parameter & param,
     if (block.read_buffer(m_block[blockname], false) == 0) {
         block_read.insert(blockname);
 
-        unsigned int adstart, eg, tg=0, adend, tir;
-        double sm, sv, st;
+        unsigned int adstart = 0, eg = 0, tg = 0, adend = 0, tir = 0;
+        double sm = 0.0, sv = 0.0, st = 0.0;
 
         block.get_next_parameter("ADGR", param.addecouple.adgr, "=>0", "");
 
@@ -5134,7 +5134,7 @@ void io::In_Parameter::read_ADDECOUPLE(simulation::Parameter & param,
 
             //check whether the group is also a temperature group
             if (param.multibath.couple) {
-                int addc_bath_index;
+                int addc_bath_index = 0;
                 if (param.multibath.multibath.bath_index().size() < param.addecouple.adgr && st != 1)
                     io::messages.add("ADDECOUPLE block: sT bigger 1, but temperature group and adiabatic decouling group not equivalent",
                                      "In_Parameter", io::message::error);

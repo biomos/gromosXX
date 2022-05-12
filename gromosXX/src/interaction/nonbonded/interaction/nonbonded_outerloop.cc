@@ -329,8 +329,8 @@ void interaction::Nonbonded_Outerloop
       
       const double dist2 = abs2(r);
       math::Vec force;
-      double f;
-      double e_lj, e_crf;
+      double f = 0.0;
+      double e_lj = 0.0, e_crf = 0.0;
       
       innerloop.lj_crf_innerloop_2(topo, i, *j_it, dist2, f, e_lj, e_crf);      
       
@@ -418,7 +418,7 @@ unsigned int i_deb;
       math::Vec shift = periodicity.shift(k + 13).pos;
       double tx = shift(0), ty = shift(1), tz = shift(2);
 
-      double dist6i;
+      double dist6i = 0.0;
       double e_lj = 0., e_crf = 0.;
       double r2[9], r2i[9], ri[9], x[9], y[9], z[9], f[9], fx[9], fy[9], fz[9];
       math::Vec r;
@@ -1059,8 +1059,8 @@ unsigned int i_deb;
 
         const double dist2 = abs2(r);
         math::Vec force;
-        double f;
-        double e_lj, e_crf;
+        double f = 0.0;
+        double e_lj = 0.0, e_crf = 0.0;
 
         innerloop.lj_crf_innerloop_2(topo, i, *j_it, dist2, f, e_lj, e_crf);
 
@@ -1567,7 +1567,7 @@ void interaction::Nonbonded_Outerloop
 
   double minfield = sim.param().polarise.minfield;
   const double minfield_param = minfield;
-  double maxfield;
+  double maxfield = 0.0;
   int turni = 0;
 
 #ifdef XXMPI
@@ -2247,7 +2247,7 @@ void interaction::Nonbonded_Outerloop
 
   double a1 = 0.0, a3 = 0.0;
   double & a2_tilde = conf.lattice_sum().a2_tilde;
-  double a2;
+  double a2 = 0.0;
 
   const double st2 = topo.sum_squared_charges();
   const double s2 = topo.squared_sum_charges();
@@ -2363,7 +2363,7 @@ void interaction::Nonbonded_Outerloop
       // surfaces.
       math::SymmetricMatrix sum_gammahat(0.0);
       int l_max = 0;
-      double tolerance;
+      double tolerance = 0.0;
       a2 = 0.0;
       do {
         ++l_max;
@@ -2419,7 +2419,7 @@ void interaction::Nonbonded_Outerloop
               const double abs_k = sqrt(k2);
               const double ak = abs_k * width;
 
-              double gamma_hat, gamma_hat_prime;
+              double gamma_hat = 0.0, gamma_hat_prime = 0.0;
               if (do_virial) {
                 interaction::Lattice_Sum::charge_shape_fourier(shape,
                         ak, gamma_hat, &gamma_hat_prime);
@@ -2699,7 +2699,7 @@ int interaction::Nonbonded_Outerloop
           << conf.current().pos(atom_j)(1) << " / "
           << conf.current().pos(atom_j)(2));
   DEBUG(10, "\tni r " << r(0) << " / " << r(1) << " / " << r(2));
-  double f;
+  double f = 0.0;
   term.lj_crf_interaction(r, lj.c6, lj.c12,
           topo.charge()(atom_i) * topo.charge()(atom_j),
           f, e_lj, e_crf);

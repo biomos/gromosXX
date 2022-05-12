@@ -1711,7 +1711,7 @@ bool io::In_Configuration::_read_genbox(math::Box &box, double &phi,
 		     "In_Configuration", io::message::warning);
   }
   //change from genbox to triclinicbox...
-  long double a, b, c, alpha, beta, gamma;// phi, theta, psi;
+  long double a = 0.0, b = 0.0, c = 0.0, alpha = 0.0, beta = 0.0, gamma = 0.0;// phi, theta, psi;
   a = box(0)(0);
   b = box(1)(0);
   c = box(2)(0);
@@ -1929,8 +1929,8 @@ bool io::In_Configuration::_read_flexv
 
   std::vector<double>::iterator flexv_it = flexv.begin();
 
-  int i, j, c, pc;
-  double v, l;
+  int i = 0, j = 0, c = 0, pc = 0;
+  double v = 0.0, l = 0.0;
 
   for(c=0; (it != to) && (constr_it != constr_to); ++it, ++constr_it, ++flexv_it, ++c){
 
@@ -2089,7 +2089,7 @@ bool io::In_Configuration::_read_pertdata(topology::Topology & topo,
   _lineStream.clear();
   _lineStream.str(concatenate(buffer.begin(), buffer.end(), s));
 
-  double lambda;
+  double lambda = 0.0;
   _lineStream >> lambda;
   if (_lineStream.fail()) {
     io::messages.add("Bad line in PERTDATA block.", "In_Configuration",
@@ -2124,7 +2124,7 @@ bool io::In_Configuration::_read_distance_restraint_averages
   _lineStream.str(concatenate(buffer.begin(), buffer.end(), s));
 
   for( ;distanceress_it != distanceress_to; ++distanceress_it){
-    double ave;
+    double ave = 0.0;
     _lineStream >> ave;
 
     if (_lineStream.fail() || ave < 0.0) {
@@ -2157,7 +2157,7 @@ _read_jvalue_av(std::vector<std::string> &buffer,
 
   jval_av.clear();
 
-  double av;
+  double av = 0.0;
 
   if (buffer.size() - 1 != jval_res.size()){
     std::cout << "JVALUERESEXPAVE: " << buffer.size() - 1
@@ -2275,7 +2275,7 @@ bool io::In_Configuration::_read_order_parameter_restraint_averages(
       }
     }
 
-    double D;
+    double D = 0.0;
     _lineStream >> D;
 
     if (_lineStream.fail()) {
@@ -2312,7 +2312,7 @@ bool io::In_Configuration::_read_order_parameter_restraint_average_window(
   D_avg.clear();
   D_avg.resize(oparamres.size());
   math::Matrix Q;
-  double D;
+  double D = 0.0;
   for (unsigned int o = 0; oparamres_it != oparamres_to; ++oparamres_it, ++o) {
     for(unsigned int w = 0; w < window_size; ++w) {
       for (unsigned int i = 0; i < 3; ++i) {
@@ -2365,7 +2365,7 @@ bool io::In_Configuration::_read_rdc_av(std::vector<std::string> &buffer,
       buff_it = buffer.begin(),
       buff_to = buffer.end()-1;
 
-  double av;
+  double av = 0.0;
   unsigned int i=0,j=0; // index for rdc-groups and rdcs in groups
   for(; buff_it != buff_to; ++buff_it, ++j){
 
@@ -2639,7 +2639,7 @@ bool io::In_Configuration::_read_rdc_stochint(std::vector<std::string> &buffer,
 
   // tmp
   math::Vec tmp_v;
-  double tmp_d;
+  double tmp_d = 0.0;
 
   std::vector<std::string>::const_iterator
       buff_it = buffer.begin(),
@@ -2709,8 +2709,8 @@ _read_pscale_jrest(std::vector<std::string> &buffer,
   for( ; (it != to) && (jval_it != jval_to); ++it, ++jval_it){
     _lineStream.clear();
     _lineStream.str(*it);
-    int s;
-    double t;
+    int s = 0;
+    double t = 0.0;
     _lineStream >> s >> t;
 
     if (_lineStream.fail()) {
@@ -2771,8 +2771,8 @@ _read_time_step(std::vector<std::string> &buffer,
   _lineStream.clear();
   _lineStream.str(*it);
 
-  int i;
-  double t;
+  int i = 0;
+  double t = 0.0;
 
   _lineStream >> i >> t;
 
@@ -3030,7 +3030,7 @@ bool io::In_Configuration::_read_bsleus(util::BS_Umbrella& bs_umbrella,
       return false;
     }
     subid--; // Convert to GROMOS
-    double mem;
+    double mem = 0.0;
     std::vector<double> memVector;
     for (int j = 0; j < num_gp; j++){
       _lineStream >> mem;
@@ -3093,7 +3093,7 @@ bool io::In_Configuration::_read_bsleus(util::BS_Umbrella& bs_umbrella,
         return false;
       }
       subid--; // Convert to GROMOS
-      double mem;
+      double mem = 0.0;
       std::vector<double> memVector;
       for (int j = 0; j < num_gp; j++) {
         _lineStream >> mem;
@@ -3146,7 +3146,7 @@ bool io::In_Configuration::_read_bsleuspos(util::BS_Umbrella& bs_umbrella,
       return false;
     }
     subid--; // Convert to GROMOS
-    double pos;
+    double pos = 0.0;
     std::vector<double> posVector;
     for (int j = 0; j < num_dim; j++){
       _lineStream >> pos;
@@ -3306,7 +3306,7 @@ _read_xray_av(std::vector<std::string> &buffer,
 
   xray_av.clear();
 
-  double av, phase_av;
+  double av = 0.0, phase_av = 0.0;
 
   if (buffer.size() - 1 != xray_res.size() + xray_rfree.size()) {
     io::messages.add("number of Xray-restraints and R-free hkls does not match with number of "

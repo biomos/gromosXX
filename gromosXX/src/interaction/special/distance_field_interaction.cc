@@ -121,7 +121,7 @@ static int _calculate_field_restraint_interactions
  util::Virtual_Atom &va_j)
 {
   math::Vec v, f;
-  double energy;
+  double energy = 0.0;
   std::vector<int> &ngrid = conf.special().distancefield.ngrid;
   math::Box &box = conf.current().box;
   double grid = sim.param().distancefield.grid;
