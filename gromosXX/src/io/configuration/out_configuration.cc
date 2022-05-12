@@ -1693,7 +1693,7 @@ void io::Out_Configuration
 
   os << std::setw(5) << conf.boundary_type << "\n";
 
-  long double a, b, c, alpha, beta, gamma, phi, theta, psi;
+  long double a = 0.0, b = 0.0, c = 0.0, alpha = 0.0, beta = 0.0, gamma = 0.0, phi = 0.0, theta = 0.0, psi = 0.0;
   math::Matrixl Rmat(math::rmat(conf.current().phi,
           conf.current().theta, conf.current().psi));
   
@@ -1866,7 +1866,7 @@ void io::Out_Configuration
   math::Matrix p, pf, v, vf, et, etf;
 
   std::vector<double> sasa_a, sasa_af, sasa_vol, sasa_volf;
-  double sasa_tot, sasa_totf, sasa_voltot, sasa_voltotf;
+  double sasa_tot = 0.0, sasa_totf = 0.0, sasa_voltot = 0.0, sasa_voltotf = 0.0;
 
   if (sim.param().minimise.ntem) {
     //print_MINIMISATION(m_output, rmsd_force, max_force, sim.minimisation);
@@ -1900,7 +1900,7 @@ void io::Out_Configuration
 
   if (sim.param().perturbation.perturbation) {
 
-    double lambda, lambda_fluct;
+    double lambda = 0.0, lambda_fluct = 0.0;
     conf.current().averages.simulation().
             energy_derivative_average(e, ef, lambda, lambda_fluct, sim.param().perturbation.dlamt);
 
@@ -1962,7 +1962,7 @@ void io::Out_Configuration
 ::_print_blockaveraged_volumepressurered(configuration::Configuration const & conf,
         simulation::Simulation const & sim,
         std::ostream &os) {
-  double mass, massf, vol, volf;
+  double mass = 0.0, massf = 0.0, vol = 0.0, volf = 0.0;
   std::vector<double> s, sf;
   configuration::Energy e, ef;
   math::Box b, bf;
@@ -2019,7 +2019,7 @@ void io::Out_Configuration
   os.precision(m_precision);
 
   configuration::Energy e, ef;
-  double lambda, lambda_fluct;
+  double lambda = 0.0, lambda_fluct = 0.0;
 
   // energies in old(), but averages in current()!
   conf.current().averages.block().energy_derivative_average(e, ef, lambda, lambda_fluct, dlamt);
@@ -3752,7 +3752,7 @@ _print_adde(simulation::Simulation const & sim,
         configuration::Configuration const & conf, std::ostream & os) {
   os.setf(std::ios::fixed, std::ios::floatfield);
   os.precision(m_precision);
-  int not_adde;
+  int not_adde = 0;
   double vhh = conf.special().adde.vhh;
 
   for (unsigned int i = 0; i < sim.param().multibath.multibath.size(); ++i) {
@@ -3822,7 +3822,7 @@ _print_nemd(simulation::Simulation const & sim,
      */
 
     
-    int prop_vs_method;
+    int prop_vs_method = 0;
     if (sim.param().nemd.property == 0){
       if (sim.param().nemd.method == 0)
         prop_vs_method = 0;

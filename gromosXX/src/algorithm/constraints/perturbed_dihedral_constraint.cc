@@ -153,7 +153,7 @@ int algorithm::Perturbed_Shake::perturbed_dih_constr_iteration(
 
       double l_dt2 = 0;
       double phi0_abs = fabs(phi0);
-      double sd;
+      double sd = 0.0;
       if (phi0_abs <= math::Pi / 4 || phi0_abs > 3 * math::Pi / 4)
       { // sine case
         math::Vec c5 = math::cross(r52, r63);

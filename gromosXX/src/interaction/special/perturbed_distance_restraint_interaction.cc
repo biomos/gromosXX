@@ -51,7 +51,7 @@ static int _calculate_perturbed_distance_restraint_interactions(topology::Topolo
   // math::VArray &force = conf.current().force;
   math::Vec v, f;
 
-  double en_term, dlam_term, energy, energy_derivativ;
+  double en_term = 0.0, dlam_term = 0.0, energy = 0.0, energy_derivativ = 0.0;
 
   math::Periodicity<B> periodicity(conf.current().box);
 
@@ -242,7 +242,7 @@ static int _calculate_perturbed_distance_restraint_interactions(topology::Topolo
 
     // the derivative of the prefactor
     // division by zero precaution
-    double dprefndl, dprefmdl;
+    double dprefndl = 0.0, dprefmdl = 0.0;
     if (it->n == 0)
       dprefndl = 0;
     else
@@ -287,7 +287,7 @@ static int _calculate_perturbed_distance_restraint_interactions(topology::Topolo
         double difflam = dist - r0lam;
         double difflam2 = difflam * difflam;
 
-        double en_termlam;
+        double en_termlam = 0.0;
         if (rah * dist < rah * (r0lam))
         {
           en_termlam = 0;
@@ -316,7 +316,7 @@ static int _calculate_perturbed_distance_restraint_interactions(topology::Topolo
         }
         double energylam = prefactorlam * en_termlam;
 
-        double dlam_termlam;
+        double dlam_termlam = 0.0;
         if (rah * dist < rah * (r0lam))
           dlam_termlam = 0;
         else if (abs(sim.param().distanceres.distanceres) == 1)
@@ -355,7 +355,7 @@ static int _calculate_perturbed_distance_restraint_interactions(topology::Topolo
             }
           }
         }
-        double dprefndlam, dprefmdlam;
+        double dprefndlam = 0.0, dprefmdlam = 0.0;
         if (it->n == 0)
           dprefndlam = 0;
         else

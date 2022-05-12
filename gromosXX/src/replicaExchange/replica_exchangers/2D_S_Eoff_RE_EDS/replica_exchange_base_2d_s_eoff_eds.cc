@@ -810,9 +810,9 @@ void re::replica_exchange_base_2d_s_eoff_eds::change_eds(const unsigned int part
  * given in the energy_stat output files.
  */
 double re::replica_exchange_base_2d_s_eoff_eds::calc_energy_eds_stat(double s){
-    double old_dt;
-    double old_s;
-    double old_eds_vr;
+    double old_dt = 0.0;
+    double old_s = 0.0;
+    double old_eds_vr = 0.0;
     algorithm::Algorithm * ff;
     DEBUG(5,"replica_exchange_base_2d_s_eoff_eds: CALC_ENERGY_EDS_STAT\n\n");
     if(replica->sim.param().eds.eds){
