@@ -192,7 +192,7 @@ const simulation::Simulation & sim) {
               const double k = sqrt(k_2);
               const double ak = charge_width * k;
 
-              double fourier_coeff, fourier_coeff_deriv;
+              double fourier_coeff = 0.0, fourier_coeff_deriv = 0.0;
               if (do_virial) // get the derivative as well
                 interaction::Lattice_Sum::charge_shape_fourier(shape, ak, fourier_coeff, &fourier_coeff_deriv);
               else
