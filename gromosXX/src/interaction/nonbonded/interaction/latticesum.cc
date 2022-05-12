@@ -88,7 +88,7 @@ void interaction::Lattice_Sum::calculate_charge_density(const topology::Topology
     DEBUG(15, "\tnearest grid point: " << math::v2s(nearest_grid_point));
     math::GenericVec<int> point;
     math::Vec point_to_charge;
-    double w_x, w_y, w_z;
+    double w_x = 0.0, w_y = 0.0, w_z = 0.0;
     for (int dx = lower_bound; dx <= upper_bound; ++dx) {
       point(0) = nearest_grid_point(0) + dx;
       point_to_charge(0) = grid_r(0) - point(0);
@@ -722,7 +722,7 @@ void interaction::Lattice_Sum::calculate_force(
 
     math::GenericVec<int> point;
     math::Vec point_to_charge, electric_field_i(0.0);
-    double w_x, w_y, w_z;
+    double w_x = 0.0, w_y = 0.0, w_z = 0.0;
     for (int dx = lower_bound; dx <= upper_bound; ++dx) {
       point(0) = nearest_grid_point(0) + dx;
       point_to_charge(0) = point(0) - grid_r(0);
@@ -825,7 +825,7 @@ void interaction::Lattice_Sum::decompose_into_domains(const topology::Topology &
       const double grid_x = term_x * r_i(0) + term_y * r_i(1) + term_z * r_i(2);
       DEBUG(13, "\t\treal coordinates: " << math::v2s(r_i));
       DEBUG(13, "\t\tcoordinates on grid (x comp): " << grid_x);
-      unsigned int nearest_grid_point;
+      unsigned int nearest_grid_point = 0;
 
       // getting the nearest grid point is dependend on the order of the
       // charge assignment function

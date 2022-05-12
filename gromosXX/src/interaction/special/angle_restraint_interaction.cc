@@ -2,7 +2,7 @@
  * @file angle_restraint_interaction.cc
  * template methods of Angle_Restraint_Interaction
  */
- 
+
 #include <sstream>
 #include "../../stdheader.h"
 
@@ -49,7 +49,7 @@ static int _calculate_angle_restraint_interactions
   math::VArray &pos   = conf.current().pos;
   math::VArray &force = conf.current().force;
   math::Vec rij, rkj, fi, fj, fk;
-  double energy, f;
+  double energy = 0.0, f = 0.0;
 
   math::Periodicity<B> periodicity(conf.current().box);
 

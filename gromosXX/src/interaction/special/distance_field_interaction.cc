@@ -42,7 +42,7 @@ static void _update_grid
 
 
 int neighbour(int i, int j, std::vector<int> &ngrid){
-  int n;
+  int n = 0;
   
   switch(j){
     
@@ -298,7 +298,7 @@ static void _update_grid
 
   // find the gridpoint that is nearest to atom_i. This will be our seed
   math::Box box = conf.current().box;
-  int nx, ny, nz;
+  int nx = 0, ny = 0, nz = 0;
   math::Vec ppos = va_i.pos(conf, topo);
   periodicity.put_into_box(ppos);
 

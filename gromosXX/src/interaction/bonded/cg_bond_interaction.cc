@@ -47,7 +47,7 @@ static int _calculate_dp_bond_interactions
   //double energy, sigma2, diff2i, sigma4, diff4i, diffi;
   //double limitr = 0.3;
 
-  double energy, diff, diff2;
+  double energy = 0.0, diff = 0.0, diff2 = 0.0;
 
   math::Periodicity<B> periodicity(conf.current().box);
 

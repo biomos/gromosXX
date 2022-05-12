@@ -164,7 +164,7 @@ void re::replica::init() {
 
 void re::replica::run_MD() {
   // run MD simulation
-  int error;
+  int error = 0;
   DEBUG(4,  "replica "<< globalThreadID <<": run_MD:\t Start");      
   DEBUG(5, "replica "<< globalThreadID <<":run_MD:\t doing steps: "<<stepsPerRun<< " till: "<< stepsPerRun + curentStepNumber << " starts at: " << curentStepNumber << "TOTAL RUNS: "<< totalStepNumber );
   DEBUG(7, "replica "<<globalThreadID<<" BeforeSimulation "<<sim.time()<<": Conf Current Epot" << conf.current().energies.potential_total<< "\n");
@@ -251,7 +251,7 @@ void re::replica::run_MD() {
 
 double re::replica::calculateEnergies(){
     double energy = 0.0;
-    algorithm::Algorithm * ff;
+    algorithm::Algorithm * ff = nullptr;
 
     //Calculate energies
     ff = md.algorithm("Forcefield");

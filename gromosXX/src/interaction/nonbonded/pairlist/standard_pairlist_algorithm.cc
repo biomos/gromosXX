@@ -70,7 +70,7 @@ prepare(topology::Topology & topo,
     topology::Chargegroup_Iterator
       cg1 =   topo.chargegroup_begin();
     
-    unsigned int i, num_cg = topo.num_solute_chargegroups();
+    unsigned int i = 0, num_cg = topo.num_solute_chargegroups();
     
     for(i=0; i < num_cg; ++cg1, ++i){
       cg1.cog(pos, m_cg_cog(i));
@@ -140,7 +140,7 @@ void interaction::Standard_Pairlist_Algorithm::_update_cg
   DEBUG(8, "begin=" << begin << " stride=" << stride
 	<< " num_cg=" << num_cg << "num_solute_cg=" << num_solute_cg);
 
-  int cg1, cg2;
+  int cg1 = 0, cg2 = 0;
   math::Vec r;
   
   const simulation::qmmm_enum qmmm = sim.param().qmmm.qmmm;
@@ -457,7 +457,7 @@ _update_pert_cg(topology::Topology & topo,
   DEBUG(8, "begin=" << begin << " stride=" << stride
 	<< " num_cg=" << num_cg << "num_solute_cg=" << num_solute_cg);
 
-  int cg1, cg2;
+  int cg1 = 0, cg2 = 0;
   math::Vec r;
   
   // solute -

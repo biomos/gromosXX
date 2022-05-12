@@ -146,8 +146,8 @@ void io::In_Dihrest::read_DIHEDRALRESSPEC(topology::Topology &topo,
   }
 
 
-  int i, j, k, l;
-  double delta, phi, w0;
+  int i = 0, j = 0, k = 0, l = 0;
+  double delta = 0.0, phi = 0.0, w0 = 0.0;
 
   unsigned int num = block.numlines()-2;
   for(unsigned int line_number=0; line_number < num; ++line_number){
@@ -277,8 +277,8 @@ void io::In_Dihrest::read_PERTDIHRESSPEC(topology::Topology &topo,
       os.setf(std::ios::fixed, std::ios::floatfield);
   }
 
-  int i, j, k, l, m, n;
-  double delta, A_phi, A_w0, B_phi, B_w0;
+  int i = 0, j = 0, k = 0, l = 0, m = 0, n = 0;
+  double delta = 0.0, A_phi = 0.0, A_w0 = 0.0, B_phi = 0.0, B_w0 = 0.0;
 
   unsigned int num = block.numlines()-2;
   for(unsigned int line_number=0; line_number < num; ++line_number){

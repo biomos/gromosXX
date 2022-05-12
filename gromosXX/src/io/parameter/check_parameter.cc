@@ -470,7 +470,7 @@ int io::check_features(simulation::Simulation  &sim)
   add("parallel_mpi", "MPI parallelization", sim.mpi);
   int size = 1;
 #ifdef OMP
-    int tid;
+    int tid = 0;
 #pragma omp parallel private(tid)
     {
       tid = omp_get_thread_num();

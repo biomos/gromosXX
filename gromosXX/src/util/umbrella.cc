@@ -286,7 +286,7 @@ void util::Umbrella::read_configuration() {
   std::istringstream _lineStream(configuration_block);
   _lineStream.seekg(configuration_block_pos);
 
-  unsigned int nconle;
+  unsigned int nconle = 0;
   _lineStream >> nconle;
   if (_lineStream.fail()) {
     io::messages.add("LEUSBIAS block: Could not read umbrella number of configurations",

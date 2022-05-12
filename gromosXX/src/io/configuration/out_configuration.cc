@@ -878,7 +878,7 @@ void _print_g96_position_bound(configuration::Configuration const &conf,
         topology::Topology const &topo,
         std::ostream &os, int width,
         bool old_conf = false) {
-  const configuration::Configuration::state_struct * state;
+  const configuration::Configuration::state_struct * state = nullptr;
   if (old_conf)
     state = & conf.old();
   else
@@ -2331,7 +2331,7 @@ void io::Out_Configuration::_print_distance_restraints(
   if (conf.special().distanceres.d.size() > 0) {
     os << "DISRESDATA" << std::endl;
     os << conf.special().distanceres.d.size() << "\n";
-    int i;
+    int i = 0;
     for (i = 1; av_it != av_to; ++av_it, ++ene_it, ++d_it, ++i) {
        os << std::setw(m_width) << *d_it
        << std::setw(m_width) << *ene_it;
@@ -2353,7 +2353,7 @@ void io::Out_Configuration::_print_distance_restraints(
   if (conf.special().pertdistanceres.d.size() > 0) {
     os << "PERTDISRESDATA" << std::endl;
     os << conf.special().pertdistanceres.d.size() << "\n";
-    int i;
+    int i = 0;
     for (i = 1; pav_it != pav_to; ++pav_it, ++pene_it, ++pd_it, ++i) {
        os << std::setw(m_width) << *pd_it
        << std::setw(m_width) << *pene_it;
@@ -2400,7 +2400,7 @@ void io::Out_Configuration::_print_distance_restraint_averages(
   os.precision(m_distance_restraint_precision);
 
   os << "DISRESEXPAVE" << std::endl;
-  int i;
+  int i = 0;
   for (i = 1; it != to; ++it, ++i) {
     os << std::setw(m_width) << *it;
     if (i % 5 == 0)
@@ -2468,7 +2468,7 @@ void io::Out_Configuration::_print_angle_restraints(
   if (conf.special().angleres.d.size() > 0) {
     os << "ANGRESDATA" << std::endl;
     os << std::setw(m_width) << conf.special().angleres.d.size() << "\n";
-    int i;
+    int i = 0;
     for (i = 1; d_it != d_to; ++d_it, ++ene_it, ++i) {
        double theta = *d_it * 180 /math::Pi;
        os << std::setw(m_width) << theta << " "
@@ -2485,7 +2485,7 @@ void io::Out_Configuration::_print_angle_restraints(
   if (conf.special().pertangleres.d.size() > 0) {
     os << "PERTANGRESDATA" << std::endl;
     os << conf.special().pertangleres.d.size() << "\n";
-    int i;
+    int i = 0;
     for (i = 1; pd_it != pd_to; ++pd_it, ++pene_it, ++i) {
        double theta = *pd_it * 180 /math::Pi;
        os << std::setw(m_width) << theta
@@ -2513,7 +2513,7 @@ void io::Out_Configuration::_print_dihedral_restraints(
     os << "DIHRESDATA" << std::endl;
     os << std::setw(m_width) 
        << conf.special().dihedralres.d.size() << "\n";
-    int i;
+    int i = 0;
     for (i = 1; d_it != d_to; ++d_it, ++ene_it, ++i) {
        double phi = *d_it * 360 /(2 * math::Pi);
        os << std::setw(m_width) << phi
@@ -2530,7 +2530,7 @@ void io::Out_Configuration::_print_dihedral_restraints(
   if (conf.special().pertdihedralres.d.size() > 0) {
     os << "PERTDIHRESDATA" << std::endl;
     os << conf.special().pertdihedralres.d.size() << "\n";
-    int i;
+    int i = 0;
     for (i = 1; pd_it != pd_to; ++pd_it, ++pene_it, ++i) {
        double phi = *pd_it * 360 /(2 * math::Pi);
        os << std::setw(m_width) << phi
@@ -2578,7 +2578,7 @@ void io::Out_Configuration::_print_order_parameter_restraint_averages(
   os.precision(m_distance_restraint_precision); // use a lower precision due to scientific formats
 
   os << "ORDERPARAMRESEXPAVE" << std::endl;
-  int l;
+  int l = 0;
   for (l = 0; it != to; ++it, ++d_it) {
     for(unsigned int i = 0; i < 3; ++i) {
       for(unsigned int j = 0; j < 3; ++j) {
@@ -2852,11 +2852,11 @@ void io::Out_Configuration::_print_dihangle_trans(
 
   os.setf(std::ios::fixed, std::ios::floatfield);
   os.precision(1);
-  unsigned int atom_i, atom_j, atom_k, atom_l;
+  unsigned int atom_i = 0, atom_j = 0, atom_k = 0, atom_l = 0;
 
   os << "D-A-T" << std::endl;
   os << "# Dih. No.    Resid  Atoms                                        Old min. -> New min." << std::endl;
-  int i;
+  int i = 0;
   for (i = 1; it != to; ++it, ++i) {
     if (conf.special().dihangle_trans.old_minimum[i] > math::epsilon) {
       atom_i = conf.special().dihangle_trans.i[i];
@@ -3419,7 +3419,7 @@ void io::Out_Configuration::_print_bsleusmem(const configuration::Configuration 
      << "# AUXMEM:   Is the auxiliary memory set? (0: No; 1: Yes)\n"
      << "#\n"
      << "# NUMPOT AUXMEM\n";
-  int numPotentials;
+  int numPotentials = 0;
   umb->getNumPotentials(numPotentials);
   os << std::setw(3) << numPotentials << std::setw(7) << umb->printAuxMem() << "\n";
   os << "#\n"
@@ -3431,7 +3431,7 @@ void io::Out_Configuration::_print_bsleusmem(const configuration::Configuration 
           << "# ID    SUBSP   NUMGP   MEM[1..NUMGP]\n";
   for (int i = 0; i < numPotentials; i++) {
     std::vector<double> memory;
-    unsigned int subid;
+    unsigned int subid = 0;
     if (!umb->getMemory(i + 1, subid, memory)) {
       std::ostringstream msg;
       msg << "Could not find the memory of potential " << i + 1 << "!\n";
@@ -3465,7 +3465,7 @@ void io::Out_Configuration::_print_bsleusmem(const configuration::Configuration 
             << numSubspaces << "\n"
             << "# SUBID AUXC    REDC\n";
     for (unsigned int i = 0; i < numSubspaces; i++) {
-      unsigned int auxc, redc;
+      unsigned int auxc = 0, redc = 0;
       umb->getCounter(i, auxc, redc);
       os << std::setw(3) << i + 1
               << std::setw(6) << auxc
@@ -3476,7 +3476,7 @@ void io::Out_Configuration::_print_bsleusmem(const configuration::Configuration 
        << "# ID    SUBSP   NUMGP   AUXMEM[1..NUMGP]\n";
     for (int i = 0; i < numPotentials; i++) {
       std::vector<double> memory;
-      unsigned int subid;
+      unsigned int subid = 0;
       if (!umb->getAuxMemory(i + 1, subid, memory)) {
         std::ostringstream msg;
         msg << "Could not find the memory of potential " << i + 1 << "!\n";

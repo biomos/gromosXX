@@ -87,7 +87,7 @@ double math::RandomGeneratorG96::get_gauss() {
     return mean() + stddev() * stored_gaussian;
   }
   
-  double w1, w2, r;
+  double w1 = 0.0, w2 = 0.0, r = 0.0;
   do {
     w1 = 2.0 * get() - 1.0;
     w2 = 2.0 * get() - 1.0;
@@ -126,12 +126,12 @@ math::RandomGeneratorGSL::~RandomGeneratorGSL() {
 
 void math::RandomGeneratorGSL::create_instance(const int algorithm) {
   gsl_rng_env_setup();
-  const gsl_rng_type **t, **t0;
+  const gsl_rng_type **t = nullptr, **t0 = nullptr;
           
   t0 = gsl_rng_types_setup();
          
   bool hasDefault = false; 
-  int i;
+  int i = 0;
   for(i = 0, t = t0; *t != 0; t++, i++) {
     std::string name((*t)->name);
     if (name == "mt19937" && algorithm == -1) {
@@ -155,7 +155,7 @@ void math::RandomGeneratorGSL::create_instance(const int algorithm) {
 
 void math::RandomGeneratorGSL::seed(std::string s) {
   std::istringstream str(s);
-  unsigned int init;
+  unsigned int init = 0;
   // try to decode it to a string of binary data
   std::string decoded = util::base64_decode(s);
   if (decoded != "") {

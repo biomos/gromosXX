@@ -376,7 +376,7 @@ void re::replica_exchange_base_2d_l_T_HREMD::set_temp() {
 
 void re::replica_exchange_base_2d_l_T_HREMD::change_lambda(const unsigned int partnerReplicaID) {
     DEBUG(5,"\n\nreplica_exchange_base_interface: CHANGE_LAMBDA\n\n");
-    int idx;
+    int idx = 0;
     if (replica->sim.param().replica.num_l == 1){
         idx = 0;
     }
@@ -398,7 +398,7 @@ void re::replica_exchange_base_2d_l_T_HREMD::change_lambda(const unsigned int pa
 
 void re::replica_exchange_base_2d_l_T_HREMD::change_temp(const unsigned int partnerReplicaID) {
     DEBUG(5,"\n\nreplica_exchange_base_interface: CHANGE_TEMP\n\n");
-    int idx;
+    int idx = 0;
     if (replica->sim.param().replica.num_T == 1){
         idx = 0;
     }

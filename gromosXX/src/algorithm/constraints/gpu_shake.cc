@@ -215,7 +215,7 @@ int algorithm::GPU_Shake::init(topology::Topology & topo,
   {
     unsigned int tid = omp_get_thread_num();
     if (tid < num_gpus) {     // then create a thread for the gpu
-      GPU_Shake_Thread * gpu_shake;
+      GPU_Shake_Thread * gpu_shake = nullptr;
       gpu_shake = new GPU_Shake_Thread(topo, conf, sim, factor, mass, constr_length2, tolerance(), num_gpus, tid, os, quiet);
       if (gpu_shake == NULL)
         std::cerr << "Could not allocate space for GPU_Shake_Thread!" << std::endl;

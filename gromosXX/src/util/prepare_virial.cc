@@ -38,7 +38,7 @@ static void _centre_of_mass(topology::Atom_Iterator start,
 {
 
   com_pos = 0.0;
-  double m;
+  double m = 0.0;
   double tot_mass = 0.0;
 
   math::Vec p;
@@ -48,7 +48,7 @@ static void _centre_of_mass(topology::Atom_Iterator start,
   prev = conf.current().pos(*start);
   //scale the velocity for the adiabatic decoupling
   double scale_vel=1;
-  int addc_index;
+  int addc_index = 0;
   for( ; start != end; ++start){
 
     assert(unsigned(topo.mass().size()) > *start &&
@@ -118,8 +118,8 @@ static void _prepare_virial(topology::Topology const & topo,
 
     conf.current().kinetic_energy_tensor = 0.0;
     //scale the virial for adiabatic decoupling
-    double scale_vel;
-    int addc_index;
+    double scale_vel = 0.0;
+    int addc_index = 0;
     for(unsigned int i=0; i < topo.num_atoms(); ++i){
       addc_index = sim.param().addecouple.check_index_adc(i);
       scale_vel=1;

@@ -29,8 +29,8 @@ t_interaction_spec, t_perturbation_details>
   periodicity.nearest_image(conf.current().pos(i),
           conf.current().pos(j), r);
 
-  lj_parameter_struct const *A_lj;
-  lj_parameter_struct const *B_lj;
+  lj_parameter_struct const *A_lj = nullptr;
+  lj_parameter_struct const *B_lj = nullptr;
   double A_q = 0.0, B_q = 0.0, A_qi = 0.0, A_qj = 0.0, B_qi = 0.0, B_qj = 0.0;
 
   double alpha_lj = 0, alpha_crf = 0;
@@ -619,8 +619,8 @@ t_interaction_spec, t_perturbation_details>
   periodicity.nearest_image(conf.current().pos(i),
           conf.current().pos(j), r);
 
-  lj_parameter_struct const * A_lj;
-  lj_parameter_struct const * B_lj;
+  lj_parameter_struct const * A_lj = nullptr;
+  lj_parameter_struct const * B_lj = nullptr;
   double A_q = 0.0, B_q = 0.0, A_qi = 0.0, A_qj = 0.0, B_qi = 0.0, B_qj = 0.0;
   double alpha_lj = 0, alpha_crf = 0;
 

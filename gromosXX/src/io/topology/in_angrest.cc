@@ -139,8 +139,8 @@ void io::In_Angrest::read_ANGRESSPEC(topology::Topology &topo,
   }
 
 
-  int i, j, k;
-  double theta, w0;
+  int i = 0, j = 0, k = 0;
+  double theta = 0.0, w0 = 0.0;
 
   unsigned int num = block.numlines()-2;
   for(unsigned int line_number=0; line_number < num; ++line_number){
@@ -270,8 +270,8 @@ void io::In_Angrest::read_PERTANGRESSPEC(topology::Topology &topo,
       os.setf(std::ios::fixed, std::ios::floatfield);
   }
 
-  int i, j, k, m, n;
-  double A_theta, A_w0, B_theta, B_w0;
+  int i = 0, j = 0, k = 0, m = 0, n = 0;
+  double A_theta = 0.0, A_w0 = 0.0, B_theta = 0.0, B_w0 = 0.0;
 
   unsigned int num = block.numlines()-2;
   for(unsigned int line_number=0; line_number < num; ++line_number){

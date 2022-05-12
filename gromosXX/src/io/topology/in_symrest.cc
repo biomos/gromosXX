@@ -85,7 +85,7 @@ io::In_Symrest::read(topology::Topology& topo,
       return;
     }
 
-    unsigned int num_sym;
+    unsigned int num_sym = 0;
     _lineStream.clear();
     _lineStream.str(buffer[1]);
     _lineStream >> num_sym;
@@ -143,7 +143,7 @@ io::In_Symrest::read(topology::Topology& topo,
 
     topo.sym_asu().clear();
     for (unsigned int i = 0; i < sim.param().symrest.symmetry_operations.size(); ++i) {
-      int atom_pointer;
+      int atom_pointer = 0;
       _lineStream >> atom_pointer;
       if (_lineStream.fail()) {
         std::ostringstream msg;
@@ -180,7 +180,7 @@ io::In_Symrest::read(topology::Topology& topo,
       _lineStream.clear();
       _lineStream.str(line);
 
-      int atom;
+      int atom = 0;
       _lineStream >> atom;
 
       DEBUG(11, "\t" << atom);
