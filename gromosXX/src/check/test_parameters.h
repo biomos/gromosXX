@@ -1263,7 +1263,7 @@ struct Results {
    * @brief A code for nullptr
    * 
    */
-  const nullptr_t UNINITIALIZED = nullptr;
+  const std::nullptr_t UNINITIALIZED = nullptr;
 
 };
 
