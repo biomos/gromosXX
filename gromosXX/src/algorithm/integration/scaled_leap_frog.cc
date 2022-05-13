@@ -35,8 +35,8 @@ int algorithm::Scaled_Leap_Frog_Velocity
   const int num_atoms = topo.num_atoms();
 
   // v = v + f * dt / m
-  int addc_index;
-  double scale_force;
+  int addc_index = 0;
+  double scale_force = 0.0;
 #ifdef OMP
 #pragma omp parallel for
 #endif

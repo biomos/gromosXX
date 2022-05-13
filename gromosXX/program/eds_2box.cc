@@ -228,7 +228,7 @@ int main(int argc, char *argv[]){
 	    << "==================================================\n"
 	    << std::endl;
 
-  int error1, error2;
+  int error1 = 0, error2 = 0;
 
   const double init_time = util::now() - start;
   while(int(sim1.steps()) < sim1.param().step.number_of_steps &&

@@ -29,7 +29,7 @@ template<typename T>
 bool check_type(std::vector<std::string> const & buffer, std::vector<T> term) {
   if (buffer.size()) {
     std::istringstream is(buffer[1]);
-    int num;
+    int num = 0;
     if (!(is >> num) || num < 0) {
       std::cout << "ERROR:\tcould not read num or smaller 0!"
               << std::endl;
@@ -128,7 +128,7 @@ void io::In_Topology::read(topology::Topology& topo,
     { //scale mass for adiabatic decoupling
       if (param.addecouple.adgr > 0) {
         double sm = 1;
-        int adc_index;
+        int adc_index = 0;
         int num = topo.num_solute_atoms();
         for (int n = 0; n < num; ++n) {
           sm = 1;
@@ -587,11 +587,11 @@ void io::In_Topology::read_bond_types(topology::Topology& topo,
   Block block(blockname);
   if (block.read_buffer(m_block[blockname], false) == 0) {
     block_read.insert(blockname);
-    unsigned int num;
+    unsigned int num = 0;
     block.get_next_parameter("NCONS", num, ">=0", "");
 
-    int ic, jc;
-    double b0;
+    int ic = 0, jc = 0;
+    double b0 = 0.0;
     for (unsigned int i=0; i<num; i++) {
       block.get_next_parameter("ICONS", ic, ">=1", "");
       block.get_next_parameter("JCONS", jc, ">=1", "");
@@ -697,8 +697,8 @@ void io::In_Topology::read_block_BONDSTRETCHTYPE(topology::Topology &topo,
 
     block_read.insert(blockname);
 
-    int num;
-    double k, kh, r;
+    int num = 0;
+    double k = 0.0, kh = 0.0, r = 0.0;
     block.get_next_parameter("NBTY", num, ">=0", "");
 
     if (num<=0 || block.error() ) return;
@@ -735,8 +735,8 @@ void io::In_Topology::read_block_BONDTYPE(topology::Topology& topo,
 
     block_read.insert(blockname);
 
-    int num;
-    double k, r;
+    int num = 0;
+    double k = 0.0, r = 0.0;
     block.get_next_parameter("NBTY", num, ">=0", "");
 
     if (num<=0 || block.error() ) return;
@@ -770,8 +770,8 @@ void io::In_Topology::read_block_HARMBONDTYPE(topology::Topology& topo,
 
     block_read.insert(blockname);
 
-    int num;
-    double kh, r;
+    int num = 0;
+    double kh = 0.0, r = 0.0;
     block.get_next_parameter("NBTY", num, ">=0", "");
 
     if (num<=0 || block.error() ) return;
@@ -805,8 +805,8 @@ void io::In_Topology::read_block_BONDANGLEBENDTYPE(topology::Topology &topo,
 
     block_read.insert(blockname);
 
-    int num;
-    double kcosh, kh, theta;
+    int num = 0;
+    double kcosh = 0.0, kh = 0.0, theta = 0.0;
     block.get_next_parameter("NTTY", num, ">=0", "");
 
     if (num<=0 || block.error() ) return;
@@ -844,8 +844,8 @@ void io::In_Topology::read_block_BONDANGLETYPE(topology::Topology &topo,
 
     block_read.insert(blockname);
 
-    int num;
-    double kcosh, theta;
+    int num = 0;
+    double kcosh = 0.0, theta = 0.0;
     block.get_next_parameter("NTTY", num, ">=0", "");
 
     if (num<=0 || block.error() ) return;
@@ -880,8 +880,8 @@ void io::In_Topology::read_block_HARMBONDANGLETYPE(topology::Topology &topo,
 
     block_read.insert(blockname);
 
-    int num;
-    double kh, theta;
+    int num = 0;
+    double kh = 0.0, theta = 0.0;
     block.get_next_parameter("NTTY", num, ">=0", "");
 
     if (num<=0 || block.error() ) return;
@@ -917,8 +917,8 @@ void io::In_Topology::read_block_TORSDIHEDRALTYPE(topology::Topology &topo,
 
     block_read.insert(blockname);
 
-    int num, m;
-    double k, pdl;
+    int num = 0, m = 0;
+    double k = 0.0, pdl = 0.0;
     bool asymmetric=false;
     block.get_next_parameter("NPTY", num, ">=0", "");
 
@@ -967,8 +967,8 @@ void io::In_Topology::read_block_DIHEDRALTYPE(topology::Topology &topo,
 
     block_read.insert(blockname);
 
-    int num, m;
-    double k, pd;
+    int num = 0, m = 0;
+    double k = 0.0, pd = 0.0;
     block.get_next_parameter("NPTY", num, ">=0", "");
 
     if (num<=0 || block.error() ) return;
@@ -1002,8 +1002,8 @@ void io::In_Topology::read_block_IMPDIHEDRALTYPE(topology::Topology &topo,
 
     block_read.insert(blockname);
 
-    int num;
-    double k, q0;
+    int num = 0;
+    double k = 0.0, q0 = 0.0;
     block.get_next_parameter("NQTY", num, ">=0", "");
 
     if (num<=0 || block.error() ) return;
@@ -1049,7 +1049,7 @@ void io::In_Topology
       return;
     }
 
-    int num, n;
+    int num = 0, n = 0;
 
     it = buffer.begin() + 1;
     _lineStream.clear();
@@ -1072,7 +1072,7 @@ void io::In_Topology
     for (n = 0; it != buffer.end() - 1; ++it, ++n) {
 
       interaction::lj_parameter_struct s;
-      int i, j;
+      int i = 0, j = 0;
 
       _lineStream.clear();
       _lineStream.str(*it);
@@ -1128,7 +1128,7 @@ void io::In_Topology
       return;
     }
 
-    int num, n;
+    int num = 0, n = 0;
 
     it = buffer.begin() + 1;
     _lineStream.clear();
@@ -1151,7 +1151,7 @@ void io::In_Topology
     for (n = 0; it != buffer.end() - 1; ++it, ++n) {
 
       interaction::lj_parameter_struct s;
-      int i, j;
+      int i = 0, j = 0;
 
       _lineStream.clear();
       _lineStream.str(*it);
@@ -1208,7 +1208,7 @@ read_sasa_parameter(topology::Topology & topo, std::vector<topology::sasa_parame
       return;
     }
 
-    unsigned int num; // number of sasa atoms;
+    unsigned int num = 0; // number of sasa atoms;
 
     it = buffer.begin() + 1;
     _lineStream.clear();
@@ -1224,7 +1224,7 @@ read_sasa_parameter(topology::Topology & topo, std::vector<topology::sasa_parame
       _lineStream.clear();
       _lineStream.str(*it);
 
-      int atom;
+      int atom = 0;
       _lineStream >> atom >> s.r >> s.p >> s.sigma;
 
       if (_lineStream.fail() || !_lineStream.eof())
@@ -1337,7 +1337,7 @@ void io::In_Topology::read_block_PHYSICALCONSTANTS(topology::Topology& topo,
       _lineStream.clear();
       _lineStream.str(concatenate(buffer.begin() + 1,
               buffer.end() - 1, s));
-      double four_pi_eps0_i;
+      double four_pi_eps0_i = 0.0;
 
       _lineStream >> four_pi_eps0_i >> math::h_bar >> math::spd_l >> math::k_Boltzmann;
       math::eps0_i = four_pi_eps0_i * 4.0 * math::Pi;
@@ -1362,7 +1362,7 @@ void io::In_Topology::read_block_RESNAME(topology::Topology& topo,
       std::vector<std::string> buffer = m_block["RESNAME"];
       block_read.insert("RESNAME");
       std::vector<std::string>::const_iterator it = buffer.begin() + 1;
-      int n, num;
+      int n = 0, num = 0;
       _lineStream.clear();
       _lineStream.str(*it);
       _lineStream >> num;
@@ -1414,7 +1414,7 @@ void io::In_Topology::read_block_ATOMTYPENAME(topology::Topology& topo,
       std::vector<std::string> buffer = m_block["ATOMTYPENAME"];
       block_read.insert("ATOMTYPENAME");
       std::vector<std::string>::const_iterator it = buffer.begin() + 1;
-      int n, num;
+      int n = 0, num = 0;
       _lineStream.clear();
       _lineStream.str(*it);
       _lineStream >> num;
@@ -1467,7 +1467,7 @@ void io::In_Topology::read_block_SOLUTEATOM(topology::Topology& topo,
       std::vector<std::string>::const_iterator it = buffer.begin() + 1;
       _lineStream.clear();
       _lineStream.str(*it);
-      int num, n;
+      int num = 0, n = 0;
       _lineStream >> num;
       topo.resize(num);
 
@@ -1486,8 +1486,8 @@ void io::In_Topology::read_block_SOLUTEATOM(topology::Topology& topo,
 
       // os << "\ntime after concatenate: " << util::now() - start << std::endl;
 
-      int a_nr, r_nr, t, cg, n_ex, a_ex;
-      double m, q;
+      int a_nr = 0, r_nr = 0, t = 0, cg = 0, n_ex = 0, a_ex = 0;
+      double m = 0.0, q = 0.0;
       std::string s;
       topology::excl_cont_t::value_type ex;
       topology::excl_cont_t::value_type ex14;
@@ -1652,13 +1652,13 @@ void io::In_Topology::read_block_SOLUTEPOLARISATION(topology::Topology& topo,
         _lineStream.clear();
         _lineStream.str(*it);
 
-        int num, n;
+        int num = 0, n = 0;
         _lineStream >> num;
         ++it;
 
         for (n = 0; it != buffer.end() - 1; ++it, ++n) {
-          int i, j, k;
-          double polarisability, coscharge, damping_level, damping_power, gamma;
+          int i = 0, j = 0, k = 0;
+          double polarisability = 0.0, coscharge = 0.0, damping_level = 0.0, damping_power = 0.0, gamma = 0.0;
           _lineStream.clear();
           _lineStream.str(*it);
           _lineStream >> i >> polarisability >> coscharge >> damping_level
@@ -1714,13 +1714,13 @@ void io::In_Topology::read_block_CGSOLUTE(topology::Topology& topo,
         _lineStream.clear();
         _lineStream.str(*it);
 
-        int num, n;
+        int num = 0, n = 0;
         _lineStream >> num;
         ++it;
         os << "\t\tnumber of ranges: " << num << "\n";
 
         for (n = 0; it != buffer.end() - 1; ++it, ++n) {
-          int cg_begin, cg_end, cg_fac;
+          int cg_begin = 0, cg_end = 0, cg_fac = 0;
           _lineStream.clear();
           _lineStream.str(*it);
           _lineStream >> cg_begin >> cg_end >> cg_fac;
@@ -1772,7 +1772,7 @@ void io::In_Topology::read_block_LJEXCEPTIONS(topology::Topology& topo,
         _lineStream.clear();
         _lineStream.str(*it);
 
-        int num, n;
+        int num = 0, n = 0;
         _lineStream >> num;
         ++it;
         if (_lineStream.fail() || !_lineStream.eof()) {
@@ -1787,8 +1787,8 @@ void io::In_Topology::read_block_LJEXCEPTIONS(topology::Topology& topo,
         }
 
         for (n = 0; it != buffer.end() - 1; ++it, ++n) {
-          int i, j;
-          double c6, c12;
+          int i = 0, j = 0;
+          double c6 = 0.0, c12 = 0.0;
           _lineStream.clear();
           _lineStream.str(*it);
           _lineStream >> i >> j >> c12 >> c6;
@@ -1835,7 +1835,7 @@ void io::In_Topology::read_block_BONDH(topology::Topology& topo,
         _lineStream.clear();
         _lineStream.str(*it);
 
-        int num, n;
+        int num = 0, n = 0;
         _lineStream >> num;
         ++it;
 
@@ -1850,7 +1850,7 @@ void io::In_Topology::read_block_BONDH(topology::Topology& topo,
         }
 
         for (n = 0; it != buffer.end() - 1; ++it, ++n) {
-          int i, j, t;
+          int i = 0, j = 0, t = 0;
           _lineStream.clear();
           _lineStream.str(*it);
           _lineStream >> i >> j >> t;
@@ -1900,7 +1900,7 @@ void io::In_Topology::read_block_BOND(topology::Topology& topo,
         std::vector<std::string>::const_iterator it = buffer.begin() + 1;
         _lineStream.clear();
         _lineStream.str(*it);
-        int num, n;
+        int num = 0, n = 0;
         _lineStream >> num;
         ++it;
 
@@ -1915,7 +1915,7 @@ void io::In_Topology::read_block_BOND(topology::Topology& topo,
         }
 
         for (n = 0; it != buffer.end() - 1; ++it, ++n) {
-          int i, j, t;
+          int i = 0, j = 0, t = 0;
 
           _lineStream.clear();
           _lineStream.str(*it);
@@ -1971,7 +1971,7 @@ void io::In_Topology::read_block_BONDDP(topology::Topology& topo,
         _lineStream.clear();
         _lineStream.str(*it);
 
-        int num, n;
+        int num = 0, n = 0;
         _lineStream >> num;
         ++it;
 
@@ -1981,7 +1981,7 @@ void io::In_Topology::read_block_BONDDP(topology::Topology& topo,
         }
 
         for (n = 0; it != buffer.end() - 1; ++it, ++n) {
-          int i, j, t;
+          int i = 0, j = 0, t = 0;
           _lineStream.clear();
           _lineStream.str(*it);
           _lineStream >> i >> j >> t;
@@ -2028,7 +2028,7 @@ void io::In_Topology::read_block_CONSTRAINT(topology::Topology& topo,
         std::vector<std::string>::const_iterator it = buffer.begin() + 1;
         _lineStream.clear();
         _lineStream.str(*it);
-        int num, n;
+        int num = 0, n = 0;
         _lineStream >> num;
         ++it;
 
@@ -2041,7 +2041,7 @@ void io::In_Topology::read_block_CONSTRAINT(topology::Topology& topo,
           << "\n\tEND\n";
 
         for (n = 0; it != buffer.end() - 1; ++it, ++n) {
-          int i, j, t;
+          int i = 0, j = 0, t = 0;
 
           _lineStream.clear();
           _lineStream.str(*it);
@@ -2094,7 +2094,7 @@ void io::In_Topology::read_block_BONDANGLEH(topology::Topology& topo,
         _lineStream.clear();
         _lineStream.str(*it);
 
-        int num, n;
+        int num = 0, n = 0;
         _lineStream >> num;
         ++it;
 
@@ -2102,7 +2102,7 @@ void io::In_Topology::read_block_BONDANGLEH(topology::Topology& topo,
           os << "\n\t\tbondangles containing hydrogens : " << num;
 
         for (n = 0; it != buffer.end() - 1; ++it, ++n) {
-          int i, j, k, t;
+          int i = 0, j = 0, k = 0, t = 0;
           _lineStream.clear();
           _lineStream.str(*it);
           _lineStream >> i >> j >> k >> t;
@@ -2147,7 +2147,7 @@ void io::In_Topology::read_block_BONDANGLE(topology::Topology& topo,
         std::vector<std::string>::const_iterator it = buffer.begin() + 1;
         _lineStream.clear();
         _lineStream.str(*it);
-        int num, n;
+        int num = 0, n = 0;
         _lineStream >> num;
         ++it;
 
@@ -2155,7 +2155,7 @@ void io::In_Topology::read_block_BONDANGLE(topology::Topology& topo,
           os << "\n\t\tbondangles not containing hydrogens : " << num;
 
         for (n = 0; it != buffer.end() - 1; ++it, ++n) {
-          int i, j, k, t;
+          int i = 0, j = 0, k = 0, t = 0;
 
           _lineStream.clear();
           _lineStream.str(*it);
@@ -2208,7 +2208,7 @@ void io::In_Topology::read_block_IMPDIHEDRAL(topology::Topology& topo,
         std::vector<std::string>::const_iterator it = buffer.begin() + 1;
         _lineStream.clear();
         _lineStream.str(*it);
-        int num, n;
+        int num = 0, n = 0;
         _lineStream >> num;
         ++it;
 
@@ -2217,7 +2217,7 @@ void io::In_Topology::read_block_IMPDIHEDRAL(topology::Topology& topo,
                 << num;
 
         for (n = 0; it != buffer.end() - 1; ++it, ++n) {
-          int i, j, k, l, t;
+          int i = 0, j = 0, k = 0, l = 0, t = 0;
 
           _lineStream.clear();
           _lineStream.str(*it);
@@ -2264,7 +2264,7 @@ void io::In_Topology::read_block_IMPDIHEDRALH(topology::Topology& topo,
         _lineStream.clear();
         _lineStream.str(*it);
 
-        int num, n;
+        int num = 0, n = 0;
         _lineStream >> num;
         ++it;
 
@@ -2273,7 +2273,7 @@ void io::In_Topology::read_block_IMPDIHEDRALH(topology::Topology& topo,
                 << num;
 
         for (n = 0; it != buffer.end() - 1; ++it, ++n) {
-          int i, j, k, l, t;
+          int i = 0, j = 0, k = 0, l = 0, t = 0;
           _lineStream.clear();
           _lineStream.str(*it);
           _lineStream >> i >> j >> k >> l >> t;
@@ -2324,7 +2324,7 @@ void io::In_Topology::read_block_DIHEDRAL(topology::Topology& topo,
         std::vector<std::string>::const_iterator it = buffer.begin() + 1;
         _lineStream.clear();
         _lineStream.str(*it);
-        int num, n;
+        int num = 0, n = 0;
         _lineStream >> num;
         ++it;
 
@@ -2333,7 +2333,7 @@ void io::In_Topology::read_block_DIHEDRAL(topology::Topology& topo,
                 << num;
 
         for (n = 0; it != buffer.end() - 1; ++it, ++n) {
-          int i, j, k, l, t;
+          int i = 0, j = 0, k = 0, l = 0, t = 0;
 
           _lineStream.clear();
           _lineStream.str(*it);
@@ -2380,7 +2380,7 @@ void io::In_Topology::read_block_DIHEDRALH(topology::Topology& topo,
         _lineStream.clear();
         _lineStream.str(*it);
 
-        int num, n;
+        int num = 0, n = 0;
         _lineStream >> num;
         ++it;
 
@@ -2389,7 +2389,7 @@ void io::In_Topology::read_block_DIHEDRALH(topology::Topology& topo,
                 << num;
 
         for (n = 0; it != buffer.end() - 1; ++it, ++n) {
-          int i, j, k, l, t;
+          int i = 0, j = 0, k = 0, l = 0, t = 0;
           _lineStream.clear();
           _lineStream.str(*it);
           _lineStream >> i >> j >> k >> l >> t;
@@ -2439,7 +2439,7 @@ void io::In_Topology::read_block_CROSSDIHEDRAL(topology::Topology& topo,
         std::vector<std::string>::const_iterator it = buffer.begin() + 1;
         _lineStream.clear();
         _lineStream.str(*it);
-        int num, n;
+        int num = 0, n = 0;
         _lineStream >> num;
         ++it;
 
@@ -2448,7 +2448,7 @@ void io::In_Topology::read_block_CROSSDIHEDRAL(topology::Topology& topo,
                 << num;
 
         for (n = 0; it != buffer.end() - 1; ++it, ++n) {
-          int a, b, c, d, e, f, g, h, t;
+          int a = 0, b = 0, c = 0, d = 0, e = 0, f = 0, g = 0, h = 0, t = 0;
 
           _lineStream.clear();
           _lineStream.str(*it);
@@ -2498,7 +2498,7 @@ void io::In_Topology::read_block_CROSSDIHEDRALH(topology::Topology& topo,
         _lineStream.clear();
         _lineStream.str(*it);
 
-        int num, n;
+        int num = 0, n = 0;
         _lineStream >> num;
         ++it;
 
@@ -2507,7 +2507,7 @@ void io::In_Topology::read_block_CROSSDIHEDRALH(topology::Topology& topo,
                 << num;
 
         for (n = 0; it != buffer.end() - 1; ++it, ++n) {
-          int a, b, c, d, e, f, g, h, t;
+          int a = 0, b = 0, c = 0, d = 0, e = 0, f = 0, g = 0, h = 0, t = 0;
           _lineStream.clear();
           _lineStream.str(*it);
           _lineStream >> a >> b >> c >> d >> e >> f >> g >> h >> t;
@@ -2560,7 +2560,7 @@ void io::In_Topology::read_block_VIRTUALGRAIN(topology::Topology& topo,
         _lineStream.clear();
         _lineStream.str(*it);
 
-        int num, n;
+        int num = 0, n = 0;
         _lineStream >> num;
         ++it;
 
@@ -2573,7 +2573,7 @@ void io::In_Topology::read_block_VIRTUALGRAIN(topology::Topology& topo,
           _lineStream.str(*it);
 
           // number of real atoms to define virtual atom
-          int index, i, q;
+          int index = 0, i = 0, q = 0;
           _lineStream >> index >> i;
 
           std::vector<int> cog;
@@ -2620,7 +2620,7 @@ void io::In_Topology::read_block_SOLUTEMOLECULES(topology::Topology& topo,
         _lineStream.clear();
         _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
 
-        int num;
+        int num = 0;
 
         _lineStream >> num;
 
@@ -2629,7 +2629,7 @@ void io::In_Topology::read_block_SOLUTEMOLECULES(topology::Topology& topo,
                   "In_Topology", io::message::error);
         }
 
-        unsigned int m;
+        unsigned int m = 0;
         unsigned int old_m = 0;
 
         for (int i = 0; i < num; ++i) {
@@ -2665,7 +2665,7 @@ void io::In_Topology::read_block_TEMPERATUREGROUPS(topology::Topology& topo,
         _lineStream.clear();
         _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
 
-        int num;
+        int num = 0;
 
         _lineStream >> num;
 
@@ -2674,7 +2674,7 @@ void io::In_Topology::read_block_TEMPERATUREGROUPS(topology::Topology& topo,
                   "In_Topology", io::message::error);
         }
 
-        unsigned int m;
+        unsigned int m = 0;
         unsigned int old_m = 0;
 
         for (int i = 0; i < num; ++i) {
@@ -2711,7 +2711,7 @@ void io::In_Topology::read_block_PRESSUREGROUPS(topology::Topology& topo,
         _lineStream.clear();
         _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
 
-        int num;
+        int num = 0;
 
         _lineStream >> num;
 
@@ -2720,7 +2720,7 @@ void io::In_Topology::read_block_PRESSUREGROUPS(topology::Topology& topo,
                   "In_Topology", io::message::error);
         }
 
-        unsigned int m;
+        unsigned int m = 0;
         unsigned int old_m = 0;
 
         for (int i = 0; i < num; ++i) {
@@ -2762,7 +2762,7 @@ void io::In_Topology::read_SOLVENT_blocks(topology::Topology& topo,
       std::vector<std::string>::const_iterator it = buffer.begin() + 1;
       _lineStream.clear();
       _lineStream.str(*it);
-      int num, n;
+      int num = 0, n = 0;
       _lineStream >> num;
       ++it;
 
@@ -2772,8 +2772,8 @@ void io::In_Topology::read_SOLVENT_blocks(topology::Topology& topo,
       topology::Solvent s;
 
       std::string name;
-      int i, iac;
-      double mass, charge;
+      int i = 0, iac = 0;
+      double mass = 0.0, charge = 0.0;
       //adiabatic decoupling
       int adc_index = 0;
       double sm = 1;
@@ -2838,13 +2838,13 @@ void io::In_Topology::read_block_SOLVENTPOLARISATION(topology::Topology& topo,
         _lineStream.clear();
         _lineStream.str(*it);
 
-        int num, n;
+        int num = 0, n = 0;
         _lineStream >> num;
         ++it;
 
         for (n = 0; it != buffer.end() - 1; ++it, ++n) {
-          int i, j, k;
-          double polarisability, coscharge, damping_level, damping_power, gamma;
+          int i = 0, j = 0, k = 0;
+          double polarisability = 0.0, coscharge = 0.0, damping_level = 0.0, damping_power = 0.0, gamma = 0.0;
           _lineStream.clear();
           _lineStream.str(*it);
           _lineStream >> i >> polarisability >> coscharge >> damping_level
@@ -2899,14 +2899,14 @@ void io::In_Topology::read_block_SOLVENTCONSTR(topology::Topology& topo,
         _lineStream.clear();
         _lineStream.str(*it);
 
-        int i, j, n, num;
+        int i = 0, j = 0, n = 0, num = 0;
         _lineStream >> num;
         ++it;
 
         if (!quiet)
           os << "\n\t\tconstraints : " << num;
 
-        double b0;
+        double b0 = 0.0;
 
         for (n = 0; it != buffer.end() - 1; ++it, ++n) {
           _lineStream.clear();

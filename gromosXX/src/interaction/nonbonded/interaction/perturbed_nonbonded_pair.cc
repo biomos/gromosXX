@@ -113,8 +113,8 @@ void interaction::Perturbed_Nonbonded_Pair
   double A_e_lj = 0.0, A_e_crf = 0.0, A_de_lj = 0.0, A_de_crf = 0.0, 
     B_e_lj = 0.0, B_e_crf = 0.0, B_de_lj = 0.0, B_de_crf = 0.0;
   double e_lj = 0.0, e_crf = 0.0, de_lj = 0.0, de_crf = 0.0;
-  lj_parameter_struct const *A_lj;
-  lj_parameter_struct const *B_lj;
+  lj_parameter_struct const *A_lj = nullptr;
+  lj_parameter_struct const *B_lj = nullptr;
   double A_q = 0.0, B_q = 0.0, A_qi = 0.0, A_qj = 0.0, B_qi = 0.0, B_qj = 0.0;
   double alpha_lj=0, alpha_crf=0;
   
@@ -123,7 +123,7 @@ void interaction::Perturbed_Nonbonded_Pair
   f_pol_vec = A_f_pol_vec = B_f_pol_vec = 0.0;
 
   
-  bool is_perturbed;
+  bool is_perturbed = 0;
 
 
   DEBUG(7, "\tperturbed-pair\t" << it->i << "\t" << it->j);

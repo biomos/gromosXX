@@ -143,7 +143,7 @@ int algorithm::EDS
         // OFFSET search
         if (sim.param().eds.form == simulation::aeds_search_eir || sim.param().eds.form == simulation::aeds_search_all) {
           double tau = double(sim.param().eds.asteps) + double(sim.param().eds.bsteps - sim.param().eds.asteps) * double(sim.steps()) / double(sim.param().step.number_of_steps);
-          double expde, eiremin, eiremax, eirestar, eirdemix, eirkfac;
+          double expde = 0.0, eiremin = 0.0, eiremax = 0.0, eirestar = 0.0, eirdemix = 0.0, eirkfac = 0.0;
           for (unsigned int is = 0; is < numstates; is++) {
             eiremin = sim.param().eds.emin + sim.param().eds.eir[is];
             eiremax = sim.param().eds.emax + sim.param().eds.eir[is];

@@ -46,7 +46,7 @@ static int _calculate_quartic_bond_interactions(topology::Topology &topo,
   math::VArray &force = conf.current().force;
   math::Vec v, f;
 
-  double e;
+  double e = 0.0;
 
   for( ; b_it != b_to; ++b_it){
     periodicity.nearest_image(pos(b_it->i), pos(b_it->j), v);

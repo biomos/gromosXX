@@ -120,7 +120,7 @@ void interaction::Nonbonded_Outerloop
 
   const unsigned int end = topo.num_solute_atoms();
 
-  unsigned int i;
+  unsigned int i = 0;
   for (i = 0; i < end; ++i) {
     for (j_it = pairlist_solute[i].begin(),
             j_to = pairlist_solute[i].end();
@@ -293,7 +293,7 @@ void interaction::Nonbonded_Outerloop
 
   const unsigned int end = topo.num_solute_atoms();
 
-  unsigned int i;
+  unsigned int i = 0;
   for (i = 0; i < end; ++i) {
     const math::Vec posI = conf.current().pos(i);
     const unsigned int eg_i = topo.atom_energy_group(i);
@@ -1530,7 +1530,7 @@ void interaction::Nonbonded_Outerloop
   math::Periodicity<t_interaction_spec::boundary_type> periodicity(conf.current().box);
   Nonbonded_Innerloop<t_interaction_spec> innerloop(m_param);
   innerloop.init(sim);
-  unsigned int i;
+  unsigned int i = 0;
   unsigned int size_i = unsigned(pairlist.size());
   unsigned int size_lr = size_i;
   DEBUG(11, "el_field outerloop pairlist size " << size_i);
@@ -1847,7 +1847,7 @@ void interaction::Nonbonded_Outerloop
 
   unsigned int end = topo.num_solute_atoms();
 
-  unsigned int i;
+  unsigned int i = 0;
   for (i = 0; i < end; i++) {
     for (j_it = pairlist_solute[i].begin(),
             j_to = pairlist_solute[i].end();
@@ -2371,8 +2371,8 @@ void interaction::Nonbonded_Outerloop
 
         // the planes are located perpendicular to the axis (coord)
         for (unsigned int coord = 0; coord < 3; ++coord) {
-          unsigned int coord_a, coord_b;
-          int boundary_a, boundary_b;
+          unsigned int coord_a = 0, coord_b = 0;
+          int boundary_a = 0, boundary_b = 0;
           switch (coord) {
             case 0: // plane perpendicular to x
               coord_a = 1;

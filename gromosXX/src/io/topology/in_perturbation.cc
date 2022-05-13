@@ -40,7 +40,7 @@ bool check_type(std::vector<std::string> const & buffer, std::vector<T> term)
 {
   if (buffer.size()){
     std::istringstream is(buffer[1]);
-    int num;
+    int num = 0;
     if (!(is >> num) || num < 0)
       return false;
       
@@ -164,7 +164,7 @@ io::In_Perturbation::read(topology::Topology &topo,
           it = buffer.begin() + 1;
           _lineStream.clear();
           _lineStream.str(*it);
-          int num, n;
+          int num = 0, n = 0;
           _lineStream >> num;
           ++it;
           
@@ -191,7 +191,7 @@ io::In_Perturbation::read(topology::Topology &topo,
             << "\n";
           
           for(n=0; it != buffer.end() -1; ++it, ++n){
-            int i, j, t_A, t_B;
+            int i = 0, j = 0, t_A = 0, t_B = 0;
             _lineStream.clear();
             _lineStream.str(*it);
             _lineStream >> i >> j >> t_A >> t_B;
@@ -333,7 +333,7 @@ io::In_Perturbation::read(topology::Topology &topo,
           it = buffer.begin() + 1;
           _lineStream.clear();
           _lineStream.str(*it);
-          int num, n;
+          int num = 0, n = 0;
           _lineStream >> num;
           ++it;
           
@@ -347,8 +347,8 @@ io::In_Perturbation::read(topology::Topology &topo,
             << "\n";
           
           for(n=0; it != buffer.end() -1; ++it, ++n){
-            int i, j, t_A, t_B;
-            double alphab;
+            int i = 0, j = 0, t_A = 0, t_B = 0;
+            double alphab = 0.0;
             _lineStream.clear();
             _lineStream.str(*it);
             _lineStream >> i >> j >> t_A >> t_B >> alphab;
@@ -478,7 +478,7 @@ io::In_Perturbation::read(topology::Topology &topo,
         it = buffer.begin() + 1;
         _lineStream.clear();
         _lineStream.str(*it);
-        int num, n;
+        int num = 0, n = 0;
         _lineStream >> num;
         ++it;
         
@@ -497,7 +497,7 @@ io::In_Perturbation::read(topology::Topology &topo,
           << "\n";
         
         for(n=0; it != buffer.end() - 1; ++it, ++n){
-          int i, j, t_A, t_B;
+          int i = 0, j = 0, t_A = 0, t_B = 0;
           
           _lineStream.clear();
           _lineStream.str(*it);
@@ -580,7 +580,7 @@ io::In_Perturbation::read(topology::Topology &topo,
           it = buffer.begin() + 1;
           _lineStream.clear();
           _lineStream.str(*it);
-          int num, n;
+          int num = 0, n = 0;
           _lineStream >> num;
           ++it;
           
@@ -594,7 +594,7 @@ io::In_Perturbation::read(topology::Topology &topo,
             << "\n";
           
           for(n=0; it != buffer.end() -1; ++it, ++n){
-            int i, j, k, t_A, t_B;
+            int i = 0, j = 0, k = 0, t_A = 0, t_B = 0;
             _lineStream.clear();
             _lineStream.str(*it);
             _lineStream >> i >> j >> k >> t_A >> t_B;
@@ -673,7 +673,7 @@ io::In_Perturbation::read(topology::Topology &topo,
           it = buffer.begin() + 1;
           _lineStream.clear();
           _lineStream.str(*it);
-          int num, n;
+          int num = 0, n = 0;
           _lineStream >> num;
           ++it;
           
@@ -688,8 +688,8 @@ io::In_Perturbation::read(topology::Topology &topo,
             << "\n";
           
           for(n=0; it != buffer.end() -1; ++it, ++n){
-            int i, j, k, t_A, t_B;
-            double alphaa;
+            int i = 0, j = 0, k = 0, t_A = 0, t_B = 0;
+            double alphaa = 0.0;
             _lineStream.clear();
             _lineStream.str(*it);
             _lineStream >> i >> j >> k >> t_A >> t_B >> alphaa;
@@ -817,7 +817,7 @@ io::In_Perturbation::read(topology::Topology &topo,
           it = buffer.begin() + 1;
           _lineStream.clear();
           _lineStream.str(*it);
-          int num, n;
+          int num = 0, n = 0;
           _lineStream >> num;
           ++it;
           
@@ -832,7 +832,7 @@ io::In_Perturbation::read(topology::Topology &topo,
             << "\n";
           
           for(n=0; it != buffer.end() -1; ++it, ++n){
-            int i, j, k, l, t_A, t_B;
+            int i = 0, j = 0, k = 0, l = 0, t_A = 0, t_B = 0;
             _lineStream.clear();
             _lineStream.str(*it);
             _lineStream >> i >> j >> k >> l >> t_A >> t_B;
@@ -914,7 +914,7 @@ io::In_Perturbation::read(topology::Topology &topo,
           it = buffer.begin() + 1;
           _lineStream.clear();
           _lineStream.str(*it);
-          int num, n;
+          int num = 0, n = 0;
           _lineStream >> num;
           ++it;
           
@@ -930,8 +930,8 @@ io::In_Perturbation::read(topology::Topology &topo,
             << "\n";
           
           for(n=0; it != buffer.end() -1; ++it, ++n){
-            int i, j, k, l, t_A, t_B;
-            double alphaa;
+            int i = 0, j = 0, k = 0, l = 0, t_A = 0, t_B = 0;
+            double alphaa = 0.0;
             _lineStream.clear();
             _lineStream.str(*it);
             _lineStream >> i >> j >> k >> l >> t_A >> t_B >> alphaa;
@@ -1048,7 +1048,7 @@ io::In_Perturbation::read(topology::Topology &topo,
           it = buffer.begin() + 1;
           _lineStream.clear();
           _lineStream.str(*it);
-          int num, n;
+          int num = 0, n = 0;
           _lineStream >> num;
           ++it;
           
@@ -1063,7 +1063,7 @@ io::In_Perturbation::read(topology::Topology &topo,
             << "\n";
           
           for(n=0; it != buffer.end() -1; ++it, ++n){
-            int i, j, k, l, t_A, t_B;
+            int i = 0, j = 0, k = 0, l = 0, t_A = 0, t_B = 0;
             _lineStream.clear();
             _lineStream.str(*it);
             _lineStream >> i >> j >> k >> l >> t_A >> t_B;
@@ -1146,11 +1146,11 @@ io::In_Perturbation::read(topology::Topology &topo,
         it = buffer.begin() + 1;
         _lineStream.clear();
         _lineStream.str(*it);
-        int num, n;
+        int num = 0, n = 0;
         _lineStream >> num;
         ++it;
 
-        int i, j, A, B;
+        int i = 0, j = 0, A = 0, B = 0;
         
         if (!quiet)
           os << "\t"
@@ -1243,14 +1243,14 @@ io::In_Perturbation::read(topology::Topology &topo,
         it = buffer.begin() + 1;
         _lineStream.clear();
         _lineStream.str(*it);
-        int num, n;
+        int num = 0, n = 0;
         _lineStream >> num;
         ++it;
        
-        int seq, a_iac_int, b_iac_int; 
-        unsigned int res, a_iac, b_iac;
-        double a_mass, b_mass, a_charge, b_charge;
-        double lj_soft, crf_soft;
+        int seq = 0, a_iac_int = 0, b_iac_int = 0; 
+        unsigned int res = 0, a_iac = 0, b_iac = 0;
+        double a_mass = 0.0, b_mass = 0.0, a_charge = 0.0, b_charge = 0.0;
+        double lj_soft = 0.0, crf_soft = 0.0;
         std::string name;
         
         if (!quiet)
@@ -1411,12 +1411,12 @@ io::In_Perturbation::read(topology::Topology &topo,
           it = buffer.begin() + 1;
           _lineStream.clear();
           _lineStream.str(*it);
-          int num, n;
+          int num = 0, n = 0;
           _lineStream >> num;
           ++it;
           
-          int i, j;
-          double A, B;
+          int i = 0, j = 0;
+          double A = 0.0, B = 0.0;
           
           if (!quiet)
             os << "\t"
@@ -1502,12 +1502,12 @@ io::In_Perturbation::read(topology::Topology &topo,
         it = buffer.begin() + 1;
         _lineStream.clear();
         _lineStream.str(*it);
-        int num, n;
+        int num = 0, n = 0;
         _lineStream >> num;
         ++it;
         
-        int seq, res;
-        double a_pol, b_pol, a_lev, b_lev;
+        int seq = 0, res = 0;
+        double a_pol = 0.0, b_pol = 0.0, a_lev = 0.0, b_lev = 0.0;
         std::string name;
         
         if (!quiet)
@@ -1616,7 +1616,7 @@ io::In_Perturbation::read(topology::Topology &topo,
       it = buffer.begin() + 1;
       _lineStream.clear();
       _lineStream.str(*it);
-      unsigned int numstates, numatoms, n;
+      unsigned int numstates = 0, numatoms = 0, n = 0;
       //numstates = param.eds.numstates;
 
       _lineStream >> numatoms >> numstates;
@@ -1657,7 +1657,7 @@ io::In_Perturbation::read(topology::Topology &topo,
         }
         os << "\n";
       }
-      int seq;
+      int seq = 0;
       std::string name;
       std::vector<unsigned int> m_iac(numstates);
       std::vector<double> m_charge(numstates);

@@ -227,7 +227,7 @@ bool io::In_Configuration::read_position_plain(topology::Topology &topo,
 
   math::VArray &pos = conf.current().pos;
 
-  int i;
+  int i = 0;
 
   for(i=0; it != to; ++i, ++it){
     DEBUG(8, "line: " << *it);
@@ -1371,7 +1371,7 @@ bool io::In_Configuration::_read_positionred(math::VArray &pos,
   std::vector<std::string>::const_iterator it = buffer.begin(),
     to = buffer.end()-1;
 
-  int i;
+  int i = 0;
 
   if (pos.size() < unsigned(num)){
     io::messages.add("configuration: too many coordinates for given topology",
@@ -1424,7 +1424,7 @@ bool io::In_Configuration::_read_cos_position(math::VArray &pos,
   std::vector<std::string>::const_iterator it = buffer.begin(),
     to = buffer.end()-1;
 
-  int i;
+  int i = 0;
 
   if (pos.size() < unsigned(num)){
     io::messages.add("configuration: too many cos coordinates for given topology",
@@ -1476,7 +1476,7 @@ bool io::In_Configuration::_read_position(math::VArray &pos, std::vector<std::st
   std::vector<std::string>::const_iterator it = buffer.begin(),
     to = buffer.end()-1;
 
-  int i;
+  int i = 0;
 
   std::istringstream _lineStream;
 
@@ -1525,7 +1525,7 @@ bool io::In_Configuration::_read_velocityred(math::VArray &vel,
   std::vector<std::string>::const_iterator it = buffer.begin(),
     to = buffer.end()-1;
 
-  int i;
+  int i = 0;
 
   for(i=0; it != to; ++i, ++it){
     if (i >= num){
@@ -1572,7 +1572,7 @@ bool io::In_Configuration::_read_velocity(math::VArray &vel,
     to = buffer.end()-1;
 
   std::string s1, s2;
-  unsigned int i;
+  unsigned int i = 0;
 
   for(i=0; it != to; ++i, ++it){
     if (i >= num){
@@ -1621,7 +1621,7 @@ bool io::In_Configuration::_read_lattice_shifts(math::VArray &shift,
     to = buffer.end()-1;
 
   std::string s1, s2;
-  int i;
+  int i = 0;
 
   for(i=0; it != to; ++i, ++it){
     if (i >= num){
@@ -1664,14 +1664,14 @@ bool io::In_Configuration::_read_genbox(math::Box &box, double &phi,
   std::vector<std::string>::const_iterator it = buffer.begin(),
     to = buffer.end()-1;
 
-  int bound;
+  int bound = 0;
   _lineStream.clear();
   _lineStream.str(*it);
   _lineStream >> bound;
 
   ++it;
 
-  int i;
+  int i = 0;
 
   for(i=0; it != to; ++i, ++it){
 
@@ -1793,14 +1793,14 @@ bool io::In_Configuration::_read_box(math::Box &box, double &phi, double &theta,
   std::vector<std::string>::const_iterator it = buffer.begin(),
     to = buffer.end()-1;
 
-  int bound;
+  int bound = 0;
   _lineStream.clear();
   _lineStream.str(*it);
   _lineStream >> bound;
 
   ++it;
 
-  int i;
+  int i = 0;
 
   for(i=0; it != to; ++i, ++it){
 
@@ -2017,7 +2017,7 @@ bool io::In_Configuration::_read_stochastic_integral
   std::vector<std::string>::const_iterator it = buffer.begin(),
     to = buffer.end()-2;
 
-  int i, j, c;
+  int i = 0, j = 0, c = 0;
   std::string a, r;
 
   for(c=0; it != to; ++it, ++c){
@@ -2747,7 +2747,7 @@ _read_time(std::vector<std::string> &buffer,
   _lineStream.clear();
   _lineStream.str(*it);
 
-  int i;
+  int i = 0;
   _lineStream >> i >> t;
 
   if (_lineStream.fail() || t < 0){
@@ -2853,7 +2853,7 @@ std::vector<std::string> &buffer, bool hasTitle)
   std::vector<std::string>::const_iterator it = buffer.begin() + (hasTitle ? 1 : 0),
     to = buffer.end()-1;
   std::string s1, s2;
-  int i, n, nr;
+  int i = 0, n = 0, nr = 0;
   int num = b.size();
 
   std::istringstream _lineStream;
@@ -2901,7 +2901,7 @@ bool io::In_Configuration::_read_leusbias(
   _lineStream.clear();
   _lineStream.str(concatenate(buffer.begin(), buffer.end()-1, s));
 
-  unsigned int num_umb;
+  unsigned int num_umb = 0;
   _lineStream >> num_umb;
   if (_lineStream.fail()) {
     io::messages.add("bad line in LEUSBIAS block: NUMUMB",
@@ -2910,7 +2910,7 @@ bool io::In_Configuration::_read_leusbias(
     return false;
   }
   for(unsigned int x = 0; x < num_umb; ++x) {
-    int id, dim;
+    int id = 0, dim = 0;
     _lineStream >> id >> dim;
 
     if(_lineStream.fail()){
@@ -2932,7 +2932,7 @@ bool io::In_Configuration::_read_leusbias(
 
     // loop over dimensions
     for (unsigned int i = 0; i < u.dim(); ++i) {
-      int type, form;
+      int type = 0, form = 0;
       _lineStream >> type >> form >> u.width[i] >> u.cutoff[i]
               >> u.num_grid_points[i] >> u.grid_min[i] >> u.grid_max[i];
       if (_lineStream.fail()) {
@@ -2971,7 +2971,7 @@ bool io::In_Configuration::_read_leusbias(
     umbrellas.push_back(u);
 
     // skip the rest of the data - read it to dummies
-    unsigned int num_conf;
+    unsigned int num_conf = 0;
     _lineStream  >> num_conf;
     if (_lineStream.fail()) {
       io::messages.add("LEUSBIAS block: Could not read number of configurations",
@@ -2980,7 +2980,7 @@ bool io::In_Configuration::_read_leusbias(
     }
     for(unsigned int c = 0; c < num_conf; ++c) {
       for(unsigned int dim = 0; dim < u.dim(); ++dim) {
-        int di;
+        int di = 0;
         _lineStream >> di;
       }
       std::string ds;
@@ -3004,7 +3004,7 @@ bool io::In_Configuration::_read_bsleus(util::BS_Umbrella& bs_umbrella,
   _lineStream.clear();
   _lineStream.str(concatenate(buffer.begin(), buffer.end()-1, s));
 
-  int numPotentials, num_gp, id, have_aux;
+  int numPotentials = 0, num_gp = 0, id = 0, have_aux = 0;
   _lineStream >> numPotentials >> have_aux;
   if (_lineStream.fail()){
     io::messages.add("BSLEUSMEM block: Could not read the number of Potentials!",
@@ -3012,7 +3012,7 @@ bool io::In_Configuration::_read_bsleus(util::BS_Umbrella& bs_umbrella,
     return false;
   }
   DEBUG(5, "Reading " << numPotentials << "Potentials.");
-  int topoPotentials;
+  int topoPotentials = 0;
   bs_umbrella.getNumPotentials(topoPotentials);
   if (numPotentials != topoPotentials){
     io::messages.add("BSLEUSMEM block: Not the same number of potentials in topology and configuration!",
@@ -3021,7 +3021,7 @@ bool io::In_Configuration::_read_bsleus(util::BS_Umbrella& bs_umbrella,
   }
 
   for (int i = 0; i < numPotentials; i++){
-    int subid;
+    int subid = 0;
     _lineStream >> id >> subid >> num_gp;
     if (_lineStream.fail()) {
       std::ostringstream os;
@@ -3052,7 +3052,7 @@ bool io::In_Configuration::_read_bsleus(util::BS_Umbrella& bs_umbrella,
     bs_umbrella.setAuxMemoryToZero();
   } else {
     // Read in subspaces
-    unsigned int num_subspaces;
+    unsigned int num_subspaces = 0;
     _lineStream >> num_subspaces;
     if (_lineStream.fail()) {
       std::ostringstream os;
@@ -3069,7 +3069,7 @@ bool io::In_Configuration::_read_bsleus(util::BS_Umbrella& bs_umbrella,
       return false;
     }
     for (unsigned int i = 0; i < num_subspaces; i++){
-      int subid, auxc, redc;
+      int subid = 0, auxc = 0, redc = 0;
       _lineStream >> subid >> auxc >> redc;
       if (_lineStream.fail()) {
         std::ostringstream os;
@@ -3082,7 +3082,7 @@ bool io::In_Configuration::_read_bsleus(util::BS_Umbrella& bs_umbrella,
     }
 
     // Read in potentials
-    int subid;
+    int subid = 0;
     for (int i = 0; i < numPotentials; i++) {
       _lineStream >> id >> subid >> num_gp;
       if (_lineStream.fail()) {
@@ -3121,7 +3121,7 @@ bool io::In_Configuration::_read_bsleuspos(util::BS_Umbrella& bs_umbrella,
   _lineStream.clear();
   _lineStream.str(concatenate(buffer.begin(), buffer.end()-1, s));
 
-  int num_subspaces;
+  int num_subspaces = 0;
   _lineStream >> num_subspaces;
   if (_lineStream.fail()){
     io::messages.add("BSLEUSPOS block: Could not read the number of Subspaces!",
@@ -3137,7 +3137,7 @@ bool io::In_Configuration::_read_bsleuspos(util::BS_Umbrella& bs_umbrella,
   }
 
   for (int i = 0; i < num_subspaces; i++){
-    int subid, num_dim;
+    int subid = 0, num_dim = 0;
     _lineStream >> subid >> num_dim;
     if (_lineStream.fail()) {
       std::ostringstream os;
@@ -3215,7 +3215,7 @@ configuration::Configuration::special_struct::rottrans_constr_struct & rottrans)
   std::vector<std::string>::const_iterator it = buffer.begin(),
     to = buffer.end()-1;
 
-  unsigned int i;
+  unsigned int i = 0;
   for (i = 0; it != to && i < 3; ++it, ++i) {
     _lineStream.clear();
     _lineStream.str(*it);
@@ -3444,7 +3444,7 @@ bool io::In_Configuration::_read_aedssearch(
   _lineStream.str(*it);
   _lineStream >> sim.param().eds.oldstate;
   it++;
-  int fulleminbool;
+  int fulleminbool = 0;
   _lineStream.clear();
   _lineStream.str(*it);
   _lineStream >> fulleminbool;
@@ -3458,7 +3458,7 @@ bool io::In_Configuration::_read_aedssearch(
   for (unsigned int i = 0; i < last; i++, it++) {
     _lineStream.clear();
     _lineStream.str(*it);
-    int visitedstatesbool;
+    int visitedstatesbool = 0;
     _lineStream >> sim.param().eds.eir[i]
       >> sim.param().eds.lnexpde[i]
       >> sim.param().eds.statefren[i]

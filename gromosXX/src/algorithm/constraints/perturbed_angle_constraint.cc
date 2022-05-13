@@ -58,7 +58,7 @@ int algorithm::Perturbed_Shake::perturbed_ang_constr_iteration(
     const long double c1 = math::dot(r12, r32);
     const long double cost = c1 / (d12 * d32);
 
-    double theta;
+    double theta = 0.0;
     // cost can be >1 or <-1 because of precision limits
     if (cost > 1)
       theta = 0.0;

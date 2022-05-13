@@ -280,7 +280,7 @@ void re::replica_MPI_Slave::calculateEnergiesHelper(){
     DEBUG(4, "replica_MPI_Slave " << globalThreadID << " :calculateEnergiesHelper:\t START");
 
     //do the MPI fun! :)
-    int error;
+    int error = 0;
     if (do_nonbonded && (error = nb->calculate_interactions(topo, conf, sim)) != 0){
         std::cout << "Rank: "<< globalThreadID<<"\tMPI slave " << globalThreadID << ": error in nonbonded calculation!\n" << std::endl;
     }

@@ -50,7 +50,7 @@ int _calculate_perturbed_qbond_interactions
   math::VArray &force = conf.current().force;
   math::Vec v, f;
 
-  double e, e_lambda;
+  double e = 0.0, e_lambda = 0.0;
 
   math::Periodicity<B> periodicity(conf.current().box);
 

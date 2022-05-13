@@ -67,7 +67,7 @@ io::In_Friction::read(topology::Topology& topo,
       to = buffer.end()-1;
 
     DEBUG(10, "reading in FRICTIONSPEC data");
-    unsigned int i;
+    unsigned int i = 0;
     for(i=0; it != to; ++i, ++it){
       _lineStream.clear();
       std::string line = *it;
@@ -81,7 +81,7 @@ io::In_Friction::read(topology::Topology& topo,
         return;
       }
 
-      double gam0;
+      double gam0 = 0.0;
       _lineStream >> gam0;
     
       if(_lineStream.fail()){

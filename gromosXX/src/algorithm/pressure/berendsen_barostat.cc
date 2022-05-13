@@ -15,6 +15,7 @@
 #include "../../util/error.h"
 
 #include "berendsen_barostat.h"
+
 #include "../../math/boundary_checks.h"
 
 #undef MODULE
@@ -110,7 +111,7 @@ int algorithm::Berendsen_Barostat
     {
 
       math::Matrix mu;
-      double delta, mu_aux;
+      double delta = 0.0, mu_aux = 0.0;
       for (int i = 0; i < 3; ++i) {
         for (int j = 0; j < 3; ++j) {
           if (i == j)

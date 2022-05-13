@@ -45,7 +45,7 @@ static int _calculate_eds_distance_restraint_interactions
   // math::VArray &force = conf.current().force;
   math::Vec v, f;
 
-  double energy;
+  double energy = 0.0;
 
   math::Periodicity<B> periodicity(conf.current().box);
 

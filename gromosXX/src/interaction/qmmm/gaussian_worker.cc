@@ -85,7 +85,7 @@ int interaction::Gaussian_Worker::process_input(const topology::Topology& topo
                                             , const interaction::QM_Zone& qm_zone)
   {
   std::ofstream ifs;
-  int err;
+  int err = 0;
   err = this->open_input(ifs, this->param->input_file);
   if (err) return err;
   std::string header(this->param->input_header);
@@ -172,7 +172,7 @@ int interaction::Gaussian_Worker::process_output(topology::Topology& topo
                                         , simulation::Simulation& sim
                                         , interaction::QM_Zone& qm_zone) {
   std::ifstream ofs;
-  int err;
+  int err = 0;
   err = this->open_output(ofs, this->param->output_file);
   if (err) return err;
 
@@ -298,7 +298,7 @@ int interaction::Gaussian_Worker::parse_coordinates(std::ifstream& ofs, interact
   
   // Parse coordinates lines
   math::Vec pos;
-  int dummy;
+  int dummy = 0;
   for(std::set<QM_Atom>::iterator
       it = qm_zone.qm.begin(), to = qm_zone.qm.end(); it != to; ++it) {
     if(!std::getline(ofs, line)) {
@@ -357,7 +357,7 @@ int interaction::Gaussian_Worker::parse_forces(const simulation::Simulation& sim
                                             , interaction::QM_Zone& qm_zone) {
   std::string& out = this->param->output_file;
   std::string line;
-  int err;
+  int err = 0;
   
   // Find MM forces - in the form of electric field
   if (sim.param().qmmm.qmmm > simulation::qmmm_mechanical) {

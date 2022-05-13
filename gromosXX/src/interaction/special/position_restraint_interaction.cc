@@ -45,7 +45,7 @@ static int _calculate_position_restraint_interactions
   const math::SArray &bfactor = conf.special().bfactors;
   math::Vec v, f;
 
-  double energy;
+  double energy = 0.0;
 
   math::Periodicity<B> periodicity(conf.current().box);
 
