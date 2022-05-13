@@ -1,0 +1,79 @@
+#!/bin/sh
+
+# first we set some variables
+NAME=`whoami`
+PROGRAM=/cluster/project/igc/fpultar/bin/gromosXX/bin/md_mpi
+SIMULDIR=/cluster/work/igc/fpultar/tutorials/gromos-tutorial/peptide/eq-test-system
+
+# create temporary directory
+WORKDIR=${TMPDIR}/${SIMULDIR}/running
+mkdir -p ${WORKDIR}
+cd       ${WORKDIR}
+
+# set the input files
+TOPO=${SIMULDIR}/../topo/peptide_2Cl_54a7.top
+IUNIT=${SIMULDIR}/eq_peptide_1.imd
+INPUTCRD=${SIMULDIR}/../ion/peptide_2Cl_h2o.cnf
+REFPOS=${SIMULDIR}/peptide_2Cl_h2o.rpr
+POSRESSPEC=${SIMULDIR}/peptide_2Cl_h2o.por
+
+#set the output files
+OUNIT=eq_peptide_1.omd
+OUTPUTCRD=eq_peptide_1.cnf
+OUTPUTTRX=eq_peptide_1.trc
+OUTPUTTRV=eq_peptide_1.trv
+OUTPUTTRF=eq_peptide_1.trf
+OUTPUTTRE=eq_peptide_1.tre
+
+
+MDOK=1
+
+${OPENMPI_ROOT}/bin/mpirun ${PROGRAM} \
+	@topo        ${TOPO} \
+	@conf        ${INPUTCRD} \
+	@input       ${IUNIT} \
+	@posresspec  ${POSRESSPEC} \
+	@refpos      ${REFPOS} \
+	@fin         ${OUTPUTCRD} \
+	@trc         ${OUTPUTTRX} \
+	@trv         ${OUTPUTTRV} \
+	@trf         ${OUTPUTTRF} \
+	@tre         ${OUTPUTTRE}\
+	>            ${OUNIT}
+grep "finished successfully" ${OUNIT} > /dev/null || MDOK=0
+
+uname -a >> ${OUNIT}
+
+# compress some files
+gzip ${OUTPUTTRX}
+gzip ${OUTPUTTRV}
+gzip ${OUTPUTTRF}
+gzip ${OUTPUTTRE}
+
+# copy the files back
+OK=1
+cp ${OUNIT}               ${SIMULDIR} || OK=0
+cp ${OUTPUTCRD}           ${SIMULDIR} || OK=0
+cp ${OUTPUTTRX}.gz        ${SIMULDIR} || OK=0
+cp ${OUTPUTTRV}.gz        ${SIMULDIR} || OK=0
+cp ${OUTPUTTRF}.gz        ${SIMULDIR} || OK=0
+cp ${OUTPUTTRE}.gz        ${SIMULDIR} || OK=0
+
+# clean up after successful run
+if `test ${OK} -eq 0`; then
+  uname -a > mess;
+  echo 'cp failed for eq_peptide, run 1' >> mess;
+  Mail -s "ERROR" ${NAME} < mess;
+  cd ${SIMULDIR};
+else
+  cd ${SIMULDIR};
+  rm ${WORKDIR}/*;
+  rmdir ${WORKDIR};
+fi
+
+# stop if MD was not succesfull
+if `test ${MDOK} -eq 0`; then
+  exit
+fi
+
+# perform last command (usually submit next job)

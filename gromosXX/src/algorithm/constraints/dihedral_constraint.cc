@@ -65,7 +65,7 @@ int algorithm::Shake::dih_constr_iteration(
     // eq 35
     const double cos_phi = math::dot(r52, r63) / (d52 * d63);
 
-    double phi;
+    double phi= 0.0;
     // cos_phi can be >1 or <-1 because of precision limits
     if (cos_phi > 1)
       phi = 0.0;
@@ -154,7 +154,7 @@ int algorithm::Shake::dih_constr_iteration(
         math::Vec am32 = (a3 / m3 - a2 / m2);
 
         double sinphi0 = sin(it->phi);
-        double sin_nom, sin_denom;
+        double sin_nom = 0.0, sin_denom = 0.0;
 
         sin_nom = sinphi0 * d32 * c3 - math::dot(c5, r32);
 
@@ -188,7 +188,7 @@ int algorithm::Shake::dih_constr_iteration(
                 math::cross(r32, r34),
                 b123);
 
-        double nominator, denominator;
+        double nominator = 0.0, denominator = 0.0;
         nominator = cos(it->phi) * c3 - c1234;
         denominator = cos(it->phi) * c4 - d1234;
 

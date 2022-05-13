@@ -155,7 +155,7 @@ int _lincs(topology::Topology & topo,
   _solve_lincs(topo, conf, sim, constr, B, A, rhs, sol, lincs, lincs_order, offset);
   
   // correction for rotational lengthening
-  double p;
+  double p = 0.0;
   unsigned int count = 0;
   
   for(unsigned int i=0; i<num_constr; ++i){

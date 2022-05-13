@@ -110,12 +110,12 @@ void interaction::Perturbed_Nonbonded_Pair
  
   math::Vec r, f, A_f, B_f, rp1, rp2, rpp;
   math::Vec rij, rik, rjj, rjk, rim, rjm, rm;
-  double A_e_lj, A_e_crf, A_de_lj, A_de_crf, 
-    B_e_lj, B_e_crf, B_de_lj, B_de_crf;
-  double e_lj, e_crf, de_lj, de_crf;
-  lj_parameter_struct const *A_lj;
-  lj_parameter_struct const *B_lj;
-  double A_q, B_q, A_qi, A_qj, B_qi, B_qj;
+  double A_e_lj = 0.0, A_e_crf = 0.0, A_de_lj = 0.0, A_de_crf = 0.0, 
+    B_e_lj = 0.0, B_e_crf = 0.0, B_de_lj = 0.0, B_de_crf = 0.0;
+  double e_lj = 0.0, e_crf = 0.0, de_lj = 0.0, de_crf = 0.0;
+  lj_parameter_struct const *A_lj = nullptr;
+  lj_parameter_struct const *B_lj = nullptr;
+  double A_q = 0.0, B_q = 0.0, A_qi = 0.0, A_qj = 0.0, B_qi = 0.0, B_qj = 0.0;
   double alpha_lj=0, alpha_crf=0;
   
   //double A_f_pol[4], B_f_pol[4];
@@ -123,7 +123,7 @@ void interaction::Perturbed_Nonbonded_Pair
   f_pol_vec = A_f_pol_vec = B_f_pol_vec = 0.0;
 
   
-  bool is_perturbed;
+  bool is_perturbed = 0;
 
 
   DEBUG(7, "\tperturbed-pair\t" << it->i << "\t" << it->j);
@@ -321,7 +321,7 @@ void interaction::Perturbed_Nonbonded_Pair
 
       // ANITA
       if (sim.param().precalclam.nr_lambdas && ((sim.steps()  % sim.param().write.free_energy) == 0)){
-        double A_e_rf, B_e_rf, A_de_rf, B_de_rf;
+        double A_e_rf = 0.0, B_e_rf = 0.0, A_de_rf = 0.0, B_de_rf = 0.0;
 
         // determine lambda stepsize from min,max and nr of lambdas
         double lambda_step = (sim.param().precalclam.max_lam -
@@ -442,7 +442,7 @@ void interaction::Perturbed_Nonbonded_Pair
 	DEBUG(7, "perturbed interaction");
         switch(t_interaction_spec::interaction_func){
           case simulation::lj_crf_func : {
-            double A_f1, A_f6, A_f12;
+            double A_f1 = 0.0, A_f6 = 0.0, A_f12 = 0.0;
             
             m_perturbed_nonbonded_term.
             lj_crf_soft_interaction(r, A_lj->c6, A_lj->c12,
@@ -457,8 +457,8 @@ void interaction::Perturbed_Nonbonded_Pair
       // ANITA
             if (sim.param().precalclam.nr_lambdas && ((sim.steps()  % sim.param().write.free_energy) == 0)){
 //        if ( sim.param().precalclam.nr_lambdas ) { 
-          double A_e_lj_l, B_e_lj_l, A_e_crf_l, B_e_crf_l,
-              A_de_lj_l, B_de_lj_l, A_de_crf_l, B_de_crf_l;
+          double A_e_lj_l = 0.0, B_e_lj_l = 0.0, A_e_crf_l = 0.0, B_e_crf_l = 0.0,
+              A_de_lj_l = 0.0, B_de_lj_l = 0.0, A_de_crf_l = 0.0, B_de_crf_l = 0.0;
 
           // determine lambda stepsize from min,max and nr of lambdas
           double lambda_step = (sim.param().precalclam.max_lam - 
@@ -560,7 +560,7 @@ void interaction::Perturbed_Nonbonded_Pair
       else{ // not perturbed
         switch(t_interaction_spec::interaction_func){
           case simulation::lj_crf_func : {
-            double A_f1;
+            double A_f1 = 0.0;
             DEBUG(7, "non-perturbed interaction");
             m_nonbonded_term.
             lj_crf_interaction(r, A_lj->c6, A_lj->c12,
@@ -648,7 +648,7 @@ void interaction::Perturbed_Nonbonded_Pair
         DEBUG(7, "perturbed 1,4 interaction");
         switch(t_interaction_spec::interaction_func){
           case simulation::lj_crf_func : {
-            double A_f1, A_f6, A_f12;
+            double A_f1 = 0.0, A_f6 = 0.0, A_f12 = 0.0;
             
             m_perturbed_nonbonded_term.
 	      lj_crf_soft_interaction(r, A_lj->cs6, A_lj->cs12,
@@ -661,8 +661,8 @@ void interaction::Perturbed_Nonbonded_Pair
       // ANITA
             if (sim.param().precalclam.nr_lambdas && ((sim.steps()  % sim.param().write.free_energy) == 0)){
 //        if ( sim.param().precalclam.nr_lambdas ) { 
-          double A_e_lj_l, B_e_lj_l, A_e_crf_l, B_e_crf_l,
-              A_de_lj_l, B_de_lj_l, A_de_crf_l, B_de_crf_l;
+          double A_e_lj_l = 0.0, B_e_lj_l = 0.0, A_e_crf_l = 0.0, B_e_crf_l = 0.0,
+              A_de_lj_l = 0.0, B_de_lj_l = 0.0, A_de_crf_l = 0.0, B_de_crf_l = 0.0;
 
           // determine lambda stepsize from min,max and nr of lambdas
           double lambda_step = (sim.param().precalclam.max_lam - 
@@ -764,7 +764,7 @@ void interaction::Perturbed_Nonbonded_Pair
       } else { // non perturbed
         switch(t_interaction_spec::interaction_func){
           case simulation::lj_crf_func : {
-            double A_f1;
+            double A_f1 = 0.0;
             DEBUG(7, "non-perturbed 1,4 interaction");
             m_nonbonded_term.
             lj_crf_interaction(r, A_lj->cs6, A_lj->cs12,
@@ -861,7 +861,7 @@ void interaction::Perturbed_Nonbonded_Pair
 				  B_f, B_e_crf, B_de_crf);
       // ANITA
       if (sim.param().precalclam.nr_lambdas && ((sim.steps()  % sim.param().write.free_energy) == 0)){
-        double A_e_rf, B_e_rf, A_de_rf, B_de_rf;
+        double A_e_rf = 0.0, B_e_rf = 0.0, A_de_rf = 0.0, B_de_rf = 0.0;
 
         // determine lambda stepsize from min,max and nr of lambdas
         double lambda_step = (sim.param().precalclam.max_lam -
@@ -961,7 +961,7 @@ void interaction::Perturbed_Nonbonded_Pair
 	DEBUG(7, "perturbed interaction");
         switch(t_interaction_spec::interaction_func){
           case simulation::lj_crf_func : {
-            double B_f1, B_f6, B_f12;
+            double B_f1 = 0.0, B_f6 = 0.0, B_f12 = 0.0;
             
             m_perturbed_nonbonded_term.
             lj_crf_soft_interaction(r, 0, 0,
@@ -975,8 +975,8 @@ void interaction::Perturbed_Nonbonded_Pair
            // ANITA
             if (sim.param().precalclam.nr_lambdas && ((sim.steps()  % sim.param().write.free_energy) == 0)){
 //        if ( sim.param().precalclam.nr_lambdas ) { 
-          double A_e_lj_l, B_e_lj_l, A_e_crf_l, B_e_crf_l,
-              A_de_lj_l, B_de_lj_l, A_de_crf_l, B_de_crf_l;
+          double A_e_lj_l = 0.0, B_e_lj_l = 0.0, A_e_crf_l = 0.0, B_e_crf_l = 0.0,
+              A_de_lj_l = 0.0, B_de_lj_l = 0.0, A_de_crf_l = 0.0, B_de_crf_l = 0.0;
 
           // determine lambda stepsize from min,max and nr of lambdas
           double lambda_step = (sim.param().precalclam.max_lam -
@@ -1078,7 +1078,7 @@ void interaction::Perturbed_Nonbonded_Pair
       else{ // not perturbed
         switch(t_interaction_spec::interaction_func){
           case simulation::lj_crf_func : {
-            double B_f1;
+            double B_f1 = 0.0;
             DEBUG(7, "non-perturbed interaction");
             m_nonbonded_term.
             lj_crf_interaction(r, B_lj->c6, B_lj->c12,
@@ -1167,7 +1167,7 @@ void interaction::Perturbed_Nonbonded_Pair
         DEBUG(7, "perturbed 1,4 interaction");
         switch(t_interaction_spec::interaction_func){
           case simulation::lj_crf_func : {
-            double B_f1, B_f6, B_f12;
+            double B_f1 = 0.0, B_f6 = 0.0, B_f12 = 0.0;
             
             m_perturbed_nonbonded_term.
             lj_crf_soft_interaction(r, 0, 0,
@@ -1179,8 +1179,8 @@ void interaction::Perturbed_Nonbonded_Pair
             
           // ANITA
             if (sim.param().precalclam.nr_lambdas && ((sim.steps()  % sim.param().write.free_energy) == 0)){ 
-          double A_e_lj_l, B_e_lj_l, A_e_crf_l, B_e_crf_l,
-              A_de_lj_l, B_de_lj_l, A_de_crf_l, B_de_crf_l;
+          double A_e_lj_l = 0.0, B_e_lj_l = 0.0, A_e_crf_l = 0.0, B_e_crf_l = 0.0,
+              A_de_lj_l = 0.0, B_de_lj_l = 0.0, A_de_crf_l = 0.0, B_de_crf_l = 0.0;
 
           // determine lambda stepsize from min,max and nr of lambdas
           double lambda_step = (sim.param().precalclam.max_lam -
@@ -1291,7 +1291,7 @@ void interaction::Perturbed_Nonbonded_Pair
       } else { // non perturbed
         switch(t_interaction_spec::interaction_func){
           case simulation::lj_crf_func : {
-            double B_f1;
+            double B_f1 = 0.0;
             DEBUG(7, "non-perturbed 1,4 interaction");
             m_nonbonded_term.
 	      lj_crf_interaction(r, B_lj->cs6, B_lj->cs12,

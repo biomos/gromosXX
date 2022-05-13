@@ -142,8 +142,12 @@ void re::replica_exchange_master_2d_s_eoff_eds::receive_from_all_slaves() {
     replicaData[simulationID].pos_info.second = real_pos;
   }
 
+  if (switched){
+    replicaData[simulationID].Vi = replica->conf.old().energies.eds_vi;
+  } else {
+    replicaData[simulationID].Vi = replica->conf.current().energies.eds_vi;
+  }
 
-  replicaData[simulationID].Vi = replica->conf.current().energies.eds_vi;
 
   DEBUG(4,"replica_exchange_master_2d_s_eoff_eds "<< globalThreadID <<":receive_from_all_slaves:\t Master:\n" << "time used for receiving all messages: " << MPI_Wtime() - start
             << " seconds");

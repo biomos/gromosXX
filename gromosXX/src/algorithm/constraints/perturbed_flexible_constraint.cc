@@ -267,7 +267,7 @@ int algorithm::Perturbed_Flexible_Constraint::_iteration
       const double m1 = topo.mass()(it->i);
       const double m2 = topo.mass()(it->j);
       const double mu = (m1*m2)/(m1+m2);
-      double dm1, dm2;
+      double dm1 = 0.0, dm2 = 0.0;
 
       if(topo.is_perturbed(it->i)){
 	dm1 = topo.perturbed_solute().atom(it->i).B_mass() -
@@ -351,7 +351,7 @@ void algorithm::Perturbed_Flexible_Constraint::_calc_distance
 
   //loop over all constraints
   unsigned int k = unsigned(topo.solute().distance_constraints().size());
-  unsigned int com, ir;
+  unsigned int com = 0, ir = 0;
 
   const double dt2 = sim.time_step_size() * sim.time_step_size();
   

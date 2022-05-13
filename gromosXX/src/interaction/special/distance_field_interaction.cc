@@ -42,7 +42,7 @@ static void _update_grid
 
 
 int neighbour(int i, int j, std::vector<int> &ngrid){
-  int n;
+  int n = 0;
   
   switch(j){
     
@@ -121,7 +121,7 @@ static int _calculate_field_restraint_interactions
  util::Virtual_Atom &va_j)
 {
   math::Vec v, f;
-  double energy;
+  double energy = 0.0;
   std::vector<int> &ngrid = conf.special().distancefield.ngrid;
   math::Box &box = conf.current().box;
   double grid = sim.param().distancefield.grid;
@@ -298,7 +298,7 @@ static void _update_grid
 
   // find the gridpoint that is nearest to atom_i. This will be our seed
   math::Box box = conf.current().box;
-  int nx, ny, nz;
+  int nx = 0, ny = 0, nz = 0;
   math::Vec ppos = va_i.pos(conf, topo);
   periodicity.put_into_box(ppos);
 

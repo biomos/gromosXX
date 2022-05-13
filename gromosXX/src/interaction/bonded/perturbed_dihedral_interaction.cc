@@ -56,8 +56,8 @@ static int _calculate_perturbed_dihedral_interactions
   math::Vec rij, rkj, rkl, rlj, rim, rln, rmj, rnk, fi, fj, fk, fl;
   math::Vec A_fi, A_fj, A_fk, A_fl, B_fi, B_fj, B_fk, B_fl;
 
-  double dkj2, dim, dln, ip;
-  double A_energy, B_energy, energy, e_lambda;
+  double dkj2 = 0.0, dim = 0.0, dln = 0.0, ip = 0.0;
+  double A_energy = 0.0, B_energy = 0.0, energy = 0.0, e_lambda = 0.0;
 
   math::Periodicity<B> periodicity(conf.current().box);
 

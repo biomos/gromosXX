@@ -274,10 +274,8 @@ int interaction::XTB_Worker::process_output(topology::Topology& topo
     }
   }
 
-  int err;
-
   // parse energy
-  err = this->parse_energy(qm_zone);
+  int err = this->parse_energy(qm_zone);
   if (err) return err;
 
   // parse QM gradients
@@ -301,7 +299,7 @@ int interaction::XTB_Worker::process_output(topology::Topology& topo
 }
 
 int interaction::XTB_Worker::parse_energy(interaction::QM_Zone& qm_zone) const {
-  double energy; // energy will live here
+  double energy = 0.0; // energy will live here
   xtb_getEnergy(this->env, this->res, &energy);
   if (xtb_checkEnvironment(this->env)) {
     xtb_showEnvironment(this->env, NULL);

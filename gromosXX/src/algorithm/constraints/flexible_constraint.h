@@ -495,7 +495,7 @@ void algorithm::Flexible_Constraint::_calc_distance
 
   //loop over all constraints
   unsigned int k = 0;
-  unsigned int com, ir;
+  unsigned int com = 0, ir = 0;
   
   for(std::vector<topology::two_body_term_struct>::const_iterator
 	it = topo.solute().distance_constraints().begin(),
@@ -526,7 +526,7 @@ void algorithm::Flexible_Constraint::_calc_distance
     DEBUG(10, "red mass = " << red_mass << "   dt2 = " << dt2);
       
     // calculate the force on constraint k
-    double force_on_constraint;
+    double force_on_constraint = 0.0;
 
     //**************************************************
     // velocities along constraints ???

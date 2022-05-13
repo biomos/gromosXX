@@ -32,7 +32,7 @@ int interaction::Adde_Reweighting::calculate_interactions
  simulation::Simulation & sim)
 { 
   unsigned int eg=sim.param().addecouple.adc_index()[0].eg;
-  double vhl=0, evhl;
+  double vhl=0, evhl = 0.0;
   //int not_adde;
   conf.special().adde.vhh=conf.current().energies.lj_energy[eg][eg]+
           conf.current().energies.crf_energy[eg][eg];

@@ -52,7 +52,7 @@ void interaction::QM_Zone::clear() {
 int interaction::QM_Zone::init(const topology::Topology& topo, 
                                const configuration::Configuration& conf, 
                                const simulation::Simulation& sim) {
-  int err;
+  int err = 0;
   
   DEBUG(15,"Getting QM atoms");
   if ((err = this->get_qm_atoms(topo, conf, sim)))
@@ -503,7 +503,7 @@ int interaction::QM_Zone::gather_chargegroups(const topology::Topology& topo,
       } // for cgs in the range
       return 0;
     }; // lambda cg_cogs_loop
-    int err;
+    int err = 0;
     DEBUG(15, "Iterating over solute cgs");
     err = cg_cogs_loop(0, num_solute_cg, solute_cgs);
     if (err) return err;
@@ -575,7 +575,7 @@ int interaction::QM_Zone::_get_buffer_atoms(const topology::Topology& topo,
   /** Here we need to iterate over all buffer atoms and see, if they are within the
    * adaptive buffer cutoff
    */
-  int err;
+  int err = 0;
   // Firstly remove buffer atoms from the QM set
   DEBUG(15, "Firstly removing the old buffer atoms");
   for (std::set<QM_Atom>::const_iterator qm_it = this->qm.begin();
@@ -656,7 +656,7 @@ int interaction::QM_Zone::_get_mm_atoms(const topology::Topology& topo,
                                         const configuration::Configuration& conf, 
                                         const simulation::Simulation& sim)
   {
-  int err;
+  int err = 0;
   math::Periodicity<B> periodicity(conf.current().box);
   DEBUG(15, "Boundary type: " << conf.boundary_type);
   // MM link atoms need to be always gathered

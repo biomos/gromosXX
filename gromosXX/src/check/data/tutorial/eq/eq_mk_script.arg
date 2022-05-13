@@ -1,0 +1,12 @@
+@sys		eq_peptide
+@bin	        /cluster/project/igc/fpultar/bin/gromosXX/bin/md_mpi
+@dir	        /cluster/work/igc/fpultar/tutorials/gromos-tutorial/peptide/eq
+@files
+  topo		../topo/peptide_2Cl_54a7.top
+  input		equilibration.imd
+  coord		../ion/peptide_2Cl_h2o.cnf
+  posresspec	peptide_2Cl_h2o.por
+  refpos        peptide_2Cl_h2o.rpr
+@template       mk_script.16.procs.omp.lib
+@version        md++
+@joblist        equilibration.jobs

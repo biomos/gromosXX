@@ -22,7 +22,7 @@ io::getline(
 	    const char& comm
 	    )
 {
-  std::string::size_type ii;
+  std::string::size_type ii = 0;
 
   while (is.good()) {
     std::getline(is, s, sep);

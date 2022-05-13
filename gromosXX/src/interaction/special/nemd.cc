@@ -123,7 +123,7 @@ calculate_interactions(topology::Topology& topo,
      * 
      */
     
-    int prop_vs_method;
+    int prop_vs_method = 0;
     if (sim.param().nemd.property == 0){
       if (sim.param().nemd.method == 0)
         prop_vs_method = 0;

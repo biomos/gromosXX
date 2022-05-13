@@ -104,7 +104,7 @@ void algorithm::NoseHoover_Thermostat
 
       DEBUG(7, "pre-scale ekin: " << b_it->ekin);
 
-      double free_temp;
+      double free_temp = 0.0;
 
       // small flexible constraints hack!
       if (sim.param().constraint.solute.algorithm == simulation::constr_flexshake){
@@ -160,7 +160,7 @@ void algorithm::NoseHoover_Thermostat
 
       DEBUG(7, "pre-scale ekin: " << b_it->ekin);
 
-      double free_temp;
+      double free_temp = 0.0;
 
       // small flexible constraints hack!
       if (sim.param().constraint.solute.algorithm == simulation::constr_flexshake){

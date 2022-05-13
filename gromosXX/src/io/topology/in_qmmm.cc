@@ -915,7 +915,7 @@ void io::In_QMMM::read(topology::Topology& topo,
                 "In_QMMM", io::message::error);
       }
       else {
-        unsigned int hamiltonian, verbosity;
+        unsigned int hamiltonian = 0, verbosity = 0;
         std::string line(buffer[1]);
         _lineStream.clear();
         _lineStream.str(line);
@@ -944,7 +944,7 @@ void io::In_QMMM::read(topology::Topology& topo,
               "In_QMMM", io::message::error);
     }
     else {
-      double caplen;
+      double caplen = 0.0;
       std::string line(*(buffer.begin() + 1));
       _lineStream.clear();
       _lineStream.str(line);
@@ -974,7 +974,7 @@ void io::In_QMMM::read_elements(const topology::Topology& topo
   // Strip away the last newline character
   bstr.pop_back();
   _lineStream.str(bstr);
-  unsigned Z;
+  unsigned Z = 0;
   std::string element;
   while(!_lineStream.eof()) {
     _lineStream >> Z >> element;
@@ -1071,9 +1071,9 @@ void io::In_QMMM::read_iac_elements(topology::Topology& topo
     // Strip away the last newline character
     bstr.pop_back();
     _lineStream.str(bstr);
-    unsigned int iac;
+    unsigned int iac = 0;
     std::string atomic_symbol; // unused
-    unsigned int atomic_number;
+    unsigned int atomic_number = 0;
     while(!_lineStream.eof()) {
       _lineStream >> iac >> atomic_symbol >> atomic_number;
       if (_lineStream.fail()) {
@@ -1200,7 +1200,7 @@ void io::In_QMMM::read_zone(topology::Topology& topo
   _lineStream.clear();
   _lineStream.str(line);
 
-  int charge, spin_mult;
+  int charge = 0, spin_mult = 0;
   
   _lineStream >> charge
               >> spin_mult;
@@ -1222,7 +1222,7 @@ void io::In_QMMM::read_zone(topology::Topology& topo
   }
   // Count number of electrons and check consistency with charge and multiplicity
   int num_elec = -charge;
-  unsigned qmi, qmz, qmli;
+  unsigned qmi = 0, qmz = 0, qmli = 0;
   for (std::vector<std::string>::const_iterator it = buffer.begin() + 2
                                               , to = buffer.end() - 1
                                               ; it != to; ++it) {

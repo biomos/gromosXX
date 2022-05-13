@@ -51,7 +51,7 @@ int interaction::Turbomole_Worker::process_input(const topology::Topology& topo
                                              , const interaction::QM_Zone& qm_zone) {
   if (this->chdir(this->param->working_directory) != 0) return 1;
   std::ofstream ifs;
-  int err;
+  int err = 0;
   err = this->open_input(ifs, this->param->input_coordinate_file);
   if (err) return err;
   
@@ -184,7 +184,7 @@ int interaction::Turbomole_Worker::process_output(topology::Topology& topo
                                              , simulation::Simulation& sim
                                              , interaction::QM_Zone& qm_zone) {
   std::ifstream ofs;
-  int err;
+  int err = 0;
 
   err = this->open_output(ofs, this->param->output_energy_file);
   if (err) return err;
@@ -295,7 +295,7 @@ int interaction::Turbomole_Worker::parse_energy(std::ifstream& ofs
     if (line.find("$energy") != std::string::npos) {
       std::getline(ofs, line);
       std::istringstream iss(line);
-      int dummy;
+      int dummy = 0;
       iss >> dummy >> qm_zone.QM_energy();
       if (iss.fail()) {
         std::ostringstream msg;

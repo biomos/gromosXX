@@ -269,7 +269,7 @@ void re::replica_exchange_base_interface::execute_swap(const unsigned int partne
 double re::replica_exchange_base_interface::calc_probability(const unsigned int partnerReplicaMasterThreadID) {
 
   DEBUG(1,"\n\nreplica "<<globalThreadID<<":replica_exchange_base_interface: CALC_PROBABILITY by ID:" << simulationID << "\n");
-  double delta;
+  double delta = 0.0;
   const double b1 = 1.0 / (math::k_Boltzmann * T);
   const double b2 = 1.0 / (math::k_Boltzmann * replica->sim.param().replica.temperature[partnerReplicaMasterThreadID % replica->sim.param().replica.num_T]);
 
@@ -286,7 +286,12 @@ double re::replica_exchange_base_interface::calc_probability(const unsigned int 
     DEBUG(1,"\n\nreplica_exchange_base_interface: CALC_PROBABILITY after Recv\n");
 #endif
     epot_partner = energies[0];
+
+    //DEBUG
+    DEBUG(7, "replica "<<globalThreadID<<" Exchange: E1" << epot<< "\n");
+    DEBUG(7, "replica "<<globalThreadID<<" Exchange: E2" << epot_partner<< "\n");
     delta = (b1 - b2)*(epot_partner - epot); //*  (E21 - E11=
+
   } else {
     // 2D formula
     /*
@@ -310,13 +315,11 @@ double re::replica_exchange_base_interface::calc_probability(const unsigned int 
     // store this as the partner energy
     epot_partner = E21;
 
-    // Chris: I think this is wrong
-    // delta = b1 * (E22 - E11) - b2 * (E21 - E12);
-    //std::cerr << "b1: " << b1 << " b2: " << b2 << std::endl;
-    //std::cerr << "E11: " << E11 << " E22: " << E22 << std::endl;
-    //std::cerr << "E21: " << E21 << " E12: " << E12 << std::endl;
-    DEBUG(8,"\nreplica_exchange_base_interface: CALC_PROBABILITY - E11 "<<E11 <<"E12 "<<E12 <<"E21 "<<E21 <<"E22"<< E22 << "\n");
-    DEBUG(8,"replica_exchange_base_interface: CALC_PROBABILITY - b1 "<<b1 <<" b2 "<<b2<< "\n");
+    //DEBUG
+    DEBUG(7, "\n\nb1: " << b1 << " b2: " << b2 << std::endl);
+    DEBUG(7, "replica "<<globalThreadID<<" Exchange:E11: " << E11 << " E22: " << E22 << std::endl);
+    DEBUG(7, "replica "<<globalThreadID<<" Exchange: E21: " << E21 << " E12: " << E12 << std::endl<<std::endl);
+
 
     delta = b1 * (E12 - E11) - b2 * (E22 - E21);
   }

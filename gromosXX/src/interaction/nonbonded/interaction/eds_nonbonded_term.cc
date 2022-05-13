@@ -15,7 +15,7 @@
  */
 inline void interaction::Eds_Nonbonded_Term
 ::init(simulation::Simulation const &sim) {
-  double crf, crf_cut;
+  double crf = 0.0, crf_cut = 0.0;
   m_crf_cut.clear();
   m_crf.clear();
   cgrain_eps.clear();

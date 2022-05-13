@@ -85,7 +85,7 @@ int interaction::Extended_Grid_Pairlist_Algorithm::init
     const int Ncell = m_grid.Na * m_grid.Nb * m_grid.Nc;
     const int N = m_grid.Na * m_grid.Nb;
 
-    double P;
+    double P = 0.0;
     if(sim.param().pairlist.atomic_cutoff)
       P = topo.num_atoms();
     else

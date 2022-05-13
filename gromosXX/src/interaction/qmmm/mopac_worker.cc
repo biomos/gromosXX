@@ -270,7 +270,7 @@ int interaction::MOPAC_Worker::process_input(const topology::Topology& topo
                                          , const interaction::QM_Zone& qm_zone)
   {
   std::ofstream ifs;
-  int err;
+  int err = 0;
   // First do MOPAC input file
   err = this->open_input(ifs, this->param->input_file);
   if (err) return err;
@@ -468,7 +468,7 @@ int interaction::MOPAC_Worker::process_output(topology::Topology& topo
                                         , simulation::Simulation& sim
                                         , interaction::QM_Zone& qm_zone) {
   std::ifstream ofs;
-  int err;
+  int err = 0;
 
   err = this->open_output(ofs, this->param->output_aux_file);
   if (err) return err;

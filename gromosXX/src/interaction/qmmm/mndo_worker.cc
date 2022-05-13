@@ -163,7 +163,7 @@ int interaction::MNDO_Worker::process_input(const topology::Topology& topo
                                         , const interaction::QM_Zone& qm_zone)
   {
   std::ofstream ifs;
-  int err;
+  int err = 0;
   err = this->open_input(ifs, this->param->input_file);
   if (err) return err;
   std::string header(this->param->input_header);
@@ -260,7 +260,7 @@ int interaction::MNDO_Worker::process_output(topology::Topology& topo
                                         , simulation::Simulation& sim
                                         , interaction::QM_Zone& qm_zone) {
   std::ifstream ofs;
-  int err;
+  int err = 0;
   err = this->open_output(ofs, this->param->output_file);
   if (err) return err;
   
@@ -425,7 +425,7 @@ int interaction::MNDO_Worker::parse_coordinates(std::ifstream& ofs, interaction:
     return 1;
   }
   // Parse coordinates lines
-  int dummy;
+  int dummy = 0;
   for(std::set<QM_Atom>::iterator
       it = qm_zone.qm.begin(), to = qm_zone.qm.end(); it != to; ++it) {
     if(!std::getline(ofs, line)) {
@@ -503,7 +503,7 @@ int interaction::MNDO_Worker::parse_gradients(const simulation::Simulation& sim
                                             , interaction::QM_Zone& qm_zone) {
   std::string& out_grad = this->param->output_gradient_file;
   std::string line;
-  int err;
+  int err = 0;
   
   {
     // Find QM gradients
@@ -594,7 +594,7 @@ int interaction::MNDO_Worker::parse_gradient(std::ifstream& ofs,
     return 1;
   }
   std::istringstream iss(line);
-  int dummy;
+  int dummy = 0;
   iss >> dummy >> dummy >> force(0) >> force(1) >> force(2);
   if (ofs.fail()) {
     std::ostringstream msg;

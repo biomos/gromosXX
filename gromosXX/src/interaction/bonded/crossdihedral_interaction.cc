@@ -49,8 +49,8 @@ static int _calculate_crossdihedral_interactions(topology::Topology & topo,
   math::Vec rcb, rcd, rab, rgf, rgh, ref, rmb, rmf, rng, rnc, ram, rdn, rem, rgn;
   math::Vec rdb, rhf;
   math::Vec fa, fb, fc, fd, fe, ff, fg, fh;
-  double dcb2, dgf2, dmb2, dmf2, dnc2, dng2, dam, ddn, ap, dem, dgn, ep, dcb, dgf;
-  double energy;
+  double dcb2 = 0.0, dgf2 = 0.0, dmb2 = 0.0, dmf2 = 0.0, dnc2 = 0.0, dng2 = 0.0, dam = 0.0, ddn = 0.0, ap = 0.0, dem = 0.0, dgn = 0.0, ep = 0.0, dcb = 0.0, dgf = 0.0;
+  double energy = 0.0;
   
   math::Periodicity<B> periodicity(conf.current().box);
 

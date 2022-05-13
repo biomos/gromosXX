@@ -20,7 +20,7 @@ inline void interaction::Nonbonded_Term
      , simulation::interaction_func_enum int_func) {
   if (int_func == simulation::default_func)
     int_func = sim.param().force.interaction_function;
-  double cut3i, crf, crf_cut3i, crf_2cut3i, crf_cut;
+  double cut3i = 0.0, crf = 0.0, crf_cut3i = 0.0, crf_2cut3i = 0.0, crf_cut = 0.0;
   m_cut3i.clear();
   m_crf.clear();
   m_crf_cut3i.clear();
@@ -301,8 +301,8 @@ inline void interaction::Nonbonded_Term
   const double ai_dist = charge_width_i * dist;
 
   e_lj = (c12_dist6i - c6) * dist6i;
-  double eta;
-  double d_eta;
+  double eta = 0.0;
+  double d_eta = 0.0;
   interaction::Lattice_Sum::charge_shape_switch(charge_shape, ai_dist, eta, d_eta);
   DEBUG(14, "eta: " << eta << " d_eta: " << d_eta);
   e_ls = q_eps * disti * eta;
@@ -329,8 +329,8 @@ inline void interaction::Nonbonded_Term
   const double disti = 1.0 / dist;
   const double ai_dist = charge_width_i * dist;
 
-  double eta;
-  double d_eta;
+  double eta = 0.0;
+  double d_eta = 0.0;
   interaction::Lattice_Sum::charge_shape_switch(charge_shape, ai_dist, eta, d_eta);
   DEBUG(14, "eta: " << eta << " d_eta: " << d_eta);
   e_ls = q_eps * disti * (eta - 1.0);

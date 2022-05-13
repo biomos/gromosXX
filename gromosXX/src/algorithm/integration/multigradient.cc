@@ -163,7 +163,7 @@ std::string algorithm::Multi_Gradient::Curve::plot_ascii(double start_time, doub
   double spread = max_val - min_val;
 
   for(unsigned int x = 0; x < width; ++x) {
-    int y;
+    int y = 0;
     if (spread)
       y = int(height * (values[x] - min_val) / spread);
     else
@@ -333,7 +333,7 @@ int algorithm::Multi_Gradient
   for(std::vector<algorithm::Multi_Gradient::Curve*>::const_iterator it = curves.begin(),
             to = curves.end(); it != to; ++it) {
     std::string name;
-    int index;
+    int index = 0;
     parse_var((*it)->variable, name, index);
 
     if (name == "TEMP0") {
@@ -364,7 +364,7 @@ int algorithm::Multi_Gradient
 {
 
   for(unsigned int i = 0; i < sim.param().multigradient.variable.size(); ++i) {
-    algorithm::Multi_Gradient::Curve * c;
+    algorithm::Multi_Gradient::Curve * c = nullptr;
     
     // check
     if (!check_variable(topo, conf, sim, sim.param().multigradient.variable[i])) {

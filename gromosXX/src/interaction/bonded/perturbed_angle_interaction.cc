@@ -51,7 +51,7 @@ static int _calculate_perturbed_angle_interactions
   math::VArray &force = conf.current().force;
   math::Vec rij, rkj, fi, fj, fk;
 
-  double energy, e_lambda;
+  double energy = 0.0, e_lambda = 0.0;
 
   math::Periodicity<B> periodicity(conf.current().box);
 
