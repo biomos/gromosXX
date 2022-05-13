@@ -5,7 +5,6 @@
 
 #include "../stdheader.h"
 #include "boundary_checks.h"
-
 #include "../util/debug.h"
 
 #undef MODULE

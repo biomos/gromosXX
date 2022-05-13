@@ -15,7 +15,6 @@
 #include "../../util/error.h"
 
 #include "berendsen_barostat.h"
-
 #include "../../math/boundary_checks.h"
 
 #undef MODULE

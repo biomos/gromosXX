@@ -9,7 +9,6 @@
 #include "../util/debug.h"
 
 #include "bs_potentials.h"
-
 #include "bs_vector.h"
 
 #undef MODULE
