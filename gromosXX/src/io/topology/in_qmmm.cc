@@ -900,8 +900,6 @@ void io::In_QMMM::read_zone(topology::Topology& topo
     return;
   }
 
-  // Count number of electrons and check consistency with charge and multiplicity
-  int num_elec = -charge;
   unsigned qmi = 0, qmz = 0, qmli = 0;
   for (std::vector<std::string>::const_iterator it = buffer.begin() + 2
                                               , to = buffer.end() - 1

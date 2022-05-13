@@ -12,7 +12,6 @@
 #include "../../configuration/state_properties.h"
 
 #include "nosehoover_thermostat.h"
-
 #include "../../util/debug.h"
 
 #undef MODULE
