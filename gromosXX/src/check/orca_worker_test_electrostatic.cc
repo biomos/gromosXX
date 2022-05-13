@@ -404,22 +404,22 @@ void Orca_Worker_Test_Electrostatic::init_results_mass() {
 void Orca_Worker_Test_Electrostatic::init_results_temperature() {
   // "current" (step 1)
   results_.ints_[Key::num_temperature_coupling_baths_current]       = 2;
-  results_.doubles_[Key::temperature_total_bath_0_current]          = 2.968677248e+02;
+  results_.doubles_[Key::temperature_total_bath_0_current]          = 2.968675272e+02;
   results_.doubles_[Key::temperature_total_bath_1_current]          = 2.801836889e+02;
-  results_.doubles_[Key::temperature_com_bath_0_current]            = 3.336222763e+02;
+  results_.doubles_[Key::temperature_com_bath_0_current]            = 3.336290580e+02;
   results_.doubles_[Key::temperature_com_bath_1_current]            = 3.798019531e+02;
-  results_.doubles_[Key::temperature_ir_bath_0_current]             = 2.963187086e+02;
+  results_.doubles_[Key::temperature_ir_bath_0_current]             = 2.963184326e+02;
   results_.doubles_[Key::temperature_ir_bath_1_current]             = 2.666979806e+02;
   results_.doubles_[Key::temperature_scaling_factor_bath_0_current] = 1.000019771e+00;
   results_.doubles_[Key::temperature_scaling_factor_bath_1_current] = 1.000014899e+00;
   // "old" (step 2)
   results_.ints_[Key::num_temperature_coupling_baths_old]           = 2;
-  results_.doubles_[Key::temperature_total_bath_0_old]              = 3.837658875e+02;
-  results_.doubles_[Key::temperature_total_bath_1_old]              = 2.791741040e+02;
-  results_.doubles_[Key::temperature_com_bath_0_old]                = 3.314704712e+02;
+  results_.doubles_[Key::temperature_total_bath_0_old]              = 3.837655402e+02;
+  results_.doubles_[Key::temperature_total_bath_1_old]              = 2.791741044e+02;
+  results_.doubles_[Key::temperature_com_bath_0_old]                = 3.314835071e+02;
   results_.doubles_[Key::temperature_com_bath_1_old]                = 3.801787590e+02;
-  results_.doubles_[Key::temperature_ir_bath_0_old]                 = 3.841776103e+02;
-  results_.doubles_[Key::temperature_ir_bath_1_old]                 = 2.655032371e+02;
+  results_.doubles_[Key::temperature_ir_bath_0_old]                 = 3.841771128e+02;
+  results_.doubles_[Key::temperature_ir_bath_1_old]                 = 2.655032375e+02;
   results_.doubles_[Key::temperature_scaling_factor_bath_0_old]     = 1.000023732e+00;
   results_.doubles_[Key::temperature_scaling_factor_bath_1_old]     = 1.000022414e+00;
 }
@@ -451,27 +451,27 @@ void Orca_Worker_Test_Electrostatic::init_results_volume() {
 
 void Orca_Worker_Test_Electrostatic::init_results_pressure() {
   // "current" (step 1)
-  results_.doubles_[Key::pressure_current]                            =  1.774560087e+00;
-  results_.doubles_[Key::virial_current]                              =  3.507492242e+02;
+  results_.doubles_[Key::pressure_current]                            =  1.802914765e+00;
+  results_.doubles_[Key::virial_current]                              =  3.500273180e+02;
   results_.doubles_[Key::molecular_kinetic_energy_current]            =  3.959292823e+02;
-  results_.doubles_[Key::pressure_tensor_0_0_current]                 = -3.087931850e+00;
-  results_.doubles_[Key::pressure_tensor_0_1_current]                 =  8.257587370e+00;
-  results_.doubles_[Key::pressure_tensor_0_2_current]                 = -1.101848872e+01;
-  results_.doubles_[Key::pressure_tensor_1_0_current]                 =  1.307025805e+01;
-  results_.doubles_[Key::pressure_tensor_1_1_current]                 = -2.212711333e+00;
-  results_.doubles_[Key::pressure_tensor_1_2_current]                 = -1.464952771e+01;
-  results_.doubles_[Key::pressure_tensor_2_0_current]                 = -5.037615305e+00;
-  results_.doubles_[Key::pressure_tensor_2_1_current]                 = -6.298825539e+00;
-  results_.doubles_[Key::pressure_tensor_2_2_current]                 =  1.062432344e+01;
-  results_.doubles_[Key::virial_tensor_0_0_current]                   =  5.050716577e+02;
-  results_.doubles_[Key::virial_tensor_0_1_current]                   = -1.937614474e+02;
-  results_.doubles_[Key::virial_tensor_0_2_current]                   =  2.745860522e+02;
-  results_.doubles_[Key::virial_tensor_1_0_current]                   = -3.162913873e+02;
-  results_.doubles_[Key::virial_tensor_1_1_current]                   =  4.637087300e+02;
-  results_.doubles_[Key::virial_tensor_1_2_current]                   =  3.558157852e+02;
-  results_.doubles_[Key::virial_tensor_2_0_current]                   =  1.223138298e+02;
-  results_.doubles_[Key::virial_tensor_2_1_current]                   =  1.432080454e+02;
-  results_.doubles_[Key::virial_tensor_2_2_current]                   =  8.346728497e+01;
+  results_.doubles_[Key::pressure_tensor_0_0_current]                 = -3.093682555e+00;
+  results_.doubles_[Key::pressure_tensor_0_1_current]                 =  8.268917846e+00;
+  results_.doubles_[Key::pressure_tensor_0_2_current]                 = -1.103667867e+01;
+  results_.doubles_[Key::pressure_tensor_1_0_current]                 =  1.309011686e+01;
+  results_.doubles_[Key::pressure_tensor_1_1_current]                 = -2.251838747e+00;
+  results_.doubles_[Key::pressure_tensor_1_2_current]                 = -1.458671234e+01;
+  results_.doubles_[Key::pressure_tensor_2_0_current]                 = -4.996534585e+00;
+  results_.doubles_[Key::pressure_tensor_2_1_current]                 = -6.379765980e+00;
+  results_.doubles_[Key::pressure_tensor_2_2_current]                 =  1.075426560e+01;
+  results_.doubles_[Key::virial_tensor_0_0_current]                   =  5.052180699e+02;
+  results_.doubles_[Key::virial_tensor_0_1_current]                   = -1.940499198e+02;
+  results_.doubles_[Key::virial_tensor_0_2_current]                   =  2.750491660e+02;
+  results_.doubles_[Key::virial_tensor_1_0_current]                   = -3.167969899e+02;
+  results_.doubles_[Key::virial_tensor_1_1_current]                   =  4.647049086e+02;
+  results_.doubles_[Key::virial_tensor_1_2_current]                   =  3.542165144e+02;
+  results_.doubles_[Key::virial_tensor_2_0_current]                   =  1.212679202e+02;
+  results_.doubles_[Key::virial_tensor_2_1_current]                   =  1.452687781e+02;
+  results_.doubles_[Key::virial_tensor_2_2_current]                   =  8.015897545e+01;
   results_.doubles_[Key::molecular_kinetic_energy_tensor_0_0_current] =  4.264533335e+02;
   results_.doubles_[Key::molecular_kinetic_energy_tensor_0_1_current] =  1.647560216e+01;
   results_.doubles_[Key::molecular_kinetic_energy_tensor_0_2_current] = -5.943169643e+00;
@@ -482,36 +482,36 @@ void Orca_Worker_Test_Electrostatic::init_results_pressure() {
   results_.doubles_[Key::molecular_kinetic_energy_tensor_2_1_current] = -1.715919472e+01;
   results_.doubles_[Key::molecular_kinetic_energy_tensor_2_2_current] =  3.539611126e+02;
   // "old" (step 2)
-  results_.doubles_[Key::pressure_old]                            =  1.581469292e+00;
-  results_.doubles_[Key::virial_old]                              =  3.560431584e+02;
-  results_.doubles_[Key::molecular_kinetic_energy_old]            =  3.963071828e+02;
-  results_.doubles_[Key::pressure_tensor_0_0_old]                 = -3.120251261e+00;
-  results_.doubles_[Key::pressure_tensor_0_1_old]                 =  8.399222892e+00;
-  results_.doubles_[Key::pressure_tensor_0_2_old]                 = -1.109642505e+01;
-  results_.doubles_[Key::pressure_tensor_1_0_old]                 =  1.295917267e+01;
-  results_.doubles_[Key::pressure_tensor_1_1_old]                 = -2.700620433e+00;
-  results_.doubles_[Key::pressure_tensor_1_2_old]                 = -1.490663574e+01;
-  results_.doubles_[Key::pressure_tensor_2_0_old]                 = -5.347501517e+00;
-  results_.doubles_[Key::pressure_tensor_2_1_old]                 = -6.223445946e+00;
-  results_.doubles_[Key::pressure_tensor_2_2_old]                 =  1.056527957e+01;
-  results_.doubles_[Key::virial_tensor_0_0_old]                   =  5.061933042e+02;
-  results_.doubles_[Key::virial_tensor_0_1_old]                   = -1.971145922e+02;
-  results_.doubles_[Key::virial_tensor_0_2_old]                   =  2.762657115e+02;
-  results_.doubles_[Key::virial_tensor_1_0_old]                   = -3.132103835e+02;
-  results_.doubles_[Key::virial_tensor_1_1_old]                   =  4.764302609e+02;
-  results_.doubles_[Key::virial_tensor_1_2_old]                   =  3.623069342e+02;
-  results_.doubles_[Key::virial_tensor_2_0_old]                   =  1.298987867e+02;
-  results_.doubles_[Key::virial_tensor_2_1_old]                   =  1.412339313e+02;
-  results_.doubles_[Key::virial_tensor_2_2_old]                   =  8.550591018e+01;
-  results_.doubles_[Key::molecular_kinetic_energy_tensor_0_0_old] =  4.267520698e+02;
-  results_.doubles_[Key::molecular_kinetic_energy_tensor_0_1_old] =  1.672864624e+01;
-  results_.doubles_[Key::molecular_kinetic_energy_tensor_0_2_old] = -6.247980288e+00;
-  results_.doubles_[Key::molecular_kinetic_energy_tensor_1_0_old] =  1.672864624e+01;
-  results_.doubles_[Key::molecular_kinetic_energy_tensor_1_1_old] =  4.076727786e+02;
-  results_.doubles_[Key::molecular_kinetic_energy_tensor_1_2_old] = -1.721427904e+01;
-  results_.doubles_[Key::molecular_kinetic_energy_tensor_2_0_old] = -6.247980288e+00;
-  results_.doubles_[Key::molecular_kinetic_energy_tensor_2_1_old] = -1.721427904e+01;
-  results_.doubles_[Key::molecular_kinetic_energy_tensor_2_2_old] =  3.544966999e+02;
+  results_.doubles_[Key::pressure_old]                            =  1.613723372e+00;
+  results_.doubles_[Key::virial_old]                              =  3.552220291e+02;
+  results_.doubles_[Key::molecular_kinetic_energy_old]            =  3.963072392e+02;
+  results_.doubles_[Key::pressure_tensor_0_0_old]                 = -3.129626137e+00;
+  results_.doubles_[Key::pressure_tensor_0_1_old]                 =  8.388690086e+00;
+  results_.doubles_[Key::pressure_tensor_0_2_old]                 = -1.110619490e+01;
+  results_.doubles_[Key::pressure_tensor_1_0_old]                 =  1.299149964e+01;
+  results_.doubles_[Key::pressure_tensor_1_1_old]                 = -2.664260532e+00;
+  results_.doubles_[Key::pressure_tensor_1_2_old]                 = -1.487290677e+01;
+  results_.doubles_[Key::pressure_tensor_2_0_old]                 = -5.280628076e+00;
+  results_.doubles_[Key::pressure_tensor_2_1_old]                 = -6.148213173e+00;
+  results_.doubles_[Key::pressure_tensor_2_2_old]                 =  1.063505679e+01;
+  results_.doubles_[Key::virial_tensor_0_0_old]                   =  5.064319489e+02;
+  results_.doubles_[Key::virial_tensor_0_1_old]                   = -1.968464027e+02;
+  results_.doubles_[Key::virial_tensor_0_2_old]                   =  2.765144185e+02;
+  results_.doubles_[Key::virial_tensor_1_0_old]                   = -3.140334005e+02;
+  results_.doubles_[Key::virial_tensor_1_1_old]                   =  4.755045847e+02;
+  results_.doubles_[Key::virial_tensor_1_2_old]                   =  3.614481177e+02;
+  results_.doubles_[Key::virial_tensor_2_0_old]                   =  1.281961623e+02;
+  results_.doubles_[Key::virial_tensor_2_1_old]                   =  1.393184302e+02;
+  results_.doubles_[Key::virial_tensor_2_2_old]                   =  8.372955379e+01;
+  results_.doubles_[Key::molecular_kinetic_energy_tensor_0_0_old] =  4.267520302e+02;
+  results_.doubles_[Key::molecular_kinetic_energy_tensor_0_1_old] =  1.672867459e+01;
+  results_.doubles_[Key::molecular_kinetic_energy_tensor_0_2_old] = -6.248016444e+00;
+  results_.doubles_[Key::molecular_kinetic_energy_tensor_1_0_old] =  1.672867459e+01;
+  results_.doubles_[Key::molecular_kinetic_energy_tensor_1_1_old] =  4.076728204e+02;
+  results_.doubles_[Key::molecular_kinetic_energy_tensor_1_2_old] = -1.721436458e+01;
+  results_.doubles_[Key::molecular_kinetic_energy_tensor_2_0_old] = -6.248016444e+00;
+  results_.doubles_[Key::molecular_kinetic_energy_tensor_2_1_old] = -1.721436458e+01;
+  results_.doubles_[Key::molecular_kinetic_energy_tensor_2_2_old] =  3.544968668e+02;
 }
 
 void Orca_Worker_Test_Electrostatic::check_qm_atoms_init() {
