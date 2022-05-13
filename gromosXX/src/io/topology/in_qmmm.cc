@@ -915,7 +915,7 @@ void io::In_QMMM::read(topology::Topology& topo,
                 "In_QMMM", io::message::error);
       }
       else {
-        unsigned int hamiltonian, verbosity;
+        unsigned int hamiltonian = 0, verbosity = 0;
         std::string line(buffer[1]);
         _lineStream.clear();
         _lineStream.str(line);
@@ -1071,9 +1071,9 @@ void io::In_QMMM::read_iac_elements(topology::Topology& topo
     // Strip away the last newline character
     bstr.pop_back();
     _lineStream.str(bstr);
-    unsigned int iac;
+    unsigned int iac = 0;
     std::string atomic_symbol; // unused
-    unsigned int atomic_number;
+    unsigned int atomic_number = 0;
     while(!_lineStream.eof()) {
       _lineStream >> iac >> atomic_symbol >> atomic_number;
       if (_lineStream.fail()) {

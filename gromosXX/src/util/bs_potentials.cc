@@ -616,7 +616,7 @@ double util::BS_Pipe::calcPotential(BS_Vector &bs_pos){
   
   double long_pot = 0.0;
   m_potDerivatives.assign(bs_pos.size(), 0);
-  where_in_potential longitudinal;  
+  where_in_potential longitudinal{};  
   double l_diff = long_dist;
   if (l_diff < 0){
     longitudinal = below_lower;
@@ -641,7 +641,7 @@ double util::BS_Pipe::calcPotential(BS_Vector &bs_pos){
   double outer_cutoff = m_outer_slope * long_dist + m_start.outer_width;
   
   double perp_pot = 0.0;
-  where_in_potential perpendicular;
+  where_in_potential perpendicular{};
   double inner_p_diff = perp_dist - inner_cutoff;
   double outer_p_diff = perp_dist - outer_cutoff;
   if (inner_p_diff < 0){

@@ -1694,7 +1694,7 @@ bool io::In_Configuration::_read_genbox(math::Box &box, double &phi,
     }
   }
 
-  math::boundary_enum conf_bound;
+  math::boundary_enum conf_bound{};
   switch(bound) {
     case -1: conf_bound = math::truncoct; break;
     case 0: conf_bound = math::vacuum; break;

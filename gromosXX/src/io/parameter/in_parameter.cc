@@ -4119,7 +4119,7 @@ void io::In_Parameter::read_LAMBDAS(simulation::Parameter & param,
         int num = block.numlines()-3;
 
         std::string nm;
-        simulation::interaction_lambda_enum j;
+        simulation::interaction_lambda_enum j{};
         int n1 = 0, n2 = 0;
         double a = 0.0, b = 0.0, c = 0.0, d = 0.0, e = 0.0;
         block.get_next_parameter("NTIL", nm, "", "on,off,1,0");
