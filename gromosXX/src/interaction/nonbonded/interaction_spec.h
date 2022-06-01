@@ -25,6 +25,7 @@ namespace interaction
     math::boundary_enum t_boundary = math::rectangular,
     // math::virial_enum t_virial = math::molecular_virial,
     simulation::interaction_func_enum t_interaction_func = simulation::lj_crf_func,
+    simulation::charge_type_enum t_charge_type = simulation::mm_charge,
     bool t_pol_damping = false,
     simulation::efield_site_enum t_efield_site = simulation::ef_atom
   >
@@ -42,7 +43,23 @@ namespace interaction
     static const simulation::interaction_func_enum interaction_func = t_interaction_func;
     static const bool pol_damping = t_pol_damping;
     static const simulation::efield_site_enum efield_site = t_efield_site;
+    static const simulation::charge_type_enum charge_type = t_charge_type;
   };
+
+  /**
+   * @class Polarisation_Interaction_Spec
+   * adapter class for polarisation interaction specifications.
+   */
+  template<
+    math::boundary_enum t_boundary = math::rectangular,
+    simulation::interaction_func_enum t_interaction_func = simulation::lj_crf_func,
+    bool t_pol_damping = false,
+    simulation::efield_site_enum t_efield_site = simulation::ef_atom,
+    simulation::charge_type_enum t_charge_type = simulation::mm_charge
+  >
+  class Polarisation_Interaction_Spec :
+    public Interaction_Spec<t_boundary, t_interaction_func, t_charge_type, t_pol_damping, t_efield_site>
+  {};
 
   /**
    * @class Perturbation_Spec

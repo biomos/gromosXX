@@ -14,7 +14,11 @@
 #define SPLIT_INTERACTION_FUNC(f, bound, ...) \
   switch(sim.param().force.interaction_function){ \
     case simulation::lj_crf_func : \
-      f<Interaction_Spec<bound, simulation::lj_crf_func> >(__VA_ARGS__); \
+      if (!sim.param().qmmm.dynamic_buffer_charges){ \
+        f<Interaction_Spec<bound, simulation::lj_crf_func> >(__VA_ARGS__); \
+      } else { \
+        f<Interaction_Spec<bound, simulation::lj_crf_func, simulation::qm_buffer_charge> >(__VA_ARGS__); \
+      } \
       break; \
     case simulation::lj_ls_func : \
       f<Interaction_Spec<bound, simulation::lj_ls_func> >(__VA_ARGS__); \
@@ -32,20 +36,20 @@
       if (sim.param().polarise.damp) { \
         switch(sim.param().polarise.efield_site) { \
           case simulation::ef_atom : \
-            f<Interaction_Spec<bound, simulation::pol_lj_crf_func, pol_damping_on, simulation::ef_atom > >(__VA_ARGS__); \
+            f<Polarisation_Interaction_Spec<bound, simulation::pol_lj_crf_func, pol_damping_on, simulation::ef_atom > >(__VA_ARGS__); \
             break; \
           case simulation::ef_cos : \
-            f<Interaction_Spec<bound, simulation::pol_lj_crf_func, pol_damping_on, simulation::ef_cos > >(__VA_ARGS__); \
+            f<Polarisation_Interaction_Spec<bound, simulation::pol_lj_crf_func, pol_damping_on, simulation::ef_cos > >(__VA_ARGS__); \
             break; \
           default: io::messages.add("Electric field calculation site not implemented.", "innerloop_template", io::message::error); \
         } \
       } else { \
         switch(sim.param().polarise.efield_site) { \
           case simulation::ef_atom : \
-            f<Interaction_Spec<bound, simulation::pol_lj_crf_func, pol_damping_off, simulation::ef_atom > >(__VA_ARGS__); \
+            f<Polarisation_Interaction_Spec<bound, simulation::pol_lj_crf_func, pol_damping_off, simulation::ef_atom > >(__VA_ARGS__); \
             break; \
           case simulation::ef_cos : \
-            f<Interaction_Spec<bound, simulation::pol_lj_crf_func, pol_damping_off, simulation::ef_cos > >(__VA_ARGS__); \
+            f<Polarisation_Interaction_Spec<bound, simulation::pol_lj_crf_func, pol_damping_off, simulation::ef_cos > >(__VA_ARGS__); \
             break; \
           default: io::messages.add("Electric field calculation site not implemented.", "innerloop_template", io::message::error); \
         } \
@@ -55,20 +59,20 @@
       if (sim.param().polarise.damp) { \
         switch(sim.param().polarise.efield_site) { \
           case simulation::ef_atom : \
-            f<Interaction_Spec<bound, simulation::pol_off_lj_crf_func, pol_damping_on, simulation::ef_atom > >(__VA_ARGS__); \
+            f<Polarisation_Interaction_Spec<bound, simulation::pol_off_lj_crf_func, pol_damping_on, simulation::ef_atom > >(__VA_ARGS__); \
             break; \
           case simulation::ef_cos : \
-            f<Interaction_Spec<bound, simulation::pol_off_lj_crf_func, pol_damping_on, simulation::ef_cos > >(__VA_ARGS__); \
+            f<Polarisation_Interaction_Spec<bound, simulation::pol_off_lj_crf_func, pol_damping_on, simulation::ef_cos > >(__VA_ARGS__); \
             break; \
           default: io::messages.add("Electric field calculation site not implemented.", "innerloop_template", io::message::error); \
         } \
       } else { \
         switch(sim.param().polarise.efield_site) { \
           case simulation::ef_atom : \
-            f<Interaction_Spec<bound, simulation::pol_off_lj_crf_func, pol_damping_off, simulation::ef_atom > >(__VA_ARGS__); \
+            f<Polarisation_Interaction_Spec<bound, simulation::pol_off_lj_crf_func, pol_damping_off, simulation::ef_atom > >(__VA_ARGS__); \
             break; \
           case simulation::ef_cos : \
-            f<Interaction_Spec<bound, simulation::pol_off_lj_crf_func, pol_damping_off, simulation::ef_cos > >(__VA_ARGS__); \
+            f<Polarisation_Interaction_Spec<bound, simulation::pol_off_lj_crf_func, pol_damping_off, simulation::ef_cos > >(__VA_ARGS__); \
             break; \
           default: io::messages.add("Electric field calculation site not implemented.", "innerloop_template", io::message::error); \
         } \
@@ -149,20 +153,20 @@
       if (sim.param().polarise.damp) { \
         switch(sim.param().polarise.efield_site) { \
           case simulation::ef_atom : \
-            f<Interaction_Spec<bound, simulation::pol_lj_crf_func, pol_damping_on, simulation::ef_atom >, pertspec>(__VA_ARGS__); \
+            f<Polarisation_Interaction_Spec<bound, simulation::pol_lj_crf_func, pol_damping_on, simulation::ef_atom >, pertspec>(__VA_ARGS__); \
             break; \
           case simulation::ef_cos : \
-            f<Interaction_Spec<bound, simulation::pol_lj_crf_func, pol_damping_on, simulation::ef_cos >, pertspec>(__VA_ARGS__); \
+            f<Polarisation_Interaction_Spec<bound, simulation::pol_lj_crf_func, pol_damping_on, simulation::ef_cos >, pertspec>(__VA_ARGS__); \
             break; \
           default: io::messages.add("Electric field calculation site not implemented.", "innerloop_template", io::message::error); \
         } \
       } else { \
         switch(sim.param().polarise.efield_site) { \
           case simulation::ef_atom : \
-            f<Interaction_Spec<bound, simulation::pol_lj_crf_func, pol_damping_off, simulation::ef_atom >, pertspec>(__VA_ARGS__); \
+            f<Polarisation_Interaction_Spec<bound, simulation::pol_lj_crf_func, pol_damping_off, simulation::ef_atom >, pertspec>(__VA_ARGS__); \
             break; \
           case simulation::ef_cos : \
-            f<Interaction_Spec<bound, simulation::pol_lj_crf_func, pol_damping_off, simulation::ef_cos >, pertspec>(__VA_ARGS__); \
+            f<Polarisation_Interaction_Spec<bound, simulation::pol_lj_crf_func, pol_damping_off, simulation::ef_cos >, pertspec>(__VA_ARGS__); \
             break; \
           default: io::messages.add("Electric field calculation site not implemented.", "innerloop_template", io::message::error); \
         } \
@@ -172,20 +176,20 @@
       if (sim.param().polarise.damp) { \
         switch(sim.param().polarise.efield_site) { \
           case simulation::ef_atom : \
-            f<Interaction_Spec<bound, simulation::pol_off_lj_crf_func, pol_damping_on, simulation::ef_atom >, pertspec>(__VA_ARGS__); \
+            f<Polarisation_Interaction_Spec<bound, simulation::pol_off_lj_crf_func, pol_damping_on, simulation::ef_atom >, pertspec>(__VA_ARGS__); \
             break; \
           case simulation::ef_cos : \
-            f<Interaction_Spec<bound, simulation::pol_off_lj_crf_func, pol_damping_on, simulation::ef_cos >, pertspec>(__VA_ARGS__); \
+            f<Polarisation_Interaction_Spec<bound, simulation::pol_off_lj_crf_func, pol_damping_on, simulation::ef_cos >, pertspec>(__VA_ARGS__); \
             break; \
           default: io::messages.add("Electric field calculation site not implemented.", "innerloop_template", io::message::error); \
         } \
       } else { \
         switch(sim.param().polarise.efield_site) { \
           case simulation::ef_atom : \
-            f<Interaction_Spec<bound, simulation::pol_off_lj_crf_func, pol_damping_off, simulation::ef_atom >, pertspec>(__VA_ARGS__); \
+            f<Polarisation_Interaction_Spec<bound, simulation::pol_off_lj_crf_func, pol_damping_off, simulation::ef_atom >, pertspec>(__VA_ARGS__); \
             break; \
           case simulation::ef_cos : \
-            f<Interaction_Spec<bound, simulation::pol_off_lj_crf_func, pol_damping_off, simulation::ef_cos >, pertspec>(__VA_ARGS__); \
+            f<Polarisation_Interaction_Spec<bound, simulation::pol_off_lj_crf_func, pol_damping_off, simulation::ef_cos >, pertspec>(__VA_ARGS__); \
             break; \
           default: io::messages.add("Electric field calculation site not implemented.", "innerloop_template", io::message::error); \
         } \

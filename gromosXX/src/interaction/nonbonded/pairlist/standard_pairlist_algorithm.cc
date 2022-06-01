@@ -260,7 +260,15 @@ void interaction::Standard_Pairlist_Algorithm::_update_cg
     
     for( ; cg2 < num_cg; ++cg2){
 
-      DEBUG(10, "cg2 = " << cg2);
+      DEBUG(10, "cg2 = " << cg2);// If cg is QM
+      if (Pairlist_Algorithm::qm_excluded(
+            topo, qmmm, topo.chargegroup(cg1), topo.chargegroup(cg2))) 
+        {
+        DEBUG(9, "Skipping cgs " << cg1 << " and " << cg2);
+        DEBUG(9, " - atoms " << topo.chargegroup(cg1) << "-" << topo.chargegroup(cg1+1)-1);
+        DEBUG(9, " - atoms " << topo.chargegroup(cg2) << "-" << topo.chargegroup(cg2+1)-1);
+        continue;
+      }
       
       assert(m_cg_cog.size() > unsigned(cg1));
     

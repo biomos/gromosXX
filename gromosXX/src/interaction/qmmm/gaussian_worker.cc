@@ -159,6 +159,7 @@ int interaction::Gaussian_Worker::system_call() {
   }
   return 0;
 }
+
 int interaction::Gaussian_Worker::read_output(topology::Topology& topo
                                         , configuration::Configuration& conf
                                         , simulation::Simulation& sim

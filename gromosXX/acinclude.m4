@@ -403,11 +403,12 @@ AC_DEFUN([AM_PATH_CUDA],[
   : ${NVCC="nvcc"}
   : ${NVCCFLAGS="-arch sm_30"}
   AC_ARG_VAR(NVCC,
-    [ NVCC       nvcc compiler path])
+    [nvcc compiler path])
   AC_ARG_VAR(NVCCFLAGS,
-    [ NVCCFLAGS       nvcc compiler flags])
+    [nvcc compiler flags])
   AC_ARG_WITH(cuda,
-    [  --with-cuda=DIR         CUDA library directory to use],
+      [AS_HELP_STRING([--with-cuda=DIR],
+              [CUDA library directory to use])],
     [
     if test "x${withval}" != xno; then
       with_cuda=yes
@@ -462,6 +463,44 @@ EOF
   AS_IF([test "x$enable_openmp" != xyes && test "x$with_cuda" = xyes],
           [AC_MSG_ERROR([CUDA without OpenMP is not supported.])])
   AM_CONDITIONAL([WITH_CUDA], [test x$with_cuda = xyes])
+])
+
+dnl allow for schnetpack
+AC_DEFUN([AM_WITH_SCHNETPACK],[
+  AC_ARG_VAR(PYTHON,
+    [python interpreter path])
+  AC_ARG_VAR(PYFLAGS,
+      [pybind11-related C preprocessor flags])
+  AC_ARG_VAR(PYLDFLAGS,
+      [pybind11-related linker flag])
+      
+  AC_ARG_ENABLE(schnetpack,
+      [AS_HELP_STRING([--enable-schnetpack],
+              [enable schnetpack support using pybind11])],
+      [
+        dnl set default values
+        : ${PYTHON="python3"}
+        : ${PYFLAGS="$(${PYTHON} -m pybind11 --includes)"}
+        dnl for Python <3.8:
+        : ${PYLDFLAGS="$(${PYTHON}-config --ldflags)"}
+        dnl for Python >=3.8 : ${PYLDFLAGS="$(${PYTHON}-config --ldflags --embed)"}
+        AC_MSG_CHECKING([for pybind11])
+        working_pb11=no
+        cat>conftest.cc<<EOF
+        #include <pybind11/embed.h>
+        int main() { pybind11::scoped_interpreter g; }
+EOF
+        if ${CXX} ${MY_CXXFLAGS} ${PYFLAGS} conftest.cc -o conftest.o ${PYLDFLAGS} && test -f conftest.o; then
+          working_pb11=yes
+        fi
+        rm -f conftest.cc conftest.o
+        AC_MSG_RESULT([${working_pb11}])
+        if test "x${working_pb11}" = xno; then
+          AC_MSG_ERROR([C++ compiler failed to link pybind11])
+        fi
+   		  AC_DEFINE([HAVE_PYBIND11],[1],[C++ Python Binding Library])
+      ]
+  )
 ])
 
 dnl check for lib CCP4/Clipper

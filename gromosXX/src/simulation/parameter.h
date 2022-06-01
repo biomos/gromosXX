@@ -454,6 +454,21 @@ namespace simulation
   };
 
   /**
+   * @enum charge_type_enum
+   * use standard MM charges or special charge of QM buffer atoms
+   */
+  enum charge_type_enum {
+    /**
+     * standard MM charge
+     */
+    mm_charge = 0, 
+    /**
+     * special charge calculation for QM buffer atoms
+     */
+    qm_buffer_charge = 1
+  };
+  
+  /**
    * @enum randomgenerator_enum
    * determines which random number generator is used
    */
@@ -824,14 +839,68 @@ namespace simulation
      * use DFTB
      */
     qm_dftb = 2,
-      /**
-       * use MOPAC
-       */
+    /**
+     * use MOPAC
+     */
     qm_mopac = 3,
-      /**
-       * use Gaussian
-       */
-    qm_gaussian = 4
+    /**
+     * use Gaussian
+     */
+    qm_gaussian = 4,
+    /**
+     * use Schnetpack NN
+     */
+    qm_nn = 5
+  };
+
+  /**
+   * @enum qmmm_nn_device_enum
+   * which device to run NN on
+   */
+  enum qm_nn_device_enum {
+    /**
+     * Try CUDA, otherwise CPU
+     */
+    nn_device_auto = 0,
+    /**
+     * use CUDA
+     */
+    nn_device_cuda = 1,
+    /**
+     * use CPU
+     */
+    nn_device_cpu = 2
+  };
+
+  /**
+   * @enum qmmm_nn_model_type_enum
+   * specify if the model was trained on both the QM+buffer region and the buffer region
+   * or on the difference of QM+buffer and buffer region
+   */
+  enum qmmm_nn_model_type_enum {
+    /**
+     * BuRNN model - trained on the difference between the QM+buffer region and the buffer region
+     */
+    nn_model_type_burnn = 0,
+    /**
+     * Standard model - trained on the QM+buffer region and the buffer region
+     */
+    nn_model_type_standard = 1
+  };
+
+  /**
+   * @enum qmmm_nn_learning_type_enum
+   * which device to run NN on
+   */
+  enum qmmm_nn_learning_type_enum {
+    /**
+     * 1: model was learned on all atoms (QMZONE + BUFFERZONE)
+     */
+    nn_learning_type_all = 1,
+    /**
+     * 2: model was learned by assigning energies only to the QMZONE atoms
+     */
+    nn_learning_type_qmonly = 2
   };
 
   /**
@@ -3713,7 +3782,8 @@ namespace simulation
                     , software(qm_mndo)
                     , write(0)
                     , atomic_cutoff(false)
-                    , use_qm_buffer(false) {}
+                    , use_qm_buffer(false)
+                    , dynamic_buffer_charges(false) {}
       /**
        *
        * Common QMMM parameters
@@ -3760,9 +3830,13 @@ namespace simulation
        */
       bool atomic_cutoff;
       /**
-       * type of cutoff (atomic or chargegroup-based)
+       * if QM buffer zone is used
        */
       bool use_qm_buffer;
+      /**
+       * if dynamic charges are used with QM buffer zone
+       */
+      bool dynamic_buffer_charges;
 
       /**
        * QM zone parameters
@@ -3973,7 +4047,7 @@ namespace simulation
          */
         int link_atom_mode;
       } mopac;
-
+      
       /**
        * Gaussian specific parameters
        */
@@ -3987,6 +4061,71 @@ namespace simulation
          */
         std::string chsm;
       } gaussian;
+
+      /**
+       * NN specific parameters
+       */
+      struct nn_param_struct : public qm_param_struct {
+      /**
+       * Constructor
+       * Default values:
+       * - model_path "" (empty string)
+       * - val_model_path "" (empty string)
+       * - model_type 0 (bool)
+       * - device 0 (auto)
+       */
+      nn_param_struct() :
+                      model_path()
+                      , val_model_path() 
+                      , val_thresh(0.0)
+                      , val_steps(0)
+                      , val_forceconstant(0.0)
+                      , charge_model_path()
+                      , charge_steps(0)
+                      , model_type(nn_model_type_burnn) 
+                      , learning_type(nn_learning_type_all)
+                      , device(nn_device_auto) {}
+        /**
+         * Schnetpack model path
+         */
+        std::string model_path;
+        /**
+         * Schnetpack model path
+         */
+        std::string val_model_path;
+        /**
+         * Threshold of energy validation
+         */
+        double val_thresh;
+        /**
+         * Number of steps between validations
+         */
+        unsigned val_steps;
+        /**
+         * Force constant to enforce agreement between NN models
+         */
+        double val_forceconstant;
+        /**
+         * Schnetpack model path
+         */
+        std::string charge_model_path;
+        /**
+         * Number of steps between validations
+         */
+        unsigned charge_steps;
+        /**
+         * nn model type
+         */
+        qmmm_nn_model_type_enum model_type;
+        /**
+         * nn learning type
+         */
+        qmmm_nn_learning_type_enum learning_type;
+        /**
+         * Device to run model on
+         */
+        qm_nn_device_enum device;
+      } nn;
     } qmmm;
 
 

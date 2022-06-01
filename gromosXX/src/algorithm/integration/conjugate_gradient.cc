@@ -628,15 +628,13 @@ int algorithm::Conjugate_Gradient
   int minimum
 )
 {
-  int error;
+  int error = 0;
   std::cout << std::string(60, '-') << "\n";
   if (minimum) {
     error = E_MINIMUM_REACHED;
     std::cout << "CONJUGATE GRADIENT:\tMINIMUM REACHED\n";
   }
   else {
-    //error = E_MINIMUM_NOT_REACHED;
-    error = 0;
     std::cout << "CONJUGATE GRADIENT:\tMIMIMUM CRITERION NOT MET\n";
   }
   std::cout << "Total interaction calculations : " << std::setw(10) << std::right << total_iterations + 1 << "\n";

@@ -166,11 +166,23 @@ int interaction::MNDO_Worker::write_input(const topology::Topology& topo
   std::string header(this->param->input_header);
   
   // Get number of links and replace
-  // *2 - include also linked QM atom
-  header = io::replace_string(header, "@@NUM_LINKS@@", std::to_string(qm_zone.link.size() * 2));
+  unsigned num_links = qm_zone.link.size();
+  // Include also linked QM atom - count them
+  std::stringstream link_atoms;
+  {
+    unsigned i = 1;
+    for (std::set<QM_Atom>::const_iterator
+          it = qm_zone.qm.begin(), to = qm_zone.qm.end(); it != to; ++it, ++i) {
+      if (it->is_linked) {
+        ++num_links;
+        link_atoms << i << " ";
+      }
+    }
+  }
+  header = io::replace_string(header, "@@NUM_LINKS@@", std::to_string(num_links));
   
   // Get number of MM charges and replace
-  unsigned num_charges = get_num_charges(sim, qm_zone);
+  unsigned num_charges = this->get_num_charges(sim, qm_zone);
   header = io::replace_string(header, "@@NUM_CHARGES@@", std::to_string(num_charges));
   header = io::replace_string(header, "@@CHARGE@@", std::to_string(qm_zone.charge()));
   header = io::replace_string(header, "@@SPINM@@", std::to_string(qm_zone.spin_mult()));
@@ -199,20 +211,8 @@ int interaction::MNDO_Worker::write_input(const topology::Topology& topo
   // Write termination line
   this->write_qm_atom(ifs, 0, math::Vec(0.0));
 
-  // Write capping atom indices
-  for (std::set<QM_Link>::const_iterator
-        it = qm_zone.link.begin(), to = qm_zone.link.end(); it != to; ++it) {
-    assert(qm_zone.qm.find(it->qm_index) != qm_zone.qm.end());
-    unsigned i = std::distance(qm_zone.qm.begin(), qm_zone.qm.find(it->qm_index)) + 1;
-    ifs << i << " ";
-  }
-  for (std::set<QM_Atom>::const_iterator
-        it = qm_zone.qm.begin(), to = qm_zone.qm.end(); it != to; ++it) {
-    if (it->is_linked) {
-      unsigned i = std::distance(qm_zone.qm.begin(), it) + 1;
-      ifs << i << " ";
-    }
-  }
+  // Write link atom indices to be excluded in QM-MM electrostatics
+  ifs << link_atoms.rdbuf();
   // Write capping atom indices - they are last in the geometry
   const unsigned qm_size = qm_zone.qm.size();
   const unsigned last_link = qm_zone.link.size() + qm_size;

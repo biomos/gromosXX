@@ -147,6 +147,7 @@ int interaction::QMMM_Interaction::AddRemove2(topology::Topology &topo,
     }
 
 }
+// useless comment
 
 */
 int interaction::QMMM_Interaction::scf_step(topology::Topology& topo,
@@ -204,30 +205,32 @@ int interaction::QMMM_Interaction::calculate_interactions(topology::Topology& to
       /** If we are using buffer region, this region is treated as both QM and MM
        * We construct our system from 3 subsystems:
        * 1. Outer region (OR)
-       * 2. Buffer zone (BZ)
-       * 3. QM zone (QZ)
+       * 2. Buffer region (BR)
+       * 3. QM region (QR)
        * Now we treat the interactions as follows:
-       * OR energies - classical MM interactions (possible addition of delta(BZQZ - BZ) from calculation in electrostatic embedding)
-       * OR forces - classical MM interactions (possible addition of delta(BZQZ - BZ) from calculation in electrostatic embedding)
-       * BZ energies - classical MM interactions + delta(BZQZ - BZ)
-       * BZ forces - classical MM interactions + delta(BZQZ - BZ)
-       * QZ energies - delta(BZQZ - BZ) only
-       * QZ forces - delta(BZQZ - BZ) only
-       * Energy term delta(BZQZ - BZ) from the twin QM calculation contains inseparable energy contributions
+       * OR energies - classical MM interactions (possible addition of delta(BRQR - BR) from calculation in electrostatic embedding)
+       * OR forces - classical MM interactions (possible addition of delta(BRQR - BR) from calculation in electrostatic embedding)
+       * BR energies - classical MM interactions + delta(BRQR - BR)
+       * BR forces - classical MM interactions + delta(BRQR - BR)
+       * QR energies - delta(BRQR - BR) only
+       * QR forces - delta(BRQR - BR) only
+       * Energy term delta(BRQR - BR) from the twin QM calculation contains inseparable energy contributions
        * 
-       * Now we can get delta(BZQZ - BZ) from
-       * a) one evaluation of BZQZ with NN trained on deltas
+       * Now we can get delta(BRQR - BR) from
+       * a) one evaluation of BRQR with NN trained on deltas
        * b) from 2 QM or NN evaluations and calculating the difference here
        * 
        */
-      if (true /*sim.param().qmmm.software != simulation::qm_nn*/) {
+      if (sim.param().qmmm.software != simulation::qm_nn
+          || sim.param().qmmm.nn.model_type == simulation::nn_model_type_standard) {
         DEBUG(4, "Creating QM buffer for separate QM calculation");
         //create buffer zone for separate QM calculation and run it
-        if (m_qm_buffer != nullptr) delete m_qm_buffer;
+        delete m_qm_buffer;
         m_qm_buffer = m_qm_zone->create_buffer_zone(topo, sim);
         m_timer.start(m_worker->name());
         err = m_worker->run_QM(topo, conf, sim, *m_qm_buffer);
         m_timer.stop(m_worker->name());
+        if (err) return err;
         // Calculate QM energy and QM forces as difference
         /**
          * this->evaluate_buffered_qm(m_qm_zone, m_qm_buffer)
@@ -258,10 +261,9 @@ int interaction::QMMM_Interaction::calculate_interactions(topology::Topology& to
             DEBUG(10, "Delta: " <<  math::v2s(mm_it->force));
           }
         }
-      } else {
-        DEBUG(0, "Skipping buffer zone calculation");
-        DEBUG(0, "Expecting deltas directly from NN");
-        // We are using NN trained on differences - here probably nothing needs to be done
+      } else { // BuRNN model (a)
+        DEBUG(1, "Skipping buffer zone calculation");
+        DEBUG(1, "Expecting deltas directly from NN");
       }
     }
     
@@ -350,11 +352,14 @@ int interaction::QMMM_Interaction::init(topology::Topology& topo,
     int sm = sim.param().qmmm.qm_zone.spin_mult;
     if (sim.param().qmmm.use_qm_buffer) {
       // Calculate combined spin multiplicity
-      const int spin_z = (sim.param().qmmm.qm_zone.spin_mult - 1) / 2;
-      const int spin_sb = (sim.param().qmmm.buffer_zone.spin_mult - 1) / 2;
-      // let's consider that all spins are paired
-      sm = (2 * (spin_z + spin_sb)) % 2 + 1;
+      // number of unpaired spins of the QM zone
+      const int spin_qm = sim.param().qmmm.qm_zone.spin_mult - 1;
+      // number of unpaired spins of the buffer zone
+      const int spin_buf = sim.param().qmmm.buffer_zone.spin_mult - 1;
+      // consider no spin pairing between the QM and buffer zone
+      sm = spin_qm + spin_buf + 1;
     }
+    delete m_qm_zone;
     m_qm_zone = new interaction::QM_Zone(charge, sm);
 
     DEBUG(15,"QM Zone created");
@@ -411,6 +416,9 @@ int interaction::QMMM_Interaction::init(topology::Topology& topo,
       case simulation::qm_gaussian:
         os << "Gaussian";
         break;
+      case simulation::qm_nn:
+        os << "Schnet";
+        break;
       default:
         os << "unknown";
         break;
@@ -452,6 +460,9 @@ int interaction::QMMM_Interaction::init(topology::Topology& topo,
       os << "\tLJ interactions between QM atoms enabled" << std::endl;
     else
       os << "\tLJ interactions between QM atoms disabled" << std::endl;
+      
+    if (!sim.param().qmmm.qm_constraint)
+      os << "\tremoving QM-QM constraints" << std::endl;
 
     if (sim.param().qmmm.mm_scale > 0.0) {
       os << "\tMM point charges will be scaled using (2/pi)*atan(s*|R|) with s = " <<
@@ -467,9 +478,9 @@ int interaction::QMMM_Interaction::init(topology::Topology& topo,
         ++num_buffer;
     }
     os << "\tQM zone: " << std::endl
-       << "\t\tnet charge\t\t\t\t\t\t\t: " << sim.param().qmmm.qm_zone.charge << std::endl
-       << "\t\tspin multiplicity\t\t\t\t: " << sim.param().qmmm.qm_zone.spin_mult << std::endl
-       << "\t\tnumber of QM atoms\t\t\t: " << num_qm << std::endl;
+       << "\t\tnet charge         : " << sim.param().qmmm.qm_zone.charge << std::endl
+       << "\t\tspin multiplicity  : " << sim.param().qmmm.qm_zone.spin_mult << std::endl
+       << "\t\tnumber of QM atoms : " << num_qm << std::endl;
     if (sim.param().qmmm.use_qm_buffer) {
       os << "\t";
       if (sim.param().qmmm.buffer_zone.cutoff)
@@ -478,15 +489,15 @@ int interaction::QMMM_Interaction::init(topology::Topology& topo,
         os << "static ";
       os << "buffer zone:" << std::endl;
       if (sim.param().qmmm.buffer_zone.cutoff)
-        os << "\t\tcutoff\t\t\t\t\t\t\t\t\t: " << sim.param().qmmm.buffer_zone.cutoff <<std::endl;
-      os << "\t\tnet charge\t\t\t\t\t\t\t: " << sim.param().qmmm.buffer_zone.charge << std::endl
-         << "\t\tspin multiplicity\t\t\t\t: " << sim.param().qmmm.buffer_zone.spin_mult << std::endl
-         << "\t\tnumber of buffer atoms\t: ";
+        os << "\t\tcutoff                    : " << sim.param().qmmm.buffer_zone.cutoff <<std::endl;
+      os <<   "\t\tnet charge                : " << sim.param().qmmm.buffer_zone.charge << std::endl
+         <<   "\t\tspin multiplicity         : " << sim.param().qmmm.buffer_zone.spin_mult << std::endl
+         <<   "\t\tnumber of buffer atoms    : ";
       if (sim.param().qmmm.buffer_zone.cutoff)
         os << "up to ";
       os << num_buffer << std::endl;
     }
-    os << "\tnumber of QM-MM links\t\t\t: " << m_qm_zone->link.size() << std::endl;
+    os <<     "\tnumber of QM-MM links\t      : " << m_qm_zone->link.size() << std::endl;
 
   }
 
@@ -494,13 +505,6 @@ int interaction::QMMM_Interaction::init(topology::Topology& topo,
   DEBUG(15, "Removing bonded terms");
   this->remove_bonded_terms(topo, os, quiet);
 
-  // Remove relevant constraints from topo (only if requested by user)
-  // This had to be moved to In_QMMM, so the DOFs are calculated correctly
-  /*
-  if (!sim.param().qmmm.qm_constraint) {
-    //DEBUG(15, "Removing constraints");
-    //this->remove_constraints(topo, os, quiet);
-  }*/
   if (!quiet)
     os << "\n";
 
@@ -823,52 +827,6 @@ void interaction::QMMM_Interaction::remove_bonded_terms(
     } else ++d_it;
   }
 }
-/*
-void interaction::QMMM_Interaction::remove_constraints(
-                                topology::Topology& topo
-                              , std::ostream& os
-                              , bool quiet)
-  {
-  // Remove distance constraints between QM atoms
-  std::vector<topology::two_body_term_struct> & dist_constr = topo.solute().distance_constraints();
-  std::vector<topology::two_body_term_struct>::const_iterator it = dist_constr.begin();
-
-  // Counter for neat printing
-  unsigned count = 0;
-  if (!quiet) {
-    os << "\n\t\tdistance constraints:\n";
-  }
-  while (it != dist_constr.end()) {
-    const unsigned qm_count = topo.is_qm(it->i) + topo.is_qm(it->j);
-    bool erase = false;
-    switch(qm_count) {
-      case 0:
-        break;
-      case 1:
-        break;
-      case 2:
-        erase = true;
-        break;
-      default:
-        break;
-    }
-    if (erase) {
-      DEBUG(15, "Removing distance constraint: " << it->i << "-" << it->j);
-      it = dist_constr.erase(it);
-
-      // Neat printing
-      if (!quiet) {
-        if (count == 0) os << "\t\t";
-          os << (it->i + 1) << "-" << (it->j + 1) << " ";
-        if (++count == 8) {
-          os << "\n";
-          count = 0;
-        }
-      }
-    }
-    else ++it;
-  }
-}*/
 
 void interaction::QMMM_Interaction::modify_exclusions(
                                 topology::Topology& topo
