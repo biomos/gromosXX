@@ -1268,16 +1268,15 @@ void _calculate_ah(topology::Topology & topo,
       periodicity.nearest_image(topo.rdc_molaxis()[0].pos(conf, topo), topo.rdc_molaxis()[1].pos(conf, topo), ma);
       double d_ma=math::abs(ma);
       // magn. field vector orientation
-      double b1 = sqrt((2*(conf_it->Tensor[0]+0.5)/3));
-      double b2 = sqrt((2*(conf_it->Tensor[1]+0.5)/3));
-      double b3 = 2*conf_it->Tensor[3]/(3*b1);
-      double theta = acos((ma[0]*b1+ma[1]*b2+ma[2]*b3)/d_ma);
-      while (theta > math::Pi*2) {
-        theta-=math::Pi*2;
-      }
-      while (theta < 0) {
-        theta+=math::Pi*2;
-      }
+      //double cosb1 = sqrt((2*(conf_it->Tensor[0]+0.5)/3));
+      //double cosb2 = sqrt((2*(conf_it->Tensor[1]+0.5)/3));
+
+      double cosb1 = cos(acos(4/3*conf_it->Tensor[0])/2);
+      double cosb2 = cos(acos(4/3*conf_it->Tensor[1])/2);
+      double cosb3 = 2*conf_it->Tensor[3]/(3*cosb1);
+
+      double theta = acos((ma[0]*cosb1+ma[1]*cosb2+ma[2]*cosb3)/d_ma);
+
       for (unsigned int i=0; i<sim.param().rdc.bins_theta.size()-1; i++) {
         const double & bin_upper = sim.param().rdc.bins_theta[i+1];
         if (theta < bin_upper) {
