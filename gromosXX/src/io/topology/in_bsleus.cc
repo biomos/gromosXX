@@ -201,7 +201,7 @@ void io::In_BSLEUS::read(topology::Topology &topo,
 {
   std::vector<std::string> buffer;
   std::vector<util::BS_Subspace *> bs_subspaces;
-  int num_subspaces;
+  int num_subspaces = 0;
   
   { // BSLEUSSUB
     buffer = m_block["BSLEUSSUB"];
@@ -230,8 +230,8 @@ void io::In_BSLEUS::read(topology::Topology &topo,
       return;
     }
     
-    double forceIncrement, reductionFactor;
-    int id, localCutoff, globalCutoff;
+    double forceIncrement = 0.0, reductionFactor = 0.0;
+    int id = 0, localCutoff = 0, globalCutoff = 0;
     int last_id = 0;
     for (int i = 0; i < num_subspaces; i++) {
       _lineStream.clear();
@@ -257,7 +257,7 @@ void io::In_BSLEUS::read(topology::Topology &topo,
   } // BSLEUSSUB
   // ==============================================================
   // Number of coordinates
-  int numCoords;
+  int numCoords = 0;
   std::vector<unsigned int> numCoordsPerSubspace(num_subspaces, 0);
   std::vector<std::vector<double> > references(num_subspaces, std::vector<double>());
   std::map<unsigned int, std::string> refFiles;
@@ -287,8 +287,8 @@ void io::In_BSLEUS::read(topology::Topology &topo,
       return;
     }
 
-    int id, subspace, type, numCoordRead = 0;
-    double reference;
+    int id = 0, subspace = 0, type = 0, numCoordRead = 0;
+    double reference = 0.0;
 
 
     // Loop over the coordinates
@@ -305,12 +305,12 @@ void io::In_BSLEUS::read(topology::Topology &topo,
       DEBUG(10, "ID: " << id << " SUBSP: " << subspace << " TYPE: " << type << " REF: " << reference);
       // Convert to GROMOS
       subspace--;
-      util::BS_Coordinate *coord;
+      util::BS_Coordinate *coord = nullptr;
       
       // The Type of the coordinate
       switch (type) {
         case util::BS_Coordinate::dihedral: {
-          unsigned int i, j, k, l;
+          unsigned int i = 0, j = 0, k = 0, l = 0;
           _lineStream >> i >> j >> k >> l;
           if (_lineStream.fail()) {
             io::messages.add("bad line in BSLEUSCOORD block (Dihedral angle)",
@@ -334,7 +334,7 @@ void io::In_BSLEUS::read(topology::Topology &topo,
           break;
         }
         case util::BS_Coordinate::distance: {
-          unsigned int i, j;
+          unsigned int i = 0, j = 0;
           _lineStream >> i >> j;
           if (_lineStream.fail()) {
             io::messages.add("bad line in BSLEUSCOORD block (Distance)",
@@ -354,8 +354,8 @@ void io::In_BSLEUS::read(topology::Topology &topo,
           break;
         }
         case util::BS_Coordinate::cartesian: {
-          int num_atoms_int;
-          unsigned int num_atoms;
+          int num_atoms_int = 0;
+          unsigned int num_atoms = 0;
           _lineStream >> num_atoms_int;
           if (_lineStream.fail()) {
             io::messages.add("bad line in BSLEUSCOORD block (Cartesian)",
@@ -375,7 +375,7 @@ void io::In_BSLEUS::read(topology::Topology &topo,
           std::vector<unsigned int> atom_list;
           if (num_atoms){
             allAtoms = false;
-            unsigned int atom;
+            unsigned int atom = 0;
             DEBUG(10, "We will add in total " << num_atoms << " atoms.")
             for (unsigned int i = 0; i < num_atoms; i++){
               _lineStream >> atom;
@@ -401,7 +401,7 @@ void io::In_BSLEUS::read(topology::Topology &topo,
           break;
         }
         case util::BS_Coordinate::dihedralSum: {
-          unsigned int i, j, k, l, ii, jj, kk, ll;
+          unsigned int i = 0, j = 0, k = 0, l = 0, ii = 0, jj = 0, kk = 0, ll = 0;
           _lineStream >> i >> j >> k >> l >> ii >> jj >> kk >> ll;
           if (_lineStream.fail()) {
             io::messages.add("bad line in BSLEUSCOORD block (Dihedral angle)",
@@ -481,7 +481,7 @@ void io::In_BSLEUS::read(topology::Topology &topo,
     _lineStream.clear();
     _lineStream.str(*it++);
     
-    int subspace, numSpheres, numSpheresRead = 0;
+    int subspace = 0, numSpheres = 0, numSpheresRead = 0;
     _lineStream >> numSpheres;
     if (_lineStream.fail()) {
       io::messages.add("Couldn't get the number of Spheres in BSLEUSSPH",
@@ -489,8 +489,8 @@ void io::In_BSLEUS::read(topology::Topology &topo,
       return;
     }
     
-    int id = 0, num_gp;
-    double radius, forceConst;
+    int id = 0, num_gp = 0;
+    double radius = 0.0, forceConst = 0.0;
     std::vector<double> centerValues;
     util::BS_Vector center;
     for (; it != to; it++){
@@ -568,7 +568,7 @@ void io::In_BSLEUS::read(topology::Topology &topo,
     _lineStream.clear();
     _lineStream.str(*it++);
     
-    int subspace, numSticks, numSticksRead = 0;
+    int subspace = 0, numSticks = 0, numSticksRead = 0;
     _lineStream >> numSticks;
     if (_lineStream.fail()) {
       io::messages.add("Couldn't get the number of Sticks in BSLEUSSTK",
@@ -576,8 +576,8 @@ void io::In_BSLEUS::read(topology::Topology &topo,
       return;
     }
     
-    int id = 0, num_gp, defType, startSphere, endSphere;
-    double width, forceConst;
+    int id = 0, num_gp = 0, defType = 0, startSphere = 0, endSphere = 0;
+    double width = 0.0, forceConst = 0.0;
     util::BS_Vector start, end;
     for (; it != to; it++){
       _lineStream.clear();
@@ -689,7 +689,7 @@ void io::In_BSLEUS::read(topology::Topology &topo,
     _lineStream.clear();
     _lineStream.str(*it++);
 
-    int subspace, numSnakes, numSnakesRead = 0;
+    int subspace = 0, numSnakes = 0, numSnakesRead = 0;
     _lineStream >> numSnakes;
     if (_lineStream.fail()) {
       io::messages.add("Couldn't get the number of Snakes in BSLEUSSNAKE",
@@ -697,8 +697,8 @@ void io::In_BSLEUS::read(topology::Topology &topo,
       return;
     }
 
-    int id = 0, num_gp, numPoints;
-    double half_width, forceConst;
+    int id = 0, num_gp = 0, numPoints = 0;
+    double half_width = 0.0, forceConst = 0.0;
     for (; it != to; it++) {
       _lineStream.clear();
       _lineStream.str(*it);
@@ -785,7 +785,7 @@ void io::In_BSLEUS::read(topology::Topology &topo,
     _lineStream.clear();
     _lineStream.str(*it++);
 
-    int subspace, numPipes, numPipesRead = 0;
+    int subspace = 0, numPipes = 0, numPipesRead = 0;
     _lineStream >> numPipes;
     if (_lineStream.fail()) {
       io::messages.add("Couldn't get the number of Pipes in BSLEUSPIPE",
@@ -793,8 +793,8 @@ void io::In_BSLEUS::read(topology::Topology &topo,
       return;
     }
 
-    int id = 0, num_gp_l, num_gp_p, spec_type;
-    double forceConst;
+    int id = 0, num_gp_l = 0, num_gp_p = 0, spec_type = 0;
+    double forceConst = 0.0;
     for (; it != to; it++) {
       _lineStream.clear();
       _lineStream.str(*it);
@@ -812,7 +812,7 @@ void io::In_BSLEUS::read(topology::Topology &topo,
 
       for (int m = 0; m < 2; m++) { // start, end point
         if (spec_type == 0) {
-          int sph_id;
+          int sph_id = 0;
           _lineStream >> sph_id;
           if (_lineStream.fail()) {
             io::messages.add("Could not read the sphere id in BSLEUSPIPE block",
@@ -892,7 +892,7 @@ io::In_BSLEUS::parseSpecifier(topology::Topology &topo,
                               std::vector<double>& coords,
                               std::ostream & os)
 {
-  size_t found;;
+  size_t found = 0;;
   if ((found = coordStr.find("{") )!= std::string::npos) {
     size_t to = coordStr.find("}");
     std::string refFileName(coordStr, found + 1, --to);

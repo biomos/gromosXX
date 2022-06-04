@@ -295,7 +295,7 @@ void re::replica_exchange_base_eds::reset_eds() {//only reset switched parameter
 
 void re::replica_exchange_base_eds::change_eds(const unsigned int partner){//only change parameters, which are needed for energy calculation i.e.
 
-  int idx;
+  int idx = 0;
   if (replica->sim.param().reeds.num_s == 1){
     idx = 0;
   }
@@ -317,7 +317,7 @@ double re::replica_exchange_base_eds::calculate_energy_core() {
     virial_tensor_orig = replica->conf.current().virial_tensor;
 
     double energy = 0.0;
-    algorithm::Algorithm * ff;
+    algorithm::Algorithm * ff = nullptr;
 
     ff = replica->md.algorithm("EDS");
 

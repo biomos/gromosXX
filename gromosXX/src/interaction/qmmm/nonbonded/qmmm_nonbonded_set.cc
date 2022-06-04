@@ -163,7 +163,7 @@ int interaction::QMMM_Nonbonded_Set::init(const topology::Topology& topo
 
 
   const double vol = math::volume(conf.current().box, conf.boundary_type);
-  unsigned pairs;
+  unsigned pairs = 0;
   if (vol && sim.param().qmmm.qmmm > simulation::qmmm_mechanical) {
     const double c3 = sim.param().qmmm.cutoff
                     * sim.param().qmmm.cutoff

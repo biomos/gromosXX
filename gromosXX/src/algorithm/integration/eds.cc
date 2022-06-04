@@ -40,7 +40,7 @@ int algorithm::EDS
       // interactions have been calculated - now apply eds Hamiltonian
       std::vector<double> prefactors(numstates);
       // get beta
-      double beta;
+      double beta = 0.0;
       if(!sim.param().stochastic.sd){
             assert(sim.param().multibath.multibath.bath(0).temperature != 0.0);
             beta = 1.0 / (sim.param().multibath.multibath.bath(0).temperature * math::k_Boltzmann);
@@ -75,7 +75,7 @@ int algorithm::EDS
       }
 
       // calculate eds Hamiltonian
-      double demix, kfac, fkfac = 1.0;
+      double demix = 0.0, kfac = 0.0, fkfac = 1.0;
       conf.current().energies.eds_vmix = -1.0 / beta * sum_prefactors;
       DEBUG(7, "eds_vmix = " << conf.current().energies.eds_vmix);
 
@@ -143,7 +143,7 @@ int algorithm::EDS
         // OFFSET search
         if (sim.param().eds.form == simulation::aeds_search_eir || sim.param().eds.form == simulation::aeds_search_all) {
           double tau = double(sim.param().eds.asteps) + double(sim.param().eds.bsteps - sim.param().eds.asteps) * double(sim.steps()) / double(sim.param().step.number_of_steps);
-          double expde, eiremin, eiremax, eirestar, eirdemix, eirkfac;
+          double expde = 0.0, eiremin = 0.0, eiremax = 0.0, eirestar = 0.0, eirdemix = 0.0, eirkfac = 0.0;
           for (unsigned int is = 0; is < numstates; is++) {
             eiremin = sim.param().eds.emin + sim.param().eds.eir[is];
             eiremax = sim.param().eds.emax + sim.param().eds.eir[is];
@@ -234,7 +234,7 @@ int algorithm::EDS
           }
 
           // EMIN
-          double bmax;
+          double bmax = 0.0;
           if (sim.param().eds.bmaxtype == 1)
           {
             bmax = sim.param().eds.setbmax;
@@ -295,7 +295,7 @@ int algorithm::EDS
       // interactions have been calculated - now apply eds Hamiltonian
       std::vector<double> prefactors(numstates);
       // get beta
-      double beta;
+      double beta = 0.0;
       if(!sim.param().stochastic.sd){
             assert(sim.param().multibath.multibath.bath(0).temperature != 0.0);
             beta = 1.0 / (sim.param().multibath.multibath.bath(0).temperature * math::k_Boltzmann);
@@ -369,7 +369,7 @@ int algorithm::EDS
       // interactions have been calculated - now apply eds Hamiltonian
       std::vector<double> prefactors(numstates, 0.0);
       // get beta
-      double beta;
+      double beta = 0.0;
       if(!sim.param().stochastic.sd){
         assert(sim.param().multibath.multibath.bath(0).temperature != 0.0);
         beta = 1.0 / (sim.param().multibath.multibath.bath(0).temperature * math::k_Boltzmann);
@@ -465,7 +465,7 @@ int algorithm::EDS
       // interactions have been calculated - now apply eds Hamiltonian
       std::vector<double> prefactors(numstates, 0.0);
       // get beta
-      double beta;
+      double beta = 0.0;
       if(!sim.param().stochastic.sd){
         assert(sim.param().multibath.multibath.bath(0).temperature != 0.0);
         beta = 1.0 / (sim.param().multibath.multibath.bath(0).temperature * math::k_Boltzmann);

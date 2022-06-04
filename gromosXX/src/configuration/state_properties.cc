@@ -38,7 +38,7 @@ _centre_of_mass(topology::Atom_Iterator start, topology::Atom_Iterator end,
   math::Periodicity<b> periodicity(conf.current().box);
   
   com_pos = 0.0;
-  double m;
+  double m = 0.0;
   double tot_mass = 0.0;
 
   math::Vec p;
@@ -119,7 +119,7 @@ molecular_translational_ekin(simulation::Simulation &sim,
   new_com_e_kin = 0.0;
   new_e_kin = 0.0;
   
-  double m;
+  double m = 0.0;
   double tot_mass = 0.0;
   math::Vec v, new_v, old_v;
 

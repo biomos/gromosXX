@@ -22,16 +22,16 @@ t_interaction_spec, t_perturbation_details>
         ) {
   DEBUG(8, "\tperturbed pair\t" << i << "\t" << j << " (inner loop)");
   math::Vec r;
-  double e_lj, e_crf, de_lj, de_crf;
+  double e_lj = 0.0, e_crf = 0.0, de_lj = 0.0, de_crf = 0.0;
 
   int energy_derivative_index = -1;
 
   periodicity.nearest_image(conf.current().pos(i),
           conf.current().pos(j), r);
 
-  lj_parameter_struct const *A_lj;
-  lj_parameter_struct const *B_lj;
-  double A_q, B_q, A_qi, A_qj, B_qi, B_qj;
+  lj_parameter_struct const *A_lj = nullptr;
+  lj_parameter_struct const *B_lj = nullptr;
+  double A_q = 0.0, B_q = 0.0, A_qi = 0.0, A_qj = 0.0, B_qi = 0.0, B_qj = 0.0;
 
   double alpha_lj = 0, alpha_crf = 0;
 
@@ -155,7 +155,7 @@ t_interaction_spec, t_perturbation_details>
   if (t_perturbation_details::do_scaling) {
     // SCALING ON
     math::Vec f;
-    double f1, f6, f12;
+    double f1 = 0.0, f6 = 0.0, f12 = 0.0;
     if (t_interaction_spec::interaction_func == simulation::cgrain_func ||
             t_interaction_spec::interaction_func == simulation::cggromos_func) {
       io::messages.add("Nonbonded Innerloop",
@@ -232,7 +232,7 @@ t_interaction_spec, t_perturbation_details>
       case simulation::lj_crf_func:
       {
         math::Vec f;
-        double f1, f6, f12;
+        double f1 = 0.0, f6 = 0.0, f12 = 0.0;
 
         lj_crf_soft_interaction(r, A_lj->c6, A_lj->c12,
                 B_lj->c6, B_lj->c12,
@@ -277,8 +277,8 @@ t_interaction_spec, t_perturbation_details>
         if (sim.param().precalclam.nr_lambdas && ((sim.steps()  % sim.param().write.free_energy) == 0)){
             DEBUG(8, "precalculate lj_crf_soft");
 //        if ( sim.param().precalclam.nr_lambdas ) { 
-          double A_e_lj,B_e_lj, A_e_crf, B_e_crf,
-              A_de_lj, B_de_lj, A_de_crf, B_de_crf;
+          double A_e_lj = 0.0, B_e_lj = 0.0, A_e_crf = 0.0, B_e_crf = 0.0,
+              A_de_lj = 0.0, B_de_lj = 0.0, A_de_crf = 0.0, B_de_crf = 0.0;
 
           // determine lambda stepsize from min,max and nr of lambdas
           double lambda_step = (sim.param().precalclam.max_lam - 
@@ -343,7 +343,7 @@ t_interaction_spec, t_perturbation_details>
       {
         DEBUG(7, "\tcgrain_func");
         math::Vec f;
-        double f1, f6, f12;
+        double f1 = 0.0, f6 = 0.0, f12 = 0.0;
 
         cgrain_soft_interaction(r, A_lj->c6, A_lj->c12,
                 B_lj->c6, B_lj->c12,
@@ -382,7 +382,7 @@ t_interaction_spec, t_perturbation_details>
       {
         DEBUG(7, "\tcggromos_func");
         math::Vec f;
-        double f1, f6, f12;
+        double f1 = 0.0, f6 = 0.0, f12 = 0.0;
 
         // check if...
         if (topo.is_coarse_grained(i) && topo.is_coarse_grained(j)) { // CG-CG interaction
@@ -442,7 +442,7 @@ t_interaction_spec, t_perturbation_details>
         double f1[4];
         math::VArray f(4);
         f = 0.0;
-        double f6, f12;
+        double f6 = 0.0, f12 = 0.0;
 
         rp1 = r - conf.current().posV(j);
         rp2 = r + conf.current().posV(i);
@@ -507,7 +507,7 @@ t_interaction_spec, t_perturbation_details>
         double f1[4];
         math::VArray f(4);
         f = 0.0;
-        double f6, f12;
+        double f6 = 0.0, f12 = 0.0;
 
         rp1 = rm - conf.current().posV(j);
         rp2 = rm + conf.current().posV(i);
@@ -614,14 +614,14 @@ t_interaction_spec, t_perturbation_details>
   DEBUG(7, "\tone four pair\t" << i << "\t" << j);
 
   math::Vec r;
-  double e_lj, e_crf, de_lj, de_crf;
+  double e_lj = 0.0, e_crf = 0.0, de_lj = 0.0, de_crf = 0.0;
 
   periodicity.nearest_image(conf.current().pos(i),
           conf.current().pos(j), r);
 
-  lj_parameter_struct const * A_lj;
-  lj_parameter_struct const * B_lj;
-  double A_q, B_q, A_qi, A_qj, B_qi, B_qj;
+  lj_parameter_struct const * A_lj = nullptr;
+  lj_parameter_struct const * B_lj = nullptr;
+  double A_q = 0.0, B_q = 0.0, A_qi = 0.0, A_qj = 0.0, B_qi = 0.0, B_qj = 0.0;
   double alpha_lj = 0, alpha_crf = 0;
 
   // const double l = topo.lambda();
@@ -688,7 +688,7 @@ t_interaction_spec, t_perturbation_details>
   if (t_perturbation_details::do_scaling) {
     // SCALING ON
     math::Vec f;
-    double f1, f6, f12;
+    double f1 = 0.0, f6 = 0.0, f12 = 0.0;
     if (t_interaction_spec::interaction_func == simulation::pol_lj_crf_func
             || t_interaction_spec::interaction_func == simulation::pol_lj_crf_func) {
       io::messages.add("Nonbonded Innerloop",
@@ -761,7 +761,7 @@ t_interaction_spec, t_perturbation_details>
       case simulation::lj_crf_func:
       {
         math::Vec f;
-        double f1, f6, f12;
+        double f1 = 0.0, f6 = 0.0, f12 = 0.0;
 
         lj_crf_soft_interaction
                 (r, A_lj->cs6, A_lj->cs12,
@@ -782,8 +782,8 @@ t_interaction_spec, t_perturbation_details>
         // if nr_lambdas > 1, we apply extended TI
         if (sim.param().precalclam.nr_lambdas && ((sim.steps()  % sim.param().write.free_energy) == 0)){
  
-          double A_e_lj,B_e_lj, A_e_crf, B_e_crf,
-              A_de_lj, B_de_lj, A_de_crf, B_de_crf;
+          double A_e_lj = 0.0, B_e_lj = 0.0, A_e_crf = 0.0, B_e_crf = 0.0,
+              A_de_lj = 0.0, B_de_lj = 0.0, A_de_crf = 0.0, B_de_crf = 0.0;
 
           // determine lambda stepsize from min,max and nr of lambdas
           double lambda_step = (sim.param().precalclam.max_lam - 
@@ -880,7 +880,7 @@ t_interaction_spec, t_perturbation_details>
                 io::message::critical);
         } else { // FG-FG interaction
           math::Vec f;
-          double f1, f6, f12;
+          double f1 = 0.0, f6 = 0.0, f12 = 0.0;
           lj_crf_soft_interaction
                   (r, A_lj->cs6, A_lj->cs12,
                   B_lj->cs6, B_lj->cs12,
@@ -916,7 +916,7 @@ t_interaction_spec, t_perturbation_details>
         double f1[4];
         math::VArray f(4);
         f = 0.0;
-        double f6, f12;
+        double f6 = 0.0, f12 = 0.0;
 
         rp1 = r - conf.current().posV(j);
         rp2 = r + conf.current().posV(i);
@@ -980,7 +980,7 @@ t_interaction_spec, t_perturbation_details>
         double f1[4];
         math::VArray f(4);
         f = 0.0;
-        double f6, f12;
+        double f6 = 0.0, f12 = 0.0;
 
         rp1 = rm - conf.current().posV(j);
         rp2 = rm + conf.current().posV(i);
@@ -1082,7 +1082,7 @@ t_interaction_spec, t_perturbation_details>
   math::VArray &force = conf.current().force;
 
   math::Vec r;
-  double e_rf, de_rf;
+  double e_rf = 0.0, de_rf = 0.0;
 
   topology::excl_cont_t::value_type::const_iterator it, to;
 
@@ -1094,7 +1094,7 @@ t_interaction_spec, t_perturbation_details>
   const int i = mit->second.sequence_number();
   const double q_i_a = mit->second.A_charge();
   const double q_i_b = mit->second.B_charge();
-  double q_j_a, q_j_b;
+  double q_j_a = 0.0, q_j_b = 0.0;
 
   int n1 = topo.atom_energy_group(i);
 
@@ -1121,7 +1121,7 @@ t_interaction_spec, t_perturbation_details>
 
       // ANITA
       if (sim.param().precalclam.nr_lambdas && ((sim.steps()  % sim.param().write.free_energy) == 0)){
-        double A_e_rf, B_e_rf, A_de_rf, B_de_rf;
+        double A_e_rf = 0.0, B_e_rf = 0.0, A_de_rf = 0.0, B_de_rf = 0.0;
 
         // determine lambda stepsize from min,max and nr of lambdas
         double lambda_step = (sim.param().precalclam.max_lam -
@@ -1203,8 +1203,8 @@ t_interaction_spec, t_perturbation_details>
 
     DEBUG(8, "r2 i(" << i << "-" << *it << ") " << abs2(r));
 
-    double q_ij_a;
-    double q_ij_b;
+    double q_ij_a = 0.0;
+    double q_ij_b = 0.0;
 
     double alpha_crf = 0;
 
@@ -1270,7 +1270,7 @@ t_interaction_spec, t_perturbation_details>
         // ANITA
         if (sim.param().precalclam.nr_lambdas && ((sim.steps() % sim.param().write.free_energy) == 0)){
 //        if ( sim.param().precalclam.nr_lambdas ) {
-          double A_e_rf, B_e_rf, A_de_rf, B_de_rf;
+          double A_e_rf = 0.0, B_e_rf = 0.0, A_de_rf = 0.0, B_de_rf = 0.0;
  
           // determine lambda stepsize from min,max and nr of lambdas
           double lambda_step = (sim.param().precalclam.max_lam -
@@ -1453,7 +1453,7 @@ t_interaction_spec, t_perturbation_details>::perturbed_electric_field_innerloop
         Periodicity_type const & periodicity
         ) {
   math::Vec r, rp1, rp2, e_el1, e_el2;
-  double alpha_crf, A_qi, A_qj, B_qi, B_qj;
+  double alpha_crf = 0.0, A_qi = 0.0, A_qj = 0.0, B_qi = 0.0, B_qj = 0.0;
 
   if (topo.is_perturbed(j) == true) {
     // both i and j are perturbed
@@ -1565,7 +1565,7 @@ t_interaction_spec, t_perturbation_details>::perturbed_self_energy_innerloop
         ) {
   DEBUG(8, "\tself energy of molecule i " << i);
 
-  double self_e, de_self;
+  double self_e = 0.0, de_self = 0.0;
   const double e_i2 = math::abs2(storage.electric_field(i));
   const double alpha_A = topo.perturbed_solute().atom(i).A_polarisability(),
           alpha_B = topo.perturbed_solute().atom(i).B_polarisability(),

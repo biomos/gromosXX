@@ -43,7 +43,7 @@ int interaction::DFTB_Worker::init(simulation::Simulation& sim) {
   // Change to working directory and create the input file
   if (this->chdir(this->param->working_directory) != 0) return 1;
   std::ofstream ifs;
-  int err;
+  int err = 0;
   err = this->open_input(ifs, this->param->input_file);
   if (err) return err;
   ifs << this->param->input_header;
@@ -58,7 +58,7 @@ int interaction::DFTB_Worker::write_input(const topology::Topology& topo
                                         , const interaction::QM_Zone& qm_zone) {
   if (this->chdir(this->param->working_directory) != 0) return 1;
   std::ofstream ifs;
-  int err;
+  int err = 0;
   err = this->open_input(ifs, this->param->input_coordinate_file);
   if (err) return err;
 
@@ -187,7 +187,7 @@ int interaction::DFTB_Worker::read_output(topology::Topology& topo
                                         , simulation::Simulation& sim
                                         , interaction::QM_Zone& qm_zone) {
   std::ifstream ofs;
-  int err;
+  int err = 0;
 
   err = this->open_output(ofs, this->param->output_file);
   if (err) return err;

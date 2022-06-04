@@ -63,7 +63,7 @@ io::In_Orderparamresspec::read(topology::Topology& topo,
       std::vector<std::string>::const_iterator it = buffer.begin() + 1,
               to = buffer.end() - 1;
 
-      double dish, disc;
+      double dish = 0.0, disc = 0.0;
       bool nr_atoms = true;
 
       DEBUG(10, "reading in ORDERPARAMRESSPEC data");
@@ -81,15 +81,15 @@ io::In_Orderparamresspec::read(topology::Topology& topo,
       ++it;
       for (unsigned int line_number = 2; it != to; ++line_number, ++it) {
         DEBUG(11, "\tnr " << line_number - 2);
-        int type1, type2;
+        int type1 = 0, type2 = 0;
         std::vector<int> atom1, atom2;
-        double dist_norm, S0, dS0, w;
+        double dist_norm = 0.0, S0 = 0.0, dS0 = 0.0, w = 0.0;
 
         _lineStream.clear();
         _lineStream.str(*it);
 
         for (unsigned int i = 0; i < io::In_Orderparamresspec::MAX_ATOMS; i++) {
-          int atom;
+          int atom = 0;
           _lineStream >> atom;
           // -1 because we directly convert to array indices
           if (atom > 0) {
@@ -105,7 +105,7 @@ io::In_Orderparamresspec::read(topology::Topology& topo,
         _lineStream >> type1;
 
         for (unsigned int i = 0; i < io::In_Orderparamresspec::MAX_ATOMS; i++) {
-          int atom;
+          int atom = 0;
           _lineStream >> atom;
           if (atom > 0) {
             atom2.push_back(atom - 1);

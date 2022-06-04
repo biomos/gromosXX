@@ -663,7 +663,7 @@ int _calculate_interactions_mfield(topology::Topology & topo,
         }
 
         size_t iter = 0;
-        int status;
+        int status = 0;
         const gsl_multimin_fdfminimizer_type *fT = gsl_multimin_fdfminimizer_conjugate_fr;
         gsl_multimin_fdfminimizer *s = gsl_multimin_fdfminimizer_alloc(fT, number_magnetic_field_vector_components);
         gsl_multimin_fdfminimizer_set(s, &potential_function, MF, stepsize, tol); // runs fdf once
@@ -803,7 +803,7 @@ int _calculate_interactions_mfield(topology::Topology & topo,
       const double gdth = gdt * 0.5;
 
       // depending on the value of gth we choose different expressions to ensure a high accuracy
-      double c1, c2, c3, c4, c5, c6, c7, c8, c9;
+      double c1 = 0.0, c2 = 0.0, c3 = 0.0, c4 = 0.0, c5 = 0.0, c6 = 0.0, c7 = 0.0, c8 = 0.0, c9 = 0.0;
       if(fabs(gdt) > 0.05){
         DEBUG(10, "Doing the analytical formulas, (gamma * step_size = "<< gdt << " > 0.05)")
 
@@ -1204,7 +1204,7 @@ void _calculate_ah(topology::Topology & topo,
     gsl_matrix_view m = gsl_matrix_view_array (matrix_array, n_ah, n_ah);
     gsl_vector_view b = gsl_vector_view_array (result_array, n_ah);
     gsl_vector *x = gsl_vector_alloc (n_ah);
-    int signum; // not used
+    int signum = 0; // not used
     gsl_permutation * p = gsl_permutation_alloc (n_ah);
 
     gsl_linalg_LU_decomp (&m.matrix, p, &signum);
@@ -1615,7 +1615,7 @@ int _calculate_interactions_tensor(topology::Topology & topo,
            DEBUG(15, "kT_over_m[" << h << "] = " << kT_over_m[h])
         }
 
-        double c1, c2, c3, c4, c5, c6, c7, c8, c9;
+        double c1 = 0.0, c2 = 0.0, c3 = 0.0, c4 = 0.0, c5 = 0.0, c6 = 0.0, c7 = 0.0, c8 = 0.0, c9 = 0.0;
         if(fabs(gdt) > 0.05){
           DEBUG(10, "doing the analytical formulas")
 
@@ -1693,7 +1693,7 @@ int _calculate_interactions_tensor(topology::Topology & topo,
         for(int h=0; h<n_ah; ++h){
           // Vel1
           DEBUG(10, "doing stochastic dynamics velocities (1)")
-          double vrand1, vrand2, vrand3, vrand4;
+          double vrand1 = 0.0, vrand2 = 0.0, vrand3 = 0.0, vrand4 = 0.0;
           //2.11.2.8 (sigma2 squared)
           const double sd1 = c3 * kT_over_m[h];
           //2.11.2.9 (rho1 squared)
@@ -2332,7 +2332,7 @@ void _calculate_clm(topology::Topology & topo,
     gsl_matrix_view m = gsl_matrix_view_array (matrix_array, n_clm, n_clm);
     gsl_vector_view b = gsl_vector_view_array (result_array, n_clm);
     gsl_vector *x = gsl_vector_alloc (n_clm);
-    int signum; // not used
+    int signum = 0; // not used
     gsl_permutation * p = gsl_permutation_alloc (n_clm);
 
     gsl_linalg_LU_decomp (&m.matrix, p, &signum);
@@ -2482,7 +2482,7 @@ int _calculate_interactions_sh(topology::Topology & topo,
            DEBUG(18, "kB, temp, mass: " << math::k_Boltzmann << ", " << sim.param().rdc.temp << ", " << conf_it->clmMass[lm])
         }
 
-        double c1, c2, c3, c4, c5, c6, c7, c8, c9;
+        double c1 = 0.0, c2 = 0.0, c3 = 0.0, c4 = 0.0, c5 = 0.0, c6 = 0.0, c7 = 0.0, c8 = 0.0, c9 = 0.0;
         if(fabs(gdt) > 0.05){
           DEBUG(10, "doing the analytical formulas")
 
@@ -2560,7 +2560,7 @@ int _calculate_interactions_sh(topology::Topology & topo,
         for(int lm=0; lm<n_clm; ++lm){
           // Vel1
           DEBUG(10, "doing stochastic dynamics velocities (1)")
-          double vrand1, vrand2, vrand3, vrand4;
+          double vrand1 = 0.0, vrand2 = 0.0, vrand3 = 0.0, vrand4 = 0.0;
           //2.11.2.8 (sigma2 squared)
           const double sd1 = c3 * kT_over_m[lm];
           //2.11.2.9 (rho1 squared)

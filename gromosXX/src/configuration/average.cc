@@ -247,7 +247,7 @@ void configuration::Average::Block_Average
 		   math::Matrix &kinetic_energy,
 		   math::Matrix &kinetic_energy_fluctuations)const
 {
-  double diff;
+  double diff = 0.0;
   
   for(int a=0; a<3; ++a){
     for(int b=0; b<3; ++b){
@@ -287,7 +287,7 @@ void configuration::Average::Block_Average
 	      std::vector<double> & scaling,
 	      std::vector<double> & scaling_fluctuations)const
 {
-  double diff;
+  double diff = 0.0;
   
   mass = mass_avg / time;
   diff = mass_fluct - mass_avg * mass_avg / time;
@@ -632,7 +632,7 @@ void configuration::Average::Block_Average
 {
   DEBUG(10, "new average total: " << energy_avg.total << "\ttime: " << time);
 
-  double diff;
+  double diff = 0.0;
   double cumu = time;
   if (dlamt) cumu = 1;
   

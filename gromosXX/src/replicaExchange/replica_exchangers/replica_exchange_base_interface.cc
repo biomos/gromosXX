@@ -269,7 +269,7 @@ void re::replica_exchange_base_interface::execute_swap(const unsigned int partne
 double re::replica_exchange_base_interface::calc_probability(const unsigned int partnerReplicaMasterThreadID) {
 
   DEBUG(1,"\n\nreplica "<<globalThreadID<<":replica_exchange_base_interface: CALC_PROBABILITY by ID:" << simulationID << "\n");
-  double delta;
+  double delta = 0.0;
   const double b1 = 1.0 / (math::k_Boltzmann * T);
   const double b2 = 1.0 / (math::k_Boltzmann * replica->sim.param().replica.temperature[partnerReplicaMasterThreadID % replica->sim.param().replica.num_T]);
 

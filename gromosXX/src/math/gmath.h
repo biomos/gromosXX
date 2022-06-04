@@ -23,7 +23,7 @@ namespace math
   private:
     numeric_type d_v[3];
   public:
-    GenericVec() {}
+    GenericVec() : GenericVec(0) {}
     explicit GenericVec(numeric_type d) { d_v[0] = d_v[1] = d_v[2] = d; }
     template<typename numeric_type_b>
     GenericVec(GenericVec<numeric_type_b> const & v) { d_v[0] = v(0); d_v[1] = v(1); d_v[2] = v(2); }
@@ -163,7 +163,7 @@ namespace math
   private:
     numeric_type m[3][3];
   public:
-    GenericMatrix() {}
+    GenericMatrix() : GenericMatrix(0) {}
     template<typename numeric_type_b>
     explicit GenericMatrix(numeric_type_b d) 
     {
@@ -319,7 +319,7 @@ namespace math
     /**
      * constructor
      */
-    GenericSymmetricMatrix() {}
+    GenericSymmetricMatrix() : GenericSymmetricMatrix(0) {}
     
     /**
      * construct it from a numerical value
@@ -560,6 +560,13 @@ namespace math
         d_b[i]=(m(0,i),m(1,i),m(2,i));
 
        }   
+    }
+    Box(const Box& other)
+    {
+      // copy constructor
+      d_b[0] = other.d_b[0];
+      d_b[1] = other.d_b[1];
+      d_b[2] = other.d_b[2];
     }
     Vec const & operator()(int i)const { return d_b[i]; }
     double operator()(int i, int j)const 

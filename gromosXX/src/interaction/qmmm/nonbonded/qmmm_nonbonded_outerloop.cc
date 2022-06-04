@@ -229,7 +229,7 @@ int interaction::QMMM_Nonbonded_Outerloop
           << conf.current().pos(atom_j)(1) << " / "
           << conf.current().pos(atom_j)(2));
   DEBUG(10, "\tni r " << r(0) << " / " << r(1) << " / " << r(2));
-  double f;
+  double f = 0.0;
   term.lj_interaction(r, lj.c6, lj.c12,
           f, e_lj);
   force = f * r;

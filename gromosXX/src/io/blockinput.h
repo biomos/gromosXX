@@ -157,7 +157,7 @@ namespace io {
    */
   template < class T >
   bool evaluate_comparison(const T &var, std::string expr) {
-    bool result;
+    bool result = 0;
     
     std::size_t found = expr.find("<=");
     if (found != std::string::npos) {

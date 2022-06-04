@@ -521,7 +521,7 @@ void configuration::Configuration::lattice_sum_struct::init(topology::Topology c
   DEBUG(1,"Lattice Sum initialization.");
   simulation::Parameter & param = sim.param();
 #ifdef OMP
-  int tid, size;
+  int tid = 0, size = 0;
 #pragma omp parallel private(tid)
   {
     tid = omp_get_thread_num();
@@ -760,14 +760,14 @@ void configuration::Configuration::check_excluded_positions(topology::Topology c
     // calculate solute center of geometries
     topology::Chargegroup_Iterator
       cg1 =   topo.chargegroup_begin();
-    unsigned int i, num_cg = topo.num_solute_chargegroups();
+    unsigned int i = 0, num_cg = topo.num_solute_chargegroups();
     
     for(i=0; i < num_cg; ++cg1, ++i){
       cg1.cog(pos, cg_cog(i));
     }
 
     // loop over the solute charge groups
-    unsigned int idx_cg1, idx_cg2;
+    unsigned int idx_cg1 = 0, idx_cg2 = 0;
     for (idx_cg1 = 0; idx_cg1 < num_cg; idx_cg1++) {
       for (idx_cg2 = idx_cg1 + 1; idx_cg2 < num_cg; idx_cg2++) {
         // check if they are outside of inner cut off
