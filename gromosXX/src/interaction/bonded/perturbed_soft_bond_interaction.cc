@@ -53,7 +53,7 @@ static int _calculate_perturbed_soft_interactions
   math::VArray &force = conf.current().force;
   math::Vec v, f;
 
-  double e, diff, e_lambda;
+  double e = 0.0, diff = 0.0, e_lambda = 0.0;
 
   math::Periodicity<B> periodicity(conf.current().box);
 

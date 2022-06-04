@@ -66,7 +66,7 @@ void util::BS_Vector::minus(const BS_Vector& subtrahend, BS_Vector& result){
           m_end = this->end();
   BS_Vector::const_iterator s_i = subtrahend.begin();
   
-  double diff;
+  double diff = 0.0;
   for (; m_i != m_end; m_i++, s_i++){
     diff = *m_i - *s_i;
     DEBUG(12, "BS_Vector.minus: Value: " << diff);

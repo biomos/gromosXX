@@ -56,7 +56,7 @@ t_interaction_spec, t_perturbation_details>
     case simulation::lj_crf_func:
     {
       std::vector<math::VArray> &force_endstates = storage.force_endstates;
-      double c6, c12, q, e_nb, f;
+      double c6 = 0.0, c12 = 0.0, q = 0.0, e_nb = 0.0, f = 0.0;
       assert(abs2(r) != 0);
       const double dist2 = abs2(r);
       const double dist6 = dist2 * dist2 * dist2;
@@ -147,7 +147,7 @@ t_interaction_spec, t_perturbation_details>
                 io::message::critical);
       } else if (topo.is_coarse_grained(j)) { // FG-CG
         std::vector<math::VArray> &force_endstates = storage.force_endstates;
-        double c6, c12, q, e_nb, f;
+        double c6 = 0.0, c12 = 0.0, q = 0.0, e_nb = 0.0, f = 0.0;
         assert(abs2(r) != 0);
         const double dist2 = abs2(r);
         const double dist6 = dist2 * dist2 * dist2;
@@ -195,7 +195,7 @@ t_interaction_spec, t_perturbation_details>
         }
       } else { // FG-FG interaction
         std::vector<math::VArray> &force_endstates = storage.force_endstates;
-        double c6, c12, q, e_nb, f;
+        double c6 = 0.0, c12 = 0.0, q = 0.0, e_nb = 0.0, f = 0.0;
         assert(abs2(r) != 0);
         const double dist2 = abs2(r);
         const double dist6 = dist2 * dist2 * dist2;
@@ -340,7 +340,7 @@ t_interaction_spec, t_perturbation_details>
   switch (t_interaction_spec::interaction_func) {
     case simulation::lj_crf_func:
     {
-      double c6, c12, q, e_nb, f;
+      double c6 = 0.0, c12 = 0.0, q = 0.0, e_nb = 0.0, f = 0.0;
       assert(abs2(r) != 0);
       const double dist2 = abs2(r);
       const double dist6 = dist2 * dist2 * dist2;
@@ -433,7 +433,7 @@ t_interaction_spec, t_perturbation_details>
                 "1,4-interaction function not implemented for Gromos coarse-grained simulations!",
                 io::message::critical);
       } else { // FG-FG
-        double c6, c12, q, e_nb, f;
+        double c6 = 0.0, c12 = 0.0, q = 0.0, e_nb = 0.0, f = 0.0;
         assert(abs2(r) != 0);
         const double dist2 = abs2(r);
         const double dist6 = dist2 * dist2 * dist2;
@@ -544,7 +544,7 @@ t_interaction_spec, t_perturbation_details>
   math::VArray &pos = conf.current().pos;
   std::vector<math::VArray> &force = conf.special().eds.force_endstates;
   math::Vec r;
-  double e_rf;
+  double e_rf = 0.0;
 
   double alpha_crf = mit->second.CRF_softcore();
 
@@ -625,7 +625,7 @@ t_interaction_spec, t_perturbation_details>
 
       DEBUG(8, "r2 i(" << i << "-" << *it << ") " << abs2(r));
 
-      double q_j;
+      double q_j = 0.0;
 
       if (unsigned(*it) < topo.num_solute_atoms() && topo.is_eds_perturbed(*it)) {
         // j perturbed

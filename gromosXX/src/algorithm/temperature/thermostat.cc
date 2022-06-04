@@ -71,8 +71,8 @@ void algorithm::Thermostat
 	    << r_it->last_temperature_group);
 
       math::Vec com_v, new_com_v, ir_v;
-      double com_ekin, ekin, new_com_ekin, new_ekin;
-      unsigned int ir_bath, com_bath;
+      double com_ekin = 0.0, ekin = 0.0, new_com_ekin = 0.0, new_ekin = 0.0;
+      unsigned int ir_bath = 0, com_bath = 0;
 
       // which bathes?
       sim.multibath().in_bath(*(tg_it.begin()), com_bath, ir_bath);  

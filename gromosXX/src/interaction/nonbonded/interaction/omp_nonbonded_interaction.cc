@@ -173,7 +173,7 @@ int interaction::OMP_Nonbonded_Interaction::init(topology::Topology & topo,
 
   // OpenMP parallelization
 #ifdef OMP
-  unsigned int number_of_cpus;
+  unsigned int number_of_cpus = 0;
   int result = 0;
   
   #pragma omp parallel

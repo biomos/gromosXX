@@ -100,7 +100,7 @@ int nonbonded_hessian(topology::Topology & topo,
   //hessian matrix is square matrix of second-order partial derivatives of a function
   math::Vec pos_i = conf.current().pos(atom_i);
   math::Vec f1, f2; //from algorithm/constraints/flexible_constraint.cc they are hessian functions
-  double e_lj, e_crf;
+  double e_lj = 0.0, e_crf = 0.0;
   math::Matrix fd_h, h;
 
   for (int d = 0; d < 3; ++d) {
@@ -145,7 +145,7 @@ int check_lambda_derivative(topology::Topology & topo,
         double const delta, //from end of file check::check_forcefield
         bool physical = true
         ) {
-  int res, total = 0; // checking how many test, how many negative results
+  int res = 0, total = 0; // checking how many test, how many negative results
 
   std::string name = term.name;
 
@@ -186,7 +186,7 @@ int check_lambda_derivative(topology::Topology & topo,
   conf.current().energies.calculate_totals();
   conf.current().perturbed_energy_derivatives.calculate_totals();
 
-  double dE;
+  double dE = 0.0;
   if (physical) dE = conf.current().perturbed_energy_derivatives.potential_total;
   else dE = conf.current().perturbed_energy_derivatives.special_total;
 
@@ -203,7 +203,7 @@ int check_lambda_derivative(topology::Topology & topo,
   conf.current().energies.calculate_totals();
   conf.current().perturbed_energy_derivatives.calculate_totals();
 
-  double e1;
+  double e1 = 0.0;
   if (physical)
     e1 = conf.current().energies.potential_total;
   else
@@ -222,7 +222,7 @@ int check_lambda_derivative(topology::Topology & topo,
   conf.current().energies.calculate_totals();
   conf.current().perturbed_energy_derivatives.calculate_totals();
 
-  double e2;
+  double e2 = 0.0;
   if (physical)
     e2 = conf.current().energies.potential_total;
   else
@@ -255,7 +255,7 @@ int check_interaction(topology::Topology & topo,
         double const delta,
         double const rmsferr = 0.0,
         bool fast = false) {
-  int res, total = 0;
+  int res = 0, total = 0;
 
   std::string name = term.name;
 
@@ -385,7 +385,7 @@ int check_distanceres_interaction(topology::Topology & topo,
         double const energy,
         double const epsilon,
         double const delta) {
-  int res, total = 0;
+  int res = 0, total = 0;
 
   std::string name = term.name;
 
@@ -441,7 +441,7 @@ int check_angrest_interaction(topology::Topology & topo,
         double const energy,
         double const epsilon,
         double const delta) {
-  int res, total = 0;
+  int res = 0, total = 0;
 
   std::string name = term.name;
 
@@ -503,7 +503,7 @@ int check_dihrest_interaction(topology::Topology & topo,
         double const energy,
         double const epsilon,
         double const delta) {
-  int res, total = 0;
+  int res = 0, total = 0;
 
   std::string name = term.name;
 
@@ -566,7 +566,7 @@ int check_le_interaction(topology::Topology & topo,
         double const energy,
         double const epsilon,
         double const delta) {
-  int res, total = 0;
+  int res = 0, total = 0;
 
   std::string name = term.name;
 
@@ -603,7 +603,7 @@ int check_le_interaction(topology::Topology & topo,
       }
       else if(k>0){
 	stringstream sss(ss);
-	int m;
+	int m = 0;
 	sss >> m;
 	atom.push_back(m-1);
 	ss= "    ";
@@ -645,7 +645,7 @@ int check_oparam_interaction(topology::Topology & topo,
         double const energy,
         double const epsilon,
         double const delta) {
-  int res, total = 0;
+  int res = 0, total = 0;
 
   std::string name = term.name;
 

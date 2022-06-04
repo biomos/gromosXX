@@ -40,7 +40,7 @@ bool math::boundary_check_cutoff(math::Box const & box, math::boundary_enum cons
     case math::triclinic :
     {
       DEBUG(13, "PBC: truncoct/triclinic");
-      double a, b, c, alpha, beta, gamma, triclinicvolume;
+      double a = 0.0, b = 0.0, c = 0.0, alpha = 0.0, beta = 0.0, gamma = 0.0, triclinicvolume = 0.0;
       a = math::abs(box(0));
       b = math::abs(box(1));
       c = math::abs(box(2));

@@ -209,7 +209,7 @@ int algorithm::Conjugate_Gradient
   }
 
   // If old forces are non-zero and this is not a resetting step, calculate beta
-  double beta;
+  double beta = 0.0;
   if (!no_force && (sim.param().minimise.ncyc == 0 || sim.steps() % sim.param().minimise.ncyc != 0)) {
     beta = calculate_beta(topo, conf, sim);
     DEBUG(15, "beta = " << beta);
@@ -274,7 +274,7 @@ int algorithm::Conjugate_Gradient
   conf.exchange_state();
   
   // Slope and energy in the upper boundary
-  double gB, eneB;
+  double gB = 0.0, eneB = 0.0;
   
   // Counter of interval doubling
   unsigned counter_doub = 0;
@@ -324,9 +324,9 @@ int algorithm::Conjugate_Gradient
     }
   }
   double a = 0.0;
-  double Z, W;
+  double Z = 0.0, W = 0.0;
   double X = 0.0;
-  double gX, eneX, old_X;
+  double gX = 0.0, eneX = 0.0, old_X = 0.0;
   // Counter of interpolations
   unsigned counter_ipol = 0;
   while(true) {

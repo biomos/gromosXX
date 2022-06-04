@@ -49,7 +49,7 @@ static int _calculate_perturbed_field_restraint_interactions
  util::Virtual_Atom &va_j)
 {
   math::Vec v, f;
-  double energy, en_term;
+  double energy = 0.0, en_term = 0.0;
   std::vector<int> &ngrid = conf.special().distancefield.ngrid;
   math::Box &box = conf.current().box;
   double grid = sim.param().distancefield.grid;
@@ -190,7 +190,7 @@ static int _calculate_perturbed_field_restraint_interactions
   va_i.force(conf, topo, -f);
   va_j.force(conf, topo,  f);
 
-  double dlam_term, energy_derivative, dprefndl, dprefmdl;
+  double dlam_term = 0.0, energy_derivative = 0.0, dprefndl = 0.0, dprefmdl = 0.0;
 
   // the derivative of the prefactor
   // division by zero precaution
@@ -262,7 +262,7 @@ static int _calculate_perturbed_field_restraint_interactions
       double difflam = dist - r0lam;
       double difflam2 = difflam * difflam;
 
-      double en_termlam;
+      double en_termlam = 0.0;
       if(fabs(r0lam - dist) < r_l){
 	en_termlam = 0.5 * Klam * difflam;
       }
@@ -274,7 +274,7 @@ static int _calculate_perturbed_field_restraint_interactions
       }
       double energylam = prefactorlam * en_termlam;
       
-      double dlam_termlam, dprefmdlam, dprefndlam;
+      double dlam_termlam = 0.0, dprefmdlam = 0.0, dprefndlam = 0.0;
       if (n==0) dprefndlam = 0;
       else dprefndlam = n * pow(lam, n-1) * pow(1.0 - lam, m);
       if (m == 0) dprefmdlam = 0;
@@ -347,7 +347,7 @@ static void _update_grid
 
   // find the gridpoint that is nearest to atom_i. This will be our seed
   math::Box box = conf.current().box;
-  int nx, ny, nz;
+  int nx = 0, ny = 0, nz = 0;
   math::Vec ppos = va_i.pos(conf, topo);
   periodicity.put_into_box(ppos);
 

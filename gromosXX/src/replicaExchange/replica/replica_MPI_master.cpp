@@ -302,7 +302,7 @@ void re::replica_MPI_Master::send_coordinates(){
 
 double re::replica_MPI_Master::calculateEnergies(){
     double energy = 0.0;
-    algorithm::Algorithm * ff;
+    algorithm::Algorithm * ff = nullptr;
 
     //Calculate energies
     ff = md.algorithm("Forcefield");

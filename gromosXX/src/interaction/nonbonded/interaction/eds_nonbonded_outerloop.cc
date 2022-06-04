@@ -87,7 +87,7 @@ void interaction::Eds_Nonbonded_Outerloop
   innerloop.init(sim);
 
   std::vector<unsigned int>::const_iterator j_it, j_to;
-  unsigned int i;
+  unsigned int i = 0;
   unsigned int size_i = unsigned(topo.num_solute_atoms());
   // unsigned int size_i = unsigned(pairlist.size());
 

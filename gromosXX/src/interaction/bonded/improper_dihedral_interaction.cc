@@ -42,8 +42,8 @@ static int _calculate_improper_interactions(topology::Topology & topo,
   math::VArray &pos   = conf.current().pos;
   math::VArray &force = conf.current().force;
   math::Vec rij, rkj, rkl, rlj, rmj, rnk, fi, fj, fk, fl;
-  double dkj2, dkj, dmj2, dmj, dnk2, dnk, ip, q;
-  double energy;
+  double dkj2 = 0.0, dkj = 0.0, dmj2 = 0.0, dmj = 0.0, dnk2 = 0.0, dnk = 0.0, ip = 0.0, q = 0.0;
+  double energy = 0.0;
   
   math::Periodicity<B> periodicity(conf.current().box);
 

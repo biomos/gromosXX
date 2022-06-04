@@ -247,7 +247,7 @@ void io::In_RDC::read(topology::Topology& topo,
   //////////////////////
   // CONVERSION BLOCK //
   //////////////////////
-  double factorfreq, factorgyr;
+  double factorfreq = 0.0, factorgyr = 0.0;
   {
     // get two conversion factors from (input) to ps-1 (internal)  typically input is Hz and the factor is 10^-12
     //                        and from (input) to e/u (internal)   typically input is 10^7*rad/T*s and the factor is 0.10375
@@ -329,8 +329,8 @@ void io::In_RDC::read(topology::Topology& topo,
         else {
           vector<string>::const_iterator itMF = buffer.begin() + 1;
 
-          unsigned int n_mf;
-          unsigned int mf_mass;
+          unsigned int n_mf = 0;
+          unsigned int mf_mass = 0;
 
           _lineStream.clear();
           _lineStream.str(*itMF);
@@ -426,8 +426,8 @@ void io::In_RDC::read(topology::Topology& topo,
 
         os.setf(ios_base::fixed, ios_base::floatfield);
 
-        double mass;
-        double Axx=0, vAxx, Ayy=0, vAyy, Axy=0, vAxy, Axz=0, vAxz, Ayz=0, vAyz;
+        double mass = 0.0;
+        double Axx=0, vAxx = 0.0, Ayy=0, vAyy = 0.0, Axy=0, vAxy = 0.0, Axz=0, vAxz = 0.0, Ayz=0, vAyz = 0.0;
 
         _lineStream.clear();
         _lineStream.str(*itA);
@@ -495,7 +495,7 @@ void io::In_RDC::read(topology::Topology& topo,
 
         os.setf(ios_base::fixed, ios_base::floatfield);
 
-        double Axx, mAxx, vAxx, Ayy, mAyy, vAyy, Axy, mAxy, vAxy, Axz, mAxz, vAxz, Ayz, mAyz, vAyz;
+        double Axx = 0.0, mAxx = 0.0, vAxx = 0.0, Ayy = 0.0, mAyy = 0.0, vAyy = 0.0, Axy = 0.0, mAxy = 0.0, vAxy = 0.0, Axz = 0.0, mAxz = 0.0, vAxz = 0.0, Ayz = 0.0, mAyz = 0.0, vAyz = 0.0;
 
         _lineStream.clear();
         _lineStream.str(*itA);
@@ -583,7 +583,7 @@ void io::In_RDC::read(topology::Topology& topo,
         os.setf(ios_base::fixed, ios_base::floatfield);
 
         const int n_clm = 5; // (-2,2), (-1,2), (0,2), (1,2), (2,2)
-        double mass;
+        double mass = 0.0;
         vector<double> c;
 
         _lineStream.clear();
@@ -670,8 +670,8 @@ void io::In_RDC::read(topology::Topology& topo,
 
     DEBUG(10, "reading in RDCRESSPEC data")
 
-    int atom_i, atom_j, k, l, type;
-    double weight, R, gyri, gyrj, rij, rik;
+    int atom_i = 0, atom_j = 0, k = 0, l = 0, type = 0;
+    double weight = 0.0, R = 0.0, gyri = 0.0, gyrj = 0.0, rij = 0.0, rik = 0.0;
 
     os.setf(ios_base::fixed, ios_base::floatfield);
 
@@ -746,7 +746,7 @@ void io::In_RDC::read(topology::Topology& topo,
       io::messages.add("no RDCGROUPS block in RDC restraints file", "In_RDC", io::message::critical);
     }
 
-    unsigned int int_buf;
+    unsigned int int_buf = 0;
 
     os.setf(ios_base::fixed, ios_base::floatfield);
 

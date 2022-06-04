@@ -1057,7 +1057,7 @@ calculate_constraint_dof(simulation::Multibath &multibath,
     c_it = solute().distance_constraints().begin(),
             c_to = solute().distance_constraints().end();
 
-    unsigned int com_bath_i, ir_bath_i, com_bath_j, ir_bath_j;
+    unsigned int com_bath_i = 0, ir_bath_i = 0, com_bath_j = 0, ir_bath_j = 0;
 
     for (; c_it != c_to; ++c_it) {
 
@@ -1157,7 +1157,7 @@ calculate_constraint_dof(simulation::Multibath &multibath,
             c_it = perturbed_solute().distance_constraints().begin(),
             c_to = perturbed_solute().distance_constraints().end();
 
-    unsigned int com_bath_i, ir_bath_i, com_bath_j, ir_bath_j;
+    unsigned int com_bath_i = 0, ir_bath_i = 0, com_bath_j = 0, ir_bath_j = 0;
 
     for (; c_it != c_to; ++c_it) {
 
@@ -1214,7 +1214,7 @@ calculate_constraint_dof(simulation::Multibath &multibath,
       if (pos_cons_atom.find(angit->k) == pos_cons_atom.end()) not_pos_constrained.push_back(angit->k);
 
       double num_not_pos_const = not_pos_constrained.size();
-      unsigned int ir_bath, com_bath;
+      unsigned int ir_bath = 0, com_bath = 0;
 
       for (unsigned int i=0; i < num_not_pos_const; i++) {
         double part=1/num_not_pos_const;
@@ -1234,7 +1234,7 @@ calculate_constraint_dof(simulation::Multibath &multibath,
       if (pos_cons_atom.find(pangit->k) == pos_cons_atom.end()) not_pos_constrained.push_back(pangit->k);
 
       double num_not_pos_const = not_pos_constrained.size();
-      unsigned int ir_bath, com_bath;
+      unsigned int ir_bath = 0, com_bath = 0;
 
       for (unsigned int i=0; i < num_not_pos_const; i++) {
         double part=1/num_not_pos_const;
@@ -1263,7 +1263,7 @@ calculate_constraint_dof(simulation::Multibath &multibath,
       if (pos_cons_atom.find(dihit->l) == pos_cons_atom.end()) not_pos_constrained.push_back(dihit->l);
 
       double num_not_pos_const = not_pos_constrained.size();
-      unsigned int ir_bath, com_bath;
+      unsigned int ir_bath = 0, com_bath = 0;
 
       for (unsigned int i=0; i < num_not_pos_const; i++) {
         double part=1/num_not_pos_const;
@@ -1284,7 +1284,7 @@ calculate_constraint_dof(simulation::Multibath &multibath,
       if (pos_cons_atom.find(pdihit->l) == pos_cons_atom.end()) not_pos_constrained.push_back(pdihit->l);
 
       double num_not_pos_const = not_pos_constrained.size();
-      unsigned int ir_bath, com_bath;
+      unsigned int ir_bath = 0, com_bath = 0;
 
       for (unsigned int i=0; i < num_not_pos_const; i++) {
         double part=1/num_not_pos_const;
@@ -1309,7 +1309,7 @@ calculate_constraint_dof(simulation::Multibath &multibath,
     for (; tmpit != tmpto; ++tmpit) {
       unsigned int num_cons = 0;
       topology::Atom_Iterator ait = tmpit.begin(), ato = tmpit.end();
-      unsigned int com_bath_i, ir_bath_i;
+      unsigned int com_bath_i = 0, ir_bath_i = 0;
       unsigned int first_atom = *ait;
       multibath.in_bath(*ait, com_bath_i, ir_bath_i);
 
@@ -1351,7 +1351,7 @@ calculate_constraint_dof(simulation::Multibath &multibath,
     // check whether all solute is in one bath
     if (num_solute_atoms()) {
 
-      unsigned int ir_bath, ir_bath_0, com_bath, com_bath_0;
+      unsigned int ir_bath = 0, ir_bath_0 = 0, com_bath = 0, com_bath_0 = 0;
       bool ok = true;
 
       multibath.in_bath(0, com_bath_0, ir_bath_0);

@@ -174,7 +174,7 @@ int main(int argc, char *argv[]){
 	    << "==================================================\n"
 	    << std::endl;
 
-  int error;
+  int error = 0;
 
   const double init_time = util::now() - start;
   while(int(sim.steps()) < sim.param().step.number_of_steps && !exit_md){

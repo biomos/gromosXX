@@ -105,10 +105,10 @@ io::In_Jvalue::read(topology::Topology& topo,
     DEBUG(10, "reading in JVALRESSPEC data");
     DEBUG(10, "jvalue_av size = " << conf.special().jvalue_av.size());
     
-    int i, j, k, l;
-    double K, J;
-    double a, b, c, delta;
-    int H;
+    int i = 0, j = 0, k = 0, l = 0;
+    double K = 0.0, J = 0.0;
+    double a = 0.0, b = 0.0, c = 0.0, delta = 0.0;
+    int H = 0;
     
     os.precision(2);
     os.setf(std::ios_base::fixed, std::ios_base::floatfield);

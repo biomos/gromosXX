@@ -48,7 +48,7 @@ std::map<int,math::Vec> &rah_map, int &error)
   // math::VArray &pos   = conf.current().pos;
   // math::VArray &force = conf.current().force;
   math::Vec v, f;
-  double energy;
+  double energy = 0.0;
 
   math::Periodicity<B> periodicity(conf.current().box);
 
