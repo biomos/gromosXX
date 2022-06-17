@@ -2803,16 +2803,16 @@ void io::Out_Configuration::_print_rdc_values(simulation::Parameter const &param
   if (!formatted) { // very ugly, I use the formatted flag to indicate we are printing to the final conf
     // when printed to the special trajectory it is useful to have the number of restraints
     unsigned int total_num_rdcs = 0;
-    for (unsigned int i=0; i<conf.special().rdc.size(); ++i){
-      total_num_rdcs+=conf.special().rdc[i].curr.size();
+    for (unsigned int i=0; i<conf.special().rdc_groups.size(); ++i){
+      total_num_rdcs+=conf.special().rdc_groups[i].curr.size();
     }
     os << total_num_rdcs << std::endl;
   }
   os.setf(std::ios::fixed, std::ios::floatfield);
   os.precision(m_rdc_restraint_precision);
-  for (unsigned int i=0; i<conf.special().rdc.size(); ++i){
-    for (unsigned int j=0; j<conf.special().rdc[i].curr.size(); ++j){
-      os << std::setw(m_width) << conf.special().rdc[i].curr[j]/conf.special().rdc[i].factorFreq << std::endl;
+  for (unsigned int i=0; i<conf.special().rdc_groups.size(); ++i){
+    for (unsigned int j=0; j<conf.special().rdc_groups[i].curr.size(); ++j){
+      os << std::setw(m_width) << conf.special().rdc_groups[i].curr[j]/param.rdc.factorFreq << std::endl;
     }
   }
   os << "END" << std::endl;
@@ -2827,16 +2827,16 @@ void io::Out_Configuration::_print_rdc_averages(simulation::Parameter const &par
   if (!formatted) { // very ugly, I use this as flag for when printing to the final conf
     // when printed to the special trajectory it is useful to have the number of restraints
     unsigned int total_num_rdcs = 0;
-    for (unsigned int i=0; i<conf.special().rdc.size(); ++i){
-      total_num_rdcs+=conf.special().rdc[i].curr.size();
+    for (unsigned int i=0; i<conf.special().rdc_groups.size(); ++i){
+      total_num_rdcs+=conf.special().rdc_groups[i].curr.size();
     }
     os << total_num_rdcs << std::endl;
   }
   os.setf(std::ios::fixed, std::ios::floatfield);
   os.precision(m_rdc_restraint_precision);
-  for (unsigned int i=0; i<conf.special().rdc.size(); ++i){
-    for (unsigned int j=0; j<conf.special().rdc[i].av.size(); ++j){
-      os << std::setw(m_width) << conf.special().rdc[i].av[j]/conf.special().rdc[i].factorFreq << std::endl;
+  for (unsigned int i=0; i<conf.special().rdc_groups.size(); ++i){
+    for (unsigned int j=0; j<conf.special().rdc_groups[i].av.size(); ++j){
+      os << std::setw(m_width) << conf.special().rdc_groups[i].av[j]/param.rdc.factorFreq << std::endl;
     }
   }
   os << "END" << std::endl;
@@ -2849,20 +2849,20 @@ void io::Out_Configuration::_print_rdc_cumaverages(simulation::Parameter const &
                              bool formatted) {
   os << "RDCCUMAVE" << std::endl;
   if (formatted) { // very ugly, I use this as flag for when printing to the final conf
-    os << conf.special().rdc[0].num_averaged << std::endl;
+    os << conf.special().rdc_groups[0].num_averaged << std::endl;
   } else {
     // when printed to the special trajectory it is useful to have the number of restraints
     unsigned int total_num_rdcs = 0;
-    for (unsigned int i=0; i<conf.special().rdc.size(); ++i){
-      total_num_rdcs+=conf.special().rdc[i].curr.size();
+    for (unsigned int i=0; i<conf.special().rdc_groups.size(); ++i){
+      total_num_rdcs+=conf.special().rdc_groups[i].curr.size();
     }
     os << total_num_rdcs << std::endl;
   }
   os.setf(std::ios::fixed, std::ios::floatfield);
   os.precision(m_rdc_restraint_precision);
-  for (unsigned int i=0; i<conf.special().rdc.size(); ++i){
-    for (unsigned int j=0; j<conf.special().rdc[i].RDC_cumavg.size(); ++j){
-      os << std::setw(m_width) << conf.special().rdc[i].RDC_cumavg[j]/conf.special().rdc[i].factorFreq << std::endl;
+  for (unsigned int i=0; i<conf.special().rdc_groups.size(); ++i){
+    for (unsigned int j=0; j<conf.special().rdc_groups[i].RDC_cumavg.size(); ++j){
+      os << std::setw(m_width) << conf.special().rdc_groups[i].RDC_cumavg[j]/param.rdc.factorFreq << std::endl;
     }
   }
   os << "END" << std::endl;
@@ -2878,9 +2878,9 @@ void io::Out_Configuration::_print_rdc_ataverage(simulation::Parameter const &pa
       if (formatted) {
         os << "#   Axx            Ayy            Axy            Axz            Ayz\n";
       }
-      for (unsigned int i=0; i<conf.special().rdc.size(); ++i){
+      for (unsigned int i=0; i<conf.special().rdc_groups.size(); ++i){
         for (unsigned int j=0; j<n_ah; ++j) {
-          os << std::setw(m_width) << conf.special().rdc[i].Tensor_av[j];
+          os << std::setw(m_width) << conf.special().rdc_groups[i].Tensor_av[j];
         }
         os << std::endl;
       }
@@ -2902,11 +2902,11 @@ void io::Out_Configuration::_print_rdc_representation(simulation::Parameter cons
           }
           os.setf(std::ios::fixed, std::ios::floatfield);
           os.precision(m_precision);
-          for (unsigned int i=0; i<conf.special().rdc.size(); ++i){
-            for (unsigned int j=0; j<conf.special().rdc[i].MFpoint.size(); ++j) {
-              os << std::setw(m_width) << conf.special().rdc[i].MFpoint[j](0)
-                 << std::setw(m_width) << conf.special().rdc[i].MFpoint[j](1)
-                 << std::setw(m_width) << conf.special().rdc[i].MFpoint[j](2) << std::endl;
+          for (unsigned int i=0; i<conf.special().rdc_groups.size(); ++i){
+            for (unsigned int j=0; j<conf.special().rdc_groups[i].MFpoint.size(); ++j) {
+              os << std::setw(m_width) << conf.special().rdc_groups[i].MFpoint[j](0)
+                 << std::setw(m_width) << conf.special().rdc_groups[i].MFpoint[j](1)
+                 << std::setw(m_width) << conf.special().rdc_groups[i].MFpoint[j](2) << std::endl;
             }
           }
 
@@ -2919,15 +2919,15 @@ void io::Out_Configuration::_print_rdc_representation(simulation::Parameter cons
           }
           os.setf(std::ios::fixed, std::ios::floatfield);
           os.precision(m_precision);
-          for (unsigned int i=0; i<conf.special().rdc.size(); ++i){
-            for (unsigned int j=0; j<conf.special().rdc[i].MFpoint.size(); ++j) {
-              os << std::setw(m_width) << conf.special().rdc[i].MFpoint[j](0)
-                 << std::setw(m_width) << conf.special().rdc[i].MFpoint[j](1)
-                 << std::setw(m_width) << conf.special().rdc[i].MFpoint[j](2)
-                 << std::setw(m_width) << conf.special().rdc[i].MFpointVel[j](0)
-                 << std::setw(m_width) << conf.special().rdc[i].MFpointVel[j](1)
-                 << std::setw(m_width) << conf.special().rdc[i].MFpointVel[j](2)
-                 << std::setw(m_width) << conf.special().rdc[i].MFpointMass[j] << std::endl;
+          for (unsigned int i=0; i<conf.special().rdc_groups.size(); ++i){
+            for (unsigned int j=0; j<conf.special().rdc_groups[i].MFpoint.size(); ++j) {
+              os << std::setw(m_width) << conf.special().rdc_groups[i].MFpoint[j](0)
+                 << std::setw(m_width) << conf.special().rdc_groups[i].MFpoint[j](1)
+                 << std::setw(m_width) << conf.special().rdc_groups[i].MFpoint[j](2)
+                 << std::setw(m_width) << conf.special().rdc_groups[i].MFpointVel[j](0)
+                 << std::setw(m_width) << conf.special().rdc_groups[i].MFpointVel[j](1)
+                 << std::setw(m_width) << conf.special().rdc_groups[i].MFpointVel[j](2)
+                 << std::setw(m_width) << conf.special().rdc_groups[i].MFpointMass[j] << std::endl;
             }
           }
           break;
@@ -2946,9 +2946,9 @@ void io::Out_Configuration::_print_rdc_representation(simulation::Parameter cons
           }
           os.setf(std::ios::fixed, std::ios::floatfield);
           os.precision(m_precision);
-          for (unsigned int i=0; i<conf.special().rdc.size(); ++i){
+          for (unsigned int i=0; i<conf.special().rdc_groups.size(); ++i){
             for (unsigned int j=0; j<n_ah; ++j) {
-              os << std::setw(m_width) << conf.special().rdc[i].Tensor[j];
+              os << std::setw(m_width) << conf.special().rdc_groups[i].Tensor[j];
             }
             os << std::endl;
           }
@@ -2966,11 +2966,11 @@ void io::Out_Configuration::_print_rdc_representation(simulation::Parameter cons
           }
           os.setf(std::ios::fixed, std::ios::floatfield);
           os.precision(m_precision);
-          for (unsigned int i=0; i<conf.special().rdc.size(); ++i){
+          for (unsigned int i=0; i<conf.special().rdc_groups.size(); ++i){
             for (unsigned int j=0; j<n_ah; ++j) {
-              os << std::setw(m_width) << conf.special().rdc[i].Tensor[j]
-                 << std::setw(m_width) << conf.special().rdc[i].TensorVel[j]
-                 << std::setw(m_width) << conf.special().rdc[i].TensorMass[j];
+              os << std::setw(m_width) << conf.special().rdc_groups[i].Tensor[j]
+                 << std::setw(m_width) << conf.special().rdc_groups[i].TensorVel[j]
+                 << std::setw(m_width) << conf.special().rdc_groups[i].TensorMass[j];
             }
             os << std::endl;
           }
@@ -2990,9 +2990,9 @@ void io::Out_Configuration::_print_rdc_representation(simulation::Parameter cons
           }
           os.setf(std::ios::fixed, std::ios::floatfield);
           os.precision(m_precision);
-          for (unsigned int i=0; i<conf.special().rdc.size(); ++i){
+          for (unsigned int i=0; i<conf.special().rdc_groups.size(); ++i){
             for (unsigned int j=0; j<n_clm; ++j) {
-              os << std::setw(m_width) << conf.special().rdc[i].clm[j];
+              os << std::setw(m_width) << conf.special().rdc_groups[i].clm[j];
             }
             os << std::endl;
           }
@@ -3010,11 +3010,11 @@ void io::Out_Configuration::_print_rdc_representation(simulation::Parameter cons
           }
           os.setf(std::ios::fixed, std::ios::floatfield);
           os.precision(m_precision);
-          for (unsigned int i=0; i<conf.special().rdc.size(); ++i){
+          for (unsigned int i=0; i<conf.special().rdc_groups.size(); ++i){
             for (unsigned int j=0; j<n_clm; ++j) {
-              os << std::setw(m_width) << conf.special().rdc[i].clm[j]
-                 << std::setw(m_width) << conf.special().rdc[i].clmVel[j]
-                 << std::setw(m_width) << conf.special().rdc[i].clmMass[j];
+              os << std::setw(m_width) << conf.special().rdc_groups[i].clm[j]
+                 << std::setw(m_width) << conf.special().rdc_groups[i].clmVel[j]
+                 << std::setw(m_width) << conf.special().rdc_groups[i].clmMass[j];
             }
             os << std::endl;
           }
@@ -3037,8 +3037,8 @@ void io::Out_Configuration::_print_rdc_alignment_distribution(
   os.precision(m_precision);
   double binsize_theta = sim.param().rdc.bins_theta[1]-sim.param().rdc.bins_theta[0];
   std::vector<configuration::Configuration::special_struct::rdc_struct>::const_iterator
-      conf_it = conf.special().rdc.begin(),
-      conf_to = conf.special().rdc.end(); // vector of groups of rdc current state
+      conf_it = conf.special().rdc_groups.begin(),
+      conf_to = conf.special().rdc_groups.end(); // vector of groups of rdc current state
   for(unsigned int i=1 ; conf_it!=conf_to; conf_it++, i++){  // for each RDC group
     os << "RDCTHETADIST" << i << std::endl; 
     for (unsigned int i = 0; i < conf_it->dist_theta.size()-1; i++) {
@@ -3225,25 +3225,25 @@ void io::Out_Configuration::_print_rdc_stochastic_integrals(simulation::Paramete
   os << "RDCSTOCHINT" << std::endl;
   os.setf(std::ios::scientific, std::ios::floatfield);
   os.precision(m_precision);
-  for (unsigned int i=0; i<conf.special().rdc.size(); ++i){
+  for (unsigned int i=0; i<conf.special().rdc_groups.size(); ++i){
     switch(param.rdc.type){
       case(simulation::rdc_mf): {
-        for (unsigned int j=0; j<conf.special().rdc[i].stochastic_integral_mf.size(); ++j){
-          os << std::setw(m_width) << conf.special().rdc[i].stochastic_integral_mf[j][0];
-          os << std::setw(m_width) << conf.special().rdc[i].stochastic_integral_mf[j][1];
-          os << std::setw(m_width) << conf.special().rdc[i].stochastic_integral_mf[j][2] << std::endl;
+        for (unsigned int j=0; j<conf.special().rdc_groups[i].stochastic_integral_mf.size(); ++j){
+          os << std::setw(m_width) << conf.special().rdc_groups[i].stochastic_integral_mf[j][0];
+          os << std::setw(m_width) << conf.special().rdc_groups[i].stochastic_integral_mf[j][1];
+          os << std::setw(m_width) << conf.special().rdc_groups[i].stochastic_integral_mf[j][2] << std::endl;
         }
         break;
       }
       case(simulation::rdc_t): {
-        for (unsigned int j=0; j<conf.special().rdc[i].stochastic_integral_t.size(); ++j){
-          os << std::setw(m_width) << conf.special().rdc[i].stochastic_integral_t[j] << std::endl;
+        for (unsigned int j=0; j<conf.special().rdc_groups[i].stochastic_integral_t.size(); ++j){
+          os << std::setw(m_width) << conf.special().rdc_groups[i].stochastic_integral_t[j] << std::endl;
         }
         break;
       }
       case(simulation::rdc_sh): {
-        for (unsigned int j=0; j<conf.special().rdc[i].stochastic_integral_sh.size(); ++j){
-          os << std::setw(m_width) << conf.special().rdc[i].stochastic_integral_sh[j] << std::endl;
+        for (unsigned int j=0; j<conf.special().rdc_groups[i].stochastic_integral_sh.size(); ++j){
+          os << std::setw(m_width) << conf.special().rdc_groups[i].stochastic_integral_sh[j] << std::endl;
         }
         break;
       }

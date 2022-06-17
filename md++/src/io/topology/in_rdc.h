@@ -39,6 +39,7 @@
 #define INCLUDED_IN_RDC_H
 
 #include "../instream.h"
+#include <math/random.h>
 
 namespace io {
 
@@ -47,6 +48,10 @@ namespace io {
    * reads in a RDC restraint specification file.
    */
   class In_RDC : public GInStream {
+
+  private:
+    unsigned int input_mode = 0;
+    double dish, disc;
 
   public:
     /**
@@ -61,9 +66,37 @@ namespace io {
      * Read in a RDC restraining file.
      */
     void read(topology::Topology &topo,
-	      configuration::Configuration & conf,
-	      simulation::Simulation & sim,
-	      std::ostream & os = std::cout);
+        configuration::Configuration & conf,
+        simulation::Simulation & sim,
+        std::ostream & os = std::cout);
+
+    void read_CONVERSION(topology::Topology &topo,
+                          simulation::Simulation &sim,
+                          std::ostream & os);
+    void read_INPUTMODE(topology::Topology &topo,
+                          simulation::Simulation &sim,
+                          std::ostream & os);
+    void read_MAGFIELDC(topology::Topology &topo,
+                          simulation::Simulation &sim,
+                          std::ostream & os,
+                          math::RandomGenerator *rng);
+    void read_ALIGNT(topology::Topology &topo,
+                          simulation::Simulation &sim,
+                          std::ostream & os,
+                          math::RandomGenerator *rng);
+    void read_SPHERICALHARMONICS(topology::Topology &topo,
+                          simulation::Simulation &sim,
+                          std::ostream & os,
+                          math::RandomGenerator *rng);
+    void read_RDCRESSPEC(topology::Topology &topo,
+                          simulation::Simulation &sim,
+                          std::ostream & os);
+    void read_RDCMOLAXIS(topology::Topology &topo,
+                          simulation::Simulation &sim,
+                          std::ostream & os);
+    void read_RDCGROUPS(topology::Topology &topo,
+                          simulation::Simulation &sim,
+                          std::ostream & os);
     /**
      * Maximum number of atoms that can be specified to define a virtual atom
      */

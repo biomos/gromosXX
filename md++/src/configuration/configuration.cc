@@ -206,7 +206,7 @@ configuration::Configuration::Configuration
   special().orderparamres.Q_winavg = conf.special().orderparamres.Q_winavg;
   special().orderparamres.D_winavg = conf.special().orderparamres.D_winavg;
 
-  special().rdc = conf.special().rdc;
+  special().rdc_groups = conf.special().rdc_groups;
 
   special().zaxisoribias.av = conf.special().zaxisoribias.av;
   special().zaxisoribias.energy = conf.special().zaxisoribias.energy;
@@ -334,7 +334,7 @@ configuration::Configuration & configuration::Configuration::operator=
   special().dihedralres.energy = conf.special().dihedralres.energy;
   special().dihedralres.d = conf.special().dihedralres.d;
 
-  special().rdc = conf.special().rdc;
+  special().rdc_groups = conf.special().rdc_groups;
 
   special().zaxisoribias.av = conf.special().zaxisoribias.av;
   special().zaxisoribias.energy = conf.special().zaxisoribias.energy;

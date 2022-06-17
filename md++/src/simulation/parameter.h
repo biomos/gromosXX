@@ -4096,6 +4096,16 @@ namespace simulation
        */
       unsigned int normalize_r;
       /**
+       * frequency conversion factor from input units to ps-1
+       * (read from CONVERSION block in rdc restraints spec file)
+       */
+      double factorFreq;
+      /**
+       * gyromagnetic ratio conversion factor from input units to e/u
+       * (read from CONVERSION block in rdc restraints spec file)
+       */
+      double factorGyr;
+      /**
         * bins for distribution of the angle between magn. field vector and 
         * a chosen molecule axis
         */
