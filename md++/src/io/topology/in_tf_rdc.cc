@@ -11,9 +11,8 @@
 #include <interaction/interaction_types.h>
 #include <configuration/configuration.h>
 
-#include <io/instream.h>
-#include <io/blockinput.h>
-
+#include "../../io/instream.h"
+#include "../../io/blockinput.h"
 #include "in_tf_rdc.h"
 
 #undef MODULE
@@ -21,35 +20,8 @@
 #define MODULE io
 #define SUBMODULE topology
 
-/**
- * @section tfrdcresspec TFRDCRESSPEC block
- * The TFRDCRESSPEC block is read from the tensor-free RDC restraints
- *  specification file .tfr.
- *
- * \c DISH is the carbon-hydrogen, \c DISC the carbon-carbon distance.
- * See @ref util::virtual_type for valid virtual atom types.
- * \c R0 is the normalisation distance
- * \c G1/G2 is the gyromagnetic ratio for nucleus 1/nucleus 2 in
- * 10^6 rad /(T s)
- * \c D0 is the experimental RDC in Hz
- * \c DD0 is a deviation which is allowed (in Hz)
- * \c WTFRDC a weight factor (multiplied by the force constant specified in
- * the input file)
- * @verbatim
-TFRDCRESSPEC
-#DISH  DISC
-   0.1   0.13
-# i   j   k   l   type  i    j    k   l  type  R0      G1      G2      D0      DD0   WTFRDC
-  2   0   0   0   0     4    0    0   0    0   0.1  267.513  19.331   0.136    0.05     1.0
-  3   0   0   0   0     5    0    0   0    0   0.1  267.513  67.262   0.136    0.05     1.0
-END
-TFRDCMOLAXIS
-# i   j   k   l   type  i    j    k   l  type  
-  3   0   0   0   0     5    0    0   0    0  
-END
-@endverbatim
- * @sa util::virtual_type util::Virtual_Atom
- */
+static std::set<std::string> block_read;
+
 void
 io::In_Tfrdcresspec::read(topology::Topology& topo,
         simulation::Simulation & sim,
@@ -57,212 +29,309 @@ io::In_Tfrdcresspec::read(topology::Topology& topo,
   std::set<std::string> block_read;
   DEBUG(7, "reading in a tensor-free RDC restraints file");
 
-  std::vector<std::string> buffer;
-  double dish, disc;
+  read_TFRDCCONV(topo, sim, os);
+  read_TFRDCRESSPEC(topo, sim, os);
+  read_TFRDCMOLAXIS(topo, sim, os);
 
-  { // TFRDCRESSPEC
+}
+
+/**
+ * @section tfrdcconversion TFRDCCONV block
+ * The TFRDCCONV block is read from the TF-RDC restraint specification file.
+ *
+ * - Frequency unit conversion factor to ps-1.
+ * - Gyr.magn. ratio unit conversion factor to (e/u).
+ * @snippet snippets/snippets.cc TFRDCCONV
+ */
+void io::In_Tfrdcresspec::read_TFRDCCONV(topology::Topology &topo,
+                                 simulation::Simulation &sim,
+                                 std::ostream &os)
+{ // TFRDCCONV
+
+  DEBUG(10, "TFRDCCONV block");
+  std::stringstream exampleblock;
+  // lines starting with 'exampleblock<<"' and ending with '\n";' (spaces don't matter)
+  // will be used to generate snippets that can be included in the doxygen doc;
+  // the first line is the tag
+  exampleblock << "TFRDCCONV\n";
+  exampleblock << "# FACFREQ   frequency conversion factor from input units to ps-1\n";
+  exampleblock << "#           typically input is Hz and the factor is 10^-12\n";
+  exampleblock << "# FACGYR    rgyr conversion factor from input units to e/u\n";
+  exampleblock << "#           typically input is 10^6*rad/T*s and the factor is 0.010375\n";
+  exampleblock << "#  FACFREQ        FACGYR\n";
+  exampleblock << "   0.000000000001 0.010364272\n";
+  exampleblock << "END\n";
+
+  std::string blockname = "TFRDCCONV";
+  Block block(blockname, exampleblock.str());
+
+  if (block.read_buffer(m_block[blockname], true) == 0)
+  {
+    block_read.insert(blockname);
+
+    DEBUG(10, "reading in TF-RDC TFRDCCONV block")
+    block.get_next_parameter("FACFREQ", sim.param().tfrdc.factorFreq, ">0", "");
+    block.get_next_parameter("FACGYR", sim.param().tfrdc.factorGyr, ">0", "");
+
+    os.precision(12);
+    os.setf(std::ios_base::fixed, std::ios_base::floatfield);
+
+    DEBUG(10, scientific << setprecision(6) << setw(14) << "factorFreq: " << sim.param().tfrdc.factorFreq)
+    DEBUG(10, scientific << setprecision(6) << setw(14) << "factorGyr: " << sim.param().tfrdc.factorGyr)
+
+    block.get_final_messages();
+  } // if block empty or not there
+} // TFRDCCONV
+
+/**
+ * @section tfrdcresspec TFRDCRESSPEC block
+ * The TFRDCRESSPEC block is read from the tensor-free RDC restraints
+ *  specification file .tfr.
+ * @snippet snippets/snippets.cc TFRDCRESSPEC
+ */
+void io::In_Tfrdcresspec::read_TFRDCRESSPEC(topology::Topology &topo,
+                                 simulation::Simulation &sim,
+                                 std::ostream &os)
+{ // TFRDCRESSPEC
     DEBUG(10, "TFRDCRESSPEC block");
-    buffer = m_block["TFRDCRESSPEC"];
-    block_read.insert("TFRDCRESSPEC");
-    if (buffer.size() <= 2) {
-      io::messages.add("no or empty TFRDCRESSPEC block in tensor-free "
-         "RDC restraints file", "In_Tfrdcresspec", io::message::error);
-      return;
-    } else {
-      std::vector<std::string>::const_iterator it = buffer.begin() + 1,
-              to = buffer.end() - 1;
+  std::stringstream exampleblock;
+  // lines starting with 'exampleblock<<"' and ending with '\n";' (spaces don't matter)
+  // will be used to generate snippets that can be included in the doxygen doc;
+  // the first line is the tag
+  exampleblock << "TFRDCRESSPEC\n";
+  exampleblock << "# DISH, DISC carbon-hydrogen/carbon-carbon distance\n";
+  exampleblock << "# i,j,k,l  atoms comprising the virtual atom (fill with 0 if less than 4 atoms used)\n";
+  exampleblock << "# type     virtual atom type\n";
+  exampleblock << "# R0       normalisation distance\n";
+  exampleblock << "# G1, G2   gyromagnetic ratio for nucleus 1/nucleus 2\n";
+  exampleblock << "# D0       target RDC\n";
+  exampleblock << "# DD0      half the width of the flatbottom potential\n";
+  exampleblock << "# WTFRDC   a weight factor (multiplied by the force constant \n";
+  exampleblock << "#          specified in the input file)\n";
+  exampleblock << "# DISH  DISC\n";
+  exampleblock << "  0.1   0.153\n";
+  exampleblock << "# i   j   k   l   type  i    j    k   l  type  R0      G1      G2      D0      DD0   WTFRDC\n";
+  exampleblock << "  2   0   0   0   0     4    0    0   0    0   0.1  267.513  19.331   0.136    0.05     1.0\n";
+  exampleblock << "  3   0   0   0   0     5    0    0   0    0   0.1  267.513  67.262   0.136    0.05     1.0\n";
+  exampleblock << "END\n";
 
-      bool nr_atoms = true;
+  std::string blockname = "TFRDCRESSPEC";
+  Block block(blockname, exampleblock.str());
 
-      DEBUG(10, "reading in TFRDCRESSPEC data");
+  if (block.read_buffer(m_block[blockname], true) == 0)
+  {
+    block_read.insert(blockname);
 
-      _lineStream.clear();
-      _lineStream.str(*it);
-      _lineStream >> dish >> disc;
+    block.get_next_parameter("DISH", dish, ">0", "");
+    block.get_next_parameter("DISC", disc, ">0", "");
 
-      if (_lineStream.fail()) {
-        std::ostringstream msg;
-        msg << "bad line in TFRDCRESSPEC block: failed to read in DISH and DISC" << std::endl;
-        io::messages.add(msg.str(), "In_Tfrdcresspec", io::message::error);
-      }
+    DEBUG(10, "reading in TFRDCRESSPEC data")
 
-      ++it;
-      for (unsigned int line_number = 2; it != to; ++line_number, ++it) {
-        DEBUG(11, "\tnr " << line_number - 2);
-        int type1, type2;
-        std::vector<int> atom1, atom2;
-        double dist_norm, gyri, gyrj, D0, dD0, w;
+    os.setf(std::ios_base::fixed, std::ios_base::floatfield);
 
-        _lineStream.clear();
-        _lineStream.str(*it);
+    DEBUG(10, setw(6) << "i"
+                      << setw(6) << "j"
+                      << setw(6) << "k"
+                      << setw(6) << "l"
+                      << setw(6) << "type"
+                      << setw(6) << "i"
+                      << setw(6) << "j"
+                      << setw(6) << "k"
+                      << setw(6) << "l"
+                      << setw(6) << "type"
+                      << setw(19) << "R0"
+                      << setw(12) << "G1 [e/u]"
+                      << setw(12) << "G2 [e/u]"
+                      << setw(8) << "D0 [1/ps]"
+                      << setw(8) << "DD0 [1/ps]"
+                      << setw(8) << "WTFRDC");
 
-        for (unsigned int i = 0; i < io::In_Tfrdcresspec::MAX_ATOMS; i++) {
-          int atom;
-          _lineStream >> atom;
-          // -1 because we directly convert to array indices
-          if (atom > 0) {
-            atom1.push_back(atom - 1);
-          } else if (atom < 0) {
-            std::ostringstream msg;
-            msg << "COM and COG type not possible for more than "
-                    << io::In_Tfrdcresspec::MAX_ATOMS << " atoms" << std::endl;
-            io::messages.add(msg.str(), "In_Tfrdcresspec", io::message::error);
-            nr_atoms = false;
-          }
-        }
-        _lineStream >> type1;
+    unsigned int num = block.numlines() - 3;
+    for (unsigned int line_number = 0; line_number < num; line_number++)
+    {
+      std::vector<int> atom1, atom2;
+      int type1, type2;
+      double weight, D0, DD0, gyr1, gyr2, r0;
 
-        for (unsigned int i = 0; i < io::In_Tfrdcresspec::MAX_ATOMS; i++) {
-          int atom;
-          _lineStream >> atom;
-          if (atom > 0) {
-            atom2.push_back(atom - 1);
-          } else if (atom < 0) {
-            std::ostringstream msg;
-            msg << "COM and COG type not possible for more than "
-                    << io::In_Tfrdcresspec::MAX_ATOMS << " atoms" << std::endl;
-            io::messages.add(msg.str(), "In_Tfrdcresspec", io::message::error);
-            nr_atoms = false;
-          }
-        }
-        _lineStream >> type2;
-        _lineStream >> dist_norm >> gyri >> gyrj >> D0 >> dD0 >> w;
+      DEBUG(11, "\ttfrdc line " << line_number);
 
-        // Scaling gyromagnetic ratios from 10^6 rad/(T*s) to rad /(e*u)
-        gyri *= 0.010364272;
-        gyrj *= 0.010364272;
-        // Scaling RDC and DeltaRDC from Hz to 1/ps
-        D0 *= 0.000000000001;
-        dD0 *= 0.000000000001;
-        if (_lineStream.fail()) {
+      for (unsigned int i = 0; i < 4; i++)
+      {
+        unsigned int atom;
+        std::string str_i = io::to_string(i);
+        block.get_next_parameter("ATOM[" + str_i + "]", atom, ">=0", "");
+        DEBUG(11, "\tat " << i << " " << atom);
+        if (atom > topo.num_atoms())
+        {
           std::ostringstream msg;
-          msg << "bad line in TFRDCRESSPEC block: " << line_number << std::endl
-                  << "          " << *it;
-          io::messages.add(msg.str(), "In_Tfrdcresspec", io::message::error);
+          msg << blockname << " block: atom number out of range: " << atom << ", last atom is " << topo.num_atoms();
+          io::messages.add(msg.str(), "In_TFRDC", io::message::error);
         }
 
-        if (dist_norm <= 0.0) {
-          io::messages.add("TFRDCRESSPEC block: R0 has to be > 0.0",
-                  "In_Tfrdcresspec", io::message::error);
+        // -1 because we directly convert to array indices
+        if (atom > 0)
+          atom1.push_back(atom - 1);
+      }
+      block.get_next_parameter("TYPE", type1, "", "-2,-1,0,1,2,3,4,5,6,7");
+
+      for (unsigned int i = 0; i < 4; i++)
+      {
+        unsigned int atom;
+        std::string str_i = io::to_string(i);
+        block.get_next_parameter("ATOM[" + str_i + "]", atom, ">=0", "");
+        if (atom > topo.num_atoms())
+        {
+          std::ostringstream msg;
+          msg << blockname << " block: atom number out of range: " << atom << ", last atom is " << topo.num_atoms();
+          io::messages.add(msg.str(), "In_TFRDC", io::message::error);
         }
 
-        if(fabs(-( math::eps0_i * math::h_bar * gyri * gyrj )/( pow(math::spd_l,2) * 4.0 * pow(math::Pi,2) * pow(dist_norm,3.0))) < fabs(D0)){
+        // -1 because we directly convert to array indices
+        if (atom > 0)
+          atom2.push_back(atom - 1);
+      }
+      block.get_next_parameter("TYPE", type2, "", "-2,-1,0,1,2,3,4,5,6,7");
+
+      block.get_next_parameter("R0", r0, ">0", "");
+      block.get_next_parameter("GYR1", gyr1, "", "");
+      block.get_next_parameter("GYR2", gyr2, "", "");
+      block.get_next_parameter("D0", D0, "", "");
+      block.get_next_parameter("DD0", DD0, ">=0", "");
+      block.get_next_parameter("W0", weight, ">=0", "");
+
+      if (!block.error())
+      {
+
+        D0 *= sim.param().tfrdc.factorFreq;
+        DD0 *= sim.param().tfrdc.factorFreq;
+        gyr1 *= sim.param().tfrdc.factorGyr;
+        gyr2 *= sim.param().tfrdc.factorGyr;
+
+        // check for sensible choice of RDC
+        if (abs(-(math::eps0_i * math::h_bar * gyr1 * gyr2) / (pow(math::spd_l, 2) * 4.0 * pow(math::Pi, 2)) * 1000) < abs(D0))
+        {
+          io::messages.add("The chosen RDC is larger in magnitude than RDC_max.  This is probably a mistake and may result in strange behaviour.",
+                           "In_Tfrdcresspec", io::message::warning);
+        }
+        if(fabs(-( math::eps0_i * math::h_bar * gyr1 * gyr2 )/( pow(math::spd_l,2) * 4.0 * pow(math::Pi,2) * pow(r0,3.0))) < fabs(D0)){
           io::messages.add("The chosen RDC is larger in magnitude than RDC_max. This is probably a mistake and may result in strange behaviour.",
            "In_Tfrdcresspec", io::message::warning);
         }
 
-        if (dD0 < 0.0) {
-          io::messages.add("TFRDCRESSPEC block: DD0 has to be >= 0.0",
-                  "In_Tfrdcresspec", io::message::error);
-        }
+        util::virtual_type t1 = util::virtual_type(type1);
+        util::virtual_type t2 = util::virtual_type(type2);
 
-        if (w < 0.0) {
-          io::messages.add("TFRDCRESSPEC block: WTFRDC has to be >= 0.0",
-                  "In_Tfrdcresspec", io::message::error);
-        }
+        util::Virtual_Atom v1(t1, atom1, dish, disc);
+        util::Virtual_Atom v2(t2, atom2, dish, disc);
 
-        if (nr_atoms) {
-          util::virtual_type t1 = util::virtual_type(type1);
-          util::virtual_type t2 = util::virtual_type(type2);
+        topo.tf_rdc_restraints().push_back
+            (topology::tf_rdc_restraint_struct(v1, v2, r0, gyr1, gyr2, D0, DD0, weight));
 
-          util::Virtual_Atom v1(t1, atom1, dish, disc);
-          util::Virtual_Atom v2(t2, atom2, dish, disc);
+        DEBUG(10, setw(6) << atom1[0]
+                          << setw(6) << atom1[1]
+                          << setw(6) << atom1[2]
+                          << setw(6) << atom1[3]
+                          << setw(6) << type1
+                          << setw(6) << atom2[0]
+                          << setw(6) << atom2[1]
+                          << setw(6) << atom2[2]
+                          << setw(6) << atom2[3]
+                          << setw(6) << type2
+                          << setw(8) << r0
+                          << setprecision(4) << setw(12) << gyr1
+                          << setw(12) << gyr2
+                          << setprecision(14) << setw(19) << D0
+                          << setprecision(14) << setw(19) << DD0
+                          << setprecision(2) << setw(8) << weight);
+      }
+    } // for restraint-lines
+    block.get_final_messages();
 
-
-          topo.tf_rdc_restraints().push_back
-                  (topology::tf_rdc_restraint_struct(v1, v2, dist_norm, gyri, gyrj, D0, dD0, w));
-        }
-      } // for lines
-    } // if block
+  } // if block content
 } // TFRDCRESSPEC
 
+
+
+/**
+ * @section tfrdcmolaxis TFRDCMOLAXIS block
+ * The TFRDCMOLAXIS block is read from the TFRDC restraint specification file.
+ * It defines a molecular axis, the angle of which with the magn. field vector is calculated to write out its distribution at the end of a run.
+ * @snippet snippets/snippets.cc TFRDCMOLAXIS
+ */
+void io::In_Tfrdcresspec::read_TFRDCMOLAXIS(topology::Topology &topo,
+                                 simulation::Simulation &sim,
+                                 std::ostream &os)
 { // TFRDCMOLAXIS
     DEBUG(10, "TFRDCMOLAXIS block");
-    buffer = m_block["TFRDCMOLAXIS"];
-    block_read.insert("TFRDCMOLAXIS");
-    if (buffer.size() <= 2) {
-      io::messages.add("no or empty TFRDCMOLAXIS block in tensor-free "
-         "RDC restraints file", "In_Tfrdcresspec", io::message::error);
-      return;
-    } else {
-      std::vector<std::string>::const_iterator it = buffer.begin() + 1,
-              to = buffer.end() - 1;
+  std::stringstream exampleblock;
+  // lines starting with 'exampleblock<<"' and ending with '\n";' (spaces don't matter)
+  // will be used to generate snippets that can be included in the doxygen doc;
+  // the first line is the tag
+  exampleblock << "TFRDCMOLAXIS\n";
+  exampleblock << "# i,j,k,l  atoms comprising the virtual atom (put 0 if less than four atoms in use)\n";
+  exampleblock << "# type   virtual atom type \n";
+  exampleblock << "# i   j   k   l   type  i    j    k   l  type\n";
+  exampleblock << "  16  0   0   0    0    17   0    0   0  0\n";
+  exampleblock << "END\n";
+  std::string blockname = "TFRDCMOLAXIS";
+  Block block(blockname, exampleblock.str());
 
+  if (block.read_buffer(m_block[blockname], true) == 0)
+  {
+    block_read.insert(blockname);
 
+    DEBUG(10, "reading in TFRDCMOLAXIS data");
 
-      DEBUG(10, "reading in TFRDCMOLAXIS data");
+    int type1, type2;
+    std::vector<int> atom1, atom2;
 
-      bool nr_atoms = true;
+    for (unsigned int i = 0; i < io::In_Tfrdcresspec::MAX_ATOMS; i++)
+    {
+      unsigned int atom;
+      std::string str_i = io::to_string(i);
+      std::string condition = i == 0 ? ">0" : ">=0";
+      block.get_next_parameter("ATOM[" + str_i + "]", atom, condition, "");
+      if (atom > topo.num_atoms())
+      {
+        std::ostringstream msg;
+        msg << blockname << " block: atom number out of range: " << atom << ", last atom is " << topo.num_atoms();
+        io::messages.add(msg.str(), "In_Tfrdcresspec", io::message::error);
+      }
 
-
-        int type1, type2;
-        std::vector<int> atom1, atom2;
-        double dist_norm, gyri, gyrj, D0, dD0, w;
-
-        _lineStream.clear();
-        _lineStream.str(*it);
-
-        for (unsigned int i = 0; i < io::In_Tfrdcresspec::MAX_ATOMS; i++) {
-          int atom;
-          _lineStream >> atom;
-          // -1 because we directly convert to array indices
-          if (atom > 0) {
-            atom1.push_back(atom - 1);
-          } else if (atom < 0) {
-            std::ostringstream msg;
-            msg << "COM and COG type not possible for more than "
-                    << io::In_Tfrdcresspec::MAX_ATOMS << " atoms" << std::endl;
-            io::messages.add(msg.str(), "In_Tfrdcresspec", io::message::error);
-            nr_atoms = false;
-          }
-        }
-        _lineStream >> type1;
-
-        for (unsigned int i = 0; i < io::In_Tfrdcresspec::MAX_ATOMS; i++) {
-          int atom;
-          _lineStream >> atom;
-          if (atom > 0) {
-            atom2.push_back(atom - 1);
-          } else if (atom < 0) {
-            std::ostringstream msg;
-            msg << "COM and COG type not possible for more than "
-                    << io::In_Tfrdcresspec::MAX_ATOMS << " atoms" << std::endl;
-            io::messages.add(msg.str(), "In_Tfrdcresspec", io::message::error);
-            nr_atoms = false;
-          }
-        }
-        _lineStream >> type2;
-
-
-        if (_lineStream.fail()) {
-          std::ostringstream msg;
-          msg << "bad line in TFRDCMOLAXIS block: "  << std::endl
-                  << "          " << *it;
-          io::messages.add(msg.str(), "In_Tfrdcresspec", io::message::error);
-        }
-
-        if (nr_atoms) {
-          util::virtual_type t1 = util::virtual_type(type1);
-          util::virtual_type t2 = util::virtual_type(type2);
-
-          util::Virtual_Atom v1(t1, atom1, dish, disc);
-          util::Virtual_Atom v2(t2, atom2, dish, disc);
-
-
-          topo.tf_rdc_molaxis().push_back(v1);
-          topo.tf_rdc_molaxis().push_back(v2);
-        }
-    } // if block
-} // TFRDCMOLAXIS
-
-
-  for (std::map<std::string, std::vector<std::string> >::const_iterator
-    it = m_block.begin(),
-          to = m_block.end(); it != to; ++it) {
-
-    if (block_read.count(it->first) == 0 && it->second.size()) {
-      io::messages.add("block " + it->first + " not supported!",
-              "In_Tfrdcresspec", io::message::error);
+      // -1 because we directly convert to array indices
+      if (atom > 0)
+        atom1.push_back(atom - 1);
     }
-  }
-}
+    block.get_next_parameter("type1", type1, "", "");
+
+    for (unsigned int i = 0; i < io::In_Tfrdcresspec::MAX_ATOMS; i++)
+    {
+      unsigned int atom;
+      std::string str_i = io::to_string(i);
+      std::string condition = i == 0 ? ">0" : ">=0";
+      block.get_next_parameter("ATOM[" + str_i + "]", atom, condition, "");
+      if (atom > topo.num_atoms())
+      {
+        std::ostringstream msg;
+        msg << blockname << " block: atom number out of range: " << atom << ", last atom is " << topo.num_atoms();
+        io::messages.add(msg.str(), "In_Tfrdcresspec", io::message::error);
+      }
+
+      // -1 because we directly convert to array indices
+      if (atom > 0)
+        atom2.push_back(atom - 1);
+    }
+    block.get_next_parameter("type2", type2, "", "");
+
+    util::virtual_type t1 = util::virtual_type(type1);
+    util::virtual_type t2 = util::virtual_type(type2);
+
+    util::Virtual_Atom v1(t1, atom1, dish, disc);
+    util::Virtual_Atom v2(t2, atom2, dish, disc);
+
+
+    topo.tf_rdc_molaxis().push_back(v1);
+    topo.tf_rdc_molaxis().push_back(v2);
+    block.get_final_messages();
+  } // if block empty or not there
+} // TFRDCMOLAXIS
