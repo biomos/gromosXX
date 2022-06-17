@@ -6,10 +6,11 @@
  * @page tfrdc tensor-free RDC restraints format
  * @date 25-04-2019
  *
- * A tensor-free RDC restraints specifcation file may contain the following
+ * A tensor-free RDC restraints specification file may contain the following
  * blocks:
  * - @ref title
  * - @ref tfrdcresspec
+ * - @ref tfrdcmolaxis
  */
 
 
@@ -26,6 +27,9 @@ namespace io {
    */
   class In_Tfrdcresspec : public GInStream {
 
+  private:
+    double dish, disc;
+
   public:
     /**
      * Default constructor.
@@ -41,6 +45,16 @@ namespace io {
     void read(topology::Topology &topo,
 	      simulation::Simulation & sim,
 	      std::ostream & os = std::cout);
+
+    void read_TFRDCCONV(topology::Topology &topo,
+                          simulation::Simulation &sim,
+                          std::ostream & os);
+    void read_TFRDCRESSPEC(topology::Topology &topo,
+                          simulation::Simulation &sim,
+                          std::ostream & os);
+    void read_TFRDCMOLAXIS(topology::Topology &topo,
+                          simulation::Simulation &sim,
+                          std::ostream & os);
     /**
      * Maximum number of atoms that can be specified to define a virtual atom
      */

@@ -4170,6 +4170,16 @@ namespace simulation
        */
       bool continuation;
       /**
+       * frequency conversion factor from input units to ps-1
+       * (read from TFRDCCONV block in rdc restraints spec file)
+       */
+      double factorFreq;
+      /**
+       * gyromagnetic ratio conversion factor from input units to e/u
+       * (read from TFRDCCONV block in rdc restraints spec file)
+       */
+      double factorGyr;
+      /**
         * bins for angle distributions
         */
       std::vector<double> bins_theta;
