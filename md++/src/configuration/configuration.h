@@ -322,25 +322,17 @@ namespace configuration {
          */
         std::vector<double> TensorMass;
         /**
-         * Shperical harmonics coefficients
+         * Spherical harmonics coefficients
          */
         std::vector<double> clm;
         /**
-         * Shperical harmonics coefficient masses
+         * Spherical harmonics coefficient masses
          */
         std::vector<double> clmMass;
         /**
-         * Shperical harmonics coefficient velocities
+         * Spherical harmonics coefficient velocities
          */
         std::vector<double> clmVel;
-        /**
-         * Conversion of the frequency
-         */
-        double factorFreq;
-        /**
-         * Conversion of the gyromagnetic ratio
-         */
-        double factorGyr;
         /**
          * 'kinetic energy'
          */
@@ -367,7 +359,7 @@ namespace configuration {
       /**
        * rdc restraint averages and other related data
        */
-      std::vector<rdc_struct> rdc;
+      std::vector<rdc_struct> rdc_groups;
 
 
       /**

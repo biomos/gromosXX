@@ -211,8 +211,8 @@ void _calculate_forces_vectors_MF(topology::Topology & topo,
                   math::VArray & force_vectors_hfield /*empty*/) {
 
   vector<configuration::Configuration::special_struct::rdc_struct>::iterator
-      conf_it = conf.special().rdc.begin(),
-      conf_to = conf.special().rdc.end();
+      conf_it = conf.special().rdc_groups.begin(),
+      conf_to = conf.special().rdc_groups.end();
   vector<vector<topology::rdc_restraint_struct> >::iterator
       topo_it = topo.rdc_restraints().begin();
   for( ; conf_it!=conf_to; conf_it++, topo_it++){
@@ -328,8 +328,8 @@ void _calculate_forces_atoms_MF(topology::Topology & topo,
                     const simulation::Simulation & sim) {
 
   vector<configuration::Configuration::special_struct::rdc_struct>::iterator
-      conf_it = conf.special().rdc.begin(),
-      conf_to = conf.special().rdc.end();
+      conf_it = conf.special().rdc_groups.begin(),
+      conf_to = conf.special().rdc_groups.end();
   vector<vector<topology::rdc_restraint_struct> >::iterator
       topo_it = topo.rdc_restraints().begin();
   for( ; conf_it!=conf_to; conf_it++, topo_it++){
@@ -662,8 +662,8 @@ int _calculate_interactions_mfield(topology::Topology & topo,
       const unsigned int max_iterations = sim.param().rdc.emmaxiter;
 
       vector<configuration::Configuration::special_struct::rdc_struct>::iterator
-          conf_it = conf.special().rdc.begin(),
-          conf_to = conf.special().rdc.end();
+          conf_it = conf.special().rdc_groups.begin(),
+          conf_to = conf.special().rdc_groups.end();
       vector<vector<topology::rdc_restraint_struct> >::iterator
           topo_it = topo.rdc_restraints().begin();
       for( ; conf_it!=conf_to; conf_it++, topo_it++){
@@ -804,8 +804,8 @@ int _calculate_interactions_mfield(topology::Topology & topo,
       /////////////////////////
 
       vector<configuration::Configuration::special_struct::rdc_struct>::iterator
-          conf_it = conf.special().rdc.begin(),
-          conf_to = conf.special().rdc.end();
+          conf_it = conf.special().rdc_groups.begin(),
+          conf_to = conf.special().rdc_groups.end();
       vector<vector<topology::rdc_restraint_struct> >::iterator
           topo_it = topo.rdc_restraints().begin();
       for( ; conf_it!=conf_to; conf_it++, topo_it++){
@@ -1063,8 +1063,8 @@ int _calculate_interactions_mfield(topology::Topology & topo,
       ///////////////
 
       vector<configuration::Configuration::special_struct::rdc_struct>::iterator
-          conf_it = conf.special().rdc.begin(),
-          conf_to = conf.special().rdc.end();
+          conf_it = conf.special().rdc_groups.begin(),
+          conf_to = conf.special().rdc_groups.end();
       vector<vector<topology::rdc_restraint_struct> >::iterator
           topo_it = topo.rdc_restraints().begin();
       for( ; conf_it!=conf_to; conf_it++, topo_it++){
@@ -1181,8 +1181,8 @@ void _calculate_ah(topology::Topology & topo,
   const int n_ah = 5;
 
   vector<configuration::Configuration::special_struct::rdc_struct>::iterator
-      conf_it = conf.special().rdc.begin(),
-      conf_to = conf.special().rdc.end(); // vector of groups of rdc current state
+      conf_it = conf.special().rdc_groups.begin(),
+      conf_to = conf.special().rdc_groups.end(); // vector of groups of rdc current state
   vector<vector<topology::rdc_restraint_struct> >::iterator
       topo_it = topo.rdc_restraints().begin(); // vector of groups of rdc specs
   for( ; conf_it!=conf_to; conf_it++, topo_it++){  // for each RDC group
@@ -1316,8 +1316,8 @@ void _calculate_forces_tensor_T(topology::Topology & topo,
   math::Vec rij(0.0, 0.0, 0.0);
 
   vector<configuration::Configuration::special_struct::rdc_struct>::iterator
-      conf_it = conf.special().rdc.begin(),
-      conf_to = conf.special().rdc.end();
+      conf_it = conf.special().rdc_groups.begin(),
+      conf_to = conf.special().rdc_groups.end();
   vector<vector<topology::rdc_restraint_struct> >::iterator
       topo_it = topo.rdc_restraints().begin();
   for( ; conf_it!=conf_to; conf_it++, topo_it++){
@@ -1426,12 +1426,12 @@ void _calculate_forces_atoms_T(topology::Topology & topo,
   math::Vec rij(0.0, 0.0, 0.0);
 
   vector<configuration::Configuration::special_struct::rdc_struct>::iterator
-      conf_it = conf.special().rdc.begin(),
-      conf_to = conf.special().rdc.end();
+      conf_it = conf.special().rdc_groups.begin(),
+      conf_to = conf.special().rdc_groups.end();
   vector<vector<topology::rdc_restraint_struct> >::iterator
       topo_it = topo.rdc_restraints().begin();
   for(unsigned int group=0; conf_it!=conf_to; conf_it++, topo_it++, group++){ // loop over RDC groups
-    ++conf.special().rdc[group].num_averaged;
+    ++conf.special().rdc_groups[group].num_averaged;
 
     std::vector<double> current_tensor;
 
@@ -1493,10 +1493,10 @@ void _calculate_forces_atoms_T(topology::Topology & topo,
       // the cumulative average
       
       double & RDC_cumavg = conf_it->RDC_cumavg[k]; // [1 / ps]
-      RDC_cumavg += (conf_it->curr[k]-RDC_cumavg)/conf.special().rdc[group].num_averaged; 
-      DEBUG(15, "Number of averaged RDC values: " << scientific << conf.special().rdc[group].num_averaged << ", RDC_cumavg: " <<  RDC_cumavg);
+      RDC_cumavg += (conf_it->curr[k]-RDC_cumavg)/conf.special().rdc_groups[group].num_averaged; 
+      DEBUG(15, "Number of averaged RDC values: " << scientific << conf.special().rdc_groups[group].num_averaged << ", RDC_cumavg: " <<  RDC_cumavg);
       if (std::isnan(RDC_cumavg)) {
-        std::cout << conf.special().rdc[group].num_averaged << "th step: cumavg=" << RDC_cumavg << std::endl;
+        std::cout << conf.special().rdc_groups[group].num_averaged << "th step: cumavg=" << RDC_cumavg << std::endl;
       }
 
       // update average RDC values
@@ -1633,8 +1633,8 @@ int _calculate_interactions_tensor(topology::Topology & topo,
       _calculate_forces_atoms_T<B>(topo, conf, sim);
 
       vector<configuration::Configuration::special_struct::rdc_struct>::iterator
-          conf_it = conf.special().rdc.begin(),
-          conf_to = conf.special().rdc.end();
+          conf_it = conf.special().rdc_groups.begin(),
+          conf_to = conf.special().rdc_groups.end();
       vector<vector<topology::rdc_restraint_struct> >::iterator
           topo_it = topo.rdc_restraints().begin();
       for( ; conf_it!=conf_to; conf_it++, topo_it++){
@@ -1669,8 +1669,8 @@ int _calculate_interactions_tensor(topology::Topology & topo,
 
 #ifndef FINITE_DIFF
       vector<configuration::Configuration::special_struct::rdc_struct>::iterator
-          conf_it = conf.special().rdc.begin(),
-          conf_to = conf.special().rdc.end();
+          conf_it = conf.special().rdc_groups.begin(),
+          conf_to = conf.special().rdc_groups.end();
       for( ; conf_it!=conf_to; conf_it++){
         if(sim.steps() == 0 && abs(conf_it->Tensor[0]+2) < 1.e-10) { // init clm to sensible values in the first cycle, if user didn't input values her- or himself.
           _calculate_ah<B>(topo, conf, sim);
@@ -1695,8 +1695,8 @@ int _calculate_interactions_tensor(topology::Topology & topo,
       const double gdt = gamma * sim.time_step_size();
       const double gdth = gdt * 0.5;
 
-      conf_it = conf.special().rdc.begin();
-      conf_to = conf.special().rdc.end();
+      conf_it = conf.special().rdc_groups.begin();
+      conf_to = conf.special().rdc_groups.end();
       vector<vector<topology::rdc_restraint_struct> >::iterator
           topo_it = topo.rdc_restraints().begin();
       for( ; conf_it!=conf_to; conf_it++, topo_it++){
@@ -1918,8 +1918,8 @@ int _calculate_interactions_tensor(topology::Topology & topo,
 
 #ifndef FINITE_DIFF
       vector<configuration::Configuration::special_struct::rdc_struct>::iterator
-          conf_it = conf.special().rdc.begin(),
-          conf_to = conf.special().rdc.end();
+          conf_it = conf.special().rdc_groups.begin(),
+          conf_to = conf.special().rdc_groups.end();
       for( ; conf_it!=conf_to; conf_it++){
         if(sim.steps() == 0 && abs(conf_it->Tensor[0]+2) < 1.e-10) { // init clm to sensible values in the first cycle, if user didn't input values her- or himself.
           _calculate_ah<B>(topo, conf, sim);
@@ -1937,8 +1937,8 @@ int _calculate_interactions_tensor(topology::Topology & topo,
       // LEAP FROG //
       ///////////////
 
-      conf_it = conf.special().rdc.begin();
-      conf_to = conf.special().rdc.end();
+      conf_it = conf.special().rdc_groups.begin();
+      conf_to = conf.special().rdc_groups.end();
       vector<vector<topology::rdc_restraint_struct> >::iterator
           topo_it = topo.rdc_restraints().begin();
       for( ; conf_it!=conf_to; conf_it++, topo_it++){
@@ -2066,8 +2066,8 @@ void _calculate_forces_clm_SH(topology::Topology & topo,
   const double grid_z[grid_number_of_points] =      {0.0,    0.0,  0.0,   0.0,   1.0,  -1.0,   aux_c,  aux_c,  aux_c,  aux_c, -aux_c, -aux_c, -aux_c, -aux_c};
 
   vector<configuration::Configuration::special_struct::rdc_struct>::iterator
-      conf_it = conf.special().rdc.begin(),
-      conf_to = conf.special().rdc.end();
+      conf_it = conf.special().rdc_groups.begin(),
+      conf_to = conf.special().rdc_groups.end();
   vector<vector<topology::rdc_restraint_struct> >::iterator
       topo_it = topo.rdc_restraints().begin();
   for( ; conf_it!=conf_to; conf_it++, topo_it++){
@@ -2197,8 +2197,8 @@ void _calculate_forces_atoms_SH(topology::Topology & topo,
   const double grid_z[grid_number_of_points] =      {0.0,    0.0,  0.0,   0.0,   1.0,  -1.0,   aux_c,  aux_c,  aux_c,  aux_c, -aux_c, -aux_c, -aux_c, -aux_c};
 
   vector<configuration::Configuration::special_struct::rdc_struct>::iterator
-      conf_it = conf.special().rdc.begin(),
-      conf_to = conf.special().rdc.end();
+      conf_it = conf.special().rdc_groups.begin(),
+      conf_to = conf.special().rdc_groups.end();
   vector<vector<topology::rdc_restraint_struct> >::iterator
       topo_it = topo.rdc_restraints().begin();
   for( ; conf_it!=conf_to; conf_it++, topo_it++){
@@ -2362,8 +2362,8 @@ void _calculate_clm(topology::Topology & topo,
   const double grid_z[grid_number_of_points] =      {0.0,    0.0,  0.0,   0.0,   1.0,  -1.0,   aux_c,  aux_c,  aux_c,  aux_c, -aux_c, -aux_c, -aux_c, -aux_c};
 
   vector<configuration::Configuration::special_struct::rdc_struct>::iterator
-      conf_it = conf.special().rdc.begin(),
-      conf_to = conf.special().rdc.end();
+      conf_it = conf.special().rdc_groups.begin(),
+      conf_to = conf.special().rdc_groups.end();
   vector<vector<topology::rdc_restraint_struct> >::iterator
       topo_it = topo.rdc_restraints().begin();
   for( ; conf_it!=conf_to; conf_it++, topo_it++){
@@ -2490,8 +2490,8 @@ int _calculate_interactions_sh(topology::Topology & topo,
       _calculate_forces_atoms_SH<B>(topo, conf, sim);
 
       vector<configuration::Configuration::special_struct::rdc_struct>::iterator
-          conf_it = conf.special().rdc.begin(),
-          conf_to = conf.special().rdc.end();
+          conf_it = conf.special().rdc_groups.begin(),
+          conf_to = conf.special().rdc_groups.end();
       vector<vector<topology::rdc_restraint_struct> >::iterator
           topo_it = topo.rdc_restraints().begin();
       for( ; conf_it!=conf_to; conf_it++, topo_it++){
@@ -2527,8 +2527,8 @@ int _calculate_interactions_sh(topology::Topology & topo,
 
 #ifndef FINITE_DIFF
       vector<configuration::Configuration::special_struct::rdc_struct>::iterator
-          conf_it = conf.special().rdc.begin(),
-          conf_to = conf.special().rdc.end();
+          conf_it = conf.special().rdc_groups.begin(),
+          conf_to = conf.special().rdc_groups.end();
       for( ; conf_it!=conf_to; conf_it++){
         if(sim.steps() == 0 && abs(conf_it->clm[0]+2) < 1.e-10) { // init clm to sensible values in the first cycle, if user didn't input values her- or himself.
           _calculate_clm<B>(topo, conf, sim);
@@ -2552,8 +2552,8 @@ int _calculate_interactions_sh(topology::Topology & topo,
       const double gdt = gamma * sim.time_step_size();
       const double gdth = gdt * 0.5;
 
-      conf_it = conf.special().rdc.begin();
-      conf_to = conf.special().rdc.end();
+      conf_it = conf.special().rdc_groups.begin();
+      conf_to = conf.special().rdc_groups.end();
       vector<vector<topology::rdc_restraint_struct> >::iterator
           topo_it = topo.rdc_restraints().begin();
       for( ; conf_it!=conf_to; conf_it++, topo_it++){
@@ -2782,8 +2782,8 @@ int _calculate_interactions_sh(topology::Topology & topo,
 
 #ifndef FINITE_DIFF
       vector<configuration::Configuration::special_struct::rdc_struct>::iterator
-          conf_it = conf.special().rdc.begin(),
-          conf_to = conf.special().rdc.end();
+          conf_it = conf.special().rdc_groups.begin(),
+          conf_to = conf.special().rdc_groups.end();
       for( ; conf_it!=conf_to; conf_it++){
         if(sim.steps() == 0 && abs(conf_it->clm[0]+2) < 1.e-10) { // init clm to sensible values in the first cycle, if user didn't input values her- or himself.
           _calculate_clm<B>(topo, conf, sim);
@@ -2800,8 +2800,8 @@ int _calculate_interactions_sh(topology::Topology & topo,
       //      LEAP FROG      //
       /////////////////////////
 
-      conf_it = conf.special().rdc.begin();
-      conf_to = conf.special().rdc.end();
+      conf_it = conf.special().rdc_groups.begin();
+      conf_to = conf.special().rdc_groups.end();
       vector<vector<topology::rdc_restraint_struct> >::iterator
           topo_it = topo.rdc_restraints().begin();
       for( ; conf_it!=conf_to; conf_it++, topo_it++){
@@ -2914,8 +2914,8 @@ int RDC_Restraint_Interaction::init(
 
     sim.param().rdc.bins_theta = _linspace(0.0,math::Pi,101.0);
     vector<configuration::Configuration::special_struct::rdc_struct>::iterator
-        conf_it = conf.special().rdc.begin(),
-        conf_to = conf.special().rdc.end(); // vector of groups of rdc current state
+        conf_it = conf.special().rdc_groups.begin(),
+        conf_to = conf.special().rdc_groups.end(); // vector of groups of rdc current state
     for( ; conf_it!=conf_to; conf_it++){  // for each RDC group
       conf_it->dist_theta.resize(sim.param().rdc.bins_theta.size(), 0.0);
     }
