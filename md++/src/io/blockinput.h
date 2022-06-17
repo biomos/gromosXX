@@ -190,7 +190,7 @@ namespace io {
         return result;
       } catch (...) {
         io::messages.add("evaluate_comparison: could not evaluate "+expr+"!",
-		     "In_Parameter", io::message::error);
+		     "BlockInput", io::message::error);
         return false;        
       }
     }
@@ -206,7 +206,7 @@ namespace io {
         return result;
       } catch (...) {
         io::messages.add("evaluate_comparison: could not evaluate "+expr+"!",
-		     "In_Parameter", io::message::error);
+		     "BlockInput", io::message::error);
         return false;       
       }        
     }
@@ -222,7 +222,7 @@ namespace io {
         return result;
       } catch (...) {
         io::messages.add("evaluate_comparison: could not evaluate "+expr+"!",
-		     "In_Parameter", io::message::error);
+		     "BlockInput", io::message::error);
         return false;       
       }        
     }
@@ -238,13 +238,13 @@ namespace io {
         return result;
       } catch (...) {
         io::messages.add("evaluate_comparison: could not evaluate "+expr+"!",
-		     "In_Parameter", io::message::error);
+		     "BlockInput", io::message::error);
         return false;        
       }       
     }
     if (expr != "") {
         io::messages.add("evaluate_comparison: could not evaluate "+expr+"!",
-		     "In_Parameter", io::message::error);
+		     "BlockInput", io::message::error);
         return false;        
     } else {
         return true;
@@ -264,6 +264,44 @@ namespace io {
         result = result || iresult;
     }
     return result;
+  }
+
+  template < class T >
+  int validate_value(std::string blockname, std::string  varname, T &var, std::string expr, std::string allowed) {
+    io::trim(expr);
+    io::trim(allowed);
+    bool ok=false;
+    if (allowed == "" && expr == "") ok=true;
+
+    std::ostringstream errormsg;
+    errormsg << blockname << " block: " <<varname<< " parameter is " << var << ", should be: ";
+    if (expr != "") {
+       ok = evaluate_logical_expression(var, expr);
+       errormsg << " " << expr;
+    }
+
+    // even if the variable does not fit with expr,
+    // it is ok if it is in allowed
+    if (allowed != "") {
+        if (expr != "") errormsg << "\n\t  or\n";
+        errormsg << " one of: ";
+        std::vector<std::string> substrings=io::split(allowed, ",");
+        for (unsigned int i=0; i<substrings.size(); i++) {
+          T value;
+          std::stringstream stream(substrings[i]);
+          stream >> value;
+          if (var == value) {
+            ok=true;
+          }
+      }
+      errormsg << allowed;
+    }
+
+    if (!ok) {
+      io::messages.add(errormsg.str(), "BlockInput", io::message::error);
+      return 1;
+    }
+    return 0;
   }
   
   
@@ -316,6 +354,15 @@ namespace io {
     int get_next_parameter(std::string varname, T &var, std::string expr="", std::string allowed="", bool allow_missing=false);
 
    /**
+    * read a block into an array
+    * @param vararray the array to read into
+    * @param expr e.g. >=0 && < 1
+    * @param allowed comma-separated string of allowed values
+    */
+    template < class T >
+    int get_as_array(std::string varname, std::vector<std::vector<T>> &vararray, std::string expr, std::string allowed);
+
+   /**
     * print the read parameters if there were errors
     * else check if there are leftover parameters and warn
     */
@@ -329,26 +376,36 @@ namespace io {
     std::string name() { return _blockname; }
     bool error() { return _block_error; }
     int numlines() { return _numlines; }
+    std::vector<std::string> const &lines() const { return _lines;}
     void reset_error() { _block_error = 0; }
     
     /**
      * get the block example
      */
     std::string exampleblock() { return _exampleblock; }
+
+    /**
+     * @brief get line number i as istringstream
+     *
+     */
+    int get_line_as_stream(unsigned int i, std::istringstream & linestream);
+
+
     
    private:
      std::istringstream _lineStream;
      std::vector<std::string> _par_names, _par_values;
      std::string _blockname;
      int _block_error; 
-     int _numlines;   
+     int _numlines;
+     std::vector<std::string> _lines ;
      std::string _exampleblock;
   };
   
   /**
    * if unsuccessful, var is just not set!! this was also the previous behaviour
    */
-  template < class T > 
+  template < class T >
   int io::Block::get_next_parameter(std::string  varname, T &var, std::string expr, std::string allowed, bool allow_missing) {
     _par_names.push_back(varname);
     std::string tmp_string;
@@ -364,7 +421,6 @@ namespace io {
       }
       return 1;  
     }
-
     // check if we have a valid data type
     if (io::is_valid_type(var, tmp_string.c_str())) {
       std::istringstream iss(tmp_string);
@@ -372,46 +428,40 @@ namespace io {
     } else {
       io::messages.add(_blockname + " block: wrong value type for "+varname+": "
                        +tmp_string,  //+" (required: "+typeid(var).name()+")"  NOTE: I could write also which it should be with typeid(var).name(), but this is a bit cryptic as the output is compiler/system? dependent - I get i and d for int and double
-		     "In_Parameter", io::message::error);
+		     "BlockInput", io::message::error);
       _par_values.push_back(tmp_string);
       _block_error=1;
       return 1;
     }
 
     _par_values.push_back(io::to_string(var));
-    io::trim(expr);
-    io::trim(allowed);
-    bool ok=false;
-    if (allowed == "" && expr == "") ok=true;
+    _block_error = validate_value(_blockname, varname, var, expr, allowed);
+    return _block_error;
+  }
 
-    std::ostringstream errormsg;
-    errormsg << _blockname << " block: " <<varname<< " parameter is " << var << ", should be: ";
-    if (expr != "") {
-       ok = evaluate_logical_expression(var, expr);
-       errormsg << " " << expr;
-    }
-  
-    // even if the variable does not fit with expr, 
-    // it is ok if it is in allowed
-    if (allowed != "") {
-        if (expr != "") errormsg << "\n\t  or\n";
-        errormsg << " one of: ";
-        std::vector<std::string> substrings=io::split(allowed, ",");
-        for (unsigned int i=0; i<substrings.size(); i++) {
-          T value;
-          std::stringstream stream(substrings[i]);
-          stream >> value;
-          if (var == value) {
-            ok=true;
-          }
+  template < class T >
+  int io::Block::get_as_array(std::string varname, std::vector<std::vector<T>> &vararray, std::string expr, std::string allowed) { 
+    for (int i=1; i<_numlines-1; i++) {
+      std::vector<T> tmp;
+      T x, tmpv;
+      std::istringstream linestream(_lines[i]);
+      int j=1;
+      while (!linestream.eof()) {
+         std::ostringstream oss;
+         oss << varname << "[" << i << "][" << j<< "]";
+        _par_names.push_back(oss.str());
+        linestream >> x;
+        _lineStream >> tmpv; // just to empty that stream as well
+        if (linestream.fail()) {
+          io::messages.add("failed to read " +_blockname + " block: wrong value type? (e.g. float instead of int?)", "BlockInput", io::message::error);
+          _block_error=1;
+          return 1;
+        }
+        _par_values.push_back(std::to_string(x));
+        tmp.push_back(x);
+        j++;
       }
-      errormsg << allowed;
-    }
-  
-    if (!ok) {
-      _block_error=1;
-      io::messages.add(errormsg.str(), "In_Parameter", io::message::error);
-      return 1;
+      vararray.push_back(tmp);
     }
     return 0;
   }

@@ -238,6 +238,7 @@ bool io::is_valid_type <bool> (bool & var, const char* x) {
 int io::Block::read_buffer(std::vector<std::string> &buffer, bool required) {
   //check if buffer exists and there is something between blockname and END
   _numlines=buffer.size();
+  _lines=buffer;
   if (buffer.size() == 0 && !required) return 1; 
 
   if (buffer.size() <= 2){
@@ -265,6 +266,19 @@ int io::Block::read_buffer(std::vector<std::string> &buffer, bool required) {
     DEBUG(11, _blockname+" present");
     return 0;
   }  
+}
+
+int io::Block::get_line_as_stream(unsigned int i, std::istringstream &linestream) {
+  if (i < _lines.size()) {
+    linestream.str(_lines[i]);
+  } else {
+    std::ostringstream msg;
+    msg <<"asked for line " << i << " but block only has " << _lines.size() << " lines: "<<_blockname;
+    io::messages.add(msg.str(),
+    "blockinput", io::message::warning);
+    return 1;
+  }
+  return 0;
 }
 
 void io::Block::get_final_messages(bool print_read) {
