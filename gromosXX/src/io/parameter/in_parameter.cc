@@ -444,26 +444,22 @@ void io::In_Parameter::read_CONSTRAINT(simulation::Parameter &param,
 
             // Get number of GPUs and their IDs
             block.get_next_parameter("NTCG", param.constraint.solvent.number_gpus, ">0", "");
-
-            if (param.constraint.solvent.number_gpus == (unsigned int) 0)
-                io::messages.add("CUDA enabled, but number of GPUs is zero",
-                                 "In_Parameter", io::message::error);
-            else {
-                unsigned int temp = 0;
-                bool fail = false;
-                for (unsigned int i = 0; i < param.constraint.solvent.number_gpus; i++) {
-                    if (block.get_next_parameter("NTCD", temp, "", "")) {
-                        fail = true;
-                        break;
-                    }
-                    param.constraint.solvent.gpu_device_number.push_back(temp);
+            int temp = 0;
+            bool fail = false;
+            for (unsigned int i = 0; i < param.constraint.solvent.number_gpus; i++) {
+                std::string idx=io::to_string(i);
+                if (block.get_next_parameter("NTCD["+idx+"]", temp, ">=-1", "", true)) {
+                    fail = true;
+                    break;
                 }
-                if (fail) {
-                    param.constraint.solvent.gpu_device_number.clear();
-                    param.constraint.solvent.gpu_device_number.resize(param.constraint.solvent.number_gpus, -1);
-                    io::messages.add("CUDA driver will determine devices for M-SHAKE",
-                                     "In_Parameter", io::message::notice);
-                }
+                param.constraint.solvent.gpu_device_number.push_back(temp);
+            }
+            if (fail) {
+                param.constraint.solvent.gpu_device_number.clear();
+                param.constraint.solvent.gpu_device_number.resize(param.constraint.solvent.number_gpus, -1);
+                io::messages.add("CUDA driver will determine devices for M-SHAKE",
+                                    "In_Parameter", io::message::notice);
+                block.reset_error();
             }
         } else if (salg == "off" || salg == "0") {
             DEBUG(9, "constraints solvent off");
@@ -2713,32 +2709,25 @@ void io::In_Parameter::read_INNERLOOP(simulation::Parameter &param,
         if (param.innerloop.method == simulation::sla_cuda) {
             block.get_next_parameter("NGPUS", param.innerloop.number_gpus, ">0", "");
 
-            if (!block.error()) {
-                unsigned int temp = 0;
-                bool fail = false;
-                for (unsigned int i = 0; i < param.innerloop.number_gpus; i++) {
-                    std::string idx=io::to_string(i);
-                    block.get_next_parameter("NDEVG["+idx+"]", temp, ">=0", "", true);
-                    if (block.error()) {
-                        fail = true;
-                        break;
-                    }
-                    param.innerloop.gpu_device_number.push_back(temp);
+            int temp = 0;
+            bool fail = false;
+            for (unsigned int i = 0; i < param.innerloop.number_gpus; i++) {
+                std::string idx=io::to_string(i);
+                if (block.get_next_parameter("NDEVG["+idx+"]", temp, ">=-1", "", true)) {
+                    fail = true;
+                    break;
                 }
-                if (fail) {
-                    // if not enough device numbers are given, set all numibers to -1
-                    // and do not report this as an error
-                    param.innerloop.gpu_device_number.clear();
-                    param.innerloop.gpu_device_number.resize(param.innerloop.number_gpus, -1);
-                    io::messages.add("CUDA driver will determine devices for nonbonded interaction evaluation.",
-                                     "In_Parameter", io::message::notice);
-                    block.reset_error();
-                }
+                param.innerloop.gpu_device_number.push_back(temp);
             }
-        } else {
-            // we don't care if there is a value for NGPUS even if we do not need it
-            int tmp = 0;
-            block.get_next_parameter("NGPUS", tmp, "", "");
+            if (fail) {
+                // if not enough device numbers are given, set all numibers to -1
+                // and do not report this as an error
+                param.innerloop.gpu_device_number.clear();
+                param.innerloop.gpu_device_number.resize(param.innerloop.number_gpus, -1);
+                io::messages.add("CUDA driver will determine devices for nonbonded interaction evaluation.",
+                                    "In_Parameter", io::message::notice);
+                block.reset_error();
+            }
         }
         block.get_final_messages();
     }
