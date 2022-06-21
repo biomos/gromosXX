@@ -222,7 +222,9 @@ void interaction::CUDA_Nonbonded_Set::init_run() {
           &error
           );
   if (error) {
-    io::messages.add("Cannot initialize GPU for nonbonded interaction", io::message::error);
+    std::ostringstream msg;
+    msg << "Cannot initialize nonbonded interaction on GPU " << mysim->param().innerloop.gpu_device_number.at(mygpu_id);
+    io::messages.add(msg.str(), "CUDA_Nonbonded_Set", io::message::error);
     return;
   }
   free(pLj_crf);

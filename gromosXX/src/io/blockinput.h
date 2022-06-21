@@ -335,11 +335,11 @@ namespace io {
     _lineStream >> tmp_string;
   
     if (_lineStream.eof()) {
-      if (allow_missing)
-        return 0;
+      if (!allow_missing) {
       io::messages.add(_blockname + " block reached END before "+varname
           +" could be read!",
 		    "BlockInput", io::message::error);
+      }
       _par_values.push_back(tmp_string);
       _block_error=1;
       return 1;  
