@@ -401,7 +401,6 @@ dnl check for lib CUDA
 AC_DEFUN([AM_PATH_CUDA],[
   dnl set default values
   : ${NVCC="nvcc"}
-  : ${NVCCFLAGS="-arch sm_30"}
   AC_ARG_VAR(NVCC,
     [nvcc compiler path])
   AC_ARG_VAR(NVCCFLAGS,
