@@ -253,6 +253,7 @@ void io::In_RDC::read(topology::Topology &topo,
       {
         DEBUG(10, "RDC #" << rdc_groups[i][j] << " is part of RDC group #" << i << " but does not exist.")
         io::messages.add("non-existing RDCs included in RDC groups", "In_RDC", io::message::critical);
+        return;
       }
     }
   }
