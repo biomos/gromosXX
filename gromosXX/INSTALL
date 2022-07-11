@@ -64,7 +64,8 @@ Case A) Installing from a tarball
              (see volume 8 of the GROMOS manuals).
              nvcc automatically discovers available GPUs and compiles
              for the correct architecture. In case you want to use GROMOS
-             on another GPU (e.g. on a cluster), set compiler flags accordingly. 
+             on another GPU (e.g. on a cluster) or have other special hardware
+             specifications, export nvcc compiler flags accordingly before compilation. 
              For eaxmple, if you want to compile on sm_30, use: export NVCCFLAGS="-arch sm_30" 
 
 
