@@ -66,7 +66,7 @@ Case A) Installing from a tarball
              for the correct architecture. In case you want to use GROMOS
              on another GPU (e.g. on a cluster) or have other special hardware
              specifications, export nvcc compiler flags accordingly before compilation. 
-             For eaxmple, if you want to compile on sm_30, use: export NVCCFLAGS="-arch sm_30" 
+             For example, if you want to compile on sm_30, use: export NVCCFLAGS="-arch sm_30" 
 
 
 
