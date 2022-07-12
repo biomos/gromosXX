@@ -61,7 +61,12 @@ Case A) Installing from a tarball
              (see volume 8 of the GROMOS manuals)
           .) To compile the code with GPU acceleration for the solvent-solvent
              interactions, use --with-cuda=<path-to-cuda-libraries>
-             (see volume 8 of the GROMOS manuals)
+             (see volume 8 of the GROMOS manuals).
+             nvcc automatically discovers available GPUs and compiles
+             for the correct architecture. In case you want to use GROMOS
+             on another GPU (e.g. on a cluster) or have other special hardware
+             specifications, export nvcc compiler flags accordingly before compilation. 
+             For example, if you want to compile on sm_30, use: export NVCCFLAGS="-arch sm_30" 
 
 
 
@@ -102,7 +107,8 @@ Case B) To compile and install the unconfigured source tree from git
              (see volume 8 of the GROMOS manuals)
           .) To compile the code with GPU acceleration for the solvent-solvent
              interactions, use --with-cuda=<path-to-cuda-libraries>
-             (see volume 8 of the GROMOS manuals)
+             (see volume 8 of the GROMOS manuals). See sections above for the
+             use of nvcc compiler flags.
 
 
 optimization flags
