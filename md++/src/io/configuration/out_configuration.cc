@@ -3129,9 +3129,12 @@ void io::Out_Configuration::_print_tfrdc_axis_theta_distribution(
   os.precision(m_precision);
   double binsize_theta = sim.param().tfrdc.bins_theta[1]-sim.param().tfrdc.bins_theta[0];
   os << "TFRDCMFVTHETADIST" << std::endl; 
-  for (unsigned int i = 0; i < conf.special().tfrdc.dist_theta.size()-1; i++) {
-    os  << std::setw(m_width) << sim.param().tfrdc.bins_theta[i]+0.5*binsize_theta << " "
-        << std::setw(m_width) << conf.special().tfrdc.dist_theta[i] / (sim.steps()*binsize_theta) << std::endl;
+  for (unsigned int i = 0; i < sim.param().tfrdc.bins_theta.size()-1; i++) {
+    os  << std::setw(m_width) << sim.param().tfrdc.bins_theta[i]+0.5*binsize_theta << " ";
+    for (unsigned int j = 0; j < conf.special().tfrdc.dist_theta.size(); j++) {
+      os << std::setw(m_width) << conf.special().tfrdc.dist_theta[j][i] / (sim.steps()*binsize_theta);
+    }
+    os << std::endl;
   }
   os << "END" << std::endl;
 }

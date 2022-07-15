@@ -602,12 +602,14 @@ int _magnetic_field_vector_sd
       periodicity.nearest_image(rh_i, conf.special().tfrdc_mfv.pos(1), rh_ij);
       dh_ij = math::abs(rh_ij);                  // [nm]
 
-      math::Vec axis;
-      math::Vec axis1 = topo.tf_rdc_molaxis()[0].pos(conf, topo), 
-                        axis2 = topo.tf_rdc_molaxis()[1].pos(conf, topo);
-      periodicity.nearest_image(axis1, axis2, axis);
-      double d_axis = math::abs(axis);
-      _add_to_theta_distribution(axis, d_axis, rh_ij, dh_ij,sim.param().tfrdc.bins_theta, conf.special().tfrdc.dist_theta);
+      for (unsigned int a=0; a < topo.tf_rdc_molaxis().size(); a++) {
+        math::Vec axis;
+        math::Vec axis1 = topo.tf_rdc_molaxis()[a][0].pos(conf, topo), 
+                          axis2 = topo.tf_rdc_molaxis()[a][1].pos(conf, topo);
+        periodicity.nearest_image(axis1, axis2, axis);
+        double d_axis = math::abs(axis);
+        _add_to_theta_distribution(axis, d_axis, rh_ij, dh_ij, sim.param().tfrdc.bins_theta, conf.special().tfrdc.dist_theta[a]);
+      }
       DEBUG(9, "rh_i  :" << math::v2s(rh_i));
       DEBUG(9, "rh_ij :" << math::v2s(rh_ij));
       
@@ -839,7 +841,10 @@ int interaction::TF_RDC_Restraint_Interaction::init
   conf.special().tfrdc_mfv.dPdr_avg.resize(num_res);
 
   sim.param().tfrdc.bins_theta = _linspace(0.0,math::Pi,101.0);
-  conf.special().tfrdc.dist_theta.resize(sim.param().tfrdc.bins_theta.size(), 0.0);
+  conf.special().tfrdc.dist_theta.resize(topo.tf_rdc_molaxis().size());
+  for (int i = 0; i<topo.tf_rdc_molaxis().size(); i++) {
+    conf.special().tfrdc.dist_theta[i].resize(sim.param().tfrdc.bins_theta.size(), 0.0);
+  }
 
   if (sim.param().tfrdc.write_rdc_theta_distr) {
     conf.special().tfrdc.dist_theta_r_mfv.resize(num_res);

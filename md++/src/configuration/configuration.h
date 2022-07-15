@@ -796,7 +796,7 @@ namespace configuration {
         /**
          * distribution of the angle of the mfv to a user-defined axis
          */
-        std::vector<double> dist_theta;
+        std::vector<std::vector<double>> dist_theta;
         /**
          * distribution of the angles of the RDC vectors with the magn. field
          */
