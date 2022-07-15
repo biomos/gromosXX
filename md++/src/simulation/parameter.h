@@ -4172,6 +4172,10 @@ namespace simulation
        */
       unsigned int nstsd;
       /**
+       * force constant on the magn. field vector
+       */
+      double Kmfv;
+      /**
        * theta memory time for time averaging of 
        * magnetic field vector restraining
        */
@@ -4184,6 +4188,14 @@ namespace simulation
        * temperature of stochastic bath for magn. field vector
        */
       double tempsd;
+      /**
+       * mass of the magn. field vector atoms
+       */
+      double mfv_mass;
+      /**
+       * distance between the magn. field vector atoms
+       */
+      double mfv_r;
       /**
        * generate stochastic integrals for magn. field vector SD
        */
