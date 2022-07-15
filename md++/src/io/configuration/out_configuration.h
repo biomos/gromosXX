@@ -443,7 +443,11 @@ namespace io {
             configuration::Configuration const &conf,
             std::ostream &os);
 
-    void _print_tfrdc_mfv_orientation_distribution(simulation::Simulation const & sim,
+    void _print_tfrdc_axis_theta_distribution(simulation::Simulation const & sim,
+            configuration::Configuration const &conf,
+            std::ostream &os);
+
+    void _print_tfrdc_r_theta_distribution(simulation::Simulation const & sim,
             configuration::Configuration const &conf,
             std::ostream &os);
 
