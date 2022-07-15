@@ -1517,14 +1517,14 @@ namespace topology
     /**
      * tensor-free RDC restraints molecular axis accessor.
      */
-    std::vector<util::Virtual_Atom> & tf_rdc_molaxis()
+    std::vector<std::vector<util::Virtual_Atom>> & tf_rdc_molaxis()
     {
       return m_tf_rdc_molaxis;
     }
     /**
      * const tensor-free RDC restraints molecular axis accessor.
      */
-    std::vector<util::Virtual_Atom>  const & tf_rdc_molaxis() const
+    std::vector<std::vector<util::Virtual_Atom>>  const & tf_rdc_molaxis() const
     {
       return m_tf_rdc_molaxis;
     }
@@ -2016,7 +2016,7 @@ namespace topology
     /**
      * tf rdc molecular axis (for output of the magn. field vector distribution)
      */
-    std::vector<util::Virtual_Atom> m_tf_rdc_molaxis;
+    std::vector<std::vector<util::Virtual_Atom>> m_tf_rdc_molaxis;
      /**
     * z-axis orientation bias
     */

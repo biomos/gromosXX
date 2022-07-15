@@ -282,56 +282,62 @@ void io::In_Tfrdcresspec::read_TFRDCMOLAXIS(topology::Topology &topo,
 
     DEBUG(10, "reading in TFRDCMOLAXIS data");
 
-    int type1, type2;
-    std::vector<int> atom1, atom2;
-
-    for (unsigned int i = 0; i < io::In_Tfrdcresspec::MAX_ATOMS; i++)
+    unsigned int num = block.numlines() - 2;
+    topo.tf_rdc_molaxis().resize(num);
+    for (unsigned int line_number = 0; line_number < num; line_number++)
     {
-      unsigned int atom;
-      std::string str_i = io::to_string(i);
-      std::string condition = i == 0 ? ">0" : ">=0";
-      block.get_next_parameter("ATOM[" + str_i + "]", atom, condition, "");
-      if (atom > topo.num_atoms())
+
+      int type1, type2;
+      std::vector<int> atom1, atom2;
+
+      for (unsigned int i = 0; i < io::In_Tfrdcresspec::MAX_ATOMS; i++)
       {
-        std::ostringstream msg;
-        msg << blockname << " block: atom number out of range: " << atom << ", last atom is " << topo.num_atoms();
-        io::messages.add(msg.str(), "In_Tfrdcresspec", io::message::error);
+        unsigned int atom;
+        std::string str_i = io::to_string(i);
+        std::string condition = i == 0 ? ">0" : ">=0";
+        block.get_next_parameter("ATOM[" + str_i + "]", atom, condition, "");
+        if (atom > topo.num_atoms())
+        {
+          std::ostringstream msg;
+          msg << blockname << " block: atom number out of range: " << atom << ", last atom is " << topo.num_atoms();
+          io::messages.add(msg.str(), "In_Tfrdcresspec", io::message::error);
+        }
+
+        // -1 because we directly convert to array indices
+        if (atom > 0)
+          atom1.push_back(atom - 1);
       }
+      block.get_next_parameter("type1", type1, "", "");
 
-      // -1 because we directly convert to array indices
-      if (atom > 0)
-        atom1.push_back(atom - 1);
-    }
-    block.get_next_parameter("type1", type1, "", "");
-
-    for (unsigned int i = 0; i < io::In_Tfrdcresspec::MAX_ATOMS; i++)
-    {
-      unsigned int atom;
-      std::string str_i = io::to_string(i);
-      std::string condition = i == 0 ? ">0" : ">=0";
-      block.get_next_parameter("ATOM[" + str_i + "]", atom, condition, "");
-      if (atom > topo.num_atoms())
+      for (unsigned int i = 0; i < io::In_Tfrdcresspec::MAX_ATOMS; i++)
       {
-        std::ostringstream msg;
-        msg << blockname << " block: atom number out of range: " << atom << ", last atom is " << topo.num_atoms();
-        io::messages.add(msg.str(), "In_Tfrdcresspec", io::message::error);
+        unsigned int atom;
+        std::string str_i = io::to_string(i);
+        std::string condition = i == 0 ? ">0" : ">=0";
+        block.get_next_parameter("ATOM[" + str_i + "]", atom, condition, "");
+        if (atom > topo.num_atoms())
+        {
+          std::ostringstream msg;
+          msg << blockname << " block: atom number out of range: " << atom << ", last atom is " << topo.num_atoms();
+          io::messages.add(msg.str(), "In_Tfrdcresspec", io::message::error);
+        }
+
+        // -1 because we directly convert to array indices
+        if (atom > 0)
+          atom2.push_back(atom - 1);
       }
+      block.get_next_parameter("type2", type2, "", "");
 
-      // -1 because we directly convert to array indices
-      if (atom > 0)
-        atom2.push_back(atom - 1);
+      util::virtual_type t1 = util::virtual_type(type1);
+      util::virtual_type t2 = util::virtual_type(type2);
+
+      util::Virtual_Atom v1(t1, atom1, dish, disc);
+      util::Virtual_Atom v2(t2, atom2, dish, disc);
+
+
+      topo.tf_rdc_molaxis()[line_number].push_back(v1);
+      topo.tf_rdc_molaxis()[line_number].push_back(v2);
     }
-    block.get_next_parameter("type2", type2, "", "");
-
-    util::virtual_type t1 = util::virtual_type(type1);
-    util::virtual_type t2 = util::virtual_type(type2);
-
-    util::Virtual_Atom v1(t1, atom1, dish, disc);
-    util::Virtual_Atom v2(t2, atom2, dish, disc);
-
-
-    topo.tf_rdc_molaxis().push_back(v1);
-    topo.tf_rdc_molaxis().push_back(v2);
     block.get_final_messages();
   } // if block empty or not there
 } // TFRDCMOLAXIS
