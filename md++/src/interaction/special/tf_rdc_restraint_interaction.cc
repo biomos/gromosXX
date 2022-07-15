@@ -396,7 +396,7 @@ int _magnetic_field_vector_sd
     double exptaut = 0.0;                                       // [-]
     if (sim.param().tfrdc.tauth > 0.0)
       exptaut = exp(-sim.time_step_size() / sim.param().tfrdc.tauth);    // [-]
-    const double & K = sim.param().tfrdc.K * 1e24;        // [kJ ps^2 / mol]
+    const double & K = sim.param().tfrdc.Kmfv * 1e24;        // [kJ ps^2 / mol]
     const double dPavedP = 1.0 - exptaut;                       // [-]
 
 
@@ -707,8 +707,8 @@ void _init_mfv_sd(configuration::Configuration & conf,
   const double gdth = gdt * 0.5;
   
   // TODO: maybe do not use hardcoded values here
-  tfrdc_mfv.mass = 15.035;
-  tfrdc_mfv.d = 0.153;
+  tfrdc_mfv.mass = sim.param().tfrdc.mfv_mass;
+  tfrdc_mfv.d = sim.param().tfrdc.mfv_r;
   tfrdc_mfv.n_com_translation_removal = 1000;
   tfrdc_mfv.sd.kToverM = sqrt(math::k_Boltzmann * sim.param().tfrdc.tempsd / tfrdc_mfv.mass);
   DEBUG(12, "kb "<< math::k_Boltzmann << "Temp " << sim.param().tfrdc.tempsd << "mass "<< tfrdc_mfv.mass);
@@ -904,6 +904,8 @@ int interaction::TF_RDC_Restraint_Interaction::init
     os.precision(8);
     os << "  - Number of restraints: " << num_res << std::endl
             << "  - force constant: " << std::setw(15) << sim.param().tfrdc.K << std::endl;
+    if (sim.param().tfrdc.nstsd > 0) 
+      os << "  - force constant mfv " << std::setw(15) << sim.param().tfrdc.Kmfv << std::endl;
     os << "  - time-averaging memory r relaxation time: " << std::setw(15) << sim.param().tfrdc.taur << std::endl;
     os << "  - time-averaging memory theta relaxation time: " << std::setw(15) << sim.param().tfrdc.taut << std::endl;
     if (sim.param().tfrdc.read)
