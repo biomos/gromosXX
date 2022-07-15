@@ -2607,6 +2607,9 @@ void io::In_Parameter::read_TFRDCRES(simulation::Parameter &param,
     exampleblock << "# NTWTFRAVE >= 0             write cumulative averages of RDCs to special trajectory\n";
     exampleblock << "#             0              don't write [default]\n";
     exampleblock << "#          >  0              write every NTWTFRAVE step\n";
+    exampleblock << "# NWDISTR  0,1               calculate distribution of the angle of each RDC vector\n";
+    exampleblock << "#                            with the magn. field at every step and write it\n;";
+    exampleblock << "#                            to standard output at the end of the simulation \n";
     exampleblock << "# NSTSD    >= 0              number of SD steps of the magnetic field vector\n";
     exampleblock << "#             0              magnetic field is fixed along z\n";
     exampleblock << "# CTMFV   >= 0.0             force constant acting on the magn. field vector [kJ*s^2/ mol]\n";
@@ -2617,8 +2620,8 @@ void io::In_Parameter::read_TFRDCRES(simulation::Parameter &param,
     exampleblock << "# MFVMASS  > 0.0             mass of the magn. field vector atoms\n";
     exampleblock << "# MFVR  > 0.0                distance between the the magn. field vector atoms\n";
     exampleblock << "#\n";
-    exampleblock << "#       NTTFRDC  NTTFRDCA  CTFRDC   TAUR    TAUT    NTWTFRDC NTWTFRAVE\n";
-    exampleblock << "           1       0        1.0     0       1000      0           0      \n";
+    exampleblock << "#       NTTFRDC  NTTFRDCA  CTFRDC   TAUR    TAUT    NTWTFRDC NTWTFRAVE NWDISTR\n";
+    exampleblock << "           1       0        1.0     0       1000      0           0    0  \n";
     exampleblock << "#       NSTSD  CTMFV TAUTH  CFRICH  TEMPSD  MFVMASS  MFVR \n";
     exampleblock << "        20000   1.0   1000     2.4   298.0  15.035  0.153 \n";
     exampleblock << "END\n";
@@ -2638,6 +2641,7 @@ void io::In_Parameter::read_TFRDCRES(simulation::Parameter &param,
         block.get_next_parameter("TAUT", param.tfrdc.taut, ">=0", "");
         block.get_next_parameter("NTWTFRDC", param.tfrdc.write, ">=0", "");
         block.get_next_parameter("NTWTFRAVE", param.tfrdc.cumave_write, ">=0", "");
+        block.get_next_parameter("NWDISTR", param.tfrdc.write_rdc_theta_distr, "", "0,1");
         block.get_next_parameter("NSTSD", param.tfrdc.nstsd, ">=0", "");
         block.get_next_parameter("CTMFV", param.tfrdc.Kmfv, ">=0", "");
         block.get_next_parameter("TAUTH", param.tfrdc.tauth, ">=0", "");

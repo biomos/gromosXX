@@ -331,52 +331,30 @@ int _shake_bond(math::Box box, math::VArray &pos, const math::VArray &old_pos, d
   return 0;
 }
 
-void _add_to_theta_distribution(const math::Vec axis, configuration::Configuration & conf,
-        simulation::Simulation & sim, 
-        const math::Vec v){
+void _add_to_theta_distribution(math::Vec v1, double d1, math::Vec v2, double d2, 
+  std::vector<double> &bins, std::vector< double> &distribution) {
 
-    double d_v = math::abs(v), d_axis = math::abs(axis);
+  double theta = acos((v1[0]*v2[0]+v1[1]*v2[1]+v1[2]*v2[2])/(d1*d2));
 
-    double theta = acos((axis[0]*v[0]+axis[1]*v[1]+axis[2]*v[2])/(d_axis*d_v));
+  for (unsigned int i=0; i<bins.size()-1; i++) {
+    double & bin_upper = bins[i+1];
+    if (theta < bin_upper) {
+      distribution.at(i)+=1;
+      break;
+    }
+  }
+}
 
-    // TODO: phi here is not relative to the mfv but to the z-axis
-    // either remove or correct
-    double dpx = math::dot(v,math::Vec(1, 0, 0));
-    double dpy = math::dot(v,math::Vec(0, 1, 0));
-    double phi = acos(dpx / sqrt((dpx*dpx)+(dpy*dpy)));
-    if (dpy <0) {
-      phi=-phi;
-    }
-   
-    while (phi > math::Pi*2) {
-      phi-=math::Pi*2;
-    }
-    while (phi < 0) {
-      phi+=math::Pi*2;
-    }
+void _add_to_theta_distribution(double theta, 
+  std::vector<double> &bins, std::vector< double> &distribution) {
 
-    while (theta > math::Pi*2) {
-      theta-=math::Pi*2;
+  for (unsigned int i=0; i<bins.size()-1; i++) {
+    double & bin_upper = bins[i+1];
+    if (theta < bin_upper) {
+      distribution.at(i)+=1;
+      break;
     }
-    while (theta < 0) {
-      theta+=math::Pi*2;
-    }
-
-    for (unsigned int i=0; i<sim.param().tfrdc.bins_phi.size()-1; i++) {
-      double & bin_upper = sim.param().tfrdc.bins_phi[i+1];
-       if (phi < bin_upper) {
-         conf.special().tfrdc_mfv.dist_phi.at(i)+=1;
-         break;
-       }
-    }
-
-    for (unsigned int i=0; i<sim.param().tfrdc.bins_theta.size()-1; i++) {
-      double & bin_upper = sim.param().tfrdc.bins_theta[i+1];
-      if (theta < bin_upper) {
-        conf.special().tfrdc_mfv.dist_theta.at(i)+=1;
-        break;
-      }
-    }
+  }
 }
 
 
@@ -624,11 +602,12 @@ int _magnetic_field_vector_sd
       periodicity.nearest_image(rh_i, conf.special().tfrdc_mfv.pos(1), rh_ij);
       dh_ij = math::abs(rh_ij);                  // [nm]
 
-    math::Vec axis;
-    math::Vec axis1 = topo.tf_rdc_molaxis()[0].pos(conf, topo), 
-                      axis2 = topo.tf_rdc_molaxis()[1].pos(conf, topo);
-    periodicity.nearest_image(axis1, axis2, axis);
-      _add_to_theta_distribution(axis, conf, sim, rh_ij);
+      math::Vec axis;
+      math::Vec axis1 = topo.tf_rdc_molaxis()[0].pos(conf, topo), 
+                        axis2 = topo.tf_rdc_molaxis()[1].pos(conf, topo);
+      periodicity.nearest_image(axis1, axis2, axis);
+      double d_axis = math::abs(axis);
+      _add_to_theta_distribution(axis, d_axis, rh_ij, dh_ij,sim.param().tfrdc.bins_theta, conf.special().tfrdc.dist_theta);
       DEBUG(9, "rh_i  :" << math::v2s(rh_i));
       DEBUG(9, "rh_ij :" << math::v2s(rh_ij));
       
@@ -637,6 +616,7 @@ int _magnetic_field_vector_sd
       for(unsigned int l=0; it != to; ++it, ++l) {
 
         costheta[l] = (rh_ij(0)*r_ij[l](0)+rh_ij(1)*r_ij[l](1)+rh_ij(2)*r_ij[l](2))/(dh_ij*d_ij[l]);
+        _add_to_theta_distribution(acos(costheta[l]), sim.param().tfrdc.bins_theta, conf.special().tfrdc.dist_theta_r_mfv[l]);
  
         const double P = 0.5 * (3 * costheta[l] * costheta[l] - 1.0);          // [-]
         DEBUG(15, "P: " << P);
@@ -858,6 +838,15 @@ int interaction::TF_RDC_Restraint_Interaction::init
   conf.special().tfrdc_mfv.P_avg.resize(num_res);
   conf.special().tfrdc_mfv.dPdr_avg.resize(num_res);
 
+  sim.param().tfrdc.bins_theta = _linspace(0.0,math::Pi,101.0);
+  conf.special().tfrdc.dist_theta.resize(sim.param().tfrdc.bins_theta.size(), 0.0);
+
+  if (sim.param().tfrdc.write_rdc_theta_distr) {
+    conf.special().tfrdc.dist_theta_r_mfv.resize(num_res);
+    for (int i = 0; i<num_res; i++) {
+      conf.special().tfrdc.dist_theta_r_mfv[i].resize(sim.param().tfrdc.bins_theta.size(), 0.0);
+    }
+  }
 
   if (!sim.param().tfrdc.read) {
     conf.special().tfrdc.num_averaged=0;
@@ -876,11 +865,6 @@ int interaction::TF_RDC_Restraint_Interaction::init
     }
 
     _init_mfv_sd(conf, sim, m_rng);
-    sim.param().tfrdc.bins_theta = _linspace(0.0,math::Pi,101.0);
-    sim.param().tfrdc.bins_phi = _linspace(0.0,2*math::Pi,101.0);
-
-    conf.special().tfrdc_mfv.dist_theta.resize(sim.param().tfrdc.bins_theta.size(), 0.0);
-    conf.special().tfrdc_mfv.dist_phi.resize(sim.param().tfrdc.bins_phi.size(), 0.0);
   }
 
   if (!quiet) {

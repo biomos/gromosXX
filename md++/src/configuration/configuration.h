@@ -793,6 +793,14 @@ namespace configuration {
          * the running average of P
          */
         std::vector<double> P_avg;
+        /**
+         * distribution of the angle of the mfv to a user-defined axis
+         */
+        std::vector<double> dist_theta;
+        /**
+         * distribution of the angles of the RDC vectors with the magn. field
+         */
+        std::vector<std::vector<double>> dist_theta_r_mfv;
     } /** tensor-free RDC information */ tfrdc;
       
       /**
@@ -838,16 +846,6 @@ namespace configuration {
         double mass;
         double d;
         unsigned int n_com_translation_removal;
-
-        /**
-         * distribution of the angle of the mfv to the z-axis
-         */
-        std::vector<double> dist_theta;
-        /**
-         * distribution of the angle in the xy-plane
-         */
-        std::vector<double> dist_phi;
-
     } /** tensor-free RDC magnetic field vector information */ tfrdc_mfv;
       
 

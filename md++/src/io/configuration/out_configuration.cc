@@ -2079,7 +2079,10 @@ void io::Out_Configuration
   }
 
   if (sim.param().tfrdc.nstsd > 0) {
-    _print_tfrdc_mfv_orientation_distribution(sim, conf, m_output);
+    _print_tfrdc_axis_theta_distribution(sim, conf, m_output);
+  }
+  if (sim.param().tfrdc.write_rdc_theta_distr) {
+    _print_tfrdc_r_theta_distribution(sim, conf, m_output);
   }
   if (sim.param().rdc.mode != simulation::rdc_restr_off && sim.param().rdc.type == simulation::rdc_t) {
     _print_rdc_alignment_distribution(sim, conf, m_output);
@@ -3104,28 +3107,39 @@ void io::Out_Configuration::_print_zaxisori_distribution(
 
 }
 
-void io::Out_Configuration::_print_tfrdc_mfv_orientation_distribution(
+void io::Out_Configuration::_print_tfrdc_axis_theta_distribution(
         simulation::Simulation const & sim,
         configuration::Configuration const & conf,
         std::ostream & os) {
-        DEBUG(10, "tfrdc magn. field vector orientation distributions");
+        DEBUG(10, "tfrdc user-defined axes to magn. field vector orientation distributions");
        
   os.precision(m_precision);
   double binsize_theta = sim.param().tfrdc.bins_theta[1]-sim.param().tfrdc.bins_theta[0];
-  double binsize_phi = sim.param().tfrdc.bins_phi[1]-sim.param().tfrdc.bins_phi[0];
   os << "TFRDCMFVTHETADIST" << std::endl; 
-  for (unsigned int i = 0; i < conf.special().tfrdc_mfv.dist_theta.size()-1; i++) {
-    os  << std::setw(m_width) << sim.param().tfrdc.bins_theta[i]+0.5*binsize_theta << " " 
-        << std::setw(m_width) << conf.special().tfrdc_mfv.dist_theta[i] / (sim.steps()*binsize_theta) << std::endl;
+  for (unsigned int i = 0; i < conf.special().tfrdc.dist_theta.size()-1; i++) {
+    os  << std::setw(m_width) << sim.param().tfrdc.bins_theta[i]+0.5*binsize_theta << " "
+        << std::setw(m_width) << conf.special().tfrdc.dist_theta[i] / (sim.steps()*binsize_theta) << std::endl;
   }
   os << "END" << std::endl;
-  os << "TFRDCMFVPHIDIST" << std::endl; 
-  for (unsigned int i = 0; i < conf.special().tfrdc_mfv.dist_phi.size()-1; i++) {
-    os  << std::setw(m_width) << sim.param().tfrdc.bins_phi[i]+0.5*binsize_phi << " " 
-        << std::setw(m_width) << conf.special().tfrdc_mfv.dist_phi[i] / (sim.steps()*binsize_phi) << std::endl;
-  }
-  os << "END" << std::endl;
+}
 
+void io::Out_Configuration::_print_tfrdc_r_theta_distribution(
+        simulation::Simulation const & sim,
+        configuration::Configuration const & conf,
+        std::ostream & os) {
+        DEBUG(10, "tfrdc RDC vectors to magn. field vector orientation distributions");
+       
+  os.precision(m_precision);
+  double binsize_theta = sim.param().tfrdc.bins_theta[1]-sim.param().tfrdc.bins_theta[0];
+  os << "TFRDCRTHETADIST" << std::endl; 
+  for (unsigned int i = 0; i < sim.param().tfrdc.bins_theta.size()-1; i++) {
+    os  << std::setw(m_width) << sim.param().tfrdc.bins_theta[i]+0.5*binsize_theta << " ";
+    for (unsigned int j = 0; j < conf.special().tfrdc.dist_theta_r_mfv.size(); j++) { 
+        os  << std::setw(m_width) << conf.special().tfrdc.dist_theta_r_mfv[j][i] / (sim.steps()*binsize_theta);
+    }
+    os << std::endl;
+  }
+  os << "END" << std::endl;
 }
 
 void io::Out_Configuration::_print_tf_rdc_restraint_averages(

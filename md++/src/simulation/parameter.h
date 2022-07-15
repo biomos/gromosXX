@@ -4148,6 +4148,7 @@ namespace simulation
        */
       unsigned int write;
       unsigned int cumave_write;
+      unsigned int write_rdc_theta_distr;
       /**
        * number of SD steps of magnetic field vector sampling
        */
@@ -4195,7 +4196,6 @@ namespace simulation
         * bins for angle distributions
         */
       std::vector<double> bins_theta;
-      std::vector<double> bins_phi;
     }/** tensor-free RDC parameters */ tfrdc;
 
     /**
