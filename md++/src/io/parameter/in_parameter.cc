@@ -2609,7 +2609,7 @@ void io::In_Parameter::read_TFRDCRES(simulation::Parameter &param,
     exampleblock << "#             0              don't write [default]\n";
     exampleblock << "#          >  0              write every NTWTFRAVE step\n";
     exampleblock << "# NWDISTR  0,1               calculate distribution of the angle of each RDC vector\n";
-    exampleblock << "#                            with the magn. field at every step and write it\n;";
+    exampleblock << "#                            with the magn. field at every step and write it\n";
     exampleblock << "#                            to standard output at the end of the simulation \n";
     exampleblock << "# NSTSD    >= 0              number of SD steps of the magnetic field vector\n";
     exampleblock << "#             0              magnetic field is fixed along z\n";

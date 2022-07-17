@@ -618,7 +618,9 @@ int _magnetic_field_vector_sd
       for(unsigned int l=0; it != to; ++it, ++l) {
 
         costheta[l] = (rh_ij(0)*r_ij[l](0)+rh_ij(1)*r_ij[l](1)+rh_ij(2)*r_ij[l](2))/(dh_ij*d_ij[l]);
-        _add_to_theta_distribution(acos(costheta[l]), sim.param().tfrdc.bins_theta, conf.special().tfrdc.dist_theta_r_mfv[l]);
+        if (sim.param().tfrdc.write_rdc_theta_distr) {
+          _add_to_theta_distribution(acos(costheta[l]), sim.param().tfrdc.bins_theta, conf.special().tfrdc.dist_theta_r_mfv[l]);
+        }
  
         const double P = 0.5 * (3 * costheta[l] * costheta[l] - 1.0);          // [-]
         DEBUG(15, "P: " << P);
