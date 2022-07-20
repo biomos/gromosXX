@@ -5557,21 +5557,21 @@ void io::In_Parameter::read_AMBER(simulation::Parameter & param,
     _lineStream.clear();
     _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
 
-    bool amber = 0;
+    int amber = 0;
     double factor = 0.0;
     _lineStream >> amber >> factor;
 
-    if (_lineStream.fail()) { //TODO: Check for real reason why is crashing
-      io::messages.add("Bad line in AMBER block MAAAAAN.",
+    if (_lineStream.fail()) {
+      io::messages.add("Bad line in AMBER block.",
                     "In_Parameter", io::message::error);
       return;
     }
 
-    if (amber > 1 || amber < 0) {
+    if (amber != 1 && amber != 0) {
       io::messages.add("AMBER block: AMBER must be 0 or 1",
                     "In_Parameter", io::message::error);
     }
-    param.amber.amber = amber;
+    param.amber.amber = (bool)amber;
 
     if (factor < 0.0) {
       io::messages.add("AMBER block: AMBSCAL must be >= 0.0",
@@ -5580,7 +5580,7 @@ void io::In_Parameter::read_AMBER(simulation::Parameter & param,
     } else if (factor > 0.0) {
       param.amber.coulomb_scaling = 1.0 / factor;
     } else {
-      param.amber.coulomb_scaling = 0.0;
+      param.amber.coulomb_scaling = 1.0;
     }
   } // if block
 
