@@ -284,8 +284,7 @@ namespace topology
      */
     EDS_Perturbed_Atom(unsigned int JLA,
             std::vector<unsigned int> IACM,
-            std::vector<double> CGM,
-            double SCLJ, double SCC)
+            std::vector<double> CGM)
           : m_sequence_number(JLA),
             m_M_IAC(IACM),
             m_M_charge(CGM),
