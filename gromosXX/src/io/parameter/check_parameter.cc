@@ -135,7 +135,8 @@ int io::simple_crosschecks(simulation::Simulation & sim) {
               }
       }
       
-      if (param.multibath.multibath.bath(0).temperature == 0){
+      if (!((param.multibath.couple && param.multibath.multibath.bath(0).temperature != 0) 
+           || (param.stochastic.sd && param.stochastic.temp != 0))) {
         io::messages.add("MULTIBATH block: baths must have non zero temperature with EDS.", 
                           "In_Parameter", io::message::error); 
       } 
