@@ -242,9 +242,8 @@ int main(int argc, char *argv[]) {
             traj.write(conf, topo, sim, io::reduced);
             // run a stepi
             if ((error = md.run(topo, conf, sim))) {
-                if ((error == E_MINIMUM_REACHED) || (error == E_MINIMUM_NOT_REACHED)) {
+                if (error == E_MINIMUM_REACHED) {
                     conf.old().energies.calculate_totals();
-
 
                     // write final coordinates and then do shake once more
                     // because the slaves will and otherwise get stuck
