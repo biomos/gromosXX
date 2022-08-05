@@ -339,9 +339,6 @@ void interaction::CUDA_Nonbonded_Set::cycle() {
 #endif
 }
 
-// ----------------------------------------------------------------------------
-// CLEANUP
-
 /**
  * Clean up after cycle
  */
