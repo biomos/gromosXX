@@ -120,7 +120,7 @@ END
  *
  * @section The ELEMENTS block specifies the element names used in QM packages.
  * It is determined by the atomic number given in the QMZONE block. This block
- * is required only for Turbomole and DFTB
+ * is required only for Turbomole, DFTB, and ORCA
  * 
 @verbatim
 ELEMENTS
@@ -128,6 +128,87 @@ ELEMENTS
 6 c
 7 n
 8 o
+END
+@endverbatim
+ *
+ * @section The IAC block specifies the atomic number that should be used for each 
+ * IAC atom type used. This block is only requiered for XTB to model point charges.
+ * Default parameters are generated for the 54a7 ff atom types if the block is omitted.
+ * IAC numbering start from "1" to match the documentation.
+ * 
+@verbatim
+IAC
+# IAC   ATMS   ATMN
+  1     O      8
+  2     O      8
+  3     O      8
+  4     O      8
+  5     O      8
+  6     N      7
+  7     N      7
+  8     N      7
+  9     N      7
+  10    N      7
+  11    N      7
+  12    C      6
+  13    C      6
+  14    C      6
+  15    C      6
+  16    C      6
+  17    C      6
+  18    C      6
+  19    C      6
+  20    H      1
+  21    H      1
+  22    Z      0
+  23    S      16
+  24    Cu     29
+  25    Cu     29
+  26    Fe     26
+  27    Zn     30
+  28    Mg     12
+  29    Ca     20
+  30    P      15
+  31    Ar     18
+  32    F      9
+  33    Cl     17
+  34    Br     35
+  35    C      6
+  36    O      8
+  37    Na     11
+  38    Cl     17
+  39    C      6
+  40    Cl     17
+  41    H      1
+  42    S      16
+  43    C      6
+  44    O      8
+  45    C      6
+  46    Cl     17
+  47    F      9
+  48    C      6
+  49    C      6
+  50    O      8
+  51    C      6
+  52    O      8
+  53    N      7
+  54    C      6
+  55    I      53
+  56    Cl     17
+  57    B      5
+  58    Se     34
+  59    H      1
+  60    Cl     17
+  61    Br     35
+  62    O      8
+  63    N      7
+  64    C      6
+  65    C      6
+  66    N      7
+  67    N      7
+  68    O      8
+  69    Si     14
+  70    P      15
 END
 @endverbatim
  *
@@ -382,11 +463,12 @@ END
  *
  * The GAUROUTE block specifies the route section of the Gaussian input file.
  * hashsign (#) should be omitted. It is beneficial to generate an initial checkpoint file
- * and reuse it in subsequent steps with guess=read option.
+ * and reuse it in subsequent steps with guess=read option. Allowed variables
+ * - GUESS: replaced by 'guess=read' after first step
  * 
 @verbatim
 GAUROUTE
-N hf/STO-3G nosymm pop(mk) force charge(angstroms) prop=(field,read)
+N hf/STO-3G @@GUESS@@ nosymm pop(mk) force charge(angstroms) prop=(field,read)
 END
 @endverbatim
  *
@@ -399,9 +481,23 @@ GAUCHSM
 @@CHARGE@@ @@SPINM@@
 END
 @endverbatim
+ *
+ * @section XTB blocks for the XTB worker
+ * 
+ * XTBOPTIONS block for the XTB worker
+ * The XTBOPTIONS block specifies options for the XTB worker
+ * Supported are selection of the Hamiltonian (GFNHAM): 1 or 2 for 
+ * GFN1-xTB or GFN2-xTB, respectively and verbosity level: 
+ * 0 (none), 1 (minimimal), and 2 (full) (XVERBO)
+ *
+ @verbatim
+XTBOPTIONS
+# GFNHAM    XVERBO
+       1         1
+END
+ @endverbatim
  */
-void
-io::In_QMMM::read(topology::Topology& topo,
+void io::In_QMMM::read(topology::Topology& topo,
         simulation::Simulation& sim,
         std::ostream & os) {
   io::messages.add("Reading QM/MM specification file",
@@ -420,11 +516,13 @@ io::In_QMMM::read(topology::Topology& topo,
   std::vector<std::string> buffer;
 
   const simulation::qm_software_enum sw = sim.param().qmmm.software;
+
   /**
    * MNDO
    */
   if (sw == simulation::qm_mndo) {
     this->read_units(sim, &sim.param().qmmm.mndo);
+    this->read_iac_elements(topo, &sim.param().qmmm.mndo);
     { // MNDOBINARY
 
       DEBUG(15, "Reading MNDOBINARY");
@@ -482,6 +580,7 @@ io::In_QMMM::read(topology::Topology& topo,
   else if (sw == simulation::qm_turbomole) {
     this->read_units(sim, &sim.param().qmmm.turbomole);
     this->read_elements(topo, &sim.param().qmmm.turbomole);
+    this->read_iac_elements(topo, &sim.param().qmmm.turbomole);
 
     { // TMOLEFILES
       buffer = m_block["TMOLEFILES"];
@@ -543,6 +642,7 @@ io::In_QMMM::read(topology::Topology& topo,
   else if (sw == simulation::qm_dftb) {
     this->read_units(sim, &sim.param().qmmm.dftb);
     this->read_elements(topo, &sim.param().qmmm.dftb);
+    this->read_iac_elements(topo, &sim.param().qmmm.dftb);
     { // DFTBFILES
       buffer = m_block["DFTBFILES"];
       if (!buffer.size()) {
@@ -579,6 +679,7 @@ io::In_QMMM::read(topology::Topology& topo,
    */
   else if (sw == simulation::qm_mopac) {
     this->read_units(sim, &sim.param().qmmm.mopac);
+    this->read_iac_elements(topo, &sim.param().qmmm.mopac);
     { // MOPACBINARY
 
       DEBUG(15, "Reading MOPACBINARY");
@@ -656,6 +757,7 @@ io::In_QMMM::read(topology::Topology& topo,
    */
   else if (sw == simulation::qm_gaussian) {
     this->read_units(sim, &sim.param().qmmm.gaussian);
+    this->read_iac_elements(topo, &sim.param().qmmm.gaussian);
     { // GAUBINARY
 
       DEBUG(15, "Reading GAUBINARY");
@@ -739,7 +841,7 @@ io::In_QMMM::read(topology::Topology& topo,
     } // GAUCHSM
   }
 
-  /**
+  /*
    * Schnetpack NN
    */
   else if (sw == simulation::qm_nn) {
@@ -862,6 +964,102 @@ io::In_QMMM::read(topology::Topology& topo,
     } // NNDEVICE
   }
 
+  /**
+   * Orca
+   */
+  else if (sw == simulation::qm_orca) {
+    this->read_units(sim, &sim.param().qmmm.orca);
+    this->read_elements(topo, &sim.param().qmmm.orca);
+    this->read_iac_elements(topo, &sim.param().qmmm.orca);
+    { // ORCABINARY
+
+      DEBUG(15, "Reading ORCABINARY");
+      buffer = m_block["ORCABINARY"];
+
+      if (!buffer.size()) {
+        io::messages.add("Assuming that the orca binary is in the PATH",
+                "In_QMMM", io::message::notice);
+        sim.param().qmmm.orca.binary = "orca";
+      } else {
+        if (buffer.size() != 3) {
+          io::messages.add("ORCABINARY block corrupt. Provide 1 line.",
+                  "In_QMMM", io::message::error);
+          return;
+        }
+        sim.param().qmmm.orca.binary = buffer[1];
+      }
+    } // ORCABINARY
+    { // ORCAFILES
+
+      DEBUG(15, "Reading ORCAFILES");
+      buffer = m_block["ORCAFILES"];
+
+      if (!buffer.size()) {
+        io::messages.add("Using temporary files for Orca input/output",
+                "In_QMMM", io::message::notice);
+      } else {
+        if (buffer.size() != 8) {
+          io::messages.add("ORCAFILES block corrupt. Provide 6 lines.",
+                  "In_QMMM", io::message::error);
+          return;
+        }
+        sim.param().qmmm.orca.input_file = buffer[1];
+        sim.param().qmmm.orca.output_file = buffer[2];
+        sim.param().qmmm.orca.input_coordinate_file = buffer[3];
+        sim.param().qmmm.orca.input_pointcharges_file = buffer[4];
+        sim.param().qmmm.orca.output_gradient_file = buffer[5];
+        sim.param().qmmm.orca.output_mm_gradient_file = buffer[6];
+      }
+    } // ORCAFILES
+    { // ORCAHEADER
+      buffer = m_block["ORCAHEADER"];
+
+      if (!buffer.size()) {
+        io::messages.add("no ORCAHEADER block in QM/MM specification file",
+                "In_QMMM", io::message::error);
+        return;
+      }
+      concatenate(buffer.begin() + 1, buffer.end() - 1,
+              sim.param().qmmm.orca.input_header);
+      DEBUG(1, "sim.param().qmmm.orca.input_header:");
+      DEBUG(1, sim.param().qmmm.orca.input_header);
+    } // ORCAHEADER
+  }
+
+  /**
+   * XTB
+   */
+  else if (sw == simulation::qm_xtb) {
+    this->read_units(sim, &sim.param().qmmm.xtb);
+    this->read_iac_elements(topo, &sim.param().qmmm.xtb);
+    { // XTBOPTIONS
+      buffer = m_block["XTBOPTIONS"];
+
+      if (!buffer.size()) {
+        io::messages.add("no XTBOPTIONS block in QM/MM specification file",
+                "In_QMMM", io::message::error);
+      }
+      else {
+        unsigned int hamiltonian, verbosity;
+        std::string line(buffer[1]);
+        _lineStream.clear();
+        _lineStream.str(line);
+        _lineStream >> hamiltonian >> verbosity;
+        if (_lineStream.fail()) {
+          io::messages.add("bad line in XTBOPTIONS block.",
+                            "In_QMMM", io::message::error);
+          return;
+        }
+        sim.param().qmmm.xtb.hamiltonian = hamiltonian;
+        sim.param().qmmm.xtb.verbosity = verbosity;
+      }
+      DEBUG(1, "sim.param().qmmm.xtb.hamiltonian:");
+      DEBUG(1, sim.param().qmmm.xtb.hamiltonian);
+      DEBUG(1, "sim.param().qmmm.xtb.verbosity:");
+      DEBUG(1, sim.param().qmmm.xtb.verbosity);
+    } // XTBOPTIONS
+  }
+
   // Cap length definition
   { // CAPLEN
     if(topo.qmmm_link().size() > 0 ) {
@@ -950,6 +1148,121 @@ void io::In_QMMM::read_elements(const topology::Topology& topo
       msg << "ELEMENTS block: No element name provided for atomic number " << *it;
       io::messages.add(msg.str(), "In_QMMM", io::message::error);
       return;
+    }
+  }
+}
+
+void io::In_QMMM::read_iac_elements(topology::Topology& topo
+    , simulation::Parameter::qmmm_struct::qm_param_struct* qm_param)
+  {
+  std::vector<std::string> buffer = m_block["IAC"];
+
+  if (!buffer.size()) { // provide default matching
+    io::messages.add("No IAC block in QM/MM specification file. Using Gromos 54a7_ff definitions.",
+            "In_QMMM", io::message::notice);
+    // indices start with "0" to match the Gromos C++ coding style
+    qm_param->iac_elements[0]  = 8;
+    qm_param->iac_elements[1]  = 8;
+    qm_param->iac_elements[2]  = 8;
+    qm_param->iac_elements[3]  = 8;
+    qm_param->iac_elements[4]  = 8;
+    qm_param->iac_elements[5]  = 7;
+    qm_param->iac_elements[6]  = 7;
+    qm_param->iac_elements[7]  = 7;
+    qm_param->iac_elements[8]  = 7;
+    qm_param->iac_elements[9] = 7;
+    qm_param->iac_elements[10] = 7;
+    qm_param->iac_elements[11] = 6;
+    qm_param->iac_elements[12] = 6;
+    qm_param->iac_elements[13] = 6;
+    qm_param->iac_elements[14] = 6;
+    qm_param->iac_elements[15] = 6;
+    qm_param->iac_elements[16] = 6;
+    qm_param->iac_elements[17] = 6;
+    qm_param->iac_elements[18] = 6;
+    qm_param->iac_elements[19] = 1;
+    qm_param->iac_elements[20] = 1;
+    qm_param->iac_elements[21] = 0; // dummy atom
+    qm_param->iac_elements[22] = 16;
+    qm_param->iac_elements[23] = 29;
+    qm_param->iac_elements[24] = 29;
+    qm_param->iac_elements[25] = 26;
+    qm_param->iac_elements[26] = 30;
+    qm_param->iac_elements[27] = 12;
+    qm_param->iac_elements[28] = 20;
+    qm_param->iac_elements[29] = 14; // P oder Si
+    qm_param->iac_elements[30] = 18;
+    qm_param->iac_elements[31] = 9;
+    qm_param->iac_elements[32] = 17;
+    qm_param->iac_elements[33] = 35;
+    qm_param->iac_elements[34] = 6;
+    qm_param->iac_elements[35] = 8;
+    qm_param->iac_elements[36] = 11;
+    qm_param->iac_elements[37] = 17;
+    qm_param->iac_elements[38] = 6;
+    qm_param->iac_elements[39] = 17;
+    qm_param->iac_elements[40] = 1;
+    qm_param->iac_elements[41] = 16;
+    qm_param->iac_elements[42] = 6;
+    qm_param->iac_elements[43] = 8;
+    qm_param->iac_elements[44] = 6;
+    qm_param->iac_elements[45] = 17;
+    qm_param->iac_elements[46] = 9;
+    qm_param->iac_elements[47] = 6;
+    qm_param->iac_elements[48] = 6;
+    qm_param->iac_elements[49] = 8;
+    qm_param->iac_elements[50] = 6;
+    qm_param->iac_elements[51] = 8;
+    qm_param->iac_elements[52] = 7;
+    qm_param->iac_elements[53] = 6;
+  }
+  else {
+    io::messages.add("Reading IAC block in QMMM specification file.",
+            "In_QMMM", io::message::notice);
+    _lineStream.clear();
+    std::string bstr = concatenate(buffer.begin() + 1, buffer.end() - 1);
+    // Strip away the last newline character
+    bstr.pop_back();
+    _lineStream.str(bstr);
+    unsigned int iac;
+    std::string atomic_symbol; // unused
+    unsigned int atomic_number;
+    while(!_lineStream.eof()) {
+      _lineStream >> iac >> atomic_symbol >> atomic_number;
+      if (_lineStream.fail()) {
+        io::messages.add("Cannot read IAC block", "In_QMMM", io::message::error);
+        return;
+      }
+      iac--;
+      // IAC indices in QM/MM specification file start from "1" to match documentation
+      // IAC indices in Gromos C++ standard start from "0" to match C++ data structure layouts
+      qm_param->iac_elements[iac] = atomic_number;
+    }
+  }
+  
+  // check whether all atom types of the force field used have a matching atom number
+  const std::map<std::string, int>& atomic_names = topo.atom_names();
+  for (std::map<std::string, int>::const_iterator
+        it = atomic_names.begin(), to = atomic_names.end(); it != to; ++it) {
+    if (qm_param->iac_elements.find(it->second) == qm_param->iac_elements.end()) {
+      std::ostringstream msg;
+      msg << "IAC block: No atomic number provided for IAC " << (it->second + 1); // +1: match documentation for IAC atoms
+      io::messages.add(msg.str(), "In_QMMM", io::message::error);
+      return;
+    }
+    else {
+      DEBUG(15, "IAC atom \"" << it->first << "\" (#" << (it->second + 1) << ") is mapped to element #" 
+        << qm_param->iac_elements.at(it->second)); // +1: match documentation for IAC atoms
+    }
+  }
+  // assign atoms in topology - note that this is only relevant for MM atoms
+  // this procedure allows usage of QM atom types for which no force field parametrers
+  // are available (e.g. Pd can be modelled with Si) 
+  for (unsigned int i = 0; i < topo.iac().size(); ++i) {
+    if (!topo.is_qm(i)) { // QM atoms are assigned in QMZONE block
+      DEBUG(15, "Atom #" << (i+1) << " with IAC #" << topo.iac(i) + 1 << " is assigned element symbol #" // +1: match documentation
+        << qm_param->iac_elements.at(topo.iac(i))); 
+      topo.qm_atomic_number(i) = qm_param->iac_elements.at(topo.iac(i));
     }
   }
 }

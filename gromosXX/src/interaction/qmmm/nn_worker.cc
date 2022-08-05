@@ -53,7 +53,10 @@ interaction::NN_Worker::NN_Worker() : QM_Worker("NN Worker"),
                                       ml_calculator(),
                                       val_calculator() {};
 
-int interaction::NN_Worker::init(simulation::Simulation& sim) {
+int interaction::NN_Worker::init(const topology::Topology& topo
+                               , const configuration::Configuration& conf
+                               , simulation::Simulation& sim
+                               , const interaction::QM_Zone& qm_zone) {
 #ifdef HAVE_PYBIND11
   // Get a pointer to simulation parameters
   this->param = &(sim.param().qmmm.nn);
@@ -191,7 +194,7 @@ int interaction::NN_Worker::init(simulation::Simulation& sim) {
   return 0;
 }
 
-interaction::NN_Worker::~NN_Worker() {}
+interaction::NN_Worker::~NN_Worker() = default;
 
 int interaction::NN_Worker::run_QM(topology::Topology& topo
                      , configuration::Configuration& conf

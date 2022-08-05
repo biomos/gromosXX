@@ -5232,6 +5232,8 @@ void io::In_Parameter::read_QMMM(simulation::Parameter & param,
     exampleblock << "#    3: MOPAC\n";
     exampleblock << "#    4: Gaussian\n";
     exampleblock << "#    5: Schnetpack NN\n";
+    exampleblock << "#    6: Orca\n";
+    exampleblock << "#    7: XTB\n";
     exampleblock << "# RCUTQM: ABS(RCUTQM): cutoff for inclusion of MM atoms in QM calculation\n";
     exampleblock << "#         (ignored for NTQMMM = 1)\n";
     exampleblock << "#     0.0: include all atoms\n";
@@ -5265,7 +5267,7 @@ void io::In_Parameter::read_QMMM(simulation::Parameter & param,
     double mm_scale = -1.;
     double cutoff = 0.0;
     block.get_next_parameter("NTQMMM", enable, "", "-1,0,1,2,3");
-    block.get_next_parameter("NTQMSW", software, "", "0,1,2,3,4,5");
+    block.get_next_parameter("NTQMSW", software, "", "0,1,2,3,4,5,6,7");
     block.get_next_parameter("RCUTQM", cutoff, "", "");
     block.get_next_parameter("NTWQMMM", write, ">=0", "");
     block.get_next_parameter("QMLJ", qmlj, "", "0,1");
@@ -5321,6 +5323,18 @@ void io::In_Parameter::read_QMMM(simulation::Parameter & param,
             io::messages.add("QMMM block: Schnetpack NN interface is not available "
                                 "in your compilation. Use --enable-schnetpack for compiling.",
                                 "In_Parameter", io::message::error);
+#endif
+            break;
+        case 6:
+            param.qmmm.software = simulation::qm_orca;
+            break;
+        case 7:
+#ifdef WITH_XTB
+            param.qmmm.software = simulation::qm_xtb;
+#else       
+            io::messages.add("QMMM block: XTB interface is not available "
+                                "in your compilation. Use --with-xtb=PATH/TO/XTB for compiling.",
+                                "In_Parameter", io::message::error);   
 #endif
             break;
         default:

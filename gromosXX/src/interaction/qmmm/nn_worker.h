@@ -1,6 +1,7 @@
 /**
  * @file nn_worker.h
- * The worker class for the neural network interface
+ * The worker class for the neural network interface (SchNetPack)
+ * https://github.com/atomistic-machine-learning/schnetpack
  */
 #ifndef INCLUDED_NN_WORKER_H
 #define	INCLUDED_NN_WORKER_H
@@ -24,6 +25,7 @@ namespace interaction {
    * a worker class which calls the NN interface
    */
   class __attribute__((visibility("default"))) NN_Worker : public QM_Worker {
+
   public:
     /**
      * Constructor
@@ -37,7 +39,10 @@ namespace interaction {
      * initialise the NN worker
      * @return 0 if successful, non-zero on failure
      */
-    virtual int init(simulation::Simulation& sim);
+    virtual int init(const topology::Topology& topo
+                   , const configuration::Configuration& conf
+                   , simulation::Simulation& sim
+                   , const interaction::QM_Zone& qm_zone) override;
 
   private:
     /**
@@ -75,7 +80,7 @@ namespace interaction {
      */
     int run_QM(topology::Topology& topo
                      , configuration::Configuration& conf
-                     , simulation::Simulation& sim, interaction::QM_Zone & qm_zone);
+                     , simulation::Simulation& sim, interaction::QM_Zone & qm_zone) override;
   };
 }
 

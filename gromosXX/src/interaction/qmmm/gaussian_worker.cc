@@ -32,7 +32,10 @@
 
 interaction::Gaussian_Worker::Gaussian_Worker() : QM_Worker("Gaussian Worker"), param(nullptr) {};
 
-int interaction::Gaussian_Worker::init(simulation::Simulation& sim) {
+int interaction::Gaussian_Worker::init(const topology::Topology& topo
+                                     , const configuration::Configuration& conf
+                                     , simulation::Simulation& sim
+                                     , const interaction::QM_Zone& qm_zone) {
   // Get a pointer to simulation parameters
   this->param = &(sim.param().qmmm.gaussian);
   QM_Worker::param = this->param;
@@ -76,20 +79,24 @@ int interaction::Gaussian_Worker::init(simulation::Simulation& sim) {
   return 0;
 }
 
-int interaction::Gaussian_Worker::write_input(const topology::Topology& topo
+int interaction::Gaussian_Worker::process_input(const topology::Topology& topo
                                             , const configuration::Configuration& conf
                                             , const simulation::Simulation& sim
                                             , const interaction::QM_Zone& qm_zone)
   {
   std::ofstream ifs;
-  int err = 0;
-  err = this->open_input(ifs, this->param->input_file);
+  int err = this->open_input(ifs, this->param->input_file);
   if (err) return err;
   std::string header(this->param->input_header);
 
   // Write header
   ifs << this->param->input_header;
-  ifs << this->param->route_section;
+  std::string guess;
+  if (sim.steps() != 0) {
+    guess = "guess=read";
+  }
+  std::string route_section = io::replace_string(this->param->route_section, "@@GUESS@@", guess);
+  ifs << route_section;
   ifs << std::endl;
   ifs << "GROMOS generated input file" << std::endl;
   ifs << std::endl;
@@ -147,7 +154,7 @@ int interaction::Gaussian_Worker::write_input(const topology::Topology& topo
   return 0;
 }
 
-int interaction::Gaussian_Worker::system_call() {
+int interaction::Gaussian_Worker::run_calculation() {
   int err = util::system_call(this->param->binary + " < " + this->param->input_file
                                 + " 1> " + this->param->output_file + " 2>&1 ");
   if (err) {
@@ -159,14 +166,12 @@ int interaction::Gaussian_Worker::system_call() {
   }
   return 0;
 }
-
-int interaction::Gaussian_Worker::read_output(topology::Topology& topo
+int interaction::Gaussian_Worker::process_output(topology::Topology& topo
                                         , configuration::Configuration& conf
                                         , simulation::Simulation& sim
                                         , interaction::QM_Zone& qm_zone) {
   std::ifstream ofs;
-  int err = 0;
-  err = this->open_output(ofs, this->param->output_file);
+  int err = this->open_output(ofs, this->param->output_file);
   if (err) return err;
 
   err = this->parse_energy(ofs, qm_zone);
@@ -225,7 +230,7 @@ void interaction::Gaussian_Worker::write_mm_pos(std::ofstream& inputfile_stream
                    << std::endl;
 }
 
-int interaction::Gaussian_Worker::parse_charges(std::ifstream& ofs, interaction::QM_Zone& qm_zone) {
+int interaction::Gaussian_Worker::parse_charges(std::ifstream& ofs, interaction::QM_Zone& qm_zone) const {
   std::string& out = this->param->output_file;
   // Find the block
   {
@@ -277,7 +282,7 @@ int interaction::Gaussian_Worker::parse_charges(std::ifstream& ofs, interaction:
   return 0;
 }
 
-int interaction::Gaussian_Worker::parse_coordinates(std::ifstream& ofs, interaction::QM_Zone& qm_zone) {
+int interaction::Gaussian_Worker::parse_coordinates(std::ifstream& ofs, interaction::QM_Zone& qm_zone) const {
   std::string& out = this->param->output_file;
   std::string line;
   bool got_coordinates = false;
@@ -315,7 +320,7 @@ int interaction::Gaussian_Worker::parse_coordinates(std::ifstream& ofs, interact
   return 0;
 }
 
-int interaction::Gaussian_Worker::parse_energy(std::ifstream& ofs, interaction::QM_Zone& qm_zone) {
+int interaction::Gaussian_Worker::parse_energy(std::ifstream& ofs, interaction::QM_Zone& qm_zone) const {
   std::string line;
   // Find energy block
   bool got_energy = false;
@@ -347,7 +352,7 @@ int interaction::Gaussian_Worker::parse_energy(std::ifstream& ofs, interaction::
 
 int interaction::Gaussian_Worker::parse_forces(const simulation::Simulation& sim
                                             , std::ifstream& ofs
-                                            , interaction::QM_Zone& qm_zone) {
+                                            , interaction::QM_Zone& qm_zone) const {
   std::string& out = this->param->output_file;
   std::string line;
   int err = 0;
@@ -426,7 +431,7 @@ int interaction::Gaussian_Worker::parse_forces(const simulation::Simulation& sim
 }
 
 int interaction::Gaussian_Worker::parse_force(std::ifstream& ofs,
-                                              math::Vec& force) {
+                                              math::Vec& force) const {
   std::string dummy;
   ofs >> dummy >> dummy >> force(0) >> force(1) >> force(2);
   if (ofs.fail()) {

@@ -172,10 +172,10 @@ int main(int argc, char* argv[]) {
 	      << "distanceres :   " << sdistanceres << "\n"
 	      << "angrest :       " << sangrest << "\n"
 	      << "dihrest :       " << sdihrest << "\n"
-              << "xray :          " << sxray << "\n"
+        << "xray :          " << sxray << "\n"
 	      << "led :           " << sled << "\n"
 	      << "lud :           " << slud << "\n"
-              << "order :         " << sorder << "\n"
+        << "order :         " << sorder << "\n"
 	      << "configuration : " << sconf << "\n"
 	      << std::endl;
 
@@ -197,10 +197,11 @@ int main(int argc, char* argv[]) {
 			      sdistanceres,
 			      sangrest,
 			      sdihrest,
-                              sxray,
+            sxray,
+            "", // qmmm
 			      sled,
 			      slud,
-                              sorder,  
+            sorder,  
 			      quiet
 			      )
       != 0){

@@ -464,6 +464,27 @@ EOF
   AM_CONDITIONAL([WITH_CUDA], [test x$with_cuda = xyes])
 ])
 
+dnl check for lib XTB
+AC_DEFUN([AM_PATH_XTB],[
+  AC_ARG_WITH(xtb,
+    [  --with-xtb=DIR         xtb library directory to use],
+    [
+      [CXXFLAGS="$CXXFLAGS -I${withval}/include -L${withval}/build"]
+      [LDFLAGS="$LDFLAGS -L${withval}/build"]
+      dnl check for lib with these settings and add flags automatically
+      AC_CHECK_LIB([xtb], [xtb_getAPIVersion],, AC_MSG_ERROR([xtb library not found or not functional.]))
+      AC_MSG_NOTICE([Compiling with XTB support.])
+      AC_DEFINE([WITH_XTB],[1],[XTB QM Library])
+      with_xtb=yes
+    ],
+    [
+      AC_MSG_WARN([XTB path was not specified. XTB support disabled.])
+      with_xtb=no
+    ]
+  )
+  AM_CONDITIONAL([WITH_XTB], [test x$with_xtb = xyes])
+])
+
 dnl allow for schnetpack
 AC_DEFUN([AM_WITH_SCHNETPACK],[
   AC_ARG_VAR(PYTHON,
@@ -499,7 +520,7 @@ EOF
         fi
    		  AC_DEFINE([HAVE_PYBIND11],[1],[C++ Python Binding Library])
       ]
-  )
+)
 ])
 
 dnl check for lib CCP4/Clipper
