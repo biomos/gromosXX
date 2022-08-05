@@ -105,6 +105,24 @@ namespace simulation
       B_overall_on = 1,
   };
   /**
+   * @enum dfunct_enum
+   * dfunct enum, useful for sampling reaction transition states
+   */
+  enum dfunct_enum {
+    /**
+     * dfunct off
+     */
+    dfunct_off, 
+    /**
+     * restrain substitution type geometry
+     */
+    dfunct_substitution,
+    /**
+     * restrain cycloaddition type geometry
+     */
+    dfunct_cycloaddition
+  };
+  /**
    * @enum special_loop_enum
    * special solvent loop
    */
@@ -4241,6 +4259,44 @@ namespace simulation
        */
       double coulomb_scaling;
     } amber;
+
+    struct dfunct_struct {
+
+      dfunct_struct() : dfunct(dfunct_off), atom_i(0), atom_j(0), atom_k(0), atom_l(0), r_0(0.0), d(0), force(0.0) {}
+
+      /**
+       * dfunct enum 
+       */
+      dfunct_enum dfunct;
+      /**
+       * index of first atom involved in the potential
+       */
+      int atom_i, 
+      /**
+       * index of second atom involved in the potential
+       */
+      atom_j, 
+      /**
+       * index of third atom involved in the potential
+       */
+      atom_k, 
+      /**
+       * index of fourth atom involved in the potential
+       */
+      atom_l;
+      /**
+       * r_0 distance
+       */
+      double r_0;
+      /**
+       * addition or subtraction of distances r_ij and r_kl (can be scaled)
+       */
+      double d;
+      /**
+       * force constant of the bias
+       */
+      double force;
+    } dfunct;
     
     /**
      A struct to mark parts of the code as "under development"

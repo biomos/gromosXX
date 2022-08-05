@@ -67,6 +67,7 @@
  * - @ref  qmmm
  * - @ref  xrayres
  * - @ref  amber
+ * - @ref  dfunct
  */
 
 
@@ -375,6 +376,10 @@ namespace io {
      * read AMBER block
      */
     void read_AMBER(simulation::Parameter &param, std::ostream & os = std::cout);
+    /**
+     * read DFUNCT block 
+     */
+    void read_DFUNCT(simulation::Parameter &param, std::ostream & os = std::cout);
   };
 
 } // io
