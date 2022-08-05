@@ -25,7 +25,12 @@
 #include "dftb_worker.h"
 #include "mopac_worker.h"
 #include "gaussian_worker.h"
+#include "orca_worker.h"
 #include "nn_worker.h"
+
+#ifdef WITH_XTB
+  #include "xtb_worker.h"
+#endif
 
 #undef MODULE
 #undef SUBMODULE
@@ -63,6 +68,12 @@ interaction::QM_Worker * interaction::QM_Worker::get_instance(const simulation::
       return new Gaussian_Worker;
     case simulation::qm_nn :
       return new NN_Worker;
+    case simulation::qm_orca :
+      return new Orca_Worker;
+#ifdef WITH_XTB
+    case simulation::qm_xtb :
+      return new XTB_Worker;
+#endif
     default:
       io::messages.add("QM worker not implemented", "QM_Worker", io::message::critical);
       break;
@@ -79,17 +90,17 @@ int interaction::QM_Worker::run_QM(topology::Topology& topo
   DEBUG(15,"Running QM Worker");
   int ret = 0;
   m_timer.start("writing input");
-  if ((ret = this->write_input(topo, conf, sim, qm_zone)) != 0)
+  if ((ret = this->process_input(topo, conf, sim, qm_zone)) != 0)
     return ret;
   m_timer.stop("writing input");
   
   m_timer.start("QM program call");
-  if ((ret = this->system_call()) != 0)
+  if ((ret = this->run_calculation()) != 0)
     return ret;
   m_timer.stop("QM program call");
 
   m_timer.start("reading output");
-  if ((ret = this->read_output(topo, conf, sim, qm_zone)) != 0)
+  if ((ret = this->process_output(topo, conf, sim, qm_zone)) != 0)
     return ret;
 
   m_timer.stop("reading output");
@@ -97,7 +108,7 @@ int interaction::QM_Worker::run_QM(topology::Topology& topo
   return 0;
 }
 
-int interaction::QM_Worker::write_input(const topology::Topology& topo
+int interaction::QM_Worker::process_input(const topology::Topology& topo
                                       , const configuration::Configuration& conf
                                       , const simulation::Simulation& sim
                                       , const interaction::QM_Zone& qm_zone) {
@@ -111,12 +122,12 @@ int interaction::QM_Worker::write_input(const topology::Topology& topo
   return 0;
 }
 
-int interaction::QM_Worker::system_call() {
+int interaction::QM_Worker::run_calculation() {
   return util::system_call(this->param->binary + " < " + this->param->input_file
                                 + " 1> " + this->param->output_file + " 2>&1 ");
 };
 
-int interaction::QM_Worker::read_output(topology::Topology& topo
+int interaction::QM_Worker::process_output(topology::Topology& topo
                                       , configuration::Configuration& conf
                                       , simulation::Simulation& sim
                                       , interaction::QM_Zone& qm_zone) {
@@ -171,7 +182,7 @@ int interaction::QM_Worker::get_num_charges(const simulation::Simulation& sim
       break;
     }
     default: {
-      io::messages.add("Uknown QMMM option", this->name(), io::message::error);
+      io::messages.add("Unknown QMMM option", this->name(), io::message::error);
     }
   }
   return num_charges;

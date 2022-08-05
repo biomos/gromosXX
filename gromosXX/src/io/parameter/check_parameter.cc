@@ -4692,6 +4692,7 @@ int io::check_features(simulation::Simulation  &sim)
   fc.unlock("qmmm", "bsleus");
   fc.unlock("qmmm", "xray");
   //fc.unlock("qmmm", "force_groups");
+  fc.unlock("qmmm", "amber");
 
   if (fc.check()) 
     return 0;

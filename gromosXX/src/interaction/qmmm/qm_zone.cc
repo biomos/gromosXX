@@ -35,8 +35,7 @@ interaction::QM_Zone::QM_Zone(int net_charge
                               , m_spin_mult(spin_mult)
 {}
 
-interaction::QM_Zone::~QM_Zone()
-{}
+interaction::QM_Zone::~QM_Zone() = default;
 
 void interaction::QM_Zone::zero() {
   this->m_qm_energy = 0.0; 
@@ -92,6 +91,7 @@ int interaction::QM_Zone::update(topology::Topology& topo,
   this->update_links(sim);
   return 0;
 }
+
 void interaction::QM_Zone::write(topology::Topology& topo, 
                                  configuration::Configuration& conf, 
                                  const simulation::Simulation& sim) {
@@ -562,11 +562,11 @@ void interaction::QM_Zone::emplace_atom(std::set<interaction::MM_Atom>& set,
                                         const math::Vec& pos,
                                         const unsigned atomic_number,
                                         const double charge,
-                                        const bool is_qm_buffer)
-  {
+                                        const bool is_qm_buffer) 
+{
   if (!is_qm_buffer) {
     DEBUG(15, "Adding MM atom " << index);
-    it = set.emplace_hint(it, index, pos, charge);
+    it = set.emplace_hint(it, index, pos, atomic_number, charge);
   }
 }
 
@@ -664,7 +664,7 @@ void interaction::QM_Zone::get_mm_atoms(const topology::Topology& topo,
         it != to; ++it) {
       const unsigned i = it->second;
       DEBUG(9, "Adding MM link atom " << i);
-      this->mm.emplace(i, conf.current().pos(i), topo.charge(i));
+      this->mm.emplace(i, conf.current().pos(i), topo.qm_atomic_number(i), topo.charge(i));
     }
   }
   else if (sim.param().boundary.boundary == math::vacuum
@@ -675,7 +675,7 @@ void interaction::QM_Zone::get_mm_atoms(const topology::Topology& topo,
     for (unsigned int i = 0; i < topo.num_atoms(); ++i) {
       if ( !topo.is_qm(i) && !topo.is_qm_buffer(i) ) {
         DEBUG(9, "Adding atom " << i);
-        this->mm.emplace(i, conf.current().pos(i), topo.charge(i));
+        this->mm.emplace(i, conf.current().pos(i), topo.qm_atomic_number(i), topo.charge(i));
       }
     }
   }
@@ -760,7 +760,7 @@ int interaction::QM_Zone::_get_mm_atoms_atomic(const topology::Topology& topo,
           const size_t size = this->mm.size();
           if (mm_it != this->mm.end())
             std::advance(mm_it,1); // hint on set insertion, improves performance
-          mm_it = this->mm.emplace_hint(mm_it, i, mm_pos, topo.charge(i));
+          mm_it = this->mm.emplace_hint(mm_it, i, mm_pos, topo.qm_atomic_number(i), topo.charge(i));
           if (size == this->mm.size()) {
             DEBUG(9, "Atom " << i << " already in the list");
             const double delta = math::abs2(mm_it->pos - mm_pos);
@@ -805,7 +805,7 @@ void interaction::QM_Zone::get_linked_mm_atoms(const topology::Topology& topo
     const math::Vec mm_pos = qm_pos - r_qm_mm;
 
     DEBUG(15, "Linked MM position: " << math::v2s(mm_pos));
-    this->mm.emplace(mm_i, mm_pos, topo.charge(mm_i));
+    this->mm.emplace(mm_i, mm_pos, topo.qm_atomic_number(mm_i), topo.charge(mm_i));
     DEBUG(15, "Adding MM atom: " << mm_i);
   }
 }

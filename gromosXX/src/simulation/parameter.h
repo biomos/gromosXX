@@ -847,10 +847,18 @@ namespace simulation
      * use Gaussian
      */
     qm_gaussian = 4,
-    /**
+    /*
      * use Schnetpack NN
      */
-    qm_nn = 5
+    qm_nn = 5,
+    /**
+     * use Orca
+     */
+    qm_orca = 6,
+    /**
+     * use XTB
+     */
+    qm_xtb = 7
   };
 
   /**
@@ -3900,6 +3908,10 @@ namespace simulation
          */
         std::map<unsigned, std::string> elements;
         /**
+         * maps IAC numbers to atomic numbers; 
+         */
+        std::map<unsigned, unsigned> iac_elements;
+        /**
          * path for the program binary
          */
         std::string binary;
@@ -3980,7 +3992,7 @@ namespace simulation
          */
         std::string output_gradient_file;
         /**
-         * the output file containing the cartesion gradients of the MM atoms
+         * the output file containing the cartesian gradients of the MM atoms
          */
         std::string output_mm_gradient_file;
         /**
@@ -4062,6 +4074,60 @@ namespace simulation
         std::string chsm;
       } gaussian;
 
+     /**
+       * ORCA specific parameters
+       */
+      struct orca_param_struct : public qm_param_struct { 
+        /**
+         * the input file containing the positions and element types of the QM atoms
+         */
+        std::string input_coordinate_file;
+        /**
+         * the input file containing the positions and charges of the MM atoms
+         */
+        std::string input_pointcharges_file;
+        /**
+         * the output file containing the cartesian gradients
+         */
+        std::string output_gradient_file;
+        /**
+         * the output file containing the cartesion gradients of the MM atoms
+         */
+        std::string output_mm_gradient_file;
+      } orca; 
+
+      /**
+       * XTB specific parameters
+       */
+      struct xtb_param_struct : public qm_param_struct { 
+        /**
+         * the version of the XTB Hamiltonian used
+         * options are 1 and 2 (for GFN1-xTB or GFN2-xTB, respectively)
+         */
+        unsigned int hamiltonian;
+        /**
+         * the verbosity level of XTB
+         * options are 0, 1, and 2 corresponding to muted, minimal, or full verbosity, respectively
+         */
+        unsigned int verbosity;
+        /**
+         * the input file containing the positions and element types of the QM atoms
+         */
+        std::string input_coordinate_file;
+        /**
+         * the input file containing the positions and charges of the MM atoms
+         */
+        std::string input_pointcharges_file;
+        /**
+         * the output file containing the cartesian gradients
+         */
+        std::string output_gradient_file;
+        /**
+         * the output file containing the cartesion gradients of the MM atoms
+         */
+        std::string output_mm_gradient_file;
+      } xtb; 
+
       /**
        * NN specific parameters
        */
@@ -4126,6 +4192,7 @@ namespace simulation
          */
         qm_nn_device_enum device;
       } nn;
+
     } qmmm;
 
 
