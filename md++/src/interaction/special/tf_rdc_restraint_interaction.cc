@@ -483,6 +483,10 @@ int _magnetic_field_vector_sd
 
           force = term * interaction::D_c(it) * dPavedP * dPdr;  // [1 / (ps^2 nm)]
 
+          if (sim.param().tfrdc.mode == simulation::tfrdc_restr_av_weighted) {
+            force *= it->w;                                         // [kJ / (mol nm)]
+          }
+
           forces(0) -= K * force;              // [(kJ ps^2 / mol) * (1 / (ps^2 nm))] = [kJ / (mol nm)]
           forces(1) -= forces(0);              // [kJ / (mol nm)]
 
