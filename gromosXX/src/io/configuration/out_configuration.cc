@@ -1552,6 +1552,7 @@ ENERGY03
    0.000000000e+00 # B&S-LEUS energy
    0.000000000e+00 # RDC-value total
    0.000000000e+00 # angle restraints total
+   0.000000000e+00 # NN valid
 # baths
 # number of baths
 2
