@@ -35,7 +35,7 @@
 
 // Energy trajectory version
 // For details, see definition in out_configuration.cc
-const std::string io::Out_Configuration::ene_version = "2021-04-12";
+const std::string io::Out_Configuration::ene_version = "2022-08-17";
 
 // declarations
 static void _print_energyred_helper(std::ostream & os, configuration::Energy const &e);
@@ -1552,6 +1552,7 @@ ENERGY03
    0.000000000e+00 # B&S-LEUS energy
    0.000000000e+00 # RDC-value total
    0.000000000e+00 # angle restraints total
+   0.000000000e+00 # NN valid
 # baths
 # number of baths
 2
