@@ -128,7 +128,7 @@ totqm = ENER[41]
 totbsleus = ENER[42]
 totrdc = ENER[43]
 totangres = ENER[44]
-nnvalid = ENERG[45]
+nnvalid = ENER[45]
 # calculate the pressure in atm.
 pressu = PRESSURE[1] * 16.388453
 boxvol = VOLUME[1]
