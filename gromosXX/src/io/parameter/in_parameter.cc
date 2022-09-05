@@ -3774,8 +3774,6 @@ void io::In_Parameter::read_EDS(simulation::Parameter & param,
     exampleblock << "# EDS        0,1\n";
     exampleblock << "#              0: no enveloping distribution sampling (EDS) [default]\n";
     exampleblock << "#              1: enveloping distribution sampling\n";
-    exampleblock << "# ALPHLJ: >= 0.0 Lennard-Jones soft-core parameter\n";
-    exampleblock << "#  ALPHC: >= 0.0 Coulomb-RF soft-core parameter\n";
     exampleblock << "# FORM       1-3\n";
     exampleblock << "#              1: Single s Hamiltonian\n";
     exampleblock << "#              2: Hamiltonian with NUMSTATES*(NUMSTATES-1)/2 (pairwise) S parameters\n";
@@ -3789,8 +3787,8 @@ void io::In_Parameter::read_EDS(simulation::Parameter & param,
     exampleblock << "#\n";
     exampleblock << "# EDS\n";
     exampleblock << "  1\n";
-    exampleblock << "# ALPHLJ  ALPHC  FORM  NUMSTATES\n";
-    exampleblock << "  0.0     0.0       2          3\n";
+    exampleblock << "# FORM  NUMSTATES\n";
+    exampleblock << "  2     3\n";
     exampleblock << "# S\n";
     exampleblock << "  0.2  0.01 0.1\n";
     exampleblock << "# EIR\n";
@@ -3800,8 +3798,8 @@ void io::In_Parameter::read_EDS(simulation::Parameter & param,
     exampleblock << "#\n";
     exampleblock << "# EDS\n";
     exampleblock << "  1\n";
-    exampleblock << "# ALPHLJ  ALPHC  FORM  NUMSTATES\n";
-    exampleblock << "  0.0     0.0       3          3\n";
+    exampleblock << "# FORM  NUMSTATES\n";
+    exampleblock << "  3     3\n";
     exampleblock << "# i  j  S\n";
     exampleblock << "  1  2  0.1\n";
     exampleblock << "  2  3  0.5\n";
@@ -3819,8 +3817,6 @@ void io::In_Parameter::read_EDS(simulation::Parameter & param,
         int eds = 0, form = 0;
         double soft_lj = 0.0, soft_crf = 0.0;
         block.get_next_parameter("EDS", eds, "", "0,1");
-        block.get_next_parameter("ALPHLJ", soft_lj, ">=0", "");
-        block.get_next_parameter("ALPHC", soft_crf, ">=0", "");
         block.get_next_parameter("FORM", form, "", "1,2,3");
         block.get_next_parameter("NUMSTATES", param.eds.numstates, ">=2", "");
 
@@ -3840,11 +3836,6 @@ void io::In_Parameter::read_EDS(simulation::Parameter & param,
           block.get_final_messages();
           return;
         }
-
-        param.eds.soft_vdw = soft_lj;
-        param.eds.soft_crf = soft_crf;
-        if (soft_lj > 0.0 || soft_crf > 0.0)
-            param.setDevelop("Soft-core EDS is under development.");
 
         switch (form) {
             case 1: {
@@ -3908,8 +3899,6 @@ void io::In_Parameter::read_AEDS(simulation::Parameter & param,
   exampleblock << "# AEDS       0,1\n";
   exampleblock << "#              0: no accelerated enveloping distribution sampling (A-EDS) [default]\n";
   exampleblock << "#              1: accelerated enveloping distribution sampling\n";
-  exampleblock << "# ALPHLJ: >= 0.0 Lennard-Jones soft-core parameter\n";
-  exampleblock << "#  ALPHC: >= 0.0 Coulomb-RF soft-core parameter\n";
   exampleblock << "# FORM       1-4\n";
   exampleblock << "#              1: A-EDS with fixed parameters\n";
   exampleblock << "#              2: fixed Emax and Emin parameters, search for offset parameters\n";
@@ -3934,8 +3923,8 @@ void io::In_Parameter::read_AEDS(simulation::Parameter & param,
   exampleblock << "#\n";
   exampleblock << "# AEDS\n";
   exampleblock << "  1\n";
-  exampleblock << "# ALPHLJ  ALPHC  FORM  NUMSTATES\n";
-  exampleblock << "  0.0     0.0       4          5\n";
+  exampleblock << "# FORM  NUMSTATES\n";
+  exampleblock << "  4          5\n";
   exampleblock << "# EMAX  EMIN\n";
   exampleblock << "  10    -50\n";
   exampleblock << "# EIR\n";
@@ -3953,10 +3942,7 @@ void io::In_Parameter::read_AEDS(simulation::Parameter & param,
     block_read.insert(blockname);
 
     int aeds = 0, form = 0;
-    double soft_lj = 0.0, soft_crf = 0.0;
     block.get_next_parameter("AEDS", aeds, "", "0,1");
-    block.get_next_parameter("ALPHLJ", soft_lj, ">=0", "");
-    block.get_next_parameter("ALPHC", soft_crf, ">=0", "");
     block.get_next_parameter("FORM", form, "", "1,2,3,4");
     block.get_next_parameter("NUMSTATES", param.eds.numstates, ">=2", "");
 
@@ -3982,11 +3968,6 @@ void io::In_Parameter::read_AEDS(simulation::Parameter & param,
       block.get_final_messages();
       return;
     }
-
-    param.eds.soft_vdw = soft_lj;
-    param.eds.soft_crf = soft_crf;
-    if (soft_lj > 0.0 || soft_crf > 0.0)
-      param.setDevelop("Soft-core EDS is under development.");
 
     switch (form) {
     case 1: {
