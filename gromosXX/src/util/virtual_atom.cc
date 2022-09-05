@@ -392,7 +392,8 @@ void util::Virtual_Atom::_force
       break;
     }
 
-    case 8: // TIP4P
+    case 8:  // TIP4P
+    {
       assert(m_atom.size()>2);
       periodicity.nearest_image(position(m_atom[1]), posi, posj);
       posj += posi;
