@@ -1,0 +1,17 @@
+gromos:ubuntu-20.04-mpi:configure:
+  extends:
+    - .gromos:base:configure
+    - .use-mpi
+  image: ${CI_REGISTRY}/yescalona/gromosxx/gromos-ubuntu-20.04-mpi
+  variables:
+    BUILD_DIR: build
+
+gromos:ubuntu-20.04-mpi:build:
+  extends:
+    - .gromos:base:build
+    - .use-mpi
+  image: ${CI_REGISTRY}/yescalona/gromosxx/gromos-ubuntu-20.04-mpi
+  variables:
+    BUILD_DIR: build/bin/md_mpi
+  needs:
+    - job: gromos:ubuntu-20.04-mpi:configure
