@@ -3,7 +3,7 @@ gromos:ubuntu-20.04-cuda-11.6.1:configure:
     - .gromos:base:configure
     - .use-openmp
     - .use-cuda
-  image: ${CI_REGISTRY}/yescalona/gromosxx/gromos-ubuntu-20.04-cuda-11.6.1
+  image: ${CI_REGISTRY}/gromos/gromosxx/gromos-ubuntu-20.04-cuda-11.6.1
   variables:
     BUILD_DIR: build
 
@@ -12,7 +12,7 @@ gromos:ubuntu-20.04-cuda-11.6.1:build:
     - .gromos:base:build
     - .use-openmp
     - .use-cuda
-  image: ${CI_REGISTRY}/yescalona/gromosxx/gromos-ubuntu-20.04-cuda-11.6.1
+  image: ${CI_REGISTRY}/gromos/gromosxx/gromos-ubuntu-20.04-cuda-11.6.1
   variables:
     BUILD_DIR: build/bin/md
   needs:
