@@ -392,7 +392,7 @@ int interaction::Nonbonded_Interaction::check_special_loop
   DEBUG(10, "checking energy groups ...");
 
   if (topo.atom_energy_group(topo.num_solute_atoms()) !=
-      topo.atom_energy_group(topo.num_atoms() - 1)) {
+      topo.atom_energy_group(topo.num_atoms() - 2)) {
     DEBUG(10, "- incompatible.");
     if (!quiet)
       os << "\tusing standard solvent loops (energy group partitioning incompatible).\n"

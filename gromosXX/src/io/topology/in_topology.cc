@@ -114,6 +114,9 @@ void io::In_Topology::read(topology::Topology& topo,
 
   read_block_IMPDIHEDRALTYPE(topo, param, os);
 
+  if (m_block.count("VIRTUALATOMTYPE") != 0)
+    read_block_VIRTUALATOMTYPE(topo, param, os);
+
   read_block_TYPE(topo, param, os);
   read_block_PHYSICALCONSTANTS(topo, param, os);
 
@@ -122,6 +125,12 @@ void io::In_Topology::read(topology::Topology& topo,
   read_block_RESNAME(topo, param, os);
   read_block_ATOMTYPENAME(topo, param, os);
   read_block_SOLUTEATOM(topo, param, os);
+  if (param.virtualatoms.virtualatoms && m_block.count("VIRTUALATOMS") == 0){
+    io::messages.add("Virtual atoms specified in input file but no VIRTUALATOM block found in toplogy", io::message::error);
+  }
+  if (m_block.count("VIRTUALATOMS") != 0)
+    read_block_VIRTUALATOM(topo, param, os);
+  
 
   // os << "time after SOLUTEATOM: " << util::now() - start << std::endl;
 
@@ -1029,6 +1038,42 @@ void io::In_Topology::read_block_IMPDIHEDRALTYPE(topology::Topology &topo,
 
 }
 
+void io::In_Topology::read_block_VIRTUALATOMTYPE(topology::Topology &topo,
+        simulation::Parameter &param, std::ostream & os) {
+  std::string blockname = "VIRTUALATOMTYPE";
+  Block block(blockname);
+
+  if (block.read_buffer(m_block[blockname], false) == 0) {
+    DEBUG(7, "reading in "+blockname+" block");
+
+    block_read.insert(blockname);
+
+    int num, type;
+    double dis1, dis2;
+    block.get_next_parameter("NVATY", num, ">=0", "");
+
+    if (num<=0 || block.error() ) return;
+
+    for (int i=0; i<num; i++) {
+      block.get_next_parameter("TYPE", type, "", "");
+      block.get_next_parameter("DIS1", dis1, ">=0", "");
+      block.get_next_parameter("DIS2", dis2, ">=0", "");
+      if (block.error()) {
+        std::string linenumber=io::to_string(num+1);
+        io::messages.add("Bad values in line "+linenumber+" in "+blockname+" block",
+                "In_Topology",
+                io::message::error);
+        break;
+      } else {
+        topo.virtual_atom_types().push_back(interaction::virtual_atom_type_struct(type, dis1, dis2));
+      }
+    }
+
+    block.get_final_messages(false);
+  }
+
+}
+
 void io::In_Topology
 ::read_lj_parameter(std::vector<std::vector
         <interaction::lj_parameter_struct> >
@@ -1634,6 +1679,241 @@ void io::In_Topology::read_block_SOLUTEATOM(topology::Topology& topo,
 
 } // SOLUTEATOM
 
+void io::In_Topology::read_block_VIRTUALATOM(topology::Topology& topo,
+        simulation::Parameter &param, std::ostream & os)   { // VIRTUALATOM
+      DEBUG(10, "VIRTUALATOM block");
+      std::vector<std::string> buffer = m_block["VIRTUALATOMS"];
+      block_read.insert("VIRTUALATOMS");
+
+      std::vector<std::string>::const_iterator it = buffer.begin() + 1;
+      _lineStream.clear();
+      _lineStream.str(*it);
+      int num, n;
+
+      _lineStream >> num;
+      ++it;
+      topo.resize(topo.num_atoms() + num);
+
+
+      if (!quiet){
+        os << "\tVIRTUALATOMS\n\t" << "\tnumber of atoms : " << num; 
+      }
+
+      if (num != param.virtualatoms.numatoms){
+        io::messages.add("Error in VIRTUALATOM block: Number of virtual atoms in the topology does not match the number of virtual atoms in the imd file.",
+        "InTopology", io::message::error);
+      }
+      
+      // put the rest of the block into a single stream
+      //++it;
+
+      int a_num, iac, num_atoms, member_atom, t;
+      util::virtual_type type;
+      double q;
+      std::vector<int> member_atoms;
+
+      for (n = 0; n < num; ++n) {
+
+        _lineStream.clear();
+        _lineStream.str(*it);
+        ++it;
+
+        _lineStream >> a_num >> iac >> q >> t >> num_atoms;
+        if (a_num != topo.num_solute_atoms() + 1) {
+          io::messages.add("Error in VIRTUALATOM block: atom number not sequential.",
+                  "InTopology", io::message::error);
+        }
+
+        if (a_num > param.virtualatoms.lastatom) {
+          io::messages.add("Error in VIRTUALATOM block: Index of the last virtual atom specified in the imd does not match the indexes in the topology.",
+                  "InTopology", io::message::error);
+        }
+
+        if (iac < 1) {
+          io::messages.add("Error in VIRTUALATOM block: iac < 1.",
+                  "InTopology", io::message::error);
+        }
+
+        if (iac > topo.num_atomtype()) {
+          io::messages.add("Error in VIRTUALATOM block: iac > number of atom types.",
+                  "InTopology", io::message::error);
+        }
+
+        switch (t)
+        {
+        case 0:
+          type = util::virtual_type::va_explicit;
+          break;
+        case 1:
+          type = util::virtual_type::va_CH1;
+          break;
+        case 2:
+          type = util::virtual_type::va_aromatic;
+          break;
+        case 3:
+          type = util::virtual_type::va_CH2;
+          break;
+        case 8:
+          type = util::virtual_type::va_tip4p;
+          break;
+        case 4:
+          type = util::virtual_type::va_stereo_CH2;
+          break;
+        case 5:
+          type = util::virtual_type::va_stereo_CH3;
+          break;
+        case 6:
+          type = util::virtual_type::va_CH3;
+          break;
+        case 7:
+          type = util::virtual_type::va_3CH3;
+          break;
+        case -1:
+          type = util::virtual_type::va_cog;
+          break;  
+        case -2:
+          type = util::virtual_type::va_com;
+          break;      
+        default:
+          io::messages.add("Error in VIRTUALATOM block: wrong virtual atom type.",
+                           "InTopology", io::message::error);
+        }
+        
+        //check for the distances. The virtual atom types have already been handled
+        double dis1=0.0, dis2=0.0;
+        bool found_virtual_atom_type = false;
+        for (unsigned int i=0; i < topo.virtual_atom_types().size(); i++){
+          if(topo.virtual_atom_types()[i].type == t){
+            found_virtual_atom_type = true;
+            dis1 = topo.virtual_atom_types()[i].dis1;
+            dis2 = topo.virtual_atom_types()[i].dis2;
+            break;
+          }
+        }
+        if(!found_virtual_atom_type){
+          io::messages.add("Atom in VIRTUALATOM block uses virtual atom type for which no distances are provided", "InTopology", io::message::error);
+        } 
+        member_atoms.clear();
+
+        for (int i = 0; i < num_atoms; ++i) {
+          if (!(_lineStream >> member_atom)) {
+              io::messages.add("Error in VIRTUALATOM block: ATOMS "
+                               "could not be read.",
+                                "InTopology", io::message::error);
+            }
+
+
+
+          member_atoms.push_back(member_atom - 1);
+        }
+
+        // Read exclusions
+        int n_ex, a_ex;
+        topology::excl_cont_t::value_type ex;
+        topology::excl_cont_t::value_type ex14;
+
+        if (!(_lineStream >> n_ex)) {
+          if (_lineStream.eof()) {
+            _lineStream.clear();
+            _lineStream.str(*it);
+            ++it;
+            _lineStream >> n_ex;
+          } else {
+            io::messages.add("Error in VIRTUALATOM block: number of exclusions "
+                    "could not be read.",
+                    "InTopology", io::message::error);
+          }
+        }
+
+        if (n_ex < 0) {
+          io::messages.add("Error in VIRTUALATOM block: number of exclusions < 0.",
+                  "InTopology", io::message::error);
+        }
+
+        // exclusions
+        ex.clear();
+        for (int i = 0; i < n_ex; ++i) {
+          if (!(_lineStream >> a_ex)) {
+            if (_lineStream.eof()) {
+              _lineStream.clear();
+              _lineStream.str(*it);
+              ++it;
+              _lineStream >> a_ex;
+            } else {
+              io::messages.add("Error in VIRTUALATOM block: exclusion "
+                      "could not be read.",
+                      "InTopology", io::message::error);
+            }
+          }
+
+          if (a_ex <= a_num)
+            io::messages.add("Error in VIRTUALATOM block: exclusions only to "
+                  "larger atom numbers.",
+                  "InTopology", io::message::error);
+
+          ex.insert(a_ex - 1);
+        }
+
+        // 1,4 - pairs
+        if (!(_lineStream >> n_ex)) {
+          if (_lineStream.eof()) {
+            _lineStream.clear();
+            _lineStream.str(*it);
+            ++it;
+            _lineStream >> n_ex;
+          } else {
+            io::messages.add("Error in VIRTUALATOM block: number of 1,4 - exclusion "
+                    "could not be read.",
+                    "InTopology", io::message::error);
+          }
+        }
+
+        if (n_ex < 0) {
+          io::messages.add("Error in VIRTUALATOM block: number of 1,4 exclusions < 0.",
+                  "InTopology", io::message::error);
+        }
+
+        ex14.clear();
+        for (int i = 0; i < n_ex; ++i) {
+          if (!(_lineStream >> a_ex)) {
+            if (_lineStream.eof()) {
+              _lineStream.clear();
+              _lineStream.str(*it);
+              ++it;
+              _lineStream >> a_ex;
+            } else {
+              io::messages.add("Error in VIRTUALATOM block: 1,4 - exclusion "
+                      "could not be read.",
+                      "InTopology", io::message::error);
+            }
+          }
+
+          if (a_ex <= a_num)
+            io::messages.add("Error in VIRTUALATOM block: 1,4 - exclusions only to "
+                  "larger atom numbers.",
+                  "InTopology", io::message::error);
+
+          ex14.insert(a_ex - 1);
+        }
+
+        if (_lineStream.fail())
+          io::messages.add("bad line in VIRTUALATOM block",
+                "In_Topology",
+                io::message::critical);
+
+        //ADD ATOM
+        util::Virtual_Atom atom(type, member_atoms, dis1, dis2, 0);
+        atom.set_charge(q);
+        atom.set_iac(iac - 1);
+        topo.virtual_atoms_group().atoms()[a_num - 1] = atom;
+
+
+        topo.add_solute_atom("VIRT", 0, iac - 1, 1.0, q, 1, ex , ex14);
+      }
+      if (!quiet)
+        os << "\n\tEND\n";
+
+} // VIRTUALATOM
 
 void io::In_Topology::read_block_SOLUTEPOLARISATION(topology::Topology& topo,
         simulation::Parameter &param, std::ostream & os)
@@ -2634,6 +2914,9 @@ void io::In_Topology::read_block_SOLUTEMOLECULES(topology::Topology& topo,
 
         for (int i = 0; i < num; ++i) {
           _lineStream >> m;
+          if (i + 1 == num){
+            m = m + topo.virtual_atoms_group().atoms().size();
+          }
           topo.molecules().push_back(m);
           DEBUG(11, "add submol " << m);
           if (m < old_m) {
@@ -2679,6 +2962,9 @@ void io::In_Topology::read_block_TEMPERATUREGROUPS(topology::Topology& topo,
 
         for (int i = 0; i < num; ++i) {
           _lineStream >> m;
+          if (i + 1 == num){
+            m = m + topo.virtual_atoms_group().atoms().size();
+          }
           topo.temperature_groups().push_back(m);
           DEBUG(11, "add temperature group " << m);
           if (m < old_m) {
@@ -2725,6 +3011,9 @@ void io::In_Topology::read_block_PRESSUREGROUPS(topology::Topology& topo,
 
         for (int i = 0; i < num; ++i) {
           _lineStream >> m;
+          if (i + 1 == num){
+            m = m + topo.virtual_atoms_group().atoms().size();
+          }
           topo.pressure_groups().push_back(m);
           DEBUG(11, "add pressure group " << m);
           if (m < old_m) {

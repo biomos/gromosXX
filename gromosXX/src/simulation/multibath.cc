@@ -34,10 +34,9 @@ void simulation::Multibath
     add_bath(0.0);
   }
 
-  // check whether the last last is really the last_atom
-  if ((!(m_bath_index.size() == 0))
+    if ((!(m_bath_index.size() == 0))
           && (m_bath_index.end() - 1)->last_atom != topo.num_atoms() - 1) {
-    io::messages.add("Last atom of last bath is not the last atom in the sytem!",
+            io::messages.add("Last atom of last bath is not the last atom in the sytem!",
             "Multibath::calculate_degrees_of_freedom",
             io::message::error);
     return;
@@ -68,9 +67,22 @@ void simulation::Multibath
     // get the number of temperature groups in the range
     int num_tg = 0;
     int tg = 0;
-
+    int last_atm = it->last_atom;
     DEBUG(8, "last atom: " << it->last_atom);
     DEBUG(8, "end of last group: " << last);
+
+    // if there are virtual atoms on the bath set degrees of freedom to 0 and skip it
+    // we do this by comparing if the last atom of the bath is virtual. 
+    // There are checks to avoid having virtual atoms scattered trough multiple baths or with regular atoms 
+    if (topo.virtual_atoms_group().atoms().count(last_atm)){
+      // set dof to 0
+      (*this)[it->com_bath].dof = 0;
+      (*this)[it->com_bath].com_dof = 0;
+      (*this)[it->ir_bath].dof = 0;
+      (*this)[it->ir_bath].ir_dof = 0;
+      last = it->last_atom;
+      continue;
+    }
 
     for (topology::Temperaturegroup_Iterator tg_it = topo.temperature_group_begin(),
             tg_to = topo.temperature_group_end();
@@ -137,7 +149,9 @@ void simulation::Multibath
     for (; a_it != a_to; ++a_it) {
       unsigned int com_i = 0, ir_i = 0;
       in_bath(*a_it, com_i, ir_i);
-      if (com_i != first_com || ir_i != first_ir) {
+      if ((com_i != first_com || ir_i != first_ir) && topo.virtual_atoms_group().atoms().count(*a_it) == 0) {
+        // we ignore the virtual atoms for this check
+        DEBUG(8, "a_it " << *a_it << "com_i " << com_i << " first_com " << first_com);
         io::messages.add("Multibath: Temperature group distributed over multiple baths.",
                 "Multibath::check_state",
                 io::message::error);

@@ -642,7 +642,8 @@ void configuration::Configuration::check_positions(topology::Topology const & to
   for(unsigned int i = 0; i < num_pos; ++i) {
     for(unsigned int j = i + 1; j < num_pos; ++j) {
       periodicity.nearest_image(pos(i), pos(j), r);
-      if (math::abs2(r) < math::epsilon) {
+      if (math::abs2(r) < math::epsilon && topo.virtual_atoms_group().atoms().count(i) == 0) {
+        // We exclude virtual atoms for this check
         // if they are excluded, it is a warning, if not it is an error
 	if (topo.exclusion(i).is_excluded(j)){
 	    std::ostringstream msg;

@@ -17,6 +17,18 @@ namespace interaction
   };
   
   /**
+   * @struct virtual_atom_type_struct
+   * virtual atom types. This stores the distances to compute the virtual atoms.
+   */
+  struct virtual_atom_type_struct : public interaction_type_struct
+  {
+    virtual_atom_type_struct(int type, double dis1, double dis2) : type(type), dis1(dis1), dis2(dis2) {}
+    int type;
+    double dis1;
+    double dis2;
+  };
+
+  /**
    * @struct bond_type_struct
    * bond types.
    */

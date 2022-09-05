@@ -14,6 +14,7 @@
 #include "sd.h"
 #include "exclusions.h"
 #include "../interaction/interaction_types.h"
+#include "../util/virtual_atom.h"
 
 namespace simulation
 {
@@ -235,6 +236,11 @@ namespace topology
     EDS_Perturbed_Solute & eds_perturbed_solute() {return m_eds_perturbed_solute;}
 
     /**
+     * virtual solute accessor.
+     */
+    util::Virtual_Atoms_Group & virtual_atoms_group() {return m_virtual_atoms_group;}
+
+    /**
      * const solute accessor.
      */
     Solute const & solute()const{return m_solute;}
@@ -248,6 +254,11 @@ namespace topology
      * const eds-perturbed solute accessor.
      */
     EDS_Perturbed_Solute const & eds_perturbed_solute()const{return m_eds_perturbed_solute;}
+
+    /**
+     * virtual solute accessor.
+     */
+    util::Virtual_Atoms_Group const & virtual_atoms_group()const{return m_virtual_atoms_group;}
 
     /**
      * number of atom types.
@@ -414,6 +425,13 @@ namespace topology
      */
     std::vector<interaction::improper_dihedral_type_struct> & impdihedral_types() {return m_impdihedral_types;}
     std::vector<interaction::improper_dihedral_type_struct> const & impdihedral_types() const {return m_impdihedral_types;}
+
+    /**
+     * virtual atom types
+     */
+    std::vector<interaction::virtual_atom_type_struct> & virtual_atom_types() {return m_virtual_atom_types;}
+    std::vector<interaction::virtual_atom_type_struct> const & virtual_atom_types() const {return m_virtual_atom_types;}
+	
 
     /**
      * all exclusions for atom i. Exclusions, 1,4 interactions and Lennard-Jones exceptions
@@ -1568,6 +1586,11 @@ namespace topology
     EDS_Perturbed_Solute m_eds_perturbed_solute;
 
     /**
+     * the virtual atoms
+     */
+    util::Virtual_Atoms_Group m_virtual_atoms_group;
+
+    /**
      * is the atom perturbed?
      */
     std::vector<bool> m_is_perturbed;
@@ -1718,6 +1741,11 @@ namespace topology
      * store all available improper dihedral types
      */
     std::vector<interaction::improper_dihedral_type_struct> m_impdihedral_types;
+
+    /**
+     * store all available virtual atom types
+     */
+    std::vector<interaction::virtual_atom_type_struct> m_virtual_atom_types;
 
     /**
      * energy groups.

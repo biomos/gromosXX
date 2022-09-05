@@ -46,10 +46,10 @@ namespace io {
     void read(topology::Topology &topo, simulation::Parameter &param,
 	      std::ostream & os = std::cout);
 
-	/**
-	 * Read topology blocks
-	*/
-	void read_block_TYPE(topology::Topology& topo,
+    /**
+     * Read topology blocks
+     */
+    void read_block_TYPE(topology::Topology& topo,
         simulation::Parameter &param, std::ostream & os);
     void read_block_PHYSICALCONSTANTS(topology::Topology& topo,
         simulation::Parameter &param, std::ostream & os);
@@ -58,6 +58,8 @@ namespace io {
     void read_block_ATOMTYPENAME(topology::Topology& topo,
         simulation::Parameter &param, std::ostream & os);
     void read_block_SOLUTEATOM(topology::Topology& topo,
+        simulation::Parameter &param, std::ostream & os);
+    void read_block_VIRTUALATOM(topology::Topology& topo,
         simulation::Parameter &param, std::ostream & os);
     void read_block_SOLUTEPOLARISATION(topology::Topology& topo,
         simulation::Parameter &param, std::ostream & os);
@@ -124,6 +126,8 @@ namespace io {
     void read_block_TORSDIHEDRALTYPE(topology::Topology& topo,
         simulation::Parameter &param, std::ostream & os);
     void read_block_IMPDIHEDRALTYPE(topology::Topology& topo,
+        simulation::Parameter &param, std::ostream & os);
+    void read_block_VIRTUALATOMTYPE(topology::Topology& topo,
         simulation::Parameter &param, std::ostream & os);
 
     /**

@@ -505,6 +505,9 @@ int io::check_features(simulation::Simulation  &sim)
   // force groups
   add("force_groups", "force groups", param.force.force_groups);
 
+  //VIRTUALATOMS block
+  add("virtualatoms", "Virtual Atoms", param.virtualatoms.virtualatoms);
+
 // we don't need the add function anymore.
 #undef add
 
@@ -4694,6 +4697,98 @@ int io::check_features(simulation::Simulation  &sim)
   //fc.unlock("qmmm", "force_groups");
   fc.unlock("qmmm", "amber");
 
+  // VIRTUALATOMS
+  fc.unlock("virtualatoms", "steepest_descent");
+  fc.unlock("virtualatoms", "conjugate_gradient");
+  fc.unlock("virtualatoms", "solute");
+  fc.unlock("virtualatoms", "solvent");
+  //fc.unlock("virtualatoms", "solvent_only"); // Not allowed
+  fc.unlock("virtualatoms", "solute_constraint_off");
+  fc.unlock("virtualatoms", "solute_shake");
+  fc.unlock("virtualatoms", "solute_lincs");
+  //fc.unlock("virtualatoms", "solute_flexshake"); // Needs Hessian, not implemented
+  fc.unlock("virtualatoms", "solvent_constraint_off");
+  fc.unlock("virtualatoms", "solvent_shake");
+  fc.unlock("virtualatoms", "solvent_lincs");
+  fc.unlock("virtualatoms", "solvent_settle");
+  fc.unlock("virtualatoms", "pressure_calculation");
+  fc.unlock("virtualatoms", "pressure_scale_berendsen");
+  fc.unlock("virtualatoms", "virial_off");
+  fc.unlock("virtualatoms", "virial_atomic");
+  fc.unlock("virtualatoms", "virial_molecular");
+  fc.unlock("virtualatoms", "vacuum");
+  fc.unlock("virtualatoms", "pbc_r");
+  fc.unlock("virtualatoms", "pbc_c");
+  fc.unlock("virtualatoms", "pbc_t");
+  fc.unlock("virtualatoms", "perturbation");
+  fc.unlock("virtualatoms", "perturbation_scaling");
+  fc.unlock("virtualatoms", "slow_growth");
+  fc.unlock("virtualatoms", "individual_lambdas");
+  fc.unlock("virtualatoms", "precalculate_lambdas");
+  fc.unlock("virtualatoms", "bond");
+  fc.unlock("virtualatoms", "angle");
+  fc.unlock("virtualatoms", "dihedral");
+  fc.unlock("virtualatoms", "improper");
+  fc.unlock("virtualatoms", "crf");
+  fc.unlock("virtualatoms", "lj");
+  fc.unlock("virtualatoms", "com_removal");
+  fc.unlock("virtualatoms", "rf_excluded");
+  fc.unlock("virtualatoms", "pairlist_standard");
+  fc.unlock("virtualatoms", "pairlist_grid");
+  fc.unlock("virtualatoms", "pairlist_gridcell");
+  fc.unlock("virtualatoms", "cutoff_atomic");
+  fc.unlock("virtualatoms", "cutoff_cg");
+  fc.unlock("virtualatoms", "cg_martini");
+  fc.unlock("virtualatoms", "cg_gromos");
+  fc.unlock("virtualatoms", "mixed_grain");
+  fc.unlock("virtualatoms", "temp_berendsen");
+  fc.unlock("virtualatoms", "temp_nosehoover");
+  fc.unlock("virtualatoms", "temp_nosehoover_chains");
+  fc.unlock("virtualatoms", "position_rest");
+  fc.unlock("virtualatoms", "position_const");
+  fc.unlock("virtualatoms", "position_const_scaled");
+  fc.unlock("virtualatoms", "distance_rest");
+  fc.unlock("virtualatoms", "distance_field");
+  fc.unlock("virtualatoms", "dihedral_rest");
+  fc.unlock("virtualatoms", "dihedral_const");
+  fc.unlock("virtualatoms", "jvalue_rest");
+  fc.unlock("virtualatoms", "rdc_rest");
+  fc.unlock("virtualatoms", "perscale");
+  fc.unlock("virtualatoms", "rottrans");
+  fc.unlock("virtualatoms", "innerloop_method_off");
+  fc.unlock("virtualatoms", "innerloop_method_generic");
+  fc.unlock("virtualatoms", "innerloop_method_hardcode");
+  fc.unlock("virtualatoms", "innerloop_method_table");
+  fc.unlock("virtualatoms", "innerloop_method_cuda");
+  fc.unlock("virtualatoms", "innerloop_solvent_topology");
+  fc.unlock("virtualatoms", "innerloop_solvent_spc");
+  fc.unlock("virtualatoms", "repex_temp");
+  fc.unlock("virtualatoms", "repex_lambda");
+  fc.unlock("virtualatoms", "multicell");
+  fc.unlock("virtualatoms", "analysis");
+  fc.unlock("virtualatoms", "no_integration");
+  fc.unlock("virtualatoms", "stochdyn");
+  fc.unlock("virtualatoms", "multistep");
+  fc.unlock("virtualatoms", "multistep_boost");
+  //fc.unlock("virtualatoms", "montecarlo");
+  //fc.unlock("virtualatoms", "polarisation_cos");
+  //fc.unlock("virtualatoms", "polarisation_cos_damped");
+  //fc.unlock("virtualatoms", "sasa");
+  //fc.unlock("virtualatoms", "sasavol");
+  fc.unlock("virtualatoms", "random_gromos");
+  fc.unlock("virtualatoms", "random_gsl");
+  fc.unlock("virtualatoms", "eds");
+  fc.unlock("virtualatoms", "aeds");
+  fc.unlock("virtualatoms", "parallel_mpi");
+  fc.unlock("virtualatoms", "parallel_omp");
+  fc.unlock("virtualatoms", "mult_energy_groups");
+  fc.unlock("virtualatoms", "ewald");
+  fc.unlock("virtualatoms", "p3m");
+  fc.unlock("virtualatoms", "leus");
+  fc.unlock("virtualatoms", "bsleus");
+  fc.unlock("virtualatoms", "xray");
+  fc.unlock("virtualatoms", "force_groups");
+  //fc.unlock("virtualatoms", "qmmm");
   if (fc.check()) 
     return 0;
 
