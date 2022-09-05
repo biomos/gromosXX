@@ -236,13 +236,7 @@ void re::replica_MPI_Slave::run_MD(){
     }
     curentStepNumber +=  stepsPerRun;
 
-    /*
-    calculate nonbonded interactions to make sure we're up-to-date
-    with the current coordinates for the calculation of the exchange probabilities
-    */
-    DEBUG(8, "replica_MPI_SLAVE "<< globalThreadID <<":calculate_energy:\t final MD help calc energies");
-    calculateEnergiesHelper();
-
+    //calculateEnergiesHelper(); // ONLY for DEBUGGING
     #endif
     MPI_DEBUG(5, "replica_MPI_SLAVE "<< globalThreadID <<":runMD:\t DONE at step= " << curentStepNumber);
 }
@@ -286,7 +280,7 @@ void re::replica_MPI_Slave::calculateEnergiesHelper(){
     DEBUG(4, "replica_MPI_Slave " << globalThreadID << " :calculateEnergiesHelper:\t START");
 
     //do the MPI fun! :)
-    int error;
+    int error = 0;
     if (do_nonbonded && (error = nb->calculate_interactions(topo, conf, sim)) != 0){
         std::cout << "Rank: "<< globalThreadID<<"\tMPI slave " << globalThreadID << ": error in nonbonded calculation!\n" << std::endl;
     }

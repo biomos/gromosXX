@@ -103,14 +103,14 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::spc_innerloop
  unsigned int eps)
 {
   math::Vec r;
-  double x[4], y[4], z[4], r2[4], r2i[4], ri[4], ff[4], tx, ty, tz, fx, fy, fz;
+  double x[4], y[4], z[4], r2[4], r2i[4], ri[4], ff[4], tx = 0.0, ty = 0.0, tz = 0.0, fx = 0.0, fy = 0.0, fz = 0.0;
   // , rx, ry, rz;
 
   // only one energy group
   const int egroup = topo.atom_energy_group(topo.num_solute_atoms());
   DEBUG(8, "\tspc pair\t" << i << "\t" << j << " egroup " << egroup);
   
-  double dist6i, e_lj, e_crf, f;
+  double dist6i = 0.0, e_lj = 0.0, e_crf = 0.0, f = 0.0;
   
   const int ii = i;
   math::Vec const * const pos_i = &conf.current().pos(ii);
@@ -618,14 +618,14 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::shortrange_spc_table_innerlo
 {
   math::Vec r;
   unsigned int r2_int[4];
-  double x[4], y[4], z[4], r2[4], r2_tab[4], ff[4], tx, ty, tz, fx, fy, fz;
+  double x[4], y[4], z[4], r2[4], r2_tab[4], ff[4], tx = 0.0, ty = 0.0, tz = 0.0, fx = 0.0, fy = 0.0, fz = 0.0;
 
   // only one energy group
   const int egroup = topo.atom_energy_group(topo.num_solute_atoms());
   DEBUG(8, "\ttable shortrange");
   DEBUG(8, "\tspc pair\t" << i << "\t" << j << " egroup " << egroup);
   
-  double e_lj, e_crf;
+  double e_lj = 0.0, e_crf = 0.0;
   
   const int ii = i;
   math::Vec const * const pos_i = &conf.current().pos(ii);
@@ -1029,14 +1029,14 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::longrange_spc_table_innerloo
 {
   math::Vec r;
   unsigned int r2_int[4];
-  double x[4], y[4], z[4], r2[4], r2_tab[4], ff[4], tx, ty, tz, fx, fy, fz;
+  double x[4], y[4], z[4], r2[4], r2_tab[4], ff[4], tx = 0.0, ty = 0.0, tz = 0.0, fx = 0.0, fy = 0.0, fz = 0.0;
 
   // only one energy group
   const int egroup = topo.atom_energy_group(topo.num_solute_atoms());
   DEBUG(8, "\ttable longrange");
   DEBUG(8, "\tspc pair\t" << i << "\t" << j << " egroup " << egroup);
   
-  double e_lj, e_crf;
+  double e_lj = 0.0, e_crf = 0.0;
   
   const int ii = i;
   math::Vec const * const pos_i = &conf.current().pos(ii);

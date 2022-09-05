@@ -92,7 +92,7 @@ math::Matrixl math::smat(math::Box const & box, math::boundary_enum const b) {
     math::Matrixl S(Sx, Sy, Sz);
     return S;
   } else {
-    long double alpha, beta, gamma;
+    long double alpha = 0.0, beta = 0.0, gamma = 0.0;
     alpha = acos(math::costest(dot(box(1), box(2)) / (abs(box(1)) * abs(box(2)))));
     beta = acos(math::costest(dot(box(0), box(2)) / (abs(box(0)) * abs(box(2)))));
     gamma = acos(math::costest(dot(box(0), box(1)) / (abs(box(0)) * abs(box(1)))));
@@ -126,7 +126,7 @@ math::Matrixl math::sinvmat(math::Box const & box, math::boundary_enum const b) 
     math::Matrixl Sinv(Sx, Sy, Sz);
     return Sinv;
   } else {
-    long double alpha, beta, gamma;
+    long double alpha = 0.0, beta = 0.0, gamma = 0.0;
     alpha = acos(math::costest(dot(box(1), box(2)) / (abs(box(1)) * abs(box(2)))));
     beta = acos(math::costest(dot(box(0), box(2)) / (abs(box(0)) * abs(box(2)))));
     gamma = acos(math::costest(dot(box(0), box(1)) / (abs(box(0)) * abs(box(1)))));

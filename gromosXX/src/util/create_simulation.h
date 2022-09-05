@@ -51,6 +51,7 @@ namespace util
 			std::string angrest = "",
 			std::string dihrest = "",
                         std::string xray = "",
+                        std::string qmmm = "",
 			std::string lud = "",
 			std::string led = "",
                         std::string order = "",

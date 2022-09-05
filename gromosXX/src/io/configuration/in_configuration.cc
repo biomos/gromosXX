@@ -227,7 +227,7 @@ bool io::In_Configuration::read_position_plain(topology::Topology &topo,
 
   math::VArray &pos = conf.current().pos;
 
-  int i;
+  int i = 0;
 
   for(i=0; it != to; ++i, ++it){
     DEBUG(8, "line: " << *it);
@@ -1372,7 +1372,8 @@ bool io::In_Configuration::_read_positionred(math::VArray &pos,
   std::vector<std::string>::const_iterator it = buffer.begin(),
     to = buffer.end()-1;
 
-  int i;
+
+  int i = 0;
   unsigned int num = topo.num_atoms();
 
   if (pos.size() < unsigned(num)){
@@ -1445,7 +1446,7 @@ bool io::In_Configuration::_read_cos_position(math::VArray &pos,
   std::vector<std::string>::const_iterator it = buffer.begin(),
     to = buffer.end()-1;
 
-  int i;
+  int i = 0;
 
   if (pos.size() < unsigned(num)){
     io::messages.add("configuration: too many cos coordinates for given topology",
@@ -1497,9 +1498,9 @@ bool io::In_Configuration::_read_position(math::VArray &pos, std::vector<std::st
   std::vector<std::string>::const_iterator it = buffer.begin(),
     to = buffer.end()-1;
 
-  int i;
+  int i = 0;
   unsigned int num = topo.num_atoms();
-  DEBUG(1, "MY NUM" << num);
+
   std::istringstream _lineStream;
 
   for(i=0; it != to; ++i, ++it){
@@ -1569,7 +1570,8 @@ bool io::In_Configuration::_read_velocityred(math::VArray &vel,
   std::vector<std::string>::const_iterator it = buffer.begin(),
     to = buffer.end()-1;
 
-  int i;
+
+  int i = 0;
   unsigned int num = topo.num_atoms();
 
   for(i=0; it != to; ++i, ++it){
@@ -1638,8 +1640,10 @@ bool io::In_Configuration::_read_velocity(math::VArray &vel,
     to = buffer.end()-1;
 
   std::string s1, s2;
-  unsigned int i;
+
+  unsigned int i = 0;
   unsigned int num = topo.num_atoms();
+
 
   for(i=0; it != to; ++i, ++it){
     if (i >= num){
@@ -1710,7 +1714,8 @@ bool io::In_Configuration::_read_lattice_shifts(math::VArray &shift,
     to = buffer.end()-1;
 
   std::string s1, s2;
-  int i;
+
+  int i = 0;
   unsigned int num = topo.num_atoms();
 
   for(i=0; it != to; ++i, ++it){
@@ -1777,14 +1782,14 @@ bool io::In_Configuration::_read_genbox(math::Box &box, double &phi,
   std::vector<std::string>::const_iterator it = buffer.begin(),
     to = buffer.end()-1;
 
-  int bound;
+  int bound = 0;
   _lineStream.clear();
   _lineStream.str(*it);
   _lineStream >> bound;
 
   ++it;
 
-  int i;
+  int i = 0;
 
   for(i=0; it != to; ++i, ++it){
 
@@ -1824,7 +1829,7 @@ bool io::In_Configuration::_read_genbox(math::Box &box, double &phi,
 		     "In_Configuration", io::message::warning);
   }
   //change from genbox to triclinicbox...
-  long double a, b, c, alpha, beta, gamma;// phi, theta, psi;
+  long double a = 0.0, b = 0.0, c = 0.0, alpha = 0.0, beta = 0.0, gamma = 0.0;// phi, theta, psi;
   a = box(0)(0);
   b = box(1)(0);
   c = box(2)(0);
@@ -1906,14 +1911,14 @@ bool io::In_Configuration::_read_box(math::Box &box, double &phi, double &theta,
   std::vector<std::string>::const_iterator it = buffer.begin(),
     to = buffer.end()-1;
 
-  int bound;
+  int bound = 0;
   _lineStream.clear();
   _lineStream.str(*it);
   _lineStream >> bound;
 
   ++it;
 
-  int i;
+  int i = 0;
 
   for(i=0; it != to; ++i, ++it){
 
@@ -2042,8 +2047,8 @@ bool io::In_Configuration::_read_flexv
 
   std::vector<double>::iterator flexv_it = flexv.begin();
 
-  int i, j, c, pc;
-  double v, l;
+  int i = 0, j = 0, c = 0, pc = 0;
+  double v = 0.0, l = 0.0;
 
   for(c=0; (it != to) && (constr_it != constr_to); ++it, ++constr_it, ++flexv_it, ++c){
 
@@ -2130,7 +2135,7 @@ bool io::In_Configuration::_read_stochastic_integral
   std::vector<std::string>::const_iterator it = buffer.begin(),
     to = buffer.end()-2;
 
-  int i, j, c;
+  int i = 0, j = 0, c = 0;
   std::string a, r;
 
   for(c=0; it != to; ++it, ++c){
@@ -2202,7 +2207,7 @@ bool io::In_Configuration::_read_pertdata(topology::Topology & topo,
   _lineStream.clear();
   _lineStream.str(concatenate(buffer.begin(), buffer.end(), s));
 
-  double lambda;
+  double lambda = 0.0;
   _lineStream >> lambda;
   if (_lineStream.fail()) {
     io::messages.add("Bad line in PERTDATA block.", "In_Configuration",
@@ -2237,7 +2242,7 @@ bool io::In_Configuration::_read_distance_restraint_averages
   _lineStream.str(concatenate(buffer.begin(), buffer.end(), s));
 
   for( ;distanceress_it != distanceress_to; ++distanceress_it){
-    double ave;
+    double ave = 0.0;
     _lineStream >> ave;
 
     if (_lineStream.fail() || ave < 0.0) {
@@ -2270,7 +2275,7 @@ _read_jvalue_av(std::vector<std::string> &buffer,
 
   jval_av.clear();
 
-  double av;
+  double av = 0.0;
 
   if (buffer.size() - 1 != jval_res.size()){
     std::cout << "JVALUERESEXPAVE: " << buffer.size() - 1
@@ -2388,7 +2393,7 @@ bool io::In_Configuration::_read_order_parameter_restraint_averages(
       }
     }
 
-    double D;
+    double D = 0.0;
     _lineStream >> D;
 
     if (_lineStream.fail()) {
@@ -2425,7 +2430,7 @@ bool io::In_Configuration::_read_order_parameter_restraint_average_window(
   D_avg.clear();
   D_avg.resize(oparamres.size());
   math::Matrix Q;
-  double D;
+  double D = 0.0;
   for (unsigned int o = 0; oparamres_it != oparamres_to; ++oparamres_it, ++o) {
     for(unsigned int w = 0; w < window_size; ++w) {
       for (unsigned int i = 0; i < 3; ++i) {
@@ -2478,7 +2483,7 @@ bool io::In_Configuration::_read_rdc_av(std::vector<std::string> &buffer,
       buff_it = buffer.begin(),
       buff_to = buffer.end()-1;
 
-  double av;
+  double av = 0.0;
   unsigned int i=0,j=0; // index for rdc-groups and rdcs in groups
   for(; buff_it != buff_to; ++buff_it, ++j){
 
@@ -2752,7 +2757,7 @@ bool io::In_Configuration::_read_rdc_stochint(std::vector<std::string> &buffer,
 
   // tmp
   math::Vec tmp_v;
-  double tmp_d;
+  double tmp_d = 0.0;
 
   std::vector<std::string>::const_iterator
       buff_it = buffer.begin(),
@@ -2822,8 +2827,8 @@ _read_pscale_jrest(std::vector<std::string> &buffer,
   for( ; (it != to) && (jval_it != jval_to); ++it, ++jval_it){
     _lineStream.clear();
     _lineStream.str(*it);
-    int s;
-    double t;
+    int s = 0;
+    double t = 0.0;
     _lineStream >> s >> t;
 
     if (_lineStream.fail()) {
@@ -2860,7 +2865,7 @@ _read_time(std::vector<std::string> &buffer,
   _lineStream.clear();
   _lineStream.str(*it);
 
-  int i;
+  int i = 0;
   _lineStream >> i >> t;
 
   if (_lineStream.fail() || t < 0){
@@ -2884,8 +2889,8 @@ _read_time_step(std::vector<std::string> &buffer,
   _lineStream.clear();
   _lineStream.str(*it);
 
-  int i;
-  double t;
+  int i = 0;
+  double t = 0.0;
 
   _lineStream >> i >> t;
 
@@ -2966,7 +2971,7 @@ std::vector<std::string> &buffer, bool hasTitle)
   std::vector<std::string>::const_iterator it = buffer.begin() + (hasTitle ? 1 : 0),
     to = buffer.end()-1;
   std::string s1, s2;
-  int i, n, nr;
+  int i = 0, n = 0, nr = 0;
   int num = b.size();
 
   std::istringstream _lineStream;
@@ -3014,7 +3019,7 @@ bool io::In_Configuration::_read_leusbias(
   _lineStream.clear();
   _lineStream.str(concatenate(buffer.begin(), buffer.end()-1, s));
 
-  unsigned int num_umb;
+  unsigned int num_umb = 0;
   _lineStream >> num_umb;
   if (_lineStream.fail()) {
     io::messages.add("bad line in LEUSBIAS block: NUMUMB",
@@ -3023,7 +3028,7 @@ bool io::In_Configuration::_read_leusbias(
     return false;
   }
   for(unsigned int x = 0; x < num_umb; ++x) {
-    int id, dim;
+    int id = 0, dim = 0;
     _lineStream >> id >> dim;
 
     if(_lineStream.fail()){
@@ -3045,7 +3050,7 @@ bool io::In_Configuration::_read_leusbias(
 
     // loop over dimensions
     for (unsigned int i = 0; i < u.dim(); ++i) {
-      int type, form;
+      int type = 0, form = 0;
       _lineStream >> type >> form >> u.width[i] >> u.cutoff[i]
               >> u.num_grid_points[i] >> u.grid_min[i] >> u.grid_max[i];
       if (_lineStream.fail()) {
@@ -3084,7 +3089,7 @@ bool io::In_Configuration::_read_leusbias(
     umbrellas.push_back(u);
 
     // skip the rest of the data - read it to dummies
-    unsigned int num_conf;
+    unsigned int num_conf = 0;
     _lineStream  >> num_conf;
     if (_lineStream.fail()) {
       io::messages.add("LEUSBIAS block: Could not read number of configurations",
@@ -3093,7 +3098,7 @@ bool io::In_Configuration::_read_leusbias(
     }
     for(unsigned int c = 0; c < num_conf; ++c) {
       for(unsigned int dim = 0; dim < u.dim(); ++dim) {
-        int di;
+        int di = 0;
         _lineStream >> di;
       }
       std::string ds;
@@ -3117,7 +3122,7 @@ bool io::In_Configuration::_read_bsleus(util::BS_Umbrella& bs_umbrella,
   _lineStream.clear();
   _lineStream.str(concatenate(buffer.begin(), buffer.end()-1, s));
 
-  int numPotentials, num_gp, id, have_aux;
+  int numPotentials = 0, num_gp = 0, id = 0, have_aux = 0;
   _lineStream >> numPotentials >> have_aux;
   if (_lineStream.fail()){
     io::messages.add("BSLEUSMEM block: Could not read the number of Potentials!",
@@ -3125,7 +3130,7 @@ bool io::In_Configuration::_read_bsleus(util::BS_Umbrella& bs_umbrella,
     return false;
   }
   DEBUG(5, "Reading " << numPotentials << "Potentials.");
-  int topoPotentials;
+  int topoPotentials = 0;
   bs_umbrella.getNumPotentials(topoPotentials);
   if (numPotentials != topoPotentials){
     io::messages.add("BSLEUSMEM block: Not the same number of potentials in topology and configuration!",
@@ -3134,7 +3139,7 @@ bool io::In_Configuration::_read_bsleus(util::BS_Umbrella& bs_umbrella,
   }
 
   for (int i = 0; i < numPotentials; i++){
-    int subid;
+    int subid = 0;
     _lineStream >> id >> subid >> num_gp;
     if (_lineStream.fail()) {
       std::ostringstream os;
@@ -3143,7 +3148,7 @@ bool io::In_Configuration::_read_bsleus(util::BS_Umbrella& bs_umbrella,
       return false;
     }
     subid--; // Convert to GROMOS
-    double mem;
+    double mem = 0.0;
     std::vector<double> memVector;
     for (int j = 0; j < num_gp; j++){
       _lineStream >> mem;
@@ -3165,7 +3170,7 @@ bool io::In_Configuration::_read_bsleus(util::BS_Umbrella& bs_umbrella,
     bs_umbrella.setAuxMemoryToZero();
   } else {
     // Read in subspaces
-    unsigned int num_subspaces;
+    unsigned int num_subspaces = 0;
     _lineStream >> num_subspaces;
     if (_lineStream.fail()) {
       std::ostringstream os;
@@ -3182,7 +3187,7 @@ bool io::In_Configuration::_read_bsleus(util::BS_Umbrella& bs_umbrella,
       return false;
     }
     for (unsigned int i = 0; i < num_subspaces; i++){
-      int subid, auxc, redc;
+      int subid = 0, auxc = 0, redc = 0;
       _lineStream >> subid >> auxc >> redc;
       if (_lineStream.fail()) {
         std::ostringstream os;
@@ -3195,7 +3200,7 @@ bool io::In_Configuration::_read_bsleus(util::BS_Umbrella& bs_umbrella,
     }
 
     // Read in potentials
-    int subid;
+    int subid = 0;
     for (int i = 0; i < numPotentials; i++) {
       _lineStream >> id >> subid >> num_gp;
       if (_lineStream.fail()) {
@@ -3206,7 +3211,7 @@ bool io::In_Configuration::_read_bsleus(util::BS_Umbrella& bs_umbrella,
         return false;
       }
       subid--; // Convert to GROMOS
-      double mem;
+      double mem = 0.0;
       std::vector<double> memVector;
       for (int j = 0; j < num_gp; j++) {
         _lineStream >> mem;
@@ -3234,7 +3239,7 @@ bool io::In_Configuration::_read_bsleuspos(util::BS_Umbrella& bs_umbrella,
   _lineStream.clear();
   _lineStream.str(concatenate(buffer.begin(), buffer.end()-1, s));
 
-  int num_subspaces;
+  int num_subspaces = 0;
   _lineStream >> num_subspaces;
   if (_lineStream.fail()){
     io::messages.add("BSLEUSPOS block: Could not read the number of Subspaces!",
@@ -3250,7 +3255,7 @@ bool io::In_Configuration::_read_bsleuspos(util::BS_Umbrella& bs_umbrella,
   }
 
   for (int i = 0; i < num_subspaces; i++){
-    int subid, num_dim;
+    int subid = 0, num_dim = 0;
     _lineStream >> subid >> num_dim;
     if (_lineStream.fail()) {
       std::ostringstream os;
@@ -3259,7 +3264,7 @@ bool io::In_Configuration::_read_bsleuspos(util::BS_Umbrella& bs_umbrella,
       return false;
     }
     subid--; // Convert to GROMOS
-    double pos;
+    double pos = 0.0;
     std::vector<double> posVector;
     for (int j = 0; j < num_dim; j++){
       _lineStream >> pos;
@@ -3328,7 +3333,7 @@ configuration::Configuration::special_struct::rottrans_constr_struct & rottrans)
   std::vector<std::string>::const_iterator it = buffer.begin(),
     to = buffer.end()-1;
 
-  unsigned int i;
+  unsigned int i = 0;
   for (i = 0; it != to && i < 3; ++it, ++i) {
     _lineStream.clear();
     _lineStream.str(*it);
@@ -3419,7 +3424,7 @@ _read_xray_av(std::vector<std::string> &buffer,
 
   xray_av.clear();
 
-  double av, phase_av;
+  double av = 0.0, phase_av = 0.0;
 
   if (buffer.size() - 1 != xray_res.size() + xray_rfree.size()) {
     io::messages.add("number of Xray-restraints and R-free hkls does not match with number of "
@@ -3557,7 +3562,7 @@ bool io::In_Configuration::_read_aedssearch(
   _lineStream.str(*it);
   _lineStream >> sim.param().eds.oldstate;
   it++;
-  int fulleminbool;
+  int fulleminbool = 0;
   _lineStream.clear();
   _lineStream.str(*it);
   _lineStream >> fulleminbool;
@@ -3571,7 +3576,7 @@ bool io::In_Configuration::_read_aedssearch(
   for (unsigned int i = 0; i < last; i++, it++) {
     _lineStream.clear();
     _lineStream.str(*it);
-    int visitedstatesbool;
+    int visitedstatesbool = 0;
     _lineStream >> sim.param().eds.eir[i]
       >> sim.param().eds.lnexpde[i]
       >> sim.param().eds.statefren[i]

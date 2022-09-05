@@ -59,9 +59,14 @@ namespace topology
     int iac(unsigned int const i)const {assert(i < m_iac.size()); return m_iac[i];}
 
     /**
-     * integer atom code array accessor
+     * integer atom code accessor
      */
-    std::vector<int> &iac_array() { return m_iac; }
+    std::vector<int> &iac() {return m_iac;}
+
+    /**
+     * integer atom code const accessor
+     */
+    std::vector<int> const & iac()const {return m_iac;}
 
     /**
      * masses accessor
@@ -834,7 +839,7 @@ namespace topology
     /**
      * is the atom in the QM buffer? - accessor
      */
-    unsigned is_qm_buffer(const unsigned i)const {
+    int is_qm_buffer(const unsigned i)const {
       assert(i < m_is_qm_buffer.size());
       return m_is_qm_buffer[i];
     }
@@ -842,10 +847,38 @@ namespace topology
     /**
      * is the atom in the QM buffer? - mutator
      */
-    unsigned& is_qm_buffer(const unsigned i) {
+    int& is_qm_buffer(const unsigned i) {
       assert(i < m_is_qm_buffer.size());
       return m_is_qm_buffer[i];
     }
+
+    /**
+     * is the atom in the adaptive QM buffer? - accessor
+     */
+    bool is_adaptive_qm_buffer(const unsigned i)const {
+      assert(i < m_is_qm_buffer.size());
+      return m_is_qm_buffer[i] > 0;
+    }
+
+    /**
+     * QM delta charge accessor
+     */
+    math::SArray &qm_delta_charge() {return m_qm_delta_charge;}
+
+    /**
+     * QM delta charge const accessor
+     */
+    math::SArray const & qm_delta_charge()const {return m_qm_delta_charge;}
+
+    /**
+     * QM delta charge mutator
+     */
+    double &qm_delta_charge(unsigned i) { return m_qm_delta_charge[i]; }
+
+    /**
+     * QM delta charge accessor
+     */
+    double qm_delta_charge(unsigned i) const { return m_qm_delta_charge[i]; }
 
     /**
      * QM atomic number accessor
@@ -2000,9 +2033,14 @@ namespace topology
     std::vector<unsigned> m_is_qm;
 
     /**
-     * Is the atom QM
+     * Is the QM buffer (1: yes, 0: no, -1: temporarily disabled [adaptive buffer with cutoff])
      */
-    std::vector<unsigned> m_is_qm_buffer;
+    std::vector<int> m_is_qm_buffer;
+
+    /**
+     * Delta-charges to be added to interactions between QM/buffer and MM atoms
+     */
+    math::SArray m_qm_delta_charge;
 
     /**
      * QM atomic number

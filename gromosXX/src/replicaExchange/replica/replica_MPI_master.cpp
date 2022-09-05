@@ -194,11 +194,15 @@ void re::replica_MPI_Master::run_MD(){
     send_coordinates();
     MPI_DEBUG(5, "replica_MPI_Master "<< globalThreadID <<":runMD:\t\t sent Coords");
     MPI_DEBUG(5, "replica_MPI_Master "<< globalThreadID <<":runMD:\t\t steps: current step: "<<sim.steps()<< "  totalsteps: "<< stepsPerRun << " + " << curentStepNumber << " + 1 = "<< stepsPerRun+curentStepNumber+1);
+    DEBUG(7,  "replica "<<globalThreadID<<" BeforeSimulation: Conf Current Epot" << conf.current().energies.potential_total<< "\n");
+    DEBUG(7,  "replica "<<globalThreadID<<" BeforeSimulation: Conf OLD Epot" << conf.old().energies.potential_total<< "\n");
+    DEBUG(7,  "replica "<<globalThreadID<<" BeforeSimulation: Conf cur CNF" << conf.current().pos[0][0] << "\t" << conf.current().pos[0][1] << "\t"  << conf.current().pos[0][2]<< "\n");
 
+    if(sim.steps() == 0){ //initial write out
+        traj->write(conf, topo, sim, io::reduced);
+    }
     while ((unsigned int)(sim.steps()) <  stepsPerRun + curentStepNumber) {
       MPI_DEBUG(6, "replica_MPI_SLAVE " << globalThreadID << ":run_MD:\t step: "<< sim.steps() << " \tmaximal \t" << curentStepNumber+stepsPerRun);
-
-      traj->write(conf, topo, sim, io::reduced);
 
       // run a step
       DEBUG(5, "replica_MPI_MASTER "<< globalThreadID <<":run_MD:\t simulation!:");
@@ -245,36 +249,24 @@ void re::replica_MPI_Master::run_MD(){
         traj->print(topo, conf, sim);
         ++sim.steps();
         sim.time() = sim.param().step.t0 + sim.steps() * sim.time_step_size();
+        //DEBUG
+        DEBUG(7,  "replica "<<globalThreadID<<" STEP"<< sim.steps() <<": Conf Current Epot" << conf.current().energies.potential_total<< "\n");
+        DEBUG(7,  "replica "<<globalThreadID<<" STEP"<< sim.steps() <<": Conf OLD Epot" << conf.old().energies.potential_total<< "\n");
+
+        traj->write(conf, topo, sim, io::reduced);
+
     } // main md loop
     MPI_DEBUG(5, "replica_MPI_MASTER "<< globalThreadID <<":run_MD:\t after step while");
+    //DEBUG
+    DEBUG(7, "replica "<<globalThreadID<<" AfterSimulation: Conf Current Epot" << conf.current().energies.potential_total<< "\n");
+    DEBUG(7,  "replica "<<globalThreadID<<" AfterSimulation: Conf OLD Epot" << conf.old().energies.potential_total<< "\n");
+    DEBUG(7,  "replica "<<globalThreadID<<" AfterSimulation: Conf cur CNF" << conf.current().pos[0][0] << "\t" << conf.current().pos[0][1] << "\t"  << conf.current().pos[0][2]<< "\n");
+
+    //calculateEnergies(); // ONLY for DEBUGGING
+    //DEBUG(7, "replica "<<globalThreadID<<" AfterReCAlc: Conf Current Epot" << conf.current().energies.potential_total<< "\n");
+    //DEBUG(7,  "replica "<<globalThreadID<<" AfterReCAlc: Conf OLD Epot" << conf.old().energies.potential_total<< "\n");
+
     curentStepNumber +=  stepsPerRun;
-      
-    /*
-    call Forcefield, EDS and EnergyCalculation to make sure we're up-to-date
-    with the current coordinates for the calculation of the exchange probabilities
-    */
-
-    algorithm::Algorithm * ff;   
-    ff = md.algorithm("Forcefield");
-
-    //Calculate energies    
-    DEBUG(8, "replica_MPI_MASTER "<< globalThreadID <<":calculate_energy:\t final MD calc energies");
-    energy = calculateEnergies();
-
-    conf.exchange_state();
-
-    ff = md.algorithm("EnergyCalculation");
-
-    //Calculate energies    
-    DEBUG(5, "replica_MPI_MASTER "<< globalThreadID <<":calculate_energy:\t  final MD calc averages");
-    if (ff->apply(topo, conf, sim)) {
-        std::cerr << "Error in EnergyCalculation in Replica " << (simulationID+1) << " on node " << globalThreadID << std::endl;
-      #ifdef XXMPI
-          MPI_Abort(MPI_COMM_WORLD, E_UNSPECIFIED);
-      #endif
-    }
-
-    conf.exchange_state();
 
     #endif
     MPI_DEBUG(5, "replica_MPI_MASTER "<< globalThreadID <<":run_MD:\t  DONE: at step= " << curentStepNumber);
@@ -310,7 +302,7 @@ void re::replica_MPI_Master::send_coordinates(){
 
 double re::replica_MPI_Master::calculateEnergies(){
     double energy = 0.0;
-    algorithm::Algorithm * ff;
+    algorithm::Algorithm * ff = nullptr;
 
     //Calculate energies
     ff = md.algorithm("Forcefield");

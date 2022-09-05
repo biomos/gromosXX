@@ -693,7 +693,7 @@ double re::replica_exchange_base_2d_s_eoff_eds::calc_probability_for_eoff_exchan
 
   unsigned int partnerReplicaMasterThreadID = partnerReplicaID;
 
-  double delta;
+  double delta = 0.0;
   const double b1 = 1.0 / (math::k_Boltzmann * T);
   const double b2 = 1.0 / (math::k_Boltzmann * replica->sim.param().replica.temperature[partnerReplicaID % replica->sim.param().reeds.num_eoff]);
 
@@ -785,7 +785,7 @@ void re::replica_exchange_base_2d_s_eoff_eds::reset_eds() {//only reset switched
 void re::replica_exchange_base_2d_s_eoff_eds::change_eds(const unsigned int partner){//only change parameters, which are needed for energy calculation i.e.
 
   DEBUG(3,"replica_exchange_base_2d_s_eoff_eds: CHANGE_EDS\n\n");
-  int idx;
+  int idx = 0;
   if (replica->sim.param().reeds.num_s == 1){
     idx = 0;
   }
@@ -810,10 +810,10 @@ void re::replica_exchange_base_2d_s_eoff_eds::change_eds(const unsigned int part
  * given in the energy_stat output files.
  */
 double re::replica_exchange_base_2d_s_eoff_eds::calc_energy_eds_stat(double s){
-    double old_dt;
-    double old_s;
-    double old_eds_vr;
-    algorithm::Algorithm * ff;
+    double old_dt = 0.0;
+    double old_s = 0.0;
+    double old_eds_vr = 0.0;
+    algorithm::Algorithm * ff = nullptr;
     DEBUG(5,"replica_exchange_base_2d_s_eoff_eds: CALC_ENERGY_EDS_STAT\n\n");
     if(replica->sim.param().eds.eds){
           //to reset old state
@@ -880,7 +880,7 @@ double re::replica_exchange_base_2d_s_eoff_eds::calculate_energy_core() {
     virial_tensor_orig = replica->conf.current().virial_tensor;
 
     double energy = 0.0;
-    algorithm::Algorithm * ff;
+    algorithm::Algorithm * ff = nullptr;
 
     ff = replica->md.algorithm("EDS");
 

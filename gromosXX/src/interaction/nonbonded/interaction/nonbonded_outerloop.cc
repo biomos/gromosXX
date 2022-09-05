@@ -100,7 +100,8 @@ void interaction::Nonbonded_Outerloop
   if (t_interaction_spec::boundary_type == math::rectangular &&
       t_interaction_spec::interaction_func == simulation::lj_crf_func &&
       sim.param().innerloop.method != simulation::sla_cuda) {
-    _lj_crf_outerloop_fast(topo, conf, sim, pairlist_solute, pairlist_solvent,
+    _lj_crf_outerloop_fast<t_interaction_spec::charge_type>(topo, conf, sim,
+                        pairlist_solute, pairlist_solvent,
                         storage, longrange, timer, master);
     return;
   }
@@ -120,7 +121,7 @@ void interaction::Nonbonded_Outerloop
 
   const unsigned int end = topo.num_solute_atoms();
 
-  unsigned int i;
+  unsigned int i = 0;
   for (i = 0; i < end; ++i) {
     for (j_it = pairlist_solute[i].begin(),
             j_to = pairlist_solute[i].end();
@@ -267,6 +268,7 @@ unsigned int i_deb;
  * to make it usable for longrange calculations.
  */
 // WORKAROUND - see definition!
+template<simulation::charge_type_enum t_charge_type>
 void interaction::Nonbonded_Outerloop
 ::_lj_crf_outerloop_fast(topology::Topology & topo,
         configuration::Configuration & conf,
@@ -279,7 +281,9 @@ void interaction::Nonbonded_Outerloop
 
   math::Periodicity<math::rectangular> periodicity(conf.current().box);
   periodicity.recalc_shift_vectors();
-  Nonbonded_Innerloop<interaction::Interaction_Spec<math::rectangular, simulation::lj_crf_func> > innerloop(m_param);
+  Nonbonded_Innerloop<interaction::Interaction_Spec<math::rectangular,
+                      simulation::lj_crf_func,
+                      t_charge_type> > innerloop(m_param);
   innerloop.init(sim);
 
   /*
@@ -293,7 +297,7 @@ void interaction::Nonbonded_Outerloop
 
   const unsigned int end = topo.num_solute_atoms();
 
-  unsigned int i;
+  unsigned int i = 0;
   for (i = 0; i < end; ++i) {
     const math::Vec posI = conf.current().pos(i);
     const unsigned int eg_i = topo.atom_energy_group(i);
@@ -329,8 +333,8 @@ void interaction::Nonbonded_Outerloop
       
       const double dist2 = abs2(r);
       math::Vec force;
-      double f;
-      double e_lj, e_crf;
+      double f = 0.0;
+      double e_lj = 0.0, e_crf = 0.0;
       
       innerloop.lj_crf_innerloop_2(topo, i, *j_it, dist2, f, e_lj, e_crf);      
       
@@ -418,7 +422,7 @@ unsigned int i_deb;
       math::Vec shift = periodicity.shift(k + 13).pos;
       double tx = shift(0), ty = shift(1), tz = shift(2);
 
-      double dist6i;
+      double dist6i = 0.0;
       double e_lj = 0., e_crf = 0.;
       double r2[9], r2i[9], ri[9], x[9], y[9], z[9], f[9], fx[9], fy[9], fz[9];
       math::Vec r;
@@ -1059,8 +1063,8 @@ unsigned int i_deb;
 
         const double dist2 = abs2(r);
         math::Vec force;
-        double f;
-        double e_lj, e_crf;
+        double f = 0.0;
+        double e_lj = 0.0, e_crf = 0.0;
 
         innerloop.lj_crf_innerloop_2(topo, i, *j_it, dist2, f, e_lj, e_crf);
 
@@ -1530,7 +1534,7 @@ void interaction::Nonbonded_Outerloop
   math::Periodicity<t_interaction_spec::boundary_type> periodicity(conf.current().box);
   Nonbonded_Innerloop<t_interaction_spec> innerloop(m_param);
   innerloop.init(sim);
-  unsigned int i;
+  unsigned int i = 0;
   unsigned int size_i = unsigned(pairlist.size());
   unsigned int size_lr = size_i;
   DEBUG(11, "el_field outerloop pairlist size " << size_i);
@@ -1567,7 +1571,7 @@ void interaction::Nonbonded_Outerloop
 
   double minfield = sim.param().polarise.minfield;
   const double minfield_param = minfield;
-  double maxfield;
+  double maxfield = 0.0;
   int turni = 0;
 
 #ifdef XXMPI
@@ -1847,7 +1851,7 @@ void interaction::Nonbonded_Outerloop
 
   unsigned int end = topo.num_solute_atoms();
 
-  unsigned int i;
+  unsigned int i = 0;
   for (i = 0; i < end; i++) {
     for (j_it = pairlist_solute[i].begin(),
             j_to = pairlist_solute[i].end();
@@ -1955,7 +1959,7 @@ void interaction::Nonbonded_Outerloop
   double a2_tilde = 0.0;
 
   // virial stuff
-  const double do_virial = sim.param().pcouple.virial != math::no_virial;
+  const bool do_virial = sim.param().pcouple.virial != math::no_virial;
   math::SymmetricMatrix virial(0.0);
   math::SymmetricMatrix sum_gammahat(0.0);
 
@@ -2247,7 +2251,7 @@ void interaction::Nonbonded_Outerloop
 
   double a1 = 0.0, a3 = 0.0;
   double & a2_tilde = conf.lattice_sum().a2_tilde;
-  double a2;
+  double a2 = 0.0;
 
   const double st2 = topo.sum_squared_charges();
   const double s2 = topo.squared_sum_charges();
@@ -2363,7 +2367,7 @@ void interaction::Nonbonded_Outerloop
       // surfaces.
       math::SymmetricMatrix sum_gammahat(0.0);
       int l_max = 0;
-      double tolerance;
+      double tolerance = 0.0;
       a2 = 0.0;
       do {
         ++l_max;
@@ -2371,8 +2375,8 @@ void interaction::Nonbonded_Outerloop
 
         // the planes are located perpendicular to the axis (coord)
         for (unsigned int coord = 0; coord < 3; ++coord) {
-          unsigned int coord_a, coord_b;
-          int boundary_a, boundary_b;
+          unsigned int coord_a = 0, coord_b = 0;
+          int boundary_a = 0, boundary_b = 0;
           switch (coord) {
             case 0: // plane perpendicular to x
               coord_a = 1;
@@ -2419,7 +2423,7 @@ void interaction::Nonbonded_Outerloop
               const double abs_k = sqrt(k2);
               const double ak = abs_k * width;
 
-              double gamma_hat, gamma_hat_prime;
+              double gamma_hat = 0.0, gamma_hat_prime = 0.0;
               if (do_virial) {
                 interaction::Lattice_Sum::charge_shape_fourier(shape,
                         ak, gamma_hat, &gamma_hat_prime);
@@ -2699,7 +2703,7 @@ int interaction::Nonbonded_Outerloop
           << conf.current().pos(atom_j)(1) << " / "
           << conf.current().pos(atom_j)(2));
   DEBUG(10, "\tni r " << r(0) << " / " << r(1) << " / " << r(2));
-  double f;
+  double f = 0.0;
   term.lj_crf_interaction(r, lj.c6, lj.c12,
           topo.charge()(atom_i) * topo.charge()(atom_j),
           f, e_lj, e_crf);

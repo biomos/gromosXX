@@ -44,7 +44,7 @@ static int _calculate_harmonic_bond_interactions
   math::VArray &force = conf.current().force;
   math::Vec v, f;
 
-  double energy, diff;
+  double energy = 0.0, diff = 0.0;
 
   math::Periodicity<B> periodicity(conf.current().box);
 

@@ -174,7 +174,7 @@ int main(int argc, char *argv[]){
 	    << "==================================================\n"
 	    << std::endl;
 
-  int error;
+  int error = 0;
 
   const double init_time = util::now() - start;
   while(int(sim.steps()) < sim.param().step.number_of_steps && !exit_md){
@@ -183,24 +183,16 @@ int main(int argc, char *argv[]){
 
     // run a step
     if ((error = md.run(topo, conf, sim))){
-      
-      if ((error == E_MINIMUM_REACHED) || (error == E_MINIMUM_NOT_REACHED)){
-	      
-        //conf.current().energies.calculate_totals(); // This is done in algorithm
 
-        /** This is not necessary, because it is printed in out_configuration as well
-	       *  Here could be MINIMISATION block instead
-         */
-        /* traj.print_timestep(sim, traj.output());
-        io::print_ENERGY(
-          traj.output(),
-          conf.current().energies,
-          topo.energy_groups(),
-          "MINIMUM ENERGY",
-          "EMIN_"); */
-	  
-	      error = 0; // clear error condition
-	      break;
+      if (error == E_MINIMUM_REACHED) {
+        conf.old().energies.calculate_totals();
+        traj.print_timestep(sim, traj.output());
+        io::print_ENERGY(traj.output(), conf.old().energies, 
+            topo.energy_groups(),
+            "MINIMUM ENERGY", "EMIN_");
+          
+        error = 0; // clear error condition
+        break;
       }
       else { 
 	// try to print energies anyway

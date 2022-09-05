@@ -85,7 +85,7 @@ int interaction::Extended_Grid_Pairlist_Algorithm::init
     const int Ncell = m_grid.Na * m_grid.Nb * m_grid.Nc;
     const int N = m_grid.Na * m_grid.Nb;
 
-    double P;
+    double P = 0.0;
     if(sim.param().pairlist.atomic_cutoff)
       P = topo.num_atoms();
     else
@@ -329,7 +329,8 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update
 	      else{ // solute - solvent
 				if (Pairlist_Algorithm::qm_excluded(
 						topo, qmmm
-						, topo.chargegroup(m_grid.p_cell[z][i].i))) {
+						, topo.chargegroup(m_grid.p_cell[z][i].i)
+						, topo.chargegroup(m_grid.p_cell[z][j].i))) {
 					DEBUG(9, "Skipping CGs " << m_grid.p_cell[z][i].i << "-" << m_grid.p_cell[z][j].i);
 					continue;
 				}
@@ -367,7 +368,7 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update
                     pairlist.solvent_short[a2].push_back(a1);
 #endif
                   } else {
-										if (Pairlist_Algorithm::qm_excluded(topo, qmmm, a2)) {
+										if (Pairlist_Algorithm::qm_excluded(topo, qmmm, a1, a2)) {
 											DEBUG(9, "Skipping pair: " << a1 << "-" << a2);
 											continue;
 										}
@@ -435,7 +436,11 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update
 		if (Pairlist_Algorithm::qm_excluded(topo, qmmm
 				, topo.chargegroup(m_grid.p_cell[i_level][i].i)
 				, topo.chargegroup(p_plane[j].i))) {
-			DEBUG(9, "Skipping pair: " << m_grid.p_cell[i_level][i].i << "-" << p_plane[j].i);
+			DEBUG(9, "Skipping pairs: (" << topo.chargegroup(m_grid.p_cell[i_level][i].i)
+								  << "-" << topo.chargegroup(m_grid.p_cell[i_level][i].i + 1) - 1
+								  << ")-(" << topo.chargegroup(p_plane[j].i)
+								  << "-" << topo.chargegroup(p_plane[j].i + 1) - 1
+								  << ")");
 			continue;
 		}
 
@@ -477,8 +482,13 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update
 	      }
 	      else{ // solute - solvent
 		if (Pairlist_Algorithm::qm_excluded(topo, qmmm
-				, topo.chargegroup(m_grid.p_cell[i_level][i].i))) {
-			DEBUG(9, "Skipping pair: " << m_grid.p_cell[i_level][i].i << "-" << p_plane[j].i);
+				, topo.chargegroup(m_grid.p_cell[i_level][i].i)
+				, topo.chargegroup(p_plane[j].i))) {
+			DEBUG(9, "Skipping pairs: (" << topo.chargegroup(m_grid.p_cell[i_level][i].i)
+								  << "-" << topo.chargegroup(m_grid.p_cell[i_level][i].i + 1) - 1
+								  << ")-(" << topo.chargegroup(p_plane[j].i)
+								  << "-" << topo.chargegroup(p_plane[j].i + 1) - 1
+								  << ")");
 			continue;
 		}
 		if (d2 > m_cutoff_short_2){ // LONGRANGE
@@ -552,7 +562,7 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update
 #endif
                     } else
 
-											if (Pairlist_Algorithm::qm_excluded(topo, qmmm, a2)) {
+											if (Pairlist_Algorithm::qm_excluded(topo, qmmm, a1, a2)) {
 												DEBUG(9, "Skipping pair: " << a1 << "-" << a2);
 												continue;
 											}
@@ -575,7 +585,7 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update
                       pairlist.solvent_short[a2].push_back(a1);
 #endif
                     } else
-										if (Pairlist_Algorithm::qm_excluded(topo, qmmm, a2)) {
+										if (Pairlist_Algorithm::qm_excluded(topo, qmmm, a1, a2)) {
 												DEBUG(9, "Skipping pair: " << a1 << "-" << a2);
 												continue;
 											}

@@ -115,7 +115,7 @@ io::In_Posresspec::read(topology::Topology& topo,
 
     DEBUG(10, "reading in POSRESSPEC data");
 
-    unsigned int i, nr;
+    unsigned int i = 0, nr = 0;
     for(i=0; it != to; ++i, ++it){
       
       DEBUG(11, "\tnr " << i);

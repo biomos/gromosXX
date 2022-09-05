@@ -265,16 +265,20 @@ void util::Virtual_Atom::_force
   posi = position(m_atom[0]);
 
   math::Vec s,t,a,b, calc1, calc2, calc3, calch;
-  double abs_s, abs_t;
-  double m_c; //multiplication constant
+  double abs_s = 0.0, abs_t = 0.0;
+  double m_c = 0.0; //multiplication constant
   
   switch(m_type){
     
-    case 0: // explicit atom
+    case 0: 
+    {
+      // explicit atom
       assert(m_atom.size()>0);
       force(m_atom[0])+=f;
       break;
+    }
     case 1: // CH1
+    {
       assert(m_atom.size()>3);
       periodicity.nearest_image(position(m_atom[1]), posi, posj);
       posj += posi;
@@ -312,8 +316,9 @@ void util::Virtual_Atom::_force
       force(m_atom[2]) += math::Vec(math::dot(calc1,f),math::dot(calc2,f),math::dot(calc3,f));
       force(m_atom[3]) += math::Vec(math::dot(calc1,f),math::dot(calc2,f),math::dot(calc3,f));
       break;
-
+    }
     case 2: // aromatic H
+    {
       assert(m_atom.size()>2);
       periodicity.nearest_image(position(m_atom[1]), posi, posj);
       posj += posi;
@@ -348,7 +353,9 @@ void util::Virtual_Atom::_force
       force(m_atom[2])+=math::Vec(math::dot(calc1,f),math::dot(calc2,f),math::dot(calc3,f));
 
       break;
+    }
     case 3: // non-stereospecific CH2
+    {
       assert(m_atom.size()>2);
       periodicity.nearest_image(position(m_atom[1]), posi, posj);
       posj += posi;
@@ -383,7 +390,8 @@ void util::Virtual_Atom::_force
       force(m_atom[1]) += math::Vec(math::dot(calc1,f),math::dot(calc2,f),math::dot(calc3,f));
       force(m_atom[2]) += math::Vec(math::dot(calc1,f),math::dot(calc2,f),math::dot(calc3,f));
       break;
-      
+    }
+
     case 8: // TIP4P
       assert(m_atom.size()>2);
       periodicity.nearest_image(position(m_atom[1]), posi, posj);
@@ -419,8 +427,9 @@ void util::Virtual_Atom::_force
       force(m_atom[1]) += math::Vec(math::dot(calc1,f),math::dot(calc2,f),math::dot(calc3,f));
       force(m_atom[2]) += math::Vec(math::dot(calc1,f),math::dot(calc2,f),math::dot(calc3,f));
       break;
-      
+   }
    case 4: // stereospecific CH2
+   {
       assert(m_atom.size()>2);
       periodicity.nearest_image(position(m_atom[1]), posi, posj);
       posj += posi;
@@ -429,7 +438,7 @@ void util::Virtual_Atom::_force
      
       DEBUG(8, "FORCE REDISTRIBUTION: case 4!!!");
       
-      double m_c_2;
+      double m_c_2 = 0.0;
       
       s = 2.0 * posi - posj - posk;
       abs_s = math::abs(s);
@@ -618,8 +627,9 @@ void util::Virtual_Atom::_force
 						 math::dot(calc2,f),
 						 math::dot(calc3,f))));
       break;
-      
+   }
     case 5: // CH3
+    {
       assert(m_atom.size()>1);
       periodicity.nearest_image(position(m_atom[1]), posi, posj);
       posj += posi;
@@ -650,8 +660,9 @@ void util::Virtual_Atom::_force
 			   -(abs_s*abs_s - s(2)*s(2)))/(abs_s*abs_s*abs_s);
       force(m_atom[1])+=math::Vec(math::dot(calc1,f),math::dot(calc2,f),math::dot(calc3,f));
       break;
-      
+    }
     case 6: // non-stereospecific CH3 (Leu, Val)
+    {
       assert(m_atom.size()>2);
       periodicity.nearest_image(position(m_atom[1]), posi, posj);
       posj += posi;
@@ -686,8 +697,9 @@ void util::Virtual_Atom::_force
       force(m_atom[2])+=math::Vec(math::dot(calc1,f),math::dot(calc2,f),math::dot(calc3,f));
       
       break;
-      
+    }
     case va_3CH3: // (CH3)3-group (one psuedosite)
+    {
       assert(m_atom.size()>1);
       periodicity.nearest_image(position(m_atom[1]), posi, posj);
       posj += posi;
@@ -718,32 +730,38 @@ void util::Virtual_Atom::_force
 			   -(abs_s*abs_s - s(2)*s(2)))/(abs_s*abs_s*abs_s);
       force(m_atom[1])+=math::Vec(math::dot(calc1,f),math::dot(calc2,f),math::dot(calc3,f));
       break;
-
+    }
     case va_cog: // cog
+    {
       assert(m_atom.size() > 0);
       {
-	for(unsigned int i=0; i<m_atom.size(); ++i){
-	  force(m_atom[i]) += f / m_atom.size();
-	}
-	break;
+	      for(unsigned int i=0; i<m_atom.size(); ++i){
+	        force(m_atom[i]) += f / m_atom.size();
+       	}
+      	break;
       }
+    }
     case va_com: // com
+    {
       assert(m_atom.size() > 0);
       {
         double mass_com=0.0;
         for(unsigned int i=0; i<m_atom.size(); ++i){
             mass_com += topo.mass()(i);
         }
-	for(unsigned int i=0; i<m_atom.size(); ++i){
-	  force(m_atom[i]) += f * topo.mass()(i) /  mass_com ;
-	}
-	break;
+	        for(unsigned int i=0; i<m_atom.size(); ++i){
+	          force(m_atom[i]) += f * topo.mass()(i) /  mass_com ;
+	      }
+	    break;
       }
+    }
       
     default:
+    {
       std::cerr <<"Type not implemented";
       assert(false);
       break;
+    }
   }
 }
 

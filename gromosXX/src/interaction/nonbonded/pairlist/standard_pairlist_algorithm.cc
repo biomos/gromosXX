@@ -70,7 +70,7 @@ prepare(topology::Topology & topo,
     topology::Chargegroup_Iterator
       cg1 =   topo.chargegroup_begin();
     
-    unsigned int i, num_cg = topo.num_solute_chargegroups();
+    unsigned int i = 0, num_cg = topo.num_solute_chargegroups();
     
     for(i=0; i < num_cg; ++cg1, ++i){
       cg1.cog(pos, m_cg_cog(i));
@@ -140,7 +140,7 @@ void interaction::Standard_Pairlist_Algorithm::_update_cg
   DEBUG(8, "begin=" << begin << " stride=" << stride
 	<< " num_cg=" << num_cg << "num_solute_cg=" << num_solute_cg);
 
-  int cg1, cg2;
+  int cg1 = 0, cg2 = 0;
   math::Vec r;
   
   const simulation::qmmm_enum qmmm = sim.param().qmmm.qmmm;
@@ -260,7 +260,15 @@ void interaction::Standard_Pairlist_Algorithm::_update_cg
     
     for( ; cg2 < num_cg; ++cg2){
 
-      DEBUG(10, "cg2 = " << cg2);
+      DEBUG(10, "cg2 = " << cg2);// If cg is QM
+      if (Pairlist_Algorithm::qm_excluded(
+            topo, qmmm, topo.chargegroup(cg1), topo.chargegroup(cg2))) 
+        {
+        DEBUG(9, "Skipping cgs " << cg1 << " and " << cg2);
+        DEBUG(9, " - atoms " << topo.chargegroup(cg1) << "-" << topo.chargegroup(cg1+1)-1);
+        DEBUG(9, " - atoms " << topo.chargegroup(cg2) << "-" << topo.chargegroup(cg2+1)-1);
+        continue;
+      }
       
       assert(m_cg_cog.size() > unsigned(cg1));
     
@@ -457,7 +465,7 @@ _update_pert_cg(topology::Topology & topo,
   DEBUG(8, "begin=" << begin << " stride=" << stride
 	<< " num_cg=" << num_cg << "num_solute_cg=" << num_solute_cg);
 
-  int cg1, cg2;
+  int cg1 = 0, cg2 = 0;
   math::Vec r;
   
   // solute -

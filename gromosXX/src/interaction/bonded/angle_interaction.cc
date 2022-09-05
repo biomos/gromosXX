@@ -46,7 +46,7 @@ static int _calculate_angle_interactions(topology::Topology & topo,
   DEBUG(10, "pos   size: " << pos.size());
   DEBUG(10, "force size: " << force.size());
   
-  double energy;
+  double energy = 0.0;
 
   DEBUG(7, "bond angles : " << topo.solute().angles().size());
 

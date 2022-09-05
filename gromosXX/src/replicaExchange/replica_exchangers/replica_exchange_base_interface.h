@@ -221,7 +221,7 @@ namespace re {
     /**
      * run number of replica
      */
-    unsigned int run;
+    int run;
 
     /**
      * total number of runs per replica

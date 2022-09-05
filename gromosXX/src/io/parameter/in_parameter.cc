@@ -109,6 +109,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_QMMM(param);
   read_SYMRES(param);
   read_AMBER(param);
+  read_DFUNCT(param);
 
   read_known_unsupported_blocks();
 
@@ -445,26 +446,22 @@ void io::In_Parameter::read_CONSTRAINT(simulation::Parameter &param,
 
             // Get number of GPUs and their IDs
             block.get_next_parameter("NTCG", param.constraint.solvent.number_gpus, ">0", "");
-
-            if (param.constraint.solvent.number_gpus == (unsigned int) 0)
-                io::messages.add("CUDA enabled, but number of GPUs is zero",
-                                 "In_Parameter", io::message::error);
-            else {
-                unsigned int temp;
-                bool fail = false;
-                for (unsigned int i = 0; i < param.constraint.solvent.number_gpus; i++) {
-                    if (block.get_next_parameter("NTCD", temp, "", "")) {
-                        fail = true;
-                        break;
-                    }
-                    param.constraint.solvent.gpu_device_number.push_back(temp);
+            int temp = 0;
+            bool fail = false;
+            for (unsigned int i = 0; i < param.constraint.solvent.number_gpus; i++) {
+                std::string idx=io::to_string(i);
+                if (block.get_next_parameter("NTCD["+idx+"]", temp, ">=-1", "", true)) {
+                    fail = true;
+                    break;
                 }
-                if (fail) {
-                    param.constraint.solvent.gpu_device_number.clear();
-                    param.constraint.solvent.gpu_device_number.resize(param.constraint.solvent.number_gpus, -1);
-                    io::messages.add("CUDA driver will determine devices for M-SHAKE",
-                                     "In_Parameter", io::message::notice);
-                }
+                param.constraint.solvent.gpu_device_number.push_back(temp);
+            }
+            if (fail) {
+                param.constraint.solvent.gpu_device_number.clear();
+                param.constraint.solvent.gpu_device_number.resize(param.constraint.solvent.number_gpus, -1);
+                io::messages.add("CUDA driver will determine devices for M-SHAKE",
+                                    "In_Parameter", io::message::notice);
+                block.reset_error();
             }
         } else if (salg == "off" || salg == "0") {
             DEBUG(9, "constraints solvent off");
@@ -669,7 +666,7 @@ void io::In_Parameter::read_PRESSURESCALE(simulation::Parameter &param,
         block_read.insert(blockname);
 
         std::string couple, scale, vir;
-        int xs, ys, zs;
+        int xs = 0, ys = 0, zs = 0;
         block.get_next_parameter("COUPLE", couple, "", "off, 0, calc, 1, scale, 2");
         block.get_next_parameter("SCALE", scale, "", "off, 0, iso, 1, aniso, 2, full, 3, semianiso, 4");
         block.get_next_parameter("COMP", param.pcouple.compressibility, ">0", "");
@@ -780,7 +777,7 @@ void io::In_Parameter::read_BOUNDCOND(simulation::Parameter &param,
     if (block.read_buffer(m_block[blockname], true) == 0) {
         block_read.insert(blockname);
 
-        int ntb;
+        int ntb = 0;
         block.get_next_parameter("NTB", ntb, "", "-1, 0, 1, 2");
         block.get_next_parameter("NDFMIN", param.boundary.dof_to_subtract, ">=0", "");
 
@@ -851,7 +848,7 @@ void io::In_Parameter::read_PERTURBATION(simulation::Parameter &param,
         block_read.insert(blockname);
 
         std::string b, s1, s2;
-        int ntg, scale, nrdgl;
+        int ntg = 0, scale = 0, nrdgl = 0;
         block.get_next_parameter("NTG", ntg, "", "0,1");
         block.get_next_parameter("NRDGL", nrdgl, "", "0,1");
         block.get_next_parameter("RLAM", param.perturbation.lambda, ">=0 && <=1", "");
@@ -945,8 +942,8 @@ void io::In_Parameter::read_FORCE(simulation::Parameter &param,
         block.get_next_parameter("NTF(5)", param.force.nonbonded_crf, "", "0,1");
         block.get_next_parameter("NTF(6)", param.force.nonbonded_vdw, "", "0,1");
 
-        int snum;
-        unsigned int num, e, old_e = 0;
+        int snum = 0;
+        unsigned int num = 0, e = 0, old_e = 0;
         block.get_next_parameter("NEGR", snum, "", "");
 
         if (snum < 0) {
@@ -1037,7 +1034,7 @@ void io::In_Parameter::read_COVALENTFORM(simulation::Parameter &param,
     if (block.read_buffer(m_block[blockname], false) == 0) {
         block_read.insert(blockname);
 
-        int bond, angle, dihedral;
+        int bond = 0, angle = 0, dihedral = 0;
         block.get_next_parameter("NTBBH", bond, "", "0,1");
         block.get_next_parameter("NTBAH", angle, "", "0,1");
         block.get_next_parameter("NTBDN", dihedral, "", "0,1");
@@ -1135,7 +1132,7 @@ void io::In_Parameter::read_INITIALISE(simulation::Parameter &param,
     if (block.read_buffer(m_block[blockname], true) == 0) {
         block_read.insert(blockname);
 
-        int ntivel, ntishk, ntinht, ntinhb, ntishi, ntirtc, nticom, ntisti;
+        int ntivel = 0, ntishk = 0, ntinht = 0, ntinhb = 0, ntishi = 0, ntirtc = 0, nticom = 0, ntisti = 0;
         block.get_next_parameter("NTIVEL", ntivel, "", "0,1");
         block.get_next_parameter("NTISHK", ntishk, "", "0,1,2,3");
         block.get_next_parameter("NTINHT", ntinht, "", "0,1");
@@ -1281,7 +1278,7 @@ void io::In_Parameter::read_COMTRANSROT(simulation::Parameter &param,
     if (block.read_buffer(m_block[blockname], false) == 0) {
         block_read.insert(blockname);
 
-        int nscm;
+        int nscm = 0;
         block.get_next_parameter("NSCM", nscm, "", "");
 
         if (nscm > 0) {
@@ -1458,7 +1455,7 @@ void io::In_Parameter::read_CGRAIN(simulation::Parameter &param,
     if (block.read_buffer(m_block[blockname], false) == 0) {
         block_read.insert(blockname);
 
-        int ntcgran;
+        int ntcgran = 0;
         block.get_next_parameter("NTCGRAN", ntcgran, "", "0,1,2,3");
         block.get_next_parameter("EPS", param.cgrain.EPS, ">=0", "");
         block.get_next_parameter("EPSM", param.cgrain.EPSM, ">=0", "");
@@ -1549,9 +1546,9 @@ void io::In_Parameter::read_MULTIBATH(simulation::Parameter &param,
             block.get_next_parameter("NUM", param.multibath.algorithm, ">=2", "");
         }
 
-        int num_baths, num_dof;
-        unsigned int last, com_bath, ir_bath;
-        double temp, tau;
+        int num_baths = 0, num_dof = 0;
+        unsigned int last = 0, com_bath = 0, ir_bath = 0;
+        double temp = 0.0, tau = 0.0;
 
         // the baths
         block.get_next_parameter("NBATHS", num_baths, ">=0", "");
@@ -1708,7 +1705,7 @@ void io::In_Parameter::read_POSITIONRES(simulation::Parameter &param,
     if (block.read_buffer(m_block[blockname], false) == 0) {
         block_read.insert(blockname);
 
-        int ntpor, ntpors, read;
+        int ntpor = 0, ntpors = 0, read = 0;
         block.get_next_parameter("NTPOR", ntpor, "", "0,1,2,3");
         block.get_next_parameter("NTPORB", read, "", "0,1");
         block.get_next_parameter("NTPORS", ntpors, "", "0,1");
@@ -1803,7 +1800,7 @@ void io::In_Parameter::read_XRAYRES(simulation::Parameter &param,
         block_read.insert(blockname);
         param.setDevelop("XRAY restraining is under development.");
 
-        int ntxr, ntxle;
+        int ntxr = 0, ntxle = 0;
         block.get_next_parameter("NTXR", ntxr, "", "-2,-1,0,1,2,3");
         block.get_next_parameter("NTXLE", ntxle, "", "0,1");
         block.get_next_parameter("CXR", param.xrayrest.force_constant, ">=0", "");
@@ -1907,7 +1904,7 @@ void io::In_Parameter::read_DISTANCERES(simulation::Parameter &param,
     if (block.read_buffer(m_block[blockname], false) == 0) {
         block_read.insert(blockname);
 
-        int ntdira;
+        int ntdira = 0;
         block.get_next_parameter("NTDIR", param.distanceres.distanceres, "", "0, 1, -1, 2, -2");
         block.get_next_parameter("NTDIRA", ntdira, "", "0,1");
         block.get_next_parameter("CDIR", param.distanceres.K, ">=0", "");
@@ -2036,8 +2033,8 @@ void io::In_Parameter::read_ANGLERES(simulation::Parameter &param,
     if (block.read_buffer(m_block[blockname], false) == 0) {
         block_read.insert(blockname);
 
-        double K, tolerance;
-        int angrest;
+        double K = 0.0, tolerance = 0.0;
+        int angrest = 0;
         block.get_next_parameter("NTALR", angrest, "", "0,1,2,3");
         block.get_next_parameter("CALR", K, ">=0", "");
         block.get_next_parameter("VARES", param.angrest.virial, "", "0,1");
@@ -2115,8 +2112,8 @@ void io::In_Parameter::read_DIHEDRALRES(simulation::Parameter &param,
     if (block.read_buffer(m_block[blockname], false) == 0) {
         block_read.insert(blockname);
 
-        double phi_lin, K, tolerance;
-        int dihrest;
+        double phi_lin = 0.0, K = 0.0, tolerance = 0.0;
+        int dihrest = 0;
         block.get_next_parameter("NTDLR", dihrest, "", "0,1,2,3");
         block.get_next_parameter("CDLR", K, ">=0", "");
         block.get_next_parameter("PHILIN", phi_lin, ">0", "");
@@ -2212,7 +2209,7 @@ void io::In_Parameter::read_JVALUERES(simulation::Parameter &param,
     if (block.read_buffer(m_block[blockname], false) == 0) {
         block_read.insert(blockname);
 
-        int ntjvr;
+        int ntjvr = 0;
         block.get_next_parameter("NTJVR", ntjvr, "", "-3,-2,-1,0,1,2");
         block.get_next_parameter("NTJVRA", param.jvalue.read_av, "", "0,1");
         block.get_next_parameter("CJVR", param.jvalue.K, ">=0", "");
@@ -2296,7 +2293,7 @@ void io::In_Parameter::read_ORDERPARAMRES(simulation::Parameter &param,
     if (block.read_buffer(m_block[blockname], false) == 0) {
         block_read.insert(blockname);
 
-        int ntopr;
+        int ntopr = 0;
 
         block.get_next_parameter("NTOPR", ntopr, "", "-2,-1,0,1,2");
         block.get_next_parameter("NTOPRA", param.orderparamrest.read, "", "0,1");
@@ -2424,7 +2421,7 @@ void io::In_Parameter::read_RDCRES(simulation::Parameter &param,
         //set at develop flag
         param.setDevelop("RDC restraining is under development!");
 
-        int ntrdcr, ntrdct, method;
+        int ntrdcr = 0, ntrdct = 0, method = 0;
         block.get_next_parameter("NTRDCR", ntrdcr, "", "-4,-3,-2,-1,0,1,2");
         block.get_next_parameter("NTRDCRA", param.rdc.read_av, "", "0,1");
         block.get_next_parameter("NTRDCT", ntrdct, "", "0,1,2");
@@ -2583,7 +2580,7 @@ void io::In_Parameter::read_PERSCALE(simulation::Parameter &param,
         block_read.insert(blockname);
 
         std::string s1;
-        int read;
+        int read = 0;
         block.get_next_parameter("RESTYPE", s1, "", "off, 0, jrest, 1");
         block.get_next_parameter("KDIH", param.pscale.KDIH, ">=0", "");
         block.get_next_parameter("KJ", param.pscale.KJ, ">=0", "");
@@ -2644,7 +2641,7 @@ void io::In_Parameter::read_ROTTRANS(simulation::Parameter &param,
     if (block.read_buffer(m_block[blockname], false) == 0) {
         block_read.insert(blockname);
 
-        int rtc;
+        int rtc = 0;
         block.get_next_parameter("RTC", rtc, "", "0,1");
         block.get_next_parameter("RTCLAST", param.rottrans.last, ">0", "");
 
@@ -2698,7 +2695,7 @@ void io::In_Parameter::read_INNERLOOP(simulation::Parameter &param,
     if (block.read_buffer(m_block[blockname], false) == 0) {
         block_read.insert(blockname);
 
-        int method, solvent;
+        int method = 0, solvent = 0;
         block.get_next_parameter("NTILM", method, "", "0,1,2,3,4");
         block.get_next_parameter("NTILS", solvent, "", "0,1");
 
@@ -2768,32 +2765,25 @@ void io::In_Parameter::read_INNERLOOP(simulation::Parameter &param,
         if (param.innerloop.method == simulation::sla_cuda) {
             block.get_next_parameter("NGPUS", param.innerloop.number_gpus, ">0", "");
 
-            if (!block.error()) {
-                unsigned int temp;
-                bool fail = false;
-                for (unsigned int i = 0; i < param.innerloop.number_gpus; i++) {
-                    std::string idx=io::to_string(i);
-                    block.get_next_parameter("NDEVG["+idx+"]", temp, ">=0", "", true);
-                    if (block.error()) {
-                        fail = true;
-                        break;
-                    }
-                    param.innerloop.gpu_device_number.push_back(temp);
+            int temp = 0;
+            bool fail = false;
+            for (unsigned int i = 0; i < param.innerloop.number_gpus; i++) {
+                std::string idx=io::to_string(i);
+                if (block.get_next_parameter("NDEVG["+idx+"]", temp, ">=-1", "", true)) {
+                    fail = true;
+                    break;
                 }
-                if (fail) {
-                    // if not enough device numbers are given, set all numibers to -1
-                    // and do not report this as an error
-                    param.innerloop.gpu_device_number.clear();
-                    param.innerloop.gpu_device_number.resize(param.innerloop.number_gpus, -1);
-                    io::messages.add("CUDA driver will determine devices for nonbonded interaction evaluation.",
-                                     "In_Parameter", io::message::notice);
-                    block.reset_error();
-                }
+                param.innerloop.gpu_device_number.push_back(temp);
             }
-        } else {
-            // we don't care if there is a value for NGPUS even if we do not need it
-            int tmp;
-            block.get_next_parameter("NGPUS", tmp, "", "");
+            if (fail) {
+                // if not enough device numbers are given, set all numibers to -1
+                // and do not report this as an error
+                param.innerloop.gpu_device_number.clear();
+                param.innerloop.gpu_device_number.resize(param.innerloop.number_gpus, -1);
+                io::messages.add("CUDA driver will determine devices for nonbonded interaction evaluation.",
+                                    "In_Parameter", io::message::notice);
+                block.reset_error();
+            }
         }
         block.get_final_messages();
     }
@@ -2877,7 +2867,7 @@ void io::In_Parameter::read_REPLICA(simulation::Parameter &param,
             block.get_next_parameter("RET["+idx+"]", param.replica.temperature[i], ">=0", "");
         }
 
-        int scale;
+        int scale = 0;
         block.get_next_parameter("LRESCALE", scale, "", "0,1");
         switch (scale) {
             case 0:
@@ -3045,8 +3035,8 @@ void io::In_Parameter::read_REPLICA_EDS(simulation::Parameter &param, std::ostre
 
         DEBUG(2, "REPLICA_EDS BLOCK: reading Block an translating to vars");
         //init_vars
-        unsigned int reeds_control, num_s, num_states, num_eoff=0;
-        unsigned int ntrials, nEquilibrate, cont_run, eds_stat_out=0;
+        unsigned int reeds_control = 0, num_s = 0, num_states = 0, num_eoff=0;
+        unsigned int ntrials = 0, nEquilibrate = 0, cont_run = 0, eds_stat_out=0;
         bool periodic=1;
 
         // GET BLOCKVARS
@@ -3309,8 +3299,8 @@ void io::In_Parameter::read_MULTICELL(simulation::Parameter & param,
 
         param.setDevelop("MULTICELL is under development.");
 
-        int ntm;
-        double tolpx, tolpv, tolpf, tolpfw;
+        int ntm = 0;
+        double tolpx = 0.0, tolpv = 0.0, tolpf = 0.0, tolpfw = 0.0;
         block.get_next_parameter("NTM", ntm, "", "0,1");
         block.get_next_parameter("NCELLA", param.multicell.x, ">=1", "");
         block.get_next_parameter("NCELLB", param.multicell.y, ">=1", "");
@@ -3395,7 +3385,7 @@ void io::In_Parameter::read_READTRAJ(simulation::Parameter & param,
     if (block.read_buffer(m_block[blockname], false) == 0) {
         block_read.insert(blockname);
 
-        int ntrd, ntrb, ntshk;
+        int ntrd = 0, ntrb = 0, ntshk = 0;
         block.get_next_parameter("NTRD", ntrd, "", "0,1");
         block.get_next_parameter("NTSTR", param.analyze.stride, "", "");
         block.get_next_parameter("NTRB", ntrb, "", "1");
@@ -3471,7 +3461,7 @@ void io::In_Parameter::read_INTEGRATE(simulation::Parameter & param,
     if (block.read_buffer(m_block[blockname], false) == 0) {
         block_read.insert(blockname);
 
-        int nint;
+        int nint = 0;
         block.get_next_parameter("NINT", nint, "", "0,1");
 
         switch (nint) {
@@ -3607,7 +3597,7 @@ void io::In_Parameter::read_MULTISTEP(simulation::Parameter & param,
     if (block.read_buffer(m_block[blockname], false) == 0) {
         block_read.insert(blockname);
 
-        int boost;
+        int boost = 0;
         block.get_next_parameter("STEPS", param.multistep.steps, ">=0", "");
         block.get_next_parameter("BOOST", boost, "", "0,1");
 
@@ -3649,7 +3639,7 @@ void io::In_Parameter::read_CHEMICALMONTECARLO(simulation::Parameter & param,
     if (block.read_buffer(m_block[blockname], false) == 0) {
         block_read.insert(blockname);
 
-        int mc;
+        int mc = 0;
         block.get_next_parameter("MC", mc, "", "0,1");
         block.get_next_parameter("MCSTEPS", param.montecarlo.steps, ">=0", "");
         block.get_next_parameter("MCDLAM", param.montecarlo.dlambda, ">=0", "");
@@ -3710,7 +3700,7 @@ void io::In_Parameter::read_POLARISE(simulation::Parameter & param,
     if (block.read_buffer(m_block[blockname], false) == 0) {
         block_read.insert(blockname);
 
-        int cos, damp, efield;
+        int cos = 0, damp = 0, efield = 0;
         block.get_next_parameter("COS", cos, "", "0,1,2");
         block.get_next_parameter("EFIELD", efield, "", "0,1");
         block.get_next_parameter("MINFIELD", param.polarise.minfield, ">0.0", "");
@@ -3802,7 +3792,7 @@ void io::In_Parameter::read_RANDOMNUMBERS(simulation::Parameter & param,
     if (block.read_buffer(m_block[blockname], false) == 0) {
         block_read.insert(blockname);
 
-        int rng;
+        int rng = 0;
         block.get_next_parameter("NTRNG", rng, "", "0,1");
         block.get_next_parameter("NTGSL", param.rng.gsl_rng, ">=0", "-1");
 
@@ -3881,8 +3871,8 @@ void io::In_Parameter::read_EDS(simulation::Parameter & param,
     if (block.read_buffer(m_block[blockname], false) == 0) {
         block_read.insert(blockname);
 
-        int eds, form;
-        double soft_lj, soft_crf;
+        int eds = 0, form = 0;
+        double soft_lj = 0.0, soft_crf = 0.0;
         block.get_next_parameter("EDS", eds, "", "0,1");
         block.get_next_parameter("ALPHLJ", soft_lj, ">=0", "");
         block.get_next_parameter("ALPHC", soft_crf, ">=0", "");
@@ -4017,8 +4007,8 @@ void io::In_Parameter::read_AEDS(simulation::Parameter & param,
   if (block.read_buffer(m_block[blockname], false) == 0) {
     block_read.insert(blockname);
 
-    int aeds, form;
-    double soft_lj, soft_crf;
+    int aeds = 0, form = 0;
+    double soft_lj = 0.0, soft_crf = 0.0;
     block.get_next_parameter("AEDS", aeds, "", "0,1");
     block.get_next_parameter("ALPHLJ", soft_lj, ">=0", "");
     block.get_next_parameter("ALPHC", soft_crf, ">=0", "");
@@ -4089,7 +4079,7 @@ void io::In_Parameter::read_AEDS(simulation::Parameter & param,
       block.get_next_parameter("EIR[" + idx + "]", param.eds.eir[i], "", "");
     }
 
-    int ntia, restremin;
+    int ntia = 0, restremin = 0;
     block.get_next_parameter("NTIAEDSS",ntia, "", "0,1");
     switch (ntia) {
     case 0:
@@ -4175,8 +4165,8 @@ void io::In_Parameter::read_LAMBDAS(simulation::Parameter & param,
 
         std::string nm;
         simulation::interaction_lambda_enum j;
-        int n1, n2;
-        double a, b, c, d, e;
+        int n1 = 0, n2 = 0;
+        double a = 0.0, b = 0.0, c = 0.0, d = 0.0, e = 0.0;
         block.get_next_parameter("NTIL", nm, "", "on,off,1,0");
         DEBUG(10, "read NTIL " << nm);
 
@@ -4412,7 +4402,7 @@ void io::In_Parameter::read_NONBONDED(simulation::Parameter & param,
     if (block.read_buffer(m_block[blockname], true) == 0) {
         block_read.insert(blockname);
 
-        int method, ls_calculate_a2;
+        int method = 0, ls_calculate_a2 = 0;
 
         block.get_next_parameter("NLRELE", method, "", "-1,0,1,2,3");
         block.get_next_parameter("APPAK", param.nonbonded.rf_kappa, ">=0", "");
@@ -4583,7 +4573,7 @@ void io::In_Parameter::read_SASA(simulation::Parameter & param, std::ostream & o
     if (block.read_buffer(m_block[blockname], false) == 0) {
         block_read.insert(blockname);
 
-        int switch_sasa, switch_volume;
+        int switch_sasa = 0, switch_volume = 0;
         block.get_next_parameter("NTSASA", switch_sasa, "", "0,1");
         block.get_next_parameter("NTVOL", switch_volume, "", "0,1");
         block.get_next_parameter("P_12", param.sasa.p_12, ">=0.0 && <=1.0", "");
@@ -4671,7 +4661,7 @@ void io::In_Parameter::read_LOCALELEV(simulation::Parameter & param,
     if (block.read_buffer(m_block[blockname], false) == 0) {
         block_read.insert(blockname);
 
-        int onoff, num, read;
+        int onoff = 0, num = 0, read = 0;
         block.get_next_parameter("NTLES", onoff, "", "0,1");
         block.get_next_parameter("NLEPOT", num, ">=0", "");
         block.get_next_parameter("NTLESA", read, "", "1,2");
@@ -4701,7 +4691,7 @@ void io::In_Parameter::read_LOCALELEV(simulation::Parameter & param,
 
         // read the umbrellas
         for (int i = 0; i < num; ++i) {
-            int id, f;
+            int id = 0, f = 0;
             block.get_next_parameter("NLEPID", id, ">=1", "");
             block.get_next_parameter("NTLEPFR", f, "", "0,1");
             if (block.error()) {
@@ -4758,7 +4748,7 @@ void io::In_Parameter::read_BSLEUS(simulation::Parameter& param, std::ostream& o
     if (block.read_buffer(m_block[blockname], false) == 0) {
         block_read.insert(blockname);
 
-        int use_bsleus, build;
+        int use_bsleus = 0, build = 0;
         block.get_next_parameter("BSLEUS", use_bsleus, "", "0,1");
         block.get_next_parameter("BUILD", build, "", "0,1");
         block.get_next_parameter("WRITE", param.bsleus.write, ">=0", "");
@@ -4825,7 +4815,7 @@ void io::In_Parameter::read_ELECTRIC(simulation::Parameter & param,
     if (block.read_buffer(m_block[blockname], false) == 0) {
         block_read.insert(blockname);
 
-        int field, dipole, current, ncurgrp;
+        int field = 0, dipole = 0, current = 0, ncurgrp = 0;
         block.get_next_parameter("FIELD", field, "", "0,1");
         block.get_next_parameter("DIPOLE", dipole, "", "0,1");
         block.get_next_parameter("CURRENT", current, "", "0,1");
@@ -4835,7 +4825,7 @@ void io::In_Parameter::read_ELECTRIC(simulation::Parameter & param,
         block.get_next_parameter("DIPGRP", param.electric.dip_groups, "", "0,1,2");
         block.get_next_parameter("NTWDIP", param.electric.dip_write, ">=0", "");
         block.get_next_parameter("NTWCUR", param.electric.cur_write, ">=0", "");
-        block.get_next_parameter("NCURGRP", ncurgrp, ">0", "");
+        block.get_next_parameter("NCURGRP", ncurgrp, ">=0", "");
 
         switch (field) {
             case 0:
@@ -4897,7 +4887,7 @@ void io::In_Parameter::read_ELECTRIC(simulation::Parameter & param,
 
         if (param.electric.current != false) {
             // TO READ THE ELECTRIC GROUPS
-            unsigned int temp;
+            unsigned int temp = 0;
             for (unsigned int i = 0; i < param.electric.cur_groups; i++) {
                 std::string idx = io::to_string(i);
                 block.get_next_parameter("CURGRP["+idx+"]", temp, ">0", "");
@@ -4951,7 +4941,7 @@ void io::In_Parameter::read_NEMD(simulation::Parameter & param,
         block_read.insert(blockname);
         param.setDevelop("NEMD is under development.");
 
-        int nemd, method;
+        int nemd = 0, method = 0;
         block.get_next_parameter("NEMD", nemd, "", "0,1");
         block.get_next_parameter("PROPERTY", param.nemd.property, "", "0");
         block.get_next_parameter("METHOD", method, "", "0,1");
@@ -5052,7 +5042,7 @@ void io::In_Parameter::read_MULTIGRADIENT(simulation::Parameter & param,
     if (block.read_buffer(m_block[blockname], false) == 0) {
         block_read.insert(blockname);
 
-        int enable, plot, num;
+        int enable = 0, plot = 0, num = 0;
         block.get_next_parameter("NTMGRE", enable, "", "0,1");
         block.get_next_parameter("NTMGRP", plot, "", "0,1,2,3");
         block.get_next_parameter("NTMGRN", num, ">=0", "");
@@ -5096,7 +5086,7 @@ void io::In_Parameter::read_MULTIGRADIENT(simulation::Parameter & param,
 
         // read the gradient
         for(int i = 0; i < num; ++i) {
-            int funct_form, num_p;
+            int funct_form = 0, num_p = 0;
             std::string var;
             block.get_next_parameter("MGRVAR", var, "", "");
             block.get_next_parameter("MGRFRM", funct_form, "", "0,1,2,3");
@@ -5109,7 +5099,7 @@ void io::In_Parameter::read_MULTIGRADIENT(simulation::Parameter & param,
 
             std::vector<std::pair<double, double> > points;
             for(int p = 0; p < num_p; ++p) {
-                double t, v;
+                double t = 0.0, v = 0.0;
                 block.get_next_parameter("MGRCPT", t, ">=0", "");
                 block.get_next_parameter("MGRCPV", v, "", "");
                 if (block.error()) return;
@@ -5164,8 +5154,8 @@ void io::In_Parameter::read_ADDECOUPLE(simulation::Parameter & param,
     if (block.read_buffer(m_block[blockname], false) == 0) {
         block_read.insert(blockname);
 
-        unsigned int adstart, eg, tg=0, adend, tir;
-        double sm, sv, st;
+        unsigned int adstart = 0, eg = 0, tg = 0, adend = 0, tir = 0;
+        double sm = 0.0, sv = 0.0, st = 0.0;
 
         block.get_next_parameter("ADGR", param.addecouple.adgr, "=>0", "");
 
@@ -5189,7 +5179,7 @@ void io::In_Parameter::read_ADDECOUPLE(simulation::Parameter & param,
 
             //check whether the group is also a temperature group
             if (param.multibath.couple) {
-                int addc_bath_index;
+                int addc_bath_index = 0;
                 if (param.multibath.multibath.bath_index().size() < param.addecouple.adgr && st != 1)
                     io::messages.add("ADDECOUPLE block: sT bigger 1, but temperature group and adiabatic decouling group not equivalent",
                                      "In_Parameter", io::message::error);
@@ -5291,12 +5281,15 @@ void io::In_Parameter::read_QMMM(simulation::Parameter & param,
     exampleblock << "#    1: apply mechanical embedding scheme with dynamic QM charges\n";
     exampleblock << "#    2: apply electrostatic embedding scheme\n";
     exampleblock << "#    3: apply polarisable embedding scheme\n";
-    exampleblock << "# NTQMSW 0..4 QM software package to use\n";
+    exampleblock << "# NTQMSW 0..5 QM software package to use\n";
     exampleblock << "#    0: MNDO\n";
     exampleblock << "#    1: Turbomole\n";
     exampleblock << "#    2: DFTB\n";
     exampleblock << "#    3: MOPAC\n";
     exampleblock << "#    4: Gaussian\n";
+    exampleblock << "#    5: Schnetpack NN\n";
+    exampleblock << "#    6: Orca\n";
+    exampleblock << "#    7: XTB\n";
     exampleblock << "# RCUTQM: ABS(RCUTQM): cutoff for inclusion of MM atoms in QM calculation\n";
     exampleblock << "#         (ignored for NTQMMM = 1)\n";
     exampleblock << "#     0.0: include all atoms\n";
@@ -5325,98 +5318,122 @@ void io::In_Parameter::read_QMMM(simulation::Parameter & param,
     if (block.read_buffer(m_block[blockname], false) == 0) {
         block_read.insert(blockname);
 
+        int enable = 0,software = 0,write = 0,qmlj = 0,qmcon = 0;
+        double mm_scale = -1.;
+        double cutoff = 0.0;
+        block.get_next_parameter("NTQMMM", enable, "", "-1,0,1,2,3");
+        block.get_next_parameter("NTQMSW", software, "", "0,1,2,3,4,5,6,7");
+        block.get_next_parameter("RCUTQM", cutoff, "", "");
+        block.get_next_parameter("NTWQMMM", write, ">=0", "");
+        block.get_next_parameter("QMLJ", qmlj, "", "0,1");
+        block.get_next_parameter("QMCON", qmcon, "", "0,1");
+        block.get_next_parameter("MMSCALE", mm_scale, ">=0.0 || <0.0", "", true);
 
-    int enable,software,write,qmlj,qmcon;
-    double mm_scale = -1.;
-    double cutoff;
-    block.get_next_parameter("NTQMMM", enable, "", "-1,0,1,2,3");
-    block.get_next_parameter("NTQMSW", software, "", "0,1,2,3,4");
-    block.get_next_parameter("RCUTQM", cutoff, "", "");
-    block.get_next_parameter("NTWQMMM", write, ">=0", "");
-    block.get_next_parameter("QMLJ", qmlj, "", "0,1");
-    block.get_next_parameter("QMCON", qmcon, "", "0,1");
-    block.get_next_parameter("MMSCALE", mm_scale, ">=0.0 || <0.0", "", true);
+        if (block.error()) {
+            block.get_final_messages();
+            return;
+        }
+        switch(enable) {
+            case 0:
+                param.qmmm.qmmm = simulation::qmmm_off;
+                break;
+            case -1:
+                param.qmmm.qmmm = simulation::qmmm_mechanical;
+                param.qmmm.qm_ch = simulation::qm_ch_constant;
+                break;
+            case 1:
+                param.qmmm.qmmm = simulation::qmmm_mechanical;
+                param.qmmm.qm_ch = simulation::qm_ch_dynamic;
+                break;
+            case 2:
+                param.qmmm.qmmm = simulation::qmmm_electrostatic;
+                break;
+            case 3:
+                param.qmmm.qmmm = simulation::qmmm_polarisable;
+                break;
+            default:
+                break;
+        }
 
-    if (block.error()) {
+        switch (software) {
+            case 0:
+                param.qmmm.software = simulation::qm_mndo;
+                break;
+            case 1:
+                param.qmmm.software = simulation::qm_turbomole;
+                break;
+            case 2:
+                param.qmmm.software = simulation::qm_dftb;
+                break;
+            case 3:
+                param.qmmm.software = simulation::qm_mopac;
+                break;
+            case 4:
+                param.qmmm.software = simulation::qm_gaussian;
+                break;
+            case 5:
+#ifdef HAVE_PYBIND11
+            param.qmmm.software = simulation::qm_nn;
+#else
+            io::messages.add("QMMM block: Schnetpack NN interface is not available "
+                                "in your compilation. Use --enable-schnetpack for compiling.",
+                                "In_Parameter", io::message::error);
+#endif
+            break;
+        case 6:
+            param.qmmm.software = simulation::qm_orca;
+            break;
+        case 7:
+#ifdef WITH_XTB
+            param.qmmm.software = simulation::qm_xtb;
+#else       
+            io::messages.add("QMMM block: XTB interface is not available "
+                                "in your compilation. Use --with-xtb=PATH/TO/XTB for compiling.",
+                                "In_Parameter", io::message::error);   
+#endif
+            break;
+        default:
+            break;
+    }
+
+        switch (qmlj) {
+            case 0:
+                param.qmmm.qm_lj = simulation::qm_lj_off;
+                break;
+            case 1:
+                param.qmmm.qm_lj = simulation::qm_lj_on;
+                break;
+            default:
+                break;
+        }
+
+        switch (qmcon) {
+            case 0:
+                param.qmmm.qm_constraint = simulation::qm_constr_off;
+                break;
+            case 1:
+                param.qmmm.qm_constraint = simulation::qm_constr_on;
+                break;
+            default:
+                break;
+        }
+
+        param.qmmm.mm_scale = mm_scale;
+        if (cutoff < 0.0)
+            param.qmmm.atomic_cutoff = true;
+        param.qmmm.cutoff = fabs(cutoff);
+        param.qmmm.write = write;
+        if (param.qmmm.qmmm != simulation::qmmm_mechanical && param.qmmm.software == simulation::qm_nn)
+            io::messages.add("QMMM block: Schnetpack NN works only with mechanical embedding scheme",
+                "io::In_Parameter",
+                io::message::error);
+        if (param.qmmm.qmmm == simulation::qmmm_mechanical && param.qmmm.cutoff != 0.0)
+            io::messages.add("QMMM block: RCUTQM > 0.0 has no effect for mechanical embedding scheme",
+                "In_Parameter",
+                io::message::warning);
+
         block.get_final_messages();
-        return;
-    }
-    switch(enable) {
-        case 0:
-            param.qmmm.qmmm = simulation::qmmm_off;
-            break;
-        case -1:
-            param.qmmm.qmmm = simulation::qmmm_mechanical;
-            param.qmmm.qm_ch = simulation::qm_ch_constant;
-            break;
-        case 1:
-            param.qmmm.qmmm = simulation::qmmm_mechanical;
-            param.qmmm.qm_ch = simulation::qm_ch_dynamic;
-            break;
-        case 2:
-            param.qmmm.qmmm = simulation::qmmm_electrostatic;
-            break;
-        case 3:
-            param.qmmm.qmmm = simulation::qmmm_polarisable;
-            break;
-        default:
-            break;
-    }
-
-    switch (software) {
-        case 0:
-            param.qmmm.software = simulation::qm_mndo;
-            break;
-        case 1:
-            param.qmmm.software = simulation::qm_turbomole;
-            break;
-        case 2:
-            param.qmmm.software = simulation::qm_dftb;
-            break;
-        case 3:
-            param.qmmm.software = simulation::qm_mopac;
-            break;
-        case 4:
-            param.qmmm.software = simulation::qm_gaussian;
-            break;
-        default:
-            break;
-    }
-
-    switch (qmlj) {
-        case 0:
-            param.qmmm.qm_lj = simulation::qm_lj_off;
-            break;
-        case 1:
-            param.qmmm.qm_lj = simulation::qm_lj_on;
-            break;
-        default:
-            break;
-    }
-
-    switch (qmcon) {
-        case 0:
-            param.qmmm.qm_constraint = simulation::qm_constr_off;
-            break;
-        case 1:
-            param.qmmm.qm_constraint = simulation::qm_constr_on;
-            break;
-        default:
-            break;
-    }
-
-    param.qmmm.mm_scale = mm_scale;
-    if (cutoff < 0.0)
-        param.qmmm.atomic_cutoff = true;
-    param.qmmm.cutoff = fabs(cutoff);
-    param.qmmm.write = write;
-    if (param.qmmm.qmmm == simulation::qmmm_mechanical && param.qmmm.cutoff != 0.0)
-        io::messages.add("QMMM block: RCUTQM > 0.0 has no effect for mechanical embedding scheme",
-            "io::In_Parameter",
-            io::message::warning);
-
-    block.get_final_messages();
-    }     // if block
+        }     // if block
 } // QMMM
 
 // two helper data types to simply unsupported block handling
@@ -5557,7 +5574,7 @@ void io::In_Parameter::read_SYMRES(simulation::Parameter & param,
     if (block.read_buffer(m_block[blockname], false) == 0) {
         block_read.insert(blockname);
 
-        int enable;
+        int enable = 0;
         block.get_next_parameter("NTSYM", enable, "", "0,1,2");
         block.get_next_parameter("CSYM", param.symrest.force_constant, ">=0", "");
 
@@ -5609,21 +5626,21 @@ void io::In_Parameter::read_AMBER(simulation::Parameter & param,
     _lineStream.clear();
     _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
 
-    bool amber;
-    double factor;
+    int amber = 0;
+    double factor = 0.0;
     _lineStream >> amber >> factor;
 
-    if (_lineStream.fail()) { //TODO: Check for real reason why is crashing
-      io::messages.add("Bad line in AMBER block MAAAAAN.",
+    if (_lineStream.fail()) {
+      io::messages.add("Bad line in AMBER block.",
                     "In_Parameter", io::message::error);
       return;
     }
 
-    if (amber > 1 || amber < 0) {
+    if (amber != 1 && amber != 0) {
       io::messages.add("AMBER block: AMBER must be 0 or 1",
                     "In_Parameter", io::message::error);
     }
-    param.amber.amber = amber;
+    param.amber.amber = (bool)amber;
 
     if (factor < 0.0) {
       io::messages.add("AMBER block: AMBSCAL must be >= 0.0",
@@ -5632,8 +5649,87 @@ void io::In_Parameter::read_AMBER(simulation::Parameter & param,
     } else if (factor > 0.0) {
       param.amber.coulomb_scaling = 1.0 / factor;
     } else {
-      param.amber.coulomb_scaling = 0.0;
+      param.amber.coulomb_scaling = 1.0;
     }
   } // if block
 
 } // AMBER
+
+/**
+ * @section dfunct DFUNCT block
+ * @snippet snippets/snippets.cc DFUNCT
+
+ */
+void io::In_Parameter::read_DFUNCT(simulation::Parameter & param, std::ostream & os ) {
+    DEBUG(8, "read DFUNCT");
+
+    std::stringstream exampleblock;
+    // lines starting with 'exampleblock<<"' and ending with '\n";' (spaces don't matter)
+    // will be used to generate snippets that can be included in the doxygen doc;
+    // the first line is the tag
+    exampleblock << "DFUNCT\n";
+    exampleblock << "# DFUNCT 0..2 apply DFUNCT\n";
+    exampleblock << "#    0: do not apply DFUNCT\n";
+    exampleblock << "#    1: apply DFUNCT to restrain substitution-type geometry\n";
+    exampleblock << "#    2: apply DFUNCT to restrain cycloaddition-type geometry\n";
+    exampleblock << "# DATOMI 1..N Index of first atom to restrain\n";
+    exampleblock << "# DATOMJ 1..N Index of second atom to restrain\n";
+    exampleblock << "# DATOMK 1..N Index of third atom to restrain\n";
+    exampleblock << "# DATOML 1..N Index of fourth atom to restrain\n";
+    exampleblock << "# DTARG >= 0 Combined distance r_0 to target\n";
+    exampleblock << "# DFUNCD: Add or subtract atomic distances (ignored for cycloaddition-type potentials)\n";
+    exampleblock << "#     1: add R_kl to R_ij\n";
+    exampleblock << "#    -1: subtract R_kl from R_ij\n";
+    exampleblock << "# DFFORC >= 0 Force constant to restrain distance\n";
+    exampleblock << "#\n";
+    exampleblock << "# DFUNCT  DATOMI  DATOMJ  DATOMK  DATOML  DFTARG  DFUNCD  DFFORC\n";
+    exampleblock << "       1       1       2       3       4     0.0      -1   20000\n";
+    exampleblock << "END\n";
+
+    std::string blockname = "DFUNCT";
+    Block block (blockname, exampleblock.str());
+    if (block.read_buffer(m_block[blockname], false) == 0) {
+        block_read.insert(blockname);
+
+        int dfunct, atom_i = 0, atom_j = 0, atom_k = 0, atom_l = 0;
+        double d = 0.0, r_0 = 0.0, force = 0.0;
+
+        block.get_next_parameter("DFUNCT", dfunct, "", "0,1,2");
+        block.get_next_parameter("DATOMI", atom_i, ">0", "");
+        block.get_next_parameter("DATOMJ", atom_j, ">0", "");
+        block.get_next_parameter("DATOMK", atom_k, ">0", "");
+        block.get_next_parameter("DATOML", atom_l, ">0", "");
+        block.get_next_parameter("DFTARG", r_0, "", "");
+        block.get_next_parameter("DFUNCD", d, ">0.0 || <0.0", "");
+        block.get_next_parameter("DFFORC", force, ">0", "");
+
+        if (block.error()) {
+          block.get_final_messages();
+          return;
+        }
+
+        switch (dfunct) {
+          case 0:
+              param.dfunct.dfunct = simulation::dfunct_off;
+              break;
+          case 1:
+              param.dfunct.dfunct = simulation::dfunct_substitution;
+              break;
+          case 2:
+              param.dfunct.dfunct = simulation::dfunct_cycloaddition;
+              break;
+          default:
+              break;
+        }
+
+        param.dfunct.atom_i = (atom_i - 1);
+        param.dfunct.atom_j = (atom_j - 1);
+        param.dfunct.atom_k = (atom_k - 1);
+        param.dfunct.atom_l = (atom_l - 1);
+        param.dfunct.r_0 = r_0;
+        param.dfunct.d = d;
+        param.dfunct.force = force;
+
+        block.get_final_messages();
+    } // if block
+} // DFUNCT

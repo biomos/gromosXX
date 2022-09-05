@@ -47,9 +47,9 @@ static int _calculate_dihedral_restraint_interactions(topology::Topology &topo,
   math::VArray &pos = conf.current().pos;
   math::VArray &force = conf.current().force;
   math::Vec rij, rkj, rkl, rlj, rmj, rnk, fi, fj, fk, fl;
-  double dkj2, dkj, dmj2, dmj, dnk2, dnk, ip, phi;
-  double lower_bound, upper_bound;
-  double energy, f;
+  double dkj2 = 0.0, dkj = 0.0, dmj2 = 0.0, dmj = 0.0, dnk2 = 0.0, dnk = 0.0, ip = 0.0, phi = 0.0;
+  double lower_bound = 0.0, upper_bound = 0.0;
+  double energy = 0.0, f = 0.0;
 
   math::Periodicity<B> periodicity(conf.current().box);
 
@@ -227,7 +227,7 @@ static void _init_dihres_data(topology::Topology &topo,
   math::VArray &pos = conf.current().pos;
 
   math::Vec rij, rkj, rkl, rmj, rnk;
-  double dkj2, dkj, dmj2, dmj, dnk2, dnk, ip, phi;
+  double dkj2 = 0.0, dkj = 0.0, dmj2 = 0.0, dmj = 0.0, dnk2 = 0.0, dnk = 0.0, ip = 0.0, phi = 0.0;
 
   for (std::vector<topology::dihedral_restraint_struct>::const_iterator
            it = topo.dihedral_restraints().begin(),

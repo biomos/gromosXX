@@ -44,36 +44,31 @@ void interaction::QM_Link::distribute_force(const math::Vec &qm_pos
                                           , math::Vec &mm_force) const
   {
   math::Vec r_mm_qm = mm_pos - qm_pos;
+  
+  // F_LQM = (1 - d_frac) * FL + d/d_QMMM^3 * (FL . r_MM-QM) * r_MM-QM
+  // F_LQM = d_frac * FL - d/d_QMMM^3 * (FL . r_MM-QM) * r_MM-QM
 
-  DEBUG(15, "QM pos: " << math::v2s(qm_pos));
-  DEBUG(15, "QM force: " << math::v2s(qm_force));
-  DEBUG(15, "MM pos: " << math::v2s(mm_pos));
-  DEBUG(15, "MM force: " << math::v2s(mm_force));
-  DEBUG(15, "r_mm_qm: " << math::v2s(r_mm_qm));
-  
-  double d_l_qm = math::abs(this->pos - qm_pos);
-  double d2_mm_qm = math::abs2(r_mm_qm);
-  double d_mm_qm = sqrt(d2_mm_qm);
-  double link_fraction = d_l_qm / d_mm_qm;
-  
-  math::Vec lr_r_d2 = r_mm_qm * link_fraction / d2_mm_qm;
-  DEBUG(15, "Force on capping atom: " << math::v2s(this->force));
-  for (unsigned i = 0; i < 3; ++i) {
-    DEBUG(15, "Coordinate " << i);
-    math::Vec a_qm(0.0);
-    math::Vec a_mm(0.0);
-    a_qm[i] = 1 - link_fraction;
-    DEBUG(15, "a_qm: " << math::v2s(a_qm));
-    a_mm[i] = link_fraction;
-    DEBUG(15, "a_mm: " << math::v2s(a_mm));
-    math::Vec b = (mm_pos(i) - qm_pos(i)) * lr_r_d2;
-    DEBUG(15, "a_qm + b: " << math::v2s(a_qm + b));
-    DEBUG(15, "a_mm - b: " << math::v2s(a_mm - b));
-    qm_force[i] += math::dot(this->force, a_qm + b);
-    mm_force[i] += math::dot(this->force, a_mm - b);
-    DEBUG(15, "Force[" << i << "] distributed to QM atom: " << math::dot(this->force, a_qm + b));
-    DEBUG(15, "Force[" << i << "] distributed to MM atom: " << math::dot(this->force, a_mm - b));
-  }
+  const double d_l_qm = math::abs(this->pos - qm_pos);
+  const double d2_mm_qm = math::abs2(r_mm_qm);
+  const double d_mm_qm = sqrt(d2_mm_qm);
+  const double d3_mm_qm = d2_mm_qm * d_mm_qm;
+  const double d_frac = d_l_qm / d_mm_qm;
+  const double d3_frac = d_l_qm / d3_mm_qm;
+
+  math::Vec l_qm_force = (1 - d_frac) * this->force;
+  math::Vec l_mm_force = d_frac * this->force;
+
+  const math::Vec b = d3_frac * math::dot(this->force, r_mm_qm) * r_mm_qm;
+
+  l_qm_force += b;
+  l_mm_force -= b;
+  DEBUG(15, "Force on the capping atom: " << math::v2s(this->force));
+  DEBUG(15, "Capping atom force distributed to QM atom: " << math::v2s(l_qm_force));
+  DEBUG(15, "Capping atom force distributed to MM atom: " << math::v2s(l_mm_force));
+
+  qm_force += l_qm_force;
+  mm_force += l_mm_force;
+
   // Zero capping atom force, as it has been distributed
   this->force = 0.0;
 }

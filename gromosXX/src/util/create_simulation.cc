@@ -52,10 +52,11 @@ int util::create_simulation(std::string topo,
 			    std::string distanceres,
 			    std::string angrest,
 			    std::string dihrest,
-                            std::string xray,
+          std::string xray,
+          std::string qmmm,
 			    std::string led,
 			    std::string lud,
-                            std::string order,
+          std::string order,
 			    bool quiet)
 {
 

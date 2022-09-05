@@ -29,9 +29,16 @@ namespace interaction {
     virtual ~MNDO_Worker() = default;
     /**
      * initialise the QM worker
+     * @param topo Topology
+     * @param conf Configuration
+     * @param sim Simulation
+     * @param qm_zone QM Zone
      * @return 0 if successful, non-zero on failure
      */
-    virtual int init(simulation::Simulation& sim);
+    virtual int init(const topology::Topology& topo
+                   , const configuration::Configuration& conf
+                   , simulation::Simulation& sim
+                   , const interaction::QM_Zone& qm_zone) override; 
 
   private:
     /**
@@ -46,23 +53,23 @@ namespace interaction {
      * @param sim Simulation
      * @param qm_zone QM Zone
      */
-    int write_input(const topology::Topology& topo
+    int process_input(const topology::Topology& topo
                   , const configuration::Configuration& conf
                   , const simulation::Simulation& sim
-                  , const interaction::QM_Zone& qm_zone);
+                  , const interaction::QM_Zone& qm_zone) override;
 
     /**
-     * System call
+     * System call - MNDO
      */
-    int system_call();
+    int run_calculation() override;
 
     /**
      * Read outputs
      */
-    int read_output(topology::Topology& topo
+    int process_output(topology::Topology& topo
                   , configuration::Configuration& conf
                   , simulation::Simulation& sim
-                  , interaction::QM_Zone& qm_zone);
+                  , interaction::QM_Zone& qm_zone) override;
 
     /**
      * Write QM atom
@@ -70,42 +77,42 @@ namespace interaction {
     void write_qm_atom(std::ofstream& inputfile_stream
                   , const int atomic_number
                   , const math::Vec& pos
-                  , const int opt_flag = 0);
+                  , const int opt_flag = 0) const;
 
     /**
      * Write MM atom
      */
     void write_mm_atom(std::ofstream& inputfile_stream
                       , const math::Vec& pos
-                      , const double charge);
+                      , const double charge) const;
 
     /**
      * Parse charges
      */
-    int parse_charges(std::ifstream& ofs, interaction::QM_Zone& qm_zone);
+    int parse_charges(std::ifstream& ofs, interaction::QM_Zone& qm_zone) const;
 
     /**
      * Parse coordinates
      */
-    int parse_coordinates(std::ifstream& ofs, interaction::QM_Zone& qm_zone);
+    int parse_coordinates(std::ifstream& ofs, interaction::QM_Zone& qm_zone) const;
 
     /**
      * Parse energy
      */
-    int parse_energy(std::ifstream& ofs, interaction::QM_Zone& qm_zone);
+    int parse_energy(std::ifstream& ofs, interaction::QM_Zone& qm_zone) const;
 
     /**
      * Parse gradients
      */
     int parse_gradients(const simulation::Simulation& sim
                       , std::ifstream& ofs
-                      , interaction::QM_Zone& qm_zone);
+                      , interaction::QM_Zone& qm_zone) const;
 
     /**
      * Parse gradient line
      */
     int parse_gradient(std::ifstream& ofs
-                     , math::Vec& force);
+                     , math::Vec& force) const;
   };
 }
 

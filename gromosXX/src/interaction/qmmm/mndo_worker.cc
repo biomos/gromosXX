@@ -32,7 +32,10 @@
 
 interaction::MNDO_Worker::MNDO_Worker() : QM_Worker("MNDO Worker"), param(nullptr) {};
 
-int interaction::MNDO_Worker::init(simulation::Simulation& sim) {
+int interaction::MNDO_Worker::init(const topology::Topology& topo
+                                 , const configuration::Configuration& conf
+                                 , simulation::Simulation& sim
+                                 , const interaction::QM_Zone& qm_zone) {
   // Get a pointer to simulation parameters
   this->param = &(sim.param().qmmm.mndo);
   QM_Worker::param = this->param;
@@ -154,23 +157,34 @@ int interaction::MNDO_Worker::init(simulation::Simulation& sim) {
   return 0;
 }
 
-int interaction::MNDO_Worker::write_input(const topology::Topology& topo
+int interaction::MNDO_Worker::process_input(const topology::Topology& topo
                                         , const configuration::Configuration& conf
                                         , const simulation::Simulation& sim
                                         , const interaction::QM_Zone& qm_zone)
   {
   std::ofstream ifs;
-  int err;
-  err = this->open_input(ifs, this->param->input_file);
+  int err = this->open_input(ifs, this->param->input_file);
   if (err) return err;
   std::string header(this->param->input_header);
   
   // Get number of links and replace
-  // *2 - include also linked QM atom
-  header = io::replace_string(header, "@@NUM_LINKS@@", std::to_string(qm_zone.link.size() * 2));
+  unsigned num_links = qm_zone.link.size();
+  // Include also linked QM atom - count them
+  std::stringstream link_atoms;
+  {
+    unsigned i = 1;
+    for (std::set<QM_Atom>::const_iterator
+          it = qm_zone.qm.begin(), to = qm_zone.qm.end(); it != to; ++it, ++i) {
+      if (it->is_linked) {
+        ++num_links;
+        link_atoms << i << " ";
+      }
+    }
+  }
+  header = io::replace_string(header, "@@NUM_LINKS@@", std::to_string(num_links));
   
   // Get number of MM charges and replace
-  unsigned num_charges = get_num_charges(sim, qm_zone);
+  unsigned num_charges = this->get_num_charges(sim, qm_zone);
   header = io::replace_string(header, "@@NUM_CHARGES@@", std::to_string(num_charges));
   header = io::replace_string(header, "@@CHARGE@@", std::to_string(qm_zone.charge()));
   header = io::replace_string(header, "@@SPINM@@", std::to_string(qm_zone.spin_mult()));
@@ -199,20 +213,8 @@ int interaction::MNDO_Worker::write_input(const topology::Topology& topo
   // Write termination line
   this->write_qm_atom(ifs, 0, math::Vec(0.0));
 
-  // Write capping atom indices
-  for (std::set<QM_Link>::const_iterator
-        it = qm_zone.link.begin(), to = qm_zone.link.end(); it != to; ++it) {
-    assert(qm_zone.qm.find(it->qm_index) != qm_zone.qm.end());
-    unsigned i = std::distance(qm_zone.qm.begin(), qm_zone.qm.find(it->qm_index)) + 1;
-    ifs << i << " ";
-  }
-  for (std::set<QM_Atom>::const_iterator
-        it = qm_zone.qm.begin(), to = qm_zone.qm.end(); it != to; ++it) {
-    if (it->is_linked) {
-      unsigned i = std::distance(qm_zone.qm.begin(), it) + 1;
-      ifs << i << " ";
-    }
-  }
+  // Write link atom indices to be excluded in QM-MM electrostatics
+  ifs << link_atoms.rdbuf();
   // Write capping atom indices - they are last in the geometry
   const unsigned qm_size = qm_zone.qm.size();
   const unsigned last_link = qm_zone.link.size() + qm_size;
@@ -238,7 +240,7 @@ int interaction::MNDO_Worker::write_input(const topology::Topology& topo
   return 0;
 }
 
-int interaction::MNDO_Worker::system_call() {
+int interaction::MNDO_Worker::run_calculation() {
   int err = util::system_call(this->param->binary + " < " + this->param->input_file
                                 + " 1> " + this->param->output_file + " 2>&1 ");
   if (err) {
@@ -252,13 +254,12 @@ int interaction::MNDO_Worker::system_call() {
   }
   return 0;
 }
-int interaction::MNDO_Worker::read_output(topology::Topology& topo
+int interaction::MNDO_Worker::process_output(topology::Topology& topo
                                         , configuration::Configuration& conf
                                         , simulation::Simulation& sim
                                         , interaction::QM_Zone& qm_zone) {
   std::ifstream ofs;
-  int err;
-  err = this->open_output(ofs, this->param->output_file);
+  int err = this->open_output(ofs, this->param->output_file);
   if (err) return err;
   
   if (sim.param().qmmm.qmmm == simulation::qmmm_mechanical
@@ -291,7 +292,7 @@ int interaction::MNDO_Worker::read_output(topology::Topology& topo
 void interaction::MNDO_Worker::write_qm_atom(std::ofstream& inputfile_stream
                                         , const int atomic_number
                                         , const math::Vec& pos
-                                        , const int opt_flag)
+                                        , const int opt_flag) const
   {
 /*
       a(1,i)    11-20  f10.5  First coordinate.
@@ -321,7 +322,7 @@ void interaction::MNDO_Worker::write_qm_atom(std::ofstream& inputfile_stream
 
 void interaction::MNDO_Worker::write_mm_atom(std::ofstream& inputfile_stream
                                         , const math::Vec& pos
-                                        , const double charge)
+                                        , const double charge) const
   {
     /*
       cm(1,m)    1-12  f12.7  x coordinate.
@@ -337,7 +338,7 @@ void interaction::MNDO_Worker::write_mm_atom(std::ofstream& inputfile_stream
                    << std::endl;
 }
 
-int interaction::MNDO_Worker::parse_charges(std::ifstream& ofs, interaction::QM_Zone& qm_zone) {
+int interaction::MNDO_Worker::parse_charges(std::ifstream& ofs, interaction::QM_Zone& qm_zone) const {
   std::string& out = this->param->output_file;
   std::string line;
   /**
@@ -405,7 +406,7 @@ int interaction::MNDO_Worker::parse_charges(std::ifstream& ofs, interaction::QM_
   return 0;
 }
 
-int interaction::MNDO_Worker::parse_coordinates(std::ifstream& ofs, interaction::QM_Zone& qm_zone) {
+int interaction::MNDO_Worker::parse_coordinates(std::ifstream& ofs, interaction::QM_Zone& qm_zone) const {
   std::string& out_grad = this->param->output_gradient_file;
   std::string line;
   bool got_coordinates = false;
@@ -422,7 +423,7 @@ int interaction::MNDO_Worker::parse_coordinates(std::ifstream& ofs, interaction:
     return 1;
   }
   // Parse coordinates lines
-  int dummy;
+  int dummy = 0;
   for(std::set<QM_Atom>::iterator
       it = qm_zone.qm.begin(), to = qm_zone.qm.end(); it != to; ++it) {
     if(!std::getline(ofs, line)) {
@@ -467,7 +468,7 @@ int interaction::MNDO_Worker::parse_coordinates(std::ifstream& ofs, interaction:
   return 0;
 }
 
-int interaction::MNDO_Worker::parse_energy(std::ifstream& ofs, interaction::QM_Zone& qm_zone) {
+int interaction::MNDO_Worker::parse_energy(std::ifstream& ofs, interaction::QM_Zone& qm_zone) const {
   std::string line;
   // Find energy block
   bool got_energy = false;
@@ -497,10 +498,10 @@ int interaction::MNDO_Worker::parse_energy(std::ifstream& ofs, interaction::QM_Z
 
 int interaction::MNDO_Worker::parse_gradients(const simulation::Simulation& sim
                                             , std::ifstream& ofs
-                                            , interaction::QM_Zone& qm_zone) {
+                                            , interaction::QM_Zone& qm_zone) const {
   std::string& out_grad = this->param->output_gradient_file;
   std::string line;
-  int err;
+  int err = 0;
   
   {
     // Find QM gradients
@@ -581,7 +582,7 @@ int interaction::MNDO_Worker::parse_gradients(const simulation::Simulation& sim
 }
 
 int interaction::MNDO_Worker::parse_gradient(std::ifstream& ofs,
-                                             math::Vec& force) {
+                                             math::Vec& force) const {
   std::string line;
   if (!std::getline(ofs, line)) {
     std::ostringstream msg;
@@ -591,7 +592,7 @@ int interaction::MNDO_Worker::parse_gradient(std::ifstream& ofs,
     return 1;
   }
   std::istringstream iss(line);
-  int dummy;
+  int dummy = 0;
   iss >> dummy >> dummy >> force(0) >> force(1) >> force(2);
   if (ofs.fail()) {
     std::ostringstream msg;

@@ -47,8 +47,6 @@ aladip_ls_t_SOURCES = aladip_ls.t.cc\
   check_state.cc
 aladip_ls_t_LDADD = ../libmdpp.la
 
-
-
 c16_cg_t_SOURCES = c16_cg.t.cc\
 	check.h\
 	check_forcefield.h\
@@ -76,7 +74,7 @@ EXTRA_DIST = data/aladip.topo\
 	data/aladip.dihrest\
 	data/aladip.order\
 	data/aladip.xrs\
-        data/aladip.lud\
+  data/aladip.lud\
 	data/aladip.led\
 	data/aladip_atomic.in\
 	data/aladip_ewald.in\
@@ -91,4 +89,3 @@ EXTRA_DIST = data/aladip.topo\
 	data/scaling.lambdadep.in\
 	data/scaling.lambdadep.pttopo\
 	data/scaling.pttopo
-

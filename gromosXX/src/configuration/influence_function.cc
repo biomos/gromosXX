@@ -192,7 +192,7 @@ const simulation::Simulation & sim) {
               const double k = sqrt(k_2);
               const double ak = charge_width * k;
 
-              double fourier_coeff, fourier_coeff_deriv;
+              double fourier_coeff = 0.0, fourier_coeff_deriv = 0.0;
               if (do_virial) // get the derivative as well
                 interaction::Lattice_Sum::charge_shape_fourier(shape, ak, fourier_coeff, &fourier_coeff_deriv);
               else
@@ -424,7 +424,7 @@ const simulation::Simulation & sim) {
               const double k_2 = math::abs2(k_lm);
               const double k_2i = 1.0 / k_2;
               const double k = sqrt(k_2);
-              double fourier_coeff;
+              double fourier_coeff = 0.0;
               interaction::Lattice_Sum::charge_shape_fourier(shape, charge_width * k, fourier_coeff);
               DEBUG(25, "\t\t k_lm " << math::v2s(k_lm) << ", fourier_coeff = " << fourier_coeff);
               math::Vec tH_k = math::product(H_trans, k_lm);

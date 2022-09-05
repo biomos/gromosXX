@@ -258,8 +258,8 @@ io::In_Xrayresspec::read(topology::Topology& topo,
 
     DEBUG(10, "reading in XRAYRESSPEC data");
 
-    int i, h, k, l;
-    double sf, stddev_sf;
+    int i = 0, h = 0, k = 0, l = 0;
+    double sf = 0.0, stddev_sf = 0.0;
     topo.xray_restraints().clear();
     for(i=0; it != to; ++i, ++it){
 
@@ -301,8 +301,8 @@ io::In_Xrayresspec::read(topology::Topology& topo,
 
       DEBUG(10, "reading in XRAYRFREESPEC data");
 
-      int i, h, k, l;
-      double sf, stddev_sf;
+      int i = 0, h = 0, k = 0, l = 0;
+      double sf = 0.0, stddev_sf = 0.0;
       topo.xray_rfree().clear();
       for (i = 0; it != to; ++i, ++it) {
 
@@ -370,7 +370,7 @@ io::In_Xrayresspec::read(topology::Topology& topo,
       return;
     }
 
-    double to_ang;
+    double to_ang = 0.0;
     _lineStream >> to_ang;
     if (_lineStream.fail()) {
       io::messages.add("XRAYRESPARA block: No conversion factor for the length unit to Angstrom given. Asuming 10.0",
@@ -515,9 +515,9 @@ io::In_Xrayresspec::read(topology::Topology& topo,
         if (right != std::string::npos)
           line.erase(right+1);
         _lineStream.str(line);
-        int umbrella;
-        double thres, thres_growth, thres_overshoot, cut;
-        bool thres_freeze;
+        int umbrella = 0;
+        double thres = 0.0, thres_growth = 0.0, thres_overshoot = 0.0, cut = 0.0;
+        bool thres_freeze = 0;
         _lineStream >> umbrella 
                     >> thres 
                     >> thres_growth 
@@ -535,7 +535,7 @@ io::In_Xrayresspec::read(topology::Topology& topo,
           return;
         }
         std::vector<unsigned int> atoms;
-        int atom;
+        int atom = 0;
         while(!_lineStream.eof()) {
           _lineStream >> atom;
           --atom;
@@ -575,7 +575,7 @@ io::In_Xrayresspec::read(topology::Topology& topo,
 
       _lineStream.clear();
       _lineStream.str(buffer[1]);
-      unsigned int ntsym;
+      unsigned int ntsym = 0;
       _lineStream >> ntsym >> sim.param().xrayrest.sym_force_constant;
       if (_lineStream.fail()) {
         io::messages.add("XRAYSYMRESSPEC block: Cannot read method and force constant from first line",
@@ -667,7 +667,7 @@ io::In_Xrayresspec::read(topology::Topology& topo,
         _lineStream.clear();
         _lineStream.str(line);
 
-        int atom;
+        int atom = 0;
         _lineStream >> atom;
 
         DEBUG(11, "\t" << atom);
@@ -718,8 +718,8 @@ io::In_Xrayresspec::read(topology::Topology& topo,
       _lineStream.clear();
       _lineStream.str(concatenate(buffer.begin() + 1, buffer.end() - 1, s));
 
-      int step, iter;
-      double grad, bmin, bmax;
+      int step = 0, iter = 0;
+      double grad = 0.0, bmin = 0.0, bmax = 0.0;
       // BFOPTS  BFOPTTI BFOPTTG BFOPTMN BFOPTMX
       _lineStream >> step >> iter >> grad >> bmin >> bmax;
 
@@ -765,7 +765,7 @@ io::In_Xrayresspec::read(topology::Topology& topo,
       sim.param().xrayrest.bfactor.min = bmin;
       sim.param().xrayrest.bfactor.max = bmax;
 
-      int num_group;
+      int num_group = 0;
       _lineStream >> num_group;
       if (_lineStream.fail() || num_group < 0) {
         io::messages.add("XRAYBFACTOROPTIMISATION block: BFOPTNG has to be >= 0",
@@ -781,7 +781,7 @@ io::In_Xrayresspec::read(topology::Topology& topo,
       } else {
         sim.param().xrayrest.bfactor.groups.resize(num_group);
         for(unsigned int i = 0; i < unsigned(num_group); ++i) {
-          int size;
+          int size = 0;
           _lineStream >> size;
           if (_lineStream.fail() || size <= 0) {
             io::messages.add("XRAYBFACTOROPTIMISATION block: BFOPTGS has to be > 0",
@@ -789,7 +789,7 @@ io::In_Xrayresspec::read(topology::Topology& topo,
             return;
           }
           for (int j = 0; j < size; ++j) {
-            int atom;
+            int atom = 0;
             _lineStream >> atom;
             atom--;
             if (_lineStream.fail() || atom < 0 || atom >= int(topo.num_atoms())) {
@@ -828,9 +828,9 @@ io::In_Xrayresspec::read(topology::Topology& topo,
       _lineStream.clear();
       _lineStream.str(concatenate(buffer.begin() + 1,buffer.end() - 1,s));
 
-      int interruptor; //NTXRRE
-      double min_value, max_value; //CXREEMN CXREEMX
-      int energy_interruptor;
+      int interruptor = 0; //NTXRRE
+      double min_value = 0.0, max_value = 0.0; //CXREEMN CXREEMX
+      int energy_interruptor = 0;
       _lineStream >> interruptor >> min_value >> max_value >> energy_interruptor;
 
       if (_lineStream.fail()) {
@@ -879,8 +879,8 @@ io::In_Xrayresspec::read(topology::Topology& topo,
       _lineStream.clear();
       _lineStream.str(concatenate(buffer.begin() + 1,buffer.end() - 1,s));
 
-      double overall_Bfac;
-      int overall_Bfac_interruptor;
+      double overall_Bfac = 0.0;
+      int overall_Bfac_interruptor = 0;
       _lineStream >> overall_Bfac >> overall_Bfac_interruptor;
 
       if (_lineStream.fail()) {
@@ -907,8 +907,8 @@ io::In_Xrayresspec::read(topology::Topology& topo,
       _lineStream.clear();
       _lineStream.str(concatenate(buffer.begin() + 1,buffer.end() - 1,s));
 
-      double sf_tolerance; //SFCTOL
-      unsigned int sf_constant; //SFCST
+      double sf_tolerance = 0.0; //SFCTOL
+      unsigned int sf_constant = 0; //SFCST
       _lineStream >> sf_tolerance >> sf_constant;
 
       if (_lineStream.fail()) {

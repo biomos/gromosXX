@@ -1,0 +1,7 @@
+stages:
+  - configure-build
+  - build
+
+include:
+  - local: 'gromosXX/admin/gitlab-ci/gromos.gitlab-ci.yml'
+

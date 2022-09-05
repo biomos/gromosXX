@@ -366,8 +366,10 @@ int interaction::Nonbonded_Interaction::check_special_loop
   }
 
   DEBUG(10, "num_solvents = " << topo.num_solvents());
-  DEBUG(10, "molecules = " << topo.num_solvent_molecules(0));
-  DEBUG(10, "atoms = " << topo.num_solvent_atoms(0));
+  if (topo.num_solvents() > 0) {
+    DEBUG(10, "molecules = " << topo.num_solvent_molecules(0));
+    DEBUG(10, "atoms = " << topo.num_solvent_atoms(0));
+  }
 
   // check whether there is a solvent.
   if (topo.num_solvents() != 1 || topo.num_solvent_molecules(0) < 1) {

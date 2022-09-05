@@ -35,8 +35,7 @@ interaction::QM_Zone::QM_Zone(int net_charge
                               , m_spin_mult(spin_mult)
 {}
 
-interaction::QM_Zone::~QM_Zone()
-{}
+interaction::QM_Zone::~QM_Zone() = default;
 
 void interaction::QM_Zone::zero() {
   this->m_qm_energy = 0.0; 
@@ -49,10 +48,10 @@ void interaction::QM_Zone::clear() {
   this->link.clear();
 }
 
-int interaction::QM_Zone::init(const topology::Topology& topo, 
+int interaction::QM_Zone::init(topology::Topology& topo, 
                                const configuration::Configuration& conf, 
                                const simulation::Simulation& sim) {
-  int err;
+  int err = 0;
   
   DEBUG(15,"Getting QM atoms");
   if ((err = this->get_qm_atoms(topo, conf, sim)))
@@ -69,9 +68,10 @@ int interaction::QM_Zone::init(const topology::Topology& topo,
   DEBUG(15,"Getting QM-MM links");
   this->get_links(topo, sim);
   return 0;
+
 }
 
-int interaction::QM_Zone::update(const topology::Topology& topo, 
+int interaction::QM_Zone::update(topology::Topology& topo, 
                                  const configuration::Configuration& conf, 
                                  const simulation::Simulation& sim) {
   this->zero();
@@ -91,6 +91,7 @@ int interaction::QM_Zone::update(const topology::Topology& topo,
   this->update_links(sim);
   return 0;
 }
+
 void interaction::QM_Zone::write(topology::Topology& topo, 
                                  configuration::Configuration& conf, 
                                  const simulation::Simulation& sim) {
@@ -146,7 +147,10 @@ void interaction::QM_Zone::write(topology::Topology& topo,
       }
     }
   }
-  conf.current().virial_tensor += virial_tensor;
+  
+  if (sim.param().pcouple.virial) {
+    conf.current().virial_tensor += virial_tensor;
+  }
   
   // Write charges
   if (sim.param().qmmm.qmmm == simulation::qmmm_mechanical
@@ -154,8 +158,10 @@ void interaction::QM_Zone::write(topology::Topology& topo,
     for (std::set<QM_Atom>::const_iterator
           it = this->qm.begin(), to = this->qm.end(); it != to; ++it)
       {
-      DEBUG(15, "Atom " << it->index << ", new charge: " << it->qm_charge);
-      topo.charge()(it->index) = it->qm_charge;
+      if (topo.is_qm(it->index)) {
+        DEBUG(15, "Atom " << it->index << ", new charge: " << it->qm_charge);
+        topo.charge()(it->index) = it->qm_charge;
+      }
     }
     // Add capping atom charge to QM link atom
     for (std::set<QM_Link>::const_iterator
@@ -164,6 +170,25 @@ void interaction::QM_Zone::write(topology::Topology& topo,
       DEBUG(15, "Capping atom " << it->qm_index << "-" << it->mm_index << ", charge: " << it->qm_charge);
       topo.charge()(it->qm_index) += it->qm_charge;
       DEBUG(15, "Charge added to QM atom " << it->qm_index << ", new charge: " << topo.charge(it->qm_index));
+    }
+  }
+
+  // write separate charges for interaction between the buffer region and MM region
+  if (sim.param().qmmm.use_qm_buffer
+      && sim.param().qmmm.qm_ch == simulation::qm_ch_dynamic
+      && (sim.param().qmmm.software != simulation::qm_nn
+          || sim.steps() % sim.param().qmmm.nn.charge_steps == 0))
+    {
+    // First reset delta charges
+    std::fill(topo.qm_delta_charge().begin(), topo.qm_delta_charge().end(), 0.0);
+    // Fill with delta-charges
+    for (std::set<QM_Atom>::const_iterator
+        it = this->qm.begin(), to = this->qm.end(); it != to; ++it) {
+      if (topo.is_adaptive_qm_buffer(it->index)) {
+        const double delta_charge = it->qm_charge - topo.charge(it->index);
+        DEBUG(15, "Atom " << it->index << ", new delta charge: " << delta_charge);
+        topo.qm_delta_charge(it->index) = delta_charge;
+      }
     }
   }
 
@@ -189,14 +214,6 @@ int interaction::QM_Zone::get_qm_atoms(const topology::Topology& topo,
      * on this system, but we are not excluding the QM_Buffer atoms in MM pairlist generation.
      */
     const bool cg_is_qm = topo.is_qm(a);
-    if (cg_is_qm
-        && (cg >= topo.num_solute_chargegroups())
-      ) {
-      std::ostringstream msg;
-      msg << "QM atom " << a + 1 << " in solvent is not supported";
-      io::messages.add(msg.str(), "QM_Zone", io::message::error);
-      return E_INPUT_ERROR;
-    }
     const bool cg_is_buf = topo.is_qm_buffer(a);
     assert(!(cg_is_qm && cg_is_buf));
     for (; a < a_to; ++a) {
@@ -442,6 +459,11 @@ int interaction::QM_Zone::gather_chargegroups(const topology::Topology& topo,
   for (std::set<QM_Atom>::const_iterator
       qm_it = this->qm.begin(), qm_to = this->qm.end(); qm_it != qm_to; ++qm_it)
     {
+    // Initial dumb implementation - gather only around the first atom, if
+    // AtomType == QM_Atom (true only for QM buffer atoms gathering)
+    if (std::is_same<AtomType,QM_Atom>::value && qm_it != this->qm.begin()) {
+      break;
+    }
     DEBUG(15, "Gathering around QM atom " << qm_it->index);
     const math::Vec& qm_pos = qm_it->pos;
     math::Vec r_qm_cg;
@@ -503,7 +525,7 @@ int interaction::QM_Zone::gather_chargegroups(const topology::Topology& topo,
       } // for cgs in the range
       return 0;
     }; // lambda cg_cogs_loop
-    int err;
+    int err = 0;
     DEBUG(15, "Iterating over solute cgs");
     err = cg_cogs_loop(0, num_solute_cg, solute_cgs);
     if (err) return err;
@@ -527,9 +549,10 @@ void interaction::QM_Zone::emplace_atom(std::set<interaction::QM_Atom>& set,
                                         const double charge,
                                         const bool is_qm_buffer)
   {
-  if (is_qm_buffer)
+  if (is_qm_buffer) {
     DEBUG(15, "Adding QM buffer atom " << index);
     it = set.emplace_hint(it, index, pos, atomic_number);
+  }
 }
 
 template<>
@@ -539,11 +562,12 @@ void interaction::QM_Zone::emplace_atom(std::set<interaction::MM_Atom>& set,
                                         const math::Vec& pos,
                                         const unsigned atomic_number,
                                         const double charge,
-                                        const bool is_qm_buffer)
-  {
-  if (!is_qm_buffer)
+                                        const bool is_qm_buffer) 
+{
+  if (!is_qm_buffer) {
     DEBUG(15, "Adding MM atom " << index);
-    it = set.emplace_hint(it, index, pos, charge);
+    it = set.emplace_hint(it, index, pos, atomic_number, charge);
+  }
 }
 
 template<>
@@ -562,20 +586,20 @@ bool interaction::QM_Zone::skip_cg<interaction::MM_Atom>
   return (topo.is_qm(index) || topo.is_qm_buffer(index));
 }
 
-void interaction::QM_Zone::get_buffer_atoms(const topology::Topology& topo, 
+void interaction::QM_Zone::get_buffer_atoms(topology::Topology& topo, 
                                             const configuration::Configuration& conf, 
                                             const simulation::Simulation& sim) {
   SPLIT_BOUNDARY(this->_get_buffer_atoms, topo, conf, sim);
 }
 
 template<math::boundary_enum B>
-int interaction::QM_Zone::_get_buffer_atoms(const topology::Topology& topo, 
+int interaction::QM_Zone::_get_buffer_atoms(topology::Topology& topo, 
                                             const configuration::Configuration& conf, 
                                             const simulation::Simulation& sim) {
   /** Here we need to iterate over all buffer atoms and see, if they are within the
    * adaptive buffer cutoff
    */
-  int err;
+  int err = 0;
   // Firstly remove buffer atoms from the QM set
   DEBUG(15, "Firstly removing the old buffer atoms");
   for (std::set<QM_Atom>::const_iterator qm_it = this->qm.begin();
@@ -594,6 +618,25 @@ int interaction::QM_Zone::_get_buffer_atoms(const topology::Topology& topo,
   if ((err = this->gather_chargegroups<B>(topo, conf, sim, buffer_atoms, cutoff2)))
     return err;
   
+  // update the QM buffer topology so the pairlist algorithm can skip them
+  for (unsigned i = 0; i < topo.num_atoms(); ++i) {
+    if (topo.is_qm_buffer(i)) {
+      if (buffer_atoms.count(i)) {
+        topo.is_qm_buffer(i) = 1;
+        DEBUG(9, "Atom " << i << " in adaptive buffer");
+      } else {
+        topo.is_qm_buffer(i) = -1; // temporarily disabled buffer atom
+        DEBUG(15, "Atom " << i << " not in adaptive buffer");
+      }
+    }
+  }
+
+  DEBUG(15, "Buffer atoms:");
+  for (std::set<QM_Atom>::const_iterator it = buffer_atoms.begin(); it != buffer_atoms.end(); ++it) {
+    DEBUG(15, it->index);
+    DEBUG(15, "Distance to the 1st atom: " << math::abs(it->pos - this->qm.begin()->pos));
+  }
+
   // And merge with QM
   this->qm.insert(buffer_atoms.begin(), buffer_atoms.end());
 
@@ -606,7 +649,7 @@ int interaction::QM_Zone::_get_buffer_atoms(const topology::Topology& topo,
 void interaction::QM_Zone::get_mm_atoms(const topology::Topology& topo, 
                                         const configuration::Configuration& conf, 
                                         const simulation::Simulation& sim) {
-  /** Standard pairlist algorithm is not enough since we are
+  /** The default pairlist algorithms cannot be applied here since we are
    * using different cutoff. We also do gathering at the same time and perform
    * some checks on cutoff and periodic copy interactions so it becomes
    * rather specific for QM
@@ -621,7 +664,7 @@ void interaction::QM_Zone::get_mm_atoms(const topology::Topology& topo,
         it != to; ++it) {
       const unsigned i = it->second;
       DEBUG(9, "Adding MM link atom " << i);
-      this->mm.emplace(i, conf.current().pos(i), topo.charge(i));
+      this->mm.emplace(i, conf.current().pos(i), topo.qm_atomic_number(i), topo.charge(i));
     }
   }
   else if (sim.param().boundary.boundary == math::vacuum
@@ -632,7 +675,7 @@ void interaction::QM_Zone::get_mm_atoms(const topology::Topology& topo,
     for (unsigned int i = 0; i < topo.num_atoms(); ++i) {
       if ( !topo.is_qm(i) && !topo.is_qm_buffer(i) ) {
         DEBUG(9, "Adding atom " << i);
-        this->mm.emplace(i, conf.current().pos(i), topo.charge(i));
+        this->mm.emplace(i, conf.current().pos(i), topo.qm_atomic_number(i), topo.charge(i));
       }
     }
   }
@@ -656,7 +699,7 @@ int interaction::QM_Zone::_get_mm_atoms(const topology::Topology& topo,
                                         const configuration::Configuration& conf, 
                                         const simulation::Simulation& sim)
   {
-  int err;
+  int err = 0;
   math::Periodicity<B> periodicity(conf.current().box);
   DEBUG(15, "Boundary type: " << conf.boundary_type);
   // MM link atoms need to be always gathered
@@ -717,7 +760,7 @@ int interaction::QM_Zone::_get_mm_atoms_atomic(const topology::Topology& topo,
           const size_t size = this->mm.size();
           if (mm_it != this->mm.end())
             std::advance(mm_it,1); // hint on set insertion, improves performance
-          mm_it = this->mm.emplace_hint(mm_it, i, mm_pos, topo.charge(i));
+          mm_it = this->mm.emplace_hint(mm_it, i, mm_pos, topo.qm_atomic_number(i), topo.charge(i));
           if (size == this->mm.size()) {
             DEBUG(9, "Atom " << i << " already in the list");
             const double delta = math::abs2(mm_it->pos - mm_pos);
@@ -762,7 +805,7 @@ void interaction::QM_Zone::get_linked_mm_atoms(const topology::Topology& topo
     const math::Vec mm_pos = qm_pos - r_qm_mm;
 
     DEBUG(15, "Linked MM position: " << math::v2s(mm_pos));
-    this->mm.emplace(mm_i, mm_pos, topo.charge(mm_i));
+    this->mm.emplace(mm_i, mm_pos, topo.qm_atomic_number(mm_i), topo.charge(mm_i));
     DEBUG(15, "Adding MM atom: " << mm_i);
   }
 }
@@ -872,17 +915,18 @@ interaction::QM_Zone* interaction::QM_Zone::create_buffer_zone(
                                           ) {
   DEBUG(15,"Generating QM buffer zone");
   // We make the buffer zone by copying the QM zone and deleting the QM atoms
-  QM_Zone* qmzone = new interaction::QM_Zone(*this);
-  qmzone->zero();
-  qmzone->charge() = sim.param().qmmm.buffer_zone.charge;
-  qmzone->spin_mult() = sim.param().qmmm.buffer_zone.spin_mult;
+  QM_Zone* qm_buffer = new interaction::QM_Zone(*this);
+  qm_buffer->zero();
+  qm_buffer->charge() = sim.param().qmmm.buffer_zone.charge;
+  qm_buffer->spin_mult() = sim.param().qmmm.buffer_zone.spin_mult;
 
   for (std::set<interaction::QM_Atom>::const_iterator
         it = this->qm.begin(); it != this->qm.end(); ++it) {
     if (topo.is_qm(it->index)) {
       DEBUG(10,"Erasing QM atom " << it->index << " from buffer zone");
-      qmzone->qm.erase(*it);
+      // 'it' remains valid, since we are iterating over 'this->qm' but erasing in 'qm_buffer->qm'
+      qm_buffer->qm.erase(*it);
     }
   }
-  return qmzone;
+  return qm_buffer;
 }

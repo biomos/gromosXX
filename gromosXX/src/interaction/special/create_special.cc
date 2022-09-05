@@ -20,6 +20,7 @@
 #include "../../interaction/special/distance_field_interaction.h"
 #include "../../interaction/special/angle_restraint_interaction.h"
 #include "../../interaction/special/dihedral_restraint_interaction.h"
+#include "../../interaction/special/dfunct_interaction.h"
 #include "../../interaction/special/perturbed_distance_restraint_interaction.h"
 #include "../../interaction/special/perturbed_distance_field_interaction.h"
 #include "../../interaction/special/eds_distance_restraint_interaction.h"
@@ -54,7 +55,14 @@ int interaction::create_special(interaction::Forcefield & ff,
 {
   // if (!quiet)
   // os << "SPECIAL\n";
-  
+  if (param.dfunct.dfunct > simulation::dfunct_off) {
+    if (!quiet) {
+      os << "\tDFUNCT\n";
+    }
+    interaction::DFunct_Interaction* dfunct = new interaction::DFunct_Interaction();
+    ff.push_back(dfunct);
+  }
+
   // Position restraints / constraints
   if (param.posrest.posrest == simulation::posrest_on || 
       param.posrest.posrest == simulation::posrest_bfactor) {

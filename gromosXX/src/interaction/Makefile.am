@@ -1,5 +1,6 @@
-AM_CXXFLAGS = @MY_CXXFLAGS@
-AM_CPPFLAGS = -I$(top_srcdir) -I$(top_srcdir)/src -I$(top_srcdir)/src/interaction -I$(top_srcdir)/src/interaction/nonbonded -I$(top_srcdir)/src/interaction/nonbonded/pairlist -I$(top_srcdir)/src/interaction/nonbonded/interaction -I$(top_srcdir)/src/interaction/bonded -I$(top_srcdir)/src/interaction/forcefield -I$(top_srcdir)/src/interaction/qmmm -I$(top_srcdir)/src/interaction/special -I$(top_srcdir)/src/interaction/special/xray -I$(top_srcdir)/src/algorithm 
+AM_CXXFLAGS = @MY_CXXFLAGS@ $(PYFLAGS)
+AM_CPPFLAGS = -I$(top_srcdir) -I$(top_srcdir)/src -I$(top_srcdir)/src/interaction -I$(top_srcdir)/src/interaction/nonbonded -I$(top_srcdir)/src/interaction/nonbonded/pairlist -I$(top_srcdir)/src/interaction/nonbonded/interaction -I$(top_srcdir)/src/interaction/bonded -I$(top_srcdir)/src/interaction/forcefield -I$(top_srcdir)/src/interaction/qmmm -I$(top_srcdir)/src/interaction/special -I$(top_srcdir)/src/interaction/special/xray -I$(top_srcdir)/src/algorithm -I$(top_srcdir)/src/math 
+AM_LDFLAGS = $(PYLDFLAGS)
 
 if WITH_CUDA
   AM_CPPFLAGS += -I$(top_srcdir)/src/cukernel
@@ -30,9 +31,9 @@ xxintbonded_HEADERS = bonded/create_bonded.h\
 	bonded/perturbed_soft_bond_interaction.h\
 	bonded/perturbed_cg_bond_interaction.h\
 	bonded/perturbed_angle_interaction.h\
-    bonded/perturbed_soft_angle_interaction.h\
+  bonded/perturbed_soft_angle_interaction.h\
 	bonded/perturbed_improper_dihedral_interaction.h\
-    bonded/perturbed_soft_improper_interaction.h\
+  bonded/perturbed_soft_improper_interaction.h\
 	bonded/perturbed_dihedral_new_interaction.h\
 	bonded/perturbed_dihedral_interaction.h
 
@@ -102,7 +103,8 @@ xxintnbspecial_HEADERS = special/create_special.h\
 	special/nemd.h\
 	special/order_parameter_restraint_interaction.h\
 	special/rdc_restraint_interaction.h\
-	special/symmetry_restraint_interaction.h
+	special/symmetry_restraint_interaction.h\
+	special/dfunct_interaction.h
 
 xxintspecialxraydir = $(includedir)/md++/interaction/special/xray
 xxintspecialxray_HEADERS = special/xray/dens.h\
@@ -120,13 +122,19 @@ xxintqmmm_HEADERS = qmmm/mm_atom.h\
 	qmmm/dftb_worker.h\
 	qmmm/mopac_worker.h\
 	qmmm/gaussian_worker.h\
+	qmmm/orca_worker.h\
+	qmmm/nn_worker.h\
 	qmmm/qmmm_interaction.h\
 	qmmm/nonbonded/qmmm_nonbonded_outerloop.h \
 	qmmm/nonbonded/qmmm_nonbonded_set.h
 
+if WITH_XTB
+  xxintqmmm_HEADERS += qmmm/xtb_worker.h
+endif
+
 noinst_LTLIBRARIES = libgrointeraction.la
 
-libgrointeraction_la_SOURCES =interaction.cc\
+libgrointeraction_la_SOURCES = interaction.cc\
 	molecular_virial_interaction.cc\
 	forcefield/forcefield.cc\
 	forcefield/create_forcefield.cc\
@@ -161,10 +169,10 @@ libgrointeraction_la_SOURCES =interaction.cc\
 	bonded/angle_interaction.cc\
 	bonded/harm_angle_interaction.cc\
 	bonded/perturbed_angle_interaction.cc\
-    bonded/perturbed_soft_angle_interaction.cc\
+  bonded/perturbed_soft_angle_interaction.cc\
 	bonded/improper_dihedral_interaction.cc\
 	bonded/perturbed_improper_dihedral_interaction.cc\
-    bonded/perturbed_soft_improper_interaction.cc\
+  bonded/perturbed_soft_improper_interaction.cc\
 	bonded/dihedral_interaction.cc\
 	bonded/dihedral_new_interaction.cc\
 	bonded/crossdihedral_interaction.cc\
@@ -195,6 +203,7 @@ libgrointeraction_la_SOURCES =interaction.cc\
 	special/order_parameter_restraint_interaction.cc\
 	special/rdc_restraint_interaction.cc\
 	special/symmetry_restraint_interaction.cc\
+	special/dfunct_interaction.cc\
 	qmmm/qm_link.cc\
 	qmmm/qm_zone.cc\
 	qmmm/qm_worker.cc\
@@ -203,9 +212,15 @@ libgrointeraction_la_SOURCES =interaction.cc\
 	qmmm/dftb_worker.cc\
 	qmmm/mopac_worker.cc\
 	qmmm/gaussian_worker.cc\
+	qmmm/orca_worker.cc\
+	qmmm/nn_worker.cc\
 	qmmm/qmmm_interaction.cc\
 	qmmm/nonbonded/qmmm_nonbonded_outerloop.cc\
 	qmmm/nonbonded/qmmm_nonbonded_set.cc
+
+if WITH_XTB
+  libgrointeraction_la_SOURCES += qmmm/xtb_worker.cc
+endif
 
 bin_PROGRAMS =
 

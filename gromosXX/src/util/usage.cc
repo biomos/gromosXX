@@ -224,7 +224,7 @@ void util::print_title(bool mpi, std::ostream & os, bool repex)
 
   // some omp stuff
 #ifdef OMP
-  int nthreads, tid;
+  int nthreads = 0, tid = 0;
 #pragma omp parallel private(nthreads, tid)
   {
     tid = omp_get_thread_num();
