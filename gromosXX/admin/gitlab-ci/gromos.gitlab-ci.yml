@@ -22,6 +22,11 @@
 .use-clang:
   variables:
     ENV_COMPILER: "CC=clang CXX=clang++ CFLAGS=-fopenmp=libomp CXXFLAGS=-fopenmp=libomp"
+
+.use-share:
+  variables:
+    ENV_SHARE: "--disable-static --enable-shared"
+
   #before_script:
   #  - mkdir -p ccache
   #  - export CCACHE_BASEDIR=${PWD}
@@ -35,12 +40,13 @@
     - echo $OPENMP_OPTIONS
     - echo $MPI_OPTIONS
     - echo $CUDA_OPTIONS
+    - echo $ENV_SHARE
     - cd gromosXX/
     - ./Config.sh $ENV_COMPILER
     - cd ..
     - mkdir build
     - cd build
-    - ../gromosXX/configure --disable-debug $OPENMP_OPTIONS $MPI_OPTIONS $CUDA_OPTIONS $ENV_COMPILER
+    - ../gromosXX/configure --disable-debug $ENV_SHARE $OPENMP_OPTIONS $MPI_OPTIONS $CUDA_OPTIONS $ENV_COMPILER
   artifacts:
     when: always
     paths:
