@@ -3958,6 +3958,8 @@ void io::In_Parameter::read_GAMD(simulation::Parameter & param,
   exampleblock << "    0       1      1        0\n";
   exampleblock << "# AGROUPS\n";
   exampleblock << "  2\n"; 
+  exampleblock << "# IGROUPS\n";
+  exampleblock << "  2\n";
   exampleblock << "# DIHSTD  TOTSTD\n";
   exampleblock << "  24.79   24.79\n";
   exampleblock << "# ED\n";
@@ -3970,6 +3972,8 @@ void io::In_Parameter::read_GAMD(simulation::Parameter & param,
   exampleblock << "  -10.0   20.0\n";
   exampleblock << "# EQSTEPS\n";
   exampleblock << " 5000\n";
+  exampleblock << "# GWINDOW\n";
+  exampleblock << " 0\n";
   exampleblock << "END\n";
 
 
