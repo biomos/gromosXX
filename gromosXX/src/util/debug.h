@@ -176,6 +176,7 @@
       extern int temperature_debug_level;
       extern int pressure_debug_level;
       extern int integration_debug_level;
+      extern int virtualatoms_debug_level;
     }
 
     namespace simulation
