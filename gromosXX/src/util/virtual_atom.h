@@ -40,6 +40,10 @@ namespace util
      */
     va_CH2 = 3,
     /**
+     * 8: TIP4P
+     */
+    va_tip4p = 8,
+    /**
      * 4: CH2 (stereospecific)
      */
     va_stereo_CH2 = 4,
@@ -110,7 +114,23 @@ namespace util
      * accessor to the type
      */
     virtual_type type() const { return m_type; }
-    
+    /**
+     * accessor to the charge
+     */
+    double charge() const { return m_charge; }
+    /**
+     * accessor to the IAC
+     */
+    int iac() const { return m_iac; }
+    /**
+     * set charge
+     */
+    void set_charge(double charge) { m_charge = charge; }
+    /**
+     * set iac
+     */
+    void set_iac(int iac) { m_iac = iac; }
+
   private:
     /**
      * calculate the position of the virtual site
@@ -144,7 +164,48 @@ namespace util
      * orientation
      */
     int m_orientation;
+    /**
+     * charge
+     */
+    double m_charge;
+    /**
+     * IAC
+     */
+    int m_iac;
   };
-}
+
+
+    /**
+     * @class Virtual_Atoms_Group
+     * holds the information about Virtual atoms in topology.
+     */
+  class Virtual_Atoms_Group
+  {
+  public:
+      
+    /**
+     * virtual atoms accessor.
+     */
+    std::map<unsigned int, Virtual_Atom> & atoms() {return m_atom;}
+
+    /**
+     * const virtual atoms accessor.
+     */
+    std::map<unsigned int, Virtual_Atom> const & atoms()const {return m_atom;}
+
+    /**
+     * virtual atom accessor
+     */
+    Virtual_Atom & atom(unsigned int i) {return m_atom[i];}
+      
+  private:
+      
+    /**
+     * the virtual atoms.
+     */
+    std::map<unsigned int, Virtual_Atom> m_atom; 
+
+  };
+}    
 
 #endif

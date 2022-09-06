@@ -71,7 +71,7 @@ namespace io {
      * read POSITION block.
      */
     static bool _read_position(math::VArray &pos, std::vector<std::string> &buffer,
-			int const num, std::string blockname = "POSITION");
+			topology::Topology &topo, configuration::Configuration & conf, std::string blockname = "POSITION");
 
     /**
      * Just try to read the positions without any checks.
@@ -280,7 +280,7 @@ namespace io {
      * read POSITIONRED block.
      */
     bool _read_positionred(math::VArray &pos, std::vector<std::string> &buffer,
-			   int const num);
+			   topology::Topology &topo, configuration::Configuration & conf);
     
     /**
      * read COSDISPLACEMENTS block.
@@ -292,19 +292,19 @@ namespace io {
      * read VELOCITY block.
      */
     bool _read_velocity(math::VArray &vel, std::vector<std::string> &buffer,
-			unsigned int const num);
+			topology::Topology &topo);
     
     /**
      * read LATTICESHIFTS block.
      */
     bool _read_lattice_shifts(math::VArray &vel, std::vector<std::string> &buffer,
-			int const num);
+			topology::Topology &topo);
     
     /**
      * read POSITIONRED block.
      */
     bool _read_velocityred(math::VArray &vel, std::vector<std::string> &buffer,
-			   int const num);
+			   topology::Topology &topo);
     /**
      * read TRICLINICBOX block.
      */
