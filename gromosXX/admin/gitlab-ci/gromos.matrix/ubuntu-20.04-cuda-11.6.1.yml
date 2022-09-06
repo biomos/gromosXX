@@ -3,6 +3,7 @@ gromos:ubuntu-20.04-cuda-11.6.1:configure:
     - .gromos:base:configure
     - .use-openmp
     - .use-cuda
+    - .use-share
   image: ${CI_REGISTRY}/gromos/gromosxx/gromos-ubuntu-20.04-cuda-11.6.1
   variables:
     BUILD_DIR: build

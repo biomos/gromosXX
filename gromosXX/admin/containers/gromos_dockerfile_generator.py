@@ -35,7 +35,8 @@ _common_packages = [
     'software-properties-common',
     'wget',
     'zlib1g-dev',
-    'ccache']
+    'ccache',
+    'python3-pytest']
 
 _clang = ['clang',
           'libomp5',

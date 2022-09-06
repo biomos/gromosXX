@@ -2,6 +2,7 @@ gromos:ubuntu-20.04-mpi:configure:
   extends:
     - .gromos:base:configure
     - .use-mpi
+    - .use-share
   image: ${CI_REGISTRY}/gromos/gromosxx/gromos-ubuntu-20.04-mpi
   variables:
     BUILD_DIR: build
