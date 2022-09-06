@@ -79,7 +79,11 @@ int interaction::Eds_Nonbonded_Set
     // move decision to pairlist!!!
     DEBUG(6, "create a pairlist");
     
-    if (topo.eds_perturbed_solute().atoms().size() > 0){
+    DEBUG(10, "\teds_perturbed_solute().atoms().size() " << topo.eds_perturbed_solute().atoms().size());
+    DEBUG(10, "\tperturbed_solute().atoms().size() " << topo.perturbed_solute().atoms().size());
+    if (topo.eds_perturbed_solute().atoms().size() +topo.perturbed_solute().atoms().size() > 0){
+      DEBUG(10, "update perturbed");
+      
       m_pairlist_alg.update_perturbed(topo, conf, sim, 
 				      pairlist(), perturbed_pairlist(),
 				      m_rank, topo.num_atoms(), m_num_threads);
@@ -99,7 +103,8 @@ int interaction::Eds_Nonbonded_Set
 
   if(pairlist_update){
     start_timer("longrange");
-
+    DEBUG(6, "\tlong range interactions");
+    
     m_outerloop.lj_crf_outerloop(topo, conf, sim,
 			       m_pairlist.solute_long, m_pairlist.solvent_long,
                                m_longrange_storage, true /*longrange!*/, m_pairlist_alg.timer(), m_rank == 0);
@@ -115,17 +120,17 @@ int interaction::Eds_Nonbonded_Set
   }
 
   // calculate forces / energies
-  DEBUG(6, "\tshort range interactions");
+   DEBUG(6, "\tshort range interactions");
   start_timer("shortrange");
   m_outerloop.lj_crf_outerloop(topo, conf, sim,
 			       m_pairlist.solute_short, m_pairlist.solvent_short,
                                m_storage, false, m_pairlist_alg.timer(), m_rank == 0);
   
   if (topo.eds_perturbed_solute().atoms().size() > 0){
-    DEBUG(6, "\tperturbed short range");
+    DEBUG(6, "\teds-perturbed short range");
     m_eds_outerloop.eds_lj_crf_outerloop(topo, conf, sim, 
-						     m_perturbed_pairlist.solute_short,
-						     m_storage);
+					 m_perturbed_pairlist.solute_short,
+					 m_storage);
   }
   stop_timer("shortrange");
 
@@ -160,9 +165,8 @@ int interaction::Eds_Nonbonded_Set
       start_timer("RF excluded");
       DEBUG(6, "\tRF excluded interactions and self term");
       if (topo.eds_perturbed_solute().atoms().size() > 0) {
-        DEBUG(6, "\tperturbed RF excluded interactions and self term");
+        DEBUG(6, "\teds-perturbed RF excluded interactions and self term");
         m_eds_outerloop.eds_RF_excluded_outerloop(topo, conf, sim, m_storage);
-
       }
       stop_timer("RF excluded");
     }
@@ -193,12 +197,27 @@ int interaction::Eds_Nonbonded_Set
 	m_longrange_storage.energies.lj_energy[i][j];
       m_storage.energies.crf_energy[i][j] += 
 	m_longrange_storage.energies.crf_energy[i][j];
+      m_storage.perturbed_energy_derivatives.lj_energy[i][j] +=
+	m_longrange_storage.perturbed_energy_derivatives.lj_energy[i][j];
+      m_storage.perturbed_energy_derivatives.crf_energy[i][j] +=
+	m_longrange_storage.perturbed_energy_derivatives.crf_energy[i][j];
     }
   }
   // and long-range energies of end states
-  assert(m_storage.energies.eds_vi.size()==m_longrange_storage.energies.eds_vi.size());
+  assert(m_storage.energies.eds_vi.size()
+	 ==m_longrange_storage.energies.eds_vi.size());
+  assert(m_storage.perturbed_energy_derivatives.eds_vi.size()
+	 ==m_longrange_storage.perturbed_energy_derivatives.eds_vi.size());
+  assert(m_storage.perturbed_energy_derivatives.eds_vi.size() == numstates);
+  
+  DEBUG(6, "\t(set) add long-range energies of end states");
+  
   for(unsigned int i = 0; i < numstates; ++i){
     m_storage.energies.eds_vi[i] += m_longrange_storage.energies.eds_vi[i];
+    DEBUG(6, "\t\t(set) eds_vi " << m_longrange_storage.energies.eds_vi[i]);
+    m_storage.perturbed_energy_derivatives.eds_vi[i] += m_longrange_storage.perturbed_energy_derivatives.eds_vi[i];
+    DEBUG(6, "\t\t(set) eds_dvi " << m_longrange_storage.perturbed_energy_derivatives.eds_vi[i]);
+
   }
   
   // add longrange virial
@@ -211,7 +230,7 @@ int interaction::Eds_Nonbonded_Set
 	      << "\tshortrange virial = " << m_storage.virial_tensor(i,j));
 
 	m_storage.virial_tensor(i, j) +=
-        m_longrange_storage.virial_tensor(i, j);
+	  m_longrange_storage.virial_tensor(i, j);
         
         // longrange virial of eds end states
         for(unsigned int k = 0; k < numstates; ++k){
@@ -221,7 +240,7 @@ int interaction::Eds_Nonbonded_Set
       }
     }
   }
-  
+
   DEBUG(7, "(set) calculate interactions done!");
 
   return 0;
@@ -234,15 +253,20 @@ int interaction::Eds_Nonbonded_Set::update_configuration
  simulation::Simulation const & sim)
 {
   Nonbonded_Set::update_configuration(topo, conf, sim);
-  
+  // this should, theoretically, also have taken care of all the stuff that the 
+  // eds_outer_loop has written to m_storage 
+
+
   // number of eds states
   const unsigned int numstates = m_storage.force_endstates.size();
   assert(m_storage.virial_tensor_endstates.size() == numstates);
   assert(conf.special().eds.force_endstates.size() == numstates);
   assert(conf.special().eds.virial_tensor_endstates.size() == numstates);
   assert(conf.current().energies.eds_vi.size() == numstates);
+  assert(conf.current().perturbed_energy_derivatives.eds_vi.size() == numstates);
   assert(m_storage.energies.eds_vi.size() == numstates);
-
+  assert(m_storage.perturbed_energy_derivatives.eds_vi.size() == numstates);
+  
   // add storage forces to configuration
   for(unsigned int i = 0; i < numstates; ++i){
     for(unsigned int j = 0; j < topo.num_atoms(); ++j){
@@ -253,6 +277,8 @@ int interaction::Eds_Nonbonded_Set::update_configuration
   // add storage energies to configuration
   for(unsigned int i = 0; i < numstates; ++i){
     conf.current().energies.eds_vi[i] += m_storage.energies.eds_vi[i];
+    conf.current().perturbed_energy_derivatives.eds_vi[i] += m_storage.perturbed_energy_derivatives.eds_vi[i];
+    
   }
   
   // add storage virial 
@@ -269,6 +295,25 @@ int interaction::Eds_Nonbonded_Set::update_configuration
     }
   } // virial?
 
+  // we have written non-eds interactions directly to the forces, energies and derivates
+  // The forces and energies have been taken care of by the call 
+  // to Nonbonded_Set::update_configuration, but we still need to include the derivatives 
+  const int ljs = conf.current().energies.lj_energy.size();
+  configuration::Energy & pe = conf.current().perturbed_energy_derivatives;
+  
+  // energy derivatives
+  for (int i = 0; i < ljs; ++i) {
+    for (int j = 0; j < ljs; ++j) {
+      pe.lj_energy[i][j] += 
+	m_storage.perturbed_energy_derivatives.
+	lj_energy[i][j];
+      pe.crf_energy[i][j] += 
+	m_storage.perturbed_energy_derivatives.
+	crf_energy[i][j];
+    }
+    pe.self_energy[i] += m_storage.perturbed_energy_derivatives.self_energy[i];
+  }
+  
   return 0;
 }
 
@@ -283,15 +328,27 @@ int interaction::Eds_Nonbonded_Set
 
   Nonbonded_Set::init(topo, conf, sim, os, quiet); 
   perturbed_pairlist().resize(topo.num_atoms());
-  
+
+  m_storage.perturbed_energy_derivatives.resize
+    (unsigned(conf.current().perturbed_energy_derivatives.bond_energy.size()),
+     unsigned(conf.current().perturbed_energy_derivatives.kinetic_energy.size()),
+     unsigned(sim.param().precalclam.nr_lambdas));
+
+  m_longrange_storage.perturbed_energy_derivatives.resize
+    (unsigned(conf.current().perturbed_energy_derivatives.bond_energy.size()),
+     unsigned(conf.current().perturbed_energy_derivatives.kinetic_energy.size()),
+     unsigned(sim.param().precalclam.nr_lambdas));
+
   m_storage.force_endstates.resize(sim.param().eds.numstates);
   m_storage.virial_tensor_endstates.resize(sim.param().eds.numstates);
   m_storage.energies.eds_vi.resize(sim.param().eds.numstates);
-
+  m_storage.perturbed_energy_derivatives.eds_vi.resize(sim.param().eds.numstates);
+  
   m_longrange_storage.force_endstates.resize(sim.param().eds.numstates);
   m_longrange_storage.virial_tensor_endstates.resize(sim.param().eds.numstates);
   m_longrange_storage.energies.eds_vi.resize(sim.param().eds.numstates);
-  
+  m_longrange_storage.perturbed_energy_derivatives.eds_vi.resize(sim.param().eds.numstates);
+
   assert(m_storage.force_endstates.size() 
       == m_longrange_storage.force_endstates.size());
   for(unsigned int i = 0; i < m_storage.force_endstates.size(); i++){

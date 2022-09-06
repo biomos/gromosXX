@@ -134,7 +134,7 @@ io::In_Perturbation::read(topology::Topology &topo,
   
   // let's do a warning because state A information is overwritten?
   bool warn = false;
-  if(!param.eds.eds){
+  if(!param.eds.eds || (param.eds.eds && param.perturbation.perturbation)){
     // prepare arrays
     topo.is_perturbed().resize(topo.num_solute_atoms(), false);
     
@@ -1725,7 +1725,6 @@ io::In_Perturbation::read(topology::Topology &topo,
         topology::EDS_Perturbed_Atom atom(seq, m_iac, m_charge);
         DEBUG(10, "\tcreated an atom");
               
-        
         atom.exclusion() = topo.exclusion(seq);
         topo.exclusion(seq).clear();
         DEBUG(10, "\treplace the exclusions to perturbation");
@@ -1740,6 +1739,7 @@ io::In_Perturbation::read(topology::Topology &topo,
           }
         }
         DEBUG(10, "\tadapted perturbed exclusions");
+
         
         atom.one_four_pair() = topo.one_four_pair(seq);
         topo.one_four_pair(seq).clear();

@@ -207,17 +207,17 @@ int algorithm::Perturbed_Shake
 
       //ANITA
       if (sim.param().precalclam.nr_lambdas &&
-          ((sim.steps() % sim.param().write.free_energy) == 0))
-      {
-        DEBUG(1, "AB_bond within if ");
+          ((sim.steps()  % sim.param().write.free_energy) == 0)){
+        DEBUG(10, "AB_bond within if ");
         double r0A = topo.bond_types_harm()[it->A_type].r0;
-        DEBUG(1, "AB_bond r0A " << r0A);
+        DEBUG(10, "AB_bond r0A " << r0A); 
         double r0B = topo.bond_types_harm()[it->B_type].r0;
-        DEBUG(1, "AB_bond r0B " << r0B);
-        double r0_diff = r0B - r0A;
-        DEBUG(1, "AB_bond r0_diff " << r0_diff);
-        double sp_2_m_dt2 = sp * 2 * (1.0 / topo.mass()(atom_i) + 1.0 / topo.mass()(atom_j)) * dt2;
-        DEBUG(1, "AB_bond sp_2_m_dt2 " << sp_2_m_dt2);
+        DEBUG(10, "AB_bond r0B " << r0B); 
+        double r0_diff = r0B - r0A; 
+        DEBUG(10, "AB_bond r0_diff " << r0_diff); 
+        double sp_2_m_dt2 = sp * 2 * (1.0 / topo.mass()(atom_i) +
+                               1.0 / topo.mass()(atom_j) ) * dt2; 
+        DEBUG(10, "AB_bond sp_2_m_dt2 " << sp_2_m_dt2); 
 
         double lambda_step = (sim.param().precalclam.max_lam -
                               sim.param().precalclam.min_lam) /
@@ -230,11 +230,11 @@ int algorithm::Perturbed_Shake
           // determine current lambda for this index
           double lam = (lam_index * lambda_step) + sim.param().precalclam.min_lam;
 
-          double r0lam = (1 - lam) * r0A + lam * r0B;
-          DEBUG(1, "AB_bond r0lam " << r0lam);
-          double difflam = r0lam * r0lam - dist2;
-          DEBUG(1, "AB_bond difflam " << difflam);
-          double value = (difflam / sp_2_m_dt2) * r0lam * r0_diff;
+          double r0lam = (1-lam)*r0A + lam*r0B;
+          DEBUG(10, "AB_bond r0lam " << r0lam); 
+          double difflam = r0lam*r0lam - dist2; 
+          DEBUG(10, "AB_bond difflam " << difflam); 
+          double value = (difflam / sp_2_m_dt2) * r0lam *r0_diff;
           conf.old().perturbed_energy_derivatives.AB_bond[lam_index] += value;
         }
       } // ANITA

@@ -258,7 +258,7 @@ calculate_interactions(topology::Topology & topo,
       }
     }
 
-    // ANITA
+    // for extended TI: 
     unsigned int nr_lambdas = sim.param().precalclam.nr_lambdas;
     for(unsigned int l = 0; l < nr_lambdas; ++l){
       std::vector<double> A_lj_scratch(ljs*ljs), A_rlj_scratch(ljs*ljs);
@@ -364,7 +364,7 @@ calculate_interactions(topology::Topology & topo,
         }
       }
 
-    } // ANITA
+    }
 
     if (sim.param().eds.eds){
       const unsigned int numstates = sim.param().eds.numstates;
@@ -375,8 +375,11 @@ calculate_interactions(topology::Topology & topo,
       assert(m_nonbonded_set[0]->storage().force_endstates.size() == numstates);
       assert(m_storage.energies.eds_vi.size() == numstates);
       assert(m_nonbonded_set[0]->storage().energies.eds_vi.size() == numstates);
-      
+      assert(m_storage.perturbed_energy_derivatives.eds_vi.size() == numstates);
+      assert(m_nonbonded_set[0]->storage().perturbed_energy_derivatives.eds_vi.size() == numstates);    
       m_storage.energies.eds_vi  = m_nonbonded_set[0]->storage().energies.eds_vi;
+      m_storage.perturbed_energy_derivatives.eds_vi  = 
+         m_nonbonded_set[0]->storage().perturbed_energy_derivatives.eds_vi;
       m_storage.force_endstates = m_nonbonded_set[0]->storage().force_endstates;
       m_storage.virial_tensor_endstates = m_nonbonded_set[0]->storage().virial_tensor_endstates;
        
@@ -387,6 +390,14 @@ calculate_interactions(topology::Topology & topo,
               MPI::DOUBLE,
               MPI::SUM,
                sim.mpiControl().masterID, sim.mpiControl().comm);
+      
+      // reduce perturbed energy derivatives of endstates
+      MPI::COMM_WORLD.Reduce(&m_storage.perturbed_energy_derivatives.eds_vi[0],
+              &m_nonbonded_set[0]->storage().perturbed_energy_derivatives.eds_vi[0],
+              numstates,
+              MPI::DOUBLE,
+              MPI::SUM,
+              0);
       
       // reduce virial tensors of endstates
       if (sim.param().pcouple.virial){
@@ -498,24 +509,28 @@ int interaction::MPI_Nonbonded_Master::init(topology::Topology & topo,
   DEBUG(15, "MPI_Nonbonded_Master::initialize");
   m_nonbonded_set.clear();
   
-  if (sim.param().perturbation.perturbation){
-    
-    // only one set per MPI process
-    m_nonbonded_set.push_back(new Perturbed_Nonbonded_Set(*m_pairlist_algorithm,
-            m_parameter, rank, num_threads));
-  }
-  else if (sim.param().eds.eds){
+
+  // in case we do perturbation and eds at the same time, this is handled
+  // in the eds_outer_loop. So we start with checking for EDS. 
+  if (sim.param().eds.eds){
     m_nonbonded_set.push_back(new Eds_Nonbonded_Set(*m_pairlist_algorithm,
             m_parameter, rank, num_threads));
     
     m_storage.force_endstates.resize(sim.param().eds.numstates);
     m_storage.virial_tensor_endstates.resize(sim.param().eds.numstates);
     m_storage.energies.eds_vi.resize(sim.param().eds.numstates);
+    m_storage.perturbed_energy_derivatives.eds_vi.resize(sim.param().eds.numstates);
     
     for(unsigned int i = 0; i < m_storage.force_endstates.size(); i++){
       m_storage.force_endstates[i].resize(topo.num_atoms());
     }
      
+  }
+  else if(sim.param().perturbation.perturbation){
+    
+    // only one set per MPI process
+    m_nonbonded_set.push_back(new Perturbed_Nonbonded_Set(*m_pairlist_algorithm,
+            m_parameter, rank, num_threads));
   }
   else{
     // only one set per MPI process

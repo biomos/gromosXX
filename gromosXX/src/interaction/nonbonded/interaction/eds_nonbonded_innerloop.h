@@ -56,6 +56,26 @@ namespace interaction
       configuration::Configuration & conf,
       std::map<unsigned int, topology::EDS_Perturbed_Atom>::const_iterator const & mit,
       Periodicity_type const & periodicity);
+
+     /**
+     * perturbed RF interaction (solute).
+     * (always shortrange)
+     */
+    void perturbed_RF_excluded_interaction_innerloop
+    (topology::Topology & topo, configuration::Configuration & conf,
+        std::map<unsigned int, topology::Perturbed_Atom>::const_iterator const & mit,
+        Periodicity_type const & periodicity
+    );
+
+    /**
+     * Common part of eds rf and pertubed atoms rf
+     */
+    void eds_perturbed_RF_exclusions_loop
+    (topology::Topology & topo, 
+    configuration::Configuration & conf, 
+    int atom_i, const topology::excl_cont_t::value_type &exclusions, 
+    Periodicity_type const & periodicity);
+
     
   protected:
 

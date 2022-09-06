@@ -100,9 +100,7 @@ void interaction::Eds_Nonbonded_Outerloop
 	j_it != j_to;
 	++j_it){
       
-      DEBUG(10, "\tperturbed nonbonded_interaction: i "
-	    << i << " j " << *j_it);
-      
+      DEBUG(10, "\tperturbed nonbonded_interaction: i " << i << " j " << *j_it);
       innerloop.eds_lj_crf_innerloop(topo, conf, i, *j_it, storage, periodicity);
     }
     
@@ -159,6 +157,24 @@ void interaction::Eds_Nonbonded_Outerloop
 
     } // loop over 1,4 pairs
   } // loop over solute atoms
+
+  
+  topology::excl_cont_t::value_type::const_iterator itt, tto;
+  std::map<unsigned int, topology::Perturbed_Atom>::const_iterator 
+    mitt=topo.perturbed_solute().atoms().begin(), 
+    mtto=topo.perturbed_solute().atoms().end();
+  
+  for(; mitt!=mtto; ++mitt){
+    itt = mitt->second.one_four_pair().begin();
+    tto = mitt->second.one_four_pair().end();
+    
+    for( ; itt != tto; ++itt){
+
+      innerloop.eds_one_four_interaction_innerloop
+	(topo, conf, mitt->second.sequence_number(), *itt, periodicity);
+
+    } // loop over 1,4 pairs
+  } // loop over solute atoms
 }  
 
 
@@ -200,7 +216,12 @@ void interaction::Eds_Nonbonded_Outerloop
   for(; mit!=mto; ++mit){
     innerloop.eds_RF_excluded_interaction_innerloop(topo, conf, mit, periodicity);
   }
+  
+  // pertubed atoms
+  std::map<unsigned int, topology::Perturbed_Atom>::const_iterator 
+    mitt=topo.perturbed_solute().atoms().begin(), 
+    mtto=topo.perturbed_solute().atoms().end();
+  for(; mitt!=mtto; ++mitt){
+    innerloop.perturbed_RF_excluded_interaction_innerloop(topo, conf, mitt, periodicity);
+  }  
 }
-
-
-
