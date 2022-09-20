@@ -1,6 +1,7 @@
 stages:
   - configure-build
   - build
+  - sim_test
 
 include:
   - local: 'gromosXX/admin/gitlab-ci/gromos.gitlab-ci.yml'

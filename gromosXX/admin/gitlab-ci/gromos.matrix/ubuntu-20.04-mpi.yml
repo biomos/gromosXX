@@ -13,6 +13,24 @@ gromos:ubuntu-20.04-mpi:build:
     - .use-mpi
   image: ${CI_REGISTRY}/gromos/gromosxx/gromos-ubuntu-20.04-mpi
   variables:
-    BUILD_DIR: build/bin/md_mpi
+    BUILD_DIR: build
+    BIN_PATH: ${BUILD_DIR}/bin/md_mpi
   needs:
     - job: gromos:ubuntu-20.04-mpi:configure
+
+gromos:ubuntu-20.04-mpi:sim_test:
+  extends:
+    - .gromos:base:sim_test
+    - .use-mpi
+  image: ${CI_REGISTRY}/gromos/gromosxx/gromos-ubuntu-20.04-mpi
+  variables:
+    BUILD_DIR: build
+    BIN_PATH: ${BUILD_DIR}/bin/md_mpi
+    TEST_REPO: $CI_PROJECT_DIR/gromos_test_files/
+    PRE_MD_BIN: "mpirun -np 4"
+    OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
+    OMPI_ALLOW_RUN_AS_ROOT: 1
+  needs:
+    - job: gromos:ubuntu-20.04-mpi:build
+
+

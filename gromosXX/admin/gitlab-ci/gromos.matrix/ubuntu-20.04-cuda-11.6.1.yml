@@ -15,6 +15,7 @@ gromos:ubuntu-20.04-cuda-11.6.1:build:
     - .use-cuda
   image: ${CI_REGISTRY}/gromos/gromosxx/gromos-ubuntu-20.04-cuda-11.6.1
   variables:
-    BUILD_DIR: build/bin/md
+    BUILD_DIR: build
+    BIN_PATH: build/bin/md
   needs:
     - job: gromos:ubuntu-20.04-cuda-11.6.1:configure
