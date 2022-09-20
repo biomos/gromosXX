@@ -1,4 +1,4 @@
-gromos:ubuntu-20.04-cuda-11.6.1:configure:
+gromos:ubuntu-20.04-cuda-11.6.1-debug:configure:
   extends:
     - .gromos:base:configure
     - .use-openmp
@@ -7,15 +7,16 @@ gromos:ubuntu-20.04-cuda-11.6.1:configure:
     - .use-debug
   image: ${CI_REGISTRY}/gromos/gromosxx/gromos-ubuntu-20.04-cuda-11.6.1
   variables:
-    BUILD_DIR: build
+    BUILD_DIR: build_debug
 
-gromos:ubuntu-20.04-cuda-11.6.1:build:
+gromos:ubuntu-20.04-cuda-11.6.1-debug:build:
   extends:
     - .gromos:base:build
     - .use-openmp
     - .use-cuda
   image: ${CI_REGISTRY}/gromos/gromosxx/gromos-ubuntu-20.04-cuda-11.6.1
   variables:
-    BUILD_DIR: build/bin/md
+    BUILD_DIR: build_debug
+    BIN_PATH: ${BUILD_DIR}/bin/md
   needs:
-    - job: gromos:ubuntu-20.04-cuda-11.6.1:configure
+    - job: gromos:ubuntu-20.04-cuda-11.6.1-debug:configure

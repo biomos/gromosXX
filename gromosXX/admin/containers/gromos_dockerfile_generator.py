@@ -38,6 +38,8 @@ _common_packages = [
     'ccache',
     'python3-pytest']
 
+_pip = ['numpy', 'PyYAML']
+
 _clang = ['clang',
           'libomp5',
           'libomp-dev']
@@ -46,7 +48,8 @@ _mpi = [
     'libopenmpi-dev',
     'libfftw3-3',
     'libfftw3-mpi3',
-    'libfftw3-mpi-dev',]
+    'libfftw3-mpi-dev',
+    'openmpi-bin',]
 
 _cuda = [
     'nvidia-cuda-toolkit',
@@ -142,6 +145,7 @@ def add_base_stage(name, input_args):
     output_stages[name] = hpccm.Stage()
     output_stages[name] += hpccm.primitives.baseimage(image=get_image_tag(input_args), _distro=set_linux_distro(input_args))
     output_stages[name] += hpccm.building_blocks.packages(ospackages=_common_packages)
+    output_stages[name] += hpccm.building_blocks.pip(packages=_pip, pip='pip3')
     output_stages[name] += get_compiler(input_args)
     output_stages[name] += get_mpi(input_args)
     return output_stages
