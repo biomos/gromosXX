@@ -4215,6 +4215,7 @@ namespace simulation
         * bins for angle distributions
         */
       std::vector<double> bins_theta;
+      std::vector<double> bins_costheta;
     }/** tensor-free RDC parameters */ tfrdc;
 
     /**
