@@ -331,26 +331,26 @@ int _shake_bond(math::Box box, math::VArray &pos, const math::VArray &old_pos, d
   return 0;
 }
 
-void _add_to_theta_distribution(math::Vec v1, double d1, math::Vec v2, double d2, 
+void _add_to_theta_distribution(math::Vec v1, double inv_d1, math::Vec v2, double inv_d2,
   std::vector<double> &bins, std::vector< double> &distribution) {
-
-  double theta = acos((v1[0]*v2[0]+v1[1]*v2[1]+v1[2]*v2[2])/(d1*d2));
+  // bins must be in cos(theta) as well!!
+  double costheta = (v1[0]*v2[0]+v1[1]*v2[1]+v1[2]*v2[2])*(inv_d1*inv_d2);
 
   for (unsigned int i=0; i<bins.size()-1; i++) {
     double & bin_upper = bins[i+1];
-    if (theta < bin_upper) {
+    if (costheta > bin_upper) {
       distribution.at(i)+=1;
       break;
     }
   }
 }
 
-void _add_to_theta_distribution(double theta, 
+void _add_to_theta_distribution(double costheta,
   std::vector<double> &bins, std::vector< double> &distribution) {
 
   for (unsigned int i=0; i<bins.size()-1; i++) {
     double & bin_upper = bins[i+1];
-    if (theta < bin_upper) {
+    if (costheta > bin_upper) {
       distribution.at(i)+=1;
       break;
     }
@@ -384,10 +384,10 @@ int _magnetic_field_vector_sd
     periodicity.nearest_image(rh_i, conf.special().tfrdc_mfv.pos(1), rh_ij);
     DEBUG(9, "initial rh_i  :" << math::v2s(rh_i));
     DEBUG(9, "initial rh_ij :" << math::v2s(rh_ij));
-    double dh_ij = math::abs(rh_ij);                  // [nm]
+    double inv_dh_ij = 1/math::abs(rh_ij);                  // [nm]
     math::VArray r_ij;
     std::vector<double> costheta;
-    std::vector<double> d_ij;
+    std::vector<double> inv_d_ij;
 
     // get the RDC bond vectors once, they won't change
     std::vector<topology::tf_rdc_restraint_struct>::iterator
@@ -398,8 +398,8 @@ int _magnetic_field_vector_sd
       math::Vec r_ij1;
       periodicity.nearest_image(r_i1, it->v2.pos(conf, topo), r_ij1);
       r_ij.push_back(r_ij1);
-      d_ij.push_back(math::abs(r_ij1));                  // [nm]
-      double ct = (rh_ij(0)*r_ij[l](0)+rh_ij(1)*r_ij[l](1)+rh_ij(2)*r_ij[l](2))/(dh_ij*d_ij[l]);
+      inv_d_ij.push_back(1/math::abs(r_ij1));                  // [nm]
+      double ct = (rh_ij(0)*r_ij[l](0)+rh_ij(1)*r_ij[l](1)+rh_ij(2)*r_ij[l](2))*(inv_dh_ij*inv_d_ij[l]);
       costheta.push_back(ct);
 
       DEBUG(9, "r_i  :" << math::v2s(r_i1));
@@ -473,7 +473,7 @@ int _magnetic_field_vector_sd
             //double inv_dh_ij = 1/dh_ij;
             //dPdr(a) = 3 * costheta * inv_dh_ij * (v_r_ij[l](a)/(d_ij) - costheta*rh_ij(a)*inv_dh_ij*inv_dh_ij); // [1 / nm]
             // eq. 32
-            double prefix =  3 * costheta[l] / (d_ij[l]*dh_ij);
+            double prefix =  3 * costheta[l] * (inv_d_ij[l]*inv_dh_ij);
             dPdr(a) = prefix * r_ij[l](a); // [1 / nm]
           }
           
@@ -601,29 +601,28 @@ int _magnetic_field_vector_sd
       // shake (only positions)
       err = _shake_bond<B>(conf.current().box, tfrdc_mfv.pos, old_pos, tfrdc_mfv.mass, tfrdc_mfv.d);
       if (err) break;
-
       
       periodicity.nearest_image(rh_i, conf.special().tfrdc_mfv.pos(1), rh_ij);
-      dh_ij = math::abs(rh_ij);                  // [nm]
+      inv_dh_ij = 1/math::abs(rh_ij);                  // [nm]
 
       for (unsigned int a=0; a < topo.tf_rdc_molaxis().size(); a++) {
         math::Vec axis;
         math::Vec axis1 = topo.tf_rdc_molaxis()[a][0].pos(conf, topo), 
                           axis2 = topo.tf_rdc_molaxis()[a][1].pos(conf, topo);
         periodicity.nearest_image(axis1, axis2, axis);
-        double d_axis = math::abs(axis);
-        _add_to_theta_distribution(axis, d_axis, rh_ij, dh_ij, sim.param().tfrdc.bins_theta, conf.special().tfrdc.dist_theta[a]);
+        double inv_d_axis = 1/math::abs(axis);
+        _add_to_theta_distribution(axis, inv_d_axis, rh_ij, inv_dh_ij, sim.param().tfrdc.bins_costheta, conf.special().tfrdc.dist_theta[a]);
       }
       DEBUG(9, "rh_i  :" << math::v2s(rh_i));
       DEBUG(9, "rh_ij :" << math::v2s(rh_ij));
-      
+
       it = topo.tf_rdc_restraints().begin(),
             to = topo.tf_rdc_restraints().end();
       for(unsigned int l=0; it != to; ++it, ++l) {
 
-        costheta[l] = (rh_ij(0)*r_ij[l](0)+rh_ij(1)*r_ij[l](1)+rh_ij(2)*r_ij[l](2))/(dh_ij*d_ij[l]);
+        costheta[l] = (rh_ij(0)*r_ij[l](0)+rh_ij(1)*r_ij[l](1)+rh_ij(2)*r_ij[l](2))*(inv_dh_ij*inv_d_ij[l]);
         if (sim.param().tfrdc.write_rdc_theta_distr) {
-          _add_to_theta_distribution(acos(costheta[l]), sim.param().tfrdc.bins_theta, conf.special().tfrdc.dist_theta_r_mfv[l]);
+          _add_to_theta_distribution(costheta[l], sim.param().tfrdc.bins_costheta, conf.special().tfrdc.dist_theta_r_mfv[l]);
         }
  
         const double P = 0.5 * (3 * costheta[l] * costheta[l] - 1.0);          // [-]
@@ -638,7 +637,7 @@ int _magnetic_field_vector_sd
         conf.special().tfrdc_mfv.P_avg[l]+=P;
         DEBUG(15, " P_avg: " << conf.special().tfrdc_mfv.P_avg[l]/(sdstep+1));
 
-        double prefix =  3 * costheta[l] / (d_ij[l]*dh_ij);
+        double prefix =  3 * costheta[l] * (inv_d_ij[l]*inv_dh_ij);
         // TODO: add case when bond is not constrained
         for(unsigned int a = 0; a < 3; ++a){
             conf.special().tfrdc_mfv.dPdr_avg[l](a)+=prefix*rh_ij(a);
@@ -694,7 +693,6 @@ void _init_mfv_sd(configuration::Configuration & conf,
   const double gdt = gg * sim.time_step_size();
   const double gdth = gdt * 0.5;
   
-  // TODO: maybe do not use hardcoded values here
   tfrdc_mfv.mass = sim.param().tfrdc.mfv_mass;
   tfrdc_mfv.d = sim.param().tfrdc.mfv_r;
   tfrdc_mfv.n_com_translation_removal = 1000;
@@ -847,6 +845,10 @@ int interaction::TF_RDC_Restraint_Interaction::init
   conf.special().tfrdc_mfv.dPdr_avg.resize(num_res);
 
   sim.param().tfrdc.bins_theta = _linspace(0.0,math::Pi,101.0);
+  sim.param().tfrdc.bins_costheta.resize(sim.param().tfrdc.bins_theta.size(), 0.0);
+  for (int i = 0; i < sim.param().tfrdc.bins_theta.size(); i++) {
+    sim.param().tfrdc.bins_costheta[i] = cos(sim.param().tfrdc.bins_theta[i]);
+  }
   conf.special().tfrdc.dist_theta.resize(topo.tf_rdc_molaxis().size());
   for (int i = 0; i<topo.tf_rdc_molaxis().size(); i++) {
     conf.special().tfrdc.dist_theta[i].resize(sim.param().tfrdc.bins_theta.size(), 0.0);
