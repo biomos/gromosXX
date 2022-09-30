@@ -76,11 +76,11 @@ if(last == 0) {\
 
 #define GETFILE(ifs, name) \
 { \
-string s = TOP_SOURCE_DIR "src/check/data/" name; \
+string s = "../../" TOP_SOURCE_DIR "src/check/data/" name; \
 ifs.open(s.c_str()); \
 }
 
 #define GETFILEPATH(p, name, subdir) \
 { \
-  p = TOP_SOURCE_DIR "/" subdir name; \
+  p = "../../" TOP_SOURCE_DIR "/" subdir name; \
 }
