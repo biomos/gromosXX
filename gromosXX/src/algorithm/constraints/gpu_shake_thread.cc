@@ -49,16 +49,17 @@ algorithm::GPU_Shake_Thread::GPU_Shake_Thread(topology::Topology & topo,
         unsigned int num_gpus,
         unsigned int gpu_id,
         std::ostream & os,
-        bool quiet) : util::CycleThread(),
-                               mytopo(&topo), myconf(&conf), mysim(&sim),
-                               factor(factor), mass(mass), constr_length2(constr_length2),
-                               m_tolerance(tolerance),
-                               num_gpus(num_gpus), gpu_id(gpu_id),
-                               mystream(&os), amIquiet(quiet) {
+        bool quiet) { //: util::CycleThread(),
+                               //mytopo(&topo), myconf(&conf), mysim(&sim),
+                               //factor(factor), mass(mass), constr_length2(constr_length2),
+                               //m_tolerance(tolerance),
+                               //num_gpus(num_gpus), gpu_id(gpu_id),
+                               //mystream(&os), amIquiet(quiet) {
   shake_fail_mol = -1;
   DEBUG(5, "Constructor of GPU_Shake_Thread " << gpu_id);
-  start();
-  pthread_barrier_wait(&barrier_init);
+  //start();
+  //pthread_barrier_wait(&barrier_init);
+  init_run();
 }
 
 /**
@@ -66,7 +67,7 @@ algorithm::GPU_Shake_Thread::GPU_Shake_Thread(topology::Topology & topo,
  */
 algorithm::GPU_Shake_Thread::~GPU_Shake_Thread() {
   DEBUG(5, "Destructor of GPU_Shake_Thread " << gpu_id)
-  terminate_cycle();
+  //terminate_cycle();
 }
 
 
@@ -75,7 +76,8 @@ algorithm::GPU_Shake_Thread::~GPU_Shake_Thread() {
  */
 int algorithm::GPU_Shake_Thread::apply(){
   DEBUG(10, "GPU_Shake_Thread : Do Cycle (" << gpu_id << ")")
-  do_cycle();
+  //do_cycle();
+  cycle();
 
   return shake_fail_mol;
 }

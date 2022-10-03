@@ -17,40 +17,40 @@ namespace util {
     /**
      * start the thread
      */
-    void start();
+    //void start();
 
     /**
      * in this function the genuine purpose of every child class
      * can be implemented
      */
-    virtual void run() = 0;
+    //virtual void run() = 0;
 
     /**
      * kill the thread
      */
-    void kill();
+    //void kill();
 
     /**
      * interrupt the thread
      */
-    void wait();
+    //void wait();
 
     /**
      * destructor
      */
-    virtual ~Thread() {}
+    //virtual ~Thread() {}
 
   private:
     /**
      * thread id number
      */
-    pthread_t id;
+    //pthread_t id;
   };
 
   /**
    * Used to start the thread
    */
-  extern "C" void * launchThread(void * t);
+  //extern "C" void * launchThread(void * t);
 
 }
 #endif	/* _THREADS_H */

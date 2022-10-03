@@ -8,7 +8,7 @@
 #include <pthread.h>
 #include "thread.h"
 //#include "pthread_barrier.h"
-
+/*
 #ifdef __APPLE__
 
 typedef int pthread_barrierattr_t;
@@ -27,7 +27,7 @@ int pthread_barrier_destroy(pthread_barrier_t *barrier);
 int pthread_barrier_wait(pthread_barrier_t *barrier);
 
 #endif
-
+*/
 namespace util {
 
   /**
@@ -44,32 +44,32 @@ namespace util {
     /**
      * Where the cycle (while loop) is placed
      */
-    virtual void run();
+    //virtual void run();
     /**
      * What to do before the cycle in run()
      */
-    virtual void init_run() = 0;
+    //virtual void init_run() = 0;
     /**
      * What to do during the cycle in run()
      */
-    virtual void cycle() = 0;
+    //virtual void cycle() = 0;
     /**
      * What to do after the cycle in run()
      */
-    virtual void end_run() = 0;
+    //virtual void end_run() = 0;
     /**
      * Initiate a cycle
      */
-    void do_cycle();
+    //void do_cycle();
     /**
      * Called by the derrived class to terminate the thread
      */
-    void terminate_cycle();
+    //void terminate_cycle();
   protected:
     /**
      * Barrier for thread initialization
      */
-    pthread_barrier_t barrier_init;
+    //pthread_barrier_t barrier_init;
     /**
      * Error integer to communicate problems between threads
      */
@@ -78,16 +78,16 @@ namespace util {
     /**
      * Barrier at the beginning of the cyle
      */
-    pthread_barrier_t barrier_start;
+    //pthread_barrier_t barrier_start;
     /**
      * Barrier at the end of the cyle
      */
-    pthread_barrier_t barrier_end;
+    //pthread_barrier_t barrier_end;
 
     /**
      * for the while loop in run()
      */
-    bool keeprunning;
+    //bool keeprunning;
   };
 }
 
