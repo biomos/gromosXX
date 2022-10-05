@@ -36,6 +36,7 @@ int algorithm::EDS
     case simulation::aeds_search_eir:
     case simulation::aeds_search_emax_emin:
     case simulation::aeds_search_all:
+    case simulation::aeds_advanced_search:
     {
       // interactions have been calculated - now apply eds Hamiltonian
       std::vector<double> prefactors(numstates);
