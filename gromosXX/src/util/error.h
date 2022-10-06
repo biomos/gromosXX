@@ -21,5 +21,6 @@
 
 // termination
 #define E_MINIMUM_REACHED 1000
+#define E_AEDS_CONVERGENCE 2000
 
 #endif

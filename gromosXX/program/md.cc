@@ -194,6 +194,10 @@ int main(int argc, char *argv[]){
         error = 0; // clear error condition
         break;
       }
+      if (error == E_AEDS_CONVERGENCE){
+        error = 0; // clear error condition
+        break;
+      }
       else { 
 	// try to print energies anyway
 	// if (error == E_NAN){
