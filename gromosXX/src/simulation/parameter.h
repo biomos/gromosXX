@@ -636,6 +636,10 @@ namespace simulation
     * A-EDS using Emax and Emin, search for Eir, Emax an Emin
     */
     aeds_search_all = 7,
+    /**
+    * A-EDS using local elevation to get initial guesses of EMIN, EMAX and EIR
+    */
+    aeds_advanced_search = 8,
   };
 
   /**
@@ -3124,6 +3128,10 @@ namespace simulation
       */
       std::vector<unsigned int> visitcounts;
       /**
+      * contributing frames per state
+      */
+      std::vector<unsigned int> framecounts;
+      /**
       * state of the last simulation step
       */
       unsigned int oldstate;
@@ -3163,6 +3171,10 @@ namespace simulation
       * half-life of the offset parameters at the beginning of the run
       */
       unsigned int bsteps;
+      /**
+      * Conversion criteria of aeds_advanced_search (number of frames contributing per state)
+      */
+     unsigned int cc;
     } /** enveloping distribution sampling*/ eds;
 
  struct reeds_struct : public replica_struct
