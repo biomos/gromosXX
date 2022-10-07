@@ -8,10 +8,6 @@
 #undef SUBMODULE
 #define MODULE math
 
-#ifdef __AVX2__
-  #include <immintrin.h>
-#endif
-
 #ifdef WIN32
 // Converts a floating point value to an integer, very fast.
 inline int rint(float param)
