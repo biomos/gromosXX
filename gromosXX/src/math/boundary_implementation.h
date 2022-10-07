@@ -7,6 +7,10 @@
 #ifndef INCLUDED_BOUNDARY_IMPLEMENTATION_H
 #define INCLUDED_BOUNDARY_IMPLEMENTATION_H
 
+#ifdef __AVX2__
+  #include <immintrin.h>
+#endif
+
 namespace math
 {
   

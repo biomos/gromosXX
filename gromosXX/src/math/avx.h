@@ -369,9 +369,9 @@ namespace avx
     __m256d res2 = _mm256_hadd_pd(yy_zx, yz_zy);
 
     // and the zz-case
-    zz = _m256_hadd_pd(zz, zz);
+    zz = _mm256_hadd_pd(zz, zz);
     zz = _mm256_permute4x64_pd(zz, 0xD8);
-    __m256d res3 = _m256_hadd_pd(zz, zz);
+    __m256d res3 = _mm256_hadd_pd(zz, zz);
 
     // add-and-write or just write
     if (M == mode::add) {

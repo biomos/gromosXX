@@ -130,7 +130,7 @@ namespace interaction {
       for (unsigned i = 0; i < 3; ++i) {
         m256d_forceCP[i] = _mm256_mul_pd(m256d_f, m256d_nim[i]);
       }
-      int* const js = (int*)&m128i_js;
+
       for (unsigned i = 0; i < 4; ++i) {
         DEBUG(15, "interaction " << ai << "-" << js[i]);
         DEBUG(15, "nim: " << m256d_nim[0][i] << " " << m256d_nim[1][i] << " "  << m256d_nim[2][i]);
