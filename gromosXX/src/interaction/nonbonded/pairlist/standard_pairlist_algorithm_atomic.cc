@@ -65,7 +65,7 @@ _update_atomic(topology::Topology & topo,
 {
   DEBUG(7, "standard pairlist update (atomic cutoff)");
   if (begin == 0)
-    timer().start("pairlist");
+    timer().start_subtimer("pairlist");
 
   math::Periodicity<b> periodicity(conf.current().box);
   math::VArray const & pos = conf.current().pos;
@@ -222,7 +222,7 @@ _update_atomic(topology::Topology & topo,
 
   } // multiple solvents
   if (begin == 0)
-    timer().stop("pairlist");
+    timer().stop_subtimer("pairlist");
   
   DEBUG(7, "pairlist done");
 
@@ -240,7 +240,7 @@ _update_pert_atomic(topology::Topology & topo,
 {
   DEBUG(7, "perturbed standard pairlist update (atomic cutoff)");
   if (begin == 0)
-    timer().start("perturbed pairlist");
+    timer().start_subtimer("perturbed pairlist");
   
   math::Periodicity<b> periodicity(conf.current().box);
 
@@ -417,7 +417,7 @@ _update_pert_atomic(topology::Topology & topo,
   } // multiple solvents
   
   if (begin == 0)
-    timer().stop("perturbed pairlist");
+    timer().stop_subtimer("perturbed pairlist");
   
   DEBUG(7, "pairlist done");
 

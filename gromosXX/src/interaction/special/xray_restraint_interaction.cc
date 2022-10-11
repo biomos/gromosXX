@@ -69,7 +69,7 @@ int interaction::Xray_Restraint_Interaction
     clipper::Xmap<clipper::ftype32> & d_r = conf.special().xray_conf.d_r;
     clipper::Spacegroup & sym_spacegroup = conf.special().xray_conf.sym_spacegroup;
     const clipper::Cell & cell = rho_calc.cell();
-  m_timer.start();
+  m_timer.start(sim);
   // get number of atoms in simulation
   const int atoms_size = topo.num_atoms();
   // update clipper atomvec: convert the position to Angstrom
@@ -128,7 +128,7 @@ int interaction::Xray_Restraint_Interaction
   // lets start with sym stuff.
   if (sim.param().xrayrest.symrest != simulation::xray_symrest_off) {
     DEBUG(6, "symmetry restraints");
-    m_timer.start("symmetry restraints");
+    m_timer.start_subtimer("symmetry restraints");
     std::vector<unsigned int>::const_iterator
             atom_it = topo.xray_sym_restraints().begin(),
             atom_to = topo.xray_sym_restraints().end();
@@ -202,35 +202,35 @@ int interaction::Xray_Restraint_Interaction
         }
       } // method switch
     } // loop over restrained atoms
-    m_timer.stop("symmetry restraints");
+    m_timer.stop_subtimer("symmetry restraints");
   }
   
   // fit the b factor
   if (sim.param().xrayrest.bfactor.step && (!sim.steps() || sim.steps() % sim.param().xrayrest.bfactor.step == 0)) {
-    m_timer.start("B factor fitting");
+    m_timer.start_subtimer("B factor fitting");
     fit_bfactor(topo, conf, sim, cell, atoms, fphi_calc, fphi, fphi_obs, rho_calc, D_k, d_r);
     update = true;
-    m_timer.stop("B factor fitting");
+    m_timer.stop_subtimer("B factor fitting");
   }
 
   if (update) {
     atoms_sf = atoms;
     // Calculate structure factors
-    m_timer.start("structure factor");
+    m_timer.start_subtimer("structure factor");
     calculate_electron_density(rho_calc, atoms);
     // FFT the electron density to obtain the structure factors
     rho_calc.fft_to(fphi_calc);
-    m_timer.stop("structure factor");
+    m_timer.stop_subtimer("structure factor");
 
     if (sim.param().xrayrest.overall_bfactor.B_overall_switcher == simulation::B_overall_on) {
-      m_timer.start("overall B factor fitting");
+      m_timer.start_subtimer("overall B factor fitting");
       fit_overall_bfactor(topo, conf, sim, cell, atoms, fphi_calc, fphi, fphi_obs, rho_calc, D_k, d_r);
-      m_timer.stop("overall B factor fitting");
+      m_timer.stop_subtimer("overall B factor fitting");
     }
 
-    m_timer.start("scaling");
+    m_timer.start_subtimer("scaling");
     scale_sf(topo, conf, sim, fphi_calc, fphi, fphi_obs);
-    m_timer.stop("scaling");
+    m_timer.stop_subtimer("scaling");
   }
 
   math::VArray force(atoms_size);
@@ -241,16 +241,16 @@ int interaction::Xray_Restraint_Interaction
     // LOCAL ELEVATION
     ///////////////////////////////////////////////
     if (update) {
-      m_timer.start("obs. electron density");
+      m_timer.start_subtimer("obs. electron density");
       rho_obs.fft_from(fphi_obs);
-      m_timer.stop("obs. electron density");
+      m_timer.stop_subtimer("obs. electron density");
     }
   } else if (sim.param().xrayrest.mode != simulation::xrayrest_mode_electron_density) {
     ///////////////////////////////////////////////
     // STRUCTURE FACTOR RESTRAINING
     ///////////////////////////////////////////////
     if (update) {
-      m_timer.start("energy");
+      m_timer.start_subtimer("energy");
       calculate_energy_sf(sim, fphi,
               topo.xray_restraints(),
               conf.special().xray_rest,
@@ -258,29 +258,29 @@ int interaction::Xray_Restraint_Interaction
               conf.special().xray.k_inst, conf.special().xray.k_avg,
               D_k, sim.param().xrayrest.force_constant,
               conf.current().energies.xray_total);
-      m_timer.stop("energy");
+      m_timer.stop_subtimer("energy");
     } else {
       conf.current().energies.xray_total = conf.old().energies.xray_total;
     }
 
     // start to calculate the forces
-    m_timer.start("force");
+    m_timer.start_subtimer("force");
     math::SArray b_deriv(atoms.size());
     calculate_force_sf(update, D_k, d_r, atoms, force, b_deriv, to_ang);
     for(unsigned int i = 0; i < atoms.size(); ++i) {
       conf.special().xray_bfoc[i].b_factor_gradient = b_deriv(i);
     }
-    m_timer.stop("force");
+    m_timer.stop_subtimer("force");
   } else {
     ///////////////////////////////////////////////
     // ELECTRON DENSITY RESTRAINING
     ///////////////////////////////////////////////
-    m_timer.start("energy & force");
+    m_timer.start_subtimer("energy & force");
     if (update)
       rho_obs.fft_from(fphi_obs);
     calculate_energy_rho(atoms, rho_obs, rho_calc, sim.param().xrayrest.force_constant,
             conf.current().energies.xray_total, force, to_ang);
-    m_timer.stop("energy & force");
+    m_timer.stop_subtimer("energy & force");
   }
   DEBUG(10, "energy: " << conf.current().energies.xray_total);
 

@@ -152,7 +152,7 @@ int interaction::Harm_Angle_Interaction
 			 configuration::Configuration &conf,
 			 simulation::Simulation &sim)
 {
-  m_timer.start();
+  m_timer.start(sim);
 
   SPLIT_VIRIAL_BOUNDARY(_calculate_harm_angle_interactions,
 			topo, conf, sim);

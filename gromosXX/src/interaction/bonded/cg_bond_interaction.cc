@@ -104,7 +104,7 @@ int interaction::DP_Bond_Interaction
 			 simulation::Simulation &sim)
 {
 
-  m_timer.start();
+  m_timer.start(sim);
 
   SPLIT_VIRIAL_BOUNDARY(_calculate_dp_bond_interactions,
 			topo, conf, sim);

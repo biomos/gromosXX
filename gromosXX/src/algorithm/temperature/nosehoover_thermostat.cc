@@ -59,7 +59,7 @@ int algorithm::NoseHoover_Thermostat::apply
  simulation::Simulation & sim
  )
 {
-  m_timer.start();
+  m_timer.start(sim);
 
   assert(sim.param().multibath.algorithm > 0);
   

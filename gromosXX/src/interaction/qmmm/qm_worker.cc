@@ -85,25 +85,25 @@ int interaction::QM_Worker::run_QM(topology::Topology& topo
                                  , configuration::Configuration& conf
                                  , simulation::Simulation& sim
                                  , interaction::QM_Zone& qm_zone) {
-  m_timer.start();
+  m_timer.start(sim);
 
   DEBUG(15,"Running QM Worker");
   int ret = 0;
-  m_timer.start("writing input");
+  m_timer.start_subtimer("writing input");
   if ((ret = this->process_input(topo, conf, sim, qm_zone)) != 0)
     return ret;
-  m_timer.stop("writing input");
+  m_timer.stop_subtimer("writing input");
   
-  m_timer.start("QM program call");
+  m_timer.start_subtimer("QM program call");
   if ((ret = this->run_calculation()) != 0)
     return ret;
-  m_timer.stop("QM program call");
+  m_timer.stop_subtimer("QM program call");
 
-  m_timer.start("reading output");
+  m_timer.start_subtimer("reading output");
   if ((ret = this->process_output(topo, conf, sim, qm_zone)) != 0)
     return ret;
 
-  m_timer.stop("reading output");
+  m_timer.stop_subtimer("reading output");
   m_timer.stop();
   return 0;
 }

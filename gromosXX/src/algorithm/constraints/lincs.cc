@@ -190,7 +190,7 @@ void _solvent(topology::Topology & topo,
 		     simulation::Simulation & sim,
 		     util::Algorithm_Timer & m_timer, int & error)
 {
-  m_timer.start("solvent");
+  m_timer.start_subtimer("solvent");
   // the first atom of a solvent
   unsigned int first = unsigned(topo.num_solute_atoms());
 
@@ -208,7 +208,7 @@ void _solvent(topology::Topology & topo,
     }
   }
  
-  m_timer.stop("solvent");
+  m_timer.stop_subtimer("solvent");
   error = 0;
 }
 
@@ -220,7 +220,7 @@ int algorithm::Lincs::apply(topology::Topology & topo,
 			    simulation::Simulation & sim)
 {
   DEBUG(7, "applying LINCS");
-  m_timer.start();
+  m_timer.start(sim);
   
   // check whether we lincs solute
   if (topo.solute().distance_constraints().size() && 
@@ -228,11 +228,11 @@ int algorithm::Lincs::apply(topology::Topology & topo,
       sim.param().constraint.ntc > 1){
 
     DEBUG(8, "\twe need to lincs SOLUTE");
-    m_timer.start("solute");
+    m_timer.start_subtimer("solute");
     SPLIT_BOUNDARY(_lincs, topo, conf, sim, topo.solute().distance_constraints(),
 		   topo.solute().lincs(),
 		   sim.param().constraint.solute.lincs_order, m_timer);
-    m_timer.stop("solute");
+    m_timer.stop_subtimer("solute");
  
   }
 

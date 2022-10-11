@@ -62,6 +62,7 @@
  *   - integration
  * - simulation
  * - util
+ *   - timing
  *   - replica_exchange
  *   - leus
  *
@@ -196,6 +197,7 @@
     {
       extern int debug_level;
       extern int util_debug_level;
+      extern int timing_debug_level;
       extern int leus_debug_level;
       extern int bs_leus_debug_level;
     }

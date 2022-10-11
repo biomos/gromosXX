@@ -167,7 +167,7 @@ int interaction::Extended_Grid_Pairlist_Algorithm::prepare
  )
 {
   DEBUG(7, "grid pairlist algorithm : prepare");
-  timer().start("pairlist prepare");
+  timer().start_subtimer("pairlist prepare");
   
   set_cutoff(sim.param().pairlist.cutoff_short, 
 	     sim.param().pairlist.cutoff_long);
@@ -180,7 +180,7 @@ int interaction::Extended_Grid_Pairlist_Algorithm::prepare
   failed = false;
 
   if (prepare_grid(topo, conf, sim)){
-    timer().stop("pairlist prepare");
+    timer().stop_subtimer("pairlist prepare");
     std::ostringstream msg;
     msg << "At step " << sim.steps() << ": Could not prepare grid. "
             "Falling back to standard algoritm for this step.";
@@ -192,7 +192,7 @@ int interaction::Extended_Grid_Pairlist_Algorithm::prepare
   collapse_grid();
 
   // print_grid();
-  timer().stop("pairlist prepare");
+  timer().stop_subtimer("pairlist prepare");
 
   return 0;
 }
@@ -239,7 +239,7 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update
   // empty the pairlist
   pairlist.clear();
   if (begin == 0) // master
-    timer().start("pairlist");
+    timer().start_subtimer("pairlist");
   
   DEBUG(12, "Timer named: " << timer().name() << " begin:" << begin);
   DEBUG(10,"Extended_Grid_Pairlist_Algorithm::_update");
@@ -608,7 +608,7 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update
 
   } // the extended planes
   if (begin == 0) // master
-    timer().stop("pairlist");
+    timer().stop_subtimer("pairlist");
 }
 
 void interaction::Extended_Grid_Pairlist_Algorithm::_update_atomic
@@ -625,7 +625,7 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update_atomic
   // empty the pairlist
   pairlist.clear();
   if (begin == 0) // master
-    timer().start("pairlist");
+    timer().start_subtimer("pairlist");
   
   DEBUG(12, "Timer named: " << timer().name() << " begin:" << begin);
   DEBUG(10,"Extended_Grid_Pairlist_Algorithm::_update_atomic");
@@ -863,7 +863,7 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update_atomic
 
   } // the extended planes
   if (begin == 0) // master
-    timer().stop("pairlist");
+    timer().stop_subtimer("pairlist");
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -912,7 +912,7 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update_perturbed
   pairlist.clear();
   perturbed_pairlist.clear();
   if (begin == 0) // master
-    timer().start("perturbed pairlist");
+    timer().start_subtimer("perturbed pairlist");
 
   std::vector<Grid::Particle> p_plane;
   std::vector<int> cell_start;
@@ -1363,7 +1363,7 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update_perturbed
   } // the extended planes
 
   if (begin == 0) // master
-    timer().stop("perturbed pairlist");
+    timer().stop_subtimer("perturbed pairlist");
 }
 
 inline bool interaction::Extended_Grid_Pairlist_Algorithm::insert_pair

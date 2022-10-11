@@ -278,7 +278,7 @@ void algorithm::Perturbed_Shake ::perturbed_solute(topology::Topology const &top
   math::Periodicity<B> periodicity(conf.current().box);
 
   if (!sim.mpi || m_rank == 0)
-    m_timer.start("solute");
+    m_timer.start_subtimer("solute");
 
   const unsigned int num_atoms = topo.num_solute_atoms();
   std::vector<bool> skip_now;
@@ -416,7 +416,7 @@ void algorithm::Perturbed_Shake ::perturbed_solute(topology::Topology const &top
   }
 
   if (!sim.mpi || m_rank == 0)
-    m_timer.stop("solute");
+    m_timer.stop_subtimer("solute");
 
   //error = 0;
 
@@ -436,7 +436,7 @@ int algorithm::Perturbed_Shake ::apply(topology::Topology &topo,
   DEBUG(7, "applying perturbed SHAKE");
 
   if (!sim.mpi || m_rank == 0)
-    m_timer.start();
+    m_timer.start(sim);
 
   // set the constraint force to zero
   std::set<unsigned int>::const_iterator it = constrained_atoms().begin(),

@@ -92,7 +92,7 @@ calculate_interactions(topology::Topology & topo,
         simulation::Simulation & sim) {
   DEBUG(4, "Nonbonded_Interaction::calculate_interactions");
 
-  m_timer.start();
+  m_timer.start(sim);
 
   // check if we want to calculate nonbonded
   // might not be necessary if multiple time-stepping is enabled
@@ -626,7 +626,7 @@ void interaction::Nonbonded_Interaction::store_set_data
         configuration::Configuration & conf,
         simulation::Simulation const & sim
         ) {
-  m_timer.start("set data summation");
+  m_timer.start_subtimer("set data summation");
   std::vector<Nonbonded_Set_Interface *>::iterator
   it = m_nonbonded_set.begin(),
           to = m_nonbonded_set.end();
@@ -636,7 +636,7 @@ void interaction::Nonbonded_Interaction::store_set_data
     DEBUG(7, "adding forces from set " << it - m_nonbonded_set.begin());
     (*it)->update_configuration(topo, conf, sim);
   }
-  m_timer.stop("set data summation");
+  m_timer.stop_subtimer("set data summation");
 }
 
 void interaction::Nonbonded_Interaction::init_expand_configuration

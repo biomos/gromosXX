@@ -83,7 +83,7 @@ calculate_interactions(topology::Topology & topo,
     return 1;
   }
   
-  m_timer.start();
+  m_timer.start(sim);
   
 #ifdef XXMPI
   // check if we want to calculate nonbonded

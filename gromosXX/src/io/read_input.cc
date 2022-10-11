@@ -322,6 +322,8 @@ int io::read_parameter(io::Argument const & args,
   if (args.count("print") > 0){
     if (args["print"] == "pairlist")
       sim.param().pairlist.print = true;
+    if (args["print"] == "timings_report")
+      sim.param().print.timings_report = true;
   }
    
   // check for errors and abort if there are some

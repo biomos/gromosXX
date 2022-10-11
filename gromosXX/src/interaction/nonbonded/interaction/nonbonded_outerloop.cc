@@ -116,6 +116,10 @@ void interaction::Nonbonded_Outerloop
    */
   std::vector<unsigned int>::const_iterator j_it, j_to;
 
+  const std::string timer_name_solute(longrange ? "longrange solute" : "shortrange solute");
+  //if (master)
+    timer.start_subtimer(timer_name_solute);
+  
   unsigned int size_i = unsigned(pairlist_solute.size());
   DEBUG(10, "lj_crf_outerloop pairlist size " << size_i);
 
@@ -134,6 +138,9 @@ void interaction::Nonbonded_Outerloop
       innerloop.lj_crf_innerloop(topo, conf, i, *j_it, storage, periodicity);
     }
   }
+  //if (master)
+    timer.stop_subtimer(timer_name_solute);
+  
 /*only for DEBUG*/
  /* DEBUG(1,"current solute pairlist:\n");
 unsigned int i_deb;
@@ -162,9 +169,9 @@ unsigned int i_deb;
   // cuda doesn't do solvent-solvent here
   if (sim.param().innerloop.method == simulation::sla_cuda) return;
   // solvent-solvent
-  const std::string timer_name(longrange ? "longrange solvent-solvent" : "solvent-solvent");
-  if (master)
-    timer.start(timer_name);
+  const std::string timer_name_solvent(longrange ? "longrange solvent-solvent" : "shortrange solvent-solvent");
+  //if (master)
+    timer.start_subtimer(timer_name_solvent);
   if (sim.param().force.special_loop == simulation::special_loop_spc) { // special solvent loop
     // solvent - solvent with spc innerloop...
     for (; i < size_i; i += 3) { // use every third pairlist (OW's)
@@ -257,8 +264,8 @@ unsigned int i_deb;
       }
     }
   }
-  if (master)
-    timer.stop(timer_name);
+  //if (master)
+    timer.stop_subtimer(timer_name_solvent);
 }
 
 
@@ -292,6 +299,9 @@ void interaction::Nonbonded_Outerloop
    */
   std::vector<unsigned int>::const_iterator j_it, j_to;
 
+  const std::string timer_name_solute(longrange ? "longrange solute" : "shortrange solute");
+  //if (master)
+    timer.start_subtimer(timer_name_solute);
   unsigned int size_i = unsigned(pairlist_solute.size());
   DEBUG(10, "lj_crf2 outerloop pairlist size " << size_i);
 
@@ -373,6 +383,10 @@ void interaction::Nonbonded_Outerloop
       }
     }
   }
+  //if (master)
+    timer.stop_subtimer(timer_name_solute);
+  
+  
 /*only for DEBUG*/
  /* DEBUG(1,"current solute pairlist:\n");
 unsigned int i_deb;
@@ -401,9 +415,9 @@ unsigned int i_deb;
   // cuda doesn't do solvent-solvent here
   if (sim.param().innerloop.method == simulation::sla_cuda) return;
   // solvent-solvent
-  const std::string timer_name(longrange ? "longrange solvent-solvent" : "solvent-solvent");
-  if (master)
-    timer.start(timer_name);
+  const std::string timer_name_solvent(longrange ? "longrange solvent-solvent" : "shortrange solvent-solvent");
+  //if (master)
+    timer.start_subtimer(timer_name_solvent);
   if (sim.param().force.special_loop == simulation::special_loop_spc) { // special solvent loop
     // solvent - solvent with spc innerloop...
 
@@ -1103,8 +1117,8 @@ unsigned int i_deb;
       }
     }
   }
-  if (master)
-    timer.stop(timer_name);
+  //if (master)
+    timer.stop_subtimer(timer_name_solvent);
 }
 
 void interaction::Nonbonded_Outerloop
@@ -2081,7 +2095,7 @@ void interaction::Nonbonded_Outerloop
   if (sim.steps() == 0 && !sim.param().nonbonded.influence_function_read) {
     DEBUG(10, "\t calculating influence function");
     if (rank == 0)
-      timer.start("P3M: influence function");
+      timer.start_subtimer("P3M: influence function");
     if (sim.mpi)
       conf.lattice_sum().influence_function.template calculate< configuration::ParallelMesh > (topo, conf, sim);
     else
@@ -2091,7 +2105,7 @@ void interaction::Nonbonded_Outerloop
     DEBUG(10, "\testimated force error: " << new_rms_force_error);
 
     if (rank == 0)
-      timer.stop("P3M: influence function");
+      timer.stop_subtimer("P3M: influence function");
 
     if (new_rms_force_error > sim.param().nonbonded.influence_function_rms_force_error) {
       io::messages.add("P3M: RMS force error is still too big after reevaluation "
@@ -2113,7 +2127,7 @@ void interaction::Nonbonded_Outerloop
   if (sim.steps() && sim.param().nonbonded.accuracy_evaluation &&
           sim.steps() % sim.param().nonbonded.accuracy_evaluation == 0) {
     if (rank == 0)
-      timer.start("P3M: accuracy evaluation");
+      timer.start_subtimer("P3M: accuracy evaluation");
     if (sim.mpi)
       conf.lattice_sum().influence_function.template evaluate_quality<configuration::ParallelMesh > (topo, conf, sim);
     else
@@ -2122,13 +2136,13 @@ void interaction::Nonbonded_Outerloop
     // see MD02.10 eq. C7
     const double rms_force_error = conf.lattice_sum().influence_function.rms_force_error();
     if (rank == 0)
-      timer.stop("P3M: accuracy evaluation");
+      timer.stop_subtimer("P3M: accuracy evaluation");
 
     if (rms_force_error > sim.param().nonbonded.influence_function_rms_force_error) {
       // recalculate the influence function
       DEBUG(10, "\t calculating influence function");
       if (rank == 0)
-        timer.start("P3M: influence function");
+        timer.start_subtimer("P3M: influence function");
       if (sim.mpi)
         conf.lattice_sum().influence_function.template calculate<configuration::ParallelMesh > (topo, conf, sim);
       else
@@ -2136,7 +2150,7 @@ void interaction::Nonbonded_Outerloop
 
       const double new_rms_force_error = conf.lattice_sum().influence_function.rms_force_error();
       if (rank == 0)
-        timer.stop("P3M: influence function");
+        timer.stop_subtimer("P3M: influence function");
 
       if (new_rms_force_error > sim.param().nonbonded.influence_function_rms_force_error) {
         io::messages.add("P3M: RMS force error is still too big after reevaluation "
@@ -2167,7 +2181,7 @@ void interaction::Nonbonded_Outerloop
   if (do_a2t && calculate_lattice_sum_corrections) {
     DEBUG(10, "\tstarting to assign squared charge to grid ... ");
     if (rank == 0)
-      timer.start("P3M: self term");
+      timer.start_subtimer("P3M: self term");
 
     if (sim.param().nonbonded.ls_calculate_a2 != simulation::ls_a2t_ave_a2_numerical) {
       // calculate the real A2~ term (not averaged)
@@ -2195,12 +2209,12 @@ void interaction::Nonbonded_Outerloop
     }
 
     if (rank == 0)
-      timer.stop("P3M: self term");
+      timer.stop_subtimer("P3M: self term");
   }
   
   
   if (rank == 0)
-    timer.start("P3M: energy & force");
+    timer.start_subtimer("P3M: energy & force");
 
   DEBUG(10, "\t done with influence function, starting to assign charge density to grid ... ");
   if (sim.mpi)
@@ -2234,7 +2248,7 @@ void interaction::Nonbonded_Outerloop
   }
 
   if (rank == 0)
-    timer.stop("P3M: energy & force");
+    timer.stop_subtimer("P3M: energy & force");
   DEBUG(7, "\tdone with calculating interactions in k-space (P3M)");
 }
 

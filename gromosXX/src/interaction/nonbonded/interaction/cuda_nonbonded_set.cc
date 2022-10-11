@@ -87,10 +87,10 @@ int interaction::CUDA_Nonbonded_Set
   DEBUG(8, "CUDA_Nonbonded_Set::calculate_interactions");
   DEBUG(15, "Start Cycle for GPU: " << mygpu_id);
   if (mygpu_id == 0)
-    m_pairlist_alg.timer().start("cuda set");
+    m_pairlist_alg.timer().start_subtimer("cuda set");
   do_cycle();
   if (mygpu_id == 0)
-    m_pairlist_alg.timer().stop("cuda set");
+    m_pairlist_alg.timer().stop_subtimer("cuda set");
   if (error) return 1;
   DEBUG(15, "Finished Cycle for GPU: " << mygpu_id);
 
@@ -247,7 +247,7 @@ void interaction::CUDA_Nonbonded_Set::cycle() {
   m_storage.zero();
   const bool pairlist_update = !(mysim->steps() % mysim->param().pairlist.skip_step);
   if (mygpu_id == 0)  
-    m_pairlist_alg.timer().start("GPU data copy");
+    m_pairlist_alg.timer().start_subtimer("GPU data copy");
   
   error += cudakernel::cudaCopyPositions(&myconf->current().pos(mytopo->num_solute_atoms())(0), gpu_stat);
   DEBUG(15, "myconf->current().pos(mytopo->num_solute_atoms())(0) = " << myconf->current().pos(mytopo->num_solute_atoms())(0));
@@ -258,7 +258,7 @@ void interaction::CUDA_Nonbonded_Set::cycle() {
     error += cudakernel::cudaCopyBox(gpu_stat, myconf->current().box(0)(0), myconf->current().box(1)(1), myconf->current().box(2)(2));
   }
   if (mygpu_id == 0)  
-    m_pairlist_alg.timer().stop("GPU data copy");
+    m_pairlist_alg.timer().stop_subtimer("GPU data copy");
   
 
   if (pairlist_update) {
@@ -266,10 +266,10 @@ void interaction::CUDA_Nonbonded_Set::cycle() {
 
     m_longrange_storage.zero();
     if (mygpu_id == 0)
-      m_pairlist_alg.timer().start("pairlist cuda");
+      m_pairlist_alg.timer().start_subtimer("pairlist cuda");
     cudakernel::cudaCalcPairlist(gpu_stat);
     if (mygpu_id == 0)
-      m_pairlist_alg.timer().stop("pairlist cuda");
+      m_pairlist_alg.timer().stop_subtimer("pairlist cuda");
   }
 
   if (pairlist_update) {
@@ -280,7 +280,7 @@ void interaction::CUDA_Nonbonded_Set::cycle() {
     // in case of LS only LJ are calculated
 
     if (mygpu_id == 0)
-      m_pairlist_alg.timer().start("longrange-cuda");
+      m_pairlist_alg.timer().start_subtimer("longrange-cuda");
     double * For = &m_longrange_storage.force(mytopo->num_solute_atoms())(0);
     DEBUG(15, "mytopo->num_solute_atoms() = " << mytopo->num_solute_atoms());
     double * Vir = &m_longrange_storage.virial_tensor(0, 0);
@@ -292,13 +292,13 @@ void interaction::CUDA_Nonbonded_Set::cycle() {
     DEBUG(15, "e_crf = " << *e_crf);
     error += cudakernel::cudaCalcForces(For, Vir, e_lj, e_crf, true, gpu_stat);
     if (mygpu_id == 0)
-      m_pairlist_alg.timer().stop("longrange-cuda");
+      m_pairlist_alg.timer().stop_subtimer("longrange-cuda");
   }
   // calculate forces / energies
   DEBUG(6, "\tshort range interactions");
 
   if (mygpu_id == 0)
-    m_pairlist_alg.timer().start("shortrange-cuda");
+    m_pairlist_alg.timer().start_subtimer("shortrange-cuda");
   double * For = &m_storage.force(mytopo->num_solute_atoms())(0);
   double * Vir = &m_storage.virial_tensor(0, 0);
   const int egroup = mytopo->atom_energy_group(mytopo->num_solute_atoms());
@@ -306,7 +306,7 @@ void interaction::CUDA_Nonbonded_Set::cycle() {
   double * e_crf = &m_storage.energies.crf_energy[egroup][egroup];
   error += cudakernel::cudaCalcForces(For, Vir, e_lj, e_crf, false, gpu_stat);
   if (mygpu_id == 0)
-    m_pairlist_alg.timer().stop("shortrange-cuda");
+    m_pairlist_alg.timer().stop_subtimer("shortrange-cuda");
   if (m_rank == 0 && error) {
     io::messages.add("GPU: cannot calculate forces", io::message::critical);
     return;

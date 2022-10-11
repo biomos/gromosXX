@@ -79,7 +79,7 @@ void algorithm::GPU_Shake
   DEBUG(8, "\tshaking SOLVENT - GPU_SHAKE");
 
   if (!sim.mpi || m_rank == 0)
-    m_timer.start("solvent");
+    m_timer.start_subtimer("solvent");
 
   error = 0;
 
@@ -114,7 +114,7 @@ void algorithm::GPU_Shake
 #endif
 
   if (!sim.mpi || m_rank == 0)
-    m_timer.stop("solvent");
+    m_timer.stop_subtimer("solvent");
 } // shake solvent
 
 
@@ -126,7 +126,7 @@ int algorithm::GPU_Shake::apply(topology::Topology & topo,
         simulation::Simulation & sim) {
   DEBUG(7, "applying GPU_SHAKE");
   if (!sim.mpi || m_rank == 0)
-    m_timer.start();
+    m_timer.start(sim);
 
   int error = 0;
 

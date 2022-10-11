@@ -2782,7 +2782,7 @@ int RDC_Restraint_Interaction::calculate_interactions
         (topology::Topology & topo,
         configuration::Configuration & conf,
         simulation::Simulation & sim) {
-  m_timer.start();
+  m_timer.start(sim);
 
   switch(sim.param().rdc.type) {
     case simulation::rdc_mf:

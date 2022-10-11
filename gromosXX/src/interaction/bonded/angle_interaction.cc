@@ -133,7 +133,7 @@ int interaction::Angle_Interaction
 			 simulation::Simulation &sim)
 {
   int e=0;
-  m_timer.start();
+  m_timer.start(sim);
 
   SPLIT_VIRIAL_BOUNDARY(_calculate_angle_interactions,
 			topo, conf, sim);

@@ -218,7 +218,7 @@ int interaction::Crossdihedral_Interaction
 			 configuration::Configuration &conf,
 			 simulation::Simulation &sim)
 {
-  m_timer.start();
+  m_timer.start(sim);
 
   SPLIT_VIRIAL_BOUNDARY(_calculate_crossdihedral_interactions,
 			topo, conf, sim);

@@ -200,7 +200,7 @@ void algorithm::M_Shake
   const double dt2i = 1.0 / dt2;
 
   if (!sim.mpi || m_rank == 0)
-    m_timer.start("solvent");
+    m_timer.start_subtimer("solvent");
 
   // the first atom of a solvent
   unsigned int first = topo.num_solute_atoms();
@@ -370,7 +370,7 @@ void algorithm::M_Shake
   error = my_error;
 
   if (!sim.mpi || m_rank == 0)
-    m_timer.stop("solvent");
+    m_timer.stop_subtimer("solvent");
   DEBUG(3, "total shake solvent iterations: " << tot_iterations);
 } // shake solvent
 
@@ -382,7 +382,7 @@ int algorithm::M_Shake::apply(topology::Topology & topo,
         simulation::Simulation & sim) {
   DEBUG(7, "applying M_SHAKE - START");
   if (!sim.mpi || m_rank == 0){
-    m_timer.start();
+    m_timer.start(sim);
   }
 
   int error = 0;

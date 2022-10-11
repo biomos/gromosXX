@@ -128,7 +128,7 @@ void interaction::Standard_Pairlist_Algorithm::_update_cg
 
   DEBUG(7, "standard pairlist update");
   if (begin == 0) 
-    timer().start("pairlist");
+    timer().start_subtimer("pairlist");
   
   math::Periodicity<b> periodicity(conf.current().box);
   // empty the pairlist
@@ -325,7 +325,7 @@ void interaction::Standard_Pairlist_Algorithm::_update_cg
     _solvent_solvent(topo, conf, sim, pairlist, cg1, stride, periodicity);
 
   if (begin == 0)
-    timer().stop("pairlist");
+    timer().stop_subtimer("pairlist");
   DEBUG(7, "pairlist done");
 
 }
@@ -343,7 +343,7 @@ void interaction::Standard_Pairlist_Algorithm::_solvent_solvent
 {
   bool master = false;
   if (cg1 == int(topo.num_solute_chargegroups())) { // master
-    timer().start("pairlist solvent-solvent");
+    timer().start_subtimer("pairlist solvent-solvent");
     master = true;
   }
   
@@ -400,7 +400,7 @@ void interaction::Standard_Pairlist_Algorithm::_solvent_solvent
   } // cg1
 
   if (master)
-    timer().stop("pairlist solvent-solvent");
+    timer().stop_subtimer("pairlist solvent-solvent");
   
 }
 
@@ -443,7 +443,7 @@ _update_pert_cg(topology::Topology & topo,
 {
   DEBUG(7, "standard pairlist update");
   if (begin == 0) // master
-    timer().start("perturbed pairlist");
+    timer().start_subtimer("perturbed pairlist");
   
   // create the innerloops
   math::Periodicity<b> periodicity(conf.current().box);
@@ -625,7 +625,7 @@ _update_pert_cg(topology::Topology & topo,
                    cg1, stride, periodicity);
   */
   if (begin == 0) // master
-    timer().stop("perturbed pairlist");
+    timer().stop_subtimer("perturbed pairlist");
   DEBUG(7, "pairlist done");
 
 }
