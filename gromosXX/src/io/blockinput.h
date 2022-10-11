@@ -336,12 +336,12 @@ namespace io {
   
     if (_lineStream.eof()) {
       if (!allow_missing) {
-      io::messages.add(_blockname + " block reached END before "+varname
-          +" could be read!",
-		    "BlockInput", io::message::error);
+        io::messages.add(_blockname + " block reached END before "+varname
+            +" could be read!",
+          "BlockInput", io::message::error);
+        _par_values.push_back(tmp_string);
+        _block_error=1;
       }
-      _par_values.push_back(tmp_string);
-      _block_error=1;
       return 1;  
     }
 
