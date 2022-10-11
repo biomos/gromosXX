@@ -227,7 +227,7 @@ int interaction::Perturbed_Dihedral_new_Interaction
 			 configuration::Configuration &conf,
 			 simulation::Simulation & sim)
 {
-  m_timer.start();
+  m_timer.start(sim);
   
   SPLIT_VIRIAL_BOUNDARY(_calculate_perturbed_dihedral_new_interactions,
 			topo, conf, sim, m_interaction);

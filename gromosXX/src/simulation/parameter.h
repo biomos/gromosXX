@@ -1336,8 +1336,9 @@ namespace simulation
        * - stepblock 0               (no printing of energies)
        * - centreofmass 0            (no printing of centre of mass information)
        * - monitor_dihedrals false   (do not monitor dihedral angle transitions)
+       * - timings_report false      (do not write detailed report of timings)
        */
-      print_struct() : stepblock(0), centreofmass(0), monitor_dihedrals(0) {}
+      print_struct() : stepblock(0), centreofmass(0), monitor_dihedrals(0), timings_report(false) {}
 
       /**
        * print stepblock
@@ -1351,6 +1352,10 @@ namespace simulation
        * dihedral angle transitions
        */
       int monitor_dihedrals;
+      /**
+       * dihedral angle transitions
+       */
+      bool timings_report;
     } /** output parameters */ print;
 
     /**

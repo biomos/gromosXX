@@ -80,7 +80,7 @@ calculate_interactions(topology::Topology & topo,
 {
   DEBUG(4, "OMP_Nonbonded_Interaction::calculate_interactions");
 
-  m_timer.start();
+  m_timer.start(sim);
 
   // check if we want to calculate nonbonded
   // might not be necessary if multiple time-stepping is enabled
@@ -151,6 +151,16 @@ calculate_interactions(topology::Topology & topo,
     reduce_configuration(topo, conf, sim, *p_conf);
   }
 
+  ////////////////////////////////////////////////////
+  // printing pairlist
+  ////////////////////////////////////////////////////
+  if (sim.param().pairlist.print &&
+      (!(sim.steps() % sim.param().pairlist.skip_step))) {
+    DEBUG(7, "print pairlist...");
+    std::cerr << "printing pairlist!" << std::endl;
+    print_pairlist(*p_topo, *p_conf, sim);
+  }
+  
   DEBUG(6, "Nonbonded_Interaction::calculate_interactions done");
 
   m_timer.stop();

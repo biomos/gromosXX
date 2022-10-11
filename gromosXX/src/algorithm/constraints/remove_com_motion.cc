@@ -214,7 +214,7 @@ int algorithm::Remove_COM_Motion
   bool remove_trans = false;
   bool print_it = false;
   
-  m_timer.start();
+  m_timer.start(sim);
 
   // check if nothing to do
   if (sim.steps() == 0){
@@ -233,7 +233,10 @@ int algorithm::Remove_COM_Motion
 
   DEBUG(9, "centre of mass: print " << print_it << " remove " <<
            (remove_trans || remove_rot) );
-  if (!print_it && !remove_trans && !remove_rot) return 0;
+  if (!print_it && !remove_trans && !remove_rot){
+    m_timer.stop();
+    return 0;
+  } 
   
   if (sim.steps() != 0){
     remove_rot = remove_rot && sim.param().centreofmass.remove_rot;

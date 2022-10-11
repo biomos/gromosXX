@@ -326,6 +326,8 @@ int main(int argc, char *argv[]) {
             traj.print_final(topo, conf, sim);
         }
 
+        const double sim_time = (util::now() - start) - init_time;
+
         std::cout << "\nMESSAGES FROM SIMULATION\n";
         io::message::severity_enum err_msg = io::messages.display(std::cout);
 
@@ -333,8 +335,21 @@ int main(int argc, char *argv[]) {
 
         md.print_timing(std::cout);
 
-        std::cout << "Overall time used:\t" << util::now() - start << "\n"
-                << "(initialization took " << init_time << ")\n\n";
+        std::setprecision(5);
+        std::cout << std::endl;    
+        std::cout << "Wall time initialisation (s):  " << std::setw(10) << init_time << std::endl;
+        std::cout << "Wall time simulation (s):      " << std::setw(10) << sim_time << std::endl;
+        std::cout << "-----------------------------------------" << std::endl;
+        std::cout << "Wall time total (s):           " << std::setw(10) << (init_time + sim_time) << std::endl;
+        std::cout << std::endl;
+        
+        const double ns_calculated = (sim.param().step.number_of_steps * sim.param().step.dt)/1000.0;
+        //std::cout << "Simulated period (ns):         " << std::setw(10) << ns_calculated << std::endl; 
+        
+        const double performance_per_day = ns_calculated / (sim_time/(60.0*60.0*24.0));    
+        std::cout << "Performance (ns/day):          " << std::setw(10) << performance_per_day << std::endl; 
+        std::cout << std::endl;
+        std::cout << std::endl;
 
         const time_t time_now = time_t(util::now());
         std::cout << ctime(&time_now) << "\n\n";
@@ -496,6 +511,8 @@ int main(int argc, char *argv[]) {
                 sim.time() = sim.param().step.t0 + sim.steps() * sim.time_step_size();
             }
 
+            const double sim_time = (util::now() - start) - init_time;
+
             (*os) << "\nMESSAGES FROM SIMULATION\n";
             io::message::severity_enum err_msg = io::messages.display(*os);
 
@@ -503,8 +520,21 @@ int main(int argc, char *argv[]) {
 
             md.print_timing(*os);
 
-            (*os) << "Overall time used:\t" << util::now() - start << "\n"
-                    << "(initialization took " << init_time << ")\n\n";
+            std::setprecision(5);
+            (*os) << std::endl;    
+            (*os) << "Wall time initialisation (s):  " << std::setw(10) << init_time << std::endl;
+            (*os) << "Wall time simulation (s):      " << std::setw(10) << sim_time << std::endl;
+            (*os) << "-----------------------------------------" << std::endl;
+            (*os) << "Wall time total (s):           " << std::setw(10) << (init_time + sim_time) << std::endl;
+            (*os) << std::endl;
+            
+            const double ns_calculated = (sim.param().step.number_of_steps * sim.param().step.dt)/1000.0;
+            //(*os) << "Simulated period (ns):         " << std::setw(10) << ns_calculated << std::endl; 
+            
+            const double performance_per_day = ns_calculated / (sim_time/(60.0*60.0*24.0));    
+            (*os) << "Performance (ns/day):          " << std::setw(10) << performance_per_day << std::endl; 
+            (*os) << std::endl;
+            (*os) << std::endl;
 
             const time_t time_now = time_t(util::now());
             (*os) << ctime(&time_now) << "\n\n";

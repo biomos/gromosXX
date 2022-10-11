@@ -191,7 +191,7 @@ int interaction::Dihedral_new_Interaction
 ::calculate_interactions(topology::Topology &topo,
         configuration::Configuration &conf,
         simulation::Simulation & sim) {
-  m_timer.start();
+  m_timer.start(sim);
 
   SPLIT_VIRIAL_BOUNDARY(_calculate_dihedral_new_interactions,
           topo, conf, sim);

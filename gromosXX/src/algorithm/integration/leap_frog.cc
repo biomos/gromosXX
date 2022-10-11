@@ -26,7 +26,7 @@ int algorithm::Leap_Frog_Position
 	configuration::Configuration & conf,
 	simulation::Simulation &sim)
 {
-  m_timer.start();
+  m_timer.start(sim);
   
   const int num_atoms = topo.num_atoms();
   
@@ -63,7 +63,7 @@ int algorithm::Leap_Frog_Velocity
 	configuration::Configuration & conf,
 	simulation::Simulation &sim)
 {
-  m_timer.start();
+  m_timer.start(sim);
 
   conf.exchange_state();
   // copy the box

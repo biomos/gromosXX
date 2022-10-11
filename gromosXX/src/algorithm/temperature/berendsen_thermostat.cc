@@ -42,7 +42,7 @@ int algorithm::Berendsen_Thermostat
 	configuration::Configuration & conf,
 	simulation::Simulation & sim)
 {
-  m_timer.start();
+  m_timer.start(sim);
 
   calc_scaling(topo, conf, sim);
 

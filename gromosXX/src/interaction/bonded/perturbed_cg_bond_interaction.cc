@@ -157,7 +157,7 @@ int interaction::Perturbed_DP_Bond_Interaction
 			 configuration::Configuration &conf,
 			 simulation::Simulation &sim)
 {
-  m_timer.start();
+  m_timer.start(sim);
   
   SPLIT_VIRIAL_BOUNDARY(_calculate_perturbed_bond_interactions,
 			topo, conf, sim, m_interaction);

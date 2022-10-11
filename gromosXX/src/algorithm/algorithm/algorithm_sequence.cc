@@ -106,7 +106,6 @@ int algorithm::Algorithm_Sequence
     (*it)->print_timing(os);
 
   }
-  
   os << "END\n";
 
   return 0;

@@ -532,7 +532,7 @@ void algorithm::Perturbed_Flexible_Constraint::_solute
   // not bothering about submolecules...
 
   DEBUG(8, "\tflexible shaking perturbed SOLUTE");
-  m_timer.start();
+  m_timer.start(sim);
 
   math::Periodicity<B> periodicity(conf.current().box);
   

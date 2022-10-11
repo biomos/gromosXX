@@ -328,7 +328,7 @@ int algorithm::Multi_Gradient
 	simulation::Simulation &sim)
 {
 
-  m_timer.start();
+  m_timer.start(sim);
   // loop over curves
   for(std::vector<algorithm::Multi_Gradient::Curve*>::const_iterator it = curves.begin(),
             to = curves.end(); it != to; ++it) {

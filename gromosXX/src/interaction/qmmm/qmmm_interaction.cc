@@ -154,16 +154,16 @@ int interaction::QMMM_Interaction::scf_step(topology::Topology& topo,
                                             configuration::Configuration& conf,
                                             simulation::Simulation& sim) {
   // Update only COS in QM zone
-  m_timer.start();
+  m_timer.start(sim);
   DEBUG(15,"Updating COS in QM zone");
-  m_timer.start("QM zone update");
+  m_timer.start_subtimer("QM zone update");
   m_qm_zone->update_cos(topo, conf, sim);
-  m_timer.stop("QM zone update");
+  m_timer.stop_subtimer("QM zone update");
 
   int err = 0;
-  m_timer.start(m_worker->name());
+  m_timer.start_subtimer(m_worker->name());
   err = m_worker->run_QM(topo, conf, sim, *m_qm_zone);
-  m_timer.stop(m_worker->name());
+  m_timer.stop_subtimer(m_worker->name());
   if (err) return err;
   m_timer.stop();
   return 0;
@@ -173,9 +173,9 @@ void interaction::QMMM_Interaction::write_qm_data(topology::Topology& topo,
                                                   configuration::Configuration& conf,
                                                   const simulation::Simulation& sim) {
   DEBUG(15,"Writing QM data");
-  m_timer.start("writing QM results");
+  m_timer.start_subtimer("writing QM results");
   m_qm_zone->write(topo, conf, sim);
-  m_timer.stop("writing QM results");
+  m_timer.stop_subtimer("writing QM results");
 }
 
 
@@ -187,17 +187,17 @@ int interaction::QMMM_Interaction::calculate_interactions(topology::Topology& to
 
   // Do QMMM only on master (MPI)
   if (m_rank == 0) {
-    m_timer.start();
+    m_timer.start(sim);
     // Update QM Zone
     DEBUG(15,"Updating QM zone");
-    m_timer.start("QM zone update");
+    m_timer.start_subtimer("QM zone update");
     err = m_qm_zone->update(topo, conf, sim);
-    m_timer.stop("QM zone update");
+    m_timer.stop_subtimer("QM zone update");
     if (err) return err;
     
-    m_timer.start(m_worker->name());
+    m_timer.start_subtimer(m_worker->name());
     err = m_worker->run_QM(topo, conf, sim, *m_qm_zone);
-    m_timer.stop(m_worker->name());
+    m_timer.stop_subtimer(m_worker->name());
     if (err) return err;
 
     if (sim.param().qmmm.use_qm_buffer) {
@@ -227,9 +227,9 @@ int interaction::QMMM_Interaction::calculate_interactions(topology::Topology& to
         //create buffer zone for separate QM calculation and run it
         delete m_qm_buffer;
         m_qm_buffer = m_qm_zone->create_buffer_zone(topo, sim);
-        m_timer.start(m_worker->name());
+        m_timer.start_subtimer(m_worker->name());
         err = m_worker->run_QM(topo, conf, sim, *m_qm_buffer);
-        m_timer.stop(m_worker->name());
+        m_timer.stop_subtimer(m_worker->name());
         if (err) return err;
         // Calculate QM energy and QM forces as difference
         /**
@@ -315,10 +315,10 @@ int interaction::QMMM_Interaction::calculate_nonbonded(topology::Topology& topo,
 void interaction::QMMM_Interaction::get_electric_field(const simulation::Simulation& sim
                                                      , math::VArray & electric_field) {
   // Write electric field
-  m_timer.start();
-  m_timer.start("Electric field writing");
+  m_timer.start(sim);
+  m_timer.start_subtimer("Electric field writing");
   m_qm_zone->electric_field(sim, electric_field);
-  m_timer.stop("Electric field writing");
+  m_timer.stop_subtimer("Electric field writing");
   m_timer.stop();
 }
 
@@ -977,7 +977,7 @@ void interaction::QMMM_Interaction::store_set_data(
         configuration::Configuration& conf,
         const simulation::Simulation& sim
         ) {
-  m_timer.start("set data summation");
+  m_timer.start_subtimer("set data summation");
   std::vector<QMMM_Nonbonded_Set *>::iterator
     it = m_qmmm_nonbonded_set.begin(),
     to = m_qmmm_nonbonded_set.end();
@@ -987,7 +987,7 @@ void interaction::QMMM_Interaction::store_set_data(
     DEBUG(7, "adding forces from set " << it - m_qmmm_nonbonded_set.begin());
     (*it)->update_configuration(topo, conf, sim);
   }
-  m_timer.stop("set data summation");
+  m_timer.stop_subtimer("set data summation");
 }
 
 int interaction::QMMM_Interaction::print_pairlist(const topology::Topology& topo

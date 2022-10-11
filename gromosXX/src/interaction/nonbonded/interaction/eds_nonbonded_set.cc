@@ -98,7 +98,7 @@ int interaction::Eds_Nonbonded_Set
   }  
 
   if(pairlist_update){
-    start_timer("longrange");
+    //start_subtimer("longrange interactions (total)"); 
 
     m_outerloop.lj_crf_outerloop(topo, conf, sim,
 			       m_pairlist.solute_long, m_pairlist.solvent_long,
@@ -111,12 +111,12 @@ int interaction::Eds_Nonbonded_Set
                                                  m_perturbed_pairlist.solute_long,
                                                  m_longrange_storage);
     }
-    stop_timer("longrange");
+    //stop_subtimer("longrange interactions (total)"); 
   }
 
   // calculate forces / energies
   DEBUG(6, "\tshort range interactions");
-  start_timer("shortrange");
+  //start_subtimer("shortrange interactions (total)");
   m_outerloop.lj_crf_outerloop(topo, conf, sim,
 			       m_pairlist.solute_short, m_pairlist.solvent_short,
                                m_storage, false, m_pairlist_alg.timer(), m_rank == 0);
@@ -127,44 +127,44 @@ int interaction::Eds_Nonbonded_Set
 						     m_perturbed_pairlist.solute_short,
 						     m_storage);
   }
-  stop_timer("shortrange");
+  //stop_subtimer("shortrange interactions (total)");
 
   DEBUG(6, "\t1,4 - interactions");
-  start_timer("1,4 interaction");
+  start_subtimer("1,4 interaction");
   m_outerloop.one_four_outerloop(topo, conf, sim, m_storage, m_rank, m_num_threads);
-  stop_timer("1,4 interaction");
+  stop_subtimer("1,4 interaction");
 
-  start_timer("LJ exceptions");
+  start_subtimer("LJ exceptions");
   m_outerloop.lj_exception_outerloop(topo, conf, sim, m_storage,  m_rank, m_num_threads);
-  stop_timer("LJ exceptions");
+  stop_subtimer("LJ exceptions");
 
   if (sim.param().nonbonded.rf_excluded) {
-    start_timer("RF excluded");
+    start_subtimer("RF excluded");
     DEBUG(6, "\tRF excluded interactions and self term");
     m_outerloop.RF_excluded_outerloop(topo, conf, sim, m_storage, m_rank, m_num_threads);
-    stop_timer("RF excluded");
+    stop_subtimer("RF excluded");
   }
 
   // add 1,4 - interactions
   if (m_rank == 0) {
     if (topo.eds_perturbed_solute().atoms().size() > 0) {
-      start_timer("1,4 interaction");
+      start_subtimer("1,4 interaction");
       DEBUG(6, "\teds-perturbed 1,4 - interactions");
       m_eds_outerloop.eds_one_four_outerloop(topo, conf, sim, m_storage);
-      stop_timer("1,4 interaction");
+      stop_subtimer("1,4 interaction");
     }
     
 
     // possibly do the RF contributions due to excluded atoms
     if (sim.param().nonbonded.rf_excluded) {
-      start_timer("RF excluded");
+      start_subtimer("RF excluded");
       DEBUG(6, "\tRF excluded interactions and self term");
       if (topo.eds_perturbed_solute().atoms().size() > 0) {
         DEBUG(6, "\tperturbed RF excluded interactions and self term");
         m_eds_outerloop.eds_RF_excluded_outerloop(topo, conf, sim, m_storage);
 
       }
-      stop_timer("RF excluded");
+      stop_subtimer("RF excluded");
     }
   }
   

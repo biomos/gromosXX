@@ -226,7 +226,7 @@ int interaction::Perturbed_Soft_Improper_Interaction
 			 configuration::Configuration &conf,
 			 simulation::Simulation &sim)
 {
-  m_timer.start();
+  m_timer.start(sim);
   
   SPLIT_VIRIAL_BOUNDARY(_calculate_perturbed_soft_improper_interactions,
 			topo, conf, sim);

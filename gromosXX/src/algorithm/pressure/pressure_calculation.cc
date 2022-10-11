@@ -31,7 +31,7 @@ int algorithm::Pressure_Calculation
 {
   DEBUG(7, "Pressure calculation");
 
-  m_timer.start();
+  m_timer.start(sim);
 
   // the virial is stored internally as just the outer product of positions and forces
   // so without the -0.5 prefactor.

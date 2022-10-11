@@ -6,6 +6,10 @@
 #ifndef HAVE_INCLUDED_TIMING_H
 #define HAVE_INCLUDED_TIMING_H
 
+namespace simulation{
+	class Simulation;
+}
+
 namespace util
 {
   /**
@@ -20,29 +24,37 @@ namespace util
   class Algorithm_Timer {
   public:
     /**
-     * Constructor
-     */
-    Algorithm_Timer() : m_name("anonymous timer") {}
-    /**
      * Constructor with name
      */
-    Algorithm_Timer(const std::string & name) : m_name(name) {}
+    Algorithm_Timer(const std::string & name);
     /**
-     * start sub timer
+     * start main-timer
      */
-    void start(const std::string & name = "total");
+    void start(const simulation::Simulation & sim);
     /**
-     * stop sub timer
+     * start sub-timer
      */
-    void stop(const std::string & name = "total");
+    void start_subtimer(const std::string & name = "total");
     /**
-     * reset sub timer
+     * stop main-timer
+     */
+    void stop();
+    /**
+     * stop sub-timer
+     */
+    void stop_subtimer(const std::string & name = "total");
+    /**
+     * reset sub-timer
      */
     void reset(const std::string & name = "total");
     /**
-     * get the total time of a sub timer
+     * get the total time of a sub-timer
      */
     double get_total(const std::string & name = "total");
+    /**
+    * print detailed report to omd-file
+    */
+    void print_report(std::ostream & out = std::cout);
     /**
      * print timing results to stream
      */
@@ -72,13 +84,35 @@ namespace util
      */
     std::string m_name;
     /**
-     * the current subtimes
+     * maximum number of threads tracked by timer
      */
-    std::map<std::string, double> m_current_subtimes;
-    /** 
-     * the total subtimes
+    uint m_max_thread_num;
+
+    /**
+     * struct sub-timer
      */
-    std::map<std::string, double> m_total_subtimes;
+    struct subtimer_struct {
+      uint master_thread = std::numeric_limits<uint>::max();
+      uint highest_used_thread = 0;
+      std::vector<double> start_time = start_time = std::vector<double>(1, 0.00);
+      std::vector<double> end_time = start_time = std::vector<double>(1, 0.00);
+      double total_walltime = 0.0;               //total runtime for subtimer
+      double total_cputime = 0.0;       
+      bool double_counted_time = false;   //set true if the subtime was once started while another subtimer was still running
+    };
+    std::map<std::string, subtimer_struct> m_subtimers;
+    /**
+     * store which subtimer is actually in use (debug only)
+     */
+    std::string subtimer_in_use = "none";
+    /**
+     * bool; if detailed report should be printed
+     */
+    bool m_detailed_report = false;
+    /**
+     * store the current step of the simulation
+     */    
+    uint m_step_index;
   };
 }
 

@@ -40,7 +40,7 @@ int interaction::BS_Interaction::calculate_interactions(
                                         configuration::Configuration& conf, 
                                         simulation::Simulation& sim)
 {
-  m_timer.start();
+  m_timer.start(sim);
   conf.special().bs_umbrella.apply(conf, sim);
   m_timer.stop();
   return 0;

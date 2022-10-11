@@ -806,7 +806,7 @@ void algorithm::Flexible_Constraint::_solute
 
   DEBUG(8, "\tFlexible shaking SOLUTE");
 
-  m_timer.start();
+  m_timer.start(sim);
 
   math::Periodicity<B> periodicity(conf.current().box);
   

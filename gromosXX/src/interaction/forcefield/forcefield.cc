@@ -82,7 +82,7 @@ int interaction::Forcefield
 {
   DEBUG(5, "forcefield: calculate interaction");
 
-  m_timer.start();
+  //m_timer.start(sim);
 
   conf.current().force = 0.0;
   
@@ -124,13 +124,13 @@ int interaction::Forcefield
       it != to;
       ++it){
     DEBUG(5, "interaction: " << (*it)->name);
-// !!! crash if error
+    // !!! crash if error
     int error=(*it)->calculate_interactions(topo, conf, sim);
     if (error){
       return 1;
     }
   }
-  m_timer.stop();  
+  //m_timer.stop();  
   return 0;
 }
     

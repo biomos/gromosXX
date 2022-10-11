@@ -187,7 +187,7 @@ prepare(topology::Topology & topo,
 	simulation::Simulation & sim)
 {
 
-  timer().start("pairlist prepare");
+  timer().start_subtimer("pairlist prepare");
 
   is_vacuum = false;
   if (is_vacuum) {
@@ -227,7 +227,7 @@ prepare(topology::Topology & topo,
 
   failed = false;
   // If pressure is constant, make mask again
-  timer().start("pairlist mask");
+  timer().start_subtimer("pairlist mask");
   unsigned int err = 0;
   if (sim.param().pcouple.scale != math::pcouple_off) {
     DEBUG(7, "Grid Cell : Pressure is constant");
@@ -245,7 +245,7 @@ prepare(topology::Topology & topo,
       return 1;
     }
   }
-  timer().stop("pairlist mask");
+  timer().stop_subtimer("pairlist mask");
   if (err) {
     std::ostringstream msg;
     msg << "At step " << sim.steps() << ": Could not prepare grid. "
@@ -255,11 +255,11 @@ prepare(topology::Topology & topo,
     return fallback_algorithm->prepare(topo, conf, sim);
   }
 
-  timer().start("pairlist cell");
+  timer().start_subtimer("pairlist cell");
   SPLIT_BOUNDARY(make_cell, topo, conf, sim);
-  timer().stop("pairlist cell");
+  timer().stop_subtimer("pairlist cell");
 
-  timer().stop("pairlist prepare");
+  timer().stop_subtimer("pairlist prepare");
   return 0;
 }
 
@@ -292,7 +292,7 @@ void interaction::Grid_Cell_Pairlist::update(
   }
 
   if (begin == 0) // master
-    timer().start("pairlist");
+    timer().start_subtimer("pairlist");
 
   {
     pairlist.clear();
@@ -308,7 +308,7 @@ void interaction::Grid_Cell_Pairlist::update(
   }
 
   if (begin == 0) // master
-    timer().stop("pairlist");
+    timer().stop_subtimer("pairlist");
 #ifdef OMP
   #pragma omp barrier
 #endif
@@ -336,7 +336,7 @@ void interaction::Grid_Cell_Pairlist::update_perturbed(
   }
 
   if (begin == 0) // master
-    timer().start("perturbed pairlist");
+    timer().start_subtimer("perturbed pairlist");
 
   {
     pairlist.clear();
@@ -353,7 +353,7 @@ void interaction::Grid_Cell_Pairlist::update_perturbed(
   }
 
   if (begin == 0) // master
-    timer().stop("perturbed pairlist");
+    timer().stop_subtimer("perturbed pairlist");
 
   #ifdef OMP
   #pragma omp barrier

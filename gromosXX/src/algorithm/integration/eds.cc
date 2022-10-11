@@ -28,7 +28,7 @@ int algorithm::EDS
         configuration::Configuration & conf,
         simulation::Simulation &sim)
  {
-  m_timer.start();
+  m_timer.start(sim);
 
   const unsigned int numstates = sim.param().eds.numstates;
   switch (sim.param().eds.form) {

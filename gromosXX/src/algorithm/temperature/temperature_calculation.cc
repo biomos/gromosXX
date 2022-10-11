@@ -30,7 +30,7 @@ int algorithm::Temperature_Calculation
 {
   DEBUG(7, "Temperature calculation");
   
-  m_timer.start();
+  m_timer.start(sim);
   
   // zero previous (temperature scaling) energies
   conf.old().energies.zero(false, true);
