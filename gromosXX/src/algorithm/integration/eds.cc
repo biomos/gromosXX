@@ -294,7 +294,10 @@ int algorithm::EDS
         if (sim.param().eds.form == simulation::aeds_advanced_search){
           // compute the prevalence of each endstate over this frame
           double prevalence = 0.0;
-          double total_endstates_ene = std::accumulate(eds_vi.begin(), eds_vi.end(), 0.0f);
+          double total_endstates_ene = 0.0;
+          for (unsigned int state = 0; state < numstates; state++) {
+            total_endstates_ene += eds_vi[state];
+          }
 
           for (unsigned int state = 0; state < numstates; state++) {
             prevalence = eds_vi[state] / total_endstates_ene;
