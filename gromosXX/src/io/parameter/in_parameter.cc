@@ -4102,12 +4102,12 @@ void io::In_Parameter::read_AEDS(simulation::Parameter & param,
     param.eds.statefren.resize(param.eds.numstates, 0.0);
     param.eds.visitedstates.resize(param.eds.numstates, false);
     param.eds.visitcounts.resize(param.eds.numstates, 0);
-    param.eds.framecounts.resize(param.eds.numstates, 0);
     param.eds.avgenergy.resize(param.eds.numstates, 0.0);
     param.eds.eiravgenergy.resize(param.eds.numstates, 0.0);
     param.eds.bigs.resize(param.eds.numstates, 0.0);
     param.eds.stdevenergy.resize(param.eds.numstates, 0.0);
-
+    param.eds.framecounts.resize(param.eds.numstates, 0);
+    
     block.get_final_messages();
   }
 }
