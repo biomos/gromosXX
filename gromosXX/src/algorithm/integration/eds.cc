@@ -12,6 +12,8 @@
 #include "../../simulation/simulation.h"
 #include "../../configuration/configuration.h"
 
+#include "../../util/error.h"
+
 #include "eds.h"
 
 #undef MODULE
@@ -20,7 +22,7 @@
 #define SUBMODULE integration
 
 /**
- * EDS step.
+ * EDS step
  */
 
 int algorithm::EDS
@@ -139,10 +141,11 @@ int algorithm::EDS
       }
 
       // parameter search
-      if (sim.param().eds.form == simulation::aeds_search_eir || sim.param().eds.form == simulation::aeds_search_emax_emin || sim.param().eds.form == simulation::aeds_search_all) {
+      if (sim.param().eds.form == simulation::aeds_search_eir || sim.param().eds.form == simulation::aeds_search_emax_emin || 
+          sim.param().eds.form == simulation::aeds_search_all || sim.param().eds.form == simulation::aeds_advanced_search) {
         DEBUG(7, "entering parameter search");
         // OFFSET search
-        if (sim.param().eds.form == simulation::aeds_search_eir || sim.param().eds.form == simulation::aeds_search_all) {
+        if (sim.param().eds.form == simulation::aeds_search_eir || sim.param().eds.form == simulation::aeds_search_all ||  sim.param().eds.form == simulation::aeds_advanced_search) {
           double tau = double(sim.param().eds.asteps) + double(sim.param().eds.bsteps - sim.param().eds.asteps) * double(sim.steps()) / double(sim.param().step.number_of_steps);
           double expde = 0.0, eiremin = 0.0, eiremax = 0.0, eirestar = 0.0, eirdemix = 0.0, eirkfac = 0.0;
           for (unsigned int is = 0; is < numstates; is++) {
@@ -159,12 +162,22 @@ int algorithm::EDS
               eirkfac = 1.0 / (eiremax - eiremin);
               eirestar = eds_vi[is] - 0.5 * eirkfac * eirdemix * eirdemix;
             }
-            expde = -1.0 * beta * (eirestar - conf.current().energies.eds_vr);
-            sim.param().eds.lnexpde[is] += log(exp(-1.0 / tau) / (1.0 - exp(-1.0 / tau)));
-            sim.param().eds.lnexpde[is] = std::max(sim.param().eds.lnexpde[is], expde) + log(1.0 + exp(std::min(sim.param().eds.lnexpde[is], expde) - std::max(sim.param().eds.lnexpde[is], expde)));
-            sim.param().eds.lnexpde[is] += log(1.0 - exp(-1.0 / tau));
-            sim.param().eds.statefren[is] = -1.0 / beta * sim.param().eds.lnexpde[is];
-            sim.param().eds.eir[is] = sim.param().eds.statefren[is] - sim.param().eds.statefren[0];
+            // if in conventional search algorithm recalculate offsets using time decay function and update them
+            if (sim.param().eds.form == simulation::aeds_search_eir || sim.param().eds.form == simulation::aeds_search_all){
+              expde = -1.0 * beta * (eirestar - conf.current().energies.eds_vr);
+              sim.param().eds.lnexpde[is] += log(exp(-1.0 / tau) / (1.0 - exp(-1.0 / tau)));
+              sim.param().eds.lnexpde[is] = std::max(sim.param().eds.lnexpde[is], expde) + log(1.0 + exp(std::min(sim.param().eds.lnexpde[is], expde) - std::max(sim.param().eds.lnexpde[is], expde)));
+              sim.param().eds.lnexpde[is] += log(1.0 - exp(-1.0 / tau));
+              sim.param().eds.statefren[is] = -1.0 / beta * sim.param().eds.lnexpde[is];
+              sim.param().eds.eir[is] = sim.param().eds.statefren[is] - sim.param().eds.statefren[0];
+            }
+            // if in adaptive fast search algorithm, calculate the free energies from the endstates to the reference without using time decay
+            // and without updating the offsets
+            if (sim.param().eds.form == simulation::aeds_advanced_search){
+              expde = -1.0 * beta * (eirestar - conf.current().energies.eds_vr);
+              sim.param().eds.lnexpde[is] = std::max(sim.param().eds.lnexpde[is], expde) + log(1.0 + exp(std::min(sim.param().eds.lnexpde[is], expde) - std::max(sim.param().eds.lnexpde[is], expde)));
+              sim.param().eds.statefren[is] = -1.0 / beta * sim.param().eds.lnexpde[is];
+            }
           }
         }
 
@@ -275,8 +288,32 @@ int algorithm::EDS
           conf.current().energies.eds_globminfluc = globminfluc;
           sim.param().eds.oldstate = state;
         }
-      }
 
+        // Adaptive AEDS search
+        // at this point we have already computed the free energies of the difference endstates to the reference
+        if (sim.param().eds.form == simulation::aeds_advanced_search){
+          // compute the prevalence of each endstate over this frame
+          double prevalence = 0.0;
+          double total_endstates_ene = std::accumulate(eds_vi.begin(), eds_vi.end(), 0.0f);
+
+          for (unsigned int state = 0; state < numstates; state++) {
+            prevalence = eds_vi[state] / total_endstates_ene;
+            // Now check if the frame is contributing to the free energy
+            // only states that have contributed at least 1/numstates on this frame will be checked to avoid counting frames of states that have not been sampled yet
+            if (prevalence >= (1.0/numstates)){
+              // update number of frames that contributed if the energy of the endstate was bellow its free energy difference + KbT
+              if (eds_vi[state] <= (sim.param().eds.statefren[state] + (1/beta))){
+                  sim.param().eds.framecounts[state] += 1;
+              }
+            }
+            // check if we have seen enough frames for this state (convergence criteria) to update offsets
+            if (sim.param().eds.framecounts[state] > sim.param().eds.cc) {
+              sim.param().eds.eir[state] -= prevalence;
+            }
+          } // loop over states
+        }
+      }
+      
       DEBUG(7, "updating energy configuration");
 
       conf.current().energies.eds_emax = sim.param().eds.emax;
@@ -287,6 +324,23 @@ int algorithm::EDS
 
       if (sim.param().eds.initaedssearch == true) {
         sim.param().eds.initaedssearch = false;
+      }
+
+      // check if simulation should finish earlier due to convergence of adaptive search reached
+      if (sim.param().eds.form == simulation::aeds_advanced_search){
+        bool convergence = true;
+        for (unsigned int state = 0; state < numstates; state++) {
+          if (sim.param().eds.framecounts[state] < sim.param().eds.cc){
+            convergence = false;
+            break;
+          }
+        }
+        if (convergence){
+          // if convergence is reached finish simulation
+          std::cout << "AEDS ADAPTIVE SEARCH:\tCONVERGENCE REACHED\n";
+          return E_AEDS_CONVERGENCE;
+        }
+
       }
 
       break;

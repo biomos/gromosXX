@@ -3975,7 +3975,7 @@ void io::In_Parameter::read_AEDS(simulation::Parameter & param,
   exampleblock << "# BMAX          : maximum energy barrier parameter\n";
   exampleblock << "# ASTEPS        : have-life in simulation steps of the exponential averaged energy difference between the end-states at the begining of the run\n";
   exampleblock << "# BSTEPS        : have-life in simulation steps of the exponential averaged energy difference between the end-states at the end of the run\n";
-  exampleblock << "# CC        :   : conversion criteria for the aeds_advanced_search; number of frames contributing to each state\n";
+  exampleblock << "# CC        :   : convergence criteria for the aeds_advanced_search; number of frames contributing to each state\n";
   exampleblock << "#\n";
   exampleblock << "# AEDS\n";
   exampleblock << "  1\n";

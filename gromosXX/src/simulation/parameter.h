@@ -3172,7 +3172,7 @@ namespace simulation
       */
       unsigned int bsteps;
       /**
-      * Conversion criteria of aeds_advanced_search (number of frames contributing per state)
+      * Convergence criteria of aeds_advanced_search (number of frames contributing per state)
       */
      unsigned int cc;
     } /** enveloping distribution sampling*/ eds;
