@@ -1313,7 +1313,8 @@ bool io::In_Configuration::read_aedssearch
   std::ostream & os)
 {
   std::vector<std::string> buffer;
-  if (sim.param().eds.form == simulation::aeds_search_eir || sim.param().eds.form == simulation::aeds_search_emax_emin || sim.param().eds.form == simulation::aeds_search_all || sim.param().eds.form == simulation::aeds_advanced_search) {
+  if (sim.param().eds.form == simulation::aeds_search_eir || sim.param().eds.form == simulation::aeds_search_emax_emin || sim.param().eds.form == simulation::aeds_search_all 
+  || sim.param().eds.form == simulation::aeds_advanced_search || sim.param().eds.form == simulation::aeds_advanced_search2) {
 
     buffer = m_block["AEDSSEARCH"];
     if (buffer.size()) {

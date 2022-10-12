@@ -637,9 +637,13 @@ namespace simulation
     */
     aeds_search_all = 7,
     /**
-    * A-EDS using local elevation to get initial guesses of EMIN, EMAX and EIR
+    * A-EDS using local elevation changing EMIN, EMAX and EIR for an initial guess
     */
     aeds_advanced_search = 8,
+    /**
+    * A-EDS using local elevation to get initial guesses of EIR with EMIN, EMAX fixed
+    */
+    aeds_advanced_search2 = 9,
   };
 
   /**
@@ -3172,7 +3176,7 @@ namespace simulation
       */
       unsigned int bsteps;
       /**
-      * Convergence criteria of aeds_advanced_search (number of frames contributing per state)
+      * Convergence criteria of aeds_advanced_search & aeds_advanced_search2 (number of frames contributing per state)
       */
      unsigned int cc;
     } /** enveloping distribution sampling*/ eds;

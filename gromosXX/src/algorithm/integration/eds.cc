@@ -39,6 +39,7 @@ int algorithm::EDS
     case simulation::aeds_search_emax_emin:
     case simulation::aeds_search_all:
     case simulation::aeds_advanced_search:
+    case simulation::aeds_advanced_search2:
     {
       // interactions have been calculated - now apply eds Hamiltonian
       std::vector<double> prefactors(numstates);
@@ -84,12 +85,14 @@ int algorithm::EDS
 
       // initilize search if necessary
       if (sim.param().eds.initaedssearch == true) {
-        if (sim.param().eds.form == simulation::aeds_search_emax_emin || sim.param().eds.form == simulation::aeds_search_all  || sim.param().eds.form == simulation::aeds_advanced_search) {
+        if (sim.param().eds.form == simulation::aeds_search_emax_emin || sim.param().eds.form == simulation::aeds_search_all  
+        || sim.param().eds.form == simulation::aeds_advanced_search || sim.param().eds.form == simulation::aeds_advanced_search2) {
           sim.param().eds.emax = conf.current().energies.eds_vmix;
           sim.param().eds.emin = conf.current().energies.eds_vmix;
           sim.param().eds.searchemax = conf.current().energies.eds_vmix;
         }
-        if (sim.param().eds.form == simulation::aeds_search_eir || sim.param().eds.form == simulation::aeds_search_all || sim.param().eds.form == simulation::aeds_advanced_search) {
+        if (sim.param().eds.form == simulation::aeds_search_eir || sim.param().eds.form == simulation::aeds_search_all
+         || sim.param().eds.form == simulation::aeds_advanced_search || sim.param().eds.form == simulation::aeds_advanced_search2) {
           for (unsigned int is = 0; is < numstates; is++) {
             sim.param().eds.lnexpde[is] = (sim.param().eds.eir[is] - sim.param().eds.eir[0]) * -1.0 * beta;
           }
@@ -142,10 +145,12 @@ int algorithm::EDS
 
       // parameter search
       if (sim.param().eds.form == simulation::aeds_search_eir || sim.param().eds.form == simulation::aeds_search_emax_emin || 
-          sim.param().eds.form == simulation::aeds_search_all || sim.param().eds.form == simulation::aeds_advanced_search) {
+          sim.param().eds.form == simulation::aeds_search_all || sim.param().eds.form == simulation::aeds_advanced_search
+          || sim.param().eds.form == simulation::aeds_advanced_search2) {
         DEBUG(7, "entering parameter search");
         // OFFSET search
-        if (sim.param().eds.form == simulation::aeds_search_eir || sim.param().eds.form == simulation::aeds_search_all ||  sim.param().eds.form == simulation::aeds_advanced_search) {
+        if (sim.param().eds.form == simulation::aeds_search_eir || sim.param().eds.form == simulation::aeds_search_all 
+        ||  sim.param().eds.form == simulation::aeds_advanced_search ||  sim.param().eds.form == simulation::aeds_advanced_search2) {
           double tau = double(sim.param().eds.asteps) + double(sim.param().eds.bsteps - sim.param().eds.asteps) * double(sim.steps()) / double(sim.param().step.number_of_steps);
           double expde = 0.0, eiremin = 0.0, eiremax = 0.0, eirestar = 0.0, eirdemix = 0.0, eirkfac = 0.0;
           for (unsigned int is = 0; is < numstates; is++) {
@@ -173,7 +178,7 @@ int algorithm::EDS
             }
             // if in adaptive fast search algorithm, calculate the free energies from the endstates to the reference without using time decay
             // and without updating the offsets
-            if (sim.param().eds.form == simulation::aeds_advanced_search){
+            if (sim.param().eds.form == simulation::aeds_advanced_search || sim.param().eds.form == simulation::aeds_advanced_search2){
               expde = -1.0 * beta * (eirestar - conf.current().energies.eds_vr);
               sim.param().eds.lnexpde[is] += log(exp(-1.0 / tau) / (1.0 - exp(-1.0 / tau)));
               sim.param().eds.lnexpde[is] = std::max(sim.param().eds.lnexpde[is], expde) + log(1.0 + exp(std::min(sim.param().eds.lnexpde[is], expde) - std::max(sim.param().eds.lnexpde[is], expde)));
@@ -294,7 +299,7 @@ int algorithm::EDS
 
         // Adaptive AEDS search
         // at this point we have already computed the free energies of the difference endstates to the reference
-        if (sim.param().eds.form == simulation::aeds_advanced_search){
+        if (sim.param().eds.form == simulation::aeds_advanced_search || sim.param().eds.form == simulation::aeds_advanced_search2){
           // compute the prevalence of each endstate over this frame
           std::vector<double> exp_vi(numstates);
           double prevalence = 0.0;
@@ -340,7 +345,7 @@ int algorithm::EDS
       }
 
       // check if simulation should finish earlier due to convergence of adaptive search reached
-      if (sim.param().eds.form == simulation::aeds_advanced_search){
+      if (sim.param().eds.form == simulation::aeds_advanced_search || sim.param().eds.form == simulation::aeds_advanced_search2){
         bool convergence = true;
         for (unsigned int state = 0; state < numstates; state++) {
           if (sim.param().eds.framecounts[state] < sim.param().eds.cc){
