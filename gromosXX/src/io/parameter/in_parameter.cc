@@ -3954,11 +3954,12 @@ void io::In_Parameter::read_AEDS(simulation::Parameter & param,
   exampleblock << "# AEDS       0,1\n";
   exampleblock << "#              0: no accelerated enveloping distribution sampling (A-EDS) [default]\n";
   exampleblock << "#              1: accelerated enveloping distribution sampling\n";
-  exampleblock << "# FORM       1-4\n";
+  exampleblock << "# FORM       1-5\n";
   exampleblock << "#              1: A-EDS with fixed parameters\n";
   exampleblock << "#              2: fixed Emax and Emin parameters, search for offset parameters\n";
   exampleblock << "#              3: search for Emax and Emin parameters, fixed offset parameters\n";
   exampleblock << "#              4: search for Emax, Emin and offset parameters\n";
+  exampleblock << "#              5: A-EDs advanced adaptive search\n";
   exampleblock << "# NUMSTATES >1  : number of states\n";
   exampleblock << "# EMAX          : A-EDS parameter Emax\n";
   exampleblock << "# EMIN          : A-EDS parameter Emin\n";
@@ -3999,7 +4000,7 @@ void io::In_Parameter::read_AEDS(simulation::Parameter & param,
 
     int aeds = 0, form = 0;
     block.get_next_parameter("AEDS", aeds, "", "0,1");
-    block.get_next_parameter("FORM", form, "", "1,2,3,4");
+    block.get_next_parameter("FORM", form, "", "1,2,3,4,5");
     block.get_next_parameter("NUMSTATES", param.eds.numstates, ">=2", "");
 
     if (param.eds.eds != 1) {

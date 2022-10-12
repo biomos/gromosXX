@@ -84,12 +84,12 @@ int algorithm::EDS
 
       // initilize search if necessary
       if (sim.param().eds.initaedssearch == true) {
-        if (sim.param().eds.form == simulation::aeds_search_emax_emin || sim.param().eds.form == simulation::aeds_search_all) {
+        if (sim.param().eds.form == simulation::aeds_search_emax_emin || sim.param().eds.form == simulation::aeds_search_all  || sim.param().eds.form == simulation::aeds_advanced_search) {
           sim.param().eds.emax = conf.current().energies.eds_vmix;
           sim.param().eds.emin = conf.current().energies.eds_vmix;
           sim.param().eds.searchemax = conf.current().energies.eds_vmix;
         }
-        if (sim.param().eds.form == simulation::aeds_search_eir || sim.param().eds.form == simulation::aeds_search_all) {
+        if (sim.param().eds.form == simulation::aeds_search_eir || sim.param().eds.form == simulation::aeds_search_all || sim.param().eds.form == simulation::aeds_advanced_search) {
           for (unsigned int is = 0; is < numstates; is++) {
             sim.param().eds.lnexpde[is] = (sim.param().eds.eir[is] - sim.param().eds.eir[0]) * -1.0 * beta;
           }
@@ -175,14 +175,17 @@ int algorithm::EDS
             // and without updating the offsets
             if (sim.param().eds.form == simulation::aeds_advanced_search){
               expde = -1.0 * beta * (eirestar - conf.current().energies.eds_vr);
+              sim.param().eds.lnexpde[is] += log(exp(-1.0 / tau) / (1.0 - exp(-1.0 / tau)));
               sim.param().eds.lnexpde[is] = std::max(sim.param().eds.lnexpde[is], expde) + log(1.0 + exp(std::min(sim.param().eds.lnexpde[is], expde) - std::max(sim.param().eds.lnexpde[is], expde)));
+              sim.param().eds.lnexpde[is] += log(1.0 - exp(-1.0 / tau));
               sim.param().eds.statefren[is] = -1.0 / beta * sim.param().eds.lnexpde[is];
+
             }
           }
         }
 
         // EMAX and EMIN search
-        if (sim.param().eds.form == simulation::aeds_search_emax_emin || sim.param().eds.form == simulation::aeds_search_all) {
+        if (sim.param().eds.form == simulation::aeds_search_emax_emin || sim.param().eds.form == simulation::aeds_search_all || sim.param().eds.form == simulation::aeds_advanced_search) {
           // find the state we are in
           unsigned int state = 0;
           double min = eds_vi[0] - eir[0];
@@ -293,27 +296,34 @@ int algorithm::EDS
         // at this point we have already computed the free energies of the difference endstates to the reference
         if (sim.param().eds.form == simulation::aeds_advanced_search){
           // compute the prevalence of each endstate over this frame
+          std::vector<double> exp_vi(numstates);
           double prevalence = 0.0;
           double total_endstates_ene = 0.0;
           for (unsigned int state = 0; state < numstates; state++) {
-            total_endstates_ene += eds_vi[state];
+            exp_vi[state] = exp(-1.0 * beta * (eds_vi[state] - eir[state]));
+            total_endstates_ene += exp_vi[state];
           }
 
           for (unsigned int state = 0; state < numstates; state++) {
-            prevalence = eds_vi[state] / total_endstates_ene;
+            prevalence = exp_vi[state]/ total_endstates_ene;
             // Now check if the frame is contributing to the free energy
             // only states that have contributed at least 1/numstates on this frame will be checked to avoid counting frames of states that have not been sampled yet
             if (prevalence >= (1.0/numstates)){
               // update number of frames that contributed if the energy of the endstate was bellow its free energy difference + KbT
-              if (eds_vi[state] <= (sim.param().eds.statefren[state] + (1/beta))){
+              DEBUG(1, "state 2 " << (eds_vi[state] - conf.current().energies.eds_vr) << "  Free ener "  << sim.param().eds.statefren[state]);
+              if ((eds_vi[state] - conf.current().energies.eds_vr)  <= (sim.param().eds.statefren[state] + (1/beta))){
                   sim.param().eds.framecounts[state] += 1;
               }
-            }
-            // check if we have seen enough frames for this state (convergence criteria) to update offsets
-            if (sim.param().eds.framecounts[state] > sim.param().eds.cc) {
-              sim.param().eds.eir[state] -= prevalence;
+              // check if we have seen enough frames for this state (convergence criteria) to update offsets
+              //if (sim.param().eds.framecounts[state] > sim.param().eds.cc) {
+              sim.param().eds.eir[state] -= prevalence/500;
+              //}
             }
           } // loop over states
+          for (unsigned int state = 1; state < numstates; state++) {
+            sim.param().eds.eir[state] -= sim.param().eds.eir[0];
+          }
+          sim.param().eds.eir[0] = 0;
         }
       }
       
@@ -340,7 +350,6 @@ int algorithm::EDS
         }
         if (convergence){
           // if convergence is reached finish simulation
-          std::cout << "AEDS ADAPTIVE SEARCH:\tCONVERGENCE REACHED\n";
           return E_AEDS_CONVERGENCE;
         }
 

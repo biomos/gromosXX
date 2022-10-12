@@ -195,7 +195,6 @@ int main(int argc, char *argv[]){
         break;
       }
       if (error == E_AEDS_CONVERGENCE){
-        error = 0; // clear error condition
         break;
       }
       else { 
@@ -265,7 +264,7 @@ int main(int argc, char *argv[]){
   const time_t time_now = time_t(util::now());
   std::cout << ctime(&time_now) << "\n\n";
     
-  if (error){
+  if (error != 0 && error != E_AEDS_CONVERGENCE){
     std::cout << "\nErrors encountered during run - check above!\n" << std::endl;
     return 1;
   } else if (exit_md) {
@@ -276,6 +275,8 @@ int main(int argc, char *argv[]){
 	      << "Check the messages for possible problems during the run."
 	      << std::endl;
     return 0;
+  } else if (error == E_AEDS_CONVERGENCE){
+    std::cout << "\n" GROMOSXX " finished successfully by reaching AEDS convergence criteria\n" << std::endl;
   } else{
     std::cout << "\n" GROMOSXX " finished successfully\n" << std::endl;
   }
