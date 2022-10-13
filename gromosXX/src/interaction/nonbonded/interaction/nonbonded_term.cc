@@ -83,6 +83,11 @@ inline void interaction::Nonbonded_Term
         m_crf_cut3i.push_back(crf_cut3i);
         m_crf_2cut3i.push_back(crf_2cut3i);
         m_crf_cut.push_back(crf_cut);
+        if(sim.param().nonbonded.use_shift){
+          a_RFm = sim.param().nonbonded.a_RFm;
+          a_RFn = sim.param().nonbonded.a_RFn;
+          m_crf_cut[m_crf_cut.size()-1] += a_RFm * pow(sim.param().nonbonded.rf_cutoff,sim.param().nonbonded.m_crf) + a_RFn * pow(sim.param().nonbonded.rf_cutoff,sim.param().nonbonded.n_crf);
+        }
 
       } else {
         m_cut3i.push_back(0.0);
@@ -197,7 +202,8 @@ inline void interaction::Nonbonded_Term
 
   assert(abs2(r) != 0);
   const double dist2 = abs2(r);
-  HEAVISIDETRUNC(dist2, force = e_lj = e_crf)
+  const double dist4 = dist2 * dist2;
+  const double dist6 = dist2 * dist4;  HEAVISIDETRUNC(dist2, force = e_lj = e_crf)
           const double dist2i = 1.0 / dist2;
   const double q_eps = q * math::four_pi_eps_i;
   const double dist6i = dist2i * dist2i * dist2i;
@@ -207,10 +213,11 @@ inline void interaction::Nonbonded_Term
   e_lj = (c12_dist6i - c6) * dist6i;
 
   e_crf = q_eps *
-          (disti * coulomb_scaling - m_crf_2cut3i[eps] * dist2 - m_crf_cut[eps]);
+          (disti * coulomb_scaling - m_crf_2cut3i[eps] * dist2 + a_RFm * dist4 + a_RFn * dist6 - m_crf_cut[eps]);
 
   force = (c12_dist6i + c12_dist6i - c6) * 6.0 * dist6i * dist2i +
-          q_eps * (disti * coulomb_scaling * dist2i + m_crf_cut3i[eps]);
+          q_eps * (disti * coulomb_scaling * dist2i + m_crf_cut3i[eps]
+           - 4 * a_RFm * dist2 - 6 * a_RFn * dist4);
 
   //double f_crf = q_eps * (disti * dist2i + m_crf_cut3i);
   //DEBUG(1, "force = " << f_crf*r(0) << "  " << f_crf*r(1) << "  " << f_crf*r(2));
@@ -235,7 +242,9 @@ inline void interaction::Nonbonded_Term
   //const double dist2 = abs2(r);
   
   assert(dist2 > 0);
-  
+  const double dist4 = dist2 * dist2;
+  const double dist6 = dist2 * dist4;
+
   HEAVISIDETRUNC(dist2, force = e_lj = e_crf)
           const double dist2i = 1.0 / dist2;
   const double q_eps = q * math::four_pi_eps_i;
@@ -246,10 +255,11 @@ inline void interaction::Nonbonded_Term
   e_lj = (c12_dist6i - c6) * dist6i;
 
   e_crf = q_eps *
-          (disti - m_crf_2cut3i[eps] * dist2 - m_crf_cut[eps]);
+          (disti - m_crf_2cut3i[eps] * dist2 + a_RFm * dist4 + a_RFn * dist6 - m_crf_cut[eps]);
 
   force = (c12_dist6i + c12_dist6i - c6) * 6.0 * dist6i * dist2i +
-          q_eps * (disti * dist2i + m_crf_cut3i[eps]);
+          q_eps * (disti * dist2i + m_crf_cut3i[eps]
+          - 4 * a_RFm * dist2 - 6 * a_RFn * dist4);
 
   //double f_crf = q_eps * (disti * dist2i + m_crf_cut3i);
   //DEBUG(1, "force = " << f_crf*r(0) << "  " << f_crf*r(1) << "  " << f_crf*r(2));
@@ -463,11 +473,14 @@ inline void interaction::Nonbonded_Term
 ::rf_interaction(math::Vec const &r, double q,
         math::Vec &force, double &e_crf, unsigned int eps) {
   const double dist2 = abs2(r);
+  const double dist4 = dist2 * dist2;
+  const double dist6 = dist2 * dist4;
+  
   HEAVISIDETRUNC(dist2, force = e_crf)
 
-          force = q * math::four_pi_eps_i * m_crf_cut3i[eps] * r;
+  force = q * math::four_pi_eps_i * (m_crf_cut3i[eps] - 4 * a_RFm * dist2 - 6 * a_RFn * dist4) * r;
 
-  e_crf = q * math::four_pi_eps_i * (-m_crf_2cut3i[eps] * dist2 - m_crf_cut[eps]);
+  e_crf = q * math::four_pi_eps_i * (-m_crf_2cut3i[eps] * dist2 + a_RFm * dist4 + a_RFn * dist6 - m_crf_cut[eps]);
   DEBUG(11, "dist2 " << dist2);
   DEBUG(11, "crf_2cut3i " << m_crf_2cut3i[eps]);
   DEBUG(11, "crf_cut " << m_crf_cut[eps]);

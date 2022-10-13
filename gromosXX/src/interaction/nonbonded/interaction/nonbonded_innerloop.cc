@@ -1670,10 +1670,14 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_solvent_interaction_inner
           periodicity.nearest_image(pos(*at_it),
                   pos(*at2_it), r);
 
+          const double dist2 = abs2(r);
+          const double dist4 = dist2*dist2;
+          const double dist6 = dist2*dist4;
+
           // for solvent, we don't calculate internal forces (rigid molecules)
           // and the distance independent parts should go to zero
           e_crf = -charge_product(topo, *at_it, *at2_it) *
-                  math::four_pi_eps_i * crf_2cut3i() * abs2(r);
+                  math::four_pi_eps_i * (crf_2cut3i() * dist2 - a_RFm * dist4 - a_RFn * dist6);
           DEBUG(15, "\tqi = " << topo.charge()(*at_it) << ", qj = " << topo.charge()(*at2_it));
           DEBUG(15, "\tcrf_2cut3i = " << crf_2cut3i() << ", abs2(r) = " << abs2(r));
           // energy

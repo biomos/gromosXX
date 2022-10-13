@@ -78,6 +78,12 @@ namespace interaction
     /*
      Coarse grained dielectric permittivities*/
     std::vector<double> cgrain_eps;
+
+    /**
+     * shifting parameters
+     */
+    double a_RFm = 0;
+    double a_RFn = 0;
     
   };
   

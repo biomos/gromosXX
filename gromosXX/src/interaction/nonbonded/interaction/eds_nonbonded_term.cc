@@ -36,6 +36,11 @@ inline void interaction::Eds_Nonbonded_Term
                 m_rrf * sim.param().nonbonded.rf_kappa * m_rrf);
 
         crf_cut = (1 - crf / 2.0) / m_rrf;
+        if(sim.param().nonbonded.use_shift){
+          a_RFm = sim.param().nonbonded.a_RFm;
+          a_RFn = sim.param().nonbonded.a_RFn;
+          crf_cut += sim.param().nonbonded.a_RFm * pow(sim.param().nonbonded.rf_cutoff,sim.param().nonbonded.m_crf) + sim.param().nonbonded.a_RFn * pow(sim.param().nonbonded.rf_cutoff,sim.param().nonbonded.n_crf);
+        }
       } else { // infinity case: rf_cutoff == 0
         crf = -1;
         DEBUG(15, "nonbonded eds term init: m_crf: " << crf);
@@ -103,17 +108,18 @@ inline void interaction::Eds_Nonbonded_Term
         const double coulomb_scaling) {
     DEBUG(14, "\t\tnonbonded term");
 
+    const double dist4 = dist2 * dist2;
     const double dist6i = 1.0 / (dist6);
     const double q_eps = q * math::four_pi_eps_i;
     const double c12_dist6i = c12 * dist6i;
     const double dist2i = 1.0 / dist2;
     
     double elj = (c12_dist6i - c6) * dist6i;
-    double ecrf = q_eps * (disti * coulomb_scaling - m_crf_2cut3i[eps] * dist2 - m_crf_cut[eps]);
+    double ecrf = q_eps * (disti * coulomb_scaling - m_crf_2cut3i[eps] * dist2 + a_RFm * dist4 + a_RFn * dist6 - m_crf_cut[eps]);
     e_nb = elj + ecrf;
 
     double flj = (c12_dist6i + c12_dist6i - c6) * 6.0 * dist6i * dist2i;
-    double fcrf = q_eps * (disti * coulomb_scaling * dist2i + 2.0 * m_crf_2cut3i[eps]);
+    double fcrf = q_eps * (disti * coulomb_scaling * dist2i - 4 * a_RFm * dist2 - 6 * a_RFn * dist4 + 2.0 * m_crf_2cut3i[eps]);
     force = flj + fcrf;
     
     DEBUG(15, "nonbonded energy = " << (elj + ecrf) << ", force = " << (flj + fcrf));
@@ -128,10 +134,12 @@ inline void interaction::Eds_Nonbonded_Term
 		     math::Vec &force, double &e_crf, unsigned int eps)
 {
   const double dist2 = abs2(r);
+  const double dist4 = dist2 * dist2;
+  const double dist6 = dist2 * dist4;
   
-  force = q * math::four_pi_eps_i * 2.0 * m_crf_2cut3i[eps] * r;
+  force = q * math::four_pi_eps_i * (-4 * a_RFm * dist2 - 6 * a_RFn * dist4 + 2.0 * m_crf_2cut3i[eps]) * r;
 
-  e_crf = q * math::four_pi_eps_i * ( -m_crf_2cut3i[eps] * dist2 - m_crf_cut[eps]);
+  e_crf = q * math::four_pi_eps_i * ( -m_crf_2cut3i[eps] * dist2 + a_RFm * dist4 + a_RFn * dist6 - m_crf_cut[eps]);
   DEBUG(15, "dist2 " << dist2 );
   DEBUG(15, "q*q   " << q );
   DEBUG(15, "rf energy = " << e_crf);

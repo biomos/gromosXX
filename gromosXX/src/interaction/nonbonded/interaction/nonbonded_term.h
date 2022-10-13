@@ -234,6 +234,12 @@ namespace interaction
      * the cutoff squared
      */
     double m_cut2;
+
+    /**
+     * shifting parameters
+     */
+    double a_RFm = 0;
+    double a_RFn = 0;
   };
 
 
