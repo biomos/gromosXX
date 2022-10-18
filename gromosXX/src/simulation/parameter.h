@@ -3104,6 +3104,10 @@ namespace simulation
       */
       double emin;
       /**
+      * the target_emax
+      */
+      double target_emax;
+      /**
       * do we want to init an aeds parameter search?
       */
       bool initaedssearch;

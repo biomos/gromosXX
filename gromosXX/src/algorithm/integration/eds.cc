@@ -21,6 +21,171 @@
 #define MODULE algorithm
 #define SUBMODULE integration
 
+
+
+
+// gamma acceleration functions
+
+// private functions
+
+// finds the gamma power needed to fulfill the target_frac
+void algorithm::EDS::find_gamma_pow(){
+    double temp_gamma_pow = (1. / target_frac - 1) / 2;
+    gamma_pow =  2*ceil(temp_gamma_pow);
+    gamma_pow_1 = gamma_pow + 1;
+    gamma_c = 1. / (2*(gamma_pow_1));
+}
+
+//calculates the linear (and the gamma term) scaling factor to get the target_frac
+// sets lin_frac, gamma_frac and gamma_pow based on target_frac
+void algorithm::EDS::find_lin_scaling_frac(){
+    find_gamma_pow();
+    double gama_frac_min = 1. / (gamma_pow + 1);
+    lin_frac = (target_frac - gama_frac_min) / (1. - gama_frac_min);
+    gamma_frac = 1. - lin_frac;
+    // new transformation function (derivative of it) is
+    // gamma_frac * gamma_pow_term + (1-gamma_frac) * gamma_pow_term
+}
+
+// calculates f(x) for a given gamma power
+// f(x) i the scaling factor for the energy (acceleration)
+// where x = (H - Emin) / (Emax - Emin)
+// gamma_pow has to be 0, 2, 4, 6...
+void algorithm::EDS::f_k_pow(double x){
+    f_gamma = pow(2.0, gamma_pow) * pow(x - 0.5, gamma_pow_1) / gamma_pow_1 + gamma_c;
+}
+
+// calculates f'(x) for a given gamma power
+// f'(x) i the scaling factor for the force (acceleration)
+// where x = (H - Emin) / (Emax - Emin)
+// gamma_pow has to be 0, 2, 4, 6...
+void algorithm::EDS::f_der_k_pow(double x){
+    f_der_gamma = pow(2 * x - 1, gamma_pow);
+}
+
+// the 2 functions from above in one (optimized version)
+void algorithm::EDS::f_f_der_k_pow(double x){
+    f_der_gamma = pow(2 * x - 1, gamma_pow); // same as pow(2.0, gamma_pow) * pow(x - 0.5, gamma_pow)
+    f_gamma = f_der_gamma * (x - 0.5) / gamma_pow_1 + gamma_c;
+}
+
+// calculate f(x) and f'(x) needed to get H* and F*
+// f(x)
+double algorithm::EDS::get_f_x_lin(double x){
+    f_k_pow(x);
+    return gamma_frac * f_gamma + lin_frac * x;
+}
+// f'(x)
+double algorithm::EDS::get_f_der_x_lin(double x){
+    f_der_k_pow(x);
+    return gamma_frac * f_der_gamma + lin_frac;
+}
+
+// do both f(x) and f'(x) at the same time
+void algorithm::EDS::get_f_f_der_x_lin(double x, double *f_x, double *f_der_x){
+    f_f_der_k_pow(x);
+    *f_x = gamma_frac * f_gamma + lin_frac * x;
+    *f_der_x = gamma_frac * f_der_gamma + lin_frac;
+}
+
+// transition from f(x) to accelerated H
+void algorithm::EDS::get_target_frac(){
+    if (emax == emin)
+      target_frac = 1.1;
+    else
+      target_frac = (target_emax - emin) / (emax - emin);
+}
+
+
+// public functions
+
+// sets emin, emax and target_emax & updates other gamma acceleration variables (e.g. target_frac, diff_emm, gamma_pow, ...)
+void algorithm::EDS::set_EDS_params(double emin_value, double emax_value, double target_emax_value){
+    emin = emin_value;
+    emax = emax_value;
+    target_emax = target_emax_value;
+    update_gamma_params();
+}
+
+// updates gamma acceleration variables (e.g. target_frac, diff_emm, gamma_pow, ...)
+void algorithm::EDS::update_gamma_params(){
+    diff_emm = emax - emin;
+    get_target_frac();
+    find_lin_scaling_frac();
+}
+
+// transforms energy value into x variable for gamma acceleration
+double algorithm::EDS::transform_E_2_x(double E){
+    return (E - emin) / diff_emm;
+}
+
+// calculate accelerated energy & scaling factor for the force (gamma acceleration)
+void algorithm::EDS::accelerate_E_F_gamma(double *E_a, double *f_der_x, double E, double E_offset=0){
+    *f_der_x = 1.;
+    if (target_emax >= emax)
+        *E_a = E;
+    double E_with_offset = E - E_offset;
+    if (E_with_offset <= emin)
+        *E_a = E;
+    else if (E_with_offset >= emax)
+        *E_a = target_emax + E - emax;
+    else{
+        double x = transform_E_2_x(E_with_offset);
+        double f_x;
+        get_f_f_der_x_lin(x, &f_x, f_der_x);
+        *E_a = emin + f_x * (E_with_offset - emin) + E_offset;
+    }
+}
+
+// calculate accelerated energy (gamma acceleration)
+void algorithm::EDS::accelerate_E_gamma(double *E_a, double E, double E_offset=0){
+    if (target_emax >= emax)
+        *E_a = E;
+    double E_with_offset = E - E_offset;
+    if (E_with_offset <= emin)
+        *E_a = E;
+    else if (E_with_offset >= emax)
+        *E_a = target_emax + E - emax;
+    else{
+        double x = transform_E_2_x(E_with_offset);
+        double f_x = get_f_x_lin(x);
+        *E_a = emin + f_x * (E_with_offset - emin) + E_offset;
+    }
+}
+
+
+// calculate accelerated energy  & scaling factor for the force (gaussian acceleration)
+void algorithm::EDS::accelerate_E_F_gauss(double *E_a, double *fkfac, double E, double E_offset=0){
+    *fkfac = 1.;
+    double E_with_offset = E - E_offset;
+    if (E_with_offset <= emin)
+        *E_a = E;
+    else if (E_with_offset >= emax)
+        *E_a = E - 0.5 * emax - emin;
+    else{
+        double demix = E - emin;
+        double kfac = 1.0 / diff_emm;
+        *fkfac = 1.0 - kfac * demix;
+        *E_a = E - 0.5 * kfac * demix * demix;;
+    }
+}
+
+// calculate accelerated energy (gaussian acceleration)
+void algorithm::EDS::accelerate_E_gauss(double *E_a, double E, double E_offset=0){
+    double E_with_offset = E - E_offset;
+    if (E_with_offset <= emin)
+        *E_a = E;
+    else if (E_with_offset >= emax)
+        *E_a = E - 0.5 * emax - emin;
+    else{
+        double demix = E - emin;
+        double kfac = 1.0 / diff_emm;
+        *E_a = E - 0.5 * kfac * demix * demix;;
+    }
+}
+
+
+
 /**
  * EDS step
  */
@@ -31,6 +196,10 @@ int algorithm::EDS
         simulation::Simulation &sim)
  {
   m_timer.start();
+
+  int flag_acceleration_type = 1; // gamma acceleration
+  // int flag_acceleration_type = 0; // old/gauss acceleration
+  // this should be implemented through imd file...
 
   const unsigned int numstates = sim.param().eds.numstates;
   switch (sim.param().eds.form) {
@@ -99,46 +268,30 @@ int algorithm::EDS
         }
       }
 
+      // update EDS params and call acceleration function 
+      // update EDS params
+      set_EDS_params(sim.param().eds.emin, sim.param().eds.emax, sim.param().eds.target_emax);
       // accelerate eds Hamiltonian
-      if (conf.current().energies.eds_vmix <= sim.param().eds.emin) {
-        conf.current().energies.eds_vr = conf.current().energies.eds_vmix;
-      }
-      else if (conf.current().energies.eds_vmix >= sim.param().eds.emax) {
-        conf.current().energies.eds_vr = conf.current().energies.eds_vmix - 0.5 * (sim.param().eds.emax - sim.param().eds.emin);
-      }
-      else {
-        demix = conf.current().energies.eds_vmix - sim.param().eds.emin;
-        kfac = 1.0 / (sim.param().eds.emax - sim.param().eds.emin);
-        fkfac = 1.0 - kfac * demix;
-        conf.current().energies.eds_vr = conf.current().energies.eds_vmix - 0.5 * kfac * demix * demix;
-      }
+      if (flag_acceleration_type == 0)
+        accelerate_E_F_gauss(&conf.current().energies.eds_vr, &fkfac, conf.current().energies.eds_vmix);
+      else if (flag_acceleration_type == 1)
+        accelerate_E_F_gamma(&conf.current().energies.eds_vr, &fkfac, conf.current().energies.eds_vmix);
 
       // calculate eds contribution ...
       for (unsigned int state = 0; state < numstates; state++) {
         const long double pi = exp(prefactors[state] - sum_prefactors);
-        //std::cerr << "state = " << state << ", pi = " << pi << std::endl;
         // ... to forces
         DEBUG(7, "prefactor = " << pi);
         for (unsigned int i = 0; i < topo.num_atoms(); i++) {
-          if (conf.current().energies.eds_vmix <= sim.param().eds.emin || conf.current().energies.eds_vmix >= sim.param().eds.emax) {
-            conf.current().force(i) += pi * conf.special().eds.force_endstates[state](i);
-          }
-          else {
-            conf.current().force(i) += pi * conf.special().eds.force_endstates[state](i) * fkfac;
-          }
+          // fkfac = 1. if outside of acceleration range
+          conf.current().force(i) += pi * conf.special().eds.force_endstates[state](i) * fkfac;
           DEBUG(9, "force current: " << i << " = " << math::v2s(conf.current().force(i)));
         }
         // ... to virial
         for (int a = 0; a < 3; ++a) {
           for (int b = 0; b < 3; ++b) {
-            if (conf.current().energies.eds_vmix <= sim.param().eds.emin || conf.current().energies.eds_vmix >= sim.param().eds.emax) {
-              conf.current().virial_tensor(b, a) +=
-                pi * conf.special().eds.virial_tensor_endstates[state](b, a);
-            }
-            else {
-              conf.current().virial_tensor(b, a) +=
-                pi * conf.special().eds.virial_tensor_endstates[state](b, a) * fkfac;
-            }
+            conf.current().virial_tensor(b, a) +=
+              pi * conf.special().eds.virial_tensor_endstates[state](b, a) * fkfac;
           }
         }
       }
@@ -154,19 +307,12 @@ int algorithm::EDS
           double tau = double(sim.param().eds.asteps) + double(sim.param().eds.bsteps - sim.param().eds.asteps) * double(sim.steps()) / double(sim.param().step.number_of_steps);
           double expde = 0.0, eiremin = 0.0, eiremax = 0.0, eirestar = 0.0, eirdemix = 0.0, eirkfac = 0.0;
           for (unsigned int is = 0; is < numstates; is++) {
-            eiremin = sim.param().eds.emin + sim.param().eds.eir[is];
-            eiremax = sim.param().eds.emax + sim.param().eds.eir[is];
-            if (eds_vi[is] <= eiremin) {
-              eirestar = eds_vi[is];
-            }
-            else if (eds_vi[is] >= eiremax) {
-              eirestar = eds_vi[is] - 0.5 * (eiremax - eiremin);
-            }
-            else {
-              eirdemix = eds_vi[is] - eiremin;
-              eirkfac = 1.0 / (eiremax - eiremin);
-              eirestar = eds_vi[is] - 0.5 * eirkfac * eirdemix * eirdemix;
-            }
+            // get the acceleration
+            if (flag_acceleration_type == 0)
+              accelerate_E_gauss(&eirestar, eds_vi[is]);
+            else if (flag_acceleration_type == 1)
+              accelerate_E_gamma(&eirestar, eds_vi[is]);
+            
             // if in conventional search algorithm recalculate offsets using time decay function and update them
             if (sim.param().eds.form == simulation::aeds_search_eir || sim.param().eds.form == simulation::aeds_search_all){
               expde = -1.0 * beta * (eirestar - conf.current().energies.eds_vr);
@@ -266,32 +412,43 @@ int algorithm::EDS
             // this implies that the fluctuations of the energies do not change with the acceleration
             bmax = sim.param().eds.stdevenergy[targetstate] * sim.param().eds.setbmax;
           }
-          if ((sim.param().eds.emax - globminavg) <= bmax) {
-            sim.param().eds.emin = sim.param().eds.emax;
-            DEBUG(7, "emin1 " << sim.param().eds.emin);
-          }
-          else {
-            sim.param().eds.emin = 2.0 * (globminavg + bmax) - sim.param().eds.emax;
-            DEBUG(7, "emin2 " << sim.param().eds.emin);
-            DEBUG(7, "emin2 " << globminavg);
-            if (sim.param().eds.emin < globminavg) {
-              sim.param().eds.emin = (-sim.param().eds.emax * sim.param().eds.emax
-                + 2.0 * sim.param().eds.emax * bmax
-                + 2.0 * sim.param().eds.emax * globminavg
-                - globminavg * globminavg)
-                / (2.0 * bmax);
-              DEBUG(7, "emin3 " << sim.param().eds.emin);
+
+          
+          sim.param().eds.target_emax = bmax;
+          if (flag_acceleration_type == 0){
+            if ((sim.param().eds.emax - globminavg) <= bmax) {
+              sim.param().eds.emin = sim.param().eds.emax;
+              DEBUG(7, "emin1 " << sim.param().eds.emin);
             }
-            // security measure to prevent extreme emins in the beginning of the simulation before we saw a full round-trip
-            if (sim.param().eds.fullemin == false && sim.param().eds.emin < globminavg) {
-              sim.param().eds.emin = globminavg;
-              // globminavg can be larger than the current largest transition energy
-              if (sim.param().eds.emin > sim.param().eds.emax) {
-                sim.param().eds.emin = sim.param().eds.emax;
+            else {
+              sim.param().eds.emin = 2.0 * (globminavg + bmax) - sim.param().eds.emax;
+              DEBUG(7, "emin2 " << sim.param().eds.emin);
+              DEBUG(7, "emin2 " << globminavg);
+              if (sim.param().eds.emin < globminavg) {
+                sim.param().eds.emin = (-sim.param().eds.emax * sim.param().eds.emax
+                  + 2.0 * sim.param().eds.emax * bmax
+                  + 2.0 * sim.param().eds.emax * globminavg
+                  - globminavg * globminavg)
+                  / (2.0 * bmax);
+                DEBUG(7, "emin3 " << sim.param().eds.emin);
               }
-              DEBUG(7, "emin4 " << sim.param().eds.emin);
+              // security measure to prevent extreme emins in the beginning of the simulation before we saw a full round-trip
+              if (sim.param().eds.fullemin == false && sim.param().eds.emin < globminavg) {
+                sim.param().eds.emin = globminavg;
+                // globminavg can be larger than the current largest transition energy
+                if (sim.param().eds.emin > sim.param().eds.emax) {
+                  sim.param().eds.emin = sim.param().eds.emax;
+                }
+                DEBUG(7, "emin4 " << sim.param().eds.emin);
+              }
             }
           }
+          else if (flag_acceleration_type == 1){
+            sim.param().eds.target_emax = bmax;
+            sim.param().eds.emin = globminavg;
+          }
+
+
           conf.current().energies.eds_globmin = globminavg;
           conf.current().energies.eds_globminfluc = globminfluc;
           sim.param().eds.oldstate = state;
