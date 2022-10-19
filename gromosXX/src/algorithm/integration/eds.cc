@@ -25,10 +25,9 @@
 
 
 // gamma acceleration functions
-
 // private functions
 
-// finds the gamma power needed to fulfill the target_frac
+/**finds the gamma power needed to fulfill the target_frac */
 void algorithm::EDS::find_gamma_pow(){
     double temp_gamma_pow = (1. / target_frac - 1) / 2;
     gamma_pow =  2*ceil(temp_gamma_pow);
@@ -36,8 +35,10 @@ void algorithm::EDS::find_gamma_pow(){
     gamma_c = 1. / (2*(gamma_pow_1));
 }
 
-//calculates the linear (and the gamma term) scaling factor to get the target_frac
-// sets lin_frac, gamma_frac and gamma_pow based on target_frac
+/**
+ * calculates the linear (and the gamma term) scaling factor to get the target_frac
+ * sets lin_frac, gamma_frac and gamma_pow based on target_frac
+ */
 void algorithm::EDS::find_lin_scaling_frac(){
     find_gamma_pow();
     double gama_frac_min = 1. / (gamma_pow + 1);
@@ -47,41 +48,64 @@ void algorithm::EDS::find_lin_scaling_frac(){
     // gamma_frac * gamma_pow_term + (1-gamma_frac) * gamma_pow_term
 }
 
-// calculates f(x) for a given gamma power
-// f(x) i the scaling factor for the energy (acceleration)
-// where x = (H - Emin) / (Emax - Emin)
-// gamma_pow has to be 0, 2, 4, 6...
+/**
+* calculates f(x) for a given gamma power
+* f(x) i the scaling factor for the energy (acceleration)
+* where x = (H - Emin) / (Emax - Emin)
+* gamma_pow has to be 0, 2, 4, 6...
+* @param x 
+*/
 void algorithm::EDS::f_k_pow(double x){
     f_gamma = pow(2.0, gamma_pow) * pow(x - 0.5, gamma_pow_1) / gamma_pow_1 + gamma_c;
 }
 
-// calculates f'(x) for a given gamma power
-// f'(x) i the scaling factor for the force (acceleration)
-// where x = (H - Emin) / (Emax - Emin)
-// gamma_pow has to be 0, 2, 4, 6...
+/**
+ * calculates f'(x) for a given gamma power
+ * f'(x) i the scaling factor for the force (acceleration)
+ * where x = (H - Emin) / (Emax - Emin)
+ * gamma_pow has to be 0, 2, 4, 6...
+ * @param x 
+ */
 void algorithm::EDS::f_der_k_pow(double x){
     f_der_gamma = pow(2 * x - 1, gamma_pow);
 }
 
-// the 2 functions from above in one (optimized version)
+/**
+ * the 2 functions from above in one (optimized version)
+ * @param x 
+ */
 void algorithm::EDS::f_f_der_k_pow(double x){
     f_der_gamma = pow(2 * x - 1, gamma_pow); // same as pow(2.0, gamma_pow) * pow(x - 0.5, gamma_pow)
     f_gamma = f_der_gamma * (x - 0.5) / gamma_pow_1 + gamma_c;
 }
 
 // calculate f(x) and f'(x) needed to get H* and F*
-// f(x)
+
+/** 
+ * calculate f(x) needed to get H*
+ * @param x 
+ * @return f(x)
+ */
 double algorithm::EDS::get_f_x_lin(double x){
     f_k_pow(x);
     return gamma_frac * f_gamma + lin_frac * x;
 }
-// f'(x)
+/** 
+ * calculate f'(x) needed to get F*
+ * @param x 
+ * @return f'(x)
+ */
 double algorithm::EDS::get_f_der_x_lin(double x){
     f_der_k_pow(x);
     return gamma_frac * f_der_gamma + lin_frac;
 }
 
-// do both f(x) and f'(x) at the same time
+/**
+ * calculate both f(x) and f'(x) at the same time
+ * @param x 
+ * @param f_x pointer to a double to assign the value of f(x)
+ * @param f_der_x pointer to a double to assign the value of f'(x)
+ */
 void algorithm::EDS::get_f_f_der_x_lin(double x, double *f_x, double *f_der_x){
     f_f_der_k_pow(x);
     *f_x = gamma_frac * f_gamma + lin_frac * x;
@@ -89,6 +113,8 @@ void algorithm::EDS::get_f_f_der_x_lin(double x, double *f_x, double *f_der_x){
 }
 
 // transition from f(x) to accelerated H
+
+/**get the target_frac based on emin, emax and target_emax*/
 void algorithm::EDS::get_target_frac(){
     if (emax == emin)
       target_frac = 1.1;
@@ -99,7 +125,13 @@ void algorithm::EDS::get_target_frac(){
 
 // public functions
 
-// sets emin, emax and target_emax & updates other gamma acceleration variables (e.g. target_frac, diff_emm, gamma_pow, ...)
+/**
+ * sets emin, emax and target_emax 
+ * also updates other gamma acceleration variables (e.g. target_frac, diff_emm, gamma_pow, ...)
+ * @param emin_value
+ * @param emax_value
+ * @param target_emax_value
+ */
 void algorithm::EDS::set_EDS_params(double emin_value, double emax_value, double target_emax_value){
     emin = emin_value;
     emax = emax_value;
@@ -107,19 +139,28 @@ void algorithm::EDS::set_EDS_params(double emin_value, double emax_value, double
     update_gamma_params();
 }
 
-// updates gamma acceleration variables (e.g. target_frac, diff_emm, gamma_pow, ...)
+/** updates gamma acceleration variables (e.g. target_frac, diff_emm, gamma_pow, ...)*/
 void algorithm::EDS::update_gamma_params(){
     diff_emm = emax - emin;
     get_target_frac();
     find_lin_scaling_frac();
 }
 
-// transforms energy value into x variable for gamma acceleration
+/**
+ * transforms energy value into x variable for gamma acceleration
+ * @param E
+ */
 double algorithm::EDS::transform_E_2_x(double E){
     return (E - emin) / diff_emm;
 }
 
-// calculate accelerated energy & scaling factor for the force (gamma acceleration)
+/**
+ * calculate accelerated energy & scaling factor for the force (gamma acceleration)
+ * @param E_a pointer to a variable to assign the value of the accelerated energy
+ * @param f_der_x pointer to a variable to assign the value of the force scaling factor
+ * @param E energy to be accelerated
+ * @param E_offset energy offset (assumed 0 if not given)
+ */
 void algorithm::EDS::accelerate_E_F_gamma(double *E_a, double *f_der_x, double E, double E_offset=0){
     *f_der_x = 1.;
     if (target_emax >= emax)
@@ -137,7 +178,12 @@ void algorithm::EDS::accelerate_E_F_gamma(double *E_a, double *f_der_x, double E
     }
 }
 
-// calculate accelerated energy (gamma acceleration)
+/**
+ * calculate accelerated energy (gamma acceleration)
+ * @param E_a pointer to a variable to assign the value of the accelerated energy
+ * @param E energy to be accelerated
+ * @param E_offset energy offset (assumed 0 if not given)
+ */
 void algorithm::EDS::accelerate_E_gamma(double *E_a, double E, double E_offset=0){
     if (target_emax >= emax)
         *E_a = E;
@@ -154,7 +200,13 @@ void algorithm::EDS::accelerate_E_gamma(double *E_a, double E, double E_offset=0
 }
 
 
-// calculate accelerated energy  & scaling factor for the force (gaussian acceleration)
+/**
+ * calculate accelerated energy & scaling factor for the force (gaussian acceleration)
+ * @param E_a pointer to a variable to assign the value of the accelerated energy
+ * @param fkfac pointer to a variable to assign the value of the force scaling factor
+ * @param E energy to be accelerated
+ * @param E_offset energy offset (assumed 0 if not given)
+ */
 void algorithm::EDS::accelerate_E_F_gauss(double *E_a, double *fkfac, double E, double E_offset=0){
     *fkfac = 1.;
     double E_with_offset = E - E_offset;
@@ -163,14 +215,19 @@ void algorithm::EDS::accelerate_E_F_gauss(double *E_a, double *fkfac, double E, 
     else if (E_with_offset >= emax)
         *E_a = E - 0.5 * emax - emin;
     else{
-        double demix = E - emin;
+        double demix = E_with_offset - emin;
         double kfac = 1.0 / diff_emm;
         *fkfac = 1.0 - kfac * demix;
-        *E_a = E - 0.5 * kfac * demix * demix;;
+        *E_a = E - 0.5 * kfac * demix * demix;
     }
 }
 
-// calculate accelerated energy (gaussian acceleration)
+/**
+ * calculate accelerated energy & scaling factor for the force (gaussian acceleration)
+ * @param E_a pointer to a variable to assign the value of the accelerated energy
+ * @param E energy to be accelerated
+ * @param E_offset energy offset (assumed 0 if not given)
+ */
 void algorithm::EDS::accelerate_E_gauss(double *E_a, double E, double E_offset=0){
     double E_with_offset = E - E_offset;
     if (E_with_offset <= emin)
@@ -178,9 +235,9 @@ void algorithm::EDS::accelerate_E_gauss(double *E_a, double E, double E_offset=0
     else if (E_with_offset >= emax)
         *E_a = E - 0.5 * emax - emin;
     else{
-        double demix = E - emin;
+        double demix = E_with_offset - emin;
         double kfac = 1.0 / diff_emm;
-        *E_a = E - 0.5 * kfac * demix * demix;;
+        *E_a = E - 0.5 * kfac * demix * demix;
     }
 }
 
