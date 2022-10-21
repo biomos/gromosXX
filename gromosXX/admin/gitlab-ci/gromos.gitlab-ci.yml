@@ -80,16 +80,6 @@
       - $BUILD_DIR/lib
       - $BIN_PATH
 
-.gromos:base:make_check:
-  stage: make_check
-  script:
-    - cd $BUILD_DIR
-    - make check $ENV_COMPILER
-  artifacts:
-    when: always
-    paths:
-      - $BUILD_DIR
-
 .gromos:base:sim_test:
   stage: sim_test
   script: 
