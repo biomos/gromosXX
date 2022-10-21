@@ -80,6 +80,20 @@
       - $BUILD_DIR/lib
       - $BIN_PATH
 
+.gromos:base:make_check:
+  stage: make_check
+  script:
+    - cd $BUILD_DIR
+    - make check $ENV_COMPILER
+  artifacts:
+    when: always
+    paths:
+      # all of them already in build dir...
+      #- $BUILD_DIR/src/check/test-suite.log
+      #- $BUILD_DIR/lib
+      #- $BIN_PATH
+      - $BUILD_DIR
+
 .gromos:base:sim_test:
   stage: sim_test
   script: 
@@ -107,9 +121,9 @@ include:
 #  - local: 'gromosXX/admin/gitlab-ci/gromos.matrix/ubuntu-20.04.yml'
 #  - local: 'gromosXX/admin/gitlab-ci/gromos.matrix/ubuntu-20.04-llvm.yml'
   - local: 'gromosXX/admin/gitlab-ci/gromos.matrix/ubuntu-20.04-mpi.yml'
-  - local: 'gromosXX/admin/gitlab-ci/gromos.matrix/ubuntu-20.04-mpi_debug.yml'
-  - local: 'gromosXX/admin/gitlab-ci/gromos.matrix/ubuntu-20.04-cuda-11.6.1.yml'
-  - local: 'gromosXX/admin/gitlab-ci/gromos.matrix/ubuntu-20.04-cuda-11.6.1_debug.yml'
+#  - local: 'gromosXX/admin/gitlab-ci/gromos.matrix/ubuntu-20.04-mpi_debug.yml'
+#  - local: 'gromosXX/admin/gitlab-ci/gromos.matrix/ubuntu-20.04-cuda-11.6.1.yml'
+#  - local: 'gromosXX/admin/gitlab-ci/gromos.matrix/ubuntu-20.04-cuda-11.6.1_debug.yml'
 #  - local: 'gromosXX/admin/gitlab-ci/gromos.matrix/ubuntu-18.04.yml'
 #  - local: 'gromosXX/admin/gitlab-ci/gromos.matrix/ubuntu-18.04-llvm.yml'
 #  - local: 'gromosXX/admin/gitlab-ci/gromos.matrix/ubuntu-18.04-mpi.yml'
