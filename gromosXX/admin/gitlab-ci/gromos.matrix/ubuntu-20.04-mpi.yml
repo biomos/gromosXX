@@ -31,6 +31,6 @@ gromos:ubuntu-20.04-mpi:sim_test:
     OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
     OMPI_ALLOW_RUN_AS_ROOT: 1
   needs:
-    - job: gromos:ubuntu-20.04-mpi:build
+    - job: gromos:ubuntu-20.04-mpi:build_make_check
 
 
