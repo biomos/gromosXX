@@ -24,7 +24,7 @@ gromos:ubuntu-20.04-mpi:make_check:
     - .use-mpi
   image: ${CI_REGISTRY}/gromos/gromosxx/gromos-ubuntu-20.04-mpi
   variables:
-    BUILD_DIR: build/bin/md_mpi
+    BUILD_DIR: build
   needs:
     - job: gromos:ubuntu-20.04-mpi:build
 
