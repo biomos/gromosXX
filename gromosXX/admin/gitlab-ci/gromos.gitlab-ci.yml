@@ -98,6 +98,7 @@
     when: always
     paths:
       - $BUILD_DIR/lib
+      - $BUILD_DIR/src/check/test-suite.log
       - $BIN_PATH
 
 .gromos:base:sim_test:
