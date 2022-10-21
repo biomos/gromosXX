@@ -1,7 +1,7 @@
 stages:
   - configure-build
   - build
-  - make_check
+  - build_make_check
   - sim_test
 
 include:
