@@ -122,10 +122,10 @@
         - sim_test_report.xml
 
 include:
-  - local: 'gromosXX/admin/gitlab-ci/gromos.matrix/ubuntu-22.04.yml'
+#  - local: 'gromosXX/admin/gitlab-ci/gromos.matrix/ubuntu-22.04.yml'
 #  - local: 'gromosXX/admin/gitlab-ci/gromos.matrix/ubuntu-22.04-llvm.yml'
 #  - local: 'gromosXX/admin/gitlab-ci/gromos.matrix/ubuntu-22.04-mpi.yml'
-#  - local: 'gromosXX/admin/gitlab-ci/gromos.matrix/ubuntu-20.04.yml'
+  - local: 'gromosXX/admin/gitlab-ci/gromos.matrix/ubuntu-20.04.yml'
 #  - local: 'gromosXX/admin/gitlab-ci/gromos.matrix/ubuntu-20.04-llvm.yml'
 #  - local: 'gromosXX/admin/gitlab-ci/gromos.matrix/ubuntu-20.04-mpi.yml'
 #  - local: 'gromosXX/admin/gitlab-ci/gromos.matrix/ubuntu-20.04-mpi_debug.yml'
