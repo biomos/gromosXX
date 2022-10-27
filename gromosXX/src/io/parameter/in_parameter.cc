@@ -3951,9 +3951,10 @@ void io::In_Parameter::read_AEDS(simulation::Parameter & param,
   // will be used to generate snippets that can be included in the doxygen doc;
   // the first line should be the blockname and is used as snippet tag
   exampleblock << "AEDS\n";
-  exampleblock << "# AEDS       0,1\n";
+  exampleblock << "# AEDS       0,1,2\n";
   exampleblock << "#              0: no accelerated enveloping distribution sampling (A-EDS) [default]\n";
   exampleblock << "#              1: accelerated enveloping distribution sampling\n";
+  exampleblock << "#              2: accelerated enveloping distribution sampling (gamma acceleration)\n";
   exampleblock << "# FORM       1-5\n";
   exampleblock << "#              1: A-EDS with fixed parameters\n";
   exampleblock << "#              2: fixed Emax and Emin parameters, search for offset parameters\n";
@@ -3999,7 +4000,7 @@ void io::In_Parameter::read_AEDS(simulation::Parameter & param,
     block_read.insert(blockname);
 
     int aeds = 0, form = 0;
-    block.get_next_parameter("AEDS", aeds, "", "0,1");
+    block.get_next_parameter("AEDS", aeds, "", "0,1,2");
     block.get_next_parameter("FORM", form, "", "1,2,3,4,5,6");
     block.get_next_parameter("NUMSTATES", param.eds.numstates, ">=2", "");
 
@@ -4011,6 +4012,9 @@ void io::In_Parameter::read_AEDS(simulation::Parameter & param,
         break;
       case 1:
         param.eds.eds = 2;
+        break;
+      case 2:
+        param.eds.eds = 3;
         break;
       default:
         break;

@@ -21,7 +21,7 @@
 #define MODULE algorithm
 #define SUBMODULE integration
 
-
+// #include <iostream>
 
 
 // gamma acceleration functions
@@ -163,8 +163,10 @@ double algorithm::EDS::transform_E_2_x(double E){
  */
 void algorithm::EDS::accelerate_E_F_gamma(double *E_a, double *f_der_x, double E, double E_offset=0){
     *f_der_x = 1.;
-    if (target_emax >= emax)
+    if (target_emax >= emax){
         *E_a = E;
+        return;
+    }
     double E_with_offset = E - E_offset;
     if (E_with_offset <= emin)
         *E_a = E;
@@ -185,8 +187,10 @@ void algorithm::EDS::accelerate_E_F_gamma(double *E_a, double *f_der_x, double E
  * @param E_offset energy offset (assumed 0 if not given)
  */
 void algorithm::EDS::accelerate_E_gamma(double *E_a, double E, double E_offset=0){
-    if (target_emax >= emax)
+    if (target_emax >= emax){
         *E_a = E;
+        return;
+    }
     double E_with_offset = E - E_offset;
     if (E_with_offset <= emin)
         *E_a = E;
@@ -213,7 +217,7 @@ void algorithm::EDS::accelerate_E_F_gauss(double *E_a, double *fkfac, double E, 
     if (E_with_offset <= emin)
         *E_a = E;
     else if (E_with_offset >= emax)
-        *E_a = E - 0.5 * emax - emin;
+        *E_a = E - 0.5 * diff_emm;
     else{
         double demix = E_with_offset - emin;
         double kfac = 1.0 / diff_emm;
@@ -233,7 +237,7 @@ void algorithm::EDS::accelerate_E_gauss(double *E_a, double E, double E_offset=0
     if (E_with_offset <= emin)
         *E_a = E;
     else if (E_with_offset >= emax)
-        *E_a = E - 0.5 * emax - emin;
+        *E_a = E - 0.5 * diff_emm;
     else{
         double demix = E_with_offset - emin;
         double kfac = 1.0 / diff_emm;
@@ -254,9 +258,10 @@ int algorithm::EDS
  {
   m_timer.start();
 
-  int flag_acceleration_type = 1; // gamma acceleration
+  // int flag_acceleration_type = 1; // gamma acceleration
   // int flag_acceleration_type = 0; // old/gauss acceleration
   // this should be implemented through imd file...
+  // as sim.param().eds.eds (2 for old/gauss; 3 for new/gamma)
 
   const unsigned int numstates = sim.param().eds.numstates;
   switch (sim.param().eds.form) {
@@ -329,10 +334,11 @@ int algorithm::EDS
       // update EDS params
       set_EDS_params(sim.param().eds.emin, sim.param().eds.emax, sim.param().eds.target_emax);
       // accelerate eds Hamiltonian
-      if (flag_acceleration_type == 0)
+      if (sim.param().eds.eds == 2)
         accelerate_E_F_gauss(&conf.current().energies.eds_vr, &fkfac, conf.current().energies.eds_vmix);
-      else if (flag_acceleration_type == 1)
+      else if (sim.param().eds.eds == 3)
         accelerate_E_F_gamma(&conf.current().energies.eds_vr, &fkfac, conf.current().energies.eds_vmix);
+      // force fact / eds E / accel eds E
 
       // calculate eds contribution ...
       for (unsigned int state = 0; state < numstates; state++) {
@@ -365,10 +371,10 @@ int algorithm::EDS
           double expde = 0.0, eiremin = 0.0, eiremax = 0.0, eirestar = 0.0, eirdemix = 0.0, eirkfac = 0.0;
           for (unsigned int is = 0; is < numstates; is++) {
             // get the acceleration
-            if (flag_acceleration_type == 0)
-              accelerate_E_gauss(&eirestar, eds_vi[is]);
-            else if (flag_acceleration_type == 1)
-              accelerate_E_gamma(&eirestar, eds_vi[is]);
+            if (sim.param().eds.eds == 2)
+              accelerate_E_gauss(&eirestar, eds_vi[is], eir[is]);
+            else if (sim.param().eds.eds == 3)
+              accelerate_E_gamma(&eirestar, eds_vi[is], eir[is]);
             
             // if in conventional search algorithm recalculate offsets using time decay function and update them
             if (sim.param().eds.form == simulation::aeds_search_eir || sim.param().eds.form == simulation::aeds_search_all){
@@ -457,7 +463,6 @@ int algorithm::EDS
               sim.param().eds.visitedstates[is] = false;
             }
           }
-
           // EMIN
           double bmax = 0.0;
           if (sim.param().eds.bmaxtype == 1)
@@ -471,8 +476,8 @@ int algorithm::EDS
           }
 
           
-          sim.param().eds.target_emax = bmax;
-          if (flag_acceleration_type == 0){
+          sim.param().eds.target_emax = globminavg + bmax;
+          if (sim.param().eds.eds == 2){
             if ((sim.param().eds.emax - globminavg) <= bmax) {
               sim.param().eds.emin = sim.param().eds.emax;
               DEBUG(7, "emin1 " << sim.param().eds.emin);
@@ -500,8 +505,8 @@ int algorithm::EDS
               }
             }
           }
-          else if (flag_acceleration_type == 1){
-            sim.param().eds.target_emax = bmax;
+          else if (sim.param().eds.eds == 3){
+            sim.param().eds.target_emax = globminavg + bmax;
             sim.param().eds.emin = globminavg;
           }
 
