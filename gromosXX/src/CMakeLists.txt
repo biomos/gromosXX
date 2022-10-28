@@ -1,0 +1,13 @@
+add_subdirectory(algorithm)
+add_subdirectory(check)
+add_subdirectory(configuration)
+if(CUDAKERNEL)
+    # add_subdirectory(cukernel) # not supported yet
+endif()
+add_subdirectory(interaction)
+add_subdirectory(io)
+add_subdirectory(math)
+add_subdirectory(replicaExchange)
+add_subdirectory(simulation)
+add_subdirectory(topology)
+add_subdirectory(util)
