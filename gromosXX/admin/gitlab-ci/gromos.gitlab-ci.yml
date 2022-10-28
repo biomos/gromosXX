@@ -76,8 +76,29 @@
   artifacts:
     when: always
     paths:
-            #      - gromosXX
       - $BUILD_DIR/lib
+      - $BIN_PATH
+
+.gromos:base:build_make_check:
+  stage: build_make_check
+  script: 
+    - echo $ENV_COMPILER
+    - echo $OPENMP_OPTIONS
+    - echo $MPI_OPTIONS
+    - echo $CUDA_OPTIONS
+    - echo $ENV_SHARE
+    - echo $ENV_DEBUG
+    - echo $BUILD_DIR
+    - echo $BIN_PATH
+    - cd $BUILD_DIR
+    - make -j4 $ENV_COMPILER
+    - make check $ENV_COMPILER
+    - make install $ENV_COMPILER
+  artifacts:
+    when: always
+    paths:
+      - $BUILD_DIR/lib
+      - $BUILD_DIR/src/check/test-suite.log
       - $BIN_PATH
 
 .gromos:base:sim_test:
@@ -104,7 +125,7 @@ include:
 #  - local: 'gromosXX/admin/gitlab-ci/gromos.matrix/ubuntu-22.04.yml'
 #  - local: 'gromosXX/admin/gitlab-ci/gromos.matrix/ubuntu-22.04-llvm.yml'
 #  - local: 'gromosXX/admin/gitlab-ci/gromos.matrix/ubuntu-22.04-mpi.yml'
-#  - local: 'gromosXX/admin/gitlab-ci/gromos.matrix/ubuntu-20.04.yml'
+  - local: 'gromosXX/admin/gitlab-ci/gromos.matrix/ubuntu-20.04.yml'
 #  - local: 'gromosXX/admin/gitlab-ci/gromos.matrix/ubuntu-20.04-llvm.yml'
   - local: 'gromosXX/admin/gitlab-ci/gromos.matrix/ubuntu-20.04-mpi.yml'
   - local: 'gromosXX/admin/gitlab-ci/gromos.matrix/ubuntu-20.04-mpi_debug.yml'
