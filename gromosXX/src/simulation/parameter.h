@@ -3984,6 +3984,26 @@ namespace simulation
          * factor to convert the QM charge unit to the GROMOS one
          */
         double unit_factor_charge;
+        /**
+         * input file containing the positions and element types of the QM atoms (used for debugging or generation of NN training sets)
+         */
+        std::string trajectory_input_coordinate_file;
+        /**
+         * input file containing the positions and charges of the MM atoms (used for debugging or generation of NN training sets)
+         */
+        std::string trajectory_input_pointcharges_file;
+        /**
+         * output file containing the cartesian gradients (used for debugging or generation of NN training sets)
+         */
+        std::string trajectory_output_gradient_file;
+        /**
+         * output file containing the cartesion gradients of the MM atoms (used for debugging or generation of NN training sets)
+         */
+        std::string trajectory_output_mm_gradient_file;
+        /**
+         * output file containing the charges calculated (used for debugging or generation of NN training sets)
+         */
+        std::string trajectory_output_charges_file;
       };
 
       /**
@@ -4152,21 +4172,17 @@ namespace simulation
          */
         unsigned int verbosity;
         /**
-         * the input file containing the positions and element types of the QM atoms
+         * maximum iteration for SCC procedure (default is 250)
          */
-        std::string input_coordinate_file;
+        unsigned int maxIter = 250;
         /**
-         * the input file containing the positions and charges of the MM atoms
+         * accuracy multiplier for XTB calculations (default is 1) (https://xtb-docs.readthedocs.io/en/latest/sp.html#accuracy-and-iterations) 
          */
-        std::string input_pointcharges_file;
+        double accuracy = 1;
         /**
-         * the output file containing the cartesian gradients
+         * output file containing xtb logging
          */
-        std::string output_gradient_file;
-        /**
-         * the output file containing the cartesion gradients of the MM atoms
-         */
-        std::string output_mm_gradient_file;
+        std::string output_log_file;
       } xtb; 
 
       /**

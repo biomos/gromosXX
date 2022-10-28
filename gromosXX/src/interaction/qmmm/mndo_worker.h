@@ -45,7 +45,7 @@ namespace interaction {
      * Pointer to simulation parameters
      */
     simulation::Parameter::qmmm_struct::mndo_param_struct* param;
-
+    
     /**
      * Write input file for QM
      * @param topo Topology
@@ -75,16 +75,24 @@ namespace interaction {
      * Write QM atom
      */
     void write_qm_atom(std::ofstream& inputfile_stream
-                  , const int atomic_number
-                  , const math::Vec& pos
-                  , const int opt_flag = 0) const;
+                     , const int atomic_number
+                     , const math::Vec& pos) const override;
+    
+    /**
+     * Write QM atom
+     */
+    void write_qm_atom(std::ofstream& inputfile_stream
+                     , const int atomic_number
+                     , const math::Vec& pos
+                     , const int opt_flag) const;
 
     /**
      * Write MM atom
      */
     void write_mm_atom(std::ofstream& inputfile_stream
-                      , const math::Vec& pos
-                      , const double charge) const;
+                     , const int atomic_number
+                     , const math::Vec& pos
+                     , const double charge) const override;
 
     /**
      * Parse charges

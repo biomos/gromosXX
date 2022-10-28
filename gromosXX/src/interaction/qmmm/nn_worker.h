@@ -74,7 +74,7 @@ namespace interaction {
      * ASE calculator for charges
      */
     PY_OBJECT charge_calculator;
-
+    
     /**
      * run the NN worker
      */

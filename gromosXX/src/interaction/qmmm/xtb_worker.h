@@ -41,6 +41,7 @@ namespace interaction {
                    , const interaction::QM_Zone& qm_zone) override; 
 
   private:
+    
     /**
      * Write input files for QM program
      * @param topo Topology
@@ -69,7 +70,7 @@ namespace interaction {
      * @param sim Simulation
      * @param qm_zone The QM zone
      */
-    void process_input_coordinates(const topology::Topology& topo
+    int process_input_coordinates(const topology::Topology& topo
                                  , const configuration::Configuration& conf
                                  , const simulation::Simulation& sim
                                  , const interaction::QM_Zone& qm_zone);
@@ -83,16 +84,16 @@ namespace interaction {
      * @param sim Simulation
      * @param qm_zone The QM zone
      */
-    void process_input_pointcharges(const topology::Topology& topo
+    int process_input_pointcharges(const topology::Topology& topo
                                   , const configuration::Configuration& conf
                                   , const simulation::Simulation& sim
                                   , const interaction::QM_Zone& qm_zone);
-    
+
     /**
      * Call external QM program - XTB
      */
     int run_calculation() override;
-
+    
     /**
      * Read output file from the QM program
      * @param topo Topology
@@ -129,6 +130,38 @@ namespace interaction {
      */
     int parse_mm_gradients(interaction::QM_Zone& qm_zone) const;
 
+    /**
+     * Helper function to write the header in coordinate file trajectory
+     */
+    void write_coordinate_header(std::ofstream& ifs
+                               , const QM_Zone& qm_zone) const override;
+
+    /**
+     * Helper function to write the footer in coordinate file trajectory
+     */
+    void write_coordinate_footer(std::ofstream& inputfile_stream) const override;
+
+    /**
+     * Write QM atom line
+     * @param inputfile_stream ofstream to input file
+     * @param atomic_number atomic number of the atom
+     * @param pos position of the atom
+     */
+    void write_qm_atom(std::ofstream& inputfile_stream
+                     , const int atomic_number
+                     , const math::Vec& pos) const override;
+
+    /**
+     * Write MM atom line
+     * @param inputfile_stream ofstream to the input file
+     * @param pos position of the atom
+     * @param charge charge of the atom
+     */
+    void write_mm_atom(std::ofstream& inputfile_stream
+                     , const int atomic_number
+                     , const math::Vec& pos
+                     , const double charge) const override;
+    
     /**
      * Pointer to simulation parameters
      */

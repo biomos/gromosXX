@@ -50,7 +50,7 @@ namespace interaction {
      * Pointer to simulation parameters
      */
     simulation::Parameter::qmmm_struct::dftb_param_struct* param;
-
+    
     /**
      * Write input file for the QM program
      * @param topo Topology
@@ -72,7 +72,7 @@ namespace interaction {
     void write_atom_types_list(std::ofstream& input_file_stream
                              , std::map<unsigned, unsigned>& type_indices
                              , const interaction::QM_Zone& qm_zone) const;
-
+    
     /**
      * Write QM atom line
      * @param inputfile_stream ofstream to input file
@@ -91,8 +91,9 @@ namespace interaction {
      * @param charge charge of the atom
      */
     void write_mm_atom(std::ofstream& inputfile_stream
+                     , const int atomic_number
                      , const math::Vec& pos
-                     , const double charge) const;
+                     , const double charge) const override;
 
     /**
      * Call external QM program - DFTB

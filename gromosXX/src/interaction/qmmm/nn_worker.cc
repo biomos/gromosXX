@@ -57,10 +57,19 @@ int interaction::NN_Worker::init(const topology::Topology& topo
                                , const configuration::Configuration& conf
                                , simulation::Simulation& sim
                                , const interaction::QM_Zone& qm_zone) {
+  DEBUG(15, "Initializing " << this->name());
+
 #ifdef HAVE_PYBIND11
   // Get a pointer to simulation parameters
   this->param = &(sim.param().qmmm.nn);
   QM_Worker::param = this->param;
+
+  // writing of QM trajectory currently not supported as NN_Worker
+  // has its own implementatino of run_QM()
+  // -> calling QM_Worker::init is thus unnecessary
+  // parent class initialization (trajectory files)
+  // int err = QM_Worker::init(topo, conf, sim, qm_zone);
+  // if (err) return err;
 
   // Initialize NN interface
   // Initialize pybind, schnetpack, python script
@@ -191,6 +200,9 @@ int interaction::NN_Worker::init(const topology::Topology& topo
   #endif
 
 #endif
+
+  DEBUG(15, "Initialized " << this->name());
+
   return 0;
 }
 

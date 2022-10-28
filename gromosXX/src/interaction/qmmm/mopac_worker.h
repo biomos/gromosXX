@@ -43,7 +43,7 @@ namespace interaction {
      * Pointer to simulation parameters
      */
     simulation::Parameter::qmmm_struct::mopac_param_struct* param;
-
+    
     /**
      * Write input file for QM program
      * @param topo Topology
@@ -73,9 +73,16 @@ namespace interaction {
      * Write QM atom
      */
     void write_qm_atom(std::ofstream& inputfile_stream
+                     , const int atomic_number
+                     , const math::Vec& pos) const override;
+    
+    /**
+     * Write QM atom
+     */
+    void write_qm_atom(std::ofstream& inputfile_stream
                   , const int atomic_number
                   , const math::Vec& pos
-                  , const int var_flag = 1) const;
+                  , const int var_flag) const;
 
     /**
      * Write potential from MM atoms

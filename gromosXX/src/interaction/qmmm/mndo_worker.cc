@@ -36,9 +36,16 @@ int interaction::MNDO_Worker::init(const topology::Topology& topo
                                  , const configuration::Configuration& conf
                                  , simulation::Simulation& sim
                                  , const interaction::QM_Zone& qm_zone) {
+  DEBUG(15, "Initializing " << this->name());
+
   // Get a pointer to simulation parameters
   this->param = &(sim.param().qmmm.mndo);
   QM_Worker::param = this->param;
+  
+  // parent class initialization (trajectory files)
+  int err = QM_Worker::init(topo, conf, sim, qm_zone);
+  if (err) return err;
+  
   // Aliases to shorten the code
   std::string& inp = this->param->input_file;
   std::string& out = this->param->output_file;
@@ -154,6 +161,9 @@ int interaction::MNDO_Worker::init(const topology::Topology& topo
     this->name(), io::message::warning);
   }
 #endif
+
+  DEBUG(15, "Initialized " << this->name());
+
   return 0;
 }
 
@@ -228,11 +238,11 @@ int interaction::MNDO_Worker::process_input(const topology::Topology& topo
     for (std::set<MM_Atom>::const_iterator
           it = qm_zone.mm.begin(), to = qm_zone.mm.end(); it != to; ++it) {
       if (it->is_polarisable) {
-        this->write_mm_atom(ifs, it->pos * len_to_qm, (it->charge - it->cos_charge) * cha_to_qm);
-        this->write_mm_atom(ifs, (it->pos + it->cosV) * len_to_qm, it->cos_charge * cha_to_qm);
+        this->write_mm_atom(ifs, it->atomic_number, it->pos * len_to_qm, (it->charge - it->cos_charge) * cha_to_qm);
+        this->write_mm_atom(ifs, it->atomic_number, (it->pos + it->cosV) * len_to_qm, it->cos_charge * cha_to_qm);
       }
       else {
-        this->write_mm_atom(ifs, it->pos * len_to_qm, it->charge * cha_to_qm);
+        this->write_mm_atom(ifs, it->atomic_number, it->pos * len_to_qm, it->charge * cha_to_qm);
       }
     }
   }
@@ -291,6 +301,14 @@ int interaction::MNDO_Worker::process_output(topology::Topology& topo
 
 void interaction::MNDO_Worker::write_qm_atom(std::ofstream& inputfile_stream
                                         , const int atomic_number
+                                        , const math::Vec& pos) const
+  {
+    // pass forward with default opt_flag
+    write_qm_atom(inputfile_stream, atomic_number, pos, 0);
+  }
+
+void interaction::MNDO_Worker::write_qm_atom(std::ofstream& inputfile_stream
+                                        , const int atomic_number
                                         , const math::Vec& pos
                                         , const int opt_flag) const
   {
@@ -321,6 +339,7 @@ void interaction::MNDO_Worker::write_qm_atom(std::ofstream& inputfile_stream
 }
 
 void interaction::MNDO_Worker::write_mm_atom(std::ofstream& inputfile_stream
+                                        , const int atomic_number
                                         , const math::Vec& pos
                                         , const double charge) const
   {
