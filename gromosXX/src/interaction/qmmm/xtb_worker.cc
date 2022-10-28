@@ -40,6 +40,9 @@ interaction::XTB_Worker::~XTB_Worker() {
   xtb_delResults(&res);
   xtb_delCalculator(&calc);
   xtb_delEnvironment(&env);
+  // release output file
+  if (!this->param->output_log_file.empty())
+    xtb_releaseOutput(this->env);
 }
 
 int interaction::XTB_Worker::init(const topology::Topology& topo
@@ -51,6 +54,10 @@ int interaction::XTB_Worker::init(const topology::Topology& topo
   // Get a pointer to simulation parameters
   this->param = &(sim.param().qmmm.xtb);
   QM_Worker::param = this->param;
+
+  // parent class initialization (trajectory files)
+  int err = QM_Worker::init(topo, conf, sim, qm_zone);
+  if (err) return err;
 
   // Charge and spin
   this->charge = qm_zone.charge() * this->param->unit_factor_charge;
@@ -88,7 +95,8 @@ int interaction::XTB_Worker::init(const topology::Topology& topo
   this->init_input_atom_types(qm_zone);
 
   // process QM coordinates
-  this->process_input_coordinates(topo, conf, sim, qm_zone);
+  err = this->process_input_coordinates(topo, conf, sim, qm_zone);
+  if (err) return err;
 
   // Fortran API call - pass pointers
   this->mol = xtb_newMolecule(this->env, &(this->natoms), attyp.data(), coord.data(), 
@@ -105,12 +113,32 @@ int interaction::XTB_Worker::init(const topology::Topology& topo
         xtb_showEnvironment(this->env, NULL);
         return 1;
     }
-  }
-  else if (this->param->hamiltonian == 2) {
+  } else if (this->param->hamiltonian == 2) {
     xtb_loadGFN2xTB(this->env, this->mol, this->calc, NULL);
     if (xtb_checkEnvironment(this->env)) {
         xtb_showEnvironment(this->env, NULL);
         return 1;
+    }
+  }
+
+  // setting accuracy and max iterations
+  xtb_setAccuracy(this->env, this->calc, this->param->accuracy);
+  if (xtb_checkEnvironment(this->env)) {
+    xtb_showEnvironment(this->env, NULL);
+    return 1;
+  }
+  xtb_setMaxIter(this->env, this->calc, this->param->maxIter);
+  if (xtb_checkEnvironment(this->env)) {
+    xtb_showEnvironment(this->env, NULL);
+    return 1;
+  }
+
+  // bind output to file
+  if (!this->param->output_log_file.empty()) {
+    xtb_setOutput(this->env, this->param->output_log_file.c_str());
+    if (xtb_checkEnvironment(env)) {
+      xtb_showEnvironment(env, NULL);
+      return 1;
     }
   }
 
@@ -148,9 +176,9 @@ int interaction::XTB_Worker::process_input(const topology::Topology& topo
                   , const configuration::Configuration& conf
                   , const simulation::Simulation& sim
                   , const interaction::QM_Zone& qm_zone) {
-
   // first process QM coordinates
-  this->process_input_coordinates(topo, conf, sim, qm_zone);
+  int err = this->process_input_coordinates(topo, conf, sim, qm_zone);
+  if (err) return err;
 
   // Fortran API call - pass pointers
   xtb_updateMolecule(this->env, this->mol, coord.data(), NULL);
@@ -161,7 +189,8 @@ int interaction::XTB_Worker::process_input(const topology::Topology& topo
 
   if (sim.param().qmmm.qmmm > simulation::qmmm_mechanical) {
     // process point charges
-    this->process_input_pointcharges(topo, conf, sim, qm_zone);
+    err = this->process_input_pointcharges(topo, conf, sim, qm_zone);
+    if (err) return err;
 
     if (this->ncharges > 0) { // set external charges only if > 0 ; otherwise xTB crashes
       xtb_setExternalCharges(this->env, this->calc, &(this->ncharges), this->numbers.data(),
@@ -176,10 +205,11 @@ int interaction::XTB_Worker::process_input(const topology::Topology& topo
   return 0;
 }
 
-void interaction::XTB_Worker::process_input_coordinates(const topology::Topology& topo
+int interaction::XTB_Worker::process_input_coordinates(const topology::Topology& topo
                                                       , const configuration::Configuration& conf
                                                       , const simulation::Simulation& sim
                                                       , const interaction::QM_Zone& qm_zone) {
+    
   // Gromos -> QM length unit is inverse of input value from QM/MM specification file
   const double len_to_qm = 1.0 / this->param->unit_factor_length;
 
@@ -200,12 +230,14 @@ void interaction::XTB_Worker::process_input_coordinates(const topology::Topology
     math::vector_c2f(this->coord, it->pos, i, len_to_qm);
     ++i;
   } 
+
+  return 0;
 }
 
-void interaction::XTB_Worker::process_input_pointcharges(const topology::Topology& topo
-                                                       , const configuration::Configuration& conf
-                                                       , const simulation::Simulation& sim
-                                                       , const interaction::QM_Zone& qm_zone) {
+int interaction::XTB_Worker::process_input_pointcharges(const topology::Topology& topo
+                                                      , const configuration::Configuration& conf
+                                                      , const simulation::Simulation& sim
+                                                      , const interaction::QM_Zone& qm_zone) {
   // MM -> QM length unit is inverse of input value
   const double cha_to_qm = 1.0 / this->param->unit_factor_charge;
   const double len_to_qm = 1.0 / this->param->unit_factor_length;
@@ -248,6 +280,8 @@ void interaction::XTB_Worker::process_input_pointcharges(const topology::Topolog
       ++i;
     }
   }
+
+  return 0;
 }
 
 int interaction::XTB_Worker::run_calculation() {
@@ -307,6 +341,7 @@ int interaction::XTB_Worker::parse_energy(interaction::QM_Zone& qm_zone) const {
     return 1;
   }
   qm_zone.QM_energy() = energy * this->param->unit_factor_energy;
+  DEBUG(15, "Parsing QM energy: " << energy << " Hartree or " << qm_zone.QM_energy() << " kJ / mol");
   return 0;
 }
 
@@ -336,6 +371,7 @@ int interaction::XTB_Worker::parse_qm_gradients(interaction::QM_Zone& qm_zone) c
     DEBUG(15, "Force: " << math::v2s(it->force));
     ++i;
   }
+
   return 0;
 }
 
@@ -363,6 +399,7 @@ int interaction::XTB_Worker::parse_mm_gradients(interaction::QM_Zone& qm_zone) c
     }
     ++i;
   }
+
   return 0;
 }
 
@@ -392,4 +429,44 @@ int interaction::XTB_Worker::parse_charges(interaction::QM_Zone& qm_zone) const 
     ++i;
   }
   return 0;
+}
+
+void interaction::XTB_Worker::write_coordinate_header(std::ofstream& ifs
+                                                    , const QM_Zone& qm_zone) const {
+  // TURBOMOLE format
+  ifs << "$coord" << '\n';  
+}
+
+void interaction::XTB_Worker::write_coordinate_footer(std::ofstream& ifs) const {
+  // TURBOMOLE format
+  ifs << "$end" << '\n';
+}
+
+void interaction::XTB_Worker::write_qm_atom(std::ofstream& inputfile_stream
+                                          , const int atomic_number
+                                          , const math::Vec& pos) const {
+  inputfile_stream.setf(std::ios::fixed, std::ios::floatfield);
+  inputfile_stream << std::setprecision(20)
+                   << std::setw(25) << pos(0)
+                   << std::setw(25) << pos(1)
+                   << std::setw(25) << pos(2)
+                   << std::setw(8)  << this->param->elements[atomic_number]
+                   << '\n';
+}
+
+void interaction::XTB_Worker::write_mm_atom(std::ofstream& inputfile_stream
+                                          , const int atomic_number
+                                          , const math::Vec& pos
+                                          , const double charge) const {
+  if (charge != 0.0) {
+    inputfile_stream.setf(std::ios::fixed, std::ios::floatfield);
+    inputfile_stream << std::setprecision(6)
+                     << std::setw(10) << charge
+                     << std::setprecision(20)
+                     << std::setw(25) << pos(0)
+                     << std::setw(25) << pos(1)
+                     << std::setw(25) << pos(2) 
+                     << std::setw(8)  << this->param->elements[atomic_number]
+                     << '\n';
+  }
 }

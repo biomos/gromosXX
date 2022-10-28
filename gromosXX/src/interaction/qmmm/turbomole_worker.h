@@ -51,7 +51,7 @@ namespace interaction {
      * Pointer to simulation parameters
      */
     simulation::Parameter::qmmm_struct::turbomole_param_struct* param;
-
+    
     /**
      * Write input file for the QM program
      * @param topo Topology
@@ -72,7 +72,7 @@ namespace interaction {
      */
     void write_qm_atom(std::ofstream& inputfile_stream
                      , const int atomic_number
-                     , const math::Vec& pos) const;
+                     , const math::Vec& pos) const override;
 
     /**
      * Write MM atom line
@@ -81,8 +81,9 @@ namespace interaction {
      * @param charge charge of the atom
      */
     void write_mm_atom(std::ofstream& inputfile_stream
+                     , const int atomic_number
                      , const math::Vec& pos
-                     , const double charge) const;
+                     , const double charge) const override;
 
     /**
      * Call external QM program - Turbomole

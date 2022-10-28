@@ -45,7 +45,7 @@ namespace interaction {
      * Pointer to simulation parameters
      */
     simulation::Parameter::qmmm_struct::gaussian_param_struct* param;
-
+    
     /**
      * Write input file for QM
      * @param topo Topology
@@ -76,14 +76,15 @@ namespace interaction {
      */
     void write_qm_atom(std::ofstream& inputfile_stream
                   , const int atomic_number
-                  , const math::Vec& pos);
+                  , const math::Vec& pos) const override;
 
     /**
      * Write MM atom
      */
     void write_mm_atom(std::ofstream& inputfile_stream
+                      , const int atomic_number
                       , const math::Vec& pos
-                      , const double charge);
+                      , const double charge) const override;
 
     /**
      * Write MM position

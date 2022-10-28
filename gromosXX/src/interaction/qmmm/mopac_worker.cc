@@ -37,9 +37,15 @@ int interaction::MOPAC_Worker::init(const topology::Topology& topo
                                   , simulation::Simulation& sim
                                   , const interaction::QM_Zone& qm_zone) {
   DEBUG(15, "Initializing " << this->name());
+
   // Get a pointer to simulation parameters
   this->param = &(sim.param().qmmm.mopac);
   QM_Worker::param = this->param;
+  
+  // parent class initialization (trajectory files)
+  int err = QM_Worker::init(topo, conf, sim, qm_zone);
+  if (err) return err;
+  
   // Aliases to shorten the code
   std::string& inp = this->param->input_file;
   std::string& out = this->param->output_file;
@@ -493,6 +499,15 @@ int interaction::MOPAC_Worker::process_output(topology::Topology& topo
 
   ofs.close();
   return 0;
+}
+
+
+void interaction::MOPAC_Worker::write_qm_atom(std::ofstream& inputfile_stream
+                                        , const int atomic_number
+                                        , const math::Vec& pos) const
+  {
+  // pass forward default argument for var_flag
+  write_qm_atom(inputfile_stream, atomic_number, pos, 1);
 }
 
 void interaction::MOPAC_Worker::write_qm_atom(std::ofstream& inputfile_stream

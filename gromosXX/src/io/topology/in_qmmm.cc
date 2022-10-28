@@ -212,6 +212,33 @@ IAC
 END
 @endverbatim
  *
+ * @section The TRAJECTORY block specifies files, in which the QM/MM trajectory
+ * is saved every NTWQMMM's step. 
+ * 
+ * The order of the file paths is (for electrostatic and polarizable embedding): 
+ * (1) input of QM atoms,
+ * (2) input of MM atoms as point charges, 
+ * (3) output of QM gradients calculated, and
+ * (4) output of MM gradients calculated. 
+ * 
+ * For mechanical embedding, order of file paths is:
+ * (1) input of QM atoms,
+ * (2) output of QM gradients calculated,
+ * (3) output of QM charges calculated
+ * 
+ * The block is not necessary if NTWQMMM is not 0.
+ * The information saved via this method is valuable to re-run the trajectory later using
+ * the QM software directy or to generate training data for machine learning applications.
+ * 
+@verbatim
+TRAJECTORY
+xtb.coord
+xtb.pc
+xtb.engrad
+xtb.pcgrad
+END
+@endverbatim
+ *
  * @section MNDO blocks for the MNDO worker
  * 
  * MNDOBINARY block for the MNDO worker
@@ -485,17 +512,32 @@ END
  * @section XTB blocks for the XTB worker
  * 
  * XTBOPTIONS block for the XTB worker
- * The XTBOPTIONS block specifies options for the XTB worker
- * Supported are selection of the Hamiltonian (GFNHAM): 1 or 2 for 
- * GFN1-xTB or GFN2-xTB, respectively and verbosity level: 
- * 0 (none), 1 (minimimal), and 2 (full) (XVERBO)
+ * The XTBOPTIONS block specifies options for the XTB worker.
+ * Mandatory input are selection of the Hamiltonian 
+ * GFNHAM: 1 or 2 for GFN1-xTB or GFN2-xTB, respectively 
+ * and verbosity level: 0 (none), 1 (minimimal), 2 (full) XVERBO
+ * Additional input may be number of maximum iterations XTBITE
+ * and and accuracy multiplier XTBACC. 
+ * Default values are XTBITE = 250 and XTBACC = 1.0
+ * (https://xtb-docs.readthedocs.io/en/latest/sp.html#accuracy-and-iterations)
  *
  @verbatim
 XTBOPTIONS
 # GFNHAM    XVERBO
        1         1
+# XTBITE    XTBACC
+     100       0.1
 END
  @endverbatim
+ * XTBFILES is an optional block that accepts a file path
+ * to an additional log file. If specified, XTB will redirect
+ * its output there and not into stdout.
+ *
+ * @verbatim
+XTBFILES
+/path/to/xtb.log
+END
+@endverbatim
  */
 void io::In_QMMM::read(topology::Topology& topo,
         simulation::Simulation& sim,
@@ -523,6 +565,8 @@ void io::In_QMMM::read(topology::Topology& topo,
   if (sw == simulation::qm_mndo) {
     this->read_units(sim, &sim.param().qmmm.mndo);
     this->read_iac_elements(topo, &sim.param().qmmm.mndo);
+    if (sim.param().qmmm.write > 0)
+      this->read_trajectory_files(sim, &sim.param().qmmm.mndo);
     { // MNDOBINARY
 
       DEBUG(15, "Reading MNDOBINARY");
@@ -581,6 +625,8 @@ void io::In_QMMM::read(topology::Topology& topo,
     this->read_units(sim, &sim.param().qmmm.turbomole);
     this->read_elements(topo, &sim.param().qmmm.turbomole);
     this->read_iac_elements(topo, &sim.param().qmmm.turbomole);
+    if (sim.param().qmmm.write > 0)
+      this->read_trajectory_files(sim, &sim.param().qmmm.turbomole);
 
     { // TMOLEFILES
       buffer = m_block["TMOLEFILES"];
@@ -643,6 +689,8 @@ void io::In_QMMM::read(topology::Topology& topo,
     this->read_units(sim, &sim.param().qmmm.dftb);
     this->read_elements(topo, &sim.param().qmmm.dftb);
     this->read_iac_elements(topo, &sim.param().qmmm.dftb);
+    if (sim.param().qmmm.write > 0)
+      this->read_trajectory_files(sim, &sim.param().qmmm.dftb);
     { // DFTBFILES
       buffer = m_block["DFTBFILES"];
       if (!buffer.size()) {
@@ -680,6 +728,8 @@ void io::In_QMMM::read(topology::Topology& topo,
   else if (sw == simulation::qm_mopac) {
     this->read_units(sim, &sim.param().qmmm.mopac);
     this->read_iac_elements(topo, &sim.param().qmmm.mopac);
+    if (sim.param().qmmm.write > 0)
+      this->read_trajectory_files(sim, &sim.param().qmmm.mopac);
     { // MOPACBINARY
 
       DEBUG(15, "Reading MOPACBINARY");
@@ -758,6 +808,8 @@ void io::In_QMMM::read(topology::Topology& topo,
   else if (sw == simulation::qm_gaussian) {
     this->read_units(sim, &sim.param().qmmm.gaussian);
     this->read_iac_elements(topo, &sim.param().qmmm.gaussian);
+    if (sim.param().qmmm.write > 0)
+      this->read_trajectory_files(sim, &sim.param().qmmm.gaussian);
     { // GAUBINARY
 
       DEBUG(15, "Reading GAUBINARY");
@@ -971,6 +1023,8 @@ void io::In_QMMM::read(topology::Topology& topo,
     this->read_units(sim, &sim.param().qmmm.orca);
     this->read_elements(topo, &sim.param().qmmm.orca);
     this->read_iac_elements(topo, &sim.param().qmmm.orca);
+    if (sim.param().qmmm.write > 0)
+      this->read_trajectory_files(sim, &sim.param().qmmm.orca);
     { // ORCABINARY
 
       DEBUG(15, "Reading ORCABINARY");
@@ -1032,6 +1086,9 @@ void io::In_QMMM::read(topology::Topology& topo,
   else if (sw == simulation::qm_xtb) {
     this->read_units(sim, &sim.param().qmmm.xtb);
     this->read_iac_elements(topo, &sim.param().qmmm.xtb);
+    this->read_elements(topo, &sim.param().qmmm.xtb);
+    if (sim.param().qmmm.write > 0)
+      this->read_trajectory_files(sim, &sim.param().qmmm.xtb);
     { // XTBOPTIONS
       buffer = m_block["XTBOPTIONS"];
 
@@ -1040,7 +1097,8 @@ void io::In_QMMM::read(topology::Topology& topo,
                 "In_QMMM", io::message::error);
       }
       else {
-        unsigned int hamiltonian, verbosity;
+        unsigned int hamiltonian, verbosity, maxIter;
+        double accuracy;
         std::string line(buffer[1]);
         _lineStream.clear();
         _lineStream.str(line);
@@ -1052,12 +1110,57 @@ void io::In_QMMM::read(topology::Topology& topo,
         }
         sim.param().qmmm.xtb.hamiltonian = hamiltonian;
         sim.param().qmmm.xtb.verbosity = verbosity;
+        DEBUG(1, "sim.param().qmmm.xtb.hamiltonian:");
+        DEBUG(1, sim.param().qmmm.xtb.hamiltonian);
+        DEBUG(1, "sim.param().qmmm.xtb.verbosity:");
+        DEBUG(1, sim.param().qmmm.xtb.verbosity);
+
+        if (buffer.size() == 4) { // optional parameters available
+          line = buffer[2];
+          _lineStream.clear();
+          _lineStream.str(line);
+          // maxIter
+          _lineStream >> maxIter;
+          if(_lineStream.fail()) {
+            io::messages.add("reading in maxIter parameter.",
+                            "In_QMMM", io::message::error);
+            return;
+          }
+          sim.param().qmmm.xtb.maxIter = maxIter;
+          DEBUG(1, "sim.param().qmmm.xtb.maxIter:");
+          DEBUG(1, sim.param().qmmm.xtb.maxIter);
+          // accuracy
+          _lineStream >> accuracy;
+          if (_lineStream.fail()) {
+            io::messages.add("reading in maxIter parameter.",
+                              "In_QMMM", io::message::error);
+              return;
+          }
+          sim.param().qmmm.xtb.accuracy = accuracy;
+          DEBUG(1, "sim.param().qmmm.xtb.accuracy:");
+          DEBUG(1, sim.param().qmmm.xtb.accuracy);
+        }
       }
-      DEBUG(1, "sim.param().qmmm.xtb.hamiltonian:");
-      DEBUG(1, sim.param().qmmm.xtb.hamiltonian);
-      DEBUG(1, "sim.param().qmmm.xtb.verbosity:");
-      DEBUG(1, sim.param().qmmm.xtb.verbosity);
     } // XTBOPTIONS
+    { // XTBFILES
+      DEBUG(15, "Reading XTBFILES");
+      buffer = m_block["XTBFILES"];
+
+      if (!buffer.size()) {
+        io::messages.add("No XTB files are specified, GROMOS will write XTB logging into omd file.",
+                "In_QMMM", io::message::notice);
+      } else {
+        if (buffer.size() != 3) {
+          io::messages.add("XTBFILES block corrupt. Provide one line.",
+                  "In_QMMM", io::message::error);
+          return;
+        }
+
+        sim.param().qmmm.xtb.output_log_file = buffer[1];
+        DEBUG(1, "sim.param().qmmm.xtb.output_log_file")
+        DEBUG(1, sim.param().qmmm.xtb.output_log_file)
+      }
+    } // XTBFILES
   }
 
   // Cap length definition
@@ -1110,6 +1213,62 @@ void io::In_QMMM::read(topology::Topology& topo,
   // if dynamic charges for buffer will be used
   sim.param().qmmm.dynamic_buffer_charges =
       sim.param().qmmm.use_qm_buffer && (sim.param().qmmm.qm_ch == simulation::qm_ch_dynamic);
+}
+
+void io::In_QMMM::read_trajectory_files(const simulation::Simulation& sim
+                                      , simulation::Parameter::qmmm_struct::qm_param_struct* qm_param)
+{
+  std::vector<std::string> buffer = m_block["TRAJECTORY"];
+
+  if (!buffer.size()) {
+    io::messages.add("NTWQMMM is not 0 but no TRAJECTORY block specified.",
+      "In_QMMM", io::message::error);
+    return;
+  } 
+  // block exists
+  io::messages.add("Reading TRAJECTORY block in QMMM specification file.",
+          "In_QMMM", io::message::notice);
+  _lineStream.clear();
+  std::string bstr = concatenate(buffer.begin() + 1, buffer.end() - 1);
+  // Strip away the last newline character
+  bstr.pop_back();
+  _lineStream.str(bstr);
+
+  if (sim.param().qmmm.qmmm > simulation::qmmm_mechanical) { // electrostatic embedding
+    if (buffer.size() != 6) {
+    io::messages.add("TRAJECTORY block corrupt. Provide four lines.",
+            "In_QMMM", io::message::error);
+    return;
+    }
+    qm_param->trajectory_input_coordinate_file = buffer[1];
+    qm_param->trajectory_input_pointcharges_file = buffer[2];
+    qm_param->trajectory_output_gradient_file = buffer[3];
+    qm_param->trajectory_output_mm_gradient_file = buffer[4];
+    DEBUG(1, "trajectory_input_coordinate_file")
+    DEBUG(1, qm_param->trajectory_input_coordinate_file)
+    DEBUG(1, "trajectory_input_pointcharges_file")
+    DEBUG(1, qm_param->trajectory_input_pointcharges_file)
+    DEBUG(1, "trajectory_output_gradient_file")
+    DEBUG(1, qm_param->trajectory_output_gradient_file)
+    DEBUG(1, "trajectory_output_mm_gradient_file")
+    DEBUG(1, qm_param->trajectory_output_mm_gradient_file)
+  }
+  else { // mechanical embedding
+    if (buffer.size() != 5) {
+    io::messages.add("TRAJECTORY block corrupt. Provide three lines.",
+            "In_QMMM", io::message::error);
+    return;
+    }
+    qm_param->trajectory_input_coordinate_file = buffer[1];
+    qm_param->trajectory_output_gradient_file = buffer[2];
+    qm_param->trajectory_output_charges_file = buffer[3];
+    DEBUG(1, "trajectory_input_coordinate_file")
+    DEBUG(1, qm_param->trajectory_input_coordinate_file)
+    DEBUG(1, "trajectory_output_gradient_file")
+    DEBUG(1, qm_param->trajectory_output_gradient_file)
+    DEBUG(1, "trajectory_output_charges_file")
+    DEBUG(1, qm_param->trajectory_output_charges_file)
+  }
 }
 
 void io::In_QMMM::read_elements(const topology::Topology& topo

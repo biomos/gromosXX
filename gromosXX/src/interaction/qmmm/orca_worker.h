@@ -43,7 +43,7 @@ namespace interaction {
      * Pointer to simulation parameters
      */
     simulation::Parameter::qmmm_struct::orca_param_struct* param;
-
+    
     /**
      * Tests if a temporary file should be generated and performs some sanity checks
      * @param file_name Reference to the param structure file
@@ -116,7 +116,7 @@ namespace interaction {
      */
     void write_qm_atom(std::ofstream& inputfile_stream
                      , const int atomic_number
-                     , const math::Vec& pos) const;
+                     , const math::Vec& pos) const override;
 
     /**
      * Write MM atom line
@@ -125,8 +125,9 @@ namespace interaction {
      * @param charge charge of the atom
      */
     void write_mm_atom(std::ofstream& inputfile_stream
+                     , const int atomic_number
                      , const math::Vec& pos
-                     , const double charge) const;              
+                     , const double charge) const override;              
 
     /**
      * Call external QM program - Orca
@@ -186,6 +187,12 @@ namespace interaction {
      * @param force reference for writing the force
      */
     int parse_gradient3D(std::ifstream& ofs, math::Vec& force) const;
+
+    /**
+     * Helper function to write the header in coordinate file trajectory
+     */
+    void write_coordinate_header(std::ofstream& ifs
+                               , const QM_Zone& qm_zone) const override;
   };
 }
 
