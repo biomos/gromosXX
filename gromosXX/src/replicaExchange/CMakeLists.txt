@@ -23,6 +23,7 @@ add_library(grorepex OBJECT ${REPEX_CC})
 
 target_include_directories(grorepex PUBLIC
     ${PROJECT_BINARY_DIR}
+    ${EXTERNAL_INCLUDES}
     .
     ..
 )

@@ -79,16 +79,20 @@ set(INTERACTION_CC
     qmmm/gaussian_worker.cc
     qmmm/nn_worker.cc
     qmmm/orca_worker.cc
-    qmmm/xtb_worker.cc
     qmmm/qmmm_interaction.cc
     qmmm/nonbonded/qmmm_nonbonded_outerloop.cc
     qmmm/nonbonded/qmmm_nonbonded_set.cc
 )
 
+if(XTB)
+    list (APPEND INTERACTION_CC "qmmm/xtb_worker.cc")
+endif()
+
 add_library(grointeraction OBJECT ${INTERACTION_CC})
 
 target_include_directories(grointeraction PUBLIC
     ${PROJECT_BINARY_DIR}
+    ${EXTERNAL_INCLUDES}
     .
     ..
     ../algorithm

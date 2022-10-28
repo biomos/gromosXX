@@ -58,6 +58,7 @@ set(ALGO_INCLUDE
     temperature
     virtualatoms
     ${PROJECT_BINARY_DIR}
+    ${EXTERNAL_INCLUDES}
     ..
     ../interaction
     ../interaction/nonbonded

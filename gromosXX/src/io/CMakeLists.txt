@@ -34,6 +34,7 @@ add_library(groio OBJECT ${IO_CC})
 
 target_include_directories(groio PUBLIC
     ${PROJECT_BINARY_DIR}
+    ${EXTERNAL_INCLUDES}
     .
     ..
     configuration

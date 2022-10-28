@@ -1,12 +1,18 @@
 set(CUDA_CC
-    cudaKernel.cu  
+    constraints.cu
+    cudaKernel.cu
+    cudaShake.cu  
+    interaction.cu
+    io.cu
+    pairlist.cu
     lib/utils.cu 
 )
 
-add_library(libgrocukernel OBJECT ${CUDA_CC})
+add_library(grocukernel OBJECT ${CUDA_CC})
 
-target_include_directories(libgrocukernel PUBLIC
+target_include_directories(grocukernel PUBLIC
     ${PROJECT_BINARY_DIR}
+    ${EXTERNAL_INCLUDES}
     .
     ..
     lib

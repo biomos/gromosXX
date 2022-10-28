@@ -13,5 +13,6 @@ add_library(groconfiguration OBJECT ${CONFIG_CC})
 
 target_include_directories(groconfiguration PUBLIC
     ${PROJECT_BINARY_DIR}
+    ${EXTERNAL_INCLUDES}
     ..
 )

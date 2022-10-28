@@ -2,7 +2,7 @@ add_subdirectory(algorithm)
 add_subdirectory(check)
 add_subdirectory(configuration)
 if(CUDAKERNEL)
-    # add_subdirectory(cukernel) # not supported yet
+    add_subdirectory(cuda)
 endif()
 add_subdirectory(interaction)
 add_subdirectory(io)

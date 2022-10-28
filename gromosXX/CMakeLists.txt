@@ -31,5 +31,9 @@ include(${PROJECT_SOURCE_DIR}/cmake/configure.cmake)
 # code
 add_subdirectory(src)
 
-# md, md_mpi
+# remove duplicate includes and libraries
+list(REMOVE_DUPLICATES EXTERNAL_INCLUDES)
+list(REMOVE_DUPLICATES EXTERNAL_LIBRARIES)
+
+# md, md_mpi, eds, repex_mpi, ...
 add_subdirectory(program)

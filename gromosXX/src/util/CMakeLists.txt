@@ -29,5 +29,6 @@ add_library(groutil OBJECT ${UTIL_CC})
 target_include_directories(groutil PUBLIC
     ..
     ${PROJECT_BINARY_DIR}
+    ${EXTERNAL_INCLUDES}
     ${PROJECT_BINARY_DIR}/src/util # config.h included as "../../config.h"
 )

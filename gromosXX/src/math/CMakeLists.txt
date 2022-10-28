@@ -11,4 +11,5 @@ add_library(gromath OBJECT ${MATH_CC})
 target_include_directories(gromath PUBLIC
     ..
     ${PROJECT_BINARY_DIR}
+    ${EXTERNAL_INCLUDES}
 )

@@ -9,4 +9,5 @@ add_library(grosimulation OBJECT ${SIM_CC})
 target_include_directories(grosimulation PUBLIC
     ..
     ${PROJECT_BINARY_DIR}
+    ${EXTERNAL_INCLUDES}
 )

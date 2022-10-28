@@ -8,10 +8,11 @@ endif()
 option(OMP "enable OMP" ON)
 option(MPI "enable MPI" OFF)
 option(CUDAKERNEL "enable CUDA" OFF)
+option(XTB "enable XTB" OFF) # -DXTB={XTB_ROOT}
 option(FORCEGROUPS "enable forcegroups" OFF)
 option(HEAVISIDE "enable heaviside" OFF)
 
-set(CMAKE_CXX_FLAGS "-Wall -Wextra")
+set(CMAKE_CXX_FLAGS "-Wall")
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
 
@@ -23,18 +24,6 @@ if(CUDAKERNEL)
     enable_language(CUDA)
 endif()
 
-# set include directories, xtb should also live here
-include_directories(${GSL_INCLUDE_DIRS} ${ZLIB_INCLUDE_DIRS} ${FFTW_INCLUDE_DIRS})
-
-# set libraries, xtb should also live here
-set(EXTERNAL_LIBRARIES
-    ${EXTERNAL_LIBRARIES}
-    ${CMAKE_THREAD_LIBS_INIT}
-    ${GSL_LIBRARIES}
-    ${FFTW_LIBRARIES}
-    ${ZLIB_LIBRARIES}
-)
-
 # find option dependent packages
 if(OMP)
     find_package(OpenMP REQUIRED)
@@ -45,8 +34,7 @@ endif()
 if(MPI)
     find_package(MPI REQUIRED)
     add_definitions(-DXXMPI)
-    include_directories(${MPI_CXX_INCLUDE_PATH})
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MPI_CXX_COMPILE_FLAGS}")
     set(EXTERNAL_LIBRARIES ${EXTERNAL_LIBRARIES} ${MPI_CXX_LIBRARIES})
+    set(EXTERNAL_INCLUDES ${EXTERNAL_INCLUDES} ${MPI_CXX_INCLUDE_PATH})
 endif()
-	

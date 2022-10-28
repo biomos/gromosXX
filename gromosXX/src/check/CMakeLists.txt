@@ -69,6 +69,10 @@ set(GROMOS_OBJECTS
     $<TARGET_OBJECTS:grorepex>
 )
 
+if(CUDAKERNEL)
+    list(APPEND GROMOS_OBJECTS $<TARGET_OBJECTS:grocukernel>)
+endif()
+
 # executables
 set(EXEC_NAMES aladip aladip_unperturbed aladip_special aladip_atomic aladip_ls c16_cg lambdas)
 
@@ -83,7 +87,7 @@ add_executable(lambdas ${LAMBDAS_CC} ${GROMOS_OBJECTS})
 
 # links and includes for tests
 foreach(LOOP_VAR ${EXEC_NAMES})
-    target_include_directories(${LOOP_VAR} PRIVATE ${TEST_PROGRAM_INCLUDES})
+    target_include_directories(${LOOP_VAR} PRIVATE ${TEST_PROGRAM_INCLUDES} ${EXTERNAL_INCLUDES})
     target_link_libraries(${LOOP_VAR} ${EXTERNAL_LIBRARIES})
     add_test(NAME ${LOOP_VAR} COMMAND $<TARGET_FILE:${LOOP_VAR}>)
 endforeach()
