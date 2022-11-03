@@ -846,6 +846,10 @@ namespace simulation
    */
   enum qm_software_enum {
     /**
+     * use Ghost
+     */
+    qm_ghost = -1,
+    /**
      * use MNDO
      */
     qm_mndo = 0,
@@ -4005,6 +4009,12 @@ namespace simulation
          */
         std::string trajectory_output_charges_file;
       };
+
+      /**
+       * Ghost specific parameters
+       */
+      struct ghost_param_struct : public qm_param_struct {
+      } ghost;
 
       /**
        * MNDO specific parameters

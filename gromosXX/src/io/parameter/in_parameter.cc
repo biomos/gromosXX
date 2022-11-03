@@ -5262,7 +5262,8 @@ void io::In_Parameter::read_QMMM(simulation::Parameter & param,
     exampleblock << "#    1: apply mechanical embedding scheme with dynamic QM charges\n";
     exampleblock << "#    2: apply electrostatic embedding scheme\n";
     exampleblock << "#    3: apply polarisable embedding scheme\n";
-    exampleblock << "# NTQMSW 0..5 QM software package to use\n";
+    exampleblock << "# NTQMSW -1..7 QM software package to use\n";
+    exampleblock << "#   -1: Ghost\n";
     exampleblock << "#    0: MNDO\n";
     exampleblock << "#    1: Turbomole\n";
     exampleblock << "#    2: DFTB\n";
@@ -5303,7 +5304,7 @@ void io::In_Parameter::read_QMMM(simulation::Parameter & param,
         double mm_scale = -1.;
         double cutoff = 0.0;
         block.get_next_parameter("NTQMMM", enable, "", "-1,0,1,2,3");
-        block.get_next_parameter("NTQMSW", software, "", "0,1,2,3,4,5,6,7");
+        block.get_next_parameter("NTQMSW", software, "", "-1,0,1,2,3,4,5,6,7");
         block.get_next_parameter("RCUTQM", cutoff, "", "");
         block.get_next_parameter("NTWQMMM", write, ">=0", "");
         block.get_next_parameter("QMLJ", qmlj, "", "0,1");
@@ -5337,6 +5338,9 @@ void io::In_Parameter::read_QMMM(simulation::Parameter & param,
         }
 
         switch (software) {
+            case -1:
+                param.qmmm.software = simulation::qm_ghost;
+                break;
             case 0:
                 param.qmmm.software = simulation::qm_mndo;
                 break;

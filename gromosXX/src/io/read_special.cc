@@ -378,6 +378,8 @@ int io::read_special(io::Argument const & args,
         io::In_QMMM iq(qmmm_file);
         iq.quiet = quiet;
         switch (sim.param().qmmm.software) {
+            case simulation::qm_ghost:
+                iq.title = "Ghost";
             case simulation::qm_mndo:
                 iq.title = "MNDO";
                 break;
