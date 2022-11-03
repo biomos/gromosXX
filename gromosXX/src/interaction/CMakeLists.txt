@@ -72,6 +72,7 @@ set(INTERACTION_CC
     qmmm/qm_link.cc
     qmmm/qm_zone.cc
     qmmm/qm_worker.cc
+    qmmm/ghost_worker.cc
     qmmm/mndo_worker.cc
     qmmm/turbomole_worker.cc
     qmmm/dftb_worker.cc

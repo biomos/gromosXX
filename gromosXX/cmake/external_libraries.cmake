@@ -46,7 +46,7 @@ endif()
 # TODO: should be implemented with find_package() macro...
 if(XTB)
     message(STATUS "Taking xtb library from: ${XTB}")
-    set(XTB_LIBRARIES "${XTB}/lib/libxtb.so")
+    set(XTB_LIBRARIES "${XTB}/lib/x86_64-linux-gnu/libxtb.so")
     set(XTB_INCLUDES "${XTB}/include")
     add_definitions(-DWITH_XTB)
     set(EXTERNAL_LIBRARIES ${EXTERNAL_LIBRARIES} ${XTB_LIBRARIES})
