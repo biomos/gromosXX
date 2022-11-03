@@ -117,6 +117,7 @@ xxintqmmm_HEADERS = qmmm/mm_atom.h\
 	qmmm/qm_link.h\
 	qmmm/qm_zone.h\
 	qmmm/qm_worker.h\
+	qmmm/ghost_worker.h\
 	qmmm/mndo_worker.h\
 	qmmm/turbomole_worker.h\
 	qmmm/dftb_worker.h\
@@ -207,6 +208,7 @@ libgrointeraction_la_SOURCES = interaction.cc\
 	qmmm/qm_link.cc\
 	qmmm/qm_zone.cc\
 	qmmm/qm_worker.cc\
+	qmmm/ghost_worker.cc\
 	qmmm/mndo_worker.cc\
 	qmmm/turbomole_worker.cc\
 	qmmm/dftb_worker.cc\

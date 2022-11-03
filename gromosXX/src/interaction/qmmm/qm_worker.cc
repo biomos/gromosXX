@@ -21,6 +21,7 @@
 #include "mm_atom.h"
 #include "qm_zone.h"
 #include "qm_worker.h"
+#include "ghost_worker.h"
 #include "mndo_worker.h"
 #include "turbomole_worker.h"
 #include "dftb_worker.h"
@@ -57,6 +58,8 @@ interaction::QM_Worker::~QM_Worker() {
 interaction::QM_Worker * interaction::QM_Worker::get_instance(const simulation::Simulation& sim) {
 
   switch (sim.param().qmmm.software) {
+    case simulation::qm_ghost :
+      return new Ghost_Worker;
     case simulation::qm_mndo :
       return new MNDO_Worker;
     case simulation::qm_turbomole :
