@@ -398,8 +398,10 @@ int io::read_special(io::Argument const & args,
                 break;
             case simulation::qm_orca:
                 iq.title = "Orca";
+                break;
             case simulation::qm_xtb:
                 iq.title = "XTB";
+                break;
         }
         
         iq.read(topo, sim, os);
