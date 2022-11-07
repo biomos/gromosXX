@@ -48,8 +48,12 @@ void re::replica_exchange_slave_2d_s_eoff_eds::send_to_master() const{
     MPI_Send(&info, 1, MPI_REPINFO, replicaGraphMPIControl().masterID, REPINFO, replicaGraphMPIControl().comm);
 
     DEBUG(4,"replica_exchange_slave_2d_s_eoff_eds " << globalThreadID << ":send_to_master:\t\t send MPI_EDS");
-
-    eds_energies= replica->conf.current().energies.eds_vi;
+    
+    if (switched){
+      eds_energies= replica->conf.old().energies.eds_vi;
+    } else {
+      eds_energies= replica->conf.current().energies.eds_vi;
+    }
 
     MPI_Send(&eds_energies[0], 1, MPI_EDSINFO, replicaGraphMPIControl().masterID, EDSINFO, replicaGraphMPIControl().comm);
     DEBUG(4,"replica_exchange_slave_2d_s_eoff_eds " << globalThreadID << ":send_to_master:\t\t send MPI_EDS \t DONE" );

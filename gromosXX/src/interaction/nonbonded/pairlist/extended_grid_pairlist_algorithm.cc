@@ -85,7 +85,7 @@ int interaction::Extended_Grid_Pairlist_Algorithm::init
     const int Ncell = m_grid.Na * m_grid.Nb * m_grid.Nc;
     const int N = m_grid.Na * m_grid.Nb;
 
-    double P;
+    double P = 0.0;
     if(sim.param().pairlist.atomic_cutoff)
       P = topo.num_atoms();
     else
@@ -167,7 +167,7 @@ int interaction::Extended_Grid_Pairlist_Algorithm::prepare
  )
 {
   DEBUG(7, "grid pairlist algorithm : prepare");
-  timer().start("pairlist prepare");
+  timer().start_subtimer("pairlist prepare");
   
   set_cutoff(sim.param().pairlist.cutoff_short, 
 	     sim.param().pairlist.cutoff_long);
@@ -180,7 +180,7 @@ int interaction::Extended_Grid_Pairlist_Algorithm::prepare
   failed = false;
 
   if (prepare_grid(topo, conf, sim)){
-    timer().stop("pairlist prepare");
+    timer().stop_subtimer("pairlist prepare");
     std::ostringstream msg;
     msg << "At step " << sim.steps() << ": Could not prepare grid. "
             "Falling back to standard algoritm for this step.";
@@ -192,7 +192,7 @@ int interaction::Extended_Grid_Pairlist_Algorithm::prepare
   collapse_grid();
 
   // print_grid();
-  timer().stop("pairlist prepare");
+  timer().stop_subtimer("pairlist prepare");
 
   return 0;
 }
@@ -239,7 +239,7 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update
   // empty the pairlist
   pairlist.clear();
   if (begin == 0) // master
-    timer().start("pairlist");
+    timer().start_subtimer("pairlist");
   
   DEBUG(12, "Timer named: " << timer().name() << " begin:" << begin);
   DEBUG(10,"Extended_Grid_Pairlist_Algorithm::_update");
@@ -329,7 +329,8 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update
 	      else{ // solute - solvent
 				if (Pairlist_Algorithm::qm_excluded(
 						topo, qmmm
-						, topo.chargegroup(m_grid.p_cell[z][i].i))) {
+						, topo.chargegroup(m_grid.p_cell[z][i].i)
+						, topo.chargegroup(m_grid.p_cell[z][j].i))) {
 					DEBUG(9, "Skipping CGs " << m_grid.p_cell[z][i].i << "-" << m_grid.p_cell[z][j].i);
 					continue;
 				}
@@ -367,7 +368,7 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update
                     pairlist.solvent_short[a2].push_back(a1);
 #endif
                   } else {
-										if (Pairlist_Algorithm::qm_excluded(topo, qmmm, a2)) {
+										if (Pairlist_Algorithm::qm_excluded(topo, qmmm, a1, a2)) {
 											DEBUG(9, "Skipping pair: " << a1 << "-" << a2);
 											continue;
 										}
@@ -435,7 +436,11 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update
 		if (Pairlist_Algorithm::qm_excluded(topo, qmmm
 				, topo.chargegroup(m_grid.p_cell[i_level][i].i)
 				, topo.chargegroup(p_plane[j].i))) {
-			DEBUG(9, "Skipping pair: " << m_grid.p_cell[i_level][i].i << "-" << p_plane[j].i);
+			DEBUG(9, "Skipping pairs: (" << topo.chargegroup(m_grid.p_cell[i_level][i].i)
+								  << "-" << topo.chargegroup(m_grid.p_cell[i_level][i].i + 1) - 1
+								  << ")-(" << topo.chargegroup(p_plane[j].i)
+								  << "-" << topo.chargegroup(p_plane[j].i + 1) - 1
+								  << ")");
 			continue;
 		}
 
@@ -477,8 +482,13 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update
 	      }
 	      else{ // solute - solvent
 		if (Pairlist_Algorithm::qm_excluded(topo, qmmm
-				, topo.chargegroup(m_grid.p_cell[i_level][i].i))) {
-			DEBUG(9, "Skipping pair: " << m_grid.p_cell[i_level][i].i << "-" << p_plane[j].i);
+				, topo.chargegroup(m_grid.p_cell[i_level][i].i)
+				, topo.chargegroup(p_plane[j].i))) {
+			DEBUG(9, "Skipping pairs: (" << topo.chargegroup(m_grid.p_cell[i_level][i].i)
+								  << "-" << topo.chargegroup(m_grid.p_cell[i_level][i].i + 1) - 1
+								  << ")-(" << topo.chargegroup(p_plane[j].i)
+								  << "-" << topo.chargegroup(p_plane[j].i + 1) - 1
+								  << ")");
 			continue;
 		}
 		if (d2 > m_cutoff_short_2){ // LONGRANGE
@@ -552,7 +562,7 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update
 #endif
                     } else
 
-											if (Pairlist_Algorithm::qm_excluded(topo, qmmm, a2)) {
+											if (Pairlist_Algorithm::qm_excluded(topo, qmmm, a1, a2)) {
 												DEBUG(9, "Skipping pair: " << a1 << "-" << a2);
 												continue;
 											}
@@ -575,7 +585,7 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update
                       pairlist.solvent_short[a2].push_back(a1);
 #endif
                     } else
-										if (Pairlist_Algorithm::qm_excluded(topo, qmmm, a2)) {
+										if (Pairlist_Algorithm::qm_excluded(topo, qmmm, a1, a2)) {
 												DEBUG(9, "Skipping pair: " << a1 << "-" << a2);
 												continue;
 											}
@@ -598,7 +608,7 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update
 
   } // the extended planes
   if (begin == 0) // master
-    timer().stop("pairlist");
+    timer().stop_subtimer("pairlist");
 }
 
 void interaction::Extended_Grid_Pairlist_Algorithm::_update_atomic
@@ -615,7 +625,7 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update_atomic
   // empty the pairlist
   pairlist.clear();
   if (begin == 0) // master
-    timer().start("pairlist");
+    timer().start_subtimer("pairlist");
   
   DEBUG(12, "Timer named: " << timer().name() << " begin:" << begin);
   DEBUG(10,"Extended_Grid_Pairlist_Algorithm::_update_atomic");
@@ -853,7 +863,7 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update_atomic
 
   } // the extended planes
   if (begin == 0) // master
-    timer().stop("pairlist");
+    timer().stop_subtimer("pairlist");
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -902,7 +912,7 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update_perturbed
   pairlist.clear();
   perturbed_pairlist.clear();
   if (begin == 0) // master
-    timer().start("perturbed pairlist");
+    timer().start_subtimer("perturbed pairlist");
 
   std::vector<Grid::Particle> p_plane;
   std::vector<int> cell_start;
@@ -1353,7 +1363,7 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update_perturbed
   } // the extended planes
 
   if (begin == 0) // master
-    timer().stop("perturbed pairlist");
+    timer().stop_subtimer("perturbed pairlist");
 }
 
 inline bool interaction::Extended_Grid_Pairlist_Algorithm::insert_pair

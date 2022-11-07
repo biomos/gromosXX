@@ -51,8 +51,8 @@ static int _calculate_perturbed_improper_interactions
   math::VArray &pos   = conf.current().pos;
   math::VArray &force = conf.current().force;
   math::Vec rij, rkj, rlj, rkl, rmj, rnk, fi, fj, fk, fl;
-  double dkj2, dkj, dmj2, dmj, dnk2, dnk, ip, q;
-  double energy, e_lambda;
+  double dkj2 = 0.0, dkj = 0.0, dmj2 = 0.0, dmj = 0.0, dnk2 = 0.0, dnk = 0.0, ip = 0.0, q = 0.0;
+  double energy = 0.0, e_lambda = 0.0;
 
   math::Periodicity<B> periodicity(conf.current().box);
 
@@ -210,7 +210,7 @@ int interaction::Perturbed_Improper_Dihedral_Interaction
 			 configuration::Configuration &conf,
 			 simulation::Simulation &sim)
 {
-  m_timer.start();
+  m_timer.start(sim);
   
   SPLIT_VIRIAL_BOUNDARY(_calculate_perturbed_improper_interactions,
 			topo, conf, sim, m_interaction);

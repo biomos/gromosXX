@@ -57,7 +57,7 @@ int _calculate_jvalue_restraint_interactions
   math::VArray & pos = conf.current().pos;
   math::Vec rij, rkj, rkl, rmj, rnk, rim, rln;
 
-  double dkj2, dmj2, dnk2, dim, dln;
+  double dkj2 = 0.0, dmj2 = 0.0, dnk2 = 0.0, dim = 0.0, dln = 0.0;
 
   math::Periodicity<B> periodicity(conf.current().box);
 
@@ -104,8 +104,8 @@ int _calculate_jvalue_restraint_interactions
 
     ////////////////////////////////////////////////////////////////////////////////
 
-    double exp_term;
-    double memory_decay;
+    double exp_term = 0.0;
+    double memory_decay = 0.0;
 
     //decide on time averaging
     if (sim.param().jvalue.mode != simulation::jvalue_restr_inst && // ||
@@ -164,7 +164,7 @@ int _calculate_jvalue_restraint_interactions
 	    << " phi0=" << (bin + 0.5) * 360 / sim.param().jvalue.ngrid << " bin=" << bin);
       
       assert(conf.special().jvalue_epsilon[n].size() > unsigned(bin));
-      double delta_epsilon;
+      double delta_epsilon = 0.0;
       double delta_Jav = Jav - it->J0;
       double delta_Jinst = Jcurr - it->J0;
 

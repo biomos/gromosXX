@@ -78,7 +78,7 @@ int interaction::MPI_Nonbonded_Slave::calculate_interactions
 {
   DEBUG(4, "MPI_Nonbonded_Slave::calculate_interactions");
 
-  m_timer.start();
+  m_timer.start(sim);
 
 #ifdef XXMPI
 

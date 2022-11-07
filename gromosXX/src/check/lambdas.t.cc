@@ -154,7 +154,7 @@ int main(int argc, char* argv[]) {
 			      sinputon,
 			      aladip_sim_on,
 			      in_topo_on,
-			      "", "", "", "", "", "", "",
+			      "", "", "", "", "", "", "", "",
 			      quiet
 			      )
       != 0){
@@ -170,7 +170,7 @@ int main(int argc, char* argv[]) {
 			      sinputoff,
 			      aladip_sim_off,
 			      in_topo_off,
-			      "", "", "", "", "", "", "",
+			      "", "", "", "", "", "", "", "",
 			      quiet
 			      )
       != 0){
@@ -239,7 +239,7 @@ int main(int argc, char* argv[]) {
 
   for(int i=0; i< simulation::last_interaction_lambda; i++){
     std::string nm;
-    double E_on, E_off, dE_on, dE_off;
+    double E_on = 0.0, E_off = 0.0, dE_on = 0.0, dE_off = 0.0;
 
     for(int n1=0; n1 < n_groups; n1++){
       int res=0;

@@ -64,14 +64,14 @@ namespace interaction {
     /**
      * Initialize QM zone
      */
-    int init(const topology::Topology& topo, 
+    int init(topology::Topology& topo, 
              const configuration::Configuration& conf, 
              const simulation::Simulation& sim);
     
     /**
      * Update positions of QM and re-gather MM atoms
      */
-    int update(const topology::Topology& topo, 
+    int update(topology::Topology& topo, 
                const configuration::Configuration& conf, 
                const simulation::Simulation& sim);
 
@@ -193,7 +193,7 @@ namespace interaction {
     /**
      * Gather buffer atoms in adaptive scheme
      */
-    void get_buffer_atoms(const topology::Topology& topo, 
+    void get_buffer_atoms(topology::Topology& topo, 
                           const configuration::Configuration& conf, 
                           const simulation::Simulation& sim);
 
@@ -225,6 +225,7 @@ namespace interaction {
   private:  
     /**
      * Gather chargegroups within cutoff from QM atoms
+     * QM buffer atoms (QM_Atom) or MM atoms (MM_Atom)
      */
     template <math::boundary_enum B, class AtomType>
     int gather_chargegroups(const topology::Topology& topo, 
@@ -237,7 +238,7 @@ namespace interaction {
      * Gather buffer atoms in adaptive scheme - internal function
      */
     template<math::boundary_enum B>
-    int _get_buffer_atoms(const topology::Topology& topo, 
+    int _get_buffer_atoms(topology::Topology& topo, 
                           const configuration::Configuration& conf, 
                           const simulation::Simulation& sim);
 

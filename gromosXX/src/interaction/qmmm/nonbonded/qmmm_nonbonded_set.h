@@ -97,15 +97,15 @@ namespace interaction
     /**
      * timing function
      */
-    void start_timer(std::string t) {
-      if (m_rank == 0) m_timer.start(t);
+    void start_subtimer(std::string t) {
+      if (m_rank == 0) m_timer.start_subtimer(t);
     }
     
     /**
      * timing function
      */
-    void stop_timer(std::string t) {
-      if (m_rank == 0) m_timer.stop(t);
+    void stop_subtimer(std::string t) {
+      if (m_rank == 0) m_timer.stop_subtimer(t);
     }
 
   protected:

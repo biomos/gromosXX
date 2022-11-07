@@ -29,9 +29,16 @@ namespace interaction {
     virtual ~DFTB_Worker() = default;
     /**
      * initialise the QM worker
+     * @param topo Topology
+     * @param conf Configuration
+     * @param sim Simulation
+     * @param qm_zone QM Zone
      * @return 0 if successful, non-zero on failure
      */
-    virtual int init(simulation::Simulation& sim);
+    virtual int init(const topology::Topology& topo
+                   , const configuration::Configuration& conf
+                   , simulation::Simulation& sim
+                   , const interaction::QM_Zone& qm_zone) override; 
 
     private:
     /**
@@ -43,7 +50,7 @@ namespace interaction {
      * Pointer to simulation parameters
      */
     simulation::Parameter::qmmm_struct::dftb_param_struct* param;
-
+    
     /**
      * Write input file for the QM program
      * @param topo Topology
@@ -51,10 +58,10 @@ namespace interaction {
      * @param sim Simulation
      * @param qm_zone QM Zone
      */
-    int write_input(const topology::Topology& topo
+    int process_input(const topology::Topology& topo
                   , const configuration::Configuration& conf
                   , const simulation::Simulation& sim
-                  , const interaction::QM_Zone& qm_zone);
+                  , const interaction::QM_Zone& qm_zone) override;
 
     /**
      * Write list of atom types and create a map
@@ -65,7 +72,7 @@ namespace interaction {
     void write_atom_types_list(std::ofstream& input_file_stream
                              , std::map<unsigned, unsigned>& type_indices
                              , const interaction::QM_Zone& qm_zone) const;
-
+    
     /**
      * Write QM atom line
      * @param inputfile_stream ofstream to input file
@@ -84,13 +91,14 @@ namespace interaction {
      * @param charge charge of the atom
      */
     void write_mm_atom(std::ofstream& inputfile_stream
+                     , const int atomic_number
                      , const math::Vec& pos
-                     , const double charge) const;
+                     , const double charge) const override;
 
     /**
      * Call external QM program - DFTB
      */
-    int system_call();
+    int run_calculation() override;
 
     /**
      * Read output file from the QM program
@@ -99,10 +107,10 @@ namespace interaction {
      * @param sim Simulation
      * @param qm_zone QM Zone
      */
-    int read_output(topology::Topology& topo
+    int process_output(topology::Topology& topo
                   , configuration::Configuration& conf
                   , simulation::Simulation& sim
-                  , interaction::QM_Zone& qm_zone);
+                  , interaction::QM_Zone& qm_zone) override;
 
     /**
      * Parse charges

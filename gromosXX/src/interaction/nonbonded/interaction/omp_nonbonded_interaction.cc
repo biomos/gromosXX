@@ -80,7 +80,7 @@ calculate_interactions(topology::Topology & topo,
 {
   DEBUG(4, "OMP_Nonbonded_Interaction::calculate_interactions");
 
-  m_timer.start();
+  m_timer.start(sim);
 
   // check if we want to calculate nonbonded
   // might not be necessary if multiple time-stepping is enabled
@@ -151,6 +151,16 @@ calculate_interactions(topology::Topology & topo,
     reduce_configuration(topo, conf, sim, *p_conf);
   }
 
+  ////////////////////////////////////////////////////
+  // printing pairlist
+  ////////////////////////////////////////////////////
+  if (sim.param().pairlist.print &&
+      (!(sim.steps() % sim.param().pairlist.skip_step))) {
+    DEBUG(7, "print pairlist...");
+    std::cerr << "printing pairlist!" << std::endl;
+    print_pairlist(*p_topo, *p_conf, sim);
+  }
+  
   DEBUG(6, "Nonbonded_Interaction::calculate_interactions done");
 
   m_timer.stop();
@@ -173,7 +183,7 @@ int interaction::OMP_Nonbonded_Interaction::init(topology::Topology & topo,
 
   // OpenMP parallelization
 #ifdef OMP
-  unsigned int number_of_cpus;
+  unsigned int number_of_cpus = 0;
   int result = 0;
   
   #pragma omp parallel
@@ -186,7 +196,7 @@ int interaction::OMP_Nonbonded_Interaction::init(topology::Topology & topo,
   result += Nonbonded_Interaction::init(topo, conf, sim, os, quiet);
 
   // Increase the number of threads to include the GPUs if CUDA enabled
-  if (sim.param().innerloop.method == simulation::sla_cuda) {
+  if (sim.param().innerloop.method == simulation::sla_cuda && result == 0) {
     omp_set_num_threads(number_of_cpus + sim.param().innerloop.number_gpus);
 
 #pragma omp parallel

@@ -28,11 +28,20 @@
 
 interaction::DFTB_Worker::DFTB_Worker() : QM_Worker("DFTB Worker"), param(nullptr) {};
 
-int interaction::DFTB_Worker::init(simulation::Simulation& sim) {
+int interaction::DFTB_Worker::init(const topology::Topology& topo
+                                 , const configuration::Configuration& conf
+                                 , simulation::Simulation& sim
+                                 , const interaction::QM_Zone& qm_zone) { 
   DEBUG(15, "Initializing " << this->name());
+
   // Get a pointer to simulation parameters
   this->param = &(sim.param().qmmm.dftb);
   QM_Worker::param = this->param;
+  
+  // parent class initialization (trajectory files)
+  int err = QM_Worker::init(topo, conf, sim, qm_zone);
+  if (err) return err;
+
   this->cwd = this->getcwd();
   if (this->cwd == "") return 1;
 
@@ -43,23 +52,24 @@ int interaction::DFTB_Worker::init(simulation::Simulation& sim) {
   // Change to working directory and create the input file
   if (this->chdir(this->param->working_directory) != 0) return 1;
   std::ofstream ifs;
-  int err;
   err = this->open_input(ifs, this->param->input_file);
   if (err) return err;
   ifs << this->param->input_header;
   // Change back to GromosXX directory
   if (this->chdir(this->cwd) != 0) return 1;
+
+  DEBUG(15, "Initialized " << this->name());
+
   return 0;
 }
 
-int interaction::DFTB_Worker::write_input(const topology::Topology& topo
+int interaction::DFTB_Worker::process_input(const topology::Topology& topo
                                         , const configuration::Configuration& conf
                                         , const simulation::Simulation& sim
                                         , const interaction::QM_Zone& qm_zone) {
   if (this->chdir(this->param->working_directory) != 0) return 1;
   std::ofstream ifs;
-  int err;
-  err = this->open_input(ifs, this->param->input_coordinate_file);
+  int err = this->open_input(ifs, this->param->input_coordinate_file);
   if (err) return err;
 
   unsigned qm_size = qm_zone.qm.size() + qm_zone.link.size();
@@ -94,11 +104,11 @@ int interaction::DFTB_Worker::write_input(const topology::Topology& topo
     for (std::set<MM_Atom>::const_iterator
           it = qm_zone.mm.begin(), to = qm_zone.mm.end(); it != to; ++it) {
       if (it->is_polarisable) {
-        this->write_mm_atom(ifs, it->pos * len_to_qm, (it->charge - it->cos_charge) * cha_to_qm);
-        this->write_mm_atom(ifs, (it->pos + it->cosV) * len_to_qm, it->cos_charge * cha_to_qm);
+        this->write_mm_atom(ifs, it->atomic_number, it->pos * len_to_qm, (it->charge - it->cos_charge) * cha_to_qm);
+        this->write_mm_atom(ifs, it->atomic_number, (it->pos + it->cosV) * len_to_qm, it->cos_charge * cha_to_qm);
       }
       else {
-        this->write_mm_atom(ifs, it->pos * len_to_qm, it->charge * cha_to_qm);
+        this->write_mm_atom(ifs, it->atomic_number, it->pos * len_to_qm, it->charge * cha_to_qm);
       }
     }
     ifs.close();
@@ -146,6 +156,7 @@ void interaction::DFTB_Worker::write_qm_atom(std::ofstream& inputfile_stream
 }
 
 void interaction::DFTB_Worker::write_mm_atom(std::ofstream& inputfile_stream
+                                           , const int atomic_number
                                            , const math::Vec& pos
                                            , const double charge) const
   {
@@ -157,7 +168,7 @@ void interaction::DFTB_Worker::write_mm_atom(std::ofstream& inputfile_stream
                    << std::endl;
 }
 
-int interaction::DFTB_Worker::system_call()
+int interaction::DFTB_Worker::run_calculation()
   {
   DEBUG(15, "Calling external DFTB+ program");
   // First delete output files
@@ -182,14 +193,13 @@ int interaction::DFTB_Worker::system_call()
   return 0;
 }
 
-int interaction::DFTB_Worker::read_output(topology::Topology& topo
+int interaction::DFTB_Worker::process_output(topology::Topology& topo
                                         , configuration::Configuration& conf
                                         , simulation::Simulation& sim
                                         , interaction::QM_Zone& qm_zone) {
   std::ifstream ofs;
-  int err;
-
-  err = this->open_output(ofs, this->param->output_file);
+  
+  int err = this->open_output(ofs, this->param->output_file);
   if (err) return err;
 
   err = this->parse_energy(ofs, qm_zone);

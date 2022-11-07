@@ -41,8 +41,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop_2
       DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));
 
       lj_crf_interaction_fast(dist2, lj.c6, lj.c12,
-              topo.charge(i) *
-              topo.charge(j),
+              charge_product(topo, i, j),
               f, e_lj, e_crf);
       DEBUG(12, "f: " << f);
       DEBUG(12, "e_lj: " << e_lj);
@@ -72,8 +71,8 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop
   DEBUG(8, "\tpair\t" << i << "\t" << j);
 
   math::Vec r, force;
-  double f;
-  double e_lj, e_crf;
+  double f = 0.0;
+  double e_lj = 0.0, e_crf = 0.0;
 
   periodicity.nearest_image(conf.current().pos(i),
           conf.current().pos(j), r);
@@ -96,8 +95,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop
       DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));
 
       lj_crf_interaction(r, lj.c6, lj.c12,
-              topo.charge(i) *
-              topo.charge(j),
+              charge_product(topo, i, j),
               f, e_lj, e_crf);
       DEBUG(12, "f: " << f);
       DEBUG(12, "e_lj: " << e_lj);
@@ -412,8 +410,8 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_innerloop
   DEBUG(8, "\tpair\t" << i << "\t" << j);
 
   math::Vec r, force;
-  double f;
-  double e_lj;
+  double f = 0.0;
+  double e_lj = 0.0;
 
   periodicity.nearest_image(conf.current().pos(i),
           conf.current().pos(j), r);
@@ -712,7 +710,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::calculate_sasa_forces
   math::VArray & pos = conf.current().pos;
   math::VArray & force = conf.current().force;
   math::Vec rij(0.0);
-  double ddf_vol;
+  double ddf_vol = 0.0;
 
   // get sasa parameters for atom j
   const topology::sasa_parameter_struct & sasa_param_j = topo.sasa_parameter(j);
@@ -928,7 +926,7 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::one_four_interaction_in
   DEBUG(8, "\t1,4-pair\t" << i << "\t" << j);
 
   math::Vec r;
-  double f, e_lj, e_crf = 0.0, e_ls = 0.0;
+  double f = 0.0, e_lj = 0.0, e_crf = 0.0, e_ls = 0.0;
 
   periodicity.nearest_image(conf.current().pos(i),
           conf.current().pos(j), r);
@@ -951,8 +949,7 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::one_four_interaction_in
       DEBUG(11, "\tcoulomb scaling = " << m_param->get_coulomb_scaling());
 
       lj_crf_interaction(r, lj.cs6, lj.cs12,
-              topo.charge()(i) *
-              topo.charge()(j),
+              charge_product(topo, i, j),
               f, e_lj, e_crf, 0,
               m_param->get_coulomb_scaling());
 
@@ -1182,7 +1179,7 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_exception_innerloop
   DEBUG(8, "\tLJ exception\t" << ljex.i << "\t" << ljex.j);
 
   math::Vec r;
-  double f, e_lj, e_crf = 0.0, e_ls = 0.0;
+  double f = 0.0, e_lj = 0.0, e_crf = 0.0, e_ls = 0.0;
 
   unsigned int i = ljex.i, j = ljex.j;
 
@@ -1388,7 +1385,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
         Storage & storage,
         math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity) {
   math::Vec r, f;
-  double e_crf;
+  double e_crf = 0.0;
 
   math::VArray &pos = conf.current().pos;
   math::VArray &force = storage.force;
@@ -1405,7 +1402,11 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
     case simulation::lj_crf_func:
     {
       // this will only contribute in the energy, the force should be zero.
-      rf_interaction(r, topo.charge()(i) * topo.charge()(i), f, e_crf);
+      double q = topo.charge()(i);
+      if (t_nonbonded_spec::charge_type == simulation::qm_buffer_charge) {
+        q += topo.qm_delta_charge(i);
+      }
+      rf_interaction(r, q * q, f, e_crf);
       storage.energies.crf_energy[topo.atom_energy_group(i)]
               [topo.atom_energy_group(i)] += 0.5 * e_crf;
       DEBUG(11, "\tcontribution " << 0.5 * e_crf);
@@ -1422,7 +1423,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
                 << pos(*it)(1) << " / "
                 << pos(*it)(2));
         DEBUG(10, "\tni r " << r(0) << " / " << r(1) << " / " << r(2));
-        rf_interaction(r, topo.charge()(i) * topo.charge()(*it), f, e_crf);
+        rf_interaction(r, charge_product(topo, i, *it), f, e_crf);
 
         force(i) += f;
         force(*it) -= f;
@@ -1646,7 +1647,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_solvent_interaction_inner
         math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity
         ) {
   math::Vec r;
-  double e_crf;
+  double e_crf = 0.0;
 
   math::VArray &pos = conf.current().pos;
 
@@ -1671,7 +1672,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_solvent_interaction_inner
 
           // for solvent, we don't calculate internal forces (rigid molecules)
           // and the distance independent parts should go to zero
-          e_crf = -topo.charge()(*at_it) * topo.charge()(*at2_it) *
+          e_crf = -charge_product(topo, *at_it, *at2_it) *
                   math::four_pi_eps_i * crf_2cut3i() * abs2(r);
           DEBUG(15, "\tqi = " << topo.charge()(*at_it) << ", qj = " << topo.charge()(*at2_it));
           DEBUG(15, "\tcrf_2cut3i = " << crf_2cut3i() << ", abs2(r) = " << abs2(r));
@@ -1935,7 +1936,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::self_energy_innerloop
         ) {
   DEBUG(8, "\tself energy of molecule i " << i);
 
-  double self_e;
+  double self_e = 0.0;
   const double e_i2 = math::abs2(storage.electric_field(i));
 
   if (t_nonbonded_spec::pol_damping)
@@ -1966,8 +1967,8 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_ls_real_innerloop
   DEBUG(8, "\tpair\t" << i << "\t" << j);
 
   math::Vec r;
-  double f;
-  double e_lj, e_ls;
+  double f = 0.0;
+  double e_lj = 0.0, e_ls = 0.0;
 
   periodicity.nearest_image(conf.current().pos(i),
           conf.current().pos(j), r);
@@ -2035,8 +2036,8 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::ls_real_excluded_innerloop
   DEBUG(8, "\tpair\t" << i << "\t" << j);
 
   math::Vec r;
-  double f;
-  double e_ls;
+  double f = 0.0;
+  double e_ls = 0.0;
 
   periodicity.nearest_image(conf.current().pos(i),
           conf.current().pos(j), r);
@@ -2077,4 +2078,28 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::ls_real_excluded_innerloop
 
   storage.energies.ls_real_energy[topo.atom_energy_group(i)]
           [topo.atom_energy_group(j)] += e_ls;
+}
+
+/**
+ * calculate the product of charges based on the charge type
+ * this function implements variable charges for the QM buffer region
+ */
+template <typename t_nonbonded_spec>
+double interaction::Nonbonded_Innerloop<t_nonbonded_spec>::charge_product(
+        topology::Topology const & topo, 
+        unsigned i, unsigned j) {
+  double q = topo.charge(i) * topo.charge(j);
+  switch (t_nonbonded_spec::charge_type) {
+    case simulation::mm_charge : break;
+    case simulation::qm_buffer_charge : {
+      if (topo.is_adaptive_qm_buffer(i) != topo.is_adaptive_qm_buffer(j)) {
+        DEBUG(11, "\tqm_delta_charge i=" << topo.qm_delta_charge(i) << " j=" << topo.qm_delta_charge(j));
+        q +=  topo.charge(i) * topo.qm_delta_charge(j)
+            + topo.charge(j) * topo.qm_delta_charge(i);
+      }
+      break;
+    }
+    default : io::messages.add("Charge type not implemented.", "nonbonded_innerloop", io::message::warning);
+  }
+  return q;
 }

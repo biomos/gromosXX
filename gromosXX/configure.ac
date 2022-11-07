@@ -181,6 +181,10 @@ case "$compiler" in
       echo "   configuring for release build"
     fi
 
+    if eval "test x$enable_shared = xyes"; then
+      MY_CXXFLAGS="$MY_CXXFLAGS -lpthread"
+    fi
+
     AC_DEFINE_UNQUOTED(COMPILER_ICC, 1, [Intel C++ compiler])
   ;;
   gnu*)               # EGCS  http://egcs.cygnus.com/
@@ -241,6 +245,9 @@ case "$compiler" in
       MY_CXXFLAGS="$CXX_OPTIMIZE_FLAGS"
       echo "configuring for release build"
     fi
+    if eval "test x$enable_shared = xyes"; then
+      MY_CXXFLAGS="$MY_CXXFLAGS -lpthread"
+    fi
 
     dnl Why do we need this?
     F77=g77
@@ -278,6 +285,10 @@ case "$compiler" in
       echo "configuring for release build"
     fi
 
+    if eval "test x$enable_shared = xyes"; then
+      MY_CXXFLAGS="$MY_CXXFLAGS -lpthread"
+    fi
+
     AC_DEFINE_UNQUOTED(COMPILER_SUNCC, 1, [SUN C++ compiler])
   ;;
   pgicc*)             # PGI compilers
@@ -312,6 +323,9 @@ case "$compiler" in
       MY_CXXFLAGS="$CXX_OPTIMIZE_FLAGS"
       echo "configuring for release build"
     fi
+    if eval "test x$enable_shared = xyes"; then
+      MY_CXXFLAGS="$MY_CXXFLAGS -lpthread"
+    fi
 
     AC_DEFINE_UNQUOTED(COMPILER_PGICC, 1, [PGI compiler])
   ;;
@@ -335,6 +349,8 @@ AM_PATH_CCP4_CLIPPER
 AM_PATH_FFTW3
 AM_PATH_HOOMD
 AM_PATH_CUDA
+AM_PATH_XTB
+AM_WITH_SCHNETPACK
 
 dnl check header files
 AC_HEADER_STDC

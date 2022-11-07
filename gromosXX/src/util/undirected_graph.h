@@ -65,7 +65,7 @@ namespace util {
 		 * @return vector with group index for each vertex
 		 */
 		inline component_cont_t connected_components() const {
-			index_t num_components;
+			index_t num_components = 0;
 			return connected_components(num_components);
 		}
 

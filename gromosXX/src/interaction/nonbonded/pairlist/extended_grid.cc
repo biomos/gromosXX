@@ -348,7 +348,7 @@ void interaction::Extended_Grid_Pairlist_Algorithm::grid_properties
 
   const int Ncell = m_grid.Na * m_grid.Nb * m_grid.Nc;
   
-  double P;
+  double P = 0.0;
   if(sim.param().pairlist.atomic_cutoff)
     P = topo.num_atoms();
   else
@@ -410,7 +410,7 @@ void interaction::Extended_Grid_Pairlist_Algorithm::calculate_mask()
   m_grid.mask.resize(m_grid.mask_z+1);
   
 
-  double z_dist, y_dist;
+  double z_dist = 0.0, y_dist = 0.0;
 
   // special case of 0 plane
   {

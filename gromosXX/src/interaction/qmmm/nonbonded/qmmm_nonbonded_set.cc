@@ -55,13 +55,13 @@ int interaction::QMMM_Nonbonded_Set::calculate_interactions(
   m_storage.zero();
 
   // update the pairlist
-  start_timer("pairlist update");
+  start_subtimer("pairlist update");
   m_qm_zone.update_pairlist(topo, sim, m_pairlist, m_rank, topo.num_atoms(), m_num_threads);
-  stop_timer("pairlist update");
+  stop_subtimer("pairlist update");
 
   // calculate forces / energies
   DEBUG(6, "\tQMMM LJ interactions");
-  start_timer("nonbonded LJ");
+  start_subtimer("nonbonded LJ");
 
   // With QMMM we do only single range cutoff - shortrange
   m_outerloop.lj_outerloop(topo, conf, sim,
@@ -69,18 +69,18 @@ int interaction::QMMM_Nonbonded_Set::calculate_interactions(
           m_storage, false, m_timer,
           m_rank == 0);
 
-  stop_timer("nonbonded LJ");
+  stop_subtimer("nonbonded LJ");
   //Possibly do one_four_interaction and LJ_exception here
 
   DEBUG(6, "\tQMMM 1,4 - interactions");
-  start_timer("1,4 interaction");
+  start_subtimer("1,4 interaction");
   m_outerloop.one_four_outerloop(topo, conf, sim, m_storage, m_rank, m_num_threads);
-  stop_timer("1,4 interaction");
+  stop_subtimer("1,4 interaction");
 
   DEBUG(6, "\tQMMM LJ exceptions");
-  start_timer("LJ exceptions");
+  start_subtimer("LJ exceptions");
   m_outerloop.lj_exception_outerloop(topo, conf, sim, m_storage, m_rank, m_num_threads);
-  stop_timer("LJ exceptions");
+  stop_subtimer("LJ exceptions");
   
   // add long-range force
 
@@ -163,7 +163,7 @@ int interaction::QMMM_Nonbonded_Set::init(const topology::Topology& topo
 
 
   const double vol = math::volume(conf.current().box, conf.boundary_type);
-  unsigned pairs;
+  unsigned pairs = 0;
   if (vol && sim.param().qmmm.qmmm > simulation::qmmm_mechanical) {
     const double c3 = sim.param().qmmm.cutoff
                     * sim.param().qmmm.cutoff

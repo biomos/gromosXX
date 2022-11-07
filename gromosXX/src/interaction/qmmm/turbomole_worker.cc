@@ -32,24 +32,32 @@
 
 interaction::Turbomole_Worker::Turbomole_Worker() : QM_Worker("Turbomole Worker"), param(nullptr) {};
 
-int interaction::Turbomole_Worker::init(simulation::Simulation& sim) {
+int interaction::Turbomole_Worker::init(const topology::Topology& topo
+                                      , const configuration::Configuration& conf
+                                      , simulation::Simulation& sim
+                                      , const interaction::QM_Zone& qm_zone) {
   DEBUG(15, "Initializing " << this->name());
+
   // Get a pointer to simulation parameters
   this->param = &(sim.param().qmmm.turbomole);
   QM_Worker::param = this->param;
+  
+  // parent class initialization (trajectory files)
+  int err = QM_Worker::init(topo, conf, sim, qm_zone);
+  if (err) return err;
+  
   this->cwd = this->getcwd();
   if (this->cwd == "") return 1;
   return 0;
 }
 
-int interaction::Turbomole_Worker::write_input(const topology::Topology& topo
+int interaction::Turbomole_Worker::process_input(const topology::Topology& topo
                                              , const configuration::Configuration& conf
                                              , const simulation::Simulation& sim
                                              , const interaction::QM_Zone& qm_zone) {
   if (this->chdir(this->param->working_directory) != 0) return 1;
   std::ofstream ifs;
-  int err;
-  err = this->open_input(ifs, this->param->input_coordinate_file);
+  int err = this->open_input(ifs, this->param->input_coordinate_file);
   if (err) return err;
   
   ifs << "$coord" << std::endl;
@@ -77,15 +85,18 @@ int interaction::Turbomole_Worker::write_input(const topology::Topology& topo
   for (std::set<MM_Atom>::const_iterator
         it = qm_zone.mm.begin(), to = qm_zone.mm.end(); it != to; ++it) {
     if (it->is_polarisable) {
-      this->write_mm_atom(ifs, it->pos * len_to_qm, (it->charge - it->cos_charge) * cha_to_qm);
-      this->write_mm_atom(ifs, (it->pos + it->cosV) * len_to_qm, it->cos_charge * cha_to_qm);
+      this->write_mm_atom(ifs, it->atomic_number, it->pos * len_to_qm, (it->charge - it->cos_charge) * cha_to_qm);
+      this->write_mm_atom(ifs, it->atomic_number, (it->pos + it->cosV) * len_to_qm, it->cos_charge * cha_to_qm);
     }
     else {
-      this->write_mm_atom(ifs, it->pos * len_to_qm, it->charge * cha_to_qm);
+      this->write_mm_atom(ifs, it->atomic_number, it->pos * len_to_qm, it->charge * cha_to_qm);
     }
   }
   ifs << "$end" << std::endl;
   ifs.close();
+
+  DEBUG(15, "Initialized " << this->name());
+  
   return 0;
 }
 
@@ -103,6 +114,7 @@ void interaction::Turbomole_Worker::write_qm_atom(std::ofstream& inputfile_strea
 }
 
 void interaction::Turbomole_Worker::write_mm_atom(std::ofstream& inputfile_stream
+                                                , const int atomic_number
                                                 , const math::Vec& pos
                                                 , const double charge) const
   {
@@ -116,7 +128,7 @@ void interaction::Turbomole_Worker::write_mm_atom(std::ofstream& inputfile_strea
   }
 }
 
-int interaction::Turbomole_Worker::system_call()
+int interaction::Turbomole_Worker::run_calculation()
   {
   // First delete output files, since Turbomole appends to them and we dont need old data
 #ifdef HAVE_UNLINK
@@ -176,14 +188,12 @@ int interaction::Turbomole_Worker::system_call()
   return 0;
 }
 
-int interaction::Turbomole_Worker::read_output(topology::Topology& topo
+int interaction::Turbomole_Worker::process_output(topology::Topology& topo
                                              , configuration::Configuration& conf
                                              , simulation::Simulation& sim
                                              , interaction::QM_Zone& qm_zone) {
   std::ifstream ofs;
-  int err;
-
-  err = this->open_output(ofs, this->param->output_energy_file);
+  int err = this->open_output(ofs, this->param->output_energy_file);
   if (err) return err;
 
   err = this->parse_energy(ofs, qm_zone);
@@ -292,7 +302,7 @@ int interaction::Turbomole_Worker::parse_energy(std::ifstream& ofs
     if (line.find("$energy") != std::string::npos) {
       std::getline(ofs, line);
       std::istringstream iss(line);
-      int dummy;
+      int dummy = 0;
       iss >> dummy >> qm_zone.QM_energy();
       if (iss.fail()) {
         std::ostringstream msg;

@@ -53,7 +53,7 @@ apply(topology::Topology &topo,
         configuration::Configuration &conf,
         simulation::Simulation &sim) {
   DEBUG(6, "keeping track of lattice shifts");
-  m_timer.start();
+  m_timer.start(sim);
   SPLIT_BOUNDARY(_apply, topo, conf, sim);
   m_timer.stop();
   return 0;

@@ -32,11 +32,20 @@
 
 interaction::MOPAC_Worker::MOPAC_Worker() : QM_Worker("MOPAC Worker"), param(nullptr) {};
 
-int interaction::MOPAC_Worker::init(simulation::Simulation& sim) {
+int interaction::MOPAC_Worker::init(const topology::Topology& topo
+                                  , const configuration::Configuration& conf
+                                  , simulation::Simulation& sim
+                                  , const interaction::QM_Zone& qm_zone) {
   DEBUG(15, "Initializing " << this->name());
+
   // Get a pointer to simulation parameters
   this->param = &(sim.param().qmmm.mopac);
   QM_Worker::param = this->param;
+  
+  // parent class initialization (trajectory files)
+  int err = QM_Worker::init(topo, conf, sim, qm_zone);
+  if (err) return err;
+  
   // Aliases to shorten the code
   std::string& inp = this->param->input_file;
   std::string& out = this->param->output_file;
@@ -261,15 +270,14 @@ int interaction::MOPAC_Worker::init(simulation::Simulation& sim) {
   return 0;
 }
 
-int interaction::MOPAC_Worker::write_input(const topology::Topology& topo
+int interaction::MOPAC_Worker::process_input(const topology::Topology& topo
                                          , const configuration::Configuration& conf
                                          , const simulation::Simulation& sim
                                          , const interaction::QM_Zone& qm_zone)
   {
   std::ofstream ifs;
-  int err;
   // First do MOPAC input file
-  err = this->open_input(ifs, this->param->input_file);
+  int err = this->open_input(ifs, this->param->input_file);
   if (err) return err;
   std::string header(this->param->input_header);
   
@@ -442,7 +450,7 @@ double interaction::MOPAC_Worker::pair_potential(const math::Vec& pos
   }
 }
 
-int interaction::MOPAC_Worker::system_call() {
+int interaction::MOPAC_Worker::run_calculation() {
   // MOPAC writes automatically to inputfilename.out
   // We redirect stderr to stdout and store in separate file
   DEBUG(15, "Calling external MOPAC program");
@@ -460,14 +468,12 @@ int interaction::MOPAC_Worker::system_call() {
   return 0;
 }
 
-int interaction::MOPAC_Worker::read_output(topology::Topology& topo
+int interaction::MOPAC_Worker::process_output(topology::Topology& topo
                                         , configuration::Configuration& conf
                                         , simulation::Simulation& sim
                                         , interaction::QM_Zone& qm_zone) {
   std::ifstream ofs;
-  int err;
-
-  err = this->open_output(ofs, this->param->output_aux_file);
+  int err = this->open_output(ofs, this->param->output_aux_file);
   if (err) return err;
 
   err = this->parse_energy(ofs, qm_zone);
@@ -493,6 +499,15 @@ int interaction::MOPAC_Worker::read_output(topology::Topology& topo
 
   ofs.close();
   return 0;
+}
+
+
+void interaction::MOPAC_Worker::write_qm_atom(std::ofstream& inputfile_stream
+                                        , const int atomic_number
+                                        , const math::Vec& pos) const
+  {
+  // pass forward default argument for var_flag
+  write_qm_atom(inputfile_stream, atomic_number, pos, 1);
 }
 
 void interaction::MOPAC_Worker::write_qm_atom(std::ofstream& inputfile_stream

@@ -157,7 +157,7 @@ int interaction::create_g96_nonbonded
 
   }
 
-  Pairlist_Algorithm * pa;
+  Pairlist_Algorithm * pa = nullptr;
 #ifdef HAVE_HOOMD
   // some sanity checks
   #ifdef OMP

@@ -101,7 +101,7 @@ int algorithm::Settle::apply(topology::Topology & topo,
         configuration::Configuration & conf,
         simulation::Simulation & sim) {
   DEBUG(7, "applying SETTLE");
-  m_timer.start();
+  m_timer.start(sim);
 
   int error = 0;
 

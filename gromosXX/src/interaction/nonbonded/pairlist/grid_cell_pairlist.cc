@@ -187,7 +187,7 @@ prepare(topology::Topology & topo,
 	simulation::Simulation & sim)
 {
 
-  timer().start("pairlist prepare");
+  timer().start_subtimer("pairlist prepare");
 
   is_vacuum = false;
   if (is_vacuum) {
@@ -209,7 +209,7 @@ prepare(topology::Topology & topo,
       cg1 =   topo.chargegroup_begin();
 
     // Add solute charge groups
-    unsigned int i, num_cg = topo.num_solute_chargegroups();
+    unsigned int i = 0, num_cg = topo.num_solute_chargegroups();
     first_solvent = num_cg;
     for(i=0; i < num_cg; ++cg1, ++i){
       cg1.cog(pos, m_cg_cog(i));
@@ -227,7 +227,7 @@ prepare(topology::Topology & topo,
 
   failed = false;
   // If pressure is constant, make mask again
-  timer().start("pairlist mask");
+  timer().start_subtimer("pairlist mask");
   unsigned int err = 0;
   if (sim.param().pcouple.scale != math::pcouple_off) {
     DEBUG(7, "Grid Cell : Pressure is constant");
@@ -245,7 +245,7 @@ prepare(topology::Topology & topo,
       return 1;
     }
   }
-  timer().stop("pairlist mask");
+  timer().stop_subtimer("pairlist mask");
   if (err) {
     std::ostringstream msg;
     msg << "At step " << sim.steps() << ": Could not prepare grid. "
@@ -255,11 +255,11 @@ prepare(topology::Topology & topo,
     return fallback_algorithm->prepare(topo, conf, sim);
   }
 
-  timer().start("pairlist cell");
+  timer().start_subtimer("pairlist cell");
   SPLIT_BOUNDARY(make_cell, topo, conf, sim);
-  timer().stop("pairlist cell");
+  timer().stop_subtimer("pairlist cell");
 
-  timer().stop("pairlist prepare");
+  timer().stop_subtimer("pairlist prepare");
   return 0;
 }
 
@@ -292,7 +292,7 @@ void interaction::Grid_Cell_Pairlist::update(
   }
 
   if (begin == 0) // master
-    timer().start("pairlist");
+    timer().start_subtimer("pairlist");
 
   {
     pairlist.clear();
@@ -308,7 +308,7 @@ void interaction::Grid_Cell_Pairlist::update(
   }
 
   if (begin == 0) // master
-    timer().stop("pairlist");
+    timer().stop_subtimer("pairlist");
 #ifdef OMP
   #pragma omp barrier
 #endif
@@ -336,7 +336,7 @@ void interaction::Grid_Cell_Pairlist::update_perturbed(
   }
 
   if (begin == 0) // master
-    timer().start("perturbed pairlist");
+    timer().start_subtimer("perturbed pairlist");
 
   {
     pairlist.clear();
@@ -353,7 +353,7 @@ void interaction::Grid_Cell_Pairlist::update_perturbed(
   }
 
   if (begin == 0) // master
-    timer().stop("perturbed pairlist");
+    timer().stop_subtimer("perturbed pairlist");
 
   #ifdef OMP
   #pragma omp barrier
@@ -527,7 +527,7 @@ bool interaction::Grid_Cell_Pairlist::make_mask(unsigned int delta_m,
   // A.14
   const int delta_n_x = abs(minIm(delta_m_x, num_x));
   // A.15
-  int delta_n_y;
+  int delta_n_y = 0;
   if ((delta_m_x == 0) ||
           ((delta_m_y == num_y_minus_1) && (delta_m_z == num_z_minus_1)))
     delta_n_y = abs(minIm(delta_m_y, num_y));
@@ -535,7 +535,7 @@ bool interaction::Grid_Cell_Pairlist::make_mask(unsigned int delta_m,
     delta_n_y = std::min(abs(minIm(delta_m_y, num_y)),
           abs(minIm(delta_m_y + 1, num_y)));
   // A.16
-  int delta_n_z;
+  int delta_n_z = 0;
   if ((delta_m_z == num_z_minus_1) || ((delta_m_x == 0) && (delta_m_y == 0)))
     delta_n_z = abs(minIm(delta_m_z, num_z));
   else
@@ -571,7 +571,7 @@ bool interaction::Grid_Cell_Pairlist::make_mask(int delta_m,
   int my = delta_m_y;
   int mx = delta_m_x;
 
-  int case_min, case_max;
+  int case_min = 0, case_max = 0;
   if (mz == num_z - 1) {
     if (my != num_y - 1 && mx != 0) {
       case_min = 1;
@@ -787,7 +787,7 @@ int interaction::Grid_Cell_Pairlist::make_cell(topology::Topology &topo,
   DEBUG(5, "Grid Cell : Make the cell pointer")
 
   int last_m = 0;
-  int current_m;
+  int current_m = 0;
   cell_pointer.push_back(0);
 
   for (unsigned int j = 0; j < cell.size();){
@@ -946,7 +946,7 @@ inline int interaction::Grid_Cell_Pairlist::pair(
   }// Solvent - solute
   else if (second >= first_solvent) {
     DEBUG(15, "Solute - Solvent");
-    if (t_qm_excluded<cutoff_trait>(*mytopo, qmmm, first)) {
+    if (t_qm_excluded<cutoff_trait>(*mytopo, qmmm, first, second)) {
 			DEBUG(9, "Skipping pair: " << first << "-" << second);
       return 0;
     }

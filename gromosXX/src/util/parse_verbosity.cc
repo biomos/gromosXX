@@ -93,6 +93,8 @@ int util::parse_verbosity(io::Argument &args, std::string flag,
 	algorithm::temperature_debug_level = level;
       else if (submodule == "pressure") 
 	algorithm::pressure_debug_level = level;
+      else if (submodule == "virtualatoms") 
+	algorithm::virtualatoms_debug_level = level;
       else return E_NOT_IMPLEMENTED;
     }
     else if (module == "interaction"){
@@ -146,6 +148,7 @@ int util::parse_verbosity(io::Argument &args, std::string flag,
     else if (module == "util"){
       if (submodule == "") util::debug_level = level;
       else if (submodule == "util") util::util_debug_level = level;
+      else if (submodule == "timing") util::timing_debug_level = level;
       else if (submodule == "leus") util::leus_debug_level = level;
       else if (submodule == "bs_leus") util::bs_leus_debug_level = level;
       else return E_NOT_IMPLEMENTED;

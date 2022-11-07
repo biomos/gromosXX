@@ -1,0 +1,29 @@
+gromos:ubuntu-20.04:configure:
+  extends:
+    - .gromos:base:configure
+  image: ${CI_REGISTRY}/gromos/gromosxx/gromos-ubuntu-20.04-mpi
+  variables:
+    BUILD_DIR: build
+
+gromos:ubuntu-20.04:build_make_check:
+  extends:
+    - .gromos:base:build_make_check
+  image: ${CI_REGISTRY}/gromos/gromosxx/gromos-ubuntu-20.04-mpi
+  variables:
+    BUILD_DIR: build
+    BIN_PATH: ${BUILD_DIR}/bin/md
+  needs:
+    - job: gromos:ubuntu-20.04:configure
+
+gromos:ubuntu-20.04:sim_test:
+  extends:
+    - .gromos:base:sim_test
+  image: ${CI_REGISTRY}/gromos/gromosxx/gromos-ubuntu-20.04-mpi
+  variables:
+    BUILD_DIR: build
+    BIN_PATH: ${BUILD_DIR}/bin/md
+    TEST_REPO: $CI_PROJECT_DIR/gromos_test_files/
+  needs:
+    - job: gromos:ubuntu-20.04:build_make_check
+
+

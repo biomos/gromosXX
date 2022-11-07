@@ -145,7 +145,7 @@ double util::BS_Sphere::calcPotential(BS_Vector & bs_pos) {
     double gridPointCoordinate = m_gridPointScaling * radialDistance;
     //double gridPointCoordinate = (num_gp - 1) * pow((radialDistance / m_radius), radialVector.size());
     DEBUG(6, "GridPointCoordinate = " << gridPointCoordinate);
-    double force;
+    double force = 0.0;
     calcPotAndForce(gridPointCoordinate, m_potential, force);
     DEBUG(10, "Force = " << force);
     m_potDerivatives = radialVector * (m_gridPointScaling * force);
@@ -212,7 +212,7 @@ double util::BS_Stick::calcPotential(BS_Vector& bs_pos) {
     // aside of the stick
   else {
     double gridPointCoordinate = m_gridPointScaling * longitudinalDistance;
-    double force;
+    double force = 0.0;
     calcPotAndForce(gridPointCoordinate, m_potential, force);
     m_potDerivatives = m_unitLongitudinal * (force * m_gridPointScaling);
     BS_Vector transversalVector;
@@ -284,7 +284,7 @@ double util::BS_Snake::calcPotential(BS_Vector& bs_pos) {
   double distances[size];
   bool interacts[size];
 
-  double min_distance;
+  double min_distance = 0.0;
   int min_i = -1;
 
   for (int i = 0; i < size; i++) {
@@ -387,7 +387,7 @@ void
 util::BS_Distorted_Stick::init_vectors(BS_Vector prev_dir, BS_Vector next_dir) {
   DEBUG(5, "Initilaize vectors for distorted stick " << id);
   BS_Vector S, T, Sigma, Tau;
-  double start_tangens, end_tangens;
+  double start_tangens = 0.0, end_tangens = 0.0;
   // K = prev_dir
   // L = m_unitLongitudinal
   // M = next_dir
@@ -524,7 +524,7 @@ double util::BS_Distorted_Stick::calcPotential(BS_Vector& bs_pos) {
   DEBUG(5, "Calculate the potential of distorted stick " << id);
   if (m_at_end) {
     double offset = m_distance - m_half_width;
-    double memory;
+    double memory = 0.0;
     if (where == start) {
       memory = m_memory[0];
     } else if (where == end) {
@@ -545,7 +545,7 @@ double util::BS_Distorted_Stick::calcPotential(BS_Vector& bs_pos) {
     }
   } else { // in between
     double gridPointCoordinate = (num_gp - 1)* m_h_over_H;
-    double force;
+    double force = 0.0;
     calcPotAndForce(gridPointCoordinate, m_potential, force);
 
     m_potDerivatives = m_deriv_h_over_H * (force * (num_gp - 1));

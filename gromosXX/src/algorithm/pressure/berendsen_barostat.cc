@@ -30,7 +30,7 @@ int algorithm::Berendsen_Barostat
 ::apply(topology::Topology & topo,
         configuration::Configuration & conf,
         simulation::Simulation & sim) {
-  m_timer.start();
+  m_timer.start(sim);
 
   DEBUG(8, "Berendsen Barostat == apply");
 
@@ -110,7 +110,7 @@ int algorithm::Berendsen_Barostat
     {
 
       math::Matrix mu;
-      double delta, mu_aux;
+      double delta = 0.0, mu_aux = 0.0;
       for (int i = 0; i < 3; ++i) {
         for (int j = 0; j < 3; ++j) {
           if (i == j)

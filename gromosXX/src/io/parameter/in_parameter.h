@@ -67,6 +67,7 @@
  * - @ref  qmmm
  * - @ref  xrayres
  * - @ref  amber
+ * - @ref  dfunct
  */
 
 
@@ -179,6 +180,11 @@ namespace io {
      * read PAIRLIST block.
      */
     void read_PAIRLIST(simulation::Parameter &param, std::ostream & os = std::cout);
+
+    /**
+     * read VIRTUALATOM block.
+     */
+    void read_VIRTUALATOM(simulation::Parameter &param, std::ostream & os = std::cout);
 
     /**
      * read POSRES block.
@@ -375,6 +381,10 @@ namespace io {
      * read AMBER block
      */
     void read_AMBER(simulation::Parameter &param, std::ostream & os = std::cout);
+    /**
+     * read DFUNCT block 
+     */
+    void read_DFUNCT(simulation::Parameter &param, std::ostream & os = std::cout);
   };
 
 } // io

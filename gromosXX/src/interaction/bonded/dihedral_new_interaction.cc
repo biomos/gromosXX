@@ -45,8 +45,8 @@ static int _calculate_dihedral_new_interactions(topology::Topology & topo,
   math::VArray &pos = conf.current().pos;
   math::VArray &force = conf.current().force;
   math::Vec rij, rkj, rkl, rlj, rim, rln, rmj, rnk, fi, fj, fk, fl;
-  double dkj2, dkj, dmj2, dnk2, dim, dln, ip;
-  double energy;
+  double dkj2 = 0.0, dkj = 0.0, dmj2 = 0.0, dnk2 = 0.0, dim = 0.0, dln = 0.0, ip = 0.0;
+  double energy = 0.0;
 
   math::Periodicity<B> periodicity(conf.current().box);
 
@@ -191,7 +191,7 @@ int interaction::Dihedral_new_Interaction
 ::calculate_interactions(topology::Topology &topo,
         configuration::Configuration &conf,
         simulation::Simulation & sim) {
-  m_timer.start();
+  m_timer.start(sim);
 
   SPLIT_VIRIAL_BOUNDARY(_calculate_dihedral_new_interactions,
           topo, conf, sim);

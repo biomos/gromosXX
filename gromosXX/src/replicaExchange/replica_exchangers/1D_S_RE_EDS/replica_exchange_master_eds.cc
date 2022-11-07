@@ -142,9 +142,14 @@ void re::replica_exchange_master_eds::receive_from_all_slaves() {
   if(switched && begin){
     replicaData[simulationID].pos_info.second = real_pos;
   }
-
-
-  replicaData[simulationID].Vi = replica->conf.current().energies.eds_vi;
+  
+  // If conformations were switched, the values used to determine
+  // if we want to exchange are now in conf.old()
+  if (switched){
+    replicaData[simulationID].Vi = replica->conf.old().energies.eds_vi;
+  } else {
+    replicaData[simulationID].Vi = replica->conf.current().energies.eds_vi;
+  }
 
   DEBUG(4,"replica_exchange_master_eds "<< globalThreadID <<":receive_from_all_slaves:\t Master:\n" << "time used for receiving all messages: " << MPI_Wtime() - start
             << " seconds");
@@ -274,15 +279,15 @@ void re::replica_exchange_master_eds::init_repOut_stat_file() {
     repOut << "\n";
     repOut << "#s\t\t";
     repOut.precision(svalPrecision);
-    int num_l = reedsParam.num_l;
-    for (int i = 0; i < num_l; ++i){
+    int num_s = reedsParam.eds_para.size();
+    for (int i = 0; i < num_s; ++i){
             repOut << std::setw(12) << reedsParam.eds_para[i].s[0];
     }
 
     repOut.precision(generalPrecision);
     for (int j = 0; j < reedsParam.num_states; ++j) {
         repOut << "\n# E"<< (j+1)<<"R(s)\t";
-        for (int i = 0; i < num_l; ++i)
+        for (int i = 0; i < num_s; ++i)
             repOut << std::setw(12) << reedsParam.eds_para[i].eir[j];
     }
 

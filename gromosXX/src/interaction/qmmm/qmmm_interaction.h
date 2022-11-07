@@ -131,13 +131,6 @@ namespace interaction {
                            , bool quiet);
 
     /**
-     * helper function to remove constraints from QM zone
-     */
-    /*void remove_constraints(topology::Topology& topo
-                          , std::ostream& os
-                          , bool quiet);*/
-
-    /**
      * helper function to modify pairlist exclusions in topology
      */
     void modify_exclusions(topology::Topology& topo

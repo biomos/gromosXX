@@ -76,7 +76,7 @@ int algorithm::Shake::apply(topology::Topology & topo,
         simulation::Simulation & sim) {
   DEBUG(7, "applying SHAKE");
   if (!sim.mpi || m_rank == 0){
-    m_timer.start();
+    m_timer.start(sim);
   }
 
   int error = 0;

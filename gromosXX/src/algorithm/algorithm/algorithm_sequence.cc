@@ -82,7 +82,7 @@ int algorithm::Algorithm_Sequence
 	it = begin(), to = end();
       it != to;
       ++it){
-    int ret;
+    int ret = 0;
     DEBUG(7, "algorithm: " << (*it)->name);
     if((ret = (*it)->apply(topo, conf, sim))){
       DEBUG(1, "ERROR in algorithm_sequence::run : bailing out!");
@@ -106,7 +106,6 @@ int algorithm::Algorithm_Sequence
     (*it)->print_timing(os);
 
   }
-  
   os << "END\n";
 
   return 0;

@@ -228,7 +228,7 @@ int main(int argc, char *argv[]){
 	    << "==================================================\n"
 	    << std::endl;
 
-  int error1, error2;
+  int error1 = 0, error2 = 0;
 
   const double init_time = util::now() - start;
   while(int(sim1.steps()) < sim1.param().step.number_of_steps &&
@@ -326,7 +326,8 @@ int main(int argc, char *argv[]){
   traj2.write(conf2, topo2, sim2, io::final);
   traj2.print_final(topo2, conf2, sim2);
 
-    
+  const double sim_time = (util::now() - start) - init_time;
+
   std::cout << "\nMESSAGES FROM SIMULATION\n";
   io::message::severity_enum err_msg = io::messages.display(std::cout);
 
@@ -334,8 +335,21 @@ int main(int argc, char *argv[]){
     
   md1.print_timing(std::cout);
 
-  std::cout << "Overall time used:\t" << util::now() - start << "\n"
-	    << "(initialisation took " << init_time << ")\n\n";
+  std::setprecision(5);
+  std::cout << std::endl;    
+  std::cout << "Wall time initialisation (s):  " << std::setw(10) << init_time << std::endl;
+  std::cout << "Wall time simulation (s):      " << std::setw(10) << sim_time << std::endl;
+  std::cout << "-----------------------------------------" << std::endl;
+  std::cout << "Wall time total (s):           " << std::setw(10) << (init_time + sim_time) << std::endl;
+  std::cout << std::endl;
+  
+  const double ns_calculated = (sim1.param().step.number_of_steps * sim1.param().step.dt)/1000.0;
+  //std::cout << "Simulated period (ns):         " << std::setw(10) << ns_calculated << std::endl; 
+  
+  const double performance_per_day = ns_calculated / (sim_time/(60.0*60.0*24.0));    
+  std::cout << "Performance (ns/day):          " << std::setw(10) << performance_per_day << std::endl; 
+  std::cout << std::endl;
+  std::cout << std::endl;
 
   const time_t time_now = time_t(util::now());
   std::cout << ctime(&time_now) << "\n\n";

@@ -72,7 +72,7 @@ int algorithm::Perturbed_Shake::perturbed_dih_constr_iteration(
     // eq 35
     const double cos_phi = math::dot(r52, r63) / (d52 * d63);
 
-    double phi;
+    double phi = 0.0;
     // cos_phi can be >1 or <-1 because of precision limits
     if (cos_phi > 1)
       phi = 0.0;
@@ -153,7 +153,7 @@ int algorithm::Perturbed_Shake::perturbed_dih_constr_iteration(
 
       double l_dt2 = 0;
       double phi0_abs = fabs(phi0);
-      double sd;
+      double sd = 0.0;
       if (phi0_abs <= math::Pi / 4 || phi0_abs > 3 * math::Pi / 4)
       { // sine case
         math::Vec c5 = math::cross(r52, r63);
@@ -163,7 +163,7 @@ int algorithm::Perturbed_Shake::perturbed_dih_constr_iteration(
         math::Vec am32 = (a3 / m3 - a2 / m2);
 
         double sinphi0 = sin(phi0);
-        double sin_nom, sin_denom;
+        double sin_nom = 0.0, sin_denom = 0.0;
         sd = -1 * cos(phi0);
         sin_nom = sinphi0 * d32 * c3 - math::dot(c5, r32);
 
@@ -200,7 +200,7 @@ int algorithm::Perturbed_Shake::perturbed_dih_constr_iteration(
                 math::cross(r32, r34),
                 b123);
 
-        double nominator, denominator;
+        double nominator = 0.0, denominator = 0.0;
         nominator = cos(phi0) * c3 - c1234;
         denominator = cos(phi0) * c4 - d1234;
       // denominator might be zero

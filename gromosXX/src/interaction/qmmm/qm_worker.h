@@ -36,14 +36,18 @@ namespace interaction {
     /**
      * initialise the QM worker
      */
-    virtual int init(simulation::Simulation & sim) = 0;
+    virtual int init(const topology::Topology& topo
+                   , const configuration::Configuration& conf
+                   , simulation::Simulation& sim
+                   , const interaction::QM_Zone& qm_zone);
 
     /**
      * run the QM worker
      */
     virtual int run_QM(topology::Topology& topo
                      , configuration::Configuration& conf
-                     , simulation::Simulation& sim, interaction::QM_Zone & qm_zone);
+                     , simulation::Simulation& sim
+                     , interaction::QM_Zone & qm_zone);
 
     /**
      * accessor to the name of the QM worker
@@ -97,27 +101,150 @@ namespace interaction {
     bool minimisation;
 
     /**
+     * Handle to the input coordinate trajectory (QM) 
+     */
+    mutable std::ofstream input_coordinate_stream;
+
+    /**
+     * Handle to the input point charge trajectory (QM) 
+     */
+    mutable std::ofstream input_point_charge_stream;
+
+    /**
+     * Handle to the output gradient trajectory (QM) 
+     */
+    mutable std::ofstream output_gradient_stream;
+
+    /**
+     * Handle to the output point charge gradient trajectory (QM) 
+     */
+    mutable std::ofstream output_point_charge_gradient_stream;
+
+    /**
+     * Handle to the output charges trajectory (QM) 
+     */
+    mutable std::ofstream output_charges_stream;
+    
+    /**
      * Write input file for QM
      */
-    virtual int write_input(const topology::Topology& topo
-                          , const configuration::Configuration& conf
-                          , const simulation::Simulation& sim
-                          , const interaction::QM_Zone & qm_zone);
-
+    virtual int process_input(const topology::Topology& topo
+                            , const configuration::Configuration& conf
+                            , const simulation::Simulation& sim
+                            , const interaction::QM_Zone & qm_zone);  
+    
     /**
      * Open input file for QM
      */
-    virtual int open_input(std::ofstream & inputfile_stream, const std::string & input_file);
+    virtual int open_input(std::ofstream & inputfile_stream, const std::string & input_file) const;
     
     /**
      * Call external QM program
      */
-    virtual int system_call();
+    virtual int run_calculation();
+
+    /**
+     * Helper function to write information on step size in QM trajectory
+     */
+    virtual void write_step_size(std::ofstream& inputfile_stream
+                               , const unsigned int step) const;
+
+    /**
+     * Helper function to write the header in coordinate file trajectory
+     */
+    virtual void write_coordinate_header(std::ofstream& inputfile_stream
+                                       , const QM_Zone& qm_zone) const;
+
+    /**
+     * Helper function to write the footer in coordinate file trajectory
+     */
+    virtual void write_coordinate_footer(std::ofstream& inputfile_stream) const;
+
+    /**
+     * Writes a gradient (default implementation)
+     */
+    virtual void write_gradient(const math::Vec& gradient, 
+                                std::ofstream& inputfile_stream) const;
+
+    /**
+     * Writes a QM atom (default implementation)
+     */
+    virtual void write_qm_atom(std::ofstream& inputfile_stream
+                             , const int atomic_number
+                             , const math::Vec& pos) const;
+
+    /**
+     * Writes a MM atom (default implementation)
+     */
+    virtual void write_mm_atom(std::ofstream& inputfile_stream
+                             , const int atomic_number
+                             , const math::Vec& pos
+                             , const double charge) const;
+
+    /**
+     * Writes a charge
+     */
+    virtual void write_charge(std::ofstream& inputfile_stream
+                            , const int atomic_number
+                            , const double charge) const;
+    
+    /**
+     * Writes the QM trajectory to special file (coordinates, point charges)
+     */
+    virtual void save_input(const unsigned int step
+                          , const simulation::Simulation& sim
+                          , const interaction::QM_Zone & qm_zone) const;
+
+    /**
+     * Writes the QM trajectory to special file (gradients, point charge gradients)
+     */
+    virtual void save_output(const unsigned int step
+                           , const simulation::Simulation& sim
+                           , const interaction::QM_Zone & qm_zone) const;
+
+    /**
+     * Writes QM input coordinates in QM units
+     */
+    virtual void save_input_coord(std::ofstream& inputfile_stream
+                                , const unsigned int step
+                                , const interaction::QM_Zone & qm_zone) const;
+
+    /**
+     * Writes QM input point charge coordinates in QM units
+     */
+    virtual void save_input_point_charges(std::ofstream& inputfile_stream
+                                        , const unsigned int step
+                                        , const unsigned int ncharges
+                                        , const interaction::QM_Zone & qm_zone) const;
+
+    /**
+     * Writes QM gradients in QM units
+
+     */
+    virtual void save_output_gradients(std::ofstream& inputfile_stream
+                                     , const unsigned int step
+                                     , const interaction::QM_Zone & qm_zone) const;
+
+    /**
+     * Writes QM point charge gradients in QM units
+
+     */
+    virtual void save_output_pc_gradients(std::ofstream& inputfile_stream
+                                        , const unsigned int step
+                                        , const interaction::QM_Zone & qm_zone) const;
+
+    /**
+     * Writes QM charges in QM units
+
+     */
+    virtual void save_output_charges(std::ofstream& inputfile_stream
+                                   , const unsigned int step
+                                   , const interaction::QM_Zone & qm_zone) const;
 
     /**
      * read QM output files
      */
-    virtual int read_output(topology::Topology& topo
+    virtual int process_output(topology::Topology& topo
                           , configuration::Configuration& conf
                           , simulation::Simulation& sim
                           , interaction::QM_Zone & qm_zone);
@@ -125,7 +252,7 @@ namespace interaction {
     /**
      * Open QM output file
      */
-    virtual int open_output(std::ifstream & outputfile_stream, const std::string & output_file);
+    virtual int open_output(std::ifstream & outputfile_stream, const std::string & output_file) const;
     
     /**
      * Replace exponent character to parse correctly

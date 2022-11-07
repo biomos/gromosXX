@@ -47,9 +47,9 @@ static int _calculate_perturbed_dihedral_restraint_interactions(
   math::VArray &pos = conf.current().pos;
   math::VArray &force = conf.current().force;
   math::Vec rij, rkj, rkl, rlj, rmj, rnk, fi, fj, fk, fl;
-  double dkj2, dkj, dmj2, dmj, dnk2, dnk, ip, phi;
-  double lower_bound, upper_bound;
-  double energy, en_term, f, energy_derivative, dlam_term;
+  double dkj2 = 0.0, dkj = 0.0, dmj2 = 0.0, dmj = 0.0, dnk2 = 0.0, dnk = 0.0, ip = 0.0, phi = 0.0;
+  double lower_bound = 0.0, upper_bound = 0.0;
+  double energy = 0.0, en_term = 0.0, f = 0.0, energy_derivative = 0.0, dlam_term = 0.0;
 
   math::Periodicity<B> periodicity(conf.current().box);
 
@@ -209,7 +209,7 @@ static int _calculate_perturbed_dihedral_restraint_interactions(
     // lambda derivative
 
     // divide by zero measure
-    double dprefndl, dprefmdl;
+    double dprefndl = 0.0, dprefmdl = 0.0; 
     if (it->n == 0)
       dprefndl = 0;
     else
@@ -254,7 +254,7 @@ static int _calculate_perturbed_dihedral_restraint_interactions(
         double K_diff = B_K - A_K;
         double phi0_diff = phi0_A - phi0_B;
 
-        double en_termlam, dlam_termlam;
+        double en_termlam = 0.0, dlam_termlam = 0.0;
         if (phi_lin >= 0.0 && fabs(delta_philam) > phi_lin)
         {
           double zeta = 1;
@@ -270,7 +270,7 @@ static int _calculate_perturbed_dihedral_restraint_interactions(
         }
         double energylam = prefactorlam * en_termlam;
 
-        double dprefndlam, dprefmdlam;
+        double dprefndlam = 0.0, dprefmdlam = 0.0;
         if (it->n == 0)
           dprefndlam = 0;
         else
@@ -315,7 +315,7 @@ static void _init_dihres_data(topology::Topology &topo,
   math::VArray &pos = conf.current().pos;
 
   math::Vec rij, rkj, rkl, rmj, rnk;
-  double dkj2, dkj, dmj2, dmj, dnk2, dnk, ip, phi;
+  double dkj2 = 0.0, dkj = 0.0, dmj2 = 0.0, dmj = 0.0, dnk2 = 0.0, dnk = 0.0, ip = 0.0, phi = 0.0;
 
   for (std::vector<topology::perturbed_dihedral_restraint_struct>::const_iterator
            it = topo.perturbed_dihedral_restraints().begin(),

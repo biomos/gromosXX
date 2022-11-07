@@ -107,7 +107,9 @@ void algorithm::GPU_Shake_Thread::init_run() {
           &error);
   mysim->param().constraint.solvent.gpu_device_number[gpu_id] = dev;
   if (error) {
-    io::messages.add("Cannot initialize GPU for SHAKE", io::message::error);
+    std::ostringstream msg;
+    msg << "Cannot initialize SHAKE on GPU " << dev;
+    io::messages.add(msg.str(), "GPU_Shake_Thread", io::message::error);
     return;
   }
 #endif

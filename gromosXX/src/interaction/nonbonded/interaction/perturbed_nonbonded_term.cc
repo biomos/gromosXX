@@ -523,7 +523,7 @@ inline void interaction::Perturbed_Nonbonded_Term
         double &e_lj, double &e_crf,
         double &de_lj, double & de_crf, 
         unsigned int eps, double coulomb_scaling) {
-  double A_c126, B_c126;
+  double A_c126 = 0.0, B_c126 = 0.0;
 
   if (A_c6 != 0) A_c126 = A_c12 / A_c6;
   else A_c126 = 0.0;
@@ -644,7 +644,7 @@ inline void interaction::Perturbed_Nonbonded_Term
   const double A_crfs_lambda2 = (1 - crfs_lambda) * (1 - crfs_lambda);
   const double B_crfs_lambda2 = crfs_lambda * crfs_lambda;
 
-  double A_c126, B_c126;
+  double A_c126 = 0.0, B_c126 = 0.0;
 
   if (A_c6 != 0) A_c126 = A_c12 / A_c6;
   else A_c126 = 0.0;
@@ -737,7 +737,7 @@ inline void interaction::Perturbed_Nonbonded_Term
         double &force6, double &force12,
         double &e_lj, double &e_crf,
         double &de_lj, double & de_crf, unsigned int eps) {
-  double A_c126, B_c126;
+  double A_c126 = 0.0, B_c126 = 0.0;
 
   if (A_c6 != 0) A_c126 = A_c12 / A_c6;
   else A_c126 = 0.0;
@@ -882,7 +882,7 @@ inline void interaction::Perturbed_Nonbonded_Term
         double &force6, double &force12,
         double &e_lj, double &e_crf,
         double &de_lj, double & de_crf, unsigned int eps) {
-  double A_c126, B_c126;
+  double A_c126 = 0.0, B_c126 = 0.0;
 
   if (A_c6 != 0) A_c126 = A_c12 / A_c6;
   else A_c126 = 0.0;
@@ -1028,7 +1028,7 @@ inline void interaction::Perturbed_Nonbonded_Term
         double &e_lj, double &e_crf,
         double &de_lj, double & de_crf, unsigned int eps, 
         double coulomb_scaling) {
-  double A_c126, B_c126;
+  double A_c126 = 0.0, B_c126 = 0.0;
 
   if (A_c6 != 0) A_c126 = A_c12 / A_c6;
   else A_c126 = 0.0;
@@ -1129,7 +1129,7 @@ inline void interaction::Perturbed_Nonbonded_Term
         double &force1, double &force6, double &force12,
         double &e_lj, double &e_crf,
         double &de_lj, double & de_crf) {
-  double A_c126, B_c126;
+  double A_c126 = 0.0, B_c126 = 0.0;
 
   if (A_c6 != 0) A_c126 = A_c12 / A_c6;
   else A_c126 = 0.0;

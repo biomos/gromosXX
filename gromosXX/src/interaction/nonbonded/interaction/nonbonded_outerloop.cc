@@ -100,7 +100,8 @@ void interaction::Nonbonded_Outerloop
   if (t_interaction_spec::boundary_type == math::rectangular &&
       t_interaction_spec::interaction_func == simulation::lj_crf_func &&
       sim.param().innerloop.method != simulation::sla_cuda) {
-    _lj_crf_outerloop_fast(topo, conf, sim, pairlist_solute, pairlist_solvent,
+    _lj_crf_outerloop_fast<t_interaction_spec::charge_type>(topo, conf, sim,
+                        pairlist_solute, pairlist_solvent,
                         storage, longrange, timer, master);
     return;
   }
@@ -115,12 +116,16 @@ void interaction::Nonbonded_Outerloop
    */
   std::vector<unsigned int>::const_iterator j_it, j_to;
 
+  const std::string timer_name_solute(longrange ? "longrange solute" : "shortrange solute");
+  //if (master)
+    timer.start_subtimer(timer_name_solute);
+  
   unsigned int size_i = unsigned(pairlist_solute.size());
   DEBUG(10, "lj_crf_outerloop pairlist size " << size_i);
 
   const unsigned int end = topo.num_solute_atoms();
 
-  unsigned int i;
+  unsigned int i = 0;
   for (i = 0; i < end; ++i) {
     for (j_it = pairlist_solute[i].begin(),
             j_to = pairlist_solute[i].end();
@@ -133,6 +138,9 @@ void interaction::Nonbonded_Outerloop
       innerloop.lj_crf_innerloop(topo, conf, i, *j_it, storage, periodicity);
     }
   }
+  //if (master)
+    timer.stop_subtimer(timer_name_solute);
+  
 /*only for DEBUG*/
  /* DEBUG(1,"current solute pairlist:\n");
 unsigned int i_deb;
@@ -161,9 +169,9 @@ unsigned int i_deb;
   // cuda doesn't do solvent-solvent here
   if (sim.param().innerloop.method == simulation::sla_cuda) return;
   // solvent-solvent
-  const std::string timer_name(longrange ? "longrange solvent-solvent" : "solvent-solvent");
-  if (master)
-    timer.start(timer_name);
+  const std::string timer_name_solvent(longrange ? "longrange solvent-solvent" : "shortrange solvent-solvent");
+  //if (master)
+    timer.start_subtimer(timer_name_solvent);
   if (sim.param().force.special_loop == simulation::special_loop_spc) { // special solvent loop
     // solvent - solvent with spc innerloop...
     for (; i < size_i; i += 3) { // use every third pairlist (OW's)
@@ -256,8 +264,8 @@ unsigned int i_deb;
       }
     }
   }
-  if (master)
-    timer.stop(timer_name);
+  //if (master)
+    timer.stop_subtimer(timer_name_solvent);
 }
 
 
@@ -267,6 +275,7 @@ unsigned int i_deb;
  * to make it usable for longrange calculations.
  */
 // WORKAROUND - see definition!
+template<simulation::charge_type_enum t_charge_type>
 void interaction::Nonbonded_Outerloop
 ::_lj_crf_outerloop_fast(topology::Topology & topo,
         configuration::Configuration & conf,
@@ -279,7 +288,9 @@ void interaction::Nonbonded_Outerloop
 
   math::Periodicity<math::rectangular> periodicity(conf.current().box);
   periodicity.recalc_shift_vectors();
-  Nonbonded_Innerloop<interaction::Interaction_Spec<math::rectangular, simulation::lj_crf_func> > innerloop(m_param);
+  Nonbonded_Innerloop<interaction::Interaction_Spec<math::rectangular,
+                      simulation::lj_crf_func,
+                      t_charge_type> > innerloop(m_param);
   innerloop.init(sim);
 
   /*
@@ -288,12 +299,15 @@ void interaction::Nonbonded_Outerloop
    */
   std::vector<unsigned int>::const_iterator j_it, j_to;
 
+  const std::string timer_name_solute(longrange ? "longrange solute" : "shortrange solute");
+  //if (master)
+    timer.start_subtimer(timer_name_solute);
   unsigned int size_i = unsigned(pairlist_solute.size());
   DEBUG(10, "lj_crf2 outerloop pairlist size " << size_i);
 
   const unsigned int end = topo.num_solute_atoms();
 
-  unsigned int i;
+  unsigned int i = 0;
   for (i = 0; i < end; ++i) {
     const math::Vec posI = conf.current().pos(i);
     const unsigned int eg_i = topo.atom_energy_group(i);
@@ -329,8 +343,8 @@ void interaction::Nonbonded_Outerloop
       
       const double dist2 = abs2(r);
       math::Vec force;
-      double f;
-      double e_lj, e_crf;
+      double f = 0.0;
+      double e_lj = 0.0, e_crf = 0.0;
       
       innerloop.lj_crf_innerloop_2(topo, i, *j_it, dist2, f, e_lj, e_crf);      
       
@@ -369,6 +383,10 @@ void interaction::Nonbonded_Outerloop
       }
     }
   }
+  //if (master)
+    timer.stop_subtimer(timer_name_solute);
+  
+  
 /*only for DEBUG*/
  /* DEBUG(1,"current solute pairlist:\n");
 unsigned int i_deb;
@@ -397,9 +415,9 @@ unsigned int i_deb;
   // cuda doesn't do solvent-solvent here
   if (sim.param().innerloop.method == simulation::sla_cuda) return;
   // solvent-solvent
-  const std::string timer_name(longrange ? "longrange solvent-solvent" : "solvent-solvent");
-  if (master)
-    timer.start(timer_name);
+  const std::string timer_name_solvent(longrange ? "longrange solvent-solvent" : "shortrange solvent-solvent");
+  //if (master)
+    timer.start_subtimer(timer_name_solvent);
   if (sim.param().force.special_loop == simulation::special_loop_spc) { // special solvent loop
     // solvent - solvent with spc innerloop...
 
@@ -418,7 +436,7 @@ unsigned int i_deb;
       math::Vec shift = periodicity.shift(k + 13).pos;
       double tx = shift(0), ty = shift(1), tz = shift(2);
 
-      double dist6i;
+      double dist6i = 0.0;
       double e_lj = 0., e_crf = 0.;
       double r2[9], r2i[9], ri[9], x[9], y[9], z[9], f[9], fx[9], fy[9], fz[9];
       math::Vec r;
@@ -1059,8 +1077,8 @@ unsigned int i_deb;
 
         const double dist2 = abs2(r);
         math::Vec force;
-        double f;
-        double e_lj, e_crf;
+        double f = 0.0;
+        double e_lj = 0.0, e_crf = 0.0;
 
         innerloop.lj_crf_innerloop_2(topo, i, *j_it, dist2, f, e_lj, e_crf);
 
@@ -1099,8 +1117,8 @@ unsigned int i_deb;
       }
     }
   }
-  if (master)
-    timer.stop(timer_name);
+  //if (master)
+    timer.stop_subtimer(timer_name_solvent);
 }
 
 void interaction::Nonbonded_Outerloop
@@ -1530,7 +1548,7 @@ void interaction::Nonbonded_Outerloop
   math::Periodicity<t_interaction_spec::boundary_type> periodicity(conf.current().box);
   Nonbonded_Innerloop<t_interaction_spec> innerloop(m_param);
   innerloop.init(sim);
-  unsigned int i;
+  unsigned int i = 0;
   unsigned int size_i = unsigned(pairlist.size());
   unsigned int size_lr = size_i;
   DEBUG(11, "el_field outerloop pairlist size " << size_i);
@@ -1567,7 +1585,7 @@ void interaction::Nonbonded_Outerloop
 
   double minfield = sim.param().polarise.minfield;
   const double minfield_param = minfield;
-  double maxfield;
+  double maxfield = 0.0;
   int turni = 0;
 
 #ifdef XXMPI
@@ -1847,7 +1865,7 @@ void interaction::Nonbonded_Outerloop
 
   unsigned int end = topo.num_solute_atoms();
 
-  unsigned int i;
+  unsigned int i = 0;
   for (i = 0; i < end; i++) {
     for (j_it = pairlist_solute[i].begin(),
             j_to = pairlist_solute[i].end();
@@ -1955,7 +1973,7 @@ void interaction::Nonbonded_Outerloop
   double a2_tilde = 0.0;
 
   // virial stuff
-  const double do_virial = sim.param().pcouple.virial != math::no_virial;
+  const bool do_virial = sim.param().pcouple.virial != math::no_virial;
   math::SymmetricMatrix virial(0.0);
   math::SymmetricMatrix sum_gammahat(0.0);
 
@@ -2077,7 +2095,7 @@ void interaction::Nonbonded_Outerloop
   if (sim.steps() == 0 && !sim.param().nonbonded.influence_function_read) {
     DEBUG(10, "\t calculating influence function");
     if (rank == 0)
-      timer.start("P3M: influence function");
+      timer.start_subtimer("P3M: influence function");
     if (sim.mpi)
       conf.lattice_sum().influence_function.template calculate< configuration::ParallelMesh > (topo, conf, sim);
     else
@@ -2087,7 +2105,7 @@ void interaction::Nonbonded_Outerloop
     DEBUG(10, "\testimated force error: " << new_rms_force_error);
 
     if (rank == 0)
-      timer.stop("P3M: influence function");
+      timer.stop_subtimer("P3M: influence function");
 
     if (new_rms_force_error > sim.param().nonbonded.influence_function_rms_force_error) {
       io::messages.add("P3M: RMS force error is still too big after reevaluation "
@@ -2109,7 +2127,7 @@ void interaction::Nonbonded_Outerloop
   if (sim.steps() && sim.param().nonbonded.accuracy_evaluation &&
           sim.steps() % sim.param().nonbonded.accuracy_evaluation == 0) {
     if (rank == 0)
-      timer.start("P3M: accuracy evaluation");
+      timer.start_subtimer("P3M: accuracy evaluation");
     if (sim.mpi)
       conf.lattice_sum().influence_function.template evaluate_quality<configuration::ParallelMesh > (topo, conf, sim);
     else
@@ -2118,13 +2136,13 @@ void interaction::Nonbonded_Outerloop
     // see MD02.10 eq. C7
     const double rms_force_error = conf.lattice_sum().influence_function.rms_force_error();
     if (rank == 0)
-      timer.stop("P3M: accuracy evaluation");
+      timer.stop_subtimer("P3M: accuracy evaluation");
 
     if (rms_force_error > sim.param().nonbonded.influence_function_rms_force_error) {
       // recalculate the influence function
       DEBUG(10, "\t calculating influence function");
       if (rank == 0)
-        timer.start("P3M: influence function");
+        timer.start_subtimer("P3M: influence function");
       if (sim.mpi)
         conf.lattice_sum().influence_function.template calculate<configuration::ParallelMesh > (topo, conf, sim);
       else
@@ -2132,7 +2150,7 @@ void interaction::Nonbonded_Outerloop
 
       const double new_rms_force_error = conf.lattice_sum().influence_function.rms_force_error();
       if (rank == 0)
-        timer.stop("P3M: influence function");
+        timer.stop_subtimer("P3M: influence function");
 
       if (new_rms_force_error > sim.param().nonbonded.influence_function_rms_force_error) {
         io::messages.add("P3M: RMS force error is still too big after reevaluation "
@@ -2163,7 +2181,7 @@ void interaction::Nonbonded_Outerloop
   if (do_a2t && calculate_lattice_sum_corrections) {
     DEBUG(10, "\tstarting to assign squared charge to grid ... ");
     if (rank == 0)
-      timer.start("P3M: self term");
+      timer.start_subtimer("P3M: self term");
 
     if (sim.param().nonbonded.ls_calculate_a2 != simulation::ls_a2t_ave_a2_numerical) {
       // calculate the real A2~ term (not averaged)
@@ -2191,12 +2209,12 @@ void interaction::Nonbonded_Outerloop
     }
 
     if (rank == 0)
-      timer.stop("P3M: self term");
+      timer.stop_subtimer("P3M: self term");
   }
   
   
   if (rank == 0)
-    timer.start("P3M: energy & force");
+    timer.start_subtimer("P3M: energy & force");
 
   DEBUG(10, "\t done with influence function, starting to assign charge density to grid ... ");
   if (sim.mpi)
@@ -2230,7 +2248,7 @@ void interaction::Nonbonded_Outerloop
   }
 
   if (rank == 0)
-    timer.stop("P3M: energy & force");
+    timer.stop_subtimer("P3M: energy & force");
   DEBUG(7, "\tdone with calculating interactions in k-space (P3M)");
 }
 
@@ -2247,7 +2265,7 @@ void interaction::Nonbonded_Outerloop
 
   double a1 = 0.0, a3 = 0.0;
   double & a2_tilde = conf.lattice_sum().a2_tilde;
-  double a2;
+  double a2 = 0.0;
 
   const double st2 = topo.sum_squared_charges();
   const double s2 = topo.squared_sum_charges();
@@ -2363,7 +2381,7 @@ void interaction::Nonbonded_Outerloop
       // surfaces.
       math::SymmetricMatrix sum_gammahat(0.0);
       int l_max = 0;
-      double tolerance;
+      double tolerance = 0.0;
       a2 = 0.0;
       do {
         ++l_max;
@@ -2371,8 +2389,8 @@ void interaction::Nonbonded_Outerloop
 
         // the planes are located perpendicular to the axis (coord)
         for (unsigned int coord = 0; coord < 3; ++coord) {
-          unsigned int coord_a, coord_b;
-          int boundary_a, boundary_b;
+          unsigned int coord_a = 0, coord_b = 0;
+          int boundary_a = 0, boundary_b = 0;
           switch (coord) {
             case 0: // plane perpendicular to x
               coord_a = 1;
@@ -2419,7 +2437,7 @@ void interaction::Nonbonded_Outerloop
               const double abs_k = sqrt(k2);
               const double ak = abs_k * width;
 
-              double gamma_hat, gamma_hat_prime;
+              double gamma_hat = 0.0, gamma_hat_prime = 0.0;
               if (do_virial) {
                 interaction::Lattice_Sum::charge_shape_fourier(shape,
                         ak, gamma_hat, &gamma_hat_prime);
@@ -2699,7 +2717,7 @@ int interaction::Nonbonded_Outerloop
           << conf.current().pos(atom_j)(1) << " / "
           << conf.current().pos(atom_j)(2));
   DEBUG(10, "\tni r " << r(0) << " / " << r(1) << " / " << r(2));
-  double f;
+  double f = 0.0;
   term.lj_crf_interaction(r, lj.c6, lj.c12,
           topo.charge()(atom_i) * topo.charge()(atom_j),
           f, e_lj, e_crf);

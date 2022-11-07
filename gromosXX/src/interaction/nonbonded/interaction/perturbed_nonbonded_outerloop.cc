@@ -93,7 +93,7 @@ void interaction::Perturbed_Nonbonded_Outerloop
   // innerloop.set_lambda(topo.lambda(), topo.lambda_exp());
 
   std::vector<unsigned int>::const_iterator j_it, j_to;
-  unsigned int i;
+  unsigned int i = 0;
   unsigned int size_i = unsigned(topo.num_solute_atoms());
   // unsigned int size_i = unsigned(pairlist.size());
 
@@ -254,7 +254,7 @@ void interaction::Perturbed_Nonbonded_Outerloop
   // this is now (unfortunately) done in the innerloop, when we know which energy group we are in
   // p_innerloop.set_lambda(topo.lambda(), topo.lambda_exp());
   
-  unsigned int i;
+  unsigned int i = 0;
   unsigned int size_i = unsigned(pairlist.size());
   unsigned int size_lr = size_i;
   DEBUG(11, "outerloop pairlist size " << size_i);
@@ -271,7 +271,7 @@ void interaction::Perturbed_Nonbonded_Outerloop
 
   double minfield = sim.param().polarise.minfield;
   const double minfield_param = minfield;
-  double maxfield;
+  double maxfield = 0.0;
   int turni = 0;
 
 #ifdef XXMPI

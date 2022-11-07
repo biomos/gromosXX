@@ -49,7 +49,7 @@ static int _calculate_perturbed_angle_restraint_interactions
   math::VArray &pos   = conf.current().pos;
   math::VArray &force = conf.current().force;
   math::Vec rij, rkj, fi, fj, fk;
-  double energy, en_term, f, energy_derivative, dlam_term;
+  double energy = 0.0, en_term = 0.0, f = 0.0, energy_derivative = 0.0, dlam_term = 0.0;
 
   math::Periodicity<B> periodicity(conf.current().box);
 
@@ -149,7 +149,7 @@ static int _calculate_perturbed_angle_restraint_interactions
     // lambda derivative
 
     // divide by zero measure
-    double dprefndl, dprefmdl;
+    double dprefndl = 0.0, dprefmdl = 0.0;
     if (it->n==0) dprefndl = 0;
     else dprefndl = it->n * pow(l, it->n-1) * pow(1.0 - l, it->m);
     
@@ -193,7 +193,7 @@ static int _calculate_perturbed_angle_restraint_interactions
         double energylam = prefactorlam * en_termlam;
         
         // lambda derivative
-        double dprefndlam, dprefmdlam;
+        double dprefndlam = 0.0, dprefmdlam = 0.0;
         // divide by zero measure
         if (it->n==0) dprefndlam = 0;
         else dprefndlam = it->n * pow(lam, it->n-1) * pow(1.0 - lam, it->m);

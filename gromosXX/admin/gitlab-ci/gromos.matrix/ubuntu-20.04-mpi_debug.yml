@@ -1,0 +1,20 @@
+gromos:ubuntu-20.04-mpi-debug:configure:
+  extends:
+    - .gromos:base:configure
+    - .use-mpi
+    - .use-share
+    - .use-debug
+  image: ${CI_REGISTRY}/gromos/gromosxx/gromos-ubuntu-20.04-mpi
+  variables:
+    BUILD_DIR: build_debug
+
+gromos:ubuntu-20.04-mpi-debug:build:
+  extends:
+    - .gromos:base:build
+    - .use-mpi
+  image: ${CI_REGISTRY}/gromos/gromosxx/gromos-ubuntu-20.04-mpi
+  variables:
+    BUILD_DIR: build_debug
+    BIN_PATH: ${BUILD_DIR}/bin/md_mpi
+  needs:
+    - job: gromos:ubuntu-20.04-mpi-debug:configure

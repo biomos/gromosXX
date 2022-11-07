@@ -47,9 +47,18 @@ namespace io {
     void read_units(const simulation::Simulation & sim
           , simulation::Parameter::qmmm_struct::qm_param_struct* qm_param);
     /**
+     * Read file paths for QM/MM trajectory
+     */
+    void read_trajectory_files(const simulation::Simulation & sim, simulation::Parameter::qmmm_struct::qm_param_struct* qm_param);
+    /**
      * Read the map of atomic numbers to element names
      */
     void read_elements(const topology::Topology& topo
+    , simulation::Parameter::qmmm_struct::qm_param_struct* qm_param);
+    /**
+     * Read the map of IAC codes to atomic numbers
+     */
+    void read_iac_elements(topology::Topology& topo
     , simulation::Parameter::qmmm_struct::qm_param_struct* qm_param);
     /**
      * Read the list of QM atoms

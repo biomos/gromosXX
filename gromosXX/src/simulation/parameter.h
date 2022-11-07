@@ -105,6 +105,24 @@ namespace simulation
       B_overall_on = 1,
   };
   /**
+   * @enum dfunct_enum
+   * dfunct enum, useful for sampling reaction transition states
+   */
+  enum dfunct_enum {
+    /**
+     * dfunct off
+     */
+    dfunct_off, 
+    /**
+     * restrain substitution type geometry
+     */
+    dfunct_substitution,
+    /**
+     * restrain cycloaddition type geometry
+     */
+    dfunct_cycloaddition
+  };
+  /**
    * @enum special_loop_enum
    * special solvent loop
    */
@@ -453,6 +471,21 @@ namespace simulation
     ef_cos = 1
   };
 
+  /**
+   * @enum charge_type_enum
+   * use standard MM charges or special charge of QM buffer atoms
+   */
+  enum charge_type_enum {
+    /**
+     * standard MM charge
+     */
+    mm_charge = 0, 
+    /**
+     * special charge calculation for QM buffer atoms
+     */
+    qm_buffer_charge = 1
+  };
+  
   /**
    * @enum randomgenerator_enum
    * determines which random number generator is used
@@ -824,14 +857,76 @@ namespace simulation
      * use DFTB
      */
     qm_dftb = 2,
-      /**
-       * use MOPAC
-       */
+    /**
+     * use MOPAC
+     */
     qm_mopac = 3,
-      /**
-       * use Gaussian
-       */
-    qm_gaussian = 4
+    /**
+     * use Gaussian
+     */
+    qm_gaussian = 4,
+    /*
+     * use Schnetpack NN
+     */
+    qm_nn = 5,
+    /**
+     * use Orca
+     */
+    qm_orca = 6,
+    /**
+     * use XTB
+     */
+    qm_xtb = 7
+  };
+
+  /**
+   * @enum qmmm_nn_device_enum
+   * which device to run NN on
+   */
+  enum qm_nn_device_enum {
+    /**
+     * Try CUDA, otherwise CPU
+     */
+    nn_device_auto = 0,
+    /**
+     * use CUDA
+     */
+    nn_device_cuda = 1,
+    /**
+     * use CPU
+     */
+    nn_device_cpu = 2
+  };
+
+  /**
+   * @enum qmmm_nn_model_type_enum
+   * specify if the model was trained on both the QM+buffer region and the buffer region
+   * or on the difference of QM+buffer and buffer region
+   */
+  enum qmmm_nn_model_type_enum {
+    /**
+     * BuRNN model - trained on the difference between the QM+buffer region and the buffer region
+     */
+    nn_model_type_burnn = 0,
+    /**
+     * Standard model - trained on the QM+buffer region and the buffer region
+     */
+    nn_model_type_standard = 1
+  };
+
+  /**
+   * @enum qmmm_nn_learning_type_enum
+   * which device to run NN on
+   */
+  enum qmmm_nn_learning_type_enum {
+    /**
+     * 1: model was learned on all atoms (QMZONE + BUFFERZONE)
+     */
+    nn_learning_type_all = 1,
+    /**
+     * 2: model was learned by assigning energies only to the QMZONE atoms
+     */
+    nn_learning_type_qmonly = 2
   };
 
   /**
@@ -1241,8 +1336,9 @@ namespace simulation
        * - stepblock 0               (no printing of energies)
        * - centreofmass 0            (no printing of centre of mass information)
        * - monitor_dihedrals false   (do not monitor dihedral angle transitions)
+       * - timings_report false      (do not write detailed report of timings)
        */
-      print_struct() : stepblock(0), centreofmass(0), monitor_dihedrals(0) {}
+      print_struct() : stepblock(0), centreofmass(0), monitor_dihedrals(0), timings_report(false) {}
 
       /**
        * print stepblock
@@ -1256,6 +1352,10 @@ namespace simulation
        * dihedral angle transitions
        */
       int monitor_dihedrals;
+      /**
+       * dihedral angle transitions
+       */
+      bool timings_report;
     } /** output parameters */ print;
 
     /**
@@ -1747,6 +1847,32 @@ namespace simulation
        */
       bool scale_reference_positions;
     } /** Position restraint parameters */ posrest;
+
+    struct virtualatoms_struct
+    {
+      /** 
+       * Constructor
+       * Default values:
+       * - virtualatoms 0
+       * - numatoms 0
+       * - lastatom 0
+       */
+      virtualatoms_struct() : virtualatoms(0), numatoms(0), lastatom(0){}
+      
+      /**
+       * virtualatoms
+       */
+      int virtualatoms;
+      /**
+       * number of virtual atoms
+       */
+      int numatoms;
+      /**
+       * index of the last virtual atom in topology
+       */
+      int lastatom;
+
+    } /** virtual atoms parameters */ virtualatoms;
 
 
 
@@ -2934,19 +3060,11 @@ namespace simulation
        * - eds: no eds sampling
        * - form: single_s
        */
-      eds_struct() : eds(false), soft_vdw(0.0), soft_crf(0.0), form(single_s), numstates(0) {}
+      eds_struct() : eds(false), form(single_s), numstates(0) {}
       /**
        * do enveloping distribution sampling using the Hamiltonian:
        */
       unsigned int eds;
-      /**
-       * soft core van der Waals interactions
-       */
-      double soft_vdw;
-      /**
-       * soft core electrostatic interactions
-       */
-      double soft_crf;
       /**
        * functional form of eds Hamiltonian
        */
@@ -3713,7 +3831,8 @@ namespace simulation
                     , software(qm_mndo)
                     , write(0)
                     , atomic_cutoff(false)
-                    , use_qm_buffer(false) {}
+                    , use_qm_buffer(false)
+                    , dynamic_buffer_charges(false) {}
       /**
        *
        * Common QMMM parameters
@@ -3760,9 +3879,13 @@ namespace simulation
        */
       bool atomic_cutoff;
       /**
-       * type of cutoff (atomic or chargegroup-based)
+       * if QM buffer zone is used
        */
       bool use_qm_buffer;
+      /**
+       * if dynamic charges are used with QM buffer zone
+       */
+      bool dynamic_buffer_charges;
 
       /**
        * QM zone parameters
@@ -3826,6 +3949,10 @@ namespace simulation
          */
         std::map<unsigned, std::string> elements;
         /**
+         * maps IAC numbers to atomic numbers; 
+         */
+        std::map<unsigned, unsigned> iac_elements;
+        /**
          * path for the program binary
          */
         std::string binary;
@@ -3857,6 +3984,26 @@ namespace simulation
          * factor to convert the QM charge unit to the GROMOS one
          */
         double unit_factor_charge;
+        /**
+         * input file containing the positions and element types of the QM atoms (used for debugging or generation of NN training sets)
+         */
+        std::string trajectory_input_coordinate_file;
+        /**
+         * input file containing the positions and charges of the MM atoms (used for debugging or generation of NN training sets)
+         */
+        std::string trajectory_input_pointcharges_file;
+        /**
+         * output file containing the cartesian gradients (used for debugging or generation of NN training sets)
+         */
+        std::string trajectory_output_gradient_file;
+        /**
+         * output file containing the cartesion gradients of the MM atoms (used for debugging or generation of NN training sets)
+         */
+        std::string trajectory_output_mm_gradient_file;
+        /**
+         * output file containing the charges calculated (used for debugging or generation of NN training sets)
+         */
+        std::string trajectory_output_charges_file;
       };
 
       /**
@@ -3906,7 +4053,7 @@ namespace simulation
          */
         std::string output_gradient_file;
         /**
-         * the output file containing the cartesion gradients of the MM atoms
+         * the output file containing the cartesian gradients of the MM atoms
          */
         std::string output_mm_gradient_file;
         /**
@@ -3973,7 +4120,7 @@ namespace simulation
          */
         int link_atom_mode;
       } mopac;
-
+      
       /**
        * Gaussian specific parameters
        */
@@ -3987,6 +4134,122 @@ namespace simulation
          */
         std::string chsm;
       } gaussian;
+
+     /**
+       * ORCA specific parameters
+       */
+      struct orca_param_struct : public qm_param_struct { 
+        /**
+         * the input file containing the positions and element types of the QM atoms
+         */
+        std::string input_coordinate_file;
+        /**
+         * the input file containing the positions and charges of the MM atoms
+         */
+        std::string input_pointcharges_file;
+        /**
+         * the output file containing the cartesian gradients
+         */
+        std::string output_gradient_file;
+        /**
+         * the output file containing the cartesion gradients of the MM atoms
+         */
+        std::string output_mm_gradient_file;
+      } orca; 
+
+      /**
+       * XTB specific parameters
+       */
+      struct xtb_param_struct : public qm_param_struct { 
+        /**
+         * the version of the XTB Hamiltonian used
+         * options are 1 and 2 (for GFN1-xTB or GFN2-xTB, respectively)
+         */
+        unsigned int hamiltonian;
+        /**
+         * the verbosity level of XTB
+         * options are 0, 1, and 2 corresponding to muted, minimal, or full verbosity, respectively
+         */
+        unsigned int verbosity;
+        /**
+         * maximum iteration for SCC procedure (default is 250)
+         */
+        unsigned int maxIter = 250;
+        /**
+         * accuracy multiplier for XTB calculations (default is 1) (https://xtb-docs.readthedocs.io/en/latest/sp.html#accuracy-and-iterations) 
+         */
+        double accuracy = 1;
+        /**
+         * output file containing xtb logging
+         */
+        std::string output_log_file;
+      } xtb; 
+
+      /**
+       * NN specific parameters
+       */
+      struct nn_param_struct : public qm_param_struct {
+      /**
+       * Constructor
+       * Default values:
+       * - model_path "" (empty string)
+       * - val_model_path "" (empty string)
+       * - model_type 0 (bool)
+       * - device 0 (auto)
+       */
+      nn_param_struct() :
+                      model_path()
+                      , val_model_path() 
+                      , val_thresh(0.0)
+                      , val_steps(0)
+                      , val_forceconstant(0.0)
+                      , charge_model_path()
+                      , charge_steps(0)
+                      , model_type(nn_model_type_burnn) 
+                      , learning_type(nn_learning_type_all)
+                      , device(nn_device_auto) {}
+        /**
+         * Schnetpack model path
+         */
+        std::string model_path;
+        /**
+         * Schnetpack model path
+         */
+        std::string val_model_path;
+        /**
+         * Threshold of energy validation
+         */
+        double val_thresh;
+        /**
+         * Number of steps between validations
+         */
+        unsigned val_steps;
+        /**
+         * Force constant to enforce agreement between NN models
+         */
+        double val_forceconstant;
+        /**
+         * Schnetpack model path
+         */
+        std::string charge_model_path;
+        /**
+         * Number of steps between validations
+         */
+        unsigned charge_steps;
+        /**
+         * nn model type
+         */
+        qmmm_nn_model_type_enum model_type;
+        /**
+         * nn learning type
+         */
+        qmmm_nn_learning_type_enum learning_type;
+        /**
+         * Device to run model on
+         */
+        qm_nn_device_enum device;
+      } nn;
+
     } qmmm;
 
 
@@ -4035,6 +4298,44 @@ namespace simulation
        */
       double coulomb_scaling;
     } amber;
+
+    struct dfunct_struct {
+
+      dfunct_struct() : dfunct(dfunct_off), atom_i(0), atom_j(0), atom_k(0), atom_l(0), r_0(0.0), d(0), force(0.0) {}
+
+      /**
+       * dfunct enum 
+       */
+      dfunct_enum dfunct;
+      /**
+       * index of first atom involved in the potential
+       */
+      int atom_i, 
+      /**
+       * index of second atom involved in the potential
+       */
+      atom_j, 
+      /**
+       * index of third atom involved in the potential
+       */
+      atom_k, 
+      /**
+       * index of fourth atom involved in the potential
+       */
+      atom_l;
+      /**
+       * r_0 distance
+       */
+      double r_0;
+      /**
+       * addition or subtraction of distances r_ij and r_kl (can be scaled)
+       */
+      double d;
+      /**
+       * force constant of the bias
+       */
+      double force;
+    } dfunct;
     
     /**
      A struct to mark parts of the code as "under development"

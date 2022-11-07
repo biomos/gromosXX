@@ -56,7 +56,7 @@ static int _calculate_perturbed_soft_angle_interactions
   math::VArray &force = conf.current().force;
   math::Vec rij, rkj, fi, fj, fk;
 
-  double energy, e_lambda;
+  double energy = 0.0, e_lambda = 0.0;
 
   math::Periodicity<B> periodicity(conf.current().box);
 
@@ -216,7 +216,7 @@ int interaction::Perturbed_Soft_Angle_Interaction
 			 configuration::Configuration &conf,
 			 simulation::Simulation &sim)
 {
-  m_timer.start();
+  m_timer.start(sim);
 
   SPLIT_VIRIAL_BOUNDARY(_calculate_perturbed_soft_angle_interactions,
 			topo, conf, sim);

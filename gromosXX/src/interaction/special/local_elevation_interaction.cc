@@ -34,7 +34,7 @@ calculate_interactions(topology::Topology& topo,
         configuration::Configuration& conf,
         simulation::Simulation& sim) {
   DEBUG(4, "local elevation interaction");
-  m_timer.start();
+  m_timer.start(sim);
   // loop over umbrellas
   std::vector<util::Umbrella>::iterator
   it = conf.special().umbrellas.begin(), to = conf.special().umbrellas.end();
