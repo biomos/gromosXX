@@ -86,7 +86,7 @@ int algorithm::EDS
       // initilize search if necessary
       if (sim.param().eds.initaedssearch == true) {
         if (sim.param().eds.form == simulation::aeds_search_emax_emin || sim.param().eds.form == simulation::aeds_search_all  
-        || sim.param().eds.form == simulation::aeds_advanced_search || sim.param().eds.form == simulation::aeds_advanced_search2) {
+        || sim.param().eds.form == simulation::aeds_advanced_search) {
           sim.param().eds.emax = conf.current().energies.eds_vmix;
           sim.param().eds.emin = conf.current().energies.eds_vmix;
           sim.param().eds.searchemax = conf.current().energies.eds_vmix;
