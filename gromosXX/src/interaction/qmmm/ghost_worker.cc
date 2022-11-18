@@ -75,3 +75,14 @@ int interaction::Ghost_Worker::process_output(topology::Topology& topo
   // does nothing
   return err;
 }
+
+void interaction::Ghost_Worker::write_coordinate_header(std::ofstream& ifs
+                                                      , const QM_Zone& qm_zone) const {
+  // TURBOMOLE format
+  ifs << "$coord" << '\n';  
+}
+
+void interaction::Ghost_Worker::write_coordinate_footer(std::ofstream& ifs) const {
+  // TURBOMOLE format
+  ifs << "$end" << '\n';
+}
