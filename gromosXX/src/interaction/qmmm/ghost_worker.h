@@ -68,6 +68,18 @@ namespace interaction {
                   , configuration::Configuration& conf
                   , simulation::Simulation& sim
                   , interaction::QM_Zone& qm_zone) override;
+
+
+    /**
+     * Helper function to write the header in coordinate file trajectory
+     */
+    void write_coordinate_header(std::ofstream& ifs
+                               , const QM_Zone& qm_zone) const override;
+
+    /**
+     * Helper function to write the footer in coordinate file trajectory
+     */
+    void write_coordinate_footer(std::ofstream& inputfile_stream) const override;
     
     /**
      * Pointer to simulation parameters
