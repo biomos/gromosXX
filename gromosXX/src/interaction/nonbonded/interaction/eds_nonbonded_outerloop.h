@@ -48,6 +48,26 @@ namespace interaction
 					 simulation::Simulation & sim,
 					 Storage & storage);
 
+    /**
+     * calculate the perturbed self energy (polarisation).
+     */
+    void perturbed_self_energy_outerloop(topology::Topology & topo,
+		            configuration::Configuration & conf,
+		            simulation::Simulation & sim, 
+			    Storage & storage);
+
+    /**
+     * calculate the perturbed electric field (polarisation).
+     */
+    void perturbed_electric_field_outerloop(topology::Topology & topo,
+		            configuration::Configuration & conf,
+		            simulation::Simulation & sim, 
+		            PairlistContainer const & pairlist,
+                            PairlistContainer const & perturbed_pairlist,
+                            Storage & storage,
+                            Storage & storage_lr,
+                            int rank);
+
   private:
     Nonbonded_Parameter & m_param;
 
@@ -78,6 +98,22 @@ namespace interaction
 					  configuration::Configuration & conf,
 					  simulation::Simulation & sim,
 					  Storage & storage);
+
+    template<typename t_interaction_spec, typename t_perturbation_spec>
+    void _perturbed_self_energy_outerloop(topology::Topology & topo,
+		            configuration::Configuration & conf,
+		            simulation::Simulation & sim, 
+			    Storage & storage);
+
+    template<typename t_interaction_spec, typename t_perturbation_spec>
+    void _perturbed_electric_field_outerloop(topology::Topology & topo,
+		            configuration::Configuration & conf,
+		            simulation::Simulation & sim, 
+		            PairlistContainer const & pairlist,
+                            PairlistContainer const & perturbed_pairlist,
+			    Storage & storage,
+                            Storage & storage_lr,
+                            int rank);
   };
   
 } // interaction

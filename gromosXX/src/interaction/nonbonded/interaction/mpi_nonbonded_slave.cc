@@ -27,13 +27,10 @@
 #include "../../../interaction/nonbonded/interaction/nonbonded_set.h"
 
 #include "../../../interaction/nonbonded/interaction/nonbonded_term.h"
-#include "../../../interaction/nonbonded/interaction/perturbed_nonbonded_term.h"
 #include "../../../interaction/nonbonded/interaction/eds_nonbonded_term.h"
 
 #include "../../../interaction/nonbonded/interaction/perturbed_nonbonded_pair.h"
-#include "../../../interaction/nonbonded/interaction/perturbed_nonbonded_outerloop.h"
 #include "../../../interaction/nonbonded/interaction/eds_nonbonded_outerloop.h"
-#include "../../../interaction/nonbonded/interaction/perturbed_nonbonded_set.h"
 #include "../../../interaction/nonbonded/interaction/eds_nonbonded_set.h"
 
 #include "../../../interaction/nonbonded/interaction/nonbonded_interaction.h"
@@ -446,15 +443,9 @@ int interaction::MPI_Nonbonded_Slave::init
 
   // in case we do perturbation and eds at the same time, this is handled
   // in the eds_outer_loop. So we start with checking for EDS.
-  if (sim.param().eds.eds){
+  if (sim.param().eds.eds || sim.param().perturbation.perturbation){
     m_nonbonded_set.push_back(new Eds_Nonbonded_Set(*m_pairlist_algorithm,
             m_parameter, rank, num_threads));
-  }
-  else if (sim.param().perturbation.perturbation){
-    
-    // only one set per MPI process
-    m_nonbonded_set.push_back(new Perturbed_Nonbonded_Set(*m_pairlist_algorithm,
-							  m_parameter, rank, num_threads));
   }
   else{
     // only one set per MPI process

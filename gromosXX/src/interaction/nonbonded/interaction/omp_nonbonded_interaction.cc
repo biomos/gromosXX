@@ -23,11 +23,11 @@
 #include "../../../interaction/nonbonded/interaction/nonbonded_set.h"
 
 #include "../../../interaction/nonbonded/interaction/nonbonded_term.h"
-#include "../../../interaction/nonbonded/interaction/perturbed_nonbonded_term.h"
+#include "../../../interaction/nonbonded/interaction/eds_nonbonded_term.h"
 
 #include "../../../interaction/nonbonded/interaction/perturbed_nonbonded_pair.h"
-#include "../../../interaction/nonbonded/interaction/perturbed_nonbonded_outerloop.h"
-#include "../../../interaction/nonbonded/interaction/perturbed_nonbonded_set.h"
+#include "../../../interaction/nonbonded/interaction/eds_nonbonded_outerloop.h"
+#include "../../../interaction/nonbonded/interaction/eds_nonbonded_set.h"
 #include "../../../interaction/nonbonded/interaction/cuda_nonbonded_set.h"
 
 #include "../../../interaction/nonbonded/interaction/nonbonded_interaction.h"

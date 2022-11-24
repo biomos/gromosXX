@@ -51,6 +51,15 @@ namespace interaction
     virtual int update_configuration(topology::Topology const & topo,
 				     configuration::Configuration & conf,
 				     simulation::Simulation const & sim);
+
+    /**
+     * calculate the hessian for a given atom.
+     */
+    virtual int calculate_hessian(topology::Topology & topo,
+				  configuration::Configuration & conf,
+				  simulation::Simulation & sim,
+				  unsigned int atom_i, unsigned int atom_j,
+				  math::Matrix & hessian);
    
     PairlistContainer & perturbed_pairlist() { return m_perturbed_pairlist; }
     PairlistContainer const & perturbed_pairlist()const { return m_perturbed_pairlist; }
@@ -60,6 +69,8 @@ namespace interaction
     PairlistContainer m_perturbed_pairlist;
 
     Eds_Nonbonded_Outerloop m_eds_outerloop;
+
+    Perturbed_Nonbonded_Pair m_perturbed_pair;
     
   };
   

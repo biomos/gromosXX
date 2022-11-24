@@ -19,8 +19,8 @@
 #include "../../../interaction/nonbonded/interaction/storage.h"
 
 #include "../../../interaction/nonbonded/interaction/nonbonded_term.h"
-#include "../../../interaction/nonbonded/interaction/perturbed_nonbonded_term.h"
-#include "../../../interaction/nonbonded/interaction/perturbed_nonbonded_innerloop.h"
+#include "../../../interaction/nonbonded/interaction/eds_nonbonded_term.h"
+#include "../../../interaction/nonbonded/interaction/eds_nonbonded_innerloop.h"
 
 #include "../../../interaction/nonbonded/interaction/perturbed_nonbonded_pair.h"
 
@@ -443,9 +443,10 @@ void interaction::Perturbed_Nonbonded_Pair
         switch(t_interaction_spec::interaction_func){
           case simulation::lj_crf_func : {
             double A_f1 = 0.0, A_f6 = 0.0, A_f12 = 0.0;
-            
+            const double dist2 = abs2(r);
+            const double dist6 = dist2 * dist2 * dist2;
             m_perturbed_nonbonded_term.
-            lj_crf_soft_interaction(r, A_lj->c6, A_lj->c12,
+            eds_pert_lj_crf_interaction(dist2, dist6, A_lj->c6, A_lj->c12,
 				    0, 0,
 				    A_q, 0,
 				    alpha_lj, alpha_crf,
@@ -649,9 +650,11 @@ void interaction::Perturbed_Nonbonded_Pair
         switch(t_interaction_spec::interaction_func){
           case simulation::lj_crf_func : {
             double A_f1 = 0.0, A_f6 = 0.0, A_f12 = 0.0;
+            const double dist2 = abs2(r);
+            const double dist6 = dist2 * dist2 * dist2;
             
             m_perturbed_nonbonded_term.
-	      lj_crf_soft_interaction(r, A_lj->cs6, A_lj->cs12,
+	      eds_pert_lj_crf_interaction(dist2, dist6, A_lj->cs6, A_lj->cs12,
 				      0, 0,
 				      A_q, 0,
 				      alpha_lj, alpha_crf,
@@ -962,9 +965,11 @@ void interaction::Perturbed_Nonbonded_Pair
         switch(t_interaction_spec::interaction_func){
           case simulation::lj_crf_func : {
             double B_f1 = 0.0, B_f6 = 0.0, B_f12 = 0.0;
+            const double dist2 = abs2(r);
+            const double dist6 = dist2 * dist2 * dist2;
             
             m_perturbed_nonbonded_term.
-            lj_crf_soft_interaction(r, 0, 0,
+            eds_pert_lj_crf_interaction(dist2, dist6, 0, 0,
 			            B_lj->c6, B_lj->c12,				    
 				    0, B_q,
 				    alpha_lj, alpha_crf,
@@ -1168,9 +1173,11 @@ void interaction::Perturbed_Nonbonded_Pair
         switch(t_interaction_spec::interaction_func){
           case simulation::lj_crf_func : {
             double B_f1 = 0.0, B_f6 = 0.0, B_f12 = 0.0;
+            const double dist2 = abs2(r);
+            const double dist6 = dist2 * dist2 * dist2;
             
             m_perturbed_nonbonded_term.
-            lj_crf_soft_interaction(r, 0, 0,
+            eds_pert_lj_crf_interaction(dist2, dist6, 0, 0,
 				    B_lj->cs6, B_lj->cs12,
 				    0, B_q,
 				    alpha_lj, alpha_crf,

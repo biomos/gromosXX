@@ -24,6 +24,8 @@
 #include "../../../interaction/nonbonded/interaction/nonbonded_term.h"
 #include "../../../interaction/nonbonded/interaction/eds_nonbonded_term.h"
 
+#include "../../../interaction/nonbonded/interaction/perturbed_nonbonded_pair.h"
+
 #include "../../../math/volume.h"
 
 #include "../../../interaction/nonbonded/interaction/nonbonded_set.h"
@@ -43,7 +45,7 @@ interaction::Eds_Nonbonded_Set
 ::Eds_Nonbonded_Set(Pairlist_Algorithm & pairlist_alg, Nonbonded_Parameter & param, 
 			  int rank, int num_threads)
   : Nonbonded_Set(pairlist_alg, param, rank, num_threads),
-    m_eds_outerloop(param)   
+    m_eds_outerloop(param), m_perturbed_pair(param)  
 {
     DEBUG(10, "EDS Nonbonded Set Constructor");
 }
@@ -99,7 +101,27 @@ int interaction::Eds_Nonbonded_Set
 			    m_rank, topo.num_atoms(), m_num_threads);
     }
     
-  }  
+  } 
+
+  if (sim.param().polarise.cos) {
+    //===============
+    // polarisation
+    //===============
+    // Only compatible with TI for now!
+
+    // calculate explicit polarisation of the molecules
+    DEBUG(6, "\texplicit polarisation");
+    start_timer("explicit polarisation");
+    if (topo.perturbed_solute().atoms().size() > 0) {
+      m_eds_outerloop.perturbed_electric_field_outerloop(topo, conf, sim,
+                                       m_pairlist, m_perturbed_pairlist,
+				       m_storage, m_longrange_storage, m_rank);
+    } else {
+      m_outerloop.electric_field_outerloop(topo, conf, sim, m_pairlist, 
+				       m_storage, m_longrange_storage, m_rank);
+    }
+    stop_timer("explicit polarisation");
+  }   
 
   if(pairlist_update){
     start_timer("longrange");
@@ -109,7 +131,7 @@ int interaction::Eds_Nonbonded_Set
 			       m_pairlist.solute_long, m_pairlist.solvent_long,
                                m_longrange_storage, true /*longrange!*/, m_pairlist_alg.timer(), m_rank == 0);
      
-    if (topo.eds_perturbed_solute().atoms().size() > 0){
+    if (topo.eds_perturbed_solute().atoms().size() + topo.perturbed_solute().atoms().size() > 0){
       DEBUG(6, "\teds-perturbed long range");
       
       m_eds_outerloop.eds_lj_crf_outerloop(topo, conf, sim,
@@ -126,7 +148,7 @@ int interaction::Eds_Nonbonded_Set
 			       m_pairlist.solute_short, m_pairlist.solvent_short,
                                m_storage, false, m_pairlist_alg.timer(), m_rank == 0);
   
-  if (topo.eds_perturbed_solute().atoms().size() > 0){
+  if (topo.eds_perturbed_solute().atoms().size() + topo.perturbed_solute().atoms().size() > 0){
     DEBUG(6, "\teds-perturbed short range");
     m_eds_outerloop.eds_lj_crf_outerloop(topo, conf, sim, 
 					 m_perturbed_pairlist.solute_short,
@@ -151,8 +173,19 @@ int interaction::Eds_Nonbonded_Set
   }
 
   // add 1,4 - interactions
-  if (m_rank == 0) {
-    if (topo.eds_perturbed_solute().atoms().size() > 0) {
+  if (m_rank == 0){
+    if (sim.param().polarise.cos) {
+      // Polarisation is only commpatible with TI for now!!
+      start_timer("polarisation self-energy");
+      if (topo.perturbed_solute().atoms().size() > 0) {
+        m_eds_outerloop.perturbed_self_energy_outerloop(topo, conf, sim, m_storage);
+      } else {
+        m_outerloop.self_energy_outerloop(topo, conf, sim, m_storage);
+      }
+      stop_timer("polarisation self-energy");
+    }
+
+    if (topo.eds_perturbed_solute().atoms().size() + topo.perturbed_solute().atoms().size() > 0) {
       start_timer("1,4 interaction");
       DEBUG(6, "\teds-perturbed 1,4 - interactions");
       m_eds_outerloop.eds_one_four_outerloop(topo, conf, sim, m_storage);
@@ -164,12 +197,17 @@ int interaction::Eds_Nonbonded_Set
     if (sim.param().nonbonded.rf_excluded) {
       start_timer("RF excluded");
       DEBUG(6, "\tRF excluded interactions and self term");
-      if (topo.eds_perturbed_solute().atoms().size() > 0) {
+      if (topo.eds_perturbed_solute().atoms().size() +  topo.perturbed_solute().atoms().size() > 0) {
         DEBUG(6, "\teds-perturbed RF excluded interactions and self term");
         m_eds_outerloop.eds_RF_excluded_outerloop(topo, conf, sim, m_storage);
       }
       stop_timer("RF excluded");
     }
+
+    DEBUG(6, "\tperturbed pairs");
+    start_timer("perturbed pairs");
+    m_perturbed_pair.perturbed_pair_outerloop(topo, conf, sim, m_storage);
+    stop_timer("perturbed pairs");
   }
   
   // add longrange for EDS 
@@ -219,6 +257,32 @@ int interaction::Eds_Nonbonded_Set
     DEBUG(6, "\t\t(set) eds_dvi " << m_longrange_storage.perturbed_energy_derivatives.eds_vi[i]);
 
   }
+
+  // Extended TI. Not compatible with EDS yet
+  if (sim.param().precalclam.nr_lambdas){
+    for(unsigned int i = 0; i < sim.param().precalclam.nr_lambdas; ++i){
+      for(unsigned int j = 0; j < lj_e_size; ++j){
+        for(unsigned int k = 0; k < lj_e_size; ++k){
+          m_storage.energies.A_lj_energy[i][j][k] +=
+            m_longrange_storage.energies.A_lj_energy[i][j][k];
+          m_storage.energies.B_lj_energy[i][j][k] +=
+            m_longrange_storage.energies.B_lj_energy[i][j][k];
+          m_storage.energies.A_crf_energy[i][j][k] +=
+            m_longrange_storage.energies.A_crf_energy[i][j][k];
+          m_storage.energies.B_crf_energy[i][j][k] +=
+            m_longrange_storage.energies.B_crf_energy[i][j][k];
+          m_storage.perturbed_energy_derivatives.A_lj_energy[i][j][k] +=
+            m_longrange_storage.perturbed_energy_derivatives.A_lj_energy[i][j][k];
+          m_storage.perturbed_energy_derivatives.B_lj_energy[i][j][k] +=
+            m_longrange_storage.perturbed_energy_derivatives.B_lj_energy[i][j][k];
+          m_storage.perturbed_energy_derivatives.A_crf_energy[i][j][k] +=
+            m_longrange_storage.perturbed_energy_derivatives.A_crf_energy[i][j][k];
+          m_storage.perturbed_energy_derivatives.B_crf_energy[i][j][k] +=
+            m_longrange_storage.perturbed_energy_derivatives.B_crf_energy[i][j][k];
+        }
+      }
+    }
+  } // Extended TI
   
   // add longrange virial
   if (sim.param().pcouple.virial){
@@ -313,8 +377,48 @@ int interaction::Eds_Nonbonded_Set::update_configuration
     }
     pe.self_energy[i] += m_storage.perturbed_energy_derivatives.self_energy[i];
   }
+
+  // Save extended TI derivatives
+  const unsigned int nr_lambdas = unsigned(m_storage.energies.A_lj_total.size());
+
+  for(unsigned int i=0; i < nr_lambdas; ++i) {
+    for(int j=0; j < ljs; ++j) {
+      for(int k=0; k < ljs; ++k) {
+        pe.A_lj_energy[i][j][k] +=
+            m_storage.perturbed_energy_derivatives.A_lj_energy[i][j][k];
+        pe.B_lj_energy[i][j][k] +=
+            m_storage.perturbed_energy_derivatives.B_lj_energy[i][j][k];
+        pe.A_crf_energy[i][j][k] +=
+            m_storage.perturbed_energy_derivatives.A_crf_energy[i][j][k];
+        pe.B_crf_energy[i][j][k] +=
+            m_storage.perturbed_energy_derivatives.B_crf_energy[i][j][k];
+      }
+    }
+  } 
   
   return 0;
+}
+
+
+/**
+ * calculate the hessian for a given atom.
+ * this will be VERY SLOW !
+ */
+int interaction::Eds_Nonbonded_Set
+::calculate_hessian(topology::Topology & topo,
+		    configuration::Configuration & conf,
+		    simulation::Simulation & sim,
+		    unsigned int atom_i, unsigned int atom_j,
+		    math::Matrix & hessian){
+  
+  if (topo.is_perturbed(atom_i) ||
+      topo.is_perturbed(atom_j)){
+    assert(false);
+    return -1;
+  }
+
+  return Nonbonded_Set::calculate_hessian(topo, conf, sim,
+					  atom_i, atom_j, hessian);
 }
 
 int interaction::Eds_Nonbonded_Set

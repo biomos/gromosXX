@@ -50,11 +50,6 @@ xxintnbint_HEADERS = nonbonded/interaction/nonbonded_parameter.h\
 	nonbonded/interaction/nonbonded_innerloop.cc\
 	nonbonded/interaction/solvent_innerloop.cc\
 	nonbonded/interaction/nonbonded_outerloop.h\
-	nonbonded/interaction/perturbed_nonbonded_term.h\
-	nonbonded/interaction/perturbed_nonbonded_term.cc\
-	nonbonded/interaction/perturbed_nonbonded_innerloop.h\
-	nonbonded/interaction/perturbed_nonbonded_innerloop.cc\
-	nonbonded/interaction/perturbed_nonbonded_outerloop.h\
 	nonbonded/interaction/perturbed_nonbonded_pair.h\
 	nonbonded/interaction/eds_nonbonded_term.h\
 	nonbonded/interaction/eds_nonbonded_term.cc\
@@ -63,7 +58,6 @@ xxintnbint_HEADERS = nonbonded/interaction/nonbonded_parameter.h\
 	nonbonded/interaction/eds_nonbonded_outerloop.h\
 	nonbonded/interaction/nonbonded_set_interface.h\
 	nonbonded/interaction/nonbonded_set.h\
-	nonbonded/interaction/perturbed_nonbonded_set.h\
 	nonbonded/interaction/eds_nonbonded_set.h\
 	nonbonded/interaction/nonbonded_interaction.h\
 	nonbonded/interaction/omp_nonbonded_interaction.h\
@@ -151,8 +145,6 @@ libgrointeraction_la_SOURCES = interaction.cc\
 	nonbonded/interaction/mpi_nonbonded_slave.cc\
 	nonbonded/interaction/nonbonded_set.cc\
 	nonbonded/interaction/nonbonded_outerloop.cc\
-	nonbonded/interaction/perturbed_nonbonded_set.cc\
-	nonbonded/interaction/perturbed_nonbonded_outerloop.cc\
 	nonbonded/interaction/perturbed_nonbonded_pair.cc\
 	nonbonded/interaction/latticesum.cc\
 	nonbonded/interaction/eds_nonbonded_set.cc\

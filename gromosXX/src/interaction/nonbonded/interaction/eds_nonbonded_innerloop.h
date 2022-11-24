@@ -35,7 +35,8 @@ namespace interaction
      configuration::Configuration & conf,
      unsigned int i, unsigned int j,
      Storage &storage,
-     Periodicity_type const & periodicity
+     Periodicity_type const & periodicity,
+    simulation::Simulation & sim
      );
 
     /**
@@ -45,7 +46,8 @@ namespace interaction
     void eds_one_four_interaction_innerloop
     (topology::Topology & topo, configuration::Configuration & conf,
      unsigned int i, unsigned int j,
-     Periodicity_type const & periodicity);
+     Periodicity_type const & periodicity,
+     simulation::Simulation & sim);
     
     /**
      * eds-perturbed RF interaction (solute).
@@ -55,7 +57,7 @@ namespace interaction
     ( topology::Topology & topo,
       configuration::Configuration & conf,
       std::map<unsigned int, topology::EDS_Perturbed_Atom>::const_iterator const & mit,
-      Periodicity_type const & periodicity);
+      Periodicity_type const & periodicity, simulation::Simulation & sim);
 
      /**
      * perturbed RF interaction (solute).
@@ -64,7 +66,7 @@ namespace interaction
     void perturbed_RF_excluded_interaction_innerloop
     (topology::Topology & topo, configuration::Configuration & conf,
         std::map<unsigned int, topology::Perturbed_Atom>::const_iterator const & mit,
-        Periodicity_type const & periodicity
+        Periodicity_type const & periodicity, simulation::Simulation & sim
     );
 
     /**
@@ -74,7 +76,30 @@ namespace interaction
     (topology::Topology & topo, 
     configuration::Configuration & conf, 
     int atom_i, const topology::excl_cont_t::value_type &exclusions, 
-    Periodicity_type const & periodicity);
+    Periodicity_type const & periodicity, simulation::Simulation & sim);
+
+    /**
+     * Calculation of the perturbed electric field (polarisation)
+     */
+    void perturbed_electric_field_innerloop
+    (
+     topology::Topology & topo,
+     configuration::Configuration & conf,
+     unsigned int i, unsigned int j, math::Vec &e_eli, math::Vec &e_elj,
+     Periodicity_type const & periodicity
+    );
+    
+    /**
+     * Calculation of the perturbed self energy (polarisation)
+     */
+    void perturbed_self_energy_innerloop
+    (
+     topology::Topology & topo,
+     configuration::Configuration & conf,
+     unsigned int i,
+     Storage & storage,
+     Periodicity_type const & periodicity
+    );
 
     
   protected:
