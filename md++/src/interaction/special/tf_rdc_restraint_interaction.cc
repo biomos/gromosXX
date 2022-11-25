@@ -426,7 +426,11 @@ int _magnetic_field_vector_sd
     // clear P_avg
     std::fill(conf.special().tfrdc_mfv.P_avg.begin(), conf.special().tfrdc_mfv.P_avg.end(), 0.0);
     std::fill(conf.special().tfrdc_mfv.dPdr_avg.begin(), conf.special().tfrdc_mfv.dPdr_avg.end(), math::Vec(0.0,0.0,0.0));
+
     for (int sdstep=0; sdstep < sim.param().tfrdc.nstsd; sdstep++) {
+      double mfv_energy = 0.0;
+
+      conf.current().energies.tfrdc_mfv_energy.assign(conf.current().energies.tfrdc_mfv_energy.size(), 0.0);
 
       // com translation removal
       if ((sdstep % conf.special().tfrdc_mfv.n_com_translation_removal) == 0) {
@@ -482,11 +486,17 @@ int _magnetic_field_vector_sd
           DEBUG(9, "dP_expavg/dP: " << dPavedP);
 
           force = term * interaction::D_c(it) * dPavedP * dPdr;  // [1 / (ps^2 nm)]
+          mfv_energy = 0.5 * K * term * term;
+          DEBUG(9, "Energy mfv [kJ/mol]: " << mfv_energy);
 
           if (sim.param().tfrdc.mode == simulation::tfrdc_restr_av_weighted) {
             force *= it->w;                                         // [kJ / (mol nm)]
           }
 
+          conf.current().energies.tfrdc_mfv_energy[topo.atom_energy_group()
+                    [it->v1.atom(0)]] += mfv_energy;
+          conf.current().energies.tfrdc_mfv_ave_energy[topo.atom_energy_group()
+                    [it->v1.atom(0)]] += mfv_energy;
           forces(0) -= K * force;              // [(kJ ps^2 / mol) * (1 / (ps^2 nm))] = [kJ / (mol nm)]
           forces(1) -= forces(0);              // [kJ / (mol nm)]
 
@@ -647,7 +657,10 @@ int _magnetic_field_vector_sd
       if (err) return err;
     } // loop sd steps
 
-    // average
+    // average          
+    for (unsigned int i=0; i < conf.current().energies.tfrdc_mfv_ave_energy.size(); i++) {
+      conf.current().energies.tfrdc_mfv_ave_energy[i]/=sim.param().tfrdc.nstsd;
+    }
     it = topo.tf_rdc_restraints().begin(),
           to = topo.tf_rdc_restraints().end();
     for(unsigned int l=0; it != to; ++it, ++l) {

@@ -3375,7 +3375,9 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
           << std::setw(18) << e.eds_vr_shift_phys << "\n"  // 49
           << std::setw(18) << e.gamd_DV_total << "\n"; // 50
           << std::setw(18) << e.tfrdc_total << "\n" // 51
-          << std::setw(18) << e.zaxisoribias_total << "\n"; // 52
+          << std::setw(18) << e.zaxisoribias_total << "\n" // 52
+          << std::setw(18) << e.tfrdc_mfv_total << "\n" // 53
+          << std::setw(18) << e.tfrdc_mfv_ave_total << "\n"; // 54
 
   os << "# baths\n";
   os << numbaths << "\n";
