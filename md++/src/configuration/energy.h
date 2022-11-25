@@ -193,6 +193,14 @@ namespace configuration
      */
     double tfrdc_total;
     /**
+     * total energy of the tensor-free rdc restraint (mfv) interaction
+     */
+    double tfrdc_mfv_total;
+    /**
+     * total energy of the tensor-free rdc restraint (mfv, average) interaction
+     */
+    double tfrdc_mfv_ave_total;
+    /**
      * total energy of the z-axis orientation bias interaction
      */
     double zaxisoribias_total;
@@ -468,6 +476,16 @@ namespace configuration
      * tensor-free RDC restraint energy term
      */
     std::vector<double> tfrdc_energy;
+    /**
+     * tensor-free magn. field vector RDC restraint energy term
+     * (value in last SD step)
+     */
+    std::vector<double> tfrdc_mfv_energy;
+    /**
+     * tensor-free magn. field vector RDC restraint energy term
+     * average over SD steps
+     */
+    std::vector<double> tfrdc_mfv_ave_energy;
     /**
      * z-axis orientation bias energy term
      */
