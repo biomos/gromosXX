@@ -76,8 +76,8 @@ void io::In_Tfrdcresspec::read_TFRDCCONV(topology::Topology &topo,
     os.precision(12);
     os.setf(std::ios_base::fixed, std::ios_base::floatfield);
 
-    DEBUG(10, scientific << setprecision(6) << setw(14) << "factorFreq: " << sim.param().tfrdc.factorFreq)
-    DEBUG(10, scientific << setprecision(6) << setw(14) << "factorGyr: " << sim.param().tfrdc.factorGyr)
+    DEBUG(10, std::scientific << std::setprecision(6) << std::setw(14) << "factorFreq: " << sim.param().tfrdc.factorFreq)
+    DEBUG(10, std::scientific << std::setprecision(6) << std::setw(14) << "factorGyr: " << sim.param().tfrdc.factorGyr)
 
     block.get_final_messages();
   } // if block empty or not there
@@ -129,22 +129,22 @@ void io::In_Tfrdcresspec::read_TFRDCRESSPEC(topology::Topology &topo,
 
     os.setf(std::ios_base::fixed, std::ios_base::floatfield);
 
-    DEBUG(10, setw(6) << "i"
-                      << setw(6) << "j"
-                      << setw(6) << "k"
-                      << setw(6) << "l"
-                      << setw(6) << "type"
-                      << setw(6) << "i"
-                      << setw(6) << "j"
-                      << setw(6) << "k"
-                      << setw(6) << "l"
-                      << setw(6) << "type"
-                      << setw(19) << "R0"
-                      << setw(12) << "G1 [e/u]"
-                      << setw(12) << "G2 [e/u]"
-                      << setw(8) << "D0 [1/ps]"
-                      << setw(8) << "DD0 [1/ps]"
-                      << setw(8) << "WTFRDC");
+    DEBUG(10, std::setw(6) << "i"
+                      << std::setw(6) << "j"
+                      << std::setw(6) << "k"
+                      << std::setw(6) << "l"
+                      << std::setw(6) << "type"
+                      << std::setw(6) << "i"
+                      << std::setw(6) << "j"
+                      << std::setw(6) << "k"
+                      << std::setw(6) << "l"
+                      << std::setw(6) << "type"
+                      << std::setw(19) << "R0"
+                      << std::setw(12) << "G1 [e/u]"
+                      << std::setw(12) << "G2 [e/u]"
+                      << std::setw(8) << "D0 [1/ps]"
+                      << std::setw(8) << "DD0 [1/ps]"
+                      << std::setw(8) << "WTFRDC");
 
     unsigned int num = block.numlines() - 3;
     for (unsigned int line_number = 0; line_number < num; line_number++)
@@ -227,22 +227,22 @@ void io::In_Tfrdcresspec::read_TFRDCRESSPEC(topology::Topology &topo,
         topo.tf_rdc_restraints().push_back
             (topology::tf_rdc_restraint_struct(v1, v2, r0, gyr1, gyr2, D0, DD0, weight));
 
-        DEBUG(10, setw(6) << atom1[0]
-                          << setw(6) << atom1[1]
-                          << setw(6) << atom1[2]
-                          << setw(6) << atom1[3]
-                          << setw(6) << type1
-                          << setw(6) << atom2[0]
-                          << setw(6) << atom2[1]
-                          << setw(6) << atom2[2]
-                          << setw(6) << atom2[3]
-                          << setw(6) << type2
-                          << setw(8) << r0
-                          << setprecision(4) << setw(12) << gyr1
-                          << setw(12) << gyr2
-                          << setprecision(14) << setw(19) << D0
-                          << setprecision(14) << setw(19) << DD0
-                          << setprecision(2) << setw(8) << weight);
+        DEBUG(10, std::setw(6) << atom1[0]
+                          << std::setw(6) << atom1[1]
+                          << std::setw(6) << atom1[2]
+                          << std::setw(6) << atom1[3]
+                          << std::setw(6) << type1
+                          << std::setw(6) << atom2[0]
+                          << std::setw(6) << atom2[1]
+                          << std::setw(6) << atom2[2]
+                          << std::setw(6) << atom2[3]
+                          << std::setw(6) << type2
+                          << std::setw(8) << r0
+                          << std::setprecision(4) << std::setw(12) << gyr1
+                          << std::setw(12) << gyr2
+                          << std::setprecision(14) << std::setw(19) << D0
+                          << std::setprecision(14) << std::setw(19) << DD0
+                          << std::setprecision(2) << std::setw(8) << weight);
       }
     } // for restraint-lines
     block.get_final_messages();
