@@ -265,7 +265,7 @@ void interaction::QM_Worker::save_output_gradients(std::ofstream& ifs
 
   // Write energy
   ifs.setf(std::ios::fixed, std::ios::floatfield);
-  ifs << std::setprecision(6);
+  ifs << std::setprecision(12);
   ifs << "ENERGY: " << qm_zone.QM_energy() * energy_to_qm << '\n';
 
   // Write QM atoms
