@@ -560,13 +560,24 @@ void io::In_QMMM::read(topology::Topology& topo,
   const simulation::qm_software_enum sw = sim.param().qmmm.software;
 
   /**
+   * Ghost
+   */
+  if (sw == simulation::qm_ghost) { // minimal parameters
+    this->read_units(sim, &sim.param().qmmm.ghost);
+    this->read_iac_elements(topo, &sim.param().qmmm.ghost);
+    if (sim.param().qmmm.write > 0) {
+      this->read_trajectory_files(sim, &sim.param().qmmm.ghost);
+    }
+  }
+  /**
    * MNDO
    */
-  if (sw == simulation::qm_mndo) {
+  else if (sw == simulation::qm_mndo) {
     this->read_units(sim, &sim.param().qmmm.mndo);
     this->read_iac_elements(topo, &sim.param().qmmm.mndo);
-    if (sim.param().qmmm.write > 0)
+    if (sim.param().qmmm.write > 0) {
       this->read_trajectory_files(sim, &sim.param().qmmm.mndo);
+    }
     { // MNDOBINARY
 
       DEBUG(15, "Reading MNDOBINARY");
@@ -625,8 +636,9 @@ void io::In_QMMM::read(topology::Topology& topo,
     this->read_units(sim, &sim.param().qmmm.turbomole);
     this->read_elements(topo, &sim.param().qmmm.turbomole);
     this->read_iac_elements(topo, &sim.param().qmmm.turbomole);
-    if (sim.param().qmmm.write > 0)
+    if (sim.param().qmmm.write > 0) {
       this->read_trajectory_files(sim, &sim.param().qmmm.turbomole);
+    }
 
     { // TMOLEFILES
       buffer = m_block["TMOLEFILES"];
@@ -689,8 +701,9 @@ void io::In_QMMM::read(topology::Topology& topo,
     this->read_units(sim, &sim.param().qmmm.dftb);
     this->read_elements(topo, &sim.param().qmmm.dftb);
     this->read_iac_elements(topo, &sim.param().qmmm.dftb);
-    if (sim.param().qmmm.write > 0)
+    if (sim.param().qmmm.write > 0) {
       this->read_trajectory_files(sim, &sim.param().qmmm.dftb);
+    }
     { // DFTBFILES
       buffer = m_block["DFTBFILES"];
       if (!buffer.size()) {
@@ -728,8 +741,9 @@ void io::In_QMMM::read(topology::Topology& topo,
   else if (sw == simulation::qm_mopac) {
     this->read_units(sim, &sim.param().qmmm.mopac);
     this->read_iac_elements(topo, &sim.param().qmmm.mopac);
-    if (sim.param().qmmm.write > 0)
+    if (sim.param().qmmm.write > 0) {
       this->read_trajectory_files(sim, &sim.param().qmmm.mopac);
+    }
     { // MOPACBINARY
 
       DEBUG(15, "Reading MOPACBINARY");
@@ -808,8 +822,9 @@ void io::In_QMMM::read(topology::Topology& topo,
   else if (sw == simulation::qm_gaussian) {
     this->read_units(sim, &sim.param().qmmm.gaussian);
     this->read_iac_elements(topo, &sim.param().qmmm.gaussian);
-    if (sim.param().qmmm.write > 0)
+    if (sim.param().qmmm.write > 0) {
       this->read_trajectory_files(sim, &sim.param().qmmm.gaussian);
+    }
     { // GAUBINARY
 
       DEBUG(15, "Reading GAUBINARY");
@@ -1023,8 +1038,9 @@ void io::In_QMMM::read(topology::Topology& topo,
     this->read_units(sim, &sim.param().qmmm.orca);
     this->read_elements(topo, &sim.param().qmmm.orca);
     this->read_iac_elements(topo, &sim.param().qmmm.orca);
-    if (sim.param().qmmm.write > 0)
+    if (sim.param().qmmm.write > 0) {
       this->read_trajectory_files(sim, &sim.param().qmmm.orca);
+    }
     { // ORCABINARY
 
       DEBUG(15, "Reading ORCABINARY");
@@ -1087,8 +1103,9 @@ void io::In_QMMM::read(topology::Topology& topo,
     this->read_units(sim, &sim.param().qmmm.xtb);
     this->read_iac_elements(topo, &sim.param().qmmm.xtb);
     this->read_elements(topo, &sim.param().qmmm.xtb);
-    if (sim.param().qmmm.write > 0)
+    if (sim.param().qmmm.write > 0) {
       this->read_trajectory_files(sim, &sim.param().qmmm.xtb);
+    }
     { // XTBOPTIONS
       buffer = m_block["XTBOPTIONS"];
 
