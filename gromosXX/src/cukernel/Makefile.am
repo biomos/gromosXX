@@ -6,9 +6,7 @@ NVCC_CFLAGS = @NVCC_CFLAGS@
 ## Tracking dependencies correctly as with CXX would need a macro for NVCC
 ## This would be too tedious and I hope that CMake will be handling this better
 ## For now, we just delete the intermediate files to always enforce recompilation
-## to avoid confusion after changes or reconfiguration
 .cu.o:
-	$(MKDIR_P) $(@D)
 	$(NVCC) $(NVCCFLAGS) -dc --compiler-options '$(NVCC_CFLAGS)' $< -o $@
 
 libgrocukernel.o: $(libgrocukernel_a_OBJECTS)
@@ -16,11 +14,16 @@ libgrocukernel.o: $(libgrocukernel_a_OBJECTS)
 
 libgrocukernel.a: $(libgrocukernel_a_OBJECTS) libgrocukernel.o
 	$(NVCC) $(NVCCFLAGS) --lib -o $@ $^
-	rm -f $^
+	rm -f $^ # Remove this line if you dont want to recompile every time
+
 
 noinst_LIBRARIES = libgrocukernel.a
 
-libgrocukernel_a_SOURCES =  cudaKernel.cu\
+libgrocukernel_a_SOURCES =  io.cu \
+                            pairlist.cu \
+                            interaction.cu \
+                            constraints.cu \
+                            cudaShake.cu \
 							lib/utils.cu
 
 bin_PROGRAMS =

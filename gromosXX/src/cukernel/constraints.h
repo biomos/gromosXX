@@ -17,7 +17,7 @@ namespace cudakernel {
 __global__ void kernel_CalcConstraints_Settle
 (
         double3 * new_pos, double3 * old_pos,
-        simulation_parameter * dev_params,
+        cudakernel::simulation_parameter * dev_params,
         int *shake_fail_mol
 );
 
