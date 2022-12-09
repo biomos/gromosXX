@@ -498,7 +498,7 @@ int _magnetic_field_vector_sd
           conf.current().energies.tfrdc_mfv_ave_energy[topo.atom_energy_group()
                     [it->v1.atom(0)]] += mfv_energy;
           forces(0) -= K * force;              // [(kJ ps^2 / mol) * (1 / (ps^2 nm))] = [kJ / (mol nm)]
-          forces(1) -= forces(0);              // [kJ / (mol nm)]
+          forces(1) += K * force;              // [kJ / (mol nm)]
 
           std::cout.precision(15); // useful for debugging
           DEBUG(7, "f_hi: " << math::v2s(forces(0)));
