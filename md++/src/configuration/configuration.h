@@ -812,6 +812,7 @@ namespace configuration {
         std::vector<double> P_avg;
         std::vector<math::Vec> dPdr_avg;
         std::vector<double> P_expavg;
+        std::vector<double> RDC_expavg;
 
         /**
          * stochastic integrals for the magnetic field vector

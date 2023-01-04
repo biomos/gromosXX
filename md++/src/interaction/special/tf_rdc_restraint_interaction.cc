@@ -452,8 +452,8 @@ int _magnetic_field_vector_sd
           double & P_expavg = conf.special().tfrdc_mfv.P_expavg[l];         // [-]
 
           // compute tensor-free RDC
-          double RDC_avg = interaction::D_c(it) * P_expavg;     // [1 / ps]
-          DEBUG(9, "RDC_avg (MFV): " << RDC_avg*pow(10,12));
+          conf.special().tfrdc_mfv.RDC_expavg[l] = interaction::D_c(it) * P_expavg;     // [1 / ps]
+          DEBUG(9, "RDC_avg (MFV): " << conf.special().tfrdc_mfv.RDC_expavg[l]*pow(10,12));
 
           // the not averaged RDC
           //double RDC = interaction::D_c(it)  * P;
@@ -464,10 +464,10 @@ int _magnetic_field_vector_sd
           DEBUG(15, "D_k^c [Hz]: " << interaction::D_c(it)*pow(10,12));
 
           double term = 0.0;
-          if (RDC_avg > it->D0 + it->dD0) {
-            term = RDC_avg - it->D0 - it->dD0;            // [1 / ps]
-          } else if (RDC_avg < it->D0 - it->dD0) {
-            term = RDC_avg - it->D0 + it->dD0;            // [1 / ps]
+          if (conf.special().tfrdc_mfv.RDC_expavg[l] > it->D0 + it->dD0) {
+            term = conf.special().tfrdc_mfv.RDC_expavg[l] - it->D0 - it->dD0;            // [1 / ps]
+          } else if (conf.special().tfrdc_mfv.RDC_expavg[l] < it->D0 - it->dD0) {
+            term = conf.special().tfrdc_mfv.RDC_expavg[l] - it->D0 + it->dD0;            // [1 / ps]
           } else {
             DEBUG(9, "TFRDCRES  : restraint fulfilled");
           }
@@ -856,6 +856,7 @@ int interaction::TF_RDC_Restraint_Interaction::init
   conf.special().tfrdc_mfv.P_expavg.resize(num_res);
   conf.special().tfrdc_mfv.P_avg.resize(num_res);
   conf.special().tfrdc_mfv.dPdr_avg.resize(num_res);
+  conf.special().tfrdc_mfv.RDC_expavg.resize(num_res);
 
   sim.param().tfrdc.bins_theta = _linspace(0.0,math::Pi,101.0);
   sim.param().tfrdc.bins_costheta.resize(sim.param().tfrdc.bins_theta.size(), 0.0);
