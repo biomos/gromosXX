@@ -3046,12 +3046,14 @@ void io::Out_Configuration::_print_tf_rdc_restraints(
 
   std::vector<double>::const_iterator RDC_avg_it = conf.special().tfrdc.RDC_avg.begin(),
           RDC_avg_to = conf.special().tfrdc.RDC_avg.end();
+  std::vector<double>::const_iterator RDC_avg_mfv_it = conf.special().tfrdc_mfv.RDC_expavg.begin(),
+          RDC_avg_mfv_to = conf.special().tfrdc_mfv.RDC_expavg.end();
   std::vector<double>::const_iterator e_it = conf.special().tfrdc.energy.begin();
   std::vector<double>::const_iterator RDC_it = conf.special().tfrdc.RDC.begin();
 
   os << "TFRDCRESDATA" << std::endl;
   os << std::setw(m_width) << conf.special().tfrdc.RDC_avg.size() << std::endl;
-  for (int i = 1; RDC_avg_it != RDC_avg_to; ++RDC_avg_it, ++RDC_it, ++e_it, ++i) {
+  for (int i = 1; RDC_avg_it != RDC_avg_to; ++RDC_avg_it, ++RDC_it, ++e_it, ++RDC_avg_mfv_it, ++i) {
     //os << std::setw(6) << i;
     os.precision(m_rdc_restraint_precision);
     os.setf(std::ios::fixed, std::ios::floatfield);
@@ -3059,7 +3061,8 @@ void io::Out_Configuration::_print_tf_rdc_restraints(
     os << " " << std::setw(m_width) << *RDC_it*1000000000000;
     os.setf(std::ios::scientific, std::ios::floatfield);
     os.precision(m_rdc_restraint_precision);
-    os << std::setw(m_width) << *e_it << std::endl;
+    os << std::setw(m_width) << *e_it;
+    os << std::setw(m_width) << *RDC_avg_mfv_it*1000000000000 << std::endl;
   }
   os << "END" << std::endl;
 }
