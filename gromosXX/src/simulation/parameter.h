@@ -3175,10 +3175,6 @@ namespace simulation
       * half-life of the offset parameters at the beginning of the run
       */
       unsigned int bsteps;
-      /**
-      * Convergence criteria of aeds_advanced_search & aeds_advanced_search2 (number of frames contributing per state)
-      */
-     unsigned int cc;
     } /** enveloping distribution sampling*/ eds;
 
  struct reeds_struct : public replica_struct

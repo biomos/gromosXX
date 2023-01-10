@@ -3976,7 +3976,6 @@ void io::In_Parameter::read_AEDS(simulation::Parameter & param,
   exampleblock << "# BMAX          : maximum energy barrier parameter\n";
   exampleblock << "# ASTEPS        : have-life in simulation steps of the exponential averaged energy difference between the end-states at the begining of the run\n";
   exampleblock << "# BSTEPS        : have-life in simulation steps of the exponential averaged energy difference between the end-states at the end of the run\n";
-  exampleblock << "# CC        :   : convergence criteria for the aeds_advanced_search and aeds_advanced_search2; number of frames contributing to each state\n";
   exampleblock << "#\n";
   exampleblock << "# AEDS\n";
   exampleblock << "  1\n";
@@ -3986,8 +3985,8 @@ void io::In_Parameter::read_AEDS(simulation::Parameter & param,
   exampleblock << "  10    -50\n";
   exampleblock << "# EIR\n";
   exampleblock << "  0   -5   -140   -560   -74\n";
-  exampleblock << "# NTIAEDSS  RESTREMIN  BMAXTYPE  BMAX  ASTEPS  BSTEPS  CC\n";
-  exampleblock << "  1         1          2         3     500     50000   100\n";
+  exampleblock << "# NTIAEDSS  RESTREMIN  BMAXTYPE  BMAX  ASTEPS  BSTEPS\n";
+  exampleblock << "  1         1          2         3     500     50000\n";
   exampleblock << "END\n";
 
 
@@ -4097,7 +4096,6 @@ void io::In_Parameter::read_AEDS(simulation::Parameter & param,
     block.get_next_parameter("BMAX", param.eds.setbmax, ">0", "");
     block.get_next_parameter("ASTEPS", param.eds.asteps, ">0", "");
     block.get_next_parameter("BSTEPS", param.eds.bsteps, ">0", "");
-    block.get_next_parameter("CC", param.eds.cc, ">0", "");
 
     param.eds.searchemax = 0.0;
     param.eds.emaxcounts = 0;

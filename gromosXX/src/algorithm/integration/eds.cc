@@ -345,12 +345,14 @@ int algorithm::EDS
       // check if simulation should finish earlier due to convergence of adaptive search reached
       if (sim.param().eds.form == simulation::aeds_advanced_search || sim.param().eds.form == simulation::aeds_advanced_search2){
         bool convergence = true;
+        /**
         for (unsigned int state = 0; state < numstates; state++) {
           if (sim.param().eds.framecounts[state] < sim.param().eds.cc){
             convergence = false;
             break;
           }
         }
+        **/
         if (convergence){
           // if convergence is reached finish simulation
           return E_AEDS_CONVERGENCE;
