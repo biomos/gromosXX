@@ -353,8 +353,8 @@ int algorithm::EDS
             convergence = false;
             break;
           }
-        **/
         }
+        **/
         if (convergence){
           // if convergence is reached finish simulation
           return E_AEDS_CONVERGENCE;
