@@ -55,7 +55,7 @@ namespace algorithm
     /**
      * Check for round trips
      **/
-    bool algorithm::EDS::check_round_trip(simulation::Simulation &sim);
+    bool check_round_trip(simulation::Simulation &sim);
 
    private:
      configuration::Configuration * conf2;
