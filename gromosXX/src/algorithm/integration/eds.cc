@@ -188,44 +188,54 @@ int algorithm::EDS
             }
           }
         }
+        // Check for round trips
+        // find the state we are in
+        unsigned int state = 0;
+        double min = eds_vi[0] - eir[0];
+        for (unsigned int is = 1; is < numstates; is++) {
+          if ((eds_vi[is] - eir[is]) < min) {
+            min = eds_vi[is] - eir[is];
+            state = is;
+          }
+        }
+        // mark the state we are in as visited
+        sim.param().eds.visitedstates[state] = true;
+        // monitor energy landscape
+        sim.param().eds.visitcounts[state]++;
+        bool round_trip = false;
+
+        if (check_round_trip(sim)){
+          round_trip = true;
+          DEBUG(7, "Number of round trips " << sim.param().eds.emaxcounts);
+        };
+
+        // Compute energy averages and fluctuations
+        double tempenergy = sim.param().eds.avgenergy[state] + (eds_vi[state] - sim.param().eds.avgenergy[state]) / double(sim.param().eds.visitcounts[state]);
+        sim.param().eds.eiravgenergy[state] += (eds_vi[state] - sim.param().eds.eiravgenergy[state] - eir[state]) / double(sim.param().eds.visitcounts[state]);
+        if (sim.param().eds.visitcounts[state] > 1) {
+          sim.param().eds.bigs[state] += (eds_vi[state] - tempenergy) * (eds_vi[state] - sim.param().eds.avgenergy[state]);
+          sim.param().eds.stdevenergy[state] = sqrt(sim.param().eds.bigs[state] / (double(sim.param().eds.visitcounts[state] - 1)));
+        }
+        sim.param().eds.avgenergy[state] = tempenergy;
+        tempenergy = sim.param().eds.eiravgenergy[0];
+        // find the state with the minimum average energy
+        int targetstate = 0;
+        for (unsigned int is = 1; is < numstates; is++) {
+          if (tempenergy >= sim.param().eds.eiravgenergy[is] && sim.param().eds.visitcounts[is] > 1) {
+            targetstate = is;
+            tempenergy = sim.param().eds.eiravgenergy[is];
+          }
+        }
+        double globminavg = sim.param().eds.eiravgenergy[targetstate];
+        double globminfluc = sim.param().eds.stdevenergy[targetstate];
+        // prevent rounding error in the first simulation step
+        if (sim.param().eds.initaedssearch == true) {
+          globminavg = sim.param().eds.emin;
+        }
+
 
         // EMAX and EMIN search
         if (sim.param().eds.form == simulation::aeds_search_emax_emin || sim.param().eds.form == simulation::aeds_search_all || sim.param().eds.form == simulation::aeds_advanced_search) {
-          // find the state we are in
-          unsigned int state = 0;
-          double min = eds_vi[0] - eir[0];
-          for (unsigned int is = 1; is < numstates; is++) {
-            if ((eds_vi[is] - eir[is]) < min) {
-              min = eds_vi[is] - eir[is];
-              state = is;
-            }
-          }
-          // mark the state we are in as visited
-          sim.param().eds.visitedstates[state] = true;
-          // monitor energy landscape
-          sim.param().eds.visitcounts[state]++;
-          double tempenergy = sim.param().eds.avgenergy[state] + (eds_vi[state] - sim.param().eds.avgenergy[state]) / double(sim.param().eds.visitcounts[state]);
-          sim.param().eds.eiravgenergy[state] += (eds_vi[state] - sim.param().eds.eiravgenergy[state] - eir[state]) / double(sim.param().eds.visitcounts[state]);
-          if (sim.param().eds.visitcounts[state] > 1) {
-            sim.param().eds.bigs[state] += (eds_vi[state] - tempenergy) * (eds_vi[state] - sim.param().eds.avgenergy[state]);
-            sim.param().eds.stdevenergy[state] = sqrt(sim.param().eds.bigs[state] / (double(sim.param().eds.visitcounts[state] - 1)));
-          }
-          sim.param().eds.avgenergy[state] = tempenergy;
-          tempenergy = sim.param().eds.eiravgenergy[0];
-          // find the state with the minimum average energy
-          int targetstate = 0;
-          for (unsigned int is = 1; is < numstates; is++) {
-            if (tempenergy >= sim.param().eds.eiravgenergy[is] && sim.param().eds.visitcounts[is] > 1) {
-              targetstate = is;
-              tempenergy = sim.param().eds.eiravgenergy[is];
-            }
-          }
-          double globminavg = sim.param().eds.eiravgenergy[targetstate];
-          double globminfluc = sim.param().eds.stdevenergy[targetstate];
-          // prevent rounding error in the first simulation step
-          if (sim.param().eds.initaedssearch == true) {
-            globminavg = sim.param().eds.emin;
-          }
           // EMAX
           // search for the highest transition energy between states
           if (state != sim.param().eds.oldstate && sim.param().eds.searchemax < conf.current().energies.eds_vmix) {
@@ -236,23 +246,13 @@ int algorithm::EDS
             sim.param().eds.emax = sim.param().eds.searchemax;
           }
           // check if we visited all the states; if so, stop updating searchemax, add it to Emax and reset
-          unsigned int statecount = 0;
-          for (unsigned int is = 0; is < numstates; is++) {
-            if (sim.param().eds.visitedstates[is] == true) {
-              statecount++;
-            }
-          }
-          if (statecount == sim.param().eds.visitedstates.size()) {
-            if (sim.param().eds.emaxcounts == 0) {
+          if (round_trip) {
+            if (sim.param().eds.emaxcounts == 1) {
               sim.param().eds.emax = 0.0;
               sim.param().eds.fullemin = true;
             }
-            sim.param().eds.emaxcounts += 1;
             sim.param().eds.emax += (sim.param().eds.searchemax - sim.param().eds.emax) / double(sim.param().eds.emaxcounts);
             sim.param().eds.searchemax = globminavg;
-            for (unsigned int is = 0; is < numstates; is++) {
-              sim.param().eds.visitedstates[is] = false;
-            }
           }
 
           // EMIN
@@ -319,9 +319,7 @@ int algorithm::EDS
               if ((eds_vi[state] - conf.current().energies.eds_vr)  <= (sim.param().eds.statefren[state] + (1/beta))){
                   sim.param().eds.framecounts[state] += 1;
               }
-              // check if we have seen enough frames for this state (convergence criteria) to update offsets
-              //if (sim.param().eds.framecounts[state] > sim.param().eds.cc) {
-              sim.param().eds.eir[state] -= prevalence/500;
+              sim.param().eds.eir[state] -= prevalence/(50 * (sim.param().eds.emaxcounts + 1));
               //}
             }
           } // loop over states
@@ -641,4 +639,23 @@ int algorithm::EDS
 //  return 0;
 //}
 
-
+bool algorithm::EDS::check_round_trip(simulation::Simulation &sim)
+ {
+    unsigned int statecount = 0;
+    bool round_trip = false;
+    const unsigned int numstates = sim.param().eds.numstates;
+    for (unsigned int is = 0; is < numstates; is++) {
+      if (sim.param().eds.visitedstates[is] == true) {
+        statecount++;
+      }
+    }
+    if (statecount == sim.param().eds.visitedstates.size()) {
+      round_trip = true;
+      sim.param().eds.emaxcounts += 1;
+      // reset round trip array
+      for (unsigned int is = 0; is < numstates; is++) {
+        sim.param().eds.visitedstates[is] = false;
+      }
+    }
+    return round_trip;
+ }

@@ -1,6 +1,6 @@
 /* 
  * File:   eds.h
- * Author: haniels
+ * Author: haniels, Jan, Oriol, Benedict, Drazen
  *
  * Created on August 2, 2011, 1:41 PM
  */
@@ -52,6 +52,10 @@ namespace algorithm
 	os << "\tEDS\nEND\n";
       return 0;
     };
+    /**
+     * Check for round trips
+     **/
+    bool algorithm::EDS::check_round_trip(simulation::Simulation &sim);
 
    private:
      configuration::Configuration * conf2;
