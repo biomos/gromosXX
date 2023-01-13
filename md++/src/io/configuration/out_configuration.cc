@@ -3577,6 +3577,9 @@ static void _print_volumepressurered_helper(std::ostream &os,
 
   }
 
+  os << "# mfv temperature\n";
+  os << std::setw(18) << 2 * e.tfrdc_mfv_kinetic_energy / (math::k_Boltzmann * 2) << "\n"; // 2 DOFs with distance constraint and COM translation removal
+
   os << "# volume\n";
   os << std::setw(18) << math::volume(b, t) << "\n";
   //rotate the volume and pressure tensors into the original Cartesian Coordinate system
