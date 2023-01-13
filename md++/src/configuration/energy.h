@@ -483,6 +483,10 @@ namespace configuration
      */
     std::vector<double> tfrdc_mfv_ave_energy;
     /**
+     * tensor-free magn. field vector kinetic energy
+     */
+    double tfrdc_mfv_kinetic_energy;
+    /**
      * z-axis orientation bias energy term
      */
     std::vector<double> zaxisoribias_energy;

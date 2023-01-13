@@ -661,6 +661,10 @@ int _magnetic_field_vector_sd
     for (unsigned int i=0; i < conf.current().energies.tfrdc_mfv_ave_energy.size(); i++) {
       conf.current().energies.tfrdc_mfv_ave_energy[i]/=sim.param().tfrdc.nstsd;
     }
+
+    // kinetic energy
+    conf.current().energies.tfrdc_mfv_kinetic_energy = 0.5*conf.special().tfrdc_mfv.mass*(abs2(conf.special().tfrdc_mfv.vel(0))+abs2(conf.special().tfrdc_mfv.vel(1)));
+
     it = topo.tf_rdc_restraints().begin(),
           to = topo.tf_rdc_restraints().end();
     for(unsigned int l=0; it != to; ++it, ++l) {
