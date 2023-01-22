@@ -86,7 +86,7 @@ int algorithm::GAMD
         configuration::Configuration & conf,
         simulation::Simulation &sim)
  {
-  m_timer.start();
+  m_timer.start(sim);
   DEBUG(5, "GAMD: algorithm init");
   configuration::Energy ener = conf.current().energies;
   std::vector<int> used_chargegroups;
