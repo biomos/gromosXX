@@ -3225,7 +3225,6 @@ namespace simulation
       unsigned int bsteps;
     } /** enveloping distribution sampling*/ eds;
 
-<<<<<<< HEAD
   /**
    * @struct GAMD_struct
    * ORIOL_GAMD
@@ -3370,8 +3369,6 @@ namespace simulation
     int stepsdone;  
   } /** Gaussian accelerated md */ gamd;  
    
-=======
->>>>>>> ccb4b909035c522c48ca23348687b74c64bb7fe6
  struct reeds_struct : public replica_struct
     {
       /**
