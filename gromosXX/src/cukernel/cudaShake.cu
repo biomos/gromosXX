@@ -12,11 +12,13 @@
 
 #include "macros.h"
 
-#ifndef DNDEBUG
-#define DEBUG(x) std::cout << x << std::endl;
-#else
-#define DEBUG(x)
-#endif
+#include "../util/debug.h"
+
+#undef MODULE
+#undef SUBMODULE
+#define MODULE interaction
+#define SUBMODULE cuda
+
 
 /**
  * Initialize the GPU and create a gpu_status
@@ -38,7 +40,7 @@ extern "C" gpu_status * cudaInitGPU_Shake(
   }
 
   // let's first query the device properties and print them out
-  DEBUG("Set device properties")
+  DEBUG(4,"Set device properties")
   cudaDeviceProp devProp;
   cudaGetDeviceProperties(&devProp, device_number);
   unsigned flags = 0;
@@ -61,11 +63,11 @@ extern "C" gpu_status * cudaInitGPU_Shake(
   gpu_stat = (gpu_status *) malloc(sizeof (gpu_status));
 
   // Assign the numbers of gpus and the gpu_id to the struct
-  DEBUG("GPU_SHAKE : " <<gpu_id << ". GPU of " << num_gpus)
+  DEBUG(4,"GPU_SHAKE : " <<gpu_id << ". GPU of " << num_gpus)
   gpu_stat->host_parameter.num_of_gpus = num_gpus;
   gpu_stat->host_parameter.gpu_id = gpu_id;
 
-  DEBUG("Number of solvent mol: " << num_solvent_mol)
+  DEBUG(4,"Number of solvent mol: " << num_solvent_mol)
   gpu_stat->host_parameter.num_atoms = num_atoms;
   gpu_stat->host_parameter.num_solvent_mol = num_solvent_mol;
   
@@ -81,7 +83,7 @@ extern "C" gpu_status * cudaInitGPU_Shake(
 
   cudaMalloc((void**) & DEV_CONST_LENGTH2, sizeof (VECTOR));
   cudaMemcpy(DEV_CONST_LENGTH2, &length2, sizeof (VECTOR), cudaMemcpyHostToDevice);
-  DEBUG("Allocated space for const_length2");
+  DEBUG(10,"Allocated space for const_length2");
 
   MATRIX factorm;
 
@@ -108,28 +110,28 @@ extern "C" gpu_status * cudaInitGPU_Shake(
   cudaMalloc((void**) & DEV_TOL, sizeof (FL_PT_NUM));
   FL_PT_NUM tolf = (FL_PT_NUM) tol;
   cudaMemcpy(DEV_TOL, &tolf, sizeof (FL_PT_NUM), cudaMemcpyHostToDevice);
-  DEBUG("Allocated space for tol");
+  DEBUG(10,"Allocated space for tol");
   
 
   cudaMalloc((void**) & gpu_stat->dev_shake_fail_mol, sizeof (int));
   cudaMemset(gpu_stat->dev_shake_fail_mol, -1, sizeof (int));
-  DEBUG("Allocated space for shake fail molecule");
+  DEBUG(10,"Allocated space for shake fail molecule");
 
   // This index denotes how many molecules will be treated
   // cudaMalloc((void**) & gpu_stat->dev_highest_index, sizeof(unsigned int));
 
   cudaMalloc((void**) & gpu_stat->dev_parameter, sizeof (simulation_parameter));
   cudaMemcpy(gpu_stat->dev_parameter, &gpu_stat->host_parameter, sizeof (simulation_parameter), cudaMemcpyHostToDevice);
-  DEBUG("Allocated space for parameters");
+  DEBUG(10,"Allocated space for parameters");
   cudaMalloc((void**) & DEV_NEW_POS, (num_atoms / num_gpus + 3) * sizeof (VECTOR));
   cudaMemset(DEV_NEW_POS, 0, (num_atoms / num_gpus + 3) * sizeof (VECTOR));
   cudaMalloc((void**) & DEV_OLD_POS, (num_atoms / num_gpus + 3) * sizeof (VECTOR));
   cudaMemset(DEV_OLD_POS, 0, (num_atoms / num_gpus + 3) * sizeof (VECTOR));
-  DEBUG("Allocated space for positions");
+  DEBUG(10,"Allocated space for positions");
 
   *error += checkError("after allocating Memory for the old and new positions");
 
-  DEBUG("Return gpu_stat")
+  DEBUG(10,"Return gpu_stat")
   return gpu_stat;
 }
 
@@ -151,22 +153,22 @@ extern "C" int cudaGPU_Shake(double *newpos, double *oldpos, int & shake_fail_mo
   else {
     last = (num_solvent_mol / num_gpus) * 3 * (gpu_id + 1);
   }
-  DEBUG("GPU : " << gpu_id <<  " First index : " << first << ", last : " << last << " of " << num_atoms)
+  DEBUG(15,"GPU : " << gpu_id <<  " First index : " << first << ", last : " << last << " of " << num_atoms)
 
   // copy the new positions
-  DEBUG("Copy the new positions")
+  DEBUG(10,"Copy the new positions")
   double3 * positions = (double3*) newpos;
   for (unsigned int i = first, j = 0; i < last; i++, j++) {
     HOST_NEW_POS[j].x = (FL_PT_NUM) positions[i].x;
     //if (gpu_id==1)
-    DEBUG("Old Pos : i " << i << " x : " << HOST_NEW_POS[j].x)
+    DEBUG(15,"Old Pos : i " << i << " x : " << HOST_NEW_POS[j].x)
     HOST_NEW_POS[j].y = (FL_PT_NUM) positions[i].y;
     HOST_NEW_POS[j].z = (FL_PT_NUM) positions[i].z;
   }
 
 
   // Copy the old positions
-  DEBUG("Copy the old positions")
+  DEBUG(10,"Copy the old positions")
   double3 * old_positions = (double3*) oldpos;
   for (unsigned int i = first, j = 0; i < last; i++, j++) {
     HOST_OLD_POS[j].x = (FL_PT_NUM) old_positions[i].x;
@@ -175,7 +177,7 @@ extern "C" int cudaGPU_Shake(double *newpos, double *oldpos, int & shake_fail_mo
   }
 
   // Copy the old and new positions to the GPU
-  DEBUG("Copy the positions to the GPU")
+  DEBUG(10,"Copy the positions to the GPU")
   cudaMemcpy(DEV_NEW_POS, HOST_NEW_POS, (num_atoms / num_gpus + 3) * sizeof (VECTOR), cudaMemcpyHostToDevice);
   cudaMemcpy(DEV_OLD_POS, HOST_OLD_POS, (num_atoms / num_gpus + 3) * sizeof (VECTOR), cudaMemcpyHostToDevice);
   checkError("after copying the positions");
@@ -183,16 +185,16 @@ extern "C" int cudaGPU_Shake(double *newpos, double *oldpos, int & shake_fail_mo
   // Copy the highest index of the molecule
 
   const unsigned int highest_index =  (last - first) / 3;
-  DEBUG("Higest molecule index : " << highest_index)
+  DEBUG(10,"Higest molecule index : " << highest_index)
   //cudaMemset(gpu_stat->dev_highest_index,, sizeof(unsigned int));
 
   // Dimensions
   unsigned int numBlocks = (unsigned int) (num_solvent_mol / num_gpus + 1) / NUM_THREADS_PER_BLOCK_SHAKE + 1;
   dim3 dimGrid(numBlocks, 1);
   dim3 dimBlock(NUM_THREADS_PER_BLOCK_SHAKE, 1);
-  DEBUG("numBlocks: " << numBlocks)
+  DEBUG(10,"numBlocks: " << numBlocks)
 
-  DEBUG("Starting kernel")
+  DEBUG(7,"Starting kernel")
   kernel_Calc_Shake <<<dimGrid, dimBlock >>>
           (DEV_NEW_POS, DEV_OLD_POS, gpu_stat->dev_parameter, gpu_stat->dev_shake_fail_mol,
           DEV_TOL, DEV_MASS, DEV_CONST_LENGTH2, DEV_FACTOR, highest_index);
@@ -200,21 +202,21 @@ extern "C" int cudaGPU_Shake(double *newpos, double *oldpos, int & shake_fail_mo
 
 
   // Copy the new positions from the GPU
-  DEBUG("Get the new positions")
+  DEBUG(10,"Get the new positions")
   cudaMemcpy(HOST_NEW_POS, DEV_NEW_POS, (num_atoms / num_gpus + 3) * sizeof (VECTOR), cudaMemcpyDeviceToHost);
   checkError("after copying the new positions");
 
   for (unsigned int i = first, j = 0; i < last; ++i, j++) {
     positions[i].x = (double) HOST_NEW_POS[j].x;
     //if(gpu_id == 1)
-    DEBUG("GPU : " << gpu_id << " New Pos i: " << i << " x: " << positions[i].x)
+    DEBUG(15,"GPU : " << gpu_id << " New Pos i: " << i << " x: " << positions[i].x)
     positions[i].y = (double) HOST_NEW_POS[j].y;
     positions[i].z = (double) HOST_NEW_POS[j].z;
   }
 
   // Check, if everything went well
   cudaMemcpy(&shake_fail_mol, gpu_stat->dev_shake_fail_mol, sizeof (int), cudaMemcpyDeviceToHost);
-  DEBUG("GPU : " << gpu_id << " Get fail molecule, which is " << shake_fail_mol)
+  DEBUG(7,"GPU : " << gpu_id << " Get fail molecule, which is " << shake_fail_mol)
   if (shake_fail_mol > 0){
       shake_fail_mol = shake_fail_mol + first / 3;
       return 1;

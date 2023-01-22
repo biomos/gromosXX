@@ -14,6 +14,7 @@
 #include "sd.h"
 #include "exclusions.h"
 #include "../interaction/interaction_types.h"
+#include "../util/virtual_atom.h"
 
 namespace simulation
 {
@@ -56,6 +57,16 @@ namespace topology
      * integer atom code accessor.
      */
     int iac(unsigned int const i)const {assert(i < m_iac.size()); return m_iac[i];}
+
+    /**
+     * integer atom code accessor
+     */
+    std::vector<int> &iac() {return m_iac;}
+
+    /**
+     * integer atom code const accessor
+     */
+    std::vector<int> const & iac()const {return m_iac;}
 
     /**
      * masses accessor
@@ -225,6 +236,11 @@ namespace topology
     EDS_Perturbed_Solute & eds_perturbed_solute() {return m_eds_perturbed_solute;}
 
     /**
+     * virtual solute accessor.
+     */
+    util::Virtual_Atoms_Group & virtual_atoms_group() {return m_virtual_atoms_group;}
+
+    /**
      * const solute accessor.
      */
     Solute const & solute()const{return m_solute;}
@@ -238,6 +254,11 @@ namespace topology
      * const eds-perturbed solute accessor.
      */
     EDS_Perturbed_Solute const & eds_perturbed_solute()const{return m_eds_perturbed_solute;}
+
+    /**
+     * virtual solute accessor.
+     */
+    util::Virtual_Atoms_Group const & virtual_atoms_group()const{return m_virtual_atoms_group;}
 
     /**
      * number of atom types.
@@ -406,6 +427,13 @@ namespace topology
     std::vector<interaction::improper_dihedral_type_struct> const & impdihedral_types() const {return m_impdihedral_types;}
 
     /**
+     * virtual atom types
+     */
+    std::vector<interaction::virtual_atom_type_struct> & virtual_atom_types() {return m_virtual_atom_types;}
+    std::vector<interaction::virtual_atom_type_struct> const & virtual_atom_types() const {return m_virtual_atom_types;}
+	
+
+    /**
      * all exclusions for atom i. Exclusions, 1,4 interactions and Lennard-Jones exceptions
      */
     excl_cont_t::value_type & all_exclusion(unsigned int const i){
@@ -420,6 +448,39 @@ namespace topology
       assert(i < m_all_exclusion.size());
       return m_all_exclusion[i];
     }
+
+    /**
+     * QM all exclusions for atom i. QM Exclusions, QM 1,4 interactions and QM Lennard-Jones exceptions
+     */
+    excl_cont_t & qm_all_exclusion(){
+      return m_qm_all_exclusion;
+    }
+
+    /**
+     * QM all exclusions for atom i. QM Exclusions, QM 1,4 interactions and QM Lennard-Jones exceptions
+     */
+    excl_cont_t::value_type & qm_all_exclusion(unsigned int const i){
+      assert(i < m_qm_all_exclusion.size());
+      return m_qm_all_exclusion[i];
+    }
+
+    /**
+     * const QM all exclusions for atom i. QM Exclusions, QM 1,4 interactions and QM Lennard-Jones exceptions
+     */
+    excl_cont_t::value_type const & qm_all_exclusion(unsigned int const i)const{
+      assert(i < m_qm_all_exclusion.size());
+      return m_qm_all_exclusion[i];
+    }
+
+    /**
+     * update all exclusions - updates all_exclusion container after modification of exclusions, 1,4-pairs and LJ exceptions
+     */
+    void update_all_exclusion();
+
+    /**
+     * update chargegroup exclusion from atomic exclusion
+     */
+    void update_chargegroup_exclusion();
 
     /**
      * chargegroup exclusions for chargegroup i.
@@ -468,6 +529,38 @@ namespace topology
      * 1,4 pairs
      */
     excl_cont_t & one_four_pair(){return m_one_four_pair;}
+
+    /**
+     * QM exclusions for atom i.
+     */
+    excl_cont_t::value_type & qm_exclusion(unsigned int const i){
+      assert(i < m_qm_exclusion.size());
+      return m_qm_exclusion[i];
+    }
+    /**
+     * const QM exclusions for atom i.
+     */
+    excl_cont_t::value_type const & qm_exclusion(unsigned int const i)const{
+      assert(i < m_qm_exclusion.size());
+      return m_qm_exclusion[i];
+    }
+
+    /**
+     * QM exclusions
+     */
+    excl_cont_t & qm_exclusion() {return m_qm_exclusion;}
+
+    /**
+     * QM 1,4 pairs of atom i.
+     */
+    excl_cont_t::value_type & qm_one_four_pair(unsigned int const i){
+      assert(i < m_qm_one_four_pair.size());
+      return m_qm_one_four_pair[i];
+    }
+    /**
+     * QM 1,4 pairs
+     */
+    excl_cont_t & qm_one_four_pair(){return m_qm_one_four_pair;}
 
     /**
      * chargegroup accessor.
@@ -635,7 +728,8 @@ namespace topology
     void calculate_constraint_dof(simulation::Multibath & mb,
 				  bool rottrans_constraints,
                                   bool position_constraints,
-                                  bool dih_constraints)const;
+                                  bool dih_constraints,
+                                  bool ang_constraints)const;
 
     /**
      * check state
@@ -761,6 +855,111 @@ namespace topology
      * is the atom coarse-grained?
      */
     std::vector<bool> & is_coarse_grained() { return m_is_coarse_grained;}
+
+    /**
+     * is the atom QM? - accessor
+     */
+    unsigned is_qm(const unsigned i)const {
+      assert(i < m_is_qm.size());
+      return m_is_qm[i];
+    }
+    
+    /**
+     * is the atom QM? - mutator
+     */
+    unsigned& is_qm(const unsigned i) {
+      assert(i < m_is_qm.size());
+      return m_is_qm[i];
+    }
+
+    /**
+     * is the atom in the QM buffer? - accessor
+     */
+    int is_qm_buffer(const unsigned i)const {
+      assert(i < m_is_qm_buffer.size());
+      return m_is_qm_buffer[i];
+    }
+    
+    /**
+     * is the atom in the QM buffer? - mutator
+     */
+    int& is_qm_buffer(const unsigned i) {
+      assert(i < m_is_qm_buffer.size());
+      return m_is_qm_buffer[i];
+    }
+
+    /**
+     * is the atom in the adaptive QM buffer? - accessor
+     */
+    bool is_adaptive_qm_buffer(const unsigned i)const {
+      assert(i < m_is_qm_buffer.size());
+      return m_is_qm_buffer[i] > 0;
+    }
+
+    /**
+     * QM delta charge accessor
+     */
+    math::SArray &qm_delta_charge() {return m_qm_delta_charge;}
+
+    /**
+     * QM delta charge const accessor
+     */
+    math::SArray const & qm_delta_charge()const {return m_qm_delta_charge;}
+
+    /**
+     * QM delta charge mutator
+     */
+    double &qm_delta_charge(unsigned i) { return m_qm_delta_charge[i]; }
+
+    /**
+     * QM delta charge accessor
+     */
+    double qm_delta_charge(unsigned i) const { return m_qm_delta_charge[i]; }
+
+    /**
+     * QM atomic number accessor
+     */
+    const unsigned& qm_atomic_number(unsigned i) const {
+      assert(i < m_qm_atomic_number.size());
+      return m_qm_atomic_number[i]; 
+    }
+
+    /**
+     * QM atomic number mutator
+     */
+    unsigned& qm_atomic_number(unsigned i) {
+      assert(i < m_qm_atomic_number.size());
+      return m_qm_atomic_number[i]; 
+    }
+    
+    /**
+     * QM atomic number vector mutator
+     */
+    const std::vector<unsigned>& qm_atomic_number() const {
+      return m_qm_atomic_number; 
+    }
+
+    /**
+     * QM atomic number mutator
+     */
+    std::vector<unsigned> & qm_atomic_number() { return m_qm_atomic_number; }
+
+    /**
+     * QM to MM link accessor
+     */
+    const std::set< std::pair<unsigned,unsigned> > & qmmm_link() const { return m_qmmm_link; }
+
+    /**
+     * QM to MM link mutator
+     */
+    std::set< std::pair<unsigned,unsigned> > & qmmm_link() { return m_qmmm_link; }
+
+    /**
+     * if atoms are linked
+     */
+    bool are_linked(unsigned qmi, unsigned mmi) {
+      return m_qmmm_link.count(std::make_pair( qmi, mmi ));
+    }
 
     /**
      * recalculate lambda dependent properties.
@@ -1163,6 +1362,35 @@ namespace topology
     }
 
     /**
+     * const angle restraints accessor.
+     */
+    std::vector<angle_restraint_struct> const & angle_restraints()const
+    {
+      return m_angle_restraint;
+    }
+    /**
+     * angle restraints accessor.
+     */
+    std::vector<angle_restraint_struct> & angle_restraints()
+    {
+      return m_angle_restraint;
+    }
+    /**
+     * const perturbed angle restraints accessor.
+     */
+    std::vector<perturbed_angle_restraint_struct> const & perturbed_angle_restraints()const
+    {
+      return m_perturbed_angle_restraint;
+    }
+    /**
+     * perturbed angle restraints accessor.
+     */
+    std::vector<perturbed_angle_restraint_struct> & perturbed_angle_restraints()
+    {
+      return m_perturbed_angle_restraint;
+    }
+
+    /**
      * const dihedral restraints accessor.
      */
     std::vector<dihedral_restraint_struct> const & dihedral_restraints()const
@@ -1350,22 +1578,16 @@ namespace topology
      * const accessor to LJ exceptions
      */
     const std::vector<lj_exception_struct> & lj_exceptions() const { return m_lj_exceptions;}
+
     /**
-     * accessor to QM zone
+     * accessor to QM LJ exceptions
      */
-    std::set<qm_atom_struct> & qm_zone() { return m_qm_zone; }
+    std::vector<lj_exception_struct> & qm_lj_exceptions() { return m_qm_lj_exceptions;}
     /**
-     * const accessor to QM zone
+     * const accessor to QM LJ exceptions
      */
-    const std::set<qm_atom_struct> & qm_zone() const { return m_qm_zone; }
-    /**
-     * check whether an atom is in the QM zone
-     * @param i index of the atom to check
-     * @return true if in QM zone, false otherwise
-     */
-    bool in_qm_zone(unsigned int i) const {
-      return m_qm_zone.count(i);
-    }
+    const std::vector<lj_exception_struct> & qm_lj_exceptions() const { return m_qm_lj_exceptions;}
+
   private:
     /**
      * the number of atom types
@@ -1398,6 +1620,11 @@ namespace topology
      * the eds-perturbed solute
      */
     EDS_Perturbed_Solute m_eds_perturbed_solute;
+
+    /**
+     * the virtual atoms
+     */
+    util::Virtual_Atoms_Group m_virtual_atoms_group;
 
     /**
      * is the atom perturbed?
@@ -1558,6 +1785,11 @@ namespace topology
     std::vector<interaction::improper_dihedral_type_struct> m_impdihedral_types;
 
     /**
+     * store all available virtual atom types
+     */
+    std::vector<interaction::virtual_atom_type_struct> m_virtual_atom_types;
+
+    /**
      * energy groups.
      */
     std::vector<unsigned int> m_energy_group;
@@ -1670,6 +1902,14 @@ namespace topology
      * eds distance restraints
      */
     std::vector<eds_distance_restraint_struct> m_eds_distance_restraint;
+    /**
+     * angle restraints
+     */
+    std::vector<angle_restraint_struct> m_angle_restraint;
+    /**
+     * perturbed angle restraints
+     */
+    std::vector<perturbed_angle_restraint_struct> m_perturbed_angle_restraint;
     /**
      * dihedral restraints
      */
@@ -1828,10 +2068,51 @@ namespace topology
      * LJ exceptions
      */
     std::vector<lj_exception_struct> m_lj_exceptions;
+
     /**
-     * the QM zone
+     * Is the atom QM
      */
-    std::set<qm_atom_struct> m_qm_zone;
+    std::vector<unsigned> m_is_qm;
+
+    /**
+     * Is the QM buffer (1: yes, 0: no, -1: temporarily disabled [adaptive buffer with cutoff])
+     */
+    std::vector<int> m_is_qm_buffer;
+
+    /**
+     * Delta-charges to be added to interactions between QM/buffer and MM atoms
+     */
+    math::SArray m_qm_delta_charge;
+
+    /**
+     * QM atomic number
+     */
+    std::vector<unsigned> m_qm_atomic_number;
+
+    /**
+     * links of QM to MM
+     */
+    std::set< std::pair<unsigned,unsigned> > m_qmmm_link;
+
+    /**
+     * the QMMM LJ exclusions.
+     */
+    excl_cont_t m_qm_exclusion;
+
+    /**
+     * the QMMM 1-4 interactions.
+     */
+    excl_cont_t m_qm_one_four_pair;
+     
+    /**
+     * QMMM exclusions and 1-4 interactions.
+     */
+    excl_cont_t m_qm_all_exclusion;
+     
+     /**
+     * QMMM LJ exceptions
+     */
+    std::vector<lj_exception_struct> m_qm_lj_exceptions;
 
   }; // topology
 

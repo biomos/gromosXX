@@ -25,7 +25,9 @@ namespace interaction
     /**
      * initialize constants
      */
-    void init(simulation::Simulation const &sim);
+    void init(simulation::Simulation const &sim
+            , simulation::interaction_func_enum int_func
+               = simulation::default_func);
 
     /**
      * calculate the force and energy of an atom pair.
@@ -35,7 +37,8 @@ namespace interaction
 			    double q,
 			    double & force, double & e_lj,
 			    double & e_crf,
-                            unsigned int eps = 0);
+                            unsigned int eps = 0,
+                            const double coulomb_scaling = 1);
 
     /**
      * calculate the force and energy of an atom pair.

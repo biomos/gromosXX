@@ -157,7 +157,7 @@ int interaction::create_g96_nonbonded
 
   }
 
-  Pairlist_Algorithm * pa;
+  Pairlist_Algorithm * pa = nullptr;
 #ifdef HAVE_HOOMD
   // some sanity checks
   #ifdef OMP
@@ -191,14 +191,14 @@ int interaction::create_g96_nonbonded
   Nonbonded_Interaction * ni;
 
   if (sim.mpi){
-    int rank = MPI::COMM_WORLD.Get_rank();
-    if (rank == 0)
+    if (sim.mpiControl().threadID == sim.mpiControl().masterID)
       ni = new MPI_Nonbonded_Master(pa);
     else
       ni = new MPI_Nonbonded_Slave(pa);
   }
-  else
+  else{
     ni = new Nonbonded_Interaction(pa);
+  }
 #else
   Nonbonded_Interaction * ni = new Nonbonded_Interaction(pa);
 #endif
@@ -213,7 +213,10 @@ int interaction::create_g96_nonbonded
       sim.param().force.interaction_function ==
       simulation::pol_off_lj_crf_func ||
       sim.param().force.interaction_function ==
-      simulation::lj_ls_func    )
+      simulation::lj_ls_func || 
+      sim.param().force.interaction_function ==
+      simulation::lj_func
+          )
     it.read_lj_parameter(ni->parameter().lj_parameter());
   // and coarse-grained parameter (MARTINI model)
   if (sim.param().force.interaction_function ==
@@ -248,6 +251,14 @@ int interaction::create_g96_nonbonded
                        "interactions.", "topology", io::message::error);
     }
   }
+
+  // scaling factor for electrostatic 1,4-interactions
+  if (sim.param().amber.amber) {
+    ni->parameter().set_coulomb_scaling(sim.param().amber.coulomb_scaling);
+  } else {
+    ni->parameter().set_coulomb_scaling(1.0);
+  }
+
   ff.push_back(ni);
 
   if (!quiet){

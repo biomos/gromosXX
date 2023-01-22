@@ -16,3 +16,21 @@ INSTALL
 
 # test folder:
 /TEST
+
+# hidden folders:
+/.*/
+
+#building artefacts
+build*
+.dirstamp
+**.deps
+
+#making results:
+**.o
+**.lo
+**.la
+**.log
+**/Makefile
+
+#IDE-Folder:
+**.idea

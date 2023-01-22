@@ -64,8 +64,8 @@ io::In_Localelevspec::read(topology::Topology& topo,
 
     DEBUG(10, "reading in LOCALELEVSPEC data");
 
-    int id;
-    unsigned int n, i, j, k, l, t;
+    int id = 0;
+    unsigned int n = 0, i = 0, j = 0, k = 0, l = 0, t = 0;
     for(n=0; it != to; ++n, ++it){
       DEBUG(11, "\tnr " << n);
 

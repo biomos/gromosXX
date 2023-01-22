@@ -18,17 +18,12 @@
 #include "../../io/ifp.h"
 
 #include "create_forcefield.h"
-#include "../../interaction/special/qmmm/qm_storage.h"
-#include "../../interaction/special/qmmm/mm_atom.h"
-#include "../../interaction/special/qmmm_interaction.h"
 
 #include "../../interaction/bonded/create_bonded.h"
 #include "../../interaction/nonbonded/create_nonbonded.h"
+#include "../../interaction/qmmm/qmmm_interaction.h"
 #include "../../interaction/special/create_special.h"
 
-#ifdef XXMPI
-#include <mpi.h>
-#endif
 
 #undef MODULE
 #undef SUBMODULE
@@ -52,6 +47,19 @@ int interaction::create_g96_forcefield(interaction::Forcefield & ff,
   DEBUG(8, "creating the bonded terms");
   if (create_g96_bonded(ff, topo, sim.param(), it, os, quiet))
     return 1;
+	
+  /** create QMMM_Interaction - nonbonded can recover the pointer from ff
+   * This has to be here, because QMMM can provide charges to calculate 
+   * the nonbonded interactions in mechanical embedding
+   * MPI will be split inside QMMM interaction
+   */
+
+  if (sim.param().qmmm.qmmm) {
+    DEBUG(8, "creating the QMMM nonbonded terms");
+    QMMM_Interaction * qmmm = new QMMM_Interaction;
+    it.read_lj_parameter(qmmm->parameter().lj_parameter());
+    ff.push_back(qmmm);
+  }
 
   // the nonbonded
   DEBUG(8, "creating the nonbonded terms");
@@ -69,19 +77,6 @@ int interaction::create_g96_forcefield(interaction::Forcefield & ff,
   DEBUG(8, "creating the special terms");
   if(create_special(ff, topo, sim.param(), os, quiet))
     return 1;
-  
-  DEBUG(8, "creating the QM/MM terms");
-  bool add_qmmm = true;
-#ifdef XXMPI
-  if (sim.mpi && MPI::COMM_WORLD.Get_rank() != 0) {
-    add_qmmm = false;
-  }
-#endif  
-  if (sim.param().qmmm.qmmm != simulation::qmmm_off && add_qmmm) {
-    interaction::QMMM_Interaction * qmmm = new interaction::QMMM_Interaction;
-    ff.push_back(qmmm);
-    sim.param().qmmm.interaction = qmmm;
-  }
 
   if (!quiet){
   
@@ -157,6 +152,9 @@ int interaction::create_g96_forcefield(interaction::Forcefield & ff,
 		    break;
 		  case simulation::disres_lambda :
 		    os << "distance restraint :";
+		    break;
+		  case simulation::angres_lambda :
+		    os << "angle restraint :";
 		    break;
 		  case simulation::dihres_lambda :
 		    os << "dihedral restraint :";

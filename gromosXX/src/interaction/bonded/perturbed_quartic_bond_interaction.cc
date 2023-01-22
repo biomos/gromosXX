@@ -50,7 +50,7 @@ int _calculate_perturbed_qbond_interactions
   math::VArray &force = conf.current().force;
   math::Vec v, f;
 
-  double e, e_lambda;
+  double e = 0.0, e_lambda = 0.0;
 
   math::Periodicity<B> periodicity(conf.current().box);
 
@@ -189,7 +189,7 @@ int interaction::Perturbed_Quartic_Bond_Interaction
 			 configuration::Configuration &conf,
 			 simulation::Simulation &sim)
 {
-  m_timer.start();
+  m_timer.start(sim);
   
   SPLIT_VIRIAL_BOUNDARY(_calculate_perturbed_qbond_interactions,
 			topo, conf, sim, m_interaction);

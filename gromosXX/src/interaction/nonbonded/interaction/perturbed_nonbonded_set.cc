@@ -121,7 +121,7 @@ int interaction::Perturbed_Nonbonded_Set
 
     // calculate explicit polarisation of the molecules
     DEBUG(6, "\texplicit polarisation");
-    start_timer("explicit polarisation");
+    start_subtimer("explicit polarisation");
     if (topo.perturbed_solute().atoms().size() > 0) {
       m_perturbed_outerloop.perturbed_electric_field_outerloop(topo, conf, sim,
                                        m_pairlist, m_perturbed_pairlist,
@@ -130,11 +130,11 @@ int interaction::Perturbed_Nonbonded_Set
       m_outerloop.electric_field_outerloop(topo, conf, sim, m_pairlist, 
 				       m_storage, m_longrange_storage, m_rank);
     }
-    stop_timer("explicit polarisation");
+    stop_subtimer("explicit polarisation");
   }  
 
   if (pairlist_update){
-    start_timer("longrange");
+    start_subtimer("longrange");
     m_outerloop.lj_crf_outerloop(topo, conf, sim,
             m_pairlist.solute_long, m_pairlist.solvent_long,
             m_longrange_storage, true /*longrange!*/, m_pairlist_alg.timer(),
@@ -145,12 +145,12 @@ int interaction::Perturbed_Nonbonded_Set
               m_perturbed_pairlist.solute_long,
               m_longrange_storage);
     }
-    stop_timer("longrange");
+    stop_subtimer("longrange");
   }
 
   // calculate forces / energies
   DEBUG(6, "\tshort range interactions");
-  start_timer("shortrange");
+  start_subtimer("shortrange");
 
   m_outerloop.lj_crf_outerloop(topo, conf, sim,
           m_pairlist.solute_short, m_pairlist.solvent_short,
@@ -164,60 +164,60 @@ int interaction::Perturbed_Nonbonded_Set
 						     m_storage);
   }
 
-  stop_timer("shortrange");
+  stop_subtimer("shortrange");
 
-  start_timer("1,4 interaction");
+  start_subtimer("1,4 interaction");
   m_outerloop.one_four_outerloop(topo, conf, sim, m_storage, m_rank, m_num_threads);
-  stop_timer("1,4 interaction");
-  start_timer("LJ exceptions");
+  stop_subtimer("1,4 interaction");
+  start_subtimer("LJ exceptions");
   m_outerloop.lj_exception_outerloop(topo, conf, sim, m_storage,  m_rank, m_num_threads);
-  stop_timer("LJ exceptions");
+  stop_subtimer("LJ exceptions");
 
   if (sim.param().nonbonded.rf_excluded) {
-    start_timer("RF excluded");
+    start_subtimer("RF excluded");
     DEBUG(6, "\tRF excluded interactions and self term");
     m_outerloop.RF_excluded_outerloop(topo, conf, sim, m_storage,  m_rank, m_num_threads);
-    stop_timer("RF excluded");
+    stop_subtimer("RF excluded");
   }
   
   // add 1,4 - interactions
   if (m_rank == 0){
     if (sim.param().polarise.cos) {
-      start_timer("polarisation self-energy");
+      start_subtimer("polarisation self-energy");
       if (topo.perturbed_solute().atoms().size()) {
         m_perturbed_outerloop.perturbed_self_energy_outerloop(topo, conf, sim, m_storage);
       } else {
         m_outerloop.self_energy_outerloop(topo, conf, sim, m_storage);
       }
-      stop_timer("polarisation self-energy");
+      stop_subtimer("polarisation self-energy");
     } 
     
     DEBUG(6, "\t1,4 - interactions");
     if (topo.perturbed_solute().atoms().size() > 0){
-      start_timer("1,4 interaction");
+      start_subtimer("1,4 interaction");
       DEBUG(6, "\tperturbed 1,4 - interactions");
       m_perturbed_outerloop.perturbed_one_four_outerloop(topo, conf, sim, 
 							 m_storage);
-      stop_timer("1,4 interaction");
+      stop_subtimer("1,4 interaction");
     }
    
     
     // possibly do the RF contributions due to excluded atoms
     if(sim.param().nonbonded.rf_excluded){
-      start_timer("RF excluded");
+      start_subtimer("RF excluded");
       DEBUG(6, "\tRF excluded interactions and self term");
       if (topo.perturbed_solute().atoms().size() > 0){
 	DEBUG(6, "\tperturbed RF excluded interactions and self term");
 	m_perturbed_outerloop.perturbed_RF_excluded_outerloop(topo, conf, sim,
 							      m_storage);
       }
-      stop_timer("RF excluded");
+      stop_subtimer("RF excluded");
     }
 
     DEBUG(6, "\tperturbed pairs");
-    start_timer("perturbed pairs");
+    start_subtimer("perturbed pairs");
     m_perturbed_pair.perturbed_pair_outerloop(topo, conf, sim, m_storage);
-    stop_timer("perturbed pairs");
+    stop_subtimer("perturbed pairs");
   }
   
   // add long-range force

@@ -41,8 +41,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop_2
       DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));
 
       lj_crf_interaction_fast(dist2, lj.c6, lj.c12,
-              topo.charge(i) *
-              topo.charge(j),
+              charge_product(topo, i, j),
               f, e_lj, e_crf);
       DEBUG(12, "f: " << f);
       DEBUG(12, "e_lj: " << e_lj);
@@ -72,8 +71,8 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop
   DEBUG(8, "\tpair\t" << i << "\t" << j);
 
   math::Vec r, force;
-  double f;
-  double e_lj, e_crf;
+  double f = 0.0;
+  double e_lj = 0.0, e_crf = 0.0;
   //ORIOL_GAMD
   unsigned int gamdi = topo.gamd_accel_group(i);
   unsigned int gamdj = topo.gamd_accel_group(j);
@@ -101,8 +100,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop
       DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));
 
       lj_crf_interaction(r, lj.c6, lj.c12,
-              topo.charge(i) *
-              topo.charge(j),
+              charge_product(topo, i, j),
               f, e_lj, e_crf);
       DEBUG(12, "f: " << f);
       DEBUG(12, "e_lj: " << e_lj);
@@ -159,6 +157,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop
       }
       break;
     }
+
     case simulation::cggromos_func:
     {
       DEBUG(11, "\tiac(i) = " << topo.iac(i) << " iac(j) = " << topo.iac(j));
@@ -374,6 +373,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop
         }
       break;
     }
+    case simulation::lj_func :
     case simulation::lj_ls_func : {
       const lj_parameter_struct & lj =
               m_param->lj_parameter(topo.iac(i),
@@ -447,6 +447,73 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop
   }
 #endif
 }
+
+template<typename t_nonbonded_spec>
+inline void
+interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_innerloop
+(
+        topology::Topology & topo,
+        configuration::Configuration & conf,
+        unsigned int i,
+        unsigned int j,
+        Storage & storage,
+        math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity
+        ) {
+  DEBUG(8, "\tpair\t" << i << "\t" << j);
+
+  math::Vec r, force;
+  double f = 0.0;
+  double e_lj = 0.0;
+
+  periodicity.nearest_image(conf.current().pos(i),
+          conf.current().pos(j), r);
+  DEBUG(10, "\tni i " << conf.current().pos(i)(0) << " / "
+          << conf.current().pos(i)(1) << " / "
+          << conf.current().pos(i)(2));
+  DEBUG(10, "\tni j " << conf.current().pos(j)(0) << " / "
+          << conf.current().pos(j)(1) << " / "
+          << conf.current().pos(j)(2));
+  DEBUG(10, "\tni r " << r(0) << " / " << r(1) << " / " << r(2));
+
+  const lj_parameter_struct & lj =
+          m_param->lj_parameter(topo.iac(i),
+          topo.iac(j));
+
+  DEBUG(11, "\tlj-parameter c6=" << lj.c6 << " c12=" << lj.c12);
+
+  lj_interaction(r, lj.c6, lj.c12, f, e_lj);
+
+  DEBUG(10, "\t\tatomic virial");
+  for (int a = 0; a < 3; ++a) {
+  force(a) = f * r(a);
+  storage.force(i)(a) += force(a);
+  storage.force(j)(a) -= force(a);
+
+  for (int b = 0; b < 3; ++b)
+          storage.virial_tensor(b, a) += r(b) * force(a);
+  }
+
+// energy
+  assert(storage.energies.lj_energy.size() >
+          topo.atom_energy_group(i));
+  assert(storage.energies.lj_energy.size() >
+          topo.atom_energy_group(j));
+
+  DEBUG(11, "\tenergy group i " << topo.atom_energy_group(i)
+          << " j " << topo.atom_energy_group(j));
+
+  const unsigned int eg_i = topo.atom_energy_group(i);
+  const unsigned int eg_j = topo.atom_energy_group(j);
+  storage.energies.lj_energy[eg_i][eg_j] += e_lj;
+
+#ifdef XXFORCEGROUPS
+  if (storage.force_groups.size()) {
+    storage.force_groups[eg_i][eg_j][i] += force;
+    storage.force_groups[eg_i][eg_j][j] -= force;
+  }
+#endif
+}
+
 
 template<typename t_nonbonded_spec>
 inline void
@@ -695,7 +762,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::calculate_sasa_forces
   math::VArray & pos = conf.current().pos;
   math::VArray & force = conf.current().force;
   math::Vec rij(0.0);
-  double ddf_vol;
+  double ddf_vol = 0.0;
 
   // get sasa parameters for atom j
   const topology::sasa_parameter_struct & sasa_param_j = topo.sasa_parameter(j);
@@ -911,7 +978,7 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::one_four_interaction_in
   DEBUG(8, "\t1,4-pair\t" << i << "\t" << j);
 
   math::Vec r;
-  double f, e_lj, e_crf = 0.0, e_ls = 0.0;
+  double f = 0.0, e_lj = 0.0, e_crf = 0.0, e_ls = 0.0;
   //ORIOL_GAMD
   unsigned int gamdi = topo.gamd_accel_group(i);
   unsigned int gamdj = topo.gamd_accel_group(j);
@@ -936,11 +1003,12 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::one_four_interaction_in
 
       DEBUG(11, "\tlj-parameter cs6=" << lj.cs6 << " cs12=" << lj.cs12);
       DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));
+      DEBUG(11, "\tcoulomb scaling = " << m_param->get_coulomb_scaling());
 
       lj_crf_interaction(r, lj.cs6, lj.cs12,
-              topo.charge()(i) *
-              topo.charge()(j),
-              f, e_lj, e_crf);
+              charge_product(topo, i, j),
+              f, e_lj, e_crf, 0,
+              m_param->get_coulomb_scaling());
 
       DEBUG(10, "\t\tatomic virial");
       //ORIOL_GAMD
@@ -979,7 +1047,7 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::one_four_interaction_in
 
         DEBUG(11, "\tlj-parameter cs6=" << lj.cs6 << " cs12=" << lj.cs12);
         DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));
-
+        
         lj_crf_interaction(r, lj.cs6, lj.cs12,
                 topo.charge()(i) *
                 topo.charge()(j),
@@ -1106,12 +1174,33 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::one_four_interaction_in
         }
         break;
     }
+    case simulation::lj_func : {
+      const lj_parameter_struct & lj =
+              m_param->lj_parameter(topo.iac(i),
+              topo.iac(j));
+
+      DEBUG(11, "\tlj-parameter cs6=" << lj.cs6 << " cs12=" << lj.cs12);
+      lj_interaction(r, lj.cs6, lj.cs12, f, e_lj);
+
+      e_crf = 0.0;
+
+      DEBUG(10, "\t\tatomic virial");
+      for (int a = 0; a < 3; ++a) {
+        const double term = f * r(a);
+        storage.force(i)(a) += term;
+        storage.force(j)(a) -= term;
+
+        for (int b = 0; b < 3; ++b)
+          storage.virial_tensor(b, a) += r(b) * term;
+      }
+      break;
+    }
     case simulation::lj_ls_func : {
       const lj_parameter_struct & lj =
               m_param->lj_parameter(topo.iac(i),
               topo.iac(j));
 
-      DEBUG(11, "\tlj-parameter c6=" << lj.c6 << " c12=" << lj.c12);
+      DEBUG(11, "\tlj-parameter cs6=" << lj.cs6 << " cs12=" << lj.cs12);
  //     lj_interaction(r, lj.cs6, lj.cs12, f, e_lj);
 
 //  call lj_ls!!!
@@ -1176,7 +1265,7 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_exception_innerloop
   DEBUG(8, "\tLJ exception\t" << ljex.i << "\t" << ljex.j);
 
   math::Vec r;
-  double f, e_lj, e_crf = 0.0, e_ls = 0.0;
+  double f = 0.0, e_lj = 0.0, e_crf = 0.0, e_ls = 0.0;
 
   unsigned int i = ljex.i, j = ljex.j;
   //ORIOL_GAMD
@@ -1363,6 +1452,7 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_exception_innerloop
         }
         break;
     }
+    case simulation::lj_func : 
     case simulation::lj_ls_func : {
       DEBUG(11, "\tlj-parameter c6=" << ljex.c6 << " c12=" << ljex.c12);
       lj_interaction(r, ljex.c6, ljex.c12, f, e_lj);
@@ -1418,7 +1508,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
         Storage & storage,
         math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity) {
   math::Vec r, f;
-  double e_crf;
+  double e_crf = 0.0;
 
   math::VArray &pos = conf.current().pos;
   math::VArray &force = storage.force;
@@ -1431,10 +1521,15 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
   r = 0;
 
   switch (t_nonbonded_spec::interaction_func) {
+
     case simulation::lj_crf_func:
     {
       // this will only contribute in the energy, the force should be zero.
-      rf_interaction(r, topo.charge()(i) * topo.charge()(i), f, e_crf);
+      double q = topo.charge()(i);
+      if (t_nonbonded_spec::charge_type == simulation::qm_buffer_charge) {
+        q += topo.qm_delta_charge(i);
+      }
+      rf_interaction(r, q * q, f, e_crf);
       storage.energies.crf_energy[topo.atom_energy_group(i)]
               [topo.atom_energy_group(i)] += 0.5 * e_crf;
       // ORIOL_GAMD
@@ -1462,7 +1557,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
                 << pos(*it)(1) << " / "
                 << pos(*it)(2));
         DEBUG(10, "\tni r " << r(0) << " / " << r(1) << " / " << r(2));
-        rf_interaction(r, topo.charge()(i) * topo.charge()(*it), f, e_crf);
+        rf_interaction(r, charge_product(topo, i, *it), f, e_crf);
 
         force(i) += f;
         force(*it) -= f;
@@ -1760,7 +1855,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_solvent_interaction_inner
         math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity
         ) {
   math::Vec r;
-  double e_crf;
+  double e_crf = 0.0;
 
   math::VArray &pos = conf.current().pos;
 
@@ -1790,7 +1885,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_solvent_interaction_inner
 
           // for solvent, we don't calculate internal forces (rigid molecules)
           // and the distance independent parts should go to zero
-          e_crf = -topo.charge()(*at_it) * topo.charge()(*at2_it) *
+          e_crf = -charge_product(topo, *at_it, *at2_it) *
                   math::four_pi_eps_i * crf_2cut3i() * abs2(r);
           DEBUG(15, "\tqi = " << topo.charge()(*at_it) << ", qj = " << topo.charge()(*at2_it));
           DEBUG(15, "\tcrf_2cut3i = " << crf_2cut3i() << ", abs2(r) = " << abs2(r));
@@ -2084,7 +2179,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::self_energy_innerloop
         ) {
   DEBUG(8, "\tself energy of molecule i " << i);
 
-  double self_e;
+  double self_e = 0.0;
   const double e_i2 = math::abs2(storage.electric_field(i));
 
   if (t_nonbonded_spec::pol_damping)
@@ -2115,8 +2210,8 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_ls_real_innerloop
   DEBUG(8, "\tpair\t" << i << "\t" << j);
 
   math::Vec r;
-  double f;
-  double e_lj, e_ls;
+  double f = 0.0;
+  double e_lj = 0.0, e_ls = 0.0;
   //ORIOL_GAMD
   unsigned int gamdi = topo.gamd_accel_group(i);
   unsigned int gamdj = topo.gamd_accel_group(j);
@@ -2195,8 +2290,8 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::ls_real_excluded_innerloop
   DEBUG(8, "\tpair\t" << i << "\t" << j);
 
   math::Vec r;
-  double f;
-  double e_ls;
+  double f = 0.0;
+  double e_ls = 0.0;
   //ORIOL_GAMD
   unsigned int gamdi = topo.gamd_accel_group(i);
   unsigned int gamdj = topo.gamd_accel_group(j);
@@ -2249,4 +2344,28 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::ls_real_excluded_innerloop
           [topo.atom_energy_group(j)] += e_ls;
 
    storage.energies.gamd_potential_total[igroup] += e_ls;
+}
+
+/**
+ * calculate the product of charges based on the charge type
+ * this function implements variable charges for the QM buffer region
+ */
+template <typename t_nonbonded_spec>
+double interaction::Nonbonded_Innerloop<t_nonbonded_spec>::charge_product(
+        topology::Topology const & topo, 
+        unsigned i, unsigned j) {
+  double q = topo.charge(i) * topo.charge(j);
+  switch (t_nonbonded_spec::charge_type) {
+    case simulation::mm_charge : break;
+    case simulation::qm_buffer_charge : {
+      if (topo.is_adaptive_qm_buffer(i) != topo.is_adaptive_qm_buffer(j)) {
+        DEBUG(11, "\tqm_delta_charge i=" << topo.qm_delta_charge(i) << " j=" << topo.qm_delta_charge(j));
+        q +=  topo.charge(i) * topo.qm_delta_charge(j)
+            + topo.charge(j) * topo.qm_delta_charge(i);
+      }
+      break;
+    }
+    default : io::messages.add("Charge type not implemented.", "nonbonded_innerloop", io::message::warning);
+  }
+  return q;
 }

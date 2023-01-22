@@ -3,16 +3,16 @@
  * input parameters
  */
 
+#ifdef XXMPI
+    #include <mpi.h>
+#endif
+
 #ifndef INCLUDED_PARAMETER_H
 #define INCLUDED_PARAMETER_H
 
-// forward declarations
-namespace interaction {
-  class QMMM_Interaction;
-}
-
 namespace simulation
 {
+
   /**
    * @enum constr_enum
    * constraints enumeration.
@@ -105,6 +105,24 @@ namespace simulation
       B_overall_on = 1,
   };
   /**
+   * @enum dfunct_enum
+   * dfunct enum, useful for sampling reaction transition states
+   */
+  enum dfunct_enum {
+    /**
+     * dfunct off
+     */
+    dfunct_off, 
+    /**
+     * restrain substitution type geometry
+     */
+    dfunct_substitution,
+    /**
+     * restrain cycloaddition type geometry
+     */
+    dfunct_cycloaddition
+  };
+  /**
    * @enum special_loop_enum
    * special solvent loop
    */
@@ -126,7 +144,7 @@ namespace simulation
      */
     special_loop_spc_table = 3
   };
-  
+
   /**
    * @enum special_loop_solvent_enum
    * holds the solvent used in a special loop
@@ -141,7 +159,7 @@ namespace simulation
      */
     sls_spc
   };
-  
+
   /**
    * @enum special_loop_acceleration_enum
    * holds the acceleration method
@@ -168,7 +186,7 @@ namespace simulation
      */
     sla_cuda
   };
-  
+
 #ifdef HAVE_HOOMD
   /**
    * @enum hoomd
@@ -229,7 +247,7 @@ namespace simulation
     /**
      * biquadratic with zero weight of the average term
      */
-    jvalue_restr_biq_zero_weight = 2            
+    jvalue_restr_biq_zero_weight = 2
   };
 
     /**
@@ -293,12 +311,12 @@ namespace simulation
      */
     rdc_restr_biq_weighted = -4
   };
-  
+
   /**
    * @enum rdc_mode_enum
    * Method of updating RDC magnetic field vectors enumeration
    */
-  
+
   enum rdc_mode_enum {
       /**
        * Energy minimisation
@@ -313,12 +331,12 @@ namespace simulation
        */
       rdc_md = 2
   };
-  
+
   /**
    * @enum rdc_type_enum
    * Type of magnetic field representation
    */
-  
+
   enum rdc_type_enum {
       /**
        * Magnetic field vectors
@@ -332,7 +350,30 @@ namespace simulation
        * Spherical harmonics
        */
       rdc_sh = 2
-  };  
+  };
+
+  /**
+ * @enum angle_restr_enum
+ * Angle restraints enumeration
+ */
+  enum angle_restr_enum{
+      /**
+       * no restraints
+       */
+      angle_restr_off = 0,
+      /**
+       * instantaneous restraints
+       */
+      angle_restr_inst = 1,
+      /**
+       * instantaneous restraints, weighted
+       */
+      angle_restr_inst_weighted = 2,
+      /**
+       * angle constraints
+       */
+      angle_constr = 3
+  };
 
 
   /**
@@ -384,12 +425,14 @@ namespace simulation
   enum interaction_func_enum{
     /** lj_crf_function */ lj_crf_func,
     /** lj_ls_function */ lj_ls_func,
+    /** lj_function */ lj_func,
     /** pol_lj_crf_function */ pol_lj_crf_func,
     /** pol_off_lj_crf_function */ pol_off_lj_crf_func,
     /** cgrain_function (MARTINI)*/ cgrain_func,
-    /** cgrain_function (GROMOS) */ cggromos_func
+    /** cgrain_function (GROMOS) */ cggromos_func,
+    /** default */ default_func
   };
-  
+
   /**
    * @enum electrostatic_method_enum
    * which electrostatic method to use
@@ -400,7 +443,7 @@ namespace simulation
     /** particle-particle-particle mesh (P3M) */ el_p3m,
     /** smooth particle mesh Ewald */ el_spme
   };
-  
+
   /**
    * @enum ls_a2_method_enum
    * how to calculate the A2 term for lattice sum self energy
@@ -412,7 +455,7 @@ namespace simulation
     /** a2_tilde exact (ewald or mesh+coords), a2 numerical */ ls_a2t_exact_a2_numerical,
     /** a2_tilde averaged from mesh only, a2 numerical */ ls_a2t_ave_a2_numerical
   };
-  
+
   /**
    * @enum efield_site_enum
    * determines on which site the electric field is calculated
@@ -421,11 +464,26 @@ namespace simulation
     /**
      * electric field at the atom
      */
-    ef_atom = 0, 
+    ef_atom = 0,
     /**
      * electric field at the carge-on-spring
      */
     ef_cos = 1
+  };
+
+  /**
+   * @enum charge_type_enum
+   * use standard MM charges or special charge of QM buffer atoms
+   */
+  enum charge_type_enum {
+    /**
+     * standard MM charge
+     */
+    mm_charge = 0, 
+    /**
+     * special charge calculation for QM buffer atoms
+     */
+    qm_buffer_charge = 1
   };
   
   /**
@@ -436,7 +494,7 @@ namespace simulation
     /**
      * g96 algorithm
      */
-    random_g96 = 0, 
+    random_g96 = 0,
     /**
      * GSL library
      */
@@ -533,7 +591,7 @@ namespace simulation
      * @f$ V_R = - \left(\beta s \right)^{-1} \ln \sum_i e^{-\beta s \left(V_i-E_i^R\right)} @f$
      */
     single_s = 1,
-    /** 
+    /**
      * pairwise s parameters i.e.
      * @f$ V_R = - \beta ^{-1} \ln \left\{
        \left[
@@ -652,7 +710,7 @@ namespace simulation
      * improper interaction
      */
     improper_lambda = 3,
-    /** 
+    /**
      * Van der Waals interaction
      */
     lj_lambda = 4,
@@ -675,7 +733,7 @@ namespace simulation
     /**
      * distancefield restraint interaction
      */
-    disfield_lambda = 9, 
+    disfield_lambda = 9,
     /**
      * dihedral restraint interaction
      */
@@ -685,11 +743,16 @@ namespace simulation
      */
     mass_lambda = 11,
     /**
+     * angle restraint interaction
+     */
+    angres_lambda = 12,
+
+    /**
      * one extra interaction for looping
      */
-    last_interaction_lambda=12
+    last_interaction_lambda=13
   };
-  
+
   /**
    * @enum nemd_enum
    * non-equilibrium molecular dynamics
@@ -719,7 +782,7 @@ namespace simulation
      */
     localelev_on = 1
   };
-  
+
   /**
    * @enum bsleus_enum
    * do B&S-LEUS or not
@@ -756,28 +819,169 @@ namespace simulation
    */
   enum qmmm_enum {
     /**
-     * don't apply QM/MM
+     * disable QM/MM
      */
     qmmm_off = 0,
     /**
-     * apply QM/MM
+     * enable QM/MM - mechanical embedding
+     * QM charges are used for nonbonded QM-MM interaction.
+     * QM atoms do not see any MM atoms.
      */
-    qmmm_on = 1
+    qmmm_mechanical = 1,
+    /**
+     * enable QM/MM - electrostatic embedding
+     * Nonbonded QM-MM interaction is modelled on QM level using
+     * MM atoms as point charges. Only LJ interactions are
+     * calculated clasically.
+     */
+    qmmm_electrostatic = 2,
+    /**
+     * enable QM/MM - polarisable embedding
+     * Nonbonded QM-MM interaction is modelled on QM level using
+     * MM atoms and their charge-on-spring as point charges.
+     * Self-consistent field iteration is performed every step.
+     * LJ interactions are calculated clasically.
+     */
+    qmmm_polarisable = 3
+  };
+
+  /**
+   * @enum qm_ch_enum
+   * update charges of QM atoms from the QM calculation
+   * (only in mechanical embedding)
+   */
+  enum qm_ch_enum {
+    /**
+     * use constant charges from the topology
+     */
+    qm_ch_constant = 0,
+    /**
+     * update charges every step
+     */
+    qm_ch_dynamic = 1
+  };
+
+  /**
+   * @enum qm_lj_enum
+   * apply LJ between QM atoms
+   */
+  enum qm_lj_enum {
+  /**
+     * don't apply LJ dispersion between QM atoms
+     */
+    qm_lj_off = 0,
+    /**
+     * apply LJ dispersion between QM atoms
+     */
+    qm_lj_on = 1
+  };
+
+  /**
+   * @enum qm_constr_enum
+   * keep distance constraints within QM zone
+   */
+  enum qm_constr_enum {
+  /**
+     * remove constraints in QM zone
+     */
+    qm_constr_off = 0,
+    /**
+     * keep constraints in QM zone
+     */
+    qm_constr_on = 1
   };
 
   /**
    * @enum qmmm_software_enum
    * which QM software to use
    */
-  enum qmmm_software_enum {
+  enum qm_software_enum {
+    /**
+     * use Ghost
+     */
+    qm_ghost = -1,
     /**
      * use MNDO
      */
-    qmmm_software_mndo = 0,
+    qm_mndo = 0,
     /**
      * use Turbomole
      */
-    qmmm_software_turbomole = 1
+    qm_turbomole = 1,
+    /**
+     * use DFTB
+     */
+    qm_dftb = 2,
+    /**
+     * use MOPAC
+     */
+    qm_mopac = 3,
+    /**
+     * use Gaussian
+     */
+    qm_gaussian = 4,
+    /*
+     * use Schnetpack NN
+     */
+    qm_nn = 5,
+    /**
+     * use Orca
+     */
+    qm_orca = 6,
+    /**
+     * use XTB
+     */
+    qm_xtb = 7
+  };
+
+  /**
+   * @enum qmmm_nn_device_enum
+   * which device to run NN on
+   */
+  enum qm_nn_device_enum {
+    /**
+     * Try CUDA, otherwise CPU
+     */
+    nn_device_auto = 0,
+    /**
+     * use CUDA
+     */
+    nn_device_cuda = 1,
+    /**
+     * use CPU
+     */
+    nn_device_cpu = 2
+  };
+
+  /**
+   * @enum qmmm_nn_model_type_enum
+   * specify if the model was trained on both the QM+buffer region and the buffer region
+   * or on the difference of QM+buffer and buffer region
+   */
+  enum qmmm_nn_model_type_enum {
+    /**
+     * BuRNN model - trained on the difference between the QM+buffer region and the buffer region
+     */
+    nn_model_type_burnn = 0,
+    /**
+     * Standard model - trained on the QM+buffer region and the buffer region
+     */
+    nn_model_type_standard = 1
+  };
+
+  /**
+   * @enum qmmm_nn_learning_type_enum
+   * which device to run NN on
+   */
+  enum qmmm_nn_learning_type_enum {
+    /**
+     * 1: model was learned on all atoms (QMZONE + BUFFERZONE)
+     */
+    nn_learning_type_all = 1,
+    /**
+     * 2: model was learned by assigning energies only to the QMZONE atoms
+     */
+    nn_learning_type_qmonly = 2
   };
 
   /**
@@ -787,13 +991,15 @@ namespace simulation
   class Parameter
   {
   public:
-    Parameter() : title(GROMOSXX) {develop.develop = false;}
-    
+    Parameter() : title(GROMOSXX) {
+        develop.develop = false;
+    }
+
     /**
      * title of the simulation (from the input file)
      */
     std::string title;
-    
+
     /**
      * @struct system_struct
      * system block
@@ -807,17 +1013,17 @@ namespace simulation
        * - nsm 0 (no solvent)
        */
       system_struct() : npm(1), nsm(0) {}
-      
+
       /**
        * Number of protein molecules
        */
       int npm;
-      /** 
+      /**
        * Number of solvent molecules
        */
       int nsm;
     } /** the system paramters */ system;
-    
+
     /**
      * @struct minimise_struct
      * minimise block
@@ -903,12 +1109,12 @@ namespace simulation
        * - ig                       0      (random number seed)
        * - tempi                    0.0    (temperature to generate initial velocities)
        */
-      start_struct() : shake_pos(false), shake_vel(false), 
+      start_struct() : shake_pos(false), shake_vel(false),
                        remove_com_translation(false), remove_com_rotation(false),
 		       generate_velocities(false), ig(0), tempi(0.0),
                        read_nosehoover_chains(true), read_nosehoover_barostat(true),
                        read_rottrans(true), read_lattice_shifts(true) {}
-      
+
       /**
        * shake initial positions
        */
@@ -970,7 +1176,7 @@ namespace simulation
        * - dt               0.0 (time step)
        */
       step_struct() : number_of_steps(0), t0(0.0), dt(0.0) {}
-      
+
       /**
        * Number of steps
        */
@@ -998,7 +1204,7 @@ namespace simulation
        * - dof_to_subtract 0
        */
       boundary_struct() : boundary(math::vacuum), dof_to_subtract(0) {}
-      
+
       /**
        * NTB switch
        */
@@ -1025,7 +1231,7 @@ namespace simulation
        * - algorithm 0 (weak coupling)
        */
       multibath_struct() : couple(false), found_multibath(false), found_tcouple(false), algorithm(0) {}
-      
+
       /**
        * do temperature coupling?
        */
@@ -1036,7 +1242,7 @@ namespace simulation
       Multibath multibath;
       /**
        * tcouple struct
-       * is translated to the multibath before the 
+       * is translated to the multibath before the
        * configuration / topology is read in.
        */
       struct tcouple_struct
@@ -1053,7 +1259,7 @@ namespace simulation
 	  temp0[0] = temp0[1] = temp0[2] = 300.0;
 	  tau[0] = tau[1] = tau[2] = 0.1;
 	}
-	
+
 	/**
 	 * ntt array
 	 */
@@ -1067,7 +1273,7 @@ namespace simulation
 	 */
 	double tau[3];
       } /** TCOUPLE paramter */ tcouple;
-      
+
       /**
        * have multibath
        */
@@ -1085,7 +1291,7 @@ namespace simulation
       int algorithm;
 
     } /** temperature coupling parameters */ multibath;
-    
+
     /**
      * @struct pcouple_struct
      * PCOUPLE block
@@ -1157,7 +1363,7 @@ namespace simulation
        * - remove_trans false  (remove center of mass translation)
        */
       centreofmass_struct() : skip_step(0), remove_rot(false), remove_trans(false) {}
-      
+
       /**
        * NSCM parameter
        */
@@ -1170,7 +1376,7 @@ namespace simulation
        * remove translational momentum.
        */
       bool remove_trans;
-      
+
     } /** centre of mass motion removal parameters */ centreofmass;
 
     /**
@@ -1185,9 +1391,10 @@ namespace simulation
        * - stepblock 0               (no printing of energies)
        * - centreofmass 0            (no printing of centre of mass information)
        * - monitor_dihedrals false   (do not monitor dihedral angle transitions)
+       * - timings_report false      (do not write detailed report of timings)
        */
-      print_struct() : stepblock(0), centreofmass(0), monitor_dihedrals(0) {}
-      
+      print_struct() : stepblock(0), centreofmass(0), monitor_dihedrals(0), timings_report(false) {}
+
       /**
        * print stepblock
        */
@@ -1200,6 +1407,10 @@ namespace simulation
        * dihedral angle transitions
        */
       int monitor_dihedrals;
+      /**
+       * dihedral angle transitions
+       */
+      bool timings_report;
     } /** output parameters */ print;
 
     /**
@@ -1222,11 +1433,11 @@ namespace simulation
        * - force_solute_only false (write solute and solvent)
        * - energy_index 0    (don't write minimum energy trajectory)
        */
-      write_struct() : position(0), velocity(0), force(0), energy(0), free_energy(0), 
+      write_struct() : position(0), velocity(0), force(0), energy(0), free_energy(0),
 		       block_average(0), position_solute_only(false),
                        velocity_solute_only(false), force_solute_only(false),
                        energy_index(0) {}
-      
+
       /**
        * position.
        */
@@ -1268,7 +1479,7 @@ namespace simulation
        * trajectory
        */
       int energy_index;
-      
+
     } /** write out paramters (trajectories) */ write;
 
     /**
@@ -1283,7 +1494,7 @@ namespace simulation
        * - ntc = 1
        */
       constraint_struct() : ntc(1) {}
-      
+
       /**
        * NTC parameter (off=1, hydrogens=2, all=3, specified=4)
        * specified shakes everything in the constraint block in the topology.
@@ -1314,7 +1525,7 @@ namespace simulation
 	    flexshake_readin(false),
 	    flexshake_mode(0)
 	{}
-	
+
 	/**
 	 * constraint algorithm to use.
 	 */
@@ -1357,7 +1568,7 @@ namespace simulation
        * parameter for solvent.
        */
       constr_param_struct solvent;
-      
+
     } /** Constraint method parameters */ constraint;
 
     /**
@@ -1386,7 +1597,7 @@ namespace simulation
 		       interaction_function(lj_crf_func),
 		       force_groups(false)
       {}
-      
+
       /**
        * bonds?
        */
@@ -1431,7 +1642,7 @@ namespace simulation
        * use energy groups also for forces
        */
       bool force_groups;
-      
+
     } /** Force(field) parameters */ force;
 
 #ifdef HAVE_HOOMD
@@ -1466,7 +1677,7 @@ namespace simulation
       plist_struct() : grid(0), skip_step(5), cutoff_short(0.8),
 		       cutoff_long(1.4), grid_size(0.4),
 		       atomic_cutoff(false), print(false) {}
-      
+
       /**
        * algorithm.
        */
@@ -1475,7 +1686,7 @@ namespace simulation
        * skip step
        */
       int skip_step;
-      /** 
+      /**
        * short range cutoff
        */
       double cutoff_short;
@@ -1491,12 +1702,12 @@ namespace simulation
        * atomic cutoff
        */
       bool atomic_cutoff;
-      
+
       /**
        * print the pairlist
        */
       bool print;
-      
+
     } /** Pairlist method parameters */ pairlist;
 
     /**
@@ -1515,7 +1726,7 @@ namespace simulation
        * - rf_excluded true (new standard)
        * - epsilon     1
        */
-      nonbonded_struct() :      
+      nonbonded_struct() :
         method(el_reaction_field),
         lserf(false),
         rf_kappa(0.0),
@@ -1575,7 +1786,7 @@ namespace simulation
        * lattice-sum charge shaping function
        */
       int ls_charge_shape;
-      /** 
+      /**
        * lattice-sum charge shaping function width
        */
       double ls_charge_shape_width;
@@ -1664,7 +1875,7 @@ namespace simulation
      */
     struct posrest_struct
     {
-      /** 
+      /**
        * Constructor
        * Default values:
        * - posrest 0 (no position restraints)
@@ -1673,7 +1884,7 @@ namespace simulation
        */
       posrest_struct() : posrest(posrest_off), read(true), force_constant(1E4),
                          scale_reference_positions(false) {}
-      
+
       /**
        * posrest
        */
@@ -1691,6 +1902,32 @@ namespace simulation
        */
       bool scale_reference_positions;
     } /** Position restraint parameters */ posrest;
+
+    struct virtualatoms_struct
+    {
+      /** 
+       * Constructor
+       * Default values:
+       * - virtualatoms 0
+       * - numatoms 0
+       * - lastatom 0
+       */
+      virtualatoms_struct() : virtualatoms(0), numatoms(0), lastatom(0){}
+      
+      /**
+       * virtualatoms
+       */
+      int virtualatoms;
+      /**
+       * number of virtual atoms
+       */
+      int numatoms;
+      /**
+       * index of the last virtual atom in topology
+       */
+      int lastatom;
+
+    } /** virtual atoms parameters */ virtualatoms;
 
 
 
@@ -1860,7 +2097,7 @@ namespace simulation
         energy_switcher(energy_tot)
         {
         }
-        /**         
+        /**
          *replica exchange switcher
          */
         replica_exchange_interruptor_enum switcher;
@@ -1887,7 +2124,7 @@ namespace simulation
         B_overall_switcher(B_overall_off), init(0.0)
         {
         }
-        /**         
+        /**
          * overall B factor switching
          */
         B_overall_enum B_overall_switcher;
@@ -1953,27 +2190,27 @@ namespace simulation
           write(0)
       {
       }
-      
-      /** 
+
+      /**
        * distance restraints on/off
        */
       int distanceres;
-      
+
       /**
        * force constant K
        */
       double K;
-      
+
       /**
        * distance where potential gets linear
        */
       double r_linear;
-      
+
       /**
-       * memory time for time averaging 
+       * memory time for time averaging
        */
       double tau;
-      
+
       /**
        * read on/off (not supported)
        */
@@ -1983,17 +2220,17 @@ namespace simulation
        * compute virial contribution
        */
       unsigned int virial;
-      
+
       /**
        * force scaling according to equation 8.17
        */
       unsigned int forcescale;
-      
+
       /**
        * write on/off
        */
       unsigned int write;
-      
+
     }/** Distance restraints parameters */ distanceres;
      /**
      * @struct distancefield_struct
@@ -2027,8 +2264,8 @@ namespace simulation
           protect(0)
       {
       }
-      
-      /** 
+
+      /**
        * distance field restraints on/off
        */
       int distancefield;
@@ -2071,52 +2308,109 @@ namespace simulation
       double protect;
     }/** Distancefield restraints parameters */ distancefield;
 
+    struct angrest_struct
+            {
+        /**
+         * Constructor
+         * Default values:
+         * - angrest 0 (no angle restraints)
+         * - K 0
+         */
+        angrest_struct()
+        : angrest(angle_restr_off),
+        K(0.0),
+        virial(0),
+        write(0) {}
+
+        /**
+         * angle restraints
+         * method:
+         * - 0: off
+         * - 1: uniform K
+         * - 2: K * Ki (weight by Ki in angle restraint file)
+         * - 3: constraints
+         */
+        angle_restr_enum angrest;
+
+        /**
+         * force constant K
+         */
+        double K;
+
+        /**
+        * compute virial contribution
+        */
+        unsigned int virial;
+
+        /**
+         * write on/off
+         */
+        unsigned int write;
+
+        /**
+         * tolerance
+         */
+        double tolerance;
+
+    }/** angle restraint parameters */ angrest;
+
+
     /**
      * @struct dihrest_struct
      * DIHREST block
      */
     struct dihrest_struct
     {
-      /**
-       * Constructor
-       * Default values:
-       * - dihrest 0 (no dihedral restraints)
-       * - K 0
-       */
-      dihrest_struct()
-	: dihrest(dihedral_restr_off),
-	  K(0.0),
-	  phi_lin(0.0),
-          write(0) {}
-      
-      /** 
-       * dihedral restraints
-       * method:
-       * - 0: off
-       * - 1: uniform K
-       * - 2: K * Ki (weight by Ki in dihedral restraint file)
-       * - 3: constraints
-       */
-      dihedral_restr_enum dihrest;
-      /**
-       * force constant K
-       */
-      double K;
-      /**
-       * deviation larger phi_lin leads to linear potential
-       */
-      double phi_lin;
-      /**
-       * write on/off
-       */
-      unsigned int write;
-      
-      /**
-       * tolerance 
-       */
-      double tolerance;
-      
+        /**
+         * Constructor
+         * Default values:
+         * - dihrest 0 (no dihedral restraints)
+         * - K 0
+         */
+        dihrest_struct()
+        : dihrest(dihedral_restr_off),
+        K(0.0),
+        phi_lin(0.0),
+        virial(0),
+        write(0) {}
+
+        /**
+         * dihedral restraints
+         * method:
+         * - 0: off
+         * - 1: uniform K
+         * - 2: K * Ki (weight by Ki in dihedral restraint file)
+         * - 3: constraints
+         */
+        dihedral_restr_enum dihrest;
+
+        /**
+         * force constant K
+         */
+        double K;
+
+        /**
+         * deviation larger phi_lin leads to linear potential
+         */
+        double phi_lin;
+
+        /**
+        * compute virial contribution
+        */
+        unsigned int virial;
+
+        /**
+         * write on/off
+         */
+        unsigned int write;
+
+        /**
+         * tolerance
+         */
+        double tolerance;
+
     }/** dihedral restraint parameters */ dihrest;
+
 
     /**
      * @struct perturb_struct
@@ -2136,11 +2430,11 @@ namespace simulation
        * - soft_lj 0.0
        * - soft_crf 0.0
        */
-      perturb_struct() : perturbation(false), read_initial(false), 
+      perturb_struct() : perturbation(false), read_initial(false),
                          lambda(0), lambda_exponent(1),
 			 dlamt(0), scaling(false), scaled_only(false),
 			 soft_vdw(0.0), soft_crf(0.0), perturbed_par(false) {}
-      
+
       /**
        * perturbation?
        */
@@ -2182,7 +2476,7 @@ namespace simulation
        * is read in read_special  or read_topology
        */
       bool perturbed_par;
-      
+
     } /** Perturbation parameters */ perturbation;
 
     /**
@@ -2258,7 +2552,7 @@ namespace simulation
        */
       unsigned int write;
     } /** jvalue-parameters */ jvalue;
-    
+
     /**
      * @struct pscale_struct
      * periodic scaling parameters.
@@ -2279,7 +2573,7 @@ namespace simulation
       pscale_struct() : jrest(false), KDIH(1.0), KJ(1.0), T(1.0), difference(1.0), ratio(1.0), read_data(false)
       {
       }
-      
+
       /**
        * do J-Value restraints dependent periodic scaling?
        */
@@ -2308,7 +2602,7 @@ namespace simulation
        * read data for continuous runs
        */
       bool read_data;
-      
+
     } /** pscale parameters */ pscale;
 
     /**
@@ -2491,7 +2785,7 @@ namespace simulation
                          stride(1), no_constraints(false)
       {
       }
-      /** 
+      /**
        * re-analyze trajectory
        */
       bool analyze;
@@ -2503,7 +2797,7 @@ namespace simulation
        * trajectory filename
        */
       std::string trajectory;
-      /** 
+      /**
        * stride
        */
       int stride;
@@ -2511,7 +2805,7 @@ namespace simulation
        * do not apply any constraints (also not on solvent)
        */
       bool no_constraints;
-      
+
     } /** analyze parameter */ analyze;
 
     /**
@@ -2528,14 +2822,14 @@ namespace simulation
       integrate_struct() : method(integrate_leap_frog)
       {
       }
-      /** 
+      /**
        * select integration method
        */
       integrate_enum method;
 
     } /** integration parameter */ integrate;
 
-    /** 
+    /**
      * @struct lambdas_struct
      * individual lambdas
      */
@@ -2551,7 +2845,7 @@ namespace simulation
        * - d(empty)
        * - e(empty)
        */
-      lambdas_struct() : individual_lambdas(false), 
+      lambdas_struct() : individual_lambdas(false),
 			 a(last_interaction_lambda),
 			 b(last_interaction_lambda),
 			 c(last_interaction_lambda),
@@ -2606,22 +2900,22 @@ namespace simulation
                           max_lam(1.0)
       {
       }
-      /** 
-       * calculate nr_lambdas extra lambda points 
+      /**
+       * calculate nr_lambdas extra lambda points
        */
        unsigned int nr_lambdas;
-      /** 
-       * starting from lambda 
+      /**
+       * starting from lambda
        */
        double min_lam;
-      /** 
-       * up to lambda 
+      /**
+       * up to lambda
        */
        double max_lam;
 
     } /** precalculate lambdas struct */ precalclam;
     // END ANITA
- 
+
     struct stochastic_struct
     {
       /**
@@ -2676,7 +2970,7 @@ namespace simulation
        * initially generate stochastic integral
        */
       bool generate_integral;
-      
+
     } /** stochastic dynamics */ stochastic;
 
     /**
@@ -2720,7 +3014,7 @@ namespace simulation
        * use boost method (impulse)
        */
       bool boost;
-      
+
     } /** multistep */ multistep;
 
     /**
@@ -2744,12 +3038,12 @@ namespace simulation
        */
       int steps;
       /**
-       * value of dlambda in MC move 
+       * value of dlambda in MC move
        */
       double dlambda;
     } /** chemical monte-carlo */ montecarlo;
 
-    
+
     /**
      * @struct polarise_struct
      * polarisation simulation
@@ -2770,7 +3064,7 @@ namespace simulation
        * use charge-on-spring polarisation
        */
       int cos;
-      /** 
+      /**
        * minfield
        */
       double minfield;
@@ -2787,7 +3081,7 @@ namespace simulation
        */
       int write;
     } /** polarise */ polarise;
-    
+
     /**
      * @struct rng_struct
      * random number generator settings
@@ -2803,37 +3097,29 @@ namespace simulation
        * random number generator
        */
       randomgenerator_enum rng;
-      /** 
+      /**
        * GSL random number generator
        * use the rng_gsl contrib program to find out which values are supported.
        */
       int gsl_rng;
-    } /** random number generator */ rng;    
-    
+    } /** random number generator */ rng;
+
     /**
      * @struct eds_struct
      * parameters for enveloping distribution sampling (eds)
      */
     struct eds_struct{
-      /** 
+      /**
        * Constructor:
        * Default values:
        * - eds: no eds sampling
        * - form: single_s
        */
-      eds_struct() : eds(false), soft_vdw(0.0), soft_crf(0.0), form(single_s), numstates(0) {}
+      eds_struct() : eds(false), form(single_s), numstates(0) {}
       /**
        * do enveloping distribution sampling using the Hamiltonian:
        */
       unsigned int eds;
-      /**
-       * soft core van der Waals interactions
-       */
-      double soft_vdw;
-      /**
-       * soft core electrostatic interactions
-       */
-      double soft_crf;
       /**
        * functional form of eds Hamiltonian
        */
@@ -2846,6 +3132,10 @@ namespace simulation
        * smoothness parameter(s) @f$ s@f$ of @f$ s_{ij}@f$ used in reference state Hamiltonian.
        */
       std::vector<double> s;
+      /**
+       * position information first: start position; second: current position of coord_ID
+       */
+      std::pair<int, int> pos_info;
       /**
        * vector of indices of specified pairs (for form = pair_s)
        */
@@ -2935,6 +3225,7 @@ namespace simulation
       unsigned int bsteps;
     } /** enveloping distribution sampling*/ eds;
 
+<<<<<<< HEAD
   /**
    * @struct GAMD_struct
    * ORIOL_GAMD
@@ -3079,41 +3370,45 @@ namespace simulation
     int stepsdone;  
   } /** Gaussian accelerated md */ gamd;  
    
+=======
+>>>>>>> ccb4b909035c522c48ca23348687b74c64bb7fe6
  struct reeds_struct : public replica_struct
     {
       /**
        * Constructor
        * Default values:
-       * - num_T 0
-       * - num_l 0
+       * - num_s 0
+       * - num_eoff 0
        * - temperature \<empty\>
        * - scale (false)
-       * - lambda \<empty\>
+       * - svals \<empty\>
        * - dt \<empty\>
        * - trials 0
        * - equilibrate 0
        * - cont 0
        */
-      reeds_struct() : reeds(false), 
-                       num_states(0), num_T(0),  num_l(0), 
-                       trials(0), equilibrate(0), 
-                       cont(0), eds_stat_out(true) {}
+      reeds_struct() : reeds(0),
+                       num_states(0),  num_s(0), num_eoff(0),
+                       trials(0), equilibrate(0),
+                       cont(0), eds_stat_out(true), periodic(false) {}
       /**
-       * Check if this is a reed run.f
+       * Check what kind of reed run.f this is
        **/
-      bool reeds;
+      int reeds;
       /**
        * num_states
        */
       int num_states;
+
       /**
-       * number of replicas with different temperature
+       * number of replicas with different s in REEDS these are the smoothing values
        */
-      int num_T;
+      int num_s;
       /**
-       * number of replicas with different lambdas in REEDS these are the smoothing values
+       * * number of energy offsets param-vectors with different offsets for each state in REEDS
+       * * length of one param-vector == NUMSTATES
        */
-      int num_l;
+      int num_eoff;
       /**
        * temperatures
        */
@@ -3121,7 +3416,7 @@ namespace simulation
       /**
        * lambdas: contains all smoothness parameter of RE_EDS system
        */
-      std::vector<double> lambda;
+      std::vector<double> svals;
       /**
        * time step to use when running at corresponding lambda
        */
@@ -3142,6 +3437,10 @@ namespace simulation
        * write output to stat_file (repdat)
        **/
       bool eds_stat_out;
+      /**
+       * periodic boundary?
+       **/
+      bool periodic;
        /**
        * for RE-EDS Sim many eds parameters have to be accessible for
        * energy calculation.
@@ -3149,7 +3448,7 @@ namespace simulation
       std::vector<eds_struct> eds_para;
 
     } /** replica exchange parameters */ reeds;
-    
+
     /**
      * @struct sasa
      * parameters for calculating the sasa and volume term
@@ -3202,7 +3501,7 @@ namespace simulation
       double cut_diff;
 
     } /** sasa */ sasa;
-    
+
     /**
      * @struct innerloop_struct
      * Constructor:
@@ -3264,7 +3563,7 @@ namespace simulation
        */
       std::map<int, bool> umbrellas;
     } localelev;
-    
+
     /**
      * @struct bsleus_struct
      * Constructor:
@@ -3292,7 +3591,7 @@ namespace simulation
        * Do we write the bsleus potential?
        */
       int write;
-      /** 
+      /**
        * Is this just the configuration along the transition path, which doesn't
        * need a velocity?
        */
@@ -3353,7 +3652,7 @@ namespace simulation
       unsigned int cur_write;
 
     } electric;
-    
+
     struct nemd_struct {
       /**
        * constructor
@@ -3399,7 +3698,7 @@ namespace simulation
        * write every nth timesteps (write the velocities and flux)
        */
       unsigned int write;
-     
+
     } nemd;
 
     struct multigradient_struct {
@@ -3437,7 +3736,7 @@ namespace simulation
        */
       std::vector<std::vector<std::pair<double, double> > > control_points;
     } multigradient;
-    
+
     /**
      * @struct addecouple_struct
      * Constructor:
@@ -3470,12 +3769,12 @@ namespace simulation
          * last atom of addiabatic decoupling groups
          */
         int adend;
-        /**          
-         * scaling factor mass          
+        /**
+         * scaling factor mass
          */
         double sm;
-        /**          
-         * scaling factor potential energy function          
+        /**
+         * scaling factor potential energy function
          */
         double sv;
         /**
@@ -3486,12 +3785,12 @@ namespace simulation
          * which temperature bath to scale
          */
         int tir;
-        /**          
-         * energy group of decoupled group     
+        /**
+         * energy group of decoupled group
          */
         int eg;
         /**
-         * temperature group of decoupled group     
+         * temperature group of decoupled group
          */
         unsigned int tg;
       };
@@ -3620,7 +3919,7 @@ namespace simulation
        * - biqfactor 0
        * - write 0
        */
-        
+
       rdc_struct()
 	: mode(rdc_restr_off),
           read_av(false),
@@ -3659,10 +3958,10 @@ namespace simulation
       /**
        * method of updating the magnetic field vectors
        */
-      rdc_mode_enum method;  
+      rdc_mode_enum method;
       /**
        * EM: stop if gradient is below emgradient
-       */      
+       */
       double emgradient;
       /**
        * EM: start with emstepsize
@@ -3679,7 +3978,7 @@ namespace simulation
       /**
        * reference temperature for SD and for initial velocities
        */
-      double temp;     
+      double temp;
       /**
        * half the width of the flat bottom potential
        */
@@ -3712,58 +4011,151 @@ namespace simulation
     struct qmmm_struct {
       /**
        * Constructor
-       * defaults:
-       * - no QM/MM
-       * - software: MNDO
-       * - length factor: 0.1 (i.e. Angstrom -> nm)
-       * - energy factor: 4.184 (i.e. kcal -> kJ)
-       * - charge factor: 1.0 (i.e. e -> e)
-       * - cutoff: 0.0 (no cutoff applied)
-       * - write: 0
+       * Default values:
+       * - cutoff 0.0 (no cutoff)
+       * - cap_length 0.109 (capping atom distance)
+       * - mm_scale -1.0 (no scaling)
+       * - qmmm qmmm_off (no QMMM)
+       * - qm_lj qm_lj_off (no LJ dispersion within QM zone)
+       * - qm_constraint qm_constr_off (no constraints in QM zone)
+       * - software qm_mndo (MNDO)
+       * - write 0 (no writing)
+       * - atomic_cutoff false (using charge-group based cutoff)
+       * - use_qm_buffer false (not using buffer zone)
        */
       qmmm_struct() :
-      qmmm(qmmm_off),
-      software(qmmm_software_mndo),
-      unit_factor_length(0.1),
-      unit_factor_energy(4.184),
-      unit_factor_charge(1.0),
-      cutoff(0.0),
-      write(0),
-      interaction(NULL) {}
+                      cutoff(0.0)
+                    , cap_length(0.109)
+                    , mm_scale(-1.0)
+                    , qmmm(qmmm_off)
+                    , qm_ch(qm_ch_constant)
+                    , qm_constraint(qm_constr_off)
+                    , software(qm_mndo)
+                    , write(0)
+                    , atomic_cutoff(false)
+                    , use_qm_buffer(false)
+                    , dynamic_buffer_charges(false) {}
       /**
-       * apply QM/MM or not
+       *
+       * Common QMMM parameters
+       *
        */
-      qmmm_enum qmmm;
       /**
-       * the QM software to use
-       */
-      qmmm_software_enum software;
-      /**
-       * factor to convert the QM length unit to the GROMOS one
-       */
-      double unit_factor_length;
-      /**
-       * factor to convert the QM energy unit to the GROMOS one
-       */
-      double unit_factor_energy;
-      /**
-       * factor to convert the QM charge unit to the GROMOS one
-       */
-      double unit_factor_charge;
-      /**
-       * cutoff to determine atoms included in QM computation as point charges.
+       * cutoff to determine atoms included in QM calculation as point charges.
        */
       double cutoff;
       /**
+       * Capping atom bond length
+       */
+      double cap_length;
+      /**
+       * scaling factor for the MM charges in the QM/MM interaction
+       */
+      double mm_scale;
+      /**
+       * QM-MM embedding scheme or disable
+       */
+      qmmm_enum qmmm;
+      /**
+       * QM-MM embedding scheme or disable
+       */
+      qm_ch_enum qm_ch;
+      /**
+       * apply LJ interaction in QM zone or not
+       */
+      qm_lj_enum qm_lj;
+      /**
+       * keep constraints in QM zone and QM-MM link
+       */
+      qm_constr_enum qm_constraint;
+      /**
+       * the QM software to use
+       */
+      qm_software_enum software;
+      /**
        * write QM/MM related stuff to special trajectory
        */
-      unsigned int write;
+      unsigned write; // What can be written here?
       /**
-       * parameters for the MNDO software
+       * type of cutoff (atomic or chargegroup-based)
        */
-      struct mndo_param_struct {
+      bool atomic_cutoff;
+      /**
+       * if QM buffer zone is used
+       */
+      bool use_qm_buffer;
+      /**
+       * if dynamic charges are used with QM buffer zone
+       */
+      bool dynamic_buffer_charges;
+
+      /**
+       * QM zone parameters
+       */
+      struct qm_zone_struct {
+      /**
+       * Constructor
+       * Default values:
+       * - charge 0 (neutral)
+       * - spin_mult 1 (no unpaired electrons)
+       */
+      qm_zone_struct() :
+                      charge(0)
+                    , spin_mult(1) {}
         /**
-         * path for the MNDO binary
+         * net charge
+         */
+        int charge;
+        /**
+         * spin multiplicity
+         */
+        int spin_mult;
+      } qm_zone;
+
+      /**
+       * QM buffer zone parameters
+       */
+      struct buffer_zone_struct : qm_zone_struct {
+      /**
+       * Constructor
+       * Default values:
+       * - cutoff 0.0 (no adaptive QM buffer)
+       */
+      buffer_zone_struct() :
+                      cutoff(0.0) {}
+        /**
+         * Adaptive buffer zone cutoff
+         */
+        double cutoff;
+      } buffer_zone;
+
+      /**
+       * QM program unspecific parameters
+       */
+      struct qm_param_struct{
+      /**
+       * Constructor
+       * Default values:
+       * - unit_factor_length 1.0
+       * - unit_factor_energy 1.0
+       * - unit_factor_force 1.0
+       * - unit_factor_charge 1.0
+       */
+      qm_param_struct() :
+                      unit_factor_length(1.0)
+                    , unit_factor_energy(1.0)
+                    , unit_factor_force(1.0)
+                    , unit_factor_charge(1.0) {}
+        /**
+         * maps atomic number to elements name
+         */
+        std::map<unsigned, std::string> elements;
+        /**
+         * maps IAC numbers to atomic numbers; 
+         */
+        std::map<unsigned, unsigned> iac_elements;
+        /**
+         * path for the program binary
          */
         std::string binary;
         /**
@@ -3775,6 +4167,58 @@ namespace simulation
          */
         std::string output_file;
         /**
+         * header of the input file
+         */
+        std::string input_header;
+        /**
+         * factor to convert the QM length unit to the GROMOS one
+         */
+        double unit_factor_length;
+        /**
+         * factor to convert the QM energy unit to the GROMOS one
+         */
+        double unit_factor_energy;
+        /**
+         * factor to convert the QM energy unit to the GROMOS one
+         */
+        double unit_factor_force;
+        /**
+         * factor to convert the QM charge unit to the GROMOS one
+         */
+        double unit_factor_charge;
+        /**
+         * input file containing the positions and element types of the QM atoms (used for debugging or generation of NN training sets)
+         */
+        std::string trajectory_input_coordinate_file;
+        /**
+         * input file containing the positions and charges of the MM atoms (used for debugging or generation of NN training sets)
+         */
+        std::string trajectory_input_pointcharges_file;
+        /**
+         * output file containing the cartesian gradients (used for debugging or generation of NN training sets)
+         */
+        std::string trajectory_output_gradient_file;
+        /**
+         * output file containing the cartesion gradients of the MM atoms (used for debugging or generation of NN training sets)
+         */
+        std::string trajectory_output_mm_gradient_file;
+        /**
+         * output file containing the charges calculated (used for debugging or generation of NN training sets)
+         */
+        std::string trajectory_output_charges_file;
+      };
+
+      /**
+       * Ghost specific parameters
+       */
+      struct ghost_param_struct : public qm_param_struct {
+      } ghost;
+
+      /**
+       * MNDO specific parameters
+       */
+      struct mndo_param_struct : public qm_param_struct {
+        /**
          * path for the gradient output file. Empty for a temporary file
          */
         std::string output_gradient_file;
@@ -3782,19 +4226,12 @@ namespace simulation
          * path for the density matrix file. Empty for a temporary file
          */
         std::string density_matrix_file;
-        /**
-         * header of the MNDO input file
-         */
-        std::string input_header;
       } mndo;
+
       /**
-       * parameter for the Turbomole software
+       * Turbomole specific parameters
        */
-      struct tubromole_param_struct {
-        /**
-         * the directory containing the turbomole binaries
-         */
-        std::string binary_directory;
+      struct turbomole_param_struct : public qm_param_struct {
         /**
          * the tools to run in the working directory
          */
@@ -3803,6 +4240,10 @@ namespace simulation
          * the working directory containing the control file
          */
         std::string working_directory;
+        /**
+         * the directory containing the turbomole binaries
+         */
+        std::string binary_directory;
         /**
          * the input file containing the atomic coordinates
          */
@@ -3820,21 +4261,206 @@ namespace simulation
          */
         std::string output_gradient_file;
         /**
-         * the output file containing the cartesion gradients of the MM atoms
+         * the output file containing the cartesian gradients of the MM atoms
          */
         std::string output_mm_gradient_file;
         /**
-         * maps atomic number to elements name
+         * the output file containing the ESP charges of the QM atoms
          */
-        std::map<unsigned int, std::string> elements;
+        std::string output_charge_file;
       } turbomole;
+
       /**
-       * pointer to the interaction class such the the QM/MM interaction
-       * can be easily passed to other algorithms
+       * DFTB specific parameters
        */
-      interaction::QMMM_Interaction * interaction;
+      struct dftb_param_struct : public qm_param_struct {
+        /**
+         * the working directory containing the dftb_in.hsd
+         */
+        std::string working_directory;
+        /**
+         * path of the input geometry file
+         */
+        std::string input_coordinate_file;
+        /**
+         * path of the input MM charges geometry file
+         */
+        std::string input_mm_coordinate_file;
+        /**
+         * path for the stdout file
+         */
+        std::string stdout_file;
+      } dftb;
+
+      /**
+       * MOPAC specific parameters
+       */
+      struct mopac_param_struct : public qm_param_struct {
+        /**
+         * Constructor
+         * Default values:
+         * - link_atom_mode 0
+         */
+        mopac_param_struct() :
+                        link_atom_mode(0) {}
+        /**
+         * path for the output aux file. Empty for a temporary file
+         */
+        std::string output_aux_file;
+        /**
+         * path for the output arc file. Empty for a temporary file
+         */
+        std::string output_arc_file;
+        /**
+         * path for the stdout file. Empty for a temporary file
+         */
+        std::string stdout_file;
+        /**
+         * path for the output aux file. Empty for a temporary file
+         */
+        std::string output_dens_file;
+        /**
+         * path for the molin file. Empty for a temporary file
+         */
+        std::string molin_file;
+        /**
+         * link atom treatment mode
+         */
+        int link_atom_mode;
+      } mopac;
+      
+      /**
+       * Gaussian specific parameters
+       */
+     struct gaussian_param_struct : public qm_param_struct{
+        /**
+         * route section of the input file
+         */
+        std::string route_section;
+        /**
+         * total charge and spin multiplicity in the input file
+         */
+        std::string chsm;
+      } gaussian;
+
+     /**
+       * ORCA specific parameters
+       */
+      struct orca_param_struct : public qm_param_struct { 
+        /**
+         * the input file containing the positions and element types of the QM atoms
+         */
+        std::string input_coordinate_file;
+        /**
+         * the input file containing the positions and charges of the MM atoms
+         */
+        std::string input_pointcharges_file;
+        /**
+         * the output file containing the cartesian gradients
+         */
+        std::string output_gradient_file;
+        /**
+         * the output file containing the cartesion gradients of the MM atoms
+         */
+        std::string output_mm_gradient_file;
+      } orca; 
+
+      /**
+       * XTB specific parameters
+       */
+      struct xtb_param_struct : public qm_param_struct { 
+        /**
+         * the version of the XTB Hamiltonian used
+         * options are 1 and 2 (for GFN1-xTB or GFN2-xTB, respectively)
+         */
+        unsigned int hamiltonian;
+        /**
+         * the verbosity level of XTB
+         * options are 0, 1, and 2 corresponding to muted, minimal, or full verbosity, respectively
+         */
+        unsigned int verbosity;
+        /**
+         * maximum iteration for SCC procedure (default is 250)
+         */
+        unsigned int maxIter = 250;
+        /**
+         * accuracy multiplier for XTB calculations (default is 1) (https://xtb-docs.readthedocs.io/en/latest/sp.html#accuracy-and-iterations) 
+         */
+        double accuracy = 1;
+        /**
+         * output file containing xtb logging
+         */
+        std::string output_log_file;
+      } xtb; 
+
+      /**
+       * NN specific parameters
+       */
+      struct nn_param_struct : public qm_param_struct {
+      /**
+       * Constructor
+       * Default values:
+       * - model_path "" (empty string)
+       * - val_model_path "" (empty string)
+       * - model_type 0 (bool)
+       * - device 0 (auto)
+       */
+      nn_param_struct() :
+                      model_path()
+                      , val_model_path() 
+                      , val_thresh(0.0)
+                      , val_steps(0)
+                      , val_forceconstant(0.0)
+                      , charge_model_path()
+                      , charge_steps(0)
+                      , model_type(nn_model_type_burnn) 
+                      , learning_type(nn_learning_type_all)
+                      , device(nn_device_auto) {}
+        /**
+         * Schnetpack model path
+         */
+        std::string model_path;
+        /**
+         * Schnetpack model path
+         */
+        std::string val_model_path;
+        /**
+         * Threshold of energy validation
+         */
+        double val_thresh;
+        /**
+         * Number of steps between validations
+         */
+        unsigned val_steps;
+        /**
+         * Force constant to enforce agreement between NN models
+         */
+        double val_forceconstant;
+        /**
+         * Schnetpack model path
+         */
+        std::string charge_model_path;
+        /**
+         * Number of steps between validations
+         */
+        unsigned charge_steps;
+        /**
+         * nn model type
+         */
+        qmmm_nn_model_type_enum model_type;
+        /**
+         * nn learning type
+         */
+        qmmm_nn_learning_type_enum learning_type;
+        /**
+         * Device to run model on
+         */
+        qm_nn_device_enum device;
+      } nn;
+
     } qmmm;
-    
+
+
     struct symrest_struct {
       /**
        * Constructor
@@ -3857,6 +4483,67 @@ namespace simulation
        */
       std::vector<std::pair<math::Matrix, math::Vec> > symmetry_operations;
     } /* symmetry restraints */symrest;
+
+    /**
+     * @struct amber_struct
+     * AMBER block
+     */
+    struct amber_struct {
+      /**
+       * Constructor
+       * - no AMBER topology
+       * - electrostatic interaction scaling for 1,4-interactions 1.2
+       */
+      amber_struct():
+      amber(false),
+      coulomb_scaling(1.2) {}
+      /**
+       * amber topology
+       */
+      bool amber;
+      /**
+       * electrostatic interaction scaling for 1,4-interactions
+       */
+      double coulomb_scaling;
+    } amber;
+
+    struct dfunct_struct {
+
+      dfunct_struct() : dfunct(dfunct_off), atom_i(0), atom_j(0), atom_k(0), atom_l(0), r_0(0.0), d(0), force(0.0) {}
+
+      /**
+       * dfunct enum 
+       */
+      dfunct_enum dfunct;
+      /**
+       * index of first atom involved in the potential
+       */
+      int atom_i, 
+      /**
+       * index of second atom involved in the potential
+       */
+      atom_j, 
+      /**
+       * index of third atom involved in the potential
+       */
+      atom_k, 
+      /**
+       * index of fourth atom involved in the potential
+       */
+      atom_l;
+      /**
+       * r_0 distance
+       */
+      double r_0;
+      /**
+       * addition or subtraction of distances r_ij and r_kl (can be scaled)
+       */
+      double d;
+      /**
+       * force constant of the bias
+       */
+      double force;
+    } dfunct;
     
     /**
      A struct to mark parts of the code as "under development"
@@ -3866,19 +4553,17 @@ namespace simulation
       bool develop;
       std::string msg;
     } develop;
-    
+
     /**
      set the development flag as true and specify the error message
      */
     void setDevelop(std::string s) {
       develop.develop = true;
       develop.msg = s;
-    }    
-    
+    }
+
   };
 
-  
-  
 }
 
 #endif

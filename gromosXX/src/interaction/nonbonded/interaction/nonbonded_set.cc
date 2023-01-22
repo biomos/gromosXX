@@ -89,11 +89,11 @@ int interaction::Nonbonded_Set
 
     // calculate explicit polarisation of the molecules
     DEBUG(6, "\texplicit polarisation");
-    start_timer("explicit polarisation");
+    start_subtimer("explicit polarisation");
     
     m_outerloop.electric_field_outerloop(topo, conf, sim, m_pairlist,
 				       m_storage, m_longrange_storage, m_rank);
-    stop_timer("explicit polarisation");
+    stop_subtimer("explicit polarisation");
   }
   
   //DEBUG(1, "field 1 [" << m_storage.electric_field(0)(0) << " " << m_storage.electric_field(0)(1) << " "  << m_storage.electric_field(0)(2) << "]");
@@ -101,25 +101,27 @@ int interaction::Nonbonded_Set
   
   if (pairlist_update) {
     DEBUG(8, "doing longrange calculation");
-    start_timer("longrange");
+    //start_subtimer("longrange interactions (total)");    //This timer counts all nonbonded long range interactions
     // in case of LS only LJ are calculated
 
     m_outerloop.lj_crf_outerloop(topo, conf, sim,
             m_pairlist.solute_long, m_pairlist.solvent_long,
             m_longrange_storage, true /*longrange!*/, m_pairlist_alg.timer(),
             m_rank == 0);
-    stop_timer("longrange");
+    //stop_subtimer("longrange interactions (total)");
   }
 
 
   // calculate forces / energies
   DEBUG(6, "\tshort range interactions");
-  start_timer("shortrange");
+  //start_subtimer("shortrange interactions (total)");
 
   if (sim.param().force.interaction_function == simulation::lj_ls_func) {
+    start_subtimer("shortrange ls_real_outerloop");
     m_outerloop.ls_real_outerloop(topo, conf, sim,
             m_pairlist.solute_short, m_pairlist.solvent_short,
             m_storage, m_rank, m_num_threads);
+    stop_subtimer("shortrange ls_real_outerloop");
   } else {
     m_outerloop.lj_crf_outerloop(topo, conf, sim,
             m_pairlist.solute_short, m_pairlist.solvent_short,
@@ -127,21 +129,21 @@ int interaction::Nonbonded_Set
             m_rank == 0);
   }
 
-  stop_timer("shortrange");
+  //stop_subtimer("shortrange interactions (total)");
 
   // calculate sasa interaction
   if (sim.param().sasa.switch_sasa) {
     DEBUG(6, "\tsasa energy");
-    start_timer("SASA energy");
+    start_subtimer("SASA energy");
     m_outerloop.sasa_outerloop(topo, conf, sim, m_storage);
-    stop_timer("SASA energy");
+    stop_subtimer("SASA energy");
   }
 
   // calculate k-space energy and forces
   switch (sim.param().nonbonded.method) {
     case simulation::el_ewald :
     {
-      start_timer("k-space Ewald");
+      start_subtimer("k-space Ewald");
       DEBUG(6, "\tlong range electrostatics: Ewald");
       if (sim.param().pcouple.scale != math::pcouple_off || sim.steps() == 0) {
         // the box may have changed. Recalculate the k space
@@ -150,12 +152,12 @@ int interaction::Nonbonded_Set
       // do the longrange calculation in k space
       m_outerloop.ls_ewald_kspace_outerloop(topo, conf, sim, m_storage,
               m_rank, m_num_threads);
-      stop_timer("k-space Ewald");
+      stop_subtimer("k-space Ewald");
       break;
     }
     case simulation::el_p3m :
     {
-      start_timer("k-space P3M");
+      start_subtimer("k-space P3M");
       DEBUG(6, "\tlong range electrostatics: P3M");
       if (sim.param().pcouple.scale != math::pcouple_off || sim.steps() == 0) {
         // check whether we have to recalculate the influence function
@@ -164,7 +166,7 @@ int interaction::Nonbonded_Set
       bool is_ok = true;
       m_outerloop.ls_p3m_kspace_outerloop(topo, conf, sim, m_storage,
               m_rank, m_num_threads, m_pairlist_alg.timer(), is_ok);
-      stop_timer("k-space P3M");
+      stop_subtimer("k-space P3M");
   // !!! crash if not ok
         if ( is_ok == false ) {
           return 1;
@@ -192,30 +194,30 @@ int interaction::Nonbonded_Set
     case simulation::el_p3m :
     {
       if (calculate_lattice_sum_corrections) {
-        start_timer("LS self energy and A term");
+        start_subtimer("LS self energy and A term");
         m_outerloop.ls_self_outerloop(topo, conf, sim, m_storage,
                 m_rank, m_num_threads);
-        stop_timer("LS self energy and A term");
+        stop_subtimer("LS self energy and A term");
       }
     }
     default:; // doing reaction field
   }
 
   DEBUG(6, "\t1,4 - interactions");
-  start_timer("1,4 interaction");
+  start_subtimer("1,4 interaction");
   m_outerloop.one_four_outerloop(topo, conf, sim, m_storage,  m_rank, m_num_threads);
-  stop_timer("1,4 interaction");
+  stop_subtimer("1,4 interaction");
 
-  start_timer("LJ exceptions");
+  start_subtimer("LJ exceptions");
   m_outerloop.lj_exception_outerloop(topo, conf, sim, m_storage,  m_rank, m_num_threads);
-  stop_timer("LJ exceptions");
+  stop_subtimer("LJ exceptions");
 
   // possibly do the RF contributions due to excluded atoms
   if (sim.param().nonbonded.rf_excluded) {
     DEBUG(7, "\tRF excluded interactions and self term");
-    start_timer("RF excluded interaction");
+    start_subtimer("RF excluded interaction");
     m_outerloop.RF_excluded_outerloop(topo, conf, sim, m_storage, m_rank, m_num_threads);
-    stop_timer("RF excluded interaction");
+    stop_subtimer("RF excluded interaction");
   }
 
   // single processor algorithms 
@@ -226,10 +228,10 @@ int interaction::Nonbonded_Set
       case simulation::el_ewald :
       case simulation::el_p3m :
       {
-        start_timer("LS surface energy");
+        start_subtimer("LS surface energy");
         m_outerloop.ls_surface_outerloop(topo, conf, sim, m_storage,
                 m_rank, m_num_threads);
-        stop_timer("LS surface energy");
+        stop_subtimer("LS surface energy");
       }
       default:
       {
@@ -238,16 +240,16 @@ int interaction::Nonbonded_Set
 
     if (sim.param().polarise.cos) {
       DEBUG(6, "\tself-energy of polarisation");
-      start_timer("polarisation self-energy");
+      start_subtimer("polarisation self-energy");
       m_outerloop.self_energy_outerloop(topo, conf, sim, m_storage);
-      stop_timer("polarisation self-energy");
+      stop_subtimer("polarisation self-energy");
     }
   }
 
   // add long-range force
   DEBUG(6, "\t(set) add long range forces");
 
-  start_timer("longrange addition");
+  start_subtimer("longrange addition");
   m_storage.force += m_longrange_storage.force;
   
   // and long-range energies
@@ -282,7 +284,6 @@ int interaction::Nonbonded_Set
   // add longrange virial
   if (sim.param().pcouple.virial){
     DEBUG(6, "\t(set) add long range virial");
-
 	m_storage.virial_tensor += m_longrange_storage.virial_tensor;
   //ORIOL_GAMD
   if(sim.param().gamd.gamd){
@@ -292,8 +293,8 @@ int interaction::Nonbonded_Set
     }
   }
   }
-  stop_timer("longrange addition");
-  
+  stop_subtimer("longrange addition");
+  DEBUG(6, "\t(set) DONE");
   return 0;
 }
 
@@ -523,7 +524,7 @@ int interaction::Nonbonded_Set
       int(1.3 * num_atoms / vol * 4.0 / 3.0 * math::Pi * c3);
 
     if (!quiet)
-      os << "\n\testimated pairlist size (per atom) : "
+      os << "\testimated pairlist size (per atom) : "
 	 << pairs << "\n";
     
     pairlist().reserve(pairs);

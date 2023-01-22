@@ -30,6 +30,7 @@
  * <tr><td> \@posresspec</td><td>&lt;@ref posres "position restraints specification"&gt;</td><td style="color:#088A08">in</td></tr>
  * <tr><td> \@refpos</td><td>&lt;@ref posres "position restraints"&gt;</td><td style="color:#088A08">in</td></tr>
  * <tr><td> \@distrest</td><td>&lt;@ref disres "distance restraints specification"&gt;</td><td style="color:#088A08">in</td></tr>
+ * <tr><td> \@angrest</td><td>&lt;@ref angrest "angle restraints specification"&gt; </td><td style="color:#088A08">in</td></tr>
  * <tr><td> \@dihrest</td><td>&lt;@ref dihrest "dihedral restraints specification"&gt; </td><td style="color:#088A08">in</td></tr>
  * <tr><td> \@jval</td><td>&lt;@ref jvalue "J-value restraints specification"&gt;</td><td style="color:#088A08">in</td></tr>
  * <tr><td> \@xray</td><td>&lt;@ref xrayresfile "X-ray restraints specification"&gt;</td><td style="color:#088A08">in</td></tr>
@@ -90,7 +91,8 @@ int main(int argc, char *argv[]){
   util::Known knowns;
   knowns << "topo" << "conf" << "input" << "verb" << "pttopo"
 	 << "trc" << "fin" << "trv" << "trf" << "trs" << "tre" << "trg"
-	 << "bae" << "bag" << "posresspec" << "refpos" <<"distrest" << "dihrest"
+	 << "bae" << "bag" << "posresspec" << "refpos" <<"distrest" 
+	 << "angrest" << "dihrest"
          << "jval" << "xray" << "sym" << "order" << "rdc" << "lud" << "led" << "bsleus" 
          << "anatrj" << "print" << "friction" << "qmmm" << "version" << "develop" << "gamd";
   
@@ -172,7 +174,7 @@ int main(int argc, char *argv[]){
 	    << "==================================================\n"
 	    << std::endl;
 
-  int error;
+  int error = 0;
 
   const double init_time = util::now() - start;
   while(int(sim.steps()) < sim.param().step.number_of_steps && !exit_md){
@@ -181,24 +183,16 @@ int main(int argc, char *argv[]){
 
     // run a step
     if ((error = md.run(topo, conf, sim))){
-      
-      if ((error == E_MINIMUM_REACHED) || (error == E_MINIMUM_NOT_REACHED)){
-	      
-        //conf.current().energies.calculate_totals(); // This is done in algorithm
 
-        /** This is not necessary, because it is printed in out_configuration as well
-	       *  Here could be MINIMISATION block instead
-         */
-        /* traj.print_timestep(sim, traj.output());
-        io::print_ENERGY(
-          traj.output(),
-          conf.current().energies,
-          topo.energy_groups(),
-          "MINIMUM ENERGY",
-          "EMIN_"); */
-	  
-	      error = 0; // clear error condition
-	      break;
+      if (error == E_MINIMUM_REACHED) {
+        conf.old().energies.calculate_totals();
+        traj.print_timestep(sim, traj.output());
+        io::print_ENERGY(traj.output(), conf.old().energies, 
+            topo.energy_groups(),
+            "MINIMUM ENERGY", "EMIN_");
+          
+        error = 0; // clear error condition
+        break;
       }
       else { 
 	// try to print energies anyway
@@ -248,22 +242,36 @@ int main(int argc, char *argv[]){
       std::cout << "MD: ETA   " << eta_hh << ":" << eta_mm << ":" << eta_ss << std::endl;
     }
   } // main md loop
-    
+  
   std::cout << "writing final configuration" << std::endl;
-    
   traj.write(conf, topo, sim, io::final);
   traj.print_final(topo, conf, sim);
     
+  const double sim_time = (util::now() - start) - init_time;
+
   std::cout << "\nMESSAGES FROM SIMULATION\n";
   io::message::severity_enum err_msg = io::messages.display(std::cout);
 
   std::cout << "\n\n";
-    
+  
   md.print_timing(std::cout);
 
-  std::cout << "Overall time used:\t" << util::now() - start << "\n"
-	    << "(initialisation took " << init_time << ")\n\n";
-
+  std::setprecision(5);
+  std::cout << std::endl;    
+  std::cout << "Wall time initialisation (s):  " << std::setw(10) << init_time << std::endl;
+  std::cout << "Wall time simulation (s):      " << std::setw(10) << sim_time << std::endl;
+  std::cout << "-----------------------------------------" << std::endl;
+  std::cout << "Wall time total (s):           " << std::setw(10) << (init_time + sim_time) << std::endl;
+  std::cout << std::endl;
+  
+  const double ns_calculated = (sim.param().step.number_of_steps * sim.param().step.dt)/1000.0;
+  //std::cout << "Simulated period (ns):         " << std::setw(10) << ns_calculated << std::endl; 
+  
+  const double performance_per_day = ns_calculated / (sim_time/(60.0*60.0*24.0));    
+  std::cout << "Performance (ns/day):          " << std::setw(10) << performance_per_day << std::endl; 
+  std::cout << std::endl;
+  std::cout << std::endl;
+    
   const time_t time_now = time_t(util::now());
   std::cout << ctime(&time_now) << "\n\n";
     

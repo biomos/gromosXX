@@ -76,19 +76,20 @@ int algorithm::Algorithm_Sequence
       configuration::Configuration &conf,
       simulation::Simulation &sim)
 {
-  DEBUG(5, "Algorithm_Sequence: apply algorithm");
+  DEBUG(5, "Algorithm_Sequence: apply algorithm - START");
 
   for(Algorithm_Sequence::iterator 
 	it = begin(), to = end();
       it != to;
       ++it){
-    int ret;
+    int ret = 0;
     DEBUG(7, "algorithm: " << (*it)->name);
     if((ret = (*it)->apply(topo, conf, sim))){
       DEBUG(1, "ERROR in algorithm_sequence::run : bailing out!");
       return ret;
     }
   }
+  DEBUG(5, "Algorithm_Sequence: apply algorithm - DONE");
   return 0;
 }
 
@@ -105,7 +106,6 @@ int algorithm::Algorithm_Sequence
     (*it)->print_timing(os);
 
   }
-  
   os << "END\n";
 
   return 0;
@@ -127,4 +127,14 @@ algorithm::Algorithm * algorithm::Algorithm_Sequence::algorithm
   }
 
   return NULL;
+}
+
+void algorithm::Algorithm_Sequence::printSequence(){
+      std::cout << " ALGORITHM SEQUENCE: \n";
+      for(Algorithm_Sequence::iterator it = begin(), to = end();
+      it != to;
+      ++it){
+          std::cout <<  "\t " << (*it)->name;
+      }
+      std::cout << "\n";
 }

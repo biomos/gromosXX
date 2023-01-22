@@ -28,7 +28,7 @@ math::Matrixl math::rmat(math::Box const & box) {
   math::Matrixl R(Rx, Ry, Rz);
   for (int i = 0; i < 3; i++)
     for (int j = 0; j < 3; j++)
-      if (fabs(R(i, j)) <= math::epsilon)
+      if (std::abs(R(i, j)) <= math::epsilon)
         R(i, j) = 0.0;
   return R;
 }
@@ -76,7 +76,7 @@ math::Matrixl math::rmat(double const & phi, double const & theta,
   math::Matrixl R(Rx, Ry, Rz);
   for (int i = 0; i < 3; i++)
     for (int j = 0; j < 3; j++)
-      if (fabs(R(i, j)) <= math::epsilon)
+      if (std::abs(R(i, j)) <= math::epsilon)
         R(i, j) = 0.0;
   return R;
 }
@@ -92,7 +92,7 @@ math::Matrixl math::smat(math::Box const & box, math::boundary_enum const b) {
     math::Matrixl S(Sx, Sy, Sz);
     return S;
   } else {
-    long double alpha, beta, gamma;
+    long double alpha = 0.0, beta = 0.0, gamma = 0.0;
     alpha = acos(math::costest(dot(box(1), box(2)) / (abs(box(1)) * abs(box(2)))));
     beta = acos(math::costest(dot(box(0), box(2)) / (abs(box(0)) * abs(box(2)))));
     gamma = acos(math::costest(dot(box(0), box(1)) / (abs(box(0)) * abs(box(1)))));
@@ -109,7 +109,7 @@ math::Matrixl math::smat(math::Box const & box, math::boundary_enum const b) {
     math::Matrixl S(Sx, Sy, Sz);
     for (int i = 0; i < 3; i++)
       for (int j = 0; j < 3; j++)
-        if (fabs(S(i, j)) < math::epsilon)
+        if (std::abs(S(i, j)) < math::epsilon)
           S(i, j) = 0.0;
     return S;
   }
@@ -126,7 +126,7 @@ math::Matrixl math::sinvmat(math::Box const & box, math::boundary_enum const b) 
     math::Matrixl Sinv(Sx, Sy, Sz);
     return Sinv;
   } else {
-    long double alpha, beta, gamma;
+    long double alpha = 0.0, beta = 0.0, gamma = 0.0;
     alpha = acos(math::costest(dot(box(1), box(2)) / (abs(box(1)) * abs(box(2)))));
     beta = acos(math::costest(dot(box(0), box(2)) / (abs(box(0)) * abs(box(2)))));
     gamma = acos(math::costest(dot(box(0), box(1)) / (abs(box(0)) * abs(box(1)))));

@@ -42,6 +42,8 @@ xxalgconst_HEADERS = constraints/create_constraints.h\
 	constraints/position_constraints.h\
 	constraints/shake.h\
 	constraints/perturbed_shake.h\
+	constraints/angle_constraint.cc\
+        constraints/perturbed_angle_constraint.cc\
 	constraints/dihedral_constraint.cc\
 	constraints/perturbed_dihedral_constraint.cc\
 	constraints/lincs.h\
@@ -53,6 +55,10 @@ xxalgconst_HEADERS = constraints/create_constraints.h\
         constraints/m_shake.h\
         constraints/gpu_shake.h\
         constraints/gpu_shake_thread.h
+
+xxalgvirtualatdir = $(includedir)/md++/algorithm/virtualatoms
+xxalgvirtualat_HEADERS = virtualatoms/prepare_virtualatoms.h\
+	virtualatoms/propagate_forces.h
 
 noinst_LTLIBRARIES=	libgroalgorithm.la
 
@@ -91,6 +97,9 @@ libgroalgorithm_la_SOURCES = algorithm.cc\
 	integration/multigradient.cc\
     integration/eds.cc\
 	integration/gamd.cc
+	virtualatoms/prepare_virtualatoms.cc\
+	virtualatoms/propagate_forces.cc
+
 
 bin_PROGRAMS =			
 

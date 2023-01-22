@@ -41,8 +41,8 @@ namespace interaction
 				 double const alpha_crf,
 				 double & force1, double & force6, double & force12,
 				 double &e_lj, double & e_crf, double &de_lj, 
-				 double & de_crf,
-                                 unsigned int eps = 0);
+				 double & de_crf, unsigned int eps = 0, 
+                 double coulomb_scaling = 1);
     
     /**
      * ####### ANITA ############ 
@@ -57,7 +57,8 @@ namespace interaction
                                  double &A_e_crf, double &B_e_crf,
                                  double &A_de_lj, double &B_de_lj,
                                  double &A_de_crf, double &B_de_crf,
-                                 double const lam = 0.0, unsigned int eps = 0);
+                                 double const lam = 0.0, unsigned int eps = 0, 
+                                 double coulomb_scaling = 1);
 
 
     /**
@@ -106,8 +107,8 @@ namespace interaction
 				   double const A_scale, double const B_scale,
 				   double & force1, double & force6, double & force12,
 				   double &e_lj, double & e_crf, double &de_lj, 
-				   double & de_crf,
-                                   unsigned int eps = 0);
+				   double & de_crf, unsigned int eps = 0, 
+                   double coulomb_scaling = 1);
 
     /**
      * calculate the reaction field force and energy

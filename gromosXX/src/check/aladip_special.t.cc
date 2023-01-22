@@ -49,6 +49,8 @@
 void hard_coded_values(std::map<std::string, double> & m){
   m["DistanceRestraint"] = 257.189539;
   m["PerturbedDistanceRestraint"] = 195.899012;
+  m["AngleRestraint"] = 54.5267;
+  m["PerturbedAngleRestraint"] = 4.60917;
   m["DihedralRestraint"] = 2127.910749;
   m["PerturbedDihedralRestraint"] = 399.820792;
   m["XrayRestraint"] = 5.9411e+03;
@@ -69,7 +71,8 @@ int main(int argc, char* argv[]) {
   int total = 0;
 
   util::Known knowns;
-  knowns << "topo" << "pttopo" << "conf" << "input" << "distanceres" << "dihrest" << "xray" << "led" << "lud" << "order" << "verb";
+  knowns << "topo" << "pttopo" << "conf" << "input" << "distanceres" << "angrest"
+         << "dihrest" << "xray" << "led" << "lud" << "order" << "verb";
     
   std::string usage = argv[0];
   usage += "\n\t[@topo      <topology>]\n";
@@ -77,6 +80,7 @@ int main(int argc, char* argv[]) {
   usage += "\t[@conf      <starting configuration>]\n";
   usage += "\t[@input     <input>]\n";
   usage += "\t[@distanceres  <distanceres>]\n";
+  usage += "\t[@angrest   <angrest>]\n";
   usage += "\t[@dihrest   <dihrest>]\n";
   usage += "\t[@xray      <xray>]\n";
   usage += "\t[@led       <le definition file>]\n";
@@ -93,7 +97,7 @@ int main(int argc, char* argv[]) {
   // parse the verbosity flag and set debug levels
   util::parse_verbosity(args);
       
-  std::string stopo, spttopo, sconf, sinput, sdistanceres, sdihrest, sxray, sled, slud, sorder;
+  std::string stopo, spttopo, sconf, sinput, sdistanceres, sangrest, sdihrest, sxray, sled, slud, sorder;
   bool quiet = true;
 
   if (args.count("verb") != -1) quiet = false;
@@ -122,6 +126,11 @@ int main(int argc, char* argv[]) {
     sdistanceres = args["distanceres"];
   else
     GETFILEPATH(sdistanceres, "aladip.distrest", "src/check/data/");
+
+  if(args.count("angrest") ==1)
+    sdihrest = args["angrest"];
+  else
+    GETFILEPATH(sangrest, "aladip.angrest", "src/check/data/");
 
   if(args.count("dihrest") ==1)
     sdihrest = args["dihrest"];
@@ -161,11 +170,12 @@ int main(int argc, char* argv[]) {
 	      << "perturbation :  " << spttopo << "\n"
 	      << "input :         " << sinput << "\n"
 	      << "distanceres :   " << sdistanceres << "\n"
+	      << "angrest :       " << sangrest << "\n"
 	      << "dihrest :       " << sdihrest << "\n"
-              << "xray :          " << sxray << "\n"
+        << "xray :          " << sxray << "\n"
 	      << "led :           " << sled << "\n"
 	      << "lud :           " << slud << "\n"
-              << "order :         " << sorder << "\n"
+        << "order :         " << sorder << "\n"
 	      << "configuration : " << sconf << "\n"
 	      << std::endl;
 
@@ -185,11 +195,13 @@ int main(int argc, char* argv[]) {
 			      aladip_sim,
 			      in_topo,
 			      sdistanceres,
+			      sangrest,
 			      sdihrest,
-                              sxray,
+            sxray,
+            "", // qmmm
 			      sled,
 			      slud,
-                              sorder,  
+            sorder,  
 			      quiet
 			      )
       != 0){

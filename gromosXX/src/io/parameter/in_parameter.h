@@ -42,6 +42,7 @@
  * - @ref  distanceres
  * - @ref  distancefield
  * - @ref  disres
+ * - @ref  angleres
  * - @ref  dihedralres
  * - @ref  dihrest
  * - @ref  multistep
@@ -64,8 +65,10 @@
  * - @ref  addecouple
  * - @ref  orderparamres
  * - @ref  rdcres
- * - @ref  qmmmb
+ * - @ref  qmmm
  * - @ref  xrayres
+ * - @ref  amber
+ * - @ref  dfunct
  */
 
 
@@ -180,6 +183,11 @@ namespace io {
     void read_PAIRLIST(simulation::Parameter &param, std::ostream & os = std::cout);
 
     /**
+     * read VIRTUALATOM block.
+     */
+    void read_VIRTUALATOM(simulation::Parameter &param, std::ostream & os = std::cout);
+
+    /**
      * read POSRES block.
      */
     void read_POSITIONRES(simulation::Parameter &param, std::ostream & os = std::cout);
@@ -198,6 +206,11 @@ namespace io {
      * read DISTANCEFIELD block.
      */
     void read_DISTANCEFIELD(simulation::Parameter &param, std::ostream & os = std::cout);
+
+    /**
+     * read ANGLERES block.
+     */
+    void read_ANGLERES(simulation::Parameter &param, std::ostream & os = std::cout);
 
     /**
      * read DIHEDRALRES block.
@@ -369,6 +382,14 @@ namespace io {
      * read SYMRES block
      */
     void read_SYMRES(simulation::Parameter &param, std::ostream & os = std::cout);
+    /**
+     * read AMBER block
+     */
+    void read_AMBER(simulation::Parameter &param, std::ostream & os = std::cout);
+    /**
+     * read DFUNCT block 
+     */
+    void read_DFUNCT(simulation::Parameter &param, std::ostream & os = std::cout);
   };
 
 } // io

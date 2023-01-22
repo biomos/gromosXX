@@ -1,0 +1,146 @@
+# Use a persistent compiler cache to speed up rebuilds for a single job.
+#.use-ccache:
+#  cache:
+#    key: "$CI_JOB_NAME-$CI_JOB_STAGE-$CI_COMMIT_REF_SLUG"
+#    paths:
+#      - ccache/
+
+.use-cuda:
+  variables:
+    ENV_COMPILER: "NVCCFLAGS=" #\"-arch sm_52\""
+    CUDA_OPTIONS: "--with-cuda"
+
+.use-mpi:
+  variables:
+    ENV_COMPILER: "CC=mpicc CXX=mpiCC"
+    MPI_OPTIONS: "--enable-mpi"
+
+.use-openmp:
+  variables:
+    OPENMP_OPTIONS: "--enable-openmp"
+
+.use-clang:
+  variables:
+    ENV_COMPILER: "CC=clang CXX=clang++ CFLAGS=-fopenmp=libomp CXXFLAGS=-fopenmp=libomp"
+
+.use-share:
+  variables:
+    ENV_SHARE: "--disable-static --enable-shared"
+
+.use-debug:
+  variables:
+    ENV_DEBUG: "--enable-debug"
+
+  #before_script:
+  #  - mkdir -p ccache
+  #  - export CCACHE_BASEDIR=${PWD}
+  #  - export CCACHE_DIR=${PWD}/ccache
+  
+
+.gromos:base:configure:
+  stage: configure-build
+  script:
+    - echo $ENV_COMPILER
+    - echo $OPENMP_OPTIONS
+    - echo $MPI_OPTIONS
+    - echo $CUDA_OPTIONS
+    - echo $ENV_SHARE
+    - echo $ENV_DEBUG
+    - echo $BUILD_DIR
+    - cd gromosXX/
+    - ./Config.sh $ENV_COMPILER
+    - cd ..
+    - mkdir $BUILD_DIR
+    - cd $BUILD_DIR
+    - ../gromosXX/configure $ENV_SHARE $OPENMP_OPTIONS $MPI_OPTIONS $CUDA_OPTIONS $ENV_COMPILER $ENV_DEBUG
+  artifacts:
+    when: always
+    paths:
+      - gromosXX
+      - $BUILD_DIR
+
+.gromos:base:build:
+  stage: build
+  script:
+    - echo $ENV_COMPILER
+    - echo $OPENMP_OPTIONS
+    - echo $MPI_OPTIONS
+    - echo $CUDA_OPTIONS
+    - echo $ENV_SHARE
+    - echo $ENV_DEBUG
+    - echo $BUILD_DIR
+    - echo $BIN_PATH
+    - cd $BUILD_DIR
+    - make -j4 $ENV_COMPILER
+    - make install $ENV_COMPILER
+  artifacts:
+    when: always
+    paths:
+      - $BUILD_DIR/lib
+      - $BIN_PATH
+
+.gromos:base:build_make_check:
+  stage: build_make_check
+  script: 
+    - echo $ENV_COMPILER
+    - echo $OPENMP_OPTIONS
+    - echo $MPI_OPTIONS
+    - echo $CUDA_OPTIONS
+    - echo $ENV_SHARE
+    - echo $ENV_DEBUG
+    - echo $BUILD_DIR
+    - echo $BIN_PATH
+    - cd $BUILD_DIR
+    - make -j4 $ENV_COMPILER
+    - make check $ENV_COMPILER
+    - make install $ENV_COMPILER
+  artifacts:
+    when: always
+    paths:
+      - $BUILD_DIR/lib
+      - $BUILD_DIR/src/check/test-suite.log
+      - $BIN_PATH
+
+.gromos:base:sim_test:
+  stage: sim_test
+  script: 
+    - echo $CI_PROJECT_DIR
+    - echo $BIN_PATH
+    - echo $TEST_REPO
+    - echo $PRE_MD_BIN
+    - echo $OMPI_ALLOW_RUN_AS_ROOT_CONFIRM
+    - echo $OMPI_ALLOW_RUN_AS_ROOT
+    - git clone https://gromosx.boku.ac.at/dpetrov/gromos_test_files.git
+    - cd gromosXX/contrib/py_gr_utils/tests/
+    - pytest-3 --junitxml=${CI_PROJECT_DIR}/sim_test_report.xml
+  artifacts:
+    when: always
+    paths:
+      - $BUILD_DIR
+    reports:
+      junit:
+        - sim_test_report.xml
+
+include:
+#  - local: 'gromosXX/admin/gitlab-ci/gromos.matrix/ubuntu-22.04.yml'
+#  - local: 'gromosXX/admin/gitlab-ci/gromos.matrix/ubuntu-22.04-llvm.yml'
+#  - local: 'gromosXX/admin/gitlab-ci/gromos.matrix/ubuntu-22.04-mpi.yml'
+  - local: 'gromosXX/admin/gitlab-ci/gromos.matrix/ubuntu-20.04.yml'
+#  - local: 'gromosXX/admin/gitlab-ci/gromos.matrix/ubuntu-20.04-llvm.yml'
+  - local: 'gromosXX/admin/gitlab-ci/gromos.matrix/ubuntu-20.04-mpi.yml'
+  - local: 'gromosXX/admin/gitlab-ci/gromos.matrix/ubuntu-20.04-mpi_debug.yml'
+  - local: 'gromosXX/admin/gitlab-ci/gromos.matrix/ubuntu-20.04-cuda-11.6.1.yml'
+  - local: 'gromosXX/admin/gitlab-ci/gromos.matrix/ubuntu-20.04-cuda-11.6.1_debug.yml'
+#  - local: 'gromosXX/admin/gitlab-ci/gromos.matrix/ubuntu-18.04.yml'
+#  - local: 'gromosXX/admin/gitlab-ci/gromos.matrix/ubuntu-18.04-llvm.yml'
+#  - local: 'gromosXX/admin/gitlab-ci/gromos.matrix/ubuntu-18.04-mpi.yml'
+#  - local: 'gromosXX/admin/gitlab-ci/gromos.matrix/ubuntu-16.04.yml'
+#  - local: 'gromosXX/admin/gitlab-ci/gromos.matrix/ubuntu-16.04-llvm.yml'
+#  - local: 'gromosXX/admin/gitlab-ci/gromos.matrix/ubuntu-16.04-mpi.yml'
+#  - local: 'gromosXX/admin/gitlab-ci/gromos.matrix/ubuntu-16.04-cuda-10.2.yml'
+#  - local: 'gromosXX/admin/gitlab-ci/gromos.matrix/debian-11.yml'
+#  - local: 'gromosXX/admin/gitlab-ci/gromos.matrix/debian-11-mpi.yml'
+#  - local: 'gromosXX/admin/gitlab-ci/gromos.matrix/debian-10.yml'
+#  - local: 'gromosXX/admin/gitlab-ci/gromos.matrix/debian-10-mpi.yml'
+#  - local: 'gromosXX/admin/gitlab-ci/gromos.matrix/debian-9.yml'
+#  - local: 'gromosXX/admin/gitlab-ci/gromos.matrix/debian-9-mpi.yml'

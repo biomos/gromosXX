@@ -16,15 +16,18 @@
  * helper function to initialize the constants.
  */
 inline void interaction::Nonbonded_Term
-::init(simulation::Simulation const &sim) {
-  double cut3i, crf, crf_cut3i, crf_2cut3i, crf_cut;
+::init(simulation::Simulation const &sim
+     , simulation::interaction_func_enum int_func) {
+  if (int_func == simulation::default_func)
+    int_func = sim.param().force.interaction_function;
+  double cut3i = 0.0, crf = 0.0, crf_cut3i = 0.0, crf_2cut3i = 0.0, crf_cut = 0.0;
   m_cut3i.clear();
   m_crf.clear();
   m_crf_cut3i.clear();
   m_crf_cut.clear();
   m_crf_2cut3i.clear();
   cgrain_eps.clear();
-  switch (sim.param().force.interaction_function) {
+  switch (int_func) {
     case simulation::lj_crf_func:
     case simulation::pol_lj_crf_func:
     case simulation::pol_off_lj_crf_func:
@@ -160,6 +163,8 @@ inline void interaction::Nonbonded_Term
       charge_shape = sim.param().nonbonded.ls_charge_shape;
       charge_width_i = 1.0 / sim.param().nonbonded.ls_charge_shape_width;
       break;
+    case simulation::lj_func: // Do only LJ
+      break;
     default:
       io::messages.add("Nonbonded_Innerloop",
               "interaction function not implemented",
@@ -186,7 +191,8 @@ inline void interaction::Nonbonded_Term
 ::lj_crf_interaction(math::Vec const &r,
         double c6, double c12,
         double q,
-        double &force, double &e_lj, double &e_crf, unsigned int eps) {
+        double &force, double &e_lj, double &e_crf, unsigned int eps,
+        const double coulomb_scaling) {
   DEBUG(14, "\t\tnonbonded term");
 
   assert(abs2(r) != 0);
@@ -201,10 +207,10 @@ inline void interaction::Nonbonded_Term
   e_lj = (c12_dist6i - c6) * dist6i;
 
   e_crf = q_eps *
-          (disti - m_crf_2cut3i[eps] * dist2 - m_crf_cut[eps]);
+          (disti * coulomb_scaling - m_crf_2cut3i[eps] * dist2 - m_crf_cut[eps]);
 
   force = (c12_dist6i + c12_dist6i - c6) * 6.0 * dist6i * dist2i +
-          q_eps * (disti * dist2i + m_crf_cut3i[eps]);
+          q_eps * (disti * coulomb_scaling * dist2i + m_crf_cut3i[eps]);
 
   //double f_crf = q_eps * (disti * dist2i + m_crf_cut3i);
   //DEBUG(1, "force = " << f_crf*r(0) << "  " << f_crf*r(1) << "  " << f_crf*r(2));
@@ -295,8 +301,8 @@ inline void interaction::Nonbonded_Term
   const double ai_dist = charge_width_i * dist;
 
   e_lj = (c12_dist6i - c6) * dist6i;
-  double eta;
-  double d_eta;
+  double eta = 0.0;
+  double d_eta = 0.0;
   interaction::Lattice_Sum::charge_shape_switch(charge_shape, ai_dist, eta, d_eta);
   DEBUG(14, "eta: " << eta << " d_eta: " << d_eta);
   e_ls = q_eps * disti * eta;
@@ -323,8 +329,8 @@ inline void interaction::Nonbonded_Term
   const double disti = 1.0 / dist;
   const double ai_dist = charge_width_i * dist;
 
-  double eta;
-  double d_eta;
+  double eta = 0.0;
+  double d_eta = 0.0;
   interaction::Lattice_Sum::charge_shape_switch(charge_shape, ai_dist, eta, d_eta);
   DEBUG(14, "eta: " << eta << " d_eta: " << d_eta);
   e_ls = q_eps * disti * (eta - 1.0);

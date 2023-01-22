@@ -205,6 +205,24 @@ namespace interaction {
     template<math::boundary_enum b>
     void _prepare_cog(configuration::Configuration & conf,
             topology::Topology & topo);
+    
+    /**
+     * QM exclusion inline function for the first atom/cg
+     */
+    template<class cutoff_trait>
+    inline bool t_qm_excluded(const topology::Topology& topo
+                         , const simulation::qmmm_enum qmmm
+                         , unsigned first);
+    
+    /**
+     * QM exclusion inline function for a pair of atoms/cgs
+     */
+    template<class cutoff_trait>
+    inline bool t_qm_excluded(const topology::Topology& topo
+                         , const simulation::qmmm_enum qmmm
+                         , unsigned first
+                         , unsigned second);
+
     /**
      * Makes the combination table of the codes for irregular shapes aswell
      * as the corresponding code table for the parameters

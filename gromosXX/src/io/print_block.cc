@@ -466,12 +466,14 @@ namespace io
     os << type << "El (lattice sum self): " << std::setw(48) << e.ls_self_total << "\n";
     os << type << "El (surface term)    : " << std::setw(48) << e.ls_surface_total << "\n";
     os << type << "Polarisation self    : " << std::setw(39) << e.self_total << "\n";
+    os << type << "QM                   : " << std::setw(30) << e.qm_total << "\n";
     os << type << "Special              : " << std::setw(21) << e.special_total << "\n";
     os << type << "SASA                 : " << std::setw(30) << e.sasa_total << "\n";
     os << type << "SASA Volume          : " << std::setw(30) << e.sasa_volume_total << "\n";
     os << type << "Constraints          : " << std::setw(30) << e.constraints_total << "\n";
     os << type << "Distanceres          : " << std::setw(30) << e.distanceres_total << "\n";
     os << type << "Disfieldres          : " << std::setw(30) << e.disfieldres_total << "\n";
+    os << type << "Angrest              : " << std::setw(30) << e.angrest_total << "\n";
     os << type << "Dihrest              : " << std::setw(30) << e.dihrest_total << "\n";
     os << type << "Posrest              : " << std::setw(30) << e.posrest_total << "\n";
     os << type << "Jrest                : " << std::setw(30) << e.jvalue_total << "\n";
@@ -483,7 +485,7 @@ namespace io
     os << type << "EDS reference        : " << std::setw(30) << e.eds_vr << "\n";
     os << type << "GAMD total           : " << std::setw(30) << e.gamd_DV_total << "\n";
     os << type << "Entropy              : " << std::setw(30) << e.entropy_term << "\n";
-    os << type << "QM                   : " << std::setw(30) << e.qm_total << "\n";
+    os << type << "NN validation        : " << std::setw(30) << e.nn_valid << "\n";
     os << "\n";
 
     os << std::setw(20) << "COV";
@@ -648,6 +650,9 @@ namespace io
 
     os << "\n" << std::setw(20) << type + "Disfieldres";
     for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << e.disfieldres_energy[i];
+
+    os << "\n" << std::setw(20) << type + "Angrest";
+    for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << e.angrest_energy[i];
 
     os << "\n" << std::setw(20) << type + "Dihrest";
     for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << e.dihrest_energy[i];

@@ -92,7 +92,7 @@ calculate_interactions(topology::Topology & topo,
         simulation::Simulation & sim) {
   DEBUG(4, "Nonbonded_Interaction::calculate_interactions");
 
-  m_timer.start();
+  m_timer.start(sim);
 
   // check if we want to calculate nonbonded
   // might not be necessary if multiple time-stepping is enabled
@@ -144,7 +144,7 @@ calculate_interactions(topology::Topology & topo,
 
   DEBUG(6, "sets are done, adding things up...");
   store_set_data(*p_topo, *p_conf, sim);
-
+  
   if (sim.param().multicell.multicell) {
     reduce_configuration(topo, conf, sim, *p_conf);
   }
@@ -366,8 +366,10 @@ int interaction::Nonbonded_Interaction::check_special_loop
   }
 
   DEBUG(10, "num_solvents = " << topo.num_solvents());
-  DEBUG(10, "molecules = " << topo.num_solvent_molecules(0));
-  DEBUG(10, "atoms = " << topo.num_solvent_atoms(0));
+  if (topo.num_solvents() > 0) {
+    DEBUG(10, "molecules = " << topo.num_solvent_molecules(0));
+    DEBUG(10, "atoms = " << topo.num_solvent_atoms(0));
+  }
 
   // check whether there is a solvent.
   if (topo.num_solvents() != 1 || topo.num_solvent_molecules(0) < 1) {
@@ -390,7 +392,7 @@ int interaction::Nonbonded_Interaction::check_special_loop
   DEBUG(10, "checking energy groups ...");
 
   if (topo.atom_energy_group(topo.num_solute_atoms()) !=
-      topo.atom_energy_group(topo.num_atoms() - 1)) {
+      topo.atom_energy_group(topo.num_atoms() - 2)) {
     DEBUG(10, "- incompatible.");
     if (!quiet)
       os << "\tusing standard solvent loops (energy group partitioning incompatible).\n"
@@ -624,7 +626,7 @@ void interaction::Nonbonded_Interaction::store_set_data
         configuration::Configuration & conf,
         simulation::Simulation const & sim
         ) {
-  m_timer.start("set data summation");
+  m_timer.start_subtimer("set data summation");
   std::vector<Nonbonded_Set_Interface *>::iterator
   it = m_nonbonded_set.begin(),
           to = m_nonbonded_set.end();
@@ -634,7 +636,7 @@ void interaction::Nonbonded_Interaction::store_set_data
     DEBUG(7, "adding forces from set " << it - m_nonbonded_set.begin());
     (*it)->update_configuration(topo, conf, sim);
   }
-  m_timer.stop("set data summation");
+  m_timer.stop_subtimer("set data summation");
 }
 
 void interaction::Nonbonded_Interaction::init_expand_configuration

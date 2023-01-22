@@ -166,7 +166,8 @@ namespace simulation
 				      bool rottrans_constraints,
                                       bool position_constraints,
                                       double dof_to_subtract,
-                                      bool dih_constraints);
+                                      bool dih_constraints,
+                                      bool ang_constraints);
     
     /**
      * calculate total kinetic energies and temperatures.

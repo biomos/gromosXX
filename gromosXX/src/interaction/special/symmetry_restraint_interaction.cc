@@ -111,7 +111,7 @@ void _calculate_interactions(topology::Topology& topo,
 
 int interaction::Symmetry_Restraint_Interaction::calculate_interactions(topology::Topology& topo,
         configuration::Configuration& conf, simulation::Simulation& sim) {
-  m_timer.start();
+  m_timer.start(sim);
   SPLIT_BOUNDARY(_calculate_interactions, topo, conf, sim);
   m_timer.stop();
   return 0;

@@ -48,7 +48,7 @@ std::map<int,math::Vec> &rah_map, int &error)
   // math::VArray &pos   = conf.current().pos;
   // math::VArray &force = conf.current().force;
   math::Vec v, f;
-  double energy;
+  double energy = 0.0;
 
   math::Periodicity<B> periodicity(conf.current().box);
 
@@ -178,13 +178,7 @@ std::map<int,math::Vec> &rah_map, int &error)
 	}
       } 
     }
-    
-    // std::cout.precision(9);
-    // std::cout.setf(std::ios::fixed, std::ios::floatfield);
-    // std::cout << "DISTANCERES_" << i << ": " 
-    // << dist << "\t\t" << math::dot(f, v) / dist 
-    // << "\t\t" << energy << "\n";
-    
+       
   }
   
   return 0;

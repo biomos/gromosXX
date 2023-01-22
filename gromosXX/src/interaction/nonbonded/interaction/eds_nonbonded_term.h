@@ -34,17 +34,17 @@ namespace interaction
      * calculate the force and energy of an atom pair.
      */
     void eds_lj_crf_interaction(const double dist2, const double dist6, 
-			        const double &c6, const double &c12,
-			        const double &q,
-                                double const alpha_lj,
-			        double const alpha_crf,
+              const double disti,
+			        const double c6, const double c12,
+			        const double q,
 			        double & force, double & e_nb,
-                                unsigned int eps = 0);
+                                unsigned int eps = 0,
+                                const double coulomb_scaling = 1);
 
     /**
      * calculate the reaction field force and energy of an atom pair.
      */
-    void eds_rf_interaction(math::Vec const &r, double q, double const alpha_crf,
+    void eds_rf_interaction(math::Vec const &r, double q,
 			    math::Vec & force, double & e_rf, unsigned int eps = 0);
    
 
@@ -68,6 +68,12 @@ namespace interaction
      * divided by reaction field cutoff.
      */
     std::vector<double> m_crf_cut;
+
+    /**
+     * Energy:
+     * reaction field constant / twice reaction field cutoff ^ 3
+     */
+    std::vector<double> m_crf_2cut3i;
     
     /*
      Coarse grained dielectric permittivities*/

@@ -42,7 +42,7 @@ int algorithm::Berendsen_Thermostat
 	configuration::Configuration & conf,
 	simulation::Simulation & sim)
 {
-  m_timer.start();
+  m_timer.start(sim);
 
   calc_scaling(topo, conf, sim);
 
@@ -80,7 +80,7 @@ void algorithm::Berendsen_Thermostat
 
       DEBUG(7, "pre-scale ekin: " << b_it->ekin);
 
-      double free_temp;
+      double free_temp = 0.0;
 
       // small flexible constraints hack!
       if (sim.param().constraint.solute.algorithm == simulation::constr_flexshake){

@@ -155,7 +155,7 @@ int _lincs(topology::Topology & topo,
   _solve_lincs(topo, conf, sim, constr, B, A, rhs, sol, lincs, lincs_order, offset);
   
   // correction for rotational lengthening
-  double p;
+  double p = 0.0;
   unsigned int count = 0;
   
   for(unsigned int i=0; i<num_constr; ++i){
@@ -190,7 +190,7 @@ void _solvent(topology::Topology & topo,
 		     simulation::Simulation & sim,
 		     util::Algorithm_Timer & m_timer, int & error)
 {
-  m_timer.start("solvent");
+  m_timer.start_subtimer("solvent");
   // the first atom of a solvent
   unsigned int first = unsigned(topo.num_solute_atoms());
 
@@ -208,7 +208,7 @@ void _solvent(topology::Topology & topo,
     }
   }
  
-  m_timer.stop("solvent");
+  m_timer.stop_subtimer("solvent");
   error = 0;
 }
 
@@ -220,7 +220,7 @@ int algorithm::Lincs::apply(topology::Topology & topo,
 			    simulation::Simulation & sim)
 {
   DEBUG(7, "applying LINCS");
-  m_timer.start();
+  m_timer.start(sim);
   
   // check whether we lincs solute
   if (topo.solute().distance_constraints().size() && 
@@ -228,11 +228,11 @@ int algorithm::Lincs::apply(topology::Topology & topo,
       sim.param().constraint.ntc > 1){
 
     DEBUG(8, "\twe need to lincs SOLUTE");
-    m_timer.start("solute");
+    m_timer.start_subtimer("solute");
     SPLIT_BOUNDARY(_lincs, topo, conf, sim, topo.solute().distance_constraints(),
 		   topo.solute().lincs(),
 		   sim.param().constraint.solute.lincs_order, m_timer);
-    m_timer.stop("solute");
+    m_timer.stop_subtimer("solute");
  
   }
 
@@ -375,13 +375,16 @@ int algorithm::Lincs::init(topology::Topology & topo,
   unsigned int first = topo.num_solute_atoms();
 
   // for all solvents
-  for(unsigned int i=0; i<topo.num_solvents(); ++i){
-    
-    _setup_lincs(topo, topo.solvent(i).lincs(),
-		 topo.solvent(i).distance_constraints(),
-		 first);
-
-    first+=topo.solvent(i).num_atoms();
+  for(unsigned int i=0; i<topo.num_solvents(); ++i){  //Initialize lincs for each solvent
+    if (topo.num_solvent_molecules(i) != 0){
+      _setup_lincs(topo, topo.solvent(i).lincs(),
+		    topo.solvent(i).distance_constraints(),
+		    first);
+      first+=topo.solvent(i).num_atoms();
+    } else {
+      io::messages.add("Solvent " + std::to_string(i) + ": No molecules found; does not initialize LINCS for solvent "  + std::to_string(i) + ".", 
+    		 	  "algorithm::Lincs::init" , io::message::warning);
+    }
   }
   
   //================================================================================

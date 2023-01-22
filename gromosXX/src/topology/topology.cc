@@ -65,7 +65,11 @@ m_sasa_volume_tot(0.0),
 m_sasa_first_neighbour(),
 m_sasa_second_neighbour(),
 m_sasa_third_neighbour(),
-m_sasa_higher_neighbour() {
+m_sasa_higher_neighbour(),
+m_is_qm(0),
+m_is_qm_buffer(0),
+m_qm_delta_charge(0),
+m_qm_atomic_number(0) {
   m_chargegroup.push_back(0);
   m_molecule.push_back(0);
   m_temperature_group.push_back(0);
@@ -99,24 +103,26 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
   m_angle_types_cosharm = topo.angle_types_cosharm();
   m_dihedral_types = topo.dihedral_types();
   m_impdihedral_types = topo.impdihedral_types();
-    std::vector<interaction::bond_type_struct> m_bond_types_quart;
+  m_virtual_atom_types = topo.virtual_atom_types();
+
+// CHRIS: this seems to be copy-pasted piece of code?
+//    std::vector<interaction::bond_type_struct> m_bond_types_quart;
 
     /**
      * store all available angle types with harmonic/cosine harmonic force constant
      */
-    std::vector<interaction::angle_type_struct> m_angle_types_harm;
-    std::vector<interaction::angle_type_struct> m_angle_types_cosharm;
+//    std::vector<interaction::angle_type_struct> m_angle_types_harm;
+//    std::vector<interaction::angle_type_struct> m_angle_types_cosharm;
 
     /**
      * store all available dihedral types
      */
-    std::vector<interaction::dihedral_type_struct> m_dihedral_types;
+//    std::vector<interaction::dihedral_type_struct> m_dihedral_types;
 
     /**
      * store all available improper dihedral types
      */
-    std::vector<interaction::improper_dihedral_type_struct> m_impdihedral_types;
-
+//    std::vector<interaction::improper_dihedral_type_struct> m_impdihedral_types;
   m_is_perturbed.clear();
   m_is_eds_perturbed.clear();
   m_gamd_accel_group.clear();
@@ -143,6 +149,17 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
   m_chargegroup.push_back(0);
   m_stochastic.clear();
   m_lj_exceptions.clear();
+  // QMMM TEST
+  m_qm_exclusion.clear();;
+  m_qm_one_four_pair.clear();;
+  m_qm_all_exclusion.clear();;
+  m_qm_lj_exceptions.clear();;
+  // END QMMM TEST
+  m_is_qm.clear();
+  m_is_qm_buffer.clear();
+  m_qm_delta_charge.clear();
+  m_qm_atomic_number.clear();
+  m_qmmm_link.clear();
 
   DEBUG(10, "solute chargegroups = " << topo.num_solute_chargegroups());
 
@@ -176,6 +193,7 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
     m_gamd_accel_group.insert(m_gamd_accel_group.end(), topo.m_gamd_accel_group.begin(), topo.m_gamd_accel_group.end());
     m_is_polarisable.insert(m_is_polarisable.end(), topo.m_is_polarisable.begin(), topo.m_is_polarisable.end());
     m_is_coarse_grained.insert(m_is_coarse_grained.end(), topo.m_is_coarse_grained.begin(), topo.m_is_coarse_grained.end());
+    m_qmmm_link.insert(topo.m_qmmm_link.begin(), topo.m_qmmm_link.end());
 
     for (int i = 0; i < num_solute; ++i) {
       m_iac.push_back(topo.m_iac[i]);
@@ -190,6 +208,10 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
       m_gamma_j.push_back(topo.m_gamma_j[i]);
       m_gamma_k.push_back(topo.m_gamma_k[i]);
       m_cg_factor.push_back(topo.m_cg_factor[i]);
+      m_is_qm.push_back(topo.m_is_qm[i]);
+      m_is_qm_buffer.push_back(topo.m_is_qm_buffer[i]);
+      m_qm_delta_charge.push_back(topo.m_qm_delta_charge[i]);
+      m_qm_atomic_number.push_back(topo.m_qm_atomic_number[i]);
 
       topology::excl_cont_t::value_type ex;
       topology::excl_cont_t::value_type::const_iterator it = topo.m_exclusion[i].begin(),
@@ -220,6 +242,44 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
                 topology::lj_exception_struct(ljex_it->i + num_solute * m, ljex_it->j + num_solute * m,
                 ljex_it->c6, ljex_it->c12));
       }
+
+      // QMMM TEST
+      {
+        topology::excl_cont_t::value_type ex;
+        topology::excl_cont_t::value_type::const_iterator it = topo.m_qm_exclusion[i].begin(),
+                to = topo.m_qm_exclusion[i].end();
+        for (; it != to; ++it)
+          ex.insert(*it + num_solute * m);
+        m_qm_exclusion.push_back(ex);
+
+        ex.clear();
+        it = topo.m_qm_one_four_pair[i].begin();
+        to = topo.m_qm_one_four_pair[i].end();
+        for (; it != to; ++it)
+          ex.insert(*it + num_solute * m);
+        m_qm_one_four_pair.push_back(ex);
+
+        ex.clear();
+        it = topo.m_qm_all_exclusion[i].begin();
+        to = topo.m_qm_all_exclusion[i].end();
+        for (; it != to; ++it)
+          ex.insert(*it + num_solute * m);
+        m_qm_all_exclusion.push_back(ex);
+
+        std::vector<topology::lj_exception_struct>::const_iterator ljex_it =
+                topo.qm_lj_exceptions().begin(), ljex_to =
+                topo.qm_lj_exceptions().end();
+        for (; ljex_it != ljex_to; ++ljex_it) {
+          m_qm_lj_exceptions.push_back(
+                  topology::lj_exception_struct(ljex_it->i + num_solute * m, ljex_it->j + num_solute * m,
+                  ljex_it->c6, ljex_it->c12));
+        }
+      }
+      // END QMMM TEST
+
+
+
+
 
       m_atom_energy_group.push_back(topo.m_atom_energy_group[i]);
 
@@ -485,6 +545,15 @@ void topology::Topology::resize(unsigned int const atoms) {
   m_one_four_pair.resize(atoms);
   m_all_exclusion.resize(atoms);
   m_stochastic.resize(atoms);
+  //QMMM TEST
+  m_qm_exclusion.resize(atoms);
+  m_qm_one_four_pair.resize(atoms);
+  m_qm_all_exclusion.resize(atoms);
+  // END QMMM TEST
+  m_qm_atomic_number.resize(atoms, 0);
+  m_is_qm.resize(atoms, 0);
+  m_is_qm_buffer.resize(atoms, 0);
+  m_qm_delta_charge.resize(atoms, 0);
 
   m_iac.resize(atoms);
   // chargegroups???
@@ -493,6 +562,7 @@ void topology::Topology::resize(unsigned int const atoms) {
   m_gamd_accel_group.resize(atoms, 0);
   m_is_polarisable.resize(atoms, false);
   m_is_coarse_grained.resize(atoms, false);
+
 }
 
 void topology::Topology::init(simulation::Simulation const & sim,
@@ -546,38 +616,7 @@ void topology::Topology::init(simulation::Simulation const & sim,
   }
 
   // add chargegroup exclusions (a clever technique to improve pairlisting...)
-  m_chargegroup_exclusion.resize(num_solute_chargegroups());
-
-  for (size_t cg1 = 0; cg1 < num_solute_chargegroups(); ++cg1) {
-
-    m_chargegroup_exclusion[cg1].insert(cg1);
-
-    for (size_t cg2 = cg1 + 1; cg2 < num_solute_chargegroups(); ++cg2) {
-
-      // std::cerr << "\tchecking cg1=" << cg1 << " cg2=" << cg2 << std::endl;
-
-      for (int at1 = m_chargegroup[cg1]; at1 < m_chargegroup[cg1 + 1]; ++at1) {
-
-              topology::excl_cont_t::value_type::const_iterator ex = m_all_exclusion[at1].begin(),
-                ex_to = m_all_exclusion[at1].end();
-        for (; ex != ex_to; ++ex) {
-
-          // std::cerr << "cg2: " << m_chargegroup[cg2] << " - " << m_chargegroup[cg2+1]
-          // << " ex=" << *ex << std::endl;
-
-          if (m_chargegroup[cg2] <= *ex &&
-                  m_chargegroup[cg2 + 1] > *ex) {
-
-            // std::cerr << "cg1=" << cg1 << " cg2=" << cg2 << " : excluded!" << std::endl;
-
-            m_chargegroup_exclusion[cg1].insert(cg2);
-            m_chargegroup_exclusion[cg2].insert(cg1);
-
-          } // exclude cg
-        } // exclusions of at1
-      } // at1 in cg1
-    } // cg2
-  } // cg1
+  update_chargegroup_exclusion();
 
   if (!sim.param().force.nonbonded_crf) {
     for (unsigned int i = 0; i < m_charge.size(); ++i) {
@@ -999,7 +1038,8 @@ void
 topology::Topology::
 calculate_constraint_dof(simulation::Multibath &multibath,
         bool rottrans_constraints, bool position_constraints,
-        bool dih_constraints)const {
+        bool dih_constraints,
+        bool ang_constraints)const {
 
   // save the positionally constrained atom inidices for fast checking
   // only make sure the distance constraints dof are not removed for
@@ -1023,7 +1063,7 @@ calculate_constraint_dof(simulation::Multibath &multibath,
     c_it = solute().distance_constraints().begin(),
             c_to = solute().distance_constraints().end();
 
-    unsigned int com_bath_i, ir_bath_i, com_bath_j, ir_bath_j;
+    unsigned int com_bath_i = 0, ir_bath_i = 0, com_bath_j = 0, ir_bath_j = 0;
 
     for (; c_it != c_to; ++c_it) {
 
@@ -1123,21 +1163,24 @@ calculate_constraint_dof(simulation::Multibath &multibath,
             c_it = perturbed_solute().distance_constraints().begin(),
             c_to = perturbed_solute().distance_constraints().end();
 
-    unsigned int com_bath_i, ir_bath_i, com_bath_j, ir_bath_j;
+    unsigned int com_bath_i = 0, ir_bath_i = 0, com_bath_j = 0, ir_bath_j = 0;
 
     for (; c_it != c_to; ++c_it) {
 
       DEBUG(10, "Constraint: " << c_it->i << " - " << c_it->j);
       if (pos_cons_atom.find(c_it->i) != pos_cons_atom.end() &&
               pos_cons_atom.find(c_it->j) != pos_cons_atom.end()) {
+        // both atoms are position constrained
         continue;
       } else if (pos_cons_atom.find(c_it->i) != pos_cons_atom.end()) {
+        // atom i position constrained
         multibath.in_bath(c_it->j, com_bath_j, ir_bath_j);
         multibath[ir_bath_j].dof -= 1.0;
         multibath[ir_bath_j].ir_dof -= 1.0;
         multibath[ir_bath_j].solute_constr_dof += 1.0;
         continue;
       } else if (pos_cons_atom.find(c_it->j) != pos_cons_atom.end()) {
+        // atom j position constrained
         multibath.in_bath(c_it->i, com_bath_i, ir_bath_i);
         multibath[ir_bath_i].dof -= 1.0;
         multibath[ir_bath_i].ir_dof -= 1.0;
@@ -1145,6 +1188,7 @@ calculate_constraint_dof(simulation::Multibath &multibath,
         continue;
       }
 
+      // both atoms are not position-constrained
       multibath.in_bath(c_it->i, com_bath_i, ir_bath_i);
       multibath.in_bath(c_it->j, com_bath_j, ir_bath_j);
 
@@ -1165,10 +1209,55 @@ calculate_constraint_dof(simulation::Multibath &multibath,
     }
   }
 
-  
+  DEBUG(7, "and the angle constraints (DOF calc)");
+  if (ang_constraints) {
+    std::vector<angle_restraint_struct>::const_iterator angit = angle_restraints().begin(), 
+                                                   angto = angle_restraints().end();
+    for (; angit != angto; ++angit){
+      std::vector<int> not_pos_constrained;
+      if (pos_cons_atom.find(angit->i) == pos_cons_atom.end()) not_pos_constrained.push_back(angit->i);
+      if (pos_cons_atom.find(angit->j) == pos_cons_atom.end()) not_pos_constrained.push_back(angit->j);
+      if (pos_cons_atom.find(angit->k) == pos_cons_atom.end()) not_pos_constrained.push_back(angit->k);
+
+      double num_not_pos_const = not_pos_constrained.size();
+      unsigned int ir_bath = 0, com_bath = 0;
+
+      for (unsigned int i=0; i < num_not_pos_const; i++) {
+        double part=1/num_not_pos_const;
+        multibath.in_bath(not_pos_constrained[i], com_bath, ir_bath);
+        multibath[ir_bath].dof-=part;
+        multibath[ir_bath].ir_dof-=part;
+        multibath[ir_bath].solute_constr_dof+=part;
+      }
+    }
+
+    std::vector<perturbed_angle_restraint_struct>::const_iterator pangit = perturbed_angle_restraints().begin(), 
+                                                   pangto = perturbed_angle_restraints().end();
+    for (; pangit != pangto; ++pangit){
+      std::vector<int> not_pos_constrained;
+      if (pos_cons_atom.find(pangit->i) == pos_cons_atom.end()) not_pos_constrained.push_back(pangit->i);
+      if (pos_cons_atom.find(pangit->j) == pos_cons_atom.end()) not_pos_constrained.push_back(pangit->j);
+      if (pos_cons_atom.find(pangit->k) == pos_cons_atom.end()) not_pos_constrained.push_back(pangit->k);
+
+      double num_not_pos_const = not_pos_constrained.size();
+      unsigned int ir_bath = 0, com_bath = 0;
+
+      for (unsigned int i=0; i < num_not_pos_const; i++) {
+        double part=1/num_not_pos_const;
+        multibath.in_bath(not_pos_constrained[i], com_bath, ir_bath);
+        multibath[ir_bath].dof-=part;
+        multibath[ir_bath].ir_dof-=part;
+        multibath[ir_bath].solute_constr_dof+=part;
+      }
+    }
+
+    for (unsigned int i = 0; i < multibath.size(); ++i) {
+      DEBUG(7, "dof           " << multibath[i].dof);
+      DEBUG(7, "solute constr " << multibath[i].solute_constr_dof);
+    }
+  }
 
   DEBUG(7, "and the dihedral constraints (DOF calc)");
-  //TODO: we have to check if dihedral constraints for solvent can work (not only here but especially in shake.h)
   if (dih_constraints) {
     std::vector<dihedral_restraint_struct>::const_iterator dihit = dihedral_restraints().begin(), 
                                                    dihto = dihedral_restraints().end();
@@ -1180,7 +1269,7 @@ calculate_constraint_dof(simulation::Multibath &multibath,
       if (pos_cons_atom.find(dihit->l) == pos_cons_atom.end()) not_pos_constrained.push_back(dihit->l);
 
       double num_not_pos_const = not_pos_constrained.size();
-      unsigned int ir_bath, com_bath;
+      unsigned int ir_bath = 0, com_bath = 0;
 
       for (unsigned int i=0; i < num_not_pos_const; i++) {
         double part=1/num_not_pos_const;
@@ -1201,7 +1290,7 @@ calculate_constraint_dof(simulation::Multibath &multibath,
       if (pos_cons_atom.find(pdihit->l) == pos_cons_atom.end()) not_pos_constrained.push_back(pdihit->l);
 
       double num_not_pos_const = not_pos_constrained.size();
-      unsigned int ir_bath, com_bath;
+      unsigned int ir_bath = 0, com_bath = 0;
 
       for (unsigned int i=0; i < num_not_pos_const; i++) {
         double part=1/num_not_pos_const;
@@ -1226,7 +1315,7 @@ calculate_constraint_dof(simulation::Multibath &multibath,
     for (; tmpit != tmpto; ++tmpit) {
       unsigned int num_cons = 0;
       topology::Atom_Iterator ait = tmpit.begin(), ato = tmpit.end();
-      unsigned int com_bath_i, ir_bath_i;
+      unsigned int com_bath_i = 0, ir_bath_i = 0;
       unsigned int first_atom = *ait;
       multibath.in_bath(*ait, com_bath_i, ir_bath_i);
 
@@ -1268,7 +1357,7 @@ calculate_constraint_dof(simulation::Multibath &multibath,
     // check whether all solute is in one bath
     if (num_solute_atoms()) {
 
-      unsigned int ir_bath, ir_bath_0, com_bath, com_bath_0;
+      unsigned int ir_bath = 0, ir_bath_0 = 0, com_bath = 0, com_bath_0 = 0;
       bool ok = true;
 
       multibath.in_bath(0, com_bath_0, ir_bath_0);
@@ -1372,6 +1461,71 @@ topology::Topology::update_for_lambda() {
     DEBUG(8, "mass(" << it->second.sequence_number()
             << ") = " << mass()(it->second.sequence_number()));
   }
+}
+
+void topology::Topology::update_chargegroup_exclusion() {
+  m_chargegroup_exclusion.clear();
+  m_chargegroup_exclusion.resize(num_solute_chargegroups());
+
+  for (size_t cg1 = 0; cg1 < num_solute_chargegroups(); ++cg1) {
+
+    m_chargegroup_exclusion[cg1].insert(cg1);
+
+    for (size_t cg2 = cg1 + 1; cg2 < num_solute_chargegroups(); ++cg2) {
+
+      // std::cerr << "\tchecking cg1=" << cg1 << " cg2=" << cg2 << std::endl;
+
+      for (int at1 = m_chargegroup[cg1]; at1 < m_chargegroup[cg1 + 1]; ++at1) {
+
+              topology::excl_cont_t::value_type::const_iterator ex = m_all_exclusion[at1].begin(),
+                ex_to = m_all_exclusion[at1].end();
+        for (; ex != ex_to; ++ex) {
+
+          // std::cerr << "cg2: " << m_chargegroup[cg2] << " - " << m_chargegroup[cg2+1]
+          // << " ex=" << *ex << std::endl;
+
+          if (m_chargegroup[cg2] <= *ex &&
+                  m_chargegroup[cg2 + 1] > *ex) {
+
+            // std::cerr << "cg1=" << cg1 << " cg2=" << cg2 << " : excluded!" << std::endl;
+
+            m_chargegroup_exclusion[cg1].insert(cg2);
+            m_chargegroup_exclusion[cg2].insert(cg1);
+
+          } // exclude cg
+        } // exclusions of at1
+      } // at1 in cg1
+    } // cg2
+  } // cg1
+}
+
+void topology::Topology::update_all_exclusion() {
+  const unsigned size = m_all_exclusion.size();
+  const unsigned n_atoms = num_atoms();
+  assert(size == n_atoms
+      && size == m_exclusion.size()
+      && size == m_one_four_pair.size());
+  m_all_exclusion.clear();
+  m_all_exclusion.resize(n_atoms);
+
+  DEBUG(15, "Merging exclusions and one_four_pairs into all_exclusions");
+  // Insert exclusions and 1,4-pairs
+  for (unsigned i = 0; i < n_atoms; ++i)
+  {
+    std::set_union(m_exclusion[i].begin(), m_exclusion[i].end(),
+          m_one_four_pair[i].begin(), m_one_four_pair[i].end(),
+          std::inserter(m_all_exclusion[i], m_all_exclusion[i].end()));
+  }
+  // Insert LJ exceptions
+  DEBUG(15, "Inserting LJ exceptions");
+  for (std::vector<topology::lj_exception_struct>::const_iterator
+        it = m_lj_exceptions.begin(); it != m_lj_exceptions.end(); ++it) {
+    DEBUG(15, "LJ exception: " << it->i << " - " << it->j);
+    assert((unsigned) it->i < size && it->i < it->j);
+    m_all_exclusion[it->i].insert(it->j);
+  }
+  /// Chargegroup exclusions need to be updated too
+  update_chargegroup_exclusion();
 }
 
 /**

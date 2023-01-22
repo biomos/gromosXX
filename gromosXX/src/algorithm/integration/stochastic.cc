@@ -299,7 +299,7 @@ int algorithm::Stochastic_Dynamics_Vel1
 {
   DEBUG(7, "doing stochastic dynamics velocities")
   
-  m_timer.start();
+  m_timer.start(sim);
 
   // calculate atomic friction oefficients?
   if (sim.param().stochastic.ntfr == 3){
@@ -412,7 +412,7 @@ int algorithm::Stochastic_Dynamics_Pos1
 	simulation::Simulation &sim)
 {
   DEBUG(7, "doing stochastic dynamics positions")  
-  m_timer.start(); 
+  m_timer.start(sim); 
   for (unsigned int i=0; i < topo.num_atoms(); ++i){
     //calc new positions
     //according to step 7 in leap frog for SD (GROMOS96 book)
@@ -445,7 +445,7 @@ int algorithm::Stochastic_Dynamics_Vel2
 {
   DEBUG(7, "doing stochastic dynamics velocities (from SHAKE)")
   
-  m_timer.start();
+  m_timer.start(sim);
   //now comes the second part, after calling shake
   //as given by 2.11.2.24
   
@@ -489,7 +489,7 @@ int algorithm::Stochastic_Dynamics_Pos2
 {
   DEBUG(7, "doing stochastic dynamics positions")
   
-  m_timer.start();
+  m_timer.start(sim);
 
   for (unsigned int i=0; i < topo.num_atoms(); ++i){
     //this is 2.11.2.25

@@ -75,6 +75,10 @@ AC_ARG_ENABLE(heaviside,
   [ --enable-heaviside    compile with Heaviside truncation],
   ,enable_heaviside=no)
 
+AC_ARG_ENABLE(shared,
+[  --enable-shared         compile with shared libraries],
+    , enable_shared=no)
+
 dnl use empty default flags but allow user to override
 : ${CFLAGS=""}
 : ${CXXFLAGS=""}
@@ -177,6 +181,10 @@ case "$compiler" in
       echo "   configuring for release build"
     fi
 
+    if eval "test x$enable_shared = xyes"; then
+      MY_CXXFLAGS="$MY_CXXFLAGS -lpthread"
+    fi
+
     AC_DEFINE_UNQUOTED(COMPILER_ICC, 1, [Intel C++ compiler])
   ;;
   gnu*)               # EGCS  http://egcs.cygnus.com/
@@ -237,6 +245,9 @@ case "$compiler" in
       MY_CXXFLAGS="$CXX_OPTIMIZE_FLAGS"
       echo "configuring for release build"
     fi
+    if eval "test x$enable_shared = xyes"; then
+      MY_CXXFLAGS="$MY_CXXFLAGS -lpthread"
+    fi
 
     dnl Why do we need this?
     F77=g77
@@ -274,6 +285,10 @@ case "$compiler" in
       echo "configuring for release build"
     fi
 
+    if eval "test x$enable_shared = xyes"; then
+      MY_CXXFLAGS="$MY_CXXFLAGS -lpthread"
+    fi
+
     AC_DEFINE_UNQUOTED(COMPILER_SUNCC, 1, [SUN C++ compiler])
   ;;
   pgicc*)             # PGI compilers
@@ -308,6 +323,9 @@ case "$compiler" in
       MY_CXXFLAGS="$CXX_OPTIMIZE_FLAGS"
       echo "configuring for release build"
     fi
+    if eval "test x$enable_shared = xyes"; then
+      MY_CXXFLAGS="$MY_CXXFLAGS -lpthread"
+    fi
 
     AC_DEFINE_UNQUOTED(COMPILER_PGICC, 1, [PGI compiler])
   ;;
@@ -331,6 +349,8 @@ AM_PATH_CCP4_CLIPPER
 AM_PATH_FFTW3
 AM_PATH_HOOMD
 AM_PATH_CUDA
+AM_PATH_XTB
+AM_WITH_SCHNETPACK
 
 dnl check header files
 AC_HEADER_STDC
@@ -351,7 +371,6 @@ AC_CHECK_FUNCS(symlink)
 AC_CHECK_FUNCS(unlink)
 AC_CHECK_FUNCS(chdir)
 AC_CHECK_FUNCS(getcwd)
-AC_CHECK_FUNCS(remove)
 
 AC_MSG_CHECKING([for isinf with <cmath>])
 AC_TRY_LINK([#include <cmath>], [float f = 0.0; std::isinf(f)],[
@@ -432,7 +451,7 @@ AC_DEFINE_UNQUOTED(TOP_SOURCE_DIR, "$srcdir", [top src directory])
 
 AC_CONFIG_FILES([
 	src/Makefile
-  src/cukernel/Makefile
+	src/cukernel/Makefile
 	src/math/Makefile
 	src/topology/Makefile
 	src/configuration/Makefile
@@ -440,6 +459,7 @@ AC_CONFIG_FILES([
 	src/simulation/Makefile
 	src/interaction/Makefile
 	src/io/Makefile
+	src/replicaExchange/Makefile
 	src/util/Makefile
 	src/check/Makefile
 	program/Makefile

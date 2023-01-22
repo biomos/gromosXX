@@ -272,8 +272,6 @@ namespace topology
           : m_sequence_number(0),
             m_M_IAC(),
             m_M_charge(),
-            m_LJ_softcore(0),
-            m_crf_softcore(0),
             m_exclusion(),
             m_one_four_pair()
     {};
@@ -283,18 +281,13 @@ namespace topology
      * @param JLA atom sequence number.
      * @param IACM integer atom code of states 0...N.
      * @param CGM  charge of states 0...N.
-     * @param SCLJ soft core LJ parameter
-     * @param SCC soft core CRF parameter
      */
     EDS_Perturbed_Atom(unsigned int JLA,
             std::vector<unsigned int> IACM,
-            std::vector<double> CGM,
-            double SCLJ, double SCC)
+            std::vector<double> CGM)
           : m_sequence_number(JLA),
             m_M_IAC(IACM),
             m_M_charge(CGM),
-            m_LJ_softcore(SCLJ),
-            m_crf_softcore(SCC),
             m_exclusion(),
             m_one_four_pair()
     {};
@@ -308,18 +301,12 @@ namespace topology
     unsigned int sequence_number()const;
     void sequence_number(unsigned int);
     
-    std::vector<unsigned int> M_IAC()const;
+    const std::vector<unsigned int>& M_IAC()const;
     void M_IAC(std::vector<unsigned int>);
 
-    std::vector<double> M_charge()const;
+    const std::vector<double>& M_charge()const;
     void M_charge(std::vector<double>);
-    
-    double LJ_softcore()const;
-    void LJ_softcore(double);
-    
-    double CRF_softcore()const;
-    void CRF_softcore(double);
-    
+        
     topology::excl_cont_t::value_type & exclusion();
     topology::excl_cont_t::value_type const & exclusion()const;
     
@@ -334,8 +321,6 @@ namespace topology
     unsigned int m_sequence_number;
     std::vector<unsigned int> m_M_IAC;
     std::vector<double> m_M_charge;
-    double m_LJ_softcore;
-    double m_crf_softcore;
     topology::excl_cont_t::value_type m_exclusion;
     topology::excl_cont_t::value_type m_one_four_pair;
   };
@@ -345,17 +330,11 @@ namespace topology
 inline unsigned int topology::EDS_Perturbed_Atom::sequence_number()const{
   return m_sequence_number;
 }
-inline std::vector<unsigned int> topology::EDS_Perturbed_Atom::M_IAC()const{
+inline const std::vector<unsigned int>& topology::EDS_Perturbed_Atom::M_IAC()const{
   return m_M_IAC; 
 }
-inline std::vector<double> topology::EDS_Perturbed_Atom::M_charge()const{
+inline const std::vector<double>& topology::EDS_Perturbed_Atom::M_charge()const{
   return m_M_charge; 
-}
-inline double topology::EDS_Perturbed_Atom::LJ_softcore()const{
-  return m_LJ_softcore; 
-}
-inline double topology::EDS_Perturbed_Atom::CRF_softcore()const{
-  return m_crf_softcore; 
 }
 inline topology::excl_cont_t::value_type const & topology::EDS_Perturbed_Atom::exclusion()const{
   return m_exclusion;
@@ -372,12 +351,6 @@ inline void topology::EDS_Perturbed_Atom::M_IAC(std::vector<unsigned int> a){
 }
 inline void topology::EDS_Perturbed_Atom::M_charge(std::vector<double> a){
   m_M_charge = a;
-}
-inline void topology::EDS_Perturbed_Atom::LJ_softcore(double a){
-  m_LJ_softcore = a;
-}
-inline void topology::EDS_Perturbed_Atom::CRF_softcore(double a){
-  m_crf_softcore = a;
 }
 inline topology::excl_cont_t::value_type & topology::EDS_Perturbed_Atom::exclusion()
 {

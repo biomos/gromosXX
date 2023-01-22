@@ -146,7 +146,7 @@ int main(int argc, char* argv[]) {
 			      sinput,
 			      aladip_sim,
 			      in_topo,
-			      "", "", "", "", "", "", 
+			      "", "", "", "", "", "", "", "",
 			      quiet
 			      )
       != 0){
@@ -201,7 +201,7 @@ int main(int argc, char* argv[]) {
       aladip_sim.sim.time_step_size() * 
       aladip_sim.sim.param().step.number_of_steps;
     
-    int error;
+    int error = 0;
 
     while(aladip_sim.sim.time() < end_time){
       

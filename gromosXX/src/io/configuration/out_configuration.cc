@@ -35,7 +35,7 @@
 
 // Energy trajectory version
 // For details, see definition in out_configuration.cc
-const std::string io::Out_Configuration::ene_version = "2018-12-10";
+const std::string io::Out_Configuration::ene_version = "2022-08-17";
 
 // declarations
 static void _print_energyred_helper(std::ostream & os, configuration::Energy const &e);
@@ -70,6 +70,7 @@ m_every_jvalue(0),
 m_every_xray(0),
 m_every_disres(0),
 m_every_disfieldres(0),
+m_every_angres(0),
 m_every_dihres(0),
 m_every_dat(0),
 m_every_leus(0),
@@ -86,6 +87,7 @@ m_precision(9),
 m_force_precision(9),
 m_distance_restraint_precision(7),
 m_disfield_restraint_precision(7),
+m_angle_restraint_precision(7),
 m_dihedral_restraint_precision(7),
 m_width(15),
 m_force_width(18),
@@ -200,7 +202,8 @@ void io::Out_Configuration::init(io::Argument & args,
           io::message::error);
 
   m_write_special = param.polarise.write || param.jvalue.write || param.xrayrest.write 
-     || param.distanceres.write || param.distancefield.write || param.dihrest.write || param.print.monitor_dihedrals 
+     || param.distanceres.write || param.distancefield.write || param.angrest.write
+     || param.dihrest.write || param.print.monitor_dihedrals
      || param.localelev.write || param.electric.dip_write || param.electric.cur_write 
      || param.addecouple.write || param.nemd.write || param.orderparamrest.write || param.rdc.write
      || param.bsleus.write;    // add others if there are any
@@ -208,7 +211,8 @@ void io::Out_Configuration::init(io::Argument & args,
   if (args.count(argname_trs) > 0)
     special_trajectory(args[argname_trs], param.polarise.write, 
             param.jvalue.write, param.xrayrest.write, param.distanceres.write, 
-            param.distancefield.write, param.dihrest.write, param.print.monitor_dihedrals,param.localelev.write, 
+            param.distancefield.write, param.angrest.write, param.dihrest.write,
+            param.print.monitor_dihedrals,param.localelev.write, 
             param.electric.dip_write, param.electric.cur_write, param.addecouple.write,
             param.nemd.write, param.orderparamrest.write, param.rdc.write,
             param.bsleus.write);
@@ -301,9 +305,9 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
     if (m_every_vel && (sim.steps() % m_every_vel) == 0) {
       _print_timestep(sim, m_vel_traj);
       if (sim.param().write.velocity_solute_only)
-        _print_velocityred(conf, topo.num_solute_atoms(), m_vel_traj);
+        _print_velocityred(conf, topo, topo.num_solute_atoms(), m_vel_traj);
       else
-        _print_velocityred(conf, topo.num_atoms(), m_vel_traj);
+        _print_velocityred(conf, topo, topo.num_atoms(), m_vel_traj);
       m_vel_traj.flush();
     }
 
@@ -311,9 +315,9 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       if (sim.steps()) {
         _print_old_timestep(sim, m_force_traj);
         if (sim.param().write.force_solute_only)
-          _print_forcered(conf, topo.num_solute_atoms(), m_force_traj, constraint_force);
+          _print_forcered(conf, topo, topo.num_solute_atoms(), m_force_traj, constraint_force);
         else
-          _print_forcered(conf, topo.num_atoms(), m_force_traj, constraint_force);
+          _print_forcered(conf, topo, topo.num_atoms(), m_force_traj, constraint_force);
         m_force_traj.flush();
       }
     }
@@ -333,6 +337,12 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       _print_disfield_restraints(conf, topo, m_special_traj);
       m_special_traj.flush();
     }
+
+    if (m_every_angres && sim.steps() && ((sim.steps()-sim.param().analyze.stride) % m_every_angres) == 0) {
+      _print_angle_restraints(conf, topo, m_special_traj);
+      m_special_traj.flush();
+    }
+
     if (m_every_dihres && sim.steps() && ((sim.steps()-sim.param().analyze.stride) % m_every_dihres) == 0) {
       _print_dihedral_restraints(conf, topo, m_special_traj);
       m_special_traj.flush();
@@ -573,9 +583,9 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
     if (m_every_force && ((sim.steps()-sim.param().analyze.stride) % m_every_force) == 0) {
       _print_old_timestep(sim, m_force_traj);
       if (sim.param().write.force_solute_only)
-        _print_forcered(conf, topo.num_solute_atoms(), m_force_traj, constraint_force);
+        _print_forcered(conf, topo, topo.num_solute_atoms(), m_force_traj, constraint_force);
       else
-        _print_forcered(conf, topo.num_atoms(), m_force_traj, constraint_force);
+        _print_forcered(conf, topo, topo.num_atoms(), m_force_traj, constraint_force);
     }
 
     if (m_every_energy && ((sim.steps()-sim.param().analyze.stride) % m_every_energy) == 0) {
@@ -618,6 +628,10 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
     
     if (m_every_disfieldres && ((sim.steps()-sim.param().analyze.stride) % m_every_disfieldres) == 0) {    
       _print_disfield_restraints(conf, topo, m_special_traj);
+    }
+    
+    if (m_every_angres && ((sim.steps()-sim.param().analyze.stride) % m_every_angres) == 0) {   
+      _print_angle_restraints(conf, topo, m_special_traj);
     }
     
     if (m_every_dihres && ((sim.steps()-sim.param().analyze.stride) % m_every_dihres) == 0) {   
@@ -742,7 +756,8 @@ void io::Out_Configuration
 
 void io::Out_Configuration
 ::special_trajectory(std::string name, int every_cos, int every_jvalue, 
-                     int every_xray, int every_disres, int every_disfieldres, int every_dihres, int every_dat, 
+                     int every_xray, int every_disres, int every_disfieldres, 
+                     int every_angres, int every_dihres, int every_dat, 
                      int every_leus, int every_dipole, int every_current,
                      int every_adde, int every_nemd, int every_oparam, int every_rdc,
                      int every_bsleus) {
@@ -754,6 +769,7 @@ void io::Out_Configuration
   m_every_xray = every_xray;
   m_every_disres = every_disres;
   m_every_disfieldres = every_disfieldres;
+  m_every_angres = every_angres;
   m_every_dihres = every_dihres;
   m_every_dat = every_dat;
   m_every_leus = every_leus;
@@ -847,6 +863,7 @@ void io::Out_Configuration
                              (m_every_xray && ((sim.steps() % m_every_xray) == 0)) ||
                              (m_every_disres && ((sim.steps() % m_every_disres) == 0)) ||
                              (m_every_disfieldres && ((sim.steps() % m_every_disfieldres) == 0)) ||
+                             (m_every_angres && ((sim.steps() % m_every_angres) == 0)) ||
                              (m_every_dihres && ((sim.steps() % m_every_dihres) == 0)) ||
                              (m_every_dat && ((sim.steps() % m_every_dat) == 0)) ||
                              (m_every_leus && ((sim.steps() % m_every_leus) == 0)) ||
@@ -865,7 +882,7 @@ void _print_g96_position_bound(configuration::Configuration const &conf,
         topology::Topology const &topo,
         std::ostream &os, int width,
         bool old_conf = false) {
-  const configuration::Configuration::state_struct * state;
+  const configuration::Configuration::state_struct * state = nullptr;
   if (old_conf)
     state = & conf.old();
   else
@@ -875,6 +892,9 @@ void _print_g96_position_bound(configuration::Configuration const &conf,
   math::VArray const &pos = state->pos;
   topology::Solute const &solute = topo.solute();
   std::vector<std::string> const &residue_name = topo.residue_names();
+  
+  // virtual atoms skiped counter
+  int virt_skip = 0;
 
 
   math::Vec v, v_box, trans, r;
@@ -905,6 +925,11 @@ void _print_g96_position_bound(configuration::Configuration const &conf,
             at_to = cg_it.end();
 
     for (; at_it != at_to; ++at_it) {
+      // Skip virtual atoms TO DO: Add condition to print them
+      if (topo.virtual_atoms_group().atoms().count(*at_it)){
+        virt_skip++;
+        continue;
+      }
       r = pos(*at_it) + trans;
       //rotate to original Cartesian coordinates
       r = math::Vec(math::product(Rmat, r));
@@ -913,7 +938,7 @@ void _print_g96_position_bound(configuration::Configuration const &conf,
               << residue_name[solute.atom(*at_it).residue_nr] << " "
               << std::setw(6) << std::left << solute.atom(*at_it).name
               << std::right
-              << std::setw(6) << *at_it + 1
+              << std::setw(6) << *at_it + 1 - virt_skip
               << std::setw(width) << r(0)
               << std::setw(width) << r(1)
               << std::setw(width) << r(2)
@@ -946,7 +971,7 @@ void _print_g96_position_bound(configuration::Configuration const &conf,
               << residue_name[topo.solvent(s).atom(atom).residue_nr] << " "
               << std::setw(6) << std::left << topo.solvent(s).atom(atom).name
               << std::right
-              << std::setw(6) << *at_it + 1
+              << std::setw(6) << *at_it + 1 - virt_skip
               << std::setw(width) << r(0)
               << std::setw(width) << r(1)
               << std::setw(width) << r(2)
@@ -1097,7 +1122,11 @@ void _print_g96_positionred_bound(configuration::Configuration const &conf,
             at_to = cg_it.end();
 
     for (; at_it != at_to; ++at_it, ++count) {
-
+      // skip virtual atoms
+      if (topo.virtual_atoms_group().atoms().count(*at_it)){
+        count--;
+        continue;
+      }
       if (*at_it >= unsigned(num)) return;
 
       DEBUG(10, "atom: " << count);
@@ -1244,6 +1273,9 @@ void io::Out_Configuration
   topology::Solute const &solute = topo.solute();
   std::vector<std::string> const &residue_name = topo.residue_names();
 
+  // skipped virtual atoms counter
+  int virt_skip = 0;
+
   os << "# first 24 chars ignored\n";
   //matrix to rotate back into orignial Cartesian Coordinat system
   math::Matrixl Rmat(math::rmat(conf.current().phi,
@@ -1253,12 +1285,17 @@ void io::Out_Configuration
 
   math::Vec vel_rot;
   for (int i = 0, to = topo.num_solute_atoms(); i < to; ++i) {
+    // skip virtual atoms
+    if (topo.virtual_atoms_group().atoms().count(i)){
+      virt_skip++;    
+      continue;
+    }
     //rotate back to original Carthesian coordinates
     vel_rot = math::Vec(math::product(Rmat, vel(i)));
     os << std::setw(5) << solute.atom(i).residue_nr + 1 << " "
             << std::setw(5) << std::left << residue_name[solute.atom(i).residue_nr] << " "
             << std::setw(6) << std::left << solute.atom(i).name << std::right
-            << std::setw(6) << i + 1
+            << std::setw(6) << i + 1 - virt_skip
             << std::setw(m_width) << vel_rot(0)
             << std::setw(m_width) << vel_rot(1)
             << std::setw(m_width) << vel_rot(2)
@@ -1278,7 +1315,7 @@ void io::Out_Configuration
                 << std::setw(5) << std::left
                 << residue_name[topo.solvent(s).atom(a).residue_nr] << " "
                 << std::setw(6) << std::left << topo.solvent(s).atom(a).name << std::right
-                << std::setw(6) << index + 1
+                << std::setw(6) << index + 1 - virt_skip
                 << std::setw(m_width) << vel_rot(0)
                 << std::setw(m_width) << vel_rot(1)
                 << std::setw(m_width) << vel_rot(2)
@@ -1298,6 +1335,9 @@ void io::Out_Configuration
   os << "LATTICESHIFTS\n";
   math::VArray const &shift = conf.special().lattice_shifts;
   for (int i = 0, to = topo.num_atoms(); i < to; ++i) {
+    // skip virtual atoms
+    if (topo.virtual_atoms_group().atoms().count(i)) continue;
+
     os << std::setw(10) << int(rint(shift(i)(0)))
             << std::setw(10) << int(rint(shift(i)(1)))
             << std::setw(10) << int(rint(shift(i)(2)))
@@ -1308,6 +1348,7 @@ void io::Out_Configuration
 
 void io::Out_Configuration
 ::_print_velocityred(configuration::Configuration const &conf,
+        topology::Topology const &topo,
         int num, std::ostream &os) {
   os.setf(std::ios::fixed, std::ios::floatfield);
   os.precision(m_precision);
@@ -1320,16 +1361,22 @@ void io::Out_Configuration
   if (conf.boundary_type == math::truncoct)
     Rmat = math::product(Rmat, math::truncoct_triclinic_rotmat(false));
   math::Vec vel_rot;
-
+  // skipped virtual atoms counter
+  int virt_skip = 0;
   assert(num <= int(vel.size()));
-  for (int i = 0; i < num; ++i) {
+  for (int i = 0; i < num; ++i) {     
+    // skip virtual atoms
+    if (topo.virtual_atoms_group().atoms().count(i)){
+      virt_skip++;
+      continue;
+    }
     vel_rot = math::Vec(math::product(Rmat, vel(i)));
     os << std::setw(m_width) << vel_rot(0)
             << std::setw(m_width) << vel_rot(1)
             << std::setw(m_width) << vel_rot(2)
 
             << "\n";
-    if ((i + 1) % 10 == 0) os << '#' << std::setw(10) << i + 1 << "\n";
+    if ((i + 1 - virt_skip) % 10 == 0) os << '#' << std::setw(10) << i + 1 - virt_skip<< "\n";
   }
 
   os << "END\n";
@@ -1347,6 +1394,8 @@ void io::Out_Configuration
   math::VArray const & force = conf.current().force;
   topology::Solute const &solute = topo.solute();
   std::vector<std::string> const &residue_name = topo.residue_names();
+  // skipped virtual atoms counter
+  int virt_skip = 0;
   //matrix to rotate back into orignial Cartesian Coordinat system
   math::Matrixl Rmat(math::rmat(conf.current().phi,
           conf.current().theta, conf.current().psi));
@@ -1355,11 +1404,16 @@ void io::Out_Configuration
   math::Vec force_rot;
   os << "# first 24 chars ignored\n";
   for (int i = 0, to = topo.num_solute_atoms(); i < to; ++i) {
+    // skip virtual atoms
+    if (topo.virtual_atoms_group().atoms().count(i)){
+          virt_skip++;    
+          continue;
+        }
     force_rot = math::Vec(math::product(Rmat, force(i)));
     os << std::setw(6) << solute.atom(i).residue_nr + 1
             << std::setw(5) << residue_name[solute.atom(i).residue_nr]
             << std::setw(6) << solute.atom(i).name
-            << std::setw(8) << i + 1
+            << std::setw(8) << i + 1 - virt_skip
             << std::setw(m_force_width) << force_rot(0)
             << std::setw(m_force_width) << force_rot(1)
             << std::setw(m_force_width) << force_rot(2)
@@ -1374,7 +1428,7 @@ void io::Out_Configuration
         os << std::setw(6) << topo.solvent(s).atom(a).residue_nr + 1
                 << std::setw(5) << residue_name[topo.solvent(s).atom(a).residue_nr]
                 << std::setw(6) << topo.solvent(s).atom(a).name
-                << std::setw(8) << index + 1
+                << std::setw(8) << index + 1 - virt_skip
                 << std::setw(m_force_width) << force_rot(0)
                 << std::setw(m_force_width) << force_rot(1)
                 << std::setw(m_force_width) << force_rot(2)
@@ -1386,16 +1440,23 @@ void io::Out_Configuration
 
   if (constraint_force) {
     os << "CONSFORCE\n";
+    
+    virt_skip = 0;
 
     math::VArray const & cons_force = conf.current().constraint_force;
 
     os << "# first 24 chars ignored\n";
     for (int i = 0, to = topo.num_solute_atoms(); i < to; ++i) {
+          // skip virtual atoms
+          if (topo.virtual_atoms_group().atoms().count(i)){
+            virt_skip++;    
+            continue;
+        }
       force_rot = math::Vec(math::product(Rmat, cons_force(i)));
       os << std::setw(6) << solute.atom(i).residue_nr + 1
               << std::setw(5) << residue_name[solute.atom(i).residue_nr]
               << std::setw(6) << solute.atom(i).name
-              << std::setw(8) << i + 1
+              << std::setw(8) << i + 1 - virt_skip
               << std::setw(m_force_width) << force_rot(0)
               << std::setw(m_force_width) << force_rot(1)
               << std::setw(m_force_width) << force_rot(2)
@@ -1410,7 +1471,7 @@ void io::Out_Configuration
           os << std::setw(6) << topo.solvent(s).atom(a).residue_nr + 1
                   << std::setw(5) << residue_name[topo.solvent(s).atom(a).residue_nr]
                   << std::setw(6) << topo.solvent(s).atom(a).name
-                  << std::setw(8) << index + 1
+                  << std::setw(8) << index + 1 - virt_skip
                   << std::setw(m_force_width) << force_rot(0)
                   << std::setw(m_force_width) << force_rot(1)
                   << std::setw(m_force_width) << force_rot(2)
@@ -1424,6 +1485,7 @@ void io::Out_Configuration
 
 void io::Out_Configuration
 ::_print_forcered(configuration::Configuration const &conf,
+        topology::Topology const &topo,
         int num,
         std::ostream &os,
         bool constraint_force) {
@@ -1442,31 +1504,45 @@ void io::Out_Configuration
   
   assert(num <= int(force.size()));
 
+  // skipped virtual atoms counter
+  int virt_skip = 0;
+
   for (int i = 0; i < num; ++i) {
+    // skip virtual atoms
+    if (topo.virtual_atoms_group().atoms().count(i)){
+      virt_skip++;    
+      continue;
+    }
     force_rot = math::Vec(math::product(Rmat, force(i)));
     os << std::setw(m_force_width) << force_rot(0)
             << std::setw(m_force_width) << force_rot(1)
             << std::setw(m_force_width) << force_rot(2)
             << "\n";
 
-    if ((i + 1) % 10 == 0) os << '#' << std::setw(10) << i + 1 << "\n";
+    if ((i + 1 - virt_skip) % 10 == 0) os << '#' << std::setw(10) << i + 1 - virt_skip << "\n";
   }
 
   os << "END\n";
   // group wise forces
+  virt_skip = 0;
   if (conf.special().force_groups.size()) {
     os << "FREEFORCEGROUPRED\n";
     for(unsigned int i = 0; i < conf.special().force_groups.size(); ++i) {
       for (unsigned int j = i; j < conf.special().force_groups.size(); ++j) {
         os << "# group " << i+1 << "-" << j+1 << "\n";
         for (int k = 0; k < num; ++k) {
+          // skip virtual atoms
+          if (topo.virtual_atoms_group().atoms().count(k)){
+            virt_skip++;    
+            continue;
+          }
           force_rot = math::Vec(math::product(Rmat, conf.special().force_groups[j][i](k)));
           os << std::setw(m_force_width) << force_rot(0)
                   << std::setw(m_force_width) << force_rot(1)
                   << std::setw(m_force_width) << force_rot(2)
                   << "\n";
 
-          if ((k + 1) % 10 == 0) os << '#' << std::setw(10) << k + 1 << "\n";
+          if ((k + 1 - virt_skip) % 10 == 0) os << '#' << std::setw(10) << k + 1 - virt_skip << "\n";
         }
       }
     }
@@ -1475,18 +1551,23 @@ void io::Out_Configuration
 
   if (constraint_force) {
     os << "CONSFORCERED\n";
-
+    virt_skip = 0;
     const math::VArray & cons_force = conf.old().constraint_force;
     assert(num <= int(cons_force.size()));
     math::Vec cons_force_rot;
     for (int i = 0; i < num; ++i) {
+      // skip virtual atoms
+      if (topo.virtual_atoms_group().atoms().count(i)){
+        virt_skip++;    
+        continue;
+      }
       cons_force_rot = math::Vec(math::product(Rmat, cons_force(i)));
       os << std::setw(m_force_width) << cons_force_rot(0)
               << std::setw(m_force_width) << cons_force_rot(1)
               << std::setw(m_force_width) << cons_force_rot(2)
               << "\n";
 
-      if ((i + 1) % 10 == 0) os << '#' << std::setw(10) << i + 1 << "\n";
+      if ((i + 1 - virt_skip) % 10 == 0) os << '#' << std::setw(10) << i + 1 - virt_skip << "\n";
     }
 
     os << "END\n";
@@ -1538,6 +1619,8 @@ ENERGY03
    0.000000000e+00 # QM/MM total
    0.000000000e+00 # B&S-LEUS energy
    0.000000000e+00 # RDC-value total
+   0.000000000e+00 # angle restraints total
+   0.000000000e+00 # NN valid
 # baths
 # number of baths
 2
@@ -1556,9 +1639,9 @@ ENERGY03
   -6.774710271e-01   4.920740888e-01   0.000000000e+00   0.000000000e+00  # 1 - 2
   -7.163386790e-01  -1.309311086e+01   0.000000000e+00   0.000000000e+00  # 2 - 2
 # special
-#  constraints       pos. restraints   dist. restraints  disfield res      dihe. restr.      SASA              SASA volume       jvalue            rdc               local elevation   path integral
-   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00 # group 1
-   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00 # group 2
+#  constraints       pos. restraints   dist. restraints  disfield res      dihe. restr.      SASA              SASA volume       jvalue            rdc               local elevation   path integral   angle restraint
+   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00 0.000000000e+00 # group 1
+   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00   0.000000000e+00 0.000000000e+00 # group 2
 # eds (enveloping distribution sampling)
 # numstates
 2
@@ -1679,7 +1762,7 @@ void io::Out_Configuration
 
   os << std::setw(5) << conf.boundary_type << "\n";
 
-  long double a, b, c, alpha, beta, gamma, phi, theta, psi;
+  long double a = 0.0, b = 0.0, c = 0.0, alpha = 0.0, beta = 0.0, gamma = 0.0, phi = 0.0, theta = 0.0, psi = 0.0;
   math::Matrixl Rmat(math::rmat(conf.current().phi,
           conf.current().theta, conf.current().psi));
   
@@ -1852,7 +1935,7 @@ void io::Out_Configuration
   math::Matrix p, pf, v, vf, et, etf;
 
   std::vector<double> sasa_a, sasa_af, sasa_vol, sasa_volf;
-  double sasa_tot, sasa_totf, sasa_voltot, sasa_voltotf;
+  double sasa_tot = 0.0, sasa_totf = 0.0, sasa_voltot = 0.0, sasa_voltotf = 0.0;
 
   if (sim.param().minimise.ntem) {
     //print_MINIMISATION(m_output, rmsd_force, max_force, sim.minimisation);
@@ -1886,7 +1969,7 @@ void io::Out_Configuration
 
   if (sim.param().perturbation.perturbation) {
 
-    double lambda, lambda_fluct;
+    double lambda = 0.0, lambda_fluct = 0.0;
     conf.current().averages.simulation().
             energy_derivative_average(e, ef, lambda, lambda_fluct, sim.param().perturbation.dlamt);
 
@@ -1948,7 +2031,7 @@ void io::Out_Configuration
 ::_print_blockaveraged_volumepressurered(configuration::Configuration const & conf,
         simulation::Simulation const & sim,
         std::ostream &os) {
-  double mass, massf, vol, volf;
+  double mass = 0.0, massf = 0.0, vol = 0.0, volf = 0.0;
   std::vector<double> s, sf;
   configuration::Energy e, ef;
   math::Box b, bf;
@@ -2005,7 +2088,7 @@ void io::Out_Configuration
   os.precision(m_precision);
 
   configuration::Energy e, ef;
-  double lambda, lambda_fluct;
+  double lambda = 0.0, lambda_fluct = 0.0;
 
   // energies in old(), but averages in current()!
   conf.current().averages.block().energy_derivative_average(e, ef, lambda, lambda_fluct, dlamt);
@@ -2317,7 +2400,7 @@ void io::Out_Configuration::_print_distance_restraints(
   if (conf.special().distanceres.d.size() > 0) {
     os << "DISRESDATA" << std::endl;
     os << conf.special().distanceres.d.size() << "\n";
-    int i;
+    int i = 0;
     for (i = 1; av_it != av_to; ++av_it, ++ene_it, ++d_it, ++i) {
        os << std::setw(m_width) << *d_it
        << std::setw(m_width) << *ene_it;
@@ -2339,7 +2422,7 @@ void io::Out_Configuration::_print_distance_restraints(
   if (conf.special().pertdistanceres.d.size() > 0) {
     os << "PERTDISRESDATA" << std::endl;
     os << conf.special().pertdistanceres.d.size() << "\n";
-    int i;
+    int i = 0;
     for (i = 1; pav_it != pav_to; ++pav_it, ++pene_it, ++pd_it, ++i) {
        os << std::setw(m_width) << *pd_it
        << std::setw(m_width) << *pene_it;
@@ -2386,7 +2469,7 @@ void io::Out_Configuration::_print_distance_restraint_averages(
   os.precision(m_distance_restraint_precision);
 
   os << "DISRESEXPAVE" << std::endl;
-  int i;
+  int i = 0;
   for (i = 1; it != to; ++it, ++i) {
     os << std::setw(m_width) << *it;
     if (i % 5 == 0)
@@ -2438,6 +2521,50 @@ void io::Out_Configuration::_print_disfield_grid(
   os << "END" << std::endl;
 }
 
+void io::Out_Configuration::_print_angle_restraints(
+        configuration::Configuration const &conf,
+        topology::Topology const & topo,
+        std::ostream &os) {
+  DEBUG(10, "angle restraints");
+
+  std::vector<double>::const_iterator ene_it = conf.special().angleres.energy.begin();
+  std::vector<double>::const_iterator d_it = conf.special().angleres.d.begin(), 
+                                      d_to = conf.special().angleres.d.end();
+
+  os.setf(std::ios::fixed, std::ios::floatfield);
+  os.precision(m_angle_restraint_precision);
+  
+  if (conf.special().angleres.d.size() > 0) {
+    os << "ANGRESDATA" << std::endl;
+    os << std::setw(m_width) << conf.special().angleres.d.size() << "\n";
+    int i = 0;
+    for (i = 1; d_it != d_to; ++d_it, ++ene_it, ++i) {
+       double theta = *d_it * 180 /math::Pi;
+       os << std::setw(m_width) << theta << " "
+       << std::setw(m_width) << *ene_it;
+       os << std::endl;
+    }
+    os << "END" << std::endl;
+  }
+  
+  std::vector<double>::const_iterator pene_it = conf.special().pertangleres.energy.begin();
+  std::vector<double>::const_iterator pd_it = conf.special().pertangleres.d.begin(), 
+                                      pd_to = conf.special().pertangleres.d.end();
+  
+  if (conf.special().pertangleres.d.size() > 0) {
+    os << "PERTANGRESDATA" << std::endl;
+    os << conf.special().pertangleres.d.size() << "\n";
+    int i = 0;
+    for (i = 1; pd_it != pd_to; ++pd_it, ++pene_it, ++i) {
+       double theta = *pd_it * 180 /math::Pi;
+       os << std::setw(m_width) << theta
+       << std::setw(m_width) << *pene_it;
+       os << std::endl;
+    }
+    os << "END" << std::endl;
+  }
+}
+
 void io::Out_Configuration::_print_dihedral_restraints(
         configuration::Configuration const &conf,
         topology::Topology const & topo,
@@ -2455,7 +2582,7 @@ void io::Out_Configuration::_print_dihedral_restraints(
     os << "DIHRESDATA" << std::endl;
     os << std::setw(m_width) 
        << conf.special().dihedralres.d.size() << "\n";
-    int i;
+    int i = 0;
     for (i = 1; d_it != d_to; ++d_it, ++ene_it, ++i) {
        double phi = *d_it * 360 /(2 * math::Pi);
        os << std::setw(m_width) << phi
@@ -2472,7 +2599,7 @@ void io::Out_Configuration::_print_dihedral_restraints(
   if (conf.special().pertdihedralres.d.size() > 0) {
     os << "PERTDIHRESDATA" << std::endl;
     os << conf.special().pertdihedralres.d.size() << "\n";
-    int i;
+    int i = 0;
     for (i = 1; pd_it != pd_to; ++pd_it, ++pene_it, ++i) {
        double phi = *pd_it * 360 /(2 * math::Pi);
        os << std::setw(m_width) << phi
@@ -2520,7 +2647,7 @@ void io::Out_Configuration::_print_order_parameter_restraint_averages(
   os.precision(m_distance_restraint_precision); // use a lower precision due to scientific formats
 
   os << "ORDERPARAMRESEXPAVE" << std::endl;
-  int l;
+  int l = 0;
   for (l = 0; it != to; ++it, ++d_it) {
     for(unsigned int i = 0; i < 3; ++i) {
       for(unsigned int j = 0; j < 3; ++j) {
@@ -2794,11 +2921,11 @@ void io::Out_Configuration::_print_dihangle_trans(
 
   os.setf(std::ios::fixed, std::ios::floatfield);
   os.precision(1);
-  unsigned int atom_i, atom_j, atom_k, atom_l;
+  unsigned int atom_i = 0, atom_j = 0, atom_k = 0, atom_l = 0;
 
   os << "D-A-T" << std::endl;
   os << "# Dih. No.    Resid  Atoms                                        Old min. -> New min." << std::endl;
-  int i;
+  int i = 0;
   for (i = 1; it != to; ++it, ++i) {
     if (conf.special().dihangle_trans.old_minimum[i] > math::epsilon) {
       atom_i = conf.special().dihangle_trans.i[i];
@@ -2892,8 +3019,10 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
           << std::setw(18) << e.entropy_term << "\n" // 40
           << std::setw(18) << e.qm_total << "\n" // 41
           << std::setw(18) << e.bsleus_total << "\n" // 42
-          << std::setw(18) << e.rdc_total << "\n"   // 43
-          << std::setw(18) << e.gamd_DV_total << "\n"; // 44
+          << std::setw(18) << e.rdc_total << "\n" // 43
+          << std::setw(18) << e.angrest_total << "\n" // 44
+          << std::setw(18) << e.nn_valid << "\n"; // 45
+          << std::setw(18) << e.gamd_DV_total << "\n"; // 46
 
   os << "# baths\n";
   os << numbaths << "\n";
@@ -2934,6 +3063,7 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
             << std::setw(18) << e.posrest_energy[i]
             << std::setw(18) << e.distanceres_energy[i] // disres
             << std::setw(18) << e.disfieldres_energy[i] // disfieldres
+            << std::setw(18) << e.angrest_energy[i]// angle res
             << std::setw(18) << e.dihrest_energy[i] // dihedral res
             << std::setw(18) << e.sasa_energy[i]
             << std::setw(18) << e.sasa_volume_energy[i]
@@ -2996,6 +3126,7 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
      << std::setw(18) << "AB_improper"
      // special interactions - Betty
      << std::setw(18) << "AB_disres"
+     << std::setw(18) << "AB_angres"
      << std::setw(18) << "AB_dihres"
      << std::setw(18) << "AB_disfld\n";
      /*<< std::setw(18) << /"AB_dihedral\n";*/
@@ -3011,6 +3142,7 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
        << std::setw(18) << e.AB_improper[i]
        // special interations - Betty
        << std::setw(18) << e.AB_disres[i]
+       << std::setw(18) << e.AB_angres[i]
        << std::setw(18) << e.AB_dihres[i]
        << std::setw(18) << e.AB_disfld[i]
        //<< std::setw(18) << e.AB_dihedral[i]
@@ -3375,7 +3507,7 @@ void io::Out_Configuration::_print_bsleusmem(const configuration::Configuration 
      << "# AUXMEM:   Is the auxiliary memory set? (0: No; 1: Yes)\n"
      << "#\n"
      << "# NUMPOT AUXMEM\n";
-  int numPotentials;
+  int numPotentials = 0;
   umb->getNumPotentials(numPotentials);
   os << std::setw(3) << numPotentials << std::setw(7) << umb->printAuxMem() << "\n";
   os << "#\n"
@@ -3387,7 +3519,7 @@ void io::Out_Configuration::_print_bsleusmem(const configuration::Configuration 
           << "# ID    SUBSP   NUMGP   MEM[1..NUMGP]\n";
   for (int i = 0; i < numPotentials; i++) {
     std::vector<double> memory;
-    unsigned int subid;
+    unsigned int subid = 0;
     if (!umb->getMemory(i + 1, subid, memory)) {
       std::ostringstream msg;
       msg << "Could not find the memory of potential " << i + 1 << "!\n";
@@ -3421,7 +3553,7 @@ void io::Out_Configuration::_print_bsleusmem(const configuration::Configuration 
             << numSubspaces << "\n"
             << "# SUBID AUXC    REDC\n";
     for (unsigned int i = 0; i < numSubspaces; i++) {
-      unsigned int auxc, redc;
+      unsigned int auxc = 0, redc = 0;
       umb->getCounter(i, auxc, redc);
       os << std::setw(3) << i + 1
               << std::setw(6) << auxc
@@ -3432,7 +3564,7 @@ void io::Out_Configuration::_print_bsleusmem(const configuration::Configuration 
        << "# ID    SUBSP   NUMGP   AUXMEM[1..NUMGP]\n";
     for (int i = 0; i < numPotentials; i++) {
       std::vector<double> memory;
-      unsigned int subid;
+      unsigned int subid = 0;
       if (!umb->getAuxMemory(i + 1, subid, memory)) {
         std::ostringstream msg;
         msg << "Could not find the memory of potential " << i + 1 << "!\n";
@@ -3592,6 +3724,7 @@ _print_dipole(simulation::Simulation const & sim,
      if (topo.is_polarisable(i)) 
      {
        //offset position
+       
        math::Vec rm=r;
         
        //cos dipol contribution
@@ -3708,7 +3841,7 @@ _print_adde(simulation::Simulation const & sim,
         configuration::Configuration const & conf, std::ostream & os) {
   os.setf(std::ios::fixed, std::ios::floatfield);
   os.precision(m_precision);
-  int not_adde;
+  int not_adde = 0;
   double vhh = conf.special().adde.vhh;
 
   for (unsigned int i = 0; i < sim.param().multibath.multibath.size(); ++i) {
@@ -3802,7 +3935,7 @@ _print_nemd(simulation::Simulation const & sim,
      */
 
     
-    int prop_vs_method;
+    int prop_vs_method = 0;
     if (sim.param().nemd.property == 0){
       if (sim.param().nemd.method == 0)
         prop_vs_method = 0;

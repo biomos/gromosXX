@@ -36,7 +36,7 @@ namespace configuration
      * total potential energy
      */
     double potential_total;
-    
+
     /**
      * total bond stretching energy
      */
@@ -108,7 +108,11 @@ namespace configuration
     /**
      * total A term energy for constant volume simulations
      */
-    double ls_a_term_total_nvt;    
+    double ls_a_term_total_nvt;
+    /**
+     * total QM energy
+     */
+    double qm_total;
     /**
      * total energy of the "special" interactions
      */
@@ -125,6 +129,10 @@ namespace configuration
      *  total energy of the distancefield restraint interaction
      */
     double disfieldres_total;
+    /**
+     *  total energy of the angle restraint interaction
+     */
+    double angrest_total;
     /**
      *  total energy of the dihedral restraint interaction
      */
@@ -176,9 +184,9 @@ namespace configuration
      */
     double sasa_volume_total;
     /**
-     * total QM energy
+     * energy difference of validation NN model
      */
-    double qm_total;
+    double nn_valid;
 
     /** ANITA
     * total A_lj for each lambda
@@ -233,6 +241,7 @@ namespace configuration
      * special interaction energies for each lambda
      */
     std::vector<double> AB_disres;
+    std::vector<double> AB_angres;
     std::vector<double> AB_dihres;
     std::vector<double> AB_disfld;
 
@@ -385,6 +394,10 @@ namespace configuration
      */
     std::vector<double> disfieldres_energy;
     /**
+     * angle restraint energy term
+     */
+    std::vector<double> angrest_energy;
+    /**
      * dihedral restraint energy term
      */
     std::vector<double> dihrest_energy;
@@ -468,7 +481,7 @@ namespace configuration
      */
     double get_energy_by_index(const unsigned int & index);
     
-    static const unsigned int MAX_ENERGY_INDEX = 38;
+    static const unsigned int MAX_ENERGY_INDEX = 44;
 
   private:
     double m_ewarn;

@@ -70,7 +70,7 @@ prepare(topology::Topology & topo,
     topology::Chargegroup_Iterator
       cg1 =   topo.chargegroup_begin();
     
-    unsigned int i, num_cg = topo.num_solute_chargegroups();
+    unsigned int i = 0, num_cg = topo.num_solute_chargegroups();
     
     for(i=0; i < num_cg; ++cg1, ++i){
       cg1.cog(pos, m_cg_cog(i));
@@ -128,7 +128,7 @@ void interaction::Standard_Pairlist_Algorithm::_update_cg
 
   DEBUG(7, "standard pairlist update");
   if (begin == 0) 
-    timer().start("pairlist");
+    timer().start_subtimer("pairlist");
   
   math::Periodicity<b> periodicity(conf.current().box);
   // empty the pairlist
@@ -140,27 +140,41 @@ void interaction::Standard_Pairlist_Algorithm::_update_cg
   DEBUG(8, "begin=" << begin << " stride=" << stride
 	<< " num_cg=" << num_cg << "num_solute_cg=" << num_solute_cg);
 
-  int cg1, cg2;
+  int cg1 = 0, cg2 = 0;
   math::Vec r;
+  
+  const simulation::qmmm_enum qmmm = sim.param().qmmm.qmmm;
   
   // solute -
   for(cg1 = begin; cg1 < num_solute_cg; cg1+=stride){
     
     DEBUG(10, "cg1 = " << cg1);
     
-    for(int a1 = topo.chargegroup(cg1),
-	  a_to = topo.chargegroup(cg1+1);
-	a1 < a_to; ++a1){
-      for(int a2 = a1+1; a2 < a_to; ++a2){
-	
-	// check it is not excluded
-	if (excluded_solute_pair(topo, a1, a2))
-	  continue;
-	
-	assert(int(pairlist.size()) > a1);
-	pairlist.solute_short[a1].push_back(a2);
-	
+    // If cg is QM
+    if (Pairlist_Algorithm::qm_excluded(topo, qmmm, topo.chargegroup(cg1))) {
+      DEBUG(9, "Skipping all for cg " << cg1);
+      DEBUG(9, " - atoms " << topo.chargegroup(cg1) << "-" << topo.chargegroup(cg1+1)-1);
+      continue;
+    }
+
+    if (!qmmm || !topo.is_qm( topo.chargegroup(cg1) )) { // skip QM chargegroups
+      for(int a1 = topo.chargegroup(cg1),
+      a_to = topo.chargegroup(cg1+1);
+    a1 < a_to; ++a1){
+        for(int a2 = a1+1; a2 < a_to; ++a2){
+    
+    // check it is not excluded
+    if (excluded_solute_pair(topo, a1, a2))
+      continue;
+    
+    assert(int(pairlist.size()) > a1);
+    pairlist.solute_short[a1].push_back(a2);
+        }
       }
+    }
+    else {
+      DEBUG(9, "Skipping cg " << cg1 << " innerloop");
+      DEBUG(9, " - atoms " << topo.chargegroup(cg1) << "-" << topo.chargegroup(cg1+1)-1);
     }
     
     // solute - solute
@@ -169,7 +183,15 @@ void interaction::Standard_Pairlist_Algorithm::_update_cg
     for(cg2 = cg1+1; cg2 < num_solute_cg; ++cg2){
 
       DEBUG(10, "cg2 = " << cg2);
-      
+      // If cg is QM
+      if (Pairlist_Algorithm::qm_excluded(
+            topo, qmmm, topo.chargegroup(cg1), topo.chargegroup(cg2))) 
+        {
+        DEBUG(9, "Skipping cgs " << cg1 << " and " << cg2);
+        DEBUG(9, " - atoms " << topo.chargegroup(cg1) << "-" << topo.chargegroup(cg1+1)-1);
+        DEBUG(9, " - atoms " << topo.chargegroup(cg2) << "-" << topo.chargegroup(cg2+1)-1);
+        continue;
+      }
       assert(m_cg_cog.size() > unsigned(cg1) &&
 	     m_cg_cog.size() > unsigned(cg2));
       DEBUG(10, "ni cog1"<< math::v2s(m_cg_cog(cg1)));
@@ -238,7 +260,15 @@ void interaction::Standard_Pairlist_Algorithm::_update_cg
     
     for( ; cg2 < num_cg; ++cg2){
 
-      DEBUG(10, "cg2 = " << cg2);
+      DEBUG(10, "cg2 = " << cg2);// If cg is QM
+      if (Pairlist_Algorithm::qm_excluded(
+            topo, qmmm, topo.chargegroup(cg1), topo.chargegroup(cg2))) 
+        {
+        DEBUG(9, "Skipping cgs " << cg1 << " and " << cg2);
+        DEBUG(9, " - atoms " << topo.chargegroup(cg1) << "-" << topo.chargegroup(cg1+1)-1);
+        DEBUG(9, " - atoms " << topo.chargegroup(cg2) << "-" << topo.chargegroup(cg2+1)-1);
+        continue;
+      }
       
       assert(m_cg_cog.size() > unsigned(cg1));
     
@@ -295,7 +325,7 @@ void interaction::Standard_Pairlist_Algorithm::_update_cg
     _solvent_solvent(topo, conf, sim, pairlist, cg1, stride, periodicity);
 
   if (begin == 0)
-    timer().stop("pairlist");
+    timer().stop_subtimer("pairlist");
   DEBUG(7, "pairlist done");
 
 }
@@ -313,7 +343,7 @@ void interaction::Standard_Pairlist_Algorithm::_solvent_solvent
 {
   bool master = false;
   if (cg1 == int(topo.num_solute_chargegroups())) { // master
-    timer().start("pairlist solvent-solvent");
+    timer().start_subtimer("pairlist solvent-solvent");
     master = true;
   }
   
@@ -370,7 +400,7 @@ void interaction::Standard_Pairlist_Algorithm::_solvent_solvent
   } // cg1
 
   if (master)
-    timer().stop("pairlist solvent-solvent");
+    timer().stop_subtimer("pairlist solvent-solvent");
   
 }
 
@@ -413,7 +443,7 @@ _update_pert_cg(topology::Topology & topo,
 {
   DEBUG(7, "standard pairlist update");
   if (begin == 0) // master
-    timer().start("perturbed pairlist");
+    timer().start_subtimer("perturbed pairlist");
   
   // create the innerloops
   math::Periodicity<b> periodicity(conf.current().box);
@@ -435,7 +465,7 @@ _update_pert_cg(topology::Topology & topo,
   DEBUG(8, "begin=" << begin << " stride=" << stride
 	<< " num_cg=" << num_cg << "num_solute_cg=" << num_solute_cg);
 
-  int cg1, cg2;
+  int cg1 = 0, cg2 = 0;
   math::Vec r;
   
   // solute -
@@ -595,7 +625,7 @@ _update_pert_cg(topology::Topology & topo,
                    cg1, stride, periodicity);
   */
   if (begin == 0) // master
-    timer().stop("perturbed pairlist");
+    timer().stop_subtimer("perturbed pairlist");
   DEBUG(7, "pairlist done");
 
 }

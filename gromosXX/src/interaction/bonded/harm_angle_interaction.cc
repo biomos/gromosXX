@@ -46,7 +46,7 @@ static int _calculate_harm_angle_interactions(topology::Topology & topo,
   DEBUG(10, "pos   size: " << pos.size());
   DEBUG(10, "force size: " << force.size());
   
-  double energy;
+  double energy = 0.0;
 
   math::Periodicity<B> periodicity(conf.current().box);
   
@@ -86,7 +86,7 @@ static int _calculate_harm_angle_interactions(topology::Topology & topo,
 
     DEBUG(10, "\tK=" << K << " theta0=" << theta0 << " dij=" << dij << " dkj=" << dkj);
 
-    double ki, kk;
+    double ki = 0.0, kk = 0.0;
     // double kj;
 
     if (sint < math::epsilon){
@@ -170,7 +170,7 @@ int interaction::Harm_Angle_Interaction
 			 configuration::Configuration &conf,
 			 simulation::Simulation &sim)
 {
-  m_timer.start();
+  m_timer.start(sim);
 
   SPLIT_VIRIAL_BOUNDARY(_calculate_harm_angle_interactions,
 			topo, conf, sim);

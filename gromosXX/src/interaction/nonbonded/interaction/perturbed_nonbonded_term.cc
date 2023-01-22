@@ -521,8 +521,9 @@ inline void interaction::Perturbed_Nonbonded_Term
         double const alpha_lj, double const alpha_crf,
         double &force1, double &force6, double &force12,
         double &e_lj, double &e_crf,
-        double &de_lj, double & de_crf, unsigned int eps) {
-  double A_c126, B_c126;
+        double &de_lj, double & de_crf, 
+        unsigned int eps, double coulomb_scaling) {
+  double A_c126 = 0.0, B_c126 = 0.0;
 
   if (A_c6 != 0) A_c126 = A_c12 / A_c6;
   else A_c126 = 0.0;
@@ -566,8 +567,8 @@ inline void interaction::Perturbed_Nonbonded_Term
   const double B_crf_pert = 3.0 * B_crf_2cut3i / B_cut2soft;
 
   // substitute A_dist3isoft thing. just like here -- daniel
-  force1 = (m_A_crf_lambda_n * A_q * (A_dist3isoft + A_crf_cut3i) +
-          m_B_crf_lambda_n * B_q * (B_dist3isoft + B_crf_cut3i)) *
+  force1 = (m_A_crf_lambda_n * A_q * (coulomb_scaling * A_dist3isoft + A_crf_cut3i) +
+          m_B_crf_lambda_n * B_q * (coulomb_scaling * B_dist3isoft + B_crf_cut3i)) *
           math::four_pi_eps_i;
 
   force6 = -6.0 * (m_A_lj_lambda_n * A_c6 * A_dist6isoft * A_dist6isoft +
@@ -579,8 +580,8 @@ inline void interaction::Perturbed_Nonbonded_Term
   const double A_e_lj = (A_c12 * A_dist6isoft - A_c6) * A_dist6isoft;
   const double B_e_lj = (B_c12 * B_dist6isoft - B_c6) * B_dist6isoft;
 
-  const double A_e_crf = A_q * (A_distisoft - A_crf_2cut3i * dist2 - m_crf_cut[eps]);
-  const double B_e_crf = B_q * (B_distisoft - B_crf_2cut3i * dist2 - m_crf_cut[eps]);
+  const double A_e_crf = A_q * (coulomb_scaling * A_distisoft - A_crf_2cut3i * dist2 - m_crf_cut[eps]);
+  const double B_e_crf = B_q * (coulomb_scaling * B_distisoft - B_crf_2cut3i * dist2 - m_crf_cut[eps]);
 
   DEBUG(11, "just checking\nm_A_ljs_lambda " << m_A_ljs_lambda
           << "\nm_B_ljs_lambda " << m_B_ljs_lambda
@@ -610,11 +611,11 @@ inline void interaction::Perturbed_Nonbonded_Term
           (2 * B_c12 * B_dist6isoft - B_c6))
           + m_lambda_exp * (m_B_lj_lambda_n_1 * B_e_lj - m_A_lj_lambda_n_1 * A_e_lj);
 
-  de_crf = -(m_A_crf_lambda_n * A_q * m_B_crfs_lambda * (A_dist3isoft - A_crf_pert * dist2) -
-          m_B_crf_lambda_n * B_q * m_A_crfs_lambda * (B_dist3isoft - B_crf_pert * dist2)) *
+  de_crf = -(m_A_crf_lambda_n * A_q * m_B_crfs_lambda * (coulomb_scaling * A_dist3isoft - A_crf_pert * dist2) -
+             m_B_crf_lambda_n * B_q * m_A_crfs_lambda * (coulomb_scaling * B_dist3isoft - B_crf_pert * dist2)) *
           math::four_pi_eps_i * alpha_crf
-          + m_lambda_exp * (m_B_crf_lambda_n_1 * B_e_crf - m_A_crf_lambda_n_1 * A_e_crf) *
-          math::four_pi_eps_i;
+           + m_lambda_exp * (m_B_crf_lambda_n_1 * B_e_crf - m_A_crf_lambda_n_1 * A_e_crf) *
+           math::four_pi_eps_i;
 
 }
 
@@ -632,7 +633,8 @@ inline void interaction::Perturbed_Nonbonded_Term
         double &A_e_crf, double &B_e_crf,
         double &A_de_lj, double &B_de_lj,
         double &A_de_crf, double &B_de_crf,
-        double const lam, unsigned int eps) {
+        double const lam, unsigned int eps,
+        double coulomb_scaling) {
 
   const double ljs_lambda = lam;
   const double A_ljs_lambda2 = (1 - ljs_lambda) * (1 - ljs_lambda);
@@ -642,7 +644,7 @@ inline void interaction::Perturbed_Nonbonded_Term
   const double A_crfs_lambda2 = (1 - crfs_lambda) * (1 - crfs_lambda);
   const double B_crfs_lambda2 = crfs_lambda * crfs_lambda;
 
-  double A_c126, B_c126;
+  double A_c126 = 0.0, B_c126 = 0.0;
 
   if (A_c6 != 0) A_c126 = A_c12 / A_c6;
   else A_c126 = 0.0;
@@ -695,8 +697,8 @@ inline void interaction::Perturbed_Nonbonded_Term
   A_e_lj = (A_c12 * A_dist6isoft - A_c6) * A_dist6isoft;
   B_e_lj = (B_c12 * B_dist6isoft - B_c6) * B_dist6isoft;
 
-  A_e_crf = A_q * (A_distisoft - A_crf_2cut3i * dist2 - m_crf_cut[eps]) * math::four_pi_eps_i;
-  B_e_crf = B_q * (B_distisoft - B_crf_2cut3i * dist2 - m_crf_cut[eps]) * math::four_pi_eps_i;
+  A_e_crf = A_q * (coulomb_scaling * A_distisoft - A_crf_2cut3i * dist2 - m_crf_cut[eps]) * math::four_pi_eps_i;
+  B_e_crf = B_q * (coulomb_scaling * B_distisoft - B_crf_2cut3i * dist2 - m_crf_cut[eps]) * math::four_pi_eps_i;
 
   A_de_lj = -2.0 * alpha_lj * ljs_lambda * A_c126 * A_dist6isoft * A_dist6isoft *
             (2 * A_c12 * A_dist6isoft - A_c6);
@@ -704,10 +706,10 @@ inline void interaction::Perturbed_Nonbonded_Term
   B_de_lj = -2.0 * alpha_lj * (1 - ljs_lambda) * B_c126 * B_dist6isoft * B_dist6isoft *
             (2 * B_c12 * B_dist6isoft - B_c6);
 
-  A_de_crf = -A_q * crfs_lambda * (A_dist3isoft - A_crf_pert * dist2) *
+  A_de_crf = -A_q * crfs_lambda * (coulomb_scaling * A_dist3isoft - A_crf_pert * dist2) *
              math::four_pi_eps_i * alpha_crf;
 
-  B_de_crf = -B_q * (1 - crfs_lambda) * (B_dist3isoft - B_crf_pert * dist2) *
+  B_de_crf = -B_q * (1 - crfs_lambda) * (coulomb_scaling * B_dist3isoft - B_crf_pert * dist2) *
              math::four_pi_eps_i * alpha_crf;
 
   DEBUG(10, "just checking\nA_e_lj " << A_e_lj
@@ -735,7 +737,7 @@ inline void interaction::Perturbed_Nonbonded_Term
         double &force6, double &force12,
         double &e_lj, double &e_crf,
         double &de_lj, double & de_crf, unsigned int eps) {
-  double A_c126, B_c126;
+  double A_c126 = 0.0, B_c126 = 0.0;
 
   if (A_c6 != 0) A_c126 = A_c12 / A_c6;
   else A_c126 = 0.0;
@@ -880,7 +882,7 @@ inline void interaction::Perturbed_Nonbonded_Term
         double &force6, double &force12,
         double &e_lj, double &e_crf,
         double &de_lj, double & de_crf, unsigned int eps) {
-  double A_c126, B_c126;
+  double A_c126 = 0.0, B_c126 = 0.0;
 
   if (A_c6 != 0) A_c126 = A_c12 / A_c6;
   else A_c126 = 0.0;
@@ -1024,8 +1026,9 @@ inline void interaction::Perturbed_Nonbonded_Term
         double const A_scale, double const B_scale,
         double &force1, double &force6, double &force12,
         double &e_lj, double &e_crf,
-        double &de_lj, double & de_crf, unsigned int eps) {
-  double A_c126, B_c126;
+        double &de_lj, double & de_crf, unsigned int eps, 
+        double coulomb_scaling) {
+  double A_c126 = 0.0, B_c126 = 0.0;
 
   if (A_c6 != 0) A_c126 = A_c12 / A_c6;
   else A_c126 = 0.0;
@@ -1074,8 +1077,8 @@ inline void interaction::Perturbed_Nonbonded_Term
   const double B_crf_scaled_lambda_n = B_scale * m_B_crf_lambda_n;
 
 
-  force1 = (A_crf_scaled_lambda_n * A_q * (A_dist3isoft + A_crf_cut3i) +
-          B_crf_scaled_lambda_n * B_q * (B_dist3isoft + B_crf_cut3i)) *
+  force1 = (A_crf_scaled_lambda_n * A_q * (coulomb_scaling * A_dist3isoft + A_crf_cut3i) +
+          B_crf_scaled_lambda_n * B_q * (coulomb_scaling * B_dist3isoft + B_crf_cut3i)) *
           math::four_pi_eps_i;
 
   force6 = -6.0 * (A_lj_scaled_lambda_n * A_c6 * A_dist6isoft * A_dist6isoft +
@@ -1087,8 +1090,8 @@ inline void interaction::Perturbed_Nonbonded_Term
   const double A_e_lj = (A_c12 * A_dist6isoft - A_c6) * A_dist6isoft;
   const double B_e_lj = (B_c12 * B_dist6isoft - B_c6) * B_dist6isoft;
 
-  const double A_e_crf = A_q * (A_distisoft - A_crf_2cut3i * dist2 - m_crf_cut[eps]);
-  const double B_e_crf = B_q * (B_distisoft - B_crf_2cut3i * dist2 - m_crf_cut[eps]);
+  const double A_e_crf = A_q * (coulomb_scaling * A_distisoft - A_crf_2cut3i * dist2 - m_crf_cut[eps]);
+  const double B_e_crf = B_q * (coulomb_scaling * B_distisoft - B_crf_2cut3i * dist2 - m_crf_cut[eps]);
 
 
   e_lj = A_lj_scaled_lambda_n * A_e_lj + B_lj_scaled_lambda_n * B_e_lj;
@@ -1103,9 +1106,9 @@ inline void interaction::Perturbed_Nonbonded_Term
           + m_lambda_exp * (B_scale * m_B_lj_lambda_n_1 * B_e_lj - A_scale * m_A_lj_lambda_n_1 * A_e_lj);
 
   de_crf = (-alpha_crf * (A_crf_scaled_lambda_n * A_q * m_B_crfs_lambda *
-          (A_dist3isoft - A_crf_pert * dist2) -
+          (coulomb_scaling * A_dist3isoft - A_crf_pert * dist2) -
           B_crf_scaled_lambda_n * B_q * m_A_crfs_lambda *
-          (B_dist3isoft - B_crf_pert * dist2))
+          (coulomb_scaling * B_dist3isoft - B_crf_pert * dist2))
           + m_lambda_exp * (B_scale * m_B_crf_lambda_n_1 * B_e_crf -
           A_scale * m_A_crf_lambda_n_1 * A_e_crf))
           * math::four_pi_eps_i;
@@ -1126,7 +1129,7 @@ inline void interaction::Perturbed_Nonbonded_Term
         double &force1, double &force6, double &force12,
         double &e_lj, double &e_crf,
         double &de_lj, double & de_crf) {
-  double A_c126, B_c126;
+  double A_c126 = 0.0, B_c126 = 0.0;
 
   if (A_c6 != 0) A_c126 = A_c12 / A_c6;
   else A_c126 = 0.0;

@@ -34,10 +34,7 @@
 #include "../../../util/debug.h"
 #include "../../../interaction/nonbonded/innerloop_template.h"
 
-#include "../../special/qmmm/mm_atom.h"
-#include "../../special/qmmm/qm_storage.h"
 #include "../../interaction.h"
-#include "../../special/qmmm_interaction.h"
 
 #undef MODULE
 #undef SUBMODULE
@@ -96,7 +93,7 @@ void interaction::Perturbed_Nonbonded_Outerloop
   // innerloop.set_lambda(topo.lambda(), topo.lambda_exp());
 
   std::vector<unsigned int>::const_iterator j_it, j_to;
-  unsigned int i;
+  unsigned int i = 0;
   unsigned int size_i = unsigned(topo.num_solute_atoms());
   // unsigned int size_i = unsigned(pairlist.size());
 
@@ -257,20 +254,13 @@ void interaction::Perturbed_Nonbonded_Outerloop
   // this is now (unfortunately) done in the innerloop, when we know which energy group we are in
   // p_innerloop.set_lambda(topo.lambda(), topo.lambda_exp());
   
-  unsigned int i;
+  unsigned int i = 0;
   unsigned int size_i = unsigned(pairlist.size());
   unsigned int size_lr = size_i;
   DEBUG(11, "outerloop pairlist size " << size_i);
 
   unsigned int end = size_i;
   unsigned int end_lr = size_lr;
-
-  if (rank == 0) {
-    // compute the QM part, gather etc...
-    if (sim.param().qmmm.qmmm != simulation::qmmm_off) {
-      sim.param().qmmm.interaction->prepare(topo, conf, sim);
-    }
-  }
 
   math::VArray e_el_new(topo.num_atoms());
   
@@ -281,14 +271,14 @@ void interaction::Perturbed_Nonbonded_Outerloop
 
   double minfield = sim.param().polarise.minfield;
   const double minfield_param = minfield;
-  double maxfield;
+  double maxfield = 0.0;
   int turni = 0;
 
 #ifdef XXMPI
   // broadcast posV to slaves. We only have to do this here at the very first step because
   // posV is also broadcasted at the end of every electric field iteration.
   if (sim.mpi && sim.steps() == 0) {
-    MPI::COMM_WORLD.Bcast(&conf.current().posV(0)(0), conf.current().posV.size() * 3, MPI::DOUBLE, 0);
+    MPI_Bcast(&conf.current().posV(0)(0), conf.current().posV.size() * 3, MPI::DOUBLE, sim.mpiControl().masterID, sim.mpiControl().comm);
   }
 #endif
 
@@ -346,11 +336,11 @@ void interaction::Perturbed_Nonbonded_Outerloop
       // variable to the longrange electric field on the master. The lr e field
       // is only needed on the master node
       if (rank) {
-        MPI::COMM_WORLD.Reduce(&storage_lr.electric_field(0)(0), NULL,
-                             storage_lr.electric_field.size() * 3, MPI::DOUBLE, MPI::SUM, 0);
+        MPI_Reduce(&storage_lr.electric_field(0)(0), NULL,
+                             storage_lr.electric_field.size() * 3, MPI::DOUBLE, MPI::SUM, sim.mpiControl().masterID, sim.mpiControl().comm);
       } else {
-        MPI::COMM_WORLD.Reduce(&storage_lr.electric_field(0)(0), &e_el_master(0)(0),
-                             storage_lr.electric_field.size() * 3, MPI::DOUBLE, MPI::SUM, 0);
+        MPI_Reduce(&storage_lr.electric_field(0)(0), &e_el_master(0)(0),
+                             storage_lr.electric_field.size() * 3, MPI::DOUBLE, MPI::SUM, sim.mpiControl().masterID, sim.mpiControl().comm);
         storage_lr.electric_field = e_el_master;
       }
     }
@@ -421,20 +411,15 @@ void interaction::Perturbed_Nonbonded_Outerloop
     // electric field
     if (sim.mpi) {
       if (rank) {
-        MPI::COMM_WORLD.Reduce(&e_el_new(0)(0), NULL, e_el_new.size() * 3, MPI::DOUBLE, MPI::SUM, 0);
+        MPI_Reduce(&e_el_new(0)(0), NULL, e_el_new.size() * 3, MPI::DOUBLE, MPI::SUM, sim.mpiControl().masterID, sim.mpiControl().comm);
       } else {
-        MPI::COMM_WORLD.Reduce(&e_el_new(0)(0), &e_el_master(0)(0), e_el_new.size() * 3, MPI::DOUBLE, MPI::SUM, 0);
+        MPI_Reduce(&e_el_new(0)(0), &e_el_master(0)(0), e_el_new.size() * 3, MPI::DOUBLE, MPI::SUM, sim.mpiControl().masterID, sim.mpiControl().comm);
         e_el_new = e_el_master;
       }
     }
 #endif
 
     if (rank == 0) {
-      // get the contributions from the QM part.
-      if (sim.param().qmmm.qmmm != simulation::qmmm_off) {
-        sim.param().qmmm.interaction->
-                add_electric_field_contribution(topo, conf, sim, e_el_new);
-      }
       
       for (i=0; i<topo.num_atoms(); ++i) {
         double alpha = topo.polarisability(i);
@@ -501,8 +486,8 @@ void interaction::Perturbed_Nonbonded_Outerloop
     // broadcast the new posV and also the convergence criterium (minfield)
     // to the slaves. Otherwise they don't know when to stop.
     if (sim.mpi) {
-      MPI::COMM_WORLD.Bcast(&conf.current().posV(0)(0), conf.current().posV.size() * 3, MPI::DOUBLE, 0);
-      MPI::COMM_WORLD.Bcast(&minfield, 1, MPI::DOUBLE, 0);
+      MPI_Bcast(&conf.current().posV(0)(0), conf.current().posV.size() * 3, MPI::DOUBLE, sim.mpiControl().masterID, sim.mpiControl().comm);
+      MPI_Bcast(&minfield, 1, MPI::DOUBLE, sim.mpiControl().masterID, sim.mpiControl().comm);
     }
 #endif
     DEBUG(11, "\trank: " << rank << " minfield: "<<minfield<<" iteration round: "<<turni);

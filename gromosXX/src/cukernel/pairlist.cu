@@ -5,18 +5,20 @@
 
 #include "gpu_status.h"
 
+#include "../util/debug.h"
+
+#undef MODULE
+#undef SUBMODULE
+#define MODULE interaction
+#define SUBMODULE cuda
+
 
 #define NUM_THREADS_PER_BLOCK 96
 
-#ifndef DNDEBUG
-#define DEBUG(x) std::cout << x << std::endl;
-#else
-#define DEBUG(x)
-#endif
 
 void cudakernel::free_pairlist(pairlist &pl) {
   cudaFree(pl.list); cudaFree(pl.num_neighbors); cudaFree(pl.overflow);
-  DEBUG("Pairlist: freed pairlist")
+  DEBUG(4,"Pairlist: freed pairlist")
 }
 void cudakernel::allocate_pairlist(pairlist &pl, unsigned int size, unsigned int max_neighbors) {
   size_t pitch;
@@ -32,7 +34,7 @@ void cudakernel::allocate_pairlist(pairlist &pl, unsigned int size, unsigned int
   cudaMalloc((void**) &pl.overflow, sizeof(bool));
   // Set the memory to 0
   cudaMemset(pl.overflow, 0, sizeof(bool));
-  DEBUG("Pairlist: allocated memory")
+  DEBUG(10,"Pairlist: allocated memory")
 }
 
 extern "C" void cudaCalcPairlist(gpu_status * gpu_stat) {
@@ -41,7 +43,7 @@ extern "C" void cudaCalcPairlist(gpu_status * gpu_stat) {
   dim3 dimGrid(numBlocks, 1);
   dim3 dimBlock(NUM_THREADS_PER_BLOCK, 1);
 
-  DEBUG("Pairlist: GPU ID: " << gpu_stat->host_parameter.gpu_id << " of " << gpu_stat->host_parameter.num_of_gpus
+  DEBUG(10,"Pairlist: GPU ID: " << gpu_stat->host_parameter.gpu_id << " of " << gpu_stat->host_parameter.num_of_gpus
             <<  ". Blocks: " << numBlocks)
   bool overflow;
   do {
@@ -54,7 +56,7 @@ extern "C" void cudaCalcPairlist(gpu_status * gpu_stat) {
 
     
     cudaDeviceSynchronize();
-    DEBUG("Pairlist: Executed kernel and synchronized Threads")
+    DEBUG(10,"Pairlist: Executed kernel and synchronized Threads")
 
     bool overflow_short, overflow_long;
     // get the overflow flags
@@ -67,15 +69,15 @@ extern "C" void cudaCalcPairlist(gpu_status * gpu_stat) {
     // DEBUGGING
     //for(unsigned int i = 0; i < gpu_stat->host_parameter.num_solvent_mol; ++i) {
     //  if (gpu_stat->host_parameter.gpu_id==0)
-    //  DEBUG("nn " << i << ":" << num_neighbors[i]);
+    //  DEBUG(15,"nn " << i << ":" << num_neighbors[i]);
     //}
 
     // guard for overflow
     if (overflow_short) {
       overflow = true;
       // add 20% more space.
-      DEBUG("short overflow");
-      DEBUG("max_size = " << gpu_stat->dev_pl_short.max_size);
+      DEBUG(1,"short overflow");
+      DEBUG(1,"max_size = " << gpu_stat->dev_pl_short.max_size);
       const unsigned int new_estimate = gpu_stat->dev_pl_short.max_size + int(gpu_stat->dev_pl_short.max_size * 0.2f);
       free_pairlist(gpu_stat->dev_pl_short);
       allocate_pairlist(gpu_stat->dev_pl_short, gpu_stat->host_parameter.num_solvent_mol, new_estimate);
@@ -83,8 +85,8 @@ extern "C" void cudaCalcPairlist(gpu_status * gpu_stat) {
     if (overflow_long) {
       overflow = true;
       // add 20% more space.
-      DEBUG("long overflow");
-      DEBUG("max_size = " << gpu_stat->dev_pl_long.max_size);
+      DEBUG(1,"long overflow");
+      DEBUG(1,"max_size = " << gpu_stat->dev_pl_long.max_size);
       const unsigned int new_estimate = gpu_stat->dev_pl_long.max_size + int(gpu_stat->dev_pl_long.max_size * 0.2f);
       free_pairlist(gpu_stat->dev_pl_long);
       allocate_pairlist(gpu_stat->dev_pl_long, gpu_stat->host_parameter.num_solvent_mol, new_estimate);

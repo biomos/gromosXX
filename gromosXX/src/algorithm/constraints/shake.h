@@ -17,6 +17,7 @@ namespace algorithm
    * grouped constraints
    */
   struct ConstraintGroup {
+    std::vector<topology::angle_restraint_struct> angle_restraints;
     std::vector<topology::dihedral_restraint_struct> dihedral_restraints;
     std::vector<topology::two_body_term_struct> distance_restraints;
 #ifdef XXMPI
@@ -142,7 +143,19 @@ namespace algorithm
      math::Periodicity<B> const & periodicity
      );
     
-    
+    template<math::boundary_enum B, math::virial_enum V>
+    int ang_constr_iteration
+    (
+     topology::Topology const & topo,
+     configuration::Configuration & conf,
+     simulation::Simulation const & sim,
+     bool & convergence,
+     std::vector<bool> & skip_now,
+     std::vector<bool> & skip_next,
+     std::vector<topology::angle_restraint_struct> const & angle_restraints,
+     math::Periodicity<B> const & periodicity
+     );
+
     template<math::boundary_enum B, math::virial_enum V>
     int dih_constr_iteration
     (
@@ -221,6 +234,8 @@ namespace algorithm
 #define MODULE algorithm
 #define SUBMODULE constraints
 
+// angle constraints template method
+#include "angle_constraint.cc"
 // dihedral constraints template method
 #include "dihedral_constraint.cc"
 
@@ -388,7 +403,7 @@ solute(topology::Topology const & topo,
   math::Periodicity<B> periodicity(conf.current().box);
 
   if (!sim.mpi || m_rank == 0)
-    m_timer.start("solute");
+    m_timer.start_subtimer("solute");
 
   const unsigned int num_atoms = topo.num_solute_atoms();
   std::vector<bool> skip_now;
@@ -412,7 +427,6 @@ solute(topology::Topology const & topo,
     if (topo.solute().distance_constraints().size() &&
             sim.param().constraint.solute.algorithm == simulation::constr_shake &&
             sim.param().constraint.ntc > 1) {
-
       DEBUG(7, "SHAKE: distance constraints iteration");
 
       if (shake_iteration<B, V >
@@ -424,6 +438,23 @@ solute(topology::Topology const & topo,
                 "Shake::solute",
                 io::message::error);
         std::cout << "SHAKE failure in solute!" << std::endl;
+        my_error = E_SHAKE_FAILURE_SOLUTE;
+        break;
+      }
+    }
+
+    // angle constraints
+    bool ang_convergence = true;
+    if (sim.param().angrest.angrest == simulation::angle_constr) {
+      DEBUG(7, "SHAKE: angle constraints iteration");
+
+      if (ang_constr_iteration<B, V >
+              (topo, conf, sim, ang_convergence, skip_now, skip_next, m_constraint_groups[group_id].angle_restraints, periodicity)
+              ) {
+        io::messages.add("SHAKE error: angle constraints",
+                "Shake::solute",
+                io::message::error);
+        std::cout << "SHAKE failure in solute angle constraints!" << std::endl;
         my_error = E_SHAKE_FAILURE_SOLUTE;
         break;
       }
@@ -447,7 +478,7 @@ solute(topology::Topology const & topo,
       }
     }
 
-    convergence = dist_convergence && dih_convergence;
+    convergence = dist_convergence && dih_convergence && ang_convergence;
 
     if (++num_iterations > max_iterations) {
       io::messages.add("SHAKE error. too many iterations",
@@ -460,10 +491,12 @@ solute(topology::Topology const & topo,
     skip_next.assign(skip_next.size(), true);
   } // convergence?
 
+  DEBUG(10, "SHAKE: num_iterations " << num_iterations );
+
   // reduce errors
 #ifdef XXMPI
   if (sim.mpi) {
-    MPI::COMM_WORLD.Allreduce(&my_error, &error, 1, MPI::INT, MPI::MAX);
+    MPI_Allreduce(&my_error, &error, 1, MPI::INT, MPI::MAX, sim.mpiControl().comm);
   } else
   error = my_error;
 #else
@@ -479,7 +512,7 @@ solute(topology::Topology const & topo,
   // error = 0;
 
   if (!sim.mpi || m_rank == 0)
-    m_timer.stop("solute");
+    m_timer.stop_subtimer("solute");
 
 } // solute
 /**
@@ -496,13 +529,14 @@ void algorithm::Shake
   DEBUG(8, "\tshaking SOLVENT");
 
   if (!sim.mpi || m_rank == 0)
-    m_timer.start("solvent");
+    m_timer.start_subtimer("solvent");
 
   // the first atom of a solvent
   unsigned int first = topo.num_solute_atoms();
 
   std::vector<bool> skip_now;
   std::vector<bool> skip_next;
+
   int tot_iterations = 0;
 
   error = 0;
@@ -583,10 +617,10 @@ void algorithm::Shake
     if (m_rank == 0) {
       // Master 
       // reduce the error to all processors
-      MPI::COMM_WORLD.Allreduce(&my_error, &error, 1, MPI::INT, MPI::MAX);
+      MPI_Allreduce(&my_error, &error, 1, MPI::INT, MPI::MAX, sim.mpiControl().comm);
     } else {
       // reduce the error to all processors
-      MPI::COMM_WORLD.Allreduce(&my_error, &error, 1, MPI::INT, MPI::MAX);
+      MPI_Allreduce(&my_error, &error, 1, MPI::INT, MPI::MAX, sim.mpiControl().comm);
     }
   }
 #else
@@ -601,7 +635,7 @@ void algorithm::Shake
   }
 
   if (!sim.mpi || m_rank == 0)
-    m_timer.stop("solvent");
+    m_timer.stop_subtimer("solvent");
   DEBUG(3, "total shake solvent iterations: " << tot_iterations);
 } // shake solvent
 

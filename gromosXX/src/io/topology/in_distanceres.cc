@@ -142,7 +142,7 @@ void io::In_Distanceres::read_DISTANCERESSPEC(topology::Topology &topo,
   if (block.read_buffer(m_block[blockname], false) == 0) {
     block_read.insert(blockname);
 
-    double dish,disc;
+    double dish = 0.0,disc = 0.0;
 
     DEBUG(10, "reading in DISTANCERES data");
 
@@ -205,13 +205,13 @@ void io::In_Distanceres::read_DISTANCERESSPEC(topology::Topology &topo,
 
       DEBUG(11, "\tnr " << line_number);
 
-      int type1, type2;
+      int type1 = 0, type2 = 0;
       std::vector<int> atom1, atom2;
-      double r0,w0;
-      int rah;
+      double r0 = 0.0,w0 = 0.0;
+      int rah = 0;
 
       for(unsigned int i = 0; i < io::In_Distanceres::MAX_ATOMS; i++) {
-        unsigned int atom;
+        unsigned int atom = 0;
         std::string str_i = io::to_string(i);
         block.get_next_parameter("ATOM["+str_i+"]", atom, ">=0", "");
         if (atom > topo.num_atoms()) {
@@ -226,7 +226,7 @@ void io::In_Distanceres::read_DISTANCERESSPEC(topology::Topology &topo,
       block.get_next_parameter("TYPE", type1, "", "-2,-1,0,1,2,3,4,5,6,7");
 
       for(unsigned int i = 0; i < io::In_Distanceres::MAX_ATOMS; i++) {
-        unsigned int atom;
+        unsigned int atom = 0;
         std::string str_i = io::to_string(i);
         block.get_next_parameter("ATOM["+str_i+"]", atom, ">=0", "");
         if (atom > topo.num_atoms()) {
@@ -353,7 +353,7 @@ void io::In_Distanceres::read_PERTDISRESSPEC(topology::Topology &topo,
     }
     }
 
-    double dish, disc;
+    double dish = 0.0, disc = 0.0;
     block.get_next_parameter("DISH", dish, ">0", "");
     block.get_next_parameter("DISC", disc, ">0", "");
 
@@ -390,14 +390,14 @@ void io::In_Distanceres::read_PERTDISRESSPEC(topology::Topology &topo,
 
       DEBUG(11, "\tnr " << line_number-2);
 
-      int type1, type2;
-      int n,m;
+      int type1 = 0, type2 = 0;
+      int n = 0,m = 0;
       std::vector<int> atom1, atom2;
-      double A_r0, B_r0, A_w0, B_w0;
-      int rah;
+      double A_r0 = 0.0, B_r0 = 0.0, A_w0 = 0.0, B_w0 = 0.0;
+      int rah = 0;
 
       for(unsigned int i = 0; i < io::In_Distanceres::MAX_ATOMS; i++) {
-        unsigned int atom;
+        unsigned int atom = 0;
         std::string str_atom = io::to_string(i);
         block.get_next_parameter("ATOM["+str_atom+"]", atom, ">=0", "");
         if (atom > topo.num_atoms()) {
@@ -411,7 +411,7 @@ void io::In_Distanceres::read_PERTDISRESSPEC(topology::Topology &topo,
       block.get_next_parameter("TYPE", type1, "", "-2,-1,0,1,2,3,4,5,6,7");
 
       for(unsigned int i = 0; i < io::In_Distanceres::MAX_ATOMS; i++) {
-        unsigned int atom;
+        unsigned int atom = 0;
         std::string str_atom = io::to_string(i);
         block.get_next_parameter("ATOM["+str_atom+"]", atom, ">=0", "");
         if (atom > topo.num_atoms()) {
@@ -535,7 +535,7 @@ void io::In_Distanceres::read_DFRESSPEC(topology::Topology &topo,
     }
     }
 
-    double dish,disc;
+    double dish = 0.0,disc = 0.0;
     block.get_next_parameter("DISH", dish, ">0", "");
     block.get_next_parameter("DISC", disc, ">0", "");
 
@@ -548,8 +548,8 @@ void io::In_Distanceres::read_DFRESSPEC(topology::Topology &topo,
           << "\n";
     }
 
-    int vtype_i, vtype_j;
-    unsigned int num, atom;
+    int vtype_i = 0, vtype_j = 0;
+    unsigned int num = 0, atom = 0;
     std::vector<int> atomi, atomj;
 
     topo.disfield_restraints().on = true;
@@ -676,7 +676,7 @@ void io::In_Distanceres::read_PERTDFRESSPEC(topology::Topology &topo,
     }
     sim.param().perturbation.perturbed_par=true;
 
-    double dish,disc;
+    double dish = 0.0,disc = 0.0;
     block.get_next_parameter("DISH", dish, ">0", "");
     block.get_next_parameter("DISC", disc, ">0", "");
 
@@ -689,8 +689,8 @@ void io::In_Distanceres::read_PERTDFRESSPEC(topology::Topology &topo,
           << "\n";
     }
 
-    int vtype_i, vtype_j;
-    unsigned int num, atom;
+    int vtype_i = 0, vtype_j = 0;
+    unsigned int num = 0, atom = 0;
     std::vector<int> atomi, atomj;
 
     topo.perturbed_disfield_restraints().on = true;
@@ -817,7 +817,7 @@ void io::In_Distanceres::read_MDISRESSPEC(topology::Topology &topo,
     }
     }
 
-    double dish,disc;
+    double dish = 0.0,disc = 0.0;
     block.get_next_parameter("DISH", dish, ">0", "");
     block.get_next_parameter("DISC", disc, ">0", "");
 
@@ -861,13 +861,13 @@ void io::In_Distanceres::read_MDISRESSPEC(topology::Topology &topo,
 
       DEBUG(11, "\tnr " << line_number - 2);
 
-      int type1, type2;
+      int type1 = 0, type2 = 0;
       std::vector<int> atom1, atom2;
       std::vector<double> r0(numstates),w0(numstates);
-      int rah;
+      int rah = 0;
 
       for(unsigned int i = 0; i < io::In_Distanceres::MAX_ATOMS; i++) {
-        unsigned int atom;
+        unsigned int atom = 0;
         std::string str_atom = io::to_string(i);
         block.get_next_parameter("ATOM["+str_atom+"]", atom, ">=0", "");
         if (atom > topo.num_atoms()) {
@@ -882,7 +882,7 @@ void io::In_Distanceres::read_MDISRESSPEC(topology::Topology &topo,
       block.get_next_parameter("TYPE", type1, "", "-2,-1,0,1,2,3,4,5,6,7");
 
       for(unsigned int i = 0; i < io::In_Distanceres::MAX_ATOMS; i++) {
-        unsigned int atom;
+        unsigned int atom = 0;
         std::string str_atom = io::to_string(i);
         block.get_next_parameter("ATOM["+str_atom+"]", atom, ">=0", "");
         if (atom > topo.num_atoms()) {

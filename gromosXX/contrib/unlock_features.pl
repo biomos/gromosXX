@@ -21,7 +21,7 @@ my @available_features = ();
 
 # read and parse the file
 while(my $line = <>) {
-  while($line =~ m/add\(\w*"([^"]+)",/g) {
+  while($line =~ m/\sadd\(\w*"([^"]+)",/g) {
     push @available_features, $1;
   }
 }

@@ -27,7 +27,7 @@ int interaction::Molecular_Virial_Interaction
 			 configuration::Configuration &conf,
 			 simulation::Simulation &sim)
 {
-  m_timer.start();
+  m_timer.start(sim);
   util::atomic_to_molecular_virial(topo, conf, sim);
   m_timer.stop();
   return 0;

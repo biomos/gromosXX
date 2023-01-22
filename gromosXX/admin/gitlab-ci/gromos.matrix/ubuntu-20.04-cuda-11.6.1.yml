@@ -1,0 +1,21 @@
+gromos:ubuntu-20.04-cuda-11.6.1:configure:
+  extends:
+    - .gromos:base:configure
+    - .use-openmp
+    - .use-cuda
+    - .use-share
+  image: ${CI_REGISTRY}/gromos/gromosxx/gromos-ubuntu-20.04-cuda-11.6.1
+  variables:
+    BUILD_DIR: build
+
+gromos:ubuntu-20.04-cuda-11.6.1:build:
+  extends:
+    - .gromos:base:build
+    - .use-openmp
+    - .use-cuda
+  image: ${CI_REGISTRY}/gromos/gromosxx/gromos-ubuntu-20.04-cuda-11.6.1
+  variables:
+    BUILD_DIR: build
+    BIN_PATH: build/bin/md
+  needs:
+    - job: gromos:ubuntu-20.04-cuda-11.6.1:configure

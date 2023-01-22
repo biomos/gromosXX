@@ -65,7 +65,7 @@ _update_atomic(topology::Topology & topo,
 {
   DEBUG(7, "standard pairlist update (atomic cutoff)");
   if (begin == 0)
-    timer().start("pairlist");
+    timer().start_subtimer("pairlist");
 
   math::Periodicity<b> periodicity(conf.current().box);
   math::VArray const & pos = conf.current().pos;
@@ -79,16 +79,26 @@ _update_atomic(topology::Topology & topo,
   const int num_solute = topo.num_solute_atoms();
   const int num_atoms = topo.num_atoms();
   
+  const simulation::qmmm_enum qmmm = sim.param().qmmm.qmmm;
+  
   int a1 = begin;
   DEBUG(9, "\tbegin (1st) = " << begin);  
   for( ; a1 < num_solute; a1 += stride) {
 
     DEBUG(9, "solute (" << a1 << ") - solute");
-    
+    // If a1 is QM
+    if (Pairlist_Algorithm::qm_excluded(topo, qmmm, a1)) {
+      DEBUG(9, "Skipping all: " << a1 );
+      continue;
+    }
     for(int a2 = a1 + 1; a2 < num_solute; ++a2){
 
       assert(a1 != a2);
-      
+      // If a2 is QM
+      if (Pairlist_Algorithm::qm_excluded(topo, qmmm, a1, a2)) {
+			  DEBUG(9, "Skipping pair: " << a1 << "-" << a2);
+        continue;
+      }
       // check exclusions and range
       periodicity.nearest_image(pos(a1), pos(a2), v);
 
@@ -212,7 +222,7 @@ _update_atomic(topology::Topology & topo,
 
   } // multiple solvents
   if (begin == 0)
-    timer().stop("pairlist");
+    timer().stop_subtimer("pairlist");
   
   DEBUG(7, "pairlist done");
 
@@ -230,7 +240,7 @@ _update_pert_atomic(topology::Topology & topo,
 {
   DEBUG(7, "perturbed standard pairlist update (atomic cutoff)");
   if (begin == 0)
-    timer().start("perturbed pairlist");
+    timer().start_subtimer("perturbed pairlist");
   
   math::Periodicity<b> periodicity(conf.current().box);
 
@@ -407,7 +417,7 @@ _update_pert_atomic(topology::Topology & topo,
   } // multiple solvents
   
   if (begin == 0)
-    timer().stop("perturbed pairlist");
+    timer().stop_subtimer("perturbed pairlist");
   
   DEBUG(7, "pairlist done");
 

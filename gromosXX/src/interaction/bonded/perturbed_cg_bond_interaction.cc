@@ -52,7 +52,7 @@ static int _calculate_perturbed_bond_interactions
   math::VArray &force = conf.current().force;
   math::Vec v, f;
 
-  double e, diff, e_lambda, diff2;
+  double e = 0.0, diff = 0.0, e_lambda = 0.0, diff2 = 0.0;
 
   math::Periodicity<B> periodicity(conf.current().box);
 
@@ -157,7 +157,7 @@ int interaction::Perturbed_DP_Bond_Interaction
 			 configuration::Configuration &conf,
 			 simulation::Simulation &sim)
 {
-  m_timer.start();
+  m_timer.start(sim);
   
   SPLIT_VIRIAL_BOUNDARY(_calculate_perturbed_bond_interactions,
 			topo, conf, sim, m_interaction);

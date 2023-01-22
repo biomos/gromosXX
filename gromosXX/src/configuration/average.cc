@@ -247,7 +247,7 @@ void configuration::Average::Block_Average
 		   math::Matrix &kinetic_energy,
 		   math::Matrix &kinetic_energy_fluctuations)const
 {
-  double diff;
+  double diff = 0.0;
   
   for(int a=0; a<3; ++a){
     for(int b=0; b<3; ++b){
@@ -287,7 +287,7 @@ void configuration::Average::Block_Average
 	      std::vector<double> & scaling,
 	      std::vector<double> & scaling_fluctuations)const
 {
-  double diff;
+  double diff = 0.0;
   
   mass = mass_avg / time;
   diff = mass_fluct - mass_avg * mass_avg / time;
@@ -438,6 +438,7 @@ fluct.prop = old_fluct.prop + dt * e.prop * e.prop
   ENERGY_AVG(qm_total);
   ENERGY_AVG(posrest_total);
   ENERGY_AVG(distanceres_total);
+  ENERGY_AVG(angrest_total);
   ENERGY_AVG(dihrest_total);
   ENERGY_AVG(disfieldres_total);
   ENERGY_AVG(jvalue_total);
@@ -450,6 +451,7 @@ fluct.prop = old_fluct.prop + dt * e.prop * e.prop
   ENERGY_AVG(self_total);
   ENERGY_AVG(eds_vr);
   ENERGY_AVG(entropy_term);
+  ENERGY_AVG(nn_valid);
 
   // ANITA
   for(size_t i=0; i < e.A_lj_total.size(); ++i){
@@ -523,6 +525,7 @@ fluct.prop = old_fluct.prop + dt * e.prop * e.prop
     ENERGY_AVG(sasa_volume_energy[i]);
     ENERGY_AVG(posrest_energy[i]);
     ENERGY_AVG(distanceres_energy[i]);
+    ENERGY_AVG(angrest_energy[i]);
     ENERGY_AVG(dihrest_energy[i]);
     ENERGY_AVG(disfieldres_energy[i]);
     ENERGY_AVG(constraints_energy[i]);
@@ -629,7 +632,7 @@ void configuration::Average::Block_Average
 {
   DEBUG(10, "new average total: " << energy_avg.total << "\ttime: " << time);
 
-  double diff;
+  double diff = 0.0;
   double cumu = time;
   if (dlamt) cumu = 1;
   
@@ -679,6 +682,7 @@ void configuration::Average::Block_Average
   ENERGY_RES(qm_total);
   ENERGY_RES(posrest_total);
   ENERGY_RES(distanceres_total);
+  ENERGY_RES(angrest_total);
   ENERGY_RES(dihrest_total);
   ENERGY_RES(disfieldres_total);
   ENERGY_RES(jvalue_total);
@@ -690,6 +694,7 @@ void configuration::Average::Block_Average
   ENERGY_RES(constraints_total);
   ENERGY_RES(entropy_term);
   ENERGY_RES(self_total);
+  ENERGY_RES(nn_valid);
 
   // ANITA
   for(size_t i=0; i < e.A_lj_total.size(); ++i){
@@ -750,6 +755,7 @@ void configuration::Average::Block_Average
     ENERGY_RES(sasa_volume_energy[i]);
     ENERGY_RES(posrest_energy[i]);
     ENERGY_RES(distanceres_energy[i]);
+    ENERGY_RES(angrest_energy[i]);
     ENERGY_RES(dihrest_energy[i]);
     ENERGY_RES(disfieldres_energy[i]);
     ENERGY_RES(constraints_energy[i]);
