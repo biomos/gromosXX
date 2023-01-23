@@ -296,7 +296,7 @@ void interaction::CUDA_Nonbonded_Set::cycle() {
     // in case of LS only LJ are calculated
 
     if (mygpu_id == 0)
-    m_pairlist_alg.timer().start("longrange-cuda");
+    m_pairlist_alg.timer().start_subtimer("longrange-cuda");
     double * For = &m_longrange_storage.force(mytopo->num_solute_atoms())(0);
     DEBUG(15, "mytopo->num_solute_atoms() = " << mytopo->num_solute_atoms());
     double * Vir = &m_longrange_storage.virial_tensor(0, 0);
