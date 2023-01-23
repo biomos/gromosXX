@@ -3021,7 +3021,7 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
           << std::setw(18) << e.bsleus_total << "\n" // 42
           << std::setw(18) << e.rdc_total << "\n" // 43
           << std::setw(18) << e.angrest_total << "\n" // 44
-          << std::setw(18) << e.nn_valid << "\n"; // 45
+          << std::setw(18) << e.nn_valid << "\n" // 45
           << std::setw(18) << e.gamd_DV_total << "\n"; // 46
 
   os << "# baths\n";
