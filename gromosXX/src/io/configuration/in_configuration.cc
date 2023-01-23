@@ -1371,7 +1371,7 @@ bool io::In_Configuration::read_gamdstat
   std::ostream & os)
 {
   std::vector<std::string> buffer;
-  //if (sim.param().gamd.search == simulation::cmd_search || sim.param().gamd.search == simulation::gamd_search) {
+  if (sim.param().gamd.search == simulation::cmd_search || sim.param().gamd.search == simulation::gamd_search) {
 
     buffer = m_block["GAMDSTAT"];
     if (buffer.size()) {
@@ -1410,7 +1410,7 @@ bool io::In_Configuration::read_gamdstat
           "in_configuration",
           io::message::error);
     }
-  //}
+  }
   return true;
 }
 
