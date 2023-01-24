@@ -55,7 +55,7 @@ int algorithm::EDS
       std::vector<double> eds_vi = conf.current().energies.eds_vi;
       DEBUG(7, "eds_vi[0] = " << eds_vi[0]);
       DEBUG(7, "eds_vi[1] = " << eds_vi[1]);
-      
+      conf.current().energies.eds_eir
       const std::vector<double> & eir = sim.param().eds.eir;
       unsigned int state_i = 0;
       unsigned int state_j = 1;
@@ -74,7 +74,7 @@ int algorithm::EDS
           + log(1 + exp(std::min(sum_prefactors, part) - std::max(sum_prefactors, part)));
         prefactors[state] = part;
         DEBUG(7, "eds_vi[ " << state << "] = " << eds_vi[state]);
-        DEBUG(7, "eir[" << state << "]" << eir[state]);
+        DEBUG(7, "eir[" << state << "]" << sim.param().eds.eir[state]);
         DEBUG(7, "part = " << part);
       }
 
@@ -319,7 +319,7 @@ int algorithm::EDS
               if ((eds_vi[state] - conf.current().energies.eds_vr)  <= (sim.param().eds.statefren[state] + (1/beta))){
                   sim.param().eds.framecounts[state] += 1;
               }
-              sim.param().eds.eir[state] -= prevalence/(50 * (sim.param().eds.emaxcounts + 1));
+              sim.param().eds.eir[state] -= prevalence/((sim.param().eds.emaxcounts + 1));
               //}
             }
           } // loop over states
