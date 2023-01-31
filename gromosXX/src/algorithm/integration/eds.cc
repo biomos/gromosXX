@@ -319,6 +319,7 @@ int algorithm::EDS
               if ((eds_vi[state] - conf.current().energies.eds_vr)  <= (sim.param().eds.statefren[state] + (1/beta))){
                   sim.param().eds.framecounts[state] += 1;
               }
+              //EIR_i = (1000*dt)*(prevalence/roundtrips+1)
               sim.param().eds.eir[state] -= (1000*sim.time_step_size())*(prevalence/((sim.param().eds.emaxcounts + 1)));
               //}
             }
