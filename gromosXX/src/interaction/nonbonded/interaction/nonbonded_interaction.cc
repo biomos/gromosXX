@@ -811,6 +811,8 @@ void interaction::Nonbonded_Interaction::reduce_configuration
     for (int j = 0; j < ljs; ++j) {
       e.lj_energy[i][j] += exp_e.lj_energy[i][j] * cells_i;
       e.crf_energy[i][j] += exp_e.crf_energy[i][j] * cells_i;
+      e.shift_extra_orig[i][j] += exp_e.shift_extra_orig[i][j] * cells_i;
+      e.shift_extra_phys[i][j] += exp_e.shift_extra_phys[i][j] * cells_i;
       e.ls_real_energy[i][j] += exp_e.ls_real_energy[i][j] * cells_i;
       pe.lj_energy[i][j] += exp_pe.lj_energy[i][j] * cells_i;
       pe.crf_energy[i][j] += exp_pe.crf_energy[i][j] * cells_i;

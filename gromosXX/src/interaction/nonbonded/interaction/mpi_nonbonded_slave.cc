@@ -328,9 +328,27 @@ int interaction::MPI_Nonbonded_Slave::calculate_interactions
       assert(m_nonbonded_set[0]->storage().virial_tensor_endstates.size() == numstates);
       assert(m_nonbonded_set[0]->storage().force_endstates.size() == numstates);
       assert(m_nonbonded_set[0]->storage().energies.eds_vi.size() == numstates);
+      assert(m_nonbonded_set[0]->storage().energies.eds_vi_shift_extra_orig.size() == numstates);
+      assert(m_nonbonded_set[0]->storage().energies.eds_vi_shift_extra_phys.size() == numstates);
       
       // reduce energies of endstates
       MPI_Reduce(&m_nonbonded_set[0]->storage().energies.eds_vi[0],
+              NULL,
+              numstates,
+              MPI::DOUBLE,
+              MPI::SUM,
+               sim.mpiControl().masterID, sim.mpiControl().comm);
+
+      // reduce extra energies of endstates
+      MPI_Reduce(&m_nonbonded_set[0]->storage().energies.eds_vi_shift_extra_orig[0],
+              NULL,
+              numstates,
+              MPI::DOUBLE,
+              MPI::SUM,
+               sim.mpiControl().masterID, sim.mpiControl().comm);
+
+      // reduce extra energies of endstates
+      MPI_Reduce(&m_nonbonded_set[0]->storage().energies.eds_vi_shift_extra_phys[0],
               NULL,
               numstates,
               MPI::DOUBLE,
@@ -388,6 +406,33 @@ int interaction::MPI_Nonbonded_Slave::calculate_interactions
         sim.param().nonbonded.method == simulation::el_ewald) {
       MPI_Reduce(&m_nonbonded_set[0]->storage().energies.ls_kspace_total,
             NULL, 1, MPI::DOUBLE, MPI::SUM,  sim.mpiControl().masterID, sim.mpiControl().comm);
+    }
+
+    if(sim.param().force.interaction_function == simulation::lj_shifted_crf_corr_func){
+      std::vector<double> shift_extra_orig_scratch(ljs*ljs);
+      std::vector<double> shift_extra_phys_scratch(ljs*ljs);
+      
+      for(unsigned int i = 0; i < ljs; ++i){
+        for(unsigned int j = 0; j < ljs; ++j){
+          shift_extra_orig_scratch[i*ljs + j] = 
+            m_nonbonded_set[0]->storage().energies.shift_extra_orig[i][j];
+          shift_extra_phys_scratch[i*ljs + j] = 
+            m_nonbonded_set[0]->storage().energies.shift_extra_phys[i][j];
+        }
+      }
+      MPI_Reduce(&shift_extra_orig_scratch[0],
+           NULL,
+           ljs * ljs,
+           MPI::DOUBLE,
+           MPI::SUM,
+           sim.mpiControl().masterID, sim.mpiControl().comm);
+
+      MPI_Reduce(&shift_extra_phys_scratch[0],
+           NULL,
+           ljs * ljs,
+           MPI::DOUBLE,
+           MPI::SUM,
+           sim.mpiControl().masterID, sim.mpiControl().comm);
     }
       
     ////////////////////////////////////////////////////

@@ -425,6 +425,8 @@ fluct.prop = old_fluct.prop + dt * e.prop * e.prop
   ENERGY_AVG(nonbonded_total);
   ENERGY_AVG(lj_total);
   ENERGY_AVG(crf_total);
+  ENERGY_AVG(shift_extra_orig_total);
+  ENERGY_AVG(shift_extra_phys_total);
   ENERGY_AVG(ls_total);
   ENERGY_AVG(ls_pair_total);
   ENERGY_AVG(ls_realspace_total);
@@ -516,6 +518,8 @@ fluct.prop = old_fluct.prop + dt * e.prop * e.prop
 
       ENERGY_AVG(lj_energy[i][j]);
       ENERGY_AVG(crf_energy[i][j]);
+      ENERGY_AVG(shift_extra_orig[i][j]);
+      ENERGY_AVG(shift_extra_phys[i][j]);
       ENERGY_AVG(ls_real_energy[i][j]);
       ENERGY_AVG(ls_k_energy[i][j]);
     }
@@ -668,6 +672,8 @@ void configuration::Average::Block_Average
   ENERGY_RES(nonbonded_total);
   ENERGY_RES(lj_total);
   ENERGY_RES(crf_total);
+  ENERGY_RES(shift_extra_orig_total);
+  ENERGY_RES(shift_extra_phys_total);
   ENERGY_RES(ls_total);
   ENERGY_RES(ls_pair_total);
   ENERGY_RES(ls_realspace_total);
@@ -746,6 +752,8 @@ void configuration::Average::Block_Average
 
       ENERGY_RES(lj_energy[i][j]);
       ENERGY_RES(crf_energy[i][j]);
+      ENERGY_RES(shift_extra_orig[i][j]);
+      ENERGY_RES(shift_extra_phys[i][j]);
       ENERGY_RES(ls_real_energy[i][j]);
       ENERGY_RES(ls_k_energy[i][j]);
     }

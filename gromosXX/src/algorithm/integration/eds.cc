@@ -362,6 +362,82 @@ int algorithm::EDS
         }
       } // loop over states
 
+      if(sim.param().force.interaction_function == simulation::lj_shifted_crf_corr_func){
+        // interactions have been calculated - now apply eds Hamiltonian
+        std::vector<double> prefactors_shift_orig(numstates);
+        std::vector<double> prefactors_shift_phys(numstates);
+        // get beta
+                
+        std::vector<double> eds_vi_shift_orig = conf.current().energies.eds_vi_shift_extra_orig;
+        std::vector<double> eds_vi_shift_phys = conf.current().energies.eds_vi_shift_extra_phys;
+        for(size_t i = 0; i < eds_vi_shift_orig.size(); i++){
+          eds_vi_shift_orig[i] += eds_vi[i];
+          eds_vi_shift_phys[i] += eds_vi[i];
+        }
+        
+        if (conf2 != NULL) {
+          for (unsigned int i = 0; i < eds_vi.size(); ++i) {
+            DEBUG(7, "conf2->current().energies.eds_vi[i] = " << conf2->current().energies.eds_vi[i]);
+            eds_vi_shift_orig[i] += conf2->current().energies.eds_vi_shift_extra_orig[i] + conf2->current().energies.eds_vi[i];
+            eds_vi_shift_phys[i] += conf2->current().energies.eds_vi_shift_extra_phys[i] + conf2->current().energies.eds_vi[i];
+          }
+        }
+        
+        const std::vector<double> & eir = sim.param().eds.eir;
+        state_i = 0;
+        state_j = 1;
+        double partA_shift_orig = -beta * s * (eds_vi_shift_orig[state_i] - eir[state_i]);
+        double partB_shift_orig = -beta * s * (eds_vi_shift_orig[state_j] - eir[state_j]);
+        double partA_shift_phys = -beta * s * (eds_vi_shift_phys[state_i] - eir[state_i]);
+        double partB_shift_phys = -beta * s * (eds_vi_shift_phys[state_j] - eir[state_j]);
+        
+        double sum_prefactors_C = std::max(partA_shift_orig, partB_shift_orig)
+              + log(1 + exp(std::min(partA_shift_orig, partB_shift_orig) - std::max(partA_shift_orig, partB_shift_orig)));
+        double sum_prefactors_A = std::max(partA_shift_phys, partB_shift_phys)
+              + log(1 + exp(std::min(partA_shift_phys, partB_shift_phys) - std::max(partA_shift_phys, partB_shift_phys)));
+        
+        prefactors_shift_orig[state_i] = partA_shift_orig;
+        prefactors_shift_orig[state_j] = partB_shift_orig;
+
+        prefactors_shift_phys[state_i] = partA_shift_phys;
+        prefactors_shift_phys[state_j] = partB_shift_phys;
+
+        for (unsigned int state = 2; state < numstates; state++) {
+          double part_shift_orig = - beta * s * (eds_vi_shift_orig[state] - eir[state]);
+          double part_shift_phys = - beta * s * (eds_vi_shift_phys[state] - eir[state]);
+          sum_prefactors_C = std::max(sum_prefactors_C, part_shift_orig)
+                + log(1 + exp(std::min(sum_prefactors_C, part_shift_orig) 
+                  - std::max(sum_prefactors_C, part_shift_orig)));
+          sum_prefactors_A = std::max(sum_prefactors_A, part_shift_phys)
+                + log(1 + exp(std::min(sum_prefactors_A, part_shift_phys) 
+                  - std::max(sum_prefactors_A, part_shift_phys)));
+          prefactors_shift_orig[state] = part_shift_orig;
+          prefactors_shift_phys[state] = part_shift_phys;
+        }
+        // calculate eds Hamiltonian
+        conf.current().energies.eds_vr_shift_orig = -1.0 / (beta * s) * sum_prefactors_C;
+        conf.current().energies.eds_vr_shift_phys = -1.0 / (beta * s) * sum_prefactors_A;
+
+        // calculate eds contribution ...
+        for (unsigned int state = 0; state < numstates; state++) {
+          const long double pi = exp(prefactors[state] - sum_prefactors);
+          //std::cerr << "state = " << state << ", pi = " << pi << std::endl;
+          // ... to forces
+          DEBUG(7, "prefactor = " << pi);
+          for (unsigned int i = 0; i < topo.num_atoms(); i++) {
+            conf.current().force(i) += pi * conf.special().eds.force_endstates[state](i);
+            DEBUG(9, "force current: " << i << " = " << math::v2s(conf.current().force(i)));
+          }
+          // ... to virial
+          for (int a = 0; a < 3; ++a) {
+            for (int b = 0; b < 3; ++b) {
+              conf.current().virial_tensor(b, a) +=
+                      pi * conf.special().eds.virial_tensor_endstates[state](b, a);
+            }
+          }
+        } // loop over states
+      }
+
       break;
     }
     case simulation::multi_s:

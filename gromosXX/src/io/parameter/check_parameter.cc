@@ -367,6 +367,8 @@ int io::check_features(simulation::Simulation  &sim)
   add("improper", "improper dihedral interaction", param.force.improper == 1);
   add("crf", "coulomb reaction field interaction", param.force.nonbonded_crf == 1);
   add("lj", "Lennard-Jones interaction", param.force.nonbonded_vdw == 1);
+  // NONBONDED block
+  add("shifted_crf", "shifted reaction-field correction", param.nonbonded.use_shift == 1);
   // COMTRANSROT block
   add("com_removal", "COM motion removal", param.centreofmass.remove_rot ||
                                            param.centreofmass.remove_trans);
@@ -4789,6 +4791,72 @@ int io::check_features(simulation::Simulation  &sim)
   fc.unlock("virtualatoms", "xray");
   fc.unlock("virtualatoms", "force_groups");
   //fc.unlock("virtualatoms", "qmmm");
+
+  //shifted reaction-field correction
+  fc.unlock("shifted_crf", "solute");
+  fc.unlock("shifted_crf", "solvent");
+  fc.unlock("shifted_crf", "solute");
+  fc.unlock("shifted_crf", "solvent_only");
+  fc.unlock("shifted_crf", "solute_constraint_off");
+  fc.unlock("shifted_crf", "solute_shake");
+  fc.unlock("shifted_crf", "solute_lincs");
+  fc.unlock("shifted_crf", "solute_flexshake");
+  fc.unlock("shifted_crf", "solvent_constraint_off");
+  fc.unlock("shifted_crf", "solvent_shake");
+  fc.unlock("shifted_crf", "solvent_lincs");
+  fc.unlock("shifted_crf", "solvent_settle");
+  fc.unlock("shifted_crf", "pressure_calculation");
+  fc.unlock("shifted_crf", "pressure_scale_berendsen");
+  fc.unlock("shifted_crf", "virial_off");
+  fc.unlock("shifted_crf", "virial_molecular");
+  fc.unlock("shifted_crf", "vacuum");
+  fc.unlock("shifted_crf", "pbc_r");
+  fc.unlock("shifted_crf", "amber");
+  //fc.unlock("shifted_crf", "perturbation"); -> not yet implemented
+  //fc.unlock("shifted_crf", "perturbation_scaling"); -> not yet implemented
+  fc.unlock("shifted_crf", "bond");
+  fc.unlock("shifted_crf", "angle");
+  fc.unlock("shifted_crf", "dihedral");
+  fc.unlock("shifted_crf", "improper");
+  fc.unlock("shifted_crf", "crf");
+  fc.unlock("shifted_crf", "lj");
+  fc.unlock("shifted_crf", "com_removal");
+  fc.unlock("shifted_crf", "rf_excluded");
+  fc.unlock("shifted_crf", "pairlist_standard");
+  fc.unlock("shifted_crf", "pairlist_grid");
+  fc.unlock("shifted_crf", "pairlist_gridcell");
+  fc.unlock("shifted_crf", "cutoff_atomic");
+  //fc.unlock("shifted_crf", "cutoff_cg"); -> shifted RF is not intended for CG cutoff
+  fc.unlock("shifted_crf", "temp_berendsen");
+  fc.unlock("shifted_crf", "temp_nosehoover");
+  fc.unlock("shifted_crf", "temp_nosehoover_chains");
+  fc.unlock("shifted_crf", "position_rest");
+  fc.unlock("shifted_crf", "position_const");
+  fc.unlock("shifted_crf", "position_const_scaled");
+  fc.unlock("shifted_crf", "distance_rest");
+  fc.unlock("shifted_crf", "dihedral_rest");
+  fc.unlock("shifted_crf", "dihedral_const");
+  fc.unlock("shifted_crf", "innerloop_method_off");
+  fc.unlock("shifted_crf", "innerloop_method_generic");
+  //fc.unlock("shifted_crf", "innerloop_method_hardcode");
+  //fc.unlock("shifted_crf", "innerloop_method_table");
+  //fc.unlock("shifted_crf", "innerloop_method_cuda");
+  fc.unlock("shifted_crf", "innerloop_solvent_topology");
+  //fc.unlock("shifted_crf", "innerloop_solvent_spc");
+  fc.unlock("shifted_crf", "repex_temp");
+  fc.unlock("shifted_crf", "repex_lambda");
+  fc.unlock("shifted_crf", "multicell");
+  fc.unlock("shifted_crf", "analysis");
+  fc.unlock("shifted_crf", "no_integration");
+  fc.unlock("shifted_crf", "stochdyn");
+  fc.unlock("shifted_crf", "multistep");
+  fc.unlock("shifted_crf", "multistep_boost");
+  fc.unlock("shifted_crf", "random_gromos");
+  fc.unlock("shifted_crf", "random_gsl");
+  fc.unlock("shifted_crf", "eds");
+  fc.unlock("shifted_crf", "parallel_mpi");
+  fc.unlock("shifted_crf", "parallel_omp");
+  fc.unlock("shifted_crf", "mult_energy_groups");
   if (fc.check()) 
     return 0;
 

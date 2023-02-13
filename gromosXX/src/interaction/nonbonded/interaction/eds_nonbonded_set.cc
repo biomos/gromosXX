@@ -253,6 +253,8 @@ int interaction::Eds_Nonbonded_Set::update_configuration
   // add storage energies to configuration
   for(unsigned int i = 0; i < numstates; ++i){
     conf.current().energies.eds_vi[i] += m_storage.energies.eds_vi[i];
+    conf.current().energies.eds_vi_shift_extra_orig[i] += m_storage.energies.eds_vi_shift_extra_orig[i];
+    conf.current().energies.eds_vi_shift_extra_phys[i] += m_storage.energies.eds_vi_shift_extra_phys[i];
   }
   
   // add storage virial 
@@ -287,6 +289,8 @@ int interaction::Eds_Nonbonded_Set
   m_storage.force_endstates.resize(sim.param().eds.numstates);
   m_storage.virial_tensor_endstates.resize(sim.param().eds.numstates);
   m_storage.energies.eds_vi.resize(sim.param().eds.numstates);
+  m_storage.energies.eds_vi_shift_extra_orig.resize(sim.param().eds.numstates);
+  m_storage.energies.eds_vi_shift_extra_phys.resize(sim.param().eds.numstates);
 
   m_longrange_storage.force_endstates.resize(sim.param().eds.numstates);
   m_longrange_storage.virial_tensor_endstates.resize(sim.param().eds.numstates);

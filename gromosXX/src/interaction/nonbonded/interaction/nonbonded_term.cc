@@ -31,6 +31,7 @@ inline void interaction::Nonbonded_Term
     case simulation::lj_crf_func:
     case simulation::pol_lj_crf_func:
     case simulation::pol_off_lj_crf_func:
+    case simulation::lj_shifted_crf_corr_func:
       cgrain_eps.push_back(sim.param().nonbonded.epsilon);
       // Force
       if (sim.param().nonbonded.rf_cutoff > 0.0) {
@@ -83,6 +84,12 @@ inline void interaction::Nonbonded_Term
         m_crf_cut3i.push_back(crf_cut3i);
         m_crf_2cut3i.push_back(crf_2cut3i);
         m_crf_cut.push_back(crf_cut);
+        if(sim.param().nonbonded.use_shift){
+          a_RFm = sim.param().nonbonded.a_RFm;
+          a_RFn = sim.param().nonbonded.a_RFn;
+          m_crf_cut_extra.push_back(a_RFm * pow(sim.param().nonbonded.rf_cutoff,sim.param().nonbonded.m_crf) + a_RFn * pow(sim.param().nonbonded.rf_cutoff,sim.param().nonbonded.n_crf));
+          m_crf_cut[m_crf_cut.size()-1] += m_crf_cut_extra.back();
+        }
 
       } else {
         m_cut3i.push_back(0.0);
@@ -90,6 +97,7 @@ inline void interaction::Nonbonded_Term
         m_crf_cut3i.push_back(0.0);
         m_crf_2cut3i.push_back(0.0);
         m_crf_cut.push_back(0.0);
+        m_crf_cut_extra.push_back(0.0);
       }
       break;
 
@@ -198,7 +206,8 @@ inline void interaction::Nonbonded_Term
   assert(abs2(r) != 0);
   const double dist2 = abs2(r);
   HEAVISIDETRUNC(dist2, force = e_lj = e_crf)
-          const double dist2i = 1.0 / dist2;
+  
+  const double dist2i = 1.0 / dist2;
   const double q_eps = q * math::four_pi_eps_i;
   const double dist6i = dist2i * dist2i * dist2i;
   const double disti = sqrt(dist2i);
@@ -211,6 +220,51 @@ inline void interaction::Nonbonded_Term
 
   force = (c12_dist6i + c12_dist6i - c6) * 6.0 * dist6i * dist2i +
           q_eps * (disti * coulomb_scaling * dist2i + m_crf_cut3i[eps]);
+
+  //double f_crf = q_eps * (disti * dist2i + m_crf_cut3i);
+  //DEBUG(1, "force = " << f_crf*r(0) << "  " << f_crf*r(1) << "  " << f_crf*r(2));
+
+  DEBUG(15, "\t\tq=" << q << " 4pie=" << math::four_pi_eps_i
+          << " crf_cut2i=" << m_crf_cut3i[eps]);
+
+}
+
+/**
+ * helper function to calculate the force and energy for
+ * a given atom pair, recording the extra energies of the shifted RF correction
+ */
+inline void interaction::Nonbonded_Term
+::lj_shifted_crf_corr_interaction(math::Vec const &r,
+        double c6, double c12,
+        double q,
+        double &force, double &e_lj, double &e_crf,
+        double &e_extra_orig, double &e_extra_phys,
+        unsigned int eps, const double coulomb_scaling) {
+  DEBUG(14, "\t\tnonbonded term");
+
+  assert(abs2(r) != 0);
+  const double dist2 = abs2(r);
+  const double dist4 = dist2 * dist2;
+  const double dist6 = dist2 * dist4;
+  HEAVISIDETRUNC(dist2, force = e_lj = e_crf)
+  
+  const double dist2i = 1.0 / dist2;
+  const double q_eps = q * math::four_pi_eps_i;
+  const double dist6i = dist2i * dist2i * dist2i;
+  const double disti = sqrt(dist2i);
+  const double c12_dist6i = c12 * dist6i;
+
+  e_lj = (c12_dist6i - c6) * dist6i;
+
+  e_crf = q_eps *
+          (disti * coulomb_scaling - m_crf_2cut3i[eps] * dist2 + a_RFm * dist4 + a_RFn * dist6 - m_crf_cut[eps]);
+
+  e_extra_orig = -q_eps * (a_RFm * dist4 + a_RFn * dist6 - m_crf_cut_extra[eps]);
+  e_extra_phys = -q_eps * (a_RFm * dist4 + a_RFn * dist6 + m_crf_cut[eps]);
+
+  force = (c12_dist6i + c12_dist6i - c6) * 6.0 * dist6i * dist2i +
+          q_eps * (disti * coulomb_scaling * dist2i + m_crf_cut3i[eps]
+           - 4 * a_RFm * dist2 - 6 * a_RFn * dist4);
 
   //double f_crf = q_eps * (disti * dist2i + m_crf_cut3i);
   //DEBUG(1, "force = " << f_crf*r(0) << "  " << f_crf*r(1) << "  " << f_crf*r(2));
@@ -235,7 +289,7 @@ inline void interaction::Nonbonded_Term
   //const double dist2 = abs2(r);
   
   assert(dist2 > 0);
-  
+
   HEAVISIDETRUNC(dist2, force = e_lj = e_crf)
           const double dist2i = 1.0 / dist2;
   const double q_eps = q * math::four_pi_eps_i;
@@ -463,11 +517,42 @@ inline void interaction::Nonbonded_Term
 ::rf_interaction(math::Vec const &r, double q,
         math::Vec &force, double &e_crf, unsigned int eps) {
   const double dist2 = abs2(r);
+
   HEAVISIDETRUNC(dist2, force = e_crf)
 
-          force = q * math::four_pi_eps_i * m_crf_cut3i[eps] * r;
+  force = q * math::four_pi_eps_i * (m_crf_cut3i[eps]) * r;
 
   e_crf = q * math::four_pi_eps_i * (-m_crf_2cut3i[eps] * dist2 - m_crf_cut[eps]);
+  DEBUG(11, "dist2 " << dist2);
+  DEBUG(11, "crf_2cut3i " << m_crf_2cut3i[eps]);
+  DEBUG(11, "crf_cut " << m_crf_cut[eps]);
+  DEBUG(11, "q*q   " << q);
+
+}
+
+/**
+ * helper function to calculate the force and energy for
+ * the reaction field contribution for a given pair
+ * for shifted RF correction with extra energies
+ */
+inline void interaction::Nonbonded_Term
+::shifted_rf_corr_interaction(math::Vec const &r, double q,
+        math::Vec &force, double &e_crf,
+        double &e_extra_orig, double &e_extra_phys,
+        unsigned int eps) {
+  const double dist2 = abs2(r);
+  const double dist4 = dist2 * dist2;
+  const double dist6 = dist2 * dist4;
+
+  HEAVISIDETRUNC(dist2, force = e_crf)
+
+  force = q * math::four_pi_eps_i * (m_crf_cut3i[eps] - 4 * a_RFm * dist2 - 6 * a_RFn * dist4) * r;
+
+  e_crf = q * math::four_pi_eps_i * (-m_crf_2cut3i[eps] * dist2 + a_RFm * dist4 + a_RFn * dist6 - m_crf_cut[eps]);
+
+  e_extra_orig = -q * math::four_pi_eps_i * (a_RFm * dist4 + a_RFn * dist6 - m_crf_cut_extra[eps]);
+  e_extra_phys = -q * math::four_pi_eps_i * (a_RFm * dist4 + a_RFn * dist6 - m_crf_cut[eps]);
+
   DEBUG(11, "dist2 " << dist2);
   DEBUG(11, "crf_2cut3i " << m_crf_2cut3i[eps]);
   DEBUG(11, "crf_cut " << m_crf_cut[eps]);
