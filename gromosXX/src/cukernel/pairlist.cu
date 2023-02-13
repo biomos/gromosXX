@@ -3,8 +3,10 @@
  * pairlist compuation
  */
 
+#include <iostream>
 #include "gpu_status.h"
 
+#include "lib/math.h"
 #include "../util/debug.h"
 
 #undef MODULE
@@ -104,7 +106,7 @@ extern "C" void cudaCalcPairlist(gpu_status * gpu_stat) {
 
 __global__ void cudakernel::kernel_CalcPairlist
 (
-        simulation_parameter * dev_params,
+        cudakernel::simulation_parameter * dev_params,
         float3 * dev_pos,
         pairlist pl_short,
         pairlist pl_long,

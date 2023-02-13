@@ -6,8 +6,11 @@
 #define NUM_THREADS_PER_BLOCK_SHAKE 64
 
 #include "gpu_status.h"
-#include "lib/types.h"
+#include "lib/math.h"
 
+#include "cudaShake.h"
+
+#include "lib/utils.h"
 #include "parameter.h"
 
 #include "macros.h"
@@ -37,6 +40,7 @@ extern "C" gpu_status * cudaInitGPU_Shake(
     cudaSetDevice(device_number);
   } else {
     cudaGetDevice(&device_number);
+    ;;
   }
 
   // let's first query the device properties and print them out
@@ -120,8 +124,8 @@ extern "C" gpu_status * cudaInitGPU_Shake(
   // This index denotes how many molecules will be treated
   // cudaMalloc((void**) & gpu_stat->dev_highest_index, sizeof(unsigned int));
 
-  cudaMalloc((void**) & gpu_stat->dev_parameter, sizeof (simulation_parameter));
-  cudaMemcpy(gpu_stat->dev_parameter, &gpu_stat->host_parameter, sizeof (simulation_parameter), cudaMemcpyHostToDevice);
+  cudaMalloc((void**) & gpu_stat->dev_parameter, sizeof (cudakernel::simulation_parameter));
+  cudaMemcpy(gpu_stat->dev_parameter, &gpu_stat->host_parameter, sizeof (cudakernel::simulation_parameter), cudaMemcpyHostToDevice);
   DEBUG(10,"Allocated space for parameters");
   cudaMalloc((void**) & DEV_NEW_POS, (num_atoms / num_gpus + 3) * sizeof (VECTOR));
   cudaMemset(DEV_NEW_POS, 0, (num_atoms / num_gpus + 3) * sizeof (VECTOR));
@@ -129,7 +133,7 @@ extern "C" gpu_status * cudaInitGPU_Shake(
   cudaMemset(DEV_OLD_POS, 0, (num_atoms / num_gpus + 3) * sizeof (VECTOR));
   DEBUG(10,"Allocated space for positions");
 
-  *error += checkError("after allocating Memory for the old and new positions");
+  *error += cudakernel::checkError("after allocating Memory for the old and new positions");
 
   DEBUG(10,"Return gpu_stat")
   return gpu_stat;
@@ -180,7 +184,7 @@ extern "C" int cudaGPU_Shake(double *newpos, double *oldpos, int & shake_fail_mo
   DEBUG(10,"Copy the positions to the GPU")
   cudaMemcpy(DEV_NEW_POS, HOST_NEW_POS, (num_atoms / num_gpus + 3) * sizeof (VECTOR), cudaMemcpyHostToDevice);
   cudaMemcpy(DEV_OLD_POS, HOST_OLD_POS, (num_atoms / num_gpus + 3) * sizeof (VECTOR), cudaMemcpyHostToDevice);
-  checkError("after copying the positions");
+  cudakernel::checkError("after copying the positions");
 
   // Copy the highest index of the molecule
 
@@ -195,16 +199,16 @@ extern "C" int cudaGPU_Shake(double *newpos, double *oldpos, int & shake_fail_mo
   DEBUG(10,"numBlocks: " << numBlocks)
 
   DEBUG(7,"Starting kernel")
-  kernel_Calc_Shake <<<dimGrid, dimBlock >>>
+  cudakernel::kernel_Calc_Shake <<<dimGrid, dimBlock >>>
           (DEV_NEW_POS, DEV_OLD_POS, gpu_stat->dev_parameter, gpu_stat->dev_shake_fail_mol,
           DEV_TOL, DEV_MASS, DEV_CONST_LENGTH2, DEV_FACTOR, highest_index);
-  checkError("after GPU_SHAKE");
+  cudakernel::checkError("after GPU_SHAKE");
 
 
   // Copy the new positions from the GPU
   DEBUG(10,"Get the new positions")
   cudaMemcpy(HOST_NEW_POS, DEV_NEW_POS, (num_atoms / num_gpus + 3) * sizeof (VECTOR), cudaMemcpyDeviceToHost);
-  checkError("after copying the new positions");
+  cudakernel::checkError("after copying the new positions");
 
   for (unsigned int i = first, j = 0; i < last; ++i, j++) {
     positions[i].x = (double) HOST_NEW_POS[j].x;
@@ -228,7 +232,7 @@ extern "C" int cudaGPU_Shake(double *newpos, double *oldpos, int & shake_fail_mo
 __global__ void cudakernel::kernel_Calc_Shake
 (
         VECTOR * new_pos, VECTOR * old_pos,
-        simulation_parameter * dev_params,
+        cudakernel::simulation_parameter * dev_params,
         int *shake_fail_mol, FL_PT_NUM * tol,
         VECTOR * mass, VECTOR * const_length2,
         MATRIX * factor, unsigned int highest_mol_index
