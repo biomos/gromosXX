@@ -430,6 +430,7 @@ namespace simulation
     /** pol_off_lj_crf_function */ pol_off_lj_crf_func,
     /** cgrain_function (MARTINI)*/ cgrain_func,
     /** cgrain_function (GROMOS) */ cggromos_func,
+    /** lj_crf with shifted RF and corrected energies */ lj_shifted_crf_corr_func,
     /** default */ default_func
   };
 
@@ -1705,7 +1706,12 @@ namespace simulation
         lj_correction(false),
         lj_solvent_density(997.0),
         rf_excluded(true),
-        epsilon(1.0) {}
+        epsilon(1.0),
+        use_shift(false),
+        m_crf(4),
+        n_crf(m_crf + 2),
+        a_RFm(0),
+        a_RFn(0) {}
 
       /**
        * method for longrange electrostatics
@@ -1817,6 +1823,14 @@ namespace simulation
        * we do so in In_Parameter
        */
       double epsilon;
+      /**
+       * parameters for shifted RF (see Kubincová et al, Phys. Chem. Chem. Phys. 2020,22,26419-26437)
+       */
+      bool use_shift;
+      double m_crf;
+      double n_crf;
+      double a_RFm;
+      double a_RFn;
     } nonbonded;
     /**
      * @struct posrest_struct

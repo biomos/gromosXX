@@ -207,6 +207,8 @@ int interaction::create_g96_nonbonded
   if (sim.param().force.interaction_function ==
       simulation::lj_crf_func ||
       sim.param().force.interaction_function ==
+      simulation::lj_shifted_crf_corr_func ||
+      sim.param().force.interaction_function ==
       simulation::cggromos_func ||
       sim.param().force.interaction_function ==
       simulation::pol_lj_crf_func ||
@@ -227,6 +229,8 @@ int interaction::create_g96_nonbonded
   pa->set_parameter(&ni->parameter());
   if ((!sim.param().force.nonbonded_vdw && sim.param().force.interaction_function ==
           simulation::lj_crf_func) ||
+          (!sim.param().force.nonbonded_vdw && sim.param().force.interaction_function ==
+          simulation::lj_shifted_crf_corr_func) ||
           (!sim.param().force.nonbonded_vdw && sim.param().force.interaction_function ==
           simulation::cggromos_func) ||
           (!sim.param().force.nonbonded_vdw && sim.param().force.interaction_function ==
@@ -272,6 +276,7 @@ int interaction::create_g96_nonbonded
       << " steps\n\n";
     
     if (sim.param().force.interaction_function == simulation::lj_crf_func ||
+        sim.param().force.interaction_function == simulation::lj_shifted_crf_corr_func ||
         sim.param().force.interaction_function == simulation::cgrain_func || 
         sim.param().force.interaction_function == simulation::pol_lj_crf_func ||
         sim.param().force.interaction_function == simulation::pol_off_lj_crf_func) {

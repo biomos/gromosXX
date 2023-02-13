@@ -56,7 +56,9 @@ calculate_interactions(topology::Topology& topo,
       break;
     }
     default:
-      break;
+      io::messages.add("Electric_Field_Interaction",
+              "interaction function not implemented",
+              io::message::critical);
   }
 
   if (simulation::pol_off_lj_crf_func != 0)
