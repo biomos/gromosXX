@@ -17,7 +17,7 @@ namespace cudakernel {
 __global__ void kernel_CalcForces_Solvent(
         pairlist pl,
         float3 * dev_pos,
-        simulation_parameter * dev_params,
+        cudakernel::simulation_parameter * dev_params,
         lj_crf_parameter * dev_lj_crf_params,
         float3 * dev_for,
         float9 * dev_virial,

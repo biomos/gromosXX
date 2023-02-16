@@ -468,6 +468,8 @@ namespace io
     os << type << "Polarisation self    : " << std::setw(39) << e.self_total << "\n";
     os << type << "QM                   : " << std::setw(30) << e.qm_total << "\n";
     os << type << "Special              : " << std::setw(21) << e.special_total << "\n";
+    os << type << "total_orig           : " << std::setw(30) << e.total + e.shift_extra_orig_total << "\n";
+    os << type << "total_phys           : " << std::setw(30) << e.total + e.shift_extra_phys_total << "\n";
     os << type << "SASA                 : " << std::setw(30) << e.sasa_total << "\n";
     os << type << "SASA Volume          : " << std::setw(30) << e.sasa_volume_total << "\n";
     os << type << "Constraints          : " << std::setw(30) << e.constraints_total << "\n";
@@ -529,6 +531,8 @@ namespace io
 	// now in calculate totals
 	// if(i==j)
 	os << std::setw(12) << e.crf_energy[i][j];
+  os << std::setw(12) << e.shift_extra_orig[i][j];
+  os << std::setw(12) << e.shift_extra_phys[i][j];
 	// else
 	// os << std::setw(12) << e.crf_energy[i][j] +  e.crf_energy[j][i];
       }

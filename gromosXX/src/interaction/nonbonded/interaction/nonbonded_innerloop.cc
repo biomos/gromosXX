@@ -353,6 +353,38 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop
       break;
     }
 
+    case simulation::lj_shifted_crf_corr_func:
+    {
+      const lj_parameter_struct & lj =
+              m_param->lj_parameter(topo.iac(i),
+              topo.iac(j));
+
+      DEBUG(11, "\tlj-parameter c6=" << lj.c6 << " c12=" << lj.c12);
+      DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));
+
+      double e_extra_orig;
+      double e_extra_phys;
+      lj_shifted_crf_corr_interaction(r, lj.c6, lj.c12,
+              charge_product(topo, i, j),
+              f, e_lj, e_crf, e_extra_orig, e_extra_phys);
+      DEBUG(12, "f: " << f);
+      DEBUG(12, "e_lj: " << e_lj);
+      DEBUG(12, "e_crf: " << e_crf);
+
+      DEBUG(10, "\t\tatomic virial");
+      for (int a = 0; a < 3; ++a) {
+        force(a) = f * r(a);
+        storage.force(i)(a) += force(a);
+        storage.force(j)(a) -= force(a);
+
+        for (int b = 0; b < 3; ++b)
+          storage.virial_tensor(b, a) += r(b) * force(a);
+      }
+      storage.energies.shift_extra_orig[topo.atom_energy_group(i)][topo.atom_energy_group(j)] += e_extra_orig;
+      storage.energies.shift_extra_phys[topo.atom_energy_group(i)][topo.atom_energy_group(j)] += e_extra_phys;
+      break;
+    }
+
     default:
       io::messages.add("Nonbonded_Innerloop",
               "interaction function not implemented",
@@ -1146,6 +1178,37 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::one_four_interaction_in
       }
       break;
     }
+    case simulation::lj_shifted_crf_corr_func:
+    {
+      const lj_parameter_struct & lj =
+              m_param->lj_parameter(topo.iac(i),
+              topo.iac(j));
+
+      DEBUG(11, "\tlj-parameter cs6=" << lj.cs6 << " cs12=" << lj.cs12);
+      DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));
+      DEBUG(11, "\tcoulomb scaling = " << m_param->get_coulomb_scaling());
+
+      double e_extra_orig;
+      double e_extra_phys;
+
+      lj_shifted_crf_corr_interaction(r, lj.cs6, lj.cs12,
+              charge_product(topo, i, j),
+              f, e_lj, e_crf, e_extra_orig, e_extra_phys,
+              0, m_param->get_coulomb_scaling());
+
+      DEBUG(10, "\t\tatomic virial");
+      for (int a = 0; a < 3; ++a) {
+        const double term = f * r(a);
+        storage.force(i)(a) += term;
+        storage.force(j)(a) -= term;
+
+        for (int b = 0; b < 3; ++b)
+          storage.virial_tensor(b, a) += r(b) * term;
+      }
+      storage.energies.shift_extra_orig[topo.atom_energy_group(i)][topo.atom_energy_group(j)] += e_extra_orig;
+      storage.energies.shift_extra_phys[topo.atom_energy_group(i)][topo.atom_energy_group(j)] += e_extra_phys;
+      break;
+    }
     default:
       io::messages.add("Nonbonded_Innerloop",
               "interaction function not implemented",
@@ -1627,6 +1690,56 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
       } // loop over excluded pairs
       break;
     }
+    case simulation::lj_shifted_crf_corr_func:
+    {
+      // this will only contribute in the energy, the force should be zero.
+      double q = topo.charge()(i);
+      if (t_nonbonded_spec::charge_type == simulation::qm_buffer_charge) {
+        q += topo.qm_delta_charge(i);
+      }
+      double e_extra_orig;
+      double e_extra_phys;
+
+      shifted_rf_corr_interaction(r, q * q, f, e_crf, e_extra_orig, e_extra_phys);
+      storage.energies.crf_energy[topo.atom_energy_group(i)]
+              [topo.atom_energy_group(i)] += 0.5 * e_crf;
+      storage.energies.shift_extra_orig[topo.atom_energy_group(i)][topo.atom_energy_group(i)] += 0.5 * e_extra_orig;
+      storage.energies.shift_extra_phys[topo.atom_energy_group(i)][topo.atom_energy_group(i)] += 0.5 * e_extra_phys;
+      DEBUG(11, "\tcontribution " << 0.5 * e_crf);
+
+      for (; it != to; ++it) {
+
+        DEBUG(11, "\texcluded pair " << i << " - " << *it);
+
+        periodicity.nearest_image(pos(i), pos(*it), r);
+        DEBUG(10, "\tni i " << pos(i)(0) << " / "
+                << pos(i)(1) << " / "
+                << pos(i)(2));
+        DEBUG(10, "\tni j " << pos(*it)(0) << " / "
+                << pos(*it)(1) << " / "
+                << pos(*it)(2));
+        DEBUG(10, "\tni r " << r(0) << " / " << r(1) << " / " << r(2));
+        shifted_rf_corr_interaction(r, charge_product(topo, i, *it), f, e_crf, e_extra_orig, e_extra_phys);
+
+        force(i) += f;
+        force(*it) -= f;
+
+        for (int a = 0; a < 3; ++a)
+          for (int b = 0; b < 3; ++b)
+            storage.virial_tensor(a, b) += r(a) * f(b);
+        DEBUG(11, "\tatomic virial done");
+
+        // energy
+        storage.energies.crf_energy[topo.atom_energy_group(i)]
+                [topo.atom_energy_group(*it)] += e_crf;
+        storage.energies.shift_extra_orig[topo.atom_energy_group(i)][topo.atom_energy_group(*it)] += e_extra_orig;
+        storage.energies.shift_extra_phys[topo.atom_energy_group(i)][topo.atom_energy_group(*it)] += e_extra_phys;
+
+        DEBUG(11, "\tcontribution " << e_crf);
+
+      } // loop over excluded pairs
+      break;
+    }
     default:
       io::messages.add("Nonbonded_Innerloop",
               "interaction function not implemented",
@@ -1831,6 +1944,47 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_solvent_interaction_inner
         } // loop over at2_it
       } // loop over at_it
 
+      break;
+    }
+    case simulation::lj_shifted_crf_corr_func:
+    {
+      for (; at_it != at_to; ++at_it) {
+        DEBUG(11, "\tsolvent self term " << *at_it);
+        // no solvent self term. The distance dependent part and the forces
+        // are zero. The distance independent part should add up to zero
+        // for the energies and is left out.
+
+        for (topology::Atom_Iterator at2_it = at_it + 1; at2_it != at_to; ++at2_it) {
+
+          DEBUG(11, "\tsolvent " << *at_it << " - " << *at2_it);
+          periodicity.nearest_image(pos(*at_it),
+                  pos(*at2_it), r);
+
+          const double dist2 = abs2(r);
+          const double dist4 = dist2*dist2;
+          const double dist6 = dist2*dist4;
+
+          // for solvent, we don't calculate internal forces (rigid molecules)
+          // and the distance independent parts should go to zero
+          e_crf = -charge_product(topo, *at_it, *at2_it) *
+                  math::four_pi_eps_i * (crf_2cut3i() * dist2 - a_RFm * dist4 - a_RFn * dist6);
+          double e_extra_orig = -charge_product(topo, *at_it, *at2_it) * math::four_pi_eps_i * (a_RFm * dist4 + a_RFn * dist6);
+          double e_extra_phys = -charge_product(topo, *at_it, *at2_it) * math::four_pi_eps_i * (a_RFm * dist4 + a_RFn * dist6);
+
+          DEBUG(15, "\tqi = " << topo.charge()(*at_it) << ", qj = " << topo.charge()(*at2_it));
+          DEBUG(15, "\tcrf_2cut3i = " << crf_2cut3i() << ", abs2(r) = " << abs2(r));
+          DEBUG(15, "\a_RFm = " << a_RFm << " a_RFn = " << a_RFn);
+          // energy
+          storage.energies.crf_energy
+                  [topo.atom_energy_group(*at_it) ]
+                  [topo.atom_energy_group(*at2_it)] += e_crf;
+          storage.energies.shift_extra_orig[topo.atom_energy_group(*at_it) ]
+                  [topo.atom_energy_group(*at2_it)] += e_extra_orig;
+          storage.energies.shift_extra_phys[topo.atom_energy_group(*at_it) ]
+                  [topo.atom_energy_group(*at2_it)] += e_extra_phys;
+          DEBUG(11, "\tsolvent rf excluded contribution: " << e_crf);
+        } // loop over at2_it
+      } // loop over at_it
       break;
     }
     default:

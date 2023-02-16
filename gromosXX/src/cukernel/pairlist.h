@@ -54,7 +54,7 @@ void allocate_pairlist(pairlist &pl, unsigned int size, unsigned int max_neighbo
  * @param[out] pl_long the long-range pairlist
  */
 __global__ void kernel_CalcPairlist(
-        simulation_parameter * dev_params,
+        cudakernel::simulation_parameter * dev_params,
         float3 * dev_pos,
         pairlist pl_short,
         pairlist pl_long,

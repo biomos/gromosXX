@@ -78,6 +78,13 @@
         } \
       } \
       break; \
+    case simulation::lj_shifted_crf_corr_func : \
+      if (!sim.param().qmmm.dynamic_buffer_charges){ \
+        f<Interaction_Spec<bound, simulation::lj_shifted_crf_corr_func> >(__VA_ARGS__); \
+      } else { \
+        f<Interaction_Spec<bound, simulation::lj_shifted_crf_corr_func, simulation::qm_buffer_charge> >(__VA_ARGS__); \
+      } \
+      break; \
     default: \
       io::messages.add("wrong interaction function", "innerloop_template", io::message::error); \
       \
@@ -194,6 +201,10 @@
           default: io::messages.add("Electric field calculation site not implemented.", "innerloop_template", io::message::error); \
         } \
       } \
+      break; \
+    case simulation::lj_shifted_crf_corr_func : \
+      f< Interaction_Spec<bound, simulation::lj_shifted_crf_corr_func>, \
+         pertspec > (__VA_ARGS__); \
       break; \
     default: \
       io::messages.add("wrong interaction function", "innerloop_template", io::message::error); \

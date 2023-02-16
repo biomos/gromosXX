@@ -3,8 +3,10 @@ SUFFIXES = .cu
 AM_CPPFLAGS = -I$(top_srcdir) -I$(top_srcdir)/src
 NVCC_CFLAGS = @NVCC_CFLAGS@
 
+## Tracking dependencies correctly as with CXX would need a macro for NVCC
+## This would be too tedious and I hope that CMake will be handling this better
+## For now, we just delete the intermediate files to always enforce recompilation
 .cu.o:
-	$(MKDIR_P) $(@D)
 	$(NVCC) $(NVCCFLAGS) -dc --compiler-options '$(NVCC_CFLAGS)' $< -o $@
 
 libgrocukernel.o: $(libgrocukernel_a_OBJECTS)
@@ -12,33 +14,17 @@ libgrocukernel.o: $(libgrocukernel_a_OBJECTS)
 
 libgrocukernel.a: $(libgrocukernel_a_OBJECTS) libgrocukernel.o
 	$(NVCC) $(NVCCFLAGS) --lib -o $@ $^
+	rm -f $^ # Remove this line if you dont want to recompile every time
 
-xxincludedir = $(includedir)/md++/cukernel
-xxinclude_HEADERS = cudaKernel.h \
-                    macros.h \
-                    parameter.h \
-                    pairlist.h \
-                    interaction.h \
-                    constraints.h \
-                    cudaShake.h \
-                    gpu_status.h \
-                    io.cu \
-                    pairlist.cu \
-                    interaction.cu \
-                    constraints.cu \
-                    cudaShake.cu
-
-xxculibdir = $(includedir)/md++/cukernel/lib
-xxculib_HEADERS = lib/utils.h \
-                  lib/math.h \
-                  lib/types.h \
-                  lib/float3.h \
-                  lib/double3.h
 
 noinst_LIBRARIES = libgrocukernel.a
 
-libgrocukernel_a_SOURCES = cudaKernel.cu\
-	lib/utils.cu
+libgrocukernel_a_SOURCES =  io.cu \
+                            pairlist.cu \
+                            interaction.cu \
+                            constraints.cu \
+                            cudaShake.cu \
+							lib/utils.cu
 
 bin_PROGRAMS =
 

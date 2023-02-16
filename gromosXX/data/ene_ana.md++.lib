@@ -2,7 +2,7 @@ TITLE
   XX Library file for ene_ana
 END
 ENEVERSION
-  2022-08-17
+  2022-10-19
 END
 ENERTRJ
 # block definition for the energy trajectory file.
@@ -21,15 +21,15 @@ ENERTRJ
   block TIMESTEP
     subblock TIME 2 1
   block ENERGY03
-    subblock ENER 45 1
+    subblock ENER 49 1
     size NUM_BATHS
     subblock KINENER NUM_BATHS 3
     size NUM_ENERGY_GROUPS
     subblock BONDED NUM_ENERGY_GROUPS 5
-    subblock NONBONDED matrix_NUM_ENERGY_GROUPS 4
+    subblock NONBONDED matrix_NUM_ENERGY_GROUPS 6
     subblock SPECIAL NUM_ENERGY_GROUPS 12
     size NUM_EDS_STATES
-    subblock EDS NUM_EDS_STATES 4 
+    subblock EDS NUM_EDS_STATES 6
     size NUM_LAMBDAS
     subblock PRECALCLAM NUM_LAMBDAS 12
     subblock ABDIH 1 2
@@ -129,6 +129,10 @@ totbsleus = ENER[42]
 totrdc = ENER[43]
 totangres = ENER[44]
 nnvalid = ENER[45]
+totene_shift = ENER[46]
+totene_phys = ENER[47]
+eds_vr_shift = ENER[48]
+eds_vr_phys = ENER[49]
 # calculate the pressure in atm.
 pressu = PRESSURE[1] * 16.388453
 boxvol = VOLUME[1]
