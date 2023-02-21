@@ -48,6 +48,29 @@ namespace interaction
 			    math::Vec & force, double & e_rf, unsigned int eps = 0);
    
 
+   /**
+     * calculate the force and energy of an atom pair
+     * with shifted RF correction and reporting extra energies
+     */
+    void eds_lj_shifted_crf_corr_interaction(const double dist2, const double dist6, 
+              const double disti,
+              const double c6, const double c12,
+              const double q,
+              double &force, double &e_nb,
+              double &e_extra_orig, double &e_extra_phys,
+              unsigned int eps = 0,
+              const double coulomb_scaling = 1);
+
+    /**
+     * calculate the reaction field force and energy of an atom pair
+     * with shifted RF correction and reporting extra energies
+     */
+    void eds_shifted_rf_corr_interaction(math::Vec const &r, double q,
+          math::Vec & force, double & e_rf, 
+          double &e_extra_orig, double &e_extra_phys,
+          unsigned int eps = 0);
+   
+
   protected:
     /**
      * Force:
@@ -71,6 +94,12 @@ namespace interaction
 
     /**
      * Energy:
+     * extra energy of distance-independent part of shifted RF
+     */
+    std::vector<double> m_crf_cut_extra;
+
+    /**
+     * Energy:
      * reaction field constant / twice reaction field cutoff ^ 3
      */
     std::vector<double> m_crf_2cut3i;
@@ -78,6 +107,12 @@ namespace interaction
     /*
      Coarse grained dielectric permittivities*/
     std::vector<double> cgrain_eps;
+
+    /**
+     * shifting parameters
+     */
+    double a_RFm = 0;
+    double a_RFn = 0;
     
   };
   

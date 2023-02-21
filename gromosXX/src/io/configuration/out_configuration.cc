@@ -3022,7 +3022,11 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
           << std::setw(18) << e.rdc_total << "\n" // 43
           << std::setw(18) << e.angrest_total << "\n" // 44
           << std::setw(18) << e.nn_valid << "\n" // 45
-          << std::setw(18) << e.gamd_DV_total << "\n"; // 46
+          << std::setw(18) << e.total + e.shift_extra_orig_total << "\n" // 46
+          << std::setw(18) << e.total + e.shift_extra_phys_total << "\n" // 47
+          << std::setw(18) << e.eds_vr_shift_orig << "\n" // 48
+          << std::setw(18) << e.eds_vr_shift_phys << "\n"  // 49
+          << std::setw(18) << e.gamd_DV_total << "\n"; // 50
 
   os << "# baths\n";
   os << numbaths << "\n";
@@ -3053,7 +3057,9 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
       // Therefore the total LS energy is written out.        
       // As soon as multiple energy groups are possible this has to be revised      
               << std::setw(18) << e.ls_total
-              << std::setw(18) << e.ls_k_energy[j][i] << "\n";
+              << std::setw(18) << e.ls_k_energy[j][i]
+              << std::setw(18) << e.shift_extra_orig[j][i]
+              << std::setw(18) << e.shift_extra_phys[j][i] << "\n";
     }
   }
 
@@ -3081,12 +3087,16 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
   os << std::setw(18) << "# total"
           << std::setw(18) << "nonbonded"
           << std::setw(18) << "special"
-          << std::setw(18) << "offset\n";
+          << std::setw(18) << "offset"
+          << std::setw(18) << "total_orig"
+          << std::setw(18) << "total_phys\n";
   for (unsigned i = 0; i < e.eds_vi.size(); i++) {
     os << std::setw(18) << e.eds_vi[i]
             << std::setw(18) << e.eds_vi[i] - e.eds_vi_special[i]
             << std::setw(18) << e.eds_vi_special[i] 
-            << std::setw(18) << e.eds_eir[i] << "\n";
+            << std::setw(18) << e.eds_eir[i]
+            << std::setw(18) << e.eds_vi[i] + e.eds_vi_shift_extra_orig[i]
+            << std::setw(18) << e.eds_vi[i] + e.eds_vi_shift_extra_phys[i] << "\n";
   }
 
   // GAMD thresholds and force constant used

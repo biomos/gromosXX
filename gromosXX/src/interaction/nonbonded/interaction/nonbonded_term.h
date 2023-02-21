@@ -57,6 +57,17 @@ namespace interaction
     void lj_interaction(math::Vec const &r,
 			    double c6, double c12,
 			    double & force, double & e_lj);
+
+    /**
+     * calculate the force and energy of an atom pair
+     * with the shifted RF correction and report the extra energies
+     */
+    void lj_shifted_crf_corr_interaction(math::Vec const &r,
+        double c6, double c12,
+        double q,
+        double &force, double &e_lj, double &e_crf,
+        double &e_extra_orig, double &e_extra_phys,
+        unsigned int eps = 0, const double coulomb_scaling = 1);
     
     /**
      * calculate the force and energy of an atom pair. (lattice sum)
@@ -101,6 +112,15 @@ namespace interaction
      */
     void rf_interaction(math::Vec const &r, double q,
 			math::Vec & force, double & e_rf, unsigned int eps = 0);
+
+    /**
+     * calculate the shifted reaction field force and energy of an atom pair
+     * and report the extra energies
+     */
+    void shifted_rf_corr_interaction(math::Vec const &r, double q,
+        math::Vec &force, double &e_crf,
+        double &e_extra_orig, double &e_extra_phys,
+        unsigned int eps = 0);
     
     /**
      * helper function to calculate the force and energy for
@@ -215,6 +235,12 @@ namespace interaction
      * divided by reaction field cutoff.
      */
     std::vector<double> m_crf_cut;
+
+    /**
+     * Energy:
+     * extra energy of shifted RF for distance-independent part
+     */
+    std::vector<double> m_crf_cut_extra;
     
     /**
      * Coarse grain variables
@@ -234,6 +260,12 @@ namespace interaction
      * the cutoff squared
      */
     double m_cut2;
+
+    /**
+     * shifting parameters
+     */
+    double a_RFm = 0;
+    double a_RFn = 0;
   };
 
 

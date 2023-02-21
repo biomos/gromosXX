@@ -7,6 +7,8 @@
 #ifndef _GPU_STATUS_H
 #define	_GPU_STATUS_H
 
+#include "parameter.h"
+#include "pairlist.h"
 #include "lib/types.h"
 
 /**
@@ -16,7 +18,7 @@
  */
 struct gpu_status {
   int device;
-  simulation_parameter host_parameter;
+  cudakernel::simulation_parameter host_parameter;
   float2 * host_energy;
   float3 * host_forces;
   float9 * host_virial;
@@ -35,9 +37,9 @@ struct gpu_status {
   float9 * dev_virial;
   float9 * dev_factor;
   double9 * dev_double_factor;
-  pairlist dev_pl_short, dev_pl_long;
-  simulation_parameter * dev_parameter;
-  lj_crf_parameter * dev_lj_crf_parameter;
+  cudakernel::pairlist dev_pl_short, dev_pl_long;
+  cudakernel::simulation_parameter * dev_parameter;
+  cudakernel::lj_crf_parameter * dev_lj_crf_parameter;
   float2 * dev_energy;
   float3 * dev_const_length2;
   double3 * dev_double_const_length2;
@@ -48,7 +50,7 @@ struct gpu_status {
   int * dev_shake_fail_mol;
   unsigned int * dev_highest_index;
 
-  constraint * dev_constr;
+  cudakernel::constraint * dev_constr;
 };
 
 #endif	/* _GPU_STATUS_H */

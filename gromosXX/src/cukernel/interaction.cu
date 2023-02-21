@@ -4,7 +4,9 @@
  */
 
 #include "gpu_status.h"
-
+#include "interaction.h"
+#include "lib/utils.h"
+#include "lib/math.h"
 #include "../util/debug.h"
 
 #undef MODULE
@@ -20,7 +22,7 @@
 extern "C" int cudaCalcForces(double * forces, double * virial, double * lj_energy,
         double * crf_energy, bool longrange, gpu_status * gpu_stat) {
   int error = 0;
-  pairlist *dev_pl;
+  cudakernel::pairlist *dev_pl;
   int num_of_gpus = gpu_stat->host_parameter.num_of_gpus;
   int gpu_id = gpu_stat->host_parameter.gpu_id;
   DEBUG(10,"Num solvent atoms: " << gpu_stat->host_parameter.num_atoms);
@@ -36,14 +38,14 @@ extern "C" int cudaCalcForces(double * forces, double * virial, double * lj_ener
   // decide which pairlist to take.
   dev_pl = longrange ? &gpu_stat->dev_pl_long : &gpu_stat->dev_pl_short;
 
-  error += checkError("before calculating Forces");
+  error += cudakernel::checkError("before calculating Forces");
   // make sure to allocate __shared__ memory for ever thread
   // we need: 1. for every thread (i.e. NUM_THREADS.. * num_atoms_per_mol
   //          2. for every atom in a solvent molecule
   //          3. the size of the LJ CRF parameter struct
-  const size_t dynamic_shared_memory = NUM_THREADS_PER_BLOCK_FORCES * gpu_stat->host_parameter.num_atoms_per_mol * sizeof(lj_crf_parameter);
+  const size_t dynamic_shared_memory = NUM_THREADS_PER_BLOCK_FORCES * gpu_stat->host_parameter.num_atoms_per_mol * sizeof(cudakernel::lj_crf_parameter);
 
-  kernel_CalcForces_Solvent <<<dimGrid, dimBlock, dynamic_shared_memory >>>
+  cudakernel::kernel_CalcForces_Solvent <<<dimGrid, dimBlock, dynamic_shared_memory >>>
           (*dev_pl, gpu_stat->dev_pos, gpu_stat->dev_parameter,
           gpu_stat->dev_lj_crf_parameter, gpu_stat->dev_forces,
           gpu_stat->dev_virial, gpu_stat->dev_energy,
@@ -54,15 +56,15 @@ extern "C" int cudaCalcForces(double * forces, double * virial, double * lj_ener
 
   DEBUG(10,"Interactions: Executed kernel and synchronized threads")
 
-  error += checkError("after calculating Forces");
+  error += cudakernel::checkError("after calculating Forces");
   //copy forces/energies back to CPU
   // TODO: These could be reduced on GPU - numThreads-fold less communication
   cudaMemcpy(gpu_stat->host_forces, gpu_stat->dev_forces, numThreads * sizeof (float3), cudaMemcpyDeviceToHost);
-  error += checkError("after copying Forces");
+  error += cudakernel::checkError("after copying Forces");
   cudaMemcpy(gpu_stat->host_virial, gpu_stat->dev_virial, numThreads * sizeof (float9), cudaMemcpyDeviceToHost);
-  error += checkError("after copying virial");
+  error += cudakernel::checkError("after copying virial");
   cudaMemcpy(gpu_stat->host_energy, gpu_stat->dev_energy, numThreads * sizeof (float2), cudaMemcpyDeviceToHost);
-  error += checkError("after copying energy");
+  error += cudakernel::checkError("after copying energy");
 
   
   //sum up energies and write them back
@@ -110,8 +112,8 @@ __global__ void cudakernel::kernel_CalcForces_Solvent
 (
         pairlist pl,
         float3 * dev_pos,
-        simulation_parameter * dev_params,
-        lj_crf_parameter * dev_lj_crf_params,
+        cudakernel::simulation_parameter * dev_params,
+        cudakernel::lj_crf_parameter * dev_lj_crf_params,
         float3 * dev_for,
         float9 * dev_virial,
         float2 * dev_energy,
@@ -151,7 +153,7 @@ __global__ void cudakernel::kernel_CalcForces_Solvent
   float e_lj = 0.0f, e_crf = 0.0f;
 
   // the shared memory is allocated in the kernel call.
-  extern __shared__ lj_crf_parameter lj_crf[];
+  extern __shared__ cudakernel::lj_crf_parameter lj_crf[];
   // now cache the parameter matrix line in the shared memory
   for (unsigned int j = 0; j < solvent_offset; ++j)
     lj_crf[threadIdx.x + NUM_THREADS_PER_BLOCK_FORCES * j] = dev_lj_crf_params[atom_type * solvent_offset + j];
@@ -180,7 +182,7 @@ __global__ void cudakernel::kernel_CalcForces_Solvent
         // calculate distance
         const float3 r = nearestImage(my_pos, dev_pos[atom_j], box_param_x, box_param_y, box_param_z);
         // get the parameters
-        const lj_crf_parameter lj_crf_param = lj_crf[threadIdx.x + NUM_THREADS_PER_BLOCK_FORCES * j];
+        const cudakernel::lj_crf_parameter lj_crf_param = lj_crf[threadIdx.x + NUM_THREADS_PER_BLOCK_FORCES * j];
 
         // calculate the force
         const float dist2 = abs2(r);

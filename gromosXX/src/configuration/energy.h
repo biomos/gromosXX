@@ -114,6 +114,13 @@ namespace configuration
      */
     double qm_total;
     /**
+     * shifting energy
+     */
+    std::vector<std::vector<double> > shift_extra_orig;
+    double shift_extra_orig_total;
+    std::vector<std::vector<double> > shift_extra_phys;
+    double shift_extra_phys_total;
+    /**
      * total energy of the "special" interactions
      */
     double special_total;
@@ -253,6 +260,12 @@ namespace configuration
      * energy of the reference state in eds
      */
     double eds_vr;
+
+    /**
+     * energy of the gromos reference state in eds with shifting
+     */
+    double eds_vr_shift_orig;
+    double eds_vr_shift_phys;
     
     /**
     *
@@ -283,6 +296,12 @@ namespace configuration
      * nonbonded energy of the endstates in eds
      */
     std::vector<double> eds_vi;
+
+    /**
+     * shifting energy of V_i states
+     */
+    std::vector<double> eds_vi_shift_extra_orig;
+    std::vector<double> eds_vi_shift_extra_phys;
 
     /**
     * offset energy of the endstates in eds

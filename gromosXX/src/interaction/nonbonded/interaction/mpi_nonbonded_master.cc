@@ -374,15 +374,37 @@ calculate_interactions(topology::Topology & topo,
       assert(m_storage.force_endstates.size() == numstates);
       assert(m_nonbonded_set[0]->storage().force_endstates.size() == numstates);
       assert(m_storage.energies.eds_vi.size() == numstates);
+      assert(m_storage.energies.eds_vi_shift_extra_orig.size() == numstates);
+      assert(m_storage.energies.eds_vi_shift_extra_phys.size() == numstates);
       assert(m_nonbonded_set[0]->storage().energies.eds_vi.size() == numstates);
+      assert(m_nonbonded_set[0]->storage().energies.eds_vi_shift_extra_orig.size() == numstates);
+      assert(m_nonbonded_set[0]->storage().energies.eds_vi_shift_extra_phys.size() == numstates);
       
       m_storage.energies.eds_vi  = m_nonbonded_set[0]->storage().energies.eds_vi;
       m_storage.force_endstates = m_nonbonded_set[0]->storage().force_endstates;
       m_storage.virial_tensor_endstates = m_nonbonded_set[0]->storage().virial_tensor_endstates;
+      m_storage.energies.eds_vi_shift_extra_orig= m_nonbonded_set[0]->storage().energies.eds_vi_shift_extra_orig;
+      m_storage.energies.eds_vi_shift_extra_phys = m_nonbonded_set[0]->storage().energies.eds_vi_shift_extra_phys;
        
       // reduce energies of endstates
       MPI_Reduce(&m_storage.energies.eds_vi[0],
               &m_nonbonded_set[0]->storage().energies.eds_vi[0],
+              numstates,
+              MPI::DOUBLE,
+              MPI::SUM,
+               sim.mpiControl().masterID, sim.mpiControl().comm);
+
+      // reduce extra energies of endstates
+      MPI_Reduce(&m_storage.energies.eds_vi_shift_extra_orig[0],
+              &m_nonbonded_set[0]->storage().energies.eds_vi_shift_extra_orig[0],
+              numstates,
+              MPI::DOUBLE,
+              MPI::SUM,
+               sim.mpiControl().masterID, sim.mpiControl().comm);
+
+      // reduce extra energies of endstates
+      MPI_Reduce(&m_storage.energies.eds_vi_shift_extra_phys[0],
+              &m_nonbonded_set[0]->storage().energies.eds_vi_shift_extra_phys[0],
               numstates,
               MPI::DOUBLE,
               MPI::SUM,
@@ -439,6 +461,41 @@ calculate_interactions(topology::Topology & topo,
       MPI_Reduce(&m_nonbonded_set[0]->storage().energies.ls_kspace_total,
             &sum, 1, MPI::DOUBLE, MPI::SUM, sim.mpiControl().masterID, sim.mpiControl().comm);
       m_nonbonded_set[0]->storage().energies.ls_kspace_total = sum;
+    }
+
+    if(sim.param().force.interaction_function == simulation::lj_shifted_crf_corr_func){
+      std::vector<double> shift_extra_orig_scratch(ljs*ljs), rshift_extra_orig_scratch(ljs*ljs);
+      std::vector<double> shift_extra_phys_scratch(ljs*ljs), rshift_extra_phys_scratch(ljs*ljs);
+      
+      for(unsigned int i = 0; i < ljs; ++i){
+        for(unsigned int j = 0; j < ljs; ++j){
+          shift_extra_orig_scratch[i*ljs + j] =
+                  m_nonbonded_set[0]->storage().energies.shift_extra_orig[i][j];
+          shift_extra_phys_scratch[i*ljs + j] =
+                  m_nonbonded_set[0]->storage().energies.shift_extra_phys[i][j];
+        }
+      }
+      
+      MPI_Reduce(&shift_extra_orig_scratch[0],
+              &rshift_extra_orig_scratch[0],
+              ljs * ljs,
+              MPI::DOUBLE,
+              MPI::SUM,
+              sim.mpiControl().masterID, sim.mpiControl().comm);
+
+      MPI_Reduce(&shift_extra_phys_scratch[0],
+              &rshift_extra_phys_scratch[0],
+              ljs * ljs,
+              MPI::DOUBLE,
+              MPI::SUM,
+              sim.mpiControl().masterID, sim.mpiControl().comm);
+      
+      for(unsigned int i = 0; i < ljs; ++i){
+        for(unsigned int j = 0; j < ljs; ++j){
+          m_nonbonded_set[0]->storage().energies.shift_extra_orig[i][j] = rshift_extra_orig_scratch[i*ljs + j];
+          m_nonbonded_set[0]->storage().energies.shift_extra_phys[i][j] = rshift_extra_phys_scratch[i*ljs + j];
+        }
+      }
     }
      
     ////////////////////////////////////////////////////
@@ -511,6 +568,9 @@ int interaction::MPI_Nonbonded_Master::init(topology::Topology & topo,
     m_storage.force_endstates.resize(sim.param().eds.numstates);
     m_storage.virial_tensor_endstates.resize(sim.param().eds.numstates);
     m_storage.energies.eds_vi.resize(sim.param().eds.numstates);
+    m_storage.energies.eds_vi_shift_extra_orig.resize(sim.param().eds.numstates);
+    m_storage.energies.eds_vi_shift_extra_phys.resize(sim.param().eds.numstates);
+    
     
     for(unsigned int i = 0; i < m_storage.force_endstates.size(); i++){
       m_storage.force_endstates[i].resize(topo.num_atoms());

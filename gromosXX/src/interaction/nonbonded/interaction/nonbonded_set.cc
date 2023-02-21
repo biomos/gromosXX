@@ -263,6 +263,10 @@ int interaction::Nonbonded_Set
               m_longrange_storage.energies.lj_energy[i][j];
       m_storage.energies.crf_energy[i][j] +=
               m_longrange_storage.energies.crf_energy[i][j];
+      m_storage.energies.shift_extra_orig[i][j] +=
+              m_longrange_storage.energies.shift_extra_orig[i][j];
+      m_storage.energies.shift_extra_phys[i][j] +=
+              m_longrange_storage.energies.shift_extra_phys[i][j];
       if (sim.param().force.force_groups) {
         for (unsigned int k = 0; k < num_atoms; ++k) {
           m_storage.force_groups[i][j][k] +=
@@ -353,6 +357,10 @@ int interaction::Nonbonded_Set::update_configuration
               m_storage.energies.lj_energy[i][j];
       e.crf_energy[i][j] +=
               m_storage.energies.crf_energy[i][j];
+      e.shift_extra_orig[i][j] +=
+              m_storage.energies.shift_extra_orig[i][j];
+      e.shift_extra_phys[i][j] +=
+              m_storage.energies.shift_extra_phys[i][j];
       e.ls_real_energy[i][j] +=
               m_storage.energies.ls_real_energy[i][j];
       e.ls_k_energy[i][j] +=
@@ -365,6 +373,7 @@ int interaction::Nonbonded_Set::update_configuration
       }
     }
     e.self_energy[i] += m_storage.energies.self_energy[i];
+
   }
 
 

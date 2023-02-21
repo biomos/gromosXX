@@ -4497,6 +4497,7 @@ void io::In_Parameter::read_NONBONDED(simulation::Parameter & param,
     exampleblock << "#     1 : reaction-field\n";
     exampleblock << "#     2 : Ewald method\n";
     exampleblock << "#     3 : P3M method\n";
+    exampleblock << "#     4 : shifted reaction-field, reporting extra energies\n";
     exampleblock << "# APPAK     >= 0.0 reaction-field inverse Debye screening length\n";
     exampleblock << "# RCRF      >= 0.0 reaction-field radius\n";
     exampleblock << "#   0.0 : set to infinity\n";
@@ -4566,7 +4567,7 @@ void io::In_Parameter::read_NONBONDED(simulation::Parameter & param,
 
         int method = 0, ls_calculate_a2 = 0;
 
-        block.get_next_parameter("NLRELE", method, "", "-1,0,1,2,3");
+        block.get_next_parameter("NLRELE", method, "", "-1,0,1,2,3,4");
         block.get_next_parameter("APPAK", param.nonbonded.rf_kappa, ">=0", "");
         block.get_next_parameter("RCRF", param.nonbonded.rf_cutoff, ">=0", "");
         block.get_next_parameter("EPSRF", param.nonbonded.rf_epsilon, ">=1", "0.0");
@@ -4625,6 +4626,19 @@ void io::In_Parameter::read_NONBONDED(simulation::Parameter & param,
                 param.nonbonded.rf_excluded = false;
                 do_ls = true;
                 break;
+            case 4:
+                param.nonbonded.use_shift = true;
+                param.nonbonded.method = simulation::el_reaction_field;
+                param.force.interaction_function = simulation::lj_shifted_crf_corr_func;
+                param.nonbonded.lserf = false;
+                param.nonbonded.m_crf = 4;
+                param.nonbonded.n_crf = param.nonbonded.m_crf + 2;
+                param.nonbonded.a_RFm = 3 * pow(param.nonbonded.rf_cutoff,-(param.nonbonded.m_crf+1)) / (param.nonbonded.m_crf * (param.nonbonded.n_crf-param.nonbonded.m_crf));
+                param.nonbonded.a_RFm *= (2*param.nonbonded.rf_epsilon+param.nonbonded.n_crf-1)/(1+2*param.nonbonded.rf_epsilon);
+                param.nonbonded.a_RFn = 3 * pow(param.nonbonded.rf_cutoff,-(param.nonbonded.n_crf+1)) / (param.nonbonded.n_crf * (param.nonbonded.m_crf-param.nonbonded.n_crf));
+                param.nonbonded.a_RFn *= (2*param.nonbonded.rf_epsilon+param.nonbonded.m_crf-1)/(1+2*param.nonbonded.rf_epsilon);
+                break;
+            
             default:
                 break;
         }
@@ -4693,6 +4707,16 @@ void io::In_Parameter::read_NONBONDED(simulation::Parameter & param,
         if (param.nonbonded.lj_correction)
             io::messages.add("NONBONDED block: LJ long range correction Switched on."
                              "In_Parameter", io::message::warning);
+
+        if (param.nonbonded.use_shift && param.nonbonded.method != simulation::el_reaction_field) {
+            io::messages.add("NONBONDED block: shifted RF cannot be used with anything other than RF",
+                             "In_Parameter", io::message::error);
+        }
+
+        if (param.nonbonded.use_shift && !param.pairlist.atomic_cutoff) {
+            io::messages.add("NONBONDED block: shifted reaction field intended for use with atomic cutoff, not chargegroup cutoff",
+                             "In_Parameter", io::message::warning);
+        }
 
         block.get_final_messages();
     }
