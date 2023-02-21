@@ -417,6 +417,10 @@ void algorithm::GAMD::calc_gamd_std_mean(double V, int step, double *Vmax, doubl
 int algorithm::GAMD::calc_gamd_E_K(simulation::gamd_thresh_enum Eform, double sigma0, double Vmax, double Vmin, double Vmean,long double sigmaV,
                    double *k0, double *k, double *E)
         {
+                if (Vmax == 0.0 && Vmin == 0.0 && Vmean == 0.0){
+                    return 0;
+                }
+                
                 if (Eform == simulation::upper_bound){
                         *k0 = (1 - sigma0/sigmaV) * (Vmax-Vmin) / (Vmean-Vmin);
                         // k0 should be between 0 and 1 if not switch to lower bound energy threshold

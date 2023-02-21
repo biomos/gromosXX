@@ -3107,7 +3107,8 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
   os << std::setw(18) << "# E_dihedral"
           << std::setw(18) << "E_potential"
           << std::setw(18) << "K_dihedral"
-          << std::setw(18) << "K_potential\n";
+          << std::setw(18) << "K_potential"
+          << std::setw(18) << "dV_group\n";
   for (unsigned i = 0; i < numaccelgroups; i++) {
     os << std::setw(18) << e.gamd_ED[i]
             << std::setw(18) << e.gamd_ET[i]
