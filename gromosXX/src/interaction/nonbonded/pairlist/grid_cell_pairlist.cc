@@ -186,7 +186,6 @@ prepare(topology::Topology & topo,
 	configuration::Configuration & conf,
 	simulation::Simulation & sim)
 {
-
   timer().start_subtimer("pairlist prepare");
 
   is_vacuum = false;
@@ -227,7 +226,6 @@ prepare(topology::Topology & topo,
 
   failed = false;
   // If pressure is constant, make mask again
-  timer().start_subtimer("pairlist mask");
   unsigned int err = 0;
   if (sim.param().pcouple.scale != math::pcouple_off) {
     DEBUG(7, "Grid Cell : Pressure is constant");
@@ -242,22 +240,23 @@ prepare(topology::Topology & topo,
     if (err) {
       io::messages.add("Could not create mask!",
               "Grid Cell", io::message::error);
+
+      timer().stop_subtimer("pairlist prepare");
       return 1;
     }
   }
-  timer().stop_subtimer("pairlist mask");
   if (err) {
     std::ostringstream msg;
     msg << "At step " << sim.steps() << ": Could not prepare grid. "
             "Falling back to standard algoritm for this step.";
     io::messages.add(msg.str(), "Grid_Cell_Pairlist", io::message::notice);
     failed = true;
+
+    timer().stop_subtimer("pairlist prepare");
     return fallback_algorithm->prepare(topo, conf, sim);
   }
 
-  timer().start_subtimer("pairlist cell");
   SPLIT_BOUNDARY(make_cell, topo, conf, sim);
-  timer().stop_subtimer("pairlist cell");
 
   timer().stop_subtimer("pairlist prepare");
   return 0;
@@ -291,15 +290,16 @@ void interaction::Grid_Cell_Pairlist::update(
     return;
   }
 
-  if (begin == 0) // master
-    timer().start_subtimer("pairlist");
-
+  timer().start_subtimer("pairlist clearing");
   {
     pairlist.clear();
-#ifdef OMP
-    #pragma omp barrier
-#endif
+    #ifdef OMP
+      #pragma omp barrier
+    #endif
   }
+  timer().stop_subtimer("pairlist clearing");
+
+  timer().start_subtimer("pairlist update");
   // _pairlist(pairlist)
   if (!sim.param().pairlist.atomic_cutoff) {
     SPLIT_BOUNDARY(_pairlist, pairlist, pairlist, begin, stride, cg_cutoff(), no_perturbation());
@@ -307,11 +307,10 @@ void interaction::Grid_Cell_Pairlist::update(
     SPLIT_BOUNDARY(_pairlist, pairlist, pairlist, begin, stride, atomic_cutoff(), no_perturbation());
   }
 
-  if (begin == 0) // master
-    timer().stop_subtimer("pairlist");
-#ifdef OMP
-  #pragma omp barrier
-#endif
+  #ifdef OMP
+    #pragma omp barrier
+  #endif
+  timer().stop_subtimer("pairlist update");
 
   if (begin == 0 && is_vacuum) {
     restore_vacuum_box();
@@ -335,9 +334,7 @@ void interaction::Grid_Cell_Pairlist::update_perturbed(
     return;
   }
 
-  if (begin == 0) // master
-    timer().start_subtimer("perturbed pairlist");
-
+  timer().start_subtimer("perturbed pairlist clearing");
   {
     pairlist.clear();
     perturbed_pairlist.clear();
@@ -345,6 +342,9 @@ void interaction::Grid_Cell_Pairlist::update_perturbed(
     #pragma omp barrier
     #endif
   }
+  timer().stop_subtimer("perturbed pairlist clearing");
+
+  timer().start_subtimer("perturbed pairlist");
   // _pairlist(pairlist)
   if (!sim.param().pairlist.atomic_cutoff) {
     SPLIT_BOUNDARY(_pairlist, pairlist, perturbed_pairlist, begin, stride, cg_cutoff(), do_perturbation());
@@ -352,12 +352,10 @@ void interaction::Grid_Cell_Pairlist::update_perturbed(
     SPLIT_BOUNDARY(_pairlist, pairlist, perturbed_pairlist, begin, stride, atomic_cutoff(), do_perturbation());
   }
 
-  if (begin == 0) // master
-    timer().stop_subtimer("perturbed pairlist");
-
   #ifdef OMP
-  #pragma omp barrier
+    #pragma omp barrier
   #endif
+  timer().stop_subtimer("perturbed pairlist");
 
   if (begin == 0 && is_vacuum) {
     restore_vacuum_box();

@@ -232,7 +232,7 @@ void util::print_title(bool mpi, std::ostream & os, bool repex)
       nthreads = omp_get_num_threads();
       os << "OpenMP code enabled\n"
 		<< "\tusing "
-		<< omp_get_num_threads() << " threads.\n"
+		<< nthreads << " threads.\n"
 		<< "\tThis can be adjusted by setting the\n "
 		<< "\tOMP_NUM_THREADS environment variable.\n"
 		<< std::endl;
