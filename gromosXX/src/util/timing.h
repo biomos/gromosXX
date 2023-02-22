@@ -62,57 +62,57 @@ namespace util
     /**
      * accessor to name
      */
-    void name(const std::string & name) {
-      m_name = name;
+    std::string & get_maintimer_name() {
+      return m_maintimer_name;
     }
-    /**
-     * accessor to name
-     */
-    std::string & name() {
-      return m_name;
-    }
-    /**
-     * const accessor to name
-     */
-    const std::string & name() const {
-      return m_name;
-    }    
-    
+  
   protected:
     /**
-     * name of the timer
+     * name of the maintimer timer
      */
-    std::string m_name;
+    std::string m_maintimer_name;
     /**
      * maximum number of threads tracked by timer
      */
     uint m_max_thread_num;
-
-    /**
-     * struct sub-timer
-     */
-    struct subtimer_struct {
-      uint master_thread = std::numeric_limits<uint>::max();
-      uint highest_used_thread = 0;
-      std::vector<double> start_time = start_time = std::vector<double>(1, 0.00);
-      std::vector<double> end_time = start_time = std::vector<double>(1, 0.00);
-      double total_walltime = 0.0;               //total runtime for subtimer
-      double total_cputime = 0.0;       
-      bool double_counted_time = false;   //set true if the subtime was once started while another subtimer was still running
-    };
-    std::map<std::string, subtimer_struct> m_subtimers;
-    /**
-     * store which subtimer is actually in use (debug only)
-     */
-    std::string subtimer_in_use = "none";
-    /**
-     * bool; if detailed report should be printed
-     */
-    bool m_detailed_report = false;
     /**
      * store the current step of the simulation
      */    
     uint m_step_index;
+    /**
+     * bool; if detailed report should be printed
+     */
+    bool m_detailed_report = false;
+
+    /**
+     * sub-timer class
+     */
+    class Subtimer_Class {
+      public:
+        uint master_thread = std::numeric_limits<uint>::max();
+        uint highest_used_thread = 0;
+        std::vector<double> start_time;
+        std::vector<double> end_time;
+        double total_walltime = 0.0;               //total runtime for subtimer
+        double total_cputime = 0.0;       
+        bool double_counted_time = false;   //set true if the subtime was once started while another subtimer was still running
+
+        //Constructor (no arguments)
+        Subtimer_Class(){ 
+          start_time = std::vector<double>(1, 0.0);
+          end_time = std::vector<double>(1, 0.0);
+        }
+        //Constructor
+        Subtimer_Class(const uint thread_count){
+          start_time = std::vector<double>(thread_count, 0.0);
+          end_time = std::vector<double>(thread_count, 0.0);
+        }
+    };
+    std::unordered_map<std::string, Subtimer_Class> m_subtimers;
+    /**
+     * store which subtimer is actually in use (debug only)
+     */
+    std::string subtimer_in_use = "none";
   };
 }
 

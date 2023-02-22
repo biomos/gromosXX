@@ -115,24 +115,24 @@ calculate_interactions(topology::Topology & topo,
     m_pairlist_algorithm->prepare(*p_topo, *p_conf, sim);
 
     int error = 0;
-#ifdef OMP
-    omp_set_num_threads(m_nonbonded_set.size());
-#pragma omp parallel reduction(+:error)
-    {
-      unsigned int tid = omp_get_thread_num();
-      // calculate the corresponding interactions
-      assert(m_nonbonded_set.size() > tid);
-      DEBUG(4, "calculating nonbonded interactions (thread "
+    #ifdef OMP
+      omp_set_num_threads(m_nonbonded_set.size());
+      #pragma omp parallel reduction(+:error)
+      {
+        unsigned int tid = omp_get_thread_num();
+        // calculate the corresponding interactions
+        assert(m_nonbonded_set.size() > tid);
+        DEBUG(4, "calculating nonbonded interactions (thread "
               << tid << " of " << m_set_size << ")");
 
-      error += m_nonbonded_set[tid]->calculate_interactions(*p_topo, *p_conf, sim);
+        error += m_nonbonded_set[tid]->calculate_interactions(*p_topo, *p_conf, sim);
 
-    }
+      }
 
-#else
-    std::cerr << "using OMP code without OMP defined..." << std::endl;
-    return E_ILLEGAL;
-#endif
+    #else
+      std::cerr << "using OMP code without OMP defined..." << std::endl;
+      return E_ILLEGAL;
+    #endif
     if (error) return 1;
     
     ////////////////////////////////////////////////////
@@ -199,7 +199,7 @@ int interaction::OMP_Nonbonded_Interaction::init(topology::Topology & topo,
   if (sim.param().innerloop.method == simulation::sla_cuda && result == 0) {
     omp_set_num_threads(number_of_cpus + sim.param().innerloop.number_gpus);
 
-#pragma omp parallel
+    #pragma omp parallel
     {
       unsigned int tid = omp_get_thread_num();
       DEBUG(10, "tid: " << tid);
@@ -214,7 +214,7 @@ int interaction::OMP_Nonbonded_Interaction::init(topology::Topology & topo,
 
         DEBUG(10, "CUDA_NonBonded::initialize");
 
-#pragma omp critical
+        #pragma omp critical
         {
           m_nonbonded_set.push_back(cuda_nbs);
         }
