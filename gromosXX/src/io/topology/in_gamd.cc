@@ -186,7 +186,7 @@ io::In_GAMD::read(topology::Topology& topo,
 
       _lineStream >> group1 >> group2 >> intgroup;
       if (_lineStream.fail()){
-      io::messages.add("bad line in GAMDGROUPS block; expected format:\nGAMDGROUPS\n#  GROUP_1   GROUP_2   ACCELGROUP\nEND\n",
+      io::messages.add("bad line in GAMDGROUPS block; expected format:\nGAMDGROUPS\n#  GROUP_1   GROUP_2   IGROUP\nEND\n",
                           "In_GAMD", io::message::error);
       return;
       }

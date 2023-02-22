@@ -260,7 +260,7 @@ unsigned int i_deb;
 
         DEBUG(10, "\tsolvent_nonbonded_interaction (normal solvent loop): i " << i << " j " << *j_it);
 
-        innerloop.lj_crf_innerloop(topo, conf, i, *j_it, storage, periodicity, , sim.param().gamd.gamd);
+        innerloop.lj_crf_innerloop(topo, conf, i, *j_it, storage, periodicity, sim.param().gamd.gamd);
       }
     }
   }
@@ -1414,7 +1414,8 @@ void interaction::Nonbonded_Outerloop
             innerloop.one_four_interaction_innerloop(topo, conf, a1, a2, storage, periodicity,  sim.param().gamd.gamd);
           } else {
             // std::cout << "\tstandard interaction" << std::endl;
-            innerloop.lj_crf_innerloop(topo, conf, a1, a2, storage, periodicity, sim.param().gamd.gamd
+            innerloop.lj_crf_innerloop(topo, conf, a1, a2, storage, periodicity, sim.param().gamd.gamd);
+          }
         } // atoms of cg 2
       } // atoms of cg 1
 

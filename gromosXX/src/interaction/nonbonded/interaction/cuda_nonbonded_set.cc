@@ -284,10 +284,11 @@ void interaction::CUDA_Nonbonded_Set::cycle() {
   }
   //ORIOL GAMD
   // CUDA gamd asumes all waters belong to the same group!
+  unsigned int igroup = 0;
   if (mysim->param().gamd.gamd){
     unsigned int gamd_group = mytopo->gamd_accel_group(mytopo->num_solute_atoms());
     std::vector<unsigned int> key = {gamd_group, gamd_group};
-    unsigned int igroup = mytopo->gamd_interaction_group(key);
+    igroup = mytopo->gamd_interaction_group(key);
     DEBUG(8, "interaction group for the water (gamd) " << igroup);
   }
 

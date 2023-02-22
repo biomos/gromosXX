@@ -75,11 +75,13 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop
   double f = 0.0;
   double e_lj = 0.0, e_crf = 0.0;
   //ORIOL_GAMD
+  unsigned int igroup = 0;
+  unsigned int gamd_i, gamd_j = 0;
   if (gamd){
     unsigned int gamdi = topo.gamd_accel_group(i);
     unsigned int gamdj = topo.gamd_accel_group(j);
     std::vector<unsigned int> key = {gamdi, gamdj};
-    unsigned int igroup = topo.gamd_interaction_group(key);
+    igroup = topo.gamd_interaction_group(key);
   }
 
   periodicity.nearest_image(conf.current().pos(i),
@@ -1049,11 +1051,13 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::one_four_interaction_in
   math::Vec r;
   double f = 0.0, e_lj = 0.0, e_crf = 0.0, e_ls = 0.0;
   //ORIOL_GAMD
+  unsigned int igroup = 0;
+  unsigned int gamd_i, gamd_j = 0;
   if (gamd){
     unsigned int gamdi = topo.gamd_accel_group(i);
     unsigned int gamdj = topo.gamd_accel_group(j);
     std::vector<unsigned int> key = {gamdi, gamdj};
-    unsigned int igroup = topo.gamd_interaction_group(key);
+    igroup = topo.gamd_interaction_group(key);
   }
 
   periodicity.nearest_image(conf.current().pos(i),
@@ -1394,11 +1398,12 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_exception_innerloop
 
   unsigned int i = ljex.i, j = ljex.j;
   //ORIOL_GAMD
+  unsigned int igroup = 0;
   if (gamd){
     unsigned int gamdi = topo.gamd_accel_group(i);
     unsigned int gamdj = topo.gamd_accel_group(j);
     std::vector<unsigned int> key = {gamdi, gamdj};
-    unsigned int igroup = topo.gamd_interaction_group(key);
+    igroup = topo.gamd_interaction_group(key);
   }
 
   periodicity.nearest_image(conf.current().pos(i),
@@ -1658,6 +1663,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
         unsigned int gamd) {
   math::Vec r, f;
   double e_crf = 0.0;
+  unsigned int gamd_i, gamd_j = 0;
 
   math::VArray &pos = conf.current().pos;
   math::VArray &force = storage.force;
@@ -1682,10 +1688,11 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
       storage.energies.crf_energy[topo.atom_energy_group(i)]
               [topo.atom_energy_group(i)] += 0.5 * e_crf;
       // ORIOL_GAMD
+      unsigned int igroup = 0;
       if (gamd){
         unsigned int gamd_i = topo.gamd_accel_group(i);
         std::vector<unsigned int> key = {gamd_i, gamd_i};
-        unsigned int igroup = topo.gamd_interaction_group(key);
+        igroup = topo.gamd_interaction_group(key);
         storage.energies.gamd_potential_total[igroup] +=  0.5 * e_crf;
       }
       DEBUG(11, "\tcontribution " << 0.5 * e_crf);
@@ -1695,7 +1702,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
         //ORIOL_GAMD
         if (gamd){
           unsigned int gamd_j = topo.gamd_accel_group(*it);
-          key = {gamd_i, gamd_j};
+          std::vector<unsigned int> key = {gamd_i, gamd_j};
           igroup = topo.gamd_interaction_group(key);
         }
 
@@ -1764,10 +1771,11 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
               [topo.atom_energy_group(i)] += 0.5 * e_crf;
 
       // ORIOL_GAMD
+      unsigned int igroup = 0;
       if (gamd){
         unsigned int gamd_i = topo.gamd_accel_group(i);
         std::vector<unsigned int> key = {gamd_i, gamd_i};
-        unsigned int igroup = topo.gamd_interaction_group(key);
+        igroup = topo.gamd_interaction_group(key);
         storage.energies.gamd_potential_total[igroup] +=  0.5 * e_crf;
       }
       DEBUG(11, "\tcontribution " << 0.5 * e_crf);
@@ -1798,7 +1806,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
         //ORIOL_GAMD
         if (gamd){
           unsigned int gamd_j = topo.gamd_accel_group(*it);
-          key = {gamd_i, gamd_j};
+          std::vector<unsigned int> key = {gamd_i, gamd_j};
           igroup = topo.gamd_interaction_group(key);
           storage.force_gamd[igroup](i) += f;
           storage.force_gamd[igroup](*it) -= f;
@@ -1835,10 +1843,11 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
       math::VArray f_pol(4);
       f_pol = 0.0;
       //ORIOL_GAMD
+      unsigned int igroup = 0;
       if (gamd){
         unsigned int gamd_i = topo.gamd_accel_group(i);
         std::vector<unsigned int> key = {gamd_i, gamd_i};
-        unsigned int igroup = topo.gamd_interaction_group(key);
+        igroup = topo.gamd_interaction_group(key);
       }
       DEBUG(8, "\tself-term " << i);
       rp1 = -conf.current().posV(i);
@@ -1875,7 +1884,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
         //ORIOL_GAMD
         if (gamd){
           unsigned int gamd_j = topo.gamd_accel_group(*it);
-          key = {gamd_i, gamd_j};
+          std::vector<unsigned int> key = {gamd_i, gamd_j};
           igroup = topo.gamd_interaction_group(key);
         }
         for (int a = 0; a < 3; ++a) {
@@ -1910,10 +1919,11 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
       math::VArray f_pol(4);
       f_pol = 0.0;
       //ORIOL_GAMD
+      unsigned int igroup = 0;
       if (gamd){
         unsigned int gamd_i = topo.gamd_accel_group(i);
         std::vector<unsigned int> key = {gamd_i, gamd_i};
-        unsigned int igroup = topo.gamd_interaction_group(key);
+        igroup = topo.gamd_interaction_group(key);
       }
       DEBUG(8, "\tself-term " << i );
       rp1 = -conf.current().posV(i);
@@ -1947,7 +1957,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
         //ORIOL_GAMD
         if (gamd){
           unsigned int gamd_j = topo.gamd_accel_group(*it);
-          key = {gamd_i, gamd_j};
+          std::vector<unsigned int> key = {gamd_i, gamd_j};
           igroup = topo.gamd_interaction_group(key);
         }
         periodicity.nearest_image(pos(i), pos(*it), r);
@@ -2106,11 +2116,12 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_solvent_interaction_inner
 
         for (topology::Atom_Iterator at2_it = at_it + 1; at2_it != at_to; ++at2_it) {
           //ORIOL_GAMD
+          unsigned int igroup = 0;
           if (gamd){
             unsigned int gamdi = topo.gamd_accel_group(*at_it);
             unsigned int gamdj = topo.gamd_accel_group(*at2_it);
             std::vector<unsigned int> key = {gamdi, gamdj};
-            unsigned int igroup = topo.gamd_interaction_group(key);
+            igroup = topo.gamd_interaction_group(key);
           }
           DEBUG(11, "\tsolvent " << *at_it << " - " << *at2_it);
           periodicity.nearest_image(pos(*at_it),
@@ -2150,11 +2161,12 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_solvent_interaction_inner
 
           for (topology::Atom_Iterator at2_it = at_it + 1; at2_it != at_to; ++at2_it) {
             //ORIOL_GAMD
+            unsigned int igroup = 0;
             if (gamd){
               unsigned int gamdi = topo.gamd_accel_group(*at_it);
               unsigned int gamdj = topo.gamd_accel_group(*at2_it);
               std::vector<unsigned int> key = {gamdi, gamdj};
-              unsigned int igroup = topo.gamd_interaction_group(key);
+              igroup = topo.gamd_interaction_group(key);
             }
             DEBUG(11, "\tsolvent " << *at_it << " - " << *at2_it);
             periodicity.nearest_image(pos(*at_it),
@@ -2201,11 +2213,12 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_solvent_interaction_inner
         for (topology::Atom_Iterator at2_it = at_it + 1; at2_it != at_to; ++at2_it) {
 
           //ORIOL_GAMD
+          unsigned int igroup = 0;
           if (gamd){
             unsigned int gamdi = topo.gamd_accel_group(*at_it);
             unsigned int gamdj = topo.gamd_accel_group(*at2_it);
             std::vector<unsigned int> key = {gamdi, gamdj};
-            unsigned int igroup = topo.gamd_interaction_group(key);
+            igroup = topo.gamd_interaction_group(key);
           }
           DEBUG(11, "\tsolvent " << *at_it << " - " << *at2_it);
           periodicity.nearest_image(pos(*at_it),
@@ -2266,11 +2279,12 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_solvent_interaction_inner
         for(topology::Atom_Iterator at2_it=at_it+1; at2_it!=at_to; ++at2_it){
           math::Vec rjm = math::Vec(0.0);
           //ORIOL_GAMD
+          unsigned int igroup = 0;
           if (gamd){
             unsigned int gamdi = topo.gamd_accel_group(*at_it);
             unsigned int gamdj = topo.gamd_accel_group(*at2_it);
             std::vector<unsigned int> key = {gamdi, gamdj};
-            unsigned int igroup = topo.gamd_interaction_group(key);
+            igroup = topo.gamd_interaction_group(key);
           }
           if(topo.gamma(*at2_it)!=0.0){
            math::Vec rjj, rjk;
@@ -2495,12 +2509,13 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_ls_real_innerloop
   math::Vec r;
   double f = 0.0;
   double e_lj = 0.0, e_ls = 0.0;
+  unsigned int igroup = 0;
   //ORIOL_GAMD
   if (gamd){
     unsigned int gamdi = topo.gamd_accel_group(i);
     unsigned int gamdj = topo.gamd_accel_group(j);
     std::vector<unsigned int> key = {gamdi, gamdj};
-    unsigned int igroup = topo.gamd_interaction_group(key);
+    igroup = topo.gamd_interaction_group(key);
   }
   periodicity.nearest_image(conf.current().pos(i),
           conf.current().pos(j), r);
@@ -2582,12 +2597,13 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::ls_real_excluded_innerloop
   math::Vec r;
   double f = 0.0;
   double e_ls = 0.0;
+  unsigned int igroup = 0;
   //ORIOL_GAMD
   if (gamd){
     unsigned int gamdi = topo.gamd_accel_group(i);
     unsigned int gamdj = topo.gamd_accel_group(j);
     std::vector<unsigned int> key = {gamdi, gamdj};
-    unsigned int igroup = topo.gamd_interaction_group(key);
+    igroup = topo.gamd_interaction_group(key);
   }
   periodicity.nearest_image(conf.current().pos(i),
           conf.current().pos(j), r);

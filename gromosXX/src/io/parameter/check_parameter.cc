@@ -359,7 +359,7 @@ int io::check_features(simulation::Simulation  &sim)
   // PRECALCLAM block
   add("precalculate_lambdas","precalculate at other lambdas", param.precalclam.nr_lambdas > 0);
   // end ANITA
-  add("gamd". "gaussian accelerated MD", param.gamd.gamd = 1);
+  add("gamd", "gaussian accelerated MD", param.gamd.gamd == 1);
 
   // FORCE block
   add("bond", "bond interaction", param.force.bond == 1);
