@@ -574,6 +574,27 @@ namespace configuration {
         std::vector<math::Matrix> virial_tensor_endstates;
 
       } /** enveloping distribution sampling information */ eds;
+
+      // ORIOL_GAMD
+      struct gamd_struct {
+        /**
+         *  force storage for the dihedral forces (copy of the dihedral forces)
+         */
+        std::vector<math::VArray> dihe_force;
+        /**
+         *  force storage by pairs of acceleration groups (copy of the forces)
+         */
+        std::vector<math::VArray> total_force;
+        /**
+         * virial tensor dihedral contribution by charge group
+         */
+        std::vector<math::Matrix> virial_tensor_dihe;
+        /**
+         * virial tensor by charge group pairs
+         */
+        std::vector<math::Matrix> virial_tensor;
+
+      } /** enveloping distribution sampling information */ gamd;
       
       struct nemd_conf_struct {
         /**

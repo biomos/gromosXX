@@ -115,6 +115,12 @@ void util::get_usage(util::Known const &knowns, std::string &usage, std::string 
     usage += "\t# X-ray restraints specification\n";
     usage += "\t# @xray      filename\n\n";
   }
+
+  //ORIOL_GAMD
+  if (knowns.count("gamd")){
+    usage += "\t# GAMD restraints specification\n";
+    usage += "\t# @gamd      filename\n\n";
+  }
   
   if (knowns.count("sym")){
     usage += "\t# symmetry restraints specification\n";

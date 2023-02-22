@@ -119,7 +119,23 @@ int interaction::Forcefield
       conf.special().eds.virial_tensor_endstates[state] = 0.0;
     }
  // }
-
+  // ORIOL_GAMD
+  if (sim.param().gamd.gamd) {
+    DEBUG(15, "GAMD forcefield init"); 
+    const unsigned int numaccelgroups = sim.param().gamd.igroups;
+    DEBUG(15, "number of GAMD groups " << numaccelgroups);
+    assert(conf.special().gamd.total_force.size() == numaccelgroups);
+    assert(conf.special().gamd.dihe_force.size() == numaccelgroups);
+    assert(conf.special().gamd.virial_tensor.size() == numaccelgroups);
+    assert(conf.special().gamd.virial_tensor_dihe.size() == numaccelgroups);
+    for (unsigned int group = 0; group < numaccelgroups; group++) {
+      conf.special().gamd.dihe_force[group] = 0.0;
+      conf.special().gamd.virial_tensor_dihe[group] = 0.0;
+      conf.special().gamd.total_force[group] = 0.0;
+      conf.special().gamd.virial_tensor[group] = 0.0;
+    }
+ }
+ DEBUG(15, "Finished GAMD forcefield init");
   for (iterator it = begin(), to = end();
       it != to;
       ++it){

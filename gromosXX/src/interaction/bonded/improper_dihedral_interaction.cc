@@ -146,8 +146,28 @@ static int _calculate_improper_interactions(topology::Topology & topo,
 
 
     energy = 0.5 * K * (q-q0) * (q-q0);
-    conf.current().energies.improper_energy[topo.atom_energy_group()[i_it->i]]
-      += energy;
+    conf.current().energies.improper_energy[topo.atom_energy_group()[i_it->i]] += energy;
+
+    // ORIOL_GAMD
+    if(sim.param().gamd.gamd){
+      unsigned int gamd_group = topo.gamd_accel_group(i_it->i);
+      std::vector<unsigned int> key = {gamd_group, gamd_group};
+      unsigned int igroup = topo.gamd_interaction_group(key);
+      DEBUG(10, "\tGAMD interaction group is " << igroup);
+      conf.special().gamd.dihe_force[igroup][i_it->i] += fi;
+      conf.special().gamd.dihe_force[igroup][i_it->j] += fj;
+      conf.special().gamd.dihe_force[igroup][i_it->k] += fk;
+      conf.special().gamd.dihe_force[igroup][i_it->l] += fl;
+      conf.current().energies.gamd_dihedral_total[igroup] += energy;
+      //conf.current().energies.gamd_potential_total[igroup] += energy;
+      // virial
+      for(int a=0; a<3; ++a){
+        for(int bb=0; bb < 3; ++bb){
+          conf.special().gamd.virial_tensor_dihe[igroup](a, bb) += rij(a) * fi(bb) + rkj(a) * fk(bb) +  rlj(a) * fl(bb);
+        }
+      }
+
+    } // end gamd
     
   }
   return 0;

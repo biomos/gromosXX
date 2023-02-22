@@ -139,7 +139,7 @@ void interaction::QMMM_Nonbonded_Outerloop
     to = topo.qm_one_four_pair(i).end();
     for (; it != to; ++it) {
       DEBUG(10, "\tQMMM 1,4-interaction:" << i << " " << *it);
-      innerloop.one_four_interaction_innerloop(topo, conf, i, *it, storage, periodicity);
+      innerloop.one_four_interaction_innerloop(topo, conf, i, *it, storage, periodicity, sim.param().gamd.gamd);
     } // loop over 1,4 pairs
   } // loop over solute atoms
 }
@@ -181,7 +181,7 @@ void interaction::QMMM_Nonbonded_Outerloop
     const topology::lj_exception_struct & ljex = topo.qm_lj_exceptions()[i];
 
     DEBUG(15, "\tQMMM LJ exception: " << ljex.i << " " << ljex.j);
-    innerloop.lj_exception_innerloop(topo, conf, ljex, storage, periodicity);
+    innerloop.lj_exception_innerloop(topo, conf, ljex, storage, periodicity, sim.param().gamd.gamd);
   } // loop over LJ exceptions
 }
 
