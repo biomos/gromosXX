@@ -84,8 +84,26 @@ static int _calculate_harmonic_bond_interactions
       // }
 
     energy = 0.5 * bondtypes[b_it->type].K * diff * diff;
-    conf.current().energies.bond_energy[topo.atom_energy_group()
-					[b_it->i]] += energy;
+    conf.current().energies.bond_energy[topo.atom_energy_group()[b_it->i]] += energy;
+
+    // ORIOL_GAMD
+    if(sim.param().gamd.gamd){
+      unsigned int gamd_group = topo.gamd_accel_group(b_it->i);
+      std::vector<unsigned int> key = {gamd_group, gamd_group};
+      unsigned int igroup = topo.gamd_interaction_group(key);
+      DEBUG(10, "\tGAMD interaction group is " << igroup);
+      conf.special().gamd.total_force[igroup](b_it->i) += f;
+      conf.special().gamd.total_force[igroup](b_it->j) -= f;
+      conf.current().energies.gamd_potential_total[igroup] += energy;
+      // virial
+      for(int a=0; a<3; ++a){
+        for(int bb=0; bb < 3; ++bb){
+          conf.special().gamd.virial_tensor[igroup](a, bb) +=  v(a) * f(bb);
+        }
+      }
+
+    } // end gamd
+
 
     DEBUG(9, "\tenergy = " << energy);
     

@@ -66,13 +66,23 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop
         unsigned int i,
         unsigned int j,
         Storage & storage,
-        math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity
+        math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity,
+        unsigned int gamd
         ) {
   DEBUG(8, "\tpair\t" << i << "\t" << j);
 
   math::Vec r, force;
   double f = 0.0;
   double e_lj = 0.0, e_crf = 0.0;
+  //ORIOL_GAMD
+  unsigned int igroup = 0;
+  unsigned int gamd_i, gamd_j = 0;
+  if (gamd){
+    unsigned int gamdi = topo.gamd_accel_group(i);
+    unsigned int gamdj = topo.gamd_accel_group(j);
+    std::vector<unsigned int> key = {gamdi, gamdj};
+    igroup = topo.gamd_interaction_group(key);
+  }
 
   periodicity.nearest_image(conf.current().pos(i),
           conf.current().pos(j), r);
@@ -102,13 +112,22 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop
       DEBUG(12, "e_crf: " << e_crf);
 
       DEBUG(10, "\t\tatomic virial");
+      //ORIOL_GAMD
       for (int a = 0; a < 3; ++a) {
         force(a) = f * r(a);
         storage.force(i)(a) += force(a);
         storage.force(j)(a) -= force(a);
+        if (gamd){
+          storage.force_gamd[igroup](i)(a) += force(a);
+          storage.force_gamd[igroup](j)(a) -= force(a);
+        }
 
-        for (int b = 0; b < 3; ++b)
+        for (int b = 0; b < 3; ++b){
           storage.virial_tensor(b, a) += r(b) * force(a);
+          if (gamd){
+            storage.virial_tensor_gamd[igroup](b, a) += r(b) * force(a);
+          }
+        }
       }
       break;
     }
@@ -132,13 +151,21 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop
               f, e_lj, e_crf);
 
       DEBUG(10, "\t\tatomic virial");
+      //ORIOL_GAMD
       for (int a = 0; a < 3; ++a) {
         force(a) = f * r(a);
         storage.force(i)(a) += force(a);
         storage.force(j)(a) -= force(a);
-
-        for (int b = 0; b < 3; ++b)
+        if (gamd){
+          storage.force_gamd[igroup](i)(a) += force(a);
+          storage.force_gamd[igroup](j)(a) -= force(a);
+        }
+        for (int b = 0; b < 3; ++b){
           storage.virial_tensor(b, a) += r(b) * force(a);
+          if (gamd){
+            storage.virial_tensor_gamd[igroup](b, a) += r(b) * force(a);
+          }
+        }
       }
       break;
     }
@@ -172,13 +199,21 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop
               f, e_lj, e_crf, 2);
         DEBUG(10, "\t\tatomic virial");
       }
+      //ORIOL_GAMD
       for (int a = 0; a < 3; ++a) {
         force(a) = f * r(a);
         storage.force(i)(a) += force(a);
         storage.force(j)(a) -= force(a);
-
-        for (int b = 0; b < 3; ++b)
+        if (gamd){
+          storage.force_gamd[igroup](i)(a) += force(a);
+          storage.force_gamd[igroup](j)(a) -= force(a);
+        }
+        for (int b = 0; b < 3; ++b){
           storage.virial_tensor(b, a) += r(b) * force(a);
+          if (gamd){
+            storage.virial_tensor_gamd[igroup](b, a) += r(b) * force(a);
+          }
+        }
       }
       break;
     }
@@ -199,13 +234,21 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop
                 f, e_lj, e_crf);
 
         DEBUG(10, "\t\tatomic virial");
+        //ORIOL_GAMD
         for (int a = 0; a < 3; ++a) {
           force(a) = f * r(a);
           storage.force(i)(a) += force(a);
           storage.force(j)(a) -= force(a);
-
-          for (int b = 0; b < 3; ++b)
+          if (gamd){
+            storage.force_gamd[igroup](i)(a) += force(a);
+            storage.force_gamd[igroup](j)(a) -= force(a);
+          }
+          for (int b = 0; b < 3; ++b){
             storage.virial_tensor(b, a) += r(b) * force(a);
+            if (gamd){
+              storage.virial_tensor_gamd[igroup](b, a) += r(b) * force(a);
+            }
+          }
         }
       } else {
         double f_pol[4];
@@ -228,13 +271,21 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop
                 f_pol, e_lj, e_crf);
 
         DEBUG(10, "\tatomic virial");
+        //ORIOL_GAMD
         for (int a = 0; a < 3; ++a) {
           force(a) = f_pol[0] * r(a) + f_pol[1] * rp1(a) + f_pol[2] * rp2(a) + f_pol[3] * rpp(a);
           storage.force(i)(a) += force(a);
           storage.force(j)(a) -= force(a);
-
-          for (int b = 0; b < 3; ++b)
+          if (gamd){
+            storage.force_gamd[igroup](i)(a) += force(a);
+            storage.force_gamd[igroup](j)(a) -= force(a);
+          }
+          for (int b = 0; b < 3; ++b){
             storage.virial_tensor(b, a) += r(b) * force(a);
+            if (gamd){
+            storage.virial_tensor_gamd[igroup](b, a) += r(b) * force(a);
+            }
+          }
         }
       }
       break;
@@ -255,13 +306,21 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop
                 f, e_lj, e_crf);
 
         DEBUG(10, "\t\tatomic virial");
+        //ORIOL_GAMD
         for (int a = 0; a < 3; ++a) {
           force(a) = f * r(a);
           storage.force(i)(a) += force(a);
           storage.force(j)(a) -= force(a);
-
-          for (int b = 0; b < 3; ++b)
+          if (gamd){
+            storage.force_gamd[igroup](i)(a) += force(a);
+            storage.force_gamd[igroup](j)(a) -= force(a);
+          }
+          for (int b = 0; b < 3; ++b){
             storage.virial_tensor(b, a) += r(b) * force(a);
+            if (gamd){
+            storage.virial_tensor_gamd[igroup](b, a) += r(b) * force(a);
+            }
+          }
         }
       } else {
         math::Vec rm=r;
@@ -307,26 +366,43 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop
         
         DEBUG(10, "\tatomic virial");
         for (int a = 0; a < 3; ++a) {
+
          
           const double term = f_pol[1] * rm(a) +
                   f_pol[2] * rp1(a) + f_pol[3] * rp2(a) + f_pol[4] * rpp(a);
           storage.force(i)(a) +=(1-topo.gamma(i))*term+f_pol[0]*r(a);
           storage.force(j)(a) -=(1-topo.gamma(j))*term+f_pol[0]*r(a);
+          if (gamd){
+            storage.force_gamd[igroup](i)(a) +=(1-topo.gamma(i))*term+f_pol[0]*r(a);
+            storage.force_gamd[igroup](j)(a) -=(1-topo.gamma(j))*term+f_pol[0]*r(a);
+          }
 
 
           if(topo.gamma(i)!=0.0){
            storage.force(topo.gamma_j(i))(a) +=term*topo.gamma(i)/2;
            storage.force(topo.gamma_k(i))(a) +=term*topo.gamma(i)/2;
+           if (gamd){
+            storage.force_gamd[igroup](topo.gamma_j(i))(a) +=term*topo.gamma(i)/2;
+            storage.force_gamd[igroup](topo.gamma_k(i))(a) +=term*topo.gamma(i)/2;
+           }
           }
           if(topo.gamma(j)!=0.0){
            storage.force(topo.gamma_j(j))(a) -=term*topo.gamma(j)/2;
            storage.force(topo.gamma_k(j))(a) -=term*topo.gamma(j)/2;
+           if (gamd){
+            storage.force_gamd[igroup](topo.gamma_j(j))(a) +=term*topo.gamma(j)/2;
+            storage.force_gamd[igroup](topo.gamma_k(j))(a) +=term*topo.gamma(j)/2;
+           }
           }
           //bugbugbug, debug...
-          for (int b = 0; b < 3; ++b)
+          for (int b = 0; b < 3; ++b){
         //    storage.virial_tensor(b, a) += (term+f_pol[0]*r(a))*r(b);
             storage.virial_tensor(b, a) += (term*rm(b))+(f_pol[0]*r(a))*r(b);
+            if (gamd){
+              storage.virial_tensor_gamd[igroup](b, a) += (term*rm(b))+(f_pol[0]*r(a))*r(b);
+            }
           }
+         }
         }
       break;
     }
@@ -342,13 +418,21 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop
       e_crf = 0.0;
 
       DEBUG(10, "\t\tatomic virial");
+      //ORIOL_GAMD
       for (int a = 0; a < 3; ++a) {
         force(a) = f * r(a);
         storage.force(i)(a) += force(a);
         storage.force(j)(a) -= force(a);
-
-        for (int b = 0; b < 3; ++b)
+        if (gamd){
+          storage.force_gamd[igroup](i)(a) += force(a);
+          storage.force_gamd[igroup](j)(a) -= force(a);
+        }
+        for (int b = 0; b < 3; ++b){
           storage.virial_tensor(b, a) += r(b) * force(a);
+          if (gamd){
+            storage.virial_tensor_gamd[igroup](b, a) += r(b) * force(a);
+          }
+        }
       }
       break;
     }
@@ -419,6 +503,12 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_crf_innerloop
   const unsigned int eg_j = topo.atom_energy_group(j);
   storage.energies.lj_energy[eg_i][eg_j] += e_lj;
   storage.energies.crf_energy[eg_i][eg_j] += e_crf;
+
+  //ORIOL_GAMD
+  if (gamd){
+    storage.energies.gamd_potential_total[igroup] += e_lj;
+    storage.energies.gamd_potential_total[igroup] += e_crf;
+  }
 
 #ifdef XXFORCEGROUPS
   if (storage.force_groups.size()) {
@@ -954,11 +1044,21 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::one_four_interaction_in
         int i,
         int j,
         Storage & storage,
-        math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity) {
+        math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity,
+        unsigned int gamd) {
   DEBUG(8, "\t1,4-pair\t" << i << "\t" << j);
 
   math::Vec r;
   double f = 0.0, e_lj = 0.0, e_crf = 0.0, e_ls = 0.0;
+  //ORIOL_GAMD
+  unsigned int igroup = 0;
+  unsigned int gamd_i, gamd_j = 0;
+  if (gamd){
+    unsigned int gamdi = topo.gamd_accel_group(i);
+    unsigned int gamdj = topo.gamd_accel_group(j);
+    std::vector<unsigned int> key = {gamdi, gamdj};
+    igroup = topo.gamd_interaction_group(key);
+  }
 
   periodicity.nearest_image(conf.current().pos(i),
           conf.current().pos(j), r);
@@ -986,13 +1086,21 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::one_four_interaction_in
               m_param->get_coulomb_scaling());
 
       DEBUG(10, "\t\tatomic virial");
+      //ORIOL_GAMD
       for (int a = 0; a < 3; ++a) {
         const double term = f * r(a);
         storage.force(i)(a) += term;
         storage.force(j)(a) -= term;
-
-        for (int b = 0; b < 3; ++b)
+        if (gamd){
+          storage.force_gamd[igroup](i)(a) += term;
+          storage.force_gamd[igroup](j)(a) -= term;
+        }
+        for (int b = 0; b < 3; ++b){
           storage.virial_tensor(b, a) += r(b) * term;
+          if (gamd){
+            storage.virial_tensor_gamd[igroup](b, a) += r(b) * term;
+          }
+        }
       }
       break;
     }
@@ -1024,17 +1132,25 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::one_four_interaction_in
                 f, e_lj, e_crf, 2);
 
         DEBUG(10, "\t\tatomic virial");
-        for (int a = 0; a < 3; ++a) {
-          const double term = f * r(a);
-          storage.force(i)(a) += term;
-          storage.force(j)(a) -= term;
-
-          for (int b = 0; b < 3; ++b)
-            storage.virial_tensor(b, a) += r(b) * term;
+      //ORIOL_GAMD
+      for (int a = 0; a < 3; ++a) {
+        const double term = f * r(a);
+        storage.force(i)(a) += term;
+        storage.force(j)(a) -= term;
+        if (gamd){
+          storage.force_gamd[igroup](i)(a) += term;
+          storage.force_gamd[igroup](j)(a) -= term;
         }
+
+        for (int b = 0; b < 3; ++b){
+          storage.virial_tensor(b, a) += r(b) * term;
+          if (gamd){
+            storage.virial_tensor_gamd[igroup](b, a) += r(b) * term;
+          }
+        }
+       }
       }
       break;
-    
     }
     case simulation::pol_lj_crf_func :
       {
@@ -1048,8 +1164,8 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::one_four_interaction_in
         
         const lj_parameter_struct & lj = m_param->lj_parameter(topo.iac(i), topo.iac(j));
 	
-	DEBUG(11, "\tlj-parameter cs6=" << lj.cs6 << " cs12=" << lj.cs12);
-	DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));
+      	DEBUG(11, "\tlj-parameter cs6=" << lj.cs6 << " cs12=" << lj.cs12);
+	      DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));
         DEBUG(11, "\tcoscharge i=" << topo.coscharge()(i) << " j=" << topo.coscharge()(j));
         
         pol_lj_crf_interaction(r, rp1, rp2, rpp, lj.cs6, lj.cs12,
@@ -1062,9 +1178,16 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::one_four_interaction_in
           const double term = f_pol[0]*r(a) + f_pol[1]*rp1(a) + f_pol[2]*rp2(a) + f_pol[3]*rpp(a);
           storage.force(i)(a) += term;
           storage.force(j)(a) -= term;
-          
-          for(int b=0; b<3; ++b)
+          if (gamd){
+            storage.force_gamd[igroup](i)(a) += term;
+            storage.force_gamd[igroup](j)(a) -= term;
+          }
+          for(int b=0; b<3; ++b){
             storage.virial_tensor(b, a) += r(b)*term;
+            if (gamd){
+              storage.virial_tensor_gamd[igroup](b, a) += r(b)*term;
+            }
+          }
         }
       break;
     }
@@ -1114,18 +1237,33 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::one_four_interaction_in
           const double term = f_pol[1]*r(a) + f_pol[2]*rp1(a) + f_pol[3]*rp2(a) + f_pol[4]*rpp(a);
           storage.force(i)(a) +=(1-topo.gamma(i))*term+f_pol[0]*r(a);
           storage.force(j)(a) -=(1-topo.gamma(j))*term+f_pol[0]*r(a);
-
+          if (gamd){
+            storage.force_gamd[igroup](i)(a) +=(1-topo.gamma(i))*term+f_pol[0]*r(a);
+            storage.force_gamd[igroup](j)(a) -=(1-topo.gamma(j))*term+f_pol[0]*r(a);
+          }
           if(topo.gamma(i)!=0.0){
            storage.force(topo.gamma_j(i))(a) +=topo.gamma(i)/2*term;
            storage.force(topo.gamma_k(i))(a) -=topo.gamma(i)/2*term;
+           if (gamd){
+            storage.force_gamd[igroup](topo.gamma_j(i))(a) +=topo.gamma(i)/2*term;
+            storage.force_gamd[igroup](topo.gamma_k(i))(a) -=topo.gamma(i)/2*term;
+           }
           }
           if(topo.gamma(j)!=0.0){
            storage.force(topo.gamma_j(j))(a) +=topo.gamma(j)/2*term;
            storage.force(topo.gamma_k(j))(a) -=topo.gamma(j)/2*term;
+           if (gamd){
+            storage.force_gamd[igroup](topo.gamma_j(j))(a) +=topo.gamma(j)/2*term;
+            storage.force_gamd[igroup](topo.gamma_k(j))(a) -=topo.gamma(j)/2*term;
+           }
           }
-          for(int b=0; b<3; ++b)
+          for(int b=0; b<3; ++b){
            // storage.virial_tensor(b,a ) += (term+f_pol[0]*r(a))*r(b);
             storage.virial_tensor(b, a) += (term*rm(b))+(f_pol[0]*r(a))*r(b);
+            if (gamd){
+              storage.virial_tensor_gamd[igroup](b, a) += (term*rm(b))+(f_pol[0]*r(a))*r(b);
+            }
+          }
         }
         break;
     }
@@ -1168,13 +1306,21 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::one_four_interaction_in
       e_crf = 0.0;
 
       DEBUG(10, "\t\tatomic virial");
+      //ORIOL_GAMD
       for (int a = 0; a < 3; ++a) {
         const double term = f * r(a);
         storage.force(i)(a) += term;
         storage.force(j)(a) -= term;
-
-        for (int b = 0; b < 3; ++b)
+        if (gamd){
+          storage.force_gamd[igroup](i)(a) += term;
+          storage.force_gamd[igroup](j)(a) -= term;
+        }
+        for (int b = 0; b < 3; ++b){
           storage.virial_tensor(b, a) += r(b) * term;
+          if (gamd){
+            storage.virial_tensor_gamd[igroup](b, a) += r(b) * term;
+          }
+        }
       }
       break;
     }
@@ -1225,6 +1371,11 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::one_four_interaction_in
   storage.energies.ls_real_energy[topo.atom_energy_group(i)]
           [topo.atom_energy_group(j)] += e_ls;
 
+  // ORIOL_GAMD
+  if (gamd){
+    storage.energies.gamd_potential_total[igroup] += e_lj;
+    storage.energies.gamd_potential_total[igroup] += e_crf;
+  }
   DEBUG(11, "\tenergy group i " << topo.atom_energy_group(i)
           << " j " << topo.atom_energy_group(j));
 
@@ -1237,7 +1388,8 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_exception_innerloop
  configuration::Configuration & conf,
  topology::lj_exception_struct const & ljex,
  Storage & storage,
- math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity)
+ math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity,
+ unsigned int gamd)
 {
   DEBUG(8, "\tLJ exception\t" << ljex.i << "\t" << ljex.j);
 
@@ -1245,6 +1397,14 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_exception_innerloop
   double f = 0.0, e_lj = 0.0, e_crf = 0.0, e_ls = 0.0;
 
   unsigned int i = ljex.i, j = ljex.j;
+  //ORIOL_GAMD
+  unsigned int igroup = 0;
+  if (gamd){
+    unsigned int gamdi = topo.gamd_accel_group(i);
+    unsigned int gamdj = topo.gamd_accel_group(j);
+    std::vector<unsigned int> key = {gamdi, gamdj};
+    igroup = topo.gamd_interaction_group(key);
+  }
 
   periodicity.nearest_image(conf.current().pos(i),
 			    conf.current().pos(j), r);
@@ -1272,16 +1432,25 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_exception_innerloop
 			 f, e_lj, e_crf);
 
         DEBUG(10, "\t\tatomic virial");
-        for (int a=0; a<3; ++a){
-          const double term = f * r(a);
-          storage.force(i)(a) += term;
-          storage.force(j)(a) -= term;
-
-          for(int b=0; b<3; ++b)
-            storage.virial_tensor(b, a) += r(b) * term;
+      //ORIOL_GAMD
+      for (int a = 0; a < 3; ++a) {
+        const double term = f * r(a);
+        storage.force(i)(a) += term;
+        storage.force(j)(a) -= term;
+        if (gamd){
+          storage.force_gamd[igroup](i)(a) += term;
+          storage.force_gamd[igroup](j)(a) -= term;
         }
-	break;
+        for (int b = 0; b < 3; ++b){
+          storage.virial_tensor(b, a) += r(b) * term;
+          if (gamd){
+            storage.virial_tensor_gamd[igroup](b, a) += r(b) * term;
+          }
+        }
       }
+      break;
+    }
+
     case simulation::cggromos_func :
     {
       if (topo.is_coarse_grained(i) || topo.is_coarse_grained(j)) { // CG-CG or CG-FG
@@ -1295,14 +1464,22 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_exception_innerloop
 			 f, e_lj, e_crf, 2);
 
         DEBUG(10, "\t\tatomic virial");
-        for (int a=0; a<3; ++a){
-          const double term = f * r(a);
-          storage.force(i)(a) += term;
-          storage.force(j)(a) -= term;
-
-          for(int b=0; b<3; ++b)
-            storage.virial_tensor(b, a) += r(b) * term;
+      //ORIOL_GAMD
+      for (int a = 0; a < 3; ++a) {
+        const double term = f * r(a);
+        storage.force(i)(a) += term;
+        storage.force(j)(a) -= term;
+        if (gamd){
+          storage.force_gamd[igroup](i)(a) += term;
+          storage.force_gamd[igroup](j)(a) -= term;
         }
+        for (int b = 0; b < 3; ++b){
+          storage.virial_tensor(b, a) += r(b) * term;
+          if (gamd){
+            storage.virial_tensor_gamd[igroup](b, a) += r(b) * term;
+          }
+        }
+       }
       }
       break;
     }
@@ -1322,8 +1499,8 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_exception_innerloop
         const math::Vec rpp(rp2 - conf.current().posV(j));
 
         DEBUG(10, "\t rpp " << rpp(0) << " / " << rpp(1) << " / " << rpp(2));
-	DEBUG(11, "\tlj-parameter cs6=" << ljex.c6 << " cs12=" << ljex.c12);
-	DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));
+	      DEBUG(11, "\tlj-parameter cs6=" << ljex.c6 << " cs12=" << ljex.c12);
+      	DEBUG(11, "\tcharge i=" << topo.charge()(i) << " j=" << topo.charge()(j));
         DEBUG(11, "\tcoscharge i=" << topo.coscharge()(i) << " j=" << topo.coscharge()(j));
 
         pol_lj_crf_interaction(r, rp1, rp2, rpp, ljex.c6, ljex.c12,
@@ -1332,13 +1509,21 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_exception_innerloop
                                f_pol, e_lj, e_crf);
 
         DEBUG(10, "\tatomic virial");
+        //ORIOL_GAMD
         for (int a=0; a<3; ++a){
           const double term = f_pol[0]*r(a) + f_pol[1]*rp1(a) + f_pol[2]*rp2(a) + f_pol[3]*rpp(a);
           storage.force(i)(a) += term;
           storage.force(j)(a) -= term;
-
-          for(int b=0; b<3; ++b)
+          if (gamd){
+            storage.force_gamd[igroup](i)(a) += term;
+            storage.force_gamd[igroup](j)(a) -= term;
+          }
+          for(int b=0; b<3; ++b){
             storage.virial_tensor(b, a) += r(b)*term;
+            if (gamd){
+            storage.virial_tensor_gamd[igroup](b, a) += r(b)*term;
+            }
+          }
         }
 
 	break;
@@ -1385,18 +1570,33 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_exception_innerloop
           const double term = f_pol[1]*r(a) + f_pol[2]*rp1(a) + f_pol[3]*rp2(a) + f_pol[4]*rpp(a);
           storage.force(i)(a) +=(1-topo.gamma(i))*term+f_pol[0]*r(a);
           storage.force(j)(a) -=(1-topo.gamma(j))*term+f_pol[0]*r(a);
-
+          if (gamd){
+            storage.force_gamd[igroup](i)(a) +=(1-topo.gamma(i))*term+f_pol[0]*r(a);
+            storage.force_gamd[igroup](j)(a) -=(1-topo.gamma(j))*term+f_pol[0]*r(a);
+          }
           if(topo.gamma(i)!=0.0){
            storage.force(topo.gamma_j(i))(a) +=topo.gamma(i)/2*term;
            storage.force(topo.gamma_k(i))(a) -=topo.gamma(i)/2*term;
+           if (gamd){
+            storage.force_gamd[igroup](topo.gamma_j(i))(a) +=topo.gamma(i)/2*term;
+            storage.force_gamd[igroup](topo.gamma_k(i))(a) -=topo.gamma(i)/2*term;
+           }
           }
           if(topo.gamma(j)!=0.0){
            storage.force(topo.gamma_j(j))(a) +=topo.gamma(j)/2*term;
            storage.force(topo.gamma_k(j))(a) -=topo.gamma(j)/2*term;
+           if (gamd){
+            storage.force_gamd[igroup](topo.gamma_j(j))(a) +=topo.gamma(j)/2*term;
+            storage.force_gamd[igroup](topo.gamma_k(j))(a) -=topo.gamma(j)/2*term;
+           }
           }
-          for(int b=0; b<3; ++b)
+          for(int b=0; b<3; ++b){
           // storage.virial_tensor(b,a ) += (term+f_pol[0]*r(a))*r(b);
            storage.virial_tensor(b, a) += (term*rm(b))+(f_pol[0]*r(a))*r(b);
+           if (gamd){
+            storage.virial_tensor_gamd[igroup](b, a) += (term*rm(b))+(f_pol[0]*r(a))*r(b);
+           }
+          }
         }
         break;
     }
@@ -1407,13 +1607,21 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_exception_innerloop
       e_crf = 0.0;
 
       DEBUG(10, "\t\tatomic virial");
-      for (int a=0; a<3; ++a){
+      //ORIOL_GAMD
+      for (int a = 0; a < 3; ++a) {
         const double term = f * r(a);
         storage.force(i)(a) += term;
         storage.force(j)(a) -= term;
-
-        for(int b=0; b<3; ++b)
+        if (gamd){
+          storage.force_gamd[igroup](i)(a) += term;
+          storage.force_gamd[igroup](j)(a) -= term;
+        }
+        for (int b = 0; b < 3; ++b){
           storage.virial_tensor(b, a) += r(b) * term;
+          if (gamd){
+            storage.virial_tensor_gamd[igroup](b, a) += r(b) * term;
+          }
+        }
       }
       break;
     }
@@ -1433,6 +1641,11 @@ void interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_exception_innerloop
   storage.energies.ls_real_energy[topo.atom_energy_group(i)]
     [topo.atom_energy_group(j)] += e_ls;
 
+  //ORIOL_GAMD
+  if (gamd){
+    storage.energies.gamd_potential_total[igroup] +=  e_lj;
+    storage.energies.gamd_potential_total[igroup] +=  e_crf;
+  }
   DEBUG(11, "\tenergy group i " << topo.atom_energy_group(i)
 	<< " j " << topo.atom_energy_group(j));
 
@@ -1446,9 +1659,11 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
         configuration::Configuration & conf,
         int i,
         Storage & storage,
-        math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity) {
+        math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity,
+        unsigned int gamd) {
   math::Vec r, f;
   double e_crf = 0.0;
+  unsigned int gamd_i, gamd_j = 0;
 
   math::VArray &pos = conf.current().pos;
   math::VArray &force = storage.force;
@@ -1472,9 +1687,24 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
       rf_interaction(r, q * q, f, e_crf);
       storage.energies.crf_energy[topo.atom_energy_group(i)]
               [topo.atom_energy_group(i)] += 0.5 * e_crf;
+      // ORIOL_GAMD
+      unsigned int igroup = 0;
+      if (gamd){
+        unsigned int gamd_i = topo.gamd_accel_group(i);
+        std::vector<unsigned int> key = {gamd_i, gamd_i};
+        igroup = topo.gamd_interaction_group(key);
+        storage.energies.gamd_potential_total[igroup] +=  0.5 * e_crf;
+      }
       DEBUG(11, "\tcontribution " << 0.5 * e_crf);
 
       for (; it != to; ++it) {
+
+        //ORIOL_GAMD
+        if (gamd){
+          unsigned int gamd_j = topo.gamd_accel_group(*it);
+          std::vector<unsigned int> key = {gamd_i, gamd_j};
+          igroup = topo.gamd_interaction_group(key);
+        }
 
         DEBUG(11, "\texcluded pair " << i << " - " << *it);
 
@@ -1491,14 +1721,29 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
         force(i) += f;
         force(*it) -= f;
 
-        for (int a = 0; a < 3; ++a)
-          for (int b = 0; b < 3; ++b)
+        //ORIOL_GAMD
+        if (gamd){
+          storage.force_gamd[igroup](i) += f;
+          storage.force_gamd[igroup](*it) -= f;
+        }
+        for (int a = 0; a < 3; ++a){
+          for (int b = 0; b < 3; ++b){
             storage.virial_tensor(a, b) += r(a) * f(b);
+            if (gamd){
+              storage.virial_tensor_gamd[igroup](a,b) += r(a) * f(b);
+            }
+          }
+        }
         DEBUG(11, "\tatomic virial done");
 
         // energy
         storage.energies.crf_energy[topo.atom_energy_group(i)]
                 [topo.atom_energy_group(*it)] += e_crf;
+
+        // ORIOL_GAMD
+        if (gamd){
+          storage.energies.gamd_potential_total[igroup] +=  e_crf;
+        }
 
         DEBUG(11, "\tcontribution " << e_crf);
 
@@ -1524,6 +1769,15 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
       }
       storage.energies.crf_energy[topo.atom_energy_group(i)]
               [topo.atom_energy_group(i)] += 0.5 * e_crf;
+
+      // ORIOL_GAMD
+      unsigned int igroup = 0;
+      if (gamd){
+        unsigned int gamd_i = topo.gamd_accel_group(i);
+        std::vector<unsigned int> key = {gamd_i, gamd_i};
+        igroup = topo.gamd_interaction_group(key);
+        storage.energies.gamd_potential_total[igroup] +=  0.5 * e_crf;
+      }
       DEBUG(11, "\tcontribution " << 0.5 * e_crf);
 
       for (; it != to; ++it) {
@@ -1549,19 +1803,35 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
         } else { // FG-FG interaction
           rf_interaction(r, topo.charge()(i) * topo.charge()(*it), f, e_crf, 2);
         }
-
+        //ORIOL_GAMD
+        if (gamd){
+          unsigned int gamd_j = topo.gamd_accel_group(*it);
+          std::vector<unsigned int> key = {gamd_i, gamd_j};
+          igroup = topo.gamd_interaction_group(key);
+          storage.force_gamd[igroup](i) += f;
+          storage.force_gamd[igroup](*it) -= f;
+        }
         force(i) += f;
         force(*it) -= f;
 
-        for (int a = 0; a < 3; ++a)
-          for (int b = 0; b < 3; ++b)
+        for (int a = 0; a < 3; ++a){
+          for (int b = 0; b < 3; ++b){
             storage.virial_tensor(a, b) += r(a) * f(b);
+            if (gamd){
+              storage.virial_tensor_gamd[igroup](a, b) += r(a) * f(b);
+            }
+          }
+        }
         DEBUG(11, "\tatomic virial done");
 
         // energy
         storage.energies.crf_energy[topo.atom_energy_group(i)]
                 [topo.atom_energy_group(*it)] += e_crf;
 
+        // ORIOL_GAMD
+        if (gamd){
+          storage.energies.gamd_potential_total[igroup] +=  e_crf;
+        }
         DEBUG(11, "\tcontribution " << e_crf);
 
       } // loop over excluded pairs
@@ -1572,7 +1842,13 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
       math::Vec rp1, rp2, rpp;
       math::VArray f_pol(4);
       f_pol = 0.0;
-
+      //ORIOL_GAMD
+      unsigned int igroup = 0;
+      if (gamd){
+        unsigned int gamd_i = topo.gamd_accel_group(i);
+        std::vector<unsigned int> key = {gamd_i, gamd_i};
+        igroup = topo.gamd_interaction_group(key);
+      }
       DEBUG(8, "\tself-term " << i);
       rp1 = -conf.current().posV(i);
       rp2 = conf.current().posV(i);
@@ -1583,6 +1859,13 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
               topo.coscharge(i), topo.coscharge(i), f_pol, e_crf);
       storage.energies.crf_energy[topo.atom_energy_group(i)]
               [topo.atom_energy_group(i)] += 0.5 * e_crf;
+
+      // ORIOL_GAMD
+      if (gamd){
+        storage.energies.gamd_potential_total[igroup] +=  0.5 * e_crf; 
+      storage.energies.gamd_potential_total[igroup] +=  0.5 * e_crf; 
+        storage.energies.gamd_potential_total[igroup] +=  0.5 * e_crf; 
+      }
       DEBUG(11, "\tcontribution " << 0.5 * e_crf);
 
       for (; it != to; ++it) {
@@ -1597,13 +1880,25 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
         pol_rf_interaction(r, rp1, rp2, rpp, topo.charge()(i),
                 topo.charge()(*it), topo.coscharge(i),
                 topo.coscharge(*it), f_pol, e_crf);
-
+        
+        //ORIOL_GAMD
+        if (gamd){
+          unsigned int gamd_j = topo.gamd_accel_group(*it);
+          std::vector<unsigned int> key = {gamd_i, gamd_j};
+          igroup = topo.gamd_interaction_group(key);
+        }
         for (int a = 0; a < 3; ++a) {
           const double term = f_pol(0)(a) + f_pol(1)(a) + f_pol(2)(a) + f_pol(3)(a);
           force(i)(a) += term;
           force(*it)(a) -= term;
-          for (int b = 0; b < 3; ++b)
+          storage.force_gamd[igroup](i)(a) += term;
+          storage.force_gamd[igroup](*it)(a) -= term;
+          for (int b = 0; b < 3; ++b){
             storage.virial_tensor(b, a) += r(b) * term;
+            if (gamd){
+              storage.virial_tensor_gamd[igroup](b, a) += r(b) * term;
+            }
+          }
         }
         DEBUG(11, "\tatomic virial done");
 
@@ -1611,6 +1906,10 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
         storage.energies.crf_energy[topo.atom_energy_group(i)]
                 [topo.atom_energy_group(*it)] += e_crf;
         
+        //ORIOL_GAMD
+        if (gamd){
+          storage.energies.gamd_potential_total[igroup] += e_crf;
+        }
         DEBUG(11, "\tcontribution " << e_crf);
       } // loop over excluded pairs
       break;
@@ -1619,7 +1918,13 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
       math::Vec rp1, rp2, rpp;
       math::VArray f_pol(4);
       f_pol = 0.0;
-
+      //ORIOL_GAMD
+      unsigned int igroup = 0;
+      if (gamd){
+        unsigned int gamd_i = topo.gamd_accel_group(i);
+        std::vector<unsigned int> key = {gamd_i, gamd_i};
+        igroup = topo.gamd_interaction_group(key);
+      }
       DEBUG(8, "\tself-term " << i );
       rp1 = -conf.current().posV(i);
       //rp1 = 0.0;
@@ -1641,9 +1946,20 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
               topo.coscharge(i), topo.coscharge(i), f_pol, e_crf);
       storage.energies.crf_energy[topo.atom_energy_group(i)]
               [topo.atom_energy_group(i)] += 0.5 * e_crf;
+
+      //ORIOL_GAMD
+      if (gamd){
+        storage.energies.gamd_potential_total[igroup] += 0.5 * e_crf;
+      }
       DEBUG(11, "\tcontribution " << 0.5*e_crf);
 
       for( ; it != to; ++it){
+        //ORIOL_GAMD
+        if (gamd){
+          unsigned int gamd_j = topo.gamd_accel_group(*it);
+          std::vector<unsigned int> key = {gamd_i, gamd_j};
+          igroup = topo.gamd_interaction_group(key);
+        }
         periodicity.nearest_image(pos(i), pos(*it), r);
 	math::Vec rjm= math::Vec(0.0);
         if(topo.gamma(*it)!=0.0){
@@ -1669,16 +1985,32 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
           const double term = f_pol(0)(a) + f_pol(1)(a) + f_pol(2)(a) + f_pol(3)(a);
           force(i)(a)   +=(1-topo.gamma(i))*term;
           force(*it)(a) -=(1-topo.gamma(*it))*term;
+          if (gamd){
+            storage.force_gamd[igroup](i)(a)   +=(1-topo.gamma(i))*term;
+            storage.force_gamd[igroup](*it)(a) -=(1-topo.gamma(*it))*term;
+          }
           if(topo.gamma(i)!=0.0){
            force(topo.gamma_j(i))(a) +=topo.gamma(i)/2*term;
            force(topo.gamma_k(i))(a) +=topo.gamma(i)/2*term;
+           if (gamd){
+            storage.force_gamd[igroup](topo.gamma_j(i))(a) +=topo.gamma(i)/2*term;
+            storage.force_gamd[igroup](topo.gamma_k(i))(a) +=topo.gamma(i)/2*term;
+           }
           }
           if(topo.gamma(*it)!=0.0){
            force(topo.gamma_j(*it))(a) -=topo.gamma(*it)/2*term;
            force(topo.gamma_k(*it))(a) -=topo.gamma(*it)/2*term;
+           if (gamd){
+            storage.force_gamd[igroup](topo.gamma_j(*it))(a) -=topo.gamma(*it)/2*term;
+            storage.force_gamd[igroup](topo.gamma_k(*it))(a) -=topo.gamma(*it)/2*term;
+           }
           }
-          for(int b=0; b<3; ++b)
-            storage.virial_tensor(b, a) += rm(b)*term; 
+          for(int b=0; b<3; ++b){
+            storage.virial_tensor(b, a) += rm(b)*term;
+            if (gamd){ 
+              storage.virial_tensor_gamd[igroup](b, a) += rm(b)*term;
+            }
+          }
         }
         DEBUG(11, "\tatomic virial done");
 
@@ -1686,6 +2018,10 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_excluded_interaction_inne
         storage.energies.crf_energy[topo.atom_energy_group(i)]
                 [topo.atom_energy_group(*it)] += e_crf;
 
+        //ORIOL_GAMD
+        if (gamd){
+          storage.energies.gamd_potential_total[igroup] += 0.5 * e_crf;
+        }
         DEBUG(11, "\tcontribution " << e_crf);
       } // loop over excluded pairs
       break;
@@ -1757,7 +2093,8 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_solvent_interaction_inner
         configuration::Configuration & conf,
         topology::Chargegroup_Iterator const & cg_it,
         Storage & storage,
-        math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity
+        math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity,
+        unsigned int gamd
         ) {
   math::Vec r;
   double e_crf = 0.0;
@@ -1778,7 +2115,14 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_solvent_interaction_inner
         // for the energies and is left out.
 
         for (topology::Atom_Iterator at2_it = at_it + 1; at2_it != at_to; ++at2_it) {
-
+          //ORIOL_GAMD
+          unsigned int igroup = 0;
+          if (gamd){
+            unsigned int gamdi = topo.gamd_accel_group(*at_it);
+            unsigned int gamdj = topo.gamd_accel_group(*at2_it);
+            std::vector<unsigned int> key = {gamdi, gamdj};
+            igroup = topo.gamd_interaction_group(key);
+          }
           DEBUG(11, "\tsolvent " << *at_it << " - " << *at2_it);
           periodicity.nearest_image(pos(*at_it),
                   pos(*at2_it), r);
@@ -1793,6 +2137,10 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_solvent_interaction_inner
           storage.energies.crf_energy
                   [topo.atom_energy_group(*at_it) ]
                   [topo.atom_energy_group(*at2_it)] += e_crf;
+          // ORIOL_GAMD
+          if (gamd){
+            storage.energies.gamd_potential_total[igroup] += e_crf;
+          }
           DEBUG(11, "\tsolvent rf excluded contribution: " << e_crf);
         } // loop over at2_it
       } // loop over at_it
@@ -1812,7 +2160,14 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_solvent_interaction_inner
           // for the energies and is left out.
 
           for (topology::Atom_Iterator at2_it = at_it + 1; at2_it != at_to; ++at2_it) {
-
+            //ORIOL_GAMD
+            unsigned int igroup = 0;
+            if (gamd){
+              unsigned int gamdi = topo.gamd_accel_group(*at_it);
+              unsigned int gamdj = topo.gamd_accel_group(*at2_it);
+              std::vector<unsigned int> key = {gamdi, gamdj};
+              igroup = topo.gamd_interaction_group(key);
+            }
             DEBUG(11, "\tsolvent " << *at_it << " - " << *at2_it);
             periodicity.nearest_image(pos(*at_it),
                     pos(*at2_it), r);
@@ -1827,6 +2182,11 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_solvent_interaction_inner
             storage.energies.crf_energy
                     [topo.atom_energy_group(*at_it) ]
                     [topo.atom_energy_group(*at2_it)] += e_crf;
+
+            // ORIOL_GAMD
+            if (gamd){
+              storage.energies.gamd_potential_total[igroup] += e_crf;
+            }
             DEBUG(11, "\tsolvent rf excluded contribution: " << e_crf);
           } // loop over at2_it
         } // loop over at_it
@@ -1852,6 +2212,14 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_solvent_interaction_inner
 
         for (topology::Atom_Iterator at2_it = at_it + 1; at2_it != at_to; ++at2_it) {
 
+          //ORIOL_GAMD
+          unsigned int igroup = 0;
+          if (gamd){
+            unsigned int gamdi = topo.gamd_accel_group(*at_it);
+            unsigned int gamdj = topo.gamd_accel_group(*at2_it);
+            std::vector<unsigned int> key = {gamdi, gamdj};
+            igroup = topo.gamd_interaction_group(key);
+          }
           DEBUG(11, "\tsolvent " << *at_it << " - " << *at2_it);
           periodicity.nearest_image(pos(*at_it),
                   pos(*at2_it), r);
@@ -1879,6 +2247,11 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_solvent_interaction_inner
           storage.energies.crf_energy
                   [topo.atom_energy_group(*at_it) ]
                   [topo.atom_energy_group(*at2_it)] += e_crf;
+
+          // ORIOL_GAMD
+          if (gamd){
+            storage.energies.gamd_potential_total[igroup] += e_crf;
+          }
         } // loop over at2_it
       } // loop over at_it
 
@@ -1905,6 +2278,14 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_solvent_interaction_inner
         }
         for(topology::Atom_Iterator at2_it=at_it+1; at2_it!=at_to; ++at2_it){
           math::Vec rjm = math::Vec(0.0);
+          //ORIOL_GAMD
+          unsigned int igroup = 0;
+          if (gamd){
+            unsigned int gamdi = topo.gamd_accel_group(*at_it);
+            unsigned int gamdj = topo.gamd_accel_group(*at2_it);
+            std::vector<unsigned int> key = {gamdi, gamdj};
+            igroup = topo.gamd_interaction_group(key);
+          }
           if(topo.gamma(*at2_it)!=0.0){
            math::Vec rjj, rjk;
            periodicity.nearest_image(conf.current().pos(*at2_it),
@@ -1941,6 +2322,10 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::RF_solvent_interaction_inner
           storage.energies.crf_energy
                   [topo.atom_energy_group(*at_it) ]
                   [topo.atom_energy_group(*at2_it)] += e_crf;
+          // ORIOL_GAMD
+          if (gamd){
+            storage.energies.gamd_potential_total[igroup] += e_crf;
+          }
         } // loop over at2_it
       } // loop over at_it
 
@@ -2116,14 +2501,22 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_ls_real_innerloop
         unsigned int i,
         unsigned int j,
         Storage & storage,
-        math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity
+        math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity,
+        unsigned int gamd
         ) {
   DEBUG(8, "\tpair\t" << i << "\t" << j);
 
   math::Vec r;
   double f = 0.0;
   double e_lj = 0.0, e_ls = 0.0;
-
+  unsigned int igroup = 0;
+  //ORIOL_GAMD
+  if (gamd){
+    unsigned int gamdi = topo.gamd_accel_group(i);
+    unsigned int gamdj = topo.gamd_accel_group(j);
+    std::vector<unsigned int> key = {gamdi, gamdj};
+    igroup = topo.gamd_interaction_group(key);
+  }
   periodicity.nearest_image(conf.current().pos(i),
           conf.current().pos(j), r);
   DEBUG(10, "\tni r " << r(0) << " / " << r(1) << " / " << r(2));
@@ -2143,13 +2536,21 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_ls_real_innerloop
               f, e_lj, e_ls);
       DEBUG(12, "\t\t e_ls = " << e_ls << " f = " << f);
       DEBUG(10, "\t\tatomic virial");
+      //ORIOL_GAMD
       for (int a = 0; a < 3; ++a) {
         const double term = f * r(a);
         storage.force(i)(a) += term;
         storage.force(j)(a) -= term;
-
-        for (int b = 0; b < 3; ++b)
+        if (gamd){
+          storage.force_gamd[igroup](i)(a) += term;
+          storage.force_gamd[igroup](j)(a) -= term;
+        }
+        for (int b = 0; b < 3; ++b){
           storage.virial_tensor(b, a) += r(b) * term;
+          if (gamd){
+            storage.virial_tensor_gamd[igroup](b, a) += r(b) * term;
+          }
+        }
       }
       break;
     }
@@ -2174,6 +2575,9 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::lj_ls_real_innerloop
 
   storage.energies.ls_real_energy[topo.atom_energy_group(i)]
           [topo.atom_energy_group(j)] += e_ls;
+  if (gamd){
+    storage.energies.gamd_potential_total[igroup] += e_lj +  e_ls;
+  }
 }
 
 template<typename t_nonbonded_spec>
@@ -2185,14 +2589,22 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::ls_real_excluded_innerloop
         unsigned int i,
         unsigned int j,
         Storage & storage,
-        math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity
+        math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity,
+        unsigned int gamd
         ) {
   DEBUG(8, "\tpair\t" << i << "\t" << j);
 
   math::Vec r;
   double f = 0.0;
   double e_ls = 0.0;
-
+  unsigned int igroup = 0;
+  //ORIOL_GAMD
+  if (gamd){
+    unsigned int gamdi = topo.gamd_accel_group(i);
+    unsigned int gamdj = topo.gamd_accel_group(j);
+    std::vector<unsigned int> key = {gamdi, gamdj};
+    igroup = topo.gamd_interaction_group(key);
+  }
   periodicity.nearest_image(conf.current().pos(i),
           conf.current().pos(j), r);
   DEBUG(10, "\tni r " << r(0) << " / " << r(1) << " / " << r(2));
@@ -2206,13 +2618,24 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::ls_real_excluded_innerloop
               f, e_ls);
       DEBUG(10, "\t\t e_ls (exl. atoms) = " << e_ls);
       DEBUG(10, "\t\tatomic virial");
+      //ORIOL_GAMD
       for (int a = 0; a < 3; ++a) {
         const double term = f * r(a);
         storage.force(i)(a) += term;
         storage.force(j)(a) -= term;
+        if (gamd){
+          storage.force_gamd[igroup](i)(a) += term;
+          storage.force_gamd[igroup](j)(a) -= term; 
+        storage.force_gamd[igroup](j)(a) -= term;
+          storage.force_gamd[igroup](j)(a) -= term; 
+        }
 
-        for (int b = 0; b < 3; ++b)
+        for (int b = 0; b < 3; ++b){
           storage.virial_tensor(b, a) += r(b) * term;
+          if (gamd){
+            storage.virial_tensor_gamd[igroup](b, a) += r(b) * term;
+          }
+        }
       }
       break;
     }
@@ -2232,6 +2655,9 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::ls_real_excluded_innerloop
 
   storage.energies.ls_real_energy[topo.atom_energy_group(i)]
           [topo.atom_energy_group(j)] += e_ls;
+  if (gamd){
+    storage.energies.gamd_potential_total[igroup] += e_ls;
+  }
 }
 
 /**

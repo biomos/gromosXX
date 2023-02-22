@@ -337,7 +337,6 @@ void interaction::Extended_Grid_Pairlist_Algorithm::grid_properties
  )
 {
   const double s = sim.param().pairlist.grid_size;
-  
   m_grid.Na = int(rint(abs(conf.current().box(0)) / s));
   m_grid.Nb = int(rint(abs(conf.current().box(1)) / s));
   m_grid.Nc = int(rint(abs(conf.current().box(2)) / s));
@@ -372,9 +371,7 @@ void interaction::Extended_Grid_Pairlist_Algorithm::grid_properties
   if (m_cutoff_long / m_grid.c > math::epsilon) ++m_grid.Nc_ex;
   m_grid.Nc_ex *= 2;
   m_grid.Nc_ex += m_grid.Nc;
-
   calculate_mask();
-
   // and the shift vectors
   m_shift_vector.clear();
   m_reverse_shift_vector.clear();
@@ -392,7 +389,6 @@ void interaction::Extended_Grid_Pairlist_Algorithm::grid_properties
       }
     }
   }
-
 }
 
 /**
@@ -403,7 +399,7 @@ void interaction::Extended_Grid_Pairlist_Algorithm::calculate_mask()
   const double c2 = m_grid.c * m_grid.c;
   const double b2 = m_grid.b * m_grid.b;
   // const double a2 = m_grid.a * m_grid.a;
-
+  
   m_grid.mask_z = int(m_cutoff_long / m_grid.c);
   if (m_cutoff_long / m_grid.c > math::epsilon) ++m_grid.mask_z;
   
@@ -433,7 +429,6 @@ void interaction::Extended_Grid_Pairlist_Algorithm::calculate_mask()
     // don't do self interaction over mask...
     m_grid.mask[0][0] = 1;
   }
-
   for(int z=1; z<=m_grid.mask_z; ++z){
     m_grid.mask[z].clear();
 
@@ -458,7 +453,6 @@ void interaction::Extended_Grid_Pairlist_Algorithm::calculate_mask()
       m_grid.mask[z].push_back(row + mask_x + 1);
     }
   }
-
   for(int z=1; z <= m_grid.mask_z; ++z){
     int row = 0;
     for(int y = m_grid.mask[z].size() - 4; y >= 0; y-=2){

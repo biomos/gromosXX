@@ -96,10 +96,10 @@ void interaction::Nonbonded_Outerloop
         util::Algorithm_Timer & timer, bool master) {
   DEBUG(7, "\tcalculate interactions");
 
-  // WORKAROUND! See definition of _lj_crf_outerloop_fast
+  // WORKAROUND! See definition of _lj_crf_outerloop_fast ToDo: fast outerloop implementation
   if (t_interaction_spec::boundary_type == math::rectangular &&
       t_interaction_spec::interaction_func == simulation::lj_crf_func &&
-      sim.param().innerloop.method != simulation::sla_cuda) {
+      sim.param().innerloop.method != simulation::sla_cuda && not sim.param().gamd.gamd) {
     _lj_crf_outerloop_fast<t_interaction_spec::charge_type>(topo, conf, sim,
                         pairlist_solute, pairlist_solvent,
                         storage, longrange, timer, master);
@@ -135,7 +135,7 @@ void interaction::Nonbonded_Outerloop
       DEBUG(10, "\tnonbonded_interaction: i " << i << " j " << *j_it);
 
       // shortrange, therefore store in simulation.system()
-      innerloop.lj_crf_innerloop(topo, conf, i, *j_it, storage, periodicity);
+      innerloop.lj_crf_innerloop(topo, conf, i, *j_it, storage, periodicity, sim.param().gamd.gamd);
     }
   }
   //if (master)
@@ -260,7 +260,7 @@ unsigned int i_deb;
 
         DEBUG(10, "\tsolvent_nonbonded_interaction (normal solvent loop): i " << i << " j " << *j_it);
 
-        innerloop.lj_crf_innerloop(topo, conf, i, *j_it, storage, periodicity);
+        innerloop.lj_crf_innerloop(topo, conf, i, *j_it, storage, periodicity, sim.param().gamd.gamd);
       }
     }
   }
@@ -285,7 +285,6 @@ void interaction::Nonbonded_Outerloop
         Storage & storage, bool longrange,
         util::Algorithm_Timer & timer, bool master) {
   DEBUG(7, "\tcalculate interactions lj_crf_outerloop_fast");
-
   math::Periodicity<math::rectangular> periodicity(conf.current().box);
   periodicity.recalc_shift_vectors();
   Nonbonded_Innerloop<interaction::Interaction_Spec<math::rectangular,
@@ -1316,7 +1315,7 @@ void interaction::Nonbonded_Outerloop
 
     for (; it != to; ++it) {
 
-      innerloop.one_four_interaction_innerloop(topo, conf, i, *it, storage, periodicity);
+      innerloop.one_four_interaction_innerloop(topo, conf, i, *it, storage, periodicity, sim.param().gamd.gamd);
 
     } // loop over 1,4 pairs
   } // loop over solute atoms
@@ -1358,7 +1357,7 @@ void interaction::Nonbonded_Outerloop
   for (unsigned int i = rank; i < num_lj_exceptions; i += size) {
     const topology::lj_exception_struct & ljex = topo.lj_exceptions()[i];
 
-    innerloop.lj_exception_innerloop(topo, conf, ljex, storage, periodicity);
+    innerloop.lj_exception_innerloop(topo, conf, ljex, storage, periodicity, sim.param().gamd.gamd);
   } // loop over LJ exceptions
 }
 
@@ -1412,10 +1411,10 @@ void interaction::Nonbonded_Outerloop
           if (std::find(topo.one_four_pair(a1).begin(), topo.one_four_pair(a1).end(), a2) 
               != topo.one_four_pair(a1).end()) {
             // std::cout << "\t1,4" << std::endl;
-            innerloop.one_four_interaction_innerloop(topo, conf, a1, a2, storage, periodicity);
+            innerloop.one_four_interaction_innerloop(topo, conf, a1, a2, storage, periodicity,  sim.param().gamd.gamd);
           } else {
             // std::cout << "\tstandard interaction" << std::endl;
-            innerloop.lj_crf_innerloop(topo, conf, a1, a2, storage, periodicity);
+            innerloop.lj_crf_innerloop(topo, conf, a1, a2, storage, periodicity, sim.param().gamd.gamd);
           }
         } // atoms of cg 2
       } // atoms of cg 1
@@ -1472,7 +1471,7 @@ void interaction::Nonbonded_Outerloop
   const bool qmmm = (sim.param().qmmm.qmmm > simulation::qmmm_mechanical);
   for (unsigned int i = rank; i < num_solute_atoms; i += size) {
     if (qmmm && topo.is_qm(i)) continue;
-    innerloop.RF_excluded_interaction_innerloop(topo, conf, i, storage, periodicity);
+    innerloop.RF_excluded_interaction_innerloop(topo, conf, i, storage, periodicity, sim.param().gamd.gamd);
   } // loop over solute atoms
 
   // Solvent
@@ -1481,7 +1480,7 @@ void interaction::Nonbonded_Outerloop
   cg_it += topo.num_solute_chargegroups() + rank;
 
   for (; cg_it < cg_to; cg_it += size) {
-    innerloop.RF_solvent_interaction_innerloop(topo, conf, cg_it, storage, periodicity);
+    innerloop.RF_solvent_interaction_innerloop(topo, conf, cg_it, storage, periodicity, sim.param().gamd.gamd);
   } // loop over solvent charge groups
 }
 
@@ -1875,7 +1874,7 @@ void interaction::Nonbonded_Outerloop
       DEBUG(10, "\tnonbonded_interaction: i " << i << " j " << *j_it);
 
       // shortrange, therefore store in simulation.system()
-      innerloop.lj_ls_real_innerloop(topo, conf, i, *j_it, storage, periodicity);
+      innerloop.lj_ls_real_innerloop(topo, conf, i, *j_it, storage, periodicity, sim.param().gamd.gamd);
     }
   }
 
@@ -1887,7 +1886,7 @@ void interaction::Nonbonded_Outerloop
 
       DEBUG(10, "\tsolvent_nonbonded_interaction: i " << i << " j " << *j_it);
 
-      innerloop.lj_ls_real_innerloop(topo, conf, i, *j_it, storage, periodicity);
+      innerloop.lj_ls_real_innerloop(topo, conf, i, *j_it, storage, periodicity, sim.param().gamd.gamd);
     }
   }
 
@@ -1902,7 +1901,7 @@ void interaction::Nonbonded_Outerloop
             ++ex_it) {
 
       DEBUG(10, "\texcluded_nonbonded_interaction: i " << i << " j " << *ex_it);
-      innerloop.ls_real_excluded_innerloop(topo, conf, i, *ex_it, storage, periodicity);
+      innerloop.ls_real_excluded_innerloop(topo, conf, i, *ex_it, storage, periodicity, sim.param().gamd.gamd);
     }
   }
   DEBUG(9, "U_eta due to excluded solvent pairs...");
@@ -1913,7 +1912,7 @@ void interaction::Nonbonded_Outerloop
             a1 < a_to; ++a1) {
       for (int a2 = a1 + 1; a2 < a_to; ++a2) {
         DEBUG(10, "\texcluded_nonbonded_interaction: i " << a1 << " j " << a2);
-        innerloop.ls_real_excluded_innerloop(topo, conf, a1, a2, storage, periodicity);
+        innerloop.ls_real_excluded_innerloop(topo, conf, a1, a2, storage, periodicity, sim.param().gamd.gamd);
       }
     }
   }
