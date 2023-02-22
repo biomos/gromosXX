@@ -4907,7 +4907,7 @@ int io::check_features(simulation::Simulation  &sim)
   //fc.unlock("gamd", "innerloop_method_hardcode");
   //fc.unlock("gamd", "innerloop_method_table");
   fc.unlock("gamd", "innerloop_method_cuda");
-  //fc.unlock("gamd", "innerloop_solvent_topology");
+  fc.unlock("gamd", "innerloop_solvent_topology");
   //fc.unlock("gamd", "innerloop_solvent_spc");
   fc.unlock("gamd", "repex_temp");
   fc.unlock("gamd", "repex_lambda");
