@@ -61,6 +61,12 @@ configuration::Configuration::Configuration() {
   for (unsigned int k = 0; k < special().eds.virial_tensor_endstates.size(); ++k) {
     special().eds.virial_tensor_endstates[k] = 0.0;
   }
+
+  //ORIOL_GAMD
+  for (unsigned int a = 0; a < special().gamd.virial_tensor.size(); ++a){
+    special().gamd.virial_tensor_dihe[a] = 0.0;
+    special().gamd.virial_tensor[a] = 0.0;
+  }
   
   special().shake_failure_occurred = false;
 }
@@ -90,6 +96,11 @@ configuration::Configuration::Configuration
             conf.special().eds.virial_tensor_endstates[k];
   }
 
+  //ORIOL_GAMD
+  for (unsigned int a = 0; a < special().gamd.virial_tensor.size(); ++a){
+    special().gamd.virial_tensor_dihe[a] = conf.special().gamd.virial_tensor_dihe[a];
+    special().gamd.virial_tensor[a] =  conf.special().gamd.virial_tensor[a];
+  }
 
   current().pos = conf.current().pos;
   old().pos = conf.old().pos;
@@ -181,6 +192,7 @@ configuration::Configuration::Configuration
 
   // if this works just like this, why do we need to explicitly copy the virial tensor?
   special().eds = conf.special().eds;
+  special().gamd = conf.special().gamd;
   
   special().lattice_shifts = conf.special().lattice_shifts;
   
@@ -215,6 +227,14 @@ configuration::Configuration & configuration::Configuration::operator=
     special().eds.virial_tensor_endstates[k] =
             conf.special().eds.virial_tensor_endstates[k];
   }
+
+  //ORIOL_GAMD
+  for (unsigned int a = 0; a < special().gamd.virial_tensor.size(); ++a){
+    special().gamd.virial_tensor_dihe[a] = conf.special().gamd.virial_tensor_dihe[a];
+    special().gamd.virial_tensor[a] =  conf.special().gamd.virial_tensor[a];
+    
+  }
+
 
   
   current().pos = conf.current().pos;
@@ -297,6 +317,7 @@ configuration::Configuration & configuration::Configuration::operator=
   special().rottrans_constr = conf.special().rottrans_constr;
 
   special().eds = conf.special().eds;
+  special().gamd = conf.special().gamd;
   
   special().lattice_shifts = conf.special().lattice_shifts;
   
@@ -360,6 +381,30 @@ void configuration::Configuration::init(topology::Topology const & topo,
   old().energies.eds_vi.resize(param.eds.numstates);
   old().energies.eds_eir.resize(param.eds.numstates);
   old().energies.eds_vi_special.resize(param.eds.numstates);
+
+  // ORIOL_GAMD
+  special().gamd.total_force.resize(param.gamd.igroups);
+  special().gamd.dihe_force.resize(param.gamd.igroups);
+  special().gamd.virial_tensor.resize(param.gamd.igroups);
+  for (unsigned int i = 0; i < special().gamd.total_force.size(); i++){
+    special().gamd.dihe_force[i].resize(topo.num_atoms());
+    special().gamd.total_force[i].resize(topo.num_atoms());
+  }  
+  special().gamd.virial_tensor_dihe.resize(param.gamd.igroups);
+  current().energies.gamd_dihedral_total.resize(param.gamd.igroups);
+  current().energies.gamd_potential_total.resize(param.gamd.igroups);
+  current().energies.gamd_DV.resize(param.gamd.igroups);
+  current().energies.gamd_ED.resize(param.gamd.igroups);
+  current().energies.gamd_ET.resize(param.gamd.igroups);
+  current().energies.gamd_KD.resize(param.gamd.igroups);
+  current().energies.gamd_KT.resize(param.gamd.igroups);
+  old().energies.gamd_dihedral_total.resize(param.gamd.igroups);
+  old().energies.gamd_potential_total.resize(param.gamd.igroups);
+  old().energies.gamd_DV.resize(param.gamd.igroups);
+  old().energies.gamd_ED.resize(param.gamd.igroups);
+  old().energies.gamd_ET.resize(param.gamd.igroups);
+  old().energies.gamd_KD.resize(param.gamd.igroups);
+  old().energies.gamd_KT.resize(param.gamd.igroups);
   
   current().energies.ewarn(param.ewarn.limit);
   old().energies.ewarn(param.ewarn.limit);

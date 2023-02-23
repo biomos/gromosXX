@@ -27,6 +27,7 @@
 #include "../algorithm/integration/lattice_shift.h"
 #include "../algorithm/integration/multigradient.h"
 #include "../algorithm/integration/eds.h"
+#include "../algorithm/integration/gamd.h"
 
 #include "../io/blockinput.h"
 #include "../io/instream.h"
@@ -117,7 +118,12 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
   //add EDS
   if (sim.param().eds.eds) {
     md_seq.push_back(new algorithm::EDS());
-  }  
+  } 
+
+  //ORIOL_GAMD add GAMD
+  if (sim.param().gamd.gamd){
+    md_seq.push_back(new algorithm::GAMD());
+  } 
               
   // position constraints?
   if (sim.param().posrest.posrest == 3 && !sim.param().analyze.no_constraints) {

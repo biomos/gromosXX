@@ -127,8 +127,7 @@ void interaction::Standard_Pairlist_Algorithm::_update_cg
 {
 
   DEBUG(7, "standard pairlist update");
-  if (begin == 0) 
-    timer().start_subtimer("pairlist");
+  timer().start_subtimer("pairlist");
   
   math::Periodicity<b> periodicity(conf.current().box);
   // empty the pairlist
@@ -324,8 +323,7 @@ void interaction::Standard_Pairlist_Algorithm::_update_cg
   if (no_cuda && num_cg > num_solute_cg)
     _solvent_solvent(topo, conf, sim, pairlist, cg1, stride, periodicity);
 
-  if (begin == 0)
-    timer().stop_subtimer("pairlist");
+  timer().stop_subtimer("pairlist");
   DEBUG(7, "pairlist done");
 
 }
@@ -340,13 +338,7 @@ void interaction::Standard_Pairlist_Algorithm::_solvent_solvent
  int cg1,  int stride,
  math::Periodicity<b> const & periodicity
  )
-{
-  bool master = false;
-  if (cg1 == int(topo.num_solute_chargegroups())) { // master
-    timer().start_subtimer("pairlist solvent-solvent");
-    master = true;
-  }
-  
+{  
   const int num_cg = topo.num_chargegroups();
   math::Vec r;
   
@@ -355,53 +347,47 @@ void interaction::Standard_Pairlist_Algorithm::_solvent_solvent
     for(int cg2 = cg1+1; cg2 < num_cg; ++cg2){
 
       periodicity.nearest_image(conf.current().pos(topo.chargegroup(cg1)),
-				conf.current().pos(topo.chargegroup(cg2)),
-				r);
+				conf.current().pos(topo.chargegroup(cg2)), r);
     
       // the distance
       const double d = math::abs2(r);
     
       if (d > m_cutoff_long_2){        // OUTSIDE
-	continue;
+	      continue;
       }
   
       if (d > m_cutoff_short_2){       // LONGRANGE: calculate interactions!
 	
-	for(int a1 = topo.chargegroup(cg1),
+	      for(int a1 = topo.chargegroup(cg1),
 	      a1_to = topo.chargegroup(cg1+1);
-	    a1 != a1_to; ++a1){
-	  for(int a2 = topo.chargegroup(cg2),
-		a2_to = topo.chargegroup(cg2+1);
-	      a2 != a2_to; ++a2){
+	      a1 != a1_to; ++a1){
+	        for(int a2 = topo.chargegroup(cg2),
+		      a2_to = topo.chargegroup(cg2+1);
+	        a2 != a2_to; ++a2){
             DEBUG(15, "solvent-solvent longrange: " << a1 << "-" << a2);
-	    pairlist.solvent_long[a1].push_back(a2);
-	    
-	  } // loop over atom of cg2
-	} // loop over atom of cg1
+	          pairlist.solvent_long[a1].push_back(a2);
+	        } // loop over atom of cg2
+	      } // loop over atom of cg1
 	
-	continue;
+	      continue;
       } // longrange
       
       // SHORTRANGE : at least the second cg is solvent => no exclusions
       for(int a1 = topo.chargegroup(cg1),
 	    a1_to = topo.chargegroup(cg1+1);
-	  a1 != a1_to; ++a1){
-	for(int a2 = topo.chargegroup(cg2),
+	    a1 != a1_to; ++a1){
+	      for(int a2 = topo.chargegroup(cg2),
 	      a2_to = topo.chargegroup(cg2+1);
-	    a2 != a2_to; ++a2){
-	  DEBUG(15, "solvent-solvent shortrange: " << a1 << "-" << a2);
-	  pairlist.solvent_short[a1].push_back(a2);
+	      a2 != a2_to; ++a2){
+	        DEBUG(15, "solvent-solvent shortrange: " << a1 << "-" << a2);
+	        pairlist.solvent_short[a1].push_back(a2);
 	  
-	} // loop over atom of cg2
+	      } // loop over atom of cg2
       } // loop over atom of cg1
       
     }
     
-  } // cg1
-
-  if (master)
-    timer().stop_subtimer("pairlist solvent-solvent");
-  
+  } // cg1  
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -442,8 +428,7 @@ _update_pert_cg(topology::Topology & topo,
 		unsigned int stride)
 {
   DEBUG(7, "standard pairlist update");
-  if (begin == 0) // master
-    timer().start_subtimer("perturbed pairlist");
+  timer().start_subtimer("perturbed pairlist");
   
   // create the innerloops
   math::Periodicity<b> periodicity(conf.current().box);
@@ -624,8 +609,7 @@ _update_pert_cg(topology::Topology & topo,
                    pairlist,  
                    cg1, stride, periodicity);
   */
-  if (begin == 0) // master
-    timer().stop_subtimer("perturbed pairlist");
+  timer().stop_subtimer("perturbed pairlist");
   DEBUG(7, "pairlist done");
 
 }

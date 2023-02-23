@@ -260,6 +260,14 @@ namespace io {
                                   simulation::Simulation & sim,
                                   std::ostream & os);
 
+     /**
+      * read configuration of GAMD parameter search simulation
+      */
+     bool read_gamdstat(topology::Topology &topo,
+                                  configuration::Configuration &conf,
+                                  simulation::Simulation & sim,
+                                  std::ostream & os);
+
     /**
      * Read in the memory function of the umbrellas (BSLEUSMEM block)
      * @param bs_umbrella
@@ -478,6 +486,12 @@ namespace io {
      */
     bool _read_aedssearch(std::vector<std::string> &buffer,
             simulation::Simulation & sim, unsigned int numstates);
+
+    /**
+     * read GAMDSTAT block
+     */
+    bool _read_gamdstat(std::vector<std::string> &buffer,
+            simulation::Simulation & sim, unsigned int numagroups);
   };
 
 } // io

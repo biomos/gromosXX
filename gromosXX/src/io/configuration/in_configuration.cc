@@ -74,6 +74,7 @@ void io::In_Configuration::read(configuration::Configuration &conf,
   read_order_parameter_restraint_averages(topo, conf, sim, os);
   read_rdc(topo, conf, sim, os);
   read_aedssearch(topo, conf, sim, os);
+  read_gamdstat(topo, conf, sim, os);
 
   // and set the boundary type!
   conf.boundary_type = param.boundary.boundary;
@@ -1354,6 +1355,58 @@ bool io::In_Configuration::read_aedssearch
     else {
       if (sim.param().eds.initaedssearch == false)
         io::messages.add("no AEDSSEARCH block in configuration.",
+          "in_configuration",
+          io::message::error);
+    }
+  }
+  return true;
+}
+
+// ORIOL_GAMD
+bool io::In_Configuration::read_gamdstat
+(
+  topology::Topology &topo,
+  configuration::Configuration &conf,
+  simulation::Simulation & sim,
+  std::ostream & os)
+{
+  std::vector<std::string> buffer;
+  if (sim.param().gamd.search == simulation::cmd_search || sim.param().gamd.search == simulation::gamd_search) {
+
+    buffer = m_block["GAMDSTAT"];
+    if (buffer.size()) {
+      block_read.insert("GAMDSTAT");
+      if (!quiet)
+        os << "\treading GAMDSTAT...\n";
+
+      if (sim.param().gamd.ntisearch == false) {
+        _read_gamdstat(buffer, sim, sim.param().gamd.igroups);
+        os << "\t" << "GAMDSTAT\n";
+        os << "\t" << sim.param().gamd.stepsdone;
+
+        for (unsigned int i = 0; i < sim.param().gamd.igroups; i++) {
+          os << "\t" << sim.param().gamd.M2D[i] << "\t"
+            << sim.param().gamd.M2T[i] << "\t"
+            << sim.param().gamd.VmaxD[i] << "\t"
+            << sim.param().gamd.VmaxT[i] << "\t"
+            << sim.param().gamd.VmeanD[i] << "\t"
+            << sim.param().gamd.VmeanT[i] << "\t"
+            << sim.param().gamd.VminD[i] << "\t"
+            << sim.param().gamd.VminT[i] << "\t"
+            << sim.param().gamd.sigmaVD[i] << "\t"
+            << sim.param().gamd.sigmaVT[i] << "\n";
+        }
+
+        os << "\t" << "END\n";
+      }
+      else
+        io::messages.add("Initial settings for GAMD from a previous search simulation found but not read! This happended because NTIAEDSS = 1.",
+          "in_configuration",
+          io::message::warning);
+    }
+    else {
+      if (sim.param().gamd.ntisearch == false)
+        io::messages.add("no GAMDSTAT block in configuration.",
           "in_configuration",
           io::message::error);
     }
@@ -3595,6 +3648,39 @@ bool io::In_Configuration::_read_aedssearch(
   }
   if (_lineStream.fail()) {
     io::messages.add("bad line in AEDSSEARCH block",
+      "In_Configuration",
+      io::message::error);
+    return false;
+  }
+  return true;
+}
+
+bool io::In_Configuration::_read_gamdstat(
+  std::vector<std::string> &buffer, simulation::Simulation & sim, unsigned int last) {
+  DEBUG(8, "read configuration for GAMD parameter search simulation");
+  // no title in buffer!
+  std::vector<std::string>::const_iterator it = buffer.begin(),
+  to = buffer.end() - 1;
+  _lineStream.clear();
+  _lineStream.str(*it);
+  _lineStream >> sim.param().gamd.stepsdone;
+  it++;
+  for (unsigned int i = 0; i < last; i++, it++) {
+    _lineStream.clear();
+    _lineStream.str(*it);
+    _lineStream >>  sim.param().gamd.M2D[i] >>
+                    sim.param().gamd.M2T[i] >>
+                    sim.param().gamd.VmaxD[i] >>
+                    sim.param().gamd.VmaxT[i] >>
+                    sim.param().gamd.VmeanD[i] >>
+                    sim.param().gamd.VmeanT[i] >>
+                    sim.param().gamd.VminD[i] >>
+                    sim.param().gamd.VminT[i] >>
+                    sim.param().gamd.sigmaVD[i] >>
+                    sim.param().gamd.sigmaVT[i];
+  }
+  if (_lineStream.fail()) {
+    io::messages.add("bad line in GAMDSTAT block",
       "In_Configuration",
       io::message::error);
     return false;

@@ -23,6 +23,7 @@ xxiotopo_HEADERS = topology/in_jvalue.h\
 	topology/in_dihrest.h\
 	topology/in_friction.h\
 	topology/in_xray.h\
+	topology/in_gamd.h\
 	topology/in_order.h\
 	topology/in_leus.h\
 	topology/in_bsleus.h\
@@ -67,6 +68,7 @@ libgroio_la_SOURCES =	io.cc\
 	topology/in_jvalue.cc\
 	topology/in_friction.cc\
 	topology/in_xray.cc\
+	topology/in_gamd.cc\
 	topology/in_order.cc\
 	topology/in_leus.cc\
 	topology/in_bsleus.cc\

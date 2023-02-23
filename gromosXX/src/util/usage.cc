@@ -115,6 +115,12 @@ void util::get_usage(util::Known const &knowns, std::string &usage, std::string 
     usage += "\t# X-ray restraints specification\n";
     usage += "\t# @xray      filename\n\n";
   }
+
+  //ORIOL_GAMD
+  if (knowns.count("gamd")){
+    usage += "\t# GAMD restraints specification\n";
+    usage += "\t# @gamd      filename\n\n";
+  }
   
   if (knowns.count("sym")){
     usage += "\t# symmetry restraints specification\n";
@@ -232,7 +238,7 @@ void util::print_title(bool mpi, std::ostream & os, bool repex)
       nthreads = omp_get_num_threads();
       os << "OpenMP code enabled\n"
 		<< "\tusing "
-		<< omp_get_num_threads() << " threads.\n"
+		<< nthreads << " threads.\n"
 		<< "\tThis can be adjusted by setting the\n "
 		<< "\tOMP_NUM_THREADS environment variable.\n"
 		<< std::endl;

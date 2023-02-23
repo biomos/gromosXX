@@ -79,6 +79,11 @@ void get_usage(Known const &knowns, std::string &usage, std::string name)
     usage += "\t# distance restraints specification\n";
     usage += "\t# @distrest  filename\n\n";
   }
+    //ORIOL_GAMD
+  if (knowns.count("gamd")){
+    usage += "\t# GAMD restraints specification\n";
+    usage += "\t# @gamd      filename\n\n";
+  }
   
   if (knowns.count("jval")){
     usage += "\t# J-value restraints specification\n";

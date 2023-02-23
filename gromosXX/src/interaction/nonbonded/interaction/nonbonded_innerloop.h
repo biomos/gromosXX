@@ -40,7 +40,8 @@ namespace interaction
      unsigned int i,
      unsigned int j,
      Storage & storage,
-     math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity
+     math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity,
+     unsigned int gamd
             );
     
     /**
@@ -147,7 +148,8 @@ namespace interaction
      int i,
      int j,
      Storage & storage,
-     math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity
+     math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity,
+     unsigned int gamd
      );
 
     /**
@@ -160,7 +162,8 @@ namespace interaction
             configuration::Configuration & conf,
             topology::lj_exception_struct const & ljex,
             Storage & storage,
-            math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity
+            math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity,
+            unsigned int gamd
             );
 
     /**
@@ -173,7 +176,8 @@ namespace interaction
      configuration::Configuration & conf,
      int i,
      Storage & storage,
-     math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity
+     math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity,
+     unsigned int gamd
      );
 
     /**
@@ -186,7 +190,8 @@ namespace interaction
      configuration::Configuration & conf,
      topology::Chargegroup_Iterator const & cg_it,
      Storage & storage,
-     math::Periodicity<t_nonbonded_spec::boundary_type> const &periodicity
+     math::Periodicity<t_nonbonded_spec::boundary_type> const &periodicity,
+     unsigned int gamd
      );
 
     /**
@@ -325,7 +330,8 @@ namespace interaction
      unsigned int i,
      unsigned int j,
      Storage & storage,
-     math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity
+     math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity,
+     unsigned int gamd
      );
     
     /**
@@ -352,7 +358,8 @@ namespace interaction
      unsigned int i,
      unsigned int j,
      Storage & storage,
-     math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity
+     math::Periodicity<t_nonbonded_spec::boundary_type> const & periodicity,
+     unsigned int gamd
      );
     
     /**
