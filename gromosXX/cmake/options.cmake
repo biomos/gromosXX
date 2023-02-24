@@ -29,6 +29,10 @@ if(OMP AND MPI)
     message(FATAL_ERROR "OMP and MPI must NOT be enabled at the same time")
 endif()
 
+if(CUDAKERNEL AND NOT OMP)
+    message(FATAL_ERROR "CUDA kernel requires OMP compilation")
+endif()
+
 if(CUDAKERNEL)
     enable_language(CUDA)
     set(CMAKE_CUDA_STANDARD 11)
