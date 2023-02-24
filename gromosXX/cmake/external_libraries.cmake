@@ -1,13 +1,3 @@
-# use backported find module for Zlib library if version < 3.0
-if(${CMAKE_VERSION} VERSION_LESS "3.0.0")
-    set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/cmake/modules/zlib")
-endif()
-
-# use backported find module for GSL library if version < 3.2
-if(${CMAKE_VERSION} VERSION_LESS "3.2.0")
-    set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/cmake/modules/gsl")
-endif()
-
 # find always required libraries
 find_package(FFTW REQUIRED)
 find_package(Threads REQUIRED)
