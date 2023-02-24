@@ -33,14 +33,12 @@ else()
     message(STATUS "Clipper usage disabled.")
 endif()
 
-# TODO: should be implemented with find_package() macro...
 if(XTB)
-    message(STATUS "Taking xtb library from: ${XTB}")
-    set(XTB_LIBRARIES "${XTB}/lib/x86_64-linux-gnu/libxtb.so")
-    set(XTB_INCLUDES "${XTB}/include")
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(XTB REQUIRED IMPORTED_TARGET xtb)
     add_definitions(-DWITH_XTB)
-    set(EXTERNAL_LIBRARIES ${EXTERNAL_LIBRARIES} ${XTB_LIBRARIES})
-    set(EXTERNAL_INCLUDES ${EXTERNAL_INCLUDES} ${XTB_INCLUDES})
+    list(APPEND EXTERNAL_LIBRARIES ${XTB_LIBRARIES})
+    list(APPEND EXTERNAL_INCLUDES ${XTB_INCLUDE_DIRS})
 endif()
 
 # find options based libraries
