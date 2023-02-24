@@ -18,7 +18,7 @@ set(GROMOS_OBJECTS
     $<TARGET_OBJECTS:grorepex>
 )
 
-if(CUDAKERNEL)
+if(CUKERNEL)
     list(APPEND GROMOS_OBJECTS $<TARGET_OBJECTS:grocukernel>)
 endif()
 

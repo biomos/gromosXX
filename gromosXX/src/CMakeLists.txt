@@ -1,7 +1,7 @@
 add_subdirectory(algorithm)
 add_subdirectory(check)
 add_subdirectory(configuration)
-if(CUDAKERNEL)
+if(CUKERNEL)
     add_subdirectory(cukernel)
 endif()
 add_subdirectory(interaction)

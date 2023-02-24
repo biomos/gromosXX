@@ -70,7 +70,7 @@ set(ALGO_INCLUDE
     ../interaction/special
 )
 
-if(CUDAKERNEL)
+if(CUKERNEL)
     set(ALGO_INCLUDE "${ALGO_INCLUDE} ../cukernel")
 endif()
 

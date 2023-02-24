@@ -7,7 +7,7 @@ endif()
 # set options
 option(OMP "enable OMP" ON)
 option(MPI "enable MPI" OFF)
-option(CUDAKERNEL "enable CUDA" OFF)
+option(CUKERNEL "enable CUDA" OFF)
 option(XTB "enable XTB" OFF)
 
 # TODO do we still want to support these options?
@@ -29,11 +29,11 @@ if(OMP AND MPI)
     message(FATAL_ERROR "OMP and MPI must NOT be enabled at the same time")
 endif()
 
-if(CUDAKERNEL AND NOT OMP)
+if(CUKERNEL AND NOT OMP)
     message(FATAL_ERROR "CUDA kernel requires OMP compilation")
 endif()
 
-if(CUDAKERNEL)
+if(CUKERNEL)
     enable_language(CUDA)
     set(CMAKE_CUDA_STANDARD 11)
     set(CMAKE_CUDA_STANDARD_REQUIRED ON)
