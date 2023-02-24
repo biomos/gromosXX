@@ -58,7 +58,7 @@ if(XTB)
     # global includes / libraries vs target specific ones
     
     set(CMAKE_REQUIRED_INCLUDES ${XTB_INCLUDE_DIRS})
-    set(CMAKE_REQUIRED_LIBRARIES ${XTB_LINK_LIBRARIES})
+    set(CMAKE_REQUIRED_LIBRARIES ${XTB_LIBRARIES})
 
     # check header file
     check_include_file_cxx(xtb.h HAVE_XTB_H)
