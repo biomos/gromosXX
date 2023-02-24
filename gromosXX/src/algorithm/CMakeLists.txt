@@ -46,6 +46,7 @@ set(ALGO_CC
     integration/lattice_shift.cc
     integration/multigradient.cc
     integration/eds.cc
+    integration/gamd.cc
     virtualatoms/prepare_virtualatoms.cc
     virtualatoms/propagate_forces.cc
 )

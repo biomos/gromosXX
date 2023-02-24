@@ -1,6 +1,5 @@
 set(CUDA_CC
     constraints.cu
-    cudaKernel.cu
     cudaShake.cu  
     interaction.cu
     io.cu

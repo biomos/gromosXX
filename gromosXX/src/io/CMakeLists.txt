@@ -22,6 +22,7 @@ set(IO_CC
     topology/in_jvalue.cc
     topology/in_friction.cc
     topology/in_xray.cc
+    topology/in_gamd.cc
     topology/in_order.cc
     topology/in_leus.cc
     topology/in_bsleus.cc
