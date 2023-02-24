@@ -8,13 +8,22 @@ endif()
 option(OMP "enable OMP" ON)
 option(MPI "enable MPI" OFF)
 option(CUDAKERNEL "enable CUDA" OFF)
-option(XTB "enable XTB" OFF) # -DXTB={XTB_ROOT}
+option(XTB "enable XTB" OFF)
+
+# TODO do we still want to support these options?
 option(FORCEGROUPS "enable forcegroups" OFF)
 option(HEAVISIDE "enable heaviside" OFF)
+
+# more pedantic compiler checks
+option(PENDANTIC "enable pedantic compiler checks")
 
 set(CMAKE_CXX_FLAGS "-Wall")
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
+
+if(PEDANTIC)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wextra -Wshadow -Wnon-virtual-dtor -pedantic -Wunused -Wconversion -Wsign-conversion")
+endif()
 
 if(OMP AND MPI)
     message(FATAL_ERROR "OMP and MPI must NOT be enabled at the same time")
@@ -22,6 +31,8 @@ endif()
 
 if(CUDAKERNEL)
     enable_language(CUDA)
+    set(CMAKE_CUDA_STANDARD 11)
+    set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 endif()
 
 # find option dependent packages

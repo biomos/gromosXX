@@ -1,10 +1,10 @@
 set(CUDA_CC
-    constraints.cu
-    cudaShake.cu  
-    interaction.cu
-    io.cu
-    pairlist.cu
-    lib/utils.cu 
+  io.cu
+  pairlist.cu
+  interaction.cu
+  constraints.cu
+  cudaShake.cu
+  lib/utils.cu
 )
 
 add_library(grocukernel OBJECT ${CUDA_CC})

@@ -7,6 +7,8 @@
 #error "Don't include float3.h without defining HOSTDEVICE"
 #else
 
+#include <cstdlib>
+
 /**
  * calculates the nearest image for cubic periodic boundary conditions
  * @param[in] i first position
