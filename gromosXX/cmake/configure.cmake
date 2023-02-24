@@ -57,15 +57,13 @@ check_function_exists(getenv HAVE_GETENV)
 if(XTB)
     # global includes / libraries vs target specific ones
     
-    list(APPEND CMAKE_REQUIRED_INCLUDES ${XTB_INCLUDE_DIRS})
-    list(APPEND CMAKE_REQUIRED_LIBRARIES ${XTB_LIBRARIES})
-    message(${CMAKE_REQUIRED_INCLUDES})
-    message(${CMAKE_REQUIRED_LIBRARIES})
+    set(CMAKE_REQUIRED_INCLUDES ${XTB_INCLUDE_DIRS})
+    set(CMAKE_REQUIRED_LIBRARIES ${XTB_LINK_LIBRARIES})
 
     # check header file
     check_include_file_cxx(xtb.h HAVE_XTB_H)
     if(NOT HAVE_XTB_H)
-        message(FATAL_ERROR "xtb.h not found - provided path to xtb invalid")
+         message(FATAL_ERROR "xtb.h not found - provided path to xtb invalid")
     endif()
 
     # check simple function call
