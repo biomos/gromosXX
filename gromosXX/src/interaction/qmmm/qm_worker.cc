@@ -30,7 +30,7 @@
 #include "orca_worker.h"
 #include "nn_worker.h"
 
-#ifdef WITH_XTB
+#ifdef XTB
   #include "xtb_worker.h"
 #endif
 
@@ -74,7 +74,7 @@ interaction::QM_Worker * interaction::QM_Worker::get_instance(const simulation::
       return new NN_Worker;
     case simulation::qm_orca :
       return new Orca_Worker;
-#ifdef WITH_XTB
+#ifdef XTB
     case simulation::qm_xtb :
       return new XTB_Worker;
 #endif

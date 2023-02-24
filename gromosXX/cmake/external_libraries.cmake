@@ -36,10 +36,10 @@ endif()
 if(XTB)
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(XTB REQUIRED IMPORTED_TARGET xtb)
-    add_definitions(-DWITH_XTB)
     set(EXTERNAL_LIBRARIES ${EXTERNAL_LIBRARIES} ${XTB_LIBRARIES})
     set(EXTERNAL_INCLUDES ${EXTERNAL_INCLUDES} ${XTB_INCLUDE_DIRS})
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${XTB_CFLAGS_OTHER}")
+    add_definitions(-DXTB)
 endif()
 
 # find options based libraries

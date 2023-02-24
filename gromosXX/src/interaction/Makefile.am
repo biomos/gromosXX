@@ -129,7 +129,7 @@ xxintqmmm_HEADERS = qmmm/mm_atom.h\
 	qmmm/nonbonded/qmmm_nonbonded_outerloop.h \
 	qmmm/nonbonded/qmmm_nonbonded_set.h
 
-if WITH_XTB
+if XTB
   xxintqmmm_HEADERS += qmmm/xtb_worker.h
 endif
 
@@ -220,7 +220,7 @@ libgrointeraction_la_SOURCES = interaction.cc\
 	qmmm/nonbonded/qmmm_nonbonded_outerloop.cc\
 	qmmm/nonbonded/qmmm_nonbonded_set.cc
 
-if WITH_XTB
+if XTB
   libgrointeraction_la_SOURCES += qmmm/xtb_worker.cc
 endif
 
