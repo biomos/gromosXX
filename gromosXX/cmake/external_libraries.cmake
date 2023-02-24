@@ -45,13 +45,13 @@ endif()
 
 # find options based libraries
 if(OMP)
-    find_package(FFTWomp REQUIRED)
+    find_package(FFTW_OMP REQUIRED)
     set(EXTERNAL_LIBRARIES ${EXTERNAL_LIBRARIES} ${FFTW_OMP_LIBRARIES})
     set(EXTERNAL_INCLUDES ${EXTERNAL_INCLUDES} ${FFTW_OMP_INCLUDE_DIRS})
 endif()
 
 if(MPI)
-    find_package(FFTWmpi REQUIRED)
+    find_package(FFTW_MPI REQUIRED)
     set(EXTERNAL_LIBRARIES ${EXTERNAL_LIBRARIES} ${FFTW_MPI_LIBRARIES})
     set(EXTERNAL_INCLUDES ${EXTERNAL_INCLUDES}${FFTW_MPI_INCLUDE_DIRS})
 endif()

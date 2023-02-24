@@ -97,7 +97,7 @@ endif()
 
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(CLIPPER "Clipper library could not be found. Please specify CLIPPER_ROOT."
+find_package_handle_standard_args(Clipper "Clipper library could not be found. Please specify CLIPPER_ROOT."
         CLIPPER_INCLUDE_DIRS CLIPPER_CCP4_LIB CLIPPER_CCP4C_LIB CLIPPER_CONTRIB_LIB CLIPPER_CORE_LIB)
 
 set(CLIPPER_LIBRARIES
