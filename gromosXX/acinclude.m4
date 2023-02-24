@@ -483,7 +483,7 @@ AC_DEFUN([AM_PATH_XTB],[
       with_xtb=no
     ]
   )
-  AM_CONDITIONAL([XTB], [test x$with_xtb = xyes])
+  AM_CONDITIONAL([WITH_XTB], [test x$with_xtb = xyes])
 ])
 
 dnl allow for schnetpack
