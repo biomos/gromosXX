@@ -4126,6 +4126,17 @@ namespace simulation
        */
      struct gaussian_param_struct : public qm_param_struct{
         /**
+         * Constructor
+         * Default values:
+         * - use_fchk false
+         */
+        gaussian_param_struct() :
+                        use_fchk(false) {}
+        /**
+         * path for the formatted checkpoint file. Empty for a temporary file
+         */
+        std::string fchk_file;
+        /**
          * route section of the input file
          */
         std::string route_section;
@@ -4133,6 +4144,10 @@ namespace simulation
          * total charge and spin multiplicity in the input file
          */
         std::string chsm;
+        /**
+         * Using fchk_file
+         */
+        bool use_fchk;
       } gaussian;
 
      /**

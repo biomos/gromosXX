@@ -476,6 +476,21 @@ GAUFILES
 /path/to/gaussian.out
 END
 @endverbatim
+ * GAUFCHK block for the Gaussian worker
+ * The GAUFCHK block specifies the formatted checkpoint file to read gradients data from Gaussian
+ * 
+ * The file has to be created using the 'formcheck' keyword in the GAUROUTE block. Otherwise,
+ * the run ends with an error.
+ *
+ * This block is optional. If unspecified, gradients are read from the standard output file.
+ * Expect reduced precision. If specified as 'tmp', temporary file is created using TMPDIR
+ * environment variable. User-specified files are not deleted after use.
+ *
+ * @verbatim
+GAUFCHK
+/path/to/Test.FChk
+END
+@endverbatim
  *
  * The GAUHEADER block specifies the header part of the Gaussian input file.
  * 
@@ -837,15 +852,35 @@ void io::In_QMMM::read(topology::Topology& topo,
         io::messages.add("Using temporary files for Gaussian input/output",
                 "In_QMMM", io::message::notice);
       } else {
-        if (buffer.size() != 4) {
+        if (buffer.size() == 4) {
+          sim.param().qmmm.gaussian.input_file = buffer[1];
+          sim.param().qmmm.gaussian.output_file = buffer[2];
+        } else {
           io::messages.add("GAUFILES block corrupt. Provide 2 lines.",
                   "In_QMMM", io::message::error);
           return;
         }
-        sim.param().qmmm.gaussian.input_file = buffer[1];
-        sim.param().qmmm.gaussian.output_file = buffer[2];
       }
     } // GAUFILES
+    { // GAUFCHK
+      buffer = m_block["GAUFCHK"];
+      if (!buffer.size()) {
+        io::messages.add("Reading forces from Gaussian standard output (lower precision)",
+                "In_QMMM", io::message::notice);
+      } else {
+        if (buffer.size() == 3) {
+          sim.param().qmmm.gaussian.use_fchk = true;
+          // allow use of temporary file
+          if (buffer[1] != "tmp") {
+            sim.param().qmmm.gaussian.fchk_file = buffer[1];
+          }
+        } else {
+          io::messages.add("GAUFCHK block corrupt. Provide 1 line.",
+                  "In_QMMM", io::message::error);
+          return;
+        }
+      }
+    } // GAUFCHK
     { // GAUHEADER
       buffer = m_block["GAUHEADER"];
 
