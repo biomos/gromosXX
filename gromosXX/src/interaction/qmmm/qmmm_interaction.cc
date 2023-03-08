@@ -401,6 +401,9 @@ int interaction::QMMM_Interaction::init(topology::Topology& topo,
     }
     os << "\tusing external ";
     switch (sim.param().qmmm.software) {
+      case simulation::qm_ghost:
+        os << "Ghost";
+        break;
       case simulation::qm_mndo:
         os << "MNDO";
         break;

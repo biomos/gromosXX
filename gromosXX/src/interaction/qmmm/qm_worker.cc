@@ -21,6 +21,7 @@
 #include "mm_atom.h"
 #include "qm_zone.h"
 #include "qm_worker.h"
+#include "ghost_worker.h"
 #include "mndo_worker.h"
 #include "turbomole_worker.h"
 #include "dftb_worker.h"
@@ -57,6 +58,8 @@ interaction::QM_Worker::~QM_Worker() {
 interaction::QM_Worker * interaction::QM_Worker::get_instance(const simulation::Simulation& sim) {
 
   switch (sim.param().qmmm.software) {
+    case simulation::qm_ghost :
+      return new Ghost_Worker;
     case simulation::qm_mndo :
       return new MNDO_Worker;
     case simulation::qm_turbomole :
@@ -265,7 +268,7 @@ void interaction::QM_Worker::save_output_gradients(std::ofstream& ifs
 
   // Write energy
   ifs.setf(std::ios::fixed, std::ios::floatfield);
-  ifs << std::setprecision(6);
+  ifs << std::setprecision(12);
   ifs << "ENERGY: " << qm_zone.QM_energy() * energy_to_qm << '\n';
 
   // Write QM atoms

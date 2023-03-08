@@ -78,6 +78,16 @@ namespace interaction {
     util::Algorithm_Timer & timer() {return m_timer;}
 
     /**
+     * qm_zone accessor
+     */
+    QM_Zone* qm_zone() const { return m_qm_zone; }
+
+    /**
+     * qm_zone mutator
+     */
+    QM_Zone* qm_zone() { return m_qm_zone; }
+
+    /**
      * timing information.
      */
     virtual void print_timing(std::ostream & os);

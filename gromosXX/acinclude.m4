@@ -465,12 +465,13 @@ EOF
 ])
 
 dnl check for lib XTB
+dnl TODO should probably be handled with pkconfig: https://autotools.info/pkgconfig/pkg_check_modules.html
 AC_DEFUN([AM_PATH_XTB],[
   AC_ARG_WITH(xtb,
     [  --with-xtb=DIR         xtb library directory to use],
     [
-      [CXXFLAGS="$CXXFLAGS -I${withval}/include -L${withval}/build"]
-      [LDFLAGS="$LDFLAGS -L${withval}/build"]
+      [CXXFLAGS="$CXXFLAGS -I${withval}/include -L${withval}/lib/x86_64-linux-gnu"]
+      [LDFLAGS="$LDFLAGS -L${withval}/lib/x86_64-linux-gnu"]
       dnl check for lib with these settings and add flags automatically
       AC_CHECK_LIB([xtb], [xtb_getAPIVersion],, AC_MSG_ERROR([xtb library not found or not functional.]))
       AC_MSG_NOTICE([Compiling with XTB support.])
