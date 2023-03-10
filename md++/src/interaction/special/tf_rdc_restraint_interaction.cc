@@ -402,11 +402,11 @@ int _magnetic_field_vector_sd
       double ct = (rh_ij(0)*r_ij[l](0)+rh_ij(1)*r_ij[l](1)+rh_ij(2)*r_ij[l](2))*(inv_dh_ij*inv_d_ij[l]);
       costheta.push_back(ct);
 
-      DEBUG(9, "r_i  :" << math::v2s(r_i1));
-      DEBUG(9, "r_ij :" << math::v2s(r_ij1));
+      DEBUG(9, "mfv r_i  :" << math::v2s(r_i1));
+      DEBUG(9, "mfv r_ij :" << math::v2s(r_ij1));
       // compute  P, P is dimensionless
       const double P = 0.5 * (3 * costheta[l] * costheta[l] - 1.0);          // [-]
-      DEBUG(15, "P: " << P);
+      DEBUG(15, "P mfv initial: " << P);
       DEBUG(15, "Theta of k1k2: " << acos(costheta[l]));
 
       // time-averaging
@@ -432,12 +432,6 @@ int _magnetic_field_vector_sd
 
       conf.current().energies.tfrdc_mfv_energy.assign(conf.current().energies.tfrdc_mfv_energy.size(), 0.0);
 
-      // com translation removal
-      if ((sdstep % conf.special().tfrdc_mfv.n_com_translation_removal) == 0) {
-        math::Vec com_vel = (conf.special().tfrdc_mfv.vel[0]+conf.special().tfrdc_mfv.vel[1])/2;
-        conf.special().tfrdc_mfv.vel[0]-= com_vel;
-        conf.special().tfrdc_mfv.vel[1]-= com_vel;
-      }
     
       // -----  calculate forces on magn. field vector -----
       math::VArray forces(2, math::Vec(0.0, 0.0, 0.0));
@@ -636,7 +630,7 @@ int _magnetic_field_vector_sd
         }
  
         const double P = 0.5 * (3 * costheta[l] * costheta[l] - 1.0);          // [-]
-        DEBUG(15, "P: " << P);
+        DEBUG(15, "P mfv: " << P);
         DEBUG(15, "Theta of k1k2: " << acos(costheta[l]));
 
         // apply time averaging
@@ -712,7 +706,6 @@ void _init_mfv_sd(configuration::Configuration & conf,
   
   tfrdc_mfv.mass = sim.param().tfrdc.mfv_mass;
   tfrdc_mfv.d = sim.param().tfrdc.mfv_r;
-  tfrdc_mfv.n_com_translation_removal = 1000;
   tfrdc_mfv.sd.kToverM = sqrt(math::k_Boltzmann * sim.param().tfrdc.tempsd / tfrdc_mfv.mass);
   DEBUG(12, "kb "<< math::k_Boltzmann << "Temp " << sim.param().tfrdc.tempsd << "mass "<< tfrdc_mfv.mass);
 

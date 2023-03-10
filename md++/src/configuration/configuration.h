@@ -846,7 +846,6 @@ namespace configuration {
 
         double mass;
         double d;
-        unsigned int n_com_translation_removal;
     } /** tensor-free RDC magnetic field vector information */ tfrdc_mfv;
       
 
