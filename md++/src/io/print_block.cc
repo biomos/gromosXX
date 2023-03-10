@@ -506,6 +506,7 @@ namespace io
     os << type << "TFRDCrest            : " << std::setw(30) << e.tfrdc_total << "\n";
     os << type << "TFRDCmfvrest         : " << std::setw(30) << e.tfrdc_mfv_total << "\n";
     os << type << "TFRDCmfvaverest      : " << std::setw(30) << e.tfrdc_mfv_ave_total << "\n";
+    os << type << "TFRDCmfvkinetic      : " << std::setw(30) << e.tfrdc_mfv_kinetic_energy << "\n";
     os << type << "Zaxisoribiasrest     : " << std::setw(30) << e.zaxisoribias_total << "\n";
     os << type << "Symmetry restraints  : " << std::setw(30) << e.symrest_total << "\n";
     os << type << "EDS reference        : " << std::setw(30) << e.eds_vr << "\n";
