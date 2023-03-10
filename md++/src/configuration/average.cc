@@ -470,6 +470,7 @@ fluct.prop = old_fluct.prop + dt * e.prop * e.prop
   ENERGY_AVG(tfrdc_total);
   ENERGY_AVG(tfrdc_mfv_total);
   ENERGY_AVG(tfrdc_mfv_ave_total);
+  ENERGY_AVG(tfrdc_mfv_kinetic_energy);
   ENERGY_AVG(zaxisoribias_total);
   ENERGY_AVG(symrest_total);
   ENERGY_AVG(constraints_total);
@@ -727,6 +728,7 @@ void configuration::Average::Block_Average
   ENERGY_RES(tfrdc_total);
   ENERGY_RES(tfrdc_mfv_total);
   ENERGY_RES(tfrdc_mfv_ave_total);
+  ENERGY_RES(tfrdc_mfv_kinetic_energy);
   ENERGY_RES(zaxisoribias_total);
   ENERGY_RES(symrest_total);
   ENERGY_RES(constraints_total);
