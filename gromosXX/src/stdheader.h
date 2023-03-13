@@ -12,6 +12,7 @@
 #include <sstream>
 #include <fstream>
 #include <map>
+#include <unordered_map>
 #include <set>
 #include <vector>
 #include <stdexcept>

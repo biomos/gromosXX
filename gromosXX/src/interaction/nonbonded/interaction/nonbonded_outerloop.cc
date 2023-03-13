@@ -117,8 +117,7 @@ void interaction::Nonbonded_Outerloop
   std::vector<unsigned int>::const_iterator j_it, j_to;
 
   const std::string timer_name_solute(longrange ? "longrange solute" : "shortrange solute");
-  //if (master)
-    timer.start_subtimer(timer_name_solute);
+  timer.start_subtimer(timer_name_solute);
   
   unsigned int size_i = unsigned(pairlist_solute.size());
   DEBUG(10, "lj_crf_outerloop pairlist size " << size_i);
@@ -138,8 +137,7 @@ void interaction::Nonbonded_Outerloop
       innerloop.lj_crf_innerloop(topo, conf, i, *j_it, storage, periodicity, sim.param().gamd.gamd);
     }
   }
-  //if (master)
-    timer.stop_subtimer(timer_name_solute);
+  timer.stop_subtimer(timer_name_solute);
   
 /*only for DEBUG*/
  /* DEBUG(1,"current solute pairlist:\n");
@@ -170,8 +168,8 @@ unsigned int i_deb;
   if (sim.param().innerloop.method == simulation::sla_cuda) return;
   // solvent-solvent
   const std::string timer_name_solvent(longrange ? "longrange solvent-solvent" : "shortrange solvent-solvent");
-  //if (master)
-    timer.start_subtimer(timer_name_solvent);
+  timer.start_subtimer(timer_name_solvent);
+
   if (sim.param().force.special_loop == simulation::special_loop_spc) { // special solvent loop
     // solvent - solvent with spc innerloop...
     for (; i < size_i; i += 3) { // use every third pairlist (OW's)
@@ -264,8 +262,7 @@ unsigned int i_deb;
       }
     }
   }
-  //if (master)
-    timer.stop_subtimer(timer_name_solvent);
+  timer.stop_subtimer(timer_name_solvent);
 }
 
 
@@ -299,8 +296,8 @@ void interaction::Nonbonded_Outerloop
   std::vector<unsigned int>::const_iterator j_it, j_to;
 
   const std::string timer_name_solute(longrange ? "longrange solute" : "shortrange solute");
-  //if (master)
-    timer.start_subtimer(timer_name_solute);
+  timer.start_subtimer(timer_name_solute);
+
   unsigned int size_i = unsigned(pairlist_solute.size());
   DEBUG(10, "lj_crf2 outerloop pairlist size " << size_i);
 
@@ -382,8 +379,7 @@ void interaction::Nonbonded_Outerloop
       }
     }
   }
-  //if (master)
-    timer.stop_subtimer(timer_name_solute);
+  timer.stop_subtimer(timer_name_solute);
   
   
 /*only for DEBUG*/
@@ -415,8 +411,8 @@ unsigned int i_deb;
   if (sim.param().innerloop.method == simulation::sla_cuda) return;
   // solvent-solvent
   const std::string timer_name_solvent(longrange ? "longrange solvent-solvent" : "shortrange solvent-solvent");
-  //if (master)
-    timer.start_subtimer(timer_name_solvent);
+  timer.start_subtimer(timer_name_solvent);
+
   if (sim.param().force.special_loop == simulation::special_loop_spc) { // special solvent loop
     // solvent - solvent with spc innerloop...
 
@@ -1116,8 +1112,7 @@ unsigned int i_deb;
       }
     }
   }
-  //if (master)
-    timer.stop_subtimer(timer_name_solvent);
+  timer.stop_subtimer(timer_name_solvent);
 }
 
 void interaction::Nonbonded_Outerloop
