@@ -1,0 +1,190 @@
+/* config.h.in.  Generated from cmake configuration.  */
+
+/* GNU C++ compiler */
+#cmakedefine COMPILER_GCC @COMPILER_GCC@
+
+/* Intel C++ compiler */
+#cmakedefine COMPILER_ICC @COMPILER_ICC@
+
+/* PGI compiler */
+#cmakedefine COMPILER_PGICC @COMPILER_PGICC@
+
+/* SUN C++ compiler */
+#cmakedefine COMPILER_SUNCC @COMPILER_SUNCC@
+
+/* prefix for fftw3 library */
+#cmakedefine FFTW_PREFIX @FFTW_PREFIX@
+
+/* Define to 1 if you have the `acosh' function. */
+#cmakedefine HAVE_ACOSH @HAVE_ACOSH@
+
+/* Define to 1 if you have the `asinh' function. */
+#cmakedefine HAVE_ASINH @HAVE_ASINH@
+
+/* Define to 1 if you have the `atanh' function. */
+#cmakedefine HAVE_ATANH @HAVE_ATANH@
+
+/* Define to 1 if you have the `chdir' function. */
+#cmakedefine HAVE_CHDIR @HAVE_CHDIR@
+
+/* Have clipper x-ray library */
+#cmakedefine HAVE_CLIPPER @HAVE_CLIPPER@
+
+/* Define to 1 if you have the <dlfcn.h> header file. */
+#cmakedefine HAVE_DLFCN_H @HAVE_DLFCN_H@
+
+/* Define to 1 if you have the `expm1' function. */
+#cmakedefine HAVE_EXPM1 @HAVE_EXPM1@
+
+/* have finite */
+#cmakedefine HAVE_FINITE @HAVE_FINITE@
+
+/* Define to 1 if you have the `getcwd' function. */
+#cmakedefine HAVE_GETCWD @HAVE_GETCWD@
+
+/* Define to 1 if you have the `hypot' function. */
+#cmakedefine HAVE_HYPOT @HAVE_HYPOT@
+
+/* Define to 1 if you have the <inttypes.h> header file. */
+#cmakedefine HAVE_INTTYPES_H @HAVE_INTTYPES_H@
+
+/* have isfinite */
+#cmakedefine HAVE_ISFINITE @HAVE_ISFINITE@
+
+/* has isinf */
+#cmakedefine HAVE_ISINF @HAVE_ISINF@
+
+/* have isnan */
+#cmakedefine HAVE_ISNAN @HAVE_ISNAN@
+
+/* Define to 1 if you have the `cukernel' library (-lcukernel). */
+#cmakedefine HAVE_LIBCUKERNEL @HAVE_LIBCUKERNEL@
+
+/* Define to 1 if you have the `fftw3' library (-lfftw3). */
+#cmakedefine HAVE_LIBFFTW3 @HAVE_LIBFFTW3@
+
+/* Define to 1 if you have the `fftw3_mpi' library (-lfftw3_mpi). */
+#cmakedefine HAVE_LIBFFTW3_MPI @HAVE_LIBFFTW3_MPI@
+
+/* Define to 1 if you have the `fftw3_omp' library (-lfftw3_omp). */
+#cmakedefine HAVE_LIBFFTW3_OMP @HAVE_LIBFFTW3_OMP@
+
+/* Define to 1 if you have the `m' library (-lm). */
+#cmakedefine HAVE_LIBM @HAVE_LIBM@
+
+/* Define to 1 if you have the `nsl' library (-lnsl). */
+#cmakedefine HAVE_LIBNSL @HAVE_LIBNSL@
+
+/* Define to 1 if you have the `socket' library (-lsocket). */
+#cmakedefine HAVE_LIBSOCKET @HAVE_LIBSOCKET@
+
+/* Define to 1 if you have the `z' library (-lz). */
+#cmakedefine HAVE_LIBZ @HAVE_LIBZ@
+
+/* Define to 1 if you have the `log1p' function. */
+#cmakedefine HAVE_LOG1P @HAVE_LOG1P@
+
+/* Define to 1 if you have the <memory.h> header file. */
+#cmakedefine HAVE_MEMORY_H @HAVE_MEMORY_H@
+
+/* Define to 1 if you have the `remove' function. */
+#cmakedefine HAVE_REMOVE @HAVE_REMOVE@
+
+/* Define to 1 if you have the <stdint.h> header file. */
+#cmakedefine HAVE_STDINT_H @HAVE_STDINT_H@
+
+/* Define to 1 if you have the <stdlib.h> header file. */
+#cmakedefine HAVE_STDLIB_H @HAVE_STDLIB_H@
+
+/* Define to 1 if you have the <strings.h> header file. */
+#cmakedefine HAVE_STRINGS_H @HAVE_STRINGS_H@
+
+/* Define to 1 if you have the <string.h> header file. */
+#cmakedefine HAVE_STRING_H @HAVE_STRING_H@
+
+/* Define to 1 if you have the `symlink' function. */
+#cmakedefine HAVE_SYMLINK @HAVE_SYMLINK@
+
+/* Define to 1 if you have the `getenv' function. */
+#cmakedefine HAVE_GETENV @HAVE_GETENV@
+
+/* Define to 1 if you have the `system' function. */
+#cmakedefine HAVE_SYSTEM @HAVE_SYSTEM@
+
+/* Define to 1 if you have the <sys/stat.h> header file. */
+#cmakedefine HAVE_SYS_STAT_H @HAVE_SYS_STAT_H@
+
+/* Define to 1 if you have the <sys/types.h> header file. */
+#cmakedefine HAVE_SYS_TYPES_H @HAVE_SYS_TYPES_H@
+
+/* Define to 1 if you have the `tmpnam' function. */
+#cmakedefine HAVE_TMPNAM @HAVE_TMPNAM@
+
+/* Define to 1 if you have the `mkstemp` function. */
+#cmakedefine HAVE_MKSTEMP @HAVE_MKSTEMP@
+
+/* Define to 1 if you have the `mkdtemp` function. */
+#cmakedefine HAVE_MKDTEMP @HAVE_MKDTEMP@
+
+/* Define to 1 if you have the <unistd.h> header file. */
+#cmakedefine HAVE_UNISTD_H @HAVE_UNISTD_H@
+
+/* Define to 1 if you have the `unlink' function. */
+#cmakedefine HAVE_UNLINK @HAVE_UNLINK@
+
+/* Define to the sub-directory in which libtool stores uninstalled libraries.
+   */
+#cmakedefine LT_OBJDIR @LT_OBJDIR@
+
+/* MD date (configure) */
+#cmakedefine MD_DATE @MD_DATE@
+
+/* MD version info */
+#cmakedefine MD_VERSION @MD_VERSION@
+
+/* Define to the address where bug reports for this package should be sent. */
+#define PACKAGE_BUGREPORT ""
+
+/* Define to the full name of this package. */
+#define PACKAGE_NAME ""
+
+/* Define to the full name and version of this package. */
+#define PACKAGE_STRING ""
+
+/* Define to the one symbol short name of this package. */
+#define PACKAGE_TARNAME ""
+
+/* Define to the home page for this package. */
+#define PACKAGE_URL ""
+
+/* Define to the version of this package. */
+#define PACKAGE_VERSION ""
+
+/* replica-exchange simulation */
+#cmakedefine REPEX @REPEX@
+
+/* Define to 1 if you have the ANSI C header files. */
+// DISABLED: only c++ used
+// #cmakedefine STDC_HEADERS @STDC_HEADERS@
+
+/* top src directory */
+#cmakedefine TOP_SOURCE_DIR @TOP_SOURCE_DIR@
+
+/* enable force groups */
+#cmakedefine XXFORCEGROUPS @XXFORCEGROUPS@
+
+/* enable Heaviside truncation */
+#cmakedefine XXHEAVISIDE @XXHEAVISIDE@
+
+/* Define to empty if `const' does not conform to ANSI C. */
+#cmakedefine const @const@
+
+/* Define to `__inline__' or `__inline' if that's what the C compiler
+   calls it, or to nothing if 'inline' is not supported under any name.  */
+#ifndef __cplusplus
+// DISABLED: only c++ used
+// #define inline
+#endif
+
+/* Define to `unsigned int' if <sys/types.h> does not define. */
+#cmakedefine size_t @size_t@
