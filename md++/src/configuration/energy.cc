@@ -439,12 +439,12 @@ int configuration::Energy::calculate_totals()
       }
     }
   }
+
   //ORIOL_GAMD
   for(unsigned int i=0; i<gamd_DV.size(); ++i){
     gamd_DV_total += gamd_DV[i];
   }  
   
-
   for(size_t i=0; i<kinetic_energy.size(); ++i){
     if (kinetic_energy[i] > m_ewarn){
       std::cout << "EWARN: kinetic energy " << i+1 << " = " << kinetic_energy[i] << "\n";

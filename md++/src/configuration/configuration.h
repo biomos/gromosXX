@@ -482,7 +482,7 @@ namespace configuration {
       disres_struct pertdistanceres;
 
       /**
-       * @struct zalres_struct
+       * @struct zaxisoribias_struct
        * holds the z-axis orientation bias configuration data
        */
       struct zaxisoribias_struct {

@@ -673,7 +673,7 @@ int interaction::TF_RDC_Restraint_Interaction::calculate_interactions
         simulation::Simulation & sim) {
   m_timer.start(sim);
   int error = 0;
-  m_timer.start("mfv");
+  m_timer.start_subtimer("mfv");
   if (sim.param().tfrdc.nstsd > 0) {
     SPLIT_VIRIAL_BOUNDARY(_magnetic_field_vector_sd,
           topo, conf, sim, m_rng, error);
@@ -681,7 +681,7 @@ int interaction::TF_RDC_Restraint_Interaction::calculate_interactions
 
     conf.special().tfrdc_mfv.sd.seed=m_rng->seed();
   }
-  m_timer.stop("mfv");
+  m_timer.stop_subtimer("mfv");
 
   SPLIT_VIRIAL_BOUNDARY(_calculate_tf_rdc_restraint_interactions,
           topo, conf, sim);
