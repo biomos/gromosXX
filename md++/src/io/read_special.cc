@@ -319,7 +319,7 @@ int io::read_special(io::Argument const & args,
     }
   } // TFRDCRES
 
-  // ZANGLE restraints
+  // Z-axis orientation bias
     if (sim.param().zaxisoribias.zaxisoribias){
       io::igzstream zaxisoribias_file;
 
@@ -341,7 +341,7 @@ int io::read_special(io::Argument const & args,
                   "read special", io::message::notice);
         }
       }
-    }// ZANGLE restraints
+    }// Z-axis orientation bias
 
 
     // FRICTION

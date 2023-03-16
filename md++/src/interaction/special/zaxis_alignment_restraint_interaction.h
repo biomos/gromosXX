@@ -18,7 +18,7 @@ namespace interaction
     /**
      * Constructor.
      */
-    Zaxis_Orientation_Bias_Interaction() : Interaction("ZalignRestraint"),
+    Zaxis_Orientation_Bias_Interaction() : Interaction("ZaxisOriBias"),
         exponential_term(0.0) {}
 
     /**

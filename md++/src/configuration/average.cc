@@ -308,6 +308,7 @@ void configuration::Average::Block_Average
 	      std::vector<double> & scaling_fluctuations)const
 {
   double diff = 0.0;
+
   mass = mass_avg / time;
   diff = mass_fluct - mass_avg * mass_avg / time;
   if (diff > 0.0)
@@ -808,6 +809,7 @@ void configuration::Average::Block_Average
     ENERGY_RES(tfrdc_mfv_energy[i]);
     ENERGY_RES(tfrdc_mfv_ave_energy[i]);
     ENERGY_RES(zaxisoribias_energy[i]);
+
     ENERGY_RES(self_energy[i]);
   }
 

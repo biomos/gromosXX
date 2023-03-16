@@ -935,7 +935,7 @@ bool io::In_Configuration::read_rdc (topology::Topology &topo,
       if (buffer.size()) {
         if (sim.param().rdc.read_av) {
 //          io::messages.add("initialising RDC restraint averages from saved values", "In_Configuration", io::message::notice);
-          if(!_read_rdc_av(buffer, conf.special().rdc, topo.rdc_restraints(), os)){
+          if(!_read_rdc_av(buffer, sim, conf.special().rdc_groups, topo.rdc_restraints(), os)){
             io::messages.add("reading RDCAVERAGES block failed", "In_Configuration", io::message::error);
             return false;
           }
@@ -976,7 +976,7 @@ bool io::In_Configuration::read_rdc (topology::Topology &topo,
 	buffer = m_block["RDCTAVERAGE"];
 	if (buffer.size()) {
 		block_read.insert("RDCTAVERAGE"); // mark block read
-		if(!_read_rdc_taverage(buffer, conf.special().rdc, os)){
+		if(!_read_rdc_taverage(buffer, conf.special().rdc_groups, os)){
 			io::messages.add("problem reading RDCTAVERAGE block in input configuration", "In_Configuration", io::message::error);
 			return false;
 		}
@@ -989,7 +989,7 @@ bool io::In_Configuration::read_rdc (topology::Topology &topo,
 	buffer = m_block["RDCCUMAVE"];
 	if (buffer.size()) {
 		block_read.insert("RDCCUMAVE"); // mark block read
-		if(!_read_rdc_cumav(buffer, conf.special().rdc, topo.rdc_restraints(), os)){
+		if(!_read_rdc_cumav(buffer, sim, conf.special().rdc_groups, topo.rdc_restraints(), os)){
 			io::messages.add("problem reading RDCCUMAVE block in input configuration", "In_Configuration", io::message::error);
 			return false;
 		}
@@ -1012,7 +1012,7 @@ bool io::In_Configuration::read_rdc (topology::Topology &topo,
           if (sim.param().rdc.read_align) {
             if (buffer.size()) {
 //              io::messages.add("magnetic field vectors from saved values", "In_Configuration", io::message::notice);
-              if(!_read_rdc_mf(buffer, conf.special().rdc, topo.rdc_restraints(), os)){
+              if(!_read_rdc_mf(buffer, conf.special().rdc_groups, topo.rdc_restraints(), os)){
                 io::messages.add("reading of RDCMF block failed", "In_Configuration", io::message::error);
                 return false;
               }
@@ -1035,7 +1035,7 @@ bool io::In_Configuration::read_rdc (topology::Topology &topo,
           if (sim.param().rdc.read_align) {
             if (buffer.size()) {
 //              io::messages.add("magnetic field vectors from saved values", "In_Configuration", io::message::notice);
-              if(!_read_rdc_t(buffer, conf.special().rdc, os)){
+              if(!_read_rdc_t(buffer, conf.special().rdc_groups, os)){
                 io::messages.add("reading of RDCT block failed", "In_Configuration", io::message::error);
                 return false;
               }
@@ -1058,7 +1058,7 @@ bool io::In_Configuration::read_rdc (topology::Topology &topo,
           if (sim.param().rdc.read_align) {
             if (buffer.size()) {
 //              io::messages.add("magnetic field vectors from saved values", "In_Configuration", io::message::notice);
-              if(!_read_rdc_sh(buffer, conf.special().rdc, os)){
+              if(!_read_rdc_sh(buffer, conf.special().rdc_groups, os)){
                 io::messages.add("reading of RDCSH block failed", "In_Configuration", io::message::error);
                 return false;
               }
@@ -1087,7 +1087,7 @@ bool io::In_Configuration::read_rdc (topology::Topology &topo,
       buffer = m_block["RDCSTOCHINT"];
       if (buffer.size()) {
         block_read.insert("RDCSH"); // mark block read
-        if(!_read_rdc_stochint(buffer, conf.special().rdc, sim.param().rdc.type, os)){
+        if(!_read_rdc_stochint(buffer, conf.special().rdc_groups, sim.param().rdc.type, os)){
           io::messages.add("reading of RDCSTOCHINT block failed", "In_Configuration", io::message::error);
           return false;
         }
@@ -2631,6 +2631,7 @@ bool io::In_Configuration::_read_order_parameter_restraint_average_window(
 
 //FIXME remove rdc-res dependency
 bool io::In_Configuration::_read_rdc_av(std::vector<std::string> &buffer,
+                                           simulation::Simulation &sim,
                            std::vector<configuration::Configuration::special_struct::rdc_struct> &rdc,
                            std::vector<std::vector<topology::rdc_restraint_struct> > const &rdc_res,
                            std::ostream & os)
@@ -2666,7 +2667,7 @@ bool io::In_Configuration::_read_rdc_av(std::vector<std::string> &buffer,
     _lineStream.str(*buff_it);
 
     _lineStream >> av;
-	 av*=rdc[i].factorFreq;
+	 av*=sim.param().rdc.factorFreq;
     if (_lineStream.fail()){
       io::messages.add("Bad value in RDCAVERAGES block", "In_Configuration", io::message::error);
       return false;
@@ -2688,6 +2689,7 @@ bool io::In_Configuration::_read_rdc_av(std::vector<std::string> &buffer,
 
 //FIXME remove rdc-res dependency
 bool io::In_Configuration::_read_rdc_cumav(std::vector<std::string> &buffer,
+                                           simulation::Simulation &sim,
 													std::vector<configuration::Configuration::special_struct::rdc_struct> &rdc,
 													std::vector<std::vector<topology::rdc_restraint_struct> > const &rdc_res,
 													std::ostream & os)
@@ -2732,7 +2734,7 @@ bool io::In_Configuration::_read_rdc_cumav(std::vector<std::string> &buffer,
 	 _lineStream.str(*buff_it);
 
 	 _lineStream >> cumav;
-	 cumav*=rdc[i].factorFreq;
+	 cumav*=sim.param().rdc.factorFreq;
 	 if (_lineStream.fail()){
 		 io::messages.add("Bad value in RDCAVERAGES block", "In_Configuration", io::message::error);
 		 return false;

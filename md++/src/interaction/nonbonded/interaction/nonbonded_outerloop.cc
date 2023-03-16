@@ -1297,7 +1297,6 @@ void interaction::Nonbonded_Outerloop
     } // end else
   } // end atoms i
 
-
   // finally calculate the forces (for sasa and, if used, vol)
   // has to be in a separate loop because we need the switching function derivative
   // for all atoms to have been computed

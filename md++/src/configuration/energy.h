@@ -562,7 +562,7 @@ namespace configuration
      */
     double get_energy_by_index(const unsigned int & index);
     
-    static const unsigned int MAX_ENERGY_INDEX = 46;
+    static const unsigned int MAX_ENERGY_INDEX = 54;
 
   private:
     double m_ewarn;
