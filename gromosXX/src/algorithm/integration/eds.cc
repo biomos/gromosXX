@@ -291,6 +291,11 @@ int algorithm::EDS
               }
               DEBUG(7, "emin4 " << sim.param().eds.emin);
             }
+            // sanity check to prevent acceleration leading to a flat energy surface (1000 k_BT)
+            if ((sim.param().eds.emax - sim.param().eds.emin) > 1.0/beta * 1000){
+              sim.param().eds.emin = 1.0/beta * 1000 - sim.param().eds.emax;
+            }
+            DEBUG(7, "emin5 " << sim.param().eds.emin);
           }
           conf.current().energies.eds_globmin = globminavg;
           conf.current().energies.eds_globminfluc = globminfluc;
