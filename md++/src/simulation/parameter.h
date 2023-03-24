@@ -4123,6 +4123,7 @@ namespace simulation
        * Default values:
        * - mode 0 (no tensor-free RDC restraints)
        * - K 0.0
+       * - dD_linear 1.0
        * - taur 0.5
        * - taut 5.0
        * - read false
@@ -4132,6 +4133,7 @@ namespace simulation
       tfrdc_struct()
 	: mode(tfrdc_restr_off),
 	  K(0.0),
+    dD_linear(1.0),
 	  taur(0.5),
     taut(5.0),
 	  read(false),
@@ -4150,6 +4152,10 @@ namespace simulation
        * force constant K
        */
       double K;
+      /**
+       * offset at which to change to linear restraining function
+       */
+      double dD_linear;
       /**
        * r memory time for time averaging
        */
@@ -4176,6 +4182,10 @@ namespace simulation
        * force constant on the magn. field vector
        */
       double Kmfv;
+      /**
+       * offset at which to change to linear restraining function for MFV
+       */
+      double dD_linear_mfv;
       /**
        * theta memory time for time averaging of 
        * magnetic field vector restraining
