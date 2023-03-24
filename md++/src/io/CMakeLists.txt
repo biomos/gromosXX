@@ -29,6 +29,8 @@ set(IO_CC
     topology/in_qmmm.cc
     topology/in_symrest.cc
     topology/in_rdc.cc
+    topology/in_tf_rdc.cc
+    topology/in_zaxisoribias.cc
 )
 
 add_library(groio OBJECT ${IO_CC})
