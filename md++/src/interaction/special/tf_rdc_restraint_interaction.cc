@@ -85,6 +85,7 @@ int _calculate_tf_rdc_restraint_interactions
     if (sim.param().tfrdc.taut > 0.0)
       exptaut = exp(-sim.time_step_size() / sim.param().tfrdc.taut);    // [-]
     const double & K = sim.param().tfrdc.K * 1e24;        // [kJ ps^2 / mol]
+    const double & dD_linear = sim.param().tfrdc.dD_linear * 1e-12; // [1/ps];
 
     // compute constant force terms
     const double dRavedR = 1.0 - exptaur;                       // [-]
@@ -157,6 +158,7 @@ int _calculate_tf_rdc_restraint_interactions
         }
 
         double term = 0.0;
+        double dev_sign = 0.0;
         switch (sim.param().tfrdc.mode) {
             case simulation::tfrdc_restr_off:
                 break;
@@ -193,8 +195,10 @@ int _calculate_tf_rdc_restraint_interactions
                 DEBUG(15, "D_k^c [Hz]: " << interaction::D_c(it)*pow(10,12));
 
                 if (RDC_avg > it->D0 + it->dD0) {
+                  dev_sign = -1;
                   term = RDC_avg - it->D0 - it->dD0;            // [1 / ps]
                 } else if (RDC_avg < it->D0 - it->dD0) {
+                  dev_sign = 1;
                   term = RDC_avg - it->D0 + it->dD0;            // [1 / ps]
                 } else {
                   DEBUG(9, "TFRDCRES  : restraint fulfilled");
@@ -227,18 +231,28 @@ int _calculate_tf_rdc_restraint_interactions
         DEBUG(9, "dR_avg/dR: " << dRavedR);
         DEBUG(9, "dP_avg/dP: " << dPavedP);
 
-        force = term * interaction::D_c(it) * (P_avg * dRavedR * dRdr + R_avg * dPavedP * dPdr);  // [1 / (ps^2 nm)]
+        if (term == 0) {
+          force = 0.0;
+          energy = 0.0;
+        } else if (fabs(conf.special().tfrdc.RDC_avg[l] - it->D0) > it->dD0 + dD_linear) {
+          DEBUG(9, "TFRDCRES  : linear");
+          force = K * dev_sign * dD_linear * interaction::D_c(it) * (P_avg * dRavedR * dRdr + R_avg * dPavedP * dPdr);
+          energy = -1 * dev_sign * K * (term + dev_sign * 0.5 * dD_linear) * dD_linear;
+        } else {
+          DEBUG(9, "TFRDCRES  : harmonic");
+          force = - K * term * interaction::D_c(it) * (P_avg * dRavedR * dRdr + R_avg * dPavedP * dPdr);  // [1 / (ps^2 nm)]
+          energy = 0.5 * K * term * term;  
+        }
+
 
         //TODO: remove the following line:
         math::Vec force_rescaled = term * interaction::D_c(it) * (P_avg * q_scale * dRdr + R_avg * dPdr);  // [1 / (ps^2 nm)]                  // [kJ / mol]
         DEBUG(9, "force           :" << math::v2s(force) );
-        DEBUG(9, "force / rescaled:" << math::v2s(force_rescaled) );
-
-        energy = 0.5 * K * term * term;                         // [kJ / mol]
+        DEBUG(9, "force / rescaled:" << math::v2s(force_rescaled) );                       // [kJ / mol]
         DEBUG(9, "Term in [1/ps]:" << term);
         DEBUG(9, "Energy before weighting [kJ/mol]:" << energy);
         math::Vec f_i(0.0, 0.0, 0.0), f_j(0.0, 0.0, 0.0);
-        f_i = - K * force;                                      // [(kJ ps^2 / mol) * (1 / (ps^2 nm))] = [kJ / (mol nm)]
+        f_i = force;                                      // [(kJ ps^2 / mol) * (1 / (ps^2 nm))] = [kJ / (mol nm)]
         f_j = -f_i;                                             // [kJ / (mol nm)]
 
         // weight if necessary
@@ -375,6 +389,7 @@ int _magnetic_field_vector_sd
       exptaut = exp(-sim.time_step_size() / sim.param().tfrdc.tauth);    // [-]
     const double & K = sim.param().tfrdc.Kmfv * 1e24;        // [kJ ps^2 / mol]
     const double dPavedP = 1.0 - exptaut;                       // [-]
+    const double & dD_linear_mfv = sim.param().tfrdc.dD_linear_mfv * 1e-12; // [1/ps];
 
 
     // initialize
@@ -457,10 +472,14 @@ int _magnetic_field_vector_sd
           DEBUG(15, "D_k^c [Hz]: " << interaction::D_c(it)*pow(10,12));
 
           double term = 0.0;
-          if (conf.special().tfrdc_mfv.RDC_expavg[l] > it->D0 + it->dD0) {
-            term = conf.special().tfrdc_mfv.RDC_expavg[l] - it->D0 - it->dD0;            // [1 / ps]
-          } else if (conf.special().tfrdc_mfv.RDC_expavg[l] < it->D0 - it->dD0) {
-            term = conf.special().tfrdc_mfv.RDC_expavg[l] - it->D0 + it->dD0;            // [1 / ps]
+          double dev_sign = 0.0;
+          double Ddev = conf.special().tfrdc_mfv.RDC_expavg[l] - it->D0;
+          if (Ddev > it->dD0) {
+            dev_sign = -1;
+            term = Ddev - it->dD0;            // [1 / ps]
+          } else if (Ddev < -it->dD0) {
+            dev_sign = 1;
+            term = Ddev + it->dD0;            // [1 / ps]
           } else {
             DEBUG(9, "TFRDCRES  : restraint fulfilled");
           }
@@ -473,20 +492,30 @@ int _magnetic_field_vector_sd
           DEBUG(9, "dP/dr" << math::v2s(dPdr));
           DEBUG(9, "dP_expavg/dP: " << dPavedP);
 
-          force = term * interaction::D_c(it) * dPavedP * dPdr;  // [1 / (ps^2 nm)]
-          mfv_energy = 0.5 * K * term * term;
+          if (term == 0) {
+            force = 0.0;
+            mfv_energy = 0.0;
+          } else if (fabs(Ddev) > it->dD0 + dD_linear_mfv) {
+            DEBUG(9, "TFRDCRESmfv: linear");
+            force = K * dev_sign * dD_linear_mfv * interaction::D_c(it) * dPavedP * dPdr;
+            mfv_energy = -1 * dev_sign * K * (term + dev_sign * 0.5 * dD_linear_mfv) * dD_linear_mfv;
+          } else {
+            DEBUG(9, "TFRDCRESmfv: harmonic");
+            force = -K * term * interaction::D_c(it) * dPavedP * dPdr;  // [1 / (ps^2 nm)]
+            mfv_energy = 0.5 * K * term * term;
+          }
           DEBUG(9, "Energy mfv [kJ/mol]: " << mfv_energy);
 
           if (sim.param().tfrdc.mode == simulation::tfrdc_restr_av_weighted) {
-            force *= it->w;                                         // [kJ / (mol nm)]
+            force *= it->w;  // [kJ / (mol nm)]
           }
 
           conf.current().energies.tfrdc_mfv_energy[topo.atom_energy_group()
                     [it->v1.atom(0)]] += mfv_energy;
           conf.current().energies.tfrdc_mfv_ave_energy[topo.atom_energy_group()
                     [it->v1.atom(0)]] += mfv_energy;
-          forces(0) -= K * force;              // [(kJ ps^2 / mol) * (1 / (ps^2 nm))] = [kJ / (mol nm)]
-          forces(1) += K * force;              // [kJ / (mol nm)]
+          forces(0) += force;              // [(kJ ps^2 / mol) * (1 / (ps^2 nm))] = [kJ / (mol nm)]
+          forces(1) -= force;              // [kJ / (mol nm)]
 
           std::cout.precision(15); // useful for debugging
           DEBUG(7, "f_hi: " << math::v2s(forces(0)));

@@ -2599,6 +2599,8 @@ void io::In_Parameter::read_TFRDCRES(simulation::Parameter &param,
     exampleblock << "#                            (for continuation time-averaged run)\n";
     exampleblock << "# CTFRDC   >= 0.0            RDC restraining force constant [kJ*s^2/ mol]\n";
     exampleblock << "#                            (weighted by individual WTFRDC)\n";
+    exampleblock << "# TFRDCLIN >= 0.0            offset [Hz] where the restraining function is\n";
+    exampleblock << "#                            changed from the harmonic to the linear form\n";
     exampleblock << "# TAUR     >= 0.0            r coupling time for time-averaging\n";
     exampleblock << "# TAUT     >= 0.0            theta coupling time for time-averaging\n";
     exampleblock << "# NTWTFRDC >= 0              write tensor-free RDCs to special trajectory\n";
@@ -2614,16 +2616,18 @@ void io::In_Parameter::read_TFRDCRES(simulation::Parameter &param,
     exampleblock << "#             0              magnetic field is fixed along z\n";
     exampleblock << "# CTMFV   >= 0.0             force constant acting on the magn. field vector [kJ*s^2/ mol]\n";
     exampleblock << "#                            (only applies with NSTSD>0)\n";
+    exampleblock << "# MFVLIN  >= 0.0             offset [Hz] where the restraining function is\n";
+    exampleblock << "#                            changed from the harmonic to the linear form\n";
     exampleblock << "# TAUTH    >= 0.0            theta coupling time for time-averaging of restraints on the magnetic field vector\n";
     exampleblock << "# CFRICH   >= 0.0            friction coefficient for SD on the magnetic field vector\n";
     exampleblock << "# TEMPSD   >= 0.0            temperature of stochastic bath\n";
     exampleblock << "# MFVMASS  > 0.0             mass of the magn. field vector atoms\n";
     exampleblock << "# MFVR  > 0.0                distance between the the magn. field vector atoms\n";
     exampleblock << "#\n";
-    exampleblock << "#       NTTFRDC  NTTFRDCA  CTFRDC   TAUR    TAUT    NTWTFRDC NTWTFRAVE NWDISTR\n";
-    exampleblock << "           1       0        1.0     0       1000      0           0    0  \n";
-    exampleblock << "#       NSTSD  CTMFV TAUTH  CFRICH  TEMPSD  MFVMASS  MFVR \n";
-    exampleblock << "        20000   1.0   1000     2.4   298.0  15.035  0.153 \n";
+    exampleblock << "#       NTTFRDC  NTTFRDCA  CTFRDC TFRDCLIN TAUR    TAUT    NTWTFRDC NTWTFRAVE NWDISTR\n";
+    exampleblock << "           1       0        1.0          1    0     1000      0           0    0  \n";
+    exampleblock << "#       NSTSD  CTMFV  MFVLIN TAUTH  CFRICH  TEMPSD  MFVMASS  MFVR \n";
+    exampleblock << "        20000   1.0        1  1000     2.4   298.0  15.035  0.153 \n";
     exampleblock << "END\n";
 
     std::string blockname = "TFRDCRES";
@@ -2632,11 +2636,11 @@ void io::In_Parameter::read_TFRDCRES(simulation::Parameter &param,
     if (block.read_buffer(m_block[blockname], false) == 0) {
         block_read.insert(blockname);
 
-        int nttfrdc;
-
+        int nttfrdc = 0;
         block.get_next_parameter("NTTFRDC", nttfrdc, "", "0,1,2");
         block.get_next_parameter("NTTFRDCA", param.tfrdc.read, "", "0,1");
         block.get_next_parameter("CTFRDC", param.tfrdc.K, ">=0", "");
+        block.get_next_parameter("TFRDCLIN", param.tfrdc.dD_linear, ">=0", "");
         block.get_next_parameter("TAUR", param.tfrdc.taur, ">=0", "");
         block.get_next_parameter("TAUT", param.tfrdc.taut, ">=0", "");
         block.get_next_parameter("NTWTFRDC", param.tfrdc.write, ">=0", "");
@@ -2644,6 +2648,7 @@ void io::In_Parameter::read_TFRDCRES(simulation::Parameter &param,
         block.get_next_parameter("NWDISTR", param.tfrdc.write_rdc_theta_distr, "", "0,1");
         block.get_next_parameter("NSTSD", param.tfrdc.nstsd, ">=0", "");
         block.get_next_parameter("CTMFV", param.tfrdc.Kmfv, ">=0", "");
+        block.get_next_parameter("MFVLIN", param.tfrdc.dD_linear_mfv, ">=0", "");
         block.get_next_parameter("TAUTH", param.tfrdc.tauth, ">=0", "");
         block.get_next_parameter("CFRICH", param.tfrdc.cfrich, ">=0", "");
         block.get_next_parameter("TEMPSD", param.tfrdc.tempsd, ">0", "");
