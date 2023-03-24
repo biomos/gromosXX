@@ -65,6 +65,8 @@ set(INTERACTION_CC
     special/xray/bfactor.cc
     special/order_parameter_restraint_interaction.cc
     special/rdc_restraint_interaction.cc
+    special/tf_rdc_restraint_interaction.cc
+    special/zaxis_orientation_bias_interaction.cc
     special/symmetry_restraint_interaction.cc
     special/dfunct_interaction.cc
     qmmm/qm_link.cc
