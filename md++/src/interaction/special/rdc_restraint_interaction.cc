@@ -693,8 +693,7 @@ int _calculate_interactions_mfield(topology::Topology & topo,
           const double x = conf_it->MFpoint[h][0];
           const double y = conf_it->MFpoint[h][1];
           const double z = conf_it->MFpoint[h][2];
-          const double r = sqrt(x*x + y*y + z*z);
-          assert(abs(1.0 - r) < 1.0e-5);
+          assert(abs(1.0 - sqrt(x*x + y*y + z*z)) < 1.0e-5);
           const double theta = acos(z);
           const double phi = atan2(y, x);
           // cout << "x: " << x << "y: " << y << "z: " << z << endl;
@@ -1512,7 +1511,7 @@ void _calculate_forces_atoms_T(topology::Topology & topo,
       }
 
       const double force_coefficient = sim.param().rdc.K * it->weight * 1e24; // [kJ*ps^2/mol]
-      double e_term;
+      double e_term = 0.0;
 
       DEBUG(15, "adding energy to groups " << topo.atom_energy_group()[it->v1.atom(0)] << " and " << topo.atom_energy_group()[it->v2.atom(0)] )
 
