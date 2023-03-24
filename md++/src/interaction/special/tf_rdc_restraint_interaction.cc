@@ -317,7 +317,6 @@ int _shake_bond(math::Box box, math::VArray &pos, const math::VArray &old_pos, d
 
     DEBUG(10, "lagrange multiplier " << lambda);
 
-    const math::Vec cons_force = lambda * ref_r;
     // update positions
     ref_r *= lambda;
     pos(0) += ref_r * 1/mass;
@@ -427,7 +426,7 @@ int _magnetic_field_vector_sd
     std::fill(conf.special().tfrdc_mfv.P_avg.begin(), conf.special().tfrdc_mfv.P_avg.end(), 0.0);
     std::fill(conf.special().tfrdc_mfv.dPdr_avg.begin(), conf.special().tfrdc_mfv.dPdr_avg.end(), math::Vec(0.0,0.0,0.0));
 
-    for (int sdstep=0; sdstep < sim.param().tfrdc.nstsd; sdstep++) {
+    for (unsigned int sdstep=0; sdstep < sim.param().tfrdc.nstsd; sdstep++) {
       double mfv_energy = 0.0;
 
       conf.current().energies.tfrdc_mfv_energy.assign(conf.current().energies.tfrdc_mfv_energy.size(), 0.0);
@@ -853,17 +852,17 @@ int interaction::TF_RDC_Restraint_Interaction::init
 
   sim.param().tfrdc.bins_theta = _linspace(0.0,math::Pi,101.0);
   sim.param().tfrdc.bins_costheta.resize(sim.param().tfrdc.bins_theta.size(), 0.0);
-  for (int i = 0; i < sim.param().tfrdc.bins_theta.size(); i++) {
+  for (unsigned int i = 0; i < sim.param().tfrdc.bins_theta.size(); i++) {
     sim.param().tfrdc.bins_costheta[i] = cos(sim.param().tfrdc.bins_theta[i]);
   }
   conf.special().tfrdc.dist_theta.resize(topo.tf_rdc_molaxis().size());
-  for (int i = 0; i<topo.tf_rdc_molaxis().size(); i++) {
+  for (unsigned int i = 0; i<topo.tf_rdc_molaxis().size(); i++) {
     conf.special().tfrdc.dist_theta[i].resize(sim.param().tfrdc.bins_theta.size(), 0.0);
   }
 
   if (sim.param().tfrdc.write_rdc_theta_distr) {
     conf.special().tfrdc.dist_theta_r_mfv.resize(num_res);
-    for (int i = 0; i<num_res; i++) {
+    for (unsigned int i = 0; i<num_res; i++) {
       conf.special().tfrdc.dist_theta_r_mfv[i].resize(sim.param().tfrdc.bins_theta.size(), 0.0);
     }
   }
