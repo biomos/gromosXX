@@ -372,3 +372,39 @@ ORDERPARAMRES
 #       NTOPR  NTOPRA  COPR   TAUOPR     UPDOPR     NTWOP
            -1  0       200    1.0        1          1
 END
+TFRDCRES
+# NTTFRDC   0..2
+#           0                no tensor-free RDC restraints [default]
+#           1                damped time-averaged using CTFRDC
+#           2                damped time-averaged using CTFRDC * WTFRDC
+# NTTFRDCA  0,1              controls reading of averages from startup file
+#           0                start from initial values of D0 [default]
+#           1                read time averages from startup file
+#                            (for continuation time-averaged run)
+# CTFRDC   >= 0.0            RDC restraining force constant [kJ*s^2/ mol]
+#                            (weighted by individual WTFRDC)
+# TAUR     >= 0.0            r coupling time for time-averaging
+# TAUT     >= 0.0            theta coupling time for time-averaging
+# NTWTFRDC >= 0              write tensor-free RDCs to special trajectory
+#             0              don't write [default]
+#          >  0              write every NTWTFRDC step
+# NTWTFRAVE >= 0             write cumulative averages of RDCs to special trajectory
+#             0              don't write [default]
+#          >  0              write every NTWTFRAVE step
+# NWDISTR  0,1               calculate distribution of the angle of each RDC vector
+#                            with the magn. field at every step and write it
+# NSTSD    >= 0              number of SD steps of the magnetic field vector
+#             0              magnetic field is fixed along z
+# CTMFV   >= 0.0             force constant acting on the magn. field vector [kJ*s^2/ mol]
+#                            (only applies with NSTSD>0)
+# TAUTH    >= 0.0            theta coupling time for time-averaging of restraints on the magnetic field vector
+# CFRICH   >= 0.0            friction coefficient for SD on the magnetic field vector
+# TEMPSD   >= 0.0            temperature of stochastic bath
+# MFVMASS  > 0.0             mass of the magn. field vector atoms
+# MFVR  > 0.0                distance between the the magn. field vector atoms
+#
+#  NTTFRDC  NTTFRDCA    CTFRDC      TAUR      TAUT  NTWTFRDC NTWTFRAVE   NWDISTR
+         2         1         3         0      1000       100       100         1
+#    NSTSD     CTMFV     TAUTH    CFRICH    TEMPSD   MFVMASS      MFVR
+        10         1      1000       2.4       300    15.035     0.153
+END

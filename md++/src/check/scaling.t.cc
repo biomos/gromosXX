@@ -135,7 +135,7 @@ int main(int argc, char* argv[]) {
 			      sinput,
 			      aladip_sim,
 			      in_topo,
-			      "", "", "", "", "", "", "", "",
+			      "", "", "", "", "", "", "", "", "",
 			      quiet
 			      ) != 0 ){
     std::cerr << "creating simulation failed!" << std::endl;
@@ -150,7 +150,7 @@ int main(int argc, char* argv[]) {
 			      slambdadepinput,
 			      aladip_lambdadep_sim,
 			      in_lambdadep_topo,
-			      "", "", "", "", "", "", "", "",
+			      "", "", "", "", "", "", "", "", "",
 			      quiet
 			      ) != 0 ){
     std::cerr << "creating lambda dependent simulation failed!" << std::endl;

@@ -416,6 +416,11 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
       m_special_traj.flush();
     }
 
+    if (m_every_tfrdc && sim.steps() && ((sim.steps()-1) % m_every_tfrdc) == 0 && sim.param().tfrdc.nstsd > 0) {
+      _print_tf_rdc_mfvprop(conf, m_special_traj);
+      m_special_traj.flush();
+    }
+
     if (m_every_rdccumave && sim.steps() && ((sim.steps()-1) % m_every_rdccumave) == 0) {
       _print_tf_rdc_cumaverages(conf, m_special_traj);
       m_special_traj.flush();
@@ -728,6 +733,10 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
 
     if (m_every_tfrdc &&  ((sim.steps()-1) % m_every_tfrdc) == 0) {
       _print_tf_rdc_restraints(conf, m_special_traj);
+    }
+
+    if (m_every_tfrdc &&  ((sim.steps()-1) % m_every_tfrdc) == 0 && sim.param().tfrdc.nstsd > 0) {
+      _print_tf_rdc_mfvprop(conf, m_special_traj);
     }
 
     if (m_every_rdccumave &&  ((sim.steps()-1) % m_every_rdccumave) == 0) {
@@ -3050,10 +3059,11 @@ void io::Out_Configuration::_print_tf_rdc_restraints(
           RDC_avg_mfv_to = conf.special().tfrdc_mfv.RDC_expavg.end();
   std::vector<double>::const_iterator e_it = conf.special().tfrdc.energy.begin();
   std::vector<double>::const_iterator RDC_it = conf.special().tfrdc.RDC.begin();
+  std::vector<double>::const_iterator f_it = conf.special().tfrdc.force_absolute.begin();
 
   os << "TFRDCRESDATA" << std::endl;
   os << std::setw(m_width) << conf.special().tfrdc.RDC_avg.size() << std::endl;
-  for (int i = 1; RDC_avg_it != RDC_avg_to; ++RDC_avg_it, ++RDC_it, ++e_it, ++RDC_avg_mfv_it, ++i) {
+  for (int i = 1; RDC_avg_it != RDC_avg_to; ++RDC_avg_it, ++RDC_it, ++e_it, ++RDC_avg_mfv_it, ++f_it, ++i) {
     //os << std::setw(6) << i;
     os.precision(m_rdc_restraint_precision);
     os.setf(std::ios::fixed, std::ios::floatfield);
@@ -3062,8 +3072,22 @@ void io::Out_Configuration::_print_tf_rdc_restraints(
     os.setf(std::ios::scientific, std::ios::floatfield);
     os.precision(m_rdc_restraint_precision);
     os << std::setw(m_width) << *e_it;
-    os << std::setw(m_width) << *RDC_avg_mfv_it*1000000000000 << std::endl;
+    os << std::setw(m_width) << *RDC_avg_mfv_it*1000000000000;
+    os << std::setw(m_width) << *f_it << std::endl;
   }
+  os << "END" << std::endl;
+}
+
+void io::Out_Configuration::_print_tf_rdc_mfvprop(
+        configuration::Configuration const &conf,
+        std::ostream &os) {
+  DEBUG(10, "TFRDC mfv properties");
+
+  os << "TFRDCMFVPROPS" << std::endl;
+  //os << std::setw(6) << i;
+  os.precision(m_rdc_restraint_precision);
+  os.setf(std::ios::fixed, std::ios::floatfield);
+  os << std::setw(m_width) << conf.special().tfrdc_mfv.force_absolute << std::endl;
   os << "END" << std::endl;
 }
 

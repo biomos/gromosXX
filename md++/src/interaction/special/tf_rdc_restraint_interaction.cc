@@ -96,6 +96,7 @@ int _calculate_tf_rdc_restraint_interactions
         math::Vec dRdr(0.0, 0.0, 0.0), dPdr(0.0, 0.0, 0.0);
         math::Vec force(0.0, 0.0, 0.0);
         double & energy = conf.special().tfrdc.energy[l];       // [kJ / mol]
+        double & force_absolute = conf.special().tfrdc.force_absolute[l];
         double & R_avg = conf.special().tfrdc.R_avg[l];         // [-]
         double & P_avg = conf.special().tfrdc.P_avg[l];         // [-]
 
@@ -272,6 +273,8 @@ int _calculate_tf_rdc_restraint_interactions
         it->v1.force(conf, topo, f_i);
         it->v2.force(conf, topo, f_j);
 
+        force_absolute = abs(f_i);
+
 
         for (int a = 0; a < 3; ++a) {
           for (int b = 0; b < 3; ++b) { 
@@ -441,6 +444,8 @@ int _magnetic_field_vector_sd
     std::fill(conf.special().tfrdc_mfv.P_avg.begin(), conf.special().tfrdc_mfv.P_avg.end(), 0.0);
     std::fill(conf.special().tfrdc_mfv.dPdr_avg.begin(), conf.special().tfrdc_mfv.dPdr_avg.end(), math::Vec(0.0,0.0,0.0));
 
+    double sum_forces_mfv = 0.0;
+
     for (unsigned int sdstep=0; sdstep < sim.param().tfrdc.nstsd; sdstep++) {
       double mfv_energy = 0.0;
 
@@ -521,6 +526,8 @@ int _magnetic_field_vector_sd
           DEBUG(7, "f_hi: " << math::v2s(forces(0)));
           DEBUG(7, "f_hj: " << math::v2s(forces(1)));
       }
+
+      sum_forces_mfv += abs(forces(0));
 
       configuration::Configuration::special_struct::tfrdc_mfv_struct & tfrdc_mfv = conf.special().tfrdc_mfv;
 
@@ -679,6 +686,8 @@ int _magnetic_field_vector_sd
     for (unsigned int i=0; i < conf.current().energies.tfrdc_mfv_ave_energy.size(); i++) {
       conf.current().energies.tfrdc_mfv_ave_energy[i]/=sim.param().tfrdc.nstsd;
     }
+
+    conf.special().tfrdc_mfv.force_absolute = sum_forces_mfv/sim.param().tfrdc.nstsd;
 
     // kinetic energy
     conf.current().energies.tfrdc_mfv_kinetic_energy = 0.5*conf.special().tfrdc_mfv.mass*(abs2(conf.special().tfrdc_mfv.vel(0))+abs2(conf.special().tfrdc_mfv.vel(1)));
@@ -874,6 +883,7 @@ int interaction::TF_RDC_Restraint_Interaction::init
   conf.special().tfrdc.RDC_avg.resize(num_res);
   conf.special().tfrdc.RDC_cumavg.resize(num_res);
   conf.special().tfrdc.energy.resize(num_res);
+  conf.special().tfrdc.force_absolute.resize(num_res);
   conf.special().tfrdc_mfv.P_expavg.resize(num_res);
   conf.special().tfrdc_mfv.P_avg.resize(num_res);
   conf.special().tfrdc_mfv.dPdr_avg.resize(num_res);

@@ -181,7 +181,7 @@ int main(int argc, char* argv[]) {
 			      sinputon,
 			      aladip_sim_on,
 			      in_topo_on,
-			      "", "", "", "", "", "", "", "",
+			      "", "", "", "", "", "", "", "", "",
 			      quiet
 			      ) != 0 ){
     std::cerr << "creating simulation (on) failed!" << std::endl;
@@ -197,7 +197,7 @@ int main(int argc, char* argv[]) {
 			      sinputoff,
 			      aladip_sim_off,
 			      in_topo_off,
-			      "", "", "", "", "", "", "", "",
+			      "", "", "", "", "", "", "", "", "",
 			      quiet
 			      ) != 0 ){
     std::cerr << "creating simulation (off) failed!" << std::endl;

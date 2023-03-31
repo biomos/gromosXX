@@ -427,6 +427,10 @@ namespace io {
             configuration::Configuration const &conf,
             std::ostream &os);
 
+    void _print_tf_rdc_mfvprop(
+            configuration::Configuration const &conf,
+            std::ostream &os);
+
     void _print_tf_rdc_cumaverages(
             configuration::Configuration const &conf,
             std::ostream &os);

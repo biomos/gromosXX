@@ -78,6 +78,7 @@ void hard_coded_values(std::map<std::string, double> & m){
   m["XrayRestraint"] = 5.9411e+03;
   m["Local Elevation"] = 3.5284e+01;
   m["OrderParameterRestraint"] = 3.316416e-02;
+  m["TFRDCRestraint"] = 150.176612120289349; // TODO anpassen!!
 }
 
 
@@ -98,7 +99,7 @@ int main(int argc, char* argv[]) {
 
   util::Known knowns;
   knowns << "topo" << "pttopo" << "conf" << "input" << "distanceres" << "angrest"
-         << "dihrest" << "xray" << "led" << "lud" << "order" << "verb";
+         << "dihrest" << "xray" << "led" << "lud" << "order" << "tfrdcres" << "verb";
     
   std::string usage = argv[0];
   usage += "\n\t[@topo      <topology>]\n";
@@ -112,6 +113,7 @@ int main(int argc, char* argv[]) {
   usage += "\t[@led       <le definition file>]\n";
   usage += "\t[@lud       <le umbrella file>]\n";
   usage += "\t[@order     <order parameter specification file]\n";
+  usage += "\t[@tfrdcres     <tensor-free RDC restraints specification file>]\n";
   usage += "\t[@verb     <[module:][submodule:]level>]\n";
 
   io::Argument args;
@@ -123,8 +125,9 @@ int main(int argc, char* argv[]) {
   // parse the verbosity flag and set debug levels
   util::parse_verbosity(args);
       
-  std::string stopo, spttopo, sconf, sinput, sdistanceres, sangrest, sdihrest, sxray, sled, slud, sorder;
-  bool quiet = true;
+  std::string stopo, spttopo, sconf, sinput, sdistanceres, sangrest, sdihrest, 
+    sxray, sled, slud, sorder, stfrdcres;
+  bool quiet = false;
 
   if (args.count("verb") != -1) quiet = false;
       
@@ -180,6 +183,12 @@ int main(int argc, char* argv[]) {
   else
     GETFILEPATH(sorder, "aladip.order", "src/check/data/");
   //sorder="";
+
+  if(args.count("tfrdcres") ==1)
+    stfrdcres = args["tfrdcres"];
+  else
+    GETFILEPATH(stfrdcres, "aladip.tfr", "src/check/data/");
+  //stfrdcres="";
     
   #ifdef HAVE_CLIPPER
     if(args.count("xray") ==1)
@@ -198,10 +207,11 @@ int main(int argc, char* argv[]) {
 	      << "distanceres :   " << sdistanceres << "\n"
 	      << "angrest :       " << sangrest << "\n"
 	      << "dihrest :       " << sdihrest << "\n"
-        << "xray :          " << sxray << "\n"
+	      << "xray :          " << sxray << "\n"
 	      << "led :           " << sled << "\n"
 	      << "lud :           " << slud << "\n"
-        << "order :         " << sorder << "\n"
+	      << "order :         " << sorder << "\n"
+	      << "tfrdcres :      " << stfrdcres << "\n"
 	      << "configuration : " << sconf << "\n"
 	      << std::endl;
 
@@ -227,7 +237,8 @@ int main(int argc, char* argv[]) {
             "", // qmmm
 			      sled,
 			      slud,
-            sorder,  
+            sorder,
+			      stfrdcres,
 			      quiet
 			      ) != 0 ){
     std::cerr << "creating simulation failed!" << std::endl;

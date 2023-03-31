@@ -49,6 +49,7 @@
 #include "../io/topology/in_xray.h"
 #include "../io/topology/in_leus.h"
 #include "../io/topology/in_order.h"
+#include "../io/topology/in_tf_rdc.h"
 #include "../io/parameter/in_parameter.h"
 
 #include "../algorithm/algorithm/algorithm_sequence.h"
@@ -72,11 +73,12 @@ int util::create_simulation(std::string topo,
 			    std::string distanceres,
 			    std::string angrest,
 			    std::string dihrest,
-          std::string xray,
-          std::string qmmm,
+			    std::string xray,
+			    std::string qmmm,
 			    std::string led,
 			    std::string lud,
-          std::string order,
+			    std::string order,
+			    std::string tfrdcres,
 			    bool quiet)
 {
 
@@ -89,7 +91,8 @@ int util::create_simulation(std::string topo,
   }
 
   io::igzstream input_file, topo_file, pttopo_file, conf_file, 
-    distanceres_file, angrest_file, dihrest_file, xray_file, led_file, lud_file, order_file;
+    distanceres_file, angrest_file, dihrest_file, xray_file, led_file, lud_file,
+    order_file, tfrdcres_file;
 
 #ifdef XXMPI
   int rank, size;
@@ -289,7 +292,7 @@ int util::create_simulation(std::string topo,
     iled.read(sim.topo, sim.sim);
   }
   
-    if (order != "") {
+  if (order != "") {
     order_file.open(order.c_str());
     if (!order_file.is_open()) {
       std::cout << "\n\ncould not open " << order << "!\n" << std::endl;
@@ -303,6 +306,20 @@ int util::create_simulation(std::string topo,
     
     //io::In_Configuration::read_order_parameter_restraint_averages  order_res(sim.conf);
     //io::In_Configuration::read_order_parameter_restraint_averages(sim.topo, sim.conf, sim.sim, std::cout);
+    
+  }
+  
+  if (tfrdcres != "") {
+    tfrdcres_file.open(tfrdcres.c_str());
+    if (!tfrdcres_file.is_open()) {
+      std::cout << "\n\ncould not open " << tfrdcres << "!\n" << std::endl;
+      io::messages.add("opening tensor-free RDC parameter specification file failed", "read_input",
+              io::message::error);
+      return -1;
+    }
+    io::In_Tfrdcresspec itfrdcres(tfrdcres_file);
+    itfrdcres.quiet = true;
+    itfrdcres.read(sim.topo, sim.sim);
     
   }
 

@@ -786,6 +786,10 @@ namespace configuration {
          */
         std::vector<double> energy;
         /**
+         * absolute value of forces due to each RDC
+         */
+        std::vector<double> force_absolute;
+        /**
          * the running average of R
          */
         std::vector<double> R_avg;
@@ -814,6 +818,10 @@ namespace configuration {
         std::vector<double> P_expavg;
         std::vector<double> RDC_expavg;
 
+        /**
+         * absolute value of force on one of the mfv atoms due to each RDC
+         */
+        double force_absolute;
         /**
          * stochastic integrals for the magnetic field vector
          */

@@ -46,8 +46,9 @@ EXTRA_DIST = data/aladip.topo\
 	data/aladip.distrest\
 	data/aladip.dihrest\
 	data/aladip.order\
+	data/aladip.tfr\
 	data/aladip.xrs\
-    data/aladip.lud\
+	data/aladip.lud\
 	data/aladip.led\
 	data/aladip_atomic.in\
 	data/aladip_ewald.in\
