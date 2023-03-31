@@ -2885,6 +2885,12 @@ bool io::In_Configuration::_read_tf_rdc_mfv_pexp(
     if (!quiet) os << " from configuration ...\n";
     DEBUG(15, "buffer size: " << buffer.size()-1)
     if(buffer.size()-1 != tfrdcres.size()){
+
+        std::ostringstream osc;
+        osc << "buffer size " << buffer.size() << " tf " << tfrdcres.size();
+
+        io::messages.add(osc.str(),
+                         "In_Configuration", io::message::warning);
         io::messages.add("no or empty TFRDCMFVP block or insufficient information in configuration file",
                 "In_Configuration", io::message::error);
         return false;

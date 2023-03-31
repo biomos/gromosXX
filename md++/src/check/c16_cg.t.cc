@@ -169,7 +169,7 @@ int main(int argc, char* argv[]) {
 			      sinput,
 			      c16_cg_sim,
 			      in_topo,
-			      "", "", "", "", "", "", "", "",
+			      "", "", "", "", "", "", "", "", "",
 			      quiet
 			      ) != 0 ){
     std::cerr << "creating simulation failed!" << std::endl;

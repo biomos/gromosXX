@@ -180,7 +180,7 @@ int main(int argc, char* argv[]) {
 			      sinput,
 			      aladip_sim,
 			      in_topo,
-			      "", "", "", "", "", "", "", "",
+			      "", "", "", "", "", "", "", "", "",
 			      quiet
 			      ) != 0 ){
     std::cerr << "creating simulation failed!" << std::endl;
