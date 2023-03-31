@@ -417,25 +417,6 @@ int algorithm::EDS
         // calculate eds Hamiltonian
         conf.current().energies.eds_vr_shift_orig = -1.0 / (beta * s) * sum_prefactors_C;
         conf.current().energies.eds_vr_shift_phys = -1.0 / (beta * s) * sum_prefactors_A;
-
-        // calculate eds contribution ...
-        for (unsigned int state = 0; state < numstates; state++) {
-          const long double pi = exp(prefactors[state] - sum_prefactors);
-          //std::cerr << "state = " << state << ", pi = " << pi << std::endl;
-          // ... to forces
-          DEBUG(7, "prefactor = " << pi);
-          for (unsigned int i = 0; i < topo.num_atoms(); i++) {
-            conf.current().force(i) += pi * conf.special().eds.force_endstates[state](i);
-            DEBUG(9, "force current: " << i << " = " << math::v2s(conf.current().force(i)));
-          }
-          // ... to virial
-          for (int a = 0; a < 3; ++a) {
-            for (int b = 0; b < 3; ++b) {
-              conf.current().virial_tensor(b, a) +=
-                      pi * conf.special().eds.virial_tensor_endstates[state](b, a);
-            }
-          }
-        } // loop over states
       }
 
       break;
