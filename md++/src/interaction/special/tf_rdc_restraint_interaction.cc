@@ -490,7 +490,9 @@ int _magnetic_field_vector_sd
           }
 
           for(unsigned int a = 0; a < 3; ++a){
-            dPdr(a) = 3 * costheta[l] * (- costheta[l] * rh_ij(a) * inv_dh_ij * inv_dh_ij + r_ij[l](a) * inv_dh_ij * inv_d_ij[l]);
+            //dPdr(a) = 3 * costheta[l] * (- costheta[l] * rh_ij(a) * inv_dh_ij * inv_dh_ij + r_ij[l](a) * inv_dh_ij * inv_d_ij[l]);
+            double prefix =  3 * costheta[l] * (inv_d_ij[l]*inv_dh_ij);
+            dPdr(a) = prefix * r_ij[l](a); // [1 / nm]
           }
           
 
@@ -671,11 +673,10 @@ int _magnetic_field_vector_sd
         conf.special().tfrdc_mfv.P_avg[l]+=P;
         DEBUG(15, " P_avg: " << conf.special().tfrdc_mfv.P_avg[l]/(sdstep+1));
 
-
+        double prefix =  3 * costheta[l] * (inv_d_ij[l]*inv_dh_ij);
         // TODO: add case when bond is not constrained
         for(unsigned int a = 0; a < 3; ++a){
-            conf.special().tfrdc_mfv.dPdr_avg[l](a) += 3 * costheta[l] * (- costheta[l] *
-            +r_ij[l](a) * inv_d_ij[l] * inv_d_ij[l] + rh_ij(a) * inv_dh_ij * inv_d_ij[l]);
+            conf.special().tfrdc_mfv.dPdr_avg[l](a)+=prefix*rh_ij(a);
         }
       }
 
