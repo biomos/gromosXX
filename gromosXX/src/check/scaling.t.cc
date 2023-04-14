@@ -41,7 +41,6 @@
 #include <ctime>
 
 #include "check.h"
-
 #include "check_forcefield.h"
 #include "check_state.h"
 
@@ -51,9 +50,16 @@
 
 int main(int argc, char* argv[]) {
 
-#ifdef OMP
-  omp_set_num_threads(1);
-#endif
+  #ifdef OMP
+    //omp_set_num_threads(2);
+    #pragma omp parallel
+    {
+      int tid = omp_get_thread_num();
+      if (tid == 0){
+        std::cout << "OpenMP code enabled; using " << omp_get_num_threads() << " threads." << std::endl;
+      }
+    }
+  #endif
 
   int total = 0;
 
@@ -111,17 +117,12 @@ int main(int argc, char* argv[]) {
 			      in_topo,
 			      "", "", "", "", "", "", "", "",
 			      quiet
-			      )
-      != 0){
+			      ) != 0 ){
     std::cerr << "creating simulation failed!" << std::endl;
     return 1;
   }
   io::messages.display(std::cout);
   io::messages.clear();
-      
-  // std::cout << "aladip sim" << std::endl;
-  // io::messages.display(std::cout);
-  // io::messages.clear();
 
   if (util::create_simulation(stopo,
 			      slambdadeppttopo,
@@ -131,17 +132,12 @@ int main(int argc, char* argv[]) {
 			      in_lambdadep_topo,
 			      "", "", "", "", "", "", "", "",
 			      quiet
-			      )
-      != 0){
+			      ) != 0 ){
     std::cerr << "creating lambda dependent simulation failed!" << std::endl;
     return 1;
   }
   io::messages.display(std::cout);
   io::messages.clear();
-
-  // std::cout << "aladip lambdadep sim" << std::endl;
-  // io::messages.display(std::cout);
-  // io::messages.clear();
 
   // create a forcefield
   interaction::Forcefield *ff = new interaction::Forcefield;
@@ -152,17 +148,12 @@ int main(int argc, char* argv[]) {
 					 aladip_sim.sim,
 					 in_topo,
 					 std::cout,
-					 quiet)
-      != 0){
+					 quiet) != 0 ){
     std::cerr << "creating forcefield failed!" << std::endl;
     return 1;
   }
 
   ff->init(aladip_sim.topo, aladip_sim.conf, aladip_sim.sim, std::cout, quiet);
-
-  // std::cout << "aladip forcefield" << std::endl;
-  // io::messages.display(std::cout);
-  // io::messages.clear();
 
   if (interaction::create_g96_forcefield(*lambdadep_ff, 
 					 aladip_lambdadep_sim.topo,
@@ -176,10 +167,6 @@ int main(int argc, char* argv[]) {
   }
 
   lambdadep_ff->init(aladip_lambdadep_sim.topo, aladip_lambdadep_sim.conf, aladip_lambdadep_sim.sim, std::cout, quiet);
-  
-  // std::cout << "aladip lambdadep forcefield" << std::endl;
-  // io::messages.display(std::cout);
-  // io::messages.clear();
 
   int res;
   total = 0;
