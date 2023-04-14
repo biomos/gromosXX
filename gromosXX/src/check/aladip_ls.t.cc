@@ -41,9 +41,12 @@
 #include <time.h>
 
 #include "check.h"
-
 #include "check_forcefield.h"
 #include "check_state.h"
+
+#ifdef OMP
+  #include <omp.h>
+#endif
 
 void hard_coded_values(std::map<std::string, double> & m){
     m["NonBonded_-1"] = -0.65647E+02; // This number is slightly different in the fortran code, -0.65652E+02, probably due to the use of a numerical approximation to the error function there
@@ -58,18 +61,21 @@ void hard_coded_values(std::map<std::string, double> & m){
     m["NonBonded_8"]  = -0.65862E+02;
     m["NonBonded_9"]  = -0.65964E+02;
     m["NonBonded_10"] = -0.65880E+02;
-
 }
 
-#ifdef OMP
-  #include <omp.h>
-#endif
 
 int main(int argc, char* argv[]) {
 
-#ifdef OMP
-  omp_set_num_threads(1);
-#endif
+  #ifdef OMP
+    //omp_set_num_threads(1);
+    #pragma omp parallel
+    {
+      int tid = omp_get_thread_num();
+      if (tid == 0){
+        std::cout << "OpenMP code enabled; using " << omp_get_num_threads() << " threads." << std::endl;
+      }
+    }
+  #endif
 
   int total = 0;
   
@@ -92,7 +98,7 @@ int main(int argc, char* argv[]) {
   // parse the verbosity flag and set debug levels
   util::parse_verbosity(args);
       
-    std::string stopo, spttopo, sconf, sinput;
+  std::string stopo, spttopo, sconf, sinput;
   bool quiet = true;
 
   if (args.count("verb") != -1) quiet = false;
@@ -142,8 +148,7 @@ int main(int argc, char* argv[]) {
 			      in_topo,
 			      "", "", "", "", "", "", "", "",
 			      quiet
-			      )
-      != 0){
+			      ) != 0 ){
     std::cerr << "creating simulation failed!" << std::endl;
     return 1;
   }
@@ -159,13 +164,13 @@ int main(int argc, char* argv[]) {
 					   aladip_sim.sim,
 					   in_topo,
 					   std::cout,
-					   quiet)
-	!= 0){
+					   quiet)	!= 0 ){
       std::cerr << "creating forcefield failed!" << std::endl;
       return 1;
     }
-  io::messages.display(std::cout);
-  io::messages.clear();
+
+    io::messages.display(std::cout);
+    io::messages.clear();
 
     // store backup value for width of the charge shaping function
     double ashape = aladip_sim.sim.param().nonbonded.ls_charge_shape_width;
@@ -231,22 +236,22 @@ int main(int argc, char* argv[]) {
 				     aladip_sim.conf,
 				     aladip_sim.sim))){
 
-	std::cout << "\nError during MD run!\n" << std::endl;
-	// try to save the final structures...
-	break;
+	      std::cout << "\nError during MD run!\n" << std::endl;
+	      // try to save the final structures...
+	      break;
       }
 
       // update the energies
       aladip_sim.conf.old().energies.calculate_totals();
+
       // perturbed energy derivatives
       if (aladip_sim.sim.param().perturbation.perturbation){
-	aladip_sim.conf.old().perturbed_energy_derivatives.calculate_totals();
+	      aladip_sim.conf.old().perturbed_energy_derivatives.calculate_totals();
       }
 
-      aladip_sim.conf.current().averages.
-	apply(aladip_sim.topo,
-	      aladip_sim.conf,
-	      aladip_sim.sim);
+      aladip_sim.conf.current().averages.apply(aladip_sim.topo,
+	            aladip_sim.conf,
+	            aladip_sim.sim);
 	  
       aladip_sim.sim.time() +=  aladip_sim.sim.time_step_size();
       ++ aladip_sim.sim.steps();
@@ -254,8 +259,8 @@ int main(int argc, char* argv[]) {
     }
     aladip_sim.md.print_timing(std::cout);
   }
+
   io::messages.display(std::cout);
   io::messages.clear();
-
   return total;
 }

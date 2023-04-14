@@ -40,11 +40,13 @@
 
 #include <time.h>
 
-
 #include "check.h"
-
 #include "check_forcefield.h"
 #include "check_state.h"
+
+#ifdef OMP
+  #include <omp.h>
+#endif
 
 void hard_coded_values(std::map<std::string, double> & m){
   m["DistanceRestraint"] = 257.189539;
@@ -58,15 +60,19 @@ void hard_coded_values(std::map<std::string, double> & m){
   m["OrderParameterRestraint"] = 3.316416e-02;
 }
 
-#ifdef OMP
-  #include <omp.h>
-#endif
 
 int main(int argc, char* argv[]) {
 
-#ifdef OMP
-  omp_set_num_threads(1);
-#endif
+  #ifdef OMP
+    //omp_set_num_threads(1);
+    #pragma omp parallel
+    {
+      int tid = omp_get_thread_num();
+      if (tid == 0){
+        std::cout << "OpenMP code enabled; using " << omp_get_num_threads() << " threads." << std::endl;
+      }
+    }
+  #endif
 
   int total = 0;
 
@@ -155,14 +161,14 @@ int main(int argc, char* argv[]) {
     GETFILEPATH(sorder, "aladip.order", "src/check/data/");
   //sorder="";
     
-#ifdef HAVE_CLIPPER
-  if(args.count("xray") ==1)
-    sxray = args["xray"];
-  else
-    GETFILEPATH(sxray, "aladip.xrs", "src/check/data/");
-#else
-  sxray = "";
-#endif
+  #ifdef HAVE_CLIPPER
+    if(args.count("xray") ==1)
+      sxray = args["xray"];
+    else
+      GETFILEPATH(sxray, "aladip.xrs", "src/check/data/");
+  #else
+    sxray = "";
+  #endif
   
   if (!quiet)
     std::cout << "\n\n"
@@ -203,19 +209,17 @@ int main(int argc, char* argv[]) {
 			      slud,
             sorder,  
 			      quiet
-			      )
-      != 0){
+			      ) != 0 ){
     std::cerr << "creating simulation failed!" << std::endl;
     return 1;
   }
   io::messages.display(std::cout);
   io::messages.clear();
 
-#ifndef HAVE_CLIPPER
-  aladip_sim.sim.param().xrayrest.xrayrest = simulation::xrayrest_off;
-#endif
+  #ifndef HAVE_CLIPPER
+    aladip_sim.sim.param().xrayrest.xrayrest = simulation::xrayrest_off;
+  #endif
       
-
   // create a forcefield
   interaction::Forcefield *ff = new interaction::Forcefield;
 
@@ -224,8 +228,7 @@ int main(int argc, char* argv[]) {
 					 aladip_sim.sim,
 					 in_topo,
 					 std::cout,
-					 quiet)
-      != 0){
+					 quiet) != 0 ){
     std::cerr << "creating forcefield failed!" << std::endl;
     return 1;
   }
@@ -237,6 +240,7 @@ int main(int argc, char* argv[]) {
   // first check the forcefield
   total += check::check_forcefield(aladip_sim.topo, aladip_sim.conf, 
 				   aladip_sim.sim, *ff, ref_values);
+           
   io::messages.display(std::cout);
   io::messages.clear();
 

@@ -41,9 +41,12 @@
 #include <time.h>
 
 #include "check.h"
-
 #include "check_forcefield.h"
 #include "check_state.h"
+
+#ifdef OMP
+  #include <omp.h>
+#endif
 
 void hard_coded_values(std::map<std::string, double> & m){
   m["QuarticBond"] = 8.028505;
@@ -63,15 +66,20 @@ void hard_coded_values(std::map<std::string, double> & m){
 //  m["PerturbedDihedralRestraint"] = 279.207857;
 }
 
-#ifdef OMP
-  #include <omp.h>
-#endif
+
 
 int main(int argc, char* argv[]) {
 
-#ifdef OMP
-  omp_set_num_threads(1);
-#endif
+  #ifdef OMP
+    //omp_set_num_threads(1);
+    #pragma omp parallel
+    {
+      int tid = omp_get_thread_num();
+      if (tid == 0){
+        std::cout << "OpenMP code enabled; using " << omp_get_num_threads() << " threads." << std::endl;
+      }
+    }
+  #endif
 
   int total = 0;
 
@@ -137,11 +145,11 @@ int main(int argc, char* argv[]) {
 			      in_topo,
 			      "", "", "", "", "", "", "", "",
 			      quiet
-			      )
-      != 0){
+			      ) != 0 ){
     std::cerr << "creating simulation failed!" << std::endl;
     return 1;
   }
+
   io::messages.display(std::cout);
   io::messages.clear();
       
@@ -153,11 +161,11 @@ int main(int argc, char* argv[]) {
 					 c16_cg_sim.sim,
 					 in_topo,
 					 std::cout,
-					 quiet)
-      != 0){
+					 quiet) != 0){
     std::cerr << "creating forcefield failed!" << std::endl;
     return 1;
   }
+  
   io::messages.display(std::cout);
   io::messages.clear();
   
