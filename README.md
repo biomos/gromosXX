@@ -4,9 +4,9 @@
 
 GROMOS™ is an acronym of the GROningen MOlecular Simulation computer program package, which has been developed since 1978 for the dynamic modelling of (bio)molecules, until 1990 at the University of Groningen, The Netherlands, and since then at the ETH, the Swiss Federal Institute of Technology, in Zürich, Switzerland. Its development was driven by the [research group of Wilfred van Gunsteren.](http://www.igc.ethz.ch) Currently, the development is shared between him and the research groups of [Philippe Hünenberger](http://www.csms.ethz.ch) and [Sereina Riniker](http://www.riniker.ethz.ch) at the ETH, of [Chris Oostenbrink](http://www.map.boku.ac.at/mms/) at the University of Natural Resources and Life Sciences in Vienna, Austria, and of [Niels Hansen](http://www.itt.uni-stuttgart.de/en/institute/team/staff/Hansen/) at the University of Stuttgart, Stuttgart, Germany.
 
-Since the last official release of the GROMOS software and manual in 1996, called GROMOS96, no comprehensive release occurred till 2011\. Yet the GROMOS software has seen a steady development since 1996, see e.g. [[1](#Christen2005)]. The programming language has been changed from FORTRAN to C++, the documentation has been put into electronic form, and many new features have been included in the software.
+Since the last official release of the GROMOS software and manual in 1996, called GROMOS96, no comprehensive release occurred till 2011\. Yet the GROMOS software has seen a steady development since 1996, see e.g. [1]. The programming language has been changed from FORTRAN to C++, the documentation has been put into electronic form, and many new features have been included in the software.
 
-To the development of the GROMOS software (since 1978) members of the research groups of Wilfred van Gunsteren (Groningen, Z<c3><bc>rich), Philippe H<c3><bc>nenberger (Z<c3><bc>rich), Chris Oostenbrink (Vienna), Niels Hansen (Stuttgart) and Sereina Riniker (Z<c3><bc>rich) have contributed.</bc></c3></bc></c3></bc></c3></bc></c3>
+To the development of the GROMOS software (since 1978) members of the research groups of Wilfred van Gunsteren (Groningen, Zürich), Philippe Hünenberger (Zürich), Chris Oostenbrink (Vienna), Niels Hansen (Stuttgart) and Sereina Riniker (Zürich) have contributed.
 
 The GROMOS _software_ is to be distinguished from the GROMOS _force fields_ for biomolecular systems, of which the latest versions are coded as:
 
@@ -18,7 +18,7 @@ The GROMOS _software_ is to be distinguished from the GROMOS _force fields_ for 
 
 <td>45A3/4</td>
 
-<td>Comprehensive GROMOS96 parameter set [[2](#Schuler2001), [3](#Chandrasekhar2003), [4](#Soares2005), [5](#Lins2005)]</td>
+<td>Comprehensive GROMOS96 parameter set [2-5]</td>
 
 </tr>
 
@@ -26,7 +26,7 @@ The GROMOS _software_ is to be distinguished from the GROMOS _force fields_ for 
 
 <td>53A5/6</td>
 
-<td>Reparameterization of polar groups [[6](#Oostenbrink2005)]</td>
+<td>Reparameterization of polar groups [6]</td>
 
 </tr>
 
@@ -34,7 +34,7 @@ The GROMOS _software_ is to be distinguished from the GROMOS _force fields_ for 
 
 <td>54A7</td>
 
-<td>Optimization of lipids [[7](#Poger2010)] and protein backbone [[8](#Schmid2011)]</td>
+<td>Optimization of lipids [7] and protein backbone [8]</td>
 
 </tr>
 
@@ -42,7 +42,7 @@ The GROMOS _software_ is to be distinguished from the GROMOS _force fields_ for 
 
 <td>54A8</td>
 
-<td>Reparameterization of charged groups [[9](#Reif2012)]</td>
+<td>Reparameterization of charged groups [9]</td>
 
 </tr>
 
@@ -50,13 +50,31 @@ The GROMOS _software_ is to be distinguished from the GROMOS _force fields_ for 
 
 </table>
 
-The architecture and different functionalities of the current version of GROMOS are described in the a number of papers [[14](#Schmid2012)-[20](#Hansen2014)].
+### GROMOS documentation
 
-The GROMOS C++ code is documented in the code in the form of a _doxygen_ documentation. It is accompanied by make files, etc. and by example files. A basic tutorial is available in volume 7 of the GROMOS manual (see above). The files required for this tutorial, are available from the downloads page on this website. A more advanced set of tutorials can be found in [[21](#Lier2020)]
+Extensive GROMOS software manuals accompanied the major releases of 1987 [10] and 1996 [11]. The functionalities of GROMOS87, GROMOS96 and GROMOS05 are summarized in the scientific literature [1, 12, 13].
+
+The current GROMOS manual and user guide consists of nine volumes, which are available at the [GROMOS website](https://www.gromos.net):
+
+The GROMOS Software for (Bio)Molecular Simulation
+
+Volume 1: About the GROMOS Package: Overview<br>
+Volume 2: Algorithms and Formulae for Modelling of Molecular Systems<br>
+Volume 3: Force Fields and Topology Data Set<br>
+Volume 4: Data Structures and Formats<br>
+Volume 5: Program Library Manual<br>
+Volume 6: Technical Details<br>
+Volume 7: Tutorial with Examples<br>
+Volume 8: Installation Guide<br>
+Volume 9: Index
+
+The architecture and different functionalities of the current version of GROMOS are described in the a number of papers [14]-[20].
+
+The GROMOS C++ code is documented in the code in the form of a _doxygen_ documentation. It is accompanied by make files, etc. and by example files. A basic tutorial is available in volume 7 of the GROMOS manual (see above). The files required for this tutorial, are available from the downloads page on this website. A more advanced set of tutorials can be found in [21]
 
 ### Distribution of GROMOS software and manuals
 
-Information on GROMOS will be kept on this website which is owned and maintained by Biomos b.v., Laboratory of Physical Chemistry, HCI, ETH Hönggerberg, 8093 Zürich, Switzerland.
+Information on GROMOS is available at [www.gromos.net](https://www.gromos.net) which is owned and maintained by Biomos b.v., Laboratory of Physical Chemistry, HCI, ETH Hönggerberg, 8093 Zürich, Switzerland.
 
 GROMOS users are obliged to properly acknowledge the use of the software, e.g. by referencing one or more of the mentioned scientific papers.
 
