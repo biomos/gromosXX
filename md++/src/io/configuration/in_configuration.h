@@ -509,7 +509,6 @@ namespace io {
     */
     bool _read_tf_rdc_restraint_averages(
               std::vector<std::string> & buffer,
-              const std::vector<topology::tf_rdc_restraint_struct> & tfrdcres,
               std::vector<double> & R_avg,
               std::vector<double> & P_avg,
               std::vector<double> & RDC_cumavg,
