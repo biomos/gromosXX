@@ -36,42 +36,8 @@ Required libraries
 	for MPI you also need the fftw3-mpi library which you have to
 	compile with the same MPI wrapper. 
 
-Case A) Installing from a tarball
-*********************************
-
-	1. tar zxvf gromos++-x.y.z.tar.gz
-	2. cd gromos++-x.y.z
-	3. mkdir BUILD
-	4. cd BUILD
-	5. ../configure
-	6. make
-	7. make check
-	8. make install
-
-	Info:
-	  .) See ./configure --help for options.
-	  .) Steps 7 and 8 are optional. Step 8 will place the programs in 
-             BUILD/bin, or in the directory specified by --prefix in step 5.
-	  .) If you leave out step 8, the programs will be in BUILD/program/.
-	  .) You may choose any other name for the BUILD directory or do 
-             multiple builds by choosing different directory names by repeating 
-             from step 3.
-          .) To compile parallel code with either openMP or MPI, the 
-             appropriate options should be given in step 5 
-             (see volume 8 of the GROMOS manuals)
-          .) To compile the code with GPU acceleration for the solvent-solvent
-             interactions, use --with-cuda=<path-to-cuda-libraries>
-             (see volume 8 of the GROMOS manuals).
-             nvcc automatically discovers available GPUs and compiles
-             for the correct architecture. In case you want to use GROMOS
-             on another GPU (e.g. on a cluster) or have other special hardware
-             specifications, export nvcc compiler flags accordingly before compilation. 
-             For example, if you want to compile on sm_30, use: export NVCCFLAGS="-arch sm_30" 
-
-
-
-Case B) To compile and install the unconfigured source tree from git
-********************************************************************
+Case 1[automake]: To compile and install the unconfigured source tree from git with automake
+*********************************************************************************************
 
 	prerequisites:
 		GNU autotools:
