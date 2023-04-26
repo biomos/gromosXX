@@ -272,6 +272,7 @@ namespace topology
           : m_sequence_number(0),
             m_M_IAC(),
             m_M_charge(),
+	    m_site_number(0),
             m_exclusion(),
             m_one_four_pair()
     {};
@@ -281,13 +282,16 @@ namespace topology
      * @param JLA atom sequence number.
      * @param IACM integer atom code of states 0...N.
      * @param CGM  charge of states 0...N.
+     * @param SITE number of EDS site
      */
     EDS_Perturbed_Atom(unsigned int JLA,
             std::vector<unsigned int> IACM,
-            std::vector<double> CGM)
+            std::vector<double> CGM,
+	    unsigned int SITE)
           : m_sequence_number(JLA),
             m_M_IAC(IACM),
             m_M_charge(CGM),
+	    m_site_number(SITE),
             m_exclusion(),
             m_one_four_pair()
     {};
@@ -306,7 +310,11 @@ namespace topology
 
     const std::vector<double>& M_charge()const;
     void M_charge(std::vector<double>);
-        
+
+    unsigned int site_number();
+    unsigned int site_number()const;
+    void site_number(unsigned int);
+
     topology::excl_cont_t::value_type & exclusion();
     topology::excl_cont_t::value_type const & exclusion()const;
     
@@ -321,6 +329,7 @@ namespace topology
     unsigned int m_sequence_number;
     std::vector<unsigned int> m_M_IAC;
     std::vector<double> m_M_charge;
+    unsigned int m_site_number;
     topology::excl_cont_t::value_type m_exclusion;
     topology::excl_cont_t::value_type m_one_four_pair;
   };
@@ -335,6 +344,9 @@ inline const std::vector<unsigned int>& topology::EDS_Perturbed_Atom::M_IAC()con
 }
 inline const std::vector<double>& topology::EDS_Perturbed_Atom::M_charge()const{
   return m_M_charge; 
+}
+inline unsigned int topology::EDS_Perturbed_Atom::site_number()const{
+  return m_site_number;
 }
 inline topology::excl_cont_t::value_type const & topology::EDS_Perturbed_Atom::exclusion()const{
   return m_exclusion;
@@ -351,6 +363,9 @@ inline void topology::EDS_Perturbed_Atom::M_IAC(std::vector<unsigned int> a){
 }
 inline void topology::EDS_Perturbed_Atom::M_charge(std::vector<double> a){
   m_M_charge = a;
+}
+inline void topology::EDS_Perturbed_Atom::site_number(unsigned int a){
+  m_site_number = a;
 }
 inline topology::excl_cont_t::value_type & topology::EDS_Perturbed_Atom::exclusion()
 {

@@ -459,7 +459,54 @@ int interaction::Eds_Nonbonded_Set
     m_storage.force_endstates[i].resize(topo.num_atoms());
     m_longrange_storage.force_endstates[i].resize(topo.num_atoms());
   }
-  
+
+  //MULTIAEDS
+  //initialize the maps of eds_mult_vi 
+  //do we need this?
+  //maybe only need to zero?
+  for(unsigned int site_i = 0; site_i < sim.param().eds.numsites; site_i++){
+    for(unsigned int site_j = site_i; site_j < sim.param().eds.numsites; site_j++){
+      for(unsigned int state_i =0; state_i < sim.param().eds.multnumstates[site_i]; state_i++){
+        if( site_i == site_j){
+          std::vector<int> states_i_j = {site_i, state_i, site_i, state_i};
+	  m_storage.energies.eds_mult_vi[states_i_j];
+	  m_longrange_storage.energies.eds_mult_vi[states_i_j];
+	  m_storage.force_mult_endstates[states_i_j].resize(topo.num_atoms());//?
+	  m_longrange_storage.force_mult_endstates[states_i_j].resize(topo.num_atoms());//?
+	  m_storage.virial_tensor_mult_endstates[states_i_j];
+	  m_longrange_storage.virial_tensor_mult_endstates[states_i_j];
+	}
+	else{
+	  for(unsigned int state_j=0; state_j < sim.param().eds.multnumstates[site_j]; state_j++){
+            std::vector<int> states_i_j = {site_i, state_i, site_j, state_j};
+	    m_storage.energies.eds_mult_vi[states_i_j];
+	    m_longrange_storage.energies.eds_mult_vi[states_i_j];
+	    m_storage.force_mult_endstates[states_i_j].resize(topo.num_atoms());//?
+  	    m_longrange_storage.force_mult_endstates[states_i_j].resize(topo.num_atoms());//?
+	    m_storage.virial_tensor_mult_endstates[states_i_j];
+	    m_longrange_storage.virial_tensor_mult_endstates[states_i_j];
+	  }
+	}
+      }
+    }
+  }
+
+        
+
+//  m_storage.energies.eds_mult_vi.resize(sim.param().eds.numsites);
+//  m_longrange_storage.energies.eds_mult_vi.resize(sim.param().eds.numsites);
+//  for(unsigned int i = 0; i < sim.param().eds.numsites; i++){
+//    m_storage.energies.eds_mult_vi[i].resize(sim.param().eds.numsites);
+//    m_longrange_storage.energies.eds_mult_vi[i].resize(sim.param().eds.numsites);
+//    for(unsigned int j = 0; j < sim.param().eds.numsites; j++){
+//      m_storage.energies.eds_mult_vi[i][j].resize(sim.param().eds.multnumstates[i]);
+//      m_longrange_storage.energies.eds_mult_vi[i][j].resize(sim.param().eds.multnumstates[i]);
+//      for(unsigned int k = 0; k < sim.param().eds.multnumstates[i]; k++){
+//      m_storage.energies.eds_mult_vi[i][j][k].resize(sim.param().eds.multnumstates[j]);
+//      m_longrange_storage.energies.eds_mult_vi[i][j][k].resize(sim.param().eds.multnumstates[j]);
+//      }
+//    }
+//  }
   return 0;
 }
 

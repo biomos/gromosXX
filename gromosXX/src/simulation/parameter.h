@@ -636,6 +636,10 @@ namespace simulation
     * A-EDS using Emax and Emin, search for Eir, Emax an Emin
     */
     aeds_search_all = 7,
+    /**
+     * multi-site A-EDS with fixed Emax, Emin and EiR
+     */
+    multi_aeds = 8,
   };
 
   /**
@@ -3055,7 +3059,7 @@ namespace simulation
        * - eds: no eds sampling
        * - form: single_s
        */
-      eds_struct() : eds(false), form(single_s), numstates(0) {}
+      eds_struct() : eds(false), form(single_s), numstates(0), numsites(0) {}
       /**
        * do enveloping distribution sampling using the Hamiltonian:
        */
@@ -3163,6 +3167,26 @@ namespace simulation
       * half-life of the offset parameters at the beginning of the run
       */
       unsigned int bsteps;
+      /**
+       * number of eds sites for multi-aeds
+       */
+      unsigned int numsites;
+      /**
+       * number of states of each eds site for multi-aeds
+       */
+      std::vector<double> multnumstates;
+      /**
+       * emax values of each eds site for multi-aeds
+       */
+      std::vector<double> multemax;
+      /**
+       * emin values for each eds site for multi-aeds
+       */
+      std::vector<double> multemin;
+      /**
+       * energy offsets @f$E_i^R@f$ of states of each eds site, for multi-aeds 
+       */
+      std::vector<std::vector<double>> multeir; 
     } /** enveloping distribution sampling*/ eds;
 
  struct reeds_struct : public replica_struct

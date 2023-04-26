@@ -44,6 +44,7 @@ t_interaction_spec, t_perturbation_details>
     both_perturbed += 2;
   }
 
+  //MULTIAEDS: todo: if multiaeds; check size accordingly
   math::Vec r;
   const unsigned int numstates = conf.special().eds.force_endstates.size();
   assert(storage.energies.eds_vi.size() == numstates);
@@ -62,6 +63,604 @@ t_interaction_spec, t_perturbation_details>
 
 
   switch (t_interaction_spec::interaction_func) {
+    // MULTIAEDS
+    case simulation::lj_crf_eds_mult_func:
+    {
+      //todo: forces!!
+      std::map<std::vector<int>, math::VArray> &force_mult_endstates = storage.force_mult_endstates;
+      double c6 = 0.0, c12 = 0.0, q = 0.0, A_q = 0.0, B_q = 0.0, e_nb = 0.0, e_lj = 0.0,
+       e_crf = 0.0, f = 0.0, de_lj = 0.0, de_crf = 0.0;
+      assert(abs2(r) != 0);
+      const double dist2 = abs2(r);
+      const double disti = 1 / abs(r);
+      const double dist6 = dist2 * dist2 * dist2;
+      switch (both_perturbed) {
+        case 0:
+        // EDS - normal
+        {
+	  const int site_i = topo.eds_perturbed_solute().atoms()[i].site_number();
+	  const int numstates_i = sim.param().eds.multnumstates[site_i]; 
+	  const int site_j = sim.param().eds.numsites; // non eds atom, belongs to site R (rest), last site
+	  const int state_j = 0; // non eds atom, state is set to 0
+	  std::vector<unsigned int> states_i_j {site_i, state_i, site_j, state_j};
+
+          const std::vector<unsigned int> &pert_i_M_IAC = topo.eds_perturbed_solute().atoms()[i].M_IAC();
+          const std::vector<double> &pert_i_M_charge = topo.eds_perturbed_solute().atoms()[i].M_charge();
+	  std::map<std::vector<int>, double> & storage_energies_eds_mult_vi = storage.energies.eds_mult_vi;
+          //std::vector<double> & storage_energies_eds_mult_vi = storage.energies.eds_mult_vi;
+	  std::map<std::vector<int>, math::Matrix > & storage_virial_tensor_mult_endstates = storage.virial_tensor_mult_endstates;
+          for (unsigned int state_i = 0; state_i < numstates_i; state_i++) {
+            math::Vec & force_mult_endstates_state_i = force_mult_endstates[states_i_j](i);//??
+            math::Vec & force_mult_endstates_state_j = force_mult_endstates[states_i_j](j);//??
+            math::Matrix & virial_tensor_mult_endstates_state = storage_virial_tensor_mult_endstates[states_i_j];//??
+            const lj_parameter_struct &lj = m_param_lj_parameter[(pert_i_M_IAC[state_i])][iac_j];
+            c6 = lj.c6;
+            c12 = lj.c12;
+            q = pert_i_M_charge[state_i] * charge_j;
+
+            eds_lj_crf_interaction(dist2, dist6, disti, c6, c12, q, f, e_nb);
+
+            DEBUG(10, "\t\tatomic virial");
+            for (int a = 0; a < 3; ++a) {
+              const double term = f * r(a);
+              force_mult_endstates_state_i(a) += term;//??
+              force_mult_endstates_state_j(a) -= term;//??
+
+              for (int b = 0; b < 3; ++b)
+                virial_tensor_mult_endstates_state(b, a) += r(b) * term;//??
+            }
+            // energy
+            //assert(storage.energies.eds_vi.size() == numstates);//remove?
+	    storage_energies_eds_mult_vi[states_i_j] += e_nb;
+          }
+          break;
+        }
+        case 1:
+        // EDS - EDS
+        {
+          const int site_i = topo.eds_perturbed_solute().atoms()[i].site_number();
+          const int numstates_i = sim.param().eds.multnumstates[site_i];
+          const int site_j =topo.eds_perturbed_solute().atoms()[j].site_number(); 
+	  const int numstates_j = sim.param().eds.multnumstates[site_j];
+
+          const std::vector<unsigned int> &pert_i_M_IAC = topo.eds_perturbed_solute().atoms()[i].M_IAC();
+          const std::vector<double> &pert_i_M_charge = topo.eds_perturbed_solute().atoms()[i].M_charge();
+          const std::vector<unsigned int> &pert_j_M_IAC = topo.eds_perturbed_solute().atoms()[j].M_IAC();
+          const std::vector<double> &pert_j_M_charge = topo.eds_perturbed_solute().atoms()[j].M_charge();
+	  std::map<std::vector<int>, double> & storage_energies_eds_mult_vi = storage.energies.eds_mult_vi;
+          //std::vector<double> & storage_energies_eds_mult_vi = storage.energies.eds_mult_vi;
+          std::map<std::vector<int>, math::Matrix> & storage_virial_tensor_mult_endstates = storage.virial_tensor_mult_endstates;
+	  if (site_j >= site_i) {
+            for (unsigned int state_i = 0; state_i < numstates_i; state_i++) {
+              for (unsigned int state_j = 0; state_j < numstates_j; state_j++) {
+		if ((site_j == site_i) && (state_i != state_j){
+		  continue;
+		}
+   		std::vector<unsigned int> states_i_j {site_i, state_i, site_j, state_j}; 
+                math::Vec & force_mult_endstates_state_i = force_mult_endstates[states_i_j](i);//??
+                math::Vec & force_mult_endstates_state_j = force_mult_endstates[states_i_j](j);//??
+                math::Matrix & virial_tensor_mult_endstates_state = storage_virial_tensor_mult_endstates[states_i_j];//??
+                const lj_parameter_struct &lj =
+                    m_param_lj_parameter[(pert_i_M_IAC[state_i])][(pert_j_M_IAC[state_j])];
+                c6 = lj.c6;
+                c12 = lj.c12;
+                q = pert_i_M_charge[state_i]* (pert_j_M_charge[state_j]);
+
+                // give numstates as reference to const int argument to avoid .size()
+                eds_lj_crf_interaction(dist2, dist6, disti, c6, c12, q, f, e_nb);
+
+                DEBUG(10, "\t\tatomic virial");
+                for (int a = 0; a < 3; ++a) {
+                  const double term = f * r(a);
+                  force_mult_endstates_state_i(a) += term;
+                  force_mult_endstates_state_j(a) -= term;
+    
+                  for (int b = 0; b < 3; ++b)
+                    virial_tensor_mult_endstates_state(b, a) += r(b) * term;
+                }
+                // energy
+                //assert(storage.energies.eds_vi.size() == numstates);
+                storage_energies_eds_mult_vi[states_i_j] += e_nb;
+              }
+            }
+          }
+          break;
+        }
+        case 2:
+        // EDS - perturbed
+        {
+          alpha_lj = topo.perturbed_solute().atoms()[j].LJ_softcore();
+          alpha_crf = topo.perturbed_solute().atoms()[j].CRF_softcore();
+
+ 	  const int site_i = topo.eds_perturbed_solute().atoms()[i].site_number();
+          const int numstates_i = sim.param().eds.multnumstates[site_i];
+          const int site_j = sim.param().eds.numsites; // non eds atom, belongs to site R (rest), last site
+          const int state_j = 0; // non eds atom, state is set to 0
+
+          const std::vector<unsigned int> &pert_i_M_IAC = topo.eds_perturbed_solute().atoms()[i].M_IAC();
+          const std::vector<double> &pert_i_M_charge = topo.eds_perturbed_solute().atoms()[i].M_charge();
+
+          std::map<std::vector<int>, double> & storage_energies_eds_mult_vi = storage.energies.eds_mult_vi;
+          std::map<std::vector<int>, double> & storage_energies_eds_mult_dvi = storage.perturbed_energy_derivatives.eds_mult_vi;//?
+          std::map<std::vector<int>, math::Matrix> & storage_virial_tensor_mult_endstates = storage.virial_tensor_mult_endstates;
+
+          for (unsigned int state_i = 0; state_i < numstates_i; state_i++) {
+            std::vector<unsigned int> states_i_j {site_i, state_i, site_j, state_j};
+            math::Vec & force_mult_endstates_state_i = force_mult_endstates[states_i_j](i);
+            math::Vec & force_mult_endstates_state_j = force_mult_endstates[states_i_j](j);
+            math::Matrix & virial_tensor_mult_endstates_state = storage_virial_tensor_mult_endstates[states_i_j];
+            const lj_parameter_struct &A_lj =
+                    m_param_lj_parameter[(pert_i_M_IAC[state_i])][topo.perturbed_solute().atoms()[j].A_IAC()];
+            const lj_parameter_struct &B_lj =
+                    m_param_lj_parameter[(pert_i_M_IAC[state_i])][topo.perturbed_solute().atoms()[j].B_IAC()];
+
+            A_q = pert_i_M_charge[state_i] * topo.perturbed_solute().atoms()[j].A_charge();
+                  B_q = pert_i_M_charge[state_i] * topo.perturbed_solute().atoms()[j].B_charge();
+
+                  int n1 = topo.atom_energy_group(i);
+                  int n2 = topo.atom_energy_group(j);
+
+                  set_lambda(topo.individual_lambda(simulation::lj_lambda)[n1][n2],
+                          topo.individual_lambda(simulation::lj_softness_lambda)[n1][n2],
+                          topo.individual_lambda(simulation::crf_lambda)[n1][n2],
+                          topo.individual_lambda(simulation::crf_softness_lambda)[n1][n2],
+                          topo.individual_lambda_derivative(simulation::lj_lambda)[n1][n2],
+                          topo.individual_lambda_derivative(simulation::lj_softness_lambda)[n1][n2],
+                          topo.individual_lambda_derivative(simulation::crf_lambda)[n1][n2],
+                          topo.individual_lambda_derivative(simulation::crf_softness_lambda)[n1][n2],
+                          topo.lambda_exp());
+
+
+            // Scaling is not compatible
+            if (t_perturbation_details::do_scaling) {
+              io::messages.add("EDS-Nonbonded_Innerloop",
+              "Scaling function not implemented",
+              io::message::critical);
+            }
+            eds_pert_lj_crf_interaction(dist2, dist6, A_lj.c6, A_lj.c12, B_lj.c6, B_lj.c12, A_q, B_q,
+                                            alpha_lj, alpha_crf, f, e_lj, e_crf, de_lj, de_crf);
+
+            // Extended TI is not compatible with EDS yet
+            if (sim.param().precalclam.nr_lambdas){
+              io::messages.add("EDS-Nonbonded_Innerloop",
+              "Extended TI-EDS function not implemented",
+              io::message::critical);
+            }
+
+            DEBUG(10, "\t\tatomic virial");
+            for (int a = 0; a < 3; ++a) {
+              const double term = f * r(a);
+              force_mult_endstates_state_i(a) += term;
+              force_mult_endstates_state_j(a) -= term;
+
+              for (int b = 0; b < 3; ++b)
+                virial_tensor_mult_endstates_state(b, a) += r(b) * term;
+            }
+            // energy
+            //assert(storage.energies.eds_vi.size() == numstates);
+            storage_energies_eds_mult_vi[states_i_j] += e_lj + e_crf;
+            //assert(storage.perturbed_energy_derivatives.eds_vi.size() == numstates);
+            storage_energies_eds_mult_dvi[states_i_j] += de_lj + de_crf;
+
+          }
+          break;
+        }
+        case 3:
+	// perturbed - normal
+	{
+	  DEBUG(10, "perturbed - normal");
+          alpha_lj = topo.perturbed_solute().atoms()[i].LJ_softcore();
+          alpha_crf = topo.perturbed_solute().atoms()[i].CRF_softcore();
+ 
+	  const lj_parameter_struct &A_lj = 
+	    m_param_lj_parameter[topo.perturbed_solute().atoms()[i].A_IAC()][topo.iac(j)];
+	  const lj_parameter_struct &B_lj = 
+	    m_param_lj_parameter[topo.perturbed_solute().atoms()[i].B_IAC()][topo.iac(j)];
+	  
+	  A_q = topo.perturbed_solute().atoms()[i].A_charge() * topo.charge(j);
+	  B_q = topo.perturbed_solute().atoms()[i].B_charge() * topo.charge(j);
+	  
+	  int n1 = topo.atom_energy_group(i);
+	  int n2 = topo.atom_energy_group(j);
+
+	  DEBUG(14, "energy groups " << n1 << " " << n2);
+	  
+	  DEBUG(10, "parameters gathered");
+	  
+	  set_lambda(topo.individual_lambda(simulation::lj_lambda)[n1][n2],
+	          topo.individual_lambda(simulation::lj_softness_lambda)[n1][n2],
+	          topo.individual_lambda(simulation::crf_lambda)[n1][n2],
+	          topo.individual_lambda(simulation::crf_softness_lambda)[n1][n2],
+	          topo.individual_lambda_derivative(simulation::lj_lambda)[n1][n2],
+	          topo.individual_lambda_derivative(simulation::lj_softness_lambda)[n1][n2],
+	          topo.individual_lambda_derivative(simulation::crf_lambda)[n1][n2],
+	          topo.individual_lambda_derivative(simulation::crf_softness_lambda)[n1][n2],
+	          topo.lambda_exp());
+	  
+	  DEBUG (10, "lambdas set");
+
+          if (t_perturbation_details::do_scaling) {
+            // SCALING ON
+            // check whether we need to do scaling
+            // based on energy groups
+            // Check if we want to scale interactions
+            std::pair<int, int> energy_group_pair(topo.atom_energy_group(i),
+              topo.atom_energy_group(j));
+      
+            if (topo.energy_group_scaling().count(energy_group_pair)) {
+
+              // YES, we do scale the interactions!
+              lj_crf_scaled_interaction(dist2, dist6, A_lj.c6, A_lj.c12,
+                B_lj.c6, B_lj.c12,
+                A_q, B_q,
+                alpha_lj, alpha_crf,
+                topo.energy_group_scaling()[energy_group_pair].first,
+                topo.energy_group_scaling()[energy_group_pair].second,
+                f, e_lj, e_crf, de_lj, de_crf);
+            }
+            else{  // No scaling
+                eds_pert_lj_crf_interaction(dist2, dist6, A_lj.c6, A_lj.c12, B_lj.c6, B_lj.c12, A_q, B_q,
+                  alpha_lj, alpha_crf, f, e_lj, e_crf, de_lj, de_crf);
+            }
+          } //END Scaling
+          else { // No scaling 
+            eds_pert_lj_crf_interaction(dist2, dist6, A_lj.c6, A_lj.c12, B_lj.c6, B_lj.c12, A_q, B_q,
+                alpha_lj, alpha_crf, f, e_lj, e_crf, de_lj, de_crf);
+
+            //---------------------------------------------------------
+            //                     ANITA
+            // extended TI: calculate A_e_lj, B_e_lj, A_e_crf, B_e_crf,
+            //              A_de_LJ, B_de_lj, A_de_crf, B_de_crf
+            //---------------------------------------------------------
+
+            // TODO: could add another parameter, to only calculate every x steps
+            // if nr_lambdas > 1, we apply extended TI 
+            if (sim.param().precalclam.nr_lambdas && ((sim.steps()  % sim.param().write.free_energy) == 0)){
+              DEBUG(8, "precalculate lj_crf_soft");
+              double A_e_lj = 0.0, B_e_lj = 0.0, A_e_crf = 0.0, B_e_crf = 0.0,
+                A_de_lj = 0.0, B_de_lj = 0.0, A_de_crf = 0.0, B_de_crf = 0.0;
+
+              // determine lambda stepsize from min,max and nr of lambdas
+              double lambda_step = (sim.param().precalclam.max_lam - 
+                   sim.param().precalclam.min_lam) / 
+                   (sim.param().precalclam.nr_lambdas-1);
+
+              //loop over nr_lambdas
+              for (unsigned int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){ 
+
+              // determine current lambda for this index
+              double lam=(lam_index * lambda_step) + sim.param().precalclam.min_lam;
+
+              // start the calculations
+              lj_crf_soft_interaction_ext(r, A_lj.c6, A_lj.c12,
+                B_lj.c6, B_lj.c12, A_q, B_q, alpha_lj, alpha_crf,
+                A_e_lj,  B_e_lj, A_e_crf, B_e_crf,
+                A_de_lj, B_de_lj, A_de_crf, B_de_crf,
+                lam);
+
+              DEBUG(8, "ANITA: precalculated energies for lambda " << lam
+                   << "\n now starting storage");
+              DEBUG(8, "\n  A_e_lj " << A_e_lj << "\n  lambda index " << lam_index <<
+                   "\n  storage.energies.A_lj_energy.size() " << storage.energies.A_lj_energy.size()
+                   << "\n  energy group1 " << topo.atom_energy_group(i) << " energy group2 " 
+                   << topo.atom_energy_group(j));
+              //            assert(storage.energies.A_lj_energy.size() > lam_index);
+              //            assert(storage.energies.A_lj_energy[lam_index].size() > topo.atom_energy_group(i));
+              //            assert(storage.energies.A_lj_energy[lam_index][topo.atom_energy_group(i)].size() 
+              //                     > topo.atom_energy_group(j));
+
+              storage.energies.A_lj_energy[lam_index][topo.atom_energy_group(i)]
+                    [topo.atom_energy_group(j)] += A_e_lj;
+              storage.energies.B_lj_energy[lam_index][topo.atom_energy_group(i)]
+                    [topo.atom_energy_group(j)] += B_e_lj;
+
+              storage.energies.A_crf_energy[lam_index][topo.atom_energy_group(i)]
+                    [topo.atom_energy_group(j)] += A_e_crf;
+              storage.energies.B_crf_energy[lam_index][topo.atom_energy_group(i)]
+                    [topo.atom_energy_group(j)] += B_e_crf;
+
+              storage.perturbed_energy_derivatives.A_lj_energy
+                    [lam_index][topo.atom_energy_group(i)]
+                    [topo.atom_energy_group(j)] += A_de_lj;
+              storage.perturbed_energy_derivatives.B_lj_energy
+                    [lam_index][topo.atom_energy_group(i)]
+                    [topo.atom_energy_group(j)] += B_de_lj;
+
+              storage.perturbed_energy_derivatives.A_crf_energy
+                    [lam_index][topo.atom_energy_group(i)]
+                    [topo.atom_energy_group(j)] += A_de_crf;
+              storage.perturbed_energy_derivatives.B_crf_energy
+                    [lam_index][topo.atom_energy_group(i)]
+                    [topo.atom_energy_group(j)] += B_de_crf;
+              DEBUG(8, "\ndone with storing energies ");
+              } //all 101 lambda points done
+            } // done with extended TI
+          }
+	  
+	  DEBUG(10, "interactions computed");
+	  
+	  // In this case, we can store everything immediately and do not need the endstates
+	  
+	  DEBUG(10, "\t\tatomic virial");
+	  storage.force(i) += f*r;
+	  storage.force(j) -= f*r;
+	  
+	  for (int a = 0; a < 3; ++a) {
+	    const double term = f * r(a);
+	    for (int b = 0; b < 3; ++b)
+	      storage.virial_tensor(b,a) += r(b) * term;
+	  }
+	  
+	  // energy 
+	  assert(storage.energies.lj_energy.size() > n1);
+	  assert(storage.energies.lj_energy.size() > n2);
+	  
+	  storage.energies.lj_energy[n1][n2] += e_lj;
+	  
+	  storage.energies.crf_energy[n1][n2] += e_crf;
+	  
+	  assert(storage.perturbed_energy_derivatives.lj_energy.size() > n1 &&
+	        storage.perturbed_energy_derivatives.lj_energy.size() > n2);
+	  
+	  assert(storage.perturbed_energy_derivatives.lj_energy[n1].size() > n1 &&
+	        storage.perturbed_energy_derivatives.lj_energy[n2].size() > n2);
+	  
+	  storage.perturbed_energy_derivatives.lj_energy[n1][n2] += de_lj;
+	  
+	  storage.perturbed_energy_derivatives.crf_energy[n1][n2] += de_crf;
+	  
+	  DEBUG(10, "forces, energies and energy derivatives stored in storage");
+	  
+	  break;
+        }
+        case 4:
+        // perturbed - EDS
+        {
+          alpha_lj = topo.perturbed_solute().atoms()[i].LJ_softcore();
+          alpha_crf = topo.perturbed_solute().atoms()[i].CRF_softcore();
+
+          const int site_i = sim.param().eds.numsites; // non eds atom, belongs to site R (rest), last site
+          const int state_i = 0; // non eds atom, state is set to 0
+          const int site_j = topo.eds_perturbed_solute().atoms()[j].site_number();
+          const int numstates_j = sim.param().eds.multnumstates[site_j];
+
+          const std::vector<unsigned int> &pert_j_M_IAC = topo.eds_perturbed_solute().atoms()[j].M_IAC();
+          const std::vector<double> &pert_j_M_charge = topo.eds_perturbed_solute().atoms()[j].M_charge();
+
+          std::map<std::vector<int>, double> & storage_energies_eds_mult_vi = storage.energies.eds_mult_vi;
+          std::map<std::vector<int>, double> & storage_energies_eds_mult_dvi = storage.perturbed_energy_derivatives.eds_mult_vi;
+          std::map<std::vector<int>, math::Matrix> & storage_virial_tensor_mult_endstates = storage.virial_tensor_mult_endstates;
+
+          for (unsigned int state_j = 0; state_j < numstates_j; state_j++) {
+            math::Vec & force_mult_endstates_state_i = force_endstates[states_i_j](i);
+            math::Vec & force_mult_endstates_state_j = force_endstates[states_i_j](j);
+            math::Matrix & virial_tensor_mult_endstates_state = storage_virial_tensor_mult_endstates[states_i_j];
+            const lj_parameter_struct &A_lj =
+              m_param_lj_parameter[topo.perturbed_solute().atoms()[i].A_IAC()][(pert_j_M_IAC[state])];
+            const lj_parameter_struct &B_lj =
+              m_param_lj_parameter[topo.perturbed_solute().atoms()[i].B_IAC()][(pert_j_M_IAC[state])];
+
+            A_q = topo.perturbed_solute().atoms()[i].A_charge() * pert_j_M_charge[state_j] ;
+            B_q = topo.perturbed_solute().atoms()[i].B_charge() * pert_j_M_charge[state_j];
+
+            int n1 = topo.atom_energy_group(i);
+            int n2 = topo.atom_energy_group(j);
+
+            set_lambda(topo.individual_lambda(simulation::lj_lambda)[n1][n2],
+              topo.individual_lambda(simulation::lj_softness_lambda)[n1][n2],
+              topo.individual_lambda(simulation::crf_lambda)[n1][n2],
+              topo.individual_lambda(simulation::crf_softness_lambda)[n1][n2],
+              topo.individual_lambda_derivative(simulation::lj_lambda)[n1][n2],
+              topo.individual_lambda_derivative(simulation::lj_softness_lambda)[n1][n2],
+              topo.individual_lambda_derivative(simulation::crf_lambda)[n1][n2],
+              topo.individual_lambda_derivative(simulation::crf_softness_lambda)[n1][n2],
+              topo.lambda_exp());
+
+	    // Scaling is not compatible with EDS
+            if (t_perturbation_details::do_scaling) {
+              io::messages.add("EDS-Nonbonded_Innerloop",
+              "Scaling function not implemented",
+              io::message::critical);
+            }
+
+            eds_pert_lj_crf_interaction(dist2, dist6, A_lj.c6, A_lj.c12, B_lj.c6, B_lj.c12, A_q, B_q,
+            alpha_lj, alpha_crf, f, e_lj, e_crf, de_lj, de_crf);
+
+            // Extended TI is not compatible with EDS yet
+            if (sim.param().precalclam.nr_lambdas){
+              io::messages.add("EDS-Nonbonded_Innerloop",
+              "Extended TI-EDS function not implemented",
+              io::message::critical);
+            }
+
+            DEBUG(10, "\t\tatomic virial");
+            for (int a = 0; a < 3; ++a) {
+              const double term = f * r(a);
+              force_mult_endstates_state_i(a) += term;
+              force_mult_endstates_state_j(a) -= term;
+
+              for (int b = 0; b < 3; ++b)
+                virial_tensor_mult_endstates_state(b, a) += r(b) * term;
+            }
+            // energy
+            //assert(storage.energies.eds_vi.size() == numstates);
+            storage_energies_eds_mult_vi[states_i_j] += e_lj + e_crf;
+            //assert(storage.perturbed_energy_derivatives.eds_vi.size() == numstates);
+            storage_energies_eds_mult_dvi[states_i_j] += de_lj + de_crf;
+
+          }
+          break;
+        }
+
+        case 5:
+	// perturbed - perturbed
+	{
+	  alpha_lj = (topo.perturbed_solute().atoms()[i].LJ_softcore() +
+		topo.perturbed_solute().atoms()[j].LJ_softcore()) / 2.0;
+          alpha_crf = (topo.perturbed_solute().atoms()[i].CRF_softcore() +
+            	topo.perturbed_solute().atoms()[j].CRF_softcore()) / 2.0;
+
+	  const lj_parameter_struct &A_lj = 
+	          m_param_lj_parameter[topo.perturbed_solute().atoms()[i].A_IAC()][topo.perturbed_solute().atoms()[j].A_IAC()];
+	  const lj_parameter_struct &B_lj = 
+	          m_param_lj_parameter[topo.perturbed_solute().atoms()[i].B_IAC()][topo.perturbed_solute().atoms()[j].B_IAC()];
+	  
+	  A_q = topo.perturbed_solute().atoms()[i].A_charge() * topo.perturbed_solute().atoms()[j].A_charge();
+	  B_q = topo.perturbed_solute().atoms()[i].B_charge() * topo.perturbed_solute().atoms()[j].B_charge();
+	    
+          int n1 = topo.atom_energy_group(i);
+          int n2 = topo.atom_energy_group(j);
+	  
+          set_lambda(topo.individual_lambda(simulation::lj_lambda)[n1][n2],
+		        topo.individual_lambda(simulation::lj_softness_lambda)[n1][n2],
+		        topo.individual_lambda(simulation::crf_lambda)[n1][n2],
+		        topo.individual_lambda(simulation::crf_softness_lambda)[n1][n2],
+		        topo.individual_lambda_derivative(simulation::lj_lambda)[n1][n2],
+		        topo.individual_lambda_derivative(simulation::lj_softness_lambda)[n1][n2],
+		        topo.individual_lambda_derivative(simulation::crf_lambda)[n1][n2],
+		        topo.individual_lambda_derivative(simulation::crf_softness_lambda)[n1][n2],
+		        topo.lambda_exp());
+	  
+          if (t_perturbation_details::do_scaling) {
+            // SCALING ON
+            // check whether we need to do scaling
+            // based on energy groups
+            // Check if we want to scale interactions
+            std::pair<int, int> energy_group_pair(topo.atom_energy_group(i),
+              topo.atom_energy_group(j));
+      
+            if (topo.energy_group_scaling().count(energy_group_pair)) {
+
+              // YES, we do scale the interactions!
+              lj_crf_scaled_interaction(dist2, dist6, A_lj.c6, A_lj.c12,
+                B_lj.c6, B_lj.c12,
+                A_q, B_q,
+                alpha_lj, alpha_crf,
+                topo.energy_group_scaling()[energy_group_pair].first,
+                topo.energy_group_scaling()[energy_group_pair].second,
+                f, e_lj, e_crf, de_lj, de_crf);
+
+            }
+            else{  // No scaling
+      
+              eds_pert_lj_crf_interaction(dist2, dist6, A_lj.c6, A_lj.c12, B_lj.c6, B_lj.c12, A_q, B_q,
+                alpha_lj, alpha_crf, f, e_lj, e_crf, de_lj, de_crf);
+            }
+          } //END Scaling
+          else { // No scaling 
+            eds_pert_lj_crf_interaction(dist2, dist6, A_lj.c6, A_lj.c12, B_lj.c6, B_lj.c12, A_q, B_q,
+                alpha_lj, alpha_crf, f, e_lj, e_crf, de_lj, de_crf);
+
+            //---------------------------------------------------------
+            //                     ANITA
+            // extended TI: calculate A_e_lj, B_e_lj, A_e_crf, B_e_crf,
+            //              A_de_LJ, B_de_lj, A_de_crf, B_de_crf
+            //---------------------------------------------------------
+
+            // TODO: could add another parameter, to only calculate every x steps
+            // if nr_lambdas > 1, we apply extended TI 
+            if (sim.param().precalclam.nr_lambdas && ((sim.steps()  % sim.param().write.free_energy) == 0)){
+              DEBUG(8, "precalculate lj_crf_soft");
+              double A_e_lj = 0.0, B_e_lj = 0.0, A_e_crf = 0.0, B_e_crf = 0.0,
+              A_de_lj = 0.0, B_de_lj = 0.0, A_de_crf = 0.0, B_de_crf = 0.0;
+
+              // determine lambda stepsize from min,max and nr of lambdas
+              double lambda_step = (sim.param().precalclam.max_lam - 
+                   sim.param().precalclam.min_lam) / 
+                   (sim.param().precalclam.nr_lambdas-1);
+
+              //loop over nr_lambdas
+              for (unsigned int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){ 
+
+                // determine current lambda for this index
+                double lam=(lam_index * lambda_step) + sim.param().precalclam.min_lam;
+
+                // start the calculations
+                lj_crf_soft_interaction_ext(r, A_lj.c6, A_lj.c12,
+                  B_lj.c6, B_lj.c12, A_q, B_q, alpha_lj, alpha_crf,
+                  A_e_lj,  B_e_lj, A_e_crf, B_e_crf,
+                  A_de_lj, B_de_lj, A_de_crf, B_de_crf,
+                  lam);
+
+                DEBUG(8, "ANITA: precalculated energies for lambda " << lam
+                   << "\n now starting storage");
+                DEBUG(8, "\n  A_e_lj " << A_e_lj << "\n  lambda index " << lam_index <<
+                   "\n  storage.energies.A_lj_energy.size() " << storage.energies.A_lj_energy.size()
+                   << "\n  energy group1 " << topo.atom_energy_group(i) << " energy group2 " 
+                   << topo.atom_energy_group(j));
+                //            assert(storage.energies.A_lj_energy.size() > lam_index);
+                //            assert(storage.energies.A_lj_energy[lam_index].size() > topo.atom_energy_group(i));
+                //            assert(storage.energies.A_lj_energy[lam_index][topo.atom_energy_group(i)].size() 
+                //                     > topo.atom_energy_group(j));
+
+                storage.energies.A_lj_energy[lam_index][topo.atom_energy_group(i)]
+                    [topo.atom_energy_group(j)] += A_e_lj;
+                storage.energies.B_lj_energy[lam_index][topo.atom_energy_group(i)]
+                    [topo.atom_energy_group(j)] += B_e_lj;
+
+                storage.energies.A_crf_energy[lam_index][topo.atom_energy_group(i)]
+                    [topo.atom_energy_group(j)] += A_e_crf;
+                storage.energies.B_crf_energy[lam_index][topo.atom_energy_group(i)]
+                    [topo.atom_energy_group(j)] += B_e_crf;
+
+                storage.perturbed_energy_derivatives.A_lj_energy
+                    [lam_index][topo.atom_energy_group(i)]
+                    [topo.atom_energy_group(j)] += A_de_lj;
+                storage.perturbed_energy_derivatives.B_lj_energy
+                    [lam_index][topo.atom_energy_group(i)]
+                    [topo.atom_energy_group(j)] += B_de_lj;
+
+                storage.perturbed_energy_derivatives.A_crf_energy
+                    [lam_index][topo.atom_energy_group(i)]
+                    [topo.atom_energy_group(j)] += A_de_crf;
+                storage.perturbed_energy_derivatives.B_crf_energy
+                    [lam_index][topo.atom_energy_group(i)]
+                    [topo.atom_energy_group(j)] += B_de_crf;
+                DEBUG(8, "\ndone with storing energies ");
+                } //all 101 lambda points done
+              } // done with extended TI
+            }
+
+          // In this case, we can store everything immediately and do not need the endstates
+        
+          DEBUG(10, "\t\tatomic virial");
+          storage.force(i) += f*r;
+          storage.force(j) -= f*r;
+        
+          for (int a = 0; a < 3; ++a) {
+            const double term = f * r(a);
+            for (int b = 0; b < 3; ++b)
+              storage.virial_tensor(b,a) += r(b) * term;
+          }
+        
+          // energy 
+          assert(storage.energies.lj_energy.size() > n1);
+          assert(storage.energies.lj_energy.size() > n2);
+          DEBUG(10, "energies lj " << e_lj << " electro " << e_crf);
+          storage.energies.lj_energy[n1][n2] += e_lj;
+        
+          storage.energies.crf_energy[n1][n2] += e_crf;
+        
+          assert(storage.perturbed_energy_derivatives.
+          lj_energy.size() > n1 &&
+          storage.perturbed_energy_derivatives.
+          lj_energy.size() > n2);
+        
+          assert(storage.perturbed_energy_derivatives.
+          lj_energy[n1].size() > n1 &&
+          storage.perturbed_energy_derivatives.
+          lj_energy[n2].size() > n2);
+        
+          storage.perturbed_energy_derivatives.lj_energy[n1][n2] += de_lj;
+        
+          storage.perturbed_energy_derivatives.crf_energy[n1][n2] += de_crf;
+        
+          break;
+        }
+	break;
+      }
+      break;
+    }
     case simulation::lj_crf_func:
     {
       std::vector<math::VArray> &force_endstates = storage.force_endstates;
@@ -73,10 +672,10 @@ t_interaction_spec, t_perturbation_details>
       const double dist6 = dist2 * dist2 * dist2;
       switch (both_perturbed) {
         case 0:
-	      // EDS - normal
+	// EDS - normal
         {
-	        const std::vector<unsigned int> &pert_i_M_IAC = topo.eds_perturbed_solute().atoms()[i].M_IAC();
-	        const std::vector<double> &pert_i_M_charge = topo.eds_perturbed_solute().atoms()[i].M_charge();
+          const std::vector<unsigned int> &pert_i_M_IAC = topo.eds_perturbed_solute().atoms()[i].M_IAC();
+          const std::vector<double> &pert_i_M_charge = topo.eds_perturbed_solute().atoms()[i].M_charge();
           std::vector<double> & storage_energies_eds_vi = storage.energies.eds_vi;
           std::vector<math::Matrix> & storage_virial_tensor_endstates = storage.virial_tensor_endstates;
           for (unsigned int state = 0; state < numstates; state++) {
@@ -107,9 +706,9 @@ t_interaction_spec, t_perturbation_details>
         }
         case 1:
 	      // EDS - EDS
-	      {
-	        const std::vector<unsigned int> &pert_i_M_IAC = topo.eds_perturbed_solute().atoms()[i].M_IAC();
-	        const std::vector<double> &pert_i_M_charge = topo.eds_perturbed_solute().atoms()[i].M_charge();
+	{
+	  const std::vector<unsigned int> &pert_i_M_IAC = topo.eds_perturbed_solute().atoms()[i].M_IAC();
+	  const std::vector<double> &pert_i_M_charge = topo.eds_perturbed_solute().atoms()[i].M_charge();
           const std::vector<unsigned int> &pert_j_M_IAC = topo.eds_perturbed_solute().atoms()[j].M_IAC();
           const std::vector<double> &pert_j_M_charge = topo.eds_perturbed_solute().atoms()[j].M_charge();
           std::vector<double> & storage_energies_eds_vi = storage.energies.eds_vi;
@@ -139,7 +738,7 @@ t_interaction_spec, t_perturbation_details>
             // energy
             assert(storage.energies.eds_vi.size() == numstates);
             storage_energies_eds_vi[state] += e_nb;
-            // }
+            // 
 
           }
           break;
@@ -227,7 +826,7 @@ t_interaction_spec, t_perturbation_details>
           //std::vector<double> & storage_energies_eds_vi = storage.energies.eds_vi;
 	        //std::vector<double> & storage_energies_eds_dvi = storage.perturbed_energy_derivatives.eds_vi;
           //std::vector<math::Matrix> & storage_virial_tensor_endstates = storage.virial_tensor_endstates;
-          //for (unsigned int state = 0; state < numstates; state++) {
+          //for (unsigned int state = 0; state < numstates; state++) 
 	        //math::Vec & force_endstates_state_i = force_endstates[state](i);
           //  math::Vec & force_endstates_state_j = force_endstates[state](j);
           //  math::Matrix & virial_tensor_endstates_state = storage_virial_tensor_endstates[state];
@@ -296,7 +895,7 @@ t_interaction_spec, t_perturbation_details>
             // if nr_lambdas > 1, we apply extended TI 
             if (sim.param().precalclam.nr_lambdas && ((sim.steps()  % sim.param().write.free_energy) == 0)){
               DEBUG(8, "precalculate lj_crf_soft");
-              //        if ( sim.param().precalclam.nr_lambdas ) { 
+              //        if ( sim.param().precalclam.nr_lambdas )  
               double A_e_lj = 0.0, B_e_lj = 0.0, A_e_crf = 0.0, B_e_crf = 0.0,
                 A_de_lj = 0.0, B_de_lj = 0.0, A_de_crf = 0.0, B_de_crf = 0.0;
 
@@ -536,7 +1135,7 @@ t_interaction_spec, t_perturbation_details>
             // if nr_lambdas > 1, we apply extended TI 
             if (sim.param().precalclam.nr_lambdas && ((sim.steps()  % sim.param().write.free_energy) == 0)){
               DEBUG(8, "precalculate lj_crf_soft");
-              //        if ( sim.param().precalclam.nr_lambdas ) { 
+              //        if ( sim.param().precalclam.nr_lambdas )  
               double A_e_lj = 0.0, B_e_lj = 0.0, A_e_crf = 0.0, B_e_crf = 0.0,
               A_de_lj = 0.0, B_de_lj = 0.0, A_de_crf = 0.0, B_de_crf = 0.0;
 
@@ -634,7 +1233,7 @@ t_interaction_spec, t_perturbation_details>
 
           break;
         }
-	      break;
+        break;
       }
       break;
     }

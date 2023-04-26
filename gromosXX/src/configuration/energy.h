@@ -293,7 +293,16 @@ namespace configuration
      * special energy of the endstates in eds
      */
     std::vector<double> eds_vi_special;
-           
+
+    /**
+     * MULTIAEDS
+     * interaction energies between two EDS sites
+     * //eds_mult_vi[site_i, state_ia, site_j, state_jb]
+     * eds_mult_vi[site_i][site_j][state_ia][state_jb]
+     */
+    std::map<std::vector<int>, double> eds_mult_vi;
+    //std::vector<std::vector<std::vector<std::vector<double> > > > eds_mult_vi;
+
     // this should be size of bath
     /**
      * kinetic energy term

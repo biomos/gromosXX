@@ -192,6 +192,22 @@ void configuration::Energy::zero(bool potential, bool kinetic)
               std::vector<std::vector<double> >(B_crf_energy[0].size(),
               std::vector<double>(B_crf_energy[0].size(),0.0)));
     }//
+
+    // MULTIAEDS
+    if(eds_mult_vi.size()){
+      for (auto i: eds_mult_vi){
+        eds_mult_vi[i.first] = 0.0;
+      }
+    }
+
+//    // will this work? different EDS sites can have different nr of states
+//    if (eds_mult_vi.size()){
+//      
+//      eds_mult_vi.assign(eds_mult_vi.size(),
+//	      std::vector<std::vector<std::vector<double> > >(eds_mult_vi[0].size(),
+//	      std::vector<std::vector<double> >(eds_mult_vi[0][0].size(),
+//	      std::vector<double>(eds_mult_vi[0][0][0].size(),0.0))));
+//    }
   }
 
   if (kinetic){

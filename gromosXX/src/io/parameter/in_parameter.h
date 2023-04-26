@@ -53,6 +53,7 @@
  * - @ref  EDS
  * - @ref  REEDS
  * - @ref  AEDS
+ * - @ref  MULTIAEDS
  * - @ref  LAMBDAS
  * - @ref  localelev
  * - @ref  bsleusparam
@@ -337,6 +338,10 @@ namespace io {
     * read AEDS block.
     */
     void read_AEDS(simulation::Parameter &param, std::ostream & os = std::cout);
+    /**
+    * read MUTLIAEDS block.
+    */
+    void read_MULTIAEDS(simulation::Parameter &param, std::ostream & os = std::cout);
     /**
      * read NONBONDED block.
      */
