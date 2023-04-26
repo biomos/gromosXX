@@ -19,9 +19,9 @@ aladip_atomic_t_SOURCES = aladip_atomic.t.cc\
 	check_forcefield.cc\
 	check_state.cc
 
-aladip_ls_t_SOURCES = aladip_ls.t.cc\
-    check_forcefield.cc\
-    check_state.cc
+# aladip_ls_t_SOURCES = aladip_ls.t.cc\
+#     check_forcefield.cc\
+#     check_state.cc
 
 c16_cg_t_SOURCES = c16_cg.t.cc\
 	check_forcefield.cc

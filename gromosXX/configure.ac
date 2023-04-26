@@ -337,6 +337,7 @@ esac
 
 dnl set c++11 standard
 MY_CXXFLAGS="-std=c++11 ${MY_CXXFLAGS}"
+CXX_NDEBUG_FLAGS="-std=c++11 ${CXX_NDEBUG_FLAGS}"
 
 dnl subst compiler flags
 AC_SUBST(MY_CXXFLAGS)
