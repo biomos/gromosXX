@@ -1,4 +1,4 @@
-# check compiler
+# check compile
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "PGI")
     set(COMPILER_PGICC 1)
 elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
