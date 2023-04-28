@@ -1123,7 +1123,7 @@ bool io::In_Configuration::read_tf_rdc
         os << "\treading TFRDCRESEXPAVE...\n";
 
       if (sim.param().tfrdc.read)
-        _read_tf_rdc_restraint_averages(buffer,
+        _read_tf_rdc_restraint_averages(buffer, topo.tf_rdc_restraints(),
               conf.special().tfrdc.R_avg, conf.special().tfrdc.P_avg, 
 							conf.special().tfrdc.RDC_cumavg, conf.special().tfrdc.num_averaged);
       else
@@ -2551,7 +2551,7 @@ bool io::In_Configuration::_read_order_parameter_restraint_averages(
         const std::vector<topology::order_parameter_restraint_struct> & oparamres,
         std::vector<math::Matrix> & Q_avg,
         std::vector<double> & D_avg) {
-  DEBUG(8, "read order parameter restaint averages");
+  DEBUG(8, "read order parameter restraint averages");
 
   std::vector<topology::order_parameter_restraint_struct>::const_iterator
   oparamres_it = oparamres.begin(), oparamres_to = oparamres.end();
@@ -2761,11 +2761,15 @@ bool io::In_Configuration::_read_rdc_cumav(std::vector<std::string> &buffer,
 
 bool io::In_Configuration::_read_tf_rdc_restraint_averages(
         std::vector<std::string> &buffer,
+        const std::vector<topology::tf_rdc_restraint_struct> & tfrdcres,
         std::vector<double> & R_avg,
         std::vector<double> & P_avg,
         std::vector<double> & RDC_cumavg,
 				unsigned long long int & num_averaged) {
   DEBUG(8, "read tensor-free RDC restraint averages");
+
+  std::vector<topology::tf_rdc_restraint_struct>::const_iterator
+  tfrdcres_it = tfrdcres.begin(), tfrdcres_to = tfrdcres.end();
 
   std::string s;
 
@@ -2776,33 +2780,29 @@ bool io::In_Configuration::_read_tf_rdc_restraint_averages(
   P_avg.clear();
   RDC_cumavg.clear();
 
-  std::vector<std::string>::const_iterator
-      buff_it = buffer.begin(),
-      buff_to = buffer.end()-1;
-
-  _lineStream.clear();
-  _lineStream.str(*buff_it);
-
   _lineStream >> num_averaged;
-  buff_it++;
-  for(; buff_it != buff_to; ++buff_it){
 
-    _lineStream.clear();
-    _lineStream.str(*buff_it);
-    double R, P, RDC;
-    _lineStream >> R >> P >> RDC;
+  for (; tfrdcres_it != tfrdcres_to; ++tfrdcres_it) {
+    double R;
+    _lineStream >> R;
+
+    double P;
+    _lineStream >> P;
+
+    double RDC;
+    _lineStream >> RDC;
 
     if (_lineStream.fail()) {
       io::messages.add("Could not read averages from TFRDCRESEXPAVE block",
               "In_Configuration", io::message::error);
       return false;
     }
+
     R_avg.push_back(R);
     P_avg.push_back(P);
     RDC_cumavg.push_back(RDC/1000000000000);
   }
-
-  return true;
+    return true;
 }
 
 bool io::In_Configuration::_read_tf_rdc_mfv(
