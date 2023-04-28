@@ -2898,7 +2898,7 @@ bool io::In_Configuration::_read_tf_rdc_mfv_pexp(
 
     tfrdc_mfv.P_expavg.resize(tfrdcres.size());
 
-    for(int i=0; i<tfrdcres.size()-1; ++i, ++it){
+    for(int i=0; i<tfrdcres.size(); ++i, ++it){
         _lineStream.clear();
         _lineStream.str(*it);
         _lineStream >> tfrdc_mfv.P_expavg[i];
