@@ -81,7 +81,7 @@ void hard_coded_values(std::map<std::string, double> & m){
   m["XrayRestraint"] = 5.9411e+03;
   m["Local Elevation"] = 3.5284e+01;
   m["OrderParameterRestraint"] = 3.316416e-02;
-  m["TFRDCRestraint"] = 150.176612120289349; // TODO anpassen!!
+  m["TFRDCRestraint"] = 0.276657772809125;
 }
 
 
