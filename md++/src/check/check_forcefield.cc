@@ -74,6 +74,23 @@
 
 using namespace std;
 
+
+configuration::Configuration::special_struct::tfrdc_struct tfrdc_copy;
+configuration::Configuration::special_struct::tfrdc_mfv_struct tfrdc_mfv_copy;
+inline void store_initial_tfrdc(configuration::Configuration & conf) {
+  tfrdc_copy = conf.special().tfrdc;
+  tfrdc_mfv_copy = conf.special().tfrdc_mfv;
+}
+
+inline void set_initial_tfrdc_averages(configuration::Configuration & conf) {
+    /*conf.special().tfrdc.P_avg[0] = 0.0018399861;
+    conf.special().tfrdc.P_avg[1] = 0.0019696395;
+    conf.special().tfrdc_mfv.P_expavg[0] = 0.0015722091;
+    conf.special().tfrdc_mfv.P_expavg[1] = 0.0017608732;*/
+  conf.special().tfrdc = tfrdc_copy;
+  conf.special().tfrdc_mfv = tfrdc_mfv_copy;
+}
+
 double finite_diff(topology::Topology & topo,
         configuration::Configuration &conf,
         simulation::Simulation & sim,
@@ -84,6 +101,9 @@ double finite_diff(topology::Topology & topo,
   conf.current().force = 0;
   conf.current().energies.zero();
 
+  if (term.name == "TFRDCRestraint") {
+    set_initial_tfrdc_averages(conf);
+  }
   term.calculate_interactions(topo, conf, sim); // from interaction/interaction.h set to 0?
   conf.current().energies.calculate_totals(); // from configuration/energy.cc
 
@@ -93,17 +113,15 @@ double finite_diff(topology::Topology & topo,
   conf.current().force = 0;
   conf.current().energies.zero();
 
+  if (term.name == "TFRDCRestraint") {
+    set_initial_tfrdc_averages(conf);
+  }
   term.calculate_interactions(topo, conf, sim);
   conf.current().energies.calculate_totals();
 
   double e2 = conf.current().energies.potential_total + conf.current().energies.special_total;
 
   conf.current().pos(atom)(coord) += epsilon;
-
-  /*
-  std::cout << "atom=" << atom << " e1=" << e1 
-  << " e2=" << e2 << " epsilon=" << epsilon << std::endl;
-  */
 
   return (e2 - e1) / 2.0 / epsilon;
 
@@ -734,6 +752,8 @@ int check_tfrdc_interaction(topology::Topology & topo,
   conf.current().force = 0;
   conf.current().energies.zero();
 
+  store_initial_tfrdc(conf);
+
   term.calculate_interactions(topo, conf, sim);
 
   conf.current().energies.calculate_totals();
@@ -756,6 +776,10 @@ int check_tfrdc_interaction(topology::Topology & topo,
     conf.current().force = 0;
     conf.current().energies.zero();
 
+    /* the infinite-difference check only works if we use the same average
+      at every step, so the values have to be reset before calculating interactions
+    */
+    set_initial_tfrdc_averages(conf);
     term.calculate_interactions(topo, conf, sim);
 
     for (size_t j = 0; j < atom.size(); ++j) {
@@ -767,7 +791,7 @@ int check_tfrdc_interaction(topology::Topology & topo,
       finf(0) = finite_diff(topo, conf, sim, term, atom[j], 0, epsilon);
       finf(1) = finite_diff(topo, conf, sim, term, atom[j], 1, epsilon);
       finf(2) = finite_diff(topo, conf, sim, term, atom[j], 2, epsilon);
-      
+
       CHECK_APPROX_EQUAL(f(0), finf(0), delta, res);
       CHECK_APPROX_EQUAL(f(1), finf(1), delta, res);
       CHECK_APPROX_EQUAL(f(2), finf(2), delta, res);

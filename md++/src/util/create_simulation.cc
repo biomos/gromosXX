@@ -236,6 +236,19 @@ int util::create_simulation(std::string topo,
     ixr.read(sim.topo, sim.sim);
   }
 
+  if (tfrdcres != "") {
+    tfrdcres_file.open(tfrdcres.c_str());
+    if (!tfrdcres_file.is_open()) {
+      std::cout << "\n\ncould not open " << tfrdcres << "!\n" << std::endl;
+      io::messages.add("opening tensor-free RDC parameter specification file failed", "read_input",
+              io::message::error);
+      return -1;
+    }
+    io::In_Tfrdcresspec itfrdcres(tfrdcres_file);
+    itfrdcres.quiet = true;
+    itfrdcres.read(sim.topo, sim.sim);
+  }
+
   // do this after reading in a perturbation topology
   sim.sim.multibath().calculate_degrees_of_freedom(sim.topo,
           sim.sim.param().rottrans.rottrans,
@@ -306,20 +319,6 @@ int util::create_simulation(std::string topo,
     
     //io::In_Configuration::read_order_parameter_restraint_averages  order_res(sim.conf);
     //io::In_Configuration::read_order_parameter_restraint_averages(sim.topo, sim.conf, sim.sim, std::cout);
-    
-  }
-  
-  if (tfrdcres != "") {
-    tfrdcres_file.open(tfrdcres.c_str());
-    if (!tfrdcres_file.is_open()) {
-      std::cout << "\n\ncould not open " << tfrdcres << "!\n" << std::endl;
-      io::messages.add("opening tensor-free RDC parameter specification file failed", "read_input",
-              io::message::error);
-      return -1;
-    }
-    io::In_Tfrdcresspec itfrdcres(tfrdcres_file);
-    itfrdcres.quiet = true;
-    itfrdcres.read(sim.topo, sim.sim);
     
   }
 
