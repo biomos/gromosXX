@@ -319,15 +319,15 @@ int algorithm::EDS
               if ((eds_vi[state] - conf.current().energies.eds_vr)  <= (sim.param().eds.statefren[state] + (1/beta))){
                   sim.param().eds.framecounts[state] += 1;
               }
-              //EIR_i = (1000*dt)*(prevalence/roundtrips+1)
-              sim.param().eds.eir[state] -= (1000*sim.time_step_size())*(prevalence/((sim.param().eds.emaxcounts + 1)));
+              //EIR_i = (ASTEPS*dt)*(prevalence/roundtrips+1)
+              sim.param().eds.eir[state] -= (double(sim.param().eds.asteps)*sim.time_step_size())*(prevalence/((sim.param().eds.emaxcounts + 1)));
               //}
             }
-          } // loop over states
-          for (unsigned int state = 1; state < numstates; state++) {
-            sim.param().eds.eir[state] -= sim.param().eds.eir[0];
+          } // get average of all EIR and loop over states. Substract average
+          double avg_eir = getAverage(sim);
+          for (unsigned int state = 0; state < numstates; state++) {
+            sim.param().eds.eir[state] -= avg_eir;
           }
-          sim.param().eds.eir[0] = 0;
         }
       }
       
@@ -342,27 +342,9 @@ int algorithm::EDS
       if (sim.param().eds.initaedssearch == true) {
         sim.param().eds.initaedssearch = false;
       }
-
-      // check if simulation should finish earlier due to convergence of adaptive search reached
-      if (sim.param().eds.form == simulation::aeds_advanced_search || sim.param().eds.form == simulation::aeds_advanced_search2){
-        bool convergence = false;
-        /**
-        for (unsigned int state = 0; state < numstates; state++) {
-          if (sim.param().eds.framecounts[state] < sim.param().eds.cc){
-            convergence = false;
-            break;
-          }
-        }
-        **/
-        if (convergence){
-          // if convergence is reached finish simulation
-          return E_AEDS_CONVERGENCE;
-        }
-
-      }
-
       break;
     }
+    
     case simulation::single_s:
     {
       // interactions have been calculated - now apply eds Hamiltonian
@@ -662,3 +644,13 @@ bool algorithm::EDS::check_round_trip(simulation::Simulation &sim)
     }
     return round_trip;
  }
+
+
+double algorithm::EDS::getAverage(simulation::Simulation &sim) 
+  {
+    const std::vector<double> & eir = sim.param().eds.eir;
+    if (eir.empty()) {
+        return 0;
+    }
+    return std::accumulate(eir.begin(), eir.end(), 0.0) / eir.size();
+}
