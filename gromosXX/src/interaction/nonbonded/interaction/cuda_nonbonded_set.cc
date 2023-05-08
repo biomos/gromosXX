@@ -51,8 +51,8 @@ interaction::CUDA_Nonbonded_Set
 ::CUDA_Nonbonded_Set(Pairlist_Algorithm & pairlist_alg, Nonbonded_Parameter & param,
 		int rank, int num_threads,
         unsigned int gpu_id)
-  : Nonbonded_Set(pairlist_alg, param, rank, num_threads),
-    util::CycleThread(){
+  : Nonbonded_Set(pairlist_alg, param, rank, num_threads)/*,
+    util::CycleThread()*/{
 
   // these values should be fine for a cutoff of 0.8 / 1.4. They have
   // to be increased for larger cutoffs. 
@@ -74,7 +74,7 @@ interaction::CUDA_Nonbonded_Set
  */
 interaction::CUDA_Nonbonded_Set::~CUDA_Nonbonded_Set(){
   DEBUG (8, "CUDA_Nonbonded_Set::destructor")
-  terminate_cycle();
+  //terminate_cycle();
 }
 
 /**
@@ -88,7 +88,9 @@ int interaction::CUDA_Nonbonded_Set
   DEBUG(15, "Start Cycle for GPU: " << mygpu_id);
   if (mygpu_id == 0)
     m_pairlist_alg.timer().start_subtimer("cuda set");
-  do_cycle();
+  //do_cycle();
+  // just calculate_interactions directly?
+  calculate();
   if (mygpu_id == 0)
     m_pairlist_alg.timer().stop_subtimer("cuda set");
   if (error) return 1;
@@ -136,8 +138,9 @@ int interaction::CUDA_Nonbonded_Set
           resize(unsigned(conf.current().energies.bond_energy.size()),
           unsigned(conf.current().energies.kinetic_energy.size()));
 
-  start();
-  pthread_barrier_wait(&barrier_init);
+  /*start();
+  pthread_barrier_wait(&barrier_init);*/
+  this->init_run();
   return 0;
 }
 
@@ -249,7 +252,8 @@ void interaction::CUDA_Nonbonded_Set::init_run() {
 /**
  * what the thread does: calculate the solvent forces, energies and virals
  */
-void interaction::CUDA_Nonbonded_Set::cycle() {
+//void interaction::CUDA_Nonbonded_Set::cycle() {
+void interaction::CUDA_Nonbonded_Set::calculate() {
   DEBUG(6, "CUDA_Nonbonded_Set::cycle start calculations. GPU: " << mygpu_id);
   // this whole function is remove is the lib is not present.
 

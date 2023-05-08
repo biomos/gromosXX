@@ -22,7 +22,7 @@ namespace interaction {
    * @class CUDA_Nonbonded_Set
    * calculates the nonbonded interactions.
    */
-  class CUDA_Nonbonded_Set : public Nonbonded_Set, public util::CycleThread {
+  class CUDA_Nonbonded_Set : public Nonbonded_Set/*, public util::CycleThread*/ {
   public:
 
     /**
@@ -105,6 +105,10 @@ namespace interaction {
     unsigned int mygpu_id;     
 
     Nonbonded_Parameter * m_parameter;
+    /**
+     * Error integer to communicate problems between threads
+     */
+    int error;
 
     /**
      * Calculates the contstants needed for
@@ -114,7 +118,8 @@ namespace interaction {
     /**
      * contains the calculations, executed at every step
      */
-    virtual void cycle();
+    //virtual void cycle();
+    virtual void calculate();
     /**
      * Clean up
      */

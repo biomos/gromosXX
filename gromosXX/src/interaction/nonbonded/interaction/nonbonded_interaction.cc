@@ -132,7 +132,7 @@ calculate_interactions(topology::Topology & topo,
     // but then maybe it's clearer like it is...)
     for (int i = 0; i < m_set_size; ++i) {
       if(m_nonbonded_set[i]->calculate_interactions(*p_topo, *p_conf, sim))
-	return 1;
+	      return 1;
     }
 
     ///////////////////////////////////////////////////
