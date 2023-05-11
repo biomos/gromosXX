@@ -7,6 +7,7 @@
 
 #ifndef EDS_H
 #define	EDS_H
+#include <numeric>
 namespace algorithm
 {
   /**
@@ -52,7 +53,16 @@ namespace algorithm
 	os << "\tEDS\nEND\n";
       return 0;
     };
-
+    /**
+     * Check for round trips
+     **/
+    bool check_round_trip(simulation::Simulation &sim);
+    
+    /**
+     * get average over offsets
+     **/
+    double getAverage(simulation::Simulation &sim);
+    
    private:
      configuration::Configuration * conf2;
   

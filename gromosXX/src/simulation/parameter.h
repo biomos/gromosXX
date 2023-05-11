@@ -637,6 +637,14 @@ namespace simulation
     * A-EDS using Emax and Emin, search for Eir, Emax an Emin
     */
     aeds_search_all = 7,
+    /**
+    * A-EDS using local elevation changing EMIN, EMAX and EIR for an initial guess
+    */
+    aeds_advanced_search = 8,
+    /**
+    * A-EDS using local elevation to get initial guesses of EIR with EMIN, EMAX fixed
+    */
+    aeds_advanced_search2 = 9,
   };
 
    /**
@@ -3197,6 +3205,10 @@ namespace simulation
       * how many times did we visit a state?
       */
       std::vector<unsigned int> visitcounts;
+      /**
+      * contributing frames per state
+      */
+      std::vector<unsigned int> framecounts;
       /**
       * state of the last simulation step
       */

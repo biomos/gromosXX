@@ -1314,7 +1314,8 @@ bool io::In_Configuration::read_aedssearch
   std::ostream & os)
 {
   std::vector<std::string> buffer;
-  if (sim.param().eds.form == simulation::aeds_search_eir || sim.param().eds.form == simulation::aeds_search_emax_emin || sim.param().eds.form == simulation::aeds_search_all) {
+  if (sim.param().eds.form == simulation::aeds_search_eir || sim.param().eds.form == simulation::aeds_search_emax_emin || sim.param().eds.form == simulation::aeds_search_all
+  || sim.param().eds.form == simulation::aeds_advanced_search || sim.param().eds.form == simulation::aeds_advanced_search2) {
 
     buffer = m_block["AEDSSEARCH"];
     if (buffer.size()) {
@@ -1342,7 +1343,8 @@ bool io::In_Configuration::read_aedssearch
             << sim.param().eds.avgenergy[i] << "\t"
             << sim.param().eds.eiravgenergy[i] << "\t"
             << sim.param().eds.bigs[i] << "\t"
-            << sim.param().eds.stdevenergy[i] << "\n";
+            << sim.param().eds.stdevenergy[i] << "\t"
+            << sim.param().eds.framecounts[i] << "\n";
         }
 
         os << "\t" << "END\n";
@@ -3638,7 +3640,8 @@ bool io::In_Configuration::_read_aedssearch(
       >> sim.param().eds.avgenergy[i]
       >> sim.param().eds.eiravgenergy[i]
       >> sim.param().eds.bigs[i]
-      >> sim.param().eds.stdevenergy[i];
+      >> sim.param().eds.stdevenergy[i]
+      >> sim.param().eds.framecounts[i];
     if (visitedstatesbool == 1) {
       sim.param().eds.visitedstates[i] = true;
     }

@@ -571,7 +571,8 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
     }
     }
 
-    if (sim.param().eds.form == simulation::aeds_search_eir || sim.param().eds.form == simulation::aeds_search_emax_emin || sim.param().eds.form == simulation::aeds_search_all) {
+    if (sim.param().eds.form == simulation::aeds_search_eir || sim.param().eds.form == simulation::aeds_search_emax_emin || sim.param().eds.form == simulation::aeds_search_all
+    || sim.param().eds.form == simulation::aeds_advanced_search || sim.param().eds.form == simulation::aeds_advanced_search2) {
       _print_aedssearch(conf, sim, m_final_conf);
     }
 
@@ -3903,7 +3904,8 @@ _print_aedssearch(configuration::Configuration const &conf,
       << std::setw(m_width) << sim.param().eds.avgenergy[i] << " "
       << std::setw(m_width) << sim.param().eds.eiravgenergy[i] << " "
       << std::setw(m_width) << sim.param().eds.bigs[i] << " "
-      << std::setw(m_width) << sim.param().eds.stdevenergy[i] << "\n";
+      << std::setw(m_width) << sim.param().eds.stdevenergy[i] << " "
+      << std::setw(m_width) << sim.param().eds.framecounts[i] << "\n";
   }
   os << "END\n";
 }
