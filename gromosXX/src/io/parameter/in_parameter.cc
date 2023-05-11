@@ -3960,6 +3960,8 @@ void io::In_Parameter::read_AEDS(simulation::Parameter & param,
   exampleblock << "#              2: fixed Emax and Emin parameters, search for offset parameters\n";
   exampleblock << "#              3: search for Emax and Emin parameters, fixed offset parameters\n";
   exampleblock << "#              4: search for Emax, Emin and offset parameters\n";
+  exampleblock << "#              5: A-EDs advanced adaptive search\n";
+  exampleblock << "#              6: A-EDs advanced adaptive offset search, fixed Emax and Emin\n";
   exampleblock << "# NUMSTATES >1  : number of states\n";
   exampleblock << "# EMAX          : A-EDS parameter Emax\n";
   exampleblock << "# EMIN          : A-EDS parameter Emin\n";
@@ -3999,7 +4001,7 @@ void io::In_Parameter::read_AEDS(simulation::Parameter & param,
 
     int aeds = 0, form = 0;
     block.get_next_parameter("AEDS", aeds, "", "0,1");
-    block.get_next_parameter("FORM", form, "", "1,2,3,4");
+    block.get_next_parameter("FORM", form, "", "1,2,3,4,5,6");
     block.get_next_parameter("NUMSTATES", param.eds.numstates, ">=2", "");
 
     if (param.eds.eds != 1) {
@@ -4040,6 +4042,14 @@ void io::In_Parameter::read_AEDS(simulation::Parameter & param,
     }
     case 4: {
       param.eds.form = simulation::aeds_search_all;
+      break;
+    }
+    case 5: {
+      param.eds.form = simulation::aeds_advanced_search;
+      break;
+    }
+    case 6: {
+      param.eds.form = simulation::aeds_advanced_search2;
       break;
     }
     default:
@@ -4101,6 +4111,7 @@ void io::In_Parameter::read_AEDS(simulation::Parameter & param,
     param.eds.eiravgenergy.resize(param.eds.numstates, 0.0);
     param.eds.bigs.resize(param.eds.numstates, 0.0);
     param.eds.stdevenergy.resize(param.eds.numstates, 0.0);
+    param.eds.framecounts.resize(param.eds.numstates, 0);
 
     block.get_final_messages();
   }

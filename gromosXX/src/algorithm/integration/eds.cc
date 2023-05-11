@@ -12,6 +12,8 @@
 #include "../../simulation/simulation.h"
 #include "../../configuration/configuration.h"
 
+#include "../../util/error.h"
+
 #include "eds.h"
 
 #undef MODULE
@@ -20,7 +22,7 @@
 #define SUBMODULE integration
 
 /**
- * EDS step.
+ * EDS step
  */
 
 int algorithm::EDS
@@ -36,6 +38,8 @@ int algorithm::EDS
     case simulation::aeds_search_eir:
     case simulation::aeds_search_emax_emin:
     case simulation::aeds_search_all:
+    case simulation::aeds_advanced_search:
+    case simulation::aeds_advanced_search2:
     {
       // interactions have been calculated - now apply eds Hamiltonian
       std::vector<double> prefactors(numstates);
@@ -51,7 +55,7 @@ int algorithm::EDS
       std::vector<double> eds_vi = conf.current().energies.eds_vi;
       DEBUG(7, "eds_vi[0] = " << eds_vi[0]);
       DEBUG(7, "eds_vi[1] = " << eds_vi[1]);
-      
+     
       const std::vector<double> & eir = sim.param().eds.eir;
       unsigned int state_i = 0;
       unsigned int state_j = 1;
@@ -81,12 +85,14 @@ int algorithm::EDS
 
       // initilize search if necessary
       if (sim.param().eds.initaedssearch == true) {
-        if (sim.param().eds.form == simulation::aeds_search_emax_emin || sim.param().eds.form == simulation::aeds_search_all) {
+        if (sim.param().eds.form == simulation::aeds_search_emax_emin || sim.param().eds.form == simulation::aeds_search_all  
+        || sim.param().eds.form == simulation::aeds_advanced_search) {
           sim.param().eds.emax = conf.current().energies.eds_vmix;
           sim.param().eds.emin = conf.current().energies.eds_vmix;
           sim.param().eds.searchemax = conf.current().energies.eds_vmix;
         }
-        if (sim.param().eds.form == simulation::aeds_search_eir || sim.param().eds.form == simulation::aeds_search_all) {
+        if (sim.param().eds.form == simulation::aeds_search_eir || sim.param().eds.form == simulation::aeds_search_all
+         || sim.param().eds.form == simulation::aeds_advanced_search || sim.param().eds.form == simulation::aeds_advanced_search2) {
           for (unsigned int is = 0; is < numstates; is++) {
             sim.param().eds.lnexpde[is] = (sim.param().eds.eir[is] - sim.param().eds.eir[0]) * -1.0 * beta;
           }
@@ -138,10 +144,13 @@ int algorithm::EDS
       }
 
       // parameter search
-      if (sim.param().eds.form == simulation::aeds_search_eir || sim.param().eds.form == simulation::aeds_search_emax_emin || sim.param().eds.form == simulation::aeds_search_all) {
+      if (sim.param().eds.form == simulation::aeds_search_eir || sim.param().eds.form == simulation::aeds_search_emax_emin || 
+          sim.param().eds.form == simulation::aeds_search_all || sim.param().eds.form == simulation::aeds_advanced_search
+          || sim.param().eds.form == simulation::aeds_advanced_search2) {
         DEBUG(7, "entering parameter search");
         // OFFSET search
-        if (sim.param().eds.form == simulation::aeds_search_eir || sim.param().eds.form == simulation::aeds_search_all) {
+        if (sim.param().eds.form == simulation::aeds_search_eir || sim.param().eds.form == simulation::aeds_search_all 
+        ||  sim.param().eds.form == simulation::aeds_advanced_search ||  sim.param().eds.form == simulation::aeds_advanced_search2) {
           double tau = double(sim.param().eds.asteps) + double(sim.param().eds.bsteps - sim.param().eds.asteps) * double(sim.steps()) / double(sim.param().step.number_of_steps);
           double expde = 0.0, eiremin = 0.0, eiremax = 0.0, eirestar = 0.0, eirdemix = 0.0, eirkfac = 0.0;
           for (unsigned int is = 0; is < numstates; is++) {
@@ -158,52 +167,75 @@ int algorithm::EDS
               eirkfac = 1.0 / (eiremax - eiremin);
               eirestar = eds_vi[is] - 0.5 * eirkfac * eirdemix * eirdemix;
             }
-            expde = -1.0 * beta * (eirestar - conf.current().energies.eds_vr);
-            sim.param().eds.lnexpde[is] += log(exp(-1.0 / tau) / (1.0 - exp(-1.0 / tau)));
-            sim.param().eds.lnexpde[is] = std::max(sim.param().eds.lnexpde[is], expde) + log(1.0 + exp(std::min(sim.param().eds.lnexpde[is], expde) - std::max(sim.param().eds.lnexpde[is], expde)));
-            sim.param().eds.lnexpde[is] += log(1.0 - exp(-1.0 / tau));
-            sim.param().eds.statefren[is] = -1.0 / beta * sim.param().eds.lnexpde[is];
-            sim.param().eds.eir[is] = sim.param().eds.statefren[is] - sim.param().eds.statefren[0];
+            // if in conventional search algorithm recalculate offsets using time decay function and update them
+            if (sim.param().eds.form == simulation::aeds_search_eir || sim.param().eds.form == simulation::aeds_search_all){
+              expde = -1.0 * beta * (eirestar - conf.current().energies.eds_vr);
+              sim.param().eds.lnexpde[is] += log(exp(-1.0 / tau) / (1.0 - exp(-1.0 / tau)));
+              sim.param().eds.lnexpde[is] = std::max(sim.param().eds.lnexpde[is], expde) + log(1.0 + exp(std::min(sim.param().eds.lnexpde[is], expde) - std::max(sim.param().eds.lnexpde[is], expde)));
+              sim.param().eds.lnexpde[is] += log(1.0 - exp(-1.0 / tau));
+              sim.param().eds.statefren[is] = -1.0 / beta * sim.param().eds.lnexpde[is];
+              sim.param().eds.eir[is] = sim.param().eds.statefren[is] - sim.param().eds.statefren[0];
+            }
+            // if in adaptive fast search algorithm, calculate the free energies from the endstates to the reference without using time decay
+            // and without updating the offsets
+            if (sim.param().eds.form == simulation::aeds_advanced_search || sim.param().eds.form == simulation::aeds_advanced_search2){
+              expde = -1.0 * beta * (eirestar - conf.current().energies.eds_vr);
+              sim.param().eds.lnexpde[is] += log(exp(-1.0 / tau) / (1.0 - exp(-1.0 / tau)));
+              sim.param().eds.lnexpde[is] = std::max(sim.param().eds.lnexpde[is], expde) + log(1.0 + exp(std::min(sim.param().eds.lnexpde[is], expde) - std::max(sim.param().eds.lnexpde[is], expde)));
+              sim.param().eds.lnexpde[is] += log(1.0 - exp(-1.0 / tau));
+              sim.param().eds.statefren[is] = -1.0 / beta * sim.param().eds.lnexpde[is];
+
+            }
           }
         }
+        // Check for round trips
+        // find the state we are in
+        unsigned int state = 0;
+        double min = eds_vi[0] - eir[0];
+        for (unsigned int is = 1; is < numstates; is++) {
+          if ((eds_vi[is] - eir[is]) < min) {
+            min = eds_vi[is] - eir[is];
+            state = is;
+          }
+        }
+        // mark the state we are in as visited
+        sim.param().eds.visitedstates[state] = true;
+        // monitor energy landscape
+        sim.param().eds.visitcounts[state]++;
+        bool round_trip = false;
+
+        if (check_round_trip(sim)){
+          round_trip = true;
+          DEBUG(7, "Number of round trips " << sim.param().eds.emaxcounts);
+        };
+
+        // Compute energy averages and fluctuations
+        double tempenergy = sim.param().eds.avgenergy[state] + (eds_vi[state] - sim.param().eds.avgenergy[state]) / double(sim.param().eds.visitcounts[state]);
+        sim.param().eds.eiravgenergy[state] += (eds_vi[state] - sim.param().eds.eiravgenergy[state] - eir[state]) / double(sim.param().eds.visitcounts[state]);
+        if (sim.param().eds.visitcounts[state] > 1) {
+          sim.param().eds.bigs[state] += (eds_vi[state] - tempenergy) * (eds_vi[state] - sim.param().eds.avgenergy[state]);
+          sim.param().eds.stdevenergy[state] = sqrt(sim.param().eds.bigs[state] / (double(sim.param().eds.visitcounts[state] - 1)));
+        }
+        sim.param().eds.avgenergy[state] = tempenergy;
+        tempenergy = sim.param().eds.eiravgenergy[0];
+        // find the state with the minimum average energy
+        int targetstate = 0;
+        for (unsigned int is = 1; is < numstates; is++) {
+          if (tempenergy >= sim.param().eds.eiravgenergy[is] && sim.param().eds.visitcounts[is] > 1) {
+            targetstate = is;
+            tempenergy = sim.param().eds.eiravgenergy[is];
+          }
+        }
+        double globminavg = sim.param().eds.eiravgenergy[targetstate];
+        double globminfluc = sim.param().eds.stdevenergy[targetstate];
+        // prevent rounding error in the first simulation step
+        if (sim.param().eds.initaedssearch == true) {
+          globminavg = sim.param().eds.emin;
+        }
+
 
         // EMAX and EMIN search
-        if (sim.param().eds.form == simulation::aeds_search_emax_emin || sim.param().eds.form == simulation::aeds_search_all) {
-          // find the state we are in
-          unsigned int state = 0;
-          double min = eds_vi[0] - eir[0];
-          for (unsigned int is = 1; is < numstates; is++) {
-            if ((eds_vi[is] - eir[is]) < min) {
-              min = eds_vi[is] - eir[is];
-              state = is;
-            }
-          }
-          // mark the state we are in as visited
-          sim.param().eds.visitedstates[state] = true;
-          // monitor energy landscape
-          sim.param().eds.visitcounts[state]++;
-          double tempenergy = sim.param().eds.avgenergy[state] + (eds_vi[state] - sim.param().eds.avgenergy[state]) / double(sim.param().eds.visitcounts[state]);
-          sim.param().eds.eiravgenergy[state] += (eds_vi[state] - sim.param().eds.eiravgenergy[state] - eir[state]) / double(sim.param().eds.visitcounts[state]);
-          if (sim.param().eds.visitcounts[state] > 1) {
-            sim.param().eds.bigs[state] += (eds_vi[state] - tempenergy) * (eds_vi[state] - sim.param().eds.avgenergy[state]);
-            sim.param().eds.stdevenergy[state] = sqrt(sim.param().eds.bigs[state] / (double(sim.param().eds.visitcounts[state] - 1)));
-          }
-          sim.param().eds.avgenergy[state] = tempenergy;
-          tempenergy = sim.param().eds.eiravgenergy[0];
-          // find the state with the minimum average energy
-          int targetstate = 0;
-          for (unsigned int is = 1; is < numstates; is++) {
-            if (tempenergy >= sim.param().eds.eiravgenergy[is] && sim.param().eds.visitcounts[is] > 1) {
-              targetstate = is;
-              tempenergy = sim.param().eds.eiravgenergy[is];
-            }
-          }
-          double globminavg = sim.param().eds.eiravgenergy[targetstate];
-          double globminfluc = sim.param().eds.stdevenergy[targetstate];
-          // prevent rounding error in the first simulation step
-          if (sim.param().eds.initaedssearch == true) {
-            globminavg = sim.param().eds.emin;
-          }
+        if (sim.param().eds.form == simulation::aeds_search_emax_emin || sim.param().eds.form == simulation::aeds_search_all || sim.param().eds.form == simulation::aeds_advanced_search) {
           // EMAX
           // search for the highest transition energy between states
           if (state != sim.param().eds.oldstate && sim.param().eds.searchemax < conf.current().energies.eds_vmix) {
@@ -214,23 +246,13 @@ int algorithm::EDS
             sim.param().eds.emax = sim.param().eds.searchemax;
           }
           // check if we visited all the states; if so, stop updating searchemax, add it to Emax and reset
-          unsigned int statecount = 0;
-          for (unsigned int is = 0; is < numstates; is++) {
-            if (sim.param().eds.visitedstates[is] == true) {
-              statecount++;
-            }
-          }
-          if (statecount == sim.param().eds.visitedstates.size()) {
-            if (sim.param().eds.emaxcounts == 0) {
+          if (round_trip) {
+            if (sim.param().eds.emaxcounts == 1) {
               sim.param().eds.emax = 0.0;
               sim.param().eds.fullemin = true;
             }
-            sim.param().eds.emaxcounts += 1;
             sim.param().eds.emax += (sim.param().eds.searchemax - sim.param().eds.emax) / double(sim.param().eds.emaxcounts);
             sim.param().eds.searchemax = globminavg;
-            for (unsigned int is = 0; is < numstates; is++) {
-              sim.param().eds.visitedstates[is] = false;
-            }
           }
 
           // EMIN
@@ -274,8 +296,41 @@ int algorithm::EDS
           conf.current().energies.eds_globminfluc = globminfluc;
           sim.param().eds.oldstate = state;
         }
-      }
 
+        // Adaptive AEDS search
+        // at this point we have already computed the free energies of the difference endstates to the reference
+        if (sim.param().eds.form == simulation::aeds_advanced_search || sim.param().eds.form == simulation::aeds_advanced_search2){
+          // compute the prevalence of each endstate over this frame
+          std::vector<double> exp_vi(numstates);
+          double prevalence = 0.0;
+          double total_endstates_ene = 0.0;
+          for (unsigned int state = 0; state < numstates; state++) {
+            exp_vi[state] = exp(-1.0 * beta * (eds_vi[state] - eir[state]));
+            total_endstates_ene += exp_vi[state];
+          }
+
+          for (unsigned int state = 0; state < numstates; state++) {
+            prevalence = exp_vi[state]/ total_endstates_ene;
+            // Now check if the frame is contributing to the free energy
+            // only states that have contributed at least 1/numstates on this frame will be checked to avoid counting frames of states that have not been sampled yet
+            if (prevalence >= (1.0/numstates)){
+              // update number of frames that contributed if the energy of the endstate was bellow its free energy difference + KbT
+              DEBUG(1, "state 2 " << (eds_vi[state] - conf.current().energies.eds_vr) << "  Free ener "  << sim.param().eds.statefren[state]);
+              if ((eds_vi[state] - conf.current().energies.eds_vr)  <= (sim.param().eds.statefren[state] + (1/beta))){
+                  sim.param().eds.framecounts[state] += 1;
+              }
+              //EIR_i = (ASTEPS*dt)*(prevalence/roundtrips+1)
+              sim.param().eds.eir[state] -= (double(sim.param().eds.asteps)*sim.time_step_size())*(prevalence/((sim.param().eds.emaxcounts + 1)));
+              //}
+            }
+          } // get average of all EIR and loop over states. Substract average
+          double avg_eir = getAverage(sim);
+          for (unsigned int state = 0; state < numstates; state++) {
+            sim.param().eds.eir[state] -= avg_eir;
+          }
+        }
+      }
+      
       DEBUG(7, "updating energy configuration");
 
       conf.current().energies.eds_emax = sim.param().eds.emax;
@@ -287,9 +342,9 @@ int algorithm::EDS
       if (sim.param().eds.initaedssearch == true) {
         sim.param().eds.initaedssearch = false;
       }
-
       break;
     }
+    
     case simulation::single_s:
     {
       // interactions have been calculated - now apply eds Hamiltonian
@@ -626,4 +681,33 @@ int algorithm::EDS
 //  return 0;
 //}
 
+bool algorithm::EDS::check_round_trip(simulation::Simulation &sim)
+ {
+    unsigned int statecount = 0;
+    bool round_trip = false;
+    const unsigned int numstates = sim.param().eds.numstates;
+    for (unsigned int is = 0; is < numstates; is++) {
+      if (sim.param().eds.visitedstates[is] == true) {
+        statecount++;
+      }
+    }
+    if (statecount == sim.param().eds.visitedstates.size()) {
+      round_trip = true;
+      sim.param().eds.emaxcounts += 1;
+      // reset round trip array
+      for (unsigned int is = 0; is < numstates; is++) {
+        sim.param().eds.visitedstates[is] = false;
+      }
+    }
+    return round_trip;
+ }
 
+
+double algorithm::EDS::getAverage(simulation::Simulation &sim) 
+  {
+    const std::vector<double> & eir = sim.param().eds.eir;
+    if (eir.empty()) {
+        return 0;
+    }
+    return std::accumulate(eir.begin(), eir.end(), 0.0) / eir.size();
+}
