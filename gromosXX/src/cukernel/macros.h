@@ -3,8 +3,8 @@
  * defines some macros, e.g. if single or double precision
  */
 
-#ifndef _MACROS_H
-#define	_MACROS_H
+#ifndef INCLUDED_CUKERNEL_MACROS_H
+#define	INCLUDED_CUKERNEL_MACROS_H
 
 #include <iostream>
 
@@ -12,7 +12,7 @@
 //#define DOUBLE_PREC
 
 #ifdef SINGLE_PREC
-#define FL_PT_NUM float
+#define REAL float
 #define PREC(x) x ## f
 #define VECTOR float3
 #define MATRIX float9
@@ -28,7 +28,7 @@
 #define FABS(x) fabsf(x)
 
 #elif defined DOUBLE_PREC
-#define FL_PT_NUM double
+#define Real double
 #define PREC(x) x
 #define VECTOR double3
 #define MATRIX double9

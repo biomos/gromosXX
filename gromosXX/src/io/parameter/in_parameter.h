@@ -250,16 +250,21 @@ namespace io {
      * read REPLICA block.
      */
     void read_REPLICA(simulation::Parameter &param, std::ostream & os = std::cout);
+
     /** 
     * read REPLICA_EDS block.
     */
     void read_REPLICA_EDS(simulation::Parameter &param, std::ostream & os = std::cout);
 
-     
     /**
      * read INNERLOOP block.
      */
     void read_INNERLOOP(simulation::Parameter &param, std::ostream & os = std::cout);
+
+    /**
+     * read CUDA block.
+     */
+    void read_CUDA(simulation::Parameter &param, std::ostream & os = std::cout);
 
     /**
      * read CGRAIN block.

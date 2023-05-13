@@ -13,7 +13,9 @@
 #include "nonbonded_set_interface.h"
 #include "nonbonded_set.h"
 #include <util/cycle_thread.h>
+#ifndef HAVE_LIBCUDART
 #define gpu_status void
+#endif
 
 
 namespace interaction {

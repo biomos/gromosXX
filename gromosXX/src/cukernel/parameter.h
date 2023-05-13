@@ -2,8 +2,8 @@
  * @file parameter.h
  * the accelerator's parameters
  */
-#ifndef CUKERNEL_PARAMETER
-#define CUKERNEL_PARAMETER
+#ifndef INCLUDED_CUKERNEL_PARAMETER_H
+#define INCLUDED_CUKERNEL_PARAMETER_H
 
 namespace cudakernel {
 

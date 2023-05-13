@@ -3,7 +3,8 @@
  * m_shake algorithm
  */
 
-#ifndef CUKERNEL_CONSTRAINTS
+#ifndef INCLUDED_CUKERNEL_SHAKE_H
+#define INCLUDED_CUKERNEL_SHAKE_H
 #include "parameter.h"
 #include "macros.h"
 
@@ -24,7 +25,7 @@ namespace cudakernel {
   (
           VECTOR * new_pos, VECTOR * old_pos,
           cudakernel::simulation_parameter * dev_params,
-          int *shake_fail_mol, FL_PT_NUM * tol, 
+          int *shake_fail_mol, REAL * tol, 
           VECTOR * mass,
           VECTOR * const_length2,
           MATRIX * factor, unsigned int highest_mol_index

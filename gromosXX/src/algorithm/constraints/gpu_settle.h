@@ -6,7 +6,9 @@
 #ifndef _GPU_SETTLE_H
 #define	_GPU_SETTLE_H
 
-#include <cudaKernel.h>
+#ifdef HAVE_LIBCUDART
+#include "cukernel/cudaKernel.h"
+#endif
 
 namespace interaction {
   struct bond_type_struct;

@@ -424,6 +424,7 @@ namespace simulation
    */
   enum interaction_func_enum{
     /** lj_crf_function */ lj_crf_func,
+    /** lj_crf_function */ lj_crf_cuda_func,
     /** lj_ls_function */ lj_ls_func,
     /** lj_function */ lj_func,
     /** pol_lj_crf_function */ pol_lj_crf_func,
@@ -3542,6 +3543,28 @@ namespace simulation
        */
       std::vector<int> gpu_device_number;
     } /** special inner loops */ innerloop;
+
+    /**
+     * @struct cuda_struct
+     * Constructor:
+     * Default values:
+     * - number_gpus: 0
+     * - gpu_device_number: \<empty\>
+     */
+    struct cuda_struct {
+      /**
+       * constructor
+       */
+      cuda_struct() : number_gpus(0) {}
+      /**
+       * The number of GPUs used for CUDA
+       */
+      unsigned int number_gpus;
+      /**
+       * Which device number should be used for CUDA
+       */
+      std::vector<int> device_number;
+    } /** special inner loops */ cuda;
 
     /**
      * @struct localelev_struct

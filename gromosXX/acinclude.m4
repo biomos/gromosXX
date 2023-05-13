@@ -413,12 +413,17 @@ AC_DEFUN([AM_PATH_CUDA],[
       with_cuda=yes
       if test "x${withval}" = xyes; then
         CUDA_PATH="/usr/local/cuda/lib64"
+        CUDA_INCLUDE="/usr/local/cuda/include"
         echo "using default CUDA path... ${CUDA_PATH}"
+        echo "including CUDA headers from... ${CUDA_INCLUDE}"
       else
         CUDA_PATH="${withval}"
+        CUDA_INCLUDE="{withval%/*}/include"
+        echo "using CUDA path... ${CUDA_PATH}"
+        echo "including CUDA headers from... ${CUDA_INCLUDE}"
       fi
-      CXXFLAGS="$CXXFLAGS -I${CUDA_PATH}"
-      LDFLAGS="$LDFLAGS -L${CUDA_PATH} -lcuda -lcudart"
+      CXXFLAGS="-I${CUDA_PATH} -I${CUDA_INCLUDE} $CXXFLAGS"
+      LDFLAGS="-L${CUDA_PATH} -lcuda -lcudart $LDFLAGS"
       AC_MSG_CHECKING([whether the NVCC compiler works])
       working_nvcc=no
       cat>conftest.cu<<EOF

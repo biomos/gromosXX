@@ -3,8 +3,8 @@
  * utilities
  */
 
-#ifndef CUKERNEL_UTILS
-#define CUKERNEL_UTILS
+#ifndef INCLUDED_CUKERNEL_UTILS_H
+#define INCLUDED_CUKERNEL_UTILS_H
 namespace cudakernel {
   /**
    * check for an error and print the error message if there was one.

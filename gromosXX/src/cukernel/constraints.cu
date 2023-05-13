@@ -13,12 +13,10 @@
 
 #undef MODULE
 #undef SUBMODULE
-#define MODULE interaction
-#define SUBMODULE cuda
+#define MODULE cuda
+#define SUBMODULE constraints
 
 #define NUM_THREADS_PER_BLOCK_SETTLE 128
-
-
 
 /**
  * inititalze the gpu for the settle calculations

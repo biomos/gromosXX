@@ -18,7 +18,7 @@
 #include "../../algorithm/constraints/gpu_shake_thread.h"
 
 #ifdef HAVE_LIBCUDART
-#include <cudaKernel.h>
+#include "cukernel/cudaKernel.h"
 #endif
 
 #include "../../util/template_split.h"

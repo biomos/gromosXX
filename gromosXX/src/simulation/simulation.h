@@ -14,6 +14,13 @@
 #include <HOOMD_GROMOSXX_processor.h>
 #endif
 
+#include "cukernel/cuda_kernel.h"
+#ifdef HAVE_LIBCUDART
+#include "cukernel/cudaKernel.h"
+#else
+#define CUDA_KERNEL void
+#endif
+
 
 
 namespace simulation
@@ -67,6 +74,19 @@ namespace simulation
      */
     simulation::MpiControl const & mpiControl()const{
         return m_MpiControl; 
+    }
+
+     /**
+     * CUDA_kernel mutator
+     */
+    cudakernel::CUDA_Kernel & CUDA_Kernel(){
+        return m_cuda_kernel;
+    }
+    /** 
+     * CUDA_kernel accessor
+     */
+    cudakernel::CUDA_Kernel const & CUDA_Kernel()const{
+        return m_cuda_kernel; 
     }
 
     
@@ -129,9 +149,14 @@ namespace simulation
     Parameter m_param;
 
     /**
-     *  
+     * the MPI controller
      */
     MpiControl m_MpiControl;
+
+    /**
+     * the CUDA kernel
+     */
+    cudakernel::CUDA_Kernel m_cuda_kernel;
     
     /**
      * the time step size

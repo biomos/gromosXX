@@ -7,6 +7,11 @@
 #include <iostream>
 #include "utils.h"
 
+#undef MODULE
+#undef SUBMODULE
+#define MODULE cuda
+#define SUBMODULE utils
+
 int cudakernel::checkError(const char * err_msg) {
   cudaError_t error = cudaGetLastError();
   if (error != cudaSuccess)

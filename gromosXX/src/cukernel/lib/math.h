@@ -2,8 +2,8 @@
  * @file math.h
  * some basic math operations
  */
-#ifndef CUKERNEL_MATH_H
-#define CUKERNEL_MATH_H
+#ifndef INCLUDED_CUKERNEL_MATH_H
+#define INCLUDED_CUKERNEL_MATH_H
 
 // float3 operations
 #define HOSTDEVICE __device__ inline

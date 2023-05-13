@@ -54,6 +54,9 @@ int algorithm::Algorithm_Sequence
     rcom.apply(topo, conf, sim);
   }
 
+  // initialize CUDA
+  sim.CUDA_Kernel().init(topo,conf,sim);
+
   for(Algorithm_Sequence::iterator 
 	it = begin(), to = end();
       it != to;

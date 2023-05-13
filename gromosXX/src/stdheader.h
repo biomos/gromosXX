@@ -33,6 +33,11 @@
 
 #include "util/timing.h"
 
+#include "cukernel/cuda_kernel.h"
+#ifdef HAVE_LIBCUDART
+#include "cukernel/cudaKernel.h"
+#endif
+
 #define GROMOSXX "MD++"
 
 #endif

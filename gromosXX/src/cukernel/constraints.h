@@ -3,7 +3,8 @@
  * constraints algorithms
  */
 
-#ifndef CUKERNEL_CONSTRAINTS
+#ifndef INCLUDED_CUKERNEL_CONSTRAINTS_H
+#define INCLUDED_CUKERNEL_CONSTRAINTS_H
 #include "parameter.h"
 
 namespace cudakernel {

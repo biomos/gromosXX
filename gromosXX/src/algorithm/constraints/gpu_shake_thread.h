@@ -8,9 +8,7 @@
 #define	_GPU_SHAKE_THREAD_H
 
 #include <util/cycle_thread.h>
-#ifdef HAVE_LIBCUDART
-#include <cudaKernel.h>
-#else
+#ifndef HAVE_LIBCUDART
 #define gpu_status void
 #endif
 #include <iostream>

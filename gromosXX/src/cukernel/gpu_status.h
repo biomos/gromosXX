@@ -4,8 +4,8 @@
  * host (CPU) and device (GPU)
  */
 
-#ifndef _GPU_STATUS_H
-#define	_GPU_STATUS_H
+#ifndef INCLUDED_GPU_STATUS_H
+#define	INCLUDED_GPU_STATUS_H
 
 #include "parameter.h"
 #include "pairlist.h"

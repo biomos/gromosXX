@@ -23,7 +23,9 @@
 #include "../../util/debug.h"
 
 #include "../../algorithm/constraints/gpu_settle.h"
-#include <cudaKernel.h>
+#ifdef HAVE_LIBCUDART
+#include "cukernel/cudaKernel.h"
+#endif
 
 #undef MODULE
 #undef SUBMODULE

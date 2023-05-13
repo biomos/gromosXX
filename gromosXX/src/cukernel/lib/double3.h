@@ -3,8 +3,8 @@
  * 3D vector operations
  */
 
-#ifndef _DOUBLE3_H
-#define	_DOUBLE3_H
+#ifndef INCLUDED_DOUBLE3_H
+#define	INCLUDED_DOUBLE3_H
 
 #ifndef HOSTDEVICE
 #error "Don't include double3.h without defining HOSTDEVICE"

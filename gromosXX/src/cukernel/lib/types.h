@@ -3,8 +3,8 @@
  * additional types of general use
  */
 
-#ifndef TYPES_H
-#define TYPES_H
+#ifndef INCLUDED_TYPES_H
+#define INCLUDED_TYPES_H
 
 /* *
  * @struct double3 a structure to hold a vector in double precision

@@ -44,7 +44,7 @@
 #endif
 
 #ifdef HAVE_LIBCUDART
-#include <cudaKernel.h>
+#include "cukernel/cudaKernel.h"
 #endif
 
 #undef MODULE

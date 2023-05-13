@@ -44,6 +44,10 @@
 #include <omp.h>
 #endif
 
+#ifdef HAVE_LIBCUDART
+#include "cukernel/cudaKernel.h"
+#endif
+
 #include <algorithm>
 
 #undef MODULE
@@ -2667,6 +2671,16 @@ void interaction::Nonbonded_Outerloop
     DEBUG(6, "surface term virial: " << math::m2s(virial));
   }
 }
+
+
+int interaction::Nonbonded_Outerloop::cuda_solute_outerloop(topology::Topology & topo,
+        configuration::Configuration & conf,
+        simulation::Simulation & sim,
+        Pairlist const & pairlist_solute,
+        Storage & storage,
+        bool longrange, util::Algorithm_Timer & timer, bool master) {
+      return 0;
+    };
 
 /**
  * calculate the interaction for a given atom pair.

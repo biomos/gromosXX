@@ -153,6 +153,15 @@ int util::parse_verbosity(io::Argument &args, std::string flag,
       else if (submodule == "bs_leus") util::bs_leus_debug_level = level;
       else return E_NOT_IMPLEMENTED;
     }
+    else if (module == "cuda"){
+      if (submodule == "") cuda::debug_level = level;
+      else if (submodule == "kernel") cuda::kernel_debug_level = level;
+      else if (submodule == "constraints") cuda::constraints_debug_level = level;
+      else if (submodule == "interaction") cuda::interaction_debug_level = level;
+      else if (submodule == "pairlist") cuda::pairlist_debug_level = level;
+      else if (submodule == "utils") cuda::utils_debug_level = level;
+      else return E_NOT_IMPLEMENTED;
+    }
     else{
       return E_NOT_IMPLEMENTED;
     }

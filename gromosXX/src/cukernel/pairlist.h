@@ -2,8 +2,8 @@
  * @file pairlist.h
  * pairlist computation
  */
-#ifndef CUKERNEL_PAIRLIST
-#define CUKERNEL_PAIRLIST
+#ifndef INCLUDED_CUKERNEL_PAIRLIST_H
+#define INCLUDED_CUKERNEL_PAIRLIST_H
 namespace cudakernel {
 /**
  * @struct pairlist

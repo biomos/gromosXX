@@ -11,13 +11,10 @@
 
 #undef MODULE
 #undef SUBMODULE
-#define MODULE interaction
-#define SUBMODULE cuda
-
+#define MODULE cuda
+#define SUBMODULE interaction
 
 #define NUM_THREADS_PER_BLOCK_FORCES 96
-
-
 
 extern "C" int cudaCalcForces(double * forces, double * virial, double * lj_energy,
         double * crf_energy, bool longrange, gpu_status * gpu_stat) {

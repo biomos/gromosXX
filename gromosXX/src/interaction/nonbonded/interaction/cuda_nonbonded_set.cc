@@ -34,7 +34,7 @@
 #include "../../../util/cycle_thread.h"
 
 #ifdef HAVE_LIBCUDART
-#include <cudaKernel.h>
+#include "cukernel/cudaKernel.h"
 #endif
 
 

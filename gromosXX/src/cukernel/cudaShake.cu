@@ -19,9 +19,8 @@
 
 #undef MODULE
 #undef SUBMODULE
-#define MODULE interaction
-#define SUBMODULE cuda
-
+#define MODULE cuda
+#define SUBMODULE constraints
 
 /**
  * Initialize the GPU and create a gpu_status
@@ -81,9 +80,9 @@ extern "C" gpu_status * cudaInitGPU_Shake(
   
   // Constraint lengths
   VECTOR length2;
-  length2.x = (FL_PT_NUM) constr[0];
-  length2.y = (FL_PT_NUM) constr[1];
-  length2.z = (FL_PT_NUM) constr[2];
+  length2.x = (REAL) constr[0];
+  length2.y = (REAL) constr[1];
+  length2.z = (REAL) constr[2];
 
   cudaMalloc((void**) & DEV_CONST_LENGTH2, sizeof (VECTOR));
   cudaMemcpy(DEV_CONST_LENGTH2, &length2, sizeof (VECTOR), cudaMemcpyHostToDevice);
@@ -91,29 +90,29 @@ extern "C" gpu_status * cudaInitGPU_Shake(
 
   MATRIX factorm;
 
-  factorm.xx = (FL_PT_NUM) factor[0];
-  factorm.xy = (FL_PT_NUM) factor[1];
-  factorm.xz = (FL_PT_NUM) factor[2];
-  factorm.yx = (FL_PT_NUM) factor[3];
-  factorm.yy = (FL_PT_NUM) factor[4];
-  factorm.yz = (FL_PT_NUM) factor[5];
-  factorm.zx = (FL_PT_NUM) factor[6];
-  factorm.zy = (FL_PT_NUM) factor[7];
-  factorm.zz = (FL_PT_NUM) factor[8];
+  factorm.xx = (REAL) factor[0];
+  factorm.xy = (REAL) factor[1];
+  factorm.xz = (REAL) factor[2];
+  factorm.yx = (REAL) factor[3];
+  factorm.yy = (REAL) factor[4];
+  factorm.yz = (REAL) factor[5];
+  factorm.zx = (REAL) factor[6];
+  factorm.zy = (REAL) factor[7];
+  factorm.zz = (REAL) factor[8];
 
   cudaMalloc((void**) & DEV_FACTOR, sizeof(MATRIX));
   cudaMemcpy(DEV_FACTOR, & factorm, sizeof(MATRIX), cudaMemcpyHostToDevice);
 
   cudaMalloc((void**) & DEV_MASS, sizeof(VECTOR));
   VECTOR massv;
-  massv.x = FL_PT_NUM (mass[0]);
-  massv.y = FL_PT_NUM (mass[1]);
-  massv.z = FL_PT_NUM (mass[2]);
+  massv.x = REAL (mass[0]);
+  massv.y = REAL (mass[1]);
+  massv.z = REAL (mass[2]);
   cudaMemcpy(DEV_MASS,& massv, sizeof(VECTOR), cudaMemcpyHostToDevice);
 
-  cudaMalloc((void**) & DEV_TOL, sizeof (FL_PT_NUM));
-  FL_PT_NUM tolf = (FL_PT_NUM) tol;
-  cudaMemcpy(DEV_TOL, &tolf, sizeof (FL_PT_NUM), cudaMemcpyHostToDevice);
+  cudaMalloc((void**) & DEV_TOL, sizeof (REAL));
+  REAL tolf = (REAL) tol;
+  cudaMemcpy(DEV_TOL, &tolf, sizeof (REAL), cudaMemcpyHostToDevice);
   DEBUG(10,"Allocated space for tol");
   
 
@@ -163,11 +162,11 @@ extern "C" int cudaGPU_Shake(double *newpos, double *oldpos, int & shake_fail_mo
   DEBUG(10,"Copy the new positions")
   double3 * positions = (double3*) newpos;
   for (unsigned int i = first, j = 0; i < last; i++, j++) {
-    HOST_NEW_POS[j].x = (FL_PT_NUM) positions[i].x;
+    HOST_NEW_POS[j].x = (REAL) positions[i].x;
     //if (gpu_id==1)
     DEBUG(15,"Old Pos : i " << i << " x : " << HOST_NEW_POS[j].x)
-    HOST_NEW_POS[j].y = (FL_PT_NUM) positions[i].y;
-    HOST_NEW_POS[j].z = (FL_PT_NUM) positions[i].z;
+    HOST_NEW_POS[j].y = (REAL) positions[i].y;
+    HOST_NEW_POS[j].z = (REAL) positions[i].z;
   }
 
 
@@ -175,9 +174,9 @@ extern "C" int cudaGPU_Shake(double *newpos, double *oldpos, int & shake_fail_mo
   DEBUG(10,"Copy the old positions")
   double3 * old_positions = (double3*) oldpos;
   for (unsigned int i = first, j = 0; i < last; i++, j++) {
-    HOST_OLD_POS[j].x = (FL_PT_NUM) old_positions[i].x;
-    HOST_OLD_POS[j].y = (FL_PT_NUM) old_positions[i].y;
-    HOST_OLD_POS[j].z = (FL_PT_NUM) old_positions[i].z;
+    HOST_OLD_POS[j].x = (REAL) old_positions[i].x;
+    HOST_OLD_POS[j].y = (REAL) old_positions[i].y;
+    HOST_OLD_POS[j].z = (REAL) old_positions[i].z;
   }
 
   // Copy the old and new positions to the GPU
@@ -233,7 +232,7 @@ __global__ void cudakernel::kernel_Calc_Shake
 (
         VECTOR * new_pos, VECTOR * old_pos,
         cudakernel::simulation_parameter * dev_params,
-        int *shake_fail_mol, FL_PT_NUM * tol,
+        int *shake_fail_mol, REAL * tol,
         VECTOR * mass, VECTOR * const_length2,
         MATRIX * factor, unsigned int highest_mol_index
         ) {
@@ -259,7 +258,7 @@ __global__ void cudakernel::kernel_Calc_Shake
   const VECTOR dist_old_2 = old_pos_1 - old_pos_3;
   const VECTOR dist_old_3 = old_pos_2 - old_pos_3;
 
-  const FL_PT_NUM ltol = *tol * PREC(2.0);
+  const REAL ltol = *tol * PREC(2.0);
   const VECTOR cl2 = *const_length2;
   const MATRIX lfactor = *factor;
 
@@ -303,14 +302,14 @@ __global__ void cudakernel::kernel_Calc_Shake
        
       // inverse
 
-      const FL_PT_NUM det =
+      const REAL det =
                 A.xy * A.yz * A.zx
               - A.xz * A.yy * A.zx
               + A.xz * A.yx * A.zy
               - A.xx * A.yz * A.zy
               - A.xy * A.yx * A.zz
               + A.xx * A.yy * A.zz;
-      const FL_PT_NUM deti = PREC(1.0) / det;
+      const REAL deti = PREC(1.0) / det;
       MATRIX Ai;
       Ai.xx = (A.yy * A.zz - A.yz * A.zy) * deti;
       Ai.yx = (A.yz * A.zx - A.yx * A.zz) * deti;
@@ -322,9 +321,9 @@ __global__ void cudakernel::kernel_Calc_Shake
       Ai.yz = (A.xz * A.yx - A.xx * A.yz) * deti;
       Ai.zz = (A.xx * A.yy - A.xy * A.yx) * deti;
 
-      const FL_PT_NUM f0 = (Ai.xx * diff.x + Ai.xy * diff.y + Ai.xz * diff.z) * PREC(0.5);
-      const FL_PT_NUM f1 = (Ai.yx * diff.x + Ai.yy * diff.y + Ai.yz * diff.z) * PREC(0.5);
-      const FL_PT_NUM f2 = (Ai.zx * diff.x + Ai.zy * diff.y + Ai.zz * diff.z) * PREC(0.5);
+      const REAL f0 = (Ai.xx * diff.x + Ai.xy * diff.y + Ai.xz * diff.z) * PREC(0.5);
+      const REAL f1 = (Ai.yx * diff.x + Ai.yy * diff.y + Ai.yz * diff.z) * PREC(0.5);
+      const REAL f2 = (Ai.zx * diff.x + Ai.zy * diff.y + Ai.zz * diff.z) * PREC(0.5);
 
       const VECTOR f01 = f0 * dist_old_1 + f1 * dist_old_2;
       const VECTOR f02 = f2 * dist_old_3 - f0 * dist_old_1;

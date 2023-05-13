@@ -43,6 +43,7 @@
  *   - pairlist
  *   - bonded
  *   - nonbonded
+ *   - qmmm
  *   - latticesum
  *   - special
  * - io
@@ -184,6 +185,16 @@
     {
       extern int debug_level;
       extern int simulation_debug_level;
+    }
+
+    namespace cuda
+    {
+      extern int debug_level;
+      extern int kernel_debug_level;
+      extern int constraints_debug_level;
+      extern int interaction_debug_level;
+      extern int pairlist_debug_level;
+      extern int utils_debug_level;
     }
 
     namespace re

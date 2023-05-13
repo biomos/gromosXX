@@ -4,12 +4,32 @@
  * contains function declarations used in GROMOSXX MD++
  */
 
+#ifndef INCLUDED_CUKERNEL_H
+#define INCLUDED_CUKERNEL_H
+
+#include <cuda_runtime.h>
+#include <device_launch_parameters.h>
+
 #define CUKERNEL_TYPES_ONLY
 #include "lib/types.h"
 #include "parameter.h"
 #include "pairlist.h"
+#ifndef HAVE_LIBCUDART
 #define gpu_status void
+#endif
 #undef CUKERNEL_TYPES_ONLY
+
+namespace topology { 
+  class Topology;
+}
+
+namespace configuration { 
+  class Configuration;
+}
+
+namespace simulation { 
+  class Simulation;
+}
 
 namespace cudakernel {
   extern "C" {
@@ -126,7 +146,9 @@ namespace cudakernel {
      * a dummy function for linker checking
      */
     void test();
+
+    void test_topo(topology::Topology& topo);
     
   }
 }
-
+#endif

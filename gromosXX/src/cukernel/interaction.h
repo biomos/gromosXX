@@ -2,7 +2,8 @@
  * @file interaction.h
  * interaction computation
  */
-#ifndef CUKERNEL_INTERACTION
+#ifndef INCLUDED_CUKERNEL_INTERACTION_H
+#define INCLUDED_CUKERNEL_INTERACTION_H
 namespace cudakernel {
 /**
   * calculate the forces, energies and virial and stores them in per atom arrays

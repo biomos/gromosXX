@@ -11,12 +11,10 @@
 
 #undef MODULE
 #undef SUBMODULE
-#define MODULE interaction
-#define SUBMODULE cuda
-
+#define MODULE cuda
+#define SUBMODULE pairlist
 
 #define NUM_THREADS_PER_BLOCK 96
-
 
 void cudakernel::free_pairlist(pairlist &pl) {
   cudaFree(pl.list); cudaFree(pl.num_neighbors); cudaFree(pl.overflow);
