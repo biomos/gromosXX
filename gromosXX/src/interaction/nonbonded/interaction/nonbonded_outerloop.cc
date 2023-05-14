@@ -2672,16 +2672,6 @@ void interaction::Nonbonded_Outerloop
   }
 }
 
-
-int interaction::Nonbonded_Outerloop::cuda_solute_outerloop(topology::Topology & topo,
-        configuration::Configuration & conf,
-        simulation::Simulation & sim,
-        Pairlist const & pairlist_solute,
-        Storage & storage,
-        bool longrange, util::Algorithm_Timer & timer, bool master) {
-      return 0;
-    };
-
 /**
  * calculate the interaction for a given atom pair.
  * SLOW! as it has to create the periodicity...

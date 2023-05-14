@@ -342,13 +342,6 @@ namespace interaction
     static double minfield;
 #endif
 
-    int cuda_solute_outerloop(topology::Topology & topo,
-                              configuration::Configuration & conf,
-                              simulation::Simulation & sim,
-                              Pairlist const & pairlist_solute,
-                              Storage & storage,
-                              bool longrange, util::Algorithm_Timer & timer, bool master);
-
     template<typename t_interaction_spec>
     void _lj_crf_outerloop(topology::Topology & topo,
 			   configuration::Configuration & conf,

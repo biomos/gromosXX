@@ -424,7 +424,6 @@ namespace simulation
    */
   enum interaction_func_enum{
     /** lj_crf_function */ lj_crf_func,
-    /** lj_crf_function */ lj_crf_cuda_func,
     /** lj_ls_function */ lj_ls_func,
     /** lj_function */ lj_func,
     /** pol_lj_crf_function */ pol_lj_crf_func,

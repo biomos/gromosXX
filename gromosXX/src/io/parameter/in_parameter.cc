@@ -4704,10 +4704,6 @@ void io::In_Parameter::read_NONBONDED(simulation::Parameter & param,
                 param.nonbonded.a_RFn = 3 * pow(param.nonbonded.rf_cutoff,-(param.nonbonded.n_crf+1)) / (param.nonbonded.n_crf * (param.nonbonded.m_crf-param.nonbonded.n_crf));
                 param.nonbonded.a_RFn *= (2*param.nonbonded.rf_epsilon+param.nonbonded.m_crf-1)/(1+2*param.nonbonded.rf_epsilon);
                 break;
-            case 5:
-                param.nonbonded.method = simulation::el_reaction_field;
-                param.nonbonded.lserf = false;
-                param.force.interaction_function = simulation::lj_crf_cuda_func;
             
             default:
                 break;
