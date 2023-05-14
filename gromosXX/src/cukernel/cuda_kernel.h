@@ -47,24 +47,32 @@ namespace cudakernel {
              */
             ~CUDA_Kernel();
 
-            void init(topology::Topology &topo,
-                                configuration::Configuration & conf,
-                                simulation::Simulation & sim);
+            void init(topology::Topology & topo,
+                      configuration::Configuration & conf,
+                      simulation::Simulation & sim);
+
+            /**
+             * Copy simulation parameters to GPU constant memory
+             */
+            void copy_parameters();
             
-            gpu_status * cudaInitConstraints(unsigned int num_of_gpus, unsigned int gpu_id, unsigned int num_atoms,
-                    unsigned int num_solvent_mol);
+            /**
+             * Estimate the pairlist size
+             */
+            void estimate_pairlist();
             
             void disabled() {
                 io::messages.add("Compilation without CUDA support.",
                                 "CUDA_Kernel", io::message::critical);
-            }
+            };
         private:
-            topology::Topology *mytopo;
-            configuration::Configuration *myconf;
-            simulation::Simulation *mysim;
+            cudakernel::simulation_parameter param;
             #ifdef HAVE_LIBCUDART
             cudaDeviceProp device_properties;
             #endif
+            topology::Topology * mytopo;
+            configuration::Configuration * myconf;
+            simulation::Simulation * mysim;
             int device_number;
             unsigned flags;
         };

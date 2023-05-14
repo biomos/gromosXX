@@ -49,7 +49,7 @@ extern "C" gpu_status * cudaInitConstraints(unsigned int num_of_gpus, unsigned i
   gpu_stat->host_parameter.num_of_gpus = num_of_gpus;
   gpu_stat->host_parameter.gpu_id = gpu_id;
 
-  gpu_stat->host_parameter.num_atoms = num_atoms;
+  gpu_stat->host_parameter.num_atoms.solvent = num_atoms;
   gpu_stat->host_parameter.num_solvent_mol = num_solvent_mol;
 
   // Allocate space for the old and new positions
@@ -78,7 +78,7 @@ extern "C" int cudaConstraints(double *newpos, double *oldpos,
   // copy the new positions
   DEBUG(10,"Copy the new positions")
   double3 * new_positions = (double3*) newpos;
-  for (unsigned int i = 0; i < gpu_stat->host_parameter.num_atoms; i++) {
+  for (unsigned int i = 0; i < gpu_stat->host_parameter.num_atoms.solvent; i++) {
     gpu_stat->host_double_new_pos[i].x = new_positions[i].x;
     gpu_stat->host_double_new_pos[i].y = new_positions[i].y;
     gpu_stat->host_double_new_pos[i].z = new_positions[i].z;
@@ -87,7 +87,7 @@ extern "C" int cudaConstraints(double *newpos, double *oldpos,
   // Copy the old positions
   DEBUG(10,"Copy the old positions")
   double3 * old_positions = (double3*) oldpos;
-  for (unsigned int i = 0; i < gpu_stat->host_parameter.num_atoms; i++) {
+  for (unsigned int i = 0; i < gpu_stat->host_parameter.num_atoms.solvent; i++) {
     gpu_stat->host_double_old_pos[i].x = old_positions[i].x;
     gpu_stat->host_double_old_pos[i].y = old_positions[i].y;
     gpu_stat->host_double_old_pos[i].z = old_positions[i].z;
@@ -95,8 +95,8 @@ extern "C" int cudaConstraints(double *newpos, double *oldpos,
 
   // Copy the new and old positions on the GPU
   DEBUG(10,"Copy the new positions on to the GPU")
-  cudaMemcpy(gpu_stat->dev_double_new_pos, gpu_stat->host_double_new_pos, gpu_stat->host_parameter.num_atoms * sizeof (double3), cudaMemcpyHostToDevice);
-  cudaMemcpy(gpu_stat->dev_double_old_pos, gpu_stat->host_double_old_pos, gpu_stat->host_parameter.num_atoms * sizeof (double3), cudaMemcpyHostToDevice);
+  cudaMemcpy(gpu_stat->dev_double_new_pos, gpu_stat->host_double_new_pos, gpu_stat->host_parameter.num_atoms.solvent * sizeof (double3), cudaMemcpyHostToDevice);
+  cudaMemcpy(gpu_stat->dev_double_old_pos, gpu_stat->host_double_old_pos, gpu_stat->host_parameter.num_atoms.solvent * sizeof (double3), cudaMemcpyHostToDevice);
 
   cudakernel::checkError("after copying the new positions to the GPU");
 
@@ -127,9 +127,9 @@ extern "C" int cudaConstraints(double *newpos, double *oldpos,
     return 1;
 
     DEBUG(10,"Copy the positions")
-  cudaMemcpy(gpu_stat->host_double_new_pos, gpu_stat->dev_double_new_pos, gpu_stat->host_parameter.num_atoms * sizeof (double3), cudaMemcpyDeviceToHost);
+  cudaMemcpy(gpu_stat->host_double_new_pos, gpu_stat->dev_double_new_pos, gpu_stat->host_parameter.num_atoms.solvent * sizeof (double3), cudaMemcpyDeviceToHost);
   cudakernel::checkError("after copying the new positions");
-  for(unsigned int i = 0; i < gpu_stat->host_parameter.num_atoms; ++i) {
+  for(unsigned int i = 0; i < gpu_stat->host_parameter.num_atoms.solvent; ++i) {
     newpos[3*i  ] = double(gpu_stat->host_double_new_pos[i].x);
     newpos[3*i+1] = double(gpu_stat->host_double_new_pos[i].y);
     newpos[3*i+2] = double(gpu_stat->host_double_new_pos[i].z);

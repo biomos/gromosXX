@@ -71,7 +71,7 @@ extern "C" gpu_status * cudaInitGPU_Shake(
   gpu_stat->host_parameter.gpu_id = gpu_id;
 
   DEBUG(4,"Number of solvent mol: " << num_solvent_mol)
-  gpu_stat->host_parameter.num_atoms = num_atoms;
+  gpu_stat->host_parameter.num_atoms.solvent = num_atoms;
   gpu_stat->host_parameter.num_solvent_mol = num_solvent_mol;
   
   // Allocate space for the old and new positions
@@ -145,7 +145,7 @@ extern "C" int cudaGPU_Shake(double *newpos, double *oldpos, int & shake_fail_mo
         gpu_status * gpu_stat) {
 
   const unsigned int gpu_id = gpu_stat->host_parameter.gpu_id;
-  const unsigned int num_atoms = gpu_stat->host_parameter.num_atoms;
+  const unsigned int num_atoms = gpu_stat->host_parameter.num_atoms.solvent;
   const unsigned int num_gpus = gpu_stat->host_parameter.num_of_gpus;
   const unsigned int num_solvent_mol = gpu_stat->host_parameter.num_solvent_mol;
   const unsigned int first = (num_solvent_mol / num_gpus) * 3 * gpu_id;

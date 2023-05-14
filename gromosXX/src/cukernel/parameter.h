@@ -6,7 +6,6 @@
 #define INCLUDED_CUKERNEL_PARAMETER_H
 
 namespace cudakernel {
-
   /**
    * @struct simulation_parameter
    *
@@ -14,6 +13,23 @@ namespace cudakernel {
    * initialized in cudaInit(...)
    */
   struct simulation_parameter {
+    struct num_atoms_struct {
+      unsigned total;
+      unsigned solute;
+      unsigned solvent;
+    } num_atoms;
+    /**
+     * the box edges
+     */
+    float3 box;
+    /**
+     * the inverted box edges
+     */
+    float3 box_inv;
+    /**
+     * half the box edges
+     */
+    float3 box_half;
     /**
      * the long-range cutoff
      */
@@ -31,25 +47,6 @@ namespace cudakernel {
      */
     float cutoff_short_2;
     /**
-     * the box edges
-     */
-    float box_x;
-    float box_y;
-    float box_z;
-    /**
-     * the inverted box edges
-     */
-    float box_inv_x;
-    float box_inv_y;
-    float box_inv_z;
-    /**
-     * half the box edges
-     */
-    float box_half_x;
-    float box_half_y;
-    float box_half_z;
-    
-    /**
      * reaction field constant
      */
     float crf_2cut3i;
@@ -64,7 +61,7 @@ namespace cudakernel {
     /**
      * number of solvent atoms
      */
-    unsigned int num_atoms;
+    unsigned int num_solvent_atoms;
     /**
      * the number of atoms per solvent molecule
      */

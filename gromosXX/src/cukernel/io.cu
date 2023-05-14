@@ -56,19 +56,19 @@ extern "C" gpu_status * cudaInit(int & device_number,
   gpu_stat->host_parameter.cutoff_long_2 = (float) cutoff_long*cutoff_long;
   gpu_stat->host_parameter.cutoff_short = (float) cutoff_short;
   gpu_stat->host_parameter.cutoff_short_2 = (float) cutoff_short*cutoff_short;
-  gpu_stat->host_parameter.box_x = (float) box_x;
-  gpu_stat->host_parameter.box_y = (float) box_y;
-  gpu_stat->host_parameter.box_z = (float) box_z;
-  gpu_stat->host_parameter.box_inv_x = 1.0 / box_x;
-  gpu_stat->host_parameter.box_inv_y = 1.0 / box_y;
-  gpu_stat->host_parameter.box_inv_z = 1.0 / box_z;
-  gpu_stat->host_parameter.box_half_x = box_x / 2.0;
-  gpu_stat->host_parameter.box_half_y = box_y / 2.0;
-  gpu_stat->host_parameter.box_half_z = box_z / 2.0;
+  gpu_stat->host_parameter.box.x = (float) box_x;
+  gpu_stat->host_parameter.box.y = (float) box_y;
+  gpu_stat->host_parameter.box.z = (float) box_z;
+  gpu_stat->host_parameter.box_inv.x = 1.0 / box_x;
+  gpu_stat->host_parameter.box_inv.y = 1.0 / box_y;
+  gpu_stat->host_parameter.box_inv.z = 1.0 / box_z;
+  gpu_stat->host_parameter.box_half.x = box_x / 2.0;
+  gpu_stat->host_parameter.box_half.y = box_y / 2.0;
+  gpu_stat->host_parameter.box_half.z = box_z / 2.0;
   gpu_stat->host_parameter.crf_2cut3i = crf_2cut3i;
   gpu_stat->host_parameter.crf_cut = crf_cut;
   gpu_stat->host_parameter.crf_cut3i = crf_cut3i;
-  gpu_stat->host_parameter.num_atoms = num_atoms;
+  gpu_stat->host_parameter.num_atoms.solvent = num_atoms;
   gpu_stat->host_parameter.estimated_neighbors_short = estimated_neighbors_short;
   gpu_stat->host_parameter.estimated_neighbors_long = estimated_neighbors_long;
   gpu_stat->host_parameter.num_atoms_per_mol = num_atoms_per_mol;
@@ -85,8 +85,8 @@ extern "C" gpu_status * cudaInit(int & device_number,
   GPUMALLOC(& gpu_stat->dev_parameter, sizeof (cudakernel::simulation_parameter));
 
   // Allocate memory for positions, pairlists, parameters, forces and energies
-  GPUMALLOC(& gpu_stat->dev_pos, gpu_stat->host_parameter.num_atoms * sizeof(float3));
-  GPUMALLOC(& gpu_stat->dev_new_pos, gpu_stat->host_parameter.num_atoms * sizeof(float3));
+  GPUMALLOC(& gpu_stat->dev_pos, gpu_stat->host_parameter.num_atoms.solvent * sizeof(float3));
+  GPUMALLOC(& gpu_stat->dev_new_pos, gpu_stat->host_parameter.num_atoms.solvent * sizeof(float3));
 
   // assign two dimensional arrays for the pairlists.
   unsigned int numThreads = (gpu_stat->host_parameter.num_solvent_mol / num_of_gpus + 1) * gpu_stat->host_parameter.num_atoms_per_mol;
@@ -111,7 +111,7 @@ extern "C" gpu_status * cudaInit(int & device_number,
 
   // allocate data structure suited for copying on the host
   gpu_stat->host_energy = (float2 *) malloc(numThreads * sizeof (float2));
-  gpu_stat->host_pos = (float3 *) malloc(gpu_stat->host_parameter.num_atoms * sizeof (float3));
+  gpu_stat->host_pos = (float3 *) malloc(gpu_stat->host_parameter.num_atoms.solvent * sizeof (float3));
   gpu_stat->host_forces = (float3 *) malloc(numThreads * sizeof (float3));
   gpu_stat->host_virial = (float9 *) malloc(numThreads * sizeof (float9));
 
@@ -126,28 +126,28 @@ extern "C" gpu_status * cudaInit(int & device_number,
 }
 
 extern "C" int cudaCopyBox(gpu_status * gpu_stat, double box_x, double box_y, double box_z) {
-  gpu_stat->host_parameter.box_x = (float) box_x;
-  gpu_stat->host_parameter.box_y = (float) box_y;
-  gpu_stat->host_parameter.box_z = (float) box_z;
-  gpu_stat->host_parameter.box_inv_x = 1.0 / box_x;
-  gpu_stat->host_parameter.box_inv_y = 1.0 / box_y;
-  gpu_stat->host_parameter.box_inv_z = 1.0 / box_z;
-  gpu_stat->host_parameter.box_half_x = box_x / 2.0;
-  gpu_stat->host_parameter.box_half_y = box_y / 2.0;
-  gpu_stat->host_parameter.box_half_z = box_z / 2.0;
+  gpu_stat->host_parameter.box.x = (float) box_x;
+  gpu_stat->host_parameter.box.y = (float) box_y;
+  gpu_stat->host_parameter.box.z = (float) box_z;
+  gpu_stat->host_parameter.box_inv.x = 1.0 / box_x;
+  gpu_stat->host_parameter.box_inv.y = 1.0 / box_y;
+  gpu_stat->host_parameter.box_inv.z = 1.0 / box_z;
+  gpu_stat->host_parameter.box_half.x = box_x / 2.0;
+  gpu_stat->host_parameter.box_half.y = box_y / 2.0;
+  gpu_stat->host_parameter.box_half.z = box_z / 2.0;
   cudaMemcpy(gpu_stat->dev_parameter, &gpu_stat->host_parameter, sizeof (cudakernel::simulation_parameter), cudaMemcpyHostToDevice);
   return cudakernel::checkError("after copying the box");
 }
 
 extern "C" int cudaCopyPositions(double * pos, gpu_status * gpu_stat) {
   double3 * positions = (double3*) pos;
-  for (unsigned int i = 0; i < gpu_stat->host_parameter.num_atoms; i++) {
+  for (unsigned int i = 0; i < gpu_stat->host_parameter.num_atoms.solvent; i++) {
     gpu_stat->host_pos[i].x = positions[i].x;
     gpu_stat->host_pos[i].y = positions[i].y;
     gpu_stat->host_pos[i].z = positions[i].z;
   }
 
-  cudaMemcpy(gpu_stat->dev_pos, gpu_stat->host_pos, gpu_stat->host_parameter.num_atoms * sizeof (float3), cudaMemcpyHostToDevice);
+  cudaMemcpy(gpu_stat->dev_pos, gpu_stat->host_pos, gpu_stat->host_parameter.num_atoms.solvent * sizeof (float3), cudaMemcpyHostToDevice);
   return cudakernel::checkError("after copying the positions");
 }
 

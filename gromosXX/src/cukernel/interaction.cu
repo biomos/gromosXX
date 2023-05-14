@@ -22,7 +22,7 @@ extern "C" int cudaCalcForces(double * forces, double * virial, double * lj_ener
   cudakernel::pairlist *dev_pl;
   int num_of_gpus = gpu_stat->host_parameter.num_of_gpus;
   int gpu_id = gpu_stat->host_parameter.gpu_id;
-  DEBUG(10,"Num solvent atoms: " << gpu_stat->host_parameter.num_atoms);
+  DEBUG(10,"Num solvent atoms: " << gpu_stat->host_parameter.num_atoms.solvent);
   unsigned int numThreads = (gpu_stat->host_parameter.num_solvent_mol / num_of_gpus + 1) * gpu_stat->host_parameter.num_atoms_per_mol;
   unsigned int numBlocks = numThreads / NUM_THREADS_PER_BLOCK_FORCES + 1;
 
@@ -76,7 +76,7 @@ extern "C" int cudaCalcForces(double * forces, double * virial, double * lj_ener
   for (unsigned int i = 0; i < numThreads; i++) {
     // convert from float to double
     index = i % gpu_stat->host_parameter.num_atoms_per_mol + ( (i / gpu_stat->host_parameter.num_atoms_per_mol) * num_of_gpus + gpu_id)*gpu_stat->host_parameter.num_atoms_per_mol;
-    if (index >= gpu_stat->host_parameter.num_atoms)
+    if (index >= gpu_stat->host_parameter.num_atoms.solvent)
       continue;
     //std::cout << gpu_id << " : i = " << i << " , index = " << index << std::endl;
     DEBUG(15,"force " << i << " index: " << (int) gpu_stat->host_forces[i].x << " ai: " << (int) gpu_stat->host_forces[i].y << " mi: " << (int) gpu_stat->host_forces[i].z);
@@ -123,7 +123,7 @@ __global__ void cudakernel::kernel_CalcForces_Solvent
   const unsigned int solvent_offset = dev_params->num_atoms_per_mol;
   const int atom_index = index % solvent_offset + ((index / solvent_offset) * num_of_gpus + gpu_id) * solvent_offset;
 
-  if (atom_index >= dev_params->num_atoms)
+  if (atom_index >= dev_params->num_atoms.solvent)
     return;
 
   // fetch the position and some parameters
@@ -161,9 +161,9 @@ __global__ void cudakernel::kernel_CalcForces_Solvent
   const float crf_cut3i = dev_params->crf_cut3i;
 
   // cache box
-  const float3 box_param_x = make_float3(dev_params->box_half_x, dev_params->box_x, dev_params->box_inv_x);
-  const float3 box_param_y = make_float3(dev_params->box_half_y, dev_params->box_y, dev_params->box_inv_y);
-  const float3 box_param_z = make_float3(dev_params->box_half_z, dev_params->box_z, dev_params->box_inv_z); 
+  const float3 box_param_x = make_float3(dev_params->box_half.x, dev_params->box.x, dev_params->box_inv.x);
+  const float3 box_param_y = make_float3(dev_params->box_half.y, dev_params->box.y, dev_params->box_inv.y);
+  const float3 box_param_z = make_float3(dev_params->box_half.z, dev_params->box.z, dev_params->box_inv.z); 
 
   unsigned active = __activemask();
   // loop over neighbor list which contains the index of the first atom of the neighboring molecule
