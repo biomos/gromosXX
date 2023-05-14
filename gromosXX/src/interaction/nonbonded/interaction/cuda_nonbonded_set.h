@@ -116,16 +116,16 @@ namespace interaction {
      * Calculates the contstants needed for
      * further calculation
      */
-    virtual void init_run();
+    virtual inline void init_run();
     /**
      * contains the calculations, executed at every step
      */
     //virtual void cycle();
-    virtual void calculate();
+    virtual inline void calculate();
     /**
      * Clean up
      */
-    virtual void end_run();
+    virtual inline void end_run();
     
 
   protected:

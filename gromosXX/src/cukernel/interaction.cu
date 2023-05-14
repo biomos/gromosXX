@@ -16,6 +16,8 @@
 
 #define NUM_THREADS_PER_BLOCK_FORCES 96
 
+extern __device__ __constant__ cudakernel::simulation_parameter device_param;
+
 extern "C" int cudaCalcForces(double * forces, double * virial, double * lj_energy,
         double * crf_energy, bool longrange, gpu_status * gpu_stat) {
   int error = 0;
@@ -23,6 +25,12 @@ extern "C" int cudaCalcForces(double * forces, double * virial, double * lj_ener
   int num_of_gpus = gpu_stat->host_parameter.num_of_gpus;
   int gpu_id = gpu_stat->host_parameter.gpu_id;
   DEBUG(10,"Num solvent atoms: " << gpu_stat->host_parameter.num_atoms.solvent);
+
+  cudakernel::simulation_parameter tmp_param;
+  cudaMemcpyFromSymbol(&tmp_param, device_param, sizeof(cudakernel::simulation_parameter));
+  DEBUG(4,"num_atoms.solvent: " << gpu_stat->host_parameter.num_atoms.solvent << " " << tmp_param.num_atoms.solvent);
+  DEBUG(4,"num_atoms_per_mol: " << gpu_stat->host_parameter.num_atoms_per_mol << " " << tmp_param.num_atoms_per_mol);
+  DEBUG(4,"num_of_gpus: " << gpu_stat->host_parameter.num_of_gpus << " " << tmp_param.num_of_gpus);
   unsigned int numThreads = (gpu_stat->host_parameter.num_solvent_mol / num_of_gpus + 1) * gpu_stat->host_parameter.num_atoms_per_mol;
   unsigned int numBlocks = numThreads / NUM_THREADS_PER_BLOCK_FORCES + 1;
 
@@ -41,6 +49,28 @@ extern "C" int cudaCalcForces(double * forces, double * virial, double * lj_ener
   //          2. for every atom in a solvent molecule
   //          3. the size of the LJ CRF parameter struct
   const size_t dynamic_shared_memory = NUM_THREADS_PER_BLOCK_FORCES * gpu_stat->host_parameter.num_atoms_per_mol * sizeof(cudakernel::lj_crf_parameter);
+
+  // check what we have there
+  cudaMemcpyFromSymbol(&tmp_param, device_param, sizeof(cudakernel::simulation_parameter));
+  DEBUG(0, "num_atoms.total: \t" << tmp_param.num_atoms.total);
+  DEBUG(0, "num_atoms.solute: \t" << tmp_param.num_atoms.solute);
+  DEBUG(0, "num_atoms.solvent: \t" << tmp_param.num_atoms.solvent);
+  DEBUG(0, "box: \t" << tmp_param.box.full.x << " " << tmp_param.box.full.y << " " << tmp_param.box.full.z);
+  DEBUG(0, "box.inv: \t" << tmp_param.box.inv.x << " " << tmp_param.box.inv.y << " " << tmp_param.box.inv.z);
+  DEBUG(0, "box.half: \t" << tmp_param.box.half.x << " " << tmp_param.box.half.y << " " << tmp_param.box.half.z);
+  DEBUG(0, "cutoff_long: \t" << tmp_param.cutoff_long);
+  DEBUG(0, "cutoff_long_2: \t" << tmp_param.cutoff_long_2);
+  DEBUG(0, "cutoff_short: \t" << tmp_param.cutoff_short);
+  DEBUG(0, "cutoff_short_2: \t" << tmp_param.cutoff_short_2);
+  DEBUG(0, "crf_2cut3i: \t" << tmp_param.crf_2cut3i);
+  DEBUG(0, "crf_cut: \t" << tmp_param.crf_cut);
+  DEBUG(0, "crf_cut3i: \t" << tmp_param.crf_cut3i);
+  DEBUG(0, "num_atoms_per_mol: \t" << tmp_param.num_atoms_per_mol);
+  DEBUG(0, "num_solvent_mol: \t" << tmp_param.num_solvent_mol);
+  DEBUG(0, "estimated_neighbors_long: \t" << tmp_param.estimated_neighbors_long);
+  DEBUG(0, "estimated_neighbors_short: \t" << tmp_param.estimated_neighbors_short);
+  DEBUG(0, "num_of_gpus: \t" << tmp_param.num_of_gpus);
+  DEBUG(0, "gpu_id: \t" << tmp_param.gpu_id);
 
   cudakernel::kernel_CalcForces_Solvent <<<dimGrid, dimBlock, dynamic_shared_memory >>>
           (*dev_pl, gpu_stat->dev_pos, gpu_stat->dev_parameter,
@@ -120,10 +150,11 @@ __global__ void cudakernel::kernel_CalcForces_Solvent
   // calculate atom index and check for boundaries
   // x: molecules, y: atoms of the molecule
   const int index = blockIdx.x * NUM_THREADS_PER_BLOCK_FORCES + threadIdx.x;
-  const unsigned int solvent_offset = dev_params->num_atoms_per_mol;
+  //const unsigned int solvent_offset = dev_params->num_atoms_per_mol;
+  const unsigned int solvent_offset = device_param.num_atoms_per_mol;
   const int atom_index = index % solvent_offset + ((index / solvent_offset) * num_of_gpus + gpu_id) * solvent_offset;
 
-  if (atom_index >= dev_params->num_atoms.solvent)
+  if (atom_index >= device_param.num_atoms.solvent)
     return;
 
   // fetch the position and some parameters
@@ -156,14 +187,14 @@ __global__ void cudakernel::kernel_CalcForces_Solvent
     lj_crf[threadIdx.x + NUM_THREADS_PER_BLOCK_FORCES * j] = dev_lj_crf_params[atom_type * solvent_offset + j];
 
   // cache reaction field parameters
-  const float crf_2cut3i = dev_params->crf_2cut3i;
-  const float crf_cut = dev_params->crf_cut;
-  const float crf_cut3i = dev_params->crf_cut3i;
+  const float crf_2cut3i = device_param.crf_2cut3i;
+  const float crf_cut = device_param.crf_cut;
+  const float crf_cut3i = device_param.crf_cut3i;
 
   // cache box
-  const float3 box_param_x = make_float3(dev_params->box_half.x, dev_params->box.x, dev_params->box_inv.x);
-  const float3 box_param_y = make_float3(dev_params->box_half.y, dev_params->box.y, dev_params->box_inv.y);
-  const float3 box_param_z = make_float3(dev_params->box_half.z, dev_params->box.z, dev_params->box_inv.z); 
+  const float3 box_param_x = make_float3(device_param.box.half.x, device_param.box.full.x, device_param.box.inv.x);
+  const float3 box_param_y = make_float3(device_param.box.half.y, device_param.box.full.y, device_param.box.inv.y);
+  const float3 box_param_z = make_float3(device_param.box.half.z, device_param.box.full.z, device_param.box.inv.z); 
 
   unsigned active = __activemask();
   // loop over neighbor list which contains the index of the first atom of the neighboring molecule

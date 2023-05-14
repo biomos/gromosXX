@@ -13,23 +13,25 @@ namespace cudakernel {
    * initialized in cudaInit(...)
    */
   struct simulation_parameter {
+    struct box_struct {
+      /**
+       * the box edges
+       */
+      float3 full;
+      /**
+       * the inverted box edges
+       */
+      float3 inv;
+      /**
+       * half the box edges
+       */
+      float3 half;
+    } box;
     struct num_atoms_struct {
       unsigned total;
       unsigned solute;
       unsigned solvent;
     } num_atoms;
-    /**
-     * the box edges
-     */
-    float3 box;
-    /**
-     * the inverted box edges
-     */
-    float3 box_inv;
-    /**
-     * half the box edges
-     */
-    float3 box_half;
     /**
      * the long-range cutoff
      */

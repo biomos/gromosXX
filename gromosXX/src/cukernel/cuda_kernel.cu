@@ -84,50 +84,50 @@ extern "C" void cudakernel::CUDA_Kernel::init(topology::Topology &topo,
 
 extern "C" void cudakernel::CUDA_Kernel::copy_parameters() {
   DEBUG(0, "cutoff before copy: " << mysim->param().pairlist.cutoff_long);
-  float m_cutoff;
+  /*float m_cutoff;
   // long cutoff
-  m_cutoff = mysim->param().pairlist.cutoff_long;
+  m_cutoff = mysim->param().pairlist.cutoff_long;*/
   this->param.cutoff_long = mysim->param().pairlist.cutoff_long;
   //cudaMemcpyToSymbol(device_param.cutoff_long, &m_cutoff, sizeof(float));
-  m_cutoff = m_cutoff * m_cutoff;
+  //m_cutoff = m_cutoff * m_cutoff;
   this->param.cutoff_long_2 = mysim->param().pairlist.cutoff_long * mysim->param().pairlist.cutoff_long;
   //cudaMemcpyToSymbol(device_param.cutoff_long_2, &m_cutoff, sizeof(float));
 
   // short cutoff
-  m_cutoff = mysim->param().pairlist.cutoff_short;
+  //m_cutoff = mysim->param().pairlist.cutoff_short;
   this->param.cutoff_short = mysim->param().pairlist.cutoff_short;
   //cudaMemcpyToSymbol(device_param.cutoff_short, &m_cutoff, sizeof(float));
-  m_cutoff = m_cutoff * m_cutoff;
+  //m_cutoff = m_cutoff * m_cutoff;
   this->param.cutoff_short_2 = mysim->param().pairlist.cutoff_short * mysim->param().pairlist.cutoff_short;
   //cudaMemcpyToSymbol(device_param.cutoff_short_2, &m_cutoff, sizeof(float));
 
   // box edges
-  float3 m_box;
+  /*float3 m_box;
   m_box.x = myconf->current().box(0)(0);
   m_box.y = myconf->current().box(1)(1);
-  m_box.z = myconf->current().box(2)(2);
-  this->param.box.x = myconf->current().box(0)(0);
-  this->param.box.y = myconf->current().box(1)(1);
-  this->param.box.z = myconf->current().box(2)(2);
+  m_box.z = myconf->current().box(2)(2);*/
+  this->param.box.full.x = myconf->current().box(0)(0);
+  this->param.box.full.y = myconf->current().box(1)(1);
+  this->param.box.full.z = myconf->current().box(2)(2);
   //cudaMemcpyToSymbol(device_param.box, &m_box, sizeof(float3));
 
   // inverted box edges
-  m_box.x = 1 / m_box.x;
+  /*m_box.x = 1 / m_box.x;
   m_box.y = 1 / m_box.y;
-  m_box.z = 1 / m_box.z;
-  this->param.box_inv.x = 1 / myconf->current().box(0)(0);
-  this->param.box_inv.y = 1 / myconf->current().box(1)(1);
-  this->param.box_inv.z = 1 / myconf->current().box(2)(2);
-  //cudaMemcpyToSymbol(device_param.box_inv, &m_box, sizeof(float3));
+  m_box.z = 1 / m_box.z;*/
+  this->param.box.inv.x = 1 / myconf->current().box(0)(0);
+  this->param.box.inv.y = 1 / myconf->current().box(1)(1);
+  this->param.box.inv.z = 1 / myconf->current().box(2)(2);
+  //cudaMemcpyToSymbol(device_param.box.inv, &m_box, sizeof(float3));
 
   // half the box edges
-  m_box.x = myconf->current().box(0)(0) / 2;
+  /*m_box.x = myconf->current().box(0)(0) / 2;
   m_box.y = myconf->current().box(1)(1) / 2;
-  m_box.z = myconf->current().box(2)(2) / 2;
-  this->param.box_half.x = myconf->current().box(0)(0) / 2;
-  this->param.box_half.y = myconf->current().box(1)(1) / 2;
-  this->param.box_half.z = myconf->current().box(2)(2) / 2;
-  //cudaMemcpyToSymbol(device_param.box_half, &m_box, sizeof(float3));
+  m_box.z = myconf->current().box(2)(2) / 2;*/
+  this->param.box.half.x = myconf->current().box(0)(0) / 2;
+  this->param.box.half.y = myconf->current().box(1)(1) / 2;
+  this->param.box.half.z = myconf->current().box(2)(2) / 2;
+  //cudaMemcpyToSymbol(device_param.box.half, &m_box, sizeof(float3));
   
   // reaction field constants
   float m_cut3i, m_crf, m_crf_cut, m_crf_cut3i, m_crf_2cut3i;
@@ -189,9 +189,9 @@ extern "C" void cudakernel::CUDA_Kernel::copy_parameters() {
   DEBUG(0, "num_atoms.total: \t" << tmp_param.num_atoms.total);
   DEBUG(0, "num_atoms.solute: \t" << tmp_param.num_atoms.solute);
   DEBUG(0, "num_atoms.solvent: \t" << tmp_param.num_atoms.solvent);
-  DEBUG(0, "box: \t" << tmp_param.box.x << " " << tmp_param.box.y << " " << tmp_param.box.z);
-  DEBUG(0, "box_inv: \t" << tmp_param.box_inv.x << " " << tmp_param.box_inv.y << " " << tmp_param.box_inv.z);
-  DEBUG(0, "box_half: \t" << tmp_param.box_half.x << " " << tmp_param.box_half.y << " " << tmp_param.box_half.z);
+  DEBUG(0, "box: \t" << tmp_param.box.full.x << " " << tmp_param.box.full.y << " " << tmp_param.box.full.z);
+  DEBUG(0, "box.inv: \t" << tmp_param.box.inv.x << " " << tmp_param.box.inv.y << " " << tmp_param.box.inv.z);
+  DEBUG(0, "box.half: \t" << tmp_param.box.half.x << " " << tmp_param.box.half.y << " " << tmp_param.box.half.z);
   DEBUG(0, "cutoff_long: \t" << tmp_param.cutoff_long);
   DEBUG(0, "cutoff_long_2: \t" << tmp_param.cutoff_long_2);
   DEBUG(0, "cutoff_short: \t" << tmp_param.cutoff_short);

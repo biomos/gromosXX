@@ -16,6 +16,8 @@
 
 #define NUM_THREADS_PER_BLOCK 96
 
+extern __device__ __constant__ cudakernel::simulation_parameter device_param;
+
 void cudakernel::free_pairlist(pairlist &pl) {
   cudaFree(pl.list); cudaFree(pl.num_neighbors); cudaFree(pl.overflow);
   DEBUG(4,"Pairlist: freed pairlist")
@@ -116,20 +118,19 @@ __global__ void cudakernel::kernel_CalcPairlist
   __shared__ float shared_pos[NUM_THREADS_PER_BLOCK * 3];
 
   // take host_parameter local
-  const unsigned int N = dev_params->num_atoms.solvent;
-  const unsigned int num_solvent_mol = dev_params->num_solvent_mol;
-  const float cutoff_long_2 = dev_params->cutoff_long_2;
-  const float cutoff_short_2 = dev_params->cutoff_short_2;
+  const unsigned int N = device_param.num_atoms.solvent;
+  const unsigned int num_solvent_mol = device_param.num_solvent_mol;
+  const float cutoff_long_2 = device_param.cutoff_long_2;
+  const float cutoff_short_2 = device_param.cutoff_short_2;
   //box edges
-  const float box_x = dev_params->box.x;
-  const float box_y = dev_params->box.y;
-  const float box_z = dev_params->box.z;
+  const float box_x = device_param.box.full.x;
+  const float box_y = device_param.box.full.y;
+  const float box_z = device_param.box.full.z;
   
-  const float box_inv_x = dev_params->box_inv.x;
-  const float box_inv_y = dev_params->box_inv.y;
-  const float box_inv_z = dev_params->box_inv.z;
-
-  const unsigned int solvent_offset = dev_params->num_atoms_per_mol;
+  const float box_inv_x = device_param.box.inv.x;
+  const float box_inv_y = device_param.box.inv.y;
+  const float box_inv_z = device_param.box.inv.z;
+  const unsigned int solvent_offset = device_param.num_atoms_per_mol;
 
   // calculate indices
   const unsigned int index = blockIdx.x * NUM_THREADS_PER_BLOCK + threadIdx.x;

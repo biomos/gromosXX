@@ -8,6 +8,7 @@
 #include "gpu_status.h"
 #include "lib/utils.h"
 
+extern __device__ __constant__ cudakernel::simulation_parameter device_param;
 
 extern "C" gpu_status * cudaInit(int & device_number,
             unsigned int num_atoms,
@@ -56,15 +57,15 @@ extern "C" gpu_status * cudaInit(int & device_number,
   gpu_stat->host_parameter.cutoff_long_2 = (float) cutoff_long*cutoff_long;
   gpu_stat->host_parameter.cutoff_short = (float) cutoff_short;
   gpu_stat->host_parameter.cutoff_short_2 = (float) cutoff_short*cutoff_short;
-  gpu_stat->host_parameter.box.x = (float) box_x;
-  gpu_stat->host_parameter.box.y = (float) box_y;
-  gpu_stat->host_parameter.box.z = (float) box_z;
-  gpu_stat->host_parameter.box_inv.x = 1.0 / box_x;
-  gpu_stat->host_parameter.box_inv.y = 1.0 / box_y;
-  gpu_stat->host_parameter.box_inv.z = 1.0 / box_z;
-  gpu_stat->host_parameter.box_half.x = box_x / 2.0;
-  gpu_stat->host_parameter.box_half.y = box_y / 2.0;
-  gpu_stat->host_parameter.box_half.z = box_z / 2.0;
+  gpu_stat->host_parameter.box.full.x = (float) box_x;
+  gpu_stat->host_parameter.box.full.y = (float) box_y;
+  gpu_stat->host_parameter.box.full.z = (float) box_z;
+  gpu_stat->host_parameter.box.inv.x = 1.0 / box_x;
+  gpu_stat->host_parameter.box.inv.y = 1.0 / box_y;
+  gpu_stat->host_parameter.box.inv.z = 1.0 / box_z;
+  gpu_stat->host_parameter.box.half.x = box_x / 2.0;
+  gpu_stat->host_parameter.box.half.y = box_y / 2.0;
+  gpu_stat->host_parameter.box.half.z = box_z / 2.0;
   gpu_stat->host_parameter.crf_2cut3i = crf_2cut3i;
   gpu_stat->host_parameter.crf_cut = crf_cut;
   gpu_stat->host_parameter.crf_cut3i = crf_cut3i;
@@ -126,16 +127,29 @@ extern "C" gpu_status * cudaInit(int & device_number,
 }
 
 extern "C" int cudaCopyBox(gpu_status * gpu_stat, double box_x, double box_y, double box_z) {
-  gpu_stat->host_parameter.box.x = (float) box_x;
-  gpu_stat->host_parameter.box.y = (float) box_y;
-  gpu_stat->host_parameter.box.z = (float) box_z;
-  gpu_stat->host_parameter.box_inv.x = 1.0 / box_x;
-  gpu_stat->host_parameter.box_inv.y = 1.0 / box_y;
-  gpu_stat->host_parameter.box_inv.z = 1.0 / box_z;
-  gpu_stat->host_parameter.box_half.x = box_x / 2.0;
-  gpu_stat->host_parameter.box_half.y = box_y / 2.0;
-  gpu_stat->host_parameter.box_half.z = box_z / 2.0;
+  gpu_stat->host_parameter.box.full.x = (float) box_x;
+  gpu_stat->host_parameter.box.full.y = (float) box_y;
+  gpu_stat->host_parameter.box.full.z = (float) box_z;
+  gpu_stat->host_parameter.box.inv.x = 1.0 / box_x;
+  gpu_stat->host_parameter.box.inv.y = 1.0 / box_y;
+  gpu_stat->host_parameter.box.inv.z = 1.0 / box_z;
+  gpu_stat->host_parameter.box.half.x = box_x / 2.0;
+  gpu_stat->host_parameter.box.half.y = box_y / 2.0;
+  gpu_stat->host_parameter.box.half.z = box_z / 2.0;
   cudaMemcpy(gpu_stat->dev_parameter, &gpu_stat->host_parameter, sizeof (cudakernel::simulation_parameter), cudaMemcpyHostToDevice);
+  cudakernel::simulation_parameter::box_struct box;
+  //box.full
+  //device_param;
+  box.full.x = (float) box_x;
+  box.full.y = (float) box_y;
+  box.full.z = (float) box_z;
+  box.inv.x = 1.0 / box_x;
+  box.inv.y = 1.0 / box_y;
+  box.inv.z = 1.0 / box_z;
+  box.half.x = box_x / 2.0;
+  box.half.y = box_y / 2.0;
+  box.half.z = box_z / 2.0;
+  cudaMemcpyToSymbol(device_param.box, &box, sizeof(cudakernel::simulation_parameter::box_struct));
   return cudakernel::checkError("after copying the box");
 }
 
