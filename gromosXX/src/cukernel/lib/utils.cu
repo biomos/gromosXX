@@ -12,14 +12,13 @@
 #define MODULE cuda
 #define SUBMODULE utils
 
-int cudakernel::checkError(const char * err_msg) {
+int cudakernel::check_error(const char * err_msg) {
 #ifndef NDEBUG
+  cudaDeviceSynchronize();
+#endif
   cudaError_t error = cudaGetLastError();
   if (error != cudaSuccess)
     std::cout << "CUDA-ERROR " << err_msg << ": " << cudaGetErrorString(error) << std::endl;
   return (int) error;
-#else
-  return 0;
-#endif
 }
 

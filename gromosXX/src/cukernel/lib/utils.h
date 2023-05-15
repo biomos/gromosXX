@@ -11,7 +11,7 @@ namespace cudakernel {
    * @param[in] err_msg the error message
    * @return the error code
    */
-  int checkError(const char * err_msg);
+  int check_error(const char * err_msg);
 }
 #endif
 

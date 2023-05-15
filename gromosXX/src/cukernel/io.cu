@@ -121,7 +121,7 @@ extern "C" gpu_status * cudaInit(int & device_number,
   cudaMemcpy(gpu_stat->dev_parameter, &gpu_stat->host_parameter, sizeof (cudakernel::simulation_parameter), cudaMemcpyHostToDevice);
 
   std::cout << "END" << std::endl;
-  *error = cudakernel::checkError("after init");
+  *error = cudakernel::check_error("after init");
 
   return gpu_stat;
 }
@@ -161,7 +161,7 @@ extern "C" int cudaCopyBox(gpu_status * gpu_stat, double box_x, double box_y, do
   box.half.y = box_y / 2.0;
   box.half.z = box_z / 2.0;
   cudaMemcpyToSymbol(device_param.box, &box, sizeof(cudakernel::simulation_parameter::box_struct));
-  return cudakernel::checkError("after copying the box");
+  return cudakernel::check_error("after copying the box");
 }
 
 extern "C" int cudaCopyPositions(double * pos, gpu_status * gpu_stat) {
@@ -173,7 +173,7 @@ extern "C" int cudaCopyPositions(double * pos, gpu_status * gpu_stat) {
   }
 
   cudaMemcpy(gpu_stat->dev_pos, gpu_stat->host_pos, gpu_stat->host_parameter.num_atoms.solvent * sizeof (float3), cudaMemcpyHostToDevice);
-  return cudakernel::checkError("after copying the positions");
+  return cudakernel::check_error("after copying the positions");
 }
 
 extern "C" int CleanUp(gpu_status * gpu_stat) {
@@ -191,6 +191,6 @@ extern "C" int CleanUp(gpu_status * gpu_stat) {
   cudaFree(gpu_stat->dev_energy);
   cudaFree(gpu_stat->dev_parameter);
 
-  return cudakernel::checkError("after clean-up");
+  return cudakernel::check_error("after clean-up");
 }
 

@@ -57,7 +57,7 @@ extern "C" void cudaCalcPairlist(gpu_status * gpu_stat) {
             gpu_stat->host_parameter.num_of_gpus, gpu_stat->host_parameter.gpu_id);
 
     
-    cudaDeviceSynchronize();
+    //cudaDeviceSynchronize();
     DEBUG(10,"Pairlist: Executed kernel and synchronized Threads")
 
     bool overflow_short, overflow_long;

@@ -43,7 +43,7 @@ extern "C" int cudaCalcForces(double * forces, double * virial, double * lj_ener
   // decide which pairlist to take.
   dev_pl = longrange ? &gpu_stat->dev_pl_long : &gpu_stat->dev_pl_short;
 
-  error += cudakernel::checkError("before calculating Forces");
+  error += cudakernel::check_error("before calculating Forces");
   // make sure to allocate __shared__ memory for ever thread
   // we need: 1. for every thread (i.e. NUM_THREADS.. * num_atoms_per_mol
   //          2. for every atom in a solvent molecule
@@ -79,19 +79,19 @@ extern "C" int cudaCalcForces(double * forces, double * virial, double * lj_ener
           num_of_gpus,
           gpu_id);
 
-  cudaDeviceSynchronize();
+  //cudaDeviceSynchronize();
 
   DEBUG(10,"Interactions: Executed kernel and synchronized threads")
 
-  error += cudakernel::checkError("after calculating Forces");
+  error += cudakernel::check_error("after calculating Forces");
   //copy forces/energies back to CPU
   // TODO: These could be reduced on GPU - numThreads-fold less communication
   cudaMemcpy(gpu_stat->host_forces, gpu_stat->dev_forces, numThreads * sizeof (float3), cudaMemcpyDeviceToHost);
-  error += cudakernel::checkError("after copying Forces");
+  error += cudakernel::check_error("after copying Forces");
   cudaMemcpy(gpu_stat->host_virial, gpu_stat->dev_virial, numThreads * sizeof (float9), cudaMemcpyDeviceToHost);
-  error += cudakernel::checkError("after copying virial");
+  error += cudakernel::check_error("after copying virial");
   cudaMemcpy(gpu_stat->host_energy, gpu_stat->dev_energy, numThreads * sizeof (float2), cudaMemcpyDeviceToHost);
-  error += cudakernel::checkError("after copying energy");
+  error += cudakernel::check_error("after copying energy");
 
   
   //sum up energies and write them back
