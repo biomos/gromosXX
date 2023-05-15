@@ -178,34 +178,35 @@ int interaction::OMP_Nonbonded_Interaction::init(topology::Topology & topo,
 						 std::ostream & os,
 						 bool quiet)
 {
-
- 
-
   // OpenMP parallelization
 #ifdef OMP
   unsigned int number_of_cpus = 0;
+  unsigned int number_of_gpus = sim.param().innerloop.number_gpus;
   int result = 0;
   
   #pragma omp parallel
   {
     number_of_cpus = omp_get_num_threads();
     unsigned int tid = omp_get_thread_num();
-    if (tid == 0)
-      m_set_size = number_of_cpus;
+    if (tid == 0) {
+      if (number_of_cpus > number_of_gpus) // if we have enough threads, take one for GPU
+        m_set_size = number_of_cpus - number_of_gpus;
+      else
+        m_set_size = number_of_cpus;
+    }
   }
   result += Nonbonded_Interaction::init(topo, conf, sim, os, quiet);
-
+  m_set_size = number_of_cpus;
   // Increase the number of threads to include the GPUs if CUDA enabled
   if (sim.param().innerloop.method == simulation::sla_cuda && result == 0) {
-    omp_set_num_threads(number_of_cpus + sim.param().innerloop.number_gpus);
-
+    //omp_set_num_threads(number_of_cpus + sim.param().innerloop.number_gpus);
     #pragma omp parallel
     {
       unsigned int tid = omp_get_thread_num();
       DEBUG(10, "tid: " << tid);
       // For the GPUs
-      if (tid >= number_of_cpus) {
-        unsigned int gpu_tid = tid - number_of_cpus;
+      if (tid >= number_of_cpus - number_of_gpus) {
+        unsigned int gpu_tid = tid - number_of_cpus + number_of_gpus;
         DEBUG(9, "OMP: CUDA_set, gpu_tid: " << gpu_tid);
 
         CUDA_Nonbonded_Set * cuda_nbs = new CUDA_Nonbonded_Set(*m_pairlist_algorithm, m_parameter, 0, 1, gpu_tid);
