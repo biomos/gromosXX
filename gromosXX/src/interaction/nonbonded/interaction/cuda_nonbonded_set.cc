@@ -155,7 +155,7 @@ void interaction::CUDA_Nonbonded_Set::init_run() {
   //
   DEBUG(8, "CUDA_Nonbonded_Set::run")
 
-          unsigned int nAtomsPerSolvMol = mytopo->num_solvent_atoms() / mytopo->num_solvent_molecules(0);
+          unsigned int nAtomsPerSolvMol = mytopo->num_solvent_atoms(0) / mytopo->num_solvent_molecules(0);
   cudakernel::lj_crf_parameter * pLj_crf;
   pLj_crf = (cudakernel::lj_crf_parameter *)malloc(nAtomsPerSolvMol * nAtomsPerSolvMol * sizeof (cudakernel::lj_crf_parameter));
 
@@ -216,13 +216,13 @@ void interaction::CUDA_Nonbonded_Set::init_run() {
           (
           //mygpu_id, /*sim.param().innerloop.cuda_device,*/
           mysim->param().innerloop.gpu_device_number.at(mygpu_id),
-          mytopo->num_solvent_atoms(),
+          mytopo->num_solvent_atoms(0),
           mysim->param().pairlist.cutoff_short,
           mysim->param().pairlist.cutoff_long,
           myconf->current().box(0)(0),
           myconf->current().box(1)(1),
           myconf->current().box(2)(2),
-          mytopo->num_solvent_atoms() / mytopo->num_solvent_molecules(0),
+          mytopo->num_solvent_atoms(0) / mytopo->num_solvent_molecules(0),
           //cuda_nbs->estNeigh_short,
           //cuda_nbs->estNeigh_long,
           this->estNeigh_short,

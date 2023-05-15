@@ -28,8 +28,17 @@ namespace cudakernel {
       float3 half;
     } box;
     struct num_atoms_struct {
+      /**
+       * number of all atoms
+       */
       unsigned total;
+      /**
+       * number of solute atoms
+       */
       unsigned solute;
+      /**
+       * number of solvent atoms
+       */
       unsigned solvent;
     } num_atoms;
     /**
@@ -60,10 +69,6 @@ namespace cudakernel {
      * reaction field constant
      */
     float crf_cut3i;
-    /**
-     * number of solvent atoms
-     */
-    unsigned int num_solvent_atoms;
     /**
      * the number of atoms per solvent molecule
      */

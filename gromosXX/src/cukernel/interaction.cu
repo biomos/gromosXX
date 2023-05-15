@@ -192,9 +192,9 @@ __global__ void cudakernel::kernel_CalcForces_Solvent
   const float crf_cut3i = device_param.crf_cut3i;
 
   // cache box
-  const float3 box_param_x = make_float3(device_param.box.half.x, device_param.box.full.x, device_param.box.inv.x);
+  /*const float3 box_param_x = make_float3(device_param.box.half.x, device_param.box.full.x, device_param.box.inv.x);
   const float3 box_param_y = make_float3(device_param.box.half.y, device_param.box.full.y, device_param.box.inv.y);
-  const float3 box_param_z = make_float3(device_param.box.half.z, device_param.box.full.z, device_param.box.inv.z); 
+  const float3 box_param_z = make_float3(device_param.box.half.z, device_param.box.full.z, device_param.box.inv.z); */
 
   unsigned active = __activemask();
   // loop over neighbor list which contains the index of the first atom of the neighboring molecule
@@ -208,7 +208,8 @@ __global__ void cudakernel::kernel_CalcForces_Solvent
       for (unsigned int j = 0; j < solvent_offset; j++) {
         const unsigned int atom_j = neighbor_index + j;
         // calculate distance
-        const float3 r = nearestImage(my_pos, dev_pos[atom_j], box_param_x, box_param_y, box_param_z);
+        //const float3 r = nearestImage(my_pos, dev_pos[atom_j], box_param_x, box_param_y, box_param_z);
+        const float3 r = nearestImage_v2(my_pos, dev_pos[atom_j]);
         // get the parameters
         const cudakernel::lj_crf_parameter lj_crf_param = lj_crf[threadIdx.x + NUM_THREADS_PER_BLOCK_FORCES * j];
 

@@ -127,7 +127,7 @@ extern "C" gpu_status * cudaInit(int & device_number,
 }
 
 extern "C" int cudaCopyBox(gpu_status * gpu_stat, double box_x, double box_y, double box_z) {
-  gpu_stat->host_parameter.box.full.x = (float) box_x;
+  /*gpu_stat->host_parameter.box.full.x = (float) box_x;
   gpu_stat->host_parameter.box.full.y = (float) box_y;
   gpu_stat->host_parameter.box.full.z = (float) box_z;
   gpu_stat->host_parameter.box.inv.x = 1.0 / box_x;
@@ -136,13 +136,24 @@ extern "C" int cudaCopyBox(gpu_status * gpu_stat, double box_x, double box_y, do
   gpu_stat->host_parameter.box.half.x = box_x / 2.0;
   gpu_stat->host_parameter.box.half.y = box_y / 2.0;
   gpu_stat->host_parameter.box.half.z = box_z / 2.0;
-  cudaMemcpy(gpu_stat->dev_parameter, &gpu_stat->host_parameter, sizeof (cudakernel::simulation_parameter), cudaMemcpyHostToDevice);
+  cudaMemcpy(gpu_stat->dev_parameter, &gpu_stat->host_parameter, sizeof (cudakernel::simulation_parameter), cudaMemcpyHostToDevice);*/
+  // direct copy to box_struct symbol is not allowed (is not a symbol itself)
+  //cudakernel::simulation_parameter tmp_param;
   cudakernel::simulation_parameter::box_struct box;
-  //box.full
-  //device_param;
-  box.full.x = (float) box_x;
-  box.full.y = (float) box_y;
-  box.full.z = (float) box_z;
+  //cudaMemcpyFromSymbol(&tmp_param, device_param, sizeof(cudakernel::simulation_parameter));
+  /*tmp_param.box.full.x = (float) box_x;
+  tmp_param.box.full.y = (float) box_y;
+  tmp_param.box.full.z = (float) box_z;
+  tmp_param.box.inv.x = 1.0 / box_x;
+  tmp_param.box.inv.y = 1.0 / box_y;
+  tmp_param.box.inv.z = 1.0 / box_z;
+  tmp_param.box.half.x = box_x / 2.0;
+  tmp_param.box.half.y = box_y / 2.0;
+  tmp_param.box.half.z = box_z / 2.0;*/
+  //cudaMemcpyToSymbol(device_param, &tmp_param, sizeof(cudakernel::simulation_parameter));
+  box.full.x = box_x;
+  box.full.y = box_y;
+  box.full.z = box_z;
   box.inv.x = 1.0 / box_x;
   box.inv.y = 1.0 / box_y;
   box.inv.z = 1.0 / box_z;

@@ -118,18 +118,18 @@ __global__ void cudakernel::kernel_CalcPairlist
   __shared__ float shared_pos[NUM_THREADS_PER_BLOCK * 3];
 
   // take host_parameter local
-  const unsigned int N = device_param.num_atoms.solvent;
-  const unsigned int num_solvent_mol = device_param.num_solvent_mol;
-  const float cutoff_long_2 = device_param.cutoff_long_2;
-  const float cutoff_short_2 = device_param.cutoff_short_2;
+  const unsigned int &N = device_param.num_atoms.solvent;
+  const unsigned int &num_solvent_mol = device_param.num_solvent_mol;
+  const float &cutoff_long_2 = device_param.cutoff_long_2;
+  const float &cutoff_short_2 = device_param.cutoff_short_2;
   //box edges
-  const float box_x = device_param.box.full.x;
-  const float box_y = device_param.box.full.y;
-  const float box_z = device_param.box.full.z;
+  const float &box_x = device_param.box.full.x;
+  const float &box_y = device_param.box.full.y;
+  const float &box_z = device_param.box.full.z;
   
-  const float box_inv_x = device_param.box.inv.x;
-  const float box_inv_y = device_param.box.inv.y;
-  const float box_inv_z = device_param.box.inv.z;
+  const float &box_inv_x = device_param.box.inv.x;
+  const float &box_inv_y = device_param.box.inv.y;
+  const float &box_inv_z = device_param.box.inv.z;
   const unsigned int solvent_offset = device_param.num_atoms_per_mol;
 
   // calculate indices

@@ -28,7 +28,7 @@
 #define FABS(x) fabsf(x)
 
 #elif defined DOUBLE_PREC
-#define Real double
+#define REAL double
 #define PREC(x) x
 #define VECTOR double3
 #define MATRIX double9
@@ -46,6 +46,9 @@
 std::cout << "Define precisions!" << std::endl;
 #endif
 
+/* How to perform double->float operations on CPU */
+//#define FP_CAST float // the old way, float=float*double // just for the consistency check
+#define FP_CAST double // consistent, higher precision float=float(double*double) // preferred
 
 #endif	/* _MACROS_H */
 

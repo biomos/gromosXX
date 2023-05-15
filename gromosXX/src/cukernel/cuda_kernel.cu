@@ -10,7 +10,8 @@
 #include "gpu_status.h"
 //#include "cudaKernel.h"
 #include "lib/constants.h"
-#include "cukernel/parameter.h"
+#include "parameter.h"
+#include "macros.h"
 
 #include "algorithm/algorithm.h"
 #include "../topology/topology.h"
@@ -18,6 +19,7 @@
 #include "configuration/configuration.h"
 
 #include "math/volume.h"
+
 
 #undef MODULE
 #undef SUBMODULE
@@ -84,57 +86,74 @@ extern "C" void cudakernel::CUDA_Kernel::init(topology::Topology &topo,
 
 extern "C" void cudakernel::CUDA_Kernel::copy_parameters() {
   DEBUG(0, "cutoff before copy: " << mysim->param().pairlist.cutoff_long);
-  /*float m_cutoff;
   // long cutoff
-  m_cutoff = mysim->param().pairlist.cutoff_long;*/
   this->param.cutoff_long = mysim->param().pairlist.cutoff_long;
-  //cudaMemcpyToSymbol(device_param.cutoff_long, &m_cutoff, sizeof(float));
-  //m_cutoff = m_cutoff * m_cutoff;
-  this->param.cutoff_long_2 = mysim->param().pairlist.cutoff_long * mysim->param().pairlist.cutoff_long;
-  //cudaMemcpyToSymbol(device_param.cutoff_long_2, &m_cutoff, sizeof(float));
+  this->param.cutoff_long_2 = (FP_CAST) mysim->param().pairlist.cutoff_long * mysim->param().pairlist.cutoff_long;
+  
+  #ifndef NDEBUG
+    float sp_cutoff_long_2 = float(mysim->param().pairlist.cutoff_long) * float(mysim->param().pairlist.cutoff_long);
+    double dp_cutoff_long_2 = mysim->param().pairlist.cutoff_long * mysim->param().pairlist.cutoff_long;
+    float dpsp_cutoff_long_2 = dp_cutoff_long_2;
+    float dpspsp_cutoff_long_2 = (float) mysim->param().pairlist.cutoff_long * mysim->param().pairlist.cutoff_long;
+    DEBUG(0, "double cutoff_long_2: " << std::scientific << std::setprecision(18) << dp_cutoff_long_2);
+    DEBUG(0, "float cutoff_long_2: " << std::scientific << std::setprecision(18) << sp_cutoff_long_2);
+    double truncation_error = 100.*((double)sp_cutoff_long_2 - dp_cutoff_long_2) / dp_cutoff_long_2;
+    DEBUG(0, "truncation error: " << std::scientific << std::setprecision(18) << truncation_error << " %");
+
+    DEBUG(0, "double->float cutoff_long_2: " << std::scientific << std::setprecision(18) << dpsp_cutoff_long_2);
+    truncation_error = 100.*((double)dpsp_cutoff_long_2 - dp_cutoff_long_2) / dp_cutoff_long_2;
+    DEBUG(0, "truncation error: " << std::scientific << std::setprecision(18) << truncation_error << " %");
+
+    DEBUG(0, "float*double->float cutoff_long_2: " << std::scientific << std::setprecision(18) << dpspsp_cutoff_long_2);
+    truncation_error = 100.*((double)dpspsp_cutoff_long_2 - dp_cutoff_long_2) / dp_cutoff_long_2;
+    DEBUG(0, "truncation error: " << std::scientific << std::setprecision(18) << truncation_error << " %");
+  #endif
 
   // short cutoff
-  //m_cutoff = mysim->param().pairlist.cutoff_short;
   this->param.cutoff_short = mysim->param().pairlist.cutoff_short;
-  //cudaMemcpyToSymbol(device_param.cutoff_short, &m_cutoff, sizeof(float));
-  //m_cutoff = m_cutoff * m_cutoff;
-  this->param.cutoff_short_2 = mysim->param().pairlist.cutoff_short * mysim->param().pairlist.cutoff_short;
-  //cudaMemcpyToSymbol(device_param.cutoff_short_2, &m_cutoff, sizeof(float));
+  this->param.cutoff_short_2 = (FP_CAST) mysim->param().pairlist.cutoff_short * mysim->param().pairlist.cutoff_short;
+  
+  #ifndef NDEBUG
+    float sp_cutoff_short_2 = float(mysim->param().pairlist.cutoff_short) * float(mysim->param().pairlist.cutoff_short);
+    double dp_cutoff_short_2 = mysim->param().pairlist.cutoff_short * mysim->param().pairlist.cutoff_short;
+    float dpsp_cutoff_short_2 = dp_cutoff_short_2;
+    float dpspsp_cutoff_short_2 = (float) mysim->param().pairlist.cutoff_short *  mysim->param().pairlist.cutoff_short;
+    DEBUG(0, "double cutoff_short_2: " << std::scientific << std::setprecision(18) << dp_cutoff_short_2);
 
+    DEBUG(0, "float cutoff_short_2: " << std::scientific << std::setprecision(18) << sp_cutoff_short_2);
+    truncation_error = 100.*((double)sp_cutoff_short_2 - dp_cutoff_short_2) / dp_cutoff_short_2;
+    DEBUG(0, "truncation error: " << std::scientific << std::setprecision(18) << truncation_error << " %");
+
+    DEBUG(0, "double->float cutoff_short_2: " << std::scientific << std::setprecision(18) << dpsp_cutoff_short_2);
+    truncation_error = 100.*((double)dpsp_cutoff_short_2 - dp_cutoff_short_2) / dp_cutoff_short_2;
+    DEBUG(0, "truncation error: " << std::scientific << std::setprecision(18) << truncation_error << " %");
+    
+    DEBUG(0, "float*double->float cutoff_short_2: " << std::scientific << std::setprecision(18) << dpspsp_cutoff_short_2);
+    truncation_error = 100.*((double)dpspsp_cutoff_short_2 - dp_cutoff_short_2) / dp_cutoff_short_2;
+    DEBUG(0, "truncation error: " << std::scientific << std::setprecision(18) << truncation_error << " %");
+    
+  #endif
   // box edges
-  /*float3 m_box;
-  m_box.x = myconf->current().box(0)(0);
-  m_box.y = myconf->current().box(1)(1);
-  m_box.z = myconf->current().box(2)(2);*/
   this->param.box.full.x = myconf->current().box(0)(0);
   this->param.box.full.y = myconf->current().box(1)(1);
   this->param.box.full.z = myconf->current().box(2)(2);
-  //cudaMemcpyToSymbol(device_param.box, &m_box, sizeof(float3));
 
   // inverted box edges
-  /*m_box.x = 1 / m_box.x;
-  m_box.y = 1 / m_box.y;
-  m_box.z = 1 / m_box.z;*/
-  this->param.box.inv.x = 1 / myconf->current().box(0)(0);
-  this->param.box.inv.y = 1 / myconf->current().box(1)(1);
-  this->param.box.inv.z = 1 / myconf->current().box(2)(2);
-  //cudaMemcpyToSymbol(device_param.box.inv, &m_box, sizeof(float3));
+  this->param.box.inv.x = (FP_CAST) 1. / myconf->current().box(0)(0);
+  this->param.box.inv.y = (FP_CAST) 1. / myconf->current().box(1)(1);
+  this->param.box.inv.z = (FP_CAST) 1. / myconf->current().box(2)(2);
 
   // half the box edges
-  /*m_box.x = myconf->current().box(0)(0) / 2;
-  m_box.y = myconf->current().box(1)(1) / 2;
-  m_box.z = myconf->current().box(2)(2) / 2;*/
-  this->param.box.half.x = myconf->current().box(0)(0) / 2;
-  this->param.box.half.y = myconf->current().box(1)(1) / 2;
-  this->param.box.half.z = myconf->current().box(2)(2) / 2;
-  //cudaMemcpyToSymbol(device_param.box.half, &m_box, sizeof(float3));
+  this->param.box.half.x = (FP_CAST) myconf->current().box(0)(0) / 2.;
+  this->param.box.half.y = (FP_CAST) myconf->current().box(1)(1) / 2.;
+  this->param.box.half.z = (FP_CAST) myconf->current().box(2)(2) / 2.;
   
   // reaction field constants
-  float m_cut3i, m_crf, m_crf_cut, m_crf_cut3i, m_crf_2cut3i;
-  float rf_cutoff = mysim->param().nonbonded.rf_cutoff;
-  float epsilon = mysim->param().nonbonded.epsilon;
-  float rf_epsilon = mysim->param().nonbonded.rf_epsilon;
-  float rf_kappa = mysim->param().nonbonded.rf_kappa;
+  FP_CAST m_cut3i, m_crf, m_crf_cut, m_crf_cut3i, m_crf_2cut3i;
+  FP_CAST rf_cutoff = mysim->param().nonbonded.rf_cutoff;
+  FP_CAST epsilon = mysim->param().nonbonded.epsilon;
+  FP_CAST rf_epsilon = mysim->param().nonbonded.rf_epsilon;
+  FP_CAST rf_kappa = mysim->param().nonbonded.rf_kappa;
 
   m_cut3i = 1.0 / (rf_cutoff * rf_cutoff * rf_cutoff);
   m_crf = 2 * (epsilon - rf_epsilon)*(1.0 + rf_kappa * rf_cutoff) - rf_epsilon *
@@ -149,37 +168,25 @@ extern "C" void cudakernel::CUDA_Kernel::copy_parameters() {
   this->param.crf_2cut3i = m_crf_2cut3i;
   this->param.crf_cut = m_crf_cut;
   this->param.crf_cut3i = m_crf_cut3i;
-  //cudaMemcpyToSymbol(device_param.crf_2cut3i, &m_crf_2cut3i, sizeof(float));
-  //cudaMemcpyToSymbol(device_param.crf_cut, &m_crf_cut, sizeof(float));
-  //cudaMemcpyToSymbol(device_param.crf_cut3i, &m_crf_cut3i, sizeof(float));
   
   // number of atoms
-  unsigned m_num_atoms = mytopo->num_atoms();
   this->param.num_atoms.total = mytopo->num_atoms();
-  //cudaMemcpyToSymbol(device_param.num_atoms.total, &m_num_atoms, sizeof(unsigned));
 
   // number of solute atoms
-  m_num_atoms = mytopo->num_solute_atoms();
   this->param.num_atoms.solute = mytopo->num_solute_atoms();
-  //cudaMemcpyToSymbol(device_param.num_atoms.solute, &m_num_atoms, sizeof(unsigned));
 
   // number of solvent atoms
-  m_num_atoms = mytopo->num_solvent_atoms();
-  this->param.num_atoms.solvent = mytopo->num_solvent_atoms();
-  //cudaMemcpyToSymbol(device_param.num_atoms.solvent, &m_num_atoms, sizeof(unsigned));
-
-  // the number of atoms per solvent molecule
   assert(mytopo->num_solvents() <= 1);
-  unsigned m_num_solvent_mol = mytopo->num_solvent_molecules(0);
   this->param.num_atoms.solvent = mytopo->num_solvent_atoms(0);
+
+  // the number of solvent molecules
   this->param.num_solvent_mol = mytopo->num_solvent_molecules(0);
-  //cudaMemcpyToSymbol(device_param.num_solvent_mol, &m_num_solvent_mol, sizeof(unsigned));
-  m_num_atoms = mytopo->num_solvent_atoms() / m_num_solvent_mol;
-  this->param.num_atoms_per_mol = mytopo->num_solvent_atoms() / mytopo->num_solvent_molecules(0);
-  //cudaMemcpyToSymbol(device_param.num_atoms_per_mol, &m_num_atoms, sizeof(unsigned));
-  unsigned m_num_gpus = mysim->param().cuda.number_gpus;
+  // the number of atoms per solvent molecule
+  this->param.num_atoms_per_mol = mytopo->num_solvent_atoms(0) / mytopo->num_solvent_molecules(0);
+  // the number of gpus
   this->param.num_of_gpus = mysim->param().cuda.number_gpus;
   //cudaMemcpyToSymbol(device_param.num_of_gpus, &m_num_gpus, sizeof(unsigned));
+  this->param.gpu_id = this->device_number;
   
   this->estimate_pairlist();
   cudaMemcpyToSymbol(device_param, &this->param, sizeof(cudakernel::simulation_parameter));
