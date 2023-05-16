@@ -90,9 +90,7 @@ int algorithm::GAMD
   DEBUG(5, "GAMD: algorithm init");
   configuration::Energy ener = conf.current().energies;
   std::vector<int> used_chargegroups;
-  unsigned int num_groups = unsigned(ener.bond_energy.size());
   unsigned int num_atoms = topo.num_atoms();
-  double gamd_energy;
   DEBUG(5, "GAMD: Interactions calculated now calculate acceleration");
 
   // total energies have been computed now calculate acceleration
@@ -446,4 +444,5 @@ int algorithm::GAMD::calc_gamd_E_K(simulation::gamd_thresh_enum Eform, double si
                                 return 0;  
 
                 }
+                return 0;
         };
