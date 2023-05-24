@@ -55,7 +55,9 @@ int algorithm::Algorithm_Sequence
   }
 
   // initialize CUDA
-  sim.CUDA_Kernel().init(topo,conf,sim);
+  if (sim.param().cuda.number_gpus > 0) {
+    sim.CUDA_Kernel().init(topo,conf,sim);
+  }
 
   for(Algorithm_Sequence::iterator 
 	it = begin(), to = end();
