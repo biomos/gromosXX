@@ -175,7 +175,7 @@ int interaction::create_g96_nonbonded
     } else if (sim.param().pairlist.grid == 1) {
       pa = new Extended_Grid_Pairlist_Algorithm();
     } else if (sim.param().pairlist.grid == 2) {
-      pa = new Grid_Cell_Pairlist(topo, sim);
+      pa = new Grid_Cell_Pairlist();
     }  else {
       io::messages.add("unkown pairlist algorithm.", "create_nonbonded",
              io::message::error);
