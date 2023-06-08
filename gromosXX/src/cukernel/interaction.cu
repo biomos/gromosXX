@@ -14,9 +14,10 @@
 #define MODULE cuda
 #define SUBMODULE interaction
 
-#define NUM_THREADS_PER_BLOCK_FORCES 96
+#define NUM_THREADS_PER_BLOCK_FORCES 192
 
 extern __device__ __constant__ cudakernel::simulation_parameter device_param;
+extern __device__ __constant__ cudakernel::simulation_parameter::box_struct device_box;
 
 extern "C" int cudaCalcForces(double * forces, double * virial, double * lj_energy,
         double * crf_energy, bool longrange, gpu_status * gpu_stat) {
@@ -178,14 +179,14 @@ __global__ void cudakernel::kernel_CalcForces_Solvent
   virial.zx = 0.0f;
   virial.zy = 0.0f;
   virial.zz = 0.0f;
-  float e_lj = 0.0f, e_crf = 0.0f;
+  volatile float e_lj = 0.0f, e_crf = 0.0f;
 
   // the shared memory is allocated in the kernel call.
   extern __shared__ cudakernel::lj_crf_parameter lj_crf[];
   // now cache the parameter matrix line in the shared memory
-  for (unsigned int j = 0; j < solvent_offset; ++j)
+  /*for (unsigned int j = 0; j < solvent_offset; ++j)
     lj_crf[threadIdx.x + NUM_THREADS_PER_BLOCK_FORCES * j] = dev_lj_crf_params[atom_type * solvent_offset + j];
-
+*/
   // cache reaction field parameters
   const float crf_2cut3i = device_param.crf_2cut3i;
   const float crf_cut = device_param.crf_cut;
@@ -205,19 +206,20 @@ __global__ void cudakernel::kernel_CalcForces_Solvent
       bool calculate_energy = (atom_index  < neighbor_index);
 
       // loop over atoms in neighboring solvent molecule
-      for (unsigned int j = 0; j < solvent_offset; j++) {
+      for (unsigned int j = 0; j < solvent_offset; ++j) {
         const unsigned int atom_j = neighbor_index + j;
         // calculate distance
         //const float3 r = nearestImage(my_pos, dev_pos[atom_j], box_param_x, box_param_y, box_param_z);
-        const float3 r = nearestImage_v2(my_pos, dev_pos[atom_j]);
+        const float3 r = nearestImage(my_pos, dev_pos[atom_j]);
         // get the parameters
-        const cudakernel::lj_crf_parameter lj_crf_param = lj_crf[threadIdx.x + NUM_THREADS_PER_BLOCK_FORCES * j];
-
+        //const cudakernel::lj_crf_parameter lj_crf_param = lj_crf[threadIdx.x + NUM_THREADS_PER_BLOCK_FORCES * j];
+        const cudakernel::lj_crf_parameter lj_crf_param = device_param.solvent_lj_crf[atom_type * solvent_offset + j];
         // calculate the force
         const float dist2 = abs2(r);
         const float dist2i = 1.0f / dist2;
         const float dist6i = dist2i * dist2i * dist2i;
-        const float disti = sqrtf(dist2i);
+        //const float disti = sqrtf(dist2i);
+        const float disti = rsqrtf(dist2); // lower register pressure and bit more precise
         const float q_eps = lj_crf_param.q;
         const float c12_dist6i = lj_crf_param.c12 * dist6i;
 

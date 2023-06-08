@@ -5,7 +5,30 @@
 #ifndef INCLUDED_CUKERNEL_PARAMETER_H
 #define INCLUDED_CUKERNEL_PARAMETER_H
 
+#define MAX_ATOMS_SOLVENT 6
+
 namespace cudakernel {
+  /**
+   * @struct lj_crf_parameter
+   * struct containing the interaction parameters for pairwise forces
+   * this struct is used to build a NxN-interaction parameter matrix
+   * where N is the number of different atom-types
+   */
+  struct lj_crf_parameter {
+    /**
+     * the Lennard-Jones C6 constant of the pair
+     */
+    float c6;
+    /**
+     * the Lennard-Jones C12 constant of the pair
+     */
+    float c12;
+    /**
+     * product of charges times 1/(4 pi eps0)
+     */
+    float q;
+  };
+
   /**
    * @struct simulation_parameter
    *
@@ -13,6 +36,12 @@ namespace cudakernel {
    * initialized in cudaInit(...)
    */
   struct simulation_parameter {
+    static const unsigned max_atoms_solvent = MAX_ATOMS_SOLVENT;
+    /**
+     * precalculated lj and crf products
+     */
+    lj_crf_parameter solvent_lj_crf[max_atoms_solvent*max_atoms_solvent];
+
     struct box_struct {
       /**
        * the box edges
@@ -93,27 +122,6 @@ namespace cudakernel {
      * The current number of the gpu
      */
     unsigned int gpu_id;
-  };
-
-  /**
-   * @struct lj_crf_parameter
-   * struct containing the interaction parameters for pairwise forces
-   * this struct is used to build a NxN-interaction parameter matrix
-   * where N is the number of different atom-types
-   */
-  struct lj_crf_parameter {
-    /**
-     * the Lennard-Jones C6 constant of the pair
-     */
-    float c6;
-    /**
-     * the Lennard-Jones C12 constant of the pair
-     */
-    float c12;
-    /**
-     * product of charges times 1/(4 pi eps0)
-     */
-    float q;
   };
 
   /**

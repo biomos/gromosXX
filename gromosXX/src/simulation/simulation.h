@@ -37,7 +37,7 @@ namespace simulation
     /**
      * Constructor.
      */
-    Simulation() : mpi(false), openmp(false),
+    Simulation() : mpi(false), openmp(false), m_cuda_kernel(nullptr),
 		   m_time_step_size(0),
 		   m_steps(0), 
 		   m_time(0) {}
@@ -77,15 +77,15 @@ namespace simulation
     }
 
      /**
-     * CUDA_kernel mutator
+     * CUDA_Kernel pointer mutator
      */
-    cudakernel::CUDA_Kernel & CUDA_Kernel(){
-        return m_cuda_kernel;
+    void CUDA_Kernel(cudakernel::CUDA_Kernel * cuda_kernel) {
+        m_cuda_kernel = cuda_kernel;
     }
     /** 
      * CUDA_kernel accessor
      */
-    cudakernel::CUDA_Kernel const & CUDA_Kernel()const{
+    cudakernel::CUDA_Kernel * CUDA_Kernel() const{
         return m_cuda_kernel; 
     }
 
@@ -156,7 +156,7 @@ namespace simulation
     /**
      * the CUDA kernel
      */
-    cudakernel::CUDA_Kernel m_cuda_kernel;
+    cudakernel::CUDA_Kernel * m_cuda_kernel;
     
     /**
      * the time step size

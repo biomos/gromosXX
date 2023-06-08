@@ -9,6 +9,7 @@
 #include "lib/utils.h"
 
 extern __device__ __constant__ cudakernel::simulation_parameter device_param;
+extern __device__ __constant__ cudakernel::simulation_parameter::box_struct device_box;
 
 extern "C" gpu_status * cudaInit(int & device_number,
             unsigned int num_atoms,
@@ -160,7 +161,7 @@ extern "C" int cudaCopyBox(gpu_status * gpu_stat, double box_x, double box_y, do
   box.half.x = box_x / 2.0;
   box.half.y = box_y / 2.0;
   box.half.z = box_z / 2.0;
-  cudaMemcpyToSymbol(device_param.box, &box, sizeof(cudakernel::simulation_parameter::box_struct));
+  cudaMemcpyToSymbol(device_box, &box, sizeof(cudakernel::simulation_parameter::box_struct));
   return cudakernel::check_error("after copying the box");
 }
 

@@ -17,6 +17,7 @@
 #define NUM_THREADS_PER_BLOCK 96
 
 extern __device__ __constant__ cudakernel::simulation_parameter device_param;
+extern __device__ __constant__ cudakernel::simulation_parameter::box_struct device_box;
 
 void cudakernel::free_pairlist(pairlist &pl) {
   cudaFree(pl.list); cudaFree(pl.num_neighbors); cudaFree(pl.overflow);
@@ -123,13 +124,13 @@ __global__ void cudakernel::kernel_CalcPairlist
   const float &cutoff_long_2 = device_param.cutoff_long_2;
   const float &cutoff_short_2 = device_param.cutoff_short_2;
   //box edges
-  const float &box_x = device_param.box.full.x;
-  const float &box_y = device_param.box.full.y;
-  const float &box_z = device_param.box.full.z;
-  
-  const float &box_inv_x = device_param.box.inv.x;
-  const float &box_inv_y = device_param.box.inv.y;
-  const float &box_inv_z = device_param.box.inv.z;
+  const float &box_x = device_box.full.x;
+  const float &box_y = device_box.full.y;
+  const float &box_z = device_box.full.z;
+
+  const float &box_inv_x = device_box.inv.x;
+  const float &box_inv_y = device_box.inv.y;
+  const float &box_inv_z = device_box.inv.z;
   const unsigned int solvent_offset = device_param.num_atoms_per_mol;
 
   // calculate indices
@@ -155,10 +156,11 @@ __global__ void cudakernel::kernel_CalcPairlist
     shared_pos[threadIdx.x + 2 * NUM_THREADS_PER_BLOCK] = neighbor_pos.z;
     __syncthreads();
 
-    unsigned int end_i_loop = NUM_THREADS_PER_BLOCK;
+    /*unsigned int end_i_loop = NUM_THREADS_PER_BLOCK;
     if (end_i_loop > (N - i) / solvent_offset)
-      end_i_loop = (N - i) / solvent_offset;
-
+      end_i_loop = (N - i) / solvent_offset;*/
+    
+    const unsigned int end_i_loop = min(NUM_THREADS_PER_BLOCK, (N - i) / solvent_offset);
     if (first_atom_index < N) {
       for (unsigned int start_i_loop = 0; start_i_loop < end_i_loop; start_i_loop++) {
         const unsigned int current_first_atom_index = i + start_i_loop*solvent_offset;

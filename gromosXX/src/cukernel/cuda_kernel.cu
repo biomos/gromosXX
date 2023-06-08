@@ -17,6 +17,8 @@
 #include "../topology/topology.h"
 #include "simulation/simulation.h"
 #include "configuration/configuration.h"
+#include "interaction/nonbonded/interaction/nonbonded_parameter.h"
+#include "interaction/interaction_types.h"
 
 #include "math/volume.h"
 
@@ -28,7 +30,12 @@
 
 #include "cuda.cc"
 
+//__device__ __constant__ cudakernel::simulation_parameter lj_crf_param;
 __device__ __constant__ cudakernel::simulation_parameter device_param;
+__device__ __constant__ cudakernel::simulation_parameter::box_struct device_box;
+
+// Initialize the CUDA_Kernel instance to nullptr
+cudakernel::CUDA_Kernel * cudakernel::CUDA_Kernel::m_cuda_kernel = nullptr;
 
 extern "C" cudakernel::CUDA_Kernel::CUDA_Kernel()
 : mytopo(nullptr),
@@ -37,7 +44,48 @@ extern "C" cudakernel::CUDA_Kernel::CUDA_Kernel()
   device_number(-1)
 {};
 
-extern "C" cudakernel::CUDA_Kernel::~CUDA_Kernel(){};
+
+extern "C" cudakernel::CUDA_Kernel * cudakernel::CUDA_Kernel::get_instance(
+                                                topology::Topology &topo,
+                                                configuration::Configuration &conf,
+                                                simulation::Simulation &sim) {
+  if (m_cuda_kernel == nullptr) {
+    m_cuda_kernel = new CUDA_Kernel();
+    m_cuda_kernel->init(topo,conf,sim);
+  } else {
+    assert(&topo == m_cuda_kernel->mytopo);
+    assert(&conf == m_cuda_kernel->myconf);
+    assert(&sim == m_cuda_kernel->mysim);
+  }
+  return m_cuda_kernel;
+};
+
+extern "C" void cudakernel::CUDA_Kernel::update_nonbonded(interaction::Nonbonded_Parameter *np) {
+  // solvent lj and crf parameters to const memory
+  if (this->param.num_atoms_per_mol > simulation_parameter::max_atoms_solvent) {
+    io::messages.add("Too many solvent atoms for constant memory",
+                        "CUDA_Kernel", io::message::critical);
+  }
+  memset(&this->param.solvent_lj_crf, 0.0f, sizeof(this->param.solvent_lj_crf));
+
+  const unsigned solvent_index = mytopo->num_solute_atoms();
+  for (unsigned i = 0; i < this->param.num_atoms_per_mol; ++i) {
+    for (unsigned j = 0; j < this->param.num_atoms_per_mol; ++j) {
+      lj_crf_parameter & lj_crf_pair = this->param.solvent_lj_crf[i*this->param.num_atoms_per_mol + j];
+      const interaction::lj_parameter_struct & lj = np->lj_parameter(mytopo->iac(solvent_index + i), mytopo->iac(solvent_index + j));
+      lj_crf_pair.q = math::four_pi_eps_i * mytopo->charge(solvent_index + i) * mytopo->charge(solvent_index + j);
+      lj_crf_pair.c6 = lj.c6;
+      lj_crf_pair.c12 = lj.c12;
+    }
+  }
+  this->sync_symbol();
+}
+
+extern "C" void cudakernel::CUDA_Kernel::sync_symbol() {
+  cudaMemcpyToSymbol(device_param, &this->param, sizeof(cudakernel::simulation_parameter));
+}
+
+//extern "C" cudakernel::CUDA_Kernel::~CUDA_Kernel(){};
 
 extern "C" void cudakernel::CUDA_Kernel::init(topology::Topology &topo,
                         configuration::Configuration &conf,
@@ -49,7 +97,19 @@ extern "C" void cudakernel::CUDA_Kernel::init(topology::Topology &topo,
     // initialize the devices
     // for now, we only support only single GPU
     DEBUG(0, "Device number:" << this->device_number);
-    this->device_number = mysim->param().cuda.device_number.at(0);
+    
+    /*
+     TEMPORARY OVERRIDE
+    */
+    {
+      this->device_number = -1;
+      if (mysim->param().cuda.device_number.size()) {
+        this->device_number = mysim->param().cuda.device_number.at(0);
+      }
+    }
+
+
+
     DEBUG(0, "Device number:" << this->device_number);
     if (this->device_number != -1) {
       cudaSetDevice(this->device_number);
@@ -190,6 +250,7 @@ extern "C" void cudakernel::CUDA_Kernel::copy_parameters() {
   
   this->estimate_pairlist();
   cudaMemcpyToSymbol(device_param, &this->param, sizeof(cudakernel::simulation_parameter));
+  this->sync_symbol();
   // check what we have there
   cudakernel::simulation_parameter tmp_param;
   cudaMemcpyFromSymbol(&tmp_param, device_param, sizeof(cudakernel::simulation_parameter));

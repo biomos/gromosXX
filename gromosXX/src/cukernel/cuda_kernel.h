@@ -29,6 +29,10 @@ namespace simulation {
   class Simulation;
 }
 
+namespace interaction {
+  class Nonbonded_Parameter;
+}
+
 namespace cudakernel {
     extern "C" {
         /**
@@ -38,9 +42,19 @@ namespace cudakernel {
         class CUDA_Kernel {
         public:
             /**
-             * Constructor
+             * Get the instance object
              */
-            explicit CUDA_Kernel();
+            static CUDA_Kernel *get_instance(topology::Topology & topo,
+                                             configuration::Configuration & conf,
+                                             simulation::Simulation & sim);
+            /**
+             * disable copy
+             */
+            CUDA_Kernel(const CUDA_Kernel &) = delete;
+            /**
+             * disable assignment
+             */
+            void operator=(const CUDA_Kernel &) = delete;
 
             /**
              * Destructor
@@ -52,6 +66,16 @@ namespace cudakernel {
                       simulation::Simulation & sim);
 
             /**
+             * Update nonbonded parameters
+             */
+            void update_nonbonded(interaction::Nonbonded_Parameter *np);
+
+            /**
+             * Copy constants to device symbols
+             */
+            void sync_symbol();
+
+            /**
              * Copy simulation parameters to GPU constant memory
              */
             void copy_parameters();
@@ -60,20 +84,49 @@ namespace cudakernel {
              * Estimate the pairlist size
              */
             void estimate_pairlist();
-            
+
             void disabled() {
                 io::messages.add("Compilation without CUDA support.",
                                 "CUDA_Kernel", io::message::critical);
             };
+        protected:
         private:
+            /**
+             * Constructor as singleton
+             */
+            CUDA_Kernel();
+
             cudakernel::simulation_parameter param;
-            #ifdef HAVE_LIBCUDART
+
+#ifdef HAVE_LIBCUDART
             cudaDeviceProp device_properties;
-            #endif
+#endif
+            /**
+             * The instance
+             */
+            static CUDA_Kernel * m_cuda_kernel;
+
+            /**
+             * topology
+             */
             topology::Topology * mytopo;
+
+            /**
+             * configuration
+             */
             configuration::Configuration * myconf;
+
+            /**
+             * simulation
+             */
             simulation::Simulation * mysim;
-            int device_number;
+
+            /**
+             * Nonboded_Parameters
+             */
+            //interaction::Nonbonded_Parameter * myparam;
+
+            int device_number; // maybe we store the device numbers here and run all the GPUs from here
             unsigned flags;
         };
     }

@@ -57,6 +57,7 @@ extern "C" gpu_status * cudaInitGPU_Shake(
   std::cout << "\tDeviceproperties:" << std::endl;
   std::cout << "\t\tNumber: " << device_number << std::endl;
   std::cout << "\t\tName: " << devProp.name << std::endl;
+  std::cout << "\t\tCompute capability: " << devProp.major << "." << devProp.minor << std::endl;
   std::cout << "\t\tTotal memory: " << devProp.totalGlobalMem << std::endl;
   std::cout << "\t\tShared memory per block: " << devProp.sharedMemPerBlock << std::endl;
   std::cout << "\t\tTotal constant memory: " << devProp.totalConstMem << std::endl;
