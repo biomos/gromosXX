@@ -6,44 +6,49 @@
 #ifndef INCLUDED_TYPES_H
 #define INCLUDED_TYPES_H
 
-/* *
- * @struct double3 a structure to hold a vector in double precision
- * this is now standardly available and thus commented out!
- */
-// struct double3 {
-//   /** coordinate x */ double x;
-//   /** coordinate y */ double y;
-//   /** coordinate z */ double z;
-// };
+#include <type_traits>
+
+#define HOSTDEVICE __device__ __forceinline__
+#include "float3.h"
+#include "float9.h"
+#include "double3.h"
+
+template <typename T2, typename std::enable_if< // allow only float2 and double2
+                                        std::is_same<T2,float2>::value ||
+                                        std::is_same<T2,double2>::value
+                                            , bool>::type = true>
+HOSTDEVICE T2 operator+(T2& a, const T2& b) {
+    T2 c;
+    c.x = a.x + b.x;
+    c.y = a.y + b.y;
+    return c;
+}
 
 /**
- * @struct float9 a matrix in single precision
+ * addition operators for float2 and double2
  */
-struct float9 {
-    /** coordinate xx */ float xx;
-    /** coordinate xy */ float xy;
-    /** coordinate xx */ float xz;
-    /** coordinate yx */ float yx;
-    /** coordinate yy */ float yy;
-    /** coordinate yz */ float yz;
-    /** coordinate zx */ float zx;
-    /** coordinate zy */ float zy;
-    /** coordinate zz */ float zz;
-};
+template <typename T2, typename std::enable_if< // allow only float2 and double2
+                                        std::is_same<T2,float2>::value ||
+                                        std::is_same<T2,double2>::value
+                                            , bool>::type = true>
+HOSTDEVICE volatile T2& operator+=(volatile T2& a, volatile const T2& b) {
+    a.x += b.x;
+    a.y += b.y;
+    return a;
+}
 
-/**
- * @struct float9 a matrix in single precision
- */
-struct double9 {
-    /** coordinate xx */ double xx;
-    /** coordinate xy */ double xy;
-    /** coordinate xx */ double xz;
-    /** coordinate yx */ double yx;
-    /** coordinate yy */ double yy;
-    /** coordinate yz */ double yz;
-    /** coordinate zx */ double zx;
-    /** coordinate zy */ double zy;
-    /** coordinate zz */ double zz;
-};
+// non-volatile variant
+template <typename T2, typename std::enable_if< // allow only float2 and double2
+                                        std::is_same<T2,float2>::value ||
+                                        std::is_same<T2,double2>::value
+                                            , bool>::type = true>
+HOSTDEVICE T2& operator+=(T2& a, const T2& b) {
+    a.x += b.x;
+    a.y += b.y;
+    return a;
+}
+
+
+#undef HOSTDEVICE
 
 #endif /* TYPES_H */

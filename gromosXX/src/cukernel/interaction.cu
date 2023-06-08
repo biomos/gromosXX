@@ -7,6 +7,7 @@
 #include "interaction.h"
 #include "lib/utils.h"
 #include "lib/math.h"
+#include "lib/reduction.h"
 #include "../util/debug.h"
 
 #undef MODULE
@@ -14,7 +15,7 @@
 #define MODULE cuda
 #define SUBMODULE interaction
 
-#define NUM_THREADS_PER_BLOCK_FORCES 192
+#define NUM_THREADS_PER_BLOCK_FORCES 32
 
 extern __device__ __constant__ cudakernel::simulation_parameter device_param;
 extern __device__ __constant__ cudakernel::simulation_parameter::box_struct device_box;
@@ -89,18 +90,38 @@ extern "C" int cudaCalcForces(double * forces, double * virial, double * lj_ener
   // TODO: These could be reduced on GPU - numThreads-fold less communication
   cudaMemcpy(gpu_stat->host_forces, gpu_stat->dev_forces, numThreads * sizeof (float3), cudaMemcpyDeviceToHost);
   error += cudakernel::check_error("after copying Forces");
+  #ifndef NDEBUG
   cudaMemcpy(gpu_stat->host_virial, gpu_stat->dev_virial, numThreads * sizeof (float9), cudaMemcpyDeviceToHost);
   error += cudakernel::check_error("after copying virial");
   cudaMemcpy(gpu_stat->host_energy, gpu_stat->dev_energy, numThreads * sizeof (float2), cudaMemcpyDeviceToHost);
   error += cudakernel::check_error("after copying energy");
-
+  #endif
   
+  //sum up energies on gpu
+  float2 energy_sum = cudakernel::calc_sum<float2,64,1>(numThreads, gpu_stat->dev_energy, gpu_stat->dev_energy_output);
+
+  *lj_energy = energy_sum.x;
+  *crf_energy = energy_sum.y;
+  
+  #ifndef NDEBUG
+  double l_lj_energy = 0.0;
+  double l_crf_energy = 0.0;
+
   //sum up energies and write them back
   for (unsigned int i = 0; i < numThreads; i++) {
-    (*lj_energy) += gpu_stat->host_energy[i].x;
-    (*crf_energy) += gpu_stat->host_energy[i].y;
+    //(*lj_energy) += gpu_stat->host_energy[i].x;
+    //(*crf_energy) += gpu_stat->host_energy[i].y;
+    l_lj_energy += gpu_stat->host_energy[i].x;
+    l_crf_energy += gpu_stat->host_energy[i].y;
   }
- 
+
+  DEBUG(7,"GPU lj_energy: " << *lj_energy);
+  DEBUG(7,"GPU crf_energy: " << *crf_energy);
+  DEBUG(7,"CPU lj_energy: " << l_lj_energy);
+  DEBUG(7,"CPU crf_energy: " << l_crf_energy);
+  #endif
+
+
   //sum up forces -> include effects of solute
   double3 * pforces = (double3 *) forces;
   int index;
@@ -115,22 +136,20 @@ extern "C" int cudaCalcForces(double * forces, double * virial, double * lj_ener
     pforces[index].x += gpu_stat->host_forces[i].x;
     pforces[index].y += gpu_stat->host_forces[i].y;
     pforces[index].z += gpu_stat->host_forces[i].z;
-
-    // and the same for the virial
-    virial[0] += gpu_stat->host_virial[i].xx;
-    virial[1] += gpu_stat->host_virial[i].xy;
-    virial[2] += gpu_stat->host_virial[i].xz;
-    virial[3] += gpu_stat->host_virial[i].yx;
-    virial[4] += gpu_stat->host_virial[i].yy;
-    virial[5] += gpu_stat->host_virial[i].yz;
-    virial[6] += gpu_stat->host_virial[i].zx;
-    virial[7] += gpu_stat->host_virial[i].zy;
-    virial[8] += gpu_stat->host_virial[i].zz;
-    // DEBUGGING
-    //if (i%100 < 2)
-    //  DEBUG(15,"GPU ID: " << gpu_stat->host_parameter.gpu_id << " of " << gpu_stat->host_parameter.num_of_gpus
-    //          << " Interactions: Summing up forces and virals. Atom: " << i)
   }
+
+  //sum up virials on gpu
+  float9 virial_sum = cudakernel::calc_sum<float9,64,1>(numThreads, gpu_stat->dev_virial, gpu_stat->dev_virial_output);
+
+  virial[0] += virial_sum.xx;
+  virial[1] += virial_sum.xy;
+  virial[2] += virial_sum.xz;
+  virial[3] += virial_sum.yx;
+  virial[4] += virial_sum.yy;
+  virial[5] += virial_sum.yz;
+  virial[6] += virial_sum.zx;
+  virial[7] += virial_sum.zy;
+  virial[8] += virial_sum.zz;
 
   return error;
 
@@ -215,11 +234,13 @@ __global__ void cudakernel::kernel_CalcForces_Solvent
         //const cudakernel::lj_crf_parameter lj_crf_param = lj_crf[threadIdx.x + NUM_THREADS_PER_BLOCK_FORCES * j];
         const cudakernel::lj_crf_parameter lj_crf_param = device_param.solvent_lj_crf[atom_type * solvent_offset + j];
         // calculate the force
-        const float dist2 = abs2(r);
-        const float dist2i = 1.0f / dist2;
+        //const float dist2 = abs2(r);
+        const float disti = rnorm3df(r.x,r.y,r.z);
+        const float dist2i = disti * disti;
         const float dist6i = dist2i * dist2i * dist2i;
         //const float disti = sqrtf(dist2i);
-        const float disti = rsqrtf(dist2); // lower register pressure and bit more precise
+        //const float disti = rsqrtf(dist2); // lower register pressure and bit more precise
+        //const float disti = rnorm3df(r.x,r.y,r.z); // lower register pressure and bit more precise
         const float q_eps = lj_crf_param.q;
         const float c12_dist6i = lj_crf_param.c12 * dist6i;
 
@@ -233,6 +254,7 @@ __global__ void cudakernel::kernel_CalcForces_Solvent
 
         // calculate the energy and virial?
         if (calculate_energy) {
+          const float dist2 = abs2(r);
           e_lj += (c12_dist6i - lj_crf_param.c6) * dist6i;
           e_crf += q_eps * (disti - crf_2cut3i * dist2 - crf_cut);
 

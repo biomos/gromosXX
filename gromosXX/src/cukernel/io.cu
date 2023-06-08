@@ -112,10 +112,15 @@ extern "C" gpu_status * cudaInit(int & device_number,
           << mem / (1024.0*1024.0) << " MB" << std::endl;
 
   // allocate data structure suited for copying on the host
-  gpu_stat->host_energy = (float2 *) malloc(numThreads * sizeof (float2));
   gpu_stat->host_pos = (float3 *) malloc(gpu_stat->host_parameter.num_atoms.solvent * sizeof (float3));
   gpu_stat->host_forces = (float3 *) malloc(numThreads * sizeof (float3));
+    //memory on host for energy and virial not needed anymore, as summation is done on device
+  gpu_stat->host_energy = (float2 *) malloc(numThreads * sizeof (float2));
   gpu_stat->host_virial = (float9 *) malloc(numThreads * sizeof (float9));
+
+  //allocate memory for output arrays for virial and energy summation
+  GPUMALLOC(& gpu_stat->dev_energy_output , numThreads * sizeof (float2));
+  GPUMALLOC(& gpu_stat->dev_virial_output, numThreads * sizeof (float9));
 
   // copy over the parameters
   cudaMemcpy(gpu_stat->dev_lj_crf_parameter, lj_crf_params, gpu_stat->host_parameter.num_atoms_per_mol * gpu_stat->host_parameter.num_atoms_per_mol * sizeof (cudakernel::lj_crf_parameter), cudaMemcpyHostToDevice);

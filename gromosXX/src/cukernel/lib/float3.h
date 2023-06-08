@@ -3,6 +3,9 @@
  * 3D vector operations
  */
 
+#ifndef INCLUDED_FLOAT3_H
+#define INCLUDED_FLOAT3_H
+
 #ifndef HOSTDEVICE
 #error "Don't include float3.h without defining HOSTDEVICE"
 #else
@@ -45,7 +48,9 @@ HOSTDEVICE float3 nearestImage(const float3 &a, const float3 &b) {
   float* fnim = reinterpret_cast<float*>(&nim);
   float* box_half = reinterpret_cast<float*>(&device_box.half);
   float* box_full = reinterpret_cast<float*>(&device_box.full);
-  #pragma unroll
+  #ifdef NDEBUG
+  #pragma unroll(3)
+  #endif
   for (unsigned i = 0; i < 3; ++i) {
     while (fnim[i] > box_half[i]) {
       fnim[i] -= box_full[i];
@@ -156,6 +161,6 @@ HOSTDEVICE float3 operator/(const float3 & a, float b) {
   b = 1.0f / b;
   return a*b;
 }
-
+#endif
 #endif
 

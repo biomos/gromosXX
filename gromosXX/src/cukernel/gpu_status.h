@@ -49,8 +49,9 @@ struct gpu_status {
   double3 * dev_double_mass;
   int * dev_shake_fail_mol;
   unsigned int * dev_highest_index;
-
   cudakernel::constraint * dev_constr;
+  float2 * dev_energy_output;
+  float9 * dev_virial_output;
 };
 
 #endif	/* _GPU_STATUS_H */

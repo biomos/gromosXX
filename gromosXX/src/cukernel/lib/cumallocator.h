@@ -1,5 +1,6 @@
 /**
  * @file cumallocator.h
+ * @author poliak
  * allocator for CUDA managed unified memory, CUDA transparent version of std::vector
  */
 

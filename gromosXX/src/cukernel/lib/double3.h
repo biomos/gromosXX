@@ -10,7 +10,6 @@
 #error "Don't include double3.h without defining HOSTDEVICE"
 #else
 
-#include "types.h"
 #include <cstdlib>
 /**
  * produce a double3
