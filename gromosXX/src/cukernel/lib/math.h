@@ -6,7 +6,7 @@
 #define INCLUDED_CUKERNEL_MATH_H
 
 // float3 operations
-#define HOSTDEVICE __device__ inline
+#define HOSTDEVICE __device__ __forceinline__
 #include "float3.h"
 #include "double3.h"
 #undef HOSTDEVICE

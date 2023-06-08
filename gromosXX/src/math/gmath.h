@@ -11,6 +11,10 @@
 // #include <blitz/tinyvec-et.h>
 // #include <blitz/tinymat.h>
 
+#ifdef HAVE_LIBCUDART
+#include "cukernel/lib/cumallocator.h"
+#endif
+
 
 namespace math
 {  
@@ -23,6 +27,7 @@ namespace math
   private:
     numeric_type d_v[3];
   public:
+    typedef numeric_type value_type;
     GenericVec() : GenericVec(0) {}
     explicit GenericVec(numeric_type d) { d_v[0] = d_v[1] = d_v[2] = d; }
     template<typename numeric_type_b>
@@ -49,6 +54,10 @@ namespace math
     };
     
     /**
+     * single precision vector
+     */
+    typedef GenericVec<float> Vecf;
+    /**
      * double vector
      */
     typedef GenericVec<double> Vec;
@@ -60,53 +69,54 @@ namespace math
   /**
    * Array of 3D vectors.
    */
-  class VArray : public std::vector<Vec>
+  template<typename T = Vec, template<typename> typename A = std::allocator >
+  class VArrayT : public std::vector<T, A<T> >
   {
   public:
 #ifndef __SUNPRO_CC
-    VArray() : std::vector<Vec>::vector() {}
-    VArray(size_t s) : std::vector<Vec>::vector(s) {}
-    VArray(size_t s, Vec const &v) : std::vector<Vec>::vector(s, v) {}
+    VArrayT() : std::vector<T, A<T> >::vector() {}
+    VArrayT(size_t s) : std::vector<T, A<T> >::vector(s) {}
+    VArrayT(size_t s, T const &v) : std::vector<T, A<T> >::vector(s, v) {}
 #else
-    VArray() : vector() {}
-    VArray(size_t s) : vector(s) {}
-    VArray(size_t s, Vec const &v) : vector(s, v) {}
+    VArrayT() : vector() {}
+    VArrayT(size_t s) : vector(s) {}
+    VArrayT(size_t s, T const &v) : vector(s, v) {}
 #endif
     
-    VArray & operator=(double d)
+    VArrayT & operator=(typename T::value_type d)
     {
-      for(std::vector<Vec>::iterator it=begin(), to=end(); it!=to; ++it)
+      for(typename std::vector<T, A<T> >::iterator it=this->begin(), to=this->end(); it!=to; ++it)
 	*it = d;
       return *this;
     }
     
-    Vec const & operator()(int i)const 
+    T const & operator()(int i)const 
     {
-      assert(i >= 0 && i < int(size()));
-      return operator[](i);
+      assert(i >= 0 && i < int(this->size()));
+      return this->operator[](i);
     }
-    Vec & operator()(int i)
+    T & operator()(int i)
     {
-      assert(i >= 0 && i < int(size()));
-      return operator[](i);
+      assert(i >= 0 && i < int(this->size()));
+      return this->operator[](i);
     }
 
-    VArray & operator+=(VArray const &v)
+    VArrayT & operator+=(VArrayT const &v)
     {
-      assert(size() == v.size());
-      std::vector<Vec>::const_iterator it2 = v.begin();
-      for(std::vector<Vec>::iterator it=begin(), to=end();
+      assert(this->size() == v.size());
+      typename std::vector<T, A<T> >::const_iterator it2 = v.begin();
+      for(typename std::vector<T, A<T> >::iterator it=this->begin(), to=this->end();
 	  it!=to; ++it, ++it2)
 	*it += *it2;
       return *this;
     }
 
     /**
-     * Subtract from every Vector in VArray a vector
+     * Subtract from every Vector in VArrayT a vector
      */
-    VArray & operator-=(Vec const &v)
+    VArrayT & operator-=(T const &v)
     {
-      VArray::iterator it = this->begin(),
+      typename std::vector<T, A<T> >::iterator it = this->begin(),
                        to = this->end();
       for (; it != to; it++){
         *it -= v;
@@ -114,7 +124,19 @@ namespace math
       return *this;
     }
   };
-  
+
+    /**
+     * Standard VArray
+     */
+    typedef VArrayT<Vec> VArray;
+
+#ifdef HAVE_LIBCUDART
+    /**
+     * CUDA allocated VArray
+     */
+    typedef VArrayT<Vec, cudakernel::CuMallocator > CuVArray;
+#endif
+
   /**
    * Array of scalars.
    */
