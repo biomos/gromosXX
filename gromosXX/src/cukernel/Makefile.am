@@ -11,7 +11,7 @@ NVCC_CFLAGS = @NVCC_CFLAGS@
 ##	$(NVCC) $(NVCCFLAGS) -std=c++11 -dc --compiler-options '-std=c++11 -I../.. -I../../../src $(CXXFLAGS) $(NVCC_CFLAGS)' $< -o $@
 ##	$(NVCC) $(NVCCFLAGS) --compiler-options '-std=c++11 -I../.. -I../../../src $(CXXFLAGS) $(NVCC_CFLAGS)' -dlink $^ -o $@
 .cu.o:
-	$(NVCC) $(NVCCFLAGS) -std=c++11 -dc --compiler-options '-I../.. -I../../../src $(CXXFLAGS) $(NVCC_CFLAGS)' $< -o $@
+	$(NVCC) $(NVCCFLAGS) -std=c++11 -dc --compiler-options '$(DEFAULT_INCLUDES) $(AM_CPPFLAGS) $(CXXFLAGS) $(NVCC_CFLAGS)' $< -o $@
 
 libgrocukernel.o: $(libgrocukernel_a_OBJECTS)
 	$(NVCC) $(NVCCFLAGS) --compiler-options '$(CXXFLAGS) $(NVCC_CFLAGS)' -dlink $^ -o $@
