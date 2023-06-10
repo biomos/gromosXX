@@ -4,6 +4,14 @@
  */
 #ifndef INCLUDED_CUKERNEL_INTERACTION_H
 #define INCLUDED_CUKERNEL_INTERACTION_H
+
+#define NUM_THREADS_PER_BLOCK_FORCES 192
+
+#define NUM_THREADS_PER_BLOCK_REDUCTION_FLOAT2 512
+#define NUM_ELEMENTS_PER_THREAD_FLOAT2 4
+#define NUM_THREADS_PER_BLOCK_REDUCTION_FLOAT9 128
+#define NUM_ELEMENTS_PER_THREAD_FLOAT9 4
+
 namespace cudakernel {
 /**
   * calculate the forces, energies and virial and stores them in per atom arrays

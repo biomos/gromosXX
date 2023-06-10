@@ -30,9 +30,7 @@
 
 #include "cuda.cc"
 
-//__device__ __constant__ cudakernel::simulation_parameter lj_crf_param;
 __device__ __constant__ cudakernel::simulation_parameter device_param;
-__device__ __constant__ cudakernel::simulation_parameter::box_struct device_box;
 
 // Initialize the CUDA_Kernel instance to nullptr
 cudakernel::CUDA_Kernel * cudakernel::CUDA_Kernel::m_cuda_kernel = nullptr;
@@ -66,7 +64,7 @@ extern "C" void cudakernel::CUDA_Kernel::update_nonbonded(interaction::Nonbonded
     io::messages.add("Too many solvent atoms for constant memory",
                         "CUDA_Kernel", io::message::critical);
   }
-  memset(&this->param.solvent_lj_crf, 0.0f, sizeof(this->param.solvent_lj_crf));
+  memset(&this->param.solvent_lj_crf, 0, sizeof(this->param.solvent_lj_crf));
 
   const unsigned solvent_index = mytopo->num_solute_atoms();
   for (unsigned i = 0; i < this->param.num_atoms_per_mol; ++i) {
@@ -249,7 +247,6 @@ extern "C" void cudakernel::CUDA_Kernel::copy_parameters() {
   this->param.gpu_id = this->device_number;
   
   this->estimate_pairlist();
-  cudaMemcpyToSymbol(device_param, &this->param, sizeof(cudakernel::simulation_parameter));
   this->sync_symbol();
   // check what we have there
   cudakernel::simulation_parameter tmp_param;

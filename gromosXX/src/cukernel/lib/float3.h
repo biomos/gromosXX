@@ -13,7 +13,6 @@
 #include <cstdlib>
 
 extern __device__ __constant__ cudakernel::simulation_parameter device_param;
-extern __device__ __constant__ cudakernel::simulation_parameter::box_struct device_box;
 
 /**
  * calculates the nearest image for cubic periodic boundary conditions
@@ -46,8 +45,8 @@ HOSTDEVICE float3 nearestImage(const float3 &a, const float3 &b) {
   nim.y = a.y - b.y;
   nim.z = a.z - b.z;
   float* fnim = reinterpret_cast<float*>(&nim);
-  float* box_half = reinterpret_cast<float*>(&device_box.half);
-  float* box_full = reinterpret_cast<float*>(&device_box.full);
+  float* box_half = reinterpret_cast<float*>(&(device_param.box.half));
+  float* box_full = reinterpret_cast<float*>(&(device_param.box.full));
   #ifdef NDEBUG
   #pragma unroll(3)
   #endif

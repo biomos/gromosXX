@@ -13,20 +13,20 @@
 
 #include <type_traits>
 /**
- * @struct float9 a matrix in single precision
+ * @struct R9 a matrix of nine real numbers
  */
 template <typename R, typename std::enable_if< // allow only floating point types
                                         std::is_floating_point<R>::value, bool>::type = true>
 struct R9 {
-    float xx;
-    float xy;
-    float xz;
-    float yx;
-    float yy;
-    float yz;
-    float zx;
-    float zy;
-    float zz;
+    R xx;
+    R xy;
+    R xz;
+    R yx;
+    R yy;
+    R yz;
+    R zx;
+    R zy;
+    R zz;
 };
 
 typedef R9<float> float9;

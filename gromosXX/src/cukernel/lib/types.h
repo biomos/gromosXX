@@ -8,7 +8,7 @@
 
 #include <type_traits>
 
-#define HOSTDEVICE __device__ __forceinline__
+#define HOSTDEVICE __host__ __device__ __forceinline__
 #include "float3.h"
 #include "float9.h"
 #include "double3.h"

@@ -31,6 +31,12 @@ namespace cudakernel {
     */
     template <typename T, unsigned num_threads_per_block, unsigned num_elements_per_thread = 8>
     T calc_sum(unsigned int num_input_elements, T* device_input, T* device_output);
+
+    /**
+     * reduce variable in warp, Lane 0 gets the result
+     */
+    template <typename T>
+    T reduce_in_warp(unsigned int num_input_elements, T* device_input, T* device_output);
 }
 
 #include "reduction.cu"

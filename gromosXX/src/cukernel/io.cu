@@ -7,9 +7,9 @@
 #include "parameter.h"
 #include "gpu_status.h"
 #include "lib/utils.h"
+#include "interaction.h"
 
 extern __device__ __constant__ cudakernel::simulation_parameter device_param;
-extern __device__ __constant__ cudakernel::simulation_parameter::box_struct device_box;
 
 extern "C" gpu_status * cudaInit(int & device_number,
             unsigned int num_atoms,
@@ -32,6 +32,7 @@ extern "C" gpu_status * cudaInit(int & device_number,
     // determine the device number
     cudaGetDevice(&device_number);
   }
+  cudakernel::check_error("before init");
   // let's first query the device properties and print them out
   cudaDeviceProp devProp;
   cudaGetDeviceProperties(&devProp, device_number);
@@ -91,7 +92,9 @@ extern "C" gpu_status * cudaInit(int & device_number,
   GPUMALLOC(& gpu_stat->dev_new_pos, gpu_stat->host_parameter.num_atoms.solvent * sizeof(float3));
 
   // assign two dimensional arrays for the pairlists.
-  unsigned int numThreads = (gpu_stat->host_parameter.num_solvent_mol / num_of_gpus + 1) * gpu_stat->host_parameter.num_atoms_per_mol;
+  unsigned int num_threads = (gpu_stat->host_parameter.num_solvent_mol / num_of_gpus + 1) * gpu_stat->host_parameter.num_atoms_per_mol;
+  const unsigned int num_blocks = num_threads / NUM_THREADS_PER_BLOCK_FORCES + 1;
+  const unsigned int num_warps = num_blocks * NUM_THREADS_PER_BLOCK_FORCES / 32 + 1;
   allocate_pairlist(gpu_stat->dev_pl_short, gpu_stat->host_parameter.num_solvent_mol / num_of_gpus + 1, gpu_stat->host_parameter.estimated_neighbors_short);
   mem += gpu_stat->host_parameter.num_solvent_mol * gpu_stat->host_parameter.estimated_neighbors_short / num_of_gpus * sizeof (unsigned int);
   allocate_pairlist(gpu_stat->dev_pl_long, gpu_stat->host_parameter.num_solvent_mol / num_of_gpus + 1, gpu_stat->host_parameter.estimated_neighbors_long);
@@ -99,28 +102,31 @@ extern "C" gpu_status * cudaInit(int & device_number,
 
   // allocate space for forces, virial and energies
   // and set it to zero
-  GPUMALLOC(& gpu_stat->dev_forces, numThreads * sizeof (float3));
-  cudaMemset(gpu_stat->dev_forces, 0, numThreads * sizeof (float3));
-  GPUMALLOC(& gpu_stat->dev_virial, numThreads * sizeof (float9));
-  cudaMemset(gpu_stat->dev_virial, 0, numThreads * sizeof (float9));
-  GPUMALLOC(& gpu_stat->dev_energy, numThreads * sizeof (float2));
-  cudaMemset(gpu_stat->dev_energy, 0, numThreads * sizeof (float2));
+  GPUMALLOC(& gpu_stat->dev_forces, num_threads * sizeof (float3));
+  cudaMemset(gpu_stat->dev_forces, 0, num_threads * sizeof (float3));
+  // we reduce on warp level before write
+  GPUMALLOC(& gpu_stat->dev_virial, num_warps * sizeof (float9));
+  cudaMemset(gpu_stat->dev_virial, 0, num_warps * sizeof (float9));
+  GPUMALLOC(& gpu_stat->dev_energy, num_warps * sizeof (float2));
+  cudaMemset(gpu_stat->dev_energy, 0, num_warps * sizeof (float2));
   // allocate space for parameters
   GPUMALLOC(& gpu_stat->dev_lj_crf_parameter, gpu_stat->host_parameter.num_atoms_per_mol * gpu_stat->host_parameter.num_atoms_per_mol * sizeof (cudakernel::lj_crf_parameter));
+
+  // allocate memory for output arrays for virial and energy summation
+  // we only need at most half for the tree reduction
+  GPUMALLOC(& gpu_stat->dev_energy_output , (num_warps/2+1) * sizeof (float2));
+  GPUMALLOC(& gpu_stat->dev_virial_output, (num_warps/2+1) * sizeof (float9));
 
   std::cout << "\t\tMemory used: " << mem << " bytes or "
           << mem / (1024.0*1024.0) << " MB" << std::endl;
 
   // allocate data structure suited for copying on the host
   gpu_stat->host_pos = (float3 *) malloc(gpu_stat->host_parameter.num_atoms.solvent * sizeof (float3));
-  gpu_stat->host_forces = (float3 *) malloc(numThreads * sizeof (float3));
+  gpu_stat->host_forces = (float3 *) malloc(num_threads * sizeof (float3));
     //memory on host for energy and virial not needed anymore, as summation is done on device
-  gpu_stat->host_energy = (float2 *) malloc(numThreads * sizeof (float2));
-  gpu_stat->host_virial = (float9 *) malloc(numThreads * sizeof (float9));
-
-  //allocate memory for output arrays for virial and energy summation
-  GPUMALLOC(& gpu_stat->dev_energy_output , numThreads * sizeof (float2));
-  GPUMALLOC(& gpu_stat->dev_virial_output, numThreads * sizeof (float9));
+  gpu_stat->host_energy = (float2 *) malloc(num_warps * sizeof (float2));
+  gpu_stat->host_virial = (float9 *) malloc(num_warps * sizeof (float9));
+  memset(gpu_stat->host_virial, 0, num_warps * sizeof (float9));
 
   // copy over the parameters
   cudaMemcpy(gpu_stat->dev_lj_crf_parameter, lj_crf_params, gpu_stat->host_parameter.num_atoms_per_mol * gpu_stat->host_parameter.num_atoms_per_mol * sizeof (cudakernel::lj_crf_parameter), cudaMemcpyHostToDevice);
@@ -166,7 +172,7 @@ extern "C" int cudaCopyBox(gpu_status * gpu_stat, double box_x, double box_y, do
   box.half.x = box_x / 2.0;
   box.half.y = box_y / 2.0;
   box.half.z = box_z / 2.0;
-  cudaMemcpyToSymbol(device_box, &box, sizeof(cudakernel::simulation_parameter::box_struct));
+  cudaMemcpyToSymbol(device_param, &box, sizeof(cudakernel::simulation_parameter::box_struct), offsetof(cudakernel::simulation_parameter, box));
   return cudakernel::check_error("after copying the box");
 }
 

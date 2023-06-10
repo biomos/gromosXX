@@ -17,7 +17,6 @@
 #define NUM_THREADS_PER_BLOCK 96
 
 extern __device__ __constant__ cudakernel::simulation_parameter device_param;
-extern __device__ __constant__ cudakernel::simulation_parameter::box_struct device_box;
 
 void cudakernel::free_pairlist(pairlist &pl) {
   cudaFree(pl.list); cudaFree(pl.num_neighbors); cudaFree(pl.overflow);
@@ -124,6 +123,7 @@ __global__ void cudakernel::kernel_CalcPairlist
   const float &cutoff_long_2 = device_param.cutoff_long_2;
   const float &cutoff_short_2 = device_param.cutoff_short_2;
   //box edges
+  const cudakernel::simulation_parameter::box_struct& device_box = device_param.box;
   const float &box_x = device_box.full.x;
   const float &box_y = device_box.full.y;
   const float &box_z = device_box.full.z;

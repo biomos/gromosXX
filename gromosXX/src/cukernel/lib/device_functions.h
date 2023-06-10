@@ -4,6 +4,8 @@
  * device function for easier indexing
  */
 
+#define FULL_MASK 0xFFFFFFFF
+
 __device__ __forceinline__ unsigned local_index() {
   return threadIdx.x + threadIdx.y * blockDim.x + threadIdx.z * blockDim.x * blockDim.y;
 }
