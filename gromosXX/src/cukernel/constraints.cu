@@ -108,8 +108,8 @@ extern "C" int cudaConstraints(double *newpos, double *oldpos,
   cudaMemcpy(gpu_stat->dev_shake_fail_mol, &shake_fail_mol, sizeof(int), cudaMemcpyHostToDevice);
 
   // Dimensions
-  unsigned int numBlocks = (unsigned int) gpu_stat->host_parameter.num_solvent_mol / NUM_THREADS_PER_BLOCK_SETTLE + 1;
-  dim3 dimGrid(numBlocks, 1);
+  unsigned int num_blocks = (unsigned int) gpu_stat->host_parameter.num_solvent_mol / NUM_THREADS_PER_BLOCK_SETTLE + 1;
+  dim3 dimGrid(num_blocks, 1);
   dim3 dimBlock(NUM_THREADS_PER_BLOCK_SETTLE, 1);
 
   DEBUG(4,"Actually calculate the constraints on the GPU. (Fail Mol : " << shake_fail_mol << ")")

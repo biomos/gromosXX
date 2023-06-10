@@ -193,10 +193,10 @@ extern "C" int cudaGPU_Shake(double *newpos, double *oldpos, int & shake_fail_mo
   //cudaMemset(gpu_stat->dev_highest_index,, sizeof(unsigned int));
 
   // Dimensions
-  unsigned int numBlocks = (unsigned int) (num_solvent_mol / num_gpus + 1) / NUM_THREADS_PER_BLOCK_SHAKE + 1;
-  dim3 dimGrid(numBlocks, 1);
+  unsigned int num_blocks = (unsigned int) (num_solvent_mol / num_gpus + 1) / NUM_THREADS_PER_BLOCK_SHAKE + 1;
+  dim3 dimGrid(num_blocks, 1);
   dim3 dimBlock(NUM_THREADS_PER_BLOCK_SHAKE, 1);
-  DEBUG(10,"numBlocks: " << numBlocks)
+  DEBUG(10,"num_blocks: " << num_blocks)
 
   DEBUG(7,"Starting kernel")
   cudakernel::kernel_Calc_Shake <<<dimGrid, dimBlock >>>

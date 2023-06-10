@@ -42,12 +42,12 @@ void cudakernel::allocate_pairlist(pairlist &pl, unsigned int size, unsigned int
 
 extern "C" void cudaCalcPairlist(gpu_status * gpu_stat) {
 
-  unsigned int numBlocks = (unsigned int) gpu_stat->host_parameter.num_solvent_mol / ( NUM_THREADS_PER_BLOCK * gpu_stat->host_parameter.num_of_gpus ) + 1;
-  dim3 dimGrid(numBlocks, 1);
+  unsigned int num_blocks = (unsigned int) gpu_stat->host_parameter.num_solvent_mol / ( NUM_THREADS_PER_BLOCK * gpu_stat->host_parameter.num_of_gpus ) + 1;
+  dim3 dimGrid(num_blocks, 1);
   dim3 dimBlock(NUM_THREADS_PER_BLOCK, 1);
 
   DEBUG(10,"Pairlist: GPU ID: " << gpu_stat->host_parameter.gpu_id << " of " << gpu_stat->host_parameter.num_of_gpus
-            <<  ". Blocks: " << numBlocks)
+            <<  ". Blocks: " << num_blocks)
   bool overflow;
   do {
     overflow = false;
