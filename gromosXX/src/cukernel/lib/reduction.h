@@ -5,27 +5,26 @@
  */
 #ifndef INCLUDED_REDUCTION_H
 #define INCLUDED_REDUCTION_H
-#define NUM_THREADS_PER_BLOCK_REDUCTION 128
 
 #include "types.h"
 
 namespace cudakernel {
-    /* 
+    /**
     * unroll last warp, no sync needed
     * continue summation when only the last warp is left (thread id <32). 
     * as instructions in one warp are synchronous no __syncthreads() needed.
     */
     template <unsigned int block_size, typename T>
-    __device__ void last_warp_reduce(volatile T *sdata, unsigned int tid);
+    __device__  __forceinline__ void last_warp_reduce(volatile T *sdata, unsigned int tid);
 
-    /* 
+    /**
     * Perform parallel reduction using sequential addressing of memory. 
     * First reads in multiple values into shared data of each block, then sums up all values within one block.
     */
     template <unsigned int block_size, typename T>
     __global__ void reduce(T *g_idata, T *g_odata, unsigned int g_size);
 
-    /*
+    /**
     * call kernel function reduce() iteratively until only one block is needed. 
     * device_input and device_output are switched after each iteration.
     * When only one block is needed iteration stops and the first element of device_output (the sum) is copied to host.
