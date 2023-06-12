@@ -24,6 +24,8 @@ libmdpp_la_LIBADD = algorithm/libgroalgorithm.la\
 	$(GSL_LIBS)\
 	$(CLIPPER_LIBS)
 
-if !WITH_CUDA
-libmdpp_la_LIBADD += cukernel/libgrocukernel.la
+if WITH_CUDA
+	libmdpp_la_LIBADD += cukernel/libgrocukernel.a
+else
+	libmdpp_la_LIBADD += cukernel/libgrocukernel.la
 endif

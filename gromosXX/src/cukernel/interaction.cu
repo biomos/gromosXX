@@ -317,13 +317,11 @@ __global__ void cudakernel::kernel_CalcForces_Solvent
       virial += _virial;
     }
   }
-
-  //int leader = __ffs(active) - 1; // should be 0
-  if (threadIdx.x%32 == 0) {
+  // elect a leader that who will write to global memory
+  int leader = __ffs(mask) - 1;
+  int lane_id = threadIdx.x%32;
+  if (lane_id == leader) {
     dev_virial[index/32] = virial;
     dev_energy[index/32] = make_float2(e_lj, e_crf);
   }
 }
-
-#undef DEBUG
-

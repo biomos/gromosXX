@@ -204,5 +204,4 @@ __global__ void cudakernel::kernel_CalcPairlist
   }
 }
 
-#undef DEBUG
 

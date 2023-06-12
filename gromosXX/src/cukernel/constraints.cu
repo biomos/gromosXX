@@ -291,5 +291,4 @@ __global__ void cudakernel::kernel_CalcConstraints_Settle
 
 }
 
-#undef DEBUG
 

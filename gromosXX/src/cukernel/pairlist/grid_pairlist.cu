@@ -257,5 +257,4 @@ __global__ void cukernel::kernel_CalcPairlist
   }
 }
 
-#undef DEBUG
 

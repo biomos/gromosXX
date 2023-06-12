@@ -343,6 +343,5 @@ __global__ void cudakernel::kernel_Calc_Shake
   new_pos[mol_index * 3 + 2] = pos_shr[2][threadIdx.x];
 }
 
-#undef DEBUG
 
 
