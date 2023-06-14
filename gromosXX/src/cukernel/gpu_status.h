@@ -18,7 +18,7 @@
  */
 struct gpu_status {
   int device;
-  cudakernel::simulation_parameter host_parameter;
+  cukernel::simulation_parameter host_parameter;
   float2 * host_energy;
   float3 * host_forces;
   float9 * host_virial;
@@ -37,9 +37,9 @@ struct gpu_status {
   float9 * dev_virial;
   float9 * dev_factor;
   double9 * dev_double_factor;
-  cudakernel::pairlist dev_pl_short, dev_pl_long;
-  cudakernel::simulation_parameter * dev_parameter;
-  cudakernel::lj_crf_parameter * dev_lj_crf_parameter;
+  cukernel::pairlist dev_pl_short, dev_pl_long;
+  cukernel::simulation_parameter * dev_parameter;
+  cukernel::lj_crf_parameter * dev_lj_crf_parameter;
   float2 * dev_energy;
   float3 * dev_const_length2;
   double3 * dev_double_const_length2;
@@ -49,7 +49,7 @@ struct gpu_status {
   double3 * dev_double_mass;
   int * dev_shake_fail_mol;
   unsigned int * dev_highest_index;
-  cudakernel::constraint * dev_constr;
+  cukernel::constraint * dev_constr;
   float2 * dev_energy_output;
   float9 * dev_virial_output;
 };

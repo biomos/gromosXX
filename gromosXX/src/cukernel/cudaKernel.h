@@ -31,7 +31,7 @@ namespace simulation {
   class Simulation;
 }
 
-namespace cudakernel {
+namespace cukernel {
   extern "C" {
     /**
      * initializes the MD-paramters allocates and initializes the memory on device

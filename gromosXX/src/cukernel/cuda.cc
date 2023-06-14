@@ -8,7 +8,7 @@
 
 double cukernel_ver = 0.10;
 
-namespace cuda
+namespace cukernel
 {
   char const id[] = MD_VERSION;
   const char* get_id() { return id; }

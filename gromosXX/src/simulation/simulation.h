@@ -79,13 +79,13 @@ namespace simulation
      /**
      * CUDA_Kernel pointer mutator
      */
-    void CUDA_Kernel(cudakernel::CUDA_Kernel * cuda_kernel) {
+    void CUDA_Kernel(cukernel::CUDA_Kernel * cuda_kernel) {
         m_cuda_kernel = cuda_kernel;
     }
     /** 
      * CUDA_kernel accessor
      */
-    cudakernel::CUDA_Kernel * CUDA_Kernel() const{
+    cukernel::CUDA_Kernel * CUDA_Kernel() const{
         return m_cuda_kernel; 
     }
 
@@ -156,7 +156,7 @@ namespace simulation
     /**
      * the CUDA kernel
      */
-    cudakernel::CUDA_Kernel * m_cuda_kernel;
+    cukernel::CUDA_Kernel * m_cuda_kernel;
     
     /**
      * the time step size

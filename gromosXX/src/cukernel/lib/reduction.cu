@@ -6,11 +6,11 @@
 
 #undef MODULE
 #undef SUBMODULE
-#define MODULE cuda
+#define MODULE cukernel
 #define SUBMODULE interaction
 
 template <unsigned int block_size, typename T>
-__device__  __forceinline__ void cudakernel::last_warp_reduce(volatile T *sdata, unsigned int tid) {
+__device__  __forceinline__ void cukernel::last_warp_reduce(volatile T *sdata, unsigned int tid) {
     if (block_size >=  64) sdata[tid] += sdata[tid + 32];
     if (block_size >=  32) sdata[tid] += sdata[tid + 16];
     if (block_size >=  16) sdata[tid] += sdata[tid +  8]; 
@@ -20,7 +20,7 @@ __device__  __forceinline__ void cudakernel::last_warp_reduce(volatile T *sdata,
 }
 
 template <unsigned block_size, typename T>
-__global__ void cudakernel::reduce(T *g_idata, T *g_odata, unsigned int g_size) {
+__global__ void cukernel::reduce(T *g_idata, T *g_odata, unsigned int g_size) {
     __shared__ T sdata[block_size];
     //T* volatile sdata = reinterpret_cast<T*>(shmem);
     unsigned tid = threadIdx.x;
@@ -47,7 +47,7 @@ __global__ void cudakernel::reduce(T *g_idata, T *g_odata, unsigned int g_size) 
 }
 
 template <typename T, unsigned num_threads_per_block, unsigned num_elements_per_thread>
-T cudakernel::calc_sum(unsigned int num_input_elements, T* device_input, T* device_output) {
+T cukernel::calc_sum(unsigned int num_input_elements, T* device_input, T* device_output) {
     //NUM_THREADS_PER_BLOCK_REDUCTION has to be a power of 2 with maximum of 1024
     //number of elements each threads sums up when reading data from global to shared data
     //calculate the number of blocks needed depending on the block size, the size of the input and num_elements_per_thread

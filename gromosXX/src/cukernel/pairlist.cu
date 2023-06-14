@@ -11,18 +11,18 @@
 
 #undef MODULE
 #undef SUBMODULE
-#define MODULE cuda
+#define MODULE cukernel
 #define SUBMODULE pairlist
 
 #define NUM_THREADS_PER_BLOCK 96
 
-extern __device__ __constant__ cudakernel::simulation_parameter device_param;
+extern __device__ __constant__ cukernel::simulation_parameter device_param;
 
-void cudakernel::free_pairlist(pairlist &pl) {
+void cukernel::free_pairlist(pairlist &pl) {
   cudaFree(pl.list); cudaFree(pl.num_neighbors); cudaFree(pl.overflow);
   DEBUG(4,"Pairlist: freed pairlist")
 }
-void cudakernel::allocate_pairlist(pairlist &pl, unsigned int size, unsigned int max_neighbors) {
+void cukernel::allocate_pairlist(pairlist &pl, unsigned int size, unsigned int max_neighbors) {
   size_t pitch;
   // allocate the number of neighbors
   cudaMalloc((void**) & pl.num_neighbors, size * sizeof (unsigned int));
@@ -104,9 +104,9 @@ extern "C" void cudaCalcPairlist(gpu_status * gpu_stat) {
 }
 
 
-__global__ void cudakernel::kernel_CalcPairlist
+__global__ void cukernel::kernel_CalcPairlist
 (
-        cudakernel::simulation_parameter * dev_params,
+        cukernel::simulation_parameter * dev_params,
         float3 * dev_pos,
         pairlist pl_short,
         pairlist pl_long,
@@ -123,7 +123,7 @@ __global__ void cudakernel::kernel_CalcPairlist
   const float &cutoff_long_2 = device_param.cutoff_long_2;
   const float &cutoff_short_2 = device_param.cutoff_short_2;
   //box edges
-  const cudakernel::simulation_parameter::box_struct& device_box = device_param.box;
+  const cukernel::simulation_parameter::box_struct& device_box = device_param.box;
   const float &box_x = device_box.full.x;
   const float &box_y = device_box.full.y;
   const float &box_z = device_box.full.z;

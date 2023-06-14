@@ -25,17 +25,17 @@
 
 #undef MODULE
 #undef SUBMODULE
-#define MODULE cuda
+#define MODULE cukernel
 #define SUBMODULE kernel
 
 #include "cuda.cc"
 
-__device__ __constant__ cudakernel::simulation_parameter device_param;
+__device__ __constant__ cukernel::simulation_parameter device_param;
 
 // Initialize the CUDA_Kernel instance to nullptr
-cudakernel::CUDA_Kernel * cudakernel::CUDA_Kernel::m_cuda_kernel = nullptr;
+cukernel::CUDA_Kernel * cukernel::CUDA_Kernel::m_cuda_kernel = nullptr;
 
-extern "C" cudakernel::CUDA_Kernel::CUDA_Kernel()
+extern "C" cukernel::CUDA_Kernel::CUDA_Kernel()
 : mytopo(nullptr),
   myconf(nullptr),
   mysim(nullptr),
@@ -43,7 +43,7 @@ extern "C" cudakernel::CUDA_Kernel::CUDA_Kernel()
 {};
 
 
-extern "C" cudakernel::CUDA_Kernel * cudakernel::CUDA_Kernel::get_instance(
+extern "C" cukernel::CUDA_Kernel * cukernel::CUDA_Kernel::get_instance(
                                                 topology::Topology &topo,
                                                 configuration::Configuration &conf,
                                                 simulation::Simulation &sim) {
@@ -58,7 +58,7 @@ extern "C" cudakernel::CUDA_Kernel * cudakernel::CUDA_Kernel::get_instance(
   return m_cuda_kernel;
 };
 
-extern "C" void cudakernel::CUDA_Kernel::update_nonbonded(interaction::Nonbonded_Parameter *np) {
+extern "C" void cukernel::CUDA_Kernel::update_nonbonded(interaction::Nonbonded_Parameter *np) {
   // solvent lj and crf parameters to const memory
   if (this->param.num_atoms_per_mol > simulation_parameter::max_atoms_solvent) {
     io::messages.add("Too many solvent atoms for constant memory",
@@ -79,13 +79,13 @@ extern "C" void cudakernel::CUDA_Kernel::update_nonbonded(interaction::Nonbonded
   this->sync_symbol();
 }
 
-extern "C" void cudakernel::CUDA_Kernel::sync_symbol() {
-  cudaMemcpyToSymbol(device_param, &this->param, sizeof(cudakernel::simulation_parameter));
+extern "C" void cukernel::CUDA_Kernel::sync_symbol() {
+  cudaMemcpyToSymbol(device_param, &this->param, sizeof(cukernel::simulation_parameter));
 }
 
-//extern "C" cudakernel::CUDA_Kernel::~CUDA_Kernel(){};
+//extern "C" cukernel::CUDA_Kernel::~CUDA_Kernel(){};
 
-extern "C" void cudakernel::CUDA_Kernel::init(topology::Topology &topo,
+extern "C" void cukernel::CUDA_Kernel::init(topology::Topology &topo,
                         configuration::Configuration &conf,
                         simulation::Simulation &sim){
     this->mytopo = &topo;
@@ -142,7 +142,7 @@ extern "C" void cudakernel::CUDA_Kernel::init(topology::Topology &topo,
     gpu_stat->device = device_number;*/
 };
 
-extern "C" void cudakernel::CUDA_Kernel::copy_parameters() {
+extern "C" void cukernel::CUDA_Kernel::copy_parameters() {
   DEBUG(0, "cutoff before copy: " << mysim->param().pairlist.cutoff_long);
   // long cutoff
   this->param.cutoff_long = mysim->param().pairlist.cutoff_long;
@@ -249,8 +249,8 @@ extern "C" void cudakernel::CUDA_Kernel::copy_parameters() {
   this->estimate_pairlist();
   this->sync_symbol();
   // check what we have there
-  cudakernel::simulation_parameter tmp_param;
-  cudaMemcpyFromSymbol(&tmp_param, device_param, sizeof(cudakernel::simulation_parameter));
+  cukernel::simulation_parameter tmp_param;
+  cudaMemcpyFromSymbol(&tmp_param, device_param, sizeof(cukernel::simulation_parameter));
   DEBUG(0, "num_atoms.total: \t" << tmp_param.num_atoms.total);
   DEBUG(0, "num_atoms.solute: \t" << tmp_param.num_atoms.solute);
   DEBUG(0, "num_atoms.solvent: \t" << tmp_param.num_atoms.solvent);
@@ -273,7 +273,7 @@ extern "C" void cudakernel::CUDA_Kernel::copy_parameters() {
   return;
 };
 
-extern "C" void cudakernel::CUDA_Kernel::estimate_pairlist() {
+extern "C" void cukernel::CUDA_Kernel::estimate_pairlist() {
   // calculate density and allocate memory?
   // when we overflow, double the size and start over again?
   // calculate the particle density?

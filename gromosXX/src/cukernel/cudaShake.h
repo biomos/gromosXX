@@ -8,7 +8,7 @@
 #include "parameter.h"
 #include "macros.h"
 
-namespace cudakernel {
+namespace cukernel {
   /**
    * solve the constraints using the M-SHAKE algorithm
    * @param[inout] new_pos the new positions
@@ -24,7 +24,7 @@ namespace cudakernel {
   __global__ void kernel_Calc_Shake
   (
           VECTOR * new_pos, VECTOR * old_pos,
-          cudakernel::simulation_parameter * dev_params,
+          cukernel::simulation_parameter * dev_params,
           int *shake_fail_mol, REAL * tol, 
           VECTOR * mass,
           VECTOR * const_length2,

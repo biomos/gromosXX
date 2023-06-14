@@ -9,7 +9,7 @@
 #include "lib/utils.h"
 #include "interaction.h"
 
-extern __device__ __constant__ cudakernel::simulation_parameter device_param;
+extern __device__ __constant__ cukernel::simulation_parameter device_param;
 
 extern "C" gpu_status * cudaInit(int & device_number,
             unsigned int num_atoms,
@@ -22,7 +22,7 @@ extern "C" gpu_status * cudaInit(int & device_number,
             unsigned int estimated_neighbors_short,
             unsigned int estimated_neighbors_long,
             double crf_2cut3i, double crf_cut, double crf_cut3i,
-            cudakernel::lj_crf_parameter * lj_crf_params,
+            cukernel::lj_crf_parameter * lj_crf_params,
             unsigned int num_of_gpus,
             unsigned int gpu_id,
             int * error) {
@@ -32,7 +32,7 @@ extern "C" gpu_status * cudaInit(int & device_number,
     // determine the device number
     cudaGetDevice(&device_number);
   }
-  cudakernel::check_error("before init");
+  cukernel::check_error("before init");
   // let's first query the device properties and print them out
   cudaDeviceProp devProp;
   cudaGetDeviceProperties(&devProp, device_number);
@@ -85,7 +85,7 @@ extern "C" gpu_status * cudaInit(int & device_number,
   // Allocate memory for the simulation parameters
   unsigned int mem = 0;
   #define GPUMALLOC(x, size) cudaMalloc((void**)(x), (size)); mem += (size)
-  GPUMALLOC(& gpu_stat->dev_parameter, sizeof (cudakernel::simulation_parameter));
+  GPUMALLOC(& gpu_stat->dev_parameter, sizeof (cukernel::simulation_parameter));
 
   // Allocate memory for positions, pairlists, parameters, forces and energies
   GPUMALLOC(& gpu_stat->dev_pos, gpu_stat->host_parameter.num_atoms.solvent * sizeof(float3));
@@ -110,7 +110,7 @@ extern "C" gpu_status * cudaInit(int & device_number,
   GPUMALLOC(& gpu_stat->dev_energy, num_warps * sizeof (float2));
   cudaMemset(gpu_stat->dev_energy, 0, num_warps * sizeof (float2));
   // allocate space for parameters
-  GPUMALLOC(& gpu_stat->dev_lj_crf_parameter, gpu_stat->host_parameter.num_atoms_per_mol * gpu_stat->host_parameter.num_atoms_per_mol * sizeof (cudakernel::lj_crf_parameter));
+  GPUMALLOC(& gpu_stat->dev_lj_crf_parameter, gpu_stat->host_parameter.num_atoms_per_mol * gpu_stat->host_parameter.num_atoms_per_mol * sizeof (cukernel::lj_crf_parameter));
 
   // allocate memory for output arrays for virial and energy summation
   // we only need at most half for the tree reduction
@@ -129,11 +129,11 @@ extern "C" gpu_status * cudaInit(int & device_number,
   memset(gpu_stat->host_virial, 0, num_warps * sizeof (float9));
 
   // copy over the parameters
-  cudaMemcpy(gpu_stat->dev_lj_crf_parameter, lj_crf_params, gpu_stat->host_parameter.num_atoms_per_mol * gpu_stat->host_parameter.num_atoms_per_mol * sizeof (cudakernel::lj_crf_parameter), cudaMemcpyHostToDevice);
-  cudaMemcpy(gpu_stat->dev_parameter, &gpu_stat->host_parameter, sizeof (cudakernel::simulation_parameter), cudaMemcpyHostToDevice);
+  cudaMemcpy(gpu_stat->dev_lj_crf_parameter, lj_crf_params, gpu_stat->host_parameter.num_atoms_per_mol * gpu_stat->host_parameter.num_atoms_per_mol * sizeof (cukernel::lj_crf_parameter), cudaMemcpyHostToDevice);
+  cudaMemcpy(gpu_stat->dev_parameter, &gpu_stat->host_parameter, sizeof (cukernel::simulation_parameter), cudaMemcpyHostToDevice);
 
   std::cout << "END" << std::endl;
-  *error = cudakernel::check_error("after init");
+  *error = cukernel::check_error("after init");
 
   return gpu_stat;
 }
@@ -148,11 +148,11 @@ extern "C" int cudaCopyBox(gpu_status * gpu_stat, double box_x, double box_y, do
   gpu_stat->host_parameter.box.half.x = box_x / 2.0;
   gpu_stat->host_parameter.box.half.y = box_y / 2.0;
   gpu_stat->host_parameter.box.half.z = box_z / 2.0;
-  cudaMemcpy(gpu_stat->dev_parameter, &gpu_stat->host_parameter, sizeof (cudakernel::simulation_parameter), cudaMemcpyHostToDevice);*/
+  cudaMemcpy(gpu_stat->dev_parameter, &gpu_stat->host_parameter, sizeof (cukernel::simulation_parameter), cudaMemcpyHostToDevice);*/
   // direct copy to box_struct symbol is not allowed (is not a symbol itself)
-  //cudakernel::simulation_parameter tmp_param;
-  cudakernel::simulation_parameter::box_struct box;
-  //cudaMemcpyFromSymbol(&tmp_param, device_param, sizeof(cudakernel::simulation_parameter));
+  //cukernel::simulation_parameter tmp_param;
+  cukernel::simulation_parameter::box_struct box;
+  //cudaMemcpyFromSymbol(&tmp_param, device_param, sizeof(cukernel::simulation_parameter));
   /*tmp_param.box.full.x = (float) box_x;
   tmp_param.box.full.y = (float) box_y;
   tmp_param.box.full.z = (float) box_z;
@@ -162,7 +162,7 @@ extern "C" int cudaCopyBox(gpu_status * gpu_stat, double box_x, double box_y, do
   tmp_param.box.half.x = box_x / 2.0;
   tmp_param.box.half.y = box_y / 2.0;
   tmp_param.box.half.z = box_z / 2.0;*/
-  //cudaMemcpyToSymbol(device_param, &tmp_param, sizeof(cudakernel::simulation_parameter));
+  //cudaMemcpyToSymbol(device_param, &tmp_param, sizeof(cukernel::simulation_parameter));
   box.full.x = box_x;
   box.full.y = box_y;
   box.full.z = box_z;
@@ -172,8 +172,8 @@ extern "C" int cudaCopyBox(gpu_status * gpu_stat, double box_x, double box_y, do
   box.half.x = box_x / 2.0;
   box.half.y = box_y / 2.0;
   box.half.z = box_z / 2.0;
-  cudaMemcpyToSymbol(device_param, &box, sizeof(cudakernel::simulation_parameter::box_struct), offsetof(cudakernel::simulation_parameter, box));
-  return cudakernel::check_error("after copying the box");
+  cudaMemcpyToSymbol(device_param, &box, sizeof(cukernel::simulation_parameter::box_struct), offsetof(cukernel::simulation_parameter, box));
+  return cukernel::check_error("after copying the box");
 }
 
 extern "C" int cudaCopyPositions(double * pos, gpu_status * gpu_stat) {
@@ -185,7 +185,7 @@ extern "C" int cudaCopyPositions(double * pos, gpu_status * gpu_stat) {
   }
 
   cudaMemcpy(gpu_stat->dev_pos, gpu_stat->host_pos, gpu_stat->host_parameter.num_atoms.solvent * sizeof (float3), cudaMemcpyHostToDevice);
-  return cudakernel::check_error("after copying the positions");
+  return cukernel::check_error("after copying the positions");
 }
 
 extern "C" int CleanUp(gpu_status * gpu_stat) {
@@ -203,6 +203,6 @@ extern "C" int CleanUp(gpu_status * gpu_stat) {
   cudaFree(gpu_stat->dev_energy);
   cudaFree(gpu_stat->dev_parameter);
 
-  return cudakernel::check_error("after clean-up");
+  return cukernel::check_error("after clean-up");
 }
 

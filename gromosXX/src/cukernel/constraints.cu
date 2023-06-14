@@ -13,7 +13,7 @@
 
 #undef MODULE
 #undef SUBMODULE
-#define MODULE cuda
+#define MODULE cukernel
 #define SUBMODULE constraints
 
 #define NUM_THREADS_PER_BLOCK_SETTLE 128
@@ -59,14 +59,14 @@ extern "C" gpu_status * cudaInitConstraints(unsigned int num_of_gpus, unsigned i
   DEBUG(4,"Allocating memory on the GPU for SETTLE")
   cudaMalloc((void**) & gpu_stat->dev_shake_fail_mol, sizeof (int));
   cudaMemset(gpu_stat->dev_shake_fail_mol, 0, sizeof(int));
-  cudaMalloc((void**) & gpu_stat->dev_parameter, sizeof (cudakernel::simulation_parameter));
-  cudaMemset(gpu_stat->dev_parameter, 0, sizeof(cudakernel::simulation_parameter));
+  cudaMalloc((void**) & gpu_stat->dev_parameter, sizeof (cukernel::simulation_parameter));
+  cudaMemset(gpu_stat->dev_parameter, 0, sizeof(cukernel::simulation_parameter));
   cudaMalloc((void**) & gpu_stat->dev_double_new_pos, num_atoms * sizeof (double3));
   cudaMemset(gpu_stat->dev_double_new_pos, 0, num_atoms * sizeof (double3));
   cudaMalloc((void**) & gpu_stat->dev_double_old_pos, num_atoms * sizeof (double3));
   cudaMemset(gpu_stat->dev_double_old_pos, 0, num_atoms * sizeof (double3));
 
-  cudakernel::check_error("after allocating Memory for the old and new positions");
+  cukernel::check_error("after allocating Memory for the old and new positions");
 
   return gpu_stat;
 }
@@ -98,10 +98,10 @@ extern "C" int cudaConstraints(double *newpos, double *oldpos,
   cudaMemcpy(gpu_stat->dev_double_new_pos, gpu_stat->host_double_new_pos, gpu_stat->host_parameter.num_atoms.solvent * sizeof (double3), cudaMemcpyHostToDevice);
   cudaMemcpy(gpu_stat->dev_double_old_pos, gpu_stat->host_double_old_pos, gpu_stat->host_parameter.num_atoms.solvent * sizeof (double3), cudaMemcpyHostToDevice);
 
-  cudakernel::check_error("after copying the new positions to the GPU");
+  cukernel::check_error("after copying the new positions to the GPU");
 
   // Copy the paramter
-  cudaMemcpy(gpu_stat->dev_parameter, & gpu_stat->host_parameter, sizeof(cudakernel::simulation_parameter), cudaMemcpyHostToDevice);
+  cudaMemcpy(gpu_stat->dev_parameter, & gpu_stat->host_parameter, sizeof(cukernel::simulation_parameter), cudaMemcpyHostToDevice);
 
 
   // Copy the error molecule index
@@ -118,7 +118,7 @@ extern "C" int cudaConstraints(double *newpos, double *oldpos,
             gpu_stat->dev_parameter,
             gpu_stat->dev_shake_fail_mol);
   
-  cudakernel::check_error("after GPU_SETTLE"); 
+  cukernel::check_error("after GPU_SETTLE"); 
 
   DEBUG(7,"Copy the Error molecule index")
   cudaMemcpy(&shake_fail_mol, gpu_stat->dev_shake_fail_mol, sizeof (int), cudaMemcpyDeviceToHost);
@@ -128,7 +128,7 @@ extern "C" int cudaConstraints(double *newpos, double *oldpos,
 
     DEBUG(10,"Copy the positions")
   cudaMemcpy(gpu_stat->host_double_new_pos, gpu_stat->dev_double_new_pos, gpu_stat->host_parameter.num_atoms.solvent * sizeof (double3), cudaMemcpyDeviceToHost);
-  cudakernel::check_error("after copying the new positions");
+  cukernel::check_error("after copying the new positions");
   for(unsigned int i = 0; i < gpu_stat->host_parameter.num_atoms.solvent; ++i) {
     newpos[3*i  ] = double(gpu_stat->host_double_new_pos[i].x);
     newpos[3*i+1] = double(gpu_stat->host_double_new_pos[i].y);
@@ -142,10 +142,10 @@ extern "C" int cudaConstraints(double *newpos, double *oldpos,
 
 }
 
-__global__ void cudakernel::kernel_CalcConstraints_Settle
+__global__ void cukernel::kernel_CalcConstraints_Settle
 (
         double3 * new_pos, double3 * old_pos,
-        cudakernel::simulation_parameter * dev_params,
+        cukernel::simulation_parameter * dev_params,
         int *shake_fail_mol
 ) {
 

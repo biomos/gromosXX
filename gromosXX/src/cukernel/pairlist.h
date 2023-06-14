@@ -4,7 +4,7 @@
  */
 #ifndef INCLUDED_CUKERNEL_PAIRLIST_H
 #define INCLUDED_CUKERNEL_PAIRLIST_H
-namespace cudakernel {
+namespace cukernel {
 /**
  * @struct pairlist
  *  the holds the pairlist
@@ -54,7 +54,7 @@ void allocate_pairlist(pairlist &pl, unsigned int size, unsigned int max_neighbo
  * @param[out] pl_long the long-range pairlist
  */
 __global__ void kernel_CalcPairlist(
-        cudakernel::simulation_parameter * dev_params,
+        cukernel::simulation_parameter * dev_params,
         float3 * dev_pos,
         pairlist pl_short,
         pairlist pl_long,

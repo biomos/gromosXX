@@ -11,7 +11,7 @@
 
 #undef MODULE
 #undef SUBMODULE
-#define MODULE cuda
+#define MODULE cukernel
 #define SUBMODULE pairlist
 
 #define NUM_THREADS_PER_BLOCK 96

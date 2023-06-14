@@ -12,7 +12,7 @@
 #define NUM_THREADS_PER_BLOCK_REDUCTION_FLOAT9 128
 #define NUM_ELEMENTS_PER_THREAD_FLOAT9 4
 
-namespace cudakernel {
+namespace cukernel {
 /**
   * calculate the forces, energies and virial and stores them in per atom arrays
   * @param[in] pl the pairlist used for the interaction computation
@@ -26,7 +26,7 @@ namespace cudakernel {
 __global__ void kernel_CalcForces_Solvent(
         pairlist pl,
         float3 * dev_pos,
-        cudakernel::simulation_parameter * dev_params,
+        cukernel::simulation_parameter * dev_params,
         lj_crf_parameter * dev_lj_crf_params,
         float3 * dev_for,
         float9 * dev_virial,

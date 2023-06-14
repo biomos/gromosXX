@@ -95,7 +95,7 @@ void algorithm::GPU_Shake_Thread::init_run() {
       dev = mysim->param().innerloop.gpu_device_number[gpu_id];
     }
   }
-  gpu_stat = cudakernel::cudaInitGPU_Shake(
+  gpu_stat = cukernel::cudaInitGPU_Shake(
           dev,
           &constr_length2(0),
           &factor(0, 0), &mass(0),
@@ -125,7 +125,7 @@ void algorithm::GPU_Shake_Thread::cycle(){
 
     DEBUG(10, "GPU_Shake_Thread : Cycle : Calculate Constraints")
 #ifdef HAVE_LIBCUDART
-    cudakernel::cudaGPU_Shake(&(myconf->current().pos(mytopo->num_solute_atoms())(0)),
+    cukernel::cudaGPU_Shake(&(myconf->current().pos(mytopo->num_solute_atoms())(0)),
           &(myconf->old().pos(mytopo->num_solute_atoms())(0)),
           shake_fail_mol, gpu_stat);
 #endif
@@ -138,7 +138,7 @@ void algorithm::GPU_Shake_Thread::cycle(){
 void algorithm::GPU_Shake_Thread::end_run() {
   DEBUG(10, "GPU_Shake_Thread : Clean up");
 #ifdef HAVE_LIBCUDART
-  cudakernel::CleanUp(gpu_stat);
+  cukernel::CleanUp(gpu_stat);
 #endif
 }
 

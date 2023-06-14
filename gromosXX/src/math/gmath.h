@@ -134,7 +134,7 @@ namespace math
     /**
      * CUDA allocated VArray
      */
-    typedef VArrayT<Vec, cudakernel::CuMallocator > CuVArray;
+    typedef VArrayT<Vec, cukernel::CuMallocator > CuVArray;
 #endif
 
   /**

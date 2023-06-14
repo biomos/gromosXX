@@ -5,7 +5,7 @@
 
 #ifndef INCLUDED_CUKERNEL_UTILS_H
 #define INCLUDED_CUKERNEL_UTILS_H
-namespace cudakernel {
+namespace cukernel {
   /**
    * check for an error and print the error message if there was one.
    * @param[in] err_msg the error message

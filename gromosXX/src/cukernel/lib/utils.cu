@@ -9,10 +9,10 @@
 
 #undef MODULE
 #undef SUBMODULE
-#define MODULE cuda
+#define MODULE cukernel
 #define SUBMODULE utils
 
-int cudakernel::check_error(const char * err_msg) {
+int cukernel::check_error(const char * err_msg) {
 #ifndef NDEBUG
   cudaDeviceSynchronize();
 #endif

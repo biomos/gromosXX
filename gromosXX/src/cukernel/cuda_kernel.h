@@ -33,7 +33,7 @@ namespace interaction {
   class Nonbonded_Parameter;
 }
 
-namespace cudakernel {
+namespace cukernel {
     extern "C" {
         /**
          * @class CUDA_Kernel
@@ -96,7 +96,7 @@ namespace cudakernel {
              */
             CUDA_Kernel();
 
-            cudakernel::simulation_parameter param;
+            cukernel::simulation_parameter param;
 
 #ifdef HAVE_LIBCUDART
             cudaDeviceProp device_properties;

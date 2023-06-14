@@ -7,7 +7,7 @@
 
 #define MAX_ATOMS_SOLVENT 6
 
-namespace cudakernel {
+namespace cukernel {
   /**
    * @struct lj_crf_parameter
    * struct containing the interaction parameters for pairwise forces

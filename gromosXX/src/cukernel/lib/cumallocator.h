@@ -9,7 +9,7 @@
 
 #include <cuda_runtime.h>
 
-namespace cudakernel
+namespace cukernel
 {  
     template <typename T>
     struct CuMallocator
@@ -60,7 +60,7 @@ namespace cudakernel
     bool operator!=(const CuMallocator <T>&, const CuMallocator <U>&) { return false; }
 
     template <typename T>
-    using cuvector = std::vector< T, cudakernel::CuMallocator<T> >;
+    using cuvector = std::vector< T, cukernel::CuMallocator<T> >;
 };
 
 #endif

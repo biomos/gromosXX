@@ -7,7 +7,7 @@
 #define INCLUDED_CUKERNEL_CONSTRAINTS_H
 #include "parameter.h"
 
-namespace cudakernel {
+namespace cukernel {
 /**
  * solve the constraints using the SETTLE algorithm
  * @param[inout] new_pos the new positions
@@ -18,7 +18,7 @@ namespace cudakernel {
 __global__ void kernel_CalcConstraints_Settle
 (
         double3 * new_pos, double3 * old_pos,
-        cudakernel::simulation_parameter * dev_params,
+        cukernel::simulation_parameter * dev_params,
         int *shake_fail_mol
 );
 

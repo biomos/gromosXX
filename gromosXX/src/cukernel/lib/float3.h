@@ -12,7 +12,7 @@
 
 #include <cstdlib>
 
-extern __device__ __constant__ cudakernel::simulation_parameter device_param;
+extern __device__ __constant__ cukernel::simulation_parameter device_param;
 
 /**
  * calculates the nearest image for cubic periodic boundary conditions
