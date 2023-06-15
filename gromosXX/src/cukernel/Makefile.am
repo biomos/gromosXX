@@ -34,7 +34,7 @@ xxincludedir = $(includedir)/md++/cukernel
 ##xxinclude_HEADERS =	cuda_kernel.h
 noinst_LTLIBRARIES = libgrocukernel.la
 libgrocukernel_la_SOURCES = cuda_kernel.cc \
-							cuda.cc
+							cukernel.cc
 libgrocukernel_la_CXXFLAGS = $(AM_CXXFLAGS)
 endif
 

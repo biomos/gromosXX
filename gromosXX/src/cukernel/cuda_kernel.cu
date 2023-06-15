@@ -28,7 +28,7 @@
 #define MODULE cukernel
 #define SUBMODULE kernel
 
-#include "cuda.cc"
+#include "cukernel.cc"
 
 __device__ __constant__ cukernel::simulation_parameter device_param;
 

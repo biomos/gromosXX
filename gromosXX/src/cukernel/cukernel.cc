@@ -1,5 +1,5 @@
 /**
- * @file cuda.cc
+ * @file cukernel.cc
  * globals of the cukernel library
  */
 

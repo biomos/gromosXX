@@ -12,7 +12,7 @@
 #define MODULE cukernel
 #define SUBMODULE kernel
 
-#include "cuda.cc"
+#include "cukernel.cc"
 
 extern "C" cukernel::CUDA_Kernel::CUDA_Kernel(){disabled();};
 
