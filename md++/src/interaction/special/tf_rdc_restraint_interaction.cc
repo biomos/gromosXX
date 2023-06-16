@@ -242,7 +242,7 @@ int _calculate_tf_rdc_restraint_interactions
         } else {
           DEBUG(9, "TFRDCRES  : harmonic");
           force = term * interaction::D_c(it) * (P_avg * dRavedR * dRdr + R_avg * dPavedP * dPdr);  // [1 / (ps^2 nm)]
-          energy = 0.5 * K * term * term;  
+          energy = 0.5 * K * term * term;
         }
 
 
@@ -390,10 +390,17 @@ int _magnetic_field_vector_sd
     double exptaut = 0.0;                                       // [-]
     if (sim.param().tfrdc.tauth > 0.0)
       exptaut = exp(-sim.time_step_size() / sim.param().tfrdc.tauth);    // [-]
+    double exptaur = 0.0;                                       // [-]
+    if (sim.param().tfrdc.taur > 0.0)
+      exptaur = exp(-sim.time_step_size() / sim.param().tfrdc.taur);    // [-]
+
+    // TODO: conversion from Hz to 1/ps should not be hardcoded:
     const double & K = sim.param().tfrdc.Kmfv * 1e24;        // [kJ ps^2 / mol]
     const double dPavedP = 1.0 - exptaut;                       // [-]
-    const double & dD_linear_mfv = sim.param().tfrdc.dD_linear_mfv * 1e-12; // [1/ps];
+    const double dRavedR = 1.0 - exptaur;                       // [-]
 
+    // TODO: conversion from Hz to 1/ps should not be hardcoded:
+    const double & dD_linear_mfv = sim.param().tfrdc.dD_linear_mfv * 1e-12; // [1/ps];
 
     // initialize
     math::Vec & rh_i = conf.special().tfrdc_mfv.pos(0);         // [nm]
@@ -421,10 +428,11 @@ int _magnetic_field_vector_sd
 
       DEBUG(9, "mfv r_i  :" << math::v2s(r_i1));
       DEBUG(9, "mfv r_ij :" << math::v2s(r_ij1));
-      // compute  P, P is dimensionless
+      // compute initial P, P is dimensionless
       const double P = 0.5 * (3 * costheta[l] * costheta[l] - 1.0);          // [-]
-      DEBUG(15, "P mfv initial: " << P);
-      DEBUG(15, "Theta of k1k2: " << acos(costheta[l]));
+
+      DEBUG(15, "P mfv initial("<< l << "): " << P);
+      DEBUG(15, "Theta of k1k2 ("<< l << "): " << acos(costheta[l]));
 
       // time-averaging
       // initialise average?
@@ -437,7 +445,7 @@ int _magnetic_field_vector_sd
       }
       // apply time averaging
       P_expavg = dPavedP * P + exptaut * P_expavg;          // [-]
-      DEBUG(15, " P_expavg: " << P_expavg);
+      DEBUG(15, " P_expavg("<< l << "): " << P_expavg);
     }
 
     // clear P_avg
@@ -448,12 +456,30 @@ int _magnetic_field_vector_sd
 
     for (unsigned int sdstep=0; sdstep < sim.param().tfrdc.nstsd; sdstep++) {
       double mfv_energy = 0.0;
-
       conf.current().energies.tfrdc_mfv_energy.assign(conf.current().energies.tfrdc_mfv_energy.size(), 0.0);
 
+      // TODO: remove 
+      for (unsigned int i=0; i<conf.current().energies.tfrdc_mfv_energy.size(); i++) {
+          DEBUG(9, "mfv energy0 step " << sdstep << ", i=" << i <<", e=" 
+                         << conf.current().energies.tfrdc_mfv_energy[i]);
+      }
+
+      // TODO: remove 
+      std::cout << "default dist rh_ij=" << conf.special().tfrdc_mfv.d << ", current=" << 1/inv_dh_ij << std::endl;
+      const double r_0_3 = pow(conf.special().tfrdc_mfv.d, 3.0); // [nm^3]
+
+      const double inv_dh_ij_3 = inv_dh_ij * inv_dh_ij * inv_dh_ij;
+      const double R = r_0_3 * inv_dh_ij_3;                    // [-]
+      double R_expavg = R;
+      R_expavg = dRavedR * R + exptaur * R_expavg;          // [-]
+      std::cout << "mfv R_expavg=" << R_expavg << std::endl;
+      math::Vec dRdr = - 3.0 * r_0_3 * inv_dh_ij_3 * inv_dh_ij * inv_dh_ij * rh_ij;       // [1 / nm]
+      std::cout << "mfv dRdr=" << math::v2s(dRdr) << std::endl;
     
       // -----  calculate forces on magn. field vector -----
-      math::VArray forces(2, math::Vec(0.0, 0.0, 0.0));
+      conf.special().tfrdc_mfv.force = 0.0;
+      math::VArray &forces = conf.special().tfrdc_mfv.force; //(2, math::Vec(0.0, 0.0, 0.0));
+      DEBUG(9, "initial mfv-forces " << v2s(forces(0)));
 
       // loop over the tensor-free RDC restraints
       std::vector<topology::tf_rdc_restraint_struct>::iterator
@@ -465,7 +491,7 @@ int _magnetic_field_vector_sd
           double & P_expavg = conf.special().tfrdc_mfv.P_expavg[l];         // [-]
 
           // compute tensor-free RDC
-          conf.special().tfrdc_mfv.RDC_expavg[l] = interaction::D_c(it) * P_expavg;     // [1 / ps]
+          conf.special().tfrdc_mfv.RDC_expavg[l] = interaction::D_c(it) * P_expavg * R_expavg;     // [1 / ps]
           DEBUG(9, "RDC_avg (MFV): " << conf.special().tfrdc_mfv.RDC_expavg[l]*pow(10,12));
 
           // the not averaged RDC
@@ -486,16 +512,15 @@ int _magnetic_field_vector_sd
             dev_sign = 1;
             term = Ddev + it->dD0;            // [1 / ps]
           } else {
-            DEBUG(9, "TFRDCRES  : restraint fulfilled");
+            DEBUG(9, "TFRDCRES mfv : restraint fulfilled");
           }
 
           for(unsigned int a = 0; a < 3; ++a){
-            //dPdr(a) = 3 * costheta[l] * (- costheta[l] * rh_ij(a) * inv_dh_ij * inv_dh_ij + r_ij[l](a) * inv_dh_ij * inv_d_ij[l]);
-            double prefix =  3 * costheta[l] * (inv_d_ij[l]*inv_dh_ij);
-            dPdr(a) = prefix * r_ij[l](a); // [1 / nm]
+            dPdr(a) = 3 * costheta[l] * (r_ij[l](a) * inv_dh_ij * inv_d_ij[l]- costheta[l] * rh_ij(a) * inv_dh_ij * inv_dh_ij);
+            //double prefix =  3 * costheta[l] * (inv_dh_ij * inv_d_ij[l]);
+            //dPdr(a) = prefix * r_ij[l](a); // [1 / nm]
           }
           
-
           DEBUG(9, "dP/dr" << math::v2s(dPdr));
           DEBUG(9, "dP_expavg/dP: " << dPavedP);
 
@@ -508,7 +533,7 @@ int _magnetic_field_vector_sd
             mfv_energy = -1 * dev_sign * K * (term + dev_sign * 0.5 * dD_linear_mfv) * dD_linear_mfv;
           } else {
             DEBUG(9, "TFRDCRESmfv: harmonic");
-            force = term * interaction::D_c(it) * dPavedP * dPdr;  // [1 / (ps^2 nm)]
+            force = term * interaction::D_c(it) * (P_expavg * dRavedR * dRdr + R_expavg * dPavedP * dPdr);  // [1 / (ps^2 nm)]
             mfv_energy = 0.5 * K * term * term;
           }
           DEBUG(9, "Energy mfv [kJ/mol]: " << mfv_energy);
@@ -527,6 +552,9 @@ int _magnetic_field_vector_sd
           std::cout.precision(15); // useful for debugging
           DEBUG(7, "f_hi: " << math::v2s(forces(0)));
           DEBUG(7, "f_hj: " << math::v2s(forces(1)));
+      }
+      for (unsigned int i=0; i<conf.current().energies.tfrdc_mfv_energy.size(); i++) {
+          DEBUG(9, "mfv energy1 step " << sdstep << ", egroup=" << i <<", e=" << conf.current().energies.tfrdc_mfv_energy[i]);
       }
 
       sum_forces_mfv += abs(forces(0));
@@ -663,7 +691,7 @@ int _magnetic_field_vector_sd
  
         const double P = 0.5 * (3 * costheta[l] * costheta[l] - 1.0);          // [-]
         DEBUG(15, "P mfv: " << P);
-        DEBUG(15, "Theta of k1k2: " << acos(costheta[l]));
+        DEBUG(15, "Theta("<< l << "): " << acos(costheta[l])*180/math::Pi);
 
         // apply time averaging
         double & P_expavg = conf.special().tfrdc_mfv.P_expavg[l];         // [-]
@@ -831,6 +859,7 @@ sqrt(fabs(gdth/6.0 - gdth3/60.0 + gdth5 * 17.0/10080.0 - gdth7 * 31.0/181440.0))
   DEBUG(10, "sd3: " << tfrdc_mfv.sd.sd3 << " sd4: " << tfrdc_mfv.sd.sd4);
   DEBUG(10, "c5=" << tfrdc_mfv.sd.c5);
 
+  tfrdc_mfv.force.resize(2);
   if (!sim.param().tfrdc.continuation){
     tfrdc_mfv.pos.resize(2);
     tfrdc_mfv.vel.resize(2);

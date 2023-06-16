@@ -127,6 +127,63 @@ double finite_diff(topology::Topology & topo,
 
 }
 
+double finite_diff_mfv(topology::Topology & topo,
+        configuration::Configuration &conf,
+        simulation::Simulation & sim,
+        interaction::Interaction &term,
+        size_t atom, size_t coord,
+        double const epsilon) {
+  conf.current().energies.zero();
+
+  set_initial_tfrdc_averages(conf);
+  std::cout << "mfv pos fd1: " << v2s(conf.special().tfrdc_mfv.pos(0)) << std::endl;
+  conf.special().tfrdc_mfv.pos(atom)(coord) += epsilon; //epsilon from end of file check::check_forcefield
+  conf.special().tfrdc_mfv.force = 0;
+  
+  term.calculate_interactions(topo, conf, sim); // from interaction/interaction.h set to 0?
+  std::cout << "mfv forces fd1: " << v2s(conf.special().tfrdc_mfv.force(0)) << std::endl;
+  std::cout << "                " << v2s(conf.special().tfrdc_mfv.force(1)) << std::endl;
+
+  conf.current().energies.calculate_totals(); // from configuration/energy.cc
+
+  std::cout << "E_tfrdc_mfv1 " << conf.current().energies.tfrdc_mfv_total << " " << conf.current().energies.potential_total << " " << conf.current().energies.special_total << std::endl;
+
+  double e1 = conf.current().energies.tfrdc_mfv_total;
+
+  conf.current().energies.zero();
+
+  set_initial_tfrdc_averages(conf);
+  conf.special().tfrdc_mfv.pos(atom)(coord) -= epsilon;
+  conf.special().tfrdc_mfv.force = 0;
+
+  term.calculate_interactions(topo, conf, sim);
+  std::cout << "mfv forces fd2: " << v2s(conf.special().tfrdc_mfv.force(0)) << std::endl;
+  std::cout << "                " << v2s(conf.special().tfrdc_mfv.force(1)) << std::endl;
+  conf.current().energies.calculate_totals();
+
+  double e2 = conf.current().energies.tfrdc_mfv_total;
+
+  std::cout << "E_tfrdc_mfv2 " << conf.current().energies.tfrdc_mfv_total 
+            << " " <<  conf.current().energies.potential_total << " " 
+            << conf.current().energies.special_total << std::endl;
+
+  // just to check
+  set_initial_tfrdc_averages(conf);
+    std::cout << "mfv pos fd3: " << v2s(conf.special().tfrdc_mfv.pos(0)) << std::endl;
+  conf.special().tfrdc_mfv.force = 0;
+
+  term.calculate_interactions(topo, conf, sim);
+  std::cout << "mfv forces fd3: " << v2s(conf.special().tfrdc_mfv.force(0)) << std::endl;
+  std::cout << "                " << v2s(conf.special().tfrdc_mfv.force(1)) << std::endl;
+  conf.current().energies.calculate_totals();
+
+  std::cout << "E_tfrdc_mfv3 " << conf.current().energies.tfrdc_mfv_total << " " << conf.current().energies.potential_total << " " << conf.current().energies.special_total << std::endl;
+  std::cout << e1 << " - " << e2 << " eps=" << epsilon << std::endl;
+
+  return (e2 - e1) / 2.0 / epsilon;
+
+}
+
 int nonbonded_hessian(topology::Topology & topo,
         configuration::Configuration &conf,
         simulation::Simulation & sim,
@@ -748,6 +805,7 @@ int check_tfrdc_interaction(topology::Topology & topo,
   std::string name = term.name;
 
   CHECKING(name + " interaction energy", res);
+  sim.param().tfrdc.nstsd=0;
 
   conf.current().force = 0;
   conf.current().energies.zero();
@@ -771,13 +829,14 @@ int check_tfrdc_interaction(topology::Topology & topo,
   for (size_t i = 0; i < topo.tf_rdc_restraints().size(); ++i) {
 
     std::vector<int> atom;
+    // the first atom of virtual atom 1 of each restraint is added to be checked
     atom.push_back(topo.tf_rdc_restraints()[i].v1.atom(0)+1);
 
     conf.current().force = 0;
     conf.current().energies.zero();
 
     /* the infinite-difference check only works if we use the same average
-      at every step, so the values have to be reset before calculating interactions
+      at every step, so the averages have to be reset before calculating interactions
     */
     set_initial_tfrdc_averages(conf);
     term.calculate_interactions(topo, conf, sim);
@@ -796,6 +855,80 @@ int check_tfrdc_interaction(topology::Topology & topo,
       CHECK_APPROX_EQUAL(f(1), finf(1), delta, res);
       CHECK_APPROX_EQUAL(f(2), finf(2), delta, res);
     }
+  }
+
+  RESULT(res, total);
+
+  return total;
+
+}
+
+int check_tfrdc_mfv_interaction(topology::Topology & topo,
+        configuration::Configuration & conf,
+        simulation::Simulation & sim,
+        interaction::Interaction &term,
+        size_t atoms,
+        double const energy,
+        double const epsilon,
+        double const delta) {
+  int res, total = 0;
+
+  std::string name = term.name;
+
+  CHECKING(name + " MFV interaction energy", res);
+  sim.param().tfrdc.nstsd=1;
+
+  conf.current().force = 0;
+  conf.current().energies.zero();
+
+  store_initial_tfrdc(conf);
+
+  term.calculate_interactions(topo, conf, sim);
+
+  conf.current().energies.calculate_totals();
+  CHECK_APPROX_EQUAL(conf.current().energies.tfrdc_mfv_total,
+          energy, delta, res);
+  RESULT(res, total);
+  if (res) {
+    std::cout << "is: " << std::setw(15) << conf.current().energies.tfrdc_mfv_total
+            << " should: " << setw(15) << energy << std::endl;
+  }
+  
+  // finite diff
+  CHECKING(name + " MFV interaction force (finite diff)", res);
+
+  for (size_t i = 0; i < 1; ++i) {
+    // for the two mfv atoms
+
+    conf.current().force = 0;
+    conf.special().tfrdc_mfv.force = 0;
+    conf.current().energies.zero();
+
+    /* the infinite-difference check only works if we use the same average
+      at every step, so the averages have to be reset before calculating interactions
+    */
+    set_initial_tfrdc_averages(conf);
+    std::cout << std::endl;
+    std::cout << "mfv pos:     " << v2s(conf.special().tfrdc_mfv.pos(0)) << std::endl;
+    term.calculate_interactions(topo, conf, sim);
+    std::cout << "mfv forces:     " << v2s(conf.special().tfrdc_mfv.force(0)) << std::endl;
+    std::cout << "                " << v2s(conf.special().tfrdc_mfv.force(1)) << std::endl;
+
+
+      math::Vec f = conf.special().tfrdc_mfv.force(0);
+      
+      math::Vec finf;
+
+      finf(0) = finite_diff_mfv(topo, conf, sim, term, i, 0, epsilon);
+      std::cout << "finf=" << finf(0) << " f=" << f(0) << std::endl;
+      //finf(1) = finite_diff_mfv(topo, conf, sim, term, i, 1, epsilon);
+      //finf(2) = finite_diff_mfv(topo, conf, sim, term, i, 2, epsilon);
+      //std::cout << "finf=" << finf(1) << " f=" << f(1) << std::endl;
+      //std::cout << "finf=" << finf(2) << " f=" << f(2) << std::endl;
+
+      CHECK_APPROX_EQUAL(f(0), finf(0), delta, res);
+      CHECK_APPROX_EQUAL(f(1), finf(1), delta, res);
+      CHECK_APPROX_EQUAL(f(2), finf(2), delta, res);
   }
 
   RESULT(res, total);
@@ -1127,7 +1260,14 @@ int check::check_forcefield(topology::Topology & topo,
       total += check_tfrdc_interaction(topo, conf, sim, **it,
               topo.num_solute_atoms(),
               ref["TFRDCRestraint"],
-              0.0000000001, 0.001);   
+              0.0000000001, 0.001);
+
+      if (ref.find("TFRDCRestraint_mfv") == ref.end())
+        continue;
+      total += check_tfrdc_mfv_interaction(topo, conf, sim, **it,
+              topo.num_solute_atoms(),
+              ref["TFRDCRestraint_mfv"],
+              0.0000000001, 0.001);
       
     } else if ((*it)->name == "MolecularVirial") {
       // no real interaction...
