@@ -834,6 +834,10 @@ namespace configuration {
          * magnetic field vector velocities
          */
         math::VArray vel;
+        /**
+         * magnetic field vector velocities
+         */
+        math::VArray force;
 
         /**
          * SD parameters
