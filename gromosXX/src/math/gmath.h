@@ -68,8 +68,9 @@ namespace math
   
   /**
    * Array of 3D vectors.
+   * template to allow custom allocator
    */
-  template<typename T = Vec, template<typename> typename A = std::allocator >
+  template<typename T, template<typename> typename A = std::allocator >
   class VArrayT : public std::vector<T, A<T> >
   {
   public:
@@ -125,17 +126,10 @@ namespace math
     }
   };
 
-    /**
-     * Standard VArray
-     */
-    typedef VArrayT<Vec> VArray;
-
-#ifdef HAVE_LIBCUDART
-    /**
-     * CUDA allocated VArray
-     */
-    typedef VArrayT<Vec, cukernel::CuMallocator > CuVArray;
-#endif
+  /**
+   * Standard VArray
+   */
+  typedef VArrayT<Vec> VArray;
 
   /**
    * Array of scalars.
