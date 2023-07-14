@@ -472,7 +472,7 @@ int _magnetic_field_vector_sd
           double & P_expavg = conf.special().tfrdc_mfv.P_expavg[l];         // [-]
 
           // compute tensor-free RDC
-          conf.special().tfrdc_mfv.RDC_expavg[l] = interaction::D_c(it) * P_expavg;     // [1 / ps]
+          conf.special().tfrdc_mfv.RDC_expavg[l] = interaction::D_c(it) * P_expavg * conf.special().tfrdc.R_avg[l];     // [1 / ps]
           DEBUG(9, "RDC_avg (MFV,"<< l << "): " << conf.special().tfrdc_mfv.RDC_expavg[l]*pow(10,12));
 
           // the not averaged RDC
@@ -510,11 +510,11 @@ int _magnetic_field_vector_sd
             mfv_energy = 0.0;
           } else if (fabs(Ddev) > it->dD0 + dD_linear_mfv) {
             DEBUG(9, "TFRDCRESmfv: linear");
-            force = -1 * dev_sign * dD_linear_mfv * interaction::D_c(it) * dPavedP * dPdr;
+            force = -1 * dev_sign * dD_linear_mfv * interaction::D_c(it) * conf.special().tfrdc.R_avg[l] * dPavedP * dPdr;
             mfv_energy = -1 * dev_sign * K * (term + dev_sign * 0.5 * dD_linear_mfv) * dD_linear_mfv;
           } else {
             DEBUG(9, "TFRDCRESmfv: harmonic");
-            force = term * interaction::D_c(it) * dPavedP * dPdr;  // [1 / (ps^2 nm)]
+            force = term * interaction::D_c(it) * conf.special().tfrdc.R_avg[l] * dPavedP * dPdr;  // [1 / (ps^2 nm)]
             mfv_energy = 0.5 * K * term * term;
           }
           DEBUG(9, "Energy mfv ("<< l <<") [kJ/mol]: " << mfv_energy);
