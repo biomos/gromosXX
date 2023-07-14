@@ -83,10 +83,6 @@ inline void store_initial_tfrdc(configuration::Configuration & conf) {
 }
 
 inline void set_initial_tfrdc_averages(configuration::Configuration & conf) {
-    /*conf.special().tfrdc.P_avg[0] = 0.0018399861;
-    conf.special().tfrdc.P_avg[1] = 0.0019696395;
-    conf.special().tfrdc_mfv.P_expavg[0] = 0.0015722091;
-    conf.special().tfrdc_mfv.P_expavg[1] = 0.0017608732;*/
   conf.special().tfrdc = tfrdc_copy;
   conf.special().tfrdc_mfv = tfrdc_mfv_copy;
 }
@@ -136,17 +132,12 @@ double finite_diff_mfv(topology::Topology & topo,
   conf.current().energies.zero();
 
   set_initial_tfrdc_averages(conf);
-  std::cout << "mfv pos fd1: " << v2s(conf.special().tfrdc_mfv.pos(0)) << std::endl;
   conf.special().tfrdc_mfv.pos(atom)(coord) += epsilon; //epsilon from end of file check::check_forcefield
   conf.special().tfrdc_mfv.force = 0;
   
   term.calculate_interactions(topo, conf, sim); // from interaction/interaction.h set to 0?
-  std::cout << "mfv forces fd1: " << v2s(conf.special().tfrdc_mfv.force(0)) << std::endl;
-  std::cout << "                " << v2s(conf.special().tfrdc_mfv.force(1)) << std::endl;
 
   conf.current().energies.calculate_totals(); // from configuration/energy.cc
-
-  std::cout << "E_tfrdc_mfv1 " << conf.current().energies.tfrdc_mfv_total << " " << conf.current().energies.potential_total << " " << conf.current().energies.special_total << std::endl;
 
   double e1 = conf.current().energies.tfrdc_mfv_total;
 
@@ -157,28 +148,9 @@ double finite_diff_mfv(topology::Topology & topo,
   conf.special().tfrdc_mfv.force = 0;
 
   term.calculate_interactions(topo, conf, sim);
-  std::cout << "mfv forces fd2: " << v2s(conf.special().tfrdc_mfv.force(0)) << std::endl;
-  std::cout << "                " << v2s(conf.special().tfrdc_mfv.force(1)) << std::endl;
   conf.current().energies.calculate_totals();
 
   double e2 = conf.current().energies.tfrdc_mfv_total;
-
-  std::cout << "E_tfrdc_mfv2 " << conf.current().energies.tfrdc_mfv_total 
-            << " " <<  conf.current().energies.potential_total << " " 
-            << conf.current().energies.special_total << std::endl;
-
-  // just to check
-  set_initial_tfrdc_averages(conf);
-    std::cout << "mfv pos fd3: " << v2s(conf.special().tfrdc_mfv.pos(0)) << std::endl;
-  conf.special().tfrdc_mfv.force = 0;
-
-  term.calculate_interactions(topo, conf, sim);
-  std::cout << "mfv forces fd3: " << v2s(conf.special().tfrdc_mfv.force(0)) << std::endl;
-  std::cout << "                " << v2s(conf.special().tfrdc_mfv.force(1)) << std::endl;
-  conf.current().energies.calculate_totals();
-
-  std::cout << "E_tfrdc_mfv3 " << conf.current().energies.tfrdc_mfv_total << " " << conf.current().energies.potential_total << " " << conf.current().energies.special_total << std::endl;
-  std::cout << e1 << " - " << e2 << " eps=" << epsilon << std::endl;
 
   return (e2 - e1) / 2.0 / epsilon;
 
@@ -908,11 +880,7 @@ int check_tfrdc_mfv_interaction(topology::Topology & topo,
       at every step, so the averages have to be reset before calculating interactions
     */
     set_initial_tfrdc_averages(conf);
-    std::cout << std::endl;
-    std::cout << "mfv pos:     " << v2s(conf.special().tfrdc_mfv.pos(0)) << std::endl;
     term.calculate_interactions(topo, conf, sim);
-    std::cout << "mfv forces:     " << v2s(conf.special().tfrdc_mfv.force(0)) << std::endl;
-    std::cout << "                " << v2s(conf.special().tfrdc_mfv.force(1)) << std::endl;
 
 
       math::Vec f = conf.special().tfrdc_mfv.force(0);
@@ -920,11 +888,11 @@ int check_tfrdc_mfv_interaction(topology::Topology & topo,
       math::Vec finf;
 
       finf(0) = finite_diff_mfv(topo, conf, sim, term, i, 0, epsilon);
-      std::cout << "finf=" << finf(0) << " f=" << f(0) << std::endl;
-      //finf(1) = finite_diff_mfv(topo, conf, sim, term, i, 1, epsilon);
-      //finf(2) = finite_diff_mfv(topo, conf, sim, term, i, 2, epsilon);
-      //std::cout << "finf=" << finf(1) << " f=" << f(1) << std::endl;
-      //std::cout << "finf=" << finf(2) << " f=" << f(2) << std::endl;
+      finf(1) = finite_diff_mfv(topo, conf, sim, term, i, 1, epsilon);
+      finf(2) = finite_diff_mfv(topo, conf, sim, term, i, 2, epsilon);
+      /* std::cout << std::endl << finf(0) << " - " << f(0) << " delta: " << (f(0)-finf(0))/f(0) << std::endl;
+      std::cout << finf(1) << " - " << f(1) << " delta: " << (f(1)-finf(1))/f(1) << std::endl;
+      std::cout << finf(2) << " - " << f(2) << " delta: " << (f(2)-finf(2))/f(2) << std::endl; */
 
       CHECK_APPROX_EQUAL(f(0), finf(0), delta, res);
       CHECK_APPROX_EQUAL(f(1), finf(1), delta, res);

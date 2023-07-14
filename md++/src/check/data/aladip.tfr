@@ -1,0 +1,27 @@
+TITLE
+tensor-free RDC restraints
+END
+TFRDCCONV
+# FACFREQ   frequency conversion factor from input units to ps-1
+#           typically input is Hz and the factor is 10^-12
+# FACGYR    rgyr conversion factor from input units to e/u
+#           typically input is 10^6*rad/T*s and the factor is 0.010375
+#  FACFREQ        FACGYR
+   0.000000000001 0.010364272
+END
+TFRDCRESSPEC
+# DISH is the carbon-hydrogen, DISC the carbon-carbon distance. See util::virtual_type for valid virtual atom types.
+# R0 is the normalization distance
+# G1/G2 is the gyromagnetic ratio for nucleus 1/nucleus 2 in 10^6 rad /(T s)
+# D0 is the experimental RDC in Hz
+# DD0 is a deviation which is allowed
+# WTFRDC a weight factor (multiplied by the force constant specified in the input file
+#DISH  DISC
+  0.1   0.153
+# i   j   k   l   type  i    j    k   l  type  R0      G1      G2             D0      DD0   WTFRDC
+  1   0   0   0   0     2    0    0   0    0   0.153  67.262    67.262   -6.7028        1     1.0
+  6   0   0   0   0     7    0    0   0    0   0.153  67.262    67.262   -7.5074        1     1.0
+END
+TFRDCMOLAXIS
+ 11   0   0   0   0    4    0    0   0    0
+END
