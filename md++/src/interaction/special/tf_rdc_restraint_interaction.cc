@@ -497,9 +497,9 @@ int _magnetic_field_vector_sd
           }
 
           for(unsigned int a = 0; a < 3; ++a){
-            //dPdr(a) = 3 * costheta[l] * (r_ij[l](a) * inv_dh_ij * inv_d_ij[l]- costheta[l] * rh_ij(a) * inv_dh_ij * inv_dh_ij);
-            double prefix =  3 * costheta[l] * (inv_dh_ij * inv_d_ij[l]);
-            dPdr(a) = prefix * r_ij[l](a); // [1 / nm]
+            dPdr(a) = 3 * costheta[l] * (r_ij[l](a) * inv_dh_ij * inv_d_ij[l]- costheta[l] * rh_ij(a) * inv_dh_ij * inv_dh_ij);
+            //double prefix =  3 * costheta[l] * (inv_dh_ij * inv_d_ij[l]);
+            //dPdr(a) = prefix * r_ij[l](a); // [1 / nm]
           }
           
           DEBUG(9, "dP/dr" << math::v2s(dPdr));
