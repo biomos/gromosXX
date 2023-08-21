@@ -376,11 +376,18 @@ void configuration::Configuration::init(topology::Topology const & topo,
   }  
   special().eds.virial_tensor_endstates.resize(param.eds.numstates);
   current().energies.eds_vi.resize(param.eds.numstates);
-  current().energies.eds_eir.resize(param.eds.numstates);
+  current().perturbed_energy_derivatives.eds_vi.resize(param.eds.numstates);
   current().energies.eds_vi_special.resize(param.eds.numstates);
+  current().perturbed_energy_derivatives.eds_eir.resize(param.eds.numstates);
+  current().energies.eds_eir.resize(param.eds.numstates);
+  current().perturbed_energy_derivatives.eds_vi_special.resize(param.eds.numstates);
   old().energies.eds_vi.resize(param.eds.numstates);
-  old().energies.eds_eir.resize(param.eds.numstates);
+  old().perturbed_energy_derivatives.eds_vi.resize(param.eds.numstates);
   old().energies.eds_vi_special.resize(param.eds.numstates);
+  old().energies.eds_eir.resize(param.eds.numstates);
+  old().perturbed_energy_derivatives.eds_eir.resize(param.eds.numstates);
+  old().perturbed_energy_derivatives.eds_vi_special.resize(param.eds.numstates);
+
 
   // ORIOL_GAMD
   special().gamd.total_force.resize(param.gamd.igroups);

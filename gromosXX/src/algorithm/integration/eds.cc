@@ -128,6 +128,18 @@ int algorithm::EDS
           }
           DEBUG(9, "force current: " << i << " = " << math::v2s(conf.current().force(i)));
         }
+
+        // ... to lambda derivatives
+	      DEBUG(7, "TI derivative state: " << state << " is " << conf.current().perturbed_energy_derivatives.eds_vi[state]);
+        if (conf.current().energies.eds_vmix <= sim.param().eds.emin || conf.current().energies.eds_vmix >= sim.param().eds.emax) {
+          conf.current().perturbed_energy_derivatives.eds_vr +=
+           pi * conf.current().perturbed_energy_derivatives.eds_vi[state];
+        }
+        else {
+          conf.current().perturbed_energy_derivatives.eds_vr += 
+          pi * conf.current().perturbed_energy_derivatives.eds_vi[state] * fkfac;
+        }
+
         // ... to virial
         for (int a = 0; a < 3; ++a) {
           for (int b = 0; b < 3; ++b) {
@@ -408,6 +420,10 @@ int algorithm::EDS
           conf.current().force(i) += pi * conf.special().eds.force_endstates[state](i);
           DEBUG(9, "force current: " << i << " = " << math::v2s(conf.current().force(i)));
         }
+        // ... to lambda derivatives
+        conf.current().perturbed_energy_derivatives.eds_vr +=
+           pi * conf.current().perturbed_energy_derivatives.eds_vi[state];
+	
         // ... to virial
         for (int a = 0; a < 3; ++a) {
           for (int b = 0; b < 3; ++b) {
@@ -561,6 +577,11 @@ int algorithm::EDS
         for (unsigned int i = 0; i < topo.num_atoms(); i++) {
           conf.current().force(i) += pi * conf.special().eds.force_endstates[state](i);
         }
+	      // ... to lambda derivatives
+        // we only stored the totals, we put it in the first energy group of the lj.
+        conf.current().perturbed_energy_derivatives.lj_energy[0][0] +=
+           pi * conf.current().perturbed_energy_derivatives.eds_vr;
+
         // ... to virial
         for (int a = 0; a < 3; ++a) {
           for (int b = 0; b < 3; ++b) {
@@ -657,6 +678,11 @@ int algorithm::EDS
           conf.current().force(i) += pi * conf.special().eds.force_endstates[state](i);
           DEBUG(7, "force = " << math::v2s(conf.special().eds.force_endstates[state](i)));
         }
+        // ... to lambda derivatives
+        // we only stored the totals, we put it in the first energy group of the lj.
+        conf.current().perturbed_energy_derivatives.lj_energy[0][0] +=
+           pi * conf.current().perturbed_energy_derivatives.eds_vr;
+
         // ... to virial
         for (int a = 0; a < 3; ++a) {
           for (int b = 0; b < 3; ++b) {

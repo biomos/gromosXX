@@ -2,7 +2,6 @@
  * @file perturbed_nonbonded_outerloop.cc
  * (template) methods of Perturbed_Nonbonded_Outerloop.
  */
-
 #ifdef XXMPI
 #include <mpi.h>
 #endif
@@ -34,8 +33,6 @@
 #include "../../../util/debug.h"
 #include "../../../interaction/nonbonded/innerloop_template.h"
 
-#include "../../interaction.h"
-
 #undef MODULE
 #undef SUBMODULE
 #define MODULE interaction
@@ -55,7 +52,7 @@ interaction::Perturbed_Nonbonded_Outerloop
 //==================================================
 
 //==================================================
-// the perturbed interaction (outer) loops
+// the eds-perturbed interaction (outer) loops
 //==================================================
 
 /**
@@ -106,17 +103,15 @@ void interaction::Perturbed_Nonbonded_Outerloop
 	j_it != j_to;
 	++j_it){
       
-      DEBUG(10, "\tperturbed nonbonded_interaction: i "
-	    << i << " j " << *j_it);
-     // ANITA 
-     // include sim such that we can decide if extendedTI is required 
-     // innerloop.perturbed_lj_crf_innerloop(topo, conf, i, *j_it, storage, periodicity);
+      DEBUG(10, "\tperturbed nonbonded_interaction: i " << i << " j " << *j_it);
+      // include sim such that we can decide if extendedTI is required 
+      //innerloop.eds_lj_crf_innerloop(topo, conf, i, *j_it, storage, periodicity);
       innerloop.perturbed_lj_crf_innerloop(topo, conf, i, *j_it, storage, periodicity, sim);
     }
     
   }
 
-  DEBUG(7, "end of function perturbed nonbonded interaction");  
+  DEBUG(7, "end of function eds-perturbed nonbonded interaction");  
 }
 
 /**
@@ -140,76 +135,102 @@ void interaction::Perturbed_Nonbonded_Outerloop
 				simulation::Simulation & sim,
 				Storage & storage)
 {
-  DEBUG(7, "\tcalculate perturbed 1,4-interactions");
+  DEBUG(7, "\tcalculate eds-perturbed 1,4-interactions");
   
   math::Periodicity<t_interaction_spec::boundary_type> periodicity(conf.current().box);
   Perturbed_Nonbonded_Innerloop<t_interaction_spec, t_perturbation_details> innerloop(m_param);
   innerloop.init(sim);
-
-  // Chris:
-  // this is now (unfortunately) done in the innerloop, when we know which energy group we are in
-  // innerloop.set_lambda(topo.lambda(), topo.lambda_exp());
   
   topology::excl_cont_t::value_type::const_iterator it, to;
-  std::map<unsigned int, topology::Perturbed_Atom>::const_iterator 
-    mit=topo.perturbed_solute().atoms().begin(), 
-    mto=topo.perturbed_solute().atoms().end();
+  
+  std::map<unsigned int, topology::EDS_Perturbed_Atom>::const_iterator 
+    mit=topo.eds_perturbed_solute().atoms().begin(), 
+    mto=topo.eds_perturbed_solute().atoms().end();
   
   for(; mit!=mto; ++mit){
+    //int seq = mit->second.sequence_number();
+    //it = topo.one_four_pair(seq).begin();
+    //to = topo.one_four_pair(seq).end();
+    
     it = mit->second.one_four_pair().begin();
     to = mit->second.one_four_pair().end();
     
     for( ; it != to; ++it){
 
       innerloop.perturbed_one_four_interaction_innerloop
-	(topo, conf, mit->second.sequence_number(), *it, periodicity, sim); // ANITA: include sim
+	(topo, conf, mit->second.sequence_number(), *it, periodicity, sim);
 
     } // loop over 1,4 pairs
   } // loop over solute atoms
-}
+
+  
+  topology::excl_cont_t::value_type::const_iterator itt, tto;
+  std::map<unsigned int, topology::Perturbed_Atom>::const_iterator 
+    mitt=topo.perturbed_solute().atoms().begin(), 
+    mtto=topo.perturbed_solute().atoms().end();
+  
+  for(; mitt!=mtto; ++mitt){
+    itt = mitt->second.one_four_pair().begin();
+    tto = mitt->second.one_four_pair().end();
+    
+    for( ; itt != tto; ++itt){
+
+      innerloop.perturbed_one_four_interaction_innerloop
+	(topo, conf, mitt->second.sequence_number(), *itt, periodicity, sim);
+
+    } // loop over 1,4 pairs
+  } // loop over solute atoms
+}  
+
 
 /**
  * helper function to calculate the forces and energies from the
  * RF contribution of excluded atoms and self term
  */
 void interaction::Perturbed_Nonbonded_Outerloop
-::perturbed_RF_excluded_outerloop(topology::Topology & topo,
+::eds_RF_excluded_outerloop(topology::Topology & topo,
 				  configuration::Configuration & conf,
 				  simulation::Simulation & sim,
 				  Storage & storage)
 {
-  SPLIT_PERT_INNERLOOP(_perturbed_RF_excluded_outerloop,
+  SPLIT_PERT_INNERLOOP(_eds_RF_excluded_outerloop,
 		       topo, conf, sim, storage);
 }
 
 template<typename t_interaction_spec, typename  t_perturbation_details>
 void interaction::Perturbed_Nonbonded_Outerloop
-::_perturbed_RF_excluded_outerloop(topology::Topology & topo,
+::_eds_RF_excluded_outerloop(topology::Topology & topo,
 				   configuration::Configuration & conf,
 				   simulation::Simulation & sim,
 				   Storage & storage)
 {
 
-  DEBUG(7, "\tcalculate perturbed excluded RF interactions");
+  DEBUG(7, "\tcalculate eds-perturbed excluded RF interactions");
 
   math::Periodicity<t_interaction_spec::boundary_type> periodicity(conf.current().box);
   Perturbed_Nonbonded_Innerloop<t_interaction_spec, t_perturbation_details> innerloop(m_param);
   innerloop.init(sim);
-  // Chris:
-  // this is now (unfortunately) done in the innerloop, when we know which energy group we are in
-  // innerloop.set_lambda(topo.lambda(), topo.lambda_exp());
 
-  std::map<unsigned int, topology::Perturbed_Atom>::const_iterator
-    mit=topo.perturbed_solute().atoms().begin(),
-    mto=topo.perturbed_solute().atoms().end();
+  std::map<unsigned int, topology::EDS_Perturbed_Atom>::const_iterator
+    mit=topo.eds_perturbed_solute().atoms().begin(),
+    mto=topo.eds_perturbed_solute().atoms().end();
 
   DEBUG(9, "\tSize of perturbed atoms " 
-	<< unsigned(topo.perturbed_solute().atoms().size()));
+	<< unsigned(topo.eds_perturbed_solute().atoms().size()));
   
   for(; mit!=mto; ++mit){
-    innerloop.perturbed_RF_excluded_interaction_innerloop(topo, conf, mit, periodicity, sim); //ANITA
+    innerloop.eds_RF_excluded_interaction_innerloop(topo, conf, mit, periodicity, sim);
   }
+  
+  // pertubed atoms
+  std::map<unsigned int, topology::Perturbed_Atom>::const_iterator 
+    mitt=topo.perturbed_solute().atoms().begin(), 
+    mtto=topo.perturbed_solute().atoms().end();
+  for(; mitt!=mtto; ++mitt){
+    innerloop.perturbed_RF_excluded_interaction_innerloop(topo, conf, mitt, periodicity, sim);
+  }  
 }
+
 
 void interaction::Perturbed_Nonbonded_Outerloop
 ::perturbed_electric_field_outerloop(topology::Topology & topo,
@@ -539,5 +560,3 @@ void interaction::Perturbed_Nonbonded_Outerloop
     }
   }
 }
-
-

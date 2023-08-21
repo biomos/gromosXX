@@ -1,6 +1,6 @@
 /**
  * @file perturbed_nonbonded_innerloop.h
- * perturbed inner loop class of the nonbonded routines.
+ * eds-perturbed inner loop class of the nonbonded routines.
  */
 
 #ifndef INCLUDED_PERTURBED_NONBONDED_INNERLOOP_H
@@ -10,12 +10,12 @@ namespace interaction
 {
   /**
    * @class Perturbed_Nonbonded_Innerloop
-   * perturbed non bonded inner loop.
+   * eds-perturbed non bonded inner loop.
    */
   template<typename t_interaction_spec,
 	   typename t_perturbation_details>
   class Perturbed_Nonbonded_Innerloop:
-    public Perturbed_Nonbonded_Term
+    public Eds_Nonbonded_Term
   {
   public:
 
@@ -27,7 +27,7 @@ namespace interaction
     explicit Perturbed_Nonbonded_Innerloop(Nonbonded_Parameter &nbp): m_param(&nbp){}
     
     /**
-     * perturbed interaction
+     * eds-perturbed interaction
      */
     void perturbed_lj_crf_innerloop
     (
@@ -36,35 +36,48 @@ namespace interaction
      unsigned int i, unsigned int j,
      Storage &storage,
      Periodicity_type const & periodicity,
-     // ANITA
-     simulation::Simulation & sim //
+    simulation::Simulation & sim
      );
 
     /**
-     * perturbed 1-4 interaction
+     * eds-perturbed 1-4 interaction
      * (always shortrange)
      */
     void perturbed_one_four_interaction_innerloop
     (topology::Topology & topo, configuration::Configuration & conf,
      unsigned int i, unsigned int j,
      Periodicity_type const & periodicity,
-     // ANITA
-     simulation::Simulation & sim //
-     );
+     simulation::Simulation & sim);
     
     /**
+     * eds-perturbed RF interaction (solute).
+     * (always shortrange)
+     */
+    void eds_RF_excluded_interaction_innerloop
+    ( topology::Topology & topo,
+      configuration::Configuration & conf,
+      std::map<unsigned int, topology::EDS_Perturbed_Atom>::const_iterator const & mit,
+      Periodicity_type const & periodicity, simulation::Simulation & sim);
+
+     /**
      * perturbed RF interaction (solute).
      * (always shortrange)
      */
     void perturbed_RF_excluded_interaction_innerloop
-    ( topology::Topology & topo,
-      configuration::Configuration & conf,
-      std::map<unsigned int, topology::Perturbed_Atom>::const_iterator const & mit,
-      Periodicity_type const & periodicity,
-      // ANITA
-      simulation::Simulation & sim //
+    (topology::Topology & topo, configuration::Configuration & conf,
+        std::map<unsigned int, topology::Perturbed_Atom>::const_iterator const & mit,
+        Periodicity_type const & periodicity, simulation::Simulation & sim
     );
-    
+
+    /**
+     * Common part of eds rf and pertubed atoms rf
+     */
+    void eds_perturbed_RF_exclusions_loop
+    (topology::Topology & topo, 
+    configuration::Configuration & conf, 
+    int atom_i, const topology::excl_cont_t::value_type &exclusions, 
+    Periodicity_type const & periodicity, simulation::Simulation & sim);
+
     /**
      * Calculation of the perturbed electric field (polarisation)
      */
@@ -88,6 +101,7 @@ namespace interaction
      Periodicity_type const & periodicity
     );
 
+    
   protected:
 
     Nonbonded_Parameter * m_param;
