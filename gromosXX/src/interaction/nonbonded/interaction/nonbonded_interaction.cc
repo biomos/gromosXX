@@ -26,14 +26,11 @@
 
 #include "../../../interaction/nonbonded/interaction/nonbonded_term.h"
 #include "../../../interaction/nonbonded/interaction/perturbed_nonbonded_term.h"
-#include "../../../interaction/nonbonded/interaction/eds_nonbonded_term.h"
 
 #include "../../../interaction/nonbonded/interaction/perturbed_nonbonded_pair.h"
 #include "../../../interaction/nonbonded/interaction/perturbed_nonbonded_outerloop.h"
-#include "../../../interaction/nonbonded/interaction/eds_nonbonded_outerloop.h"
 
 #include "../../../interaction/nonbonded/interaction/perturbed_nonbonded_set.h"
-#include "../../../interaction/nonbonded/interaction/eds_nonbonded_set.h"
 
 #include "../../../interaction/nonbonded/interaction/nonbonded_interaction.h"
 
@@ -291,17 +288,14 @@ int interaction::Nonbonded_Interaction::init(topology::Topology & topo,
   DEBUG(15, "nonbonded_interaction::initialize");
   m_nonbonded_set.clear();
 
-  if (sim.param().perturbation.perturbation) {
+  // in case we do perturbation and eds at the same time, this is handled
+  // in the eds_outer_loop. So we start with checking for EDS.
+  if (sim.param().eds.eds || sim.param().perturbation.perturbation) {
+    DEBUG(16, "creating EDS-perturbed nonbonded set");
     for (int i = 0; i < m_set_size; ++i) {
       m_nonbonded_set.push_back(new Perturbed_Nonbonded_Set(*m_pairlist_algorithm,
-            m_parameter, i, m_set_size));
-    }
-  } else if (sim.param().eds.eds) {
-    DEBUG(16, "creating EDS nonbonded set");
-    for (int i = 0; i < m_set_size; ++i) {
-      m_nonbonded_set.push_back(new Eds_Nonbonded_Set(*m_pairlist_algorithm,
               m_parameter, i, m_set_size));
-      DEBUG(16, "pushed back EDS nonbonded set");
+      DEBUG(16, "pushed back EDS-perturbed nonbonded set");
     }
   } else {
     for (int i = 0; i < m_set_size; ++i) {

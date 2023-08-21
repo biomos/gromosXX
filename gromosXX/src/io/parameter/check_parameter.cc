@@ -1505,6 +1505,8 @@ int io::check_features(simulation::Simulation  &sim)
   fc.unlock("perturbation", "parallel_mpi");
   fc.unlock("perturbation", "parallel_omp");
   fc.unlock("perturbation", "innerloop_method_cuda");
+  fc.unlock("perturbation", "eds");
+  fc.unlock("perturbation", "aeds");
   fc.unlock("perturbation_scaling", "bond");
   fc.unlock("perturbation_scaling", "angle");
   fc.unlock("perturbation_scaling", "dihedral");

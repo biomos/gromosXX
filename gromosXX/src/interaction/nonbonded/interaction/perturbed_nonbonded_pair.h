@@ -65,7 +65,7 @@ namespace interaction
  
     Nonbonded_Parameter *m_param;
     Nonbonded_Term m_nonbonded_term;
-    Perturbed_Nonbonded_Term m_perturbed_nonbonded_term;
+    Eds_Nonbonded_Term m_perturbed_nonbonded_term;
 
   };
   
