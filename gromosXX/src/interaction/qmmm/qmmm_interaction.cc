@@ -44,12 +44,12 @@ interaction::QMMM_Interaction * interaction::QMMM_Interaction::qmmm_ptr = nullpt
 
 interaction::QMMM_Interaction::QMMM_Interaction() : Interaction("QMMM Interaction")
                                                   , m_parameter()
-                                                  , m_set_size(1)
-                                                  , m_rank(0)
-                                                  , m_size(1)
                                                   , m_worker(nullptr)
                                                   , m_qm_zone(nullptr)
                                                   , m_qm_buffer(nullptr)
+                                                  , m_set_size(1)
+                                                  , m_rank(0)
+                                                  , m_size(1)
   {
 #ifdef XXMPI
     m_rank = MPI::COMM_WORLD.Get_rank();
