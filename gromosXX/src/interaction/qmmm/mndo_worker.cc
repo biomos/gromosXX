@@ -224,7 +224,7 @@ int interaction::MNDO_Worker::process_input(const topology::Topology& topo
   this->write_qm_atom(ifs, 0, math::Vec(0.0));
 
   // Write link atom indices to be excluded in QM-MM electrostatics
-  ifs << link_atoms.rdbuf();
+  ifs << link_atoms.str();
   // Write capping atom indices - they are last in the geometry
   const unsigned qm_size = qm_zone.qm.size();
   const unsigned last_link = qm_zone.link.size() + qm_size;
