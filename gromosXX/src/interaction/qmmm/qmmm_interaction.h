@@ -172,21 +172,6 @@ namespace interaction {
     Nonbonded_Parameter m_parameter;
 
     /**
-     * number of sets to create (OpenMP size)
-     */
-    unsigned m_set_size;
-
-    /**
-     * MPI rank
-     */
-    unsigned m_rank;
-
-    /**
-     * MPI size
-     */
-    unsigned m_size;
-
-    /**
      * QM worker
      */
     QM_Worker * m_worker;
@@ -200,6 +185,21 @@ namespace interaction {
      * QM buffer zone
      */
     QM_Zone * m_qm_buffer;
+
+    /**
+     * number of sets to create (OpenMP size)
+     */
+    unsigned m_set_size;
+
+    /**
+     * MPI rank
+     */
+    unsigned m_rank;
+
+    /**
+     * MPI size
+     */
+    unsigned m_size;
 
   private:
     /**

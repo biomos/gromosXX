@@ -167,6 +167,30 @@ static int _calculate_crossdihedral_interactions(topology::Topology & topo,
     DEBUG(10, "crossdihedral energy= " << energy);
     conf.current().energies.crossdihedral_energy[topo.atom_energy_group()[d_it->a]]
                                                                       += energy;
+    // ORIOL_GAMD
+    // if atom 1 is in acceleration group
+    int gamd_group = topo.gamd_accel_group(d_it->a);
+    if(gamd_group){
+      DEBUG(10, "\tGAMD group is " << gamd_group);
+      conf.special().gamd.dihe_force[gamd_group][d_it->a] += fa;
+      conf.special().gamd.dihe_force[gamd_group][d_it->b] += fb;
+      conf.special().gamd.dihe_force[gamd_group][d_it->c] += fc;
+      conf.special().gamd.dihe_force[gamd_group][d_it->d] += fd;
+      conf.special().gamd.dihe_force[gamd_group][d_it->e] += fe;
+      conf.special().gamd.dihe_force[gamd_group][d_it->f] += ff;
+      conf.special().gamd.dihe_force[gamd_group][d_it->g] += fg;
+      conf.special().gamd.dihe_force[gamd_group][d_it->h] += fh;
+      conf.current().energies.gamd_dihedral_total[gamd_group] += energy;
+      //conf.current().energies.gamd_potential_total[gamd_group] += energy;
+      // virial
+      for(unsigned int i = 0; i < 3; ++i){
+        for(unsigned int j = 0; j < 3; ++j){
+          conf.special().gamd.virial_tensor_dihe[gamd_group](i, j) += rab(i) * fa(j) + rcb(i) * fc(j) + rdb(i) * fd(j);
+          conf.special().gamd.virial_tensor_dihe[gamd_group](i, j) += ref(i) * fe(j) + rgf(i) * fg(j) + rhf(i) * fh(j);
+        }
+      }
+
+    } // end gamd
 
     // dihedral angle monitoring.
     /*if(sim.param().print.monitor_dihedrals){

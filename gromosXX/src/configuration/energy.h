@@ -114,6 +114,13 @@ namespace configuration
      */
     double qm_total;
     /**
+     * shifting energy
+     */
+    std::vector<std::vector<double> > shift_extra_orig;
+    double shift_extra_orig_total;
+    std::vector<std::vector<double> > shift_extra_phys;
+    double shift_extra_phys_total;
+    /**
      * total energy of the "special" interactions
      */
     double special_total;
@@ -253,6 +260,12 @@ namespace configuration
      * energy of the reference state in eds
      */
     double eds_vr;
+
+    /**
+     * energy of the gromos reference state in eds with shifting
+     */
+    double eds_vr_shift_orig;
+    double eds_vr_shift_phys;
     
     /**
     *
@@ -285,6 +298,12 @@ namespace configuration
     std::vector<double> eds_vi;
 
     /**
+     * shifting energy of V_i states
+     */
+    std::vector<double> eds_vi_shift_extra_orig;
+    std::vector<double> eds_vi_shift_extra_phys;
+
+    /**
     * offset energy of the endstates in eds
     */
     std::vector<double> eds_eir;
@@ -293,6 +312,40 @@ namespace configuration
      * special energy of the endstates in eds
      */
     std::vector<double> eds_vi_special;
+
+    // ORIOL_GAMD
+    /**
+     * dihedral energie for each accel group (dihedral + improper + crossdihedral)
+     */
+    std::vector<double> gamd_dihedral_total;
+    /**
+     * total potential energie for each accel group without dihedral
+     */
+    std::vector<double> gamd_potential_total;
+    /**
+     * boosting potential used per accel group
+     */
+    std::vector<double> gamd_DV;
+    /**
+     * Energy threshold for the dihedral acceleration per accel group
+     */
+    std::vector<double> gamd_ED;
+    /**
+     * Energy threshold for the potential energy acceleration per accel group
+     */
+    std::vector<double> gamd_ET;
+    /**
+     * Force constant for the dihedral acceleration
+     */
+    std::vector<double> gamd_KD;
+    /**
+     * Force constant for the potential energy acceleration
+     */
+    std::vector<double> gamd_KT;
+    /**
+     * total boosting potential used
+     */
+    double gamd_DV_total;
            
     // this should be size of bath
     /**

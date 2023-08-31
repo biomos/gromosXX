@@ -171,7 +171,7 @@ int interaction::Extended_Grid_Pairlist_Algorithm::prepare
   
   set_cutoff(sim.param().pairlist.cutoff_short, 
 	     sim.param().pairlist.cutoff_long);
-  
+		 
   // first put the chargegroups into the box
   // _prepare_cog(conf, topo);
 
@@ -238,10 +238,8 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update
 {
   // empty the pairlist
   pairlist.clear();
-  if (begin == 0) // master
-    timer().start_subtimer("pairlist");
+  timer().start_subtimer("pairlist");
   
-  DEBUG(12, "Timer named: " << timer().name() << " begin:" << begin);
   DEBUG(10,"Extended_Grid_Pairlist_Algorithm::_update");
   std::vector<Grid::Particle> p_plane;
   std::vector<int> cell_start;
@@ -607,8 +605,7 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update
     } // mask levels
 
   } // the extended planes
-  if (begin == 0) // master
-    timer().stop_subtimer("pairlist");
+  timer().stop_subtimer("pairlist");
 }
 
 void interaction::Extended_Grid_Pairlist_Algorithm::_update_atomic
@@ -624,10 +621,8 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update_atomic
 {
   // empty the pairlist
   pairlist.clear();
-  if (begin == 0) // master
-    timer().start_subtimer("pairlist");
+  timer().start_subtimer("pairlist");
   
-  DEBUG(12, "Timer named: " << timer().name() << " begin:" << begin);
   DEBUG(10,"Extended_Grid_Pairlist_Algorithm::_update_atomic");
   std::vector<Grid::Particle> p_plane;
   std::vector<int> cell_start;
@@ -862,8 +857,7 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update_atomic
     } // mask levels
 
   } // the extended planes
-  if (begin == 0) // master
-    timer().stop_subtimer("pairlist");
+  timer().stop_subtimer("pairlist");
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -911,8 +905,7 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update_perturbed
 
   pairlist.clear();
   perturbed_pairlist.clear();
-  if (begin == 0) // master
-    timer().start_subtimer("perturbed pairlist");
+  timer().start_subtimer("perturbed pairlist");
 
   std::vector<Grid::Particle> p_plane;
   std::vector<int> cell_start;
@@ -1361,9 +1354,7 @@ void interaction::Extended_Grid_Pairlist_Algorithm::_update_perturbed
     } // mask levels
 
   } // the extended planes
-
-  if (begin == 0) // master
-    timer().stop_subtimer("perturbed pairlist");
+  timer().stop_subtimer("perturbed pairlist");
 }
 
 inline bool interaction::Extended_Grid_Pairlist_Algorithm::insert_pair

@@ -263,6 +263,10 @@ int interaction::Nonbonded_Set
               m_longrange_storage.energies.lj_energy[i][j];
       m_storage.energies.crf_energy[i][j] +=
               m_longrange_storage.energies.crf_energy[i][j];
+      m_storage.energies.shift_extra_orig[i][j] +=
+              m_longrange_storage.energies.shift_extra_orig[i][j];
+      m_storage.energies.shift_extra_phys[i][j] +=
+              m_longrange_storage.energies.shift_extra_phys[i][j];
       if (sim.param().force.force_groups) {
         for (unsigned int k = 0; k < num_atoms; ++k) {
           m_storage.force_groups[i][j][k] +=
@@ -271,11 +275,27 @@ int interaction::Nonbonded_Set
       } // if force groups
     }
   }
+  //ORIOL_GAMD check
+  if(sim.param().gamd.gamd){
+    const unsigned int nr_agroups = unsigned(sim.param().gamd.igroups);
+    for (unsigned int igroup = 0; igroup < nr_agroups; ++igroup) {
+      m_storage.energies.gamd_potential_total[igroup] += m_longrange_storage.energies.gamd_potential_total[igroup];
+      DEBUG(15, "Long range GAMD energys " << m_longrange_storage.energies.gamd_potential_total[igroup]);
+      m_storage.force_gamd[igroup] += m_longrange_storage.force_gamd[igroup];
+    }
+  }
 
   // add longrange virial
   if (sim.param().pcouple.virial){
     DEBUG(6, "\t(set) add long range virial");
 	m_storage.virial_tensor += m_longrange_storage.virial_tensor;
+  //ORIOL_GAMD
+  if(sim.param().gamd.gamd){
+    const unsigned int nr_agroups = unsigned(sim.param().gamd.igroups);
+    for (unsigned int igroup = 0; igroup < nr_agroups; ++igroup) {
+      m_storage.virial_tensor_gamd[igroup] += m_longrange_storage.virial_tensor_gamd[igroup];
+    }
+  }
   }
   stop_subtimer("longrange addition");
   DEBUG(6, "\t(set) DONE");
@@ -290,7 +310,6 @@ int interaction::Nonbonded_Set::update_configuration
 {
   const int ljs = conf.current().energies.lj_energy.size();
   configuration::Energy & e = conf.current().energies;
-  
   // use the IMPULSE method for multiple time stepping
   const unsigned int num_atoms = topo.num_atoms();
   math::VArray & f = conf.current().force;
@@ -312,9 +331,24 @@ int interaction::Nonbonded_Set::update_configuration
     }
     
   } else{ // no multistep
-    for(unsigned int i=0; i<num_atoms; ++i)
+    for(unsigned int i=0; i<num_atoms; ++i){
       f(i) += m_storage.force(i);
+    }
+      // ORIOL_GAMD
+    if (sim.param().gamd.gamd){
+      const unsigned int nr_agroups = unsigned(sim.param().gamd.igroups);
+      for (unsigned int igroup=0; igroup < nr_agroups; ++igroup){
+        DEBUG(5, "adding energy " << m_storage.energies.gamd_potential_total[igroup]);
+        e.gamd_potential_total[igroup] += m_storage.energies.gamd_potential_total[igroup];
+          for(unsigned int atomn=0; atomn<num_atoms; ++atomn){
+            conf.special().gamd.total_force[igroup](atomn) +=  m_storage.force_gamd[igroup](atomn);
+          } // loop over atoms
+      } // loop over acceleration groups
+    //energies
+    } // end if
+    DEBUG(5, "FINISHING UPATING FORCES");
   }
+
   
   // (MULTISTEP: and keep energy constant)
   for (int i = 0; i < ljs; ++i) {
@@ -323,6 +357,10 @@ int interaction::Nonbonded_Set::update_configuration
               m_storage.energies.lj_energy[i][j];
       e.crf_energy[i][j] +=
               m_storage.energies.crf_energy[i][j];
+      e.shift_extra_orig[i][j] +=
+              m_storage.energies.shift_extra_orig[i][j];
+      e.shift_extra_phys[i][j] +=
+              m_storage.energies.shift_extra_phys[i][j];
       e.ls_real_energy[i][j] +=
               m_storage.energies.ls_real_energy[i][j];
       e.ls_k_energy[i][j] +=
@@ -335,7 +373,9 @@ int interaction::Nonbonded_Set::update_configuration
       }
     }
     e.self_energy[i] += m_storage.energies.self_energy[i];
+
   }
+
 
   // ANITA
   const unsigned int nr_lambdas = unsigned(m_storage.energies.A_lj_total.size());
@@ -352,7 +392,8 @@ int interaction::Nonbonded_Set::update_configuration
             m_storage.energies.B_crf_energy[i][j][k];
       }
     }
-  } //ANITA 
+  } //ANITA
+
 
   // no components in lattice sum methods!
   
@@ -367,7 +408,24 @@ int interaction::Nonbonded_Set::update_configuration
   if (sim.param().pcouple.virial){
     DEBUG(7, "\tadd set virial");
   	conf.current().virial_tensor += m_storage.virial_tensor;
-  }
+      // ORIOL_GAMD
+      DEBUG(5, "UPDATE VIRIAL");
+      if (sim.param().gamd.gamd){
+        const unsigned int nr_agroups = unsigned(sim.param().gamd.igroups);
+        for (unsigned int igroup=0; igroup < nr_agroups; ++igroup){
+            for (int a = 0; a < 3; ++a) {
+               for (int b = 0; b < 3; ++b) {
+                 conf.special().gamd.virial_tensor[igroup](b, a) +=  m_storage.virial_tensor_gamd[igroup](b, a);
+                 DEBUG(5, "GROUP is " << igroup);
+                 DEBUG(5, conf.special().gamd.virial_tensor[igroup](b, a));
+                 DEBUG(5, conf.special().gamd.virial_tensor_dihe[igroup](b, a));
+                 DEBUG(5, conf.current().virial_tensor(b,a));
+               }
+            }
+            DEBUG(5, "VIRIAL CICLED COMPLETED");
+        } // loop over acceleration groups
+      } // end if
+  } // end virial if
   
   return 0;
 }
@@ -433,6 +491,20 @@ int interaction::Nonbonded_Set
     resize(unsigned(conf.current().energies.bond_energy.size()),
 	   unsigned(conf.current().energies.kinetic_energy.size()),
            unsigned(sim.param().precalclam.nr_lambdas)); //ANITA
+
+  // ORIOL_GAMD
+  m_storage.force_gamd.resize(sim.param().gamd.igroups);
+  m_storage.virial_tensor_gamd.resize(sim.param().gamd.igroups);
+  m_storage.energies.gamd_potential_total.resize(sim.param().gamd.igroups);
+
+  m_longrange_storage.force_gamd.resize(sim.param().gamd.igroups);
+  m_longrange_storage.virial_tensor_gamd.resize(sim.param().gamd.igroups);
+  m_longrange_storage.energies.gamd_potential_total.resize(sim.param().gamd.igroups);
+
+  for(unsigned int i = 0; i < m_storage.force_gamd.size(); i++){
+      m_storage.force_gamd[i].resize(topo.num_atoms());
+      m_longrange_storage.force_gamd[i].resize(topo.num_atoms());
+  }
   
   if (sim.param().force.force_groups) {
     m_storage.force_groups.resize(unsigned(conf.current().energies.bond_energy.size()),

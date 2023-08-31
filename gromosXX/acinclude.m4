@@ -475,7 +475,7 @@ AC_DEFUN([AM_PATH_XTB],[
       dnl check for lib with these settings and add flags automatically
       AC_CHECK_LIB([xtb], [xtb_getAPIVersion],, AC_MSG_ERROR([xtb library not found or not functional.]))
       AC_MSG_NOTICE([Compiling with XTB support.])
-      AC_DEFINE([WITH_XTB],[1],[XTB QM Library])
+      AC_DEFINE([XTB],[1],[XTB QM Library])
       with_xtb=yes
     ],
     [

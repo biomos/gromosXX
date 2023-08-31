@@ -90,8 +90,25 @@ static int _calculate_quartic_bond_interactions(topology::Topology &topo,
 	   topo.atom_energy_group()[b_it->i]);
     
     conf.current().energies.
-      bond_energy[topo.atom_energy_group()
-		  [b_it->i]] += e;
+      bond_energy[topo.atom_energy_group()[b_it->i]] += e;
+
+    // ORIOL_GAMD
+    if(sim.param().gamd.gamd){
+      unsigned int gamd_group = topo.gamd_accel_group(b_it->i);
+      std::vector<unsigned int> key = {gamd_group, gamd_group};
+      unsigned int igroup = topo.gamd_interaction_group(key);
+      DEBUG(10, "\tGAMD interaction group is " << igroup);
+      conf.special().gamd.total_force[igroup](b_it->i) += f;
+      conf.special().gamd.total_force[igroup](b_it->j) -= f;
+      conf.current().energies.gamd_potential_total[igroup] += e;
+      // virial
+      for(int a=0; a<3; ++a){
+        for(int bb=0; bb < 3; ++bb){
+          conf.special().gamd.virial_tensor[igroup](a, bb) +=  v(a) * f(bb);
+        }
+      }
+
+    } // end gamd
   }
  
   return 0;

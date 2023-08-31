@@ -94,7 +94,7 @@ int main(int argc, char *argv[]){
 	 << "bae" << "bag" << "posresspec" << "refpos" <<"distrest" 
 	 << "angrest" << "dihrest"
          << "jval" << "xray" << "sym" << "order" << "rdc" << "lud" << "led" << "bsleus" 
-         << "anatrj" << "print" << "friction" << "qmmm" << "version" << "develop";
+         << "anatrj" << "print" << "friction" << "qmmm" << "version" << "develop" << "gamd";
   
   
   std::string usage;

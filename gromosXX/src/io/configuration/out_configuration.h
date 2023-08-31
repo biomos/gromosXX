@@ -269,6 +269,11 @@ namespace io {
             simulation::Simulation const &sim,
             std::ostream &os);
 
+     // ORIOL_GAMD
+     void _print_gamdstat(configuration::Configuration const &conf,
+            simulation::Simulation const &sim,
+            std::ostream &os);
+
     /**
      * perturbation (slow groth) restart data
      */

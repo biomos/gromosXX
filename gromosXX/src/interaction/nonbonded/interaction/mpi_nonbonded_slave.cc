@@ -28,13 +28,10 @@
 
 #include "../../../interaction/nonbonded/interaction/nonbonded_term.h"
 #include "../../../interaction/nonbonded/interaction/perturbed_nonbonded_term.h"
-#include "../../../interaction/nonbonded/interaction/eds_nonbonded_term.h"
 
 #include "../../../interaction/nonbonded/interaction/perturbed_nonbonded_pair.h"
 #include "../../../interaction/nonbonded/interaction/perturbed_nonbonded_outerloop.h"
-#include "../../../interaction/nonbonded/interaction/eds_nonbonded_outerloop.h"
 #include "../../../interaction/nonbonded/interaction/perturbed_nonbonded_set.h"
-#include "../../../interaction/nonbonded/interaction/eds_nonbonded_set.h"
 
 #include "../../../interaction/nonbonded/interaction/nonbonded_interaction.h"
 #include "../../../interaction/nonbonded/interaction/mpi_nonbonded_slave.h"
@@ -226,7 +223,7 @@ int interaction::MPI_Nonbonded_Slave::calculate_interactions
       
     }
 
-    // ANITA
+    // for extended TI:
     unsigned int nr_lambdas = sim.param().precalclam.nr_lambdas;
     for(unsigned int l = 0; l < nr_lambdas; ++l){
       std::vector<double> A_lj_scratch(ljs*ljs);
@@ -328,6 +325,10 @@ int interaction::MPI_Nonbonded_Slave::calculate_interactions
       assert(m_nonbonded_set[0]->storage().virial_tensor_endstates.size() == numstates);
       assert(m_nonbonded_set[0]->storage().force_endstates.size() == numstates);
       assert(m_nonbonded_set[0]->storage().energies.eds_vi.size() == numstates);
+      assert(m_nonbonded_set[0]->storage().perturbed_energy_derivatives.eds_vi.size() == numstates); 
+
+      assert(m_nonbonded_set[0]->storage().energies.eds_vi_shift_extra_orig.size() == numstates);
+      assert(m_nonbonded_set[0]->storage().energies.eds_vi_shift_extra_phys.size() == numstates);
       
       // reduce energies of endstates
       MPI_Reduce(&m_nonbonded_set[0]->storage().energies.eds_vi[0],
@@ -336,6 +337,30 @@ int interaction::MPI_Nonbonded_Slave::calculate_interactions
               MPI::DOUBLE,
               MPI::SUM,
                sim.mpiControl().masterID, sim.mpiControl().comm);
+
+      // reduce extra energies of endstates
+      MPI_Reduce(&m_nonbonded_set[0]->storage().energies.eds_vi_shift_extra_orig[0],
+              NULL,
+              numstates,
+              MPI::DOUBLE,
+              MPI::SUM,
+               sim.mpiControl().masterID, sim.mpiControl().comm);
+
+      // reduce extra energies of endstates
+      MPI_Reduce(&m_nonbonded_set[0]->storage().energies.eds_vi_shift_extra_phys[0],
+              NULL,
+              numstates,
+              MPI::DOUBLE,
+              MPI::SUM,
+               sim.mpiControl().masterID, sim.mpiControl().comm);
+      
+      // reduce perturbed energy derivatives of endstates
+      MPI::COMM_WORLD.Reduce(&m_nonbonded_set[0]->storage().perturbed_energy_derivatives.eds_vi[0],
+              NULL,
+              numstates,
+              MPI::DOUBLE,
+              MPI::SUM,
+              0);
       
       // reduce virial tensors of endstates
       if (sim.param().pcouple.virial){
@@ -389,6 +414,33 @@ int interaction::MPI_Nonbonded_Slave::calculate_interactions
       MPI_Reduce(&m_nonbonded_set[0]->storage().energies.ls_kspace_total,
             NULL, 1, MPI::DOUBLE, MPI::SUM,  sim.mpiControl().masterID, sim.mpiControl().comm);
     }
+
+    if(sim.param().force.interaction_function == simulation::lj_shifted_crf_corr_func){
+      std::vector<double> shift_extra_orig_scratch(ljs*ljs);
+      std::vector<double> shift_extra_phys_scratch(ljs*ljs);
+      
+      for(unsigned int i = 0; i < ljs; ++i){
+        for(unsigned int j = 0; j < ljs; ++j){
+          shift_extra_orig_scratch[i*ljs + j] = 
+            m_nonbonded_set[0]->storage().energies.shift_extra_orig[i][j];
+          shift_extra_phys_scratch[i*ljs + j] = 
+            m_nonbonded_set[0]->storage().energies.shift_extra_phys[i][j];
+        }
+      }
+      MPI_Reduce(&shift_extra_orig_scratch[0],
+           NULL,
+           ljs * ljs,
+           MPI::DOUBLE,
+           MPI::SUM,
+           sim.mpiControl().masterID, sim.mpiControl().comm);
+
+      MPI_Reduce(&shift_extra_phys_scratch[0],
+           NULL,
+           ljs * ljs,
+           MPI::DOUBLE,
+           MPI::SUM,
+           sim.mpiControl().masterID, sim.mpiControl().comm);
+    }
       
     ////////////////////////////////////////////////////
     // end of multiple time stepping: calculate
@@ -435,14 +487,10 @@ int interaction::MPI_Nonbonded_Slave::init
   DEBUG(15, "MPI_Nonbonded_Slave::initialize");
   m_nonbonded_set.clear();
 
-  if (sim.param().perturbation.perturbation){
-    
-    // only one set per MPI process
+  // in case we do perturbation and eds at the same time, this is handled
+  // in the eds_outer_loop. So we start with checking for EDS.
+  if (sim.param().eds.eds || sim.param().perturbation.perturbation){
     m_nonbonded_set.push_back(new Perturbed_Nonbonded_Set(*m_pairlist_algorithm,
-							  m_parameter, rank, num_threads));
-  }
-  else if (sim.param().eds.eds){
-    m_nonbonded_set.push_back(new Eds_Nonbonded_Set(*m_pairlist_algorithm,
             m_parameter, rank, num_threads));
   }
   else{

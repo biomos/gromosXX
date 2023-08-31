@@ -795,6 +795,42 @@ namespace topology
     std::vector<bool> & is_eds_perturbed() { return m_is_eds_perturbed;}
 
     /**
+     * ORIOL_GAMD
+     * list of acceleration groups of the gaussian accelerated md atoms
+     */
+    std::vector<int> & gamd_accel_group(){ return m_gamd_accel_group;}
+
+    /** 
+     * ORIOL_GAMD
+     * Map of interactions and where should they be saved based on the groups that define them
+     */
+    std::map< std::vector<unsigned int>, unsigned int> & get_gamd_interaction_pairs(){ return m_gamd_interaction_pairs;}
+    /** in which acceleration group is the atom (index)
+     * returns 0 if it does not exist
+     */
+     unsigned int gamd_interaction_group(std::vector<unsigned int> key)const{
+       std::map< std::vector<unsigned int>, unsigned int>::const_iterator searched = m_gamd_interaction_pairs.find(key);
+       if (searched != m_gamd_interaction_pairs.end()) {
+          return m_gamd_interaction_pairs.at(key);
+       } else {
+         return 0;
+       }
+     };
+
+    /**
+     * in which acceleration group is the atom (index)
+     * returns 0 if not accelerated
+     **/
+    int gamd_accel_group(unsigned int const i)const {
+      //assert(i < m_gamd_accel_group.size());
+      if (i < m_gamd_accel_group.size()){
+        return m_gamd_accel_group[i];
+      }
+      else {
+        return 0;
+      }
+    }
+    /**
      * is the atom polarisable?
      */
     bool is_polarisable(unsigned int const i)const {
@@ -1599,6 +1635,12 @@ namespace topology
      * is the atom eds-perturbed?
      */
     std::vector<bool> m_is_eds_perturbed;
+
+    /**
+     * ORIOL_GAMD
+     **/
+    std::vector<int> m_gamd_accel_group;
+    std::map< std::vector<unsigned int>, unsigned int> m_gamd_interaction_pairs;
 
     /**
      * is the atom polarisable?

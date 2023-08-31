@@ -60,12 +60,19 @@ sasa_total(0.0),
 sasa_volume_total(0.0),
 nn_valid(0.0),
 eds_vr(0.0),
+eds_vr_shift_orig(0.0),
+eds_vr_shift_phys(0.0),
 eds_vmix(0.0),
 eds_emax(0.0),
 eds_emin(0.0),
 eds_globmin(0.0),
 eds_globminfluc(0.0),
 entropy_term(0.0),
+shift_extra_orig(0.0),
+shift_extra_phys(0.0),
+shift_extra_orig_total(0.0),
+shift_extra_phys_total(0.0),
+gamd_DV_total(0.0),
 m_ewarn(1E99){         
 }
 
@@ -113,16 +120,33 @@ void configuration::Energy::zero(bool potential, bool kinetic)
     sasa_volume_total = 0.0;
     nn_valid = 0.0;
     qm_total = 0.0;
+    shift_extra_orig.assign(shift_extra_orig.size(), std::vector<double>(shift_extra_orig.size(), 0.0));
+    shift_extra_phys.assign(shift_extra_phys.size(), std::vector<double>(shift_extra_phys.size(), 0.0));
+    shift_extra_orig_total = 0;
+    shift_extra_phys_total = 0;
     eds_vr = 0.0;
+    eds_vr_shift_orig = 0.0;
+    eds_vr_shift_phys = 0.0;
     eds_vmix = 0.0;
     eds_emax = 0.0;
     eds_emin = 0.0;
     eds_globmin = 0.0;
     eds_globminfluc = 0.0;
     eds_vi.assign(eds_vi.size(), 0.0);
+    eds_vi_shift_extra_orig.assign(eds_vi.size(), 0.0);
+    eds_vi_shift_extra_phys.assign(eds_vi.size(), 0.0);
     eds_eir.assign(eds_eir.size(), 0.0);
     eds_vi_special.assign(eds_vi_special.size(), 0.0);
-    
+    //ORIOL_GAMD
+    gamd_DV_total = 0.0;
+    gamd_DV.assign(gamd_DV.size(), 0.0);
+    gamd_dihedral_total.assign(gamd_dihedral_total.size(), 0.0);
+    gamd_potential_total.assign(gamd_potential_total.size(), 0.0);
+    gamd_ED.assign(gamd_ED.size(), 0.0);
+    gamd_ET.assign(gamd_ET.size(), 0.0);
+    gamd_KD.assign(gamd_KD.size(), 0.0);
+    gamd_KT.assign(gamd_KT.size(), 0.0);
+    gamd_DV.assign(gamd_DV.size(), 0.0);    
     // ANITA
     // total A_lj for each lambda set to zero
     A_lj_total.assign(A_lj_total.size(),0.0);
@@ -229,6 +253,8 @@ void configuration::Energy::resize(unsigned int energy_groups, unsigned int mult
   
     lj_energy.resize(energy_groups);
     crf_energy.resize(energy_groups);
+    shift_extra_orig.resize(energy_groups);
+    shift_extra_phys.resize(energy_groups);
     ls_real_energy.resize(energy_groups);
     ls_k_energy.resize(energy_groups);
 
@@ -320,6 +346,8 @@ int configuration::Energy::calculate_totals()
   crossdihedral_total = 0.0;
   lj_total = 0.0;
   crf_total = 0.0;
+  shift_extra_orig_total = 0.0;
+  shift_extra_phys_total = 0.0;
   ls_total = 0.0;
   ls_realspace_total = 0.0;
   //ls_kspace_total = 0.0;
@@ -369,7 +397,10 @@ int configuration::Energy::calculate_totals()
     }
   }
           
-  //  
+  //ORIOL_GAMD
+  for(unsigned int i=0; i<gamd_DV.size(); ++i){
+    gamd_DV_total += gamd_DV[i];
+  }  
   
   for(size_t i=0; i<kinetic_energy.size(); ++i){
     if (kinetic_energy[i] > m_ewarn){
@@ -388,11 +419,15 @@ int configuration::Energy::calculate_totals()
         crf_energy[j][i] += crf_energy[i][j];
         ls_real_energy[j][i] += ls_real_energy[i][j];
         ls_k_energy[j][i] += ls_k_energy[i][j];
+        shift_extra_orig[j][i] += shift_extra_orig[i][j];
+        shift_extra_phys[j][i] += shift_extra_phys[i][j];
         
         lj_energy[i][j] = 0.0;
         crf_energy[i][j] = 0.0;
         ls_real_energy[i][j] = 0.0;
         ls_k_energy[i][j] = 0.0;
+        shift_extra_orig[i][j] = 0.0;
+        shift_extra_phys[i][j] = 0.0;
       }
 
       if (lj_energy[i][j] > m_ewarn){
@@ -407,10 +442,18 @@ int configuration::Energy::calculate_totals()
       if (ls_k_energy[i][j] > m_ewarn){
         std::cout << "EWARN: crf energy " << i+1 << ", " << j+1 << " = " << ls_k_energy[j][i] << "\n";
       }
+      if (shift_extra_orig[i][j] > m_ewarn){
+        std::cout << "EWARN: shift extra energy orig " << i+1 << ", " << j+1 << " = " << shift_extra_orig[j][i] << "\n";
+      }
+      if (shift_extra_phys[i][j] > m_ewarn){
+        std::cout << "EWARN: shift extra energy phys " << i+1 << ", " << j+1 << " = " << shift_extra_phys[j][i] << "\n";
+      }
       
       lj_total   += lj_energy[j][i];
       crf_total  += crf_energy[j][i];
       ls_realspace_total   += ls_real_energy[j][i];
+      shift_extra_orig_total += shift_extra_orig[j][i];
+      shift_extra_phys_total += shift_extra_phys[j][i];
       //ls_kspace_total  += ls_k_energy[j][i];
     }
 
@@ -517,7 +560,7 @@ int configuration::Energy::calculate_totals()
     + angrest_total + dihrest_total
     + constraints_total + jvalue_total + xray_total
     + eds_vr + leus_total + sasa_total + sasa_volume_total + oparam_total
-    + symrest_total + bsleus_total + rdc_total;
+    + symrest_total + bsleus_total + rdc_total + gamd_DV_total;
   
   total = potential_total + kinetic_total + special_total;
 
@@ -587,6 +630,11 @@ double configuration::Energy::get_energy_by_index(const unsigned int & index) {
     case 43 : return rdc_total;
     case 44 : return angrest_total;
     case 45 : return nn_valid;
+    case 46 : return total + shift_extra_orig_total;
+    case 47 : return total + shift_extra_phys_total;
+    case 48 : return eds_vr_shift_orig;
+    case 49 : return eds_vr_shift_phys;
+    case 50 : return gamd_DV_total;
   }
   return 0.0;
 }

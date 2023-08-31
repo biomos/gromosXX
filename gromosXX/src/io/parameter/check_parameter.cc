@@ -359,6 +359,7 @@ int io::check_features(simulation::Simulation  &sim)
   // PRECALCLAM block
   add("precalculate_lambdas","precalculate at other lambdas", param.precalclam.nr_lambdas > 0);
   // end ANITA
+  add("gamd", "gaussian accelerated MD", param.gamd.gamd == 1);
 
   // FORCE block
   add("bond", "bond interaction", param.force.bond == 1);
@@ -367,6 +368,8 @@ int io::check_features(simulation::Simulation  &sim)
   add("improper", "improper dihedral interaction", param.force.improper == 1);
   add("crf", "coulomb reaction field interaction", param.force.nonbonded_crf == 1);
   add("lj", "Lennard-Jones interaction", param.force.nonbonded_vdw == 1);
+  // NONBONDED block
+  add("shifted_crf", "shifted reaction-field correction", param.nonbonded.use_shift == 1);
   // COMTRANSROT block
   add("com_removal", "COM motion removal", param.centreofmass.remove_rot ||
                                            param.centreofmass.remove_trans);
@@ -1502,6 +1505,8 @@ int io::check_features(simulation::Simulation  &sim)
   fc.unlock("perturbation", "parallel_mpi");
   fc.unlock("perturbation", "parallel_omp");
   fc.unlock("perturbation", "innerloop_method_cuda");
+  fc.unlock("perturbation", "eds");
+  fc.unlock("perturbation", "aeds");
   fc.unlock("perturbation_scaling", "bond");
   fc.unlock("perturbation_scaling", "angle");
   fc.unlock("perturbation_scaling", "dihedral");
@@ -4789,6 +4794,138 @@ int io::check_features(simulation::Simulation  &sim)
   fc.unlock("virtualatoms", "xray");
   fc.unlock("virtualatoms", "force_groups");
   //fc.unlock("virtualatoms", "qmmm");
+
+  //shifted reaction-field correction
+  fc.unlock("shifted_crf", "solute");
+  fc.unlock("shifted_crf", "solvent");
+  fc.unlock("shifted_crf", "solute");
+  fc.unlock("shifted_crf", "solvent_only");
+  fc.unlock("shifted_crf", "solute_constraint_off");
+  fc.unlock("shifted_crf", "solute_shake");
+  fc.unlock("shifted_crf", "solute_lincs");
+  fc.unlock("shifted_crf", "solute_flexshake");
+  fc.unlock("shifted_crf", "solvent_constraint_off");
+  fc.unlock("shifted_crf", "solvent_shake");
+  fc.unlock("shifted_crf", "solvent_lincs");
+  fc.unlock("shifted_crf", "solvent_settle");
+  fc.unlock("shifted_crf", "pressure_calculation");
+  fc.unlock("shifted_crf", "pressure_scale_berendsen");
+  fc.unlock("shifted_crf", "virial_off");
+  fc.unlock("shifted_crf", "virial_molecular");
+  fc.unlock("shifted_crf", "vacuum");
+  fc.unlock("shifted_crf", "pbc_r");
+  fc.unlock("shifted_crf", "amber");
+  //fc.unlock("shifted_crf", "perturbation"); -> not yet implemented
+  //fc.unlock("shifted_crf", "perturbation_scaling"); -> not yet implemented
+  fc.unlock("shifted_crf", "bond");
+  fc.unlock("shifted_crf", "angle");
+  fc.unlock("shifted_crf", "dihedral");
+  fc.unlock("shifted_crf", "improper");
+  fc.unlock("shifted_crf", "crf");
+  fc.unlock("shifted_crf", "lj");
+  fc.unlock("shifted_crf", "com_removal");
+  fc.unlock("shifted_crf", "rf_excluded");
+  fc.unlock("shifted_crf", "pairlist_standard");
+  fc.unlock("shifted_crf", "pairlist_grid");
+  fc.unlock("shifted_crf", "pairlist_gridcell");
+  fc.unlock("shifted_crf", "cutoff_atomic");
+  //fc.unlock("shifted_crf", "cutoff_cg"); -> shifted RF is not intended for CG cutoff
+  fc.unlock("shifted_crf", "temp_berendsen");
+  fc.unlock("shifted_crf", "temp_nosehoover");
+  fc.unlock("shifted_crf", "temp_nosehoover_chains");
+  fc.unlock("shifted_crf", "position_rest");
+  fc.unlock("shifted_crf", "position_const");
+  fc.unlock("shifted_crf", "position_const_scaled");
+  fc.unlock("shifted_crf", "distance_rest");
+  fc.unlock("shifted_crf", "dihedral_rest");
+  fc.unlock("shifted_crf", "dihedral_const");
+  fc.unlock("shifted_crf", "innerloop_method_off");
+  fc.unlock("shifted_crf", "innerloop_method_generic");
+  //fc.unlock("shifted_crf", "innerloop_method_hardcode");
+  //fc.unlock("shifted_crf", "innerloop_method_table");
+  //fc.unlock("shifted_crf", "innerloop_method_cuda");
+  fc.unlock("shifted_crf", "innerloop_solvent_topology");
+  //fc.unlock("shifted_crf", "innerloop_solvent_spc");
+  fc.unlock("shifted_crf", "repex_temp");
+  fc.unlock("shifted_crf", "repex_lambda");
+  fc.unlock("shifted_crf", "multicell");
+  fc.unlock("shifted_crf", "analysis");
+  fc.unlock("shifted_crf", "no_integration");
+  fc.unlock("shifted_crf", "stochdyn");
+  fc.unlock("shifted_crf", "multistep");
+  fc.unlock("shifted_crf", "multistep_boost");
+  fc.unlock("shifted_crf", "random_gromos");
+  fc.unlock("shifted_crf", "random_gsl");
+  fc.unlock("shifted_crf", "eds");
+  fc.unlock("shifted_crf", "parallel_mpi");
+  fc.unlock("shifted_crf", "parallel_omp");
+  fc.unlock("shifted_crf", "mult_energy_groups");
+  // Gaussian accelerated MD
+  fc.unlock("gamd", "solute");
+  fc.unlock("gamd", "solvent");
+  fc.unlock("gamd", "solute");
+  fc.unlock("gamd", "solvent_only");
+  fc.unlock("gamd", "solute_constraint_off");
+  fc.unlock("gamd", "solute_shake");
+  fc.unlock("gamd", "solute_lincs");
+  fc.unlock("gamd", "solute_flexshake");
+  fc.unlock("gamd", "solvent_constraint_off");
+  fc.unlock("gamd", "solvent_shake");
+  fc.unlock("gamd", "solvent_lincs");
+  fc.unlock("gamd", "solvent_settle");
+  fc.unlock("gamd", "pressure_calculation");
+  fc.unlock("gamd", "pressure_scale_berendsen");
+  fc.unlock("gamd", "virial_off");
+  fc.unlock("gamd", "virial_molecular");
+  fc.unlock("gamd", "vacuum");
+  fc.unlock("gamd", "pbc_r");
+  fc.unlock("gamd", "amber");
+  fc.unlock("gamd", "perturbation"); 
+  fc.unlock("gamd", "perturbation_scaling"); 
+  fc.unlock("gamd", "bond");
+  fc.unlock("gamd", "angle");
+  fc.unlock("gamd", "dihedral");
+  fc.unlock("gamd", "improper");
+  fc.unlock("gamd", "crf");
+  fc.unlock("gamd", "lj");
+  fc.unlock("gamd", "com_removal");
+  fc.unlock("gamd", "rf_excluded");
+  fc.unlock("gamd", "pairlist_standard");
+  fc.unlock("gamd", "pairlist_grid");
+  fc.unlock("gamd", "pairlist_gridcell");
+  fc.unlock("gamd", "cutoff_atomic");
+  fc.unlock("gamd", "cutoff_cg"); 
+  fc.unlock("gamd", "temp_berendsen");
+  fc.unlock("gamd", "temp_nosehoover");
+  fc.unlock("gamd", "temp_nosehoover_chains");
+  fc.unlock("gamd", "position_rest");
+  fc.unlock("gamd", "position_const");
+  fc.unlock("gamd", "position_const_scaled");
+  fc.unlock("gamd", "distance_rest");
+  fc.unlock("gamd", "dihedral_rest");
+  fc.unlock("gamd", "dihedral_const");
+  fc.unlock("gamd", "innerloop_method_off");
+  //fc.unlock("gamd", "innerloop_method_generic");
+  //fc.unlock("gamd", "innerloop_method_hardcode");
+  //fc.unlock("gamd", "innerloop_method_table");
+  fc.unlock("gamd", "innerloop_method_cuda");
+  fc.unlock("gamd", "innerloop_solvent_topology");
+  //fc.unlock("gamd", "innerloop_solvent_spc");
+  fc.unlock("gamd", "repex_temp");
+  fc.unlock("gamd", "repex_lambda");
+  fc.unlock("gamd", "multicell");
+  fc.unlock("gamd", "analysis");
+  fc.unlock("gamd", "no_integration");
+  fc.unlock("gamd", "stochdyn");
+  fc.unlock("gamd", "multistep");
+  fc.unlock("gamd", "multistep_boost");
+  fc.unlock("gamd", "random_gromos");
+  fc.unlock("gamd", "random_gsl");
+  fc.unlock("gamd", "eds");
+  fc.unlock("gamd", "parallel_mpi");
+  fc.unlock("gamd", "parallel_omp");
+  fc.unlock("gamd", "mult_energy_groups");
+  //fc.unlock("gamd", "shifted_crf");
   if (fc.check()) 
     return 0;
 

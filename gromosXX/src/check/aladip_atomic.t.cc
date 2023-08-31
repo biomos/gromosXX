@@ -49,12 +49,18 @@
   #include <omp.h>
 #endif
 
-int main(int argc, char* argv[])
-{
+int main(int argc, char* argv[]){
 
-#ifdef OMP
-  omp_set_num_threads(1);
-#endif
+  #ifdef OMP
+    //omp_set_num_threads(1);
+    #pragma omp parallel
+    {
+      int tid = omp_get_thread_num();
+      if (tid == 0){
+        std::cout << "OpenMP code enabled; using " << omp_get_num_threads() << " threads." << std::endl;
+      }
+    }
+  #endif
 
   int total = 0;
 
@@ -123,8 +129,7 @@ int main(int argc, char* argv[])
 			      in_topo,
 			      "", "", "", "", "", "", "", "",
 			      quiet
-			      )
-      != 0){
+			      ) != 0 ){
     std::cerr << "creating simulation failed!" << std::endl;
     return 1;
   }

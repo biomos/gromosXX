@@ -30,7 +30,7 @@
 #include "orca_worker.h"
 #include "nn_worker.h"
 
-#ifdef WITH_XTB
+#ifdef XTB
   #include "xtb_worker.h"
 #endif
 
@@ -74,7 +74,7 @@ interaction::QM_Worker * interaction::QM_Worker::get_instance(const simulation::
       return new NN_Worker;
     case simulation::qm_orca :
       return new Orca_Worker;
-#ifdef WITH_XTB
+#ifdef XTB
     case simulation::qm_xtb :
       return new XTB_Worker;
 #endif
@@ -421,9 +421,9 @@ void interaction::QM_Worker::write_gradient(const math::Vec& gradient,
                                             std::ofstream& inputfile_stream) const {
   inputfile_stream.setf(std::ios::fixed, std::ios::floatfield);
   inputfile_stream << std::setprecision(12)
-                   << std::setw(17) << gradient(0)
-                   << std::setw(17) << gradient(1)
-                   << std::setw(17) << gradient(2)
+                   << std::setw(20) << gradient(0)
+                   << std::setw(20) << gradient(1)
+                   << std::setw(20) << gradient(2)
                    << '\n';
 }
 
@@ -432,9 +432,9 @@ void interaction::QM_Worker::write_qm_atom(std::ofstream& inputfile_stream
                                          , const math::Vec& pos) const {
   inputfile_stream.setf(std::ios::fixed, std::ios::floatfield);
   inputfile_stream << std::setprecision(20)
-                   << std::setw(25) << pos(0)
-                   << std::setw(25) << pos(1)
-                   << std::setw(25) << pos(2)
+                   << std::setw(28) << pos(0)
+                   << std::setw(28) << pos(1)
+                   << std::setw(28) << pos(2)
                    << std::setw(8)  << atomic_number
                    << '\n';
 }
@@ -448,9 +448,9 @@ void interaction::QM_Worker::write_mm_atom(std::ofstream& inputfile_stream
     inputfile_stream << std::setprecision(6)
                      << std::setw(10) << charge
                      << std::setprecision(20)
-                     << std::setw(25) << pos(0)
-                     << std::setw(25) << pos(1)
-                     << std::setw(25) << pos(2) 
+                     << std::setw(28) << pos(0)
+                     << std::setw(28) << pos(1)
+                     << std::setw(28) << pos(2) 
                      << std::setw(8)  << atomic_number
                      << '\n';
   }

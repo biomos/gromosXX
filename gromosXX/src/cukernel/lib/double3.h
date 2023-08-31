@@ -11,6 +11,7 @@
 #else
 
 #include "types.h"
+#include <cstdlib>
 /**
  * produce a double3
  * this is not required in CUDA 3.2 anymore and thus commented out...

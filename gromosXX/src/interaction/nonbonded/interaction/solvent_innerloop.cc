@@ -22,7 +22,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::solvent_innerloop
   // only one energy group
   const int egroup = topo.atom_energy_group(topo.num_solute_atoms());
   DEBUG(8, "\tspc pair\t" << i << "\t" << j << " egroup " << egroup);
-  
+  DEBUG(1, "Fast solvent");
   math::Vec const * const pos_i = &conf.current().pos(i);
   math::Vec * const force_i = &storage.force(i);
 

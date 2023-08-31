@@ -41,9 +41,12 @@
 #include <time.h>
 
 #include "check.h"
-
 #include "check_forcefield.h"
 #include "check_state.h"
+
+#ifdef OMP
+  #include <omp.h>
+#endif
 
 void hard_coded_values(std::map<std::string, double> & m){
   m["QuarticBond"] = 18.053811;
@@ -68,15 +71,20 @@ void hard_coded_values(std::map<std::string, double> & m){
   //m["LeapFrogPositions"] = ;
 }
 
-#ifdef OMP
-  #include <omp.h>
-#endif
 
 int main(int argc, char* argv[]) {
 
-#ifdef OMP
-  omp_set_num_threads(1);
-#endif
+  #ifdef OMP
+    //omp_set_num_threads(1);
+    #pragma omp parallel
+    {
+      int tid = omp_get_thread_num();
+      if (tid == 0){
+        std::cout << "OpenMP code enabled; using " << omp_get_num_threads() << " threads." << std::endl;
+      }
+    }
+  #endif
+
   int total = 0;
   
   util::Known knowns;
@@ -98,7 +106,7 @@ int main(int argc, char* argv[]) {
   // parse the verbosity flag and set debug levels
   util::parse_verbosity(args);
       
-    std::string stopo, spttopo, sconf, sinput;
+  std::string stopo, spttopo, sconf, sinput;
   bool quiet = true;
 
   if (args.count("verb") != -1) quiet = false;
@@ -148,11 +156,11 @@ int main(int argc, char* argv[]) {
 			      in_topo,
 			      "", "", "", "", "", "", "", "",
 			      quiet
-			      )
-      != 0){
+			      ) != 0 ){
     std::cerr << "creating simulation failed!" << std::endl;
     return 1;
   }
+  
   io::messages.display(std::cout);
   io::messages.clear();
       
@@ -165,13 +173,13 @@ int main(int argc, char* argv[]) {
 					   aladip_sim.sim,
 					   in_topo,
 					   std::cout,
-					   quiet)
-	!= 0){
+					   quiet)	!= 0 ){
       std::cerr << "creating forcefield failed!" << std::endl;
       return 1;
     }
-  io::messages.display(std::cout);
-  io::messages.clear();
+
+    io::messages.display(std::cout);
+    io::messages.clear();
 
     ff->init(aladip_sim.topo, aladip_sim.conf, aladip_sim.sim, std::cout,  quiet);
 
@@ -182,7 +190,7 @@ int main(int argc, char* argv[]) {
     // run it with atomic cutoff
     aladip_sim.sim.param().pairlist.atomic_cutoff = true;
     total += check::check_atomic_cutoff(aladip_sim.topo, aladip_sim.conf, 
-					aladip_sim.sim, *ff, ref_values);
+		    aladip_sim.sim, *ff, ref_values);
     aladip_sim.sim.param().pairlist.atomic_cutoff = false;
 
     // check virial, ...
@@ -198,8 +206,8 @@ int main(int argc, char* argv[]) {
 				  in_topo);
     
     double end_time = aladip_sim.sim.param().step.t0 + 
-      aladip_sim.sim.time_step_size() * 
-      aladip_sim.sim.param().step.number_of_steps;
+        aladip_sim.sim.time_step_size() * 
+        aladip_sim.sim.param().step.number_of_steps;
     
     int error = 0;
 
@@ -209,22 +217,22 @@ int main(int argc, char* argv[]) {
 				     aladip_sim.conf,
 				     aladip_sim.sim))){
 
-	std::cout << "\nError during MD run!\n" << std::endl;
-	// try to save the final structures...
-	break;
+	      std::cout << "\nError during MD run!\n" << std::endl;
+	      // try to save the final structures...
+	      break;
       }
 
       // update the energies
       aladip_sim.conf.old().energies.calculate_totals();
+
       // perturbed energy derivatives
       if (aladip_sim.sim.param().perturbation.perturbation){
-	aladip_sim.conf.old().perturbed_energy_derivatives.calculate_totals();
+	      aladip_sim.conf.old().perturbed_energy_derivatives.calculate_totals();
       }
 
-      aladip_sim.conf.current().averages.
-	apply(aladip_sim.topo,
-	      aladip_sim.conf,
-	      aladip_sim.sim);
+      aladip_sim.conf.current().averages.apply(aladip_sim.topo,
+	            aladip_sim.conf,
+	            aladip_sim.sim);
 	  
       aladip_sim.sim.time() +=  aladip_sim.sim.time_step_size();
       ++ aladip_sim.sim.steps();

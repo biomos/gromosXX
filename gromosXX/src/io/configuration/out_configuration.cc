@@ -35,7 +35,7 @@
 
 // Energy trajectory version
 // For details, see definition in out_configuration.cc
-const std::string io::Out_Configuration::ene_version = "2022-08-17";
+const std::string io::Out_Configuration::ene_version = "2023-04-15";
 
 // declarations
 static void _print_energyred_helper(std::ostream & os, configuration::Energy const &e);
@@ -571,8 +571,13 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
     }
     }
 
-    if (sim.param().eds.form == simulation::aeds_search_eir || sim.param().eds.form == simulation::aeds_search_emax_emin || sim.param().eds.form == simulation::aeds_search_all) {
+    if (sim.param().eds.form == simulation::aeds_search_eir || sim.param().eds.form == simulation::aeds_search_emax_emin || sim.param().eds.form == simulation::aeds_search_all
+    || sim.param().eds.form == simulation::aeds_advanced_search || sim.param().eds.form == simulation::aeds_advanced_search2) {
       _print_aedssearch(conf, sim, m_final_conf);
+    }
+
+    if (sim.param().gamd.search == simulation::cmd_search || sim.param().gamd.search == simulation::gamd_search){
+      _print_gamdstat(conf, sim, m_final_conf);
     }
 
     // forces and energies still go to their trajectories
@@ -3017,7 +3022,12 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
           << std::setw(18) << e.bsleus_total << "\n" // 42
           << std::setw(18) << e.rdc_total << "\n" // 43
           << std::setw(18) << e.angrest_total << "\n" // 44
-          << std::setw(18) << e.nn_valid << "\n"; // 45
+          << std::setw(18) << e.nn_valid << "\n" // 45
+          << std::setw(18) << e.total + e.shift_extra_orig_total << "\n" // 46
+          << std::setw(18) << e.total + e.shift_extra_phys_total << "\n" // 47
+          << std::setw(18) << e.eds_vr_shift_orig << "\n" // 48
+          << std::setw(18) << e.eds_vr_shift_phys << "\n"  // 49
+          << std::setw(18) << e.gamd_DV_total << "\n"; // 50
 
   os << "# baths\n";
   os << numbaths << "\n";
@@ -3048,7 +3058,9 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
       // Therefore the total LS energy is written out.        
       // As soon as multiple energy groups are possible this has to be revised      
               << std::setw(18) << e.ls_total
-              << std::setw(18) << e.ls_k_energy[j][i] << "\n";
+              << std::setw(18) << e.ls_k_energy[j][i]
+              << std::setw(18) << e.shift_extra_orig[j][i]
+              << std::setw(18) << e.shift_extra_phys[j][i] << "\n";
     }
   }
 
@@ -3076,12 +3088,34 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
   os << std::setw(18) << "# total"
           << std::setw(18) << "nonbonded"
           << std::setw(18) << "special"
-          << std::setw(18) << "offset\n";
+          << std::setw(18) << "offset"
+          << std::setw(18) << "total_orig"
+          << std::setw(18) << "total_phys\n";
   for (unsigned i = 0; i < e.eds_vi.size(); i++) {
     os << std::setw(18) << e.eds_vi[i]
             << std::setw(18) << e.eds_vi[i] - e.eds_vi_special[i]
             << std::setw(18) << e.eds_vi_special[i] 
-            << std::setw(18) << e.eds_eir[i] << "\n";
+            << std::setw(18) << e.eds_eir[i]
+            << std::setw(18) << e.eds_vi[i] + e.eds_vi_shift_extra_orig[i]
+            << std::setw(18) << e.eds_vi[i] + e.eds_vi_shift_extra_phys[i] << "\n";
+  }
+
+  // GAMD thresholds and force constant used
+  os << "# gamd\n";
+  os << "# numaccelgroups\n";
+  const unsigned int numaccelgroups = e.gamd_KT.size();
+  os << numaccelgroups << "\n";
+  os << std::setw(18) << "# E_dihedral"
+          << std::setw(18) << "E_potential"
+          << std::setw(18) << "K_dihedral"
+          << std::setw(18) << "K_potential"
+          << std::setw(18) << "dV_group\n";
+  for (unsigned i = 0; i < numaccelgroups; i++) {
+    os << std::setw(18) << e.gamd_ED[i]
+            << std::setw(18) << e.gamd_ET[i]
+            << std::setw(18) << e.gamd_KD[i] 
+            << std::setw(18) << e.gamd_KT[i]
+            << std::setw(18) << e.gamd_DV[i] << "\n";
   }
 
   // write eds energies (vr,{V_i}) here
@@ -3870,10 +3904,35 @@ _print_aedssearch(configuration::Configuration const &conf,
       << std::setw(m_width) << sim.param().eds.avgenergy[i] << " "
       << std::setw(m_width) << sim.param().eds.eiravgenergy[i] << " "
       << std::setw(m_width) << sim.param().eds.bigs[i] << " "
-      << std::setw(m_width) << sim.param().eds.stdevenergy[i] << "\n";
+      << std::setw(m_width) << sim.param().eds.stdevenergy[i] << " "
+      << std::setw(m_width) << sim.param().eds.framecounts[i] << "\n";
   }
   os << "END\n";
 }
+
+// ORIOL_GAMD
+void io::Out_Configuration::
+_print_gamdstat(configuration::Configuration const &conf,
+        simulation::Simulation const &sim,std::ostream &os) {
+      
+  os.setf(std::ios::fixed, std::ios::floatfield);
+  os.precision(m_precision);
+  os << "GAMDSTAT\n";
+  os << std::setw(m_width) << sim.param().gamd.stepsdone << "\n";
+  for (unsigned int i = 0; i < sim.param().gamd.igroups; i++) {
+   os << std::setw(m_width) << sim.param().gamd.M2D[i] << " "
+      << std::setw(m_width) << sim.param().gamd.M2T[i] << " "
+      << std::setw(m_width) << sim.param().gamd.VmaxD[i] << " "
+      << std::setw(m_width) << sim.param().gamd.VmaxT[i] << " "
+      << std::setw(m_width) << sim.param().gamd.VmeanD[i] << " "
+      << std::setw(m_width) << sim.param().gamd.VmeanT[i] << " "
+      << std::setw(m_width) << sim.param().gamd.VminD[i] << " "
+      << std::setw(m_width) << sim.param().gamd.VminT[i] << " "
+      << std::setw(m_width) << sim.param().gamd.sigmaVD[i] << " "
+      << std::setw(m_width) << sim.param().gamd.sigmaVT[i] << "\n";
+      }
+  os << "END\n";
+  }
 
 void io::Out_Configuration::
 _print_nemd(simulation::Simulation const & sim,

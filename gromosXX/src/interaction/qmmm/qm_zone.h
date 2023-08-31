@@ -292,6 +292,11 @@ namespace interaction {
     template<class AtomType>
     inline bool skip_cg(const topology::Topology& topo,
                         const unsigned index);
+    
+    /**
+     * error ocurred during QM evaluation
+     */
+    int m_err;
   };
 
   /**

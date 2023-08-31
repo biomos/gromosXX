@@ -41,9 +41,12 @@
 #include <time.h>
 
 #include "check.h"
-
 #include "check_forcefield.h"
 #include "check_state.h"
+
+#ifdef OMP
+  #include <omp.h>
+#endif
 
 void hard_coded_values(std::map<std::string, double> & m){
   m["QuarticBond"] = 18.055276;
@@ -65,15 +68,19 @@ void hard_coded_values(std::map<std::string, double> & m){
 }
 
 
-#ifdef OMP
-  #include <omp.h>
-#endif
 
 int main(int argc, char* argv[]) {
 
-#ifdef OMP
-  omp_set_num_threads(1);
-#endif
+  #ifdef OMP
+    //omp_set_num_threads(1);
+    #pragma omp parallel
+    {
+      int tid = omp_get_thread_num();
+      if (tid == 0){
+        std::cout << "OpenMP code enabled; using " << omp_get_num_threads() << " threads." << std::endl;
+      }
+    }
+  #endif
 
   int total = 0;
   
@@ -156,11 +163,11 @@ int main(int argc, char* argv[]) {
 			      in_topo_on,
 			      "", "", "", "", "", "", "", "",
 			      quiet
-			      )
-      != 0){
+			      ) != 0 ){
     std::cerr << "creating simulation (on) failed!" << std::endl;
     return 1;
   }
+
   io::messages.display(std::cout);
   io::messages.clear();
 
@@ -172,11 +179,11 @@ int main(int argc, char* argv[]) {
 			      in_topo_off,
 			      "", "", "", "", "", "", "", "",
 			      quiet
-			      )
-      != 0){
+			      ) != 0 ){
     std::cerr << "creating simulation (off) failed!" << std::endl;
     return 1;
-  }     
+  } 
+
   io::messages.display(std::cout);
   io::messages.clear();
   
@@ -188,8 +195,7 @@ int main(int argc, char* argv[]) {
 					 aladip_sim_on.sim,
 					 in_topo_on,
 					 std::cout,
-					 quiet)
-      != 0){
+					 quiet) != 0 ){
     std::cerr << "creating forcefield failed!" << std::endl;
     return 1;
   }
@@ -213,8 +219,7 @@ int main(int argc, char* argv[]) {
 					 aladip_sim_off.sim,
 					 in_topo_off,
 					 std::cout,
-					 quiet)
-      != 0){
+					 quiet) != 0 ){
     std::cerr << "creating forcefield failed!" << std::endl;
     return 1;
   }
@@ -245,125 +250,126 @@ int main(int argc, char* argv[]) {
       int res=0;
       
       if(aladip_sim_on.sim.param().lambdas.a[i][n1][n1] != 0 ||
-	 aladip_sim_on.sim.param().lambdas.b[i][n1][n1] != 0 ||
-	 aladip_sim_on.sim.param().lambdas.c[i][n1][n1] != 0 ||
-	 aladip_sim_on.sim.param().lambdas.d[i][n1][n1] != 1 ||
-	 aladip_sim_on.sim.param().lambdas.e[i][n1][n1] != 0){
-	// we have an individual lambda interaction
-	double Lint=
-	  aladip_sim_on.sim.param().lambdas.a[i][n1][n1] * lam * lam * lam * lam +
-	  aladip_sim_on.sim.param().lambdas.b[i][n1][n1] * lam * lam * lam +
-	  aladip_sim_on.sim.param().lambdas.c[i][n1][n1] * lam * lam +
-	  aladip_sim_on.sim.param().lambdas.d[i][n1][n1] * lam +
-	  aladip_sim_on.sim.param().lambdas.e[i][n1][n1];
-	double dLint = 
-	  4.0 * aladip_sim_on.sim.param().lambdas.a[i][n1][n1] * lam * lam * lam +
-	  3.0 * aladip_sim_on.sim.param().lambdas.b[i][n1][n1] * lam * lam +
-	  2.0 * aladip_sim_on.sim.param().lambdas.c[i][n1][n1] * lam +
-	  aladip_sim_on.sim.param().lambdas.d[i][n1][n1];
+      aladip_sim_on.sim.param().lambdas.b[i][n1][n1] != 0 ||
+      aladip_sim_on.sim.param().lambdas.c[i][n1][n1] != 0 ||
+      aladip_sim_on.sim.param().lambdas.d[i][n1][n1] != 1 ||
+      aladip_sim_on.sim.param().lambdas.e[i][n1][n1] != 0){
+        // we have an individual lambda interaction
+        double Lint=
+          aladip_sim_on.sim.param().lambdas.a[i][n1][n1] * lam * lam * lam * lam +
+          aladip_sim_on.sim.param().lambdas.b[i][n1][n1] * lam * lam * lam +
+          aladip_sim_on.sim.param().lambdas.c[i][n1][n1] * lam * lam +
+          aladip_sim_on.sim.param().lambdas.d[i][n1][n1] * lam +
+          aladip_sim_on.sim.param().lambdas.e[i][n1][n1];
+        double dLint = 
+          4.0 * aladip_sim_on.sim.param().lambdas.a[i][n1][n1] * lam * lam * lam +
+          3.0 * aladip_sim_on.sim.param().lambdas.b[i][n1][n1] * lam * lam +
+          2.0 * aladip_sim_on.sim.param().lambdas.c[i][n1][n1] * lam +
+          aladip_sim_on.sim.param().lambdas.d[i][n1][n1];
 	
-	aladip_sim_off.topo.lambda(Lint);
-	aladip_sim_off.topo.update_for_lambda();
-	ff_off->apply(aladip_sim_off.topo, 
-		      aladip_sim_off.conf,
-		      aladip_sim_off.sim);
-	aladip_sim_off.conf.current().perturbed_energy_derivatives.
-	  calculate_totals();
-	if(i==simulation::bond_lambda){
-	  E_on=aladip_sim_on.conf.current().energies.
-	    bond_energy[n1];
-	  E_off=aladip_sim_off.conf.current().energies.
-	    bond_energy[n1];
-	  dE_on=aladip_sim_on.conf.current().perturbed_energy_derivatives.
-	    bond_energy[n1];
-	  dE_off=aladip_sim_off.conf.current().perturbed_energy_derivatives.
-	    bond_energy[n1];
-	  nm="bond";
-	}
-	else if(i==simulation::angle_lambda){
-	  E_on=aladip_sim_on.conf.current().energies.
-	    angle_energy[n1];
-	  E_off=aladip_sim_off.conf.current().energies.
-	    angle_energy[n1];
-	  dE_on=aladip_sim_on.conf.current().perturbed_energy_derivatives.
-	    angle_energy[n1];
-	  dE_off=aladip_sim_off.conf.current().perturbed_energy_derivatives.
-	    angle_energy[n1];
-	  nm="angle";
-	}
-	else if(i==simulation::improper_lambda){
-	  E_on=aladip_sim_on.conf.current().energies.
-	    improper_energy[n1];
-	  E_off=aladip_sim_off.conf.current().energies.
-	    improper_energy[n1];
-	  dE_on=aladip_sim_on.conf.current().perturbed_energy_derivatives.
-	    improper_energy[n1];
-	  dE_off=aladip_sim_off.conf.current().perturbed_energy_derivatives.
-	    improper_energy[n1];
-	  nm="improper";
-	}
-	else if(i==simulation::dihedral_lambda){
-	  E_on=aladip_sim_on.conf.current().energies.
-	    dihedral_energy[n1];
-	  E_off=aladip_sim_off.conf.current().energies.
-	    dihedral_energy[n1];
-	  dE_on=aladip_sim_on.conf.current().perturbed_energy_derivatives.
-	    dihedral_energy[n1];
-	  dE_off=aladip_sim_off.conf.current().perturbed_energy_derivatives.
-	    dihedral_energy[n1];
-	  nm="dihedral";
-	}
-	else if(i==simulation::angres_lambda){
-	  E_on=aladip_sim_on.conf.current().energies.
-	    angrest_energy[n1];
-	  E_off=aladip_sim_off.conf.current().energies.
-	    angrest_energy[n1];
-	  dE_on=aladip_sim_on.conf.current().perturbed_energy_derivatives.
-	    angrest_energy[n1];
-	  dE_off=aladip_sim_off.conf.current().perturbed_energy_derivatives.
-	    angrest_energy[n1];
-	  nm="angle restraint";
-	}
-	else if(i==simulation::dihres_lambda){
-	  E_on=aladip_sim_on.conf.current().energies.
-	    dihrest_energy[n1];
-	  E_off=aladip_sim_off.conf.current().energies.
-	    dihrest_energy[n1];
-	  dE_on=aladip_sim_on.conf.current().perturbed_energy_derivatives.
-	    dihrest_energy[n1];
-	  dE_off=aladip_sim_off.conf.current().perturbed_energy_derivatives.
-	    dihrest_energy[n1];
-	  nm="dihedral restraint";
-	}
-	else if(i==simulation::disres_lambda){
-	  E_on=aladip_sim_on.conf.current().energies.
-	    distanceres_energy[n1];
-	  E_off=aladip_sim_off.conf.current().energies.
-	    distanceres_energy[n1];
-	  dE_on=aladip_sim_on.conf.current().perturbed_energy_derivatives.
-	    distanceres_energy[n1];
-	  dE_off=aladip_sim_off.conf.current().perturbed_energy_derivatives.
-	    distanceres_energy[n1];
-	  nm="distance restraint";
-	}
-	// let's not claim we checked something that was zero to begin with
-	if(dE_on !=0){
-	    
-	  CHECKING("individual lambdas ("+nm+")", res);
-	  CHECK_APPROX_EQUAL(E_on, E_off, 0.0000001, res);
-	  CHECK_APPROX_EQUAL(dE_on, dE_off*dLint, 0.0000001, res);
-	  RESULT(res, total);
-	}
+        aladip_sim_off.topo.lambda(Lint);
+        aladip_sim_off.topo.update_for_lambda();
+        ff_off->apply(aladip_sim_off.topo, 
+                aladip_sim_off.conf,
+                aladip_sim_off.sim);
+
+        aladip_sim_off.conf.current().perturbed_energy_derivatives.calculate_totals();
+
+        if(i==simulation::bond_lambda){
+          E_on=aladip_sim_on.conf.current().energies.
+            bond_energy[n1];
+          E_off=aladip_sim_off.conf.current().energies.
+            bond_energy[n1];
+          dE_on=aladip_sim_on.conf.current().perturbed_energy_derivatives.
+            bond_energy[n1];
+          dE_off=aladip_sim_off.conf.current().perturbed_energy_derivatives.
+            bond_energy[n1];
+          nm="bond";
+        }
+        else if(i==simulation::angle_lambda){
+          E_on=aladip_sim_on.conf.current().energies.
+            angle_energy[n1];
+          E_off=aladip_sim_off.conf.current().energies.
+            angle_energy[n1];
+          dE_on=aladip_sim_on.conf.current().perturbed_energy_derivatives.
+            angle_energy[n1];
+          dE_off=aladip_sim_off.conf.current().perturbed_energy_derivatives.
+            angle_energy[n1];
+          nm="angle";
+        }
+        else if(i==simulation::improper_lambda){
+          E_on=aladip_sim_on.conf.current().energies.
+            improper_energy[n1];
+          E_off=aladip_sim_off.conf.current().energies.
+            improper_energy[n1];
+          dE_on=aladip_sim_on.conf.current().perturbed_energy_derivatives.
+            improper_energy[n1];
+          dE_off=aladip_sim_off.conf.current().perturbed_energy_derivatives.
+            improper_energy[n1];
+          nm="improper";
+        }
+        else if(i==simulation::dihedral_lambda){
+          E_on=aladip_sim_on.conf.current().energies.
+            dihedral_energy[n1];
+          E_off=aladip_sim_off.conf.current().energies.
+            dihedral_energy[n1];
+          dE_on=aladip_sim_on.conf.current().perturbed_energy_derivatives.
+            dihedral_energy[n1];
+          dE_off=aladip_sim_off.conf.current().perturbed_energy_derivatives.
+            dihedral_energy[n1];
+          nm="dihedral";
+        }
+        else if(i==simulation::angres_lambda){
+          E_on=aladip_sim_on.conf.current().energies.
+            angrest_energy[n1];
+          E_off=aladip_sim_off.conf.current().energies.
+            angrest_energy[n1];
+          dE_on=aladip_sim_on.conf.current().perturbed_energy_derivatives.
+            angrest_energy[n1];
+          dE_off=aladip_sim_off.conf.current().perturbed_energy_derivatives.
+            angrest_energy[n1];
+          nm="angle restraint";
+        }
+        else if(i==simulation::dihres_lambda){
+          E_on=aladip_sim_on.conf.current().energies.
+            dihrest_energy[n1];
+          E_off=aladip_sim_off.conf.current().energies.
+            dihrest_energy[n1];
+          dE_on=aladip_sim_on.conf.current().perturbed_energy_derivatives.
+            dihrest_energy[n1];
+          dE_off=aladip_sim_off.conf.current().perturbed_energy_derivatives.
+            dihrest_energy[n1];
+          nm="dihedral restraint";
+        }
+        else if(i==simulation::disres_lambda){
+          E_on=aladip_sim_on.conf.current().energies.
+            distanceres_energy[n1];
+          E_off=aladip_sim_off.conf.current().energies.
+            distanceres_energy[n1];
+          dE_on=aladip_sim_on.conf.current().perturbed_energy_derivatives.
+            distanceres_energy[n1];
+          dE_off=aladip_sim_off.conf.current().perturbed_energy_derivatives.
+            distanceres_energy[n1];
+          nm="distance restraint";
+        }
+        // let's not claim we checked something that was zero to begin with
+        if(dE_on !=0){
+            
+          CHECKING("individual lambdas ("+nm+")", res);
+          CHECK_APPROX_EQUAL(E_on, E_off, 0.0000001, res);
+          CHECK_APPROX_EQUAL(dE_on, dE_off*dLint, 0.0000001, res);
+          RESULT(res, total);
+        }
       }
       
       // check if we can do the kinetic energy
       if(i==simulation::mass_lambda &&
-	 (aladip_sim_on.sim.param().lambdas.a[i][n1][n1] != a ||
-	  aladip_sim_on.sim.param().lambdas.b[i][n1][n1] != b ||
-	  aladip_sim_on.sim.param().lambdas.c[i][n1][n1] != c ||
-	  aladip_sim_on.sim.param().lambdas.d[i][n1][n1] != d ||
-	  aladip_sim_on.sim.param().lambdas.e[i][n1][n1] != e)){
-	do_kin=false;
+      (aladip_sim_on.sim.param().lambdas.a[i][n1][n1] != a ||
+      aladip_sim_on.sim.param().lambdas.b[i][n1][n1] != b ||
+      aladip_sim_on.sim.param().lambdas.c[i][n1][n1] != c ||
+      aladip_sim_on.sim.param().lambdas.d[i][n1][n1] != d ||
+      aladip_sim_on.sim.param().lambdas.e[i][n1][n1] != e)){
+        do_kin=false;
       }
     } // loop over energy groups
   } // loop over interactions
@@ -376,32 +382,30 @@ int main(int argc, char* argv[]) {
 
       // we have an individual lambda interaction
       double Lint = a * lam * lam * lam * lam +
-	b * lam * lam * lam +
-	c * lam * lam +
-	d * lam +
-	e;
+        b * lam * lam * lam +
+        c * lam * lam +
+        d * lam +
+        e;
       double dLint = 
-	4.0 * a * lam * lam * lam +
-	3.0 * b * lam * lam +
-	2.0 * c * lam +
-	d;
+        4.0 * a * lam * lam * lam +
+        3.0 * b * lam * lam +
+        2.0 * c * lam +
+        d;
       aladip_sim_off.topo.lambda(Lint);
       aladip_sim_off.topo.update_for_lambda();
       ff_off->apply(aladip_sim_off.topo, 
 		    aladip_sim_off.conf,
 		    aladip_sim_off.sim);
-      aladip_sim_off.conf.current().perturbed_energy_derivatives.
-	calculate_totals();
+      aladip_sim_off.conf.current().perturbed_energy_derivatives.calculate_totals();
       // we probably need to do some temperature calculation as well?
       CHECKING("indivual lambdas (kinetic)", res);
-      double dE_on=aladip_sim_on.conf.current().perturbed_energy_derivatives.
-	kinetic_total;
-      double dE_off=aladip_sim_off.conf.current().perturbed_energy_derivatives.
-	kinetic_total;
+      double dE_on=aladip_sim_on.conf.current().perturbed_energy_derivatives.kinetic_total;
+      double dE_off=aladip_sim_off.conf.current().perturbed_energy_derivatives.kinetic_total;
       CHECK_APPROX_EQUAL(dE_on, dE_off*dLint, 0.0000001, res);
       RESULT(res, total);
     }
   }
+  
   io::messages.display(std::cout);
   io::messages.clear();
 
