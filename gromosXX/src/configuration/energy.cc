@@ -560,7 +560,7 @@ int configuration::Energy::calculate_totals()
     + angrest_total + dihrest_total
     + constraints_total + jvalue_total + xray_total
     + eds_vr + leus_total + sasa_total + sasa_volume_total + oparam_total
-    + symrest_total + bsleus_total + qm_total + rdc_total + gamd_DV_total;
+    + symrest_total + bsleus_total + rdc_total + gamd_DV_total;
   
   total = potential_total + kinetic_total + special_total;
 

@@ -33,6 +33,7 @@ interaction::QM_Zone::QM_Zone(int net_charge
                               : m_qm_energy(0.0)
                               , m_charge(net_charge)
                               , m_spin_mult(spin_mult)
+                              , m_err(0)
 {}
 
 interaction::QM_Zone::~QM_Zone() = default;
@@ -51,11 +52,11 @@ void interaction::QM_Zone::clear() {
 int interaction::QM_Zone::init(topology::Topology& topo, 
                                const configuration::Configuration& conf, 
                                const simulation::Simulation& sim) {
-  int err = 0;
+  //int err = 0;
   
   DEBUG(15,"Getting QM atoms");
-  if ((err = this->get_qm_atoms(topo, conf, sim)))
-    return err;
+  if ((m_err = this->get_qm_atoms(topo, conf, sim)))
+    return m_err;
 
   if (sim.param().qmmm.buffer_zone.cutoff) {
     DEBUG(15,"Getting buffer atoms");
@@ -78,14 +79,17 @@ int interaction::QM_Zone::update(topology::Topology& topo,
 
   DEBUG(15,"Updating QM atoms positions");
   update_qm_pos(topo, conf, sim);
+  if (m_err) return m_err;
 
   if (sim.param().qmmm.buffer_zone.cutoff) {
     DEBUG(15,"Getting buffer atoms");
     this->get_buffer_atoms(topo, conf, sim);
+    if (m_err) return m_err;
   }
   
   DEBUG(15,"Getting MM atoms positions");
   this->get_mm_atoms(topo, conf, sim);
+  if (m_err) return m_err;
   
   DEBUG(15,"Updating links");
   this->update_links(sim);
@@ -268,7 +272,7 @@ template<math::boundary_enum B>
 int interaction::QM_Zone::_update_qm_pos(const topology::Topology& topo, 
                                          const configuration::Configuration& conf, 
                                          const simulation::Simulation& sim) {
-  int err = 0;
+  //int err = 0;
   math::Periodicity<B> periodicity(conf.current().box);
   const math::VArray& pos = conf.current().pos;
 
@@ -318,12 +322,12 @@ int interaction::QM_Zone::_update_qm_pos(const topology::Topology& topo,
           msg << "QM zone sees own periodic image (atoms "
               << (it1->index + 1) << " and " << (it2->index + 1) << ")";
           io::messages.add(msg.str(), "QM_Zone", io::message::error);
-          err = 1;
+          m_err = 1;
         }
       }
     }
   }
-  return err;
+  return m_err;
 }
 
 void interaction::QM_Zone::update_pairlist(
@@ -525,14 +529,14 @@ int interaction::QM_Zone::gather_chargegroups(const topology::Topology& topo,
       } // for cgs in the range
       return 0;
     }; // lambda cg_cogs_loop
-    int err = 0;
+    //int err = 0;
     DEBUG(15, "Iterating over solute cgs");
-    err = cg_cogs_loop(0, num_solute_cg, solute_cgs);
-    if (err) return err;
+    m_err = cg_cogs_loop(0, num_solute_cg, solute_cgs);
+    if (m_err) return m_err;
 
     DEBUG(15, "Iterating over solvent cgs");
-    err = cg_cogs_loop(num_solute_cg, num_cg, solvent_cgs);
-    if (err) return err;
+    m_err = cg_cogs_loop(num_solute_cg, num_cg, solvent_cgs);
+    if (m_err) return m_err;
   }
   delete solute_cgs;
   delete solvent_cgs;
@@ -599,7 +603,7 @@ int interaction::QM_Zone::_get_buffer_atoms(topology::Topology& topo,
   /** Here we need to iterate over all buffer atoms and see, if they are within the
    * adaptive buffer cutoff
    */
-  int err = 0;
+  //int err = 0;
   // Firstly remove buffer atoms from the QM set
   DEBUG(15, "Firstly removing the old buffer atoms");
   for (std::set<QM_Atom>::const_iterator qm_it = this->qm.begin();
@@ -615,8 +619,8 @@ int interaction::QM_Zone::_get_buffer_atoms(topology::Topology& topo,
   }
   const double cutoff2 = sim.param().qmmm.buffer_zone.cutoff * sim.param().qmmm.buffer_zone.cutoff;
   std::set<QM_Atom> buffer_atoms;
-  if ((err = this->gather_chargegroups<B>(topo, conf, sim, buffer_atoms, cutoff2)))
-    return err;
+  if ((m_err = this->gather_chargegroups<B>(topo, conf, sim, buffer_atoms, cutoff2)))
+    return m_err;
   
   // update the QM buffer topology so the pairlist algorithm can skip them
   for (unsigned i = 0; i < topo.num_atoms(); ++i) {
@@ -641,8 +645,8 @@ int interaction::QM_Zone::_get_buffer_atoms(topology::Topology& topo,
   this->qm.insert(buffer_atoms.begin(), buffer_atoms.end());
 
   // Also update their positions
-  if ((err = this->_update_qm_pos<B>(topo, conf, sim)))
-    return err;
+  if ((m_err = this->_update_qm_pos<B>(topo, conf, sim)))
+    return m_err;
   return 0;
 }
 
@@ -699,7 +703,7 @@ int interaction::QM_Zone::_get_mm_atoms(const topology::Topology& topo,
                                         const configuration::Configuration& conf, 
                                         const simulation::Simulation& sim)
   {
-  int err = 0;
+  //int err = 0;
   math::Periodicity<B> periodicity(conf.current().box);
   DEBUG(15, "Boundary type: " << conf.boundary_type);
   // MM link atoms need to be always gathered
@@ -708,8 +712,8 @@ int interaction::QM_Zone::_get_mm_atoms(const topology::Topology& topo,
   if (sim.param().qmmm.qmmm > simulation::qmmm_mechanical) {
     DEBUG(9, "Gathering MM atoms using chargegroup-based cutoff");
     const double cutoff2 = sim.param().qmmm.cutoff * sim.param().qmmm.cutoff;
-    if ((err = this->gather_chargegroups<B>(topo, conf, sim, this->mm, cutoff2)))
-      return err;
+    if ((m_err = this->gather_chargegroups<B>(topo, conf, sim, this->mm, cutoff2)))
+      return m_err;
     
   }
   return 0;
