@@ -5,7 +5,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 # set options
-option(OMP "enable OMP" ON)
+option(OMP "enable OMP" OFF)
 option(MPI "enable MPI" OFF)
 option(CUKERNEL "enable CUDA" OFF)
 option(XTB "enable XTB" OFF)
@@ -38,6 +38,10 @@ if(CUKERNEL)
     set(CMAKE_CUDA_STANDARD 11)
     set(CMAKE_CUDA_STANDARD_REQUIRED ON)
     set(CMAKE_CUDA_RUNTIME_LIBRARY Shared)
+endif()
+
+if(OMP AND CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
+    message(FATAL_ERROR "Apple Clang does not have an OpenMP implementation. Please use another compiler like main branch clang or gcc.")
 endif()
 
 # find option dependent packages

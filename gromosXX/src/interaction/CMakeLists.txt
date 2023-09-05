@@ -20,7 +20,6 @@ set(INTERACTION_CC
     nonbonded/interaction/perturbed_nonbonded_outerloop.cc
     nonbonded/interaction/perturbed_nonbonded_pair.cc
     nonbonded/interaction/latticesum.cc
-    nonbonded/interaction/eds_nonbonded_outerloop.cc
     nonbonded/interaction/cuda_nonbonded_set.cc
     bonded/create_bonded.cc
     bonded/quartic_bond_interaction.cc
