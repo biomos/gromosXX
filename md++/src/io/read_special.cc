@@ -281,7 +281,7 @@ int io::read_special(io::Argument const & args,
     io::igzstream rdc_file;
 
     if (args.count("rdcres") != 1){
-      io::messages.add("rdc restraints: no data file specified (use @rdc)", "read special", io::message::error);
+      io::messages.add("rdc restraints: no data file specified (use @rdcres)", "read special", io::message::error);
     } else {
       rdc_file.open(args["rdcres"].c_str());
       if (!rdc_file.is_open()){
