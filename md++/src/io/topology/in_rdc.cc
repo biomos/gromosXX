@@ -479,8 +479,8 @@ void io::In_RDC::read_INPUTMODE(topology::Topology &topo,
   // the first line is the tag
   exampleblock << "INPUTMODE\n";
   exampleblock << "# IM   0,1  input mode\n";
-  exampleblock << "#      1:  basic mode, most settings are chosen for the user\n";
-  exampleblock << "#      0:  expert mode, more choices can be made\n";
+  exampleblock << "#      0:  basic mode, most settings are chosen for the user\n";
+  exampleblock << "#      1:  expert mode, more choices can be made\n";
   exampleblock << "#  IM\n";
   exampleblock << "    0\n";
   exampleblock << "END\n";
@@ -1004,11 +1004,15 @@ void io::In_RDC::read_RDCMOLAXIS(topology::Topology &topo,
   Block block(blockname, exampleblock.str());
 
   bool block_required = false;
-  if (sim.param().rdc.type != simulation::rdc_t)
+  if (sim.param().rdc.type == simulation::rdc_t)
     block_required = true;
 
   if (block.read_buffer(m_block[blockname], block_required) == 0)
   {
+    if (sim.param().rdc.type != simulation::rdc_t) {
+        io::messages.add("Ignoring RDCMOLAXIS block, it is only used with the alignm. tensor representation ", "In_RDC", io::message::warning);
+        return;
+    }
     block_read.insert(blockname);
 
     DEBUG(10, "reading in RDCMOLAXIS data");
