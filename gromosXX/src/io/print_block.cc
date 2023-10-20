@@ -540,6 +540,37 @@ namespace io
       os << "\n";
     }
 
+    os << "\n" << std::setw(20) << type + "Shift_extra_orig";
+    
+    for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << energroup[i];
+    os << "\n";
+    for(unsigned int j=0; j < numenergygroups; j++) {
+      os << std::setw(20) << energroup[j];
+      for(unsigned int i=0; i<j; i++) os << std::setw(12) << " ";
+        for(unsigned int i=j; i < numenergygroups; i++){
+	        // now in calculate_totals
+	        // if(i==j)
+	        os << std::setw(12) << e.shift_extra_orig[i][j];
+	        // else 
+        }
+        os << "\n";
+    }
+
+    os << "\n" << std::setw(20) << type + "Shift_extra_phys";
+    for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << energroup[i];
+      os << "\n";
+    for(unsigned int j=0; j < numenergygroups; j++) {
+      os << std::setw(20) << energroup[j];
+      for(unsigned int i=0; i<j; i++) os << std::setw(12) << " ";
+        for(unsigned int i=j; i < numenergygroups; i++){
+          // now in calculate_totals
+          // if(i==j)
+          os << std::setw(12) << e.shift_extra_phys[i][j];
+          // else 
+        }
+        os << "\n";
+    }
+
     // ANITA 
     // print A_e_lj, B_e_lj, A_e_crf, B_e_crf for the lambda at which
     // we are simulating
