@@ -532,12 +532,70 @@ namespace io
 	// now in calculate totals
 	// if(i==j)
 	os << std::setw(12) << e.crf_energy[i][j];
-  os << std::setw(12) << e.shift_extra_orig[i][j];
-  os << std::setw(12) << e.shift_extra_phys[i][j];
 	// else
 	// os << std::setw(12) << e.crf_energy[i][j] +  e.crf_energy[j][i];
       }
       os << "\n";
+    }
+
+    // check if reaction shift or Ls is needed
+    bool use_shift_orig = false;
+    bool use_shift_phys = false;
+    bool use_ls_real = false;
+    for(unsigned int i=0; i < numenergygroups; i++){
+      for(unsigned int j=0; j < numenergygroups; j++) {
+        if (e.shift_extra_orig[i][j] != 0.0){
+          use_shift_orig = true;
+        }
+        if (e.shift_extra_phys[i][j] != 0.0){
+          use_shift_phys = true;
+        }  
+        if (e.ls_real_energy[i][j]  != 0.0){
+          use_ls_real = true;
+        }   
+      }
+    }
+
+    os << "\n" << std::setw(20) << type + "Shift_extra_orig";
+
+    if (use_shift_orig){      
+      for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << energroup[i];
+      os << "\n";
+      for(unsigned int j=0; j < numenergygroups; j++) {
+        os << std::setw(20) << energroup[j];
+        for(unsigned int i=0; i<j; i++) os << std::setw(12) << " ";
+          for(unsigned int i=j; i < numenergygroups; i++){
+            // now in calculate_totals
+            // if(i==j)
+            os << std::setw(12) << e.shift_extra_orig[i][j];
+            // else 
+          }
+          os << "\n";
+      }
+    }
+    else{
+      os << std::setw(12) << "All Zeros" << "\n";
+    }
+
+
+    os << "\n" << std::setw(20) << type + "Shift_extra_phys";
+    if (use_shift_phys){
+      for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << energroup[i];
+        os << "\n";
+      for(unsigned int j=0; j < numenergygroups; j++) {
+        os << std::setw(20) << energroup[j];
+        for(unsigned int i=0; i<j; i++) os << std::setw(12) << " ";
+          for(unsigned int i=j; i < numenergygroups; i++){
+            // now in calculate_totals
+            // if(i==j)
+            os << std::setw(12) << e.shift_extra_phys[i][j];
+            // else 
+          }
+          os << "\n";
+      }
+    }
+    else{
+      os << std::setw(12) << "All Zeros" << "\n";
     }
 
     // ANITA 
@@ -605,17 +663,22 @@ namespace io
     }//ANITA
 */    
     os << "\n" << std::setw(20) << type + "LS (real)";
-    
-    for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << energroup[i];
-    os << "\n";
-    for(unsigned int j=0; j < numenergygroups; j++) {
-      os << std::setw(20) << energroup[j];
-      for(unsigned int i=0; i<j; i++) os << std::setw(12) << " ";
-      for(unsigned int i=j; i < numenergygroups; i++){
-	os << std::setw(12) << e.ls_real_energy[i][j];
-      }
+
+    if (use_ls_real){
+      for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << energroup[i];
       os << "\n";
-    }    
+      for(unsigned int j=0; j < numenergygroups; j++) {
+        os << std::setw(20) << energroup[j];
+        for(unsigned int i=0; i<j; i++) os << std::setw(12) << " ";
+        for(unsigned int i=j; i < numenergygroups; i++){
+    os << std::setw(12) << e.ls_real_energy[i][j];
+        }
+        os << "\n";
+      }
+    }   
+    else{
+      os << std::setw(12) << "All Zeros" << "\n";
+    } 
 
     /*
     energy groups not implemented for k-space energy.

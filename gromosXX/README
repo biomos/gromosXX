@@ -1,8 +1,7 @@
-GROMOS MD++
-===========
+This is GROMOS md++, the MD engine of GROMOS
 
-See INSTALL for the installation instructions or consider Volume 8 for the GROMOS Manual and User Guide.
+Installation:
+-------------
 
-For file formats and program usage consider the doxygen documentation or Volume 4 of the GROMOS Manual and User Guide.
+See INSTALL for installation instructions.
 
-A tutorial of MD++ can be found in Volume 7 of the GROMOS Manual and User Guide.

@@ -1,7 +1,7 @@
 AM_CXXFLAGS = @MY_CXXFLAGS@
 ACLOCAL_AMFLAGS = -I m4
 AUTOMAKE_OPTIONS = subdir-objects
-SUBDIRS = src program contrib
+SUBDIRS = src program contrib data
 
 docdir = $(prefix)/doc/$(PACKAGE)-$(VERSION)
 
