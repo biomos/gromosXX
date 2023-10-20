@@ -532,8 +532,6 @@ namespace io
 	// now in calculate totals
 	// if(i==j)
 	os << std::setw(12) << e.crf_energy[i][j];
-  os << std::setw(12) << e.shift_extra_orig[i][j];
-  os << std::setw(12) << e.shift_extra_phys[i][j];
 	// else
 	// os << std::setw(12) << e.crf_energy[i][j] +  e.crf_energy[j][i];
       }
