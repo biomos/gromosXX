@@ -385,3 +385,71 @@ Defining Variables
 	`configure' also accepts some other, not widely useful, options.  Run
 	`configure --help' for more details.
 
+
+Case 2[cmake]: To compile and install the unconfigured source tree from git with cmake
+*********************************************************************************************
+
+	prerequisites:
+		cmake: 3.20 or newer
+
+	1. cmake -S . -B build
+	2. cmake --build build -j
+	3. cmake --install build
+
+
+optional dependencies and flags (passed during the configuration step)
+--------------------------------------------------
+
+	All additional features for parallelization or additional libraries are deactivated by default. Enable them by using the following flags:
+
+   - DOMP=on
+   - DMPI=on
+   - DCUKERNEL=on (together with -DMPI=on)
+   - DXTB=on
+
+   - DPEDANTIC=on (adds compiler flags: -Wextra -Wshadow -Wnon-virtual-dtor -pedantic -Wunused -Wconversion -Wsign-conversion)
+
+
+installation location and optimization flags
+--------------------------------------------------
+
+   The installation location can be set using CMAKE_INSTALL_PREFIX. Importantly, rpath related information is stripped from the binaries after installation. If gsl and fftw are not installed in standard locations, setting LD_LIBRARY_PATH might be necessary. The have cmake search for libraries in non standard locations, the variable CMAKE_PREFIX_PATH can be set. Most optimization flags for GNU C++ and Intel C++ compiler are set automatically if CMAKE_BUILD_TYPE=Release is set during configuration. If you want to set additional flags you can set CXXFLAGS or LDFLAGS accordingly.
+
+ advanced examples
+--------------------------------------------------
+
+	Linux Release build. Standard MPI location. Using Ninja build system and install in user's home folder.
+
+	cmake -S . -B build -DMPI=on -DCMAKE_INSTALL_PREFIX=$HOME/bin/gromos -DCMAKE_BUILD_TYPE=Release -GNinja
+	cmake --build build -j # using all available resources
+	cmake --install build
+
+	macOS Release build. Custom OpenMPI location (compiled using the --enable-mpi-cxx flag). Using Xcode's build system and install in user's home folder.
+
+	cmake -S . -B build_xcode -DMPI=on -DCMAKE_PREFIX_PATH="/opt/openmpi" -DCMAKE_INSTALL_PREFIX=$HOME/bin/gromos -DCMAKE_BUILD_TYPE=Release -GXcode
+	cmake --build build_xcode -j --config Release # using all available resources, --config Release only required for multi-config generators like Xcode
+	cmake --install build_xcode
+
+	Note: After the configuration step, the build_xcode folder will contain an Xcode project "gromosXX.xcodeproj" that can be opened in the IDE for debugging.
+
+
+ARCHITECTURE DEPENDENT DETAILS
+******************************
+
+	macOS (tested on 13.3.1 (a)  Ventura):
+	--------------------------------------
+
+	Gromos can be compiled with Apple Clang (tested: Apple clang version 14.0.3) and even be debugged using the Xcode IDE. Binaries produced will be native allowing support for Apple silicon and Intel based chips alike. Install the Xcode developer toolchain and optionally Xcode: xcode-select --install. Dependencies on macOS can conveniently be installed using either homebrew (https://brew.sh) or conda (https://docs.conda.io/en/latest/). Since Apple Clang does not have an OpenMP implementation, this feature cannot be used using this compiler. A possible solution is to use main branch clang or gcc instead.
+
+===========================================================================
+
+
+if something does not work
+--------------------------------------------------
+
+	check the version number of the autotools:
+	(in brackets the versions known to work)
+
+	cmake --version [cmake version 3.20]
+
+	another useful trick is to check against which libraries the compiled binary will link (ldd on Linux, otool -L on macOS)
