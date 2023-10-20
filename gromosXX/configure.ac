@@ -465,6 +465,7 @@ AC_CONFIG_FILES([
 	src/check/Makefile
 	program/Makefile
 	contrib/Makefile
+	data/Makefile
 	Makefile
 ])
 	
