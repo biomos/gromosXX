@@ -538,35 +538,53 @@ namespace io
       os << "\n";
     }
 
-    os << "\n" << std::setw(20) << type + "Shift_extra_orig";
-    
-    for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << energroup[i];
-    os << "\n";
-    for(unsigned int j=0; j < numenergygroups; j++) {
-      os << std::setw(20) << energroup[j];
-      for(unsigned int i=0; i<j; i++) os << std::setw(12) << " ";
-        for(unsigned int i=j; i < numenergygroups; i++){
-	        // now in calculate_totals
-	        // if(i==j)
-	        os << std::setw(12) << e.shift_extra_orig[i][j];
-	        // else 
+    // check if reaction shift is needed
+    bool use_shift_orig = false;
+    bool use_shift_phys = false;
+    for(unsigned int i=0; i < numenergygroups; i++){
+      for(unsigned int j=0; j < numenergygroups; j++) {
+        if (e.shift_extra_orig[i][j] != 0.0){
+          use_shift_orig = true;
         }
-        os << "\n";
+        if (e.shift_extra_phys[i][j] != 0.0){
+          use_shift_phys = true;
+        }      
+      }
     }
 
-    os << "\n" << std::setw(20) << type + "Shift_extra_phys";
-    for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << energroup[i];
+    if (use_shift_orig){
+      os << "\n" << std::setw(20) << type + "Shift_extra_orig";
+      
+      for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << energroup[i];
       os << "\n";
-    for(unsigned int j=0; j < numenergygroups; j++) {
-      os << std::setw(20) << energroup[j];
-      for(unsigned int i=0; i<j; i++) os << std::setw(12) << " ";
-        for(unsigned int i=j; i < numenergygroups; i++){
-          // now in calculate_totals
-          // if(i==j)
-          os << std::setw(12) << e.shift_extra_phys[i][j];
-          // else 
-        }
+      for(unsigned int j=0; j < numenergygroups; j++) {
+        os << std::setw(20) << energroup[j];
+        for(unsigned int i=0; i<j; i++) os << std::setw(12) << " ";
+          for(unsigned int i=j; i < numenergygroups; i++){
+            // now in calculate_totals
+            // if(i==j)
+            os << std::setw(12) << e.shift_extra_orig[i][j];
+            // else 
+          }
+          os << "\n";
+      }
+    }
+
+    if (use_shift_phys){
+      os << "\n" << std::setw(20) << type + "Shift_extra_phys";
+      for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << energroup[i];
         os << "\n";
+      for(unsigned int j=0; j < numenergygroups; j++) {
+        os << std::setw(20) << energroup[j];
+        for(unsigned int i=0; i<j; i++) os << std::setw(12) << " ";
+          for(unsigned int i=j; i < numenergygroups; i++){
+            // now in calculate_totals
+            // if(i==j)
+            os << std::setw(12) << e.shift_extra_phys[i][j];
+            // else 
+          }
+          os << "\n";
+      }
     }
 
     // ANITA 
