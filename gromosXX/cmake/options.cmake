@@ -38,6 +38,7 @@ if(CUKERNEL)
     set(CMAKE_CUDA_STANDARD 11)
     set(CMAKE_CUDA_STANDARD_REQUIRED ON)
     set(CMAKE_CUDA_RUNTIME_LIBRARY Shared)
+    add_definitions(-DHAVE_LIBCUDART)
 endif()
 
 # find option dependent packages

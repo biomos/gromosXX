@@ -20,7 +20,6 @@ set(INTERACTION_CC
     nonbonded/interaction/perturbed_nonbonded_outerloop.cc
     nonbonded/interaction/perturbed_nonbonded_pair.cc
     nonbonded/interaction/latticesum.cc
-    nonbonded/interaction/eds_nonbonded_outerloop.cc
     nonbonded/interaction/cuda_nonbonded_set.cc
     bonded/create_bonded.cc
     bonded/quartic_bond_interaction.cc
@@ -88,9 +87,8 @@ if(XTB)
     list (APPEND INTERACTION_CC "qmmm/xtb_worker.cc")
 endif()
 
-add_library(grointeraction OBJECT ${INTERACTION_CC})
 
-target_include_directories(grointeraction PUBLIC
+set(INTERACTION_INCLUDE
     ${PROJECT_BINARY_DIR}
     ${EXTERNAL_INCLUDES}
     .
@@ -106,3 +104,10 @@ target_include_directories(grointeraction PUBLIC
     special
     special/xray
 )
+
+if(CUKERNEL)
+  list(APPEND INTERACTION_INCLUDE "../cukernel")
+endif()
+
+add_library(grointeraction OBJECT ${INTERACTION_CC})
+target_include_directories(grointeraction PUBLIC ${INTERACTION_INCLUDE})
