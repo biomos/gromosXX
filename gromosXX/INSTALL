@@ -390,11 +390,11 @@ Case 2[cmake]: To compile and install the unconfigured source tree from git with
 *********************************************************************************************
 
 	prerequisites:
-		cmake: 3.20 or newer
+		cmake: 3.13 or newer
 
-	1. cmake -S . -B build
-	2. cmake --build build -j
-	3. cmake --install build
+	1. cmake -S . -B BUILD
+	2. cmake --build BUILD -j
+	3. cmake --install BUILD
 
 
 optional dependencies and flags (passed during the configuration step)
@@ -413,24 +413,24 @@ optional dependencies and flags (passed during the configuration step)
 installation location and optimization flags
 --------------------------------------------------
 
-   The installation location can be set using CMAKE_INSTALL_PREFIX. Importantly, rpath related information is stripped from the binaries after installation. If gsl and fftw are not installed in standard locations, setting LD_LIBRARY_PATH might be necessary. The have cmake search for libraries in non standard locations, the variable CMAKE_PREFIX_PATH can be set. Most optimization flags for GNU C++ and Intel C++ compiler are set automatically if CMAKE_BUILD_TYPE=Release is set during configuration. If you want to set additional flags you can set CXXFLAGS or LDFLAGS accordingly.
+   The installation location can be set using CMAKE_INSTALL_PREFIX. Importantly, rpath related information is stripped from the binaries after installation. If gsl and fftw are not installed in standard locations, setting LD_LIBRARY_PATH might be necessary. To have cmake search for libraries in non standard locations, the variable CMAKE_PREFIX_PATH can be set. Most optimization flags for GNU C++ and Intel C++ compiler are set automatically if CMAKE_BUILD_TYPE=Release is set during configuration. If you want to set additional flags you can set CXXFLAGS or LDFLAGS accordingly.
 
  advanced examples
 --------------------------------------------------
 
 	Linux Release build. Standard MPI location. Using Ninja build system and install in user's home folder.
 
-	cmake -S . -B build -DMPI=on -DCMAKE_INSTALL_PREFIX=$HOME/bin/gromos -DCMAKE_BUILD_TYPE=Release -GNinja
-	cmake --build build -j # using all available resources
-	cmake --install build
+	cmake -S . -B BUILD -DMPI=on -DCMAKE_INSTALL_PREFIX=$HOME/bin/gromos -DCMAKE_BUILD_TYPE=Release -GNinja
+	cmake --build BUILD -j # using all available resources
+	cmake --install BUILD
 
 	macOS Release build. Custom OpenMPI location (compiled using the --enable-mpi-cxx flag). Using Xcode's build system and install in user's home folder.
 
-	cmake -S . -B build_xcode -DMPI=on -DCMAKE_PREFIX_PATH="/opt/openmpi" -DCMAKE_INSTALL_PREFIX=$HOME/bin/gromos -DCMAKE_BUILD_TYPE=Release -GXcode
-	cmake --build build_xcode -j --config Release # using all available resources, --config Release only required for multi-config generators like Xcode
-	cmake --install build_xcode
+	cmake -S . -B BUILD_xcode -DMPI=on -DCMAKE_PREFIX_PATH="/opt/openmpi" -DCMAKE_INSTALL_PREFIX=$HOME/bin/gromos -DCMAKE_BUILD_TYPE=Release -GXcode
+	cmake --build BUILD_xcode -j --config Release # using all available resources, --config Release only required for multi-config generators like Xcode
+	cmake --install BUILD_xcode
 
-	Note: After the configuration step, the build_xcode folder will contain an Xcode project "gromosXX.xcodeproj" that can be opened in the IDE for debugging.
+	Note: After the configuration step, the BUILD_xcode folder will contain an Xcode project "gromosXX.xcodeproj" that can be opened in the IDE for debugging.
 
 
 ARCHITECTURE DEPENDENT DETAILS
@@ -450,6 +450,6 @@ if something does not work
 	check the version number of the autotools:
 	(in brackets the versions known to work)
 
-	cmake --version [cmake version 3.20]
+	cmake --version [cmake version 3.13]
 
 	another useful trick is to check against which libraries the compiled binary will link (ldd on Linux, otool -L on macOS)
