@@ -78,6 +78,8 @@ GROMOS users are obliged to properly acknowledge the use of the software, e.g. b
 
 Although we are continuously testing the GROMOS software, it goes without saying that we cannot be held responsible for any damage caused by errors in the software or data files.
 
+GROMOS is published under the GNU General Public License [(GPLv2)](https://www.gnu.org/licenses/gpl-2.0.html)
+
 ### References
 
 1.  M. Christen, P. H. Hünenberger, D. Bakowies, R. Baron, R. Bürgi, D. P. Geerke, T. N. Heinz, M. A. Kastenholz, V. Kräutler, C. Oostenbrink, C. Peter, D. Trzesniak, and W. F. van Gunsteren, _The GROMOS software for biomolecular simulation: GROMOS05_, J. Comput. Chem. **26** (2005) 1719-1751, doi: [10.1002/jcc.20303](https://doi.org/10.1002/jcc.20303)
