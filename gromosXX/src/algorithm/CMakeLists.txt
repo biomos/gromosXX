@@ -71,7 +71,7 @@ set(ALGO_INCLUDE
 )
 
 if(CUKERNEL)
-    set(ALGO_INCLUDE "${ALGO_INCLUDE} ../cukernel")
+    list(APPEND ALGO_INCLUDE "../cukernel")
 endif()
 
 add_library(groalgorithm OBJECT ${ALGO_CC})
