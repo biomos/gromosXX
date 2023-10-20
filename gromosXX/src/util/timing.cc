@@ -132,7 +132,7 @@ void util::Algorithm_Timer::start(const simulation::Simulation & sim) {
 
   #ifdef OMP
     if (omp_get_thread_num() != 0){
-      io::messages.add("Using a main-timer (see util/timing.cc) in parallel regions is not tested!","Timing",io::message::warning);
+      io::messages.add("Using a main-timer (see util/timing.cc) in parallel regions is not tested!","Timing",io::message::notice);
     }
   #endif
 
@@ -180,7 +180,7 @@ void util::Algorithm_Timer::start_subtimer(const std::string & name) {
   #ifdef XXMPI
     thread_id = 0;    //The MPI Process has always just one thread. If this is changed in the future, the implementation of the timer has to be changed
     #ifdef OMP
-      io::messages.add("Usage of both OpenMP and MPI not yet implemented in util/timing.cc. Timings might be wrong!","Timing",io::message::warning);
+      io::messages.add("Usage of both OpenMP and MPI not yet implemented in util/timing.cc. Timings might be wrong!","Timing",io::message::notice);
     #endif
   #endif
 
@@ -243,7 +243,7 @@ void util::Algorithm_Timer::stop_subtimer(const std::string & name) {
   #ifdef XXMPI
     thread_id = 0;    //The MPI Process has always just one thread. If this is changed in the future, the implementation of the timer has to be changed
     #ifdef OMP
-      io::messages.add("Usage of both OpenMP and MPI not yet implemented in util/timing.cc. Timings might be wrong!","Timing",io::message::warning);
+      io::messages.add("Usage of both OpenMP and MPI not yet implemented in util/timing.cc. Timings might be wrong!","Timing",io::message::notice);
     #endif
   #endif
   
@@ -254,7 +254,7 @@ void util::Algorithm_Timer::stop_subtimer(const std::string & name) {
   if (m_subtimers.find(name) == m_subtimers.end()){  
     #pragma omp critical (subtimer_stop_init)
     {
-      io::messages.add("Sub-timer " + name + " was stopped that has not been initialized before!","Timing",io::message::warning);
+      io::messages.add("Sub-timer " + name + " was stopped that has not been initialized before!","Timing",io::message::notice);
       DEBUG(5, "Sub-timer " + name + " was stopped that has not been initialized before!");
       //throw std::runtime_error("Sub-timer " + name + " was stopped that has not been initialized before! (Simulation step: " + std::to_string(m_step_index) + ")\n"); //Delete before merge!!
 
@@ -298,7 +298,7 @@ double util::Algorithm_Timer::get_total(const std::string & name) {
   
   //Sanity check: Throw error if runtime for a subtimer is larger than 2 years
   if (std::abs(m_subtimers[name].total_walltime) > 63072000.0){
-    io::messages.add("Total runtime of timer " + name + " failed sanity check!","Timing",io::message::warning);
+    io::messages.add("Total runtime of timer " + name + " failed sanity check!","Timing",io::message::notice);
     DEBUG(5, "Total runtime of timer " + name + " failed sanity check!");
     //throw std::runtime_error("Total runtime of timer " + name + " failed sanity check!"); //DELETE BEFORE MERGE
   }
