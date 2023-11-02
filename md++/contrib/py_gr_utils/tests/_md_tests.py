@@ -21,7 +21,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 import os
 import subprocess
 
-class Test_MD():
+class Base_MD_Test():
     def test_md_run(self):
         """
         Executes a short simulation of a test system checks for output files.

@@ -24,6 +24,8 @@ import shutil
 import yaml
 import numpy as np
 
+from ene_ana import EnergyTrajectory
+
 # default paths for GITLAB
 _MD_BIN = '${CI_PROJECT_DIR}/${BIN_PATH}'
 _CI_PROJECT_DIR = os.getenv('CI_PROJECT_DIR')
@@ -160,7 +162,7 @@ class ConfigTest():
         _md_line_format = '@{:<12}{:} \\\n'
         out_files_dict = dict(OUTPUTCRD='fin', OUTPUTTRX='trc', OUTPUTTRE='tre', 
                               OUTPUTTRG='trg', OUTPUTTRF='trf', OUTPUTTRV='trv')
-        in_files_dict = dict() # pos res for instance, not implemented yet...
+        in_files_dict = dict(PTTOPO='pttopo') # pos res for instance, not implemented yet...
         # get the run file
         # header
         self.omd = self.config['output']['OUNIT'] # out log file (omd)
@@ -210,9 +212,9 @@ class ConfigTest():
         return os.path.abspath(run_file)
 
     def __store_expected_values(self, trj_type, temp_file):
-        temp_file = self.__get_input_file_path(temp_file)
-        with open(temp_file[1], "rb") as f:
-            self.expected_values[trj_type] = np.load(f)
+        temp_file = self.__get_input_file_path(temp_file) # returns path and abspath
+        self.expected_values[trj_type] = EnergyTrajectory()
+        self.expected_values[trj_type].load_trj_np(temp_file[1], flag_load_var=True)
         return
 
     def load_expected_values(self, *args):
@@ -237,3 +239,52 @@ class ConfigTest():
         if os.path.abspath(self.sim_dir) != self.input_dir_abs or flag_rm_input_dir:
             if os.path.isdir(self.sim_dir):
                 shutil.rmtree(self.sim_dir)
+
+    conf_file__env_var='ConfigFile'
+    test_repo__env_var='TEST_REPO'
+
+    @classmethod
+    def find_config_file(cls, repo_test_dir=None, conf_file='default_param.yaml', repo_dir='gromos_test_files'):
+        """
+        finds / defines the configuration file, either locally or from a testing repository
+            environment variables used:
+                conf_file__env_var='ConfigFile'
+                test_repo__env_var='TEST_REPO'
+            defaults used:
+
+
+        :param repo_test_dir: directory in the repository
+        :param repo_dir: path to the repository
+        :param conf_file: configuration file in the current directory (local) or in the repo_test_dir
+        :return: path to the configuration file
+        """
+        config_file = os.getenv(cls.conf_file__env_var, conf_file)
+        if os.path.isfile(config_file):
+            return config_file
+        else:
+            # default settings based on the path to the Test_Repo (gromos_test_files)
+            test_repo_path = os.getenv(cls.test_repo__env_var, repo_dir)
+            config_file = os.path.join(test_repo_path, repo_test_dir, conf_file)
+            return config_file
+
+    def flag_cleanup(self, flag_cleanup__env_var='FLAG_TEST_CLEAN_UP'):
+        """
+        flag to make a cleanup of the simulation dir (for local testing)
+        set it up using export FLAG_TEST_CLEAN_UP=1 (env var can be change by flag_cleanup__env_var)
+        or by setting flag_clean_up: True in the yaml config file
+
+        :param flag_cleanup__env_var: name of the environmental variable to check
+        :return: True or False
+        """
+        flag_clean_up=False # set True for local testing
+        # set it up using export FLAG_TEST_CLEAN_UP=1
+        temp_flag_clean_up = os.getenv(flag_cleanup__env_var)
+        if temp_flag_clean_up:
+            if str(temp_flag_clean_up).lower() not in ('0', 'false'):
+                flag_clean_up=True
+        # or set it up using flag_clean_up: True in the yaml file
+        if self.config.get('flag_clean_up'):
+            flag_clean_up=True
+        if flag_clean_up:
+            self.test_clean_up = self.clean_up
+        return flag_clean_up

@@ -27,100 +27,104 @@ _current = os.path.dirname(_current)
 _current = os.path.dirname(_current)
 sys.path.append(_current)
 
-from ene_ana import EnegyTrajectory
+from ene_ana import EnergyTrajectory
 
 # energy trajectory tests
-class Test_tre():
-    
+class Base_Test_tre:
+    "base class for all test related to energy trajectory"
+
     @classmethod
     def load_tre(cls):
         # simulated trajectory
         ene_trj_file = cls.test_conf.out_files.get('tre')
         assert os.path.isfile(ene_trj_file)
         assert os.path.isfile(cls.test_conf.ene_ana_lib)
-        cls.tr = EnegyTrajectory(cls.test_conf.ene_ana_lib, ene_trj_path=ene_trj_file)
+        cls.tre = EnergyTrajectory(cls.test_conf.ene_ana_lib, trj_files=(ene_trj_file,), num_type=np.single)
         # hardcoded expected values
         cls.test_conf.load_expected_values('tre')
-        cls.tre = cls.test_conf.expected_values['tre']
-    
-    @staticmethod
-    def test_load_tre():
-        Test_tre.load_tre()
+        cls.HC_tre = cls.test_conf.expected_values['tre']
+
+    def test_load_tre(self):
+        self.load_tre()
+
+
+class Basic_Tests_tre(Base_Test_tre):
+    "class for basic tests related to energy trajectory"
+
+    def _test_almost_eq_var(self, *var):
+        tre_data = self.tre.get_values(*var)
+        HC_tre_data = self.HC_tre.get_values(*var)
+        np.testing.assert_almost_equal(tre_data, HC_tre_data)
+
+    def _test_almost_eq_subbl(self, subblock, idx=()):
+        tre_data = self.tre.extract_values(subblock, idx=idx)
+        HC_tre_data = self.HC_tre.extract_values(subblock, idx=idx)
+        np.testing.assert_almost_equal(tre_data, HC_tre_data)
 
     # test functions
     def test_TIME_block(self):
         """
-        Checks if the 0th, 1st and the last timestep in the reference file and the new md are consistent
+        Checks if the TIMESTEP in the reference file and the new md are consistent
         """
-        tre, tr = self.tre, self.tr
-        np.testing.assert_almost_equal(tre["TIMESTEP"]["TIME"][0,0,:2,0] ,tr.tre["TIMESTEP"]["TIME"][0,0,:2,0], decimal=8)
-        np.testing.assert_almost_equal(tre["TIMESTEP"]["TIME"][1,0,:2,0] ,tr.tre["TIMESTEP"]["TIME"][1,0,:2,0], decimal=8)
-        np.testing.assert_almost_equal(tre["TIMESTEP"]["TIME"][2,0,:2,0] ,tr.tre["TIMESTEP"]["TIME"][2,0,:2,0], decimal=8)
-        np.testing.assert_almost_equal(tre["TIMESTEP"]["TIME"][-1,0,:2,0] ,tr.tre["TIMESTEP"]["TIME"][-1,0,:2,0], decimal=8)
+        self.tre.variables['step'] = ('TIME', (0,))
+        self.HC_tre.variables['step'] = ('TIME', (0,))
+        self._test_almost_eq_var('step', 'time')
 
     def test_ENER_block(self):
         """
-        Checks for energy consistency in different timesteps between ref data and new md.
+        Checks for energy consistency between ref data and new md.
         """
-        tre, tr = self.tre, self.tr
-        np.testing.assert_almost_equal(tre["ENERGY03"]["ENER"][0,0,:5,0] ,tr.tre["ENERGY03"]["ENER"][0,0,:5,0], decimal=8)
-        np.testing.assert_almost_equal(tre["ENERGY03"]["ENER"][1,0,:5,0] ,tr.tre["ENERGY03"]["ENER"][1,0,:5,0], decimal=8)
-        np.testing.assert_almost_equal(tre["ENERGY03"]["ENER"][2,0,:5,0] ,tr.tre["ENERGY03"]["ENER"][2,0,:5,0], decimal=8)
-        np.testing.assert_almost_equal(tre["ENERGY03"]["ENER"][-1,0,:5,0] ,tr.tre["ENERGY03"]["ENER"][-1,0,:5,0], decimal=8)
+        self._test_almost_eq_var('totene', 'totkin', 'totpot', 'totcov')
+        self._test_almost_eq_var('totbond', 'totangle', 'totimproper', 'totdihedral')
+        self._test_almost_eq_var('totnonbonded', 'totlj','totcrf')
 
     def test_KINENER_block(self):
         """
         Checks for kinetic energy consistency in different timesteps between ref data and new md.
         """
-        tre, tr = self.tre, self.tr
-        np.testing.assert_almost_equal(tre["ENERGY03"]["KINENER"][0,0,:2,:3] ,tr.tre["ENERGY03"]["KINENER"][0,0,:2,:3], decimal=8)
-        np.testing.assert_almost_equal(tre["ENERGY03"]["KINENER"][1,0,:2,:3] ,tr.tre["ENERGY03"]["KINENER"][1,0,:2,:3], decimal=8)
-        np.testing.assert_almost_equal(tre["ENERGY03"]["KINENER"][2,0,:2,:3] ,tr.tre["ENERGY03"]["KINENER"][2,0,:2,:3], decimal=8)
-        np.testing.assert_almost_equal(tre["ENERGY03"]["KINENER"][-1,0,:2,:3] ,tr.tre["ENERGY03"]["KINENER"][-1,0,:2,:3], decimal=8)
+        self._test_almost_eq_subbl('KINENER')
 
     def test_BONDED_block(self):
         """
         Checks for bonded terms consistency in different timesteps between ref data and new md.
         """
-        tre, tr = self.tre, self.tr
-        np.testing.assert_almost_equal(tre["ENERGY03"]["BONDED"][0,0,:4,:5] ,tr.tre["ENERGY03"]["BONDED"][0,0,:4,:5], decimal=8)
-        np.testing.assert_almost_equal(tre["ENERGY03"]["BONDED"][1,0,:4,:5] ,tr.tre["ENERGY03"]["BONDED"][1,0,:4,:5], decimal=8)
-        np.testing.assert_almost_equal(tre["ENERGY03"]["BONDED"][2,0,:4,:5] ,tr.tre["ENERGY03"]["BONDED"][2,0,:4,:5], decimal=8)
-        np.testing.assert_almost_equal(tre["ENERGY03"]["BONDED"][-1,0,:4,:5] ,tr.tre["ENERGY03"]["BONDED"][-1,0,:4,:5], decimal=8)
+        self._test_almost_eq_subbl('BONDED')
 
     def test_NONBONDED_block(self):
         """
         Checks for nonbonded terms consistency in different timesteps between ref data and new md.
         """
-        tre, tr = self.tre, self.tr
-        np.testing.assert_almost_equal(tre["ENERGY03"]["NONBONDED"][0,0,:8,:4] ,tr.tre["ENERGY03"]["NONBONDED"][0,0,:8,:4], decimal=8)
-        np.testing.assert_almost_equal(tre["ENERGY03"]["NONBONDED"][1,0,:8,:4] ,tr.tre["ENERGY03"]["NONBONDED"][1,0,:8,:4], decimal=8)
-        np.testing.assert_almost_equal(tre["ENERGY03"]["NONBONDED"][2,0,:8,:4] ,tr.tre["ENERGY03"]["NONBONDED"][2,0,:8,:4], decimal=8)
-        np.testing.assert_almost_equal(tre["ENERGY03"]["NONBONDED"][-1,0,:8,:4] ,tr.tre["ENERGY03"]["NONBONDED"][-1,0,:8,:4], decimal=8)
+        self._test_almost_eq_subbl('NONBONDED')
 
     def test_TEMP_block(self):
         """
         Checks for temperature consistency in different timesteps between ref data and new md.
         """
-        tre, tr = self.tre, self.tr
-        np.testing.assert_almost_equal(tre["VOLUMEPRESSURE03"]["TEMPERATURE"][0,0,:2,:4] ,tr.tre["VOLUMEPRESSURE03"]["TEMPERATURE"][0,0,:2,:4], decimal=8)
-        np.testing.assert_almost_equal(tre["VOLUMEPRESSURE03"]["TEMPERATURE"][1,0,:2,:4] ,tr.tre["VOLUMEPRESSURE03"]["TEMPERATURE"][1,0,:2,:4], decimal=8)
-        np.testing.assert_almost_equal(tre["VOLUMEPRESSURE03"]["TEMPERATURE"][2,0,:2,:4] ,tr.tre["VOLUMEPRESSURE03"]["TEMPERATURE"][2,0,:2,:4], decimal=8)
-        np.testing.assert_almost_equal(tre["VOLUMEPRESSURE03"]["TEMPERATURE"][-1,0,:2,:4] ,tr.tre["VOLUMEPRESSURE03"]["TEMPERATURE"][-1,0,:2,:4], decimal=8)
+        self._test_almost_eq_subbl('TEMPERATURE')
 
     def test_VOLUME_block(self):
-        tre, tr = self.tre, self.tr
-        np.testing.assert_almost_equal(tre["VOLUMEPRESSURE03"]["VOLUME"][0,0,:5,0] ,tr.tre["VOLUMEPRESSURE03"]["VOLUME"][0,0,:5,0], decimal=8)
-        np.testing.assert_almost_equal(tre["VOLUMEPRESSURE03"]["VOLUME"][1,0,:5,0] ,tr.tre["VOLUMEPRESSURE03"]["VOLUME"][1,0,:5,0], decimal=8)
-        np.testing.assert_almost_equal(tre["VOLUMEPRESSURE03"]["VOLUME"][2,0,:5,0] ,tr.tre["VOLUMEPRESSURE03"]["VOLUME"][2,0,:5,0], decimal=8)
-        np.testing.assert_almost_equal(tre["VOLUMEPRESSURE03"]["VOLUME"][-1,0,:5,0] ,tr.tre["VOLUMEPRESSURE03"]["VOLUME"][-1,0,:5,0], decimal=8)
+        self._test_almost_eq_subbl('VOLUME')
 
     def test_PRESSURE_block(self):
         """
         Checks for pressure consistency in different timesteps between ref data and new md.
         """
-        tre, tr = self.tre, self.tr
-        np.testing.assert_almost_equal(tre["VOLUMEPRESSURE03"]["PRESSURE"][0,0,:10,0] ,tr.tre["VOLUMEPRESSURE03"]["PRESSURE"][0,0,:10,0], decimal=8)
-        np.testing.assert_almost_equal(tre["VOLUMEPRESSURE03"]["PRESSURE"][1,0,:10,0] ,tr.tre["VOLUMEPRESSURE03"]["PRESSURE"][1,0,:10,0], decimal=8)
-        np.testing.assert_almost_equal(tre["VOLUMEPRESSURE03"]["PRESSURE"][2,0,:10,0] ,tr.tre["VOLUMEPRESSURE03"]["PRESSURE"][2,0,:10,0], decimal=8)
-        np.testing.assert_almost_equal(tre["VOLUMEPRESSURE03"]["PRESSURE"][-1,0,:10,0] ,tr.tre["VOLUMEPRESSURE03"]["PRESSURE"][-1,0,:10,0], decimal=8)
+        self._test_almost_eq_subbl('PRESSURE', idx=slice(10)) # first 10 numbers only
+
+
+class AEDS_Tests_tre(Basic_Tests_tre):
+    "class for EDS tests related to energy trajectory"
+
+    def test_AEDS_energy(self):
+        """
+        Checks for EDS energy consistency between ref data and new md.
+        """
+        self._test_almost_eq_var('eds_vmix', 'eds_vr')
+        self._test_almost_eq_var('eds_emax', 'eds_emin', 'eds_globmin', 'eds_globminfluc')
+
+    def test_AEDS_state_energy(self):
+        """
+        Checks for EDS energy consistency between ref data and new md.
+        """
+        self._test_almost_eq_var('e1', 'e2', 'e3', 'e4')
+        self._test_almost_eq_var('e1r', 'e2r', 'e3r', 'e4r')

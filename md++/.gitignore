@@ -32,5 +32,10 @@ build*
 **.log
 **/Makefile
 
+#python files
+*__pycache__*
+*pyc
+*.ipynb_checkpoints*
+
 #IDE-Folder:
 **.idea
