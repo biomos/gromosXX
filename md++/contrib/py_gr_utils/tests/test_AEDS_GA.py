@@ -23,7 +23,8 @@ import os
 
 ######## specific code for the test ########
 # set test directory in the repository (gromos_test_files)
-_repo_test_dir='tutorial_pept'
+_repo_test_dir='AEDS_test'
+_config_file='GA_param.yaml'
 ######## specific code for the test ########
 
 ######## default code ########
@@ -32,7 +33,7 @@ _parent = os.path.dirname(_current)
 sys.path.append(_parent)
 from tests._config_test_params import ConfigTest
 
-_config_file = ConfigTest.find_config_file(_repo_test_dir)
+_config_file = ConfigTest.find_config_file(_repo_test_dir, conf_file=_config_file)
 _test_conf = ConfigTest(_config_file)
 
 # make sure to clear_up the sim_dir before running the tests
@@ -42,12 +43,12 @@ if os.path.isdir(_test_conf.sim_dir):_test_conf.clean_up()
 ######## specific code for the test ########
 # test MD
 from tests._md_tests import Base_MD_Test
-class Test_tutpept_MD(Base_MD_Test):
+class Test_AEDS_GA_MD(Base_MD_Test):
     test_conf = _test_conf
 
 # test ene
-from tests._tre_tests import Basic_Tests_tre
-class Test_tutpept_tre(Basic_Tests_tre):
+from tests._tre_tests import AEDS_Tests_tre
+class Test_AEDS_GA_tre(AEDS_Tests_tre):
     test_conf = _test_conf
 ######## specific code for the test ########
 
