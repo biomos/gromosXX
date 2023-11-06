@@ -110,7 +110,7 @@
     - echo $PRE_MD_BIN
     - echo $OMPI_ALLOW_RUN_AS_ROOT_CONFIRM
     - echo $OMPI_ALLOW_RUN_AS_ROOT
-    - git clone https://gromosx.boku.ac.at/gromos/gromos_test_files.git
+    - git clone https://gromosx.boku.ac.at/gromos_tests/gromos_test_files.git
     - cd md++/contrib/py_gr_utils/tests/
     - pytest-3 --junitxml=${CI_PROJECT_DIR}/sim_test_report.xml
   artifacts:
