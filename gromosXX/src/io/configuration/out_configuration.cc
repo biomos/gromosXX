@@ -3027,7 +3027,8 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
           << std::setw(18) << e.total + e.shift_extra_phys_total << "\n" // 47
           << std::setw(18) << e.eds_vr_shift_orig << "\n" // 48
           << std::setw(18) << e.eds_vr_shift_phys << "\n"  // 49
-          << std::setw(18) << e.gamd_DV_total << "\n"; // 50
+          << std::setw(18) << e.gamd_DV_total << "\n" // 50
+          << std::setw(18) << e.eds_target_emax << "\n"; // 51
 
   os << "# baths\n";
   os << numbaths << "\n";
@@ -3891,6 +3892,7 @@ _print_aedssearch(configuration::Configuration const &conf,
   os << "AEDSSEARCH\n";
   os << std::setw(m_width) << sim.param().eds.emax << "\n";
   os << std::setw(m_width) << sim.param().eds.emin << "\n";
+  os << std::setw(m_width) << sim.param().eds.target_emax << "\n";
   os << std::setw(m_width) << sim.param().eds.searchemax << "\n";
   os << std::setw(m_width) << sim.param().eds.emaxcounts << "\n";
   os << std::setw(m_width) << sim.param().eds.oldstate << "\n";

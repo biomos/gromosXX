@@ -65,6 +65,7 @@ eds_vr_shift_phys(0.0),
 eds_vmix(0.0),
 eds_emax(0.0),
 eds_emin(0.0),
+eds_target_emax(0.0),
 eds_globmin(0.0),
 eds_globminfluc(0.0),
 entropy_term(0.0),
@@ -130,6 +131,7 @@ void configuration::Energy::zero(bool potential, bool kinetic)
     eds_vmix = 0.0;
     eds_emax = 0.0;
     eds_emin = 0.0;
+    eds_target_emax = 0.0;
     eds_globmin = 0.0;
     eds_globminfluc = 0.0;
     eds_vi.assign(eds_vi.size(), 0.0);
@@ -635,6 +637,7 @@ double configuration::Energy::get_energy_by_index(const unsigned int & index) {
     case 48 : return eds_vr_shift_orig;
     case 49 : return eds_vr_shift_phys;
     case 50 : return gamd_DV_total;
+    case 51 : return eds_target_emax;
   }
   return 0.0;
 }

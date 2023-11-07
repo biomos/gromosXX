@@ -15,11 +15,32 @@
 #include "../../util/error.h"
 
 #include "eds.h"
+#include "H_acceleration.h"
+
 
 #undef MODULE
 #undef SUBMODULE
 #define MODULE algorithm
 #define SUBMODULE integration
+
+
+algorithm::PowerAcceleration p_accel;
+
+/**
+ * EDS init
+ */
+// int algorithm::EDS
+// ::init(topology::Topology &topo, 
+//         configuration::Configuration &conf,
+//         simulation::Simulation &sim,
+//         std::ostream &os,
+//         bool quiet){
+//     PowerAcceleration p_accel;
+//     return 0;
+// }
+
+
+
 
 /**
  * EDS step
@@ -30,6 +51,10 @@ int algorithm::EDS
         configuration::Configuration & conf,
         simulation::Simulation &sim)
  {
+
+  
+  std::cout << "\nEDS_step"<< std::endl;
+
   m_timer.start(sim);
 
   const unsigned int numstates = sim.param().eds.numstates;
@@ -41,6 +66,7 @@ int algorithm::EDS
     case simulation::aeds_advanced_search:
     case simulation::aeds_advanced_search2:
     {
+      std::cout << "TUSMO! AEDS param: "<< sim.param().eds.eds << std::endl;
       // interactions have been calculated - now apply eds Hamiltonian
       std::vector<double> prefactors(numstates);
       // get beta
@@ -89,6 +115,7 @@ int algorithm::EDS
         || sim.param().eds.form == simulation::aeds_advanced_search) {
           sim.param().eds.emax = conf.current().energies.eds_vmix;
           sim.param().eds.emin = conf.current().energies.eds_vmix;
+          sim.param().eds.target_emax = conf.current().energies.eds_vmix;
           sim.param().eds.searchemax = conf.current().energies.eds_vmix;
         }
         if (sim.param().eds.form == simulation::aeds_search_eir || sim.param().eds.form == simulation::aeds_search_all
@@ -100,18 +127,31 @@ int algorithm::EDS
       }
 
       // accelerate eds Hamiltonian
-      if (conf.current().energies.eds_vmix <= sim.param().eds.emin) {
-        conf.current().energies.eds_vr = conf.current().energies.eds_vmix;
+      if (sim.param().eds.eds==2){
+        if (conf.current().energies.eds_vmix <= sim.param().eds.emin) {
+          conf.current().energies.eds_vr = conf.current().energies.eds_vmix;
+        }
+        else if (conf.current().energies.eds_vmix >= sim.param().eds.emax) {
+          conf.current().energies.eds_vr = conf.current().energies.eds_vmix - 0.5 * (sim.param().eds.emax - sim.param().eds.emin);
+        }
+        else {
+          demix = conf.current().energies.eds_vmix - sim.param().eds.emin;
+          kfac = 1.0 / (sim.param().eds.emax - sim.param().eds.emin);
+          fkfac = 1.0 - kfac * demix;
+          conf.current().energies.eds_vr = conf.current().energies.eds_vmix - 0.5 * kfac * demix * demix;
+        }
       }
-      else if (conf.current().energies.eds_vmix >= sim.param().eds.emax) {
-        conf.current().energies.eds_vr = conf.current().energies.eds_vmix - 0.5 * (sim.param().eds.emax - sim.param().eds.emin);
+      //power acceleration
+      else if (sim.param().eds.eds==3){
+        p_accel.set_target_acceleration(sim.param().eds.emax, sim.param().eds.emin, sim.param().eds.target_emax);
+        p_accel.accelerate_E_F(conf.current().energies.eds_vmix, &conf.current().energies.eds_vr, &fkfac);
       }
-      else {
-        demix = conf.current().energies.eds_vmix - sim.param().eds.emin;
-        kfac = 1.0 / (sim.param().eds.emax - sim.param().eds.emin);
-        fkfac = 1.0 - kfac * demix;
-        conf.current().energies.eds_vr = conf.current().energies.eds_vmix - 0.5 * kfac * demix * demix;
-      }
+
+      std::cout << "emin: "<< sim.param().eds.emin << std::endl;
+      std::cout << "emax: "<< sim.param().eds.emax << std::endl;
+      std::cout << "target_emax: "<< sim.param().eds.target_emax << std::endl;
+      std::cout << "E_vmix: "<< conf.current().energies.eds_vmix << std::endl;
+      std::cout << "E_vr: "<< conf.current().energies.eds_vr << std::endl;
 
       // calculate eds contribution ...
       for (unsigned int state = 0; state < numstates; state++) {
@@ -166,18 +206,26 @@ int algorithm::EDS
           double tau = double(sim.param().eds.asteps) + double(sim.param().eds.bsteps - sim.param().eds.asteps) * double(sim.steps()) / double(sim.param().step.number_of_steps);
           double expde = 0.0, eiremin = 0.0, eiremax = 0.0, eirestar = 0.0, eirdemix = 0.0, eirkfac = 0.0;
           for (unsigned int is = 0; is < numstates; is++) {
-            eiremin = sim.param().eds.emin + sim.param().eds.eir[is];
-            eiremax = sim.param().eds.emax + sim.param().eds.eir[is];
-            if (eds_vi[is] <= eiremin) {
-              eirestar = eds_vi[is];
+            // gauss acceleration
+            if (sim.param().eds.eds==2){
+              eiremin = sim.param().eds.emin + sim.param().eds.eir[is];
+              eiremax = sim.param().eds.emax + sim.param().eds.eir[is];
+              if (eds_vi[is] <= eiremin) {
+                eirestar = eds_vi[is];
+              }
+              else if (eds_vi[is] >= eiremax) {
+                eirestar = eds_vi[is] - 0.5 * (eiremax - eiremin);
+              }
+              else {
+                eirdemix = eds_vi[is] - eiremin;
+                eirkfac = 1.0 / (eiremax - eiremin);
+                eirestar = eds_vi[is] - 0.5 * eirkfac * eirdemix * eirdemix;
+              }
             }
-            else if (eds_vi[is] >= eiremax) {
-              eirestar = eds_vi[is] - 0.5 * (eiremax - eiremin);
-            }
-            else {
-              eirdemix = eds_vi[is] - eiremin;
-              eirkfac = 1.0 / (eiremax - eiremin);
-              eirestar = eds_vi[is] - 0.5 * eirkfac * eirdemix * eirdemix;
+            // power acceleration
+            else if (sim.param().eds.eds==3){
+              p_accel.accelerate_E(eds_vi[is] - sim.param().eds.eir[is], &eirestar);
+              eirestar += sim.param().eds.eir[is];
             }
             // if in conventional search algorithm recalculate offsets using time decay function and update them
             if (sim.param().eds.form == simulation::aeds_search_eir || sim.param().eds.form == simulation::aeds_search_all){
@@ -267,7 +315,7 @@ int algorithm::EDS
             sim.param().eds.searchemax = globminavg;
           }
 
-          // EMIN
+          // EMIN & TARGET_EMAX
           double bmax = 0.0;
           if (sim.param().eds.bmaxtype == 1)
           {
@@ -278,32 +326,41 @@ int algorithm::EDS
             // this implies that the fluctuations of the energies do not change with the acceleration
             bmax = sim.param().eds.stdevenergy[targetstate] * sim.param().eds.setbmax;
           }
-          if ((sim.param().eds.emax - globminavg) <= bmax) {
-            sim.param().eds.emin = sim.param().eds.emax;
-            DEBUG(7, "emin1 " << sim.param().eds.emin);
-          }
-          else {
-            sim.param().eds.emin = 2.0 * (globminavg + bmax) - sim.param().eds.emax;
-            DEBUG(7, "emin2 " << sim.param().eds.emin);
-            DEBUG(7, "emin2 " << globminavg);
-            if (sim.param().eds.emin < globminavg) {
-              sim.param().eds.emin = (-sim.param().eds.emax * sim.param().eds.emax
-                + 2.0 * sim.param().eds.emax * bmax
-                + 2.0 * sim.param().eds.emax * globminavg
-                - globminavg * globminavg)
-                / (2.0 * bmax);
-              DEBUG(7, "emin3 " << sim.param().eds.emin);
+          // gauss acceleration
+          if (sim.param().eds.eds==2){
+            if ((sim.param().eds.emax - globminavg) <= bmax) {
+              sim.param().eds.emin = sim.param().eds.emax;
+              DEBUG(7, "emin1 " << sim.param().eds.emin);
             }
-            // security measure to prevent extreme emins in the beginning of the simulation before we saw a full round-trip
-            if (sim.param().eds.fullemin == false && sim.param().eds.emin < globminavg) {
-              sim.param().eds.emin = globminavg;
-              // globminavg can be larger than the current largest transition energy
-              if (sim.param().eds.emin > sim.param().eds.emax) {
-                sim.param().eds.emin = sim.param().eds.emax;
+            else {
+              sim.param().eds.emin = 2.0 * (globminavg + bmax) - sim.param().eds.emax;
+              DEBUG(7, "emin2 " << sim.param().eds.emin);
+              DEBUG(7, "emin2 " << globminavg);
+              if (sim.param().eds.emin < globminavg) {
+                sim.param().eds.emin = (-sim.param().eds.emax * sim.param().eds.emax
+                  + 2.0 * sim.param().eds.emax * bmax
+                  + 2.0 * sim.param().eds.emax * globminavg
+                  - globminavg * globminavg)
+                  / (2.0 * bmax);
+                DEBUG(7, "emin3 " << sim.param().eds.emin);
               }
-              DEBUG(7, "emin4 " << sim.param().eds.emin);
+              // security measure to prevent extreme emins in the beginning of the simulation before we saw a full round-trip
+              if (sim.param().eds.fullemin == false && sim.param().eds.emin < globminavg) {
+                sim.param().eds.emin = globminavg;
+                // globminavg can be larger than the current largest transition energy
+                if (sim.param().eds.emin > sim.param().eds.emax) {
+                  sim.param().eds.emin = sim.param().eds.emax;
+                }
+                DEBUG(7, "emin4 " << sim.param().eds.emin);
+              }
             }
           }
+          // power accceleration
+          else if (sim.param().eds.eds==3){
+            sim.param().eds.emin = globminavg;
+          }
+          sim.param().eds.target_emax = globminavg + bmax;
+
           conf.current().energies.eds_globmin = globminavg;
           conf.current().energies.eds_globminfluc = globminfluc;
           sim.param().eds.oldstate = state;
@@ -347,6 +404,7 @@ int algorithm::EDS
 
       conf.current().energies.eds_emax = sim.param().eds.emax;
       conf.current().energies.eds_emin = sim.param().eds.emin;
+      conf.current().energies.eds_target_emax = sim.param().eds.target_emax;
       for (unsigned int is = 0; is < numstates; is++) {
         conf.current().energies.eds_eir[is] = sim.param().eds.eir[is];
       }

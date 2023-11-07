@@ -1329,6 +1329,7 @@ bool io::In_Configuration::read_aedssearch
 
         os << "\t" << sim.param().eds.emax << "\n";
         os << "\t" << sim.param().eds.emin << "\n";
+        os << "\t" << sim.param().eds.target_emax << "\n";
         os << "\t" << sim.param().eds.searchemax << "\n";
         os << "\t" << sim.param().eds.emaxcounts << "\n";
         os << "\t" << sim.param().eds.oldstate << "\n";
@@ -3604,6 +3605,10 @@ bool io::In_Configuration::_read_aedssearch(
   _lineStream.clear();
   _lineStream.str(*it);
   _lineStream >> sim.param().eds.emin;
+  it++;
+  _lineStream.clear();
+  _lineStream.str(*it);
+  _lineStream >> sim.param().eds.target_emax;
   it++;
   _lineStream.clear();
   _lineStream.str(*it);

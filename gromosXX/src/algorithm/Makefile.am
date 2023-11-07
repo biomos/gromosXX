@@ -24,7 +24,8 @@ xxalgintegration_HEADERS = integration/energy_calculation.h\
 	integration/analyze.h\
 	integration/lattice_shift.h\
 	integration/multigradient.h\
-    integration/eds.h\
+    	integration/eds.h\
+    	integration/H_acceleration.h\
 	integration/gamd.h
 
 xxalgtempdir = $(includedir)/md++/algorithm/temperature
@@ -95,7 +96,8 @@ libgroalgorithm_la_SOURCES = algorithm.cc\
 	constraints/rottrans.cc\
 	integration/lattice_shift.cc\
 	integration/multigradient.cc\
-    integration/eds.cc\
+    	integration/eds.cc\
+	integration/H_acceleration.cc\
 	integration/gamd.cc\
 	virtualatoms/prepare_virtualatoms.cc\
 	virtualatoms/propagate_forces.cc

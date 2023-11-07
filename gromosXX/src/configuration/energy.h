@@ -285,6 +285,11 @@ namespace configuration
     /**
     *
     */
+    double eds_target_emax;
+
+    /**
+    *
+    */
     double eds_globmin;
 
     /**
