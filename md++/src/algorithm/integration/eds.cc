@@ -49,17 +49,19 @@ algorithm::PowerAcceleration p_accel;
 /**
  * EDS init
  */
-// int algorithm::EDS
-// ::init(topology::Topology &topo, 
-//         configuration::Configuration &conf,
-//         simulation::Simulation &sim,
-//         std::ostream &os,
-//         bool quiet){
-//     PowerAcceleration p_accel;
-//     return 0;
-// }
+int algorithm::EDS
+::init(topology::Topology &topo, 
+            configuration::Configuration &conf,
+            simulation::Simulation &sim,
+            std::ostream &os,
+            bool quiet)
+{
+    PowerAcceleration E_accel;
 
-
+    if (!quiet)
+        os << "\tEDS\nEND\n";
+    return 0;
+}
 
 
 /**
@@ -71,10 +73,6 @@ int algorithm::EDS
         configuration::Configuration & conf,
         simulation::Simulation &sim)
  {
-
-  
-  std::cout << "\nEDS_step"<< std::endl;
-
   m_timer.start(sim);
 
   const unsigned int numstates = sim.param().eds.numstates;
@@ -86,7 +84,6 @@ int algorithm::EDS
     case simulation::aeds_advanced_search:
     case simulation::aeds_advanced_search2:
     {
-      std::cout << "TUSMO! AEDS param: "<< sim.param().eds.eds << std::endl;
       // interactions have been calculated - now apply eds Hamiltonian
       std::vector<double> prefactors(numstates);
       // get beta
@@ -163,15 +160,17 @@ int algorithm::EDS
       }
       //power acceleration
       else if (sim.param().eds.eds==3){
-        p_accel.set_target_acceleration(sim.param().eds.emax, sim.param().eds.emin, sim.param().eds.target_emax);
+        p_accel.set_target_acceleration(sim.param().eds.emax, sim.param().eds.emin, sim.param().eds.target_emax - sim.param().eds.emin);
         p_accel.accelerate_E_F(conf.current().energies.eds_vmix, &conf.current().energies.eds_vr, &fkfac);
       }
 
-      std::cout << "emin: "<< sim.param().eds.emin << std::endl;
-      std::cout << "emax: "<< sim.param().eds.emax << std::endl;
-      std::cout << "target_emax: "<< sim.param().eds.target_emax << std::endl;
-      std::cout << "E_vmix: "<< conf.current().energies.eds_vmix << std::endl;
-      std::cout << "E_vr: "<< conf.current().energies.eds_vr << std::endl;
+      // std::cout << "\tAEDS (FORM)"<< sim.param().eds.eds << std::endl;
+      // std::cout << "emin: "<< sim.param().eds.emin << std::endl;
+      // std::cout << "emax: "<< sim.param().eds.emax << std::endl;
+      // std::cout << "target_emax: "<< sim.param().eds.target_emax << std::endl;
+      // std::cout << "E_vmix: "<< conf.current().energies.eds_vmix << std::endl;
+      // std::cout << "E_vr: "<< conf.current().energies.eds_vr << std::endl;
+
 
       // calculate eds contribution ...
       for (unsigned int state = 0; state < numstates; state++) {

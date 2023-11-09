@@ -152,7 +152,7 @@ inline void algorithm::PowerAcceleration::get_target_frac(){
     if (emax == emin)
       target_frac = 1.;
     else
-      target_frac = (accel_target - emin) / (emax - emin);
+      target_frac = accel_target / (emax - emin);
 }
 
 /**
@@ -171,12 +171,12 @@ void algorithm::PowerAcceleration::set_target_acceleration(double accel_emax_val
 
 /**updates the acceleration variables based on target acceleration*/
 void algorithm::PowerAcceleration::update_target_params(){
-    if (accel_emax > accel_target && accel_target > accel_emin){
+    if (0 < accel_target && accel_target < accel_emax - accel_emin){
         valid_params=true;
         emin = accel_emin;
         emax = accel_emax;
         diff_emm = emax - emin;
-        emax_a = accel_target;
+        emax_a = accel_target + emin;
         get_target_frac();
         find_pow2();
         find_lin_scaling_frac();    
@@ -258,7 +258,7 @@ void algorithm::InverseGaussianAcceleration::set_target_acceleration(double acce
 
 /**updates the acceleration variables based on target acceleration*/
 void algorithm::InverseGaussianAcceleration::update_target_params(){
-    if (accel_emax > accel_target && accel_target > accel_emin){
+    if (0 < accel_target && accel_target < accel_emax - accel_emin){
         valid_params=true;
         emax = accel_emax;
         get_emin();
@@ -270,11 +270,10 @@ void algorithm::InverseGaussianAcceleration::update_target_params(){
 
 // adjusts emin to target acceleration
 void algorithm::InverseGaussianAcceleration::get_emin(){
-    emin = 2 * accel_target - emax;
+    emin = 2 * (accel_target + accel_emin) - emax;
     if (emin < accel_emin){
-        double bmax = accel_target - accel_emin;
-        double temp = - emax*emax + 2*emax*bmax + 2*emax*accel_emin - accel_emin*accel_emin;
-        emin = temp / (2*bmax);
+        double temp = - emax*emax + 2*emax*accel_target + 2*emax*accel_emin - accel_emin*accel_emin;
+        emin = temp / (2*accel_target);
     }
     diff_emm = emax - emin;
 }
@@ -343,7 +342,7 @@ void algorithm::GaussianAcceleration::set_target_acceleration(double accel_emax_
 
 /**updates the acceleration variables based on target acceleration*/
 void algorithm::GaussianAcceleration::update_target_params(){
-    if (accel_emax > accel_target && accel_target > accel_emin){
+    if (0 < accel_target && accel_target < accel_emax - accel_emin){
         valid_params=true;
         emax = accel_emax;
         if (flag_global_emin)
@@ -351,13 +350,13 @@ void algorithm::GaussianAcceleration::update_target_params(){
         else
             emin = accel_emin;
         diff_emm = emax - emin;
-        if (!flag_global_emin && accel_target >= (emax + emin)/2){
-            k0 = 2*(emax - accel_target) / diff_emm;
+        if (!flag_global_emin && accel_target >= diff_emm/2){
+            k0 = 2*(diff_emm - accel_target) / diff_emm;
         }
         else{
-            double target_d_emm = accel_target - accel_emin; // desired accelerated difference
+            k0=1.; // reset k0 to 1 to ensure one always gets the same result
             double non_acell_d_emm = accel_emax - accel_emin; // normal difference
-            double temp_fac = 2*(target_d_emm - non_acell_d_emm) / k0;
+            double temp_fac = 2*(accel_target - non_acell_d_emm) / k0;
             double temp = emin * temp_fac + accel_emax*accel_emax - accel_emin*accel_emin;
             double temp_emax = temp / (temp_fac + 2*non_acell_d_emm);
             if (temp_emax > emax){
@@ -365,7 +364,7 @@ void algorithm::GaussianAcceleration::update_target_params(){
                 diff_emm = emax - emin;
             }
             else{
-                temp = 2*(non_acell_d_emm - target_d_emm) * diff_emm;
+                temp = 2*(non_acell_d_emm - accel_target) * diff_emm;
                 k0 = temp / ((emax - accel_emin)*(emax - accel_emin));
             }
         }

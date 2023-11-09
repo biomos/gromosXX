@@ -66,13 +66,8 @@ namespace algorithm
 		     configuration::Configuration &conf,
 		     simulation::Simulation &sim,
 		     std::ostream &os = std::cout,
-		     bool quiet = false) 
+		     bool quiet = false);
     
-    {
-      if (!quiet)
-	os << "\tEDS\nEND\n";
-      return 0;
-    };
     /**
      * Check for round trips
      **/
