@@ -2,7 +2,7 @@ AM_CXXFLAGS = @MY_CXXFLAGS@
 AM_CPPFLAGS = -I$(top_srcdir)/src -I$(top_srcdir)/src/interaction -I$(top_srcdir)/src/interaction/nonbonded -I$(top_srcdir)/src/interaction/nonbonded/pairlist -I$(top_srcdir)/src/interaction/nonbonded/interaction -I$(top_srcdir)/src/interaction/bonded -I$(top_srcdir)/src/interaction/forcefield -I$(top_srcdir)/src/interaction/special -I${top_srcdir}/src/algorithm
 
 #check_PROGRAMS = aladip.t aladip_unperturbed.t aladip_atomic.t aladip_ls.t aladip_special.t c16_cg.t lambdas.t
-check_PROGRAMS = aladip.t aladip_unperturbed.t aladip_atomic.t aladip_special.t c16_cg.t lambdas.t
+check_PROGRAMS = aladip.t aladip_unperturbed.t aladip_atomic.t aladip_special.t c16_cg.t lambdas.t H_acceleration.t
 
 aladip_t_SOURCES = aladip.t.cc\
 	check_forcefield.cc\
@@ -30,12 +30,14 @@ lambdas_t_SOURCES = lambdas.t.cc\
 	check_forcefield.cc\
 	check_state.cc
 
+H_acceleration_t_SOURCES = H_acceleration.t.cc
+
 LDADD = ../libmdpp.la
 if WITH_CUDA
     LDADD += ../cukernel/libgrocukernel.a
 endif
 
-TESTS = aladip.t aladip_unperturbed.t aladip_atomic.t aladip_special.t c16_cg.t lambdas.t #aladip_ls.t 
+TESTS = aladip.t aladip_unperturbed.t aladip_atomic.t aladip_special.t c16_cg.t lambdas.t H_acceleration.t #aladip_ls.t 
 
 EXTRA_DIST = data/aladip.topo\
 	data/aladip.pttopo\
