@@ -150,10 +150,9 @@ void interaction::QM_Zone::write(topology::Topology& topo,
     {
     DEBUG(15, "Atom " << it->index << ", force: " << math::v2s(it->force));
     conf.current().force(it->index) += it->force;
-    math::Vec& pos = conf.current().pos(it->index);
     for (int i = 0; i < 3; ++i) {
       for (int j = 0; j < 3; ++j) {
-        virial_tensor(j,i) += pos(j) * it->force(i);
+        virial_tensor(j,i) += it->pos(j) * it->force(i);
       }
     }
   }
@@ -164,10 +163,9 @@ void interaction::QM_Zone::write(topology::Topology& topo,
     {
     DEBUG(15, "Atom " << it->index << ", force: " << math::v2s(it->force));
     conf.current().force(it->index) += it->force;
-    math::Vec& pos = conf.current().pos(it->index);
     for (int i = 0; i < 3; ++i) {
       for (int j = 0; j < 3; ++j) {
-        virial_tensor(j,i) += pos(j) * it->force(i);
+        virial_tensor(j,i) += it->pos(j) * it->force(i);
       }
     }
   }
