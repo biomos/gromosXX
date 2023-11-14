@@ -123,6 +123,21 @@ void configuration::Energy::zero(bool potential, bool kinetic)
     eds_eir.assign(eds_eir.size(), 0.0);
     eds_vi_special.assign(eds_vi_special.size(), 0.0);
     
+    // MULTIAEDS
+    if(eds_mult_vi.size()){
+      for (auto i: eds_mult_vi){
+        eds_mult_vi[i.first] = 0.0;
+      }
+    }
+    eds_mult_vr.assign(eds_mult_vr.size(), 0.0);
+    eds_mult_vmix.assign(eds_mult_vmix.size(), 0.0);
+    for (int i = 0; i < eds_vsite.size(); i++){
+      for (int j = 0; j < eds_vsite[i].size(); j++){
+        eds_vsite[i][j]=0.0;
+      }
+    }
+    //eds_vsite.assign(eds_vsite.size(), std::vector<double>(eds_vsite[0].size(),0.0));
+    
     // ANITA
     // total A_lj for each lambda set to zero
     A_lj_total.assign(A_lj_total.size(),0.0);
@@ -193,21 +208,7 @@ void configuration::Energy::zero(bool potential, bool kinetic)
               std::vector<double>(B_crf_energy[0].size(),0.0)));
     }//
 
-    // MULTIAEDS
-    if(eds_mult_vi.size()){
-      for (auto i: eds_mult_vi){
-        eds_mult_vi[i.first] = 0.0;
-      }
-    }
 
-//    // will this work? different EDS sites can have different nr of states
-//    if (eds_mult_vi.size()){
-//      
-//      eds_mult_vi.assign(eds_mult_vi.size(),
-//	      std::vector<std::vector<std::vector<double> > >(eds_mult_vi[0].size(),
-//	      std::vector<std::vector<double> >(eds_mult_vi[0][0].size(),
-//	      std::vector<double>(eds_mult_vi[0][0][0].size(),0.0))));
-//    }
   }
 
   if (kinetic){

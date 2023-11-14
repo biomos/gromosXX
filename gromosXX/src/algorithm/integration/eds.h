@@ -53,6 +53,14 @@ namespace algorithm
       return 0;
     };
 
+    /**
+     * function to help enumerate all combinations of states for multiAEDS
+    */
+    void comboAll( std::vector<std::vector<int> > &allStates,
+         size_t vecIndex, 
+         std::vector<std::vector<int>> &allCombos, 
+         std::vector<int> &singleCombo);
+
    private:
      configuration::Configuration * conf2;
   

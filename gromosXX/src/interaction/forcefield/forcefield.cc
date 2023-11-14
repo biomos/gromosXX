@@ -118,6 +118,14 @@ int interaction::Forcefield
       conf.special().eds.force_endstates[state] = 0.0;
       conf.special().eds.virial_tensor_endstates[state] = 0.0;
     }
+
+  //multiAEDS
+  for (auto i: conf.special().eds.virial_tensor_mult_endstates){
+    conf.special().eds.virial_tensor_mult_endstates[i.first] = 0.0;
+  }
+  for (auto i: conf.special().eds.force_mult_endstates){
+    conf.special().eds.force_mult_endstates[i.first] = 0.0;
+  }
  // }
 
   for (iterator it = begin(), to = end();

@@ -31,7 +31,7 @@ namespace interaction
      */
     std::vector<math::VArray> force_endstates;
     /**
-     * multi eds endstates (longrange) force storage.
+     * multiAEDS endstates (longrange) force storage.
      */
     std::map<std::vector<int>, math::VArray> force_mult_endstates;
      /**
@@ -93,7 +93,7 @@ namespace interaction
       //MULTIAEDS
       assert(virial_tensor_mult_endstates.size() == force_mult_endstates.size());
       for(auto i: virial_tensor_mult_endstates){
-	virial_tensor_mult_endstates[i.first] = 0.0;
+	      virial_tensor_mult_endstates[i.first] = 0.0;
         force_mult_endstates[i.first] = 0.0;
       }
     }

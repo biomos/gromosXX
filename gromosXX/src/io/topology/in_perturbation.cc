@@ -1616,7 +1616,7 @@ io::In_Perturbation::read(topology::Topology &topo,
       it = buffer.begin() + 1;
       _lineStream.clear();
       _lineStream.str(*it);
-      unsigned int numstates = 0, numatoms = 0, n = 0;
+      
       //numstates = param.eds.numstates;
 
       // prepare arrays
@@ -1625,10 +1625,21 @@ io::In_Perturbation::read(topology::Topology &topo,
       // loop over number of eds sites
       // keep track of site number
       // start with reading numatoms and numstates  
-      for (unsigned int site = 0; site < param.eds.numsites, site++) {
+      for (unsigned int site = 0; site < param.eds.numsites; site++) {
+        unsigned int numstates = 0, numatoms = 0, n = 0;
+        if (site > 0){
+          _lineStream.clear();
+          _lineStream.str(*it);
+        }
+        DEBUG(7, "number of eds sites: " << param.eds.numsites);
+        DEBUG(7, "reading MPERTATOM, site nr: " << site);
+        DEBUG(10, "\tline content: " << *it);
         _lineStream >> numatoms >> numstates;
         ++it;
-        if (_lineStream.fail()){
+        
+        DEBUG(7, "numatoms: " << numatoms);
+        DEBUG(7, "numstates: " << numstates);
+       if (_lineStream.fail()){
           io::messages.add("Bad line (numatoms, numstates) in MPERTATOM block.",
                            "In_Perturbation", io::message::error);
           return;
@@ -1636,31 +1647,32 @@ io::In_Perturbation::read(topology::Topology &topo,
       
         //determine if we have multi-aeds
         //if so; compare numstates with param.eds.multnumstates[eds_site_number]
-        if (sim.param().eds.form == multi_aeds){
-	  if (numstates != param.eds.multnumstates[site]) {
-	    std::ostringstream msg;
-	    msg << "Number of perturbed states given in perturbation topology ("
-	        << numstates << ") and input file (" << param.eds.multnumstates[site]
-	        << ") do not match.";
-	    io::messages.add(msg.str(),
-	        "In_Perturbation", io::message::error);
-	    return;
-	  }
-	else
-	  if (numstates != param.eds.numstates[site]) {
+        if (param.eds.form == simulation::multi_aeds){
+          if (numstates != param.eds.multnumstates[site]) {
             std::ostringstream msg;
             msg << "Number of perturbed states given in perturbation topology ("
-                << numstates << ") and input file (" << param.eds.numstates[site]
+                << numstates << ") and input file (" << param.eds.multnumstates[site]
                 << ") do not match.";
             io::messages.add(msg.str(),
                 "In_Perturbation", io::message::error);
             return;
           }
-	}
+        } else {
+          if (numstates != param.eds.numstates) {
+            std::ostringstream msg;
+            msg << "Number of perturbed states given in perturbation topology ("
+                << numstates << ") and input file (" << param.eds.numstates
+                << ") do not match.";
+            io::messages.add(msg.str(),
+                "In_Perturbation", io::message::error);
+            return;
+          }
+        }
         // read in the name to identify the perturbation
         std::vector<std::string> identifier(numstates);
         _lineStream.clear();
         _lineStream.str(*it);
+        DEBUG(10, "\tline content: " << *it);
         for (unsigned int i = 0; i < identifier.size(); i++) {
           _lineStream >> identifier[i];
         }
@@ -1732,13 +1744,13 @@ io::In_Perturbation::read(topology::Topology &topo,
             return;
           }
 
-	  //atoms cannot be listed twice in the MPERTATOM block
-	  //also not in different EDS sites
-	  if (topo.is_eds_perturbed()[seq] == true ){
-	    io::messages.add("atom is already part of an EDS site",
-		     "In_Perturbation", io::message::error);
-	    return;
-	  }
+          //atoms cannot be listed twice in the MPERTATOM block
+          //also not in different EDS sites
+          if (topo.is_eds_perturbed()[seq] == true ){
+            io::messages.add("atom is already part of an EDS site",
+              "In_Perturbation", io::message::error);
+            return;
+          }
   
           if (!quiet) {
             os << "\t"
@@ -1788,14 +1800,19 @@ io::In_Perturbation::read(topology::Topology &topo,
           topo.eds_perturbed_solute().atoms()[seq] = atom;
           assert(seq < int(topo.is_eds_perturbed().size()));
           topo.is_eds_perturbed()[seq] = true;
+          DEBUG(10, "done with n = " << n);
         }//end for loop over numatoms
       
-        if (n != numatoms) {
+        /*if (n != numatoms) {
+          DEBUG(7,"n: " << n);
+          DEBUG(7,"numatoms: "<< numatoms);
           io::messages.add("Wrong number of perturbed atoms in MPERTATOM block.",
                            "In_Perturbation", io::message::error);
           return;
         }
         else if (_lineStream.fail()){
+          */
+        if (_lineStream.fail()){
           io::messages.add("Bad line in MPERTATOM block.",
                            "In_Perturbation", io::message::error);
           return;

@@ -4175,20 +4175,44 @@ void io::In_Parameter::read_MULTIAEDS(simulation::Parameter & param,
       param.eds.multeir[i].resize(param.eds.multnumstates[i], 0.0);
 
       for (unsigned int j = 0; j < param.eds.multnumstates[i]; j++) {
-	string idxj = io::to_string(j);
-	block.get_next_parameter("EIR[" + idx + "][" + idxj + "]", param.eds.multeir[i][j], "", "");
+	    std::string idxj = io::to_string(j);
+	    block.get_next_parameter("EIR[" + idx + "][" + idxj + "]", param.eds.multeir[i][j], "", "");
+      }
+    }
+    // for the interactions between eds and non eds atoms, add 1 'state' to the non-eds 'site'
+    param.eds.multnumstates.push_back(1);
+
+    //generate a 2D vectors with all possible combination of 2 sites
+    for( int site_i = 0; site_i < param.eds.numsites; site_i++){
+      for( int site_j = site_i; site_j < param.eds.numsites + 1; site_j++){ // +1 for the non-eds site
+        for( int state_i =0; state_i < param.eds.multnumstates[site_i]; state_i++){
+          if( site_i == site_j){
+            std::vector<int> states_i_j = {site_i, state_i, site_i, state_i};
+            param.eds.site_state_pairs.push_back(states_i_j);
+          }
+          else{
+            for( int state_j=0; state_j < param.eds.multnumstates[site_j]; state_j++){
+              std::vector<int> states_i_j = {site_i, state_i, site_j, state_j};
+              param.eds.site_state_pairs.push_back(states_i_j);
+            }
+          }
+        }
       }
     }
 
+    
+          
+    DEBUG(1, "param.eds.site_state_pairs.size(): " << param.eds.site_state_pairs.size());
+
     if (param.eds.eds != 1 && param.eds.eds != 2) {
-      switch (multiaeds) {
+      switch (param.eds.multiaeds) {
       case 0:
         param.eds.eds = 0;
         param.eds.numstates = 0;
         break;
       case 1:
         param.eds.eds = 3;
-	param.eds.form = simulation::multi_aeds;
+	    param.eds.form = simulation::multi_aeds;
         break;
       default:
         break;

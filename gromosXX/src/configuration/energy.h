@@ -297,11 +297,21 @@ namespace configuration
     /**
      * MULTIAEDS
      * interaction energies between two EDS sites
-     * //eds_mult_vi[site_i, state_ia, site_j, state_jb]
-     * eds_mult_vi[site_i][site_j][state_ia][state_jb]
+     * vector is based on: {site_i, state_i, site_j,state_j}
      */
     std::map<std::vector<int>, double> eds_mult_vi;
-    //std::vector<std::vector<std::vector<std::vector<double> > > > eds_mult_vi;
+    /*
+    * energy of the reference state for each site
+    */
+    std::vector<double> eds_mult_vmix;
+    /*
+    * accelerated eds energy of the reference state for each site
+    */
+    std::vector<double> eds_mult_vr;
+    /*
+    * for each site, energy for each state with optimal states for other sites
+    */
+    std::vector<std::vector<double>> eds_vsite;
 
     // this should be size of bath
     /**

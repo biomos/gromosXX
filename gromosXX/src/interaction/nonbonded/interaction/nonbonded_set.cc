@@ -363,7 +363,14 @@ int interaction::Nonbonded_Set::update_configuration
 
   // (MULTISTEP: and the virial???)
   if (sim.param().pcouple.virial){
-    DEBUG(7, "\tadd set virial");
+    DEBUG(7, "\tadd set virial (nonbonded_set)");
+    for(unsigned int i=0; i<3; ++i){
+      for(unsigned int j=0; j<3; ++j){
+        DEBUG(9, "\tconf.current().virial_tensor: "<< conf.current().virial_tensor(i,j) 
+          << "\tadding m_storage.virial_tensor: " << m_storage.virial_tensor(i,j) 
+          << "\ttotal: " << conf.current().virial_tensor(i,j) + m_storage.virial_tensor(i,j));
+      }
+    }
   	conf.current().virial_tensor += m_storage.virial_tensor;
   }
   

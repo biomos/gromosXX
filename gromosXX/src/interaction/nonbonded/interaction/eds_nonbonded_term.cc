@@ -24,7 +24,6 @@ inline void interaction::Eds_Nonbonded_Term
   m_crf_cut3i.clear();
   m_crf_2.clear();
   switch (sim.param().force.interaction_function) {
-      case simulation::lj_crf_eds_mult_func:
       case simulation::lj_crf_func:
       case simulation::pol_lj_crf_func:
       case simulation::pol_off_lj_crf_func:

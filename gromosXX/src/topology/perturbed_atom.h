@@ -272,7 +272,7 @@ namespace topology
           : m_sequence_number(0),
             m_M_IAC(),
             m_M_charge(),
-	    m_site_number(0),
+	          m_site_number(0),
             m_exclusion(),
             m_one_four_pair()
     {};
@@ -291,7 +291,7 @@ namespace topology
           : m_sequence_number(JLA),
             m_M_IAC(IACM),
             m_M_charge(CGM),
-	    m_site_number(SITE),
+	          m_site_number(SITE),
             m_exclusion(),
             m_one_four_pair()
     {};
@@ -311,8 +311,9 @@ namespace topology
     const std::vector<double>& M_charge()const;
     void M_charge(std::vector<double>);
 
-    unsigned int site_number();
-    unsigned int site_number()const;
+    //unsigned int site_number();
+    //unsigned int site_number()const;
+    const unsigned int & site_number()const;
     void site_number(unsigned int);
 
     topology::excl_cont_t::value_type & exclusion();
@@ -345,7 +346,7 @@ inline const std::vector<unsigned int>& topology::EDS_Perturbed_Atom::M_IAC()con
 inline const std::vector<double>& topology::EDS_Perturbed_Atom::M_charge()const{
   return m_M_charge; 
 }
-inline unsigned int topology::EDS_Perturbed_Atom::site_number()const{
+inline const unsigned int & topology::EDS_Perturbed_Atom::site_number()const{
   return m_site_number;
 }
 inline topology::excl_cont_t::value_type const & topology::EDS_Perturbed_Atom::exclusion()const{

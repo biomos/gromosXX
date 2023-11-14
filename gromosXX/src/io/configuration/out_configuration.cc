@@ -35,7 +35,7 @@
 
 // Energy trajectory version
 // For details, see definition in out_configuration.cc
-const std::string io::Out_Configuration::ene_version = "2022-08-17";
+const std::string io::Out_Configuration::ene_version = "2023-09-12";
 
 // declarations
 static void _print_energyred_helper(std::ostream & os, configuration::Energy const &e);
@@ -3082,6 +3082,19 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
             << std::setw(18) << e.eds_vi[i] - e.eds_vi_special[i]
             << std::setw(18) << e.eds_vi_special[i] 
             << std::setw(18) << e.eds_eir[i] << "\n";
+  }
+
+  // multi-AEDS energies of end states for each site
+  os << "# multi-AEDS\n";
+  os << "# numsites\n";
+  const unsigned int numsites = e.eds_vsite.size();
+  os << numsites << "\n";
+  for (unsigned i = 0; i < numsites; i++){
+    os << e.eds_vsite[i].size() << "\n";
+    for (unsigned j = 0; j < e.eds_vsite[i].size(); j++){
+      os << std::setw(18) << e.eds_vsite[i][j];
+    }
+    os << "\n";
   }
 
   // write eds energies (vr,{V_i}) here

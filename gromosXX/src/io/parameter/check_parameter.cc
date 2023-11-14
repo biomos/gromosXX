@@ -54,7 +54,7 @@ int io::simple_crosschecks(simulation::Simulation & sim) {
                        "In_Parameter", io::message::error);
 
   if (param.multibath.couple && param.minimise.ntem && !param.eds.eds)
-      io::messages.add("MULTIBATH block: temperature coupling not allowed with energy minimization",
+      io::messages.add("MULTIBATH block: temperature coupling not allowed with eds",
                        "In_Parameter", io::message::error);
 
   // no reading of atomic shift vectors in vacuum
@@ -462,6 +462,7 @@ int io::check_features(simulation::Simulation  &sim)
   // EDS/AEDS block
   add("eds", "Enveloping distribution sampling", param.eds.eds == 1);
   add("aeds", "Accelerated enveloping distribution sampling", param.eds.eds == 2);
+  add("multiaeds", "multi-site accelerated enveloping distribution sampling", param.eds.eds == 3);
   // QMMM block
   add("qmmm", "QMMM multiscale simulation", param.qmmm.qmmm);
   // AMBER topology
@@ -1504,6 +1505,7 @@ int io::check_features(simulation::Simulation  &sim)
   fc.unlock("perturbation", "innerloop_method_cuda");
   fc.unlock("perturbation", "eds");
   fc.unlock("perturbation", "aeds");
+  //  fc.unlock("perturbation", "multiaeds");
   fc.unlock("perturbation_scaling", "bond");
   fc.unlock("perturbation_scaling", "angle");
   fc.unlock("perturbation_scaling", "dihedral");
@@ -2616,6 +2618,94 @@ int io::check_features(simulation::Simulation  &sim)
   //fc.unlock("aeds", "bsleus");
   //fc.unlock("aeds", "xray");
   //fc.unlock("aeds", "force_groups");
+
+  fc.unlock("multiaeds", "solute");
+  fc.unlock("multiaeds", "solvent");
+  fc.unlock("multiaeds", "solvent_only");
+  //fc.unlock("multiaeds", "steepest_descent");
+  fc.unlock("multiaeds", "solute_constraint_off");
+  fc.unlock("multiaeds", "solute_shake");
+  fc.unlock("multiaeds", "solute_lincs");
+  fc.unlock("multiaeds", "solute_flexshake");
+  fc.unlock("multiaeds", "solvent_constraint_off");
+  fc.unlock("multiaeds", "solvent_shake");
+  fc.unlock("multiaeds", "solvent_lincs");
+  fc.unlock("multiaeds", "solvent_settle");
+  fc.unlock("multiaeds", "pressure_calculation");
+  fc.unlock("multiaeds", "pressure_scale_berendsen");
+  fc.unlock("multiaeds", "virial_off");
+  fc.unlock("multiaeds", "virial_atomic");
+  fc.unlock("multiaeds", "virial_molecular");
+  fc.unlock("multiaeds", "vacuum");
+  fc.unlock("multiaeds", "pbc_r");
+  fc.unlock("multiaeds", "pbc_c");
+  fc.unlock("multiaeds", "pbc_t");
+  //fc.unlock("multiaeds", "perturbation");
+  //fc.unlock("multiaeds", "perturbation_scaling");
+  //fc.unlock("multiaeds", "slow_growth");
+  //fc.unlock("multiaeds", "individual_lambdas");
+  //fc.unlock("multiaeds", "precalculate_lambdas");
+  fc.unlock("multiaeds", "bond");
+  fc.unlock("multiaeds", "angle");
+  fc.unlock("multiaeds", "dihedral");
+  fc.unlock("multiaeds", "improper");
+  fc.unlock("multiaeds", "crf");
+  fc.unlock("multiaeds", "lj");
+  fc.unlock("multiaeds", "com_removal");
+  fc.unlock("multiaeds", "rf_excluded");
+  fc.unlock("multiaeds", "pairlist_standard");
+  fc.unlock("multiaeds", "pairlist_grid");
+  fc.unlock("multiaeds", "pairlist_gridcell");
+  fc.unlock("multiaeds", "cutoff_atomic");
+  fc.unlock("multiaeds", "cutoff_cg");
+  //fc.unlock("multiaeds", "cg_martini");
+  //fc.unlock("multiaeds", "cg_gromos");
+  //fc.unlock("multiaeds", "mixed_grain");
+  fc.unlock("multiaeds", "temp_berendsen");
+  fc.unlock("multiaeds", "temp_nosehoover");
+  fc.unlock("multiaeds", "temp_nosehoover_chains");
+  fc.unlock("multiaeds", "position_rest");
+  fc.unlock("multiaeds", "position_const");
+  fc.unlock("multiaeds", "position_const_scaled");
+  fc.unlock("multiaeds", "distance_rest");
+  fc.unlock("multiaeds", "distance_field");
+  fc.unlock("multiaeds", "dihedral_rest");
+  fc.unlock("multiaeds", "dihedral_const");
+  fc.unlock("multiaeds", "jvalue_rest");
+  fc.unlock("multiaeds", "rdc_rest");
+  //fc.unlock("multiaeds", "perscale");
+  fc.unlock("multiaeds", "rottrans");
+  fc.unlock("multiaeds", "innerloop_method_off");
+  fc.unlock("multiaeds", "innerloop_method_generic");
+  fc.unlock("multiaeds", "innerloop_method_hardcode");
+  fc.unlock("multiaeds", "innerloop_method_table");
+  fc.unlock("multiaeds", "innerloop_method_cuda");
+  fc.unlock("multiaeds", "innerloop_solvent_topology");
+  fc.unlock("multiaeds", "innerloop_solvent_spc");
+  //fc.unlock("multiaeds", "repex_temp");
+  //fc.unlock("multiaeds", "repex_lambda");
+  //fc.unlock("multiaeds", "multicell");
+  //fc.unlock("multiaeds", "analysis");
+  //fc.unlock("multiaeds", "no_integration");
+  fc.unlock("multiaeds", "stochdyn");
+  fc.unlock("multiaeds", "multistep");
+  //fc.unlock("multiaeds", "multistep_boost");
+  //fc.unlock("multiaeds", "montecarlo");
+  //fc.unlock("multiaeds", "polarisation_cos");
+  //fc.unlock("multiaeds", "polarisation_cos_damped");
+  //fc.unlock("multiaeds", "sasa");
+  //fc.unlock("multiaeds", "sasavol");
+  fc.unlock("multiaeds", "random_gromos");
+  fc.unlock("multiaeds", "random_gsl");
+  fc.unlock("multiaeds", "parallel_mpi");
+  fc.unlock("multiaeds", "parallel_omp");
+  fc.unlock("multiaeds", "mult_energy_groups");
+  //fc.unlock("multiaeds", "ewald");
+  //fc.unlock("multiaeds", "p3m");
+  //fc.unlock("multiaeds", "leus");
+  //fc.unlock("multiaeds", "bsleus");
+  //fc.unlock("multiaeds", "xray");
+  //fc.unlock("multiaeds", "force_groups");
 
   fc.unlock("mult_energy_groups", "solute");
   fc.unlock("mult_energy_groups", "solvent");
@@ -4322,6 +4412,7 @@ int io::check_features(simulation::Simulation  &sim)
   fc.unlock("angle_rest", "random_gsl");
   fc.unlock("angle_rest", "eds");
   fc.unlock("angle_rest", "aeds");
+  fc.unlock("angle_rest", "multiaeds");
   fc.unlock("angle_rest", "parallel_mpi");
   fc.unlock("angle_rest", "parallel_omp");
   fc.unlock("angle_rest", "mult_energy_groups");
@@ -4412,6 +4503,7 @@ int io::check_features(simulation::Simulation  &sim)
   fc.unlock("angle_const", "random_gsl");
   fc.unlock("angle_const", "eds");
   fc.unlock("angle_const", "aeds");
+  fc.unlock("angle_const", "multiaeds");
   fc.unlock("angle_const", "parallel_mpi");
   fc.unlock("angle_const", "parallel_omp");
   fc.unlock("angle_const", "mult_energy_groups");
@@ -4781,6 +4873,7 @@ int io::check_features(simulation::Simulation  &sim)
   fc.unlock("virtualatoms", "random_gsl");
   fc.unlock("virtualatoms", "eds");
   fc.unlock("virtualatoms", "aeds");
+  fc.unlock("virtualatoms", "multiaeds");
   fc.unlock("virtualatoms", "parallel_mpi");
   fc.unlock("virtualatoms", "parallel_omp");
   fc.unlock("virtualatoms", "mult_energy_groups");

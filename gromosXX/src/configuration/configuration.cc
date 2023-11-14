@@ -62,6 +62,11 @@ configuration::Configuration::Configuration() {
     special().eds.virial_tensor_endstates[k] = 0.0;
   }
   
+  //multiAEDS
+  for (auto i: special().eds.virial_tensor_mult_endstates){
+    special().eds.virial_tensor_mult_endstates[i.first] = 0.0;
+  }
+
   special().shake_failure_occurred = false;
 }
 
@@ -90,6 +95,10 @@ configuration::Configuration::Configuration
             conf.special().eds.virial_tensor_endstates[k];
   }
 
+  //multiAEDS
+  for (auto const& i: conf.special().eds.virial_tensor_mult_endstates){
+    special().eds.virial_tensor_mult_endstates[i.first] = i.second;
+  }
 
   current().pos = conf.current().pos;
   old().pos = conf.old().pos;
@@ -216,6 +225,10 @@ configuration::Configuration & configuration::Configuration::operator=
             conf.special().eds.virial_tensor_endstates[k];
   }
 
+  //multiAEDS
+  for (auto i: conf.special().eds.virial_tensor_mult_endstates){
+    special().eds.virial_tensor_mult_endstates[i.first] = i.second;
+  }
   
   current().pos = conf.current().pos;
   old().pos = conf.old().pos;
@@ -352,7 +365,7 @@ void configuration::Configuration::init(topology::Topology const & topo,
   special().eds.force_endstates.resize(param.eds.numstates);
   for (unsigned int i = 0; i < special().eds.force_endstates.size(); i++){
     special().eds.force_endstates[i].resize(topo.num_atoms());
-  }  
+  }
   special().eds.virial_tensor_endstates.resize(param.eds.numstates);
   current().energies.eds_vi.resize(param.eds.numstates);
   current().perturbed_energy_derivatives.eds_vi.resize(param.eds.numstates);
@@ -366,6 +379,23 @@ void configuration::Configuration::init(topology::Topology const & topo,
   old().energies.eds_eir.resize(param.eds.numstates);
   old().perturbed_energy_derivatives.eds_eir.resize(param.eds.numstates);
   old().perturbed_energy_derivatives.eds_vi_special.resize(param.eds.numstates);
+
+  //multiAEDS
+  for (auto i: param.eds.site_state_pairs){
+    special().eds.force_mult_endstates[i].resize(topo.num_atoms());
+    special().eds.virial_tensor_mult_endstates[i];
+    current().energies.eds_mult_vi[i];
+    //current().energies.eds_mult_vi_special[i];
+    //current().energies.eds_mult_eir[i];
+    old().energies.eds_mult_vi[i];
+    //old().energies.eds_mult_vi_special[i];
+    //old().energies.eds_mult_eir[i];
+  }
+  //std::cout << "MULTIAEDS: force_mult_endstates[0,0,0,0]atom0,x: " << special().eds.force_mult_endstates[{0,0,0,0}][0](0) << std::endl;
+  old().energies.eds_mult_vmix.resize(param.eds.numsites);
+  current().energies.eds_mult_vmix.resize(param.eds.numsites);
+  old().energies.eds_mult_vr.resize(param.eds.numsites);
+  current().energies.eds_mult_vr.resize(param.eds.numsites);
 
   current().energies.ewarn(param.ewarn.limit);
   old().energies.ewarn(param.ewarn.limit);

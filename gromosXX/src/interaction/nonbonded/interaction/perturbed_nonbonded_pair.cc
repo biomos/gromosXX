@@ -316,59 +316,57 @@ void interaction::Perturbed_Nonbonded_Pair
           switch(t_interaction_spec::interaction_func){
             case simulation::lj_crf_func : {
               m_perturbed_nonbonded_term.
-              rf_soft_interaction(r, A_q, 0, alpha_crf,
-				  A_f, A_e_crf, A_de_crf);
+              rf_soft_interaction(r, A_q, 0, alpha_crf, A_f, A_e_crf, A_de_crf);
 
-      // ANITA
-      if (sim.param().precalclam.nr_lambdas && ((sim.steps()  % sim.param().write.free_energy) == 0)){
-        double A_e_rf = 0.0, B_e_rf = 0.0, A_de_rf = 0.0, B_de_rf = 0.0;
+              // ANITA
+              if (sim.param().precalclam.nr_lambdas && ((sim.steps()  % sim.param().write.free_energy) == 0)){
+                double A_e_rf = 0.0, B_e_rf = 0.0, A_de_rf = 0.0, B_de_rf = 0.0;
 
-        // determine lambda stepsize from min,max and nr of lambdas
-        double lambda_step = (sim.param().precalclam.max_lam -
-                 sim.param().precalclam.min_lam) /
-                 (sim.param().precalclam.nr_lambdas-1);
+                // determine lambda stepsize from min,max and nr of lambdas
+                double lambda_step = (sim.param().precalclam.max_lam -
+                        sim.param().precalclam.min_lam) /
+                        (sim.param().precalclam.nr_lambdas-1);
 
-        //loop over nr_lambdas
-        for (unsigned int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
-
-          // determine current lambda for this index
-          double lam=(lam_index * lambda_step) + sim.param().precalclam.min_lam;
-          m_perturbed_nonbonded_term.rf_soft_interaction_ext(r, A_q, 0,
-                  alpha_crf, A_e_rf, B_e_rf, 
-                  A_de_rf, B_de_rf, lam);
-          conf.current().energies.A_crf_energy[lam_index][topo.atom_energy_group(it->i)]
-            [topo.atom_energy_group(it->j)] +=  A_e_rf;
-          conf.current().perturbed_energy_derivatives.A_crf_energy[lam_index]
-            [topo.atom_energy_group(it->i)]
-            [topo.atom_energy_group(it->j)] += A_de_rf;
-        }
-      } // ANITA 
+                //loop over nr_lambdas
+                for (unsigned int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
+                  // determine current lambda for this index
+                  double lam=(lam_index * lambda_step) + sim.param().precalclam.min_lam;
+                  m_perturbed_nonbonded_term.rf_soft_interaction_ext(r, A_q, 0,
+                          alpha_crf, A_e_rf, B_e_rf, 
+                          A_de_rf, B_de_rf, lam);
+                  conf.current().energies.A_crf_energy[lam_index][topo.atom_energy_group(it->i)]
+                    [topo.atom_energy_group(it->j)] +=  A_e_rf;
+                  conf.current().perturbed_energy_derivatives.A_crf_energy[lam_index]
+                    [topo.atom_energy_group(it->i)]
+                    [topo.atom_energy_group(it->j)] += A_de_rf;
+                }
+              } // ANITA 
       
               break;
             }
             case simulation::pol_lj_crf_func : {
               /* polarization function not correctly implemented --martina
-	      m_perturbed_nonbonded_term.
-              pol_rf_soft_interaction(r, rp1, rp2, rpp,
+	             m_perturbed_nonbonded_term.
+                pol_rf_soft_interaction(r, rp1, rp2, rpp,
                       A_qi, A_qj, B_qi, B_qj,
                       topo.coscharge(it->i), topo.coscharge(it->j),
                       alpha_crf, A_f_pol, A_e_crf, A_de_crf);
-	      */
-	      io::messages.add("Perturbed_Nonbonded_Pair", 
-		      "polarization: interaction function not implemented",
+	            */
+	            io::messages.add("Perturbed_Nonbonded_Pair", 
+		                   "polarization: interaction function not implemented",
                        io::message::critical);
               break;
             }
             case simulation::pol_off_lj_crf_func : {
               /* polarization function not correctly implemented --martina
-	      m_perturbed_nonbonded_term.
-              pol_rf_soft_interaction(rm, rp1, rp2, rpp,
+	                    m_perturbed_nonbonded_term.
+                      pol_rf_soft_interaction(rm, rp1, rp2, rpp,
                       A_qi, A_qj, B_qi, B_qj,
                       topo.coscharge(it->i), topo.coscharge(it->j),
                       alpha_crf, A_f_pol, A_e_crf, A_de_crf);
-	      */
-	      io::messages.add("Perturbed_Nonbonded_Pair", 
-		      "polarization: interaction function not implemented",
+	            */
+	            io::messages.add("Perturbed_Nonbonded_Pair", 
+		                   "polarization: interaction function not implemented",
                        io::message::critical);
               break;
             }
@@ -381,35 +379,33 @@ void interaction::Perturbed_Nonbonded_Pair
             case simulation::lj_crf_func : {
               m_nonbonded_term.rf_interaction(r, A_q, A_f, A_e_crf);
 
-	      //Since nonbonded_term is not scaled by lambda, this is calculated here --martina
-	      A_f = m_perturbed_nonbonded_term.A_crf_lambda_n() * A_f;
+	            //Since nonbonded_term is not scaled by lambda, this is calculated here --martina
+              A_f = m_perturbed_nonbonded_term.A_crf_lambda_n() * A_f;
 
-	      A_de_crf = - topo.lambda_exp() * m_perturbed_nonbonded_term.A_crf_lambda_n_1() * A_e_crf; //define before multiplication of A_e_crf with lambda!
-	      
-      // ANITA
-      if (sim.param().precalclam.nr_lambdas && ((sim.steps()  % sim.param().write.free_energy) == 0)){
+              A_de_crf = - topo.lambda_exp() * m_perturbed_nonbonded_term.A_crf_lambda_n_1() * A_e_crf; //define before multiplication of A_e_crf with lambda!
+              
+              // ANITA
+              if (sim.param().precalclam.nr_lambdas && ((sim.steps()  % sim.param().write.free_energy) == 0)){
 
-        //loop over nr_lambdas
-        for (unsigned int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
-         
-          conf.current().energies.A_crf_energy[lam_index][topo.atom_energy_group(it->i)]
-            [topo.atom_energy_group(it->j)] += A_e_crf;
+                //loop over nr_lambdas
+                for (unsigned int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
+                  conf.current().energies.A_crf_energy[lam_index][topo.atom_energy_group(it->i)]
+                    [topo.atom_energy_group(it->j)] += A_e_crf;   
+                }
+              } // ANITA 
             
-        }
-      } // ANITA 
-      
-	      A_e_crf *= m_perturbed_nonbonded_term.A_crf_lambda_n(); //scale A_e_crf with lambda
+	            A_e_crf *= m_perturbed_nonbonded_term.A_crf_lambda_n(); //scale A_e_crf with lambda
 
               break;
             }
             case simulation::pol_lj_crf_func : {
               /*m_nonbonded_term.
-              pol_rf_interaction(r, rp1, rp2, rpp, topo.charge()(it->i),
-                      topo.charge()(it->j), topo.coscharge(it->i),
-                      topo.coscharge(it->j), A_f_pol_vec, A_e_crf);
-	      */
-	      io::messages.add("Perturbed_Nonbonded_Pair", 
-		      "polarization: interaction function not implemented",
+                  pol_rf_interaction(r, rp1, rp2, rpp, topo.charge()(it->i),
+                    topo.charge()(it->j), topo.coscharge(it->i),
+                    topo.coscharge(it->j), A_f_pol_vec, A_e_crf);
+	            */
+	            io::messages.add("Perturbed_Nonbonded_Pair", 
+		            "polarization: interaction function not implemented",
                        io::message::critical);
               break;
             }
@@ -418,9 +414,9 @@ void interaction::Perturbed_Nonbonded_Pair
               pol_rf_interaction(rm, rp1, rp2, rpp, topo.charge()(it->i),
                       topo.charge()(it->j), topo.coscharge(it->i),
                       topo.coscharge(it->j), A_f_pol_vec, A_e_crf);
-	      */
-	      io::messages.add("Perturbed_Nonbonded_Pair", 
-		      "polarization: interaction function not implemented",
+	            */
+	            io::messages.add("Perturbed_Nonbonded_Pair", 
+		            "polarization: interaction function not implemented",
                        io::message::critical);
               break;
             }
@@ -435,11 +431,11 @@ void interaction::Perturbed_Nonbonded_Pair
       // --------------------------
     case 1: // normal interaction
       DEBUG(7, "\tlj-parameter state A c6=" << A_lj->c6 
-	    << " c12=" << A_lj->c12);
+	      << " c12=" << A_lj->c12);
       DEBUG(7, "\tcharges state A i*j = " << A_q);
       
       if (is_perturbed){
-	DEBUG(7, "perturbed interaction");
+	      DEBUG(7, "perturbed interaction");
         switch(t_interaction_spec::interaction_func){
           case simulation::lj_crf_func : {
             double A_f1 = 0.0, A_f6 = 0.0, A_f12 = 0.0;
@@ -455,62 +451,61 @@ void interaction::Perturbed_Nonbonded_Pair
             
             A_f = (A_f1 + A_f6 + A_f12) * r;
             
-      // ANITA
+            // ANITA
             if (sim.param().precalclam.nr_lambdas && ((sim.steps()  % sim.param().write.free_energy) == 0)){
-//        if ( sim.param().precalclam.nr_lambdas ) { 
-          double A_e_lj_l = 0.0, B_e_lj_l = 0.0, A_e_crf_l = 0.0, B_e_crf_l = 0.0,
+              double A_e_lj_l = 0.0, B_e_lj_l = 0.0, A_e_crf_l = 0.0, B_e_crf_l = 0.0,
               A_de_lj_l = 0.0, B_de_lj_l = 0.0, A_de_crf_l = 0.0, B_de_crf_l = 0.0;
 
-          // determine lambda stepsize from min,max and nr of lambdas
-          double lambda_step = (sim.param().precalclam.max_lam - 
+              // determine lambda stepsize from min,max and nr of lambdas
+              double lambda_step = (sim.param().precalclam.max_lam - 
                    sim.param().precalclam.min_lam) / 
                    (sim.param().precalclam.nr_lambdas-1);
 
-          //loop over nr_lambdas
-          for (unsigned int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){ 
+              //loop over nr_lambdas
+              for (unsigned int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){ 
 
-            // determine current lambda for this index
-            double lam=(lam_index * lambda_step) + sim.param().precalclam.min_lam;
+                // determine current lambda for this index
+                double lam=(lam_index * lambda_step) + sim.param().precalclam.min_lam;
 
-            // start the calculations
-            m_perturbed_nonbonded_term.
-            lj_crf_soft_interaction_ext(r, A_lj->c6, A_lj->c12,
-                0, 0, A_q, 0, alpha_lj, alpha_crf,
-                A_e_lj_l,  B_e_lj_l, A_e_crf_l, B_e_crf_l,
-                A_de_lj_l, B_de_lj_l, A_de_crf_l, B_de_crf_l,
-                lam);
+                // start the calculations
+                m_perturbed_nonbonded_term.
+                lj_crf_soft_interaction_ext(r, A_lj->c6, A_lj->c12,
+                    0, 0, A_q, 0, alpha_lj, alpha_crf,
+                    A_e_lj_l,  B_e_lj_l, A_e_crf_l, B_e_crf_l,
+                    A_de_lj_l, B_de_lj_l, A_de_crf_l, B_de_crf_l,
+                    lam);
 
-            DEBUG(8, "ANITA: precalculated energies for lambda " << lam
-                   << "\n now starting storage");
-            DEBUG(8, "\n  A_e_lj " << A_e_lj << "\n  lambda index " << lam_index <<
-                   "\n  storage.energies.A_lj_energy.size() " << conf.current().energies.A_lj_energy.size()
-                   << "\n  energy group1 " << topo.atom_energy_group(it->i) << " energy group2 " 
-                   << topo.atom_energy_group(it->j));
+                DEBUG(8, "ANITA: precalculated energies for lambda " << lam
+                      << "\n now starting storage");
+                DEBUG(8, "\n  A_e_lj " << A_e_lj << "\n  lambda index " << lam_index <<
+                      "\n  storage.energies.A_lj_energy.size() " << conf.current().energies.A_lj_energy.size()
+                      << "\n  energy group1 " << topo.atom_energy_group(it->i) << " energy group2 " 
+                      << topo.atom_energy_group(it->j));
 
-            conf.current().energies.A_lj_energy[lam_index][topo.atom_energy_group(it->i)]
-                    [topo.atom_energy_group(it->j)] += A_e_lj_l;
+                conf.current().energies.A_lj_energy[lam_index][topo.atom_energy_group(it->i)]
+                        [topo.atom_energy_group(it->j)] += A_e_lj_l;
 
-            conf.current().energies.A_crf_energy[lam_index][topo.atom_energy_group(it->i)]
-                    [topo.atom_energy_group(it->j)] += A_e_crf_l;
+                conf.current().energies.A_crf_energy[lam_index][topo.atom_energy_group(it->i)]
+                        [topo.atom_energy_group(it->j)] += A_e_crf_l;
 
-            conf.current().perturbed_energy_derivatives.A_lj_energy
-                    [lam_index][topo.atom_energy_group(it->i)]
-                    [topo.atom_energy_group(it->j)] += A_de_lj_l;
+                conf.current().perturbed_energy_derivatives.A_lj_energy
+                        [lam_index][topo.atom_energy_group(it->i)]
+                        [topo.atom_energy_group(it->j)] += A_de_lj_l;
 
-            conf.current().perturbed_energy_derivatives.A_crf_energy
-                    [lam_index][topo.atom_energy_group(it->i)]
-                    [topo.atom_energy_group(it->j)] += A_de_crf_l;
-            DEBUG(8, "\ndone with storing energies ");
-          } //all 101 lambda points done
-        } // done with extended TI
-      // ANITA
+                conf.current().perturbed_energy_derivatives.A_crf_energy
+                        [lam_index][topo.atom_energy_group(it->i)]
+                        [topo.atom_energy_group(it->j)] += A_de_crf_l;
+                DEBUG(8, "\ndone with storing energies ");
+              } //all 101 lambda points done
+            } // done with extended TI
+            // ANITA
       
             break;
           }
           case simulation::pol_lj_crf_func : {
             /*double A_f6, A_f12;
             m_perturbed_nonbonded_term.
-	      pol_lj_crf_soft_interaction(r, rp1, rp2, rpp,
+	          pol_lj_crf_soft_interaction(r, rp1, rp2, rpp,
 					  A_lj->c6, A_lj->c12,
 					  B_lj->c6, B_lj->c12,
 					  A_qi, B_qi, A_qj, B_qj,
@@ -524,9 +519,9 @@ void interaction::Perturbed_Nonbonded_Pair
             A_f_pol_vec(1) = A_f_pol[1] * rp1;
             A_f_pol_vec(2) = A_f_pol[2] * rp2;
             A_f_pol_vec(3) = A_f_pol[3] * rpp;
-	    */
-	      io::messages.add("Perturbed_Nonbonded_Pair", 
-		      "polarization: interaction function not implemented",
+	          */
+	          io::messages.add("Perturbed_Nonbonded_Pair", 
+		         "polarization: interaction function not implemented",
                        io::message::critical);
             break;
           }
@@ -547,9 +542,9 @@ void interaction::Perturbed_Nonbonded_Pair
             A_f_pol_vec(1) = A_f_pol[1] * rp1;
             A_f_pol_vec(2) = A_f_pol[2] * rp2;
             A_f_pol_vec(3) = A_f_pol[3] * rpp;
-	    */
-	      io::messages.add("Perturbed_Nonbonded_Pair", 
-		      "polarization: interaction function not implemented",
+	          */
+	          io::messages.add("Perturbed_Nonbonded_Pair", 
+		          "polarization: interaction function not implemented",
                        io::message::critical);
             break;
           }
@@ -571,32 +566,27 @@ void interaction::Perturbed_Nonbonded_Pair
             //A_de_lj = A_de_crf = 0.0;
             A_f = A_f1 * r * m_perturbed_nonbonded_term.A_lj_lambda_n();
 
-	    A_de_lj = - topo.lambda_exp() * m_perturbed_nonbonded_term.A_lj_lambda_n_1() * A_e_lj; //again: calculate before scaling A_e_lj with lambda!
-	    A_de_crf = - topo.lambda_exp() * m_perturbed_nonbonded_term.A_crf_lambda_n_1() * A_e_crf;
+	          A_de_lj = - topo.lambda_exp() * m_perturbed_nonbonded_term.A_lj_lambda_n_1() * A_e_lj; //again: calculate before scaling A_e_lj with lambda!
+	          A_de_crf = - topo.lambda_exp() * m_perturbed_nonbonded_term.A_crf_lambda_n_1() * A_e_crf;
 	    
-	    
-	      
-      // ANITA
-      if (sim.param().precalclam.nr_lambdas && ((sim.steps()  % sim.param().write.free_energy) == 0)){
+            // ANITA
+            if (sim.param().precalclam.nr_lambdas && ((sim.steps()  % sim.param().write.free_energy) == 0)){
+              //loop over nr_lambdas
+              for (unsigned int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
+                conf.current().energies.A_lj_energy[lam_index][topo.atom_energy_group(it->i)]
+                  [topo.atom_energy_group(it->j)] += A_e_lj; 
+                conf.current().energies.A_crf_energy[lam_index][topo.atom_energy_group(it->i)]
+                  [topo.atom_energy_group(it->j)] += A_e_crf;
+              }
+            } // ANITA 
 
-        //loop over nr_lambdas
-        for (unsigned int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
-          
-          conf.current().energies.A_lj_energy[lam_index][topo.atom_energy_group(it->i)]
-            [topo.atom_energy_group(it->j)] += A_e_lj; 
-          conf.current().energies.A_crf_energy[lam_index][topo.atom_energy_group(it->i)]
-            [topo.atom_energy_group(it->j)] += A_e_crf;
-
-        }
-      } // ANITA 
-
-	    A_e_lj *= m_perturbed_nonbonded_term.A_lj_lambda_n();
-	    A_e_crf *= m_perturbed_nonbonded_term.A_crf_lambda_n();
+	          A_e_lj *= m_perturbed_nonbonded_term.A_lj_lambda_n();
+	          A_e_crf *= m_perturbed_nonbonded_term.A_crf_lambda_n();
 
             break;
           }
           case simulation::pol_lj_crf_func : {
-           /* m_nonbonded_term.
+            /* m_nonbonded_term.
             pol_lj_crf_interaction(r, rp1, rp2, rpp, A_lj->c6, A_lj->c12,
                     topo.charge(it->i), topo.charge(it->j),
                     topo.coscharge(it->i), topo.coscharge(it->j),
@@ -605,9 +595,9 @@ void interaction::Perturbed_Nonbonded_Pair
             A_f_pol_vec(1) = A_f_pol[1] * rp1;
             A_f_pol_vec(2) = A_f_pol[2] * rp2;
             A_f_pol_vec(3) = A_f_pol[3] * rpp;
-	    */
-	      io::messages.add("Perturbed_Nonbonded_Pair", 
-		      "polarization: interaction function not implemented",
+	          */
+	          io::messages.add("Perturbed_Nonbonded_Pair", 
+		          "polarization: interaction function not implemented",
                        io::message::critical);
             break;
           }
@@ -621,9 +611,9 @@ void interaction::Perturbed_Nonbonded_Pair
             A_f_pol_vec(1) = A_f_pol[1] * rp1;
             A_f_pol_vec(2) = A_f_pol[2] * rp2;
             A_f_pol_vec(3) = A_f_pol[3] * rpp;
-	    */
-	      io::messages.add("Perturbed_Nonbonded_Pair", 
-		      "polarization: interaction function not implemented",
+	          */
+	          io::messages.add("Perturbed_Nonbonded_Pair", 
+		          "polarization: interaction function not implemented",
                        io::message::critical);
             break;
           }

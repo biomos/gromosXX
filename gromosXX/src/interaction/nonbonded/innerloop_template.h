@@ -244,7 +244,7 @@
  * (assuming that perturbation is enabled).
  */
 #define SPLIT_PERTURBATION(f, ...) \
-assert(sim.param().perturbation.perturbation); \
+assert(sim.param().perturbation.perturbation || sim.param().eds.eds); \
 if (sim.param().perturbation.scaling){ \
   f<Perturbation_Spec<scaling_on> >(__VA_ARGS__); \
   } else { \

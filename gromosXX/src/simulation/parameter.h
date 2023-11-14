@@ -3059,7 +3059,7 @@ namespace simulation
        * - eds: no eds sampling
        * - form: single_s
        */
-      eds_struct() : eds(false), form(single_s), numstates(0), numsites(0) {}
+      eds_struct() : eds(false), form(single_s), numstates(0), numsites(1) {}
       /**
        * do enveloping distribution sampling using the Hamiltonian:
        */
@@ -3168,25 +3168,34 @@ namespace simulation
       */
       unsigned int bsteps;
       /**
-       * number of eds sites for multi-aeds
+       * multiAEDS turn on/off
+      */
+      unsigned int multiaeds;
+      /**
+       * number of eds sites for multiAEDS
        */
       unsigned int numsites;
       /**
-       * number of states of each eds site for multi-aeds
+       * number of states of each eds site for multiAEDS
        */
-      std::vector<double> multnumstates;
+      std::vector<unsigned int> multnumstates;
       /**
-       * emax values of each eds site for multi-aeds
+       * emax values of each eds site for multiAEDS
        */
       std::vector<double> multemax;
       /**
-       * emin values for each eds site for multi-aeds
+       * emin values for each eds site for multiAEDS
        */
       std::vector<double> multemin;
       /**
-       * energy offsets @f$E_i^R@f$ of states of each eds site, for multi-aeds 
+       * energy offsets @f$E_i^R@f$ of states of each eds site, for multiAEDS 
        */
       std::vector<std::vector<double>> multeir; 
+      /**
+       * pairwise combinations of sites and states
+       * [site_i, state_i, site_j, state_j]
+      */
+      std::vector<std::vector<int>> site_state_pairs;
     } /** enveloping distribution sampling*/ eds;
 
  struct reeds_struct : public replica_struct

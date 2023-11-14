@@ -174,59 +174,146 @@ static void _atomic_to_molecular_virial(topology::Topology const & topo,
     math::Vec r;
 
     math::Matrix corrP(0.0);
-    // EDS
+    
     const int numstates = conf.special().eds.virial_tensor_endstates.size();
     std::vector<math::Matrix> corrPendstates(numstates,corrP);
     
+    //multiAEDS
+    std::vector<std::vector<int>> site_state_pairs = sim.param().eds.site_state_pairs;
+    std::map<std::vector<int>, math::VArray> &force_mult_endstates = conf.special().eds.force_mult_endstates;
+    std::map<std::vector<int>, math::Matrix> corrPmultendstates;
+    if (sim.param().eds.numsites > 1){
+      for (auto k: site_state_pairs){
+        corrPmultendstates[k] = corrP;
+      }
+    }
+    
+    
+    math::Vec com_pos;
+    math::Matrix com_ekin;
+
+    //multiAEDS
+    if (sim.param().eds.numsites > 1){
+      // loop over all site / state pairs
+      for (auto key: site_state_pairs){
+        math::VArray &current = force_mult_endstates[key];
+        math::Matrix &corrPmultendstates_current = corrPmultendstates[key];
+
+        topology::Pressuregroup_Iterator
+          pg_it = topo.pressure_group_begin(),
+          pg_to = topo.pressure_group_end();
+
+        // loop over pressuregroups
+        for( ; pg_it != pg_to; ++pg_it){
+          _centre_of_mass(pg_it.begin(), pg_it.end(), topo, conf,
+		        com_pos, com_ekin, periodicity, sim);
+
+          topology::Atom_Iterator a_it = pg_it.begin(),
+      	    a_to = pg_it.end();
+
+          //loop over atoms
+          for (; a_it != a_to; ++a_it){
+            periodicity.nearest_image(pos(*a_it), com_pos, r);
+
+            for (int a=0; a<3; ++a){
+              for (int b=0; b<3; ++b){
+                corrPmultendstates_current(b,a) += current(*a_it)(a) *r(b);
+              }
+            }
+          }
+        }
+      }
+    }
     topology::Pressuregroup_Iterator
       pg_it = topo.pressure_group_begin(),
       pg_to = topo.pressure_group_end();
 
-    math::Vec com_pos;
-    math::Matrix com_ekin;
-
+    // loop over pressuregroups
     for( ; pg_it != pg_to; ++pg_it){
+        _centre_of_mass(pg_it.begin(),
+		    pg_it.end(),
+		    topo, conf,
+		    com_pos, com_ekin,
+		    periodicity, sim);
+    
+      topology::Atom_Iterator a_it = pg_it.begin(),
+      	a_to = pg_it.end();
+
+      for( ; a_it != a_to; ++a_it){
+        periodicity.nearest_image(pos(*a_it), com_pos, r);
+	      for(int a=0; a<3; ++a){
+	        for(int b=0; b<3; ++b){
+	          corrP(b, a)  +=
+	            conf.current().force(*a_it)(a) * r(b);
+            for(int state = 0; state < numstates; state++){
+              corrPendstates[state](b, a) +=
+                  conf.special().eds.force_endstates[state](*a_it)(a) * r(b);
+            }
+          }
+        }
+      }
+    }
+  
+/*    for( ; pg_it != pg_to; ++pg_it){
       _centre_of_mass(pg_it.begin(),
 		      pg_it.end(),
 		      topo, conf,
 		      com_pos, com_ekin,
 		      periodicity, sim);
 
+
+      if (sim.param().eds.numsites > 1){
+        for (auto key: site_state_pairs){
+          math::VArray &current = force_mult_endstates[key];
+          math::Matrix &corrPmultendstates_current = corrPmultendstates[key];
+          topology::Atom_Iterator a_it = pg_it.begin(),
+      	    a_to = pg_it.end();
+          for (; a_it != a_to; ++a_it){
+            periodicity.nearest_image(pos(*a_it), com_pos, r);
+             for (int a=0; a<3; ++a){
+              for (int b=0; b<3; ++b){
+                corrPmultendstates_current(b,a) += current(*a_it)(a) *r(b);
+              }
+            }
+          }
+        }
+      }
       topology::Atom_Iterator a_it = pg_it.begin(),
-	a_to = pg_it.end();
+      	a_to = pg_it.end();
 
       for( ; a_it != a_to; ++a_it){
-
-	// this should be changed to
-	// the vector between the free floating atom position
-	// and the free floating virial group centre of mass position
-	periodicity.nearest_image(pos(*a_it), com_pos, r);
-
-	for(int a=0; a<3; ++a){
-	  for(int b=0; b<3; ++b){
-
-	    // conf.current().virial_tensor(b, a) +=
-	    corrP(b, a)  +=
-	      conf.current().force(*a_it)(a) * r(b);
-            
-            // EDS
+        periodicity.nearest_image(pos(*a_it), com_pos, r);
+	      for(int a=0; a<3; ++a){
+	        for(int b=0; b<3; ++b){
+	          corrP(b, a)  +=
+	            conf.current().force(*a_it)(a) * r(b);
             for(int state = 0; state < numstates; state++){
               corrPendstates[state](b, a) +=
-                      conf.special().eds.force_endstates[state](*a_it)(a) * r(b);
+                    conf.special().eds.force_endstates[state](*a_it)(a) * r(b);
             }
-             
-            
-	  }
-	}
+          }
+        }
+      }
+    } */
 
-      } // loop over virial group
+    for(unsigned int i=0; i<3; ++i){
+      for(unsigned int j=0; j<3; ++j){
+        DEBUG(1, "\tconf.current().virial_tensor: "<< conf.current().virial_tensor(i,j) 
+          << "\tcorrP: " << corrP(i,j)); 
+      }
     }
-
     conf.current().virial_tensor -= corrP;
-    
-    // EDS
-    for(int state = 0; state < numstates; state++){
-      conf.special().eds.virial_tensor_endstates[state] -= corrPendstates[state];
+
+    if (sim.param().eds.numsites > 1 ){
+      for (auto k: conf.special().eds.virial_tensor_mult_endstates){
+        conf.special().eds.virial_tensor_mult_endstates[k.first] -= corrPmultendstates[k.first];
+      }
+    }
+    else{
+      // EDS
+      for(int state = 0; state < numstates; state++){
+        conf.special().eds.virial_tensor_endstates[state] -= corrPendstates[state];
+      }
     }
 
   } // molecular virial
