@@ -369,6 +369,7 @@ AC_CHECK_FUNCS(mkdtemp)
 AC_CHECK_FUNCS(getenv)
 AC_CHECK_FUNCS(symlink)
 AC_CHECK_FUNCS(unlink)
+AC_CHECK_FUNCS(rmdir)
 AC_CHECK_FUNCS(chdir)
 AC_CHECK_FUNCS(getcwd)
 

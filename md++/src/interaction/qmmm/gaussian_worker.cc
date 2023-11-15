@@ -98,8 +98,8 @@ int interaction::Gaussian_Worker::init(const topology::Topology& topo
   
 #ifndef HAVE_UNLINK
   {
-    io::messages.add("Unlink function not supported on this platform. "
-    + "Please delete temporary files manually.",
+    io::messages.add("unlink function not supported on this platform. "
+    "Please delete temporary files manually.",
     this->name(), io::message::warning);
   }
 #endif

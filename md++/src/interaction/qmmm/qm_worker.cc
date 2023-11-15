@@ -65,12 +65,19 @@ interaction::QM_Worker::QM_Worker(std::string name) : m_timer(name)
                                                     , minimisation(false) {}
 
 interaction::QM_Worker::~QM_Worker() {
-#ifdef HAVE_UNLINK
   // Remove temporary files and links
+#ifdef HAVE_UNLINK
   while (!this->tmp_files.empty()) {
     std::set<std::string>::const_iterator it = this->tmp_files.begin();
     unlink(it->c_str());
     this->tmp_files.erase(*it);
+  }
+#endif
+
+#ifdef HAVE_RMDIR
+  // Remove temporary directory
+  if (!this->tmp_dir.empty()) {
+    rmdir(this->tmp_dir.c_str());
   }
 #endif
 }
