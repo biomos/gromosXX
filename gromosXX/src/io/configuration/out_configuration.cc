@@ -35,7 +35,7 @@
 
 // Energy trajectory version
 // For details, see definition in out_configuration.cc
-const std::string io::Out_Configuration::ene_version = "2023-09-12";
+const std::string io::Out_Configuration::ene_version = "2023-11-16";
 
 // declarations
 static void _print_energyred_helper(std::ostream & os, configuration::Energy const &e);
@@ -3086,16 +3086,26 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
 
   // multi-AEDS energies of end states for each site
   os << "# multi-AEDS\n";
-  os << "# numsites\n";
+  os << "# total number of states (summed over all sites)\n";
   const unsigned int numsites = e.eds_vsite.size();
-  os << numsites << "\n";
-  for (unsigned i = 0; i < numsites; i++){
-    os << e.eds_vsite[i].size() << "\n";
-    for (unsigned j = 0; j < e.eds_vsite[i].size(); j++){
-      os << std::setw(18) << e.eds_vsite[i][j];
+    unsigned int sumstates = 0;
+    for (unsigned i=0; i < numsites; i++){
+        sumstates += e.eds_vsite[i].size();
     }
-    os << "\n";
-  }
+    os << sumstates << "\n";
+    for (unsigned i=0; i < numsites; i++){
+        for (unsigned j=0; j < e.eds_vsite[i].size(); j++){
+            os << std::setw(18) << e.eds_vsite[i][j] << "\n";
+        }
+    }
+  //os << numsites << "\n";
+  //for (unsigned i = 0; i < numsites; i++){
+  //  os << e.eds_vsite[i].size() << "\n";
+  //  for (unsigned j = 0; j < e.eds_vsite[i].size(); j++){
+  //    os << std::setw(18) << e.eds_vsite[i][j];
+  //  }
+  //  os << "\n";
+  //}
 
   // write eds energies (vr,{V_i}) here
 
