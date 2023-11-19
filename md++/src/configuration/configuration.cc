@@ -803,8 +803,11 @@ void configuration::Configuration::check_excluded_positions(topology::Topology c
         periodicity.nearest_image(pos(a1), pos(a2), r);
         const double d2 = math::abs2(r);
         if (d2 > cutoff_2) {
-          // if yes, check if they are excluded
-          if (topo.all_exclusion(a1).is_excluded(a2)) {
+	  // check if not virtual atoms (these may not be initialized yet)
+	  bool not_virtual=(topo.virtual_atoms_group().atoms().count(a1)==0) &&
+	                   (topo.virtual_atoms_group().atoms().count(a2)==0);
+          // check if they are excluded
+          if (topo.all_exclusion(a1).is_excluded(a2) && not_virtual) {
             //check if reeds is on and both atoms are perturbed - then subpress the warning
             if(sim.param().reeds.reeds){
                 continue;
@@ -854,7 +857,11 @@ void configuration::Configuration::check_excluded_positions(topology::Topology c
                      a2 != a2_to; ++a2) {
 
               bool not_excluded_via_eds= !((sim.param().reeds.reeds || sim.param().eds.eds) && (topo.eds_perturbed_solute().atoms().count(a1)>=1 && topo.eds_perturbed_solute().atoms().count(a2)>=1));
-              if (topo.all_exclusion(a1).is_excluded(a2) && not_excluded_via_eds) {
+	      bool not_virtual=(topo.virtual_atoms_group().atoms().count(a1)==0) &&
+		               (topo.virtual_atoms_group().atoms().count(a2)==0);
+              if (topo.all_exclusion(a1).is_excluded(a2) && 
+                  not_excluded_via_eds &&
+		  not_virtual) {
                 // if yes, issue warning!
                 std::ostringstream msg;
                 msg << "Warning: Atoms " << a1 << " and " << a2
