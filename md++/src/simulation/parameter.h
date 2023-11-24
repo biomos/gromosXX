@@ -3167,9 +3167,17 @@ namespace simulation
        */
       eds_enum form;
       /**
-       * number of eds states
+       * number of eds sites
+       */
+       unsigned int numsites;
+      /**
+       * number of eds states (for single-site)
        */
       unsigned int numstates;
+      /**
+       * number of eds states per site
+       */
+      std::vector<unsigned int> v_numstates;
       /**
        * smoothness parameter(s) @f$ s@f$ of @f$ s_{ij}@f$ used in reference state Hamiltonian.
        */
@@ -3186,21 +3194,21 @@ namespace simulation
       };
       std::vector<state_pair> pairs;
       /**
+       * acceleration name (ID) for rach site
+       */
+      std::vector<std::string> v_accel_name;
+      /**
+       * emin and emax for Inverse Gaussian Acceleration (depricated)
+       */
+      double emin, emax;
+      /**
        * energy offsets @f$E_i^R@f$ of states
        */
       std::vector<double> eir;
       /**
-      * parameter emax for aeds
-      */
-      double emax;
-      /**
-      * parameter emin for aeds
-      */
-      double emin;
-      /**
-      * parameter target_emax for aeds
-      */
-      double target_emax;
+       * energy offsets @f$E_i^R@f$ of states for each site
+       */
+      std::vector<std::vector<double>> v_eir;
       /**
       * do we want to init an aeds parameter search?
       */
@@ -3214,27 +3222,27 @@ namespace simulation
       */
       unsigned int emaxcounts;
       /**
-      * ln of exponential energy differences between the states and the reference state
+      * ln of exponential energy differences between the states and the reference state (for search only)
       */
       std::vector<double> lnexpde;
       /**
-      * free energy differences between the states and the reference state
+      * free energy differences between the states and the reference state (for search only)
       */
       std::vector<double> statefren;
       /**
-      * states that were already visited within a state round-trip
+      * states that were already visited within a state round-trip (for search only)
       */
       std::vector<bool> visitedstates;
       /**
-      * how many times did we visit a state?
+      * how many times did we visit a state? (for search only)
       */
       std::vector<unsigned int> visitcounts;
       /**
-      * contributing frames per state
+      * contributing frames per state (for search only)
       */
       std::vector<unsigned int> framecounts;
       /**
-      * state of the last simulation step
+      * state of the last simulation step (for search only)
       */
       unsigned int oldstate;
       /**
@@ -3266,6 +3274,10 @@ namespace simulation
       */
       bool fullemin;
       /**
+      * definition of 0 for energy offsets (only relevant for the search)
+      */
+      int eir0type;
+      /**
       * half-life of the offset parameters at the beginning of the run
       */
       unsigned int asteps;
@@ -3274,6 +3286,52 @@ namespace simulation
       */
       unsigned int bsteps;
     } /** enveloping distribution sampling*/ eds;
+
+
+    /**
+    * @struct Hamiltonian Acceleration
+    * parameters for different types of acceleration
+    */
+    struct hacceleration_struct {
+      /**
+      * Constructor:
+      * Default values:
+      * - number of acceleration groups (definitions): 0
+      */
+      hacceleration_struct() : num_accel(0) {}
+
+      /**
+      * number of acceleration groups (definitions)
+      */
+      unsigned int num_accel;
+      /**
+      * acceleration name mapped to acceleration parameters (see struc below)
+      */
+      struct accceleration_params_struct {
+        /**
+        * acceleration type (method)
+        */
+        int accel_type;
+        /**
+        * acceleration parameters form
+        */
+        int aparam_form;
+        /**
+        * acceleration parameters
+        */
+        std::vector<double> accel_params;
+      };
+      std::map<std::string, accceleration_params_struct> accel_params_map;
+
+      /**
+      * acceleration parameters from cnf (they are of form TEMAX, TEMIN, TACCEL)
+      */
+      struct TargetAccelerationParams{
+        double temax, temin, taccel;
+      };
+      TargetAccelerationParams cnf_accel_params;
+    } /** Hamiltonian Acceleration*/ haccel;
+
 
   /**
    * @struct GAMD_struct

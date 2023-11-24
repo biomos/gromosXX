@@ -27,6 +27,8 @@
 
 #ifndef EDS_H
 #define	EDS_H
+
+#include "H_acceleration.h"
 #include <numeric>
 namespace algorithm
 {
@@ -77,6 +79,9 @@ namespace algorithm
      * get average over offsets
      **/
     double getAverage(simulation::Simulation &sim);
+
+    AccelerationContainer accel_cont; // stores acceleration parameters
+    EnergyAcceleration * accel_ptr; // stores acceleration parameters (for single-site) -> will be depricated
     
    private:
      configuration::Configuration * conf2;

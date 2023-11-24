@@ -359,6 +359,10 @@ namespace io {
     */
     void read_AEDS(simulation::Parameter &param, std::ostream & os = std::cout);
     /**
+    * read ACCELERATION block.
+    */
+    void read_ACCELERATION(simulation::Parameter &param, std::ostream & os = std::cout);
+    /**
     * read GAMD block.
     */
     void read_GAMD(simulation::Parameter &param, std::ostream & os = std::cout);

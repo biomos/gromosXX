@@ -35,16 +35,12 @@
 #include "../../util/error.h"
 
 #include "eds.h"
-#include "H_acceleration.h"
-
 
 #undef MODULE
 #undef SUBMODULE
 #define MODULE algorithm
 #define SUBMODULE integration
 
-
-algorithm::PowerAcceleration p_accel;
 
 /**
  * EDS init
@@ -56,10 +52,44 @@ int algorithm::EDS
             std::ostream &os,
             bool quiet)
 {
-    PowerAcceleration E_accel;
-
+  if (!quiet)
+    os << "EDS\n";
+  if (sim.param().eds.eds){
+    std::string accel_name;
+    std::vector<double> temp_accel_params;
+    for (int i=0; i<sim.param().eds.numsites; i++){
+      temp_accel_params.clear();
+      accel_name = sim.param().eds.v_accel_name[i];
+      if (accel_name=="__IMD_IGA_oldAEDS__"){
+        temp_accel_params.push_back(sim.param().eds.emax);
+        temp_accel_params.push_back(sim.param().eds.emin);
+        if (!quiet)
+          os << "old AEDS (FORM):\n emax="<< temp_accel_params[0]<< "    emin: " << temp_accel_params[1] << "\n";
+        accel_cont.set_accel(accel_name, 1, 1, temp_accel_params);
+      }
+      else{
+        accel_cont.set_accel(accel_name, 
+                            sim.param().haccel.accel_params_map[accel_name].accel_type,
+                            sim.param().haccel.accel_params_map[accel_name].aparam_form,
+                            sim.param().haccel.accel_params_map[accel_name].accel_params);
+        if (!quiet){
+          os << "\tacceleration name:" << accel_name 
+             << "\t\taccel_type: "<<sim.param().haccel.accel_params_map[accel_name].accel_type
+             << "; aparam_form: "<<sim.param().haccel.accel_params_map[accel_name].aparam_form
+             << "\n\t\tparameters:";
+          for (int i=0; i<sim.param().haccel.accel_params_map[accel_name].accel_params.size(); i++){
+            os << " " << sim.param().haccel.accel_params_map[accel_name].accel_params[i];
+          }
+          os << "\n";
+        }
+      }
+    }
+    if (sim.param().eds.numsites==1){
+      accel_ptr = accel_cont.accel_map[sim.param().eds.v_accel_name[0]];
+    }
+  }
     if (!quiet)
-        os << "\tEDS\nEND\n";
+        os << "END\n";
     return 0;
 }
 
@@ -132,7 +162,6 @@ int algorithm::EDS
         || sim.param().eds.form == simulation::aeds_advanced_search) {
           sim.param().eds.emax = conf.current().energies.eds_vmix;
           sim.param().eds.emin = conf.current().energies.eds_vmix;
-          sim.param().eds.target_emax = conf.current().energies.eds_vmix;
           sim.param().eds.searchemax = conf.current().energies.eds_vmix;
         }
         if (sim.param().eds.form == simulation::aeds_search_eir || sim.param().eds.form == simulation::aeds_search_all
@@ -160,8 +189,7 @@ int algorithm::EDS
       }
       //power acceleration
       else if (sim.param().eds.eds==3){
-        p_accel.set_target_acceleration(sim.param().eds.emax, sim.param().eds.emin, sim.param().eds.target_emax - sim.param().eds.emin);
-        p_accel.accelerate_E_F(conf.current().energies.eds_vmix, &conf.current().energies.eds_vr, &fkfac);
+        (*accel_ptr).accelerate_E_F(conf.current().energies.eds_vmix, &conf.current().energies.eds_vr, &fkfac);
       }
 
       // std::cout << "\tAEDS (FORM)"<< sim.param().eds.eds << std::endl;
@@ -243,7 +271,7 @@ int algorithm::EDS
             }
             // power acceleration
             else if (sim.param().eds.eds==3){
-              p_accel.accelerate_E(eds_vi[is] - sim.param().eds.eir[is], &eirestar);
+              (*accel_ptr).accelerate_E(eds_vi[is] - sim.param().eds.eir[is], &eirestar);
               eirestar += sim.param().eds.eir[is];
             }
             // if in conventional search algorithm recalculate offsets using time decay function and update them
@@ -334,7 +362,7 @@ int algorithm::EDS
             sim.param().eds.searchemax = globminavg;
           }
 
-          // EMIN & TARGET_EMAX
+          // EMIN
           double bmax = 0.0;
           if (sim.param().eds.bmaxtype == 1)
           {
@@ -376,12 +404,11 @@ int algorithm::EDS
           }
           // power accceleration
           else if (sim.param().eds.eds==3){
-            sim.param().eds.emin = globminavg;
+            (*accel_ptr).set_target_acceleration(sim.param().eds.emax, globminavg, bmax);
           }
-          sim.param().eds.target_emax = globminavg + bmax;
-
           conf.current().energies.eds_globmin = globminavg;
           conf.current().energies.eds_globminfluc = globminfluc;
+          conf.current().energies.eds_target_emax = bmax;
           sim.param().eds.oldstate = state;
         }
 
@@ -423,7 +450,6 @@ int algorithm::EDS
 
       conf.current().energies.eds_emax = sim.param().eds.emax;
       conf.current().energies.eds_emin = sim.param().eds.emin;
-      conf.current().energies.eds_target_emax = sim.param().eds.target_emax;
       for (unsigned int is = 0; is < numstates; is++) {
         conf.current().energies.eds_eir[is] = sim.param().eds.eir[is];
       }

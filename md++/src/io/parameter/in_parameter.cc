@@ -3958,6 +3958,7 @@ void io::In_Parameter::read_EDS(simulation::Parameter & param,
     }
 }
 
+
 /**
 * @section AEDS AEDS block
 * @snippet snippets/snippets.cc AEDS
@@ -3972,21 +3973,21 @@ void io::In_Parameter::read_AEDS(simulation::Parameter & param,
   // will be used to generate snippets that can be included in the doxygen doc;
   // the first line should be the blockname and is used as snippet tag
   exampleblock << "AEDS\n";
-  exampleblock << "# AEDS       0,1,2\n";
+  exampleblock << "# AEDS       0-21:\n";
   exampleblock << "#              0: no accelerated enveloping distribution sampling (A-EDS) [default]\n";
-  exampleblock << "#              1: accelerated enveloping distribution sampling (Gauss acceleration)\n";
-  exampleblock << "#              2: accelerated enveloping distribution sampling (Power acceleration)\n";
-  exampleblock << "# FORM       1-6\n";
-  exampleblock << "#              1: A-EDS with fixed parameters\n";
-  exampleblock << "#              2: fixed Emax and Emin parameters, search for offset parameters\n";
-  exampleblock << "#              3: search for Emax and Emin parameters, fixed offset parameters\n";
-  exampleblock << "#              4: search for Emax, Emin and offset parameters\n";
-  exampleblock << "#              5: A-EDs advanced adaptive search\n";
-  exampleblock << "#              6: A-EDs advanced adaptive offset search, fixed Emax and Emin\n";
+  exampleblock << "#              1: accelerated enveloping distribution sampling\n";
+  exampleblock << "#              2: multi-site A-EDS explicitly defined (to allow for reading of the old block format)\n";
+  exampleblock << "# NUMSITES >0   : number of sites\n";
   exampleblock << "# NUMSTATES >1  : number of states\n";
-  exampleblock << "# EMAX          : A-EDS parameter Emax\n";
-  exampleblock << "# EMIN          : A-EDS parameter Emin\n";
+  exampleblock << "# ACCELID       : ID of the acceleration group (definition) - as defined in the imd file\n";
   exampleblock << "# EIR           : energy offsets for states\n";
+  exampleblock << "# FORM       1-6:\n";
+  exampleblock << "#              1: A-EDS with fixed parameters\n";
+  exampleblock << "#              2: fixed acceleration range, search for offset parameters\n";
+  exampleblock << "#              3: search for acceleration range, fixed offset parameters\n";
+  exampleblock << "#              4: search for acceleration range and offset parameters\n";
+  exampleblock << "#              5: A-EDs advanced adaptive search\n";
+  exampleblock << "#              6: A-EDs advanced adaptive offset search, fixed acceleration range\n";
   exampleblock << "# NTIAEDSS   0,1\n";
   exampleblock << "#              0: read A-EDS parameter search configuration from input configuration\n";
   exampleblock << "#              1: initialize A-EDS parameter search\n";
@@ -3997,21 +3998,23 @@ void io::In_Parameter::read_AEDS(simulation::Parameter & param,
   exampleblock << "#              1: absolute maximum energy barrier between the states in energy units\n";
   exampleblock << "#              2: multiples of the standard deviation of the energy of the end-state with the lowest average energy\n";
   exampleblock << "# BMAX          : maximum energy barrier parameter\n";
-  exampleblock << "# ASTEPS        : have-life in simulation steps of the exponential averaged energy difference between the end-states at the begining of the run\n";
-  exampleblock << "# BSTEPS        : have-life in simulation steps of the exponential averaged energy difference between the end-states at the end of the run\n";
+  exampleblock << "# ASTEPS        : half-life in simulation steps of the exponential averaged energy difference between the end-states at the begining of the run\n";
+  exampleblock << "# BSTEPS        : half-life in simulation steps of the exponential averaged energy difference between the end-states at the end of the run\n";
+  exampleblock << "# EIR0       0,1:\n";
+  exampleblock << "#              0: anchor offset of the first state to 0\n";
+  exampleblock << "#              1: anchor the averge offset of all states to 0\n";
   exampleblock << "#\n";
-  exampleblock << "# AEDS\n";
-  exampleblock << "  1\n";
-  exampleblock << "# FORM  NUMSTATES\n";
-  exampleblock << "  4          5\n";
-  exampleblock << "# EMAX  EMIN\n";
-  exampleblock << "  10    -50\n";
+  exampleblock << "# AEDS  NUMSITES\n";
+  exampleblock << "  1     1\n";
+  exampleblock << "# NUMSTATES  ACCELID\n";
+  exampleblock << "  5          1\n";
   exampleblock << "# EIR\n";
   exampleblock << "  0   -5   -140   -560   -74\n";
-  exampleblock << "# NTIAEDSS  RESTREMIN  BMAXTYPE  BMAX  ASTEPS  BSTEPS\n";
-  exampleblock << "  1         1          2         3     500     50000\n";
+  exampleblock << "# FORM\n";
+  exampleblock << "  1\n";
+  exampleblock << "# NTIAEDSS  RESTREMIN  BMAXTYPE  BMAX  ASTEPS  BSTEPS  EIR0\n";
+  exampleblock << "  1         1          2         3     500     50000   0\n";
   exampleblock << "END\n";
-
 
 
   std::string blockname = "AEDS";
@@ -4020,11 +4023,8 @@ void io::In_Parameter::read_AEDS(simulation::Parameter & param,
   if (block.read_buffer(m_block[blockname], false) == 0) {
     block_read.insert(blockname);
 
-    int aeds = 0, form = 0;
+    int aeds = 0;
     block.get_next_parameter("AEDS", aeds, "", "0,1,2");
-    block.get_next_parameter("FORM", form, "", "1,2,3,4,5,6");
-    block.get_next_parameter("NUMSTATES", param.eds.numstates, ">=2", "");
-
     if (param.eds.eds != 1) {
       switch (aeds) {
       case 0:
@@ -4045,10 +4045,111 @@ void io::In_Parameter::read_AEDS(simulation::Parameter & param,
       io::messages.add("AEDS block: AEDS cannot be used in combination with EDS.",
                                  "In_Parameter", io::message::error);
     }
-
     if (!param.eds.eds) {
       block.get_final_messages();
       return;
+    }
+
+    // new block format
+    block.get_next_parameter("NUMSITES", param.eds.numsites, ">0", "");
+    for (int i_site=0; i_site<param.eds.numsites; i_site++){
+        int num_states;
+        block.get_next_parameter("NUMSTATES", num_states, ">2", "");
+        param.eds.numstates = num_states; // this will be depricated!
+        param.eds.v_numstates.push_back(num_states);
+
+        // acceleration ID
+        std::string accel_name;
+        block.get_next_parameter("ACCELID", accel_name, "", "");
+        param.eds.v_accel_name.push_back(accel_name);
+
+        // get the offsets
+        std::vector<double> eir(num_states, 0.0);
+        for (unsigned int i = 0; i < param.eds.numstates; i++) {
+            std::string idx = io::to_string(i);
+            block.get_next_parameter("EIR[" + idx + "]", eir[i], "", "");
+        }
+        param.eds.v_eir.push_back(eir);
+        param.eds.eir = eir;// this will be depricated!
+
+        if (aeds==1) // multi-state only assumed if aeds==2
+            break;
+    }
+
+    // if multi-site, then we can just ignore the rest
+    if (aeds==2){
+      block.get_final_messages();
+      return;
+    }
+
+    std::string form_str;
+    int form;
+    block.get_next_parameter("FORM", form_str, "", ""); // if old block format, this is EIR of the last state
+    //block.get_next_parameter("FORM", form, "", "1,2,3,4,5,6"); // this is how it should look like
+
+    int ntia = 0, restremin = 0;
+    block.get_next_parameter("NTIAEDSS", ntia, "", "0,1");
+    switch (ntia) {
+    case 0:
+      param.eds.initaedssearch = false;
+      break;
+    case 1:
+      param.eds.initaedssearch = true;
+      break;
+    default:
+      break;
+    }
+    block.get_next_parameter("RESTREMIN", restremin, "", "0,1");
+    switch (restremin) {
+    case 0:
+      param.eds.fullemin = true;
+      break;
+    case 1:
+      param.eds.fullemin = false;
+      break;
+    default:
+      break;
+    }
+    block.get_next_parameter("BMAXTYPE", param.eds.bmaxtype, "", "1,2");
+    block.get_next_parameter("BMAX", param.eds.setbmax, ">0", "");
+    block.get_next_parameter("ASTEPS", param.eds.asteps, ">0", "");
+    block.get_next_parameter("BSTEPS", param.eds.bsteps, ">0", "");
+
+    int flag = block.get_next_parameter("EIR0", param.eds.eir0type, "", "0,1", true);
+    // if old block format (missing last parameter)
+    if (flag){
+        if (param.eds.numsites>6){
+            io::messages.add("AEDS block: FORM parameter allowed values are 1-6",
+                            "In_Parameter", io::message::error);
+            return;
+        }
+        form = param.eds.numsites;
+        param.eds.numsites=1;
+
+        // get emax and emin
+        std::istringstream temp_strm(param.eds.v_accel_name[0]);
+        temp_strm >> param.eds.emax;
+        param.eds.v_accel_name[0] = "__IMD_IGA_oldAEDS__"; // hard-coded name for acceleration based on params from AEDS (old format)
+        param.eds.emin = param.eds.eir[0];
+        if (param.eds.emin > param.eds.emax) {
+        io::messages.add("AEDS paramater EMIN is larger than EMAX",
+            "In_Parameter", io::message::warning);
+        return;
+        }
+
+        int numstates = param.eds.numstates;
+        // fix offsets
+        for (int i=1; i<numstates;i++){
+            param.eds.eir[i-1] = param.eds.eir[i];
+            param.eds.v_eir[0][i-1] = param.eds.eir[i];
+        }
+        temp_strm.str(form_str);
+        temp_strm >> param.eds.eir[numstates-1];
+        param.eds.v_eir[0][numstates-1] = param.eds.eir[numstates-1];
+    }
+    else{
+        std::istringstream temp_strm(form_str);
+        temp_strm >> form;
     }
 
     switch (form) {
@@ -4080,6 +4181,44 @@ void io::In_Parameter::read_AEDS(simulation::Parameter & param,
       break;
     }
 
+
+
+    /** 
+    old block format
+    int form=0;
+    block.get_next_parameter("FORM", form, "", "1,2,3,4,5,6");
+
+    switch (form) {
+    case 1: {
+      param.eds.form = simulation::aeds;
+      break;
+    }
+    case 2: {
+      param.eds.form = simulation::aeds_search_eir;
+      break;
+    }
+    case 3: {
+      param.eds.form = simulation::aeds_search_emax_emin;
+      break;
+    }
+    case 4: {
+      param.eds.form = simulation::aeds_search_all;
+      break;
+    }
+    case 5: {
+      param.eds.form = simulation::aeds_advanced_search;
+      break;
+    }
+    case 6: {
+      param.eds.form = simulation::aeds_advanced_search2;
+      break;
+    }
+    default:
+      break;
+    }
+
+    block.get_next_parameter("NUMSTATES", param.eds.numstates, ">=2", "");
+
     block.get_next_parameter("EMAX", param.eds.emax, "", "");
     block.get_next_parameter("EMIN", param.eds.emin, "", "");
 
@@ -4087,10 +4226,6 @@ void io::In_Parameter::read_AEDS(simulation::Parameter & param,
       io::messages.add("AEDS paramater EMIN is larger than EMAX",
         "In_Parameter", io::message::warning);
       return;
-    }
-
-    if (param.eds.eds==3){
-        block.get_next_parameter("TARGET_EMAX", param.eds.target_emax, "", "");
     }
 
     param.eds.eir.resize(param.eds.numstates, 0.0);
@@ -4126,6 +4261,7 @@ void io::In_Parameter::read_AEDS(simulation::Parameter & param,
     block.get_next_parameter("BMAX", param.eds.setbmax, ">0", "");
     block.get_next_parameter("ASTEPS", param.eds.asteps, ">0", "");
     block.get_next_parameter("BSTEPS", param.eds.bsteps, ">0", "");
+    */
 
     param.eds.searchemax = 0.0;
     param.eds.emaxcounts = 0;
@@ -4142,8 +4278,133 @@ void io::In_Parameter::read_AEDS(simulation::Parameter & param,
     param.eds.framecounts.resize(param.eds.numstates, 0);
 
     block.get_final_messages();
+
   }
 }
+
+
+/**
+* @section acceleration ACCELERATION block
+* @snippet snippets/snippets.cc ACCELERATION
+
+*/
+void io::In_Parameter::read_ACCELERATION(simulation::Parameter & param,
+  std::ostream & os) {
+  DEBUG(8, "reading ACCELERATION");
+
+  std::stringstream exampleblock;
+  // lines starting with 'exampleblock<<"' and ending with '\n";' (spaces don't matter)
+  // will be used to generate snippets that can be included in the doxygen doc;
+  // the first line should be the blockname and is used as snippet tag
+  exampleblock << "ACCELERATION\n";
+  exampleblock << "# NUMACCEL >0   : number of separate acceleration groups (definitions)\n";
+  exampleblock << "# ACCELNAME     : acceleration name (used to define which part of the system is accelerated using that particular acceleration)\n";
+  exampleblock << "# ACCELTYPE  1-3:\n";
+  exampleblock << "#              1: Inverse Gaussian Acceleration\n";
+  exampleblock << "#              2: Gaussian Acceleration\n";
+  exampleblock << "#              3: Power Acceleration\n";
+  exampleblock << "# APARAMFORM 0,1:\n";
+  exampleblock << "#              0: acceleration parameters given as target parameters - target acceleration range and target_acceleration\n";
+  exampleblock << "#              1: acceleration parameters specific for a given acceleration type (e.g. emin, emax for Inverse Gauss acceleration)\n";
+  exampleblock << "# TEMAX  TEMIN  TACCEL         (if APARAMFORM==0)\n";
+  exampleblock << "# TEMAX         : defines the acceleration range\n";
+  exampleblock << "# TEMIN         : defines the acceleration range\n";
+  exampleblock << "# TACCEL        : target acceleration (difference of the accelerated energy at TEMAX and TEMIN)\n";
+  exampleblock << "# EMAX  EMIN                   (if APARAMFORM==1 and ACCELTYPE==1)\n";
+  exampleblock << "# EMAX          : Inverse Gaussian Acceleration parameter\n";
+  exampleblock << "# EMIN          : Inverse Gaussian Acceleration parameter\n";
+  exampleblock << "# EMAX  EMIN  k0               (if APARAMFORM==1 and ACCELTYPE==2)\n";
+  exampleblock << "# EMAX          : Gaussian Acceleration parameter\n";
+  exampleblock << "# EMIN          : Gaussian Acceleration parameter\n";
+  exampleblock << "# k0            : Gaussian Acceleration parameter\n";
+  exampleblock << "# EMAX  EMIN  POW2  POW_FRAC   (if APARAMFORM==1 and ACCELTYPE==3)\n";
+  exampleblock << "# EMAX          : Power Acceleration parameter\n";
+  exampleblock << "# EMIN          : Power Acceleration parameter\n";
+  exampleblock << "# POW2          : Power Acceleration parameter\n";
+  exampleblock << "# POW_FRAC      : Power Acceleration parameter\n";
+
+  std::string blockname = "ACCELERATION";
+  Block block(blockname, exampleblock.str());
+
+  if (block.read_buffer(m_block[blockname], false) == 0) {
+    block_read.insert(blockname);
+    
+    std::string temp_accel_name;
+    int temp_accel_type, temp_aparam_form; 
+
+    block.get_next_parameter("NUMACCEL", param.haccel.num_accel, ">=0", "");
+    for (int i=0; i<param.haccel.num_accel; i++){
+        block.get_next_parameter("ACCELNAME", temp_accel_name, "", "");
+        if (param.haccel.accel_params_map.count(temp_accel_name)){
+            io::messages.add("same ACCELNAME given more than once: " + temp_accel_name,
+                             "In_Parameter", io::message::error);
+            return;
+        }
+        
+        //param.hacceleration_struct.hacceleration_struct temp_accel_params;
+        simulation::Parameter::hacceleration_struct::accceleration_params_struct temp_accel_params;
+        block.get_next_parameter("ACCELTYPE", temp_accel_params.accel_type, "", "1,2,3");
+        block.get_next_parameter("APARAMFORM", temp_accel_params.aparam_form, ">=0", "");
+
+        double temp_accel_param;
+        // target parameters are always of the same form
+        if (temp_accel_params.aparam_form==0){
+            block.get_next_parameter("TEMAX", temp_accel_param, "", "");
+            temp_accel_params.accel_params.push_back(temp_accel_param);
+            block.get_next_parameter("TEMIN", temp_accel_param, "", "");
+            temp_accel_params.accel_params.push_back(temp_accel_param);
+            block.get_next_parameter("TACCEL", temp_accel_param, "", "");
+            temp_accel_params.accel_params.push_back(temp_accel_param);
+        }
+        else{
+            switch (temp_accel_params.accel_type) {
+            // Inverse Gaussian Acceleration
+            case 1: {
+                block.get_next_parameter("EMAX", temp_accel_param, "", "");
+                temp_accel_params.accel_params.push_back(temp_accel_param);
+                block.get_next_parameter("EMIN", temp_accel_param, "", "");
+                temp_accel_params.accel_params.push_back(temp_accel_param);
+                break;
+            }
+            // Gaussian Acceleration
+            case 2: {
+                if (temp_accel_params.aparam_form==1){
+                    block.get_next_parameter("EMAX", temp_accel_param, "", "");
+                    temp_accel_params.accel_params.push_back(temp_accel_param);
+                    block.get_next_parameter("k", temp_accel_param, "", "");
+                    temp_accel_params.accel_params.push_back(temp_accel_param);
+                }
+                if (temp_accel_params.aparam_form==2){
+                    block.get_next_parameter("EMAX", temp_accel_param, "", "");
+                    temp_accel_params.accel_params.push_back(temp_accel_param);
+                    block.get_next_parameter("EMIN", temp_accel_param, "", "");
+                    temp_accel_params.accel_params.push_back(temp_accel_param);
+                    block.get_next_parameter("k0", temp_accel_param, "", "");
+                    temp_accel_params.accel_params.push_back(temp_accel_param);
+                }
+                break;
+            }
+            // Power Acceleration
+            case 3: {
+                block.get_next_parameter("EMAX", temp_accel_param, "", "");
+                temp_accel_params.accel_params.push_back(temp_accel_param);
+                block.get_next_parameter("EMIN", temp_accel_param, "", "");
+                temp_accel_params.accel_params.push_back(temp_accel_param);
+                block.get_next_parameter("POW2", temp_accel_param, "", "");
+                temp_accel_params.accel_params.push_back(temp_accel_param);
+                block.get_next_parameter("POW_FRAC", temp_accel_param, "", "");
+                temp_accel_params.accel_params.push_back(temp_accel_param);
+                break;
+            }
+            } // shitch end
+        } // if else end
+        param.haccel.accel_params_map[temp_accel_name]=temp_accel_params;
+    }
+    
+  }
+
+}
+
 
 //ORIOL_GAMD
 /**

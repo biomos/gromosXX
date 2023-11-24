@@ -3910,9 +3910,9 @@ _print_aedssearch(configuration::Configuration const &conf,
   os.setf(std::ios::fixed, std::ios::floatfield);
   os.precision(m_precision);
   os << "AEDSSEARCH\n";
-  os << std::setw(m_width) << sim.param().eds.emax << "\n";
-  os << std::setw(m_width) << sim.param().eds.emin << "\n";
-  os << std::setw(m_width) << sim.param().eds.target_emax << "\n";
+  os << std::setw(m_width) << sim.param().haccel.cnf_accel_params.temax << "\n";
+  os << std::setw(m_width) << sim.param().haccel.cnf_accel_params.temin << "\n";
+  os << std::setw(m_width) << sim.param().haccel.cnf_accel_params.taccel << "\n";
   os << std::setw(m_width) << sim.param().eds.searchemax << "\n";
   os << std::setw(m_width) << sim.param().eds.emaxcounts << "\n";
   os << std::setw(m_width) << sim.param().eds.oldstate << "\n";

@@ -19,6 +19,7 @@
  */
 
 #include <cmath>
+#include <cassert>
 
 #ifndef Haccel_H
 #define Haccel_H
@@ -26,9 +27,12 @@ namespace algorithm
 {
   class EnergyAcceleration{
     public:
-      /** updates acceleration parameters/variables*/
-      virtual void update_params() = 0;
-      
+      /** sets acceleration parameters/variables*/
+      virtual void set_params(int aparam_form, std::vector<double> params) = 0;
+
+      /** gets acceleration parameters/variables*/
+      virtual void get_params(std::vector<double> params) = 0;
+
       // calculate accelerated energy
       virtual void accelerate_E(double E, double * E_a) = 0;
       
@@ -43,23 +47,19 @@ namespace algorithm
       virtual void set_target_acceleration(double accel_emax_value, double accel_emin_value, double accel_target_value) = 0;
   };
   
-  class PowerAcceleration:EnergyAcceleration{
+  class PowerAcceleration: public EnergyAcceleration{
 
     public:
-      // current emin, emax & other varibles
-      bool valid_params;
-      double emin, emax, pow_frac, emax_a; // emax_a is the value of E at emax
-      int pow2;
-      // target acceleration vars
-      double accel_emin, accel_emax, accel_target;
-
       /**
       * Constructor.
       */
       PowerAcceleration() {emin=0.; emax=0.; pow2=2; pow_frac=1.; valid_params=false;}
 
-      /** updates power acceleration variables (e.g. target_frac, diff_emm, gamma_pow, ...)*/
-      void update_params();
+      /** sets acceleration parameters/variables*/
+      void set_params(int aparam_form, std::vector<double> params);
+
+      /** gets acceleration parameters/variables*/
+      void get_params(std::vector<double> params);
 
       /**
       * calculate accelerated energy
@@ -92,11 +92,17 @@ namespace algorithm
 
     private:
       // all vars needed for power acceleration
-      double diff_emm;
+      bool valid_params;
+      double emin, emax, pow_frac, emax_a; // emax_a is the value of E at emax
+      double pow2, pow2_1;
       double lin_frac, pow_c;
-      int pow2_1;
-      // target acceleration var
+      double diff_emm;
+      // target acceleration vars
+      double accel_emin, accel_emax, accel_target;
       double target_frac;
+
+      /** updates power acceleration variables (e.g. target_frac, diff_emm, gamma_pow, ...)*/
+      void update_params();
 
       /**
       * transforms energy value into x variable for power acceleration
@@ -143,14 +149,9 @@ namespace algorithm
   };
 
 
-  class InverseGaussianAcceleration:EnergyAcceleration{
+  class InverseGaussianAcceleration: public EnergyAcceleration{
 
     public:
-      double emin, emax;
-      bool valid_params;
-      // target acceleration vars
-      double accel_emin, accel_emax, accel_target;
-
       /**
       * Constructor.
       */
@@ -176,8 +177,11 @@ namespace algorithm
       */
       void accelerate_E_F(double E, double * E_a, double * f_k);
 
-      /** updates acceleration variables (e.g. diff_emm)*/
-      void update_params();
+      /** sets acceleration parameters/variables*/
+      void set_params(int aparam_form, std::vector<double> params);
+
+      /** gets acceleration parameters/variables*/
+      void get_params(std::vector<double> params);
 
       /**
       * sets acceleration range (between `accel_emin` and `accel_emax`)
@@ -190,9 +194,15 @@ namespace algorithm
     
     private:
       // all vars needed for invGauss acceleration
+      double emin, emax;
+      bool valid_params;
+      // target acceleration vars
       double diff_emm;
-      // target acceleration var
       double target_frac;
+      double accel_emin, accel_emax, accel_target;
+
+      /** updates acceleration variables (e.g. diff_emm)*/
+      void update_params();
 
       void update_target_params();
       void get_emin();
@@ -200,14 +210,8 @@ namespace algorithm
 
 
 
-  class GaussianAcceleration:EnergyAcceleration{
-
+  class GaussianAcceleration: public EnergyAcceleration{
     public:
-      double emin, emax, k0;
-      bool valid_params;
-      // target acceleration vars
-      double accel_emin, accel_emax, accel_target;
-
       /**
       * Constructor.
       */
@@ -233,8 +237,11 @@ namespace algorithm
       */
       void accelerate_E_F(double E, double * E_a, double * f_k);
 
-      /** updates acceleration variables (e.g. diff_emm)*/
-      void update_params();
+      /** sets acceleration parameters/variables*/
+      void set_params(int aparam_form, std::vector<double> params);
+
+      /** gets acceleration parameters/variables*/
+      void get_params(std::vector<double> params);
 
       /**
       * sets acceleration range (between `accel_emin` and `accel_emax`)
@@ -252,14 +259,30 @@ namespace algorithm
       void unset_global_emin();
 
     private:
-      // all vars needed for invGauss acceleration
+      // all vars needed for Gauss acceleration
+      double emin, emax, k0, k;
+      bool valid_params;
       double diff_emm, global_emin;
       // target acceleration var
       double target_frac;
       bool flag_global_emin;
+      double accel_emin, accel_emax, accel_target;
       
+      /** updates acceleration variables (e.g. diff_emm)*/
+      void update_params();
+
       void update_target_params();
       void get_emin();
+  };
+
+  class AccelerationContainer{
+      public:
+          std::map<std::string, algorithm::EnergyAcceleration *> accel_map;
+          void set_accel(std::string accel_name, int accel_type, int aparam_form, std::vector<double> params);
+      private:
+          std::vector<PowerAcceleration> PAs;
+          std::vector<InverseGaussianAcceleration> IGAs;
+          std::vector<GaussianAcceleration> GAs;
   };
 
 }

@@ -30,6 +30,31 @@
 
 
 // PowerAcceleration
+/** sets acceleration parameters/variables
+if aparam_form==1
+    params hold: {emax, emin, pow, pow_frac}
+*/
+void algorithm::PowerAcceleration::set_params(int aparam_form, std::vector<double> params){
+    if (aparam_form==1){
+        emax = params[0];
+        emin = params[1];
+        pow2 = params[2];
+        assert((pow2 - int(pow2) == 0));
+        pow_frac = params[3];
+        update_params();
+    }
+}
+
+/** gets acceleration parameters/variables
+{emax, emin, pow, pow_frac}
+*/
+void algorithm::PowerAcceleration::get_params(std::vector<double> params){
+    params.push_back(emax);
+    params.push_back(emin);
+    params.push_back(pow2);
+    params.push_back(pow_frac);
+}
+
 // updates power acceleration variables (e.g. diff_emm, pow_c, ...)
 void algorithm::PowerAcceleration::update_params(){
     if (emax > emin){
@@ -190,6 +215,26 @@ void algorithm::PowerAcceleration::update_target_params(){
 
 // Inverse Gaussian Acceleration
 
+/** sets acceleration parameters/variables
+if aparam_form==1
+    params hold: {emax, emin}
+*/
+void algorithm::InverseGaussianAcceleration::set_params(int aparam_form, std::vector<double> params){
+    if (aparam_form==1){
+        emax = params[0];
+        emin = params[1];
+        update_params();
+    }
+}
+
+/** gets acceleration parameters/variables
+{emax, emin}
+*/
+void algorithm::InverseGaussianAcceleration::get_params(std::vector<double> params){
+    params.push_back(emax);
+    params.push_back(emin);
+}
+
 // updates Inverse Gaussian Acceleration variables
 void algorithm::InverseGaussianAcceleration::update_params(){
     if (emax > emin){
@@ -282,11 +327,40 @@ void algorithm::InverseGaussianAcceleration::get_emin(){
 
 // Gaussian Acceleration
 
+/** sets acceleration parameters/variables
+if aparam_form==1
+    params hold: {emax, k}
+if aparam_form==2
+    params hold: {emax, emin, k0}
+*/
+void algorithm::GaussianAcceleration::set_params(int aparam_form, std::vector<double> params){
+    if (aparam_form==1){
+        emax = params[0];
+        k = params[1];
+        valid_params = true;
+    }
+    if (aparam_form==2){
+        emax = params[0];
+        emin = params[1];
+        k0 = params[2];
+        update_params();
+    }
+}
+
+/** gets acceleration parameters/variables
+{emax, k}
+*/
+void algorithm::GaussianAcceleration::get_params(std::vector<double> params){
+    params.push_back(emax);
+    params.push_back(k);
+}
+
 // updates Gaussian Acceleration variables
 void algorithm::GaussianAcceleration::update_params(){
     if (emax > emin){
         valid_params = true;
         diff_emm = emax - emin;
+        k = k0 / diff_emm;
     }
     else
         {valid_params = false;}
@@ -302,7 +376,7 @@ void algorithm::GaussianAcceleration::accelerate_E(double E, double * E_a){
     if (valid_params){
         if (E < emax){
             double temp_dE = emax - E;
-            *E_a = E + 0.5*k0 * temp_dE*temp_dE / diff_emm;
+            *E_a = E + 0.5* k * temp_dE*temp_dE;
         }
     }
 }
@@ -319,7 +393,7 @@ void algorithm::GaussianAcceleration::accelerate_E_F(double E, double * E_a, dou
     if (valid_params){
         if (E < emax){
             double temp_dE = emax - E;
-            *f_k = k0  * temp_dE / diff_emm;
+            *f_k = k  * temp_dE;
             *E_a = E + *f_k * 0.5 * temp_dE;
             *f_k = 1 - *f_k;
         }
@@ -368,6 +442,7 @@ void algorithm::GaussianAcceleration::update_target_params(){
                 k0 = temp / ((emax - accel_emin)*(emax - accel_emin));
             }
         }
+        k = k0 / diff_emm;
     }
     else{
         valid_params=false;
@@ -383,4 +458,40 @@ void algorithm::GaussianAcceleration::set_global_emin(double global_emin_value){
 // unset global_emin value
 void algorithm::GaussianAcceleration::unset_global_emin(){
     flag_global_emin=false;
+}
+
+
+// AccelerationContainer
+void algorithm::AccelerationContainer::set_accel(std::string accel_name, int accel_type, int aparam_form, std::vector<double> params){
+    switch (accel_type){
+        case 1:{
+            algorithm::InverseGaussianAcceleration temp_accel;
+            if (aparam_form!=0){
+                temp_accel.set_params(aparam_form, params);
+            }
+            IGAs.push_back(temp_accel);
+            accel_map[accel_name] = &(IGAs.back());
+            break;
+        }
+        case 2:{
+            algorithm::GaussianAcceleration temp_accel;
+            if (aparam_form!=0){
+                temp_accel.set_params(aparam_form, params);
+            }
+            GAs.push_back(temp_accel);
+            accel_map[accel_name] = &(GAs.back());
+            break;
+        }
+        case 3:{
+            algorithm::PowerAcceleration temp_accel;
+            if (aparam_form!=0){
+                temp_accel.set_params(aparam_form, params);
+            }
+            PAs.push_back(temp_accel);
+            accel_map[accel_name] = &(PAs.back());
+            break;
+        }
+    }
+    if (aparam_form==0)
+        (*accel_map[accel_name]).set_target_acceleration(params[0], params[1], params[2]);
 }

@@ -1347,9 +1347,9 @@ bool io::In_Configuration::read_aedssearch
         _read_aedssearch(buffer, sim, sim.param().eds.numstates);
         os << "\t" << "AEDSSEARCH\n";
 
-        os << "\t" << sim.param().eds.emax << "\n";
-        os << "\t" << sim.param().eds.emin << "\n";
-        os << "\t" << sim.param().eds.target_emax << "\n";
+        os << "\t" << sim.param().haccel.cnf_accel_params.temax << "\n";
+        os << "\t" << sim.param().haccel.cnf_accel_params.temin << "\n";
+        os << "\t" << sim.param().haccel.cnf_accel_params.taccel << "\n";
         os << "\t" << sim.param().eds.searchemax << "\n";
         os << "\t" << sim.param().eds.emaxcounts << "\n";
         os << "\t" << sim.param().eds.oldstate << "\n";
@@ -3620,15 +3620,15 @@ bool io::In_Configuration::_read_aedssearch(
     to = buffer.end() - 1;
   _lineStream.clear();
   _lineStream.str(*it);
-  _lineStream >> sim.param().eds.emax;
+  _lineStream >> sim.param().haccel.cnf_accel_params.temax;
   it++;
   _lineStream.clear();
   _lineStream.str(*it);
-  _lineStream >> sim.param().eds.emin;
+  _lineStream >> sim.param().haccel.cnf_accel_params.temin;
   it++;
   _lineStream.clear();
   _lineStream.str(*it);
-  _lineStream >> sim.param().eds.target_emax;
+  _lineStream >> sim.param().haccel.cnf_accel_params.taccel;
   it++;
   _lineStream.clear();
   _lineStream.str(*it);
