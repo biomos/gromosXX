@@ -4143,8 +4143,11 @@ void io::In_Parameter::read_AEDS(simulation::Parameter & param,
             param.eds.eir[i-1] = param.eds.eir[i];
             param.eds.v_eir[0][i-1] = param.eds.eir[i];
         }
+        double temp_last_eir;
+        temp_strm.clear();
         temp_strm.str(form_str);
-        temp_strm >> param.eds.eir[numstates-1];
+        temp_strm >> temp_last_eir;
+        param.eds.eir[numstates-1] = temp_last_eir;
         param.eds.v_eir[0][numstates-1] = param.eds.eir[numstates-1];
     }
     else{
