@@ -78,6 +78,20 @@ int interaction::MOPAC_Worker::init(const topology::Topology& topo
 
   // Check set filenames and generate temporary files where necessary
   if (inp.empty()) {
+    if(util::create_tmpdir(this->tmp_dir) != 0) {
+        io::messages.add("Unable to create temporary directory: " + this->tmp_dir,
+        this->name(), io::message::critical);
+      return 1;
+    }
+    io::messages.add("Using temporary directory: " + this->tmp_dir,
+      this->name(), io::message::notice);
+#ifndef HAVE_RMDIR
+    io::messages.add("rmdir function not supported on this platform. "
+    "Please delete temporary directory manually.",
+    this->name(), io::message::warning);
+#endif
+    
+    inp = this->tmp_dir + "/XXXXXX";
     if(util::create_tmpfile(inp) < 1) {
         io::messages.add("Unable to create temporary input file: " + inp,
         this->name(), io::message::critical);
@@ -171,6 +185,7 @@ int interaction::MOPAC_Worker::init(const topology::Topology& topo
   }
 
   if (stdout.empty()) {
+    stdout = this->tmp_dir + "/XXXXXX";
     if(util::create_tmpfile(stdout) < 1) {
         io::messages.add("Unable to create temporary stdout file: " + stdout,
         this->name(), io::message::critical);
@@ -192,6 +207,7 @@ int interaction::MOPAC_Worker::init(const topology::Topology& topo
   
 
   if (molin.empty()) {
+    molin = this->tmp_dir + "/XXXXXX";
     if (util::create_tmpfile(molin) < 1) {
       io::messages.add("Unable to create temporary mol.in file: " + molin,
         this->name(), io::message::critical);
@@ -265,24 +281,24 @@ int interaction::MOPAC_Worker::init(const topology::Topology& topo
     den = den_link;
     molin = molin_link;
     io::messages.add("Symbolic links are not supported in this built. "
-      + "Output file is now set to " + out,
+      "Output file is now set to " + out,
       "MOPAC_Worker", io::message::warning);
     io::messages.add("Symbolic links are not supported in this built. "
-      + "Output aux file is now set to " + aux,
+      "Output aux file is now set to " + aux,
       "MOPAC_Worker", io::message::warning);
     io::messages.add("Symbolic links are not supported in this built. "
-      + "Density matrix file is now set to " + den,
+      "Density matrix file is now set to " + den,
       "MOPAC_Worker", io::message::warning);
     io::messages.add("Symbolic links are not supported in this built. "
-      + "mol.in file is now set to " + molin,
+      "mol.in file is now set to " + molin,
       "MOPAC_Worker", io::message::warning);
   }
 #endif
   
 #ifndef HAVE_UNLINK
   {
-    io::messages.add("Unlink function not supported on this platform. "
-    + "Please delete temporary files manually.",
+    io::messages.add("unlink function not supported on this platform. "
+    "Please delete temporary files manually.",
     this->name(), io::message::warning);
   }
 #endif

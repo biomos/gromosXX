@@ -104,6 +104,11 @@ namespace interaction {
      * List of used temporary files to cleanup gracefully
      */
     std::set<std::string> tmp_files;
+    
+    /**
+     * Temporary directory to cleanup gracefully
+     */
+    std::string tmp_dir;
 
     /**
      * name of the QM worker
