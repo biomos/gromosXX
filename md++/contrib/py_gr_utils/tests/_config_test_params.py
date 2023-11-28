@@ -27,7 +27,13 @@ import numpy as np
 from ene_ana import EnergyTrajectory
 
 # default paths for GITLAB
-_MD_BIN = '${CI_PROJECT_DIR}/${BIN_PATH}'
+bin_path =  os.getenv("BIN_PATH")
+while "//" in bin_path:
+    bin_path = bin_path.replace("//", "/")
+if bin_path == os.path.abspath(bin_path):
+    _MD_BIN = "${BIN_PATH}"
+else:
+    _MD_BIN = '${CI_PROJECT_DIR}/${BIN_PATH}'
 _CI_PROJECT_DIR = os.getenv('CI_PROJECT_DIR')
 _ENE_ANA_LIB = f'{_CI_PROJECT_DIR}/md++/data/ene_ana.md++.lib'
 
