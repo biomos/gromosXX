@@ -169,11 +169,13 @@ void util::Algorithm_Timer::start_subtimer(const std::string & name) {
   /**
    * If the subtimer is called first, initialize the variables
    */
+  #pragma omp critical
+  {
   if (m_subtimers.count(name)==0){
-    #pragma omp critical (subtimer_start_init)
     {
       reset(name);
     }
+  }
   }
 
   /**
@@ -219,7 +221,7 @@ void util::Algorithm_Timer::start_subtimer(const std::string & name) {
     std::string jobname = name + std::to_string(thread_id);
     
     if (subtimer_in_use=="none"){
-        #pragma omp critical (subtimer)
+        #pragma omp critical
         {
           subtimer_in_use = jobname;
         }
@@ -271,8 +273,8 @@ void util::Algorithm_Timer::stop_subtimer(const std::string & name) {
   *  Check if an timer has been stopped without beeing in the subtimer map.
   *  That should never happen, but in that case create it to avoid large mistakes in the timing table.
   */
+  #pragma omp critical
   if (m_subtimers.find(name) == m_subtimers.end()){  
-    #pragma omp critical (subtimer_stop_init)
     {
       io::messages.add("Sub-timer " + name + " was stopped that has not been initialized before!","Timing",io::message::notice);
       DEBUG(5, "Sub-timer " + name + " was stopped that has not been initialized before!");
@@ -298,7 +300,7 @@ void util::Algorithm_Timer::stop_subtimer(const std::string & name) {
   #ifndef NDEBUG
   std::string jobname = name + std::to_string(thread_id);
   if (name!="total" && subtimer_in_use == jobname){
-      #pragma omp critical (subtimer)
+      #pragma omp critical
       {
         subtimer_in_use = "none";
       }    
@@ -349,7 +351,7 @@ void util::Algorithm_Timer::print_report(std::ostream & os) {
     os << std::endl;
 
     //Delete data after writing
-    #pragma omp critical (subtimer)
+    #pragma omp critical
     {
       subtimer.second.start_time = std::vector<double>(m_max_thread_num, 0.00);
       subtimer.second.end_time = std::vector<double>(m_max_thread_num, 0.00);
@@ -381,7 +383,7 @@ void util::Algorithm_Timer::print(std::ostream &os) {
     os << std::endl;
   }
   
-  std::unordered_map<std::string, Subtimer_Class>::const_iterator
+  std::map<std::string, Subtimer_Class>::const_iterator
       it = m_subtimers.begin(),
       to = m_subtimers.end();
   

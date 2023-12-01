@@ -128,7 +128,7 @@ namespace util
           end_time = std::vector<double>(thread_count, 0.0);
         }
     };
-    std::unordered_map<std::string, Subtimer_Class> m_subtimers;
+    std::map<std::string, Subtimer_Class> m_subtimers;
     /**
      * store which subtimer is actually in use (debug only)
      */
