@@ -57,6 +57,7 @@ util::Umbrella::Umbrella(int id, unsigned int dim, Umbrella_Weight_Factory * fac
   grid_max.resize(dim);
   grid_max_rel.resize(dim);
   grid_spacing_rel.resize(dim);
+  grid_periodic.resize(dim);
   building = false;
   enabled = false;
   umbrella_weight_factory = factory;
@@ -86,6 +87,7 @@ util::Umbrella & util::Umbrella::operator=(const util::Umbrella& u) {
   grid_max_rel = u.grid_max_rel;
   grid_spacing_rel = u.grid_spacing_rel;
   configurations = u.configurations;
+  grid_periodic = u.grid_periodic;
   building = u.building;
   enabled = u.enabled;
   umbrella_weight_factory = u.umbrella_weight_factory;
@@ -132,6 +134,8 @@ void util::Umbrella::build(
       DEBUG(6, "\tqi: " << qi);
 
       pos[i] = int(floor((qi - grid_min_rel[i]) * grid_spacing_rel[i] + 0.5));
+      if (grid_periodic[i])
+        pos[i] %= num_grid_points[i]; // wrap around the last grid point
       DEBUG(6, "\tpos: " << pos[i]);
       if (pos[i] < 0 || pos[i] >= int(num_grid_points[i])) {
         DEBUG(8, "\t\toutside the grid");
@@ -281,6 +285,7 @@ void util::Umbrella::transform_units() {
     if (grid_max_rel[i] != grid_min_rel[i])
       grid_spacing_rel[i] = (num_grid_points[i]-1.0) / (grid_max_rel[i] - grid_min_rel[i]);
     else {
+      grid_periodic[i] = true;
       switch(variable_type[i]) {
         case util::Umbrella::vt_dihedral :
           grid_spacing_rel[i] = num_grid_points[i] / (2.0 * math::Pi);
