@@ -64,9 +64,9 @@ namespace util
      */
     void stop_subtimer(const std::string & name = "total");
     /**
-     * reset sub-timer
+     * initialize sub-timer
      */
-    void reset(const std::string & name = "total");
+    void initialize(const std::string & name = "total");
     /**
      * get the total time of a sub-timer
      */
@@ -128,7 +128,7 @@ namespace util
           end_time = std::vector<double>(thread_count, 0.0);
         }
     };
-    std::map<std::string, Subtimer_Class> m_subtimers;
+    std::unordered_map<std::string, Subtimer_Class> m_subtimers;
     /**
      * store which subtimer is actually in use (debug only)
      */
