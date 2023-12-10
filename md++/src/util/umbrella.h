@@ -153,6 +153,10 @@ namespace util {
      * grid spacing (in transformed units)
      */
     std::vector<double> grid_spacing_rel;
+    /**
+     * if the grid is periodic
+     */
+    std::vector<bool> grid_periodic;
 
     /**
      * @struct leus_conf
