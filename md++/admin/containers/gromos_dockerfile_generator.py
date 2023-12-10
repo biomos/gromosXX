@@ -25,6 +25,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 Authors:
     * Jakob Liu <koki@cloningcompany.at>
     * Yerko Escalona <yerko.escalona@boku.ac.at>
+    * Drazen Petrov <drazen.petrov@boku.ac.at>
 
 Usage:
     $ python3 gromos_dockerfile_generator.py --help
@@ -44,6 +45,7 @@ _common_packages = [
     'automake',
     'autotools-dev',
     'build-essential',
+    'cmake',
     'bzip2',
     'ca-certificates',
     'curl',

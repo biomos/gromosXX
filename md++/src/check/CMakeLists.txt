@@ -74,13 +74,14 @@ if(CUKERNEL)
 endif()
 
 # executables
-set(EXEC_NAMES aladip aladip_unperturbed aladip_special aladip_atomic aladip_ls c16_cg lambdas)
+#set(EXEC_NAMES aladip aladip_unperturbed aladip_special aladip_atomic aladip_ls c16_cg lambdas)
+set(EXEC_NAMES aladip aladip_unperturbed aladip_special aladip_atomic c16_cg lambdas)
 
 add_executable(aladip ${ALADIP_CC} ${GROMOS_OBJECTS})
 add_executable(aladip_unperturbed ${ALADIP_UNPERTURBED_CC} ${GROMOS_OBJECTS})
 add_executable(aladip_special ${ALADIP_SPECIAL_CC} ${GROMOS_OBJECTS})
 add_executable(aladip_atomic ${ALADIP_ATOMIC_CC} ${GROMOS_OBJECTS})
-add_executable(aladip_ls ${ALADIP_LS_CC} ${GROMOS_OBJECTS})
+#add_executable(aladip_ls ${ALADIP_LS_CC} ${GROMOS_OBJECTS})
 
 add_executable(c16_cg ${C16_CG_CC} ${GROMOS_OBJECTS})
 add_executable(lambdas ${LAMBDAS_CC} ${GROMOS_OBJECTS})

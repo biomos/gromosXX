@@ -23,6 +23,8 @@
  * functions and macros to make testing easier.
  */
 
+#include <sys/stat.h>
+
 #define to_str(name) # name
 #define STR2(name) to_str(name)
 
@@ -96,11 +98,15 @@ if(last == 0) {\
 
 #define GETFILE(ifs, name) \
 { \
-string s = "../../" TOP_SOURCE_DIR "src/check/data/" name; \
+string s; \
+GETFILEPATH(s, name, "src/check/data/"); \
 ifs.open(s.c_str()); \
 }
 
 #define GETFILEPATH(p, name, subdir) \
 { \
-  p = "../../" TOP_SOURCE_DIR "/" subdir name; \
+  p = TOP_SOURCE_DIR "/" subdir name; \
+  struct stat buffer;\
+  if (stat (p.c_str(), &buffer) != 0) \
+    p = "../../" TOP_SOURCE_DIR "/" subdir name; \
 }

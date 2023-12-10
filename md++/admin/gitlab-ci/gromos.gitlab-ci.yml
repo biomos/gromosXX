@@ -59,6 +59,19 @@
       - md++
       - $BUILD_DIR
 
+.gromos:base:configure_cmake:
+  stage: configure-build
+  script:
+    - echo $ENV_COMPILER
+    - cmake --version
+    - echo $BUILD_DIR
+    - cmake -S md++ -B $BUILD_DIR
+  artifacts:
+    when: always
+    paths:
+      - md++
+      - $BUILD_DIR
+
 .gromos:base:build:
   stage: build
   script:
@@ -101,6 +114,23 @@
       - $BUILD_DIR/src/check/test-suite.log
       - $BIN_PATH
 
+.gromos:base:build_make_test_cmake:
+  stage: build_make_check
+  script: 
+    - echo $BUILD_DIR
+    - echo $BIN_PATH
+    - cmake --build $BUILD_DIR -j 8
+    - cd $BUILD_DIR
+    - make test
+    - cd ..
+    - cmake --install $BUILD_DIR
+  artifacts:
+    when: always
+    paths:
+      - $BUILD_DIR/Testing
+      - $BUILD_DIR/install_manifest.txt
+      - $BIN_PATH
+
 .gromos:base:sim_test:
   stage: sim_test
   script: 
@@ -122,6 +152,7 @@
         - sim_test_report.xml
 
 include:
+  - local: 'md++/admin/gitlab-ci/gromos.matrix/ubuntu-22.04_cmake.yml'
 #  - local: 'md++/admin/gitlab-ci/gromos.matrix/ubuntu-22.04.yml'
 #  - local: 'md++/admin/gitlab-ci/gromos.matrix/ubuntu-22.04-llvm.yml'
 #  - local: 'md++/admin/gitlab-ci/gromos.matrix/ubuntu-22.04-mpi.yml'
