@@ -99,7 +99,7 @@ void util::Algorithm_Timer::initialize(const std::string & name) {
 
   Subtimer_Class subtimer_obj(m_max_thread_num);    
   m_subtimers.emplace(std::make_pair(name, subtimer_obj));
-  subtimer_in_use = "none";   
+  subtimer_in_use.clear();   
   
 }
 
@@ -119,12 +119,12 @@ void util::Algorithm_Timer::start(const simulation::Simulation & sim) {
    * Create detailed timing output. Set "@print timings_report" as md++ input parameter
    */  
   m_detailed_report = false;
-  if (sim.param().print.timings_report==true) {         //If "@print timings_report" is set as md++ parameter
+  if (sim.param().print.timings_report) {         //If "@print timings_report" is set as md++ parameter
 
     //Write detailed report for timesteps 900 to 904 (if pairlist skipstep = 5)
     const uint first_report_step = (180 * sim.param().pairlist.skip_step);
     const uint last_report_step = (first_report_step + sim.param().pairlist.skip_step - 1); 
-    if(m_step_index >= first_report_step && m_step_index <= last_report_step){
+    if (m_step_index >= first_report_step && m_step_index <= last_report_step) {
       DEBUG(10, "Write detailed timing report");
       m_detailed_report = true;
     
@@ -150,7 +150,7 @@ void util::Algorithm_Timer::start(const simulation::Simulation & sim) {
 
   #ifdef OMP
     if (omp_get_thread_num() != 0){
-      io::messages.add("Using a main-timer (see util/timing.cc) in parallel regions is not tested!","Timing",io::message::notice);
+      //io::messages.add("Using a main-timer (see util/timing.cc) in parallel regions is not tested!","Timing",io::message::notice);
       throw std::runtime_error("Using a main-timer (see util/timing.cc) in parallel regions is not tested!");
     }
   #endif
@@ -172,7 +172,7 @@ void util::Algorithm_Timer::start_subtimer(const std::string & name) {
      */
 
       DEBUG(5, "Start sub-timer " + name);
-      if (m_subtimers.count(name)==0){
+      if (m_subtimers.count(name) == 0){
         {
           initialize(name);
         }
@@ -190,13 +190,12 @@ void util::Algorithm_Timer::start_subtimer(const std::string & name) {
      */
     #ifdef OMP
       thread_id = omp_get_thread_num();
-      if (thread_id>=m_max_thread_num){
+      if (thread_id >= m_max_thread_num) {
         throw std::runtime_error("Maximum number of threads exceeded! Change util/timing.cc to allow more OpenMP threads\n");
-      } 
-      //Find the highest thread number used by one task and save it.
-      if (thread_id > m_subtimers.at(name).highest_used_thread){
-        m_subtimers.at(name).highest_used_thread = thread_id;
       }
+      //Find the highest thread number used by one task and save it.
+      const uint highest_thread = m_subtimers.at(name).highest_used_thread;
+      m_subtimers.at(name).highest_used_thread = std::max(highest_thread, thread_id);
     #endif
 
     #ifdef XXMPI
@@ -206,9 +205,10 @@ void util::Algorithm_Timer::start_subtimer(const std::string & name) {
       #endif
     #endif
 
-    if (thread_id < m_subtimers.at(name).master_thread){  //subtimer.master_thread gets initialized at max(uint); set it to the lowest thread availiable
-      m_subtimers.at(name).master_thread = thread_id;   //This assumes that the ID of the master thread is constant. Usually it is zero. It can be higher for GPU threads.
-    }
+    //subtimer.master_thread gets initialized at max(uint); set it to the lowest thread availiable
+    //This assumes that the ID of the master thread is constant. Usually it is zero. It can be higher for GPU threads.
+    const uint master_thread = m_subtimers.at(name).master_thread;
+    m_subtimers.at(name).master_thread = std::min(master_thread, thread_id);
 
     m_subtimers.at(name).start_time.at(thread_id) = util::now();
   } // End omp critical
@@ -219,11 +219,11 @@ void util::Algorithm_Timer::start_subtimer(const std::string & name) {
   //  - If it is masterthread
   #pragma omp critical (timing_system)
   {
-    if (name!="total" && thread_id == m_subtimers.at(name).master_thread){ //Enable subtimer-lock only if it is a master-thread
+    if (name != "total" && thread_id == m_subtimers.at(name).master_thread){ //Enable subtimer-lock only if it is a master-thread
 
       std::string jobname = name + std::to_string(thread_id);
       
-      if (subtimer_in_use=="none"){
+      if (subtimer_in_use.empty()){
             subtimer_in_use = jobname;
       } else {
         m_subtimers.at(name).double_counted_time = true;
@@ -241,7 +241,7 @@ void util::Algorithm_Timer::stop() {
   DEBUG(5, "Stop main-timer");
   stop_subtimer("total");
   
-  if (m_detailed_report==true){
+  if (m_detailed_report){
     print_report(std::cout);
   } 
 
@@ -268,13 +268,14 @@ void util::Algorithm_Timer::stop_subtimer(const std::string & name) {
   /*
   *  Check if an timer has been stopped without beeing in the subtimer map.
   *  This should never happen!!
+  *  It would mean, that the subtimer was not yet initialized and we have a serious race condition
   */
   //#pragma omp critical (timing_system)
   {
     if (m_subtimers.count(name) == 0){  
       {
-        io::messages.add("Sub-timer " + name + " was stopped that has not been initialized before!","Timing",io::message::notice);
-        DEBUG(5, "Sub-timer " + name + " was stopped that has not been initialized before!");
+        //io::messages.add("Sub-timer " + name + " was stopped that has not been initialized before!","Timing",io::message::notice);
+        //DEBUG(5, "Sub-timer " + name + " was stopped that has not been initialized before!");
         throw std::runtime_error("Sub-timer " + name + " was stopped that has not been initialized before! (Simulation step: " + std::to_string(m_step_index) + ")\n");
       }
     }
@@ -297,8 +298,8 @@ void util::Algorithm_Timer::stop_subtimer(const std::string & name) {
     #pragma omp critical (timing_system)
     {
       std::string jobname = name + std::to_string(thread_id);
-      if (name!="total" && subtimer_in_use == jobname){
-        subtimer_in_use = "none";
+      if (name != "total" && subtimer_in_use == jobname){
+        subtimer_in_use.clear();
       }    
     }
   #endif
@@ -316,11 +317,11 @@ double util::Algorithm_Timer::get_total(const std::string & name) {
   }
   
   //Sanity check: Throw error if runtime for a subtimer is larger than 2 years
-  if (std::abs(m_subtimers.at(name).total_walltime) > 63072000.0){
-    io::messages.add("Total runtime of timer " + name + " failed sanity check!","Timing",io::message::notice);
-    DEBUG(5, "Total runtime of timer " + name + " failed sanity check!");
+  /*if (std::abs(m_subtimers.at(name).total_walltime) > 63072000.0){
+    //io::messages.add("Total runtime of timer " + name + " failed sanity check!","Timing",io::message::notice);
+    //DEBUG(5, "Total runtime of timer " + name + " failed sanity check!");
     throw std::runtime_error("Total runtime of timer " + name + " failed sanity check!"); //DELETE BEFORE MERGE
-  }
+  }*/
 
   return m_subtimers.at(name).total_walltime;
 }
@@ -396,7 +397,7 @@ void util::Algorithm_Timer::print(std::ostream &os) {
     os.precision(2);
     os << std::setw(10) << std::right
        << ((total != 0.0) ? (it->second.total_walltime * 100.0 / total) : 0.0) << "%";
-    if(it->second.double_counted_time==true) os << "      [includes double counted time]"; 
+    if (it->second.double_counted_time) os << "      [includes double counted time]"; 
     os << std::endl;
     accounted_time += it->second.total_walltime;
   }

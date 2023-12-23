@@ -132,7 +132,7 @@ namespace util
     /**
      * store which subtimer is actually in use (debug only)
      */
-    std::string subtimer_in_use = "none";
+    std::string subtimer_in_use;
   };
 }
 
