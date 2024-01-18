@@ -64,9 +64,9 @@ namespace util
      */
     void stop_subtimer(const std::string & name = "total");
     /**
-     * reset sub-timer
+     * initialize sub-timer
      */
-    void reset(const std::string & name = "total");
+    void initialize(const std::string & name = "total");
     /**
      * get the total time of a sub-timer
      */
@@ -132,7 +132,7 @@ namespace util
     /**
      * store which subtimer is actually in use (debug only)
      */
-    std::string subtimer_in_use = "none";
+    std::string subtimer_in_use;
   };
 }
 
