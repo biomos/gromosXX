@@ -1456,7 +1456,7 @@ namespace simulation
        */
       int velocity;
       /**
-       * forcwrite
+       * force
        */
       int force;
       /**

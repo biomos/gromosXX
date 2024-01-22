@@ -277,7 +277,7 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
     if (fabs(dev) > sim.param().qmmm.nn.val_thresh) {
       std::ostringstream msg;
       msg << "Deviation from validation model above threshold in step " << sim.steps() << " : " << dev;
-      io::messages.add(msg.str(), this->name(), io::message::notice); // Changed to notice
+      io::messages.add(msg.str(), this->name(), io::message::warning);
       if(sim.param().qmmm.nn.val_forceconstant != 0.0){
         // add a biasing force between the two NN networks
         double dev_squared = (dev*dev - sim.param().qmmm.nn.val_thresh * sim.param().qmmm.nn.val_thresh);

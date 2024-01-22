@@ -286,7 +286,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
     double current_energy = conf.old().energies.get_energy_by_index(sim.param().write.energy_index * -1); // use energy index value as the value for NTWSE
 
     // found a new minimum?
-    if (fabs(current_energy) > sim.param().qmmm.nn.val_thresh){
+    if (fabs(current_energy) > sim.param().qmmm.nn.val_thresh){ // < minimum_energy) { threshold 2 kj/mol was set instead of minimum energy
       minimum_found = true;
       minimum_energy = current_energy;
     }
