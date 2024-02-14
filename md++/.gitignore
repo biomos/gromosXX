@@ -1,0 +1,41 @@
+# do not track these files
+# configuration and compilation:
+/BUILD*
+Makefile.in
+/aclocal.m4
+/autom4te.cache/
+/config.h.in
+/config/
+/configure
+/m4/
+INSTALL
+/doc/snippets
+
+# temporary files:
+*~
+
+# test folder:
+/TEST
+
+# hidden folders:
+/.*/
+
+#building artefacts
+build*
+.dirstamp
+**.deps
+
+#making results:
+**.o
+**.lo
+**.la
+**.log
+**/Makefile
+
+#python files
+*__pycache__*
+*pyc
+*.ipynb_checkpoints*
+
+#IDE-Folder:
+**.idea
