@@ -66,7 +66,7 @@ void interaction::QM_Link::distribute_force(const math::Vec &qm_pos
   math::Vec r_mm_qm = mm_pos - qm_pos;
   
   // F_LQM = (1 - d_frac) * FL + d/d_QMMM^3 * (FL . r_MM-QM) * r_MM-QM
-  // F_LQM = d_frac * FL - d/d_QMMM^3 * (FL . r_MM-QM) * r_MM-QM
+  // F_LMM = d_frac * FL - d/d_QMMM^3 * (FL . r_MM-QM) * r_MM-QM
 
   const double d_l_qm = math::abs(this->pos - qm_pos);
   const double d2_mm_qm = math::abs2(r_mm_qm);
