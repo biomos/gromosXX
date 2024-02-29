@@ -217,6 +217,17 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
   py::object molecule_1 = py_modules["ase"].attr("Atoms")();
   py::object molecule_2 = py_modules["ase"].attr("Atoms")();
   double length_to_nn = 1 / this->param->unit_factor_length;
+
+  // perturbed states - specify indices of state A and B
+  // To state A, we take everything between <stateA_first ; stateA_last>
+  // To state B, we take everything between <stateB_first ; stateB_last>
+  // both states contain also atoms <both_states_first ; +inf)
+  const unsigned stateA_first = 0;
+  const unsigned stateA_last = 5;
+  const unsigned stateB_first = 6;
+  const unsigned stateB_last = 10;
+  const unsigned both_states_first = 11;
+
   std::set<interaction::QM_Atom>::const_iterator it, to;
   it = qm_zone.qm.begin();
   to = qm_zone.qm.end();
@@ -230,25 +241,29 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
     py_coordinates.attr("append")(nn_pos[1]);
     py_coordinates.attr("append")(nn_pos[2]);
     py::object atom = py_modules["ase"].attr("Atom")("symbol"_a = atomic_number, "position"_a = py_coordinates);
-    if (it->index < 6) {
+    const bool is_state_A = stateA_first <= it->index && it->index <= stateA_last;
+    const bool is_state_B = stateB_first <= it->index && it->index <= stateB_last;
+    const bool is_both_states = it->index >= both_states_first;
+    if (is_state_A || is_both_states) {
       molecule_1.attr("append")(atom); 
     }
-    else if (it->index > 5 && it->index < 11) {
-      molecule_2.attr("append")(atom);
-    }
-    else {
-      molecule_1.attr("append")(atom);
+    if (is_state_B || is_both_states) {
       molecule_2.attr("append")(atom);
     }
     //molecule.attr("append")(atom); //original
   }
 
+  const double lambda = sim.param().perturbation.lambda;
+
   // Run the calculator
   molecule_1.attr("set_calculator")(ml_calculator);
   molecule_2.attr("set_calculator")(ml_calculator);
   
+  const double energy_1 = molecule_1.attr("get_potential_energy")().cast<double>();
+  const double energy_2 = molecule_2.attr("get_potential_energy")().cast<double>();
+
   // Write the energy
-  const double energy = ((1-sim.param().perturbation.lambda) * molecule_1.attr("get_potential_energy")().cast<double>() + sim.param().perturbation.lambda * molecule_2.attr("get_potential_energy")().cast<double>()) * this->param->unit_factor_energy;
+  const double energy = ((1-lambda) * energy_1 + lambda * energy_2) * this->param->unit_factor_energy;
   qm_zone.QM_energy() = energy;
  
 
@@ -267,10 +282,25 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
   
   // Write the forces
   it = qm_zone.qm.begin();
-  for (unsigned i = 0; it != to; ++it, ++i) {
-    it->force[0] = (1 - sim.param().perturbation.lambda) * molecule_1.attr("get_forces")().attr("item")(i,0).cast<double>() + sim.param().perturbation.lambda * molecule_2.attr("get_forces")().attr("item")(i,0).cast<double>();
-    it->force[1] = (1 - sim.param().perturbation.lambda) * molecule_1.attr("get_forces")().attr("item")(i,1).cast<double>() + sim.param().perturbation.lambda * molecule_2.attr("get_forces")().attr("item")(i,1).cast<double>();
-    it->force[2] = (1 - sim.param().perturbation.lambda) * molecule_1.attr("get_forces")().attr("item")(i,2).cast<double>() + sim.param().perturbation.lambda * molecule_2.attr("get_forces")().attr("item")(i,2).cast<double>();
+  for (unsigned i = 0, j = 0; it != to; ++it) {
+    const bool is_state_A = stateA_first <= it->index && it->index <= stateA_last;
+    const bool is_state_B = stateB_first <= it->index && it->index <= stateB_last;
+    const bool is_both_states = it->index >= both_states_first;
+
+    math::Vec force_1, force_2;
+    if (is_state_A || is_both_states) {
+      force_1[0] = molecule_1.attr("get_forces")().attr("item")(i,0).cast<double>();
+      force_1[1] = molecule_1.attr("get_forces")().attr("item")(i,1).cast<double>();
+      force_1[2] = molecule_1.attr("get_forces")().attr("item")(i,2).cast<double>();
+      ++i;
+    }
+    if (is_state_B || is_both_states) {
+      force_2[0] = molecule_2.attr("get_forces")().attr("item")(j,0).cast<double>();
+      force_2[1] = molecule_2.attr("get_forces")().attr("item")(j,1).cast<double>();
+      force_2[2] = molecule_2.attr("get_forces")().attr("item")(j,2).cast<double>();
+      ++j;
+    }
+    it->force = (1 - lambda) * force_1 + lambda * force_2;
     it->force *= this->param->unit_factor_force;
     DEBUG(15, "force from NN, atom " << it->index << " : " << math::v2s(it->force));
   }
