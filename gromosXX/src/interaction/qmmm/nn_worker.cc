@@ -214,7 +214,8 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
 #ifdef HAVE_PYBIND11
   // run NN interface
   // create the molecule object
-  py::object molecule = py_modules["ase"].attr("Atoms")();
+  py::object molecule_1 = py_modules["ase"].attr("Atoms")();
+  py::object molecule_2 = py_modules["ase"].attr("Atoms")();
   double length_to_nn = 1 / this->param->unit_factor_length;
   std::set<interaction::QM_Atom>::const_iterator it, to;
   it = qm_zone.qm.begin();
@@ -229,14 +230,25 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
     py_coordinates.attr("append")(nn_pos[1]);
     py_coordinates.attr("append")(nn_pos[2]);
     py::object atom = py_modules["ase"].attr("Atom")("symbol"_a = atomic_number, "position"_a = py_coordinates);
-    molecule.attr("append")(atom);
+    if (it->index < 6) {
+      molecule_1.attr("append")(atom); 
+    }
+    else if (it->index > 5 && it->index < 11) {
+      molecule_2.attr("append")(atom);
+    }
+    else {
+      molecule_1.attr("append")(atom);
+      molecule_2.attr("append")(atom);
+    }
+    //molecule.attr("append")(atom); //original
   }
 
   // Run the calculator
-  molecule.attr("set_calculator")(ml_calculator);
+  molecule_1.attr("set_calculator")(ml_calculator);
+  molecule_2.attr("set_calculator")(ml_calculator);
   
   // Write the energy
-  const double energy = molecule.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
+  const double energy = ((1-sim.param().perturbation.lambda) * molecule_1.attr("get_potential_energy")().cast<double>() + sim.param().perturbation.lambda * molecule_2.attr("get_potential_energy")().cast<double>()) * this->param->unit_factor_energy;
   qm_zone.QM_energy() = energy;
  
 
@@ -256,9 +268,9 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
   // Write the forces
   it = qm_zone.qm.begin();
   for (unsigned i = 0; it != to; ++it, ++i) {
-    it->force[0] = molecule.attr("get_forces")().attr("item")(i,0).cast<double >();
-    it->force[1] = molecule.attr("get_forces")().attr("item")(i,1).cast<double >();
-    it->force[2] = molecule.attr("get_forces")().attr("item")(i,2).cast<double >();
+    it->force[0] = (1 - sim.param().perturbation.lambda) * molecule_1.attr("get_forces")().attr("item")(i,0).cast<double>() + sim.param().perturbation.lambda * molecule_2.attr("get_forces")().attr("item")(i,0).cast<double>();
+    it->force[1] = (1 - sim.param().perturbation.lambda) * molecule_1.attr("get_forces")().attr("item")(i,1).cast<double>() + sim.param().perturbation.lambda * molecule_2.attr("get_forces")().attr("item")(i,1).cast<double>();
+    it->force[2] = (1 - sim.param().perturbation.lambda) * molecule_1.attr("get_forces")().attr("item")(i,2).cast<double>() + sim.param().perturbation.lambda * molecule_2.attr("get_forces")().attr("item")(i,2).cast<double>();
     it->force *= this->param->unit_factor_force;
     DEBUG(15, "force from NN, atom " << it->index << " : " << math::v2s(it->force));
   }
@@ -268,9 +280,10 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
       && (sim.steps() % sim.param().qmmm.nn.val_steps == 0
        || sim.steps() % sim.param().write.energy == 0)) {
     //py::object val_molecule(molecule); we don't need to create a new (reference to a) molecule 
-    molecule.attr("set_calculator")(val_calculator);
+    molecule_1.attr("set_calculator")(val_calculator);
+    molecule_2.attr("set_calculator")(val_calculator);
     // Energy of validation model
-    const double val_energy = molecule.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
+    const double val_energy = ((1-sim.param().perturbation.lambda) * molecule_1.attr("get_potential_energy")().cast<double>() + sim.param().perturbation.lambda * molecule_2.attr("get_potential_energy")().cast<double>()) * this->param->unit_factor_energy;
     const double dev = energy - val_energy;
     conf.current().energies.nn_valid = dev;
     DEBUG(7, "Deviation from validation model: " << dev);
@@ -278,49 +291,49 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
       std::ostringstream msg;
       msg << "Deviation from validation model above threshold in step " << sim.steps() << " : " << dev;
       io::messages.add(msg.str(), this->name(), io::message::notice); // Changed to notice
-      if(sim.param().qmmm.nn.val_forceconstant != 0.0){
-        // add a biasing force between the two NN networks
-        double dev_squared = (dev*dev - sim.param().qmmm.nn.val_thresh * sim.param().qmmm.nn.val_thresh);
-        qm_zone.QM_energy() += 0.25 * sim.param().qmmm.nn.val_forceconstant * dev_squared * dev_squared;
-        math::Vec val_force;
-        it = qm_zone.qm.begin();
-        for (unsigned i = 0; it != to; ++it, ++i) {
-          val_force[0] = molecule.attr("get_forces")().attr("item")(i,0).cast<double >();
-          val_force[1] = molecule.attr("get_forces")().attr("item")(i,1).cast<double >();
-          val_force[2] = molecule.attr("get_forces")().attr("item")(i,2).cast<double >();
-          val_force *= this->param->unit_factor_force;
-          it->force += sim.param().qmmm.nn.val_forceconstant * dev_squared * dev * (it->force - val_force);
-        }
-      }
+      //if(sim.param().qmmm.nn.val_forceconstant != 0.0){
+      //  // add a biasing force between the two NN networks
+      //  double dev_squared = (dev*dev - sim.param().qmmm.nn.val_thresh * sim.param().qmmm.nn.val_thresh);
+      //  qm_zone.QM_energy() += 0.25 * sim.param().qmmm.nn.val_forceconstant * dev_squared * dev_squared;
+      //  math::Vec val_force;
+      //  it = qm_zone.qm.begin();
+      //  for (unsigned i = 0; it != to; ++it, ++i) {
+      //    val_force[0] = molecule.attr("get_forces")().attr("item")(i,0).cast<double >();
+      //    val_force[1] = molecule.attr("get_forces")().attr("item")(i,1).cast<double >();
+      //    val_force[2] = molecule.attr("get_forces")().attr("item")(i,2).cast<double >();
+      //    val_force *= this->param->unit_factor_force;
+      //    it->force += sim.param().qmmm.nn.val_forceconstant * dev_squared * dev * (it->force - val_force);
+      //  }
+      //}
     }
   }
   // Assign charges for the MM calculation, if asked for
-  if (sim.param().qmmm.qm_ch == simulation::qm_ch_dynamic
-      && sim.steps() % sim.param().qmmm.nn.charge_steps == 0) {
-    //py::object val_molecule(molecule); we don't need to create a new (reference to a) molecule 
-    molecule.attr("set_calculator")(charge_calculator);
-    // collect the charges
-    it = qm_zone.qm.begin();
-    double totcharge=0.0;
-    for (unsigned i = 0; it != to; ++it, ++i) {
-      it->qm_charge = molecule.attr("get_charges")().attr("item")(i).cast<double >() * this->param->unit_factor_charge;
-      totcharge+=it->qm_charge;
-    }
-    if(totcharge != sim.param().qmmm.qm_zone.charge){
-      std::ostringstream msg;
-      msg << "Charges from NN model do not add up " << sim.steps() 
-          << ": requested " << sim.param().qmmm.qm_zone.charge 
-          << " predicted " << totcharge << ". Homogeneously adjusting charges";
-      io::messages.add(msg.str(), this->name(), io::message::warning);
-      // adjust?
-      double q_adjust=(sim.param().qmmm.qm_zone.charge - totcharge) / qm_zone.qm.size();
-      it = qm_zone.qm.begin();
-      for(; it!=to; ++it){
-        it->qm_charge += q_adjust;
-        DEBUG(10, "Charge adjusted for atom " << it->index << " from " << it->qm_charge - q_adjust << " to " << it->qm_charge);
-      }
-    }
-  }
+  //if (sim.param().qmmm.qm_ch == simulation::qm_ch_dynamic
+  //    && sim.steps() % sim.param().qmmm.nn.charge_steps == 0) {
+  //  //py::object val_molecule(molecule); we don't need to create a new (reference to a) molecule 
+  //  molecule.attr("set_calculator")(charge_calculator);
+  //  // collect the charges
+  //  it = qm_zone.qm.begin();
+  //  double totcharge=0.0;
+  //  for (unsigned i = 0; it != to; ++it, ++i) {
+  //    it->qm_charge = molecule.attr("get_charges")().attr("item")(i).cast<double >() * this->param->unit_factor_charge;
+  //    totcharge+=it->qm_charge;
+  //  }
+  //  if(totcharge != sim.param().qmmm.qm_zone.charge){
+  //    std::ostringstream msg;
+  //    msg << "Charges from NN model do not add up " << sim.steps() 
+  //        << ": requested " << sim.param().qmmm.qm_zone.charge 
+  //        << " predicted " << totcharge << ". Homogeneously adjusting charges";
+  //    io::messages.add(msg.str(), this->name(), io::message::warning);
+  //    // adjust?
+  //    double q_adjust=(sim.param().qmmm.qm_zone.charge - totcharge) / qm_zone.qm.size();
+  //    it = qm_zone.qm.begin();
+  //    for(; it!=to; ++it){
+  //      it->qm_charge += q_adjust;
+  //      DEBUG(10, "Charge adjusted for atom " << it->index << " from " << it->qm_charge - q_adjust << " to " << it->qm_charge);
+  //    }
+  //  }
+  //}
 
 #endif
   return 0;

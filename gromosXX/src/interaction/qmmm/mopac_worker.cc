@@ -627,7 +627,7 @@ int interaction::MOPAC_Worker::parse_energy(std::ifstream& ofs, interaction::QM_
   std::string line;
   // Find energy line
   while (std::getline(ofs, line)) {
-    if (line.find("TOTAL_ENERGY") != std::string::npos) {
+    if (line.find("HEAT_OF_FORMATION") != std::string::npos) {
       line = line.substr(line.find("=") + 1);
       this->defortranize(line);
       qm_zone.QM_energy() = this->param->unit_factor_energy * atof(line.c_str());
