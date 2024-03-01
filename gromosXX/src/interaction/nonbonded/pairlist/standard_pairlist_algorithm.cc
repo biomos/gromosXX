@@ -155,8 +155,6 @@ void interaction::Standard_Pairlist_Algorithm::_update_cg
       DEBUG(9, " - atoms " << topo.chargegroup(cg1) << "-" << topo.chargegroup(cg1+1)-1);
       continue;
     }
-
-    if (!qmmm || !topo.is_qm( topo.chargegroup(cg1) )) { // skip QM chargegroups
       for(int a1 = topo.chargegroup(cg1),
       a_to = topo.chargegroup(cg1+1);
     a1 < a_to; ++a1){
@@ -170,11 +168,6 @@ void interaction::Standard_Pairlist_Algorithm::_update_cg
     pairlist.solute_short[a1].push_back(a2);
         }
       }
-    }
-    else {
-      DEBUG(9, "Skipping cg " << cg1 << " innerloop");
-      DEBUG(9, " - atoms " << topo.chargegroup(cg1) << "-" << topo.chargegroup(cg1+1)-1);
-    }
     
     // solute - solute
     DEBUG(10, "solute - solute");
