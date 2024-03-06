@@ -155,6 +155,8 @@ void interaction::Standard_Pairlist_Algorithm::_update_cg
       DEBUG(9, " - atoms " << topo.chargegroup(cg1) << "-" << topo.chargegroup(cg1+1)-1);
       continue;
     }
+
+    if (!qmmm || !topo.is_qm( topo.chargegroup(cg1) )) { // skip QM chargegroups
       for(int a1 = topo.chargegroup(cg1),
       a_to = topo.chargegroup(cg1+1);
     a1 < a_to; ++a1){
@@ -168,6 +170,11 @@ void interaction::Standard_Pairlist_Algorithm::_update_cg
     pairlist.solute_short[a1].push_back(a2);
         }
       }
+    }
+    else {
+      DEBUG(9, "Skipping cg " << cg1 << " innerloop");
+      DEBUG(9, " - atoms " << topo.chargegroup(cg1) << "-" << topo.chargegroup(cg1+1)-1);
+    }
     
     // solute - solute
     DEBUG(10, "solute - solute");
@@ -459,25 +466,31 @@ _update_pert_cg(topology::Topology & topo,
       DEBUG(9, " - atoms " << topo.chargegroup(cg1) << "-" << topo.chargegroup(cg1+1)-1);
       continue;
     }
-    for(int a1 = topo.chargegroup(cg1),
-	  a_to = topo.chargegroup(cg1+1);
-	a1 < a_to; ++a1){
-      for(int a2 = a1+1; a2 < a_to; ++a2){
-	
-	// check it is not excluded
-	if (excluded_solute_pair(topo, a1, a2))
-	  continue;
-
-	if (insert_pair(topo, pairlist.solute_short, perturbed_pairlist.solute_short,
+    if (!qmmm || !topo.is_qm( topo.chargegroup(cg1) )) { // skip QM chargegroups
+      for(int a1 = topo.chargegroup(cg1),
+      a_to = topo.chargegroup(cg1+1);
+    a1 < a_to; ++a1){
+        for(int a2 = a1+1; a2 < a_to; ++a2){
+    
+    // check it is not excluded
+    if (excluded_solute_pair(topo, a1, a2))
+      continue;
+    
+    if (insert_pair(topo, pairlist.solute_short, perturbed_pairlist.solute_short,
 						a1, a2, scaled_only))
 	  ;
 	else if (insert_pair(topo, pairlist.solute_short, perturbed_pairlist.solute_short,
 						     a2, a1, scaled_only))
 	  ;
 	else
-	  pairlist.solute_short[a1].push_back(a2);
-	
+    pairlist.solute_short[a1].push_back(a2);
+        
+        }
       }
+    }
+    else {
+      DEBUG(9, "Skipping cg " << cg1 << " innerloop");
+      DEBUG(9, " - atoms " << topo.chargegroup(cg1) << "-" << topo.chargegroup(cg1+1)-1);
     }
     
     // solute - solute
