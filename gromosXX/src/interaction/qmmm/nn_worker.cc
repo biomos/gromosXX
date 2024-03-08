@@ -250,78 +250,20 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
     if (is_state_B || is_both_states) {
       molecule_2.attr("append")(atom);
     }
+    //molecule.attr("append")(atom); //original
   }
 
   const double lambda = sim.param().perturbation.lambda;
+
+  // Run the calculator
+  molecule_1.attr("set_calculator")(ml_calculator);
+  molecule_2.attr("set_calculator")(ml_calculator);
   
-  it = qm_zone.qm.begin();
-  // lambda = 0 -> predict E and F only for state A
-  if (lambda == 0) {
+  const double energy_1 = molecule_1.attr("get_potential_energy")().cast<double>();
+  const double energy_2 = molecule_2.attr("get_potential_energy")().cast<double>();
 
-    // predict E
-    molecule_1.attr("set_calculator")(ml_calculator);
-    const double energy = molecule_1.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
-
-    // predict F
-    for (unsigned i = 0; it != to; ++it, ++i) {
-      it->force[0] = molecule_1.attr("get_forces")().attr("item")(i,0).cast<double >();
-      it->force[1] = molecule_1.attr("get_forces")().attr("item")(i,1).cast<double >();
-      it->force[2] = molecule_1.attr("get_forces")().attr("item")(i,2).cast<double >();
-      it->force *= this->param->unit_factor_force;
-      DEBUG(15, "force from NN, atom " << it->index << " : " << math::v2s(it->force));
-    }
-
-  // lambda = 1 -> predict E and F only for state B
-  } else if (lambda == 1) {
-
-    // predict E
-    molecule_2.attr("set_calculator")(ml_calculator);
-    const double energy = molecule_2.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
-
-    // predict F
-    for (unsigned i = 0; it != to; ++it, ++i) {
-      it->force[0] = molecule_2.attr("get_forces")().attr("item")(i,0).cast<double >();
-      it->force[1] = molecule_2.attr("get_forces")().attr("item")(i,1).cast<double >();
-      it->force[2] = molecule_2.attr("get_forces")().attr("item")(i,2).cast<double >();
-      it->force *= this->param->unit_factor_force;
-      DEBUG(15, "force from NN, atom " << it->index << " : " << math::v2s(it->force));
-    }
-  
-  // 0 < lambda < 1 -> do the linear combination of E and F for states A and B
-  } else {
-
-    // predict E
-    molecule_1.attr("set_calculator")(ml_calculator);
-    molecule_2.attr("set_calculator")(ml_calculator);
-    const double energy_1 = molecule_1.attr("get_potential_energy")().cast<double>();
-    const double energy_2 = molecule_2.attr("get_potential_energy")().cast<double>();
-    const double energy = ((1-lambda) * energy_1 + lambda * energy_2) * this->param->unit_factor_energy;
-
-    // predict F
-    for (unsigned i = 0, j = 0; it != to; ++it) {
-      const bool is_state_A = stateA_first <= it->index && it->index <= stateA_last;
-      const bool is_state_B = stateB_first <= it->index && it->index <= stateB_last;
-      const bool is_both_states = it->index >= both_states_first;
-
-      math::Vec force_1, force_2;
-      if (is_state_A || is_both_states) {
-        force_1[0] = molecule_1.attr("get_forces")().attr("item")(i,0).cast<double>();
-        force_1[1] = molecule_1.attr("get_forces")().attr("item")(i,1).cast<double>();
-        force_1[2] = molecule_1.attr("get_forces")().attr("item")(i,2).cast<double>();
-        ++i;
-      }
-      if (is_state_B || is_both_states) {
-        force_2[0] = molecule_2.attr("get_forces")().attr("item")(j,0).cast<double>();
-        force_2[1] = molecule_2.attr("get_forces")().attr("item")(j,1).cast<double>();
-        force_2[2] = molecule_2.attr("get_forces")().attr("item")(j,2).cast<double>();
-        ++j;
-      }
-      it->force = (1 - lambda) * force_1 + lambda * force_2;
-      it->force *= this->param->unit_factor_force;
-      DEBUG(15, "force from NN, atom " << it->index << " : " << math::v2s(it->force));
-    }
-  }
   // Write the energy
+  const double energy = ((1-lambda) * energy_1 + lambda * energy_2) * this->param->unit_factor_energy;
   qm_zone.QM_energy() = energy;
  
 
@@ -337,6 +279,31 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
     //forces(i)[1] = tmp[1];
     //forces(i)[2] = tmp[2];
   }*/
+  
+  // Write the forces
+  it = qm_zone.qm.begin();
+  for (unsigned i = 0, j = 0; it != to; ++it) {
+    const bool is_state_A = stateA_first <= it->index && it->index <= stateA_last;
+    const bool is_state_B = stateB_first <= it->index && it->index <= stateB_last;
+    const bool is_both_states = it->index >= both_states_first;
+
+    math::Vec force_1, force_2;
+    if (is_state_A || is_both_states) {
+      force_1[0] = molecule_1.attr("get_forces")().attr("item")(i,0).cast<double>();
+      force_1[1] = molecule_1.attr("get_forces")().attr("item")(i,1).cast<double>();
+      force_1[2] = molecule_1.attr("get_forces")().attr("item")(i,2).cast<double>();
+      ++i;
+    }
+    if (is_state_B || is_both_states) {
+      force_2[0] = molecule_2.attr("get_forces")().attr("item")(j,0).cast<double>();
+      force_2[1] = molecule_2.attr("get_forces")().attr("item")(j,1).cast<double>();
+      force_2[2] = molecule_2.attr("get_forces")().attr("item")(j,2).cast<double>();
+      ++j;
+    }
+    it->force = (1 - lambda) * force_1 + lambda * force_2;
+    it->force *= this->param->unit_factor_force;
+    DEBUG(15, "force from NN, atom " << it->index << " : " << math::v2s(it->force));
+  }
 
   // Run validation, if asked for
   if (!sim.param().qmmm.nn.val_model_path.empty()
@@ -346,27 +313,13 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
     molecule_1.attr("set_calculator")(val_calculator);
     molecule_2.attr("set_calculator")(val_calculator);
     // Energy of validation model
-    if (lambda == 0) {
-      const double val_energy = molecule_1.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
-    } else if (lambda == 1) {
-      const double val_energy = molecule_2.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
-    } else {
-      const double val_energy_1 = molecule_1.attr("get_potential_energy")().cast<double>();
-      const double val_energy_2 = molecule_2.attr("get_potential_energy")().cast<double>();
-      const double val_energy = ((1-lambda) * val_energy_1 + lambda * val_energy_2) * this->param->unit_factor_energy;
-      const double dev_1 = energy_1 - val_energy_1;
-      const double dev_2 = energy_2 - val_energy_2;
-    }
+    const double val_energy = ((1-sim.param().perturbation.lambda) * molecule_1.attr("get_potential_energy")().cast<double>() + sim.param().perturbation.lambda * molecule_2.attr("get_potential_energy")().cast<double>()) * this->param->unit_factor_energy;
     const double dev = energy - val_energy;
     conf.current().energies.nn_valid = dev;
     DEBUG(7, "Deviation from validation model: " << dev);
     if (fabs(dev) > sim.param().qmmm.nn.val_thresh) {
       std::ostringstream msg;
-      if (lambda == 0 || lambda == 1) {
-        msg << "Deviation from validation model above threshold in step " << sim.steps() << " : " << dev;
-      } else {
-        msg << "Deviation from validation model above threshold in step " << sim.steps() << " : " << dev << "molecule 1 deviation: " << dev_1 << "molecule 2 deviation: " << dev_2;
-      }
+      msg << "Deviation from validation model above threshold in step " << sim.steps() << " : " << dev;
       io::messages.add(msg.str(), this->name(), io::message::notice); // Changed to notice
       //if(sim.param().qmmm.nn.val_forceconstant != 0.0){
       //  // add a biasing force between the two NN networks
