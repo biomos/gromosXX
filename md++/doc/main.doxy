@@ -32,6 +32,8 @@
  *   - @ref leusdb
  *   - @ref orderparam
  *   - @ref rdc
+ *   - @ref tfrdc
+ *   - @ref zaxisori
  *
  * <h3>Modules</h3>
  * - @ref algorithmoverview "algorithm"
