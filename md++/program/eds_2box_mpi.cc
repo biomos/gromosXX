@@ -93,7 +93,7 @@ int main(int argc, char *argv[]){
          << "fin2" << "trv1" << "trv2" << "trf1" << "trf2" << "trs1" << "trs2"
          << "tre1" << "tre2" << "trg1" << "trg2" << "bae" << "bag"
          << "posresspec" << "refpos" << "distrest1" << "distrest2" << "dihrest"
-         << "jval" << "xray" << "order" << "rdc" << "tfrdcres" << "zaxisoribias"
+         << "jval" << "xray" << "order" << "rdcres" << "tfrdcres" << "zaxisoribias"
          << "lud" << "led" << "anatrj" << "print" << "friction" << "qmmm"
          << "version";
 
