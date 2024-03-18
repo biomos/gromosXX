@@ -501,7 +501,7 @@ namespace io
     os << type << "Jrest                : " << std::setw(30) << e.jvalue_total << "\n";
     os << type << "X-ray restraints     : " << std::setw(30) << e.xray_total << "\n";
     os << type << "Local elevation      : " << std::setw(30) << e.leus_total << "\n";
-    os << type << "Orderparamrest       : " << std::setw(30) << e.oparam_total << "\n";
+    os << type << "Order-parameter rest.: " << std::setw(30) << e.oparam_total << "\n";
     os << type << "RDCrest              : " << std::setw(30) << e.rdc_total << "\n";
     os << type << "TFRDCrest            : " << std::setw(30) << e.tfrdc_total << "\n";
     os << type << "TFRDCmfvrest         : " << std::setw(30) << e.tfrdc_mfv_total << "\n";
@@ -563,7 +563,6 @@ namespace io
       os << "\n";
     }
 
-<<<<<<< HEAD:md++/src/io/print_block.cc
     // check if reaction shift or Ls is needed
     bool use_shift_orig = false;
     bool use_shift_phys = false;
@@ -625,9 +624,6 @@ namespace io
     }
 
     // ANITA 
-=======
-    // ANITA
->>>>>>> 87fcc533 (Bartosz Stankiewicz's implementation of tensor-free RDCs and zaxis alignment):gromosXX/src/io/print_block.cc
     // print A_e_lj, B_e_lj, A_e_crf, B_e_crf for the lambda at which
     // we are simulating
 /*    double lambda_step = (simulation::Parameter().precalclam.max_lam -
@@ -770,6 +766,7 @@ namespace io
 
     os << "\n" << std::setw(20) << type + "TFRDCmfvrest";
     for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << e.tfrdc_mfv_energy[i];
+
     os << "\n" << std::setw(20) << type + "TFRDCmfvaverest";
     for(unsigned int i=0; i < numenergygroups; i++) os << std::setw(12) << e.tfrdc_mfv_ave_energy[i];
 

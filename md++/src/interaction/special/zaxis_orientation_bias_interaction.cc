@@ -1,3 +1,23 @@
+/*
+ * This file is part of GROMOS.
+ * 
+ * Copyright (c) 2011, 2012, 2016, 2018, 2021, 2023 Biomos b.v.
+ * See <https://www.gromos.net> for details.
+ * 
+ * GROMOS is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 /**
  * @file zaxis_orientation_bias_interaction.cc
  * template methods of Zaxis_Orientation_Bias_Interaction
@@ -35,10 +55,9 @@ template<math::boundary_enum B, math::virial_enum V>
 static int _calculate_zaxis_orientation_bias_interactions
 (topology::Topology & topo,
  configuration::Configuration & conf,
- simulation::Simulation & sim, double exponential_term,
-std::map<int,math::Vec> &rah_map, int &error)
+ simulation::Simulation & sim, int &error)
 {
-  // loop over the z-axis orientation biass
+  // loop over the z-axis orientation bias
   std::vector<topology::zaxisori_restraint_struct>::const_iterator
     it = topo.zaxisori_restraints().begin(),
     to = topo.zaxisori_restraints().end();
@@ -50,7 +69,7 @@ std::map<int,math::Vec> &rah_map, int &error)
   // math::VArray &pos   = conf.current().pos;
   // math::VArray &force = conf.current().force;
   math::Vec v, f;
-  double energy;
+  double energy = 0.0;
 
   math::Periodicity<B> periodicity(conf.current().box);
 
@@ -83,6 +102,44 @@ std::map<int,math::Vec> &rah_map, int &error)
        return error;
     }
     double theta = acos(v[2]/math::abs(v));
+
+    // just for writing angle distributions
+    double dpx = math::dot(v,math::Vec(1, 0, 0));
+    double dpy = math::dot(v,math::Vec(0, 1, 0));
+    double phi = acos(dpx / sqrt((dpx*dpx)+(dpy*dpy)));
+    if (dpy <0) {
+      phi=-phi;
+    }
+   
+    while (phi > math::Pi*2) {
+      phi-=math::Pi*2;
+    }
+    while (phi < 0) {
+      phi+=math::Pi*2;
+    }
+
+    while (theta > math::Pi*2) {
+      theta-=math::Pi*2;
+    }
+    while (theta < 0) {
+      theta+=math::Pi*2;
+    }
+
+    for (unsigned int i=0; i<sim.param().zaxisoribias.bins_phi.size()-1; i++) {
+      double & bin_upper = sim.param().zaxisoribias.bins_phi[i+1];
+       if (phi < bin_upper) {
+         conf.special().zaxisoribias.dist_phi.at(i)+=1;
+         break;
+       }
+    }
+
+    for (unsigned int i=0; i<sim.param().zaxisoribias.bins_theta.size()-1; i++) {
+      double & bin_upper = sim.param().zaxisoribias.bins_theta[i+1];
+      if (theta < bin_upper) {
+        conf.special().zaxisoribias.dist_theta.at(i)+=1;
+        break;
+      }
+    }
 
     double dist = math::abs(v);
     double vabs = dist;
@@ -164,7 +221,7 @@ int interaction::Zaxis_Orientation_Bias_Interaction
 {
   int error =0;
   SPLIT_VIRIAL_BOUNDARY(_calculate_zaxis_orientation_bias_interactions,
-			topo, conf, sim, exponential_term, rah_map, error);
+			topo, conf, sim, error);
 
   return error;
 }
@@ -190,24 +247,32 @@ static void _init_averages
   }
 }
 
-/**
- * initiate z-axis orientation bias interactions
- */
-template<math::boundary_enum B>
-static void _init_zalres_data
-(topology::Topology & topo,
- configuration::Configuration & conf)
+template<typename T>
+std::vector<double> _linspace(T start_in, T end_in, int num_in)
 {
-  math::Periodicity<B> periodicity(conf.current().box);
-  math::Vec v;
 
-  for(std::vector<topology::zaxisori_restraint_struct>::const_iterator
-        it = topo.zaxisori_restraints().begin(),
-        to = topo.zaxisori_restraints().end(); it != to; ++it) {
-    periodicity.nearest_image(it->v1.pos(conf,topo), it->v2.pos(conf,topo), v);
-    conf.special().zaxisoribias.d.push_back(math::abs(v));
-    conf.special().zaxisoribias.energy.push_back(0.0);
-  }
+  std::vector<double> linspaced;
+
+  double start = static_cast<double>(start_in);
+  double end = static_cast<double>(end_in);
+  double num = static_cast<double>(num_in);
+
+  if (num == 0) { return linspaced; }
+  if (num == 1) 
+    {
+      linspaced.push_back(start);
+      return linspaced;
+    }
+
+  double delta = (end - start) / (num - 1);
+
+  for(int i=0; i < num-1; ++i)
+    {
+      linspaced.push_back(start + delta * i);
+    }
+  linspaced.push_back(end); // I want to ensure that start and end
+                            // are exactly the same as the input
+  return linspaced;
 }
 
 int interaction::Zaxis_Orientation_Bias_Interaction::init(topology::Topology &topo,
@@ -218,6 +283,14 @@ int interaction::Zaxis_Orientation_Bias_Interaction::init(topology::Topology &to
 {
 
   SPLIT_BOUNDARY(_init_averages, topo, conf);
+
+  // 
+  sim.param().zaxisoribias.bins_theta = _linspace(0.0,math::Pi,101.0);
+  sim.param().zaxisoribias.bins_phi = _linspace(0.0,2*math::Pi,101.0);
+
+  conf.special().zaxisoribias.dist_theta.resize(sim.param().zaxisoribias.bins_theta.size(), 0.0);
+  conf.special().zaxisoribias.dist_phi.resize(sim.param().zaxisoribias.bins_phi.size(), 0.0);
+
 
   if (!quiet) {
     os << "Z-axis orientation bias interaction";
