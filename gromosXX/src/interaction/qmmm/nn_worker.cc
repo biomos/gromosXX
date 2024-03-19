@@ -259,11 +259,11 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
   molecule_1.attr("set_calculator")(ml_calculator);
   molecule_2.attr("set_calculator")(ml_calculator);
   
-  const double energy_1 = molecule_1.attr("get_potential_energy")().cast<double>();
-  const double energy_2 = molecule_2.attr("get_potential_energy")().cast<double>();
+  const double energy_1 = molecule_1.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
+  const double energy_2 = molecule_2.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
 
   // Write the energy
-  const double energy = ((1-lambda) * energy_1 + lambda * energy_2) * this->param->unit_factor_energy;
+  const double energy = (1-lambda) * energy_1 + lambda * energy_2;
   qm_zone.QM_energy() = energy;
  
 
@@ -313,13 +313,18 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
     molecule_1.attr("set_calculator")(val_calculator);
     molecule_2.attr("set_calculator")(val_calculator);
     // Energy of validation model
-    const double val_energy = ((1-sim.param().perturbation.lambda) * molecule_1.attr("get_potential_energy")().cast<double>() + sim.param().perturbation.lambda * molecule_2.attr("get_potential_energy")().cast<double>()) * this->param->unit_factor_energy;
-    const double dev = energy - val_energy;
+    const double val_energy_1 = molecule_1.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
+    const double val_energy_2 = molecule_2.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
+    const double val_energy = (1-lambda) * val_energy_1 + lambda * val_energy_2;
+    const double dev_1 = energy_1 - val_energy_1;
+    const double dev_2 = energy_2 - val_energy_2;
+    const double dev_overall = energy - val_energy;
+    const double dev = fmax(fabs(dev_1), fabs(dev_2));
     conf.current().energies.nn_valid = dev;
     DEBUG(7, "Deviation from validation model: " << dev);
     if (fabs(dev) > sim.param().qmmm.nn.val_thresh) {
       std::ostringstream msg;
-      msg << "Deviation from validation model above threshold in step " << sim.steps() << " : " << dev;
+      msg << "Deviation from validation model above threshold in step " << sim.steps() << " : " << dev_overall << ", molecule 1 deviation: " << dev_1 << ", molecule 2 deviation: " << dev_2;
       io::messages.add(msg.str(), this->name(), io::message::notice); // Changed to notice
       //if(sim.param().qmmm.nn.val_forceconstant != 0.0){
       //  // add a biasing force between the two NN networks
