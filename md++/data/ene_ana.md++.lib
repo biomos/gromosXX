@@ -39,6 +39,7 @@ ENERTRJ
     subblock MASS 1 1
     size NUM_BATHS
     subblock TEMPERATURE  NUM_BATHS 4
+    subblock MFVTEMPERATURE 1 1
     subblock VOLUME 10 1
     subblock PRESSURE 30 1
 END
