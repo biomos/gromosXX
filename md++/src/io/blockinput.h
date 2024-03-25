@@ -22,6 +22,7 @@
  * @file blockinput.h
  * read in blocks.
  */
+#include <functional>
 
 #ifndef INCLUDED_BLOCKINPUT_H
 #define INCLUDED_BLOCKINPUT_H
@@ -134,18 +135,18 @@ namespace io {
   bool is_valid_type <bool> (bool & var, const char* x);
 
   // trim from start (in place)
-   static inline void ltrim(std::string &s) {
-     s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) {
-        return !std::isspace(ch);
-     }));
-   }
+  inline void ltrim(std::string &s) {
+      s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) {
+          return !std::isspace(ch);
+      }));
+  }
 
   // trim from end (in place)
-   static inline void rtrim(std::string &s) {
-     s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) {
+  inline void rtrim(std::string &s) {
+      s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) {
           return !std::isspace(ch);
-     }).base(), s.end());
-   }
+      }).base(), s.end());
+  }
 
   // trim from both ends (in place)
    static inline void trim(std::string &s) {
