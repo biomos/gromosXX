@@ -328,9 +328,9 @@ void ParallelMesh::get_neighbors() {
   // send it to the left cpu (nonblocking)
   MPI_Request r;
   MPI_Status x, i;
-  MPI_Isend(mesh_tmp, cache_volume * 2, MPI::DOUBLE, cpu_left, 0, mpiComm, &r);
+  MPI_Isend(mesh_tmp, cache_volume * 2, MPI_DOUBLE, cpu_left, 0, mpiComm, &r);
   // receive the right cache (blocking)
-  MPI_Recv(mesh_right, cache_volume * 2, MPI::DOUBLE, cpu_right, 0, mpiComm, &i);
+  MPI_Recv(mesh_right, cache_volume * 2, MPI_DOUBLE, cpu_right, 0, mpiComm, &i);
   // wait before overwriting the mesh_tmp variable
   MPI_Wait(&r, &x);
   MPI_Request_free(&r);
@@ -346,9 +346,9 @@ void ParallelMesh::get_neighbors() {
   }
  
   // send it to the right cpu (nonblocking)
-  MPI_Isend(mesh_tmp, cache_volume * 2, MPI::DOUBLE, cpu_right, 1, mpiComm, &r);
+  MPI_Isend(mesh_tmp, cache_volume * 2, MPI_DOUBLE, cpu_right, 1, mpiComm, &r);
   // receive the left cache (blocking)
-  MPI_Recv(mesh_left, cache_volume * 2, MPI::DOUBLE, cpu_left, 1, mpiComm, &i);
+  MPI_Recv(mesh_left, cache_volume * 2, MPI_DOUBLE, cpu_left, 1, mpiComm, &i);
   // wait before overwriting the mesh_tmp variable
   MPI_Wait(&r, &x);
   MPI_Request_free(&r);
@@ -368,9 +368,9 @@ void ParallelMesh::add_neighbors_caches() {
   const unsigned int cpu_right = (rank + 1) % num_threads;
   
   // send the left cache to the left cpu (nonblocking)
-  MPI_Isend(mesh_left, cache_volume * 2, MPI::DOUBLE, cpu_left, 2, mpiComm, &r);
+  MPI_Isend(mesh_left, cache_volume * 2, MPI_DOUBLE, cpu_left, 2, mpiComm, &r);
   // receive the left cache from the right cpu (blocking)
-  MPI_Recv(mesh_tmp, cache_volume * 2, MPI::DOUBLE, cpu_right, 2, mpiComm, &i);
+  MPI_Recv(mesh_tmp, cache_volume * 2, MPI_DOUBLE, cpu_right, 2, mpiComm, &i);
   // wait before overwriting the mesh_tmp variable
   MPI_Wait(&r, &x);
   MPI_Request_free(&r);
@@ -387,9 +387,9 @@ void ParallelMesh::add_neighbors_caches() {
   }
 
   // send the right cache to the right cpu (nonblocking)..
-  MPI_Isend(mesh_right, cache_volume * 2, MPI::DOUBLE, cpu_right, 3, mpiComm, &r);
+  MPI_Isend(mesh_right, cache_volume * 2, MPI_DOUBLE, cpu_right, 3, mpiComm, &r);
   // receive the right cache from the left cpu (blocking)
-  MPI_Recv(mesh_tmp, cache_volume * 2, MPI::DOUBLE, cpu_left, 3, mpiComm, &i);
+  MPI_Recv(mesh_tmp, cache_volume * 2, MPI_DOUBLE, cpu_left, 3, mpiComm, &i);
   // wait before overwriting the mesh_tmp variable
   MPI_Wait(&r, &x);
   MPI_Request_free(&r);

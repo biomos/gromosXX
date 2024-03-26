@@ -489,7 +489,7 @@ int algorithm::Perturbed_Shake ::apply(topology::Topology &topo,
   // broadcast eventual errors from master to slaves
 #ifdef XXMPI
   if (sim.mpi) {
-    MPI_Bcast(&error, 1, MPI::INT, sim.mpiControl().masterID, sim.mpiControl().comm);
+    MPI_Bcast(&error, 1, MPI_INT, sim.mpiControl().masterID, sim.mpiControl().comm);
   } 
 #endif
 
@@ -508,9 +508,9 @@ int algorithm::Perturbed_Shake ::apply(topology::Topology &topo,
   {
     // broadcast current and old coordinates and pos.
 
-    MPI_Bcast(&pos(0)(0), pos.size() * 3, MPI::DOUBLE, sim.mpiControl().masterID, sim.mpiControl().comm);
-    MPI_Bcast(&conf.old().pos(0)(0), conf.old().pos.size() * 3, MPI::DOUBLE, sim.mpiControl().masterID, sim.mpiControl().comm);
-    MPI_Bcast(&conf.current().box(0)(0), 9, MPI::DOUBLE, sim.mpiControl().masterID, sim.mpiControl().comm);
+    MPI_Bcast(&pos(0)(0), pos.size() * 3, MPI_DOUBLE, sim.mpiControl().masterID, sim.mpiControl().comm);
+    MPI_Bcast(&conf.old().pos(0)(0), conf.old().pos.size() * 3, MPI_DOUBLE, sim.mpiControl().masterID, sim.mpiControl().comm);
+    MPI_Bcast(&conf.current().box(0)(0), 9, MPI_DOUBLE, sim.mpiControl().masterID, sim.mpiControl().comm);
 
     // set virial tensor and solute coordinates of slaves to zero
     if (m_rank) { // slave
@@ -554,20 +554,20 @@ int algorithm::Perturbed_Shake ::apply(topology::Topology &topo,
       // reduce current positions, store them in new_pos and assign them to current positions
       math::VArray new_pos=pos;
       MPI_Reduce(&pos(0)(0), &new_pos(0)(0),
-              topo.num_atoms() * 3, MPI::DOUBLE, MPI::SUM,  sim.mpiControl().masterID, sim.mpiControl().comm);
+              topo.num_atoms() * 3, MPI_DOUBLE, MPI_SUM,  sim.mpiControl().masterID, sim.mpiControl().comm);
       pos = new_pos;
 
       // reduce current virial tensor, store it in virial_new and reduce it to current tensor
       math::Matrix virial_new(0.0);
       MPI_Reduce(&conf.old().virial_tensor(0, 0), &virial_new(0, 0),
-              9, MPI::DOUBLE, MPI::SUM,  sim.mpiControl().masterID, sim.mpiControl().comm);
+              9, MPI_DOUBLE, MPI_SUM,  sim.mpiControl().masterID, sim.mpiControl().comm);
       conf.old().virial_tensor = virial_new;
 
       // reduce current contraint force, store it in cons_force_new and reduce
       // it to the current constraint force
       math::VArray cons_force_new=conf.old().constraint_force;
       MPI_Reduce(&conf.old().constraint_force(0)(0), &cons_force_new(0)(0),
-              topo.num_atoms() * 3, MPI::DOUBLE, MPI::SUM,  sim.mpiControl().masterID, sim.mpiControl().comm);
+              topo.num_atoms() * 3, MPI_DOUBLE, MPI_SUM,  sim.mpiControl().masterID, sim.mpiControl().comm);
       conf.old().constraint_force = cons_force_new;
     }
     else
@@ -575,13 +575,13 @@ int algorithm::Perturbed_Shake ::apply(topology::Topology &topo,
       // slave
       // reduce pos
       MPI_Reduce(&pos(0)(0), NULL,
-              topo.num_atoms() * 3, MPI::DOUBLE, MPI::SUM, sim.mpiControl().masterID, sim.mpiControl().comm);
+              topo.num_atoms() * 3, MPI_DOUBLE, MPI_SUM, sim.mpiControl().masterID, sim.mpiControl().comm);
       // reduce virial
       MPI_Reduce(&conf.old().virial_tensor(0, 0), NULL,
-              9, MPI::DOUBLE, MPI::SUM, sim.mpiControl().masterID, sim.mpiControl().comm);
+              9, MPI_DOUBLE, MPI_SUM, sim.mpiControl().masterID, sim.mpiControl().comm);
       // reduce constraint force
       MPI_Reduce(&conf.old().constraint_force(0)(0), NULL,
-              topo.num_atoms() * 3, MPI::DOUBLE, MPI::SUM, sim.mpiControl().masterID, sim.mpiControl().comm);
+              topo.num_atoms() * 3, MPI_DOUBLE, MPI_SUM, sim.mpiControl().masterID, sim.mpiControl().comm);
     }
   }
 #endif

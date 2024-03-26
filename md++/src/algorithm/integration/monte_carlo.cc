@@ -85,7 +85,7 @@ topology::Topology & topo,
         std::cerr << "MPI slave: could not get NonBonded interactions from forcefield"
         << "\n\t(internal error)"
         << std::endl;
-        MPI::Finalize();
+        MPI_Finalize();
         return 1;
       }
  

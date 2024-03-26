@@ -264,7 +264,7 @@ void re::replica_MPI_Master::run_MD(){
         }
         
         // tell the slaves to continue
-        MPI_Bcast(&next_step, 1, MPI::INT, sim.mpiControl().masterID, sim.mpiControl().comm);
+        MPI_Bcast(&next_step, 1, MPI_INT, sim.mpiControl().masterID, sim.mpiControl().comm);
            
         traj->print(topo, conf, sim);
         ++sim.steps();

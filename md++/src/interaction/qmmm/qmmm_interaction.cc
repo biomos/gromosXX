@@ -72,8 +72,8 @@ interaction::QMMM_Interaction::QMMM_Interaction() : Interaction("QMMM Interactio
                                                   , m_size(1)
   {
 #ifdef XXMPI
-    m_rank = MPI::COMM_WORLD.Get_rank();
-    m_size = MPI::COMM_WORLD.Get_size();
+    m_rank = MPI_COMM_WORLD.Get_rank();
+    m_size = MPI_COMM_WORLD.Get_size();
 #endif
   qmmm_ptr = this;
 }
@@ -580,7 +580,7 @@ int interaction::QMMM_Interaction::init_nonbonded(topology::Topology& topo,
   m_set_size *= omp_get_num_threads();
 #endif
 #ifdef XXMPI
-  m_set_size *= MPI::COMM_WORLD.Get_size();*/
+  m_set_size *= MPI_COMM_WORLD.Get_size();*/
   for (unsigned i = 0; i < m_set_size; ++i) {
     m_qmmm_nonbonded_set.push_back(
           new QMMM_Nonbonded_Set(*(this->m_qm_zone), this->m_timer
