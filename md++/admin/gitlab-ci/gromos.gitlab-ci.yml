@@ -153,12 +153,12 @@
         - sim_test_report.xml
 
 # This is set contains more extensive tests that are only to be run on request (e.g. AEDS tests).
-.gromos:base:extensive_sim_test:
+.gromos:base:sim_test_extensive:
   rules:
     - if: $CI_COMMIT_MESSAGE ~= /-fullTest/
       when: always
     - when: manual
-  stage: extensive_sim_test
+  stage: sim_test_extensive
   script: 
     - echo $CI_PROJECT_DIR
     - echo $BIN_PATH
@@ -175,7 +175,7 @@
       - $BUILD_DIR
     reports:
       junit:
-        - sim_test_report.xml
+        - sim_test_extensive_report.xml
 
 include:
   - local: 'md++/admin/gitlab-ci/gromos.matrix/ubuntu-22.04_cmake.yml'

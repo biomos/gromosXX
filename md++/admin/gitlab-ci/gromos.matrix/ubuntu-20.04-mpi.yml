@@ -34,7 +34,7 @@ gromos:ubuntu-20.04-mpi:sim_test:
     - job: gromos:ubuntu-20.04-mpi:build
 
 
-gromos:ubuntu-20.04-mpi:sim_test:
+gromos:ubuntu-20.04-mpi:sim_test_extensive:
   extends:
     - .gromos:base:sim_test_extensive
     - .use-mpi

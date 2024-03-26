@@ -27,7 +27,7 @@ gromos:ubuntu-22.04:sim_test:
   needs:
     - job: gromos:ubuntu-22.04:build_make_test
 
-gromos:ubuntu-22.04:sim_test:
+gromos:ubuntu-22.04:sim_test_extensive:
   extends:
     - .gromos:base:sim_test_extensive
   image: ${CI_REGISTRY}/gromos/gromosxx/gromos-ubuntu-22.04-mpi

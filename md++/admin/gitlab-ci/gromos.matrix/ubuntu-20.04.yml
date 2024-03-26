@@ -27,7 +27,7 @@ gromos:ubuntu-20.04:sim_test:
     - job: gromos:ubuntu-20.04:build_make_check
 
 
-gromos:ubuntu-20.04:sim_test:
+gromos:ubuntu-20.04:sim_test_extensive:
   extends:
     - .gromos:base:sim_test_extensive
   image: ${CI_REGISTRY}/gromos/gromosxx/gromos-ubuntu-20.04-mpi
