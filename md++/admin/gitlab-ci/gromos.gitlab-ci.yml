@@ -155,7 +155,7 @@
 # This is set contains more extensive tests that are only to be run on request (e.g. AEDS tests).
 .gromos:base:sim_test_extensive:
   rules:
-    - if: $CI_COMMIT_MESSAGE ~= /-fullTest/
+    - if: $CI_COMMIT_MESSAGE =~ /-fullTest/
       when: always
     - when: manual
   stage: sim_test_extensive
