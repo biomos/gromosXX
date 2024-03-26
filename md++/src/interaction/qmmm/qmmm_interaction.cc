@@ -72,8 +72,8 @@ interaction::QMMM_Interaction::QMMM_Interaction() : Interaction("QMMM Interactio
                                                   , m_size(1)
   {
 #ifdef XXMPI
-    m_rank = MPI_COMM_WORLD.Get_rank();
-    m_size = MPI_COMM_WORLD.Get_size();
+    MPI_Comm_size(MPI_COMM_WORLD, &m_size);
+    MPI_Comm_rank(MPI_COMM_WORLD, &m_rank);
 #endif
   qmmm_ptr = this;
 }

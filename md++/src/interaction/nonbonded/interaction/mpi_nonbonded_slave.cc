@@ -375,12 +375,12 @@ int interaction::MPI_Nonbonded_Slave::calculate_interactions
                sim.mpiControl().masterID, sim.mpiControl().comm);
       
       // reduce perturbed energy derivatives of endstates
-      MPI_COMM_WORLD.Reduce(&m_nonbonded_set[0]->storage().perturbed_energy_derivatives.eds_vi[0],
+      MPI_Reduce(&m_nonbonded_set[0]->storage().perturbed_energy_derivatives.eds_vi[0],
               NULL,
               numstates,
               MPI_DOUBLE,
               MPI_SUM,
-              0);
+              sim.mpiControl().masterID, sim.mpiControl().comm);
       
       // reduce virial tensors of endstates
       if (sim.param().pcouple.virial){

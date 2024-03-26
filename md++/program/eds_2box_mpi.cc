@@ -101,12 +101,12 @@ int main(int argc, char *argv[]){
     usage += "#\n\n";
 
     // master or slave : that's the question
-    MPI_Init(argc, argv);
+    MPI_Init(&argc, &argv);
     FFTW3(mpi_init());
 
     int rank, size;
-    rank = MPI_COMM_WORLD.Get_rank();
-    size = MPI_COMM_WORLD.Get_size();
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
     // create an output file (for the slaves)
     std::ostringstream oss;
@@ -401,7 +401,8 @@ int main(int argc, char *argv[]){
                 // send error status to slaves
                 next_step = 0;
                 std::cout << "Telling slaves to quit." << std::endl;
-                MPI_COMM_WORLD.Bcast(&next_step, 1, MPI_INT, 0);
+                MPI_Bcast(&next_step, 1, MPI_INT, sim1.mpiControl().masterID, sim1.mpiControl().comm);
+                MPI_Bcast(&next_step, 1, MPI_INT, sim2.mpiControl().masterID, sim2.mpiControl().comm);
                 //std::cout << "\tat step " << sim1.steps() << " (time " << sim1.time() << ")\n" << std::endl;
                 // try to save the final structures...
                 break;
@@ -411,7 +412,8 @@ int main(int argc, char *argv[]){
             //std::cout << "\nMD run terminated by SIGINT (CTRL-C)." << std::endl;
 
             // tell the slaves to continue
-            MPI_COMM_WORLD.Bcast(&next_step, 1, MPI_INT, 0);
+            MPI_Bcast(&next_step, 1, MPI_INT, sim1.mpiControl().masterID, sim1.mpiControl().comm);
+            MPI_Bcast(&next_step, 1, MPI_INT, sim2.mpiControl().masterID, sim2.mpiControl().comm);
             traj1.print(topo1, conf1, sim1);
             traj2.print(topo2, conf2, sim2);
 
@@ -669,7 +671,8 @@ int main(int argc, char *argv[]){
 
           //std::cout << "\t SLAVE: BC Exchange - START\n";
 
-          MPI_COMM_WORLD.Bcast(&next_step, 1, MPI_INT, 0);
+          MPI_Bcast(&next_step, 1, MPI_INT, sim1.mpiControl().masterID, sim1.mpiControl().comm);
+          MPI_Bcast(&next_step, 1, MPI_INT, sim2.mpiControl().masterID, sim2.mpiControl().comm);
 
           //std::cout << "\t SLAVE: BC Exchange - DONE\n";
 

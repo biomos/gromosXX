@@ -90,12 +90,12 @@ int main(int argc, char *argv[]) {
   usage += "#\n\n";
 
     // master or slave : that's the question
-    MPI_Init(argc, argv);
+    (&argc, &argv);
     FFTW3(mpi_init());
 
     int rank, size;
-    rank = MPI_COMM_WORLD.Get_rank();
-    size = MPI_COMM_WORLD.Get_size();
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
     // create an output file (for the slaves)
     std::ostringstream oss;
