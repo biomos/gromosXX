@@ -131,6 +131,7 @@
       - $BUILD_DIR/install_manifest.txt
       - $BIN_PATH
 
+# This tests contains short tests (e.g. the tutorial peptide)
 .gromos:base:sim_test:
   stage: sim_test
   script: 
@@ -141,7 +142,32 @@
     - echo $OMPI_ALLOW_RUN_AS_ROOT_CONFIRM
     - echo $OMPI_ALLOW_RUN_AS_ROOT
     - git clone https://gromosx.boku.ac.at/gromos_tests/gromos_test_files.git
-    - cd md++/contrib/py_gr_utils/tests/
+    - cd md++/contrib/py_gr_utils/tests_short/
+    - pytest-3 --junitxml=${CI_PROJECT_DIR}/sim_test_report.xml
+  artifacts:
+    when: always
+    paths:
+      - $BUILD_DIR
+    reports:
+      junit:
+        - sim_test_report.xml
+
+# This is set contains more extensive tests that are only to be run on request (e.g. AEDS tests).
+.gromos:base:extensive_sim_test:
+  rules:
+    - if: $CI_COMMIT_MESSAGE ~= /-fullTest/
+      when: always
+    - when: manual
+  stage: extensive_sim_test
+  script: 
+    - echo $CI_PROJECT_DIR
+    - echo $BIN_PATH
+    - echo $TEST_REPO
+    - echo $PRE_MD_BIN
+    - echo $OMPI_ALLOW_RUN_AS_ROOT_CONFIRM
+    - echo $OMPI_ALLOW_RUN_AS_ROOT
+    - git clone https://gromosx.boku.ac.at/gromos_tests/gromos_test_files.git
+    - cd md++/contrib/py_gr_utils/tests_extensive/
     - pytest-3 --junitxml=${CI_PROJECT_DIR}/sim_test_report.xml
   artifacts:
     when: always
