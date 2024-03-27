@@ -98,9 +98,9 @@ void util::Algorithm_Timer::initialize(const std::string & name) {
   DEBUG(5, "Initializes sub-timer " + name + " of main-timer " + m_maintimer_name + ".");
 
   Subtimer_Class subtimer_obj(m_max_thread_num);    
-  m_subtimers.emplace(std::make_pair(name, subtimer_obj));
-  subtimer_in_use.clear();   
-  
+  auto ret = m_subtimers.emplace(std::make_pair(name, subtimer_obj));
+  assert(!ret.second);
+  subtimer_in_use.clear();
 }
 
 /**
@@ -272,7 +272,7 @@ void util::Algorithm_Timer::stop_subtimer(const std::string & name) {
   */
   //#pragma omp critical (timing_system)
   {
-    if (m_subtimers.count(name) == 0){  
+    if (m_subtimers.count(name) == 0) {  
       {
         //io::messages.add("Sub-timer " + name + " was stopped that has not been initialized before!","Timing",io::message::notice);
         //DEBUG(5, "Sub-timer " + name + " was stopped that has not been initialized before!");
