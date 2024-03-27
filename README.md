@@ -2,11 +2,9 @@
 
 ### What is GROMOS
 
-GROMOS™ is an acronym of the GROningen MOlecular Simulation computer program package, which has been developed since 1978 for the dynamic modelling of (bio)molecules, until 1990 at the University of Groningen, The Netherlands, and since then at the ETH, the Swiss Federal Institute of Technology, in Zürich, Switzerland. Its development was driven by the [research group of Wilfred van Gunsteren.](http://www.igc.ethz.ch) Currently, the development is shared between him and the research groups of [Philippe Hünenberger](http://www.csms.ethz.ch) and [Sereina Riniker](http://www.riniker.ethz.ch) at the ETH, of [Chris Oostenbrink](http://www.map.boku.ac.at/mms/) at the University of Natural Resources and Life Sciences in Vienna, Austria, and of [Niels Hansen](http://www.itt.uni-stuttgart.de/en/institute/team/staff/Hansen/) at the University of Stuttgart, Stuttgart, Germany.
+GROMOS is an acronym of the GROningen MOlecular Simulation computer program package, which has been developed since 1978 for the dynamic modelling of (bio)molecules, until 1990 at the University of Groningen, The Netherlands, and since then at the ETH, the Swiss Federal Institute of Technology, in Zürich, Switzerland. Its development was driven by the [research group of Wilfred van Gunsteren.](http://www.igc.ethz.ch) Currently, the development is shared between him and the research groups of [Philippe Hünenberger](http://www.csms.ethz.ch) and [Sereina Riniker](http://www.riniker.ethz.ch) at the ETH, of [Chris Oostenbrink](http://www.map.boku.ac.at/mms/) at the University of Natural Resources and Life Sciences in Vienna, Austria, and of [Niels Hansen](http://www.itt.uni-stuttgart.de/en/institute/team/staff/Hansen/) at the University of Stuttgart, Stuttgart, Germany.
 
-Since the last official release of the GROMOS software and manual in 1996, called GROMOS96, no comprehensive release occurred till 2011\. Yet the GROMOS software has seen a steady development since 1996, see e.g. [1]. The programming language has been changed from FORTRAN to C++, the documentation has been put into electronic form, and many new features have been included in the software.
-
-To the development of the GROMOS software (since 1978) members of the research groups of Wilfred van Gunsteren (Groningen, Zürich), Philippe Hünenberger (Zürich), Chris Oostenbrink (Vienna), Niels Hansen (Stuttgart) and Sereina Riniker (Zürich) have contributed.
+Since the official releases of the GROMOS software and manual in 1987 and 1996, a major comprehensive release occurred in 2011\. The GROMOS software has seen a steady development since 1987, see e.g. [1]. The programming language has been changed from FORTRAN to C++, the documentation has been put into electronic form, and many new features have been included in the software. Since 2011, regular releases of GROMOS took place in 2012, 2016, 2018, 2021 and 2023.
 
 The GROMOS _software_ is to be distinguished from the GROMOS _force fields_ for biomolecular systems, of which the latest versions are coded as:
 
@@ -79,6 +77,8 @@ Information on GROMOS is available at [www.gromos.net](https://www.gromos.net) w
 GROMOS users are obliged to properly acknowledge the use of the software, e.g. by referencing one or more of the mentioned scientific papers.
 
 Although we are continuously testing the GROMOS software, it goes without saying that we cannot be held responsible for any damage caused by errors in the software or data files.
+
+GROMOS is published under the GNU General Public License [(GPLv2)](https://www.gnu.org/licenses/gpl-2.0.html)
 
 ### References
 
