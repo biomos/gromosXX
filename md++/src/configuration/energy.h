@@ -211,7 +211,7 @@ namespace configuration
      */
     double sasa_volume_total;
     /**
-     * energy difference of validation NN model
+     * energy difference of validation NN model to validation if only 1 or variance of all NN validation models 
      */
     double nn_valid;
 
