@@ -2,7 +2,7 @@ dnl configure.in for GromosXX
 
 AC_PREREQ(2.58)
 
-AC_INIT([md++], [1.6.0], [biomos@igc.phys.chem.ethz.ch], [md++], [https//www.gromos.net])
+AC_INIT([md++], [1.6.1], [biomos@igc.phys.chem.ethz.ch], [md++], [https//www.gromos.net])
 dnl this is a safety check to see wheter --srcdir exists
 AC_CONFIG_SRCDIR(src/math/math.cc)
 AC_CONFIG_AUX_DIR(config)
