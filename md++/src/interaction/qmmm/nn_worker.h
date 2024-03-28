@@ -88,7 +88,7 @@ namespace interaction {
     /**
      * ASE calculator for validation
      */
-    PY_OBJECT val_calculator;
+    std::vector<PY_OBJECT> val_calculators;
 
     /**
      * ASE calculator for charges
