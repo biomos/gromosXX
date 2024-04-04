@@ -790,43 +790,57 @@ t_interaction_spec, t_perturbation_details>
             const int numstates_i = sim.param().eds.multnumstates[site_i];
             const int &site_j =topo.eds_perturbed_solute().atoms()[j].site_number();
             const int numstates_j = sim.param().eds.multnumstates[site_j];
+            std::vector<int> states_i_j;
 
             std::map<std::vector<int>, double> & storage_energies_eds_mult_vi = storage.energies.eds_mult_vi;
             std::map<std::vector<int>, math::Matrix> & storage_virial_tensor_mult_endstates = storage.virial_tensor_mult_endstates;
-            if (site_j >= site_i) {
-              for (int state_i = 0; state_i < numstates_i; state_i++) {
-                for (int state_j = 0; state_j < numstates_j; state_j++) {
-                  if ((site_j == site_i) && (state_i != state_j)){
-                    continue; //when both atoms from same site, only include same states for both sites
-                  }
-                  std::vector<int> states_i_j {site_i, state_i, site_j, state_j};
-                  math::Vec & force_mult_endstates_state_i = force_mult_endstates[states_i_j][i];
-                  math::Vec & force_mult_endstates_state_j = force_mult_endstates[states_i_j][j];
-                  math::Matrix & virial_tensor_mult_endstates_state = storage_virial_tensor_mult_endstates[states_i_j];//??
-                  const lj_parameter_struct &lj =
-                      m_param_lj_parameter[(pert_i_M_IAC[state_i])][(pert_j_M_IAC[state_j])];
-                  c6 = lj.c6;
-                  c12 = lj.c12;
-                  q = pert_i_M_charge[state_i]* (pert_j_M_charge[state_j]);
 
-                  eds_lj_crf_interaction(dist2, dist6, disti, c6, c12, q, f, e_nb);
-                  DEBUG(9,"\teds_lj_crf, states_i_j: " << "{"<<site_i <<"<" <<state_i <<","<< site_j<<","<<state_j<<"}:" << e_nb);
-
-                  DEBUG(10, "\t\tatomic virial");
-                  for (int a = 0; a < 3; ++a) {
-                    const double term = f * r(a);
-                    force_mult_endstates_state_i(a) += term;
-                    force_mult_endstates_state_j(a) -= term;
-
-                    for (int b = 0; b < 3; ++b)
-                      virial_tensor_mult_endstates_state(b, a) += r(b) * term;
-                  }
-                  // energy
-                  //assert(storage.energies.eds_vi.size() == numstates);
-                  storage_energies_eds_mult_vi[states_i_j] += e_nb;
+            //if (site_j >= site_i) {
+            for (int state_i = 0; state_i < numstates_i; state_i++) {
+              for (int state_j = 0; state_j < numstates_j; state_j++) {
+                if ((site_j == site_i) && (state_i != state_j)){
+                  continue; //when both atoms from same site, only include same states for both sites
                 }
+                else if (site_j < site_i) {
+                  states_i_j = {site_j, state_j, site_i, state_i};
+                }
+                else {
+                  states_i_j = {site_i, state_i, site_j, state_j};
+                }
+                //std::vector<int> states_i_j {site_i, state_i, site_j, state_j};
+                math::Vec & force_mult_endstates_state_i = force_mult_endstates[states_i_j][i];
+                math::Vec & force_mult_endstates_state_j = force_mult_endstates[states_i_j][j];
+                math::Matrix & virial_tensor_mult_endstates_state = storage_virial_tensor_mult_endstates[states_i_j];//??
+                const lj_parameter_struct &lj =
+                    m_param_lj_parameter[(pert_i_M_IAC[state_i])][(pert_j_M_IAC[state_j])];
+                c6 = lj.c6;
+                c12 = lj.c12;
+                q = pert_i_M_charge[state_i]* (pert_j_M_charge[state_j]);
+
+                eds_lj_crf_interaction(dist2, dist6, disti, c6, c12, q, f, e_nb);
+                DEBUG(9,"\teds_lj_crf, states_i_j: " << "{"<<states_i_j[0] <<"," <<states_i_j[1] <<","<< states_i_j[2]<<","<<states_i_j[3]<<"}:" << e_nb);
+                //DEBUG(9,"\teds_lj_crf, states_i_j: " << "{"<<site_i <<"," <<state_i <<","<< site_j<<","<<state_j<<"}:" << e_nb);
+
+                DEBUG(10, "\t\tatomic virial");
+                for (int a = 0; a < 3; ++a) {
+                  const double term = f * r(a);
+                  force_mult_endstates_state_i(a) += term;
+                  force_mult_endstates_state_j(a) -= term;
+
+                  for (int b = 0; b < 3; ++b)
+                    virial_tensor_mult_endstates_state(b, a) += r(b) * term;
+                }
+                // energy
+                //assert(storage.energies.eds_vi.size() == numstates);
+                storage_energies_eds_mult_vi[states_i_j] += e_nb;
               }
             }
+//          }
+//            else {
+//              DEBUG(9,"\tNOT IN IF LOOP");
+//              DEBUG(9,"\tstates_i_j: " << "{"<<site_i << "," << site_j <<"}");
+//
+//            }
 
           } else {
             std::vector<double> & storage_energies_eds_vi = storage.energies.eds_vi;
@@ -2677,44 +2691,52 @@ t_interaction_spec, t_perturbation_details>
             const int numstates_i = sim.param().eds.multnumstates[site_i];
             const int &site_j =topo.eds_perturbed_solute().atoms()[j].site_number();
             const int numstates_j = sim.param().eds.multnumstates[site_j];
+            std::vector<int> states_i_j;
 
             std::map<std::vector<int>, double> & conf_current_energies_eds_mult_vi = conf.current().energies.eds_mult_vi;
             std::map<std::vector<int>, math::Matrix> & conf_special_eds_virial_tensor_mult_endstates = conf.special().eds.virial_tensor_mult_endstates;
             std::map<std::vector<int>, math::VArray> & conf_special_eds_force_mult_endstates = conf.special().eds.force_mult_endstates;
             
-            if (site_j >= site_i) {
-              for (int state_i = 0; state_i < numstates_i; state_i++) {
-                for (int state_j = 0; state_j < numstates_j; state_j++) {
-                  if ((site_j == site_i) && (state_i != state_j)){
-                    continue; //when both atoms from same site, only include same states for both sites
-                  }
-                  std::vector<int> states_i_j {site_i, state_i, site_j, state_j};
-                  math::Vec & conf_special_eds_force_mult_endstates_state_i = conf_special_eds_force_mult_endstates[states_i_j][i];
-                  math::Vec & conf_special_eds_force_mult_endstates_state_j = conf_special_eds_force_mult_endstates[states_i_j][j];
-                  math::Matrix & conf_special_eds_virial_tensor_mult_endstates_state = conf_special_eds_virial_tensor_mult_endstates[states_i_j];//??
-                  const lj_parameter_struct &lj =
-                      m_param_lj_parameter[(pert_i_M_IAC[state_i])][(pert_j_M_IAC[state_j])];
-                  c6 = lj.cs6;
-                  c12 = lj.cs12;
-                  q = pert_i_M_charge[state_i]* (pert_j_M_charge[state_j]);
-
-                  eds_lj_crf_interaction(dist2, dist6, disti, c6, c12, q, f, e_nb, 0, m_param->get_coulomb_scaling());
-
-                  DEBUG(10, "\t\tatomic virial");
-                  for (int a = 0; a < 3; ++a) {
-                    const double term = f * r(a);
-                    conf_special_eds_force_mult_endstates_state_i(a) += term;
-                    conf_special_eds_force_mult_endstates_state_j(a) -= term;
-
-                    for (int b = 0; b < 3; ++b)
-                      conf_special_eds_virial_tensor_mult_endstates_state(b, a) += r(b) * term;
-                  }
-                  // energy
-                  //assert(storage.energies.eds_vi.size() == numstates);
-                  conf_current_energies_eds_mult_vi[states_i_j] += e_nb;
+            //if (site_j >= site_i) {
+            for (int state_i = 0; state_i < numstates_i; state_i++) {
+              for (int state_j = 0; state_j < numstates_j; state_j++) {
+                if ((site_j == site_i) && (state_i != state_j)){
+                  continue; //when both atoms from same site, only include same states for both sites
                 }
+                else if (site_j < site_i) {
+                  states_i_j = {site_j, state_j, site_i, state_i};
+                }
+                else {
+                  states_i_j = {site_i, state_i, site_j, state_j};
+                }
+
+                //std::vector<int> states_i_j {site_i, state_i, site_j, state_j};
+                math::Vec & conf_special_eds_force_mult_endstates_state_i = conf_special_eds_force_mult_endstates[states_i_j][i];
+                math::Vec & conf_special_eds_force_mult_endstates_state_j = conf_special_eds_force_mult_endstates[states_i_j][j];
+                math::Matrix & conf_special_eds_virial_tensor_mult_endstates_state = conf_special_eds_virial_tensor_mult_endstates[states_i_j];//??
+                const lj_parameter_struct &lj =
+                    m_param_lj_parameter[(pert_i_M_IAC[state_i])][(pert_j_M_IAC[state_j])];
+                c6 = lj.cs6;
+                c12 = lj.cs12;
+                q = pert_i_M_charge[state_i]* (pert_j_M_charge[state_j]);
+
+                eds_lj_crf_interaction(dist2, dist6, disti, c6, c12, q, f, e_nb, 0, m_param->get_coulomb_scaling());
+
+                DEBUG(10, "\t\tatomic virial");
+                for (int a = 0; a < 3; ++a) {
+                  const double term = f * r(a);
+                  conf_special_eds_force_mult_endstates_state_i(a) += term;
+                  conf_special_eds_force_mult_endstates_state_j(a) -= term;
+
+                  for (int b = 0; b < 3; ++b)
+                    conf_special_eds_virial_tensor_mult_endstates_state(b, a) += r(b) * term;
+                }
+                // energy
+                //assert(storage.energies.eds_vi.size() == numstates);
+                conf_current_energies_eds_mult_vi[states_i_j] += e_nb;
               }
             }
+          //}
 
           } else {
             std::vector<math::VArray> & conf_special_eds_force_endstates = conf.special().eds.force_endstates;
@@ -4025,40 +4047,48 @@ t_interaction_spec, t_perturbation_details>
                 const int numstates_i = sim.param().eds.multnumstates[site_i];
                 const int &site_j =topo.eds_perturbed_solute().atoms()[*it].site_number();
                 const int numstates_j = sim.param().eds.multnumstates[site_j];
+                std::vector<int> states_i_j;
 
-                if (site_j >= site_i){
-                  for (int state_i = 0; state_i < numstates_i; state_i++){
-                    for (int state_j = 0; state_j < numstates_j; state_j++){
-                      if ((site_j == site_i) && (state_i != state_j)){
-                        continue; //when both atoms from same site, only include same states for both sites
-                      }
-                      std::vector<int> states_i_j {site_i, state_i, site_j, state_j};
-                      q_i = topo.eds_perturbed_solute().atoms()[atom_i].M_charge()[state_i];
-                      q_j = topo.eds_perturbed_solute().atoms()[*it].M_charge()[state_j];
-                      eds_rf_interaction(r, q_i*q_j, f_rf, e_rf);
-                      
-                      DEBUG(7, "multiAEDS excluded atoms " << atom_i << " & " << *it << ": " << e_rf);
-
-                      // and add everything to the correct arrays
-                      conf.current().energies.eds_mult_vi[states_i_j] += e_rf;
-
-                      force_mult_states[states_i_j](atom_i) += f_rf;
-                      force_mult_states[states_i_j](*it) -= f_rf;
-
-                      DEBUG(8,"\t virial: ");
-
-                      // if (t_interaction_spec::do_virial != math::no_virial){
-                      for (int a = 0; a < 3; ++a){
-                        for (int b = 0; b < 3; ++b){
-                          DEBUG(9,"\t old: "<< conf.special().eds.virial_tensor_mult_endstates[states_i_j](a, b) 
-                            <<"\tadding: "<< r(a)*f_rf(b));
-                          conf.special().eds.virial_tensor_mult_endstates[states_i_j](a, b) += r(a) * f_rf(b);
-                        }
-                      }
-                      DEBUG(7, "\tatomic virial done");
+                //if (site_j >= site_i){
+                for (int state_i = 0; state_i < numstates_i; state_i++){
+                  for (int state_j = 0; state_j < numstates_j; state_j++){
+                    if ((site_j == site_i) && (state_i != state_j)){
+                      continue; //when both atoms from same site, only include same states for both sites
                     }
+                    else if (site_j < site_i) {
+                      states_i_j = {site_j, state_j, site_i, state_i};
+                    }
+                    else {
+                      states_i_j = {site_i, state_i, site_j, state_j};
+                    }
+                 
+                    //std::vector<int> states_i_j {site_i, state_i, site_j, state_j};
+                    q_i = topo.eds_perturbed_solute().atoms()[atom_i].M_charge()[state_i];
+                    q_j = topo.eds_perturbed_solute().atoms()[*it].M_charge()[state_j];
+                    eds_rf_interaction(r, q_i*q_j, f_rf, e_rf);
+                    
+                    DEBUG(7, "multiAEDS excluded atoms " << atom_i << " & " << *it << ": " << e_rf);
+
+                    // and add everything to the correct arrays
+                    conf.current().energies.eds_mult_vi[states_i_j] += e_rf;
+
+                    force_mult_states[states_i_j](atom_i) += f_rf;
+                    force_mult_states[states_i_j](*it) -= f_rf;
+
+                    DEBUG(8,"\t virial: ");
+
+                    // if (t_interaction_spec::do_virial != math::no_virial){
+                    for (int a = 0; a < 3; ++a){
+                      for (int b = 0; b < 3; ++b){
+                        DEBUG(9,"\t old: "<< conf.special().eds.virial_tensor_mult_endstates[states_i_j](a, b) 
+                          <<"\tadding: "<< r(a)*f_rf(b));
+                        conf.special().eds.virial_tensor_mult_endstates[states_i_j](a, b) += r(a) * f_rf(b);
+                      }
+                    }
+                    DEBUG(7, "\tatomic virial done");
                   }
                 }
+                //}
               } else{
                 unsigned int numstates = conf.special().eds.force_endstates.size();
                 for (unsigned int state = 0; state < numstates; state++) {

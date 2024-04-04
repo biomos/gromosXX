@@ -804,22 +804,28 @@ void configuration::Configuration::check_excluded_positions(topology::Topology c
     }
 
     // loop over the solute charge groups
+    DEBUG(6, "cutoff_2: " << cutoff_2);
     unsigned int idx_cg1 = 0, idx_cg2 = 0;
     for (idx_cg1 = 0; idx_cg1 < num_cg; idx_cg1++) {
       for (idx_cg2 = idx_cg1 + 1; idx_cg2 < num_cg; idx_cg2++) {
         // check if they are outside of inner cut off
-        periodicity.nearest_image(cg_cog(idx_cg1), cg_cog(idx_cg2), r);
+        periodicity.nearest_image(cg_cog(idx_cg1), cg_cog(idx_cg2), r);        
         const double d2 = math::abs2(r);
+        DEBUG(6, "cg1, cg2, d2: " << ", " << idx_cg1 << ", " << idx_cg2 << ", " << d2 );
         if (d2 > cutoff_2) {
           // if yes, check if any of the atoms are excluded
             for (int a1 = topo.chargegroup(idx_cg1), a1_to = topo.chargegroup(idx_cg1 + 1);
                    a1 != a1_to; ++a1) {
             for (int a2 = topo.chargegroup(idx_cg2), a2_to = topo.chargegroup(idx_cg2 + 1);
                      a2 != a2_to; ++a2) {
-
               bool not_excluded_via_eds= !((sim.param().reeds.reeds || sim.param().eds.eds) && (topo.eds_perturbed_solute().atoms().count(a1)>=1 && topo.eds_perturbed_solute().atoms().count(a2)>=1));
               if (topo.all_exclusion(a1).is_excluded(a2) && not_excluded_via_eds) {
                 // if yes, issue warning!
+                DEBUG(6, "d2: " << d2);
+                DEBUG(6, "a1 eds pert. solute: " << topo.eds_perturbed_solute().atoms().count(a1) );
+                DEBUG(6, "a2 eds pert. solute: " << topo.eds_perturbed_solute().atoms().count(a2) );
+                DEBUG(6, "EDS?: " << sim.param().eds.eds);
+                DEBUG(6, "not_excluded_via_eds: " << not_excluded_via_eds);
                 std::ostringstream msg;
                 msg << "Warning: Atoms " << a1 << " and " << a2
                     << " are excluded, but their respective charge groups "

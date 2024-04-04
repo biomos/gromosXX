@@ -1769,7 +1769,7 @@ io::In_Perturbation::read(topology::Topology &topo,
           atom.exclusion() = topo.exclusion(seq);
           topo.exclusion(seq).clear();
           DEBUG(10, "\treplace the exclusions to perturbation");
-          
+          DEBUG(10, "\tfor atom " << seq);
           topology::excl_cont_t & ex = topo.exclusion();
           int seq2=0;
           
@@ -1777,11 +1777,11 @@ io::In_Perturbation::read(topology::Topology &topo,
                   eto=ex.end(); eit!=eto; ++eit, ++seq2){
             if(eit->find_and_remove(seq)){
               atom.exclusion().insert(seq2);
+              DEBUG(10,"\t\tadapt perturbed exclusions with atom " << seq2);
             }
           }
           DEBUG(10, "\tadapted perturbed exclusions");
-  
-          
+                    
           atom.one_four_pair() = topo.one_four_pair(seq);
           topo.one_four_pair(seq).clear();
           DEBUG(10, "\treplaced the 1,4 interactions");

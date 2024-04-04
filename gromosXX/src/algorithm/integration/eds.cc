@@ -436,6 +436,7 @@ int algorithm::EDS
                   << " " << state_i_j[2] << " " << state_i_j[3] << " += " << 0.5* eds_mult_vi[state_i_j]);
               for (int i = 0; i < topo.num_atoms(); i++) {
                 F_site[site_i][state_i](i) += 0.5 * force_mult_endstates[state_i_j](i);
+                DEBUG(9,"\tF_site: atom " << i << math::v2s(force_mult_endstates[state_i_j](i)));
               }
               for (int a = 0; a < 3; ++a) {
                 for (int b = 0; b < 3; ++b) {
@@ -568,6 +569,7 @@ int algorithm::EDS
       // add all entries of eds_mult_vr to eds_vr
       // subtract term which was double counted
       for (int site_i = 0; site_i < numsites; site_i++){
+        conf.current().energies.eds_vmix += conf.current().energies.eds_mult_vmix[site_i];
         conf.current().energies.eds_vr += conf.current().energies.eds_mult_vr[site_i];
         //for (int site_j = site_i+1; site_j < numsites; site_j++){
           //int opt_state_i = minCombo[site_i];
