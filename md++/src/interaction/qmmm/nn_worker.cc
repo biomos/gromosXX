@@ -301,6 +301,8 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
   }*/
   
   // Write the forces
+  std::vector<std::vector<double>> forces_1 = molecule_1.attr("get_forces")().cast<std::vector<std::vector<double>>>();
+  std::vector<std::vector<double>> forces_2 = molecule_2.attr("get_forces")().cast<std::vector<std::vector<double>>>();
   it = qm_zone.qm.begin();
   for (unsigned i = 0, j = 0; it != to; ++it) {
     const bool is_state_A = stateA_first <= it->index && it->index <= stateA_last;
@@ -309,15 +311,15 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
 
     math::Vec force_1, force_2;
     if (is_state_A || is_both_states) {
-      force_1[0] = molecule_1.attr("get_forces")().attr("item")(i,0).cast<double>();
-      force_1[1] = molecule_1.attr("get_forces")().attr("item")(i,1).cast<double>();
-      force_1[2] = molecule_1.attr("get_forces")().attr("item")(i,2).cast<double>();
+      force_1[0] = forces_1[i][0];//molecule_1.attr("get_forces")().attr("item")(i,0).cast<double>();
+      force_1[1] = forces_1[i][1];//molecule_1.attr("get_forces")().attr("item")(i,1).cast<double>();
+      force_1[2] = forces_1[i][2];//molecule_1.attr("get_forces")().attr("item")(i,2).cast<double>();
       ++i;
     }
     if (is_state_B || is_both_states) {
-      force_2[0] = molecule_2.attr("get_forces")().attr("item")(j,0).cast<double>();
-      force_2[1] = molecule_2.attr("get_forces")().attr("item")(j,1).cast<double>();
-      force_2[2] = molecule_2.attr("get_forces")().attr("item")(j,2).cast<double>();
+      force_2[0] = forces_2[j][0];//molecule_2.attr("get_forces")().attr("item")(j,0).cast<double>();
+      force_2[1] = forces_2[j][1];//molecule_2.attr("get_forces")().attr("item")(j,1).cast<double>();
+      force_2[2] = forces_2[j][2];//molecule_2.attr("get_forces")().attr("item")(j,2).cast<double>();
       ++j;
     }
     it->force = (1 - lambda) * force_1 + lambda * force_2;
