@@ -284,7 +284,13 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
 
   // Write the energy
   const double energy = (1-lambda) * energy_1 + lambda * energy_2;
+  const double derivative = energy_2 - energy_1;
+
+  // Assign QM energy
   qm_zone.QM_energy() = energy;
+
+  // Assign QM energy derivative with respect to lambda
+  qm_zone.QM_energy_derivative() = derivative;
  
 
   // Get the forces
