@@ -234,8 +234,15 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
 #ifdef HAVE_PYBIND11
   // run NN interface
   // create the molecule object
+  // molecule 1 inner plus buffer and inner only
   py::object molecule_1 = py_modules["ase"].attr("Atoms")();
+  py::object molecule_1_inner = py_modules["ase"].attr("Atoms")();
+
+  // molecule 2 inner plus buffer and inner only
   py::object molecule_2 = py_modules["ase"].attr("Atoms")();
+  py::object molecule_2_inner = py_modules["ase"].attr("Atoms")();
+
+  //length unit conversion
   double length_to_nn = 1 / this->param->unit_factor_length;
 
   // perturbed states - specify indices of state A and B
@@ -264,27 +271,49 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
     const bool is_state_A = stateA_first <= it->index && it->index <= stateA_last;
     const bool is_state_B = stateB_first <= it->index && it->index <= stateB_last;
     const bool is_both_states = it->index >= both_states_first;
+
+    // select molecule 1 inner region
+    if (is_state_A) {
+      molecule_1_inner.attr("append")(atom); 
+    }
+
+    // select molecule 1 inner region plus buffer regions
     if (is_state_A || is_both_states) {
       molecule_1.attr("append")(atom); 
     }
+
+    // select molecule 2 inner region
+    if (is_state_B) {
+      molecule_2_inner.attr("append")(atom);
+    }
+
+    // select molecule 2 inner region plus buffer regions
     if (is_state_B || is_both_states) {
       molecule_2.attr("append")(atom);
     }
-    //molecule.attr("append")(atom); //original
   }
 
   const double lambda = sim.param().perturbation.lambda;
 
   // Run the calculator
   molecule_1.attr("set_calculator")(ml_calculator);
+  molecule_1_inner.attr("set_calculator")(ml_calculator);
   molecule_2.attr("set_calculator")(ml_calculator);
+  molecule_2_inner.attr("set_calculator")(ml_calculator);
   
-  const double energy_1 = molecule_1.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
-  const double energy_2 = molecule_2.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
+  // energies molecule 1
+  const double energy_1_tot = molecule_1.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
+  const double energy_1_inner = molecule_1_inner.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
+  //const double energy_1_interaction = energy_1_tot - energy_1_inner;
+
+  // energies molecule 2
+  const double energy_2_tot = molecule_2.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
+  const double energy_2_inner = molecule_2_inner.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
+  //const double energy_2_interaction = energy_2_tot - energy_2_inner;
 
   // Write the energy
-  const double energy = (1-lambda) * energy_1 + lambda * energy_2;
-  const double derivative = energy_2 - energy_1;
+  const double energy = (1-lambda) * energy_1_tot + lambda * energy_2_tot;
+  const double derivative = energy_2_tot - energy_1_tot;
 
   // Assign QM energy
   qm_zone.QM_energy() = energy;
@@ -307,8 +336,19 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
   }*/
   
   // Write the forces
-  std::vector<std::vector<double>> forces_1 = molecule_1.attr("get_forces")().cast<std::vector<std::vector<double>>>();
-  std::vector<std::vector<double>> forces_2 = molecule_2.attr("get_forces")().cast<std::vector<std::vector<double>>>();
+
+  // forces molecule 1 inner region plus buffer regions
+  std::vector<std::vector<double>> forces_1_tot = molecule_1.attr("get_forces")().cast<std::vector<std::vector<double>>>();
+
+  // forces molecule 1 inner region
+  std::vector<std::vector<double>> forces_1_inner = molecule_1_inner.attr("get_forces")().cast<std::vector<std::vector<double>>>();
+
+  // forces molecule 2 inner region plus buffer regions
+  std::vector<std::vector<double>> forces_2_tot = molecule_2.attr("get_forces")().cast<std::vector<std::vector<double>>>();
+
+  // forces molecule 2 inner
+  std::vector<std::vector<double>> forces_2_inner = molecule_2_inner.attr("get_forces")().cast<std::vector<std::vector<double>>>();
+
   it = qm_zone.qm.begin();
   for (unsigned i = 0, j = 0; it != to; ++it) {
     const bool is_state_A = stateA_first <= it->index && it->index <= stateA_last;
@@ -316,19 +356,33 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
     const bool is_both_states = it->index >= both_states_first;
 
     math::Vec force_1, force_2;
-    if (is_state_A || is_both_states) {
-      force_1[0] = forces_1[i][0];//molecule_1.attr("get_forces")().attr("item")(i,0).cast<double>();
-      force_1[1] = forces_1[i][1];//molecule_1.attr("get_forces")().attr("item")(i,1).cast<double>();
-      force_1[2] = forces_1[i][2];//molecule_1.attr("get_forces")().attr("item")(i,2).cast<double>();
+    if (is_state_A) {
+      force_1[0] = (1-lambda) * (forces_1_tot[i][0] - forces_1_inner[i][0]) + forces_1_inner[i][0];//molecule_1.attr("get_forces")().attr("item")(i,0).cast<double>();
+      force_1[1] = (1-lambda) * (forces_1_tot[i][1] - forces_1_inner[i][1]) + forces_1_inner[i][1];//molecule_1.attr("get_forces")().attr("item")(i,1).cast<double>();
+      force_1[2] = (1-lambda) * (forces_1_tot[i][2] - forces_1_inner[i][2]) + forces_1_inner[i][2];//molecule_1.attr("get_forces")().attr("item")(i,2).cast<double>();
+      it->force = force_1;
       ++i;
     }
-    if (is_state_B || is_both_states) {
-      force_2[0] = forces_2[j][0];//molecule_2.attr("get_forces")().attr("item")(j,0).cast<double>();
-      force_2[1] = forces_2[j][1];//molecule_2.attr("get_forces")().attr("item")(j,1).cast<double>();
-      force_2[2] = forces_2[j][2];//molecule_2.attr("get_forces")().attr("item")(j,2).cast<double>();
+    if (is_state_B) {
+      force_2[0] = lambda * (forces_2_tot[j][0] - forces_2_inner[j][0]) + forces_2_inner[j][0];//molecule_2.attr("get_forces")().attr("item")(j,0).cast<double>();
+      force_2[1] = lambda * (forces_2_tot[j][1] - forces_2_inner[j][1]) + forces_2_inner[j][1];//molecule_2.attr("get_forces")().attr("item")(j,1).cast<double>();
+      force_2[2] = lambda * (forces_2_tot[j][2] - forces_2_inner[j][2]) + forces_2_inner[j][2];//molecule_2.attr("get_forces")().attr("item")(j,2).cast<double>();
+      it->force = force_2;
       ++j;
     }
-    it->force = (1 - lambda) * force_1 + lambda * force_2;
+    if (is_both_states) {
+      force_1[0] = (1-lambda) * forces_1_tot[i][0];//molecule_1.attr("get_forces")().attr("item")(i,0).cast<double>();
+      force_1[1] = (1-lambda) * forces_1_tot[i][1];//molecule_1.attr("get_forces")().attr("item")(i,1).cast<double>();
+      force_1[2] = (1-lambda) * forces_1_tot[i][2];
+
+      force_2[0] = lambda * forces_2_tot[j][0];//molecule_2.attr("get_forces")().attr("item")(j,0).cast<double>();
+      force_2[1] = lambda * forces_2_tot[j][1];//molecule_2.attr("get_forces")().attr("item")(j,1).cast<double>();
+      force_2[2] = lambda * forces_2_tot[j][2];//molecule_2.attr("get_forces")().attr("item")(j,2).cast<double>();
+      it->force = force_1 + force_2;
+      ++i;
+      ++j;
+    }
+//    it->force = (1 - lambda) * force_1 + lambda * force_2;
     it->force *= this->param->unit_factor_force;
     DEBUG(15, "force from NN, atom " << it->index << " : " << math::v2s(it->force));
   }
@@ -344,8 +398,8 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
     const double val_energy_1 = molecule_1.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
     const double val_energy_2 = molecule_2.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
     const double val_energy = (1-lambda) * val_energy_1 + lambda * val_energy_2;
-    const double dev_1 = energy_1 - val_energy_1;
-    const double dev_2 = energy_2 - val_energy_2;
+    const double dev_1 = energy_1_tot - val_energy_1;
+    const double dev_2 = energy_2_tot - val_energy_2;
     const double dev_overall = energy - val_energy;
     const double dev = fmax(fabs(dev_1), fabs(dev_2));
     conf.current().energies.nn_valid = dev;
