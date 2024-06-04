@@ -598,7 +598,8 @@ void io::In_Parameter::read_WRITETRAJ(simulation::Parameter &param,
 
         block.get_next_parameter("NTWX", param.write.position, "", "");
         std::string str_max_ene = io::to_string(configuration::Energy::MAX_ENERGY_INDEX);
-        block.get_next_parameter("NTWSE", param.write.energy_index, ">=0 && <="+str_max_ene, "");
+        // NTWSE<0 means we write all snapshots with energy > sim.param().qmmm.nn.val_thresh
+        block.get_next_parameter("NTWSE", param.write.energy_index, ">=-"+str_max_ene+" && <="+str_max_ene, "");
         block.get_next_parameter("NTWV", param.write.velocity, "", "");
         block.get_next_parameter("NTWF", param.write.force, "", "");
         block.get_next_parameter("NTWE", param.write.energy, ">=0", "");

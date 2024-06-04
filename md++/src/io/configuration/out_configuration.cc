@@ -288,6 +288,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
   bool constraint_force = sim.param().constraint.solute.algorithm == simulation::constr_shake ||
           sim.param().constraint.solvent.algorithm == simulation::constr_shake;
 
+  // NTWSE > 0 -> minimum energy
   // check whether a new energy minimum was found
   bool minimum_found = false;
   if (sim.param().write.energy_index > 0) {
@@ -295,6 +296,17 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
 
     // found a new minimum?
     if (current_energy < minimum_energy) {
+      minimum_found = true;
+      minimum_energy = current_energy;
+    }
+  }
+  
+  //  NTWSE < 0 -> adaptive sampling
+  if (sim.param().write.energy_index < 0) {
+    double current_energy = conf.old().energies.get_energy_by_index(-sim.param().write.energy_index); // use energy index value as the value for NTWSE
+
+    // found a new minimum?
+    if (fabs(current_energy) > sim.param().qmmm.nn.val_thresh){
       minimum_found = true;
       minimum_energy = current_energy;
     }
