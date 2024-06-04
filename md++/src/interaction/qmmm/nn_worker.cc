@@ -282,11 +282,12 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
   }*/
   
   // Write the forces
+  std::vector<std::vector<double>> forces = molecule.attr("get_forces")().cast<std::vector<std::vector<double>>>();
   it = qm_zone.qm.begin();
   for (unsigned i = 0; it != to; ++it, ++i) {
-    it->force[0] = molecule.attr("get_forces")().attr("item")(i,0).cast<double >();
-    it->force[1] = molecule.attr("get_forces")().attr("item")(i,1).cast<double >();
-    it->force[2] = molecule.attr("get_forces")().attr("item")(i,2).cast<double >();
+    it->force[0] = forces[i][0];//molecule.attr("get_forces")().attr("item")(i,0).cast<double >();
+    it->force[1] = forces[i][1];//molecule.attr("get_forces")().attr("item")(i,1).cast<double >();
+    it->force[2] = forces[i][2];//molecule.attr("get_forces")().attr("item")(i,2).cast<double >();
     it->force *= this->param->unit_factor_force;
     DEBUG(15, "force from NN, atom " << it->index << " : " << math::v2s(it->force));
   }
@@ -335,7 +336,7 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
     if (fabs(dev) > sim.param().qmmm.nn.val_thresh) {
       std::ostringstream msg;
       msg << "Deviation from validation model above threshold in step " << sim.steps() << " : " << dev;
-      io::messages.add(msg.str(), this->name(), io::message::warning);
+      io::messages.add(msg.str(), this->name(), io::message::notice); // Changed to notice
       if(sim.param().qmmm.nn.val_forceconstant != 0.0){
         // add a biasing force between the two NN networks
         double dev_squared = (dev*dev - sim.param().qmmm.nn.val_thresh * sim.param().qmmm.nn.val_thresh);
