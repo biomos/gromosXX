@@ -310,8 +310,8 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
   const double energy_2_inner = molecule_2_inner.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
 
   // Write the energy
-  const double energy_1 = (1-lambda) * (energy_1_tot - energy_1_inner) + energy_1_inner;
-  const double energy_2 = lambda * (energy_2_tot - energy_2_inner) + energy_2_inner;
+  const double energy_1 = (1-lambda) * energy_1_tot +     lambda * energy_1_inner;
+  const double energy_2 =     lambda * energy_2_tot + (1-lambda) * energy_2_inner;
   const double energy = energy_1 + energy_2;
   const double derivative = - energy_1_tot + energy_1_inner + energy_2_tot - energy_2_inner;
 
@@ -357,20 +357,20 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
 
     math::Vec force_1, force_2;
     if (is_state_A) {
-      force_1[0] = (1-lambda) * (forces_1_tot[i][0] - forces_1_inner[i][0]) + forces_1_inner[i][0];//molecule_1.attr("get_forces")().attr("item")(i,0).cast<double>();
-      force_1[1] = (1-lambda) * (forces_1_tot[i][1] - forces_1_inner[i][1]) + forces_1_inner[i][1];//molecule_1.attr("get_forces")().attr("item")(i,1).cast<double>();
-      force_1[2] = (1-lambda) * (forces_1_tot[i][2] - forces_1_inner[i][2]) + forces_1_inner[i][2];//molecule_1.attr("get_forces")().attr("item")(i,2).cast<double>();
+      force_1[0] = (1-lambda) * forces_1_tot[i][0] + lambda * forces_1_inner[i][0];//molecule_1.attr("get_forces")().attr("item")(i,0).cast<double>();
+      force_1[1] = (1-lambda) * forces_1_tot[i][1] + lambda * forces_1_inner[i][1];//molecule_1.attr("get_forces")().attr("item")(i,1).cast<double>();
+      force_1[2] = (1-lambda) * forces_1_tot[i][2] + lambda * forces_1_inner[i][2];//molecule_1.attr("get_forces")().attr("item")(i,2).cast<double>();
       it->force = force_1;
       ++i;
     }
-    if (is_state_B) {
-      force_2[0] = lambda * (forces_2_tot[j][0] - forces_2_inner[j][0]) + forces_2_inner[j][0];//molecule_2.attr("get_forces")().attr("item")(j,0).cast<double>();
-      force_2[1] = lambda * (forces_2_tot[j][1] - forces_2_inner[j][1]) + forces_2_inner[j][1];//molecule_2.attr("get_forces")().attr("item")(j,1).cast<double>();
-      force_2[2] = lambda * (forces_2_tot[j][2] - forces_2_inner[j][2]) + forces_2_inner[j][2];//molecule_2.attr("get_forces")().attr("item")(j,2).cast<double>();
+    else if (is_state_B) {
+      force_2[0] = lambda * forces_2_tot[j][0] + (1 - lambda) * forces_2_inner[j][0];//molecule_2.attr("get_forces")().attr("item")(j,0).cast<double>();
+      force_2[1] = lambda * forces_2_tot[j][1] + (1 - lambda) * forces_2_inner[j][1];//molecule_2.attr("get_forces")().attr("item")(j,1).cast<double>();
+      force_2[2] = lambda * forces_2_tot[j][2] + (1 - lambda) * forces_2_inner[j][2];//molecule_2.attr("get_forces")().attr("item")(j,2).cast<double>();
       it->force = force_2;
       ++j;
     }
-    if (is_both_states) {
+    else if (is_both_states) {
       force_1[0] = (1-lambda) * forces_1_tot[i][0];//molecule_1.attr("get_forces")().attr("item")(i,0).cast<double>();
       force_1[1] = (1-lambda) * forces_1_tot[i][1];//molecule_1.attr("get_forces")().attr("item")(i,1).cast<double>();
       force_1[2] = (1-lambda) * forces_1_tot[i][2];
