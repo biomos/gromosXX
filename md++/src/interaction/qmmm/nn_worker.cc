@@ -239,8 +239,8 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
   py::object molecule_1_inner = py_modules["ase"].attr("Atoms")();
 
   // molecule 2 inner plus buffer and inner only
-  py::object molecule_2 = py_modules["ase"].attr("Atoms")();
-  py::object molecule_2_inner = py_modules["ase"].attr("Atoms")();
+  //py::object molecule_2 = py_modules["ase"].attr("Atoms")();
+  //py::object molecule_2_inner = py_modules["ase"].attr("Atoms")();
 
   //length unit conversion
   double length_to_nn = 1 / this->param->unit_factor_length;
@@ -251,9 +251,9 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
   // both states contain also atoms <both_states_first ; +inf)
   const unsigned stateA_first = 0;
   const unsigned stateA_last = 5;
-  const unsigned stateB_first = 6;
-  const unsigned stateB_last = 10;
-  const unsigned both_states_first = 11;
+  //const unsigned stateB_first = 6;
+  //const unsigned stateB_last = 10;
+  const unsigned both_states_first = 12;
 
   std::set<interaction::QM_Atom>::const_iterator it, to;
   it = qm_zone.qm.begin();
@@ -269,7 +269,7 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
     py_coordinates.attr("append")(nn_pos[2]);
     py::object atom = py_modules["ase"].attr("Atom")("symbol"_a = atomic_number, "position"_a = py_coordinates);
     const bool is_state_A = stateA_first <= it->index && it->index <= stateA_last;
-    const bool is_state_B = stateB_first <= it->index && it->index <= stateB_last;
+    //const bool is_state_B = stateB_first <= it->index && it->index <= stateB_last;
     const bool is_both_states = it->index >= both_states_first;
 
     // select molecule 1 inner region
@@ -283,14 +283,14 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
     }
 
     // select molecule 2 inner region
-    if (is_state_B) {
-      molecule_2_inner.attr("append")(atom);
-    }
+    //if (is_state_B) {
+    //  molecule_2_inner.attr("append")(atom);
+    //}
 
     // select molecule 2 inner region plus buffer regions
-    if (is_state_B || is_both_states) {
-      molecule_2.attr("append")(atom);
-    }
+    //if (is_state_B || is_both_states) {
+    //  molecule_2.attr("append")(atom);
+    //}
   }
 
   const double lambda = sim.param().perturbation.lambda;
@@ -298,22 +298,22 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
   // Run the calculator
   molecule_1.attr("set_calculator")(ml_calculator);
   molecule_1_inner.attr("set_calculator")(ml_calculator);
-  molecule_2.attr("set_calculator")(ml_calculator);
-  molecule_2_inner.attr("set_calculator")(ml_calculator);
+  //molecule_2.attr("set_calculator")(ml_calculator);
+  //molecule_2_inner.attr("set_calculator")(ml_calculator);
   
   // energies molecule 1
   const double energy_1_tot = molecule_1.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
   const double energy_1_inner = molecule_1_inner.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
 
   // energies molecule 2
-  const double energy_2_tot = molecule_2.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
-  const double energy_2_inner = molecule_2_inner.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
+  //const double energy_2_tot = molecule_2.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
+  //const double energy_2_inner = molecule_2_inner.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
 
   // Write the energy
-  const double energy_1 = (1-lambda) * (energy_1_tot - energy_1_inner) + energy_1_inner;
-  const double energy_2 = lambda * (energy_2_tot - energy_2_inner) + energy_2_inner;
-  const double energy = energy_1 + energy_2;
-  const double derivative = - energy_1_tot + energy_1_inner + energy_2_tot - energy_2_inner;
+  const double energy = (1-lambda) * (energy_1_tot - energy_1_inner) + energy_1_inner;
+  //const double energy_2 = lambda * (energy_2_tot - energy_2_inner) + energy_2_inner;
+  //const double energy = energy_1 + energy_2;
+  const double derivative = - energy_1_tot + energy_1_inner;
 
   // Assign QM energy
   qm_zone.QM_energy() = energy;
@@ -344,15 +344,15 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
   std::vector<std::vector<double>> forces_1_inner = molecule_1_inner.attr("get_forces")().cast<std::vector<std::vector<double>>>();
 
   // forces molecule 2 inner region plus buffer regions
-  std::vector<std::vector<double>> forces_2_tot = molecule_2.attr("get_forces")().cast<std::vector<std::vector<double>>>();
+  //std::vector<std::vector<double>> forces_2_tot = molecule_2.attr("get_forces")().cast<std::vector<std::vector<double>>>();
 
   // forces molecule 2 inner
-  std::vector<std::vector<double>> forces_2_inner = molecule_2_inner.attr("get_forces")().cast<std::vector<std::vector<double>>>();
+  //std::vector<std::vector<double>> forces_2_inner = molecule_2_inner.attr("get_forces")().cast<std::vector<std::vector<double>>>();
 
   it = qm_zone.qm.begin();
   for (unsigned i = 0, j = 0; it != to; ++it) {
     const bool is_state_A = stateA_first <= it->index && it->index <= stateA_last;
-    const bool is_state_B = stateB_first <= it->index && it->index <= stateB_last;
+    //const bool is_state_B = stateB_first <= it->index && it->index <= stateB_last;
     const bool is_both_states = it->index >= both_states_first;
 
     math::Vec force_1, force_2;
@@ -363,22 +363,22 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
       it->force = force_1;
       ++i;
     }
-    if (is_state_B) {
-      force_2[0] = lambda * (forces_2_tot[j][0] - forces_2_inner[j][0]) + forces_2_inner[j][0];//molecule_2.attr("get_forces")().attr("item")(j,0).cast<double>();
-      force_2[1] = lambda * (forces_2_tot[j][1] - forces_2_inner[j][1]) + forces_2_inner[j][1];//molecule_2.attr("get_forces")().attr("item")(j,1).cast<double>();
-      force_2[2] = lambda * (forces_2_tot[j][2] - forces_2_inner[j][2]) + forces_2_inner[j][2];//molecule_2.attr("get_forces")().attr("item")(j,2).cast<double>();
-      it->force = force_2;
-      ++j;
-    }
+    //if (is_state_B) {
+    //  force_2[0] = lambda * (forces_2_tot[j][0] - forces_2_inner[j][0]) + forces_2_inner[j][0];//molecule_2.attr("get_forces")().attr("item")(j,0).cast<double>();
+    //  force_2[1] = lambda * (forces_2_tot[j][1] - forces_2_inner[j][1]) + forces_2_inner[j][1];//molecule_2.attr("get_forces")().attr("item")(j,1).cast<double>();
+    //  force_2[2] = lambda * (forces_2_tot[j][2] - forces_2_inner[j][2]) + forces_2_inner[j][2];//molecule_2.attr("get_forces")().attr("item")(j,2).cast<double>();
+    //  it->force = force_2;
+    //  ++j;
+    //}
     if (is_both_states) {
       force_1[0] = (1-lambda) * forces_1_tot[i][0];//molecule_1.attr("get_forces")().attr("item")(i,0).cast<double>();
       force_1[1] = (1-lambda) * forces_1_tot[i][1];//molecule_1.attr("get_forces")().attr("item")(i,1).cast<double>();
       force_1[2] = (1-lambda) * forces_1_tot[i][2];
 
-      force_2[0] = lambda * forces_2_tot[j][0];//molecule_2.attr("get_forces")().attr("item")(j,0).cast<double>();
-      force_2[1] = lambda * forces_2_tot[j][1];//molecule_2.attr("get_forces")().attr("item")(j,1).cast<double>();
-      force_2[2] = lambda * forces_2_tot[j][2];//molecule_2.attr("get_forces")().attr("item")(j,2).cast<double>();
-      it->force = force_1 + force_2;
+      //force_2[0] = lambda * forces_2_tot[j][0];//molecule_2.attr("get_forces")().attr("item")(j,0).cast<double>();
+      //force_2[1] = lambda * forces_2_tot[j][1];//molecule_2.attr("get_forces")().attr("item")(j,1).cast<double>();
+      //force_2[2] = lambda * forces_2_tot[j][2];//molecule_2.attr("get_forces")().attr("item")(j,2).cast<double>();
+      it->force = force_1;
       ++i;
       ++j;
     }
@@ -394,32 +394,32 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
     //py::object val_molecule(molecule); we don't need to create a new (reference to a) molecule 
     molecule_1.attr("set_calculator")(val_calculator);
     molecule_1_inner.attr("set_calculator")(val_calculator);
-    molecule_2.attr("set_calculator")(val_calculator);
-    molecule_2_inner.attr("set_calculator")(val_calculator);
+    //molecule_2.attr("set_calculator")(val_calculator);
+    //molecule_2_inner.attr("set_calculator")(val_calculator);
     // Energy of validation model
     // energies molecule 1
     const double val_energy_1_tot = molecule_1.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
     const double val_energy_1_inner = molecule_1_inner.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
 
     // energies molecule 2
-    const double val_energy_2_tot = molecule_2.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
-    const double val_energy_2_inner = molecule_2_inner.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
+    //const double val_energy_2_tot = molecule_2.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
+    //const double val_energy_2_inner = molecule_2_inner.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
 
-    const double val_energy_1 = (1-lambda) * (val_energy_1_tot - val_energy_1_inner) + val_energy_1_inner;
-    const double val_energy_2 = lambda * (val_energy_2_tot - val_energy_2_inner) + val_energy_2_inner;
-    const double val_energy = val_energy_1 + val_energy_2;
+    const double val_energy = (1-lambda) * (val_energy_1_tot - val_energy_1_inner) + val_energy_1_inner;
+    //const double val_energy_2 = lambda * (val_energy_2_tot - val_energy_2_inner) + val_energy_2_inner;
+    //const double val_energy = val_energy_1 + val_energy_2;
     //const double val_energy_1 = molecule_1.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
     //const double val_energy_2 = molecule_2.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
     //const double val_energy = (1-lambda) * val_energy_1 + lambda * val_energy_2;
-    const double dev_1 = energy_1 - val_energy_1;
-    const double dev_2 = energy_2 - val_energy_2;
-    const double dev_overall = energy - val_energy;
-    const double dev = fmax(fabs(dev_1), fabs(dev_2));
+    //const double dev_1 = energy_1 - val_energy_1;
+    //const double dev_2 = energy_2 - val_energy_2;
+    const double dev = energy - val_energy;
+    //const double dev = fmax(fabs(dev_1), fabs(dev_2));
     conf.current().energies.nn_valid = dev;
     DEBUG(7, "Deviation from validation model: " << dev);
     if (fabs(dev) > sim.param().qmmm.nn.val_thresh) {
       std::ostringstream msg;
-      msg << "Deviation from validation model above threshold in step " << sim.steps() << " : " << dev_overall << ", molecule 1 deviation: " << dev_1 << ", molecule 2 deviation: " << dev_2;
+      msg << "Deviation from validation model above threshold in step " << sim.steps() << " : " << dev;
       io::messages.add(msg.str(), this->name(), io::message::notice); // Changed to notice
       //if(sim.param().qmmm.nn.val_forceconstant != 0.0){
       //  // add a biasing force between the two NN networks
