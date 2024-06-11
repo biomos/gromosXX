@@ -289,9 +289,10 @@ int io::simple_crosschecks(simulation::Simulation & sim) {
     // QMMM with perturbation is allowed only for mechanical embedding with NN
     // and standard pairlist
     if (param.perturbation.perturbation &&
-        ((param.qmmm.qmmm != simulation::qmmm_off && param.qmmm.qmmm != simulation::qmmm_mechanical) ||
-         param.qmmm.qm_ch != simulation::qm_ch_constant ||
-         param.qmmm.software != simulation::qm_nn
+        param.qmmm.qmmm != simulation::qmmm_off &&
+        ! (param.qmmm.qmmm == simulation::qmmm_mechanical &&
+            param.qmmm.qm_ch == simulation::qm_ch_constant &&
+            param.qmmm.software == simulation::qm_nn
          )) {
       io::messages.add("QMMM block: Perturbation allowed only with ME, constant charge, NN and standard pairlist",
                          "In_Parameter", io::message::error);
