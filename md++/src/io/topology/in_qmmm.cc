@@ -1007,16 +1007,20 @@ void io::In_QMMM::read(topology::Topology& topo,
         }
       }
     } // NNMODEL
-    { // NNVALID
+   { // NNVALID
       buffer = m_block["NNVALID"];
-      if (buffer.size()) {
-        if (buffer.size() != 4) {
-          io::messages.add("NNVALID block corrupt. Provide 2 lines.",
-                  "In_QMMM", io::message::error);
-          return;
-        }
-        sim.param().qmmm.nn.val_model_path = buffer[1];
-        std::string line(buffer[2]);
+      if (!buffer.size()) {
+        io::messages.add("NNVALID block missing",
+                "In_QMMM", io::message::error);
+        return;
+      }
+      else {
+        // loop over number of validations buffer and add lines to val_model_path
+        for ( int i = 1; i < buffer.size() - 2; ++i ) {
+          sim.param().qmmm.nn.val_model_paths.push_back(buffer[i]);
+        }   
+        std::string line(buffer.end()[-2]);
+        DEBUG(11, "val_model_path: " << line);
         _lineStream.clear();
         _lineStream.str(line);
         unsigned val_steps;

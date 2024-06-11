@@ -19,12 +19,27 @@ libgrocukernel.a: $(libgrocukernel_a_OBJECTS) libgrocukernel.o
 
 noinst_LIBRARIES = libgrocukernel.a
 
+xxincludedir = $(includedir)/md++/cukernel
+xxinclude_HEADERS = constraints.h \
+                    cudaKernel.h \
+                    cudaShake.h \
+                    gpu_status.h \
+                    interaction.h \
+                    macros.h \
+                    pairlist.h \
+                    parameter.h \
+                    lib/double3.h \
+                    lib/float3.h \
+                    lib/math.h \
+                    lib/types.h \
+                    lib/utils.h
+
 libgrocukernel_a_SOURCES =  io.cu \
                             pairlist.cu \
                             interaction.cu \
                             constraints.cu \
                             cudaShake.cu \
-							lib/utils.cu
+                            lib/utils.cu
 
 bin_PROGRAMS =
 

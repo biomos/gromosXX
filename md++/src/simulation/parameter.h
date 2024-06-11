@@ -4465,7 +4465,7 @@ namespace simulation
        */
       nn_param_struct() :
                       model_path()
-                      , val_model_path() 
+                      , val_model_paths() 
                       , val_thresh(0.0)
                       , val_steps(0)
                       , val_forceconstant(0.0)
@@ -4479,9 +4479,9 @@ namespace simulation
          */
         std::string model_path;
         /**
-         * Schnetpack model path
+         * Schnetpack model paths
          */
-        std::string val_model_path;
+        std::vector<std::string> val_model_paths;
         /**
          * Threshold of energy validation
          */

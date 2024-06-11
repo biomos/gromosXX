@@ -70,8 +70,8 @@ double util::now()
  * Constructor
  */
 util::Algorithm_Timer::Algorithm_Timer(const std::string & name) {
-  DEBUG(5, "Construct main-timer: " + m_maintimer_name);
-  m_maintimer_name = name;
+  DEBUG(5, "Construct main-timer: " + m_name);
+  m_name = name;
 
   /* 
   *  Evaluate number of available threads
@@ -88,19 +88,20 @@ util::Algorithm_Timer::Algorithm_Timer(const std::string & name) {
     }
   #endif
   m_max_thread_num = tracked_thread_count;
-  DEBUG(10, "Maximum tracked threads in main-timer " + m_maintimer_name + " : " + std::to_string(m_max_thread_num)); 
+  DEBUG(10, "Maximum tracked threads in main-timer " + m_name + " : " + std::to_string(m_max_thread_num)); 
 }
 
 /**
  * initializes a (sub) timer
  */
 void util::Algorithm_Timer::initialize(const std::string & name) {
-  DEBUG(5, "Initializes sub-timer " + name + " of main-timer " + m_maintimer_name + ".");
+  DEBUG(5, "Initializes sub-timer " + name + " of main-timer " + m_name + ".");
 
-  Subtimer_Class subtimer_obj(m_max_thread_num);    
-  m_subtimers.emplace(std::make_pair(name, subtimer_obj));
-  subtimer_in_use.clear();   
-  
+  std::pair<Subtimer_Container::iterator, bool>
+    ret = m_subtimers.emplace(name, Subtimer(m_max_thread_num));
+  // assert the insertion took place
+  assert(ret.second && "re-initialization of sub-timer is not allowed");
+  subtimer_in_use.clear();
 }
 
 /**
@@ -119,7 +120,8 @@ void util::Algorithm_Timer::start(const simulation::Simulation & sim) {
    * Create detailed timing output. Set "@print timings_report" as md++ input parameter
    */  
   m_detailed_report = false;
-  if (sim.param().print.timings_report) {         //If "@print timings_report" is set as md++ parameter
+  //If "@print timings_report" is set as md++ parameter
+  if (sim.param().print.timings_report) {
 
     //Write detailed report for timesteps 900 to 904 (if pairlist skipstep = 5)
     const uint first_report_step = (180 * sim.param().pairlist.skip_step);
@@ -264,45 +266,43 @@ void util::Algorithm_Timer::stop_subtimer(const std::string & name) {
       io::messages.add("Usage of both OpenMP and MPI not yet implemented in util/timing.cc. Timings might be wrong!","Timing",io::message::notice);
     #endif
   #endif
-  
-  /*
-  *  Check if an timer has been stopped without beeing in the subtimer map.
-  *  This should never happen!!
-  *  It would mean, that the subtimer was not yet initialized and we have a serious race condition
-  */
-  //#pragma omp critical (timing_system)
-  {
-    if (m_subtimers.count(name) == 0){  
+
+  #pragma omp critical (timing_system)
+  {  /*
+    *  Check if the timer has been stopped without beeing in the subtimer map.
+    *  This should never happen!!
+    *  It would mean, that the subtimer was not yet initialized and we have a serious race condition
+    *
+    * calling .count() without lock is thread-unsafe
+    * existence of 'name' means initialized subtimer, however
+    * adding another subtimer simultaneously by another thread
+    * may lead to rehashing, that temporarily invalidates
+    * the .count() call
+    */ 
+    if (m_subtimers.count(name) == 0) {  
       {
         //io::messages.add("Sub-timer " + name + " was stopped that has not been initialized before!","Timing",io::message::notice);
         //DEBUG(5, "Sub-timer " + name + " was stopped that has not been initialized before!");
         throw std::runtime_error("Sub-timer " + name + " was stopped that has not been initialized before! (Simulation step: " + std::to_string(m_step_index) + ")\n");
       }
     }
-  }
-  
-  #pragma omp critical (timing_system)
-  {
     m_subtimers.at(name).end_time.at(thread_id) = util::now();
 
     if (thread_id == m_subtimers.at(name).master_thread){
       m_subtimers.at(name).total_walltime += (m_subtimers.at(name).end_time.at(thread_id) - m_subtimers.at(name).start_time.at(thread_id));
     }
     m_subtimers.at(name).total_cputime += (m_subtimers.at(name).end_time.at(thread_id) - m_subtimers.at(name).start_time.at(thread_id));
-  }
 
   /*
   * Disable subtimer_in_use flag after stopping subtimer
   */
   #ifndef NDEBUG
-    #pragma omp critical (timing_system)
-    {
-      std::string jobname = name + std::to_string(thread_id);
-      if (name != "total" && subtimer_in_use == jobname){
-        subtimer_in_use.clear();
-      }    
-    }
+    std::string jobname = name + std::to_string(thread_id);
+    if (name != "total" && subtimer_in_use == jobname){
+      subtimer_in_use.clear();
+    }    
   #endif
+  }
 }
 
 
@@ -312,7 +312,7 @@ void util::Algorithm_Timer::stop_subtimer(const std::string & name) {
 double util::Algorithm_Timer::get_total(const std::string & name) {
 
   if (m_subtimers.count(name) == 0){
-    throw std::runtime_error(std::string("Timer ") + m_maintimer_name + ": " + name + 
+    throw std::runtime_error(std::string("Timer ") + m_name + ": " + name + 
             " timer does not exist.");  
   }
   
@@ -334,7 +334,7 @@ void util::Algorithm_Timer::print_report(std::ostream & os) {
   os << "DETAILED_TIMING" << std::endl;
   for(auto& subtimer : m_subtimers) {
     //Print start time
-    os << m_maintimer_name;
+    os << m_name;
     os << ";" << subtimer.first;
     os << ";start";
     os << std::fixed << std::setprecision(6);
@@ -372,7 +372,7 @@ void util::Algorithm_Timer::print(std::ostream &os) {
   const double total = get_total();
 
   os.precision(3);
-  os << std::left << std::setw(10) << " " << std::left << std::setw(30) << m_maintimer_name 
+  os << std::left << std::setw(10) << " " << std::left << std::setw(30) << m_name 
      << std::setw(14) << std::right << total;
      
   if (m_subtimers.size() > 1){
@@ -381,7 +381,7 @@ void util::Algorithm_Timer::print(std::ostream &os) {
     os << std::endl;
   }
   
-  std::unordered_map<std::string, Subtimer_Class>::const_iterator
+  Subtimer_Container::const_iterator
       it = m_subtimers.begin(),
       to = m_subtimers.end();
   
