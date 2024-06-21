@@ -304,16 +304,26 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
   // energies molecule 1
   const double energy_1_tot = molecule_1.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
   const double energy_1_inner = molecule_1_inner.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
+  const double energy_1_interaction = energy_1_tot - energy_1_inner;
 
   // energies molecule 2
   const double energy_2_tot = molecule_2.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
   const double energy_2_inner = molecule_2_inner.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
+  const double energy_2_interaction = energy_2_tot - energy_2_inner;
 
   // Write the energy
-  const double energy_1 = (1-lambda) * energy_1_tot +     lambda * energy_1_inner;
-  const double energy_2 =     lambda * energy_2_tot + (1-lambda) * energy_2_inner;
-  const double energy = energy_1 + energy_2;
-  const double derivative = - energy_1_tot + energy_1_inner + energy_2_tot - energy_2_inner;
+
+  // soft-core equation = -kT * ln[(1-lambda) * exp(-HA/kT) + lambda * exp(-HB/kT)]
+  double beta = 1.0 / (sim.param().multibath.multibath.bath(0).temperature * math::k_Boltzmann);
+  double kt = sim.param().multibath.multibath.bath(0).temperature * math::k_Boltzmann;
+
+  //const double energy_1 = (1-lambda) * energy_1_tot +     lambda * energy_1_inner;
+  const double energy_1 = (1-lambda) * exp(- beta * (energy_1_interaction));
+  //const double energy_2 =     lambda * energy_2_tot + (1-lambda) * energy_2_inner;
+  const double energy_2 =     lambda * exp(- beta * (energy_2_interaction));
+  const double energy = - kt * log(energy_1 + energy_2) + lambda * energy_1_inner + (1-lambda) * energy_2_inner;
+  //const double derivative = - energy_1_tot + energy_1_inner + energy_2_tot - energy_2_inner;
+  const double derivative = (kt * (exp(- beta * energy_1_interaction) - exp(- beta * energy_2_interaction))) / (energy_1 + energy_2) + energy_1_inner - energy_2_inner;
 
   // Assign QM energy
   qm_zone.QM_energy() = energy;
@@ -400,14 +410,18 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
     // energies molecule 1
     const double val_energy_1_tot = molecule_1.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
     const double val_energy_1_inner = molecule_1_inner.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
+    const double val_energy_1_interaction = val_energy_1_tot - val_energy_1_inner;
 
     // energies molecule 2
     const double val_energy_2_tot = molecule_2.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
     const double val_energy_2_inner = molecule_2_inner.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
+    const double val_energy_2_interaction = val_energy_2_tot - val_energy_2_inner;
 
-    const double val_energy_1 = (1-lambda) * (val_energy_1_tot - val_energy_1_inner) + val_energy_1_inner;
-    const double val_energy_2 = lambda * (val_energy_2_tot - val_energy_2_inner) + val_energy_2_inner;
-    const double val_energy = val_energy_1 + val_energy_2;
+    //const double val_energy_1 = (1-lambda) * (val_energy_1_tot - val_energy_1_inner) + val_energy_1_inner;
+    const double val_energy_1 = (1-lambda) * exp(- beta * val_energy_1_interaction);
+    //const double val_energy_2 = lambda * (val_energy_2_tot - val_energy_2_inner) + val_energy_2_inner;
+    const double val_energy_2 = lambda * exp(- beta * val_energy_2_interaction);
+    const double val_energy = - kt * log(val_energy_1 + val_energy_2) + lambda * val_energy_1_inner + (1-lambda) * val_energy_2_inner;
     //const double val_energy_1 = molecule_1.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
     //const double val_energy_2 = molecule_2.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
     //const double val_energy = (1-lambda) * val_energy_1 + lambda * val_energy_2;
