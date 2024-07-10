@@ -250,10 +250,10 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
   // To state B, we take everything between <stateB_first ; stateB_last>
   // both states contain also atoms <both_states_first ; +inf)
   const unsigned stateA_first = 0;
-  const unsigned stateA_last = 5;
-  const unsigned stateB_first = 6;
-  const unsigned stateB_last = 10;
-  const unsigned both_states_first = 11;
+  const unsigned stateA_last = 4;
+  const unsigned stateB_first = 5;
+  const unsigned stateB_last = 9;
+  const unsigned both_states_first = 10;
 
   std::set<interaction::QM_Atom>::const_iterator it, to;
   it = qm_zone.qm.begin();
@@ -405,8 +405,8 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
     const double val_energy_2_tot = molecule_2.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
     const double val_energy_2_inner = molecule_2_inner.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
 
-    const double val_energy_1 = (1-lambda) * (val_energy_1_tot - val_energy_1_inner) + val_energy_1_inner;
-    const double val_energy_2 = lambda * (val_energy_2_tot - val_energy_2_inner) + val_energy_2_inner;
+    const double val_energy_1 = (1-lambda) * val_energy_1_tot +     lambda * val_energy_1_inner;
+    const double val_energy_2 = lambda * val_energy_2_tot + (1-lambda) * val_energy_2_inner;
     const double val_energy = val_energy_1 + val_energy_2;
     //const double val_energy_1 = molecule_1.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
     //const double val_energy_2 = molecule_2.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
