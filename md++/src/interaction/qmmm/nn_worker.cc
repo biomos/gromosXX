@@ -71,7 +71,7 @@ interaction::NN_Worker::NN_Worker() : QM_Worker("NN Worker"),
                                       param(nullptr),
                                       guard(),
                                       ml_calculator(),
-                                      val_calculator() {};
+                                      val_calculators() {};
 
 int interaction::NN_Worker::init(const topology::Topology& topo
                                , const configuration::Configuration& conf
@@ -184,22 +184,30 @@ int interaction::NN_Worker::init(const topology::Topology& topo
       msg << "Learning type value unknown " << sim.param().qmmm.nn.learning_type;
       io::messages.add(msg.str(), this->name(), io::message::error);
   }
-  if (!sim.param().qmmm.nn.val_model_path.empty()) {
-    py::str val_model_path = sim.param().qmmm.nn.val_model_path;
-    py::str val_args_path = py_modules["os"].attr("path").attr("join")(py::cast('/').attr("join")(val_model_path.attr("split")('/')[py::slice(0,-1,1)]), "args.json");
-    py::object val_model_args = py_modules["schnetpack"].attr("utils").attr("read_from_json")(val_args_path);
-    py::object val_model = py_modules["torch"].attr("load")(val_model_path,"map_location"_a=py_modules["torch"].attr("device")(device));
-    py::object val_environment = py_modules["schnetpack"].attr("utils").attr("script_utils").attr("settings").attr("get_environment_provider")(val_model_args, "device"_a=device);
-    if (py::bool_(val_model_args.attr("parallel"))) {
-      val_model = val_model.attr("module");
+
+  // Initialize Validation models  
+  if (!sim.param().qmmm.nn.val_model_paths.empty()) {
+    for (std::vector<std::string>::iterator it = sim.param().qmmm.nn.val_model_paths.begin(); it != sim.param().qmmm.nn.val_model_paths.end(); ++it) {
+        py::str val_model_path = *it;
+        DEBUG(11, "val_model_paths " << *it);
+        DEBUG(11, "val_model_path: " << val_model_path);
+        py::str val_args_path = py_modules["os"].attr("path").attr("join")(py::cast('/').attr("join")(val_model_path.attr("split")('/')[py::slice(0,-1,1)]), "args.json");
+        py::object val_model_args = py_modules["schnetpack"].attr("utils").attr("read_from_json")(val_args_path);
+        py::object val_model = py_modules["torch"].attr("load")(val_model_path,"map_location"_a=py_modules["torch"].attr("device")(device));
+        py::object val_environment = py_modules["schnetpack"].attr("utils").attr("script_utils").attr("settings").attr("get_environment_provider")(val_model_args, "device"_a=device);
+        if (py::bool_(val_model_args.attr("parallel"))) {
+          val_model = val_model.attr("module");
+        }
+        if(sim.param().qmmm.nn.learning_type == simulation::nn_learning_type_all) {
+          val_calculators.push_back(py_modules["schnetpack"].attr("interfaces").attr("SpkCalculator")(val_model, "energy"_a="energy", "forces"_a="forces", "device"_a=device, "environment_provider"_a=val_environment));
+        }
+        else if(sim.param().qmmm.nn.learning_type == simulation::nn_learning_type_qmonly) {
+          val_calculators.push_back(py_modules["schnetpack"].attr("interfaces").attr("SpkCalculator")(val_model, "energy"_a="energy", "forces"_a="forces", "device"_a=device, "environment_provider"_a=val_environment, "mlmm"_a=mlmm_indices));
+        }
     }
-    if(sim.param().qmmm.nn.learning_type == simulation::nn_learning_type_all) {
-      val_calculator = py_modules["schnetpack"].attr("interfaces").attr("SpkCalculator")(val_model, "energy"_a="energy", "forces"_a="forces", "device"_a=device, "environment_provider"_a=val_environment);
-    } else if(sim.param().qmmm.nn.learning_type == simulation::nn_learning_type_qmonly) {
-      val_calculator = py_modules["schnetpack"].attr("interfaces").attr("SpkCalculator")(val_model, "energy"_a="energy", "forces"_a="forces", "device"_a=device, "environment_provider"_a=val_environment, "mlmm"_a=mlmm_indices);
-    } 
-  }   
-   
+  } 
+  
+  // Initialize Charge model
   if (sim.param().qmmm.qm_ch == simulation::qm_ch_dynamic) {
     py::str charge_model_path = sim.param().qmmm.nn.charge_model_path;
     DEBUG(11, "charge_model_path: " << charge_model_path.cast<std::string>());
@@ -274,30 +282,61 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
   }*/
   
   // Write the forces
+  std::vector<std::vector<double>> forces = molecule.attr("get_forces")().cast<std::vector<std::vector<double>>>();
   it = qm_zone.qm.begin();
   for (unsigned i = 0; it != to; ++it, ++i) {
-    it->force[0] = molecule.attr("get_forces")().attr("item")(i,0).cast<double >();
-    it->force[1] = molecule.attr("get_forces")().attr("item")(i,1).cast<double >();
-    it->force[2] = molecule.attr("get_forces")().attr("item")(i,2).cast<double >();
+    it->force[0] = forces[i][0];//molecule.attr("get_forces")().attr("item")(i,0).cast<double >();
+    it->force[1] = forces[i][1];//molecule.attr("get_forces")().attr("item")(i,1).cast<double >();
+    it->force[2] = forces[i][2];//molecule.attr("get_forces")().attr("item")(i,2).cast<double >();
     it->force *= this->param->unit_factor_force;
     DEBUG(15, "force from NN, atom " << it->index << " : " << math::v2s(it->force));
   }
 
-  // Run validation, if asked for
-  if (!sim.param().qmmm.nn.val_model_path.empty()
+// Run validation, if asked for
+  if (!sim.param().qmmm.nn.val_model_paths.empty()
       && (sim.steps() % sim.param().qmmm.nn.val_steps == 0
        || sim.steps() % sim.param().write.energy == 0)) {
     //py::object val_molecule(molecule); we don't need to create a new (reference to a) molecule 
-    molecule.attr("set_calculator")(val_calculator);
-    // Energy of validation model
-    const double val_energy = molecule.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
-    const double dev = energy - val_energy;
+    //MICHAEL ADDED loop over validation models
+    std::vector<double> val_energy;
+    for ( std::vector<py::object>::iterator it = val_calculators.begin(); it != val_calculators.end(); ++it ) {
+      molecule.attr("set_calculator")(*it);
+      val_energy.push_back(molecule.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy);
+    } 
+
+    // if only one validation model given report the difference
+    double dev = 0.0;
+    if (sim.param().qmmm.nn.val_model_paths.size() == 1) {
+      dev = energy - val_energy[0];
+    }
+    // else report the estimate of the variance over all runs
+    else {
+      double sum = 0.0;
+      double var = 0.0;
+      val_energy.push_back(energy);
+      int size = val_energy.size();
+      
+      // Calculate the sum of elements in the vecotr
+      for (int i = 0; i < size; i++) {
+        sum += val_energy[i];
+      }
+      // Calculate the mean
+      double mean = sum / size;
+      // Calculate the sum of squared differences from the mean
+      for (int i = 0; i < size; ++i) {
+        double diff = val_energy[i] - mean;
+        var += diff * diff;
+      }
+      // still divide by the number of values - 1
+      dev = var / (size - 1);
+    }
+
     conf.current().energies.nn_valid = dev;
     DEBUG(7, "Deviation from validation model: " << dev);
     if (fabs(dev) > sim.param().qmmm.nn.val_thresh) {
       std::ostringstream msg;
       msg << "Deviation from validation model above threshold in step " << sim.steps() << " : " << dev;
-      io::messages.add(msg.str(), this->name(), io::message::warning);
+      io::messages.add(msg.str(), this->name(), io::message::notice); // Changed to notice
       if(sim.param().qmmm.nn.val_forceconstant != 0.0){
         // add a biasing force between the two NN networks
         double dev_squared = (dev*dev - sim.param().qmmm.nn.val_thresh * sim.param().qmmm.nn.val_thresh);

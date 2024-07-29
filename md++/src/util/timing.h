@@ -82,15 +82,28 @@ namespace util
     /**
      * accessor to name
      */
-    std::string & get_maintimer_name() {
-      return m_maintimer_name;
+    void name(const std::string & name) {
+      m_name = name;
     }
+    /**
+     * accessor to name
+     */
+    std::string & name() {
+      return m_name;
+    }
+    /**
+     * const accessor to name
+     */
+    const std::string & name() const {
+      return m_name;
+    }    
+    
   
   protected:
     /**
      * name of the maintimer timer
      */
-    std::string m_maintimer_name;
+    std::string m_name;
     /**
      * maximum number of threads tracked by timer
      */
@@ -107,28 +120,50 @@ namespace util
     /**
      * sub-timer class
      */
-    class Subtimer_Class {
+    class Subtimer {
       public:
-        uint master_thread = std::numeric_limits<uint>::max();
-        uint highest_used_thread = 0;
+        /**
+         * vector of start times - one per thread
+         */
         std::vector<double> start_time;
+        /**
+         * vector of end times - one per thread
+         */
         std::vector<double> end_time;
-        double total_walltime = 0.0;               //total runtime for subtimer
-        double total_cputime = 0.0;       
-        bool double_counted_time = false;   //set true if the subtime was once started while another subtimer was still running
+        /**
+         * total walltime for subtimer
+         */
+        double total_walltime = 0.0;
+        /**
+         * total cputime for subtimer
+         */
+        double total_cputime = 0.0;
+        /**
+         * ID of the master thread
+         */  
+        uint master_thread = std::numeric_limits<uint>::max();
+        /**
+         * highest ID of the used thread
+         */
+        uint highest_used_thread = 0;
+        /**
+         * true if the subtimer was started while another subtimer was still running
+         */
+        bool double_counted_time = false;
 
-        //Constructor (no arguments)
-        Subtimer_Class(){ 
-          start_time = std::vector<double>(1, 0.0);
-          end_time = std::vector<double>(1, 0.0);
-        }
-        //Constructor
-        Subtimer_Class(const uint thread_count){
+        /**
+         * Constructor
+         */
+        Subtimer(const uint thread_count = 1){
           start_time = std::vector<double>(thread_count, 0.0);
           end_time = std::vector<double>(thread_count, 0.0);
         }
     };
-    std::unordered_map<std::string, Subtimer_Class> m_subtimers;
+    typedef std::unordered_map<std::string, Subtimer> Subtimer_Container;
+    /**
+     * a map of subtimers, one subtimer per algorithm name
+     */
+    Subtimer_Container m_subtimers;
     /**
      * store which subtimer is actually in use (debug only)
      */

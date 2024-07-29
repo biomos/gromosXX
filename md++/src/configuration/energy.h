@@ -211,7 +211,7 @@ namespace configuration
      */
     double sasa_volume_total;
     /**
-     * energy difference of validation NN model
+     * energy difference of validation NN model to validation if only 1 or variance of all NN validation models 
      */
     double nn_valid;
 
@@ -520,7 +520,7 @@ namespace configuration
      */
     double get_energy_by_index(const unsigned int & index);
     
-    static const unsigned int MAX_ENERGY_INDEX = 44;
+    static const unsigned int MAX_ENERGY_INDEX = 50;
 
   private:
     double m_ewarn;
