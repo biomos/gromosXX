@@ -5,7 +5,7 @@ gromos:ubuntu-22.04:configure_cmake:
   variables:
     BUILD_DIR: build
 
-gromos:ubuntu-22.04:build_make_test:
+gromos:ubuntu-22.04:build_make_test_cmake:
   extends:
     - .gromos:base:build_make_test_cmake
   image: ${CI_REGISTRY}/gromos/gromosxx/gromos-ubuntu-22.04-mpi
