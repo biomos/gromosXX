@@ -25,7 +25,7 @@ gromos:ubuntu-22.04:sim_test:
     BIN_PATH: $BUILD_DIR/usr/local/bin/md
     TEST_REPO: $CI_PROJECT_DIR/gromos_test_files/
   needs:
-    - job: gromos:ubuntu-22.04:build_make_test
+    - job: gromos:ubuntu-22.04:build_make_test_cmake
 
 gromos:ubuntu-22.04:sim_test_extensive:
   extends:
@@ -36,4 +36,4 @@ gromos:ubuntu-22.04:sim_test_extensive:
     BIN_PATH: $BUILD_DIR/usr/local/bin/md
     TEST_REPO: $CI_PROJECT_DIR/gromos_test_files/
   needs:
-    - job: gromos:ubuntu-22.04:build_make_test
+    - job: gromos:ubuntu-22.04:build_make_test_cmake

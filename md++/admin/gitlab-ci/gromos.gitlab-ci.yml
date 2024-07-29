@@ -132,6 +132,7 @@
       - $BIN_PATH
 
 # This tests contains short tests (e.g. the tutorial peptide)
+# The corresponding tests are in md++/contrib/py_gr_utils/tests_short/ . Note that there is a mismatch in the name. The tests for sim_test are in tests_short.
 .gromos:base:sim_test:
   stage: sim_test
   script: 
@@ -153,6 +154,9 @@
         - sim_test_report.xml
 
 # This is set contains more extensive tests that are only to be run on request (e.g. AEDS tests).
+# This set of tests will only be run when the commit message contains the string "-fullTest", otherwise they are set to manual. Manual tests can be triggered manually in gitlab web.
+# When adding test sets here it is also important to add the corresponding entries in the files in gromos.matrix.
+# The actual tests are typically performed by pytest-3. If it is called as part of the testing pipeline, do not forget to place the corresponding tests in the correct directory (e.g. md++/contrib/py_gr_utils/tests_extensive/ for the test set "tests_extensive")
 .gromos:base:sim_test_extensive:
   rules:
     - if: $CI_COMMIT_MESSAGE =~ /-fullTest/
