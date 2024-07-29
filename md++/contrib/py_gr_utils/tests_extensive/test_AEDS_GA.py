@@ -31,7 +31,7 @@ _config_file='GA_param.yaml'
 _current = os.path.dirname(os.path.realpath(__file__))
 _parent = os.path.dirname(_current)
 sys.path.append(_parent)
-from tests._config_test_params import ConfigTest
+from tests_extensive._config_test_params import ConfigTest
 
 _config_file = ConfigTest.find_config_file(_repo_test_dir, conf_file=_config_file)
 _test_conf = ConfigTest(_config_file)
@@ -42,12 +42,12 @@ if os.path.isdir(_test_conf.sim_dir):_test_conf.clean_up()
 
 ######## specific code for the test ########
 # test MD
-from tests._md_tests import Base_MD_Test
+from tests_extensive._md_tests import Base_MD_Test
 class Test_AEDS_GA_MD(Base_MD_Test):
     test_conf = _test_conf
 
 # test ene
-from tests._tre_tests import AEDS_Tests_tre
+from tests_extensive._tre_tests import AEDS_Tests_tre
 class Test_AEDS_GA_tre(AEDS_Tests_tre):
     test_conf = _test_conf
 ######## specific code for the test ########
