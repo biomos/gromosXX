@@ -250,10 +250,10 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
   // To state B, we take everything between <stateB_first ; stateB_last>
   // both states contain also atoms <both_states_first ; +inf)
   const unsigned stateA_first = 0;
-  const unsigned stateA_last = 4;
-  const unsigned stateB_first = 5;
-  const unsigned stateB_last = 9;
-  const unsigned both_states_first = 10;
+  const unsigned stateA_last = 5;
+  const unsigned stateB_first = 6;
+  const unsigned stateB_last = 10;
+  const unsigned both_states_first = 11;
 
   std::set<interaction::QM_Atom>::const_iterator it, to;
   it = qm_zone.qm.begin();
