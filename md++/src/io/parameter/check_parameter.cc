@@ -4683,6 +4683,8 @@ int io::check_features(simulation::Simulation  &sim)
   fc.unlock("qmmm", "distance_field");
   fc.unlock("qmmm", "dihedral_rest");
   fc.unlock("qmmm", "dihedral_const");
+  fc.unlock("qmmm", "angle_rest");
+  fc.unlock("qmmm", "angle_const");
   fc.unlock("qmmm", "jvalue_rest");
   fc.unlock("qmmm", "rdc_rest");
   fc.unlock("qmmm", "perscale");
@@ -4774,8 +4776,8 @@ int io::check_features(simulation::Simulation  &sim)
   fc.unlock("virtualatoms", "position_const_scaled");
   fc.unlock("virtualatoms", "distance_rest");
   fc.unlock("virtualatoms", "distance_field");
-  fc.unlock("virtualatoms", "angle_rest");
-  fc.unlock("virtualatoms", "angle_const");
+  // fc.unlock("virtualatoms", "angle_rest");
+  // fc.unlock("virtualatoms", "angle_const");
   fc.unlock("virtualatoms", "dihedral_rest");
   fc.unlock("virtualatoms", "dihedral_const");
   fc.unlock("virtualatoms", "jvalue_rest");
