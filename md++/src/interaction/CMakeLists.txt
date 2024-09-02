@@ -1,0 +1,113 @@
+set(INTERACTION_CC
+    interaction.cc
+    molecular_virial_interaction.cc
+    forcefield/forcefield.cc
+    forcefield/create_forcefield.cc
+    nonbonded/create_nonbonded.cc
+    nonbonded/pairlist/pairlist.cc
+    nonbonded/pairlist/standard_pairlist_algorithm.cc
+    nonbonded/pairlist/standard_pairlist_algorithm_atomic.cc
+    nonbonded/pairlist/extended_grid.cc
+    nonbonded/pairlist/extended_grid_pairlist_algorithm.cc
+    nonbonded/pairlist/grid_cell_pairlist.cc
+    nonbonded/interaction/nonbonded_interaction.cc
+    nonbonded/interaction/omp_nonbonded_interaction.cc
+    nonbonded/interaction/mpi_nonbonded_master.cc
+    nonbonded/interaction/mpi_nonbonded_slave.cc
+    nonbonded/interaction/nonbonded_set.cc
+    nonbonded/interaction/nonbonded_outerloop.cc
+    nonbonded/interaction/perturbed_nonbonded_set.cc
+    nonbonded/interaction/perturbed_nonbonded_outerloop.cc
+    nonbonded/interaction/perturbed_nonbonded_pair.cc
+    nonbonded/interaction/latticesum.cc
+    nonbonded/interaction/cuda_nonbonded_set.cc
+    bonded/create_bonded.cc
+    bonded/quartic_bond_interaction.cc
+    bonded/perturbed_quartic_bond_interaction.cc
+    bonded/harmonic_bond_interaction.cc
+    bonded/perturbed_harmonic_bond_interaction.cc
+    bonded/perturbed_soft_bond_interaction.cc
+    bonded/cg_bond_interaction.cc
+    bonded/perturbed_cg_bond_interaction.cc
+    bonded/angle_interaction.cc
+    bonded/harm_angle_interaction.cc
+    bonded/perturbed_angle_interaction.cc
+    bonded/perturbed_soft_angle_interaction.cc
+    bonded/improper_dihedral_interaction.cc
+    bonded/perturbed_improper_dihedral_interaction.cc
+    bonded/perturbed_soft_improper_interaction.cc
+    bonded/dihedral_interaction.cc
+    bonded/dihedral_new_interaction.cc
+    bonded/crossdihedral_interaction.cc
+    bonded/perturbed_dihedral_interaction.cc
+    bonded/perturbed_dihedral_new_interaction.cc
+    special/create_special.cc
+    special/position_restraint_interaction.cc
+    special/distance_restraint_interaction.cc
+    special/distance_field_interaction.cc
+    special/angle_restraint_interaction.cc
+    special/dihedral_restraint_interaction.cc
+    special/perturbed_distance_restraint_interaction.cc
+    special/perturbed_distance_field_interaction.cc
+    special/eds_distance_restraint_interaction.cc
+    special/bs_interaction.cc
+    special/perturbed_angle_restraint_interaction.cc
+    special/perturbed_dihedral_restraint_interaction.cc
+    special/jvalue_restraint_interaction.cc
+    special/pscale.cc
+    special/xray_restraint_interaction.cc
+    special/local_elevation_interaction.cc
+    special/electric_field_interaction.cc
+    special/adde_reweighting.cc
+    special/nemd.cc
+    special/xray/dens.cc
+    special/xray/sf.cc
+    special/xray/bfactor.cc
+    special/order_parameter_restraint_interaction.cc
+    special/rdc_restraint_interaction.cc
+    special/symmetry_restraint_interaction.cc
+    special/dfunct_interaction.cc
+    qmmm/qm_link.cc
+    qmmm/qm_zone.cc
+    qmmm/qm_worker.cc
+    qmmm/ghost_worker.cc
+    qmmm/mndo_worker.cc
+    qmmm/turbomole_worker.cc
+    qmmm/dftb_worker.cc
+    qmmm/mopac_worker.cc
+    qmmm/gaussian_worker.cc
+    qmmm/nn_worker.cc
+    qmmm/orca_worker.cc
+    qmmm/qmmm_interaction.cc
+    qmmm/nonbonded/qmmm_nonbonded_outerloop.cc
+    qmmm/nonbonded/qmmm_nonbonded_set.cc
+)
+
+if(XTB)
+    list (APPEND INTERACTION_CC "qmmm/xtb_worker.cc")
+endif()
+
+
+set(INTERACTION_INCLUDE
+    ${PROJECT_BINARY_DIR}
+    ${EXTERNAL_INCLUDES}
+    .
+    ..
+    ../algorithm
+    ../math
+    nonbonded
+    nonbonded/pairlist
+    nonbonded/interaction
+    bonded
+    forcefield
+    qmmm
+    special
+    special/xray
+)
+
+if(CUKERNEL)
+  list(APPEND INTERACTION_INCLUDE "../cukernel")
+endif()
+
+add_library(grointeraction OBJECT ${INTERACTION_CC})
+target_include_directories(grointeraction PUBLIC ${INTERACTION_INCLUDE})
