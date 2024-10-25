@@ -145,7 +145,7 @@ int algorithm::Analyze_Step
   DEBUG(8, "analyze: reading next frame!");
   conf.exchange_state();
 
-  if (sim.param().step.number_of_steps == sim.steps() + sim.param().analyze.stride){
+  if (unsigned(sim.param().step.number_of_steps) == sim.steps() + sim.param().analyze.stride){
     // last frame, there is no more frame to read from the trajectory, but we still need to
     // do the step to write out the energies
     return 0;
