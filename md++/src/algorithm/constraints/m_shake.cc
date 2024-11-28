@@ -234,9 +234,9 @@ void algorithm::M_Shake
   if (sim.mpi) {
     // broadcast current and old coordinates and pos.
 
-    MPI_Bcast(&pos(0)(0), pos.size() * 3, MPI::DOUBLE, sim.mpiControl().masterID, sim.mpiControl().comm);
-    MPI_Bcast(&conf.old().pos(0)(0), conf.old().pos.size() * 3, MPI::DOUBLE, sim.mpiControl().masterID, sim.mpiControl().comm);
-    MPI_Bcast(&conf.current().box(0)(0), 9, MPI::DOUBLE, sim.mpiControl().masterID, sim.mpiControl().comm);
+    MPI_Bcast(&pos(0)(0), pos.size() * 3, MPI_DOUBLE, sim.mpiControl().masterID, sim.mpiControl().comm);
+    MPI_Bcast(&conf.old().pos(0)(0), conf.old().pos.size() * 3, MPI_DOUBLE, sim.mpiControl().masterID, sim.mpiControl().comm);
+    MPI_Bcast(&conf.current().box(0)(0), 9, MPI_DOUBLE, sim.mpiControl().masterID, sim.mpiControl().comm);
 
     // set virial tensor and solute coordinates of slaves to zero
     if (m_rank) { // slave
@@ -341,12 +341,12 @@ void algorithm::M_Shake
     if (m_rank == 0) {
       // Master
       // reduce the error to all processors
-      MPI_Allreduce(&my_error, &error, 1, MPI::INT, MPI::MAX, sim.mpiControl().comm);
+      MPI_Allreduce(&my_error, &error, 1, MPI_INT, MPI_MAX, sim.mpiControl().comm);
       //
       // reduce current positions, store them in new_pos and assign them to current positions
       math::VArray new_pos(topo.num_atoms(), math::Vec(0.0));
       MPI_Reduce(&pos(0)(0), &new_pos(0)(0),
-              pos.size() * 3, MPI::DOUBLE, MPI::SUM, 
+              pos.size() * 3, MPI_DOUBLE, MPI_SUM, 
               sim.mpiControl().masterID, sim.mpiControl().comm);
       
       pos = new_pos;
@@ -354,7 +354,7 @@ void algorithm::M_Shake
       // reduce current virial tensor, store it in virial_new and reduce it to current tensor
       math::Matrix virial_new(0.0);
       MPI_Reduce(&conf.old().virial_tensor(0, 0), &virial_new(0, 0),
-              9, MPI::DOUBLE, MPI::SUM, 
+              9, MPI_DOUBLE, MPI_SUM, 
               sim.mpiControl().masterID, sim.mpiControl().comm);
       conf.old().virial_tensor = virial_new;
 
@@ -362,25 +362,25 @@ void algorithm::M_Shake
       //it to the current constraint force
       math::VArray cons_force_new(topo.num_atoms(), math::Vec(0.0));
       MPI_Reduce(&conf.old().constraint_force(0)(0), &cons_force_new(0)(0),
-              conf.old().constraint_force.size() * 3, MPI::DOUBLE, MPI::SUM, 
+              conf.old().constraint_force.size() * 3, MPI_DOUBLE, MPI_SUM, 
               sim.mpiControl().masterID, sim.mpiControl().comm);
       conf.old().constraint_force = cons_force_new;
     } else {
       // reduce the error to all processors
-      MPI_Allreduce(&my_error, &error, 1, MPI::INT, MPI::MAX, sim.mpiControl().comm);
+      MPI_Allreduce(&my_error, &error, 1, MPI_INT, MPI_MAX, sim.mpiControl().comm);
 
       // slave
       // reduce pos
       MPI_Reduce(&pos(0)(0), NULL,
-              pos.size() * 3, MPI::DOUBLE, MPI::SUM,
+              pos.size() * 3, MPI_DOUBLE, MPI_SUM,
               sim.mpiControl().masterID, sim.mpiControl().comm);
       // reduce virial
       MPI_Reduce(&conf.old().virial_tensor(0, 0), NULL,
-              9, MPI::DOUBLE, MPI::SUM, 
+              9, MPI_DOUBLE, MPI_SUM, 
               sim.mpiControl().masterID, sim.mpiControl().comm);
       // reduce constraint force
       MPI_Reduce(&conf.old().constraint_force(0)(0), NULL,
-              conf.old().constraint_force.size() * 3, MPI::DOUBLE, MPI::SUM, 
+              conf.old().constraint_force.size() * 3, MPI_DOUBLE, MPI_SUM, 
               sim.mpiControl().masterID, sim.mpiControl().comm);
     }
   }

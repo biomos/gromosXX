@@ -7,9 +7,9 @@ gromos:ubuntu-20.04-mpi:configure:
   variables:
     BUILD_DIR: build
 
-gromos:ubuntu-20.04-mpi:build:
+gromos:ubuntu-20.04-mpi:build_make_check:
   extends:
-    - .gromos:base:build
+    - .gromos:base:build_make_check
     - .use-mpi
   image: ${CI_REGISTRY}/gromos/gromosxx/gromos-ubuntu-20.04-mpi
   variables:
@@ -31,6 +31,6 @@ gromos:ubuntu-20.04-mpi:sim_test:
     OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
     OMPI_ALLOW_RUN_AS_ROOT: 1
   needs:
-    - job: gromos:ubuntu-20.04-mpi:build
+    - job: gromos:ubuntu-20.04-mpi:build_make_check
 
 

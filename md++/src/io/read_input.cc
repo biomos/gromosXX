@@ -177,7 +177,7 @@ int io::read_input_repex(io::Argument const & args,
     int simulationID = thread_id_replica_map[rank];
 
     //if enough threads avail
-    if (totalNumberOfThreads < numReplicas) {
+    if (unsigned(totalNumberOfThreads) < numReplicas) {
         if (rank == 0) {
             std::cerr << "\n\t########################################################\n"
                     << "\n\t\tErrors during initial Parameter reading!\n"
@@ -260,7 +260,7 @@ int io::read_input_repex(io::Argument const & args,
 	int cont = sim.param().replica.cont;
 	if(cont == 1 && rank == 0){
 		DEBUG(4, "reading configurations for continous");
-		for(int x=0; x<numReplicas; x++ ){
+		for(unsigned x=0; x<numReplicas; x++ ){
 
 				io::Argument tmpArgs(args);   //copy modified args
 				std::multimap< std::string, std::string >::iterator it = tmpArgs.lower_bound(("conf"));

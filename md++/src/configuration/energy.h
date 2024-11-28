@@ -137,8 +137,8 @@ namespace configuration
      * shifting energy
      */
     std::vector<std::vector<double> > shift_extra_orig;
-    double shift_extra_orig_total;
     std::vector<std::vector<double> > shift_extra_phys;
+    double shift_extra_orig_total;
     double shift_extra_phys_total;
     /**
      * total energy of the "special" interactions
