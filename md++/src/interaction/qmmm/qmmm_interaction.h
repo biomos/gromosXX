@@ -214,12 +214,12 @@ namespace interaction {
     /**
      * MPI rank
      */
-    unsigned m_rank;
+    int m_rank;
 
     /**
      * MPI size
      */
-    unsigned m_size;
+    int m_size;
 
   private:
     /**
