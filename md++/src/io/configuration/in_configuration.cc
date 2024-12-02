@@ -73,28 +73,33 @@ void io::In_Configuration::read(configuration::Configuration &conf,
 
   block_read.clear();
 
-  read_time(topo, conf, sim, os);
-  read_position(topo, conf, sim, os);
-  read_cos_position(topo, conf, sim, os);
-  read_velocity(topo, conf, sim, os);
-  read_lattice_shifts(topo, conf, sim, os);
-  read_box(topo, conf, sim, os);
-  read_jvalue(topo, conf, sim, os);
-  read_xray(topo, conf, sim, os);
-  read_pscale(topo, conf, sim, os);
-  read_flexv(topo, conf, sim, os);
-  read_stochastic_integral(topo, conf, sim, os);
-  read_perturbation(topo, sim, os);
-  read_distance_restraint_averages(topo, conf, sim, os);
-  read_nose_hoover_chains(topo, conf, sim, os);
-  read_rottrans(topo, conf, sim, os);
-  read_position_restraints(topo, conf, sim, os);
-  read_leusbias(topo, conf, sim, os);
-  read_bsleus(topo, conf, sim, os);
-  read_order_parameter_restraint_averages(topo, conf, sim, os);
-  read_rdc(topo, conf, sim, os);
-  read_aedssearch(topo, conf, sim, os);
-  read_gamdstat(topo, conf, sim, os);
+  if (!(
+    read_time(topo, conf, sim, os) &&
+    read_position(topo, conf, sim, os) &&
+    read_cos_position(topo, conf, sim, os) &&
+    read_velocity(topo, conf, sim, os) &&
+    read_lattice_shifts(topo, conf, sim, os) &&
+    read_box(topo, conf, sim, os) &&
+    read_jvalue(topo, conf, sim, os) &&
+    read_xray(topo, conf, sim, os) &&
+    read_pscale(topo, conf, sim, os) &&
+    read_flexv(topo, conf, sim, os) &&
+    read_stochastic_integral(topo, conf, sim, os) &&
+    read_perturbation(topo, sim, os) &&
+    read_distance_restraint_averages(topo, conf, sim, os) &&
+    read_nose_hoover_chains(topo, conf, sim, os) &&
+    read_rottrans(topo, conf, sim, os) &&
+    read_position_restraints(topo, conf, sim, os) &&
+    read_leusbias(topo, conf, sim, os) &&
+    read_bsleus(topo, conf, sim, os) &&
+    read_order_parameter_restraint_averages(topo, conf, sim, os) &&
+    read_rdc(topo, conf, sim, os) &&
+    read_aedssearch(topo, conf, sim, os) &&
+    read_gamdstat(topo, conf, sim, os)
+  )) {
+    // there was an error, return
+    return;
+  }
 
   // and set the boundary type!
   conf.boundary_type = param.boundary.boundary;
