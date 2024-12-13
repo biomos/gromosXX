@@ -63,14 +63,15 @@ QMZONE
 # QMI:  index of the QM atom
 # QMZ:  atomic number of the QM atom
 # QMLI: 0,1 atom is a link atom
+# BRstat: 0,1,2 options. 0 = atom is part of the inner QM region. 1 = atom is part of the adaptiv BR, atom is part of the static BR region
 #
 # NETCH SPINM
       0     1
 # Warning: the first 17 characters are ignored!
-# RESIDUE   ATOM     QMI   QMZ   QMLI
-    1 H2O   OW         1     8      0
-    1 H2O   HW1        2     1      0
-    1 H2O   HW2        3     1      0
+# RESIDUE   ATOM     QMI   QMZ   QMLI   BRstat
+    1 H2O   OW         1     8      0        0
+    1 H2O   HW1        2     1      0        0
+    1 H2O   HW2        3     1      0        0
 END
 @endverbatim
  *
@@ -96,13 +97,14 @@ BUFFERZONE
 # QMI:   index of the QM atom
 # QMZ:   atomic number of the QM atom
 # QMLI:  0,1 atom is a link atom
+# BRstat: 0,1,2 options. 0 = atom is part of the inner QM region. 1 = atom is part of the adaptiv BR, atom is part of the static BR region
 # NETCH SPINM BUFCUT
       0     1    1.4
 # Warning: the first 17 characters are ignored!
-# RESIDUE   ATOM     QMI   QMZ   QMLI
-    1 H2O   OW         1     8      0
-    1 H2O   HW1        2     1      0
-    1 H2O   HW2        3     1      0
+# RESIDUE   ATOM     QMI   QMZ   QMLI   BRstat
+    1 H2O   OW         1     8      0        1
+    1 H2O   HW1        2     1      0        1
+    1 H2O   HW2        3     1      0        1
 END
 @endverbatim
  *
@@ -526,6 +528,49 @@ END
 @verbatim
 GAUCHSM
 @@CHARGE@@ @@SPINM@@
+END
+@endverbatim
+ *
+ * The NNMODEL block specifies the NN model used to evaluate the NN interactions
+ * In the 1st line the model path is provided
+ * In the 2nd line the model_type and the learning_type is defined
+@verbatim
+NNMODEL
+/path/to/model
+0  1
+END
+@endverbatim
+ *
+ * The NNVALID block specifies the number of models which should be used for the calculation of the uncertainty estimation
+ * Every model should be in a new line
+ * - 1 line/model is provided: difference between NNMODEL and NNVALID model is reported
+ * - 2 or more lines: standard deviation between NNMODEL and all NNVALID models is reported
+ * After the number of models are specified one additional line specifies:
+ *  - val_steps val_threshold val_steps val_forceconstant
+@verbatim
+NNVALID
+/path/to/model_uncertainty_1
+/path/to/model_uncertainty_2
+/path/to/model_uncertainty_x
+1 4.184 0.0
+END
+@endverbatim
+ *
+ * The NNCHARGE block specifies the NN charge model
+@verbatim
+NNCHARGE
+/path/to/charge_model
+END
+@endverbatim
+ *
+ * The NNDEVICE block specifies the device on which the model should be evaluated
+ * Options:
+ * - cuda
+ * - cpu
+ * - auto
+@verbatim
+NNDEVICE
+cuda
 END
 @endverbatim
  *
