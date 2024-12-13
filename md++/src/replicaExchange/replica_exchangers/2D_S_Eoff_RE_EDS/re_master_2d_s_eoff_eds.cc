@@ -291,21 +291,21 @@ void re::replica_exchange_master_2d_s_eoff_eds::init_repOut_stat_file() {
     repOut << "\n";
     repOut << "#Start coordinate == Position coordinate\n";
     repOut << "#Position\t";
-    for(int i=0; i < replicaGraphMPIControl().numberOfReplicas; ++i){
+    for(int i=0; i < (int)replicaGraphMPIControl().numberOfReplicas; ++i){
       repOut << std::setw(12) << i;
     }
     repOut << "\n";
     repOut << "#s\t\t";
     repOut.precision(svalPrecision);
     int num_l = reedsParam.num_l;
-    for (int i = 0; i < replicaGraphMPIControl().numberOfReplicas; ++i){
+    for (int i = 0; i < (int)replicaGraphMPIControl().numberOfReplicas; ++i){
             repOut << std::setw(12) << reedsParam.eds_para[i].s[0];
     }
 
     repOut.precision(generalPrecision);
     for (int j = 0; j < reedsParam.num_states; ++j) {
         repOut << "\n# E"<< (j+1)<<"R(s)\t";
-        for (int i = 0; i < replicaGraphMPIControl().numberOfReplicas; ++i)
+        for (int i = 0; i < (int)replicaGraphMPIControl().numberOfReplicas; ++i)
             repOut << std::setw(12) << reedsParam.eds_para[i].eir[j];
     }
 

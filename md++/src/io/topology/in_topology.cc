@@ -1739,7 +1739,7 @@ void io::In_Topology::read_block_VIRTUALATOM(topology::Topology& topo,
         ++it;
 
         _lineStream >> a_num >> iac >> q >> t >> num_atoms;
-        if (a_num != topo.num_solute_atoms() + 1) {
+        if (a_num != (int)topo.num_solute_atoms() + 1) {
           io::messages.add("Error in VIRTUALATOM block: atom number not sequential.",
                   "InTopology", io::message::error);
         }

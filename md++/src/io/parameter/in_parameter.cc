@@ -1624,8 +1624,8 @@ void io::In_Parameter::read_MULTIBATH(simulation::Parameter &param,
             if (last < 1) last = 1;
 
             // Virtual atom checks
-            if (param.virtualatoms.virtualatoms && last >= param.virtualatoms.lastatom && prev_last < param.virtualatoms.lastatom){
-                if ((prev_last != param.virtualatoms.lastatom - param.virtualatoms.numatoms) || last > param.virtualatoms.lastatom){
+            if ((int)param.virtualatoms.virtualatoms && (int)last >= (int)param.virtualatoms.lastatom && prev_last < (int)param.virtualatoms.lastatom){
+                if (((int)prev_last != param.virtualatoms.lastatom - (int)param.virtualatoms.numatoms) || last > (int)param.virtualatoms.lastatom){
                 io::messages.add("MULTIBATH block: virtual atoms and regular atoms mixed in bath",
                                  "In_Parameter", io::message::error);
                 }
