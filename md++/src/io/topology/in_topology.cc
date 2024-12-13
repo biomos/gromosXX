@@ -2322,7 +2322,7 @@ void io::In_Topology::read_block_CONSTRAINT(topology::Topology& topo,
       DEBUG(10, "CONSTRAINT block");
       std::vector<std::string> buffer = m_block["CONSTRAINT"];
 
-      if (buffer.size() && param.constraint.ntc > 1) {
+      if (buffer.size() && param.constraint.ntc == 2 || param.constraint.ntc == 4) {
         block_read.insert("CONSTRAINT");
 
         std::vector<std::string>::const_iterator it = buffer.begin() + 1;
