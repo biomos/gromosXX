@@ -3,6 +3,7 @@ stages:
   - build
   - build_make_check
   - sim_test
+  - sim_test_extensive
 
 include:
   - local: 'md++/admin/gitlab-ci/gromos.gitlab-ci.yml'
