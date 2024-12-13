@@ -481,6 +481,10 @@ int io::read_configuration(io::Argument const & args,
   ic.quiet = quiet;
 
   ic.read(conf, topo, sim, os);
+  
+  if (io::messages.contains(io::message::error) ||
+      io::messages.contains(io::message::critical))
+    return -1;
 
   io::messages.add("configuration read from " + args[argname_conf] + "\n" + util::frame_text(ic.title),
 		   "read input", io::message::notice);
