@@ -1547,7 +1547,7 @@ void io::In_QMMM::read_zone(topology::Topology& topo
   }
   // Count number of electrons and check consistency with charge and multiplicity
   int num_elec = -charge;
-  unsigned qmi = 0, qmz = 0, qmli = 0;
+  unsigned qmi = 0, qmz = 0, qmli = 0,brstat = 0;
   for (std::vector<std::string>::const_iterator it = buffer.begin() + 2
                                               , to = buffer.end() - 1
                                               ; it != to; ++it) {
@@ -1564,7 +1564,7 @@ void io::In_QMMM::read_zone(topology::Topology& topo
     _lineStream.clear();
     _lineStream.str(line);
 
-    _lineStream >> qmi >> qmz >> qmli;
+    _lineStream >> qmi >> qmz >> qmli >> brstat;
 
     if (_lineStream.fail()) {
       std::ostringstream msg;
@@ -1603,7 +1603,21 @@ void io::In_QMMM::read_zone(topology::Topology& topo
     }
     topo.is_qm(qmi - 1) = topo.is_qm(qmi - 1) || (blockname == "QMZONE");
     const bool is_qm_buffer = (blockname == "BUFFERZONE");
-    topo.is_qm_buffer(qmi - 1) = topo.is_qm_buffer(qmi - 1) || is_qm_buffer;
+
+  // ADDED MICHAEL check for static or adaptive BR atom
+    if (brstat == 2) {
+      topo.is_static_qm_buffer(qmi - 1) = topo.is_static_qm_buffer(qmi - 1);
+    }
+    if (brstat == 1) {
+      topo.is_adaptive_qm_buffer(qmi - 1) = topo.is_adaptive_qm_buffer(qmi - 1);
+    }
+    if (brstat < 0 || brstat > 2) {
+      std::ostringstream msg;
+      msg << blockname << " block: BRstat has to be 0: QMatom or 1: adaptiv BRatom or 2:  static BRatom";
+      io::messages.add(msg.str(), "In_QMMM", io::message::error);
+      return;
+    }
+
     sim.param().qmmm.use_qm_buffer = sim.param().qmmm.use_qm_buffer
                                       || is_qm_buffer;
     if (topo.is_qm(qmi - 1) && topo.is_qm_buffer(qmi - 1)) {
