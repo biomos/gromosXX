@@ -21,7 +21,7 @@ INSTALL
 /.*/
 
 #building artefacts
-build*
+build*/
 .dirstamp
 **.deps
 

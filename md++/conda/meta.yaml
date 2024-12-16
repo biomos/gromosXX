@@ -1,0 +1,28 @@
+package:
+  name: gromosxx
+  version: 1.6.0
+
+source:
+  path: ..
+
+build:
+  number: 0
+  #script: build.sh
+
+requirements:
+  build:
+    - gsl
+    - fftw
+    - cmake
+    - make
+  run:
+    - fftw
+    - gsl
+    - python
+
+about:
+  home: https://github.com/biomos/gromosXX
+  license: GPLv2
+  summary: Gromos MD engine
+
+
