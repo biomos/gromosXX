@@ -1609,7 +1609,7 @@ void io::In_QMMM::read_zone(topology::Topology& topo
     _lineStream.clear();
     _lineStream.str(line);
 
-    _lineStream >> qmi >> qmz >> qmli >> brstat;
+    _lineStream >> qmi >> qmz >> qmli;
 
     if (_lineStream.fail()) {
       std::ostringstream msg;
@@ -1617,6 +1617,17 @@ void io::In_QMMM::read_zone(topology::Topology& topo
       io::messages.add(msg.str(), "In_QMMM", io::message::error);
       return;
     }
+
+    // Take care of optional brstat input in QMZONE and BUFFERZONE
+    _lineStream >> brstat;
+      if (_lineStream.fail()) {
+        if (blockname == "QMZONE"){
+          brstat = 0;
+        }
+        else {
+          brstat = 1;
+        }
+      } 
 
     if (qmi < 1 || qmi > topo.num_atoms()) {
       std::ostringstream msg;
@@ -1647,6 +1658,7 @@ void io::In_QMMM::read_zone(topology::Topology& topo
       return;
     }
     topo.is_qm(qmi - 1) = topo.is_qm(qmi - 1) || (blockname == "QMZONE");
+
     const bool is_qm_buffer = (blockname == "BUFFERZONE");
 
   // ADDED MICHAEL check for static or adaptive BR atom
