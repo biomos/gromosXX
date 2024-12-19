@@ -185,7 +185,7 @@ void io::In_Angrest::read_ANGRESSPEC(topology::Topology &topo,
      std::vector<topology::three_body_term_struct>::iterator it=topo.solute().angles().begin(), 
      to=topo.solute().angles().end();
      for (;it != to; ++it) {
-       if (it->i == i-1 && it->j == j-1 && it->k == k-1) {
+       if ((int)it->i == i-1 && (int)it->j == j-1 && (int)it->k == k-1) {
          topo.solute().angles().erase(it);
          DEBUG(9, "removed angle " <<  i << ", number of angles " << topo.solute().angles().size());
          break;

@@ -1460,7 +1460,7 @@ bool io::In_Configuration::_read_positionred(math::VArray &pos,
   }
 
   for(i=0; it != to; ++i, ++it){
-    if (i >= num){
+    if (i >= (int)num){
       io::messages.add("configuration file does not match topology: "
 		       "too many coordinates in POSITIONRED block",
 		       "In_Configuration",
@@ -1487,9 +1487,9 @@ bool io::In_Configuration::_read_positionred(math::VArray &pos,
     }
   }
 
-  if (i != num){
+  if (i != (int)num){
     // if i is exactly the num of atoms without the virtual atoms it means that the virtual atoms are not loaded yet
-    if (i == num - topo.virtual_atoms_group().atoms().size()){
+    if (i == (int)num - (int)topo.virtual_atoms_group().atoms().size()){
          std::map<unsigned int, util::Virtual_Atom>::iterator it;
          for ( it = topo.virtual_atoms_group().atoms().begin(); it != topo.virtual_atoms_group().atoms().end(); it++ )
          {
@@ -1579,7 +1579,7 @@ bool io::In_Configuration::_read_position(math::VArray &pos, std::vector<std::st
   std::istringstream _lineStream;
 
   for(i=0; it != to; ++i, ++it){
-    if (i >= num){
+    if (i >= (int)num){
       io::messages.add("configuration file does not match topology: "
 		       "too many coordinates in "+blockname+" block",
 		       "In_Configuration",
@@ -1609,9 +1609,9 @@ bool io::In_Configuration::_read_position(math::VArray &pos, std::vector<std::st
     } // end else
   }
 
-  if (i != num){
+  if (i != (int)num){
     // if i is exactly the num of atoms without the virtual atoms it means that the virtual atoms are not loaded yet
-    if (i == num - topo.virtual_atoms_group().atoms().size()){
+    if (i == (int)num - (int)topo.virtual_atoms_group().atoms().size()){
          std::map<unsigned int, util::Virtual_Atom>::iterator it;
          for ( it = topo.virtual_atoms_group().atoms().begin(); it != topo.virtual_atoms_group().atoms().end(); it++ )
          {
@@ -1650,7 +1650,7 @@ bool io::In_Configuration::_read_velocityred(math::VArray &vel,
   unsigned int num = topo.num_atoms();
 
   for(i=0; it != to; ++i, ++it){
-    if (i >= num){
+    if (i >= (int)num){
       io::messages.add("configuration file does not match topology: "
 		       "too many coordinates in VELOCITYRED block",
 		       "In_Configuration",
@@ -1679,9 +1679,9 @@ bool io::In_Configuration::_read_velocityred(math::VArray &vel,
 
   }
 
-  if (i != num){
+  if (i != (int)num){
     // if i is exactly the num of atoms without the virtual atoms it means that the virtual atoms are not loaded yet
-    if (i == num - topo.virtual_atoms_group().atoms().size()){
+    if (i == (int)num - (int)topo.virtual_atoms_group().atoms().size()){
          std::map<unsigned int, util::Virtual_Atom>::iterator it;
          for ( it = topo.virtual_atoms_group().atoms().begin(); it != topo.virtual_atoms_group().atoms().end(); it++ )
          {
@@ -1794,7 +1794,7 @@ bool io::In_Configuration::_read_lattice_shifts(math::VArray &shift,
   unsigned int num = topo.num_atoms();
 
   for(i=0; it != to; ++i, ++it){
-    if (i >= num){
+    if (i >= (int)num){
       io::messages.add("configuration file does not match topology: "
 		       "too many coordinates in LATTICESHIFTS block",
 		       "In_Configuration", io::message::error);
@@ -1822,9 +1822,9 @@ bool io::In_Configuration::_read_lattice_shifts(math::VArray &shift,
     }
   }
 
-  if (i != num){
+  if (i != (int)num){
     // if i is exactly the num of atoms without the virtual atoms it means that the virtual atoms are not loaded yet
-    if (i == num - topo.virtual_atoms_group().atoms().size()){
+    if (i == (int)num - (int)topo.virtual_atoms_group().atoms().size()){
          std::map<unsigned int, util::Virtual_Atom>::iterator it;
          for ( it = topo.virtual_atoms_group().atoms().begin(); it != topo.virtual_atoms_group().atoms().end(); it++ )
          {
