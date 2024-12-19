@@ -909,11 +909,33 @@ namespace topology
     }
 
     /**
-     * is the atom in the adaptive QM buffer? - accessor
+     * ADDED MICHAEL is the atom in the QM buffer? - accessor
      */
-    bool is_adaptive_qm_buffer(const unsigned i)const {
+    int is_adaptive_qm_buffer(const unsigned i)const {
       assert(i < m_is_qm_buffer.size());
-      return m_is_qm_buffer[i] > 0;
+      return m_is_qm_buffer[i];
+    }
+    /**
+     * ADDED MICHAEL is the atom in the QM buffer? - mutator
+     */
+    int& is_adaptive_qm_buffer(const unsigned i) {
+      assert(i < m_is_qm_buffer.size());
+      return m_is_qm_buffer[i] = 1;
+    }
+
+    /**
+     * ADDED MICHAEL is the atom in the QM buffer? - accessor
+     */
+    int is_static_qm_buffer(const unsigned i)const {
+      assert(i < m_is_qm_buffer.size());
+      return m_is_qm_buffer[i];
+    }
+    /**
+     * ADDED MICHAEL is the atom in the QM buffer? - mutator
+     */
+    int& is_static_qm_buffer(const unsigned i) {
+      assert(i < m_is_qm_buffer.size());
+      return m_is_qm_buffer[i] = 2;
     }
 
     /**
@@ -2095,7 +2117,7 @@ namespace topology
     std::vector<unsigned> m_is_qm;
 
     /**
-     * Is the QM buffer (1: yes, 0: no, -1: temporarily disabled [adaptive buffer with cutoff])
+     * Is the QM buffer (1: adaptive buffer, 0: no, 2: static buffer)
      */
     std::vector<int> m_is_qm_buffer;
 

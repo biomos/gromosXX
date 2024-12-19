@@ -293,7 +293,7 @@ void re::replica_exchange_master_eds::init_repOut_stat_file() {
     repOut << "\n";
     repOut << "#Start coordinate == Position coordinate\n";
     repOut << "#Position\t";
-    for(int i=0; i < replicaGraphMPIControl().numberOfReplicas; ++i){
+    for(int i=0; i < (int)replicaGraphMPIControl().numberOfReplicas; ++i){
       repOut << std::setw(12) << i;
     }
     repOut << "\n";
