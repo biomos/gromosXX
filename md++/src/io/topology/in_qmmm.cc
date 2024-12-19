@@ -1024,9 +1024,14 @@ void io::In_QMMM::read(topology::Topology& topo,
                 "In_QMMM", io::message::error);
         return;
       }
+      else if (buffer.size() < 2) {
+        io::messages.add("NNVALID block invalid",
+                "In_QMMM", io::message::error);
+        return;
+      }
       else {
         // loop over number of validations buffer and add lines to val_model_path
-        for ( unsigned i = 1; i < buffer.size() - 2; ++i ) {
+        for ( unsigned i = 1; 2 + i < buffer.size(); ++i ) {
           sim.param().qmmm.nn.val_model_paths.push_back(buffer[i]);
         }   
         std::string line(buffer.end()[-2]);
