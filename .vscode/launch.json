@@ -1,0 +1,41 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "(gdb) Pipe Launch",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "/pool/radekc/GROMOS/GROMOS_workstation/burnn_schnet_full_python/bin/md",
+            "args": ["@topo /pool/radekc/CD_lab_project/BuRNN/Joint_model/nn_mm_simulation/test_workstation/../../../MeOH_model/snapshots/topo/meoh_54a7.top @conf /pool/radekc/CD_lab_project/BuRNN/Joint_model/nn_mm_simulation/test_workstation/../../../MeOH_model/snapshots_cut_1_4_nh_chains/eq/eq_meoh_5.cnf @input /pool/radekc/CD_lab_project/BuRNN/Joint_model/nn_mm_simulation/test_workstation/md_meoh_1.imd @qmmm /pool/radekc/CD_lab_project/BuRNN/Joint_model/nn_mm_simulation/test_workstation/meoh.qmm @fin md_meoh_1.cnf @trc md_meoh_1.trc @tre md_meoh_1.tre"],
+            "stopAtEntry": false,
+            "cwd": "${fileDirname}",
+            "environment": [{"name" : "LD_LIBRARY_PATH", "value" : "/usr/local/cuda-11.7/lib64:/usr/local/cuda-11.7/lib64:/usr/local/cuda-11.7/lib64::/pool/radekc/anaconda3/envs/spk_py30912/lib"}],
+            "externalConsole": false,
+            //"pipeTransport": {
+            //    "debuggerPath": "/usr/bin/gdb",
+            //    "pipeProgram": "/usr/bin/ssh",
+            //    "pipeArgs": [],
+            //    "pipeCwd": ""
+            //},
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set Disassembly Flavor to Intel",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                },
+            ]
+        }
+        
+
+
+    ]
+}
