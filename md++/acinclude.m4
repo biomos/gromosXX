@@ -487,7 +487,7 @@ AC_DEFUN([AM_WITH_SCHNETPACK],[
         dnl set default values
         : ${PYTHON="python3"}
         : ${PYFLAGS="$(${PYTHON} -m pybind11 --includes)"}
-        PYVERSION=$(${PYTHON} --version sed -n 's/^Python \([0-9]*\)\.\([0-9]*\).*/\1.\2/p')
+        PYVERSION=$(${PYTHON} --version | sed -n 's/^Python \([[0-9]]*\)\.\([[0-9]]*\).*/\1.\2/p')
         PY_MAJOR_VERSION=$(echo $PYVERSION | cut -d. -f1)
         PY_MINOR_VERSION=$(echo $PYVERSION | cut -d. -f2)
         dnl for Python <3.8:
