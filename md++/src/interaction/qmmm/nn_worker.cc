@@ -93,7 +93,6 @@ int interaction::NN_Worker::init(const topology::Topology& topo
   // Initialize NN interface
   // Initialize pybind, schnetpack, python script
 
-  //std::vector<std::string> modules = {"schnet_v1",};
   #ifdef OMP
     // Python module modifies omp_num_threads value, we gonna restore it
     unsigned num_threads;
@@ -101,10 +100,6 @@ int interaction::NN_Worker::init(const topology::Topology& topo
       #pragma omp single
         num_threads = omp_get_num_threads();
   #endif
-  // Initialize Python modules
-  //for (size_t i = 0; i < modules.size(); ++i) {
-  //  py_modules.emplace(modules[i], py::module::import(modules[i].c_str()));
-  //}
 
   // To be able to import the module from the current directory
   py::module_ sys = py::module_::import("sys");
@@ -130,16 +125,14 @@ int interaction::NN_Worker::init(const topology::Topology& topo
     val_models_paths = py::cast(val_paths);
   }
 
-  std::vector<std::string> val_paths_test = val_models_paths.cast<std::vector<std::string>>();
-
   // How often to run NN validation
   py::int_ write_val_step = sim.param().qmmm.nn.val_steps;
 
   // How often to write energy
   py::int_ write_energy_step = sim.param().write.energy;
 
+  // Initialize mlp_calculator Python object
   mlp_calculator = schnet_v1.attr("SchNet_V1_Calculator")(model_path, val_models_paths, write_val_step, write_energy_step);
-  
   
   // Restore omp_num_threads
   #ifdef OMP
@@ -161,7 +154,7 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
 #ifdef HAVE_PYBIND11
   // run NN interface 
 
-  // create the molecule object
+  // Prepare the input for mlp_calculator object
   double length_to_nn = 1 / this->param->unit_factor_length;
   std::set<interaction::QM_Atom>::const_iterator it, to;
   it = qm_zone.qm.begin();
@@ -174,7 +167,6 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
   py::list system_coordinates;
 
   for (;it != to; ++it) {
-    //unsigned atomic_number = it->atomic_number;
     atom_nums.push_back(it->atomic_number);
 
     // convert positions
@@ -185,34 +177,22 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
     atom_coordinates.attr("append")(nn_pos[2]);
     system_coordinates.attr("append")(atom_coordinates);
     DEBUG(15, "atom to NN: " << it->index << " : " << math::v2s(nn_pos));
-  //  py_system_coordinates.attr("append")(nn_pos[0]);
-  //  py_system_coordinates.attr("append")(nn_pos[1]);
-  //  py_system_coordinates.attr("append")(nn_pos[2]);
-  //  py_iac.attr("append")(atomic_number);
   }
 
+  // Convert std::vector<uint32_t> atom_nums to Python list
   py::list atomic_numbers = py::cast(atom_nums);
 
-  // Step
+  // Get time step
   py::int_ step = sim.steps();
 
-  // Output variables
-
-  // NN energy
-  //const double energy = 0;
-
-  // NN validation
-  //const double nn_valid_dev = 0;
-
-  // Forces
-  //std::vector<std::vector<double>> forces;
-
+  // Run the method calculate_next_step to predict energy, forces and NN validation
   mlp_calculator.attr("calculate_next_step")(atomic_numbers, system_coordinates, step);
   
+  // Store predicted energy
   const double energy = mlp_calculator.attr("get_energy")().cast<double>() * this->param->unit_factor_energy;
-  
-  const double nn_valid_dev = mlp_calculator.attr("get_nn_valid_dev")().cast<double>() * this->param->unit_factor_energy;
+  qm_zone.QM_energy() = energy;
 
+  // Store predicted forces
   std::vector<std::vector<double>> forces = mlp_calculator.attr("get_forces")().cast<std::vector<std::vector<double>>>();
   it = qm_zone.qm.begin();
   for (unsigned i = 0; it != to; ++it, ++i) {
@@ -222,18 +202,21 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
     it->force *= this->param->unit_factor_force;
     DEBUG(15, "force from NN, atom " << it->index << " : " << math::v2s(it->force));
   }
-  // Output writing
 
-  //Final NN energy
-  qm_zone.QM_energy() = energy;
-//
-  // Final NN validation
-  conf.current().energies.nn_valid = nn_valid_dev;
+  // NN validation
+  if (!sim.param().qmmm.nn.val_model_paths.empty()
+      && (sim.steps() % sim.param().qmmm.nn.val_steps == 0
+       || sim.steps() % sim.param().write.energy == 0)) {
+    
+    // Store NN valid. deviation
+    const double nn_valid_dev = mlp_calculator.attr("get_nn_valid_dev")().cast<double>() * this->param->unit_factor_energy;
+    conf.current().energies.nn_valid = nn_valid_dev;
 
-  if (fabs(nn_valid_dev) > sim.param().qmmm.nn.val_thresh) {
-      std::ostringstream msg;
-      msg << "Deviation from validation model above threshold in step " << sim.steps() << " : " << nn_valid_dev;
-      io::messages.add(msg.str(), this->name(), io::message::notice);
+    if (fabs(nn_valid_dev) > sim.param().qmmm.nn.val_thresh) {
+        std::ostringstream msg;
+        msg << "Deviation from validation model above threshold in step " << sim.steps() << " : " << nn_valid_dev;
+        io::messages.add(msg.str(), this->name(), io::message::notice);
+    }
   }
 #endif
   return 0;
