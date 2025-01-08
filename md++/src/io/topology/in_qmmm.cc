@@ -74,6 +74,27 @@ QMZONE
 END
 @endverbatim
  *
+ * @section pertqmzone PERTQMZONE block
+ * The PERTQMZONE block specifies the end states of QM atoms.
+ *
+ * The block is read from the QM/MM specification file
+ * (\@qmmm).
+ *
+ * @verbatim
+PERTQMZONE
+# STATE: state number of the QM atom, 0 = both states, 1 = state A, 2 = state B
+#
+# Warning: the first 17 characters are ignored!
+# RESIDUE   ATOM     STATE
+    1 H2O   OW         1
+    1 H2O   HW1        1
+    1 H2O   HW2        1
+    2 H2O   OW         2
+    2 H2O   HW1        2
+    2 H2O   HW2        2
+END
+@endverbatim
+ *
  * @section bufferzone BUFFERZONE block
  * The BUFFERZONE block specifies the atoms which are treated in both quantum and
  * classical way. They are added to QMZONE atoms to form the full QM zone. Energies
@@ -574,6 +595,10 @@ void io::In_QMMM::read(topology::Topology& topo,
         "In_QMMM", io::message::notice);
   }
   this->read_zone(topo, sim, "BUFFERZONE");
+
+  if (sim.param().perturbation.perturbation) {
+      this->read_pert_qmzone(sim, &sim.param().qmmm.nn);
+    }
   
   std::vector<std::string> buffer;
 
@@ -1487,6 +1512,55 @@ void io::In_QMMM::read_units(const simulation::Simulation& sim
   }
   DEBUG(15, "QM units read done");
 }
+
+void io::In_QMMM::read_pert_qmzone(simulation::Simulation& sim
+                  , simulation::Parameter::qmmm_struct::qm_param_struct* qm_param)
+  {
+  std::vector<std::string> buffer;
+  buffer = m_block["PERTQMZONE"];
+
+  if (!buffer.size()) {
+    io::messages.add("No PERTQMZONE block in QM/MM specification file",
+            "In_QMMM", io::message::error);
+    return;
+  }
+  std::string line(buffer[1]);
+  _lineStream.clear();
+  _lineStream.str(line);
+
+  unsigned state = 0;
+  for (std::vector<std::string>::const_iterator it = buffer.begin() + 1
+                                              , to = buffer.end() - 1
+                                              ; it != to; ++it) {
+    std::string line(*it);
+    if (line.length() < 17) {
+      std::ostringstream msg;
+      msg << "Line too short in PERTQMZONE block";
+      io::messages.add(msg.str(), "In_QMMM", io::message::error);
+    }
+
+    // the first 17 chars are ignored
+    line.erase(line.begin(), line.begin() + 17);
+
+    _lineStream.clear();
+    _lineStream.str(line);
+
+    _lineStream >> state;
+  
+    if (_lineStream.fail()) {
+      io::messages.add("Bad line in PERTQMZONE block.",
+              "In_QMMM", io::message::error);
+      return;
+    }
+    if (state < 0 || state > 2) {
+      std::ostringstream msg;
+      msg << "PERTQMZONE block: allowed values for state are 0 = both states, 1 = state A, 2 = state B";
+      io::messages.add(msg.str(), "In_QMMM", io::message::error);
+      return;
+    }
+    sim.param().qmmm.nn.pertqm_state.push_back(state);
+  }
+  }
 
 void io::In_QMMM::read_zone(topology::Topology& topo
                            , simulation::Simulation& sim

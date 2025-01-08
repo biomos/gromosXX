@@ -261,6 +261,7 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
   for (;it != to; ++it) {
     //unsigned atomic_number = it->atomic_number;
     uint32_t atomic_number = it->atomic_number;
+
     py::list py_coordinates;
     math::Vec nn_pos = it->pos * length_to_nn;
     DEBUG(15, "atom to NN: " << it->index << " : " << math::v2s(nn_pos));
