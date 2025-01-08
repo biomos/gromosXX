@@ -289,6 +289,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
           sim.param().constraint.solvent.algorithm == simulation::constr_shake;
 
   // NTWSE > 0 -> minimum energy
+  // NTWSE > 0 -> minimum energy
   // check whether a new energy minimum was found
   bool minimum_found = false;
   if (sim.param().write.energy_index > 0) {

@@ -969,6 +969,8 @@ void interaction::QMMM_Interaction::modify_exclusions(
       if (erase) {
         DEBUG(9, "Removing exclusion: " << i << " - " << *it);
         it = topo.exclusion(i).erase(it);
+        // add to all_exclusion
+        topo.all_exclusion(i).insert(*it);
         continue;
       }
       ++it;
@@ -995,7 +997,7 @@ void interaction::QMMM_Interaction::modify_exclusions(
     }
     ++it;
   }
-  topo.update_all_exclusion();
+  // topo.update_all_exclusion();
 }
 
 void interaction::QMMM_Interaction::store_set_data(

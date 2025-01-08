@@ -216,6 +216,7 @@ void interaction::QM_Zone::write(topology::Topology& topo,
 
   // Write energies
   conf.current().energies.qm_total = this->m_qm_energy;
+  conf.current().perturbed_energy_derivatives.qm_total = this->m_qm_energy_der;
 }
 
 int interaction::QM_Zone::get_qm_atoms(const topology::Topology& topo, 
@@ -255,7 +256,7 @@ int interaction::QM_Zone::get_qm_atoms(const topology::Topology& topo,
         ) {
         if (topo.is_polarisable(a)
                 || topo.is_coarse_grained(a)
-                || topo.is_perturbed(a)
+               // || topo.is_perturbed(a)
                 || topo.is_eds_perturbed(a)) {
           std::ostringstream msg;
           msg << "QM or buffer atom should not be polarisable, coarse-grained or perturbed";

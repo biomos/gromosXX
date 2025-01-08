@@ -1476,7 +1476,7 @@ namespace simulation
        */
       int velocity;
       /**
-       * force
+       * forcwrite
        */
       int force;
       /**
@@ -4458,7 +4458,8 @@ namespace simulation
                       , charge_steps(0)
                       , model_type(nn_model_type_burnn) 
                       , learning_type(nn_learning_type_all)
-                      , device(nn_device_auto) {}
+                      , device(nn_device_auto)
+                      , pertqm_state(0) {}
         /**
          * Schnetpack model path
          */
@@ -4499,6 +4500,8 @@ namespace simulation
          * Device to run model on
          */
         qm_nn_device_enum device;
+
+        std::vector<unsigned> pertqm_state;
       } nn;
 
     } qmmm;

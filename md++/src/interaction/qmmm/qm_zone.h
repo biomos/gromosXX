@@ -149,6 +149,20 @@ namespace interaction {
     }
 
     /**
+     * QM energy accessor
+     */
+    double QM_energy_derivative() const {
+      return m_qm_energy_der;
+    }
+
+    /**
+     * QM energy mutator
+     */
+    double & QM_energy_derivative() {
+      return m_qm_energy_der;
+    }
+
+    /**
      * net charge accessor
      */
     int charge() const {
@@ -187,6 +201,11 @@ namespace interaction {
      * the QM energy of the zone
      */
     double m_qm_energy;
+
+    /**
+     * the QM energy derivative of the zone
+     */
+    double m_qm_energy_der;
 
     /**
      * the QM zone net charge
