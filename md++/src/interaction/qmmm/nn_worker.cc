@@ -101,12 +101,8 @@ int interaction::NN_Worker::init(const topology::Topology& topo
         num_threads = omp_get_num_threads();
   #endif
 
-  // To be able to import the module from the current directory
-  py::module_ sys = py::module_::import("sys");
-  sys.attr("path").attr("append")("/pool/radekc/GROMOS/GROMOS_workstation/gromosXX/md++/src/interaction/qmmm");
-  
-  // Initialize schnet_v1 module
-  py::module_ schnet_v1 = py::module_::import("schnet_v1");
+  // determine QM software
+  const simulation::qm_software_enum software = sim.param().qmmm.software;
 
   // Model path
   py::str model_path = sim.param().qmmm.nn.model_path;
@@ -132,8 +128,33 @@ int interaction::NN_Worker::init(const topology::Topology& topo
   py::int_ write_energy_step = sim.param().write.energy;
 
   // Initialize mlp_calculator Python object
-  mlp_calculator = schnet_v1.attr("SchNet_V1_Calculator")(model_path, val_models_paths, write_val_step, write_energy_step);
-  
+  if (software == simulation::qm_nn) {
+    // To be able to import the module from the current directory
+    py::module_ sys = py::module_::import("sys");
+    sys.attr("path").attr("append")("/pool/radekc/GROMOS/GROMOS_workstation/gromosXX/md++/src/interaction/qmmm");
+
+    // Initialize schnet_v1 module
+    py::module_ schnet_v1 = py::module_::import("schnet_v1");
+    
+    // Decide if perturbation is performed or not
+    if (sim.param().perturbation.perturbation == true) {
+
+      // get lambda parameter
+      py::float_ lambda = py::cast(sim.param().perturbation.lambda);
+
+      // get perturbed QM states
+      py::list perturbed_qm_states = py::cast(sim.param().qmmm.nn.pertqm_state);
+
+      // Initialize mlp_calculator Pert_SchNet_V1_Calculator Python object
+      mlp_calculator = schnet_v1.attr("Pert_SchNet_V1_Calculator")(model_path, val_models_paths, write_val_step, write_energy_step, lambda, perturbed_qm_states);
+    }
+
+    else {
+      // Initialize mlp_calculator SchNet_V1_Calculator Python object
+      mlp_calculator = schnet_v1.attr("SchNet_V1_Calculator")(model_path, val_models_paths, write_val_step, write_energy_step);
+    }
+  }
+
   // Restore omp_num_threads
   #ifdef OMP
     omp_set_num_threads(num_threads);
@@ -156,16 +177,6 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
 
   // Prepare the input for mlp_calculator object
   double length_to_nn = 1 / this->param->unit_factor_length;
-
-  // perturbed states - specify indices of state A and B
-  // To state A, we take everything between <stateA_first ; stateA_last>
-  // To state B, we take everything between <stateB_first ; stateB_last>
-  // both states contain also atoms <both_states_first ; +inf)
-  const unsigned stateA_first = 0;
-  const unsigned stateA_last = 5;
-  const unsigned stateB_first = 6;
-  const unsigned stateB_last = 10;
-  const unsigned both_states_first = 11;
 
   std::set<interaction::QM_Atom>::const_iterator it, to;
   it = qm_zone.qm.begin();
@@ -214,6 +225,12 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
     DEBUG(15, "force from NN, atom " << it->index << " : " << math::v2s(it->force));
   }
 
+  // Free energy derivative if perturbation is performed
+  if (sim.param().perturbation.perturbation == true) {
+    const double energy_derivative = mlp_calculator.attr("get_derivative")().cast<double>() * this->param->unit_factor_energy;
+    qm_zone.QM_energy_derivative() = energy_derivative;
+  }
+  
   // NN validation
   if (!sim.param().qmmm.nn.val_model_paths.empty()
       && (sim.steps() % sim.param().qmmm.nn.val_steps == 0
