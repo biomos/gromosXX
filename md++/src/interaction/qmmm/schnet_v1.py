@@ -25,9 +25,37 @@ class SchNet_V1_Calculator:
         val_calculators (list): A list of validation calculators.
         nn_valid_freq (int): Frequency for performing validation (in terms of time steps).
         write_energy_freq (int): Frequency for writing energy values.
-        energy (float): The predicted energy for the last system.
-        forces (np.ndarray): The predicted forces for the last system.
+        energy (float): The predicted energy for the current system.
+        forces (np.ndarray): The predicted forces for the current system.
         nn_valid_dev (float): Validation deviation calculated during validation.
+
+    Methods:
+        __init__(self, model_path: str, val_model_paths: list, nn_valid_freq: int, write_energy_freq: int) -> None:
+            Initialize the calculator with model paths and configuration.
+
+        get_environment(self, model_args) -> spk.environment.SimpleEnvironmentProvider:
+            Retrieve the environment provider for the model.
+
+        get_calculator(self, model_path) -> spk.interfaces.SpkCalculator:
+            Create a SchnetPack calculator from the given model path.
+
+        predict_energy_and_forces(self, system: ase.Atoms):
+            Predict energy and forces for the given atomic system.
+
+        validate_prediction(self, system: ase.Atoms):
+            Validate predictions using the validation calculators.
+
+        calculate_next_step(self, atomic_numbers: list, positions: list, time_step: int) -> None:
+            Perform energy and force prediction, and validate the predictions if necessary.
+
+        get_energy(self):
+            Get the predicted energy for the last atomic system.
+
+        get_forces(self):
+            Get the predicted forces for the last atomic system.
+
+        get_nn_valid_dev(self):
+            Get the validation deviation calculated during the last validation step.
     """
 
     def __init__(self, model_path: str, val_model_paths: list, nn_valid_freq: int, write_energy_freq: int) -> None:
@@ -194,19 +222,61 @@ class Pert_SchNet_V1_Calculator_Error(Exception):
 
 class Pert_SchNet_V1_Calculator(SchNet_V1_Calculator):
     """
-    A calculator class for perturbed energy and force calculations using modified SchNet models.
+    Pert_SchNet_V1_Calculator is a specialized calculator for computing perturbed energies and forces 
+    in molecular dynamics simulations using the SchNet model. It extends the SchNet_V1_Calculator class 
+    to handle perturbations between different quantum mechanical (QM) end states.
 
-    This class extends the `SchNet_V1_Calculator` to handle perturbed quantum mechanical (QM) states,
-    allowing the calculation of perturbed energies and forces in different states, and free derivative.
+    This class supports the following functionalities:
+    - Initialization with model paths, validation frequencies, and perturbation settings.
+    - Retrieval of atomic numbers and positions for specified QM states.
+    - Calculation of perturbed energies and their derivatives.
+    - Validation of perturbed energy calculations using multiple validation models.
+    - Calculation of perturbed forces for the system.
+    - Prediction of the next simulation step by updating energies, forces, and derivatives.
 
     Attributes:
-        lam (float): A perturbation parameter for interpolating between states.
-        perturbed_qm_states (np.ndarray): Array indicating QM states of atoms (1 for state A, 2 for state B).
-        qmzone_size (int): Total number of QM states.
-        lenght_state_a (int): Number of atoms in state A.
-        lenght_state_b (int): Number of atoms in state B.
-    """
+        lam (float): Parameter for interpolating between different states.
+        perturbed_qm_states (np.ndarray): Array specifying the QM states of each atom.
+        qmzone_size (int): Length of the QM zone.
+        num_states (int): Number of perturbed QM states.
+        states_idx (dict): Dictionary storing indices of atoms in different states.
+        states (dict): Dictionary storing atomic states and their properties.
+        energy (float): Total perturbed energy.
+        derivative (float): Derivative of the perturbed energy.
+        forces (np.ndarray): Perturbed forces for the system.
+        nn_valid_dev (float): Deviation of the perturbed energy during validation.
 
+    Methods:
+        __init__(self, model_path: str, val_model_paths: list, nn_valid_freq: int, write_energy_freq: int, lam: float, perturbed_qm_states: list) -> None:
+            Initialize the Pert_SchNet_V1_Calculator with necessary model paths, validation frequency, and perturbation settings.
+
+        get_z_and_positions_vac(self, atomic_numbers, positions, state_id):
+            Retrieve the atomic numbers and positions within the quantum mechanical (QM) zone for a specified state.
+
+        get_z_and_positions_vac_and_burnn(self, atomic_numbers, positions, state_id):
+            Retrieve the atomic numbers and positions for both the vacuum and burnn configurations based on a specified state ID.
+
+        get_state(self, atomic_numbers: list, positions: list, state_id: str) -> ase.Atoms:
+            Construct two ASE `Atoms` objects representing the system end state in the vacuum and BuRNN environments for the specified perturbed quantum mechanical (QM) state.
+
+        calculate_perturbed_energy_and_derivative(self) -> float:
+            Calculate the perturbed energy and its derivative for two states (A and B) in both vacuum and Burnn environments.
+
+        validate_state(self, state: str, calculator: spk.interfaces.SpkCalculator) -> float:
+            Validate the state by calculating the potential energy using the specified validation calculator.
+
+        validate_perturbed_energy(self):
+            Validate the perturbed energy calculations using the provided end states in both vacuum and BuRNN environments.
+
+        calculate_perturbed_forces(self):
+            Calculate perturbed forces for the system.
+
+        calculate_next_step(self, atomic_numbers: list, positions: list, time_step: int) -> None:
+            Calculate the next step in the MLP/MM simulation by updating the states, predicting energies and forces, and calculating the perturbed energy and forces.
+
+        get_derivative(self):
+            Get the derivative of the perturbed energy.
+    """
     def __init__(self, model_path: str, val_model_paths: list, nn_valid_freq: int, write_energy_freq: int, lam: float, perturbed_qm_states: list) -> None:
         """
         Initialize the Pert_SchNet_V1_Calculator with necessary model paths, validation frequency, and perturbation settings.
@@ -216,8 +286,8 @@ class Pert_SchNet_V1_Calculator(SchNet_V1_Calculator):
             val_model_paths (list): List of paths to validation models used to validate predictions.
             nn_valid_freq (int): Frequency (in steps) at which to validate the neural network predictions.
             write_energy_freq (int): Frequency (in steps) at which to write the energy predictions to output.
-            lam (float): A perturbation parameter used for interpolating between different states.
-            perturbed_qm_states (list): List specifying the QM states of each atom, where 1 indicates state A and 2 indicates state B.
+            lam (float): A parameter used for interpolating between different states.
+            perturbed_qm_states (list): List specifying the QM states of each atom, where 0 indicates both states, 1 indicates state A, and 2 indicates state B.
 
         Returns:
             None
@@ -234,43 +304,60 @@ class Pert_SchNet_V1_Calculator(SchNet_V1_Calculator):
         # Length of the QM zone.
         self.qmzone_size = len(self.perturbed_qm_states)
 
+        # Initialize the `num_states` attribute with the number of perturbed QM states.
         self.num_states = len(set([s for s in self.perturbed_qm_states if s != 0]))
 
+        # Create a dictionary to store indices of atoms in different states.
         self.states_idx = {}
 
+        # Iterate over the perturbed QM states and populate the `states_idx` dictionary.
         for i, s in enumerate(self.perturbed_qm_states):
             if s == 0:
+                # If state is both (0), add index to all relevant lists.
                 try: 
                     self.states_idx['A'].append(i)
                     self.states_idx['B'].append(i)
                     self.states_idx['both'].append(i)
-                except KeyError: 
+                except KeyError:
                     self.states_idx['A'] = [i]
                     self.states_idx['B'] = [i]
                     self.states_idx['both'] = [i]
             elif s == 1:
-                try: self.states_idx['A'].append(i)
-                except KeyError: self.states_idx['A'] = [i]
+                # If state is 1, add index to the 'A' list.
+                try: 
+                    self.states_idx['A'].append(i)
+                except KeyError: 
+                    self.states_idx['A'] = [i]
             elif s == 2:
-                try: self.states_idx['B'].append(i)
-                except KeyError: self.states_idx['B'] = [i]
+                # If state is B(2), add index to the 'B' list.
+                try: 
+                    self.states_idx['B'].append(i)
+                except KeyError: 
+                    self.states_idx['B'] = [i]
             else:
                 print("Error: Unknown state value:", s)
+        
+        # Check if both states are present and populate their respective lists.
+        if 'both' in self.states_idx.keys():
+            # Add indices of atoms only in A to the 'only_A' list.
+            self.states_idx['only_A'] = [i for i in self.states_idx['A'] if i not in self.states_idx['both']]
+            # Add indices of atoms only in B to the 'only_B' list.
+            self.states_idx['only_B'] = [i for i in self.states_idx['B'] if i not in self.states_idx['both']]
         
         return
 
 
     def get_z_and_positions_vac(self, atomic_numbers, positions, state_id):
         """
-        Retrieve the atomic numbers and positions within the quantum mechanical (QM) zone for a specified end state.
+        Retrieve the atomic numbers and positions within the quantum mechanical (QM) zone for a specified state.
 
-        This method filters the atomic numbers and positions based on the provided end state ID, returning
-        only those that belong to the specified end state within the QM zone.
+        This method filters the atomic numbers and positions based on the provided state ID, returning
+        only those that belong to the specified state within the QM zone.
 
         Args:
             atomic_numbers (list): A list of atomic numbers for the entire system.
             positions (list): A list of atomic positions corresponding to the atomic numbers.
-            state_id (int): The state identifier (1 for state A, 2 for state B) to filter the QM zone.
+            state_id (str): The state identifier ('A' for state A, 'B' for state B) to filter the QM zone.
 
         Returns:
             tuple: Two lists containing:
@@ -280,18 +367,18 @@ class Pert_SchNet_V1_Calculator(SchNet_V1_Calculator):
         atomic_numbers_vac = []  # Initialize an empty list to store atomic numbers for the specified state.
         positions_vac = []       # Initialize an empty list to store positions for the specified state.
 
-        # Iterate over the atomic numbers and their indices.
+        # Iterate over the indices of atoms in the specified state.
         for i in self.states_idx[state_id]:
-            # Check if the current atom's end state matches the specified state ID.
-            atomic_numbers_vac.append(atomic_numbers[i])  # Add atomic number if it matches the state.
-            positions_vac.append(positions[i])  # Add position if it matches the state.
+            # Add atomic number and position to the respective lists.
+            atomic_numbers_vac.append(atomic_numbers[i])
+            positions_vac.append(positions[i])
 
         return atomic_numbers_vac, positions_vac
 
 
     def get_z_and_positions_vac_and_burnn(self, atomic_numbers, positions, state_id):
         """
-        Retrieve the atomic numbers and positions for both the vacuum and burnn configurations based on a specified end state ID.
+        Retrieve the atomic numbers and positions for both the vacuum and burnn configurations based on a specified state ID.
 
         This method separates atomic numbers and positions into two groups:
         - Vacuum (vac): Atoms within the quantum mechanical (QM) zone corresponding to the specified state.
@@ -300,10 +387,10 @@ class Pert_SchNet_V1_Calculator(SchNet_V1_Calculator):
         Args:
             atomic_numbers (list): A list of atomic numbers for the system.
             positions (list): A list of atomic positions corresponding to the atomic numbers.
-            state_id (int): The state identifier (1 for state A, 2 for state B) to filter the QM zone.
+            state_id (str): The state identifier ('A' for state A, 'B' for state B) to filter the QM zone.
 
         Returns:
-            Four lists containing:
+            tuple: Four lists containing:
                 - atomic_numbers_vac (list): Atomic numbers within the QM zone for the specified state.
                 - atomic_numbers_burnn (list): Atomic numbers for the entire Inner + Buffer zone, starting with those in the Inner zone.
                 - positions_vac (list): Positions corresponding to the atomic numbers within the QM zone.
@@ -336,7 +423,7 @@ class Pert_SchNet_V1_Calculator(SchNet_V1_Calculator):
     def get_state(self, atomic_numbers: list, positions: list, state_id: str) -> ase.Atoms:
         """
         Construct two ASE `Atoms` objects representing the system end state in the vacuum and BuRNN environments 
-        for the specified quantum mechanical (QM) state.
+        for the specified perturbed quantum mechanical (QM) state.
 
         This method divides the atomic numbers and positions into two states: vacuum and Burnn, based on 
         the provided `state_id`, and then creates corresponding ASE `Atoms` objects for each state.
@@ -344,18 +431,20 @@ class Pert_SchNet_V1_Calculator(SchNet_V1_Calculator):
         Args:
             atomic_numbers (list): A list of atomic numbers for the entire system.
             positions (list): A list of atomic positions corresponding to the atomic numbers.
-            state_id (int): The state identifier (1 for state A, 2 for state B) used to filter and construct end states.
+            state_id (str): The state identifier ('A' for state A, 'B' for state B) used to filter and construct end states.
 
         Returns:
             tuple: A pair of ASE `Atoms` objects:
-                - state_vac (ase.Atoms): The vacuum state representing the numbers and positions for the given end state.
-                - state_burnn (ase.Atoms): The BuRNN state representing the numbers and positions for the given end state, including the buffer region.
+                - state_vac (ase.Atoms): The vacuum state representing the Z and positions for the given end state.
+                - state_burnn (ase.Atoms): The BuRNN state representing the Z and positions for the given end state, including the buffer region.
         """
         # Retrieve atomic numbers and positions for both vacuum and Burnn states for the specified state ID.
         atomic_numbers_vac, atomic_numbers_burnn, positions_vac, positions_burnn = self.get_z_and_positions_vac_and_burnn(atomic_numbers, positions, state_id)
 
+        # Create ASE Atoms object for the vacuum state.
         state_vac = ase.Atoms(numbers=atomic_numbers_vac, positions=positions_vac)
 
+        # Create ASE Atoms object for the Burnn state.
         state_burnn = ase.Atoms(numbers=atomic_numbers_burnn, positions=positions_burnn)
 
         return state_vac, state_burnn
@@ -372,74 +461,92 @@ class Pert_SchNet_V1_Calculator(SchNet_V1_Calculator):
         Returns:
             tuple: A tuple containing:
                 - perturbed_energy (float): The total perturbed energy.
-                - perturbed_energy_derivative (float): The derivative of the perturbed energy with respect to lambda
+                - perturbed_energy_derivative (float): The derivative of the perturbed energy with respect to lambda.
         """
+        # Iterate over each state to calculate the perturbed energy and its derivative.
         for state in self.states.keys():
             if state == 'A':
+                # Calculate perturbed energy and derivative for state A.
                 self.states[state]['perturbed_energy'] = (1 - self.lam) * self.states[state]['energy_burnn'] + self.lam * self.states[state]['energy_vac']
                 self.states[state]['derivative'] = -self.states[state]['energy_burnn'] + self.states[state]['energy_vac']
-            
             else:
-                 self.states[state]['perturbed_energy'] = self.lam * self.states[state]['energy_burnn'] + (1 - self.lam) * self.states[state]['energy_vac']
-                 self.states[state]['derivative'] = self.states[state]['energy_burnn'] - self.states[state]['energy_vac']
+                # Calculate perturbed energy and derivative for state B.
+                self.states[state]['perturbed_energy'] = self.lam * self.states[state]['energy_burnn'] + (1 - self.lam) * self.states[state]['energy_vac']
+                self.states[state]['derivative'] = self.states[state]['energy_burnn'] - self.states[state]['energy_vac']
 
-        # Sum the perturbed energies of states A and B to get the total perturbed energy.
-        if len(self.states.keys()) == 1: return self.states['A']['perturbed_energy'], self.states['A']['derivative']
+        # Return the perturbed energies and derivatives for state A
+        if len(self.states.keys()) == 1:
+            return self.states['A']['perturbed_energy'], self.states['A']['derivative']
+        # Sum the perturbed energies and derivatives of states A and B to get the total perturbed energy and derivative.
+        else:
+            return self.states['A']['perturbed_energy'] + self.states['B']['perturbed_energy'], self.states['A']['derivative'] + self.states['B']['derivative']
 
-        else: return self.states['A']['perturbed_energy'] + self.states['B']['perturbed_energy'], self.states['A']['derivative'] + self.states['B']['derivative']
+    def validate_state(self, state: str, calculator: spk.interfaces.SpkCalculator) -> float:
+        """
+        Validate the state by calculating the potential energy using the specified validation calculator.
 
+        Args:
+            state (str): The state to validate. Expected values are 'A' or other states.
+            calculator (spk.interfaces.SpkCalculator): The calculator to set for the states.
 
+        Returns:
+            float: The calculated potential energy based on the state and lambda value.
+        """
+        self.states[state]['vac'].set_calculator(calculator)
+        self.states[state]['burnn'].set_calculator(calculator)
+
+        energy_burnn = self.states[state]['burnn'].get_potential_energy()
+        energy_vac = self.states[state]['vac'].get_potential_energy()
+
+        if state == 'A':
+            return (1 - self.lam) * energy_burnn + self.lam * energy_vac
+        else:
+            return self.lam * energy_burnn + (1 - self.lam) * energy_vac
+    
     def validate_perturbed_energy(self):
         """
-        Validates the perturbed energy calculations using the provided end states in both vacuum and BuRNN environments.
+        Validate the perturbed energy calculations using the provided end states in both vacuum and BuRNN environments.
 
         This method applies validation calculators to the provided atomic states to compute the perturbed energies 
         for both states A and B in vacuum and Burnn environments. It then calculates the deviation between the 
         previously computed perturbed energies and the validation energies, using either a single or multiple 
         validation calculators.
 
-        Args:
-            state_a_vac (ase.Atoms): The ASE Atoms object representing state A in the vacuum
-            state_a_burnn (ase.Atoms): The ASE Atoms object representing state A in the BuRNN scheme
-            state_b_vac (ase.Atoms): The ASE Atoms object representing state B in the vacuum
-            state_b_burnn (ase.Atoms): The ASE Atoms object representing state B in the BuRNN scheme
-
         Returns:
             float: The maximum absolute deviation between the computed perturbed energies and the validation energies.
         """
+        # Case when only one state (A) is present.
         if len(self.states.keys()) == 1:
+            # Case when only one validation calculator is provided.
             if len(self.val_calculators) == 1:
-                self.states['A']['vac'].set_calculator(self.val_calculators[0])
-                self.states['A']['burnn'].set_calculator(self.val_calculators[0])
+                # Compute validation perturbed energy for state A.
+                perturbed_energy_a_val = self.validate_state('A', self.val_calculators[0])
 
-                perturbed_energy_a_val = (1 - self.lam) * self.states['A']['burnn'].get_potential_energy() + self.lam * self.states['A']['vac'].get_potential_energy()
-
+                # Calculate deviation between computed and validation perturbed energy.
                 dev = abs(self.states['A']['perturbed_energy'] - perturbed_energy_a_val)
         
             else:
                 # Initialize lists to store validation perturbed energies for multiple calculators.
                 perturbed_energies_a_val = [self.states['A']['perturbed_energy']]
                 for val_calculator in self.val_calculators:
-                    self.states['A']['vac'].set_calculator(val_calculator)
-                    self.states['A']['burnn'].set_calculator(val_calculator)
-
-                    perturbed_energy_a_val = (1 - self.lam) * self.states['A']['burnn'].get_potential_energy() + self.lam * self.states['A']['vac'].get_potential_energy()
+                    # Compute validation perturbed energy for state A.
+                    perturbed_energy_a_val = self.validate_state('A', val_calculator)
+                    # Append the calculated validation energy to the list.
                     perturbed_energies_a_val.append(perturbed_energy_a_val)
-                    perturbed_energies_a_val = np.array(perturbed_energies_a_val)
-                    dev = perturbed_energies_a_val.var() / (len(perturbed_energies_a_val) - 1)
+                
+                # Convert the list of validation energies to a numpy array.
+                perturbed_energies_a_val = np.array(perturbed_energies_a_val)
+                # Calculate variance of the validation energies.
+                dev = perturbed_energies_a_val.var() / (len(perturbed_energies_a_val) - 1)
             return dev
 
+        # Case when two states (A and B) are present.
         else:
+            # Case when only one validation calculator is provided.
             if len(self.val_calculators) == 1:
-                # Set the single validation calculator for all states.
-                self.states['A']['vac'].set_calculator(self.val_calculators[0])
-                self.states['A']['burnn'].set_calculator(self.val_calculators[0])
-                self.states['B']['vac'].set_calculator(self.val_calculators[0])
-                self.states['B']['burnn'].set_calculator(self.val_calculators[0])
-
                 # Compute validation perturbed energies for state A and state B.
-                perturbed_energy_a_val = (1 - self.lam) * self.states['A']['burnn'].get_potential_energy() + self.lam * self.states['A']['vac'].get_potential_energy()
-                perturbed_energy_b_val = self.lam * self.states['B']['burnn'].get_potential_energy() + (1 - self.lam) * self.states['B']['vac'].get_potential_energy()
+                perturbed_energy_a_val = self.validate_state('A', self.val_calculators[0])
+                perturbed_energy_b_val = self.validate_state('B', self.val_calculators[0])
 
                 # Calculate deviations between computed and validation perturbed energies.
                 dev_a = abs(self.states['A']['perturbed_energy'] - perturbed_energy_a_val)
@@ -452,13 +559,9 @@ class Pert_SchNet_V1_Calculator(SchNet_V1_Calculator):
 
                 # Iterate over each validation calculator and compute perturbed energies.
                 for val_calculator in self.val_calculators:
-                    self.states['A']['vac'].set_calculator(val_calculator)
-                    self.states['A']['burnn'].set_calculator(val_calculator)
-                    self.states['B']['vac'].set_calculator(val_calculator)
-                    self.states['B']['burnn'].set_calculator(val_calculator)
-
-                    perturbed_energy_a_val = (1 - self.lam) * self.states['A']['burnn'].get_potential_energy() + self.lam * self.states['A']['vac'].get_potential_energy()
-                    perturbed_energy_b_val = self.lam * self.states['B']['burnn'].get_potential_energy() + (1 - self.lam) * self.states['B']['vac'].get_potential_energy()
+                    # Compute validation perturbed energies for state A and state B.
+                    perturbed_energy_a_val = self.validate_state('A', val_calculator)
+                    perturbed_energy_b_val = self.validate_state('B', val_calculator)
 
                     # Append the calculated validation energies to the lists.
                     perturbed_energies_a_val.append(perturbed_energy_a_val)
@@ -477,71 +580,106 @@ class Pert_SchNet_V1_Calculator(SchNet_V1_Calculator):
 
     def calculate_perturbed_forces(self):
         """
-        Calculate perturbed forces for the system.
-
-        Args:
-            state_a_forces_vac (np.ndarray): Forces for state A in vacuum.
-            state_a_forces_burnn (np.ndarray): Forces for state A in BuRNN scheme.
-            state_b_forces_vac (np.ndarray): Forces for state B in vacuum.
-            state_b_forces_burnn (np.ndarray): Forces for state B in BuRNN scheme.
-
+        Calculate the perturbed forces for the QM zone and buffer zone based on the lambda factor and the end states.
+        This method calculates the perturbed forces for the QM zone and buffer zone by interpolating between the forces
+        from different states ('A' and 'B') using the lambda factor. It handles cases where only one state ('A') is present
+        or both states ('A' and 'B') are present.
         Returns:
-            np.ndarray: Perturbed forces for the system.
+            np.ndarray: A numpy array of shape (qm zone size + buffer size, 3) containing the calculated perturbed forces.
         """
-
-        # Initialize the perturbed forces array, shape (qm zone size, 3).
-        
+        # Initialize the perturbed forces array, shape (qm zone size + buffer size, 3).
         forces = np.zeros((self.qmzone_size + (len(self.states['A']['forces_burnn']) - len(self.states['A']['forces_vac'])), 3), dtype=float)
 
+        def calculate_forces(state, indices, lam_factor, shift: int = 0)->None:
+            """
+            Calculate the forces for a given state and set of indices.
+
+            Args:
+                state (int): The state for which to calculate the forces.
+                indices (list of int): The indices of the particles for which to calculate the forces.
+                lam_factor (float): The lambda factor used to interpolate between two sets of forces.
+                shift (int, optional): The shift to apply to the indices when accessing the forces. Defaults to 0.
+
+            Returns:
+                None
+            """
+            for j, i in enumerate(indices):
+                forces[i] = lam_factor * self.states[state]['forces_burnn'][j + shift] + (1 - lam_factor) * self.states[state]['forces_vac'][j + shift]
+        
+        def calculate_forces_both(indices, lam_factor)->None:
+            """
+            Calculate the combined forces for given indices using a lambda factor.
+
+            This function computes the forces for each index in the provided list of indices
+            by combining forces from different states ('A' and 'B') and conditions ('burnn' and 'vac')
+            using the specified lambda factor.
+
+            Args:
+                indices (list of int): List of indices for which the forces need to be calculated.
+                lam_factor (float): Lambda factor used to weight the contributions from different states and conditions.
+
+            Returns:
+                None: The function updates the `forces` array in place.
+            """
+            for j, i in enumerate(indices):
+                forces[i] = lam_factor * self.states['A']['forces_burnn'][j] + (1 - lam_factor) * self.states['A']['forces_vac'][j] + (1 - lam_factor) * self.states['B']['forces_burnn'][j] + lam_factor * self.states['B']['forces_vac'][j]
+
+        # Case when only one state (A) is present.
         if len(self.states.keys()) == 1:
+            # Calculate forces for the QM zone.
             forces[:self.qmzone_size] = (1 - self.lam) * self.states['A']['forces_burnn'][:self.qmzone_size] + self.lam * self.states['A']['forces_vac']
+            # Calculate forces for the buffer zone.
             forces[self.qmzone_size:] = (1 - self.lam) * self.states['A']['forces_burnn'][self.qmzone_size:]
             return forces
 
-        if len(self.states.keys()) == 2 and 'both' not in self.states_idx.keys():
-            # Calculate forces for state B.
-            forces[:len(self.states_idx['A'])] = (1 - self.lam) * self.states['A']['forces_burnn'][:len(self.states_idx['A'])] + self.lam * self.states['A']['forces_vac']
-            forces[len(self.states_idx['A']):len(self.states_idx['A']) + len(self.states_idx['B'])] = self.lam * self.states['B']['forces_burnn'][:len(self.states_idx['B'])] + (1 - self.lam) * self.states['B']['forces_vac']
-            forces[self.qmzone_size:] = (1 - self.lam) * self.states['A']['forces_burnn'][len(self.states_idx['A']):] + self.lam * self.states['B']['forces_burnn'][len(self.states_idx['B']):]
-            return forces
-        
-        if len(self.states.keys()) == 2 and 'both' in self.states_idx.keys():
-            forces[:len(self.states_idx['both'])] = (1 - self.lam) * self.states['A']['forces_burnn'][:len(self.states_idx['both'])] + self.lam * self.states['A']['forces_vac'][:len(self.states_idx['both'])] + self.lam * self.states['B']['forces_burnn'][:len(self.states_idx['both'])] + (1 - self.lam) * self.states['B']['forces_vac'][:len(self.states_idx['both'])]
-            forces[len(self.states_idx['both']) : len(self.states_idx['A'])] = (1 - self.lam) * self.states['A']['forces_burnn'][len(self.states_idx['both']):len(self.states_idx['A'])] + self.lam * self.states['A']['forces_vac'][len(self.states_idx['both']):]
-            forces[len(self.states_idx['A']) : len(self.states_idx['A']) + (len(self.states_idx['B']) - len(self.states_idx['both']))] = self.lam * self.states['B']['forces_burnn'][len(self.states_idx['both']):len(self.states_idx['B'])] + (1 - self.lam) * self.states['B']['forces_vac'][len(self.states_idx['both']):]
+        # Case when two states (A and B) are present.
+        if len(self.states.keys()) == 2:
+            if 'both' in self.states_idx.keys():
+                # Calculate forces for atoms in both states.
+                calculate_forces_both(self.states_idx['both'], 1 - self.lam)
+                # Calculate forces for atoms only in state A.
+                calculate_forces('A', self.states_idx['only_A'], 1 - self.lam, shift=len(self.states_idx['both']))
+                # Calculate forces for atoms only in state B.
+                calculate_forces('B', self.states_idx['only_B'], self.lam, shift=len(self.states_idx['both']))
+            else:
+                # Calculate forces for atoms in state A.
+                calculate_forces('A', self.states_idx['A'], 1 - self.lam)
+                # Calculate forces for atoms in state B.
+                calculate_forces('B', self.states_idx['B'], self.lam)
+            # Calculate forces for the buffer zone.
             forces[self.qmzone_size:] = (1 - self.lam) * self.states['A']['forces_burnn'][len(self.states_idx['A']):] + self.lam * self.states['B']['forces_burnn'][len(self.states_idx['B']):]
             return forces
 
     def calculate_next_step(self, atomic_numbers: list, positions: list, time_step: int) -> None:
         """
-        Calculate the next step in the simulation by predicting energies and forces for perturbed states A and B, 
-        and updating the perturbed energy, derivative, and forces.
-
-        This function creates the atomic states for two perturbed states (A and B) in both vacuum and BuRNN environments. 
-        It then predicts the energy and forces for these states and calculates the perturbed energy 
-        and its derivative. If the time step matches the validation frequency, it validates the perturbed energy.
+        Calculate the next step in the MLP/MM simulation by updating the states, predicting energies and forces,
+        and calculating the perturbed energy and forces.
 
         Args:
-            atomic_numbers (list): List of atomic numbers representing the atoms in the system.
-            positions (list): List of atomic positions corresponding to the atomic numbers.
-            time_step (int): The current time step of the MD simulation.
+            atomic_numbers (list): List of atomic numbers for the atoms in the system.
+            positions (list): List of positions for the atoms in the system.
+            time_step (int): The current time step of the simulation.
 
         Returns:
             None
         """
-
+        # Initialize the states dictionary to store vacuum and burnn states for each end state.
         self.states = {}
 
+        # Iterate over the number of states (A and B) to populate the states dictionary.
         for i in range(self.num_states):
             if i == 0:
                 state_id = 'A'
                 self.states[state_id] = {'vac': [], 'burnn': []}
+                # Retrieve the vacuum and burnn states for state A.
                 self.states[state_id]['vac'], self.states[state_id]['burnn'] = self.get_state(atomic_numbers, positions, state_id=state_id)
             else:
                 state_id = 'B'
                 self.states[state_id] = {'vac': [], 'burnn': []}
+                # Retrieve the vacuum and burnn states for state B.
                 self.states[state_id]['vac'], self.states[state_id]['burnn'] = self.get_state(atomic_numbers, positions, state_id=state_id)
 
+        # Predict energies and forces for each state in both vacuum and burnn environments.
         for state in self.states.keys():
             self.states[state]['energy_vac'], self.states[state]['forces_vac'] = self.predict_energy_and_forces(system=self.states[state]['vac'])
             self.states[state]['energy_burnn'], self.states[state]['forces_burnn'] = self.predict_energy_and_forces(self.states[state]['burnn'])
