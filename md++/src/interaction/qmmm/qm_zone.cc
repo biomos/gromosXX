@@ -641,22 +641,31 @@ int interaction::QM_Zone::_get_buffer_atoms(topology::Topology& topo,
   if ((m_err = this->gather_chargegroups<B>(topo, conf, sim, buffer_atoms, cutoff2)))
     return m_err;
   
+  // ADDED MICHAEL added if statement to check for static buffer
   // update the QM buffer topology so the pairlist algorithm can skip them
+  std::set<QM_Atom>::const_iterator set_it = buffer_atoms.begin();
   for (unsigned i = 0; i < topo.num_atoms(); ++i) {
     if (topo.is_qm_buffer(i)) {
-      if (buffer_atoms.count(i)) {
-        topo.is_qm_buffer(i) = 1;
-        DEBUG(9, "Atom " << i << " in adaptive buffer");
-      } else {
-        topo.is_qm_buffer(i) = -1; // temporarily disabled buffer atom
-        DEBUG(15, "Atom " << i << " not in adaptive buffer");
+      if (topo.is_qm_buffer(i) == 2) {
+            topo.is_qm_buffer(i) = 2;
+            buffer_atoms.emplace_hint(set_it,i,conf.current().pos(i),topo.qm_atomic_number(i));
+            DEBUG(8, "Atom " << i << " in static buffer");
+          }
+      if (topo.is_qm_buffer(i) != 2) {
+        if (buffer_atoms.count(i)) {
+          topo.is_qm_buffer(i) = 1;
+          DEBUG(12, "Atom " << i << " in adaptive buffer");
+        } else {
+          topo.is_qm_buffer(i) = -1; // temporarily disabled buffer atom
+          DEBUG(15, "Atom " << i << " not in adaptive buffer");
+        }
       }
     }
   }
 
-  DEBUG(15, "Buffer atoms:");
+  DEBUG(10, "Buffer atoms:");
   for (std::set<QM_Atom>::const_iterator it = buffer_atoms.begin(); it != buffer_atoms.end(); ++it) {
-    DEBUG(15, it->index);
+    DEBUG(10, it->index);
     DEBUG(15, "Distance to the 1st atom: " << math::abs(it->pos - this->qm.begin()->pos));
   }
 

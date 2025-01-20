@@ -63,14 +63,15 @@ QMZONE
 # QMI:  index of the QM atom
 # QMZ:  atomic number of the QM atom
 # QMLI: 0,1 atom is a link atom
+# BRstat: 0,1,2 options. 0 = atom is part of the inner QM region. 1 = atom is part of the adaptiv BR, atom is part of the static BR region
 #
 # NETCH SPINM
       0     1
 # Warning: the first 17 characters are ignored!
-# RESIDUE   ATOM     QMI   QMZ   QMLI
-    1 H2O   OW         1     8      0
-    1 H2O   HW1        2     1      0
-    1 H2O   HW2        3     1      0
+# RESIDUE   ATOM     QMI   QMZ   QMLI   BRstat
+    1 H2O   OW         1     8      0        0
+    1 H2O   HW1        2     1      0        0
+    1 H2O   HW2        3     1      0        0
 END
 @endverbatim
  *
@@ -117,13 +118,14 @@ BUFFERZONE
 # QMI:   index of the QM atom
 # QMZ:   atomic number of the QM atom
 # QMLI:  0,1 atom is a link atom
+# BRstat: 0,1,2 options. 0 = atom is part of the inner QM region. 1 = atom is part of the adaptiv BR, atom is part of the static BR region
 # NETCH SPINM BUFCUT
       0     1    1.4
 # Warning: the first 17 characters are ignored!
-# RESIDUE   ATOM     QMI   QMZ   QMLI
-    1 H2O   OW         1     8      0
-    1 H2O   HW1        2     1      0
-    1 H2O   HW2        3     1      0
+# RESIDUE   ATOM     QMI   QMZ   QMLI   BRstat
+    1 H2O   OW         1     8      0        1
+    1 H2O   HW1        2     1      0        1
+    1 H2O   HW2        3     1      0        1
 END
 @endverbatim
  *
@@ -547,6 +549,49 @@ END
 @verbatim
 GAUCHSM
 @@CHARGE@@ @@SPINM@@
+END
+@endverbatim
+ *
+ * The NNMODEL block specifies the NN model used to evaluate the NN interactions
+ * In the 1st line the model path is provided
+ * In the 2nd line the model_type and the learning_type is defined
+@verbatim
+NNMODEL
+/path/to/model
+0  1
+END
+@endverbatim
+ *
+ * The NNVALID block specifies the number of models which should be used for the calculation of the uncertainty estimation
+ * Every model should be in a new line
+ * - 1 line/model is provided: difference between NNMODEL and NNVALID model is reported
+ * - 2 or more lines: standard deviation between NNMODEL and all NNVALID models is reported
+ * After the number of models are specified one additional line specifies:
+ *  - val_steps val_threshold val_steps val_forceconstant
+@verbatim
+NNVALID
+/path/to/model_uncertainty_1
+/path/to/model_uncertainty_2
+/path/to/model_uncertainty_x
+1 4.184 0.0
+END
+@endverbatim
+ *
+ * The NNCHARGE block specifies the NN charge model
+@verbatim
+NNCHARGE
+/path/to/charge_model
+END
+@endverbatim
+ *
+ * The NNDEVICE block specifies the device on which the model should be evaluated
+ * Options:
+ * - cuda
+ * - cpu
+ * - auto
+@verbatim
+NNDEVICE
+cuda
 END
 @endverbatim
  *
@@ -1004,9 +1049,14 @@ void io::In_QMMM::read(topology::Topology& topo,
                 "In_QMMM", io::message::error);
         return;
       }
+      else if (buffer.size() < 2) {
+        io::messages.add("NNVALID block invalid",
+                "In_QMMM", io::message::error);
+        return;
+      }
       else {
         // loop over number of validations buffer and add lines to val_model_path
-        for ( unsigned i = 1; i < buffer.size() - 2; ++i ) {
+        for ( unsigned i = 1; 2 + i < buffer.size(); ++i ) {
           sim.param().qmmm.nn.val_model_paths.push_back(buffer[i]);
         }   
         std::string line(buffer.end()[-2]);
@@ -1621,7 +1671,7 @@ void io::In_QMMM::read_zone(topology::Topology& topo
   }
   // Count number of electrons and check consistency with charge and multiplicity
   int num_elec = -charge;
-  unsigned qmi = 0, qmz = 0, qmli = 0;
+  unsigned qmi = 0, qmz = 0, qmli = 0,brstat = 0;
   for (std::vector<std::string>::const_iterator it = buffer.begin() + 2
                                               , to = buffer.end() - 1
                                               ; it != to; ++it) {
@@ -1646,6 +1696,17 @@ void io::In_QMMM::read_zone(topology::Topology& topo
       io::messages.add(msg.str(), "In_QMMM", io::message::error);
       return;
     }
+
+    // Take care of optional brstat input in QMZONE and BUFFERZONE
+    _lineStream >> brstat;
+      if (_lineStream.fail()) {
+        if (blockname == "QMZONE"){
+          brstat = 0;
+        }
+        else {
+          brstat = 1;
+        }
+      } 
 
     if (qmi < 1 || qmi > topo.num_atoms()) {
       std::ostringstream msg;
@@ -1676,8 +1737,23 @@ void io::In_QMMM::read_zone(topology::Topology& topo
       return;
     }
     topo.is_qm(qmi - 1) = topo.is_qm(qmi - 1) || (blockname == "QMZONE");
+
     const bool is_qm_buffer = (blockname == "BUFFERZONE");
-    topo.is_qm_buffer(qmi - 1) = topo.is_qm_buffer(qmi - 1) || is_qm_buffer;
+
+  // ADDED MICHAEL check for static or adaptive BR atom
+    if (brstat == 2) {
+      topo.is_static_qm_buffer(qmi - 1) = topo.is_static_qm_buffer(qmi - 1);
+    }
+    if (brstat == 1) {
+      topo.is_adaptive_qm_buffer(qmi - 1) = topo.is_adaptive_qm_buffer(qmi - 1);
+    }
+    if (brstat < 0 || brstat > 2) {
+      std::ostringstream msg;
+      msg << blockname << " block: BRstat has to be 0: QMatom or 1: adaptiv BRatom or 2:  static BRatom";
+      io::messages.add(msg.str(), "In_QMMM", io::message::error);
+      return;
+    }
+
     sim.param().qmmm.use_qm_buffer = sim.param().qmmm.use_qm_buffer
                                       || is_qm_buffer;
     if (topo.is_qm(qmi - 1) && topo.is_qm_buffer(qmi - 1)) {
