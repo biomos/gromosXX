@@ -952,7 +952,7 @@ namespace simulation
     /*
      * use Schnetpack NN
      */
-    qm_nn = 5,
+    qm_schnetv1 = 5,
     /**
      * use Orca
      */
@@ -960,7 +960,11 @@ namespace simulation
     /**
      * use XTB
      */
-    qm_xtb = 7
+    qm_xtb = 7,
+    /*
+     * use Schnetpack v2 NN
+     */
+    qm_schnetv2 = 8
   };
 
   /**

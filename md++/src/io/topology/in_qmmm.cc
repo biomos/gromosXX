@@ -1001,7 +1001,7 @@ void io::In_QMMM::read(topology::Topology& topo,
   /*
    * Schnetpack NN
    */
-  else if (sw == simulation::qm_nn) {
+  else if (sw == simulation::qm_schnetv1 || sw == simulation::qm_schnetv2) {
     this->read_units(sim, &sim.param().qmmm.nn);
     //this->read_elements(topo, &sim.param().qmmm.nn);
 
@@ -1305,7 +1305,7 @@ void io::In_QMMM::read(topology::Topology& topo,
   } // CAPLEN
 
   // check if NN charge model is defined
-  if (sw == simulation::qm_nn
+  if (sw == (simulation::qm_schnetv1 || simulation::qm_schnetv2 )
         && sim.param().qmmm.qm_ch == simulation::qm_ch_dynamic
         && sim.param().qmmm.nn.charge_model_path.empty()) {
     io::messages.add("dynamic QM charge requested but no NN charge model specified",
@@ -1313,7 +1313,7 @@ void io::In_QMMM::read(topology::Topology& topo,
   }
 
   // allow learning_type == nn_learning_type_qmonly only for single-atom QM region
-  if (sw == simulation::qm_nn
+  if (sw == (simulation::qm_schnetv1 || simulation::qm_schnetv2)
         && sim.param().qmmm.nn.learning_type == simulation::nn_learning_type_qmonly) {
     size_t qm_size = 0;
     for (unsigned i = 0; i < topo.num_atoms(); ++i) {

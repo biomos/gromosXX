@@ -128,10 +128,10 @@ int interaction::NN_Worker::init(const topology::Topology& topo
   py::int_ write_energy_step = sim.param().write.energy;
 
   // Initialize mlp_calculator Python object
-  if (software == simulation::qm_nn) {
+  if (software == simulation::qm_schnetv1) {
     // To be able to import the module from the current directory
     py::module_ sys = py::module_::import("sys");
-    sys.attr("path").attr("append")("/pool/radekc/GROMOS/GROMOS_workstation/gromosXX/md++/src/interaction/qmmm");
+    sys.attr("path").attr("append")("/local/gromosXX/md++/src/interaction/qmmm");
 
     // Initialize schnet_v1 module
     py::module_ schnet_v1 = py::module_::import("schnet_v1");
@@ -154,6 +154,26 @@ int interaction::NN_Worker::init(const topology::Topology& topo
       mlp_calculator = schnet_v1.attr("SchNet_V1_Calculator")(model_path, val_models_paths, write_val_step, write_energy_step);
     }
   }
+
+  if (software == simulation::qm_schnetv2) {
+    // To be able to import the module from the current directory
+    py::module_ sys = py::module_::import("sys");
+    sys.attr("path").attr("append")("/local/gromosXX/md++/src/interaction/qmmm");
+
+    // Initialize schnet_v2 module
+    py::module_ schnet_v2 = py::module_::import("schnet_v2");
+
+    // Decide if perturbation is performed or not
+    if (sim.param().perturbation.perturbation == true) {
+      io::messages.add("Perturbation not implemented with schnet_v2 only schnet_v1", io::message::error);
+    }
+
+    else {
+      // Initialize mlp_calculator SchNet_V1_Calculator Python object
+      mlp_calculator = schnet_v2.attr("SchNet_V2_Calculator")(model_path, val_models_paths, write_val_step, write_energy_step);
+    }
+  }
+  
 
   // Restore omp_num_threads
   #ifdef OMP
@@ -201,6 +221,21 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
     DEBUG(15, "atom to NN: " << it->index << " : " << math::v2s(nn_pos));
   }
 
+  // Write capping atoms
+  DEBUG(15,"Writing capping atoms coordinates");
+  for (std::set<QM_Link>::const_iterator it = qm_zone.link.begin(), to = qm_zone.link.end(); it != to; ++it) {
+    atom_nums.push_back(it->atomic_number);
+
+    // convert positions
+    math::Vec nn_pos = it->pos * length_to_nn;
+    py::list atom_coordinates;
+    atom_coordinates.attr("append")(nn_pos[0]);
+    atom_coordinates.attr("append")(nn_pos[1]);
+    atom_coordinates.attr("append")(nn_pos[2]);
+    system_coordinates.attr("append")(atom_coordinates);
+    DEBUG(15,"Capping atom to NN " << it->qm_index << "-" << it->mm_index << ": " << it->atomic_number << " " << math::v2s(nn_pos));
+  }  
+
   // Convert std::vector<uint32_t> atom_nums to Python list
   py::list atomic_numbers = py::cast(atom_nums);
 
@@ -212,17 +247,31 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
   
   // Store predicted energy
   const double energy = mlp_calculator.attr("get_energy")().cast<double>() * this->param->unit_factor_energy;
+  DEBUG(13, "energy from NN, " << energy);
   qm_zone.QM_energy() = energy;
 
   // Store predicted forces
   std::vector<std::vector<double>> forces = mlp_calculator.attr("get_forces")().cast<std::vector<std::vector<double>>>();
   it = qm_zone.qm.begin();
+  int QMBR_zone_size = 0;
   for (unsigned i = 0; it != to; ++it, ++i) {
     it->force[0] = forces[i][0];
     it->force[1] = forces[i][1];
     it->force[2] = forces[i][2];
     it->force *= this->param->unit_factor_force;
     DEBUG(15, "force from NN, atom " << it->index << " : " << math::v2s(it->force));
+    QMBR_zone_size += 1;
+  }
+
+  // Also parse capping atoms
+  unsigned i = 0;
+  for(std::set<QM_Link>::iterator it = qm_zone.link.begin(), to = qm_zone.link.end(); it != to; ++it) {
+    it->force[0] = forces[QMBR_zone_size+i][0];
+    it->force[1] = forces[QMBR_zone_size+i][1];
+    it->force[2] = forces[QMBR_zone_size+i][2];
+    it->force *= this->param->unit_factor_force;
+    DEBUG(13, "force from NN, capping atom " << it->qm_index << "-" << it->mm_index << ": "  << math::v2s(it->force));
+    i += 1;
   }
 
   // Free energy derivative if perturbation is performed

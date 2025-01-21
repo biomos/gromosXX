@@ -297,9 +297,9 @@ int io::simple_crosschecks(simulation::Simulation & sim) {
         param.qmmm.qmmm != simulation::qmmm_off &&
         ! (param.qmmm.qmmm == simulation::qmmm_mechanical &&
             param.qmmm.qm_ch == simulation::qm_ch_constant &&
-            param.qmmm.software == simulation::qm_nn
+            param.qmmm.software == simulation::qm_schnetv1
          )) {
-      io::messages.add("QMMM block: Perturbation allowed only with ME, constant charge, NN and standard pairlist",
+      io::messages.add("QMMM block: Perturbation allowed only with ME, constant charge, Schnet v1 and standard pairlist",
                          "In_Parameter", io::message::error);
     }
     // Polarisable FF should be only used with polarisable QMMM

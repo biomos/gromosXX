@@ -97,7 +97,9 @@ interaction::QM_Worker * interaction::QM_Worker::get_instance(const simulation::
       return new MOPAC_Worker;
     case simulation::qm_gaussian :
       return new Gaussian_Worker;
-    case simulation::qm_nn :
+    case simulation::qm_schnetv1 :
+      return new NN_Worker;
+    case simulation::qm_schnetv2 :
       return new NN_Worker;
     case simulation::qm_orca :
       return new Orca_Worker;

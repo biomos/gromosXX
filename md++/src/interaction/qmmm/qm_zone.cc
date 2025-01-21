@@ -198,7 +198,7 @@ void interaction::QM_Zone::write(topology::Topology& topo,
   // write separate charges for interaction between the buffer region and MM region
   if (sim.param().qmmm.use_qm_buffer
       && sim.param().qmmm.qm_ch == simulation::qm_ch_dynamic
-      && (sim.param().qmmm.software != simulation::qm_nn
+      && (sim.param().qmmm.software != simulation::qm_schnetv2 || sim.param().qmmm.software != simulation::qm_schnetv1
           || sim.steps() % sim.param().qmmm.nn.charge_steps == 0))
     {
     // First reset delta charges
