@@ -74,19 +74,19 @@ int interaction::QM_Zone::init(topology::Topology& topo,
                                const simulation::Simulation& sim) {
   //int err = 0;
   
-  DEBUG(15,"Getting QM atoms");
+  DEBUG(12,"Getting QM atoms");
   if ((m_err = this->get_qm_atoms(topo, conf, sim)))
     return m_err;
 
   if (sim.param().qmmm.buffer_zone.cutoff) {
-    DEBUG(15,"Getting buffer atoms");
+    DEBUG(12,"Getting buffer atoms");
     this->get_buffer_atoms(topo, conf, sim);
   }
 
-  DEBUG(15,"Getting MM atoms");
+  DEBUG(12,"Getting MM atoms");
   this->get_mm_atoms(topo, conf, sim);
 
-  DEBUG(15,"Getting QM-MM links");
+  DEBUG(12,"Getting QM-MM links");
   this->get_links(topo, sim);
   return 0;
 
@@ -97,21 +97,21 @@ int interaction::QM_Zone::update(topology::Topology& topo,
                                  const simulation::Simulation& sim) {
   this->zero();
 
-  DEBUG(15,"Updating QM atoms positions");
+  DEBUG(12,"Updating QM atoms positions");
   update_qm_pos(topo, conf, sim);
   if (m_err) return m_err;
 
   if (sim.param().qmmm.buffer_zone.cutoff) {
-    DEBUG(15,"Getting buffer atoms");
+    DEBUG(12,"Getting buffer atoms");
     this->get_buffer_atoms(topo, conf, sim);
     if (m_err) return m_err;
   }
   
-  DEBUG(15,"Getting MM atoms positions");
+  DEBUG(12,"Getting MM atoms positions");
   this->get_mm_atoms(topo, conf, sim);
   if (m_err) return m_err;
   
-  DEBUG(15,"Updating links");
+  DEBUG(12,"Updating links");
   this->update_links(sim);
   return 0;
 }
@@ -645,19 +645,24 @@ int interaction::QM_Zone::_get_buffer_atoms(topology::Topology& topo,
   // update the QM buffer topology so the pairlist algorithm can skip them
   for (unsigned i = 0; i < topo.num_atoms(); ++i) {
     if (topo.is_qm_buffer(i)) {
-      if (buffer_atoms.count(i)) {
+      if (buffer_atoms.count(i) && topo.is_static_qm_buffer(i)) {
+        topo.is_qm_buffer(i) = 2;
+        DEBUG(8, "Atom " << i << " in static buffer");
+      }
+      else if (buffer_atoms.count(i) && topo.is_adaptive_qm_buffer(i)) {
         topo.is_qm_buffer(i) = 1;
-        DEBUG(2, "Atom " << i << " in adaptive buffer");
-      } else {
+        DEBUG(8, "Atom " << i << " in adaptive buffer");
+      } 
+      else {
         topo.is_qm_buffer(i) = -1; // temporarily disabled buffer atom
         DEBUG(16, "Atom " << i << " not in adaptive buffer");
       }
     }
   }
 
-  DEBUG(10, "Buffer atoms:");
+  DEBUG(15, "Buffer atoms:");
   for (std::set<QM_Atom>::const_iterator it = buffer_atoms.begin(); it != buffer_atoms.end(); ++it) {
-    DEBUG(10, it->index);
+    DEBUG(15, it->index);
     DEBUG(15, "Distance to the 1st atom: " << math::abs(it->pos - this->qm.begin()->pos));
   }
 
@@ -815,7 +820,7 @@ void interaction::QM_Zone::get_linked_mm_atoms(const topology::Topology& topo
         it != to; ++it) {
     const unsigned qm_i = it->first,
                     mm_i = it->second;
-    DEBUG(15, "Gathering MM atom " << mm_i << " linked to QM atom " << qm_i);
+    DEBUG(10, "Gathering MM atom " << mm_i << " linked to QM atom " << qm_i);
     assert(topo.is_qm(qm_i) || topo.is_qm_buffer(qm_i));
     assert(!topo.is_qm(mm_i));
     std::set<QM_Atom>::const_iterator qm_it = this->qm.find(QM_Atom(qm_i));
@@ -824,13 +829,13 @@ void interaction::QM_Zone::get_linked_mm_atoms(const topology::Topology& topo
     math::Vec r_qm_mm;
     periodicity.nearest_image(qm_pos, conf.current().pos(mm_i), r_qm_mm);
 
-    DEBUG(15, "Linked QM position: " << math::v2s(qm_pos));
-    DEBUG(15, "Nearest image vector: " << math::v2s(r_qm_mm));
+    DEBUG(10, "Linked QM position: " << math::v2s(qm_pos));
+    DEBUG(10, "Nearest image vector: " << math::v2s(r_qm_mm));
     const math::Vec mm_pos = qm_pos - r_qm_mm;
 
-    DEBUG(15, "Linked MM position: " << math::v2s(mm_pos));
+    DEBUG(10, "Linked MM position: " << math::v2s(mm_pos));
     this->mm.emplace(mm_i, mm_pos, topo.qm_atomic_number(mm_i), topo.charge(mm_i));
-    DEBUG(15, "Adding MM atom: " << mm_i);
+    DEBUG(10, "Adding MM atom: " << mm_i);
   }
 }
 
