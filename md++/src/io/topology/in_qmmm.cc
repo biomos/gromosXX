@@ -1740,12 +1740,12 @@ void io::In_QMMM::read_zone(topology::Topology& topo
 
     const bool is_qm_buffer = (blockname == "BUFFERZONE");
 
-  // ADDED MICHAEL check for static or adaptive BR atom
+    // ADDED MICHAEL check for static or adaptive BR atom
     if (brstat == 2) {
-      topo.is_static_qm_buffer(qmi - 1) = topo.is_static_qm_buffer(qmi - 1);
+      topo.is_qm_buffer(qmi - 1)  = 2;
     }
     if (brstat == 1) {
-      topo.is_adaptive_qm_buffer(qmi - 1) = topo.is_adaptive_qm_buffer(qmi - 1);
+      topo.is_qm_buffer(qmi - 1)  = 1;
     }
     if (brstat < 0 || brstat > 2) {
       std::ostringstream msg;

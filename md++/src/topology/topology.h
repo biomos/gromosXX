@@ -909,33 +909,19 @@ namespace topology
     }
 
     /**
-     * ADDED MICHAEL is the atom in the QM buffer? - accessor
+     * is the atom in the adaptive QM buffer?
      */
-    int is_adaptive_qm_buffer(const unsigned i)const {
+    bool is_adaptive_qm_buffer(const unsigned i)const {
       assert(i < m_is_qm_buffer.size());
-      return m_is_qm_buffer[i];
-    }
-    /**
-     * ADDED MICHAEL is the atom in the QM buffer? - mutator
-     */
-    int& is_adaptive_qm_buffer(const unsigned i) {
-      assert(i < m_is_qm_buffer.size());
-      return m_is_qm_buffer[i] = 1;
+      return m_is_qm_buffer[i] > 0;
     }
 
     /**
-     * ADDED MICHAEL is the atom in the QM buffer? - accessor
+     * is the atom in the static QM buffer? 
      */
-    int is_static_qm_buffer(const unsigned i)const {
+    bool is_static_qm_buffer(const unsigned i)const {
       assert(i < m_is_qm_buffer.size());
-      return m_is_qm_buffer[i];
-    }
-    /**
-     * ADDED MICHAEL is the atom in the QM buffer? - mutator
-     */
-    int& is_static_qm_buffer(const unsigned i) {
-      assert(i < m_is_qm_buffer.size());
-      return m_is_qm_buffer[i] = 2;
+      return m_is_qm_buffer[i] == 2;
     }
 
     /**

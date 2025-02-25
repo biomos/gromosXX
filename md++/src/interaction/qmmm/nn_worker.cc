@@ -127,12 +127,24 @@ int interaction::NN_Worker::init(const topology::Topology& topo
   // How often to write energy
   py::int_ write_energy_step = sim.param().write.energy;
 
+  // // To be able to import the module from the current directory
+  // // Get the directory of the executable
+  // char result[PATH_MAX];
+  // ssize_t count = readlink("/proc/self/exe", result, PATH_MAX);
+  // std::string exePath = std::string(result, (count > 0) ? count : 0);
+  // std::string exeDir = exePath.substr(0, exePath.find_last_of("/"));
+  // // Compute the correct module directory assuming binary in BUILD_X/bin
+  // std::string modulePath = exeDir + "/../../src/interaction/qmmm";
+  // py::module_ sys = py::module_::import("sys");
+  // // Convert C++ string to Python string and append to sys.path
+  // sys.attr("path").attr("append")(modulePath);
+
+  // To be able to import the module from the current directory
+  py::module_ sys = py::module_::import("sys");
+  sys.attr("path").attr("append")("/local/gromosXX/md++/src/interaction/qmmm");
+
   // Initialize mlp_calculator Python object
   if (software == simulation::qm_schnetv1) {
-    // To be able to import the module from the current directory
-    py::module_ sys = py::module_::import("sys");
-    sys.attr("path").attr("append")("/local/gromosXX/md++/src/interaction/qmmm");
-
     // Initialize schnet_v1 module
     py::module_ schnet_v1 = py::module_::import("schnet_v1");
     
@@ -156,10 +168,6 @@ int interaction::NN_Worker::init(const topology::Topology& topo
   }
 
   if (software == simulation::qm_schnetv2) {
-    // To be able to import the module from the current directory
-    py::module_ sys = py::module_::import("sys");
-    sys.attr("path").attr("append")("/local/gromosXX/md++/src/interaction/qmmm");
-
     // Initialize schnet_v2 module
     py::module_ schnet_v2 = py::module_::import("schnet_v2");
 
@@ -169,7 +177,7 @@ int interaction::NN_Worker::init(const topology::Topology& topo
     }
 
     else {
-      // Initialize mlp_calculator SchNet_V1_Calculator Python object
+      // Initialize mlp_calculator SchNet_V2_Calculator Python object
       mlp_calculator = schnet_v2.attr("SchNet_V2_Calculator")(model_path, val_models_paths, write_val_step, write_energy_step);
     }
   }

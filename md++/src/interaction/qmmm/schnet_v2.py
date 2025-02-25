@@ -42,6 +42,17 @@ class YamlParser:
             return self.data['globals']['cutoff']
         except KeyError as e:
             raise KeyError(f"Missing key in YAML file: {e}")
+        
+    def get_property_keys(self):
+        """
+        Retrieves the cutoff value from the parsed YAML data.
+        
+        :return: The cutoff value from the YAML file.
+        """
+        try:
+            return list(self.data['data']['property_units'].keys())
+        except KeyError as e:
+            raise KeyError(f"Missing key in YAML file: {e}")
 
 class SchNet_V2_Calculator:
     """
@@ -134,14 +145,15 @@ class SchNet_V2_Calculator:
         # get cutoff from configuration file
         model_args_path = model_path.parent / 'config.yaml'
         cutoff = YamlParser(model_args_path).get_cutoff()
+        property_keys = YamlParser(model_args_path).get_property_keys()
         model_path = os.path.join(model_path.parent,'best_model')
         
         calculator = spk.interfaces.SpkCalculator(
             model_file = model_path, # path to model
             dtype=torch.float32, # 
             neighbor_list=trn.ASENeighborList(cutoff=cutoff), # neighbor list
-            energy_key='V_BuRNN_singlet', # name of energy property in model
-            force_key='F_BuRNN_singlet', # name of force property in model
+            energy_key=property_keys[0], # name of energy property in model
+            force_key=property_keys[1], # name of force property in model
             energy_unit="eV", # units of energy property predicted by ase
             device= self.torchdevice, # device for computation
         )
