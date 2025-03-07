@@ -505,8 +505,7 @@ int interaction::QM_Zone::gather_chargegroups(const topology::Topology& topo,
         DEBUG(15, "Nearest image qm_pos - cg " << cg << " : " << math::v2s(r_qm_cg));
         DEBUG(15, "math::abs2(r_qm_cg) = " << math::abs2(r_qm_cg));
         
-        // ADDED Michael if atoms are within cutoff > adaptive or topo.is_static_qm_buffer(a) == True
-        if (math::abs2(r_qm_cg) < cutoff2 || topo.is_static_qm_buffer(a)) {
+        if (math::abs2(r_qm_cg) < cutoff2) {
           // Iterate over atoms in cg
           for (unsigned a_to = topo.chargegroup(cg + 1); a < a_to; ++a) {
             // nearest image of atom to CG COG
@@ -642,20 +641,25 @@ int interaction::QM_Zone::_get_buffer_atoms(topology::Topology& topo,
   if ((m_err = this->gather_chargegroups<B>(topo, conf, sim, buffer_atoms, cutoff2)))
     return m_err;
   
+  // ADDED MICHAEL added if statement to check for static buffer
   // update the QM buffer topology so the pairlist algorithm can skip them
+  std::set<QM_Atom>::const_iterator set_it = buffer_atoms.begin();
   for (unsigned i = 0; i < topo.num_atoms(); ++i) {
     if (topo.is_qm_buffer(i)) {
-      if (buffer_atoms.count(i) && topo.is_static_qm_buffer(i)) {
-        topo.is_qm_buffer(i) = 2;
-        DEBUG(8, "Atom " << i << " in static buffer");
-      }
-      else if (buffer_atoms.count(i) && topo.is_adaptive_qm_buffer(i)) {
-        topo.is_qm_buffer(i) = 1;
-        DEBUG(8, "Atom " << i << " in adaptive buffer");
-      } 
-      else {
-        topo.is_qm_buffer(i) = -1; // temporarily disabled buffer atom
-        DEBUG(16, "Atom " << i << " not in adaptive buffer");
+      if (topo.is_static_adaptive(i) == 2) {
+            topo.is_qm_buffer(i) = 2;
+            buffer_atoms.emplace_hint(set_it,i,conf.current().pos(i),topo.qm_atomic_number(i));
+            DEBUG(8, "Atom " << i << " in static buffer");
+          }
+      if (topo.is_static_adaptive(i) != 2) {
+        if (buffer_atoms.count(i)) {
+          topo.is_qm_buffer(i) = 1;
+          DEBUG(12, "Atom " << i << " in adaptive buffer");
+        }
+        else {
+          topo.is_qm_buffer(i) = -1; // temporarily disabled buffer atom
+          DEBUG(15, "Atom " << i << " not in adaptive buffer");
+        }
       }
     }
   }

@@ -917,11 +917,11 @@ namespace topology
     }
 
     /**
-     * is the atom in the static QM buffer? 
+     * is the atom in the static QM buffer?
      */
     bool is_static_qm_buffer(const unsigned i)const {
-      assert(i < m_is_qm_buffer.size());
-      return m_is_qm_buffer[i] == 2;
+      assert(i < m_is_static_adaptive.size());
+      return m_is_static_adaptive[i] == 2;
     }
 
     /**
@@ -2106,6 +2106,11 @@ namespace topology
      * Is the QM buffer (1: adaptive buffer, 0: no, 2: static buffer)
      */
     std::vector<int> m_is_qm_buffer;
+
+    /**
+     * Is the QM buffer (1: adaptive buffer, 2: static buffer)
+     */
+    std::vector<int> m_is_static_adaptive;
 
     /**
      * Delta-charges to be added to interactions between QM/buffer and MM atoms

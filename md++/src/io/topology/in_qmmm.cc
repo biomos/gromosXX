@@ -1742,10 +1742,12 @@ void io::In_QMMM::read_zone(topology::Topology& topo
 
     // ADDED MICHAEL check for static or adaptive BR atom
     if (brstat == 2) {
-      topo.is_qm_buffer(qmi - 1)  = 2;
+      topo.is_qm_buffer(qmi - 1) = topo.is_qm_buffer(qmi - 1) || is_qm_buffer;;
+      topo.is_static_adaptive(qmi - 1)  = 2;
     }
     if (brstat == 1) {
-      topo.is_qm_buffer(qmi - 1)  = 1;
+      topo.is_qm_buffer(qmi - 1)  = topo.is_qm_buffer(qmi - 1) || is_qm_buffer;;
+      topo.is_static_adaptive(qmi - 1)  = 1;
     }
     if (brstat < 0 || brstat > 2) {
       std::ostringstream msg;
