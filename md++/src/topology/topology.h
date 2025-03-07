@@ -909,6 +909,22 @@ namespace topology
     }
 
     /**
+    * is the atom in the QM buffer? - accessor
+    */
+    int is_static_adaptive(const unsigned i)const {
+      assert(i < m_is_static_adaptive.size());
+      return m_is_static_adaptive[i];
+    }
+    
+    /**
+     * is the atom in the QM buffer? - mutator
+     */
+    int& is_static_adaptive(const unsigned i) {
+      assert(i < m_is_static_adaptive.size());
+      return m_is_static_adaptive[i];
+    }
+
+    /**
      * is the atom in the adaptive QM buffer?
      */
     bool is_adaptive_qm_buffer(const unsigned i)const {
