@@ -1270,8 +1270,8 @@ void _calculate_ah(topology::Topology & topo,
       //double cosb1 = sqrt((2*(conf_it->Tensor[0]+0.5)/3));
       //double cosb2 = sqrt((2*(conf_it->Tensor[1]+0.5)/3));
 
-      double cosb1 = cos(acos(4/3*conf_it->Tensor[0])/2);
-      double cosb2 = cos(acos(4/3*conf_it->Tensor[1])/2);
+      double cosb1 = cos(acos((4*conf_it->Tensor[0]-1)/3)/2);
+      double cosb2 = cos(acos((4*conf_it->Tensor[1]-1)/3)/2);
       double cosb3 = 2*conf_it->Tensor[3]/(3*cosb1);
 
       double theta = acos((ma[0]*cosb1+ma[1]*cosb2+ma[2]*cosb3)/d_ma);
