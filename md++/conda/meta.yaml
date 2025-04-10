@@ -1,24 +1,89 @@
+
+{% set use_openmp = build_type.startswith("openmp") %}
+{% set use_mpi = build_type == "mpi" %}
+{% set use_cuda = build_type == "openmp_cuda" %}
+
+{% if use_cuda and cuda == "None" %}
+  {% set skip_build = True %}
+{% elif not use_cuda and cuda != "None" %}
+  {% set skip_build = True %}
+{% else %}
+  {% set skip_build = False %}
+{% endif %}
+
+{% if skip_build %}
+build:
+  skip: true  # [linux]
+{% endif %}
+
 package:
   name: gromosxx
-  version: 1.6.0
+  version: 1.6.1
 
 source:
   path: ..
 
 build:
-  number: 0
-  #script: build.sh
+  string: "{{ build_type }}"
+  script: |
+    mkdir build
+    cd build
+    cmake .. \
+      -DOMP={{ 'ON' if use_openmp else 'OFF' }} \
+      -DMPI={{ 'ON' if use_mpi else 'OFF' }} \
+      -DCUKERNEL={{ 'ON' if use_cuda else 'OFF' }} \
+      -DCMAKE_INSTALL_PREFIX=$PREFIX \
+      -DCMAKE_PREFIX_PATH=$CONDA_PREFIX \
+      -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON \
+      -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_INSTALL_RPATH=$PREFIX/lib
+    make -j$(nproc)
+    ctest --output-on-failure
+    make install
 
 requirements:
   build:
+    - gcc_linux-64
+    - gxx_linux-64
+    - libgcc
+    - libgcc-ng
+    - libstdcxx-ng
+    - libopenblas
+    - zlib
     - gsl
+    {% if use_mpi %}
+    - fftw * mpi_*
+    {% else %}
     - fftw
+    {% endif %}
     - cmake
     - make
-  run:
-    - fftw
+    {% if use_cuda %}
+    - cudatoolkit=11.8
+    {% endif %}
+  host:
     - gsl
-    - python
+    {% if use_mpi %}
+    - fftw * mpi_*
+    {% else %}
+    - fftw
+    {% endif %}
+    - zlib
+    {% if use_cuda %}
+    - cudatoolkit=11.8
+    {% endif %}
+  run:
+    - libstdcxx-ng
+    - gsl
+    - zlib
+    {% if use_mpi %}
+    - fftw * mpi_*
+    {% else %}
+    - fftw
+    {% endif %}
+    {% if use_cuda %}
+    - cudatoolkit=11.8
+    {% endif %}
 
 about:
   home: https://github.com/biomos/gromosXX

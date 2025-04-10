@@ -27,3 +27,4 @@ target_include_directories(grorepex PUBLIC
     .
     ..
 )
+target_link_libraries(grorepex PRIVATE ${EXTERNAL_LIBRARIES})

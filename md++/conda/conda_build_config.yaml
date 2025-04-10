@@ -1,0 +1,8 @@
+build_type:
+  - openmp_cuda
+  - openmp
+  - mpi
+
+cuda:
+  - 11.8
+  - None

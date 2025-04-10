@@ -77,3 +77,4 @@ endif()
 add_library(groalgorithm OBJECT ${ALGO_CC})
 
 target_include_directories(groalgorithm PUBLIC ${ALGO_INCLUDE})
+target_link_libraries(groalgorithm PRIVATE ${EXTERNAL_LIBRARIES})

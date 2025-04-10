@@ -16,3 +16,4 @@ target_include_directories(groconfiguration PUBLIC
     ${EXTERNAL_INCLUDES}
     ..
 )
+target_link_libraries(groconfiguration PUBLIC ${EXTERNAL_LIBRARIES})

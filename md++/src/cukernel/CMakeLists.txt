@@ -16,3 +16,4 @@ target_include_directories(grocukernel PUBLIC
     ..
     lib
 )
+target_link_libraries(grocukernel PRIVATE ${EXTERNAL_LIBRARIES})

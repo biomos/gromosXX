@@ -11,3 +11,4 @@ target_include_directories(grotopology PUBLIC
     ${PROJECT_BINARY_DIR}
     ${EXTERNAL_INCLUDES}
 )
+target_link_libraries(grotopology PRIVATE ${EXTERNAL_LIBRARIES})

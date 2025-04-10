@@ -111,3 +111,4 @@ endif()
 
 add_library(grointeraction OBJECT ${INTERACTION_CC})
 target_include_directories(grointeraction PUBLIC ${INTERACTION_INCLUDE})
+target_link_libraries(grointeraction PRIVATE ${EXTERNAL_LIBRARIES})

@@ -11,3 +11,4 @@ target_include_directories(grosimulation PUBLIC
     ${PROJECT_BINARY_DIR}
     ${EXTERNAL_INCLUDES}
 )
+target_link_libraries(grosimulation PRIVATE ${EXTERNAL_LIBRARIES})

@@ -32,3 +32,4 @@ target_include_directories(groutil PUBLIC
     ${EXTERNAL_INCLUDES}
     ${PROJECT_BINARY_DIR}/src/util # config.h included as "../../config.h"
 )
+target_link_libraries(groutil PRIVATE ${EXTERNAL_LIBRARIES})

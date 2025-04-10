@@ -13,3 +13,4 @@ target_include_directories(gromath PUBLIC
     ${PROJECT_BINARY_DIR}
     ${EXTERNAL_INCLUDES}
 )
+target_link_libraries(gromath PUBLIC ${EXTERNAL_LIBRARIES})

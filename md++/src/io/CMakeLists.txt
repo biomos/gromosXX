@@ -42,3 +42,4 @@ target_include_directories(groio PUBLIC
     parameter
     topology
 )
+target_link_libraries(groio PUBLIC ${EXTERNAL_LIBRARIES})
