@@ -161,7 +161,11 @@ void io::In_Configuration::read(configuration::Configuration &conf,
 
   if (!quiet)
     os << "END\n\n";
-
+  
+  // return if critical
+  if (io::messages.contains(io::message::critical))
+    return;
+  
   conf.check(topo, sim);
 
   DEBUG(8, "configuration read");
@@ -505,11 +509,11 @@ bool io::In_Configuration::read_box
 	block_read.insert("BOX");
       }
       else{
-	io::messages.add("no TRICLINICBOX / BOX (for rectangular/truncoct "
-			 "boundary conditions)\n"
-			 "\tblock found in input configuration",
+	io::messages.add("no GENBOX / TRICLINICBOX / BOX (for rectangular/truncoct "
+          "boundary conditions)\n"
+          "\t\tblock found in input configuration",
 			 "in_configuration",
-			 io::message::error);
+			 io::message::critical);
 	return false;
       }
     }

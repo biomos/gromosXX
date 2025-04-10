@@ -92,7 +92,7 @@ bool math::boundary_check_cutoff(math::Box const & box, math::boundary_enum cons
       break;
     }
     default:
-      io::messages.add("wrong PBC!", "In_Configuration", io::message::error);
+      io::messages.add("wrong PBC!", "boundary_check_cutoff", io::message::error);
   }
   
   // the box is fine
