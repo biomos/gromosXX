@@ -987,6 +987,21 @@ namespace simulation
   };
 
   /**
+   * @enum qmmm_nn_valid
+   * specify if additional uncertainty estimation should be performed in the validation process
+   */
+  enum qmmm_nn_valid {
+    /**
+     * standard option do not report maximum force committe disagreement
+     */
+    nn_valid_standard = 0,
+    /**
+     * Report maximum force committe disagreement
+     */
+    nn_valid_maxF = 1
+  };
+
+  /**
    * @enum qmmm_nn_model_type_enum
    * specify if the model was trained on both the QM+buffer region and the buffer region
    * or on the difference of QM+buffer and buffer region
@@ -4458,6 +4473,7 @@ namespace simulation
                       , val_thresh(0.0)
                       , val_steps(0)
                       , val_forceconstant(0.0)
+                      , nnvalid(nn_valid_maxF)
                       , charge_model_path()
                       , charge_steps(0)
                       , model_type(nn_model_type_burnn) 
@@ -4484,6 +4500,10 @@ namespace simulation
          * Force constant to enforce agreement between NN models
          */
         double val_forceconstant;
+        /**
+         * nn validation type
+         */
+        qmmm_nn_valid nnvalid;
         /**
          * Schnetpack model path
          */

@@ -567,13 +567,17 @@ END
  * - 1 line/model is provided: difference between NNMODEL and NNVALID model is reported
  * - 2 or more lines: standard deviation between NNMODEL and all NNVALID models is reported
  * After the number of models are specified one additional line specifies:
- *  - val_steps val_threshold val_steps val_forceconstant
+ *  - val_steps val_threshold val_forceconstant nnvalid_maxF
+ *    val_steps:          how often validation model should be run every x steps
+ *    val_threshold:      threshold to be used to write out if Energy and force prediction is trustworthy
+ *    val_forceconstant:  
+ *    nnvalid_maxF:       if nnvalid_maxF (maximum force committee disagreement) should also be written out 0:no 1:yes
 @verbatim
 NNVALID
 /path/to/model_uncertainty_1
 /path/to/model_uncertainty_2
 /path/to/model_uncertainty_x
-1 4.184 0.0
+1 4.184 0.0 1
 END
 @endverbatim
  *
@@ -1064,11 +1068,21 @@ void io::In_QMMM::read(topology::Topology& topo,
         _lineStream.clear();
         _lineStream.str(line);
         unsigned val_steps;
+        int nnvalid_maxF;
         double val_thresh, val_forceconstant;
         _lineStream >> val_steps >> val_thresh >> val_forceconstant;
         sim.param().qmmm.nn.val_steps = val_steps;
         sim.param().qmmm.nn.val_thresh = val_thresh;
         sim.param().qmmm.nn.val_forceconstant = val_forceconstant;
+
+        // Take care of optional nnvalid_maxF
+        _lineStream >> nnvalid_maxF;
+        if (_lineStream.fail()) { // if it fails fall back to default energy nnvalidation
+          nnvalid_maxF = 0;
+        } 
+        if (nnvalid_maxF == 0) sim.param().qmmm.nn.nnvalid = simulation::nn_valid_standard;
+        else if (nnvalid_maxF == 1) sim.param().qmmm.nn.nnvalid = simulation::nn_valid_maxF;
+
         if (_lineStream.fail()) {
           io::messages.add("bad line in NNVALID block",
                 "In_QMMM", io::message::error);

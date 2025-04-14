@@ -3056,11 +3056,12 @@ static void _print_energyred_helper(std::ostream & os, configuration::Energy con
           << std::setw(18) << e.rdc_total << "\n" // 43
           << std::setw(18) << e.angrest_total << "\n" // 44
           << std::setw(18) << e.nn_valid << "\n" // 45
-          << std::setw(18) << e.total + e.shift_extra_orig_total << "\n" // 46
-          << std::setw(18) << e.total + e.shift_extra_phys_total << "\n" // 47
-          << std::setw(18) << e.eds_vr_shift_orig << "\n" // 48
-          << std::setw(18) << e.eds_vr_shift_phys << "\n"  // 49
-          << std::setw(18) << e.gamd_DV_total << "\n"; // 50
+          << std::setw(18) << e.nn_valid_maxF << "\n"; // 46
+          << std::setw(18) << e.total + e.shift_extra_orig_total << "\n" // 47
+          << std::setw(18) << e.total + e.shift_extra_phys_total << "\n" // 48
+          << std::setw(18) << e.eds_vr_shift_orig << "\n" // 49
+          << std::setw(18) << e.eds_vr_shift_phys << "\n"  // 50
+          << std::setw(18) << e.gamd_DV_total << "\n"; // 51
 
   os << "# baths\n";
   os << numbaths << "\n";

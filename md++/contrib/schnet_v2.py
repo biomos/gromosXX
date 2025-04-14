@@ -1,17 +1,15 @@
-#import subprocess as sbp
-#import pandas as pd
 import numpy as np
-import os
-from glob import glob
-from importlib import reload
-from shutil import rmtree
 from pathlib import Path
-
-import ase
-import schnetpack as spk
-import schnetpack.transform as trn
+import os
 import torch
 import yaml
+import ase
+import schnetpack as spk
+
+#import schnetpack.transform as trn
+#from glob import glob
+#from importlib import reload
+#from shutil import rmtree
 
 class YamlParser:
     def __init__(self, yaml_file):
@@ -87,6 +85,9 @@ class SchNet_V2_Calculator:
 
         validate_prediction(self, system: ase.Atoms):
             Validate predictions using the validation calculators.
+            
+        validate_prediction_maxForceDeviation(self, system: ase.Atoms):
+            Calculate Maximum force committee disagreement among all atoms in a structure.
 
         calculate_next_step(self, atomic_numbers: list, positions: list, time_step: int) -> None:
             Perform energy and force prediction, and validate the predictions if necessary.
@@ -97,8 +98,11 @@ class SchNet_V2_Calculator:
         get_forces(self):
             Get the predicted forces for the last atomic system.
 
-        get_nn_valid_dev(self):
+        get_nn_valid_ene(self):
             Get the validation deviation calculated during the last validation step.
+            
+        get_nn_valid_maxF(self):
+            Get the maximum force committee disagreement among all atom during the last validation step.
     """
 
     def __init__(self, model_path: str, val_model_paths: list, nn_valid_freq: int, write_energy_freq: int) -> None:
@@ -151,7 +155,7 @@ class SchNet_V2_Calculator:
         calculator = spk.interfaces.SpkCalculator(
             model_file = model_path, # path to model
             dtype=torch.float32, # 
-            neighbor_list=trn.ASENeighborList(cutoff=cutoff), # neighbor list
+            neighbor_list=spk.transform.ASENeighborList(cutoff=cutoff), # neighbor list
             energy_key=property_keys[0], # name of energy property in model
             force_key=property_keys[1], # name of force property in model
             energy_unit="eV", # units of energy property predicted by ase
@@ -194,6 +198,33 @@ class SchNet_V2_Calculator:
             system.set_calculator(val_calculator)
             val_energies.append(system.get_potential_energy())
         return val_energies
+    
+    def validate_prediction_maxForceDeviation(self, system: ase.Atoms):
+        """
+        Validate predictions using the validation calculators.
+        Calculate Maximum force committee disagreement among all atoms in a structure 
+        based on formula 1 in https://pubs.acs.org/doi/10.1021/acs.jctc.4c01382 
+        Args:
+            system (ase.Atoms): Atomic system to validate.
+
+        Returns:
+            list: Validation energies computed by the validation calculators.
+        """
+        model_forces = [np.linalg.norm(self.forces,axis=1)] # initialize production model
+        # add validation model forces to model_forces
+        for val_calculator in self.val_calculators:
+            system.set_calculator(val_calculator)
+            model_forces.append(np.linalg.norm(system.get_forces(),axis=1))
+        # Calculate ensemble force 
+        ensemble_Falpha = np.mean(model_forces, axis=0)  # Average force acting on every atom from all calculators
+
+        # Calculate sigmaF_alpha
+        Falpha_diff = [(np.asarray(force - ensemble_Falpha))**2 for force in model_forces]
+        sigmaF_alpha = np.sqrt(np.mean(Falpha_diff, axis=0))
+
+        # Store results
+        maxForce_deviation = max(sigmaF_alpha)
+        return maxForce_deviation
 
     def calculate_next_step(self, atomic_numbers: list, positions: list, time_step: int) -> None:
         """
@@ -215,13 +246,13 @@ class SchNet_V2_Calculator:
             val_energies = self.validate_prediction(system=system)
 
             # Calculate validation deviation based on validation results.
+            self.nn_valid_maxF = self.validate_prediction_maxForceDeviation(system=system)
             if len(val_energies) == 1:
-                self.nn_valid_dev = self.energy - val_energies[0]
+                self.nn_valid_ene = self.energy - val_energies[0]
             else:
                 val_energies.append(self.energy)
                 val_energies = np.array(val_energies)
-                var = val_energies.var()
-                self.nn_valid_dev = var / (len(val_energies) - 1)
+                self.nn_valid_ene = val_energies.std()
         return None
 
     def get_energy(self):
@@ -242,11 +273,20 @@ class SchNet_V2_Calculator:
         """
         return self.forces
 
-    def get_nn_valid_dev(self):
+    def get_nn_valid_ene(self):
         """
-        Get the validation deviation calculated during the last validation step.
+        Get the validation energy deviation calculated during the last validation step.
 
         Returns:
-            float: Validation deviation.
+            float: Validation energy deviation.
         """
-        return self.nn_valid_dev
+        return self.nn_valid_ene
+
+    def get_nn_valid_maxF(self):
+        """
+        Get the maximum force committee disagreement among all atom during the last validation step.
+
+        Returns:
+            float: Validation force deviation.
+        """
+        return self.nn_valid_maxF

@@ -38,8 +38,6 @@
 #include "../../../util/system_call.h"
 #include "../../../util/debug.h"
 
-//#include "../../../math/periodicity.h"
-
 #ifdef HAVE_PYBIND11
   #include <pybind11/stl.h>
   #include <pybind11/pybind11.h>
@@ -52,7 +50,6 @@
 #include "qm_zone.h"
 #include "qm_worker.h"
 #include "nn_worker.h"
-
 
 #ifdef OMP
   #include <omp.h>
@@ -107,7 +104,6 @@ int interaction::NN_Worker::init(const topology::Topology& topo
   // Model path
   py::str model_path = sim.param().qmmm.nn.model_path;
   DEBUG(11, "model_path: " << model_path.cast<std::string>());
-  //py::str ml_args_path = py_modules["os"].attr("path").attr("join")(py::cast('/').attr("join")(model_path.attr("split")('/')[py::slice(0,-1,1)]), "args.json");
 
   // Validation models paths
   py::list val_models_paths;
@@ -116,7 +112,6 @@ int interaction::NN_Worker::init(const topology::Topology& topo
     for (std::vector<std::string>::iterator it = sim.param().qmmm.nn.val_model_paths.begin(); it != sim.param().qmmm.nn.val_model_paths.end(); ++it) {
         val_paths.push_back(*it);
         DEBUG(11, "val_model_paths " << *it);
-        //DEBUG(11, "val_model_path: " << val_path);
     }
     val_models_paths = py::cast(val_paths);
   }
@@ -127,21 +122,21 @@ int interaction::NN_Worker::init(const topology::Topology& topo
   // How often to write energy
   py::int_ write_energy_step = sim.param().write.energy;
 
-  // // To be able to import the module from the current directory
-  // // Get the directory of the executable
-  // char result[PATH_MAX];
-  // ssize_t count = readlink("/proc/self/exe", result, PATH_MAX);
-  // std::string exePath = std::string(result, (count > 0) ? count : 0);
-  // std::string exeDir = exePath.substr(0, exePath.find_last_of("/"));
-  // // Compute the correct module directory assuming binary in BUILD_X/bin
-  // std::string modulePath = exeDir + "/../../src/interaction/qmmm";
-  // py::module_ sys = py::module_::import("sys");
-  // // Convert C++ string to Python string and append to sys.path
-  // sys.attr("path").attr("append")(modulePath);
+  // To be able to import the module from the current directory
+  // Get the directory of the executable
+  char result[PATH_MAX];
+  ssize_t count = readlink("/proc/self/exe", result, PATH_MAX);
+  std::string exePath = std::string(result, (count > 0) ? count : 0);
+  std::string exeDir = exePath.substr(0, exePath.find_last_of("/"));
+  // Compute the correct module directory assuming binary in BUILD_X/bin
+  std::string modulePath = exeDir + "/../contrib";
+  py::module_ sys = py::module_::import("sys");
+  // Convert C++ string to Python string and append to sys.path
+  sys.attr("path").attr("append")(modulePath);
 
   // To be able to import the module from the current directory
-  py::module_ sys = py::module_::import("sys");
-  sys.attr("path").attr("append")("/local/gromosXX/md++/src/interaction/qmmm");
+  // py::module_ sys = py::module_::import("sys");
+  // sys.attr("path").attr("append")("/local/gromosXX/md++/src/interaction/qmmm");
 
   // Initialize mlp_calculator Python object
   if (software == simulation::qm_schnetv1) {
@@ -182,7 +177,6 @@ int interaction::NN_Worker::init(const topology::Topology& topo
     }
   }
   
-
   // Restore omp_num_threads
   #ifdef OMP
     omp_set_num_threads(num_threads);
@@ -191,7 +185,6 @@ int interaction::NN_Worker::init(const topology::Topology& topo
 #endif
 
   DEBUG(15, "Initialized " << this->name());
-
   return 0;
 }
 
@@ -294,12 +287,18 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
        || sim.steps() % sim.param().write.energy == 0)) {
     
     // Store NN valid. deviation
-    const double nn_valid_dev = mlp_calculator.attr("get_nn_valid_dev")().cast<double>() * this->param->unit_factor_energy;
-    conf.current().energies.nn_valid = nn_valid_dev;
+    const double nn_valid_ene = mlp_calculator.attr("get_nn_valid_ene")().cast<double>() * this->param->unit_factor_energy;
+    conf.current().energies.nn_valid = nn_valid_ene;
 
-    if (fabs(nn_valid_dev) > sim.param().qmmm.nn.val_thresh) {
+    // Store NN valid. maximum force committee disagreement among all atoms if requested in .qmmm input file
+    if(sim.param().qmmm.nn.nnvalid == simulation::nn_valid_maxF) {
+      const double nn_valid_maxF = mlp_calculator.attr("get_nn_valid_maxF")().cast<double>() * this->param->unit_factor_force;
+      conf.current().energies.nn_valid_maxF = nn_valid_maxF;
+    }
+
+    if (fabs(nn_valid_ene) > sim.param().qmmm.nn.val_thresh) {
         std::ostringstream msg;
-        msg << "Deviation from validation model above threshold in step " << sim.steps() << " : " << nn_valid_dev;
+        msg << "Deviation from validation model above threshold in step " << sim.steps() << " : " << nn_valid_ene;
         io::messages.add(msg.str(), this->name(), io::message::notice);
     }
   }
