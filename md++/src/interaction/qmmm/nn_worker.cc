@@ -38,8 +38,6 @@
 #include "../../../util/system_call.h"
 #include "../../../util/debug.h"
 
-//#include "../../../math/periodicity.h"
-
 #ifdef HAVE_PYBIND11
   #include <pybind11/stl.h>
   #include <pybind11/pybind11.h>
@@ -52,7 +50,6 @@
 #include "qm_zone.h"
 #include "qm_worker.h"
 #include "nn_worker.h"
-
 
 #ifdef OMP
   #include <omp.h>
@@ -70,8 +67,7 @@
 interaction::NN_Worker::NN_Worker() : QM_Worker("NN Worker"),
                                       param(nullptr),
                                       guard(),
-                                      ml_calculator(),
-                                      val_calculators() {};
+                                      mlp_calculator() {};
 
 int interaction::NN_Worker::init(const topology::Topology& topo
                                , const configuration::Configuration& conf
@@ -93,14 +89,7 @@ int interaction::NN_Worker::init(const topology::Topology& topo
 
   // Initialize NN interface
   // Initialize pybind, schnetpack, python script
-  std::vector<std::string> modules = {
-      "sys"
-    , "ase"
-    , "os"
-    , "torch"
-    , "logging"
-    , "schnetpack"
-  };
+
   #ifdef OMP
     // Python module modifies omp_num_threads value, we gonna restore it
     unsigned num_threads;
@@ -108,120 +97,86 @@ int interaction::NN_Worker::init(const topology::Topology& topo
       #pragma omp single
         num_threads = omp_get_num_threads();
   #endif
-  // Initialize Python modules
-  for (size_t i = 0; i < modules.size(); ++i) {
-    py_modules.emplace(modules[i], py::module::import(modules[i].c_str()));
-  }
-  // Hint: use them as py_modules["sys"].attr()
 
-  // Print modules versions
-  std::string version;
-  version = py_modules["sys"].attr("version").cast<std::string>();
-    io::messages.add("Python version: " + version
-            , this->name(), io::message::notice);
-  version = py_modules["ase"].attr("__version__").cast<std::string>();
-    io::messages.add("ASE module version: " + version
-            , this->name(), io::message::notice);
-  version = py_modules["torch"].attr("__version__").cast<std::string>();
-    io::messages.add("Torch module version: " + version
-            , this->name(), io::message::notice);
-  version = py_modules["schnetpack"].attr("__file__").cast<std::string>();
-    io::messages.add("Schnetpack module path: " + version
-            , this->name(), io::message::notice);
+  // determine QM software
+  const simulation::qm_software_enum software = sim.param().qmmm.software;
 
-  std::string device;
-  switch(sim.param().qmmm.nn.device) {
-    case simulation::nn_device_auto: {
-      const bool cuda_available = py::bool_(py_modules["torch"].attr("cuda").attr("is_available")());
-      if (cuda_available) {
-        device = "cuda";
-        DEBUG(1, "auto: using CUDA");
-      } else {
-        device = "cpu";
-        DEBUG(1, "auto: Using CPU");
-      }
-      break;
-    }
-    case simulation::nn_device_cuda:
-      device = "cuda";
-        DEBUG(1, "Using CUDA");
-      break;
-    case simulation::nn_device_cpu:
-      device = "cpu";
-        DEBUG(1, "Using CPU");
-      break;
-    default:
-      io::messages.add("Unknown NN device", this->name(), io::message::critical);
-      return 1;
-  }
-  /** Load the model */
+  // Model path
   py::str model_path = sim.param().qmmm.nn.model_path;
   DEBUG(11, "model_path: " << model_path.cast<std::string>());
-  py::str ml_args_path = py_modules["os"].attr("path").attr("join")(py::cast('/').attr("join")(model_path.attr("split")('/')[py::slice(0,-1,1)]), "args.json");
-  DEBUG(11, "ml_args_path: " << ml_args_path.cast<std::string>());
-  py::object ml_model_args = py_modules["schnetpack"].attr("utils").attr("read_from_json")(ml_args_path);
-  py::object ml_model = py_modules["torch"].attr("load")(model_path,"map_location"_a=py_modules["torch"].attr("device")(device));
-  
-  if (py::bool_(ml_model_args.attr("parallel"))) {
-    ml_model = ml_model.attr("module");
-  }
 
-  py::object ml_environment = py_modules["schnetpack"].attr("utils").attr("script_utils").attr("settings").attr("get_environment_provider")(ml_model_args, "device"_a=device);
-
-  std::vector<int> mlmm_indices;
-
-  /** Initialize the ML calculator */
-  if(sim.param().qmmm.nn.learning_type == simulation::nn_learning_type_all) {
-    ml_calculator = py_modules["schnetpack"].attr("interfaces").attr("SpkCalculator")(ml_model, "energy"_a="energy", "forces"_a="forces", "device"_a=device, "environment_provider"_a=ml_environment);
-  } else if(sim.param().qmmm.nn.learning_type == simulation::nn_learning_type_qmonly) {
-    // this should be filled with all the atoms that are in the qm_zone, but not in the buffer zone.
-    // currently it is supported only for one, the first atom
-    // for multi-atom QM region, the atoms should be ordered such that the QM atoms are always first in the list
-    mlmm_indices.push_back(0);
-    ml_calculator = py_modules["schnetpack"].attr("interfaces").attr("SpkCalculator")(ml_model, "energy"_a="energy", "forces"_a="forces", "device"_a=device, "environment_provider"_a=ml_environment, "mlmm"_a=mlmm_indices);
-  } else {
-      std::ostringstream msg;
-      msg << "Learning type value unknown " << sim.param().qmmm.nn.learning_type;
-      io::messages.add(msg.str(), this->name(), io::message::error);
-  }
-
-  // Initialize Validation models  
+  // Validation models paths
+  py::list val_models_paths;
   if (!sim.param().qmmm.nn.val_model_paths.empty()) {
+    std::vector<std::string> val_paths;
     for (std::vector<std::string>::iterator it = sim.param().qmmm.nn.val_model_paths.begin(); it != sim.param().qmmm.nn.val_model_paths.end(); ++it) {
-        py::str val_model_path = *it;
+        val_paths.push_back(*it);
         DEBUG(11, "val_model_paths " << *it);
-        DEBUG(11, "val_model_path: " << val_model_path);
-        py::str val_args_path = py_modules["os"].attr("path").attr("join")(py::cast('/').attr("join")(val_model_path.attr("split")('/')[py::slice(0,-1,1)]), "args.json");
-        py::object val_model_args = py_modules["schnetpack"].attr("utils").attr("read_from_json")(val_args_path);
-        py::object val_model = py_modules["torch"].attr("load")(val_model_path,"map_location"_a=py_modules["torch"].attr("device")(device));
-        py::object val_environment = py_modules["schnetpack"].attr("utils").attr("script_utils").attr("settings").attr("get_environment_provider")(val_model_args, "device"_a=device);
-        if (py::bool_(val_model_args.attr("parallel"))) {
-          val_model = val_model.attr("module");
-        }
-        if(sim.param().qmmm.nn.learning_type == simulation::nn_learning_type_all) {
-          val_calculators.push_back(py_modules["schnetpack"].attr("interfaces").attr("SpkCalculator")(val_model, "energy"_a="energy", "forces"_a="forces", "device"_a=device, "environment_provider"_a=val_environment));
-        }
-        else if(sim.param().qmmm.nn.learning_type == simulation::nn_learning_type_qmonly) {
-          val_calculators.push_back(py_modules["schnetpack"].attr("interfaces").attr("SpkCalculator")(val_model, "energy"_a="energy", "forces"_a="forces", "device"_a=device, "environment_provider"_a=val_environment, "mlmm"_a=mlmm_indices));
-        }
     }
-  } 
-  
-  // Initialize Charge model
-  if (sim.param().qmmm.qm_ch == simulation::qm_ch_dynamic) {
-    py::str charge_model_path = sim.param().qmmm.nn.charge_model_path;
-    DEBUG(11, "charge_model_path: " << charge_model_path.cast<std::string>());
-    py::str charge_args_path = py_modules["os"].attr("path").attr("join")(py::cast('/').attr("join")(charge_model_path.attr("split")('/')[py::slice(0,-1,1)]), "args.json");
-    DEBUG(11, "charge_args_path: " << charge_args_path.cast<std::string>());
-    py::object charge_model_args = py_modules["schnetpack"].attr("utils").attr("read_from_json")(charge_args_path);
-    py::object charge_model = py_modules["torch"].attr("load")(charge_model_path,"map_location"_a=py_modules["torch"].attr("device")(device));
-    py::object charge_environment = py_modules["schnetpack"].attr("utils").attr("script_utils").attr("settings").attr("get_environment_provider")(charge_model_args, "device"_a=device);
-    if (py::bool_(charge_model_args.attr("parallel"))) {
-      charge_model = charge_model.attr("module");
-    }
-    charge_calculator = py_modules["schnetpack"].attr("interfaces").attr("SpkCalculator")(charge_model, "charges"_a="charges", "device"_a=device, "environment_provider"_a=charge_environment);
+    val_models_paths = py::cast(val_paths);
   }
 
+  // How often to run NN validation
+  py::int_ write_val_step = sim.param().qmmm.nn.val_steps;
+
+  // How often to write energy
+  py::int_ write_energy_step = sim.param().write.energy;
+
+  // To be able to import the module from the current directory
+  // Get the directory of the executable
+  char result[PATH_MAX];
+  ssize_t count = readlink("/proc/self/exe", result, PATH_MAX);
+  std::string exePath = std::string(result, (count > 0) ? count : 0);
+  std::string exeDir = exePath.substr(0, exePath.find_last_of("/"));
+  // Compute the correct module directory assuming binary in BUILD_X/bin
+  std::string modulePath = exeDir + "/../contrib";
+  py::module_ sys = py::module_::import("sys");
+  // Convert C++ string to Python string and append to sys.path
+  sys.attr("path").attr("append")(modulePath);
+
+  // To be able to import the module from the current directory
+  // py::module_ sys = py::module_::import("sys");
+  // sys.attr("path").attr("append")("/local/gromosXX/md++/src/interaction/qmmm");
+
+  // Initialize mlp_calculator Python object
+  if (software == simulation::qm_schnetv1) {
+    // Initialize schnet_v1 module
+    py::module_ schnet_v1 = py::module_::import("schnet_v1");
+    
+    // Decide if perturbation is performed or not
+    if (sim.param().perturbation.perturbation == true) {
+
+      // get lambda parameter
+      py::float_ lambda = py::cast(sim.param().perturbation.lambda);
+
+      // get perturbed QM states
+      py::list perturbed_qm_states = py::cast(sim.param().qmmm.nn.pertqm_state);
+
+      // Initialize mlp_calculator Pert_SchNet_V1_Calculator Python object
+      mlp_calculator = schnet_v1.attr("Pert_SchNet_V1_Calculator")(model_path, val_models_paths, write_val_step, write_energy_step, lambda, perturbed_qm_states);
+    }
+
+    else {
+      // Initialize mlp_calculator SchNet_V1_Calculator Python object
+      mlp_calculator = schnet_v1.attr("SchNet_V1_Calculator")(model_path, val_models_paths, write_val_step, write_energy_step);
+    }
+  }
+
+  if (software == simulation::qm_schnetv2) {
+    // Initialize schnet_v2 module
+    py::module_ schnet_v2 = py::module_::import("schnet_v2");
+
+    // Decide if perturbation is performed or not
+    if (sim.param().perturbation.perturbation == true) {
+      io::messages.add("Perturbation not implemented with schnet_v2 only schnet_v1", io::message::error);
+    }
+
+    else {
+      // Initialize mlp_calculator SchNet_V2_Calculator Python object
+      mlp_calculator = schnet_v2.attr("SchNet_V2_Calculator")(model_path, val_models_paths, write_val_step, write_energy_step);
+    }
+  }
+  
   // Restore omp_num_threads
   #ifdef OMP
     omp_set_num_threads(num_threads);
@@ -230,7 +185,6 @@ int interaction::NN_Worker::init(const topology::Topology& topo
 #endif
 
   DEBUG(15, "Initialized " << this->name());
-
   return 0;
 }
 
@@ -240,147 +194,114 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
                      , configuration::Configuration& conf
                      , simulation::Simulation& sim, interaction::QM_Zone & qm_zone) {
 #ifdef HAVE_PYBIND11
-  // run NN interface
-  // create the molecule object
-  py::object molecule = py_modules["ase"].attr("Atoms")();
+  // run NN interface 
+
+  // Prepare the input for mlp_calculator object
   double length_to_nn = 1 / this->param->unit_factor_length;
+
   std::set<interaction::QM_Atom>::const_iterator it, to;
   it = qm_zone.qm.begin();
   to = qm_zone.qm.end();
+
+  // Atomic numbers
+  std::vector<uint32_t> atom_nums;
+
+  // Coordinates
+  py::list system_coordinates;
+
   for (;it != to; ++it) {
-    //unsigned atomic_number = it->atomic_number;
-    uint32_t atomic_number = it->atomic_number;
-    py::list py_coordinates;
+    atom_nums.push_back(it->atomic_number);
+
+    // convert positions
     math::Vec nn_pos = it->pos * length_to_nn;
+    py::list atom_coordinates;
+    atom_coordinates.attr("append")(nn_pos[0]);
+    atom_coordinates.attr("append")(nn_pos[1]);
+    atom_coordinates.attr("append")(nn_pos[2]);
+    system_coordinates.attr("append")(atom_coordinates);
     DEBUG(15, "atom to NN: " << it->index << " : " << math::v2s(nn_pos));
-    py_coordinates.attr("append")(nn_pos[0]);
-    py_coordinates.attr("append")(nn_pos[1]);
-    py_coordinates.attr("append")(nn_pos[2]);
-    py::object atom = py_modules["ase"].attr("Atom")("symbol"_a = atomic_number, "position"_a = py_coordinates);
-    molecule.attr("append")(atom);
   }
 
-  // Run the calculator
-  molecule.attr("set_calculator")(ml_calculator);
-  
-  // Write the energy
-  const double energy = molecule.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy;
-  qm_zone.QM_energy() = energy;
- 
+  // Write capping atoms
+  DEBUG(15,"Writing capping atoms coordinates");
+  for (std::set<QM_Link>::const_iterator it = qm_zone.link.begin(), to = qm_zone.link.end(); it != to; ++it) {
+    atom_nums.push_back(it->atomic_number);
 
-  // Get the forces
-  /*const size_t qm_size = qm_zone.qm.size();
-  math::VArray forces;
-  forces.resize(qm_size);
-  std::array<double, 3> tmp;
-  for (unsigned i = 0; i < qm_size; ++i) {
-    //double * ptr = &(forces(i)[0]);
-    forces(i) = molecule.attr("get_forces")(i).cast<std::vector<double> >();
-    //forces(i)[0] = tmp[0];
-    //forces(i)[1] = tmp[1];
-    //forces(i)[2] = tmp[2];
-  }*/
+    // convert positions
+    math::Vec nn_pos = it->pos * length_to_nn;
+    py::list atom_coordinates;
+    atom_coordinates.attr("append")(nn_pos[0]);
+    atom_coordinates.attr("append")(nn_pos[1]);
+    atom_coordinates.attr("append")(nn_pos[2]);
+    system_coordinates.attr("append")(atom_coordinates);
+    DEBUG(15,"Capping atom to NN " << it->qm_index << "-" << it->mm_index << ": " << it->atomic_number << " " << math::v2s(nn_pos));
+  }  
+
+  // Convert std::vector<uint32_t> atom_nums to Python list
+  py::list atomic_numbers = py::cast(atom_nums);
+
+  // Get time step
+  py::int_ step = sim.steps();
+
+  // Run the method calculate_next_step to predict energy, forces and NN validation
+  mlp_calculator.attr("calculate_next_step")(atomic_numbers, system_coordinates, step);
   
-  // Write the forces
-  std::vector<std::vector<double>> forces = molecule.attr("get_forces")().cast<std::vector<std::vector<double>>>();
+  // Store predicted energy
+  const double energy = mlp_calculator.attr("get_energy")().cast<double>() * this->param->unit_factor_energy;
+  DEBUG(13, "energy from NN, " << energy);
+  qm_zone.QM_energy() = energy;
+
+  // Store predicted forces
+  std::vector<std::vector<double>> forces = mlp_calculator.attr("get_forces")().cast<std::vector<std::vector<double>>>();
   it = qm_zone.qm.begin();
+  int QMBR_zone_size = 0;
   for (unsigned i = 0; it != to; ++it, ++i) {
-    it->force[0] = forces[i][0];//molecule.attr("get_forces")().attr("item")(i,0).cast<double >();
-    it->force[1] = forces[i][1];//molecule.attr("get_forces")().attr("item")(i,1).cast<double >();
-    it->force[2] = forces[i][2];//molecule.attr("get_forces")().attr("item")(i,2).cast<double >();
+    it->force[0] = forces[i][0];
+    it->force[1] = forces[i][1];
+    it->force[2] = forces[i][2];
     it->force *= this->param->unit_factor_force;
     DEBUG(15, "force from NN, atom " << it->index << " : " << math::v2s(it->force));
+    QMBR_zone_size += 1;
   }
 
-// Run validation, if asked for
+  // Also parse capping atoms
+  unsigned i = 0;
+  for(std::set<QM_Link>::iterator it = qm_zone.link.begin(), to = qm_zone.link.end(); it != to; ++it) {
+    it->force[0] = forces[QMBR_zone_size+i][0];
+    it->force[1] = forces[QMBR_zone_size+i][1];
+    it->force[2] = forces[QMBR_zone_size+i][2];
+    it->force *= this->param->unit_factor_force;
+    DEBUG(13, "force from NN, capping atom " << it->qm_index << "-" << it->mm_index << ": "  << math::v2s(it->force));
+    i += 1;
+  }
+
+  // Free energy derivative if perturbation is performed
+  if (sim.param().perturbation.perturbation == true) {
+    const double energy_derivative = mlp_calculator.attr("get_derivative")().cast<double>() * this->param->unit_factor_energy;
+    qm_zone.QM_energy_derivative() = energy_derivative;
+  }
+  
+  // NN validation
   if (!sim.param().qmmm.nn.val_model_paths.empty()
       && (sim.steps() % sim.param().qmmm.nn.val_steps == 0
        || sim.steps() % sim.param().write.energy == 0)) {
-    //py::object val_molecule(molecule); we don't need to create a new (reference to a) molecule 
-    //MICHAEL ADDED loop over validation models
-    std::vector<double> val_energy;
-    for ( std::vector<py::object>::iterator it = val_calculators.begin(); it != val_calculators.end(); ++it ) {
-      molecule.attr("set_calculator")(*it);
-      val_energy.push_back(molecule.attr("get_potential_energy")().cast<double>() * this->param->unit_factor_energy);
-    } 
+    
+    // Store NN valid. deviation
+    const double nn_valid_ene = mlp_calculator.attr("get_nn_valid_ene")().cast<double>() * this->param->unit_factor_energy;
+    conf.current().energies.nn_valid = nn_valid_ene;
 
-    // if only one validation model given report the difference
-    double dev = 0.0;
-    if (sim.param().qmmm.nn.val_model_paths.size() == 1) {
-      dev = energy - val_energy[0];
-    }
-    // else report the estimate of the variance over all runs
-    else {
-      double sum = 0.0;
-      double var = 0.0;
-      val_energy.push_back(energy);
-      int size = val_energy.size();
-      
-      // Calculate the sum of elements in the vecotr
-      for (int i = 0; i < size; i++) {
-        sum += val_energy[i];
-      }
-      // Calculate the mean
-      double mean = sum / size;
-      // Calculate the sum of squared differences from the mean
-      for (int i = 0; i < size; ++i) {
-        double diff = val_energy[i] - mean;
-        var += diff * diff;
-      }
-      // still divide by the number of values - 1
-      dev = var / (size - 1);
+    // Store NN valid. maximum force committee disagreement among all atoms if requested in .qmmm input file
+    if(sim.param().qmmm.nn.nnvalid == simulation::nn_valid_maxF) {
+      const double nn_valid_maxF = mlp_calculator.attr("get_nn_valid_maxF")().cast<double>() * this->param->unit_factor_force;
+      conf.current().energies.nn_valid_maxF = nn_valid_maxF;
     }
 
-    conf.current().energies.nn_valid = dev;
-    DEBUG(7, "Deviation from validation model: " << dev);
-    if (fabs(dev) > sim.param().qmmm.nn.val_thresh) {
-      std::ostringstream msg;
-      msg << "Deviation from validation model above threshold in step " << sim.steps() << " : " << dev;
-      io::messages.add(msg.str(), this->name(), io::message::notice); // Changed to notice
-      if(sim.param().qmmm.nn.val_forceconstant != 0.0){
-        // add a biasing force between the two NN networks
-        double dev_squared = (dev*dev - sim.param().qmmm.nn.val_thresh * sim.param().qmmm.nn.val_thresh);
-        qm_zone.QM_energy() += 0.25 * sim.param().qmmm.nn.val_forceconstant * dev_squared * dev_squared;
-        math::Vec val_force;
-        it = qm_zone.qm.begin();
-        for (unsigned i = 0; it != to; ++it, ++i) {
-          val_force[0] = molecule.attr("get_forces")().attr("item")(i,0).cast<double >();
-          val_force[1] = molecule.attr("get_forces")().attr("item")(i,1).cast<double >();
-          val_force[2] = molecule.attr("get_forces")().attr("item")(i,2).cast<double >();
-          val_force *= this->param->unit_factor_force;
-          it->force += sim.param().qmmm.nn.val_forceconstant * dev_squared * dev * (it->force - val_force);
-        }
-      }
+    if (fabs(nn_valid_ene) > sim.param().qmmm.nn.val_thresh) {
+        std::ostringstream msg;
+        msg << "Deviation from validation model above threshold in step " << sim.steps() << " : " << nn_valid_ene;
+        io::messages.add(msg.str(), this->name(), io::message::notice);
     }
   }
-  // Assign charges for the MM calculation, if asked for
-  if (sim.param().qmmm.qm_ch == simulation::qm_ch_dynamic
-      && sim.steps() % sim.param().qmmm.nn.charge_steps == 0) {
-    //py::object val_molecule(molecule); we don't need to create a new (reference to a) molecule 
-    molecule.attr("set_calculator")(charge_calculator);
-    // collect the charges
-    it = qm_zone.qm.begin();
-    double totcharge=0.0;
-    for (unsigned i = 0; it != to; ++it, ++i) {
-      it->qm_charge = molecule.attr("get_charges")().attr("item")(i).cast<double >() * this->param->unit_factor_charge;
-      totcharge+=it->qm_charge;
-    }
-    if(totcharge != sim.param().qmmm.qm_zone.charge){
-      std::ostringstream msg;
-      msg << "Charges from NN model do not add up " << sim.steps() 
-          << ": requested " << sim.param().qmmm.qm_zone.charge 
-          << " predicted " << totcharge << ". Homogeneously adjusting charges";
-      io::messages.add(msg.str(), this->name(), io::message::warning);
-      // adjust?
-      double q_adjust=(sim.param().qmmm.qm_zone.charge - totcharge) / qm_zone.qm.size();
-      it = qm_zone.qm.begin();
-      for(; it!=to; ++it){
-        it->qm_charge += q_adjust;
-        DEBUG(10, "Charge adjusted for atom " << it->index << " from " << it->qm_charge - q_adjust << " to " << it->qm_charge);
-      }
-    }
-  }
-
 #endif
   return 0;
 }

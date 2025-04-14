@@ -214,6 +214,10 @@ namespace configuration
      * energy difference of validation NN model to validation if only 1 or variance of all NN validation models 
      */
     double nn_valid;
+    /**
+     * maximum force committee disagreement among all atoms in a structure calculated from up to n validation models
+     */
+    double nn_valid_maxF;
 
     /** ANITA
     * total A_lj for each lambda
