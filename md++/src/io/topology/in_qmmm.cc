@@ -1070,10 +1070,17 @@ void io::In_QMMM::read(topology::Topology& topo,
         unsigned val_steps;
         int nnvalid_maxF;
         double val_thresh, val_forceconstant;
+        
         _lineStream >> val_steps >> val_thresh >> val_forceconstant;
         sim.param().qmmm.nn.val_steps = val_steps;
         sim.param().qmmm.nn.val_thresh = val_thresh;
         sim.param().qmmm.nn.val_forceconstant = val_forceconstant;
+
+        if (_lineStream.fail()) {
+          io::messages.add("bad line in NNVALID block",
+                "In_QMMM", io::message::error);
+          return;
+        }
 
         // Take care of optional nnvalid_maxF
         _lineStream >> nnvalid_maxF;
@@ -1082,12 +1089,6 @@ void io::In_QMMM::read(topology::Topology& topo,
         } 
         if (nnvalid_maxF == 0) sim.param().qmmm.nn.nnvalid = simulation::nn_valid_standard;
         else if (nnvalid_maxF == 1) sim.param().qmmm.nn.nnvalid = simulation::nn_valid_maxF;
-
-        if (_lineStream.fail()) {
-          io::messages.add("bad line in NNVALID block",
-                "In_QMMM", io::message::error);
-          return;
-        }
       }
     } // NNVALID
     { // NNCHARGE
@@ -1713,14 +1714,14 @@ void io::In_QMMM::read_zone(topology::Topology& topo
 
     // Take care of optional brstat input in QMZONE and BUFFERZONE
     _lineStream >> brstat;
-      if (_lineStream.fail()) {
-        if (blockname == "QMZONE"){
-          brstat = 0;
-        }
-        else {
-          brstat = 1;
-        }
-      } 
+    if (_lineStream.fail()) {
+      if (blockname == "QMZONE"){
+        brstat = 0;
+      }
+      else {
+        brstat = 1;
+      }
+    } 
 
     if (qmi < 1 || qmi > topo.num_atoms()) {
       std::ostringstream msg;
