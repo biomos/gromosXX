@@ -83,6 +83,7 @@ self_total(0.0),
 sasa_total(0.0),
 sasa_volume_total(0.0),
 nn_valid(0.0),
+nn_valid_maxF(0.0),
 eds_vr(0.0),
 eds_vr_shift_orig(0.0),
 eds_vr_shift_phys(0.0),
@@ -139,6 +140,7 @@ void configuration::Energy::zero(bool potential, bool kinetic)
     sasa_total = 0.0;
     sasa_volume_total = 0.0;
     nn_valid = 0.0;
+    nn_valid_maxF = 0.0;
     qm_total = 0.0;
     shift_extra_orig.assign(shift_extra_orig.size(), std::vector<double>(shift_extra_orig.size(), 0.0));
     shift_extra_phys.assign(shift_extra_phys.size(), std::vector<double>(shift_extra_phys.size(), 0.0));
@@ -650,11 +652,12 @@ double configuration::Energy::get_energy_by_index(const unsigned int & index) {
     case 43 : return rdc_total;
     case 44 : return angrest_total;
     case 45 : return nn_valid;
-    case 46 : return total + shift_extra_orig_total;
-    case 47 : return total + shift_extra_phys_total;
-    case 48 : return eds_vr_shift_orig;
-    case 49 : return eds_vr_shift_phys;
-    case 50 : return gamd_DV_total;
+    case 46 : return nn_valid_maxF;
+    case 47 : return total + shift_extra_orig_total;
+    case 48 : return total + shift_extra_phys_total;
+    case 49 : return eds_vr_shift_orig;
+    case 50 : return eds_vr_shift_phys;
+    case 51 : return gamd_DV_total;
   }
   return 0.0;
 }

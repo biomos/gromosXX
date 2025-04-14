@@ -237,8 +237,8 @@ int interaction::QMMM_Interaction::calculate_interactions(topology::Topology& to
        * b) from 2 QM or NN evaluations and calculating the difference here
        * 
        */
-      if (sim.param().qmmm.software != simulation::qm_nn
-          || sim.param().qmmm.nn.model_type == simulation::nn_model_type_standard) {
+      if ((sim.param().qmmm.software != simulation::qm_schnetv1 && sim.param().qmmm.software != simulation::qm_schnetv2) || 
+    sim.param().qmmm.nn.model_type == simulation::nn_model_type_standard) {
         DEBUG(4, "Creating QM buffer for separate QM calculation");
         //create buffer zone for separate QM calculation and run it
         delete m_qm_buffer;
@@ -442,8 +442,8 @@ int interaction::QMMM_Interaction::init(topology::Topology& topo,
       case simulation::qm_gaussian:
         os << "Gaussian";
         break;
-      case simulation::qm_nn:
-        os << "Schnet";
+      case simulation::qm_schnetv1:
+        os << "Schnet v1";
         break;
       case simulation::qm_orca:
         os << "Orca";
@@ -453,6 +453,9 @@ int interaction::QMMM_Interaction::init(topology::Topology& topo,
         os << "XTB";
         break;
 #endif
+      case simulation::qm_schnetv2:
+        os << "Schnet v2";
+        break;
       default:
         os << "unknown";
         break;
@@ -969,6 +972,8 @@ void interaction::QMMM_Interaction::modify_exclusions(
       if (erase) {
         DEBUG(9, "Removing exclusion: " << i << " - " << *it);
         it = topo.exclusion(i).erase(it);
+        // add to all_exclusion
+        topo.all_exclusion(i).insert(*it);
         continue;
       }
       ++it;
@@ -995,7 +1000,7 @@ void interaction::QMMM_Interaction::modify_exclusions(
     }
     ++it;
   }
-  topo.update_all_exclusion();
+  // topo.update_all_exclusion();
 }
 
 void interaction::QMMM_Interaction::store_set_data(

@@ -80,6 +80,13 @@ namespace io {
      */
     void read_iac_elements(topology::Topology& topo
     , simulation::Parameter::qmmm_struct::qm_param_struct* qm_param);
+
+    /**
+     * Read the list of QM perturbed states
+     */
+    void read_pert_qmzone(simulation::Simulation& sim
+                    , simulation::Parameter::qmmm_struct::qm_param_struct* qm_param);
+
     /**
      * Read the list of QM atoms
      */

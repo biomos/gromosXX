@@ -3373,6 +3373,11 @@ t_interaction_spec, t_perturbation_details>
   r = 0.0;
 
   for (; it != to; ++it) {
+      // exclude QM-QM
+      if (topo.is_qm(atom_i) && topo.is_qm(*it)) {
+        continue;
+      }
+
       periodicity.nearest_image(pos(atom_i), pos(*it), r);
       DEBUG(8, "r2 i(" << atom_i << "-" << *it << ") " << abs2(r));
 
