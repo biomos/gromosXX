@@ -473,33 +473,59 @@ _update_pert_cg(topology::Topology & topo,
   int cg1 = 0, cg2 = 0;
   math::Vec r;
   
+  const simulation::qmmm_enum qmmm = sim.param().qmmm.qmmm;
+  
   // solute -
   for(cg1 = begin; cg1 < num_solute_cg; cg1+=stride){
     
-    for(int a1 = topo.chargegroup(cg1),
-	  a_to = topo.chargegroup(cg1+1);
-	a1 < a_to; ++a1){
-      for(int a2 = a1+1; a2 < a_to; ++a2){
-	
-	// check it is not excluded
-	if (excluded_solute_pair(topo, a1, a2))
-	  continue;
-
-	if (insert_pair(topo, pairlist.solute_short, perturbed_pairlist.solute_short,
+    DEBUG(10, "cg1 = " << cg1);
+    
+    // If cg is QM
+    if (Pairlist_Algorithm::qm_excluded(topo, qmmm, topo.chargegroup(cg1))) {
+      DEBUG(9, "Skipping all for cg " << cg1);
+      DEBUG(9, " - atoms " << topo.chargegroup(cg1) << "-" << topo.chargegroup(cg1+1)-1);
+      continue;
+    }
+    if (!qmmm || !topo.is_qm( topo.chargegroup(cg1) )) { // skip QM chargegroups
+      for(int a1 = topo.chargegroup(cg1),
+      a_to = topo.chargegroup(cg1+1);
+    a1 < a_to; ++a1){
+        for(int a2 = a1+1; a2 < a_to; ++a2){
+    
+    // check it is not excluded
+    if (excluded_solute_pair(topo, a1, a2))
+      continue;
+    
+    if (insert_pair(topo, pairlist.solute_short, perturbed_pairlist.solute_short,
 						a1, a2, scaled_only))
 	  ;
 	else if (insert_pair(topo, pairlist.solute_short, perturbed_pairlist.solute_short,
 						     a2, a1, scaled_only))
 	  ;
 	else
-	  pairlist.solute_short[a1].push_back(a2);
-	
+    pairlist.solute_short[a1].push_back(a2);
+        
+        }
       }
+    }
+    else {
+      DEBUG(9, "Skipping cg " << cg1 << " innerloop");
+      DEBUG(9, " - atoms " << topo.chargegroup(cg1) << "-" << topo.chargegroup(cg1+1)-1);
     }
     
     // solute - solute
     for(cg2 = cg1+1; cg2 < num_solute_cg; ++cg2){
 
+      DEBUG(10, "cg2 = " << cg2);
+      // If cg is QM
+      if (Pairlist_Algorithm::qm_excluded(
+            topo, qmmm, topo.chargegroup(cg1), topo.chargegroup(cg2))) 
+        {
+        DEBUG(9, "Skipping cgs " << cg1 << " and " << cg2);
+        DEBUG(9, " - atoms " << topo.chargegroup(cg1) << "-" << topo.chargegroup(cg1+1)-1);
+        DEBUG(9, " - atoms " << topo.chargegroup(cg2) << "-" << topo.chargegroup(cg2+1)-1);
+        continue;
+      }
       assert(m_cg_cog.size() > unsigned(cg1) &&
 	     m_cg_cog.size() > unsigned(cg2));
     
@@ -564,6 +590,16 @@ _update_pert_cg(topology::Topology & topo,
     // solute - solvent
     for( ; cg2 < num_cg; ++cg2){
 
+      DEBUG(10, "cg2 = " << cg2);// If cg is QM
+      if (Pairlist_Algorithm::qm_excluded(
+            topo, qmmm, topo.chargegroup(cg1), topo.chargegroup(cg2))) 
+        {
+        DEBUG(9, "Skipping cgs " << cg1 << " and " << cg2);
+        DEBUG(9, " - atoms " << topo.chargegroup(cg1) << "-" << topo.chargegroup(cg1+1)-1);
+        DEBUG(9, " - atoms " << topo.chargegroup(cg2) << "-" << topo.chargegroup(cg2+1)-1);
+        continue;
+      }
+      
       assert(m_cg_cog.size() > unsigned(cg1));
     
       periodicity.nearest_image(m_cg_cog(cg1), 

@@ -78,22 +78,28 @@ namespace interaction {
     /**
      * Python modules
      */
-    PY_MODULE_MAP py_modules;
+    //PY_MODULE_MAP py_modules;
+
+    /**
+     * PY_OBJCET MLP calculator
+     */
+
+    PY_OBJECT mlp_calculator;
 
     /**
      * ASE calculator
      */
-    PY_OBJECT ml_calculator;
+    //PY_OBJECT ml_calculator;
 
     /**
      * ASE calculator for validation
      */
-    std::vector<PY_OBJECT> val_calculators;
+    //std::vector<PY_OBJECT> val_calculators;
 
     /**
      * ASE calculator for charges
      */
-    PY_OBJECT charge_calculator;
+    //PY_OBJECT charge_calculator;
     
     /**
      * run the NN worker

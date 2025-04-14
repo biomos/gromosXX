@@ -97,8 +97,12 @@ util::Algorithm_Timer::Algorithm_Timer(const std::string & name) {
 void util::Algorithm_Timer::initialize(const std::string & name) {
   DEBUG(5, "Initializes sub-timer " + name + " of main-timer " + m_name + ".");
 
+#ifdef NDEBUG
+  m_subtimers.emplace(name, Subtimer(m_max_thread_num));
+#else
   std::pair<Subtimer_Container::iterator, bool>
     ret = m_subtimers.emplace(name, Subtimer(m_max_thread_num));
+#endif
   // assert the insertion took place
   assert(ret.second && "re-initialization of sub-timer is not allowed");
   subtimer_in_use.clear();

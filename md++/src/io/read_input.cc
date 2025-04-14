@@ -484,6 +484,11 @@ int io::read_configuration(io::Argument const & args,
 
   io::messages.add("configuration read from " + args[argname_conf] + "\n" + util::frame_text(ic.title),
 		   "read input", io::message::notice);
+  
+
+  // check for criticals before initialization
+  if (io::messages.contains(io::message::critical))
+    return -1;
 
   conf.init(topo, sim.param());
 

@@ -952,7 +952,7 @@ namespace simulation
     /*
      * use Schnetpack NN
      */
-    qm_nn = 5,
+    qm_schnetv1 = 5,
     /**
      * use Orca
      */
@@ -960,7 +960,11 @@ namespace simulation
     /**
      * use XTB
      */
-    qm_xtb = 7
+    qm_xtb = 7,
+    /*
+     * use Schnetpack v2 NN
+     */
+    qm_schnetv2 = 8
   };
 
   /**
@@ -980,6 +984,21 @@ namespace simulation
      * use CPU
      */
     nn_device_cpu = 2
+  };
+
+  /**
+   * @enum qmmm_nn_valid
+   * specify if additional uncertainty estimation should be performed in the validation process
+   */
+  enum qmmm_nn_valid {
+    /**
+     * standard option do not report maximum force committe disagreement
+     */
+    nn_valid_standard = 0,
+    /**
+     * Report maximum force committe disagreement
+     */
+    nn_valid_maxF = 1
   };
 
   /**
@@ -1476,7 +1495,7 @@ namespace simulation
        */
       int velocity;
       /**
-       * force
+       * forcwrite
        */
       int force;
       /**
@@ -4454,11 +4473,13 @@ namespace simulation
                       , val_thresh(0.0)
                       , val_steps(0)
                       , val_forceconstant(0.0)
+                      , nnvalid(nn_valid_maxF)
                       , charge_model_path()
                       , charge_steps(0)
                       , model_type(nn_model_type_burnn) 
                       , learning_type(nn_learning_type_all)
-                      , device(nn_device_auto) {}
+                      , device(nn_device_auto)
+                      , pertqm_state(0) {}
         /**
          * Schnetpack model path
          */
@@ -4480,6 +4501,10 @@ namespace simulation
          */
         double val_forceconstant;
         /**
+         * nn validation type
+         */
+        qmmm_nn_valid nnvalid;
+        /**
          * Schnetpack model path
          */
         std::string charge_model_path;
@@ -4499,6 +4524,8 @@ namespace simulation
          * Device to run model on
          */
         qm_nn_device_enum device;
+
+        std::vector<unsigned> pertqm_state;
       } nn;
 
     } qmmm;
