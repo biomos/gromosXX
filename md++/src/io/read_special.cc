@@ -416,13 +416,16 @@ int io::read_special(io::Argument const & args,
             case simulation::qm_gaussian:
                 iq.title= "GAUSSIAN";
                 break;
-            case simulation::qm_nn:
-                iq.title= "Schnetpack";
+            case simulation::qm_schnetv1:
+                iq.title= "Schnetpack v1";
                 break;
             case simulation::qm_orca:
                 iq.title = "Orca";
             case simulation::qm_xtb:
                 iq.title = "XTB";
+            case simulation::qm_schnetv2:
+                iq.title= "Schnetpack v2";
+                break;
         }
         
         iq.read(topo, sim, os);

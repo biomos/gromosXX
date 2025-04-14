@@ -1,0 +1,41 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "(gdb) Pipe Launch",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "/pool/radekc/GROMOS/GROMOS_workstation/burnn_schnet_full_python_test/bin/md",
+            "args": ["@topo /pool/radekc/CD_lab_project/BuRNN/alchemical_changes/burnn_fep_test/test_TI/../topo/meoh_CH4_dummy.top @conf /pool/radekc/CD_lab_project/BuRNN/alchemical_changes/burnn_fep_test/test_TI/eq_meoh_pert_top_adj.cnf @input /pool/radekc/CD_lab_project/BuRNN/alchemical_changes/burnn_fep_test/test_TI/TI_meoh_ch4_1.imd @pttopo /pool/radekc/CD_lab_project/BuRNN/alchemical_changes/burnn_fep_test/test_TI/../topo/meoh_CH4_dummy_meoh_dummy_CH4.ptp @distrest /pool/radekc/CD_lab_project/BuRNN/alchemical_changes/burnn_fep_test/test_TI/meoh_ch4.dsr @qmmm /pool/radekc/CD_lab_project/BuRNN/alchemical_changes/burnn_fep_test/test_TI/meoh.qmm @fin TI_meoh_ch4_1.cnf @trc TI_meoh_ch4_1.trc @tre TI_meoh_ch4_1.tre @trg TI_meoh_ch4_1.trg"],
+            "stopAtEntry": false,
+            "cwd": "${fileDirname}",
+            "environment": [{"name" : "LD_LIBRARY_PATH", "value" : "/usr/local/cuda-11.7/lib64:/usr/local/cuda-11.7/lib64:/usr/local/cuda-11.7/lib64::/pool/radekc/anaconda3/envs/spk_py30912/lib"}],
+            "externalConsole": false,
+            //"pipeTransport": {
+            //    "debuggerPath": "/usr/bin/gdb",
+            //    "pipeProgram": "/usr/bin/ssh",
+            //    "pipeArgs": [],
+            //    "pipeCwd": ""
+            //},
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set Disassembly Flavor to Intel",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                },
+            ]
+        }
+        
+
+
+    ]
+}
