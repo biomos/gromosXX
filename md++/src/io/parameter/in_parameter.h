@@ -89,6 +89,7 @@
  * - @ref  xrayres
  * - @ref  amber
  * - @ref  dfunct
+ * - @ref  colvarres
  */
 
 
@@ -410,6 +411,10 @@ namespace io {
      * read DFUNCT block 
      */
     void read_DFUNCT(simulation::Parameter &param, std::ostream & os = std::cout);
+    /**
+     * read COLVARRES block
+     */
+    void read_COLVARRES(simulation::Parameter &param, std::ostream & os = std::cout);
   };
 
 } // io

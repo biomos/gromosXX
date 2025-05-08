@@ -1,5 +1,5 @@
 AM_CXXFLAGS = @MY_CXXFLAGS@ $(PYFLAGS)
-AM_CPPFLAGS = -I$(top_srcdir) -I$(top_srcdir)/src -I$(top_srcdir)/src/interaction -I$(top_srcdir)/src/interaction/nonbonded -I$(top_srcdir)/src/interaction/nonbonded/pairlist -I$(top_srcdir)/src/interaction/nonbonded/interaction -I$(top_srcdir)/src/interaction/bonded -I$(top_srcdir)/src/interaction/forcefield -I$(top_srcdir)/src/interaction/qmmm -I$(top_srcdir)/src/interaction/special -I$(top_srcdir)/src/interaction/special/xray -I$(top_srcdir)/src/algorithm -I$(top_srcdir)/src/math 
+AM_CPPFLAGS = -I$(top_srcdir) -I$(top_srcdir)/src -I$(top_srcdir)/src/interaction -I$(top_srcdir)/src/interaction/nonbonded -I$(top_srcdir)/src/interaction/nonbonded/pairlist -I$(top_srcdir)/src/interaction/nonbonded/interaction -I$(top_srcdir)/src/interaction/bonded -I$(top_srcdir)/src/interaction/forcefield -I$(top_srcdir)/src/interaction/qmmm -I$(top_srcdir)/src/interaction/special -I$(top_srcdir)/src/interaction/special/xray -I$(top_srcdir)/src/interaction/special/colvar -I$(top_srcdir)/src/algorithm -I$(top_srcdir)/src/math 
 AM_LDFLAGS = $(PYLDFLAGS)
 
 if WITH_CUDA
@@ -99,6 +99,8 @@ xxintnbspecial_HEADERS = special/create_special.h\
 	special/rdc_restraint_interaction.h\
 	special/symmetry_restraint_interaction.h\
 	special/dfunct_interaction.h
+	special/colvar_restraint_interaction.h\
+	special/perturbed_colvar_restraint_interaction.h
 
 xxintspecialxraydir = $(includedir)/md++/interaction/special/xray
 xxintspecialxray_HEADERS = special/xray/dens.h\
@@ -122,6 +124,11 @@ xxintqmmm_HEADERS = qmmm/mm_atom.h\
 	qmmm/qmmm_interaction.h\
 	qmmm/nonbonded/qmmm_nonbonded_outerloop.h \
 	qmmm/nonbonded/qmmm_nonbonded_set.h
+
+xxintspecialcolvardir = $(includedir)/md++/interaction/special/colvar
+xxintspecialcolvar_HEADERS = special/colvar/colvar.h\
+	special/colvar/contactnum.h\
+	special/colvar/perturbed_contactnum.h
 
 if WITH_XTB
   xxintqmmm_HEADERS += qmmm/xtb_worker.h
@@ -197,6 +204,11 @@ libgrointeraction_la_SOURCES = interaction.cc\
 	special/rdc_restraint_interaction.cc\
 	special/symmetry_restraint_interaction.cc\
 	special/dfunct_interaction.cc\
+	special/colvar_restraint_interaction.cc\
+	special/perturbed_colvar_restraint_interaction.cc\
+    special/colvar/colvar.cc\
+	special/colvar/contactnum.cc\
+	special/colvar/perturbed_contactnum.cc\
 	qmmm/qm_link.cc\
 	qmmm/qm_zone.cc\
 	qmmm/qm_worker.cc\

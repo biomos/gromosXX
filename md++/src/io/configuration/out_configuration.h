@@ -131,7 +131,7 @@ namespace io {
      */
     void special_trajectory(std::string const name, int every_cos = 1,
             int every_jvalue = 1, int every_xray = 1, int every_disres = 1, int every_disfieldres = 1,
-            int every_angres = 1,
+            int every_colvarres = 1, int every_angres = 1,
             int every_dihres = 1, int every_dat = 1, int every_leus = 1, int every_dipole = 1, 
             int every_current = 1, int every_adde = 1, int every_nemd = 1,
 	    int every_oparam = 1, int every_rdc = 1, int every_bsleus = 1);
@@ -321,6 +321,11 @@ namespace io {
 	    topology::Topology const &topo,
 	    std::ostream &os);
 
+    void _print_colvar_restraints(
+            configuration::Configuration const &conf,
+            topology::Topology const &topo,
+            std::ostream &os);
+
     void _print_angle_restraints(
             configuration::Configuration const &conf,
             topology::Topology const &topo,
@@ -490,6 +495,7 @@ namespace io {
     int m_every_xray;
     int m_every_disres;
     int m_every_disfieldres;
+    int m_every_colvarres;
     int m_every_angres;
     int m_every_dihres;
     int m_every_dat;
@@ -511,6 +517,7 @@ namespace io {
     int m_disfield_restraint_precision;
     int m_angle_restraint_precision;
     int m_dihedral_restraint_precision;
+    int m_colvar_restraint_precision;
 
     int m_width;
     int m_force_width;

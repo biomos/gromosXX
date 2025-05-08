@@ -29,7 +29,8 @@ xxiotopo_HEADERS = topology/in_jvalue.h\
 	topology/in_bsleus.h\
 	topology/in_qmmm.h\
 	topology/in_symrest.h\
-	topology/in_rdc.h
+	topology/in_rdc.h\
+	topology/in_colvarres.h
 
 xxioconfdir = $(includedir)/md++/io/configuration
 xxioconf_HEADERS = configuration/in_configuration.h\
@@ -74,7 +75,8 @@ libgroio_la_SOURCES =	io.cc\
 	topology/in_bsleus.cc\
 	topology/in_qmmm.cc\
 	topology/in_symrest.cc\
-	topology/in_rdc.cc
+	topology/in_rdc.cc\
+	topology/in_colvarres.cc
 
 libgroio_la_LIBADD = libgroiocheck.la
 

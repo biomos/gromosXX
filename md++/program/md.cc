@@ -112,7 +112,7 @@ int main(int argc, char *argv[]){
   knowns << "topo" << "conf" << "input" << "verb" << "pttopo"
 	 << "trc" << "fin" << "trv" << "trf" << "trs" << "tre" << "trg"
 	 << "bae" << "bag" << "posresspec" << "refpos" <<"distrest" 
-	 << "angrest" << "dihrest"
+	 << "colvarres"  << "angrest" << "dihrest"
          << "jval" << "xray" << "sym" << "order" << "rdc" << "lud" << "led" << "bsleus" 
          << "anatrj" << "print" << "friction" << "qmmm" << "version" << "develop" << "gamd";
   

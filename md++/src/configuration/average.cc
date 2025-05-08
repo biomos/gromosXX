@@ -474,6 +474,7 @@ fluct.prop = old_fluct.prop + dt * e.prop * e.prop
   ENERGY_AVG(eds_vr);
   ENERGY_AVG(entropy_term);
   ENERGY_AVG(nn_valid);
+  ENERGY_AVG(colvarres_total);
 
   // ANITA
   for(size_t i=0; i < e.A_lj_total.size(); ++i){
@@ -553,6 +554,7 @@ fluct.prop = old_fluct.prop + dt * e.prop * e.prop
     ENERGY_AVG(dihrest_energy[i]);
     ENERGY_AVG(disfieldres_energy[i]);
     ENERGY_AVG(constraints_energy[i]);
+    ENERGY_AVG(colvarres_energy[i]);
     ENERGY_AVG(jvalue_energy[i]);
     ENERGY_AVG(rdc_energy[i]);
     ENERGY_AVG(self_energy[i]);
@@ -721,6 +723,7 @@ void configuration::Average::Block_Average
   ENERGY_RES(entropy_term);
   ENERGY_RES(self_total);
   ENERGY_RES(nn_valid);
+  ENERGY_RES(colvarres_total);
 
   // ANITA
   for(size_t i=0; i < e.A_lj_total.size(); ++i){
@@ -786,6 +789,7 @@ void configuration::Average::Block_Average
     ENERGY_RES(angrest_energy[i]);
     ENERGY_RES(dihrest_energy[i]);
     ENERGY_RES(disfieldres_energy[i]);
+    ENERGY_RES(colvarres_energy[i]);
     ENERGY_RES(constraints_energy[i]);
     ENERGY_RES(jvalue_energy[i]);
     ENERGY_RES(rdc_energy[i]);

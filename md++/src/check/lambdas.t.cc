@@ -378,6 +378,17 @@ int main(int argc, char* argv[]) {
             distanceres_energy[n1];
           nm="distance restraint";
         }
+        else if(i==simulation::colvarres_lambda){
+          E_on=aladip_sim_on.conf.current().energies.
+            distanceres_energy[n1];
+          E_off=aladip_sim_off.conf.current().energies.
+            distanceres_energy[n1];
+          dE_on=aladip_sim_on.conf.current().perturbed_energy_derivatives.
+            distanceres_energy[n1];
+          dE_off=aladip_sim_off.conf.current().perturbed_energy_derivatives.
+            distanceres_energy[n1];
+          nm="colvar restraint";
+        }
         // let's not claim we checked something that was zero to begin with
         if(dE_on !=0){
             

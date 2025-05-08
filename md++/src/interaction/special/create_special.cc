@@ -38,6 +38,8 @@
 #include "../../interaction/special/position_restraint_interaction.h"
 #include "../../interaction/special/distance_restraint_interaction.h"
 #include "../../interaction/special/distance_field_interaction.h"
+#include "../../interaction/special/colvar_restraint_interaction.h"
+#include "../../interaction/special/perturbed_colvar_restraint_interaction.h"
 #include "../../interaction/special/angle_restraint_interaction.h"
 #include "../../interaction/special/dihedral_restraint_interaction.h"
 #include "../../interaction/special/dfunct_interaction.h"
@@ -161,6 +163,23 @@ int interaction::create_special(interaction::Forcefield & ff,
 	new interaction::Perturbed_Distance_Field_Interaction;
       
       ff.push_back(pdf);
+    }
+  }
+
+  // Colvar restraints
+  if (param.colvarres.colvarres >0){
+    if(!quiet)
+      os <<"\tCollective variable restraints\n";
+      interaction::Colvar_Restraint_Interaction *cr =
+        new interaction::Colvar_Restraint_Interaction();
+      ff.push_back(cr);
+      
+    if (param.perturbation.perturbation){
+    if(!quiet)
+      os <<"\tCollective variable restraints\n";
+      interaction::Perturbed_Colvar_Restraint_Interaction *pcr =
+        new interaction::Perturbed_Colvar_Restraint_Interaction();
+      ff.push_back(pcr);
     }
   }
   
