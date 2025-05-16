@@ -385,16 +385,26 @@ int interaction::Eds_Nonbonded_Set::update_configuration
     assert(m_storage.energies.eds_mult_vi.size() == numentries);
     assert(conf.current().energies.eds_mult_vi.size() == numentries);
 
+    double start_time = util::now();
     //add storage forces to configuration (separately for each atom?)
-    for (auto i: m_storage.force_mult_endstates){
-      conf.special().eds.force_mult_endstates[i.first] += i.second;
+    //for (auto i: m_storage.force_mult_endstates){
+    //  conf.special().eds.force_mult_endstates[i.first] += i.second;
+    //}
+    auto& force_mult_endstates = conf.special().eds.force_mult_endstates;
+    DEBUG(7,"Number of elements force_mult_endstates: " << force_mult_endstates.size())
+    for (const auto& [key, value] : m_storage.force_mult_endstates) {
+      force_mult_endstates[key] += value;
     }
+    DEBUG(7," Time for eds forces: " << util::now()-start_time );
 
+    start_time = util::now();
     //add storage energies to configuration
     for (auto i: m_storage.energies.eds_mult_vi){
       conf.current().energies.eds_mult_vi[i.first] += i.second;
     }
+    DEBUG(7," Time for eds energies: " << util::now()-start_time);
 
+    start_time = util::now();
     // add storage virial 
     if (sim.param().pcouple.virial){
       DEBUG(7, "\tadd set virial for multiAEDS");
@@ -410,6 +420,7 @@ int interaction::Eds_Nonbonded_Set::update_configuration
         }
       }
     } 
+    DEBUG(7," Time for eds virial: " << util::now()-start_time);
 
   } else {
     // number of eds states

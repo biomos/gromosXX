@@ -626,10 +626,12 @@ void interaction::Nonbonded_Interaction::store_set_data
           to = m_nonbonded_set.end();
 
   // add the forces, energies, virial...
+  double start_time = util::now();
   for (; it != to; ++it) {
     DEBUG(7, "adding forces from set " << it - m_nonbonded_set.begin());
     (*it)->update_configuration(topo, conf, sim);
   }
+  DEBUG(7, "Total time update: " << util::now()-start_time);
   m_timer.stop("set data summation");
 }
 

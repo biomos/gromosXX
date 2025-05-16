@@ -16,6 +16,11 @@
 #include "../util/template_split.h"
 #include "../util/debug.h"
 
+#ifdef OMP
+#include <omp.h>
+#endif
+
+
 #undef MODULE
 #undef SUBMODULE
 #define MODULE util
@@ -192,10 +197,18 @@ static void _atomic_to_molecular_virial(topology::Topology const & topo,
     math::Vec com_pos;
     math::Matrix com_ekin;
 
+    double start_time = util::now();
     //multiAEDS
     if (sim.param().eds.numsites > 1){
       // loop over all site / state pairs
+//      #pragma omp parallel for
       for (auto key: site_state_pairs){
+        std::cout << "site_state_pair: ";
+        for (int value : key){
+          std::cout << value << " ";
+        }
+//        std::cout << "\tThread nr. " << omp_get_thread_num();
+        std::cout << std::endl;
         math::VArray &current = force_mult_endstates[key];
         math::Matrix &corrPmultendstates_current = corrPmultendstates[key];
 
@@ -223,7 +236,10 @@ static void _atomic_to_molecular_virial(topology::Topology const & topo,
           }
         }
       }
-    }
+    } 
+    DEBUG(1," Virial maeds: " << util::now()-start_time );
+
+
     topology::Pressuregroup_Iterator
       pg_it = topo.pressure_group_begin(),
       pg_to = topo.pressure_group_end();
@@ -304,6 +320,7 @@ static void _atomic_to_molecular_virial(topology::Topology const & topo,
     }
     conf.current().virial_tensor -= corrP;
 
+    start_time = util::now();
     if (sim.param().eds.numsites > 1 ){
       for (auto k: conf.special().eds.virial_tensor_mult_endstates){
         conf.special().eds.virial_tensor_mult_endstates[k.first] -= corrPmultendstates[k.first];
@@ -315,7 +332,7 @@ static void _atomic_to_molecular_virial(topology::Topology const & topo,
         conf.special().eds.virial_tensor_endstates[state] -= corrPendstates[state];
       }
     }
-
+    DEBUG(1," Virial tensor maeds: " << util::now()-start_time );
   } // molecular virial
 
 }

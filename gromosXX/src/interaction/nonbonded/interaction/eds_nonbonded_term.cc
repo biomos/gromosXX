@@ -462,6 +462,7 @@ inline void interaction::Eds_Nonbonded_Term
   e_crf = q * math::four_pi_eps_i * ( -m_crf_2cut3i[eps] * dist2 - m_crf_cut[eps]);
   DEBUG(15, "dist2 " << dist2 );
   DEBUG(15, "q*q   " << q );
+  DEBUG(15, "force[x,y,z] " << force[0] << ", " << force[1] << ", " << force[2]);
   DEBUG(15, "rf energy = " << e_crf);
   
 }

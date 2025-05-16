@@ -14,7 +14,7 @@
 
 #include "eds.h"
 
-//#include "../util/timing.h"
+#include "../util/timing.h"
 
 #undef MODULE
 #undef SUBMODULE
@@ -31,7 +31,7 @@ int algorithm::EDS
         simulation::Simulation &sim)
  {
   m_timer.start();
-  //DEBUG(7, "\start of eds.cc, eds_perturbed_solute().atoms().size(): " << topo.eds_perturbed_solute().atoms().size());
+
   const unsigned int numstates = sim.param().eds.numstates;
   switch (sim.param().eds.form) {
     case simulation::aeds:
@@ -123,7 +123,7 @@ int algorithm::EDS
           else {
             conf.current().force(i) += pi * conf.special().eds.force_endstates[state](i) * fkfac;
           }
-          DEBUG(10, "force current: " << i << " = " << math::v2s(conf.current().force(i)));
+          DEBUG(9, "force current: " << i << " = " << math::v2s(conf.current().force(i)));
         }
 
         // ... to lambda derivatives
@@ -307,8 +307,8 @@ int algorithm::EDS
     }
     case simulation::multi_aeds:
     {
-      //double start_overall = util::now();
-      //double start_time = util::now();
+      double start_overall = util::now();
+      double start_time = util::now();
       DEBUG(7,"algorithm: integration: eds case multi_aeds");
       // get beta
       double beta = 0.0;
@@ -327,9 +327,9 @@ int algorithm::EDS
       int numsites = sim.param().eds.numsites;
       std::vector<unsigned int> multnumstates = sim.param().eds.multnumstates;
 
-      //std::cout << "Time for initialization: " << util::now()-start_time << "\n";
+      std::cout << "Time for initialization: " << util::now()-start_time << "\n";
 
-      //start_time = util::now();
+      start_time = util::now();
       // enumerate all state combinations
       // first, generate vectors with possible states for each site
       DEBUG(7,"generate all possible states for each site");
@@ -349,9 +349,9 @@ int algorithm::EDS
       singleCombo.resize(numsites);
       comboAll(allStates, x, allCombos, singleCombo);
       
-      //std::cout << "Time for enumerating: " << util::now() - start_time << "\n";
+      std::cout << "Time for enumerating: " << util::now() - start_time << "\n";
 
-      //start_time = util::now();
+      start_time = util::now();
       DEBUG(7,"find optimal combination of states");
       std::vector<double> allVC;
       double minVC = 0.0;
@@ -391,12 +391,12 @@ int algorithm::EDS
         DEBUG(8, " " << i);
       }
 
-      //std::cout << "Time for optimal combination: " << util::now() - start_time << "\n";
+      std::cout << "Time for optimal combination: " << util::now() - start_time << "\n";
 
       //add 0 as optimal state for the Rest
       minCombo.push_back(0);
 
-      //start_time = util::now();
+      start_time = util::now();
       // for each site, determine the energy for each of the possible states
       std::vector<std::vector<double>> V_site(numsites);
       std::vector<std::vector<double>> Pi(numsites);
@@ -412,7 +412,6 @@ int algorithm::EDS
         F_site[site_i].resize(multnumstates[site_i]);
         virial_site[site_i].resize(multnumstates[site_i]);
         for (int state_i =0; state_i < multnumstates[site_i]; state_i++){
-          DEBUG(9,"\tstate = " << state_i);
 	        F_site[site_i][state_i].resize(topo.num_atoms());
           for (int site_j = 0; site_j < numsites+1; site_j++){
             if (site_i == site_j){
@@ -426,61 +425,31 @@ int algorithm::EDS
               opt_state_j = minCombo[site_j];
               state_i_j = {site_i,state_i,site_j,opt_state_j};
             }
-
-            //If this is a combination of two optimal states, only add half of the energies
-            //forces and virial, since it will also be added for the other site
-            if (state_i == minCombo[site_i] && site_i != site_j && site_j != numsites){
-              //DEBUG(9,"\tpreventing double counting, only adding 0.5")
-              //V_site[site_i][state_i] += 0.5 * eds_mult_vi[state_i_j];
-
-              //We leave the double counting in, but only apply the forces to the site we are currently considering
-              DEBUG(9,"\tdo double counting");
-              V_site[site_i][state_i]+= eds_mult_vi[state_i_j];
-              //DEBUG(9,"\teds_mult_vi[state_i_j]:"<< state_i_j[0] << " " << state_i_j[1] 
-              //    << " " << state_i_j[2] << " " << state_i_j[3] << " += " << 0.5* eds_mult_vi[state_i_j]);
-              for (int i = 0; i < topo.num_atoms(); i++) {
-                //F_site[site_i][state_i](i) += 0.5 * force_mult_endstates[state_i_j](i);
-                //Only add forces to the site we are considering
-                if ((topo.is_eds_perturbed(i)) && (topo.eds_perturbed_solute().atoms()[i].site_number() == site_i)){
-                  DEBUG(9,"\t atomnr: " << i << " \t sitenumber: " << topo.eds_perturbed_solute().atoms()[i].site_number());
-                  F_site[site_i][state_i](i) += force_mult_endstates[state_i_j](i);
-                  DEBUG(9,"\tF_site: atom " << i << math::v2s(force_mult_endstates[state_i_j](i))); 
-                }
-                //DEBUG(7, "\tdouble counting in eds.cc, eds_perturbed_solute().atoms().size(): " << topo.eds_perturbed_solute().atoms().size());
-              }
-              for (int a = 0; a < 3; ++a) {
-                for (int b = 0; b < 3; ++b) {
-                  //virial_site[site_i][state_i](b,a) += 0.5 * virial_tensor_mult_endstates[state_i_j](b,a);
-                  virial_site[site_i][state_i](b,a) += virial_tensor_mult_endstates[state_i_j](b,a);
-                }
-              }  
-            }
-            else{
-              V_site[site_i][state_i] += eds_mult_vi[state_i_j];
-              F_site[site_i][state_i] += force_mult_endstates[state_i_j];
-	            DEBUG(9,"\teds_mult_vi[state_i_j]:"<< state_i_j[0] << " " << state_i_j[1] 
-                  << " " << state_i_j[2] << " " << state_i_j[3] << " += " << eds_mult_vi[state_i_j]);
-              //DEBUG(9,"site_i,state_i "<< site_i << " " << state_i );
-	            DEBUG(10,"force_mult_endstates[state_i_j](atom 0) " <<  state_i_j[0] 
-                  << " " << state_i_j[1] << " " << state_i_j[2] << " " << state_i_j[3] 
-                  << "+= " << math::v2s(force_mult_endstates[state_i_j](0)) );
-              
-              virial_site[site_i][state_i] += virial_tensor_mult_endstates[state_i_j];
-            }
+            V_site[site_i][state_i] += eds_mult_vi[state_i_j];
+            F_site[site_i][state_i] += force_mult_endstates[state_i_j];
+	          DEBUG(9,"eds_mult_vi[state_i_j]:"<< state_i_j[0] << " " << state_i_j[1] 
+              << " " << state_i_j[2] << " " << state_i_j[3] << " += " << eds_mult_vi[state_i_j]);
+            //DEBUG(9,"site_i,state_i "<< site_i << " " << state_i );
+	          DEBUG(10,"force_mult_endstates[state_i_j](atom 0) " <<  state_i_j[0] 
+              << " " << state_i_j[1] << " " << state_i_j[2] << " " << state_i_j[3] 
+              << "+= " << math::v2s(force_mult_endstates[state_i_j](0)) );
+            //for (int a = 0; a < 3; ++a) {
+            //  for (int b = 0; b < 3; ++b) {
+            virial_site[site_i][state_i] += virial_tensor_mult_endstates[state_i_j];
           }
         }
       }
 
-      //std::cout <<"Time for energy of each possible state: " << util::now() - start_time << "\n";     
+      std::cout <<"Time for energy of each possible state: " << util::now() - start_time << "\n";     
       // update energies
       conf.current().energies.eds_vsite = V_site;
 
-      //start_time = util::now();
+      start_time = util::now();
       DEBUG(7, "Calculating total eds energy");
       for (int site = 0; site < numsites; site++){
         Pi[site].resize(multnumstates[site]);
         std::vector<double> prefactors(multnumstates[site]);
-        DEBUG(7, "site= " << site);
+        DEBUG(7, "\t site= " << site);
         int state_i = 0;
         int state_ii = 1;
         DEBUG(7, "V_site[site][state_0] = " << V_site[site][state_i]);
@@ -538,30 +507,30 @@ int algorithm::EDS
           Pi[site][state] = pi;
           //std::cerr << "state = " << state << ", pi = " << pi << std::endl;
           // ... to forces
-          DEBUG(7, "\tstate = " << state);
-          DEBUG(7, "\t\tpi = " << pi);
+          DEBUG(7, "state = " << state);
+          DEBUG(7, "pi = " << pi);
           for (int i = 0; i < topo.num_atoms(); i++) {
             if (conf.current().energies.eds_mult_vmix[site] <= sim.param().eds.multemin[site] || 
                 conf.current().energies.eds_mult_vmix[site] >= sim.param().eds.multemax[site]) {
-	            DEBUG(10, "\t\told force: " << math::v2s(conf.current().force(i)));
+	            DEBUG(10, "old force: " << math::v2s(conf.current().force(i)));
               conf.current().force(i) += pi * F_site[site][state](i);
-              DEBUG(10, "\t\tforce to add: " << math::v2s(F_site[site][state](i)));
-              DEBUG(10, "\t\tnew force: " << math::v2s(conf.current().force(i)));
+              DEBUG(10, "force to add: " << math::v2s(F_site[site][state](i)));
+              DEBUG(10, "new force: " << math::v2s(conf.current().force(i)));
             }
             else {
               conf.current().force(i) += pi * F_site[site][state](i) * fkfac;
-	            DEBUG(10, "\t\tadding to force: pi * " << F_site[site][state](i)[0] << " * fkfac " << fkfac);
+	            DEBUG(10, "adding to force: pi * " << F_site[site][state](i)[0] << " * fkfac " << fkfac);
             }
-            DEBUG(10, "\t\tforce current: " << i << " = " << math::v2s(conf.current().force(i)));
+            DEBUG(10, "force current: " << i << " = " << math::v2s(conf.current().force(i)));
           }
 
           // ... to virial
-          DEBUG(9,"\t\tAdding multiAEDS contribution to virial")
+          DEBUG(9,"Adding multiAEDS contribution to virial")
           for (int a = 0; a < 3; ++a) {
             for (int b = 0; b < 3; ++b) {
               if (conf.current().energies.eds_mult_vmix[site] <= sim.param().eds.multemin[site] || 
                   conf.current().energies.eds_mult_vmix[site] >= sim.param().eds.multemax[site]) {
-                    DEBUG(10,"\t\told: "<< conf.current().virial_tensor(b,a) <<"< adding: " << pi*virial_site[site][state](b,a));
+                    DEBUG(9,"old: "<< conf.current().virial_tensor(b,a) <<"< adding: " << pi*virial_site[site][state](b,a));
                 conf.current().virial_tensor(b, a) +=
                   pi * virial_site[site][state](b, a);
               }
@@ -573,39 +542,37 @@ int algorithm::EDS
           }
         }
       }
-      //std::cout << "Time for calculating eds for each site: " << util::now() - start_time << " \n";
+      std::cout << "Time for calculating eds for each site: " << util::now() - start_time << " \n";
 
-      //start_time = util::now();
+      start_time = util::now();
       DEBUG(7, "done with all sites, start wrapping up")
-      //DEBUG(7, "\tend of eds.cc, eds_perturbed_solute().atoms().size(): " << topo.eds_perturbed_solute().atoms().size());
       // add all entries of eds_mult_vr to eds_vr
       // subtract term which was double counted
       for (int site_i = 0; site_i < numsites; site_i++){
-        conf.current().energies.eds_vmix += conf.current().energies.eds_mult_vmix[site_i];
         conf.current().energies.eds_vr += conf.current().energies.eds_mult_vr[site_i];
-        //for (int site_j = site_i+1; site_j < numsites; site_j++){
-          //int opt_state_i = minCombo[site_i];
-          //int opt_state_j = minCombo[site_j];
-          //std::vector<int> state_i_j = {site_i, opt_state_i, site_j, opt_state_j};
-          //conf.current().energies.eds_vr -= conf.current().energies.eds_mult_vi[state_i_j];
-	        //DEBUG(7, "correction for site_i " << site_i << ", site_j " << site_j);
-          //DEBUG(7, "correction for double counting in eds_vr: " << conf.current().energies.eds_mult_vi[state_i_j]);
-	        //DEBUG(7, "based on state: " << site_i << " " << opt_state_i << " " << site_j << " " << opt_state_j);
-	        //DEBUG(9, "correction force for atom 0: " << force_mult_endstates[state_i_j](0)[0]);
-          //for (int i = 0; i < topo.num_atoms(); i++){
-          //  conf.current().force(i) -=  force_mult_endstates[state_i_j](i);
-          //}
-          //DEBUG(9,"correction for virial:");
-          //for (int a = 0; a < 3; ++a){
-          //  for (int b = 0; b < 3; ++b){
-          //    DEBUG(9,"old: "<< conf.current().virial_tensor(b,a) <<"< removing: " << virial_tensor_mult_endstates[state_i_j](b,a));
-          //    conf.current().virial_tensor(b,a) -= virial_tensor_mult_endstates[state_i_j](b,a);
-          //  }
-          //}
-        //}
+        for (int site_j = site_i+1; site_j < numsites; site_j++){
+          int opt_state_i = minCombo[site_i];
+          int opt_state_j = minCombo[site_j];
+          std::vector<int> state_i_j = {site_i, opt_state_i, site_j, opt_state_j};
+          conf.current().energies.eds_vr -= conf.current().energies.eds_mult_vi[state_i_j];
+	        DEBUG(7, "correction for site_i " << site_i << ", site_j " << site_j);
+          DEBUG(7, "correction for double counting in eds_vr: " << conf.current().energies.eds_mult_vi[state_i_j]);
+	        DEBUG(7, "based on state: " << site_i << " " << opt_state_i << " " << site_j << " " << opt_state_j);
+	        DEBUG(9, "correction force for atom 0: " << force_mult_endstates[state_i_j](0)[0]);
+          for (int i = 0; i < topo.num_atoms(); i++){
+            conf.current().force(i) -=  force_mult_endstates[state_i_j](i);
+          }
+          DEBUG(9,"correction for virial:");
+          for (int a = 0; a < 3; ++a){
+            for (int b = 0; b < 3; ++b){
+              DEBUG(9,"old: "<< conf.current().virial_tensor(b,a) <<"< removing: " << virial_tensor_mult_endstates[state_i_j](b,a));
+              conf.current().virial_tensor(b,a) -= virial_tensor_mult_endstates[state_i_j](b,a);
+            }
+          }
+        }
       }
-      //std::cout << "Time for corrections: " << util::now() - start_time <<" \n";
-      //std::cout << "Overall Time EDS: " << util::now() - start_overall << "\n";
+      std::cout << "Time for corrections: " << util::now() - start_time <<" \n";
+      std::cout << "Overall Time EDS: " << util::now() - start_overall << "\n";
       break;
     
     }

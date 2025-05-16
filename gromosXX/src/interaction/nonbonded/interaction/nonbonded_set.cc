@@ -289,6 +289,7 @@ int interaction::Nonbonded_Set::update_configuration
   const int ljs = conf.current().energies.lj_energy.size();
   configuration::Energy & e = conf.current().energies;
   
+  double start_time = util::now();
   // use the IMPULSE method for multiple time stepping
   const unsigned int num_atoms = topo.num_atoms();
   math::VArray & f = conf.current().force;
@@ -313,7 +314,9 @@ int interaction::Nonbonded_Set::update_configuration
     for(unsigned int i=0; i<num_atoms; ++i)
       f(i) += m_storage.force(i);
   }
-  
+  DEBUG(7," Time for forces: " << util::now()-start_time );
+
+  start_time = util::now();
   // (MULTISTEP: and keep energy constant)
   for (int i = 0; i < ljs; ++i) {
     for (int j = 0; j < ljs; ++j) {
@@ -333,6 +336,7 @@ int interaction::Nonbonded_Set::update_configuration
       }
     }
     e.self_energy[i] += m_storage.energies.self_energy[i];
+    DEBUG(7," Time for energies: " << util::now()-start_time);
   }
 
   // ANITA
@@ -354,13 +358,15 @@ int interaction::Nonbonded_Set::update_configuration
 
   // no components in lattice sum methods!
   
+  start_time = util::now();
   // lattice sum energies
   e.ls_kspace_total += m_storage.energies.ls_kspace_total;
   e.ls_self_total += m_storage.energies.ls_self_total;
   e.ls_a_term_total += m_storage.energies.ls_a_term_total;
   e.ls_surface_total += m_storage.energies.ls_surface_total;
+  DEBUG(7," Time for lattice sum: " << util::now()-start_time);
 
-
+  start_time = util::now();
   // (MULTISTEP: and the virial???)
   if (sim.param().pcouple.virial){
     DEBUG(7, "\tadd set virial (nonbonded_set)");
@@ -373,7 +379,7 @@ int interaction::Nonbonded_Set::update_configuration
     }
   	conf.current().virial_tensor += m_storage.virial_tensor;
   }
-  
+  DEBUG(7," Time for virial: " << util::now()-start_time);
   return 0;
 }
 
