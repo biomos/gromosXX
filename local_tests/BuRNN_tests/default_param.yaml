@@ -1,0 +1,26 @@
+---
+################
+input:
+################
+  md_binary: # by default ${CI_PROJECT_DIR}/${BIN_PATH}
+  input_dir: # by default the same dir as this file
+  simulation_dir: sim_dir # relative to input_dir or abspath; if not given, the same as input_dir
+  ene_ana_lib: # relative to input_dir or abspath; if not given ${CI_PROJECT_DIR}/md++/data/ene_ana.md++.lib
+  TOPO: 'inp.top'
+  IUNIT: 'inp.imd'
+  QMMM: 'inp.qmm'
+  INPUTCRD: 'initial.cnf'
+################
+output:
+################
+  OUNIT: 'out.omd'
+  OUTPUTCRD: 'out.cnf'
+  OUTPUTTRX: 'out.trc'
+  OUTPUTTRE: 'out.tre'
+  OUTPUTTRF: 'out.trf'
+  OUTPUTTRV: 'out.trv'
+################
+expected_values:
+  tre: 'expected_values.tre.npz'
+################
+flag_clean_up: False # removes the simulation_dir (for local testing)

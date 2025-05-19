@@ -1,0 +1,26 @@
+#!/bin/bash
+
+# first we set some variables
+NAME=`whoami`
+#PROGRAM=${CI_PROJECT_DIR}/${BIN_PATH}
+export LD_LIBRARY_PATH='/pool/radekc/anaconda3/envs/spk_py30912/lib:${LD_LIBRAY_PATH}'
+PROGRAM='/pool/radekc/GROMOS/GROMOS_workstation/burnn/bin/md'
+#output log file
+OUNIT=out.omd
+
+MDOK=1
+
+${PROGRAM} \
+@topo        /pool/radekc/GROMOS/GROMOS_workstation/gromosXX/local_tests/BuRNN_tests/inp.top \
+@conf        /pool/radekc/GROMOS/GROMOS_workstation/gromosXX/local_tests/BuRNN_tests/initial.cnf \
+@input       /pool/radekc/GROMOS/GROMOS_workstation/gromosXX/local_tests/BuRNN_tests/inp.imd \
+@qmmm        /pool/radekc/GROMOS/GROMOS_workstation/gromosXX/local_tests/BuRNN_tests/inp.qmm \
+@fin         out.cnf \
+@trc         out.trc \
+@tre         out.tre \
+@trf         out.trf \
+@trv         out.trv \
+>            ${OUNIT}
+grep "finished successfully" ${OUNIT} > /dev/null || MDOK=0
+
+uname -a >> ${OUNIT}
