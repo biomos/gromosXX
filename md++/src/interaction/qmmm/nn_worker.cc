@@ -144,7 +144,7 @@ int interaction::NN_Worker::init(const topology::Topology& topo
     py::module_ schnet_v1 = py::module_::import("schnet_v1");
     
     // Decide if perturbation is performed or not
-    if (sim.param().perturbation.perturbation == true) {
+    if (sim.param().perturbation.perturbation) {
 
       // get lambda parameter
       py::float_ lambda = py::cast(sim.param().perturbation.lambda);
@@ -167,7 +167,7 @@ int interaction::NN_Worker::init(const topology::Topology& topo
     py::module_ schnet_v2 = py::module_::import("schnet_v2");
 
     // Decide if perturbation is performed or not
-    if (sim.param().perturbation.perturbation == true) {
+    if (sim.param().perturbation.perturbation) {
       io::messages.add("Perturbation not implemented with schnet_v2 only schnet_v1", io::message::error);
     }
 
@@ -276,7 +276,7 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
   }
 
   // Free energy derivative if perturbation is performed
-  if (sim.param().perturbation.perturbation == true) {
+  if (sim.param().perturbation.perturbation) {
     const double energy_derivative = mlp_calculator.attr("get_derivative")().cast<double>() * this->param->unit_factor_energy;
     qm_zone.QM_energy_derivative() = energy_derivative;
   }

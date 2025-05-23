@@ -408,24 +408,25 @@ int io::read_special(io::Argument const & args,
                 iq.title = "TM";
                 break;
             case simulation::qm_dftb:
-                iq.title= "DFTB";
+                iq.title = "DFTB";
                 break;
             case simulation::qm_mopac:
-                iq.title= "MOPAC";
+                iq.title = "MOPAC";
                 break;
             case simulation::qm_gaussian:
-                iq.title= "GAUSSIAN";
+                iq.title = "GAUSSIAN";
                 break;
             case simulation::qm_schnetv1:
-                iq.title= "Schnetpack v1";
+                iq.title = "Schnetpack v1";
                 break;
             case simulation::qm_orca:
                 iq.title = "Orca";
                 break;
             case simulation::qm_xtb:
                 iq.title = "XTB";
+                break;
             case simulation::qm_schnetv2:
-                iq.title= "Schnetpack v2";
+                iq.title = "Schnetpack v2";
                 break;
         }
         

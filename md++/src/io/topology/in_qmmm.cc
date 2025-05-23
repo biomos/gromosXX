@@ -660,7 +660,7 @@ void io::In_QMMM::read(topology::Topology& topo,
   }
   this->read_zone(topo, sim, "BUFFERZONE");
 
-  if (sim.param().perturbation.perturbation == true) {
+  if (sim.param().perturbation.perturbation) {
       this->read_pert_qmzone(sim, &sim.param().qmmm.nn);
     }
   
