@@ -18,6 +18,8 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 
+import os
+from pathlib import Path
 import numpy as np
 try:
     import pandas as pd
@@ -248,6 +250,7 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="read GROMOS format (free) energy trajectory")
     parser.add_argument('-l', '--library', type=str, help="ene_ana library")
+    parser.add_argument('--def_lib', default=False, action='store_true', help='use library file from the same git repo as the script')
     parser.add_argument('-e', '--en_files', type=str, nargs='+', help="energy trajectory files (GROMOS format)")
     parser.add_argument('-f', '--fr_files', type=str, nargs='+', help="free energy trajectory files (GROMOS format)")
     parser.add_argument('-d', '--data_t', type=str, default='d', choices=['s', 'd', 'h'],
@@ -262,6 +265,10 @@ if __name__ == "__main__":
     num_type_map = dict(d=np.double, s=np.single, h=np.half)
     num_type = num_type_map[args.data_t]
 
+    if args.library is None and args.def_lib:
+        fpath = os.path.abspath(__file__)
+        md_fd = Path(fpath).parents[2]
+        args.library = os.path.join(md_fd, 'data','ene_ana.md++.lib')
     # load GROMOS trajectory files
     if args.en_files:
         assert args.library

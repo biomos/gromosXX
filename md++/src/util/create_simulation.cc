@@ -93,8 +93,8 @@ int util::create_simulation(std::string topo,
 
 #ifdef XXMPI
   int rank, size;
-  rank = MPI::COMM_WORLD.Get_rank();
-  size = MPI::COMM_WORLD.Get_size();
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
   sim.sim.mpi = true;
   //Build Attributes:

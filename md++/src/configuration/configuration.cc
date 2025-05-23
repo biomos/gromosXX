@@ -527,8 +527,7 @@ void configuration::Configuration::init(topology::Topology const & topo,
 	  break;
 	}
       default:
-	std::cout << "wrong periodic boundary conditions!";
-	io::messages.add("wrong PBC!", "In_Configuration", io::message::error);
+	io::messages.add("wrong PBC!", "Configuration", io::message::error);
     }
   }
 

@@ -126,13 +126,13 @@ calculate_interactions(topology::Topology & topo,
     // std::cerr << "master: bcast pos" << std::endl;
     MPI_Bcast(&conf.current().pos(0)(0),
             conf.current().pos.size() * 3,
-            MPI::DOUBLE,
+            MPI_DOUBLE,
              sim.mpiControl().masterID, sim.mpiControl().comm);
    
 	 // bcast charges (for QM/MM)
     MPI_Bcast(&topo.charge()[0],
         topo.num_atoms(),
-        MPI::DOUBLE,
+        MPI_DOUBLE,
         sim.mpiControl().masterID, sim.mpiControl().comm);
 
 
@@ -140,13 +140,13 @@ calculate_interactions(topology::Topology & topo,
     // don't forget the box (or are you stupid or what????)
     // std::cerr << "master: bcast box" << std::endl;
     MPI_Bcast(&conf.current().box(0)(0),
-            9, MPI::DOUBLE,
+            9, MPI_DOUBLE,
              sim.mpiControl().masterID, sim.mpiControl().comm);
     
     // bcast lambda for slow growth and chemical monte carlo
     MPI_Bcast(&topo.lambda(),
             1,
-            MPI::DOUBLE,
+            MPI_DOUBLE,
              sim.mpiControl().masterID, sim.mpiControl().comm);
     
     // std::cerr << "ready to calc" << std::endl;
@@ -163,13 +163,13 @@ calculate_interactions(topology::Topology & topo,
     m_nonbonded_set[0]->calculate_interactions(topo, conf, sim);
     
     // collect the forces, energies, energy-derivatives, virial
-    // MPI::IN_PLACE ???
+    // MPI_IN_PLACE ???
     m_storage.force = m_nonbonded_set[0]->storage().force;
     MPI_Reduce(&m_storage.force(0)(0),
             &m_nonbonded_set[0]->storage().force(0),
             m_nonbonded_set[0]->storage().force.size() * 3,
-            MPI::DOUBLE,
-            MPI::SUM,
+            MPI_DOUBLE,
+            MPI_SUM,
              sim.mpiControl().masterID, sim.mpiControl().comm);
     
 
@@ -181,8 +181,8 @@ calculate_interactions(topology::Topology & topo,
           MPI_Reduce(&m_storage.force_groups[i][j](0)(0),
             &m_nonbonded_set[0]->storage().force_groups[i][j](0),
             m_nonbonded_set[0]->storage().force_groups[i][j].size() * 3,
-            MPI::DOUBLE,
-            MPI::SUM,
+            MPI_DOUBLE,
+            MPI_SUM,
              sim.mpiControl().masterID, sim.mpiControl().comm);
         }
       }
@@ -204,20 +204,20 @@ calculate_interactions(topology::Topology & topo,
     MPI_Reduce(&lj_scratch[0],
             &rlj_scratch[0],
             ljs * ljs,
-            MPI::DOUBLE,
-            MPI::SUM,
+            MPI_DOUBLE,
+            MPI_SUM,
              sim.mpiControl().masterID, sim.mpiControl().comm);
     MPI_Reduce(&crf_scratch[0],
             &rcrf_scratch[0],
             ljs * ljs,
-            MPI::DOUBLE,
-            MPI::SUM,
+            MPI_DOUBLE,
+            MPI_SUM,
              sim.mpiControl().masterID, sim.mpiControl().comm);
     MPI_Reduce(&ls_real_scratch[0],
             &rls_real_scratch[0],
             ljs * ljs,
-            MPI::DOUBLE,
-            MPI::SUM,
+            MPI_DOUBLE,
+            MPI_SUM,
              sim.mpiControl().masterID, sim.mpiControl().comm);
     
     for(unsigned int i = 0; i < ljs; ++i){
@@ -236,8 +236,8 @@ calculate_interactions(topology::Topology & topo,
       MPI_Reduce(dvt,
               dvt2,
               9,
-              MPI::DOUBLE,
-              MPI::SUM,
+              MPI_DOUBLE,
+              MPI_SUM,
                sim.mpiControl().masterID, sim.mpiControl().comm);
     }
     
@@ -254,15 +254,15 @@ calculate_interactions(topology::Topology & topo,
       MPI_Reduce(&lj_scratch[0],
               &rlj_scratch[0],
               ljs * ljs,
-              MPI::DOUBLE,
-              MPI::SUM,
+              MPI_DOUBLE,
+              MPI_SUM,
                sim.mpiControl().masterID, sim.mpiControl().comm);
       
       MPI_Reduce(&crf_scratch[0],
               &rcrf_scratch[0],
               ljs * ljs,
-              MPI::DOUBLE,
-              MPI::SUM,
+              MPI_DOUBLE,
+              MPI_SUM,
                sim.mpiControl().masterID, sim.mpiControl().comm);
       
       for(unsigned int i = 0; i < ljs; ++i){
@@ -312,51 +312,51 @@ calculate_interactions(topology::Topology & topo,
       MPI_Reduce(&A_lj_scratch[0],
               &A_rlj_scratch[0],
               ljs * ljs,
-              MPI::DOUBLE,
-              MPI::SUM,
+              MPI_DOUBLE,
+              MPI_SUM,
                sim.mpiControl().masterID, sim.mpiControl().comm);
       MPI_Reduce(&B_lj_scratch[0],
               &B_rlj_scratch[0],
               ljs * ljs,
-              MPI::DOUBLE,
-              MPI::SUM,
+              MPI_DOUBLE,
+              MPI_SUM,
                sim.mpiControl().masterID, sim.mpiControl().comm);
       MPI_Reduce(&A_crf_scratch[0],
               &A_rcrf_scratch[0],
               ljs * ljs,
-              MPI::DOUBLE,
-              MPI::SUM,
+              MPI_DOUBLE,
+              MPI_SUM,
                sim.mpiControl().masterID, sim.mpiControl().comm);
       MPI_Reduce(&B_crf_scratch[0],
               &B_rcrf_scratch[0],
               ljs * ljs,
-              MPI::DOUBLE,
-              MPI::SUM,
+              MPI_DOUBLE,
+              MPI_SUM,
                sim.mpiControl().masterID, sim.mpiControl().comm);
 
       MPI_Reduce(&A_dlj_scratch[0],
               &A_rdlj_scratch[0],
               ljs * ljs,
-              MPI::DOUBLE,
-              MPI::SUM,
+              MPI_DOUBLE,
+              MPI_SUM,
                sim.mpiControl().masterID, sim.mpiControl().comm);
       MPI_Reduce(&B_dlj_scratch[0],
               &B_rdlj_scratch[0],
               ljs * ljs,
-              MPI::DOUBLE,
-              MPI::SUM,
+              MPI_DOUBLE,
+              MPI_SUM,
                sim.mpiControl().masterID, sim.mpiControl().comm);
       MPI_Reduce(&A_dcrf_scratch[0],
               &A_rdcrf_scratch[0],
               ljs * ljs,
-              MPI::DOUBLE,
-              MPI::SUM,
+              MPI_DOUBLE,
+              MPI_SUM,
                sim.mpiControl().masterID, sim.mpiControl().comm);
       MPI_Reduce(&B_dcrf_scratch[0],
               &B_rdcrf_scratch[0],
               ljs * ljs,
-              MPI::DOUBLE,
-              MPI::SUM,
+              MPI_DOUBLE,
+              MPI_SUM,
               sim.mpiControl().masterID, sim.mpiControl().comm);
 
       for(unsigned int i = 0; i < ljs; ++i){
@@ -411,33 +411,33 @@ calculate_interactions(topology::Topology & topo,
       MPI_Reduce(&m_storage.energies.eds_vi[0],
               &m_nonbonded_set[0]->storage().energies.eds_vi[0],
               numstates,
-              MPI::DOUBLE,
-              MPI::SUM,
+              MPI_DOUBLE,
+              MPI_SUM,
                sim.mpiControl().masterID, sim.mpiControl().comm);
 
       // reduce extra energies of endstates
       MPI_Reduce(&m_storage.energies.eds_vi_shift_extra_orig[0],
               &m_nonbonded_set[0]->storage().energies.eds_vi_shift_extra_orig[0],
               numstates,
-              MPI::DOUBLE,
-              MPI::SUM,
+              MPI_DOUBLE,
+              MPI_SUM,
                sim.mpiControl().masterID, sim.mpiControl().comm);
 
       // reduce extra energies of endstates
       MPI_Reduce(&m_storage.energies.eds_vi_shift_extra_phys[0],
               &m_nonbonded_set[0]->storage().energies.eds_vi_shift_extra_phys[0],
               numstates,
-              MPI::DOUBLE,
-              MPI::SUM,
+              MPI_DOUBLE,
+              MPI_SUM,
                sim.mpiControl().masterID, sim.mpiControl().comm);
       
       // reduce perturbed energy derivatives of endstates
-      MPI::COMM_WORLD.Reduce(&m_storage.perturbed_energy_derivatives.eds_vi[0],
+      MPI_Reduce(&m_storage.perturbed_energy_derivatives.eds_vi[0],
               &m_nonbonded_set[0]->storage().perturbed_energy_derivatives.eds_vi[0],
               numstates,
-              MPI::DOUBLE,
-              MPI::SUM,
-              0);
+              MPI_DOUBLE,
+              MPI_SUM,
+              sim.mpiControl().masterID, sim.mpiControl().comm);
       
       // reduce virial tensors of endstates
       if (sim.param().pcouple.virial){
@@ -446,8 +446,8 @@ calculate_interactions(topology::Topology & topo,
         MPI_Reduce(dvt,
                 dvt2,
                 9 * numstates,
-                MPI::DOUBLE,
-                MPI::SUM,
+                MPI_DOUBLE,
+                MPI_SUM,
                  sim.mpiControl().masterID, sim.mpiControl().comm);
       }
 
@@ -457,27 +457,27 @@ calculate_interactions(topology::Topology & topo,
         MPI_Reduce(&m_storage.force_endstates[state](0)(0),
                 &m_nonbonded_set[0]->storage().force_endstates[state](0),
                 m_nonbonded_set[0]->storage().force_endstates[state].size() * 3,
-                MPI::DOUBLE,
-                MPI::SUM,
+                MPI_DOUBLE,
+                MPI_SUM,
                  sim.mpiControl().masterID, sim.mpiControl().comm);
          /*
         // reduce energies of endstates
-        MPI::COMM_WORLD.Reduce(&m_storage.energies.eds_vi[state],
+        MPI_COMM_WORLD.Reduce(&m_storage.energies.eds_vi[state],
                 &m_nonbonded_set[0]->storage().energies.eds_vi[state],
                 1,
-                MPI::DOUBLE,
-                MPI::SUM,
+                MPI_DOUBLE,
+                MPI_SUM,
                 0);
                  
         // reduce virial tensors of endstates
         if (sim.param().pcouple.virial){
           double * dvt = &m_storage.virial_tensor_endstates[state](0, 0);
           double * dvt2 = &m_nonbonded_set[0]->storage().virial_tensor_endstates[state](0, 0);
-          MPI::COMM_WORLD.Reduce(dvt,
+          MPI_COMM_WORLD.Reduce(dvt,
                   dvt2,
                   9,
-                  MPI::DOUBLE,
-                  MPI::SUM,
+                  MPI_DOUBLE,
+                  MPI_SUM,
                   0);
         }
          */
@@ -488,7 +488,7 @@ calculate_interactions(topology::Topology & topo,
         sim.param().nonbonded.method == simulation::el_ewald) {
       double sum = 0.0;
       MPI_Reduce(&m_nonbonded_set[0]->storage().energies.ls_kspace_total,
-            &sum, 1, MPI::DOUBLE, MPI::SUM, sim.mpiControl().masterID, sim.mpiControl().comm);
+            &sum, 1, MPI_DOUBLE, MPI_SUM, sim.mpiControl().masterID, sim.mpiControl().comm);
       m_nonbonded_set[0]->storage().energies.ls_kspace_total = sum;
     }
 
@@ -508,15 +508,15 @@ calculate_interactions(topology::Topology & topo,
       MPI_Reduce(&shift_extra_orig_scratch[0],
               &rshift_extra_orig_scratch[0],
               ljs * ljs,
-              MPI::DOUBLE,
-              MPI::SUM,
+              MPI_DOUBLE,
+              MPI_SUM,
               sim.mpiControl().masterID, sim.mpiControl().comm);
 
       MPI_Reduce(&shift_extra_phys_scratch[0],
               &rshift_extra_phys_scratch[0],
               ljs * ljs,
-              MPI::DOUBLE,
-              MPI::SUM,
+              MPI_DOUBLE,
+              MPI_SUM,
               sim.mpiControl().masterID, sim.mpiControl().comm);
       
       for(unsigned int i = 0; i < ljs; ++i){

@@ -137,8 +137,8 @@ namespace configuration
      * shifting energy
      */
     std::vector<std::vector<double> > shift_extra_orig;
-    double shift_extra_orig_total;
     std::vector<std::vector<double> > shift_extra_phys;
+    double shift_extra_orig_total;
     double shift_extra_phys_total;
     /**
      * total energy of the "special" interactions
@@ -214,6 +214,10 @@ namespace configuration
      * energy difference of validation NN model to validation if only 1 or variance of all NN validation models 
      */
     double nn_valid;
+    /**
+     * maximum force committee disagreement among all atoms in a structure calculated from up to n validation models
+     */
+    double nn_valid_maxF;
 
     /** ANITA
     * total A_lj for each lambda

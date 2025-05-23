@@ -98,6 +98,11 @@ int io::simple_crosschecks(simulation::Simulation & sim) {
       io::messages.add("POSITIONRES block: NTPORS=1 can not be used when pressure scaling is off.",
                        "In_Parameter", io::message::error);
 
+  // if RTC == 1 then RTCLAST > 2
+  if (param.rottrans.rottrans && sim.param().rottrans.last < 3)
+      io::messages.add("ROTTRANS needs a minimum set size of 3. RTCLAST < 3 is not possible.",
+                       "In_Parameter", io::message::error);
+
   // center of mass removal and roto-translational constraints should not be used together
   if (param.rottrans.rottrans && param.centreofmass.skip_step != 0)
       io::messages.add("ROTTRANS or COMTRANSROT should not be used at the same time.",
@@ -292,9 +297,9 @@ int io::simple_crosschecks(simulation::Simulation & sim) {
         param.qmmm.qmmm != simulation::qmmm_off &&
         ! (param.qmmm.qmmm == simulation::qmmm_mechanical &&
             param.qmmm.qm_ch == simulation::qm_ch_constant &&
-            param.qmmm.software == simulation::qm_nn
+            param.qmmm.software == simulation::qm_schnetv1
          )) {
-      io::messages.add("QMMM block: Perturbation allowed only with ME, constant charge, NN and standard pairlist",
+      io::messages.add("QMMM block: Perturbation allowed only with ME, constant charge, Schnet v1 and standard pairlist",
                          "In_Parameter", io::message::error);
     }
     // Polarisable FF should be only used with polarisable QMMM

@@ -97,8 +97,12 @@ util::Algorithm_Timer::Algorithm_Timer(const std::string & name) {
 void util::Algorithm_Timer::initialize(const std::string & name) {
   DEBUG(5, "Initializes sub-timer " + name + " of main-timer " + m_name + ".");
 
+#ifdef NDEBUG
+  m_subtimers.emplace(name, Subtimer(m_max_thread_num));
+#else
   std::pair<Subtimer_Container::iterator, bool>
     ret = m_subtimers.emplace(name, Subtimer(m_max_thread_num));
+#endif
   // assert the insertion took place
   assert(ret.second && "re-initialization of sub-timer is not allowed");
   subtimer_in_use.clear();
@@ -167,7 +171,9 @@ void util::Algorithm_Timer::start_subtimer(const std::string & name) {
 
   uint thread_id = 0; //ID of the thread
 
+  #ifdef OMP
   #pragma omp critical (timing_system)
+  #endif
   {
     /**
      * If the subtimer is called first, initialize the variables
@@ -219,7 +225,9 @@ void util::Algorithm_Timer::start_subtimer(const std::string & name) {
   //Enable subtimer-lock if
   //  - It is a subtimer
   //  - If it is masterthread
+  #ifdef OMP
   #pragma omp critical (timing_system)
+  #endif
   {
     if (name != "total" && thread_id == m_subtimers.at(name).master_thread){ //Enable subtimer-lock only if it is a master-thread
 
@@ -267,7 +275,9 @@ void util::Algorithm_Timer::stop_subtimer(const std::string & name) {
     #endif
   #endif
 
+  #ifdef OMP
   #pragma omp critical (timing_system)
+  #endif
   {  /*
     *  Check if the timer has been stopped without beeing in the subtimer map.
     *  This should never happen!!
@@ -349,7 +359,9 @@ void util::Algorithm_Timer::print_report(std::ostream & os) {
     os << std::endl;
 
     //Delete data after writing
+    #ifdef OMP
     #pragma omp critical (timing_system)
+    #endif
     {
       subtimer.second.start_time = std::vector<double>(m_max_thread_num, 0.00);
       subtimer.second.end_time = std::vector<double>(m_max_thread_num, 0.00);

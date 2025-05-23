@@ -508,6 +508,7 @@ namespace io
     os << type << "GAMD total           : " << std::setw(30) << e.gamd_DV_total << "\n";
     os << type << "Entropy              : " << std::setw(30) << e.entropy_term << "\n";
     os << type << "NN validation        : " << std::setw(30) << e.nn_valid << "\n";
+    os << type << "NN validation Fmax   : " << std::setw(30) << e.nn_valid_maxF << "\n";
     os << "\n";
 
     os << std::setw(20) << "COV";

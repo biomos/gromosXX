@@ -1,8 +1,17 @@
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: always
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+      when: always
+    - when: never
+
 stages:
   - configure-build
   - build
   - build_make_check
   - sim_test
+  - sim_test_extensive
 
 include:
   - local: 'md++/admin/gitlab-ci/gromos.gitlab-ci.yml'

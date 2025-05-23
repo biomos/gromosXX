@@ -998,7 +998,7 @@ t_interaction_spec, t_perturbation_details>
     {
       DEBUG(7, "\tpol_lj_crf_func");
       math::Vec rp1, rp2, rpp;
-      double f1[4];
+      double f1[4] = {0.0, 0.0, 0.0,0.0};
       math::VArray f(4);
       f = 0.0;
       double f6 = 0.0, f12 = 0.0;
@@ -1281,7 +1281,7 @@ t_interaction_spec, t_perturbation_details>
         rm += topo.gamma(j)*(rjj + rjk) / 2;
       }
       math::Vec rp1, rp2, rpp;
-      double f1[4];
+      double f1[4] = {0.0, 0.0, 0.0, 0.0};
       math::VArray f(4);
       f = 0.0;
       double f6 = 0.0, f12 = 0.0;
@@ -2394,7 +2394,7 @@ t_interaction_spec, t_perturbation_details>
     {
       DEBUG(7, "\tpol_lj_crf_func");
       math::Vec rp1, rp2, rpp;
-      double f1[4];
+      double f1[4] = {0.0, 0.0, 0.0, 0.0};
       math::VArray f(4);
       f = 0.0;
       double f6 = 0.0, f12 = 0.0;
@@ -2679,7 +2679,7 @@ t_interaction_spec, t_perturbation_details>
         rm += topo.gamma(j)*(rjj + rjk) / 2;
       }
       math::Vec rp1, rp2, rpp;
-      double f1[4];
+      double f1[4] = {0.0, 0.0, 0.0, 0.0};
       math::VArray f(4);
       f = 0.0;
       double f6 = 0.0, f12 = 0.0;

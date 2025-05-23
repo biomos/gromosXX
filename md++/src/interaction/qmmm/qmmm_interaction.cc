@@ -71,10 +71,6 @@ interaction::QMMM_Interaction::QMMM_Interaction() : Interaction("QMMM Interactio
                                                   , m_rank(0)
                                                   , m_size(1)
   {
-#ifdef XXMPI
-    m_rank = MPI::COMM_WORLD.Get_rank();
-    m_size = MPI::COMM_WORLD.Get_size();
-#endif
   qmmm_ptr = this;
 }
 
@@ -241,8 +237,8 @@ int interaction::QMMM_Interaction::calculate_interactions(topology::Topology& to
        * b) from 2 QM or NN evaluations and calculating the difference here
        * 
        */
-      if (sim.param().qmmm.software != simulation::qm_nn
-          || sim.param().qmmm.nn.model_type == simulation::nn_model_type_standard) {
+      if ((sim.param().qmmm.software != simulation::qm_schnetv1 && sim.param().qmmm.software != simulation::qm_schnetv2) || 
+    sim.param().qmmm.nn.model_type == simulation::nn_model_type_standard) {
         DEBUG(4, "Creating QM buffer for separate QM calculation");
         //create buffer zone for separate QM calculation and run it
         delete m_qm_buffer;
@@ -349,7 +345,14 @@ int interaction::QMMM_Interaction::init(topology::Topology& topo,
             bool quiet) {
   if (!quiet)
     os << "QMMM INTERACTION\n";
-    // Initial checks
+#ifdef XXMPI
+  if (sim.mpi) {
+    // adopt MPI ranks
+    MPI_Comm_size(MPI_COMM_WORLD, &m_size);
+    MPI_Comm_rank(MPI_COMM_WORLD, &m_rank);
+  }
+#endif
+  // Initial checks
   if (sim.param().qmmm.cutoff > 0.0 && 
           !math::boundary_check_cutoff(conf.current().box, sim.param().boundary.boundary,
           sim.param().qmmm.cutoff)) {
@@ -439,8 +442,8 @@ int interaction::QMMM_Interaction::init(topology::Topology& topo,
       case simulation::qm_gaussian:
         os << "Gaussian";
         break;
-      case simulation::qm_nn:
-        os << "Schnet";
+      case simulation::qm_schnetv1:
+        os << "Schnet v1";
         break;
       case simulation::qm_orca:
         os << "Orca";
@@ -450,6 +453,9 @@ int interaction::QMMM_Interaction::init(topology::Topology& topo,
         os << "XTB";
         break;
 #endif
+      case simulation::qm_schnetv2:
+        os << "Schnet v2";
+        break;
       default:
         os << "unknown";
         break;
@@ -580,7 +586,7 @@ int interaction::QMMM_Interaction::init_nonbonded(topology::Topology& topo,
   m_set_size *= omp_get_num_threads();
 #endif
 #ifdef XXMPI
-  m_set_size *= MPI::COMM_WORLD.Get_size();*/
+  m_set_size *= MPI_COMM_WORLD.Get_size();*/
   for (unsigned i = 0; i < m_set_size; ++i) {
     m_qmmm_nonbonded_set.push_back(
           new QMMM_Nonbonded_Set(*(this->m_qm_zone), this->m_timer

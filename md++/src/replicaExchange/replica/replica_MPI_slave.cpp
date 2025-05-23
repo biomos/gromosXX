@@ -119,7 +119,7 @@ re::replica_MPI_Slave::replica_MPI_Slave(io::Argument _args, int cont, int globa
     
     if (do_nonbonded && ff == NULL){
       std::cerr << "globalThreadID: "<< globalThreadID<<"\tMPI slave: could not access forcefield\n\t(internal error)" << std::endl;
-      MPI::Finalize();
+      MPI_Finalize();
       throw "ReplicaSlave: \ttINITIALisation error in ff is NULL of slave of simulationID "+ simulationID;
     }
     
@@ -128,7 +128,7 @@ re::replica_MPI_Slave::replica_MPI_Slave(io::Argument _args, int cont, int globa
       std::cerr << "globalThreadID: "<< globalThreadID<<"\tMPI slave: could not get NonBonded interactions from forcefield"
 		<< "\n\t(internal error)"
 		<< std::endl;
-      MPI::Finalize();
+      MPI_Finalize();
       throw "ReplicaSlave: \tINITIALisation error in ff nbs are NULL of slave of simulationID "+ simulationID;
     }
 
@@ -145,7 +145,7 @@ re::replica_MPI_Slave::replica_MPI_Slave(io::Argument _args, int cont, int globa
         std::cerr << "globalThreadID: "<< globalThreadID<<"\tMPI slave: could not get Shake algorithm from MD sequence."
                 << "\n\t(internal error)"
                 << std::endl;
-      MPI::Finalize();
+      MPI_Finalize();
       throw "ReplicaSlave: \tINITIALisation error in shake algorithm of slave of simulationID "+ simulationID;
     }
     //DEBUG(5, "Slave "<< globalThreadID << " do_shake? "<<do_shake);
@@ -158,7 +158,7 @@ re::replica_MPI_Slave::replica_MPI_Slave(io::Argument _args, int cont, int globa
         std::cerr << "globalThreadID: "<< globalThreadID<<"\tMPI slave: could not get M_Shake algorithm from MD sequence."
                 << "\n\t(internal error)"
                 << std::endl;
-      MPI::Finalize();
+      MPI_Finalize();
       throw "ReplicaSlave: \tINITIALisation error in m_Shake algorithm of slave of simulationID "+ simulationID;
     }
     
@@ -169,7 +169,7 @@ re::replica_MPI_Slave::replica_MPI_Slave(io::Argument _args, int cont, int globa
       std::cerr << "globalThreadID: "<< globalThreadID<<"\tMPI slave: could not get Monte Carlo algorithm from MD sequence."
               << "\n\t(internal error)"
               << std:: endl;
-      MPI::Finalize();
+      MPI_Finalize();
       throw "ReplicaSlave: \tINITIALisation error in Montecarlo algorithm of slave of simulationID "+ simulationID;
     }
 
@@ -231,7 +231,7 @@ void re::replica_MPI_Slave::run_MD(){
       }
 
 
-      MPI_Bcast(&next_step, 1, MPI::INT, sim.mpiControl().masterID, sim.mpiControl().comm);
+      MPI_Bcast(&next_step, 1, MPI_INT, sim.mpiControl().masterID, sim.mpiControl().comm);
 
       if (next_step == 2) {
         (*os) << "globalThreadID: "<< globalThreadID<<"\tMessage from master: Steepest descent: minimum reached." << std::endl;
@@ -265,7 +265,7 @@ void re::replica_MPI_Slave::run_MD(){
 void re::replica_MPI_Slave::receive_coords(){
   DEBUG(4, "replica_MPI_Slave " << globalThreadID << " ::receive_coords::\t START");
   #ifdef XXMPI
-  MPI_Status status;
+  // MPI_Status status;
   
   conf.exchange_state();
   

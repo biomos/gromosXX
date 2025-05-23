@@ -404,10 +404,11 @@ optional dependencies and flags (passed during the configuration step)
 
    - DOMP=on
    - DMPI=on
-   - DCUKERNEL=on (together with -DMPI=on)
+   - DCUKERNEL=on (together with -DOMP=on)
    - DXTB=on
 
    - DPEDANTIC=on (adds compiler flags: -Wextra -Wshadow -Wnon-virtual-dtor -pedantic -Wunused -Wconversion -Wsign-conversion)
+   - DCMAKE_BUILD_TYPE=Debug (By default Release option is used. Debug should be used to turn on the debug mode.)
 
 
 installation location and optimization flags

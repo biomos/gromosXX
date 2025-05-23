@@ -1739,7 +1739,7 @@ void io::In_Topology::read_block_VIRTUALATOM(topology::Topology& topo,
         ++it;
 
         _lineStream >> a_num >> iac >> q >> t >> num_atoms;
-        if (a_num != topo.num_solute_atoms() + 1) {
+        if (a_num != (int)topo.num_solute_atoms() + 1) {
           io::messages.add("Error in VIRTUALATOM block: atom number not sequential.",
                   "InTopology", io::message::error);
         }
@@ -2321,8 +2321,8 @@ void io::In_Topology::read_block_CONSTRAINT(topology::Topology& topo,
         simulation::Parameter &param, std::ostream & os)  { // CONSTRAINT
       DEBUG(10, "CONSTRAINT block");
       std::vector<std::string> buffer = m_block["CONSTRAINT"];
-
-      if (buffer.size() && param.constraint.ntc > 1) {
+      // constraint block only needed for ntc 2 & 4
+      if (buffer.size() && (param.constraint.ntc == 2 || param.constraint.ntc == 4)) {
         block_read.insert("CONSTRAINT");
 
         std::vector<std::string>::const_iterator it = buffer.begin() + 1;
