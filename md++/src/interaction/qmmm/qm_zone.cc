@@ -482,11 +482,6 @@ int interaction::QM_Zone::gather_chargegroups(const topology::Topology& topo,
   for (std::set<QM_Atom>::const_iterator
       qm_it = this->qm.begin(), qm_to = this->qm.end(); qm_it != qm_to; ++qm_it)
     {
-    // Initial dumb implementation - gather only around the first atom, if
-    // AtomType == QM_Atom (true only for QM buffer atoms gathering)
-    if (std::is_same<AtomType,QM_Atom>::value && qm_it != this->qm.begin()) {
-      break;
-    }
     DEBUG(15, "Gathering around QM atom " << qm_it->index);
     const math::Vec& qm_pos = qm_it->pos;
     math::Vec r_qm_cg;
@@ -537,7 +532,7 @@ int interaction::QM_Zone::gather_chargegroups(const topology::Topology& topo,
                 // Atom already in the list but as different periodic image, exit
                 std::ostringstream msg;
                 msg << "QM atom " << (qm_it->index + 1)
-                    << " sees different periodic copy of MM atom "
+                    << " sees different periodic copy of MM/QM_buffer atom "
                     << (set_it->index + 1);
                 io::messages.add(msg.str(), "QM_Zone", io::message::error);
                 return E_BOUNDARY_ERROR;
@@ -645,13 +640,13 @@ int interaction::QM_Zone::_get_buffer_atoms(topology::Topology& topo,
   // update the QM buffer topology so the pairlist algorithm can skip them
   std::set<QM_Atom>::const_iterator set_it = buffer_atoms.begin();
   for (unsigned i = 0; i < topo.num_atoms(); ++i) {
-    if (topo.is_qm_buffer(i)) {
+    if (topo.is_qm_buffer(i)) { // resolves to true if the value is non-zero
       if (topo.is_static_adaptive(i) == 2) {
             topo.is_qm_buffer(i) = 2;
-            buffer_atoms.emplace_hint(set_it,i,conf.current().pos(i),topo.qm_atomic_number(i));
+            buffer_atoms.emplace_hint(set_it, i, conf.current().pos(i), topo.qm_atomic_number(i));
             DEBUG(8, "Atom " << i << " in static buffer");
           }
-      if (topo.is_static_adaptive(i) != 2) {
+      else {
         if (buffer_atoms.count(i)) {
           topo.is_qm_buffer(i) = 1;
           DEBUG(12, "Atom " << i << " in adaptive buffer");
