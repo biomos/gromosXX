@@ -196,7 +196,7 @@ int main(int argc, char *argv[]) {
 
 
     // check for development
-    if (sim.param().develop.develop == true && args.count("develop") < 0) {
+    if (sim.param().develop.develop && args.count("develop") < 0) {
         io::messages.add(sim.param().develop.msg, io::message::develop);
     }
 
