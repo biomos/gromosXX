@@ -27,7 +27,7 @@
 #define INCLUDED_CUKERNEL_CONSTRAINTS_H
 #include "parameter.h"
 
-namespace cukernel {
+namespace cuda {
 /**
  * solve the constraints using the SETTLE algorithm
  * @param[inout] new_pos the new positions

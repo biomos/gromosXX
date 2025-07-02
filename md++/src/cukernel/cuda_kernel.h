@@ -1,11 +1,11 @@
 /**
- * @file cuda_kernel.h
- * contains Cuda_Kernel controlling the GPUs
+ * @file cuda_manager.h
+ * contains CudaManager controlling the GPUs
  * contains function declarations used in GROMOSXX MD++
  */
 
-#ifndef INCLUDED_CUDA_KERNEL_H
-#define INCLUDED_CUDA_KERNEL_H
+#ifndef INCLUDED_CUDA_MANAGER_H
+#define INCLUDED_CUDA_MANAGER_H
 
 #ifdef HAVE_LIBCUDART
 #include <cuda_runtime.h>
@@ -33,33 +33,33 @@ namespace interaction {
   class Nonbonded_Parameter;
 }
 
-namespace cukernel {
+namespace cuda {
     extern "C" {
         /**
-         * @class CUDA_Kernel
+         * @class CudaManager
          * performs operations with CUDA GPUs
          */
-        class CUDA_Kernel {
+        class CudaManager {
         public:
             /**
              * Get the instance object
              */
-            static CUDA_Kernel *get_instance(topology::Topology & topo,
-                                             configuration::Configuration & conf,
-                                             simulation::Simulation & sim);
+            CudaManager(std::shared_ptr<topology::Topology> topo,
+                        std::shared_ptr<configuration::Configuration> conf,
+                        std::shared_ptr<simulation::Simulation> sim);
             /**
              * disable copy
              */
-            CUDA_Kernel(const CUDA_Kernel &) = delete;
+            CudaManager(const CudaManager &) = delete;
             /**
              * disable assignment
              */
-            void operator=(const CUDA_Kernel &) = delete;
+            void operator=(const CudaManager &) = delete;
 
             /**
              * Destructor
              */
-            ~CUDA_Kernel();
+            ~CudaManager();
 
             void init(topology::Topology & topo,
                       configuration::Configuration & conf,
@@ -87,14 +87,14 @@ namespace cukernel {
 
             void disabled() {
                 io::messages.add("Compilation without CUDA support.",
-                                "CUDA_Kernel", io::message::critical);
+                                "CudaManager", io::message::critical);
             };
         protected:
         private:
             /**
              * Constructor as singleton
              */
-            CUDA_Kernel();
+            CudaManager();
 
             cukernel::simulation_parameter param;
 
@@ -104,7 +104,7 @@ namespace cukernel {
             /**
              * The instance
              */
-            static CUDA_Kernel * m_cuda_kernel;
+            static CudaManager * m_cuda_manager;
 
             /**
              * topology
