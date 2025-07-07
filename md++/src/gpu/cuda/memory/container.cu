@@ -6,7 +6,7 @@
  */
 
 template <typename T>
-cukernel::Container<T>::Container(bool persistent) :
+gpu::Container<T>::Container(bool persistent) :
                   dev_ptr(nullptr),
                   dev_pitch(0),
                   dev_sizes(nullptr),
@@ -16,7 +16,7 @@ cukernel::Container<T>::Container(bool persistent) :
                   m_persistent(persistent) {};
 
 template <typename T>
-cukernel::Container<T>::Container(size_t height, size_t width, bool persistent) :
+gpu::Container<T>::Container(size_t height, size_t width, bool persistent) :
                   dev_ptr(nullptr),
                   dev_pitch(0),
                   dev_sizes(nullptr),
@@ -29,7 +29,7 @@ cukernel::Container<T>::Container(size_t height, size_t width, bool persistent) 
 * resize the container
 */
 template <typename T>
-void cukernel::Container<T>::resize(size_t height, size_t width) {
+void gpu::Container<T>::resize(size_t height, size_t width) {
     // if increasing the size and is not overflown, copy
     if (height >= this->m_height && width >= this->m_width && !this->overflown()) {
         Container<T> newc(height, width);
@@ -49,7 +49,7 @@ void cukernel::Container<T>::resize(size_t height, size_t width) {
 * get the element from i-th row and j-th column
 */
 template <typename T>
-__host__ __device__ T cukernel::Container<T>::operator()(const unsigned i, const unsigned j) const {
+__host__ __device__ T gpu::Container<T>::operator()(const unsigned i, const unsigned j) const {
     assert(i < this->m_height);
     assert(j < this->dev_sizes[i]);
     #ifdef __CUDA_ARCH__
@@ -66,7 +66,7 @@ __host__ __device__ T cukernel::Container<T>::operator()(const unsigned i, const
  * modify the element from i-th row and j-th column
  */
 template <typename T>
-__device__ T& cukernel::Container<T>::operator()(const unsigned i, const unsigned j) {
+__device__ T& gpu::Container<T>::operator()(const unsigned i, const unsigned j) {
     //assert(j < this->m_width);
     assert(j < this->dev_sizes[i]);
     return *(this->operator[](i) + j);
@@ -90,7 +90,7 @@ __device__ T& cukernel::Container<T>::operator()(const unsigned i, const unsigne
 * add value(s) to the array
 */
 template <typename T>
-__device__ int cukernel::Container<T>::push_back(unsigned row, T* val, size_t size) {
+__device__ int gpu::Container<T>::push_back(unsigned row, T* val, size_t size) {
     assert(row < this->m_height);
     unsigned offset = atomicAdd(&this->dev_sizes[row], size);
     if (offset + size > this->m_width) {
@@ -109,7 +109,7 @@ __device__ int cukernel::Container<T>::push_back(unsigned row, T* val, size_t si
  */
 template <typename T>
 template <bool exclusive>
-__device__ int cukernel::Container<T>::reserve_strip(unsigned i, size_t size) {
+__device__ int gpu::Container<T>::reserve_strip(unsigned i, size_t size) {
     assert(i < this->m_height);
     if (size == 0) return this->dev_sizes[i];
     unsigned offset = 0;
@@ -130,7 +130,7 @@ __device__ int cukernel::Container<T>::reserve_strip(unsigned i, size_t size) {
  * update the row from host
  */
 template <typename T>
-int cukernel::Container<T>::update_row(unsigned row, T* val, unsigned size) {
+int gpu::Container<T>::update_row(unsigned row, T* val, unsigned size) {
     if (size > this->m_width) {
         this->resize(this->m_height, size);
     }
@@ -143,7 +143,7 @@ int cukernel::Container<T>::update_row(unsigned row, T* val, unsigned size) {
  * find item in a row
  */
 template <typename T>
-__device__ int cukernel::Container<T>::find(unsigned row, T val) const {
+__device__ int gpu::Container<T>::find(unsigned row, T val) const {
     const unsigned size = this->dev_sizes[row];
     if (not size) return -1;
     if (val > this->operator()(row, size - 1)) return -1;
@@ -161,7 +161,7 @@ __device__ int cukernel::Container<T>::find(unsigned row, T val) const {
  * get size of the row
  */
 template <typename T>
-__device__ __host__ unsigned cukernel::Container<T>::size(unsigned row) const {
+__device__ __host__ unsigned gpu::Container<T>::size(unsigned row) const {
     unsigned s;
     #ifdef __CUDA_ARCH__
         s = this->dev_sizes[row];
@@ -175,7 +175,7 @@ __device__ __host__ unsigned cukernel::Container<T>::size(unsigned row) const {
  * clear all data
  */
 template <typename T>
-__host__ __device__ void cukernel::Container<T>::clear() {
+__host__ __device__ void gpu::Container<T>::clear() {
 #ifdef __CUDA_ARCH__
     const unsigned tid = threadIdx.x + blockDim.x * blockIdx.x;
     const unsigned grid_size = blockDim.x * gridDim.x;
@@ -196,7 +196,7 @@ __host__ __device__ void cukernel::Container<T>::clear() {
  * copy data to host and return as 2D vector
  */
 template <typename T>
-__host__ std::vector< std::vector<T> > cukernel::Container<T>::copy_to_host() const {
+__host__ std::vector< std::vector<T> > gpu::Container<T>::copy_to_host() const {
     std::vector<unsigned> s;
     s.resize(this->m_height,0);
     CHECK(cudaMemcpy(s.data(), this->dev_sizes, this->m_height * sizeof(unsigned), cudaMemcpyDeviceToHost));
@@ -215,7 +215,7 @@ __host__ std::vector< std::vector<T> > cukernel::Container<T>::copy_to_host() co
  * access the overflow value
  */
 template <typename T>
-__device__ __host__ bool cukernel::Container<T>::overflown() const {
+__device__ __host__ bool gpu::Container<T>::overflown() const {
 #ifdef __CUDA_ARCH__
     return *this->dev_overflow;
 #else
@@ -229,7 +229,7 @@ __device__ __host__ bool cukernel::Container<T>::overflown() const {
  * allocate the memory
  */
 template <typename T>
-void cukernel::Container<T>::allocate() {
+void gpu::Container<T>::allocate() {
   if (this->dev_overflow == nullptr) {
     CHECK(cudaMalloc(&this->dev_overflow, sizeof(bool)));
     report(this->dev_overflow, 1);
@@ -250,7 +250,7 @@ void cukernel::Container<T>::allocate() {
  * deallocate the memory
  */
 template <typename T>
-void cukernel::Container<T>::deallocate() {
+void gpu::Container<T>::deallocate() {
     CHECK(cudaFree(this->dev_ptr));
     //cudaFree(this->dev_ptr);
     report(this->dev_ptr, this->dev_pitch * this->m_height / sizeof(T), false);
@@ -275,7 +275,7 @@ void cukernel::Container<T>::deallocate() {
  */
 template <typename T>
 template <typename U>
-void cukernel::Container<T>::report(U* p, std::size_t n, bool alloc) const {
+void gpu::Container<T>::report(U* p, std::size_t n, bool alloc) const {
 #ifndef NDEBUG
     std::cout << "Container::" << (alloc ? "alloc: " : "dealloc: ") << sizeof(U) * n
         << " bytes at " << std::hex << std::showbase
@@ -287,7 +287,7 @@ void cukernel::Container<T>::report(U* p, std::size_t n, bool alloc) const {
  * reset the overflow flag
  */
 template <typename T>
-__device__ __host__ void cukernel::Container<T>::reset_overflow() {
+__device__ __host__ void gpu::Container<T>::reset_overflow() {
 #ifdef __CUDA_ARCH__
     *this->dev_overflow = false;
 #else
@@ -296,7 +296,7 @@ __device__ __host__ void cukernel::Container<T>::reset_overflow() {
 }
 
 template <typename T>
-std::ostream& operator<<(std::ostream &os, const cukernel::Container<T> &c) {
+std::ostream& operator<<(std::ostream &os, const gpu::Container<T> &c) {
     std::vector<unsigned> s;
     s.resize(c.m_height,0);
     CHECK(cudaMemcpy(s.data(), c.dev_sizes, c.m_height * sizeof(unsigned), cudaMemcpyDeviceToHost));

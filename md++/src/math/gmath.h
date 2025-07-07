@@ -31,9 +31,6 @@
 // #include <blitz/tinyvec-et.h>
 // #include <blitz/tinymat.h>
 
-#ifdef HAVE_LIBCUDART
-#include "cukernel/lib/cumallocator.h"
-#endif
 
 
 namespace math

@@ -15,7 +15,7 @@
 #include <type_traits>
 #include <vector>
 
-namespace cuda {
+namespace gpu {
 
 template <typename T>
 class CuMallocator {
@@ -87,6 +87,6 @@ bool operator!=(const CuMallocator<T>&, const CuMallocator<U>&) { return false; 
 template <typename T>
 using cuvector = std::vector<T, CuMallocator<T>>;
 
-} // namespace cuda
+} // namespace gpu
 
 #endif

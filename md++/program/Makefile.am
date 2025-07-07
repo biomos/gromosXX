@@ -13,7 +13,7 @@ eds_2box_mpi_SOURCES = eds_2box_mpi.cc
 
 LDADD = ../src/libmdpp.la
 if WITH_CUDA
-  LDADD += ../src/cukernel/libgrocukernel.a
+  LDADD += ../src/gpu/libgrocuda.a
 endif
 EXTRA_DIST = BUILD_NUMBER
 

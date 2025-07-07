@@ -75,9 +75,9 @@ int algorithm::Algorithm_Sequence
   }
 
   // initialize CUDA
-  if (sim.param().cuda.number_gpus || sim.param().innerloop.number_gpus || sim.param().constraint.solvent.number_gpus) {
-    sim.CUDA_Kernel(cukernel::CUDA_Kernel::get_instance(topo,conf,sim));
-  }
+  // if (sim.param().cuda.number_gpus || sim.param().innerloop.number_gpus || sim.param().constraint.solvent.number_gpus) {
+  //   sim.CUDA_Kernel(cukernel::CUDA_Kernel::get_instance(topo,conf,sim));
+  // }
   
   for(Algorithm_Sequence::iterator 
 	it = begin(), to = end();

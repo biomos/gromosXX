@@ -8,7 +8,7 @@
 
 #include "types.h"
 
-namespace cukernel {
+namespace gpu {
     /**
     * unroll last warp, no sync needed
     * continue summation when only the last warp is left (thread id <32). 

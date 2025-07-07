@@ -57,7 +57,7 @@
 /* have isnan */
 #cmakedefine HAVE_ISNAN @HAVE_ISNAN@
 
-/* Define to 1 if you have the `cukernel' library (-lcukernel). */
+/* Define to 1 if you have the `cuda' library (-lcuda). */
 #cmakedefine HAVE_LIBCUDART @HAVE_LIBCUDART@
 
 /* Define to 1 if you have the `fftw3' library (-lfftw3). */

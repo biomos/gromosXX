@@ -13,7 +13,7 @@
 
 #include "utils.h"
 
-namespace cukernel {
+namespace gpu {
   /**
    * @class Container
    * holds data and pointers to the 2D container on GPU

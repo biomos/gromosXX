@@ -115,16 +115,16 @@ void algorithm::GPU_Shake_Thread::init_run() {
       dev = mysim->param().innerloop.gpu_device_number[gpu_id];
     }
   }
-  gpu_stat = cukernel::cudaInitGPU_Shake(
-          dev,
-          &constr_length2(0),
-          &factor(0, 0), &mass(0),
-          m_tolerance,
-          mysim->param().constraint.solvent.number_gpus,
-          gpu_id,
-          mytopo->num_solvent_atoms(0),
-          mytopo->num_solvent_molecules(0),
-          &error);
+  // gpu_stat = cukernel::cudaInitGPU_Shake(
+  //         dev,
+  //         &constr_length2(0),
+  //         &factor(0, 0), &mass(0),
+  //         m_tolerance,
+  //         mysim->param().constraint.solvent.number_gpus,
+  //         gpu_id,
+  //         mytopo->num_solvent_atoms(0),
+  //         mytopo->num_solvent_molecules(0),
+  //         &error);
   mysim->param().constraint.solvent.gpu_device_number[gpu_id] = dev;
   if (error) {
     std::ostringstream msg;
@@ -145,9 +145,9 @@ void algorithm::GPU_Shake_Thread::cycle(){
 
     DEBUG(10, "GPU_Shake_Thread : Cycle : Calculate Constraints")
 #ifdef HAVE_LIBCUDART
-    cukernel::cudaGPU_Shake(&(myconf->current().pos(mytopo->num_solute_atoms())(0)),
-          &(myconf->old().pos(mytopo->num_solute_atoms())(0)),
-          shake_fail_mol, gpu_stat);
+    // cukernel::cudaGPU_Shake(&(myconf->current().pos(mytopo->num_solute_atoms())(0)),
+    //       &(myconf->old().pos(mytopo->num_solute_atoms())(0)),
+    //       shake_fail_mol, gpu_stat);
 #endif
 }
 
@@ -158,7 +158,7 @@ void algorithm::GPU_Shake_Thread::cycle(){
 void algorithm::GPU_Shake_Thread::end_run() {
   DEBUG(10, "GPU_Shake_Thread : Clean up");
 #ifdef HAVE_LIBCUDART
-  cukernel::CleanUp(gpu_stat);
+  // cukernel::CleanUp(gpu_stat);
 #endif
 }
 

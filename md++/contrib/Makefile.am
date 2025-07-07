@@ -3,7 +3,7 @@ AM_CPPFLAGS = -I$(top_srcdir) -I$(top_srcdir)/src
 
 
 if WITH_CUDA
-  AM_CPPFLAGS += -I$(top_srcdir)/src/cukernel
+  AM_CPPFLAGS += -I$(top_srcdir)/src/gpu
 endif
 
 include_HEADERS =
@@ -15,11 +15,11 @@ tabulate_spc_SOURCES = tabulate_spc.cc
 rng_gsl_LDFLAGS = ${GSL_LIBS}
 
 if WITH_CUDA
-  CUKERNEL = ../src/cukernel/libgrocukernel.a
+  GROCUDA = ../src/gpu/libgrocuda.a
 else
-  CUKERNEL = ../src/cukernel/libgrocukernel.la
+  GROCUDA = ../src/gpu/libgrocuda.la
 endif
-LDADD = $(CUKERNEL) ../src/libmdpp.la
+LDADD = $(GROCUDA) ../src/libmdpp.la
 
 # EXTRA_DIST =			BUILD_NUMBER
 

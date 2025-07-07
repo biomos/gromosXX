@@ -6,7 +6,7 @@
 #include "cuda_device_manager.h"
 #include "cuda_device_worker.h"
 #include "cuda_memory_manager.h"
-#include "cuvector.h"
+#include "../memory/cuvector.h"
 
 /**
  * @class CudaManager
@@ -88,4 +88,4 @@ private:
     CudaMemoryManager memory_manager_; ///< Handles memory allocation and transfers.
 };
 
-#include "cuda_manager.tpp" // Include template implementations
+#include "cuda_manager.tcc" // Include template implementations

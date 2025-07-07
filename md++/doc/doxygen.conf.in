@@ -623,8 +623,11 @@ INPUT                  = <SRCDIR> \
                          <SRCDIR>/src/io/parameter \
                          <SRCDIR>/src/io/topology \
                          <SRCDIR>/src/io/configuration \
-                         <SRCDIR>/src/cukernel \
-                         <SRCDIR>/src/cukernel/lib \
+                         <SRCDIR>/src/gpu \
+                         <SRCDIR>/src/gpu/cuda \
+                         <SRCDIR>/src/gpu/cuda/manager \
+                         <SRCDIR>/src/gpu/cuda/memory \
+                         <SRCDIR>/src/gpu/cuda/kernels \
                          <SRCDIR>/program \
                          <SRCDIR>/contrib \
                          <SRCDIR>/doc

@@ -84,4 +84,4 @@ public:
     void copy_device_to_device(T* dest_ptr, const T* src_ptr, size_t size, cudaStream_t stream = 0);
 };
 
-#include "cuda_memory_manager.tpp" // Include template implementations
+#include "cuda_memory_manager.tcc" // Include template implementations

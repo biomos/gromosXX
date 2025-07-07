@@ -33,6 +33,13 @@ foreach(LOOP_VAR ${EXEC_NAMES})
     add_executable(${LOOP_VAR} "${LOOP_VAR}.cc" ${GROMOS_OBJECTS})
     target_include_directories(${LOOP_VAR} PRIVATE ${PROGRAM_INCLUDES} ${EXTERNAL_INCLUDES})
     target_link_libraries(${LOOP_VAR} PRIVATE ${EXTERNAL_LIBRARIES})
+    
+    # Set CUDA architectures only if GPU is enabled
+    if(USE_CUDA)
+        set_target_properties(${LOOP_VAR} PROPERTIES
+            CUDA_ARCHITECTURES "60;70;75;80;86;90"
+        )
+    endif()
 endforeach()
 
 # install

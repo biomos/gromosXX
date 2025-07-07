@@ -64,4 +64,4 @@ private:
     cudaStream_t stream_; ///< The CUDA stream associated with this device worker.
 };
 
-#include "cuda_device_worker.tpp" // Include template implementations
+#include "cuda_device_worker.tcc" // Include template implementations

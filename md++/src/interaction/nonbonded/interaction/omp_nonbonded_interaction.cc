@@ -63,10 +63,7 @@
 #include <omp.h>
 #endif
 
-#ifdef HAVE_LIBCUDART
-#include "cukernel/cudaKernel.h"
-#include "cukernel/cuda_kernel.h"
-#endif
+#include "gpu/cuda/cuda_manager.h"
 
 #undef MODULE
 #undef SUBMODULE
@@ -231,7 +228,7 @@ int interaction::OMP_Nonbonded_Interaction::init(topology::Topology & topo,
         DEBUG(9, "OMP: CUDA_set, gpu_tid: " << gpu_tid);
 
         CUDA_Nonbonded_Set * cuda_nbs = new CUDA_Nonbonded_Set(*m_pairlist_algorithm, m_parameter, 0, 1, gpu_tid);
-        cukernel::CUDA_Kernel::get_instance(topo,conf,sim)->update_nonbonded(&m_parameter);
+        // cukernel::CUDA_Kernel::get_instance(topo,conf,sim)->update_nonbonded(&m_parameter);
 
         cuda_nbs->init(topo, conf, sim, os, quiet);
 

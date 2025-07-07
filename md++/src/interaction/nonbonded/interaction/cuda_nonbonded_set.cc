@@ -176,8 +176,8 @@ void interaction::CUDA_Nonbonded_Set::init_run() {
   DEBUG(8, "CUDA_Nonbonded_Set::run")
 
           unsigned int nAtomsPerSolvMol = mytopo->num_solvent_atoms(0) / mytopo->num_solvent_molecules(0);
-  cukernel::lj_crf_parameter * pLj_crf;
-  pLj_crf = (cukernel::lj_crf_parameter *)malloc(nAtomsPerSolvMol * nAtomsPerSolvMol * sizeof (cukernel::lj_crf_parameter));
+  // cukernel::lj_crf_parameter * pLj_crf;
+  // pLj_crf = (cukernel::lj_crf_parameter *)malloc(nAtomsPerSolvMol * nAtomsPerSolvMol * sizeof (cukernel::lj_crf_parameter));
 
   unsigned int solvIdx = mytopo->num_solute_atoms();
   for (unsigned int i = 0; i < nAtomsPerSolvMol; i++) {
@@ -232,29 +232,29 @@ void interaction::CUDA_Nonbonded_Set::init_run() {
 
   DEBUG(9, "CUDA_Nonbonded_Set::run : cudaInit")
   DEBUG(11, "mygpu_id: " << mygpu_id << " of " << mysim->param().innerloop.number_gpus << ". device number: " << mysim->param().innerloop.gpu_device_number.at(mygpu_id))
-  gpu_stat = cukernel::cudaInit
-          (
-          //mygpu_id, /*sim.param().innerloop.cuda_device,*/
-          mysim->param().innerloop.gpu_device_number.at(mygpu_id),
-          mytopo->num_solvent_atoms(0),
-          mysim->param().pairlist.cutoff_short,
-          mysim->param().pairlist.cutoff_long,
-          myconf->current().box(0)(0),
-          myconf->current().box(1)(1),
-          myconf->current().box(2)(2),
-          mytopo->num_solvent_atoms(0) / mytopo->num_solvent_molecules(0),
-          //cuda_nbs->estNeigh_short,
-          //cuda_nbs->estNeigh_long,
-          this->estNeigh_short,
-          this->estNeigh_long,
-          m_crf_2cut3i,
-          m_crf_cut,
-          m_crf_cut3i,
-          pLj_crf,
-          mysim->param().innerloop.number_gpus,
-          mygpu_id,
-          &error
-          );
+  // gpu_stat = cukernel::cudaInit
+  //         (
+  //         //mygpu_id, /*sim.param().innerloop.cuda_device,*/
+  //         mysim->param().innerloop.gpu_device_number.at(mygpu_id),
+  //         mytopo->num_solvent_atoms(0),
+  //         mysim->param().pairlist.cutoff_short,
+  //         mysim->param().pairlist.cutoff_long,
+  //         myconf->current().box(0)(0),
+  //         myconf->current().box(1)(1),
+  //         myconf->current().box(2)(2),
+  //         mytopo->num_solvent_atoms(0) / mytopo->num_solvent_molecules(0),
+  //         //cuda_nbs->estNeigh_short,
+  //         //cuda_nbs->estNeigh_long,
+  //         this->estNeigh_short,
+  //         this->estNeigh_long,
+  //         m_crf_2cut3i,
+  //         m_crf_cut,
+  //         m_crf_cut3i,
+  //         pLj_crf,
+  //         mysim->param().innerloop.number_gpus,
+  //         mygpu_id,
+  //         &error
+  //         );
   if (error) {
     std::ostringstream msg;
     msg << "Cannot initialize nonbonded interaction on GPU " << mysim->param().innerloop.gpu_device_number.at(mygpu_id);
@@ -284,13 +284,13 @@ void interaction::CUDA_Nonbonded_Set::calculate() {
   if (mygpu_id == 0)  
     m_pairlist_alg.timer().start_subtimer("GPU data copy");
   
-  error += cukernel::cudaCopyPositions(&myconf->current().pos(mytopo->num_solute_atoms())(0), gpu_stat);
+  // error += cukernel::cudaCopyPositions(&myconf->current().pos(mytopo->num_solute_atoms())(0), gpu_stat);
   DEBUG(15, "myconf->current().pos(mytopo->num_solute_atoms())(0) = " << myconf->current().pos(mytopo->num_solute_atoms())(0));
   
 
   // copy the box if pressure is coupled
   if (mysim->param().pcouple.scale != math::pcouple_off) {
-    error += cukernel::cudaCopyBox(gpu_stat, myconf->current().box(0)(0), myconf->current().box(1)(1), myconf->current().box(2)(2));
+    // error += cukernel::cudaCopyBox(gpu_stat, myconf->current().box(0)(0), myconf->current().box(1)(1), myconf->current().box(2)(2));
   }
   if (mygpu_id == 0)  
     m_pairlist_alg.timer().stop_subtimer("GPU data copy");
@@ -302,7 +302,7 @@ void interaction::CUDA_Nonbonded_Set::calculate() {
     m_longrange_storage.zero();
     if (mygpu_id == 0)
       m_pairlist_alg.timer().start_subtimer("pairlist cuda");
-    cukernel::cudaCalcPairlist(gpu_stat);
+    // cukernel::cudaCalcPairlist(gpu_stat);
     if (mygpu_id == 0)
       m_pairlist_alg.timer().stop_subtimer("pairlist cuda");
   }
@@ -335,7 +335,7 @@ void interaction::CUDA_Nonbonded_Set::calculate() {
     DEBUG(15, "Vir = " << *Vir);
     DEBUG(15, "e_lj = " << *e_lj);
     DEBUG(15, "e_crf = " << *e_crf);
-    error += cukernel::cudaCalcForces(For, Vir, e_lj, e_crf, true, gpu_stat);
+    // error += cukernel::cudaCalcForces(For, Vir, e_lj, e_crf, true, gpu_stat);
     if (mygpu_id == 0)
       m_pairlist_alg.timer().stop_subtimer("longrange-cuda");
   }
@@ -349,7 +349,7 @@ void interaction::CUDA_Nonbonded_Set::calculate() {
   const int egroup = mytopo->atom_energy_group(mytopo->num_solute_atoms());
   double * e_lj = &m_storage.energies.lj_energy[egroup][egroup];
   double * e_crf = &m_storage.energies.crf_energy[egroup][egroup];
-  error += cukernel::cudaCalcForces(For, Vir, e_lj, e_crf, false, gpu_stat);
+  // error += cukernel::cudaCalcForces(For, Vir, e_lj, e_crf, false, gpu_stat);
   if (mygpu_id == 0)
     m_pairlist_alg.timer().stop_subtimer("shortrange-cuda");
   if (m_rank == 0 && error) {

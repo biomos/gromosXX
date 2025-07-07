@@ -10,10 +10,10 @@
 #include "cumallocator.h"
 #include "math/gmath.h"
 
-namespace cukernel
+namespace gpu
 {
     template <typename T>
-    using cuvector = std::vector< T, cukernel::CuMallocator<T> >;
+    using cuvector = std::vector< T, gpu::CuMallocator<T> >;
 };
 
 namespace math
@@ -21,22 +21,22 @@ namespace math
     /**
      * CUDA allocated VArray (double precision)
      */
-    typedef VArrayT<Vec, cukernel::CuMallocator > CuDVArray;
+    typedef VArrayT<Vec, gpu::CuMallocator > CuDVArray;
 
     /**
      * CUDA allocated VArray (single precision)
      */
-    typedef VArrayT<Vecf, cukernel::CuMallocator > CuFVArray;
+    typedef VArrayT<Vecf, gpu::CuMallocator > CuFVArray;
 
     /**
      * CUDA allocated VArray (single precision)
      */
-    typedef VArrayT<float3, cukernel::CuMallocator > CuFVArray;
+    typedef VArrayT<float3, gpu::CuMallocator > CuFVArray;
 
     /**
      * CUDA allocated VArray (single precision)
      */
-    typedef VArrayT<double3, cukernel::CuMallocator > CuFVArray;
+    typedef VArrayT<double3, gpu::CuMallocator > CuFVArray;
 }
 
 #endif

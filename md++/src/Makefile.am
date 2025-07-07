@@ -2,7 +2,7 @@ AM_CXXFLAGS = @MY_CXXFLAGS@
 
 
 
-SUBDIRS = cukernel util simulation math topology configuration algorithm interaction io check replicaExchange .
+SUBDIRS = gpu util simulation math topology configuration algorithm interaction io check replicaExchange .
 
 noinst_HEADERS = stdheader.h
 
@@ -25,7 +25,7 @@ libmdpp_la_LIBADD = algorithm/libgroalgorithm.la\
 	$(CLIPPER_LIBS)
 
 if WITH_CUDA
-	libmdpp_la_LIBADD += cukernel/libgrocukernel.a
+	libmdpp_la_LIBADD += gpu/libgrocuda.a
 else
-	libmdpp_la_LIBADD += cukernel/libgrocukernel.la
+	libmdpp_la_LIBADD += gpu/libgrocuda.la
 endif

@@ -122,10 +122,10 @@ int algorithm::GPU_Settle::init(topology::Topology & topo,
     os << "END\n";
   }
 
-  gpu_stat = cukernel::cudaInitConstraints(sim.param().innerloop.number_gpus,
-                                    sim.param().innerloop.gpu_device_number.at(GPU_ID),
-                                    topo.num_solvent_atoms(0),
-                                    topo.num_solvent_molecules(0));
+  // gpu_stat = cukernel::cudaInitConstraints(sim.param().innerloop.number_gpus,
+  //                                   sim.param().innerloop.gpu_device_number.at(GPU_ID),
+  //                                   topo.num_solvent_atoms(0),
+  //                                   topo.num_solvent_molecules(0));
   return 0;
 }
 
@@ -181,9 +181,9 @@ void algorithm::GPU_Settle
   int shake_fail_mol = -1;
 
   // Calculate the new poisitons on the GPU
-  error = cukernel::cudaConstraints(&conf.current().pos(topo.num_solute_atoms())(0),
-                                          &conf.old().pos(topo.num_solute_atoms())(0),
-                                          shake_fail_mol, gpu_stat);
+  // error = cukernel::cudaConstraints(&conf.current().pos(topo.num_solute_atoms())(0),
+  //                                         &conf.old().pos(topo.num_solute_atoms())(0),
+  //                                         shake_fail_mol, gpu_stat);
   DEBUG(8, "GPU_Settle : Print Error, if one occured")
   if (error > 0)
     printError(topo, conf, sim, shake_fail_mol);
