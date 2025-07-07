@@ -18,8 +18,8 @@ set(GROMOS_OBJECTS
     $<TARGET_OBJECTS:grorepex>
 )
 
-if(CUKERNEL)
-    list(APPEND GROMOS_OBJECTS $<TARGET_OBJECTS:grocukernel>)
+if(GPU_ENABLED)
+    list(APPEND GROMOS_OBJECTS $<TARGET_OBJECTS:grocuda>)
 endif()
 
 if(MPI)
