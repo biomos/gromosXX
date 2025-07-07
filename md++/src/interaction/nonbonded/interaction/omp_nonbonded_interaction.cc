@@ -63,7 +63,9 @@
 #include <omp.h>
 #endif
 
-#include "gpu/cuda/cuda_manager.h"
+// #ifdef HAVE_LIBCUDART
+// #include "../../../gpu/cuda/cuda_manager.h"
+// #endif
 
 #undef MODULE
 #undef SUBMODULE

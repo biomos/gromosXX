@@ -26,9 +26,9 @@
 #ifndef _GPU_SETTLE_H
 #define	_GPU_SETTLE_H
 
-#ifdef HAVE_LIBCUDART
-#include "cukernel/cudaKernel.h"
-#endif
+// #ifdef HAVE_LIBCUDART
+// #include "cukernel/cudaKernel.h"
+// #endif
 
 namespace interaction {
   struct bond_type_struct;
@@ -108,7 +108,7 @@ namespace algorithm {
     /**
      * informations for the GPU
      */
-    gpu_status * gpu_stat;
+    //gpu_status * gpu_stat;
   };
   
 } // algorithm

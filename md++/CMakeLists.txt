@@ -1,8 +1,15 @@
 cmake_minimum_required(VERSION 3.13)
 
-project(gromosXX LANGUAGES CXX)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-set(CMAKE_CXX_STANDARD 11)
+if(USE_CUDA)
+    project(gromosXX LANGUAGES CXX CUDA)
+    include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
+else()
+    project(gromosXX LANGUAGES CXX)
+endif()
+
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 

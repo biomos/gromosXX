@@ -37,7 +37,7 @@ foreach(LOOP_VAR ${EXEC_NAMES})
     # Set CUDA architectures only if GPU is enabled
     if(USE_CUDA)
         set_target_properties(${LOOP_VAR} PROPERTIES
-            CUDA_ARCHITECTURES "60;70;75;80;86;90"
+            CUDA_ARCHITECTURES "60;62;70;75;80;86"
         )
     endif()
 endforeach()

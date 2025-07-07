@@ -3,10 +3,9 @@
  * @author capraz, poliak
  * device functions for efficient reduction
  */
-#ifndef INCLUDED_REDUCTION_H
-#define INCLUDED_REDUCTION_H
+#pragma include once
 
-#include "types.h"
+// #include "types.h"
 
 namespace gpu {
     /**
@@ -38,7 +37,3 @@ namespace gpu {
     template <typename T>
     T reduce_in_warp(unsigned int num_input_elements, T* device_input, T* device_output);
 }
-
-#include "reduction.cu"
-
-#endif

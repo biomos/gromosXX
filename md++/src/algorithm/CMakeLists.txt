@@ -70,10 +70,6 @@ set(ALGO_INCLUDE
     ../interaction/special
 )
 
-if(USE_CUDA)
-    list(APPEND ALGO_INCLUDE  ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
-endif()
-
 add_library(groalgorithm OBJECT ${ALGO_CC})
 
 target_include_directories(groalgorithm PUBLIC ${ALGO_INCLUDE})

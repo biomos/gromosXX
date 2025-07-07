@@ -9,6 +9,10 @@
 #define MODULE gpu
 #define SUBMODULE interaction
 
+#include <utility>
+
+#include "reduction.h"
+
 template <unsigned int block_size, typename T>
 __device__  __forceinline__ void gpu::last_warp_reduce(volatile T *sdata, unsigned int tid) {
     if (block_size >=  64) sdata[tid] += sdata[tid + 32];

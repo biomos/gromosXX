@@ -34,10 +34,6 @@
 #include <HOOMD_GROMOSXX_processor.h>
 #endif
 
-#ifdef HAVE_LIBCUDART
-#include "gpu/cuda/cuda_manager.h"
-#endif
-
 
 
 namespace simulation
@@ -54,7 +50,7 @@ namespace simulation
     /**
      * Constructor.
      */
-    Simulation() : mpi(false), openmp(false), m_cuda_kernel(nullptr),
+    Simulation() : mpi(false), openmp(false),
 		   m_time_step_size(0),
 		   m_steps(0), 
 		   m_time(0) {}
@@ -104,7 +100,7 @@ namespace simulation
      */
     // cukernel::CUDA_Kernel * CUDA_Kernel() const{
     //     return m_cuda_kernel; 
-    }
+    //}
 
     
     /**

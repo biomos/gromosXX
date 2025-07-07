@@ -88,7 +88,7 @@ namespace algorithm {
     /**
      * Pointer to the gpu status
      */
-    gpu_status * gpu_stat;
+    //gpu_status * gpu_stat;
 
     /**
      * Pointer to the topology

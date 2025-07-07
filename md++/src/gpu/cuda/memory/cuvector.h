@@ -31,12 +31,12 @@ namespace math
     /**
      * CUDA allocated VArray (single precision)
      */
-    typedef VArrayT<float3, gpu::CuMallocator > CuFVArray;
+    typedef VArrayT<float3, gpu::CuMallocator > CuF3VArray;
 
     /**
      * CUDA allocated VArray (single precision)
      */
-    typedef VArrayT<double3, gpu::CuMallocator > CuFVArray;
+    typedef VArrayT<double3, gpu::CuMallocator > CuD3VArray;
 }
 
 #endif

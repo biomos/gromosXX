@@ -53,9 +53,9 @@
 #include "storage.h"
 #include "../../../util/cycle_thread.h"
 
-#ifdef HAVE_LIBCUDART
-#include "cukernel/cudaKernel.h"
-#endif
+// #ifdef HAVE_LIBCUDART
+// #include "cukernel/cudaKernel.h"
+// #endif
 
 
 #undef MODULE
@@ -176,16 +176,16 @@ void interaction::CUDA_Nonbonded_Set::init_run() {
   DEBUG(8, "CUDA_Nonbonded_Set::run")
 
           unsigned int nAtomsPerSolvMol = mytopo->num_solvent_atoms(0) / mytopo->num_solvent_molecules(0);
-  // cukernel::lj_crf_parameter * pLj_crf;
+  // gpu::lj_crf_parameter * pLj_crf;
   // pLj_crf = (cukernel::lj_crf_parameter *)malloc(nAtomsPerSolvMol * nAtomsPerSolvMol * sizeof (cukernel::lj_crf_parameter));
 
   unsigned int solvIdx = mytopo->num_solute_atoms();
   for (unsigned int i = 0; i < nAtomsPerSolvMol; i++) {
     for (unsigned int j = 0; j < nAtomsPerSolvMol; j++) {
       const lj_parameter_struct & lj = m_parameter->lj_parameter(mytopo->iac(solvIdx + i), mytopo->iac(solvIdx + j));
-      pLj_crf[i * nAtomsPerSolvMol + j].c12 = lj.c12;
-      pLj_crf[i * nAtomsPerSolvMol + j].c6 = lj.c6;
-      pLj_crf[i * nAtomsPerSolvMol + j].q = math::four_pi_eps_i * mytopo->charge(solvIdx + i) * mytopo->charge(solvIdx + j);
+      // pLj_crf[i * nAtomsPerSolvMol + j].c12 = lj.c12;
+      // pLj_crf[i * nAtomsPerSolvMol + j].c6 = lj.c6;
+      // pLj_crf[i * nAtomsPerSolvMol + j].q = math::four_pi_eps_i * mytopo->charge(solvIdx + i) * mytopo->charge(solvIdx + j);
 
     }
   }
@@ -261,7 +261,7 @@ void interaction::CUDA_Nonbonded_Set::init_run() {
     io::messages.add(msg.str(), "CUDA_Nonbonded_Set", io::message::error);
     return;
   }
-  free(pLj_crf);
+  // free(pLj_crf);
   return;
 #endif
 }
@@ -406,7 +406,7 @@ void interaction::CUDA_Nonbonded_Set::calculate() {
 void interaction::CUDA_Nonbonded_Set::end_run() {
   DEBUG(15, "CUDA_Nonbonded_Set: Cleaning up for GPU: " << mygpu_id);
 #ifdef HAVE_LIBCUDART
-  if (cukernel::CleanUp(gpu_stat))
+  // if (cukernel::CleanUp(gpu_stat))
     io::messages.add("GPU cleanup failed", io::message::critical);
 #endif
 }

@@ -64,9 +64,9 @@
 #include <omp.h>
 #endif
 
-#ifdef HAVE_LIBCUDART
-#include "cukernel/cudaKernel.h"
-#endif
+// #ifdef HAVE_LIBCUDART
+// #include "cukernel/cudaKernel.h"
+// #endif
 
 #include <algorithm>
 
