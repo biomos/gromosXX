@@ -98,6 +98,11 @@ int io::simple_crosschecks(simulation::Simulation & sim) {
       io::messages.add("POSITIONRES block: NTPORS=1 can not be used when pressure scaling is off.",
                        "In_Parameter", io::message::error);
 
+  // if RTC == 1 then RTCLAST > 2
+  if (param.rottrans.rottrans && sim.param().rottrans.last < 3)
+      io::messages.add("ROTTRANS needs a minimum set size of 3. RTCLAST < 3 is not possible.",
+                       "In_Parameter", io::message::error);
+
   // center of mass removal and roto-translational constraints should not be used together
   if (param.rottrans.rottrans && param.centreofmass.skip_step != 0)
       io::messages.add("ROTTRANS or COMTRANSROT should not be used at the same time.",
@@ -284,6 +289,17 @@ int io::simple_crosschecks(simulation::Simulation & sim) {
     // Polarisable QMMM should be only used with polarisable FF
     if (param.qmmm.qmmm == simulation::qmmm_polarisable && !param.polarise.cos) {
       io::messages.add("QMMM block: polarisable embedding but FF is non-polarisable",
+                         "In_Parameter", io::message::error);
+    }
+    // QMMM with perturbation is allowed only for mechanical embedding with NN
+    // and standard pairlist
+    if (param.perturbation.perturbation &&
+        param.qmmm.qmmm != simulation::qmmm_off &&
+        ! (param.qmmm.qmmm == simulation::qmmm_mechanical &&
+            param.qmmm.qm_ch == simulation::qm_ch_constant &&
+            param.qmmm.software == simulation::qm_schnetv1
+         )) {
+      io::messages.add("QMMM block: Perturbation allowed only with ME, constant charge, Schnet v1 and standard pairlist",
                          "In_Parameter", io::message::error);
     }
     // Polarisable FF should be only used with polarisable QMMM
@@ -4683,6 +4699,8 @@ int io::check_features(simulation::Simulation  &sim)
   fc.unlock("qmmm", "distance_field");
   fc.unlock("qmmm", "dihedral_rest");
   fc.unlock("qmmm", "dihedral_const");
+  fc.unlock("qmmm", "angle_rest");
+  fc.unlock("qmmm", "angle_const");
   fc.unlock("qmmm", "jvalue_rest");
   fc.unlock("qmmm", "rdc_rest");
   fc.unlock("qmmm", "perscale");
@@ -4774,6 +4792,8 @@ int io::check_features(simulation::Simulation  &sim)
   fc.unlock("virtualatoms", "position_const_scaled");
   fc.unlock("virtualatoms", "distance_rest");
   fc.unlock("virtualatoms", "distance_field");
+  // fc.unlock("virtualatoms", "angle_rest");
+  // fc.unlock("virtualatoms", "angle_const");
   fc.unlock("virtualatoms", "dihedral_rest");
   fc.unlock("virtualatoms", "dihedral_const");
   fc.unlock("virtualatoms", "jvalue_rest");

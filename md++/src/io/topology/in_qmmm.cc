@@ -63,14 +63,36 @@ QMZONE
 # QMI:  index of the QM atom
 # QMZ:  atomic number of the QM atom
 # QMLI: 0,1 atom is a link atom
+# BRstat: 0,1,2 options. 0 = atom is part of the inner QM region. 1 = atom is part of the adaptiv BR, atom is part of the static BR region
 #
 # NETCH SPINM
       0     1
 # Warning: the first 17 characters are ignored!
-# RESIDUE   ATOM     QMI   QMZ   QMLI
-    1 H2O   OW         1     8      0
-    1 H2O   HW1        2     1      0
-    1 H2O   HW2        3     1      0
+# RESIDUE   ATOM     QMI   QMZ   QMLI   BRstat
+    1 H2O   OW         1     8      0        0
+    1 H2O   HW1        2     1      0        0
+    1 H2O   HW2        3     1      0        0
+END
+@endverbatim
+ *
+ * @section pertqmzone PERTQMZONE block
+ * The PERTQMZONE block specifies the end states of QM atoms.
+ *
+ * The block is read from the QM/MM specification file
+ * (\@qmmm).
+ *
+ * @verbatim
+PERTQMZONE
+# STATE: state number of the QM atom, 0 = both states, 1 = state A, 2 = state B
+#
+# Warning: the first 17 characters are ignored!
+# RESIDUE   ATOM     STATE
+    1 H2O   OW         1
+    1 H2O   HW1        1
+    1 H2O   HW2        1
+    2 H2O   OW         2
+    2 H2O   HW1        2
+    2 H2O   HW2        2
 END
 @endverbatim
  *
@@ -96,13 +118,14 @@ BUFFERZONE
 # QMI:   index of the QM atom
 # QMZ:   atomic number of the QM atom
 # QMLI:  0,1 atom is a link atom
+# BRstat: 0,1,2 options. 0 = atom is part of the inner QM region. 1 = atom is part of the adaptiv BR, atom is part of the static BR region
 # NETCH SPINM BUFCUT
       0     1    1.4
 # Warning: the first 17 characters are ignored!
-# RESIDUE   ATOM     QMI   QMZ   QMLI
-    1 H2O   OW         1     8      0
-    1 H2O   HW1        2     1      0
-    1 H2O   HW2        3     1      0
+# RESIDUE   ATOM     QMI   QMZ   QMLI   BRstat
+    1 H2O   OW         1     8      0        1
+    1 H2O   HW1        2     1      0        1
+    1 H2O   HW2        3     1      0        1
 END
 @endverbatim
  *
@@ -496,6 +519,21 @@ GAUFILES
 /path/to/gaussian.out
 END
 @endverbatim
+ * GAUFCHK block for the Gaussian worker
+ * The GAUFCHK block specifies the formatted checkpoint file to read gradients data from Gaussian
+ * 
+ * The file has to be created using the 'formcheck' keyword in the GAUROUTE block. Otherwise,
+ * the run ends with an error.
+ *
+ * This block is optional. If unspecified, gradients are read from the standard output file.
+ * Expect reduced precision. If specified as 'tmp', temporary file is created using TMPDIR
+ * environment variable. User-specified files are not deleted after use.
+ *
+ * @verbatim
+GAUFCHK
+/path/to/Test.FChk
+END
+@endverbatim
  *
  * The GAUHEADER block specifies the header part of the Gaussian input file.
  * 
@@ -526,6 +564,53 @@ END
 @verbatim
 GAUCHSM
 @@CHARGE@@ @@SPINM@@
+END
+@endverbatim
+ *
+ * The NNMODEL block specifies the NN model used to evaluate the NN interactions
+ * In the 1st line the model path is provided
+ * In the 2nd line the model_type and the learning_type is defined
+@verbatim
+NNMODEL
+/path/to/model
+0  1
+END
+@endverbatim
+ *
+ * The NNVALID block specifies the number of models which should be used for the calculation of the uncertainty estimation
+ * Every model should be in a new line
+ * - 1 line/model is provided: difference between NNMODEL and NNVALID model is reported
+ * - 2 or more lines: standard deviation between NNMODEL and all NNVALID models is reported
+ * After the number of models are specified one additional line specifies:
+ *  - val_steps val_threshold val_forceconstant nnvalid_maxF
+ *    val_steps:          how often validation model should be run every x steps
+ *    val_threshold:      threshold to be used to write out if Energy and force prediction is trustworthy
+ *    val_forceconstant:  
+ *    nnvalid_maxF:       if nnvalid_maxF (maximum force committee disagreement) should also be written out 0:no 1:yes
+@verbatim
+NNVALID
+/path/to/model_uncertainty_1
+/path/to/model_uncertainty_2
+/path/to/model_uncertainty_x
+1 4.184 0.0 1
+END
+@endverbatim
+ *
+ * The NNCHARGE block specifies the NN charge model
+@verbatim
+NNCHARGE
+/path/to/charge_model
+END
+@endverbatim
+ *
+ * The NNDEVICE block specifies the device on which the model should be evaluated
+ * Options:
+ * - cuda
+ * - cpu
+ * - auto
+@verbatim
+NNDEVICE
+cuda
 END
 @endverbatim
  *
@@ -574,6 +659,10 @@ void io::In_QMMM::read(topology::Topology& topo,
         "In_QMMM", io::message::notice);
   }
   this->read_zone(topo, sim, "BUFFERZONE");
+
+  if (sim.param().perturbation.perturbation) {
+      this->read_pert_qmzone(sim, &sim.param().qmmm.nn);
+    }
   
   std::vector<std::string> buffer;
 
@@ -872,15 +961,35 @@ void io::In_QMMM::read(topology::Topology& topo,
         io::messages.add("Using temporary files for Gaussian input/output",
                 "In_QMMM", io::message::notice);
       } else {
-        if (buffer.size() != 4) {
+        if (buffer.size() == 4) {
+          sim.param().qmmm.gaussian.input_file = buffer[1];
+          sim.param().qmmm.gaussian.output_file = buffer[2];
+        } else {
           io::messages.add("GAUFILES block corrupt. Provide 2 lines.",
                   "In_QMMM", io::message::error);
           return;
         }
-        sim.param().qmmm.gaussian.input_file = buffer[1];
-        sim.param().qmmm.gaussian.output_file = buffer[2];
       }
     } // GAUFILES
+    { // GAUFCHK
+      buffer = m_block["GAUFCHK"];
+      if (!buffer.size()) {
+        io::messages.add("Reading forces from Gaussian standard output (lower precision)",
+                "In_QMMM", io::message::notice);
+      } else {
+        if (buffer.size() == 3) {
+          sim.param().qmmm.gaussian.use_fchk = true;
+          // allow use of temporary file
+          if (buffer[1] != "tmp") {
+            sim.param().qmmm.gaussian.fchk_file = buffer[1];
+          }
+        } else {
+          io::messages.add("GAUFCHK block corrupt. Provide 1 line.",
+                  "In_QMMM", io::message::error);
+          return;
+        }
+      }
+    } // GAUFCHK
     { // GAUHEADER
       buffer = m_block["GAUHEADER"];
 
@@ -931,7 +1040,7 @@ void io::In_QMMM::read(topology::Topology& topo,
   /*
    * Schnetpack NN
    */
-  else if (sw == simulation::qm_nn) {
+  else if (sw == simulation::qm_schnetv1 || sw == simulation::qm_schnetv2) {
     this->read_units(sim, &sim.param().qmmm.nn);
     //this->read_elements(topo, &sim.param().qmmm.nn);
 
@@ -979,9 +1088,14 @@ void io::In_QMMM::read(topology::Topology& topo,
                 "In_QMMM", io::message::error);
         return;
       }
+      else if (buffer.size() < 2) {
+        io::messages.add("NNVALID block invalid",
+                "In_QMMM", io::message::error);
+        return;
+      }
       else {
         // loop over number of validations buffer and add lines to val_model_path
-        for ( int i = 1; i < buffer.size() - 2; ++i ) {
+        for ( unsigned i = 1; 2 + i < buffer.size(); ++i ) {
           sim.param().qmmm.nn.val_model_paths.push_back(buffer[i]);
         }   
         std::string line(buffer.end()[-2]);
@@ -989,16 +1103,27 @@ void io::In_QMMM::read(topology::Topology& topo,
         _lineStream.clear();
         _lineStream.str(line);
         unsigned val_steps;
+        int nnvalid_maxF;
         double val_thresh, val_forceconstant;
+        
         _lineStream >> val_steps >> val_thresh >> val_forceconstant;
         sim.param().qmmm.nn.val_steps = val_steps;
         sim.param().qmmm.nn.val_thresh = val_thresh;
         sim.param().qmmm.nn.val_forceconstant = val_forceconstant;
+
         if (_lineStream.fail()) {
           io::messages.add("bad line in NNVALID block",
                 "In_QMMM", io::message::error);
           return;
         }
+
+        // Take care of optional nnvalid_maxF
+        _lineStream >> nnvalid_maxF;
+        if (_lineStream.fail()) { // if it fails fall back to default energy nnvalidation
+          nnvalid_maxF = 0;
+        } 
+        if (nnvalid_maxF == 0) sim.param().qmmm.nn.nnvalid = simulation::nn_valid_standard;
+        else if (nnvalid_maxF == 1) sim.param().qmmm.nn.nnvalid = simulation::nn_valid_maxF;
       }
     } // NNVALID
     { // NNCHARGE
@@ -1230,7 +1355,7 @@ void io::In_QMMM::read(topology::Topology& topo,
   } // CAPLEN
 
   // check if NN charge model is defined
-  if (sw == simulation::qm_nn
+  if (sw == (simulation::qm_schnetv1 || simulation::qm_schnetv2 )
         && sim.param().qmmm.qm_ch == simulation::qm_ch_dynamic
         && sim.param().qmmm.nn.charge_model_path.empty()) {
     io::messages.add("dynamic QM charge requested but no NN charge model specified",
@@ -1238,7 +1363,7 @@ void io::In_QMMM::read(topology::Topology& topo,
   }
 
   // allow learning_type == nn_learning_type_qmonly only for single-atom QM region
-  if (sw == simulation::qm_nn
+  if (sw == (simulation::qm_schnetv1 || simulation::qm_schnetv2)
         && sim.param().qmmm.nn.learning_type == simulation::nn_learning_type_qmonly) {
     size_t qm_size = 0;
     for (unsigned i = 0; i < topo.num_atoms(); ++i) {
@@ -1492,6 +1617,55 @@ void io::In_QMMM::read_units(const simulation::Simulation& sim
   DEBUG(15, "QM units read done");
 }
 
+void io::In_QMMM::read_pert_qmzone(simulation::Simulation& sim
+                  , simulation::Parameter::qmmm_struct::qm_param_struct* qm_param)
+  {
+  std::vector<std::string> buffer;
+  buffer = m_block["PERTQMZONE"];
+
+  if (!buffer.size()) {
+    io::messages.add("No PERTQMZONE block in QM/MM specification file",
+            "In_QMMM", io::message::error);
+    return;
+  }
+  std::string line(buffer[1]);
+  _lineStream.clear();
+  _lineStream.str(line);
+
+  unsigned state = 0;
+  for (std::vector<std::string>::const_iterator it = buffer.begin() + 1
+                                              , to = buffer.end() - 1
+                                              ; it != to; ++it) {
+    std::string line(*it);
+    if (line.length() < 17) {
+      std::ostringstream msg;
+      msg << "Line too short in PERTQMZONE block";
+      io::messages.add(msg.str(), "In_QMMM", io::message::error);
+    }
+
+    // the first 17 chars are ignored
+    line.erase(line.begin(), line.begin() + 17);
+
+    _lineStream.clear();
+    _lineStream.str(line);
+
+    _lineStream >> state;
+  
+    if (_lineStream.fail()) {
+      io::messages.add("Bad line in PERTQMZONE block.",
+              "In_QMMM", io::message::error);
+      return;
+    }
+    if (state < 0 || state > 2) {
+      std::ostringstream msg;
+      msg << "PERTQMZONE block: allowed values for state are 0 = both states, 1 = state A, 2 = state B";
+      io::messages.add(msg.str(), "In_QMMM", io::message::error);
+      return;
+    }
+    sim.param().qmmm.nn.pertqm_state.push_back(state);
+  }
+  }
+
 void io::In_QMMM::read_zone(topology::Topology& topo
                            , simulation::Simulation& sim
                            , const std::string& blockname)
@@ -1547,7 +1721,7 @@ void io::In_QMMM::read_zone(topology::Topology& topo
   }
   // Count number of electrons and check consistency with charge and multiplicity
   int num_elec = -charge;
-  unsigned qmi = 0, qmz = 0, qmli = 0;
+  unsigned qmi = 0, qmz = 0, qmli = 0,brstat = 0;
   for (std::vector<std::string>::const_iterator it = buffer.begin() + 2
                                               , to = buffer.end() - 1
                                               ; it != to; ++it) {
@@ -1572,6 +1746,17 @@ void io::In_QMMM::read_zone(topology::Topology& topo
       io::messages.add(msg.str(), "In_QMMM", io::message::error);
       return;
     }
+
+    // Take care of optional brstat input in QMZONE and BUFFERZONE
+    _lineStream >> brstat;
+    if (_lineStream.fail()) {
+      if (blockname == "QMZONE"){
+        brstat = 0;
+      }
+      else {
+        brstat = 1;
+      }
+    } 
 
     if (qmi < 1 || qmi > topo.num_atoms()) {
       std::ostringstream msg;
@@ -1602,8 +1787,25 @@ void io::In_QMMM::read_zone(topology::Topology& topo
       return;
     }
     topo.is_qm(qmi - 1) = topo.is_qm(qmi - 1) || (blockname == "QMZONE");
+
     const bool is_qm_buffer = (blockname == "BUFFERZONE");
-    topo.is_qm_buffer(qmi - 1) = topo.is_qm_buffer(qmi - 1) || is_qm_buffer;
+
+    // ADDED MICHAEL check for static or adaptive BR atom
+    if (brstat == 2) {
+      topo.is_qm_buffer(qmi - 1) = topo.is_qm_buffer(qmi - 1) || is_qm_buffer;;
+      topo.is_static_adaptive(qmi - 1)  = 2;
+    }
+    if (brstat == 1) {
+      topo.is_qm_buffer(qmi - 1)  = topo.is_qm_buffer(qmi - 1) || is_qm_buffer;;
+      topo.is_static_adaptive(qmi - 1)  = 1;
+    }
+    if (brstat < 0 || brstat > 2) {
+      std::ostringstream msg;
+      msg << blockname << " block: BRstat has to be 0: QMatom or 1: adaptiv BRatom or 2:  static BRatom";
+      io::messages.add(msg.str(), "In_QMMM", io::message::error);
+      return;
+    }
+
     sim.param().qmmm.use_qm_buffer = sim.param().qmmm.use_qm_buffer
                                       || is_qm_buffer;
     if (topo.is_qm(qmi - 1) && topo.is_qm_buffer(qmi - 1)) {

@@ -50,16 +50,21 @@ class Base_Test_tre:
 
 class Basic_Tests_tre(Base_Test_tre):
     "class for basic tests related to energy trajectory"
+    precision = 8
+
+    @classmethod
+    def __call_assert_almost_equal(cls, tre_data, HC_tre_data):
+        np.testing.assert_almost_equal(tre_data, HC_tre_data, decimal=cls.precision) # make this into a variable
 
     def _test_almost_eq_var(self, *var):
         tre_data = self.tre.get_values(*var)
         HC_tre_data = self.HC_tre.get_values(*var)
-        np.testing.assert_almost_equal(tre_data, HC_tre_data)
+        self.__call_assert_almost_equal(tre_data, HC_tre_data)
 
     def _test_almost_eq_subbl(self, subblock, idx=()):
         tre_data = self.tre.extract_values(subblock, idx=idx)
         HC_tre_data = self.HC_tre.extract_values(subblock, idx=idx)
-        np.testing.assert_almost_equal(tre_data, HC_tre_data)
+        self.__call_assert_almost_equal(tre_data, HC_tre_data)
 
     # test functions
     def test_TIME_block(self):

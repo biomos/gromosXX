@@ -114,12 +114,12 @@ int algorithm::GAMD
   DEBUG(5, "GAMD: Interactions calculated now calculate acceleration");
 
   // total energies have been computed now calculate acceleration
-  if (sim.steps() >= sim.param().gamd.equilibration){
+  if ((int)sim.steps() >= (int)sim.param().gamd.equilibration){
       sim.param().gamd.stepsdone += 1;
       for (unsigned int gg = 1; gg < sim.param().gamd.igroups; gg++){
           // This part reset the statistics so that they can be obtained form the new simulation, this part is necessary every time that one changes form search mode
           // The idea is that because after each search mode a short equilibration is performed, sim.param().gamd.equilibration will be higher than 0
-          if (sim.param().gamd.equilibration == sim.steps() && sim.param().gamd.equilibration > 0){
+          if ((int)sim.param().gamd.equilibration == (int)sim.steps() && (int)sim.param().gamd.equilibration > 0){
              // reset parameters after equilibration
              sim.param().gamd.VmaxT[gg] = sim.param().gamd.VminT[gg] = sim.param().gamd.VmeanT[gg];
              sim.param().gamd.VmaxD[gg] = sim.param().gamd.VminD[gg] = sim.param().gamd.VmeanD[gg];

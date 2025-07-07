@@ -1,6 +1,8 @@
 AM_CXXFLAGS = @MY_CXXFLAGS@
 AM_CPPFLAGS = -I$(top_srcdir) -I$(top_srcdir)/src
 
+gdatadir = $(datadir)/../contrib
+dist_gdata_DATA = schnet_v1.py schnet_v2.py
 
 if WITH_CUDA
   AM_CPPFLAGS += -I$(top_srcdir)/src/gpu
@@ -21,5 +23,6 @@ else
 endif
 LDADD = $(GROCUDA) ../src/libmdpp.la
 
-# EXTRA_DIST =			BUILD_NUMBER
 
+
+# EXTRA_DIST =			BUILD_NUMBER

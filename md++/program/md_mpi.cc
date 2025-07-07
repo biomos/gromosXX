@@ -90,12 +90,12 @@ int main(int argc, char *argv[]) {
   usage += "#\n\n";
 
     // master or slave : that's the question
-    MPI::Init(argc, argv);
+    MPI_Init(&argc,&argv);
     FFTW3(mpi_init());
 
     int rank, size;
-    rank = MPI::COMM_WORLD.Get_rank();
-    size = MPI::COMM_WORLD.Get_size();
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
     // create an output file (for the slaves)
     std::ostringstream oss;
@@ -118,13 +118,13 @@ int main(int argc, char *argv[]) {
         if (rank == 0)
             std::cerr << usage << std::endl;
         FFTW3(mpi_cleanup());
-        MPI::Finalize();
+        MPI_Finalize();
         return 1;
     }
 
     util::print_title(true, *os);
     if (args.count("version") >= 0) {
-        MPI::Finalize();
+        MPI_Finalize();
         FFTW3(mpi_cleanup());
         return 0;
     }
@@ -133,7 +133,7 @@ int main(int argc, char *argv[]) {
     if (util::parse_verbosity(args)) {
         if (rank == 0) std::cerr << "could not parse verbosity argument" << std::endl;
         FFTW3(mpi_cleanup());
-        MPI::Finalize();
+        MPI_Finalize();
         return 1;
     }
 
@@ -190,13 +190,13 @@ int main(int argc, char *argv[]) {
         io::messages.display(std::cout);
         std::cout << "\nErrors during initialization!\n" << std::endl;
         FFTW3(mpi_cleanup());
-        MPI::Finalize();
+        MPI_Finalize();
         return 1;
     }
 
 
     // check for development
-    if (sim.param().develop.develop == true && args.count("develop") < 0) {
+    if (sim.param().develop.develop && args.count("develop") < 0) {
         io::messages.add(sim.param().develop.msg, io::message::develop);
     }
 
@@ -219,24 +219,24 @@ int main(int argc, char *argv[]) {
                 std::cout << "\nErrors during initialisation!\n" << std::endl;
                 error = 1;
                 std::cout << "Telling slaves to quit." << std::endl;
-                MPI_Bcast(&error, 1, MPI::INT, sim.mpiControl().masterID, sim.mpiControl().comm);
+                MPI_Bcast(&error, 1, MPI_INT, sim.mpiControl().masterID, sim.mpiControl().comm);
                 FFTW3(mpi_cleanup());
                 MPI_Comm_free(&sim.mpiControl().comm); //Clean up
-                MPI::Finalize();
+                MPI_Finalize();
                 return 1;
             } else if (iom == io::message::develop) {
                 std::cout << "\nUse @develop to run untested code.\n" << std::endl;
                 error = 1;
-                MPI_Bcast(&error, 1, MPI::INT, sim.mpiControl().masterID, sim.mpiControl().comm);
+                MPI_Bcast(&error, 1, MPI_INT, sim.mpiControl().masterID, sim.mpiControl().comm);
                 FFTW3(mpi_cleanup());
                 MPI_Comm_free(&sim.mpiControl().comm); //Clean up
-                MPI::Finalize();
+                MPI_Finalize();
                 return 1;
             }
         }
 
         // tell slaves there were no initialization errors
-        MPI_Bcast(&error, 1, MPI::INT, sim.mpiControl().masterID, sim.mpiControl().comm);
+        MPI_Bcast(&error, 1, MPI_INT, sim.mpiControl().masterID, sim.mpiControl().comm);
 
         io::messages.clear();
 
@@ -286,7 +286,7 @@ int main(int argc, char *argv[]) {
                                 << "\n\t(internal error)"
                                 << std::endl;
                         MPI_Comm_free(&sim.mpiControl().comm); //Clean up
-                        MPI::Finalize();
+                        MPI_Finalize();
                         return 1;
                     }
                     if (do_shake && (error = shake->apply(topo, conf, sim)) != 0) {
@@ -296,7 +296,7 @@ int main(int argc, char *argv[]) {
 
                     // signal that energy minimum is reached: exit, but without error message
                     next_step = 2;
-                    MPI_Bcast(&next_step, 1, MPI::INT, sim.mpiControl().masterID, sim.mpiControl().comm);
+                    MPI_Bcast(&next_step, 1, MPI_INT, sim.mpiControl().masterID, sim.mpiControl().comm);
                     error = 0; // clear error condition
                     break;
                 }
@@ -305,13 +305,13 @@ int main(int argc, char *argv[]) {
                 // send error status to slaves
                 next_step = 0;
                 std::cout << "Telling slaves to quit." << std::endl;
-                MPI_Bcast(&next_step, 1, MPI::INT, sim.mpiControl().masterID, sim.mpiControl().comm);
+                MPI_Bcast(&next_step, 1, MPI_INT, sim.mpiControl().masterID, sim.mpiControl().comm);
 
                 // try to save the final structures...
                 break;
             }
             // tell the slaves to continue
-            MPI_Bcast(&next_step, 1, MPI::INT, sim.mpiControl().masterID, sim.mpiControl().comm);
+            MPI_Bcast(&next_step, 1, MPI_INT, sim.mpiControl().masterID, sim.mpiControl().comm);
             traj.print(topo, conf, sim);
 
             sim.steps() = sim.steps() + sim.param().analyze.stride;
@@ -393,7 +393,7 @@ int main(int argc, char *argv[]) {
     else {
         (*os) << "MPI slave " << rank << " of " << size << std::endl;
 
-        MPI_Bcast(&error, 1, MPI::INT, sim.mpiControl().masterID, sim.mpiControl().comm);
+        MPI_Bcast(&error, 1, MPI_INT, sim.mpiControl().masterID, sim.mpiControl().comm);
 
         if (error) {
             (*os) << "There was an error in the master. Check output file for details." << std::endl
@@ -410,7 +410,7 @@ int main(int argc, char *argv[]) {
             if (do_nonbonded && ff == NULL) {
                 std::cerr << "MPI slave: could not access forcefield\n\t(internal error)" << std::endl;
                 MPI_Comm_free(&sim.mpiControl().comm); //Clean up
-                MPI::Finalize();
+                MPI_Finalize();
                 return 1;
             }
 
@@ -420,7 +420,7 @@ int main(int argc, char *argv[]) {
                         << "\n\t(internal error)"
                         << std::endl;
                 MPI_Comm_free(&sim.mpiControl().comm); //Clean up
-                MPI::Finalize();
+                MPI_Finalize();
                 return 1;
             }
 
@@ -439,7 +439,7 @@ int main(int argc, char *argv[]) {
                         << "\n\t(internal error)"
                         << std::endl;
                 MPI_Comm_free(&sim.mpiControl().comm); //Clean up
-                MPI::Finalize();
+                MPI_Finalize();
                 return 1;
             }
 
@@ -454,7 +454,7 @@ int main(int argc, char *argv[]) {
                         << "\n\t(internal error)"
                         << std::endl;
                 MPI_Comm_free(&sim.mpiControl().comm); //Clean up
-                MPI::Finalize();
+                MPI_Finalize();
                 return 1;
             }
 
@@ -468,7 +468,7 @@ int main(int argc, char *argv[]) {
                         << "\n\t(internal error)"
                         << std::endl;
                 MPI_Comm_free(&sim.mpiControl().comm); //Clean up
-                MPI::Finalize();
+                MPI_Finalize();
                 return 1;
             }
 
@@ -477,7 +477,7 @@ int main(int argc, char *argv[]) {
                        std::cerr << "MPI slave: test fail."
                           << "\n\t(internal error)"
                           << std:: endl;
-                  MPI::Finalize();
+                  MPI_Finalize();
                   return 1;
 
                 }
@@ -514,7 +514,7 @@ int main(int argc, char *argv[]) {
                     std::cout << "MPI slave " << rank << ": error in M-Shake algorithm!\n" << std::endl;
                 }
 
-                MPI_Bcast(&next_step, 1, MPI::INT, sim.mpiControl().masterID, sim.mpiControl().comm);
+                MPI_Bcast(&next_step, 1, MPI_INT, sim.mpiControl().masterID, sim.mpiControl().comm);
 
                 if (next_step == 2) {
                     (*os) << "Message from master: Steepest descent: minimum reached." << std::endl;
@@ -580,7 +580,7 @@ int main(int argc, char *argv[]) {
     FFTW3(mpi_cleanup());
 
     MPI_Comm_free(&sim.mpiControl().comm); //Clean up
-    MPI::Finalize();
+    MPI_Finalize();
     return error;
 
 #else

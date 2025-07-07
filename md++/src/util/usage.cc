@@ -268,12 +268,15 @@ void util::print_title(bool mpi, std::ostream & os, bool repex)
 #ifdef XXMPI
   if (mpi) {
     os << "MPI code enabled\n";
-    int size = MPI::COMM_WORLD.Get_size();
+    //int size = getenv("OMPI_COMM_WORLD_SIZE");
+    int size;
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
     if (size > 1)
       os << "\trunning on " << size << " nodes.\n";
     else
       os << "\trunning on " << size << " node.\n";
-    int rank = MPI::COMM_WORLD.Get_rank();
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     os << "\tthis is node " << rank << ".\n\n";
   }
 #endif

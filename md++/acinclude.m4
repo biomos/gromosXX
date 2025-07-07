@@ -492,9 +492,16 @@ AC_DEFUN([AM_WITH_SCHNETPACK],[
         dnl set default values
         : ${PYTHON="python3"}
         : ${PYFLAGS="$(${PYTHON} -m pybind11 --includes)"}
+        PYVERSION=$(${PYTHON} --version | sed -n 's/^Python \([[0-9]]*\)\.\([[0-9]]*\).*/\1.\2/p')
+        PY_MAJOR_VERSION=$(echo $PYVERSION | cut -d. -f1)
+        PY_MINOR_VERSION=$(echo $PYVERSION | cut -d. -f2)
         dnl for Python <3.8:
-        : ${PYLDFLAGS="$(${PYTHON}-config --ldflags)"}
-        dnl for Python >=3.8 : ${PYLDFLAGS="$(${PYTHON}-config --ldflags --embed)"}
+        if test "$PY_MINOR_VERSION" -lt 8; then
+          : ${PYLDFLAGS="$(${PYTHON}-config --ldflags)"}
+        else
+          dnl for Python >=3.8
+          : ${PYLDFLAGS="$(${PYTHON}-config --ldflags --embed)"}
+        fi
         AC_MSG_CHECKING([for pybind11])
         working_pb11=no
         cat>conftest.cc<<EOF

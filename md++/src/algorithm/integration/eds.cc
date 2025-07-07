@@ -524,8 +524,9 @@ int algorithm::EDS
       }
       else
         beta = 1.0 / (sim.param().stochastic.temp * math::k_Boltzmann);
- 
+#ifndef NDEBUG 
       const unsigned int numpairs = (numstates * (numstates - 1)) / 2;
+#endif
       DEBUG(7, "number of eds states = " << numstates);
       DEBUG(7, "number of eds pairs = " << numpairs);
       assert(sim.param().eds.s.size() == numpairs);

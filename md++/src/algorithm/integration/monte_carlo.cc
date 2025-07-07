@@ -85,7 +85,7 @@ topology::Topology & topo,
         std::cerr << "MPI slave: could not get NonBonded interactions from forcefield"
         << "\n\t(internal error)"
         << std::endl;
-        MPI::Finalize();
+        MPI_Finalize();
         return 1;
       }
  
@@ -158,7 +158,9 @@ int algorithm::Monte_Carlo::accept
  )
 {
   DEBUG(12,"Chemcial Monte-Carlo accept");
+#ifndef NDEBUG
   const int mc_step = (sim.steps()-1) / sim.param().montecarlo.steps;
+#endif
     
   // get probability
   double delta = 0;

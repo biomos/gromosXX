@@ -101,12 +101,12 @@ int main(int argc, char *argv[]){
     usage += "#\n\n";
 
     // master or slave : that's the question
-    MPI::Init(argc, argv);
+    MPI_Init(&argc, &argv);
     FFTW3(mpi_init());
 
     int rank, size;
-    rank = MPI::COMM_WORLD.Get_rank();
-    size = MPI::COMM_WORLD.Get_size();
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
     // create an output file (for the slaves)
     std::ostringstream oss;
@@ -130,13 +130,13 @@ int main(int argc, char *argv[]){
             std::cerr << usage << std::endl;
         }
         FFTW3(mpi_cleanup());
-        MPI::Finalize();
+        MPI_Finalize();
         return 1;
     }
 
     util::print_title(true, *os);
     if (args.count("version") >= 0){
-        MPI::Finalize();
+        MPI_Finalize();
         FFTW3(mpi_cleanup());
         return 0;
     }
@@ -147,7 +147,7 @@ int main(int argc, char *argv[]){
             std::cerr << "could not parse verbosity argument" << std::endl;
         }
         FFTW3(mpi_cleanup());
-        MPI::Finalize();
+        MPI_Finalize();
         return 1;
     }
 
@@ -229,7 +229,7 @@ int main(int argc, char *argv[]){
         io::messages.display(std::cout);
         std::cout << "\nErrors during initialization of box 1!\n" << std::endl;
         FFTW3(mpi_cleanup());
-        MPI::Finalize();
+        MPI_Finalize();
         return 1;
     }
 
@@ -237,7 +237,7 @@ int main(int argc, char *argv[]){
         io::messages.display(std::cout);
         std::cout << "\nErrors during initialization of box 2!\n" << std::endl;
         FFTW3(mpi_cleanup());
-        MPI::Finalize();
+        MPI_Finalize();
         return 1;
     }
 
@@ -316,7 +316,7 @@ int main(int argc, char *argv[]){
         if (io::messages.display(std::cout) >= io::message::error){
             // exit
             std::cout << "\nErrors during initialisation!\n" << std::endl;
-            MPI::Finalize();
+            MPI_Finalize();
             return 1;
         }
 
@@ -401,7 +401,8 @@ int main(int argc, char *argv[]){
                 // send error status to slaves
                 next_step = 0;
                 std::cout << "Telling slaves to quit." << std::endl;
-                MPI::COMM_WORLD.Bcast(&next_step, 1, MPI::INT, 0);
+                MPI_Bcast(&next_step, 1, MPI_INT, sim1.mpiControl().masterID, sim1.mpiControl().comm);
+                MPI_Bcast(&next_step, 1, MPI_INT, sim2.mpiControl().masterID, sim2.mpiControl().comm);
                 //std::cout << "\tat step " << sim1.steps() << " (time " << sim1.time() << ")\n" << std::endl;
                 // try to save the final structures...
                 break;
@@ -411,7 +412,8 @@ int main(int argc, char *argv[]){
             //std::cout << "\nMD run terminated by SIGINT (CTRL-C)." << std::endl;
 
             // tell the slaves to continue
-            MPI::COMM_WORLD.Bcast(&next_step, 1, MPI::INT, 0);
+            MPI_Bcast(&next_step, 1, MPI_INT, sim1.mpiControl().masterID, sim1.mpiControl().comm);
+            MPI_Bcast(&next_step, 1, MPI_INT, sim2.mpiControl().masterID, sim2.mpiControl().comm);
             traj1.print(topo1, conf1, sim1);
             traj2.print(topo2, conf2, sim2);
 
@@ -515,13 +517,13 @@ int main(int argc, char *argv[]){
 
         if (do_nonbonded1 && ff1 == NULL){
           std::cerr << "MPI slave: could not access forcefield 1\n\t(internal error)" << std::endl;
-          MPI::Finalize();
+          MPI_Finalize();
           return 1;
         }
 
         if (do_nonbonded2 && ff2 == NULL){
           std::cerr << "MPI slave: could not access forcefield 2\n\t(internal error)" << std::endl;
-          MPI::Finalize();
+          MPI_Finalize();
           return 1;
         }
 
@@ -530,7 +532,7 @@ int main(int argc, char *argv[]){
           std::cerr << "MPI slave: could not get NonBonded interactions from forcefield 1"
             << "\n\t(internal error)"
             << std::endl;
-          MPI::Finalize();
+          MPI_Finalize();
           return 1;
         }
 
@@ -539,7 +541,7 @@ int main(int argc, char *argv[]){
           std::cerr << "MPI slave: could not get NonBonded interactions from forcefield 2"
             << "\n\t(internal error)"
             << std::endl;
-          MPI::Finalize();
+          MPI_Finalize();
           return 1;
         }
 
@@ -555,7 +557,7 @@ int main(int argc, char *argv[]){
             std::cerr << "MPI slave: could not get Shake algorithm from MD1 sequence."
                     << "\n\t(internal error)"
                     << std::endl;
-          MPI::Finalize();
+          MPI_Finalize();
           return 1;
         }
 
@@ -565,7 +567,7 @@ int main(int argc, char *argv[]){
             std::cerr << "MPI slave: could not get Shake algorithm from MD2 sequence."
                     << "\n\t(internal error)"
                     << std::endl;
-          MPI::Finalize();
+          MPI_Finalize();
           return 1;
         }
 
@@ -584,7 +586,7 @@ int main(int argc, char *argv[]){
             std::cerr << "MPI slave: could not get M_Shake algorithm from MD1 sequence."
                     << "\n\t(internal error)"
                     << std::endl;
-          MPI::Finalize();
+          MPI_Finalize();
           return 1;
         }
 
@@ -594,7 +596,7 @@ int main(int argc, char *argv[]){
             std::cerr << "MPI slave: could not get M_Shake algorithm from MD2 sequence."
                     << "\n\t(internal error)"
                     << std::endl;
-          MPI::Finalize();
+          MPI_Finalize();
           return 1;
         }
 
@@ -608,7 +610,7 @@ int main(int argc, char *argv[]){
           std::cerr << "MPI slave: could not get Monte Carlo algorithm from MD1 sequence."
                   << "\n\t(internal error)"
                   << std:: endl;
-          MPI::Finalize();
+          MPI_Finalize();
           return 1;
         }
 
@@ -618,7 +620,7 @@ int main(int argc, char *argv[]){
           std::cerr << "MPI slave: could not get Monte Carlo algorithm from MD2 sequence."
                   << "\n\t(internal error)"
                   << std:: endl;
-          MPI::Finalize();
+          MPI_Finalize();
           return 1;
         }
 
@@ -669,7 +671,8 @@ int main(int argc, char *argv[]){
 
           //std::cout << "\t SLAVE: BC Exchange - START\n";
 
-          MPI::COMM_WORLD.Bcast(&next_step, 1, MPI::INT, 0);
+          MPI_Bcast(&next_step, 1, MPI_INT, sim1.mpiControl().masterID, sim1.mpiControl().comm);
+          MPI_Bcast(&next_step, 1, MPI_INT, sim2.mpiControl().masterID, sim2.mpiControl().comm);
 
           //std::cout << "\t SLAVE: BC Exchange - DONE\n";
 
@@ -736,7 +739,7 @@ int main(int argc, char *argv[]){
 
   // and exit...
   FFTW3(mpi_cleanup());
-  MPI::Finalize();
+  MPI_Finalize();
   return error1;
 
 #else

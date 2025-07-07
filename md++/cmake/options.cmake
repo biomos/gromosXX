@@ -15,7 +15,7 @@ option(FORCEGROUPS "enable forcegroups" OFF)
 option(HEAVISIDE "enable heaviside" OFF)
 
 # more pedantic compiler checks
-option(PENDANTIC "enable pedantic compiler checks")
+option(PEDANTIC "enable pedantic compiler checks")
 
 set(CMAKE_CXX_FLAGS "-Wall")
 set(CMAKE_CXX_FLAGS_DEBUG "-g")

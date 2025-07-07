@@ -1436,11 +1436,11 @@ bool interaction::Extended_Grid_Pairlist_Algorithm
   //DEBUG(10, "ii: " << ii << " jj: " << jj);
   //DEBUG(10, "num_solvents " << topo.num_solvents());
   
-  while(solv_i < topo.num_solvents() && ii > topo.num_solvent_atoms(solv_i)){
+  while((int)solv_i < (int)topo.num_solvents() && ii > (int)topo.num_solvent_atoms(solv_i)){
     ii -= topo.num_solvent_atoms(solv_i);
     ++solv_i;
   }
-  while(solv_j < topo.num_solvents() && jj > topo.num_solvent_atoms(solv_j)){
+  while((int)solv_j < (int)topo.num_solvents() && jj > (int)topo.num_solvent_atoms(solv_j)){
     jj -= topo.num_solvent_atoms(solv_j);
     ++solv_j;
   }

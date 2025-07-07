@@ -64,6 +64,9 @@
 #include "check_forcefield.h"
 #include "check_state.h"
 
+#ifdef XXMPI
+  #include <mpi.h>
+#endif
 #ifdef OMP
   #include <omp.h>
 #endif
@@ -91,6 +94,9 @@ void hard_coded_values(std::map<std::string, double> & m){
 
 int main(int argc, char* argv[]) {
 
+  #ifdef XXMPI
+  MPI_Init(&argc,&argv);
+  #endif
   #ifdef OMP
     //omp_set_num_threads(1);
     #pragma omp parallel

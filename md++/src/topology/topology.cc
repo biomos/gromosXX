@@ -88,6 +88,7 @@ m_sasa_third_neighbour(),
 m_sasa_higher_neighbour(),
 m_is_qm(0),
 m_is_qm_buffer(0),
+m_is_static_adaptive(0),
 m_qm_delta_charge(0),
 m_qm_atomic_number(0) {
   m_chargegroup.push_back(0);
@@ -169,14 +170,13 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
   m_chargegroup.push_back(0);
   m_stochastic.clear();
   m_lj_exceptions.clear();
-  // QMMM TEST
-  m_qm_exclusion.clear();;
-  m_qm_one_four_pair.clear();;
-  m_qm_all_exclusion.clear();;
-  m_qm_lj_exceptions.clear();;
-  // END QMMM TEST
+  m_qm_exclusion.clear();
+  m_qm_one_four_pair.clear();
+  m_qm_all_exclusion.clear();
+  m_qm_lj_exceptions.clear();
   m_is_qm.clear();
   m_is_qm_buffer.clear();
+  m_is_static_adaptive.clear();
   m_qm_delta_charge.clear();
   m_qm_atomic_number.clear();
   m_qmmm_link.clear();
@@ -230,6 +230,7 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
       m_cg_factor.push_back(topo.m_cg_factor[i]);
       m_is_qm.push_back(topo.m_is_qm[i]);
       m_is_qm_buffer.push_back(topo.m_is_qm_buffer[i]);
+      m_is_static_adaptive.push_back(topo.m_is_static_adaptive[i]);
       m_qm_delta_charge.push_back(topo.m_qm_delta_charge[i]);
       m_qm_atomic_number.push_back(topo.m_qm_atomic_number[i]);
 
@@ -263,7 +264,6 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
                 ljex_it->c6, ljex_it->c12));
       }
 
-      // QMMM TEST
       {
         topology::excl_cont_t::value_type ex;
         topology::excl_cont_t::value_type::const_iterator it = topo.m_qm_exclusion[i].begin(),
@@ -295,11 +295,6 @@ topology::Topology::Topology(topology::Topology const & topo, int mul_solute, in
                   ljex_it->c6, ljex_it->c12));
         }
       }
-      // END QMMM TEST
-
-
-
-
 
       m_atom_energy_group.push_back(topo.m_atom_energy_group[i]);
 
@@ -565,14 +560,13 @@ void topology::Topology::resize(unsigned int const atoms) {
   m_one_four_pair.resize(atoms);
   m_all_exclusion.resize(atoms);
   m_stochastic.resize(atoms);
-  //QMMM TEST
   m_qm_exclusion.resize(atoms);
   m_qm_one_four_pair.resize(atoms);
   m_qm_all_exclusion.resize(atoms);
-  // END QMMM TEST
   m_qm_atomic_number.resize(atoms, 0);
   m_is_qm.resize(atoms, 0);
   m_is_qm_buffer.resize(atoms, 0);
+  m_is_static_adaptive.resize(atoms, 0);
   m_qm_delta_charge.resize(atoms, 0);
 
   m_iac.resize(atoms);
