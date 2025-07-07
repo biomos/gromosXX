@@ -18,7 +18,7 @@ set(GROMOS_OBJECTS
     $<TARGET_OBJECTS:grorepex>
 )
 
-if(GPU_ENABLED)
+if(USE_CUDA)
     list(APPEND GROMOS_OBJECTS $<TARGET_OBJECTS:grocuda>)
 endif()
 

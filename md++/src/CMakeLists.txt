@@ -1,7 +1,7 @@
 add_subdirectory(algorithm)
 add_subdirectory(check)
 add_subdirectory(configuration)
-if(GPU_ENABLED)
+if(USE_CUDA)
     add_subdirectory(gpu)
 endif()
 add_subdirectory(interaction)
