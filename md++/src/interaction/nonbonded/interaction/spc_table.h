@@ -23,7 +23,9 @@ const unsigned int shortrange_table = 5000;
 const unsigned int longrange_table = 2000;
 const double shortrange_cutoff =  8.0000000000000e-01;
 const double longrange_cutoff =  1.4000000000000e+00;
+#ifndef NDEBUG
 const double solvent_diameter =  2.5000000000000e-01;
+#endif
 const double c12 =  2.6341290000000e-06;
 const double c6 =  2.6173460000000e-03;
 const double qOO =  6.7240000000000e-01;

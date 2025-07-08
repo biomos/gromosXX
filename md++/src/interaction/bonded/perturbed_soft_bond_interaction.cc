@@ -147,9 +147,8 @@ static int _calculate_perturbed_soft_interactions
 
     DEBUG(9, "energy: " << e);
 
-    const double K_diff = bondtypes[b_it->B_type].K -
-      bondtypes[b_it->A_type].K;
-    DEBUG(9, "K_diff: " << K_diff);
+    
+    DEBUG(9, "K_diff: " << (bondtypes[b_it->B_type].K - bondtypes[b_it->A_type].K));
     
     const double b_diff = bondtypes[b_it->B_type].r0 -
       bondtypes[b_it->A_type].r0;

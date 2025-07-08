@@ -419,7 +419,7 @@ int interaction::Gaussian_Worker::parse_forces(const simulation::Simulation& sim
                                             , std::ifstream& ofs
                                             , interaction::QM_Zone& qm_zone) const {
   std::string& out = this->param->output_file;
-  std::string& fchk = this->param->fchk_file;
+  //std::string& fchk = this->param->fchk_file;
   std::string line;
   int err = 0;
   
@@ -444,8 +444,7 @@ int interaction::Gaussian_Worker::parse_forces(const simulation::Simulation& sim
     std::set<interaction::MM_Atom>::iterator it, to;
     for(std::set<interaction::MM_Atom>::iterator
         it = qm_zone.mm.begin(), to = qm_zone.mm.end(); it != to; ++it) {
-      const int i = it->index;
-      DEBUG(15, "Parsing electric field on MM atom " << i);
+      DEBUG(15, "Parsing electric field on MM atom " << it->index);
       err = this->parse_force(ofs, it->force);
       if (err) return err;
       // We still need to multiply by charge, since here we parsed electric field only
@@ -456,9 +455,9 @@ int interaction::Gaussian_Worker::parse_forces(const simulation::Simulation& sim
         it->cos_force *= it->cos_charge;
       }
       else {
-        DEBUG(15, "Charge of atom " << i << ": " << it->charge);
+        DEBUG(15, "Charge of atom " << it->index << ": " << it->charge);
         it->force *= it->charge;
-        DEBUG(15, "stored force on MM atom " << i << ": " << math::v2s(it->force));
+        DEBUG(15, "stored force on MM atom " << it->index << ": " << math::v2s(it->force));
       }
     }
   }
