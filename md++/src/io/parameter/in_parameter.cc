@@ -5656,7 +5656,8 @@ void io::In_Parameter::read_QMMM(simulation::Parameter & param,
         param.qmmm.cutoff = fabs(cutoff);
         param.qmmm.write = write;
         if (param.qmmm.qmmm != simulation::qmmm_mechanical 
-            && param.qmmm.software == (simulation::qm_schnetv1 || simulation::qm_schnetv2))
+            && (param.qmmm.software == simulation::qm_schnetv1 ||
+                param.qmmm.software == simulation::qm_schnetv2))
             io::messages.add("QMMM block: Schnetpack NN works only with mechanical embedding scheme",
                 "io::In_Parameter",
                 io::message::error);
