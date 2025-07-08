@@ -21,16 +21,17 @@ set(GPU_HEADERS
 
 # Add GPU CUDA source files
 set(GPU_CUDA_SOURCES
-    manager/cuda_manager.tcc
-    manager/cuda_device_worker.tcc
-    manager/cuda_memory_manager.tcc
+    # manager/cuda_manager.tcc
+    # manager/cuda_device_worker.tcc
+    # manager/cuda_memory_manager.tcc
     kernels/reduction.cu
     memory/container.cu
     manager/cuda_device_worker.cu
 )
 
 # Create an object library for GPU code
-add_library(grocuda OBJECT ${GPU_SOURCES} ${GPU_CUDA_SOURCES} ${GPU_HEADERS})
+#add_library(grocuda OBJECT ${GPU_SOURCES} ${GPU_CUDA_SOURCES} ${GPU_HEADERS})
+add_library(grocuda STATIC ${GPU_SOURCES} ${GPU_CUDA_SOURCES})
 
 # Set CUDA-specific properties
 set_target_properties(grocuda PROPERTIES
@@ -46,8 +47,10 @@ target_include_directories(grocuda PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/memory
     ${PROJECT_BINARY_DIR}
     ${EXTERNAL_INCLUDES}
-    ${CUDA_INCLUDE_DIR} # Explicitly add the CUDA include directory
+    # ${CUDA_INCLUDE_DIR} # Explicitly add the CUDA include directory
 )
 
-# Link CUDA libraries
-target_link_libraries(grocuda PRIVATE cuda cudart)
+# Link CUDA runtime
+find_package(CUDAToolkit REQUIRED)
+target_link_libraries(grocuda PRIVATE CUDA::cudart)
+target_link_libraries(grocuda PRIVATE ${CUDAToolkit_LIBRARIES})
