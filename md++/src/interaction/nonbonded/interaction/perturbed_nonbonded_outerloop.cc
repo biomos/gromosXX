@@ -176,9 +176,9 @@ void interaction::Perturbed_Nonbonded_Outerloop
     to = mit->second.one_four_pair().end();
     
     for( ; it != to; ++it){
-
+      DEBUG(10,"\tstarting perturbed_one_four_interaction_innerloop with eds_perturbed_solute");
       innerloop.perturbed_one_four_interaction_innerloop
-	(topo, conf, mit->second.sequence_number(), *it, periodicity, sim);
+	(topo, conf, mit->second.sequence_number(), *it, storage, periodicity, sim);
 
     } // loop over 1,4 pairs
   } // loop over solute atoms
@@ -194,9 +194,9 @@ void interaction::Perturbed_Nonbonded_Outerloop
     tto = mitt->second.one_four_pair().end();
     
     for( ; itt != tto; ++itt){
-
+      DEBUG(10,"\tstarting perturbed_one_four_interaction_innerloop with perturbed_solute");
       innerloop.perturbed_one_four_interaction_innerloop
-	(topo, conf, mitt->second.sequence_number(), *itt, periodicity, sim);
+	(topo, conf, mitt->second.sequence_number(), *itt, storage, periodicity, sim);
 
     } // loop over 1,4 pairs
   } // loop over solute atoms
