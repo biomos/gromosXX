@@ -54,7 +54,8 @@ namespace interaction {
     /**
      * Constructor
      */
-    Grid_Cell_Pairlist();
+    Grid_Cell_Pairlist(const topology::Topology & topo,
+            const simulation::Simulation &sim);
     /**
      * Default Destructor
      */

@@ -49,7 +49,8 @@
 /**
  * Constructor
  */
-interaction::Grid_Cell_Pairlist::Grid_Cell_Pairlist() :
+interaction::Grid_Cell_Pairlist::Grid_Cell_Pairlist(const topology::Topology & topo,
+            const simulation::Simulation &sim) :
         Failing_Pairlist_Algorithm(), is_vacuum(false) {
   DEBUG(10, "Grid_Cell : Constructor");
 }
