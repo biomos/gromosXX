@@ -1891,7 +1891,7 @@ bool io::In_Configuration::_read_genbox(math::Box &box, double &phi,
     }
   }
 
-  math::boundary_enum conf_bound;
+  math::boundary_enum conf_bound = math::vacuum;
   switch(bound) {
     case -1: conf_bound = math::truncoct; break;
     case 0: conf_bound = math::vacuum; break;
@@ -2069,9 +2069,12 @@ bool io::In_Configuration::_read_box(math::Box &box, double &phi, double &theta,
   DEBUG(10, "box(0): "<< math::v2s(box(0)));
   DEBUG(10, "box(0,1): " << box(0)(1));
   //box from scratch...
+#ifndef NDEBUG
   math::Matrixl Smat = (math::smat(box, boundary));
   DEBUG(10, "Smat \n" << math::m2s(Smat));
+#endif
   return true;
+
 
 }
 
@@ -3619,8 +3622,8 @@ bool io::In_Configuration::_read_aedssearch(
   std::vector<std::string> &buffer, simulation::Simulation & sim, unsigned int last) {
   DEBUG(8, "read configuration for A-EDS parameter search simulation");
   // no title in buffer!
-  std::vector<std::string>::const_iterator it = buffer.begin(),
-    to = buffer.end() - 1;
+  std::vector<std::string>::const_iterator it = buffer.begin(); 
+	  //to = buffer.end() - 1;
   _lineStream.clear();
   _lineStream.str(*it);
   _lineStream >> sim.param().eds.emax;
@@ -3686,8 +3689,8 @@ bool io::In_Configuration::_read_gamdstat(
   std::vector<std::string> &buffer, simulation::Simulation & sim, unsigned int last) {
   DEBUG(8, "read configuration for GAMD parameter search simulation");
   // no title in buffer!
-  std::vector<std::string>::const_iterator it = buffer.begin(),
-  to = buffer.end() - 1;
+  std::vector<std::string>::const_iterator it = buffer.begin();
+  //to = buffer.end() - 1;
   _lineStream.clear();
   _lineStream.str(*it);
   _lineStream >> sim.param().gamd.stepsdone;

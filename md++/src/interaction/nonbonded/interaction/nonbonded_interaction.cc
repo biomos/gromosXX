@@ -658,9 +658,9 @@ void interaction::Nonbonded_Interaction::init_expand_configuration
         topology::Topology const & topo,
         configuration::Configuration & conf,
         simulation::Simulation & sim,
-        configuration::Configuration & exp_conf) {
-  const int mul = sim.param().multicell.x * sim.param().multicell.y * sim.param().multicell.z;
-  DEBUG(8, "\tmul=" << mul);
+        configuration::Configuration & exp_conf)
+{
+  DEBUG(8, "\tmul=" << sim.param().multicell.x * sim.param().multicell.y * sim.param().multicell.z);
 
   assert(topo.multicell_topo().num_atoms() == topo.num_atoms() * mul);
   // resize the configuration
@@ -701,8 +701,7 @@ void interaction::Nonbonded_Interaction::_expand_configuration
 
   DEBUG(7, "expanding configuration");
 
-  const int mul = sim.param().multicell.x * sim.param().multicell.y * sim.param().multicell.z;
-  DEBUG(8, "\tmul=" << mul);
+  DEBUG(8, "\tmul=" << (sim.param().multicell.x * sim.param().multicell.y * sim.param().multicell.z));
   
   math::Periodicity<b> periodicity(conf.current().box);
   periodicity.gather_molecules_into_box(conf, topo);

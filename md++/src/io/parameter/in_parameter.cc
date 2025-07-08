@@ -1625,7 +1625,7 @@ void io::In_Parameter::read_MULTIBATH(simulation::Parameter &param,
 
             // Virtual atom checks
             if ((int)param.virtualatoms.virtualatoms && (int)last >= (int)param.virtualatoms.lastatom && prev_last < (int)param.virtualatoms.lastatom){
-                if (((int)prev_last != param.virtualatoms.lastatom - (int)param.virtualatoms.numatoms) || last > (int)param.virtualatoms.lastatom){
+                if (((int)prev_last != param.virtualatoms.lastatom - (int)param.virtualatoms.numatoms) || (int)last > (int)param.virtualatoms.lastatom){
                 io::messages.add("MULTIBATH block: virtual atoms and regular atoms mixed in bath",
                                  "In_Parameter", io::message::error);
                 }
@@ -3892,7 +3892,7 @@ void io::In_Parameter::read_EDS(simulation::Parameter & param,
         block_read.insert(blockname);
 
         int eds = 0, form = 0;
-        double soft_lj = 0.0, soft_crf = 0.0;
+        //double soft_lj = 0.0, soft_crf = 0.0;
         block.get_next_parameter("EDS", eds, "", "0,1");
         block.get_next_parameter("FORM", form, "", "1,2,3");
         block.get_next_parameter("NUMSTATES", param.eds.numstates, ">=2", "");
@@ -5656,7 +5656,7 @@ void io::In_Parameter::read_QMMM(simulation::Parameter & param,
         param.qmmm.cutoff = fabs(cutoff);
         param.qmmm.write = write;
         if (param.qmmm.qmmm != simulation::qmmm_mechanical 
-            && param.qmmm.software == (simulation::qm_schnetv1 || simulation::qm_schnetv2))
+            && (param.qmmm.software == simulation::qm_schnetv1 || param.qmmm.software == simulation::qm_schnetv2))
             io::messages.add("QMMM block: Schnetpack NN works only with mechanical embedding scheme",
                 "io::In_Parameter",
                 io::message::error);

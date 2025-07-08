@@ -115,7 +115,9 @@ static int _calculate_dfunct_cycloaddition_form(topology::Topology& topo,
 	int atom_k = sim.param().dfunct.atom_k;
 	int atom_l = sim.param().dfunct.atom_l;
 	double r_0 = sim.param().dfunct.r_0;
+#ifndef NDEBUG
 	int d = sim.param().dfunct.d;
+#endif
 	double force = sim.param().dfunct.force;
 	DEBUG(10, "DFUNCT Calculating cycloaddition-type potential")
 	DEBUG(10, "DFUNCT atom_i " << atom_i << math::v2s(conf.current().pos(atom_i)));
@@ -131,12 +133,10 @@ static int _calculate_dfunct_cycloaddition_form(topology::Topology& topo,
 	// note: this procedure can be simplified as demonstrated below
 	periodicity.nearest_image(conf.current().pos(atom_j), -1.0 * conf.current().pos(atom_i), dist_vec_ji);
 	periodicity.nearest_image(conf.current().pos(atom_l), -1.0 * conf.current().pos(atom_k), dist_vec_lk);
-	double dist_ji = math::abs(dist_vec_ji);
-	double dist_lk = math::abs(dist_vec_lk);
 	DEBUG(30, "DFUNCT dist_vec_ji " << math::v2s(dist_vec_ji));
 	DEBUG(30, "DFUNCT dist_vec_lk " << math::v2s(dist_vec_lk));
-	DEBUG(30, "DFUNCT dist_ji " << dist_ji);
-	DEBUG(30, "DFUNCT dist_lk " << dist_lk);
+	DEBUG(30, "DFUNCT dist_ji " << (math::abs(dist_vec_ji)));
+	DEBUG(30, "DFUNCT dist_lk " << (math::abs(dist_vec_lk)));
 	math::Vec dist_vec_lk_halfs = 0.5 * dist_vec_lk;
 	math::Vec dist_vec_ji_halfs = 0.5 * dist_vec_ji;
 	periodicity.nearest_image(dist_vec_lk_halfs, dist_vec_ji_halfs, dist_vec_lkji);

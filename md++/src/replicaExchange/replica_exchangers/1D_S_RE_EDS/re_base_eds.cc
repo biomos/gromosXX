@@ -104,7 +104,7 @@ void re::replica_exchange_base_eds::determine_switch_probabilities(){
 void re::replica_exchange_base_eds::swap_replicas_1D(const unsigned int partnerReplicaID) {
     DEBUG(4, "replica_exchange_base_eds:replica "<<  globalThreadID <<":swap1D - S:\t  START");
     DEBUG(4, "replica_exchange_base_eds:replica "<<  globalThreadID <<":swap1D - S:\t  sim: "<< simulationID << " \t\t "<< partnerReplicaID);
-    unsigned int num_s = replica->sim.param().reeds.num_s;
+    ///unsigned int num_s = replica->sim.param().reeds.num_s;
 
     // does partner exist?
     // the one with lower ID does probability calculation
@@ -251,10 +251,11 @@ void re::replica_exchange_base_eds::setParams(){
     << pos_info.first << ", " << pos_info.second << "\n");
 
     //just to check -- theosm
+#ifndef NDEBUG
     std::pair<int, int> a = reedsParam.eds_para[simulationID].pos_info;
     DEBUG(1, "JUST TO CHECK: BASE Constructor with simulationID, reedsParam->pos_info= " << simulationID << ", "
     << a.first << ", " << a.second << "\n");
-
+#endif
     set_s();
     DEBUG(4,"replica_exchange_base_eds "<< globalThreadID <<":setParams:\t got s" << l);
 
