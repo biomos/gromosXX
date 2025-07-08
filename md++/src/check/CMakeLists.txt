@@ -1,19 +1,20 @@
 set(TEST_PROGRAM_INCLUDES
     ${PROJECT_BINARY_DIR}
-    .
-    ..
-    ../interaction
-    ../interaction/nonbonded
-    ../interaction/nonbonded/pairlist
-    ../interaction/nonbonded/interaction
-    ../interaction/bonded
-    ../interaction/forcefield
-    ../interaction/special
-    ../interaction/qmmm
-    ../topology
-    ../simulation
-    ../configuration
-    ../algorithm
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/..
+    ${CMAKE_CURRENT_SOURCE_DIR}/../interaction
+    ${CMAKE_CURRENT_SOURCE_DIR}/../interaction/nonbonded
+    ${CMAKE_CURRENT_SOURCE_DIR}/../interaction/nonbonded/pairlist
+    ${CMAKE_CURRENT_SOURCE_DIR}/../interaction/nonbonded/interaction
+    ${CMAKE_CURRENT_SOURCE_DIR}/../interaction/bonded
+    ${CMAKE_CURRENT_SOURCE_DIR}/../interaction/forcefield
+    ${CMAKE_CURRENT_SOURCE_DIR}/../interaction/special
+    ${CMAKE_CURRENT_SOURCE_DIR}/../interaction/qmmm
+    ${CMAKE_CURRENT_SOURCE_DIR}/../topology
+    ${CMAKE_CURRENT_SOURCE_DIR}/../simulation
+    ${CMAKE_CURRENT_SOURCE_DIR}/../configuration
+    ${CMAKE_CURRENT_SOURCE_DIR}/../algorithm
+    ${CMAKE_CURRENT_SOURCE_DIR}/../gpu
 )
 
 set(ALADIP_CC
@@ -69,26 +70,22 @@ set(GROMOS_OBJECTS
     $<TARGET_OBJECTS:grorepex>
 )
 
-if(CUKERNEL)
-    list(APPEND GROMOS_OBJECTS $<TARGET_OBJECTS:grocukernel>)
+if(USE_CUDA)
+    find_package(CUDAToolkit REQUIRED)
+    list(APPEND GROMOS_OBJECTS $<TARGET_OBJECTS:grocuda>)
 endif()
 
-# executables
-#set(EXEC_NAMES aladip aladip_unperturbed aladip_special aladip_atomic aladip_ls c16_cg lambdas)
 set(EXEC_NAMES aladip aladip_unperturbed aladip_special aladip_atomic c16_cg lambdas)
 
-add_executable(aladip ${ALADIP_CC} ${GROMOS_OBJECTS})
-add_executable(aladip_unperturbed ${ALADIP_UNPERTURBED_CC} ${GROMOS_OBJECTS})
-add_executable(aladip_special ${ALADIP_SPECIAL_CC} ${GROMOS_OBJECTS})
-add_executable(aladip_atomic ${ALADIP_ATOMIC_CC} ${GROMOS_OBJECTS})
-#add_executable(aladip_ls ${ALADIP_LS_CC} ${GROMOS_OBJECTS})
+add_executable(aladip ${ALADIP_CC})
+add_executable(aladip_unperturbed ${ALADIP_UNPERTURBED_CC})
+add_executable(aladip_special ${ALADIP_SPECIAL_CC})
+add_executable(aladip_atomic ${ALADIP_ATOMIC_CC})
+add_executable(c16_cg ${C16_CG_CC})
+add_executable(lambdas ${LAMBDAS_CC})
 
-add_executable(c16_cg ${C16_CG_CC} ${GROMOS_OBJECTS})
-add_executable(lambdas ${LAMBDAS_CC} ${GROMOS_OBJECTS})
-
-# links and includes for tests
 foreach(LOOP_VAR ${EXEC_NAMES})
     target_include_directories(${LOOP_VAR} PRIVATE ${TEST_PROGRAM_INCLUDES} ${EXTERNAL_INCLUDES})
-    target_link_libraries(${LOOP_VAR} ${EXTERNAL_LIBRARIES})
+    target_link_libraries(${LOOP_VAR} PRIVATE ${GROMOS_OBJECTS} ${EXTERNAL_LIBRARIES})
     add_test(NAME ${LOOP_VAR} COMMAND $<TARGET_FILE:${LOOP_VAR}>)
 endforeach()
