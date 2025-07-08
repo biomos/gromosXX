@@ -5,6 +5,8 @@
  * container implementation
  */
 
+#include "container.h"
+
 template <typename T>
 gpu::Container<T>::Container(bool persistent) :
                   dev_ptr(nullptr),

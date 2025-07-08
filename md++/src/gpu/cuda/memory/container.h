@@ -8,10 +8,12 @@
  * stored in the GPU memory
  */
 
-#ifndef INCLUDED_CUCONTAINER_H
-#define INCLUDED_CUCONTAINER_H
+#pragma once
 
-#include "utils.h"
+#include <vector>
+#include <iostream>
+#include <cassert>
+#include "../utils.h"
 
 namespace gpu {
   /**
@@ -243,6 +245,3 @@ namespace gpu {
   template <typename T>
   std::ostream& operator<<(std::ostream &os, const Container<T> &c);
 }
-
-#include "container.cu"
-#endif
