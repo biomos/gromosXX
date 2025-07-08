@@ -126,9 +126,11 @@ void re::replica_exchange_base_2d_s_eoff_eds::setParams(){
     << pos_info.first << ", " << pos_info.second << "\n");
 
     //just to check -- theosm
+#ifndef NDEBUG
     std::pair<int, int> a = reedsParam.eds_para[simulationID].pos_info;
     DEBUG(4, "JUST TO CHECK: BASE Constructor with simulationID, reedsParam->pos_info= " << simulationID << ", "
     << a.first << ", " << a.second << "\n");
+#endif
 
     set_s();
     DEBUG(4,"replica_exchange_base_2d_s_eoff_eds "<< globalThreadID <<":setParams:\t got s" << l);
@@ -207,17 +209,15 @@ void re::replica_exchange_base_2d_s_eoff_eds::determine_switch_probabilities(){
 int re::replica_exchange_base_2d_s_eoff_eds::find_partner() const {
   unsigned int num_eoff = replica->sim.param().reeds.num_eoff;
   DEBUG(3,"replica_exchange_base_2d_s_eoff_eds:find_partner: num_eoff= " << num_eoff << "\n");
-  unsigned int num_l = replica->sim.param().reeds.num_s;
+  unsigned int num_l = replica->sim.param().reeds.num_s; 
   DEBUG(3,"replica_exchange_base_2d_s_eoff_eds:find_partner: num_l= " << num_l << "\n");
-  unsigned int numT = replica->sim.param().replica.num_T;
-  DEBUG(3,"replica_exchange_base_2d_s_eoff_eds:find_partner: numT= " << numT << "\n");
-  unsigned int numReps = num_l * num_eoff;
-  DEBUG(3,"replica "<<globalThreadID<<":replica_exchange_base_2d_s_eoff_eds:find_partner: numReps= " << numReps << "\n");
+  DEBUG(3,"replica_exchange_base_2d_s_eoff_eds:find_partner: numT= " << (replica->sim.param().replica.num_T) << "\n");
+  DEBUG(3,"replica "<<globalThreadID<<":replica_exchange_base_2d_s_eoff_eds:find_partner: numReps= " << (num_l * num_eoff) << "\n");
   unsigned int ID = simulationID;
 
   unsigned int partner = ID;
   bool evenRow = (ID % num_l) % 2 == 0;//1st row is here the 0th row and therefore even!
-  bool evenCol = (ID / num_l) % 2 == 0;//1st col is here the 0th col and therefore even!
+  //bool evenCol = (ID / num_l) % 2 == 0;//1st col is here the 0th col and therefore even!
   bool numEoffeven = num_eoff % 2 == 0;//used for periodic boundary
 
 
@@ -226,13 +226,16 @@ int re::replica_exchange_base_2d_s_eoff_eds::find_partner() const {
   bool lower = ID % num_l == num_l - 1;
 
   //current s coord == j € [0, num_l -1)
+#ifndef NDEBUG
   unsigned int j = ID % num_l;
 
   //edge cases for eoff dimension
+  unsigned int numReps = num_l * num_eoff;
   bool left_edge = ID == j;
   bool right_edge = ID == (numReps - num_l + j);
   DEBUG(3,"ID, j, upper, lower, left_edge, right_edge= " << ID << ", " << j << ", " << upper << ", " << lower
   << ", " << left_edge << ", " << right_edge << "\n");
+#endif
 
 
     // determine switch direction
@@ -711,7 +714,9 @@ void re::replica_exchange_base_2d_s_eoff_eds::swap_eoff(const unsigned int partn
 double re::replica_exchange_base_2d_s_eoff_eds::calc_probability_for_eoff_exchange(const unsigned int partnerReplicaID) {
   DEBUG(4,"replica_exchange_base_2d_s_eoff_eds: CALC_PROBABILITY by ID: " << simulationID << "\n");
 
+#ifdef XXMPI
   unsigned int partnerReplicaMasterThreadID = partnerReplicaID;
+#endif
 
   double delta = 0.0;
   const double b1 = 1.0 / (math::k_Boltzmann * T);

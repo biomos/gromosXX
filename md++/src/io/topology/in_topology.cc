@@ -1728,7 +1728,7 @@ void io::In_Topology::read_block_VIRTUALATOM(topology::Topology& topo,
       //++it;
 
       int a_num, iac, num_atoms, member_atom, t;
-      util::virtual_type type;
+      util::virtual_type type = util::virtual_type::va_explicit;
       double q;
       std::vector<int> member_atoms;
 
