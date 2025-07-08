@@ -662,7 +662,7 @@ void interaction::Nonbonded_Interaction::init_expand_configuration
 {
   DEBUG(8, "\tmul=" << sim.param().multicell.x * sim.param().multicell.y * sim.param().multicell.z);
 
-  assert(topo.multicell_topo().num_atoms() == topo.num_atoms() * mul);
+  assert(topo.multicell_topo().num_atoms() == topo.num_atoms() * sim.param().multicell.x * sim.param().multicell.y * sim.param().multicell.z);
   // resize the configuration
   exp_conf.resize(topo.multicell_topo().num_atoms());
   

@@ -230,6 +230,7 @@ int re::replica_exchange_base_2d_s_eoff_eds::find_partner() const {
   unsigned int j = ID % num_l;
 
   //edge cases for eoff dimension
+  unsigned int numReps = num_l * num_eoff;
   bool left_edge = ID == j;
   bool right_edge = ID == (numReps - num_l + j);
   DEBUG(3,"ID, j, upper, lower, left_edge, right_edge= " << ID << ", " << j << ", " << upper << ", " << lower
