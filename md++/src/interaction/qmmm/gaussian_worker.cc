@@ -444,7 +444,6 @@ int interaction::Gaussian_Worker::parse_forces(const simulation::Simulation& sim
     std::set<interaction::MM_Atom>::iterator it, to;
     for(std::set<interaction::MM_Atom>::iterator
         it = qm_zone.mm.begin(), to = qm_zone.mm.end(); it != to; ++it) {
-      const int i = it->index;
       DEBUG(15, "Parsing electric field on MM atom " << i);
       err = this->parse_force(ofs, it->force);
       if (err) return err;
@@ -456,9 +455,9 @@ int interaction::Gaussian_Worker::parse_forces(const simulation::Simulation& sim
         it->cos_force *= it->cos_charge;
       }
       else {
-        DEBUG(15, "Charge of atom " << i << ": " << it->charge);
+        DEBUG(15, "Charge of atom " << it->index << ": " << it->charge);
         it->force *= it->charge;
-        DEBUG(15, "stored force on MM atom " << i << ": " << math::v2s(it->force));
+        DEBUG(15, "stored force on MM atom " << it->index << ": " << math::v2s(it->force));
       }
     }
   }
@@ -467,7 +466,7 @@ int interaction::Gaussian_Worker::parse_forces(const simulation::Simulation& sim
     DEBUG(15, "Parsing forces on QM atoms from the formatted checkpoint file");
     // Find QM forces - from the checkpoint file
     std::ifstream fchkfs;
-    int err = this->open_output(fchkfs, this->param->fchk_file);
+    int err = this->open_output(fchkfs, fchk);
     if (err) return err;
     while (std::getline(fchkfs, line)) {
       if (line.find("Cartesian Gradient") != std::string::npos) {
@@ -476,7 +475,7 @@ int interaction::Gaussian_Worker::parse_forces(const simulation::Simulation& sim
       }
     }
     if (!got_qm_forces) {
-      io::messages.add("Unable to find QM forces in formatted checkpoint file " + this->param->fchk_file,
+      io::messages.add("Unable to find QM forces in formatted checkpoint file " + fchk,
                           this->name(), io::message::error);
       return 1;
     }
@@ -488,7 +487,7 @@ int interaction::Gaussian_Worker::parse_forces(const simulation::Simulation& sim
     // Assert correct size
     if (num_values != 3 * (qm_zone.qm.size() + qm_zone.link.size())) {
       io::messages.add("Number of cartesian gradients in formatted checkpoint file do not match"
-                                  + this->param->fchk_file,
+                                  + fchk,
                           this->name(), io::message::error);
       return 1;
     }
@@ -512,7 +511,7 @@ int interaction::Gaussian_Worker::parse_forces(const simulation::Simulation& sim
     }
     if (fchkfs.fail()) {
       std::ostringstream msg;
-      msg << "Failed to parse forces in " << this->param->fchk_file;
+      msg << "Failed to parse forces in " << fchk;
       io::messages.add(msg.str(), this->name(), io::message::error);
       return 1;
     }
