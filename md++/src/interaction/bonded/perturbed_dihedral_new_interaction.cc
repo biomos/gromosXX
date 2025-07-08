@@ -135,11 +135,10 @@ static int _calculate_perturbed_dihedral_new_interactions
     // first state A 
    
     double     K = topo.dihedral_types()[d_it->A_type].K;
-    double cosdelta = topo.dihedral_types()[d_it->A_type].cospd;
     double delta = topo.dihedral_types()[d_it->A_type].pd;
     double m = topo.dihedral_types()[d_it->A_type].m;
     
-    DEBUG(10, "dihedral K=" << K << "cos delta=" << cosdelta);
+    DEBUG(10, "dihedral K=" << K << "cos delta=" << (topo.dihedral_types()[d_it->A_type].cospd));
 
     double ki = K * m * sin(m*phi - delta);
     double kl =  -ki;
@@ -156,10 +155,9 @@ static int _calculate_perturbed_dihedral_new_interactions
     // then state B 
     K = topo.dihedral_types()[d_it->B_type].K;
     delta = topo.dihedral_types()[d_it->B_type].pd;
-    cosdelta = topo.dihedral_types()[d_it->B_type].cospd;
     m = topo.dihedral_types()[d_it->B_type].m;
     
-    DEBUG(10, "dihedral K=" << K << "cos delta=" << cosdelta);
+    DEBUG(10, "dihedral K=" << K << "cos delta=" << (topo.dihedral_types()[d_it->B_type].cospd));
 
     ki = K * m * sin(m*phi - delta);
     kl =  -ki;

@@ -73,9 +73,9 @@ re::replica_exchange_base_interface::replica_exchange_base_interface(io::Argumen
                                                    unsigned int globalThreadID,
                                                    replica_graph_control &replicaGraphMPIControl,
                                                    simulation::MpiControl &replica_mpi_control) :
-        args(_args), rng(-1), cont(cont),
-        globalThreadID(globalThreadID), simulationID(replica_mpi_control.simulationID),
-        m_replicaGraphMPIControl(replicaGraphMPIControl)
+        m_replicaGraphMPIControl(replicaGraphMPIControl), 
+	args(_args), rng(-1), cont(cont),
+        globalThreadID(globalThreadID), simulationID(replica_mpi_control.simulationID)
 {
 #ifdef XXMPI
   DEBUG(3,"replica_exchange_base_interface "<< globalThreadID <<":Constructor:\t START ");\

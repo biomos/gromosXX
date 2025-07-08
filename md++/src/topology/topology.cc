@@ -1514,7 +1514,9 @@ void topology::Topology::update_chargegroup_exclusion() {
 }
 
 void topology::Topology::update_all_exclusion() {
-  const unsigned size = m_all_exclusion.size();
+#ifndef NDEBUG
+  const unsigned int size = m_all_exclusion.size();
+#endif
   const unsigned n_atoms = num_atoms();
   assert(size == n_atoms
       && size == m_exclusion.size()

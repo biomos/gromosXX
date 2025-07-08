@@ -123,6 +123,10 @@ static int _calculate_improper_interactions(topology::Topology & topo,
     const double K  = param[i_it->type].K;
     const double q0 = param[i_it->type].q0;
 
+    // bring q to the interval q0 - 180 < q < q0 + 180
+    while(q < (q0-math::Pi)){ q += 2 * math::Pi;}
+    while(q > (q0+math::Pi)){ q -= 2 * math::Pi;}
+
     double ki = -K * (q - q0) * dkj;
 	double kl = -ki;
 	if ( dmj2 < ( (1.0e-10 * dkj2))){

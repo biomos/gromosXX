@@ -118,8 +118,7 @@ static int _calculate_angle_restraint_interactions
     double cost0 = it->cost;
     DEBUG(9, "theta=" << 180 * theta / math::Pi << " theta0=" << 180 * it->theta / math::Pi);
 
-    double delta_theta = theta - it->theta;
-    DEBUG(9, "delta_theta=" << 180 * delta_theta / math::Pi);
+    DEBUG(9, "delta_theta=" << 180 * (theta - it->theta) / math::Pi);
     double delta_cost = cost - cost0;
 
     double K = sim.param().angrest.K;

@@ -144,6 +144,10 @@ static int _calculate_perturbed_improper_interactions
     
     DEBUG(10, "K=" << K << " q0=" << q0 );
 
+    // bring q to the interval q0 - 180 < q < q0 + 180
+    while(q < (q0-math::Pi)){ q += 2 * math::Pi;}
+    while(q > (q0+math::Pi)){ q -= 2 * math::Pi;}
+
     const double ki = -K * (q - q0) * dkj / dmj2;
     const double kl = K * (q - q0) * dkj / dnk2;
     const double kj1 = dot(rij, rkj) / dkj2 - 1.0;
