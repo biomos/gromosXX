@@ -312,8 +312,6 @@ t_interaction_spec, t_perturbation_details>
             //              A_de_LJ, B_de_lj, A_de_crf, B_de_crf
             //---------------------------------------------------------
 
-            // TODO: could add another parameter, to only calculate every x steps
-            // if nr_lambdas > 1, we apply extended TI 
             if (sim.param().precalclam.nr_lambdas && ((sim.steps()  % sim.param().write.free_energy) == 0)){
               DEBUG(8, "precalculate lj_crf_soft");
               double A_e_lj = 0.0, B_e_lj = 0.0, A_e_crf = 0.0, B_e_crf = 0.0,
@@ -343,10 +341,6 @@ t_interaction_spec, t_perturbation_details>
                    "\n  storage.energies.A_lj_energy.size() " << storage.energies.A_lj_energy.size()
                    << "\n  energy group1 " << topo.atom_energy_group(i) << " energy group2 " 
                    << topo.atom_energy_group(j));
-              //            assert(storage.energies.A_lj_energy.size() > lam_index);
-              //            assert(storage.energies.A_lj_energy[lam_index].size() > topo.atom_energy_group(i));
-              //            assert(storage.energies.A_lj_energy[lam_index][topo.atom_energy_group(i)].size() 
-              //                     > topo.atom_energy_group(j));
 
               storage.energies.A_lj_energy[lam_index][topo.atom_energy_group(i)]
                     [topo.atom_energy_group(j)] += A_e_lj;
@@ -550,8 +544,6 @@ t_interaction_spec, t_perturbation_details>
             //              A_de_LJ, B_de_lj, A_de_crf, B_de_crf
             //---------------------------------------------------------
 
-            // TODO: could add another parameter, to only calculate every x steps
-            // if nr_lambdas > 1, we apply extended TI 
             if (sim.param().precalclam.nr_lambdas && ((sim.steps()  % sim.param().write.free_energy) == 0)){
               DEBUG(8, "precalculate lj_crf_soft");
               double A_e_lj = 0.0, B_e_lj = 0.0, A_e_crf = 0.0, B_e_crf = 0.0,
@@ -581,10 +573,6 @@ t_interaction_spec, t_perturbation_details>
                    "\n  storage.energies.A_lj_energy.size() " << storage.energies.A_lj_energy.size()
                    << "\n  energy group1 " << topo.atom_energy_group(i) << " energy group2 " 
                    << topo.atom_energy_group(j));
-                //            assert(storage.energies.A_lj_energy.size() > lam_index);
-                //            assert(storage.energies.A_lj_energy[lam_index].size() > topo.atom_energy_group(i));
-                //            assert(storage.energies.A_lj_energy[lam_index][topo.atom_energy_group(i)].size() 
-                //                     > topo.atom_energy_group(j));
 
                 storage.energies.A_lj_energy[lam_index][topo.atom_energy_group(i)]
                     [topo.atom_energy_group(j)] += A_e_lj;
@@ -2192,8 +2180,6 @@ t_interaction_spec, t_perturbation_details>
             //              A_de_LJ, B_de_lj, A_de_crf, B_de_crf
             //---------------------------------------------------------
 
-            // TODO: could add another parameter, to only calculate every x steps
-            // if nr_lambdas > 1, we apply extended TI 
             if (sim.param().precalclam.nr_lambdas && ((sim.steps()  % sim.param().write.free_energy) == 0)){
               DEBUG(8, "precalculate lj_crf_soft");
               double A_e_lj = 0.0, B_e_lj = 0.0, A_e_crf = 0.0, B_e_crf = 0.0,
@@ -2223,10 +2209,6 @@ t_interaction_spec, t_perturbation_details>
                    "\n  storage.energies.A_lj_energy.size() " << storage.energies.A_lj_energy.size()
                    << "\n  energy group1 " << topo.atom_energy_group(i) << " energy group2 " 
                    << topo.atom_energy_group(j));
-              //            assert(storage.energies.A_lj_energy.size() > lam_index);
-              //            assert(storage.energies.A_lj_energy[lam_index].size() > topo.atom_energy_group(i));
-              //            assert(storage.energies.A_lj_energy[lam_index][topo.atom_energy_group(i)].size() 
-              //                     > topo.atom_energy_group(j));
 
               storage.energies.A_lj_energy[lam_index][topo.atom_energy_group(i)]
                     [topo.atom_energy_group(j)] += A_e_lj;
@@ -2422,8 +2404,6 @@ t_interaction_spec, t_perturbation_details>
             //              A_de_LJ, B_de_lj, A_de_crf, B_de_crf
             //---------------------------------------------------------
 
-            // TODO: could add another parameter, to only calculate every x steps
-            // if nr_lambdas > 1, we apply extended TI 
             if (sim.param().precalclam.nr_lambdas && ((sim.steps()  % sim.param().write.free_energy) == 0)){
               DEBUG(8, "precalculate lj_crf_soft");
               double A_e_lj = 0.0, B_e_lj = 0.0, A_e_crf = 0.0, B_e_crf = 0.0,
@@ -2453,10 +2433,6 @@ t_interaction_spec, t_perturbation_details>
                    "\n  storage.energies.A_lj_energy.size() " << storage.energies.A_lj_energy.size()
                    << "\n  energy group1 " << topo.atom_energy_group(i) << " energy group2 " 
                    << topo.atom_energy_group(j));
-                //            assert(storage.energies.A_lj_energy.size() > lam_index);
-                //            assert(storage.energies.A_lj_energy[lam_index].size() > topo.atom_energy_group(i));
-                //            assert(storage.energies.A_lj_energy[lam_index][topo.atom_energy_group(i)].size() 
-                //                     > topo.atom_energy_group(j));
 
                 storage.energies.A_lj_energy[lam_index][topo.atom_energy_group(i)]
                     [topo.atom_energy_group(j)] += A_e_lj;
