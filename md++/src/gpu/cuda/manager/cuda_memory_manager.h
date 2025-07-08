@@ -4,84 +4,118 @@
 #include <stdexcept>
 #include <string>
 
-/**
- * @class CudaMemoryManager
- * @brief Handles memory allocation, deallocation, and data transfers for CUDA.
- *
- * The CudaMemoryManager class provides a high-level interface for managing memory
- * on the GPU and transferring data between the host and device. It abstracts away
- * low-level CUDA memory management functions and ensures proper error handling.
- */
-class CudaMemoryManager {
-public:
+namespace gpu {
     /**
-     * @brief Allocate memory on the GPU.
-     * @tparam T The type of the data to allocate.
-     * @param size The number of elements to allocate.
-     * @return A pointer to the allocated device memory.
-     * @throws std::bad_alloc if the allocation fails.
+     * @class CudaMemoryManager
+     * @brief Handles memory allocation, deallocation, and data transfers for CUDA devices.
+     *
+     * The CudaMemoryManager class provides a high-level interface for managing memory on CUDA devices.
+     * It abstracts low-level CUDA memory operations and ensures efficient and error-resilient memory management.
      */
-    template <typename T>
-    T* allocate_device_memory(size_t size);
+    class CudaMemoryManager {
+    public:
+        /**
+         * @brief Constructor for CudaMemoryManager.
+         */
+        CudaMemoryManager();
 
-    /**
-     * @brief Free memory on the GPU.
-     * @tparam T The type of the data to free.
-     * @param ptr A pointer to the device memory to free.
-     */
-    template <typename T>
-    void free_device_memory(T* ptr);
+        /**
+         * @brief Destructor for CudaMemoryManager.
+         */
+        ~CudaMemoryManager();
 
-    /**
-     * @brief Allocate pinned (page-locked) memory on the host.
-     * @tparam T The type of the data to allocate.
-     * @param size The number of elements to allocate.
-     * @return A pointer to the allocated host memory.
-     * @throws std::bad_alloc if the allocation fails.
-     */
-    template <typename T>
-    T* allocate_host_memory(size_t size);
+        /**
+         * @brief Allocate memory on the device.
+         * @param size The size of the memory to allocate in bytes.
+         * @return A pointer to the allocated device memory.
+         * @throws std::runtime_error if memory allocation fails.
+         */
+        void* allocate_device_memory(size_t size);
 
-    /**
-     * @brief Free pinned (page-locked) memory on the host.
-     * @tparam T The type of the data to free.
-     * @param ptr A pointer to the host memory to free.
-     */
-    template <typename T>
-    void free_host_memory(T* ptr);
+        /**
+         * @brief Free memory on the device.
+         * @param device_ptr A pointer to the device memory to free.
+         * @throws std::runtime_error if memory deallocation fails.
+         */
+        void free_device_memory(void* device_ptr);
 
-    /**
-     * @brief Copy data from the host to the device.
-     * @tparam T The type of the data to copy.
-     * @param device_ptr A pointer to the destination device memory.
-     * @param host_ptr A pointer to the source host memory.
-     * @param size The number of elements to copy.
-     * @param stream The CUDA stream to use for the transfer (default: 0).
-     */
-    template <typename T>
-    void copy_to_device(T* device_ptr, const T* host_ptr, size_t size, cudaStream_t stream = 0);
+        /**
+         * @brief Allocate pinned host memory.
+         * @param size The size of the memory to allocate in bytes.
+         * @return A pointer to the allocated pinned host memory.
+         * @throws std::runtime_error if memory allocation fails.
+         */
+        void* allocate_pinned_memory(size_t size);
 
-    /**
-     * @brief Copy data from the device to the host.
-     * @tparam T The type of the data to copy.
-     * @param host_ptr A pointer to the destination host memory.
-     * @param device_ptr A pointer to the source device memory.
-     * @param size The number of elements to copy.
-     * @param stream The CUDA stream to use for the transfer (default: 0).
-     */
-    template <typename T>
-    void copy_to_host(T* host_ptr, const T* device_ptr, size_t size, cudaStream_t stream = 0);
+        /**
+         * @brief Free pinned host memory.
+         * @param host_ptr A pointer to the pinned host memory to free.
+         * @throws std::runtime_error if memory deallocation fails.
+         */
+        void free_pinned_memory(void* host_ptr);
 
-    /**
-     * @brief Copy data from one device memory location to another.
-     * @tparam T The type of the data to copy.
-     * @param dest_ptr A pointer to the destination device memory.
-     * @param src_ptr A pointer to the source device memory.
-     * @param size The number of elements to copy.
-     * @param stream The CUDA stream to use for the transfer (default: 0).
-     */
-    template <typename T>
-    void copy_device_to_device(T* dest_ptr, const T* src_ptr, size_t size, cudaStream_t stream = 0);
-};
+        /**
+         * @brief Copy data from host to device.
+         * @param device_ptr A pointer to the destination device memory.
+         * @param host_ptr A pointer to the source host memory.
+         * @param size The size of the data to copy in bytes.
+         * @throws std::runtime_error if the copy operation fails.
+         */
+        void copy_to_device(void* device_ptr, const void* host_ptr, size_t size);
 
-#include "cuda_memory_manager.tcc" // Include template implementations
+        /**
+         * @brief Copy data from device to host.
+         * @param host_ptr A pointer to the destination host memory.
+         * @param device_ptr A pointer to the source device memory.
+         * @param size The size of the data to copy in bytes.
+         * @throws std::runtime_error if the copy operation fails.
+         */
+        void copy_to_host(void* host_ptr, const void* device_ptr, size_t size);
+
+        /**
+         * @brief Copy data between two device memory locations.
+         * @param dest_device_ptr A pointer to the destination device memory.
+         * @param src_device_ptr A pointer to the source device memory.
+         * @param size The size of the data to copy in bytes.
+         * @throws std::runtime_error if the copy operation fails.
+         */
+        void copy_device_to_device(void* dest_device_ptr, const void* src_device_ptr, size_t size);
+
+        /**
+         * @brief Perform an asynchronous copy from host to device.
+         * @param device_ptr A pointer to the destination device memory.
+         * @param host_ptr A pointer to the source host memory.
+         * @param size The size of the data to copy in bytes.
+         * @param stream The CUDA stream to use for the asynchronous copy.
+         * @throws std::runtime_error if the copy operation fails.
+         */
+        void async_copy_to_device(void* device_ptr, const void* host_ptr, size_t size, cudaStream_t stream);
+
+        /**
+         * @brief Perform an asynchronous copy from device to host.
+         * @param host_ptr A pointer to the destination host memory.
+         * @param device_ptr A pointer to the source device memory.
+         * @param size The size of the data to copy in bytes.
+         * @param stream The CUDA stream to use for the asynchronous copy.
+         * @throws std::runtime_error if the copy operation fails.
+         */
+        void async_copy_to_host(void* host_ptr, const void* device_ptr, size_t size, cudaStream_t stream);
+
+        /**
+         * @brief Query the available and total memory on the device.
+         * @param free_memory A reference to store the available memory in bytes.
+         * @param total_memory A reference to store the total memory in bytes.
+         * @throws std::runtime_error if the query operation fails.
+         */
+        void query_memory(size_t& free_memory, size_t& total_memory) const;
+
+    private:
+        /**
+         * @brief Check the result of a CUDA operation and throw an exception if it failed.
+         * @param result The result of the CUDA operation.
+         * @param message A message to include in the exception if the operation failed.
+         * @throws std::runtime_error if the CUDA operation failed.
+         */
+        void check_cuda_error(cudaError_t result, const std::string& message) const;
+    };
+}

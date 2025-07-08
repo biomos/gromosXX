@@ -1,7 +1,9 @@
 # Add GPU source files
 set(GPU_SOURCES
+    manager/cuda_manager.cc
     manager/cuda_device_worker.cc
     manager/cuda_device_manager.cc
+    manager/cuda_memory_manager.cc
 )
 
 # Add GPU header files (for clarity, not compiled directly)

@@ -4,11 +4,12 @@
  * CUDA transparent version of std::vector
  */
 
-#ifndef INCLUDED_CUVECTOR_H
-#define INCLUDED_CUVECTOR_H
+#pragma once
+
+
 
 #include "cumallocator.h"
-#include "math/gmath.h"
+#include "../../../math/gmath.h"
 
 namespace gpu
 {
@@ -38,5 +39,3 @@ namespace math
      */
     typedef VArrayT<double3, gpu::CuMallocator > CuD3VArray;
 }
-
-#endif

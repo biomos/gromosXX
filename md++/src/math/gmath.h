@@ -26,6 +26,11 @@
 #ifndef INCLUDED_MATH_H
 #define INCLUDED_MATH_H
 
+#include <cassert>
+#include <sstream>
+#include <iomanip>
+#include <cmath>
+
 // #include <blitz/blitz.h>
 // #include <blitz/array.h>
 // #include <blitz/tinyvec-et.h>

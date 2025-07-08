@@ -15,6 +15,8 @@ set(TEST_PROGRAM_INCLUDES
     ${CMAKE_CURRENT_SOURCE_DIR}/../configuration
     ${CMAKE_CURRENT_SOURCE_DIR}/../algorithm
     ${CMAKE_CURRENT_SOURCE_DIR}/../gpu
+    ${CMAKE_CURRENT_SOURCE_DIR}/../gpu/cuda
+    
 )
 
 set(ALADIP_CC
@@ -72,15 +74,18 @@ set(GROMOS_OBJECTS
 
 if(USE_CUDA)
     find_package(CUDAToolkit REQUIRED)
-    list(APPEND GROMOS_OBJECTS $<TARGET_OBJECTS:grocuda>)
+    list(APPEND GROMOS_OBJECTS grocuda)
 endif()
 
+# executables
+#set(EXEC_NAMES aladip aladip_unperturbed aladip_special aladip_atomic aladip_ls c16_cg lambdas)
 set(EXEC_NAMES aladip aladip_unperturbed aladip_special aladip_atomic c16_cg lambdas)
 
 add_executable(aladip ${ALADIP_CC})
 add_executable(aladip_unperturbed ${ALADIP_UNPERTURBED_CC})
 add_executable(aladip_special ${ALADIP_SPECIAL_CC})
 add_executable(aladip_atomic ${ALADIP_ATOMIC_CC})
+#add_executable(aladip_ls ${ALADIP_LS_CC})
 add_executable(c16_cg ${C16_CG_CC})
 add_executable(lambdas ${LAMBDAS_CC})
 

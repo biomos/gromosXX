@@ -3,11 +3,11 @@
 #include <memory>
 #include <vector>
 #include <unordered_map>
+#include <stdexcept>
 #include "cuda_device_manager.h"
 #include "cuda_device_worker.h"
 #include "cuda_memory_manager.h"
 #include "../memory/cuvector.h"
-
 
 namespace gpu {
     /**
@@ -33,6 +33,7 @@ namespace gpu {
         /**
          * @brief Initialize the CUDA environment and select devices.
          * @param device_ids A vector of device IDs to use. If empty, all available devices are used.
+         * @throws std::runtime_error if no devices are available or initialization fails.
          */
         void initialize(const std::vector<int>& device_ids = {});
 
@@ -46,8 +47,21 @@ namespace gpu {
          * @brief Get the CUDA stream for a specific device.
          * @param device_id The ID of the device.
          * @return The CUDA stream for the specified device.
+         * @throws std::invalid_argument if the device ID is invalid.
          */
         cudaStream_t get_stream(int device_id) const;
+
+        /**
+         * @brief Synchronize all devices.
+         */
+        void synchronize_all();
+
+        /**
+         * @brief Synchronize a specific device.
+         * @param device_id The ID of the device to synchronize.
+         * @throws std::invalid_argument if the device ID is invalid.
+         */
+        void synchronize_device(int device_id);
 
         /**
          * @brief Create a cuvector for managing device memory on a specific GPU.
@@ -55,6 +69,8 @@ namespace gpu {
          * @param device_id The ID of the device.
          * @param size The number of elements to allocate.
          * @return A cuvector of the specified size.
+         * @throws std::invalid_argument if the device ID is invalid.
+         * @throws std::runtime_error if memory allocation fails.
          */
         template <typename T>
         cuvector<T> create_cuvector(int device_id, size_t size);
@@ -65,6 +81,8 @@ namespace gpu {
          * @param device_id The ID of the device.
          * @param device_vector The cuvector on the device.
          * @param host_vector The host vector containing the data.
+         * @throws std::invalid_argument if the device ID is invalid.
+         * @throws std::runtime_error if the copy operation fails.
          */
         template <typename T>
         void copy_to_device(int device_id, cuvector<T>& device_vector, const std::vector<T>& host_vector);
@@ -75,16 +93,26 @@ namespace gpu {
          * @param device_id The ID of the device.
          * @param host_vector The host vector to receive the data.
          * @param device_vector The cuvector on the device.
+         * @throws std::invalid_argument if the device ID is invalid.
+         * @throws std::runtime_error if the copy operation fails.
          */
         template <typename T>
         void copy_to_host(int device_id, std::vector<T>& host_vector, const cuvector<T>& device_vector);
 
         /**
-         * @brief Synchronize all devices.
+         * @brief Get a human-readable description of all active devices.
+         * @return A vector of strings describing the active devices.
          */
-        void synchronize_all();
+        std::vector<std::string> get_active_device_descriptions() const;
 
     private:
+        /**
+         * @brief Validate a device ID.
+         * @param device_id The ID of the device to validate.
+         * @throws std::invalid_argument if the device ID is invalid.
+         */
+        void validate_device_id(int device_id) const;
+
         std::unique_ptr<CudaDeviceManager> device_manager_; ///< Manages CUDA devices.
         std::unordered_map<int, std::unique_ptr<CudaDeviceWorker>> device_workers_; ///< Workers for each active device.
         CudaMemoryManager memory_manager_; ///< Handles memory allocation and transfers.

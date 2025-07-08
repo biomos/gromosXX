@@ -75,6 +75,10 @@
 #include "../algorithm/integration/steepest_descent.h"
 #include "../algorithm/integration/conjugate_gradient.h"
 
+#ifdef USE_CUDA
+  #include "../cuda/cuda_manager.h"
+#endif
+
 #include "../io/print_block.h"
 
 #include "../algorithm/create_md_sequence.h"
@@ -105,6 +109,8 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
   if (sim.param().multigradient.multigradient) {
     md_seq.push_back(new algorithm::Multi_Gradient());
   }
+
+  gpu::CudaManager cm;
 
   // center of mass motion printing / removal
   if (sim.param().centreofmass.skip_step ||
