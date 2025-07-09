@@ -71,17 +71,18 @@
 #include "../algorithm/constraints/create_constraints.h"
 #include "../algorithm/constraints/remove_com_motion.h"
 
+#include "gpu/cuda/manager/cuda_manager.h"
+#include "algorithm/constraints/remove_com_motion_gpu.h"
+
 #include "../algorithm/integration/slow_growth.h"
 #include "../algorithm/integration/steepest_descent.h"
 #include "../algorithm/integration/conjugate_gradient.h"
 
-#ifdef USE_CUDA
-  #include "../cuda/cuda_manager.h"
-#endif
 
 #include "../io/print_block.h"
 
 #include "../algorithm/create_md_sequence.h"
+
 
 
 #undef MODULE
@@ -110,7 +111,10 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
     md_seq.push_back(new algorithm::Multi_Gradient());
   }
 
+  // initialize the CudaManager
+  // if user asks for CUDA acceleration, we call CUDA-capable variants wherever possible
   gpu::CudaManager cm;
+  cm.initialize();
 
   // center of mass motion printing / removal
   if (sim.param().centreofmass.skip_step ||
@@ -123,6 +127,11 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
             new algorithm::Remove_COM_Motion(os);
       
           md_seq.push_back(rcom);
+
+          algorithm::Remove_COM_Motion_GPU * rcom_gpu =
+            new algorithm::Remove_COM_Motion_GPU(cm, os);
+          md_seq.push_back(rcom_gpu);
+      
       }
   }
   

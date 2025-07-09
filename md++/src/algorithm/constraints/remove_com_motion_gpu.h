@@ -19,18 +19,18 @@
  */
 
 /**
- * @file remove_com_motion.h
- * remove center of mass translational and angular momentum
+ * @file remove_com_motion_gpu.h
+ * remove center of mass translational and angular momentum (GPU variant)
  */
 
-#ifndef INCLUDED_REMOVE_COM_MOTION_H
-#define INCLUDED_REMOVE_COM_MOTION_H
+#pragma once
+
 
 namespace algorithm
 {
   /**
-   * @class Remove_COM_Motion
-   * implements centre of mass motion removal
+   * @class Remove_COM_Motion_GPU
+   * implements GPU variant of centre of mass motion removal
    * input switches determine whether to remove
    * translational or angular centre of mass
    * momentum (or both).
@@ -38,25 +38,23 @@ namespace algorithm
    * translational centre of mass motion is
    * removed.
    * It is recommended to remove it at every step.
-   *
-   * @todo check if there is a Gromos96 bug in cenmas.
-   * seems like absolute positions instead of
-   * relative to centre of mass are taken in
-   * angular momentum calculation.
    */
-  class Remove_COM_Motion : public Algorithm
+  class Remove_COM_Motion_GPU : public Remove_COM_Motion
   {
   public:
     /**
      * Constructor.
      */
-    Remove_COM_Motion(std::ostream & os = std::cout,
-                      const std::string& name = "RemoveCOMMotion") : Algorithm(name), os(os) {}
+    Remove_COM_Motion_GPU(gpu::CudaManager& cuda_manager,
+                          std::ostream & os = std::cout,
+                          const std::string& name = "RemoveCOMMotion") : Remove_COM_Motion(os, "RemoveCOMMotionGPU"),
+                                                            os(os),
+                                                            cuda_manager_(cuda_manager) {}
 
     /**
      * Destructor.
      */
-    virtual ~Remove_COM_Motion() {}
+    virtual ~Remove_COM_Motion_GPU() {}
     
     /**
      * apply COM removal.
@@ -101,8 +99,7 @@ namespace algorithm
 
   protected:
     std::ostream & os;
+    gpu::CudaManager& cuda_manager_;
   };
   
 } //algorithm
-
-#endif
