@@ -4,27 +4,27 @@ SCRIPT=$PWD/gromos_dockerfile_generator.py
 
 gitlab_project_tag=gromosx.boku.ac.at:5005/gromos/gromosxx/
 
+#args[${#args[@]}]="--ubuntu 24.04"
 #args[${#args[@]}]="--ubuntu 22.04"
 #args[${#args[@]}]="--ubuntu 20.04"
-#args[${#args[@]}]="--ubuntu 18.04"
-#args[${#args[@]}]="--ubuntu 16.04"
+#args[${#args[@]}]="--ubuntu 24.04 --llvm"
 #args[${#args[@]}]="--ubuntu 22.04 --llvm"
 #args[${#args[@]}]="--ubuntu 20.04 --llvm"
-#args[${#args[@]}]="--ubuntu 18.04 --llvm"
-#args[${#args[@]}]="--ubuntu 16.04 --llvm"
+#args[${#args[@]}]="--ubuntu 24.04 --mpi"
 #args[${#args[@]}]="--ubuntu 22.04 --mpi"
-args[${#args[@]}]="--ubuntu 20.04 --mpi"
-#args[${#args[@]}]="--ubuntu 18.04 --mpi"
-#args[${#args[@]}]="--ubuntu 16.04 --mpi"
-args[${#args[@]}]="--ubuntu 20.04 --cuda 11.6.1"
-#args[${#args[@]}]="--ubuntu 20.04 --cuda 11.4.1"
-#args[${#args[@]}]="--ubuntu 16.04 --cuda 10.2"
+#args[${#args[@]}]="--ubuntu 20.04 --mpi"
+#args[${#args[@]}]="--ubuntu 24.04 --cuda"
+#args[${#args[@]}]="--ubuntu 22.04 --cuda"
+#args[${#args[@]}]="--ubuntu 20.04 --cuda"
+#args[${#args[@]}]="--debian 12"
 #args[${#args[@]}]="--debian 11"
 #args[${#args[@]}]="--debian 10"
-#args[${#args[@]}]="--debian 9"
+#args[${#args[@]}]="--debian 12 --mpi"  #this one for MPI
 #args[${#args[@]}]="--debian 11 --mpi"
 #args[${#args[@]}]="--debian 10 --mpi"
-#args[${#args[@]}]="--debian 9 --mpi"
+args[${#args[@]}]="--debian 12 --cuda"  #this one for CUDA
+#args[${#args[@]}]="--debian 11 --cuda"
+#args[${#args[@]}]="--debian 10 --cuda"
 
 
 for arg_string in "${args[@]}"; do
