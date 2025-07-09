@@ -2,25 +2,28 @@ cmake_minimum_required(VERSION 3.13)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# Enable GPU support quietly if CUDA is available
+# Project definition (single source of truth)
+project(gromosXX LANGUAGES CXX)
 
+# Set standards
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+# Allow user to choose CUDA
 option(USE_CUDA "Enable CUDA support" OFF)
 
 if(USE_CUDA)
-    project(gromosXX LANGUAGES CXX CUDA)
     enable_language(CUDA)
     set(CMAKE_CUDA_STANDARD 17)
     set(CMAKE_CUDA_STANDARD_REQUIRED ON)
     set(CMAKE_CUDA_SEPARABLE_COMPILATION ON)
     set(CMAKE_CUDA_ARCHITECTURES "60;62;70;75;80;86")
+    add_compile_definitions(USE_CUDA)
+    message(STATUS "CUDA support enabled")
 else()
-    project(gromosXX LANGUAGES CXX)
     message(WARNING "CUDA support disabled. Use -DUSE_CUDA=ON to enable.")
 endif()
-
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_EXTENSIONS OFF)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # get gromos version number
 file(READ "VERSION" VERSION_FILE)
