@@ -2,12 +2,27 @@ cmake_minimum_required(VERSION 3.13)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+# Enable GPU support quietly if CUDA is available
+
+# Allow forcing CUDA with -DUSE_CUDA=ON, or detect it automatically
+option(USE_CUDA "Enable CUDA support" OFF)
+
+# Force static CUDA runtime before any find_package(CUDAToolkit)
+if(USE_CUDA)
+    set(CMAKE_CUDA_RUNTIME_LIBRARY STATIC)
+endif()
+
+# Configure project languages
 if(USE_CUDA)
     project(gromosXX LANGUAGES CXX CUDA)
-    find_package(CUDAToolkit REQUIRED)
+    enable_language(CUDA)
+    set(CMAKE_CUDA_STANDARD 17)
+    set(CMAKE_CUDA_STANDARD_REQUIRED ON)
     set(CMAKE_CUDA_SEPARABLE_COMPILATION ON)
-    include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
     set(CMAKE_CUDA_ARCHITECTURES "60;62;70;75;80;86")
+
+    find_package(CUDAToolkit REQUIRED)
+    include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
 else()
     project(gromosXX LANGUAGES CXX)
 endif()
