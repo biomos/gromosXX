@@ -22,10 +22,6 @@ namespace util {
 
 namespace interaction
 {
-  
-  double fastpow(double base, int exp);
-  double switchingfunction(double rdist,double&dfunc,int nn,int mm);
-
   /**
    * @class Colvar
    * @interface Colvar
@@ -53,6 +49,10 @@ namespace interaction
      * current value
      */
     double ct;
+    /**
+     * current value
+     */
+    math::VArray cts;    
     /**
      * target value and force constant weight
      */

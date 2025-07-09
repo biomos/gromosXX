@@ -39,7 +39,7 @@ namespace algorithm
   struct ConstraintGroup {
     std::vector<topology::angle_restraint_struct> angle_restraints;
     std::vector<topology::dihedral_restraint_struct> dihedral_restraints;
-    std::vector<topology::two_body_term_struct> distance_restraints;
+    std::vector<topology::two_body_term_struct> distance_restraints_colvar;
 #ifdef XXMPI
     std::vector<unsigned int> unaffected_indices;
 #endif
@@ -451,7 +451,7 @@ solute(topology::Topology const & topo,
 
       if (shake_iteration<B, V >
               (topo, conf, m_solute_tolerance, dist_convergence, first, skip_now, skip_next,
-              m_constraint_groups[group_id].distance_restraints, sim.time_step_size(),
+              m_constraint_groups[group_id].distance_restraints_colvar, sim.time_step_size(),
               periodicity)
               ) {
         io::messages.add("SHAKE error. vectors orthogonal",

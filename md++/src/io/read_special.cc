@@ -55,7 +55,7 @@
 #include "../io/topology/in_order.h"
 #include "../io/topology/in_symrest.h"
 #include "../io/topology/in_rdc.h"
-#include "../io/topology/in_colvarres.h"
+#include "../io/topology/in_contactnumres.h"
 #include "../util/coding.h"
 
 #include "read_special.h"
@@ -130,7 +130,7 @@ int io::read_special(io::Argument const & args,
   } // POSRES
 
   // DISTANCERES and DISTANCEFIELD
-  if (sim.param().distanceres.distanceres || sim.param().distancefield.distancefield){
+  if (sim.param().distancefield.distancefield){
     io::igzstream distanceres_file;
 
     if (args.count("distrest") != 1){
@@ -153,29 +153,75 @@ int io::read_special(io::Argument const & args,
     }    
   } // DISTANCERES
 
-  // COLVARRES
+  // COLVARRES - CONTACTNUMRES and DISTANCERES
+  if (sim.param().colvarres.colvarres ){
+    if (args.count("contactnum") == 1){
+      io::igzstream contactnumres_file;
+      contactnumres_file.open(args["contactnum"].c_str());
+
+      if (!contactnumres_file.is_open()){
+        io::messages.add("opening contactnum file failed!\n",
+			 "read_special", io::message::error);
+      } 
+      else {
+        io::In_Contactnumres ip(contactnumres_file);
+        ip.quiet = quiet;
+        ip.read(topo, sim, os);
+        io::messages.add("Contact number restraints read from " + args["contactnumres"] +
+                "\n" + util::frame_text(ip.title),
+                "read special", io::message::notice);
+      }
+    }
+
+    else if (args.count("distrest") == 1) {
+      io::igzstream distanceres_file;
+      distanceres_file.open(args["distrest"].c_str());
+
+      if (!distanceres_file.is_open()){
+        io::messages.add("opening distrest file failed!\n",
+			 "read_special", io::message::error);
+      } 
+      else {
+        io::In_Distanceres ip(distanceres_file);
+        ip.quiet = quiet;
+        ip.read(topo, sim, os);
+        io::messages.add("Distance restraints read from " + args["distrest"] +
+                "\n" + util::frame_text(ip.title),
+                "read special", io::message::notice);
+      }
+    }
+    else {
+      io::messages.add("No restraint specification file found: use @contactnum or @distrest)",
+          "read special", io::message::error);
+        } 
+    } // CONTACTNUMRES
+
+  /*
+  // CONTACTNUMRES
   if (sim.param().colvarres.colvarres){
-    io::igzstream colvarres_file;
+    io::igzstream contactnumres_ile;
 
     if (args.count("colvarres") != 1){
-      io::messages.add("collective variable restraints: no data file specified (use @colvarres)",
+      io::messages.add("contact number restraints: no data file specified (use @colvarres)",
 		       "read special", io::message::error);
     } else {
-      colvarres_file.open(args["colvarres"].c_str());
-      if (!colvarres_file.is_open()){
+      contactnumres_ile.open(args["colvarres"].c_str());
+      if (!contactnumres_ile.is_open()){
 	io::messages.add("opening colvarres file failed!\n",
 			 "read_special", io::message::error);
       } else {
-        io::In_Colvarres ip(colvarres_file);
+        io::In_Contactnumres ip(contactnumres_ile);
         ip.quiet = quiet;
 
         ip.read(topo, sim, os);
-        io::messages.add("collective variable restraints read from " + args["colvarres"] +
+        io::messages.add("Contact number restraints read from " + args["colvarres"] +
                 "\n" + util::frame_text(ip.title),
                 "read special", io::message::notice);
       }
     }    
-  } // COLVARRES
+  } // CONTACTNUMRES
+  */
+
 
   // ANGREST
   if (sim.param().angrest.angrest != simulation::angle_restr_off){

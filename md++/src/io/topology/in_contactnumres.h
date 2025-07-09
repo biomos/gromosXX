@@ -1,5 +1,5 @@
 /**
- * @file in_colvarres.h
+ * @file in_contactnumres.h
  * read in a collective variable restraints file.
  */
 /**
@@ -8,11 +8,11 @@
  *
  * A colvar restraints specification file may contain the following blocks:
  * - @ref title
- * - @ref contactnumresspec
+ * - @ref in_contactnumresspec
  */
 
-#ifndef INCLUDED_IN_COLVARRES_H
-#define INCLUDED_IN_COLVARRES_H
+#ifndef INCLUDED_IN_CONTACTNUMRES_H
+#define INCLUDED_IN_CONTACTNUMRES_H
 
 #include "../instream.h"
 
@@ -22,17 +22,17 @@ namespace io {
    * @class In_Colvarres
    * reads in a collective variable restraints file
    */
-  class In_Colvarres : public GInStream {
+  class In_Contactnumres : public GInStream {
 
   public:
     /**
      * Default constructor.
      */
-    In_Colvarres() {}
+    In_Contactnumres() {}
     /**
      * Constructor.
      */
-    In_Colvarres(std::istream& is) : GInStream(is) { readStream(); };
+    In_Contactnumres(std::istream& is) : GInStream(is) { readStream(); };
     /**
      * Read in a colvar restraints file.
      */

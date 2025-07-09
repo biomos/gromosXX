@@ -27,6 +27,79 @@
 #undef SUBMODULE
 #define MODULE interaction
 #define SUBMODULE special
+/**
+ * @file perturbed_contactnum.cc
+ * template methods of Perturbed_Contactnum_Colvar
+ */
+
+#include <limits>
+#include "../../stdheader.h"
+
+#include "../../algorithm/algorithm.h"
+#include "../../topology/topology.h"
+#include "../../simulation/simulation.h"
+#include "../../configuration/configuration.h"
+#include "../../interaction/interaction.h"
+
+#include "../../math/periodicity.h"
+
+// special interactions
+#include "../../interaction/interaction_types.h"
+
+#include "../../interaction/special/colvar/colvar.h"
+#include "../../interaction/special/colvar/perturbed_contactnum.h"
+
+#include "../../util/template_split.h"
+#include "../../util/debug.h"
+
+#undef MODULE
+#undef SUBMODULE
+#define MODULE interaction
+#define SUBMODULE special
+
+namespace {
+  double fastpow(double base, int exp) {
+    if (exp < 0) {
+      exp = -exp;
+      base = 1.0 / base;
+    }
+    double result = 1.0;
+    while (exp) {
+      if (exp & 1)
+        result *= base;
+      exp >>= 1;
+      base *= base;
+    }
+    return result;
+  }
+
+  double switchingfunction(double rdist, double& dfunc, int nn, int mm) {
+    const double epsilon(std::numeric_limits<double>::epsilon());
+    double result;
+
+    if (2 * nn == mm) {
+      double rNdist = fastpow(rdist, nn - 1);
+      double iden = 1.0 / (1.0 + rNdist * rdist);
+      dfunc = -nn * rNdist * iden * iden;
+      result = iden;
+    } else {
+      if (rdist > (1.0 - 100.0 * epsilon) && rdist < (1.0 + 100.0 * epsilon)) {
+        result = static_cast<double>(nn) / mm;
+        dfunc = 0.5 * nn * (nn - mm) / mm;
+      } else {
+        double rNdist = fastpow(rdist, nn - 1);
+        double rMdist = fastpow(rdist, mm - 1);
+        double num = 1.0 - rNdist * rdist;
+        double iden = 1.0 / (1.0 - rMdist * rdist);
+        double func = num * iden;
+        result = func;
+        dfunc = ((-nn * rNdist * iden) + (func * (iden * mm) * rMdist));
+      }
+    }
+    return result;
+  }
+} // unnamed namespace
+
 
 /**
  * calculate contactnum restraint interactions
@@ -38,7 +111,7 @@ static int _calculate_contactnum_colvar
  simulation::Simulation & sim, math::VArray &derivatives, topology::perturbed_contactnum_restraint_struct *params, double &ct)
 {
   math::Periodicity<B> periodicity(conf.current().box);
-  //m_timer.start("calculate contacts");
+  
   // calculate current number of contacts and derivatives with respect to the
   // position according to formula
   ct=0;
@@ -47,20 +120,14 @@ static int _calculate_contactnum_colvar
     for (int j=0; j < (*params).atoms2.size(); j++) {
        math::Vec v;
        double dfunc;
-       double func;
+       double func; 
        periodicity.nearest_image((*params).atoms1[i].pos(conf,topo), (*params).atoms2[j].pos(conf,topo), v);
        double rdist=math::abs(v);
-      // if(rdist<1.5) {
-       func=interaction::switchingfunction(rdist/(*params).rcut,dfunc, (*params).nn, (*params).mm);
+       //func=interaction::switchingfunction(rdist/(*params).rcut, dfunc, (*params).nn, (*params).mm);
+       func = switchingfunction(rdist / params->rcut, dfunc, params->nn, params->mm);
+
        ct+=func;
-      // } else {
-      // double func=0;
-      // double dfunc=0;
-      // }
-      //if (sim.param().colvarres.write && ((sim.steps() - 1) % sim.param().colvarres.write) == 0) {
-         //if (func > 0.1) std::cout << "ct " << i << " " << j <<" " << func <<" " << ct << " rdist " << rdist << std::endl;
-        // std::cout << "ct" << i << " " << j <<"gromosnum " << (*params).atoms1[i].atom(0) << " " << (*params).atoms2[j].atom(0) <<" " << func <<" " << ct << " rdist " << rdist << std::endl;
-      // }
+       
        math::Vec d = dfunc*v/rdist;
        derivatives[i]+=d;
        derivatives[(*params).atoms1.size()+j]-=d;
@@ -84,7 +151,7 @@ int interaction::Perturbed_Contactnum_Colvar
 
 
 /**
- * initiate perturbed contactnum restraint interactions
+ * initiate contactnum restraint interactions
  */
 int interaction::Perturbed_Contactnum_Colvar::init(topology::Topology &topo, 
 		     configuration::Configuration &conf,
@@ -98,8 +165,8 @@ int interaction::Perturbed_Contactnum_Colvar::init(topology::Topology &topo,
   rcut=(*params).rcut;
   mm=(*params).mm;
   nn=(*params).nn;
-  w0A=(*params).w0A; 
-  w0B=(*params).w0B; 
+  w0A=(*params).w0A;
+  w0B=(*params).w0B;
   
   // atoms will be one concatenated list of pointers to atoms1 and atoms2 from
   // the restraint specification that can be given to the colvar restraint interaction
@@ -117,7 +184,7 @@ int interaction::Perturbed_Contactnum_Colvar::init(topology::Topology &topo,
 
   
   if (!quiet) {
-    os << "Perturbed contactnum restraint interaction";
+    os << "Contactnum restraint interaction";
     os << std::endl;
   }
   return 0;

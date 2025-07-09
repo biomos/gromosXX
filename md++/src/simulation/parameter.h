@@ -431,7 +431,11 @@ namespace simulation
     /**
      * instantaneous restraints
      */
-    colvar_restr_harmonic = 1
+    colvar_restr_harmonic = 1,
+    /**
+     * linear + harmonic restraints
+     */
+    colvar_restr_linear_harmonic = 2,
   };
 
   /**

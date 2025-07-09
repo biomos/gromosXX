@@ -165,32 +165,19 @@ void io::In_Distanceres::read_DISTANCERESSPEC(topology::Topology &topo,
     double dish = 0.0,disc = 0.0;
 
     DEBUG(10, "reading in DISTANCERES data");
-
+    
     if (!quiet) {
-        switch (sim.param().distanceres.distanceres) {
-          case 0:
-            os << "\tDistance restraints OFF\n";
-            // how did you get here?
-            break;
-          case 1:
-            os << "\tDistance restraints ON\n";
-            break;
-          case -1:
-            os << "\tDistance restraints ON\n"
-                    << "\ttime averaging ON\n";
-            break;
-          case 2:
-            os << "\tDistance restraints ON\n"
-                    << "\t\t(using force constant K*w0)\n";
-            break;
-          case -2:
-            os << "\tDistance restraints ON\n"
-                    << "\ttime averaging ON\n"
-                    << "\t\t(using force constant K*w0)\n";
-            break;
-          default:
-            os << "\tDistance restraints ERROR\n";
-        }
+      switch (sim.param().colvarres.colvarres) {
+        case 0:
+          os << "\tColvar restraints OFF\n";
+          // how did you get here?
+          break;
+        case 1:
+          os << "\tColvar restraints ON\n";
+          break;
+        default:
+          os << "\tColvar restraints ERROR\n";
+      }
     }
 
     block.get_next_parameter("DISH", dish, ">0", "");
@@ -272,9 +259,10 @@ void io::In_Distanceres::read_DISTANCERESSPEC(topology::Topology &topo,
         util::Virtual_Atom v1(t1, atom1, dish, disc);
         util::Virtual_Atom v2(t2, atom2, dish, disc);
 
-        topo.distance_restraints().push_back
-          (topology::distance_restraint_struct(v1,v2,r0,w0,rah));
-
+        //topo.distance_restraints().push_back
+        //  (topology::distance_restraint_struct(v1,v2,r0,w0,rah));
+        topo.distance_restraints_colvar().push_back
+          (topology::distance_restraint_struct_colvar(true, v1, v2, r0, w0,rah));
         if (!quiet){
           for(unsigned int i = 0; i < io::In_Distanceres::MAX_ATOMS; i++) {
           // the first element has the width 10, if i is bigger then the number of atoms

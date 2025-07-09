@@ -513,6 +513,50 @@ namespace topology {
 
   };
 
+  struct distance_restraint_struct_colvar {
+
+    /**
+     * Constructor.
+     */
+    distance_restraint_struct_colvar() {on=false;};
+    distance_restraint_struct_colvar(bool on, util::Virtual_Atom atoms1,
+            util::Virtual_Atom atoms2, double r0, double w0, int rah)
+    : on(on), 
+    atoms1(atoms1), 
+    atoms2(atoms2),
+    r0(r0),
+    w0(w0),
+    rah(rah) {
+    }
+
+    /**
+     * is a restraint specified
+     */
+    bool on;
+    /**
+     * atom group 1.
+     */
+    util::Virtual_Atom atoms1;
+    /**
+     * atom group 2.
+     */
+    util::Virtual_Atom atoms2;
+
+    /**
+     * restraint distance.
+     */
+    double r0;
+    /**
+     * weighting factor.
+     */
+    double w0;
+    /**
+     *repulsiv, attractiv, harmonic
+     */
+    int rah;
+
+  };
+
   /**
    *Perturbed distance restraints information.
    */

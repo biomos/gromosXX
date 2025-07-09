@@ -19,6 +19,7 @@
 #include "../../interaction/special/colvar_restraint_interaction.h"
 #include "../../interaction/special/colvar/colvar.h"
 #include "../../interaction/special/colvar/contactnum.h"
+#include "../../interaction/special/colvar/distance.h"
 
 #include "../../util/template_split.h"
 #include "../../util/debug.h"
@@ -34,7 +35,6 @@ interaction::Colvar_Restraint_Interaction::~Colvar_Restraint_Interaction(){
         delete *it;
   }
 }
-
 
 /**
  * calculate colvar restraint interactions
@@ -67,7 +67,7 @@ int interaction::Colvar_Restraint_Interaction
     conf.special().colvarres.values.push_back((*it)->ct);
     if (!sum) {
       double E;
-      E= apply_restraint(topo, conf, sim, (*it)->atoms, (*it)->derivatives, (*it)->ct, (*it)->targetvalue, (*it)->w0);
+      E= apply_restraint(topo, conf, sim, (*it)->atoms, (*it)->derivatives, (*it)->ct, (*it)->targetvalue, (*it)->w0, (*it)->rah);
       conf.special().colvarres.energies.push_back(E);
       Etot+=E;
       // add to the energy group of the first atom of first list
@@ -99,44 +99,46 @@ int interaction::Colvar_Restraint_Interaction
   return 0;
 }
 
-
 // apply forces and calculate potential using the biasing function specified in the COLVARRES block
 double interaction::Colvar_Restraint_Interaction
   ::apply_restraint(topology::Topology & topo,
  configuration::Configuration & conf,simulation::Simulation & sim, std::vector< util::Virtual_Atom* > atoms, 
-                    math::VArray &derivatives, double &curr, double &target, double w0) {
-                    
-  double diff=target-curr;
-  double E;
+                    math::VArray &derivatives, double &curr, double &target, double w0, int rah) {
+  
+  double K = sim.param().colvarres.K;
+  double r_linear = sim.param().distanceres.r_linear;
+  double diff = target - curr;
+  double E = 0;
+
+  DEBUG(8, "target value: " << target << ", current value: " << curr << ", rah: " << rah);
                   
-  if (sim.param().colvarres.colvarres == simulation::colvar_restr_off) {
-     
+  if (sim.param().colvarres.colvarres == simulation::colvar_restr_off) {   
        std::cerr << "Colvar restraints are off, yet you ended up in colvar's apply_restraint .. something is wrong ..\n";
 
       io::messages.add("Error in colvar calc",
                        "Colvar",
                        io::message::error);
   }
+  // entering harmonic restraining
   else if (sim.param().colvarres.colvarres == simulation::colvar_restr_harmonic) {
-    E=0.5*sim.param().colvarres.K*w0*diff*diff;
-//    if (sim.param().colvarres.write && ((sim.steps() - 1) % sim.param().colvarres.write) == 0)
-  //      std::cout << target << " - " << curr << " E: " << E << std::endl;
-    
-    for (int i=0; i<atoms.size(); i++) {
-      math::Vec f = sim.param().colvarres.K*w0*diff*derivatives[i];
-      (*atoms[i]).force(conf, topo, f);
+  E=0.5*sim.param().colvarres.K*w0*diff*diff;
+  DEBUG(8, "Harmonic restr energy: " << E);
 
-        //if (sim.param().colvarres.virial) { 
-        //  for (int a = 0; a < 3; ++a) {
-	    //    for (int b = 0; b < 3; ++b) { 
-	    //      conf.current().virial_tensor(a, b) += v(a) * f(b); 
-	    //    }
-        //  } 
-        //}
-      //if (sim.param().colvarres.write && ((sim.steps() - 1) % sim.param().colvarres.write) == 0) {
-      //  if(math::abs(sim.param().colvarres.K*w0*diff*derivatives[i]) > 1) std::cout << "cvforces va " << i << " " << v2s(sim.param().colvarres.K*w0*diff*derivatives[i]) << ", w0 " << w0 <<std::endl;
-      //}
+  DEBUG(16, "Number of derivatives: " << derivatives.size());
+  for (int i = 0; i < derivatives.size(); ++i) {
+    DEBUG(8, "Derivative " << i << ": " << math::v2s(derivatives[i]));
+    math::Vec f = sim.param().colvarres.K*w0*diff*derivatives[i];
+    DEBUG(8, "Harmonic restr forces atom" << i+1 << ": " << math::v2s(f));
+    (*atoms[i]).force(conf, topo, f);
     }
+  }
+
+  // entering harmonic linear restraining
+  else if (sim.param().colvarres.colvarres == simulation::colvar_restr_linear_harmonic) {
+    double shifting_value =  sim.param().distanceres.r_linear;
+     for (int i=0; i<atoms.size(); i++) {
+  
+     }
   }
   return E;
 }
@@ -147,10 +149,25 @@ int interaction::Colvar_Restraint_Interaction::init(topology::Topology &topo,
 		     std::ostream &os,
 		     bool quiet) 
 {
+  // Contact number
+  DEBUG(10, "Is contactnum_restrain empty: " << topo.contactnum_restraint().empty());
   if (!topo.contactnum_restraint().empty()) {
+    DEBUG(8, "Entered Contact number restraining using COLVAR: ");
     for (int i=0; i< topo.contactnum_restraint().size(); i++) {
       interaction::Contactnum_Colvar *cv = new interaction::Contactnum_Colvar();
       (*cv).params = &topo.contactnum_restraint()[i];
+      m_colvars.push_back(cv);
+    }
+  }
+
+  // Distance restraint
+  DEBUG(10, "Is distance_restraints_colvar empty: " << topo.distance_restraints_colvar().empty());
+  if (!topo.distance_restraints_colvar().empty()) {
+    DEBUG(8, "Entered Distance restraining using COLVAR: ");
+    for (int i=0; i< topo.distance_restraints_colvar().size(); i++) {
+      DEBUG(8, "distance restraint no: " << i+1 );
+      interaction::Distance_Colvar *cv = new interaction::Distance_Colvar();
+      (*cv).params = &topo.distance_restraints_colvar()[i];
       m_colvars.push_back(cv);
     }
   }

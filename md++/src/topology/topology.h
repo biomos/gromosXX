@@ -1363,6 +1363,20 @@ namespace topology
       return m_perturbed_distance_restraint;
     }
     /**
+     * const distance restraints accessor.
+     */
+    std::vector<distance_restraint_struct_colvar> const & distance_restraints_colvar()const
+    {
+      return m_distance_restraint_colvar;
+    }
+    /**
+     *  distance restraints accessor.
+     */
+    std::vector<distance_restraint_struct_colvar>  & distance_restraints_colvar()
+    {
+      return m_distance_restraint_colvar;
+    }
+    /**
      * const distancefield restraints accessor.
      */
     disfield_restraint_struct const & disfield_restraints()const
@@ -1958,6 +1972,10 @@ namespace topology
      * distance restraints
      */
     std::vector<distance_restraint_struct> m_distance_restraint;
+    /**
+     * distance restraints
+     */
+    std::vector<distance_restraint_struct_colvar> m_distance_restraint_colvar;
     /**
      * perturbed distance restraints
      */

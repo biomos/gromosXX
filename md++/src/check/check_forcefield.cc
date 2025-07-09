@@ -424,9 +424,9 @@ int check_distanceres_interaction(topology::Topology & topo,
   // finite diff
   CHECKING(name + " interaction force (finite diff)", res);
 
-  for (size_t i = 0; i < topo.distance_restraints().size(); ++i) {
+  for (size_t i = 0; i < topo.distance_restraints_colvar().size(); ++i) {
 
-    int atom = topo.distance_restraints()[i].v1.atom(0);
+    int atom = topo.distance_restraints_colvar()[i].atoms1.atom(0);
 
     conf.current().force = 0;
     conf.current().energies.zero();

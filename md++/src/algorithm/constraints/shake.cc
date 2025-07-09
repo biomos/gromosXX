@@ -338,7 +338,7 @@ if ((topo.solute().distance_constraints().size() &&
     it != dist_constr.end(); ++it){
 	// each rank should get an equal amount of constraint groups
 	const unsigned int group_id = component[it->i] % m_size;
-    m_constraint_groups[group_id].distance_restraints.push_back(*it);
+    m_constraint_groups[group_id].distance_restraints_colvar.push_back(*it);
 #ifdef XXMPI
     affected_indices[group_id].insert(it->i);
     affected_indices[group_id].insert(it->j);

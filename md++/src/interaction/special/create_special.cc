@@ -112,35 +112,36 @@ int interaction::create_special(interaction::Forcefield & ff,
   // as this function is called before read_special, we do not know if we 
   // really need the (perturbed) interactions
   // so we generate them, but need to check inside if we really do something
-  if (abs(param.distanceres.distanceres) == 1 || 
-      abs(param.distanceres.distanceres) == 2){
+  
+   if (abs(param.distanceres.distanceres) == 1 || 
+       abs(param.distanceres.distanceres) == 2){
 
-    if(!quiet)
-      os <<"\tDistance restraints\n";
+     if(!quiet)
+       os <<"\tDistance restraints\n";
 
-    interaction::Distance_Restraint_Interaction *dr =
-      new interaction::Distance_Restraint_Interaction();
+     interaction::Colvar_Restraint_Interaction *dr =
+       new interaction::Colvar_Restraint_Interaction();
 
-    ff.push_back(dr);
+     ff.push_back(dr);
     
-    if(param.perturbation.perturbation){
-      if(!quiet)
-	os <<"\tPerturbed distance restraints\n";
+     if(param.perturbation.perturbation){
+       if(!quiet)
+	 os <<"\tPerturbed distance restraints\n";
       
-      interaction::Perturbed_Distance_Restraint_Interaction *pdr =
-	new interaction::Perturbed_Distance_Restraint_Interaction;
+       interaction::Perturbed_Distance_Restraint_Interaction *pdr =
+	 new interaction::Perturbed_Distance_Restraint_Interaction;
 
-      ff.push_back(pdr); 
-    }
-    if(param.eds.eds){
-      if(!quiet)
-        os << "\tEDS perturbed distance restraints\n";
-      interaction::Eds_Distance_Restraint_Interaction *edr =
-        new interaction::Eds_Distance_Restraint_Interaction;
+       ff.push_back(pdr); 
+     }
+     if(param.eds.eds){
+       if(!quiet)
+         os << "\tEDS perturbed distance restraints\n";
+       interaction::Eds_Distance_Restraint_Interaction *edr =
+         new interaction::Eds_Distance_Restraint_Interaction;
       
-      ff.push_back(edr);
-    }
-  }
+       ff.push_back(edr);
+     }
+   }
   
   // Distance field restraint
   // as this function is called before read_special, we do not know if we 

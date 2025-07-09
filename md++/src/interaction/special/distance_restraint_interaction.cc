@@ -122,7 +122,7 @@ std::map<int,math::Vec> &rah_map, int &error)
     (*d_it) = dist;
     DEBUG(9, "DISTANCERES dist : " << dist << " r0 : " << it->r0);
     double force_scale = 1.0;
-    if (sim.param().distanceres.distanceres < 0) {
+    if (sim.param().distanceres.distanceres < 0) { // do time averaging
 
       (*ave_it) = (1.0 - exponential_term) * pow(dist, -3.0) + 
                    exponential_term * (*ave_it);

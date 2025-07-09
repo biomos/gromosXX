@@ -230,8 +230,8 @@ int interaction::QM_Zone::get_qm_atoms(const topology::Topology& topo,
   for (unsigned cg = 0; cg < topo.num_chargegroups(); ++cg) {
     unsigned a = topo.chargegroup(cg);
     const unsigned a_to = topo.chargegroup(cg + 1);
-    DEBUG(15, "cg: " << cg);
-    DEBUG(15, "a_to: " << a_to);
+    DEBUG(17, "cg: " << cg);
+    DEBUG(17, "a_to: " << a_to);
     assert(a_to <= topo.num_atoms());
     /** QM_Zone will also contain QM_Buffer atoms, since the full QM calculation will be run
      * on this system, but we are not excluding the QM_Buffer atoms in MM pairlist generation.
@@ -300,10 +300,10 @@ int interaction::QM_Zone::_update_qm_pos(const topology::Topology& topo,
 
   assert(first_it != this->qm.end());
 
-  DEBUG(15, "First QM index: " << first_it->index);
+  DEBUG(14, "First QM index: " << first_it->index);
   const math::Vec& ref_pos = pos(first_it->index);
 
-  DEBUG(15, "First QM as ref_pos: " << math::v2s(ref_pos));
+  DEBUG(14, "First QM as ref_pos: " << math::v2s(ref_pos));
   first_it->pos = ref_pos;
   math::Vec nim;
 
@@ -314,7 +314,7 @@ int interaction::QM_Zone::_update_qm_pos(const topology::Topology& topo,
       {
       periodicity.nearest_image(ref_pos, pos(qm_it->index), nim);
       qm_it->pos = ref_pos - nim;
-      DEBUG(15, "QM atom " << qm_it->index << " : " << math::v2s(qm_it->pos));
+      DEBUG(13, "QM atom " << qm_it->index << " : " << math::v2s(qm_it->pos));
     }
   }
   // Check if QM zone sees its periodic image
@@ -330,12 +330,12 @@ int interaction::QM_Zone::_update_qm_pos(const topology::Topology& topo,
         const math::Vec& j_pos = it2->pos;
         math::Vec nim;
         periodicity.nearest_image(i_pos, j_pos, nim);
-        DEBUG(15, "nim to " << it2->index << " : " << math::v2s(nim));
+        DEBUG(16, "nim to " << it2->index << " : " << math::v2s(nim));
         const math::Vec j_pos_2 = i_pos - nim;
-        DEBUG(15, "j_pos:   " << math::v2s(j_pos));
-        DEBUG(15, "j_pos_2: " << math::v2s(j_pos_2));
+        DEBUG(16, "j_pos:   " << math::v2s(j_pos));
+        DEBUG(16, "j_pos_2: " << math::v2s(j_pos_2));
         const double delta = math::abs2(j_pos_2 - j_pos);
-        DEBUG(15, "delta:   " << delta);
+        DEBUG(16, "delta:   " << delta);
         if (delta > math::epsilon) {
           std::ostringstream msg;
           msg << "QM zone sees own periodic image (atoms "
@@ -458,12 +458,12 @@ int interaction::QM_Zone::gather_chargegroups(const topology::Topology& topo,
 
   // Initialize constants
   const math::VArray& pos = conf.current().pos;
-  DEBUG(15, "cutoff2 = " << cutoff2);
+  DEBUG(12, "cutoff2 = " << cutoff2);
 
   const unsigned num_cg = topo.num_chargegroups()
                 , num_solute_cg = topo.num_solute_chargegroups();
-  DEBUG(15, "num_cg = " << num_cg);
-  DEBUG(15, "num_solute_cg = " << num_solute_cg);
+  DEBUG(12, "num_cg = " << num_cg);
+  DEBUG(12, "num_solute_cg = " << num_solute_cg);
 
   // Calculate solute CG COGs
   math::VArray cogs(num_solute_cg);
@@ -484,10 +484,10 @@ int interaction::QM_Zone::gather_chargegroups(const topology::Topology& topo,
     {
     // Initial dumb implementation - gather only around the first atom, if
     // AtomType == QM_Atom (true only for QM buffer atoms gathering)
-    if (std::is_same<AtomType,QM_Atom>::value && qm_it != this->qm.begin()) {
-      break;
-    }
-    DEBUG(15, "Gathering around QM atom " << qm_it->index);
+    //if (std::is_same<AtomType,QM_Atom>::value && qm_it != this->qm.begin()) {
+    //  break;
+    //}
+    DEBUG(10, "Gathering around QM atom " << qm_it->index);
     const math::Vec& qm_pos = qm_it->pos;
     math::Vec r_qm_cg;
     typename std::set<AtomType>::iterator set_it = atom_set.begin();
@@ -500,39 +500,40 @@ int interaction::QM_Zone::gather_chargegroups(const topology::Topology& topo,
         if (this->skip_cg<AtomType>(topo, a)) continue;
         // get distance
         periodicity.nearest_image(qm_pos, (*cog)(cg), r_qm_cg);
-        DEBUG(15, "qm_pos: " << math::v2s(qm_pos));
-        DEBUG(15, "(*cog)(cg): " << math::v2s((*cog)(cg)));
-        DEBUG(15, "Nearest image qm_pos - cg " << cg << " : " << math::v2s(r_qm_cg));
-        DEBUG(15, "math::abs2(r_qm_cg) = " << math::abs2(r_qm_cg));
+        DEBUG(16, "qm_pos: " << math::v2s(qm_pos));
+        DEBUG(16, "(*cog)(cg): " << math::v2s((*cog)(cg)));
+        DEBUG(16, "Nearest image qm_pos - cg " << cg << " : " << math::v2s(r_qm_cg));
+        DEBUG(16, "math::abs2(r_qm_cg) = " << math::abs2(r_qm_cg));
         
-        if (math::abs2(r_qm_cg) < cutoff2) {
+        if (math::abs2(r_qm_cg) <= cutoff2) {
           // Iterate over atoms in cg
           for (unsigned a_to = topo.chargegroup(cg + 1); a < a_to; ++a) {
             // nearest image of atom to CG COG
             math::Vec r_mm_cg;
             periodicity.nearest_image(pos(a), (*cog)(cg), r_mm_cg);
-            DEBUG(15, "nearest image mm_pos-cg_cog = " << math::v2s(r_mm_cg));
-            DEBUG(15, "math::abs2(r_mm_cg) = " << math::abs2(r_mm_cg));
+            DEBUG(16, "nearest image mm_pos-cg_cog = " << math::v2s(r_mm_cg));
+            DEBUG(16, "math::abs2(r_mm_cg) = " << math::abs2(r_mm_cg));
             // MM atom position
             const math::Vec mm_pos = qm_pos - r_qm_cg + r_mm_cg;
             /** this will add every MM atom only once. We have to check, if we already
              * have the atom and if its position is the same. Otherwise we see its
              * periodic copy and that is bad.
              */
-            DEBUG(15, "mm_pos: " << math::v2s(mm_pos));
+            DEBUG(16, "mm_pos: " << math::v2s(mm_pos));
             const size_t size = atom_set.size();
             if (set_it != atom_set.end())
               std::advance(set_it,1); // hint on set insertion, improves performance
             this->emplace_atom<AtomType>(atom_set, set_it, a, mm_pos,
                                           topo.qm_atomic_number(a), topo.charge(a),
                                           topo.is_qm_buffer(a));
-
+            DEBUG(13, "nearest image mm_pos-cg_cog indx: "<< set_it->index << " pos:" << math::abs2(r_qm_cg));
             if (size == atom_set.size()) {
               DEBUG(15, "Atom " << a << " already in the list");
+             
               const double delta = math::abs2(set_it->pos - mm_pos);
-              DEBUG(15, "set_it->pos: " << math::v2s(set_it->pos));
-              DEBUG(15, "mm_pos:     " << math::v2s(mm_pos));
-              DEBUG(15, "delta: " << delta);
+              DEBUG(16, "set_it->pos: " << math::v2s(set_it->pos));
+              DEBUG(16, "mm_pos:     " << math::v2s(mm_pos));
+              DEBUG(16, "delta: " << delta);
               if (delta > math::epsilon) {
                 // Atom already in the list but as different periodic image, exit
                 std::ostringstream msg;
@@ -573,7 +574,7 @@ void interaction::QM_Zone::emplace_atom(std::set<interaction::QM_Atom>& set,
                                         const bool is_qm_buffer)
   {
   if (is_qm_buffer) {
-    DEBUG(15, "Adding QM buffer atom " << index);
+    DEBUG(14, "Adding QM buffer atom " << index);
     it = set.emplace_hint(it, index, pos, atomic_number);
   }
 }
@@ -624,7 +625,7 @@ int interaction::QM_Zone::_get_buffer_atoms(topology::Topology& topo,
    */
   //int err = 0;
   // Firstly remove buffer atoms from the QM set
-  DEBUG(15, "Firstly removing the old buffer atoms");
+  DEBUG(16, "Firstly removing the old buffer atoms");
   for (std::set<QM_Atom>::const_iterator qm_it = this->qm.begin();
         qm_it != this->qm.end();) {
     const unsigned i = qm_it->index;
@@ -654,20 +655,20 @@ int interaction::QM_Zone::_get_buffer_atoms(topology::Topology& topo,
       if (topo.is_static_adaptive(i) != 2) {
         if (buffer_atoms.count(i)) {
           topo.is_qm_buffer(i) = 1;
-          DEBUG(12, "Atom " << i << " in adaptive buffer");
+          DEBUG(15, "Atom " << i << " in adaptive buffer");
         }
         else {
           topo.is_qm_buffer(i) = -1; // temporarily disabled buffer atom
-          DEBUG(15, "Atom " << i << " not in adaptive buffer");
+          DEBUG(16, "Atom " << i << " not in adaptive buffer");
         }
       }
     }
   }
 
-  DEBUG(15, "Buffer atoms:");
+  DEBUG(16, "Buffer atoms:");
   for (std::set<QM_Atom>::const_iterator it = buffer_atoms.begin(); it != buffer_atoms.end(); ++it) {
-    DEBUG(15, it->index);
-    DEBUG(15, "Distance to the 1st atom: " << math::abs(it->pos - this->qm.begin()->pos));
+    DEBUG(16, it->index);
+    DEBUG(16, "Distance to the 1st atom: " << math::abs(it->pos - this->qm.begin()->pos));
   }
 
   // And merge with QM
@@ -765,7 +766,7 @@ int interaction::QM_Zone::_get_mm_atoms_atomic(const topology::Topology& topo,
 
     // Initialize constants
     const double cutoff2 = sim.param().qmmm.cutoff * sim.param().qmmm.cutoff;
-    DEBUG(15, "cutoff2 = " << cutoff2);
+    DEBUG(13, "cutoff2 = " << cutoff2);
 
     const unsigned num_atoms = topo.num_atoms();
 

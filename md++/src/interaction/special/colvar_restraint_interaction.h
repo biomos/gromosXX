@@ -60,7 +60,7 @@ namespace interaction
      double apply_restraint(topology::Topology & topo,
       configuration::Configuration & conf, simulation::Simulation & sim, 
       std::vector< util::Virtual_Atom* > atoms, 
-      math::VArray &derivatives, double &curr, double &target, double weight) ;
+      math::VArray &derivatives, double &curr, double &target, double weight, int rah) ;
       
     /**
      * put the bias on the sum of all collective variables

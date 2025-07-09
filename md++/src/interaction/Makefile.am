@@ -128,6 +128,7 @@ xxintqmmm_HEADERS = qmmm/mm_atom.h\
 xxintspecialcolvardir = $(includedir)/md++/interaction/special/colvar
 xxintspecialcolvar_HEADERS = special/colvar/colvar.h\
 	special/colvar/contactnum.h\
+	special/colvar/distance.h\
 	special/colvar/perturbed_contactnum.h
 
 if WITH_XTB
@@ -208,6 +209,7 @@ libgrointeraction_la_SOURCES = interaction.cc\
 	special/perturbed_colvar_restraint_interaction.cc\
     special/colvar/colvar.cc\
 	special/colvar/contactnum.cc\
+	special/colvar/distance.cc\
 	special/colvar/perturbed_contactnum.cc\
 	qmmm/qm_link.cc\
 	qmmm/qm_zone.cc\

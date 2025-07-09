@@ -15,7 +15,7 @@
 #include "../../io/instream.h"
 #include "../../io/blockinput.h"
 
-#include "in_colvarres.h"
+#include "in_contactnumres.h"
 
 #undef MODULE
 #undef SUBMODULE
@@ -54,7 +54,7 @@ END
 
  */
 void 
-io::In_Colvarres::read(topology::Topology& topo,
+io::In_Contactnumres::read(topology::Topology& topo,
 		      simulation::Simulation & sim,
 		      std::ostream & os){
   
