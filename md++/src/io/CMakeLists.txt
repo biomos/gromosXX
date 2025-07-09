@@ -41,4 +41,5 @@ target_include_directories(groio PUBLIC
     configuration
     parameter
     topology
+    ${PROJECT_SOURCE_DIR}/src
 )

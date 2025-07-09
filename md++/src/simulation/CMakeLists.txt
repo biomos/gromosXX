@@ -10,4 +10,5 @@ target_include_directories(grosimulation PUBLIC
     ..
     ${PROJECT_BINARY_DIR}
     ${EXTERNAL_INCLUDES}
+    ${PROJECT_SOURCE_DIR}/src
 )

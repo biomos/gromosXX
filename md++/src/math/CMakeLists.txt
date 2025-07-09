@@ -12,4 +12,5 @@ target_include_directories(gromath PUBLIC
     ..
     ${PROJECT_BINARY_DIR}
     ${EXTERNAL_INCLUDES}
+    ${PROJECT_SOURCE_DIR}/src
 )

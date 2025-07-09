@@ -15,4 +15,5 @@ target_include_directories(groconfiguration PUBLIC
     ${PROJECT_BINARY_DIR}
     ${EXTERNAL_INCLUDES}
     ..
+    ${PROJECT_SOURCE_DIR}/src
 )

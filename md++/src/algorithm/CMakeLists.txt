@@ -28,6 +28,7 @@ set(ALGO_CC
     constraints/create_constraints.cc
     constraints/position_constraints.cc
     constraints/remove_com_motion.cc
+    constraints/remove_com_motion_gpu.cc
     constraints/shake.cc
     constraints/perturbed_shake.cc
     constraints/flexible_constraint.cc
@@ -72,4 +73,4 @@ set(ALGO_INCLUDE
 
 add_library(groalgorithm OBJECT ${ALGO_CC})
 
-target_include_directories(groalgorithm PUBLIC ${ALGO_INCLUDE})
+target_include_directories(groalgorithm PUBLIC ${ALGO_INCLUDE} ${PROJECT_SOURCE_DIR}/src)

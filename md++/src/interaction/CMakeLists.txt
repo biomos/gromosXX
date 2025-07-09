@@ -110,4 +110,5 @@ if(CUKERNEL)
 endif()
 
 add_library(grointeraction OBJECT ${INTERACTION_CC})
-target_include_directories(grointeraction PUBLIC ${INTERACTION_INCLUDE})
+target_include_directories(grointeraction PUBLIC ${INTERACTION_INCLUDE}
+    ${PROJECT_SOURCE_DIR}/src)

@@ -90,7 +90,8 @@ add_executable(c16_cg ${C16_CG_CC})
 add_executable(lambdas ${LAMBDAS_CC})
 
 foreach(LOOP_VAR ${EXEC_NAMES})
-    target_include_directories(${LOOP_VAR} PRIVATE ${TEST_PROGRAM_INCLUDES} ${EXTERNAL_INCLUDES})
-    target_link_libraries(${LOOP_VAR} PRIVATE ${GROMOS_OBJECTS} ${EXTERNAL_LIBRARIES})
+    target_include_directories(${LOOP_VAR} PRIVATE ${TEST_PROGRAM_INCLUDES} ${EXTERNAL_INCLUDES}
+    ${PROJECT_SOURCE_DIR}/src)
+    target_link_libraries(${LOOP_VAR} PRIVATE ${GROMOS_OBJECTS} ${GROMOS_LIBS} ${EXTERNAL_LIBRARIES})
     add_test(NAME ${LOOP_VAR} COMMAND $<TARGET_FILE:${LOOP_VAR}>)
 endforeach()

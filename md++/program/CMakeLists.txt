@@ -32,8 +32,9 @@ endif()
 # executables
 foreach(LOOP_VAR ${EXEC_NAMES})
     add_executable(${LOOP_VAR} "${LOOP_VAR}.cc")
-    target_link_libraries(${LOOP_VAR} PRIVATE ${GROMOS_OBJECTS} ${EXTERNAL_LIBRARIES})
-    target_include_directories(${LOOP_VAR} PRIVATE ${PROGRAM_INCLUDES} ${EXTERNAL_INCLUDES})
+    target_link_libraries(${LOOP_VAR} PRIVATE ${GROMOS_OBJECTS} ${GROMOS_LIBS} ${EXTERNAL_LIBRARIES})
+    target_include_directories(${LOOP_VAR} PRIVATE ${PROGRAM_INCLUDES} ${EXTERNAL_INCLUDES}
+    ${PROJECT_SOURCE_DIR}/src)
 endforeach()
 
 # install

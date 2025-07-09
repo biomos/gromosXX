@@ -26,4 +26,5 @@ target_include_directories(grorepex PUBLIC
     ${EXTERNAL_INCLUDES}
     .
     ..
+    ${PROJECT_SOURCE_DIR}/src
 )
