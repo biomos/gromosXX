@@ -449,9 +449,12 @@ EOF
       [with_cuda=no]
     ]
   )
-  AS_IF([test "x$enable_openmp" != xyes && test "x$with_cuda" = xyes],
-          [AC_MSG_ERROR([CUDA without OpenMP is not supported.])])
   AM_CONDITIONAL([WITH_CUDA], [test x$with_cuda = xyes])
+  if test "x$have_libcudart" = "xyes"; then
+    AC_DEFINE([USE_CUDA], [1], [Define to 1 if CUDA is available and enabled])
+  else
+    AC_DEFINE([USE_CUDA], [0], [Define to 0 if CUDA is not enabled])
+  fi
 ])
 
 dnl check for lib XTB

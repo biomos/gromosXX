@@ -1,0 +1,48 @@
+
+SUFFIXES = .cu
+AM_CXXFLAGS = @MY_CXXFLAGS@
+AM_CPPFLAGS = -I$(top_srcdir) -I$(top_srcdir)/src
+NVCC_CFLAGS = @NVCC_CFLAGS@
+
+## Tracking dependencies correctly as with CXX would need a macro for NVCC
+## This would be too tedious and I hope that CMake will be handling this better
+## For now, we just delete the intermediate files to always enforce recompilation
+## 
+##	$(NVCC) $(NVCCFLAGS) -std=c++11 -dc --compiler-options '-std=c++11 -I../.. -I../../../src $(CXXFLAGS) $(NVCC_CFLAGS)' $< -o $@
+##	$(NVCC) $(NVCCFLAGS) --compiler-options '-std=c++11 -I../.. -I../../../src $(CXXFLAGS) $(NVCC_CFLAGS)' -dlink $^ -o $@
+.cu.o:
+	$(NVCC) $(NVCCFLAGS) -std=c++17 -dc --compiler-options '$(DEFAULT_INCLUDES) $(AM_CPPFLAGS) $(CXXFLAGS) $(NVCC_CFLAGS)' $< -o $@
+
+libgrocuda.o: $(libgrocuda_a_OBJECTS)
+	$(NVCC) $(NVCCFLAGS) --compiler-options '$(CXXFLAGS) $(NVCC_CFLAGS)' -dlink $^ -o $@
+
+libgrocuda.a: $(libgrocuda_a_OBJECTS) libgrocuda.o
+	$(NVCC) $(NVCCFLAGS) --lib -o $@ $^
+	rm -f $^ # Remove this line if you dont want to recompile every time
+
+if WITH_CUDA
+noinst_LIBRARIES = libgrocuda.a
+libgrocuda_a_SOURCES =  cuda/manager/cuda_device_worker.cu \
+						cuda/manager/cuda_memory_manager.cu \
+						cuda/manager/cuda_device_manager.cu \
+						cuda/algorithm/constraints.cu \
+						cuda/kernels/reduction.cu \
+						cuda/memory/container.cu				
+else
+xxincludedir = $(includedir)/md++/gpu
+##xxinclude_HEADERS =	cuda_kernel.h
+noinst_LTLIBRARIES = libgrocuda.la
+libgrocuda_la_SOURCES = cuda/manager/cuda_device_worker.cc \
+						cuda/manager/cuda_device_manager.cc \
+						cuda/manager/cuda_memory_manager.cc \
+						cuda/manager/cuda_manager.cc \
+						cuda/algorithm/constraints.cc
+
+libgrocuda_la_CXXFLAGS = $(AM_CXXFLAGS)
+endif
+
+bin_PROGRAMS =
+
+check_PROGRAMS =
+
+TESTS =
