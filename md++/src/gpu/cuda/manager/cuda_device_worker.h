@@ -1,8 +1,9 @@
 #pragma once
 
-#include <cuda_runtime.h>
 #include <vector>
 #include <stdexcept>
+
+#include "gpu/cuda/cuheader.h"
 
 namespace gpu {
     /**
@@ -39,7 +40,7 @@ namespace gpu {
          * @brief Get the CUDA stream associated with this device worker.
          * @return The CUDA stream.
          */
-        cudaStream_t get_stream() const;
+        CUSTREAM get_stream() const;
 
         /**
          * @brief Synchronize the device.
@@ -47,7 +48,7 @@ namespace gpu {
          * Waits for all operations on the device to complete.
          */
         void synchronize() const;
-
+#ifdef USE_CUDA
         /**
          * @brief Launch a kernel on this device.
          * @tparam KernelFunc The type of the kernel function.
@@ -59,10 +60,10 @@ namespace gpu {
          */
         template <typename KernelFunc, typename... Args>
         void launch_kernel(KernelFunc kernel, dim3 grid_dim, dim3 block_dim, Args... args, size_t shared_mem_size = 0);
-
+#endif
     private:
         int device_id_; ///< The ID of the CUDA device managed by this worker.
-        cudaStream_t stream_; ///< The CUDA stream associated with this device worker.
+        CUSTREAM stream_; ///< The CUDA stream associated with this device worker.
     };
 }
 

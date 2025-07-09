@@ -1,9 +1,17 @@
-#include "cuda_manager.h"
+
+#include <memory>
 #include <stdexcept>
 #include <sstream>
 
+#include "gpu/cuda/cuheader.h"
+#include "cuda_manager.h"
+
 gpu::CudaManager::CudaManager()
-    : device_manager_(std::make_unique<CudaDeviceManager>()), memory_manager_() {}
+    : device_manager_(std::make_unique<CudaDeviceManager>()), memory_manager_() {
+#ifndef USE_CUDA
+        DISABLED_VOID();
+#endif
+    }
 
 gpu::CudaManager::~CudaManager() {
     // Ensure all device workers are cleaned up
@@ -14,7 +22,8 @@ void gpu::CudaManager::initialize(const std::vector<int>& device_ids) {
     // Query available devices
     int available_device_count = device_manager_->get_device_count();
     if (available_device_count == 0) {
-        throw std::runtime_error("No CUDA devices available.");
+        io::messages.add("No CUDA devices available.",
+            "CudaManager", io::message::error);
     }
 
     // Determine which devices to initialize
@@ -30,7 +39,7 @@ void gpu::CudaManager::initialize(const std::vector<int>& device_ids) {
 
     // Initialize workers for each device
     for (int device_id : devices_to_initialize) {
-        validate_device_id(device_id);
+        // validate_device_id(device_id);
         device_manager_->set_device(device_id);
         device_workers_[device_id] = std::make_unique<CudaDeviceWorker>(device_id);
     }
@@ -40,7 +49,7 @@ size_t gpu::CudaManager::get_device_count() const {
     return device_workers_.size();
 }
 
-cudaStream_t gpu::CudaManager::get_stream(int device_id) const {
+CUSTREAM gpu::CudaManager::get_stream(int device_id) const {
     validate_device_id(device_id);
     return device_workers_.at(device_id)->get_stream();
 }

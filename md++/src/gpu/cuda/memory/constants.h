@@ -2,9 +2,8 @@
  * @file constants.h
  * device constant memory
  */
-#ifndef INCLUDED_CUKERNEL_CONSTANTS_H
-#define INCLUDED_CUKERNEL_CONSTANTS_H
 
+#pragma once
 
 namespace device {
     /**
@@ -36,5 +35,3 @@ namespace device {
     //__constant__ __device__ float cutoff_long;
     texture<float, 1, cudaReadModeElementType> tex;
 }
-
-#endif

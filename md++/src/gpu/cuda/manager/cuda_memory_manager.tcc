@@ -1,6 +1,8 @@
 #pragma once
 
-#include <cuda_runtime.h>
+#ifdef USE_CUDA
+    #include <cuda_runtime.h>
+#endif
 #include <stdexcept>
 #include <string>
 
@@ -34,18 +36,12 @@ T* CudaMemoryManager::allocate_host_memory(size_t size) {
 
 template <typename T>
 void CudaMemoryManager::free_host_memory(T* ptr) {
-    cudaError_t err = cudaFreeHost(ptr);
-    if (err != cudaSuccess) {
-        throw std::runtime_error("Failed to free host memory: " + std::string(cudaGetErrorString(err)));
-    }
+    CHECK(cudaFreeHost(ptr));
 }
 
 template <typename T>
 void CudaMemoryManager::copy_to_device(T* device_ptr, const T* host_ptr, size_t size, cudaStream_t stream) {
-    cudaError_t err = cudaMemcpyAsync(device_ptr, host_ptr, size * sizeof(T), cudaMemcpyHostToDevice, stream);
-    if (err != cudaSuccess) {
-        throw std::runtime_error("Failed to copy data to device: " + std::string(cudaGetErrorString(err)));
-    }
+    CHECK(cudaMemcpyAsync(device_ptr, host_ptr, size * sizeof(T), cudaMemcpyHostToDevice, stream));
 }
 
 template <typename T>

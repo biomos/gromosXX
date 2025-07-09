@@ -1,11 +1,11 @@
 #pragma once
 
-#include <cuda_runtime.h>
+#include "gpu/cuda/cuheader.h"
+
 #include <vector>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
-
 
 namespace gpu {
     /**
@@ -45,7 +45,7 @@ namespace gpu {
          * @return The properties of the specified device.
          * @throws std::invalid_argument if the device ID is invalid.
          */
-        cudaDeviceProp get_device_properties(int device_id) const;
+        CUDEVPROP get_device_properties(int device_id) const;
 
         /**
          * @brief Set the active CUDA device.
@@ -65,14 +65,14 @@ namespace gpu {
          * @return The created CUDA stream.
          * @throws std::runtime_error if stream creation fails.
          */
-        cudaStream_t create_stream();
+        CUSTREAM create_stream();
 
         /**
          * @brief Destroy a CUDA stream.
          * @param stream The CUDA stream to destroy.
          * @throws std::runtime_error if stream destruction fails.
          */
-        void destroy_stream(cudaStream_t stream);
+        void destroy_stream(CUSTREAM stream);
 
         /**
          * @brief Get a human-readable description of a CUDA device.
@@ -106,6 +106,6 @@ namespace gpu {
 
         int device_count_; ///< The number of available CUDA devices.
         int active_device_id_; ///< The ID of the currently active CUDA device.
-        std::unordered_map<cudaStream_t, int> stream_map_; ///< Tracks streams and their associated devices.
+        std::unordered_map<CUSTREAM, int> stream_map_; ///< Tracks streams and their associated devices.
     };
 }

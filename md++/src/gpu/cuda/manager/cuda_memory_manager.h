@@ -1,8 +1,9 @@
 #pragma once
 
-#include <cuda_runtime.h>
 #include <stdexcept>
 #include <string>
+
+#include "gpu/cuda/cuheader.h"
 
 namespace gpu {
     /**
@@ -61,7 +62,7 @@ namespace gpu {
          * @param size The size of the data to copy in bytes.
          * @throws std::runtime_error if the copy operation fails.
          */
-        void copy_to_device(void* device_ptr, const void* host_ptr, size_t size);
+        void copy_to_device(void* device_ptr, const void* host_ptr, size_t size, CUSTREAM stream);
 
         /**
          * @brief Copy data from device to host.
@@ -70,7 +71,7 @@ namespace gpu {
          * @param size The size of the data to copy in bytes.
          * @throws std::runtime_error if the copy operation fails.
          */
-        void copy_to_host(void* host_ptr, const void* device_ptr, size_t size);
+        void copy_to_host(void* host_ptr, const void* device_ptr, size_t size, CUSTREAM stream);
 
         /**
          * @brief Copy data between two device memory locations.
@@ -89,7 +90,7 @@ namespace gpu {
          * @param stream The CUDA stream to use for the asynchronous copy.
          * @throws std::runtime_error if the copy operation fails.
          */
-        void async_copy_to_device(void* device_ptr, const void* host_ptr, size_t size, cudaStream_t stream);
+        void async_copy_to_device(void* device_ptr, const void* host_ptr, size_t size, CUSTREAM stream);
 
         /**
          * @brief Perform an asynchronous copy from device to host.
@@ -99,7 +100,7 @@ namespace gpu {
          * @param stream The CUDA stream to use for the asynchronous copy.
          * @throws std::runtime_error if the copy operation fails.
          */
-        void async_copy_to_host(void* host_ptr, const void* device_ptr, size_t size, cudaStream_t stream);
+        void async_copy_to_host(void* host_ptr, const void* device_ptr, size_t size, CUSTREAM stream);
 
         /**
          * @brief Query the available and total memory on the device.
@@ -116,6 +117,6 @@ namespace gpu {
          * @param message A message to include in the exception if the operation failed.
          * @throws std::runtime_error if the CUDA operation failed.
          */
-        void check_cuda_error(cudaError_t result, const std::string& message) const;
+        void check_cuda_error(CUERROR result, const std::string& message) const;
     };
 }

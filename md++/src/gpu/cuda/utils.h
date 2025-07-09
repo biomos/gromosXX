@@ -1,17 +1,16 @@
 #pragma once
 
-#include <cuda_runtime.h>
 #include <iostream>
 #include <stdexcept>
 #include <string>
 #include <sstream>
 
+#include "gpu/cuda/cuheader.h"
+
 /**
  * @namespace gpu
  * @brief A collection of utility functions for GPU-related operations.
  */
-
-#define CHECK(call) gpu::check_cuda_error((call), __FILE__, __LINE__, #call)
 
 namespace gpu {
     /**

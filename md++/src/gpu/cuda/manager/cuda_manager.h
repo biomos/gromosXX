@@ -4,10 +4,11 @@
 #include <vector>
 #include <unordered_map>
 #include <stdexcept>
+
+#include "gpu/cuda/cuheader.h"
 #include "cuda_device_manager.h"
 #include "cuda_device_worker.h"
 #include "cuda_memory_manager.h"
-#include "../memory/cuvector.h"
 
 namespace gpu {
     /**
@@ -49,7 +50,7 @@ namespace gpu {
          * @return The CUDA stream for the specified device.
          * @throws std::invalid_argument if the device ID is invalid.
          */
-        cudaStream_t get_stream(int device_id) const;
+        CUSTREAM get_stream(int device_id) const;
 
         /**
          * @brief Synchronize all devices.
@@ -73,7 +74,7 @@ namespace gpu {
          * @throws std::runtime_error if memory allocation fails.
          */
         template <typename T>
-        cuvector<T> create_cuvector(int device_id, size_t size);
+        CUVECTOR<T> create_cuvector(int device_id, size_t size);
 
         /**
          * @brief Copy data from a host vector to a cuvector on a specific GPU.
@@ -85,7 +86,7 @@ namespace gpu {
          * @throws std::runtime_error if the copy operation fails.
          */
         template <typename T>
-        void copy_to_device(int device_id, cuvector<T>& device_vector, const std::vector<T>& host_vector);
+        void copy_to_device(int device_id, CUVECTOR<T>& device_vector, const std::vector<T>& host_vector);
 
         /**
          * @brief Copy data from a cuvector on a specific GPU to a host vector.
@@ -97,7 +98,7 @@ namespace gpu {
          * @throws std::runtime_error if the copy operation fails.
          */
         template <typename T>
-        void copy_to_host(int device_id, std::vector<T>& host_vector, const cuvector<T>& device_vector);
+        void copy_to_host(int device_id, std::vector<T>& host_vector, const CUVECTOR<T>& device_vector);
 
         /**
          * @brief Get a human-readable description of all active devices.

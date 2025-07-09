@@ -71,11 +71,9 @@ set(GROMOS_OBJECTS
     $<TARGET_OBJECTS:gromath>
     $<TARGET_OBJECTS:grorepex>
 )
-
-if(USE_CUDA)
-    find_package(CUDAToolkit REQUIRED)
-    list(APPEND GROMOS_OBJECTS grocuda)
-endif()
+set(GROMOS_LIBS
+    grocuda
+)
 
 # executables
 #set(EXEC_NAMES aladip aladip_unperturbed aladip_special aladip_atomic aladip_ls c16_cg lambdas)

@@ -19,41 +19,13 @@
  */
 
 /**
- * @file stdheader.h
- * file for later use with precompiled headers.
+ * @file constraints.h
+ * GPU versions of functions in algorithm/constraints
  */
 
-#ifndef INCLUDED_STDHEADER_H
-#define INCLUDED_STDHEADER_H
+#pragma once
 
-#include <string>
-#include <iostream>
-#include <iomanip>
-#include <sstream>
-#include <fstream>
-#include <map>
-#include <unordered_map>
-#include <set>
-#include <vector>
-#include <stdexcept>
-#include <cassert>
-#include <cmath>
-#include <algorithm>
-#include <typeinfo>
-#include <list>
-#include <limits>
-
-#include "config.h"
-
-#include "math/gmath.h"
-#include "util/debug.h"
-
-#include "io/message.h"
-#include "io/gzstream.h"
-
-#include "util/timing.h"
-
-#define GROMOSXX "MD++"
-
-#endif
-
+namespace gpu::cuda::algorithm {
+    double remove_com_translation(CudaManager& cuda_manager, const topology::Topology& topo, const configuration::Configuration& conf, const simulation::Simulation& sim, bool remove_trans);
+    double remove_com_rotation(CudaManager& cuda_manager, const topology::Topology& topo, const configuration::Configuration& conf, const simulation::Simulation& sim, bool remove_trans);
+}

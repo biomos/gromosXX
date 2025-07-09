@@ -3,7 +3,7 @@
  * @author capraz, poliak
  * device functions for efficient reduction
  */
-#pragma include once
+#pragma once
 
 // #include "types.h"
 

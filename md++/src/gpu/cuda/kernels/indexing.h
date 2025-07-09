@@ -4,6 +4,8 @@
  * device function for easier indexing
  */
 
+#pragma once
+
 #define FULL_MASK 0xFFFFFFFF
 
 __device__ __forceinline__ unsigned local_index() {
