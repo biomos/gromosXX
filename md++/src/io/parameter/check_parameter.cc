@@ -199,7 +199,7 @@ int io::simple_crosschecks(simulation::Simulation & sim) {
 
     // pressure scaling or calculation and trajectory reading mode
     if (param.analyze.analyze && param.pcouple.scale != math::pcouple_off) {
-        io::messages.add("PRESSURESCALE block: Pressure scaling in trajectory reading mode will lead"
+        io::messages.add("PRESSURESCALE block: Pressure scaling in trajectory reading mode will lead "
                          "to unexpected results.", "In_Parameter", io::message::warning);
     }
     if (param.analyze.analyze && param.pcouple.calculate) {

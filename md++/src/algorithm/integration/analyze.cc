@@ -103,6 +103,12 @@ int algorithm::Analyze_Step
     if (sim.param().analyze.no_constraints) {
       os << "\n\tConstraints turned off by NTSHK=2.\n";
     }
+    if (sim.param().pcouple.scale != math::pcouple_off) {
+      os << "\n\tPressure coupling is on, meaning that coordinates are modified!\n";
+      io::messages.add("Trajectory analysis with pressure scaling on leads to changes in the coordinates",
+		   "trajectory analysis",
+		   io::message::warning);
+    }
     os<< "\t\n";
   }
     
