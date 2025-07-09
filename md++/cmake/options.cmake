@@ -29,16 +29,17 @@ if(OMP AND MPI)
     message(FATAL_ERROR "OMP and MPI must NOT be enabled at the same time")
 endif()
 
-if(USE_CUDA AND NOT OMP)
-    message(FATAL_ERROR "CUDA kernel requires OMP compilation")
-endif()
-
 if(USE_CUDA)
     enable_language(CUDA)
     set(CMAKE_CUDA_STANDARD 11)
     set(CMAKE_CUDA_STANDARD_REQUIRED ON)
     set(CMAKE_CUDA_RUNTIME_LIBRARY Shared)
-    add_definitions(-DHAVE_LIBCUDART)
+    find_package(CUDAToolkit REQUIRED)
+    # set(CMAKE_CUDA_RUNTIME_LIBRARY Static) ## use this for production
+    add_definitions(-DUSE_CUDA)
+    message(STATUS "CUDA support enabled")
+else()
+    message(WARNING "CUDA support disabled. Use -DUSE_CUDA=ON to enable.")
 endif()
 
 if(OMP AND CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
