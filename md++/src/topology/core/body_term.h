@@ -520,13 +520,14 @@ namespace topology {
      */
     distance_restraint_struct_colvar() {on=false;};
     distance_restraint_struct_colvar(bool on, util::Virtual_Atom atoms1,
-            util::Virtual_Atom atoms2, double r0, double w0, int rah)
+            util::Virtual_Atom atoms2, double r0, double w0, int rah, double d0)
     : on(on), 
     atoms1(atoms1), 
     atoms2(atoms2),
     r0(r0),
     w0(w0),
-    rah(rah) {
+    rah(rah),
+    d0(d0) {
     }
 
     /**
@@ -554,6 +555,10 @@ namespace topology {
      *repulsiv, attractiv, harmonic
      */
     int rah;
+    /**
+     *distance offset to make it linear 
+     */
+    double d0;
 
   };
 

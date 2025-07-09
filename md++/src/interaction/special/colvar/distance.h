@@ -43,8 +43,6 @@ namespace interaction
 				       simulation::Simulation & sim);
 				       
     topology::distance_restraint_struct_colvar *params;
-    private:
-      int rah;
     
   };
   

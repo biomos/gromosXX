@@ -91,6 +91,7 @@ int interaction::Distance_Colvar::init(topology::Topology &topo,
 
   targetvalue=(*params).r0;
   rah=(*params).rah;
+  d0=(*params).d0;
   w0=(*params).w0;
   
   // atoms will be one concatenated list of pointers to atoms1 and atoms2 from

@@ -162,7 +162,7 @@ void io::In_Distanceres::read_DISTANCERESSPEC(topology::Topology &topo,
   if (block.read_buffer(m_block[blockname], false) == 0) {
     block_read.insert(blockname);
 
-    double dish = 0.0,disc = 0.0;
+    double dish = 0.0,disc = 0.0, d0 = 0.0;
 
     DEBUG(10, "reading in DISTANCERES data");
     
@@ -182,6 +182,7 @@ void io::In_Distanceres::read_DISTANCERESSPEC(topology::Topology &topo,
 
     block.get_next_parameter("DISH", dish, ">0", "");
     block.get_next_parameter("DISC", disc, ">0", "");
+    block.get_next_parameter("d0", d0, "", "");
 
     if (!quiet){
     os << std::setw(10) << "DISH"
@@ -189,6 +190,7 @@ void io::In_Distanceres::read_DISTANCERESSPEC(topology::Topology &topo,
        << "\n"
        <<  std::setw(10)<< dish
        <<  std::setw(10)<< disc
+       <<  std::setw(10)<< d0
        << "\n";
 
     os << std::setw(10) << "i"
@@ -262,7 +264,7 @@ void io::In_Distanceres::read_DISTANCERESSPEC(topology::Topology &topo,
         //topo.distance_restraints().push_back
         //  (topology::distance_restraint_struct(v1,v2,r0,w0,rah));
         topo.distance_restraints_colvar().push_back
-          (topology::distance_restraint_struct_colvar(true, v1, v2, r0, w0,rah));
+          (topology::distance_restraint_struct_colvar(true, v1, v2, r0, w0,rah,d0));
         if (!quiet){
           for(unsigned int i = 0; i < io::In_Distanceres::MAX_ATOMS; i++) {
           // the first element has the width 10, if i is bigger then the number of atoms

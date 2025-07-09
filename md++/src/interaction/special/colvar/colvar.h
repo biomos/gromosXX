@@ -54,9 +54,9 @@ namespace interaction
      */
     math::VArray cts;    
     /**
-     * target value and force constant weight
+     * target value and force constant weight and rah and d0(linear scaling)
      */
-    double targetvalue, w0;
+    double targetvalue, w0, rah, d0;
     /**
      * A and B state target value and force constant weight for the perturbed colvars
      */

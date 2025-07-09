@@ -67,7 +67,7 @@ int interaction::Colvar_Restraint_Interaction
     conf.special().colvarres.values.push_back((*it)->ct);
     if (!sum) {
       double E;
-      E= apply_restraint(topo, conf, sim, (*it)->atoms, (*it)->derivatives, (*it)->ct, (*it)->targetvalue, (*it)->w0, (*it)->rah);
+      E= apply_restraint(topo, conf, sim, (*it)->atoms, (*it)->derivatives, (*it)->ct, (*it)->targetvalue, (*it)->w0, (*it)->rah,(*it)->d0);
       conf.special().colvarres.energies.push_back(E);
       Etot+=E;
       // add to the energy group of the first atom of first list
@@ -85,7 +85,7 @@ int interaction::Colvar_Restraint_Interaction
         to = m_colvars.end(); it != to; ++it) {
       double E;
       // the individual weights are ignored when restraining to the sum
-      E= apply_restraint(topo, conf, sim, (*it)->atoms, (*it)->derivatives, Ctot, Ctot0, 1.0);
+      E= apply_restraint(topo, conf, sim, (*it)->atoms, (*it)->derivatives, Ctot, Ctot0, 1.0,(*it)->rah,(*it)->d0);
       conf.special().colvarres.energies.push_back(E);
       Etot+=E;
       // add to the energy group of the first atom of first list
@@ -103,15 +103,16 @@ int interaction::Colvar_Restraint_Interaction
 double interaction::Colvar_Restraint_Interaction
   ::apply_restraint(topology::Topology & topo,
  configuration::Configuration & conf,simulation::Simulation & sim, std::vector< util::Virtual_Atom* > atoms, 
-                    math::VArray &derivatives, double &curr, double &target, double w0, int rah) {
+                    math::VArray &derivatives, double &curr, double &target, double w0, int rah, double r_linear) {
   
   double K = sim.param().colvarres.K;
-  double r_linear = sim.param().distanceres.r_linear;
+  bool enable_linear_region = (r_linear >= 0);
   double diff = target - curr;
   double E = 0;
+  DEBUG(7, "target value: " << target << ", current value: " << curr << ", rah: " << rah << ", r_linear: " << r_linear);
 
-  DEBUG(8, "target value: " << target << ", current value: " << curr << ", rah: " << rah);
-                  
+  
+  
   if (sim.param().colvarres.colvarres == simulation::colvar_restr_off) {   
        std::cerr << "Colvar restraints are off, yet you ended up in colvar's apply_restraint .. something is wrong ..\n";
 
@@ -119,29 +120,47 @@ double interaction::Colvar_Restraint_Interaction
                        "Colvar",
                        io::message::error);
   }
-  // entering harmonic restraining
-  else if (sim.param().colvarres.colvarres == simulation::colvar_restr_harmonic) {
-  E=0.5*sim.param().colvarres.K*w0*diff*diff;
-  DEBUG(8, "Harmonic restr energy: " << E);
 
-  DEBUG(16, "Number of derivatives: " << derivatives.size());
-  for (int i = 0; i < derivatives.size(); ++i) {
-    DEBUG(8, "Derivative " << i << ": " << math::v2s(derivatives[i]));
-    math::Vec f = sim.param().colvarres.K*w0*diff*derivatives[i];
-    DEBUG(8, "Harmonic restr forces atom" << i+1 << ": " << math::v2s(f));
-    (*atoms[i]).force(conf, topo, f);
+  math::Vec f;
+  // default: no force - Resets their restraint force to zero before applying any new force.
+  // (so we’re not accidentally adding to previous forces when multiple colvar restraints act)
+  //for (int i = 0; i < atoms.size(); ++i)
+  //  (*atoms[i]).force(conf, topo, math::Vec(0));
+
+   // case switching on rah
+  if (rah * curr < rah * target) {
+    DEBUG(8, "COLVARRES: restraint fulfilled (no force)");
+  } 
+
+  else if (!enable_linear_region || fabs(diff) < r_linear) {
+    // Harmonic region
+    DEBUG(7, "COLVARRES: harmonic region");
+    E = 0.5 * K * diff * diff;
+    DEBUG(10, "Harmonic energy: " << E);
+    for (int i = 0; i < atoms.size(); ++i) {
+      f = K * diff * derivatives[i];
+      DEBUG(10, "Harmonic force atom " << i+1 << ": " << math::v2s(f));
+      (*atoms[i]).force(conf, topo, f);
     }
-  }
 
-  // entering harmonic linear restraining
-  else if (sim.param().colvarres.colvarres == simulation::colvar_restr_linear_harmonic) {
-    double shifting_value =  sim.param().distanceres.r_linear;
-     for (int i=0; i<atoms.size(); i++) {
-  
-     }
+  } else {
+    // Linear region
+    DEBUG(7, "COLVARRES: linear region");
+    //get sign, whether to push or pull depending on whether curr is above or below target
+    double sign = (curr < target) ? 1.0 : -1.0;
+
+    E = K * r_linear * (fabs(diff) - 0.5 * r_linear);
+    DEBUG(10, "Linear energy: " << E);
+
+    for (int i = 0; i < atoms.size(); ++i) {
+      f = sign * K * r_linear * derivatives[i];
+      (*atoms[i]).force(conf, topo, f);
+      DEBUG(10, "Linear force atom " << i+1 << ": " << math::v2s(f));
+    }
   }
   return E;
 }
+
 
 int interaction::Colvar_Restraint_Interaction::init(topology::Topology &topo, 
 		     configuration::Configuration &conf,
@@ -165,7 +184,6 @@ int interaction::Colvar_Restraint_Interaction::init(topology::Topology &topo,
   if (!topo.distance_restraints_colvar().empty()) {
     DEBUG(8, "Entered Distance restraining using COLVAR: ");
     for (int i=0; i< topo.distance_restraints_colvar().size(); i++) {
-      DEBUG(8, "distance restraint no: " << i+1 );
       interaction::Distance_Colvar *cv = new interaction::Distance_Colvar();
       (*cv).params = &topo.distance_restraints_colvar()[i];
       m_colvars.push_back(cv);
@@ -175,6 +193,7 @@ int interaction::Colvar_Restraint_Interaction::init(topology::Topology &topo,
   // add more colvar types here
 
   
+
   for (std::vector<Colvar *>::iterator it = m_colvars.begin(),
                                        to = m_colvars.end(); it != to; ++it) {
     if ((*it)->init(topo, conf, sim, os, quiet)) {
