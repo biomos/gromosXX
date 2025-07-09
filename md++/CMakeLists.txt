@@ -5,12 +5,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # Enable GPU support quietly if CUDA is available
 
 # Allow forcing CUDA with -DUSE_CUDA=ON, or detect it automatically
-option(USE_CUDA "Enable CUDA support" OFF)
-
-# Force static CUDA runtime before any find_package(CUDAToolkit)
-if(USE_CUDA)
-    set(CMAKE_CUDA_RUNTIME_LIBRARY STATIC)
-endif()
+option(USE_CUDA "Enable CUDA support if available" ON)
 
 # Configure project languages
 if(USE_CUDA)
@@ -20,11 +15,13 @@ if(USE_CUDA)
     set(CMAKE_CUDA_STANDARD_REQUIRED ON)
     set(CMAKE_CUDA_SEPARABLE_COMPILATION ON)
     set(CMAKE_CUDA_ARCHITECTURES "60;62;70;75;80;86")
+    set(CMAKE_CUDA_RUNTIME_LIBRARY STATIC)
 
     find_package(CUDAToolkit REQUIRED)
     include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
 else()
     project(gromosXX LANGUAGES CXX)
+    message(WARNING "CUDA support disabled")
 endif()
 
 set(CMAKE_CXX_STANDARD 17)
