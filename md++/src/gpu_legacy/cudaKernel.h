@@ -101,7 +101,7 @@ namespace cukernel {
      * copies the positions CPU->GPU
      * @param pos the positions
      */
-    int cudaCopyPositions(double * pos, gpu_status * gpu_stat);
+    int copy_positions(double * pos, gpu_status * gpu_stat);
     /**
      * calculates/updates the long/shortrange pairlists
      */
@@ -116,7 +116,7 @@ namespace cukernel {
      * @param[in] longrange true: longrange interaction calculated, false: shortrange interactions calculated
      * @return 0 if successful or sum error codes otherwise.
      */
-    int cudaCalcForces(double * forces, double * virial, double * lj_energy, double * crf_energy,
+    int calculate_solvent_interactions(double * forces, double * virial, double * lj_energy, double * crf_energy,
             bool longrange, gpu_status * gpu_stat);
 
     /**
@@ -125,7 +125,7 @@ namespace cukernel {
     gpu_status * cudaInitConstraints(unsigned int num_of_gpus, unsigned int gpu_id, unsigned int num_atoms,
                                   unsigned int num_solvent_mol);
     /**
-     * applyes to constraints to the positions. First call cudaCopyPositions if you haven't done so yet.
+     * applyes to constraints to the positions. First call copy_positions if you haven't done so yet.
      * @param[inout] newpos the new positions to be constrained.
      * @param[in] oldpos the old positions
      * @param[out] shake_fail_mol -1 on success or a molecule index if the solving of constraints failed for this molecule.

@@ -39,7 +39,7 @@
 
 extern __device__ __constant__ cukernel::simulation_parameter device_param;
 
-extern "C" int cudaCalcForces(double * forces, double * virial, double * lj_energy,
+extern "C" int calculate_solvent_interactions(double * forces, double * virial, double * lj_energy,
         double * crf_energy, bool longrange, gpu_status * gpu_stat) {
   int error = 0;
   cukernel::pairlist *dev_pl;
@@ -310,8 +310,7 @@ __global__ void cukernel::kernel_CalcForces_Solvent
 
 
   dev_for[index] = force;
-  //dev_energy[index] = make_float2(e_lj, e_crf);
-  //dev_virial[index] = virial;
+
   // reduce virial and energy within warp
   const unsigned mask = __ballot_sync(FULL_MASK, index < device_param.num_atoms.solvent);
   for (unsigned offset = 16; offset > 0; offset /= 2) {
@@ -344,4 +343,9 @@ __global__ void cukernel::kernel_CalcForces_Solvent
     dev_virial[index/32] = virial;
     dev_energy[index/32] = make_float2(e_lj, e_crf);
   }
+}
+__global__ void cukernel::calculate_interactions() {
+  unsigned tid = threadIdx.x;
+  unsigned bid = blockIdx.x;
+  printf("bid: %u, tid: %u\n", bid, tid);
 }

@@ -73,11 +73,6 @@ int algorithm::Algorithm_Sequence
     rcom.init(topo, conf, sim, os, quiet);
     rcom.apply(topo, conf, sim);
   }
-
-  // initialize CUDA
-  // if (sim.param().cuda.number_gpus || sim.param().innerloop.number_gpus || sim.param().constraint.solvent.number_gpus) {
-  //   sim.CUDA_Kernel(cukernel::CUDA_Kernel::get_instance(topo,conf,sim));
-  // }
   
   for(Algorithm_Sequence::iterator 
 	it = begin(), to = end();

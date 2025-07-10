@@ -174,6 +174,15 @@ __device__ __host__ unsigned gpu::Container<T>::size(unsigned row) const {
 }
 
 /**
+ * get sizes of all the rows
+ */
+std::vector<unsigned> cukernel::Container<T>::sizes() const {
+    std::vector<unsigned> s(this->m_height,0);
+    CHECK(cudaMemcpy(s.data(), this->dev_sizes, this->m_height * sizeof(unsigned), cudaMemcpyDeviceToHost));
+    return s;
+}
+
+/**
  * clear all data
  */
 template <typename T>
@@ -198,10 +207,8 @@ __host__ __device__ void gpu::Container<T>::clear() {
  * copy data to host and return as 2D vector
  */
 template <typename T>
-__host__ std::vector< std::vector<T> > gpu::Container<T>::copy_to_host() const {
-    std::vector<unsigned> s;
-    s.resize(this->m_height,0);
-    CHECK(cudaMemcpy(s.data(), this->dev_sizes, this->m_height * sizeof(unsigned), cudaMemcpyDeviceToHost));
+__host__ std::vector< std::vector<T> > cukernel::Container<T>::copy_to_host() const {
+    std::vector<unsigned> s = this->sizes();
 
     std::vector< std::vector<T> > arr;
     arr.resize(this->m_height);

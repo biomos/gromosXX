@@ -1,6 +1,12 @@
 /**
- * @file cudaKernel.cu
- * implementation of CUDA kernel
+ * @file cuda_kernel.cu
+ * @author Poliak (peter.poliak@boku.ac.at)
+ * @brief Implementation of the singleton controlling the GPUs
+ * @version 0.1
+ * @date 17.06.2023
+ * 
+ * @copyright Copyright (c) 2023
+ * 
  */
 
 #include "stdheader.h"
@@ -9,7 +15,9 @@
 
 #include "gpu_status.h"
 //#include "cudaKernel.h"
+#include "interaction.h"
 #include "lib/constants.h"
+#include "lib/utils.h"
 #include "parameter.h"
 #include "macros.h"
 
@@ -22,6 +30,7 @@
 
 #include "math/volume.h"
 
+#include "pairlist/pairlist.h"
 
 #undef MODULE
 #undef SUBMODULE
@@ -35,7 +44,7 @@ __device__ __constant__ cukernel::simulation_parameter device_param;
 // Initialize the CUDA_Kernel instance to nullptr
 cukernel::CUDA_Kernel * cukernel::CUDA_Kernel::m_cuda_kernel = nullptr;
 
-extern "C" cukernel::CUDA_Kernel::CUDA_Kernel()
+/*extern "C"*/ cukernel::CUDA_Kernel::CUDA_Kernel()
 : mytopo(nullptr),
   myconf(nullptr),
   mysim(nullptr),
@@ -43,10 +52,10 @@ extern "C" cukernel::CUDA_Kernel::CUDA_Kernel()
 {};
 
 
-extern "C" cukernel::CUDA_Kernel * cukernel::CUDA_Kernel::get_instance(
-                                                topology::Topology &topo,
-                                                configuration::Configuration &conf,
-                                                simulation::Simulation &sim) {
+/*extern "C"*/ cukernel::CUDA_Kernel * cukernel::CUDA_Kernel::get_instance(
+                                                const topology::Topology &topo,
+                                                const configuration::Configuration &conf,
+                                                const simulation::Simulation &sim) {
   if (m_cuda_kernel == nullptr) {
     m_cuda_kernel = new CUDA_Kernel();
     m_cuda_kernel->init(topo,conf,sim);
@@ -54,11 +63,13 @@ extern "C" cukernel::CUDA_Kernel * cukernel::CUDA_Kernel::get_instance(
     assert(&topo == m_cuda_kernel->mytopo);
     assert(&conf == m_cuda_kernel->myconf);
     assert(&sim == m_cuda_kernel->mysim);
+    // also check, if the topo/conf/sim correspond to the parameters uploaded to the device
+    assert(m_cuda_kernel->param == m_cuda_kernel->get_device_parameter());
   }
   return m_cuda_kernel;
 };
 
-extern "C" void cukernel::CUDA_Kernel::update_nonbonded(interaction::Nonbonded_Parameter *np) {
+/*extern "C"*/ void cukernel::CUDA_Kernel::update_nonbonded(interaction::Nonbonded_Parameter *np) {
   // solvent lj and crf parameters to const memory
   if (this->param.num_atoms_per_mol > simulation_parameter::max_atoms_solvent) {
     io::messages.add("Too many solvent atoms for constant memory",
@@ -76,21 +87,31 @@ extern "C" void cukernel::CUDA_Kernel::update_nonbonded(interaction::Nonbonded_P
       lj_crf_pair.c12 = lj.c12;
     }
   }
-  this->sync_symbol();
+  this->set_device_parameter();
 }
 
-extern "C" void cukernel::CUDA_Kernel::sync_symbol() {
+/*extern "C"*/ void cukernel::CUDA_Kernel::set_device_parameter() const {
   cudaMemcpyToSymbol(device_param, &this->param, sizeof(cukernel::simulation_parameter));
 }
 
-//extern "C" cukernel::CUDA_Kernel::~CUDA_Kernel(){};
+cukernel::simulation_parameter cukernel::CUDA_Kernel::get_device_parameter() const {
+  cukernel::simulation_parameter tmp_param;
+  cudaMemcpyFromSymbol(&tmp_param, device_param, sizeof(cukernel::simulation_parameter));
+  return tmp_param;
+}
 
-extern "C" void cukernel::CUDA_Kernel::init(topology::Topology &topo,
-                        configuration::Configuration &conf,
-                        simulation::Simulation &sim){
+///*extern "C"*/ cukernel::CUDA_Kernel::~CUDA_Kernel(){};
+
+/*extern "C"*/ void cukernel::CUDA_Kernel::init(
+                        const topology::Topology &topo,
+                        const configuration::Configuration &conf,
+                        const simulation::Simulation &sim){
     this->mytopo = &topo;
     this->myconf = &conf;
     this->mysim = &sim;
+
+    m_pos.resize(topo.num_atoms());
+    m_force.resize(topo.num_atoms());
 
     // initialize the devices
     // for now, we only support only single GPU
@@ -121,9 +142,10 @@ extern "C" void cukernel::CUDA_Kernel::init(topology::Topology &topo,
     //cudaMemcpyToSymbol(device::cutoff.cshort, &cutoff_short, sizeof(float));
     this->copy_parameters();
     DEBUG(0, "CUDA copied to symbol");
+    cudaGetDeviceProperties(&this->device_prop, this->device_number);
     /*
     // let's first query the device properties and print them out
-    cudaGetDeviceProperties(&this->device_properties, this->device_number);
+    cudaGetDeviceProperties(&this->device_prop, this->device_number);
     cudaGetDeviceFlags(&this->flags);
     if (this->flags == 0 && cudaSetDeviceFlags(cudaDeviceScheduleYield) == cudaErrorSetOnActiveProcess)
     std::cerr << "Cannot set flags\n";
@@ -131,10 +153,10 @@ extern "C" void cukernel::CUDA_Kernel::init(topology::Topology &topo,
     std::cout << "CUDA" << std::endl;
     std::cout << "\tDeviceproperties:" << std::endl;
     std::cout << "\t\tNumber: " << device_number << std::endl;
-    std::cout << "\t\tName: " << this->device_properties.name << std::endl;
-    std::cout << "\t\tTotal memory: " << this->device_properties.totalGlobalMem << std::endl;
-    std::cout << "\t\tShared memory per block: " << this->device_properties.sharedMemPerBlock << std::endl;
-    std::cout << "\t\tTotal constant memory: " << this->device_properties.totalConstMem << std::endl;
+    std::cout << "\t\tName: " << this->device_prop.name << std::endl;
+    std::cout << "\t\tTotal memory: " << this->device_prop.totalGlobalMem << std::endl;
+    std::cout << "\t\tShared memory per block: " << this->device_prop.sharedMemPerBlock << std::endl;
+    std::cout << "\t\tTotal constant memory: " << this->device_prop.totalConstMem << std::endl;
 
     // Create a gpu_status structure
     gpu_status * gpu_stat;
@@ -142,7 +164,7 @@ extern "C" void cukernel::CUDA_Kernel::init(topology::Topology &topo,
     gpu_stat->device = device_number;*/
 };
 
-extern "C" void cukernel::CUDA_Kernel::copy_parameters() {
+/*extern "C"*/ void cukernel::CUDA_Kernel::copy_parameters() {
   DEBUG(0, "cutoff before copy: " << mysim->param().pairlist.cutoff_long);
   // long cutoff
   this->param.cutoff_long = mysim->param().pairlist.cutoff_long;
@@ -247,7 +269,7 @@ extern "C" void cukernel::CUDA_Kernel::copy_parameters() {
   this->param.gpu_id = this->device_number;
   
   this->estimate_pairlist();
-  this->sync_symbol();
+  this->set_device_parameter();
   // check what we have there
   cukernel::simulation_parameter tmp_param;
   cudaMemcpyFromSymbol(&tmp_param, device_param, sizeof(cukernel::simulation_parameter));
@@ -273,7 +295,7 @@ extern "C" void cukernel::CUDA_Kernel::copy_parameters() {
   return;
 };
 
-extern "C" void cukernel::CUDA_Kernel::estimate_pairlist() {
+/*extern "C"*/ void cukernel::CUDA_Kernel::estimate_pairlist() {
   // calculate density and allocate memory?
   // when we overflow, double the size and start over again?
   // calculate the particle density?
@@ -305,3 +327,182 @@ extern "C" void cukernel::CUDA_Kernel::estimate_pairlist() {
   return;
 };
 
+int cukernel::CUDA_Kernel::copy_box(math::Box & box) {
+  this->param.box.full.x = box(0)(0);
+  this->param.box.full.y = box(1)(1);
+  this->param.box.full.z = box(2)(2);
+  this->param.box.inv.x = 1.0 / box(0)(0);
+  this->param.box.inv.y = 1.0 / box(1)(1);
+  this->param.box.inv.z = 1.0 / box(2)(2);
+  this->param.box.half.x = box(0)(0) / 2.0;
+  this->param.box.half.y = box(1)(1) / 2.0;
+  this->param.box.half.z = box(2)(2) / 2.0;
+  // copy only the box
+  cudaMemcpyToSymbol(device_param, &this->param.box, sizeof(cukernel::simulation_parameter::box_struct), offsetof(cukernel::simulation_parameter, box));
+  return cukernel::check_error("after copying the box");
+}
+
+int cukernel::CUDA_Kernel::copy_positions(math::VArray & pos) {
+  // copy only the box
+  assert(pos.size() == this->m_pos.size());
+  typedef decltype(this->m_pos)::value_type vec_type; // float3
+  typedef decltype(vec_type::x) val_type; // float
+  for (unsigned i = 0; i < pos.size(); ++i) {
+    this->m_pos[i].x = static_cast<val_type>(pos(i)(0));
+    this->m_pos[i].y = static_cast<val_type>(pos(i)(1));
+    this->m_pos[i].z = static_cast<val_type>(pos(i)(2));
+  }
+  cudaMemPrefetchAsync(this->m_pos.data(), this->m_pos.size() * sizeof(vec_type), this->device_number);
+  return cukernel::check_error("after copying the positions");
+}
+
+void cukernel::CUDA_Kernel::update_pairlist(topology::Topology &topo,
+                                            configuration::Configuration &conf,
+                                            simulation::Simulation &sim) {
+  /** number of blocks should be multiples of
+   * the maximum number of blocks per multiprocessor
+   */
+  const unsigned threads_per_block = 128;
+   /** threads_per_block should be optimized for the specific
+    * problem size and compute capability (occupancy calculator)
+    */
+  //const unsigned max_blocks_per_mp = this->device_prop.maxBlocksPerMultiProcessor;
+  const unsigned max_blocks_per_mp = 2048;
+  const unsigned max_threads_per_mp = this->device_prop.maxThreadsPerMultiProcessor;
+  assert(max_blocks_per_mp * max_threads_per_mp % threads_per_block == 0 && "Set better threads_per_block");
+  const unsigned num_blocks = max_blocks_per_mp * max_threads_per_mp / threads_per_block;
+  dim3 grid(num_blocks);
+  dim3 block(threads_per_block);
+
+  DEBUG(10,"Pairlist: GPU ID: " << this->device_number << " of " << sim.param().cuda.number_gpus
+            <<  ". Blocks: " << num_blocks);
+  
+
+  Pairlist pairlist(topo.num_atoms(), 2000);
+
+  bool overflow = false;
+  do {
+      //pairlist.clear();
+      cukernel::update_pairlist<<<grid,block>>>(m_pos.data(), pairlist);
+    
+      //std::cout << "cell_i: " << cell_i << std::endl;
+      overflow = pairlist.overflown();
+      
+      if (overflow) {
+          unsigned pair_size = 2*pairlist.width();
+          std::cout << "Pairlist overflown, new parlist width: " << pair_size*sizeof(Pairlist::num_type) << std::endl;
+          pairlist.resize(topo.num_atoms(), pair_size);
+      }
+  } while (overflow);
+};
+
+void cukernel::CUDA_Kernel::calculate_interactions() {
+  cukernel::calculate_interactions<<<32,32>>>();
+};
+
+// __global__ void cukernel::update_pairlist(float3 * dev_pos,
+//                                           pairlist pl_short,
+//                                           pairlist pl_long,
+//                                           bool overflow) {
+//   // two tables
+//   // to convert from global atom index to local index
+//   __shared__ char shmem[];
+//   __shared__ uint2 glob_to_loc[];
+//   __shared__ uint loc_to_glob[];
+//   // local thread index (within the block)
+//   const unsigned lid = threadIdx.x;
+//   // global thread index
+//   const unsigned tid = threadIdx.x + blockDim.x * blockIdx.x;
+//   // loop over chargegroups or atoms
+
+
+//   // search for all the indices in our rows
+//   unsigned int num_neighbors_long = 0, num_neighbors_short = 0;
+//   __shared__ float shared_pos[NUM_THREADS_PER_BLOCK * 3];
+
+//   // take host_parameter local
+//   const unsigned int &N = device_param.num_atoms.solvent;
+//   const unsigned int &num_solvent_mol = device_param.num_solvent_mol;
+//   const float &cutoff_long_2 = device_param.cutoff_long_2;
+//   const float &cutoff_short_2 = device_param.cutoff_short_2;
+//   //box edges
+//   const cukernel::simulation_parameter::box_struct& device_box = device_param.box;
+//   const float &box_x = device_box.full.x;
+//   const float &box_y = device_box.full.y;
+//   const float &box_z = device_box.full.z;
+
+//   const float &box_inv_x = device_box.inv.x;
+//   const float &box_inv_y = device_box.inv.y;
+//   const float &box_inv_z = device_box.inv.z;
+//   const unsigned int solvent_offset = device_param.num_atoms_per_mol;
+
+//   // calculate indices
+//   const unsigned int index = blockIdx.x * NUM_THREADS_PER_BLOCK + threadIdx.x;
+//   const unsigned int molecule_index = index * num_of_gpus + gpu_id;
+
+//   const unsigned int first_atom_index = molecule_index*solvent_offset;
+//   const unsigned int myThreadOffset = threadIdx.x*solvent_offset;
+
+//   float3 first_atom_pos;
+//   if (first_atom_index < N)
+//     first_atom_pos = dev_pos[first_atom_index];
+
+//   for (unsigned int i = 0; i < N; i += (NUM_THREADS_PER_BLOCK * solvent_offset)) {
+//     float3 neighbor_pos;
+//     if (i + myThreadOffset < N)
+//       neighbor_pos = dev_pos[i + myThreadOffset];
+
+//     // cache a block of positions
+//     __syncthreads();
+//     shared_pos[threadIdx.x] = neighbor_pos.x;
+//     shared_pos[threadIdx.x + NUM_THREADS_PER_BLOCK] = neighbor_pos.y;
+//     shared_pos[threadIdx.x + 2 * NUM_THREADS_PER_BLOCK] = neighbor_pos.z;
+//     __syncthreads();
+
+//     /*unsigned int end_i_loop = NUM_THREADS_PER_BLOCK;
+//     if (end_i_loop > (N - i) / solvent_offset)
+//       end_i_loop = (N - i) / solvent_offset;*/
+    
+//     const unsigned int end_i_loop = min(NUM_THREADS_PER_BLOCK, (N - i) / solvent_offset);
+//     if (first_atom_index < N) {
+//       for (unsigned int start_i_loop = 0; start_i_loop < end_i_loop; start_i_loop++) {
+//         const unsigned int current_first_atom_index = i + start_i_loop*solvent_offset;
+//         if (current_first_atom_index != first_atom_index && current_first_atom_index < N) {
+//           //{ calculate distance and d^2
+//           float3 dist;
+//           dist.x = first_atom_pos.x - shared_pos[start_i_loop];
+//           dist.x -= box_x * rintf(dist.x * box_inv_x);
+//           dist.y = first_atom_pos.y - shared_pos[start_i_loop + NUM_THREADS_PER_BLOCK];
+//           dist.y -= box_y * rintf(dist.y * box_inv_y);
+//           dist.z = first_atom_pos.z - shared_pos[start_i_loop + 2 * NUM_THREADS_PER_BLOCK];
+//           dist.z -= box_z * rintf(dist.z * box_inv_z);
+//           const float d2 = abs2(dist);
+//           //} calculate distance and d^2
+//        // are they interacting?
+//        if (d2 < cutoff_long_2) {
+//             // longrange?
+//             if (d2 > cutoff_short_2) {
+//               if (num_neighbors_long < pl_long.max_size) {
+//                 pl_long.list[index + pl_long.pitch * num_neighbors_long] = current_first_atom_index;
+//                 num_neighbors_long++;
+//               } else {
+//                 *pl_long.overflow = true;
+//               } // overflow
+//             } else { // shortrange then
+//               if (num_neighbors_short < pl_short.max_size) {
+//                 pl_short.list[index + pl_short.pitch * num_neighbors_short] = current_first_atom_index;
+//                 num_neighbors_short++;
+//               } else {
+//                 *pl_short.overflow = true;
+//               } // overflow
+//             } // if shortrange / longrange
+//           } // if cutoff
+//         } // if atom in valid range
+//       } // for atoms j
+//     } // if atom in valid range
+//   } // for atoms i
+//   if (molecule_index < num_solvent_mol) {
+//     pl_long.num_neighbors[index] = num_neighbors_long;
+//     pl_short.num_neighbors[index] = num_neighbors_short;
+//   }
+// }

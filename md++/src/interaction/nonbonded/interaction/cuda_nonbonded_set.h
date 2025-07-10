@@ -51,8 +51,7 @@ namespace interaction {
      * Constructor.
      */
     CUDA_Nonbonded_Set(Pairlist_Algorithm & pairlist_alg, Nonbonded_Parameter & param,
-            int rank, int num_threads, 
-            unsigned int gpu_id);
+            int rank, int num_threads);
 
     /**
      * Destructor
@@ -82,7 +81,6 @@ namespace interaction {
     Storage & longrange_storage() {
       return m_longrange_storage;
     }
-
     /**
      * maximal number of neighbors per atom in shortrange pairlist
      */
@@ -110,22 +108,8 @@ namespace interaction {
      */
     simulation::Simulation * mysim;
     /**
-     * Pointer to the stream
+     * Nonbonded parameters
      */
-    std::ostream * mystream;
-    /**
-     * Defines, wheter the output is verbouse or not
-     */
-    bool amIquiet;
-    /**
-     * Which physical gpu device
-     */
-    unsigned int gpu_device_number;
-    /**
-     * Which identifier the prgramm has for this gpu
-     */
-    unsigned int mygpu_id;     
-
     Nonbonded_Parameter * m_parameter;
     /**
      * Error integer to communicate problems between threads
@@ -136,7 +120,7 @@ namespace interaction {
      * Calculates the contstants needed for
      * further calculation
      */
-    virtual inline void init_run();
+    //virtual inline void init_run();
     /**
      * contains the calculations, executed at every step
      */

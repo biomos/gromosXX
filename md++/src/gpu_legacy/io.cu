@@ -196,7 +196,7 @@ extern "C" int cudaCopyBox(gpu_status * gpu_stat, double box_x, double box_y, do
   return cukernel::check_error("after copying the box");
 }
 
-extern "C" int cudaCopyPositions(double * pos, gpu_status * gpu_stat) {
+extern "C" int copy_positions(double * pos, gpu_status * gpu_stat) {
   double3 * positions = (double3*) pos;
   for (unsigned int i = 0; i < gpu_stat->host_parameter.num_atoms.solvent; i++) {
     gpu_stat->host_pos[i].x = positions[i].x;

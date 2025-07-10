@@ -213,7 +213,7 @@ int interaction::OMP_Nonbonded_Interaction::init(topology::Topology & topo,
         unsigned int gpu_tid = tid - number_of_cpus + number_of_gpus;
         DEBUG(9, "OMP: CUDA_set, gpu_tid: " << gpu_tid);
 
-        CUDA_Nonbonded_Set * cuda_nbs = new CUDA_Nonbonded_Set(*m_pairlist_algorithm, m_parameter, 0, 1, gpu_tid);
+        CUDA_Nonbonded_Set * cuda_nbs = new CUDA_Nonbonded_Set(*m_pairlist_algorithm, m_parameter, gpu_tid, number_of_gpus);
 
         cuda_nbs->init(topo, conf, sim, os, quiet);
 

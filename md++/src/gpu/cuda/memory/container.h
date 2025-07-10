@@ -141,6 +141,11 @@ namespace gpu {
           __device__ __host__ unsigned size(unsigned row) const;
 
           /**
+           * get size of the row
+           */
+          unsigned sizes() const;
+
+          /**
            * clear all data
            */
           __device__ __host__ void clear();

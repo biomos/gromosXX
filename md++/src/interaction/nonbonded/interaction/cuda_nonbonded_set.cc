@@ -69,10 +69,12 @@
  */
 interaction::CUDA_Nonbonded_Set
 ::CUDA_Nonbonded_Set(Pairlist_Algorithm & pairlist_alg, Nonbonded_Parameter & param,
-		int rank, int num_threads,
-        unsigned int gpu_id)
+		int rank, int num_threads)
   : Nonbonded_Set(pairlist_alg, param, rank, num_threads)/*,
-    util::CycleThread()*/{
+    util::CycleThread()*/,
+    m_parameter(&param),
+    m_cuda_kernel(nullptr),
+    error(0) {
 
   // these values should be fine for a cutoff of 0.8 / 1.4. They have
   // to be increased for larger cutoffs. 
@@ -80,7 +82,6 @@ interaction::CUDA_Nonbonded_Set
   estNeigh_short = 400;
 
   // Which gpu for this set
-  mygpu_id = gpu_id;
   
   // For m_param
   m_parameter = & param;
@@ -105,16 +106,138 @@ int interaction::CUDA_Nonbonded_Set
         configuration::Configuration & conf,
         simulation::Simulation & sim) {
   DEBUG(8, "CUDA_Nonbonded_Set::calculate_interactions");
-  DEBUG(15, "Start Cycle for GPU: " << mygpu_id);
-  if (mygpu_id == 0)
+  DEBUG(15, "Start Cycle for GPU: " << m_rank);
+  if (m_rank == 0)
     m_pairlist_alg.timer().start_subtimer("cuda set");
   //do_cycle();
   // just calculate_interactions directly?
-  calculate();
-  if (mygpu_id == 0)
+  m_storage.zero();
+  const bool pairlist_update = !(sim.steps() % sim.param().pairlist.skip_step);
+  if (m_rank == 0)  
+    m_pairlist_alg.timer().start_subtimer("GPU data copy");
+  
+  const unsigned first_solvent_atom = topo.num_solute_atoms();
+  //error += cukernel::copy_positions(&conf.current().pos(first_solvent_atom)(0), gpu_stat);
+  error += m_cuda_kernel->copy_positions(&conf.current().pos);
+
+  // copy the box if pressure is coupled
+  if (sim.param().pcouple.scale != math::pcouple_off) {
+    error += m_cuda_kernel->copy_box(conf.current().box);
+    //error += cukernel::cudaCopyBox(gpu_stat, conf.current().box(0)(0), conf.current().box(1)(1), conf.current().box(2)(2));
+  }
+  if (m_rank == 0)  
+    m_pairlist_alg.timer().stop_subtimer("GPU data copy");
+  
+
+  if (pairlist_update) {
+    DEBUG(6, "\tdoing longrange...");
+
+    m_longrange_storage.zero();
+    if (m_rank == 0)
+      m_pairlist_alg.timer().start_subtimer("pairlist cuda");
+    //cukernel::cudaCalcPairlist(gpu_stat);
+    error += m_cuda_kernel->update_pairlist(topo, conf, sim);
+    if (m_rank == 0)
+      m_pairlist_alg.timer().stop_subtimer("pairlist cuda");
+  }
+  //ORIOL GAMD
+  // CUDA gamd asumes all waters belong to the same group!
+  unsigned int igroup = 0;
+  if (sim.param().gamd.gamd){
+    unsigned int gamd_group = topo.gamd_accel_group(topo.num_solute_atoms());
+    std::vector<unsigned int> key = {gamd_group, gamd_group};
+    igroup = topo.gamd_interaction_group(key);
+    DEBUG(8, "interaction group for the water (gamd) " << igroup);
+  }
+
+
+  if (pairlist_update) {
+    const int egroup = topo.atom_energy_group(topo.num_solute_atoms());
+    DEBUG(15, "egroup = " << egroup);
+    DEBUG(8, "doing longrange calculation");
+
+    // in case of LS only LJ are calculated
+
+    if (m_rank == 0)
+      m_pairlist_alg.timer().start_subtimer("longrange-cuda");
+    double * For = &m_longrange_storage.force(topo.num_solute_atoms())(0);
+    DEBUG(15, "topo.num_solute_atoms() = " << topo.num_solute_atoms());
+    double * Vir = &m_longrange_storage.virial_tensor(0, 0);
+    double * e_lj = &m_longrange_storage.energies.lj_energy[egroup][egroup];
+    double * e_crf = &m_longrange_storage.energies.crf_energy[egroup][egroup];
+    DEBUG(15, "For = " << *For);
+    DEBUG(15, "Vir = " << *Vir);
+    DEBUG(15, "e_lj = " << *e_lj);
+    DEBUG(15, "e_crf = " << *e_crf);
+    error += cukernel::calculate_solvent_interactions(For, Vir, e_lj, e_crf, true, gpu_stat);
+    if (m_rank == 0)
+      m_pairlist_alg.timer().stop_subtimer("longrange-cuda");
+  }
+  // calculate forces / energies
+  DEBUG(6, "\tshort range interactions");
+
+  if (m_rank == 0)
+    m_pairlist_alg.timer().start_subtimer("shortrange-cuda");
+  double * For = &m_storage.force(topo.num_solute_atoms())(0);
+  double * Vir = &m_storage.virial_tensor(0, 0);
+  const int egroup = topo.atom_energy_group(topo.num_solute_atoms());
+  double * e_lj = &m_storage.energies.lj_energy[egroup][egroup];
+  double * e_crf = &m_storage.energies.crf_energy[egroup][egroup];
+  error += cukernel::calculate_solvent_interactions(For, Vir, e_lj, e_crf, false, gpu_stat);
+  if (m_rank == 0)
+    m_pairlist_alg.timer().stop_subtimer("shortrange-cuda");
+  if (m_rank == 0 && error) {
+    io::messages.add("GPU: cannot calculate forces", io::message::critical);
+    return 1;
+  }
+
+  // add long-range force
+  DEBUG(6, "\t(set) add long range forces");
+
+  m_storage.force += m_longrange_storage.force;
+
+  // and long-range energies
+  DEBUG(6, "\t(set) add long range energies");
+  const unsigned int lj_e_size = unsigned(m_storage.energies.lj_energy.size());
+
+  for (unsigned int i = 0; i < lj_e_size; ++i) {
+    for (unsigned int j = 0; j < lj_e_size; ++j) {
+      m_storage.energies.lj_energy[i][j] +=
+              m_longrange_storage.energies.lj_energy[i][j];
+      m_storage.energies.crf_energy[i][j] +=
+              m_longrange_storage.energies.crf_energy[i][j];
+    }
+  }
+  //ORIOL GAMD add enegies, forces
+  if (sim.param().gamd.gamd){
+    m_storage.force_gamd[igroup] += m_storage.force;
+    for (unsigned int i = 0; i < lj_e_size; ++i) {
+      for (unsigned int j = 0; j < lj_e_size; ++j) {
+        m_storage.energies.gamd_potential_total[igroup] +=
+                m_storage.energies.lj_energy[i][j];
+        m_storage.energies.gamd_potential_total[igroup] +=
+                m_storage.energies.crf_energy[i][j];
+      }
+    }
+  }
+  
+  // add longrange virial
+  if (sim.param().pcouple.virial) {
+    DEBUG(6, "\t(set) add long range virial");
+
+    m_storage.virial_tensor += m_longrange_storage.virial_tensor;
+    // gamd virial
+    if (sim.param().gamd.gamd){
+      m_storage.virial_tensor_gamd[igroup] += m_storage.virial_tensor;
+    }
+  }
+  
+  this->m_cuda_kernel->calculate_interactions();
+
+  if (m_rank == 0)
     m_pairlist_alg.timer().stop_subtimer("cuda set");
   if (error) return 1;
-  DEBUG(15, "Finished Cycle for GPU: " << mygpu_id);
+  DEBUG(15, "Finished Cycle for GPU: " << m_rank);
 
   return 0;
 }
@@ -130,11 +253,26 @@ int interaction::CUDA_Nonbonded_Set
         bool quiet) {
 
   // Set the pointers and variables
-  mytopo = (topology::Topology *) &topo;
+  /*mytopo = (topology::Topology *) &topo;
   myconf = (configuration::Configuration *)&conf;
-  mysim = (simulation::Simulation *) & sim;
-  mystream = &os;
-  amIquiet = quiet;
+  mysim = (simulation::Simulation *) & sim;*/
+  // check pressure coupling
+  // anisotropic is ok now, because we can now handle different box edges
+  // (only for a rectangular box; below we exit if the box is not rectangular)
+  // so, only complain here if the pressure coupling is fully-anisotropic
+  if (sim.param().pcouple.scale != math::pcouple_off &&
+          sim.param().pcouple.scale == math::pcouple_full_anisotropic) {
+    io::messages.add("Fully-anisotropic pressure scaling with CUDA not implemented.",
+            "CUDA_Nonbonded", io::message::error);
+    return 1;
+  }
+
+  if (conf.boundary_type !=  math::rectangular) { 
+      DEBUG(9, "BOX IS NOT RECTANGULAR!!!")
+      io::messages.add("CUDA with non-rectangular box not implemented.",
+            "CUDA_Nonbonded", io::message::error);
+    return 1;
+  }
 
   const int num_atoms = topo.num_atoms();
 
@@ -160,14 +298,16 @@ int interaction::CUDA_Nonbonded_Set
 
   /*start();
   pthread_barrier_wait(&barrier_init);*/
-  this->init_run();
+  //this->init_run();
+  m_cuda_kernel = cukernel::CUDA_Kernel::get_instance(topo,conf,sim);
+  m_cuda_kernel->update_nonbonded(m_parameter);
   return 0;
 }
 
 /**
  * calculate constants needed for the main calculations
  */
-void interaction::CUDA_Nonbonded_Set::init_run() {
+/*void interaction::CUDA_Nonbonded_Set::init_run() {
 
 #ifdef HAVE_LIBCUDART
   /////////////////////////////////
@@ -179,7 +319,7 @@ void interaction::CUDA_Nonbonded_Set::init_run() {
   // gpu::lj_crf_parameter * pLj_crf;
   // pLj_crf = (cukernel::lj_crf_parameter *)malloc(nAtomsPerSolvMol * nAtomsPerSolvMol * sizeof (cukernel::lj_crf_parameter));
 
-  unsigned int solvIdx = mytopo->num_solute_atoms();
+  unsigned int solvIdx = topo.num_solute_atoms();
   for (unsigned int i = 0; i < nAtomsPerSolvMol; i++) {
     for (unsigned int j = 0; j < nAtomsPerSolvMol; j++) {
       const lj_parameter_struct & lj = m_parameter->lj_parameter(mytopo->iac(solvIdx + i), mytopo->iac(solvIdx + j));
@@ -191,10 +331,10 @@ void interaction::CUDA_Nonbonded_Set::init_run() {
   }
 
   double m_cut3i, m_crf, m_crf_cut, m_crf_cut3i, m_crf_2cut3i;
-  double rf_cutoff = mysim->param().nonbonded.rf_cutoff;
-  double epsilon = mysim->param().nonbonded.epsilon;
-  double rf_epsilon = mysim->param().nonbonded.rf_epsilon;
-  double rf_kappa = mysim->param().nonbonded.rf_kappa;
+  double rf_cutoff = sim.param().nonbonded.rf_cutoff;
+  double epsilon = sim.param().nonbonded.epsilon;
+  double rf_epsilon = sim.param().nonbonded.rf_epsilon;
+  double rf_kappa = sim.param().nonbonded.rf_kappa;
 
   m_cut3i = 1.0 / (rf_cutoff * rf_cutoff * rf_cutoff);
   m_crf = 2 * (epsilon - rf_epsilon)*(1.0 + rf_kappa * rf_cutoff) - rf_epsilon *
@@ -210,9 +350,9 @@ void interaction::CUDA_Nonbonded_Set::init_run() {
   // anisotropic is ok now, because we can now handle different box edges
   // (only for a rectangular box; below we exit if the box is not rectangular)
   // so, only complain here if the pressure coupling is fully-anisotropic
-  if (mysim->param().pcouple.scale != math::pcouple_off &&
-          mysim->param().pcouple.scale == math::pcouple_full_anisotropic) {
-//          mysim->param().pcouple.scale != math::pcouple_isotropic) {
+  if (sim.param().pcouple.scale != math::pcouple_off &&
+          sim.param().pcouple.scale == math::pcouple_full_anisotropic) {
+//          sim.param().pcouple.scale != math::pcouple_isotropic) {
 //    io::messages.add("CUDA solvent doesn't support anisotropic pressure scaling.",
     io::messages.add("CUDA solvent doesn't support fully-anisotropic pressure scaling.",
             "CUDA_Nonbonded", io::message::error);
@@ -257,14 +397,14 @@ void interaction::CUDA_Nonbonded_Set::init_run() {
   //         );
   if (error) {
     std::ostringstream msg;
-    msg << "Cannot initialize nonbonded interaction on GPU " << mysim->param().innerloop.gpu_device_number.at(mygpu_id);
+    msg << "Cannot initialize nonbonded interaction on GPU " << sim.param().innerloop.gpu_device_number.at(m_rank);
     io::messages.add(msg.str(), "CUDA_Nonbonded_Set", io::message::error);
     return;
   }
   // free(pLj_crf);
   return;
 #endif
-}
+}*/
 
 // ----------------------------------------------------------------------------
 // CYCLE
@@ -274,10 +414,9 @@ void interaction::CUDA_Nonbonded_Set::init_run() {
  */
 //void interaction::CUDA_Nonbonded_Set::cycle() {
 void interaction::CUDA_Nonbonded_Set::calculate() {
-  DEBUG(6, "CUDA_Nonbonded_Set::cycle start calculations. GPU: " << mygpu_id);
+  DEBUG(6, "CUDA_Nonbonded_Set::cycle start calculations. GPU: " << m_rank);
   // this whole function is remove is the lib is not present.
 
-#ifdef HAVE_LIBCUDART
 
   m_storage.zero();
   const bool pairlist_update = !(mysim->steps() % mysim->param().pairlist.skip_step);
@@ -404,7 +543,7 @@ void interaction::CUDA_Nonbonded_Set::calculate() {
  * Clean up after cycle
  */
 void interaction::CUDA_Nonbonded_Set::end_run() {
-  DEBUG(15, "CUDA_Nonbonded_Set: Cleaning up for GPU: " << mygpu_id);
+  DEBUG(15, "CUDA_Nonbonded_Set: Cleaning up for GPU: " << m_rank);
 #ifdef HAVE_LIBCUDART
   // if (cukernel::CleanUp(gpu_stat))
     io::messages.add("GPU cleanup failed", io::message::critical);

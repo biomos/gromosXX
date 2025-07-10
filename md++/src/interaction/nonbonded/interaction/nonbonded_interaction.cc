@@ -77,7 +77,7 @@ interaction::Nonbonded_Interaction::Nonbonded_Interaction(Pairlist_Algorithm *pa
 m_pairlist_algorithm(pa),
 m_parameter(),
 m_set_size(1),
-m_exp_conf(NULL) {
+m_exp_conf(nullptr) {
   m_pairlist_algorithm->timer_pointer(&m_timer);
 }
 
@@ -93,10 +93,10 @@ interaction::Nonbonded_Interaction::~Nonbonded_Interaction() {
   for (unsigned int i = 0; i < m_nonbonded_set.size(); ++i) {
     DEBUG(12, "deleting set " << i);
     delete m_nonbonded_set[i];
-    m_nonbonded_set[i] = NULL;
+    m_nonbonded_set[i] = nullptr;
   }
 
-  if (m_exp_conf != NULL)
+  if (m_exp_conf != nullptr)
     delete m_exp_conf;
 }
 

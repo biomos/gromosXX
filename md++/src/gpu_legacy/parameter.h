@@ -20,7 +20,7 @@
 
 /**
  * @file parameter.h
- * the accelerator's parameters
+ * the device parameters copied preferably to the constant memory
  */
 #ifndef INCLUDED_CUKERNEL_PARAMETER_H
 #define INCLUDED_CUKERNEL_PARAMETER_H
@@ -53,7 +53,6 @@ namespace cukernel {
    * @struct simulation_parameter
    *
    * struct containing simulation parameters needed by kernels
-   * initialized in cudaInit(...)
    */
   struct simulation_parameter {
     static const unsigned max_atoms_solvent = MAX_ATOMS_SOLVENT;
@@ -139,7 +138,7 @@ namespace cukernel {
      */
     unsigned int num_of_gpus;
     /**
-     * The current number of the gpu
+     * The current number of the gpus
      */
     unsigned int gpu_id;
   };

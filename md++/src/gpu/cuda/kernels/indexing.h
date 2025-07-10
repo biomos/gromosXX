@@ -21,3 +21,21 @@ __device__ __forceinline__ unsigned index() {
   return local_index() + blocksize() * block_index();
 }
 
+/**
+ * fast integer square root
+ */
+__host__ __device__ unsigned fast_isqrt(const unsigned a) {
+  unsigned g = 0x8000;
+  unsigned c = 0x8000;
+  for (;;) {
+    if (g*g > a) {
+      g ^= c;
+    }
+    c >>= 1;
+    if (c == 0) {
+      return g;
+    }
+    g |= c;
+  }
+}
+

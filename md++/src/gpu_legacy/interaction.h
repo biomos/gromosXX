@@ -53,6 +53,8 @@ __global__ void kernel_CalcForces_Solvent(
         float2 * dev_energy,
         unsigned int num_of_gpus,
         unsigned int gpu_id);
+
+__global__ void calculate_interactions();
 }
 #endif
 
