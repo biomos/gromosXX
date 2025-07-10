@@ -141,9 +141,9 @@ namespace gpu {
           __device__ __host__ unsigned size(unsigned row) const;
 
           /**
-           * get size of the row
+           * get sizes of the rows
            */
-          unsigned sizes() const;
+          std::vector<unsigned> sizes() const;
 
           /**
            * clear all data
