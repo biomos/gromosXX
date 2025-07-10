@@ -22,21 +22,22 @@ libgrocuda.a: $(libgrocuda_a_OBJECTS) libgrocuda.o
 
 if WITH_CUDA
 noinst_LIBRARIES = libgrocuda.a
-libgrocuda_a_SOURCES =  cuda/manager/cuda_device_worker.cu \
-						cuda/manager/cuda_memory_manager.cu \
-						cuda/manager/cuda_device_manager.cu \
-						cuda/algorithm/constraints.cu \
+libgrocuda_a_SOURCES =  cuda/manager/cuda_manager.cc \
 						cuda/kernels/reduction.cu \
-						cuda/memory/container.cu				
+						cuda/memory/container.cu \
+						cuda/manager/cuda_device_worker.cu \
+						cuda/manager/cuda_device_manager.cu \
+						cuda/manager/cuda_memory_manager.cu \
+						cuda/algorithm/constraints.cu
 else
 xxincludedir = $(includedir)/md++/gpu
 ##xxinclude_HEADERS =	cuda_kernel.h
 noinst_LTLIBRARIES = libgrocuda.la
-libgrocuda_la_SOURCES = cuda/manager/cuda_device_worker.cc \
-						cuda/manager/cuda_device_manager.cc \
-						cuda/manager/cuda_memory_manager.cc \
-						cuda/manager/cuda_manager.cc \
-						cuda/algorithm/constraints.cc
+libgrocuda_la_SOURCES =    	cuda/algorithm/constraints.cc \
+							cuda/manager/cuda_manager.cc \
+							cuda/manager/cuda_device_worker.cc \
+							cuda/manager/cuda_device_manager.cc \
+							cuda/manager/cuda_memory_manager.cc
 
 libgrocuda_la_CXXFLAGS = $(AM_CXXFLAGS)
 endif
