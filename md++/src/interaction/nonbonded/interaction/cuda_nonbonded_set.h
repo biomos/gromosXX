@@ -112,6 +112,10 @@ namespace interaction {
      */
     Nonbonded_Parameter * m_parameter;
     /**
+     * Which identifier the prgramm has for this gpu
+     */
+    unsigned int mygpu_id;     
+    /**
      * Error integer to communicate problems between threads
      */
     int error;

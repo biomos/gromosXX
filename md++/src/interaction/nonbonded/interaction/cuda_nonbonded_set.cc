@@ -73,7 +73,7 @@ interaction::CUDA_Nonbonded_Set
   : Nonbonded_Set(pairlist_alg, param, rank, num_threads)/*,
     util::CycleThread()*/,
     m_parameter(&param),
-    m_cuda_kernel(nullptr),
+    mygpu_id(0),
     error(0) {
 
   // these values should be fine for a cutoff of 0.8 / 1.4. They have
@@ -118,11 +118,11 @@ int interaction::CUDA_Nonbonded_Set
   
   const unsigned first_solvent_atom = topo.num_solute_atoms();
   //error += cukernel::copy_positions(&conf.current().pos(first_solvent_atom)(0), gpu_stat);
-  error += m_cuda_kernel->copy_positions(&conf.current().pos);
+  // error += m_cuda_kernel->copy_positions(&conf.current().pos);
 
   // copy the box if pressure is coupled
   if (sim.param().pcouple.scale != math::pcouple_off) {
-    error += m_cuda_kernel->copy_box(conf.current().box);
+    // error += m_cuda_kernel->copy_box(conf.current().box);
     //error += cukernel::cudaCopyBox(gpu_stat, conf.current().box(0)(0), conf.current().box(1)(1), conf.current().box(2)(2));
   }
   if (m_rank == 0)  
@@ -136,7 +136,7 @@ int interaction::CUDA_Nonbonded_Set
     if (m_rank == 0)
       m_pairlist_alg.timer().start_subtimer("pairlist cuda");
     //cukernel::cudaCalcPairlist(gpu_stat);
-    error += m_cuda_kernel->update_pairlist(topo, conf, sim);
+    // error += m_cuda_kernel->update_pairlist(topo, conf, sim);
     if (m_rank == 0)
       m_pairlist_alg.timer().stop_subtimer("pairlist cuda");
   }
@@ -169,7 +169,7 @@ int interaction::CUDA_Nonbonded_Set
     DEBUG(15, "Vir = " << *Vir);
     DEBUG(15, "e_lj = " << *e_lj);
     DEBUG(15, "e_crf = " << *e_crf);
-    error += cukernel::calculate_solvent_interactions(For, Vir, e_lj, e_crf, true, gpu_stat);
+    // error += cukernel::calculate_solvent_interactions(For, Vir, e_lj, e_crf, true, gpu_stat);
     if (m_rank == 0)
       m_pairlist_alg.timer().stop_subtimer("longrange-cuda");
   }
@@ -183,7 +183,7 @@ int interaction::CUDA_Nonbonded_Set
   const int egroup = topo.atom_energy_group(topo.num_solute_atoms());
   double * e_lj = &m_storage.energies.lj_energy[egroup][egroup];
   double * e_crf = &m_storage.energies.crf_energy[egroup][egroup];
-  error += cukernel::calculate_solvent_interactions(For, Vir, e_lj, e_crf, false, gpu_stat);
+  // error += cukernel::calculate_solvent_interactions(For, Vir, e_lj, e_crf, false, gpu_stat);
   if (m_rank == 0)
     m_pairlist_alg.timer().stop_subtimer("shortrange-cuda");
   if (m_rank == 0 && error) {
@@ -232,7 +232,7 @@ int interaction::CUDA_Nonbonded_Set
     }
   }
   
-  this->m_cuda_kernel->calculate_interactions();
+  // this->m_cuda_kernel->calculate_interactions();
 
   if (m_rank == 0)
     m_pairlist_alg.timer().stop_subtimer("cuda set");
@@ -299,8 +299,8 @@ int interaction::CUDA_Nonbonded_Set
   /*start();
   pthread_barrier_wait(&barrier_init);*/
   //this->init_run();
-  m_cuda_kernel = cukernel::CUDA_Kernel::get_instance(topo,conf,sim);
-  m_cuda_kernel->update_nonbonded(m_parameter);
+  // m_cuda_kernel = cukernel::CUDA_Kernel::get_instance(topo,conf,sim);
+  // m_cuda_kernel->update_nonbonded(m_parameter);
   return 0;
 }
 
@@ -374,7 +374,7 @@ int interaction::CUDA_Nonbonded_Set
   DEBUG(11, "mygpu_id: " << mygpu_id << " of " << mysim->param().innerloop.number_gpus << ". device number: " << mysim->param().innerloop.gpu_device_number.at(mygpu_id))
   // gpu_stat = cukernel::cudaInit
   //         (
-  //         //mygpu_id, /*sim.param().innerloop.cuda_device,*/
+  //         //mygpu_id, /*sim.param().innerloop.cuda_device,
   //         mysim->param().innerloop.gpu_device_number.at(mygpu_id),
   //         mytopo->num_solvent_atoms(0),
   //         mysim->param().pairlist.cutoff_short,
@@ -416,7 +416,6 @@ int interaction::CUDA_Nonbonded_Set
 void interaction::CUDA_Nonbonded_Set::calculate() {
   DEBUG(6, "CUDA_Nonbonded_Set::cycle start calculations. GPU: " << m_rank);
   // this whole function is remove is the lib is not present.
-
 
   m_storage.zero();
   const bool pairlist_update = !(mysim->steps() % mysim->param().pairlist.skip_step);
@@ -536,7 +535,6 @@ void interaction::CUDA_Nonbonded_Set::calculate() {
       m_storage.virial_tensor_gamd[igroup] += m_storage.virial_tensor;
     }
   }
-#endif
 }
 
 /**

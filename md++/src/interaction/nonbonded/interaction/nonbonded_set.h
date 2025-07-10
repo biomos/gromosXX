@@ -32,7 +32,7 @@
 #include "storage.h"
 #include "nonbonded_outerloop.h"
 #include "nonbonded_set_interface.h"
-#include "cukernel/cuda_kernel.h"
+// #include "cukernel/cuda_kernel.h"
 
 namespace interaction
 {
