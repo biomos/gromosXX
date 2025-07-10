@@ -450,7 +450,7 @@ EOF
     ]
   )
   AM_CONDITIONAL([WITH_CUDA], [test x$with_cuda = xyes])
-  if test "x$have_libcudart" = "xyes"; then
+  if test "x$with_cuda" = "xyes"; then
     AC_DEFINE([USE_CUDA], [1], [Define to 1 if CUDA is available and enabled])
   else
     AC_DEFINE([USE_CUDA], [0], [Define to 0 if CUDA is not enabled])
