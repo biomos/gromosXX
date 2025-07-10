@@ -5,6 +5,9 @@
  * container implementation
  */
 
+
+#include "gpu.h"
+
 #include "container.h"
 
 template <typename T>

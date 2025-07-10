@@ -4,6 +4,8 @@
  * implementation device functions for efficient reduction
  */
 
+#include "gpu.h"
+
 #undef MODULE
 #undef SUBMODULE
 #define MODULE gpu

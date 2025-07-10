@@ -5,12 +5,12 @@
 
 #include "../stdheader.h"
 #include "config.h"
+#include "gpu.h"
 
 double gpu_ver = 0.10;
 
-namespace gpu
-{
-  char const id[] = MD_VERSION;
+namespace gpu {
+  const char id[] = MD_VERSION;
   const char* get_id() { return id; }
 
 #ifndef NDEBUG

@@ -28,6 +28,8 @@
 #include <map> // for io/message.h
 #include <iostream> // for io/message.h
 
+#include "config.h"
+
 // #include "stdheader.h"
 #include "io/message.h"
 

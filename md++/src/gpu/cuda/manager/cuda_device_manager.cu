@@ -1,5 +1,8 @@
 
 #include <sstream>
+
+#include "gpu.h"
+
 #include "gpu/cuda/cuheader.h"
 #include "cuda_device_manager.h"
 

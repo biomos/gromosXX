@@ -30,6 +30,8 @@
 #include "../../../simulation/simulation.h"
 #include "../../../configuration/configuration.h"
 
+#include "gpu.h"
+
 #include "../manager/cuda_manager.h"
 
 #include "../../../io/print_block.h"

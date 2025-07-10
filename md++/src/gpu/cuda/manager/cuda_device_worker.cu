@@ -1,4 +1,5 @@
 
+#include "gpu.h"
 
 #include "cuda_device_worker.h"
 #include "gpu/cuda/cuheader.h"
