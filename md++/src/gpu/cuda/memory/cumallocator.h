@@ -1,5 +1,5 @@
 /**
- * @file cumallocator.h
+ * @file Cumallocator.h
  * @author poliak
  * allocator for CUDA managed unified memory, CUDA transparent version of std::vector
  */
@@ -18,14 +18,14 @@
 namespace gpu {
 
     template <typename T>
-    class CuMallocator {
+    class CuMAllocator {
     public:
         using value_type = T;
         using pointer = T*;
         using const_pointer = const T*;
         using size_type = std::size_t;
         using difference_type = std::ptrdiff_t;
-        using allocator_type = CuMallocator<T>;
+        using allocator_type = CuMAllocator<T>;
 
         using propagate_on_container_copy_assignment = std::true_type;
         using propagate_on_container_move_assignment = std::true_type;
@@ -33,10 +33,10 @@ namespace gpu {
         using is_always_equal = std::true_type;
 
         template <typename U>
-        struct rebind { using other = CuMallocator<U>; };
+        struct rebind { using other = CuMAllocator<U>; };
 
-        CuMallocator() noexcept = default;
-        template <typename U> constexpr CuMallocator(const CuMallocator<U>&) noexcept {}
+        CuMAllocator() noexcept = default;
+        template <typename U> constexpr CuMAllocator(const CuMAllocator<U>&) noexcept {}
 
         T* allocate(std::size_t n) {
             if (n > std::numeric_limits<size_type>::max() / sizeof(T))
@@ -71,21 +71,22 @@ namespace gpu {
 #endif
 
     private:
-            void report(T* p, std::size_t n, bool alloc) const {
+        void report(T* p, std::size_t n, bool alloc) const {
 #ifndef NDEBUG
-                std::cout << (alloc ? "Alloc: " : "Dealloc: ")
-                        << n * sizeof(T) << " bytes at " << static_cast<void*>(p) << '\n';
+            std::cout << (alloc ? "Alloc: " : "Dealloc: ")
+                    << n * sizeof(T) << " bytes at " << static_cast<void*>(p) << '\n';
 #endif
-            }
-        };
+        }
+    };
 
-        template <typename T, typename U>
-        bool operator==(const CuMallocator<T>&, const CuMallocator<U>&) { return true; }
+    template <typename T, typename U>
+    bool operator==(const CuMAllocator<T>&, const CuMAllocator<U>&) { return true; }
 
-        template <typename T, typename U>
-        bool operator!=(const CuMallocator<T>&, const CuMallocator<U>&) { return false; }
+    template <typename T, typename U>
+    bool operator!=(const CuMAllocator<T>&, const CuMAllocator<U>&) { return false; }
 
-        template <typename T>
-        using cuvector = std::vector<T, CuMallocator<T>>;
+    // CUDA managed vector
+    template <typename T>
+    using cuvector = std::vector<T, CuMAllocator<T>>;
 
 } // namespace gpu

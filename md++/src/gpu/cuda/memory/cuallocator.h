@@ -1,5 +1,5 @@
 /**
- * @file cumallocator.h
+ * @file cuallocator.h
  * @author poliak
  * allocator for CUDA device memory, CUDA device-only version of std::vector
  */
@@ -45,7 +45,7 @@ namespace gpu {
             T* p = nullptr;
             cudaError_t err = cudaMalloc(&p, n * sizeof(T));
             if (err != cudaSuccess) {
-                std::cerr << "CuAllocator failed: " << cudaGetErrorString(err) << '\n';
+                std::cerr << "cudaMalloc failed: " << cudaGetErrorString(err) << '\n';
                 throw std::bad_alloc();
             }
 
@@ -58,7 +58,7 @@ namespace gpu {
             cudaFree(p);
         }
 
-    #if !defined(__CUDA_ARCH__) && __cplusplus < 202002L
+#if !defined(__CUDA_ARCH__) && __cplusplus < 202002L
         template <typename U, typename... Args>
         void construct(U* p, Args&&... args) {
             ::new((void*)p) U(std::forward<Args>(args)...);
@@ -68,14 +68,14 @@ namespace gpu {
         void destroy(U* p) {
             p->~U();
         }
-    #endif
+#endif
 
     private:
         void report(T* p, std::size_t n, bool alloc) const {
-    #ifndef NDEBUG
+#ifndef NDEBUG
             std::cout << (alloc ? "Alloc: " : "Dealloc: ")
                     << n * sizeof(T) << " bytes at " << static_cast<void*>(p) << '\n';
-    #endif
+#endif
         }
     };
 
@@ -85,6 +85,7 @@ namespace gpu {
     template <typename T, typename U>
     bool operator!=(const CuAllocator<T>&, const CuAllocator<U>&) { return false; }
 
+    // CUDA device vector
     template <typename T>
     using cudvector = std::vector<T, CuAllocator<T>>;
 

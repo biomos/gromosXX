@@ -14,28 +14,28 @@
 namespace gpu
 {
     template <typename T>
-    using cuvector = std::vector< T, gpu::CuMallocator<T> >;
+    using cuvector = std::vector< T, gpu::CuMAllocator<T> >;
 };
 
 namespace math
 {
     /**
-     * CUDA allocated VArray (double precision)
+     * CUDA allocated managed VArray (double precision)
      */
-    typedef VArrayT<Vec, gpu::CuMallocator > CuDVArray;
+    typedef VArrayT<Vec, gpu::CuMAllocator > CuDVArray;
 
     /**
-     * CUDA allocated VArray (single precision)
+     * CUDA allocated managed VArray (single precision)
      */
-    typedef VArrayT<Vecf, gpu::CuMallocator > CuFVArray;
+    typedef VArrayT<Vecf, gpu::CuMAllocator > CuFVArray;
 
     /**
-     * CUDA allocated VArray (single precision)
+     * CUDA allocated managed VArray (single precision)
      */
-    typedef VArrayT<float3, gpu::CuMallocator > CuF3VArray;
+    typedef VArrayT<float3, gpu::CuMAllocator > CuF3VArray;
 
     /**
-     * CUDA allocated VArray (single precision)
+     * CUDA allocated managed VArray (single precision)
      */
-    typedef VArrayT<double3, gpu::CuMallocator > CuD3VArray;
+    typedef VArrayT<double3, gpu::CuMAllocator > CuD3VArray;
 }
