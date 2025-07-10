@@ -78,6 +78,7 @@ libgroalgorithm_la_SOURCES = algorithm.cc\
 	constraints/create_constraints.cc\
 	constraints/position_constraints.cc\
 	constraints/remove_com_motion.cc\
+	constraints/remove_com_motion_gpu.cc\
 	constraints/shake.cc\
 	constraints/perturbed_shake.cc\
 	constraints/flexible_constraint.cc\

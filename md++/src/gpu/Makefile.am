@@ -1,7 +1,7 @@
-
 SUFFIXES = .cu
+
 AM_CXXFLAGS = @MY_CXXFLAGS@
-AM_CPPFLAGS = -I$(top_srcdir) -I$(top_srcdir)/src
+AM_CPPFLAGS = -I$(top_srcdir) -I$(top_srcdir)/src -I$(top_builddir)
 NVCC_CFLAGS = @NVCC_CFLAGS@
 
 ## Tracking dependencies correctly as with CXX would need a macro for NVCC
@@ -11,39 +11,45 @@ NVCC_CFLAGS = @NVCC_CFLAGS@
 ##	$(NVCC) $(NVCCFLAGS) -std=c++11 -dc --compiler-options '-std=c++11 -I../.. -I../../../src $(CXXFLAGS) $(NVCC_CFLAGS)' $< -o $@
 ##	$(NVCC) $(NVCCFLAGS) --compiler-options '-std=c++11 -I../.. -I../../../src $(CXXFLAGS) $(NVCC_CFLAGS)' -dlink $^ -o $@
 .cu.o:
-	$(NVCC) $(NVCCFLAGS) -std=c++17 -dc --compiler-options '$(DEFAULT_INCLUDES) $(AM_CPPFLAGS) $(CXXFLAGS) $(NVCC_CFLAGS)' $< -o $@
+	$(NVCC) $(NVCCFLAGS) -dc --compiler-options '$(DEFAULT_INCLUDES) $(AM_CPPFLAGS) $(CXXFLAGS) $(NVCC_CFLAGS)' $< -o $@
 
+# CUDA object list
+libgrocuda_a_SOURCES = \
+    gpu.cc \
+    cuda/manager/cuda_manager.cc \
+    cuda/kernels/reduction.cu \
+    cuda/memory/container.cu \
+    cuda/manager/cuda_device_worker.cu \
+    cuda/manager/cuda_device_manager.cu \
+    cuda/manager/cuda_memory_manager.cu \
+    cuda/algorithm/constraints.cu
+
+# Manual dlink step if needed for .a library
 libgrocuda.o: $(libgrocuda_a_OBJECTS)
 	$(NVCC) $(NVCCFLAGS) --compiler-options '$(CXXFLAGS) $(NVCC_CFLAGS)' -dlink $^ -o $@
 
 libgrocuda.a: $(libgrocuda_a_OBJECTS) libgrocuda.o
 	$(NVCC) $(NVCCFLAGS) --lib -o $@ $^
-	rm -f $^ # Remove this line if you dont want to recompile every time
+	rm -f $^  # optional: remove intermediates to force recompile
 
+# Conditional library building
 if WITH_CUDA
-noinst_LIBRARIES = libgrocuda.a
-libgrocuda_a_SOURCES =  cuda/manager/cuda_manager.cc \
-						cuda/kernels/reduction.cu \
-						cuda/memory/container.cu \
-						cuda/manager/cuda_device_worker.cu \
-						cuda/manager/cuda_device_manager.cu \
-						cuda/manager/cuda_memory_manager.cu \
-						cuda/algorithm/constraints.cu
+    noinst_LIBRARIES = libgrocuda.a
 else
-xxincludedir = $(includedir)/md++/gpu
-##xxinclude_HEADERS =	cuda_kernel.h
-noinst_LTLIBRARIES = libgrocuda.la
-libgrocuda_la_SOURCES =    	cuda/algorithm/constraints.cc \
-							cuda/manager/cuda_manager.cc \
-							cuda/manager/cuda_device_worker.cc \
-							cuda/manager/cuda_device_manager.cc \
-							cuda/manager/cuda_memory_manager.cc
+    noinst_LTLIBRARIES = libgrocuda.la
 
-libgrocuda_la_CXXFLAGS = $(AM_CXXFLAGS)
+    libgrocuda_la_SOURCES = \
+        gpu.cc \
+        cuda/algorithm/constraints.cc \
+        cuda/manager/cuda_manager.cc \
+        cuda/manager/cuda_device_worker.cc \
+        cuda/manager/cuda_device_manager.cc \
+        cuda/manager/cuda_memory_manager.cc
+
+    libgrocuda_la_CPPFLAGS = $(AM_CPPFLAGS)
+    libgrocuda_la_CXXFLAGS = $(AM_CXXFLAGS)
 endif
 
 bin_PROGRAMS =
-
 check_PROGRAMS =
-
 TESTS =

@@ -32,9 +32,9 @@ lambdas_t_SOURCES = lambdas.t.cc\
 
 LDADD = ../libmdpp.la
 if WITH_CUDA
-    LDADD += ../gpu/cuda/libgrocuda.a
+    LDADD += ../gpu/libgrocuda.a
 else
-    LDADD += ../gpu/cuda/libgrocuda.la
+    LDADD += ../gpu/libgrocuda.la
 endif
 
 TESTS = aladip.t aladip_unperturbed.t aladip_atomic.t aladip_special.t c16_cg.t lambdas.t #aladip_ls.t 
