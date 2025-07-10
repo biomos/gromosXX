@@ -51,6 +51,7 @@ double gpu::cuda::algorithm::remove_com_translation(CudaManager& cuda_manager,
     // CUDA-specific implementation
     cuda_manager.synchronize_all();
     auto pos = cuda_manager.create_cuvector<float3>(0, topo.num_atoms());
+    return 0;
 }
 
 double gpu::cuda::algorithm::remove_com_rotation(CudaManager& cuda_manager,
@@ -61,4 +62,5 @@ double gpu::cuda::algorithm::remove_com_rotation(CudaManager& cuda_manager,
     // CUDA-specific implementation
     cuda_manager.synchronize_all();
     auto pos = cuda_manager.create_cuvector<float3>(0, topo.num_atoms());
+    return 0;
 }
