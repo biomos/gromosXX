@@ -5,8 +5,13 @@
  * container implementation
  */
 
+#include <vector>
+#include <iostream>
+#include <cassert>
 
-#include "gpu.h"
+#include "gpu/cuda/utils.h"
+
+#include "gpu/gpu.h"
 
 #include "container.h"
 

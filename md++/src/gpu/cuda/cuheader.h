@@ -39,13 +39,11 @@
     #define CUDEVPROP cudaDeviceProp
     #define CUSTREAM cudaStream_t
     #define CUERROR cudaError_t
-    #define CHECK(call) gpu::check_cuda_error((call), __FILE__, __LINE__, #call)
     #define CUVECTOR gpu::cuvector
 #else
     #define CUDEVPROP void*
     #define CUSTREAM void*
     #define CUERROR void*
-    #define CHECK(call) (call)
     #define CUVECTOR std::vector
 #endif
 

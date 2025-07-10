@@ -10,11 +10,6 @@
 
 #pragma once
 
-#include <vector>
-#include <iostream>
-#include <cassert>
-#include "../utils.h"
-
 namespace gpu {
   /**
    * @class Container

@@ -19,6 +19,7 @@ if(USE_CUDA)
 
     set(GPU_SOURCES
         gpu.cc
+        cuda/utils.cu
         cuda/manager/cuda_manager.cc
         cuda/kernels/reduction.cu
         cuda/memory/container.cu
