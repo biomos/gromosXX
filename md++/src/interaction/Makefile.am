@@ -2,9 +2,9 @@ AM_CXXFLAGS = @MY_CXXFLAGS@ $(PYFLAGS)
 AM_CPPFLAGS = -I$(top_srcdir) -I$(top_srcdir)/src -I$(top_srcdir)/src/interaction -I$(top_srcdir)/src/interaction/nonbonded -I$(top_srcdir)/src/interaction/nonbonded/pairlist -I$(top_srcdir)/src/interaction/nonbonded/interaction -I$(top_srcdir)/src/interaction/bonded -I$(top_srcdir)/src/interaction/forcefield -I$(top_srcdir)/src/interaction/qmmm -I$(top_srcdir)/src/interaction/special -I$(top_srcdir)/src/interaction/special/xray -I$(top_srcdir)/src/algorithm -I$(top_srcdir)/src/math 
 AM_LDFLAGS = $(PYLDFLAGS)
 
-if WITH_CUDA
-  AM_CPPFLAGS += -I$(top_srcdir)/src/cukernel
-endif
+# if WITH_CUDA
+#   AM_CPPFLAGS += -I$(top_srcdir)/src/gpu
+# endif
 
 xxincludedir = $(includedir)/md++/interaction
 xxinclude_HEADERS =	interaction.h\
