@@ -5,6 +5,8 @@
 #include <unordered_map>
 #include <stdexcept>
 
+#include "gpu/cuda/memory/cuvector.h"
+
 #include "gpu/cuda/cuheader.h"
 #include "cuda_device_manager.h"
 #include "cuda_device_worker.h"
@@ -18,6 +20,12 @@ namespace gpu {
      * The CudaManager class initializes the CUDA environment, manages multiple devices, and coordinates
      * memory and kernel execution across GPUs. It provides a clean interface for interacting with CUDA
      * resources and abstracts away low-level details.
+     * 
+     * This is the only interface for host code to access CUDA, to encapsulate all cuda code separately
+     * and not expose it to the CPU-only code.
+     * Function calls, that submit to GPU should go only and only over this manager.
+     * Probably should be called CudaInterface, we will see.
+     * 
      */
     class CudaManager {
     public:
@@ -36,7 +44,7 @@ namespace gpu {
          * @param device_ids A vector of device IDs to use. If empty, all available devices are used.
          * @throws std::runtime_error if no devices are available or initialization fails.
          */
-        void initialize(const std::vector<int>& device_ids = {});
+        void init(const std::vector<int>& device_ids = {});
 
         /**
          * @brief Get the number of active GPUs.
@@ -106,6 +114,15 @@ namespace gpu {
          */
         std::vector<std::string> get_active_device_descriptions() const;
 
+        /**
+         * @brief If user requested CUDA acceleration
+         * @return boolean, always false in CUDA-disabled build
+         */
+#ifdef USE_CUDA
+        static bool is_enabled() { return is_enabled_; }
+#else
+        static constexpr bool is_enabled() { return false; }
+#endif
     private:
         /**
          * @brief Validate a device ID.
@@ -117,6 +134,10 @@ namespace gpu {
         std::unique_ptr<CudaDeviceManager> device_manager_; ///< Manages CUDA devices.
         std::unordered_map<int, std::unique_ptr<CudaDeviceWorker>> device_workers_; ///< Workers for each active device.
         CudaMemoryManager memory_manager_; ///< Handles memory allocation and transfers.
+
+#ifdef USE_CUDA
+        static bool is_enabled_;
+#endif
     };
 }
 

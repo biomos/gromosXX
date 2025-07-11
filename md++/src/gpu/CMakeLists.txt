@@ -47,9 +47,6 @@ else()
     set(GPU_SOURCES
         gpu.cc
         cuda/manager/cuda_manager.cc
-        cuda/manager/cuda_device_worker.cc
-        cuda/manager/cuda_device_manager.cc
-        cuda/manager/cuda_memory_manager.cc
         cuda/algorithm/constraints.cc
     )
 

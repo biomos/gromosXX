@@ -6,6 +6,10 @@
 #include "gpu/cuda/cuheader.h"
 #include "cuda_manager.h"
 
+#ifdef USE_CUDA
+bool gpu::CudaManager::is_enabled_ = false;
+#endif
+
 gpu::CudaManager::CudaManager()
     : device_manager_(std::make_unique<CudaDeviceManager>()), memory_manager_() {
 #ifndef USE_CUDA
@@ -18,7 +22,7 @@ gpu::CudaManager::~CudaManager() {
     device_workers_.clear();
 }
 
-void gpu::CudaManager::initialize(const std::vector<int>& device_ids) {
+void gpu::CudaManager::init(const std::vector<int>& device_ids) {
     // Query available devices
     int available_device_count = device_manager_->get_device_count();
     if (available_device_count == 0) {
@@ -43,6 +47,8 @@ void gpu::CudaManager::initialize(const std::vector<int>& device_ids) {
         device_manager_->set_device(device_id);
         device_workers_[device_id] = std::make_unique<CudaDeviceWorker>(device_id);
     }
+
+    memory_manager_.init();
 }
 
 size_t gpu::CudaManager::get_device_count() const {
