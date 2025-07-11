@@ -10,6 +10,8 @@ option(MPI "enable MPI" OFF)
 option(USE_CUDA "enable CUDA" OFF)
 option(XTB "enable XTB" OFF)
 
+option(BUILD_SHARED_LIBS "Build shared libraries instead of static" ON)
+
 # TODO do we still want to support these options?
 option(FORCEGROUPS "enable forcegroups" OFF)
 option(HEAVISIDE "enable heaviside" OFF)
