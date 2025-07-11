@@ -11,7 +11,7 @@ NVCC_CFLAGS = @NVCC_CFLAGS@
 ##	$(NVCC) $(NVCCFLAGS) -std=c++11 -dc --compiler-options '-std=c++11 -I../.. -I../../../src $(CXXFLAGS) $(NVCC_CFLAGS)' $< -o $@
 ##	$(NVCC) $(NVCCFLAGS) --compiler-options '-std=c++11 -I../.. -I../../../src $(CXXFLAGS) $(NVCC_CFLAGS)' -dlink $^ -o $@
 .cu.o:
-	$(NVCC) $(NVCCFLAGS) -dc -Xcompiler '$(DEFAULT_INCLUDES) $(AM_CPPFLAGS) $(CXXFLAGS) $(NVCC_CFLAGS)' $< -o $@
+	$(NVCC) $(NVCCFLAGS) $(NVCC_STD) -dc -Xcompiler '$(DEFAULT_INCLUDES) $(AM_CPPFLAGS) $(CXXFLAGS) $(NVCC_CFLAGS)' $< -o $@
 
 # CUDA object list
 libgrocuda_a_SOURCES = \

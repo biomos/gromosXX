@@ -335,9 +335,13 @@ case "$compiler" in
   ;;
 esac
 
-dnl set c++17 standard
-MY_CXXFLAGS="-std=c++17 ${MY_CXXFLAGS}"
-CXX_NDEBUG_FLAGS="-std=c++17 ${CXX_NDEBUG_FLAGS}"
+# Set C++ standard once
+MY_CXXSTD="-std=c++17"
+MY_CXXFLAGS="${MY_CXXSTD} ${MY_CXXFLAGS}"
+CXX_NDEBUG_FLAGS="${MY_CXXSTD} ${CXX_NDEBUG_FLAGS}"
+
+# Also define for NVCC, possibly different value
+NVCC_STD="-std=c++17"
 
 dnl subst compiler flags
 AC_SUBST(MY_CXXFLAGS)
