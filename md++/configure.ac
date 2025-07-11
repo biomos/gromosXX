@@ -341,7 +341,7 @@ MY_CXXFLAGS="${MY_CXXSTD} ${MY_CXXFLAGS}"
 CXX_NDEBUG_FLAGS="${MY_CXXSTD} ${CXX_NDEBUG_FLAGS}"
 
 # Also define for NVCC, possibly different value
-NVCC_STD="-std=c++17"
+NVCC_CXXSTD="-std=c++17"
 
 dnl subst compiler flags
 AC_SUBST(MY_CXXFLAGS)

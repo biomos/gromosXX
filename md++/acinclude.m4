@@ -439,6 +439,7 @@ EOF
       NVCC_CFLAGS="-fPIC ${NVCC_CFLAGS}"
     fi
 
+    NVCCFLAGS="$NVCC_CXXSTD $NVCCFLAGS"
     # Add debug/profile flags if needed
     if test "x$enable_profile" = "xyes"; then
       NVCCFLAGS="-pg -O2 -DNDEBUG $NVCCFLAGS"
