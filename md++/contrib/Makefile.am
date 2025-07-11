@@ -17,6 +17,11 @@ tabulate_spc_SOURCES = tabulate_spc.cc
 rng_gsl_LDFLAGS = ${GSL_LIBS}
 
 LDADD = ../src/libmdpp.la
+if WITH_CUDA
+  LDADD += ../src/gpu/libgrocuda.a
+else
+  LDADD += ../src/gpu/libgrocuda.la
+endif
 
 
 
