@@ -2,6 +2,7 @@ SUFFIXES = .cu
 
 AM_CXXFLAGS = @MY_CXXFLAGS@
 AM_CPPFLAGS = -I$(top_srcdir) -I$(top_srcdir)/src -I$(top_builddir)
+NVCCFLAGS = @NVCCFLAGS@
 NVCC_CFLAGS = @NVCC_CFLAGS@
 
 ## Tracking dependencies correctly as with CXX would need a macro for NVCC
