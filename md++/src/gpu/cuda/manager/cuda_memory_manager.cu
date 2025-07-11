@@ -11,6 +11,12 @@ gpu::CudaMemoryManager::CudaMemoryManager() {}
 
 gpu::CudaMemoryManager::~CudaMemoryManager() {}
 
+void gpu::CudaMemoryManager::init() {
+    pos_umem.resize(10000,0);
+    pos_host.resize(10000,0);
+    pos_dev.resize(10000,0);
+}
+
 void* gpu::CudaMemoryManager::allocate_device_memory(size_t size) {
     void* device_ptr = nullptr;
     cudaError_t result = cudaMalloc(&device_ptr, size);

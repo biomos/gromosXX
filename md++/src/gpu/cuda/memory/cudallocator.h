@@ -1,5 +1,5 @@
 /**
- * @file cuallocator.h
+ * @file cudallocator.h
  * @author poliak
  * allocator for CUDA device memory, CUDA device-only version of std::vector
  */
@@ -18,14 +18,14 @@
 namespace gpu {
 
     template <typename T>
-    class CuAllocator {
+    class CuDAllocator {
     public:
         using value_type = T;
         using pointer = T*;
         using const_pointer = const T*;
         using size_type = std::size_t;
         using difference_type = std::ptrdiff_t;
-        using allocator_type = CuAllocator<T>;
+        using allocator_type = CuDAllocator<T>;
 
         using propagate_on_container_copy_assignment = std::true_type;
         using propagate_on_container_move_assignment = std::true_type;
@@ -33,10 +33,10 @@ namespace gpu {
         using is_always_equal = std::true_type;
 
         template <typename U>
-        struct rebind { using other = CuAllocator<U>; };
+        struct rebind { using other = CuDAllocator<U>; };
 
-        CuAllocator() noexcept = default;
-        template <typename U> constexpr CuAllocator(const CuAllocator<U>&) noexcept {}
+        CuDAllocator() noexcept = default;
+        template <typename U> constexpr CuDAllocator(const CuDAllocator<U>&) noexcept {}
 
         T* allocate(std::size_t n) {
             if (n > std::numeric_limits<size_type>::max() / sizeof(T))
@@ -80,13 +80,13 @@ namespace gpu {
     };
 
     template <typename T, typename U>
-    bool operator==(const CuAllocator<T>&, const CuAllocator<U>&) { return true; }
+    bool operator==(const CuDAllocator<T>&, const CuDAllocator<U>&) { return true; }
 
     template <typename T, typename U>
-    bool operator!=(const CuAllocator<T>&, const CuAllocator<U>&) { return false; }
+    bool operator!=(const CuDAllocator<T>&, const CuDAllocator<U>&) { return false; }
 
     // CUDA device vector
-    template <typename T>
-    using cudvector = std::vector<T, CuAllocator<T>>;
+    // template <typename T>
+    // using cudvector = std::vector<T, CuDAllocator<T>>;
 
 } // namespace gpu

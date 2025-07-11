@@ -4,6 +4,7 @@
 #include <string>
 
 #include "gpu/cuda/cuheader.h"
+#include "gpu/cuda/memory/cuvector.h"
 
 namespace gpu {
     /**
@@ -24,6 +25,12 @@ namespace gpu {
          * @brief Destructor for CudaMemoryManager.
          */
         ~CudaMemoryManager();
+
+        /**
+         * @brief Initialize the memory manager.
+         * @throws std::runtime_error.
+         */
+        void init();
 
         /**
          * @brief Allocate memory on the device.
@@ -118,5 +125,10 @@ namespace gpu {
          * @throws std::runtime_error if the CUDA operation failed.
          */
         void check_cuda_error(CUERROR result, const std::string& message) const;
+
+        // lets play with vectors
+        gpu::cuvector<float> pos_umem;
+        gpu::cuhvector<float> pos_host;
+        gpu::cudvector<float> pos_dev;
     };
 }

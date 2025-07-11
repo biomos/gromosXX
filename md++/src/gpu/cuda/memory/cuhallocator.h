@@ -13,6 +13,7 @@
 #include <type_traits>
 #include <vector>
 
+#include <cuda_runtime.h>
 #include "gpu/cuda/cuheader.h"
 
 namespace gpu {
@@ -43,7 +44,7 @@ namespace gpu {
                 throw std::bad_array_new_length();
 
             T* p = nullptr;
-            cudaError_t err = cudaHostAlloc(&p, n * sizeof(T));
+            cudaError_t err = cudaHostAlloc(&p, n * sizeof(T), cudaHostAllocDefault);
             if (err != cudaSuccess) {
                 std::cerr << "cudaMalloc failed: " << cudaGetErrorString(err) << '\n';
                 throw std::bad_alloc();
@@ -86,7 +87,7 @@ namespace gpu {
     bool operator!=(const CuHAllocator<T>&, const CuHAllocator<U>&) { return false; }
 
     // CUDA device vector
-    template <typename T>
-    using cuhvector = std::vector<T, CuHAllocator<T>>;
+    // template <typename T>
+    // using cuhvector = std::vector<T, CuHAllocator<T>>;
 
 } // namespace gpu
