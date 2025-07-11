@@ -12,11 +12,6 @@ eds_2box_SOURCES = eds_2box.cc
 eds_2box_mpi_SOURCES = eds_2box_mpi.cc
 
 LDADD = ../src/libmdpp.la
-if WITH_CUDA
-  LDADD += ../src/gpu/libgrocuda.a
-else
-  LDADD += ../src/gpu/libgrocuda.la
-endif
 EXTRA_DIST = BUILD_NUMBER
 
 autobuildnr :

@@ -16,12 +16,7 @@ rng_gsl_SOURCES = rng_gsl.cc
 tabulate_spc_SOURCES = tabulate_spc.cc
 rng_gsl_LDFLAGS = ${GSL_LIBS}
 
-if WITH_CUDA
-  GROCUDA = ../src/gpu/libgrocuda.a
-else
-  GROCUDA = ../src/gpu/libgrocuda.la
-endif
-LDADD = $(GROCUDA) ../src/libmdpp.la
+LDADD = ../src/libmdpp.la
 
 
 

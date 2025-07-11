@@ -15,8 +15,9 @@ namespace gpu {
 
 #ifndef NDEBUG
   int debug_level = 0;
-  int kernel_debug_level = 0;
-  int cuda_debug_level = 0;
-  int memory_debug_level = 0;
+  int cuda_debug_level = 0; // CUDA manager debug
+  int device_debug_level = 0; // CUDA device manager debug 
+  int memory_debug_level = 0; // CUDA memory manager debug 
+  int kernel_debug_level = 0; // CUDA kernel debug 
 #endif
 }

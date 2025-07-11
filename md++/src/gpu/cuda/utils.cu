@@ -10,7 +10,7 @@
 #include "gpu/cuda/cuheader.h"
 #include "utils.h"
 
-void gpu::check_cuda_error(cudaError_t err, const char* file, int line, const std::string& call) {
+void gpu::check_cuda_call_error(cudaError_t err, const char* file, int line, const std::string& call) {
     if (err != cudaSuccess) {
         std::ostringstream oss;
         oss << "CUDA Error: " << cudaGetErrorString(err) << "\n"
@@ -18,6 +18,17 @@ void gpu::check_cuda_error(cudaError_t err, const char* file, int line, const st
             << "  during: " << call;
         throw std::runtime_error(oss.str());
     }
+}
+
+cudaError_t gpu::check_cuda_last_error(const char* err_msg, const char* file, int line) {
+#ifndef NDEBUG
+    cudaDeviceSynchronize();
+#endif
+    cudaError_t error = cudaGetLastError();
+    if (error != cudaSuccess)
+        std::cerr << "CUDA-ERROR at " << file << ":" << line << " - " << err_msg
+                << ": " << cudaGetErrorString(error) << std::endl;
+    return error;
 }
 
 void gpu::print_device_info() {

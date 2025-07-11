@@ -29,6 +29,8 @@
 #include "../io/argument.h"
 #include "../io/message.h"
 
+#include "gpu/gpu.h"
+
 #include "parse_verbosity.h"
 
 int util::parse_verbosity(io::Argument &args, std::string flag, 
@@ -174,12 +176,11 @@ int util::parse_verbosity(io::Argument &args, std::string flag,
       else return E_NOT_IMPLEMENTED;
     }
     else if (module == "cuda"){
-      if (submodule == "") cuda::debug_level = level;
-      else if (submodule == "kernel") cuda::kernel_debug_level = level;
-      else if (submodule == "constraints") cuda::constraints_debug_level = level;
-      else if (submodule == "interaction") cuda::interaction_debug_level = level;
-      else if (submodule == "pairlist") cuda::pairlist_debug_level = level;
-      else if (submodule == "utils") cuda::utils_debug_level = level;
+      if (submodule == "") gpu::debug_level = level;
+      else if (submodule == "cuda") gpu::cuda_debug_level = level;
+      else if (submodule == "device") gpu::device_debug_level = level;
+      else if (submodule == "memory") gpu::memory_debug_level = level;
+      else if (submodule == "kernel") gpu::kernel_debug_level = level;
       else return E_NOT_IMPLEMENTED;
     }
     else{

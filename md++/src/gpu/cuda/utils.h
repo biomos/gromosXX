@@ -28,16 +28,37 @@
 #include <cuda_runtime.h>
 #include <string>
 
-#define CHECK(call) gpu::check_cuda_error((call), __FILE__, __LINE__, #call)
+#define CHECK(call) gpu::check_cuda_call_error((call), __FILE__, __LINE__, #call)
+#define CHECK_LAST(msg) gpu::check_cuda_last_error((msg), __FILE__, __LINE__)
 
 namespace gpu {
     /**
-     * @brief Check for CUDA errors and throw an exception if an error is detected.
-     * @param err The CUDA error code to check.
-     * @param context A string describing the context of the error (e.g., function name).
+     * @brief Check for a specific CUDA error and throw an exception if an error is detected.
+     * 
+     * This function is typically used to wrap CUDA API calls via a macro like CHECK(...).
+     *
+     * @param err     The CUDA error code returned from a CUDA API function.
+     * @param file    The source file name where the error occurred.
+     * @param line    The line number where the error occurred.
+     * @param call    A string representation of the CUDA call for diagnostic purposes.
+     * 
      * @throws std::runtime_error if a CUDA error is detected.
      */
-    void check_cuda_error(cudaError_t err, const char* file, int line, const std::string& call);
+    void check_cuda_call_error(cudaError_t err, const char* file, int line, const std::string& call);
+
+    /**
+     * @brief Check for the most recent CUDA error and throw an exception if one is detected.
+     * 
+     * This function is useful after kernel launches or sequences of CUDA calls
+     * where errors are not returned directly.
+     *
+     * @param err_msg  A custom error message describing the operation being checked.
+     * @param file     The source file name where the check is performed.
+     * @param line     The line number where the check is performed.
+     * 
+     * @throws std::runtime_error if a CUDA error is detected.
+     */
+    cudaError_t check_cuda_last_error(const char* err_msg, const char* file, int line);
 
     /**
      * @brief Query and print information about all available CUDA devices.

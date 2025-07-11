@@ -390,20 +390,22 @@ AC_DEFUN([AM_PATH_CUDA],[
     [nvcc compiler path])
   AC_ARG_VAR(NVCCFLAGS,
     [nvcc compiler flags])
+  AC_ARG_VAR(NVCC_CFLAGS,
+    [nvcc host compiler flags])
   AC_ARG_WITH(cuda,
       [AS_HELP_STRING([--with-cuda=DIR],
               [CUDA library directory to use])],
     [
     if test "x${withval}" != xno; then
       with_cuda=yes
-      if test "x${withval}" = xyes; then
+      if test "x${withval}" = "xyes"; then
         CUDA_PATH="/usr/local/cuda/lib64"
         CUDA_INCLUDE="/usr/local/cuda/include"
         echo "using default CUDA path... ${CUDA_PATH}"
         echo "including CUDA headers from... ${CUDA_INCLUDE}"
       else
         CUDA_PATH="${withval}"
-        CUDA_INCLUDE="{withval%/*}/include"
+        CUDA_INCLUDE="`dirname \"$withval\"`/include"
         echo "using CUDA path... ${CUDA_PATH}"
         echo "including CUDA headers from... ${CUDA_INCLUDE}"
       fi
@@ -431,21 +433,27 @@ EOF
         [],
         AC_MSG_ERROR([linking to CUDA library failed])
       )
+      
+    NVCC_CFLAGS="-I${CUDA_INCLUDE} ${NVCC_CFLAGS}"
     if test "x$enable_shared" = "xyes"; then
-      NVCC_CFLAGS="-Xcompiler -fPIC -lcuda -lcudart $CFLAGS"
-    else
-      NVCC_CFLAGS="-lcuda -lcudart $CFLAGS"
+      NVCC_CFLAGS="-fPIC ${NVCC_CFLAGS}"
     fi
 
+    # Add debug/profile flags if needed
     if test "x$enable_profile" = "xyes"; then
-      NVCC_CFLAGS="-O2 -pg -DNDEBUG $NVCC_CFLAGS"
+      NVCCFLAGS="-pg -O2 -DNDEBUG $NVCCFLAGS"
+      NVCC_CFLAGS="-pg -O2 -DNDEBUG $NVCC_CFLAGS"
     elif test "x$enable_debug" = "xyes"; then
-      NVCC_CFLAGS="-O0 -g $NVCC_CFLAGS"
+      NVCCFLAGS="-g -O0 $NVCCFLAGS"
+      NVCC_CFLAGS="-g -O0 $NVCC_CFLAGS"
     else
+      NVCCFLAGS="-O2 -DNDEBUG $NVCCFLAGS"
       NVCC_CFLAGS="-O2 -DNDEBUG $NVCC_CFLAGS"
     fi
 
+    AC_SUBST([NVCCFLAGS])
     AC_SUBST([NVCC_CFLAGS])
+    AC_SUBST([LDFLAGS])
     else
       with_cuda=no
     fi

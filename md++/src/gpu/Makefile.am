@@ -11,7 +11,7 @@ NVCC_CFLAGS = @NVCC_CFLAGS@
 ##	$(NVCC) $(NVCCFLAGS) -std=c++11 -dc --compiler-options '-std=c++11 -I../.. -I../../../src $(CXXFLAGS) $(NVCC_CFLAGS)' $< -o $@
 ##	$(NVCC) $(NVCCFLAGS) --compiler-options '-std=c++11 -I../.. -I../../../src $(CXXFLAGS) $(NVCC_CFLAGS)' -dlink $^ -o $@
 .cu.o:
-	$(NVCC) $(NVCCFLAGS) -dc --compiler-options '$(DEFAULT_INCLUDES) $(AM_CPPFLAGS) $(CXXFLAGS) $(NVCC_CFLAGS)' $< -o $@
+	$(NVCC) $(NVCCFLAGS) -dc -Xcompiler '$(DEFAULT_INCLUDES) $(AM_CPPFLAGS) $(CXXFLAGS) $(NVCC_CFLAGS)' $< -o $@
 
 # CUDA object list
 libgrocuda_a_SOURCES = \
@@ -27,10 +27,10 @@ libgrocuda_a_SOURCES = \
 
 # Manual dlink step if needed for .a library
 libgrocuda.o: $(libgrocuda_a_OBJECTS)
-	$(NVCC) $(NVCCFLAGS) --compiler-options '$(CXXFLAGS) $(NVCC_CFLAGS)' -dlink $^ -o $@
+	$(NVCC) $(NVCCFLAGS) -Xcompiler '$(CXXFLAGS) $(NVCC_CFLAGS)' -dlink $^ -o $@
 
 libgrocuda.a: $(libgrocuda_a_OBJECTS) libgrocuda.o
-	$(NVCC) $(NVCCFLAGS) --lib -o $@ $^
+	$(NVCC) $(NVCCFLAGS) -Xcompiler '$(CXXFLAGS) $(NVCC_CFLAGS)' --lib -o $@ $^
 	rm -f $^  # optional: remove intermediates to force recompile
 
 # Conditional library building

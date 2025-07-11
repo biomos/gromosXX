@@ -182,7 +182,7 @@ case "$compiler" in
     fi
 
     if eval "test x$enable_shared = xyes"; then
-      MY_CXXFLAGS="$MY_CXXFLAGS -lpthread"
+      MY_CXXFLAGS="$MY_CXXFLAGS -fPIC -lpthread"
     fi
 
     AC_DEFINE_UNQUOTED(COMPILER_ICC, 1, [Intel C++ compiler])
@@ -246,7 +246,7 @@ case "$compiler" in
       echo "configuring for release build"
     fi
     if eval "test x$enable_shared = xyes"; then
-      MY_CXXFLAGS="$MY_CXXFLAGS -lpthread"
+      MY_CXXFLAGS="$MY_CXXFLAGS -fPIC -lpthread"
     fi
 
     dnl Why do we need this?
@@ -286,7 +286,7 @@ case "$compiler" in
     fi
 
     if eval "test x$enable_shared = xyes"; then
-      MY_CXXFLAGS="$MY_CXXFLAGS -lpthread"
+      MY_CXXFLAGS="$MY_CXXFLAGS -fPIC -lpthread"
     fi
 
     AC_DEFINE_UNQUOTED(COMPILER_SUNCC, 1, [SUN C++ compiler])
@@ -324,7 +324,7 @@ case "$compiler" in
       echo "configuring for release build"
     fi
     if eval "test x$enable_shared = xyes"; then
-      MY_CXXFLAGS="$MY_CXXFLAGS -lpthread"
+      MY_CXXFLAGS="$MY_CXXFLAGS -fPIC -lpthread"
     fi
 
     AC_DEFINE_UNQUOTED(COMPILER_PGICC, 1, [PGI compiler])
