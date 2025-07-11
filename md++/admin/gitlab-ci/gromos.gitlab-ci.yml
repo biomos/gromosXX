@@ -62,10 +62,15 @@
 .gromos:base:configure_cmake:
   stage: configure-build
   script:
-    - echo $ENV_COMPILER
+    - echo "$ENV_COMPILER"
     - cmake --version
-    - echo $BUILD_DIR
-    - cmake -S md++ -B $BUILD_DIR
+    - >
+      cmake -S md++ -B "$BUILD_DIR"
+      -DCMAKE_BUILD_TYPE=${BUILD_TYPE:-Release}
+      -DUSE_CUDA=${USE_CUDA:-OFF}
+      -DOMP=${USE_OPENMP:-OFF}
+      -DMPI=${USE_MPI:-OFF}
+      -DBUILD_SHARED_LIBS=${USE_SHARE:-OFF}
   artifacts:
     when: always
     paths:
@@ -182,7 +187,14 @@
         - sim_test_extensive_report.xml
 
 include:
-  - local: 'md++/admin/gitlab-ci/gromos.matrix/ubuntu-22.04_cmake.yml'
+  - local: 'md++/admin/gitlab-ci/gromos.matrix/ubuntu-22.04-cmake.yml'
+  - local: 'md++/admin/gitlab-ci/gromos.matrix/ubuntu-22.04-cmake_debug.yml'
+  - local: 'md++/admin/gitlab-ci/gromos.matrix/ubuntu-22.04-cmake-openmp.yml'
+  - local: 'md++/admin/gitlab-ci/gromos.matrix/ubuntu-22.04-cmake-mpi.yml'
+  - local: 'md++/admin/gitlab-ci/gromos.matrix/ubuntu-20.04-cmake-cuda-11.6.1.yml'
+  - local: 'md++/admin/gitlab-ci/gromos.matrix/ubuntu-20.04-cmake-openmp-cuda-11.6.1.yml'
+  - local: 'md++/admin/gitlab-ci/gromos.matrix/ubuntu-20.04-cmake-cuda-11.6.1_debug.yml'
+  - local: 'md++/admin/gitlab-ci/gromos.matrix/ubuntu-20.04-cmake-cuda-11.6.1_shared.yml'
 #  - local: 'md++/admin/gitlab-ci/gromos.matrix/ubuntu-22.04.yml'
 #  - local: 'md++/admin/gitlab-ci/gromos.matrix/ubuntu-22.04-llvm.yml'
 #  - local: 'md++/admin/gitlab-ci/gromos.matrix/ubuntu-22.04-mpi.yml'
