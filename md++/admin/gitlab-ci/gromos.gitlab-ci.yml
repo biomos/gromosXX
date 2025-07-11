@@ -189,6 +189,7 @@
 include:
   - local: 'md++/admin/gitlab-ci/gromos.matrix/ubuntu-22.04-cmake.yml'
   - local: 'md++/admin/gitlab-ci/gromos.matrix/ubuntu-22.04-cmake_debug.yml'
+  - local: 'md++/admin/gitlab-ci/gromos.matrix/ubuntu-22.04-cmake_shared.yml'
   - local: 'md++/admin/gitlab-ci/gromos.matrix/ubuntu-22.04-cmake-openmp.yml'
   - local: 'md++/admin/gitlab-ci/gromos.matrix/ubuntu-22.04-cmake-mpi.yml'
   - local: 'md++/admin/gitlab-ci/gromos.matrix/ubuntu-20.04-cmake-cuda-11.6.1.yml'
