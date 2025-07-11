@@ -1,0 +1,40 @@
+gromos:ubuntu-22.04-mpi:configure_cmake:
+  extends:
+    - .gromos:base:configure_cmake
+  image: ${CI_REGISTRY}/gromos/gromosxx/gromos-ubuntu-22.04-mpi
+  variables:
+    BUILD_DIR: build
+    USE_MPI: ON
+
+gromos:ubuntu-22.04-mpi:build_make_test_cmake:
+  extends:
+    - .gromos:base:build_make_test_cmake
+  image: ${CI_REGISTRY}/gromos/gromosxx/gromos-ubuntu-22.04-mpi
+  variables:
+    BUILD_DIR: build
+    DESTDIR: $BUILD_DIR
+    BIN_PATH: $BUILD_DIR/usr/local/bin/md
+  needs:
+    - job: gromos:ubuntu-22.04-mpi:configure_cmake
+
+gromos:ubuntu-22.04-mpi:sim_test:
+  extends:
+    - .gromos:base:sim_test
+  image: ${CI_REGISTRY}/gromos/gromosxx/gromos-ubuntu-22.04-mpi
+  variables:
+    BUILD_DIR: build
+    BIN_PATH: $BUILD_DIR/usr/local/bin/md
+    TEST_REPO: $CI_PROJECT_DIR/gromos_test_files/
+  needs:
+    - job: gromos:ubuntu-22.04-mpi:build_make_test_cmake
+
+gromos:ubuntu-22.04-mpi:sim_test_extensive:
+  extends:
+    - .gromos:base:sim_test_extensive
+  image: ${CI_REGISTRY}/gromos/gromosxx/gromos-ubuntu-22.04-mpi
+  variables:
+    BUILD_DIR: build
+    BIN_PATH: $BUILD_DIR/usr/local/bin/md
+    TEST_REPO: $CI_PROJECT_DIR/gromos_test_files/
+  needs:
+    - job: gromos:ubuntu-22.04-mpi:build_make_test_cmake

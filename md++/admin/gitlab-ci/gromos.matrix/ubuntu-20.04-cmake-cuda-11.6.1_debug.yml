@@ -1,0 +1,40 @@
+gromos:ubuntu-20.04-cuda-11.6.1:configure_cmake_debug:
+  extends:
+    - .gromos:base:configure_cmake
+  image: ${CI_REGISTRY}/gromos/gromosxx/gromos-ubuntu-20.04-cuda-11.6.1
+  variables:
+    BUILD_DIR: build
+    USE_CUDA: ON
+
+gromos:ubuntu-20.04-cuda-11.6.1:build_make_test_cmake_debug:
+  extends:
+    - .gromos:base:build_make_test_cmake
+  image: ${CI_REGISTRY}/gromos/gromosxx/gromos-ubuntu-20.04-cuda-11.6.1
+  variables:
+    BUILD_DIR: build
+    DESTDIR: $BUILD_DIR
+    BIN_PATH: $BUILD_DIR/usr/local/bin/md
+  needs:
+    - job: gromos:ubuntu-20.04-cuda-11.6.1:configure_cmake_debug
+
+gromos:ubuntu-20.04-cuda-11.6.1:sim_test_debug:
+  extends:
+    - .gromos:base:sim_test
+  image: ${CI_REGISTRY}/gromos/gromosxx/gromos-ubuntu-20.04-cuda-11.6.1
+  variables:
+    BUILD_DIR: build
+    BIN_PATH: $BUILD_DIR/usr/local/bin/md
+    TEST_REPO: $CI_PROJECT_DIR/gromos_test_files/
+  needs:
+    - job: gromos:ubuntu-20.04-cuda-11.6.1:build_make_test_cmake_debug
+
+gromos:ubuntu-20.04-cuda-11.6.1:sim_test_extensive_debug:
+  extends:
+    - .gromos:base:sim_test_extensive
+  image: ${CI_REGISTRY}/gromos/gromosxx/gromos-ubuntu-20.04-cuda-11.6.1
+  variables:
+    BUILD_DIR: build
+    BIN_PATH: $BUILD_DIR/usr/local/bin/md
+    TEST_REPO: $CI_PROJECT_DIR/gromos_test_files/
+  needs:
+    - job: gromos:ubuntu-20.04-cuda-11.6.1:build_make_test_cmake_debug
