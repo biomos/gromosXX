@@ -431,15 +431,21 @@ EOF
         [],
         AC_MSG_ERROR([linking to CUDA library failed])
       )
+    if test "x$enable_shared" = "xyes"; then
+      NVCC_CFLAGS="-Xcompiler -fPIC -lcuda -lcudart $CFLAGS"
+    else
       NVCC_CFLAGS="-lcuda -lcudart $CFLAGS"
-      if eval "test x$enable_profile = xyes"; then
-        NVCC_CFLAGS="-O2 -pg -DNDEBUG $NVCC_CFLAGS"
-      elif eval "test x$enable_debug = xyes"; then
-        NVCC_CFLAGS="-O0 -g $NVCC_CFLAGS"
-      else
-        NVCC_CFLAGS="-O2 -DNDEBUG $NVCC_CFLAGS"
-      fi
-      AC_SUBST(NVCC_CFLAGS)
+    fi
+
+    if test "x$enable_profile" = "xyes"; then
+      NVCC_CFLAGS="-O2 -pg -DNDEBUG $NVCC_CFLAGS"
+    elif test "x$enable_debug" = "xyes"; then
+      NVCC_CFLAGS="-O0 -g $NVCC_CFLAGS"
+    else
+      NVCC_CFLAGS="-O2 -DNDEBUG $NVCC_CFLAGS"
+    fi
+
+    AC_SUBST([NVCC_CFLAGS])
     else
       with_cuda=no
     fi
