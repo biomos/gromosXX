@@ -7,7 +7,6 @@
 
 .use-cuda:
   variables:
-    ENV_COMPILER: "NVCCFLAGS=" #\"-arch sm_52\""
     CUDA_OPTIONS: "--with-cuda"
 
 .use-mpi:
