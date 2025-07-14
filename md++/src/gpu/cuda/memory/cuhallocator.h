@@ -13,7 +13,6 @@
 #include <type_traits>
 #include <vector>
 
-#include <cuda_runtime.h>
 #include "gpu/cuda/cuheader.h"
 
 namespace gpu {

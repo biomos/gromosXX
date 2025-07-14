@@ -5,8 +5,6 @@
 #include <string>
 #include <sstream>
 
-#include <cuda_runtime.h>
-
 #include "gpu/cuda/cuheader.h"
 #include "utils.h"
 

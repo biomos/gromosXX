@@ -4,7 +4,6 @@
 #include <string>
 
 #include "gpu/cuda/cuheader.h"
-#include "gpu/cuda/memory/cuvector.h"
 
 namespace gpu {
     /**
@@ -127,8 +126,8 @@ namespace gpu {
         void check_cuda_error(CUERROR result, const std::string& message) const;
 
         // lets play with vectors
-        gpu::cuvector<float> pos_umem;
-        gpu::cuhvector<float> pos_host;
-        gpu::cudvector<float> pos_dev;
+        CUVECTOR_T<float> pos_umem;
+        CUHVECTOR_T<float> pos_host;
+        CUDVECTOR_T<float> pos_dev;
     };
 }

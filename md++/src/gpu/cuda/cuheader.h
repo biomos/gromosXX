@@ -35,16 +35,31 @@
 
 #ifdef USE_CUDA
     #include <cuda_runtime.h>
-    #include "gpu/cuda/memory/cuvector.h"
-    #define CUDEVPROP cudaDeviceProp
-    #define CUSTREAM cudaStream_t
-    #define CUERROR cudaError_t
-    #define CUVECTOR gpu::cuvector
+    #include "memory/cuvector.h"
+    namespace gpu {
+        using CUDEVPROP = cudaDeviceProp;
+        using CUSTREAM = cudaStream_t;
+        using CUERROR = cudaError_t;
+        template <typename T>
+        using CUVECTOR_T = gpu::cuvector<T>;
+        template <typename T>
+        using CUDVECTOR_T = gpu::cudvector<T>;
+        template <typename T>
+        using CUHVECTOR_T = gpu::cuhvector<T>;
+    }
 #else
-    #define CUDEVPROP void*
-    #define CUSTREAM void*
-    #define CUERROR void*
-    #define CUVECTOR std::vector
+    #include <vector>
+    namespace gpu {
+        using CUDEVPROP = void*;
+        using CUSTREAM = void*;
+        using CUERROR = void*;
+        template <typename T>
+        using CUVECTOR_T = std::vector<T>;
+        template <typename T>
+        using CUDVECTOR_T = std::vector<T>;
+        template <typename T>
+        using CUHVECTOR_T = std::vector<T>;
+    }
 #endif
 
 namespace gpu {

@@ -31,8 +31,10 @@
 #include "../../../configuration/configuration.h"
 
 #include "gpu.h"
+#include "gpu/cuda/cuheader.h"
 
-#include "../manager/cuda_manager.h"
+#include "gpu/cuda/manager/cuda_manager.h"
+#include "gpu/cuda/manager/cuda_manager.tcc"
 
 #include "../../../io/print_block.h"
 

@@ -4,10 +4,7 @@
  * allocator for CUDA managed unified memory, CUDA transparent version of std::vector
  */
 
-#ifndef INCLUDED_CUMALLOCATOR_H
-#define INCLUDED_CUMALLOCATOR_H
-
-#include <cuda_runtime.h>
+#pragma once
 
 namespace cukernel
 {  
@@ -63,5 +60,3 @@ namespace cukernel
     template <typename T>
     using cuvector = std::vector< T, cukernel::CuMallocator<T> >;
 };
-
-#endif

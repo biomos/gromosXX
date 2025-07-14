@@ -1,3 +1,7 @@
+
+#pragma once
+
+
 // Choose one by defining FP_PRECISION as 1, 2, or 3
 // 1 = float only
 // 2 = double only

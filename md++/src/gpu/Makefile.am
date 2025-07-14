@@ -18,7 +18,7 @@ NVCC_CFLAGS = @NVCC_CFLAGS@
 libgrocuda_a_SOURCES = \
     gpu.cc \
     cuda/utils.cu \
-    cuda/manager/cuda_manager.cc \
+    cuda/manager/cuda_manager.cu \
     cuda/kernels/reduction.cu \
     cuda/memory/container.cu \
     cuda/manager/cuda_device_worker.cu \
