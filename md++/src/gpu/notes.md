@@ -105,7 +105,21 @@ virtual std::vector<DataRequirement> get_data_requirements() const {
 
 
 ## CudaManager
-Possible declaration:
+Is the first and the only contact point to the GPU(s). It should wrap all CUDA functionalities into nicely readable and easily usable functions. This includes:
+- device control - the cuda manager probes all available GPU resources and sets itself accordingly. Then it exposes all functionalities to the GROMOS code.
+- memory access - variable creation should be transparent, users should not operate with pointers and have direct access to the variables. The copying and everything is wrapped and hidden in the background.
+- work submission - accepting jobs from the gromos code. Gromos only provides data, dependencies and the function to be called.
+- scheduling - based on the data dependencies, submits the functions, kernels and provides input/output
+- load balancing - balances the workload across multiple GPUS
+
+There are multiple ways on how to do this. Ideally, the user has to do as least C++ coding as possible and use the wrappers.
+E.g. variables can be defined dynamically and map<string,VAR>.
+
+We have to think how to do the scheduling.
+For every algorithm, one should define what are the output and input dependencies. Based on that, the jobs are ideally run asynchronously on GPU.
+
+
+Possible declaration of string-named arrays:
 ```cpp
 class CudaManager {
 public:
@@ -135,7 +149,7 @@ static const std::unordered_map<std::string, ArrayID> name_to_id = {
 };
 ```
 
-During the md sequence building, we need to decide, if GPU variants are used. Also, mutual data dependencies tracking
+During the md sequence preparation, we need to decide, if GPU variants are used. Also, mutual data dependencies tracking
 allows us to schedule overlap in CPU and GPU execution.
 CudaManager will handle this.
 

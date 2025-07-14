@@ -130,13 +130,20 @@ namespace gpu {
             static constexpr bool is_enabled() { return false; }
 #endif
             /**
-             * @brief Reset the active device to its default state.
-             * @param device_id The ID of the device to reset.
-             * @throws std::invalid_argument if the device ID is invalid.
+             * @brief A specialized type, that allows user to create a transparent variable on the GPU
+             * 
+             * @tparam T Variable type
              */
             template <typename T>
             class Variable {
             public:
+                /**
+                 * @brief Constructor for Variable.
+                 * @param device_id The ID of the device to use.
+                 * @param file The source file where the Variable was created.
+                 * @param line The line number in the source file where the Variable was created.
+                 * @param func The function name where the Variable was created.
+                 */
                 explicit Variable(int device_id = 0,
                 const char* file = __builtin_FILE(),
                 int line = __builtin_LINE(),
