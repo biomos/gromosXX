@@ -129,18 +129,32 @@ namespace gpu {
 #else
             static constexpr bool is_enabled() { return false; }
 #endif
-    private:
-        /**
-         * @brief Validate a device ID.
-         * @param device_id The ID of the device to validate.
-         * @throws std::invalid_argument if the device ID is invalid.
-         */
-        void validate_device_id(int device_id) const;
+            /**
+             * @brief Reset the active device to its default state.
+             * @param device_id The ID of the device to reset.
+             * @throws std::invalid_argument if the device ID is invalid.
+             */
+            template <typename T>
+            class Variable {
+            public:
+                explicit Variable(int device_id = 0,
+                const char* file = __builtin_FILE(),
+                int line = __builtin_LINE(),
+                const char* func = __builtin_FUNCTION());
+                
+                ~Variable();
 
-        std::unique_ptr<CudaDeviceManager> device_manager_; ///< Manages CUDA devices.
-        std::unordered_map<int, std::unique_ptr<CudaDeviceWorker>> device_workers_; ///< Workers for each active device.
-        CudaMemoryManager memory_manager_; ///< Handles memory allocation and transfers.
+                Variable& operator=(const T& value);
+                operator T() const;
 
+                T* device_ptr();
+
+            private:
+                int device_id_;
+                T* device_data_;
+
+                void disabled(const char* file, int line, const char* func) const;
+            };
         private:
             /**
              * @brief Validate a device ID.
