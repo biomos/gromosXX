@@ -186,12 +186,12 @@ int main(int argc, char *argv[]){
   traj1.init(args1, sim1.param());
   traj2.init(args2, sim2.param());
   
-  algorithm::EDS * eds1 = (algorithm::EDS *) md1.algorithm("EDS");
-  if (eds1 != NULL) {
+  algorithm::EDS * eds1 = md1.algorithm<algorithm::EDS>("EDS");
+  if (eds1 != nullptr) {
       eds1->set_conf2(conf2);
   }
-  algorithm::EDS * eds2 = (algorithm::EDS *) md2.algorithm("EDS");
-  if (eds2 != NULL) {
+  algorithm::EDS * eds2 = md2.algorithm<algorithm::EDS>("EDS");
+  if (eds2 != nullptr) {
       eds2->set_conf2(conf1);
   }
   

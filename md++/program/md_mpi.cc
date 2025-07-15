@@ -278,10 +278,9 @@ int main(int argc, char *argv[]) {
                     bool do_shake = sim.param().system.nsm &&
                             sim.param().constraint.solvent.algorithm == simulation::constr_shake
                             && !sim.param().analyze.no_constraints;
-
-                    algorithm::Shake * shake =
-                            dynamic_cast<algorithm::Shake *> (md.algorithm("Shake"));
-                    if (do_shake && shake == NULL) {
+                    
+                    algorithm::Shake * shake = md.algorithm<algorithm::Shake>("Shake");
+                    if (do_shake && shake == nullptr) {
                         std::cerr << "MPI master: could not get Shake algorithm from MD sequence."
                                 << "\n\t(internal error)"
                                 << std::endl;

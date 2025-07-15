@@ -242,11 +242,11 @@ int main(int argc, char *argv[]){
     }
 
     algorithm::EDS * eds1 = (algorithm::EDS *) md1.algorithm("EDS");
-    if (eds1 != NULL) {
+    if (eds1 != nullptr) {
         eds1->set_conf2(conf2);
     }
     algorithm::EDS * eds2 = (algorithm::EDS *) md2.algorithm("EDS");
-    if (eds2 != NULL) {
+    if (eds2 != nullptr) {
         eds2->set_conf2(conf1);
     }
 

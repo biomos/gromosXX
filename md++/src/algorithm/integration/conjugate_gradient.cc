@@ -100,23 +100,15 @@ int algorithm::Conjugate_Gradient
 
   // Get pointers to algorithms
   // Position restraints
-  do_posres = (sim.param().posrest.posrest == 3);
+  do_posres = (sim.param().posrest.posrest == simulation::posrest_const);
   if (do_posres) {
-    cgrad_posres = dynamic_cast<algorithm::Position_Constraints *>(cgrad_seq.algorithm("Position_Constraints"));
-    if (cgrad_posres == NULL) {
-      std::cerr << "Conjugate Gradient: Could not get Position Constraints algorithm"
-                << "\n\t(internal error)" << std::endl;
-      return 1;
-    }
+    // cgrad_posres = cgrad_seq.algorithm<algorithm::Position_Constraints>("Position_Constraints");
+    cgrad_posres = GET_ALGORITHM(cgrad_seq, algorithm::Position_Constraints, true, "Position_Constraints");
   }
 
   // Forcefield to evaluate forces and energies
-  cgrad_ff = dynamic_cast<interaction::Forcefield *>(cgrad_seq.algorithm("Forcefield"));
-  if (cgrad_ff == NULL) {
-    std::cerr << "Conjugate Gradient: could not get Interaction Calculation algorithm"
-              << "\n\t(internal error)" << std::endl;
-    return 1;
-  }
+  // cgrad_ff = cgrad_seq.algorithm<interaction::Forcefield>("Forcefield");
+  cgrad_ff = GET_ALGORITHM(cgrad_seq, interaction::Forcefield, true, "Forcefield");
 
   // SHAKE algorithm
   do_shake = (
@@ -124,12 +116,9 @@ int algorithm::Conjugate_Gradient
     || (sim.param().system.nsm && sim.param().constraint.solvent.algorithm == simulation::constr_shake)
   );
   if (do_shake) {
-    cgrad_shake = dynamic_cast<algorithm::Shake *>(cgrad_seq.algorithm("Shake"));
-    if (cgrad_shake == NULL) { 
-      std::cerr << "Conjugate Gradient: could not get SHAKE algorithm"
-                << "\n\t(internal error)" << std::endl;
-      return 1;
-    }
+    // cgrad_shake = cgrad_seq.algorithm<algorithm::Shake>("Shake");
+    cgrad_shake = GET_ALGORITHM(cgrad_seq, algorithm::Shake, true, "Shake");
+    
     // Initialise separate configuration for SHAKE
     conf_sh_init(conf);
   }

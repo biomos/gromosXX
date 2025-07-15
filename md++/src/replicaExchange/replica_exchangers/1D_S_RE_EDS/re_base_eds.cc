@@ -339,7 +339,7 @@ double re::replica_exchange_base_eds::calculate_energy_core() {
     double energy = 0.0;
     algorithm::Algorithm * ff = nullptr;
 
-    ff = replica->md.algorithm("EDS");
+    ff = replica->md.algorithm<std::remove_pointer_t<decltype(ff)>>("EDS");
 
     //Calculate energies
     DEBUG(5, "replica_reeds_base_eds "<< globalThreadID <<":calculate_energy:\t calc energies");

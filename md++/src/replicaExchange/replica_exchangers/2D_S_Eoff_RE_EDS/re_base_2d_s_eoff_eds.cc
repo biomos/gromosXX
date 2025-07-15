@@ -845,7 +845,7 @@ double re::replica_exchange_base_2d_s_eoff_eds::calc_energy_eds_stat(double s){
           //only temporary change
           replica->sim.param().eds.s[0]=s;
 
-          ff = replica->md.algorithm("EDS");
+          ff = replica->md.algorithm<std::remove_pointer_t<decltype(ff)>>("EDS");
     }
     else {
           print_info("eds_stat() i.e calc_energy_eds_stat() called for non EDS simulation!");
@@ -902,7 +902,7 @@ double re::replica_exchange_base_2d_s_eoff_eds::calculate_energy_core() {
     double energy = 0.0;
     algorithm::Algorithm * ff = nullptr;
 
-    ff = replica->md.algorithm("EDS");
+    ff = replica->md.algorithm<std::remove_pointer_t<decltype(ff)>>("EDS");
 
     //Calculate energies
     DEBUG(5, "replica_reeds_base_eds "<< globalThreadID <<":calculate_energy:\t calc energies");

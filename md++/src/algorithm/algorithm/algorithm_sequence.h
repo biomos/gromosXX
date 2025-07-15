@@ -33,7 +33,7 @@ namespace algorithm
    * contains the specific algorithms.
    * An almost clean implementation of the Strategy pattern.
    */
-  class Algorithm_Sequence : public std::vector<Algorithm *>
+  class Algorithm_Sequence : public std::vector<IAlgorithm *>
   {
   public:
     /**
@@ -68,9 +68,61 @@ namespace algorithm
     int print_timing(std::ostream & os);
 
     /**
-     * algorithm accessor
+     * @brief algorithm accessor - templated version
+     *  - casts directly
+     *  - performs runtime casting check (dynamic_cast) in debug mode
+     *  - NO check (static_cast) in release mode!
+     * 
+     * @tparam T type of the returned pointer
+     * @tparam FailIfNotFound bool fail if not found (otherwise return nullptr)
+     * @param name name of the algorithm
+     * @param file file this method was called from (optional)
+     * @param line line this method was called from (optional)
+     * @return T* the pointer to the algorithm
+     * @throws runtime_error if pointer not found (DEBUG mode: also if pointer cannot be cast)
      */
-    Algorithm * algorithm(std::string name);
+    template <typename T, bool FailIfNotFound = false>
+    T * algorithm(std::string name, const char* file = __FILE__, int line = __LINE__) {
+      using ValueType = std::remove_pointer_t<typename Algorithm_Sequence::value_type>;
+      static_assert(std::is_base_of<Algorithm, T>::value, 
+        "Template parameter T must derive from Algorithm");
+
+      static_assert(std::is_base_of<Algorithm, ValueType>::value, 
+        "Algorithm_Sequence::value_type must derive from Algorithm");
+      
+      for(Algorithm_Sequence::iterator 
+      it = begin(), to = end();
+          it != to;
+          ++it){
+        
+        if ((*it)->name == name) {
+          T* alg_p = nullptr;
+    #ifndef NDEBUG
+          alg_p = dynamic_cast<T*>(*it);
+          if (!alg_p) {
+            std::ostringstream oss;
+            oss << "Invalid dynamic_cast to requested algorithm type at "
+                << file << ":" << line << "\n"
+                << "Failed to cast algorithm named '" << name << "' (internal error)";
+            throw std::runtime_error(oss.str());
+          }
+    #else
+          // No check in release mode!
+          alg_p = static_cast<T*>(*it);
+    #endif
+          return alg_p;
+        }
+      }
+      // Not found
+      if constexpr (FailIfNotFound) {
+        std::ostringstream oss;
+        oss << "Algorithm named '" << name << "' not found at "
+            << file << ":" << line << " (internal error)";
+        throw std::runtime_error(oss.str());
+      } else {
+        return nullptr;
+      }
+    }
     
     /**
      * print algorithm sequence.
@@ -85,5 +137,10 @@ namespace algorithm
   
 } // algorithm
 
+#ifdef NDEBUG
+  #define GET_ALGORITHM(seq, T, Strict, name) seq.template algorithm<T,Strict>(name)
+#else
+  #define GET_ALGORITHM(seq, T, Strict, name) seq.template algorithm<T,Strict>(name, __FILE__, __LINE__)
+#endif
 
 #endif

@@ -325,7 +325,7 @@ double re::replica_MPI_Master::calculateEnergies(){
     algorithm::Algorithm * ff = nullptr;
 
     //Calculate energies
-    ff = md.algorithm("Forcefield");
+    ff = md.algorithm<std::remove_pointer_t<decltype(ff)>>("Forcefield");
     DEBUG(5, "replica "<< globalThreadID <<":calculate_energy:\t calc energies");
     if (ff->apply(topo, conf, sim)) {
         std::cerr << "Error in Forcefield calculation in Replica " << (simulationID+1) << " on node " << globalThreadID << std::endl;
@@ -340,7 +340,7 @@ double re::replica_MPI_Master::calculateEnergies(){
         force_orig = conf.current().force;
         virial_tensor_orig = conf.current().virial_tensor;
 
-        ff = md.algorithm("EDS");
+        ff = md.algorithm<std::remove_pointer_t<decltype(ff)>>("EDS");
         //Calculate energies
         DEBUG(5, "replica "<< globalThreadID <<":calculate_energy:\t calc energies");
         if (ff->apply(topo, conf, sim)) {
