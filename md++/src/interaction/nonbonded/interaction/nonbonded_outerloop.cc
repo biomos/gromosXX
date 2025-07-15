@@ -1609,7 +1609,7 @@ void interaction::Nonbonded_Outerloop
 #ifdef XXMPI
   // broadcast posV to slaves. We only have to do this here at the very first step because
   // posV is also broadcasted at the end of every electric field iteration.
-  if (sim.mpi && sim.steps() == 0) {
+  if (sim.mpi_enabled() && sim.steps() == 0) {
     MPI_Bcast(&conf.current().posV(0)(0), conf.current().posV.size() * 3, MPI_DOUBLE, sim.mpiControl().masterID, sim.mpiControl().comm);
   }
 #endif
@@ -1669,7 +1669,7 @@ void interaction::Nonbonded_Outerloop
 #endif
 
 #ifdef XXMPI
-    if (sim.mpi) {
+    if (sim.mpi_enabled()) {
       // reduce the longrange electric field to some temp. variable and then set this
       // variable to the longrange electric field on the master. The lr e field
       // is only needed on the master node
@@ -1693,7 +1693,7 @@ void interaction::Nonbonded_Outerloop
 #ifdef XXMPI
     // again set the temporary variable to 0 as we need it again for 
     // the short range eletric field
-    if (sim.mpi)
+    if (sim.mpi_enabled())
       e_el_master = 0.0;
 #endif
 
@@ -1732,7 +1732,7 @@ void interaction::Nonbonded_Outerloop
 #ifdef XXMPI
     // also reduce the shortrange electric field the same way as the longrange
     // electric field
-    if (sim.mpi) {
+    if (sim.mpi_enabled()) {
       if (rank) {
         MPI_Reduce(&e_el_new(0)(0), NULL, e_el_new.size() * 3, MPI_DOUBLE, MPI_SUM, sim.mpiControl().masterID, sim.mpiControl().comm);
       } else {
@@ -1823,7 +1823,7 @@ void interaction::Nonbonded_Outerloop
 #ifdef XXMPI
     // broadcast the new posV and also the convergence criterium (minfield)
     // to the slaves. Otherwise they don't know when to stop.
-    if (sim.mpi) {
+    if (sim.mpi_enabled()) {
       MPI_Bcast(&conf.current().posV(0)(0), conf.current().posV.size() * 3, MPI_DOUBLE, sim.mpiControl().masterID, sim.mpiControl().comm);
       MPI_Bcast(&minfield, 1, MPI_DOUBLE, sim.mpiControl().masterID, sim.mpiControl().comm);
     }
@@ -2096,13 +2096,13 @@ void interaction::Nonbonded_Outerloop
     DEBUG(11, "r(" << i << ") in box: " << math::v2s(r(i)));
   }
 
-  if (sim.openmp && rank != 0) {
+  if (sim.openmp_enabled() && rank != 0) {
     // for openmp this is single threaded
     return;
   }
   
   // decompose into domains
-  if (sim.mpi)
+  if (sim.mpi_enabled())
     interaction::Lattice_Sum::decompose_into_domains<configuration::ParallelMesh > (topo, conf, sim, storage.domain, r, size);
   else
     interaction::Lattice_Sum::decompose_into_domains<configuration::Mesh > (topo, conf, sim, storage.domain, r, size);
@@ -2114,7 +2114,7 @@ void interaction::Nonbonded_Outerloop
     DEBUG(10, "\t calculating influence function");
     if (rank == 0)
       timer.start_subtimer("P3M: influence function");
-    if (sim.mpi)
+    if (sim.mpi_enabled())
       conf.lattice_sum().influence_function.template calculate< configuration::ParallelMesh > (topo, conf, sim);
     else
       conf.lattice_sum().influence_function.template calculate< configuration::Mesh > (topo, conf, sim);
@@ -2146,7 +2146,7 @@ void interaction::Nonbonded_Outerloop
           sim.steps() % sim.param().nonbonded.accuracy_evaluation == 0) {
     if (rank == 0)
       timer.start_subtimer("P3M: accuracy evaluation");
-    if (sim.mpi)
+    if (sim.mpi_enabled())
       conf.lattice_sum().influence_function.template evaluate_quality<configuration::ParallelMesh > (topo, conf, sim);
     else
       conf.lattice_sum().influence_function.template evaluate_quality<configuration::Mesh > (topo, conf, sim);
@@ -2161,7 +2161,7 @@ void interaction::Nonbonded_Outerloop
       DEBUG(10, "\t calculating influence function");
       if (rank == 0)
         timer.start_subtimer("P3M: influence function");
-      if (sim.mpi)
+      if (sim.mpi_enabled())
         conf.lattice_sum().influence_function.template calculate<configuration::ParallelMesh > (topo, conf, sim);
       else
         conf.lattice_sum().influence_function.template calculate<configuration::Mesh > (topo, conf, sim);
@@ -2203,13 +2203,13 @@ void interaction::Nonbonded_Outerloop
 
     if (sim.param().nonbonded.ls_calculate_a2 != simulation::ls_a2t_ave_a2_numerical) {
       // calculate the real A2~ term (not averaged)
-      if (sim.mpi)
+      if (sim.mpi_enabled())
         interaction::Lattice_Sum::calculate_squared_charge_grid<configuration::ParallelMesh > (topo, conf, sim, storage.domain, r);
       else
         interaction::Lattice_Sum::calculate_squared_charge_grid<configuration::Mesh > (topo, conf, sim, storage.domain, r);
     } else {
       // calculate the averaged A2~ term
-      if (sim.mpi)
+      if (sim.mpi_enabled())
         interaction::Lattice_Sum::calculate_averaged_squared_charge_grid<configuration::ParallelMesh > (topo, conf, sim, storage.domain);
       else
         interaction::Lattice_Sum::calculate_averaged_squared_charge_grid<configuration::Mesh > (topo, conf, sim, storage.domain);
@@ -2220,7 +2220,7 @@ void interaction::Nonbonded_Outerloop
     squared_charge.fft(configuration::Mesh::fft_forward);
 
     DEBUG(10, "\tcalculation of self term via P3M.");
-    if (sim.mpi) {
+    if (sim.mpi_enabled()) {
       interaction::Lattice_Sum::calculate_p3m_selfterm<configuration::ParallelMesh > (topo, conf, sim);
     } else {
       interaction::Lattice_Sum::calculate_p3m_selfterm<configuration::Mesh > (topo, conf, sim);
@@ -2235,7 +2235,7 @@ void interaction::Nonbonded_Outerloop
     timer.start_subtimer("P3M: energy & force");
 
   DEBUG(10, "\t done with influence function, starting to assign charge density to grid ... ");
-  if (sim.mpi)
+  if (sim.mpi_enabled())
     interaction::Lattice_Sum::calculate_charge_density<configuration::ParallelMesh > (topo, conf, sim, storage.domain, r);
   else
     interaction::Lattice_Sum::calculate_charge_density<configuration::Mesh > (topo, conf, sim, storage.domain, r);
@@ -2247,19 +2247,19 @@ void interaction::Nonbonded_Outerloop
   charge_density.fft(configuration::Mesh::fft_forward);
   DEBUG(10, "\t done with fft! Starting to calculate the energy ...");
 
-  if (sim.mpi) {
+  if (sim.mpi_enabled()) {
     interaction::Lattice_Sum::calculate_potential_and_energy<configuration::ParallelMesh > (topo, conf, sim, storage);
   } else {
     interaction::Lattice_Sum::calculate_potential_and_energy<configuration::Mesh > (topo, conf, sim, storage);
   }
   DEBUG(10, "\t done with calculation of elec. potential and energy, calculating electric field...");
-  if (sim.mpi) {
+  if (sim.mpi_enabled()) {
     interaction::Lattice_Sum::calculate_electric_field<configuration::ParallelMesh > (topo, conf, sim);
   } else {
     interaction::Lattice_Sum::calculate_electric_field<configuration::Mesh > (topo, conf, sim);
   }
   DEBUG(10, "\t done with electric field calculation, calculating forces");
-  if (sim.mpi) {
+  if (sim.mpi_enabled()) {
     interaction::Lattice_Sum::calculate_force<configuration::ParallelMesh > (topo, conf, sim, storage, r);
   } else {
     interaction::Lattice_Sum::calculate_force<configuration::Mesh > (topo, conf, sim, storage, r);
@@ -2484,7 +2484,7 @@ void interaction::Nonbonded_Outerloop
 
         // now calculate A2 and the relative tolerance
 #ifdef XXMPI
-        if (sim.mpi) {
+        if (sim.mpi_enabled()) {
           //TODO : CONTORL THAT CORRECT! bschroed
           double my_term = term;
           MPI_Allreduce(&my_term, &term, 1, MPI_DOUBLE, MPI_SUM, sim.mpiControl().comm);
@@ -2505,7 +2505,7 @@ void interaction::Nonbonded_Outerloop
 
 #ifdef XXMPI
       // for MPI we only have parts of the A2 derivative sum. So we have to add them here
-      if (sim.mpi && do_virial) {
+      if (sim.mpi_enabled() && do_virial) {
         math::SymmetricMatrix sum_gammahat_part = sum_gammahat;
 
         if (rank) { // slave
@@ -2531,7 +2531,7 @@ void interaction::Nonbonded_Outerloop
 #ifdef XXMPI
   // for MPI we only have parts of the A2~ sums. So we have to add them here
   // but only if they were calculated.
-  if (sim.mpi && (
+  if (sim.mpi_enabled() && (
           sim.param().nonbonded.ls_calculate_a2 == simulation::ls_a2t_exact ||
           sim.param().nonbonded.ls_calculate_a2 == simulation::ls_a2t_exact_a2_numerical ||
           sim.param().nonbonded.ls_calculate_a2 == simulation::ls_a2t_ave_a2_numerical)) {

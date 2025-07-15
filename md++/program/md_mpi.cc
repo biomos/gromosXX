@@ -146,7 +146,6 @@ int main(int argc, char *argv[]) {
     /**
      *    SETTING UP MPI CONTROL
      */
-    sim.mpi = true;
     //Build Attributes:
     ////GENERATE SIM SPECIFIC SIMULATION COMM
     MPI_Comm simulationCOMM;

@@ -435,7 +435,7 @@ void algorithm::Perturbed_Shake ::perturbed_solute(topology::Topology const &top
     DEBUG(5, "constraint_force " << math::v2s(conf.old().constraint_force(i)));
   }
 
-  if (!sim.mpi || m_rank == 0)
+  if (!sim.mpi_enabled() || m_rank == 0)
     m_timer.stop_subtimer("solute");
 
   //error = 0;
@@ -455,7 +455,7 @@ int algorithm::Perturbed_Shake ::apply(topology::Topology &topo,
 {
   DEBUG(7, "applying perturbed SHAKE");
 
-  if (!sim.mpi || m_rank == 0)
+  if (!sim.mpi_enabled() || m_rank == 0)
     m_timer.start(sim);
 
   // set the constraint force to zero
@@ -488,7 +488,7 @@ int algorithm::Perturbed_Shake ::apply(topology::Topology &topo,
 
   // broadcast eventual errors from master to slaves
 #ifdef XXMPI
-  if (sim.mpi) {
+  if (sim.mpi_enabled()) {
     MPI_Bcast(&error, 1, MPI_INT, sim.mpiControl().masterID, sim.mpiControl().comm);
   } 
 #endif
@@ -504,7 +504,7 @@ int algorithm::Perturbed_Shake ::apply(topology::Topology &topo,
 
 #ifdef XXMPI
   math::VArray &pos = conf.current().pos;
-  if (sim.mpi)
+  if (sim.mpi_enabled())
   {
     // broadcast current and old coordinates and pos.
 
@@ -546,7 +546,7 @@ int algorithm::Perturbed_Shake ::apply(topology::Topology &topo,
     return E_SHAKE_FAILURE_SOLVENT;
   }
 #ifdef XXMPI
-  if (sim.mpi && do_shake_solv)
+  if (sim.mpi_enabled() && do_shake_solv)
   {
     if (m_rank == 0)
     {
@@ -602,7 +602,7 @@ int algorithm::Perturbed_Shake ::apply(topology::Topology &topo,
   }
 
   // return success!
-  if (!sim.mpi || m_rank == 0)
+  if (!sim.mpi_enabled() || m_rank == 0)
     m_timer.stop();
   return error;
 }
@@ -636,7 +636,7 @@ int algorithm::Perturbed_Shake::init(topology::Topology &topo,
   }
   
   #ifdef XXMPI
-  if (sim.mpi) {
+  if (sim.mpi_enabled()) {
     m_rank = sim.mpiControl().threadID;
     m_size = sim.mpiControl().numberOfThreads;
   }

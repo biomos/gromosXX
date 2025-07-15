@@ -506,7 +506,7 @@ int io::check_features(simulation::Simulation  &sim)
   // AMBER topology
   add("amber", "AMBER topology", param.amber.amber);
   // parallelization
-  add("parallel_mpi", "MPI parallelization", sim.mpi);
+  add("parallel_mpi", "MPI parallelization", sim.mpi_enabled());
   int size = 1;
 #ifdef OMP
     int tid = 0;

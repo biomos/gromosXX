@@ -346,7 +346,7 @@ int interaction::QMMM_Interaction::init(topology::Topology& topo,
   if (!quiet)
     os << "QMMM INTERACTION\n";
 #ifdef XXMPI
-  if (sim.mpi) {
+  if (sim.mpi_enabled()) {
     // adopt MPI ranks
     MPI_Comm_size(MPI_COMM_WORLD, &m_size);
     MPI_Comm_rank(MPI_COMM_WORLD, &m_rank);

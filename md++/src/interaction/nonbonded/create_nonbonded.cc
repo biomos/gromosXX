@@ -210,7 +210,7 @@ int interaction::create_g96_nonbonded
 #elif defined(XXMPI)
   Nonbonded_Interaction * ni;
 
-  if (sim.mpi){
+  if (sim.mpi_enabled()){
     if (sim.mpiControl().threadID == sim.mpiControl().masterID)
       ni = new MPI_Nonbonded_Master(pa);
     else

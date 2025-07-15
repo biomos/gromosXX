@@ -801,7 +801,7 @@ void interaction::Lattice_Sum::decompose_into_domains(const topology::Topology &
         const math::VArray & r,
         const unsigned int size) {
   DEBUG(8, "Starting domain decomposition for P3M.");
-  if (sim.mpi) {
+  if (sim.mpi_enabled()) {
     MeshType & charge_density = *((MeshType*) conf.lattice_sum().charge_density);
 
     const unsigned int Nx = charge_density.x();

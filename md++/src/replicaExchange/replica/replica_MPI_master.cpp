@@ -72,7 +72,6 @@ re::replica_MPI_Master::replica_MPI_Master(io::Argument _args, int cont,  int gl
     
     DEBUG(6, "replica_MPI_MASTER "<< globalThreadID <<":Constructor:\t  "<< simulationID <<":\t start read in");
     //Build structure
-    sim.mpi = true;
     sim.mpiControl() = replica_mpi_control;  //build MPI parallelism
     
     if (io::read_input(args, topo, conf, sim, md, *os, true)) { 

@@ -99,7 +99,7 @@ void algorithm::GPU_Shake
 
   DEBUG(8, "\tshaking SOLVENT - GPU_SHAKE");
 
-  if (!sim.mpi || m_rank == 0)
+  if (!sim.mpi_enabled() || m_rank == 0)
     m_timer.start_subtimer("solvent");
 
   error = 0;
@@ -134,7 +134,7 @@ void algorithm::GPU_Shake
   std::cerr << "OMP not defined, why are we here???" << std::endl;
 #endif
 
-  if (!sim.mpi || m_rank == 0)
+  if (!sim.mpi_enabled() || m_rank == 0)
     m_timer.stop_subtimer("solvent");
 } // shake solvent
 
@@ -146,7 +146,7 @@ int algorithm::GPU_Shake::apply(topology::Topology & topo,
         configuration::Configuration & conf,
         simulation::Simulation & sim) {
   DEBUG(7, "applying GPU_SHAKE");
-  if (!sim.mpi || m_rank == 0)
+  if (!sim.mpi_enabled() || m_rank == 0)
     m_timer.start(sim);
 
   int error = 0;
@@ -180,7 +180,7 @@ int algorithm::GPU_Shake::apply(topology::Topology & topo,
     }
   }
 
-  if (!sim.mpi || m_rank == 0)
+  if (!sim.mpi_enabled() || m_rank == 0)
     m_timer.stop();
   // return success!
   return 0;
@@ -259,7 +259,7 @@ int algorithm::GPU_Shake::init(topology::Topology & topo,
             << "\tsolvent\t";
 
     if (sim.param().constraint.solvent.algorithm == simulation::constr_gpu_shake) {
-      if (sim.mpi)
+      if (sim.mpi_enabled())
         os << "ON (MPI parallel version)\n";
       else
         os << "ON\n";

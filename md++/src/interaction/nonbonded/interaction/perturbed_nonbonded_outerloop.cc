@@ -318,7 +318,7 @@ void interaction::Perturbed_Nonbonded_Outerloop
 #ifdef XXMPI
   // broadcast posV to slaves. We only have to do this here at the very first step because
   // posV is also broadcasted at the end of every electric field iteration.
-  if (sim.mpi && sim.steps() == 0) {
+  if (sim.mpi_enabled() && sim.steps() == 0) {
     MPI_Bcast(&conf.current().posV(0)(0), conf.current().posV.size() * 3, MPI_DOUBLE, sim.mpiControl().masterID, sim.mpiControl().comm);
   }
 #endif
@@ -372,7 +372,7 @@ void interaction::Perturbed_Nonbonded_Outerloop
       }
     }
 #ifdef XXMPI
-    if (sim.mpi) {
+    if (sim.mpi_enabled()) {
       // reduce the longrange electric field to some temp. variable and then set this
       // variable to the longrange electric field on the master. The lr e field
       // is only needed on the master node
@@ -397,7 +397,7 @@ void interaction::Perturbed_Nonbonded_Outerloop
 #ifdef XXMPI
     // again set the temporary variable to 0 as we need it again for 
     // the short range eletric field
-    if (sim.mpi)
+    if (sim.mpi_enabled())
       e_el_master = 0.0;
 #endif
     
@@ -450,7 +450,7 @@ void interaction::Perturbed_Nonbonded_Outerloop
 #ifdef XXMPI
     // also reduce the shortrange electric field the same way as the longrange
     // electric field
-    if (sim.mpi) {
+    if (sim.mpi_enabled()) {
       if (rank) {
         MPI_Reduce(&e_el_new(0)(0), NULL, e_el_new.size() * 3, MPI_DOUBLE, MPI_SUM, sim.mpiControl().masterID, sim.mpiControl().comm);
       } else {
@@ -526,7 +526,7 @@ void interaction::Perturbed_Nonbonded_Outerloop
 #ifdef XXMPI
     // broadcast the new posV and also the convergence criterium (minfield)
     // to the slaves. Otherwise they don't know when to stop.
-    if (sim.mpi) {
+    if (sim.mpi_enabled()) {
       MPI_Bcast(&conf.current().posV(0)(0), conf.current().posV.size() * 3, MPI_DOUBLE, sim.mpiControl().masterID, sim.mpiControl().comm);
       MPI_Bcast(&minfield, 1, MPI_DOUBLE, sim.mpiControl().masterID, sim.mpiControl().comm);
     }

@@ -73,7 +73,6 @@ re::replica_MPI_Slave::replica_MPI_Slave(io::Argument _args, int cont, int globa
     
     DEBUG(6, "replica_MPI_SLAVE "<< globalThreadID <<":Constructor:\t  "<< globalThreadID <<":\t start read in");
     //build up system:
-    sim.mpi = true;
     sim.mpiControl() = replica_mpi_control;
     
     if (io::read_input(args, topo, conf, sim, md, *os, true)) { 

@@ -422,7 +422,7 @@ solute(topology::Topology const & topo,
   DEBUG(8, "\tshaking SOLUTE");
   math::Periodicity<B> periodicity(conf.current().box);
 
-  if (!sim.mpi || m_rank == 0)
+  if (!sim.mpi_enabled() || m_rank == 0)
     m_timer.start_subtimer("solute");
 
   const unsigned int num_atoms = topo.num_solute_atoms();
@@ -515,7 +515,7 @@ solute(topology::Topology const & topo,
 
   // reduce errors
 #ifdef XXMPI
-  if (sim.mpi) {
+  if (sim.mpi_enabled()) {
     MPI_Allreduce(&my_error, &error, 1, MPI_INT, MPI_MAX, sim.mpiControl().comm);
   } else
   error = my_error;
@@ -531,7 +531,7 @@ solute(topology::Topology const & topo,
   }
   // error = 0;
 
-  if (!sim.mpi || m_rank == 0)
+  if (!sim.mpi_enabled() || m_rank == 0)
     m_timer.stop_subtimer("solute");
 
 } // solute
@@ -548,7 +548,7 @@ void algorithm::Shake
 
   DEBUG(8, "\tshaking SOLVENT");
 
-  if (!sim.mpi || m_rank == 0)
+  if (!sim.mpi_enabled() || m_rank == 0)
     m_timer.start_subtimer("solvent");
 
   // the first atom of a solvent
@@ -574,7 +574,7 @@ void algorithm::Shake
 
 #ifdef XXMPI
       math::VArray & pos = conf.current().pos;
-      if (sim.mpi) {
+      if (sim.mpi_enabled()) {
         int stride = nm + m_rank;
         DEBUG(12, "rank: " << m_rank << " nm: " << nm << " stride: " << stride);
         if (stride % m_size != 0) {
@@ -633,7 +633,7 @@ void algorithm::Shake
 
   // reduce errors
 #ifdef XXMPI
-  if (sim.mpi) {
+  if (sim.mpi_enabled()) {
     if (m_rank == 0) {
       // Master 
       // reduce the error to all processors
@@ -654,7 +654,7 @@ void algorithm::Shake
     DEBUG(5, "constraint_force " << math::v2s(conf.old().constraint_force(i)));
   }
 
-  if (!sim.mpi || m_rank == 0)
+  if (!sim.mpi_enabled() || m_rank == 0)
     m_timer.stop_subtimer("solvent");
   DEBUG(3, "total shake solvent iterations: " << tot_iterations);
 } // shake solvent

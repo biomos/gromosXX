@@ -300,7 +300,7 @@ const simulation::Simulation & sim) {
   my_q *= 16 * math::Pi * math::Pi / volume;
 
 #ifdef XXMPI
-  if (sim.mpi) {
+  if (sim.mpi_enabled()) {
     MPI_Allreduce(&my_q, &q, 1, MPI_DOUBLE, MPI_SUM, sim.mpiControl().comm);
   } else {
 #endif
@@ -511,7 +511,7 @@ const simulation::Simulation & sim) {
   } // loop over reciprocal space grid
   my_q *= 16 * math::Pi * math::Pi / volume;
 #ifdef XXMPI
-  if (sim.mpi) {
+  if (sim.mpi_enabled()) {
     MPI_Allreduce(&my_q, &q, 1, MPI_DOUBLE, MPI_SUM, sim.mpiControl().comm);
   } else {
 #endif

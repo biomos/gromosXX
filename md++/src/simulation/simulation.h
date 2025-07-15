@@ -50,10 +50,23 @@ namespace simulation
     /**
      * Constructor.
      */
-    Simulation() : mpi(false), openmp(false),
+    Simulation() : 
 		   m_time_step_size(0),
 		   m_steps(0), 
-		   m_time(0) {}
+		   m_time(0),
+       m_minimisation_step_size(0),
+       m_mpi(false), m_openmp(false), m_cuda(false)
+    {
+    #ifdef XXMPI
+      m_mpi = true;
+    #endif
+    #ifdef OMP
+      m_openmp = true;
+    #endif
+    #ifdef USE_CUDA
+      m_cuda = true;
+    #endif
+    }
     
     /**
      * the simulation parameter
@@ -139,14 +152,42 @@ namespace simulation
     double & minimisation_step_size() { return m_minimisation_step_size; }
 
     /**
-     * enable mpi?
+     * MPI flag
      */
-    bool mpi;
+    bool mpi_enabled() const { return m_mpi; }
+    void set_mpi_enabled(bool enabled) {
+#ifdef XXMPI
+      // allow change only if OMP available
+      m_mpi = enabled;
+#else
+      (void)enabled; // avoids compiler warnings
+#endif
+    }
 
     /**
-     * enable openmp?
+     * OpenMP flag
      */
-    bool openmp;
+    bool openmp_enabled() const { return m_openmp; }
+    void set_openmp_enabled(bool enabled) {
+#ifdef OMP
+      // allow change only if OMP available
+      m_openmp = enabled;
+#else
+      (void)enabled; // avoids compiler warnings
+#endif
+    }
+
+    /**
+     * CUDA flag
+     */
+    bool cuda_enabled() const { return m_cuda; }
+    void set_cuda_enabled(bool enabled) {
+#ifdef USE_CUDA
+      // allow change only if CUDA available
+      m_cuda = enabled;
+#else
+      (void)enabled; // avoids compiler warnings
+#endif}
 
 	/**
 	 * Processor(s) choice to use for HOOMD code (CPU/GPUs)
@@ -190,6 +231,21 @@ namespace simulation
      * the minimisation step size.
      */
     double m_minimisation_step_size;
+
+    /**
+     * enable mpi?
+     */
+    bool m_mpi;
+
+    /**
+     * enable openmp?
+     */
+    bool m_openmp;
+
+    /**
+     * enable cuda?
+     */
+    bool m_cuda;
 
   };
 

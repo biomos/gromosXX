@@ -602,7 +602,6 @@ void configuration::Configuration::lattice_sum_struct::init(topology::Topology c
   }
   FFTW3(init_threads());
   FFTW3(plan_with_nthreads(size));
-  sim.openmp = true;
 #endif
   // get the k space
   if (param.nonbonded.method == simulation::el_ewald) {
@@ -622,7 +621,7 @@ void configuration::Configuration::lattice_sum_struct::init(topology::Topology c
           param.nonbonded.ls_calculate_a2 == simulation::ls_a2t_ave_a2_numerical;
 
 #ifdef XXMPI
-    if (sim.mpi) {
+    if (sim.mpi_enabled()) {
       int rank = sim.mpiControl().threadID;
       int num_threads = sim.mpiControl().numberOfThreads;
       MPI_Comm com = sim.mpiControl().comm;

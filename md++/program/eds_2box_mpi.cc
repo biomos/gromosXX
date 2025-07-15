@@ -159,10 +159,6 @@ int main(int argc, char *argv[]){
     algorithm::Algorithm_Sequence md1_first(false), md2_first(false),
           md1_second(false), md2_second(false);
 
-    // enable mpi for nonbonded terms
-    sim1.mpi = true;
-    sim2.mpi = true;
-
     //Build Attributes:
     ////GENERATE SIM SPECIFIC SIMULATION COMM
     MPI_Comm simulationCOMM;

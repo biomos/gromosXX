@@ -62,7 +62,7 @@ topology::Topology & topo,
   if ((sim.steps() % sim.param().montecarlo.steps) == 0){
     int rank=0;
 #ifdef XXMPI
-    if (sim.mpi) {
+    if (sim.mpi_enabled()) {
       rank =  sim.mpiControl().threadID;
     }
 #endif

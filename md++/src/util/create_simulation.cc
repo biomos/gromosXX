@@ -96,7 +96,6 @@ int util::create_simulation(std::string topo,
   MPI_Comm_size(MPI_COMM_WORLD, &size);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  sim.sim.mpi = true;
   //Build Attributes:
   ////GENERATE SIM SPECIFIC SIMULATION COMM
   MPI_Comm simulationCOMM;
@@ -114,8 +113,6 @@ int util::create_simulation(std::string topo,
   sim.sim.mpiControl().threadID = simulation_rank;
   sim.sim.mpiControl().simulationOwnedThreads = simulationOwnedThreads;
   sim.sim.mpiControl().comm = simulationCOMM;
-#else
-  sim.sim.mpi = false;
 #endif
 
   // if we got a parameter file, try to read it...

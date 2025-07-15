@@ -219,7 +219,7 @@ void algorithm::M_Shake
   const double dt2 = dt * dt;
   const double dt2i = 1.0 / dt2;
 
-  if (!sim.mpi || m_rank == 0)
+  if (!sim.mpi_enabled() || m_rank == 0)
     m_timer.start_subtimer("solvent");
 
   // the first atom of a solvent
@@ -231,7 +231,7 @@ void algorithm::M_Shake
 
 #ifdef XXMPI
   math::VArray & pos = conf.current().pos;
-  if (sim.mpi) {
+  if (sim.mpi_enabled()) {
     // broadcast current and old coordinates and pos.
 
     MPI_Bcast(&pos(0)(0), pos.size() * 3, MPI_DOUBLE, sim.mpiControl().masterID, sim.mpiControl().comm);
@@ -275,7 +275,7 @@ void algorithm::M_Shake
       DEBUG(15, "Thread " << tid << " entering for loop");
 
 #ifdef XXMPI
-      if (sim.mpi) {
+      if (sim.mpi_enabled()) {
         int stride = nm + m_rank;
         DEBUG(12, "rank: " << m_rank << " nm: " << nm << " stride: " << stride);
         if (stride % m_size != 0) {
@@ -337,7 +337,7 @@ void algorithm::M_Shake
 
   // reduce everything
 #ifdef XXMPI
-  if (sim.mpi) {
+  if (sim.mpi_enabled()) {
     if (m_rank == 0) {
       // Master
       // reduce the error to all processors
@@ -389,7 +389,7 @@ void algorithm::M_Shake
 #endif
   error = my_error;
 
-  if (!sim.mpi || m_rank == 0)
+  if (!sim.mpi_enabled() || m_rank == 0)
     m_timer.stop_subtimer("solvent");
   DEBUG(3, "total shake solvent iterations: " << tot_iterations);
 } // shake solvent
@@ -401,7 +401,7 @@ int algorithm::M_Shake::apply(topology::Topology & topo,
         configuration::Configuration & conf,
         simulation::Simulation & sim) {
   DEBUG(7, "applying M_SHAKE - START");
-  if (!sim.mpi || m_rank == 0){
+  if (!sim.mpi_enabled() || m_rank == 0){
     m_timer.start(sim);
   }
 
@@ -446,7 +446,7 @@ int algorithm::M_Shake::apply(topology::Topology & topo,
     }
   }
 
-  if (!sim.mpi || m_rank == 0){
+  if (!sim.mpi_enabled() || m_rank == 0){
     m_timer.stop();
   }
   // return success!
@@ -493,7 +493,7 @@ int algorithm::M_Shake::init(topology::Topology & topo,
             << "\tsolvent\t";
 
     if (sim.param().constraint.solvent.algorithm == simulation::constr_m_shake) {
-      if (sim.mpi)
+      if (sim.mpi_enabled())
         os << "ON (MPI parallel version)\n";
       else
         os << "ON\n";
@@ -503,7 +503,7 @@ int algorithm::M_Shake::init(topology::Topology & topo,
   }
 
 #ifdef XXMPI
-  if (sim.mpi) {
+  if (sim.mpi_enabled()) {
     m_rank = sim.mpiControl().threadID;
     m_size = sim.mpiControl().numberOfThreads;
   } else {
