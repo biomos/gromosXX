@@ -46,22 +46,22 @@ namespace util
 namespace algorithm
 {
   /**
-   * @class Algorithm
+   * @class IAlgorithm
    * base class
    */
-  class Algorithm
+  class IAlgorithm
   {
   public:
     /**
      * Constructor.
      * @param name of the algorithm.
      */
-    Algorithm(std::string name) : name(name), m_timer(name) {}
+    IAlgorithm(std::string name) : name(name), m_timer(name) {}
 
     /**
      * Destructor.
      */
-    virtual ~Algorithm() {}
+    virtual ~IAlgorithm() {}
     
     /**
      * init an algorithm
@@ -118,8 +118,65 @@ namespace algorithm
      */
     util::Algorithm_Timer m_timer;
   };
+
+  /**
+   * @class AlgorithmT
+   * template class
+   */
+  template<typename Backend = util::cpuBackend>
+  class AlgorithmT : public IAlgorithm, private util::BackendData<Backend> {
+  public:
+    // Constructors:
+    template<typename B = Backend, typename = std::enable_if_t<std::is_same_v<B, util::cpuBackend>>>
+    AlgorithmT(const std::string& name) : IAlgorithm(name) {}
+
+    template<typename B = Backend, typename = std::enable_if_t<std::is_same_v<B, util::gpuBackend>>>
+    AlgorithmT(std::shared_ptr<gpu::CudaManager> mgr, const std::string& name)
+      : IAlgorithm(name) {
+      this->cuda_manager_ = std::move(mgr);  // 'this->' needed due to dependent base
+    }
+
+#ifndef USE_CUDA
+  static_assert(std::is_same_v<Backend, util::cpuBackend>,
+                "This algorithm is allowed only with `util::cpu` unless CUDA is enabled (USE_CUDA)");
+#endif
+
+    // Accessor for GPU manager if needed
+    auto& cuda_manager() {
+      static_assert(std::is_same_v<Backend, util::gpuBackend>, "cuda_manager only valid for gpu backend");
+      return this->cuda_manager_;
+    }
+
+    /**
+     * Destructor.
+     */
+    virtual ~AlgorithmT() override {}
+    
+    /**
+     * init an algorithm
+     * print out input parameter, what it does...
+     */
+    virtual int init(topology::Topology & topo,
+		     configuration::Configuration & conf,
+		     simulation::Simulation & sim,
+		     std::ostream & os = std::cout,
+		     bool quiet = false) override = 0;
+    // { return 0; }
+    
+    /**
+     * apply the algorithm
+     */
+    virtual int apply(topology::Topology & topo,
+		      configuration::Configuration & conf,
+		      simulation::Simulation & sim) override {return 0;}
+  };
+
+  /**
+   * @brief Allow use of Algorithm directly - defaults to AlgorithmT<util::cpuBackend>
+   * 
+   */
+  using Algorithm = AlgorithmT<util::cpuBackend>;
 }
 
 #endif
-
 

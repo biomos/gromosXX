@@ -39,7 +39,7 @@
 #define SUBMODULE energy
 
 configuration::Average::Average()
-  : Algorithm("Average"),
+  : algorithm::Algorithm("Average"),
     m_sim_avg(),
     m_block_avg()
 {

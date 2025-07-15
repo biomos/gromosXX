@@ -56,7 +56,7 @@ void gpu::CudaManager::copy_to_host(int device_id, std::vector<T>& host_vector, 
  * @param func 
  */
 template <typename T>
-gpu::CudaManager::Variable<T>::Variable(int device_id, const char* file, int line, const char* func)
+gpu::CudaManager::Variable<T>::Variable(int device_id, const char* file, int line)
     : device_id_(device_id), device_data_(nullptr) {
 #ifdef USE_CUDA
     cudaSetDevice(device_id_);

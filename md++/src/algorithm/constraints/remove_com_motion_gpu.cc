@@ -30,10 +30,10 @@
 #include "../../simulation/simulation.h"
 #include "../../configuration/configuration.h"
 
-#include "remove_com_motion.h"
 #include "../../gpu/cuda/manager/cuda_manager.h"
 #include "../../gpu/cuda/algorithm/constraints.h"
-#include "remove_com_motion_gpu.h"
+
+#include "remove_com_motion.h"
 
 
 #include "../../io/print_block.h"
@@ -43,7 +43,8 @@
 #define MODULE algorithm
 #define SUBMODULE constraints
 
-int algorithm::Remove_COM_Motion_GPU::init
+template<>
+int algorithm::Remove_COM_Motion<util::gpuBackend>::init
 (
  topology::Topology &topo, 
  configuration::Configuration &conf,
@@ -91,7 +92,8 @@ int algorithm::Remove_COM_Motion_GPU::init
   return 0;
 };
 
-double algorithm::Remove_COM_Motion_GPU
+template<>
+double algorithm::Remove_COM_Motion<util::gpuBackend>
 ::remove_com_translation
 (
  topology::Topology & topo,
@@ -126,7 +128,8 @@ double algorithm::Remove_COM_Motion_GPU
   return ekin_trans;
 }
 
-double algorithm::Remove_COM_Motion_GPU
+template<>
+double algorithm::Remove_COM_Motion<util::gpuBackend>
 ::remove_com_rotation
 (
  topology::Topology & topo,
@@ -237,7 +240,8 @@ double algorithm::Remove_COM_Motion_GPU
 /**
  * apply the COM removal.
  */
-int algorithm::Remove_COM_Motion_GPU
+template<>
+int algorithm::Remove_COM_Motion<util::gpuBackend>
 ::apply(topology::Topology & topo,
 	configuration::Configuration & conf,
 	simulation::Simulation & sim)
@@ -280,10 +284,10 @@ int algorithm::Remove_COM_Motion_GPU
   double ekin_trans = 0.0, ekin_rot = 0.0;
 
   if (print_it || remove_trans){
-    ekin_trans = gpu::cuda::algorithm::remove_com_translation(cuda_manager_, topo, conf, sim, remove_trans);
+    ekin_trans = gpu::cuda::algorithm::remove_com_translation(*cuda_manager(), topo, conf, sim, remove_trans);
   }
   if (print_it || remove_rot){
-    ekin_rot = gpu::cuda::algorithm::remove_com_rotation(cuda_manager_, topo, conf, sim, remove_rot);
+    ekin_rot = gpu::cuda::algorithm::remove_com_rotation(*cuda_manager(), topo, conf, sim, remove_rot);
   }
 
   if (print_it){
@@ -295,7 +299,8 @@ int algorithm::Remove_COM_Motion_GPU
   return 0;		   
 }
 
-double algorithm::Remove_COM_Motion_GPU
+template<>
+double algorithm::Remove_COM_Motion<util::gpuBackend>
 ::add_com_rotation
 (
  topology::Topology & topo,

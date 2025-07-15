@@ -191,3 +191,80 @@ void gpu::shake() {
 }
 ```
 
+## Algoritms can be CPU or GPU
+The `Algorithm` class has been reworked such that it is a template `AlgorithmT`. CPU and GPU variants are initialized:
+```cpp
+// CPU variant
+AlgorithmT<util::cpuBackend> alg(os);
+
+// GPU variant
+AlgorithmT<util::gpuBackend> alg(cuda_manager, os);
+
+// also legacy invocation is possible
+Algorithm alg(os); // invokes AlgorithmT<util::cpuBackend> and works as before.
+```
+
+The common interface is `IAlgorithm`, so `Algorithm_Sequence` became `std::vector<*IAlgorithm>`.
+
+Every algoritm requires a single declaration:
+
+```cpp
+// shake.h
+  template<typename Backend>
+  class Shake : public AlgorithmT<Backend>
+  {
+  public:
+    /**
+     * Constructor is inherited
+     */
+    using AlgorithmT<Backend>::AlgorithmT;
+
+    /**
+     * Destructor.
+     */
+    virtual ~Shake() {}
+```
+
+Then in the source
+```cpp
+//shake_cpu.cc
+Shake<util::cpuBackend>::apply(...) {
+    ...
+}
+//shake_gpu.cc
+Shake<util::gpuBackend>::apply(...) {
+    ...
+}
+```
+
+The reason for this is to have some compile-time control. Every algorithm now has to be explicitly defined as CPU or GPU.
+If a CPU-only compilation is done, the GPU variants should not get compiled at all, and also throw no error:
+```cpp
+#ifdef USE_CUDA
+bool cuda_is_enabled = input.cuda_is_enabled();  // runtime constant
+#else
+constexpr bool cuda_is_enabled = false;          // compile-time constant
+#endif
+
+// create_md_sequence.cc
+if (cuda_is_enabled) {
+    md_seq.push_back(Shake<util::gpuBackend>(cuda_manager, os));
+} else {
+    md_seq.push_back(Shake<util::cpuBackend>(os));
+}
+```
+
+If somehow a `Algorithm<util::gpuBackend>` is created somewhere by accident, the CPU-only build should not compile (by static_assert)
+
+```cpp
+// algorithm.h
+#ifndef USE_CUDA
+  static_assert(std::is_same_v<Backend, util::cpuBackend>,
+                "This algorithm is allowed only with `util::cpu` unless CUDA is enabled (USE_CUDA)");
+#endif
+
+```
+
+There is also a soft restriction on CudaManager. In CPU-only build, all its methods are stubs throwing a runtime error.
+If you anyhow use them somewhere, they compile, but throw a runtime error as soon as you try to use them.
+Turning them into a hard restriction (compile time) could be considered.

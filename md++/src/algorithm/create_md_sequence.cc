@@ -68,11 +68,11 @@
 
 #include "../math/periodicity.h"
 
+#include "gpu/cuda/manager/cuda_manager.h"
+
 #include "../algorithm/constraints/create_constraints.h"
 #include "../algorithm/constraints/remove_com_motion.h"
 
-#include "gpu/cuda/manager/cuda_manager.h"
-#include "algorithm/constraints/remove_com_motion_gpu.h"
 
 #include "../algorithm/integration/slow_growth.h"
 #include "../algorithm/integration/steepest_descent.h"
@@ -113,8 +113,8 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
 
   // initialize the CudaManager
   // if user asks for CUDA acceleration, we call CUDA-capable variants wherever possible
-  gpu::CudaManager cm;
-  cm.init();
+  auto cm_ptr = std::make_shared<gpu::CudaManager>();
+  cm_ptr->init();
 
   // center of mass motion printing / removal
   if (sim.param().centreofmass.skip_step ||
@@ -123,14 +123,16 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
           io::messages.add("COM removal is ignored with anatrj",
                 "create_md_sequence", io::message::warning);
       } else {
-          algorithm::Remove_COM_Motion * rcom =
-            new algorithm::Remove_COM_Motion(os);
-      
+          algorithm::Remove_COM_Motion<util::cpuBackend> * rcom =
+            new algorithm::Remove_COM_Motion<util::cpuBackend>(os);
           md_seq.push_back(rcom);
 
-          algorithm::Remove_COM_Motion_GPU * rcom_gpu =
-            new algorithm::Remove_COM_Motion_GPU(cm, os);
+          algorithm::Remove_COM_Motion<util::gpuBackend> * rcom_gpu =
+            new algorithm::Remove_COM_Motion<util::gpuBackend>(cm_ptr, os);
           md_seq.push_back(rcom_gpu);
+        
+          // We rather use a factory to create the proper variant
+          // backend_factory<algorithm::Remove_COM_Motion>()
       
       }
   }

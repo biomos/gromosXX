@@ -77,7 +77,7 @@ libgroalgorithm_la_SOURCES = algorithm.cc\
 	pressure/berendsen_barostat.cc\
 	constraints/create_constraints.cc\
 	constraints/position_constraints.cc\
-	constraints/remove_com_motion.cc\
+	constraints/remove_com_motion_cpu.cc\
 	constraints/remove_com_motion_gpu.cc\
 	constraints/shake.cc\
 	constraints/perturbed_shake.cc\

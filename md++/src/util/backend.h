@@ -19,43 +19,28 @@
  */
 
 /**
- * @file stdheader.h
- * file for later use with precompiled headers.
+ * @file backend.h
+ * tags for CPU and GPU variants of algorithms
  */
+#pragma once
 
-#ifndef INCLUDED_STDHEADER_H
-#define INCLUDED_STDHEADER_H
+namespace gpu {
+    class CudaManager;
+}
 
-#include <string>
-#include <iostream>
-#include <iomanip>
-#include <sstream>
-#include <fstream>
-#include <map>
-#include <unordered_map>
-#include <set>
-#include <vector>
-#include <stdexcept>
-#include <cassert>
-#include <cmath>
-#include <algorithm>
-#include <typeinfo>
-#include <list>
-#include <limits>
-#include <memory>
+namespace util {
+    struct cpuBackend {};
+    struct gpuBackend {};
+    
+    // Helper traits struct (empty by default)
+    template<typename Backend>
+    struct BackendData {
+    // empty for all except gpu
+    };
 
-#include "config.h"
-
-#include "math/gmath.h"
-#include "util/debug.h"
-
-#include "io/message.h"
-#include "io/gzstream.h"
-
-#include "util/timing.h"
-#include "util/backend.h"
-
-#define GROMOSXX "MD++"
-
-#endif
-
+    // Specialization for gpu backend
+    template<>
+    struct BackendData<util::gpuBackend> {
+    std::shared_ptr<::gpu::CudaManager> cuda_manager_;
+    };
+}

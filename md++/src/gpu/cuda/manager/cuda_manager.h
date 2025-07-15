@@ -145,9 +145,8 @@ namespace gpu {
                  * @param func The function name where the Variable was created.
                  */
                 explicit Variable(int device_id = 0,
-                const char* file = __builtin_FILE(),
-                int line = __builtin_LINE(),
-                const char* func = __builtin_FUNCTION());
+                const char* file = __FILE__,
+                int line = __LINE__);
                 
                 ~Variable();
 

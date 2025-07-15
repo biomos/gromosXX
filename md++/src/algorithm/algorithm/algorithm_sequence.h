@@ -84,11 +84,11 @@ namespace algorithm
     template <typename T, bool FailIfNotFound = false>
     T * algorithm(std::string name, const char* file = __FILE__, int line = __LINE__) {
       using ValueType = std::remove_pointer_t<typename Algorithm_Sequence::value_type>;
-      static_assert(std::is_base_of<Algorithm, T>::value, 
-        "Template parameter T must derive from Algorithm");
+      static_assert(std::is_base_of<IAlgorithm, T>::value, 
+        "Template parameter T must derive from IAlgorithm");
 
-      static_assert(std::is_base_of<Algorithm, ValueType>::value, 
-        "Algorithm_Sequence::value_type must derive from Algorithm");
+      static_assert(std::is_base_of<IAlgorithm, ValueType>::value, 
+        "Algorithm_Sequence::value_type must derive from IAlgorithm");
       
       for(Algorithm_Sequence::iterator 
       it = begin(), to = end();

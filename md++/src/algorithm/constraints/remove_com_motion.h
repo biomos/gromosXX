@@ -26,6 +26,8 @@
 #ifndef INCLUDED_REMOVE_COM_MOTION_H
 #define INCLUDED_REMOVE_COM_MOTION_H
 
+#include "gpu/cuda/manager/cuda_manager.h"
+
 namespace algorithm
 {
   /**
@@ -44,14 +46,25 @@ namespace algorithm
    * relative to centre of mass are taken in
    * angular momentum calculation.
    */
-  class Remove_COM_Motion : public Algorithm
+  template<typename Backend = util::cpuBackend>
+  class Remove_COM_Motion : public AlgorithmT<Backend>
   {
   public:
     /**
-     * Constructor.
+     * Constructor is inherited
      */
-    Remove_COM_Motion(std::ostream & os = std::cout,
-                      const std::string& name = "RemoveCOMMotion") : Algorithm(name), os(os) {}
+    // using AlgorithmT<Backend>::AlgorithmT;
+
+
+    // Custom Constructors:
+    template<typename B = Backend, typename = std::enable_if_t<std::is_same_v<B, util::cpuBackend>>>
+    explicit Remove_COM_Motion(std::ostream & os = std::cout) : AlgorithmT<B>("RemoveCOMMotion"), os(os) {}
+
+    template<typename B = Backend, typename = std::enable_if_t<std::is_same_v<B, util::gpuBackend>>>
+    Remove_COM_Motion(std::shared_ptr<gpu::CudaManager> mgr, std::ostream & os = std::cout)
+      : AlgorithmT<B>(std::move(mgr), "RemoveCOMMotion"), os(os) {
+      // this->cuda_manager_ = std::move(mgr);  // 'this->' needed due to dependent base
+    }
 
     /**
      * Destructor.
