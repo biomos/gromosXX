@@ -176,7 +176,7 @@ int algorithm::Conjugate_Gradient
     double f = 0.0;
     double f_max = 0.0;
     for(unsigned int i=0; i<topo.num_atoms(); ++i) {
-      const double f_ = math::abs2(conf.current().force(i));
+      const double f_ = math::abs2(conf.current().force(i) + conf.current().constraint_force(i));
       f += f_;
       f_max = std::max(f_, f_max);
     }
@@ -440,7 +440,7 @@ int algorithm::Conjugate_Gradient
     // Also print the final RMS force
     double f = 0.0, f_max = 0.0;
     for(unsigned int i=0; i<topo.num_atoms(); ++i) {
-      const double f_ = math::abs2(conf.current().force(i));
+      const double f_ = math::abs2(conf.current().force(i) + conf.current().constraint_force(i));
       f += f_;
       f_max = std::max(f_, f_max);
     }
