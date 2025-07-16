@@ -176,8 +176,9 @@ int algorithm::Conjugate_Gradient
     double f = 0.0;
     double f_max = 0.0;
     for(unsigned int i=0; i<topo.num_atoms(); ++i) {
-      f += math::abs2(conf.current().force(i));
-      f_max = std::max(f, f_max);
+      const double f_ = math::abs2(conf.current().force(i));
+      f += f_;
+      f_max = std::max(f_, f_max);
     }
     f = sqrt(f / topo.num_atoms());
     f_max = sqrt(f_max);
@@ -439,8 +440,9 @@ int algorithm::Conjugate_Gradient
     // Also print the final RMS force
     double f = 0.0, f_max = 0.0;
     for(unsigned int i=0; i<topo.num_atoms(); ++i) {
-      f += math::abs2(conf.current().force(i));
-      f_max = std::max(f, f_max);
+      const double f_ = math::abs2(conf.current().force(i));
+      f += f_;
+      f_max = std::max(f_, f_max);
     }
     f = sqrt(f / topo.num_atoms());
     f_max = sqrt(f_max);
@@ -549,7 +551,10 @@ double algorithm::Conjugate_Gradient
     << "f1 = " << f1 << "\n"
     << "f2 = " << f2 << "\n"
   );
-  return f2 / f1;
+  double beta = f2 / f1;
+  // Polak-Ribiere beta can become negative
+  if (beta < 0.0) beta = 0.0;
+  return beta;
 }
 
 /**
