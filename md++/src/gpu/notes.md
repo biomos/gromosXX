@@ -151,7 +151,7 @@ static const std::unordered_map<std::string, ArrayID> name_to_id = {
 
 During the md sequence preparation, we need to decide, if GPU variants are used. Also, mutual data dependencies tracking
 allows us to schedule overlap in CPU and GPU execution.
-CudaManager will handle this.
+
 
 Then, we add to md_seq Algorithm with appropriate backend:
 ```cpp
@@ -204,7 +204,7 @@ AlgorithmT<util::gpuBackend> alg(cuda_manager, os);
 Algorithm alg(os); // invokes AlgorithmT<util::cpuBackend> and works as before.
 ```
 
-The common interface is `IAlgorithm`, so `Algorithm_Sequence` became `std::vector<*IAlgorithm>`.
+The common interface is `IAlgorithm`, so `Algorithm_Sequence` becomes `std::vector<std::unique_ptr<IAlgorithm>>`.
 
 Every algoritm requires a single declaration:
 
@@ -237,8 +237,9 @@ Shake<util::gpuBackend>::apply(...) {
 }
 ```
 
-The reason for this is to have some compile-time control. Every algorithm now has to be explicitly defined as CPU or GPU.
-If a CPU-only compilation is done, the GPU variants should not get compiled at all, and also throw no error:
+The reason for this is to have some compile-time control. Every algorithm now has to be explicitly defined as CPU or GPU variant.
+If a CPU-only compilation is done, the GPU variants should not get compiled at all, and only throw error,
+if you try to instantiate them:
 ```cpp
 #ifdef USE_CUDA
 bool cuda_is_enabled = input.cuda_is_enabled();  // runtime constant
@@ -254,17 +255,34 @@ if (cuda_is_enabled) {
 }
 ```
 
-If somehow a `Algorithm<util::gpuBackend>` is created somewhere by accident, the CPU-only build should not compile (by static_assert)
+If somehow a `Algorithm<util::gpuBackend>` is created somewhere by accident, the CPU-only build should not compile any
+AlgorithmT<util::gpuBackend>:
 
 ```cpp
-// algorithm.h
-#ifndef USE_CUDA
-  static_assert(std::is_same_v<Backend, util::cpuBackend>,
-                "This algorithm is allowed only with `util::cpu` unless CUDA is enabled (USE_CUDA)");
+// util/backend.h
+template <typename Backend>
+struct is_valid_algorithm_backend
+{
+    static constexpr bool value =
+    std::is_same_v<Backend, cpuBackend> ||
+#ifdef USE_CUDA
+      std::is_same_v<Backend, gpuBackend>;
+#else
+    false;
 #endif
+};
+
+// algorithm.h
+  class AlgorithmT : public IAlgorithm {
+    /**
+     * @brief compile time check for CUDA enabled
+     * 
+     */
+    static_assert(util::is_valid_algorithm_backend<Backend>::value,
+                "This backend is not supported in the current build configuration.");
 
 ```
 
 There is also a soft restriction on CudaManager. In CPU-only build, all its methods are stubs throwing a runtime error.
 If you anyhow use them somewhere, they compile, but throw a runtime error as soon as you try to use them.
-Turning them into a hard restriction (compile time) could be considered.
+Turning them into a hard restriction (compile time) should be considered.

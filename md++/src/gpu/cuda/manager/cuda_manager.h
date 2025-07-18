@@ -41,7 +41,7 @@ namespace gpu {
             /**
              * @brief Destructor for CudaManager.
              */
-            ~CudaManager();
+            // ~CudaManager();
 
             /**
              * @brief Initialize the CUDA environment and select devices.
@@ -170,8 +170,8 @@ namespace gpu {
             void validate_device_id(int device_id) const;
 #ifdef USE_CUDA
             CudaDeviceManager device_manager_; ///< Manages CUDA devices.
-            std::unordered_map<int, std::unique_ptr<CudaDeviceWorker>> device_workers_; ///< Workers for each active device.
-            CudaMemoryManager  memory_manager_; ///< Handles memory allocation and transfers.
+            std::unordered_map<int, CudaDeviceWorker> device_workers_; ///< Workers for each active device.
+            CudaMemoryManager memory_manager_; ///< Handles memory allocation and transfers.
 
             static bool is_enabled_;
 #endif

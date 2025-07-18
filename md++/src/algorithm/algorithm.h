@@ -26,6 +26,8 @@
 #ifndef INCLUDED_ALGORITHM_H
 #define INCLUDED_ALGORITHM_H
 
+#include "simulation/simulation.h"
+
 namespace configuration
 {
   class Configuration;
@@ -123,29 +125,21 @@ namespace algorithm
    * @class AlgorithmT
    * template class
    */
-  template<typename Backend = util::cpuBackend>
-  class AlgorithmT : public IAlgorithm, private util::BackendData<Backend> {
+template <typename Backend = util::cpuBackend>
+  class AlgorithmT : public IAlgorithm {
+    /**
+     * @brief compile time check for CUDA enabled
+     * 
+     */
+    static_assert(util::is_valid_algorithm_backend<Backend>::value,
+                "This backend is not supported in the current build configuration.");
   public:
-    // Constructors:
-    template<typename B = Backend, typename = std::enable_if_t<std::is_same_v<B, util::cpuBackend>>>
-    AlgorithmT(const std::string& name) : IAlgorithm(name) {}
-
-    template<typename B = Backend, typename = std::enable_if_t<std::is_same_v<B, util::gpuBackend>>>
-    AlgorithmT(std::shared_ptr<gpu::CudaManager> mgr, const std::string& name)
-      : IAlgorithm(name) {
-      this->cuda_manager_ = std::move(mgr);  // 'this->' needed due to dependent base
-    }
-
-#ifndef USE_CUDA
-  static_assert(std::is_same_v<Backend, util::cpuBackend>,
-                "This algorithm is allowed only with `util::cpu` unless CUDA is enabled (USE_CUDA)");
-#endif
-
-    // Accessor for GPU manager if needed
-    auto& cuda_manager() {
-      static_assert(std::is_same_v<Backend, util::gpuBackend>, "cuda_manager only valid for gpu backend");
-      return this->cuda_manager_;
-    }
+    /**
+     * Default constructor.
+     */
+    // Constructor forwarding name to base IAlgorithm
+    explicit AlgorithmT(const std::string& name) : IAlgorithm(name) {}
+    
 
     /**
      * Destructor.
@@ -176,7 +170,37 @@ namespace algorithm
    * 
    */
   using Algorithm = AlgorithmT<util::cpuBackend>;
-}
 
+  /**
+   * @brief Create a backend-aware algorithm instance (GPU if available and supported, otherwise CPU)
+   *
+   * @tparam AlgT The algorithm template
+   * @param os Output stream for logging
+   * @return std::unique_ptr<IAlgorithm>
+   */
+//   template <template <typename> class AlgT>
+//   std::unique_ptr<IAlgorithm> make_algorithm(std::ostream &os = std::cout) {
+// #ifdef USE_CUDA
+//     if constexpr (has_gpu_backend_v<AlgT>) {
+//       if (gpu::CudaManager::is_enabled()) {
+//         return std::make_unique<AlgT<util::gpuBackend>>(os);
+//       }
+//     }
+// #endif
+//     return std::make_unique<AlgT<util::cpuBackend>>(os);
+//   }
+
+  template <template <typename> class AlgT>
+  IAlgorithm* make_algorithm(
+                            simulation::Simulation & sim, 
+                            std::ostream &os = std::cout) {
+    if constexpr (util::has_gpu_backend_v<AlgT>) {
+      if (sim.cuda_enabled()) {
+        return new AlgT<util::gpuBackend>(os);
+      }
+    }
+    return new AlgT<util::cpuBackend>(os);
+  }
+}
 #endif
 

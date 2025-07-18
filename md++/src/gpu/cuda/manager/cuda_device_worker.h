@@ -31,6 +31,15 @@ namespace gpu {
         ~CudaDeviceWorker();
 
         /**
+         * @brief Comparator for CudaDeviceWorker.
+         *
+         * Allows storing workers in sets
+         */
+        // bool operator<(const CudaDeviceWorker& other) const {
+        //     return device_id_ < other.device_id_;
+        // }
+
+        /**
          * @brief Get the ID of the CUDA device managed by this worker.
          * @return The device ID.
          */
@@ -62,9 +71,9 @@ namespace gpu {
         void launch_kernel(KernelFunc kernel, dim3 grid_dim, dim3 block_dim, Args... args, size_t shared_mem_size = 0);
 #endif
     private:
-        int device_id_; ///< The ID of the CUDA device managed by this worker.
         CUSTREAM stream_; ///< The CUDA stream associated with this device worker.
+        int device_id_; ///< The ID of the CUDA device managed by this worker.
     };
 }
 
-// #include "cuda_device_worker.tcc" // Include template implementations
+#include "cuda_device_worker.tcc" // Include template implementations

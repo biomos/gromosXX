@@ -23,8 +23,7 @@
  * remove center of mass translational and angular momentum
  */
 
-#ifndef INCLUDED_REMOVE_COM_MOTION_H
-#define INCLUDED_REMOVE_COM_MOTION_H
+#pragma once
 
 #include "gpu/cuda/manager/cuda_manager.h"
 
@@ -51,20 +50,9 @@ namespace algorithm
   {
   public:
     /**
-     * Constructor is inherited
+     * Constructor.
      */
-    // using AlgorithmT<Backend>::AlgorithmT;
-
-
-    // Custom Constructors:
-    template<typename B = Backend, typename = std::enable_if_t<std::is_same_v<B, util::cpuBackend>>>
-    explicit Remove_COM_Motion(std::ostream & os = std::cout) : AlgorithmT<B>("RemoveCOMMotion"), os(os) {}
-
-    template<typename B = Backend, typename = std::enable_if_t<std::is_same_v<B, util::gpuBackend>>>
-    Remove_COM_Motion(std::shared_ptr<gpu::CudaManager> mgr, std::ostream & os = std::cout)
-      : AlgorithmT<B>(std::move(mgr), "RemoveCOMMotion"), os(os) {
-      // this->cuda_manager_ = std::move(mgr);  // 'this->' needed due to dependent base
-    }
+    Remove_COM_Motion(std::ostream & os = std::cout) : AlgorithmT<Backend>("RemoveCOMMotion"), os(os) {}
 
     /**
      * Destructor.
@@ -115,7 +103,14 @@ namespace algorithm
   protected:
     std::ostream & os;
   };
-  
+
+  // extern template class Remove_COM_Motion<util::cpuBackend>;
+  // #ifdef USE_CUDA
+  // extern template class Remove_COM_Motion<util::gpuBackend>;
+  // #endif
 } //algorithm
 
-#endif
+// #include "remove_com_motion_cpu.tcc"
+// #ifdef USE_CUDA
+//   #include "remove_com_motion_gpu.tcc"
+// #endif

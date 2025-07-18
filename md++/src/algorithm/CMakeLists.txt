@@ -28,7 +28,6 @@ set(ALGO_CC
     constraints/create_constraints.cc
     constraints/position_constraints.cc
     constraints/remove_com_motion_cpu.cc
-    constraints/remove_com_motion_gpu.cc
     constraints/shake.cc
     constraints/perturbed_shake.cc
     constraints/flexible_constraint.cc
@@ -51,6 +50,12 @@ set(ALGO_CC
     virtualatoms/prepare_virtualatoms.cc
     virtualatoms/propagate_forces.cc
 )
+
+if (USE_CUDA)
+    list(APPEND ALGO_CC
+    constraints/remove_com_motion_gpu.cc
+    )
+endif()
 
 set(ALGO_INCLUDE
     algorithm

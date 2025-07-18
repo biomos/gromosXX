@@ -42,7 +42,7 @@
 #define MODULE cuda
 #define SUBMODULE algorithm
 
-double gpu::cuda::algorithm::remove_com_translation(CudaManager& cuda_manager,
+double gpu::cuda::algorithm::remove_com_translation(
                                 const topology::Topology& topo,
                                 const configuration::Configuration& conf,
                                 const simulation::Simulation& sim,
@@ -50,7 +50,7 @@ double gpu::cuda::algorithm::remove_com_translation(CudaManager& cuda_manager,
     return DISABLED(double);
 }
 
-double gpu::cuda::algorithm::remove_com_rotation(CudaManager& cuda_manager,
+double gpu::cuda::algorithm::remove_com_rotation(
                                 const topology::Topology& topo,
                                 const configuration::Configuration& conf,
                                 const simulation::Simulation& sim,

@@ -25,7 +25,7 @@
 
 #pragma once
 
-namespace gpu::cuda::algorithm {
-    double remove_com_translation(CudaManager& cuda_manager, const topology::Topology& topo, const configuration::Configuration& conf, const simulation::Simulation& sim, bool remove_trans);
-    double remove_com_rotation(CudaManager& cuda_manager, const topology::Topology& topo, const configuration::Configuration& conf, const simulation::Simulation& sim, bool remove_trans);
-}
+// namespace gpu::cuda::algorithm {
+//     double remove_com_translation(const topology::Topology& topo, const configuration::Configuration& conf, const simulation::Simulation& sim, bool remove_trans);
+//     double remove_com_rotation(const topology::Topology& topo, const configuration::Configuration& conf, const simulation::Simulation& sim, bool remove_trans);
+// }

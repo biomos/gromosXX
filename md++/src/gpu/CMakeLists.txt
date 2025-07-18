@@ -12,7 +12,7 @@ set(GPU_HEADERS
     cuda/memory/cuvector.h
     cuda/memory/cumallocator.h
     cuda/memory/container.h
-    cuda/algorithm/constraints.h
+    # cuda/algorithm/constraints.h
 )
 
 if(USE_CUDA)
@@ -20,13 +20,13 @@ if(USE_CUDA)
     set(GPU_SOURCES
         gpu.cc
         cuda/utils.cu
-        cuda/manager/cuda_manager.cc
+        cuda/manager/cuda_manager.cu
         cuda/kernels/reduction.cu
         cuda/memory/container.cu
         cuda/manager/cuda_device_worker.cu
         cuda/manager/cuda_device_manager.cu
         cuda/manager/cuda_memory_manager.cu
-        cuda/algorithm/constraints.cu
+        # cuda/algorithm/constraints.cu
     )
 
     add_library(grocuda STATIC ${GPU_SOURCES})
@@ -47,7 +47,7 @@ else()
     set(GPU_SOURCES
         gpu.cc
         cuda/manager/cuda_manager.cc
-        cuda/algorithm/constraints.cc
+        # cuda/algorithm/constraints.cc
     )
 
     add_library(grocuda STATIC ${GPU_SOURCES})

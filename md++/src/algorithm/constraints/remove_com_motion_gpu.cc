@@ -22,7 +22,6 @@
  * @file remove_com_motion_gpu.cc
  * remove com motion - gpu variant.
  */
-
 #include "../../stdheader.h"
 
 #include "../../algorithm/algorithm.h"
@@ -31,7 +30,6 @@
 #include "../../configuration/configuration.h"
 
 #include "../../gpu/cuda/manager/cuda_manager.h"
-#include "../../gpu/cuda/algorithm/constraints.h"
 
 #include "remove_com_motion.h"
 
@@ -284,10 +282,10 @@ int algorithm::Remove_COM_Motion<util::gpuBackend>
   double ekin_trans = 0.0, ekin_rot = 0.0;
 
   if (print_it || remove_trans){
-    ekin_trans = gpu::cuda::algorithm::remove_com_translation(*cuda_manager(), topo, conf, sim, remove_trans);
+    ekin_trans = remove_com_translation(topo, conf, sim, remove_trans);
   }
   if (print_it || remove_rot){
-    ekin_rot = gpu::cuda::algorithm::remove_com_rotation(*cuda_manager(), topo, conf, sim, remove_rot);
+    ekin_rot = remove_com_rotation(topo, conf, sim, remove_rot);
   }
 
   if (print_it){

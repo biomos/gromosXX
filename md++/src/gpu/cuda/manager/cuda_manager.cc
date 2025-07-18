@@ -10,7 +10,7 @@ gpu::CudaManager::CudaManager() {
         DISABLED_VOID();
 }
 
-gpu::CudaManager::~CudaManager() {}
+// gpu::CudaManager::~CudaManager() {}
 
 void gpu::CudaManager::init(const std::vector<int>& device_ids) {
     DISABLED_VOID();
