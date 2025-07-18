@@ -32,13 +32,14 @@ namespace algorithm
    * @class Lattice_Shift_Tracker
    * keeps track of lattice shifts
    */
-  class Lattice_Shift_Tracker : public Algorithm
+  template <typename Backend = util::cpuBackend>
+  class Lattice_Shift_Tracker : public AlgorithmT<Backend>
   {
   public:
     /**
      * Constructor.
      */
-    Lattice_Shift_Tracker() : Algorithm("Lattice_Shift_Tracker") {}
+    Lattice_Shift_Tracker() : AlgorithmT<Backend>("Lattice_Shift_Tracker") {}
 
     /**
      * Destructor.

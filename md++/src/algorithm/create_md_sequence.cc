@@ -139,9 +139,11 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
   }
   
   // add the lattice shift tracking 
-  if (sim.param().boundary.boundary != math::vacuum)
-    md_seq.push_back(new algorithm::Lattice_Shift_Tracker());
-
+  if (sim.param().boundary.boundary != math::vacuum) {
+    algorithm::IAlgorithm * lst = algorithm::make_algorithm<algorithm::Lattice_Shift_Tracker>(sim);
+    md_seq.push_back(lst);
+  }
+  
   // prepare virtual atoms
   if (sim.param().virtualatoms.virtualatoms)
     md_seq.push_back(new algorithm::Prepare_VirtualAtoms());

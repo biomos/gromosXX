@@ -32,6 +32,7 @@
 
 #include "../../math/periodicity.h"
 #include "../../util/template_split.h"
+#include "util/backend.h"
 
 #include "lattice_shift.h"
 
@@ -40,7 +41,8 @@
 #define MODULE algorithm
 #define SUBMODULE integration
 
-int algorithm::Lattice_Shift_Tracker::
+template <typename Backend>
+int algorithm::Lattice_Shift_Tracker<Backend>::
 init(topology::Topology &topo,
         configuration::Configuration &conf,
         simulation::Simulation &sim,
@@ -68,19 +70,21 @@ init(topology::Topology &topo,
   return 0;
 }
 
-int algorithm::Lattice_Shift_Tracker::
+template <typename Backend>
+int algorithm::Lattice_Shift_Tracker<Backend>::
 apply(topology::Topology &topo,
         configuration::Configuration &conf,
         simulation::Simulation &sim) {
   DEBUG(6, "keeping track of lattice shifts");
-  m_timer.start(sim);
+  this->m_timer.start(sim);
   SPLIT_BOUNDARY(_apply, topo, conf, sim);
-  m_timer.stop();
+  this->m_timer.stop();
   return 0;
 }
 
+template<typename Backend>
 template<math::boundary_enum b>
-void algorithm::Lattice_Shift_Tracker::
+void algorithm::Lattice_Shift_Tracker<Backend>::
 _apply(topology::Topology &topo,
         configuration::Configuration &conf,
         simulation::Simulation &sim) {
@@ -89,5 +93,6 @@ _apply(topology::Topology &topo,
   p.put_chargegroups_into_box_saving_shifts(conf, topo);
 }
 
+template class algorithm::Lattice_Shift_Tracker<util::cpuBackend>;
 
 

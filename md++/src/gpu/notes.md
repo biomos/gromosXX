@@ -280,9 +280,82 @@ struct is_valid_algorithm_backend
      */
     static_assert(util::is_valid_algorithm_backend<Backend>::value,
                 "This backend is not supported in the current build configuration.");
+  }
+```
+
+## How to implement GPU variant of an algorithm?
+1. Change the class declaration into a template:
+```cpp
+// in my_algorithm.h
+// Change this into
+  class MyAlgorithm : public Algorithm
+  {
+  public:
+    /**
+     * Constructor.
+     */
+    MyAlgorithm() : Algorithm("MyAlgorithm") {}
+  }
+// this
+  template <typename Backend = util::cpuBackend>
+  class MyAlgorithm : public AlgorithmT<Backend>
+  {
+  public:
+    /**
+     * Constructor.
+     */
+    MyAlgorithm() : AlgorithmT<Backend>("MyAlgorithm") {}
+  }
+```
+2. Change all definitions into template definitions and define the variants implementations.
+```cpp
+// from this
+int algorithm::MyAlgorithm::init()
+
+//into this
+// preferably in my_algorithm_cpu.cc
+template<>
+int algorithm::Remove_COM_Motion<util::cpuBackend>::init() {
+    ...
+}
+// preferably in my_algorithm_gpu.cc
+template<>
+int algorithm::Remove_COM_Motion<util::gpuBackend>::init() {
+    ...
+}
+
+// or this if the function is the same or similar for both backends
+template<typename Backend>
+int algorithm::Remove_COM_Motion<Backend>::init() {
+    ... // Use Backend in logic, where you need conditionals
+}
+```
+
+3. You can then either create the `AlgoritmT<util::cpuBackend>` or `AlgoritmT<util::gpuBackend>` directly, or use:
+```cpp
+algorithm::make_algorithm<algorithm::MyAlgorithm>(sim/*, optional arguments */);
 
 ```
+to let the program create the variant based on user input and availability.
+
+4. Update the file lists accordingly in `Makefile.am` and `CMakeLists.txt`
+5. Check compilations with and without CUDA.
+
+For examples, see commit `#6d3bb58f8cb037b256e9a7cd70870ba6d653da73`
+The template of `Lattice_Shift_Tracker` there specifies indentical CPU and GPU variants.
+
+For `Remove_COM_Motion`, variants are completely separate.
+
+6. Sometimes you might need to change m_timer to this->m_timer. Also, if you do not provide explicit specializations, 
+an explicit instantiation at the bottom of the `.cc` file is neccessary for the linker:
+```cpp
+template class algorithm::Lattice_Shift_Tracker<util::cpuBackend>;
+```
+
+
+## Cuda Manager conditional compilation
 
 There is also a soft restriction on CudaManager. In CPU-only build, all its methods are stubs throwing a runtime error.
 If you anyhow use them somewhere, they compile, but throw a runtime error as soon as you try to use them.
 Turning them into a hard restriction (compile time) should be considered.
+
