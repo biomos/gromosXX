@@ -39,7 +39,7 @@
 #define MODULE algorithm
 #define SUBMODULE constraints
 
-template <>
+template<>
 int algorithm::Remove_COM_Motion<util::cpuBackend>::init
 (
  topology::Topology &topo, 
@@ -88,7 +88,7 @@ int algorithm::Remove_COM_Motion<util::cpuBackend>::init
   return 0;
 };
 
-template <>
+template<>
 double algorithm::Remove_COM_Motion<util::cpuBackend>
 ::remove_com_translation
 (
@@ -120,7 +120,7 @@ double algorithm::Remove_COM_Motion<util::cpuBackend>
   return ekin_trans;
 }
 
-template <>
+template<>
 double algorithm::Remove_COM_Motion<util::cpuBackend>
 ::remove_com_rotation
 (
@@ -228,7 +228,7 @@ double algorithm::Remove_COM_Motion<util::cpuBackend>
 /**
  * apply the COM removal.
  */
-template <>
+template<>
 int algorithm::Remove_COM_Motion<util::cpuBackend>
 ::apply(topology::Topology & topo,
 	configuration::Configuration & conf,
@@ -287,7 +287,7 @@ int algorithm::Remove_COM_Motion<util::cpuBackend>
   return 0;		   
 }
 
-template <>
+template<>
 double algorithm::Remove_COM_Motion<util::cpuBackend>
 ::add_com_rotation
 (

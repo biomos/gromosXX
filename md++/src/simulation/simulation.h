@@ -30,6 +30,7 @@
 #include "multibath.h"
 #include "parameter.h"
 #include "mpiControl.h"
+#include "gpu/cuda/manager/cuda_manager.h"
 #ifdef HAVE_HOOMD
 #include <HOOMD_GROMOSXX_processor.h>
 #endif
@@ -55,17 +56,16 @@ namespace simulation
 		   m_steps(0), 
 		   m_time(0),
        m_minimisation_step_size(0),
-       m_mpi(false), m_openmp(false), m_cuda(false)
-    {
-    #ifdef XXMPI
+       m_mpi(false), m_openmp(false), m_cuda(false) {
+#ifdef XXMPI
       m_mpi = true;
-    #endif
-    #ifdef OMP
+#endif
+#ifdef OMP
       m_openmp = true;
-    #endif
-    #ifdef USE_CUDA
+#endif
+#ifdef USE_CUDA
       m_cuda = true;
-    #endif
+#endif
     }
     
     /**
@@ -102,18 +102,19 @@ namespace simulation
         return m_MpiControl; 
     }
 
-     /**
-     * CUDA_Kernel pointer mutator
+    /**
+     * CudaManager mutator
      */
-    // void CUDA_Kernel(gpu::CUDA_Kernel * cuda_kernel) {
-    //     m_cuda_kernel = cuda_kernel;
-    // }
-    /** 
-     * CUDA_kernel accessor
+    gpu::CudaManager & cuda() {
+        return m_cuda_manager;
+    }
+
+    /**
+     * CudaManager accessor
      */
-    // cukernel::CUDA_Kernel * CUDA_Kernel() const{
-    //     return m_cuda_kernel; 
-    //}
+    const gpu::CudaManager & cuda() const {
+        return m_cuda_manager;
+    }
 
     
     /**
@@ -187,7 +188,8 @@ namespace simulation
       m_cuda = enabled;
 #else
       (void)enabled; // avoids compiler warnings
-#endif}
+#endif
+    }
 
 	/**
 	 * Processor(s) choice to use for HOOMD code (CPU/GPUs)
@@ -208,9 +210,9 @@ namespace simulation
     MpiControl m_MpiControl;
 
     /**
-     * the CUDA kernel
+     * the CUDA Manager
      */
-    // cukernel::CUDA_Kernel * m_cuda_kernel;
+    gpu::CudaManager m_cuda_manager;
     
     /**
      * the time step size

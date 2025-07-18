@@ -297,7 +297,7 @@ void algorithm::Perturbed_Shake ::perturbed_solute(topology::Topology const &top
   DEBUG(8, "\tshaking perturbed SOLUTE");
   math::Periodicity<B> periodicity(conf.current().box);
 
-  if (!sim.mpi || m_rank == 0)
+  if (!sim.mpi_enabled() || m_rank == 0)
     m_timer.start_subtimer("solute");
 
   const unsigned int num_atoms = topo.num_solute_atoms();
@@ -778,7 +778,7 @@ int algorithm::Perturbed_Shake::init(topology::Topology &topo,
 
     if (sim.param().constraint.solvent.algorithm == simulation::constr_shake)
     {
-      if (sim.mpi)
+      if (sim.mpi_enabled())
         os << "ON (MPI parallel version)\n";
       else
         os << "ON\n";
