@@ -50,20 +50,21 @@ namespace interaction
    * (clear does not call them (i guess) -- sorry, don't know what this means anymore)
    * Strategy Pattern.
    */
-  class Forcefield : public std::vector<Interaction *>,
-		     public algorithm::Algorithm
+  template<typename Backend = util::cpuBackend>
+  class ForcefieldT : public std::vector<Interaction *>,
+		     public algorithm::AlgorithmT<Backend>
   {
   public:
     /**
      * Constructor
      */
-    Forcefield() 
+    ForcefieldT() 
       : std::vector<Interaction *>(),
-	algorithm::Algorithm("Forcefield") {}
+	algorithm::AlgorithmT<Backend>("Forcefield") {}
     /**
      * Destructor
      */
-    ~Forcefield();
+    ~ForcefieldT();
     /**
      * initialise
      */
@@ -106,6 +107,12 @@ namespace interaction
   protected:
 
   };
+
+  /**
+   * @brief Allow use of Forcefield directly - defaults to ForcefieldT<util::cpuBackend>
+   * 
+   */
+  using Forcefield = ForcefieldT<util::cpuBackend>;
   
 } // interaction
 

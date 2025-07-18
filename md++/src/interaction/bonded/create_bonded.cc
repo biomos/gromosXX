@@ -67,12 +67,13 @@
 #define SUBMODULE bonded
 
 int interaction::create_g96_bonded(interaction::Forcefield & ff,
-				   topology::Topology const &topo,
-				   simulation::Parameter const &param,
+				   topology::Topology const & topo,
+				   simulation::Simulation const & sim,
 				   io::IFP & it,
 				   std::ostream & os,
 				   bool quiet)
 {
+  const simulation::Parameter & param = sim.param();
   DEBUG(8, "creating g96 bonded");
   if (param.force.bond == 1){
     if (!quiet)

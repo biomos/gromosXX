@@ -65,7 +65,7 @@ int interaction::create_g96_forcefield(interaction::Forcefield & ff,
   
   // the bonded
   DEBUG(8, "creating the bonded terms");
-  if (create_g96_bonded(ff, topo, sim.param(), it, os, quiet))
+  if (create_g96_bonded(ff, topo, sim, it, os, quiet))
     return 1;
 	
   /** create QMMM_Interaction - nonbonded can recover the pointer from ff

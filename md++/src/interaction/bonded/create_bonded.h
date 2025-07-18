@@ -32,7 +32,7 @@ namespace topology
 }
 namespace simulation
 {
-  class Parameter;
+  class Simulation;
 }
 namespace io
 {
@@ -49,7 +49,7 @@ namespace interaction
 	 */
   int create_g96_bonded(interaction::Forcefield & ff,
 			topology::Topology const & topo,
-			simulation::Parameter const & param,
+			simulation::Simulation const & sim,
 			io::IFP & it,
 			std::ostream & os = std::cout,
 			bool quiet = false);

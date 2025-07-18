@@ -41,8 +41,6 @@ namespace io
 
 namespace interaction
 {
-  class Forcefield;
-  
   /**
    * create the nobonded terms for a
    * Gromos96 like simulation.
