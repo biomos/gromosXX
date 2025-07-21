@@ -175,21 +175,9 @@ template <typename Backend = util::cpuBackend>
    * @brief Create a backend-aware algorithm instance (GPU if available and supported, otherwise CPU)
    *
    * @tparam AlgT The algorithm template
-   * @param os Output stream for logging
-   * @return std::unique_ptr<IAlgorithm>
+   * @param Args... Arguments to be passed to the constructor
+   * @return IAlgorithm*
    */
-//   template <template <typename> class AlgT>
-//   std::unique_ptr<IAlgorithm> make_algorithm(std::ostream &os = std::cout) {
-// #ifdef USE_CUDA
-//     if constexpr (has_gpu_backend_v<AlgT>) {
-//       if (gpu::CudaManager::is_enabled()) {
-//         return std::make_unique<AlgT<util::gpuBackend>>(os);
-//       }
-//     }
-// #endif
-//     return std::make_unique<AlgT<util::cpuBackend>>(os);
-//   }
-
   template <template <typename> class AlgT, typename... Args>
   IAlgorithm* make_algorithm(
                             simulation::Simulation & sim, 
@@ -200,6 +188,25 @@ template <typename Backend = util::cpuBackend>
       }
     }
     return new AlgT<util::cpuBackend>(std::forward<Args>(args)...);
+  }
+
+  /**
+   * @brief Create a backend-aware algorithm instance (GPU if available and supported, otherwise CPU)
+   *
+   * @tparam AlgT The algorithm template
+   * @param Args... Arguments to be passed to the constructor
+   * @return std::unique_ptr<IAlgorithm>
+   */
+  template <template <typename> class AlgT, typename... Args>
+  std::unique_ptr<IAlgorithm> make_unique_algorithm(
+                            simulation::Simulation & sim, 
+                            Args&&... args) {
+    if constexpr (util::has_gpu_backend_v<AlgT>) {
+      if (sim.cuda_enabled()) {
+        return std::make_unique<AlgT<util::gpuBackend>>(std::forward<Args>(args)...);
+      }
+    }
+    return std::make_unique<AlgT<util::cpuBackend>>(std::forward<Args>(args)...);
   }
 }
 #endif
