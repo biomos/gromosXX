@@ -5,6 +5,11 @@
 
 #include "gpu/cuda/cuheader.h"
 #include "gpu/cuda/utils.h"
+
+#include "cuda_device_manager.h"
+#include "cuda_device_worker.h"
+#include "cuda_memory_manager.h"
+
 #include "cuda_manager.h"
 
 #include "cuda_manager.tcc" // Include template implementations
@@ -12,6 +17,30 @@
 bool gpu::CudaManager::m_is_enabled = false;
 
 gpu::CudaManager::CudaManager() {}
+
+/**
+ * @brief Allow shallow copy constructor, but warn
+ */
+gpu::CudaManager::CudaManager(const gpu::CudaManager& other) {
+    // CUDA_MANAGER_COPY_WARNING; // Compile-time warning
+    std::cerr << "Warning: Shallow copy of CudaManager at " << __FILE__
+            << ":" << __LINE__ << " in function " << __func__ << std::endl;
+    this->m_device_managers = other.m_device_managers;
+}
+
+/**
+ * @brief Allow shallow assignment operator, but warn
+ */
+gpu::CudaManager& gpu::CudaManager::operator=(const gpu::CudaManager& other) {
+    // CUDA_MANAGER_COPY_WARNING; // Compile-time warning
+    if (this != &other) {
+        std::cerr << "Warning: Shallow copy assignment of CudaManager at " << __FILE__
+                << ":" << __LINE__ << " in function " << __func__ << std::endl;
+        // Perform shallow copy
+        this->m_device_managers = other.m_device_managers;
+    }
+    return *this;
+}
 
 void gpu::CudaManager::init(const std::vector<int>& device_ids) {
     int deviceCount = 0;

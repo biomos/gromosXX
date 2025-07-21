@@ -6,8 +6,18 @@
 #include "gpu/cuda/cuheader.h"
 #include "cuda_manager.h"
 
-gpu::CudaManager::CudaManager() {
-        DISABLED_VOID();
+gpu::CudaManager::CudaManager() {}
+
+/**
+ * @brief Allow shallow copy constructor, but warn
+ */
+gpu::CudaManager::CudaManager(const gpu::CudaManager& other) {}
+
+/**
+ * @brief Allow shallow assignment operator, but warn
+ */
+gpu::CudaManager& gpu::CudaManager::operator=(const gpu::CudaManager& other) {
+    return *this;
 }
 
 // gpu::CudaManager::~CudaManager() {}

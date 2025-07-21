@@ -5,16 +5,11 @@
 #include <unordered_map>
 #include <stdexcept>
 
-
 #include "gpu/cuda/cuheader.h"
-#include "cuda_device_manager.h"
-#include "cuda_device_worker.h"
-#include "cuda_memory_manager.h"
-
 
 #define CUDA_VARIABLE_DISABLED() disabled(__FILE__, __LINE__, __func__)
 namespace gpu {
-    // class CudaDeviceManager;
+    class CudaDeviceManager;
     // class CudaMemoryManager;
     // class CudaDeviceWorker;
     /**
@@ -56,26 +51,12 @@ namespace gpu {
             /**
              * @brief Allow shallow copy constructor, but warn
              */
-            CudaManager(const CudaManager& other) {
-                // CUDA_MANAGER_COPY_WARNING; // Compile-time warning
-                std::cerr << "Warning: Shallow copy of CudaManager at " << __FILE__
-                        << ":" << __LINE__ << " in function " << __func__ << std::endl;
-                this->m_device_managers = other.m_device_managers;
-            }
+            CudaManager(const CudaManager& other);
 
             /**
              * @brief Allow shallow assignment operator, but warn
              */
-            CudaManager& operator=(const CudaManager& other) {
-                // CUDA_MANAGER_COPY_WARNING; // Compile-time warning
-                if (this != &other) {
-                    std::cerr << "Warning: Shallow copy assignment of CudaManager at " << __FILE__
-                            << ":" << __LINE__ << " in function " << __func__ << std::endl;
-                    // Perform shallow copy
-                    this->m_device_managers = other.m_device_managers;
-                }
-                return *this;
-            }
+            CudaManager& operator=(const CudaManager& other);
 
 
             /**
