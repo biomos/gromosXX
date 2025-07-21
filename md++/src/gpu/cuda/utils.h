@@ -27,15 +27,23 @@
 
 #include <cuda_runtime.h>
 #include <string>
+#include <sstream>
 
-#define CHECK(call) gpu::check_cuda_call_error((call), __FILE__, __LINE__, #call)
-#define CHECK_LAST(msg) gpu::check_cuda_last_error((msg), __FILE__, __LINE__)
+#include "io/message.h"
+
+#ifndef NDEBUG
+    #define CUDA_CHECK(call) gpu::check_cuda_call_error((call), __FILE__, __LINE__, #call)
+    #define CUDA_CHECK_ERROR(msg) gpu::check_cuda_last_error((msg), __FILE__, __LINE__)
+#else
+    #define CUDA_CHECK(call) gpu::check_cuda_call_error((call))
+    #define CUDA_CHECK_ERROR(msg) gpu::check_cuda_last_error((msg))
+#endif
 
 namespace gpu {
     /**
-     * @brief Check for a specific CUDA error and throw an exception if an error is detected.
+     * @brief Run function, check for a CUDA error and throw an exception if an error is detected. For Debug.
      * 
-     * This function is typically used to wrap CUDA API calls via a macro like CHECK(...).
+     * This function is typically used to wrap CUDA API calls via a macro like CUDA_CHECK(...).
      *
      * @param err     The CUDA error code returned from a CUDA API function.
      * @param file    The source file name where the error occurred.
@@ -44,10 +52,23 @@ namespace gpu {
      * 
      * @throws std::runtime_error if a CUDA error is detected.
      */
-    void check_cuda_call_error(cudaError_t err, const char* file, int line, const std::string& call);
+    void check_cuda_call_error(cudaError_t result, const char* file, int line, const std::string& call);
+
+    
+    /**
+     * @brief Check for a specific CUDA error and throw an exception if an error is detected. Minimal version for Release.
+     * 
+     */
+    inline void check_cuda_call_error(cudaError_t result) {
+        if (result != cudaSuccess) {
+            std::string error_message = cudaGetErrorString(result);
+            io::messages.add("CUDA Error: " + error_message,
+                "gpu", io::message::error);
+        }
+    }
 
     /**
-     * @brief Check for the most recent CUDA error and throw an exception if one is detected.
+     * @brief Check for the most recent CUDA error and throw an exception if one is detected. For Debug.
      * 
      * This function is useful after kernel launches or sequences of CUDA calls
      * where errors are not returned directly.
@@ -58,7 +79,21 @@ namespace gpu {
      * 
      * @throws std::runtime_error if a CUDA error is detected.
      */
-    cudaError_t check_cuda_last_error(const char* err_msg, const char* file, int line);
+    void check_cuda_last_error(const char* err_msg, const char* file, int line);
+
+    /**
+     * @brief Check for the most recent CUDA error and throw an exception if one is detected. Minimal version for Release.
+     * 
+     */
+    inline void check_cuda_last_error(const char* err_msg) {
+        cudaError_t error = cudaGetLastError();
+        if (error != cudaSuccess) {
+            std::ostringstream oss;
+            oss << "CUDA Error detected - " << err_msg
+                    << ": " << cudaGetErrorString(error) << std::endl;
+            io::messages.add(oss.str(), "gpu", io::message::error);
+        }
+    }
 
     /**
      * @brief Query and print information about all available CUDA devices.
@@ -72,9 +107,9 @@ namespace gpu {
      * @return The elapsed time in milliseconds.
      */
     inline float measure_elapsed_time(cudaEvent_t start, cudaEvent_t stop) {
-        CHECK(cudaEventSynchronize(stop));
+        CUDA_CHECK(cudaEventSynchronize(stop));
         float milliseconds = 0.0f;
-        CHECK(cudaEventElapsedTime(&milliseconds, start, stop));
+        CUDA_CHECK(cudaEventElapsedTime(&milliseconds, start, stop));
         return milliseconds;
     }
 
@@ -84,7 +119,7 @@ namespace gpu {
      */
     inline cudaEvent_t create_event() {
         cudaEvent_t event;
-        CHECK(cudaEventCreate(&event));
+        CUDA_CHECK(cudaEventCreate(&event));
         return event;
     };
 
@@ -93,7 +128,7 @@ namespace gpu {
      * @param event The CUDA event to destroy.
      */
     inline void destroy_event(cudaEvent_t event) {
-        CHECK(cudaEventDestroy(event));
+        CUDA_CHECK(cudaEventDestroy(event));
     };
 
     /**

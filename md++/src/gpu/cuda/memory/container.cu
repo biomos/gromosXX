@@ -43,8 +43,8 @@ void gpu::Container<T>::resize(size_t height, size_t width) {
     // if increasing the size and is not overflown, copy
     if (height >= this->m_height && width >= this->m_width && !this->overflown()) {
         Container<T> newc(height, width);
-        CHECK(cudaMemcpy(newc.dev_sizes, this->dev_sizes, this->m_height*sizeof(unsigned), cudaMemcpyDeviceToDevice));
-        CHECK(cudaMemcpy2D(newc.dev_ptr, newc.dev_pitch, this->dev_ptr, this->dev_pitch, this->m_width*sizeof(T), this->m_height, cudaMemcpyDeviceToDevice));
+        CUDA_CHECK(cudaMemcpy(newc.dev_sizes, this->dev_sizes, this->m_height*sizeof(unsigned), cudaMemcpyDeviceToDevice));
+        CUDA_CHECK(cudaMemcpy2D(newc.dev_ptr, newc.dev_pitch, this->dev_ptr, this->dev_pitch, this->m_width*sizeof(T), this->m_height, cudaMemcpyDeviceToDevice));
         this->deallocate();
         *this = newc;
     } else {
@@ -144,8 +144,8 @@ int gpu::Container<T>::update_row(unsigned row, T* val, unsigned size) {
     if (size > this->m_width) {
         this->resize(this->m_height, size);
     }
-    CHECK(cudaMemcpy(this->dev_sizes + row, &size, sizeof(unsigned), cudaMemcpyHostToDevice));
-    CHECK(cudaMemcpy(this->operator[](row), val, size*sizeof(T), cudaMemcpyHostToDevice));
+    CUDA_CHECK(cudaMemcpy(this->dev_sizes + row, &size, sizeof(unsigned), cudaMemcpyHostToDevice));
+    CUDA_CHECK(cudaMemcpy(this->operator[](row), val, size*sizeof(T), cudaMemcpyHostToDevice));
     return 0;
 }
 
@@ -176,7 +176,7 @@ __device__ __host__ unsigned gpu::Container<T>::size(unsigned row) const {
     #ifdef __CUDA_ARCH__
         s = this->dev_sizes[row];
     #else
-        CHECK(cudaMemcpy(&s, this->dev_sizes + row, sizeof(unsigned), cudaMemcpyDeviceToHost));
+        CUDA_CHECK(cudaMemcpy(&s, this->dev_sizes + row, sizeof(unsigned), cudaMemcpyDeviceToHost));
     #endif
     return s;
 }
@@ -187,7 +187,7 @@ __device__ __host__ unsigned gpu::Container<T>::size(unsigned row) const {
 template <typename T>
 std::vector<unsigned> gpu::Container<T>::sizes() const {
     std::vector<unsigned> s(this->m_height,0);
-    CHECK(cudaMemcpy(s.data(), this->dev_sizes, this->m_height * sizeof(unsigned), cudaMemcpyDeviceToHost));
+    CUDA_CHECK(cudaMemcpy(s.data(), this->dev_sizes, this->m_height * sizeof(unsigned), cudaMemcpyDeviceToHost));
     return s;
 }
 
@@ -205,9 +205,9 @@ __host__ __device__ void gpu::Container<T>::clear() {
 #else
     #ifndef NDEBUG
         // this does not have to be zeroed
-        CHECK(cudaMemset2D(this->dev_ptr, this->dev_pitch, 0, this->m_width * sizeof(T), this->m_height));
+        CUDA_CHECK(cudaMemset2D(this->dev_ptr, this->dev_pitch, 0, this->m_width * sizeof(T), this->m_height));
     #endif
-    CHECK(cudaMemset(this->dev_sizes, 0, this->m_height * sizeof(unsigned)));
+    CUDA_CHECK(cudaMemset(this->dev_sizes, 0, this->m_height * sizeof(unsigned)));
 #endif
     this->reset_overflow();
 };
@@ -224,7 +224,7 @@ __host__ std::vector< std::vector<T> > gpu::Container<T>::copy_to_host() const {
     for (unsigned i = 0; i < this->m_height; ++i) {
         arr[i].reserve(this->m_width);
         arr[i].resize(s[i],0);
-        CHECK(cudaMemcpy(arr[i].data(), this->operator[](i), s[i] * sizeof(T), cudaMemcpyDeviceToHost));
+        CUDA_CHECK(cudaMemcpy(arr[i].data(), this->operator[](i), s[i] * sizeof(T), cudaMemcpyDeviceToHost));
     }
     return arr;
 }
@@ -238,7 +238,7 @@ __device__ __host__ bool gpu::Container<T>::overflown() const {
     return *this->dev_overflow;
 #else
     bool overflow;
-    CHECK(cudaMemcpy(&overflow, this->dev_overflow, sizeof(bool), cudaMemcpyDeviceToHost));
+    CUDA_CHECK(cudaMemcpy(&overflow, this->dev_overflow, sizeof(bool), cudaMemcpyDeviceToHost));
     return overflow;
 #endif
 }
@@ -249,17 +249,17 @@ __device__ __host__ bool gpu::Container<T>::overflown() const {
 template <typename T>
 void gpu::Container<T>::allocate() {
   if (this->dev_overflow == nullptr) {
-    CHECK(cudaMalloc(&this->dev_overflow, sizeof(bool)));
+    CUDA_CHECK(cudaMalloc(&this->dev_overflow, sizeof(bool)));
     report(this->dev_overflow, 1);
   }
-  CHECK(cudaMallocPitch(&this->dev_ptr,
+  CUDA_CHECK(cudaMallocPitch(&this->dev_ptr,
                         &this->dev_pitch,
                         this->m_width * sizeof(T),
                         this->m_height));
   this->m_width = this->dev_pitch / sizeof(T); // use also the padding area
   report(this->dev_ptr, this->dev_pitch * this->m_height / sizeof(T));
-  CHECK(cudaMalloc(&this->dev_sizes, this->m_height * sizeof(unsigned)));
-  CHECK(cudaMemset(this->dev_sizes, 0, this->m_height * sizeof(unsigned)));
+  CUDA_CHECK(cudaMalloc(&this->dev_sizes, this->m_height * sizeof(unsigned)));
+  CUDA_CHECK(cudaMemset(this->dev_sizes, 0, this->m_height * sizeof(unsigned)));
   report(this->dev_sizes, this->m_height);
   reset_overflow();
 }
@@ -269,18 +269,18 @@ void gpu::Container<T>::allocate() {
  */
 template <typename T>
 void gpu::Container<T>::deallocate() {
-    CHECK(cudaFree(this->dev_ptr));
+    CUDA_CHECK(cudaFree(this->dev_ptr));
     //cudaFree(this->dev_ptr);
     report(this->dev_ptr, this->dev_pitch * this->m_height / sizeof(T), false);
     this->dev_ptr = nullptr;
     this->dev_pitch = 0;
     this->m_width = 0;
-    CHECK(cudaFree(this->dev_sizes));
+    CUDA_CHECK(cudaFree(this->dev_sizes));
     //cudaFree(this->dev_sizes);
     report(this->dev_sizes, this->m_height, false);
     this->dev_sizes = nullptr;
     this->m_height = 0;
-    CHECK(cudaFree(this->dev_overflow));
+    CUDA_CHECK(cudaFree(this->dev_overflow));
     //cudaFree(this->dev_overflow);
     report(this->dev_overflow, 1, false);
     this->dev_overflow = nullptr;
@@ -309,7 +309,7 @@ __device__ __host__ void gpu::Container<T>::reset_overflow() {
 #ifdef __CUDA_ARCH__
     *this->dev_overflow = false;
 #else
-    CHECK(cudaMemset(this->dev_overflow, 0, sizeof(bool)));
+    CUDA_CHECK(cudaMemset(this->dev_overflow, 0, sizeof(bool)));
 #endif
 }
 
@@ -317,14 +317,14 @@ template <typename T>
 std::ostream& operator<<(std::ostream &os, const gpu::Container<T> &c) {
     std::vector<unsigned> s;
     s.resize(c.m_height,0);
-    CHECK(cudaMemcpy(s.data(), c.dev_sizes, c.m_height * sizeof(unsigned), cudaMemcpyDeviceToHost));
+    CUDA_CHECK(cudaMemcpy(s.data(), c.dev_sizes, c.m_height * sizeof(unsigned), cudaMemcpyDeviceToHost));
 
     std::vector<T> arr;
     arr.reserve(c.m_width);
     for (unsigned i = 0; i < c.m_height; ++i) {
         os << i << " (" << s[i] << "): ";
         arr.resize(s[i],0);
-        CHECK(cudaMemcpy(arr.data(), c[i], s[i] * sizeof(T), cudaMemcpyDeviceToHost));
+        CUDA_CHECK(cudaMemcpy(arr.data(), c[i], s[i] * sizeof(T), cudaMemcpyDeviceToHost));
         for (unsigned j = 0; j < s[i]; ++j) {
             os << arr[j] << " ";
         }
