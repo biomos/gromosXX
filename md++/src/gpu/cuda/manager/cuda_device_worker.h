@@ -49,7 +49,7 @@ namespace gpu {
          * @brief Get the CUDA stream associated with this device worker.
          * @return The CUDA stream.
          */
-        CUSTREAM get_stream() const;
+        cudaStream_t get_stream() const;
 
         /**
          * @brief Synchronize the device.
@@ -71,8 +71,8 @@ namespace gpu {
         void launch_kernel(KernelFunc kernel, dim3 grid_dim, dim3 block_dim, Args... args, size_t shared_mem_size = 0);
 #endif
     private:
-        CUSTREAM stream_; ///< The CUDA stream associated with this device worker.
-        int device_id_; ///< The ID of the CUDA device managed by this worker.
+        cudaStream_t m_stream; ///< The CUDA stream associated with this device worker.
+        int m_device_id; ///< The ID of the CUDA device managed by this worker.
     };
 }
 

@@ -5,37 +5,36 @@
 #include "gpu/cuda/cuheader.h"
 #include "gpu/cuda/utils.h"
 
-gpu::CudaDeviceWorker::CudaDeviceWorker(int device_id) : device_id_(device_id), stream_(nullptr) {
+gpu::CudaDeviceWorker::CudaDeviceWorker(int device_id) : m_stream(nullptr), m_device_id(device_id) {
     // Set the active device
-    cudaSetDevice(device_id_);
+    CUDA_CHECK(cudaSetDevice(m_device_id));
 
     // Create a CUDA stream
-    cudaStreamCreate(&stream_);
+    CUDA_CHECK(cudaStreamCreate(&m_stream));
 }
 
 gpu::CudaDeviceWorker::~CudaDeviceWorker() {
     // Destroy the CUDA stream
-    if (stream_) {
-        cudaStreamDestroy(stream_);
+    if (m_stream) {
+        CUDA_CHECK(cudaStreamDestroy(m_stream));
     }
 }
 
 int gpu::CudaDeviceWorker::get_device_id() const {
-    return device_id_;
+    return m_device_id;
 }
 
 cudaStream_t gpu::CudaDeviceWorker::get_stream() const {
-    return stream_;
+    return m_stream;
 }
 
 void gpu::CudaDeviceWorker::synchronize() const {
-    cudaSetDevice(device_id_);
-    cudaDeviceSynchronize();
+    CUDA_CHECK(cudaDeviceSynchronize());
 }
 
 template <typename KernelFunc, typename... Args>
 void gpu::CudaDeviceWorker::launch_kernel(KernelFunc kernel, dim3 grid_dim, dim3 block_dim, Args... args, size_t shared_mem_size) {
-    kernel<<<grid_dim, block_dim, shared_mem_size, stream_>>>(args...);
+    kernel<<<grid_dim, block_dim, shared_mem_size, m_stream>>>(args...);
 
     // Check for errors after kernel launch
     cudaError_t err = cudaGetLastError();
@@ -53,7 +52,7 @@ void gpu::CudaDeviceWorker::launch_kernel(KernelFunc kernel, dim3 grid_dim, dim3
 //     cudaSetDevice(device_id_);
 
 //     // Launch the kernel
-//     kernel<<<grid_dim, block_dim, shared_mem_size, stream_>>>(args...);
+//     kernel<<<grid_dim, block_dim, shared_mem_size, m_stream>>>(args...);
 
 //     // Check for kernel launch errors
 //     cudaError_t err = cudaGetLastError();
