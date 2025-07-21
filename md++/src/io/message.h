@@ -26,6 +26,9 @@
 #ifndef INCLUDED_MESSAGE_H
 #define INCLUDED_MESSAGE_H
 
+#include <map>
+#include <iostream>
+
 namespace io
 {
   /**
