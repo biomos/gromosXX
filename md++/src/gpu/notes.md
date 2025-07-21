@@ -7,10 +7,10 @@ Everything we do on gpu is in namespace gpu. Cuda code is in separate subdirecto
 
 ## Classes:
 
-- CudaManager - thin interface (maybe rename to CudaInterface) between CPU and GPU code. Hide GPU code to allow CPU only compilation.
-- CudaDeviceManager - Manages the resources on the devices
-- CudaDeviceWorker - Performs the work, submits kernels
-- CudaMemoryManager - Manages memory allocations, copying data
+- CudaManager - Top-level interface to all GPU devices and streams (maybe rename to CudaInterface).
+- CudaDeviceManager - Per-device metadata, streams, and hooks to memory/worker
+- CudaMemoryManager - Manages allocations and sync on a per-device basis
+- CudaDeviceWorker - Launches kernels, handles async tasks, manages streams
 
 ## Data structure classes:
 - cuvector<T> - CUDA managed memory version of std::vector, directly accessible from both CPU and GPU. Possible penalty due to non-ideal automatic copy scheduling.
@@ -20,26 +20,6 @@ Everything we do on gpu is in namespace gpu. Cuda code is in separate subdirecto
 
 - possibly a pair of cudvector,cuhvector encapsulated in a single class could be used for performance-critical arrays
 
-Recommended Folder Structure
-```
-src/
-├── gpu/
-│   ├── cuda_manager/
-│   │   ├── cuda_manager.h
-│   │   ├── cuda_manager.tcc
-│   │   ├── cuda_device_manager.h
-│   │   ├── cuda_device_worker.h
-│   │   ├── cuda_memory_manager.h
-│   │   └── cuda_manager.cc (if needed for non-template methods)
-│   ├── memory/
-│   │   ├── cuvector.h
-│   │   └── cuallocator.h (if you have a separate allocator implementation)
-│   ├── kernels/
-│   │   ├── md_kernels.cu
-│   │   ├── md_kernels.h
-│   │   └── other_kernels.cu
-│   └── gpu_utils.h (optional: utility functions for GPU operations)
-```
 
 ## Constant Memory
 CUDA provides a fast, read-only constant memory space for storing constants. However, on modern GPUs, global memory caching often makes this unnecessary.
@@ -116,7 +96,7 @@ There are multiple ways on how to do this. Ideally, the user has to do as least 
 E.g. variables can be defined dynamically and map<string,VAR>.
 
 We have to think how to do the scheduling.
-For every algorithm, one should define what are the output and input dependencies. Based on that, the jobs are ideally run asynchronously on GPU.
+For every algorithm, one should define what are the output and input dependencies. Based on that, the jobs are ideally run asynchronously on GPU. We can e.g. create an execution plan based on the algorithm sequence and use directed acyclic graph (DAG).
 
 
 Possible declaration of string-named arrays:
@@ -157,10 +137,10 @@ Then, we add to md_seq Algorithm with appropriate backend:
 ```cpp
 if (gpu::CudaManager::is_enabled()) {
     // Use GPU backend
-    md_seq.emplace_back(std::make_unique<M_Shake<GPU>>();) // we might also want to switch to smart pointers
+    md_seq.emplace_back(std::make_unique<M_Shake<gpuBackend>>();) // we might also want to switch to smart pointers
 } else {
     // Use CPU backend
-    md_seq.emplace_back(std::make_unique<M_Shake<CPU>>();)
+    md_seq.emplace_back(std::make_unique<M_Shake<cpuBackend>>();)
 }
 ```
 
@@ -190,6 +170,16 @@ void gpu::shake() {
     DISABLED_VOID(); // macro of function doing nothing
 }
 ```
+## Code splitting for CPU and GPU
+Conditional compilation for CPU-only or CPU+GPU requires careful split of the code. The source code for CUDA
+have to be invisible in the CPU-only compilation. Traditionally, this is achieved by using the `#ifdef USE_CUDA`
+macro, which is very easy to use, but with tighter and broader integration of CUDA-enabled code, the created clutter makes the code hard to read. So we try another strategy.
+The single communication point, the `CudaManager` is split into `.cc` and `.cu` compilation. The CUDA-capable
+`Algorithm`s and `Interaction`s are defined as templates with common bases to achieve clean code separation.
+Based on the compile time constants and/or runtime settings, we then dispatch either `MyAlgorithm<cpuBackend>`
+or `MyAlgorithm<gpuBackend>`. `MyAlgoritm` defaults to `MyAlgorithm<cpuBackend>`.
+The common bases are `IAlgorithm`, `IInteraction` and `IForcefield` allowing sequencing their base pointers
+in the execution sequence.
 
 ## Algoritms can be CPU or GPU
 The `Algorithm` class has been reworked such that it is a template `AlgorithmT`. CPU and GPU variants are initialized:
@@ -198,7 +188,7 @@ The `Algorithm` class has been reworked such that it is a template `AlgorithmT`.
 AlgorithmT<util::cpuBackend> alg(os);
 
 // GPU variant
-AlgorithmT<util::gpuBackend> alg(cuda_manager, os);
+AlgorithmT<util::gpuBackend> alg(os);
 
 // also legacy invocation is possible
 Algorithm alg(os); // invokes AlgorithmT<util::cpuBackend> and works as before.
@@ -206,7 +196,7 @@ Algorithm alg(os); // invokes AlgorithmT<util::cpuBackend> and works as before.
 
 The common interface is `IAlgorithm`, so `Algorithm_Sequence` becomes `std::vector<std::unique_ptr<IAlgorithm>>`.
 
-Every algoritm requires a single declaration:
+Every algoritm requires a single template declaration:
 
 ```cpp
 // shake.h
@@ -241,17 +231,18 @@ The reason for this is to have some compile-time control. Every algorithm now ha
 If a CPU-only compilation is done, the GPU variants should not get compiled at all, and only throw error,
 if you try to instantiate them:
 ```cpp
+
 #ifdef USE_CUDA
-bool cuda_is_enabled = input.cuda_is_enabled();  // runtime constant
+  static bool gpu::CudaManager::is_enabled() { return m_is_enabled; } // runtime value (set by user input)
 #else
-constexpr bool cuda_is_enabled = false;          // compile-time constant
+  static constexpr bool gpu::CudaManager::is_enabled() { return false; } // compile-time constant false
 #endif
 
 // create_md_sequence.cc
-if (cuda_is_enabled) {
-    md_seq.push_back(Shake<util::gpuBackend>(cuda_manager, os));
+if (gpu::CudaManager::is_enabled()) {
+    md_seq.push_back(Shake<util::gpuBackend>());
 } else {
-    md_seq.push_back(Shake<util::cpuBackend>(os));
+    md_seq.push_back(Shake<util::cpuBackend>());
 }
 ```
 
