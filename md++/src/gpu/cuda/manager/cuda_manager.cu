@@ -14,8 +14,6 @@
 
 #include "cuda_manager.tcc" // Include template implementations
 
-bool gpu::CudaManager::m_is_enabled = false;
-
 gpu::CudaManager::CudaManager() {}
 
 /**

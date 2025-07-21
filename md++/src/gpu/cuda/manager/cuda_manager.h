@@ -149,16 +149,6 @@ namespace gpu {
              */
             int select_best_device() const;
 
-            /**
-             * @brief If user requested CUDA acceleration
-             * @return boolean, always false in CUDA-disabled build
-             */
-#ifdef USE_CUDA
-            static bool is_enabled() { return m_is_enabled; }
-#else
-            static constexpr bool is_enabled() { return false; }
-#endif
-
         private:
             /**
              * @brief Validate a device ID.
@@ -168,8 +158,6 @@ namespace gpu {
             void validate_device_id(int device_id) const;
 #ifdef USE_CUDA
             std::unordered_map<int, std::shared_ptr<CudaDeviceManager> > m_device_managers; ///< Managers for each active device.
-
-            static bool m_is_enabled;
 #endif
     };
 }
