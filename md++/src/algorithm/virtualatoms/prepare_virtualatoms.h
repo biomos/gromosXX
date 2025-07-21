@@ -26,10 +26,6 @@
 #ifndef PREPVIRT_H
 #define	PREPVIRT_H
 
-namespace interaction
-{
-  class Forcefield;
-}
 namespace algorithm
 {
    /**

@@ -33,6 +33,7 @@
 #include "../../interaction/interaction.h"
 
 #include "../../util/prepare_virial.h"
+#include "util/backend.h"
 
 #include "forcefield.h"
 
@@ -41,7 +42,8 @@
 #define MODULE interaction
 #define SUBMODULE forcefield
 
-interaction::Forcefield::~Forcefield()
+template <typename Backend>
+interaction::ForcefieldT<Backend>::~ForcefieldT()
 {
   for(iterator it = begin(), to = end();
       it != to;
@@ -50,7 +52,8 @@ interaction::Forcefield::~Forcefield()
   }
 }
 
-int interaction::Forcefield
+template <typename Backend>
+int interaction::ForcefieldT<Backend>
 ::init(topology::Topology & topo,
        configuration::Configuration & conf,
        simulation::Simulation &sim,
@@ -72,8 +75,8 @@ int interaction::Forcefield
 }
 
 
-
-interaction::Interaction * interaction::Forcefield
+template <typename Backend>
+interaction::Interaction * interaction::ForcefieldT<Backend>
 ::interaction(std::string name)
 {
   for(iterator it = begin(), to = end();
@@ -84,7 +87,8 @@ interaction::Interaction * interaction::Forcefield
   return NULL;
 }
 
-interaction::Interaction const * interaction::Forcefield
+template <typename Backend>
+interaction::Interaction const * interaction::ForcefieldT<Backend>
 ::interaction(std::string name)const
 {
   for(const_iterator it = begin(), to = end();
@@ -95,7 +99,8 @@ interaction::Interaction const * interaction::Forcefield
   return NULL;
 }
 
-int interaction::Forcefield
+template <typename Backend>
+int interaction::ForcefieldT<Backend>
 ::calculate_interactions(topology::Topology & topo,
 			 configuration::Configuration & conf,
 			 simulation::Simulation &sim)
@@ -171,7 +176,8 @@ int interaction::Forcefield
 }
     
 
-void interaction::Forcefield
+template <typename Backend>
+void interaction::ForcefieldT<Backend>
 ::print_timing(std::ostream & os)
 {
   // m_timer.print(os);
@@ -185,3 +191,7 @@ void interaction::Forcefield
   }
 }
 
+/**
+ * Explicit default template instantiation
+ */
+template class interaction::ForcefieldT<util::cpuBackend>;

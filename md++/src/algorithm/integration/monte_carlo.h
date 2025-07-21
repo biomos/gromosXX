@@ -28,11 +28,6 @@
 
 #include <gsl/gsl_rng.h>
 
-namespace interaction
-{
-  class Forcefield;
-}
-
 namespace algorithm
 {
   /**

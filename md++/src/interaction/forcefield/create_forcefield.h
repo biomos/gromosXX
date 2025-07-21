@@ -40,8 +40,6 @@ namespace io
 
 namespace interaction
 {
-  class Forcefield;
-  
   /**
    * create a Gromos96 (like) forcefield.
    */

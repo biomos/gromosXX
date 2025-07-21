@@ -37,6 +37,9 @@
 #include "../io/instream.h"
 #include "../io/topology/in_topology.h"
 
+#include "../interaction/forcefield/forcefield.h"
+#include "../interaction/forcefield/create_forcefield.h"
+
 #include "../algorithm/algorithm/algorithm_sequence.h"
 #include "../algorithm/constraints/position_constraints.h"
 #include "../algorithm/integration/energy_calculation.h"
@@ -62,9 +65,6 @@
 #include "../algorithm/pressure/berendsen_barostat.h"
 #include "../algorithm/virtualatoms/prepare_virtualatoms.h"
 #include "../algorithm/virtualatoms/propagate_forces.h"
-
-#include "../interaction/forcefield/forcefield.h"
-#include "../interaction/forcefield/create_forcefield.h"
 
 #include "../math/periodicity.h"
 
@@ -110,9 +110,6 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
   if (sim.param().multigradient.multigradient) {
     md_seq.push_back(new algorithm::Multi_Gradient());
   }
-
-  // initialize the CudaManager
-  // if user asks for CUDA acceleration, we call CUDA-capable variants wherever possible
 
   // center of mass motion printing / removal
   if (sim.param().centreofmass.skip_step ||

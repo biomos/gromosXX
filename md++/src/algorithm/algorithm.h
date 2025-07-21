@@ -190,16 +190,16 @@ template <typename Backend = util::cpuBackend>
 //     return std::make_unique<AlgT<util::cpuBackend>>(os);
 //   }
 
-  template <template <typename> class AlgT>
+  template <template <typename> class AlgT, typename... Args>
   IAlgorithm* make_algorithm(
                             simulation::Simulation & sim, 
-                            std::ostream &os = std::cout) {
+                            Args&&... args) {
     if constexpr (util::has_gpu_backend_v<AlgT>) {
       if (sim.cuda_enabled()) {
-        return new AlgT<util::gpuBackend>(os);
+        return new AlgT<util::gpuBackend>(std::forward<Args>(args)...);
       }
     }
-    return new AlgT<util::cpuBackend>(os);
+    return new AlgT<util::cpuBackend>(std::forward<Args>(args)...);
   }
 }
 #endif

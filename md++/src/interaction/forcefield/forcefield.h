@@ -113,6 +113,12 @@ namespace interaction
    * 
    */
   using Forcefield = ForcefieldT<util::cpuBackend>;
+
+  /**
+   * @brief Explicit instantiation to provide to the linker
+   * 
+   */
+  extern template class ForcefieldT<util::cpuBackend>;
   
 } // interaction
 
