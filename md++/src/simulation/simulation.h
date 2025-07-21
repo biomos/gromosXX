@@ -161,7 +161,9 @@ namespace simulation
       // allow change only if OMP available
       m_mpi = enabled;
 #else
-      (void)enabled; // avoids compiler warnings
+      if (enabled) {
+            throw std::runtime_error("MPI support is not available in this build.");
+      }
 #endif
     }
 
@@ -174,7 +176,9 @@ namespace simulation
       // allow change only if OMP available
       m_openmp = enabled;
 #else
-      (void)enabled; // avoids compiler warnings
+      if (enabled) {
+            throw std::runtime_error("OpenMP support is not available in this build.");
+      }
 #endif
     }
 
@@ -187,7 +191,9 @@ namespace simulation
       // allow change only if CUDA available
       m_cuda = enabled;
 #else
-      (void)enabled; // avoids compiler warnings
+      if (enabled) {
+            throw std::runtime_error("CUDA support is not available in this build.");
+      }
 #endif
     }
 
