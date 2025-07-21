@@ -135,7 +135,7 @@ allows us to schedule overlap in CPU and GPU execution.
 
 Then, we add to md_seq Algorithm with appropriate backend:
 ```cpp
-if (gpu::CudaManager::is_enabled()) {
+if (sim.cuda_enabled()) {
     // Use GPU backend
     md_seq.emplace_back(std::make_unique<M_Shake<gpuBackend>>();) // we might also want to switch to smart pointers
 } else {
@@ -228,27 +228,8 @@ Shake<util::gpuBackend>::apply(...) {
 ```
 
 The reason for this is to have some compile-time control. Every algorithm now has to be explicitly defined as CPU or GPU variant.
-If a CPU-only compilation is done, the GPU variants should not get compiled at all, and only throw error,
-if you try to instantiate them:
-```cpp
-
-#ifdef USE_CUDA
-  static bool gpu::CudaManager::is_enabled() { return m_is_enabled; } // runtime value (set by user input)
-#else
-  static constexpr bool gpu::CudaManager::is_enabled() { return false; } // compile-time constant false
-#endif
-
-// create_md_sequence.cc
-if (gpu::CudaManager::is_enabled()) {
-    md_seq.push_back(Shake<util::gpuBackend>());
-} else {
-    md_seq.push_back(Shake<util::cpuBackend>());
-}
-```
-
-If somehow a `Algorithm<util::gpuBackend>` is created somewhere by accident, the CPU-only build should not compile any
-AlgorithmT<util::gpuBackend>:
-
+In a CPU-only compilation, the GPU variants should not get compiled at all, and an error is thrown,
+if you try to instantiate them. This is achieved by the `is_valid_algorithm_backend` type trait:
 ```cpp
 // util/backend.h
 template <typename Backend>
@@ -273,6 +254,40 @@ struct is_valid_algorithm_backend
                 "This backend is not supported in the current build configuration.");
   }
 ```
+Instantiating the GPU variant is not allowed in CPU-only compilation:
+```cpp
+// create_md_sequence.cc
+if (sim.cuda_enabled()) {
+    md_seq.push_back(Shake<util::gpuBackend>()); // this does not compile in USE_CUDA=OFF
+} else {
+    md_seq.push_back(Shake<util::cpuBackend>());
+}
+```
+
+Instead, you should use the factory function, that checks the availability of the GPU variant at the compile time, and compiles the 
+appropriate factory function:
+```cpp
+  template <template <typename> class AlgT, typename... Args>
+  IAlgorithm* make_algorithm(
+                            simulation::Simulation & sim, 
+                            Args&&... args) {
+    if constexpr (util::has_gpu_backend_v<AlgT>) {
+      if (sim.cuda_enabled()) {
+        return new AlgT<util::gpuBackend>(std::forward<Args>(args)...);
+      }
+    }
+    return new AlgT<util::cpuBackend>(std::forward<Args>(args)...);
+  }
+```
+Usage example:
+```cpp
+algorithm::make_algorithm<algorithm::Remove_COM_Motion>(sim, os);
+```
+The provided arguments are passed to the constructor of `Remove_COM_Motion`.
+
+If somehow a `Algorithm<util::gpuBackend>` is created somewhere by accident, the CPU-only build should not compile any
+`AlgorithmT<util::gpuBackend>`.
+
 
 ## How to implement GPU variant of an algorithm?
 1. Change the class declaration into a template:
