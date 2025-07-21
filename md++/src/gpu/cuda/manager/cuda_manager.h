@@ -14,9 +14,9 @@
 
 #define CUDA_VARIABLE_DISABLED() disabled(__FILE__, __LINE__, __func__)
 namespace gpu {
-    class CudaDeviceManager;
-    class CudaMemoryManager;
-    class CudaDeviceWorker;
+    // class CudaDeviceManager;
+    // class CudaMemoryManager;
+    // class CudaDeviceWorker;
     /**
      * @class CudaManager
      * @brief High-level orchestrator for multi-GPU CUDA operations in a molecular dynamics program.
@@ -31,17 +31,58 @@ namespace gpu {
      * Probably should be called CudaInterface, we will see.
      * 
      */
+
+    #define CUDA_MANAGER_COPY_WARNING \
+    _Pragma("message(\"Warning: Shallow copy of CudaManager detected.\")")
+
     class CudaManager {
         public:
             /**
-             * @brief Constructor for CudaManager.
+             * @brief Constructor
              */
             CudaManager();
 
             /**
-             * @brief Destructor for CudaManager.
+             * Destructor
              */
             // ~CudaManager();
+
+            /**
+             * @brief Disable copy
+             */
+            // CudaManager(const CudaManager&) = delete;
+            // CudaManager& operator=(const CudaManager&) = delete;
+
+            /**
+             * @brief Allow shallow copy constructor, but warn
+             */
+            CudaManager(const CudaManager& other) {
+                // CUDA_MANAGER_COPY_WARNING; // Compile-time warning
+                std::cerr << "Warning: Shallow copy of CudaManager at " << __FILE__
+                        << ":" << __LINE__ << " in function " << __func__ << std::endl;
+                this->m_device_managers = other.m_device_managers;
+            }
+
+            /**
+             * @brief Allow shallow assignment operator, but warn
+             */
+            CudaManager& operator=(const CudaManager& other) {
+                // CUDA_MANAGER_COPY_WARNING; // Compile-time warning
+                if (this != &other) {
+                    std::cerr << "Warning: Shallow copy assignment of CudaManager at " << __FILE__
+                            << ":" << __LINE__ << " in function " << __func__ << std::endl;
+                    // Perform shallow copy
+                    this->m_device_managers = other.m_device_managers;
+                }
+                return *this;
+            }
+
+
+            /**
+             * @brief Allow move
+             */
+            CudaManager(CudaManager&&) = default;
+            CudaManager& operator=(CudaManager&&) = default;
 
             /**
              * @brief Initialize the CUDA environment and select devices.
@@ -62,7 +103,7 @@ namespace gpu {
              * @return The CUDA stream for the specified device.
              * @throws std::invalid_argument if the device ID is invalid.
              */
-            CUSTREAM get_stream(int device_id) const;
+            // CUSTREAM get_stream(int device_id) const;
 
             /**
              * @brief Synchronize all devices.
@@ -87,8 +128,8 @@ namespace gpu {
              */
             // template <template<typename, typename> class VecT, typename T, typename Alloc /* = gpu::CuMAllocator<T> */>
             // VecT<T, Alloc> create_cuvector(int device_id, size_t size);
-            template <typename T>
-            gpu::CUVECTOR_T<T> create_cuvector(int device_id, size_t size);
+            // template <typename T>
+            // gpu::CUVECTOR_T<T> create_cuvector(int device_id, size_t size);
 
             /**
              * @brief Copy data from a host vector to a cuvector on a specific GPU.
@@ -121,46 +162,22 @@ namespace gpu {
             std::vector<std::string> get_active_device_descriptions() const;
 
             /**
+             * @brief Automatically select the best CUDA device based on properties.
+             * @return The ID of the selected device.
+             * @throws std::runtime_error if no suitable device is found.
+             */
+            int select_best_device() const;
+
+            /**
              * @brief If user requested CUDA acceleration
              * @return boolean, always false in CUDA-disabled build
              */
 #ifdef USE_CUDA
-            static bool is_enabled() { return is_enabled_; }
+            static bool is_enabled() { return m_is_enabled; }
 #else
             static constexpr bool is_enabled() { return false; }
 #endif
-            /**
-             * @brief A specialized type, that allows user to create a transparent variable on the GPU
-             * 
-             * @tparam T Variable type
-             */
-            template <typename T>
-            class Variable {
-            public:
-                /**
-                 * @brief Constructor for Variable.
-                 * @param device_id The ID of the device to use.
-                 * @param file The source file where the Variable was created.
-                 * @param line The line number in the source file where the Variable was created.
-                 * @param func The function name where the Variable was created.
-                 */
-                explicit Variable(int device_id = 0,
-                const char* file = __FILE__,
-                int line = __LINE__);
-                
-                ~Variable();
 
-                Variable& operator=(const T& value);
-                operator T() const;
-
-                T* device_ptr();
-
-            private:
-                int device_id_;
-                T* device_data_;
-
-                void disabled(const char* file, int line, const char* func) const;
-            };
         private:
             /**
              * @brief Validate a device ID.
@@ -169,11 +186,9 @@ namespace gpu {
              */
             void validate_device_id(int device_id) const;
 #ifdef USE_CUDA
-            CudaDeviceManager device_manager_; ///< Manages CUDA devices.
-            std::unordered_map<int, CudaDeviceWorker> device_workers_; ///< Workers for each active device.
-            CudaMemoryManager memory_manager_; ///< Handles memory allocation and transfers.
+            std::unordered_map<int, std::shared_ptr<CudaDeviceManager> > m_device_managers; ///< Managers for each active device.
 
-            static bool is_enabled_;
+            static bool m_is_enabled;
 #endif
     };
 }

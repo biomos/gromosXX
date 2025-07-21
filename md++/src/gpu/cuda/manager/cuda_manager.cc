@@ -20,9 +20,9 @@ size_t gpu::CudaManager::get_device_count() const {
     return DISABLED(size_t);
 }
 
-gpu::CUSTREAM gpu::CudaManager::get_stream(int device_id) const {
-    return DISABLED(gpu::CUSTREAM);
-}
+// gpu::CUSTREAM gpu::CudaManager::get_stream(int device_id) const {
+//     return DISABLED(gpu::CUSTREAM);
+// }
 
 void gpu::CudaManager::synchronize_all() {
     DISABLED_VOID();

@@ -52,7 +52,7 @@ double gpu::cuda::algorithm::remove_com_translation(
                                 bool remove_trans) {
     // CUDA-specific implementation
     sim.cuda().synchronize_all();
-    auto pos = sim.cuda().create_cuvector<float3>(0, topo.num_atoms());
+    // auto pos = sim.cuda().create_cuvector<float3>(0, topo.num_atoms());
     return 0;
 }
 
@@ -63,6 +63,6 @@ double gpu::cuda::algorithm::remove_com_rotation(
                                 bool remove_trans) {
     // CUDA-specific implementation
     sim.cuda().synchronize_all();
-    auto pos = sim.cuda().create_cuvector<float3>(0, topo.num_atoms());
+    // auto pos = sim.cuda().create_cuvector<float3>(0, topo.num_atoms());
     return 0;
 }

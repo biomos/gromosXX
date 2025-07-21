@@ -4,31 +4,31 @@
 #include <sstream>
 
 #include "gpu/cuda/cuheader.h"
+#include "gpu/cuda/utils.h"
 #include "cuda_manager.h"
 
 #include "cuda_manager.tcc" // Include template implementations
 
-bool gpu::CudaManager::is_enabled_ = false;
+bool gpu::CudaManager::m_is_enabled = false;
 
-gpu::CudaManager::CudaManager()
-    : device_manager_(), memory_manager_() {
-    }
+gpu::CudaManager::CudaManager() {}
 
 void gpu::CudaManager::init(const std::vector<int>& device_ids) {
+    int deviceCount = 0;
+    CUDA_CHECK(cudaGetDeviceCount(&deviceCount));
     // Query available devices
-    int available_device_count = device_manager_.get_device_count();
-    if (available_device_count == 0) {
+    if (deviceCount == 0) {
         io::messages.add("No CUDA devices available.",
             "CudaManager", io::message::error);
     }
 
     // Determine which devices to initialize
     std::vector<int> devices_to_initialize = device_ids.empty()
-        ? std::vector<int>(available_device_count)
+        ? std::vector<int>(deviceCount)
         : device_ids;
 
     if (device_ids.empty()) {
-        for (int i = 0; i < available_device_count; ++i) {
+        for (int i = 0; i < deviceCount; ++i) {
             devices_to_initialize[i] = i;
         }
     }
@@ -36,46 +36,45 @@ void gpu::CudaManager::init(const std::vector<int>& device_ids) {
     // Initialize workers for each device
     for (int device_id : devices_to_initialize) {
         // validate_device_id(device_id);
-        device_manager_.set_device(device_id);
-        auto [it, inserted] = device_workers_.emplace(device_id, gpu::CudaDeviceWorker(device_id));
-        if (!inserted) {
-            throw std::runtime_error("Duplicate device ID: " + std::to_string(device_id));
-        }
+        // auto [it, inserted] = m_device_managers.emplace(device_id, std::make_unique<gpu::CudaDeviceManager>(device_id));
+        // if (!inserted) {
+        //     throw std::runtime_error("Duplicate device ID: " + std::to_string(device_id));
+        // }
     }
 
-    memory_manager_.init();
+    // memory_manager_.init();
 }
 
 size_t gpu::CudaManager::get_device_count() const {
-    return device_workers_.size();
+    return m_device_managers.size();
 }
 
-gpu::CUSTREAM gpu::CudaManager::get_stream(int device_id) const {
-    validate_device_id(device_id);
-    return device_workers_.at(device_id).get_stream();
-}
+// gpu::CUSTREAM gpu::CudaManager::get_stream(int device_id) const {
+//     validate_device_id(device_id);
+//     return m_device_managers.at(device_id).get_stream();
+// }
 
 void gpu::CudaManager::synchronize_all() {
-    for (const auto& [device_id, worker] : device_workers_) {
-        worker.synchronize();
+    for (const auto& [device_id, device_manager] : m_device_managers) {
+        device_manager->synchronize();
     }
 }
 
 void gpu::CudaManager::synchronize_device(int device_id) {
     validate_device_id(device_id);
-    device_workers_.at(device_id).synchronize();
+    m_device_managers.at(device_id)->synchronize();
 }
 
 std::vector<std::string> gpu::CudaManager::get_active_device_descriptions() const {
     std::vector<std::string> descriptions;
-    for (const auto& [device_id, worker] : device_workers_) {
-        descriptions.push_back(device_manager_.get_device_description(device_id));
+    for (const auto& [device_id, device_manager] : m_device_managers) {
+        descriptions.push_back(device_manager->get_device_description());
     }
     return descriptions;
 }
 
 void gpu::CudaManager::validate_device_id(int device_id) const {
-    if (device_workers_.find(device_id) == device_workers_.end()) {
+    if (m_device_managers.find(device_id) == m_device_managers.end()) {
         throw std::invalid_argument("Invalid device ID: " + std::to_string(device_id));
     }
 }

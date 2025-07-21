@@ -1,111 +1,186 @@
+
 #pragma once
 
 #include "gpu/cuda/cuheader.h"
+#include "gpu/cuda/utils.h"
 
 #include <vector>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
+#include <mutex>
+#include <thread>
+#include <functional>
+
+#include "cuda_memory_manager.h"
+#include "cuda_device_worker.h"
 
 namespace gpu {
     /**
      * @class CudaDeviceManager
-     * @brief Manages CUDA devices and streams.
-     *
-     * The CudaDeviceManager class provides functionality to query available CUDA devices,
-     * set the active device, and manage CUDA streams. It abstracts away low-level CUDA
-     * device management details and provides a clean interface for interacting with GPUs.
+     * @brief Manages a single CUDA device: initialization, memory, and kernel execution.
+     * 
+     * Responsible for:
+     * - CUDA device context setup (cudaSetDevice)
+     * - Memory allocation via CudaMemoryManager
+     * - Task submission to device workers
+     * - Synchronization and error checking
      */
     class CudaDeviceManager {
     public:
         /**
-         * @brief Constructor for CudaDeviceManager.
-         *
-         * Queries the available CUDA devices and initializes the manager.
-         * Throws an exception if no CUDA devices are available.
+         * Constructor
+         * @param device_id CUDA device ordinal (e.g. 0, 1, 2 ...)
          */
-        CudaDeviceManager();
+        explicit CudaDeviceManager(int device_id);
 
         /**
-         * @brief Destructor for CudaDeviceManager.
-         *
-         * Ensures that all created streams are properly destroyed.
+         * Destructor
+         * Frees resources, synchronizes device
          */
         ~CudaDeviceManager();
 
         /**
-         * @brief Get the number of available CUDA devices.
-         * @return The number of available CUDA devices.
+         * @brief Disable copy
          */
-        int get_device_count() const;
+        // CudaDeviceManager(const CudaDeviceManager&) = delete;
+        // CudaDeviceManager& operator=(const CudaDeviceManager&) = delete;
+
+
+        /**
+         * @brief Allow shallow copy constructor, but warn
+         */
+        CudaDeviceManager(const CudaDeviceManager& other) {
+            // CUDA_MANAGER_COPY_WARNING; // Compile-time warning
+            std::cerr << "Warning: Shallow copy of CudaDeviceManager at " << __FILE__
+                    << ":" << __LINE__ << " in function " << __func__ << std::endl;
+            this->m_device_name = other.m_device_name;
+            this->m_workers = other.m_workers;
+            this->m_device_id = other.m_device_id;
+        }
+
+        /**
+         * @brief Allow shallow assignment operator, but warn
+         */
+        CudaDeviceManager& operator=(const CudaDeviceManager& other) {
+            // CUDA_MANAGER_COPY_WARNING; // Compile-time warning
+            if (this != &other) {
+                std::cerr << "Warning: Shallow copy assignment of CudaDeviceManager at " << __FILE__
+                        << ":" << __LINE__ << " in function " << __func__ << std::endl;
+                // Perform shallow copy
+                this->m_device_name = other.m_device_name;
+                this->m_workers = other.m_workers;
+                this->m_device_id = other.m_device_id;
+            }
+            return *this;
+        }
+
+        /**
+         * @brief Allow move
+         */
+        CudaDeviceManager(CudaDeviceManager&&) = default;
+        CudaDeviceManager& operator=(CudaDeviceManager&&) = default;
+
+        /**
+         * Initialize the device context and resources
+         * @return cudaError_t CUDA status
+         */
+        cudaError_t initialize();
 
         /**
          * @brief Get the properties of a specific CUDA device.
          * @param device_id The ID of the device.
          * @return The properties of the specified device.
-         * @throws std::invalid_argument if the device ID is invalid.
          */
-        CUDEVPROP get_device_properties(int device_id) const;
+        cudaDeviceProp get_device_properties() const;
 
         /**
-         * @brief Set the active CUDA device.
-         * @param device_id The ID of the device to set as active.
-         * @throws std::invalid_argument if the device ID is invalid.
-         */
-        void set_device(int device_id);
-
-        /**
-         * @brief Get the ID of the currently active CUDA device.
-         * @return The ID of the currently active CUDA device.
-         */
-        int get_active_device() const;
-
-        /**
-         * @brief Create a CUDA stream on the active device.
-         * @return The created CUDA stream.
-         * @throws std::runtime_error if stream creation fails.
-         */
-        CUSTREAM create_stream();
-
-        /**
-         * @brief Destroy a CUDA stream.
-         * @param stream The CUDA stream to destroy.
-         * @throws std::runtime_error if stream destruction fails.
-         */
-        void destroy_stream(CUSTREAM stream);
-
-        /**
-         * @brief Get a human-readable description of a CUDA device.
-         * @param device_id The ID of the device.
+         * @brief Get a human-readable description of the CUDA device.
          * @return A string describing the device.
-         * @throws std::invalid_argument if the device ID is invalid.
          */
-        std::string get_device_description(int device_id) const;
+        std::string get_device_description() const;
+
 
         /**
-         * @brief Automatically select the best CUDA device based on properties.
-         * @return The ID of the selected device.
-         * @throws std::runtime_error if no suitable device is found.
+         * Allocates device memory of given size (in bytes)
+         * @param size Number of bytes to allocate
+         * @return void* pointer to device memory
          */
-        int select_best_device() const;
+        void* allocate_memory(size_t size);
 
+        /**
+         * Frees previously allocated device memory
+         * @param ptr Device pointer to free
+         */
+        void free_memory(void* ptr);
+
+        /**
+         * Submit a kernel task (or a callable that launches kernels) to this device.
+         * Typically gets passed to a CudaDeviceWorker.
+         * @param task Callable object (e.g. lambda) that executes CUDA kernels
+         */
+        void submit_task(std::function<void()> task);
+
+        /**
+         * @brief Synchronize the device (waits for all kernels to finish)
+         * @throws std::runtime_error if CUDA fails.
+         */
+        void synchronize() const {
+            CUDA_CHECK(cudaDeviceSynchronize());
+        };
+
+        
         /**
          * @brief Reset the active device to its default state.
-         * @param device_id The ID of the device to reset.
-         * @throws std::invalid_argument if the device ID is invalid.
+         * @throws std::runtime_error if CUDA fails.
          */
-        void reset_device(int device_id);
+        void reset() {
+            CUDA_CHECK(cudaDeviceReset());
+        };
+
+        /**
+         * Returns device ID
+         */
+        int get_device_id() const;
+
+        /**
+         * Get device name string
+         */
+        std::string device_name() const;
+
+        /**
+         * Adds a new worker
+         */
+        void add_worker();
+
+        /**
+         * Remove the last worker
+         */
+        void remove_worker();
+
+        /**
+         * Starts all worker threads
+         */
+        void start_all_workers(){
+            for (auto& worker : m_workers) {
+                worker.start();
+            }
+        }
+
+        /**
+         * Stops all worker threads gracefully
+         */
+        void stop_all_workers() {
+            for (auto& worker : m_workers) {
+                worker.stop();
+            }
+        }
 
     private:
-        /**
-         * @brief Validate a device ID.
-         * @param device_id The ID of the device to validate.
-         * @throws std::invalid_argument if the device ID is invalid.
-         */
-        void validate_device_id(int device_id) const;
-
-        int device_count_; ///< The number of available CUDA devices.
-        int active_device_id_; ///< The ID of the currently active CUDA device.
-        std::unordered_map<CUSTREAM, int> stream_map_; ///< Tracks streams and their associated devices.
+        std::vector<CudaDeviceWorker> m_workers; // Map of device ID to workers
+        std::mutex m_workers_mutex; // Protects access to next_worker
+        std::string m_device_name;
+        size_t m_next_worker;
+        int m_device_id;
     };
 }
