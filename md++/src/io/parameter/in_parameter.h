@@ -284,7 +284,7 @@ namespace io {
     /**
      * read CUDA block.
      */
-    void read_CUDA(simulation::Parameter &param, std::ostream & os = std::cout);
+    void read_GPU(simulation::Parameter &param, std::ostream & os = std::cout);
 
     /**
      * read CGRAIN block.

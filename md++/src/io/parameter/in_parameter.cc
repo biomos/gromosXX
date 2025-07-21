@@ -107,7 +107,7 @@ void io::In_Parameter::read(simulation::Parameter &param,
   read_PERSCALE(param);
   read_ROTTRANS(param);
   read_INNERLOOP(param);
-  read_CUDA(param);
+  read_GPU(param);
   read_MULTICELL(param);
   read_READTRAJ(param);
   read_INTEGRATE(param);
@@ -2813,67 +2813,89 @@ void io::In_Parameter::read_INNERLOOP(simulation::Parameter &param,
 } //INNERLOOP
 
 /**
- * @section cuda CUDA block
- * @snippet snippets/snippets.cc CUDA
+ * @section gpu GPU block
+ * @snippet snippets/snippets.cc GPU
  */
-void io::In_Parameter::read_CUDA(simulation::Parameter &param,
+void io::In_Parameter::read_GPU(simulation::Parameter &param,
                                       std::ostream & os) {
-    DEBUG(8, "reading CUDA");
+    DEBUG(8, "reading GPU");
 
     std::stringstream exampleblock;
     // lines starting with 'exampleblock<<"' and ending with '\n";' (spaces don't matter)
     // will be used to generate snippets that can be included in the doxygen doc;
     // the first line is the tag
-    exampleblock << "CUDA\n";
+    exampleblock << "GPU\n";
+    exampleblock << "# NTGPU: 0..1, GPU acceleration method used\n";
+    exampleblock << "#        0: do not use GPU acceleration\n";
+    exampleblock << "#        1: use CUDA acceleration\n";
+    exampleblock << "# NTGPU\n";
+    exampleblock << "      1\n";
     exampleblock << "# NGPUS: number of GPUs to use\n";
-    exampleblock << "# NDEVG: Which GPU device number to use. If not given driver will determine.\n";
-    exampleblock << "# NGPUS NDEVG\n";
+    exampleblock << "# NDEVI: Which GPU device number to use. If not provided, or -1, driver will determine.\n";
+    exampleblock << "# NGPUS NDEVI\n";
     exampleblock << "      1     0\n";
     exampleblock << "END\n";
 
-
-    std::string blockname = "CUDA";
+    std::string blockname = "GPU";
     Block block(blockname, exampleblock.str());
 
     if (block.read_buffer(m_block[blockname], false) == 0) {
-#ifdef HAVE_LIBCUDART
+#ifdef USE_CUDA
         block_read.insert(blockname);
-        block.get_next_parameter("NGPUS", param.cuda.number_gpus, ">0", "");
-
-        int temp = 0;
-        bool fail = false;
-        for (unsigned int i = 0; i < param.cuda.number_gpus; i++) {
-            std::string idx=io::to_string(i);
-            if (block.get_next_parameter("NDEVG["+idx+"]", temp, ">=-1", "", true)) {
-                fail = true;
+        unsigned ntgpu = 0;
+        block.get_next_parameter("NTGPU", ntgpu, ">=0", "");
+        switch (ntgpu) {
+            case 0:
+            {
+                // do not use GPU
+                param.gpu.accelerator = simulation::gpu_disabled;
                 break;
             }
-            param.cuda.device_number.push_back(temp);
+            case 1:
+            {
+                // use CUDA
+                param.gpu.accelerator = simulation::gpu_cuda;
+                break;
+            }
+            default:
+            {
+                param.gpu.accelerator = simulation::gpu_disabled;
+            }
         }
-        if (param.cuda.number_gpus > 1) {
-            io::messages.add("CUDA block: Running on multiple GPUs is not supported yet. "
-                             "Please specify only one GPU.",
-                             "In_Parameter", io::message::error);
-        }
-        if (fail) {
-            // if not enough device numbers are given, set all numbers to -1
-            // and do not report this as an error
-            param.cuda.device_number.clear();
-            param.cuda.device_number.resize(param.cuda.number_gpus, -1);
-            io::messages.add("CUDA driver will determine devices for nonbonded interaction evaluation.",
-                                "In_Parameter", io::message::notice);
-            block.reset_error();
-        }
-        block.get_final_messages();
+        // Get the number of gpus and their device number
+        if (param.gpu.accelerator != simulation::gpu_disabled) {
+            unsigned number_gpus = 0;
+            block.get_next_parameter("NGPUS", number_gpus, ">0", "");
+
+            int temp = -1;
+            bool fail = false;
+            for (unsigned int i = 0; i < number_gpus; i++) {
+                std::string idx=io::to_string(i);
+                if (block.get_next_parameter("NDEVI["+idx+"]", temp, ">=-1", "", true)) {
+                    fail = true;
+                    break;
+                }
+                param.gpu.devices.push_back(temp);
+            }
+            if (fail) {
+                // if not enough device numbers are given, set all numbers to -1
+                // and do not report this as an error
+                param.gpu.devices.resize(number_gpus, -1);
+                io::messages.add("CUDA driver will determine device ID.",
+                                    "In_Parameter", io::message::notice);
+                block.reset_error();
+            }
+            block.get_final_messages();
 #else
-        io::messages.add("CUDA block: GPU is not supported in your compilation. Use --with-cuda for compiling.",
-                            "In_Parameter", io::message::error);
+            io::messages.add("CUDA block: GPU is not supported in your compilation. Recompile with CUDA enabled.",
+                                "In_Parameter", io::message::error);
 #endif
+        }
     }
 
     DEBUG(8, "param.cuda.device_number: ");
-    for (unsigned i = 0; i < param.cuda.device_number.size(); ++i) {
-        DEBUG(8, "param.cuda.device_number: " << param.cuda.device_number.at(i));
+    for (unsigned i = 0; i < param.gpu.devices.size(); ++i) {
+        DEBUG(8, "param.cuda.devices: " << param.gpu.devices.at(i));
     }
 } //CUDA
 

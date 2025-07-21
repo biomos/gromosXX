@@ -1033,6 +1033,25 @@ namespace simulation
   };
 
   /**
+   * @enum gpu_enum
+   * which accelerator to use
+   */
+  enum gpu_enum {
+    /**
+     * 0: disabled
+     */
+    gpu_disabled = 0,
+    /**
+     * 1: CUDA
+     */
+    gpu_cuda = 1,
+    /**
+     * 2: OpenCL
+     */
+    // gpu_opencl = 2
+  };
+
+  /**
    * @class Parameter
    * input parameters.
    */
@@ -3595,26 +3614,26 @@ namespace simulation
     } /** special inner loops */ innerloop;
 
     /**
-     * @struct cuda_struct
+     * @struct gpu_struct
      * Constructor:
      * Default values:
      * - number_gpus: 0
      * - gpu_device_number: \<empty\>
      */
-    struct cuda_struct {
+    struct gpu_struct {
       /**
        * constructor
        */
-      cuda_struct() : number_gpus(0) {}
+      gpu_struct() : accelerator(gpu_disabled) {}
       /**
-       * The number of GPUs used for CUDA
+       * GPU accelerator
        */
-      unsigned int number_gpus;
+      gpu_enum accelerator;
       /**
-       * Which device number should be used for CUDA
+       * Which device ID(s) should be used for CUDA
        */
-      std::vector<int> device_number;
-    } /** special inner loops */ cuda;
+      std::vector<int> devices;
+    } gpu;
 
     /**
      * @struct localelev_struct

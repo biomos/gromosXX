@@ -507,6 +507,7 @@ int io::check_features(simulation::Simulation  &sim)
   add("amber", "AMBER topology", param.amber.amber);
   // parallelization
   add("parallel_mpi", "MPI parallelization", sim.mpi_enabled());
+
   int size = 1;
 #ifdef OMP
     int tid = 0;
@@ -544,8 +545,11 @@ int io::check_features(simulation::Simulation  &sim)
   // force groups
   add("force_groups", "force groups", param.force.force_groups);
 
-  //VIRTUALATOMS block
+  // VIRTUALATOMS block
   add("virtualatoms", "Virtual Atoms", param.virtualatoms.virtualatoms);
+
+  // GPU block
+  add("gpu", "GPU Acceleration", param.gpu.accelerator != simulation::gpu_disabled);
 
 // we don't need the add function anymore.
 #undef add
@@ -4966,6 +4970,108 @@ int io::check_features(simulation::Simulation  &sim)
   fc.unlock("gamd", "parallel_omp");
   fc.unlock("gamd", "mult_energy_groups");
   //fc.unlock("gamd", "shifted_crf");
+  
+  // GPU Acceleration
+  fc.unlock("gpu", "solute");
+  fc.unlock("gpu", "solvent");
+  fc.unlock("gpu", "solvent_only");
+  fc.unlock("gpu", "steepest_descent");
+  fc.unlock("gpu", "conjugate_gradient");
+  fc.unlock("gpu", "solute_constraint_off");
+  fc.unlock("gpu", "solute_shake");
+  // fc.unlock("gpu", "solute_lincs");
+  // fc.unlock("gpu", "solute_flexshake");
+  fc.unlock("gpu", "solvent_constraint_off");
+  fc.unlock("gpu", "solvent_shake");
+  // fc.unlock("gpu", "solvent_lincs");
+  // fc.unlock("gpu", "solvent_settle");
+  fc.unlock("gpu", "pressure_calculation");
+  fc.unlock("gpu", "pressure_scale_berendsen");
+  fc.unlock("gpu", "virial_off");
+  fc.unlock("gpu", "virial_atomic");
+  fc.unlock("gpu", "virial_molecular");
+  fc.unlock("gpu", "vacuum");
+  fc.unlock("gpu", "pbc_r");
+  fc.unlock("gpu", "pbc_c");
+  fc.unlock("gpu", "pbc_t");
+  // fc.unlock("gpu", "perturbation");
+  // fc.unlock("gpu", "perturbation_scaling");
+  // fc.unlock("gpu", "slow_growth");
+  // fc.unlock("gpu", "individual_lambdas");
+  // fc.unlock("gpu", "precalculate_lambdas");
+  // fc.unlock("gpu", "gamd");
+  // fc.unlock("gpu", "bond");
+  // fc.unlock("gpu", "angle");
+  // fc.unlock("gpu", "dihedral");
+  // fc.unlock("gpu", "improper");
+  // fc.unlock("gpu", "crf");
+  // fc.unlock("gpu", "lj");
+  // fc.unlock("gpu", "shifted_crf");
+  // fc.unlock("gpu", "com_removal");
+  // fc.unlock("gpu", "rf_excluded");
+  // fc.unlock("gpu", "pairlist_standard");
+  // fc.unlock("gpu", "pairlist_grid");
+  // fc.unlock("gpu", "pairlist_gridcell");
+  // fc.unlock("gpu", "cutoff_atomic");
+  // fc.unlock("gpu", "cutoff_cg");
+  // fc.unlock("gpu", "cg_martini");
+  // fc.unlock("gpu", "cg_gromos");
+  // fc.unlock("gpu", "mixed_grain");
+  fc.unlock("gpu", "temp_berendsen");
+  fc.unlock("gpu", "temp_nosehoover");
+  fc.unlock("gpu", "temp_nosehoover_chains");
+  fc.unlock("gpu", "position_rest");
+  fc.unlock("gpu", "position_const");
+  fc.unlock("gpu", "position_const_scaled");
+  fc.unlock("gpu", "distance_rest");
+  fc.unlock("gpu", "distance_field");
+  fc.unlock("gpu", "angle_rest");
+  fc.unlock("gpu", "angle_const");
+  fc.unlock("gpu", "dihedral_rest");
+  fc.unlock("gpu", "dihedral_const");
+  fc.unlock("gpu", "jvalue_rest");
+  fc.unlock("gpu", "rdc_rest");
+  // fc.unlock("gpu", "perscale");
+  fc.unlock("gpu", "rottrans");
+  // fc.unlock("gpu", "innerloop_method_off");
+  // fc.unlock("gpu", "innerloop_method_generic");
+  // fc.unlock("gpu", "innerloop_method_hardcode");
+  // fc.unlock("gpu", "innerloop_method_table");
+  // fc.unlock("gpu", "innerloop_method_cuda");
+  // fc.unlock("gpu", "innerloop_solvent_topology");
+  // fc.unlock("gpu", "innerloop_solvent_spc");
+  // fc.unlock("gpu", "repex_temp");
+  // fc.unlock("gpu", "repex_lambda");
+  // fc.unlock("gpu", "multicell");
+  // // fc.unlock("gpu", "reeds");
+  fc.unlock("gpu", "analysis");
+  fc.unlock("gpu", "no_integration");
+  // fc.unlock("gpu", "stochdyn");
+  // fc.unlock("gpu", "multistep");
+  // fc.unlock("gpu", "multistep_boost");
+  fc.unlock("gpu", "montecarlo");
+  // fc.unlock("gpu", "polarisation_cos");
+  // fc.unlock("gpu", "polarisation_cos_damped");
+  // fc.unlock("gpu", "sasa");
+  // fc.unlock("gpu", "sasavol");
+  // fc.unlock("gpu", "random_gromos");
+  fc.unlock("gpu", "random_gsl");
+  // fc.unlock("gpu", "eds");
+  // fc.unlock("gpu", "aeds");
+  fc.unlock("gpu", "qmmm");
+  // fc.unlock("gpu", "amber");
+  // fc.unlock("gpu", "parallel_mpi");
+  fc.unlock("gpu", "parallel_omp");
+  // fc.unlock("gpu", "mult_energy_groups");
+  // fc.unlock("gpu", "ewald");
+  // fc.unlock("gpu", "p3m");
+  // fc.unlock("gpu", "leus");
+  // fc.unlock("gpu", "bsleus");
+  // fc.unlock("gpu", "xray");
+  // fc.unlock("gpu", "force_groups");
+  // fc.unlock("gpu", "virtualatoms");
+
+  
   if (fc.check()) 
     return 0;
 

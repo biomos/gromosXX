@@ -61,6 +61,7 @@ xxintnbint_HEADERS = nonbonded/interaction/nonbonded_parameter.h\
 	nonbonded/interaction/perturbed_nonbonded_set.h\
 	nonbonded/interaction/nonbonded_interaction.h\
 	nonbonded/interaction/omp_nonbonded_interaction.h\
+	nonbonded/interaction/cuda_nonbonded_interaction.h\
 	nonbonded/interaction/mpi_nonbonded_master.h\
 	nonbonded/interaction/mpi_nonbonded_slave.h\
 	nonbonded/interaction/storage.h\
@@ -73,7 +74,8 @@ xxintnbpairlist_HEADERS = nonbonded/pairlist/pairlist.h\
 	nonbonded/pairlist/pairlist_algorithm.h\
 	nonbonded/pairlist/standard_pairlist_algorithm.h\
 	nonbonded/pairlist/extended_grid_pairlist_algorithm.h\
-	nonbonded/pairlist/grid_cell_pairlist.h
+	nonbonded/pairlist/grid_cell_pairlist.h\
+	nonbonded/pairlist/cuda_pairlist_algorithm.h
 
 xxintnbspecialdir = $(includedir)/md++/interaction/special
 xxintnbspecial_HEADERS = special/create_special.h\
@@ -140,8 +142,10 @@ libgrointeraction_la_SOURCES = interaction.cc\
 	nonbonded/pairlist/extended_grid.cc\
 	nonbonded/pairlist/extended_grid_pairlist_algorithm.cc\
 	nonbonded/pairlist/grid_cell_pairlist.cc\
+	nonbonded/pairlist/cuda_pairlist_algorithm.cc\
 	nonbonded/interaction/nonbonded_interaction.cc\
 	nonbonded/interaction/omp_nonbonded_interaction.cc\
+	nonbonded/interaction/cuda_nonbonded_interaction.cc\
 	nonbonded/interaction/mpi_nonbonded_master.cc\
 	nonbonded/interaction/mpi_nonbonded_slave.cc\
 	nonbonded/interaction/nonbonded_set.cc\

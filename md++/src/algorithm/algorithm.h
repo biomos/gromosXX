@@ -183,7 +183,7 @@ template <typename Backend = util::cpuBackend>
                             simulation::Simulation & sim, 
                             Args&&... args) {
     if constexpr (util::has_gpu_backend_v<AlgT>) {
-      if (sim.cuda_enabled()) {
+      if (sim.param().gpu.accelerator == simulation::gpu_cuda) {
         return new AlgT<util::gpuBackend>(std::forward<Args>(args)...);
       }
     }
@@ -202,7 +202,7 @@ template <typename Backend = util::cpuBackend>
                             simulation::Simulation & sim, 
                             Args&&... args) {
     if constexpr (util::has_gpu_backend_v<AlgT>) {
-      if (sim.cuda_enabled()) {
+      if (sim.param().gpu.accelerator == simulation::gpu_cuda) {
         return std::make_unique<AlgT<util::gpuBackend>>(std::forward<Args>(args)...);
       }
     }

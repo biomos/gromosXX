@@ -46,12 +46,14 @@
 #include "../../interaction/nonbonded/pairlist/standard_pairlist_algorithm.h"
 #include "../../interaction/nonbonded/pairlist/extended_grid_pairlist_algorithm.h"
 #include "../../interaction/nonbonded/pairlist/grid_cell_pairlist.h"
+#include "../../interaction/nonbonded/pairlist/cuda_pairlist_algorithm.h"
 
 #include "../../interaction/nonbonded/interaction/nonbonded_outerloop.h"
 #include "../../interaction/nonbonded/interaction/nonbonded_set.h"
 
 #include "../../interaction/nonbonded/interaction/nonbonded_interaction.h"
 #include "../../interaction/nonbonded/interaction/omp_nonbonded_interaction.h"
+#include "../../interaction/nonbonded/interaction/cuda_nonbonded_interaction.h"
 #include "../../interaction/nonbonded/interaction/mpi_nonbonded_master.h"
 #include "../../interaction/nonbonded/interaction/mpi_nonbonded_slave.h"
 
@@ -190,7 +192,12 @@ int interaction::create_g96_nonbonded
     pa = new HOOMD_Pairlist_Algorithm(sim); 
   } else { // gromosxx pairlist
 #endif
-    if (sim.param().pairlist.grid == 0) {
+    if (sim.param().gpu.accelerator == simulation::gpu_cuda) {
+      // CUDA has its own pairlist algorithm
+      io::messages.add("Ignoring pairlist setting, using CUDA pairlist algorithm",
+        "create_nonbonded", io::message::warning);
+      pa = new CUDA_Pairlist_Algorithm();
+    } else if (sim.param().pairlist.grid == 0) {
       pa = new Standard_Pairlist_Algorithm();
     } else if (sim.param().pairlist.grid == 1) {
       pa = new Extended_Grid_Pairlist_Algorithm();
@@ -204,12 +211,32 @@ int interaction::create_g96_nonbonded
 #ifdef HAVE_HOOMD
   }
 #endif
-   
-#if defined(OMP)
-  Nonbonded_Interaction * ni = new OMP_Nonbonded_Interaction(pa);
-#elif defined(XXMPI)
-  Nonbonded_Interaction * ni;
 
+/**
+ * here we have to create a proper Nonbonded_Interaction
+ * default is Nonbonded_Interaction
+ * if OMP, default is OMP_Nonbonded_Interaction
+ * if USE_CUDA, allow CUDA_Nonbonded_Interaction
+ * 
+ * TODO: Compile all, allow runtime switch
+ * 
+ */
+using Default_Nonbonded_Interaction = 
+#if defined(OMP)
+  OMP_Nonbonded_Interaction;
+#else
+  Nonbonded_Interaction;
+#endif
+
+Nonbonded_Interaction * ni;
+
+#if defined(USE_CUDA)
+  if (sim.cuda_enabled()) {
+    ni = new CUDA_Nonbonded_Interaction(pa);
+  } else {
+    ni = new Default_Nonbonded_Interaction(pa);
+  }
+#elif defined(XXMPI)
   if (sim.mpi_enabled()){
     if (sim.mpiControl().threadID == sim.mpiControl().masterID)
       ni = new MPI_Nonbonded_Master(pa);
@@ -217,10 +244,10 @@ int interaction::create_g96_nonbonded
       ni = new MPI_Nonbonded_Slave(pa);
   }
   else{
-    ni = new Nonbonded_Interaction(pa);
+    ni = new Default_Nonbonded_Interaction(pa);
   }
 #else
-  Nonbonded_Interaction * ni = new Nonbonded_Interaction(pa);
+  ni = new Default_Nonbonded_Interaction(pa);
 #endif
 
   // standard LJ parameter
