@@ -1,0 +1,48 @@
+{
+    "version": 3,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 19,
+        "patch": 0
+    },
+    "configurePresets": [
+        {
+            "name": "cuda-on",
+            "displayName": "CUDA Enabled",
+            "description": "Build with CUDA support",
+            "generator": "Ninja",
+            "cacheVariables": {
+                "USE_CUDA": "ON",
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        },
+        {
+            "name": "cuda-off",
+            "displayName": "CUDA Disabled",
+            "description": "Build without CUDA support",
+            "generator": "Ninja",
+            "cacheVariables": {
+                "USE_CUDA": "OFF",
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "build-cuda-on",
+            "configurePreset": "cuda-on"
+        },
+        {
+            "name": "build-cuda-off",
+            "configurePreset": "cuda-off"
+        }
+    ],
+    "testPresets": [
+        {
+            "name": "Minimal",
+            "description": "Minimal tests",
+            "displayName": "Minimal tests",
+            "configurePreset": "cuda-on"
+        }
+    ]
+}
