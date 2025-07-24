@@ -11,8 +11,7 @@
 // template <template<typename, typename> class VecT, typename T, typename Alloc /* = gpu::CuMAllocator<T> */>
 // VecT<T, Alloc> gpu::CudaManager::create_cuvector(int device_id, size_t size) {
 //     // static_assert(std::is_same_v<VecT<T, Alloc>, gpu::cuvector<T>> ||
-//     //               std::is_same_v<VecT<T, Alloc>, gpu::cuhvector<T>> ||
-//     //               std::is_same_v<VecT<T, Alloc>, gpu::cudvector<T>>,
+//     //               std::is_same_v<VecT<T, Alloc>, gpu::cuhvector<T>>,
 //     //               "Unsupported vector type");
 
 //     if (device_workers_.find(device_id) == device_workers_.end()) {

@@ -113,23 +113,11 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
 
   // center of mass motion printing / removal
   if (sim.param().centreofmass.skip_step ||
-      sim.param().print.centreofmass){
+      sim.param().print.centreofmass) {
       if (sim.param().analyze.analyze) {
           io::messages.add("COM removal is ignored with anatrj",
                 "create_md_sequence", io::message::warning);
       } else {
-        // if constexpr (false) {
-        //   algorithm::Remove_COM_Motion<util::gpuBackend> * rcom_gpu =
-        //     new algorithm::Remove_COM_Motion<util::gpuBackend>(os);
-        //   md_seq.push_back(rcom_gpu);
-        // } else {
-        //   algorithm::Remove_COM_Motion<util::cpuBackend> * rcom =
-        //     new algorithm::Remove_COM_Motion<util::cpuBackend>(os);
-        //   md_seq.push_back(rcom);
-        // }
-        // We rather use a factory to create the proper variant
-        // backend_factory<algorithm::Remove_COM_Motion>()
-        // algorithm::make_algorithm<algorithm::Remove_COM_Motion>(os);
         algorithm::IAlgorithm * rcom = algorithm::make_algorithm<algorithm::Remove_COM_Motion>(sim, os);
         md_seq.push_back(rcom);
       }

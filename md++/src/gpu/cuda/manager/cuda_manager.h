@@ -98,6 +98,27 @@ namespace gpu {
              */
             void synchronize_device(int device_id);
 
+            // /**
+            //  * @brief Allocate raw device memory; returns device pointer
+            //  */
+            // void* allocate(std::size_t size_bytes);
+
+            // /**
+            //  * @brief Allocate device memory for custom types
+            //  */
+            // template <typename T>
+            // T* allocate(const T& host_data) {
+            //     for (const auto& [device_id, device_manager] : m_device_managers) {
+            //         dm->memory().allocate(host_data);
+            //     }
+            //     std::lock_guard<std::mutex> lock(m_mutex);
+            //     T* devptr;
+            //     cudaMalloc(&devptr, sizeof(T));
+            //     cudaMemcpy(devptr, &host_data, sizeof(T), cudaMemcpyHostToDevice);
+            //     m_allocations[devptr] = sizeof(T);
+            //     return devptr;
+            // };
+
             /**
              * @brief Create a cuvector for managing device memory on a specific GPU.
              * @tparam T The type of elements in the cuvector.

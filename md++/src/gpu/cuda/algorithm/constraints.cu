@@ -45,24 +45,24 @@
 #define MODULE cuda
 #define SUBMODULE algorithm
 
-double gpu::cuda::algorithm::remove_com_translation(
+double gpu::algorithm::remove_com_translation(
                                 const topology::Topology& topo,
                                 const configuration::Configuration& conf,
                                 simulation::Simulation& sim,
                                 bool remove_trans) {
     // CUDA-specific implementation
-    sim.cuda().synchronize_all();
+    // sim.cuda().synchronize_all();
     // auto pos = sim.cuda().create_cuvector<float3>(0, topo.num_atoms());
     return 0;
 }
 
-double gpu::cuda::algorithm::remove_com_rotation(
+double gpu::algorithm::remove_com_rotation(
                                 const topology::Topology& topo,
                                 const configuration::Configuration& conf,
                                 simulation::Simulation& sim,
                                 bool remove_trans) {
     // CUDA-specific implementation
-    sim.cuda().synchronize_all();
+    // sim.cuda().synchronize_all();
     // auto pos = sim.cuda().create_cuvector<float3>(0, topo.num_atoms());
     return 0;
 }

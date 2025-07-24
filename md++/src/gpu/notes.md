@@ -13,19 +13,16 @@ Everything we do on gpu is in namespace gpu. Cuda code is in separate subdirecto
 - CudaDeviceWorker - Launches kernels, handles async tasks, manages streams
 
 ## Data structure classes:
-- cuvector<T> - CUDA managed memory version of std::vector, directly accessible from both CPU and GPU. Possible penalty due to non-ideal automatic copy scheduling.
-- cudvector<T> - Device-only version of std::vector, accessible only from GPU.
+- cuvector<T> - CUDA managed unified memory version of std::vector, directly accessible from both CPU and GPU. Possible penalty due to non-ideal automatic copy scheduling.
 - cuhvector<T> - Pinned version of std::vector, fast access from GPU for async manual copies.
 - container<T> - 2D jagged array, a light-weight device-only version of std::vector< std::vector >
 
-- possibly a pair of cudvector,cuhvector encapsulated in a single class could be used for performance-critical arrays
+- possibly a pair of <device cuhvector,cuarray> encapsulated in a single class could be used for performance-critical arrays
 
 
 ## Constant Memory
 CUDA provides a fast, read-only constant memory space for storing constants. However, on modern GPUs, global memory caching often makes this unnecessary.
-If needed, an implementation can be found in `memory/constants.h`.
-
-If you feel we still need it, possible implementation is in memory/constants.h
+If you feel we still need it, possible implementation is in `memory/constants.h`.
 
 ## Coalesced Reads/Writes
 CUDA performs best when adjacent threads access adjacent memory locations. Historically, `float3` required padding due to its 12-byte size versus the 16-byte memory access granularity. On GPUs from the last decade, this is no longer a concern — `float3` is now about 25% faster than float4 in many cases.
@@ -174,8 +171,12 @@ void gpu::shake() {
 Conditional compilation for CPU-only or CPU+GPU requires careful split of the code. The source code for CUDA
 have to be invisible in the CPU-only compilation. Traditionally, this is achieved by using the `#ifdef USE_CUDA`
 macro, which is very easy to use, but with tighter and broader integration of CUDA-enabled code, the created clutter makes the code hard to read. So we try another strategy.
-The single communication point, the `CudaManager` is split into `.cc` and `.cu` compilation. The CUDA-capable
-`Algorithm`s and `Interaction`s are defined as templates with common bases to achieve clean code separation.
+The single communication point, the `CudaManager` is split into `.cc` and `.cu` compilation. The `.cc` source
+is for CPU-only compilation and contains empty method definitions using the `DISABLED()` macro. This macro
+is supposed to throw a runtime error any time you try to interact with the `CudaManager` in the CPU-only
+compilation. The `.cu` source is compiled in CUDA-enabled build and contains full working method definitions.
+
+The CUDA-capable `Algorithm`s and `Interaction`s are defined as templates with common bases to achieve clean code separation.
 Based on the compile time constants and/or runtime settings, we then dispatch either `MyAlgorithm<cpuBackend>`
 or `MyAlgorithm<gpuBackend>`. `MyAlgoritm` defaults to `MyAlgorithm<cpuBackend>`.
 The common bases are `IAlgorithm`, `IInteraction` and `IForcefield` allowing sequencing their base pointers
@@ -365,3 +366,6 @@ There is also a soft restriction on CudaManager. In CPU-only build, all its meth
 If you anyhow use them somewhere, they compile, but throw a runtime error as soon as you try to use them.
 Turning them into a hard restriction (compile time) should be considered.
 
+## Lattice_Shift_Tracker
+
+The `Lattice_Shift_Tracker` is a class that tracks the shift of a lattice in a simulation. It has both CPU and GPU variants, which are specified using template specialization. The CPU variant is defined as follows:
