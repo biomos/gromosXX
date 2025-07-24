@@ -43,8 +43,6 @@
         template <typename T>
         using CUVECTOR_T = gpu::cuvector<T>;
         template <typename T>
-        using CUDVECTOR_T = gpu::cudvector<T>;
-        template <typename T>
         using CUHVECTOR_T = gpu::cuhvector<T>;
     }
 #else
@@ -55,8 +53,6 @@
         using CUERROR = void*;
         template <typename T>
         using CUVECTOR_T = std::vector<T>;
-        template <typename T>
-        using CUDVECTOR_T = std::vector<T>;
         template <typename T>
         using CUHVECTOR_T = std::vector<T>;
     }
