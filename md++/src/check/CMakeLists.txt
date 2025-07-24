@@ -25,6 +25,12 @@ set(ALADIP_CC
     check_state.cc
 )
 
+set(ALADIP_CUDA_CC
+    aladip_cuda.t.cc
+    check_forcefield.cc
+    check_state.cc
+)
+
 set(ALADIP_UNPERTURBED_CC
     aladip_unperturbed.t.cc
     check_forcefield.cc
@@ -79,6 +85,7 @@ set(GROMOS_LIBS
 #set(EXEC_NAMES aladip aladip_unperturbed aladip_special aladip_atomic aladip_ls c16_cg lambdas)
 set(EXEC_NAMES aladip aladip_unperturbed aladip_special aladip_atomic c16_cg lambdas)
 
+
 add_executable(aladip ${ALADIP_CC})
 add_executable(aladip_unperturbed ${ALADIP_UNPERTURBED_CC})
 add_executable(aladip_special ${ALADIP_SPECIAL_CC})
@@ -86,6 +93,11 @@ add_executable(aladip_atomic ${ALADIP_ATOMIC_CC})
 #add_executable(aladip_ls ${ALADIP_LS_CC})
 add_executable(c16_cg ${C16_CG_CC})
 add_executable(lambdas ${LAMBDAS_CC})
+
+if(USE_CUDA)
+    list(APPEND EXEC_NAMES aladip_cuda)
+    add_executable(aladip_cuda ${ALADIP_CUDA_CC})
+endif()
 
 foreach(LOOP_VAR ${EXEC_NAMES})
     target_include_directories(${LOOP_VAR} PRIVATE ${TEST_PROGRAM_INCLUDES} ${EXTERNAL_INCLUDES}
