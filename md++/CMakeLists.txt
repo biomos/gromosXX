@@ -62,3 +62,22 @@ list(REMOVE_DUPLICATES EXTERNAL_LIBRARIES)
 
 # md, md_mpi, eds, repex_mpi, ...
 add_subdirectory(program)
+
+# contrib
+# add_subdirectory(contrib)
+
+# data
+# add_subdirectory(data)
+
+# doc
+add_subdirectory(doc)
+
+# Install extra files
+install(FILES
+    VERSION
+    contrib/tabulate_spc.cc
+    data/ene_ana.md++.lib
+    contrib/schnet_v1.py
+    contrib/schnet_v2.py
+    DESTINATION ${CMAKE_INSTALL_PREFIX}/share
+)

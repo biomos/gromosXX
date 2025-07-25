@@ -19,27 +19,49 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 
 #! /usr/bin/env python
-# get lines containing the documentation example of a gromos block between 'INFO <<"' and '..\n";' 
-# and output them as snippets that can be referred to in doxygen comments using @snippet
+# Extract lines containing the documentation example of a GROMOS block
+# between 'exampleblock <<"' and '..\n";' and output them as snippets
+# that can be referred to in Doxygen comments using @snippet.
 
-import sys, os
+import sys
+import os
 
-if len(sys.argv) < 2:
-  sys.exit("USAGE: " + sys.argv[0] + " <filenames")
+if len(sys.argv) < 3:
+    sys.exit("USAGE: " + sys.argv[0] + " <output_dir> <filenames>")
 
-for f in sys.argv[1:]:
-  with open(f, "r") as fi:
-    snipping=0
-    for line in fi:
-      if snipping==0:
-        if line.strip().replace(" ", "").replace("\t","").startswith('exampleblock<<"'):
-          snipping=1
-          blockname=line.split('"')[-2].split("\\n")[0]
-          print("//! ["+blockname+"]")
-          print(blockname)
-      elif snipping==1:
-        print(line.split('"')[-2].split("\\n")[0]+" ")
-        if  line.strip().replace(" ", "").replace("\t","").startswith('exampleblock<<"END'):
-          print("//! ["+blockname+"]\n")
-          snipping=0
-          
+output_dir = sys.argv[1]
+input_files = sys.argv[2:]
+
+
+print(output_dir)
+print(input_files)
+# Ensure the output directory exists and is valid
+if os.path.isfile(output_dir):
+    sys.exit(f"ERROR: Output directory '{output_dir}' conflicts with an existing file.")
+os.makedirs(output_dir, exist_ok=True)
+
+for f in input_files:
+    if not os.path.isfile(f):
+        print(f"WARNING: Input file '{f}' does not exist. Skipping.")
+        continue
+
+    with open(f, "r") as fi:
+        snipping = 0
+        blockname = None
+        output_lines = []
+        for line in fi:
+            if snipping == 0:
+                if line.strip().replace(" ", "").replace("\t", "").startswith('exampleblock<<"'):
+                    snipping = 1
+                    blockname = line.split('"')[-2].split("\\n")[0]
+                    output_lines.append(f"//! [{blockname}]")
+            elif snipping == 1:
+                output_lines.append(line.split('"')[-2].split("\\n")[0] + " ")
+                if line.strip().replace(" ", "").replace("\t", "").startswith('exampleblock<<"END'):
+                    output_lines.append(f"//! [{blockname}]\n")
+                    snipping = 0
+                    # Write the snippet to a file
+                    snippet_file = os.path.join(output_dir, f"{blockname}.snippet")
+                    with open(snippet_file, "w") as fo:
+                        fo.write("\n".join(output_lines))
+                    output_lines = []

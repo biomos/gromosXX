@@ -49,7 +49,7 @@ PROJECT_LOGO           =
 # If a relative path is entered, it will be relative to the location
 # where doxygen was started. If left blank the current directory will be used.
 
-OUTPUT_DIRECTORY       = doc
+OUTPUT_DIRECTORY       = @DOXYGEN_OUTPUT_DIR@
 
 # If the CREATE_SUBDIRS tag is set to YES, then doxygen will create
 # 4096 sub-directories (in 2 levels) under the output directory of each output
@@ -125,7 +125,7 @@ FULL_PATH_NAMES        = YES
 # If left blank the directory from which doxygen is run is used as the
 # path to strip.
 
-STRIP_FROM_PATH        = <SRCDIR>
+STRIP_FROM_PATH        = @CMAKE_SOURCE_DIR@
 
 # The STRIP_FROM_INC_PATH tag can be used to strip a user-defined part of
 # the path mentioned in the documentation of a class, which tells
@@ -598,39 +598,39 @@ WARN_LOGFILE           = doc/doxygen.warn
 # directories like "/usr/src/myproject". Separate the files or directories
 # with spaces.
 
-INPUT                  = <SRCDIR> \
-                         <SRCDIR>/src \
-                         <SRCDIR>/src/simulation \
-                         <SRCDIR>/src/topology \
-                         <SRCDIR>/src/topology/core \
-                         <SRCDIR>/src/configuration \
-                         <SRCDIR>/src/math \
-                         <SRCDIR>/src/util \
-                         <SRCDIR>/src/interaction \
-                         <SRCDIR>/src/interaction/forcefield \
-                         <SRCDIR>/src/interaction/special \
-                         <SRCDIR>/src/interaction/bonded \
-                         <SRCDIR>/src/interaction/nonbonded \
-                         <SRCDIR>/src/interaction/nonbonded/pairlist \
-                         <SRCDIR>/src/interaction/nonbonded/interaction \
-                         <SRCDIR>/src/algorithm \
-                         <SRCDIR>/src/algorithm/algorithm \
-                         <SRCDIR>/src/algorithm/integration \
-                         <SRCDIR>/src/algorithm/constraints \
-                         <SRCDIR>/src/algorithm/temperature \
-                         <SRCDIR>/src/algorithm/pressure \
-                         <SRCDIR>/src/io \
-                         <SRCDIR>/src/io/parameter \
-                         <SRCDIR>/src/io/topology \
-                         <SRCDIR>/src/io/configuration \
-                         <SRCDIR>/src/gpu \
-                         <SRCDIR>/src/gpu/cuda \
-                         <SRCDIR>/src/gpu/cuda/manager \
-                         <SRCDIR>/src/gpu/cuda/memory \
-                         <SRCDIR>/src/gpu/cuda/kernels \
-                         <SRCDIR>/program \
-                         <SRCDIR>/contrib \
-                         <SRCDIR>/doc
+INPUT                  = @CMAKE_SOURCE_DIR@ \
+                         @CMAKE_SOURCE_DIR@/src \
+                         @CMAKE_SOURCE_DIR@/src/simulation \
+                         @CMAKE_SOURCE_DIR@/src/topology \
+                         @CMAKE_SOURCE_DIR@/src/topology/core \
+                         @CMAKE_SOURCE_DIR@/src/configuration \
+                         @CMAKE_SOURCE_DIR@/src/math \
+                         @CMAKE_SOURCE_DIR@/src/util \
+                         @CMAKE_SOURCE_DIR@/src/interaction \
+                         @CMAKE_SOURCE_DIR@/src/interaction/forcefield \
+                         @CMAKE_SOURCE_DIR@/src/interaction/special \
+                         @CMAKE_SOURCE_DIR@/src/interaction/bonded \
+                         @CMAKE_SOURCE_DIR@/src/interaction/nonbonded \
+                         @CMAKE_SOURCE_DIR@/src/interaction/nonbonded/pairlist \
+                         @CMAKE_SOURCE_DIR@/src/interaction/nonbonded/interaction \
+                         @CMAKE_SOURCE_DIR@/src/algorithm \
+                         @CMAKE_SOURCE_DIR@/src/algorithm/algorithm \
+                         @CMAKE_SOURCE_DIR@/src/algorithm/integration \
+                         @CMAKE_SOURCE_DIR@/src/algorithm/constraints \
+                         @CMAKE_SOURCE_DIR@/src/algorithm/temperature \
+                         @CMAKE_SOURCE_DIR@/src/algorithm/pressure \
+                         @CMAKE_SOURCE_DIR@/src/io \
+                         @CMAKE_SOURCE_DIR@/src/io/parameter \
+                         @CMAKE_SOURCE_DIR@/src/io/topology \
+                         @CMAKE_SOURCE_DIR@/src/io/configuration \
+                         @CMAKE_SOURCE_DIR@/src/gpu \
+                         @CMAKE_SOURCE_DIR@/src/gpu/cuda \
+                         @CMAKE_SOURCE_DIR@/src/gpu/cuda/manager \
+                         @CMAKE_SOURCE_DIR@/src/gpu/cuda/memory \
+                         @CMAKE_SOURCE_DIR@/src/gpu/cuda/kernels \
+                         @CMAKE_SOURCE_DIR@/program \
+                         @CMAKE_SOURCE_DIR@/contrib \
+                         @CMAKE_SOURCE_DIR@/doc
 
 # This tag can be used to specify the character encoding of the source files
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding, which is
@@ -694,7 +694,7 @@ EXCLUDE_SYMBOLS        =
 # directories that contain example code fragments that are included (see
 # the \include command).
 
-EXAMPLE_PATH           = <SRCDIR>/doc
+EXAMPLE_PATH           = @CMAKE_SOURCE_DIR@/doc
 
 # If the value of the EXAMPLE_PATH tag contains directories, you can use the
 # EXAMPLE_PATTERNS tag to specify one or more wildcard pattern (like *.cpp
@@ -714,7 +714,7 @@ EXAMPLE_RECURSIVE      = NO
 # directories that contain image that are included in the documentation (see
 # the \image command).
 
-IMAGE_PATH             =
+IMAGE_PATH             = ${CMAKE_CURRENT_BINARY_DIR}/doc/figures
 
 # The INPUT_FILTER tag can be used to specify a program that doxygen should
 # invoke to filter for each input file. Doxygen will invoke the filter program

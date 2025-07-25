@@ -54,3 +54,6 @@ if(MPI)
     set(EXTERNAL_LIBRARIES ${EXTERNAL_LIBRARIES} ${FFTW_MPI_LIBRARIES})
     set(EXTERNAL_INCLUDES ${EXTERNAL_INCLUDES}${FFTW_MPI_INCLUDE_DIRS})
 endif()
+
+# Documentation generation
+find_package(Doxygen)
