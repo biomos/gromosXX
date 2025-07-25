@@ -91,4 +91,9 @@ namespace util
 #else
         false;
 #endif
+
+    template <template <typename> class, typename, typename = void>
+    struct has_backend : std::false_type {};
+    template <template <typename> class AlgT, typename Backend>
+    struct has_backend<AlgT, Backend, std::enable_if_t<std::true_type::value>> : std::true_type {};
 }
