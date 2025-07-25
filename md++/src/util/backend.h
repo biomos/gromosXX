@@ -30,16 +30,12 @@ namespace util
      * @brief 
      *
      */
-    struct cpuBackend
-    {
-    };
+    struct cpuBackend {};
     /**
      * @brief
      *
      */
-    struct gpuBackend
-    {
-    };
+    struct gpuBackend {};
 
     /**
      * @brief Checks if the given backend is allowed (if USE_CUDA).
@@ -49,7 +45,7 @@ namespace util
      * @return false Otherwise.
      */
     template <typename Backend>
-    struct is_valid_algorithm_backend
+    struct backend_is_enabled
     {
         static constexpr bool value =
             std::is_same_v<Backend, cpuBackend> ||
@@ -60,40 +56,66 @@ namespace util
 #endif
     };
 
-    /**
-     * @brief Checks if the given algorithm template has a GPU backend implementation.
-     *
-     * @tparam AlgT The algorithm template to check.
-     * @return false always (default trait)
-     */
-    template <template <typename> class, typename = void>
-    struct has_gpu_backend : std::false_type
-    {
-    };
+    // Traits definition
 
     /**
-     * @brief Specialization of has_gpu_backend for algorithms with a GPU backend implementation.
-     *
+     * @brief Checks if the given algorithm template has a specific backend implementation.
+     * 
      * @tparam AlgT The algorithm template to check.
-     * @return true If the algorithm template has a GPU backend implementation.
+     * @tparam Backend The backend to check.
+     * @return true_type If the algorithm template has a specific backend implementation.
+     * @return false_type Otherwise.
+     */
+    template <template <typename> class AlgT, typename Backend, typename = void>
+    struct has_backend : std::false_type {};
+    template <template <typename> class AlgT, typename Backend>
+    struct has_backend<AlgT, Backend, std::enable_if_t<AlgT<Backend>::template is_supported_backend<Backend>>> : std::true_type {};
+
+    /**
+     * @brief Checks if the given algorithm template has a CPU backend implementation.
+     * 
+     * @tparam AlgT The algorithm template to check.
+     * @return true_type If the algorithm template has a CPU backend implementation.
+     * @return false_type Otherwise.
+     */
+    template <template <typename> class AlgT>
+    struct has_cpu_backend : has_backend<AlgT, util::cpuBackend> {};
+
+    /**
+     * @brief Checks if the given algorithm template has a CPU backend implementation.
+     * 
+     * @tparam AlgT 
+     * @return true If the algorithm template has a CPU backend implementation.
      * @return false Otherwise.
      */
     template <template <typename> class AlgT>
-    struct has_gpu_backend<AlgT,
-                           std::void_t<decltype(AlgT<gpuBackend>(std::declval<std::ostream &>()))>> : std::true_type
-    {
-    };
+    constexpr bool has_cpu_backend_v =
+        has_cpu_backend<AlgT>::value;
 
+
+    /**
+     * @brief Checks if the given algorithm template has a GPU backend implementation.
+     * 
+     * @tparam AlgT The algorithm template to check.
+     * @return true_type If the algorithm template has a GPU backend implementation and CUDA is activated
+     * @return false_type Otherwise.
+     */
     template <template <typename> class AlgT>
-    constexpr bool has_gpu_backend_v =
+    struct has_gpu_backend :
 #ifdef USE_CUDA
-        has_gpu_backend<AlgT>::value;
+        has_backend<AlgT, util::gpuBackend> {};
 #else
-        false;
+        std::false_type {};
 #endif
 
-    template <template <typename> class, typename, typename = void>
-    struct has_backend : std::false_type {};
-    template <template <typename> class AlgT, typename Backend>
-    struct has_backend<AlgT, Backend, std::enable_if_t<std::true_type::value>> : std::true_type {};
+    /**
+     * @brief Checks if the given algorithm template has a GPU backend implementation.
+     * 
+     * @tparam AlgT 
+     * @return true If the algorithm template has a Gpu backend implementation.
+     * @return false Otherwise.
+     */
+    template <template <typename> class AlgT>
+    constexpr bool has_gpu_backend_v =
+        has_gpu_backend<AlgT>::value;
 }

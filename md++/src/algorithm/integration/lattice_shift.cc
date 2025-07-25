@@ -41,8 +41,8 @@
 #define MODULE algorithm
 #define SUBMODULE integration
 
-template <typename Backend>
-int algorithm::Lattice_Shift_Tracker<Backend>::
+template <>
+int algorithm::Lattice_Shift_Tracker<util::cpuBackend>::
 init(topology::Topology &topo,
         configuration::Configuration &conf,
         simulation::Simulation &sim,
@@ -70,8 +70,8 @@ init(topology::Topology &topo,
   return 0;
 }
 
-template <typename Backend>
-int algorithm::Lattice_Shift_Tracker<Backend>::
+template <>
+int algorithm::Lattice_Shift_Tracker<util::cpuBackend>::
 apply(topology::Topology &topo,
         configuration::Configuration &conf,
         simulation::Simulation &sim) {
@@ -82,9 +82,9 @@ apply(topology::Topology &topo,
   return 0;
 }
 
-template<typename Backend>
+template <>
 template<math::boundary_enum b>
-void algorithm::Lattice_Shift_Tracker<Backend>::
+void algorithm::Lattice_Shift_Tracker<util::cpuBackend>::
 _apply(topology::Topology &topo,
         configuration::Configuration &conf,
         simulation::Simulation &sim) {

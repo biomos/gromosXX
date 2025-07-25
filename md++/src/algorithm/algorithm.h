@@ -23,8 +23,7 @@
  * base class for algorithms
  */
 
-#ifndef INCLUDED_ALGORITHM_H
-#define INCLUDED_ALGORITHM_H
+#pragma once
 
 #include "simulation/simulation.h"
 
@@ -122,22 +121,53 @@ namespace algorithm
   };
 
   /**
-   * @class AlgorithmT
-   * template class
+   * @class AlgorithmB
+   * @brief Base class template for backend validation
+   * 
    */
-template <typename Backend = util::cpuBackend>
-  class AlgorithmT : public IAlgorithm {
+  template <typename Backend, typename Enable = void>
+  class AlgorithmB;
+
+  /**
+   * @class AlgorithmB
+   * @details Specialization for supported backends
+   */
+  template <typename Backend>
+  struct AlgorithmB<
+      Backend,
+      std::enable_if_t<
+           std::is_same_v<Backend, util::cpuBackend>
+        || std::is_same_v<Backend, util::gpuBackend>>
+  > {
     /**
-     * @brief compile time check for CUDA enabled
+     * Specify supported backends
      * 
      */
-    static_assert(util::is_valid_algorithm_backend<Backend>::value,
+    template <typename B>
+    static constexpr bool is_supported_backend =
+            std::is_same_v<B, util::cpuBackend>
+        // ||  std::is_same_v<B, util::gpuBackend> // uncomment this to allow gpu backend for the algorithm
+      ;
+  };
+
+  /**
+   * @class AlgorithmT
+   * General template class for algorithms. This class provides a common interface for all algorithms.
+   * It also provides timing functionality and offers different backends (CPU, GPU).
+   */
+  template <typename Backend = util::cpuBackend>
+  class AlgorithmT : public AlgorithmB<Backend>, public IAlgorithm {
+    /**
+     * @brief compile time check for accidental use in CUDA disabled
+     * 
+     */
+    static_assert(util::backend_is_enabled<Backend>::value,
                 "This backend is not supported in the current build configuration.");
   public:
+
     /**
      * Default constructor.
      */
-    // Constructor forwarding name to base IAlgorithm
     explicit AlgorithmT(const std::string& name) : IAlgorithm(name) {}
     
 
@@ -209,5 +239,3 @@ template <typename Backend = util::cpuBackend>
     return std::make_unique<AlgT<util::cpuBackend>>(std::forward<Args>(args)...);
   }
 }
-#endif
-

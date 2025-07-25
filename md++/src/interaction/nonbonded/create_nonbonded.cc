@@ -231,7 +231,7 @@ using Default_Nonbonded_Interaction =
 Nonbonded_Interaction * ni;
 
 #if defined(USE_CUDA)
-  if (sim.cuda_enabled()) {
+  if (sim.param().gpu.accelerator == simulation::gpu_cuda) {
     ni = new CUDA_Nonbonded_Interaction(pa);
   } else {
     ni = new Default_Nonbonded_Interaction(pa);

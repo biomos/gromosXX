@@ -26,6 +26,7 @@
 #ifndef INCLUDED_LATTICE_SHIFT_H
 #define INCLUDED_LATTICE_SHIFT_H
 
+#include <type_traits>
 namespace algorithm
 {
   /**
@@ -39,7 +40,10 @@ namespace algorithm
     /**
      * Constructor.
      */
-    Lattice_Shift_Tracker() : AlgorithmT<Backend>("Lattice_Shift_Tracker") {}
+    Lattice_Shift_Tracker() : AlgorithmT<Backend>("Lattice_Shift_Tracker") {
+        static_assert(!std::is_same_v<Backend, util::gpuBackend>,
+                      "Lattice_Shift_Tracker is not implemented for this backend.");
+                  }
 
     /**
      * Destructor.

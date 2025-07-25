@@ -50,6 +50,15 @@ namespace algorithm
   {
   public:
     /**
+     * Specify supported backends
+     * 
+     */
+    template <typename B>
+    static constexpr bool is_supported_backend =
+            std::is_same_v<B, util::cpuBackend>
+        ||  std::is_same_v<B, util::gpuBackend>
+      ;
+    /**
      * Constructor.
      */
     Remove_COM_Motion(std::ostream & os = std::cout) : AlgorithmT<Backend>("RemoveCOMMotion"), os(os) {}

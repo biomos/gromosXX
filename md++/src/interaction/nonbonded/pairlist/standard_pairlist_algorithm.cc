@@ -47,7 +47,7 @@
 
 interaction::Standard_Pairlist_Algorithm::
 Standard_Pairlist_Algorithm()
-: interaction::Pairlist_Algorithm(),
+: Pairlist_Algorithm(),
   m_solvent_solvent_timing(0.0) {}
         
  /**
