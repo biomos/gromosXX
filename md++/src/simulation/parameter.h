@@ -333,6 +333,30 @@ namespace simulation
   };
 
   /**
+   * @enum emin_enum
+   * Method of energy minimisation
+   */
+
+  enum emin_enum {
+      /**
+       * Energy minimisation off
+       */
+      emin_off = 0,
+      /**
+       * Steepest descent minimisation
+       */
+      emin_steepest_descent = 1,
+      /**
+       * Conjugate gradient (Fletcher-Reeves) minimisation
+       */
+       emin_conjugate_gradient_fr = 2,
+      /**
+       * Conjugate gradient (Polak-Ribiere) minimisation
+       */
+       emin_conjugate_gradient_pr = 3
+  };
+
+  /**
    * @enum rdc_mode_enum
    * Method of updating RDC magnetic field vectors enumeration
    */

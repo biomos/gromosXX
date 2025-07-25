@@ -516,7 +516,7 @@ void io::Out_Configuration::write(configuration::Configuration &conf,
     if (sim.param().polarise.cos)
       _print_cos_position(conf, topo, m_final_conf);
 
-    if (sim.param().minimise.ntem == 0)
+    if (sim.param().minimise.ntem == simulation::emin_off)
       _print_velocity(conf, topo, m_final_conf);
 
     _print_box(conf, m_final_conf);

@@ -60,7 +60,7 @@ int io::simple_crosschecks(simulation::Simulation & sim) {
   const simulation::Parameter & param = sim.param();
 
   // no velocity writeout or generation with energy minimization
-  if (param.minimise.ntem != 0 && param.write.velocity != 0)
+  if (param.minimise.ntem != simulation::emin_off && param.write.velocity != 0)
     io::messages.add("WRITETRAJ: NTWV has to be 0 for energy minimization.",
                      "In_Parameter", io::message::error);
 
@@ -169,7 +169,8 @@ int io::simple_crosschecks(simulation::Simulation & sim) {
     }
     
     // Restrict EDS and conjugate gradients:
-    if (param.eds.eds &&  (sim.param().minimise.ntem == 2 || sim.param().minimise.ntem == 3)){
+    if (param.eds.eds &&  (sim.param().minimise.ntem == simulation::emin_conjugate_gradient_fr
+                            || sim.param().minimise.ntem == simulation::emin_conjugate_gradient_pr)) {
       io::messages.add("ENERGYMIN block: Cannot run EDS and conjugate gradients. Please change value of NTEM", 
                        "In_Parameter", io::message::error);
     }
@@ -349,10 +350,10 @@ int io::check_features(simulation::Simulation  &sim)
                                                  param.system.nsm > 0);
   // ENERGYMIN block
   add("steepest_descent", "steepest descent energy minimisation",
-          param.minimise.ntem == 1);
+          param.minimise.ntem == simulation::emin_steepest_descent);
   add("conjugate_gradient", "Fletcher-Reeves or Polak-Ribiere conjugate gradient energy minimisation",
-          param.minimise.ntem == 2 ||
-          param.minimise.ntem == 3);
+          param.minimise.ntem == simulation::emin_conjugate_gradient_fr ||
+          param.minimise.ntem == simulation::emin_conjugate_gradient_pr);
   // CONSTRAINT block
   add("solute_constraint_off", "unconstrained solute",
           param.constraint.solute.algorithm == simulation::constr_off);

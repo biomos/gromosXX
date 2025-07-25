@@ -61,9 +61,9 @@ int algorithm::Conjugate_Gradient
 {
   if (!quiet) {
     os << "ENERGY MINIMISATION\n";
-    if (sim.param().minimise.ntem == 2)
+    if (sim.param().minimise.ntem == simulation::emin_conjugate_gradient_fr)
       os << "\tFletcher-Reeves conjugate gradient\n";
-    else if (sim.param().minimise.ntem == 3)
+    else if (sim.param().minimise.ntem == simulation::emin_conjugate_gradient_pr)
       os << "\tPolak-Ribiere conjugate gradient\n";
 
     os << "\tresetting search direction every n-th step : " << sim.param().minimise.ncyc;
@@ -536,13 +536,13 @@ double algorithm::Conjugate_Gradient
     f1 += math::abs2(force_old(i));
   }
   // Fletcher-Reeves
-  if (sim.param().minimise.ntem == 2) {
+  if (sim.param().minimise.ntem == simulation::emin_conjugate_gradient_fr) {
     for(unsigned int i=0; i<topo.num_atoms(); ++i) {
       f2 += math::abs2(force_current(i));
     }
   }
   // Polak-Ribiere
-  else if (sim.param().minimise.ntem == 3) {
+  else if (sim.param().minimise.ntem == simulation::emin_conjugate_gradient_pr) {
     for(unsigned int i=0; i<topo.num_atoms(); ++i) {
       f2 += math::dot(force_current(i) - force_old(i), force_current(i));
     }
