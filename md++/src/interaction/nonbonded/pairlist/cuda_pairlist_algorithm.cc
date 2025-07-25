@@ -35,7 +35,6 @@
 #include "../../../interaction/nonbonded/pairlist/pairlist.h"
 
 #include "../../../interaction/nonbonded/pairlist/pairlist_algorithm.h"
-#include "../../../interaction/nonbonded/pairlist/standard_pairlist_algorithm.h"
 #include "../../../interaction/nonbonded/pairlist/cuda_pairlist_algorithm.h"
 
 #include "../../../util/debug.h"
@@ -47,8 +46,10 @@
 #define SUBMODULE pairlist
 
 interaction::CUDA_Pairlist_Algorithm::CUDA_Pairlist_Algorithm()
-: interaction::Pairlist_Algorithm(),
-  m_solvent_solvent_timing(0.0) {}
+: Pairlist_Algorithm(),
+  m_solvent_solvent_timing(0.0) {
+    DEBUG(0,"CUDA_Pairlist_Algorithm Constructor at " << this);
+  }
 
 /**
  * calculate center of geometries

@@ -71,7 +71,13 @@ namespace interaction
 		     bool quiet = false) 
     {
       if (!quiet)
-       os << "\tcuda pairlist algorithm\n";
+        os << "\tcuda pairlist algorithm\n";
+      
+      // initialize Cuda variables
+      // maybe also copy simulation constants
+
+
+  
       return 0;
     };
 
