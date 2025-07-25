@@ -132,7 +132,7 @@ allows us to schedule overlap in CPU and GPU execution.
 
 Then, we add to md_seq Algorithm with appropriate backend:
 ```cpp
-if (sim.cuda_enabled()) {
+if (sim.param().gpu.accelerator == simulation::gpu_cuda) {
     // Use GPU backend
     md_seq.emplace_back(std::make_unique<M_Shake<gpuBackend>>();) // we might also want to switch to smart pointers
 } else {
@@ -230,11 +230,11 @@ Shake<util::gpuBackend>::apply(...) {
 
 The reason for this is to have some compile-time control. Every algorithm now has to be explicitly defined as CPU or GPU variant.
 In a CPU-only compilation, the GPU variants should not get compiled at all, and an error is thrown,
-if you try to instantiate them. This is achieved by the `is_valid_algorithm_backend` type trait:
+if you try to instantiate them. This is achieved by the `backend_is_enabled` type trait:
 ```cpp
 // util/backend.h
 template <typename Backend>
-struct is_valid_algorithm_backend
+struct backend_is_enabled
 {
     static constexpr bool value =
     std::is_same_v<Backend, cpuBackend> ||
@@ -251,14 +251,14 @@ struct is_valid_algorithm_backend
      * @brief compile time check for CUDA enabled
      * 
      */
-    static_assert(util::is_valid_algorithm_backend<Backend>::value,
+    static_assert(util::backend_is_enabled<Backend>::value,
                 "This backend is not supported in the current build configuration.");
   }
 ```
 Instantiating the GPU variant is not allowed in CPU-only compilation:
 ```cpp
 // create_md_sequence.cc
-if (sim.cuda_enabled()) {
+if (sim.param().gpu.accelerator == simulation::gpu_cuda) {
     md_seq.push_back(Shake<util::gpuBackend>()); // this does not compile in USE_CUDA=OFF
 } else {
     md_seq.push_back(Shake<util::cpuBackend>());
@@ -266,14 +266,14 @@ if (sim.cuda_enabled()) {
 ```
 
 Instead, you should use the factory function, that checks the availability of the GPU variant at the compile time, and compiles the 
-appropriate factory function:
+appropriate variants only:
 ```cpp
   template <template <typename> class AlgT, typename... Args>
   IAlgorithm* make_algorithm(
                             simulation::Simulation & sim, 
                             Args&&... args) {
     if constexpr (util::has_gpu_backend_v<AlgT>) {
-      if (sim.cuda_enabled()) {
+      if (sim.param().gpu.accelerator == simulation::gpu_cuda) {
         return new AlgT<util::gpuBackend>(std::forward<Args>(args)...);
       }
     }
@@ -291,10 +291,10 @@ If somehow a `Algorithm<util::gpuBackend>` is created somewhere by accident, the
 
 
 ## How to implement GPU variant of an algorithm?
-1. Change the class declaration into a template:
+1. Change the class declaration into a template and define the available backends:
 ```cpp
 // in my_algorithm.h
-// Change this into
+// Change this
   class MyAlgorithm : public Algorithm
   {
   public:
@@ -302,19 +302,31 @@ If somehow a `Algorithm<util::gpuBackend>` is created somewhere by accident, the
      * Constructor.
      */
     MyAlgorithm() : Algorithm("MyAlgorithm") {}
+   // ...
   }
-// this
+
+// into this
   template <typename Backend = util::cpuBackend>
   class MyAlgorithm : public AlgorithmT<Backend>
   {
   public:
     /**
+     * Specify supported backends
+     * 
+     */
+    template <typename B>
+    static constexpr bool is_supported_backend =
+            std::is_same_v<B, util::cpuBackend>
+        ||  std::is_same_v<B, util::gpuBackend>
+      ;
+    /**
      * Constructor.
      */
     MyAlgorithm() : AlgorithmT<Backend>("MyAlgorithm") {}
+   //...
   }
 ```
-2. Change all definitions into template definitions and define the variants implementations.
+1. Change all definitions into template definitions and define the variants implementations.
 ```cpp
 // from this
 int algorithm::MyAlgorithm::init()
@@ -322,41 +334,42 @@ int algorithm::MyAlgorithm::init()
 //into this
 // preferably in my_algorithm_cpu.cc
 template<>
-int algorithm::Remove_COM_Motion<util::cpuBackend>::init() {
+int algorithm::MyAlgorithm<util::cpuBackend>::init() {
     ...
 }
 // preferably in my_algorithm_gpu.cc
 template<>
-int algorithm::Remove_COM_Motion<util::gpuBackend>::init() {
+int algorithm::MyAlgorithm<util::gpuBackend>::init() {
     ...
 }
 
 // or this if the function is the same or similar for both backends
 template<typename Backend>
-int algorithm::Remove_COM_Motion<Backend>::init() {
-    ... // Use Backend in logic, where you need conditionals
+int algorithm::MyAlgorithm<Backend>::init() {
+    ... // Use Backend in constexpr conditionals, if neccessary
 }
 ```
 
-3. You can then either create the `AlgoritmT<util::cpuBackend>` or `AlgoritmT<util::gpuBackend>` directly, or use:
+3. You can then either create the `MyAlgorithm<util::cpuBackend>` or `MyAlgorithm<util::gpuBackend>` directly, or use:
 ```cpp
-algorithm::make_algorithm<algorithm::MyAlgorithm>(sim/*, optional arguments */);
+algorithm::make_algorithm<algorithm::MyAlgorithm>(sim/*, optional MyAlgorithm constructor arguments */);
 
 ```
-to let the program create the variant based on user input and availability.
+to let the program create the variant based on the input from `sim` and build.
 
-4. Update the file lists accordingly in `Makefile.am` and `CMakeLists.txt`
-5. Check compilations with and without CUDA.
+1. Update the file lists accordingly in `Makefile.am` and `CMakeLists.txt`
+2. Check compilations with and without CUDA.
 
-For examples, see commit `#6d3bb58f8cb037b256e9a7cd70870ba6d653da73`
+For examples, see commit `7866f713`
 The template of `Lattice_Shift_Tracker` there specifies indentical CPU and GPU variants.
 
 For `Remove_COM_Motion`, variants are completely separate.
 
-6. Sometimes you might need to change m_timer to this->m_timer. Also, if you do not provide explicit specializations, 
+1. Sometimes you might need to change m_timer to this->m_timer. Also, if you do not provide explicit specializations, 
 an explicit instantiation at the bottom of the `.cc` file is neccessary for the linker:
 ```cpp
-template class algorithm::Lattice_Shift_Tracker<util::cpuBackend>;
+// add this at the end of my_algorithm.cc if you get linker errors.
+template class algorithm::MyAlgorithm<util::cpuBackend>;
 ```
 
 
@@ -366,6 +379,3 @@ There is also a soft restriction on CudaManager. In CPU-only build, all its meth
 If you anyhow use them somewhere, they compile, but throw a runtime error as soon as you try to use them.
 Turning them into a hard restriction (compile time) should be considered.
 
-## Lattice_Shift_Tracker
-
-The `Lattice_Shift_Tracker` is a class that tracks the shift of a lattice in a simulation. It has both CPU and GPU variants, which are specified using template specialization. The CPU variant is defined as follows:
