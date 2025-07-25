@@ -47,7 +47,7 @@ namespace interaction
      */
     Pairlist_Algorithm()
       : algorithm::Algorithm("PairlistAlgorithm"),
-	m_param(NULL), p_timer(NULL)
+	m_param(nullptr), p_timer(nullptr)
     {}
 
     /**

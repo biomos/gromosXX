@@ -121,15 +121,15 @@ namespace algorithm
   };
 
   /**
-   * @class AlgorithmB
+   * @struct AlgorithmB
    * @brief Base class template for backend validation
    * 
    */
   template <typename Backend, typename Enable = void>
-  class AlgorithmB;
+  struct AlgorithmB;
 
   /**
-   * @class AlgorithmB
+   * @struct AlgorithmB
    * @details Specialization for supported backends
    */
   template <typename Backend>
@@ -140,13 +140,16 @@ namespace algorithm
         || std::is_same_v<Backend, util::gpuBackend>>
   > {
     /**
-     * Specify supported backends
+     * @brief Specify supported backends. This way we control 
+     * make_algorithm factories. Supported are
+     * util::cpuBackend or util::gpuBackend
      * 
      */
     template <typename B>
     static constexpr bool is_supported_backend =
             std::is_same_v<B, util::cpuBackend>
-        // ||  std::is_same_v<B, util::gpuBackend> // uncomment this to allow gpu backend for the algorithm
+          /* uncomment this line in your algorithm to allow gpu backend for the algorithm */
+        // ||  std::is_same_v<B, util::gpuBackend>
       ;
   };
 

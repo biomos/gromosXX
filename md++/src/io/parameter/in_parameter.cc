@@ -2840,7 +2840,6 @@ void io::In_Parameter::read_GPU(simulation::Parameter &param,
     Block block(blockname, exampleblock.str());
 
     if (block.read_buffer(m_block[blockname], false) == 0) {
-#ifdef USE_CUDA
         block_read.insert(blockname);
         unsigned ntgpu = 0;
         block.get_next_parameter("NTGPU", ntgpu, ">=0", "");
@@ -2853,8 +2852,14 @@ void io::In_Parameter::read_GPU(simulation::Parameter &param,
             }
             case 1:
             {
+#ifdef USE_CUDA
                 // use CUDA
                 param.gpu.accelerator = simulation::gpu_cuda;
+#else
+                io::messages.add("CUDA block: GPU is not supported in your compilation."
+                                "Recompile with CUDA enabled.",
+                                "In_Parameter", io::message::error);
+#endif
                 break;
             }
             default:
@@ -2886,10 +2891,6 @@ void io::In_Parameter::read_GPU(simulation::Parameter &param,
                 block.reset_error();
             }
             block.get_final_messages();
-#else
-            io::messages.add("CUDA block: GPU is not supported in your compilation. Recompile with CUDA enabled.",
-                                "In_Parameter", io::message::error);
-#endif
         }
     }
 
