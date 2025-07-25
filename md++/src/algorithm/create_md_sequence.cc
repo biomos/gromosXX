@@ -130,64 +130,73 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
   }
   
   // prepare virtual atoms
-  if (sim.param().virtualatoms.virtualatoms)
-    md_seq.push_back(new algorithm::Prepare_VirtualAtoms());
+  if (sim.param().virtualatoms.virtualatoms) {
+    algorithm::IAlgorithm * pva = algorithm::make_algorithm<algorithm::Prepare_VirtualAtoms>(sim);
+    md_seq.push_back(pva);
+  }
 
   // add the forcefield
   md_seq.push_back(ff);
 
   // propagate forces for virtual atoms
-  if (sim.param().virtualatoms.virtualatoms)
-      md_seq.push_back(new algorithm::Propagate_Forces());
+  if (sim.param().virtualatoms.virtualatoms) {
+      algorithm::IAlgorithm * pf = algorithm::make_algorithm<algorithm::Propagate_Forces>(sim);
+      md_seq.push_back(pf);
+  }
   
   //add EDS
   if (sim.param().eds.eds) {
-    md_seq.push_back(new algorithm::EDS());
+    algorithm::IAlgorithm * eds = algorithm::make_algorithm<algorithm::EDS>(sim);
+    md_seq.push_back(eds);
   } 
 
   //ORIOL_GAMD add GAMD
   if (sim.param().gamd.gamd){
-    md_seq.push_back(new algorithm::GAMD());
+    algorithm::IAlgorithm * gamd = algorithm::make_algorithm<algorithm::GAMD>(sim);
+    md_seq.push_back(gamd);
   } 
               
   // position constraints?
   if (sim.param().posrest.posrest == 3 && !sim.param().analyze.no_constraints) {
-    algorithm::Position_Constraints * pc = new algorithm::Position_Constraints;
+    algorithm::IAlgorithm * pc = algorithm::make_algorithm<algorithm::Position_Constraints>(sim);
     md_seq.push_back(pc);
   }
 
   // monte-carlo steps?
   if (sim.param().montecarlo.mc){
-    algorithm::Monte_Carlo * mc = new algorithm::Monte_Carlo(ff);
+    algorithm::IAlgorithm * mc = algorithm::make_algorithm<algorithm::Monte_Carlo>(sim, ff);
     md_seq.push_back(mc);
   }
 
   // energy minimisation or MD?
-  algorithm::Stochastic_Dynamics_Vel1 * sd_vel = NULL;
-  if (sim.param().minimise.ntem == 1){
-    algorithm::Steepest_Descent * sd = new algorithm::Steepest_Descent;
+  algorithm::Stochastic_Dynamics_Vel1 * sd_vel = nullptr;
+  if (sim.param().minimise.ntem == simulation::emin_steepest_descent) {
+    algorithm::IAlgorithm * sd = algorithm::make_algorithm<algorithm::Steepest_Descent>(sim);
     md_seq.push_back(sd);
   }
-  else if (sim.param().minimise.ntem == 2 || sim.param().minimise.ntem == 3){
-    algorithm::Conjugate_Gradient * cg = new algorithm::Conjugate_Gradient(md_seq);
+  else if (sim.param().minimise.ntem == simulation::emin_conjugate_gradient_fr
+            || sim.param().minimise.ntem == simulation::emin_conjugate_gradient_pr) {
+    algorithm::IAlgorithm * cg = algorithm::make_algorithm<algorithm::Conjugate_Gradient>(sim, md_seq);
     md_seq.push_back(cg);
   }
-  else if (sim.param().analyze.analyze){
-    algorithm::Analyze_Step * as = 
-      new algorithm::Analyze_Step(sim.param().analyze.trajectory);
+  else if (sim.param().analyze.analyze) {
+    algorithm::IAlgorithm * as = algorithm::make_algorithm<algorithm::Analyze_Step>(sim, sim.param().analyze.trajectory);
     md_seq.push_back(as);
   } else {    
     // SD ?
-    if (sim.param().stochastic.sd){
-      sd_vel = new algorithm::Stochastic_Dynamics_Vel1(sim.param());
+    if (sim.param().stochastic.sd) {
+      sd_vel = algorithm::make_algorithm<algorithm::Stochastic_Dynamics_Vel1>(sim, sim.param());
+      assert(sd_vel != nullptr && "make_algorithm did not return Stochastic_Dynamics_Vel1");
       md_seq.push_back(sd_vel);
     }
     // MD ?
-    else if(sim.param().integrate.method == simulation::integrate_leap_frog){
-      if(sim.param().addecouple.adgr>0)
-       md_seq.push_back(new algorithm::Scaled_Leap_Frog_Velocity);
+    else if (sim.param().integrate.method == simulation::integrate_leap_frog) {
+      algorithm::IAlgorithm * lfv = nullptr;
+      if(sim.param().addecouple.adgr > 0)
+          lfv = algorithm::make_algorithm<algorithm::Scaled_Leap_Frog_Velocity>(sim);
       else
-       md_seq.push_back(new algorithm::Leap_Frog_Velocity);
+          lfv = algorithm::make_algorithm<algorithm::Leap_Frog_Velocity>(sim);
+      md_seq.push_back(lfv);
     }
     // ??
     else{
@@ -205,24 +214,24 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
 			 io::message::warning);
       }
 
-      if (sim.param().multibath.algorithm == 0){
-	algorithm::Berendsen_Thermostat * tcoup =
-	  new algorithm::Berendsen_Thermostat;
-	md_seq.push_back(tcoup);
+      if (sim.param().multibath.algorithm == 0) {
+        algorithm::IAlgorithm * tcoup = algorithm::make_algorithm<algorithm::Berendsen_Thermostat>(sim);
+        md_seq.push_back(tcoup);
       }
-      else if (sim.param().multibath.algorithm >= 1){
-	algorithm::NoseHoover_Thermostat *tcoup =
-	  new algorithm::NoseHoover_Thermostat;
-	md_seq.push_back(tcoup);
+      else if (sim.param().multibath.algorithm >= 1) {
+        algorithm::IAlgorithm * tcoup = algorithm::make_algorithm<algorithm::NoseHoover_Thermostat>(sim);
+        md_seq.push_back(tcoup);
       }
     }
     
-    if (sim.param().stochastic.sd){
+    if (sim.param().stochastic.sd) {
       //calculating the new position without the contribution form the random velocity
-      md_seq.push_back(new algorithm::Stochastic_Dynamics_Pos1);
+      algorithm::IAlgorithm * sdp1 = algorithm::make_algorithm<algorithm::Stochastic_Dynamics_Pos1>(sim);
+      md_seq.push_back(sdp1);
     }
-    else if (sim.param().integrate.method == simulation::integrate_leap_frog){
-       md_seq.push_back(new algorithm::Leap_Frog_Position);
+    else if (sim.param().integrate.method == simulation::integrate_leap_frog) {
+      algorithm::IAlgorithm * lfp = algorithm::make_algorithm<algorithm::Leap_Frog_Position>(sim);
+       md_seq.push_back(lfp);
     }
     else{
       if (!quiet)
@@ -234,14 +243,13 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
   create_constraints(md_seq, topo, sim, it);
   if (sim.param().stochastic.sd){
       //getting the Velocities from the restraint conformation
-      md_seq.push_back(new algorithm::Stochastic_Dynamics_Vel2);
+      algorithm::IAlgorithm * sdv2 = algorithm::make_algorithm<algorithm::Stochastic_Dynamics_Vel2>(sim);
+      md_seq.push_back(sdv2);
     }
 
   // temperature calculation (always!)
   {
-    algorithm::Temperature_Calculation * tcalc =
-      new algorithm::Temperature_Calculation;
-
+    algorithm::IAlgorithm * tcalc = algorithm::make_algorithm<algorithm::Temperature_Calculation>(sim);
     DEBUG(7, tcalc->name);
     md_seq.push_back(tcalc);
 
@@ -261,8 +269,7 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
   }
   
   if (sim.param().pcouple.calculate){
-    algorithm::Pressure_Calculation * pcalc =
-      new algorithm::Pressure_Calculation;
+    algorithm::Pressure_Calculation * pcalc = algorithm::make_algorithm<algorithm::Pressure_Calculation>(sim);
     md_seq.push_back(pcalc);
     
     // coarse grain factor for pressure correction
@@ -275,34 +282,32 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
   }
 
   //  pressure scaling
-  if (sim.param().pcouple.scale != math::pcouple_off){
-    algorithm::Berendsen_Barostat * pcoup =
-      new algorithm::Berendsen_Barostat;
+  if (sim.param().pcouple.scale != math::pcouple_off) {
+    algorithm::Berendsen_Barostat * pcoup = algorithm::make_algorithm<algorithm::Berendsen_Barostat>(sim);
     md_seq.push_back(pcoup);
   }
 
   // slow growth
-  if (sim.param().perturbation.perturbation){
-    if (sim.param().perturbation.dlamt){
-      algorithm::Slow_Growth *sg =
-	new algorithm::Slow_Growth;
+  if (sim.param().perturbation.perturbation) {
+    if (sim.param().perturbation.dlamt) {
+      algorithm::Slow_Growth * sg = algorithm::make_algorithm<algorithm::Slow_Growth>(sim);
       md_seq.push_back(sg);
     }
   }
   
   // total energy calculation and energy average update
   {
-    algorithm::Energy_Calculation * ec = 
-      new algorithm::Energy_Calculation();
+    algorithm::Energy_Calculation * ec = algorithm::make_algorithm<algorithm::Energy_Calculation>(sim);
     md_seq.push_back(ec);
   }
-  if (sim.param().stochastic.sd){
+  if (sim.param().stochastic.sd) {
       // getting the new positions including the contribution from the random velocity
-      md_seq.push_back(new algorithm::Stochastic_Dynamics_Pos2(sd_vel->rng(), 
-              &sd_vel->random_vectors()));
+      algorithm::IAlgorithm * sdp2 = algorithm::make_algorithm<
+                                    algorithm::Stochastic_Dynamics_Pos2>(sim, sd_vel->rng(), 
+                                                                  &sd_vel->random_vectors());
+      md_seq.push_back(sdp2);
       //do the constraints again without changing the velocities
       create_constraints(md_seq, topo, sim, it);
-      
   }
 
 

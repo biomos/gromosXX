@@ -212,9 +212,10 @@ namespace algorithm
    * @return IAlgorithm*
    */
   template <template <typename> class AlgT, typename... Args>
-  IAlgorithm* make_algorithm(
-                            simulation::Simulation & sim, 
+  IAlgorithm* make_algorithm(simulation::Simulation & sim, 
                             Args&&... args) {
+    static_assert(std::is_base_of_v<IAlgorithm, AlgT<util::cpuBackend>>,
+                  "AlgT must derive from IAlgorithm");
     if constexpr (util::has_gpu_backend_v<AlgT>) {
       if (sim.param().gpu.accelerator == simulation::gpu_cuda) {
         return new AlgT<util::gpuBackend>(std::forward<Args>(args)...);
@@ -222,6 +223,21 @@ namespace algorithm
     }
     return new AlgT<util::cpuBackend>(std::forward<Args>(args)...);
   }
+
+  /**
+   * @brief Legacy version of make_algorithm for non-templated classes
+   * 
+   * @tparam Alg The algorithm class
+   * @param sim Simulation object
+   * @param args Arguments to be passed to the constructor
+   * @return Alg* 
+   */
+  template <class Alg, typename... Args>
+  Alg* make_algorithm(simulation::Simulation & sim, 
+                      Args&&... args) {
+    return new Alg(std::forward<Args>(args)...);
+  }
+
 
   /**
    * @brief Create a backend-aware algorithm instance (GPU if available and supported, otherwise CPU)
