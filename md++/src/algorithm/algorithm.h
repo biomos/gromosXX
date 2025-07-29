@@ -47,22 +47,22 @@ namespace util
 namespace algorithm
 {
   /**
-   * @class IAlgorithm
+   * @class Algorithm
    * base class
    */
-  class IAlgorithm
+  class Algorithm
   {
   public:
     /**
      * Constructor.
      * @param name of the algorithm.
      */
-    IAlgorithm(std::string name) : name(name), m_timer(name) {}
+    Algorithm(std::string name) : name(name), m_timer(name) {}
 
     /**
      * Destructor.
      */
-    virtual ~IAlgorithm() {}
+    virtual ~Algorithm() {}
     
     /**
      * init an algorithm
@@ -130,7 +130,7 @@ namespace algorithm
 
   /**
    * @struct AlgorithmB
-   * @details Specialization for supported backends
+   * @details Compile-time helper struct to check for supported backends
    */
   template <typename Backend>
   struct AlgorithmB<
@@ -154,68 +154,17 @@ namespace algorithm
   };
 
   /**
-   * @class AlgorithmT
-   * General template class for algorithms. This class provides a common interface for all algorithms.
-   * It also provides timing functionality and offers different backends (CPU, GPU).
-   */
-  template <typename Backend = util::cpuBackend>
-  class AlgorithmT : public AlgorithmB<Backend>, public IAlgorithm {
-    /**
-     * @brief compile time check for accidental use in CUDA disabled
-     * 
-     */
-    static_assert(util::backend_is_enabled<Backend>::value,
-                "This backend is not supported in the current build configuration.");
-  public:
-
-    /**
-     * Default constructor.
-     */
-    explicit AlgorithmT(const std::string& name) : IAlgorithm(name) {}
-    
-
-    /**
-     * Destructor.
-     */
-    virtual ~AlgorithmT() override {}
-    
-    /**
-     * init an algorithm
-     * print out input parameter, what it does...
-     */
-    virtual int init(topology::Topology & topo,
-		     configuration::Configuration & conf,
-		     simulation::Simulation & sim,
-		     std::ostream & os = std::cout,
-		     bool quiet = false) override = 0;
-    // { return 0; }
-    
-    /**
-     * apply the algorithm
-     */
-    virtual int apply(topology::Topology & topo,
-		      configuration::Configuration & conf,
-		      simulation::Simulation & sim) override {return 0;}
-  };
-
-  /**
-   * @brief Allow use of Algorithm directly - defaults to AlgorithmT<util::cpuBackend>
-   * 
-   */
-  using Algorithm = AlgorithmT<util::cpuBackend>;
-
-  /**
    * @brief Create a backend-aware algorithm instance (GPU if available and supported, otherwise CPU)
    *
    * @tparam AlgT The algorithm template
    * @param Args... Arguments to be passed to the constructor
-   * @return IAlgorithm*
+   * @return Algorithm*
    */
   template <template <typename> class AlgT, typename... Args>
-  IAlgorithm* make_algorithm(simulation::Simulation & sim, 
+  Algorithm* make_algorithm(simulation::Simulation & sim, 
                             Args&&... args) {
-    static_assert(std::is_base_of_v<IAlgorithm, AlgT<util::cpuBackend>>,
-                  "AlgT must derive from IAlgorithm");
+    static_assert(std::is_base_of_v<Algorithm, AlgT<util::cpuBackend>>,
+                  "AlgT must derive from Algorithm");
     if constexpr (util::has_gpu_backend_v<AlgT>) {
       if (sim.param().gpu.accelerator == simulation::gpu_cuda) {
         return new AlgT<util::gpuBackend>(std::forward<Args>(args)...);
@@ -244,10 +193,10 @@ namespace algorithm
    *
    * @tparam AlgT The algorithm template
    * @param Args... Arguments to be passed to the constructor
-   * @return std::unique_ptr<IAlgorithm>
+   * @return std::unique_ptr<Algorithm>
    */
   template <template <typename> class AlgT, typename... Args>
-  std::unique_ptr<IAlgorithm> make_unique_algorithm(
+  std::unique_ptr<Algorithm> make_unique_algorithm(
                             simulation::Simulation & sim, 
                             Args&&... args) {
     if constexpr (util::has_gpu_backend_v<AlgT>) {

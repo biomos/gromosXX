@@ -46,7 +46,7 @@ namespace algorithm
    * angular momentum calculation.
    */
   template<typename Backend = util::cpuBackend>
-  class Remove_COM_Motion : public AlgorithmT<Backend>
+  class Remove_COM_Motion : public Algorithm, private AlgorithmB<Backend>
   {
   public:
     /**
@@ -61,7 +61,7 @@ namespace algorithm
     /**
      * Constructor.
      */
-    Remove_COM_Motion(std::ostream & os = std::cout) : AlgorithmT<Backend>("RemoveCOMMotion"), os(os) {}
+    Remove_COM_Motion(std::ostream & os = std::cout) : Algorithm("RemoveCOMMotion"), os(os) {}
 
     /**
      * Destructor.

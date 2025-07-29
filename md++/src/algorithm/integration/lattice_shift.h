@@ -34,15 +34,15 @@ namespace algorithm
    * keeps track of lattice shifts
    */
   template <typename Backend = util::cpuBackend>
-  class Lattice_Shift_Tracker : public AlgorithmT<Backend>
+  class Lattice_Shift_Tracker : public Algorithm, private AlgorithmB<Backend>
   {
   public:
     /**
      * Constructor.
      */
-    Lattice_Shift_Tracker() : AlgorithmT<Backend>("Lattice_Shift_Tracker") {
+    Lattice_Shift_Tracker() : Algorithm("Lattice_Shift_Tracker") {
         static_assert(!std::is_same_v<Backend, util::gpuBackend>,
-                      "Lattice_Shift_Tracker is not implemented for this backend.");
+                      "Lattice_Shift_Tracker is not implemented for gpuBackend.");
                   }
 
     /**

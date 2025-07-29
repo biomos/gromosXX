@@ -41,7 +41,7 @@
 #define SUBMODULE algorithm
 
 algorithm::Algorithm_Sequence::Algorithm_Sequence(bool clean)
-  : std::vector<IAlgorithm *>(), clean(clean)
+  : std::vector<Algorithm *>(), clean(clean)
 {
 }
 

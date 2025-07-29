@@ -118,20 +118,20 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
           io::messages.add("COM removal is ignored with anatrj",
                 "create_md_sequence", io::message::warning);
       } else {
-        algorithm::IAlgorithm * rcom = algorithm::make_algorithm<algorithm::Remove_COM_Motion>(sim, os);
+        algorithm::Algorithm * rcom = algorithm::make_algorithm<algorithm::Remove_COM_Motion>(sim, os);
         md_seq.push_back(rcom);
       }
   }
   
   // add the lattice shift tracking 
   if (sim.param().boundary.boundary != math::vacuum) {
-    algorithm::IAlgorithm * lst = algorithm::make_algorithm<algorithm::Lattice_Shift_Tracker>(sim);
+    algorithm::Algorithm * lst = algorithm::make_algorithm<algorithm::Lattice_Shift_Tracker>(sim);
     md_seq.push_back(lst);
   }
   
   // prepare virtual atoms
   if (sim.param().virtualatoms.virtualatoms) {
-    algorithm::IAlgorithm * pva = algorithm::make_algorithm<algorithm::Prepare_VirtualAtoms>(sim);
+    algorithm::Algorithm * pva = algorithm::make_algorithm<algorithm::Prepare_VirtualAtoms>(sim);
     md_seq.push_back(pva);
   }
 
@@ -140,47 +140,47 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
 
   // propagate forces for virtual atoms
   if (sim.param().virtualatoms.virtualatoms) {
-      algorithm::IAlgorithm * pf = algorithm::make_algorithm<algorithm::Propagate_Forces>(sim);
+      algorithm::Algorithm * pf = algorithm::make_algorithm<algorithm::Propagate_Forces>(sim);
       md_seq.push_back(pf);
   }
   
   //add EDS
   if (sim.param().eds.eds) {
-    algorithm::IAlgorithm * eds = algorithm::make_algorithm<algorithm::EDS>(sim);
+    algorithm::Algorithm * eds = algorithm::make_algorithm<algorithm::EDS>(sim);
     md_seq.push_back(eds);
   } 
 
   //ORIOL_GAMD add GAMD
   if (sim.param().gamd.gamd){
-    algorithm::IAlgorithm * gamd = algorithm::make_algorithm<algorithm::GAMD>(sim);
+    algorithm::Algorithm * gamd = algorithm::make_algorithm<algorithm::GAMD>(sim);
     md_seq.push_back(gamd);
   } 
               
   // position constraints?
   if (sim.param().posrest.posrest == 3 && !sim.param().analyze.no_constraints) {
-    algorithm::IAlgorithm * pc = algorithm::make_algorithm<algorithm::Position_Constraints>(sim);
+    algorithm::Algorithm * pc = algorithm::make_algorithm<algorithm::Position_Constraints>(sim);
     md_seq.push_back(pc);
   }
 
   // monte-carlo steps?
   if (sim.param().montecarlo.mc){
-    algorithm::IAlgorithm * mc = algorithm::make_algorithm<algorithm::Monte_Carlo>(sim, ff);
+    algorithm::Algorithm * mc = algorithm::make_algorithm<algorithm::Monte_Carlo>(sim, ff);
     md_seq.push_back(mc);
   }
 
   // energy minimisation or MD?
   algorithm::Stochastic_Dynamics_Vel1 * sd_vel = nullptr;
   if (sim.param().minimise.ntem == simulation::emin_steepest_descent) {
-    algorithm::IAlgorithm * sd = algorithm::make_algorithm<algorithm::Steepest_Descent>(sim);
+    algorithm::Algorithm * sd = algorithm::make_algorithm<algorithm::Steepest_Descent>(sim);
     md_seq.push_back(sd);
   }
   else if (sim.param().minimise.ntem == simulation::emin_conjugate_gradient_fr
             || sim.param().minimise.ntem == simulation::emin_conjugate_gradient_pr) {
-    algorithm::IAlgorithm * cg = algorithm::make_algorithm<algorithm::Conjugate_Gradient>(sim, md_seq);
+    algorithm::Algorithm * cg = algorithm::make_algorithm<algorithm::Conjugate_Gradient>(sim, md_seq);
     md_seq.push_back(cg);
   }
   else if (sim.param().analyze.analyze) {
-    algorithm::IAlgorithm * as = algorithm::make_algorithm<algorithm::Analyze_Step>(sim, sim.param().analyze.trajectory);
+    algorithm::Algorithm * as = algorithm::make_algorithm<algorithm::Analyze_Step>(sim, sim.param().analyze.trajectory);
     md_seq.push_back(as);
   } else {    
     // SD ?
@@ -191,7 +191,7 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
     }
     // MD ?
     else if (sim.param().integrate.method == simulation::integrate_leap_frog) {
-      algorithm::IAlgorithm * lfv = nullptr;
+      algorithm::Algorithm * lfv = nullptr;
       if(sim.param().addecouple.adgr > 0)
           lfv = algorithm::make_algorithm<algorithm::Scaled_Leap_Frog_Velocity>(sim);
       else
@@ -215,22 +215,22 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
       }
 
       if (sim.param().multibath.algorithm == 0) {
-        algorithm::IAlgorithm * tcoup = algorithm::make_algorithm<algorithm::Berendsen_Thermostat>(sim);
+        algorithm::Algorithm * tcoup = algorithm::make_algorithm<algorithm::Berendsen_Thermostat>(sim);
         md_seq.push_back(tcoup);
       }
       else if (sim.param().multibath.algorithm >= 1) {
-        algorithm::IAlgorithm * tcoup = algorithm::make_algorithm<algorithm::NoseHoover_Thermostat>(sim);
+        algorithm::Algorithm * tcoup = algorithm::make_algorithm<algorithm::NoseHoover_Thermostat>(sim);
         md_seq.push_back(tcoup);
       }
     }
     
     if (sim.param().stochastic.sd) {
       //calculating the new position without the contribution form the random velocity
-      algorithm::IAlgorithm * sdp1 = algorithm::make_algorithm<algorithm::Stochastic_Dynamics_Pos1>(sim);
+      algorithm::Algorithm * sdp1 = algorithm::make_algorithm<algorithm::Stochastic_Dynamics_Pos1>(sim);
       md_seq.push_back(sdp1);
     }
     else if (sim.param().integrate.method == simulation::integrate_leap_frog) {
-      algorithm::IAlgorithm * lfp = algorithm::make_algorithm<algorithm::Leap_Frog_Position>(sim);
+      algorithm::Algorithm * lfp = algorithm::make_algorithm<algorithm::Leap_Frog_Position>(sim);
        md_seq.push_back(lfp);
     }
     else{
@@ -243,13 +243,13 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
   create_constraints(md_seq, topo, sim, it);
   if (sim.param().stochastic.sd){
       //getting the Velocities from the restraint conformation
-      algorithm::IAlgorithm * sdv2 = algorithm::make_algorithm<algorithm::Stochastic_Dynamics_Vel2>(sim);
+      algorithm::Algorithm * sdv2 = algorithm::make_algorithm<algorithm::Stochastic_Dynamics_Vel2>(sim);
       md_seq.push_back(sdv2);
     }
 
   // temperature calculation (always!)
   {
-    algorithm::IAlgorithm * tcalc = algorithm::make_algorithm<algorithm::Temperature_Calculation>(sim);
+    algorithm::Algorithm * tcalc = algorithm::make_algorithm<algorithm::Temperature_Calculation>(sim);
     DEBUG(7, tcalc->name);
     md_seq.push_back(tcalc);
 
@@ -302,7 +302,7 @@ int algorithm::create_md_sequence(algorithm::Algorithm_Sequence &md_seq,
   }
   if (sim.param().stochastic.sd) {
       // getting the new positions including the contribution from the random velocity
-      algorithm::IAlgorithm * sdp2 = algorithm::make_algorithm<
+      algorithm::Algorithm * sdp2 = algorithm::make_algorithm<
                                     algorithm::Stochastic_Dynamics_Pos2>(sim, sd_vel->rng(), 
                                                                   &sd_vel->random_vectors());
       md_seq.push_back(sdp2);

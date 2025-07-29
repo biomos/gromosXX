@@ -33,7 +33,6 @@
 #include "../../interaction/interaction.h"
 
 #include "../../util/prepare_virial.h"
-#include "util/backend.h"
 
 #include "forcefield.h"
 
@@ -42,8 +41,7 @@
 #define MODULE interaction
 #define SUBMODULE forcefield
 
-template <typename Backend>
-interaction::ForcefieldT<Backend>::~ForcefieldT()
+interaction::Forcefield::~Forcefield()
 {
   for(iterator it = begin(), to = end();
       it != to;
@@ -52,8 +50,7 @@ interaction::ForcefieldT<Backend>::~ForcefieldT()
   }
 }
 
-template <typename Backend>
-int interaction::ForcefieldT<Backend>
+int interaction::Forcefield
 ::init(topology::Topology & topo,
        configuration::Configuration & conf,
        simulation::Simulation &sim,
@@ -75,8 +72,8 @@ int interaction::ForcefieldT<Backend>
 }
 
 
-template <typename Backend>
-interaction::Interaction * interaction::ForcefieldT<Backend>
+
+interaction::Interaction * interaction::Forcefield
 ::interaction(std::string name)
 {
   for(iterator it = begin(), to = end();
@@ -87,8 +84,7 @@ interaction::Interaction * interaction::ForcefieldT<Backend>
   return NULL;
 }
 
-template <typename Backend>
-interaction::Interaction const * interaction::ForcefieldT<Backend>
+interaction::Interaction const * interaction::Forcefield
 ::interaction(std::string name)const
 {
   for(const_iterator it = begin(), to = end();
@@ -99,8 +95,7 @@ interaction::Interaction const * interaction::ForcefieldT<Backend>
   return NULL;
 }
 
-template <typename Backend>
-int interaction::ForcefieldT<Backend>
+int interaction::Forcefield
 ::calculate_interactions(topology::Topology & topo,
 			 configuration::Configuration & conf,
 			 simulation::Simulation &sim)
@@ -176,8 +171,7 @@ int interaction::ForcefieldT<Backend>
 }
     
 
-template <typename Backend>
-void interaction::ForcefieldT<Backend>
+void interaction::Forcefield
 ::print_timing(std::ostream & os)
 {
   // m_timer.print(os);
@@ -191,7 +185,3 @@ void interaction::ForcefieldT<Backend>
   }
 }
 
-/**
- * Explicit default template instantiation
- */
-template class interaction::ForcefieldT<util::cpuBackend>;
