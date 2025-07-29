@@ -35,6 +35,16 @@
                 "USE_CUDA": "ON",
                 "CMAKE_BUILD_TYPE": "Debug"
             }
+        },
+        {
+            "name": "cuda-off-debug",
+            "displayName": "CUDA Disabled Debug",
+            "description": "Debug Build without CUDA support",
+            "generator": "Ninja",
+            "cacheVariables": {
+                "USE_CUDA": "OFF",
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
         }
     ],
     "buildPresets": [
@@ -49,6 +59,10 @@
         {
             "name": "build-cuda-on-debug",
             "configurePreset": "cuda-on-debug"
+        },
+        {
+            "name": "build-cuda-off-debug",
+            "configurePreset": "cuda-off-debug"
         }
     ],
     "testPresets": [
