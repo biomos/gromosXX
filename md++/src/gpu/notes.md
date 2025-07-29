@@ -179,41 +179,51 @@ compilation. The `.cu` source is compiled in CUDA-enabled build and contains ful
 The CUDA-capable `Algorithm`s and `Interaction`s are defined as templates with common bases to achieve clean code separation.
 Based on the compile time constants and/or runtime settings, we then dispatch either `MyAlgorithm<cpuBackend>`
 or `MyAlgorithm<gpuBackend>`. `MyAlgoritm` defaults to `MyAlgorithm<cpuBackend>`.
-The common bases are `IAlgorithm`, `IInteraction` and `IForcefield` allowing sequencing their base pointers
+The common bases are `Algorithm`, `Interaction` and `Forcefield` allowing sequencing their base pointers
 in the execution sequence.
 
 ## Algoritms can be CPU or GPU
-The `Algorithm` class has been reworked such that it is a template `AlgorithmT`. CPU and GPU variants are initialized:
+The `MyAlgorithm` class can be implemented such that it is a template with bases `Algorithm` and `AlgorithmB<Backend>`.
+CPU and GPU variants are initialized:
 ```cpp
 // CPU variant
-AlgorithmT<util::cpuBackend> alg(os);
+MyAlgorithmT<util::cpuBackend> alg(os);
 
 // GPU variant
-AlgorithmT<util::gpuBackend> alg(os);
-
-// also legacy invocation is possible
-Algorithm alg(os); // invokes AlgorithmT<util::cpuBackend> and works as before.
+MyAlgorithmT<util::gpuBackend> alg(os);
 ```
 
-The common interface is `IAlgorithm`, so `Algorithm_Sequence` becomes `std::vector<std::unique_ptr<IAlgorithm>>`.
+```cpp
+// you can specify
+using MyAlgorithm = MyAlgorithmT<util::cpuBackend>;
+// then also legacy invocation is possible
+MyAlgorithm alg(os); // invokes MyAlgorithm<util::cpuBackend> and works as before.
+```
+
+The common interface is `Algorithm`, so `Algorithm_Sequence` becomes `std::vector<std::unique_ptr<IAlgorithm>>`.
+
+The `AlgorithmB<Backend>` template allows for compile-time checks of backend availability and
+ensures correct function of the `make_algorithm` factory function.
 
 Every algoritm requires a single template declaration:
 
 ```cpp
 // shake.h
   template<typename Backend>
-  class Shake : public AlgorithmT<Backend>
+  class Shake : public Algorithm, private AlgorithmB<Backend>
   {
   public:
     /**
-     * Constructor is inherited
+     * Constructor is inherited?
      */
-    using AlgorithmT<Backend>::AlgorithmT;
+    using Algorithm::Algorithm;
 
     /**
      * Destructor.
      */
     virtual ~Shake() {}
+    //...
+  }
 ```
 
 Then in the source
@@ -228,31 +238,64 @@ Shake<util::gpuBackend>::apply(...) {
 }
 ```
 
-The reason for this is to have some compile-time control. Every algorithm now has to be explicitly defined as CPU or GPU variant.
+The reason for this is to have some compile-time control. Every algorithm now can be defined as CPU or GPU variant.
 In a CPU-only compilation, the GPU variants should not get compiled at all, and an error is thrown,
-if you try to instantiate them. This is achieved by the `backend_is_enabled` type trait:
+if you try to instantiate them. The templates can be checked for backend availability using:
+
+
+This is achieved by the `util::has_gpu_backend_v<AlgT>` trait. Example for a compile-time check:
+```cpp
+if constexpr (util::has_gpu_backend_v<AlgT>) {
+  // do something
+}
+```
+The `util::has_gpu_backend_v<AlgT>` returns `True` only if:
+1. the CUDA compilation is enabled
+2. the `util::gpuBackend` is in the `static constexpr bool is_supported_backend`
+   
+There is also `util::has_cpu_backend_v<AlgT>` and the corresponding type traits:
+`util::has_backend<AlgT, Backend>`
+`util::has_cpu_backend<AlgT>`
+`util::has_gpu_backend<AlgT>`
+
 ```cpp
 // util/backend.h
-template <typename Backend>
-struct backend_is_enabled
-{
-    static constexpr bool value =
-    std::is_same_v<Backend, cpuBackend> ||
+namespace util {
 #ifdef USE_CUDA
-      std::is_same_v<Backend, gpuBackend>;
+    inline constexpr bool cuda_enabled = true;
 #else
-    false;
+    inline constexpr bool cuda_enabled = false;
 #endif
-};
+    template <template <typename> class AlgT, typename Backend, typename = void>
+    struct has_backend : std::false_type {};
+    template <template <typename> class AlgT, typename Backend>
+    struct has_backend<
+        AlgT,
+        Backend,
+        std::enable_if_t<
+            AlgT<Backend>::template is_supported_backend<Backend> &&
+            (!std::is_same_v<Backend, util::gpuBackend> || cuda_enabled)
+        >
+    > : std::true_type {};
 
-// algorithm.h
-  class AlgorithmT : public IAlgorithm {
+    template <template <typename> class AlgT>
+    struct has_gpu_backend : has_backend<AlgT, util::gpuBackend> {};
+    
+    template <template <typename> class AlgT>
+    constexpr bool has_gpu_backend_v =
+        has_gpu_backend<AlgT>::value;
+}
+```
+
+```cpp
+// my_algorithm.h
+  class MyAlgorithm : public Algorithm, private AlgorithmB {
     /**
      * @brief compile time check for CUDA enabled
      * 
      */
-    static_assert(util::backend_is_enabled<Backend>::value,
-                "This backend is not supported in the current build configuration.");
+    static_assert(!util::is_same_v<Backend, util::gpuBackend>,
+                  "MyAlgorithm is not implemented for gpuBackend.");
   }
 ```
 Instantiating the GPU variant is not allowed in CPU-only compilation:
@@ -291,7 +334,7 @@ If somehow a `Algorithm<util::gpuBackend>` is created somewhere by accident, the
 
 
 ## How to implement GPU variant of an algorithm?
-1. Change the class declaration into a template and define the available backends:
+1. Change the class declaration into a template:
 ```cpp
 // in my_algorithm.h
 // Change this
@@ -307,7 +350,7 @@ If somehow a `Algorithm<util::gpuBackend>` is created somewhere by accident, the
 
 // into this
   template <typename Backend = util::cpuBackend>
-  class MyAlgorithm : public AlgorithmT<Backend>
+  class MyAlgorithm : public Algorithm, private AlgorithmB<Backend>
   {
   public:
     /**
@@ -322,16 +365,32 @@ If somehow a `Algorithm<util::gpuBackend>` is created somewhere by accident, the
     /**
      * Constructor.
      */
-    MyAlgorithm() : AlgorithmT<Backend>("MyAlgorithm") {}
+    MyAlgorithm() : Algorithm("MyAlgorithm") {}
    //...
   }
 ```
-1. Change all definitions into template definitions and define the variants implementations.
+2. Depending on the difference complexity between the CPU and GPU backend, you may use
+   complete separation using template specialization, or you define everything in the
+   single template and separate the relevant parts using `constexpr`.
+   
+   A. Simple difference - using `constexpr`:
 ```cpp
-// from this
-int algorithm::MyAlgorithm::init()
+template<typename Backend>
+int algorithm::MyAlgorithm<Backend>::init() {
+   if constexpr(std::is_same_v<Backend, util::gpuBackend>) {
+     // do GPU operations
+   } else {
+     // do CPU operations
+   }
+}
+```
+This way, the compiler produces two versions of `MyAlgorithm` replacing the if/else branching
+with the appropriate block for the given backend.
 
-//into this
+  B. If the difference between the variants is too complex, you better define the full variants
+  using template specialization.
+
+```cpp
 // preferably in my_algorithm_cpu.cc
 template<>
 int algorithm::MyAlgorithm<util::cpuBackend>::init() {
@@ -342,36 +401,39 @@ template<>
 int algorithm::MyAlgorithm<util::gpuBackend>::init() {
     ...
 }
-
-// or this if the function is the same or similar for both backends
-template<typename Backend>
-int algorithm::MyAlgorithm<Backend>::init() {
-    ... // Use Backend in constexpr conditionals, if neccessary
-}
 ```
 
-3. You can then either create the `MyAlgorithm<util::cpuBackend>` or `MyAlgorithm<util::gpuBackend>` directly, or use:
+3. To instantiate, you can then either create the `MyAlgorithm<util::cpuBackend>` or `MyAlgorithm<util::gpuBackend>` directly, or use:
 ```cpp
-algorithm::make_algorithm<algorithm::MyAlgorithm>(sim/*, optional MyAlgorithm constructor arguments */);
+algorithm::make_algorithm<algorithm::MyAlgorithm>(sim
+/*, other MyAlgorithm constructor arguments */);
 
 ```
-to let the program create the variant based on the input from `sim` and build.
+to let the program create the variant based on the input from `simulation::Simulation sim` and build.
 
-1. Update the file lists accordingly in `Makefile.am` and `CMakeLists.txt`
-2. Check compilations with and without CUDA.
+4. Update the file lists accordingly in `Makefile.am` and `CMakeLists.txt`
+5. Check compilations with and without CUDA.
 
 For examples, see commit `7866f713`
 The template of `Lattice_Shift_Tracker` there specifies indentical CPU and GPU variants.
 
 For `Remove_COM_Motion`, variants are completely separate.
 
-1. Sometimes you might need to change m_timer to this->m_timer. Also, if you do not provide explicit specializations, 
+6. Sometimes you might need to change m_timer to this->m_timer. Also, if you do not provide explicit specializations, 
 an explicit instantiation at the bottom of the `.cc` file is neccessary for the linker:
 ```cpp
 // add this at the end of my_algorithm.cc if you get linker errors.
 template class algorithm::MyAlgorithm<util::cpuBackend>;
+// and also the gpuBackend in the .cu, if implemented
 ```
 
+## Alternative using pImpl principle
+Another way is to create a single `My_Algorithm`, which has 
+a member `My_Algorithm_Impl<Backend>* m_impl`. Then, you
+define separate implementations, and in the template of
+`My_Algorithm`, you just call `m_impl->apply()` or other
+methods. Example is `CUDA_Pairlist_Algorithm` at commit
+`4f78bf0`
 
 ## Cuda Manager conditional compilation
 
@@ -379,3 +441,5 @@ There is also a soft restriction on CudaManager. In CPU-only build, all its meth
 If you anyhow use them somewhere, they compile, but throw a runtime error as soon as you try to use them.
 Turning them into a hard restriction (compile time) should be considered.
 
+## Pairlist algorithm
+Class `CUDA_Pairlist` consists of `Interaction_Tile` structs.
