@@ -192,22 +192,29 @@ int interaction::create_g96_nonbonded
     pa = new HOOMD_Pairlist_Algorithm(sim); 
   } else { // gromosxx pairlist
 #endif
+    //// TESTING ////////
+    // CUDA has its own pairlist algorithm
+    io::messages.add("Ignoring pairlist setting, using CUDA pairlist algorithm",
+      "create_nonbonded", io::message::warning);
     if (sim.param().gpu.accelerator == simulation::gpu_cuda) {
-      // CUDA has its own pairlist algorithm
-      io::messages.add("Ignoring pairlist setting, using CUDA pairlist algorithm",
-        "create_nonbonded", io::message::warning);
-      pa = new CUDA_Pairlist_Algorithm();
-    } else if (sim.param().pairlist.grid == 0) {
-      pa = new Standard_Pairlist_Algorithm();
-    } else if (sim.param().pairlist.grid == 1) {
-      pa = new Extended_Grid_Pairlist_Algorithm();
-    } else if (sim.param().pairlist.grid == 2) {
-      pa = new Grid_Cell_Pairlist(topo, sim);
-    }  else {
-      io::messages.add("unkown pairlist algorithm.", "create_nonbonded",
-             io::message::error);
-      return 1;
-	}
+      pa = new CUDA_Pairlist_Algorithm<util::gpuBackend>();
+    } else {
+      pa = new CUDA_Pairlist_Algorithm<util::cpuBackend>();
+    }
+    //// END TESTING ////
+    //// TEMPORARILY OFF ////
+    // if (sim.param().pairlist.grid == 0) {
+    //   pa = new Standard_Pairlist_Algorithm();
+    // } else if (sim.param().pairlist.grid == 1) {
+    //   pa = new Extended_Grid_Pairlist_Algorithm();
+    // } else if (sim.param().pairlist.grid == 2) {
+    //   pa = new Grid_Cell_Pairlist(topo, sim);
+    // }  else {
+    //   io::messages.add("unkown pairlist algorithm.", "create_nonbonded",
+    //          io::message::error);
+    //   return 1;
+    // }
+    //// END TEMPORARILY OFF ////
 #ifdef HAVE_HOOMD
   }
 #endif

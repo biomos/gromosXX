@@ -26,6 +26,11 @@
 
 namespace util
 {
+    #ifdef USE_CUDA
+        inline constexpr bool cuda_enabled = true;
+    #else
+        inline constexpr bool cuda_enabled = false;
+    #endif
     /**
      * @brief 
      *
@@ -45,7 +50,7 @@ namespace util
      * @return false Otherwise.
      */
     template <typename Backend>
-    struct backend_is_enabled
+    struct backend_is_available
     {
         static constexpr bool value =
             std::is_same_v<Backend, cpuBackend> ||
@@ -69,7 +74,14 @@ namespace util
     template <template <typename> class AlgT, typename Backend, typename = void>
     struct has_backend : std::false_type {};
     template <template <typename> class AlgT, typename Backend>
-    struct has_backend<AlgT, Backend, std::enable_if_t<AlgT<Backend>::template is_supported_backend<Backend>>> : std::true_type {};
+    struct has_backend<
+        AlgT,
+        Backend,
+        std::enable_if_t<
+            AlgT<Backend>::template is_supported_backend<Backend> &&
+            (!std::is_same_v<Backend, util::gpuBackend> || cuda_enabled)
+        >
+    > : std::true_type {};
 
     /**
      * @brief Checks if the given algorithm template has a CPU backend implementation.
@@ -101,12 +113,7 @@ namespace util
      * @return false_type Otherwise.
      */
     template <template <typename> class AlgT>
-    struct has_gpu_backend :
-#ifdef USE_CUDA
-        has_backend<AlgT, util::gpuBackend> {};
-#else
-        std::false_type {};
-#endif
+    struct has_gpu_backend : has_backend<AlgT, util::gpuBackend> {};
 
     /**
      * @brief Checks if the given algorithm template has a GPU backend implementation.

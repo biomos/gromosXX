@@ -23,45 +23,75 @@
  * CUDA accelerated pairlist algorithm
  */
 
-#include "../../../stdheader.h"
+#include "stdheader.h"
 
-#include "../../../algorithm/algorithm.h"
-#include "../../../topology/topology.h"
-#include "../../../simulation/simulation.h"
-#include "../../../configuration/configuration.h"
+#include "algorithm/algorithm.h"
+#include "topology/topology.h"
+#include "simulation/simulation.h"
+#include "configuration/configuration.h"
 
-#include "../../../math/periodicity.h"
+#include "math/periodicity.h"
 
-#include "../../../interaction/nonbonded/pairlist/pairlist.h"
+#include "pairlist.h"
+#include "pairlist_algorithm.h"
+#include "cuda_pairlist_algorithm.h"
 
-#include "../../../interaction/nonbonded/pairlist/pairlist_algorithm.h"
-#include "../../../interaction/nonbonded/pairlist/cuda_pairlist_algorithm.h"
-
-#include "../../../util/debug.h"
-#include "../../../util/template_split.h"
+#include "util/debug.h"
+#include "util/template_split.h"
 
 #undef MODULE
 #undef SUBMODULE
 #define MODULE interaction
 #define SUBMODULE pairlist
 
-interaction::CUDA_Pairlist_Algorithm::CUDA_Pairlist_Algorithm()
+template<typename Backend>
+interaction::CUDA_Pairlist_Algorithm<Backend>::CUDA_Pairlist_Algorithm()
 : Pairlist_Algorithm(),
-  m_solvent_solvent_timing(0.0) {
-    DEBUG(0,"CUDA_Pairlist_Algorithm Constructor at " << this);
-  }
+  m_solvent_solvent_timing(0.0) {}
 
 /**
  * calculate center of geometries
  */
-int interaction::CUDA_Pairlist_Algorithm::prepare(topology::Topology & topo,
+template<typename Backend>
+int interaction::CUDA_Pairlist_Algorithm<Backend>::prepare(topology::Topology & topo,
 	configuration::Configuration & conf,
 	simulation::Simulation & sim)
 {
+  DEBUG(0, "cuda pairlist algorithm : prepare");
+  // m_impl.prepare(topo, conf, sim);
+  
+  set_cutoff(sim.param().pairlist.cutoff_short, 
+	     sim.param().pairlist.cutoff_long);
+  
+  if (!sim.param().pairlist.atomic_cutoff) {
+
+    // first put the chargegroups into the box
+    m_impl.prepare_cog(conf, topo);
+
+    // calculate cg cog's
+    DEBUG(10, "calculating cg cog (" << topo.num_solute_chargegroups() << ")");
+    m_cg_cog.resize(topo.num_solute_chargegroups());
+    math::VArray const &pos = conf.current().pos;
+    DEBUG(10, "pos.size() = " << pos.size());
+
+    // calculate solute center of geometries
+    topology::Chargegroup_Iterator
+      cg1 =   topo.chargegroup_begin();
+    
+    unsigned int i = 0, num_cg = topo.num_solute_chargegroups();
+    
+    for(i=0; i < num_cg; ++cg1, ++i){
+      cg1.cog(pos, m_cg_cog(i));
+    }
+
+  } // chargegroup based cutoff
+
   return 0;
+
 }
 
-void interaction::CUDA_Pairlist_Algorithm::update(topology::Topology & topo,
+template<typename Backend>
+void interaction::CUDA_Pairlist_Algorithm<Backend>::update(topology::Topology & topo,
        configuration::Configuration & conf,
        simulation::Simulation & sim,
        interaction::PairlistContainer & pairlist,
@@ -69,7 +99,8 @@ void interaction::CUDA_Pairlist_Algorithm::update(topology::Topology & topo,
        unsigned int stride)
 {}
 
-void interaction::CUDA_Pairlist_Algorithm::update_perturbed(
+template<typename Backend>
+void interaction::CUDA_Pairlist_Algorithm<Backend>::update_perturbed(
     topology::Topology & topo,
     configuration::Configuration & conf,
     simulation::Simulation & sim,
@@ -78,3 +109,10 @@ void interaction::CUDA_Pairlist_Algorithm::update_perturbed(
     unsigned int begin, unsigned int end,
     unsigned int stride)
 {}
+
+// force instantiation
+template class interaction::CUDA_Pairlist_Algorithm<util::cpuBackend>;
+
+#ifdef USE_CUDA
+template class interaction::CUDA_Pairlist_Algorithm<util::gpuBackend>;
+#endif

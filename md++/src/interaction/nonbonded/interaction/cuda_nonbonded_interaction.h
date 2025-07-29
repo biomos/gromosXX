@@ -42,11 +42,11 @@ namespace simulation
 
 #include "interaction.h"
 #include "nonbonded_parameter.h"
+#include "interaction/nonbonded/pairlist/pairlist_algorithm.h"
 
 namespace interaction
 {
 
-  class Pairlist_Algorithm;
   class Nonbonded_Set_Interface;
   
   /**

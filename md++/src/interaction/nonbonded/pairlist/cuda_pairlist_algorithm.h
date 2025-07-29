@@ -25,6 +25,8 @@
 
 #pragma once
 
+#include "cuda_pairlist_algorithm_impl.h"
+
 namespace math
 {
   template<math::boundary_enum>
@@ -47,8 +49,10 @@ namespace interaction
    * chargegroup based or atom based
    *  cut-off criterion.
    */
+
+  template <typename Backend = util::cpuBackend>
   class CUDA_Pairlist_Algorithm : 
-    public Pairlist_Algorithm
+    public Pairlist_Algorithm, private algorithm::AlgorithmB<Backend>
   {
   public:
     /**
@@ -131,8 +135,9 @@ namespace interaction
     }
       
   private:
+    CUDA_Pairlist_Algorithm_Impl<Backend> m_impl;
     /**
-     * the chargegroup center of geometries.
+     * the chargegroup center of geometries. GPU allocated version
      */
     math::VArray m_cg_cog;
     /**
@@ -161,4 +166,5 @@ namespace interaction
 
   };
 } // interaction
+
 
