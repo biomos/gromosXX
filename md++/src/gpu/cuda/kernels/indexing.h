@@ -1,5 +1,5 @@
 /**
- * @file device_functions.h
+ * @file indexing.h
  * @author poliak
  * device function for easier indexing
  */

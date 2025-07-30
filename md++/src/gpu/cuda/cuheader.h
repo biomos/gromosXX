@@ -41,9 +41,9 @@
         using CUSTREAM = cudaStream_t;
         using CUERROR = cudaError_t;
         template <typename T>
-        using CUVECTOR_T = gpu::cuvector<T>;
+        using CUVECTOR_T = cuvector<T>;
         template <typename T>
-        using CUHVECTOR_T = gpu::cuhvector<T>;
+        using CUHVECTOR_T = cuhvector<T>;
     }
 #else
     #include <vector>

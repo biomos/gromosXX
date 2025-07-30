@@ -22,11 +22,14 @@ if(USE_CUDA)
         cuda/utils.cu
         cuda/manager/cuda_manager.cu
         cuda/kernels/reduction.cu
+        cuda/kernels/hello_world.cu
         cuda/memory/container.cu
+        cuda/memory/topology_struct.cu
         cuda/manager/cuda_device_worker.cu
         cuda/manager/cuda_device_manager.cu
         cuda/manager/cuda_memory_manager.cu
         # cuda/algorithm/constraints.cu
+        cuda/interaction/nonbonded/pairlist/cuda_pairlist_algorithm_impl_gpu.cu
     )
 
     add_library(grocuda STATIC ${GPU_SOURCES})

@@ -443,3 +443,46 @@ Turning them into a hard restriction (compile time) should be considered.
 
 ## Pairlist algorithm
 Class `CUDA_Pairlist` consists of `Interaction_Tile` structs.
+
+
+## Kernel Calls
+To provide data to kernel calls, we create a light-weight structs holding device pointers to
+essential Topology, Configuration and Simulation data.
+```cpp
+ __global__ void gpu::hello_world(topology::Topology::View& topo, configuration::Configuration::View& conf) {
+  unsigned int idx = blockIdx.x * blockDim.x + threadIdx.x;
+  
+
+class Configuration {
+    using GPUView =
+#ifdef USE_CUDA
+    gpu::ConfigurationView;
+#else
+    void;
+#endif
+}
+
+namespace gpu {
+    struct ConfigurationView {
+        // a bunch of device pointers
+        struct StateView {
+            // a bunch of other device pointers
+
+        }
+        __device__ 
+    }
+
+}
+```
+To create a view, we have to go through these steps (on the example of Configuration):
+ 1. Configuration construction
+ 2. GPU allocation - obtain configuration_struct (pointers and cuvectors, possibly from CudaMemoryManager)
+ 3. Store the struct (or a pointer to it) in Configuration
+ 4. Sync the configuration_struct with Configuration
+ 5. Keep configuration and its struct in sync
+ 6. cuvectors need extra step, we have to create a View using ::data()
+
+ Alternatively, as configuration is volatile, just keep the configuration_struct on the GPU side independent
+ and just always export data from Configuration to the configuration_struct
+
+ With topology, it is more constant over the simulation, so there we can keep the pointer to the topology_struct in Topology.

@@ -85,8 +85,4 @@ namespace gpu {
     template <typename T, typename U>
     bool operator!=(const CuMAllocator<T>&, const CuMAllocator<U>&) { return false; }
 
-    // CUDA managed vector
-    // template <typename T>
-    // using cuvector = std::vector<T, CuMAllocator<T>>;
-
 } // namespace gpu

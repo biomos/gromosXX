@@ -85,8 +85,4 @@ namespace gpu {
     template <typename T, typename U>
     bool operator!=(const CuHAllocator<T>&, const CuHAllocator<U>&) { return false; }
 
-    // CUDA device vector
-    // template <typename T>
-    // using cuhvector = std::vector<T, CuHAllocator<T>>;
-
 } // namespace gpu

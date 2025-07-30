@@ -57,6 +57,4 @@ namespace cukernel
     template<class T, class U>
     bool operator!=(const CuMallocator <T>&, const CuMallocator <U>&) { return false; }
 
-    template <typename T>
-    using cuvector = std::vector< T, cukernel::CuMallocator<T> >;
 };

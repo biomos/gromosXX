@@ -32,7 +32,7 @@ namespace interaction {
 }
 
 // force instantiation
-template class interaction::CUDA_Pairlist_Algorithm_Impl<util::cpuBackend>;
+// template class interaction::CUDA_Pairlist_Algorithm_Impl<util::cpuBackend>;
 
 #ifdef USE_CUDA
   #include "gpu/cuda/interaction/nonbonded/pairlist/cuda_pairlist_algorithm_impl_gpu.h"
