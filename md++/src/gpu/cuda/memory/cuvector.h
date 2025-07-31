@@ -8,7 +8,7 @@
 
 #include "cumallocator.h"
 #include "cuhallocator.h"
-#include "../../../math/gmath.h"
+#include "math/gmath.h"
 
 namespace gpu
 {
@@ -16,7 +16,7 @@ namespace gpu
     using cuvector = std::vector< T, CuMAllocator<T> >;
     template <typename T>
     using cuhvector = std::vector< T, CuHAllocator<T> >;
-};
+}
 
 namespace math
 {

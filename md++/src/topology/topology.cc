@@ -52,6 +52,8 @@ namespace simulation {
 #include "../simulation/parameter.h"
 #include <limits>
 
+#include "gpu/cuda/memory/topology_struct.h"
+
 #undef MODULE
 #undef SUBMODULE
 #define MODULE topology
@@ -1581,6 +1583,21 @@ double topology::Topology::sum_squared_charges() const {
   for (unsigned int i = 0; i < natoms; i++)
     sum += charge(i) * charge(i);
   return sum;
+}
+
+void topology::Topology::init_gpu() {
+  m_gpu = std::make_unique<gpu::topology_struct>(*this);
+}
+
+
+const gpu::topology_struct& topology::Topology::get_gpu_view(bool sync) {
+  assert(m_gpu && "gpu::topology_struct not initialized");
+  if (!m_gpu) {
+    init_gpu();
+  } else if (sync) {
+    m_gpu->update(*this);
+  }
+  return *m_gpu;
 }
 
 namespace topology {

@@ -17,6 +17,8 @@
 #include "util/debug.h"
 #include "util/template_split.h"
 
+#include "gpu/cuda/memory/topology_struct.h"
+#include "gpu/cuda/memory/configuration_struct.h"
 #include "gpu/cuda/kernels/hello_world.h"
 
 #include "interaction/nonbonded/pairlist/cuda_pairlist_algorithm_impl.h"
@@ -56,23 +58,16 @@ void interaction::CUDA_Pairlist_Algorithm_Impl<util::gpuBackend>::
 
     dim3 dimGrid(1);
     dim3 dimBlock(NUM_THREADS_PER_BLOCK);
-    float arr[2];
-    float& a = arr[0];
-    float& b = arr[1];
-    a = 1.0f;
-    b = 2.0f;
-    float* d_a;
-    cudaMalloc(&d_a, sizeof(float)*2);
-    float* d_b = d_a+1;
-    DEBUG(0, "a: " << a << ", b: " << b);
+
+    conf.copy_to_gpu();
     
-    cudaMemcpy(d_a, arr, sizeof(float)*2, cudaMemcpyHostToDevice);
-    // gpu::hello_world<<<dimGrid, dimBlock>>>(topo.get_gpu_view(), conf.current().gpu);
-    gpu::hello_world<<<dimGrid, dimBlock>>>(d_a,d_b);
+    // cudaMemcpy(d_a, arr, sizeof(float)*2, cudaMemcpyHostToDevice);
+    gpu::hello_world<<<dimGrid, dimBlock>>>(topo.get_gpu_view(), conf.gpu_view());
+    // gpu::hello_world<<<dimGrid, dimBlock>>>(d_a,d_b);
     cudaDeviceSynchronize();
-    cudaMemcpy(arr, d_a, sizeof(float)*2, cudaMemcpyDeviceToHost);
-    DEBUG(0, "a: " << a << ", b: " << b);
-    cudaFree(d_a);
+    // cudaMemcpy(arr, d_a, sizeof(float)*2, cudaMemcpyDeviceToHost);
+    // DEBUG(0, "a: " << a << ", b: " << b);
+    // cudaFree(d_a);
 }
 
 // explicit instantiation

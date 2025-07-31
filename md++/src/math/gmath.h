@@ -72,6 +72,17 @@ namespace math
     GenericVec<numeric_type> & operator/=(numeric_type_b d) { d_v[0] /= d; d_v[1] /= d; d_v[2] /= d; return *this; }
     
     inline GenericVec<numeric_type> norm() const;
+
+      // Simplifies conversion to 3-membered types
+      template<typename T>
+      operator T() const {
+          // Requires T to have x, y, z members assignable from numeric_type
+          T tmp;
+          tmp.x = static_cast<typename std::remove_reference<decltype(tmp.x)>::type>(d_v[0]);
+          tmp.y = static_cast<typename std::remove_reference<decltype(tmp.y)>::type>(d_v[1]);
+          tmp.z = static_cast<typename std::remove_reference<decltype(tmp.z)>::type>(d_v[2]);
+          return tmp;
+      }
     
     };
     

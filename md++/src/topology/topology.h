@@ -47,6 +47,10 @@ namespace util {
   class LE_Coordinate;
 }
 
+namespace gpu {
+  struct topology_struct;
+}
+
 namespace topology
 {
   /**
@@ -1631,6 +1635,15 @@ namespace topology
      * const accessor to QM LJ exceptions
      */
     const std::vector<lj_exception_struct> & qm_lj_exceptions() const { return m_qm_lj_exceptions;}
+    /**
+     * initialize the gpu-stored topology
+     */
+    void init_gpu();
+    /**
+     * const accessor to GPU-stored topology
+     *  @param sync to GPU (default false)
+     */
+    const gpu::topology_struct& get_gpu_view(bool sync = false);
 
   private:
     /**
@@ -2162,6 +2175,11 @@ namespace topology
      * QMMM LJ exceptions
      */
     std::vector<lj_exception_struct> m_qm_lj_exceptions;
+
+    /**
+     * access to the GPU stored copy of the topology.
+     */
+    std::unique_ptr<gpu::topology_struct> m_gpu;
 
   }; // topology
 

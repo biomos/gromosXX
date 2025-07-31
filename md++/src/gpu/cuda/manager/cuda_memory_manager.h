@@ -7,6 +7,8 @@
 
 #include "gpu/cuda/cuheader.h"
 
+#include "gpu/cuda/memory/cupointer.h"
+
 namespace gpu {
     /**
      * @class CudaMemoryManager
@@ -39,134 +41,80 @@ namespace gpu {
         CudaMemoryManager(CudaMemoryManager&&) = default;
         CudaMemoryManager& operator=(CudaMemoryManager&&) = default;
 
-        /**
-         * @brief Allocate raw device memory; returns device pointer
-         */
-        void* allocate(std::size_t size_bytes);
+        /** Allow allocating only with smart pointers
+         * we track all allocations and allow deallocation only of the pointers we own
+            1. allocate<T>(size_t N) - allocates array of type T of size N
+            2. copy_to_device<T>(T& var) - allocate on device and copy (only for primitive types)
+            3. copy_to_device<T>(vector_type<T>& vec) - allocate on device and copy (only for vector types)
+            4. copy_to_device<T>(T& source, cu_unique_ptr<T> dest_pointer) - copy to existing pointer (only for primitive types)
+            5. copy_to_device<T>(vector_type<T>& source_vec, cu_unique_ptr<T> dest_pointer) - copy to existing pointer (only for vector types)
+            6. // copy_to_host variants
+            7. deallocate<T>(cu_unique_ptr<T> T)
+        */
+
+        template <typename T>
+        using cumm_unique_ptr = std::unique_ptr<T, CuDeleter<T, CudaMemoryManager>>;
 
         /**
-         * @brief Allocate device memory for custom types
+         * @brief Allocate raw device memory; returns device pointer
+         * We try not allowing raw pointers
+         */
+        // template <typename T>
+        // T* allocate(std::size_t size_bytes);
+
+        /**
+         * @brief Allocate smart device memory for custom types
          */
         template <typename T>
-        T* allocate(const T& host_data) {
-            cudaSetDevice(m_device_id);
-            std::lock_guard<std::mutex> lock(m_mutex);
-            T* devptr;
-            cudaMalloc(&devptr, sizeof(T));
-            cudaMemcpy(devptr, &host_data, sizeof(T), cudaMemcpyHostToDevice);
-            m_allocations[devptr] = sizeof(T);
-            return devptr;
-        };
+        cumm_unique_ptr<T> allocate(size_t count = 1);
+
+        /**
+         * @brief allocate and copy to device memory for custom types
+         */
+        template<typename T>
+        cumm_unique_ptr<std::remove_cv_t<T>> copy_to_device(const T& src);
+
+        /**
+         * @brief allocate and copy to device memory for containers
+         * 
+         * @tparam C source vector type
+         * @tparam T source vector value_type
+         * @tparam U destination type (for e.g. casting double to float)
+         * @param vec 
+         * @return cumm_unique_ptr<T> 
+         */
+        template<typename C,
+                typename T = typename C::value_type,
+                typename U = T>
+        cumm_unique_ptr<U> copy_to_device(const C& vec);
 
         /**
          * @brief Allocate unified memory for custom types
          */
         template <typename T>
-        T* allocate_managed(const T& host_data) {
-            std::lock_guard<std::mutex> lock(m_mutex);
-            T* devptr;
-            cudaMallocManaged(&devptr, sizeof(T));
-            *devptr = host_data;
-            m_allocations[devptr] = sizeof(T);
-            return devptr;
-        };
+        T* allocate_managed(const T& host_data);
 
-        /**
-         * @brief Allocate device memory for custom arrays
-         */
-        template <typename T>
-        T* allocate_array(size_t count) {
-            std::lock_guard<std::mutex> lock(m_mutex);
+        // /**
+        //  * @brief Allocate device memory for custom arrays
+        //  */
+        // template <typename T>
+        // T* allocate_array(size_t count) {
+        //     std::lock_guard<std::mutex> lock(m_mutex);
 
-            T* devptr;
-            cudaMalloc(&devptr, count * sizeof(T));
-            m_allocations[devptr] = count * sizeof(T);
+        //     T* devptr;
+        //     cudaMalloc(&devptr, count * sizeof(T));
+        //     m_allocations[devptr] = count * sizeof(T);
 
-            return devptr;
-        };
+        //     return devptr;
+        // };
 
-        // Deallocate memory and remove it from the tracking map
-        template <typename T>
-        void deallocate(T* device_ptr) {
-            std::lock_guard<std::mutex> lock(m_mutex);
+        // Deallocate memory and remove it from the tracking map - only for raw pointers
+        void deallocate(void* device_ptr);
 
-            auto it = m_allocations.find(device_ptr);
-            if (it == m_allocations.end()) {
-                throw std::runtime_error("Attempt to free memory that was not allocated by CudaMemoryManager.");
-            }
-
-            cudaFree(device_ptr);
-            m_allocations.erase(it);
-        }
-
-        // Copy data to device memory
-        template <typename T>
-        void copyToDevice(T* devicePtr, const T& hostData) {
-            std::lock_guard<std::mutex> lock(m_mutex);
-
-            auto it = m_allocations.find(devicePtr);
-            if (it == m_allocations.end()) {
-                throw std::runtime_error("Attempt to copy to memory that was not allocated by CudaMemoryManager.");
-            }
-
-            if (it->second < sizeof(T)) {
-                throw std::runtime_error("Insufficient memory allocated for the copy operation.");
-            }
-
-            cudaMemcpy(devicePtr, &hostData, sizeof(T), cudaMemcpyHostToDevice);
-        }
-
-        // Copy data from device memory
-        template <typename T>
-        void copyToHost(const T* devicePtr, T& hostData) {
-            std::lock_guard<std::mutex> lock(m_mutex);
-
-            auto it = m_allocations.find(const_cast<T*>(devicePtr));
-            if (it == m_allocations.end()) {
-                throw std::runtime_error("Attempt to copy from memory that was not allocated by CudaMemoryManager.");
-            }
-
-            if (it->second < sizeof(T)) {
-                throw std::runtime_error("Insufficient memory allocated for the copy operation.");
-            }
-
-            cudaMemcpy(&hostData, devicePtr, sizeof(T), cudaMemcpyDeviceToHost);
-        }
+        void validate(void* ptr) const;
 
         // Debugging: Print all tracked allocations
-        void printAllocations() const {
-            std::lock_guard<std::mutex> lock(m_mutex);
-
-            for (const auto& [ptr, size] : m_allocations) {
-                std::cout << "Device pointer: " << ptr << ", Size: " << size << " bytes\n";
-            }
-        }
-
-        /**
-         * @brief Free previously allocated device memory
-         */
-        void free(void* device_ptr);
-
-        /**
-         * @brief Initialize the memory manager.
-         * @throws std::runtime_error.
-         */
-        void init();
-
-        /**
-         * @brief Allocate memory on the device.
-         * @param size The size of the memory to allocate in bytes.
-         * @return A pointer to the allocated device memory.
-         * @throws std::runtime_error if memory allocation fails.
-         */
-        void* allocate_device_memory(size_t size);
-
-        /**
-         * @brief Free memory on the device.
-         * @param device_ptr A pointer to the device memory to free.
-         * @throws std::runtime_error if memory deallocation fails.
-         */
-        void free_device_memory(void* device_ptr);
+        void print_allocations() const;
 
         /**
          * @brief Allocate pinned host memory.
@@ -245,15 +193,6 @@ namespace gpu {
         // Query currently allocated memory size
         std::size_t allocated_memory() const;
 
-        // Debugging: Print all tracked allocations
-        void print_allocations() const {
-            std::lock_guard<std::mutex> lock(m_mutex);
-
-            for (const auto& [ptr, size] : m_allocations) {
-                std::cout << "Device pointer: " << ptr << ", Size: " << size << " bytes\n";
-            }
-        }
-
         // /**
         //  * @brief A specialized type, that allows user to create a transparent variable on the GPU
         //  * 
@@ -291,13 +230,9 @@ namespace gpu {
         int m_device_id;
 
         // Track allocations: pointer -> size
-        std::unordered_map<void*, std::size_t> m_allocations;
+        std::unordered_map<void*, size_t> m_allocations;
 
         // Mutex for thread safety
         mutable std::mutex m_mutex;
-
-        // lets play with vectors
-        CUVECTOR_T<float> pos_umem;
-        CUHVECTOR_T<float> pos_host;
     };
 }

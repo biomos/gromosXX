@@ -21,12 +21,18 @@
 /**
  * @file configuration_struct.h
  * A light-weight struct for GPU holding essential Configuration data
+ * The struct holds all device pointers
  */
+
+#pragma once
 
 #include <utility>
 #include "types.h"
 #include "cuvector.h"
 
+namespace configuration {
+    class Configuration;
+}
 namespace gpu {
 
   /**
@@ -34,15 +40,48 @@ namespace gpu {
    * 
    */
     struct Configuration {
+        /**
+         * @brief Holds current and old state
+         * 
+         */
         struct State {
-            math::CuVArray pos;
-            math::CuVArray vel;
-            math::CuVArray force;
-            math::CuVArray constraint_force;
+            mutable math::CuVArray pos;
+            mutable math::CuVArray vel;
+            mutable math::CuVArray force;
+            mutable math::CuVArray constraint_force;
             float9* box;
             float9* virial_tensor;
             float9* kinetic_energy_tensor;
             float9* pressure_tensor;
+            void* memory_block; // keep for deallcation
+            
+            /**
+             * @brief size to allocate using cudaMalloc
+             * 
+             */
+            static constexpr size_t size_in_bytes =
+                4 * sizeof(float9);  // box, virial_tensor, kinetic_energy_tensor, pressure_tensor
+
+            State() :
+                        box(nullptr),
+                        virial_tensor(nullptr),
+                        kinetic_energy_tensor(nullptr),
+                        pressure_tensor(nullptr)
+                {
+
+                // keep box separate
+                cudaMalloc(&box, sizeof(float9));
+                cudaMalloc(&memory_block, sizeof(float9)*3);
+
+                char* base              = reinterpret_cast<char*>(memory_block);
+                virial_tensor           = reinterpret_cast<float9*>(base += sizeof(float9));
+                kinetic_energy_tensor   = reinterpret_cast<float9*>(base += sizeof(float9));
+                pressure_tensor         = reinterpret_cast<float9*>(base += sizeof(float9));
+            }
+            ~State() {
+                cudaFree(box);
+                cudaFree(memory_block);
+            }
 
             /**
              * @brief Export a __host__-side view to be used in kernel call
@@ -70,7 +109,7 @@ namespace gpu {
              * @brief Update the view with the latest data from device memory
              * 
              */
-            void update_view() {
+            void update_view() const {
                 cached_view = View{
                     pos.size() ? pos.data() : nullptr,
                     vel.size() ? vel.data() : nullptr,
@@ -83,10 +122,20 @@ namespace gpu {
                 };
             }
 
+            /**
+             * @brief Get the view of the state data.
+             * 
+             * @return View 
+             */
             View const& view() const {
                 return cached_view;
             }
 
+            /**
+             * @brief Resize the state to hold `num_atoms` atoms.
+             * 
+             * @param num_atoms 
+             */
             void resize(size_t num_atoms) {
                 pos.resize(num_atoms);
                 vel.resize(num_atoms);
@@ -95,38 +144,93 @@ namespace gpu {
                 update_view();
             }
         };
-        typedef State::View StateView;
 
+        /**
+         * @brief The current state
+         * 
+         */
         State current;
+
+        /**
+         * @brief The old state
+         * 
+         */
         State old;
 
+        /**
+         * @brief if the view was created, assume mutation
+         * 
+         */
+        // bool mutated = false;
+
+        /**
+         * @brief Update the configuration
+         * 
+         */
+        void copy_to_device(configuration::Configuration& conf);
+
+        /**
+         * @brief Allow to exchange states efficiently
+         * Views are exchanged implicitly as well
+         * 
+         */
         void exchange_state() {
             std::swap(current, old);
         }
 
+        /**
+         * @brief resize the arrays
+         * 
+         * @param num_atoms 
+         */
         void resize(size_t num_atoms) {
             current.resize(num_atoms);
             old.resize(num_atoms);
         }
 
-        // This struct is safe to copy and use on device
-        class View {
-            private:
-                StateView m_current;
-                StateView m_old;
-            public:
-                View(StateView current, StateView old) :
-                        m_current(current), m_old(old) {}
-                __host__ __device__ StateView current() const {
-                    return m_current;
-                }
-                __host__ __device__ StateView old() const {
-                    return m_old;
-                }
+        /**
+         * @brief View of the configuration
+         * 
+         */
+        struct View {
+            /**
+             * @brief view of current state
+             * 
+             */
+            State::View m_current;
+
+            /**
+             * @brief view of old state
+             * 
+             */
+            State::View m_old;
+
+            /**
+             * @brief get current state from host, or device
+             * 
+             */
+            __host__ __device__ const State::View& current() {
+                return m_current;
+            }
+
+
+            /**
+             * @brief get old state from host, or device
+             * 
+             */
+            __host__ __device__ const State::View& old() {
+                return m_old;
+            }
         };
 
+        /**
+         * @brief Create view of the configuration
+         * 
+         * @return View 
+         */
         View view() const {
-            return View(current.view(), old.view());
+            // mutated = true;
+            return View{current.view(), old.view()};
         }
     };
 }

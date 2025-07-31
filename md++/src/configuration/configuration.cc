@@ -89,6 +89,7 @@ configuration::Configuration::Configuration() {
   }
   
   special().shake_failure_occurred = false;
+  m_gpu = std::make_unique<gpu::Configuration>();
 }
 
 /**
@@ -221,10 +222,12 @@ configuration::Configuration::Configuration
   special().force_groups = conf.special().force_groups;
   
   boundary_type = conf.boundary_type;
+  m_gpu = std::make_unique<gpu::Configuration>();
+  copy_to_gpu();
 }
 
 /**
- * operator equal
+ * asignment operator
  */
 configuration::Configuration & configuration::Configuration::operator=
 (
@@ -346,6 +349,9 @@ configuration::Configuration & configuration::Configuration::operator=
   special().force_groups = conf.special().force_groups;
   
   boundary_type = conf.boundary_type;
+
+  m_gpu = std::make_unique<gpu::Configuration>();
+  copy_to_gpu();
 
   return *this;
 }

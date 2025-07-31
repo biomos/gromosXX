@@ -25,9 +25,12 @@
 
 #pragma once
 
+
 #ifndef HOSTDEVICE
   #error "Don't include float3.h without defining HOSTDEVICE"
 #else
+
+// #include <type_traits>
 
 /**
  * calculates the nearest image for cubic periodic boundary conditions
@@ -214,5 +217,20 @@ HOSTDEVICE T3 operator/(const T3 & a, T b) {
   b = 1.0f / b;
   return a * b;
 }
+
+// // Helper traits to simplify casting to T3
+// template<typename, typename = void>
+// struct has_xyz_only : std::false_type {};
+
+// template<typename T>
+// struct has_xyz_only<T, std::void_t<
+//     decltype(std::declval<T>().x),
+//     decltype(std::declval<T>().y),
+//     decltype(std::declval<T>().z)
+// >> {
+//     static constexpr bool has_w = requires(T t) { t.w; };
+//     static constexpr bool value = !has_w;
+// };
+
 #endif
 

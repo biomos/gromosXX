@@ -47,10 +47,11 @@
     }
 #else
     #include <vector>
+    struct CUDUMMY_T {};
     namespace gpu {
-        using CUDEVPROP = void*;
-        using CUSTREAM = void*;
-        using CUERROR = void*;
+        using CUDEVPROP = CUDUMMY_T;
+        using CUSTREAM = CUDUMMY_T;
+        using CUERROR = CUDUMMY_T;
         template <typename T>
         using CUVECTOR_T = std::vector<T>;
         template <typename T>
