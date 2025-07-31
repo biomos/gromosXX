@@ -60,7 +60,8 @@ void interaction::CUDA_Pairlist_Algorithm_Impl<util::gpuBackend>::
     dim3 dimBlock(NUM_THREADS_PER_BLOCK);
 
     conf.copy_to_gpu();
-    
+
+    DEBUG(0, "topo.get_gpu_view().num_atoms: " << topo.get_gpu_view().num_atoms);
     // cudaMemcpy(d_a, arr, sizeof(float)*2, cudaMemcpyHostToDevice);
     gpu::hello_world<<<dimGrid, dimBlock>>>(topo.get_gpu_view(), conf.gpu_view());
     // gpu::hello_world<<<dimGrid, dimBlock>>>(d_a,d_b);

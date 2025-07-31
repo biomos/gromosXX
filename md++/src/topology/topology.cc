@@ -1591,7 +1591,7 @@ void topology::Topology::init_gpu() {
 
 
 const gpu::topology_struct& topology::Topology::get_gpu_view(bool sync) {
-  assert(m_gpu && "gpu::topology_struct not initialized");
+  // assert(m_gpu && "gpu::topology_struct not initialized");
   if (!m_gpu) {
     init_gpu();
   } else if (sync) {
