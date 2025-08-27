@@ -1585,15 +1585,15 @@ double topology::Topology::sum_squared_charges() const {
   return sum;
 }
 
-void topology::Topology::init_gpu() {
-  m_gpu = std::make_unique<gpu::topology_struct>(*this);
-}
+// void topology::Topology::init_gpu() {
+//   m_gpu = std::make_unique<gpu::Topology>(*this);
+// }
 
 
-const gpu::topology_struct& topology::Topology::get_gpu_view(bool sync) {
-  // assert(m_gpu && "gpu::topology_struct not initialized");
+const gpu::Topology& topology::Topology::get_gpu_view(bool sync) const {
+  // we cache the gpu::Topology and only update on demand
   if (!m_gpu) {
-    init_gpu();
+    m_gpu = std::make_unique<gpu::Topology>(*this);
   } else if (sync) {
     m_gpu->update(*this);
   }

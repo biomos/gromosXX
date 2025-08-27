@@ -8,7 +8,9 @@
 #include "simulation/simulation.h"
 #include "configuration/configuration.h"
 
-#include "math/periodicity.h"
+// #include "math/periodicity.h"
+#include "math/boundary_implementation.h"
+#include "gpu/cuda/math/periodicity_gpu.h"
 
 #include "interaction/nonbonded/pairlist/pairlist.h"
 #include "interaction/nonbonded/pairlist/pairlist_algorithm.h"
@@ -53,7 +55,8 @@ void interaction::CUDA_Pairlist_Algorithm_Impl<util::gpuBackend>::
                     _prepare_cog<B>(configuration::Configuration & conf,
                                     topology::Topology & topo) {
     DEBUG(10, "putting chargegroups into box");
-    math::Periodicity<B> periodicity(conf.current().box);
+    gpu::PeriodicityGpu<B> periodicity(conf.current().box);
+    // periodicity.put_chargegroups_into_box(conf, topo);
     periodicity.put_chargegroups_into_box(conf, topo);
 
     dim3 dimGrid(1);
@@ -61,9 +64,10 @@ void interaction::CUDA_Pairlist_Algorithm_Impl<util::gpuBackend>::
 
     conf.copy_to_gpu();
 
-    DEBUG(0, "topo.get_gpu_view().num_atoms: " << topo.get_gpu_view().num_atoms);
+    // DEBUG(0, "topo.get_gpu_view().num_atoms: " << topo.get_gpu_view().num_atoms);
     // cudaMemcpy(d_a, arr, sizeof(float)*2, cudaMemcpyHostToDevice);
-    gpu::hello_world<<<dimGrid, dimBlock>>>(topo.get_gpu_view(), conf.gpu_view());
+    gpu::hello_world<<<dimGrid, dimBlock>>>(topo.get_gpu_view(), conf.get_gpu_view());
+    // gpu::prepare_cog<<<dimGrid, dimBlock>>>(topo.get_gpu_view(), conf.get_gpu_view());
     // gpu::hello_world<<<dimGrid, dimBlock>>>(d_a,d_b);
     cudaDeviceSynchronize();
     // cudaMemcpy(arr, d_a, sizeof(float)*2, cudaMemcpyDeviceToHost);

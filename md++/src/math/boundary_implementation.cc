@@ -28,6 +28,8 @@
 #undef SUBMODULE
 #define MODULE math
 
+#include "util/traits.h"
+
 
 #ifdef WIN32
 // Converts a floating point value to an integer, very fast.
@@ -209,10 +211,11 @@ math::Boundary_Implementation<math::triclinic>
 /**
  * nearest image : vacuum
  */
+template <typename VecType>
 inline int math::Boundary_Implementation<math::vacuum>
-::nearest_image(Vec const &v1,
-		Vec const &v2,
-		Vec &nim)const
+::nearest_image(VecType const &v1,
+		VecType const &v2,
+		VecType &nim)const
 {
   nim = v1 - v2;
   return 0;
@@ -221,40 +224,46 @@ inline int math::Boundary_Implementation<math::vacuum>
 /**
  * nearest image : rectangular
  */
+template <typename VecType>
 inline int math::Boundary_Implementation<math::rectangular>
-::nearest_image(Vec const &v1, Vec const &v2,
-		Vec &nim)const
+::nearest_image(VecType const &v1, VecType const &v2,
+		VecType &nim)const
 {
   // nim = v1 - v2;
 
   int na = 0, nb = 0, nc = 0;
   
-  nim[0] = v1[0] - v2[0];
-  while (nim[0] > m_half_box[0]) {
-    nim[0] -= 2. * m_half_box[0];
-    na = -9;
+  if constexpr (has_bracket_operator<VecType>::value) {
+      // operator[] version
+      nim[0] = v1[0] - v2[0];
+      while (nim[0] > m_half_box[0]) { nim[0] -= 2*m_half_box[0]; na = -9; }
+      while (nim[0] < -m_half_box[0]) { nim[0] += 2*m_half_box[0]; na = 9; }
+
+      nim[1] = v1[1] - v2[1];
+      while (nim[1] > m_half_box[1]) { nim[1] -= 2*m_half_box[1]; nb = -3; }
+      while (nim[1] < -m_half_box[1]) { nim[1] += 2*m_half_box[1]; nb = 3; }
+
+      nim[2] = v1[2] - v2[2];
+      while (nim[2] > m_half_box[2]) { nim[2] -= 2*m_half_box[2]; nc = -1; }
+      while (nim[2] < -m_half_box[2]) { nim[2] += 2*m_half_box[2]; nc = 1; }
+  } 
+  else if constexpr (has_xyz_members<VecType>::value) {
+      // x,y,z member version
+      nim.x = v1.x - v2.x;
+      while (nim.x > m_half_box[0]) { nim.x -= 2*m_half_box[0]; na = -9; }
+      while (nim.x < -m_half_box[0]) { nim.x += 2*m_half_box[0]; na = 9; }
+
+      nim.y = v1.y - v2.y;
+      while (nim.y > m_half_box[1]) { nim.y -= 2*m_half_box[1]; nb = -3; }
+      while (nim.y < -m_half_box[1]) { nim.y += 2*m_half_box[1]; nb = 3; }
+
+      nim.z = v1.z - v2.z;
+      while (nim.z > m_half_box[2]) { nim.z -= 2*m_half_box[2]; nc = -1; }
+      while (nim.z < -m_half_box[2]) { nim.z += 2*m_half_box[2]; nc = 1; }
   }
-  while (nim[0] < -m_half_box[0]) {
-    nim[0] += 2. * m_half_box[0];
-    na = 9;
-  }
-  nim[1] = v1[1] - v2[1];
-  while (nim[1] > m_half_box[1]) {
-    nim[1] -= 2. * m_half_box[1];
-    nb = -3;
-  }
-  while (nim[1] < -m_half_box[1]) {
-    nim[1] += 2. * m_half_box[1];
-    nb = 3;
-  }
-  nim[2] = v1[2] - v2[2];
-  while (nim[2] > m_half_box[2]) {
-    nim[2] -= 2. * m_half_box[2];
-    nc = -1;
-  }
-  while (nim[2] < -m_half_box[2]) {
-    nim[2] += 2. * m_half_box[2];
-    nc = 1;
+  else {
+      static_assert(util::always_false<VecType>::value, 
+                    "nearest_image requires a 3D vector with operator[] or x,y,z members");
   }
   
   return na + nb + nc;
@@ -274,10 +283,11 @@ inline int math::Boundary_Implementation<math::rectangular>
 /**
  * nearest image : triclinic
  */
+template <typename VecType>
 inline int math::Boundary_Implementation<math::triclinic>
-::nearest_image(Vec const &v1,
-		Vec const &v2,
-		Vec &nim)const
+::nearest_image(VecType const &v1,
+		VecType const &v2,
+		VecType &nim)const
 {
   // nim has to be out of the loop here!
   nim = v1 - v2;

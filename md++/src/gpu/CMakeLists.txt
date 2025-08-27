@@ -2,6 +2,7 @@
 set(GPU_HEADERS
     gpu.h
     cuda/cuheader.h
+    cuda/cuhostdevice.h
     cuda/manager/cuda_memory_manager.h
     cuda/manager/cuda_device_worker.h
     cuda/manager/cuda_manager.h
@@ -11,6 +12,8 @@ set(GPU_HEADERS
     cuda/kernels/reduction.h
     cuda/kernels/indexing.h
     cuda/kernels/hello_world.h
+    cuda/kernels/periodicity.h
+    cuda/math/periodicity_gpu.h
     cuda/memory/float3.h
     cuda/memory/float9.h
     cuda/memory/types.h
@@ -39,6 +42,8 @@ if(USE_CUDA)
         cuda/manager/cuda_manager.cu
         cuda/kernels/reduction.cu
         cuda/kernels/hello_world.cu
+        cuda/kernels/periodicity.cu
+        cuda/math/periodicity_gpu.cu
         cuda/memory/container.cu
         cuda/memory/topology_struct.cu
         cuda/memory/configuration_struct.cu
@@ -82,6 +87,7 @@ target_include_directories(grocuda PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/algorithm
     ${CMAKE_CURRENT_SOURCE_DIR}/kernels
     ${CMAKE_CURRENT_SOURCE_DIR}/manager
+    ${CMAKE_CURRENT_SOURCE_DIR}/math
     ${CMAKE_CURRENT_SOURCE_DIR}/memory
     ${PROJECT_BINARY_DIR}
     ${EXTERNAL_INCLUDES}

@@ -114,13 +114,9 @@
 #define TOSTRING(s) #s
 #define STR(s) TOSTRING(s)
 
-#ifdef NDEBUG
-#define DEBUG(level, s) ;
-
-
+#if defined(NDEBUG) || defined(__CUDA_ARCH__)
+    #define DEBUG(level, s) ;
     #define MPI_DEBUG(level, s) ;
-
-
 #else
     #define DEBUG(level, s) \
       if (level <= ::debug_level + MODULE::debug_level + \
@@ -207,7 +203,7 @@
       extern int simulation_debug_level;
     }
 
-    namespace cuda
+    namespace gpu
     {
       extern int debug_level;
       extern int kernel_debug_level;

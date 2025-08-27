@@ -30,6 +30,7 @@
 #include <sstream>
 #include <iomanip>
 #include <cmath>
+#include <type_traits>
 
 // #include <blitz/blitz.h>
 // #include <blitz/array.h>
@@ -39,7 +40,29 @@
 
 
 namespace math
-{  
+{
+  /**
+   * Check for operator[]
+   */
+  template <typename, typename = void>
+  struct has_bracket_operator : std::false_type {};
+
+  template <typename T>
+  struct has_bracket_operator<T, std::void_t<decltype(std::declval<T&>()[0])>> : std::true_type {};
+
+  /**
+   * Check for x, y, z members
+   */
+  template <typename, typename = void>
+  struct has_xyz_members : std::false_type {};
+
+  template <typename T>
+  struct has_xyz_members<T, std::void_t<
+      decltype(std::declval<T&>().x),
+      decltype(std::declval<T&>().y),
+      decltype(std::declval<T&>().z)
+  >> : std::true_type {};
+  
   /**
    * 3 dimensional vector.
    */
@@ -73,16 +96,9 @@ namespace math
     
     inline GenericVec<numeric_type> norm() const;
 
-      // Simplifies conversion to 3-membered types
-      template<typename T>
-      operator T() const {
-          // Requires T to have x, y, z members assignable from numeric_type
-          T tmp;
-          tmp.x = static_cast<typename std::remove_reference<decltype(tmp.x)>::type>(d_v[0]);
-          tmp.y = static_cast<typename std::remove_reference<decltype(tmp.y)>::type>(d_v[1]);
-          tmp.z = static_cast<typename std::remove_reference<decltype(tmp.z)>::type>(d_v[2]);
-          return tmp;
-      }
+    // Simplifies conversion to 3-membered types
+    template<typename T3, typename = std::enable_if_t<has_xyz_members<T3>::value>>
+    operator T3() const;
     
     };
     
@@ -1330,6 +1346,20 @@ namespace math
   template<typename numeric_type>
   GenericVec<numeric_type> GenericVec<numeric_type>::norm() const {
     return *this / abs(*this);
+  }
+  
+  /**
+   * conversion to T3 types
+   */
+  template<typename numeric_type>
+  template<typename T3, typename>
+  GenericVec<numeric_type>::operator T3() const {
+      // Requires T to have x, y, z members assignable from numeric_type
+      T3 tmp;
+      tmp.x = static_cast<std::remove_reference_t<decltype(tmp.x)>>(d_v[0]);
+      tmp.y = static_cast<std::remove_reference_t<decltype(tmp.y)>>(d_v[1]);
+      tmp.z = static_cast<std::remove_reference_t<decltype(tmp.z)>>(d_v[2]);
+      return tmp;
   }
   
   /**

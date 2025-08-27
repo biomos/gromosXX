@@ -48,7 +48,7 @@ namespace util {
 }
 
 namespace gpu {
-  struct topology_struct;
+  struct Topology;
 }
 
 namespace topology
@@ -76,6 +76,11 @@ namespace topology
      * Destructor
      */
     ~Topology();
+    
+    /**
+     * define the View type
+     */
+    // using GpuView = gpu::Topology;
 
     /**
      * integer atom code accessor.
@@ -1638,12 +1643,13 @@ namespace topology
     /**
      * initialize the gpu-stored topology
      */
-    void init_gpu();
+    // void init_gpu();
+
     /**
      * const accessor to GPU-stored topology
      *  @param sync to GPU (default false)
      */
-    const gpu::topology_struct& get_gpu_view(bool sync = false);
+    const gpu::Topology& get_gpu_view(bool sync = false) const;
 
   private:
     /**
@@ -2179,7 +2185,7 @@ namespace topology
     /**
      * access to the GPU stored copy of the topology.
      */
-    std::unique_ptr<gpu::topology_struct> m_gpu;
+    mutable std::unique_ptr<gpu::Topology> m_gpu;
 
   }; // topology
 

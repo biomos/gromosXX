@@ -73,8 +73,8 @@ namespace gpu {
     private:
         void report(T* p, std::size_t n, bool alloc) const {
 #ifndef NDEBUG
-            std::cout << (alloc ? "Alloc: " : "Dealloc: ")
-                    << n * sizeof(T) << " bytes at " << static_cast<void*>(p) << '\n';
+            std::cout << "CuHAllocator: " << (alloc ? "Alloc: " : "Dealloc: ")
+                    << n * sizeof(T) << " bytes of at " << static_cast<void*>(p) << '\n';
 #endif
         }
     };

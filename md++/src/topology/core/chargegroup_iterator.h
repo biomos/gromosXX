@@ -31,6 +31,8 @@
 #define MODULE topology
 #define SUBMODULE topology
 
+#include "gpu/cuda/cuhostdevice.h"
+
 
 namespace topology
 {
@@ -38,35 +40,66 @@ namespace topology
    * @class Chargegroup_Iterator
    * iterates over the chargegroups.
    */
-  class Chargegroup_Iterator
-    : public Atomgroup_Iterator<std::vector<int>::const_iterator>
+  template <template <typename...> class VecType = std::vector>
+  class Chargegroup_IteratorT
+    : public Atomgroup_Iterator<typename VecType<int>::const_iterator>
   {
   public:
-    Chargegroup_Iterator(std::vector<int>::const_iterator cg_it)
-      : Atomgroup_Iterator<std::vector<int>::const_iterator>(cg_it)
+    using Base = Atomgroup_Iterator<typename VecType<int>::const_iterator>;
+
+    HOSTDEVICE Chargegroup_IteratorT(typename VecType<int>::const_iterator cg_it)
+      : Base(cg_it)
     {
     }
 
-    Chargegroup_Iterator()
+    HOSTDEVICE Chargegroup_IteratorT()
     {
     }
 
-    void cog(const math::VArray &pos, math::Vec &v)const
+  //   void cog(const math::VArray &pos, math::Vec &v)const
+  //   {
+  //     DEBUG(10, "cog: " << *this->begin() << " - " << *this->end() << " of " << pos.size());
+  //     v = 0.0;
+  //     for(Atom_Iterator it=this->begin(), to=this->end(); it!=to; ++it){
+	// assert(pos.size() > *it);
+	// v += pos(int(*it));
+  //     }
+      
+  //     v /= this->num_atoms();
+  //   }
+
+    template <typename VArrayType, typename VType>
+    HOSTDEVICE void cog(const VArrayType &pos, VType &v)const
     {
-      DEBUG(10, "cog: " << *begin() << " - " << *end() << " of " << pos.size());
+      // Check that pos(int) is valid and yields a type we can add to v
+      static_assert(
+          std::is_arithmetic<decltype(pos(int{}))>::value ||
+          std::is_same<decltype(v += pos(int{})), VType&>::value,
+          "VArrayType must support pos(int) returning a type compatible with VType"
+      );
+
+      // Check that v supports /= with size_t (num_atoms())
+      static_assert(
+          std::is_arithmetic<VType>::value || 
+          std::is_same<decltype(v /= size_t{}), VType&>::value,
+          "VType must support /= with size_t"
+      );
+
+      DEBUG(10, "cog: " << *this->begin() << " - " << *this->end() << " of " << pos.size());
       v = 0.0;
-      for(Atom_Iterator it=begin(), to=end(); it!=to; ++it){
-	assert(pos.size() > *it);
-	v += pos(int(*it));
+      for(Atom_Iterator it=this->begin(), to=this->end(); it!=to; ++it){
+        assert(pos.size() > *it);
+        v += pos(int(*it));
       }
       
-      v /= num_atoms();
+      v /= this->num_atoms();
     }
       
   private:
 
   };
-  
+
+  using Chargegroup_Iterator = Chargegroup_IteratorT<std::vector>;
 }
 
 #endif

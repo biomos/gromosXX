@@ -27,7 +27,7 @@
 
 #include <type_traits>
 
-#define HOSTDEVICE __host__ __device__ __forceinline__
+#include "../cuhostdevice.h"
 #include "float2.h"
 #include "float3.h"
 #include "float4.h"
@@ -68,6 +68,3 @@ template <typename V, typename T = decltype(V().x),
 HOSTDEVICE T abs(const V & a) {
   return sqrtf(abs2(a));
 }
-
-#undef HOSTDEVICE
-

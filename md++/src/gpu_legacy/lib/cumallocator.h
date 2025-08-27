@@ -44,7 +44,7 @@ namespace cukernel
         void report(T* p, std::size_t n, bool alloc = true) const
         {
         #ifndef NDEBUG
-            std::cout << "CuMallocator::" << (alloc ? "Alloc: " : "Dealloc: ") << sizeof(T) * n
+            std::cout << "CuMallocator:" << (alloc ? "Alloc: " : "Dealloc: ") << sizeof(T) * n
                     << " bytes at " << std::hex << std::showbase
                     << reinterpret_cast<void*>(p) << std::dec << '\n';
         #endif

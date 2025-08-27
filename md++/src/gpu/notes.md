@@ -445,31 +445,50 @@ Turning them into a hard restriction (compile time) should be considered.
 Class `CUDA_Pairlist` consists of `Interaction_Tile` structs.
 
 
-## Kernel Calls
-To provide data to kernel calls, we create a light-weight structs holding device pointers to
+## Configuration and Topology structs
+To provide data to kernel calls, we create light-weight structs holding device pointers to
 essential Topology, Configuration and Simulation data.
-```cpp
- __global__ void gpu::hello_world(topology::Topology::View& topo, configuration::Configuration::View& conf) {
-  unsigned int idx = blockIdx.x * blockDim.x + threadIdx.x;
-  
 
-class Configuration {
-    using GPUView =
-#ifdef USE_CUDA
-    gpu::ConfigurationView;
-#else
-    void;
-#endif
-}
+
+`topology::Topology` is almost constant, so we use `gpu::Topology` as an extract of topology
+to store on GPU, and use primitive types and pointers logic.
+The copy to GPU is implicit, with the first call of `topology::Topology::get_gpu_view(bool sync)`.
+Every further call uses the same pointers.
+Passing `sync = True` enforces fresh copy to device.
+
+
+`configuration::Configuration` is more dynamic, so we use `gpu::cuvector` to store dynamic arrays.
+We use a special struct `gpu::Configuration`, that holds all the arrays.
+To access the pointers, you should obtain `gpu::Configuration::View` from
+`gpu::Configuration::view()`, to provide proper pointers to the `gpu::cuvector`.
+The `gpu::cuvector` allows simple allocation and copy, not having to use CUDA API calls
+explicitly when allocating, resizing and deallocating.
+`gpu::Configuration::View` consists of two `gpu::Configuration::State::StateView` objects,
+accessible similarly to `configuration::Configuration` using `current()` and `old()`.
+
+```cpp
+// use of GPU structs in kernel functions
+ __global__ void gpu::hello_world(gpu::Topology topo, gpu::Configuration::View conf) {
+  unsigned int idx = blockIdx.x * blockDim.x + threadIdx.x;
+  for (unsigned i = idx; i < topo.num_atoms; i += blockDim.x * gridDim.x) {
+    const float3& my_pos = conf.current().pos[i];
+    printf("threadIdx %d, blockIdx %d: processing %d: pos: (%f,%f,%f) iac: %d, charge: %f\n"
+      , threadIdx.x, blockIdx.x, i, my_pos.x, my_pos.y, my_pos.z, topo.iac[i], topo.charge[i]);
+  }
+};
 
 namespace gpu {
-    struct ConfigurationView {
-        // a bunch of device pointers
-        struct StateView {
-            // a bunch of other device pointers
+    struct Configuration {
+        // a pair of states
+        struct State {
+            // a bunch of math::CuVArrays (a.k.a. gpu::cuvector<float3>) and device pointers
+            struct StateView {
 
+            }
         }
-        __device__ 
+        struct View {
+            // a bunch of math::CuVArrays (a.k.a. gpu::cuvector<float3>) and device pointers
+        }
     }
 
 }
@@ -486,3 +505,7 @@ To create a view, we have to go through these steps (on the example of Configura
  and just always export data from Configuration to the configuration_struct
 
  With topology, it is more constant over the simulation, so there we can keep the pointer to the topology_struct in Topology.
+
+ ### Multi-GPU support
+ The structs hold pointers only to a single GPU. For multiple GPUs, we either hold a map of
+ `unique_ptr<gpu::Configuration>`, or employ the `CudaMemoryManager`.

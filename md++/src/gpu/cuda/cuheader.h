@@ -33,6 +33,8 @@
 // #include "stdheader.h"
 #include "io/message.h"
 
+#include "cuhostdevice.h"
+
 #ifdef USE_CUDA
     #include <cuda_runtime.h>
     #include "memory/cuvector.h"

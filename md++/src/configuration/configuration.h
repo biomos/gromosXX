@@ -827,6 +827,12 @@ namespace configuration {
        */
       void init(topology::Topology const & topo, simulation::Simulation & sim);
     };
+
+    /**
+     * define the GPU Mirror type
+     */
+    // using GpuMirror = gpu::Configuration;
+
     //////////////////////////////////////////////////////////////////////
     // accessors
     //////////////////////////////////////////////////////////////////////
@@ -934,7 +940,7 @@ namespace configuration {
     /**
      * get GPU configuration struct of pointers to device memory
      */
-    gpu::Configuration::View gpu_view() {
+    gpu::Configuration::View get_gpu_view() {
       return m_gpu->view();
     }
 

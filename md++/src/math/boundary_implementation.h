@@ -83,7 +83,8 @@ namespace math
      * this is the vector from v1 - v2 (gromos definition),
      * not the position of v2 closest to v1 (gromos++)
      */
-    int nearest_image(Vec const &v1, Vec const &v2, Vec &nim)const;
+    template <typename VecType>
+    int nearest_image(VecType const &v1, VecType const &v2, VecType &nim)const;
     /**
      * Get the box components of v.
      * (multipliers of K, L and M)
@@ -178,7 +179,8 @@ namespace math
      * @arg nim is delivered with the vector connecting v1 and v2
      * (not the position of v2 closest to v1, like in gromos++)
      */
-    int nearest_image(Vec const &v1, Vec const &v2, Vec &nim)const;
+    template <typename VecType>
+    int nearest_image(VecType const &v1, VecType const &v2, VecType &nim)const;
     /**
      * Get the box components of v.
      * calculate the multipliers of K, L and M to represent vector v
@@ -266,7 +268,8 @@ namespace math
     /**
      * Get the nearest image of v1 in respect to v2 (v1 - v2).
      */
-    int nearest_image(Vec const &v1, Vec const &v2, Vec &nim)const;
+    template <typename VecType>
+    int nearest_image(VecType const &v1, VecType const &v2, VecType &nim)const;
     /**
      * Get the box components of v.
      */

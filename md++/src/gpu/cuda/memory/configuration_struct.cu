@@ -20,7 +20,7 @@
 
 /**
  * @file configuration_struct.cu
- * Implementation of the light-weight struct for GPU
+ * Implementation of the light-weight configuration struct for GPU
  */
 
 #include "stdheader.h"
