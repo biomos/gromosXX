@@ -41,17 +41,17 @@ HOSTDEVICE T2 operator+(T2& a, const T2& b) {
 }
 
 /**
- * addition operators for float2 and double2
+ * addition operators for float2 and double2 - volatile variant, uncomment only if needed
  */
-template <typename T2, typename std::enable_if< // allow only float2 and double2
-                                        std::is_same<T2,float2>::value ||
-                                        std::is_same<T2,double2>::value
-                                            , bool>::type = true>
-HOSTDEVICE volatile T2& operator+=(volatile T2& a, volatile const T2& b) {
-    a.x += b.x;
-    a.y += b.y;
-    return a;
-}
+// template <typename T2, typename std::enable_if< // allow only float2 and double2
+//                                         std::is_same<T2,float2>::value ||
+//                                         std::is_same<T2,double2>::value
+//                                             , bool>::type = true>
+// HOSTDEVICE volatile T2& operator+=(volatile T2& a, volatile const T2& b) {
+//     a.x += b.x;
+//     a.y += b.y;
+//     return a;
+// }
 
 // non-volatile variant
 template <typename T2, typename std::enable_if< // allow only float2 and double2

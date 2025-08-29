@@ -86,19 +86,19 @@ HOSTDEVICE T3 nearest_image(const T3 & i, const T3 & j, const T3 & box_param_x, 
  * @param[in] b second vector
  * @return the dot product
  */
-template <typename T, typename T3, typename std::enable_if< // allow only float3 and double3
+template <typename T3, typename std::enable_if< // allow only float3 and double3
                                         std::is_same<T3,float3>::value ||
                                         std::is_same<T3,double3>::value
                                             , bool>::type = true>
-HOSTDEVICE T dot(const T3 & a, const T3 & b) {
-  return a.x * b.x + a.y * b.y + a.z * b.z;
+HOSTDEVICE auto dot(const T3 & a, const T3 & b) {
+    return a.x * b.x + a.y * b.y + a.z * b.z;
 }
 
 /**
  * calculates the vector (cross) product of two vectors
  * @param[in] a first vector
  * @param[in] b second vector
- * @return the dot product
+ * @return the cross product
  */
 template <typename T3, typename std::enable_if< // allow only float3 and double3
                                         std::is_same<T3,float3>::value ||
@@ -165,24 +165,53 @@ HOSTDEVICE T3 operator-(const T3 & a) {
   };
 }
 
-/** 
- * scales a vector (multiplication with a scalar)
- * @param[in] a the vector
- * @param[in] b the scalar
- * @return a*b
- */
+// non-volatile variant
 template <typename T, typename T3, typename std::enable_if< // allow only float3 and double3
-                                        std::is_same<T3,float3>::value ||
-                                        std::is_same<T3,double3>::value &&
-                                        std::is_same<T,float>::value ||
-                                        std::is_same<T,double>::value
+                                                (std::is_same<T3,float3>::value || std::is_same<T3,double3>::value) &&
+                                                (std::is_same<T,float>::value  || std::is_same<T,double>::value)
                                             , bool>::type = true>
-HOSTDEVICE T3 operator*(const T3 & a, T b) {
+HOSTDEVICE T3& operator-(const T3& a, T b) {
   return T3{
-    a.x * b,
-    a.y * b,
-    a.z * b
+    a.x-b,
+    a.y-b,
+    a.z-b
   };
+}
+
+// non-volatile variant
+template <typename T, typename T3, typename std::enable_if< // allow only float3 and double3
+                                                (std::is_same<T3,float3>::value || std::is_same<T3,double3>::value) &&
+                                                (std::is_same<T,float>::value  || std::is_same<T,double>::value)
+                                            , bool>::type = true>
+HOSTDEVICE T3& operator-(T b, const T3& a) {
+  return T3{
+    b-a.x,
+    b-a.y,
+    b-a.z
+  };
+}
+
+// non-volatile variant
+template <typename T, typename T3, typename std::enable_if< // allow only float3 and double3
+                                                (std::is_same<T3,float3>::value || std::is_same<T3,double3>::value) &&
+                                                (std::is_same<T,float>::value  || std::is_same<T,double>::value)
+                                            , bool>::type = true>
+HOSTDEVICE T3& operator-=(T3& a, T b) {
+    a.x -= b;
+    a.y -= b;
+    a.z -= b;
+    return a;
+}
+
+// non-volatile variant
+template <typename T3, typename std::enable_if< // allow only float3 and double3
+                                  std::is_same<T3,float3>::value || std::is_same<T3,double3>::value
+                              , bool>::type = true>
+HOSTDEVICE T3& operator-=(T3& a, const T3& b) {
+    a.x -= b.x;
+    a.y -= b.y;
+    a.z -= b.z;
+    return a;
 }
 
 /** 
@@ -191,14 +220,96 @@ HOSTDEVICE T3 operator*(const T3 & a, T b) {
  * @param[in] b the scalar
  * @return a*b
  */
-template <typename T, typename T3, typename std::enable_if< // allow only float3 and double3
-                                        std::is_same<T3,float3>::value ||
-                                        std::is_same<T3,double3>::value &&
-                                        std::is_same<T,float>::value ||
-                                        std::is_same<T,double>::value
-                                            , bool>::type = true>
+template <typename T3, typename T,
+          typename CompT = decltype(T3{}.x),
+          typename std::enable_if<
+              (std::is_same<T3,float3>::value || std::is_same<T3,double3>::value) &&
+              std::is_same<T, CompT>::value,
+              bool>::type = true>
+HOSTDEVICE T3 operator*(const T3 & a, T b) {
+  return T3{
+    a.x * b,
+    a.y * b,
+    a.z * b
+  };
+}
+
+// non-volatile variant
+template <typename T3, typename T,
+          typename CompT = decltype(T3{}.x),
+          typename std::enable_if<
+              (std::is_same<T3,float3>::value || std::is_same<T3,double3>::value) &&
+              std::is_same<T, CompT>::value,
+              bool>::type = true>
+HOSTDEVICE T3& operator*=(T3& a, T b) {
+    a.x *= b;
+    a.y *= b;
+    a.z *= b;
+    return a;
+}
+
+template <typename T3, typename T,
+          typename CompT = decltype(T3{}.x),
+          typename std::enable_if<
+              (std::is_same<T3,float3>::value || std::is_same<T3,double3>::value) &&
+              std::is_same<T, CompT>::value,
+              bool>::type = true>
 HOSTDEVICE T3 operator*(T b, const T3 & a) {
-  return a * b;
+    return a * b;
+}
+
+/**
+ * addition operators for float3 and double3 - volatile variant, uncomment only if needed
+ */
+// template <typename T3, typename std::enable_if< // allow only float3 and double3
+//                                         std::is_same<T3,float3>::value ||
+//                                         std::is_same<T3,double3>::value
+//                                             , bool>::type = true>
+// HOSTDEVICE volatile T3& operator+=(volatile T3& a, volatile const T3& b) {
+//     a.x += b.x;
+//     a.y += b.y;
+//     a.z += b.z;
+//     return a;
+// }
+
+// non-volatile variant
+template <typename T3, typename std::enable_if< // allow only float3 and double3
+                                        std::is_same<T3,float3>::value ||
+                                        std::is_same<T3,double3>::value
+                                            , bool>::type = true>
+HOSTDEVICE T3& operator+=(T3& a, const T3& b) {
+    a.x += b.x;
+    a.y += b.y;
+    a.z += b.z;
+    return a;
+}
+
+// // volatile variant
+// template <typename T, typename T3, typename std::enable_if< ... , bool>::type = true>
+// HOSTDEVICE volatile T3& operator*=(volatile T3& a, T b) {
+//     a.x *= b;
+//     a.y *= b;
+//     a.z *= b;
+//     return a;
+// }
+
+// Helper: compute reciprocal of b in the same type as T3's component
+template <typename T, typename T3>
+HOSTDEVICE auto reciprocal(T b) -> decltype(T3{}.x) {
+    using CompT = decltype(T3{}.x); // float for float3, double for double3
+    CompT rcp;
+
+#ifdef __CUDA_ARCH__
+    if constexpr (std::is_same<CompT,float>::value) {
+        rcp = __frcp_rn(static_cast<float>(b)); // fast float reciprocal on device
+    } else {
+        rcp = static_cast<CompT>(1) / static_cast<CompT>(b);
+    }
+#else
+    rcp = static_cast<CompT>(1) / static_cast<CompT>(b); // host division
+#endif
+
+    return rcp;
 }
 
 /** 
@@ -208,14 +319,29 @@ HOSTDEVICE T3 operator*(T b, const T3 & a) {
  * @return a/b
  */
 template <typename T, typename T3, typename std::enable_if< // allow only float3 and double3
-                                        std::is_same<T3,float3>::value ||
-                                        std::is_same<T3,double3>::value &&
-                                        std::is_same<T,float>::value ||
-                                        std::is_same<T,double>::value
+                                                (std::is_same<T3,float3>::value || std::is_same<T3,double3>::value) &&
+                                                std::is_arithmetic<T>::value
                                             , bool>::type = true>
-HOSTDEVICE T3 operator/(const T3 & a, T b) {
-  b = 1.0f / b;
-  return a * b;
+HOSTDEVICE T3 operator/(const T3& a, T b) {
+    using CompT = decltype(T3{}.x);
+    // CompT rcp = static_cast<CompT>(1.) / b;
+    CompT rcp = reciprocal<T, T3>(b);
+    return a * rcp;
+}
+
+// non-volatile variant
+template <typename T, typename T3, typename std::enable_if< // allow only float3 and double3
+                                                (std::is_same<T3,float3>::value || std::is_same<T3,double3>::value) &&
+                                                std::is_arithmetic<T>::value
+                                            , bool>::type = true>
+HOSTDEVICE T3& operator/=(T3& a, T b) {
+    using CompT = decltype(T3{}.x);
+    // CompT rcp = static_cast<CompT>(1.) / b;
+    CompT rcp = reciprocal<T, T3>(b);
+    a.x *= rcp;
+    a.y *= rcp;
+    a.z *= rcp;
+    return a;
 }
 
 // // Helper traits to simplify casting to T3
