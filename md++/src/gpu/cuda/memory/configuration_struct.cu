@@ -20,7 +20,7 @@
 
 /**
  * @file configuration_struct.cu
- * Implementation of the light-weight struct for GPU
+ * Implementation of the light-weight configuration struct for GPU
  */
 
 #include "stdheader.h"
@@ -67,6 +67,36 @@ void gpu::Configuration::copy_to_device(configuration::Configuration& conf) {
     convert_and_copy(conf.old().vel, old.vel);
     convert_and_copy(conf.old().force, old.force);
     convert_and_copy(conf.old().constraint_force, old.constraint_force);
+
+    // copy tensors
+            // Box* box;
+            // float9* virial_tensor;
+            // float9* kinetic_energy_tensor;
+            // float9* pressure_tensor;
+    Box box;
+    float9 virial_tensor;
+    float9 kinetic_energy_tensor;
+    float9 pressure_tensor;
+    
+    box = conf.current().box;
+    virial_tensor = conf.current().virial_tensor;
+    kinetic_energy_tensor = conf.current().kinetic_energy_tensor;
+    pressure_tensor = conf.current().pressure_tensor;
+
+    cudaMemcpy(current.box, &box, sizeof(box), cudaMemcpyHostToDevice);
+    cudaMemcpy(current.virial_tensor, &virial_tensor, sizeof(virial_tensor), cudaMemcpyHostToDevice);
+    cudaMemcpy(current.kinetic_energy_tensor, &kinetic_energy_tensor, sizeof(kinetic_energy_tensor), cudaMemcpyHostToDevice);
+    cudaMemcpy(current.pressure_tensor, &pressure_tensor, sizeof(pressure_tensor), cudaMemcpyHostToDevice);
+
+    box = conf.old().box;
+    virial_tensor = conf.old().virial_tensor;
+    kinetic_energy_tensor = conf.old().kinetic_energy_tensor;
+    pressure_tensor = conf.old().pressure_tensor;
+
+    cudaMemcpy(old.box, &box, sizeof(box), cudaMemcpyHostToDevice);
+    cudaMemcpy(old.virial_tensor, &virial_tensor, sizeof(virial_tensor), cudaMemcpyHostToDevice);
+    cudaMemcpy(old.kinetic_energy_tensor, &kinetic_energy_tensor, sizeof(kinetic_energy_tensor), cudaMemcpyHostToDevice);
+    cudaMemcpy(old.pressure_tensor, &pressure_tensor, sizeof(pressure_tensor), cudaMemcpyHostToDevice);
 
     current.update_view();
     old.update_view();

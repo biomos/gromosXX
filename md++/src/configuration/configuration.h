@@ -934,7 +934,7 @@ namespace configuration {
     /**
      * get GPU configuration struct of pointers to device memory
      */
-    gpu::Configuration::View gpu_view() {
+    gpu::Configuration::View get_gpu_view() {
       return m_gpu->view();
     }
 

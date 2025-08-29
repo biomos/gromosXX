@@ -30,15 +30,17 @@
 #include "types.h"
 #include "cuvector.h"
 
+#include "gpu/cuda/math/box.h"
+
 namespace configuration {
     class Configuration;
 }
 namespace gpu {
 
-  /**
-   * @brief Holds GPU-side state copies of configuration data.
-   * 
-   */
+    /**
+     * @brief Holds GPU-side state copies of configuration data.
+     * 
+     */
     struct Configuration {
         /**
          * @brief Holds current and old state
@@ -49,18 +51,11 @@ namespace gpu {
             mutable math::CuVArray vel;
             mutable math::CuVArray force;
             mutable math::CuVArray constraint_force;
-            float9* box;
+            Box* box;
             float9* virial_tensor;
             float9* kinetic_energy_tensor;
             float9* pressure_tensor;
-            void* memory_block; // keep for deallcation
-            
-            /**
-             * @brief size to allocate using cudaMalloc
-             * 
-             */
-            static constexpr size_t size_in_bytes =
-                4 * sizeof(float9);  // box, virial_tensor, kinetic_energy_tensor, pressure_tensor
+            void* tensors_block; // keep for deallocation
 
             State() :
                         box(nullptr),
@@ -70,17 +65,21 @@ namespace gpu {
                 {
 
                 // keep box separate
-                cudaMalloc(&box, sizeof(float9));
-                cudaMalloc(&memory_block, sizeof(float9)*3);
+                cudaMalloc(&box, sizeof(Box));
+                // allocate all tensors at once
+                const size_t tensors_bytes = sizeof(*virial_tensor)
+                                            + sizeof(*kinetic_energy_tensor)
+                                            + sizeof(*pressure_tensor);
+                cudaMalloc(&tensors_block, tensors_bytes);
 
-                char* base              = reinterpret_cast<char*>(memory_block);
+                char* base              = reinterpret_cast<char*>(tensors_block);
                 virial_tensor           = reinterpret_cast<float9*>(base += sizeof(float9));
                 kinetic_energy_tensor   = reinterpret_cast<float9*>(base += sizeof(float9));
                 pressure_tensor         = reinterpret_cast<float9*>(base += sizeof(float9));
             }
             ~State() {
                 cudaFree(box);
-                cudaFree(memory_block);
+                cudaFree(tensors_block);
             }
 
             /**
@@ -88,46 +87,49 @@ namespace gpu {
              * const pointers to non-const device data
              * 
              */
-            struct View {
-                float3* pos;
-                float3* vel;
-                float3* force;
-                float3* constraint_force;
-                float9* box;
-                float9* virial_tensor;
-                float9* kinetic_energy_tensor;
-                float9* pressure_tensor;
+            struct StateView {
+                size_t size                   = 0;
+                float3* pos                   = nullptr;
+                float3* vel                   = nullptr;
+                float3* force                 = nullptr;
+                float3* constraint_force      = nullptr;
+                Box* box                      = nullptr;
+                float9* virial_tensor         = nullptr;
+                float9* kinetic_energy_tensor = nullptr;
+                float9* pressure_tensor       = nullptr;
             };
 
             /**
              * @brief cache the view 
              * 
              */
-            mutable View cached_view;
+            mutable StateView cached_view;
             
             /**
              * @brief Update the view with the latest data from device memory
              * 
              */
             void update_view() const {
-                cached_view = View{
-                    pos.size() ? pos.data() : nullptr,
-                    vel.size() ? vel.data() : nullptr,
-                    force.size() ? force.data() : nullptr,
-                    constraint_force.size() ? constraint_force.data() : nullptr,
-                    box,
-                    virial_tensor,
-                    kinetic_energy_tensor,
-                    pressure_tensor
+                cached_view = StateView{
+                    .size = pos.size(),
+                    .pos = pos.size() ? pos.data() : nullptr,
+                    .vel = vel.size() ? vel.data() : nullptr,
+                    .force = force.size() ? force.data() : nullptr,
+                    .constraint_force = constraint_force.size() ? constraint_force.data() : nullptr,
+                    .box = box,
+                    .virial_tensor = virial_tensor,
+                    .kinetic_energy_tensor = kinetic_energy_tensor,
+                    .pressure_tensor = pressure_tensor
                 };
             }
 
             /**
              * @brief Get the view of the state data.
+             * check for nullptr before use
              * 
              * @return View 
              */
-            View const& view() const {
+            StateView const& view() const {
                 return cached_view;
             }
 
@@ -197,19 +199,19 @@ namespace gpu {
              * @brief view of current state
              * 
              */
-            State::View m_current;
+            State::StateView m_current;
 
             /**
              * @brief view of old state
              * 
              */
-            State::View m_old;
+            State::StateView m_old;
 
             /**
              * @brief get current state from host, or device
              * 
              */
-            __host__ __device__ const State::View& current() {
+            HOSTDEVICE const State::StateView& current() {
                 return m_current;
             }
 
@@ -218,7 +220,7 @@ namespace gpu {
              * @brief get old state from host, or device
              * 
              */
-            __host__ __device__ const State::View& old() {
+            HOSTDEVICE const State::StateView& old() {
                 return m_old;
             }
         };
