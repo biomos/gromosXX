@@ -9,7 +9,7 @@
 #undef MODULE
 #undef SUBMODULE
 #define MODULE gpu
-#define SUBMODULE interaction
+#define SUBMODULE kernels
 
 #include <utility>
 

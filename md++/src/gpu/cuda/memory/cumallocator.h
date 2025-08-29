@@ -60,12 +60,12 @@ namespace gpu {
 
 #if !defined(__CUDA_ARCH__) && __cplusplus < 202002L
         template <typename U, typename... Args>
-        void construct(U* p, Args&&... args) {
+        __host__ void construct(U* p, Args&&... args) {
             ::new((void*)p) U(std::forward<Args>(args)...);
         }
 
         template <typename U>
-        void destroy(U* p) {
+        __host__ void destroy(U* p) {
             p->~U();
         }
 #endif
@@ -73,8 +73,8 @@ namespace gpu {
     private:
         void report(T* p, std::size_t n, bool alloc) const {
 #ifndef NDEBUG
-            std::cout << (alloc ? "Alloc: " : "Dealloc: ")
-                    << n * sizeof(T) << " bytes at " << static_cast<void*>(p) << '\n';
+            std::cout << "CuMAllocator: " << (alloc ? "Alloc: " : "Dealloc: ")
+                    << n * sizeof(T) << " bytes of at " << static_cast<void*>(p) << '\n';
 #endif
         }
     };
