@@ -30,6 +30,7 @@
 #include <sstream>
 #include <iomanip>
 #include <cmath>
+#include <type_traits>
 
 // #include <blitz/blitz.h>
 // #include <blitz/array.h>
@@ -39,7 +40,29 @@
 
 
 namespace math
-{  
+{
+  /**
+   * Check for operator[]
+   */
+  template <typename, typename = void>
+  struct has_bracket_operator : std::false_type {};
+
+  template <typename T>
+  struct has_bracket_operator<T, std::void_t<decltype(std::declval<T&>()[0])>> : std::true_type {};
+
+  /**
+   * Check for x, y, z members
+   */
+  template <typename, typename = void>
+  struct has_xyz_members : std::false_type {};
+
+  template <typename T>
+  struct has_xyz_members<T, std::void_t<
+      decltype(std::declval<T&>().x),
+      decltype(std::declval<T&>().y),
+      decltype(std::declval<T&>().z)
+  >> : std::true_type {};
+  
   /**
    * 3 dimensional vector.
    */
@@ -73,16 +96,9 @@ namespace math
     
     inline GenericVec<numeric_type> norm() const;
 
-      // Simplifies conversion to 3-membered types
-      template<typename T>
-      operator T() const {
-          // Requires T to have x, y, z members assignable from numeric_type
-          T tmp;
-          tmp.x = static_cast<typename std::remove_reference<decltype(tmp.x)>::type>(d_v[0]);
-          tmp.y = static_cast<typename std::remove_reference<decltype(tmp.y)>::type>(d_v[1]);
-          tmp.z = static_cast<typename std::remove_reference<decltype(tmp.z)>::type>(d_v[2]);
-          return tmp;
-      }
+    // conversion to 3-membered types (float3, double3)
+    template<typename T3, typename = std::enable_if_t<has_xyz_members<T3>::value>>
+    operator T3() const;
     
     };
     
@@ -315,6 +331,9 @@ namespace math
     
     template<typename numeric_type_b>
     inline GenericMatrix<numeric_type> & operator-=(GenericSymmetricMatrix<numeric_type_b> const & mat);
+
+    template<typename T9>
+    inline operator T9() const;
     
     template<typename numeric_type_b>
     inline GenericMatrix<numeric_type> & operator*=(const numeric_type_b & d) {
@@ -603,7 +622,7 @@ namespace math
       d_b[1] = v2;
       d_b[2] = v3;
     }
-   Box(const Matrixl &m)
+    Box(const Matrixl &m)
     {
        for (unsigned int i = 0; i < 3; ++i) {
         d_b[i]=(m(0,i),m(1,i),m(2,i));
@@ -645,6 +664,8 @@ namespace math
       d_b[2] -= box.d_b[2];
       return *this;
     }
+    template<typename matrix_type>
+    inline operator matrix_type() const;
   };
 
   template<typename numeric_type>
@@ -1330,6 +1351,52 @@ namespace math
   template<typename numeric_type>
   GenericVec<numeric_type> GenericVec<numeric_type>::norm() const {
     return *this / abs(*this);
+  }
+  
+  /**
+   * conversion to T3 types
+   */
+  template<typename numeric_type>
+  template<typename T3, typename>
+  GenericVec<numeric_type>::operator T3() const {
+      // Requires T to have x, y, z members assignable from numeric_type
+      T3 tmp;
+      tmp.x = static_cast<std::remove_reference_t<decltype(tmp.x)>>(d_v[0]);
+      tmp.y = static_cast<std::remove_reference_t<decltype(tmp.y)>>(d_v[1]);
+      tmp.z = static_cast<std::remove_reference_t<decltype(tmp.z)>>(d_v[2]);
+      return tmp;
+  }
+
+
+  // conversion to 9-membered types (float9, double9)
+  template<typename numeric_type>
+  template<typename T9>
+  inline GenericMatrix<numeric_type>::operator T9() const {
+      T9 tmp;
+      tmp.xx = static_cast<std::remove_reference_t<decltype(tmp.xx)>>(m[0][0]);
+      tmp.xy = static_cast<std::remove_reference_t<decltype(tmp.xy)>>(m[0][1]);
+      tmp.xz = static_cast<std::remove_reference_t<decltype(tmp.xz)>>(m[0][2]);
+      tmp.yx = static_cast<std::remove_reference_t<decltype(tmp.yx)>>(m[1][0]);
+      tmp.yy = static_cast<std::remove_reference_t<decltype(tmp.yy)>>(m[1][1]);
+      tmp.yz = static_cast<std::remove_reference_t<decltype(tmp.yz)>>(m[1][2]);
+      tmp.zx = static_cast<std::remove_reference_t<decltype(tmp.zx)>>(m[2][0]);
+      tmp.zy = static_cast<std::remove_reference_t<decltype(tmp.zy)>>(m[2][1]);
+      tmp.zz = static_cast<std::remove_reference_t<decltype(tmp.zz)>>(m[2][2]);
+      return tmp;
+  }
+
+  /**
+   * conversion of Box to any matrix types m[3][3] with operator(int i, int j)
+   */
+  template<typename matrix_type>
+  inline Box::operator matrix_type() const {
+      matrix_type tmp;
+      for (int i = 0; i < 3; ++i) {
+          for (int j = 0; j < 3; ++j) {
+              tmp(i,j) = static_cast<std::remove_reference_t<decltype(tmp(i,j))>>(d_b[i][j]);
+          }
+      }
+      return tmp;
   }
   
   /**
