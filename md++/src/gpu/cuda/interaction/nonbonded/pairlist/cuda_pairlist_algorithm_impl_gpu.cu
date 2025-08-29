@@ -8,7 +8,9 @@
 #include "simulation/simulation.h"
 #include "configuration/configuration.h"
 
-#include "math/periodicity.h"
+// #include "math/periodicity.h"
+#include "math/boundary_implementation.h"
+#include "gpu/cuda/math/periodicity.h"
 
 #include "interaction/nonbonded/pairlist/pairlist.h"
 #include "interaction/nonbonded/pairlist/pairlist_algorithm.h"
@@ -19,7 +21,8 @@
 
 #include "gpu/cuda/memory/topology_struct.h"
 #include "gpu/cuda/memory/configuration_struct.h"
-#include "gpu/cuda/kernels/hello_world.h"
+#include "gpu/cuda/math/periodicity.h"
+#include "gpu/cuda/kernels/periodicity.h"
 
 #include "interaction/nonbonded/pairlist/cuda_pairlist_algorithm_impl.h"
 #include "cuda_pairlist_algorithm_impl_gpu.h"
@@ -45,6 +48,8 @@ int interaction::CUDA_Pairlist_Algorithm_Impl<util::gpuBackend>::init(topology::
 void interaction::CUDA_Pairlist_Algorithm_Impl<util::gpuBackend>::
                     prepare_cog(configuration::Configuration & conf,
                                 topology::Topology & topo) {
+
+    conf.copy_to_gpu();
     SPLIT_BOUNDARY(_prepare_cog, conf, topo);
 }
 
@@ -53,23 +58,17 @@ void interaction::CUDA_Pairlist_Algorithm_Impl<util::gpuBackend>::
                     _prepare_cog<B>(configuration::Configuration & conf,
                                     topology::Topology & topo) {
     DEBUG(10, "putting chargegroups into box");
-    math::Periodicity<B> periodicity(conf.current().box);
-    periodicity.put_chargegroups_into_box(conf, topo);
+
 
     dim3 dimGrid(1);
     dim3 dimBlock(NUM_THREADS_PER_BLOCK);
 
     conf.copy_to_gpu();
+    gpu::Periodicity<B> periodicity(conf.current().box);
+    gpu::prepare_cog_kernel<<<dimGrid, dimBlock>>>(topo.get_gpu_view(), conf.get_gpu_view(), periodicity);
 
-    DEBUG(0, "topo.get_gpu_view().num_atoms: " << topo.get_gpu_view().num_atoms);
-    // cudaMemcpy(d_a, arr, sizeof(float)*2, cudaMemcpyHostToDevice);
-    gpu::hello_world<<<dimGrid, dimBlock>>>(topo.get_gpu_view(), conf.gpu_view());
-    // gpu::hello_world<<<dimGrid, dimBlock>>>(d_a,d_b);
     cudaDeviceSynchronize();
-    // cudaMemcpy(arr, d_a, sizeof(float)*2, cudaMemcpyDeviceToHost);
-    // DEBUG(0, "a: " << a << ", b: " << b);
-    // cudaFree(d_a);
-}
+};
 
 // explicit instantiation
 template class interaction::CUDA_Pairlist_Algorithm_Impl<util::gpuBackend>;

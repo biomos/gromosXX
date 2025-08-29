@@ -445,31 +445,54 @@ Turning them into a hard restriction (compile time) should be considered.
 Class `CUDA_Pairlist` consists of `Interaction_Tile` structs.
 
 
-## Kernel Calls
-To provide data to kernel calls, we create a light-weight structs holding device pointers to
+## Configuration and Topology structs
+To provide data to kernel calls, we create light-weight structs holding device pointers to
 essential Topology, Configuration and Simulation data.
-```cpp
- __global__ void gpu::hello_world(topology::Topology::View& topo, configuration::Configuration::View& conf) {
-  unsigned int idx = blockIdx.x * blockDim.x + threadIdx.x;
-  
 
-class Configuration {
-    using GPUView =
-#ifdef USE_CUDA
-    gpu::ConfigurationView;
-#else
-    void;
-#endif
-}
+These structs pack all relevant pointers and small PODs. Size of the structs should not be
+a performance issue, as the compiler should be able to optimize the unused member variables
+away.
+
+
+`topology::Topology` is almost constant, so we use `gpu::Topology` as an extract of topology
+to store on GPU, and use primitive types and pointers logic.
+The copy to GPU is implicit, with the first call of `topology::Topology::get_gpu_view(bool sync)`.
+Every further call uses the same pointers.
+Passing `sync = True` enforces fresh copy to device.
+
+
+`configuration::Configuration` is more dynamic, so we use `gpu::cuvector` to store dynamic arrays.
+We use a special struct `gpu::Configuration`, that holds all the arrays.
+To access the pointers, you should obtain `gpu::Configuration::View` from
+`gpu::Configuration::view()`, to provide proper pointers to the `gpu::cuvector`.
+The `gpu::cuvector` allows simple allocation and copy, not having to use CUDA API calls
+explicitly when allocating, resizing and deallocating.
+`gpu::Configuration::View` consists of two `gpu::Configuration::State::StateView` objects,
+accessible similarly to `configuration::Configuration` using `current()` and `old()`.
+
+```cpp
+// use of GPU structs in kernel functions
+ __global__ void gpu::hello_world(gpu::Topology topo, gpu::Configuration::View conf) {
+  unsigned int idx = blockIdx.x * blockDim.x + threadIdx.x;
+  for (unsigned i = idx; i < topo.num_atoms; i += blockDim.x * gridDim.x) {
+    const float3& my_pos = conf.current().pos[i];
+    printf("threadIdx %d, blockIdx %d: processing %d: pos: (%f,%f,%f) iac: %d, charge: %f\n"
+      , threadIdx.x, blockIdx.x, i, my_pos.x, my_pos.y, my_pos.z, topo.iac[i], topo.charge[i]);
+  }
+};
 
 namespace gpu {
-    struct ConfigurationView {
-        // a bunch of device pointers
-        struct StateView {
-            // a bunch of other device pointers
+    struct Configuration {
+        // a pair of states
+        struct State {
+            // a bunch of math::CuVArrays (a.k.a. gpu::cuvector<float3>) and device pointers
+            struct StateView {
 
+            }
         }
-        __device__ 
+        struct View {
+            // a bunch of math::CuVArrays (a.k.a. gpu::cuvector<float3>) and device pointers
+        }
     }
 
 }
@@ -486,3 +509,79 @@ To create a view, we have to go through these steps (on the example of Configura
  and just always export data from Configuration to the configuration_struct
 
  With topology, it is more constant over the simulation, so there we can keep the pointer to the topology_struct in Topology.
+
+ ### Multi-GPU support
+ The structs hold pointers only to a single GPU. For multiple GPUs, we either hold a map of
+ `unique_ptr<gpu::Configuration>`, or employ the `CudaMemoryManager`.
+
+
+## Mixed precision implementation
+To implement mixed precision, the floating point values are defined using type aliases
+```cpp
+// src/gpu/cuda/memory/precision.h
+using FPL_TYPE = float; // low precision floating point type (float)
+using FPH_TYPE = double; // high precision type (double)
+```
+
+So everywhere you would use `float`, you use `FPL_TYPE`, and similarly `FPH_TYPE` for `double`.
+To use `floatN` and `doubleN`, there are types `FPL{n}_TYPE` and `FPH{n}_TYPE` (`n = {2,3,4}`).
+Instead of `make_float3` or `make_double3`, use `make_FPL3` and `make_FPH3`.
+
+
+For matrices, we also have custom `float9` and `double9`, with 9 members `.xx, .xy, ... ,.zy, .zz`.
+
+Note, that `float9 / double9` has an additional feature of optional (i,j)
+indexing, as well as row manipulations, so it is a bit `math::Box`-like.
+
+
+## Built-in types
+Host GROMOS code makes use of `math::Vec` which is a wrapper template around `numeric_type v[3]`.
+Then we have `math::VArray` which is `std::vector<math::Vec>`.
+For CUDA, we extended it further using `math::VArrayT` to allow CUDA-managed allocation using `std::vector<T,A<T>>`.
+`A<T>` is then our custom `CuMAllocator`, that can create `std::vector`-like object called `math::CuVArray`,
+which is copied between host and device silently in the background.
+The data of such array are accessible from GPU code only through the pointer returned by
+`math::CuVArray::data()` and raw indexing.
+All other operations have to be performed host-side.
+I thought of going one step further and creating a fully transparent array, but the problem there is
+it is passed as a copy in the kernel function calls, so there would be not much advantage and we
+rather keep it thin and only pass a set of pointers to these `CuVArray`s in `gpu::Configuration::View`.
+`std::vector` is not supported in device code and `math::Vec` does not play well with already existing
+3-element types in CUDA. Instead of stitching everything together, we just define a conversion operator
+form `math::Vec` to numeric `float3` (and other) types.
+
+Conversion has to be performed host-side and then passed either as a function argument, or copied using `cudaMemcpy`.
+
+```cpp
+// math::Vec can be converted directly to float3
+math::Vec mypos = conf.current().pos;
+float3 d_mypos = mypos;
+
+// similarly for boxes
+math::Box box = ...;
+gpu::Box d_box(box);
+
+// or tensors
+math::Matrix virial = ...;
+float9 d_virial = virial;
+
+// example of array conversion from double to float and copy to device
+// 1. using cuda-managed memory
+math::VArray src = ...;
+math::CuVArray dst;
+dst.clear();
+dst.reserve(num_atoms);
+for (const auto& v : src) {
+   dst.push_back(static_cast<float3>(v)); // we cast from math::Vec to float3
+}
+
+// 2. using standard cudaMalloc
+    float9 virial_tensor;
+    float9* d_virial_tensor;
+    
+    virial_tensor = conf.current().virial_tensor; // notice automatic conversion from math::Matrix to float9
+
+    cudaMalloc(&d_virial_tensor, sizeof(float9));
+    cudaMemcpy(d_virial_tensor, &virial_tensor, sizeof(virial_tensor), cudaMemcpyHostToDevice);
+
+```
