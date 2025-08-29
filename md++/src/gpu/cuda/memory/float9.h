@@ -14,24 +14,73 @@
 
 #include <type_traits>
 /**
- * @struct R9 a matrix of nine real numbers
+ * @struct R9 a matrix of nine floating points
  */
-template <typename R, typename std::enable_if< // allow only floating point types
-                                        std::is_floating_point<R>::value, bool>::type = true>
-struct ALIGN16 R9 {
-    R xx;
-    R xy;
-    R xz;
-    R yx;
-    R yy;
-    R yz;
-    R zx;
-    R zy;
-    R zz;
+template <typename FP, typename std::enable_if< // allow only floating point types
+                                        std::is_floating_point<FP>::value, bool>::type = true>
+struct ALIGN16 FP9 {
+    /**
+     * @brief union allows us to access as xx, xy, xz, ... or (i,j)
+     * 
+     */
+    union {
+        struct { FP xx, xy, xz,
+                      yx, yy, yz,
+                      zx, zy, zz; };
+        FP m[3][3];   // row-major 3×3
+    };
+
+    /**
+     * @brief row getter
+     * 
+     * @param i row index
+     * @return float3 or double3 row copy
+     */
+    HOSTDEVICE typename std::conditional<
+        std::is_same<FP,float>::value, float3, double3>::type
+    operator()(int i) const {
+        return { m[i][0], m[i][1], m[i][2] };
+    }
+
+    // --- element getter (read-only) ---
+    /**
+     * @brief element getter
+     * 
+     * @param i row index
+     * @param j col index
+     * @return float or double element copy
+     */
+    HOSTDEVICE FP operator()(int i, int j) const {
+        return m[i][j];
+    }
+
+    /**
+     * @brief element reference
+     * 
+     * @param i row index
+     * @param j col index
+     * @return float or double element reference
+     */
+    HOSTDEVICE FP& operator()(int i, int j) {
+        return m[i][j];
+    }
+
+    /**
+     * @brief row setter
+     * 
+     * @param i row index
+     * @param v new row
+     */
+    HOSTDEVICE void set_row(int i, typename std::conditional<
+                                       std::is_same<FP,float>::value, float3, double3>::type const &v) {
+        m[i][0] = v.x;
+        m[i][1] = v.y;
+        m[i][2] = v.z;
+    };
 };
 
-typedef R9<float> float9;
-typedef R9<double> double9;
+using float9 = FP9<float>;
+using double9 = FP9<double>;
 
 template <typename T9, typename std::enable_if< // allow only float9 and double9
                                         std::is_same<T9,float9>::value ||
