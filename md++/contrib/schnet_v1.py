@@ -54,7 +54,7 @@ class SchNet_V1_Calculator:
         get_forces(self):
             Get the predicted forces for the last atomic system.
 
-        get_nn_valid_dev(self):
+        get_nn_valid_ene(self):
             Get the validation deviation calculated during the last validation step.
     """
 
@@ -208,7 +208,7 @@ class SchNet_V1_Calculator:
         """
         return self.forces
 
-    def get_nn_valid_dev(self):
+    def get_nn_valid_ene(self):
         """
         Get the validation deviation calculated during the last validation step.
 

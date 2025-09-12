@@ -129,7 +129,7 @@ int interaction::NN_Worker::init(const topology::Topology& topo
   std::string exePath = std::string(result, (count > 0) ? count : 0);
   std::string exeDir = exePath.substr(0, exePath.find_last_of("/"));
   // Compute the correct module directory assuming binary in BUILD_X/bin
-  std::string modulePath = exeDir + "/../contrib";
+  std::string modulePath = exeDir + "/../share/contrib";
   py::module_ sys = py::module_::import("sys");
   // Convert C++ string to Python string and append to sys.path
   sys.attr("path").attr("append")(modulePath);

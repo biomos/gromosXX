@@ -27,5 +27,5 @@ EXTRA_DIST = VERSION\
 	doc/install.html\
 	doc/main.doxy\
     data/ene_ana.md++.lib\
-	contrib/schnet_v1.py
+	contrib/schnet_v1.py\
 	contrib/schnet_v2.py
