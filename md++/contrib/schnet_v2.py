@@ -248,11 +248,11 @@ class SchNet_V2_Calculator:
             # Calculate validation deviation based on validation results.
             self.nn_valid_maxF = self.validate_prediction_maxForceDeviation(system=system)
             if len(val_energies) == 1:
-                self.nn_valid_ene = self.energy - val_energies[0]
+                self.nn_valid_ene = (self.energy - val_energies[0])/np.sqrt(2) # devided by sqrt(2) to match the sample standard deviation bellow
             else:
                 val_energies.append(self.energy)
                 val_energies = np.array(val_energies)
-                self.nn_valid_ene = val_energies.std()
+                self.nn_valid_ene = val_energies.std(ddof=1) # to calculate sample standard deviation
         return None
 
     def get_energy(self):
