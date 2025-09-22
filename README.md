@@ -1,3 +1,9 @@
+> # Code under development
+> This is `cuda` branch, where CUDA implementation into GROMOS is being developed.
+For more details, read [`md++/src/gpu/notes.md`](md++/src/gpu/notes.md), where documentation of current progress is kept up to date.
+
+---
+
 ## About the GROMOS software for biomolecular simulation
 
 ### What is GROMOS
