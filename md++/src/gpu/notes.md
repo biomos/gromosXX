@@ -454,7 +454,7 @@ a performance issue, as the compiler should be able to optimize the unused membe
 away.
 
 
-`topology::Topology` is almost constant, so we use `gpu::Topology` as an extract of topology
+`topology::Topology` is almost constant, so we use `const gpu::Topology::View` as an extract of topology
 to store on GPU, and use primitive types and pointers logic.
 The copy to GPU is implicit, with the first call of `topology::Topology::get_gpu_view(bool sync)`.
 Every further call uses the same pointers.
@@ -472,7 +472,7 @@ accessible similarly to `configuration::Configuration` using `current()` and `ol
 
 ```cpp
 // use of GPU structs in kernel functions
- __global__ void gpu::hello_world(gpu::Topology topo, gpu::Configuration::View conf) {
+ __global__ void gpu::hello_world(gpu::Topology::View topo, gpu::Configuration::View conf) {
   unsigned int idx = blockIdx.x * blockDim.x + threadIdx.x;
   for (unsigned i = idx; i < topo.num_atoms; i += blockDim.x * gridDim.x) {
     const float3& my_pos = conf.current().pos[i];
@@ -501,9 +501,9 @@ To create a view, we have to go through these steps (on the example of Configura
  1. Configuration construction
  2. GPU allocation - obtain configuration_struct (pointers and cuvectors, possibly from CudaMemoryManager)
  3. Store the struct (or a pointer to it) in Configuration
- 4. Sync the configuration_struct with Configuration
+ 4. Sync the `gpu::Configuration` with `Configuration::Configuration`
  5. Keep configuration and its struct in sync
- 6. cuvectors need extra step, we have to create a View using ::data()
+ 6. cuvectors need extra step, we have to create a View using `::View()`
 
  Alternatively, as configuration is volatile, just keep the configuration_struct on the GPU side independent
  and just always export data from Configuration to the configuration_struct

@@ -30,6 +30,7 @@
 #include "types.h"
 #include "cuvector.h"
 
+#include "gpu/cuda/cuhostdevice.h"
 #include "gpu/cuda/math/box.h"
 
 namespace configuration {
@@ -43,28 +44,24 @@ namespace gpu {
      */
     struct Configuration {
         /**
-         * @brief Holds current and old state
+         * @brief Holds exclusive pointers to current and old state
          * 
          */
         struct State {
+            // GPU-side arrays
             mutable math::CuVArray pos;
             mutable math::CuVArray vel;
             mutable math::CuVArray force;
             mutable math::CuVArray constraint_force;
-            Box* box;
-            float9* virial_tensor;
-            float9* kinetic_energy_tensor;
-            float9* pressure_tensor;
-            void* tensors_block; // keep for deallocation
 
-            State() :
-                        box(nullptr),
-                        virial_tensor(nullptr),
-                        kinetic_energy_tensor(nullptr),
-                        pressure_tensor(nullptr)
-                {
+            Box* box = nullptr;
+            FPL9_TYPE* virial_tensor = nullptr;
+            FPL9_TYPE* kinetic_energy_tensor = nullptr;
+            FPL9_TYPE* pressure_tensor = nullptr;
+            void* tensors_block = nullptr;
 
-                // keep box separate
+            State() {
+                // Allocate Box
                 cudaMalloc(&box, sizeof(Box));
                 // allocate all tensors at once
                 const size_t tensors_bytes = sizeof(*virial_tensor)
@@ -73,9 +70,9 @@ namespace gpu {
                 cudaMalloc(&tensors_block, tensors_bytes);
 
                 char* base              = reinterpret_cast<char*>(tensors_block);
-                virial_tensor           = reinterpret_cast<float9*>(base += sizeof(float9));
-                kinetic_energy_tensor   = reinterpret_cast<float9*>(base += sizeof(float9));
-                pressure_tensor         = reinterpret_cast<float9*>(base += sizeof(float9));
+                virial_tensor           = reinterpret_cast<FPL9_TYPE*>(base);
+                kinetic_energy_tensor   = reinterpret_cast<FPL9_TYPE*>(base += sizeof(FPL9_TYPE));
+                pressure_tensor         = reinterpret_cast<FPL9_TYPE*>(base += sizeof(FPL9_TYPE));
             }
             ~State() {
                 cudaFree(box);
@@ -85,14 +82,16 @@ namespace gpu {
             /**
              * @brief Export a __host__-side view to be used in kernel call
              * const pointers to non-const device data
+             * We should not pass State directly, as that could inadvertently
+             * free up resources
              * 
              */
             struct StateView {
                 size_t size                   = 0;
-                float3* pos                   = nullptr;
-                float3* vel                   = nullptr;
-                float3* force                 = nullptr;
-                float3* constraint_force      = nullptr;
+                math::CuVArray::View pos;
+                math::CuVArray::View vel;
+                math::CuVArray::View force;
+                math::CuVArray::View constraint_force;
                 Box* box                      = nullptr;
                 float9* virial_tensor         = nullptr;
                 float9* kinetic_energy_tensor = nullptr;
@@ -160,12 +159,6 @@ namespace gpu {
         State old;
 
         /**
-         * @brief if the view was created, assume mutation
-         * 
-         */
-        // bool mutated = false;
-
-        /**
          * @brief Update the configuration
          * 
          */
@@ -211,28 +204,20 @@ namespace gpu {
              * @brief get current state from host, or device
              * 
              */
-            HOSTDEVICE const State::StateView& current() {
-                return m_current;
-            }
+            HOSTDEVICE State::StateView& current() { return m_current; }
 
 
             /**
              * @brief get old state from host, or device
              * 
              */
-            HOSTDEVICE const State::StateView& old() {
-                return m_old;
-            }
+            HOSTDEVICE State::StateView& old() { return m_old; }
         };
 
         /**
          * @brief Create view of the configuration
          * 
          * @return View 
-         */
-        View view() const {
-            // mutated = true;
-            return View{current.view(), old.view()};
-        }
+         */View view() { return View{current.view(), old.view()}; }
     };
 }
