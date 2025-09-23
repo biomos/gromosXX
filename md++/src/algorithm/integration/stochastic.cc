@@ -168,7 +168,7 @@ int algorithm::Stochastic_Dynamics_Vel1
 	(1.5 + gdth * 9.0/8.0 + gdth2 * 71.0/160.0 + gdth3 * 81.0/640.0 + gdth4 * 7807.0/268800.0 
 	 + gdth5 * 1971.0/358400.0 + gdth6 * 56417.0/64512000.0);
 
-      topo.stochastic().c6(i) = 1.0 + gdth2/6.0 + gdth4/10.0 + gdth6/5040.0;
+      topo.stochastic().c6(i) = 1.0 + gdth2/6.0 + gdth4/120.0 + gdth6/5040.0;
 
       topo.stochastic().c7(i) = sim.time_step_size() * 0.5 * 
 	sqrt(fabs(gdth * 2.0/3.0 - gdth2/2.0 + gdth3 * 7.0/30.0 -gdth4/12.0 + gdth5 * 31.0/1260.0 - 
