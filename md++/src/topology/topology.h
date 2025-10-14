@@ -36,6 +36,8 @@
 #include "../interaction/interaction_types.h"
 #include "../util/virtual_atom.h"
 
+#include "gpu/cuda/memory/topology_struct.h"
+
 namespace simulation
 {
   class Multibath;
@@ -45,10 +47,6 @@ namespace simulation
 
 namespace util {
   class LE_Coordinate;
-}
-
-namespace gpu {
-  struct Topology;
 }
 
 namespace topology
@@ -1644,7 +1642,7 @@ namespace topology
      * const accessor to GPU-stored topology
      *  @param sync to GPU (default false)
      */
-    const gpu::Topology& get_gpu_view(bool sync = false) const;
+    const gpu::Topology::View get_gpu_view(bool sync = false) const;
 
   private:
     /**

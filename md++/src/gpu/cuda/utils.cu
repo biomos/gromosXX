@@ -25,7 +25,9 @@ void gpu::check_cuda_last_error(const char* err_msg, const char* file, int line)
         std::ostringstream oss;
         oss << "CUDA Error detected at " << file << ":" << line << " - " << err_msg
                 << ": " << cudaGetErrorString(error) << std::endl;
-        io::messages.add(oss.str(), "gpu", io::message::error);
+        // io::messages.add(oss.str(), "gpu", io::message::error);
+        // crash immediately
+        throw std::runtime_error(oss.str());
     }
 }
 

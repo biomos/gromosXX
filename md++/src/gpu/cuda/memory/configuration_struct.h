@@ -37,114 +37,143 @@ namespace configuration {
     class Configuration;
 }
 namespace gpu {
+    /**
+     * @brief Export a __host__-side view to be used in kernel call.
+     */
+    struct ConfigurationStateView {
+        math::CuVArray::View pos;
+        math::CuVArray::View vel;
+        math::CuVArray::View force;
+        math::CuVArray::View constraint_force;
+        Box* box;
+        FPL9_TYPE* virial_tensor;
+        FPL9_TYPE* kinetic_energy_tensor;
+        FPL9_TYPE* pressure_tensor;
+
+        HOSTDEVICE ConfigurationStateView() = default;
+
+        HOSTDEVICE ConfigurationStateView(
+            math::CuVArray::View p,
+            math::CuVArray::View v,
+            math::CuVArray::View f,
+            math::CuVArray::View cf,
+            Box* b = nullptr,
+            FPL9_TYPE* vt = nullptr,
+            FPL9_TYPE* ket = nullptr,
+            FPL9_TYPE* pt = nullptr)
+        : pos(p),
+        vel(v),
+        force(f),
+        constraint_force(cf),
+        box(b),
+        virial_tensor(vt),
+        kinetic_energy_tensor(ket),
+        pressure_tensor(pt) {}
+    };
+
+    /**
+     * @brief Holds exclusive pointers to current and old state
+     * 
+     */
+    struct ConfigurationState {
+        using StateView = ConfigurationStateView;
+        // GPU-side arrays
+        mutable math::CuVArray pos;
+        mutable math::CuVArray vel;
+        mutable math::CuVArray force;
+        mutable math::CuVArray constraint_force;
+
+        Box* box = nullptr;
+        FPL9_TYPE* virial_tensor = nullptr;
+        FPL9_TYPE* kinetic_energy_tensor = nullptr;
+        FPL9_TYPE* pressure_tensor = nullptr;
+        void* tensors_block = nullptr;
+
+        ConfigurationState() {
+            // Allocate Box
+            cudaMalloc(&box, sizeof(Box));
+            // allocate all tensors at once
+            const size_t tensors_bytes = sizeof(*virial_tensor)
+                                    + sizeof(*kinetic_energy_tensor)
+                                    + sizeof(*pressure_tensor);
+            cudaMalloc(&tensors_block, tensors_bytes);
+
+            char* base              = reinterpret_cast<char*>(tensors_block);
+            virial_tensor           = reinterpret_cast<FPL9_TYPE*>(base);
+            kinetic_energy_tensor   = reinterpret_cast<FPL9_TYPE*>(base += sizeof(FPL9_TYPE));
+            pressure_tensor         = reinterpret_cast<FPL9_TYPE*>(base += sizeof(FPL9_TYPE));
+        }
+
+        ~ConfigurationState() {
+            if (box) cudaFree(box);
+            if (tensors_block) cudaFree(tensors_block);
+        }
+
+        /**
+         * @brief Construct StateView on demand
+         * 
+         * @return HOSTDEVICE 
+         */
+        __host__ StateView view() {
+            return StateView{
+                pos.view(),
+                vel.view(),
+                force.view(),
+                constraint_force.view(),
+                box,
+                virial_tensor,
+                kinetic_energy_tensor,
+                pressure_tensor
+            };
+        }
+
+        void resize(size_t num_atoms) {
+            pos.resize(num_atoms);
+            vel.resize(num_atoms);
+            force.resize(num_atoms);
+            constraint_force.resize(num_atoms);
+        }
+    };
+
+    /**
+     * @brief View of the configuration
+     * 
+     */
+    struct ConfigurationView {
+        using StateView = ConfigurationStateView;
+        /**
+         * @brief view of current state
+         * 
+         */
+        StateView m_current;
+
+        /**
+         * @brief view of old state
+         * 
+         */
+        StateView m_old;
+
+        /**
+         * @brief get current state from host, or device
+         * 
+         */
+        HOSTDEVICE StateView& current() { return m_current; }
+
+
+        /**
+         * @brief get old state from host, or device
+         * 
+         */
+        HOSTDEVICE StateView& old() { return m_old; }
+    };
 
     /**
      * @brief Holds GPU-side state copies of configuration data.
      * 
      */
     struct Configuration {
-        /**
-         * @brief Holds exclusive pointers to current and old state
-         * 
-         */
-        struct State {
-            // GPU-side arrays
-            mutable math::CuVArray pos;
-            mutable math::CuVArray vel;
-            mutable math::CuVArray force;
-            mutable math::CuVArray constraint_force;
-
-            Box* box = nullptr;
-            FPL9_TYPE* virial_tensor = nullptr;
-            FPL9_TYPE* kinetic_energy_tensor = nullptr;
-            FPL9_TYPE* pressure_tensor = nullptr;
-            void* tensors_block = nullptr;
-
-            State() {
-                // Allocate Box
-                cudaMalloc(&box, sizeof(Box));
-                // allocate all tensors at once
-                const size_t tensors_bytes = sizeof(*virial_tensor)
-                                            + sizeof(*kinetic_energy_tensor)
-                                            + sizeof(*pressure_tensor);
-                cudaMalloc(&tensors_block, tensors_bytes);
-
-                char* base              = reinterpret_cast<char*>(tensors_block);
-                virial_tensor           = reinterpret_cast<FPL9_TYPE*>(base);
-                kinetic_energy_tensor   = reinterpret_cast<FPL9_TYPE*>(base += sizeof(FPL9_TYPE));
-                pressure_tensor         = reinterpret_cast<FPL9_TYPE*>(base += sizeof(FPL9_TYPE));
-            }
-            ~State() {
-                cudaFree(box);
-                cudaFree(tensors_block);
-            }
-
-            /**
-             * @brief Export a __host__-side view to be used in kernel call
-             * const pointers to non-const device data
-             * We should not pass State directly, as that could inadvertently
-             * free up resources
-             * 
-             */
-            struct StateView {
-                size_t size                   = 0;
-                math::CuVArray::View pos;
-                math::CuVArray::View vel;
-                math::CuVArray::View force;
-                math::CuVArray::View constraint_force;
-                Box* box                      = nullptr;
-                float9* virial_tensor         = nullptr;
-                float9* kinetic_energy_tensor = nullptr;
-                float9* pressure_tensor       = nullptr;
-            };
-
-            /**
-             * @brief cache the view 
-             * 
-             */
-            mutable StateView cached_view;
-            
-            /**
-             * @brief Update the view with the latest data from device memory
-             * 
-             */
-            void update_view() const {
-                cached_view = StateView{
-                    .size = pos.size(),
-                    .pos = pos.size() ? pos.data() : nullptr,
-                    .vel = vel.size() ? vel.data() : nullptr,
-                    .force = force.size() ? force.data() : nullptr,
-                    .constraint_force = constraint_force.size() ? constraint_force.data() : nullptr,
-                    .box = box,
-                    .virial_tensor = virial_tensor,
-                    .kinetic_energy_tensor = kinetic_energy_tensor,
-                    .pressure_tensor = pressure_tensor
-                };
-            }
-
-            /**
-             * @brief Get the view of the state data.
-             * check for nullptr before use
-             * 
-             * @return View 
-             */
-            StateView const& view() const {
-                return cached_view;
-            }
-
-            /**
-             * @brief Resize the state to hold `num_atoms` atoms.
-             * 
-             * @param num_atoms 
-             */
-            void resize(size_t num_atoms) {
-                pos.resize(num_atoms);
-                vel.resize(num_atoms);
-                force.resize(num_atoms);
-                constraint_force.resize(num_atoms);
-                update_view();
-            }
-        };
+        using State = ConfigurationState;
+        using View = ConfigurationView;
 
         /**
          * @brief The current state
@@ -184,40 +213,10 @@ namespace gpu {
         }
 
         /**
-         * @brief View of the configuration
-         * 
-         */
-        struct View {
-            /**
-             * @brief view of current state
-             * 
-             */
-            State::StateView m_current;
-
-            /**
-             * @brief view of old state
-             * 
-             */
-            State::StateView m_old;
-
-            /**
-             * @brief get current state from host, or device
-             * 
-             */
-            HOSTDEVICE State::StateView& current() { return m_current; }
-
-
-            /**
-             * @brief get old state from host, or device
-             * 
-             */
-            HOSTDEVICE State::StateView& old() { return m_old; }
-        };
-
-        /**
          * @brief Create view of the configuration
          * 
          * @return View 
-         */View view() { return View{current.view(), old.view()}; }
+         */
+        View view() { return View{current.view(), old.view()}; }
     };
 }

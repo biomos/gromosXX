@@ -8,11 +8,16 @@
 
 
 namespace gpu {
-    __global__ void put_chargegroups_into_box(Topology topo,
-                                              Configuration::View conf);
+    template <math::boundary_enum BOUNDARY>
+    __global__ void put_chargegroups_into_box_kernel(Topology::View topo,
+                                                    Configuration::View conf,
+                                                    Periodicity<BOUNDARY> periodicity);
 
     template <math::boundary_enum BOUNDARY>
-    __global__ void prepare_cog_kernel(Topology topo,
+    __global__ void prepare_cog_kernel(Topology::View topo,
                                        Configuration::View conf,
-                                       Periodicity<BOUNDARY> periodicity);
+                                       Periodicity<BOUNDARY> periodicity,
+                                       math::CuVArray::View cg_cog,
+                                       gpu::cuvector<ushort4>::View cg_cells
+                                    );
 }

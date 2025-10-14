@@ -42,62 +42,47 @@
 
 #include "configuration_struct.h"
 
+#include "gpu/cuda/utils.h"
+
 void gpu::Configuration::copy_to_device(configuration::Configuration& conf) {
+    CUDA_CHECK_ERROR("At gpu::Configuration::copy_to_device");
     const size_t num_atoms = conf.current().pos.size();
     using Vec = typename decltype(conf.current().pos)::value_type;
 
-    static_assert(std::is_convertible<Vec, float3>::value,
-                  "Vec must be convertible to float3");
+    static_assert(std::is_convertible<Vec, FPL3_TYPE>::value,
+                  "Vec must be convertible to FPL3_TYPE");
 
     auto convert_and_copy = [num_atoms](const auto& src, auto& dst) {
-        dst.clear();
-        dst.reserve(num_atoms);
-        for (const auto& v : src)
-            dst.push_back(static_cast<float3>(v));
+        CUDA_CHECK_ERROR("Before resize");
+        dst.resize(num_atoms);  // Resize already allocates GPU memory
+        CUDA_CHECK_ERROR("After resize");
+        for (size_t i = 0; i < num_atoms; ++i)
+            dst[i] = static_cast<FPL3_TYPE>(src[i]);  // Copy/convert element-wise
     };
 
-    // Current
+    // Current state
     convert_and_copy(conf.current().pos, current.pos);
     convert_and_copy(conf.current().vel, current.vel);
     convert_and_copy(conf.current().force, current.force);
     convert_and_copy(conf.current().constraint_force, current.constraint_force);
 
-    // Old
+    // Old state
     convert_and_copy(conf.old().pos, old.pos);
     convert_and_copy(conf.old().vel, old.vel);
     convert_and_copy(conf.old().force, old.force);
     convert_and_copy(conf.old().constraint_force, old.constraint_force);
 
-    // copy tensors
-            // Box* box;
-            // float9* virial_tensor;
-            // float9* kinetic_energy_tensor;
-            // float9* pressure_tensor;
-    Box box;
-    float9 virial_tensor;
-    float9 kinetic_energy_tensor;
-    float9 pressure_tensor;
     
-    box = conf.current().box;
-    virial_tensor = conf.current().virial_tensor;
-    kinetic_energy_tensor = conf.current().kinetic_energy_tensor;
-    pressure_tensor = conf.current().pressure_tensor;
+    CUDA_CHECK_ERROR("Before tensors");
+    // Copy raw Box and tensor pointers
+    CUDA_CHECK(cudaMemcpy(current.box, &conf.current().box, sizeof(Box), cudaMemcpyHostToDevice));
+    CUDA_CHECK(cudaMemcpy(current.virial_tensor, &conf.current().virial_tensor, sizeof(FPL9_TYPE), cudaMemcpyHostToDevice));
+    CUDA_CHECK(cudaMemcpy(current.kinetic_energy_tensor, &conf.current().kinetic_energy_tensor, sizeof(FPL9_TYPE), cudaMemcpyHostToDevice));
+    CUDA_CHECK(cudaMemcpy(current.pressure_tensor, &conf.current().pressure_tensor, sizeof(FPL9_TYPE), cudaMemcpyHostToDevice));
 
-    cudaMemcpy(current.box, &box, sizeof(box), cudaMemcpyHostToDevice);
-    cudaMemcpy(current.virial_tensor, &virial_tensor, sizeof(virial_tensor), cudaMemcpyHostToDevice);
-    cudaMemcpy(current.kinetic_energy_tensor, &kinetic_energy_tensor, sizeof(kinetic_energy_tensor), cudaMemcpyHostToDevice);
-    cudaMemcpy(current.pressure_tensor, &pressure_tensor, sizeof(pressure_tensor), cudaMemcpyHostToDevice);
-
-    box = conf.old().box;
-    virial_tensor = conf.old().virial_tensor;
-    kinetic_energy_tensor = conf.old().kinetic_energy_tensor;
-    pressure_tensor = conf.old().pressure_tensor;
-
-    cudaMemcpy(old.box, &box, sizeof(box), cudaMemcpyHostToDevice);
-    cudaMemcpy(old.virial_tensor, &virial_tensor, sizeof(virial_tensor), cudaMemcpyHostToDevice);
-    cudaMemcpy(old.kinetic_energy_tensor, &kinetic_energy_tensor, sizeof(kinetic_energy_tensor), cudaMemcpyHostToDevice);
-    cudaMemcpy(old.pressure_tensor, &pressure_tensor, sizeof(pressure_tensor), cudaMemcpyHostToDevice);
-
-    current.update_view();
-    old.update_view();
+    CUDA_CHECK(cudaMemcpy(old.box, &conf.old().box, sizeof(Box), cudaMemcpyHostToDevice));
+    CUDA_CHECK(cudaMemcpy(old.virial_tensor, &conf.old().virial_tensor, sizeof(FPL9_TYPE), cudaMemcpyHostToDevice));
+    CUDA_CHECK(cudaMemcpy(old.kinetic_energy_tensor, &conf.old().kinetic_energy_tensor, sizeof(FPL9_TYPE), cudaMemcpyHostToDevice));
+    CUDA_CHECK(cudaMemcpy(old.pressure_tensor, &conf.old().pressure_tensor, sizeof(FPL9_TYPE), cudaMemcpyHostToDevice));
+    CUDA_CHECK_ERROR("After tensors");
 }

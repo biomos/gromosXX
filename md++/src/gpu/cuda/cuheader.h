@@ -37,6 +37,8 @@
 
 #ifdef USE_CUDA
     #include <cuda_runtime.h>
+    #include "memory/types.h"
+    #include "memory/precision.h"
     #include "memory/cuvector.h"
     namespace gpu {
         using CUDEVPROP = cudaDeviceProp;

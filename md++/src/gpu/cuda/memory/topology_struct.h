@@ -28,19 +28,40 @@
 
 // #include "types.h"
 // #include "cuvector.h"
+#include "gpu/cuda/cuhostdevice.h"
 
 namespace topology {
   class Topology;
 }
 
 namespace gpu {
+  struct TopologyView {
+      const int* const iac;
+      const float* const mass;
+      const float* const inverse_mass;
+      const float* const charge;
+      const int* const chargegroup;
+
+      const unsigned num_solute_chargegroups;
+      const unsigned num_solute_molecules;
+      const unsigned num_atoms;
+      const unsigned num_chargegroups;
+
+      HOSTDEVICE TopologyView() = default;
+
+      HOSTDEVICE TopologyView(
+          int* iac_, float* mass_, float* imass_, float* charge_, int* chargegroup_,
+          unsigned n_s_cg, unsigned n_s_mol, unsigned n_atoms, unsigned n_cg)
+          : iac(iac_), mass(mass_), inverse_mass(imass_), charge(charge_), chargegroup(chargegroup_),
+            num_solute_chargegroups(n_s_cg), num_solute_molecules(n_s_mol),
+            num_atoms(n_atoms), num_chargegroups(n_cg) {}
+  };
+
   /**
-   * @brief Holds GPU-side view of topology data.
-   * 
-   * All arrays are in single precision (float or float3) to match GPU performance requirements.
-   * We assume constants, so we copy only once in the beginning
+   * @brief Holds GPU-side topology data.
    */
   struct Topology {
+    using View = TopologyView;
     void*      memory_block; // base pointer for deallocation
     // Atom codes, masses, charges
     int*       iac;
@@ -57,6 +78,16 @@ namespace gpu {
     ~Topology();
 
     void update(const topology::Topology & topo);
-  };
+
+    // Construct a trivial view to pass to kernels
+    const View view() const {
+        return View{
+            iac, mass, inverse_mass, charge, chargegroup,
+            num_solute_chargegroups, num_solute_molecules,
+            num_atoms, num_chargegroups
+        };
+    }
+};
+
 
 } // namespace configuration

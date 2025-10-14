@@ -1590,14 +1590,14 @@ double topology::Topology::sum_squared_charges() const {
 // }
 
 
-const gpu::Topology& topology::Topology::get_gpu_view(bool sync) const {
+const gpu::Topology::View topology::Topology::get_gpu_view(bool sync) const {
   // we cache the gpu::Topology and only update on demand
   if (!m_gpu) {
     m_gpu = std::make_unique<gpu::Topology>(*this);
   } else if (sync) {
     m_gpu->update(*this);
   }
-  return *m_gpu;
+  return m_gpu->view();
 }
 
 namespace topology {
