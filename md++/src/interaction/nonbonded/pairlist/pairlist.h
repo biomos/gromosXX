@@ -65,6 +65,8 @@ namespace interaction
       solute_long.resize(length);
       solvent_short.resize(length);
       solvent_long.resize(length);
+      solute_candidates.resize(length);
+      solvent_candidates.resize(length);
     }
     
     /**
@@ -77,11 +79,13 @@ namespace interaction
         solute_long[i].reserve(pairs);
         solvent_short[i].reserve(pairs);
         solvent_long[i].reserve(pairs);
+        solute_candidates[i].reserve(pairs);
+        solvent_candidates[i].reserve(pairs);
       }
     }
     
     /** 
-     * clears all pairlists
+     * clears non-candidate pairlists
      */
     inline void clear() {
       for(unsigned int i = 0; i < solute_short.size(); ++i) {
@@ -91,13 +95,25 @@ namespace interaction
         solvent_long[i].clear();
       }
     }
+    
+    /** 
+     * clears only candidate pairlists
+     */
+    inline void clear_candidates() {
+      for(unsigned int i = 0; i < solute_candidates.size(); ++i) {
+        solute_candidates[i].clear();
+        solvent_candidates[i].clear();
+      }
+    }
     /**
      * gives size of pairlists
      */
     inline unsigned int size() const {
       assert(solute_short.size() == solute_long.size() && 
              solute_short.size() == solvent_short.size() &&
-             solute_short.size() == solvent_long.size());
+             solute_short.size() == solvent_long.size() &&
+             solute_short.size() == solute_candidates.size() &&
+             solute_short.size() == solvent_candidates.size());
       return solute_short.size();
     }
     /**
@@ -115,7 +131,15 @@ namespace interaction
     /**
      * longrange pairlists that holds: solvent-solvent pairs
      */
-    Pairlist solvent_long;   
+    Pairlist solvent_long;
+    /**
+     * candidates pairlists that holds: solvent-solvent pairs
+     */
+    Pairlist solute_candidates;
+    /**
+     * candidates pairlists that holds: solvent-solvent pairs
+     */
+    Pairlist solvent_candidates;   
   };
   
 } // interaction
