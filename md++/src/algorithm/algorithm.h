@@ -161,7 +161,7 @@ namespace algorithm
    * @return Algorithm*
    */
   template <template <typename> class AlgT, typename... Args>
-  Algorithm* make_algorithm(simulation::Simulation & sim, 
+  Algorithm* make_algorithm(const simulation::Simulation & sim, 
                             Args&&... args) {
     static_assert(std::is_base_of_v<Algorithm, AlgT<util::cpuBackend>>,
                   "AlgT must derive from Algorithm");
@@ -182,11 +182,10 @@ namespace algorithm
    * @return Alg* 
    */
   template <class Alg, typename... Args>
-  Alg* make_algorithm(simulation::Simulation & sim, 
+  Alg* make_algorithm(const simulation::Simulation & sim, 
                       Args&&... args) {
     return new Alg(std::forward<Args>(args)...);
   }
-
 
   /**
    * @brief Create a backend-aware algorithm instance (GPU if available and supported, otherwise CPU)
