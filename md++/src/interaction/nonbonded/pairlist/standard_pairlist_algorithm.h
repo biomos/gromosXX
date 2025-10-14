@@ -237,9 +237,6 @@ namespace interaction
      * solvent - solvent pairlist 
      */
     double m_solvent_solvent_timing;
-    
-    math::Vec m_half_box;
-    math::Vec m_box;
 
   };
 } // interaction
