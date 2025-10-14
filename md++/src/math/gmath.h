@@ -119,24 +119,25 @@ namespace math
    * Array of 3D vectors.
    * template to allow custom allocator
    */
-  template<typename T, template<typename> typename A = std::allocator >
-  class VArrayT : public std::vector<T, A<T> >
+  template<typename T, typename Alloc = std::allocator<T>>
+  class VArrayT : public std::vector<T, Alloc >
   {
   public:
 #ifndef __SUNPRO_CC
-    VArrayT() : std::vector<T, A<T> >::vector() {}
-    VArrayT(size_t s) : std::vector<T, A<T> >::vector(s) {}
-    VArrayT(size_t s, T const &v) : std::vector<T, A<T> >::vector(s, v) {}
+    VArrayT() : std::vector<T, Alloc >::vector() {}
+    VArrayT(size_t s) : std::vector<T, Alloc >::vector(s) {}
+    VArrayT(size_t s, T const &v) : std::vector<T, Alloc >::vector(s, v) {}
 #else
     VArrayT() : vector() {}
     VArrayT(size_t s) : vector(s) {}
     VArrayT(size_t s, T const &v) : vector(s, v) {}
 #endif
     
-    VArrayT & operator=(typename T::value_type d)
+    template <typename V>
+    VArrayT & operator=(V d)
     {
-      for(typename std::vector<T, A<T> >::iterator it=this->begin(), to=this->end(); it!=to; ++it)
-	*it = d;
+      for(typename std::vector<T, Alloc >::iterator it=this->begin(), to=this->end(); it!=to; ++it)
+        *it = d;
       return *this;
     }
     
@@ -154,8 +155,8 @@ namespace math
     VArrayT & operator+=(VArrayT const &v)
     {
       assert(this->size() == v.size());
-      typename std::vector<T, A<T> >::const_iterator it2 = v.begin();
-      for(typename std::vector<T, A<T> >::iterator it=this->begin(), to=this->end();
+      typename std::vector<T, Alloc >::const_iterator it2 = v.begin();
+      for(typename std::vector<T, Alloc >::iterator it=this->begin(), to=this->end();
 	  it!=to; ++it, ++it2)
 	*it += *it2;
       return *this;
@@ -166,7 +167,7 @@ namespace math
      */
     VArrayT & operator-=(T const &v)
     {
-      typename std::vector<T, A<T> >::iterator it = this->begin(),
+      typename std::vector<T, Alloc >::iterator it = this->begin(),
                        to = this->end();
       for (; it != to; it++){
         *it -= v;
