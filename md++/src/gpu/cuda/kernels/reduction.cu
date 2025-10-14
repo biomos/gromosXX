@@ -15,6 +15,40 @@
 
 #include "reduction.h"
 
+/**
+ * It is possible to reduce fully in warp using these functions
+ * Moreover, each lane can get its own offset
+ *
+__global__ void example_kernel(int *elemCounts, int *elemOffsets) {
+    int nPairsLocal = elemCounts[threadIdx.x];  // each thread knows its local contribution
+
+    // Exclusive prefix sum within warp
+    int threadOffset = warp_exclusive_scan(nPairsLocal);
+
+    // Warp total
+    int warpSum = warp_total(nPairsLocal);
+
+    // Each thread can now write to elemOffsets[warpBase + threadOffset] ...
+}
+ */
+__device__ __forceinline__ 
+int warp_exclusive_scan(int val, unsigned mask = 0xffffffff) {
+    // Inclusive butterfly scan
+    for (int offset = 1; offset < 32; offset <<= 1) {
+        int n = __shfl_xor_sync(mask, val, offset);
+        val += n;
+    }
+    // Exclusive scan: subtract own value
+    int excl = val - __shfl_sync(mask, val, threadIdx.x % 32);
+    return excl;
+}
+
+__device__ __forceinline__
+int warp_total(int val, unsigned mask = 0xffffffff) {
+    // Last lane has the total
+    return __shfl_sync(mask, val, 31);
+}
+
 template <unsigned int block_size, typename T>
 __device__  __forceinline__ void gpu::last_warp_reduce(volatile T *sdata, unsigned int tid) {
     if (block_size >=  64) sdata[tid] += sdata[tid + 32];
