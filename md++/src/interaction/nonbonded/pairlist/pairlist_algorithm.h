@@ -33,7 +33,7 @@ namespace interaction
 {
   class Pairlist;
   struct PairlistContainer;
-  class Nonbonded_Parameter;
+  // class Nonbonded_Parameter;
   
   /**
    * @class Pairlist_Algorithm
@@ -47,7 +47,7 @@ namespace interaction
      */
     Pairlist_Algorithm()
       : algorithm::Algorithm("PairlistAlgorithm"),
-	m_param(NULL), p_timer(NULL)
+	/* m_param(nullptr), */ p_timer(nullptr)
     {}
 
     /**
@@ -55,7 +55,7 @@ namespace interaction
      */
     virtual ~Pairlist_Algorithm() {}
 
-    void set_parameter(Nonbonded_Parameter * param) { m_param = param; }
+    // void set_parameter(Nonbonded_Parameter * param) { m_param = param; }
     
     /**
      * prepare the pairlist(s).
@@ -197,7 +197,7 @@ namespace interaction
     /**
      * nonbonded parameters (needed to construct the Innerloop).
      */
-    Nonbonded_Parameter * m_param;
+    // Nonbonded_Parameter * m_param;
     /**
      * timer as pointer
      */

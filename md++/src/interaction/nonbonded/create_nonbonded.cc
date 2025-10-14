@@ -280,7 +280,7 @@ Nonbonded_Interaction * ni;
     it.read_cg_parameter(ni->parameter().cg_parameter());
   
   // check if DUM really has no LJ interactons.
-  pa->set_parameter(&ni->parameter());
+  // pa->set_parameter(&ni->parameter());
   if ((!sim.param().force.nonbonded_vdw && sim.param().force.interaction_function ==
           simulation::lj_crf_func) ||
           (!sim.param().force.nonbonded_vdw && sim.param().force.interaction_function ==

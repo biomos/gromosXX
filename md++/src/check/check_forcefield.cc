@@ -864,7 +864,7 @@ int check::check_forcefield(topology::Topology & topo,
           interaction::Pairlist_Algorithm * pa = new interaction::Standard_Pairlist_Algorithm;
           interaction::Nonbonded_Interaction * ni = dynamic_cast<interaction::Nonbonded_Interaction *> (*it);
 
-          pa->set_parameter(&ni->parameter());
+          // pa->set_parameter(&ni->parameter());
           interaction::Pairlist_Algorithm * old_pa = &ni->pairlist_algorithm();
           ni->pairlist_algorithm(pa);
 
@@ -885,7 +885,7 @@ int check::check_forcefield(topology::Topology & topo,
           delete pa;
 
           pa = new interaction::Extended_Grid_Pairlist_Algorithm;
-          pa->set_parameter(&ni->parameter());
+          // pa->set_parameter(&ni->parameter());
           sim.param().pairlist.grid = 1;
           sim.param().pairlist.grid_size = 0.1;
           ni->pairlist_algorithm(pa);
@@ -900,7 +900,7 @@ int check::check_forcefield(topology::Topology & topo,
 
           // construct a "grid cell" pairlist algorithm
           pa = new interaction::Grid_Cell_Pairlist(topo, sim);
-          pa->set_parameter(&ni->parameter());
+          // pa->set_parameter(&ni->parameter());
           ni->pairlist_algorithm(pa);
 
           sim.param().pairlist.grid = 2;
@@ -921,7 +921,7 @@ int check::check_forcefield(topology::Topology & topo,
           interaction::Pairlist_Algorithm * pa = new interaction::Extended_Grid_Pairlist_Algorithm;
           interaction::Nonbonded_Interaction * ni = dynamic_cast<interaction::Nonbonded_Interaction *> (*it);
 
-          pa->set_parameter(&ni->parameter());
+          // pa->set_parameter(&ni->parameter());
           interaction::Pairlist_Algorithm * old_pa = &ni->pairlist_algorithm();
           ni->pairlist_algorithm(pa);
 
@@ -942,7 +942,7 @@ int check::check_forcefield(topology::Topology & topo,
           interaction::Pairlist_Algorithm * pa = new interaction::Grid_Cell_Pairlist(topo, sim);
           interaction::Nonbonded_Interaction * ni = dynamic_cast<interaction::Nonbonded_Interaction *> (*it);
 
-          pa->set_parameter(&ni->parameter());
+          // pa->set_parameter(&ni->parameter());
           interaction::Pairlist_Algorithm * old_pa = &ni->pairlist_algorithm();
           ni->pairlist_algorithm(pa);
 
