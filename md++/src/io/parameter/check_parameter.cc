@@ -4993,8 +4993,8 @@ int io::check_features(simulation::Simulation  &sim)
   fc.unlock("gpu", "virial_molecular");
   fc.unlock("gpu", "vacuum");
   fc.unlock("gpu", "pbc_r");
-  fc.unlock("gpu", "pbc_c");
-  fc.unlock("gpu", "pbc_t");
+  // fc.unlock("gpu", "pbc_c");
+  // fc.unlock("gpu", "pbc_t");
   // fc.unlock("gpu", "perturbation");
   // fc.unlock("gpu", "perturbation_scaling");
   // fc.unlock("gpu", "slow_growth");

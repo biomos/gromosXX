@@ -193,14 +193,9 @@ int interaction::create_g96_nonbonded
   } else { // gromosxx pairlist
 #endif
     //// TESTING ////////
-    // CUDA has its own pairlist algorithm
+    // CUDA has its own pairlist algorithm base
     io::messages.add("Ignoring pairlist setting, using CUDA pairlist algorithm",
       "create_nonbonded", io::message::warning);
-    if (sim.param().gpu.accelerator == simulation::gpu_cuda) {
-      pa = new CUDA_Pairlist_Algorithm<util::gpuBackend>();
-    } else {
-      pa = new CUDA_Pairlist_Algorithm<util::cpuBackend>();
-    }
     //// END TESTING ////
     //// TEMPORARILY OFF ////
     // if (sim.param().pairlist.grid == 0) {
@@ -239,7 +234,9 @@ Nonbonded_Interaction * ni;
 
 #if defined(USE_CUDA)
   if (sim.param().gpu.accelerator == simulation::gpu_cuda) {
-    ni = new CUDA_Nonbonded_Interaction(pa);
+    auto * cupa = new CUDA_Pairlist_Algorithm<util::gpuBackend>();
+    pa = cupa;
+    ni = new CUDA_Nonbonded_Interaction(cupa);
   } else {
     ni = new Default_Nonbonded_Interaction(pa);
   }

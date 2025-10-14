@@ -39,6 +39,8 @@
 #include "util/debug.h"
 #include "util/template_split.h"
 
+#include "gpu/cuda/utils.h"
+
 #undef MODULE
 #undef SUBMODULE
 #define MODULE interaction
@@ -46,69 +48,51 @@
 
 template<typename Backend>
 interaction::CUDA_Pairlist_Algorithm<Backend>::CUDA_Pairlist_Algorithm()
-: Pairlist_Algorithm(),
-  m_solvent_solvent_timing(0.0) {}
+          : Pairlist_Algorithm()
+{}
 
 /**
  * calculate center of geometries
  */
 template<typename Backend>
-int interaction::CUDA_Pairlist_Algorithm<Backend>::prepare(topology::Topology & topo,
-	configuration::Configuration & conf,
-	simulation::Simulation & sim)
+int interaction::CUDA_Pairlist_Algorithm<Backend>::prepare(
+                                      topology::Topology & topo,
+                                      configuration::Configuration & conf,
+                                      simulation::Simulation & sim)
 {
   DEBUG(0, "cuda pairlist algorithm : prepare");
   // m_impl.prepare(topo, conf, sim);
   
-  set_cutoff(sim.param().pairlist.cutoff_short, 
+  m_impl.set_cutoff(sim.param().pairlist.cutoff_short, 
 	     sim.param().pairlist.cutoff_long);
   
   if (!sim.param().pairlist.atomic_cutoff) {
 
     // first put the chargegroups into the box
-    m_impl.prepare_cog(conf, topo);
-
-    // calculate cg cog's
-    DEBUG(10, "calculating cg cog (" << topo.num_solute_chargegroups() << ")");
-    m_cg_cog.resize(topo.num_solute_chargegroups());
-    math::VArray const &pos = conf.current().pos;
-    DEBUG(10, "pos.size() = " << pos.size());
-
-    // calculate solute center of geometries
-    topology::Chargegroup_Iterator
-      cg1 =   topo.chargegroup_begin();
-    
-    unsigned int i = 0, num_cg = topo.num_solute_chargegroups();
-    
-    for(i=0; i < num_cg; ++cg1, ++i){
-      cg1.cog(pos, m_cg_cog(i));
-    }
-
+    m_impl.prepare_cog(conf, topo, sim);
   } // chargegroup based cutoff
+
+  // assign all cogs / atoms to grid cells and reorder
+  m_impl.reorder(conf, topo, sim);
 
   return 0;
 
 }
 
-template<typename Backend>
+template <typename Backend>
 void interaction::CUDA_Pairlist_Algorithm<Backend>::update(topology::Topology & topo,
-       configuration::Configuration & conf,
-       simulation::Simulation & sim,
-       interaction::PairlistContainer & pairlist,
-       unsigned int begin, unsigned int end,
-       unsigned int stride)
-{}
-
-template<typename Backend>
-void interaction::CUDA_Pairlist_Algorithm<Backend>::update_perturbed(
-    topology::Topology & topo,
-    configuration::Configuration & conf,
-    simulation::Simulation & sim,
-    interaction::PairlistContainer & pairlist,
-    interaction::PairlistContainer & perturbed_pairlist,
-    unsigned int begin, unsigned int end,
-    unsigned int stride)
-{}
+                                      configuration::Configuration & conf,
+                                      simulation::Simulation &sim,
+                                      interaction::PairlistContainer &pairlist,
+                                      unsigned int begin, unsigned int end, 
+                                      unsigned int stride) {
+  DEBUG(0, "cuda pairlist algorithm : update");
+  /** evaluate maximum displacement since last update
+   * For that we need to store reference positions inside the verlet container
+   * if maximum displacement is more than verlet skin, we also update the verlet list
+   * */
+    
+}
 
 // force instantiation
 template class interaction::CUDA_Pairlist_Algorithm<util::cpuBackend>;

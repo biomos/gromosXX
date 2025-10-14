@@ -63,6 +63,8 @@
 #include "math/boundary_checks.h"
 #include "util/template_split.h"
 
+#include "gpu/cuda/utils.h"
+
 #ifdef OMP
 #include <omp.h>
 #endif
@@ -75,7 +77,7 @@
 /**
  * Constructor.
  */
-interaction::CUDA_Nonbonded_Interaction::CUDA_Nonbonded_Interaction(Pairlist_Algorithm *pa)
+interaction::CUDA_Nonbonded_Interaction::CUDA_Nonbonded_Interaction(CUDA_Pairlist_Algorithm<util::gpuBackend> *pa)
 : Nonbonded_Interaction(pa) {
 }
 
@@ -111,33 +113,16 @@ calculate_interactions(topology::Topology & topo,
 
     // std::cerr << "\tMULTISTEP: full non-bonded calculation" << std::endl;
 
-    ////////////////////////////////////////////////////
-    // multiple unit cell
-    ////////////////////////////////////////////////////
-    if (sim.param().multicell.multicell) {
-      DEBUG(6, "nonbonded: MULTICELL");
-      p_conf = m_exp_conf;
-      p_topo = &topo.multicell_topo();
-      expand_configuration(topo, conf, sim, *p_conf);
-      if (!math::boundary_check_cutoff(p_conf->current().box, p_conf->boundary_type,
-          sim.param().pairlist.cutoff_long)) {
-        io::messages.add("box is too small: not twice the cutoff!",
-                "configuration", io::message::error);
-        return 1;
-      }
-      DEBUG(6, "\tmulticell conf: pos.size()=" << p_conf->current().pos.size());
-    }
-
     // shared memory do this only once
     if (m_pairlist_algorithm->prepare(*p_topo, *p_conf, sim))
       return 1;
 
     // have to do all from here (probably it's only one,
     // but then maybe it's clearer like it is...)
-    for (int i = 0; i < m_set_size; ++i) {
-      if(m_nonbonded_set[i]->calculate_interactions(*p_topo, *p_conf, sim))
-	      return 1;
-    }
+    // for (int i = 0; i < m_set_size; ++i) {
+    //   if(m_nonbonded_set[i]->calculate_interactions(*p_topo, *p_conf, sim))
+	  //     return 1;
+    // }
 
     ///////////////////////////////////////////////////
     // end of multiple time stepping: calculate

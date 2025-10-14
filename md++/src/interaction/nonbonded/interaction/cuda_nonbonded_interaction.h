@@ -59,9 +59,9 @@ namespace interaction
   public:    
 
     /**
-     * Constructor.
+     * Constructor accept gpuBackend only
      */
-    CUDA_Nonbonded_Interaction(Pairlist_Algorithm *pa);
+    CUDA_Nonbonded_Interaction(CUDA_Pairlist_Algorithm<util::gpuBackend> *pa);
     
     /**
      * Destructor.
