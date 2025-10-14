@@ -31,23 +31,28 @@ namespace gpu
 {
 //   #define ALIGN32 alignas(32)
   /**
-   * The tile holding the interaction pairs dimension 8x4 (based on the mask size)
+   * The tile holding the interaction pairs dimension 32x32
    */
-  struct Interaction_Tile {
+  template <unsigned ROWS = 32, unsigned COLS = 32>
+  struct Interaction_TileT {
+      // static constexpr unsigned ROWS = 32;
+      // static constexpr unsigned COLS = 32;
+      static_assert(ROWS*COLS % (8 /* bits */ * sizeof(unsigned)) == 0);
+      static constexpr unsigned MASK_SIZE = ROWS*COLS/(8 * sizeof(unsigned));
       /**
-       * Start index of atom/charge group group X (row tile)
+       * Start index of atom/charge group X (row tile)
        */
-      int start_x;
+      // int start_x; // can be back-calculated from index
       
       /**
-       * Start index of atom/charge group group X (row tile)
+       * Start index of atom/charge group Y (row tile)
        */
-      int start_y;
+      // int start_y; // can be back-calculated from index
 
       /**
        * Unique tile ID (do we need it?)
        */
-      int index;
+      unsigned index;
 
       // possibly store other information here instead
       
@@ -58,168 +63,200 @@ namespace gpu
       /**
        * Bitmask of excluded atoms (not interacting, excluded, custom interactions etc.)
        */
-      int mask;
+      unsigned mask[MASK_SIZE];
 
-      __device__ __host__ Interaction_Tile() : start_x(0), start_y(0), index(0), mask(0) {}
+      __device__ __host__ Interaction_TileT() : index(0) {
+        // #pragma unroll
+        for (unsigned i = 0; i < MASK_SIZE; ++i) mask[i] = 0;
+      }
 
-      __device__ __host__ Interaction_Tile(int x, int y, int idx, int mask = 0)
-          : start_x(x), start_y(y), index(idx), mask(mask) {}
+      __device__ __host__ Interaction_TileT(int idx, unsigned imask = 0) : index(idx) {
+        // #pragma unroll
+          for (unsigned i = 0; i < MASK_SIZE; ++i) mask[i] = imask;
+      };
+
+      __device__ __host__ Interaction_TileT(int idx, int imask = 0) : index(idx) {
+        // #pragma unroll
+          for (unsigned i = 0; i < MASK_SIZE; ++i) mask[i] = imask;
+      };
   };
+  /**
+   * assert the size is 8 (for efficient alignment)
+   */
+  // static_assert(sizeof(Interaction_Tile) = 8);
+  using Interaction_Tile = Interaction_TileT<32,32>;
 
   /**
-   * assert the size is 16 (for efficient alignment)
+   * @brief Implementation of a vector of tiles using cuda unified memory
+   * 
+   * @tparam TileT 
    */
-  static_assert(sizeof(Interaction_Tile) = 16);
-
-  class TileVector {
+  template <typename TileT>
+  class TileVecT {
   public:
-      __host__ TileVector(size_t capacity = 0)
+      __host__ TileVecT(size_t capacity = 0)
           : m_data(nullptr), m_size(nullptr), m_capacity(0), m_overflow(nullptr)
       {
+          // Allocate in Unified Memory
+          cudaMallocManaged(&m_size, sizeof(unsigned));
+          cudaMallocManaged(&m_overflow, sizeof(bool));
           if (capacity > 0) {
               allocate(capacity);
           }
       }
 
-      __host__ ~TileVector() {
+      __host__ ~TileVecT() {
           if (m_data) cudaFree(m_data);
           if (m_size) cudaFree(m_size);
           if (m_overflow) cudaFree(m_overflow);
       }
 
       __host__ void allocate(size_t capacity) {
-          m_capacity = capacity;
-
           // Allocate Unified Memory
-          cudaMallocManaged(&m_data, sizeof(Interaction_Tile) * capacity);
-          cudaMallocManaged(&m_size, sizeof(int));
-          cudaMallocManaged(&m_overflow, sizeof(bool));
-
-          *_size = 0;
-          *_overflow = false;
+          cudaMallocManaged(&m_data, sizeof(TileT) * capacity);
+          m_capacity = capacity;
+          *m_size = 0;
+          *m_overflow = false;
       }
 
-      __device__ __host__ Interaction_Tile& operator[](size_t i) {
-          assert(i < _capacity);
-          return _data[i];
+      __host__ void deallocate() {
+          if (m_data) cudaFree(m_data);
+          m_data = nullptr;
+          *m_size = 0;
+          m_capacity = 0;
+          *m_overflow = false;
       }
 
-      __device__ __host__ const Interaction_Tile& operator[](size_t i) const {
-          assert(i < _capacity);
-          return _data[i];
+      __host__ void reserve(unsigned new_capacity) {
+          if (new_capacity > m_capacity) {
+            deallocate();
+            allocate(new_capacity);
+          }
+      }
+
+      __device__ __host__ TileT& operator[](size_t i) {
+          assert(i < m_capacity);
+          return m_data[i];
+      }
+
+      __device__ __host__ const TileT& operator[](size_t i) const {
+          assert(i < m_capacity);
+          return m_data[i];
       }
 
       /// Add from device using atomicAdd. Sets overflow flag if exceeded.
-      __device__ bool push_back(const Interaction_Tile& tile) {
-          int i = atomicAdd(_size, 1);
-          if (i >= _capacity) {
-              *_overflow = true;  // Signal overflow
-              return false;
-          }
-          _data[i] = tile;
-          return true;
+      __device__ bool push_back(const TileT& tile);
+
+      __device__ __host__ unsigned size() const {
+          return *m_size;
       }
 
-      __host__ void resize_host(int new_size) {
-          assert(new_size <= _capacity);
-          *_size = new_size;
+      __device__ __host__ unsigned capacity() const {
+          return m_capacity;
       }
 
-      __device__ __host__ int size() const {
-          return *_size;
+      __device__ __host__ TileT* data() {
+          return m_data;
       }
 
-      __device__ __host__ int capacity() const {
-          return _capacity;
-      }
-
-      __device__ __host__ Interaction_Tile* data() {
-          return _data;
-      }
-
-      __device__ __host__ const Interaction_Tile* data() const {
-          return _data;
+      __device__ __host__ const TileT* data() const {
+          return m_data;
       }
 
       __host__ bool was_overflown() const {
-          return *_overflow;
+          return *m_overflow;
       }
 
       __host__ void reset_overflow() {
-          if (_overflow) *_overflow = false;
+          if (m_overflow) *m_overflow = false;
+      }
+
+      __host__ void clear() {
+          cudaMemset(m_data, 0, m_capacity * sizeof(TileT));
+          *m_size = 0;
+          *m_overflow = false;
       }
 
   private:
-      Interaction_Tile* _data;
-      int* _size;
-      int _capacity;
-      bool* _overflow;
+      /**
+       * @brief Tiles - data host/device transparent array in unified memory
+       * 
+       */
+      TileT *m_data;
+      /**
+       * @brief current size of the array writable by device
+       * 
+       */
+      unsigned *m_size;
+      /**
+       * @brief total array capacity, passed by value to kernels
+       * 
+       */
+      unsigned m_capacity;
+      /**
+       * @brief overflow flag writable by device, set to True if m_size > m_capacity
+       * 
+       */
+      bool *m_overflow;
   };
 
-    /** 
-   * @struct TilesContainer
+  using TileVec = TileVecT<Interaction_Tile>;
+
+  /** 
+   * @struct TileContainer
    * holds a set of interacting tiles.
    */
-  struct TilesContainer {
-    /**
-     * resizes all tiles to length 
-     */
-    inline void resize(unsigned int length) {
-      solute_short.resize(length);
-      solute_long.resize(length);
-      solvent_short.resize(length);
-      solvent_long.resize(length);
-    }
-    
+  template <typename TileVecT>
+  struct TileContainerT {
     /**
      * reserve some space 
      */
-    inline void reserve(unsigned int pairs) {
-      unsigned int n = size();
-      for(unsigned int i = 0; i < n; ++i) {
-        solute_short[i].reserve(pairs);
-        solute_long[i].reserve(pairs);
-        solvent_short[i].reserve(pairs);
-        solvent_long[i].reserve(pairs);
-      }
+    inline void reserve(unsigned int num_tiles) {
+      solute_short.reserve(num_tiles);
+      solute_long.reserve(num_tiles);
+      solute_candidates.reserve(num_tiles);
+      solvent_short.reserve(num_tiles);
+      solvent_long.reserve(num_tiles);
+      solvent_candidates.reserve(num_tiles);
     }
     
     /** 
      * clears all pairlists
      */
     inline void clear() {
-      for(unsigned int i = 0; i < solute_short.size(); ++i) {
-        solute_short[i].clear();
-        solute_long[i].clear();
-        solvent_short[i].clear();
-        solvent_long[i].clear();
-      }
+      solute_short.clear();
+      solute_long.clear();
+      solute_candidates.clear();
+      solvent_short.clear();
+      solvent_long.clear();
+      solvent_candidates.clear();
     }
-    /**
-     * gives size of pairlists
-     */
-    inline unsigned int size() const {
-      assert(solute_short.size() == solute_long.size() && 
-             solute_short.size() == solvent_short.size() &&
-             solute_short.size() == solvent_long.size());
-      return solute_short.size();
-    }
+    
     /**
      * shortrange pairlists that holds: solute-, solute-solute, solute-solvent pairs
      */
-    Pairlist solute_short;
+    TileVecT solute_short;
     /**
      * longrange pairlists that holds: solute-, solute-solute, solute-solvent pairs
      */
-    Pairlist solute_long;
+    TileVecT solute_long;
     /**
      * shortrange pairlists that holds: solvent-solvent pairs
      */
-    Pairlist solvent_short;
+    TileVecT solvent_short;
     /**
      * longrange pairlists that holds: solvent-solvent pairs
      */
-    Pairlist solvent_long;   
+    TileVecT solvent_long;
+    /**
+     * shortrange pairlists that holds: solvent-solvent pairs
+     */
+    TileVecT solute_candidates;
+    /**
+     * longrange pairlists that holds: solvent-solvent pairs
+     */
+    TileVecT solvent_candidates;   
   };
+  using TileContainer = TileContainerT<TileVec>;
 
 }

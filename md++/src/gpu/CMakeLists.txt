@@ -27,7 +27,7 @@ set(GPU_HEADERS
     cuda/memory/array.h
     cuda/memory/cumallocator.h
     cuda/memory/pairlist/tile.h
-    cuda/memory/pairlist/pairlist.h
+    # cuda/memory/pairlist/pairlist.h
     cuda/memory/configuration_struct.h
     cuda/memory/cuhallocator.h
     cuda/memory/topology_struct.h
@@ -53,6 +53,7 @@ if(USE_CUDA)
         cuda/manager/cuda_memory_manager.cu
         # cuda/algorithm/constraints.cu
         cuda/interaction/nonbonded/pairlist/cuda_pairlist_algorithm_impl_gpu.cu
+        cuda/memory/pairlist/tile.cu
     )
 
     add_library(grocuda STATIC ${GPU_SOURCES})
