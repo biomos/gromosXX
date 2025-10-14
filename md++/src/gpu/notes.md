@@ -205,7 +205,7 @@ The common interface is `Algorithm`, so `Algorithm_Sequence` becomes `std::vecto
 The `AlgorithmB<Backend>` template allows for compile-time checks of backend availability and
 ensures correct function of the `make_algorithm` factory function.
 
-Every algoritm requires a single template declaration:
+Every algorithm requires a single template declaration:
 
 ```cpp
 // shake.h
@@ -240,10 +240,8 @@ Shake<util::gpuBackend>::apply(...) {
 
 The reason for this is to have some compile-time control. Every algorithm now can be defined as CPU or GPU variant.
 In a CPU-only compilation, the GPU variants should not get compiled at all, and an error is thrown,
-if you try to instantiate them. The templates can be checked for backend availability using:
-
-
-This is achieved by the `util::has_gpu_backend_v<AlgT>` trait. Example for a compile-time check:
+if you try to instantiate them. The templates can be checked for backend availability using
+the `util::has_gpu_backend_v<AlgT>` trait. Example for a compile-time check:
 ```cpp
 if constexpr (util::has_gpu_backend_v<AlgT>) {
   // do something
@@ -419,7 +417,7 @@ The template of `Lattice_Shift_Tracker` there specifies indentical CPU and GPU v
 
 For `Remove_COM_Motion`, variants are completely separate.
 
-6. Sometimes you might need to change m_timer to this->m_timer. Also, if you do not provide explicit specializations, 
+6. Sometimes you might need to change `m_timer` to `this->m_timer`. Also, if you do not provide explicit specializations, 
 an explicit instantiation at the bottom of the `.cc` file is neccessary for the linker:
 ```cpp
 // add this at the end of my_algorithm.cc if you get linker errors.
@@ -446,31 +444,24 @@ Class `CUDA_Pairlist` consists of `Interaction_Tile` structs.
 
 
 ## Configuration and Topology structs
-To provide data to kernel calls, we create light-weight structs holding device pointers to
-essential Topology, Configuration and Simulation data.
 
-These structs pack all relevant pointers and small PODs. Size of the structs should not be
-a performance issue, as the compiler should be able to optimize the unused member variables
-away.
+To provide data to kernel calls, we create **light-weight structs** that hold **device pointers** to essential Topology, Configuration, and Simulation data.
 
+These structs pack all relevant pointers and small PODs. The size of the structs should **not be a performance issue**, as the compiler can optimize away unused members.
 
-`topology::Topology` is almost constant, so we use `const gpu::Topology::View` as an extract of topology
-to store on GPU, and use primitive types and pointers logic.
-The copy to GPU is implicit, with the first call of `topology::Topology::get_gpu_view(bool sync)`.
-Every further call uses the same pointers.
-Passing `sync = True` enforces fresh copy to device.
+---
 
+### Topology
 
-`configuration::Configuration` is more dynamic, so we use `gpu::cuvector` to store dynamic arrays.
-We use a special struct `gpu::Configuration`, that holds all the arrays.
-To access the pointers, you should obtain `gpu::Configuration::View` from
-`gpu::Configuration::view()`, to provide proper pointers to the `gpu::cuvector`.
-The `gpu::cuvector` allows simple allocation and copy, not having to use CUDA API calls
-explicitly when allocating, resizing and deallocating.
-`gpu::Configuration::View` consists of two `gpu::Configuration::State::StateView` objects,
-accessible similarly to `configuration::Configuration` using `current()` and `old()`.
+`topology::Topology` is almost constant during the simulation. To pass it to GPU kernels, we extract a **light-weight GPU view**:
+
+- `gpu::Topology::View` is a **plain struct** containing only primitive types and device pointers.
+- The GPU copy is performed **once** on the first call to `topology::Topology::get_gpu_view(bool sync)`.
+- Subsequent calls reuse the same device pointers.
+- Passing `sync = true` forces a fresh copy to the GPU.
 
 ```cpp
+gpu::Topology::View topo_view = topo.get_gpu_view(sync);
 // use of GPU structs in kernel functions
  __global__ void gpu::hello_world(gpu::Topology::View topo, gpu::Configuration::View conf) {
   unsigned int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -497,18 +488,18 @@ namespace gpu {
 
 }
 ```
-To create a view, we have to go through these steps (on the example of Configuration):
- 1. Configuration construction
- 2. GPU allocation - obtain configuration_struct (pointers and cuvectors, possibly from CudaMemoryManager)
- 3. Store the struct (or a pointer to it) in Configuration
- 4. Sync the `gpu::Configuration` with `Configuration::Configuration`
- 5. Keep configuration and its struct in sync
- 6. cuvectors need extra step, we have to create a View using `::View()`
+To create a GPU view, we follow these steps (example: `gpu::Configuration`):
 
- Alternatively, as configuration is volatile, just keep the configuration_struct on the GPU side independent
- and just always export data from Configuration to the configuration_struct
+1. Construct the `Gpu::Configuration` object with `State`s.
+2. Allocate GPU arrays (`gpu::cuvector`) and small buffers, optionally using `CudaMemoryManager`.
+3. Store the struct (or a pointer) in `gpu::Configuration`.
+4. Sync the GPU struct with the host `configuration::Configuration` data.
+5. Keep host configuration and GPU struct in sync as the simulation evolves.
+6. Create a **snapshot view** for kernel usage using `gpu::Configuration::view()`. This constructs a `ConfigurationStateView` on demand without modifying underlying pointers or sizes.
 
- With topology, it is more constant over the simulation, so there we can keep the pointer to the topology_struct in Topology.
+Alternatively, for volatile configuration data, maintain the GPU-side struct independently and **export data** from host `Configuration` to the GPU struct whenever needed.
+
+For topology, which is mostly constant during the simulation, maintain a persistent GPU pointer to the `gpu::Topology::View` to avoid unnecessary reallocations.
 
  ### Multi-GPU support
  The structs hold pointers only to a single GPU. For multiple GPUs, we either hold a map of
@@ -535,11 +526,11 @@ indexing, as well as row manipulations, so it is a bit `math::Box`-like.
 
 
 ## Built-in types
-Host GROMOS code makes use of `math::Vec` which is a wrapper template around `numeric_type v[3]`.
+Host GROMOS code uses `math::Vec` for 3D vectors, which is a wrapper template around `numeric_type v[3]`.
 Then we have `math::VArray` which is `std::vector<math::Vec>`.
 For CUDA, we extended it further using `math::VArrayT` to allow CUDA-managed allocation using `std::vector<T,A<T>>`.
 `A<T>` is then our custom `CuMAllocator`, that can create `std::vector`-like object called `math::CuVArray`,
-which is copied between host and device silently in the background.
+which is copied between host and device automatically by CUDA.
 The data of such array are accessible from GPU code only through the pointer returned by
 `math::CuVArray::data()` and raw indexing.
 All other operations have to be performed host-side.
@@ -585,3 +576,10 @@ for (const auto& v : src) {
     cudaMemcpy(d_virial_tensor, &virial_tensor, sizeof(virial_tensor), cudaMemcpyHostToDevice);
 
 ```
+
+## Nonbonded Interaction
+The toughest part is probably `Nonbonded_Interaction`, because it needs a `Pairlist_Algorithm` and `Nonbonded_Set`.
+Trying to create their cross-compatible variants for GPU and CPU would be too tedious and really unneccessary.
+Therefore we create a completely separate `CUDA_Nonbonded_Interaction` with its own `CUDA_Pairlist_Algorithm`.
+We can still create interfaces between the data objects (like pairlists and sets), where needed mainly
+for debugging purposes.
