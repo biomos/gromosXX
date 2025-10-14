@@ -12,16 +12,16 @@
 #endif
 
 #if FP_PRECISION == 1
-using FPL_TYPE = float;   // low precision
-using FPH_TYPE = float;   // high precision
+    using FPL_TYPE = float;
+    using FPH_TYPE = float;
 #elif FP_PRECISION == 2
-using FPL_TYPE = float;   // low precision
-using FPH_TYPE = double;  // high precision
+    using FPL_TYPE = float;
+    using FPH_TYPE = double;
 #elif FP_PRECISION == 3
-using FPL_TYPE = double;  // low precision
-using FPH_TYPE = double;  // high precision
+    using FPL_TYPE = double;
+    using FPH_TYPE = double;
 #else
-#error "FP_PRECISION must be 1, 2, or 3"
+    #error "FP_PRECISION must be 1, 2, or 3"
 #endif
 
 template<typename FP, int N>
@@ -73,13 +73,13 @@ use:
 
 compilation:
     # Float only
-    g++ -DFP_PRECISION=1 ...
-
-    # Double only
-    g++ -DFP_PRECISION=2 ...
+    cmake -DFP_PRECISION=1 ...
 
     # Mixed precision
-    g++ -DFP_PRECISION=3 ...
+    cmake -DFP_PRECISION=2 ...
+
+    # Double only
+    cmake -DFP_PRECISION=3 ...
 
 */
 
