@@ -744,9 +744,8 @@ inline void interaction::Eds_Nonbonded_Term
 
   e_rf = (m_A_crf_lambda_n * A_e_rf + m_B_crf_lambda_n * B_e_rf) * math::four_pi_eps_i;
 
-  if (selfterm_correction){
+  if (selfterm_correction)
     e_rf += A_q * math::four_pi_eps_i * m_crf_cut[eps];
-  }
   // Chris: CHECK! I'm not sure if the self-term correction is not wrong... 
   //        There is no B state info going in here at all!
   //        If a B state is added, then there should also be a contribution to de_rf

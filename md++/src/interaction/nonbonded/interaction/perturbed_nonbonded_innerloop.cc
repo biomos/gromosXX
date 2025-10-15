@@ -3351,6 +3351,7 @@ t_interaction_spec, t_perturbation_details>
 
   // math::VArray &pos = conf.current().pos;
   // math::VArray &force = conf.current().force;
+
   math::Vec r;
   double e_rf = 0.0, de_rf = 0.0;
 
@@ -3365,7 +3366,6 @@ t_interaction_spec, t_perturbation_details>
 
   int n1 = topo.atom_energy_group(i);
 
-  DEBUG(11, "::perturbed_RF_excluded_interaction_innerloop, atom: " << i);
   // calculate all the lambda values for lj and crf interactions, softness and A and B
   set_lambda(topo.individual_lambda(simulation::lj_lambda)[n1][n1],
           topo.individual_lambda(simulation::lj_softness_lambda)[n1][n1],
@@ -3397,14 +3397,12 @@ t_interaction_spec, t_perturbation_details>
 
         //loop over nr_lambdas
         for (unsigned int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
-          // determine current lambda for this index
+
+	  // determine current lambda for this index
           double lam=(lam_index * lambda_step) + sim.param().precalclam.min_lam;
-	  DEBUG(11,"LAM: " << lam);
           rf_soft_interaction_ext(r, q_i_a*q_i_a, q_i_b * q_i_b,
                   mit->second.CRF_softcore(), A_e_rf, B_e_rf, 
                   A_de_rf, B_de_rf, lam);
-	  DEBUG(10,"\tA_crf_energy: " << conf.current().energies.A_crf_energy[lam_index]
-			  [topo.atom_energy_group(i)][topo.atom_energy_group(i)]);
           conf.current().energies.A_crf_energy[lam_index][topo.atom_energy_group(i)]
             [topo.atom_energy_group(i)] += 0.5 * A_e_rf;
           conf.current().energies.B_crf_energy[lam_index][topo.atom_energy_group(i)]
@@ -3483,8 +3481,6 @@ t_interaction_spec, t_perturbation_details>
   std::vector<int>::const_iterator it, to;
   it = exclusions.begin();
   to = exclusions.end();
-
-  DEBUG(11, "::eds_perturbed_RF_exclusions_loop, atom: " << atom_i);
 
   r = 0.0;
 
