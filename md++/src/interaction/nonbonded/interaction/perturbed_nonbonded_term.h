@@ -169,7 +169,8 @@ namespace interaction
                                  double const B_q, double const alpha_crf, 
                                  double & A_e_rf, double & B_e_rf,
                                  double & A_de_rf, double & B_de_rf, 
-                                 double const crfs_lambda, unsigned int eps=0);
+                                 double const crfs_lambda, 
+				 unsigned int eps=0);
     /**
      * calculate the reaction field force and energy
      * of a perturbed atom pair (with polarisation)
