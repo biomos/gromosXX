@@ -125,9 +125,10 @@ void configuration::Energy::zero(bool potential, bool kinetic)
     
     // MULTIAEDS
     if(eds_mult_vi.size()){
-      for (auto i: eds_mult_vi){
-        eds_mult_vi[i.first] = 0.0;
-      }
+      eds_mult_vi.assign(eds_mult_vi.size(), 0.0);
+      //for (auto i: eds_mult_vi){
+      //  eds_mult_vi[i.first] = 0.0;
+      //}
     }
     eds_mult_vr.assign(eds_mult_vr.size(), 0.0);
     eds_mult_vmix.assign(eds_mult_vmix.size(), 0.0);

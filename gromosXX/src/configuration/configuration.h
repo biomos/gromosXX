@@ -571,7 +571,8 @@ namespace configuration {
         /**
          * multiAEDS (longrange) force storage (perturbed part of multiple states)
          */
-        std::map<std::vector<int>, math::VArray> force_mult_endstates;
+        std::vector<math::VArray> force_mult_endstates;
+        //std::map<std::vector<int>, math::VArray> force_mult_endstates;
         /**
          * virial tensor (perturbed part of multiple states)
          */
@@ -579,7 +580,8 @@ namespace configuration {
         /**
          * multiAEDS virial tensor (perturbed part of multiple states)
          */
-        std::map<std::vector<int>, math::Matrix> virial_tensor_mult_endstates;
+        std::vector<math::Matrix> virial_tensor_mult_endstates;
+        //std::map<std::vector<int>, math::Matrix> virial_tensor_mult_endstates;
       } /** enveloping distribution sampling information */ eds;
       
       struct nemd_conf_struct {

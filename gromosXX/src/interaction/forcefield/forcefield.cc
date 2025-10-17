@@ -120,12 +120,17 @@ int interaction::Forcefield
     }
 
   //multiAEDS
-  for (auto i: conf.special().eds.virial_tensor_mult_endstates){
-    conf.special().eds.virial_tensor_mult_endstates[i.first] = 0.0;
+  const unsigned int numentries = sim.param().eds.site_state_pairs.size();
+  for (unsigned int i; i < numentries; ++i){
+    conf.special().eds.virial_tensor_mult_endstates[i] = 0.0;
+    conf.special().eds.force_mult_endstates[i] = 0.0;
   }
-  for (auto i: conf.special().eds.force_mult_endstates){
-    conf.special().eds.force_mult_endstates[i.first] = 0.0;
-  }
+//  for (auto i: conf.special().eds.virial_tensor_mult_endstates){
+//    conf.special().eds.virial_tensor_mult_endstates[i.first] = 0.0;
+//  }
+//  for (auto i: conf.special().eds.force_mult_endstates){
+//    conf.special().eds.force_mult_endstates[i.first] = 0.0;
+//  }
  // }
 
   for (iterator it = begin(), to = end();

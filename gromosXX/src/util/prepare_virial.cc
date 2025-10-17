@@ -184,19 +184,55 @@ static void _atomic_to_molecular_virial(topology::Topology const & topo,
     std::vector<math::Matrix> corrPendstates(numstates,corrP);
     
     //multiAEDS
-    std::vector<std::vector<int>> site_state_pairs = sim.param().eds.site_state_pairs;
-    std::map<std::vector<int>, math::VArray> &force_mult_endstates = conf.special().eds.force_mult_endstates;
-    std::map<std::vector<int>, math::Matrix> corrPmultendstates;
-    if (sim.param().eds.numsites > 1){
-      for (auto k: site_state_pairs){
-        corrPmultendstates[k] = corrP;
-      }
-    }
+//    std::vector<std::vector<int>> site_state_pairs = sim.param().eds.site_state_pairs;
+//    std::map<std::vector<int>, math::VArray> &force_mult_endstates = conf.special().eds.force_mult_endstates;
+//    std::map<std::vector<int>, math::Matrix> corrPmultendstates;
+    const int numsitestatepairs = sim.param().eds.site_state_pairs.size();
+    std::vector<math::VArray> &force_mult_endstates = conf.special().eds.force_mult_endstates;
+    std::vector<math::Matrix> corrPmultendstates(numsitestatepairs,corrP);
+
+//    if (sim.param().eds.numsites > 1){
+//      for (auto k: site_state_pairs){
+//        corrPmultendstates[k] = corrP;
+//      }
+//    }
     
     
     math::Vec com_pos;
     math::Matrix com_ekin;
 
+    double start_time = util::now();
+    //multiAEDS
+    if (sim.param().eds.numsites > 1){
+      // loop over all site / state pairs
+      topology::Pressuregroup_Iterator
+        pg_it = topo.pressure_group_begin(),
+        pg_to = topo.pressure_group_end();
+
+      // loop over pressuregroups
+      for( ; pg_it != pg_to; ++pg_it){
+        _centre_of_mass(pg_it.begin(), pg_it.end(), topo, conf,
+          com_pos, com_ekin, periodicity, sim);
+
+        topology::Atom_Iterator a_it = pg_it.begin(),
+          a_to = pg_it.end();
+
+        //loop over atoms
+        for (; a_it != a_to; ++a_it){
+          periodicity.nearest_image(pos(*a_it), com_pos, r);
+
+          for (int a=0; a<3; ++a){
+            for (int b=0; b<3; ++b){
+              for (int i = 0; i < numsitestatepairs; i++)
+                corrPmultendstates[i](b,a) += force_mult_endstates[i](*a_it)(a) *r(b);
+            }
+          }
+        }
+      }
+    } 
+    DEBUG(1," Virial maeds: " << util::now()-start_time );
+
+    /*
     double start_time = util::now();
     //multiAEDS
     if (sim.param().eds.numsites > 1){
@@ -238,7 +274,7 @@ static void _atomic_to_molecular_virial(topology::Topology const & topo,
       }
     } 
     DEBUG(1," Virial maeds: " << util::now()-start_time );
-
+*/
 
     topology::Pressuregroup_Iterator
       pg_it = topo.pressure_group_begin(),
@@ -322,8 +358,10 @@ static void _atomic_to_molecular_virial(topology::Topology const & topo,
 
     start_time = util::now();
     if (sim.param().eds.numsites > 1 ){
-      for (auto k: conf.special().eds.virial_tensor_mult_endstates){
-        conf.special().eds.virial_tensor_mult_endstates[k.first] -= corrPmultendstates[k.first];
+      for (int i = 0; i < numsitestatepairs; i++){
+        conf.special().eds.virial_tensor_mult_endstates[i] -= corrPmultendstates[i];
+//      for (auto k: conf.special().eds.virial_tensor_mult_endstates){
+//        conf.special().eds.virial_tensor_mult_endstates[k.first] -= corrPmultendstates[k.first];
       }
     }
     else{

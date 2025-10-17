@@ -307,6 +307,7 @@ int algorithm::EDS
     }
     case simulation::multi_aeds:
     {
+      m_timer.start("init");
       //double start_overall = util::now();
       //double start_time = util::now();
       DEBUG(7,"algorithm: integration: eds case multi_aeds");
@@ -320,15 +321,25 @@ int algorithm::EDS
             beta = 1.0 / (sim.param().stochastic.temp * math::k_Boltzmann);
       }
 
-      std::map<std::vector<int>, double> eds_mult_vi = conf.current().energies.eds_mult_vi;
-      std::map<std::vector<int>, math::VArray> force_mult_endstates = conf.special().eds.force_mult_endstates;
-      std::map<std::vector<int>, math::Matrix> virial_tensor_mult_endstates = conf.special().eds.virial_tensor_mult_endstates;
+//      std::map<std::vector<int>, double> eds_mult_vi = conf.current().energies.eds_mult_vi;
+//      std::map<std::vector<int>, math::VArray> force_mult_endstates = conf.special().eds.force_mult_endstates;
+//      std::map<std::vector<int>, math::Matrix> virial_tensor_mult_endstates = conf.special().eds.virial_tensor_mult_endstates;
+      std::vector<math::VArray> & force_mult_endstates = conf.special().eds.force_mult_endstates;
+      std::vector<math::Matrix> & virial_tensor_mult_endstates = conf.special().eds.virial_tensor_mult_endstates;
+      std::vector<double> & eds_mult_vi = conf.current().energies.eds_mult_vi;
+      std::vector<double> & eds_mult_vmix = conf.current().energies.eds_mult_vmix;
+      std::vector<double> & eds_mult_vr = conf.current().energies.eds_mult_vr;
       const std::vector<std::vector<double>> & eds_multeir = sim.param().eds.multeir;
       int numsites = sim.param().eds.numsites;
       std::vector<unsigned int> multnumstates = sim.param().eds.multnumstates;
-
+      std::map<std::vector<int>, int> site_state_pairs = sim.param().eds.site_state_pairs;
+      int states_i_j;
+      math::Matrix & virial_tensor = conf.current().virial_tensor;
+      math::VArray & force = conf.current().force;
       //std::cout << "Time for initialization: " << util::now()-start_time << "\n";
 
+      m_timer.stop("init");
+      m_timer.start("enumerate all");
       //start_time = util::now();
       // enumerate all state combinations
       // first, generate vectors with possible states for each site
@@ -348,27 +359,28 @@ int algorithm::EDS
       size_t x = 0;
       singleCombo.resize(numsites);
       comboAll(allStates, x, allCombos, singleCombo);
-      
+      m_timer.stop("enumerate all");
       //std::cout << "Time for enumerating: " << util::now() - start_time << "\n";
 
+      m_timer.start("optimal combo");
       //start_time = util::now();
       DEBUG(7,"find optimal combination of states");
       std::vector<double> allVC;
       double minVC = 0.0;
       std::vector<int> minCombo = {};
-      std::vector<int> states_i_j;
+//      std::vector<int> states_i_j;
       //combine all pairwise interactions
       for (auto &combo: allCombos){
         double VC = 0.0;
-        std::vector <int> states_i_j;
+        int states_i_j;
         for (int i =0 ; i< numsites; i++){
           for (int j=i; j < numsites +1 ; j++){
             if (j == numsites){
-              states_i_j = {i, combo[i], j, 0};
+              states_i_j = site_state_pairs[{i, combo[i], j, 0}];
             } else{
-              states_i_j = {i, combo[i], j, combo[j]};
+              states_i_j = site_state_pairs[{i, combo[i], j, combo[j]}];
             }
-            DEBUG(9, "states_i_j: " << states_i_j[0] << "," << states_i_j[1] << "," << states_i_j[2] << "," << states_i_j[3]);
+            //DEBUG(9, "states_i_j: " << states_i_j[0] << "," << states_i_j[1] << "," << states_i_j[2] << "," << states_i_j[3]);
             DEBUG(9, "adding: " << eds_mult_vi[states_i_j]);
             VC += eds_mult_vi[states_i_j];
           }       
@@ -390,23 +402,27 @@ int algorithm::EDS
       for (auto i: minCombo){
         DEBUG(8, " " << i);
       }
-
+      m_timer.stop("optimal combo");
       //std::cout << "Time for optimal combination: " << util::now() - start_time << "\n";
 
       //add 0 as optimal state for the Rest
       minCombo.push_back(0);
 
+      m_timer.start("energies");
       //start_time = util::now();
       // for each site, determine the energy for each of the possible states
       std::vector<std::vector<double>> V_site(numsites);
       std::vector<std::vector<double>> Pi(numsites);
       std::vector<std::vector<math::VArray>> F_site(numsites);
       std::vector<std::vector<math::Matrix>> virial_site(numsites);
-      std::vector<int> state_i_j;
+      //std::map<std::vector<int>, int> site_state_pairs = sim.param().site_state_pairs;
+      int state_i_j;
+//      std::vector<int> state_i_j;
       int opt_state_j;
 
       DEBUG(7,"for each site, determine energy for each possible state, using optimal state for other sites");
       for (int site_i=0; site_i< numsites; site_i++){
+        double start_time = util::now();
         DEBUG(9,"site = "<< site_i);
         V_site[site_i].resize(multnumstates[site_i]);
         F_site[site_i].resize(multnumstates[site_i]);
@@ -416,28 +432,27 @@ int algorithm::EDS
 	        F_site[site_i][state_i].resize(topo.num_atoms());
           for (int site_j = 0; site_j < numsites+1; site_j++){
             if (site_i == site_j){
-              state_i_j ={site_i, state_i, site_i, state_i};
+              state_i_j =site_state_pairs[{site_i, state_i, site_i, state_i}];
             }
             else if (site_i > site_j){
               opt_state_j = minCombo[site_j];
-              state_i_j = {site_j, opt_state_j, site_i, state_i};
+              state_i_j = site_state_pairs[{site_j, opt_state_j, site_i, state_i}];
             }
             else{
               opt_state_j = minCombo[site_j];
-              state_i_j = {site_i,state_i,site_j,opt_state_j};
+              state_i_j = site_state_pairs[{site_i,state_i,site_j,opt_state_j}];
             }
 
             //If this is a combination of two optimal states, only add half of the energies
             //forces and virial, since it will also be added for the other site
             if (state_i == minCombo[site_i] && site_i != site_j && site_j != numsites){
+              m_timer.start("doublecounting");
               //DEBUG(9,"\tpreventing double counting, only adding 0.5")
               //V_site[site_i][state_i] += 0.5 * eds_mult_vi[state_i_j];
 
               //We leave the double counting in, but only apply the forces to the site we are currently considering
-              DEBUG(9,"\tdo double counting");
+              DEBUG(9,"\tdo double counting: " << eds_mult_vi[state_i_j]);
               V_site[site_i][state_i]+= eds_mult_vi[state_i_j];
-              //DEBUG(9,"\teds_mult_vi[state_i_j]:"<< state_i_j[0] << " " << state_i_j[1] 
-              //    << " " << state_i_j[2] << " " << state_i_j[3] << " += " << 0.5* eds_mult_vi[state_i_j]);
               for (int i = 0; i < topo.num_atoms(); i++) {
                 //F_site[site_i][state_i](i) += 0.5 * force_mult_endstates[state_i_j](i);
                 //Only add forces to the site we are considering
@@ -448,33 +463,36 @@ int algorithm::EDS
                 }
                 //DEBUG(7, "\tdouble counting in eds.cc, eds_perturbed_solute().atoms().size(): " << topo.eds_perturbed_solute().atoms().size());
               }
-              for (int a = 0; a < 3; ++a) {
-                for (int b = 0; b < 3; ++b) {
-                  //virial_site[site_i][state_i](b,a) += 0.5 * virial_tensor_mult_endstates[state_i_j](b,a);
-                  virial_site[site_i][state_i](b,a) += virial_tensor_mult_endstates[state_i_j](b,a);
-                }
-              }  
+              virial_site[site_i][state_i] += virial_tensor_mult_endstates[state_i_j];
+              //for (int a = 0; a < 3; ++a) {
+              //  for (int b = 0; b < 3; ++b) {
+              //    //virial_site[site_i][state_i](b,a) += 0.5 * virial_tensor_mult_endstates[state_i_j](b,a);
+              //    virial_site[site_i][state_i](b,a) += virial_tensor_mult_endstates[state_i_j](b,a);
+              //  }
+              //}  
+              m_timer.stop("doublecounting");
             }
             else{
+              m_timer.start("normal");
               V_site[site_i][state_i] += eds_mult_vi[state_i_j];
               F_site[site_i][state_i] += force_mult_endstates[state_i_j];
-	            DEBUG(9,"\teds_mult_vi[state_i_j]:"<< state_i_j[0] << " " << state_i_j[1] 
-                  << " " << state_i_j[2] << " " << state_i_j[3] << " += " << eds_mult_vi[state_i_j]);
-              //DEBUG(9,"site_i,state_i "<< site_i << " " << state_i );
-	            DEBUG(10,"force_mult_endstates[state_i_j](atom 0) " <<  state_i_j[0] 
-                  << " " << state_i_j[1] << " " << state_i_j[2] << " " << state_i_j[3] 
+              DEBUG(9,"\teds_mult_vi[state_i_j]:"<< state_i_j << " += " << eds_mult_vi[state_i_j]);
+              DEBUG(10,"force_mult_endstates[state_i_j](atom 0) " <<  state_i_j 
                   << "+= " << math::v2s(force_mult_endstates[state_i_j](0)) );
               
               virial_site[site_i][state_i] += virial_tensor_mult_endstates[state_i_j];
+              m_timer.stop("normal");
             }
           }
         }
+        std::cout << "Time site_i: " << site_i << ": " << util::now() - start_time << "\n";
       }
-
+      m_timer.stop("energies");
       //std::cout <<"Time for energy of each possible state: " << util::now() - start_time << "\n";     
       // update energies
       conf.current().energies.eds_vsite = V_site;
 
+      m_timer.start("total eds energy");
       //start_time = util::now();
       DEBUG(7, "Calculating total eds energy");
       for (int site = 0; site < numsites; site++){
@@ -509,26 +527,35 @@ int algorithm::EDS
         DEBUG(7, "sum_prefactors: " << sum_prefactors);
         // calculate eds Hamiltonian
         double demix = 0.0, kfac = 0.0, fkfac = 1.0;
-        conf.current().energies.eds_mult_vmix[site] = -1.0 / beta * sum_prefactors;
+        eds_mult_vmix[site] = -1.0 / beta * sum_prefactors;
+        //conf.current().energies.eds_mult_vmix[site] = -1.0 / beta * sum_prefactors;
         DEBUG(7, "eds_mult_vmix[site] = " << conf.current().energies.eds_mult_vmix[site]);
 
         // accelerate eds Hamiltonian for current site 
-        if (conf.current().energies.eds_mult_vmix[site] <= sim.param().eds.multemin[site]) {
+        //if (conf.current().energies.eds_mult_vmix[site] <= sim.param().eds.multemin[site]) {
+        if (eds_mult_vmix[site] <= sim.param().eds.multemin[site]) {
           DEBUG(8,"no acceleration");
-          conf.current().energies.eds_mult_vr[site] = conf.current().energies.eds_mult_vmix[site];
+          eds_mult_vr[site] = eds_mult_vmix[site];
+          //conf.current().energies.eds_mult_vr[site] = conf.current().energies.eds_mult_vmix[site];
         }
-        else if (conf.current().energies.eds_mult_vmix[site] >= sim.param().eds.multemax[site]) {
+        //else if (conf.current().energies.eds_mult_vmix[site] >= sim.param().eds.multemax[site]) {
+        else if (eds_mult_vmix[site] >= sim.param().eds.multemax[site]) {
           DEBUG(8,"pulling down");
-          conf.current().energies.eds_mult_vr[site] = conf.current().energies.eds_mult_vmix[site] 
+          eds_mult_vr[site] = eds_mult_vmix[site] 
             - 0.5 * (sim.param().eds.multemax[site] - sim.param().eds.multemin[site]);
+          //conf.current().energies.eds_mult_vr[site] = conf.current().energies.eds_mult_vmix[site] 
+          //  - 0.5 * (sim.param().eds.multemax[site] - sim.param().eds.multemin[site]);
         }
         else {
           DEBUG(8,"accelerating");
-          demix = conf.current().energies.eds_mult_vmix[site] - sim.param().eds.multemin[site];
+          demix = eds_mult_vmix[site] - sim.param().eds.multemin[site];
+          //demix = conf.current().energies.eds_mult_vmix[site] - sim.param().eds.multemin[site];
           kfac = 1.0 / (sim.param().eds.multemax[site] - sim.param().eds.multemin[site]);
           fkfac = 1.0 - kfac * demix;
-          conf.current().energies.eds_mult_vr[site] = conf.current().energies.eds_mult_vmix[site] 
+          eds_mult_vr[site] = eds_mult_vmix[site] 
             - 0.5 * kfac * demix * demix;
+          //conf.current().energies.eds_mult_vr[site] = conf.current().energies.eds_mult_vmix[site] 
+          //  - 0.5 * kfac * demix * demix;
         }
         DEBUG(7, "eds_mult_vr[site] = " << conf.current().energies.eds_mult_vr[site]);
 
@@ -541,15 +568,19 @@ int algorithm::EDS
           DEBUG(7, "\tstate = " << state);
           DEBUG(7, "\t\tpi = " << pi);
           for (int i = 0; i < topo.num_atoms(); i++) {
-            if (conf.current().energies.eds_mult_vmix[site] <= sim.param().eds.multemin[site] || 
-                conf.current().energies.eds_mult_vmix[site] >= sim.param().eds.multemax[site]) {
+            //if (conf.current().energies.eds_mult_vmix[site] <= sim.param().eds.multemin[site] || 
+            //    conf.current().energies.eds_mult_vmix[site] >= sim.param().eds.multemax[site]) {
+            if (eds_mult_vmix[site] <= sim.param().eds.multemin[site] || 
+                  eds_mult_vmix[site] >= sim.param().eds.multemax[site]) {
 	            DEBUG(10, "\t\told force: " << math::v2s(conf.current().force(i)));
-              conf.current().force(i) += pi * F_site[site][state](i);
+              //conf.current().force(i) += pi * F_site[site][state](i);
+              force(i) += pi * F_site[site][state](i);
               DEBUG(10, "\t\tforce to add: " << math::v2s(F_site[site][state](i)));
               DEBUG(10, "\t\tnew force: " << math::v2s(conf.current().force(i)));
             }
             else {
-              conf.current().force(i) += pi * F_site[site][state](i) * fkfac;
+              //conf.current().force(i) += pi * F_site[site][state](i) * fkfac;
+              force(i) += pi * F_site[site][state](i) * fkfac;
 	            DEBUG(10, "\t\tadding to force: pi * " << F_site[site][state](i)[0] << " * fkfac " << fkfac);
             }
             DEBUG(10, "\t\tforce current: " << i << " = " << math::v2s(conf.current().force(i)));
@@ -559,22 +590,26 @@ int algorithm::EDS
           DEBUG(9,"\t\tAdding multiAEDS contribution to virial")
           for (int a = 0; a < 3; ++a) {
             for (int b = 0; b < 3; ++b) {
-              if (conf.current().energies.eds_mult_vmix[site] <= sim.param().eds.multemin[site] || 
-                  conf.current().energies.eds_mult_vmix[site] >= sim.param().eds.multemax[site]) {
+              //if (conf.current().energies.eds_mult_vmix[site] <= sim.param().eds.multemin[site] || 
+              //    conf.current().energies.eds_mult_vmix[site] >= sim.param().eds.multemax[site]) {
+              if (eds_mult_vmix[site] <= sim.param().eds.multemin[site] || 
+                  eds_mult_vmix[site] >= sim.param().eds.multemax[site]) {
                     DEBUG(10,"\t\told: "<< conf.current().virial_tensor(b,a) <<"< adding: " << pi*virial_site[site][state](b,a));
-                conf.current().virial_tensor(b, a) +=
-                  pi * virial_site[site][state](b, a);
+                //conf.current().virial_tensor(b, a) += pi * virial_site[site][state](b, a);
+                virial_tensor(b, a) += pi * virial_site[site][state](b, a);
               }
               else {
-                conf.current().virial_tensor(b, a) +=
-                  pi * virial_site[site][state](b, a) * fkfac;
+                //conf.current().virial_tensor(b, a) += pi * virial_site[site][state](b, a) * fkfac;
+                virial_tensor(b, a) += pi * virial_site[site][state](b, a) * fkfac;
               }
             }
           }
         }
       }
+      m_timer.stop("total eds energy");
       //std::cout << "Time for calculating eds for each site: " << util::now() - start_time << " \n";
 
+      m_timer.start("summing up");
       //start_time = util::now();
       DEBUG(7, "done with all sites, start wrapping up")
       //DEBUG(7, "\tend of eds.cc, eds_perturbed_solute().atoms().size(): " << topo.eds_perturbed_solute().atoms().size());
@@ -604,6 +639,7 @@ int algorithm::EDS
           //}
         //}
       }
+      m_timer.stop("summing up");
       //std::cout << "Time for corrections: " << util::now() - start_time <<" \n";
       //std::cout << "Overall Time EDS: " << util::now() - start_overall << "\n";
       break;

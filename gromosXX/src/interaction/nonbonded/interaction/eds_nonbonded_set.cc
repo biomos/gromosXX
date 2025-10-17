@@ -231,15 +231,20 @@ int interaction::Eds_Nonbonded_Set
             m_longrange_storage.virial_tensor_mult_endstates.size() == numentries);
 
     // add multiAEDS long-range forces
-    for (auto i: m_longrange_storage.force_mult_endstates){
-      m_storage.force_mult_endstates[i.first] += i.second;
+    for (unsigned int i = 0; i < numentries; ++i){
+      m_storage.force_mult_endstates[i] += m_longrange_storage.force_mult_endstates[i];
+    }
+    //for (auto i: m_longrange_storage.force_mult_endstates){
+    //  m_storage.force_mult_endstates[i.first] += i.second;
       //assert(m_storage.force_endstates[i].size()==m_longrange_storage.force_endstates[i].size());
       //m_storage.force_endstates[i] += m_longrange_storage.force_endstates[i];
-    }
+    //}
 
     // add multiAEDS long-range energies
-    for (auto i: m_longrange_storage.energies.eds_mult_vi){
-      m_storage.energies.eds_mult_vi[i.first] += i.second;
+    for (unsigned int i = 0; i < numentries; ++i){
+      m_storage.energies.eds_mult_vi[i] += m_longrange_storage.energies.eds_mult_vi[i];
+    //for (auto i: m_longrange_storage.energies.eds_mult_vi){
+    //  m_storage.energies.eds_mult_vi[i.first] += i.second;
     }
 
     // add multiAEDS longrange virial 
@@ -247,11 +252,13 @@ int interaction::Eds_Nonbonded_Set
       DEBUG(7, "\tmultiAEDS, add longrange virial contributions to shortrange in storage");
       for (unsigned int i=0; i<3; ++i){ //do we need this? or can we do += on the matrix?
         for (unsigned int j=0; j<3; ++j){
-          for (auto k: m_longrange_storage.virial_tensor_mult_endstates){
-            DEBUG(8, "longrange virial multiAEDS= " << k.second(i,j)
-  	          << "\tshortrange virial = " << m_storage.virial_tensor_mult_endstates[k.first](i,j) 
-              << "\ttotal: " << m_storage.virial_tensor_mult_endstates[k.first](i,j) + k.second(i,j) );
-            m_storage.virial_tensor_mult_endstates[k.first](i, j) += k.second(i,j);
+          for (unsigned int k=0; k<numentries; ++k){
+          //for (auto k: m_longrange_storage.virial_tensor_mult_endstates){
+          //  DEBUG(8, "longrange virial multiAEDS= " << k.second(i,j)
+  	      //    << "\tshortrange virial = " << m_storage.virial_tensor_mult_endstates[k.first](i,j) 
+          //    << "\ttotal: " << m_storage.virial_tensor_mult_endstates[k.first](i,j) + k.second(i,j) );
+            m_storage.virial_tensor_mult_endstates[k](i, j) 
+              += m_longrange_storage.virial_tensor_mult_endstates[k](i,j);
           }
         }
       }
@@ -390,33 +397,51 @@ int interaction::Eds_Nonbonded_Set::update_configuration
     //for (auto i: m_storage.force_mult_endstates){
     //  conf.special().eds.force_mult_endstates[i.first] += i.second;
     //}
-    auto& force_mult_endstates = conf.special().eds.force_mult_endstates;
-    DEBUG(7,"Number of elements force_mult_endstates: " << force_mult_endstates.size())
-    for (const auto& [key, value] : m_storage.force_mult_endstates) {
-      force_mult_endstates[key] += value;
+
+    std::vector<math::VArray>& storage_force_mult_endstates = m_storage.force_mult_endstates;
+    std::vector<math::VArray>& force_mult_endstates = conf.special().eds.force_mult_endstates;
+    for (unsigned int i=0; i<numentries;++i){
+      force_mult_endstates[i] += storage_force_mult_endstates[i];
     }
+    //auto& force_mult_endstates = conf.special().eds.force_mult_endstates;
+    //DEBUG(7,"Number of elements force_mult_endstates: " << force_mult_endstates.size())
+    //for (const auto& [key, value] : m_storage.force_mult_endstates) {
+    //  force_mult_endstates[key] += value;
+    //}
     DEBUG(7," Time for eds forces: " << util::now()-start_time );
 
     start_time = util::now();
+    std::vector<double>& current_eds_mult_vi = conf.current().energies.eds_mult_vi;
+    std::vector<double>& storage_eds_mult_vi = m_storage.energies.eds_mult_vi;
     //add storage energies to configuration
-    for (auto i: m_storage.energies.eds_mult_vi){
-      conf.current().energies.eds_mult_vi[i.first] += i.second;
+    //for (auto i: m_storage.energies.eds_mult_vi){
+    //  conf.current().energies.eds_mult_vi[i.first] += i.second;
+    for (unsigned int i =0; i<numentries;++i){
+      current_eds_mult_vi[i] += storage_eds_mult_vi[i];
     }
     DEBUG(7," Time for eds energies: " << util::now()-start_time);
 
     start_time = util::now();
     // add storage virial 
     if (sim.param().pcouple.virial){
+      std::vector<math::Matrix>& special_virial_tensor_mult_endstates = conf.special().eds.virial_tensor_mult_endstates;
+      std::vector<math::Matrix>& storage_virial_tensor_mult_endstates = m_storage.virial_tensor_mult_endstates;
       DEBUG(7, "\tadd set virial for multiAEDS");
       DEBUG(9,"\tadding virial_tensor_mult_endstates from m_storage to conf.special().eds");
       for(unsigned int i=0; i<3; ++i){
         for(unsigned int j=0; j<3; ++j){
-          for(auto k: m_storage.virial_tensor_mult_endstates){
-            DEBUG(9,"\tk: " << k.first[0] << k.first[1] << k.first[2] << k.first[3] << " conf.special().eds.virial_tensor_mult_endstates= " 
-            <<conf.special().eds.virial_tensor_mult_endstates[k.first](i,j) << "\tadding= " << k.second(i,j));
-            conf.special().eds.virial_tensor_mult_endstates[k.first](i, j) +=
-                k.second(i, j);
+          for(unsigned int k=0; k<numentries;++k){
+            special_virial_tensor_mult_endstates[k](i,j) 
+                += storage_virial_tensor_mult_endstates[k](i,j);
+            conf.special().eds.virial_tensor_mult_endstates[k](i,j) 
+                += m_storage.virial_tensor_mult_endstates[k](i,j);
           }
+          //for(auto k: m_storage.virial_tensor_mult_endstates){
+          //  DEBUG(9,"\tk: " << k.first[0] << k.first[1] << k.first[2] << k.first[3] << " conf.special().eds.virial_tensor_mult_endstates= " 
+          //  <<conf.special().eds.virial_tensor_mult_endstates[k.first](i,j) << "\tadding= " << k.second(i,j));
+          //  conf.special().eds.virial_tensor_mult_endstates[k.first](i, j) +=
+          //      k.second(i, j);
+          //}
         }
       }
     } 
@@ -564,14 +589,27 @@ int interaction::Eds_Nonbonded_Set
   //initialize the maps of eds_mult_vi 
   //do we need this?
   //maybe only need to zero?
-  for (auto i: sim.param().eds.site_state_pairs){
-    m_storage.energies.eds_mult_vi[i];
-    m_longrange_storage.energies.eds_mult_vi[i];
+  unsigned int numentries = sim.param().eds.site_state_pairs.size();
+  m_storage.energies.eds_mult_vi.resize(numentries);
+  m_longrange_storage.energies.eds_mult_vi.resize(numentries);
+  m_storage.force_mult_endstates.resize(numentries);
+  m_longrange_storage.force_mult_endstates.resize(numentries);
+  m_storage.virial_tensor_mult_endstates.resize(numentries);
+  m_longrange_storage.virial_tensor_mult_endstates.resize(numentries);
+
+  for(unsigned int i = 0; i < numentries; i++){
     m_storage.force_mult_endstates[i].resize(topo.num_atoms());
     m_longrange_storage.force_mult_endstates[i].resize(topo.num_atoms());
-    m_storage.virial_tensor_mult_endstates[i];
-    m_longrange_storage.virial_tensor_mult_endstates[i];
   }
+
+//  for (auto i: sim.param().eds.site_state_pairs){
+//    m_storage.energies.eds_mult_vi[i];
+//    m_longrange_storage.energies.eds_mult_vi[i];
+//    m_storage.force_mult_endstates[i].resize(topo.num_atoms());
+//    m_longrange_storage.force_mult_endstates[i].resize(topo.num_atoms());
+//    m_storage.virial_tensor_mult_endstates[i];
+//    m_longrange_storage.virial_tensor_mult_endstates[i];
+//  }
   /*
   for( int site_i = 0; site_i < sim.param().eds.numsites; site_i++){
     for( int site_j = site_i; site_j < sim.param().eds.numsites; site_j++){

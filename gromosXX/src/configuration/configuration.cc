@@ -63,8 +63,10 @@ configuration::Configuration::Configuration() {
   }
   
   //multiAEDS
-  for (auto i: special().eds.virial_tensor_mult_endstates){
-    special().eds.virial_tensor_mult_endstates[i.first] = 0.0;
+  for (unsigned int i = 0; i < special().eds.virial_tensor_mult_endstates.size(); ++i){
+    special().eds.virial_tensor_mult_endstates[i] = 0.0;
+  //for (auto i: special().eds.virial_tensor_mult_endstates){
+  //  special().eds.virial_tensor_mult_endstates[i.first] = 0.0;
   }
 
   special().shake_failure_occurred = false;
@@ -96,8 +98,11 @@ configuration::Configuration::Configuration
   }
 
   //multiAEDS
-  for (auto const& i: conf.special().eds.virial_tensor_mult_endstates){
-    special().eds.virial_tensor_mult_endstates[i.first] = i.second;
+  for (unsigned int i = 0; i < special().eds.virial_tensor_mult_endstates.size(); ++i) {
+    special().eds.virial_tensor_mult_endstates[i] =
+            conf.special().eds.virial_tensor_mult_endstates[i];
+ // for (auto const& i: conf.special().eds.virial_tensor_mult_endstates){
+ //   special().eds.virial_tensor_mult_endstates[i.first] = i.second;
   }
 
   current().pos = conf.current().pos;
@@ -226,8 +231,11 @@ configuration::Configuration & configuration::Configuration::operator=
   }
 
   //multiAEDS
-  for (auto i: conf.special().eds.virial_tensor_mult_endstates){
-    special().eds.virial_tensor_mult_endstates[i.first] = i.second;
+  for (unsigned int i = 0; i < special().eds.virial_tensor_mult_endstates.size(); ++i) {
+    special().eds.virial_tensor_mult_endstates[i] =
+            conf.special().eds.virial_tensor_mult_endstates[i];
+//  for (auto i: conf.special().eds.virial_tensor_mult_endstates){
+//    special().eds.virial_tensor_mult_endstates[i.first] = i.second;
   }
   
   current().pos = conf.current().pos;
@@ -381,16 +389,19 @@ void configuration::Configuration::init(topology::Topology const & topo,
   old().perturbed_energy_derivatives.eds_vi_special.resize(param.eds.numstates);
 
   //multiAEDS
-  for (auto i: param.eds.site_state_pairs){
+//  for (auto i: param.eds.site_state_pairs){
+  int numentries = param.eds.site_state_pairs.size();
+  DEBUG(5, "Resizing mult_endstates");
+  special().eds.force_mult_endstates.resize(numentries);
+  DEBUG(6, "Size of force_mult_endstates: " << special().eds.force_mult_endstates.size());
+  for (unsigned int i = 0; i < numentries; i++){
     special().eds.force_mult_endstates[i].resize(topo.num_atoms());
-    special().eds.virial_tensor_mult_endstates[i];
-    current().energies.eds_mult_vi[i];
-    //current().energies.eds_mult_vi_special[i];
-    //current().energies.eds_mult_eir[i];
-    old().energies.eds_mult_vi[i];
-    //old().energies.eds_mult_vi_special[i];
-    //old().energies.eds_mult_eir[i];
   }
+  special().eds.virial_tensor_mult_endstates.resize(numentries);
+  current().energies.eds_mult_vi.resize(numentries);
+  old().energies.eds_mult_vi.resize(numentries);
+  
+  
   //std::cout << "MULTIAEDS: force_mult_endstates[0,0,0,0]atom0,x: " << special().eds.force_mult_endstates[{0,0,0,0}][0](0) << std::endl;
   old().energies.eds_mult_vmix.resize(param.eds.numsites);
   current().energies.eds_mult_vmix.resize(param.eds.numsites);

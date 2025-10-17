@@ -33,7 +33,8 @@ namespace interaction
     /**
      * multiAEDS endstates (longrange) force storage.
      */
-    std::map<std::vector<int>, math::VArray> force_mult_endstates;
+    //std::map<std::vector<int>, math::VArray> force_mult_endstates;
+    std::vector<math::VArray> force_mult_endstates;
      /**
      * (longrange) energy storage.
      */
@@ -53,7 +54,8 @@ namespace interaction
     /**
      * multi eds endstates (longrange) virial storage.
      */
-    std::map<std::vector<int>, math::Matrix> virial_tensor_mult_endstates;
+    //std::map<std::vector<int>, math::Matrix> virial_tensor_mult_endstates;
+    std::vector<math::Matrix> virial_tensor_mult_endstates;
      /**
       * (longrange) electric field storage.
       */
@@ -92,10 +94,15 @@ namespace interaction
       }
       //MULTIAEDS
       assert(virial_tensor_mult_endstates.size() == force_mult_endstates.size());
-      for(auto i: virial_tensor_mult_endstates){
-	      virial_tensor_mult_endstates[i.first] = 0.0;
-        force_mult_endstates[i.first] = 0.0;
+      unsigned int multsize = force_mult_endstates.size();
+      for(unsigned int i = 0; i< multsize; i++){
+        force_mult_endstates[i] = 0.0;
+        virial_tensor_mult_endstates[i] = 0.0;
       }
+//      for(auto i: virial_tensor_mult_endstates){
+//	      virial_tensor_mult_endstates[i.first] = 0.0;
+//        force_mult_endstates[i.first] = 0.0;
+//      }
     }
 
   };

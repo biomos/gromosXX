@@ -688,7 +688,8 @@ t_interaction_spec, t_perturbation_details>
       } */
 
       // can we do this????
-      std::map<std::vector<int>, math::VArray> &force_mult_endstates = storage.force_mult_endstates;
+//      std::map<std::vector<int>, math::VArray> &force_mult_endstates = storage.force_mult_endstates;
+      std::vector<math::VArray> &force_mult_endstates = storage.force_mult_endstates;
       std::vector<math::VArray> &force_endstates = storage.force_endstates;
 
       switch (both_perturbed) {
@@ -709,14 +710,17 @@ t_interaction_spec, t_perturbation_details>
             DEBUG(10,"\t\t numstates_i: " << numstates_i);
             DEBUG(10,"\t\t site_j: " << site_j);
             DEBUG(10,"\t\t state_j: " << state_j);
-            std::map<std::vector<int>, double> & storage_energies_eds_mult_vi = storage.energies.eds_mult_vi;
-            std::map<std::vector<int>, math::Matrix > & storage_virial_tensor_mult_endstates = storage.virial_tensor_mult_endstates;
+//            std::map<std::vector<int>, double> & storage_energies_eds_mult_vi = storage.energies.eds_mult_vi;
+//            std::map<std::vector<int>, math::Matrix > & storage_virial_tensor_mult_endstates = storage.virial_tensor_mult_endstates;
+            std::vector<double> & storage_energies_eds_mult_vi = storage.energies.eds_mult_vi;
+            std::vector<math::Matrix > & storage_virial_tensor_mult_endstates = storage.virial_tensor_mult_endstates;
           
             for (unsigned int state_i = 0; state_i < numstates_i; state_i++) {
               DEBUG(10,"looping over states, now state: " << state_i);
-              std::vector<int> states_i_j {site_i, state_i, site_j, state_j};
+              int states_i_j = sim.param().eds.site_state_pairs[{site_i,state_i,site_j,state_j}];
+              //std::vector<int> states_i_j {site_i, state_i, site_j, state_j};
               DEBUG(10, "force_mult_endstates.size(): " << force_mult_endstates.size());
-              DEBUG(10, "[states_i_j] present?: " << force_mult_endstates.count(states_i_j));
+              //DEBUG(10, "[states_i_j] present?: " << force_mult_endstates.count(states_i_j));
               DEBUG(10, "force_atom_i_x: " << force_mult_endstates[states_i_j](i)[0]);
               DEBUG(10, "force_atom_i_y: " << force_mult_endstates[states_i_j](i)(1));
               //DEBUG(9, "force_atom_i_z: " << force_mult_endstates_states_i[2]);
@@ -790,10 +794,14 @@ t_interaction_spec, t_perturbation_details>
             const int numstates_i = sim.param().eds.multnumstates[site_i];
             const int &site_j =topo.eds_perturbed_solute().atoms()[j].site_number();
             const int numstates_j = sim.param().eds.multnumstates[site_j];
-            std::vector<int> states_i_j;
+            //std::vector<int> states_i_j;
+            std::map<std::vector<int>, int> site_state_pairs = sim.param().eds.site_state_pairs;
+            int states_i_j;
 
-            std::map<std::vector<int>, double> & storage_energies_eds_mult_vi = storage.energies.eds_mult_vi;
-            std::map<std::vector<int>, math::Matrix> & storage_virial_tensor_mult_endstates = storage.virial_tensor_mult_endstates;
+            //std::map<std::vector<int>, double> & storage_energies_eds_mult_vi = storage.energies.eds_mult_vi;
+            //std::map<std::vector<int>, math::Matrix> & storage_virial_tensor_mult_endstates = storage.virial_tensor_mult_endstates;
+            std::vector<double> & storage_energies_eds_mult_vi = storage.energies.eds_mult_vi;
+            std::vector<math::Matrix> & storage_virial_tensor_mult_endstates = storage.virial_tensor_mult_endstates;
 
             //if (site_j >= site_i) {
             for (int state_i = 0; state_i < numstates_i; state_i++) {
@@ -802,10 +810,10 @@ t_interaction_spec, t_perturbation_details>
                   continue; //when both atoms from same site, only include same states for both sites
                 }
                 else if (site_j < site_i) {
-                  states_i_j = {site_j, state_j, site_i, state_i};
+                  states_i_j = site_state_pairs[{site_j, state_j, site_i, state_i}];
                 }
                 else {
-                  states_i_j = {site_i, state_i, site_j, state_j};
+                  states_i_j = site_state_pairs[{site_i, state_i, site_j, state_j}];
                 }
                 //std::vector<int> states_i_j {site_i, state_i, site_j, state_j};
                 math::Vec & force_mult_endstates_state_i = force_mult_endstates[states_i_j][i];
@@ -818,7 +826,8 @@ t_interaction_spec, t_perturbation_details>
                 q = pert_i_M_charge[state_i]* (pert_j_M_charge[state_j]);
 
                 eds_lj_crf_interaction(dist2, dist6, disti, c6, c12, q, f, e_nb);
-                DEBUG(9,"\teds_lj_crf, states_i_j: " << "{"<<states_i_j[0] <<"," <<states_i_j[1] <<","<< states_i_j[2]<<","<<states_i_j[3]<<"}:" << e_nb);
+                DEBUG(9,"\teds_lj_crf, states_i_j: " << states_i_j << ": " << e_nb);
+                //DEBUG(9,"\teds_lj_crf, states_i_j: " << "{"<<site_state_pairs[0] <<"," <<site_state_pairs[1] <<","<< site_state_pairs[2]<<","<<site_state_pairs[3]<<"}:" << e_nb);
                 //DEBUG(9,"\teds_lj_crf, states_i_j: " << "{"<<site_i <<"," <<state_i <<","<< site_j<<","<<state_j<<"}:" << e_nb);
 
                 DEBUG(10, "\t\tatomic virial");
@@ -2521,6 +2530,7 @@ t_interaction_spec, t_perturbation_details>
 (topology::Topology & topo,
         configuration::Configuration & conf,
         unsigned int i, unsigned int j,
+        Storage &storage,
         Periodicity_type const & periodicity,
         simulation::Simulation & sim) {
   DEBUG(8, "\teds one four pair\t" << i << "\t" << j);
@@ -2611,9 +2621,12 @@ t_interaction_spec, t_perturbation_details>
 	        const std::vector<double> &pert_i_M_charge = topo.eds_perturbed_solute().atoms()[i].M_charge();
 
           if (multiAEDS){
-            std::map<std::vector<int>,math::Matrix> & conf_special_eds_virial_tensor_mult_endstates = conf.special().eds.virial_tensor_mult_endstates;
-            std::map<std::vector<int>,double> & conf_current_energies_eds_mult_vi = conf.current().energies.eds_mult_vi;
-            std::map<std::vector<int>, math::VArray> & conf_special_eds_force_mult_endstates = conf.special().eds.force_mult_endstates;
+//            std::map<std::vector<int>,math::Matrix> & conf_special_eds_virial_tensor_mult_endstates = conf.special().eds.virial_tensor_mult_endstates;
+//            std::map<std::vector<int>,double> & conf_current_energies_eds_mult_vi = conf.current().energies.eds_mult_vi;
+//            std::map<std::vector<int>, math::VArray> & conf_special_eds_force_mult_endstates = conf.special().eds.force_mult_endstates;
+            std::vector<math::Matrix> & conf_special_eds_virial_tensor_mult_endstates = conf.special().eds.virial_tensor_mult_endstates;
+            std::vector<double> & conf_current_energies_eds_mult_vi = conf.current().energies.eds_mult_vi;
+            std::vector<math::VArray> & conf_special_eds_force_mult_endstates = conf.special().eds.force_mult_endstates;
 
             const int &site_i = topo.eds_perturbed_solute().atoms()[i].site_number();
             const int numstates_i = sim.param().eds.multnumstates[site_i];
@@ -2621,7 +2634,8 @@ t_interaction_spec, t_perturbation_details>
             const int state_j = 0; // non eds atom, just one state
 
             for (unsigned int state_i = 0; state_i < numstates_i; state_i++) {
-              std::vector<int> states_i_j {site_i, state_i, site_j, state_j};
+              //std::vector<int> states_i_j {site_i, state_i, site_j, state_j};
+              int states_i_j = sim.param().eds.site_state_pairs[{site_i, state_i, site_j, state_j}];
               math::Vec & conf_special_eds_force_mult_endstates_state_i = conf_special_eds_force_mult_endstates[states_i_j][i];
               math::Vec & conf_special_eds_force_mult_endstates_state_j = conf_special_eds_force_mult_endstates[states_i_j][j];
               math::Matrix & conf_special_eds_virial_tensor_mult_endstates_state = conf_special_eds_virial_tensor_mult_endstates[states_i_j];//??
@@ -2691,11 +2705,16 @@ t_interaction_spec, t_perturbation_details>
             const int numstates_i = sim.param().eds.multnumstates[site_i];
             const int &site_j =topo.eds_perturbed_solute().atoms()[j].site_number();
             const int numstates_j = sim.param().eds.multnumstates[site_j];
-            std::vector<int> states_i_j;
+            std::map<std::vector<int>, int> site_state_pairs = sim.param().eds.site_state_pairs;
+            int states_i_j;
+            //std::vector<int> states_i_j;
 
-            std::map<std::vector<int>, double> & conf_current_energies_eds_mult_vi = conf.current().energies.eds_mult_vi;
-            std::map<std::vector<int>, math::Matrix> & conf_special_eds_virial_tensor_mult_endstates = conf.special().eds.virial_tensor_mult_endstates;
-            std::map<std::vector<int>, math::VArray> & conf_special_eds_force_mult_endstates = conf.special().eds.force_mult_endstates;
+//            std::map<std::vector<int>, double> & conf_current_energies_eds_mult_vi = conf.current().energies.eds_mult_vi;
+//            std::map<std::vector<int>, math::Matrix> & conf_special_eds_virial_tensor_mult_endstates = conf.special().eds.virial_tensor_mult_endstates;
+//            std::map<std::vector<int>, math::VArray> & conf_special_eds_force_mult_endstates = conf.special().eds.force_mult_endstates;
+            std::vector<double> & conf_current_energies_eds_mult_vi = conf.current().energies.eds_mult_vi;
+            std::vector<math::Matrix> & conf_special_eds_virial_tensor_mult_endstates = conf.special().eds.virial_tensor_mult_endstates;
+            std::vector<math::VArray> & conf_special_eds_force_mult_endstates = conf.special().eds.force_mult_endstates;
             
             //if (site_j >= site_i) {
             for (int state_i = 0; state_i < numstates_i; state_i++) {
@@ -2704,10 +2723,10 @@ t_interaction_spec, t_perturbation_details>
                   continue; //when both atoms from same site, only include same states for both sites
                 }
                 else if (site_j < site_i) {
-                  states_i_j = {site_j, state_j, site_i, state_i};
+                  states_i_j = site_state_pairs[{site_j, state_j, site_i, state_i}];
                 }
                 else {
-                  states_i_j = {site_i, state_i, site_j, state_j};
+                  states_i_j = site_state_pairs[{site_i, state_i, site_j, state_j}];
                 }
 
                 //std::vector<int> states_i_j {site_i, state_i, site_j, state_j};
@@ -2892,6 +2911,69 @@ t_interaction_spec, t_perturbation_details>
           else {	  
 	          eds_pert_lj_crf_interaction(dist2, dist6, A_lj.cs6, A_lj.cs12, B_lj.cs6, B_lj.cs12, A_q, B_q,
 				      alpha_lj, alpha_crf, f, e_lj, e_crf, de_lj, de_crf, 0, m_param->get_coulomb_scaling());
+
+            //---------------------------------------------------------
+            //                     ANITA
+            // extended TI: calculate A_e_lj, B_e_lj, A_e_crf, B_e_crf,
+            //              A_de_LJ, B_de_lj, A_de_crf, B_de_crf
+            //---------------------------------------------------------
+
+            if (sim.param().precalclam.nr_lambdas && ((sim.steps()  % sim.param().write.free_energy) == 0)){
+              DEBUG(8, "precalculate lj_crf_soft");
+              double A_e_lj = 0.0, B_e_lj = 0.0, A_e_crf = 0.0, B_e_crf = 0.0,
+                A_de_lj = 0.0, B_de_lj = 0.0, A_de_crf = 0.0, B_de_crf = 0.0;
+
+              // determine lambda stepsize from min,max and nr of lambdas
+              double lambda_step = (sim.param().precalclam.max_lam -
+                   sim.param().precalclam.min_lam) /
+                   (sim.param().precalclam.nr_lambdas-1);
+
+              //loop over nr_lambdas
+              for (unsigned int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
+
+                // determine current lambda for this index
+                double lam=(lam_index * lambda_step) + sim.param().precalclam.min_lam;
+
+                // start the calculations
+                lj_crf_soft_interaction_ext(r, A_lj.cs6, A_lj.cs12,
+                  B_lj.cs6, B_lj.cs12, A_q, B_q, alpha_lj, alpha_crf,
+                  A_e_lj,  B_e_lj, A_e_crf, B_e_crf,
+                  A_de_lj, B_de_lj, A_de_crf, B_de_crf,
+                  lam);
+
+                DEBUG(8, "ANITA: precalculated one_four energies for lambda " << lam
+                    << "\n now starting storage");
+                DEBUG(8, "\n  A_e_lj " << A_e_lj << "\n  lambda index " << lam_index <<
+                    "\n  storage.energies.A_lj_energy.size() " << storage.energies.A_lj_energy.size()
+                    << "\n  energy group1 " << topo.atom_energy_group(i) << " energy group2 "
+                    << topo.atom_energy_group(j));
+
+                storage.energies.A_lj_energy[lam_index][topo.atom_energy_group(i)]
+                      [topo.atom_energy_group(j)] += A_e_lj;
+                storage.energies.B_lj_energy[lam_index][topo.atom_energy_group(i)]
+                      [topo.atom_energy_group(j)] += B_e_lj;
+
+                storage.energies.A_crf_energy[lam_index][topo.atom_energy_group(i)]
+                      [topo.atom_energy_group(j)] += A_e_crf;
+                storage.energies.B_crf_energy[lam_index][topo.atom_energy_group(i)]
+                      [topo.atom_energy_group(j)] += B_e_crf;
+
+                storage.perturbed_energy_derivatives.A_lj_energy
+                      [lam_index][topo.atom_energy_group(i)]
+                      [topo.atom_energy_group(j)] += A_de_lj;
+                storage.perturbed_energy_derivatives.B_lj_energy
+                      [lam_index][topo.atom_energy_group(i)]
+                      [topo.atom_energy_group(j)] += B_de_lj;
+
+                storage.perturbed_energy_derivatives.A_crf_energy
+                      [lam_index][topo.atom_energy_group(i)]
+                      [topo.atom_energy_group(j)] += A_de_crf;
+                storage.perturbed_energy_derivatives.B_crf_energy
+                      [lam_index][topo.atom_energy_group(i)]
+                      [topo.atom_energy_group(j)] += B_de_crf;
+                DEBUG(8, "\ndone with storing energies ");
+              } //all 101 lambda points done
+            } // done with extended TI
           }
 	  
 	        // In this case, we can store everything immediately and do not need the endstates
@@ -3054,6 +3136,69 @@ t_interaction_spec, t_perturbation_details>
           else { // No scaling 
             eds_pert_lj_crf_interaction(dist2, dist6, A_lj.c6, A_lj.c12, B_lj.c6, B_lj.c12, A_q, B_q,
                 alpha_lj, alpha_crf, f, e_lj, e_crf, de_lj, de_crf, 0, m_param->get_coulomb_scaling());
+
+            //---------------------------------------------------------
+            //                     ANITA
+            // extended TI: calculate A_e_lj, B_e_lj, A_e_crf, B_e_crf,
+            //              A_de_LJ, B_de_lj, A_de_crf, B_de_crf
+            //---------------------------------------------------------
+
+            if (sim.param().precalclam.nr_lambdas && ((sim.steps()  % sim.param().write.free_energy) == 0)){
+              DEBUG(8, "precalculate lj_crf_soft");
+              double A_e_lj = 0.0, B_e_lj = 0.0, A_e_crf = 0.0, B_e_crf = 0.0,
+              A_de_lj = 0.0, B_de_lj = 0.0, A_de_crf = 0.0, B_de_crf = 0.0;
+
+              // determine lambda stepsize from min,max and nr of lambdas
+              double lambda_step = (sim.param().precalclam.max_lam -
+                   sim.param().precalclam.min_lam) /
+                   (sim.param().precalclam.nr_lambdas-1);
+
+              //loop over nr_lambdas
+              for (unsigned int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
+
+                // determine current lambda for this index
+                double lam=(lam_index * lambda_step) + sim.param().precalclam.min_lam;
+
+                // start the calculations
+                lj_crf_soft_interaction_ext(r, A_lj.cs6, A_lj.cs12,
+                  B_lj.cs6, B_lj.cs12, A_q, B_q, alpha_lj, alpha_crf,
+                  A_e_lj,  B_e_lj, A_e_crf, B_e_crf,
+                  A_de_lj, B_de_lj, A_de_crf, B_de_crf,
+                  lam);
+
+                DEBUG(8, "ANITA: precalculated one_four energies for lambda " << lam
+                  << "\n now starting storage");
+                DEBUG(8, "\n  A_e_lj " << A_e_lj << "\n  lambda index " << lam_index <<
+                  "\n  storage.energies.A_lj_energy.size() " << storage.energies.A_lj_energy.size()
+                  << "\n  energy group1 " << topo.atom_energy_group(i) << " energy group2 "
+                  << topo.atom_energy_group(j));
+
+                storage.energies.A_lj_energy[lam_index][topo.atom_energy_group(i)]
+                    [topo.atom_energy_group(j)] += A_e_lj;
+                storage.energies.B_lj_energy[lam_index][topo.atom_energy_group(i)]
+                    [topo.atom_energy_group(j)] += B_e_lj;
+
+                storage.energies.A_crf_energy[lam_index][topo.atom_energy_group(i)]
+                    [topo.atom_energy_group(j)] += A_e_crf;
+                storage.energies.B_crf_energy[lam_index][topo.atom_energy_group(i)]
+                    [topo.atom_energy_group(j)] += B_e_crf;
+
+                storage.perturbed_energy_derivatives.A_lj_energy
+                    [lam_index][topo.atom_energy_group(i)]
+                    [topo.atom_energy_group(j)] += A_de_lj;
+                storage.perturbed_energy_derivatives.B_lj_energy
+                    [lam_index][topo.atom_energy_group(i)]
+                    [topo.atom_energy_group(j)] += B_de_lj;
+
+                storage.perturbed_energy_derivatives.A_crf_energy
+                    [lam_index][topo.atom_energy_group(i)]
+                    [topo.atom_energy_group(j)] += A_de_crf;
+                storage.perturbed_energy_derivatives.B_crf_energy
+                    [lam_index][topo.atom_energy_group(i)]
+                    [topo.atom_energy_group(j)] += B_de_crf;
+                DEBUG(8, "\ndone with storing energies ");
+              } //all 101 lambda points done
+            }
           } 
           
 
@@ -3764,7 +3909,8 @@ t_interaction_spec, t_perturbation_details>
     //add self term to the <state_i,state_i, site_i, state_i> terms 
     const int &site_i = topo.eds_perturbed_solute().atoms()[i].site_number();
     for (unsigned int state_i = 0; state_i < sim.param().eds.multnumstates[site_i]; state_i++){
-        std::vector<int> states_i_i {site_i, state_i, site_i, state_i};
+        //std::vector<int> states_i_i {site_i, state_i, site_i, state_i};
+        int states_i_i = sim.param().eds.site_state_pairs[{site_i, state_i, site_i, state_i}];
         r =0.0;
 	DEBUG(7, "site_i " << site_i << ", state_i " << state_i);
         double q_i = mit->second.M_charge()[state_i];
@@ -3855,9 +4001,13 @@ t_interaction_spec, t_perturbation_details>
     case simulation::lj_crf_func:
     {
       math::Vec f_rf;
-      eds_perturbed_rf_interaction(r, q_i_a*q_i_a, q_i_b * q_i_b,
+      rf_soft_interaction(r, q_i_a*q_i_a, q_i_b*q_i_b,
               mit->second.CRF_softcore(),
               f_rf, e_rf, de_rf, true);
+      //eds_perturbed_rf_interaction(r, q_i_a*q_i_a, q_i_b * q_i_b,
+      //        mit->second.CRF_softcore(),
+      //        f_rf, e_rf, de_rf, true);
+
       // ANITA
       if (sim.param().precalclam.nr_lambdas && ((sim.steps()  % sim.param().write.free_energy) == 0)){
         double A_e_rf = 0.0, B_e_rf = 0.0, A_de_rf = 0.0, B_de_rf = 0.0;
@@ -3947,7 +4097,8 @@ t_interaction_spec, t_perturbation_details>
   // those are fortunately not in the normal exclusions!
   math::VArray &pos = conf.current().pos;
   std::vector<math::VArray> &force_states = conf.special().eds.force_endstates;
-  std::map<std::vector<int>, math::VArray> &force_mult_states = conf.special().eds.force_mult_endstates;
+  //std::map<std::vector<int>, math::VArray> &force_mult_states = conf.special().eds.force_mult_endstates;
+  std::vector<math::VArray> &force_mult_states = conf.special().eds.force_mult_endstates;
 
   math::VArray &force = conf.current().force;
   math::Vec r;
@@ -3995,7 +4146,8 @@ t_interaction_spec, t_perturbation_details>
                 const int site_j = sim.param().eds.numsites; // non eds atom, belongs to site R (rest), last site
                 const int state_j = 0; // non eds atom, just one state
                 for (unsigned int state_i = 0; state_i < numstates_i; state_i++){
-                  std::vector<int> states_i_j {site_i, state_i, site_j, state_j};
+                  //std::vector<int> states_i_j {site_i, state_i, site_j, state_j};
+                  int states_i_j = sim.param().eds.site_state_pairs[{site_i, state_i, site_j, state_j}];
                   q_i = topo.eds_perturbed_solute().atoms()[atom_i].M_charge()[state_i];
                   q_j = topo.charge()(*it);
                   eds_rf_interaction(r,q_i*q_j, f_rf, e_rf);
@@ -4050,7 +4202,9 @@ t_interaction_spec, t_perturbation_details>
                 const int numstates_i = sim.param().eds.multnumstates[site_i];
                 const int &site_j =topo.eds_perturbed_solute().atoms()[*it].site_number();
                 const int numstates_j = sim.param().eds.multnumstates[site_j];
-                std::vector<int> states_i_j;
+                std::map<std::vector<int>, int> site_state_pairs = sim.param().eds.site_state_pairs;
+                //std::vector<int> states_i_j;
+                int states_i_j;
 
                 //if (site_j >= site_i){
                 for (int state_i = 0; state_i < numstates_i; state_i++){
@@ -4059,10 +4213,12 @@ t_interaction_spec, t_perturbation_details>
                       continue; //when both atoms from same site, only include same states for both sites
                     }
                     else if (site_j < site_i) {
-                      states_i_j = {site_j, state_j, site_i, state_i};
+                      //states_i_j = {site_j, state_j, site_i, state_i};
+                      states_i_j = site_state_pairs[{site_j, state_j, site_i, state_i}];
                     }
                     else {
-                      states_i_j = {site_i, state_i, site_j, state_j};
+                      //states_i_j = {site_i, state_i, site_j, state_j};
+                      states_i_j = site_state_pairs[{site_i, state_i, site_j, state_j}];
                     }
                  
                     //std::vector<int> states_i_j {site_i, state_i, site_j, state_j};

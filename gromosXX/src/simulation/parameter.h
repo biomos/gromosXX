@@ -3193,9 +3193,11 @@ namespace simulation
       std::vector<std::vector<double>> multeir; 
       /**
        * pairwise combinations of sites and states
+       * as key, value is the corresponding index
        * [site_i, state_i, site_j, state_j]
       */
-      std::vector<std::vector<int>> site_state_pairs;
+     std::map<std::vector<int>, int> site_state_pairs;
+      //std::vector<std::vector<int>> site_state_pairs;
     } /** enveloping distribution sampling*/ eds;
 
  struct reeds_struct : public replica_struct

@@ -158,7 +158,7 @@ void interaction::Eds_Nonbonded_Outerloop
     for( ; it != to; ++it){
 
       innerloop.eds_one_four_interaction_innerloop
-	(topo, conf, mit->second.sequence_number(), *it, periodicity, sim);
+	(topo, conf, mit->second.sequence_number(), *it, storage, periodicity, sim);
 
     } // loop over 1,4 pairs
   } // loop over solute atoms
@@ -176,7 +176,7 @@ void interaction::Eds_Nonbonded_Outerloop
     for( ; itt != tto; ++itt){
 
       innerloop.eds_one_four_interaction_innerloop
-	(topo, conf, mitt->second.sequence_number(), *itt, periodicity, sim);
+	(topo, conf, mitt->second.sequence_number(), *itt, storage, periodicity, sim);
 
     } // loop over 1,4 pairs
   } // loop over solute atoms

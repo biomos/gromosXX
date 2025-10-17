@@ -46,6 +46,7 @@ namespace interaction
     void eds_one_four_interaction_innerloop
     (topology::Topology & topo, configuration::Configuration & conf,
      unsigned int i, unsigned int j,
+     Storage &storage,
      Periodicity_type const & periodicity,
      simulation::Simulation & sim);
     

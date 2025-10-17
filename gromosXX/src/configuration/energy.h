@@ -299,7 +299,8 @@ namespace configuration
      * interaction energies between two EDS sites
      * vector is based on: {site_i, state_i, site_j,state_j}
      */
-    std::map<std::vector<int>, double> eds_mult_vi;
+    std::vector<double> eds_mult_vi;
+    //std::map<std::vector<int>, double> eds_mult_vi;
     /*
     * energy of the reference state for each site
     */
