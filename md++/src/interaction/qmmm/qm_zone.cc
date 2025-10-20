@@ -219,7 +219,6 @@ void interaction::QM_Zone::write(topology::Topology& topo,
     std::ostringstream msg;
     msg << "Dynamic Charges currently only supported with schnet_v2 worker";
     io::messages.add(msg.str(), "QM_Zone", io::message::error);
-    return E_INPUT_ERROR;
   }
 
   // Write energies
