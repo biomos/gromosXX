@@ -134,10 +134,6 @@ int interaction::NN_Worker::init(const topology::Topology& topo
   // Convert C++ string to Python string and append to sys.path
   sys.attr("path").attr("append")(modulePath);
 
-  // To be able to import the module from the current directory
-  // py::module_ sys = py::module_::import("sys");
-  // sys.attr("path").attr("append")("/local/gromosXX/md++/src/interaction/qmmm");
-
   // Initialize mlp_calculator Python object
   if (software == simulation::qm_schnetv1) {
     // Initialize schnet_v1 module
@@ -243,8 +239,17 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
   // Get time step
   py::int_ step = sim.steps();
 
+  // Determine partial_charges flag
+  bool partial_charges = (sim.param().qmmm.qm_ch == simulation::qm_ch_dynamic);
+
+  // Determine the spin multiplicity
+  py::int_ spin_mult = sim.param().qmmm.qm_zone.spin_mult;
+
+  // Determine the total_charge
+  py::int_ total_charge = sim.param().qmmm.qm_zone.charge;
+
   // Run the method calculate_next_step to predict energy, forces and NN validation
-  mlp_calculator.attr("calculate_next_step")(atomic_numbers, system_coordinates, step);
+  mlp_calculator.attr("calculate_next_step")(atomic_numbers, system_coordinates, step, spin_mult, total_charge, py::bool_(partial_charges));
   
   // Store predicted energy
   const double energy = mlp_calculator.attr("get_energy")().cast<double>() * this->param->unit_factor_energy;
@@ -279,6 +284,27 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
   if (sim.param().perturbation.perturbation) {
     const double energy_derivative = mlp_calculator.attr("get_derivative")().cast<double>() * this->param->unit_factor_energy;
     qm_zone.QM_energy_derivative() = energy_derivative;
+  }
+
+  // Assign dynamic charges for IR+BR
+  if (sim.param().qmmm.qm_ch == simulation::qm_ch_dynamic) {
+    std::vector<double> partial_charges = mlp_calculator.attr("get_charges")().cast<std::vector<double>>();
+    it = qm_zone.qm.begin();
+    double totcharge=0.0;
+    for (unsigned i = 0; it != to; ++it, ++i) {
+      it->qm_charge = partial_charges[i] * this->param->unit_factor_charge;
+      totcharge+=it->qm_charge;
+    }
+    // Adjust predicted partial charges to match with requested total charge by applying homogenous background charge
+    if(totcharge != sim.param().qmmm.qm_zone.charge){
+      DEBUG(10, "Charges from NN model do not add up: requested " << sim.param().qmmm.qm_zone.charge  << " predicted " << totcharge << ". Homogeneously adjusting charges");
+      double q_adjust=(sim.param().qmmm.qm_zone.charge - totcharge) / qm_zone.qm.size();
+      it = qm_zone.qm.begin();
+      for(; it!=to; ++it){
+        it->qm_charge += q_adjust;
+        DEBUG(10, "Charge adjusted for atom " << it->index << " from " << it->qm_charge - q_adjust << " to " << it->qm_charge);
+      }
+    }
   }
   
   // NN validation

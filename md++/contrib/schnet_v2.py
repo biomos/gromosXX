@@ -6,11 +6,6 @@ import yaml
 import ase
 import schnetpack as spk
 
-#import schnetpack.transform as trn
-#from glob import glob
-#from importlib import reload
-#from shutil import rmtree
-
 class YamlParser:
     def __init__(self, yaml_file):
         """
@@ -43,14 +38,80 @@ class YamlParser:
         
     def get_property_keys(self):
         """
-        Retrieves the cutoff value from the parsed YAML data.
-        
-        :return: The cutoff value from the YAML file.
+        Returns all property keys defined under data.property_units.
         """
         try:
-            return list(self.data['data']['property_units'].keys())
+            return list(self.data["data"]["property_units"].keys())
         except KeyError as e:
             raise KeyError(f"Missing key in YAML file: {e}")
+
+    def get_energy_key(self):
+        """
+        Attempts to identify the energy property key (usually starts with 'V' or contains 'ene').
+        """
+        try:
+            property_keys = self.get_property_keys()
+            # Heuristic: look for a key that starts with 'V' or contains 'ene'
+            for key in property_keys:
+                if key.lower().startswith("v") or "ene" in key.lower():
+                    return key
+            raise ValueError("No energy key found in property_units.")
+        except Exception as e:
+            raise ValueError(f"Error finding energy key: {e}")
+
+    def get_force_key(self):
+        """
+        Attempts to identify the force property key (usually starts with 'F' or contains 'force').
+        """
+        try:
+            property_keys = self.get_property_keys()
+            for key in property_keys:
+                if key.lower().startswith("f") or "force" in key.lower():
+                    return key
+            raise ValueError("No force key found in property_units.")
+        except Exception as e:
+            raise ValueError(f"Error finding force key: {e}")
+
+    def get_charges_key(self):
+        """
+        Attempts to identify the charges property key (contains 'charge' or 'q').
+        """
+        try:
+            property_keys = self.get_property_keys()
+            for key in property_keys:
+                if "charge" in key.lower():
+                    return key
+            # Charges are optional, return None if not found
+            return None
+        except Exception as e:
+            raise ValueError(f"Error finding charges key: {e}")
+
+ 
+class ExtendedConverter(spk.interfaces.AtomsConverter):
+    def __init__(self, *args, **kwargs):
+        """
+        Initialize the converter.
+        Detects which extra keys the model expects.
+        """
+        super().__init__(*args, **kwargs)
+        # Detect which inputs the model actually expects
+        self.model_input_keys = getattr(self, "model_input_keys", [])
+
+    def __call__(self, atoms):
+        inputs = super().__call__(atoms)
+
+        # Add total_charge only if the model expects it
+        if "total_charge" in atoms.info:
+            charge = atoms.info.get("total_charge", 0.0)
+            inputs["total_charge"] = torch.tensor([charge], dtype=torch.float32, device=self.device)
+
+        # Add spin_multiplicity only if the model expects it
+        if "spin_multiplicity" in atoms.info:
+            multiplicity = atoms.info.get("spin_multiplicity", 0.0)
+            inputs["spin_multiplicity"] = torch.tensor([multiplicity], dtype=torch.float32, device=self.device)
+
+        return inputs
+    
 
 class SchNet_V2_Calculator:
     """
@@ -82,6 +143,9 @@ class SchNet_V2_Calculator:
 
         predict_energy_and_forces(self, system: ase.Atoms):
             Predict energy and forces for the given atomic system.
+
+        predict_partial_charges(self, system: ase.Atoms):
+            Predict partial charges for the given atomic system.
 
         validate_prediction(self, system: ase.Atoms):
             Validate predictions using the validation calculators.
@@ -146,18 +210,23 @@ class SchNet_V2_Calculator:
         Returns:
             spk.interfaces.SpkCalculator: A configured SchnetPack calculator.
         """
-        # get cutoff from configuration file
         model_args_path = model_path.parent / 'config.yaml'
-        cutoff = YamlParser(model_args_path).get_cutoff()
-        property_keys = YamlParser(model_args_path).get_property_keys()
         model_path = os.path.join(model_path.parent,'best_model')
+
+        # get cutoff and properties from configuration file
+        cutoff = YamlParser(model_args_path).get_cutoff()
+        energy_key =  YamlParser(model_args_path).get_energy_key()
+        force_key = YamlParser(model_args_path).get_force_key()
+        charges_key =  YamlParser(model_args_path).get_charges_key()
         
         calculator = spk.interfaces.SpkCalculator(
             model_file = model_path, # path to model
             dtype=torch.float32, # 
+            converter=ExtendedConverter,
             neighbor_list=spk.transform.ASENeighborList(cutoff=cutoff), # neighbor list
-            energy_key=property_keys[0], # name of energy property in model
-            force_key=property_keys[1], # name of force property in model
+            energy_key=energy_key, # name of energy property in model
+            force_key=force_key, # name of force property in model
+            charges_key=charges_key,
             energy_unit="eV", # units of energy property predicted by ase
             device= self.torchdevice, # device for computation
         )
@@ -182,6 +251,24 @@ class SchNet_V2_Calculator:
         energy = system.get_potential_energy()
         forces = system.get_forces()
         return energy, forces
+    
+    def predict_partial_charges(self, system: ase.Atoms):
+        """
+        Predict partial charges for the given atomic system.
+
+        Args:
+            system (ase.Atoms): Atomic system for which predictions are required.
+
+        Returns:
+            np.ndarray: Partial charges.
+        """
+        # Set the predictive calculator for the atomic system.
+        system.set_calculator(self.pred_calculator)
+
+        # Perform predictions.
+        partial_charges = system.get_charges()
+        return partial_charges
+    
 
     def validate_prediction(self, system: ase.Atoms):
         """
@@ -226,7 +313,7 @@ class SchNet_V2_Calculator:
         maxForce_deviation = max(sigmaF_alpha)
         return maxForce_deviation
 
-    def calculate_next_step(self, atomic_numbers: list, positions: list, time_step: int) -> None:
+    def calculate_next_step(self, atomic_numbers: list, positions: list, time_step: int, spin_multiplicity:int,total_charge:int, partial_charges: bool=False) -> None:
         """
         Perform energy and force prediction, and validate the predictions if necessary.
 
@@ -237,9 +324,16 @@ class SchNet_V2_Calculator:
         """
         # Create an ASE atomic system using atomic numbers and positions.
         system = ase.Atoms(numbers=atomic_numbers, positions=positions)
+        
+        system.info["total_charge"] = float(total_charge)
+        system.info["spin_multiplicity"] = float(spin_multiplicity)
 
         # Predict energy and forces using the primary calculator.
         self.energy, self.forces = self.predict_energy_and_forces(system=system)
+        
+        # Predict partial charges if requested
+        if partial_charges == True:
+            self.charges = self.predict_partial_charges(system=system)
 
         # Perform validation at specified intervals.
         if len(self.val_calculators) > 0 and time_step % self.nn_valid_freq == 0:
@@ -290,3 +384,12 @@ class SchNet_V2_Calculator:
             float: Validation force deviation.
         """
         return self.nn_valid_maxF
+     
+    def get_charges(self):
+        """
+        Get the predicted partial charges for the last atomic system.
+
+        Returns:
+            np.ndarray: Predicted partial charges.
+        """
+        return self.charges
