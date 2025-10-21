@@ -268,12 +268,15 @@ int interaction::Orca_Worker::write_input_pointcharges(std::ofstream& ifs
   if (err) return err;
 
   // write number of charges
-  ifs << this->get_num_charges(sim, qm_zone) << '\n';
+  ifs << this->get_num_charges(sim, qm_zone, true) << '\n';
+  DEBUG(7, "num_charges: " << this->get_num_charges(sim, qm_zone));
+  unsigned counter = 0;
 
   const double len_to_qm = 1.0 / this->param->unit_factor_length;
   const double cha_to_qm = 1.0 / this->param->unit_factor_charge;
   for (std::set<MM_Atom>::const_iterator it = qm_zone.mm.begin(), to = qm_zone.mm.end();
   it != to; ++it) {
+    ++counter;
     if (it->is_polarisable) {
       this->write_mm_atom(ifs, it->atomic_number, it->pos * len_to_qm, (it->charge - it->cos_charge) * cha_to_qm);
       this->write_mm_atom(ifs, it->atomic_number, (it->pos + it->cosV) * len_to_qm, it->cos_charge * cha_to_qm);
@@ -282,6 +285,7 @@ int interaction::Orca_Worker::write_input_pointcharges(std::ofstream& ifs
       this->write_mm_atom(ifs, it->atomic_number, it->pos * len_to_qm, it->charge * cha_to_qm);
     }
   }
+  DEBUG(7, "counter: " << counter);
 
   ifs.close();
   ifs.clear();
