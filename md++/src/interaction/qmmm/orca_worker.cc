@@ -528,26 +528,28 @@ int interaction::Orca_Worker::parse_mm_gradients(std::ifstream& ofs, interaction
   // Parse MM atoms
   for (std::set<MM_Atom>::iterator
          it = qm_zone.mm.begin(), to = qm_zone.mm.end(); it != to; ++it) {
-    DEBUG(15,"Parsing gradient of MM atom " << it->index);
-    int err = this->parse_gradient3D(ofs, it->force);
-    DEBUG(15, "Force: " << math::v2s(it->force));
-    if (err) {
-      std::ostringstream msg;
-      msg << "Failed to parse gradient line of MM atom " << (it->index + 1)
-            << " in " << this->param->output_mm_gradient_file;
-      io::messages.add(msg.str(), this->name(), io::message::error);
-      return 1;
-    }
-    if (it->is_polarisable) {
-      DEBUG(15,"Parsing gradient of COS of MM atom " << it->index);
-      int err = this->parse_gradient3D(ofs, it->cos_force);
-      DEBUG(15, "Force: " << math::v2s(it->cos_force));
+    if (it->charge != 0.0) {
+      DEBUG(15,"Parsing gradient of MM atom " << it->index);
+      int err = this->parse_gradient3D(ofs, it->force);
+      DEBUG(15, "Force: " << math::v2s(it->force));
       if (err) {
         std::ostringstream msg;
-        msg << "Failed to parse gradient line of COS of MM atom " << (it->index + 1)
-            << " in " << this->param->output_mm_gradient_file;
+        msg << "Failed to parse gradient line of MM atom " << (it->index + 1)
+              << " in " << this->param->output_mm_gradient_file;
         io::messages.add(msg.str(), this->name(), io::message::error);
         return 1;
+      }
+      if (it->is_polarisable) {
+        DEBUG(15,"Parsing gradient of COS of MM atom " << it->index);
+        int err = this->parse_gradient3D(ofs, it->cos_force);
+        DEBUG(15, "Force: " << math::v2s(it->cos_force));
+        if (err) {
+          std::ostringstream msg;
+          msg << "Failed to parse gradient line of COS of MM atom " << (it->index + 1)
+              << " in " << this->param->output_mm_gradient_file;
+          io::messages.add(msg.str(), this->name(), io::message::error);
+          return 1;
+        }
       }
     }
   }
