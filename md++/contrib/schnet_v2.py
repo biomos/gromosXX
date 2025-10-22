@@ -169,7 +169,7 @@ class SchNet_V2_Calculator:
             Get the maximum force committee disagreement among all atom during the last validation step.
     """
 
-    def __init__(self, model_path: str, val_model_paths: list, nn_valid_freq: int, write_energy_freq: int) -> None:
+    def __init__(self, model_path: str, val_model_paths: list, nn_valid_freq: int, write_energy_freq: int, use_partial_charges: bool) -> None:
         """
         Initialize the calculator with model paths and configuration.
 
@@ -183,6 +183,7 @@ class SchNet_V2_Calculator:
         cuda_available = torch.cuda.is_available()
         self.device = 'cuda' if cuda_available else 'cpu'
         self.torchdevice = torch.device(self.device)
+        self.use_partial_charges = use_partial_charges
 
         # Initialize the primary predictive calculator.
         model_path = Path(model_path)
@@ -217,7 +218,10 @@ class SchNet_V2_Calculator:
         cutoff = YamlParser(model_args_path).get_cutoff()
         energy_key =  YamlParser(model_args_path).get_energy_key()
         force_key = YamlParser(model_args_path).get_force_key()
-        charges_key =  YamlParser(model_args_path).get_charges_key()
+        if self.use_partial_charges == True:
+            charges_key =  YamlParser(model_args_path).get_charges_key()
+        else:
+            charges_key = None
         
         calculator = spk.interfaces.SpkCalculator(
             model_file = model_path, # path to model
@@ -313,7 +317,7 @@ class SchNet_V2_Calculator:
         maxForce_deviation = max(sigmaF_alpha)
         return maxForce_deviation
 
-    def calculate_next_step(self, atomic_numbers: list, positions: list, time_step: int, spin_multiplicity:int,total_charge:int, partial_charges: bool=False) -> None:
+    def calculate_next_step(self, atomic_numbers: list, positions: list, time_step: int, spin_multiplicity:int,total_charge:int) -> None:
         """
         Perform energy and force prediction, and validate the predictions if necessary.
 
@@ -332,7 +336,7 @@ class SchNet_V2_Calculator:
         self.energy, self.forces = self.predict_energy_and_forces(system=system)
         
         # Predict partial charges if requested
-        if partial_charges == True:
+        if self.use_partial_charges == True:
             self.charges = self.predict_partial_charges(system=system)
 
         # Perform validation at specified intervals.

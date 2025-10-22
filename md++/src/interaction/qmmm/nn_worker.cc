@@ -122,6 +122,9 @@ int interaction::NN_Worker::init(const topology::Topology& topo
   // How often to write energy
   py::int_ write_energy_step = sim.param().write.energy;
 
+  // Determine partial_charges flag
+  py::bool_ partial_charges = (sim.param().qmmm.qm_ch == simulation::qm_ch_dynamic);
+
   // To be able to import the module from the current directory
   // Get the directory of the executable
   char result[PATH_MAX];
@@ -169,7 +172,7 @@ int interaction::NN_Worker::init(const topology::Topology& topo
 
     else {
       // Initialize mlp_calculator SchNet_V2_Calculator Python object
-      mlp_calculator = schnet_v2.attr("SchNet_V2_Calculator")(model_path, val_models_paths, write_val_step, write_energy_step);
+      mlp_calculator = schnet_v2.attr("SchNet_V2_Calculator")(model_path, val_models_paths, write_val_step, write_energy_step, partial_charges);
     }
   }
   
@@ -240,7 +243,7 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
   py::int_ step = sim.steps();
 
   // Determine partial_charges flag
-  bool partial_charges = (sim.param().qmmm.qm_ch == simulation::qm_ch_dynamic);
+  //bool partial_charges = (sim.param().qmmm.qm_ch == simulation::qm_ch_dynamic);
 
   // Determine the spin multiplicity
   py::int_ spin_mult = sim.param().qmmm.qm_zone.spin_mult;
@@ -249,7 +252,7 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
   py::int_ total_charge = sim.param().qmmm.qm_zone.charge;
 
   // Run the method calculate_next_step to predict energy, forces and NN validation
-  mlp_calculator.attr("calculate_next_step")(atomic_numbers, system_coordinates, step, spin_mult, total_charge, py::bool_(partial_charges));
+  mlp_calculator.attr("calculate_next_step")(atomic_numbers, system_coordinates, step, spin_mult, total_charge);
   
   // Store predicted energy
   const double energy = mlp_calculator.attr("get_energy")().cast<double>() * this->param->unit_factor_energy;
