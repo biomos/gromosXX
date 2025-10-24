@@ -3398,7 +3398,7 @@ t_interaction_spec, t_perturbation_details>
         //loop over nr_lambdas
         for (unsigned int lam_index = 0; lam_index < sim.param().precalclam.nr_lambdas; ++lam_index){
 
-          // determine current lambda for this index
+	  // determine current lambda for this index
           double lam=(lam_index * lambda_step) + sim.param().precalclam.min_lam;
           rf_soft_interaction_ext(r, q_i_a*q_i_a, q_i_b * q_i_b,
                   mit->second.CRF_softcore(), A_e_rf, B_e_rf, 
@@ -3623,8 +3623,7 @@ t_interaction_spec, t_perturbation_details>
             {
               // Perturbed - Normal
               math::Vec f_rf;
-              double A_q = 0.0, B_q = 0.0, e_rf = 0.0, de_rf = 0.0, alpha_crf = 0.0, q_ij_a = 0.0, q_ij_b = 0.0, q_i_a = 0.0,
-              q_j_a = 0.0, q_i_b = 0.0, q_j_b = 0.0;
+              double A_q = 0.0, B_q = 0.0, e_rf = 0.0, de_rf = 0.0, alpha_crf = 0.0;
 
               alpha_crf = topo.perturbed_solute().atoms()[atom_i].CRF_softcore();
 
@@ -3643,10 +3642,6 @@ t_interaction_spec, t_perturbation_details>
 
               A_q = topo.perturbed_solute().atoms()[atom_i].A_charge() * topo.charge()(*it);
               B_q = topo.perturbed_solute().atoms()[atom_i].B_charge() * topo.charge()(*it);
-              q_j_a = topo.charge()(*it);
-              q_ij_a = q_i_a * q_j_a;
-              q_j_b = topo.charge()(*it);
-              q_ij_b = q_i_b * q_j_b;
 
               eds_perturbed_rf_interaction(r, A_q, B_q, alpha_crf, f_rf, e_rf, de_rf);
 
@@ -3674,7 +3669,7 @@ t_interaction_spec, t_perturbation_details>
       
                   // determine current lambda for this index
                   double lam=(lam_index * lambda_step) + sim.param().precalclam.min_lam;
-                  rf_soft_interaction_ext(r, q_ij_a, q_ij_b, alpha_crf, A_e_rf, B_e_rf,
+                  rf_soft_interaction_ext(r, A_q, B_q, alpha_crf, A_e_rf, B_e_rf,  
                           A_de_rf, B_de_rf, lam);
 
                   conf.current().energies.A_crf_energy[lam_index][topo.atom_energy_group(atom_i)]
