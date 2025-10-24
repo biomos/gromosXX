@@ -290,7 +290,8 @@ namespace interaction {
      * Calculate number of charges
      */
     virtual int get_num_charges(const simulation::Simulation& sim
-                              , const interaction::QM_Zone & qm_zone) const;
+                              , const interaction::QM_Zone & qm_zone
+                              , bool nonzero_only = false) const;
 
     /**
      * Get current working directory

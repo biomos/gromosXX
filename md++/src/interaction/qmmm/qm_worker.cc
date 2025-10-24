@@ -404,7 +404,8 @@ int interaction::QM_Worker::open_output(std::ifstream& outputfile_stream, const 
 }
 
 int interaction::QM_Worker::get_num_charges(const simulation::Simulation& sim
-                                          , const interaction::QM_Zone& qm_zone) const {
+                                          , const interaction::QM_Zone& qm_zone
+                                          , bool nonzero_only) const {
   unsigned num_charges = 0;
   switch (sim.param().qmmm.qmmm) {
     case simulation::qmmm_mechanical: {
@@ -412,14 +413,17 @@ int interaction::QM_Worker::get_num_charges(const simulation::Simulation& sim
       break;
     }
     case simulation::qmmm_electrostatic: {
-      num_charges = qm_zone.mm.size();
+      for (std::set<MM_Atom>::const_iterator
+        it = qm_zone.mm.begin(), to = qm_zone.mm.end(); it != to; ++it) {
+          if (!nonzero_only || it->charge != 0.0) ++num_charges;
+      }
       break;
     }
     case simulation::qmmm_polarisable: {
-      num_charges = qm_zone.mm.size();
       for (std::set<MM_Atom>::const_iterator
           it = qm_zone.mm.begin(), to = qm_zone.mm.end(); it != to; ++it) {
-        num_charges += int(it->is_polarisable);
+        if (!nonzero_only || it->charge != 0.0) ++num_charges;
+        if (it->is_polarisable) ++num_charges;
       }
       break;
     }
