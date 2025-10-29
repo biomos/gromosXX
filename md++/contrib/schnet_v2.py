@@ -71,21 +71,33 @@ class YamlParser:
             raise ValueError("No force key found in property_units.")
         except Exception as e:
             raise ValueError(f"Error finding force key: {e}")
-
-    def get_charges_key(self):
+        
+    def get_charge_prediction(self):
         """
-        Attempts to identify the charges property key (contains 'charge' or 'q').
+        Identifies if the model was trained to predict charges.
         """
         try:
-            property_keys = self.get_property_keys()
-            for key in property_keys:
-                if "charge" in key.lower():
-                    return key
-            # Charges are optional, return None if not found
-            return None
-        except Exception as e:
-            raise ValueError(f"Error finding charges key: {e}")
+            outputs = self.data['task']['outputs']
+            for out in outputs:
+                name = out.get('name', '').lower()
+                if 'charge' in name:
+                    return True
+            return False
+        except Exception:
+            return False
 
+    def get_electronic_embedding(self):
+        """
+        Identifies if the model was trained with electronic embedding.
+        """
+        try:
+            representation = self.data['model']['representation']
+            embeddings = representation.get('electronic_embeddings', [])
+            if embeddings:
+                return True
+            return False
+        except Exception:
+            return False
  
 class ExtendedConverter(spk.interfaces.AtomsConverter):
     def __init__(self, *args, **kwargs):
@@ -117,9 +129,9 @@ class SchNet_V2_Calculator:
     """
     A calculator class for predicting energy and forces using SchNet models.
 
-    This class provides functionality to load SchNet models, perform energy and 
-    force predictions for atomic systems, and validate predictions using additional 
-    validation models.
+    This class provides functionality to load SchNet models, perform energy, 
+    force and optionally partial charge predictions for atomic systems
+    and validate predictions using additional validation models.
 
     Attributes:
         device (str): The computation device ('cuda' or 'cpu').
@@ -132,6 +144,9 @@ class SchNet_V2_Calculator:
         nn_valid_dev (float): Validation deviation calculated during validation.
 
     Methods:
+        model_trained_on_partial_charges(model_path: str) -> bool:
+            Checks if a SchNetPack model can predict partial charges
+            
         __init__(self, model_path: str, val_model_paths: list, nn_valid_freq: int, write_energy_freq: int) -> None:
             Initialize the calculator with model paths and configuration.
 
@@ -168,39 +183,54 @@ class SchNet_V2_Calculator:
         get_nn_valid_maxF(self):
             Get the maximum force committee disagreement among all atom during the last validation step.
     """
-
-    def __init__(self, model_path: str, val_model_paths: list, nn_valid_freq: int, write_energy_freq: int, use_partial_charges: bool) -> None:
+    
+    @staticmethod
+    def model_trained_on_partial_charges(model_path: str) -> bool:
         """
-        Initialize the calculator with model paths and configuration.
-
-        Args:
-            model_path (str): Path to the primary SchNet model.
-            val_model_paths (list): List of paths to validation models.
-            nn_valid_freq (int): Frequency to validate predictions.
-            write_energy_freq (int): Frequency to write energy predictions.
+        Check if a SchNetPack model was trained on partial charges.
         """
-        # Set computation device to CUDA if available, otherwise fallback to CPU.
-        cuda_available = torch.cuda.is_available()
-        self.device = 'cuda' if cuda_available else 'cpu'
+        model_dir = Path(model_path).parent if Path(model_path).name == "best_model" else Path(model_path)
+        config_path = model_dir / "config.yaml"
+        
+        return YamlParser(config_path).get_charge_prediction()
+        
+    @staticmethod
+    def model_trained_with_electronic_embedding(model_path: str) -> bool:
+        """
+        Check if a SchNetPack model was trained with electronic embedding.
+        """
+        model_dir = Path(model_path).parent if Path(model_path).name == "best_model" else Path(model_path)
+        config_path = model_dir / "config.yaml"
+        return YamlParser(config_path).get_electronic_embedding()
+        
+
+    def __init__(self, model_path: str, val_model_paths: list,
+                 nn_valid_freq: int, write_energy_freq: int,
+                 spin_multiplicity:int,total_charge:int) -> None:
+        """
+        Initialize the calculator.
+        """
+        # Device
+        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.torchdevice = torch.device(self.device)
-        self.use_partial_charges = use_partial_charges
 
-        # Initialize the primary predictive calculator.
-        model_path = Path(model_path)
-        self.pred_calculator = self.get_calculator(model_path=model_path)
+        # Detect if the primary model was trained on charges
+        self.has_partial_charges = self.model_trained_on_partial_charges(model_path)
 
-        # Initialize validation calculators if validation models are provided.
+        # Initialize primary calculator
+        self.pred_calculator = self.get_calculator(model_path=Path(model_path))
+
+        # Validation calculators
         self.val_calculators = []
-        if len(val_model_paths) > 0:
-            for val_path in val_model_paths:
-                val_path = Path(val_path)
-                self.val_calculators.append(self.get_calculator(model_path=val_path))
+        for val_path in val_model_paths:
+            self.val_calculators.append(self.get_calculator(model_path=Path(val_path)))
 
-        # Store additional configuration parameters.
         self.nn_valid_freq = nn_valid_freq
         self.write_energy_freq = write_energy_freq
-        return
+        self.spin_multiplicity = spin_multiplicity
+        self.total_charge = total_charge
 
+    
     def get_calculator(self, model_path) -> spk.interfaces.SpkCalculator:
         """
         Create a SchnetPack calculator from the given model path.
@@ -215,13 +245,13 @@ class SchNet_V2_Calculator:
         model_path = os.path.join(model_path.parent,'best_model')
 
         # get cutoff and properties from configuration file
-        cutoff = YamlParser(model_args_path).get_cutoff()
-        energy_key =  YamlParser(model_args_path).get_energy_key()
-        force_key = YamlParser(model_args_path).get_force_key()
-        if self.use_partial_charges == True:
-            charges_key =  YamlParser(model_args_path).get_charges_key()
-        else:
-            charges_key = None
+        yaml_parser = YamlParser(model_args_path)
+        cutoff = yaml_parser.get_cutoff()
+        energy_key = yaml_parser.get_energy_key()
+        force_key = yaml_parser.get_force_key()
+        
+        # Only provide charges_key if model was trained on partial charges
+        charges_key = "charges" if self.has_partial_charges else None
         
         calculator = spk.interfaces.SpkCalculator(
             model_file = model_path, # path to model
@@ -249,7 +279,7 @@ class SchNet_V2_Calculator:
             tuple: Predicted energy (float) and forces (np.ndarray).
         """
         # Set the predictive calculator for the atomic system.
-        system.set_calculator(self.pred_calculator)
+        system.calc = self.pred_calculator
 
         # Perform predictions.
         energy = system.get_potential_energy()
@@ -267,7 +297,7 @@ class SchNet_V2_Calculator:
             np.ndarray: Partial charges.
         """
         # Set the predictive calculator for the atomic system.
-        system.set_calculator(self.pred_calculator)
+        system.calc = self.pred_calculator
 
         # Perform predictions.
         partial_charges = system.get_charges()
@@ -286,7 +316,7 @@ class SchNet_V2_Calculator:
         """
         val_energies = []
         for val_calculator in self.val_calculators:
-            system.set_calculator(val_calculator)
+            system.calc = val_calculator
             val_energies.append(system.get_potential_energy())
         return val_energies
     
@@ -304,7 +334,7 @@ class SchNet_V2_Calculator:
         model_forces = [np.linalg.norm(self.forces,axis=1)] # initialize production model
         # add validation model forces to model_forces
         for val_calculator in self.val_calculators:
-            system.set_calculator(val_calculator)
+            system.calc = val_calculator
             model_forces.append(np.linalg.norm(system.get_forces(),axis=1))
         # Calculate ensemble force 
         ensemble_Falpha = np.mean(model_forces, axis=0)  # Average force acting on every atom from all calculators
@@ -317,7 +347,7 @@ class SchNet_V2_Calculator:
         maxForce_deviation = max(sigmaF_alpha)
         return maxForce_deviation
 
-    def calculate_next_step(self, atomic_numbers: list, positions: list, time_step: int, spin_multiplicity:int,total_charge:int) -> None:
+    def calculate_next_step(self, atomic_numbers: list, positions: list, time_step: int) -> None:
         """
         Perform energy and force prediction, and validate the predictions if necessary.
 
@@ -329,14 +359,14 @@ class SchNet_V2_Calculator:
         # Create an ASE atomic system using atomic numbers and positions.
         system = ase.Atoms(numbers=atomic_numbers, positions=positions)
         
-        system.info["total_charge"] = float(total_charge)
-        system.info["spin_multiplicity"] = float(spin_multiplicity)
+        system.info["total_charge"] = float(self.total_charge)
+        system.info["spin_multiplicity"] = float(self.spin_multiplicity)
 
         # Predict energy and forces using the primary calculator.
         self.energy, self.forces = self.predict_energy_and_forces(system=system)
         
         # Predict partial charges if requested
-        if self.use_partial_charges == True:
+        if self.has_partial_charges == True:
             self.charges = self.predict_partial_charges(system=system)
 
         # Perform validation at specified intervals.

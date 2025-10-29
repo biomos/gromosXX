@@ -649,16 +649,19 @@ void io::In_QMMM::read(topology::Topology& topo,
         std::ostream & os) {
   io::messages.add("Reading QM/MM specification file",
                    "In_QMMM", io::message::notice);
-  //std::string blockname = "QMZONE";
+
   this->read_zone(topo, sim, "QMZONE");
-  //blockname = "BUFFERZONE";
+
   if (!sim.param().qmmm.qm_constraint) {
     DEBUG(15, "Removing constraints");
     this->remove_constraints(topo);
     io::messages.add("QM-QM distance constraints removed",
         "In_QMMM", io::message::notice);
   }
+
   this->read_zone(topo, sim, "BUFFERZONE");
+
+  this->check_charge_mult_consistency(topo, sim);
 
   if (sim.param().perturbation.perturbation) {
       this->read_pert_qmzone(sim, &sim.param().qmmm.nn);
@@ -1122,8 +1125,16 @@ void io::In_QMMM::read(topology::Topology& topo,
         if (_lineStream.fail()) { // if it fails fall back to default energy nnvalidation
           nnvalid_maxF = 0;
         } 
-        if (nnvalid_maxF == 0) sim.param().qmmm.nn.nnvalid = simulation::nn_valid_standard;
-        else if (nnvalid_maxF == 1) sim.param().qmmm.nn.nnvalid = simulation::nn_valid_maxF;
+        if (nnvalid_maxF == 0) {
+          sim.param().qmmm.nn.nnvalid = simulation::nn_valid_standard;
+          io::messages.add("NN validation based on energy deviation",
+                "In_QMMM", io::message::notice);
+        }
+        else if (nnvalid_maxF == 1) {
+          sim.param().qmmm.nn.nnvalid = simulation::nn_valid_maxF;
+          io::messages.add("Additional NN validation based on maximum force deviation",
+                "In_QMMM", io::message::notice);
+        }
       }
     } // NNVALID
     { // NNCHARGE
@@ -1142,6 +1153,8 @@ void io::In_QMMM::read(topology::Topology& topo,
           unsigned charge_steps;
           _lineStream >> charge_steps;
           sim.param().qmmm.nn.charge_steps = charge_steps;
+          io::messages.add("Charge model will be the NNMODEL.",
+              "In_QMMM", io::message::notice);
           if (_lineStream.fail()) {
             io::messages.add("bad line in NNCHARGE block",
                   "In_QMMM", io::message::error);
@@ -1151,6 +1164,10 @@ void io::In_QMMM::read(topology::Topology& topo,
           io::messages.add("Dynamic QM charges requested but NNCHARGE is not specified.",
               "In_QMMM", io::message::error);
         }
+      }
+      else {
+        io::messages.add("Static QM charges requested but NNCHARGE is specified - NNCHARGE will be ignored.",
+              "In_QMMM", io::message::notice);
       }
     } // NNCHARGE
     { // NNDEVICE
@@ -1353,14 +1370,6 @@ void io::In_QMMM::read(topology::Topology& topo,
       }
     }
   } // CAPLEN
-
-  // check if NN charge model is defined
-  if ((sw == simulation::qm_schnetv1 || sw == simulation::qm_schnetv2 )
-        && sim.param().qmmm.qm_ch == simulation::qm_ch_dynamic
-        && sim.param().qmmm.nn.charge_model_path.empty()) {
-    io::messages.add("dynamic QM charge requested but no NN charge model specified",
-                "In_QMMM", io::message::error);
-  }
 
   // allow learning_type == nn_learning_type_qmonly only for single-atom QM region
   if ((sw == simulation::qm_schnetv1 || sw == simulation::qm_schnetv2 )
@@ -1690,8 +1699,7 @@ void io::In_QMMM::read_zone(topology::Topology& topo
 
   int charge = 0, spin_mult = 0;
   
-  _lineStream >> charge
-              >> spin_mult;
+  _lineStream >> charge >> spin_mult;
   if (blockname == "BUFFERZONE") {
     _lineStream >> sim.param().qmmm.buffer_zone.cutoff;
     if (sim.param().pairlist.skip_step > 1) {
@@ -1719,13 +1727,14 @@ void io::In_QMMM::read_zone(topology::Topology& topo
     io::messages.add(msg.str(), "In_QMMM", io::message::error);
     return;
   }
-  // Count number of electrons and check consistency with charge and multiplicity
-  int num_elec = -charge;
-  unsigned qmi = 0, qmz = 0, qmli = 0,brstat = 0;
+  
+  // Parse atoms in the zone 
+  unsigned qmi = 0, qmz = 0, qmli = 0, brstat = 0;
   for (std::vector<std::string>::const_iterator it = buffer.begin() + 2
                                               , to = buffer.end() - 1
                                               ; it != to; ++it) {
     std::string line(*it);
+
     if (line.length() < 17) {
       std::ostringstream msg;
       msg << "Line too short in " << blockname << " block";
@@ -1734,10 +1743,8 @@ void io::In_QMMM::read_zone(topology::Topology& topo
 
     // the first 17 chars are ignored
     line.erase(line.begin(), line.begin() + 17);
-
     _lineStream.clear();
     _lineStream.str(line);
-
     _lineStream >> qmi >> qmz >> qmli;
 
     if (_lineStream.fail()) {
@@ -1747,7 +1754,7 @@ void io::In_QMMM::read_zone(topology::Topology& topo
       return;
     }
 
-    // Take care of optional brstat input in QMZONE and BUFFERZONE
+    // Optional BRSTAT
     _lineStream >> brstat;
     if (_lineStream.fail()) {
       if (blockname == "QMZONE"){
@@ -1758,6 +1765,7 @@ void io::In_QMMM::read_zone(topology::Topology& topo
       }
     } 
 
+    // Validation checks
     if (qmi < 1 || qmi > topo.num_atoms()) {
       std::ostringstream msg;
       msg << blockname << " block: atom out of range";
@@ -1788,6 +1796,7 @@ void io::In_QMMM::read_zone(topology::Topology& topo
     }
     topo.is_qm(qmi - 1) = topo.is_qm(qmi - 1) || (blockname == "QMZONE");
 
+    // Assign zone membership flag
     const bool is_qm_buffer = (blockname == "BUFFERZONE");
 
     // ADDED MICHAEL check for static or adaptive BR atom
@@ -1829,24 +1838,14 @@ void io::In_QMMM::read_zone(topology::Topology& topo
     }
 
     topo.qm_atomic_number(qmi - 1) = qmz;
+
     if (qmli > 0 ) {
       DEBUG(15, "Linking " << qmi << " to " << qmli);
       topo.qmmm_link().insert(std::make_pair(qmi - 1, qmli - 1));
     }
-
-    num_elec += qmz + (bool)qmli;
   }
 
-  // Check charge and multiplicity consistency
-  bool open_shell = num_elec % 2;
-  // sm=0 is closed-shell in MNDO program and is in principle sm=1
-  if (!spin_mult) spin_mult = 1;
-  if (open_shell == spin_mult % 2) {
-      std::ostringstream msg;
-      msg << blockname << " block: " << num_elec << " electrons but multiplicity " << spin_mult;
-      io::messages.add(msg.str(), "In_QMMM", io::message::warning);
-  }
-
+  // Validate Link atoms
   for (std::set< std::pair<unsigned,unsigned> >::const_iterator
       it = topo.qmmm_link().begin(), to = topo.qmmm_link().end();
       it != to; ++it)
@@ -1858,6 +1857,114 @@ void io::In_QMMM::read_zone(topology::Topology& topo
     }
   }
 }
+
+void io::In_QMMM::check_charge_mult_consistency(topology::Topology& topo,
+                                                simulation::Simulation& sim)
+{
+  int num_elec_total = 0;
+  int num_elec_static = 0;
+  int num_elec_adaptive = 0;
+
+  // Sum electrons for all QM and static and adaptive BR atoms ---
+  for (unsigned i = 0; i < topo.num_atoms(); ++i) {
+    if (topo.is_qm(i) || topo.is_qm_buffer(i)) {
+      int Z = topo.qm_atomic_number(i);
+      if (Z < 1) continue; // skip uninitialized
+
+      num_elec_total += Z;
+
+      if (topo.is_static_adaptive(i) == 2)
+        num_elec_static += Z;
+      if (topo.is_static_adaptive(i) == 1)
+        num_elec_adaptive += Z;
+
+      // Add one for link atoms (QMLI)
+      for (const auto& link : topo.qmmm_link()) {
+        if (link.first == i) {
+          num_elec_total += 1;
+          num_elec_static += 1;  // link atoms are attached to QM, hence static
+        }
+      }
+    }
+  }
+
+  // Subtract total system charge (QMZONE + BUFFERZONE)
+  int total_charge = sim.param().qmmm.qm_zone.charge
+                   + sim.param().qmmm.buffer_zone.charge;
+  num_elec_total -= total_charge;
+
+  int num_elec_ir_static = num_elec_total - num_elec_adaptive;
+  int num_elec_ir_adaptive = num_elec_total - num_elec_static;
+
+  // Determine the spin multiplicity
+  // number of unpaired spins of the QM zone
+  const int spin_qm = sim.param().qmmm.qm_zone.spin_mult - 1;
+  // number of unpaired spins of the buffer zone
+  const int spin_buf = sim.param().qmmm.buffer_zone.spin_mult - 1;
+  // consider no spin pairing between the QM and buffer zone
+  int spin_mult = spin_qm + spin_buf + 1;
+  if (!spin_mult) spin_mult = 1; // default closed-shell
+
+  // Count buffer composition
+  int num_static_BR = 0;
+  int num_adaptive_BR = 0;
+  for (unsigned i = 0; i < topo.num_atoms(); ++i) {
+    if (topo.is_qm_buffer(i)) {
+      if (topo.is_static_adaptive(i) == 1) ++num_adaptive_BR;
+      else if (topo.is_static_adaptive(i) == 2) ++num_static_BR;
+    }
+  }
+
+  // Perform sanity checks separately
+  bool open_shell_total = (num_elec_total % 2 != 0);
+
+  if (open_shell_total != (spin_mult % 2 == 0)) {
+    std::ostringstream msg;
+    msg << "QM/MM system: " << num_elec_total
+        << " electrons but multiplicity " << spin_mult
+        << " (charge and multiplicity may be inconsistent)";
+    io::messages.add(msg.str(), "In_QMMM", io::message::warning);
+  }
+
+  if (num_static_BR > 0 && open_shell_total != (spin_mult % 2 == 0)) {
+    std::ostringstream msg;
+    msg << "QM/MM system (IR + static BR): "
+        << num_elec_ir_static << " electrons but multiplicity " << spin_mult
+        << " (check charge and multiplicity for static region)";
+    io::messages.add(msg.str(), "In_QMMM", io::message::warning);
+  }
+
+  if (num_adaptive_BR > 0 && open_shell_total != (spin_mult % 2 == 0)) {
+    std::ostringstream msg;
+    msg << "QM/MM system (IR + adaptive BR): "
+        << num_elec_ir_adaptive << " electrons but multiplicity " << spin_mult
+        << " (adaptive BR may alter charge/multiplicity consistency dynamically"
+        <<" if adaptive BR contains open-shell or charged molecules - Be careful)";
+    io::messages.add(msg.str(), "In_QMMM", io::message::warning);
+  }
+
+
+  // --- Optional info about buffer composition ---
+  if (num_static_BR > 0 && num_adaptive_BR > 0) {
+    io::messages.add("QM/MM system contains both STATIC and ADAPTIVE buffer atoms.",
+                     "In_QMMM", io::message::notice);
+  } else if (num_adaptive_BR > 0) {
+    io::messages.add("QM/MM system contains an ADAPTIVE buffer region.",
+                     "In_QMMM", io::message::notice);
+  } else if (num_static_BR > 0) {
+    io::messages.add("QM/MM system contains a STATIC buffer region.",
+                     "In_QMMM", io::message::notice);
+  }
+
+
+  DEBUG(15, "QM/MM total electrons = " << num_elec_total
+            << ", static electrons = " << num_elec_static
+            << ", adaptive electrons = " << num_elec_adaptive
+            << ", total charge = " << total_charge
+            << ", spin multiplicity = " << spin_mult);
+}
+
+
 
 void io::In_QMMM::remove_constraints(topology::Topology& topo)
   {

@@ -80,19 +80,21 @@ namespace io {
      */
     void read_iac_elements(topology::Topology& topo
     , simulation::Parameter::qmmm_struct::qm_param_struct* qm_param);
-
     /**
      * Read the list of QM perturbed states
      */
     void read_pert_qmzone(simulation::Simulation& sim
                     , simulation::Parameter::qmmm_struct::qm_param_struct* qm_param);
-
     /**
      * Read the list of QM atoms
      */
     void read_zone(topology::Topology& topo
                     , simulation::Simulation& sim
                     , const std::string& blockname);
+    /**
+     * Perform charge and multiplicity check 
+     */
+    void check_charge_mult_consistency(topology::Topology& topo, simulation::Simulation& sim);
     /**
      * helper function to remove constraints from QM atoms
      */
