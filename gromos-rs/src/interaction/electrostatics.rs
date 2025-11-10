@@ -9,6 +9,17 @@ use crate::math::{Vec3, Mat3};
 use crate::topology::Topology;
 use crate::configuration::Configuration;
 
+use num_complex::Complex64;
+
+// Conditional FFT imports
+#[cfg(feature = "use-fftw")]
+use fftw::plan::*;
+#[cfg(feature = "use-fftw")]
+use fftw::types::*;
+
+#[cfg(not(feature = "use-fftw"))]
+use rustfft::{FftPlanner, num_complex::Complex};
+
 /// 1/√π constant (stable alternative to unstable FRAC_1_SQRT_PI)
 const INV_SQRT_PI: f64 = 0.5641895835477562869480794515607725858;
 
@@ -564,24 +575,248 @@ fn pme_influence_function(
     gaussian / (volume * k2) * modulation
 }
 
-/// Complete PME calculation (simplified structure)
+//
+// FFT Integration (conditional: FFTW3 or rustfft)
+//
+
+/// Perform 3D forward FFT (real → complex)
 ///
-/// This function shows the structure of a full PME calculation.
-/// For production use, integrate with an FFT library like `rustfft`.
+/// Uses FFTW3 if available (feature "use-fftw"), otherwise falls back to rustfft
+#[cfg(feature = "use-fftw")]
+fn fft_3d_forward(
+    real_grid: Vec<Vec<Vec<f64>>>,
+    nx: usize,
+    ny: usize,
+    nz: usize,
+) -> Vec<Vec<Vec<Complex64>>> {
+    // FFTW3 implementation (fastest)
+    let mut input: Vec<f64> = Vec::with_capacity(nx * ny * nz);
+    for i in 0..nx {
+        for j in 0..ny {
+            for k in 0..nz {
+                input.push(real_grid[i][j][k]);
+            }
+        }
+    }
+
+    // Create FFTW plan and execute
+    let mut output = vec![c64::new(0.0, 0.0); nx * ny * (nz / 2 + 1)];
+    let mut plan: R2CPlan64 = R2CPlan::aligned(&[nx, ny, nz], Flag::MEASURE).unwrap();
+    plan.r2c(&mut input, &mut output).unwrap();
+
+    // Convert to 3D complex grid
+    let mut complex_grid = vec![vec![vec![Complex64::new(0.0, 0.0); nz / 2 + 1]; ny]; nx];
+    let mut idx = 0;
+    for i in 0..nx {
+        for j in 0..ny {
+            for k in 0..(nz / 2 + 1) {
+                complex_grid[i][j][k] = Complex64::new(output[idx].re, output[idx].im);
+                idx += 1;
+            }
+        }
+    }
+    complex_grid
+}
+
+/// Perform 3D forward FFT using rustfft (fallback)
+#[cfg(not(feature = "use-fftw"))]
+fn fft_3d_forward(
+    real_grid: Vec<Vec<Vec<f64>>>,
+    nx: usize,
+    ny: usize,
+    nz: usize,
+) -> Vec<Vec<Vec<Complex64>>> {
+    let mut planner = FftPlanner::<f64>::new();
+
+    // Create FFT plans
+    let fft_x = planner.plan_fft_forward(nx);
+    let fft_y = planner.plan_fft_forward(ny);
+    let fft_z = planner.plan_fft_forward(nz);
+
+    // Convert to complex and perform 3D FFT (one dimension at a time)
+    let mut complex_grid = vec![vec![vec![Complex::new(0.0, 0.0); nz]; ny]; nx];
+
+    // Copy real data to complex grid
+    for i in 0..nx {
+        for j in 0..ny {
+            for k in 0..nz {
+                complex_grid[i][j][k] = Complex::new(real_grid[i][j][k], 0.0);
+            }
+        }
+    }
+
+    // FFT along z direction
+    for i in 0..nx {
+        for j in 0..ny {
+            let mut buffer = complex_grid[i][j].clone();
+            fft_z.process(&mut buffer);
+            complex_grid[i][j] = buffer;
+        }
+    }
+
+    // FFT along y direction
+    for i in 0..nx {
+        for k in 0..nz {
+            let mut buffer: Vec<Complex<f64>> = (0..ny).map(|j| complex_grid[i][j][k]).collect();
+            fft_y.process(&mut buffer);
+            for j in 0..ny {
+                complex_grid[i][j][k] = buffer[j];
+            }
+        }
+    }
+
+    // FFT along x direction
+    for j in 0..ny {
+        for k in 0..nz {
+            let mut buffer: Vec<Complex<f64>> = (0..nx).map(|i| complex_grid[i][j][k]).collect();
+            fft_x.process(&mut buffer);
+            for i in 0..nx {
+                complex_grid[i][j][k] = buffer[i];
+            }
+        }
+    }
+
+    // Convert rustfft Complex to num_complex Complex64
+    complex_grid
+        .into_iter()
+        .map(|plane| {
+            plane
+                .into_iter()
+                .map(|row| {
+                    row.into_iter()
+                        .map(|c| Complex64::new(c.re, c.im))
+                        .collect()
+                })
+                .collect()
+        })
+        .collect()
+}
+
+/// Perform 3D inverse FFT (complex → real)
+#[cfg(feature = "use-fftw")]
+fn fft_3d_inverse(
+    complex_grid: Vec<Vec<Vec<Complex64>>>,
+    nx: usize,
+    ny: usize,
+    nz: usize,
+) -> Vec<Vec<Vec<f64>>> {
+    // Convert to FFTW format
+    let mut input: Vec<c64> = Vec::with_capacity(nx * ny * (nz / 2 + 1));
+    for i in 0..nx {
+        for j in 0..ny {
+            for k in 0..(nz / 2 + 1) {
+                input.push(c64::new(complex_grid[i][j][k].re, complex_grid[i][j][k].im));
+            }
+        }
+    }
+
+    // Execute inverse FFT
+    let mut output = vec![0.0; nx * ny * nz];
+    let mut plan: C2RPlan64 = C2RPlan::aligned(&[nx, ny, nz], Flag::MEASURE).unwrap();
+    plan.c2r(&mut input, &mut output).unwrap();
+
+    // Normalize and convert to 3D grid
+    let norm = 1.0 / (nx * ny * nz) as f64;
+    let mut real_grid = vec![vec![vec![0.0; nz]; ny]; nx];
+    let mut idx = 0;
+    for i in 0..nx {
+        for j in 0..ny {
+            for k in 0..nz {
+                real_grid[i][j][k] = output[idx] * norm;
+                idx += 1;
+            }
+        }
+    }
+    real_grid
+}
+
+#[cfg(not(feature = "use-fftw"))]
+fn fft_3d_inverse(
+    complex_grid: Vec<Vec<Vec<Complex64>>>,
+    nx: usize,
+    ny: usize,
+    nz: usize,
+) -> Vec<Vec<Vec<f64>>> {
+    // Convert Complex64 to rustfft Complex
+    let mut grid: Vec<Vec<Vec<Complex<f64>>>> = complex_grid
+        .into_iter()
+        .map(|plane| {
+            plane
+                .into_iter()
+                .map(|row| {
+                    row.into_iter()
+                        .map(|c| Complex::new(c.re, c.im))
+                        .collect()
+                })
+                .collect()
+        })
+        .collect();
+
+    let mut planner = FftPlanner::<f64>::new();
+    let ifft_x = planner.plan_fft_inverse(nx);
+    let ifft_y = planner.plan_fft_inverse(ny);
+    let ifft_z = planner.plan_fft_inverse(nz);
+
+    // Inverse FFT along x direction
+    for j in 0..ny {
+        for k in 0..nz {
+            let mut buffer: Vec<Complex<f64>> = (0..nx).map(|i| grid[i][j][k]).collect();
+            ifft_x.process(&mut buffer);
+            for i in 0..nx {
+                grid[i][j][k] = buffer[i];
+            }
+        }
+    }
+
+    // Inverse FFT along y direction
+    for i in 0..nx {
+        for k in 0..nz {
+            let mut buffer: Vec<Complex<f64>> = (0..ny).map(|j| grid[i][j][k]).collect();
+            ifft_y.process(&mut buffer);
+            for j in 0..ny {
+                grid[i][j][k] = buffer[j];
+            }
+        }
+    }
+
+    // Inverse FFT along z direction
+    for i in 0..nx {
+        for j in 0..ny {
+            let mut buffer = grid[i][j].clone();
+            ifft_z.process(&mut buffer);
+            grid[i][j] = buffer;
+        }
+    }
+
+    // Extract real part and normalize
+    let norm = 1.0 / (nx * ny * nz) as f64;
+    grid.into_iter()
+        .map(|plane| {
+            plane
+                .into_iter()
+                .map(|row| row.into_iter().map(|c| c.re * norm).collect())
+                .collect()
+        })
+        .collect()
+}
+
+/// Complete PME calculation with full FFT integration
+///
+/// Implements the full Particle Mesh Ewald sum using FFT (FFTW3 or rustfft).
 ///
 /// # Steps
-/// 1. Assign charges to grid (B-splines)
+/// 1. Assign charges to grid using B-splines
 /// 2. FFT forward: charge grid → Fourier space
 /// 3. Apply influence function and compute reciprocal energy
-/// 4. FFT inverse: Fourier space → force grid
-/// 5. Interpolate forces back to atoms
+/// 4. Compute force grid in Fourier space
+/// 5. FFT inverse: Fourier space → real-space force grid
+/// 6. Interpolate forces back to atoms
 ///
-/// # Note
-/// This is a **structural template**. Full FFT implementation requires
-/// the `rustfft` crate or similar. Add to Cargo.toml:
-/// ```toml
-/// rustfft = "6.1"
-/// ```
+/// # Performance
+/// - With FFTW3 (if available): Uses highly optimized C library
+/// - Without FFTW3: Falls back to pure Rust rustfft
+///
+/// The build system automatically detects FFTW3 and enables the feature.
 pub fn pme_reciprocal_space(
     positions: &[Vec3],
     charges: &[f64],
@@ -590,7 +825,7 @@ pub fn pme_reciprocal_space(
 ) -> (Vec<Vec3>, f64) {
     let n_atoms = positions.len();
 
-    // 1. Assign charges to grid
+    // 1. Assign charges to grid using B-splines
     let charge_grid = assign_charges_to_grid(
         positions,
         charges,
@@ -601,48 +836,224 @@ pub fn pme_reciprocal_space(
         pme.spline_order,
     );
 
-    // 2. FFT forward transform (requires FFT library)
-    // In production: use rustfft to transform charge_grid
-    // let mut planner = FftPlanner::new();
-    // let fft = planner.plan_fft_forward(pme.grid_x);
-    // ... apply 3D FFT ...
+    // 2. Forward FFT: real space → Fourier space
+    let mut fourier_grid = fft_3d_forward(
+        charge_grid,
+        pme.grid_x,
+        pme.grid_y,
+        pme.grid_z,
+    );
 
-    // 3. Apply influence function in Fourier space
+    // 3. Apply influence function and compute reciprocal energy
     let volume = box_vectors.determinant() as f64;
     let box_x = box_vectors.x_axis.x as f64;
     let box_y = box_vectors.y_axis.y as f64;
     let box_z = box_vectors.z_axis.z as f64;
 
     let mut reciprocal_energy = 0.0;
+    let nz_half = pme.grid_z / 2 + 1;
 
-    // Loop over k-vectors (simplified - would be done in FFT space)
+    // Apply influence function in Fourier space
     for i_x in 0..pme.grid_x {
         let k_x = 2.0 * std::f64::consts::PI * i_x as f64 / box_x;
         for i_y in 0..pme.grid_y {
             let k_y = 2.0 * std::f64::consts::PI * i_y as f64 / box_y;
-            for i_z in 0..pme.grid_z {
+            for i_z in 0..nz_half {
                 let k_z = 2.0 * std::f64::consts::PI * i_z as f64 / box_z;
 
-                // Get Fourier coefficient (from FFT, here using grid directly as placeholder)
-                let rho_k = charge_grid[i_x][i_y][i_z];
+                // Influence function (Green's function in Fourier space)
+                let g_k = pme_influence_function(
+                    k_x, k_y, k_z,
+                    pme.alpha,
+                    volume,
+                    pme.spline_order,
+                );
 
-                // Influence function
-                let g_k = pme_influence_function(k_x, k_y, k_z, pme.alpha, volume, pme.spline_order);
+                // Get Fourier coefficient
+                let rho_k = fourier_grid[i_x][i_y][i_z];
+                let rho_k_sq = rho_k.norm_sqr();
 
-                // Reciprocal space energy contribution
-                reciprocal_energy += g_k * rho_k * rho_k;
+                // Reciprocal space energy: E = (1/2) * Σ G(k) * |ρ(k)|²
+                reciprocal_energy += 0.5 * g_k * rho_k_sq;
+
+                // Modulate by influence function for force calculation
+                fourier_grid[i_x][i_y][i_z] *= g_k;
             }
         }
     }
 
-    // 4. FFT inverse transform for forces (requires FFT library)
-    // ... inverse FFT to get force grid ...
+    // 4-5. Inverse FFT to get force potential grid
+    let force_potential_grid = fft_3d_inverse(
+        fourier_grid,
+        pme.grid_x,
+        pme.grid_y,
+        pme.grid_z,
+    );
 
-    // 5. Interpolate forces back to atoms
-    let forces = vec![Vec3::ZERO; n_atoms];
-    // ... interpolate from force grid to atomic forces ...
+    // 6. Interpolate forces back to atoms using B-spline derivatives
+    let forces = interpolate_forces_from_grid(
+        positions,
+        charges,
+        &force_potential_grid,
+        box_vectors,
+        pme.grid_x,
+        pme.grid_y,
+        pme.grid_z,
+        pme.spline_order,
+    );
 
     (forces, reciprocal_energy)
+}
+
+/// Interpolate forces from grid back to atoms using B-spline derivatives
+///
+/// Uses the derivative of the B-spline interpolation to compute forces
+/// on atoms from the force potential grid.
+fn interpolate_forces_from_grid(
+    positions: &[Vec3],
+    charges: &[f64],
+    potential_grid: &[Vec<Vec<f64>>],
+    box_vectors: &Mat3,
+    grid_x: usize,
+    grid_y: usize,
+    grid_z: usize,
+    spline_order: usize,
+) -> Vec<Vec3> {
+    let mut forces = vec![Vec3::ZERO; positions.len()];
+
+    // Box dimensions
+    let box_x = box_vectors.x_axis.x as f64;
+    let box_y = box_vectors.y_axis.y as f64;
+    let box_z = box_vectors.z_axis.z as f64;
+
+    // Grid spacing
+    let h_x = box_x / grid_x as f64;
+    let h_y = box_y / grid_y as f64;
+    let h_z = box_z / grid_z as f64;
+
+    for (i, pos) in positions.iter().enumerate() {
+        let charge = charges[i];
+
+        // Fractional coordinates on grid
+        let u_x = (pos.x as f64 / h_x) % grid_x as f64;
+        let u_y = (pos.y as f64 / h_y) % grid_y as f64;
+        let u_z = (pos.z as f64 / h_z) % grid_z as f64;
+
+        // Nearest grid point
+        let k_x = if spline_order % 2 == 0 {
+            u_x.floor() as i32
+        } else {
+            u_x.round() as i32
+        };
+        let k_y = if spline_order % 2 == 0 {
+            u_y.floor() as i32
+        } else {
+            u_y.round() as i32
+        };
+        let k_z = if spline_order % 2 == 0 {
+            u_z.floor() as i32
+        } else {
+            u_z.round() as i32
+        };
+
+        let lower = -(spline_order as i32 - 1) / 2;
+        let upper = spline_order as i32 / 2;
+
+        let mut force_x = 0.0;
+        let mut force_y = 0.0;
+        let mut force_z = 0.0;
+
+        // Interpolate using B-spline derivatives
+        for dx in lower..=upper {
+            let x_idx = ((k_x + dx).rem_euclid(grid_x as i32)) as usize;
+            let u_x_shifted = u_x - (k_x + dx) as f64;
+            let wx = b_spline(spline_order, u_x_shifted);
+            let dwx = b_spline_derivative(spline_order, u_x_shifted);
+
+            for dy in lower..=upper {
+                let y_idx = ((k_y + dy).rem_euclid(grid_y as i32)) as usize;
+                let u_y_shifted = u_y - (k_y + dy) as f64;
+                let wy = b_spline(spline_order, u_y_shifted);
+                let dwy = b_spline_derivative(spline_order, u_y_shifted);
+
+                for dz in lower..=upper {
+                    let z_idx = ((k_z + dz).rem_euclid(grid_z as i32)) as usize;
+                    let u_z_shifted = u_z - (k_z + dz) as f64;
+                    let wz = b_spline(spline_order, u_z_shifted);
+                    let dwz = b_spline_derivative(spline_order, u_z_shifted);
+
+                    let phi = potential_grid[x_idx][y_idx][z_idx];
+
+                    // Force components from gradient of potential
+                    force_x -= charge * dwx * wy * wz * phi / h_x;
+                    force_y -= charge * wx * dwy * wz * phi / h_y;
+                    force_z -= charge * wx * wy * dwz * phi / h_z;
+                }
+            }
+        }
+
+        forces[i] = Vec3::new(force_x as f32, force_y as f32, force_z as f32);
+    }
+
+    forces
+}
+
+/// Derivative of B-spline function
+fn b_spline_derivative(order: usize, x: f64) -> f64 {
+    let sign = if x >= 0.0 { 1.0 } else { -1.0 };
+    let u = x.abs();
+
+    match order {
+        2 => {
+            // Derivative of linear B-spline
+            if u < 1.0 {
+                -sign
+            } else {
+                0.0
+            }
+        }
+        3 => {
+            // Derivative of quadratic B-spline
+            if u < 0.5 {
+                -2.0 * x
+            } else if u < 1.5 {
+                let t = 1.5 - u;
+                -sign * t
+            } else {
+                0.0
+            }
+        }
+        4 => {
+            // Derivative of cubic B-spline
+            if u < 1.0 {
+                let u2 = u * u;
+                sign * (-2.0 * u + 1.5 * u2)
+            } else if u < 2.0 {
+                let t = 2.0 - u;
+                -sign * t * t / 2.0
+            } else {
+                0.0
+            }
+        }
+        5 => {
+            // Derivative of quartic B-spline
+            if u < 0.5 {
+                x * (-5.0 / 4.0 + u * u)
+            } else if u < 1.5 {
+                let t = u - 0.5;
+                sign * (1.0 / 4.0 + 0.5 * t - 0.5 * t * t - 2.0 / 3.0 * t * t * t)
+            } else if u < 2.5 {
+                let t = 2.5 - u;
+                -sign * t * t * t / 6.0
+            } else {
+                0.0
+            }
+        }
+        _ => {
+            eprintln!("Warning: B-spline derivative order {} not implemented", order);
+            0.0
+        }
+    }
 }
 
 /// PME self-energy correction

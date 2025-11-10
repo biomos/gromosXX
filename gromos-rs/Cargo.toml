@@ -25,6 +25,11 @@ mimalloc = { version = "0.1", optional = true }
 # Interop
 libc = "0.2"
 
+# FFT for PME electrostatics
+rustfft = "6.2"  # Pure Rust FFT (always available)
+fftw = { version = "0.8", optional = true }  # FFTW3 bindings (if system library available)
+num-complex = "0.4"  # Complex number support
+
 [dev-dependencies]
 criterion = { version = "0.5", features = ["html_reports"] }
 approx = "0.5"
@@ -46,6 +51,7 @@ inherits = "release"
 default = ["simd"]
 simd = []
 mimalloc = ["dep:mimalloc"]
+use-fftw = ["fftw"]  # Use FFTW3 if system library available
 
 # Uncomment when benchmarks are created
 # [[bench]]
