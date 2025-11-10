@@ -17,6 +17,10 @@
 //! VELOCITYRED (optional)
 //!     1 RES    ATOM      1    vx       vy       vz
 //! END
+//! FORCERED (optional, added in GROMOS-RS)
+//!     1 RES    ATOM      1    fx       fy       fz
+//! #         10  (comment every 10 atoms)
+//! END
 //! LATTICESHIFTS (optional)
 //!     1    0    0    0
 //! END
@@ -24,6 +28,9 @@
 //!     lx   ly   lz
 //! END
 //! ```
+//!
+//! Note: For dedicated force trajectory output with FREEFORCERED/CONSFORCERED blocks,
+//! use the `ForceWriter` from `io::force` module instead.
 
 use crate::configuration::{Configuration, Box as SimBox};
 use crate::math::Vec3;
@@ -114,6 +121,29 @@ impl TrajectoryWriter {
             writeln!(self.writer, "END")?;
         }
 
+        // FORCERED block (optional) - uses higher precision for forces
+        if self.write_forces {
+            writeln!(self.writer, "FORCERED")?;
+            for (i, force) in state.force.iter().enumerate() {
+                writeln!(
+                    self.writer,
+                    "{:>6} {:>6} {:>6} {:>6} {:18.9} {:18.9} {:18.9}",
+                    i + 1,
+                    "RES",
+                    "ATOM",
+                    i + 1,
+                    force.x,
+                    force.y,
+                    force.z
+                )?;
+                // Add comment every 10 atoms (GROMOS convention)
+                if (i + 1) % 10 == 0 {
+                    writeln!(self.writer, "#{:>10}", i + 1)?;
+                }
+            }
+            writeln!(self.writer, "END")?;
+        }
+
         // GENBOX block (box dimensions)
         let dims = state.box_config.dimensions();
         writeln!(self.writer, "GENBOX")?;
@@ -180,6 +210,28 @@ mod tests {
         config.current_mut().box_config = SimBox::rectangular(3.0, 3.0, 3.0);
 
         let mut writer = TrajectoryWriter::new(temp_file, "Test", false, false).unwrap();
+        let result = writer.write_frame(0, 0.0, &config);
+        assert!(result.is_ok());
+        assert_eq!(writer.frame_count(), 1);
+    }
+
+    #[test]
+    fn test_write_frame_with_forces() {
+        let temp_file = "/tmp/test_traj_forces.trc";
+        let mut config = Configuration::new(3, 1, 1);
+        config.current_mut().pos = vec![
+            Vec3::new(0.0, 0.0, 0.0),
+            Vec3::new(0.1, 0.0, 0.0),
+            Vec3::new(0.0, 0.1, 0.0),
+        ];
+        config.current_mut().force = vec![
+            Vec3::new(1.0, 0.0, 0.0),
+            Vec3::new(0.0, 1.0, 0.0),
+            Vec3::new(0.0, 0.0, 1.0),
+        ];
+        config.current_mut().box_config = SimBox::rectangular(3.0, 3.0, 3.0);
+
+        let mut writer = TrajectoryWriter::new(temp_file, "Test with forces", false, true).unwrap();
         let result = writer.write_frame(0, 0.0, &config);
         assert!(result.is_ok());
         assert_eq!(writer.frame_count(), 1);
