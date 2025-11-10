@@ -3,11 +3,23 @@
 //! Supports:
 //! - .topo/.top - Topology files
 //! - .conf/.cnf - Coordinate files
-//! - .trc - Trajectory files
-//! - .tre - Energy files
+//! - .imd - Input parameter files (simulation settings)
+//! - .trc/.trj - Trajectory files (coordinates over time)
+//! - .tre - Energy files (ENE/ENA format)
+//! - .trf - Force files
 
 pub mod coordinate;
 pub mod topology;
+pub mod imd;
+pub mod trajectory;
+pub mod energy;
+pub mod force;
+
+// Re-export commonly used types
+pub use imd::{ImdParameters, TempBathParameters, PressureParameters};
+pub use trajectory::TrajectoryWriter;
+pub use energy::{EnergyWriter, EnergyFrame, EnergyBlock};
+pub use force::ForceWriter;
 
 use std::io;
 
