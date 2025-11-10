@@ -620,3 +620,26 @@ impl RestraintList {
 - **Stochastic dynamics**: Langevin integrator for implicit solvent simulations
 - **Restraints**: Position and distance restraints (NMR/experimental data fitting)
 - **Free energy**: Lambda-dependent perturbations, soft-core potentials, TI calculations
+
+---
+
+## Tutorial Compatibility
+
+**Target**: Official GROMOS tutorials (biomos/gromos_tutorial_livecoms)
+**Focus**: Tutorial 01 - Basic MD workflow
+
+### Programs Status
+
+| Program | Purpose | Status |
+|---------|---------|--------|
+| **mk_script** | Generate IMD files | ✅ Implemented (gromos-rs/src/bin/) |
+| **pdb2g96** | PDB to GROMOS converter | ❌ Not implemented |
+| **make_top** | Topology generator | ❌ Not implemented |
+| **com_top** | Topology combiner | ❌ Not implemented |
+| **sim_box** | Solvation tool | ❌ Not implemented |
+| **ene_ana** | Energy analysis | ❌ Not implemented |
+| **rmsd** | RMSD calculator | ❌ Not implemented |
+| **md** | Main MD binary | ⚠️ Engine ready, need binary wrapper |
+
+**Progress**: 1/16 tutorial tools (6.25%)
+**See**: TUTORIAL_COMPATIBILITY_PLAN.md for detailed roadmap
