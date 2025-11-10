@@ -570,7 +570,10 @@ pub fn write_topology_file<P: AsRef<Path>>(
     writeln!(writer, "END").map_err(|e| IoError::WriteError(e.to_string()))?;
 
     // SOLUTEATOM block
+    let n_atoms = topo.solute.num_atoms();
     writeln!(writer, "SOLUTEATOM").map_err(|e| IoError::WriteError(e.to_string()))?;
+    writeln!(writer, "#   NRP: number of solute atoms").map_err(|e| IoError::WriteError(e.to_string()))?;
+    writeln!(writer, "{}", n_atoms).map_err(|e| IoError::WriteError(e.to_string()))?;
     writeln!(writer, "# ATNM: atom number").map_err(|e| IoError::WriteError(e.to_string()))?;
     writeln!(writer, "# MRES: residue number").map_err(|e| IoError::WriteError(e.to_string()))?;
     writeln!(writer, "# PANM: atom name").map_err(|e| IoError::WriteError(e.to_string()))?;
@@ -580,8 +583,6 @@ pub fn write_topology_file<P: AsRef<Path>>(
     writeln!(writer, "# CGC: charge group code").map_err(|e| IoError::WriteError(e.to_string()))?;
     writeln!(writer, "# INE: number of exclusions").map_err(|e| IoError::WriteError(e.to_string()))?;
     writeln!(writer, "#ATNM MRES PANM IAC  MASS      CG     CGC INE").map_err(|e| IoError::WriteError(e.to_string()))?;
-
-    let n_atoms = topo.solute.num_atoms();
     for (i, atom) in topo.solute.atoms.iter().enumerate() {
         let n_exclusions = topo.exclusions.get(i).map_or(0, |e| e.len());
         let cg_code = topo.atom_to_chargegroup.get(i).map_or(1, |&c| c + 1);
