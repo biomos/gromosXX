@@ -1,0 +1,14 @@
+@topo   ../../topo/peptide_2Cl_53a6.top 
+@pbc    r
+@jval   jval.jvr
+@traj
+../../md/md_peptide_1.trc.gz
+../../md/md_peptide_2.trc.gz
+../../md/md_peptide_3.trc.gz
+../../md/md_peptide_4.trc.gz
+../../md/md_peptide_5.trc.gz
+../../md/md_peptide_6.trc.gz
+../../md/md_peptide_7.trc.gz
+../../md/md_peptide_8.trc.gz
+../../md/md_peptide_9.trc.gz
+../../md/md_peptide_10.trc.gz

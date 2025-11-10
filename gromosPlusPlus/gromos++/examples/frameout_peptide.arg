@@ -1,0 +1,3 @@
+@topo		../topo/peptide_53a6.top
+@outformat	pdb 
+@traj      	gch_peptide.cnf

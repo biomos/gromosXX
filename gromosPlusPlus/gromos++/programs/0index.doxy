@@ -1,0 +1,192 @@
+/**
+ * @file 0index.doxy
+ * @page programs Program Documentation
+ * @anchor programs <h2>Program Documentation</h2>
+ *
+ * You can run all the programs from the command line by typing: <br>
+ *
+ * <p>program @@X ... @@Y ...<br>
+ * In addition, you can write an <strong>input file</strong> with the corresponding 
+ * flags from the command line and then type: <br>
+ *
+ * <b>program</b> @@f <strong>input_file</strong>
+ * </p>
+ *  
+ * A list of common arguments can be found @ref common_args "here".
+ *
+ * <p>For any questions or bug reports contact the respective authors. </p>
+ * 
+ * <p>
+ * authors:
+ * - Jane Allison @anchor ja (ja)
+ * - Riccardo Baron @anchor rba (rba)
+ * - Noah Bieler @anchor nb (nb)
+ * - Katherina Boguslawski @anchor kb (kb)
+ * - Roland B&uuml;rgi @anchor rb (rb)
+ * - Clara Christ @anchor cc (cc)
+ * - Markus Christen @anchor mc (mc)
+ * - Andreas Eichenberger @anchor ae (ae)
+ * - Daan Geerke @anchor dg (dg)
+ * - Alice Gl&auml;ttli @anchor ag (ag)
+ * - Niels Hansen @anchor nh (nh)
+ * - Tomas Hansson @anchor th (th)
+ * - Bruno Horta @anchor bh (bh)
+ * - Mika Kastenholz @anchor mk (mk)
+ * - Vincent Kraeutler @anchor vk (vk)
+ * - Chris Oostenbrink @anchor co (co)
+ * - Sereina Riniker @anchor sr (sr)
+ * - Nathan Schmid @anchor ns (ns)
+ * - Axel S&uuml;ndermann @anchor as (as)
+ * - Daniel Trzesniak @anchor dt (dt)
+ * - Dongqi Wang @anchor dw (dw)
+ * - Maria Pechlaner @anchor mp (mp)
+ * - Jan Walther Perthold @anchor jwp (jwp)
+ * - Maria Reif @anchor mr (mr)
+ * - Drazen Petrov @anchor dp (dp)
+ * - Anita de Ruiter @anchor adr (adr)
+ * - Martina Setz @anchor ms (ms)
+ * - Stefan Bachmann @anchor sb (sb)
+ * - Edgar Galicia-Andres @anchor ega (ega)
+ * </p>
+ *
+ * <h2>Available Programs:</h2>
+ * - @ref atominfo list atom characteristics
+ * - @ref bilayer_dist Calculates probability distribution along bilayer normal
+ * - @ref bilayer_oparam calculates order parameter in bilayers
+ * - @ref bin_box create a condensed phase system of two components
+ * - @ref build_box generate a condensed phase system on a grid
+ * - @ref check_box check box dimensions over a trajectory
+ * - @ref check_top check a topology for (consistency) errors
+ * - @ref close_pair find atom pairs of two molecules that are close to each other
+ * - @ref cluster performs a conformational clustering on a RMSD matrix
+ * - @ref cog calculates centre-of-geometry for all solute molecules over a trajectory
+ * - @ref com_top combine molecular topology files into one
+ * - @ref con_top convert topology to different force field version
+ * - @ref copy_box repeats a simulation box in a given direction
+ * - @ref cos_dipole calculate molecular dipoles including COS charges
+ * - @ref cos_epsilon calculate relative permittivity and box dipole moment autocorrelations 
+ * - @ref cry perform symmetry operations on molecules
+ * - @ref cry_rms perform RMSD and RMSF calculations based on crystallographic symmetry.
+ * - @ref dfmult calculates multiple free energy differences
+ * - @ref dfgrid calculates and writes out a distancefield grid
+ * - @ref dg_ener applies the perturbation formula based on two lists of energies
+ * - @ref diffus calculates the diffusion constant for a set of atoms
+ * - @ref dipole calculates the dipole moment for specified atoms
+ * - @ref ditrans monitors dihedral angle transitions
+ * - @ref dssp monitors secondary structure elements
+ * - @ref duplicate detects and removes duplicates
+ * - @ref eds_update_1 calculates EDS parameters iteratively from energy time series
+ * - @ref eds_update_2 calculates EDS parameters from energy time series
+ * - @ref edyn perform an essential dynamics analysis
+ * - @ref ene_ana analyse (energy) trajectories
+ * - @ref ener recalculates interaction energies
+ * - @ref epath calculates electron-tunneling pathways in a protein
+ * - @ref epsilon calculate the relative permittivity over a trajectory
+ * - @ref eps_field calculate the relative permittivity when an external electric field was used
+ * - @ref explode put molecules at large intermolecular distances
+ * - @ref ext_ti_ana predict free energy derivatives at non-simulated lambda values
+ * - @ref ext_ti_merge combine and reweight extended TI predictions
+ * - @ref filter filters a coordinate trajectory for a limited set of atoms
+ * - @ref follow display a trajectory of selected atoms in 3D
+ * - @ref frameout write out individual snapshots of a molecular trajectory
+ * - @ref gathtraj writes a gathered trajectory
+ * - @ref gca generate coordinates from (dihedral) angles
+ * - @ref gch generate coordinates for explicit hydrogens
+ * - @ref hbond monitors the occurrence of hydrogen bonds
+ * - @ref inbox force atoms in the simulation box
+ * - @ref int_ener recalculates interaction energies between two specified sets of atoms
+ * - @ref ion replaces water molecules by ions
+ * - @ref iondens monitors the average density of ions in the simulation box
+ * - @ref jepot compute the 3J-value local elevation potential
+ * - @ref jval time series of 3J-values
+ * - @ref make_sasa_top add sasa block to molecular topology file
+ * - @ref make_top creates molecule topologies from building blocks
+ * - @ref matrix_overlap calculates the overlap between two matrices
+ * - @ref mdf minimum distance function
+ * - @ref mk_script generate scripts to run MD simulations
+ * - @ref m_widom calculates the free energy of inserting a test particle into configurations of a molecular system
+ * - @ref nhoparam calculates order parameters for N-H bonds.
+ * - @ref noe analysis of NOE distances over a trajectory
+ * - @ref pairlist prints out a list of all particles within a cutoff 
+ * - @ref pdb2g96 converts coordinate files from pdb to GROMOS format
+ * - @ref pert_top creates a perturbation topology to remove interactions for specified atoms
+ * - @ref post_noe re-analyses the output of program noe
+ * - @ref predict_noe calculate NOE distance averages
+ * - @ref prep_eds generates dual EDS molecular and perturbation topology
+ * - @ref prep_noe converts X-plor NOE data to GROMOS format
+ * - @ref prep_xray creates a X-ray specification file
+ * - @ref prep_xray_le creates an X-ray LE specification file
+ * - @ref pt_top combine topologies and perturbation topologies
+ * - @ref ran_box create a condensed phase system of any composition
+ * - @ref ran_solvation solvates a solute by randomly placing solvent molecules around it
+ * - @ref rdf calculates a radial distribution function
+ * - @ref red_top reduce a molecular topology to a subset of atoms
+ * - @ref rep_ana analyse a replica exchange run
+ * - @ref rep_rewrite sort replica exchange trajectories
+ * - @ref reweight reweights a time series
+ * - @ref r_factor calculates crystallographic residuals
+ * - @ref r_real_factor calculates crystallographic real-space residuals
+ * - @ref rgyr calculated radius of gyration
+ * - @ref rmsd calculates atom-positional root-mean-square deviations
+ * - @ref rmsdmat calculates the rmsd-matrix for given structures
+ * - @ref rmsf atom-positional root-mean-square fluctuations
+ * - @ref rot_rel calculates autocorrelation functions for rotational relaxation times
+ * - @ref sasa calculates solvent-accessible surface areas for selected atoms
+ * - @ref sasa_hasel compute sasa using hasel formula
+ * - @ref shake_analysis Calculate all interactions for a selected set of atoms
+ * - @ref sim_box solvates a solute in a box of pre-equilibrated solvent
+ * - @ref solute_entropy takes a coordinate trajectory and calculated the configurational entropy
+ * - @ref structure_factor calculates structure factor amplitudes and phases
+ * - @ref swd calculates the solute weighted distance for solvents
+ * - @ref tcf calculate distributions and time correlation functions
+ * - @ref temperature calculates the temperature from the velocity trajectory for specified atoms
+ * - @ref trs_ana analyse trajectories as with ene_ana, but allowing for varying number of blocks
+ * - @ref tser calculates time series of properties
+ * - @ref tstrip removes solvent coordinates from a trajectory
+ * - @ref unify_box convert boxshapes
+ * - @ref visco calculates bulk and shear viscosities
+ * - @ref vmdplugin read GROMOS files in VMD
+ * - @ref xray_map swiss army knife for crystallographic maps
+ * - @ref xrayts extract X-ray information from the restraints trajectory
+ * <hr>
+ *
+ */
+
+/**
+ * @page common_args Common Arguments
+ * @anchor common_args <h2> Common Arguments </h2>
+ * - \@topo Moleculac topology file
+ * - \@traj Trajectory (POSITION / POSITIONRED, 
+ *          single structure or trajectory)
+ * - \@pbc  &lt;boundary type&gt; [&lt;@ref gathermethods "gather method"&gt;] [&lt;gather options&gt;]
+ * - \@pos  Single structure
+ * - \@props @ref PropertySpecifier "property specifier"
+ * - \@atoms @ref AtomSpecifier "atom specifier"
+ * - \@vector @ref VectorSpecifier "vector specifier"
+ * - \@inG96 assumes that input files (like topologies) are in GROMOS96 format.
+ * - \@outG96 writes output in GROMOS96 format.
+ */
+
+/**
+ * @mainpage Gromos++
+ * <h1>Groningen Molecular Simulation Analysis : Gromos++</h1>
+ * <h2> Documentation </h2>
+ * <hr>
+ * <h3> Programs </h3>
+ * - @ref programs "available"
+ * - @ref contrib "contrib programs"
+ *
+ * <h3> Modules </h3>
+ * - @ref gromos
+ * - @ref gcore
+ * - @ref gmath
+ * - @ref gio
+ * - @ref bound
+ * - @ref fit
+ * - @ref args
+ * - @ref utils
+ *
+ * <h3> Installation </h3>
+ * - @ref install "installation instructions"
+ * 
+ */

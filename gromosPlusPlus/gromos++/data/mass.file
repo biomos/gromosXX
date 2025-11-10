@@ -1,0 +1,11 @@
+TITLE
+Standard GROMOS atomic masses used by the hbond program
+END
+HYDROGENMASS
+1.00800     #standard GROMOS hydrogen mass
+END
+ACCEPTORMASS
+14.00670    #standard GROMOS nitrogen mass
+15.99940    #standard GROMOS oxygen mass
+32.06000    #standard GROMOS sulfur mass
+END

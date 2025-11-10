@@ -1,0 +1,48 @@
+TITLE
+NOE correction file containing the multiplicity corrections and pseudo
+atom corrections as described on page II-67 of the GROMOS96 manual
+END
+NOECORGROMOS
+#
+# Format
+# GROMOS NOE type      correction[nm]
+#
+# type 3: CH2(non-stereospecific)
+     3    0.09
+#
+# type 5: CH3
+     5    0.10
+#
+# type 6: iso-propyl
+     6    0.22
+#
+# type 7: flipping aromatic ring
+# You will notice that in the GROMOS book this
+# NOE type is given the geometric code 0. We
+# use 7 for ease of programming. 
+     7    0.21
+#
+# type 8: unassigned NH2 group
+# This one is actually not in the book. I took it from the Wuthrich
+# corrections which are most similar to the gromos96 corrections
+     8    0.10
+END
+MULTIPLICITY
+#
+#Format
+#GROMOS NOE type      correction-factor
+#
+#type 3: CH2(non-stereospecific)
+     3      1.0
+#
+#type 5; Ch3
+     5      1.0
+#
+#type 6; iso-propyl
+     6      1.0
+# 
+#type 7; flipping aromatic ring
+     7      1.0
+#
+#typw 8; unassigned NH2 group
+END

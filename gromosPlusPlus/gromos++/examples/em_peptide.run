@@ -1,0 +1,8 @@
+#!/bin/sh
+GROMOS=md
+
+$GROMOS \
+  @topo ../topo/peptide_53a6.top \
+  @conf ../coord/gch_peptide.cnf \
+  @fin  peptide_min.cnf \
+  @input em_peptide.imd > em_peptide.omd

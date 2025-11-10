@@ -1,0 +1,265 @@
+TITLE
+NOELIB specification file 
+END
+NOELIB
+#DNA parameters. These entries were made by CO and MK
+#based on unanimous decisions. 
+#Proteins parameters. Extra entries added by tsoares, July 2002
+#to contain all the NOE assignment types for Lysozyme.
+#!G96 residue name! !Noe-file atom name! !G96 atom name! !NOE type!  
+#1
+  DADE H1'  C1* 1
+  DADE H8   C8  2
+  DADE H2   C2  2
+  DADE H2'  C2* 4
+  DADE H2'' C2* 4
+  DADE H4'  C4* 1
+  DADE H5'  C5* 4
+  DADE H5'' C5* 4
+  DADE H3'  C3* 1
+#2
+  DGUA H8   C8  2
+  DGUA H1'  C1* 1
+  DGUA H2'  C2* 4
+  DGUA H2'' C2* 4
+  DGUA H4'  C4* 1
+  DGUA H5'  C5* 4
+  DGUA H3'  C3* 1
+#3
+  DCYT H6   C6  2
+  DCYT H1'  C1* 1
+  DCYT H5   C5  2
+  DCYT H2'  C2* 4
+  DCYT H2'' C2* 4
+  DCYT H4'  C4* 1
+  DCYT H5'  C5* 4
+  DCYT H3'  C3* 1
+#4
+  DTHY H1'  C1* 1
+  DTHY H6   C6  2
+  DTHY H2'  C2* 4
+  DTHY H2'' C2* 4
+  DTHY H4'  C4* 1
+  DTHY H5'  C5* 4
+  DTHY H5@  C5M 5
+  DTHY H3'  C3* 1
+#
+#
+#Additional set of Protein NOE specifications
+#by tsoares, 2002. NO GUARANTEE THEY ARE EITHER
+#COMPLETE OR RIGHT. PLEASE USE AT YOUR OWN RISK.
+#Protein NOE specifications --mika
+#possibly (rather certainly...) not complete
+#
+#Some NOE's are quite general. Here's a list:
+#HN->H; hydrogen bound to the nitrogen of the peptide group
+#HA->CA;hydrogen of the CA carbon
+#HB#->CB; unresolved hydrogens of the CB carbon
+#HB1, HB2->CB; resolved hydrogen of the CB carbon
+#and so...got a bit bored writing this, so i stop here
+#in any case use this list with caution...
+#--mika
+#
+#1
+   ALA  HN   H    0  
+   ALA  HA   CA   1
+   ALA  HB@  CB   5
+#2
+   ARG  HN   H    0
+   ARG  HA   CA   1
+   ARG  HB@  CB   3
+   ARG  HB1  CB   4 # tsoares 2002
+   ARG  HB2  CB   4 # tsoares 2002
+   ARG  HG@  CG   3
+   ARG  HD@  CD   3
+#3
+   ASN  HN   H    0
+   ASN  HA   CA   1
+   ASN  HB@  CB   3 # tsoares, 2002
+   ASN  HB1  CB   4
+   ASN  HB2  CB   4
+#Listen: We cannot really do this one (ASN  HD@) below.
+#Why: ask Mika or Chris personally.
+#Still: you can make it a type 6 and get a (slighlty but still wrong) guess
+# ASN  HD@  ND2  6 # tsoares, 2002
+   ASN  HD21 HD21 0
+   ASN  HD22 HD22 0 # tsoares, 2002
+#4
+   ASP  HN   H    0
+   ASP  HA   CA   1
+   ASP  HB@  CB   3
+   ASP  HB1  CB   4
+   ASP  HB2  CB   4
+#5
+  CYSH HN   H    0
+  CYSH HA   CA   1
+  CYSH HB@  CB   3
+#6
+  CYS1 HN   H    0
+  CYS1 HA   CA   1
+  CYS1 HB@  CB   3
+# Mod. N -> S
+  CYS1 HB1  CB   4 # tsoares, 2001
+# Mod. N -> S
+  CYS1 HB2  CB   4 # tsoares, 2001
+  CYS2 HN   H    0
+  CYS2 HA   CA   1
+  CYS2 HB@  CB   3
+# Mod. N -> S
+  CYS2 HB1  CB   4 # tsoares, 2001
+# Mod. N -> S
+  CYS2 HB2  CB   4 # tsoares, 2001
+#7
+   GLN  HN   H    0
+   GLN  HA   CA   1
+   GLN  HB@  CB   3
+   GLN  HB1  CB   4
+   GLN  HB2  CB   4
+   GLN  HG@  CG   3
+   GLN  HG1  CG   4
+   GLN  HG2  CG   4
+   GLN  HE21 HE21 0
+   GLN  HE22 HE22 0
+#8
+   GLU  HN   H    0
+   GLU  HA   CA   1
+   GLU  HB@  CB   3
+   GLU  HG@  CG   3
+#9
+   GLY  HN   H    0
+   GLY  HA1  CA   4
+   GLY  HA2  CA   4
+   GLY  HA@  CA   3 #tsoares, 2002
+#10
+  HISA HN   H    0
+  HISA HA   CA   1
+  HISA HB@  CB   3
+  HISA HB1  CB   4 #tsoares, 2002
+  HISA HB2  CB   4 #tsoares, 2002
+  HISA HD1  HD1  0 #tsoares, 2002
+  HISA HD2  CD2  2 # is the angle correct? Are these observed at all
+  HISA HE1  CE1  2 # is the angle correct? Are these observed at all
+  HISB HN   H    0
+  HISB HA   CA   1
+  HISB HB@  CB   3
+  HISB HB1  CB   4 #tsoares, 2002
+  HISB HB2  CB   4 #tsoares, 2002
+  HISB HE2  HE2  0 #tsoares, 2002
+  HISB HD2  CD2  2 # is the angle correct? Are these observed at all
+  HISB HE1  CE1  2 # is the angle correct? Are these observed at all
+#11
+   ILE  HN   H    0
+   ILE  HA   CA   1
+   ILE  HB   CB   1
+   ILE  HD@  CD   5 #tsoares, 2002
+# Check if in the PDB HG1@ refers to the methyl or to the CH2
+# and decide which of the following lines is correct
+# we use the GROMOS convention (manual p. IV-67), i.e. CG1 is a CH2
+   ILE  HG1@ CG1  3
+#
+# Check if in the PDB HG1@ refers to the methyl or to the CH2
+# and decide which of the following lines is correct
+# we use the GROMOS convention (manual p. IV-67), i.e. CG2 is a CH3
+ILE  HG2@ CG2  5
+#12
+   LEU  HN   H    0
+   LEU  HA   CA   1
+   LEU  HB@  CB   3
+   LEU  HB1  CB   4
+   LEU  HB2  CB   4
+   LEU  HD@@ CG   6
+   LEU  HD@  CG   6 #tsoares, 2002
+   LEU  HD1@ CD1  5
+   LEU  HD2@ CD2  5
+   LEU  HG   CG   1
+#13
+  LYSH HN   H    0
+  LYSH HA   CA   1
+  LYSH HB@  CB   3
+  LYSH HB1  CB   4
+  LYSH HB2  CB   4
+  LYSH HG@  CG   3
+  LYSH HG1  CG   4
+  LYSH HG2  CG   4
+  LYSH HD@  CD   3
+  LYSH HD1  CD   4
+  LYSH HD2  CD   4
+  LYSH HE@  CE   3 # tsoares, 2002
+  LYSH HE1  CE   4
+  LYSH HE2  CE   4
+#14
+   MET  HN   H    0
+   MET  HA   CA   1
+   MET  HB@  CB   3
+   MET  HB1  CB   4
+   MET  HB2  CB   4
+   MET  HG@  CG   3
+   MET  HG1  CG   4
+   MET  HG2  CG   4
+   MET  HE@  CE   5 #tsoares, 2002
+#15
+   PHE  HN   H    0
+   PHE  HA   CA   1
+   PHE  HB@  CB   3
+   PHE  HB1  CB   4 #tsoares, 2002
+   PHE  HB2  CB   4 #tsoares, 2002
+   PHE  HD@  CG  -1   1
+   PHE  HE@  CZ  -1   1
+   PHE  HZ   HZ   0
+#16
+   PRO  HA   CA   1
+   PRO  HB@  CB   3
+   PRO  HB1  CB   4
+   PRO  HB2  CB   4
+   PRO  HG@  CG   3
+   PRO  HG1  CD   4
+   PRO  HG2  CD   4
+   PRO  HD@  CD   3
+   PRO  HD1  CD   4
+   PRO  HD2  CD   4
+#17
+   SER  HN   H    0
+   SER  HA   CA   1
+   SER  HB@  CB   3
+   SER  HB1  CB   4 # tsoares, 2002
+   SER  HB2  CB   4 # tsoares, 2002
+# will not be measured, due to fast excange
+# SER  HG   HG   0
+#18
+   VAL  HN   H    0
+   VAL  HA   CA   1
+   VAL  HB   CB   1
+   VAL  HG1@ CG1  5
+   VAL  HG2@ CG2  5  
+   VAL  HG@  CB   6 # tsoares, 2002
+   VAL  HG@@ CB   6
+#19
+   THR  HN   H    0
+   THR  HA   CA   1
+   THR  HB   CB   1
+# will not be measured, due to fast excange
+# what is the pdb nomenclature?
+# THR  HG1  HG1  0
+# THR  HG2  HG1  0
+#20
+   TRP  HN   H    0
+   TRP  HA   CA   1
+   TRP  HB@  CB   3
+   TRP  HB1  CB   4
+   TRP  HB2  CB   4
+# Warning: is the pdb nomenclature exactly the same?
+   TRP  HE1  HE1  0
+   TRP  HE3  HE3  0
+   TRP  HD1  HD1  0
+   TRP  HZ2  HZ2  0
+   TRP  HZ3  HZ3  0
+   TRP  HH2  HH2  0
+#21
+   TYR  HN   H    0
+   TYR  HA   CA   1
+   TYR  HB@  CB   3
+   TYR  HB1  CB   4 # tsoares, 2002
+   TYR  HB2  CB   4 # tsoares, 2002
+   TYR  HD@  CG  -1   1
+   TYR  HE@  CZ  -1   1
+END

@@ -1,0 +1,50 @@
+TITLE
+NOE correction file containing the multiplicity corrections and pseudo
+atom corrections as described on page II-67 of the GROMOS96 manual
+With a correction according to
+* Koning, T.M.G.; Boelens, R. and Kaptein, R.: Journal of Magnetic
+  Resonance, 90:111-123 (1990)
+END
+NOECORGROMOS
+#
+# Format
+# GROMOS NOE type      correction[nm]
+#
+# type 3: CH2(non-stereospecific)
+    3    0     0.09000000
+#
+# type 5: CH3
+    5    0     0.03000000
+#
+# type 6: iso-propyl
+    6    0     0.22000000
+#
+# type -1: flipping aromatic ring
+# You will notice that in the GROMOS book this
+# NOE type is given the geometric code 0. We
+# use -1 for ease of programming. 
+   -1    1     0.21000000
+#
+# type -1: unassigned NH2 group
+   -1    2     0.10000000
+END
+MULTIPLICITY
+#
+#Format
+#GROMOS NOE type      correction-factor
+#
+#type 3: CH2(non-stereospecific)
+    3    0     1.00000000
+#
+#type 5; Ch3                            3^1/3
+    5    0     1.44225000
+#
+#type 6; iso-propyl
+    6    0     1.00000000
+# 
+#type -1; flipping aromatic ring
+   -1    1     1.00000000
+#
+#type -1; unassigned NH2 group
+   -1    2     1.00000000
+END

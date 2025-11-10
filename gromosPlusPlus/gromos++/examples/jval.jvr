@@ -1,0 +1,21 @@
+TITLE
+penta-peptide, Val-Tyr-Arg-Lys-Gln, linear,
+J-coupling constant restraints, hypothetical
+END
+JVALRESSPEC
+#
+# for each J-coupling constant restraint is to be specified:
+# IPJR, JPJR, KPJR, LPJR: atom sequence numbers defining the angle phi
+# CPJR: weight factor of interaction
+# PJR0: reference J-coupling constant value
+# PSJR: phase shift delta = theta-phi
+# A, B, C: Karplus parameters
+# H:    0 (harmonic), 1 (attractive), -1 (repulsive)
+#
+#IPJR JPJR KPJR LPJR   CPJR PJR0   PSJR     A     B     C  H
+    9   11   13   27    1.0  7.3  -60.0   6.4  -1.4   1.9  0
+   27   29   31   44    1.0  8.6  -60.0   6.4  -1.4   1.9  0
+   29   31   32   33    1.0  7.4 -120.0   9.5  -1.6   1.8  0
+   29   31   32   33    1.0  5.7    0.0   9.5  -1.6   1.8  0
+   44   46   48   57    1.0  7.4  -60.0   6.4  -1.4   1.9  0
+END

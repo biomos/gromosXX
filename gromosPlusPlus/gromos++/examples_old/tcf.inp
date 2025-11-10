@@ -1,0 +1,11 @@
+# protcf
+	@files        pressu.out
+	@time         0 0.5
+	@distribution 2
+		@bounds       -400 400 20
+		@normalize
+	@tcf          2
+#		@expression   cos ( A * B )
+		@spectrum     0.5
+	@substract_average
+

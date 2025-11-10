@@ -1,0 +1,12 @@
+@sys		eq_peptide
+@bin	         /opt/gromos/gromosXX/OPT/bin/md
+@dir	        /home/sinoswiss/peptide/eq
+@files
+  topo		../topo/peptide_2Cl_53a6.top
+  input		equilibration.imd
+  coord		../ion/peptide_2Cl_h2o.cnf
+  posresspec	peptide_2Cl_h2o.por
+  refpos        peptide_2Cl_h2o.rpr
+@template       mk_script_brutus.lib 	
+@version        md++
+@joblist        equilibration.jobs

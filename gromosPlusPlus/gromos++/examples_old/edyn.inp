@@ -1,0 +1,14 @@
+# Topology file 
+@topo ex.top
+# periodic boundaries -> (t = truncOct, r = RectBox, v = Vaccuum) 
+@pbc r
+# Number of Molecules from Topology to include for fitting 
+@mol 1
+# (can be omitted if NMOL = 1; Please notice that every ion  
+#  is considered as a separate molecule!)
+# Time at the beginning of the Trajectory and Timestep
+@class CA
+@ref exref.coo
+# Trajectory files
+@traj 
+ex.tr

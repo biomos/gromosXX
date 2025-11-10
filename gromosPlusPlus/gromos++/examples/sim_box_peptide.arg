@@ -1,0 +1,13 @@
+@topo    ../topo/peptide_53a6.top
+# We use a cubic box (r = rectangular)
+@pbc     r
+# coordinates of the solute.
+@pos  ../min/peptide_min.cnf
+# coordinates of the box containing SPC water molecules.
+@solvent spc.cnf
+# the minimum solute-wall distance
+@minwall 0.8
+# the minimum solute-solvent distance
+@thresh  0.23
+# used if one uses rectangular pbc
+@rotate

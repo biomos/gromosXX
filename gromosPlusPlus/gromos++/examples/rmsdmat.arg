@@ -1,0 +1,21 @@
+# molecular topology file
+@topo ../../topo/peptide_2Cl_53a6.top
+# We used a rectangular box (r)
+@pbc r
+# We give the gromos names of backbone atoms only
+@atomsfit 1:CA,N,C
+# If one does not want to take all frames for
+# calculation, one can specify to skip some.
+# Here we take all frame.
+@stride 1
+# trajectory files
+@traj ../../md/md_peptide_1.trc.gz
+      ../../md/md_peptide_2.trc.gz
+      ../../md/md_peptide_3.trc.gz
+      ../../md/md_peptide_4.trc.gz
+      ../../md/md_peptide_5.trc.gz
+      ../../md/md_peptide_6.trc.gz
+      ../../md/md_peptide_7.trc.gz
+      ../../md/md_peptide_8.trc.gz
+      ../../md/md_peptide_9.trc.gz
+      ../../md/md_peptide_10.trc.gz

@@ -1,0 +1,7 @@
+#Contop combines a topology and a parameter file to a a new topology
+### Topology file 
+@topo ex.top
+### Parameter file
+@param ex.ifp
+
+

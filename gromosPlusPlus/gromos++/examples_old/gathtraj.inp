@@ -1,0 +1,14 @@
+# sample input for gathtraj
+#
+@topo ex.top
+#    topology
+#
+@pbc  <r,t,v>   <gather method>
+#    periodic boundary conditions (r)ectangular, (t)runcated octahedron
+#    (v)acuum (=no gathering, why were you using this program?)
+#
+#    methods for gathering: "gather" (default), "coggather" or "gathergr"
+#
+@traj ex.tr
+#    trajectory files
+#

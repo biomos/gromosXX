@@ -1,0 +1,26 @@
+# dist2 input file
+### topology
+@topo myTop.top
+#
+### periodic boundary conditions (v, r, t)
+@pbc t
+#
+### dist (<lowest value> <highest value> <grid points>)
+@dist -1 361 362
+#
+### prop (<property specifier>)
+# format:
+# type%mol:atom[-atom][,[mol:]atom[-atom]][...][%zerovalue[%upperbound[%lowerbound]]]
+# known types: d: distance, a: angle, t: torsional angle
+# if mol = a, the property will be added for all molecules
+@prop
+t%1:1,2,3,4%0.153%0.148%0.158
+#
+### minima (optional)
+# format:
+# min%begin%end
+@min min%0%180
+#
+### trajectory
+@traj
+myTraj.trj

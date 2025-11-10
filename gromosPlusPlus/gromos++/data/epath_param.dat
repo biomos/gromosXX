@@ -1,0 +1,48 @@
+TITLE
+Parameter file for electron tunnel calculations
+END
+HBONDPARAM
+######################################
+# This block contains the parameters #
+# needed to determin whether a       #
+# hydrogen bond is present.          #
+#                                    #
+# Format:                            #
+# 	max_distance	min_angle    #
+#                                    #
+######################################
+0.25	135.0
+END
+ACCEPTORMASS
+######################################
+# This block contains the masses of  #
+# potential hydrogen bond acceptors  #
+#                                    #
+# Format:                            #
+#      	1 mass per line              #
+#                                    #
+######################################
+14.00670        #standard GROMOS96 nitrogen mass
+15.99940        #standard GROMOS96 oxygen mass
+32.06000        #standard GROMOS96 sulfur mass
+END
+DECAYPARAM
+############################################
+# This block contains the parameters       #
+# needed to calculate the decay paramters  #
+# for a jump through a covalent bond,      #
+# a hydrogen bond or through space.        #
+#                                          # 
+# The paramters are for the formula:       #
+#       epsilon = A * e^[B*(distance-R)]   #
+#                                          #
+# Format:                                  #
+# covalent_A	covalent_B	covalent_R #
+# hbond_A	hbond_B		hbond_R    #
+# space_A	space_B		space_R    #
+#                                          #
+############################################
+0.6	0	0		# covalent
+0.36	-17	0.28		# hbond
+0.6	-17	0.14		# space
+END

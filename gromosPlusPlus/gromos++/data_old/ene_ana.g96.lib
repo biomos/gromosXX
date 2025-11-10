@@ -1,0 +1,90 @@
+TITLE
+  Library file for ene_ana
+END
+ENERTRJ
+# block definition for the energy trajectory file.
+# which is specified by the input flag en_files of program ene_ana.
+#
+# Use keyword 'block' to specify the blocks
+#             'subblock' to specify name and dimensions of a set of data
+#             'size' to specify a size that should be read in from the file
+#                    this size can be used as dimension specification
+#                    in a subblock definition. Using the prefix 'matrix_'
+#                    with such a definition will expand the size N to
+#                    N*(N+1)/2
+#
+# Following is the definition for a gromos96 energy trajectory
+# with the distinction that the ENERLJ, ENERCL, ENERRF and ENERRC
+# subblocks have been replaced by a two-dimensional subblock ENERNB.
+# See page III-56 of the GROMOS96 manual.
+#
+  block TIMESTEP
+    subblock TIME 2 1
+  block ENERGY
+    subblock ENER 22 1
+    subblock ENERES 6 1
+    size  NUM_ENERGY_GROUPS
+    subblock ENERNB matrix_NUM_ENERGY_GROUPS 4
+  block VOLUMEPRESSURE
+    subblock VOLPRT 20 1
+END
+FRENERTRJ
+# block definition for the free energy trajectory file.
+# which is specified by the input flag fr_files of program ene_ana.
+#
+# syntax as for the ENERTRJ definition
+#
+# Following is the definition for a gromos96 free energy trajectory.
+# See page III-56 of the GROMOS96 manual
+#
+  block TIMESTEP
+    subblock TIME 2 1
+  block FREEENERGYLAMBDA
+    subblock ENER  9 1
+    subblock RLAM  1 1
+    subblock FREN 22 1
+END
+VARIABLES
+# Here you can define variables to be calculated by the program ene_ana
+# In principal the program refers to the blocknames you have defined above,
+# accessing individual element using array indices (one- or two-dimensional)
+#
+# Predefined as well is the Boltzmann constant (as BOLTZ = 0.00831441) and
+# the MASS which (if not present in the energy trajectory) will be calculated
+# from the topology (if inputflag @topo is given).
+#
+# Additional properties can be defined here as a direct mapping of a known 
+# property or as an expression of such properties. Make sure that variables
+# and operators are always seperated by spaces. Multi-line expressions are
+# allowed.
+#
+# Examples that work with the standard gromos96 definition are
+#          given below and are actually standardly define if no library
+#          file is specified.
+time   = TIME[2]
+totene = ENER[1]
+totkin = ENER[2]
+totpot = ENER[9]
+# calculate the pressure in atm.
+pressu = VOLPRT[12] * 16.388453
+boxvol = VOLPRT[8]
+# calculate the density in kg/m^3
+densit = MASS * 1.66056 / VOLPRT[8]
+#
+# Example: to calculate the heat of vaporization from a simulation at 300 K
+#          One could also define the number of degrees of freedom and calculate
+#          the actual temperature at every time step.
+TEMP = 300.0 
+GASENER = 0
+NUMMOL = 512
+hvap = GASENER - ENER[8] / NUMMOL + BOLTZ * TEMP
+#
+# Example: to calculate the total potential energy for the solute
+#          Assuming that the solute is taken care of in the first energy
+#          group
+totcov = ENER[10] + ENER[11] + ENER[12] + ENER[13] + ENER[14] + ENER[15]
+       + ENER[16] + ENER[17]
+solute = ENERNB[1][1] + ENERNB[1][2] + ENERNB[1][3] + ENERNB[1][4]
+       + totcov
+END
+

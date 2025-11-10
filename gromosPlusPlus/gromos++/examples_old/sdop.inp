@@ -1,0 +1,11 @@
+@topo TOL.top
+@pbc t
+@atomsfit a:1-12
+@ref refTOL.g96
+@centre a:1-12
+@centrecog cog
+@with   s:OW
+@cut   1.0
+@grid  10 
+@traj
+tTOL00298K_500ps.trj.gz

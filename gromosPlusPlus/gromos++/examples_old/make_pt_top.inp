@@ -1,0 +1,8 @@
+# the topologies of state A and B, differences are written as PERTTOPO03
+# perturbation topology
+@topoA    ex.top
+@topoB    ex2.top
+# softness parameters for lennard-jones and coulomb/reaction field
+@softpar  2.0  0.1
+# force inclusion of some atoms even though they are equal
+@select 1:res(1:CA)

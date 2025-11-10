@@ -1,0 +1,12 @@
+@topo_pro lyso_ph2mta53a6.dat
+@insx_pro lyso_ph2sx_4.dat 
+@sev 16
+@topo_solv  ic4.top urea.top h2o.top
+@insx_solv  ic4.gsf urea.gsf h2o.gsf
+@densit  900
+@molf_solv 0.100 0.150 0.750
+@pbc t
+@min_wall  1.5
+#@boxsize
+@thresh_solv  0.22
+@thresh_pro   0.4

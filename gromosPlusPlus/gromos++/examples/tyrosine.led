@@ -1,0 +1,9 @@
+TITLE
+Dihdreal angle definition file for local elevation.
+END
+LOCALELEVSPEC
+# here we only define one dihedral angle on the
+# tyrosine residue: N-CA-CB-CG
+1  11 13 14 15
+END
+

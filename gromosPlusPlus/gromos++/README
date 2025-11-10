@@ -1,0 +1,48 @@
+This is GROMOS++, an object oriented package
+for pre- and post molecular dynamics simulation
+analysis.
+
+Installation:
+-------------
+
+See INSTALL for installation instructions.
+
+Developers:
+-----------
+
+1. Libraries:
+   ----------
+   GROMOS++ can be linked to both, dyamic and static
+   libraries. (See also configure options.) To compile
+   and link, libtool is used.
+
+   Debugging: 
+   libtool generates a wrapper script to run the 
+   programme, even when it is not installed.
+   The actual programme is generated in a
+   subdirectory .libs. Therefore, libtool has to be called
+   to debug the code:
+  
+   libtool gdb <prog>
+
+   Installation:
+   Install using libtool:
+   libtool install -c <prog> <dest>
+   See libtool documentation for further questions.
+
+
+2. Editing configuration files
+   ---------------------------
+   Most of the configuration files are automatically generated.
+   Editing them would mean to have them overwritten the next
+   time they are generated. Files to edit:
+
+   - Makefile.am (template for automake)
+   - configure.in (template for autoconf)
+   - acinclude.m4 (macros for autoconf)
+
+
+3. Dependencies:
+   -------------
+   Dependencies are generated with automake by
+   automake -i --generate-deps --build-dir=<dir> --srcdir-name=<dir>

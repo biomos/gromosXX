@@ -1,0 +1,9 @@
+# bin_box
+	@topo1 ex1.topo
+	@insx1 exref.coo
+	@topo2 ex2.topo
+	@insx2 exref.coo
+	@nsm 10
+	@densit 1000
+	@fraction 0.23
+
