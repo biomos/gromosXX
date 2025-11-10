@@ -516,6 +516,183 @@ pub fn build_topology(parsed: ParsedTopology) -> Topology {
     topo
 }
 
+/// Write GROMOS topology file
+pub fn write_topology_file<P: AsRef<Path>>(
+    path: P,
+    topo: &Topology,
+    title: &str,
+) -> Result<(), IoError> {
+    use std::io::Write;
+
+    let file = File::create(path.as_ref())
+        .map_err(|e| IoError::WriteError(format!("Cannot create topology file: {}", e)))?;
+    let mut writer = std::io::BufWriter::new(file);
+
+    // TITLE block
+    writeln!(writer, "TITLE").map_err(|e| IoError::WriteError(e.to_string()))?;
+    writeln!(writer, "{}", title).map_err(|e| IoError::WriteError(e.to_string()))?;
+    writeln!(writer, "END").map_err(|e| IoError::WriteError(e.to_string()))?;
+
+    // PHYSICALCONSTANTS block (optional but good practice)
+    writeln!(writer, "PHYSICALCONSTANTS").map_err(|e| IoError::WriteError(e.to_string()))?;
+    writeln!(writer, "# FPEPSI: 1.0/(4.0*PI*EPS0) (EPS0 is the permittivity of vacuum)").map_err(|e| IoError::WriteError(e.to_string()))?;
+    writeln!(writer, "  138.9354").map_err(|e| IoError::WriteError(e.to_string()))?;
+    writeln!(writer, "# HBAR: Planck's constant HBAR = H/(2* PI)").map_err(|e| IoError::WriteError(e.to_string()))?;
+    writeln!(writer, "  0.0635078").map_err(|e| IoError::WriteError(e.to_string()))?;
+    writeln!(writer, "# SPDL: Speed of light (nm/ps)").map_err(|e| IoError::WriteError(e.to_string()))?;
+    writeln!(writer, "  299792.458").map_err(|e| IoError::WriteError(e.to_string()))?;
+    writeln!(writer, "# BOLTZ: Boltzmann's constant kB").map_err(|e| IoError::WriteError(e.to_string()))?;
+    writeln!(writer, "  0.00831441").map_err(|e| IoError::WriteError(e.to_string()))?;
+    writeln!(writer, "END").map_err(|e| IoError::WriteError(e.to_string()))?;
+
+    // TOPVERSION block
+    writeln!(writer, "TOPVERSION").map_err(|e| IoError::WriteError(e.to_string()))?;
+    writeln!(writer, "2.0").map_err(|e| IoError::WriteError(e.to_string()))?;
+    writeln!(writer, "END").map_err(|e| IoError::WriteError(e.to_string()))?;
+
+    // ATOMTYPENAME block
+    writeln!(writer, "ATOMTYPENAME").map_err(|e| IoError::WriteError(e.to_string()))?;
+    writeln!(writer, "# NTYP: number of atom types").map_err(|e| IoError::WriteError(e.to_string()))?;
+    let n_types = topo.num_atom_types();
+    writeln!(writer, "{}", n_types).map_err(|e| IoError::WriteError(e.to_string()))?;
+    writeln!(writer, "# TYPE: atom type names").map_err(|e| IoError::WriteError(e.to_string()))?;
+    for i in 1..=n_types {
+        writeln!(writer, "TYPE{}", i).map_err(|e| IoError::WriteError(e.to_string()))?;
+    }
+    writeln!(writer, "END").map_err(|e| IoError::WriteError(e.to_string()))?;
+
+    // RESNAME block
+    writeln!(writer, "RESNAME").map_err(|e| IoError::WriteError(e.to_string()))?;
+    writeln!(writer, "# NRES: number of residues").map_err(|e| IoError::WriteError(e.to_string()))?;
+    writeln!(writer, "1").map_err(|e| IoError::WriteError(e.to_string()))?;
+    writeln!(writer, "# residue name").map_err(|e| IoError::WriteError(e.to_string()))?;
+    writeln!(writer, "MOL").map_err(|e| IoError::WriteError(e.to_string()))?;
+    writeln!(writer, "END").map_err(|e| IoError::WriteError(e.to_string()))?;
+
+    // SOLUTEATOM block
+    writeln!(writer, "SOLUTEATOM").map_err(|e| IoError::WriteError(e.to_string()))?;
+    writeln!(writer, "# ATNM: atom number").map_err(|e| IoError::WriteError(e.to_string()))?;
+    writeln!(writer, "# MRES: residue number").map_err(|e| IoError::WriteError(e.to_string()))?;
+    writeln!(writer, "# PANM: atom name").map_err(|e| IoError::WriteError(e.to_string()))?;
+    writeln!(writer, "# IAC: integer atom code").map_err(|e| IoError::WriteError(e.to_string()))?;
+    writeln!(writer, "# MASS: mass").map_err(|e| IoError::WriteError(e.to_string()))?;
+    writeln!(writer, "# CG: charge").map_err(|e| IoError::WriteError(e.to_string()))?;
+    writeln!(writer, "# CGC: charge group code").map_err(|e| IoError::WriteError(e.to_string()))?;
+    writeln!(writer, "# INE: number of exclusions").map_err(|e| IoError::WriteError(e.to_string()))?;
+    writeln!(writer, "#ATNM MRES PANM IAC  MASS      CG     CGC INE").map_err(|e| IoError::WriteError(e.to_string()))?;
+
+    let n_atoms = topo.solute.num_atoms();
+    for (i, atom) in topo.solute.atoms.iter().enumerate() {
+        let n_exclusions = topo.exclusions.get(i).map_or(0, |e| e.len());
+        let cg_code = topo.atom_to_chargegroup.get(i).map_or(1, |&c| c + 1);
+
+        writeln!(
+            writer,
+            "{:5} {:4} {:>4} {:3} {:8.4} {:8.5} {:4} {:3}",
+            i + 1,
+            atom.residue_nr,
+            atom.name,
+            atom.iac,
+            atom.mass,
+            atom.charge,
+            cg_code,
+            n_exclusions
+        ).map_err(|e| IoError::WriteError(e.to_string()))?;
+
+        // Write exclusions if any
+        if let Some(exclusions) = topo.exclusions.get(i) {
+            if !exclusions.is_empty() {
+                let mut excl_vec: Vec<_> = exclusions.iter().collect();
+                excl_vec.sort();
+                for (j, excl) in excl_vec.iter().enumerate() {
+                    write!(writer, "{:5}", *excl + 1).map_err(|e| IoError::WriteError(e.to_string()))?;
+                    if (j + 1) % 10 == 0 {
+                        writeln!(writer).map_err(|e| IoError::WriteError(e.to_string()))?;
+                    }
+                }
+                writeln!(writer).map_err(|e| IoError::WriteError(e.to_string()))?;
+            }
+        }
+    }
+    writeln!(writer, "END").map_err(|e| IoError::WriteError(e.to_string()))?;
+
+    // BONDSTRETCHTYPE block
+    if !topo.bond_parameters.is_empty() {
+        writeln!(writer, "BONDSTRETCHTYPE").map_err(|e| IoError::WriteError(e.to_string()))?;
+        writeln!(writer, "# NBTY: number of bond types").map_err(|e| IoError::WriteError(e.to_string()))?;
+        writeln!(writer, "{}", topo.bond_parameters.len()).map_err(|e| IoError::WriteError(e.to_string()))?;
+        writeln!(writer, "#  CB     CHB       B0").map_err(|e| IoError::WriteError(e.to_string()))?;
+        for params in &topo.bond_parameters {
+            writeln!(
+                writer,
+                "{:10.5e} {:10.5e} {:10.7}",
+                params.k_quartic,
+                params.k_harmonic,
+                params.r0
+            ).map_err(|e| IoError::WriteError(e.to_string()))?;
+        }
+        writeln!(writer, "END").map_err(|e| IoError::WriteError(e.to_string()))?;
+    }
+
+    // BOND block
+    if !topo.solute.bonds.is_empty() {
+        writeln!(writer, "BOND").map_err(|e| IoError::WriteError(e.to_string()))?;
+        writeln!(writer, "# NBH: number of bonds").map_err(|e| IoError::WriteError(e.to_string()))?;
+        writeln!(writer, "{}", topo.solute.bonds.len()).map_err(|e| IoError::WriteError(e.to_string()))?;
+        writeln!(writer, "#  IB   JB  ICB").map_err(|e| IoError::WriteError(e.to_string()))?;
+        for bond in &topo.solute.bonds {
+            writeln!(
+                writer,
+                "{:5}{:5}{:5}",
+                bond.i + 1,
+                bond.j + 1,
+                bond.bond_type + 1
+            ).map_err(|e| IoError::WriteError(e.to_string()))?;
+        }
+        writeln!(writer, "END").map_err(|e| IoError::WriteError(e.to_string()))?;
+    }
+
+    // BONDANGLEBENDTYPE block
+    if !topo.angle_parameters.is_empty() {
+        writeln!(writer, "BONDANGLEBENDTYPE").map_err(|e| IoError::WriteError(e.to_string()))?;
+        writeln!(writer, "# NTTY: number of angle types").map_err(|e| IoError::WriteError(e.to_string()))?;
+        writeln!(writer, "{}", topo.angle_parameters.len()).map_err(|e| IoError::WriteError(e.to_string()))?;
+        writeln!(writer, "#   CT      CHT     T0[deg]").map_err(|e| IoError::WriteError(e.to_string()))?;
+        for params in &topo.angle_parameters {
+            writeln!(
+                writer,
+                "{:10.5e} {:10.5e} {:10.4}",
+                params.k_cosine,
+                params.k_harmonic,
+                params.theta0.to_degrees()
+            ).map_err(|e| IoError::WriteError(e.to_string()))?;
+        }
+        writeln!(writer, "END").map_err(|e| IoError::WriteError(e.to_string()))?;
+    }
+
+    // BONDANGLE block
+    if !topo.solute.angles.is_empty() {
+        writeln!(writer, "BONDANGLE").map_err(|e| IoError::WriteError(e.to_string()))?;
+        writeln!(writer, "# NTHEH: number of angles").map_err(|e| IoError::WriteError(e.to_string()))?;
+        writeln!(writer, "{}", topo.solute.angles.len()).map_err(|e| IoError::WriteError(e.to_string()))?;
+        writeln!(writer, "#  IT   JT   KT  ICT").map_err(|e| IoError::WriteError(e.to_string()))?;
+        for angle in &topo.solute.angles {
+            writeln!(
+                writer,
+                "{:5}{:5}{:5}{:5}",
+                angle.i + 1,
+                angle.j + 1,
+                angle.k + 1,
+                angle.angle_type + 1
+            ).map_err(|e| IoError::WriteError(e.to_string()))?;
+        }
+        writeln!(writer, "END").map_err(|e| IoError::WriteError(e.to_string()))?;
+    }
+
+    writer.flush().map_err(|e| IoError::WriteError(e.to_string()))?;
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

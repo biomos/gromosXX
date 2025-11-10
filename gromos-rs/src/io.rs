@@ -14,6 +14,8 @@ pub mod imd;
 pub mod trajectory;
 pub mod energy;
 pub mod force;
+pub mod pdb;
+pub mod g96;
 
 // Re-export commonly used types
 pub use imd::{ImdParameters, TempBathParameters, PressureParameters};
@@ -29,6 +31,7 @@ pub enum IoError {
     FileNotFound(String),
     ParseError(String),
     FormatError(String),
+    WriteError(String),
     Io(io::Error),
 }
 
@@ -44,6 +47,7 @@ impl std::fmt::Display for IoError {
             IoError::FileNotFound(path) => write!(f, "File not found: {}", path),
             IoError::ParseError(msg) => write!(f, "Parse error: {}", msg),
             IoError::FormatError(msg) => write!(f, "Format error: {}", msg),
+            IoError::WriteError(msg) => write!(f, "Write error: {}", msg),
             IoError::Io(err) => write!(f, "I/O error: {}", err),
         }
     }
