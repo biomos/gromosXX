@@ -26,10 +26,10 @@ The tutorial teaches the complete MD workflow:
 ### System Preparation
 | Program | Function | Source | Status |
 |---------|----------|--------|--------|
-| **pdb2g96** | Convert PDB to GROMOS coordinates | gromosPlusPlus/programs/pdb2g96.cc | ❌ Not implemented |
-| **make_top** | Generate topology from molecular specs | gromosPlusPlus/programs/make_top.cc | ❌ Not implemented |
-| **com_top** | Combine multiple topology files | gromosPlusPlus/programs/com_top.cc | ❌ Not implemented |
-| **check_top** | Validate topology consistency | gromosPlusPlus/programs/check_top.cc | ❌ Not implemented |
+| **pdb2g96** | Convert PDB to GROMOS coordinates | gromosPlusPlus/programs/pdb2g96.cc | ✅ **IMPLEMENTED** (gromos-rs/src/bin/pdb2g96.rs) |
+| **make_top** | Generate topology from molecular specs | gromosPlusPlus/programs/make_top.cc | ⏳ **DEFERRED** (requires .mtb parser) |
+| **com_top** | Combine multiple topology files | gromosPlusPlus/programs/com_top.cc | ✅ **IMPLEMENTED** (gromos-rs/src/bin/com_top.rs) |
+| **check_top** | Validate topology consistency | gromosPlusPlus/programs/check_top.cc | ✅ **IMPLEMENTED** (gromos-rs/src/bin/check_top.rs) |
 | **gch** | Add hydrogens (X-ray structures) | gromosPlusPlus/programs/gch.cc | ❌ Not implemented |
 
 ### Solvation & Ions
@@ -208,13 +208,21 @@ The tutorial teaches the complete MD workflow:
 
 **Tier 1 MD Engine**: ✅ 95% complete
 **Tier 2 Enhanced Methods**: ✅ 71% complete
-**Tutorial Tools**: ❌ 6% complete (1/16 programs)
+**Tutorial Tools**: ✅ 25% complete (4/16 programs)
+
+**Recent Additions** (Session 2):
+- ✅ pdb2g96: PDB → GROMOS96 converter (130 lines + I/O modules)
+- ✅ com_top: Topology file combiner (200 lines)
+- ✅ check_top: Topology validator with 34+ checks (540 lines)
+- ✅ Topology writing support (175 lines)
+- ✅ PDB and G96 file I/O modules (440 lines)
 
 **Next Steps**:
-1. Implement pdb2g96 (PDB conversion)
-2. Implement make_top (topology generation)
-3. Implement md binary (main driver)
-4. Test with Tutorial 01
+1. ⏳ Defer make_top (requires .mtb building block parser - complex)
+2. Implement md binary (main driver) - **HIGH PRIORITY**
+3. Implement sim_box (solvation) - needed for Tutorial 01
+4. Implement ene_ana (energy analysis) - for validation
+5. Test with Tutorial 01
 
 ---
 

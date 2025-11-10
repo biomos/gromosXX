@@ -632,14 +632,20 @@ impl RestraintList {
 
 | Program | Purpose | Status |
 |---------|---------|--------|
-| **mk_script** | Generate IMD files | ✅ Implemented (gromos-rs/src/bin/) |
-| **pdb2g96** | PDB to GROMOS converter | ❌ Not implemented |
-| **make_top** | Topology generator | ❌ Not implemented |
-| **com_top** | Topology combiner | ❌ Not implemented |
+| **mk_script** | Generate IMD files | ✅ Implemented (gromos-rs/src/bin/mk_script.rs) |
+| **pdb2g96** | PDB to GROMOS converter | ✅ Implemented (gromos-rs/src/bin/pdb2g96.rs) |
+| **com_top** | Topology combiner | ✅ Implemented (gromos-rs/src/bin/com_top.rs) |
+| **check_top** | Topology validator | ✅ Implemented (gromos-rs/src/bin/check_top.rs) |
+| **make_top** | Topology generator | ⏳ Deferred (requires .mtb parser, building blocks) |
 | **sim_box** | Solvation tool | ❌ Not implemented |
 | **ene_ana** | Energy analysis | ❌ Not implemented |
 | **rmsd** | RMSD calculator | ❌ Not implemented |
 | **md** | Main MD binary | ⚠️ Engine ready, need binary wrapper |
 
-**Progress**: 1/16 tutorial tools (6.25%)
+**Progress**: 4/16 tutorial tools (25%)
+**Recent additions**:
+- pdb2g96: PDB → GROMOS96 converter with automatic unit conversion
+- com_top: Combines multiple topology files with atom renumbering
+- check_top: Comprehensive topology validation (34+ checks)
+
 **See**: TUTORIAL_COMPATIBILITY_PLAN.md for detailed roadmap
