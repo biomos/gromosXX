@@ -47,14 +47,15 @@ pub mod configuration;
 pub mod pairlist;
 pub mod interaction;
 pub mod integrator;
-pub mod ffi;
+pub mod algorithm;
+// pub mod ffi;  // Temporarily disabled - needs update for refactored API
 pub mod io;
 
 // Re-export main types for convenience
 pub use math::{Vec3, Mat3, Periodicity, BoundaryCondition};
 pub use topology::{Topology, LJParameters};
 pub use configuration::{Configuration, State, Energy};
-pub use interaction::nonbonded::{lj_crf_interaction, ForceStorage};
+// pub use interaction::nonbonded::{lj_crf_interaction, ForceStorage};  // ForceStorage removed
 pub use integrator::{Integrator, LeapFrog, VelocityVerlet};
 
 #[cfg(feature = "mimalloc")]
