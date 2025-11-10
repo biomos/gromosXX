@@ -72,18 +72,19 @@ impl Integrator for LeapFrog {
         conf.exchange_state();
 
         // Step 3: Update positions r(t+dt) = r(t) + v(t+dt/2) * dt
+        // After exchange, conf.old() contains the updated velocities
         if self.parallel {
             let old_pos = conf.old().pos.clone();
-            let current_vel = conf.current().vel.clone();
+            let old_vel = conf.old().vel.clone();
 
             conf.current_mut().pos.par_iter_mut()
                 .enumerate()
                 .for_each(|(i, pos_new)| {
-                    *pos_new = old_pos[i] + current_vel[i] * dt_f32;
+                    *pos_new = old_pos[i] + old_vel[i] * dt_f32;
                 });
         } else {
             for i in 0..n_atoms {
-                conf.current_mut().pos[i] = conf.old().pos[i] + conf.current().vel[i] * dt_f32;
+                conf.current_mut().pos[i] = conf.old().pos[i] + conf.old().vel[i] * dt_f32;
             }
         }
 

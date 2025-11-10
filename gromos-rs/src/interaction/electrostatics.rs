@@ -140,7 +140,7 @@ impl ReactionFieldParameters {
 
         let crf_cut3i = crf * cut3i;
         let crf_2cut3i = crf * cut3i / 2.0;
-        let crf_cut = (1.0 - crf / 2.0) / cutoff;
+        let crf_cut = (1.0 + crf / 2.0) / cutoff;
 
         Self {
             cutoff,
