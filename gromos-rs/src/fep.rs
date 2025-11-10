@@ -464,4 +464,216 @@ mod tests {
         assert_eq!(k, 150.0);
         assert_eq!(r0, 0.125);
     }
+
+    /// Mini-test 1: Lambda derivative for thermodynamic integration
+    /// Tests dV/dλ calculation which is crucial for TI
+    #[test]
+    fn test_bonded_lambda_derivative() {
+        let bond = PerturbedBondedTerm {
+            atoms: vec![0, 1],
+            a_force_constant: 100.0,  // State A: weak bond
+            a_equilibrium: 0.1,
+            b_force_constant: 200.0,  // State B: strong bond
+            b_equilibrium: 0.15,
+        };
+
+        // Test at current bond length = 0.12 nm
+        let current_length = 0.12;
+
+        // At λ = 0 (pure state A)
+        let deriv_0 = bond.lambda_derivative(0.0, current_length);
+
+        // At λ = 1 (pure state B)
+        let deriv_1 = bond.lambda_derivative(1.0, current_length);
+
+        // At λ = 0.5 (midpoint)
+        let deriv_05 = bond.lambda_derivative(0.5, current_length);
+
+        // Derivatives should be finite (no NaN or Inf)
+        assert!(deriv_0.is_finite(), "dV/dλ at λ=0 should be finite");
+        assert!(deriv_05.is_finite(), "dV/dλ at λ=0.5 should be finite");
+        assert!(deriv_1.is_finite(), "dV/dλ at λ=1 should be finite");
+
+        // Note: Sign depends on whether bond is compressed or stretched
+        // For current_length=0.12 between eq_A=0.1 and eq_B=0.15,
+        // derivative sign varies with lambda
+
+        println!("FEP Mini-test 1: dV/dλ at λ=0: {:.4}, λ=0.5: {:.4}, λ=1: {:.4}",
+                 deriv_0, deriv_05, deriv_1);
+    }
+
+    /// Mini-test 2: Soft-core potential prevents singularities
+    /// Tests that soft-core smoothly handles particle creation/deletion
+    #[test]
+    fn test_softcore_prevents_singularity() {
+        let params = SoftCoreParameters {
+            alpha_lj: 0.5,
+            alpha_crf: 0.5,
+            n_soft: 2,
+        };
+
+        let sigma = 0.3;  // nm
+
+        // Test very close distance (would be singularity without soft-core)
+        let r_sq_close = 0.01;  // 0.1 nm
+
+        // At λ = 0 (particle appearing), soft-core is active
+        let r_soft_lambda0 = params.softcore_distance_lj(r_sq_close, 0.0, sigma);
+        // Should be larger than actual distance
+        let r_actual = r_sq_close.sqrt();
+        assert!(r_soft_lambda0 > r_actual, "Soft-core should increase distance at λ=0: {} vs {}",
+                r_soft_lambda0, r_actual);
+
+        // At λ = 0.5 (halfway), soft-core is partially active
+        let r_soft_lambda05 = params.softcore_distance_lj(r_sq_close, 0.5, sigma);
+        assert!(r_soft_lambda05 > r_sq_close.sqrt());
+        assert!(r_soft_lambda05 < r_soft_lambda0, "Soft-core effect should decrease with λ");
+
+        // At λ = 1 (particle fully present), soft-core is inactive
+        let r_soft_lambda1 = params.softcore_distance_lj(r_sq_close, 1.0, sigma);
+        assert!((r_soft_lambda1 - r_sq_close.sqrt()).abs() < 1e-6,
+                "No soft-core at λ=1");
+
+        println!("FEP Mini-test 2: Soft-core r_eff: λ=0: {:.4}, λ=0.5: {:.4}, λ=1: {:.4}",
+                 r_soft_lambda0, r_soft_lambda05, r_soft_lambda1);
+    }
+
+    /// Mini-test 3: Charge transformation (common FEP use case)
+    /// Tests smooth charge interpolation for electrostatic FEP
+    #[test]
+    fn test_charge_transformation() {
+        // Transform neutral atom to charged atom
+        let atom = PerturbedAtom::new(0)
+            .with_state_a(1, 16.0, 0.0)   // State A: neutral O
+            .with_state_b(1, 16.0, -0.8); // State B: charged O⁻
+
+        // Test charge interpolation at multiple λ values
+        let lambda_values = [0.0, 0.25, 0.5, 0.75, 1.0];
+        let expected_charges = [0.0, -0.2, -0.4, -0.6, -0.8];
+
+        for (lambda, expected) in lambda_values.iter().zip(expected_charges.iter()) {
+            let charge = atom.charge_at_lambda(*lambda);
+            assert!((charge - expected).abs() < 1e-10,
+                    "Charge at λ={} should be {}, got {}", lambda, expected, charge);
+        }
+
+        println!("FEP Mini-test 3: Charge transformation test passed");
+    }
+
+    /// Mini-test 4: Multi-window FEP consistency
+    /// Tests that energy is consistent across lambda windows
+    #[test]
+    fn test_multi_window_consistency() {
+        let bond = PerturbedBondedTerm {
+            atoms: vec![0, 1],
+            a_force_constant: 100.0,
+            a_equilibrium: 0.1,
+            b_force_constant: 200.0,
+            b_equilibrium: 0.15,
+        };
+
+        let current_length = 0.12;
+
+        // Simulate 5-window FEP
+        let lambda_windows = [0.0, 0.25, 0.5, 0.75, 1.0];
+        let mut derivatives = Vec::new();
+
+        for lambda in &lambda_windows {
+            let deriv = bond.lambda_derivative(*lambda, current_length);
+            derivatives.push(deriv);
+        }
+
+        // Check that derivatives are reasonable (no NaN, no huge jumps)
+        for (i, deriv) in derivatives.iter().enumerate() {
+            assert!(deriv.is_finite(), "Derivative at window {} should be finite", i);
+        }
+
+        // Check smoothness: no derivative should be 10x larger than adjacent
+        for i in 0..derivatives.len()-1 {
+            let ratio = (derivatives[i+1] / derivatives[i]).abs();
+            assert!(ratio < 10.0 && ratio > 0.1,
+                    "Large jump between windows {} and {}: ratio={:.2}",
+                    i, i+1, ratio);
+        }
+
+        println!("FEP Mini-test 4: Multi-window test passed");
+        println!("  dV/dλ values: {:?}", derivatives);
+    }
+
+    /// Mini-test 5: Slow growth simulation
+    /// Tests continuous lambda evolution (slow growth method)
+    #[test]
+    fn test_slow_growth_evolution() {
+        let mut controller = LambdaController::new()
+            .with_lambda(0.0)
+            .with_dlambda_dt(0.01);  // 0.01 per ps = transform over 100 ps
+
+        let dt = 0.002;  // 2 fs timestep
+        let n_steps = 50000;  // 100 ps
+
+        let mut lambda_history = Vec::new();
+
+        // Simulate slow growth
+        for _step in 0..n_steps {
+            lambda_history.push(controller.lambda);
+            controller.update(dt);
+        }
+
+        // Check final lambda
+        assert!((controller.lambda - 1.0).abs() < 1e-6,
+                "Should reach λ=1 after 100 ps");
+
+        // Check monotonicity (lambda should always increase)
+        for i in 0..lambda_history.len()-1 {
+            assert!(lambda_history[i+1] >= lambda_history[i],
+                    "Lambda should be monotonically increasing");
+        }
+
+        // Check smoothness (no jumps > 0.05)
+        for i in 0..lambda_history.len()-1 {
+            let delta = lambda_history[i+1] - lambda_history[i];
+            assert!(delta <= 0.05, "Lambda change too large: {}", delta);
+        }
+
+        println!("FEP Mini-test 5: Slow growth test passed");
+        println!("  Final λ: {:.6}, steps: {}", controller.lambda, n_steps);
+    }
+
+    /// Mini-test 6: Soft-core electrostatics
+    /// Tests soft-core for Coulomb interactions
+    #[test]
+    fn test_softcore_electrostatics() {
+        let params = SoftCoreParameters::default();
+
+        let r_sq = 0.01;  // Very close distance
+
+        // Test soft-core for electrostatics at different λ
+        let lambdas = [0.0, 0.3, 0.7, 1.0];
+        let mut r_soft_values = Vec::new();
+
+        for lambda in &lambdas {
+            let r_soft = params.softcore_distance_crf(r_sq, *lambda);
+            r_soft_values.push(r_soft);
+
+            // At λ=0, soft-core should be maximally active
+            if *lambda == 0.0 {
+                assert!(r_soft > 0.15, "Electrostatic soft-core should be active at λ=0");
+            }
+
+            // At λ=1, soft-core should be minimal
+            if *lambda == 1.0 {
+                assert!((r_soft - r_sq.sqrt()).abs() < 1e-6,
+                        "No electrostatic soft-core at λ=1");
+            }
+        }
+
+        // Check monotonicity: r_soft should decrease as λ increases
+        for i in 0..r_soft_values.len()-1 {
+            assert!(r_soft_values[i] >= r_soft_values[i+1],
+                    "Soft-core distance should decrease with increasing λ");
+        }
+
+        println!("FEP Mini-test 6: Electrostatic soft-core test passed");
+        println!("  r_soft values: {:?}", r_soft_values);
+    }
 }
