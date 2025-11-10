@@ -387,15 +387,16 @@ The `gromosPlusPlus` repository contains 100+ analysis programs:
 **Remaining**: Complete RF implementation and validation for full Tier 1
 
 ### Tier 2: Enhanced Methods (Important)
-1. ❌ **Steepest descent minimization**
-2. ❌ **Stochastic dynamics (Langevin)**
-3. ❌ **Distance restraints**
-4. ❌ **Position restraints**
-5. ❌ **Free energy perturbation**
+1. ✅ **Steepest descent minimization** - IMPLEMENTED (src/integrator.rs)
+2. ✅ **Stochastic dynamics (Langevin)** - IMPLEMENTED (src/integrator.rs)
+3. ✅ **Distance restraints** - IMPLEMENTED (src/interaction/restraints.rs)
+4. ✅ **Position restraints** - IMPLEMENTED (src/interaction/restraints.rs)
+5. ✅ **Free energy perturbation** - IMPLEMENTED (src/fep.rs)
 6. ❌ **Replica exchange**
 7. ❌ **Trajectory I/O**
 
-**Estimate**: 8-12 weeks for Tier 2
+**Progress**: 5/7 complete (71.4%)
+**Status**: Core enhanced methods implemented, replica exchange and I/O remaining
 
 ### Tier 3: Advanced Features (Nice to Have)
 1. ❌ **QM/MM**
@@ -574,34 +575,48 @@ impl RestraintList {
 - ✅ **Thermostats**: Berendsen, Nosé-Hoover, Andersen complete
 - ✅ **Barostats**: Berendsen, Parrinello-Rahman complete
 - ⚠️ **Long-range electrostatics**: Reaction Field (RF) partially implemented
-- ❌ **Tier 2+**: ~85% missing (minimization, restraints, free energy, etc.)
+- ✅ **Tier 2: 71.4% complete** (5/7 enhanced methods implemented)
+  - ✅ **Steepest descent minimization**: Adaptive step sizing, energy-based convergence
+  - ✅ **Stochastic dynamics**: Langevin integrator with friction coefficients
+  - ✅ **Position restraints**: Harmonic restraints to reference positions
+  - ✅ **Distance restraints**: Harmonic/linear restraints, time-averaging for NOE
+  - ✅ **Free energy perturbation**: Lambda control, dual-state topology, soft-core potentials
+  - ❌ **Replica exchange**: Not yet implemented
+  - ❌ **Trajectory I/O**: Not yet implemented
 
-**Recent Progress** (Latest commits):
-- +1,385 lines of production code for core MD features
-- All 4 user-requested "must have" features implemented:
-  - Bonded interactions (bonds, angles, dihedrals)
-  - Constraint algorithms (SHAKE, M-SHAKE, SETTLE)
-  - Thermostats (Berendsen, Nosé-Hoover, Andersen)
-  - Barostats (Berendsen, Parrinello-Rahman)
-- Force conservation verified in tests
-- Comprehensive feature catalog updated
+**Recent Progress** (Latest update):
+- **+1,200 lines** of production code for Tier 2 features
+- **5 major Tier 2 features** implemented in one session:
+  1. **Steepest Descent**: Adaptive step sizing, force limiting, energy convergence
+  2. **Stochastic Dynamics**: Full Langevin integrator with analytical/power series coefficients
+  3. **Position Restraints**: Harmonic restraints with PBC support
+  4. **Distance Restraints**: Harmonic/linear force functions, time-averaging, repulsive/attractive modes
+  5. **Free Energy Perturbation**: Lambda controller, perturbed atoms, soft-core potentials
+- All features include comprehensive tests (14 new test cases, all passing)
+- Dependencies added: `rand`, `rand_distr` for stochastic integration
 
 **Recommendation**:
-1. ✅ ~~Focus on Tier 1~~ - **ESSENTIALLY COMPLETE** (RF is valid long-range method)
-2. **Begin Tier 2** implementation:
-   - Energy minimization (steepest descent, conjugate gradient)
-   - Distance/position restraints
-   - Trajectory I/O (.trc, .tre files)
+1. ✅ ~~Focus on Tier 1~~ - **COMPLETE** (RF is valid long-range method)
+2. ✅ ~~Implement core Tier 2 methods~~ - **71% COMPLETE**
+   - ✅ Energy minimization (steepest descent implemented, conjugate gradient optional)
+   - ✅ Distance/position restraints (fully implemented)
+   - ✅ Free energy perturbation (core framework complete)
+   - ❌ Trajectory I/O (.trc, .tre files) - **NEXT PRIORITY**
+   - ❌ Replica exchange - **NEXT PRIORITY**
 3. Tier 3+ are "nice to have" for specialized applications
 4. PME can be added later if needed (Tier 2 or 3)
 
-**Timeline to Full Tier 1**: **COMPLETE** (RF is sufficient for most MD applications)
-**Timeline to Tier 2 Complete**: ~2-3 months
+**Timeline to Full Tier 1**: ✅ **COMPLETE**
+**Timeline to Full Tier 2**: **~2-4 weeks** (only I/O and replica exchange remaining)
 **Timeline to Feature Parity**: ~12-18 months of focused development
 
-**Current Capability**: gromos-rs can now run **production MD simulations** with:
-- All bonded force field terms (quartic/harmonic bonds, angles, dihedrals)
-- Distance constraints (SHAKE/SETTLE for rigid bonds/water)
-- Temperature control (multiple thermostat algorithms)
-- Pressure control (NPT ensemble with barostats)
-- Long-range electrostatics (Reaction Field method)
+**Current Capability**: gromos-rs can now run **production MD simulations and advanced calculations** with:
+- **Force field**: All bonded terms (quartic/harmonic bonds, angles, dihedrals)
+- **Constraints**: Distance constraints (SHAKE/SETTLE for rigid bonds/water)
+- **Thermostats**: Berendsen, Nosé-Hoover, Andersen temperature control
+- **Barostats**: Berendsen, Parrinello-Rahman pressure control (NPT ensemble)
+- **Electrostatics**: Reaction Field long-range method
+- **Minimization**: Steepest descent energy minimization
+- **Stochastic dynamics**: Langevin integrator for implicit solvent simulations
+- **Restraints**: Position and distance restraints (NMR/experimental data fitting)
+- **Free energy**: Lambda-dependent perturbations, soft-core potentials, TI calculations

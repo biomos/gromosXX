@@ -258,6 +258,8 @@ mod tests {
         let virial = calculate_virial(&positions, &forces);
 
         // Check that virial is symmetric (approximately)
-        assert!((virial[(0, 1)] - virial[(1, 0)]).abs() < 1e-6);
+        // Mat3A: columns accessible by virial.x_axis, virial.y_axis, virial.z_axis
+        // or virial.col(i)
+        assert!((virial.col(0)[1] - virial.col(1)[0]).abs() < 1e-6);
     }
 }

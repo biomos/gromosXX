@@ -33,6 +33,10 @@ rustfft = "6.2"  # Pure Rust FFT (always available)
 fftw = { version = "0.8", optional = true }  # FFTW3 bindings (if system library available)
 num-complex = "0.4"  # Complex number support
 
+# Random number generation for stochastic dynamics
+rand = "0.8"
+rand_distr = "0.4"  # For Gaussian/normal distributions
+
 [dev-dependencies]
 criterion = { version = "0.5", features = ["html_reports"] }
 approx = "0.5"

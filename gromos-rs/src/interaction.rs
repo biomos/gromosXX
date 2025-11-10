@@ -1,8 +1,9 @@
-//! Interaction calculations (nonbonded, bonded, electrostatics)
+//! Interaction calculations (nonbonded, bonded, electrostatics, restraints)
 
 pub mod nonbonded;
 pub mod bonded;
 pub mod electrostatics;
+pub mod restraints;
 
 // Re-export commonly used types and functions
 pub use bonded::{
@@ -23,4 +24,11 @@ pub use electrostatics::{
     pme_real_space_interaction,
     pme_reciprocal_space,
     pme_self_energy,
+};
+
+pub use restraints::{
+    PositionRestraint,
+    PositionRestraints,
+    DistanceRestraint,
+    DistanceRestraints,
 };

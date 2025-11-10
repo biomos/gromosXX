@@ -48,6 +48,7 @@ pub mod pairlist;
 pub mod interaction;
 pub mod integrator;
 pub mod algorithm;
+pub mod fep;
 // pub mod ffi;  // Temporarily disabled - needs update for refactored API
 pub mod io;
 
@@ -56,7 +57,7 @@ pub use math::{Vec3, Mat3, Periodicity, BoundaryCondition};
 pub use topology::{Topology, LJParameters};
 pub use configuration::{Configuration, State, Energy};
 // pub use interaction::nonbonded::{lj_crf_interaction, ForceStorage};  // ForceStorage removed
-pub use integrator::{Integrator, LeapFrog, VelocityVerlet};
+pub use integrator::{Integrator, LeapFrog, VelocityVerlet, SteepestDescent, StochasticDynamics};
 
 #[cfg(feature = "mimalloc")]
 use mimalloc::MiMalloc;
