@@ -22,39 +22,424 @@ GROMOS is **far more than a basic MD engine**. It includes:
 ## 1. Integration Algorithms (13 types)
 
 ### 1.1 Standard Molecular Dynamics
-| Algorithm | File | Purpose | Rust Status |
-|-----------|------|---------|-------------|
-| **Leap-Frog** | `leap_frog.cc` | Standard MD integrator | ✅ Implemented |
-| **Scaled Leap-Frog** | `scaled_leap_frog.cc` | Multiple time-stepping | ❌ Not implemented |
-| **Stochastic Dynamics** | `stochastic.cc` | Langevin/BD dynamics | ❌ Not implemented |
+| Algorithm | File | Purpose | Implementation Complexity | Rust Status |
+|-----------|------|---------|--------------------------|-------------|
+| **Leap-Frog** | `leap_frog.cc` | Standard MD integrator | ✅ Simple | ✅ **Implemented** (src/integrator.rs:36) |
+| **Velocity Verlet** | N/A | Alternative integrator | ✅ Simple | ✅ **Implemented** (src/integrator.rs:113) |
+| **Scaled Leap-Frog** | `scaled_leap_frog.cc` | Multiple time-stepping | 🔨 **1-2 weeks** (30 lines, force scaling) | ⬜ Not implemented |
+| **Stochastic Dynamics** | `stochastic.cc` | Langevin/BD dynamics | ✅ Medium | ✅ **Implemented** (src/integrator.rs:387) |
+
+**Scaled Leap-Frog Details** (scaled_leap_frog.cc):
+- **Complexity**: Very simple, only ~30 lines of code
+- **Implementation**: Scale forces by factor `1/lambda`, then apply standard leap-frog
+- **Use case**: Multiple time-stepping (fast/slow forces), ADDE reweighting
+- **Missing components**: None - can use existing leap-frog with force scaling
+- **Estimated effort**: 1-2 days
 
 ### 1.2 Energy Minimization
-| Algorithm | File | Purpose | Rust Status |
-|-----------|------|---------|-------------|
-| **Steepest Descent** | `steepest_descent.cc` | Simple minimization | ❌ Not implemented |
-| **Conjugate Gradient** | `conjugate_gradient.cc` | Efficient minimization | ❌ Not implemented |
+| Algorithm | File | Purpose | Implementation Complexity | Rust Status |
+|-----------|------|---------|--------------------------|-------------|
+| **Steepest Descent** | `steepest_descent.cc` | Simple minimization | ✅ Simple | ✅ **Implemented** (src/integrator.rs:185) |
+| **Conjugate Gradient** | `conjugate_gradient.cc` | Efficient minimization | 🔨 **2-4 weeks** (~400 lines) | ⬜ Not implemented |
+
+**Conjugate Gradient Details** (conjugate_gradient.cc):
+- **Complexity**: Medium (~400 lines in GROMOS++)
+- **Algorithm variants**: Fletcher-Reeves, Polak-Ribiere
+- **Key components**:
+  1. Conjugate direction calculation: `beta = (g_new · g_new) / (g_old · g_old)` (FR) or `beta = (g_new · (g_new - g_old)) / (g_old · g_old)` (PR)
+  2. Line search along conjugate direction (find optimal step size)
+  3. Force/gradient history tracking
+  4. Convergence criteria (gradient magnitude)
+- **Missing components**: Line search algorithm
+- **Estimated effort**: 2-4 weeks (line search is complex)
 
 ### 1.3 Enhanced Sampling
-| Algorithm | File | Purpose | Rust Status |
-|-----------|------|---------|-------------|
-| **Monte Carlo** | `monte_carlo.cc` | Chemical MC sampling | ❌ Not implemented |
-| **EDS** | `eds.cc` | Enveloping Distribution Sampling | ❌ Not implemented |
-| **GaMD** | `gamd.cc` | Gaussian Accelerated MD | ❌ Not implemented |
-| **Multigradient** | `multigradient.cc` | Multiple potential sampling | ❌ Not implemented |
+| Algorithm | File | Purpose | Implementation Complexity | Rust Status |
+|-----------|------|---------|--------------------------|-------------|
+| **Monte Carlo** | `monte_carlo.cc` | Chemical MC sampling | 🔨 **4-6 weeks** (300+ lines) | ⬜ Not implemented |
+| **EDS** | `eds.cc` | Enveloping Distribution Sampling | 🔨 **6-8 weeks** (500+ lines) | ⬜ Not implemented |
+| **GaMD** | `gamd.cc` | Gaussian Accelerated MD | 🔨 **6-8 weeks** (600+ lines) | ⬜ Not implemented |
+| **Multigradient** | `multigradient.cc` | Multiple potential sampling | 🔨 **4-6 weeks** (400+ lines) | ⬜ Not implemented |
+
+**Monte Carlo Details** (monte_carlo.cc):
+- **Complexity**: Complex, requires multiple components
+- **Key components**:
+  1. Random number generation (uses GSL: `gsl_rng`, `gsl_randist`)
+  2. MC move generation (position perturbations)
+  3. Energy calculation before/after move
+  4. Metropolis acceptance: `P_accept = min(1, exp(-ΔE/kT))`
+  5. MPI support for parallel replicas
+  6. Forcefield recalculation after accepted moves
+- **Missing components**:
+  - ✅ RNG: Can use `rand` crate (already dependency)
+  - ⬜ MC move logic
+  - ⬜ Acceptance/rejection framework
+- **Estimated effort**: 4-6 weeks
+
+**EDS (Enveloping Distribution Sampling) Details** (eds.cc):
+- **Complexity**: Complex, requires multi-state energy tracking
+- **Algorithm**: Samples multiple Hamiltonians H_i simultaneously using mixed Hamiltonian
+  - H_R = -(1/β) ln[Σ_i exp(-β(V_i - E_i^R))]
+  - where V_i are state energies, E_i^R are reference energies
+- **Key components**:
+  1. Multi-state energy calculation: `eds_vi` vector (one energy per state)
+  2. Boltzmann factor calculation: `exp(-beta * (V_i - E_ref_i))`
+  3. Log-sum-exp trick for numerical stability:
+     - `log(Σ exp(x_i)) = max(x_i) + log(1 + Σ exp(x_i - max(x_i)))`
+  4. Force mixing based on state probabilities
+  5. Reference energy optimization (search modes: aeds, aeds_search_eir, etc.)
+- **Missing components**:
+  - ⬜ Multi-state energy storage in Configuration
+  - ⬜ State probability calculation
+  - ⬜ Force mixing framework
+  - ⬜ Reference energy parameter optimization
+- **Estimated effort**: 6-8 weeks
+
+**GaMD (Gaussian Accelerated MD) Details** (gamd.cc):
+- **Complexity**: Complex, requires energy component separation and statistics
+- **Algorithm**: Add boost potential to flatten energy landscape
+  - V_boost = (E - V)² / (α + (E - V)) when V < E
+  - where E is threshold, α is acceleration parameter
+- **Boost types**:
+  1. Dihedral boost: Accelerate torsional barriers
+  2. Total potential boost: Accelerate all interactions
+  3. Dual boost: Both simultaneously
+- **Key components**:
+  1. Dihedral energy separation from total potential
+  2. Energy statistics tracking: V_max, V_min, V_mean, σ_V
+  3. Acceleration parameter calculation: k, k0, E
+  4. Boost potential and force calculation
+  5. Reweighting factor output: exp(βV_boost)
+- **Missing components**:
+  - ⬜ Dihedral energy tracking (separate from total)
+  - ⬜ Energy statistics accumulation
+  - ⬜ Boost parameter calculation
+  - ⬜ Reweighting output
+- **Estimated effort**: 6-8 weeks
+
+**Multigradient Details** (multigradient.cc):
+- **Complexity**: Medium-High, requires interpolation and multi-potential evaluation
+- **Algorithm**: Interpolate between multiple force fields or parameter sets
+  - Linear interpolation: `V(t) = V_i + (t-t_i)/(t_j-t_i) * (V_j - V_i)`
+  - Cubic spline interpolation: smooth transitions
+- **Key components**:
+  1. Control point system: (time, value) pairs
+  2. Linear interpolation (simple)
+  3. Cubic spline interpolation (uses GSL: `gsl_spline`, `gsl_interp_cspline`)
+  4. Multiple potential evaluations at different parameters
+  5. Force/energy blending based on interpolation weights
+- **Missing components**:
+  - ⬜ Spline interpolation (can use Rust `splines` crate or custom implementation)
+  - ⬜ Multi-potential framework
+  - ⬜ Parameter interpolation system
+- **Estimated effort**: 4-6 weeks
 
 ### 1.4 Free Energy Methods
-| Algorithm | File | Purpose | Rust Status |
-|-----------|------|---------|-------------|
-| **Slow Growth** | `slow_growth.cc` | TI with continuous λ | ❌ Not implemented |
-| **Lattice Shift** | `lattice_shift.cc` | Lattice sum derivatives | ❌ Not implemented |
+| Algorithm | File | Purpose | Implementation Complexity | Rust Status |
+|-----------|------|---------|--------------------------|-------------|
+| **Slow Growth** | `slow_growth.cc` | TI with continuous λ | ✅ Simple | ✅ **Implemented** (src/fep.rs:113) |
+| **Lattice Shift** | `lattice_shift.cc` | Track PBC crossings | 🔨 **1-2 weeks** (90 lines, simple) | ⬜ Not implemented |
+
+**Lattice Shift Details** (lattice_shift.cc):
+- **Complexity**: Simple (~90 lines)
+- **Purpose**: Track how many times atoms cross periodic boundaries
+- **Use case**: Free energy calculations with long-range electrostatics (lattice sum corrections)
+- **Key components**:
+  1. Lattice shift storage: `conf.special().lattice_shifts` (integer vector per atom)
+  2. Periodicity-aware wrapping: `put_chargegroups_into_box_saving_shifts()`
+  3. Shift accumulation during simulation
+  4. Optional reading from configuration file
+- **Missing components**:
+  - ⬜ `special` configuration field for lattice shifts
+  - ⬜ Shift-aware periodicity function
+- **Estimated effort**: 1-2 weeks
 
 ### 1.5 Analysis & Special
 | Algorithm | File | Purpose | Rust Status |
 |-----------|------|---------|-------------|
-| **Energy Calculation** | `energy_calculation.cc` | Single-point energies | ✅ Partially (tests) |
-| **Analyze** | `analyze.cc` | Trajectory analysis | ❌ Not implemented |
+| **Energy Calculation** | `energy_calculation.cc` | Single-point energies | ✅ Partially (interaction tests) |
+| **Analyze** | `analyze.cc` | Trajectory analysis | ❌ Not implemented (post-processing tool) |
 
-**Key Insight**: gromos-rs currently only has **leap-frog**. Need 12 more integration methods!
+**Summary**:
+- ✅ **Implemented**: 5/13 (Leap-Frog, Velocity Verlet, Stochastic, Steepest Descent, Slow Growth)
+- 🔨 **Simple (1-2 weeks)**: 2/13 (Scaled Leap-Frog, Lattice Shift)
+- 🔨 **Medium (2-4 weeks)**: 1/13 (Conjugate Gradient)
+- 🔨 **Complex (4-8 weeks)**: 4/13 (Monte Carlo, EDS, GaMD, Multigradient)
+- ❌ **Not needed**: 1/13 (Analyze - separate post-processing tool)
+
+---
+
+## 1.6 Missing Key Components for Advanced Algorithms
+
+To implement the remaining integration algorithms, gromos-rs needs the following infrastructure:
+
+### A. Random Number Generation (for Monte Carlo)
+**Status**: ✅ **Already available** via `rand` crate dependency
+
+**Usage**:
+```rust
+use rand::Rng;
+use rand_distr::{Normal, StandardNormal};
+
+// Uniform random for Metropolis acceptance
+let random_val: f64 = rng.gen_range(0.0..1.0);
+let accept = random_val < acceptance_probability;
+
+// Gaussian for MC moves
+let displacement = Normal::new(0.0, sigma).unwrap();
+let dx = rng.sample(displacement);
+```
+
+### B. Spline Interpolation (for Multigradient)
+**Status**: ⬜ **Not implemented** - need to add
+
+**Options**:
+1. **Rust `splines` crate** (recommended)
+   - Pure Rust, type-safe
+   - Cubic Hermite, Catmull-Rom, Bezier splines
+   - Add to `Cargo.toml`: `splines = "4.0"`
+
+2. **Custom cubic spline**
+   - ~200 lines for basic cubic spline
+   - Tridiagonal system solver needed
+
+**Implementation example**:
+```rust
+use splines::{Spline, Key};
+
+// Control points
+let keys = vec![
+    Key::new(0.0, 1.0, Interpolation::CatmullRom),
+    Key::new(1.0, 2.0, Interpolation::CatmullRom),
+    Key::new(2.0, 1.5, Interpolation::CatmullRom),
+];
+
+let spline = Spline::from_vec(keys);
+let value_at_0_5 = spline.sample(0.5).unwrap();
+```
+
+**Estimated effort**: 1-2 days to add dependency + 2-3 days for integration
+
+### C. Multi-State Energy Tracking (for EDS)
+**Status**: ⬜ **Not implemented** - requires configuration extension
+
+**Required changes**:
+```rust
+// In src/state.rs or src/energy.rs
+pub struct Energy {
+    // Existing fields...
+    pub bonded: f64,
+    pub nonbonded: f64,
+    pub kinetic: f64,
+
+    // New for EDS
+    pub eds_vi: Vec<f64>,           // Energy for each EDS state
+    pub eds_state_probabilities: Vec<f64>,  // P_i = exp(-β(V_i - E_i^R)) / Z
+    pub eds_reference_energies: Vec<f64>,   // E_i^R (adjustable)
+}
+
+pub struct EDSParameters {
+    pub num_states: usize,
+    pub s: f64,                      // Smoothness parameter
+    pub eir: Vec<f64>,               // Reference energies for each state
+    pub form: EDSForm,               // aeds, aeds_search_eir, etc.
+}
+
+pub enum EDSForm {
+    AEDS,                   // Accelerated EDS
+    AEDSSearchEIR,         // Search for optimal EIR
+    AEDSSearchEmaxEmin,    // Search for Emax/Emin
+    AEDSSearchAll,         // Search all parameters
+}
+```
+
+**Implementation tasks**:
+1. Add EDS state storage to `Energy` struct (1 day)
+2. Modify forcefield to calculate forces for all states (2-3 weeks)
+3. Implement Hamiltonian mixing with log-sum-exp (3-4 days)
+4. Add EDS-specific integrator step (1 week)
+5. Reference energy optimization algorithms (2-3 weeks)
+
+**Estimated effort**: 6-8 weeks total
+
+### D. Dihedral Energy Separation (for GaMD)
+**Status**: ⬜ **Not implemented** - requires forcefield modification
+
+**Required changes**:
+```rust
+// In src/energy.rs
+pub struct Energy {
+    // Existing
+    pub bonded: f64,
+    pub nonbonded: f64,
+
+    // Detailed breakdown for GaMD
+    pub dihedral: f64,              // Separate dihedral energy
+    pub bond: f64,
+    pub angle: f64,
+    pub improper: f64,
+}
+
+pub struct GaMDStatistics {
+    pub vmax_dihedral: f64,
+    pub vmin_dihedral: f64,
+    pub vmean_dihedral: f64,
+    pub sigma_dihedral: f64,
+
+    pub vmax_total: f64,
+    pub vmin_total: f64,
+    pub vmean_total: f64,
+    pub sigma_total: f64,
+
+    pub k_dihedral: f64,            // Boost parameter
+    pub k0_dihedral: f64,
+    pub E_dihedral: f64,            // Threshold energy
+
+    pub k_total: f64,
+    pub k0_total: f64,
+    pub E_total: f64,
+}
+```
+
+**Implementation tasks**:
+1. Separate dihedral energy calculation (modify bonded.rs) (3-4 days)
+2. Running statistics accumulation (1 week)
+3. Boost parameter calculation from statistics (1 week)
+4. Boost potential and force application (1 week)
+5. Reweighting factor output to trajectory (3-4 days)
+
+**Estimated effort**: 6-8 weeks total
+
+### E. Lattice Shift Tracking (for Lattice Shift algorithm)
+**Status**: ⬜ **Not implemented** - requires configuration extension
+
+**Required changes**:
+```rust
+// In src/configuration.rs
+pub struct SpecialData {
+    pub lattice_shifts: Vec<Vec3<i32>>,  // Integer shifts per atom
+    pub cos_energies: Vec<f64>,           // For EDS
+    pub distanceres_averages: Vec<f64>,   // For distance restraints
+}
+
+impl Configuration {
+    pub fn special(&self) -> &SpecialData { ... }
+    pub fn special_mut(&mut self) -> &mut SpecialData { ... }
+}
+
+// In src/math/periodicity.rs
+pub fn put_into_box_saving_shifts(
+    pos: &mut Vec<Vec3>,
+    shifts: &mut Vec<Vec3<i32>>,
+    box_dims: Vec3,
+) {
+    for (i, p) in pos.iter_mut().enumerate() {
+        // Wrap position and track how many box lengths we shifted
+        let old_shift = shifts[i];
+        shifts[i].x += (p.x / box_dims.x).floor() as i32;
+        shifts[i].y += (p.y / box_dims.y).floor() as i32;
+        shifts[i].z += (p.z / box_dims.z).floor() as i32;
+
+        p.x -= (p.x / box_dims.x).floor() * box_dims.x;
+        p.y -= (p.y / box_dims.y).floor() * box_dims.y;
+        p.z -= (p.z / box_dims.z).floor() * box_dims.z;
+    }
+}
+```
+
+**Implementation tasks**:
+1. Add `SpecialData` struct to Configuration (1 day)
+2. Implement shift-tracking periodicity function (2-3 days)
+3. Read/write lattice shifts from/to configuration files (2 days)
+4. Integrate with MD loop (1 day)
+
+**Estimated effort**: 1-2 weeks
+
+### F. Line Search Algorithm (for Conjugate Gradient)
+**Status**: ⬜ **Not implemented** - algorithmic component
+
+**Algorithm**: Find optimal step size `alpha` along search direction `d`
+```rust
+pub struct LineSearch {
+    c1: f64,  // Armijo condition (0.0001)
+    c2: f64,  // Wolfe condition (0.9)
+    max_iters: usize,
+}
+
+impl LineSearch {
+    // Backtracking line search with Wolfe conditions
+    pub fn search(
+        &self,
+        energy_fn: impl Fn(f64) -> f64,       // E(alpha)
+        gradient_fn: impl Fn(f64) -> f64,     // dE/dalpha at alpha
+        initial_step: f64,
+    ) -> f64 {
+        // 1. Start with initial_step
+        // 2. Check Armijo condition: E(alpha) <= E(0) + c1 * alpha * dE/dalpha(0)
+        // 3. Check Wolfe condition: |dE/dalpha(alpha)| <= c2 * |dE/dalpha(0)|
+        // 4. If not satisfied, reduce alpha (backtrack)
+        // 5. Return optimal alpha
+    }
+}
+```
+
+**Implementation tasks**:
+1. Implement backtracking line search (1 week)
+2. Add Wolfe conditions (3-4 days)
+3. Integrate with conjugate gradient (2-3 days)
+4. Testing and validation (1 week)
+
+**Estimated effort**: 3-4 weeks for robust line search
+
+---
+
+## 1.7 Implementation Priority Recommendations
+
+Based on the analysis above, here's the recommended implementation order for missing algorithms:
+
+### **Quick Wins (1-2 weeks each)**:
+1. **Scaled Leap-Frog** - Trivial, just force scaling
+   - **Effort**: 1-2 days
+   - **Value**: Enables multiple time-stepping
+   - **Dependencies**: None (uses existing leap-frog)
+
+2. **Lattice Shift Tracking** - Simple tracking system
+   - **Effort**: 1-2 weeks
+   - **Value**: Required for FEP with long-range electrostatics
+   - **Dependencies**: Configuration extension, PBC functions
+
+### **Medium Effort (2-4 weeks)**:
+3. **Conjugate Gradient** - Better minimization
+   - **Effort**: 2-4 weeks (mostly line search)
+   - **Value**: 10x faster convergence than steepest descent
+   - **Dependencies**: Line search algorithm
+
+### **Major Projects (4-8 weeks each)**:
+Implement in this order based on scientific value:
+
+4. **Monte Carlo** (4-6 weeks)
+   - **Why first**: Simpler than EDS/GaMD, uses existing RNG
+   - **Dependencies**: ✅ RNG available
+   - **Applications**: Sampling configuration space, chemical MC
+
+5. **Multigradient** (4-6 weeks)
+   - **Why second**: Moderate complexity, clear use case
+   - **Dependencies**: Spline library (easy to add)
+   - **Applications**: Parameter optimization, force field development
+
+6. **EDS** (6-8 weeks)
+   - **Why third**: Very powerful but complex
+   - **Dependencies**: Multi-state energy tracking (major refactor)
+   - **Applications**: Enhanced sampling of multiple states
+
+7. **GaMD** (6-8 weeks)
+   - **Why fourth**: Similar complexity to EDS
+   - **Dependencies**: Dihedral energy separation (moderate refactor)
+   - **Applications**: Rare event sampling, barrier crossing
+
+### **Don't Implement**:
+- **Analyze** - This is a post-processing tool, separate from MD engine
+- **GPU variants** - Excluded per user requirements
 
 ---
 
@@ -123,7 +508,13 @@ Plus soft-core variants for avoiding singularities:
 - `perturbed_soft_angle_interaction.cc`
 - `perturbed_soft_improper_interaction.cc`
 
-**Status**: ❌ **No perturbed interactions in gromos-rs**
+**Status**: ✅ **FEP framework implemented** (src/fep.rs)
+- ✅ Lambda controller with slow growth
+- ✅ Perturbed atom (dual-state A/B parameters)
+- ✅ Perturbed bonded term (interpolation + dV/dλ)
+- ✅ Soft-core potentials (LJ + electrostatic)
+- ✅ 11 comprehensive tests including mini-tests for Tutorial 02
+- ⚠️ Actual perturbed force calculation not yet integrated into forcefield
 
 ---
 
@@ -346,13 +737,32 @@ The `gromosPlusPlus` repository contains 100+ analysis programs:
 ### 12.2 Output Files
 | Format | Extension | Purpose | Rust Status |
 |--------|-----------|---------|-------------|
-| **Trajectory** | `.trc/.trj` | Coordinates over time | ❌ Not implemented |
-| **Energy** | `.tre` | Energy time series | ❌ Not implemented |
-| **Forces** | `.trf` | Force output | ❌ Not implemented |
+| **Trajectory** | `.trc/.trj` | Coordinates over time | ✅ **Implemented** (src/io/trajectory.rs) |
+| **Energy** | `.tre` | Energy time series | ✅ **Implemented** (src/io/energy.rs - simplified) |
+| **Forces** | `.trf` | Force output | ✅ **Implemented** (src/io/force.rs) |
 | **Free Energy** | `.dlg` | dH/dλ values | ❌ Not implemented |
 | **Restraints** | `.rsr/.dat` | Restraint violations | ❌ Not implemented |
 
-**Status**: gromos-rs can **read** basic files but cannot **write** any GROMOS outputs
+**TRC Files** (Coordinate Trajectory):
+- ✅ POSITIONRED block (positions)
+- ✅ VELOCITYRED block (optional velocities)
+- ✅ FORCERED block (optional forces)
+- ✅ GENBOX block (box dimensions)
+- ✅ TIMESTEP metadata
+
+**TRF Files** (Force Trajectory):
+- ✅ FREEFORCERED block (free forces)
+- ✅ CONSFORCERED block (optional constraint forces)
+- ✅ Proper GROMOS md++ format (18.9 precision)
+- ✅ Comment insertion every 10 atoms
+- ✅ TIMESTEP metadata
+
+**TRE Files** (Energy Trajectory):
+- ✅ Simplified format (time series only)
+- ⚠️ Full ENERGY03 block requires library file parser
+- ⚠️ VOLUMEPRESSURE03 block not implemented
+
+**Status**: gromos-rs can now **write** trajectory files (TRC, TRF, TRE) matching GROMOS format
 
 ---
 
@@ -392,11 +802,11 @@ The `gromosPlusPlus` repository contains 100+ analysis programs:
 3. ✅ **Distance restraints** - IMPLEMENTED (src/interaction/restraints.rs)
 4. ✅ **Position restraints** - IMPLEMENTED (src/interaction/restraints.rs)
 5. ✅ **Free energy perturbation** - IMPLEMENTED (src/fep.rs)
-6. ❌ **Replica exchange**
-7. ❌ **Trajectory I/O**
+6. ✅ **Trajectory I/O** - IMPLEMENTED (src/io/*.rs - TRC, TRF, TRE writers)
+7. ❌ **Replica exchange**
 
-**Progress**: 5/7 complete (71.4%)
-**Status**: Core enhanced methods implemented, replica exchange and I/O remaining
+**Progress**: 6/7 complete (85.7%)
+**Status**: Core enhanced methods implemented, only replica exchange remaining
 
 ### Tier 3: Advanced Features (Nice to Have)
 1. ❌ **QM/MM**
@@ -575,39 +985,49 @@ impl RestraintList {
 - ✅ **Thermostats**: Berendsen, Nosé-Hoover, Andersen complete
 - ✅ **Barostats**: Berendsen, Parrinello-Rahman complete
 - ⚠️ **Long-range electrostatics**: Reaction Field (RF) partially implemented
-- ✅ **Tier 2: 71.4% complete** (5/7 enhanced methods implemented)
+- ✅ **Tier 2: 85.7% complete** (6/7 enhanced methods implemented)
   - ✅ **Steepest descent minimization**: Adaptive step sizing, energy-based convergence
   - ✅ **Stochastic dynamics**: Langevin integrator with friction coefficients
   - ✅ **Position restraints**: Harmonic restraints to reference positions
   - ✅ **Distance restraints**: Harmonic/linear restraints, time-averaging for NOE
   - ✅ **Free energy perturbation**: Lambda control, dual-state topology, soft-core potentials
+  - ✅ **Trajectory I/O**: TRC, TRF, TRE file writers matching GROMOS md++ format
   - ❌ **Replica exchange**: Not yet implemented
-  - ❌ **Trajectory I/O**: Not yet implemented
 
 **Recent Progress** (Latest update):
-- **+1,200 lines** of production code for Tier 2 features
-- **5 major Tier 2 features** implemented in one session:
-  1. **Steepest Descent**: Adaptive step sizing, force limiting, energy convergence
-  2. **Stochastic Dynamics**: Full Langevin integrator with analytical/power series coefficients
-  3. **Position Restraints**: Harmonic restraints with PBC support
-  4. **Distance Restraints**: Harmonic/linear force functions, time-averaging, repulsive/attractive modes
-  5. **Free Energy Perturbation**: Lambda controller, perturbed atoms, soft-core potentials
-- All features include comprehensive tests (14 new test cases, all passing)
-- Dependencies added: `rand`, `rand_distr` for stochastic integration
+- **Trajectory I/O Implementation** (src/io/):
+  1. **TRC Writer**: Coordinate trajectory with POSITIONRED, VELOCITYRED, FORCERED, GENBOX blocks
+  2. **TRF Writer**: Force trajectory with FREEFORCERED/CONSFORCERED blocks (matches md++ format)
+  3. **TRE Writer**: Energy trajectory (simplified time series)
+  - All 7 trajectory writer tests passing
+  - Proper GROMOS md++ format compliance (18.9 precision, comment insertion)
+
+- **Integration Algorithm Analysis**:
+  1. Analyzed all 13 GROMOS++ integration algorithms
+  2. Identified missing key components (GSL alternatives, multi-state tracking, dihedral separation)
+  3. Created detailed implementation roadmap with effort estimates
+  4. Documented 6 new mini-tests for FEP Tutorial 02 validation (11 FEP tests total, all passing)
+
+- **Previous session**: +1,200 lines of Tier 2 features
+  - Steepest Descent, Stochastic Dynamics, Position/Distance Restraints, FEP core
 
 **Recommendation**:
 1. ✅ ~~Focus on Tier 1~~ - **COMPLETE** (RF is valid long-range method)
-2. ✅ ~~Implement core Tier 2 methods~~ - **71% COMPLETE**
+2. ✅ ~~Implement core Tier 2 methods~~ - **85.7% COMPLETE**
    - ✅ Energy minimization (steepest descent implemented, conjugate gradient optional)
    - ✅ Distance/position restraints (fully implemented)
    - ✅ Free energy perturbation (core framework complete)
-   - ❌ Trajectory I/O (.trc, .tre files) - **NEXT PRIORITY**
-   - ❌ Replica exchange - **NEXT PRIORITY**
-3. Tier 3+ are "nice to have" for specialized applications
-4. PME can be added later if needed (Tier 2 or 3)
+   - ✅ Trajectory I/O (TRC, TRF, TRE writers implemented)
+   - ❌ Replica exchange - **ONLY REMAINING TIER 2 FEATURE**
+3. **Next priorities**:
+   - Option A: Complete Tier 2 with Replica Exchange (4-6 weeks)
+   - Option B: Add quick-win algorithms: Scaled Leap-Frog (1-2 days), Lattice Shift (1-2 weeks)
+   - Option C: Start Tier 3 with Conjugate Gradient minimization (2-4 weeks)
+4. Tier 3+ advanced features (EDS, GaMD, QM/MM) are "nice to have" for specialized applications
+5. PME can be added later if needed (Tier 3)
 
 **Timeline to Full Tier 1**: ✅ **COMPLETE**
-**Timeline to Full Tier 2**: **~2-4 weeks** (only I/O and replica exchange remaining)
+**Timeline to Full Tier 2**: **~4-6 weeks** (only replica exchange remaining)
 **Timeline to Feature Parity**: ~12-18 months of focused development
 
 **Current Capability**: gromos-rs can now run **production MD simulations and advanced calculations** with:
@@ -620,6 +1040,7 @@ impl RestraintList {
 - **Stochastic dynamics**: Langevin integrator for implicit solvent simulations
 - **Restraints**: Position and distance restraints (NMR/experimental data fitting)
 - **Free energy**: Lambda-dependent perturbations, soft-core potentials, TI calculations
+- **Trajectory output**: TRC/TRF/TRE file writing matching GROMOS md++ format
 
 ---
 
