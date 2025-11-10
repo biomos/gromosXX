@@ -25,6 +25,9 @@ mimalloc = { version = "0.1", optional = true }
 # Interop
 libc = "0.2"
 
+# CLI tools
+clap = { version = "4.5", features = ["derive"] }
+
 # FFT for PME electrostatics
 rustfft = "6.2"  # Pure Rust FFT (always available)
 fftw = { version = "0.8", optional = true }  # FFTW3 bindings (if system library available)
