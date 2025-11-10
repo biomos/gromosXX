@@ -63,18 +63,20 @@ pub struct CrossDihedral {
     pub cross_dihedral_type: usize,
 }
 
-/// Bond force field parameters
+/// Bond force field parameters (GROMOS format)
 #[derive(Debug, Clone, Copy)]
 pub struct BondParameters {
-    pub k: f64,   // Force constant
-    pub r0: f64,  // Equilibrium bond length
+    pub k_quartic: f64,   // Quartic force constant
+    pub k_harmonic: f64,  // Harmonic force constant
+    pub r0: f64,          // Equilibrium bond length
 }
 
-/// Angle force field parameters
+/// Angle force field parameters (GROMOS format)
 #[derive(Debug, Clone, Copy)]
 pub struct AngleParameters {
-    pub k: f64,     // Force constant
-    pub cos0: f64,  // Cosine of equilibrium angle
+    pub k_cosine: f64,   // Force constant (harmonic in cosine)
+    pub k_harmonic: f64, // Force constant (harmonic in angle)
+    pub theta0: f64,     // Equilibrium angle in radians
 }
 
 /// Dihedral force field parameters
@@ -130,6 +132,17 @@ impl LJParameters {
             self.c6 * self.c6 / (4.0 * self.c12)
         } else {
             0.0
+        }
+    }
+}
+
+impl Default for LJParameters {
+    fn default() -> Self {
+        Self {
+            c6: 0.0,
+            c12: 0.0,
+            cs6: 0.0,
+            cs12: 0.0,
         }
     }
 }

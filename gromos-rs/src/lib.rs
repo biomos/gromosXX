@@ -48,6 +48,7 @@ pub mod pairlist;
 pub mod interaction;
 pub mod integrator;
 pub mod ffi;
+pub mod io;
 
 // Re-export main types for convenience
 pub use math::{Vec3, Mat3, Periodicity, BoundaryCondition};
