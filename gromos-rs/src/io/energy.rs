@@ -54,7 +54,7 @@
 
 use crate::io::IoError;
 use std::fs::File;
-use std::io::{Write, BufWriter};
+use std::io::{Write, BufWriter, BufReader, BufRead};
 use std::path::Path;
 
 /// Energy component identifiers (GROMOS convention)
@@ -331,6 +331,172 @@ pub fn write_energy_frame<P: AsRef<Path>>(
     writer.write_frame(frame)?;
     writer.finalize()?;
     Ok(())
+}
+
+/// GROMOS energy file reader
+pub struct EnergyReader {
+    reader: BufReader<File>,
+    title: String,
+    frames_read: usize,
+}
+
+impl EnergyReader {
+    /// Open an energy trajectory file for reading
+    pub fn new<P: AsRef<Path>>(path: P) -> Result<Self, IoError> {
+        let file = File::open(path)?;
+        let mut reader = BufReader::new(file);
+
+        // Read TITLE block
+        let title = Self::read_title_block(&mut reader)?;
+
+        Ok(Self {
+            reader,
+            title,
+            frames_read: 0,
+        })
+    }
+
+    /// Get the title from the energy file
+    pub fn title(&self) -> &str {
+        &self.title
+    }
+
+    /// Get the number of frames read so far
+    pub fn frames_read(&self) -> usize {
+        self.frames_read
+    }
+
+    /// Read a single energy frame
+    ///
+    /// Returns Ok(Some(frame)) if a frame was read, Ok(None) if end of file reached
+    pub fn read_frame(&mut self) -> Result<Option<EnergyFrame>, IoError> {
+        let mut line = String::new();
+
+        loop {
+            line.clear();
+            let bytes_read = self.reader.read_line(&mut line)?;
+
+            if bytes_read == 0 {
+                // End of file
+                return Ok(None);
+            }
+
+            let trimmed = line.trim();
+
+            // Skip empty lines and comments
+            if trimmed.is_empty() || trimmed.starts_with('#') {
+                continue;
+            }
+
+            // Check for END block
+            if trimmed == "END" {
+                return Ok(None);
+            }
+
+            // Check for ENERTRJ block
+            if trimmed == "ENERTRJ" {
+                continue;
+            }
+
+            // Parse energy values
+            let values: Result<Vec<f64>, _> = trimmed
+                .split_whitespace()
+                .map(|s| s.parse::<f64>())
+                .collect();
+
+            match values {
+                Ok(vals) if vals.len() >= 17 => {
+                    // Successfully parsed energy frame
+                    let frame = EnergyFrame {
+                        time: vals[0],
+                        kinetic: vals[1],
+                        potential: vals[2],
+                        total: vals[3],
+                        temperature: vals[4],
+                        volume: vals[5],
+                        pressure: vals[6],
+                        bond: vals[7],
+                        angle: vals[8],
+                        improper: vals[9],
+                        dihedral: vals[10],
+                        lj: vals[11],
+                        coul_real: vals[12],
+                        coul_recip: vals[13],
+                        coul_self: vals[14],
+                        shake: vals[15],
+                        restraint: vals[16],
+                        extra: if vals.len() > 17 {
+                            vals[17..].to_vec()
+                        } else {
+                            Vec::new()
+                        },
+                    };
+
+                    self.frames_read += 1;
+                    return Ok(Some(frame));
+                }
+                Ok(vals) if vals.is_empty() => {
+                    // Empty line after splitting, continue
+                    continue;
+                }
+                Ok(vals) => {
+                    return Err(IoError::ParseError(format!(
+                        "Incomplete energy frame: expected at least 17 values, got {}",
+                        vals.len()
+                    )));
+                }
+                Err(e) => {
+                    return Err(IoError::ParseError(format!(
+                        "Failed to parse energy values: {}",
+                        e
+                    )));
+                }
+            }
+        }
+    }
+
+    /// Read all energy frames from the file
+    pub fn read_all_frames(&mut self) -> Result<Vec<EnergyFrame>, IoError> {
+        let mut frames = Vec::new();
+        while let Some(frame) = self.read_frame()? {
+            frames.push(frame);
+        }
+        Ok(frames)
+    }
+
+    /// Read TITLE block
+    fn read_title_block(reader: &mut BufReader<File>) -> Result<String, IoError> {
+        let mut line = String::new();
+        let mut title_lines = Vec::new();
+        let mut in_title = false;
+
+        loop {
+            line.clear();
+            let bytes_read = reader.read_line(&mut line)?;
+
+            if bytes_read == 0 {
+                return Err(IoError::ParseError("Unexpected EOF while reading TITLE".to_string()));
+            }
+
+            let trimmed = line.trim();
+
+            if trimmed == "TITLE" {
+                in_title = true;
+                continue;
+            }
+
+            if trimmed == "END" {
+                if in_title {
+                    return Ok(title_lines.join(" ").trim().to_string());
+                }
+                continue;
+            }
+
+            if in_title {
+                title_lines.push(trimmed.to_string());
+            }
+        }
+    }
 }
 
 #[cfg(test)]
