@@ -92,10 +92,6 @@ namespace io {
                     , simulation::Simulation& sim
                     , const std::string& blockname);
     /**
-     * Perform charge and multiplicity check 
-     */
-    void check_charge_mult_consistency(topology::Topology& topo, simulation::Simulation& sim);
-    /**
      * helper function to remove constraints from QM atoms
      */
     void remove_constraints(topology::Topology& topo);
