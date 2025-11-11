@@ -51,6 +51,8 @@ pub mod algorithm;
 pub mod fep;
 // pub mod ffi;  // Temporarily disabled - needs update for refactored API
 pub mod io;
+pub mod validation;
+pub mod logging;
 
 // Re-export main types for convenience
 pub use math::{Vec3, Mat3, Periodicity, BoundaryCondition};
