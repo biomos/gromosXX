@@ -1,0 +1,66 @@
+[package]
+name = "gromos-rs"
+version = "0.1.0"
+edition = "2021"
+authors = ["GROMOS Developers"]
+description = "Rust implementation of performance-critical GROMOS MD kernels"
+license = "GPL-2.0"
+
+[lib]
+crate-type = ["staticlib", "cdylib", "rlib"]
+name = "gromos_rs"
+
+[dependencies]
+# SIMD and math
+glam = { version = "0.24", features = ["bytemuck"] }
+wide = "0.7"
+
+# Parallelism
+rayon = "1.8"
+crossbeam = "0.8"
+
+# Allocators
+mimalloc = { version = "0.1", optional = true }
+
+# Interop
+libc = "0.2"
+
+# CLI tools
+clap = { version = "4.5", features = ["derive"] }
+
+# FFT for PME electrostatics
+rustfft = "6.2"  # Pure Rust FFT (always available)
+fftw = { version = "0.8", optional = true }  # FFTW3 bindings (if system library available)
+num-complex = "0.4"  # Complex number support
+
+# Random number generation for stochastic dynamics
+rand = "0.8"
+rand_distr = "0.4"  # For Gaussian/normal distributions
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+approx = "0.5"
+rand = "0.8"
+
+[build-dependencies]
+cbindgen = "0.26"
+
+[profile.release]
+opt-level = 3
+lto = "fat"           # Full link-time optimization
+codegen-units = 1     # Better optimization
+panic = "abort"       # Smaller binary
+
+[profile.bench]
+inherits = "release"
+
+[features]
+default = ["simd"]
+simd = []
+mimalloc = ["dep:mimalloc"]
+use-fftw = ["fftw"]  # Use FFTW3 if system library available
+
+# Uncomment when benchmarks are created
+# [[bench]]
+# name = "innerloop"
+# harness = false

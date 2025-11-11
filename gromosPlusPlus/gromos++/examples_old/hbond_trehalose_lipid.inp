@@ -1,0 +1,15 @@
+#this calculates intermolecular-inter-species hydrogen bonds
+#between all trehalose and all lipid molecules.
+#first all atoms are selected as donors and acceptors. then they
+#are filtered  using the mass-file and the @molrange flag
+@topo dppctre.top
+@pbc    r
+@type   2 
+@SoluteDonorAtoms a
+@SoluteAcceptorAtoms a
+@Hbparas 0.25 135
+@time 0 0.5
+@massfile mass.file
+@molrange 2 1-128 129-256
+@traj
+dppctre.tr

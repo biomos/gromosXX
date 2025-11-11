@@ -1,0 +1,23 @@
+#Redtop reduces a topology to selected molecules and / or atoms
+### Topology file 
+#
+@topo ex.top
+#
+### Molecules and / or atoms to consider
+### a single number means the complete molecule, if followed by
+### a colon a range of atoms is expected (no spaces in such atom
+### specifiers
+#
+@mol 1:4-20
+#
+### other example:
+#
+#@mol 1:1-40 1:60-100 2
+#
+### would take atoms 1-40 and 60-100 of the first molecule and all atoms
+### of the second molecule in the topology
+### NOTE: if you would take @mol 1:1-20 1:22-34 both pieces are
+### considered individual molecules, regardless of original interactions 
+### between atoms 20 and 22 (angles, exclusions)
+
+

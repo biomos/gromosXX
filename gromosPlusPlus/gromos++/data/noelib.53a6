@@ -1,0 +1,355 @@
+TITLE
+Library file for the GROMOS geometrical types as defined in 
+Vol.2, Ch.8.4 of the GROMOS manual
+END
+NOELIB
+# format:
+# <g96 residue name> <noe-file atom name> <g96 atom name i> <NOE type>
+#
+# DNA parameters, CO, MK, JD 
+#
+#1
+DADE H5'  C5*  4 1
+DADE H5'' C5*  4 2 
+DADE H4'  C4*  1
+DADE H3'  C3*  1
+DADE H2'  C2*  4 1
+DADE H2'' C2*  4 2
+DADE H1'  C1*  1
+DADE H8   H8   0
+DADE H2   H2   0
+DADE H61  H61  0
+DADE H62  H62  0
+DADE H6@  N6  -1 2
+#2
+DGUA H5'  C5*  4 1
+DGUA H5'' C5*  4 2 
+DGUA H4'  C4*  1
+DGUA H3'  C3*  1
+DGUA H2'  C2*  4 1
+DGUA H2'' C2*  4 2
+DGUA H1'  C1*  1
+DGUA H8   H8   0
+DGUA H1   H1   0
+DGUA H21  H21  0
+DGUA H22  H22  0
+DGUA H2@  N2  -1 2
+#3
+DCYT H5'  C5*  4 1
+DCYT H5'' C5*  4 2 
+DCYT H4'  C4*  1
+DCYT H3'  C3*  1
+DCYT H2'  C2*  4 1
+DCYT H2'' C2*  4 2
+DCYT H1'  C1*  1
+DCYT H5   H5   0
+DCYT H6   H6   0
+DCYT H41  H41  0
+DCYT H42  H42  0
+DCYT H4@  N4  -1 2
+#4
+DTHY H5'  C5*  4 1
+DTHY H5'' C5*  4 2 
+DTHY H4'  C4*  1
+DTHY H3'  C3*  1
+DTHY H2'  C2*  4 1
+DTHY H2'' C2*  4 2
+DTHY H1'  C1*  1
+DTHY H3   H3   0
+DTHY H6   H6   0
+DTHY H5@  C5M  5
+#
+#RNA parameters, JD
+#1
+ADE  H5'  C5*  4 1
+ADE  H5'' C5*  4 2 
+ADE  H4'  C4*  1
+ADE  H3'  C3*  1
+ADE  H2'  C2*  1
+ADE  H2*  H2*  0
+ADE  H1'  C1*  1
+ADE  H8   H8   0
+ADE  H2   H2   0
+ADE  H61  H61  0
+ADE  H62  H62  0
+ADE  H6@  N6  -1 2
+#2
+GUA  H5'  C5*  4 1
+GUA  H5'' C5*  4 2 
+GUA  H4'  C4*  1
+GUA  H3'  C3*  1
+GUA  H2'  C2*  1
+GUA  H2*  H2*  0
+GUA  H1'  C1*  1
+GUA  H8   H8   0
+GUA  H1   H1   0
+GUA  H21  H21  0
+GUA  H22  H22  0
+GUA  H2@  N2  -1 2
+#3
+CYT  H5'  C5*  4 1
+CYT  H5'' C5*  4 2 
+CYT  H4'  C4*  1
+CYT  H3'  C3*  1
+CYT  H2'  C2*  1
+CYT  H2*  H2*  0
+CYT  H1'  C1*  1
+CYT  H5   H5   0
+CYT  H6   H6   0
+CYT  H41  H41  0
+CYT  H42  H42  0
+CYT  H4@  N4  -1 2
+#4
+URA  H5'  C5*  4 1
+URA  H5'' C5*  4 2 
+URA  H4'  C4*  1
+URA  H3'  C3*  1
+URA  H2'  C2*  1
+URA  H2*  H2*  0
+URA  H1'  C1*  1
+URA  H3   H3   0
+URA  H5   H5   0
+URA  H6   H6   0
+#
+# Protein parameters.
+# Entries contributed by CO, MK and TS
+#
+# NO GUARANTEE THEY ARE EITHER COMPLETE OR RIGHT
+# PLEASE USE AT YOUR OWN RISK.
+#
+# Some NOE's are quite general. Here's a list:
+# HN      -> H ; hydrogen bound to the nitrogen of the peptide group
+# HA      -> CA; hydrogen of the CA carbon
+# HB@     -> CB; unresolved hydrogens of the CB carbon
+# HB1, HB2-> CB; resolved hydrogen of the CB carbon
+#                the XPLOR HB1 refers to the IUPAC Hb3
+#                the XPLOR HB2 refers to the IUPAC Hb2
+#
+# GROMOS CODES: 
+# 0     :=  explicit atom
+# 1     :=  CH1 (stereospecific)
+# 2     :=  CH1 (aromatic, old ff)
+# 3     :=  CH2 (non-stereospecific)
+# 4     :=  CH2 (stereospecific)
+# 5     :=  CH3 group
+# 6     :=  non-stereospecific (CH3)2 group (isopropyl)
+# 7     :=  non-stereospecific (CH3)3 group (tert-butyl) 
+# -1 1  :=  flipping aromatic ring
+# -1 2  :=  unassigned NH2 group
+#
+# For the stereospecific CH2, a fifth column on the line can be read,
+# with possible values 0,1 and 2:
+# 0: two virtual atoms will be generated, we use this if the spin is
+#    assigned, but we don't know which virtual atom it is. Use the
+#    program postnoe to assign one based on minimum or maximum violation
+# 1: one virtual atom will be generated based on atoms i, j, k with j < k 
+# 2: one virtual atom will be generated based on atoms i, j, k with j > k
+#
+# in the definitions below we assume standard GROMOS96 building blocks,
+# meaning that HB1 (IUPAC: Hb3) is 1 and HB2 (IUPAC: Hb2) is 2
+#
+# 1
+ALA  HN   H    0  
+ALA  HA   CA   1
+ALA  HB@  CB   5
+# 2
+ARG  HN   H    0
+ARG  HA   CA   1
+ARG  HB@  CB   3
+ARG  HB1  CB   4 1
+ARG  HB2  CB   4 2
+ARG  HG@  CG   3
+ARG  HG1  CG   4 1
+ARG  HG2  CG   4 2
+ARG  HD@  CD   3
+ARG  HD1  CD   4 1
+ARG  HD2  CD   4 2
+# 3
+ASN  HN   H    0
+ASN  HA   CA   1
+ASN  HB@  CB   3 
+ASN  HB1  CB   4 1
+ASN  HB2  CB   4 2
+ASN  HD@  ND2  -1 2 
+ASN  HD21 HD21 0
+ASN  HD22 HD22 0
+# 4
+ASP  HN   H    0
+ASP  HA   CA   1
+ASP  HB@  CB   3
+ASP  HB1  CB   4 1
+ASP  HB2  CB   4 2
+# 5
+CYSH HN   H    0
+CYSH HA   CA   1
+CYSH HB@  CB   3
+# 6
+CYS1 HN   H    0
+CYS1 HA   CA   1
+CYS1 HB@  CB   3
+CYS1 HB1  CB   4 1
+CYS1 HB2  CB   4 2
+CYS2 HN   H    0
+CYS2 HA   CA   1
+CYS2 HB@  CB   3
+CYS2 HB1  CB   4 1
+CYS2 HB2  CB   4 2
+# 7
+GLN  HN   H    0
+GLN  HA   CA   1
+GLN  HB@  CB   3
+GLN  HB1  CB   4 1
+GLN  HB2  CB   4 2
+GLN  HG@  CG   3
+GLN  HG1  CG   4 1
+GLN  HG2  CG   4 2
+GLN  HE2@ NE2  8
+GLN  HE21 HE21 0
+GLN  HE22 HE22 0
+# 8
+GLU  HN   H    0
+GLU  HA   CA   1
+GLU  HB@  CB   3
+GLU  HG@  CG   3
+# 9
+GLY  HN   H    0
+GLY  HA1  CA   4 1
+GLY  HA2  CA   4 2
+GLY  HA@  CA   3
+# 10
+HISA HN   H    0
+HISA HA   CA   1
+HISA HB@  CB   3
+HISA HB1  CB   4 1
+HISA HB2  CB   4 2
+HISA HD1  HD1  0
+HISA HD2  HD2  0
+HISA HE1  HE1  0
+HISB HN   H    0
+HISB HA   CA   1
+HISB HB@  CB   3
+HISB HB1  CB   4 1
+HISB HB2  CB   4 2
+HISB HE2  HE2  0
+HISB HD2  HD2  0
+HISB HE1  HE1  0
+# 11
+ILE  HN   H    0
+ILE  HA   CA   1
+ILE  HB   CB   1
+ILE  HD@  CD   5
+ILE  HG2  CG2  5
+# Check if in the PDB HG1@ refers to the methyl or to the CH2
+# and decide which of the following lines is correct
+# we use the GROMOS convention (manual p. IV-67), i.e. CG1 is a CH2
+ILE  HG1@ CG1  3
+#
+# Check if in the PDB HG1@ refers to the methyl or to the CH2
+# and decide which of the following lines is correct
+# we use the GROMOS convention (GROMOS manual, Vol.3.), i.e. CG2 is a CH3
+ILE  HG2@ CG2  5
+# 12
+LEU  HN   H    0
+LEU  HA   CA   1
+LEU  HB@  CB   3
+LEU  HB1  CB   4 1
+LEU  HB2  CB   4 2
+LEU  HD@@ CG   6
+LEU  HD@  CG   6
+LEU  HD1@ CD1  5
+LEU  HD2@ CD2  5
+LEU  HG   CG   1
+# 13
+LYSH HN   H    0
+LYSH HA   CA   1
+LYSH HB@  CB   3
+LYSH HB1  CB   4 1
+LYSH HB2  CB   4 2
+LYSH HG@  CG   3
+LYSH HG1  CG   4 1
+LYSH HG2  CG   4 2
+LYSH HD@  CD   3
+LYSH HD1  CD   4 1
+LYSH HD2  CD   4 2
+LYSH HE@  CE   3
+LYSH HE1  CE   4 1
+LYSH HE2  CE   4 2
+# 14
+MET  HN   H    0
+MET  HA   CA   1
+MET  HB@  CB   3
+MET  HB1  CB   4 1
+MET  HB2  CB   4 2
+MET  HG@  CG   3
+MET  HG1  CG   4 1
+MET  HG2  CG   4 2
+MET  HE@  CE   5
+# 15
+PHE  HN   H    0
+PHE  HA   CA   1
+PHE  HB@  CB   3
+PHE  HB1  CB   4 1
+PHE  HB2  CB   4 2
+PHE  HD@  CG  -1 1 
+PHE  HE@  CZ  -1 1 
+PHE  HZ   HZ   0
+# 16
+PRO  HA   CA   1
+PRO  HB@  CB   3
+PRO  HB1  CB   4 1
+PRO  HB2  CB   4 2
+PRO  HG@  CG   3
+PRO  HG1  CD   4 1
+PRO  HG2  CD   4 2
+PRO  HD@  CD   3
+# because in GROMOS building blocks N < CG these are inverted
+PRO  HD1  CD   4 2
+PRO  HD2  CD   4 1
+# 17
+SER  HN   H    0
+SER  HA   CA   1
+SER  HB@  CB   3
+SER  HB1  CB   4 1
+SER  HB2  CB   4 2
+# will not be measured, due to fast excange
+# SER  HG   HG   0
+# 18
+VAL  HN   H    0
+VAL  HA   CA   1
+VAL  HB   CB   1
+VAL  HG1@ CG1  5
+VAL  HG2@ CG2  5  
+VAL  HG@  CB   6
+VAL  HG@@ CB   6
+# 19
+THR  HN   H    0
+THR  HA   CA   1
+THR  HB   CB   1
+THR  HG2@ CG2  5
+# will not be measured, due to fast excange
+# what is the pdb nomenclature?
+# THR  HG1  HG1  0
+# THR  HG2  HG1  0
+# 20
+TRP  HN   H    0
+TRP  HA   CA   1
+TRP  HB@  CB   3
+TRP  HB1  CB   4 1
+TRP  HB2  CB   4 2
+# Warning: is the pdb nomenclature exactly the same?
+TRP  HE1  HE1  0
+TRP  HE3  HE3  0
+TRP  HD1  HD1  0
+TRP  HZ2  HZ2  0
+TRP  HZ3  HZ3  0
+TRP  HH2  HH2  0
+#21
+TYR  HN   H    0
+TYR  HA   CA   1
+TYR  HB@  CB   3
+TYR  HB1  CB   4 1
+TYR  HB2  CB   4 2
+TYR  HD@  CG  -1 1 
+TYR  HE@  CZ  -1 1 
+#
+END

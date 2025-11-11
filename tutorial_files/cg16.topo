@@ -1,0 +1,289 @@
+TITLE
+COM_TOP: Combined topology using:
+           1 : cg16.topo
+Parameters from 1, solvent from 1
+END
+PHYSICALCONSTANTS
+# FPEPSI: 1.0/(4.0*PI*EPS0) (EPS0 is the permittivity of vacuum)
+138.9354
+# HBAR: Planck's constant HBAR = H/(2* PI)
+0.0635078
+# SPDL: Speed of light (in nm/ps)
+  2.9979245800E05
+# BOLTZ: Boltzmann's constant kB
+0.00831441
+END
+TOPVERSION
+2.0
+END
+ATOMTYPENAME
+# NRATT: number of van der Waals atom types
+10
+# TYPE: atom type names
+P
+N0
+Nd
+Na
+Nda
+C
+Q0
+Qd
+Qa
+Qda
+END
+RESNAME
+# NRAA2: number of residues in a solute molecule
+1
+# AANM: residue names
+CGC16
+END
+SOLUTEATOM
+#   NRP: number of solute atoms
+    4
+#  ATNM: atom number
+#  MRES: residue number
+#  PANM: atom name of solute atom
+#   IAC: integer (van der Waals) atom type code
+#  MASS: mass of solute atom
+#    CG: charge of solute atom
+#   CGC: charge group code (0 or 1)
+#   INE: number of excluded atoms
+# INE14: number of 1-4 interactions
+# ATNM MRES PANM IAC     MASS       CG  CGC INE
+#                                           INE14
+     1    1   C1   6 62.00000  0.00000  1  1     2
+                                           0
+     2    1   C2   6 62.00000  0.00000  1  1     3
+                                           0
+     3    1   C3   6 62.00000  0.00000  1  1     4
+                                           0
+     4    1   C4   6 62.00000  0.00000  1  0
+                                           0
+END
+BONDSTRETCHTYPE
+#  NBTY: number of covalent bond types
+1
+#  CB:  quartic force constant
+#  CHB: harmonic force constant
+#  B0:  bond length at minimum energy
+#         CB         CHB         B0
+     1.25000e+03     5.52250e+02     4.70000e-01
+END
+BONDH
+#  NBONH: number of bonds involving H atoms in solute
+0
+#  IBH, JBH: atom sequence numbers of atoms forming a bond
+#  ICBH: bond type code
+#   IBH    JBH ICBH
+END
+BOND
+#  NBON: number of bonds NOT involving H atoms in solute
+3
+#  IB, JB: atom sequence numbers of atoms forming a bond
+#  ICB: bond type code
+#    IB     JB  ICB
+      1      2    1
+      2      3    1
+      3      4    1
+END
+BONDANGLEBENDTYPE
+#  NTTY: number of bond angle types
+1
+#  CT:  force constant (based on potential
+#       harmonic in the angle cosine)
+#  CHT: force constant (based on potential
+#       harmonic in the angle)
+#  T0:  bond angle at minimum energy in degrees
+#         CT         CHT          T0
+     2.50000e+01     3.73339e+00     1.80000e+02
+END
+BONDANGLEH
+#  NTHEH: number of bond angles involving H atoms in solute
+0
+#  ITH, JTH, KTH: atom sequence numbers
+#    of atoms forming a bond angle in solute
+#  ICTH: bond angle type code
+#   ITH    JTH    KTH ICTH
+END
+BONDANGLE
+#  NTHE: number of bond angles NOT
+#        involving H atoms in solute
+2
+#  IT, JT, KT: atom sequence numbers of atoms
+#     forming a bond angle
+#  ICT: bond angle type code
+#    IT     JT     KT  ICT
+      1      2      3    1
+      2      3      4    1
+END
+IMPDIHEDRALTYPE
+#  NQTY: number of improper dihedrals
+0
+#  CQ: force constant of improper dihedral per degrees square
+#  Q0: improper dihedral angle at minimum energy in degrees
+#         CQ          Q0
+END
+IMPDIHEDRALH
+#  NQHIH: number of improper dihedrals
+#         involving H atoms in the solute
+0
+#  IQH,JQH,KQH,LQH: atom sequence numbers
+#     of atoms forming an improper dihedral
+#  ICQH: improper dihedral type code
+#   IQH    JQH    KQH    LQH ICQH
+END
+IMPDIHEDRAL
+#  NQHI: number of improper dihedrals NOT
+#    involving H atoms in solute
+0
+#  IQ,JQ,KQ,LQ: atom sequence numbers of atoms
+#    forming an improper dihedral
+#  ICQ: improper dihedral type code
+#    IQ     JQ     KQ     LQ  ICQ
+END
+TORSDIHEDRALTYPE
+#  NPTY: number of dihedral types
+1
+#  CP: force constant
+#  PD: phase-shift angle
+#  NP: multiplicity
+#       CP        PD  NP
+   1.37000 180.00000   1
+END
+DIHEDRALH
+#  NPHIH: number of dihedrals involving H atoms in solute
+0
+#  IPH, JPH, KPH, LPH: atom sequence numbers
+#    of atoms forming a dihedral
+#  ICPH: dihedral type code
+#   IPH    JPH    KPH    LPH ICPH
+END
+DIHEDRAL
+#  NPHI: number of dihedrals NOT involving H atoms in solute
+0
+#  IP, JP, KP, LP: atom sequence numbers
+#     of atoms forming a dihedral
+#  ICP: dihedral type code
+#    IP     JP     KP     LP  ICP
+END
+CGPARAMETERS
+#  NRATT2: number of LJ interaction types = NRATT*(NRATT+1)/2
+55
+#  IAC,JAC: integer (van der Waals) atom type code
+#  C12: r**(-12) term in nonbonded interactions
+#   C6: r**(-6) term in nonbonded interactions
+# CS12: r**(-12) term in 1-4 nonbonded interactions
+#  CS6: r**(-6) term in 1-4 nonbonded interactions
+# IAC  JAC           C12            C6          CS12           CS6
+    1    1  2.323830e-03  2.155840e-01
+#
+    1    2  1.208390e-03  1.121040e-01
+    2    2  1.580200e-03  1.465970e-01
+#
+    1    3  1.580200e-03  1.465970e-01
+    2    3  1.580200e-03  1.465970e-01
+    3    3  1.952020e-03  1.810910e-01
+#
+    1    4  1.580200e-03  1.465970e-01
+    2    4  1.580200e-03  1.465970e-01
+    3    4  1.952020e-03  1.810910e-01
+    4    4  1.952020e-03  1.810910e-01
+#
+    1    5  1.952020e-03  1.810910e-01
+    2    5  1.580200e-03  1.465970e-01
+    3    5  1.952020e-03  1.810910e-01
+    4    5  1.952020e-03  1.810910e-01
+    5    5  2.323830e-03  2.155840e-01
+#
+    1    6  8.365790e-04  7.761040e-02
+    2    6  1.580200e-03  1.465970e-01
+    3    6  1.208390e-03  1.121040e-01
+    4    6  1.208390e-03  1.121040e-01
+    5    6  8.365790e-04  7.761040e-02
+    6    6  1.580200e-03  1.465970e-01
+#
+    1    7  2.323830e-03  2.155840e-01
+    2    7  1.580200e-03  1.465970e-01
+    3    7  1.580200e-03  1.465970e-01
+    4    7  1.580200e-03  1.465970e-01
+    5    7  1.580200e-03  1.465970e-01
+    6    7  8.365790e-04  7.761040e-02
+    7    7  1.580200e-03  1.465970e-01
+#
+    1    8  2.323830e-03  2.155840e-01
+    2    8  1.580200e-03  1.465970e-01
+    3    8  1.580200e-03  1.465970e-01
+    4    8  1.952020e-03  1.810910e-01
+    5    8  1.952020e-03  1.810910e-01
+    6    8  8.365790e-04  7.761040e-02
+    7    8  1.580200e-03  1.465970e-01
+    8    8  1.580200e-03  1.465970e-01
+#
+    1    9  2.323830e-03  2.155840e-01
+    2    9  1.580200e-03  1.465970e-01
+    3    9  1.952020e-03  1.810910e-01
+    4    9  1.580200e-03  1.465970e-01
+    5    9  1.952020e-03  1.810910e-01
+    6    9  8.365790e-04  7.761040e-02
+    7    9  1.580200e-03  1.465970e-01
+    8    9  1.952020e-03  1.810910e-01
+    9    9  1.580200e-03  1.465970e-01
+#
+    1   10  2.323830e-03  2.155840e-01
+    2   10  1.580200e-03  1.465970e-01
+    3   10  1.952020e-03  1.810910e-01
+    4   10  1.952020e-03  1.810910e-01
+    5   10  2.323830e-03  2.155840e-01
+    6   10  8.365790e-04  7.761040e-02
+    7   10  1.952020e-03  1.810910e-01
+    8   10  2.323830e-03  2.155840e-01
+    9   10  2.323830e-03  2.155840e-01
+   10   10  2.323830e-03  2.155840e-01
+#
+END
+LJPARAMETERS
+0
+END
+SOLUTEMOLECULES
+# NSPM: number of separate molecules in solute block
+# NSP[1...NSPM]: atom sequence number of last atom
+#                of the successive submolecules
+#      NSPM  NSP[1...NSPM]
+         1
+     4
+END
+TEMPERATUREGROUPS
+# NSTM: number of temperature atom groups
+# NST[1...NSTM]: atom sequence number of last atom
+#                of the successive temperature atom groups
+#      NSTM  NST[1...NSTM]
+         1
+     4
+END
+PRESSUREGROUPS
+# NSVM: number of pressure atom groups
+# NSV[1...NSVM]: atom sequence number of last atom
+#                of the successive pressure atom groups
+#      NSVM  NSV[1...NSVM]
+         1
+     4
+END
+SOLVENTATOM
+#  NRAM: number of atoms per solvent molecule
+1
+#     I: solvent atom sequence number
+#  IACS: integer (van der Waals) atom type code
+#  ANMS: atom name of solvent atom
+#  MASS: mass of solvent atom
+#   CGS: charge of solvent atom
+#  I  ANMS IACS      MASS        CGS
+   1     W   1   72.00000    0.00000
+END
+SOLVENTCONSTR
+#  NCONS: number of constraints
+0
+#  ICONS, JCONS: atom sequence numbers forming constraint
+#   CONS constraint length
+#ICONS JCONS         CONS
+END
+# end of topology file

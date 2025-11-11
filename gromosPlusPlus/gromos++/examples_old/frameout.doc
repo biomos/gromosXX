@@ -1,0 +1,30 @@
+frameout
+  @topo <topology>       
+  @pbc <boundary type>
+  @gather <gather type, can be GNORM (default) or COGG>
+  @center <Vector to center mol(0) in case of COGG>
+  @spec <specification for writing out frames. either ALL, EVERY or SPEC>
+  @frames <frames to be written out>
+  @outformat <output format. either pdb, g96 or vmdam>
+  @include <either SOLUTE (default), SOLVENT or ALL>  
+  @traj <trajectory files>
+
+@topo, @pbc, @outformat, @traj do not need explaining. 
+
+@gather: the COGG option with 
+@gather will first recontruct the first molecule in the topology (mol(0))
+with respect to the centering vector to be given in @center (default is
+0, 0 ,0). then the center of geometry (COG) for mol(0) is calculated. 
+all remaining soltutes and solvents are reconstructed by taking the nearest
+image with respect to the calculated COG.
+
+@spec: the @spec allows to specify the number of frames to be written out. the 
+options are "ALL" (all frames), EVERY (every nth frame. the n is to be given
+at the @frames option) and SPEC (specific frame number(s) to be given at 
+@frames).
+
+@frames: which frames to write out. no need for this if @spec = ALL. 
+
+@include: what to include from trajectory. either ALL, SOLUTE or SOLVENT.
+
+

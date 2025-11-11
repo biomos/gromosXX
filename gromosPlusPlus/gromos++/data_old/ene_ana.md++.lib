@@ -1,0 +1,176 @@
+TITLE
+  XX Library file for ene_ana
+END
+ENERTRJ
+# block definition for the energy trajectory file.
+# which is specified by the input flag en_files of program ene_ana.
+#
+# Use keyword 'block' to specify the blocks
+#             'subblock' to specify name and dimensions of a set of data
+#             'size' to specify a size that should be read in from the file
+#                    this size can be used as dimension specification
+#                    in a subblock definition. Using the prefix 'matrix_'
+#                    with such a definition will expand the size N to
+#                    N*(N+1)/2
+#
+# Following is the definition for a gromosXX energy trajectory
+#
+  block TIMESTEP
+    subblock TIME 2 1
+  block ENERGY03
+    subblock ENER 21 1
+    size NUM_BATHS
+    subblock KINENER NUM_BATHS 3
+    size NUM_ENERGY_GROUPS
+    subblock BONDED NUM_ENERGY_GROUPS 4
+    subblock NONBONDED matrix_NUM_ENERGY_GROUPS 4
+    subblock SPECIAL NUM_ENERGY_GROUPS 7
+    size NUM_STATES
+    subblock EDS NUM_STATES 3
+  block VOLUMEPRESSURE03
+    subblock MASS 1 1
+    size NUM_BATHS
+    subblock TEMPERATURE  NUM_BATHS 4
+    subblock VOLUME 10 1
+    subblock PRESSURE 30 1
+END
+FRENERTRJ
+# block definition for the free energy trajectory file.
+# which is specified by the input flag fr_files of program ene_ana.
+#
+# syntax as for the ENERTRJ definition
+#
+# Following is the definition for a gromosXX free energy trajectory.
+#
+  block TIMESTEP
+    subblock TIME 2 1
+  block FREEENERDERIVS03
+    subblock RLAM 1 1
+    subblock FREEENER 21 1
+    size NUM_BATHS
+    subblock FREEKINENER NUM_BATHS 3
+    size NUM_ENERGY_GROUPS
+    subblock FREEBONDED NUM_ENERGY_GROUPS 4
+    subblock FREENONBONDED matrix_NUM_ENERGY_GROUPS 4
+    subblock FREESPECIAL NUM_ENERGY_GROUPS 7
+    size NUM_STATES
+    subblock FREEEDS NUM_STATES 3
+END
+VARIABLES
+# Here you can define variables to be calculated by the program ene_ana
+# In principal the program refers to the blocknames you have defined above,
+# accessing individual element using array indices (one- or two-dimensional)
+#
+# Predefined as well is the Boltzmann constant (as BOLTZ = 0.00831441) and
+# the MASS which (if not present in the energy trajectory) will be calculated
+# from the topology (if inputflag @topo is given).
+#
+# Additional properties can be defined here as a direct mapping of a known 
+# property or as an expression of such properties. Make sure that variables
+# and operators are always seperated by spaces. Multi-line expressions are
+# allowed.
+#
+# Examples that work with the standard md++ definition are given below.
+time   = TIME[2]
+# 
+# total energy
+totene = ENER[1]
+# total kinetic energy
+totkin = ENER[2]
+# total potential energy
+totpot = ENER[3]
+# total special energy
+totspec = totene - totpot - totkin
+# total bonded energy
+totbond = ENER[4]
+# total angle energy
+totangle = ENER[5]
+# total improper dihedral angle energy
+totimproper = ENER[6]
+# total dihedral angle energy
+totdihedral = ENER[7]
+# total LJ energy
+totlj = ENER[8]
+# total CRF energy (Coulomb+reaction field)
+totcrf = ENER[9]
+# total lattice sum real space energy
+tot_ls_real = ENER[10]
+# total lattice sum reciprocal space energy
+tot_ls_kspace = ENER[11]
+# total lattice sum A-term energy
+tot_ls_aterm = ENER[12]
+# total lattic sum self energy
+tot_ls_self = ENER[13]
+# total lattice sum surface energy
+tot_ls_surf = ENER[14]
+# total constraint energy
+totconstraint = ENER[15]
+# total position restraint energy
+totposres = ENER[16]
+# total distance restraint energy
+totdisres = ENER[17]
+# total dihedral restraint energy
+totdihres = ENER[18]
+# total jvalue restraint energy
+totjval = ENER[19]
+# total polarisation self energy
+totself = ENER[20]
+# enveloping distribution sampling (EDS): energy of reference state
+e_vr = ENER[21]
+# EDS: total energy of end states (example for 3 end states)
+e1 = EDS[1][1]
+e2 = EDS[2][1]
+e3 = EDS[3][1]
+# EDS: nonbonded energy of state 2
+e2_nb = EDS[2][2]
+# EDS: special energy of state 2
+e2_special = EDS[2][3]
+# calculate the pressure in atm.
+pressu = PRESSURE[1] * 16.388453
+boxvol = VOLUME[1]
+# calculate the density in kg/m^3
+densit = MASS[1] * 1.66056 / VOLUME[1]
+#
+# free energy
+# total derivative of Hamiltonian with respect to lambda
+totfren = FREEENER[1]
+# only kinetic contribution
+kinfren = FREEENER[2]
+# only potential energy contribution 
+dvdl = FREEENER[3]
+#
+#
+# temperature (2 baths)
+solutemp2 = TEMPERATURE[1][1]
+solvtemp2 = TEMPERATURE[2][1]
+#
+# example for 3 baths, first internal / rotational
+# second molecular translational temperature
+irtemp3 = TEMPERATURE[1][1]
+mttemp3 = TEMPERATURE[2][1]
+solvtemp3 = TEMPERATURE[3][1]
+#
+# example: 2 energy groups
+#  - solute - solute
+elj_uu = NONBONDED[1][1]
+ecrf_uu = NONBONDED[1][2]
+e_uu = elj_uu + ecrf_uu
+#  - solute - solvent
+elj_uv = NONBONDED[2][1]
+ecrf_uv = NONBONDED[2][2]
+e_uv = elj_uv + ecrf_uv
+#  - solvent - solvent
+elj_vv = NONBONDED[3][1]
+ecrf_vv = NONBONDED[3][2]
+e_vv = elj_vv + ecrf_vv
+#
+# Example: to calculate the heat of vaporization from a simulation at 300 K
+#          One could also define the number of degrees of freedom and calculate
+#          the actual temperature at every time step.
+# TEMP = 300.0 
+# GASENER = 0
+# NUMMOL = 512
+# hvap = GASENER - ENER[8] / NUMMOL + BOLTZ * TEMP
+#
+END
+

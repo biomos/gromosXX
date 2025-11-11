@@ -1,0 +1,14 @@
+TITLE
+multiple perturbation topologies
+END
+MPERTATOM
+# NUM_ATOMS NUM_PERTURBATIONS
+          4                 2
+#  ATOM  PERT[1..2]
+#        IAC CHARGE   IAC CHARGE
+#          TOPO1          TOPO2
+ 4  CA   12  0.100     11  0.000
+ 7  O     1  0.380      1  0.300
+10  CA   12  0.000     13  0.000
+11  CB   14  0.300     19  0.000
+END

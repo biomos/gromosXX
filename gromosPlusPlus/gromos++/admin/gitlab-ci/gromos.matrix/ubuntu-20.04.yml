@@ -1,0 +1,21 @@
+gromos:ubuntu-20.04:configure:
+  extends:
+    - .gromos:base:configure
+    - .use-openmp
+    - .use-share
+  image: ${CI_REGISTRY}/gromos/gromosplspls/gromos-ubuntu-20.04
+  variables:
+    BUILD_DIR: build
+
+gromos:ubuntu-20.04:build:
+  extends:
+    - .gromos:base:build
+    - .use-openmp
+    - .use-share
+  image: ${CI_REGISTRY}/gromos/gromosplspls/gromos-ubuntu-20.04
+  variables:
+    BUILD_DIR: build
+    BIN_PATH: ${BUILD_DIR}/bin
+  needs:
+    - job: gromos:ubuntu-20.04:configure
+

@@ -1,0 +1,25 @@
+# molecular topology file
+@topo  ../../topo/peptide_2Cl_53a6.top
+# as output of the cluster program you got cluster_structures.dat file
+# which contains the cluster structures information
+@cluster_struct cluster_structures.dat
+# as output of the cluster program you got cluster_ts.dat file
+# which contains the cluster time-series information
+@cluster_ts cluster_ts.dat
+# here we can specify on which clusters this analysis will be performed
+@clusters 1-8
+# one can also monitor the life time of a specific cluster
+# lifetime specifies the number of subsequent structures in the time 
+# series needed to switch to a different cluster before a true 
+# transition to the new conformation is taken into account
+@lifetime 2
+@traj  ../../md/md_peptide_1.trc.gz
+       ../../md/md_peptide_2.trc.gz
+       ../../md/md_peptide_3.trc.gz
+       ../../md/md_peptide_4.trc.gz
+       ../../md/md_peptide_5.trc.gz
+       ../../md/md_peptide_6.trc.gz
+       ../../md/md_peptide_7.trc.gz
+       ../../md/md_peptide_8.trc.gz
+       ../../md/md_peptide_9.trc.gz
+       ../../md/md_peptide_10.trc.gz

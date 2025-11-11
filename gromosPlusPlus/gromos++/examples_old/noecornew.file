@@ -1,0 +1,39 @@
+TITLE
+GROMOS NOE correction file 
+END
+NOECORGROMOS
+#NOE correction file for the
+#4 NOE types (geometric codes) GROMOS uses a correction for.
+#See page II-67 of the manual.
+#
+#Format
+#GROMOS NOE type      correction[nm]
+#type 3: CH2(non-stereospecific)
+3 0.09
+#type 5: CH3(Methyl; by default the experimental distance
+#        will be scaled by 3^(1/3)!
+#Ask Wilfred for the reasoning...
+5 0.03
+#type 6: CH3(non-stereospecific, Val, Leu)
+6 0.22
+#type 7: CH1(aromatic CG or CE in Phe or Tyr)
+#You will notice that in the GROMOS book this
+#NOE type is given the geometric code 0. We
+#use 7 for ease of programming. Well, who cares?
+7 0.21
+END
+MULTIPLICITY
+#These are the multiplicity corrections.
+#See: Neuhaus D. et.al. J.Bio.NMR, 8 (1996) 292-310
+#
+#Format
+#GROMOS NOE type      correction-factor, i.e. 'corrected upper-bound = upper-bound * correction-factor'
+#type 3; experimental (or corrected) upper bound is multiplied by 2^(1/6)
+3 1.12246
+#type 5; experimental (or corrected) upper bound is multiplied by 3^(1/6)
+5 1.20094
+#type 6; experimental (or corrected) upper bound is multiplied by 6^(1/6)
+6 1.34801
+#type 7; experimental (or corrected) upper bound is multiplied by 2^(1/6)
+7 1.12246
+END

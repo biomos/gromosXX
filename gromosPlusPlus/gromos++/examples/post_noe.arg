@@ -1,0 +1,6 @@
+@topo          ../../topo/peptide_2Cl_53a6.top
+@noe           prep_noe.out
+@noeoutput     noe.out
+@filter        noe.filter
+@averaging     6
+@distribution  0.05

@@ -1,0 +1,6 @@
+@topo ic4.top urea.top h2o.top 
+@pbc c
+@pos 4ane.gsf urea.gsf h2o.gsf
+@nsm 1 153 847 
+@dens 950
+@thresh 0.20

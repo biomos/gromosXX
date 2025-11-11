@@ -1,0 +1,23 @@
+#pt_top combines topologies and perturbation topologies
+#
+#
+@topo ex.top
+#   topology
+#
+@pttopo ex.mpt
+#   perturbation topology, can be either a gromos perturbation topology file
+#   or a multiple perturbation topology.
+#
+@npt 2
+#   Specifies which set of parameters to take from a multiple perturbation
+#   topology file.
+#
+@firstatom 1:10
+#   map the first atom in the perturbation topology to this atom
+#   and shift all other atoms accordingly
+#
+@type TOPO
+#   write out a new topology (TOPO) or a perturbation topology (PERTTOPO)
+#
+
+

@@ -1,0 +1,19 @@
+TITLE
+penta-peptide, Val-Tyr-Arg-Lys-Gln, linear,
+NOE distances, hypothetical
+END
+NOESPEC
+1  1  HA  1  HB    2.50  0.00  0.00
+2  1  HA  1  HG1@  2.70  0.00  0.00
+3  2  HN  2  HB1   2.00  0.00  0.00
+4  2  HN  3  HN    3.50  0.00  0.00
+5  2  HN  1  HA    3.60  0.00  0.00
+6  2  HA  2  HB2   2.30  0.00  0.00
+7  2  HA  1  HG@   5.20  0.00  0.00
+8  3  HN  3  HA    2.70  0.00  0.00
+9  3  HB@ 2  HD@   4.50  0.00  0.00
+10 4  HN  4  HA    2.90  0.00  0.00
+11 4  HN  3  HA    3.30  0.00  0.00
+12 3  HB@ 2  HD@   8.00  0.00  0.00
+13 5  HN  5  HA    2.80  0.00  0.00
+END

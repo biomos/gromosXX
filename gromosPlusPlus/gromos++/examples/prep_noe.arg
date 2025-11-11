@@ -1,0 +1,8 @@
+@topo         ../../topo/peptide_2Cl_53a6.top
+@title        NOE_specification_file
+@noe          prep.noe
+@lib          noelib.53a6
+@parsetype    1
+@correction   noecor.wuthrich
+@filter       100
+@factor       10

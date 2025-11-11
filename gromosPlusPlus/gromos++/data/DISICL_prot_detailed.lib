@@ -1,0 +1,103 @@
+TITLE
+DISICL library in gromos format
+converted from ../DISICL/libs/DISICL_prot_det.lib
+END
+DSCLANG
+PHI      C    N    CA   C     -1   0   0   0 
+PSI      N    CA   C    N      0   0   0   1 
+END
+DSCLREG
+alfa1         -95      -40      -70      -32
+alfa2        -107      -40      -32      -12
+beta1        -135      -87       95      150
+beta2        -175     -135       95      136
+beta2        -180     -135      136      180
+beta2        -135     -105      150      180
+beta2        -180     -135     -180     -160
+delta        -150      -67        8       40
+delta        -150     -107      -32        8
+delta2       -165      -95      -70      -32
+delta1       -107      -40      -12        8
+deltax         38      140      -25       75
+gamma          55       95     -100      -40
+gammax       -113      -60       50       95
+pi            -87      -30       95      180
+pi           -100      -60     -180     -150
+pix            35      100     -180     -110
+pix            60      120      150      180
+zeta         -170     -113       50       95
+END
+DSCLCLASS
+3/10-helix           alfa1    delta1   3H    
+3/10-helix           alfa2    alfa2    3H    
+3/10-helix           alfa2    delta    3H    
+Alpha-helix          alfa1    alfa1    ALH   
+Alpha-helix          alfa1    alfa2    ALH   
+Alpha-helix          alfa2    alfa1    ALH   
+Pi-helix             alfa1    delta2   PIH   
+Pi-helix             delta2   delta2   PIH   
+Pi-helix             delta2   alfa1    PIH   
+Ext.beta-strand      beta2    beta2    EBS   
+Normalbeta-strand    beta1    beta1    NBS   
+Normalbeta-strand    beta1    beta2    NBS   
+Mormalbeta-strand    beta2    beta1    NBS   
+PP-helical           pi       pi       PP    
+Turntype1            alfa1    delta    TI    
+Turntype1            alfa2    delta1   TI    
+Turntype1            delta    delta    TI    
+Turntype1            delta1   delta    TI    
+Turntype1            delta1   delta1   TI    
+Turntype1            delta1   alfa2    TI    
+Turntype2            pi       deltax   TII   
+Turntype8            delta    zeta     TVIII 
+Turntype8            delta1   zeta     TVIII 
+Turntype8            alfa2    zeta     TVIII 
+Turntype8            alfa2    beta1    TVIII 
+Turntype8            delta    gammax   TVIII 
+Gamma-turn           gammax   alfa2    GXT   
+Gamma-turn           gammax   delta    GXT   
+Gamma-turn           gammax   delta1   GXT   
+Gamma-turn           gammax   pi       GXT   
+Gamma-turn           pi       gammax   GXT   
+Gamma-turn           pix      gamma    GXT   
+Gamma-turn           gamma    pix      GXT   
+Gamma-turn           gamma    deltax   GXT   
+Schellman-turn       delta    deltax   SCH   
+Schellman-turn       delta1   deltax   SCH   
+Schellman-turn       deltax   beta2    SCH   
+Schellman-turn       deltax   pi       SCH   
+Hairpin2:2           beta1    deltax   HP    
+Hairpin2:2           beta1    pix      HP    
+Hairpin2:2           deltax   beta1    HP    
+Turn-cap             beta1    alfa2    TC    
+Turn-cap             delta    alfa1    TC    
+Turn-cap             delta    delta1   TC    
+Turn-cap             delta    alfa2    TC    
+Turn-cap             delta1   alfa1    TC    
+Turn-cap             delta2   alfa2    TC    
+Turn-cap             delta2   delta1   TC    
+Turn-cap             deltax   alfa1    TC    
+Turn-cap             deltax   alfa2    TC    
+Turn-cap             zeta     alfa2    TC    
+Helix-cap            alfa2    delta2   HC    
+Helix-cap            delta    delta2   HC    
+Helix-cap            delta1   delta2   HC    
+Helix-cap            delta2   delta    HC    
+Helix-cap            beta1    alfa1    HC    
+Helix-cap            beta2    alfa1    HC    
+Helix-cap            beta2    alfa2    HC    
+Helix-cap            pi       alfa1    HC    
+Helix-cap            pi       alfa2    HC    
+Beta-cap             beta1    pi       BC    
+Beta-cap             beta2    pi       BC    
+Beta-cap             pi       beta1    BC    
+Beta-cap             pi       beta2    BC    
+Beta-bulge           pi       delta    BU    
+Beta-bulge           alfa1    beta2    BU    
+Beta-bulge           delta    beta2    BU    
+Beta-bulge           beta2    deltax   BU    
+Leftturn2            pix      alfa2    LTII  
+Leftturn2            pix      delta    LTII  
+Leftturn2            pix      delta1   LTII  
+Left-handedhelix     deltax   deltax   LHH   
+END

@@ -1,0 +1,20 @@
+# propertyrmsd input file
+### topology
+@topo myTop.top
+#
+### periodic boundary conditions (v, r, t)
+@pbc t
+#
+### time (<start time> <time step>)
+@time 0 0.1
+#
+### prop (<property specifier>)
+# format:
+# type%mol:atom[-atom][,[mol:]atom[-atom]][...][%zerovalue[%upperbound[%lowerbound]]]
+# known types: d: distance, a: angle, t: torsional angle
+@prop
+d%a:2-3%0.153%0.148%0.158
+#
+### trajectory
+@traj
+myTraj.trj

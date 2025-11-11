@@ -1,0 +1,82 @@
+
+.use-openmp:
+  variables:
+    OPENMP_OPTIONS: "--enable-openmp"
+    ENV_COMPILER: "CFLAGS=-lgsl CXXFLAGS=-lgsl"
+
+.use-clang:
+  variables:
+    ENV_COMPILER: "CC=clang CXX=clang++ CFLAGS=-fopenmp=libomp CXXFLAGS=-fopenmp=libomp"
+
+.use-share:
+  variables:
+    ENV_SHARE: "--disable-static --enable-shared"
+
+.use-debug:
+  variables:
+    ENV_DEBUG: "--enable-debug"
+
+
+.gromos:base:configure:
+  stage: configure-build
+  script:
+    - echo $ENV_COMPILER
+    - echo $OPENMP_OPTIONS
+    - echo $ENV_SHARE
+    - echo $ENV_DEBUG
+    - echo $BUILD_DIR
+    - cd gromos++/
+    - ./Config.sh $ENV_COMPILER
+    - cd ..
+    - mkdir $BUILD_DIR
+    - cd $BUILD_DIR
+    - ../gromos++/configure $ENV_SHARE $OPENMP_OPTIONS $MPI_OPTIONS $CUDA_OPTIONS $ENV_COMPILER $ENV_DEBUG
+  artifacts:
+    when: always
+    paths:
+      - gromos++
+      - $BUILD_DIR
+
+.gromos:base:build:
+  stage: build
+  script:
+    - echo $ENV_COMPILER
+    - echo $OPENMP_OPTIONS
+    - echo $ENV_SHARE
+    - echo $ENV_DEBUG
+    - echo $BUILD_DIR
+    - echo $BIN_PATH
+    - cd $BUILD_DIR
+    - make -j4 $ENV_COMPILER
+    - make install $ENV_COMPILER
+  artifacts:
+    when: always
+    paths:
+      - $BUILD_DIR/lib
+      - $BIN_PATH
+
+.gromos:base:build_make_check:
+  stage: build_make_check
+  script: 
+    - echo $ENV_COMPILER
+    - echo $OPENMP_OPTIONS
+    - echo $MPI_OPTIONS
+    - echo $CUDA_OPTIONS
+    - echo $ENV_SHARE
+    - echo $ENV_DEBUG
+    - echo $BUILD_DIR
+    - echo $BIN_PATH
+    - cd $BUILD_DIR
+    #- make -j4 $ENV_COMPILER
+    - make check $ENV_COMPILER
+    #- make install $ENV_COMPILER
+  artifacts:
+    when: always
+    paths:
+      - $BUILD_DIR/lib
+      - $BUILD_DIR/src/check/test-suite.log
+      - $BIN_PATH
+
+include:
+  - local: 'gromos++/admin/gitlab-ci/gromos.matrix/ubuntu-20.04.yml'
+  - local: 'gromos++/admin/gitlab-ci/gromos.matrix/ubuntu-20.04_debug.yml'

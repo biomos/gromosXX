@@ -1,0 +1,17 @@
+# m_widom
+	@topo     ex.topo
+	@pbc      r
+	@intopo   test.topo
+	@inpttopo test.mpt
+	@insx     test.coord
+	@time     0 0.1
+	@stride   10
+	@cut      1.4
+	@eps      62
+	@kap      0.0
+	@rdf      new s:OW new a:CA
+	@rdfparam 1.5 100
+	@temp     298.15
+	@ntry     1000
+	@traj     ex.tr
+

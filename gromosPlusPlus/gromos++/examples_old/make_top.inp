@@ -1,0 +1,24 @@
+# maketop links together building blocks to create a topology
+# (like progmt)
+#
+@build mtb45a3.dat
+#	molecular topology building block file
+#	for the end-groups append the file mtb_add.dat to this file
+#
+@param ifp45a3.dat
+#	interaction function parameter file
+#
+@seq cyclic VAL  TYR  ARG  LYSH  GLN
+#	sequence of your system, termini are treated as seperate
+#	building blocks (defined in mtb_add.dat)
+#
+@solv H2O
+#	solvent to use
+#
+#@cys 3-6  5-12
+#	(optional) disulfide bridges will be created between residue 3
+#	(cys1) and 6 (cys2) and between residues 5 (cys1) and 12 (cys2)
+#
+# This example should create the same topology as the gromos96 example
+# `pcl' on page VII-47 of the manual.
+#

@@ -1,0 +1,4 @@
+@topo ../topo/peptide_53a6.top
+# the PDB file you want to convert
+@pdb  peptide.pdb
+@lib   pdb2g96.lib

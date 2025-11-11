@@ -1,0 +1,37 @@
+#Ener prints out a time series of the non-bonded interaction energies
+#
+#
+@topo ex.top
+#   topology
+#
+@pbc r
+#   periodic boundariy conditions: rectangular
+#
+@atoms 1:34 1:41-42
+#   atom specifier(s), here atoms 34, 40, 41 and 42 of the first
+#   molecule are selected
+@time 0 0.1
+#   starting time and increment per frame
+#
+@cut 1.4
+#   cut-off distance for the interactions, also used as the RF radius
+#
+@eps 62.0
+#   epsilon outside the RF radius, for reaction field
+#
+@kap 0.0
+#   inverse debye screening length, for reaction field
+#
+#@soft 1:40
+#   a list of the atoms that are to be treated as soft atoms
+#
+@al2 0.3775
+#   the value of alpha(LJ)*lambda*lambda to make a soft vdw-interaction
+#   if this is 0 (default) there is no soft interaction.
+#
+@traj ex.tr
+#   trajectory files
+
+
+
+

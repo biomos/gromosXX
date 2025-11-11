@@ -1,0 +1,6 @@
+# check_top performs a check of the topology file that you specify with the @topo argument.
+@topo	peptide_2Cl_53a6.top
+# add the forcefield building block and parameter arguments to do a more careful check against the force-field.
+@build  53a6.mtb
+@param  53a6.ifp
+

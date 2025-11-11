@@ -1,0 +1,30 @@
+TITLE
+prep_bb specification file for 2,3-DIHYDROXY-1,4-DITHIOBUTANE (DTT) 
+END
+ATOMS
+CA
+SA
+HA
+CB
+OB
+HB
+CG
+OG
+HG
+CD
+SD
+HD
+END
+BONDS
+ 1   2
+ 2   3
+ 1   4
+ 4   5
+ 5   6
+ 4   7
+ 7   8
+ 8   9
+ 7  10
+10  11
+11  12
+END

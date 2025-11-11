@@ -1,0 +1,47 @@
+TITLE
+NOE correction file containing the multiplicity corrections and pseudo
+atom corrections in nm.
+END
+NOECORGROMOS
+# NTPAC: NOE type to which the pseudo-atom correction applies
+# NSPAC: NOE suptype to which the pseudo-atom correction applies
+#        (set to 0 if no subtype defined)
+# FTPAC: Distance of the pseudo-atom correction
+#
+# Possible combinations of NOE types/subtypes:
+# NTPAC  NSPAC  NOE type
+#    -1      1  flipping aromatic ring
+#    -1      2  unassigned NH2 group
+#     3      0  non-stereospecific aliphatic CH2 group
+#     5      0  single CH3 group
+#     6      0  non-stereospecific (CH3)2 group (isopropyl)
+#     7      0  non-stereospecific (CH3)3 group (tert-butyl)
+# NTPAC NSPAC  FTPAC
+    3    0     0.09000000
+    5    0     0.10000000
+    6    0     0.22000000
+    7    0     0.23000000
+   -1    1     0.21000000
+   -1    2     0.10000000
+END
+MULTIPLICITY
+# NTMPC: NOE type to which the multiplicity correction applies
+# NSMPC: NOE suptype to which the multiplicity correction applies
+# FTMPC: Factor for the multiplicity correction
+#
+# Possible combinations of NOE types/subtypes:
+# NTPAC  NSPAC  NOE type
+#    -1      1  flipping aromatic ring
+#    -1      2  unassigned NH2 group
+#     3      0  non-stereospecific aliphatic CH2 group
+#     5      0  single CH3 group
+#     6      0  non-stereospecific (CH3)2 group (isopropyl)
+#     7      0  non-stereospecific (CH3)3 group (tert-butyl)
+# NTMPC NSMPC  NTMPC
+    3    0     1.00000000
+    5    0     1.00000000
+    6    0     1.00000000
+    7    0     1.00000000
+   -1    1     1.00000000
+   -1    2     1.00000000
+END

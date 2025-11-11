@@ -1,0 +1,124 @@
+TITLE
+equilibration of the peptide in water
+END
+# we have 1 solute and 907 solvent molecules
+SYSTEM
+#      NPM      NSM 
+         1      907
+END
+# most of this block is overwritten by mkscript.
+INITIALISE
+#    NTIVEL   NTISHK   NTINHT    NTINHB    NTISHI  NTIRTC     NTICOM   NTISTI      IG     TEMPI
+         1         0        0         0         1       0          0        0  210185     300.0
+END
+# do 10000 steps
+STEP
+#   NSTLIM         T        DT
+     10000       0.0     0.002
+END
+# do it with rectangular periodic boundary conditions
+BOUNDCOND
+#      NTB     NDFMIN
+         1         3 
+END
+# couple the temperature, the temperatures are overwritten by mkscript.
+MULTIBATH
+# ALGORITHM:
+#      weak-coupling(0):      use weak-coupling scheme
+#      nose-hoover(1):        use Nose Hoover scheme
+#      nose-hoover-chains(2): use Nose Hoover chains scheme
+# NUM: number of chains in Nose Hoover chains scheme
+#      !! only specify NUM when needed !!
+# NBATHS: number of temperature baths to couple to
+#          ALGORITHM
+                   0
+#  NBATHS
+         2
+# TEMP0(1 ... NBATHS)  TAU(1 ... NBATHS)
+        60     0.1      60     0.1     
+#   DOFSET: number of distiguishable sets of d.o.f.
+         2
+# LAST(1 ... DOFSET)  COMBATH(1 ... DOFSET)  IRBATH(1 ... DOFSET)
+       73         1         1      2794         2         2
+END
+# every 1000 step we remove only the translational com motion
+COMTRANSROT
+#   NSCM
+    1000
+END
+COVALENTFORM
+# NTBBH: 0,1 controls bond-stretching potential
+#        0: quartic form (default)
+#        1: harmonic form
+# NTBAH: 0,1 controls bond-angle bending potential
+#        0: cosine-harmonic (default)
+#        1: harmonic
+# NTBDN: 0,1 controls torsional dihedral potential
+#        0: arbitrary phase shifts (default)
+#        1: phase shifts limited to 0 and 180 degrees.
+#   NTBBH    NTBAH    NTBDN
+        0        0        0
+END
+# every 100 steps write the energy and coordinates to the
+# trajectory
+WRITETRAJ
+# NTWSE = configuration selection parameter
+# =0: write normal trajectory
+# >0: chose min energy for writing configurations
+#     NTWX     NTWSE      NTWV      NTWF    NTWE      NTWG      NTWB
+       100         0         0         0     100         0         0
+END
+# every 100 steps print the energy in the output file.
+PRINTOUT
+#NTPR: print out energies, etc. every NTPR steps
+#NTPP: =1 perform dihedral angle transition monitoring
+#     NTPR     NTPP
+       100        0
+END
+# calculate the energies between the peptide, the ions and the solvent.
+FORCE
+#      NTF array
+# bonds    angles    imp.     dihe     charge nonbonded
+# H        H         H        H
+  0  0     1  1      1  1     1  1     1  1
+# NEGR    NRE(1)    NRE(2)    ...      NRE(NEGR)
+     4      71     72    73    2794
+END
+# use the shake algorithm to constrain the bond lengths.
+CONSTRAINT
+#      NTC       NTCP   NTCP0(1)     NTCS      NTCS0(1)
+         3          1    0.00010        1      0.00010 
+END
+# use grid based pairlist generation to speed up
+PAIRLIST
+#	algorithm: standard(0) (gromos96 like pairlist)
+#		             grid(1) (XX grid pairlist)
+#	SIZE:	   grid cell size (or auto = 0.5 * RCUTP)
+#	TYPE:	   chargegoup(0) (chargegroup based cutoff)
+#			         atomic(1) (atom based cutoff)
+#
+#	algorithm	  NSNB	RCUTP	RCUTL	  SIZE	TYPE
+	        1		   5	  0.8	  1.4	   0.4	   0
+END
+# Longrange reaction field correction
+NONBONDED
+# NLRELE    APPAK      RCRF     EPSRF   
+       1      0.0       1.4        61
+# NSHAPE   ASHAPE    NA2CLC   TOLA2   EPSLS
+       3       1.4        2   1e-10       0
+# NKX    NKY   NKZ    KCUT
+   10     10    10     100
+# NGX   NGY   NGZ  NASORD  NFDORD   NALIAS  NSPORD
+   32    32    32       3       2        3       4
+# NQEVAL   FACCUR   NRDGRD   NWRGRD   NLRLJ    SLVDNS
+  100000      1.6        0        0       0      33.3
+END
+POSITIONRES
+#     values for NTPOR
+#     0: no position re(con)straining
+#     1: use CPOR
+#     2: use CPOR/ ATOMIC B-FACTORS
+#     3: position constraining
+# NTPOR       NTPORB     NTPORS      CPOR
+      1            1          0     2.5E4
+END

@@ -1,0 +1,103 @@
+TITLE
+DISICL library in gromos format
+converted from ../DISICL/libs/DISICL_prot_sim.lib
+END
+DSCLANG
+PHI      C    N    CA   C     -1   0   0   0 
+PSI      N    CA   C    N      0   0   0   1 
+END
+DSCLREG
+alfa1         -95      -40      -70      -32
+alfa2        -107      -40      -32      -12
+beta1        -135      -87       95      150
+beta2        -175     -135       95      136
+beta2        -180     -135      136      180
+beta2        -135     -105      150      180
+beta2        -180     -135     -180     -160
+delta        -150      -67        8       40
+delta        -150     -107      -32        8
+delta2       -165      -95      -70      -32
+delta1       -107      -40      -12        8
+deltax         38      140      -25       75
+gamma          55       95     -100      -40
+gammax       -113      -60       50       95
+pi            -87      -30       95      180
+pi           -100      -60     -180     -150
+pix            35      100     -180     -110
+pix            60      120      150      180
+zeta         -170     -113       50       95
+END
+DSCLCLASS
+3-helicalturns       alfa1    delta1   3HT   
+3-helicalturns       alfa2    alfa2    3HT   
+3-helicalturns       alfa2    delta    3HT   
+3-helicalturns       alfa1    delta    3HT   
+3-helicalturns       alfa2    delta1   3HT   
+3-helicalturns       delta    delta    3HT   
+3-helicalturns       delta1   delta    3HT   
+3-helicalturns       delta1   delta1   3HT   
+3-helicalturns       delta1   alfa2    3HT   
+3-helicalturns       beta1    alfa2    3HT   
+3-helicalturns       delta    alfa1    3HT   
+3-helicalturns       delta    delta1   3HT   
+3-helicalturns       delta    alfa2    3HT   
+3-helicalturns       delta1   alfa1    3HT   
+3-helicalturns       delta2   alfa2    3HT   
+3-helicalturns       delta2   delta1   3HT   
+3-helicalturns       deltax   alfa1    3HT   
+3-helicalturns       deltax   alfa2    3HT   
+3-helicalturns       zeta     alfa2    3HT   
+Alpha-helical        alfa1    alfa1    HEL   
+Alpha-helical        alfa1    alfa2    HEL   
+Alpha-helical        alfa2    alfa1    HEL   
+Alpha-helical        alfa1    delta2   HEL   
+Alpha-helical        delta2   delta2   HEL   
+Alpha-helical        delta2   alfa1    HEL   
+Alpha-helical        alfa2    delta2   HEL   
+Alpha-helical        delta    delta2   HEL   
+Alpha-helical        delta1   delta2   HEL   
+Alpha-helical        delta2   delta    HEL   
+Alpha-helical        beta1    alfa1    HEL   
+Alpha-helical        beta2    alfa1    HEL   
+Alpha-helical        beta2    alfa2    HEL   
+Alpha-helical        pi       alfa1    HEL   
+Alpha-helical        pi       alfa2    HEL   
+Beta-strand          beta2    beta2    BS    
+Beta-strand          beta1    beta1    BS    
+Beta-strand          beta1    beta2    BS    
+Beta-strand          beta2    beta1    BS    
+Beta-strand          beta1    pi       BS    
+Beta-strand          beta2    pi       BS    
+Beta-strand          pi       beta1    BS    
+Beta-strand          pi       beta2    BS    
+Irreg.Beta           pi       pi       IRB   
+Irreg.Beta           pi       delta    IRB   
+Irreg.Beta           alfa1    beta2    IRB   
+Irreg.Beta           delta    beta2    IRB   
+Irreg.Beta           beta2    deltax   IRB   
+Beta-turn            pi       deltax   BT    
+Beta-turn            delta    zeta     BT    
+Beta-turn            delta1   zeta     BT    
+Beta-turn            alfa2    zeta     BT    
+Beta-turn            alfa2    beta1    BT    
+Beta-turn            delta    gammax   BT    
+Othertightturns      gammax   alfa2    OTT   
+Othertightturns      gammax   delta    OTT   
+Othertightturns      gammax   delta1   OTT   
+Othertightturns      gammax   pi       OTT   
+Othertightturns      pi       gammax   OTT   
+Othertightturns      pix      gamma    OTT   
+Othertightturns      gamma    pix      OTT   
+Othertightturns      gamma    deltax   OTT   
+Othertightturns      delta    deltax   OTT   
+Othertightturns      delta1   deltax   OTT   
+Othertightturns      deltax   beta2    OTT   
+Othertightturns      deltax   pi       OTT   
+Othertightturns      beta1    deltax   OTT   
+Othertightturns      beta1    pix      OTT   
+Othertightturns      deltax   beta1    OTT   
+Left-handedturn      pix      alfa2    LHT   
+Left-handedturn      pix      delta    LHT   
+Left-handedturn      pix      delta1   LHT   
+Left-handedturn      deltax   deltax   LHT   
+END

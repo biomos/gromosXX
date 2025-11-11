@@ -1,0 +1,6 @@
+# /home/chris/GROMOS/gromos++_all/LINUX/programs/.libs/lt-procry
+	@topo   ex.top
+	@coord  exref.coo
+	@spec   procry.spec
+	@factor 0.1
+

@@ -1,0 +1,4 @@
+@topo peptide_2Cl_53a6.top
+#   atom specifier, here atoms CA, N and C of the first
+#   molecule are selected
+@atomspec 1:CA,N,C

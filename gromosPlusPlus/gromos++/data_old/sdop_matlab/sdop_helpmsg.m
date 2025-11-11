@@ -1,0 +1,3 @@
+str = sprintf(['sdop - Version 0.0.1\n\n',...
+    'Implemented with Matlab GUI Environment\n']);
+msgbox(str,'About the sdop program','modal');

@@ -1,0 +1,838 @@
+/**
+ * @file:   CubeSystem.hcc
+ * Author:  Martina Setz
+ *
+ * Created on 13.03.2015
+ */
+
+#ifndef CUBESYSTEM_H
+#define CUBESYSTEM_H
+
+#include <iostream>
+#include <vector>
+#include <set>
+#include <string>
+
+#include "../gmath/Vec.h"
+#include "../gcore/Box.h"
+
+#ifdef OMP
+#include <omp.h>
+#endif
+
+using namespace std;
+using gmath::Vec;
+
+/**
+* Struct Key
+* This struct is used as Key for the set neighbour_storage_set in CubeSystem, which stores all cube-neighbour pairs.
+* c1 stores the Cube number of the current Cube and c2 the Cube number the neighbour Cube. The struct also provides operator<
+* for set insertion and an operator for checking if two Keys are equal.
+* @author M.Setz
+* @ingroup utils
+* @struct Key
+*/
+struct Key{
+    private:
+    int c1,c2; //cube numbers
+    Vec bxshft; //boxshift vector
+    public:
+    /**
+     * Constructor
+     */
+    Key(int c_1, int c_2, Vec v):c1(c_1), c2(c_2), bxshft(v){
+    }
+    /**
+     * Method returning the the cube number of the current cube.
+     */
+    int my_cube_number() const{
+        return c1;
+    }
+    /**
+     * Method returning the neighbour cube number of the current cube.
+     */
+    int neighbour_cube_number() const{
+        return c2;
+    }
+    /**
+     * Method returning the boxshift of the neighbour cube.
+     */
+    Vec boxshift() const{
+        return bxshft;
+    }
+    /**
+     * Operator for set insertion.
+     */
+    bool operator< (const Key& right) const{ //for constructing a set
+        if (c1 < right.c1)  return true;
+        if (c1 > right.c1)  return false;
+        //l.c1==r.c1
+        if (c2 < right.c2)  return true;
+        if (c2 > right.c2)  return false;
+        //l.c2==r.c2
+        if (bxshft[0] < right.bxshft[0])  return true; //there is no fully defined < or > relationship between vectors, but this doesnt matter for the map/set insertion operation
+        if (bxshft[0] > right.bxshft[0])  return false; //it only needs to find a place to insert an element in a stable and reproducable way.
+
+        if (bxshft[1] < right.bxshft[1])  return true;
+        if (bxshft[1] > right.bxshft[1])  return false;
+
+        if (bxshft[2] < right.bxshft[2])  return true;
+        if (bxshft[2] > right.bxshft[2])  return false;
+        //l.bxshft==r.bxshft
+        return false;
+    }
+    /**
+     * Operator for testing if two Keys are equal.
+     */
+    bool operator== (const Key& right) const{
+        return (c1==right.c1 && c2==right.c2 && bxshft==right.bxshft);
+    }
+};
+
+
+/**
+* Class Cube
+* provides the Cubes for the CubeSystem. Each Cube contains a vector of an built-in or custom C++ Type (e.g. int),
+* which stores the "atoms" (or any other Type with coordinates) of this particular Cube.
+* @author  M.Setz
+* @ingroup utils
+* @class Cube
+*/
+template <typename Type>
+class Cube{
+
+    vector<Type> atomlist; //vector of list of atoms that are in this cube.
+
+public:
+    /**
+     * Method to add an "atom" (or any other Type with coordinates) to the Cube.
+     */
+    void add_atom(Type a){
+        atomlist.push_back(a); //add an atomnumber
+    }
+    /**
+     * Method returning a reference to the vector containing all "atoms".
+     */
+    const vector<Type>& atom_list() const{ //reference to atomlist
+        return atomlist; //retuns reference
+    }
+    /**
+     * Method for deleting all "atoms" in the Cube.
+     */
+    void delete_atomlist(){
+        atomlist.clear(); //deletes content but keeps reserved memory
+    }
+    /**
+    * Method that prints all atoms in a Cube.
+    */
+    void print_atoms() const{
+        for(typename vector<Type>::const_iterator atom = atomlist.begin(); atom != atomlist.end(); ++atom){
+            cerr << *atom << " ";
+        }
+        cerr << endl;
+    }
+};
+
+/**
+* Class CubeSystem
+* provides the functionality of a grid-based pairlist.
+*
+* The CubeSystem can be used on any system, which provides a Box with box lengths > 0. The type of the Box can be Rectangular or Triclinic.
+* For Triclinic Boxes two restrictions apply: the K-vector (gcore::Box::K()) must
+* lie on the x-axis and no angle between the planes must be < 45° (or > 135°). If Truncated Octahedral Boxes should be used, they must
+* be converted to Triclinic Boxes before usage.
+*
+* Any built-in or custom <b>C++ Type</b> can be used as "atoms" - the only requirement is that it must have coordinates associated.
+* The Type must be specified when creating an instance: CubeSystem<Typename> name;
+*
+* The <b>first argument</b> passed to the Constructor is the
+* <b>cutoff</b>.
+* It determines the minimum Cube length and thus, how many Cubes are needed to fill the whole Box with Cubes
+* (without gaps). It is assured that the Cube length is always >= the cutoff, even if the Box dimensions change.
+*
+* Based on the Box size and the Cube lengths, the CubeSystem assigs each Cube its "atoms" (or any other Type with coordinates)
+* that are passed to the CubeSystem. If the system is <b>gathered</b>, the COG of the system must be shifted to +K/2, +L/2, +M/2, in order to position all "atoms" within (0,0,0) and +K, +L, +M.
+*
+* Additionally, the CubeSystem provides a neighbourlist, which stores all pairs of cubes and their neighbours. Theoretically,
+* each Cube has 26 neighbouring Cubes, which would result in a redundant neighbourlist (e.g. Cube 0 has the neighbour
+* Cube 1 and <i>vice versa</i>). This redundancy is removed by the CubeSystem, ensuring that each Cube-neighbour pair exists only once.
+*
+* By default, the CubeSystem always provides <b>inner neighbours</b> (neighbours inside the Box) and outer neighbours (Cube-neighbour pairs
+* that cross the Box borders). If inner neighbours are turned on, each Cube also has itself listed as "neighbour"
+* (e.g. the neighbourlist can have the entry: Cube 0 - Cube 0) for the purpose of searching within a Cube.
+* The inner neighbours can be turned off by specifying "OUTER" as <b>second argument</b> in the Constructor.
+*
+* For special cases, where the nearest image algorithm cannot be used (e.g.: bound::RectBox::nearestImage) to determine the nearest image of an atom,
+* the <b>boxshift vector</b> can be used for the <b>outer neighbours</b> (the boxshift vector for inner neighbours is always (0,0,0)).
+* The boxshift contains the x-, y-, z- coordinates of the position of the neighbour Box (relative to the current Box) in which the neighbour
+* Cube resides (e.g. 1,0,0 for the right Box; or -1,1,1 for the Box in the left upper corner in the back). To enable this feature, "true"
+* must be passed as <b>third argument</b> to the Constructor.
+* @section Usage
+* Each of these methods must be called <i>every frame</i>.
+* <ol>
+* <li>After construction, the method update_cubesystem(const gcore::Box&) must be called, to update the Cube lengths and to check whether Cubes must be removed to ensure
+* that the minimum Cube length >= cutoff. The CubeSystem will never add Cubes (i.e. make the Cube length smaller), only remove Cubes, if the Box gets
+* too small in order to avoid successive CubeSystem rebuilds.</li>
+* <li>Call assign_atom(Type, const Vec&) for each "atom" (or other Type) that you would like to add to the CubeSystem. The Vector specifies its position.</li>
+* <li>Go through all cube-neighbour pairs in the neighbourlist by using a for loop from size_t i = 0 to CubeSystem::size(). Use the
+* count token <b>i</b> to retrieve the vector of "atoms" in the current Cube by cube_i_atomlist(size_t i) const and the vector of atoms in the
+* neighbour Cube by cube_j_atomlist(size_t i) const.</li>
+* </ol>
+
+* @author  @ref ms
+* @ingroup utils
+* @class CubeSystem
+*/
+template <typename Type>
+class CubeSystem{
+
+    double cutoff;
+    vector<int> num_cubes; //number of cubes in each direction (3)
+
+    Vec cube_length; //x,y,z-length of 1 cube
+    vector<double> offset; //offset for triclinic boxes (4)
+    bool has_boxshift; //will we have a boxshift parameter != Vec(0,0,0)
+    bool do_inner_neighbours; //do we want inner neighbours
+
+    vector< Cube<Type> > cube_list; //vector of all cubes in the system
+    set<Key> neighbour_storage_set; //this stores the cube numbers and boxshift vector of all cube pairs. for fast neighbourlist generation and copy constructor..
+    vector<pair<size_t, pair<size_t,Vec> > > neighbours; //a list of all neighbours
+
+// private methods:
+    /**
+    * Method that (re)builds the neighbourlist, if the number of Cubes in any direction has changed.
+    */
+    void setup();
+    /**
+    * Method that finds all neighbours across the box border.
+    */
+    void assign_outer_neighbours(const int);
+    /**
+    * Method that finds all neighbours within the box.
+    */
+    void assign_inner_neighbours();
+    /**
+    * Method that stores the cube-neighbour pair in a set, preventing redundant entries.
+    */
+    inline bool place_neighbour(int, int, Vec);
+    /**
+    * Method to copy all cube-neighbour pairs from the set to the neighbourlist vector.
+    */
+    void copy_set_to_vector(){
+        neighbours.clear();
+        for (set<Key>::const_iterator it = neighbour_storage_set.begin(); it != neighbour_storage_set.end() ; ++it){
+           neighbours.push_back( make_pair( it->my_cube_number(), make_pair(  it->neighbour_cube_number(), it->boxshift() ) ) );
+        }
+        neighbour_storage_set.clear(); //free memory
+    }
+    /**
+    * Method which returns the x-, y-, z-position of a cube in a Vector, calculated from its cube number.
+    */
+    Vec calc_position(int number) const { //calculate x,y,z position from cube number
+        int z = number/(num_cubes[0]*num_cubes[1]);
+        number -= z*num_cubes[0]*num_cubes[1];
+        int y = number/num_cubes[0];
+        int x = number - y*num_cubes[0];
+
+        assert(x>=0 && y>=0 && z>=0);
+        assert(x<num_cubes[0] && y<num_cubes[1] && z<num_cubes[2]);
+
+        return Vec(x,y,z);
+    }
+    /**
+    * Method which returns the cube number, calculated from the x-, y-, z-position of a cube.
+    */
+    int cube_number(int x, int y, int z) const{
+        return x + y*num_cubes[0] + z*num_cubes[0]*num_cubes[1];
+    }
+    /**
+    * Method which prints all atoms of all Cubes
+    */
+    void print() const{
+        for(typename vector< Cube<Type> >::const_iterator cube = cube_list.begin(); cube != cube_list.end(); ++cube){
+            cerr << "Cube " << cube - cube_list.begin() << endl;
+            cube->print_atoms();
+        }
+    }
+
+public:
+    //constructor
+    /**
+    * Constructor. First argument specifies the minimum Cube length. The second argument sets, if the inner neighbours should be used.
+    * "BOTH" is specified for inner and outer neighbours, "OUTER" for outer neighbours only (default: BOTH).
+    * The third argument sets, if the boxshift of the outer neighbours should be calculated (default: false).
+    * The use of boxshifts is only necessary, if the nearest image algorithm cannot be used.
+    */
+    CubeSystem(double cut, string nb = "BOTH", bool bxshift = false)
+    : cutoff(cut),num_cubes(3,0),cube_length(Vec(0,0,0)),offset(4,0),has_boxshift(bxshift) //initialisation of an array like num_cubes() like done here sets all elements to 0
+    {
+        if(cutoff < 0)
+            throw gromos::Exception("CubeSystem","Cutoff must be >= 0!");
+
+        if(cutoff != 0 && cutoff < 0.6){
+            cutoff = 0.6;
+            cerr << "# CubeSystem Notice: Due to a bug, the gridsize must be >= 0.6nm. It has been reset to "<< cutoff << " nm" << endl;
+        }
+
+        if(nb == "BOTH")
+            do_inner_neighbours = true;
+        else if (nb == "OUTER")
+            do_inner_neighbours = false;
+        else
+            throw gromos::Exception("CubeSystem","Neighbour type not known! Use OUTER or BOTH!");
+    }
+    /**
+    * Emtpy Constructor
+    */
+    CubeSystem(){}
+
+    //no custom destructor needed
+   //copy constructor:
+    /**
+    * Copy Constructor
+    */
+   CubeSystem(const CubeSystem<Type>& rightop)
+   :cutoff(rightop.cutoff),has_boxshift(rightop.has_boxshift),do_inner_neighbours(rightop.do_inner_neighbours),
+    num_cubes(rightop.num_cubes), cube_length(rightop.cube_length), offset(rightop.offset){
+
+        cube_list.resize( rightop.cube_list.size(), Cube<Type>() ); //make a new cubelist and populate each element with a new cube
+        cube_list = rightop.cube_list;
+
+        neighbour_storage_set.clear();
+        neighbours.clear();
+        neighbours = rightop.neighbours;
+    }
+    //assignment operator
+    /**
+    * Assignment operator. Copies the right-hand side CubeSystem to the left-hand side CubeSystem.
+    */
+    CubeSystem<Type>& operator= (const CubeSystem<Type>& rightop){
+
+        if (&rightop == this) return *this; //address comparison
+
+        cutoff = rightop.cutoff;
+        has_boxshift = rightop.has_boxshift;
+        do_inner_neighbours = rightop.do_inner_neighbours;
+        cube_length = rightop.cube_length; //x,y,z-length of 1 cube
+
+        num_cubes = rightop.num_cubes;
+        offset = rightop.offset;
+
+        cube_list.resize( rightop.cube_list.size(), Cube<Type>() ); //resize the cubelist
+        cube_list = rightop.cube_list; //copies also the atoms
+
+        neighbour_storage_set.clear();
+        neighbours.clear();
+        neighbours = rightop.neighbours;
+        return *this;
+    }
+
+    /**
+    * Addition operator. Adds the right-hand side CubeSystem to the left-hand side CubeSystem.
+    * Both CubeSystems must be equal in terms of everything, except the atoms they hold.
+    */
+    CubeSystem<Type>& operator+= (const CubeSystem<Type>& rightop) {
+        if( cutoff != rightop.cutoff ||
+            has_boxshift != rightop.has_boxshift ||
+            do_inner_neighbours != rightop.do_inner_neighbours ||
+            cube_length != rightop.cube_length ||
+            num_cubes != rightop.num_cubes ||
+            offset != rightop.offset ||
+            cube_list != rightop.cube_list ||
+            neighbours != rightop.neighbours
+          )
+            throw gromos::Exception("CubeSystem","You are attempting to add two CubeSystems that are not equal");
+
+
+cerr << "right CS:" << endl;
+rightop.print();
+
+cerr << "left CS BEFORE:" << endl;
+print();
+
+        typename vector< Cube<Type> >::const_iterator other_cube = rightop.cube_list.begin(); //iterator through rightop cubelist
+        //go through all cubes
+        for(typename vector< Cube<Type> >::iterator my_cube = cube_list.begin(); //tmp_cubes cubelist iterator
+            my_cube != cube_list.end() || other_cube != rightop.cube_list.end();
+            ++my_cube, ++other_cube
+            ){
+            //add each atom
+            for(typename vector<Type>::const_iterator other_atoms = other_cube->atom_list().begin();
+                other_atoms != other_cube->atom_list().end();
+                ++other_atoms
+               ){
+                    my_cube->add_atom(*other_atoms);
+               }
+        }
+cerr << "left CS AFTER:" << endl;
+print();
+
+        return *this;
+    }
+
+//public methods
+
+    /**
+    * Method, which recalculates the number of Cubes and the Cube lengths and offsets (used for triclinc boxes), based on the Box dimensions.
+    * If the number of Cubes in any direction changes setup() is called, which rebuilds the CubeSystem. <b>This method must be called every frame.</b>
+    */
+    inline void update_cubesystem(const gcore::Box&);
+    /**
+    * Method, which places an "atom" in the appropriate Cube. The Vector specifies the position of the "atom".
+    * If the system was gathered before, the COG of all "atoms" must be shifted to +K/2, +L/2, +M/2 and the positions of all "atoms" adjusted accordingly.
+    * <b>This method must be called every frame.</b>
+    */
+    inline void assign_atom(Type, const Vec&);
+    /**
+    * Method returning a vector with all "atoms" of the current Cube and ALL its 26 neighbouring Cubes.
+    * Please note that the boxshift vectors are not included.
+    */
+    inline std::vector<Type> neighbour_atomlist(size_t) const;
+    /**
+    * Method returning the size of the neighbourlist vector. Can be used for traversing the neighbourlist.
+    */
+    size_t size() const{
+        return neighbours.size();
+    }
+    /**
+    * Method that deletes all "atoms" from all Cubes in the CubeSystem.
+    */
+    void delete_atoms(){
+        for(size_t i=0;i<cube_list.size();++i) //delete atom lists of all cubes before the system changes
+            cube_list[i].delete_atomlist();
+    }
+
+    /**
+    * Method that returns the boxshift Vector of the neighbour Cube multiplied with Box vectors K, L, and M.
+    */
+    Vec boxshift(size_t i, gcore::Box& box) const{
+        Vec boxshift = neighbours[i].second.second[0]*box.K(); //multiply x boxshift component with the box vector K
+        boxshift += neighbours[i].second.second[1]*box.L(); //------"-----y---------"------------------------------L
+        boxshift += neighbours[i].second.second[2]*box.M(); //------"-----z---------"------------------------------M
+        return boxshift;
+    }
+    /**
+    * Method which returns a reference to the vector containing the "atoms" in the current Cube.
+    */
+    const vector<Type>& cube_i_atomlist(size_t i) const{
+        return cube_list[neighbours[i].first].atom_list();
+    }
+    /**
+    * Method which returns a reference to the vector containing the "atoms" in the current neighbour Cube.
+    */
+    const vector<Type>& cube_j_atomlist(size_t i) const{
+        return cube_list[neighbours[i].second.first].atom_list();
+    }
+    /**
+    * Method which checks, if the Cube and the neighbour Cube are the same.
+    */
+    bool same_cube(size_t i) const{
+        return neighbours[i].first == neighbours[i].second.first;
+    }
+    /**
+    * Method returning a pointer to the current Cube.
+    */
+    const Cube<Type>* my_cube(size_t i) const{
+        return &cube_list[neighbours[i].first];
+    }
+    /**
+    * Method returning a pointer to the current neighbour Cube.
+    */
+    const Cube<Type>* neighbour_cube(size_t i) const{
+        return &cube_list[neighbours[i].second.first];
+    }
+    //returns a vector will ALL atoms of all neighbour cubes, including the calling cube
+    /**
+    * Method returning an estimate of the size of the CubeSystem in memory.
+    */
+    int cl_size() const{
+        int sz=0;
+        for(int i=0;i < cube_list.size(); ++i)
+            sz += cube_list[i].atom_list().capacity()*sizeof(Type);
+        return sz/1000.0;
+    }
+};
+/**
+* Addition operator function. Adds the "atoms" of two CubeSystems and returns a new CubeSystem, which is equal to the other two,
+* except it contains the "atoms" of both.
+*/
+template <typename Type>
+CubeSystem<Type> operator+ (CubeSystem<Type> leftop,       // must be passed as value, since it's altered by += operator
+                            const CubeSystem<Type>& rightop){
+    return leftop += rightop;
+}
+
+template <typename Type>
+void CubeSystem<Type>::update_cubesystem(const gcore::Box& box){
+
+    double a = abs(box.K()[0]); //absolute values
+    double b = abs(box.L()[1]);
+    double c = abs(box.M()[2]);
+
+    int num_a = int(a/cutoff);
+    int num_b = int(b/cutoff);
+    int num_c = int(c/cutoff);
+
+    if(num_a == 0)    num_a = 1; //happens, if cutoff > box_size
+    if(num_b == 0)    num_b = 1;
+    if(num_c == 0)    num_c = 1;
+
+    //for triclinic box:
+    if(b == 0 || c == 0)
+        throw gromos::Exception("CubeSystem", "Problem with box vector elements L[1] or M[2]: they have a value of 0.");
+
+    if(box.K()[1] != 0 || box.K()[2] != 0 || box.alpha() < 45 || box.alpha() > 135 || box.beta() < 45 || box.beta() > 135 || box.gamma() < 45 || box.gamma() > 135)
+        throw gromos::Exception("CubeSystem","Sorry, triclinic boxes must fulfill these criteria:\n * K=(x,0,0)\n * 135 <= alpha, beta, gamma >= 45°");
+
+    delete_atoms(); //delete all atoms from all cubes
+
+    if(cutoff && ( //if a cutoff is specified &
+       num_cubes[0] >  num_a|| //only when the box gets smaller, we need to update the cubesystem
+       num_cubes[1] >  num_b||
+       num_cubes[2] >  num_c||
+       num_cubes[0] == 0 || //after intitialisation, num_cubes is set to 0
+       num_cubes[1] == 0 ||
+       num_cubes[2] == 0
+       )){
+            num_cubes[0] = num_a; //reset the number of cubes in each direction
+            num_cubes[1] = num_b;
+            num_cubes[2] = num_c;
+
+            setup(); //new neibghbourlist creation
+    }
+    else if(!cutoff && (num_cubes[0]!=1 || num_cubes[1]!=1 || num_cubes[2]!=1)){ //if there is no cutoff & the number of cubes in any direction is not 1
+        num_cubes[0]=1;
+        num_cubes[1]=1;
+        num_cubes[2]=1;
+
+        setup(); //new neibghbourlist creation
+    }
+    //in any other case, the cubesystem does not need to be setup again
+    //corrections for triclinic geometry:
+    offset[0] = box.L()[0]/box.L()[1]; //x1
+    offset[1] = box.M()[0]/box.M()[2]; //x2
+    offset[2] = box.M()[1]/box.M()[2]; //y
+    offset[3] = box.L()[2]/box.L()[1]; //z
+
+    cube_length[0] = a/num_cubes[0];
+    cube_length[1] = b/num_cubes[1];
+    cube_length[2] = c/num_cubes[2];
+
+
+}
+
+template <typename Type>
+void CubeSystem<Type>::setup(){
+
+    if(num_cubes[0] <= 0)
+        num_cubes[0]=1;
+    if(num_cubes[1] <= 0)
+        num_cubes[1]=1;
+    if(num_cubes[2] <= 0)
+        num_cubes[2]=1;
+
+    cube_list.resize(num_cubes[0]*num_cubes[1]*num_cubes[2], Cube<Type>()); //always do this: resize vector and initialise with emtpy cubes
+
+    neighbour_storage_set.clear();
+
+    //if requested also do the inner neighbours
+    if(do_inner_neighbours)
+        assign_inner_neighbours(); //set the inner neighbours
+
+    //always do the outer neighbours
+    for(int y=0; y<num_cubes[1]; ++y)
+        for(int x=0; x<num_cubes[0]; ++x)
+            assign_outer_neighbours(cube_number(x,y,0)); //only cubes along the x-y face have outer neighbours and
+
+    for(int z=0; z<num_cubes[2]; ++z){
+        for(int x=0; x<num_cubes[0]; ++x)
+            assign_outer_neighbours(cube_number(x,0,z)); //cubes along the x-z face and
+        for(int y=0; y<num_cubes[1]; ++y)
+            assign_outer_neighbours(cube_number(0,y,z)); //cubes along the y-z face (symmetry saves us from doing the other faces as well)
+    }
+
+    copy_set_to_vector();
+}
+
+template <typename Type>
+void CubeSystem<Type>::assign_outer_neighbours(const int my_index){
+
+    const Vec my_pos=calc_position(my_index); // calculate the positon from the index number
+
+    int rep;
+    if(my_pos[0] == 0 && num_cubes[0] == 1) //only 1 cube
+        rep=2;
+    else if(my_pos[0] == 0) //we are on the left edge
+        rep=1;
+    else //all others: no neighbour assignment
+        rep=0;
+
+    for(int i=0;i<rep;++i){ // we assign neighbours only for the left edge. but also for the right edge, if there is only 1 cube in x-direction
+
+        Vec boxshift(0,0,0);
+        int x = num_cubes[0]-1;
+
+        if(i == 0)
+            boxshift[0] = -1; //first repetition: box to the left
+        else
+            boxshift[0] = 1; //second & third rep: box to the right
+
+        for(int z=my_pos[2]-1; z <= my_pos[2]+1; ++z){ //go though all the zs
+            for(int y=my_pos[1]-1; y <= my_pos[1]+1; ++y){ //go through alle the ys
+
+                int b=y; //y can go from anywhere to anywhere, but b  must stay within 0 and num_cubes[1]-1
+                if(y==-1){
+                    b=num_cubes[1]-1;
+                    boxshift[1]=-1;
+                }
+                else if(y>=num_cubes[1]){
+                    b=y%num_cubes[1];
+                    boxshift[1]=1;
+                }
+                else
+                    boxshift[1]=0;
+                int c=z; //same holds for c and z
+                if(z==-1){
+                    c=num_cubes[2]-1;
+                    boxshift[2]=-1;
+                }
+                else if(z>=num_cubes[2]){
+                    c=z%num_cubes[2];
+                    boxshift[2]=1;
+                }
+                else
+                    boxshift[2]=0;
+
+               place_neighbour(my_index, cube_number(x,b,c), boxshift);
+
+            }
+        }
+    }
+
+    if(my_pos[1] == 0 && num_cubes[1] == 1) //only 1 cube
+        rep=2;
+    else if(my_pos[1] == 0) //we are on the front edge
+        rep=1;
+    else
+        rep=0;
+
+    for(int i=0;i<rep;++i){ // y position fixed
+
+        Vec boxshift(0,0,0);
+
+        int y=num_cubes[1]-1;
+        if(i == 0)
+            boxshift[1] = -1;
+        else
+            boxshift[1] = 1;
+
+        for(int z=my_pos[2]-1; z <= my_pos[2]+1; ++z){
+            for(int x=my_pos[0]-1; x <= my_pos[0]+1; ++x){
+                int c=z;
+                if(z==-1){
+                    c=num_cubes[2]-1;
+                    boxshift[2]=-1;
+                }
+                else if(z>=num_cubes[2]){
+                    c=z%num_cubes[2];
+                    boxshift[2]=1;
+                }
+                else
+                    boxshift[2]=0;
+                int a=x;
+                if(x==-1){
+                    a=num_cubes[0]-1;
+                    boxshift[0]=-1;
+                }
+                else if(x>=num_cubes[0]){
+                    a=x%num_cubes[0];
+                    boxshift[0]=1;
+                }
+                else
+                    boxshift[0]=0;
+
+              place_neighbour(my_index, cube_number(a,y,c), boxshift);
+
+            }
+        }
+    }
+    if(my_pos[2] == 0 && num_cubes[2] == 1) //only 1 cube
+        rep=2;
+    else if(my_pos[2] == 0) //we are on the bottom
+        rep=1;
+    else
+        rep=0;
+
+    for(int i=0;i<rep;++i){ // z-position fixed
+
+        Vec boxshift(0,0,0);
+        int z=num_cubes[2]-1;
+
+        if(i == 0)
+            boxshift[2] = -1;
+        else
+            boxshift[2] = 1;
+
+        for(int y=my_pos[1]-1; y <= my_pos[1]+1; ++y){
+            for(int x=my_pos[0]-1; x <= my_pos[0]+1; ++x){
+                int a=x;
+                if(x==-1){
+                    a=num_cubes[0]-1;
+                    boxshift[0]=-1;
+                }
+                else if(x>=num_cubes[0]){
+                    a=x%num_cubes[0];
+                    boxshift[0]=1;
+                }
+                else
+                    boxshift[0]=0;
+                int b=y;
+                if(y==-1){
+                    b=num_cubes[1]-1;
+                    boxshift[1]=-1;
+                }
+                else if(y>=num_cubes[1]){
+                    b=y%num_cubes[1];
+                    boxshift[1]=1;
+                }
+                else
+                    boxshift[1]=0;
+
+                place_neighbour(my_index, cube_number(a,b,z), boxshift);
+
+            }
+        }
+    }
+}
+
+template <typename Type>
+void CubeSystem<Type>::assign_inner_neighbours(){
+
+    for(unsigned int i=0; i < cube_list.size(); ++i){
+
+        const Vec my_pos=calc_position(i);
+
+        int z_max=my_pos[2]+1,
+            y_max=my_pos[1]+1,
+            x_max=my_pos[0]+1;
+
+        if(z_max >= num_cubes[2])
+            z_max=num_cubes[2]-1;
+        if(y_max >= num_cubes[1])
+            y_max=num_cubes[1]-1;
+        if(x_max >= num_cubes[0])
+            x_max=num_cubes[0]-1;
+
+        int z_min=my_pos[2]-1,
+            y_min=my_pos[1]-1;
+            //x_min: we do not need x_min. all neighbours are covered if we only use ymin and zmin
+        if(z_min < 0)
+            z_min=0;
+        if(y_min < 0)
+            y_min=0;
+
+        for(int z = z_min; z <= z_max; ++z)
+            for(int y = y_min; y <= y_max; ++y)
+                for(int x = my_pos[0]; x <= x_max; ++x)
+                    place_neighbour(i, cube_number(x,y,z), Vec(0,0,0));
+    }
+}
+
+template <typename Type>
+bool CubeSystem<Type>::place_neighbour(int me, int  my_neighbour, Vec other_boxshift){
+//INFO:
+//if there is symmetry in numbers and boxshift vectors, the cubes are equivalent.
+//number symmetry: 1-4 = 4-1
+//boxshift symmetry: (0,1,-1) = (0,-1,1)
+//1(0,0,0) - 4(0,1,-1) = 4(0,0,0) - 1(0,-1,1)
+
+    if(!has_boxshift)
+        other_boxshift = Vec(0,0,0);
+
+    Vec symmetric_boxshift = other_boxshift * -1; //create the symmetric (opposite) boxshift
+
+    Key key_same(me, my_neighbour, other_boxshift); //same key
+    Key key_sym(my_neighbour, me, symmetric_boxshift); //symmetric key
+
+    //  vvv if there is only 1 cube in any direction
+    if(me == my_neighbour || !(neighbour_storage_set.count(key_sym) || neighbour_storage_set.count(key_same))){ //if the symmetric key DOES NOT exist
+        neighbour_storage_set.insert(key_same); //create an entry with key_same. it doesnt matter, if an entry with key_same already exists
+       // cerr << me << " - " << my_neighbour << ", " << other_boxshift[0] << " "<< other_boxshift[1] << " "<< other_boxshift[2] << " " << endl;
+        return true;
+    }
+    return false;
+}
+
+template <typename Type>
+void CubeSystem<Type>::assign_atom(Type a, const Vec& atom_pos){ //this is called for every atom, each frame
+    if(cube_length[0]<=0 || cube_length[1]<=0 || cube_length[2]<=0)
+        throw gromos::Exception("CubeSystem", "Cube length <= 0. CubeSystem possibly not initialised. Use update_cubesystem.");
+
+    int x = (atom_pos[0] - offset[0]*atom_pos[1] - offset[1]*atom_pos[2]) / cube_length[0]; //offset corrects for triclinic geometry
+    if(x<0){
+         x=0;
+    }
+    else if(x>=num_cubes[0]){
+         x=num_cubes[0]-1;
+    }
+
+    int y = (atom_pos[1] - offset[2]*atom_pos[2]) / cube_length[1];
+    if(y<0){
+         y=0;
+    }
+    else if(y>=num_cubes[1]){
+         y=num_cubes[1]-1;
+    }
+
+    int z = (atom_pos[2] - offset[3]*atom_pos[1]) / cube_length[2];
+    if(z<0){
+         z=0;
+    }
+    else if(z>=num_cubes[2]){
+         z=num_cubes[2]-1;
+    }
+    cube_list[cube_number(x,y,z)].add_atom(a);
+}
+
+template <typename Type>
+std::vector<Type> CubeSystem<Type>::neighbour_atomlist(size_t i) const{
+    i = neighbours[i].first;
+    if(i < 0 || i >= cube_list.size())
+        throw gromos::Exception("CubeSystem","This cube number does not exist!");
+
+    std::vector<Type> a_list;
+    Vec pos = calc_position(i);
+
+    std::set<int> cube_set; //usage of set prevents multiple insertions of the same cube number
+
+    for(int z=-1; z<=+1; ++z){
+        int c = pos[2] + z;
+        if(c < 0)
+            c = num_cubes[2]-1;
+        else if(c == num_cubes[2])
+            c = 0;
+        for(int y=-1; y<=+1; ++y){
+            int b = pos[1] + y;
+            if(b < 0)
+                b = num_cubes[1]-1;
+            else if(b == num_cubes[1])
+                b = 0;
+            for(int x=-1; x<=+1; ++x){
+                int a = pos[0] + x;
+                if(a < 0)
+                    a = num_cubes[0]-1;
+                else if(a == num_cubes[0])
+                    a = 0;
+                cube_set.insert(cube_number(a,b,c)); //the set guarantees that each cube is inserted only once
+            }
+        }
+    }
+    //insert the atom_list of each cube in the set:
+    for(std::set<int>::const_iterator it = cube_set.begin(); it != cube_set.end(); ++it){
+        a_list.insert(a_list.end(), cube_list[*it].atom_list().begin(), cube_list[*it].atom_list().end());
+    }
+
+    return a_list;
+}
+
+#endif
