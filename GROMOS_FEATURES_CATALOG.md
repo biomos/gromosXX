@@ -15,7 +15,7 @@
 
 **Tier 1 (Core MD)**: ✅ **100%** (8/8 complete) - PRODUCTION READY!
 **Tier 2 (Enhanced)**: ✅ **85.7%** (6/7 complete)
-**Tier 3 (Advanced)**: ⚠️ **45.5%** (5/11 complete) - PME & REMD implemented
+**Tier 3 (Advanced)**: ⚠️ **54.5%** (6/11 complete) - PME, REMD & EDS implemented
 **Total Features**: **~60%** of core functionality implemented
 
 ---
@@ -34,11 +34,11 @@
 | **Conjugate Gradient** | ❌ Not Done | 🔨 2-4 weeks | Needs line search |
 | **Monte Carlo** | ❌ Not Done | 🔨 4-6 weeks | Metropolis sampling |
 | **Multigradient** | ❌ Not Done | 🔨 4-6 weeks | Multi-potential interpolation |
-| **EDS** | ❌ Not Done | 🔨 6-8 weeks | Multi-state sampling |
+| **EDS** | ✅ Implemented | - | src/eds.rs, src/bin/eds.rs (multi-state sampling with AEDS) |
 | **GaMD** | ❌ Not Done | 🔨 6-8 weeks | Boost potential |
 | **Analyze** | ❌ Skip | - | Post-processing tool |
 
-**Progress**: 5/13 implemented (38.5%)
+**Progress**: 6/13 implemented (46.2%)
 
 ---
 
@@ -283,6 +283,8 @@
 
 **gromos-rs Binaries** (Simulation & Pre-processing):
 - ✅ **md** (946 lines): Full MD simulation engine with CLI
+- ✅ **remd** (535 lines): Replica Exchange MD for enhanced sampling
+- ✅ **eds** (540 lines): Enveloping Distribution Sampling (EDS/AEDS)
 - ✅ **make_pt_top** (265 lines): Generate .ptp perturbation topologies for FEP
 - ✅ **sim_box** (550+ lines): Solvation utility - places solute in pre-equilibrated solvent box
 - ✅ **pdb2g96**: Convert PDB to GROMOS format
@@ -324,8 +326,10 @@ Use **GROMOS++** for advanced analysis (111 battle-tested tools):
 ### ✅ Tier 1 Complete!
 All Tier 1 features are now implemented and production-ready!
 
-### To Complete Tier 2 (4-6 weeks)
-- Implement Replica Exchange (T-REMD, H-REMD)
+### To Complete Tier 3 (2-4 weeks)
+- ✅ ~~Implement Replica Exchange (T-REMD)~~ - **DONE** (src/remd.rs, src/replica.rs)
+- ✅ ~~Implement EDS/AEDS~~ - **DONE** (src/eds.rs, src/bin/eds.rs)
+- Implement GaMD (Gaussian accelerated MD) - 2-4 weeks
 
 ### Quick Wins (1-3 weeks each)
 - ✅ ~~Grid cell pairlist algorithm~~ - **DONE**
