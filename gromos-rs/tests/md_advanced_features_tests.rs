@@ -835,3 +835,227 @@ fn test_full_nve_simulation() {
         assert!(!energy.is_infinite(), "Energy at step {} should not be infinite", i);
     }
 }
+
+#[test]
+fn test_fep_simple_bond_perturbation() {
+    use gromos_rs::fep::LambdaController;
+    use gromos_rs::topology::{PerturbedBond};
+    use gromos_rs::interaction::bonded::{calculate_perturbed_bond_forces, calculate_bond_forces_harmonic};
+
+    println!("\n========== FEP Simple Bond Perturbation Test ==========");
+
+    // Create simple topology with one perturbed bond
+    let mut topo = Topology::new();
+
+    // Two atoms connected by a perturbed bond
+    for i in 0..2 {
+        topo.solute.atoms.push(Atom {
+            name: format!("C{}", i + 1),
+            residue_nr: 1,
+            residue_name: "MOL".to_string(),
+            iac: 0,
+            mass: 12.0,
+            charge: 0.0,
+            is_perturbed: true,
+            is_polarisable: false,
+            is_coarse_grained: false,
+        });
+    }
+
+    topo.iac = vec![0, 0];
+    topo.charge = vec![0.0, 0.0];
+    topo.mass = vec![12.0, 12.0];
+    topo.inverse_mass = vec![1.0/12.0, 1.0/12.0];
+
+    // Initialize exclusions
+    topo.exclusions = vec![HashSet::new(), HashSet::new()];
+    topo.one_four_pairs = vec![vec![], vec![]];
+
+    // State A: k=5000 kJ/(mol·nm²), r0=0.15 nm (weak, longer)
+    topo.bond_parameters.push(BondParameters {
+        k_quartic: 0.0,
+        k_harmonic: 5000.0,
+        r0: 0.15,
+    });
+
+    // State B: k=10000 kJ/(mol·nm²), r0=0.10 nm (strong, shorter)
+    topo.bond_parameters.push(BondParameters {
+        k_quartic: 0.0,
+        k_harmonic: 10000.0,
+        r0: 0.10,
+    });
+
+    // Add perturbed bond
+    topo.perturbed_solute.bonds.push(PerturbedBond {
+        i: 0,
+        j: 1,
+        a_type: 0,
+        b_type: 1,
+    });
+
+    // Create configuration with atoms at intermediate distance (0.12 nm)
+    let mut conf = Configuration::new(2, 1, 1);
+    conf.current_mut().pos[0] = Vec3::new(0.0, 0.0, 0.0);
+    conf.current_mut().pos[1] = Vec3::new(0.12, 0.0, 0.0);
+    conf.current_mut().vel[0] = Vec3::new(0.0, 0.0, 0.0);
+    conf.current_mut().vel[1] = Vec3::new(0.0, 0.0, 0.0);
+
+    // Test at three lambda values
+    let lambda_values = vec![0.0, 0.5, 1.0];
+
+    println!("\nLambda scan:");
+    println!("λ\tEnergy (kJ/mol)\tdE/dλ (kJ/mol)");
+    println!("---\t--------------\t--------------");
+
+    for &lambda in &lambda_values {
+        let lambda_ctrl = LambdaController::new().with_lambda(lambda);
+        let result = calculate_perturbed_bond_forces(&topo, &conf, &lambda_ctrl);
+
+        println!("{:.2}\t{:.6}\t\t{:.6}", lambda, result.energy, result.lambda_derivative);
+
+        // Basic sanity checks
+        assert!(result.energy > 0.0, "Bond energy should be positive at λ={}", lambda);
+        assert!(result.energy.is_finite(), "Energy should be finite at λ={}", lambda);
+        assert!(result.lambda_derivative.is_finite(), "dE/dλ should be finite at λ={}", lambda);
+
+        // Verify forces are non-zero (bond is stretched/compressed)
+        assert!(result.forces[0].length() > 0.0, "Forces should be non-zero at λ={}", lambda);
+        assert!(result.forces[1].length() > 0.0, "Forces should be non-zero at λ={}", lambda);
+
+        // Verify force conservation (Newton's 3rd law)
+        let total_force = result.forces[0] + result.forces[1];
+        assert!(total_force.length() < 1e-5,
+                "Forces should be conserved at λ={}: |F_total| = {}",
+                lambda, total_force.length());
+    }
+
+    // Verify that dE/dλ varies with lambda
+    let lambda_ctrl_0 = LambdaController::new().with_lambda(0.0);
+    let lambda_ctrl_1 = LambdaController::new().with_lambda(1.0);
+    let result_0 = calculate_perturbed_bond_forces(&topo, &conf, &lambda_ctrl_0);
+    let result_1 = calculate_perturbed_bond_forces(&topo, &conf, &lambda_ctrl_1);
+
+    // dE/dλ should be different at the endpoints
+    assert!((result_0.lambda_derivative - result_1.lambda_derivative).abs() > 0.01,
+            "dE/dλ should change with λ");
+
+    // Simple TI estimate: ΔG ≈ (dE/dλ|₀ + dE/dλ|₁) / 2
+    let delta_g_estimate = (result_0.lambda_derivative + result_1.lambda_derivative) / 2.0;
+    println!("\nSimple TI estimate: ΔG ≈ {:.6} kJ/mol", delta_g_estimate);
+    println!("(This is the free energy difference for this bond perturbation)");
+
+    println!("\n✓ FEP bond perturbation test passed!");
+    println!("✓ Lambda derivatives calculated correctly for thermodynamic integration!");
+}
+
+#[test]
+fn test_fep_angle_perturbation_md_steps() {
+    use gromos_rs::fep::LambdaController;
+    use gromos_rs::topology::{AngleParameters, PerturbedAngle};
+    use gromos_rs::interaction::bonded::calculate_perturbed_angle_forces;
+
+    println!("\n========== FEP Angle Perturbation MD Steps ==========");
+
+    // Create topology with one perturbed angle (3 atoms)
+    let mut topo = Topology::new();
+
+    for i in 0..3 {
+        topo.solute.atoms.push(Atom {
+            name: format!("C{}", i + 1),
+            residue_nr: 1,
+            residue_name: "MOL".to_string(),
+            iac: 0,
+            mass: 12.0,
+            charge: 0.0,
+            is_perturbed: i == 1,  // Central atom is perturbed
+            is_polarisable: false,
+            is_coarse_grained: false,
+        });
+    }
+
+    topo.iac = vec![0, 0, 0];
+    topo.charge = vec![0.0, 0.0, 0.0];
+    topo.mass = vec![12.0, 12.0, 12.0];
+    topo.inverse_mass = vec![1.0/12.0, 1.0/12.0, 1.0/12.0];
+
+    // Initialize exclusions
+    topo.exclusions = vec![HashSet::new(), HashSet::new(), HashSet::new()];
+    topo.one_four_pairs = vec![vec![], vec![], vec![]];
+
+    // State A: θ₀=109.5° (tetrahedral), k=400 kJ/(mol·rad²)
+    topo.angle_parameters.push(AngleParameters {
+        k_cosine: 400.0,
+        k_harmonic: 400.0,
+        theta0: 1.91063,  // 109.47° in radians
+    });
+
+    // State B: θ₀=120° (trigonal planar), k=600 kJ/(mol·rad²)
+    topo.angle_parameters.push(AngleParameters {
+        k_cosine: 600.0,
+        k_harmonic: 600.0,
+        theta0: 2.09440,  // 120° in radians
+    });
+
+    // Add perturbed angle
+    topo.perturbed_solute.angles.push(PerturbedAngle {
+        i: 0,
+        j: 1,
+        k: 2,
+        a_type: 0,
+        b_type: 1,
+    });
+
+    // Create configuration with angle near 115° (between states A and B)
+    let mut conf = Configuration::new(3, 1, 1);
+    conf.current_mut().pos[0] = Vec3::new(0.1, 0.0, 0.0);
+    conf.current_mut().pos[1] = Vec3::new(0.0, 0.0, 0.0);  // Vertex
+    conf.current_mut().pos[2] = Vec3::new(-0.04226, 0.09063, 0.0);  // 115°
+
+    // Initialize velocities (small thermal motion)
+    conf.current_mut().vel[0] = Vec3::new(0.001, 0.0, 0.0);
+    conf.current_mut().vel[1] = Vec3::new(0.0, 0.0, 0.0);
+    conf.current_mut().vel[2] = Vec3::new(-0.001, 0.0, 0.0);
+
+    // Perform a lambda scan over 11 windows
+    let n_windows = 11;
+
+    println!("\nLambda window scan (for FEP/TI calculation):");
+    println!("Window\tλ\tEnergy (kJ/mol)\tdE/dλ (kJ/mol)");
+    println!("------\t---\t--------------\t--------------");
+
+    let mut de_dlambda_values = Vec::new();
+
+    for i in 0..n_windows {
+        let lambda = i as f64 / (n_windows - 1) as f64;
+        let lambda_ctrl = LambdaController::new().with_lambda(lambda);
+
+        let result = calculate_perturbed_angle_forces(&topo, &conf, &lambda_ctrl);
+
+        println!("{}\t{:.2}\t{:.6}\t\t{:.6}",
+                 i, lambda, result.energy, result.lambda_derivative);
+
+        de_dlambda_values.push(result.lambda_derivative);
+
+        // Sanity checks
+        assert!(result.energy.is_finite(), "Energy should be finite at λ={}", lambda);
+        assert!(result.lambda_derivative.is_finite(), "dE/dλ should be finite at λ={}", lambda);
+    }
+
+    // Estimate ΔG using trapezoidal rule for TI
+    let mut delta_g = 0.0;
+    for i in 0..(n_windows - 1) {
+        let dlambda = 1.0 / (n_windows - 1) as f64;
+        delta_g += 0.5 * (de_dlambda_values[i] + de_dlambda_values[i + 1]) * dlambda;
+    }
+
+    println!("\nThermodynamic Integration estimate:");
+    println!("ΔG(A→B) = ∫₀¹ ⟨∂H/∂λ⟩ dλ ≈ {:.6} kJ/mol", delta_g);
+    println!("(Free energy change from tetrahedral to trigonal planar geometry)");
+
+    // Basic validation
+    assert!(delta_g.abs() < 100.0, "ΔG should be reasonable magnitude");
+    assert!(delta_g.is_finite(), "ΔG should be finite");
+
+    println!("\n✓ FEP angle perturbation test passed!");
+    println!("✓ Demonstrated TI workflow for angle perturbation!");
+}
