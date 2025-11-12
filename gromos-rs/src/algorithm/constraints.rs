@@ -25,6 +25,42 @@ impl Default for ShakeParameters {
     }
 }
 
+/// LINCS algorithm parameters
+#[derive(Debug, Clone)]
+pub struct LincsParameters {
+    pub order: usize,  // Order of expansion (typically 4-8, higher = more accurate)
+}
+
+impl Default for LincsParameters {
+    fn default() -> Self {
+        Self {
+            order: 4,  // GROMOS default
+        }
+    }
+}
+
+/// LINCS coupling data for constraint network
+#[derive(Debug, Clone)]
+pub struct LincsData {
+    /// Diagonal matrix elements: 1/√(1/m_i + 1/m_j)
+    pub sdiag: Vec<f64>,
+    /// Coupled constraints for each constraint
+    pub coupled_constr: Vec<Vec<usize>>,
+    /// Coupling coefficients
+    pub coef: Vec<Vec<f64>>,
+}
+
+impl LincsData {
+    /// Create empty LINCS data
+    pub fn new() -> Self {
+        Self {
+            sdiag: Vec::new(),
+            coupled_constr: Vec::new(),
+            coef: Vec::new(),
+        }
+    }
+}
+
 /// Result of constraint application
 #[derive(Debug, Clone)]
 pub struct ConstraintResult {
@@ -277,6 +313,259 @@ pub fn settle(
     }
 }
 
+/// Setup LINCS coupling matrix for a set of distance constraints
+///
+/// This function analyzes the constraint topology to identify coupled constraints
+/// (constraints that share a common atom) and computes the coupling coefficients.
+///
+/// # Parameters
+/// - `topo`: Molecular topology
+/// - `constraint_indices`: Indices of bonds that are constrained
+///
+/// # Returns
+/// - `LincsData` containing diagonal elements, coupled constraint lists, and coefficients
+pub fn setup_lincs(topo: &Topology, constraint_indices: &[usize]) -> LincsData {
+    let num_constr = constraint_indices.len();
+    let mut lincs = LincsData::new();
+
+    lincs.sdiag.reserve(num_constr);
+    lincs.coupled_constr.resize(num_constr, Vec::new());
+    lincs.coef.resize(num_constr, Vec::new());
+
+    // Compute diagonal matrix elements: sdiag[i] = 1 / sqrt(1/m_i + 1/m_j)
+    for &bond_idx in constraint_indices {
+        let bond = &topo.solute.bonds[bond_idx];
+        let inv_mass_i = topo.inverse_mass[bond.i];
+        let inv_mass_j = topo.inverse_mass[bond.j];
+        let inv_mass_sum = inv_mass_i + inv_mass_j;
+
+        let sdiag_val = 1.0 / inv_mass_sum.sqrt();
+        lincs.sdiag.push(sdiag_val);
+    }
+
+    // Find coupled constraints (constraints that share a common atom)
+    for i in 0..num_constr {
+        let bond_i = &topo.solute.bonds[constraint_indices[i]];
+
+        for j in (i + 1)..num_constr {
+            let bond_j = &topo.solute.bonds[constraint_indices[j]];
+
+            // Check if constraints i and j share a common atom
+            let common_atom = if bond_i.i == bond_j.i {
+                Some(bond_i.i)
+            } else if bond_i.j == bond_j.i {
+                Some(bond_i.j)
+            } else if bond_i.i == bond_j.j {
+                Some(bond_i.i)
+            } else if bond_i.j == bond_j.j {
+                Some(bond_i.j)
+            } else {
+                None
+            };
+
+            if let Some(con) = common_atom {
+                // Constraints are coupled
+                lincs.coupled_constr[i].push(j);
+                lincs.coupled_constr[j].push(i);
+
+                // Coupling coefficient: c = (1/m_common) * sdiag[i] * sdiag[j]
+                let inv_mass_common = topo.inverse_mass[con];
+                let mut c = inv_mass_common * lincs.sdiag[i] * lincs.sdiag[j];
+
+                // Sign depends on the topology
+                // If both constraints have the common atom at the same position (both i or both j), negate
+                if (bond_i.i == bond_j.i) || (bond_i.j == bond_j.j) {
+                    c *= -1.0;
+                }
+
+                lincs.coef[i].push(c);
+                lincs.coef[j].push(c);
+            }
+        }
+    }
+
+    lincs
+}
+
+/// Apply LINCS algorithm to satisfy distance constraints
+///
+/// LINCS (Linear Constraint Solver) by Hess et al. (1997) uses a matrix
+/// formulation to solve constraints. It's typically faster than SHAKE and
+/// more suitable for parallel implementations.
+///
+/// Algorithm:
+/// 1. Compute constraint direction vectors B from old (reference) positions
+/// 2. Compute right-hand side: deviation from constraint
+/// 3. Solve linear system iteratively using coupling matrix
+/// 4. Apply position corrections
+/// 5. Apply rotational lengthening correction
+///
+/// # Parameters
+/// - `topo`: Molecular topology
+/// - `conf`: Configuration with current and old positions
+/// - `constraint_indices`: Indices of bonds to constrain
+/// - `lincs_data`: Pre-computed LINCS coupling data
+/// - `params`: LINCS parameters (order of expansion)
+///
+/// # Returns
+/// - `ConstraintResult` with convergence status
+pub fn lincs(
+    topo: &Topology,
+    conf: &mut Configuration,
+    constraint_indices: &[usize],
+    lincs_data: &LincsData,
+    params: &LincsParameters,
+) -> ConstraintResult {
+    let num_constr = constraint_indices.len();
+
+    if num_constr == 0 {
+        return ConstraintResult {
+            converged: true,
+            iterations: 0,
+            max_error: 0.0,
+        };
+    }
+
+    // B vectors: constraint direction unit vectors from old positions
+    let mut b_vectors: Vec<Vec3> = Vec::with_capacity(num_constr);
+
+    // Compute B vectors (reference constraint directions)
+    for &bond_idx in constraint_indices {
+        let bond = &topo.solute.bonds[bond_idx];
+        let r_ij = conf.old().pos[bond.j] - conf.old().pos[bond.i];
+        let r_length = r_ij.length() as f64;
+
+        if r_length < 1e-10 {
+            b_vectors.push(Vec3::new(0.0, 0.0, 0.0));
+            continue;
+        }
+
+        let b = r_ij / r_length as f32;
+        b_vectors.push(b);
+    }
+
+    // Right-hand side and solution vectors
+    let mut rhs: Vec<Vec<f64>> = vec![vec![0.0; num_constr]; 2];
+    let mut sol: Vec<f64> = vec![0.0; num_constr];
+
+    // Compute initial RHS: how much we deviate from constraint
+    for (idx, &bond_idx) in constraint_indices.iter().enumerate() {
+        let bond = &topo.solute.bonds[bond_idx];
+        let r_ij = conf.current().pos[bond.j] - conf.current().pos[bond.i];
+        let constraint_length = topo.bond_parameters[bond.bond_type].r0;
+
+        // rhs = sdiag * (B · r - r0)
+        let projection = b_vectors[idx].dot(r_ij) as f64;
+        rhs[0][idx] = lincs_data.sdiag[idx] * (projection - constraint_length);
+        sol[idx] = rhs[0][idx];
+    }
+
+    // Iterative solution of coupled constraints
+    let mut w = 1; // Ping-pong between rhs[0] and rhs[1]
+
+    for _rec in 0..params.order {
+        for i in 0..num_constr {
+            rhs[w][i] = 0.0;
+
+            // Add contributions from coupled constraints
+            for (n, &coupled_idx) in lincs_data.coupled_constr[i].iter().enumerate() {
+                rhs[w][i] += lincs_data.coef[i][n] * rhs[1 - w][coupled_idx];
+            }
+
+            sol[i] += rhs[w][i];
+        }
+        w = 1 - w;
+    }
+
+    // Apply position corrections
+    for (idx, &bond_idx) in constraint_indices.iter().enumerate() {
+        let bond = &topo.solute.bonds[bond_idx];
+        let inv_mass_i = topo.inverse_mass[bond.i];
+        let inv_mass_j = topo.inverse_mass[bond.j];
+
+        // delta = B * sdiag * sol
+        let correction = lincs_data.sdiag[idx] * sol[idx];
+
+        // Update positions: move atoms to satisfy constraints
+        // When bond is too long (sol > 0), we need to bring atoms closer
+        conf.current_mut().pos[bond.i] += b_vectors[idx] * (correction * inv_mass_i) as f32;
+        conf.current_mut().pos[bond.j] -= b_vectors[idx] * (correction * inv_mass_j) as f32;
+    }
+
+    // Rotational lengthening correction
+    // This accounts for the fact that rotation during the time step can cause lengthening
+    let mut num_warnings = 0;
+
+    for (idx, &bond_idx) in constraint_indices.iter().enumerate() {
+        let bond = &topo.solute.bonds[bond_idx];
+        let r_ij = conf.current().pos[bond.j] - conf.current().pos[bond.i];
+        let constraint_length = topo.bond_parameters[bond.bond_type].r0;
+
+        let r_sq = (r_ij.dot(r_ij) as f64);
+        let target_sq = 2.0 * constraint_length * constraint_length;
+
+        // Compute correction to bring |r|² back to r₀²
+        let diff = target_sq - r_sq;
+        let p = if diff > 0.0 {
+            diff.sqrt()
+        } else {
+            num_warnings += 1;
+            0.0
+        };
+
+        rhs[0][idx] = lincs_data.sdiag[idx] * (constraint_length - p);
+        sol[idx] = rhs[0][idx];
+    }
+
+    // Second iterative solve for rotational correction
+    w = 1;
+    for _rec in 0..params.order {
+        for i in 0..num_constr {
+            rhs[w][i] = 0.0;
+
+            for (n, &coupled_idx) in lincs_data.coupled_constr[i].iter().enumerate() {
+                rhs[w][i] += lincs_data.coef[i][n] * rhs[1 - w][coupled_idx];
+            }
+
+            sol[i] += rhs[w][i];
+        }
+        w = 1 - w;
+    }
+
+    // Apply rotational corrections
+    for (idx, &bond_idx) in constraint_indices.iter().enumerate() {
+        let bond = &topo.solute.bonds[bond_idx];
+        let inv_mass_i = topo.inverse_mass[bond.i];
+        let inv_mass_j = topo.inverse_mass[bond.j];
+
+        let correction = lincs_data.sdiag[idx] * sol[idx];
+
+        conf.current_mut().pos[bond.i] += b_vectors[idx] * (correction * inv_mass_i) as f32;
+        conf.current_mut().pos[bond.j] -= b_vectors[idx] * (correction * inv_mass_j) as f32;
+    }
+
+    // Compute final error
+    let mut max_error = 0.0;
+    for (idx, &bond_idx) in constraint_indices.iter().enumerate() {
+        let bond = &topo.solute.bonds[bond_idx];
+        let r_ij = conf.current().pos[bond.j] - conf.current().pos[bond.i];
+        let constraint_length = topo.bond_parameters[bond.bond_type].r0;
+
+        let r_current = r_ij.length() as f64;
+        let error = ((r_current - constraint_length) / constraint_length).abs();
+
+        if error > max_error {
+            max_error = error;
+        }
+    }
+
+    ConstraintResult {
+        converged: max_error < 1e-3,  // Slightly relaxed convergence criterion
+        iterations: params.order,
+        max_error,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -297,5 +586,185 @@ mod tests {
         };
         assert!(result.converged);
         assert_eq!(result.iterations, 5);
+    }
+
+    #[test]
+    fn test_lincs_parameters() {
+        let params = LincsParameters::default();
+        assert_eq!(params.order, 4);
+
+        let custom = LincsParameters { order: 8 };
+        assert_eq!(custom.order, 8);
+    }
+
+    #[test]
+    fn test_lincs_data_creation() {
+        let lincs_data = LincsData::new();
+        assert_eq!(lincs_data.sdiag.len(), 0);
+        assert_eq!(lincs_data.coupled_constr.len(), 0);
+        assert_eq!(lincs_data.coef.len(), 0);
+    }
+
+    #[test]
+    fn test_setup_lincs_simple() {
+        use crate::topology::*;
+        use crate::math::Vec3;
+
+        // Create a simple topology with 3 atoms forming a triangle of constraints
+        // Atom 0 -- Atom 1
+        //    \      /
+        //    Atom 2
+
+        let mut topo = Topology::new();
+
+        // Add 3 atoms
+        topo.mass = vec![12.0, 12.0, 12.0]; // Carbon atoms
+        topo.inverse_mass = vec![1.0/12.0, 1.0/12.0, 1.0/12.0];
+
+        // Add bonds: 0-1, 0-2, 1-2
+        topo.solute.bonds.push(Bond { i: 0, j: 1, bond_type: 0 });
+        topo.solute.bonds.push(Bond { i: 0, j: 2, bond_type: 0 });
+        topo.solute.bonds.push(Bond { i: 1, j: 2, bond_type: 0 });
+
+        topo.bond_parameters.push(BondParameters {
+            k_quartic: 0.0,
+            k_harmonic: 0.0,
+            r0: 0.15, // 0.15 nm constraint length
+        });
+
+        // All 3 bonds are constrained
+        let constraint_indices = vec![0, 1, 2];
+
+        let lincs_data = setup_lincs(&topo, &constraint_indices);
+
+        // Check that we have 3 constraints
+        assert_eq!(lincs_data.sdiag.len(), 3);
+        assert_eq!(lincs_data.coupled_constr.len(), 3);
+        assert_eq!(lincs_data.coef.len(), 3);
+
+        // Each constraint should be coupled to the other two (triangle)
+        assert_eq!(lincs_data.coupled_constr[0].len(), 2); // Bond 0-1 coupled to 0-2 and 1-2
+        assert_eq!(lincs_data.coupled_constr[1].len(), 2); // Bond 0-2 coupled to 0-1 and 1-2
+        assert_eq!(lincs_data.coupled_constr[2].len(), 2); // Bond 1-2 coupled to 0-1 and 0-2
+
+        // Check diagonal elements (should be same for all since all masses are equal)
+        let expected_sdiag = 1.0 / (2.0 / 12.0_f64).sqrt();
+        for &sdiag in &lincs_data.sdiag {
+            assert!((sdiag - expected_sdiag).abs() < 1e-10,
+                    "sdiag = {}, expected = {}", sdiag, expected_sdiag);
+        }
+    }
+
+    #[test]
+    fn test_lincs_simple_constraint() {
+        use crate::topology::*;
+        use crate::configuration::*;
+        use crate::math::Vec3;
+
+        // Create simple system: 2 atoms with 1 constrained bond
+        let mut topo = Topology::new();
+
+        topo.mass = vec![12.0, 12.0];
+        topo.inverse_mass = vec![1.0/12.0, 1.0/12.0];
+
+        topo.solute.bonds.push(Bond { i: 0, j: 1, bond_type: 0 });
+        topo.bond_parameters.push(BondParameters {
+            k_quartic: 0.0,
+            k_harmonic: 0.0,
+            r0: 0.15, // Constraint length 0.15 nm
+        });
+
+        let constraint_indices = vec![0];
+        let lincs_data = setup_lincs(&topo, &constraint_indices);
+        let params = LincsParameters { order: 4 };
+
+        // Create configuration with atoms slightly too far apart
+        let mut conf = Configuration::new(2, 1, 1);
+        conf.old_mut().pos[0] = Vec3::new(0.0, 0.0, 0.0);
+        conf.old_mut().pos[1] = Vec3::new(0.15, 0.0, 0.0); // At constraint distance
+
+        conf.current_mut().pos[0] = Vec3::new(0.0, 0.0, 0.0);
+        conf.current_mut().pos[1] = Vec3::new(0.16, 0.0, 0.0); // Slightly stretched
+
+        // Apply LINCS
+        let result = lincs(&topo, &mut conf, &constraint_indices, &lincs_data, &params);
+
+        // Check that constraint is satisfied
+        let r = conf.current().pos[1] - conf.current().pos[0];
+        let distance = r.length() as f64;
+
+        println!("LINCS result: converged={}, max_error={}, distance={}",
+                 result.converged, result.max_error, distance);
+
+        assert!(result.converged,
+                "LINCS did not converge: max_error={}, threshold=1e-3", result.max_error);
+        assert!((distance - 0.15).abs() < 1e-3,
+                "Distance = {}, expected 0.15", distance);
+    }
+
+    #[test]
+    fn test_lincs_coupled_constraints() {
+        use crate::topology::*;
+        use crate::configuration::*;
+        use crate::math::Vec3;
+
+        // Create a simple 3-atom system with two coupled constraints (sharing atom 0)
+        let mut topo = Topology::new();
+
+        topo.mass = vec![16.0, 1.0, 1.0]; // Water-like: O, H, H
+        topo.inverse_mass = vec![1.0/16.0, 1.0/1.0, 1.0/1.0];
+
+        // Two O-H bonds (coupled through atom 0)
+        topo.solute.bonds.push(Bond { i: 0, j: 1, bond_type: 0 });
+        topo.solute.bonds.push(Bond { i: 0, j: 2, bond_type: 0 });
+        topo.bond_parameters.push(BondParameters {
+            k_quartic: 0.0,
+            k_harmonic: 0.0,
+            r0: 0.1, // O-H distance
+        });
+
+        let constraint_indices = vec![0, 1];
+
+        // Setup LINCS
+        let lincs_data = setup_lincs(&topo, &constraint_indices);
+
+        // Verify that constraints are coupled
+        assert_eq!(lincs_data.coupled_constr[0].len(), 1, "Constraint 0 should be coupled to 1 other");
+        assert_eq!(lincs_data.coupled_constr[1].len(), 1, "Constraint 1 should be coupled to 1 other");
+        assert_eq!(lincs_data.coupled_constr[0][0], 1, "Constraint 0 should be coupled to constraint 1");
+        assert_eq!(lincs_data.coupled_constr[1][0], 0, "Constraint 1 should be coupled to constraint 0");
+
+        let lincs_params = LincsParameters { order: 4 };
+
+        // Create configuration
+        let mut conf = Configuration::new(3, 1, 1);
+
+        // Old positions (reference) - water-like geometry
+        conf.old_mut().pos[0] = Vec3::new(0.0, 0.0, 0.0);
+        conf.old_mut().pos[1] = Vec3::new(0.1, 0.0, 0.0);
+        conf.old_mut().pos[2] = Vec3::new(-0.05, 0.0866, 0.0);
+
+        // Current positions (small perturbation - 0.5% stretch)
+        conf.current_mut().pos[0] = Vec3::new(0.0, 0.0, 0.0);
+        conf.current_mut().pos[1] = Vec3::new(0.1005, 0.0, 0.0);  // 0.5% longer
+        conf.current_mut().pos[2] = Vec3::new(-0.05025, 0.08703, 0.0);  // 0.5% longer
+
+        // Apply LINCS
+        let result = lincs(&topo, &mut conf, &constraint_indices, &lincs_data, &lincs_params);
+
+        println!("LINCS coupled constraints: converged={}, max_error={}", result.converged, result.max_error);
+
+        // Should converge
+        assert!(result.converged, "LINCS did not converge with coupled constraints: {}", result.max_error);
+
+        // Check that both bonds are at correct length
+        let r01 = conf.current().pos[1] - conf.current().pos[0];
+        let r02 = conf.current().pos[2] - conf.current().pos[0];
+
+        let dist01 = r01.length() as f64;
+        let dist02 = r02.length() as f64;
+
+        assert!((dist01 - 0.1).abs() < 1e-3, "Bond 0-1 distance = {}, expected 0.1", dist01);
+        assert!((dist02 - 0.1).abs() < 1e-3, "Bond 0-2 distance = {}, expected 0.1", dist02);
     }
 }

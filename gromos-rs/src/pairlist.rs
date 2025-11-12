@@ -350,9 +350,12 @@ impl GridCellPairlistAlgorithm {
         cutoff2_long: f64,
     ) {
         for &i in &self.cells[cell1] {
-            let start_j = if cell1 == cell2 { i + 1 } else { 0 };
+            for &j in &self.cells[cell2] {
+                // Skip if same cell and j <= i (avoid double counting)
+                if cell1 == cell2 && j <= i {
+                    continue;
+                }
 
-            for &j in &self.cells[cell2][start_j..] {
                 // Check exclusions
                 if topo.is_excluded(i, j) {
                     continue;
@@ -508,7 +511,25 @@ mod tests {
 
     #[test]
     fn test_grid_cell_algorithm() {
+        use crate::topology::Atom;
+
         let mut topo = Topology::new();
+
+        // Add 10 solute atoms
+        for i in 0..10 {
+            topo.solute.atoms.push(Atom {
+                name: format!("C{}", i),
+                residue_nr: 1,
+                residue_name: "MOL".to_string(),
+                iac: 0,
+                mass: 1.0,
+                charge: 0.0,
+                is_perturbed: false,
+                is_polarisable: false,
+                is_coarse_grained: false,
+            });
+        }
+
         topo.iac = vec![0; 10];
         topo.mass = vec![1.0; 10];
         topo.charge = vec![0.0; 10];

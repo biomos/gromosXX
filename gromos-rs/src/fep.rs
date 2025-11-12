@@ -366,6 +366,14 @@ impl PerturbedTopology {
         self.perturbed_bonds.push(bond);
     }
 
+    pub fn add_perturbed_angle(&mut self, angle: PerturbedBondedTerm) {
+        self.perturbed_angles.push(angle);
+    }
+
+    pub fn add_perturbed_dihedral(&mut self, dihedral: PerturbedBondedTerm) {
+        self.perturbed_dihedrals.push(dihedral);
+    }
+
     /// Update topology parameters for current lambda
     pub fn update_for_lambda(&self, topo: &mut Topology, lambda: f64) {
         // Update perturbed atom properties

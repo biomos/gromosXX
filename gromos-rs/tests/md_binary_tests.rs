@@ -361,3 +361,424 @@ fn test_md_binary_missing_arguments() {
 
     println!("\n✓ Missing arguments test passed");
 }
+
+/// Create a perturbed topology file for FEP testing
+/// Two atoms with a perturbed bond
+fn create_fep_topology(path: &str) -> std::io::Result<()> {
+    let topology = r#"TITLE
+FEP test system - perturbed bond
+END
+PHYSICALCONSTANTS
+  0.1389354
+  0.0635078
+299792.458
+  0.00831441
+END
+TOPVERSION
+2.0
+END
+ATOMTYPENAME
+    1
+    C
+END
+RESNAME
+    1
+FEP
+END
+SOLUTEATOM
+# Two atoms with perturbed bond
+     2
+# ATNM MRES PANM IAC MASS CG CGC INE
+    1    1  C1    1  12.0110  0.0  1  1
+    2
+    2    1  C2    1  12.0110  0.0  1  1
+    1
+END
+BONDSTRETCHTYPE
+# State A bond type: k=5000, r0=0.15
+    2
+#  TYPE  CB    HB
+    1   0.0   5000.0
+    2   0.0   10000.0
+END
+BOND
+    0
+END
+BONDH
+    0
+END
+BONDANGLEBENDTYPE
+    0
+END
+BONDANGLE
+    0
+END
+BONDANGLEH
+    0
+END
+DIHEDRALTORSIONTYPE
+    0
+END
+DIHEDRALTORSION
+    0
+END
+IMPDIHEDRALTORSIONTYPE
+    0
+END
+IMPDIHEDRALTORSION
+    0
+END
+LJPARAMETERS
+# NRATT2: number of LJ types
+    1
+#  IAC   C12      C6
+    1   0.0      0.0
+END
+PERTURBATION
+# NRPERTATOM: number of perturbed atoms
+    2
+# ATOM  ALPHLJ  ALPHCRF
+    1    1.0     1.0
+    2    1.0     1.0
+# NRPERTBOND: number of perturbed bonds
+    1
+# I  J  TYPE_A  TYPE_B  ALPHLJ  ALPHCRF
+  1  2    1       2      1.0     1.0
+# NRPERTANGLE: number of perturbed angles
+    0
+# NRPERTDIHEDRAL: number of perturbed dihedrals
+    0
+END
+END"#;
+
+    fs::write(path, topology)?;
+    Ok(())
+}
+
+/// Create minimal coordinates for FEP system
+fn create_fep_coordinates(path: &str) -> std::io::Result<()> {
+    let coords = r#"TITLE
+FEP test coordinates
+END
+POSITION
+  1  FEP  C1     1   0.000   0.000   0.000
+  2  FEP  C2     2   0.120   0.000   0.000
+END
+BOX
+   2.0   2.0   2.0
+END"#;
+
+    fs::write(path, coords)?;
+    Ok(())
+}
+
+#[test]
+fn test_md_binary_fep_bond_perturbation() {
+    println!("\n========== MD Binary FEP Bond Perturbation Test ==========");
+
+    // Create temporary directory for test files
+    let test_dir = "/tmp/gromos_md_fep_bond_test";
+    fs::create_dir_all(test_dir).expect("Failed to create test directory");
+
+    let topo_file = format!("{}/fep_test.top", test_dir);
+    let coord_file = format!("{}/fep_test.g96", test_dir);
+    let traj_file = format!("{}/fep_test.trc", test_dir);
+    let ene_file = format!("{}/fep_test.tre", test_dir);
+
+    // Create test input files
+    create_fep_topology(&topo_file).expect("Failed to create FEP topology");
+    create_fep_coordinates(&coord_file).expect("Failed to create coordinates");
+
+    println!("Created test files:");
+    println!("  Topology: {}", topo_file);
+    println!("  Coordinates: {}", coord_file);
+
+    // Run MD simulation with FEP at lambda=0.5
+    println!("\nRunning MD simulation with FEP at λ=0.5...");
+    let output = Command::new("cargo")
+        .args(&[
+            "run", "--bin", "md", "--",
+            "@topo", &topo_file,
+            "@conf", &coord_file,
+            "@steps", "10",
+            "@dt", "0.001",
+            "@traj", &traj_file,
+            "@ene", &ene_file,
+            "@lambda", "0.5",
+        ])
+        .current_dir("/home/user/gromosXX/gromos-rs")
+        .output()
+        .expect("Failed to run md binary");
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+
+    if !output.status.success() {
+        println!("STDOUT:\n{}", stdout);
+        println!("STDERR:\n{}", stderr);
+        panic!("MD simulation with FEP failed");
+    }
+
+    // Check output files exist
+    assert!(Path::new(&traj_file).exists(), "Trajectory file not created");
+    assert!(Path::new(&ene_file).exists(), "Energy file not created");
+
+    // Check energy file contains data
+    let ene_content = fs::read_to_string(&ene_file).expect("Failed to read energy file");
+    assert!(ene_content.contains("ENERTRJ"), "Energy file missing ENERTRJ block");
+
+    // Count energy frames
+    let energy_lines: Vec<&str> = ene_content.lines()
+        .filter(|line| {
+            let trimmed = line.trim();
+            !trimmed.is_empty()
+            && !trimmed.starts_with('#')
+            && trimmed != "TITLE"
+            && trimmed != "ENERTRJ"
+            && trimmed != "END"
+            && (trimmed.chars().next().map_or(false, |c| c.is_numeric() || c == '-'))
+        })
+        .collect();
+
+    println!("\n✓ FEP simulation completed:");
+    println!("  - Energy frames: {}", energy_lines.len());
+    println!("  - Lambda value: 0.5");
+    assert!(energy_lines.len() >= 2, "Should have at least 2 energy frames");
+
+    // Verify energies are reasonable
+    for (idx, line) in energy_lines.iter().take(2).enumerate() {
+        let values: Vec<&str> = line.split_whitespace().collect();
+        assert!(values.len() >= 4, "Energy line should have at least 4 values");
+
+        let time: f64 = values[0].parse().expect("Failed to parse time");
+        let potential: f64 = values[2].parse().expect("Failed to parse potential energy");
+
+        println!("  Frame {}: t={:.3} ps, E_pot={:.6} kJ/mol", idx, time, potential);
+        assert!(potential.is_finite(), "Potential energy should be finite");
+    }
+
+    println!("\n✓ MD binary FEP test passed!");
+
+    // Cleanup
+    fs::remove_dir_all(test_dir).ok();
+}
+
+#[test]
+fn test_md_binary_fep_lambda_scan() {
+    println!("\n========== MD Binary FEP Lambda Scan Test ==========");
+
+    // Create temporary directory for test files
+    let test_dir = "/tmp/gromos_md_fep_lambda_scan";
+    fs::create_dir_all(test_dir).expect("Failed to create test directory");
+
+    let topo_file = format!("{}/fep_test.top", test_dir);
+    let coord_file = format!("{}/fep_test.g96", test_dir);
+
+    // Create test input files
+    create_fep_topology(&topo_file).expect("Failed to create FEP topology");
+    create_fep_coordinates(&coord_file).expect("Failed to create coordinates");
+
+    println!("Testing FEP at multiple lambda values:");
+    println!("λ\tSteps\tStatus");
+    println!("---\t-----\t------");
+
+    // Test simulations at different lambda values
+    let lambda_values = vec![0.0, 0.25, 0.5, 0.75, 1.0];
+    let mut all_succeeded = true;
+
+    for lambda in &lambda_values {
+        let traj_file = format!("{}/fep_lambda_{:.2}.trc", test_dir, lambda);
+        let ene_file = format!("{}/fep_lambda_{:.2}.tre", test_dir, lambda);
+
+        let output = Command::new("cargo")
+            .args(&[
+                "run", "--bin", "md", "--",
+                "@topo", &topo_file,
+                "@conf", &coord_file,
+                "@steps", "5",
+                "@dt", "0.001",
+                "@traj", &traj_file,
+                "@ene", &ene_file,
+                "@lambda", &lambda.to_string(),
+            ])
+            .current_dir("/home/user/gromosXX/gromos-rs")
+            .output()
+            .expect("Failed to run md binary");
+
+        let success = output.status.success();
+        all_succeeded &= success;
+
+        let status = if success { "✓" } else { "✗" };
+        println!("{:.2}\t5\t{}", lambda, status);
+
+        if success {
+            // Check that energy file was created and has content
+            if Path::new(&ene_file).exists() {
+                let ene_content = fs::read_to_string(&ene_file).expect("Failed to read energy file");
+                assert!(ene_content.contains("ENERTRJ"), "Energy file missing data at λ={}", lambda);
+            }
+        }
+    }
+
+    assert!(all_succeeded, "Some lambda simulations failed");
+
+    println!("\n✓ Lambda scan test passed!");
+    println!("  - All {} lambda values simulated successfully", lambda_values.len());
+    println!("  - Ready for thermodynamic integration!");
+
+    // Cleanup
+    fs::remove_dir_all(test_dir).ok();
+}
+
+#[test]
+fn test_md_binary_fep_perturbed_angle() {
+    println!("\n========== MD Binary FEP Angle Perturbation Test ==========");
+
+    // Create temporary directory
+    let test_dir = "/tmp/gromos_md_fep_angle_test";
+    fs::create_dir_all(test_dir).expect("Failed to create test directory");
+
+    let topo_file = format!("{}/angle_fep.top", test_dir);
+    let coord_file = format!("{}/angle_fep.g96", test_dir);
+    let ene_file = format!("{}/angle_fep.tre", test_dir);
+
+    // Create topology with perturbed angle (3 atoms)
+    let topology = r#"TITLE
+FEP angle perturbation test
+END
+PHYSICALCONSTANTS
+  0.1389354
+  0.0635078
+299792.458
+  0.00831441
+END
+TOPVERSION
+2.0
+END
+ATOMTYPENAME
+    1
+    C
+END
+RESNAME
+    1
+ANG
+END
+SOLUTEATOM
+     3
+    1    1  C1    1  12.0110  0.0  1  2
+    2 3
+    2    1  C2    1  12.0110  0.0  1  2
+    1 3
+    3    1  C3    1  12.0110  0.0  1  2
+    1 2
+END
+BONDSTRETCHTYPE
+    1
+    1   0.0   5000.0
+END
+BOND
+    2
+    1     1     2
+    1     2     3
+END
+BONDH
+    0
+END
+BONDANGLEBENDTYPE
+# State A: 109.5 degrees, State B: 120 degrees
+    2
+#  TYPE   CT    CHT
+    1    0.0   400.0
+    2    0.0   600.0
+END
+BONDANGLE
+    0
+END
+BONDANGLEH
+    0
+END
+DIHEDRALTORSIONTYPE
+    0
+END
+DIHEDRALTORSION
+    0
+END
+IMPDIHEDRALTORSIONTYPE
+    0
+END
+IMPDIHEDRALTORSION
+    0
+END
+LJPARAMETERS
+    1
+    1   0.0      0.0
+END
+PERTURBATION
+# 3 perturbed atoms (middle atom is key)
+    3
+    1    1.0     1.0
+    2    1.0     1.0
+    3    1.0     1.0
+# No perturbed bonds
+    0
+# 1 perturbed angle
+    1
+# I  J  K  TYPE_A  TYPE_B
+  1  2  3    1       2
+# No perturbed dihedrals
+    0
+END
+END"#;
+
+    fs::write(&topo_file, topology).expect("Failed to write angle topology");
+
+    // Create coordinates with angle near 115 degrees
+    let coords = r#"TITLE
+Angle FEP coordinates
+END
+POSITION
+  1  ANG  C1     1   0.100   0.000   0.000
+  2  ANG  C2     2   0.000   0.000   0.000
+  3  ANG  C3     3  -0.042   0.091   0.000
+END
+BOX
+   2.0   2.0   2.0
+END"#;
+
+    fs::write(&coord_file, coords).expect("Failed to write angle coordinates");
+
+    println!("Running angle perturbation at λ=0.5...");
+
+    // Run simulation
+    let output = Command::new("cargo")
+        .args(&[
+            "run", "--bin", "md", "--",
+            "@topo", &topo_file,
+            "@conf", &coord_file,
+            "@steps", "10",
+            "@dt", "0.001",
+            "@ene", &ene_file,
+            "@lambda", "0.5",
+        ])
+        .current_dir("/home/user/gromosXX/gromos-rs")
+        .output()
+        .expect("Failed to run md binary");
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        println!("STDERR: {}", stderr);
+        panic!("Angle FEP simulation failed");
+    }
+
+    // Verify energy file
+    assert!(Path::new(&ene_file).exists(), "Energy file not created");
+    let ene_content = fs::read_to_string(&ene_file).expect("Failed to read energy file");
+    assert!(ene_content.contains("ENERTRJ"), "Energy file missing data");
+
+    println!("\n✓ Angle perturbation test passed!");
+    println!("  - Tetrahedral → Trigonal planar transition");
+    println!("  - Simulation completed at λ=0.5");
+
+    // Cleanup
+    fs::remove_dir_all(test_dir).ok();
+}

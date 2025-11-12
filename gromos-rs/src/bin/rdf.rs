@@ -4,7 +4,9 @@
 //! Essential for analyzing liquid structure, solvation shells, coordination.
 
 use gromos_rs::{
+    io::topology::{read_topology_file, build_topology},
     io::trajectory::TrajectoryReader,
+    selection::AtomSelection,
     math::Vec3,
     logging::{set_log_level, LogLevel, ProgressBar},
     log_info, log_debug,
@@ -19,12 +21,17 @@ fn print_usage() {
     eprintln!("rdf - Radial Distribution Function Calculator");
     eprintln!();
     eprintln!("Usage:");
-    eprintln!("  rdf @traj <trajectory> @group1 <atoms> @group2 <atoms> [@options]");
+    eprintln!("  rdf @topo <topology> @traj <trajectory> @group1 <atoms> @group2 <atoms> [@options]");
     eprintln!();
     eprintln!("Arguments:");
+    eprintln!("  @topo     Molecular topology file");
     eprintln!("  @traj     Trajectory file (.trc)");
-    eprintln!("  @group1   First atom group (comma-separated indices, e.g., 1,2,3)");
-    eprintln!("  @group2   Second atom group (comma-separated indices)");
+    eprintln!("  @group1   First atom group selection");
+    eprintln!("            Formats: 'all', '1-10', '1,5,10-20'");
+    eprintln!("                     '1:1-10' (mol 1, atoms 1-10)");
+    eprintln!("                     'r:1-5' (residues 1-5)");
+    eprintln!("                     'a:OW' (all OW atoms)");
+    eprintln!("  @group2   Second atom group selection (same formats)");
     eprintln!("  @out      Output file (default: rdf.dat)");
     eprintln!("  @rmax     Maximum distance in nm (default: 1.5)");
     eprintln!("  @bins     Number of bins (default: 300)");
@@ -33,8 +40,8 @@ fn print_usage() {
     eprintln!("  @verbose  Verbose output (0=normal, 1=verbose)");
     eprintln!();
     eprintln!("Examples:");
-    eprintln!("  rdf @traj md.trc @group1 1,2,3 @group2 4,5,6");
-    eprintln!("  rdf @traj md.trc @group1 1-10 @group2 11-20 @rmax 2.0 @bins 400");
+    eprintln!("  rdf @topo system.top @traj md.trc @group1 a:OW @group2 a:CA");
+    eprintln!("  rdf @topo system.top @traj md.trc @group1 r:1-5 @group2 s:1 @rmax 2.0");
     eprintln!();
     eprintln!("Output:");
     eprintln!("  Column 1: Distance r (nm)");
@@ -43,9 +50,10 @@ fn print_usage() {
 
 #[derive(Debug)]
 struct RdfArgs {
+    topo_file: String,
     traj_file: String,
-    group1: Vec<usize>,
-    group2: Vec<usize>,
+    group1_spec: String,
+    group2_spec: String,
     output_file: String,
     rmax: f32,
     bins: usize,
@@ -57,9 +65,10 @@ struct RdfArgs {
 impl Default for RdfArgs {
     fn default() -> Self {
         Self {
+            topo_file: String::new(),
             traj_file: String::new(),
-            group1: Vec::new(),
-            group2: Vec::new(),
+            group1_spec: String::new(),
+            group2_spec: String::new(),
             output_file: "rdf.dat".to_string(),
             rmax: 1.5,
             bins: 300,
@@ -70,52 +79,17 @@ impl Default for RdfArgs {
     }
 }
 
-fn parse_atom_selection(s: &str) -> Result<Vec<usize>, String> {
-    let mut atoms = Vec::new();
-
-    for part in s.split(',') {
-        let part = part.trim();
-        if part.contains('-') {
-            // Range like "1-10"
-            let parts: Vec<&str> = part.split('-').collect();
-            if parts.len() != 2 {
-                return Err(format!("Invalid range: {}", part));
-            }
-            let start: usize = parts[0].parse()
-                .map_err(|_| format!("Invalid start in range: {}", parts[0]))?;
-            let end: usize = parts[1].parse()
-                .map_err(|_| format!("Invalid end in range: {}", parts[1]))?;
-
-            if start == 0 || end == 0 {
-                return Err("Atom indices must be >= 1".to_string());
-            }
-            if start > end {
-                return Err(format!("Invalid range: {}-{}", start, end));
-            }
-
-            for i in start..=end {
-                atoms.push(i - 1); // Convert to 0-indexed
-            }
-        } else {
-            // Single atom
-            let atom: usize = part.parse()
-                .map_err(|_| format!("Invalid atom index: {}", part))?;
-            if atom == 0 {
-                return Err("Atom indices must be >= 1".to_string());
-            }
-            atoms.push(atom - 1); // Convert to 0-indexed
-        }
-    }
-
-    Ok(atoms)
-}
-
 fn parse_args(args: Vec<String>) -> Result<RdfArgs, String> {
     let mut rdf_args = RdfArgs::default();
 
     let mut i = 0;
     while i < args.len() {
         match args[i].as_str() {
+            "@topo" | "@topology" => {
+                i += 1;
+                if i >= args.len() { return Err("Missing value for @topo".to_string()); }
+                rdf_args.topo_file = args[i].clone();
+            }
             "@traj" | "@trajectory" => {
                 i += 1;
                 if i >= args.len() { return Err("Missing value for @traj".to_string()); }
@@ -124,12 +98,12 @@ fn parse_args(args: Vec<String>) -> Result<RdfArgs, String> {
             "@group1" | "@g1" => {
                 i += 1;
                 if i >= args.len() { return Err("Missing value for @group1".to_string()); }
-                rdf_args.group1 = parse_atom_selection(&args[i])?;
+                rdf_args.group1_spec = args[i].clone();
             }
             "@group2" | "@g2" => {
                 i += 1;
                 if i >= args.len() { return Err("Missing value for @group2".to_string()); }
-                rdf_args.group2 = parse_atom_selection(&args[i])?;
+                rdf_args.group2_spec = args[i].clone();
             }
             "@out" | "@output" => {
                 i += 1;
@@ -174,13 +148,16 @@ fn parse_args(args: Vec<String>) -> Result<RdfArgs, String> {
     }
 
     // Validate required arguments
+    if rdf_args.topo_file.is_empty() {
+        return Err("Missing required argument: @topo".to_string());
+    }
     if rdf_args.traj_file.is_empty() {
         return Err("Missing required argument: @traj".to_string());
     }
-    if rdf_args.group1.is_empty() {
+    if rdf_args.group1_spec.is_empty() {
         return Err("Missing required argument: @group1".to_string());
     }
-    if rdf_args.group2.is_empty() {
+    if rdf_args.group2_spec.is_empty() {
         return Err("Missing required argument: @group2".to_string());
     }
 
@@ -348,6 +325,39 @@ fn main() {
     println!("╚══════════════════════════════════════════════════════════════╝");
     println!();
 
+    // Read topology
+    log_info!("Reading topology: {}", rdf_args.topo_file);
+    let blocks = match read_topology_file(&rdf_args.topo_file) {
+        Ok(blocks) => blocks,
+        Err(e) => {
+            eprintln!("Error reading topology: {}", e);
+            process::exit(1);
+        }
+    };
+
+    let topo = build_topology(blocks);
+    log_info!("  Total atoms: {}", topo.num_atoms());
+
+    // Parse atom selections using AtomSelection (GROMOS++ compatible)
+    let group1 = match AtomSelection::from_string(&rdf_args.group1_spec, &topo) {
+        Ok(sel) => sel,
+        Err(e) => {
+            eprintln!("Error parsing group1 selection '{}': {}", rdf_args.group1_spec, e);
+            process::exit(1);
+        }
+    };
+
+    let group2 = match AtomSelection::from_string(&rdf_args.group2_spec, &topo) {
+        Ok(sel) => sel,
+        Err(e) => {
+            eprintln!("Error parsing group2 selection '{}': {}", rdf_args.group2_spec, e);
+            process::exit(1);
+        }
+    };
+
+    log_info!("  Group 1: {} atoms", group1.len());
+    log_info!("  Group 2: {} atoms", group2.len());
+
     log_info!("Reading trajectory: {}", rdf_args.traj_file);
 
     let mut traj_reader = match TrajectoryReader::new(&rdf_args.traj_file) {
@@ -358,8 +368,8 @@ fn main() {
         }
     };
 
-    println!("Group 1: {} atoms", rdf_args.group1.len());
-    println!("Group 2: {} atoms", rdf_args.group2.len());
+    println!("Group 1: {} atoms", group1.len());
+    println!("Group 2: {} atoms", group2.len());
     println!("r_max:   {:.3} nm", rdf_args.rmax);
     println!("Bins:    {}", rdf_args.bins);
     println!("Output:  {}", rdf_args.output_file);
@@ -369,8 +379,8 @@ fn main() {
 
     let (r_values, g_r) = match calculate_rdf(
         &mut traj_reader,
-        &rdf_args.group1,
-        &rdf_args.group2,
+        group1.indices(),
+        group2.indices(),
         rdf_args.rmax,
         rdf_args.bins,
         rdf_args.skip,
@@ -399,8 +409,8 @@ fn main() {
     // Write header
     writeln!(writer, "# Radial Distribution Function g(r)").unwrap();
     writeln!(writer, "# Trajectory: {}", rdf_args.traj_file).unwrap();
-    writeln!(writer, "# Group 1: {} atoms", rdf_args.group1.len()).unwrap();
-    writeln!(writer, "# Group 2: {} atoms", rdf_args.group2.len()).unwrap();
+    writeln!(writer, "# Group 1: {} atoms", group1.len()).unwrap();
+    writeln!(writer, "# Group 2: {} atoms", group2.len()).unwrap();
     writeln!(writer, "# r_max: {:.3} nm", rdf_args.rmax).unwrap();
     writeln!(writer, "# Bins: {}", rdf_args.bins).unwrap();
     writeln!(writer, "#").unwrap();
