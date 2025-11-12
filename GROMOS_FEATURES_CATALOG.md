@@ -162,11 +162,11 @@
 | **Trajectory (write)** | `.trc` | ✅ Implemented | src/io/trajectory.rs | Positions/velocities/forces |
 | **Energy (write)** | `.tre` | ✅ Implemented | src/io/energy.rs | Energy components |
 | **Forces (write)** | `.trf` | ✅ Implemented | src/io/force.rs | Detailed force breakdown |
-| **Perturbation** | `.ptp` | ❌ Not Done | FEP topology reader | For FEP simulations |
+| **Perturbation (write)** | `.ptp` | ✅ Implemented | src/io/ptp.rs | FEP topology writer (make_pt_top tool) |
 | **Free Energy** | `.dlg` | ❌ Not Done | dH/dλ output writer | TI analysis |
 | **Restraints** | `.dat/.spec` | ❌ Not Done | NMR/experimental data | Future |
 
-**Progress**: 6/9 formats (66.7%) - Core simulation I/O complete!
+**Progress**: 7/9 formats (77.8%) - FEP I/O nearly complete!
 
 **Note**: Trajectory *reading* is handled by GROMOS++ (111 analysis tools). gromos-rs focuses on *writing* trajectories efficiently.
 
@@ -275,12 +275,13 @@
 
 **gromos-rs Binaries** (Simulation & Conversion):
 - ✅ **md** (946 lines): Full MD simulation engine with CLI
+- ✅ **make_pt_top** (265 lines): Generate .ptp perturbation topologies for FEP
 - ✅ **pdb2g96**: Convert PDB to GROMOS format
 - ✅ **com_top**: Combine topology files
 - ✅ **check_top**: Validate topology
 - ✅ **mk_script**: Generate simulation scripts
 - ✅ **frameout**, **trs_ana**, **diffus**, **hbond**, **rdf**, **rmsf**: Basic analysis tools
-- ❌ **sim_box**: Box generation utility (nice to have)
+- ❌ **sim_box**: Box generation utility (solvation, nice to have)
 
 **Analysis Strategy**:
 Use **GROMOS++** for advanced analysis (111 battle-tested tools):
