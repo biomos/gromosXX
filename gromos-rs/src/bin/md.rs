@@ -15,6 +15,8 @@ use gromos_rs::{
         energy::{EnergyWriter, EnergyFrame},
         GamdBlock, EdsBlock,
     },
+    gamd::GamdParameters,
+    eds::EDSParameters,
     interaction::{
         bonded::calculate_bonded_forces,
         nonbonded::{lj_crf_innerloop, CRFParameters, ForceStorage},
@@ -580,6 +582,19 @@ fn main() {
         eprintln!("       These methods cannot be used together in the same simulation");
         process::exit(1);
     }
+
+    // Create GAMD parameters if enabled
+    let mut gamd_params = gamd_block.as_ref().map(|block| {
+        log_info!("Creating GAMD parameters from input block");
+        block.to_parameters()
+    });
+
+    // Create EDS parameters if enabled (will be done after topology is fully loaded)
+    let eds_params = eds_block.as_ref().map(|block| {
+        log_info!("Creating EDS parameters from input block");
+        // Note: We need num_atoms, which we'll get after creating configuration
+        block
+    });
 
     // Validate coordinates
     log_debug!("Validating coordinates");
