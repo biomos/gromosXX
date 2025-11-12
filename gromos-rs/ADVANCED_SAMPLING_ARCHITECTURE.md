@@ -225,9 +225,9 @@ eds_ana @vr eds_vr.dat @input eds.imd
 - [x] `src/replica.rs` - Replica management
 
 ### Input File Support (New)
-- [ ] `src/io/input/gamd_block.rs` - Parse GAMD block
-- [ ] `src/io/input/eds_block.rs` - Parse EDS block
-- [ ] `src/io/input/replica_block.rs` - Parse REPLICA block
+- [x] `src/io/input/gamd_block.rs` - Parse GAMD block
+- [x] `src/io/input/eds_block.rs` - Parse EDS block
+- [x] `src/io/input/replica_block.rs` - Parse REPLICA block
 
 ### Output File Writers (New)
 - [ ] `src/io/output/repdat.rs` - Write replica.dat
