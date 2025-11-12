@@ -15,7 +15,7 @@
 
 **Tier 1 (Core MD)**: ✅ **100%** (8/8 complete) - PRODUCTION READY!
 **Tier 2 (Enhanced)**: ✅ **85.7%** (6/7 complete)
-**Tier 3 (Advanced)**: ⚠️ **16.7%** (1/6 complete) - PME implemented
+**Tier 3 (Advanced)**: ⚠️ **45.5%** (5/11 complete) - PME & REMD implemented
 **Total Features**: **~60%** of core functionality implemented
 
 ---
@@ -139,18 +139,21 @@
 
 ---
 
-## 7. Advanced Features (Not Yet Implemented)
+## 7. Advanced Features
 
-| Feature Category | Status | Effort | Priority |
-|------------------|--------|--------|----------|
+| Feature | Status | Effort | Location |
+|---------|--------|--------|----------|
+| **Replica Exchange (REMD)** | ✅ Implemented | - | src/replica.rs, src/remd.rs, src/bin/remd.rs |
+| **Temperature REMD (T-REMD)** | ✅ Implemented | - | Parallel tempering with Metropolis exchange |
+| **2D Temp-Lambda REPEX** | ✅ Implemented | - | Simultaneous T and λ exchange |
+| **Exchange Statistics** | ✅ Implemented | - | Per-pair acceptance rates |
 | **QM/MM** | ❌ Not Done | 🔨 12+ weeks | Tier 3 |
-| **Replica Exchange (REMD)** | ❌ Not Done | 🔨 4-6 weeks | Tier 2 |
 | **Virtual Atoms** | ❌ Not Done | 🔨 3-4 weeks | Tier 3 |
 | **Coarse-Graining** | ⚠️ Partial | 🔨 4-6 weeks | Tier 3 |
 | **GPU Acceleration** | ❌ Not Done | 🔨 8-12 weeks | Tier 3 |
 | **Analysis Tools** | ❌ Not Done | Variable | Separate project |
 
-**Note**: These are advanced/specialized features for future implementation
+**Progress**: 4/9 (44.4%) - REMD fully implemented ✅
 
 ---
 
