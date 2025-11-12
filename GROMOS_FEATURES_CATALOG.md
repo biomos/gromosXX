@@ -71,15 +71,16 @@
 | **Proper Dihedrals** | ✅ Implemented | - | src/interaction/bonded.rs |
 | **Improper Dihedrals** | ✅ Implemented | - | src/interaction/bonded.rs |
 | **Perturbed Bonds (FEP)** | ✅ Implemented | - | src/interaction/bonded.rs (with λ derivatives) |
-| **Perturbed Angles (FEP)** | ❌ Not Done | 🔨 1-2 weeks | Similar to perturbed bonds |
-| **Perturbed Dihedrals (FEP)** | ❌ Not Done | 🔨 1-2 weeks | Similar to perturbed bonds |
-| **Soft-core FEP** | ⚠️ Partial | 🔨 1-2 weeks | src/fep.rs (framework ready, needs nonbonded integration) |
+| **Perturbed Angles (FEP)** | ✅ Implemented | - | src/interaction/bonded.rs (with λ derivatives) |
+| **Perturbed Dihedrals (FEP)** | ✅ Implemented | - | src/interaction/bonded.rs (with λ derivatives) |
+| **Perturbed Nonbonded (FEP)** | ✅ Implemented | - | src/interaction/nonbonded.rs (LJ+CRF soft-core with λ derivatives) |
+| **Soft-core FEP** | ✅ Implemented | - | src/fep.rs + src/interaction/nonbonded.rs (full soft-core for LJ/CRF) |
 | **Harmonic Angles** | ✅ Implemented | - | src/interaction/bonded.rs |
 | **CG Bonds** | ✅ Implemented | - | src/interaction/bonded.rs |
 | **New Dihedrals** | ✅ Implemented | - | src/interaction/bonded.rs |
 | **Cross-Dihedrals** | ✅ Implemented | - | src/interaction/bonded.rs |
 
-**Progress**: 9/11 core terms (81.8%), FEP: perturbed bonds ✅, framework 85% done
+**Progress**: 11/11 core terms (100%) ✅, FEP: all perturbed interactions ✅ (bonds/angles/dihedrals/nonbonded with soft-core)
 
 ---
 
@@ -94,9 +95,10 @@
 | **Grid Cell Pairlist** | ✅ Implemented | - | src/pairlist.rs (O(N) spatial decomposition) |
 | **Ewald Summation** | ✅ Implemented | - | src/interaction/electrostatics.rs (via PME) |
 | **PME** | ✅ Implemented | - | src/interaction/electrostatics.rs (FFT-based Ewald) |
+| **Perturbed Nonbonded (FEP)** | ✅ Implemented | - | src/interaction/nonbonded.rs (λ-dependent LJ+CRF with soft-core) |
 | **P3M** | ❌ Not Done | 🔨 6-8 weeks | Particle-mesh method |
 
-**Progress**: 7/8 (87.5%) - Full long-range electrostatics implemented!
+**Progress**: 8/9 (88.9%) - Full long-range electrostatics + FEP nonbonded implemented!
 **Note**: RF is GROMOS' traditional long-range method (suitable for most applications)
 
 ---
@@ -241,12 +243,13 @@
 - ✅ Thermostats: Berendsen, Nosé-Hoover, Andersen
 - ✅ Barostats: Berendsen, Parrinello-Rahman
 
-**Free Energy Perturbation**:
-- ✅ FEP framework with lambda control
-- ✅ Perturbed bonds with lambda derivatives
-- ✅ Perturbed angles with lambda derivatives
-- ✅ Perturbed dihedrals with lambda derivatives
-- ✅ Soft-core potentials (framework ready)
+**Free Energy Perturbation (Complete)**:
+- ✅ FEP framework with lambda control (src/fep.rs)
+- ✅ Perturbed bonds with λ derivatives (src/interaction/bonded.rs)
+- ✅ Perturbed angles with λ derivatives (src/interaction/bonded.rs)
+- ✅ Perturbed dihedrals with λ derivatives (src/interaction/bonded.rs)
+- ✅ Perturbed nonbonded (LJ+CRF) with λ derivatives (src/interaction/nonbonded.rs)
+- ✅ Soft-core potentials for LJ and electrostatics (singularity prevention)
 
 **Restraints**:
 - ✅ Position and distance restraints
