@@ -117,6 +117,71 @@ pub fn calculate_bond_forces_harmonic(
     result
 }
 
+/// Calculate CG (coarse-grained) bond forces - quartic repulsive potential
+///
+/// Potential: V = 0.5 * K * (r - r0)^4 when r > r0, otherwise V = 0
+/// Force: F = -2 * K * (r - r0)^3 * direction when r > r0, otherwise F = 0
+///
+/// This is a soft repulsive potential that prevents bonds from stretching too much
+/// but allows free compression. Useful for coarse-grained models.
+pub fn calculate_cg_bond_forces(
+    topo: &Topology,
+    conf: &Configuration,
+) -> ForceEnergy {
+    let mut result = ForceEnergy::new(topo.num_atoms());
+
+    // CG bonds are stored separately in topology (if available)
+    // For now, we'll use a marker in bond parameters to identify CG bonds
+    for bond in &topo.solute.bonds {
+        if bond.bond_type >= topo.bond_parameters.len() {
+            continue;
+        }
+
+        let params = &topo.bond_parameters[bond.bond_type];
+
+        // Skip if this is not a CG bond (we'll add a flag later)
+        // For now, assume CG bonds have negative k_harmonic as a marker
+        if params.k_harmonic >= 0.0 {
+            continue;
+        }
+
+        let r_vec = conf.current().pos[bond.j] - conf.current().pos[bond.i];
+        let r = r_vec.length() as f64;
+
+        if r < 1e-10 {
+            // Avoid division by zero
+            continue;
+        }
+
+        // Only apply force when bond is stretched (r > r0)
+        if r > params.r0 {
+            let diff = r - params.r0;
+            let diff2 = diff * diff;
+            let diff3 = diff2 * diff;
+            let diff4 = diff2 * diff2;
+
+            // Use absolute value of k_harmonic (it's negative as a marker)
+            let k = params.k_harmonic.abs();
+
+            // Energy: V = 0.5 * K * (r - r0)^4
+            let energy = 0.5 * k * diff4;
+
+            // Force magnitude: -dV/dr = -2 * K * (r - r0)^3
+            let f_magnitude = -2.0 * k * diff3;
+
+            // Force vector: F = f_magnitude * direction
+            let direction = r_vec / (r as f32);
+            let force = direction * (f_magnitude as f32);
+
+            result.energy += energy;
+            result.forces[bond.i] += force;
+            result.forces[bond.j] -= force;
+        }
+    }
+
+    result
+}
+
 /// Calculate angle forces (GROMOS cosine-based)
 ///
 /// Potential: V = (1/2) * k_harmonic * (cos(θ) - cos(θ0))^2
@@ -896,5 +961,241 @@ mod tests {
         // Force conservation
         let total_force = result.forces[0] + result.forces[1] + result.forces[2];
         assert!(total_force.length() < 1e-5, "Forces should be conserved");
+    }
+
+    #[test]
+    fn test_cg_bond_compressed() {
+        use crate::math::Vec3;
+        use crate::configuration::Configuration;
+        use crate::topology::{Bond, BondParameters, Atom};
+
+        // Test CG bond when compressed (r < r0) - should have zero force/energy
+        let mut topo = Topology::new();
+
+        // Add 2 atoms
+        for i in 0..2 {
+            topo.solute.atoms.push(Atom {
+                name: format!("C{}", i),
+                residue_nr: 1,
+                residue_name: "TEST".to_string(),
+                iac: 0,
+                mass: 12.0,
+                charge: 0.0,
+                is_perturbed: false,
+                is_polarisable: false,
+                is_coarse_grained: true,
+            });
+        }
+        topo.mass = vec![12.0, 12.0];
+        topo.inverse_mass = vec![1.0/12.0, 1.0/12.0];
+
+        // Add one CG bond (negative k_harmonic as marker)
+        topo.solute.bonds.push(Bond { i: 0, j: 1, bond_type: 0 });
+        topo.bond_parameters.push(BondParameters {
+            k_quartic: 0.0,      // Not used for CG bonds
+            k_harmonic: -500.0,  // Negative = CG bond marker
+            r0: 0.15,  // 0.15 nm equilibrium
+        });
+
+        let mut conf = Configuration::new(2, 1, 1);
+
+        // Position atoms compressed (0.1 nm < 0.15 nm equilibrium)
+        conf.current_mut().pos[0] = Vec3::new(0.0, 0.0, 0.0);
+        conf.current_mut().pos[1] = Vec3::new(0.1, 0.0, 0.0);
+
+        let result = calculate_cg_bond_forces(&topo, &conf);
+
+        println!("\n========== CG Bond Test (Compressed) ==========");
+        println!("Bond length: 0.10 nm, equilibrium: 0.15 nm");
+        println!("Energy: {:.6} kJ/mol", result.energy);
+        println!("Force on atom 0: ({:.6}, {:.6}, {:.6})",
+                 result.forces[0].x, result.forces[0].y, result.forces[0].z);
+
+        // When compressed (r < r0), CG bonds should have zero energy and force
+        assert!(result.energy < 1e-10, "Energy should be zero when compressed: {}", result.energy);
+        assert!(result.forces[0].length() < 1e-10, "Force should be zero when compressed");
+    }
+
+    #[test]
+    fn test_cg_bond_at_equilibrium() {
+        use crate::math::Vec3;
+        use crate::configuration::Configuration;
+        use crate::topology::{Bond, BondParameters, Atom};
+
+        // Test CG bond at equilibrium (r = r0) - should have zero force/energy
+        let mut topo = Topology::new();
+
+        // Add 2 atoms
+        for i in 0..2 {
+            topo.solute.atoms.push(Atom {
+                name: format!("C{}", i),
+                residue_nr: 1,
+                residue_name: "TEST".to_string(),
+                iac: 0,
+                mass: 12.0,
+                charge: 0.0,
+                is_perturbed: false,
+                is_polarisable: false,
+                is_coarse_grained: true,
+            });
+        }
+        topo.mass = vec![12.0, 12.0];
+        topo.inverse_mass = vec![1.0/12.0, 1.0/12.0];
+
+        topo.solute.bonds.push(Bond { i: 0, j: 1, bond_type: 0 });
+        topo.bond_parameters.push(BondParameters {
+            k_quartic: 0.0,
+            k_harmonic: -500.0,
+            r0: 0.15,
+        });
+
+        let mut conf = Configuration::new(2, 1, 1);
+
+        // Position atoms at equilibrium (0.15 nm)
+        conf.current_mut().pos[0] = Vec3::new(0.0, 0.0, 0.0);
+        conf.current_mut().pos[1] = Vec3::new(0.15, 0.0, 0.0);
+
+        let result = calculate_cg_bond_forces(&topo, &conf);
+
+        println!("\n========== CG Bond Test (Equilibrium) ==========");
+        println!("Bond length: 0.15 nm (at equilibrium)");
+        println!("Energy: {:.6} kJ/mol", result.energy);
+
+        // At equilibrium, energy and force should be zero
+        assert!(result.energy < 1e-10, "Energy should be zero at equilibrium");
+        assert!(result.forces[0].length() < 1e-10, "Force should be zero at equilibrium");
+    }
+
+    #[test]
+    fn test_cg_bond_stretched() {
+        use crate::math::Vec3;
+        use crate::configuration::Configuration;
+        use crate::topology::{Bond, BondParameters, Atom};
+
+        // Test CG bond when stretched (r > r0) - should have repulsive force
+        let mut topo = Topology::new();
+
+        // Add 2 atoms
+        for i in 0..2 {
+            topo.solute.atoms.push(Atom {
+                name: format!("C{}", i),
+                residue_nr: 1,
+                residue_name: "TEST".to_string(),
+                iac: 0,
+                mass: 12.0,
+                charge: 0.0,
+                is_perturbed: false,
+                is_polarisable: false,
+                is_coarse_grained: true,
+            });
+        }
+        topo.mass = vec![12.0, 12.0];
+        topo.inverse_mass = vec![1.0/12.0, 1.0/12.0];
+
+        topo.solute.bonds.push(Bond { i: 0, j: 1, bond_type: 0 });
+        topo.bond_parameters.push(BondParameters {
+            k_quartic: 0.0,
+            k_harmonic: -500.0,  // K = 500 kJ/(mol·nm^4)
+            r0: 0.15,  // r0 = 0.15 nm
+        });
+
+        let mut conf = Configuration::new(2, 1, 1);
+
+        // Position atoms stretched (0.20 nm > 0.15 nm equilibrium)
+        conf.current_mut().pos[0] = Vec3::new(0.0, 0.0, 0.0);
+        conf.current_mut().pos[1] = Vec3::new(0.20, 0.0, 0.0);
+
+        let result = calculate_cg_bond_forces(&topo, &conf);
+
+        // Calculate expected values
+        // diff = 0.20 - 0.15 = 0.05 nm
+        // Energy = 0.5 * 500 * (0.05)^4 = 0.5 * 500 * 0.00000625 = 0.0015625 kJ/mol
+        let diff: f64 = 0.05;
+        let expected_energy = 0.5 * 500.0 * diff.powi(4);
+        let expected_force_mag = 2.0 * 500.0 * diff.powi(3);  // Attractive (pulls atoms together)
+
+        println!("\n========== CG Bond Test (Stretched) ==========");
+        println!("Bond length: 0.20 nm, equilibrium: 0.15 nm");
+        println!("Energy: {:.6} kJ/mol (expected: {:.6})", result.energy, expected_energy);
+        println!("Force magnitude: {:.6} (expected: {:.6})",
+                 result.forces[0].length(), expected_force_mag);
+        println!("Force on atom 0: ({:.6}, {:.6}, {:.6})",
+                 result.forces[0].x, result.forces[0].y, result.forces[0].z);
+        println!("Force on atom 1: ({:.6}, {:.6}, {:.6})",
+                 result.forces[1].x, result.forces[1].y, result.forces[1].z);
+
+        // Check energy
+        assert!((result.energy - expected_energy).abs() < 1e-6,
+                "Energy mismatch: got {}, expected {}", result.energy, expected_energy);
+
+        // Check force magnitude (should be attractive = negative x-direction on atom 0)
+        assert!(result.forces[0].x < 0.0, "Force should be attractive (negative x)");
+        assert!((result.forces[0].length() as f64 - expected_force_mag).abs() < 1e-5,
+                "Force magnitude mismatch: got {}, expected {}",
+                result.forces[0].length(), expected_force_mag);
+
+        // Force conservation
+        let total_force = result.forces[0] + result.forces[1];
+        assert!(total_force.length() < 1e-5, "Forces should be conserved");
+    }
+
+    #[test]
+    fn test_cg_bond_highly_stretched() {
+        use crate::math::Vec3;
+        use crate::configuration::Configuration;
+        use crate::topology::{Bond, BondParameters, Atom};
+
+        // Test CG bond when highly stretched - quartic potential grows rapidly
+        let mut topo = Topology::new();
+
+        // Add 2 atoms
+        for i in 0..2 {
+            topo.solute.atoms.push(Atom {
+                name: format!("C{}", i),
+                residue_nr: 1,
+                residue_name: "TEST".to_string(),
+                iac: 0,
+                mass: 12.0,
+                charge: 0.0,
+                is_perturbed: false,
+                is_polarisable: false,
+                is_coarse_grained: true,
+            });
+        }
+        topo.mass = vec![12.0, 12.0];
+        topo.inverse_mass = vec![1.0/12.0, 1.0/12.0];
+
+        topo.solute.bonds.push(Bond { i: 0, j: 1, bond_type: 0 });
+        topo.bond_parameters.push(BondParameters {
+            k_quartic: 0.0,
+            k_harmonic: -500.0,
+            r0: 0.15,
+        });
+
+        let mut conf = Configuration::new(2, 1, 1);
+
+        // Highly stretched: 0.25 nm (0.10 nm beyond equilibrium)
+        conf.current_mut().pos[0] = Vec3::new(0.0, 0.0, 0.0);
+        conf.current_mut().pos[1] = Vec3::new(0.25, 0.0, 0.0);
+
+        let result = calculate_cg_bond_forces(&topo, &conf);
+
+        // diff = 0.10 nm, Energy = 0.5 * 500 * (0.10)^4 = 0.025 kJ/mol
+        let diff: f64 = 0.10;
+        let expected_energy = 0.5 * 500.0 * diff.powi(4);
+
+        println!("\n========== CG Bond Test (Highly Stretched) ==========");
+        println!("Bond length: 0.25 nm, equilibrium: 0.15 nm (diff = 0.10 nm)");
+        println!("Energy: {:.6} kJ/mol (expected: {:.6})", result.energy, expected_energy);
+        println!("Force magnitude: {:.6}", result.forces[0].length());
+
+        // Energy should grow as (diff)^4
+        assert!((result.energy - expected_energy).abs() < 1e-6,
+                "Energy mismatch for highly stretched bond");
+
+        // Verify quartic growth: doubling diff should multiply energy by 16
+        // Previous test: diff = 0.05, energy = 0.0015625
+        // This test: diff = 0.10, energy should be 16x larger = 0.025
+        assert!(result.energy > 0.02, "Quartic potential should grow rapidly");
     }
 }
