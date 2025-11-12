@@ -931,6 +931,205 @@ pub fn calculate_perturbed_bond_forces(
     result
 }
 
+/// Calculate perturbed harmonic angle forces for FEP
+///
+/// Perturbed angles have dual-topology parameters (state A and B) that are
+/// interpolated based on lambda. Calculates energy and ∂E/∂λ for free energy.
+///
+/// # Energy
+/// V(λ) = 0.5 * K(λ) * (θ - θ0(λ))²
+/// where:
+/// - K(λ) = (1-λ)*K_A + λ*K_B
+/// - θ0(λ) = (1-λ)*θ0_A + λ*θ0_B
+///
+/// # Lambda derivative
+/// ∂V/∂λ = 0.5 * (K_B - K_A) * (θ - θ0)² - K(λ) * (θ - θ0) * (θ0_B - θ0_A)
+pub fn calculate_perturbed_angle_forces(
+    topo: &Topology,
+    conf: &Configuration,
+    lambda_ctrl: &LambdaController,
+) -> ForceEnergyLambda {
+    let mut result = ForceEnergyLambda::new(topo.num_atoms());
+
+    let lambda = lambda_ctrl.interaction_lambdas.angle;
+    let lambda_derivative = lambda_ctrl.lambda_derivative();
+
+    for angle in &topo.perturbed_solute.angles {
+        // Get state A and B parameters
+        let params_a = &topo.angle_parameters[angle.a_type];
+        let params_b = &topo.angle_parameters[angle.b_type];
+
+        // Lambda-interpolated parameters
+        let k = (1.0 - lambda) * params_a.k_harmonic + lambda * params_b.k_harmonic;
+        let theta0 = (1.0 - lambda) * params_a.theta0 + lambda * params_b.theta0;
+
+        // Get atom indices
+        let i = angle.i;
+        let j = angle.j;
+        let k_atom = angle.k;
+
+        // Get vectors
+        let r_ij = conf.current().pos[j] - conf.current().pos[i];
+        let r_kj = conf.current().pos[j] - conf.current().pos[k_atom];
+
+        let r_ij_len_sq = (r_ij.length_squared() as f64).max(1e-10);
+        let r_kj_len_sq = (r_kj.length_squared() as f64).max(1e-10);
+
+        let r_ij_len = r_ij_len_sq.sqrt();
+        let r_kj_len = r_kj_len_sq.sqrt();
+
+        // Calculate angle using dot product
+        let cos_theta = (r_ij.dot(r_kj) as f64) / (r_ij_len * r_kj_len);
+        let cos_theta = cos_theta.clamp(-1.0, 1.0);
+        let theta = cos_theta.acos();
+
+        // Angular difference from equilibrium
+        let diff = theta - theta0;
+
+        // Energy: V = 0.5 * K * (θ - θ0)²
+        let energy = 0.5 * k * diff * diff;
+
+        // Force calculation
+        let sin_theta = theta.sin().max(1e-10);
+        let force_mag = -k * diff / sin_theta;
+
+        // Force on atom i
+        let f_i_term = (r_kj * (cos_theta as f32) - r_ij) * ((force_mag / r_ij_len) as f32);
+        result.forces[i] += f_i_term;
+
+        // Force on atom k
+        let f_k_term = (r_ij * (cos_theta as f32) - r_kj) * ((force_mag / r_kj_len) as f32);
+        result.forces[k_atom] += f_k_term;
+
+        // Force on atom j (conservation)
+        result.forces[j] -= f_i_term + f_k_term;
+
+        result.energy += energy;
+
+        // Lambda derivative: ∂V/∂λ = 0.5 * ΔK * (θ-θ0)² - K * (θ-θ0) * Δθ0
+        let delta_k = params_b.k_harmonic - params_a.k_harmonic;
+        let delta_theta0 = params_b.theta0 - params_a.theta0;
+        let de_dlambda = 0.5 * delta_k * diff * diff - k * diff * delta_theta0;
+
+        result.lambda_derivative += lambda_derivative * de_dlambda;
+    }
+
+    result
+}
+
+/// Calculate perturbed dihedral forces for FEP
+///
+/// Perturbed dihedrals have dual-topology parameters (state A and B) that are
+/// interpolated based on lambda. Calculates energy and ∂E/∂λ for free energy.
+///
+/// # Energy
+/// V(λ) = K(λ) * (1 + cos(m*φ - δ(λ)))
+/// where:
+/// - K(λ) = (1-λ)*K_A + λ*K_B
+/// - δ(λ) = (1-λ)*δ_A + λ*δ_B (phase offset)
+///
+/// # Lambda derivative
+/// ∂V/∂λ = (K_B - K_A) * (1 + cos(m*φ - δ)) - K(λ) * sin(m*φ - δ) * (δ_B - δ_A)
+pub fn calculate_perturbed_dihedral_forces(
+    topo: &Topology,
+    conf: &Configuration,
+    lambda_ctrl: &LambdaController,
+) -> ForceEnergyLambda {
+    let mut result = ForceEnergyLambda::new(topo.num_atoms());
+
+    let lambda = lambda_ctrl.interaction_lambdas.dihedral;
+    let lambda_derivative = lambda_ctrl.lambda_derivative();
+
+    for dihedral in &topo.perturbed_solute.proper_dihedrals {
+        // Get state A and B parameters
+        let params_a = &topo.dihedral_parameters[dihedral.a_type];
+        let params_b = &topo.dihedral_parameters[dihedral.b_type];
+
+        // Lambda-interpolated parameters
+        let k = (1.0 - lambda) * params_a.k + lambda * params_b.k;
+        let pd = (1.0 - lambda) * params_a.pd + lambda * params_b.pd;
+        let m = params_a.m; // Multiplicity (should be same for A and B)
+
+        // Get atom indices
+        let i = dihedral.i;
+        let j = dihedral.j;
+        let k_atom = dihedral.k;
+        let l = dihedral.l;
+
+        // Get bond vectors
+        let r_ij = conf.current().pos[j] - conf.current().pos[i];
+        let r_kj = conf.current().pos[j] - conf.current().pos[k_atom];
+        let r_kl = conf.current().pos[l] - conf.current().pos[k_atom];
+
+        // Calculate normal vectors to the two planes
+        let m_vec = r_ij.cross(r_kj);
+        let n_vec = r_kj.cross(r_kl);
+
+        let m_len_sq = m_vec.length_squared() as f64;
+        let n_len_sq = n_vec.length_squared() as f64;
+
+        if m_len_sq < 1e-20 || n_len_sq < 1e-20 {
+            continue; // Degenerate dihedral
+        }
+
+        let m_len = m_len_sq.sqrt();
+        let n_len = n_len_sq.sqrt();
+
+        // Calculate dihedral angle
+        let r_kj_len = r_kj.length() as f64;
+        let cos_phi = (m_vec.dot(n_vec) as f64) / (m_len * n_len);
+        let cos_phi = cos_phi.clamp(-1.0, 1.0);
+
+        // Get sign from scalar triple product
+        let sign = if r_ij.dot(n_vec) >= 0.0 { 1.0 } else { -1.0 };
+        let phi = sign * cos_phi.acos();
+
+        // Compute energy: V = K * (1 + cos(m*φ - δ))
+        let argument = (m as f64) * phi - pd;
+        let energy = k * (1.0 + argument.cos());
+
+        // Force magnitude: -dV/dφ = K * m * sin(m*φ - δ)
+        let force_magnitude = k * (m as f64) * argument.sin();
+
+        // Apply forces (using standard dihedral force derivatives)
+        let f_factor = force_magnitude / r_kj_len;
+
+        // Forces on atoms i and l (perpendicular to planes)
+        let f_i = m_vec * ((f_factor / m_len) as f32);
+        let f_l = n_vec * ((-f_factor / n_len) as f32);
+
+        result.forces[i] += f_i;
+        result.forces[l] += f_l;
+
+        // Forces on atoms j and k (derived from torque balance)
+        let r_ij_len = r_ij.length() as f64;
+        let r_kl_len = r_kl.length() as f64;
+
+        let dot_ij_kj = r_ij.dot(r_kj) as f64;
+        let dot_kl_kj = r_kl.dot(r_kj) as f64;
+
+        let f_j_factor = dot_ij_kj / (r_kj_len * r_kj_len);
+        let f_k_factor = dot_kl_kj / (r_kj_len * r_kj_len);
+
+        let f_j = f_i * (f_j_factor as f32 - 1.0);
+        let f_k = f_l * (f_k_factor as f32 - 1.0);
+
+        result.forces[j] += f_j;
+        result.forces[k_atom] += f_k;
+
+        result.energy += energy;
+
+        // Lambda derivative: ∂V/∂λ = ΔK * (1 + cos(arg)) - K * sin(arg) * Δδ
+        let delta_k = params_b.k - params_a.k;
+        let delta_pd = params_b.pd - params_a.pd;
+        let de_dlambda = delta_k * (1.0 + argument.cos()) - k * argument.sin() * delta_pd;
+
+        result.lambda_derivative += lambda_derivative * de_dlambda;
+    }
+
+    result
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

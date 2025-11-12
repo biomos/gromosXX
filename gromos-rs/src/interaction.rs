@@ -8,12 +8,16 @@ pub mod restraints;
 // Re-export commonly used types and functions
 pub use bonded::{
     ForceEnergy,
+    ForceEnergyLambda,
     calculate_bond_forces_quartic,
     calculate_bond_forces_harmonic,
     calculate_angle_forces,
     calculate_dihedral_forces,
     calculate_improper_dihedral_forces,
     calculate_bonded_forces,
+    calculate_perturbed_bond_forces,
+    calculate_perturbed_angle_forces,
+    calculate_perturbed_dihedral_forces,
 };
 
 pub use electrostatics::{

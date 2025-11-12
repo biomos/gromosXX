@@ -244,6 +244,8 @@
 **Free Energy Perturbation**:
 - ✅ FEP framework with lambda control
 - ✅ Perturbed bonds with lambda derivatives
+- ✅ Perturbed angles with lambda derivatives
+- ✅ Perturbed dihedrals with lambda derivatives
 - ✅ Soft-core potentials (framework ready)
 
 **Restraints**:
@@ -326,11 +328,13 @@ All Tier 1 features are now implemented and production-ready!
 - Lattice shift tracking (1-2 weeks)
 - ✅ ~~NMR restraints (angle/dihedral)~~ - **DONE** (src/interaction/restraints.rs)
 
-### FEP I/O - ✅ COMPLETE!
+### FEP Bonded Terms - ✅ COMPLETE!
 - ✅ ~~.ptp perturbation topology writer~~ - **DONE** (src/io/ptp.rs)
 - ✅ ~~.dlg free energy output writer~~ - **DONE** (src/io/dlg.rs)
 - ✅ ~~make_pt_top utility~~ - **DONE** (src/bin/make_pt_top.rs)
-- Remaining: Complete perturbed angles and dihedrals (bonds already done!)
+- ✅ ~~Perturbed bonds~~ - **DONE** (src/interaction/bonded.rs)
+- ✅ ~~Perturbed angles~~ - **DONE** (src/interaction/bonded.rs)
+- ✅ ~~Perturbed dihedrals~~ - **DONE** (src/interaction/bonded.rs)
 
 ---
 
