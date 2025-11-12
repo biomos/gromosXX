@@ -7,6 +7,7 @@
 //! - .trc/.trj - Trajectory files (coordinates over time)
 //! - .tre - Energy files (ENE/ENA format)
 //! - .trf - Force files
+//! - .ptp - Perturbation topology files (FEP)
 
 pub mod coordinate;
 pub mod topology;
@@ -16,12 +17,14 @@ pub mod energy;
 pub mod force;
 pub mod pdb;
 pub mod g96;
+pub mod ptp;
 
 // Re-export commonly used types
 pub use imd::{ImdParameters, TempBathParameters, PressureParameters};
 pub use trajectory::TrajectoryWriter;
 pub use energy::{EnergyWriter, EnergyFrame, EnergyBlock};
 pub use force::ForceWriter;
+pub use ptp::PtpWriter;
 
 use std::io;
 
