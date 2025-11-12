@@ -157,14 +157,14 @@
 | **Topology (read)** | `.top` | ✅ Implemented | src/io/topology.rs |
 | **Coordinates (read)** | `.cnf` | ✅ Implemented | src/io/coordinate.rs |
 | **Trajectory (write)** | `.trc` | ✅ Implemented | src/io/trajectory.rs |
-| **Energy (write)** | `.tre` | ⚠️ Partial | src/io/energy.rs |
+| **Energy (write)** | `.tre` | ✅ Implemented | src/io/energy.rs |
 | **Forces (write)** | `.trf` | ✅ Implemented | src/io/force.rs |
-| **Parameters** | `.imd` | ❌ Not Done | Simulation input |
+| **Parameters** | `.imd` | ✅ Implemented | src/io/imd.rs (426 lines, full parser) |
 | **Perturbation** | `.ptp` | ❌ Not Done | FEP topology |
 | **Free Energy** | `.dlg` | ❌ Not Done | dH/dλ output |
 | **Restraints** | `.dat/.spec` | ❌ Not Done | Experimental data |
 
-**Progress**: 5/9 formats (55.6%) - Core read/write done
+**Progress**: 6/9 formats (66.7%) - Core I/O complete, FEP files remaining
 
 ---
 
@@ -237,9 +237,12 @@
 - QM/MM, EDS, GaMD (12+ weeks each)
 - Virtual atoms, GPU acceleration
 
-### Tutorial Tools
-- ✅ **Implemented**: pdb2g96, com_top, check_top, mk_script (4/9 tools)
-- ❌ **Needed**: sim_box, ene_ana, rmsd, md binary wrapper
+### Tutorial Tools & Binaries
+- ✅ **Implemented**: pdb2g96, com_top, check_top, mk_script, md, ene_ana, rmsd (7+ tools)
+  - **md** (946 lines): Full MD simulation engine with CLI
+  - **ene_ana**: Energy trajectory analysis with statistics
+  - **rmsd**: RMSD calculation with optional rotational fitting
+- ❌ **Needed**: sim_box (box generation utility)
 
 ---
 
