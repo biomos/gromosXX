@@ -14,6 +14,7 @@ use gromos_rs::{
         trajectory::TrajectoryWriter,
         energy::{EnergyWriter, EnergyFrame},
         GamdBlock, EdsBlock,
+        GamdStatsWriter, GamdBoostWriter,
     },
     interaction::{
         bonded::calculate_bonded_forces,
@@ -764,6 +765,40 @@ fn main() {
         }
     };
 
+    // Setup GaMD writers if enabled
+    let mut gamd_stats_writer = if gamd_params.is_some() {
+        let stats_file = "gamd_stats.dat";
+        match GamdStatsWriter::new(stats_file, "GROMOS-RS GaMD Statistics") {
+            Ok(mut w) => {
+                w.set_write_interval(10); // Write every 10 steps
+                println!("  GaMD stats:   {}", stats_file);
+                Some(w)
+            }
+            Err(e) => {
+                eprintln!("Warning: Failed to create GaMD stats file: {}", e);
+                None
+            }
+        }
+    } else {
+        None
+    };
+
+    let mut gamd_boost_writer = if gamd_params.is_some() {
+        let boost_file = "gamd_boost.dat";
+        match GamdBoostWriter::new(boost_file, "GROMOS-RS GaMD Boost Potential") {
+            Ok(w) => {
+                println!("  GaMD boost:   {}", boost_file);
+                Some(w)
+            }
+            Err(e) => {
+                eprintln!("Warning: Failed to create GaMD boost file: {}", e);
+                None
+            }
+        }
+    } else {
+        None
+    };
+
     // MD parameters summary
     println!("MD Parameters:");
     println!("  Steps:         {}", md_args.n_steps);
@@ -905,6 +940,23 @@ fn main() {
 
             log_debug!("GAMD boost applied: ΔV={:.4}, V_new={:.4}",
                 boost, conf.current().energies.potential_total);
+
+            // Write GaMD statistics
+            if let Some(ref mut writer) = gamd_stats_writer {
+                if let Err(e) = writer.write_frame(step, dihedral_energy, total_potential, gamd) {
+                    log_warn!("Failed to write GaMD stats at step {}: {}", step, e);
+                }
+            }
+
+            // Write GaMD boost potential
+            if let Some(ref mut writer) = gamd_boost_writer {
+                // For now, assume boost is only from total potential
+                let boost_dih = 0.0;
+                let boost_pot = boost;
+                if let Err(e) = writer.write_frame(step, time, boost, boost_dih, boost_pot) {
+                    log_warn!("Failed to write GaMD boost at step {}: {}", step, e);
+                }
+            }
         }
 
         // Validate energy
@@ -1045,6 +1097,25 @@ fn main() {
         eprintln!("Error finalizing energy file: {}", e);
     } else {
         log_debug!("Energy file finalized: {}", md_args.ene_file);
+    }
+
+    // Finalize GaMD writers if enabled
+    if let Some(ref mut writer) = gamd_stats_writer {
+        if let Err(e) = writer.finalize() {
+            log_error!("Failed to finalize GaMD stats file: {}", e);
+            eprintln!("Error finalizing GaMD stats file: {}", e);
+        } else {
+            log_debug!("GaMD stats file finalized");
+        }
+    }
+
+    if let Some(ref mut writer) = gamd_boost_writer {
+        if let Err(e) = writer.finalize() {
+            log_error!("Failed to finalize GaMD boost file: {}", e);
+            eprintln!("Error finalizing GaMD boost file: {}", e);
+        } else {
+            log_debug!("GaMD boost file finalized");
+        }
     }
 
     let elapsed = start_time.elapsed();
