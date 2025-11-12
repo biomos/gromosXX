@@ -281,7 +281,7 @@
 - ✅ **check_top**: Validate topology
 - ✅ **mk_script**: Generate simulation scripts
 - ✅ **frameout**, **trs_ana**, **diffus**, **hbond**, **rdf**, **rmsf**: Basic analysis tools
-- ❌ **sim_box**: Box generation utility (solvation, nice to have)
+- ✅ **sim_box** (550+ lines): Solvation utility - places solute in pre-equilibrated solvent box
 
 **Analysis Strategy**:
 Use **GROMOS++** for advanced analysis (111 battle-tested tools):
