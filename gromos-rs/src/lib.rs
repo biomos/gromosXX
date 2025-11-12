@@ -56,6 +56,7 @@ pub mod validation;
 pub mod logging;
 pub mod replica;
 pub mod remd;
+pub mod eds;
 
 // Re-export main types for convenience
 pub use math::{Vec3, Mat3, Periodicity, BoundaryCondition};
@@ -65,6 +66,7 @@ pub use configuration::{Configuration, State, Energy};
 pub use integrator::{Integrator, LeapFrog, VelocityVerlet, SteepestDescent, StochasticDynamics};
 pub use replica::{Replica, ReplicaId, ReplicaInfo};
 pub use remd::{ReplicaController, ExchangeType, ExchangeScheme, ExchangeStatistics};
+pub use eds::{EDSParameters, EDSState, EDSForm, AEDSParameters, EDSRunner};
 
 #[cfg(feature = "mimalloc")]
 use mimalloc::MiMalloc;
