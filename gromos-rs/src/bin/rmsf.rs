@@ -4,7 +4,9 @@
 //! Shows which atoms/residues are most mobile during the simulation.
 
 use gromos_rs::{
+    io::topology::{read_topology_file, build_topology},
     io::trajectory::TrajectoryReader,
+    selection::AtomSelection,
     math::Vec3,
     logging::{set_log_level, LogLevel, ProgressBar},
     log_info, log_debug,
@@ -18,21 +20,25 @@ fn print_usage() {
     eprintln!("rmsf - Root Mean Square Fluctuation Calculator");
     eprintln!();
     eprintln!("Usage:");
-    eprintln!("  rmsf @traj <trajectory> [@options]");
+    eprintln!("  rmsf @topo <topology> @traj <trajectory> [@options]");
     eprintln!();
     eprintln!("Arguments:");
+    eprintln!("  @topo     Molecular topology file");
     eprintln!("  @traj     Trajectory file (.trc)");
-    eprintln!("  @atoms    Atom selection (comma-separated or range, e.g., 1-100)");
-    eprintln!("            If omitted, calculates for all atoms");
+    eprintln!("  @atoms    Atom selection (default: all)");
+    eprintln!("            Formats: 'all', '1-10', '1,5,10-20'");
+    eprintln!("                     '1:1-10' (mol 1, atoms 1-10)");
+    eprintln!("                     'r:1-5' (residues 1-5)");
+    eprintln!("                     'a:CA' (all CA atoms)");
     eprintln!("  @out      Output file (default: rmsf.dat)");
     eprintln!("  @skip     Skip first N frames (default: 0)");
     eprintln!("  @every    Use every Nth frame (default: 1)");
     eprintln!("  @verbose  Verbose output (0=normal, 1=verbose)");
     eprintln!();
     eprintln!("Examples:");
-    eprintln!("  rmsf @traj md.trc");
-    eprintln!("  rmsf @traj md.trc @atoms 1-50 @skip 100");
-    eprintln!("  rmsf @traj md.trc @atoms 1,5,10,15 @every 10");
+    eprintln!("  rmsf @topo system.top @traj md.trc");
+    eprintln!("  rmsf @topo system.top @traj md.trc @atoms a:CA @skip 100");
+    eprintln!("  rmsf @topo system.top @traj md.trc @atoms r:1-10 @every 10");
     eprintln!();
     eprintln!("Output:");
     eprintln!("  Column 1: Atom index");
@@ -41,8 +47,9 @@ fn print_usage() {
 
 #[derive(Debug)]
 struct RmsfArgs {
+    topo_file: String,
     traj_file: String,
-    atoms: Vec<usize>,
+    atom_spec: String,
     output_file: String,
     skip: usize,
     every: usize,
@@ -52,8 +59,9 @@ struct RmsfArgs {
 impl Default for RmsfArgs {
     fn default() -> Self {
         Self {
+            topo_file: String::new(),
             traj_file: String::new(),
-            atoms: Vec::new(),
+            atom_spec: "all".to_string(),
             output_file: "rmsf.dat".to_string(),
             skip: 0,
             every: 1,
@@ -62,50 +70,17 @@ impl Default for RmsfArgs {
     }
 }
 
-fn parse_atom_selection(s: &str) -> Result<Vec<usize>, String> {
-    let mut atoms = Vec::new();
-
-    for part in s.split(',') {
-        let part = part.trim();
-        if part.contains('-') {
-            let parts: Vec<&str> = part.split('-').collect();
-            if parts.len() != 2 {
-                return Err(format!("Invalid range: {}", part));
-            }
-            let start: usize = parts[0].parse()
-                .map_err(|_| format!("Invalid start in range: {}", parts[0]))?;
-            let end: usize = parts[1].parse()
-                .map_err(|_| format!("Invalid end in range: {}", parts[1]))?;
-
-            if start == 0 || end == 0 {
-                return Err("Atom indices must be >= 1".to_string());
-            }
-            if start > end {
-                return Err(format!("Invalid range: {}-{}", start, end));
-            }
-
-            for i in start..=end {
-                atoms.push(i - 1);
-            }
-        } else {
-            let atom: usize = part.parse()
-                .map_err(|_| format!("Invalid atom index: {}", part))?;
-            if atom == 0 {
-                return Err("Atom indices must be >= 1".to_string());
-            }
-            atoms.push(atom - 1);
-        }
-    }
-
-    Ok(atoms)
-}
-
 fn parse_args(args: Vec<String>) -> Result<RmsfArgs, String> {
     let mut rmsf_args = RmsfArgs::default();
 
     let mut i = 0;
     while i < args.len() {
         match args[i].as_str() {
+            "@topo" | "@topology" => {
+                i += 1;
+                if i >= args.len() { return Err("Missing value for @topo".to_string()); }
+                rmsf_args.topo_file = args[i].clone();
+            }
             "@traj" | "@trajectory" => {
                 i += 1;
                 if i >= args.len() { return Err("Missing value for @traj".to_string()); }
@@ -114,7 +89,7 @@ fn parse_args(args: Vec<String>) -> Result<RmsfArgs, String> {
             "@atoms" | "@atom" => {
                 i += 1;
                 if i >= args.len() { return Err("Missing value for @atoms".to_string()); }
-                rmsf_args.atoms = parse_atom_selection(&args[i])?;
+                rmsf_args.atom_spec = args[i].clone();
             }
             "@out" | "@output" => {
                 i += 1;
@@ -146,6 +121,9 @@ fn parse_args(args: Vec<String>) -> Result<RmsfArgs, String> {
         i += 1;
     }
 
+    if rmsf_args.topo_file.is_empty() {
+        return Err("Missing required argument: @topo".to_string());
+    }
     if rmsf_args.traj_file.is_empty() {
         return Err("Missing required argument: @traj".to_string());
     }
@@ -290,6 +268,30 @@ fn main() {
     println!("╚══════════════════════════════════════════════════════════════╝");
     println!();
 
+    // Read topology
+    log_info!("Reading topology: {}", rmsf_args.topo_file);
+    let blocks = match read_topology_file(&rmsf_args.topo_file) {
+        Ok(blocks) => blocks,
+        Err(e) => {
+            eprintln!("Error reading topology: {}", e);
+            process::exit(1);
+        }
+    };
+
+    let topo = build_topology(blocks);
+    log_info!("  Total atoms: {}", topo.num_atoms());
+
+    // Parse atom selection using AtomSelection (GROMOS++ compatible)
+    let atom_selection = match AtomSelection::from_string(&rmsf_args.atom_spec, &topo) {
+        Ok(sel) => sel,
+        Err(e) => {
+            eprintln!("Error parsing atom selection '{}': {}", rmsf_args.atom_spec, e);
+            process::exit(1);
+        }
+    };
+
+    log_info!("  Selected atoms: {}", atom_selection.len());
+
     log_info!("Reading trajectory: {}", rmsf_args.traj_file);
 
     let mut traj_reader = match TrajectoryReader::new(&rmsf_args.traj_file) {
@@ -300,13 +302,7 @@ fn main() {
         }
     };
 
-    let atom_selection = if rmsf_args.atoms.is_empty() {
-        println!("Analyzing: All atoms");
-        None
-    } else {
-        println!("Analyzing: {} selected atoms", rmsf_args.atoms.len());
-        Some(rmsf_args.atoms.as_slice())
-    };
+    println!("Analyzing: {} selected atoms", atom_selection.len());
     println!("Output:    {}", rmsf_args.output_file);
     println!();
 
@@ -314,7 +310,7 @@ fn main() {
 
     let (atoms, rmsf) = match calculate_rmsf(
         &mut traj_reader,
-        atom_selection,
+        Some(atom_selection.indices()),
         rmsf_args.skip,
         rmsf_args.every,
     ) {

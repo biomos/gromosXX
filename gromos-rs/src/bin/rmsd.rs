@@ -1,12 +1,14 @@
 //! rmsd - Calculate Root Mean Square Deviation
 //!
-//! Usage: rmsd @traj <trajectory> @ref <reference_frame> [@atoms <selection>]
+//! Usage: rmsd @topo <topology> @traj <trajectory> @ref <reference_frame> [@atoms <selection>]
 //!
 //! Calculates RMSD between trajectory frames and a reference structure.
 //! RMSD measures structural similarity and is widely used to track
 //! conformational changes during MD simulations.
 
+use gromos_rs::io::topology::{read_topology_file, build_topology};
 use gromos_rs::io::trajectory::TrajectoryReader;
+use gromos_rs::selection::AtomSelection;
 use gromos_rs::math::Vec3;
 use std::env;
 use std::process;
@@ -14,33 +16,39 @@ use std::process;
 fn print_usage() {
     eprintln!("rmsd - Root Mean Square Deviation calculation");
     eprintln!();
-    eprintln!("Usage: rmsd @traj <trajectory> @ref <ref_frame> [@atoms <selection>] [@fit]");
+    eprintln!("Usage: rmsd @topo <topology> @traj <trajectory> @ref <ref_frame> [@atoms <selection>] [@fit]");
     eprintln!();
     eprintln!("Arguments:");
+    eprintln!("  @topo    Molecular topology file");
     eprintln!("  @traj    Input trajectory file (.trc)");
     eprintln!("  @ref     Reference frame number (0-based) or 'first' or 'last'");
     eprintln!("  @atoms   Atom selection (default: all)");
-    eprintln!("           Format: 'all', '1-10', '1,5,10-20'");
+    eprintln!("           Formats: 'all', '1-10', '1,5,10-20'");
+    eprintln!("                    '1:1-10' (mol 1, atoms 1-10)");
+    eprintln!("                    'r:1-5' (residues 1-5)");
+    eprintln!("                    'a:CA' (all CA atoms)");
     eprintln!("  @fit     Perform rotational fit before RMSD calculation");
     eprintln!();
     eprintln!("Output:");
     eprintln!("  Time (ps)  RMSD (nm)");
     eprintln!();
     eprintln!("Examples:");
-    eprintln!("  rmsd @traj output.trc @ref first");
-    eprintln!("  rmsd @traj output.trc @ref 0 @atoms all");
-    eprintln!("  rmsd @traj output.trc @ref last @atoms 1-100 @fit");
+    eprintln!("  rmsd @topo system.top @traj output.trc @ref first");
+    eprintln!("  rmsd @topo system.top @traj output.trc @ref 0 @atoms all");
+    eprintln!("  rmsd @topo system.top @traj output.trc @ref last @atoms a:CA @fit");
 }
 
 #[derive(Debug)]
 struct RmsdArgs {
+    topo_file: String,
     traj_file: String,
     ref_spec: String,
-    atom_selection: Vec<usize>,
+    atom_spec: String,
     do_fit: bool,
 }
 
 fn parse_args(args: Vec<String>) -> Result<RmsdArgs, String> {
+    let mut topo_file = None;
     let mut traj_file = None;
     let mut ref_spec = None;
     let mut atom_spec = None;
@@ -49,6 +57,13 @@ fn parse_args(args: Vec<String>) -> Result<RmsdArgs, String> {
     let mut i = 1;
     while i < args.len() {
         match args[i].as_str() {
+            "@topo" => {
+                i += 1;
+                if i >= args.len() {
+                    return Err("Missing value for @topo".to_string());
+                }
+                topo_file = Some(args[i].clone());
+            }
             "@traj" => {
                 i += 1;
                 if i >= args.len() {
@@ -80,61 +95,18 @@ fn parse_args(args: Vec<String>) -> Result<RmsdArgs, String> {
         i += 1;
     }
 
-    let traj_file = traj_file.ok_or("Missing required argument @traj")?;
+    let topo_file = topo_file.ok_or("Missing required argument: @topo")?;
+    let traj_file = traj_file.ok_or("Missing required argument: @traj")?;
     let ref_spec = ref_spec.unwrap_or_else(|| "first".to_string());
-
-    // Parse atom selection (default to empty, meaning all atoms)
-    let atom_selection = if let Some(spec) = atom_spec {
-        parse_atom_selection(&spec)?
-    } else {
-        Vec::new()
-    };
+    let atom_spec = atom_spec.unwrap_or_else(|| "all".to_string());
 
     Ok(RmsdArgs {
+        topo_file,
         traj_file,
         ref_spec,
-        atom_selection,
+        atom_spec,
         do_fit,
     })
-}
-
-fn parse_atom_selection(spec: &str) -> Result<Vec<usize>, String> {
-    if spec.to_lowercase() == "all" {
-        return Ok(Vec::new()); // Empty means all atoms
-    }
-
-    let mut atoms = Vec::new();
-
-    for part in spec.split(',') {
-        if part.contains('-') {
-            // Range: "1-10"
-            let range_parts: Vec<&str> = part.split('-').collect();
-            if range_parts.len() != 2 {
-                return Err(format!("Invalid range: {}", part));
-            }
-            let start: usize = range_parts[0]
-                .trim()
-                .parse()
-                .map_err(|_| format!("Invalid number: {}", range_parts[0]))?;
-            let end: usize = range_parts[1]
-                .trim()
-                .parse()
-                .map_err(|_| format!("Invalid number: {}", range_parts[1]))?;
-
-            for i in start..=end {
-                atoms.push(i - 1); // Convert to 0-based indexing
-            }
-        } else {
-            // Single atom
-            let atom: usize = part
-                .trim()
-                .parse()
-                .map_err(|_| format!("Invalid number: {}", part))?;
-            atoms.push(atom - 1); // Convert to 0-based indexing
-        }
-    }
-
-    Ok(atoms)
 }
 
 fn calculate_rmsd(pos1: &[Vec3], pos2: &[Vec3], atom_indices: &[usize]) -> f32 {
@@ -240,14 +212,36 @@ fn main() {
         }
     };
 
+    // Read topology
+    eprintln!("Reading topology: {}", parsed_args.topo_file);
+    let blocks = match read_topology_file(&parsed_args.topo_file) {
+        Ok(blocks) => blocks,
+        Err(e) => {
+            eprintln!("Error reading topology: {}", e);
+            process::exit(1);
+        }
+    };
+
+    let topo = build_topology(blocks);
+    let n_atoms = topo.num_atoms();
+    eprintln!("  Total atoms: {}", n_atoms);
+
+    // Parse atom selection using AtomSelection (GROMOS++ compatible)
+    let atom_selection = match AtomSelection::from_string(&parsed_args.atom_spec, &topo) {
+        Ok(sel) => sel,
+        Err(e) => {
+            eprintln!("Error parsing atom selection '{}': {}", parsed_args.atom_spec, e);
+            process::exit(1);
+        }
+    };
+
+    eprintln!("  Selected atoms: {}", atom_selection.len());
+    eprintln!();
+
     eprintln!("rmsd - RMSD calculation");
     eprintln!("  Trajectory: {}", parsed_args.traj_file);
     eprintln!("  Reference:  {}", parsed_args.ref_spec);
-    if !parsed_args.atom_selection.is_empty() {
-        eprintln!("  Atoms:      {} atoms selected", parsed_args.atom_selection.len());
-    } else {
-        eprintln!("  Atoms:      all");
-    }
+    eprintln!("  Atoms:      {} atoms selected", atom_selection.len());
     eprintln!("  Fit:        {}", if parsed_args.do_fit { "yes" } else { "no" });
     eprintln!();
 
@@ -312,18 +306,14 @@ fn main() {
 
     // Center reference structure if fitting
     if parsed_args.do_fit {
-        translate_to_origin(&mut reference_positions, &parsed_args.atom_selection);
+        translate_to_origin(&mut reference_positions, atom_selection.indices());
     }
 
     // Output header
     println!("# RMSD analysis");
     println!("# Trajectory: {}", parsed_args.traj_file);
     println!("# Reference frame: {}", ref_frame_idx);
-    println!("# Atoms: {}", if parsed_args.atom_selection.is_empty() {
-        "all".to_string()
-    } else {
-        format!("{} selected", parsed_args.atom_selection.len())
-    });
+    println!("# Atoms: {} selected", atom_selection.len());
     println!("# Fit: {}", if parsed_args.do_fit { "yes" } else { "no" });
     println!("#");
     println!("# {:>10}  {:>12}", "Time (ps)", "RMSD (nm)");
@@ -334,11 +324,11 @@ fn main() {
 
         // Apply fit if requested
         if parsed_args.do_fit {
-            translate_to_origin(&mut mobile_positions, &parsed_args.atom_selection);
-            simple_rotation_fit(&mut mobile_positions, &reference_positions, &parsed_args.atom_selection);
+            translate_to_origin(&mut mobile_positions, atom_selection.indices());
+            simple_rotation_fit(&mut mobile_positions, &reference_positions, atom_selection.indices());
         }
 
-        let rmsd = calculate_rmsd(&mobile_positions, &reference_positions, &parsed_args.atom_selection);
+        let rmsd = calculate_rmsd(&mobile_positions, &reference_positions, atom_selection.indices());
 
         println!("{:12.4}  {:12.6}", frame.time, rmsd);
     }
