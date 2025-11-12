@@ -19,6 +19,7 @@ pub mod pdb;
 pub mod g96;
 pub mod ptp;
 pub mod dlg;
+pub mod input;
 
 // Re-export commonly used types
 pub use imd::{ImdParameters, TempBathParameters, PressureParameters};
@@ -27,6 +28,7 @@ pub use energy::{EnergyWriter, EnergyFrame, EnergyBlock};
 pub use force::ForceWriter;
 pub use ptp::PtpWriter;
 pub use dlg::{DlgWriter, LambdaDerivativeFrame};
+pub use input::GamdBlock;
 
 use std::io;
 
