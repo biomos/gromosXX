@@ -28,7 +28,7 @@ pub use energy::{EnergyWriter, EnergyFrame, EnergyBlock};
 pub use force::ForceWriter;
 pub use ptp::PtpWriter;
 pub use dlg::{DlgWriter, LambdaDerivativeFrame};
-pub use input::GamdBlock;
+pub use input::{GamdBlock, EdsBlock, ReplicaBlock};
 
 use std::io;
 
