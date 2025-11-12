@@ -75,9 +75,9 @@
 | **Harmonic Angles** | ✅ Implemented | - | src/interaction/bonded.rs |
 | **CG Bonds** | ✅ Implemented | - | src/interaction/bonded.rs |
 | **New Dihedrals** | ✅ Implemented | - | src/interaction/bonded.rs |
-| **Cross-Dihedrals** | ❌ Not Done | 🔨 2-3 weeks | 8-atom term |
+| **Cross-Dihedrals** | ✅ Implemented | - | src/interaction/bonded.rs |
 
-**Progress**: 8/11 core terms (72.7%), FEP framework 80% done
+**Progress**: 9/11 core terms (81.8%), FEP framework 80% done
 
 ---
 
