@@ -20,6 +20,7 @@
 
 use gromos_rs::io::topology::{read_topology_file, build_topology};
 use gromos_rs::io::trajectory::TrajectoryReader;
+use gromos_rs::selection::AtomSelection;
 use gromos_rs::math::Vec3;
 use std::env;
 use std::process;
@@ -33,7 +34,10 @@ fn print_usage() {
     eprintln!("  @topo          Molecular topology file");
     eprintln!("  @traj          Input trajectory file (.trc)");
     eprintln!("  @atoms         Atom selection (default: all)");
-    eprintln!("                 Format: 'all', '1-10', '1,5,10-20'");
+    eprintln!("                 Formats: 'all', '1-10', '1,5,10-20'");
+    eprintln!("                          '1:1-10' (mol 1, atoms 1-10)");
+    eprintln!("                          'r:1-5' (residues 1-5)");
+    eprintln!("                          'a:CA' (all CA atoms)");
     eprintln!("  @massweighted  Use mass-weighted formula (default: unweighted)");
     eprintln!();
     eprintln!("Description:");
@@ -63,61 +67,8 @@ fn print_usage() {
 struct RgyrArgs {
     topo_file: String,
     traj_file: String,
-    atom_selection: Vec<usize>,
+    atom_spec: String,  // Store string, parse with AtomSelection later
     mass_weighted: bool,
-}
-
-fn parse_atom_selection(spec: &str, n_atoms: usize) -> Result<Vec<usize>, String> {
-    if spec == "all" {
-        return Ok((0..n_atoms).collect());
-    }
-
-    let mut atoms = Vec::new();
-
-    for part in spec.split(',') {
-        if part.contains('-') {
-            let range: Vec<&str> = part.split('-').collect();
-            if range.len() != 2 {
-                return Err(format!("Invalid range: {}", part));
-            }
-            let start: usize = range[0]
-                .parse()
-                .map_err(|_| format!("Invalid start: {}", range[0]))?;
-            let end: usize = range[1]
-                .parse()
-                .map_err(|_| format!("Invalid end: {}", range[1]))?;
-
-            if start < 1 || end < 1 || start > end {
-                return Err(format!("Invalid range: {}-{}", start, end));
-            }
-
-            // Convert from 1-based to 0-based
-            for i in (start - 1)..end {
-                if i < n_atoms {
-                    atoms.push(i);
-                }
-            }
-        } else {
-            let atom: usize = part
-                .parse()
-                .map_err(|_| format!("Invalid atom: {}", part))?;
-            if atom < 1 {
-                return Err("Atom numbers must be >= 1".to_string());
-            }
-            // Convert from 1-based to 0-based
-            if atom - 1 < n_atoms {
-                atoms.push(atom - 1);
-            }
-        }
-    }
-
-    if atoms.is_empty() {
-        return Err("No valid atoms in selection".to_string());
-    }
-
-    atoms.sort_unstable();
-    atoms.dedup();
-    Ok(atoms)
 }
 
 fn parse_args(args: Vec<String>) -> Result<RgyrArgs, String> {
@@ -162,14 +113,12 @@ fn parse_args(args: Vec<String>) -> Result<RgyrArgs, String> {
 
     let topo_file = topo_file.ok_or("Missing required argument: @topo")?;
     let traj_file = traj_file.ok_or("Missing required argument: @traj")?;
-
-    // Parse atom selection (will be done after reading topology to get n_atoms)
     let atom_spec = atom_spec.unwrap_or_else(|| "all".to_string());
 
     Ok(RgyrArgs {
         topo_file,
         traj_file,
-        atom_selection: vec![], // Will be filled after reading topology
+        atom_spec,  // Store as string, parse later with AtomSelection
         mass_weighted,
     })
 }
@@ -269,16 +218,16 @@ fn main() {
     let n_atoms = topo.num_atoms();
     eprintln!("  Total atoms: {}", n_atoms);
 
-    // Parse atom selection with known n_atoms
-    rgyr_args.atom_selection = match parse_atom_selection(&"all", n_atoms) {
+    // Parse atom selection using AtomSelection (GROMOS++ compatible)
+    let atom_selection = match AtomSelection::from_string(&rgyr_args.atom_spec, &topo) {
         Ok(sel) => sel,
         Err(e) => {
-            eprintln!("Error parsing atom selection: {}", e);
+            eprintln!("Error parsing atom selection '{}': {}", rgyr_args.atom_spec, e);
             process::exit(1);
         }
     };
 
-    eprintln!("  Selected atoms: {}", rgyr_args.atom_selection.len());
+    eprintln!("  Selected atoms: {}", atom_selection.len());
     eprintln!(
         "  Mode: {}",
         if rgyr_args.mass_weighted {
@@ -313,10 +262,10 @@ fn main() {
                     calc_rgyr_mass_weighted(
                         &frame.positions,
                         &topo.mass,
-                        &rgyr_args.atom_selection,
+                        atom_selection.indices(),
                     )
                 } else {
-                    calc_rgyr_unweighted(&frame.positions, &rgyr_args.atom_selection)
+                    calc_rgyr_unweighted(&frame.positions, atom_selection.indices())
                 };
 
                 println!("{:12.6}{:12.6}", frame.time, rg);
