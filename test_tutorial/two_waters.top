@@ -1,0 +1,64 @@
+TITLE
+Two water molecules - Complete topology with LJ parameters
+END
+PHYSICALCONSTANTS
+  138.9354
+  0.0635078
+  299792.458
+  0.00831441
+END
+TOPVERSION
+2.0
+END
+ATOMTYPENAME
+2
+OW
+HW
+END
+RESNAME
+1
+SOL
+END
+SOLUTEATOM
+6
+    1    1   OW   1  15.9994 -0.82000    1   2
+    2    3
+    2    1  HW1   2   1.0080  0.41000    1   2
+    1    3
+    3    1  HW2   2   1.0080  0.41000    1   2
+    1    2
+    4    1   OW   1  15.9994 -0.82000    1   2
+    5    6
+    5    1  HW1   2   1.0080  0.41000    1   2
+    4    6
+    6    1  HW2   2   1.0080  0.41000    1   2
+    4    5
+END
+BONDSTRETCHTYPE
+1
+ 1.00000e+07  5.00000e+05  0.1000000
+END
+BOND
+4
+    1    2    1
+    1    3    1
+    4    5    1
+    4    6    1
+END
+BONDANGLEBENDTYPE
+1
+ 5.00000e+02  5.00000e+02   109.5000
+END
+BONDANGLE
+2
+    2    1    3    1
+    5    4    6    1
+END
+LJPARAMETERS
+# C6 and C12 parameters for Lennard-Jones interactions
+# SPC water model parameters
+  1   1  0.0026173456  0.0025291021  # OW-OW
+  1   2  0.0  0.0                     # OW-HW
+  2   1  0.0  0.0                     # HW-OW
+  2   2  0.0  0.0                     # HW-HW
+END
