@@ -261,7 +261,7 @@
 
 ### What's Missing (Top Priorities)
 1. **Replica Exchange (T-REMD, H-REMD)** (4-6 weeks) - Complete Tier 2
-2. **Atom Specifier System** (1-2 weeks) - Selection strings for trajectory filtering/analysis
+2. ✅ ~~**Atom Specifier System**~~ - **DONE** (src/selection.rs) - Unified selection syntax!
 3. **Quick wins**: Scaled Leap-Frog (1-2 days), Lattice Shift (1-2 weeks)
 
 ### Advanced Features (Future Work)

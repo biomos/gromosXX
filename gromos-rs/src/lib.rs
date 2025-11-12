@@ -48,6 +48,7 @@ pub mod pairlist;
 pub mod interaction;
 pub mod integrator;
 pub mod algorithm;
+pub mod selection;
 pub mod fep;
 // pub mod ffi;  // Temporarily disabled - needs update for refactored API
 pub mod io;
