@@ -647,6 +647,166 @@ pub fn calculate_dihedral_new_forces(
     result
 }
 
+/// Calculate cross-dihedral forces (8-atom coupled torsional term)
+///
+/// Potential: V = K * (1 + cos(m*(φ + ψ) - δ))
+/// where φ and ψ are two dihedral angles
+///
+/// This couples two torsional degrees of freedom, useful for:
+/// - Ring systems with correlated torsions
+/// - Backbone torsion coupling (φ-ψ correlations)
+/// - Multi-bond torsional potentials
+///
+/// Atoms: a-b-c-d (dihedral φ) and e-f-g-h (dihedral ψ)
+pub fn calculate_crossdihedral_forces(
+    topo: &Topology,
+    conf: &Configuration,
+) -> ForceEnergy {
+    let mut result = ForceEnergy::new(topo.num_atoms());
+
+    for crossdih in &topo.solute.cross_dihedrals {
+        if crossdih.cross_dihedral_type >= topo.dihedral_parameters.len() {
+            continue;
+        }
+
+        let params = &topo.dihedral_parameters[crossdih.cross_dihedral_type];
+
+        // Get position vectors for first dihedral (a-b-c-d)
+        let r_ab = conf.current().pos[crossdih.b] - conf.current().pos[crossdih.a];
+        let r_cb = conf.current().pos[crossdih.b] - conf.current().pos[crossdih.c];
+        let r_cd = conf.current().pos[crossdih.d] - conf.current().pos[crossdih.c];
+
+        // Get position vectors for second dihedral (e-f-g-h)
+        let r_ef = conf.current().pos[crossdih.f] - conf.current().pos[crossdih.e];
+        let r_gf = conf.current().pos[crossdih.f] - conf.current().pos[crossdih.g];
+        let r_gh = conf.current().pos[crossdih.h] - conf.current().pos[crossdih.g];
+
+        // Calculate first dihedral angle φ
+        let r_nc = r_cb.cross(r_cd);  // Normal to c-b-c-d plane
+        let d_cb2 = r_cb.dot(r_cb);
+
+        if d_cb2 < 1e-10 {
+            continue;
+        }
+
+        let f_ram = r_ab.dot(r_cb) / d_cb2;
+        let f_rdn = r_cd.dot(r_cb) / d_cb2;
+
+        let r_am = r_ab - r_cb * f_ram;
+        let r_dn = r_cb * f_rdn - r_cd;
+
+        let d_am = r_am.length() as f64;
+        let d_dn = r_dn.length() as f64;
+
+        if d_am < 1e-10 || d_dn < 1e-10 {
+            continue;
+        }
+
+        let cos_phi = (r_am.dot(r_dn) / (d_am * d_dn) as f32).clamp(-1.0, 1.0) as f64;
+        let mut phi = cos_phi.acos();
+
+        let sign_phi = r_ab.dot(r_nc);
+        if sign_phi < 0.0 {
+            phi = -phi;
+        }
+
+        // Calculate second dihedral angle ψ
+        let r_ng = r_gf.cross(r_gh);  // Normal to g-f-g-h plane
+        let d_gf2 = r_gf.dot(r_gf);
+
+        if d_gf2 < 1e-10 {
+            continue;
+        }
+
+        let f_rem = r_ef.dot(r_gf) / d_gf2;
+        let f_rgn = r_gh.dot(r_gf) / d_gf2;
+
+        let r_em = r_ef - r_gf * f_rem;
+        let r_gn = r_gf * f_rgn - r_gh;
+
+        let d_em = r_em.length() as f64;
+        let d_gn = r_gn.length() as f64;
+
+        if d_em < 1e-10 || d_gn < 1e-10 {
+            continue;
+        }
+
+        let cos_psi = (r_em.dot(r_gn) / (d_em * d_gn) as f32).clamp(-1.0, 1.0) as f64;
+        let mut psi = cos_psi.acos();
+
+        let sign_psi = r_ef.dot(r_ng);
+        if sign_psi < 0.0 {
+            psi = -psi;
+        }
+
+        // Energy: V = K * (1 + cos(m*(φ + ψ) - δ))
+        let angle_sum = phi + psi;
+        let arg = params.m as f64 * angle_sum - params.pd;
+        let energy = params.k * (1.0 + arg.cos());
+
+        // Force derivative: dV/d(φ+ψ) = K * m * sin(m*(φ + ψ) - δ)
+        let k = params.k * params.m as f64 * arg.sin();
+
+        // Calculate cross products and squared lengths for forces
+        let r_mb = r_ab.cross(r_cb);
+        let r_mf = r_ef.cross(r_gf);
+        let d_mb2 = r_mb.dot(r_mb);
+        let d_mf2 = r_mf.dot(r_mf);
+        let d_nc2 = r_nc.dot(r_nc);
+        let d_ng2 = r_ng.dot(r_ng);
+
+        let d_cb = (d_cb2 as f64).sqrt();
+        let d_gf = (d_gf2 as f64).sqrt();
+
+        // Forces on first dihedral (a, b, c, d)
+        let mut f_a = Vec3::ZERO;
+        let mut f_d = Vec3::ZERO;
+
+        if d_mb2 > 1e-10 * d_cb2 as f32 {
+            f_a = r_mb * (k * d_cb / d_mb2 as f64) as f32;
+        }
+
+        if d_nc2 > 1e-10 * d_cb2 as f32 {
+            f_d = r_nc * (-k * d_cb / d_nc2 as f64) as f32;
+        }
+
+        let k_b1 = f_ram - 1.0;
+        let k_b2 = f_rdn;
+        let f_b = f_a * k_b1 as f32 - f_d * k_b2 as f32;
+        let f_c = -(f_a + f_b + f_d);
+
+        // Forces on second dihedral (e, f, g, h)
+        let mut f_e = Vec3::ZERO;
+        let mut f_h = Vec3::ZERO;
+
+        if d_mf2 > 1e-10 * d_gf2 as f32 {
+            f_e = r_mf * (k * d_gf / d_mf2 as f64) as f32;
+        }
+
+        if d_ng2 > 1e-10 * d_gf2 as f32 {
+            f_h = r_ng * (-k * d_gf / d_ng2 as f64) as f32;
+        }
+
+        let k_f1 = f_rem - 1.0;
+        let k_f2 = f_rgn;
+        let f_f = f_e * k_f1 as f32 - f_h * k_f2 as f32;
+        let f_g = -(f_e + f_f + f_h);
+
+        // Add energy and forces
+        result.energy += energy;
+        result.forces[crossdih.a] += f_a;
+        result.forces[crossdih.b] += f_b;
+        result.forces[crossdih.c] += f_c;
+        result.forces[crossdih.d] += f_d;
+        result.forces[crossdih.e] += f_e;
+        result.forces[crossdih.f] += f_f;
+        result.forces[crossdih.g] += f_g;
+        result.forces[crossdih.h] += f_h;
+    }
+
+    result
+}
+
 /// Calculate all bonded forces (bonds + angles + dihedrals)
 pub fn calculate_bonded_forces(
     topo: &Topology,
@@ -1547,5 +1707,212 @@ mod tests {
 
         assert!(total_force.length() < 1e-4,
                 "Forces should be conserved: total = {}", total_force.length());
+    }
+
+    #[test]
+    fn test_crossdihedral_simple() {
+        use crate::math::Vec3;
+        use crate::configuration::Configuration;
+        use crate::topology::{CrossDihedral, DihedralParameters, Atom};
+        use std::f64::consts::PI;
+
+        // Test cross-dihedral with two simple dihedrals
+        let mut topo = Topology::new();
+
+        // Add 8 atoms for cross-dihedral: a-b-c-d and e-f-g-h
+        for i in 0..8 {
+            topo.solute.atoms.push(Atom {
+                name: format!("C{}", i),
+                residue_nr: 1,
+                residue_name: "TEST".to_string(),
+                iac: 0,
+                mass: 12.0,
+                charge: 0.0,
+                is_perturbed: false,
+                is_polarisable: false,
+                is_coarse_grained: false,
+            });
+        }
+        topo.mass = vec![12.0; 8];
+        topo.inverse_mass = vec![1.0/12.0; 8];
+
+        // Parameters: K=5, m=1, δ=0°
+        topo.solute.cross_dihedrals.push(CrossDihedral {
+            a: 0, b: 1, c: 2, d: 3,  // First dihedral
+            e: 4, f: 5, g: 6, h: 7,  // Second dihedral
+            cross_dihedral_type: 0
+        });
+
+        topo.dihedral_parameters.push(DihedralParameters {
+            k: 5.0,
+            cospd: 1.0,   // cos(0°) = 1
+            pd: 0.0,      // δ = 0°
+            m: 1,
+        });
+
+        let mut conf = Configuration::new(8, 1, 1);
+
+        // Create geometry: both dihedrals at ~180° (trans)
+        // First dihedral (0-1-2-3)
+        conf.current_mut().pos[0] = Vec3::new(-1.0, 0.5, 0.0);
+        conf.current_mut().pos[1] = Vec3::new(0.0, 0.0, 0.0);
+        conf.current_mut().pos[2] = Vec3::new(1.0, 0.0, 0.0);
+        conf.current_mut().pos[3] = Vec3::new(2.0, -0.5, 0.0);
+
+        // Second dihedral (4-5-6-7)
+        conf.current_mut().pos[4] = Vec3::new(3.0, 0.5, 0.0);
+        conf.current_mut().pos[5] = Vec3::new(4.0, 0.0, 0.0);
+        conf.current_mut().pos[6] = Vec3::new(5.0, 0.0, 0.0);
+        conf.current_mut().pos[7] = Vec3::new(6.0, -0.5, 0.0);
+
+        let result = calculate_crossdihedral_forces(&topo, &conf);
+
+        println!("\n========== Cross-Dihedral Test (Both Trans) ==========");
+        println!("Energy: {:.6} kJ/mol", result.energy);
+
+        // Energy should be finite
+        assert!(!result.energy.is_nan() && !result.energy.is_infinite(),
+                "Energy should be finite");
+
+        // Energy should be reasonable
+        assert!(result.energy >= 0.0 && result.energy <= 20.0,
+                "Energy should be in reasonable range: {}", result.energy);
+    }
+
+    #[test]
+    fn test_crossdihedral_force_conservation() {
+        use crate::math::Vec3;
+        use crate::configuration::Configuration;
+        use crate::topology::{CrossDihedral, DihedralParameters, Atom};
+
+        // Test force conservation for cross-dihedral
+        let mut topo = Topology::new();
+
+        // Add 8 atoms
+        for i in 0..8 {
+            topo.solute.atoms.push(Atom {
+                name: format!("C{}", i),
+                residue_nr: 1,
+                residue_name: "TEST".to_string(),
+                iac: 0,
+                mass: 12.0,
+                charge: 0.0,
+                is_perturbed: false,
+                is_polarisable: false,
+                is_coarse_grained: false,
+            });
+        }
+        topo.mass = vec![12.0; 8];
+        topo.inverse_mass = vec![1.0/12.0; 8];
+
+        topo.solute.cross_dihedrals.push(CrossDihedral {
+            a: 0, b: 1, c: 2, d: 3,
+            e: 4, f: 5, g: 6, h: 7,
+            cross_dihedral_type: 0
+        });
+
+        topo.dihedral_parameters.push(DihedralParameters {
+            k: 10.0,
+            cospd: 0.0,  // cos(90°) = 0
+            pd: std::f64::consts::PI / 2.0,  // δ = 90°
+            m: 2,
+        });
+
+        let mut conf = Configuration::new(8, 1, 1);
+
+        // Arbitrary geometry
+        conf.current_mut().pos[0] = Vec3::new(-1.2, 0.3, 0.1);
+        conf.current_mut().pos[1] = Vec3::new(-0.4, -0.1, 0.2);
+        conf.current_mut().pos[2] = Vec3::new(0.5, 0.2, -0.1);
+        conf.current_mut().pos[3] = Vec3::new(1.3, -0.2, 0.3);
+        conf.current_mut().pos[4] = Vec3::new(2.1, 0.4, -0.2);
+        conf.current_mut().pos[5] = Vec3::new(3.0, -0.1, 0.1);
+        conf.current_mut().pos[6] = Vec3::new(3.8, 0.3, -0.3);
+        conf.current_mut().pos[7] = Vec3::new(4.7, -0.3, 0.2);
+
+        let result = calculate_crossdihedral_forces(&topo, &conf);
+
+        println!("\n========== Cross-Dihedral Force Conservation Test ==========");
+        println!("Energy: {:.6} kJ/mol", result.energy);
+
+        // Check force conservation (sum of all forces should be zero)
+        let mut total_force = Vec3::ZERO;
+        for i in 0..8 {
+            total_force += result.forces[i];
+        }
+
+        println!("Total force: ({:.6}, {:.6}, {:.6})",
+                 total_force.x, total_force.y, total_force.z);
+
+        assert!(total_force.length() < 1e-4,
+                "Forces should be conserved: total = {}", total_force.length());
+    }
+
+    #[test]
+    fn test_crossdihedral_coupling() {
+        use crate::math::Vec3;
+        use crate::configuration::Configuration;
+        use crate::topology::{CrossDihedral, DihedralParameters, Atom};
+        use std::f64::consts::PI;
+
+        // Test that cross-dihedral properly couples the two angles
+        let mut topo = Topology::new();
+
+        // Add 8 atoms
+        for i in 0..8 {
+            topo.solute.atoms.push(Atom {
+                name: format!("C{}", i),
+                residue_nr: 1,
+                residue_name: "TEST".to_string(),
+                iac: 0,
+                mass: 12.0,
+                charge: 0.0,
+                is_perturbed: false,
+                is_polarisable: false,
+                is_coarse_grained: false,
+            });
+        }
+        topo.mass = vec![12.0; 8];
+        topo.inverse_mass = vec![1.0/12.0; 8];
+
+        topo.solute.cross_dihedrals.push(CrossDihedral {
+            a: 0, b: 1, c: 2, d: 3,
+            e: 4, f: 5, g: 6, h: 7,
+            cross_dihedral_type: 0
+        });
+
+        // V = K * (1 + cos(m*(φ + ψ) - δ))
+        // With m=1, δ=0: V = K * (1 + cos(φ + ψ))
+        topo.dihedral_parameters.push(DihedralParameters {
+            k: 10.0,
+            cospd: 1.0,   // cos(0°) = 1
+            pd: 0.0,      // δ = 0°
+            m: 1,
+        });
+
+        let mut conf = Configuration::new(8, 1, 1);
+
+        // Both dihedrals near 180° (trans): φ ≈ π, ψ ≈ π
+        // φ + ψ ≈ 2π, cos(2π) = 1, Energy = K * (1 + 1) = 20
+        conf.current_mut().pos[0] = Vec3::new(-1.0, 0.5, 0.0);
+        conf.current_mut().pos[1] = Vec3::new(0.0, 0.0, 0.0);
+        conf.current_mut().pos[2] = Vec3::new(1.0, 0.0, 0.0);
+        conf.current_mut().pos[3] = Vec3::new(2.0, -0.5, 0.0);
+
+        conf.current_mut().pos[4] = Vec3::new(3.0, 0.5, 0.0);
+        conf.current_mut().pos[5] = Vec3::new(4.0, 0.0, 0.0);
+        conf.current_mut().pos[6] = Vec3::new(5.0, 0.0, 0.0);
+        conf.current_mut().pos[7] = Vec3::new(6.0, -0.5, 0.0);
+
+        let result = calculate_crossdihedral_forces(&topo, &conf);
+
+        println!("\n========== Cross-Dihedral Coupling Test ==========");
+        println!("Both dihedrals near 180° (trans)");
+        println!("Energy: {:.6} kJ/mol", result.energy);
+
+        // Energy should be close to 2*K = 20 when φ + ψ ≈ 2π
+        // Allow some tolerance for geometry
+        assert!(result.energy > 15.0 && result.energy < 21.0,
+                "Energy for φ+ψ≈2π should be near 2K=20: got {}", result.energy);
     }
 }
