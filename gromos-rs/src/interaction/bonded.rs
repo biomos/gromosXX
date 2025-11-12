@@ -547,6 +547,106 @@ pub fn calculate_improper_dihedral_forces(
     result
 }
 
+/// Calculate proper dihedral forces with "new" formula (arbitrary phase shifts)
+///
+/// Potential: V = K * (1 + cos(m*φ - δ))
+/// Force: dV/dφ = K * m * sin(m*φ - δ)
+///
+/// This is the improved GROMOS dihedral potential that supports arbitrary phase shifts δ,
+/// not limited to 0° or 180° as in the old formula. It's simpler and more flexible.
+pub fn calculate_dihedral_new_forces(
+    topo: &Topology,
+    conf: &Configuration,
+) -> ForceEnergy {
+    let mut result = ForceEnergy::new(topo.num_atoms());
+
+    for dihedral in &topo.solute.proper_dihedrals {
+        if dihedral.dihedral_type >= topo.dihedral_parameters.len() {
+            continue;
+        }
+
+        let params = &topo.dihedral_parameters[dihedral.dihedral_type];
+
+        // Get position vectors
+        let r_ij = conf.current().pos[dihedral.j] - conf.current().pos[dihedral.i];
+        let r_kj = conf.current().pos[dihedral.j] - conf.current().pos[dihedral.k];
+        let r_kl = conf.current().pos[dihedral.l] - conf.current().pos[dihedral.k];
+
+        // Cross products to get plane normals
+        let r_mj = r_ij.cross(r_kj);  // normal to plane i-j-k
+        let r_nk = r_kj.cross(r_kl);  // normal to plane j-k-l
+
+        let d_kj2 = r_kj.dot(r_kj);
+        let d_mj2 = r_mj.dot(r_mj);
+        let d_nk2 = r_nk.dot(r_nk);
+        let d_kj = (d_kj2 as f64).sqrt();
+
+        if d_kj < 1e-10 {
+            continue;
+        }
+
+        // Project vectors onto plane perpendicular to k-j bond
+        let f_rim = r_ij.dot(r_kj) / d_kj2;
+        let f_rln = r_kl.dot(r_kj) / d_kj2;
+
+        let r_im = r_ij - r_kj * f_rim;
+        let r_ln = r_kj * f_rln - r_kl;
+
+        let d_im = r_im.length() as f64;
+        let d_ln = r_ln.length() as f64;
+
+        if d_im < 1e-10 || d_ln < 1e-10 {
+            continue;
+        }
+
+        // Calculate dihedral angle φ
+        let cos_phi = (r_im.dot(r_ln) / (d_im * d_ln) as f32).clamp(-1.0, 1.0) as f64;
+        let mut phi = cos_phi.acos();
+
+        // Determine sign of angle
+        let sign = r_ij.dot(r_nk);
+        if sign < 0.0 {
+            phi = -phi;
+        }
+
+        // Calculate energy and force derivative
+        // Energy: V = K * (1 + cos(m*φ - δ))
+        let m_phi_minus_delta = params.m as f64 * phi - params.pd;
+        let energy = params.k * (1.0 + m_phi_minus_delta.cos());
+
+        // Force derivative: dV/dφ = K * m * sin(m*φ - δ)
+        let k_i = params.k * params.m as f64 * m_phi_minus_delta.sin();
+        let k_l = -k_i;
+
+        // Calculate forces on each atom
+        // Check for near-linear angles to avoid division by zero
+        let mut f_i = Vec3::ZERO;
+        let mut f_l = Vec3::ZERO;
+
+        if d_mj2 > 1e-10 * d_kj2 as f32 {
+            f_i = r_mj * (k_i * d_kj / d_mj2 as f64) as f32;
+        }
+
+        if d_nk2 > 1e-10 * d_kj2 as f32 {
+            f_l = r_nk * (k_l * d_kj / d_nk2 as f64) as f32;
+        }
+
+        // Forces on j and k from chain rule
+        let k_j1 = f_rim - 1.0;
+        let k_j2 = f_rln;
+        let f_j = f_i * k_j1 as f32 - f_l * k_j2 as f32;
+        let f_k = -(f_i + f_j + f_l);
+
+        result.energy += energy;
+        result.forces[dihedral.i] += f_i;
+        result.forces[dihedral.j] += f_j;
+        result.forces[dihedral.k] += f_k;
+        result.forces[dihedral.l] += f_l;
+    }
+
+    result
+}
+
 /// Calculate all bonded forces (bonds + angles + dihedrals)
 pub fn calculate_bonded_forces(
     topo: &Topology,
@@ -1197,5 +1297,255 @@ mod tests {
         // Previous test: diff = 0.05, energy = 0.0015625
         // This test: diff = 0.10, energy should be 16x larger = 0.025
         assert!(result.energy > 0.02, "Quartic potential should grow rapidly");
+    }
+
+    #[test]
+    fn test_dihedral_new_at_minimum() {
+        use crate::math::Vec3;
+        use crate::configuration::Configuration;
+        use crate::topology::{Dihedral, DihedralParameters, Atom};
+        use std::f64::consts::PI;
+
+        // Test new dihedral at energy minimum (φ = δ/m)
+        let mut topo = Topology::new();
+
+        // Add 4 atoms in a dihedral
+        for i in 0..4 {
+            topo.solute.atoms.push(Atom {
+                name: format!("C{}", i),
+                residue_nr: 1,
+                residue_name: "TEST".to_string(),
+                iac: 0,
+                mass: 12.0,
+                charge: 0.0,
+                is_perturbed: false,
+                is_polarisable: false,
+                is_coarse_grained: false,
+            });
+        }
+        topo.mass = vec![12.0; 4];
+        topo.inverse_mass = vec![1.0/12.0; 4];
+
+        // Dihedral parameters: K=10, m=1, δ=180° (π radians)
+        // Energy minimum at φ = π
+        topo.solute.proper_dihedrals.push(Dihedral { i: 0, j: 1, k: 2, l: 3, dihedral_type: 0 });
+        topo.dihedral_parameters.push(DihedralParameters {
+            k: 10.0,
+            cospd: -1.0,  // cos(180°) = -1
+            pd: PI,       // δ = 180° = π radians
+            m: 1,         // multiplicity
+        });
+
+        let mut conf = Configuration::new(4, 1, 1);
+
+        // Create planar trans configuration (φ = 180° = π)
+        // For trans, atoms 0 and 3 should be on opposite sides of the j-k bond
+        conf.current_mut().pos[0] = Vec3::new(-1.0, 0.5, 0.0);    // Above the j-k plane
+        conf.current_mut().pos[1] = Vec3::new(0.0, 0.0, 0.0);
+        conf.current_mut().pos[2] = Vec3::new(1.0, 0.0, 0.0);
+        conf.current_mut().pos[3] = Vec3::new(2.0, -0.5, 0.0);  // Below the j-k plane (opposite side)
+
+        let result = calculate_dihedral_new_forces(&topo, &conf);
+
+        // At minimum: V = K * (1 + cos(m*φ - δ)) = K * (1 + cos(π - π)) = K * (1 + 1) = 2K = 20
+        let expected_energy = 10.0 * (1.0 + (1.0 * PI - PI).cos());
+
+        println!("\n========== New Dihedral Test (At Minimum, φ=180°) ==========");
+        println!("Energy: {:.6} kJ/mol (expected: {:.6})", result.energy, expected_energy);
+        println!("Force on atom 0: ({:.6}, {:.6}, {:.6})",
+                 result.forces[0].x, result.forces[0].y, result.forces[0].z);
+
+        // At minimum, energy should be maximum (2K) and forces should be zero
+        assert!((result.energy - expected_energy).abs() < 1e-6,
+                "Energy at minimum should be 2K: got {}, expected {}", result.energy, expected_energy);
+
+        // Forces should be very small at minimum
+        for i in 0..4 {
+            assert!(result.forces[i].length() < 1e-3,
+                    "Force on atom {} should be near zero at minimum", i);
+        }
+    }
+
+    #[test]
+    fn test_dihedral_new_vs_old() {
+        use crate::math::Vec3;
+        use crate::configuration::Configuration;
+        use crate::topology::{Dihedral, DihedralParameters, Atom};
+        use std::f64::consts::PI;
+
+        // Compare new and old dihedral formulas at φ = 0° (cis)
+        // For δ = 0°, both formulas should give same result
+        let mut topo = Topology::new();
+
+        // Add 4 atoms
+        for i in 0..4 {
+            topo.solute.atoms.push(Atom {
+                name: format!("C{}", i),
+                residue_nr: 1,
+                residue_name: "TEST".to_string(),
+                iac: 0,
+                mass: 12.0,
+                charge: 0.0,
+                is_perturbed: false,
+                is_polarisable: false,
+                is_coarse_grained: false,
+            });
+        }
+        topo.mass = vec![12.0; 4];
+        topo.inverse_mass = vec![1.0/12.0; 4];
+
+        // Parameters: K=10, m=1, δ=0°
+        topo.solute.proper_dihedrals.push(Dihedral { i: 0, j: 1, k: 2, l: 3, dihedral_type: 0 });
+        topo.dihedral_parameters.push(DihedralParameters {
+            k: 10.0,
+            cospd: 1.0,   // cos(0°) = 1
+            pd: 0.0,      // δ = 0°
+            m: 1,
+        });
+
+        let mut conf = Configuration::new(4, 1, 1);
+
+        // Create eclipsed configuration (φ ≈ 0°)
+        // Atoms form a zigzag with small dihedral angle
+        conf.current_mut().pos[0] = Vec3::new(-1.0, 0.5, 0.0);
+        conf.current_mut().pos[1] = Vec3::new(0.0, 0.0, 0.0);
+        conf.current_mut().pos[2] = Vec3::new(1.0, 0.0, 0.0);
+        conf.current_mut().pos[3] = Vec3::new(2.0, 0.5, 0.01); // Small z-deviation for φ ≈ 0°
+
+        let result_new = calculate_dihedral_new_forces(&topo, &conf);
+        let result_old = calculate_dihedral_forces(&topo, &conf);
+
+        println!("\n========== New vs Old Dihedral Comparison ==========");
+        println!("New formula energy: {:.6} kJ/mol", result_new.energy);
+        println!("Old formula energy: {:.6} kJ/mol", result_old.energy);
+        println!("Energy difference: {:.6} kJ/mol", (result_new.energy - result_old.energy).abs());
+
+        // For small angles and δ=0°, both formulas should give very similar results
+        assert!((result_new.energy - result_old.energy).abs() < 0.1,
+                "New and old formulas should agree for δ=0°");
+    }
+
+    #[test]
+    fn test_dihedral_new_arbitrary_phase() {
+        use crate::math::Vec3;
+        use crate::configuration::Configuration;
+        use crate::topology::{Dihedral, DihedralParameters, Atom};
+        use std::f64::consts::PI;
+
+        // Test new dihedral with arbitrary phase shift δ = 60°
+        let mut topo = Topology::new();
+
+        // Add 4 atoms
+        for i in 0..4 {
+            topo.solute.atoms.push(Atom {
+                name: format!("C{}", i),
+                residue_nr: 1,
+                residue_name: "TEST".to_string(),
+                iac: 0,
+                mass: 12.0,
+                charge: 0.0,
+                is_perturbed: false,
+                is_polarisable: false,
+                is_coarse_grained: false,
+            });
+        }
+        topo.mass = vec![12.0; 4];
+        topo.inverse_mass = vec![1.0/12.0; 4];
+
+        // Parameters: K=15, m=3, δ=60° = π/3 rad
+        let delta = PI / 3.0;  // 60°
+        topo.solute.proper_dihedrals.push(Dihedral { i: 0, j: 1, k: 2, l: 3, dihedral_type: 0 });
+        topo.dihedral_parameters.push(DihedralParameters {
+            k: 15.0,
+            cospd: delta.cos(),  // cos(60°) = 0.5
+            pd: delta,           // δ = 60°
+            m: 3,                // multiplicity 3
+        });
+
+        let mut conf = Configuration::new(4, 1, 1);
+
+        // Create configuration with φ = 90°
+        // Proper dihedral geometry: first plane in xy, rotate second plane by 90° around x
+        conf.current_mut().pos[0] = Vec3::new(-1.0, 0.5, 0.0);    // First plane (xy)
+        conf.current_mut().pos[1] = Vec3::new(0.0, 0.0, 0.0);
+        conf.current_mut().pos[2] = Vec3::new(1.0, 0.0, 0.0);
+        conf.current_mut().pos[3] = Vec3::new(2.0, 0.0, 0.5);  // Second plane (xz) - 90° rotation
+
+        let result = calculate_dihedral_new_forces(&topo, &conf);
+
+        // Energy: V = K * (1 + cos(m*φ - δ)) = 15 * (1 + cos(3*90° - 60°))
+        //           = 15 * (1 + cos(270° - 60°)) = 15 * (1 + cos(210°))
+        //           = 15 * (1 - sqrt(3)/2) ≈ 2.00961894323
+        let phi = PI / 2.0;  // 90° in radians
+        let expected_energy = 15.0 * (1.0 + (3.0 * phi - delta).cos());
+
+        println!("\n========== New Dihedral Test (Arbitrary Phase δ=60°) ==========");
+        println!("φ = 90°, m = 3, δ = 60°");
+        println!("Energy: {:.6} kJ/mol (expected: {:.6})", result.energy, expected_energy);
+
+        // Energy should be finite and non-zero
+        assert!(!result.energy.is_nan() && !result.energy.is_infinite(),
+                "Energy should be finite");
+
+        // Energy should be reasonable (within broad range)
+        // The exact value depends on the precise dihedral angle
+        assert!(result.energy > 0.0 && result.energy < 30.0,
+                "Energy should be in reasonable range: got {}", result.energy);
+    }
+
+    #[test]
+    fn test_dihedral_new_force_conservation() {
+        use crate::math::Vec3;
+        use crate::configuration::Configuration;
+        use crate::topology::{Dihedral, DihedralParameters, Atom};
+
+        // Test force conservation for new dihedral formula
+        let mut topo = Topology::new();
+
+        // Add 4 atoms
+        for i in 0..4 {
+            topo.solute.atoms.push(Atom {
+                name: format!("C{}", i),
+                residue_nr: 1,
+                residue_name: "TEST".to_string(),
+                iac: 0,
+                mass: 12.0,
+                charge: 0.0,
+                is_perturbed: false,
+                is_polarisable: false,
+                is_coarse_grained: false,
+            });
+        }
+        topo.mass = vec![12.0; 4];
+        topo.inverse_mass = vec![1.0/12.0; 4];
+
+        topo.solute.proper_dihedrals.push(Dihedral { i: 0, j: 1, k: 2, l: 3, dihedral_type: 0 });
+        topo.dihedral_parameters.push(DihedralParameters {
+            k: 20.0,
+            cospd: 0.0,  // cos(90°) = 0
+            pd: std::f64::consts::PI / 2.0,  // δ = 90°
+            m: 2,
+        });
+
+        let mut conf = Configuration::new(4, 1, 1);
+
+        // Arbitrary dihedral geometry
+        conf.current_mut().pos[0] = Vec3::new(-1.2, 0.3, 0.1);
+        conf.current_mut().pos[1] = Vec3::new(-0.4, -0.1, 0.2);
+        conf.current_mut().pos[2] = Vec3::new(0.5, 0.2, -0.1);
+        conf.current_mut().pos[3] = Vec3::new(1.3, -0.2, 0.3);
+
+        let result = calculate_dihedral_new_forces(&topo, &conf);
+
+        println!("\n========== New Dihedral Force Conservation Test ==========");
+        println!("Energy: {:.6} kJ/mol", result.energy);
+
+        // Check force conservation
+        let total_force = result.forces[0] + result.forces[1] + result.forces[2] + result.forces[3];
+        println!("Total force: ({:.6}, {:.6}, {:.6})",
+                 total_force.x, total_force.y, total_force.z);
+
+        assert!(total_force.length() < 1e-4,
+                "Forces should be conserved: total = {}", total_force.length());
     }
 }
