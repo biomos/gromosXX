@@ -163,10 +163,10 @@
 | **Energy (write)** | `.tre` | ✅ Implemented | src/io/energy.rs | Energy components |
 | **Forces (write)** | `.trf` | ✅ Implemented | src/io/force.rs | Detailed force breakdown |
 | **Perturbation (write)** | `.ptp` | ✅ Implemented | src/io/ptp.rs | FEP topology writer (make_pt_top tool) |
-| **Free Energy** | `.dlg` | ❌ Not Done | dH/dλ output writer | TI analysis |
+| **Free Energy (write)** | `.dlg` | ✅ Implemented | src/io/dlg.rs | Lambda derivatives (dH/dλ) for TI |
 | **Restraints** | `.dat/.spec` | ❌ Not Done | NMR/experimental data | Future |
 
-**Progress**: 7/9 formats (77.8%) - FEP I/O nearly complete!
+**Progress**: 8/9 formats (88.9%) - FEP I/O complete!
 
 **Note**: Trajectory *reading* is handled by GROMOS++ (111 analysis tools). gromos-rs focuses on *writing* trajectories efficiently.
 
@@ -261,7 +261,7 @@
 
 ### What's Missing (Top Priorities)
 1. **Replica Exchange (T-REMD, H-REMD)** (4-6 weeks) - Complete Tier 2
-2. **FEP I/O (.ptp, .dlg readers/writers)** (2-3 weeks) - FEP simulations
+2. **Atom Specifier System** (1-2 weeks) - Selection strings for trajectory filtering/analysis
 3. **Quick wins**: Scaled Leap-Frog (1-2 days), Lattice Shift (1-2 weeks)
 
 ### Advanced Features (Future Work)
@@ -307,10 +307,11 @@ All Tier 1 features are now implemented and production-ready!
 - Lattice shift tracking (1-2 weeks)
 - NMR restraints (angle/dihedral, 1-2 weeks each)
 
-### FEP Completion (2-3 weeks)
-- .ptp perturbation topology reader
-- .dlg free energy output writer
-- Complete perturbed angles and dihedrals (bonds already done!)
+### FEP I/O - ✅ COMPLETE!
+- ✅ ~~.ptp perturbation topology writer~~ - **DONE** (src/io/ptp.rs)
+- ✅ ~~.dlg free energy output writer~~ - **DONE** (src/io/dlg.rs)
+- ✅ ~~make_pt_top utility~~ - **DONE** (src/bin/make_pt_top.rs)
+- Remaining: Complete perturbed angles and dihedrals (bonds already done!)
 
 ---
 

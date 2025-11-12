@@ -18,6 +18,7 @@ pub mod force;
 pub mod pdb;
 pub mod g96;
 pub mod ptp;
+pub mod dlg;
 
 // Re-export commonly used types
 pub use imd::{ImdParameters, TempBathParameters, PressureParameters};
@@ -25,6 +26,7 @@ pub use trajectory::TrajectoryWriter;
 pub use energy::{EnergyWriter, EnergyFrame, EnergyBlock};
 pub use force::ForceWriter;
 pub use ptp::PtpWriter;
+pub use dlg::{DlgWriter, LambdaDerivativeFrame};
 
 use std::io;
 
