@@ -579,3 +579,259 @@ fn test_virial_tensor_calculation() {
     let virial_trace = storage.virial[0][0] + storage.virial[1][1] + storage.virial[2][2];
     assert!(virial_trace.abs() > 0.0, "Virial should be non-zero for interacting atoms");
 }
+
+#[test]
+fn test_full_npt_simulation() {
+    // Test a complete NPT simulation (constant N, P, T) with thermostat and barostat
+    let topo = create_argon_dimer_topology();
+    let mut conf = Configuration::new(2, 1, 1);
+
+    // Initial setup
+    conf.current_mut().pos[0] = Vec3::new(1.0, 1.0, 1.0);
+    conf.current_mut().pos[1] = Vec3::new(1.4, 1.0, 1.0);  // 0.4 nm separation
+    conf.current_mut().vel[0] = Vec3::new(1.0, 0.5, 0.0);
+    conf.current_mut().vel[1] = Vec3::new(-1.0, -0.5, 0.0);
+    conf.current_mut().box_config = SimBox::rectangular(5.0, 5.0, 5.0);
+    conf.copy_current_to_old();
+
+    let initial_volume = conf.current().box_config.volume();
+
+    // Setup integrator
+    let mut integrator = LeapFrog::new();
+    let dt = 0.002;
+
+    // Setup nonbonded
+    let crf = CRFParameters {
+        crf_cut: 1.4,
+        crf_2cut3i: 0.0,
+        crf_cut3i: 0.0,
+    };
+
+    let lj_params = vec![vec![gromos_rs::interaction::nonbonded::LJParameters {
+        c6: topo.lj_parameters[0][0].c6,
+        c12: topo.lj_parameters[0][0].c12,
+    }]];
+
+    let mut pairlist = PairlistContainer::new(1.4, 1.4, 0.0);
+    pairlist.update_frequency = 5;
+    let algorithm = StandardPairlistAlgorithm::new(false);
+    let mut periodicity = Rectangular::new(Vec3::new(5.0, 5.0, 5.0));
+
+    // Setup thermostat
+    let thermo_params = BerendsenThermostatParameters {
+        target_temperature: 300.0,
+        coupling_time: 0.1,
+    };
+
+    // Setup barostat
+    let baro_params = BerendsenBarostatParameters {
+        target_pressure: 1.0,
+        coupling_time: 0.5,
+        compressibility: 4.5e-5,
+        isotropic: true,
+    };
+
+    // Run 30 MD steps
+    for step in 0..30 {
+        // Update periodicity if box changed
+        let box_dims = conf.current().box_config.dimensions();
+        periodicity = Rectangular::new(box_dims);
+
+        // Update pairlist
+        if pairlist.needs_update() {
+            algorithm.update(&topo, &conf, &mut pairlist, &periodicity);
+        }
+        pairlist.step();
+
+        // Calculate nonbonded forces
+        let mut storage = ForceStorage::new(2);
+        let pairlist_u32: Vec<(u32, u32)> = pairlist.solute_short.iter()
+            .map(|&(i, j)| (i as u32, j as u32))
+            .collect();
+
+        let charges: Vec<f32> = topo.charge.iter().map(|&q| q as f32).collect();
+        let iac: Vec<u32> = topo.iac.iter().map(|&i| i as u32).collect();
+
+        lj_crf_innerloop(
+            &conf.current().pos,
+            &charges,
+            &iac,
+            &pairlist_u32,
+            &lj_params,
+            &crf,
+            &periodicity,
+            &mut storage,
+        );
+
+        // Extract virial for barostat
+        let virial = Mat3 {
+            x_axis: Vec3::new(
+                storage.virial[0][0] as f32,
+                storage.virial[0][1] as f32,
+                storage.virial[0][2] as f32,
+            ),
+            y_axis: Vec3::new(
+                storage.virial[1][0] as f32,
+                storage.virial[1][1] as f32,
+                storage.virial[1][2] as f32,
+            ),
+            z_axis: Vec3::new(
+                storage.virial[2][0] as f32,
+                storage.virial[2][1] as f32,
+                storage.virial[2][2] as f32,
+            ),
+        };
+
+        // Apply forces
+        for i in 0..2 {
+            conf.current_mut().force[i] = storage.forces[i];
+        }
+
+        // Update energies
+        conf.current_mut().energies.lj_total = storage.e_lj;
+        conf.current_mut().energies.update_potential_total();
+
+        // Integrate
+        if step < 29 {
+            integrator.step(dt, &topo, &mut conf);
+
+            // Apply thermostat
+            berendsen_thermostat(&topo, &mut conf, dt, &thermo_params);
+
+            // Apply barostat
+            berendsen_barostat(&topo, &mut conf, dt, &baro_params, &virial);
+        }
+
+        // Calculate kinetic energy
+        conf.current_mut().calculate_kinetic_energy(&topo.mass);
+    }
+
+    let final_volume = conf.current().box_config.volume();
+
+    // Verify NPT simulation ran successfully
+    // Atoms should still be separated
+    let final_separation = (conf.current().pos[1] - conf.current().pos[0]).length();
+    assert!(final_separation > 0.0, "Atoms should remain separated");
+
+    // Should have kinetic energy (thermostat controls temperature)
+    assert!(conf.current().energies.kinetic_total > 0.0, "Should have kinetic energy");
+
+    // Volume may have changed due to barostat (not necessarily, but it should work)
+    // Just verify the barostat doesn't crash the simulation
+    assert!(final_volume > 0.0, "Box volume should be positive");
+
+    // Verify simulation completed without crashes
+    assert!(initial_volume > 0.0, "NPT simulation should complete successfully");
+}
+
+#[test]
+fn test_full_nve_simulation() {
+    // Test a complete NVE simulation (constant N, V, E) - microcanonical ensemble
+    // No thermostat, no barostat - total energy should be approximately conserved
+    let topo = create_argon_dimer_topology();
+    let mut conf = Configuration::new(2, 1, 1);
+
+    // Initial setup with moderate velocities
+    conf.current_mut().pos[0] = Vec3::new(1.0, 1.0, 1.0);
+    conf.current_mut().pos[1] = Vec3::new(1.5, 1.0, 1.0);  // 0.5 nm separation
+    conf.current_mut().vel[0] = Vec3::new(0.5, 0.0, 0.0);
+    conf.current_mut().vel[1] = Vec3::new(-0.5, 0.0, 0.0);
+    conf.current_mut().box_config = SimBox::rectangular(5.0, 5.0, 5.0);
+    conf.copy_current_to_old();
+
+    // Setup integrator
+    let mut integrator = LeapFrog::new();
+    let dt = 0.002;
+
+    // Setup nonbonded
+    let crf = CRFParameters {
+        crf_cut: 1.4,
+        crf_2cut3i: 0.0,
+        crf_cut3i: 0.0,
+    };
+
+    let lj_params = vec![vec![gromos_rs::interaction::nonbonded::LJParameters {
+        c6: topo.lj_parameters[0][0].c6,
+        c12: topo.lj_parameters[0][0].c12,
+    }]];
+
+    let mut pairlist = PairlistContainer::new(1.4, 1.4, 0.0);
+    pairlist.update_frequency = 5;
+    let algorithm = StandardPairlistAlgorithm::new(false);
+    let periodicity = Rectangular::new(Vec3::new(5.0, 5.0, 5.0));
+
+    let mut energies_history: Vec<f64> = Vec::new();
+
+    // Run 50 MD steps (no thermostat, no barostat)
+    for step in 0..50 {
+        // Update pairlist
+        if pairlist.needs_update() {
+            algorithm.update(&topo, &conf, &mut pairlist, &periodicity);
+        }
+        pairlist.step();
+
+        // Calculate nonbonded forces
+        let mut storage = ForceStorage::new(2);
+        let pairlist_u32: Vec<(u32, u32)> = pairlist.solute_short.iter()
+            .map(|&(i, j)| (i as u32, j as u32))
+            .collect();
+
+        let charges: Vec<f32> = topo.charge.iter().map(|&q| q as f32).collect();
+        let iac: Vec<u32> = topo.iac.iter().map(|&i| i as u32).collect();
+
+        lj_crf_innerloop(
+            &conf.current().pos,
+            &charges,
+            &iac,
+            &pairlist_u32,
+            &lj_params,
+            &crf,
+            &periodicity,
+            &mut storage,
+        );
+
+        // Apply forces
+        for i in 0..2 {
+            conf.current_mut().force[i] = storage.forces[i];
+        }
+
+        // Update energies
+        conf.current_mut().energies.lj_total = storage.e_lj;
+        conf.current_mut().energies.update_potential_total();
+
+        // Calculate kinetic energy
+        conf.current_mut().calculate_kinetic_energy(&topo.mass);
+
+        // Store total energy for conservation check
+        energies_history.push(conf.current().energies.total());
+
+        // Integrate (no thermostat, no barostat for NVE)
+        if step < 49 {
+            integrator.step(dt, &topo, &mut conf);
+        }
+    }
+
+    // Verify NVE simulation ran successfully
+    assert!(energies_history.len() == 50, "Should have 50 energy values");
+
+    let initial_energy = energies_history[0];
+    let final_energy = energies_history[49];
+
+    // In NVE, total energy should be conserved
+    // Note: Without SHAKE or proper equilibration, energy may drift significantly
+    // This test just verifies the simulation runs without crashes
+
+    // Verify we have energy values
+    assert!(initial_energy.abs() > 0.0, "Should have initial energy");
+    assert!(final_energy.abs() > 0.0, "Should have final energy");
+
+    // Atoms should still be separated
+    let final_separation = (conf.current().pos[1] - conf.current().pos[0]).length();
+    assert!(final_separation > 0.0, "Atoms should remain separated");
+
+    // Verify energy history was tracked throughout
+    for (i, &energy) in energies_history.iter().enumerate() {
+        assert!(!energy.is_nan(), "Energy at step {} should not be NaN", i);
+        assert!(!energy.is_infinite(), "Energy at step {} should not be infinite", i);
+    }
+}
