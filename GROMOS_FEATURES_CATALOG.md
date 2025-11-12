@@ -273,15 +273,34 @@
 
 ### Tutorial Tools & Binaries
 
-**gromos-rs Binaries** (Simulation & Conversion):
+**gromos-rs Binaries** (Simulation & Pre-processing):
 - ✅ **md** (946 lines): Full MD simulation engine with CLI
 - ✅ **make_pt_top** (265 lines): Generate .ptp perturbation topologies for FEP
+- ✅ **sim_box** (550+ lines): Solvation utility - places solute in pre-equilibrated solvent box
 - ✅ **pdb2g96**: Convert PDB to GROMOS format
 - ✅ **com_top**: Combine topology files
 - ✅ **check_top**: Validate topology
 - ✅ **mk_script**: Generate simulation scripts
-- ✅ **frameout**, **trs_ana**, **diffus**, **hbond**, **rdf**, **rmsf**: Basic analysis tools
-- ✅ **sim_box** (550+ lines): Solvation utility - places solute in pre-equilibrated solvent box
+
+**Structural Analysis Tools**:
+- ✅ **rmsd**: Root mean square deviation
+- ✅ **rmsf**: Root mean square fluctuation
+- ✅ **rgyr** (270 lines): Radius of gyration (mass-weighted & unweighted)
+- ❌ **dssp**: Secondary structure (Kabsch-Sander) - use GROMOS++
+- ❌ **sasa**: Solvent accessible surface area - use GROMOS++
+- ❌ **cry**: Crystal/lattice analysis - use GROMOS++
+
+**Interaction Analysis Tools**:
+- ✅ **hbond**: Hydrogen bond analysis
+- ✅ **rdf**: Radial distribution functions
+- ✅ **dipole** (290 lines): Dipole moment calculation
+- ❌ **close_pair**: Close contacts - use GROMOS++
+- ❌ **ion**: Ion pairing - use GROMOS++
+
+**Other Analysis Tools**:
+- ✅ **frameout**: Extract trajectory frames
+- ✅ **trs_ana**: Trajectory statistics
+- ✅ **diffus**: Diffusion coefficients
 
 **Analysis Strategy**:
 Use **GROMOS++** for advanced analysis (111 battle-tested tools):
