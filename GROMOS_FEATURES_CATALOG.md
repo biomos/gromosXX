@@ -87,14 +87,14 @@
 |---------|--------|--------|----------|
 | **Lennard-Jones** | ✅ Implemented | - | src/interaction/nonbonded.rs |
 | **Coulomb (cutoff)** | ✅ Implemented | - | src/interaction/nonbonded.rs |
-| **Reaction Field** | ⚠️ Partial | 🔨 1-2 weeks | Complete RF implementation |
-| **Pairlist (basic)** | ⚠️ Partial | 🔨 1 week | src/interaction/pairlist.rs |
-| **Grid Cell Pairlist** | ❌ Not Done | 🔨 2-3 weeks | O(N) spatial decomposition |
-| **Ewald Summation** | ❌ Not Done | 🔨 4-6 weeks | Periodic long-range |
-| **PME** | ❌ Not Done | 🔨 6-8 weeks | FFT-based Ewald |
+| **Reaction Field** | ✅ Implemented | - | src/interaction/electrostatics.rs |
+| **Pairlist (standard)** | ✅ Implemented | - | src/pairlist.rs |
+| **Grid Cell Pairlist** | ✅ Implemented | - | src/pairlist.rs (O(N) spatial decomposition) |
+| **Ewald Summation** | ✅ Implemented | - | src/interaction/electrostatics.rs (via PME) |
+| **PME** | ✅ Implemented | - | src/interaction/electrostatics.rs (FFT-based Ewald) |
 | **P3M** | ❌ Not Done | 🔨 6-8 weeks | Particle-mesh method |
 
-**Progress**: 2.5/8 (31.3%) - LJ + Coulomb done, RF partial
+**Progress**: 7/8 (87.5%) - Full long-range electrostatics implemented!
 **Note**: RF is GROMOS' traditional long-range method (suitable for most applications)
 
 ---
