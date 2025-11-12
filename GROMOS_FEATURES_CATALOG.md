@@ -49,15 +49,15 @@
 | **SHAKE** | ✅ Implemented | - | src/algorithm/constraints.rs |
 | **M-SHAKE** | ✅ Implemented | - | src/algorithm/constraints.rs |
 | **SETTLE** | ✅ Implemented | - | src/algorithm/constraints.rs |
+| **LINCS** | ✅ Implemented | - | src/algorithm/constraints.rs |
 | **Perturbed SHAKE** | ❌ Not Done | 🔨 2-3 weeks | λ-dependent constraints |
-| **LINCS** | ❌ Not Done | 🔨 3-4 weeks | Linear constraint solver |
 | **Flexible Constraints** | ❌ Not Done | 🔨 2 weeks | Time-dependent |
 | **COM Motion Removal** | ❌ Not Done | 🔨 1 week | Remove drift |
 | **Angle Constraints** | ❌ Not Done | 🔨 2 weeks | Fix angles |
 | **Dihedral Constraints** | ❌ Not Done | 🔨 2 weeks | Fix dihedrals |
 | **GPU variants** | ❌ Skip | - | Not needed |
 
-**Progress**: 3/9 implemented (33.3%)
+**Progress**: 4/9 implemented (44.4%)
 
 ---
 
@@ -72,12 +72,12 @@
 | **Improper Dihedrals** | ✅ Implemented | - | src/interaction/bonded.rs |
 | **Perturbed Terms (FEP)** | ⚠️ Partial | 🔨 2-3 weeks | src/fep.rs (framework done) |
 | **Soft-core FEP** | ⚠️ Partial | 🔨 2-3 weeks | src/fep.rs (needs integration) |
+| **Harmonic Angles** | ✅ Implemented | - | src/interaction/bonded.rs |
 | **CG Bonds** | ❌ Not Done | 🔨 1-2 weeks | Coarse-grained |
-| **Harmonic Angles** | ❌ Not Done | 🔨 1 week | Alternative to cosine |
 | **New Dihedrals** | ❌ Not Done | 🔨 2 weeks | Improved formula |
 | **Cross-Dihedrals** | ❌ Not Done | 🔨 2-3 weeks | 8-atom term |
 
-**Progress**: 5/11 core terms (45.5%), FEP framework 80% done
+**Progress**: 6/11 core terms (54.5%), FEP framework 80% done
 
 ---
 
