@@ -1135,6 +1135,9 @@ mod tests {
     use super::*;
     use crate::io::topology::{read_topology_file, build_topology};
     use crate::io::coordinate::read_coordinate_file;
+    use crate::topology::{Topology, Atom};
+    use crate::configuration::Configuration;
+    use crate::math::Vec3;
 
     #[test]
     fn test_bond_forces_quartic() {
@@ -2312,5 +2315,310 @@ mod tests {
         println!("Force conservation: |F_total| = {:.6e}", total_force.length());
         assert!(total_force.length() < 1e-5,
                 "Forces should be conserved (Newton's 3rd law)");
+    }
+
+    #[test]
+    fn test_perturbed_angle_forces() {
+        use crate::fep::LambdaController;
+        use crate::topology::{Angle, AngleParameters, PerturbedAngle};
+
+        println!("\n========== Testing Perturbed Angle Forces ==========");
+
+        // Create simple topology with one perturbed angle
+        let mut topo = Topology::new();
+
+        // Add atoms to solute
+        for i in 0..3 {
+            topo.solute.atoms.push(Atom {
+                name: format!("C{}", i + 1),
+                residue_nr: 1,
+                residue_name: "MOL".to_string(),
+                iac: 1,
+                mass: 12.0,
+                charge: 0.0,
+                is_perturbed: i == 1, // Middle atom is perturbed
+                is_polarisable: false,
+                is_coarse_grained: false,
+            });
+        }
+
+        topo.iac = vec![1, 1, 1];
+        topo.charge = vec![0.0, 0.0, 0.0];
+        topo.mass = vec![12.0, 12.0, 12.0];
+        topo.inverse_mass = vec![1.0/12.0, 1.0/12.0, 1.0/12.0];
+
+        // Add angle parameters for state A (θ₀=109.5°, k=400)
+        topo.angle_parameters.push(AngleParameters {
+            k_cosine: 400.0,
+            k_harmonic: 400.0,
+            theta0: 1.91063, // 109.47° in radians
+        });
+
+        // Add angle parameters for state B (θ₀=120°, k=600)
+        topo.angle_parameters.push(AngleParameters {
+            k_cosine: 600.0,
+            k_harmonic: 600.0,
+            theta0: 2.09440, // 120° in radians
+        });
+
+        // Add perturbed angle
+        topo.perturbed_solute.angles.push(PerturbedAngle {
+            i: 0,
+            j: 1,
+            k: 2,
+            a_type: 0,
+            b_type: 1,
+        });
+
+        // Create configuration with angle at 115° (between A and B equilibria)
+        let mut conf = Configuration::new(3, 1, 1);
+        conf.current_mut().pos[0] = Vec3::new(0.1, 0.0, 0.0);
+        conf.current_mut().pos[1] = Vec3::new(0.0, 0.0, 0.0); // Vertex at origin
+        conf.current_mut().pos[2] = Vec3::new(-0.04226, 0.09063, 0.0); // 115° = 2.00713 rad
+
+        let theta_current = 2.00713; // 115° in radians
+
+        // Test at λ = 0 (state A)
+        let lambda_ctrl_0 = LambdaController::new().with_lambda(0.0);
+        let result_0 = calculate_perturbed_angle_forces(&topo, &conf, &lambda_ctrl_0);
+
+        // Expected: k=400, θ₀=109.47°, θ=115°
+        let diff_0 = theta_current - 1.91063;
+        let expected_energy_0 = 0.5 * 400.0 * diff_0 * diff_0;
+        println!("\nλ=0: Energy = {:.6}, Expected = {:.6}", result_0.energy, expected_energy_0);
+        assert!((result_0.energy - expected_energy_0).abs() < 0.01,
+                "Energy at λ=0 should match state A");
+
+        // Test at λ = 1 (state B)
+        let lambda_ctrl_1 = LambdaController::new().with_lambda(1.0);
+        let result_1 = calculate_perturbed_angle_forces(&topo, &conf, &lambda_ctrl_1);
+
+        // Expected: k=600, θ₀=120°, θ=115°
+        let diff_1 = theta_current - 2.09440;
+        let expected_energy_1 = 0.5 * 600.0 * diff_1 * diff_1;
+        println!("λ=1: Energy = {:.6}, Expected = {:.6}", result_1.energy, expected_energy_1);
+        assert!((result_1.energy - expected_energy_1).abs() < 0.01,
+                "Energy at λ=1 should match state B");
+
+        // Test at λ = 0.5 (interpolated)
+        let lambda_ctrl_05 = LambdaController::new().with_lambda(0.5);
+        let result_05 = calculate_perturbed_angle_forces(&topo, &conf, &lambda_ctrl_05);
+
+        // At λ=0.5: k=500, θ₀=114.735°
+        let k_interp = 0.5 * 400.0 + 0.5 * 600.0;
+        let theta0_interp = 0.5 * 1.91063 + 0.5 * 2.09440;
+        let diff_interp = theta_current - theta0_interp;
+        let expected_energy_05 = 0.5 * k_interp * diff_interp * diff_interp;
+        println!("λ=0.5: Energy = {:.6}, Expected = {:.6}", result_05.energy, expected_energy_05);
+        assert!((result_05.energy - expected_energy_05).abs() < 0.01,
+                "Energy at λ=0.5 should be interpolated");
+
+        // Verify lambda derivative
+        let delta_k = 600.0 - 400.0;
+        let delta_theta0 = 2.09440 - 1.91063;
+        let expected_de_dlambda = 0.5 * delta_k * diff_interp * diff_interp
+                                  - k_interp * diff_interp * delta_theta0;
+        println!("λ=0.5: dE/dλ = {:.6}, Expected = {:.6}",
+                 result_05.lambda_derivative, expected_de_dlambda);
+        assert!((result_05.lambda_derivative - expected_de_dlambda).abs() < 0.01,
+                "Lambda derivative should match analytical formula");
+
+        // Verify force conservation
+        let total_force = result_05.forces[0] + result_05.forces[1] + result_05.forces[2];
+        println!("Force conservation: |F_total| = {:.6e}", total_force.length());
+        assert!(total_force.length() < 1e-4,
+                "Forces should be conserved");
+
+        println!("✓ Perturbed angle forces test passed!");
+    }
+
+    #[test]
+    fn test_perturbed_dihedral_forces() {
+        use crate::fep::LambdaController;
+        use crate::topology::{DihedralParameters, PerturbedDihedral};
+        use std::f64::consts::PI;
+
+        println!("\n========== Testing Perturbed Dihedral Forces ==========");
+
+        // Create simple topology with one perturbed dihedral
+        let mut topo = Topology::new();
+
+        // Add atoms to solute
+        for i in 0..4 {
+            topo.solute.atoms.push(Atom {
+                name: format!("C{}", i + 1),
+                residue_nr: 1,
+                residue_name: "MOL".to_string(),
+                iac: 1,
+                mass: 12.0,
+                charge: 0.0,
+                is_perturbed: i >= 1 && i <= 2, // Middle atoms are perturbed
+                is_polarisable: false,
+                is_coarse_grained: false,
+            });
+        }
+
+        topo.iac = vec![1, 1, 1, 1];
+        topo.charge = vec![0.0, 0.0, 0.0, 0.0];
+        topo.mass = vec![12.0, 12.0, 12.0, 12.0];
+        topo.inverse_mass = vec![1.0/12.0, 1.0/12.0, 1.0/12.0, 1.0/12.0];
+
+        // Add dihedral parameters for state A (k=5.0, pd=0°, m=3)
+        topo.dihedral_parameters.push(DihedralParameters {
+            k: 5.0,
+            pd: 0.0,
+            cospd: 1.0,
+            m: 3,
+        });
+
+        // Add dihedral parameters for state B (k=10.0, pd=60°, m=3)
+        topo.dihedral_parameters.push(DihedralParameters {
+            k: 10.0,
+            pd: PI / 3.0, // 60° in radians
+            cospd: 0.5,
+            m: 3,
+        });
+
+        // Add perturbed dihedral
+        topo.perturbed_solute.proper_dihedrals.push(PerturbedDihedral {
+            i: 0,
+            j: 1,
+            k: 2,
+            l: 3,
+            a_type: 0,
+            b_type: 1,
+        });
+
+        // Create configuration with dihedral at φ=0° (cis)
+        // Use a proper 3D configuration: atoms in zigzag pattern
+        let mut conf = Configuration::new(4, 1, 1);
+        conf.current_mut().pos[0] = Vec3::new(-0.15, 0.0, 0.1);
+        conf.current_mut().pos[1] = Vec3::new(-0.05, 0.0, 0.0);
+        conf.current_mut().pos[2] = Vec3::new(0.05, 0.0, 0.0);
+        conf.current_mut().pos[3] = Vec3::new(0.15, 0.0, 0.1); // Makes cis configuration (φ=0°)
+
+        let phi_current = 0.0; // 0° (cis)
+
+        // Test at λ = 0 (state A)
+        // Energy formula: V = k * (1 + cos(m*φ - pd))
+        let lambda_ctrl_0 = LambdaController::new().with_lambda(0.0);
+        let result_0 = calculate_perturbed_dihedral_forces(&topo, &conf, &lambda_ctrl_0);
+
+        // Expected: V = 5.0 * (1 + cos(3*0° - 0°)) = 5.0 * (1 + 1) = 10.0
+        let arg_0: f64 = 3.0 * phi_current - 0.0;
+        let expected_energy_0 = 5.0 * (1.0 + arg_0.cos());
+        println!("\nλ=0: Energy = {:.6}, Expected = {:.6}", result_0.energy, expected_energy_0);
+        assert!((result_0.energy - expected_energy_0).abs() < 0.1,
+                "Energy at λ=0 should match state A");
+
+        // Test at λ = 1 (state B)
+        let lambda_ctrl_1 = LambdaController::new().with_lambda(1.0);
+        let result_1 = calculate_perturbed_dihedral_forces(&topo, &conf, &lambda_ctrl_1);
+
+        // Expected: V = 10.0 * (1 + cos(3*0° - 60°)) = 10.0 * (1 + cos(-60°)) = 10.0 * 1.5 = 15.0
+        let arg_1: f64 = 3.0 * phi_current - PI / 3.0;
+        let expected_energy_1 = 10.0 * (1.0 + arg_1.cos());
+        println!("λ=1: Energy = {:.6}, Expected = {:.6}", result_1.energy, expected_energy_1);
+        assert!((result_1.energy - expected_energy_1).abs() < 0.1,
+                "Energy at λ=1 should match state B");
+
+        // Test at λ = 0.5 (interpolated)
+        let lambda_ctrl_05 = LambdaController::new().with_lambda(0.5);
+        let result_05 = calculate_perturbed_dihedral_forces(&topo, &conf, &lambda_ctrl_05);
+
+        // At λ=0.5: k=7.5, pd=30°
+        let k_interp = 0.5 * 5.0 + 0.5 * 10.0;
+        let pd_interp = 0.5 * 0.0 + 0.5 * (PI / 3.0);
+        let arg_interp: f64 = 3.0 * phi_current - pd_interp;
+        let expected_energy_05 = k_interp * (1.0 + arg_interp.cos());
+        println!("λ=0.5: Energy = {:.6}, Expected = {:.6}", result_05.energy, expected_energy_05);
+        assert!((result_05.energy - expected_energy_05).abs() < 0.1,
+                "Energy at λ=0.5 should be interpolated");
+
+        // Verify lambda derivative
+        // ∂V/∂λ = ΔK * (1 + cos(arg)) - K * sin(arg) * Δpd
+        let delta_k = 10.0 - 5.0;
+        let delta_pd = PI / 3.0 - 0.0;
+        let expected_de_dlambda = delta_k * (1.0 + arg_interp.cos())
+                                  - k_interp * arg_interp.sin() * delta_pd;
+        println!("λ=0.5: dE/dλ = {:.6}, Expected = {:.6}",
+                 result_05.lambda_derivative, expected_de_dlambda);
+        assert!((result_05.lambda_derivative - expected_de_dlambda).abs() < 0.01,
+                "Lambda derivative should match analytical formula");
+
+        // Verify force conservation
+        let total_force = result_05.forces[0] + result_05.forces[1]
+                        + result_05.forces[2] + result_05.forces[3];
+        println!("Force conservation: |F_total| = {:.6e}", total_force.length());
+        assert!(total_force.length() < 1e-4,
+                "Forces should be conserved");
+
+        println!("✓ Perturbed dihedral forces test passed!");
+    }
+
+    #[test]
+    fn test_perturbed_angle_lambda_scan() {
+        use crate::fep::LambdaController;
+        use crate::topology::{Angle, AngleParameters, PerturbedAngle};
+
+        println!("\n========== Lambda Scan for Perturbed Angles ==========");
+
+        // Create simple topology
+        let mut topo = Topology::new();
+
+        for i in 0..3 {
+            topo.solute.atoms.push(Atom {
+                name: format!("C{}", i + 1),
+                residue_nr: 1,
+                residue_name: "MOL".to_string(),
+                iac: 1,
+                mass: 12.0,
+                charge: 0.0,
+                is_perturbed: i == 1,
+                is_polarisable: false,
+                is_coarse_grained: false,
+            });
+        }
+
+        topo.iac = vec![1, 1, 1];
+        topo.charge = vec![0.0, 0.0, 0.0];
+        topo.mass = vec![12.0, 12.0, 12.0];
+        topo.inverse_mass = vec![1.0/12.0, 1.0/12.0, 1.0/12.0];
+
+        // State A: θ₀=109.5°, k=400
+        topo.angle_parameters.push(AngleParameters {
+            k_cosine: 400.0,
+            k_harmonic: 400.0,
+            theta0: 1.91063,
+        });
+
+        // State B: θ₀=120°, k=600
+        topo.angle_parameters.push(AngleParameters {
+            k_cosine: 600.0,
+            k_harmonic: 600.0,
+            theta0: 2.09440,
+        });
+
+        topo.perturbed_solute.angles.push(PerturbedAngle { i: 0, j: 1, k: 2, a_type: 0, b_type: 1 });
+
+        // Configuration at 115°
+        let mut conf = Configuration::new(3, 1, 1);
+        conf.current_mut().pos[0] = Vec3::new(0.1, 0.0, 0.0);
+        conf.current_mut().pos[1] = Vec3::new(0.0, 0.0, 0.0);
+        conf.current_mut().pos[2] = Vec3::new(-0.04226, 0.09063, 0.0);
+
+        // Scan lambda from 0 to 1
+        println!("\nλ\tEnergy (kJ/mol)\tdE/dλ");
+        println!("---\t--------------\t-----------");
+
+        let n_lambda = 11;
+        for i in 0..n_lambda {
+            let lambda = i as f64 / (n_lambda - 1) as f64;
+            let lambda_ctrl = LambdaController::new().with_lambda(lambda);
+            let result = calculate_perturbed_angle_forces(&topo, &conf, &lambda_ctrl);
+            println!("{:.2}\t{:.6}\t\t{:.6}", lambda, result.energy, result.lambda_derivative);
+        }
+
+        println!("\n✓ Lambda scan completed - TI integral = ∫₀¹ dE/dλ dλ");
     }
 }
