@@ -15,7 +15,7 @@
 
 **Tier 1 (Core MD)**: ✅ **100%** (8/8 complete) - PRODUCTION READY!
 **Tier 2 (Enhanced)**: ✅ **85.7%** (6/7 complete)
-**Tier 3 (Advanced)**: ⚠️ **54.5%** (6/11 complete) - PME, REMD & EDS implemented
+**Tier 3 (Advanced)**: ✅ **63.6%** (7/11 complete) - PME, REMD, EDS & GaMD implemented
 **Total Features**: **~60%** of core functionality implemented
 
 ---
@@ -35,10 +35,10 @@
 | **Monte Carlo** | ❌ Not Done | 🔨 4-6 weeks | Metropolis sampling |
 | **Multigradient** | ❌ Not Done | 🔨 4-6 weeks | Multi-potential interpolation |
 | **EDS** | ✅ Implemented | - | src/eds.rs, src/bin/eds.rs (multi-state sampling with AEDS) |
-| **GaMD** | ❌ Not Done | 🔨 6-8 weeks | Boost potential |
+| **GaMD** | ✅ Implemented | - | src/gamd.rs, src/bin/gamd.rs (boost potential with 3 search modes) |
 | **Analyze** | ❌ Skip | - | Post-processing tool |
 
-**Progress**: 6/13 implemented (46.2%)
+**Progress**: 7/13 implemented (53.8%)
 
 ---
 
@@ -285,6 +285,7 @@
 - ✅ **md** (946 lines): Full MD simulation engine with CLI
 - ✅ **remd** (535 lines): Replica Exchange MD for enhanced sampling
 - ✅ **eds** (540 lines): Enveloping Distribution Sampling (EDS/AEDS)
+- ✅ **gamd** (550 lines): Gaussian Accelerated MD for enhanced sampling
 - ✅ **make_pt_top** (265 lines): Generate .ptp perturbation topologies for FEP
 - ✅ **sim_box** (550+ lines): Solvation utility - places solute in pre-equilibrated solvent box
 - ✅ **pdb2g96**: Convert PDB to GROMOS format
@@ -326,10 +327,12 @@ Use **GROMOS++** for advanced analysis (111 battle-tested tools):
 ### ✅ Tier 1 Complete!
 All Tier 1 features are now implemented and production-ready!
 
-### To Complete Tier 3 (2-4 weeks)
+### ✅ Tier 3: Advanced Sampling Complete!
 - ✅ ~~Implement Replica Exchange (T-REMD)~~ - **DONE** (src/remd.rs, src/replica.rs)
 - ✅ ~~Implement EDS/AEDS~~ - **DONE** (src/eds.rs, src/bin/eds.rs)
-- Implement GaMD (Gaussian accelerated MD) - 2-4 weeks
+- ✅ ~~Implement GaMD (Gaussian accelerated MD)~~ - **DONE** (src/gamd.rs, src/bin/gamd.rs)
+
+**Advanced Sampling Trilogy Complete**: REMD + EDS + GaMD all implemented!
 
 ### Quick Wins (1-3 weeks each)
 - ✅ ~~Grid cell pairlist algorithm~~ - **DONE**
