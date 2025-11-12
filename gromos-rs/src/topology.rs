@@ -63,6 +63,36 @@ pub struct CrossDihedral {
     pub cross_dihedral_type: usize,
 }
 
+/// Perturbed bond (for FEP calculations)
+#[derive(Debug, Clone, Copy)]
+pub struct PerturbedBond {
+    pub i: usize,
+    pub j: usize,
+    pub a_type: usize,  // State A bond type
+    pub b_type: usize,  // State B bond type
+}
+
+/// Perturbed angle (for FEP calculations)
+#[derive(Debug, Clone, Copy)]
+pub struct PerturbedAngle {
+    pub i: usize,
+    pub j: usize,  // Central atom
+    pub k: usize,
+    pub a_type: usize,  // State A angle type
+    pub b_type: usize,  // State B angle type
+}
+
+/// Perturbed dihedral (for FEP calculations)
+#[derive(Debug, Clone, Copy)]
+pub struct PerturbedDihedral {
+    pub i: usize,
+    pub j: usize,
+    pub k: usize,
+    pub l: usize,
+    pub a_type: usize,  // State A dihedral type
+    pub b_type: usize,  // State B dihedral type
+}
+
 /// Bond force field parameters (GROMOS format)
 #[derive(Debug, Clone, Copy)]
 pub struct BondParameters {
@@ -206,6 +236,34 @@ impl Solute {
     }
 }
 
+/// Perturbed solute for FEP calculations
+///
+/// Contains dual-topology (A/B state) bonded terms for free energy perturbation
+#[derive(Debug, Clone)]
+pub struct PerturbedSolute {
+    pub bonds: Vec<PerturbedBond>,
+    pub angles: Vec<PerturbedAngle>,
+    pub proper_dihedrals: Vec<PerturbedDihedral>,
+    pub improper_dihedrals: Vec<PerturbedDihedral>,
+}
+
+impl PerturbedSolute {
+    pub fn new() -> Self {
+        Self {
+            bonds: Vec::new(),
+            angles: Vec::new(),
+            proper_dihedrals: Vec::new(),
+            improper_dihedrals: Vec::new(),
+        }
+    }
+}
+
+impl Default for PerturbedSolute {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// Solvent molecule structure (typically water)
 #[derive(Debug, Clone)]
 pub struct Solvent {
@@ -237,6 +295,7 @@ impl Solvent {
 pub struct Topology {
     // Solute and solvent
     pub solute: Solute,
+    pub perturbed_solute: PerturbedSolute,  // FEP dual-topology terms
     pub solvents: Vec<Solvent>,
 
     // Per-atom properties (flat arrays for all atoms)
@@ -278,6 +337,7 @@ impl Topology {
     pub fn new() -> Self {
         Self {
             solute: Solute::new(),
+            perturbed_solute: PerturbedSolute::new(),
             solvents: Vec::new(),
             iac: Vec::new(),
             mass: Vec::new(),

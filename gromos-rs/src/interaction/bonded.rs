@@ -10,12 +10,21 @@
 use crate::math::Vec3;
 use crate::topology::{Topology, BondParameters, AngleParameters};
 use crate::configuration::Configuration;
+use crate::fep::LambdaController;
 
 /// Result of force calculation: energy and forces
 #[derive(Debug, Clone)]
 pub struct ForceEnergy {
     pub energy: f64,
     pub forces: Vec<Vec3>,
+}
+
+/// Result of FEP force calculation: energy, forces, and lambda derivative
+#[derive(Debug, Clone)]
+pub struct ForceEnergyLambda {
+    pub energy: f64,
+    pub forces: Vec<Vec3>,
+    pub lambda_derivative: f64,  // dE/dλ for free energy calculations
 }
 
 impl ForceEnergy {
@@ -28,6 +37,24 @@ impl ForceEnergy {
 
     pub fn add(&mut self, other: &ForceEnergy) {
         self.energy += other.energy;
+        for i in 0..self.forces.len().min(other.forces.len()) {
+            self.forces[i] += other.forces[i];
+        }
+    }
+}
+
+impl ForceEnergyLambda {
+    pub fn new(num_atoms: usize) -> Self {
+        Self {
+            energy: 0.0,
+            forces: vec![Vec3::ZERO; num_atoms],
+            lambda_derivative: 0.0,
+        }
+    }
+
+    pub fn add(&mut self, other: &ForceEnergyLambda) {
+        self.energy += other.energy;
+        self.lambda_derivative += other.lambda_derivative;
         for i in 0..self.forces.len().min(other.forces.len()) {
             self.forces[i] += other.forces[i];
         }
@@ -834,6 +861,72 @@ pub fn calculate_bonded_forces(
     // Improper dihedrals
     let improper_forces = calculate_improper_dihedral_forces(topo, conf);
     result.add(&improper_forces);
+
+    result
+}
+
+/// Calculate perturbed harmonic bond forces for FEP
+///
+/// Perturbed bonds have dual-topology parameters (state A and B) that are
+/// interpolated based on lambda. This function calculates both the energy
+/// and the lambda derivative (dE/dλ) needed for free energy calculations.
+///
+/// # Energy
+/// V(λ) = 0.5 * K(λ) * (r - r0(λ))²
+/// where:
+/// - K(λ) = (1-λ)*K_A + λ*K_B
+/// - r0(λ) = (1-λ)*r0_A + λ*r0_B
+///
+/// # Lambda derivative
+/// ∂V/∂λ = 0.5 * (K_B - K_A) * (r - r0)² - K(λ) * (r - r0) * (r0_B - r0_A)
+///
+/// # Reference
+/// - GROMOS: md++/src/interaction/bonded/perturbed_harmonic_bond_interaction.cc
+pub fn calculate_perturbed_bond_forces(
+    topo: &Topology,
+    conf: &Configuration,
+    lambda_ctrl: &LambdaController,
+) -> ForceEnergyLambda {
+    let mut result = ForceEnergyLambda::new(topo.num_atoms());
+
+    let lambda = lambda_ctrl.interaction_lambdas.bond;
+    let lambda_derivative = lambda_ctrl.lambda_derivative();
+
+    for bond in &topo.perturbed_solute.bonds {
+        // Get state A and B parameters
+        let params_a = &topo.bond_parameters[bond.a_type];
+        let params_b = &topo.bond_parameters[bond.b_type];
+
+        // Lambda-interpolated parameters
+        let k = (1.0 - lambda) * params_a.k_harmonic + lambda * params_b.k_harmonic;
+        let r0 = (1.0 - lambda) * params_a.r0 + lambda * params_b.r0;
+
+        // Compute bond vector and distance
+        let r_vec = conf.current().pos[bond.j] - conf.current().pos[bond.i];
+        let r_sq = (r_vec.length_squared() as f64).max(1e-10);
+        let r = r_sq.sqrt();
+
+        // Displacement from equilibrium
+        let diff = r - r0;
+
+        // Energy: V = 0.5 * K * (r - r0)²
+        let energy = 0.5 * k * diff * diff;
+
+        // Force magnitude: |F| = K * (r - r0)
+        let force_mag = k * diff / r;
+        let force = r_vec * (force_mag as f32);
+
+        result.forces[bond.i] -= force;
+        result.forces[bond.j] += force;
+        result.energy += energy;
+
+        // Lambda derivative: ∂V/∂λ = 0.5 * ΔK * (r-r0)² - K * (r-r0) * Δr0
+        let delta_k = params_b.k_harmonic - params_a.k_harmonic;
+        let delta_r0 = params_b.r0 - params_a.r0;
+        let de_dlambda = 0.5 * delta_k * diff * diff - k * diff * delta_r0;
+
+        result.lambda_derivative += lambda_derivative * de_dlambda;
+    }
 
     result
 }
@@ -1914,5 +2007,111 @@ mod tests {
         // Allow some tolerance for geometry
         assert!(result.energy > 15.0 && result.energy < 21.0,
                 "Energy for φ+ψ≈2π should be near 2K=20: got {}", result.energy);
+    }
+
+    #[test]
+    fn test_perturbed_bond_lambda_interpolation() {
+        use crate::fep::LambdaController;
+        use crate::topology::{PerturbedBond, BondParameters, Atom};
+
+        let mut topo = Topology::new();
+
+        // Add 2 atoms to solute
+        for i in 0..2 {
+            topo.solute.atoms.push(Atom {
+                name: format!("C{}", i),
+                residue_nr: 1,
+                residue_name: "MOL".to_string(),
+                iac: 0,
+                mass: 12.0,
+                charge: 0.0,
+                is_perturbed: true,
+                is_polarisable: false,
+                is_coarse_grained: false,
+            });
+        }
+
+        topo.iac = vec![0, 0];
+        topo.charge = vec![0.0, 0.0];
+        topo.mass = vec![12.0, 12.0];
+        topo.inverse_mass = vec![1.0/12.0, 1.0/12.0];
+
+        // State A: k=1000, r0=0.1 nm
+        // State B: k=2000, r0=0.15 nm
+        topo.bond_parameters.push(BondParameters {
+            k_quartic: 0.0,
+            k_harmonic: 1000.0,
+            r0: 0.1,
+        });
+        topo.bond_parameters.push(BondParameters {
+            k_quartic: 0.0,
+            k_harmonic: 2000.0,
+            r0: 0.15,
+        });
+
+        topo.perturbed_solute.bonds.push(PerturbedBond {
+            i: 0,
+            j: 1,
+            a_type: 0,
+            b_type: 1,
+        });
+
+        let mut conf = Configuration::new(2, 1, 1);
+        // Bond length = 0.12 nm (between r0_A and r0_B)
+        conf.current_mut().pos[0] = Vec3::new(0.0, 0.0, 0.0);
+        conf.current_mut().pos[1] = Vec3::new(0.12, 0.0, 0.0);
+
+        // Test at λ = 0 (pure state A)
+        let lambda_ctrl_0 = LambdaController::new().with_lambda(0.0);
+        let result_0 = calculate_perturbed_bond_forces(&topo, &conf, &lambda_ctrl_0);
+
+        // At λ=0: k=1000, r0=0.1, r=0.12, diff=0.02
+        // E = 0.5 * 1000 * 0.02² = 0.2
+        let expected_energy_0 = 0.5 * 1000.0 * 0.02 * 0.02;
+        println!("\nλ=0: Energy = {:.6}, Expected = {:.6}", result_0.energy, expected_energy_0);
+        assert!((result_0.energy - expected_energy_0).abs() < 1e-6,
+                "Energy at λ=0 should match state A");
+
+        // Test at λ = 1 (pure state B)
+        let lambda_ctrl_1 = LambdaController::new().with_lambda(1.0);
+        let result_1 = calculate_perturbed_bond_forces(&topo, &conf, &lambda_ctrl_1);
+
+        // At λ=1: k=2000, r0=0.15, r=0.12, diff=-0.03
+        // E = 0.5 * 2000 * 0.03² = 0.9
+        let expected_energy_1 = 0.5 * 2000.0 * 0.03 * 0.03;
+        println!("λ=1: Energy = {:.6}, Expected = {:.6}", result_1.energy, expected_energy_1);
+        assert!((result_1.energy - expected_energy_1).abs() < 1e-6,
+                "Energy at λ=1 should match state B");
+
+        // Test at λ = 0.5 (interpolated)
+        let lambda_ctrl_05 = LambdaController::new().with_lambda(0.5);
+        let result_05 = calculate_perturbed_bond_forces(&topo, &conf, &lambda_ctrl_05);
+
+        // At λ=0.5: k=1500, r0=0.125, r=0.12, diff=-0.005
+        // E = 0.5 * 1500 * 0.005² = 0.01875
+        let k_interp = 0.5 * 1000.0 + 0.5 * 2000.0;
+        let r0_interp = 0.5 * 0.1 + 0.5 * 0.15;
+        let diff_interp = 0.12 - r0_interp;
+        let expected_energy_05 = 0.5 * k_interp * diff_interp * diff_interp;
+        println!("λ=0.5: Energy = {:.6}, Expected = {:.6}", result_05.energy, expected_energy_05);
+        assert!((result_05.energy - expected_energy_05).abs() < 1e-6,
+                "Energy at λ=0.5 should be interpolated");
+
+        // Verify lambda derivative
+        // ∂V/∂λ = 0.5 * ΔK * (r-r0)² - K * (r-r0) * Δr0
+        let delta_k = 2000.0 - 1000.0;
+        let delta_r0 = 0.15 - 0.1;
+        let expected_de_dlambda = 0.5 * delta_k * diff_interp * diff_interp
+                                  - k_interp * diff_interp * delta_r0;
+        println!("λ=0.5: dE/dλ = {:.6}, Expected = {:.6}",
+                 result_05.lambda_derivative, expected_de_dlambda);
+        assert!((result_05.lambda_derivative - expected_de_dlambda).abs() < 1e-6,
+                "Lambda derivative should match analytical formula");
+
+        // Verify force conservation
+        let total_force = result_05.forces[0] + result_05.forces[1];
+        println!("Force conservation: |F_total| = {:.6e}", total_force.length());
+        assert!(total_force.length() < 1e-5,
+                "Forces should be conserved (Newton's 3rd law)");
     }
 }
