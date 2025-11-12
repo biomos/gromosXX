@@ -31,4 +31,8 @@ pub use restraints::{
     PositionRestraints,
     DistanceRestraint,
     DistanceRestraints,
+    AngleRestraint,
+    AngleRestraints,
+    DihedralRestraint,
+    DihedralRestraints,
 };

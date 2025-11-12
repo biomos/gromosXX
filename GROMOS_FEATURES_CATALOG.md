@@ -107,8 +107,8 @@
 |---------|--------|--------|----------|
 | **Distance Restraints** | ✅ Implemented | - | src/interaction/restraints.rs |
 | **Position Restraints** | ✅ Implemented | - | src/interaction/restraints.rs |
-| **Angle Restraints** | ❌ Not Done | 🔨 1-2 weeks | NMR refinement |
-| **Dihedral Restraints** | ❌ Not Done | 🔨 1-2 weeks | NMR refinement |
+| **Angle Restraints** | ✅ Implemented | - | src/interaction/restraints.rs |
+| **Dihedral Restraints** | ✅ Implemented | - | src/interaction/restraints.rs |
 | **J-value Restraints** | ❌ Not Done | 🔨 2-3 weeks | NMR coupling |
 | **RDC Restraints** | ❌ Not Done | 🔨 3-4 weeks | NMR orientation |
 | **Order Parameter** | ❌ Not Done | 🔨 2-3 weeks | Dynamics |
@@ -119,7 +119,7 @@
 | **NEMD** | ❌ Not Done | 🔨 3-4 weeks | Non-equilibrium |
 | **Symmetry Restraints** | ❌ Not Done | 🔨 2-3 weeks | Enforce symmetry |
 
-**Progress**: 2/13 implemented (15.4%)
+**Progress**: 4/13 implemented (30.8%)
 
 ---
 
@@ -215,7 +215,7 @@
 ### Quick Wins Remaining (1-2 weeks each)
 1. **Scaled Leap-Frog** (1-2 days) - Multiple time-stepping
 2. **Lattice Shift** (1-2 weeks) - FEP with long-range
-3. **Angle/Dihedral Restraints** (1-2 weeks each) - NMR refinement
+3. ✅ ~~**Angle/Dihedral Restraints**~~ - **DONE** (src/interaction/restraints.rs)
 
 ---
 
@@ -324,7 +324,7 @@ All Tier 1 features are now implemented and production-ready!
 - ✅ ~~PME/Ewald Summation~~ - **DONE**
 - Scaled Leap-Frog integrator (1-2 days)
 - Lattice shift tracking (1-2 weeks)
-- NMR restraints (angle/dihedral, 1-2 weeks each)
+- ✅ ~~NMR restraints (angle/dihedral)~~ - **DONE** (src/interaction/restraints.rs)
 
 ### FEP I/O - ✅ COMPLETE!
 - ✅ ~~.ptp perturbation topology writer~~ - **DONE** (src/io/ptp.rs)
