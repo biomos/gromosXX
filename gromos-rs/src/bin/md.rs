@@ -15,8 +15,6 @@ use gromos_rs::{
         energy::{EnergyWriter, EnergyFrame},
         GamdBlock, EdsBlock,
     },
-    gamd::GamdParameters,
-    eds::EDSParameters,
     interaction::{
         bonded::calculate_bonded_forces,
         nonbonded::{lj_crf_innerloop, CRFParameters, ForceStorage},
@@ -872,7 +870,45 @@ fn main() {
         // Calculate kinetic energy
         state.calculate_kinetic_energy(&topo.mass);
 
+        // Drop state borrow before GAMD boost
+        drop(state);
+
+        // Apply GAMD boost if enabled
+        if let Some(ref mut gamd) = gamd_params {
+            let dihedral_energy = 0.0; // TODO: Separate dihedral energy from bonded
+            let total_potential = conf.current().energies.potential_total;
+
+            // Update GAMD statistics
+            gamd.update_statistics(dihedral_energy, total_potential);
+
+            // Update parameters if in GaMD search mode
+            if gamd.search_mode == gromos_rs::gamd::SearchMode::GamdSearch {
+                gamd.update_all_parameters();
+            }
+
+            // Apply boost potential
+            // For now, use simplified version with only total potential boost
+            // TODO: Separate dihedral forces for dual boost
+            let dihedral_forces = vec![Vec3::ZERO; topo.num_atoms()];
+            let other_forces: Vec<Vec3> = conf.current().force.clone();
+
+            let boost = gamd.apply_boost(
+                &mut conf,
+                dihedral_energy,
+                &dihedral_forces,
+                total_potential,
+                &other_forces,
+            );
+
+            // Add boost to potential energy
+            conf.current_mut().energies.potential_total += boost;
+
+            log_debug!("GAMD boost applied: ΔV={:.4}, V_new={:.4}",
+                boost, conf.current().energies.potential_total);
+        }
+
         // Validate energy
+        let state = conf.current();
         let temp = state.temperature(topo.num_atoms() * 3);
         let ene_validation = validate_energy(
             state.energies.kinetic_total,
