@@ -74,10 +74,10 @@
 | **Soft-core FEP** | ⚠️ Partial | 🔨 2-3 weeks | src/fep.rs (needs integration) |
 | **Harmonic Angles** | ✅ Implemented | - | src/interaction/bonded.rs |
 | **CG Bonds** | ✅ Implemented | - | src/interaction/bonded.rs |
-| **New Dihedrals** | ❌ Not Done | 🔨 2 weeks | Improved formula |
+| **New Dihedrals** | ✅ Implemented | - | src/interaction/bonded.rs |
 | **Cross-Dihedrals** | ❌ Not Done | 🔨 2-3 weeks | 8-atom term |
 
-**Progress**: 7/11 core terms (63.6%), FEP framework 80% done
+**Progress**: 8/11 core terms (72.7%), FEP framework 80% done
 
 ---
 
