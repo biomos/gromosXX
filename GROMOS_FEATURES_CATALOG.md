@@ -154,19 +154,21 @@
 
 ## 8. I/O & File Formats
 
-| Format | Extension | Status | Location |
-|--------|-----------|--------|----------|
-| **Topology (read)** | `.top` | ✅ Implemented | src/io/topology.rs |
-| **Coordinates (read)** | `.cnf` | ✅ Implemented | src/io/coordinate.rs |
-| **Trajectory (write)** | `.trc` | ✅ Implemented | src/io/trajectory.rs |
-| **Energy (write)** | `.tre` | ✅ Implemented | src/io/energy.rs |
-| **Forces (write)** | `.trf` | ✅ Implemented | src/io/force.rs |
-| **Parameters** | `.imd` | ✅ Implemented | src/io/imd.rs (426 lines, full parser) |
-| **Perturbation** | `.ptp` | ❌ Not Done | FEP topology |
-| **Free Energy** | `.dlg` | ❌ Not Done | dH/dλ output |
-| **Restraints** | `.dat/.spec` | ❌ Not Done | Experimental data |
+| Format | Extension | Status | Location | Notes |
+|--------|-----------|--------|----------|-------|
+| **Topology (read)** | `.top` | ✅ Implemented | src/io/topology.rs | Input for simulations |
+| **Coordinates (read)** | `.cnf` | ✅ Implemented | src/io/coordinate.rs | Initial positions |
+| **Parameters (read)** | `.imd` | ✅ Implemented | src/io/imd.rs | 426 lines, full parser |
+| **Trajectory (write)** | `.trc` | ✅ Implemented | src/io/trajectory.rs | Positions/velocities/forces |
+| **Energy (write)** | `.tre` | ✅ Implemented | src/io/energy.rs | Energy components |
+| **Forces (write)** | `.trf` | ✅ Implemented | src/io/force.rs | Detailed force breakdown |
+| **Perturbation** | `.ptp` | ❌ Not Done | FEP topology reader | For FEP simulations |
+| **Free Energy** | `.dlg` | ❌ Not Done | dH/dλ output writer | TI analysis |
+| **Restraints** | `.dat/.spec` | ❌ Not Done | NMR/experimental data | Future |
 
-**Progress**: 6/9 formats (66.7%) - Core I/O complete, FEP files remaining
+**Progress**: 6/9 formats (66.7%) - Core simulation I/O complete!
+
+**Note**: Trajectory *reading* is handled by GROMOS++ (111 analysis tools). gromos-rs focuses on *writing* trajectories efficiently.
 
 ---
 
@@ -270,11 +272,22 @@
 - NMR restraints (J-value, RDC, 2-4 weeks each)
 
 ### Tutorial Tools & Binaries
-- ✅ **Implemented**: pdb2g96, com_top, check_top, mk_script, md, ene_ana, rmsd (7+ tools)
-  - **md** (946 lines): Full MD simulation engine with CLI
-  - **ene_ana**: Energy trajectory analysis with statistics
-  - **rmsd**: RMSD calculation with optional rotational fitting
-- ❌ **Needed**: sim_box (box generation utility)
+
+**gromos-rs Binaries** (Simulation & Conversion):
+- ✅ **md** (946 lines): Full MD simulation engine with CLI
+- ✅ **pdb2g96**: Convert PDB to GROMOS format
+- ✅ **com_top**: Combine topology files
+- ✅ **check_top**: Validate topology
+- ✅ **mk_script**: Generate simulation scripts
+- ✅ **frameout**, **trs_ana**, **diffus**, **hbond**, **rdf**, **rmsf**: Basic analysis tools
+- ❌ **sim_box**: Box generation utility (nice to have)
+
+**Analysis Strategy**:
+Use **GROMOS++** for advanced analysis (111 battle-tested tools):
+- `ener_ana`, `rmsd`, `hbond`, `cluster`, `rdf`, `sasa`, `bar`, etc.
+- gromos-rs writes .trc/.tre/.trf → GROMOS++ reads and analyzes
+- See `GROMOS_PLUSPLUS_INTEGRATION.md` for details
+- **Don't reimplement** - leverage existing tools!
 
 ---
 
@@ -297,3 +310,52 @@ All Tier 1 features are now implemented and production-ready!
 - .ptp perturbation topology reader
 - .dlg free energy output writer
 - Complete perturbed angles and dihedrals (bonds already done!)
+
+---
+
+## 11. GROMOS++ Integration Strategy
+
+**Philosophy**: Don't reimplement - integrate!
+
+### Division of Labor
+| Component | Responsibility | Status |
+|-----------|---------------|--------|
+| **gromos-rs** | Simulation engine (write trajectories) | ✅ Production ready |
+| **GROMOS++** | Analysis tools (read trajectories) | ✅ Use existing 111 tools |
+
+### Workflow
+```
+gromos-rs (Rust)        GROMOS++ (C++)
+    md binary     -->    .trc/.tre/.trf    -->    ener_ana, rmsd, hbond
+   (simulate)           (trajectories)             (analyze)
+```
+
+### What gromos-rs Does
+- ✅ Run MD simulations (NVE/NVT/NPT)
+- ✅ Write trajectory files (.trc, .tre, .trf)
+- ✅ Topology conversion (pdb2g96, com_top)
+- ✅ Basic utilities (check_top, mk_script)
+
+### What GROMOS++ Does (Use Existing Tools)
+- Energy analysis: `ener_ana`, `int_ener`, `dg_ener`
+- Structural: `rmsd`, `rmsf`, `rgyr`, `dssp`, `sasa`
+- Interactions: `hbond`, `rdf`, `ion`, `close_pair`
+- Clustering: `cluster`, `follow`
+- Free energy: `bar`, `ext_ti_ana`
+- **111 tools total** - battle-tested, maintained
+
+### Building GROMOS++
+```bash
+cd gromosPlusPlus/gromos++
+./Config.sh && ./configure && make -j$(nproc)
+# Binaries in: programs/
+```
+
+### Why This Strategy?
+1. ✅ Avoid duplication (20+ years of development)
+2. ✅ Proven, tested code
+3. ✅ Focus gromos-rs on simulation
+4. ✅ User familiarity (existing workflows)
+5. ✅ Less maintenance burden
+
+See `GROMOS_PLUSPLUS_INTEGRATION.md` for complete details.
