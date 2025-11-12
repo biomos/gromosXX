@@ -8,7 +8,7 @@
 use gromos_rs::{
     configuration::{Configuration, Box as SimBox},
     integrator::{Integrator, LeapFrog},
-    math::{Vec3, Rectangular},
+    math::{Vec3, Rectangular, Mat3},
     io::{
         topology::{read_topology_file, build_topology},
         trajectory::TrajectoryWriter,
@@ -19,6 +19,11 @@ use gromos_rs::{
         nonbonded::{lj_crf_innerloop, CRFParameters, ForceStorage},
     },
     pairlist::{PairlistContainer, StandardPairlistAlgorithm},
+    algorithm::{
+        shake, ShakeParameters,
+        berendsen_thermostat, BerendsenThermostatParameters,
+        berendsen_barostat, BerendsenBarostatParameters,
+    },
     validation::{validate_topology, validate_coordinates, validate_configuration, validate_energy},
     logging::{LogLevel, set_log_level, start_timer, Timer},
     log_debug, log_info, log_warn, log_error,
@@ -45,12 +50,22 @@ fn print_usage() {
     eprintln!("  @rf_epsilon Dielectric constant outside cutoff for CRF (default: 61.0)");
     eprintln!("  @rf_kappa   Screening parameter for CRF in nm^-1 (default: 0.0)");
     eprintln!("  @pairlist   Pairlist update frequency in steps (default: 5)");
+    eprintln!("  @thermostat Thermostat: off, berendsen (default: off)");
+    eprintln!("  @tau_t      Thermostat coupling time in ps (default: 0.1)");
+    eprintln!("  @barostat   Barostat: off, berendsen (default: off)");
+    eprintln!("  @tau_p      Barostat coupling time in ps (default: 0.5)");
+    eprintln!("  @pres       Target pressure in bar (default: 1.0)");
+    eprintln!("  @shake      SHAKE constraints: on, off (default: off)");
+    eprintln!("  @shake_tol  SHAKE tolerance (default: 0.0001)");
     eprintln!("  @verbose    Verbose output for debugging (0=normal, 1=verbose, 2=debug)");
     eprintln!();
     eprintln!("Examples:");
     eprintln!("  md @topo system.top @conf initial.g96");
     eprintln!("  md @topo system.top @conf initial.g96 @steps 10000 @dt 0.002");
     eprintln!("  md @topo system.top @conf initial.g96 @cutoff 1.4 @rf_epsilon 61.0");
+    eprintln!("  md @topo system.top @conf initial.g96 @thermostat berendsen @temp 300");
+    eprintln!("  md @topo system.top @conf initial.g96 @barostat berendsen @pres 1.0");
+    eprintln!("  md @topo system.top @conf initial.g96 @shake on @shake_tol 0.0001");
     eprintln!("  md @topo system.top @conf initial.g96 @traj output.trc @ene output.tre @verbose 1");
 }
 
@@ -68,6 +83,17 @@ struct MDArgs {
     rf_epsilon: f64,
     rf_kappa: f64,
     pairlist_update: usize,
+    // Thermostat
+    thermostat: String,      // "off", "berendsen", "nose-hoover"
+    tau_t: f64,              // Thermostat coupling time
+    // Barostat
+    barostat: String,        // "off", "berendsen", "parrinello-rahman"
+    tau_p: f64,              // Barostat coupling time
+    target_pressure: f64,    // Target pressure in bar
+    // Constraints
+    shake_enabled: bool,
+    shake_tolerance: f64,
+    // Output
     nstlog: usize,
     nstxout: usize,
     nstener: usize,
@@ -89,6 +115,17 @@ impl Default for MDArgs {
             rf_epsilon: 61.0,  // Typical for water
             rf_kappa: 0.0,     // No screening
             pairlist_update: 5,
+            // Thermostat
+            thermostat: "off".to_string(),
+            tau_t: 0.1,        // 0.1 ps (typical)
+            // Barostat
+            barostat: "off".to_string(),
+            tau_p: 0.5,        // 0.5 ps (typical)
+            target_pressure: 1.0,  // 1 bar (atmospheric)
+            // Constraints
+            shake_enabled: false,
+            shake_tolerance: 1e-4,  // GROMOS default
+            // Output
             nstlog: 100,
             nstxout: 100,
             nstener: 10,
@@ -170,6 +207,56 @@ fn parse_args(args: Vec<String>) -> Result<MDArgs, String> {
                 if i >= args.len() { return Err("Missing value for @pairlist".to_string()); }
                 md_args.pairlist_update = args[i].parse()
                     .map_err(|_| format!("Invalid value for @pairlist: {}", args[i]))?;
+            }
+            "@thermostat" => {
+                i += 1;
+                if i >= args.len() { return Err("Missing value for @thermostat".to_string()); }
+                md_args.thermostat = args[i].to_lowercase();
+                if !["off", "berendsen", "nose-hoover"].contains(&md_args.thermostat.as_str()) {
+                    return Err(format!("Invalid thermostat: {}. Use: off, berendsen, nose-hoover", args[i]));
+                }
+            }
+            "@tau_t" => {
+                i += 1;
+                if i >= args.len() { return Err("Missing value for @tau_t".to_string()); }
+                md_args.tau_t = args[i].parse()
+                    .map_err(|_| format!("Invalid value for @tau_t: {}", args[i]))?;
+            }
+            "@barostat" => {
+                i += 1;
+                if i >= args.len() { return Err("Missing value for @barostat".to_string()); }
+                md_args.barostat = args[i].to_lowercase();
+                if !["off", "berendsen", "parrinello-rahman"].contains(&md_args.barostat.as_str()) {
+                    return Err(format!("Invalid barostat: {}. Use: off, berendsen, parrinello-rahman", args[i]));
+                }
+            }
+            "@tau_p" => {
+                i += 1;
+                if i >= args.len() { return Err("Missing value for @tau_p".to_string()); }
+                md_args.tau_p = args[i].parse()
+                    .map_err(|_| format!("Invalid value for @tau_p: {}", args[i]))?;
+            }
+            "@pres" | "@pressure" => {
+                i += 1;
+                if i >= args.len() { return Err("Missing value for @pres".to_string()); }
+                md_args.target_pressure = args[i].parse()
+                    .map_err(|_| format!("Invalid value for @pres: {}", args[i]))?;
+            }
+            "@shake" => {
+                i += 1;
+                if i >= args.len() { return Err("Missing value for @shake".to_string()); }
+                let shake_str = args[i].to_lowercase();
+                md_args.shake_enabled = match shake_str.as_str() {
+                    "on" | "yes" | "true" | "1" => true,
+                    "off" | "no" | "false" | "0" => false,
+                    _ => return Err(format!("Invalid value for @shake: {}. Use: on, off", args[i])),
+                };
+            }
+            "@shake_tol" | "@shake_tolerance" => {
+                i += 1;
+                if i >= args.len() { return Err("Missing value for @shake_tol".to_string()); }
+                md_args.shake_tolerance = args[i].parse()
+                    .map_err(|_| format!("Invalid value for @shake_tol: {}", args[i]))?;
             }
             "@verbose" | "@v" => {
                 i += 1;
@@ -515,6 +602,59 @@ fn main() {
     println!("  Initial pairlist: {} pairs", pairlist.total_pairs());
     println!();
 
+    // Setup thermostat
+    let thermostat_params = if md_args.thermostat == "berendsen" {
+        Some(BerendsenThermostatParameters {
+            target_temperature: md_args.temperature,
+            coupling_time: md_args.tau_t,
+        })
+    } else {
+        None
+    };
+
+    if let Some(ref params) = thermostat_params {
+        println!("Setting up thermostat: Berendsen");
+        println!("  Target temp:   {:.1} K", params.target_temperature);
+        println!("  Coupling time: {:.3} ps", params.coupling_time);
+        println!();
+    }
+
+    // Setup barostat
+    let barostat_params = if md_args.barostat == "berendsen" {
+        Some(BerendsenBarostatParameters {
+            target_pressure: md_args.target_pressure,
+            coupling_time: md_args.tau_p,
+            compressibility: 4.5e-5,  // Water compressibility
+            isotropic: true,
+        })
+    } else {
+        None
+    };
+
+    if let Some(ref params) = barostat_params {
+        println!("Setting up barostat: Berendsen");
+        println!("  Target pres:   {:.1} bar", params.target_pressure);
+        println!("  Coupling time: {:.3} ps", params.coupling_time);
+        println!();
+    }
+
+    // Setup SHAKE constraints
+    let shake_params = if md_args.shake_enabled {
+        Some(ShakeParameters {
+            tolerance: md_args.shake_tolerance,
+            max_iterations: 1000,
+        })
+    } else {
+        None
+    };
+
+    if let Some(ref params) = shake_params {
+        println!("Setting up constraints: SHAKE");
+        println!("  Tolerance:     {:.6}", params.tolerance);
+        println!("  Max iter:      {}", params.max_iterations);
+        println!();
+    }
+
     // Setup trajectory writer
     let mut traj_writer = match TrajectoryWriter::new(
         &md_args.traj_file,
@@ -564,6 +704,9 @@ fn main() {
 
         log_debug!("Step {}: time = {:.6} ps", step, time);
 
+        // Virial tensor for barostat (will be updated by nonbonded forces)
+        let mut virial = Mat3::ZERO;
+
         // Update pairlist if needed
         if pairlist.needs_update() {
             log_debug!("Updating pairlist at step {}", step);
@@ -605,6 +748,25 @@ fn main() {
 
         log_debug!("Nonbonded energies: LJ={:.4}, CRF={:.4}",
             nonbonded_storage.e_lj, nonbonded_storage.e_crf);
+
+        // Update virial for barostat
+        virial = Mat3 {
+            x_axis: Vec3::new(
+                nonbonded_storage.virial[0][0] as f32,
+                nonbonded_storage.virial[0][1] as f32,
+                nonbonded_storage.virial[0][2] as f32,
+            ),
+            y_axis: Vec3::new(
+                nonbonded_storage.virial[1][0] as f32,
+                nonbonded_storage.virial[1][1] as f32,
+                nonbonded_storage.virial[1][2] as f32,
+            ),
+            z_axis: Vec3::new(
+                nonbonded_storage.virial[2][0] as f32,
+                nonbonded_storage.virial[2][1] as f32,
+                nonbonded_storage.virial[2][2] as f32,
+            ),
+        };
 
         // Apply forces to configuration (bonded + nonbonded)
         let state = conf.current_mut();
@@ -698,6 +860,37 @@ fn main() {
         // Integrate (skip last step)
         if step < md_args.n_steps {
             integrator.step(md_args.dt, &topo, &mut conf);
+
+            // Apply SHAKE constraints to satisfy bond length constraints
+            if let Some(ref params) = shake_params {
+                log_debug!("Applying SHAKE constraints");
+                let _shake_timer = Timer::new("SHAKE constraints");
+                let shake_result = shake(&topo, &mut conf, md_args.dt, params);
+
+                if !shake_result.converged {
+                    log_warn!("SHAKE did not converge at step {}: {} iterations, error={:.6}",
+                        step, shake_result.iterations, shake_result.max_error);
+                }
+
+                log_debug!("SHAKE converged in {} iterations, error={:.6}",
+                    shake_result.iterations, shake_result.max_error);
+            }
+
+            // Apply thermostat to control temperature
+            if let Some(ref params) = thermostat_params {
+                log_debug!("Applying Berendsen thermostat");
+                let _thermo_timer = Timer::new("Thermostat");
+                berendsen_thermostat(&topo, &mut conf, md_args.dt, params);
+            }
+
+            // Apply barostat to control pressure
+            if let Some(ref params) = barostat_params {
+                log_debug!("Applying Berendsen barostat");
+                let _baro_timer = Timer::new("Barostat");
+
+                // Use virial from nonbonded calculations
+                berendsen_barostat(&topo, &mut conf, md_args.dt, params, &virial);
+            }
         }
     }
 
