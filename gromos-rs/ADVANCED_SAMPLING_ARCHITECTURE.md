@@ -231,11 +231,11 @@ eds_ana @vr eds_vr.dat @input eds.imd
 
 ### Output File Writers (New)
 - [ ] `src/io/output/repdat.rs` - Write replica.dat
-- [ ] `src/io/output/gamd_stats.rs` - Write GaMD statistics
+- [x] `src/io/output/gamd_stats.rs` - Write GaMD statistics
 - [ ] `src/io/output/eds_stats.rs` - Write EDS statistics
 
 ### Binaries (Refactor)
-- [ ] `src/bin/md.rs` - Add GAMD/EDS support via input blocks
+- [x] `src/bin/md.rs` - Add GAMD/EDS support via input blocks (GAMD complete)
 - [ ] `src/bin/repex_mpi.rs` - MPI-based REMD (NEW)
 - [ ] Remove `src/bin/remd.rs` (standalone - incorrect architecture)
 - [ ] Remove `src/bin/gamd.rs` (standalone - incorrect architecture)
