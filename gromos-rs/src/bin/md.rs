@@ -13,6 +13,7 @@ use gromos_rs::{
         topology::{read_topology_file, build_topology},
         trajectory::TrajectoryWriter,
         energy::{EnergyWriter, EnergyFrame},
+        GamdBlock, EdsBlock,
     },
     interaction::{
         bonded::calculate_bonded_forces,
@@ -35,11 +36,12 @@ use std::time::Instant;
 fn print_usage() {
     eprintln!("md - Molecular Dynamics simulation");
     eprintln!();
-    eprintln!("Usage: md @topo <topology> @conf <coordinates> [@steps <n>] [@dt <timestep>] [@traj <output>] [@ene <energy>]");
+    eprintln!("Usage: md @topo <topology> @conf <coordinates> [@input <parameters>] [@steps <n>] [@dt <timestep>] [@traj <output>] [@ene <energy>]");
     eprintln!();
     eprintln!("Arguments:");
     eprintln!("  @topo       Topology file (.top)");
     eprintln!("  @conf       Initial coordinates (.g96)");
+    eprintln!("  @input      Input parameter file (.imd) for GAMD/EDS/advanced sampling");
     eprintln!("  @steps      Number of MD steps (default: 1000)");
     eprintln!("  @dt         Time step in ps (default: 0.002)");
     eprintln!("  @traj       Output trajectory file (.trc, default: md.trc)");
@@ -73,6 +75,7 @@ fn print_usage() {
 struct MDArgs {
     topo_file: String,
     conf_file: String,
+    input_file: Option<String>,  // Optional .imd input file for GAMD/EDS/etc.
     traj_file: String,
     ene_file: String,
     n_steps: usize,
@@ -105,6 +108,7 @@ impl Default for MDArgs {
         Self {
             topo_file: String::new(),
             conf_file: String::new(),
+            input_file: None,
             traj_file: "md.trc".to_string(),
             ene_file: "md.tre".to_string(),
             n_steps: 1000,
@@ -149,6 +153,11 @@ fn parse_args(args: Vec<String>) -> Result<MDArgs, String> {
                 i += 1;
                 if i >= args.len() { return Err("Missing value for @conf".to_string()); }
                 md_args.conf_file = args[i].clone();
+            }
+            "@input" | "@imd" => {
+                i += 1;
+                if i >= args.len() { return Err("Missing value for @input".to_string()); }
+                md_args.input_file = Some(args[i].clone());
             }
             "@traj" => {
                 i += 1;
@@ -505,6 +514,70 @@ fn main() {
             topo.num_atoms(), positions.len());
         eprintln!("Error: Number of atoms in topology ({}) != coordinates ({})",
             topo.num_atoms(), positions.len());
+        process::exit(1);
+    }
+
+    // Parse input file for GAMD/EDS blocks if provided
+    let gamd_block = if let Some(ref input_file) = md_args.input_file {
+        log_debug!("Parsing input file for GAMD block: {}", input_file);
+        match GamdBlock::parse_file(input_file) {
+            Ok(block) => block,
+            Err(e) => {
+                log_warn!("Failed to parse GAMD block: {}", e);
+                None
+            }
+        }
+    } else {
+        None
+    };
+
+    let eds_block = if let Some(ref input_file) = md_args.input_file {
+        log_debug!("Parsing input file for EDS block: {}", input_file);
+        match EdsBlock::parse_file(input_file) {
+            Ok(block) => block,
+            Err(e) => {
+                log_warn!("Failed to parse EDS block: {}", e);
+                None
+            }
+        }
+    } else {
+        None
+    };
+
+    if let Some(ref block) = gamd_block {
+        println!();
+        println!("GAMD Parameters detected:");
+        println!("  Search mode:  {:?}", block.search_mode);
+        println!("  Boost form:   {:?}", block.boost_form);
+        println!("  Threshold:    {:?}", block.threshold_type);
+        println!("  Sigma0 dih:   {:.2}", block.sigma0_dih);
+        println!("  Sigma0 tot:   {:.2}", block.sigma0_tot);
+        if let (Some(k), Some(e)) = (block.k_tot, block.e_tot) {
+            println!("  K_tot:        {:.6}", k);
+            println!("  E_tot:        {:.2}", e);
+        }
+        println!();
+    }
+
+    if let Some(ref block) = eds_block {
+        println!();
+        println!("EDS Parameters detected:");
+        println!("  Num states:   {}", block.num_states);
+        println!("  Form:         {:?}", block.form);
+        println!("  S values:     {:?}", block.s_values);
+        println!("  E offsets:    {:?}", block.e_offsets);
+        println!("  Temperature:  {:.1} K", block.temperature);
+        if block.search_enabled {
+            println!("  AEDS enabled: E_max={:.2}, E_min={:.2}", block.e_max, block.e_min);
+        }
+        println!();
+    }
+
+    // Check for conflicting modes
+    if gamd_block.is_some() && eds_block.is_some() {
+        log_error!("Cannot enable both GAMD and EDS simultaneously");
+        eprintln!("Error: Both GAMD and EDS blocks found in input file");
+        eprintln!("       These methods cannot be used together in the same simulation");
         process::exit(1);
     }
 
