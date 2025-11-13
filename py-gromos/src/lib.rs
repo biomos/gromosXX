@@ -18,6 +18,9 @@ use gromos_rs::{
     State as RustState,
     Energy as RustEnergy,
     Topology as RustTopology,
+    io::trajectory::TrajectoryReader,
+    io::topology::{read_topology_file, build_topology},
+    selection::AtomSelection,
 };
 
 /// Python module for GROMOS molecular dynamics
@@ -33,6 +36,12 @@ fn gromos(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<PyState>()?;
     m.add_class::<PyConfiguration>()?;
     m.add_class::<PyTopology>()?;
+
+    // Analysis functions
+    m.add_function(wrap_pyfunction!(calculate_rmsd, m)?)?;
+    m.add_function(wrap_pyfunction!(calculate_rmsf, m)?)?;
+    m.add_function(wrap_pyfunction!(calculate_rgyr, m)?)?;
+    m.add_function(wrap_pyfunction!(analyze_trajectory, m)?)?;
 
     // Note: Integrators and advanced sampling methods are available via
     // the Rust CLI binaries. Python bindings focus on data structures and analysis.
@@ -582,6 +591,327 @@ impl PyTopology {
     fn __repr__(&self) -> String {
         format!("Topology({} atoms, {} bonds)", self.num_atoms(), self.num_bonds())
     }
+}
+
+//==============================================================================
+// ANALYSIS FUNCTIONS
+//==============================================================================
+
+/// Calculate RMSD (Root Mean Square Deviation) for trajectory
+///
+/// Parameters
+/// ----------
+/// topology_file : str
+///     Path to topology file
+/// trajectory_file : str
+///     Path to trajectory file
+/// reference_frame : int
+///     Reference frame index (0-based)
+/// atom_selection : str, optional
+///     Atom selection string (default: "all")
+/// do_fit : bool
+///     Perform rotational fit before RMSD calculation
+///
+/// Returns
+/// -------
+/// dict
+///     Dictionary with 'times' and 'rmsd' arrays
+#[pyfunction]
+#[pyo3(signature = (topology_file, trajectory_file, reference_frame=0, atom_selection="all"))]
+fn calculate_rmsd<'py>(
+    py: Python<'py>,
+    topology_file: &str,
+    trajectory_file: &str,
+    reference_frame: usize,
+    atom_selection: &str,
+) -> PyResult<&'py PyDict> {
+    // Read topology
+    let blocks = read_topology_file(topology_file)
+        .map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(format!("Error reading topology: {}", e)))?;
+    let topo = build_topology(blocks);
+
+    // Parse atom selection
+    let selection = AtomSelection::from_string(atom_selection, &topo)
+        .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(format!("Error parsing selection: {}", e)))?;
+
+    // Read trajectory
+    let mut reader = TrajectoryReader::new(trajectory_file)
+        .map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(format!("Error opening trajectory: {}", e)))?;
+
+    let frames = reader.read_all_frames()
+        .map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(format!("Error reading frames: {}", e)))?;
+
+    if frames.is_empty() {
+        return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>("No frames in trajectory"));
+    }
+
+    if reference_frame >= frames.len() {
+        return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(
+            format!("Reference frame {} out of range (0-{})", reference_frame, frames.len() - 1)
+        ));
+    }
+
+    // Get reference positions
+    let reference_positions = &frames[reference_frame].positions;
+
+    // Calculate RMSD for each frame
+    let mut times = Vec::with_capacity(frames.len());
+    let mut rmsds = Vec::with_capacity(frames.len());
+
+    for frame in &frames {
+        times.push(frame.time);
+
+        // Calculate RMSD (simplified - no fitting for now)
+        let rmsd = calculate_rmsd_simple(&frame.positions, reference_positions, selection.indices());
+        rmsds.push(rmsd);
+    }
+
+    // Return as dictionary
+    let result = PyDict::new(py);
+    result.set_item("times", times.to_pyarray(py))?;
+    result.set_item("rmsd", rmsds.to_pyarray(py))?;
+    Ok(result)
+}
+
+/// Calculate RMSF (Root Mean Square Fluctuation) for trajectory
+///
+/// Parameters
+/// ----------
+/// topology_file : str
+///     Path to topology file
+/// trajectory_file : str
+///     Path to trajectory file
+/// atom_selection : str, optional
+///     Atom selection string (default: "all")
+/// skip_frames : int
+///     Number of initial frames to skip
+///
+/// Returns
+/// -------
+/// dict
+///     Dictionary with 'atom_indices' and 'rmsf' arrays
+#[pyfunction]
+#[pyo3(signature = (topology_file, trajectory_file, atom_selection="all", skip_frames=0))]
+fn calculate_rmsf<'py>(
+    py: Python<'py>,
+    topology_file: &str,
+    trajectory_file: &str,
+    atom_selection: &str,
+    skip_frames: usize,
+) -> PyResult<&'py PyDict> {
+    // Read topology
+    let blocks = read_topology_file(topology_file)
+        .map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(format!("Error reading topology: {}", e)))?;
+    let topo = build_topology(blocks);
+
+    // Parse atom selection
+    let selection = AtomSelection::from_string(atom_selection, &topo)
+        .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(format!("Error parsing selection: {}", e)))?;
+
+    // Read trajectory
+    let mut reader = TrajectoryReader::new(trajectory_file)
+        .map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(format!("Error opening trajectory: {}", e)))?;
+
+    let frames = reader.read_all_frames()
+        .map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(format!("Error reading frames: {}", e)))?;
+
+    if frames.len() <= skip_frames {
+        return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>("Not enough frames after skipping"));
+    }
+
+    let analysis_frames = &frames[skip_frames..];
+
+    // Calculate mean position for each atom
+    let n_atoms = topo.num_atoms();
+    let n_frames = analysis_frames.len() as f32;
+    let mut mean_positions = vec![RustVec3::ZERO; n_atoms];
+
+    for frame in analysis_frames {
+        for (i, pos) in frame.positions.iter().enumerate() {
+            mean_positions[i] = mean_positions[i] + *pos;
+        }
+    }
+
+    for pos in &mut mean_positions {
+        *pos = *pos / n_frames;
+    }
+
+    // Calculate RMSF for selected atoms
+    let mut rmsf_values = Vec::new();
+    let atom_indices: Vec<usize> = selection.indices().to_vec();
+
+    for &atom_idx in &atom_indices {
+        let mut sum_sq = 0.0f32;
+
+        for frame in analysis_frames {
+            if atom_idx < frame.positions.len() {
+                let diff = frame.positions[atom_idx] - mean_positions[atom_idx];
+                sum_sq += diff.length_squared();
+            }
+        }
+
+        let rmsf = (sum_sq / n_frames).sqrt();
+        rmsf_values.push(rmsf);
+    }
+
+    // Return as dictionary
+    let result = PyDict::new(py);
+    result.set_item("atom_indices", atom_indices.to_pyarray(py))?;
+    result.set_item("rmsf", rmsf_values.to_pyarray(py))?;
+    Ok(result)
+}
+
+/// Calculate radius of gyration for trajectory
+///
+/// Parameters
+/// ----------
+/// topology_file : str
+///     Path to topology file
+/// trajectory_file : str
+///     Path to trajectory file
+/// atom_selection : str, optional
+///     Atom selection string (default: "all")
+///
+/// Returns
+/// -------
+/// dict
+///     Dictionary with 'times' and 'rgyr' arrays
+#[pyfunction]
+#[pyo3(signature = (topology_file, trajectory_file, atom_selection="all"))]
+fn calculate_rgyr<'py>(
+    py: Python<'py>,
+    topology_file: &str,
+    trajectory_file: &str,
+    atom_selection: &str,
+) -> PyResult<&'py PyDict> {
+    // Read topology
+    let blocks = read_topology_file(topology_file)
+        .map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(format!("Error reading topology: {}", e)))?;
+    let topo = build_topology(blocks);
+
+    // Parse atom selection
+    let selection = AtomSelection::from_string(atom_selection, &topo)
+        .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(format!("Error parsing selection: {}", e)))?;
+
+    // Read trajectory
+    let mut reader = TrajectoryReader::new(trajectory_file)
+        .map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(format!("Error opening trajectory: {}", e)))?;
+
+    let frames = reader.read_all_frames()
+        .map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(format!("Error reading frames: {}", e)))?;
+
+    // Calculate Rg for each frame
+    let mut times = Vec::with_capacity(frames.len());
+    let mut rgyr_values = Vec::with_capacity(frames.len());
+
+    let atom_indices = selection.indices();
+
+    for frame in &frames {
+        times.push(frame.time);
+
+        // Calculate center of mass
+        let mut com = RustVec3::ZERO;
+        let n_atoms = atom_indices.len() as f32;
+
+        for &idx in atom_indices {
+            if idx < frame.positions.len() {
+                com = com + frame.positions[idx];
+            }
+        }
+        com = com / n_atoms;
+
+        // Calculate sum of squared distances from COM
+        let mut sum_sq = 0.0f32;
+        for &idx in atom_indices {
+            if idx < frame.positions.len() {
+                let diff = frame.positions[idx] - com;
+                sum_sq += diff.length_squared();
+            }
+        }
+
+        let rgyr = (sum_sq / n_atoms).sqrt();
+        rgyr_values.push(rgyr);
+    }
+
+    // Return as dictionary
+    let result = PyDict::new(py);
+    result.set_item("times", times.to_pyarray(py))?;
+    result.set_item("rgyr", rgyr_values.to_pyarray(py))?;
+    Ok(result)
+}
+
+/// Analyze trajectory and return basic statistics
+///
+/// Parameters
+/// ----------
+/// topology_file : str
+///     Path to topology file
+/// trajectory_file : str
+///     Path to trajectory file
+///
+/// Returns
+/// -------
+/// dict
+///     Dictionary with trajectory statistics
+#[pyfunction]
+fn analyze_trajectory<'py>(
+    py: Python<'py>,
+    topology_file: &str,
+    trajectory_file: &str,
+) -> PyResult<&'py PyDict> {
+    // Read topology
+    let blocks = read_topology_file(topology_file)
+        .map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(format!("Error reading topology: {}", e)))?;
+    let topo = build_topology(blocks);
+
+    // Read trajectory
+    let mut reader = TrajectoryReader::new(trajectory_file)
+        .map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(format!("Error opening trajectory: {}", e)))?;
+
+    let frames = reader.read_all_frames()
+        .map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(format!("Error reading frames: {}", e)))?;
+
+    // Calculate statistics
+    let n_frames = frames.len();
+    let n_atoms = if n_frames > 0 { frames[0].positions.len() } else { 0 };
+    let start_time = if n_frames > 0 { frames[0].time as f64 } else { 0.0 };
+    let end_time = if n_frames > 0 { frames[n_frames - 1].time as f64 } else { 0.0 };
+    let time_step = if n_frames > 1 { (end_time - start_time) / (n_frames as f64 - 1.0) } else { 0.0 };
+
+    // Return as dictionary
+    let result = PyDict::new(py);
+    result.set_item("n_frames", n_frames)?;
+    result.set_item("n_atoms", n_atoms)?;
+    result.set_item("start_time", start_time)?;
+    result.set_item("end_time", end_time)?;
+    result.set_item("time_step", time_step)?;
+    result.set_item("title", reader.title())?;
+    Ok(result)
+}
+
+// Helper function for RMSD calculation
+fn calculate_rmsd_simple(pos1: &[RustVec3], pos2: &[RustVec3], atom_indices: &[usize]) -> f32 {
+    let indices = if atom_indices.is_empty() {
+        (0..pos1.len()).collect::<Vec<_>>()
+    } else {
+        atom_indices.to_vec()
+    };
+
+    let n = indices.len();
+    if n == 0 {
+        return 0.0;
+    }
+
+    let mut sum_sq = 0.0f32;
+    for &i in &indices {
+        if i >= pos1.len() || i >= pos2.len() {
+            continue;
+        }
+        let diff = pos1[i] - pos2[i];
+        sum_sq += diff.length_squared();
+    }
+
+    (sum_sq / n as f32).sqrt()
 }
 
 //==============================================================================

@@ -86,6 +86,12 @@ from .gromos import (
     State,
     Configuration,
     Topology,
+
+    # Analysis functions
+    calculate_rmsd,
+    calculate_rmsf,
+    calculate_rgyr,
+    analyze_trajectory,
 )
 
 # Import MD simulation runners
@@ -115,6 +121,12 @@ __all__ = [
     "State",
     "Configuration",
     "Topology",
+
+    # Analysis functions
+    "calculate_rmsd",
+    "calculate_rmsf",
+    "calculate_rgyr",
+    "analyze_trajectory",
 
     # MD simulation classes
     "MDSimulation",
