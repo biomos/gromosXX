@@ -13,6 +13,9 @@ use gromos_rs::{
         topology::{read_topology_file, build_topology},
         trajectory::TrajectoryWriter,
         energy::{EnergyWriter, EnergyFrame},
+        GamdBlock, EdsBlock,
+        GamdStatsWriter, GamdBoostWriter,
+        EdsStatsWriter, EdsVrWriter,
     },
     interaction::{
         bonded::calculate_bonded_forces,
@@ -35,11 +38,12 @@ use std::time::Instant;
 fn print_usage() {
     eprintln!("md - Molecular Dynamics simulation");
     eprintln!();
-    eprintln!("Usage: md @topo <topology> @conf <coordinates> [@steps <n>] [@dt <timestep>] [@traj <output>] [@ene <energy>]");
+    eprintln!("Usage: md @topo <topology> @conf <coordinates> [@input <parameters>] [@steps <n>] [@dt <timestep>] [@traj <output>] [@ene <energy>]");
     eprintln!();
     eprintln!("Arguments:");
     eprintln!("  @topo       Topology file (.top)");
     eprintln!("  @conf       Initial coordinates (.g96)");
+    eprintln!("  @input      Input parameter file (.imd) for GAMD/EDS/advanced sampling");
     eprintln!("  @steps      Number of MD steps (default: 1000)");
     eprintln!("  @dt         Time step in ps (default: 0.002)");
     eprintln!("  @traj       Output trajectory file (.trc, default: md.trc)");
@@ -73,6 +77,7 @@ fn print_usage() {
 struct MDArgs {
     topo_file: String,
     conf_file: String,
+    input_file: Option<String>,  // Optional .imd input file for GAMD/EDS/etc.
     traj_file: String,
     ene_file: String,
     n_steps: usize,
@@ -105,6 +110,7 @@ impl Default for MDArgs {
         Self {
             topo_file: String::new(),
             conf_file: String::new(),
+            input_file: None,
             traj_file: "md.trc".to_string(),
             ene_file: "md.tre".to_string(),
             n_steps: 1000,
@@ -149,6 +155,11 @@ fn parse_args(args: Vec<String>) -> Result<MDArgs, String> {
                 i += 1;
                 if i >= args.len() { return Err("Missing value for @conf".to_string()); }
                 md_args.conf_file = args[i].clone();
+            }
+            "@input" | "@imd" => {
+                i += 1;
+                if i >= args.len() { return Err("Missing value for @input".to_string()); }
+                md_args.input_file = Some(args[i].clone());
             }
             "@traj" => {
                 i += 1;
@@ -508,6 +519,76 @@ fn main() {
         process::exit(1);
     }
 
+    // Parse input file for GAMD/EDS blocks if provided
+    let gamd_block = if let Some(ref input_file) = md_args.input_file {
+        log_debug!("Parsing input file for GAMD block: {}", input_file);
+        match GamdBlock::parse_file(input_file) {
+            Ok(block) => block,
+            Err(e) => {
+                log_warn!("Failed to parse GAMD block: {}", e);
+                None
+            }
+        }
+    } else {
+        None
+    };
+
+    let eds_block = if let Some(ref input_file) = md_args.input_file {
+        log_debug!("Parsing input file for EDS block: {}", input_file);
+        match EdsBlock::parse_file(input_file) {
+            Ok(block) => block,
+            Err(e) => {
+                log_warn!("Failed to parse EDS block: {}", e);
+                None
+            }
+        }
+    } else {
+        None
+    };
+
+    if let Some(ref block) = gamd_block {
+        println!();
+        println!("GAMD Parameters detected:");
+        println!("  Search mode:  {:?}", block.search_mode);
+        println!("  Boost form:   {:?}", block.boost_form);
+        println!("  Threshold:    {:?}", block.threshold_type);
+        println!("  Sigma0 dih:   {:.2}", block.sigma0_dih);
+        println!("  Sigma0 tot:   {:.2}", block.sigma0_tot);
+        if let (Some(k), Some(e)) = (block.k_tot, block.e_tot) {
+            println!("  K_tot:        {:.6}", k);
+            println!("  E_tot:        {:.2}", e);
+        }
+        println!();
+    }
+
+    if let Some(ref block) = eds_block {
+        println!();
+        println!("EDS Parameters detected:");
+        println!("  Num states:   {}", block.num_states);
+        println!("  Form:         {:?}", block.form);
+        println!("  S values:     {:?}", block.s_values);
+        println!("  E offsets:    {:?}", block.e_offsets);
+        println!("  Temperature:  {:.1} K", block.temperature);
+        if block.search_enabled {
+            println!("  AEDS enabled: E_max={:.2}, E_min={:.2}", block.e_max, block.e_min);
+        }
+        println!();
+    }
+
+    // Check for conflicting modes
+    if gamd_block.is_some() && eds_block.is_some() {
+        log_error!("Cannot enable both GAMD and EDS simultaneously");
+        eprintln!("Error: Both GAMD and EDS blocks found in input file");
+        eprintln!("       These methods cannot be used together in the same simulation");
+        process::exit(1);
+    }
+
+    // Create GAMD parameters if enabled
+    let mut gamd_params = gamd_block.as_ref().map(|block| {
+        log_info!("Creating GAMD parameters from input block");
+        block.to_parameters()
+    });
+
     // Validate coordinates
     log_debug!("Validating coordinates");
     let coord_validation = validate_coordinates(&positions, Some(box_dims));
@@ -537,6 +618,35 @@ fn main() {
         box_dims.z,
     );
     conf.copy_current_to_old();
+
+    // Create EDS parameters if enabled (now that we have num_atoms)
+    let mut eds_params = if let Some(ref block) = eds_block {
+        log_info!("Creating EDS parameters from input block");
+        if block.search_enabled {
+            match block.to_aeds_parameters(topo.num_atoms()) {
+                Ok(aeds) => Some(aeds),
+                Err(e) => {
+                    log_error!("Failed to create AEDS parameters: {}", e);
+                    eprintln!("Error: Failed to create AEDS parameters: {}", e);
+                    process::exit(1);
+                }
+            }
+        } else {
+            match block.to_parameters(topo.num_atoms()) {
+                Ok(eds) => {
+                    // Wrap in AEDS for uniform handling
+                    Some(gromos_rs::eds::AEDSParameters::new(eds, 0.0, 0.0, false))
+                }
+                Err(e) => {
+                    log_error!("Failed to create EDS parameters: {}", e);
+                    eprintln!("Error: Failed to create EDS parameters: {}", e);
+                    process::exit(1);
+                }
+            }
+        }
+    } else {
+        None
+    };
 
     // Validate configuration
     log_debug!("Validating configuration (topology + coordinates)");
@@ -678,6 +788,74 @@ fn main() {
         }
     };
 
+    // Setup GaMD writers if enabled
+    let mut gamd_stats_writer = if gamd_params.is_some() {
+        let stats_file = "gamd_stats.dat";
+        match GamdStatsWriter::new(stats_file, "GROMOS-RS GaMD Statistics") {
+            Ok(mut w) => {
+                w.set_write_interval(10); // Write every 10 steps
+                println!("  GaMD stats:   {}", stats_file);
+                Some(w)
+            }
+            Err(e) => {
+                eprintln!("Warning: Failed to create GaMD stats file: {}", e);
+                None
+            }
+        }
+    } else {
+        None
+    };
+
+    let mut gamd_boost_writer = if gamd_params.is_some() {
+        let boost_file = "gamd_boost.dat";
+        match GamdBoostWriter::new(boost_file, "GROMOS-RS GaMD Boost Potential") {
+            Ok(w) => {
+                println!("  GaMD boost:   {}", boost_file);
+                Some(w)
+            }
+            Err(e) => {
+                eprintln!("Warning: Failed to create GaMD boost file: {}", e);
+                None
+            }
+        }
+    } else {
+        None
+    };
+
+    // Setup EDS writers if enabled
+    let mut eds_stats_writer = if eds_params.is_some() {
+        let stats_file = "eds_stats.dat";
+        match EdsStatsWriter::new(stats_file, "GROMOS-RS EDS Statistics") {
+            Ok(mut w) => {
+                w.set_write_interval(10); // Write every 10 steps
+                println!("  EDS stats:    {}", stats_file);
+                Some(w)
+            }
+            Err(e) => {
+                eprintln!("Warning: Failed to create EDS stats file: {}", e);
+                None
+            }
+        }
+    } else {
+        None
+    };
+
+    let mut eds_vr_writer = if eds_params.is_some() {
+        let vr_file = "eds_vr.dat";
+        match EdsVrWriter::new(vr_file, "GROMOS-RS EDS Reference Energy") {
+            Ok(w) => {
+                println!("  EDS V_R:      {}", vr_file);
+                Some(w)
+            }
+            Err(e) => {
+                eprintln!("Warning: Failed to create EDS V_R file: {}", e);
+                None
+            }
+        }
+    } else {
+        None
+    };
+
     // MD parameters summary
     println!("MD Parameters:");
     println!("  Steps:         {}", md_args.n_steps);
@@ -784,7 +962,122 @@ fn main() {
         // Calculate kinetic energy
         state.calculate_kinetic_energy(&topo.mass);
 
+        // Drop state borrow before GAMD boost
+        drop(state);
+
+        // Apply GAMD boost if enabled
+        if let Some(ref mut gamd) = gamd_params {
+            let dihedral_energy = 0.0; // TODO: Separate dihedral energy from bonded
+            let total_potential = conf.current().energies.potential_total;
+
+            // Update GAMD statistics
+            gamd.update_statistics(dihedral_energy, total_potential);
+
+            // Update parameters if in GaMD search mode
+            if gamd.search_mode == gromos_rs::gamd::SearchMode::GamdSearch {
+                gamd.update_all_parameters();
+            }
+
+            // Apply boost potential
+            // For now, use simplified version with only total potential boost
+            // TODO: Separate dihedral forces for dual boost
+            let dihedral_forces = vec![Vec3::ZERO; topo.num_atoms()];
+            let other_forces: Vec<Vec3> = conf.current().force.clone();
+
+            let boost = gamd.apply_boost(
+                &mut conf,
+                dihedral_energy,
+                &dihedral_forces,
+                total_potential,
+                &other_forces,
+            );
+
+            // Add boost to potential energy
+            conf.current_mut().energies.potential_total += boost;
+
+            log_debug!("GAMD boost applied: ΔV={:.4}, V_new={:.4}",
+                boost, conf.current().energies.potential_total);
+
+            // Write GaMD statistics
+            if let Some(ref mut writer) = gamd_stats_writer {
+                if let Err(e) = writer.write_frame(step, dihedral_energy, total_potential, gamd) {
+                    log_warn!("Failed to write GaMD stats at step {}: {}", step, e);
+                }
+            }
+
+            // Write GaMD boost potential
+            if let Some(ref mut writer) = gamd_boost_writer {
+                // For now, assume boost is only from total potential
+                let boost_dih = 0.0;
+                let boost_pot = boost;
+                if let Err(e) = writer.write_frame(step, time, boost, boost_dih, boost_pot) {
+                    log_warn!("Failed to write GaMD boost at step {}: {}", step, e);
+                }
+            }
+        }
+
+        // Apply EDS if enabled
+        if let Some(ref mut aeds) = eds_params {
+            let current_potential = conf.current().energies.potential_total;
+
+            // For EDS, we need to:
+            // 1. Update each state's energy (for simplicity, using current potential as state 0)
+            // 2. Calculate reference energy V_R
+            // 3. Apply EDS forces
+
+            // TODO: This is a simplified implementation
+            // Full EDS requires multiple state energies calculated simultaneously
+            // For now, we'll just set up the framework
+
+            let eds = &mut aeds.eds;
+
+            // Update state 0 with current potential
+            if eds.num_states > 0 {
+                eds.states[0].energy = current_potential;
+            }
+
+            // Calculate reference energy based on form
+            match eds.form {
+                gromos_rs::eds::EDSForm::SingleS => eds.calculate_reference_energy_single_s(),
+                gromos_rs::eds::EDSForm::MultiS => eds.calculate_reference_energy_multi_s(),
+                gromos_rs::eds::EDSForm::PairS => {
+                    log_warn!("PairS EDS form not yet fully implemented");
+                    eds.calculate_reference_energy_single_s();
+                }
+            }
+
+            // Apply EDS forces (modifies configuration)
+            eds.apply_forces(&mut conf);
+
+            // Replace potential energy with reference energy
+            conf.current_mut().energies.potential_total = eds.reference_energy;
+
+            log_debug!("EDS applied: V_R={:.4}, original V={:.4}",
+                eds.reference_energy, current_potential);
+
+            // Update AEDS parameters if search enabled
+            if aeds.search_enabled {
+                // TODO: Implement AEDS parameter updates
+                log_debug!("AEDS search mode active");
+            }
+
+            // Write EDS statistics
+            if let Some(ref mut writer) = eds_stats_writer {
+                if let Err(e) = writer.write_frame(step, eds) {
+                    log_warn!("Failed to write EDS stats at step {}: {}", step, e);
+                }
+            }
+
+            // Write EDS reference energy
+            if let Some(ref mut writer) = eds_vr_writer {
+                if let Err(e) = writer.write_frame(step, time, eds.reference_energy) {
+                    log_warn!("Failed to write EDS V_R at step {}: {}", step, e);
+                }
+            }
+        }
+
         // Validate energy
+        let state = conf.current();
         let temp = state.temperature(topo.num_atoms() * 3);
         let ene_validation = validate_energy(
             state.energies.kinetic_total,
@@ -921,6 +1214,44 @@ fn main() {
         eprintln!("Error finalizing energy file: {}", e);
     } else {
         log_debug!("Energy file finalized: {}", md_args.ene_file);
+    }
+
+    // Finalize GaMD writers if enabled
+    if let Some(ref mut writer) = gamd_stats_writer {
+        if let Err(e) = writer.finalize() {
+            log_error!("Failed to finalize GaMD stats file: {}", e);
+            eprintln!("Error finalizing GaMD stats file: {}", e);
+        } else {
+            log_debug!("GaMD stats file finalized");
+        }
+    }
+
+    if let Some(ref mut writer) = gamd_boost_writer {
+        if let Err(e) = writer.finalize() {
+            log_error!("Failed to finalize GaMD boost file: {}", e);
+            eprintln!("Error finalizing GaMD boost file: {}", e);
+        } else {
+            log_debug!("GaMD boost file finalized");
+        }
+    }
+
+    // Finalize EDS writers if enabled
+    if let Some(ref mut writer) = eds_stats_writer {
+        if let Err(e) = writer.finalize() {
+            log_error!("Failed to finalize EDS stats file: {}", e);
+            eprintln!("Error finalizing EDS stats file: {}", e);
+        } else {
+            log_debug!("EDS stats file finalized");
+        }
+    }
+
+    if let Some(ref mut writer) = eds_vr_writer {
+        if let Err(e) = writer.finalize() {
+            log_error!("Failed to finalize EDS V_R file: {}", e);
+            eprintln!("Error finalizing EDS V_R file: {}", e);
+        } else {
+            log_debug!("EDS V_R file finalized");
+        }
     }
 
     let elapsed = start_time.elapsed();

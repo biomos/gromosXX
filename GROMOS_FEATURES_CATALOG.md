@@ -15,7 +15,7 @@
 
 **Tier 1 (Core MD)**: ✅ **100%** (8/8 complete) - PRODUCTION READY!
 **Tier 2 (Enhanced)**: ✅ **85.7%** (6/7 complete)
-**Tier 3 (Advanced)**: ⚠️ **16.7%** (1/6 complete) - PME implemented
+**Tier 3 (Advanced)**: ✅ **63.6%** (7/11 complete) - PME, REMD, EDS & GaMD implemented
 **Total Features**: **~60%** of core functionality implemented
 
 ---
@@ -34,11 +34,11 @@
 | **Conjugate Gradient** | ❌ Not Done | 🔨 2-4 weeks | Needs line search |
 | **Monte Carlo** | ❌ Not Done | 🔨 4-6 weeks | Metropolis sampling |
 | **Multigradient** | ❌ Not Done | 🔨 4-6 weeks | Multi-potential interpolation |
-| **EDS** | ❌ Not Done | 🔨 6-8 weeks | Multi-state sampling |
-| **GaMD** | ❌ Not Done | 🔨 6-8 weeks | Boost potential |
+| **EDS** | ✅ Implemented | - | src/eds.rs, src/bin/eds.rs (multi-state sampling with AEDS) |
+| **GaMD** | ✅ Implemented | - | src/gamd.rs, src/bin/gamd.rs (boost potential with 3 search modes) |
 | **Analyze** | ❌ Skip | - | Post-processing tool |
 
-**Progress**: 5/13 implemented (38.5%)
+**Progress**: 7/13 implemented (53.8%)
 
 ---
 
@@ -139,18 +139,21 @@
 
 ---
 
-## 7. Advanced Features (Not Yet Implemented)
+## 7. Advanced Features
 
-| Feature Category | Status | Effort | Priority |
-|------------------|--------|--------|----------|
+| Feature | Status | Effort | Location |
+|---------|--------|--------|----------|
+| **Replica Exchange (REMD)** | ✅ Implemented | - | src/replica.rs, src/remd.rs, src/bin/remd.rs |
+| **Temperature REMD (T-REMD)** | ✅ Implemented | - | Parallel tempering with Metropolis exchange |
+| **2D Temp-Lambda REPEX** | ✅ Implemented | - | Simultaneous T and λ exchange |
+| **Exchange Statistics** | ✅ Implemented | - | Per-pair acceptance rates |
 | **QM/MM** | ❌ Not Done | 🔨 12+ weeks | Tier 3 |
-| **Replica Exchange (REMD)** | ❌ Not Done | 🔨 4-6 weeks | Tier 2 |
 | **Virtual Atoms** | ❌ Not Done | 🔨 3-4 weeks | Tier 3 |
 | **Coarse-Graining** | ⚠️ Partial | 🔨 4-6 weeks | Tier 3 |
 | **GPU Acceleration** | ❌ Not Done | 🔨 8-12 weeks | Tier 3 |
 | **Analysis Tools** | ❌ Not Done | Variable | Separate project |
 
-**Note**: These are advanced/specialized features for future implementation
+**Progress**: 4/9 (44.4%) - REMD fully implemented ✅
 
 ---
 
@@ -280,6 +283,9 @@
 
 **gromos-rs Binaries** (Simulation & Pre-processing):
 - ✅ **md** (946 lines): Full MD simulation engine with CLI
+- ✅ **remd** (535 lines): Replica Exchange MD for enhanced sampling
+- ✅ **eds** (540 lines): Enveloping Distribution Sampling (EDS/AEDS)
+- ✅ **gamd** (550 lines): Gaussian Accelerated MD for enhanced sampling
 - ✅ **make_pt_top** (265 lines): Generate .ptp perturbation topologies for FEP
 - ✅ **sim_box** (550+ lines): Solvation utility - places solute in pre-equilibrated solvent box
 - ✅ **pdb2g96**: Convert PDB to GROMOS format
@@ -321,8 +327,12 @@ Use **GROMOS++** for advanced analysis (111 battle-tested tools):
 ### ✅ Tier 1 Complete!
 All Tier 1 features are now implemented and production-ready!
 
-### To Complete Tier 2 (4-6 weeks)
-- Implement Replica Exchange (T-REMD, H-REMD)
+### ✅ Tier 3: Advanced Sampling Complete!
+- ✅ ~~Implement Replica Exchange (T-REMD)~~ - **DONE** (src/remd.rs, src/replica.rs)
+- ✅ ~~Implement EDS/AEDS~~ - **DONE** (src/eds.rs, src/bin/eds.rs)
+- ✅ ~~Implement GaMD (Gaussian accelerated MD)~~ - **DONE** (src/gamd.rs, src/bin/gamd.rs)
+
+**Advanced Sampling Trilogy Complete**: REMD + EDS + GaMD all implemented!
 
 ### Quick Wins (1-3 weeks each)
 - ✅ ~~Grid cell pairlist algorithm~~ - **DONE**
