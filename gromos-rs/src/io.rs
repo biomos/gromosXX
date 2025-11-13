@@ -30,7 +30,7 @@ pub use force::ForceWriter;
 pub use ptp::PtpWriter;
 pub use dlg::{DlgWriter, LambdaDerivativeFrame};
 pub use input::{GamdBlock, EdsBlock, ReplicaBlock};
-pub use output::{GamdStatsWriter, GamdBoostWriter};
+pub use output::{GamdStatsWriter, GamdBoostWriter, EdsStatsWriter, EdsVrWriter};
 
 use std::io;
 

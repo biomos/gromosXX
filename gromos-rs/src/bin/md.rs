@@ -15,6 +15,7 @@ use gromos_rs::{
         energy::{EnergyWriter, EnergyFrame},
         GamdBlock, EdsBlock,
         GamdStatsWriter, GamdBoostWriter,
+        EdsStatsWriter, EdsVrWriter,
     },
     interaction::{
         bonded::calculate_bonded_forces,
@@ -821,6 +822,40 @@ fn main() {
         None
     };
 
+    // Setup EDS writers if enabled
+    let mut eds_stats_writer = if eds_params.is_some() {
+        let stats_file = "eds_stats.dat";
+        match EdsStatsWriter::new(stats_file, "GROMOS-RS EDS Statistics") {
+            Ok(mut w) => {
+                w.set_write_interval(10); // Write every 10 steps
+                println!("  EDS stats:    {}", stats_file);
+                Some(w)
+            }
+            Err(e) => {
+                eprintln!("Warning: Failed to create EDS stats file: {}", e);
+                None
+            }
+        }
+    } else {
+        None
+    };
+
+    let mut eds_vr_writer = if eds_params.is_some() {
+        let vr_file = "eds_vr.dat";
+        match EdsVrWriter::new(vr_file, "GROMOS-RS EDS Reference Energy") {
+            Ok(w) => {
+                println!("  EDS V_R:      {}", vr_file);
+                Some(w)
+            }
+            Err(e) => {
+                eprintln!("Warning: Failed to create EDS V_R file: {}", e);
+                None
+            }
+        }
+    } else {
+        None
+    };
+
     // MD parameters summary
     println!("MD Parameters:");
     println!("  Steps:         {}", md_args.n_steps);
@@ -1025,6 +1060,20 @@ fn main() {
                 // TODO: Implement AEDS parameter updates
                 log_debug!("AEDS search mode active");
             }
+
+            // Write EDS statistics
+            if let Some(ref mut writer) = eds_stats_writer {
+                if let Err(e) = writer.write_frame(step, eds) {
+                    log_warn!("Failed to write EDS stats at step {}: {}", step, e);
+                }
+            }
+
+            // Write EDS reference energy
+            if let Some(ref mut writer) = eds_vr_writer {
+                if let Err(e) = writer.write_frame(step, time, eds.reference_energy) {
+                    log_warn!("Failed to write EDS V_R at step {}: {}", step, e);
+                }
+            }
         }
 
         // Validate energy
@@ -1183,6 +1232,25 @@ fn main() {
             eprintln!("Error finalizing GaMD boost file: {}", e);
         } else {
             log_debug!("GaMD boost file finalized");
+        }
+    }
+
+    // Finalize EDS writers if enabled
+    if let Some(ref mut writer) = eds_stats_writer {
+        if let Err(e) = writer.finalize() {
+            log_error!("Failed to finalize EDS stats file: {}", e);
+            eprintln!("Error finalizing EDS stats file: {}", e);
+        } else {
+            log_debug!("EDS stats file finalized");
+        }
+    }
+
+    if let Some(ref mut writer) = eds_vr_writer {
+        if let Err(e) = writer.finalize() {
+            log_error!("Failed to finalize EDS V_R file: {}", e);
+            eprintln!("Error finalizing EDS V_R file: {}", e);
+        } else {
+            log_debug!("EDS V_R file finalized");
         }
     }
 
