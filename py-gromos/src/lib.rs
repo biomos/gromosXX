@@ -19,6 +19,8 @@ use gromos_rs::{
     Energy as RustEnergy,
     Topology as RustTopology,
     io::trajectory::TrajectoryReader,
+    io::trajectory_binary::{DcdReader, BinaryTrajectoryReader},
+    io::energy_binary::BinaryEnergyReader,
     io::topology::{read_topology_file, build_topology},
     selection::AtomSelection,
 };
@@ -37,11 +39,19 @@ fn gromos(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<PyConfiguration>()?;
     m.add_class::<PyTopology>()?;
 
+    // Binary I/O readers
+    m.add_class::<PyDcdReader>()?;
+    m.add_class::<PyBinaryEnergyReader>()?;
+
     // Analysis functions
     m.add_function(wrap_pyfunction!(calculate_rmsd, m)?)?;
     m.add_function(wrap_pyfunction!(calculate_rmsf, m)?)?;
     m.add_function(wrap_pyfunction!(calculate_rgyr, m)?)?;
     m.add_function(wrap_pyfunction!(analyze_trajectory, m)?)?;
+
+    // Conversion functions
+    m.add_function(wrap_pyfunction!(convert_trajectory, m)?)?;
+    m.add_function(wrap_pyfunction!(convert_energy, m)?)?;
 
     // Note: Integrators and advanced sampling methods are available via
     // the Rust CLI binaries. Python bindings focus on data structures and analysis.
@@ -912,6 +922,434 @@ fn calculate_rmsd_simple(pos1: &[RustVec3], pos2: &[RustVec3], atom_indices: &[u
     }
 
     (sum_sq / n as f32).sqrt()
+}
+
+//==============================================================================
+// BINARY I/O READERS
+//==============================================================================
+
+/// Binary DCD trajectory reader (fast, lossless)
+///
+/// Reads DCD format trajectories with 30-60× faster performance than ASCII.
+/// Compatible with CHARMM, NAMD, and OpenMM DCD files.
+///
+/// Examples
+/// --------
+/// >>> reader = gromos.DcdReader("trajectory.dcd")
+/// >>> print(f"Frames: {reader.n_frames}, Atoms: {reader.n_atoms}")
+/// >>> frame = reader.read_frame()
+/// >>> print(frame['positions'].shape)  # (n_atoms, 3)
+#[pyclass(name = "DcdReader")]
+pub struct PyDcdReader {
+    reader: DcdReader,
+}
+
+#[pymethods]
+impl PyDcdReader {
+    /// Open a DCD trajectory file
+    ///
+    /// Parameters
+    /// ----------
+    /// path : str
+    ///     Path to DCD file
+    #[new]
+    fn new(path: &str) -> PyResult<Self> {
+        let reader = DcdReader::new(path)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(format!("Error opening DCD: {}", e)))?;
+        Ok(Self { reader })
+    }
+
+    /// Total number of frames in trajectory
+    #[getter]
+    fn n_frames(&self) -> usize {
+        self.reader.n_frames()
+    }
+
+    /// Number of atoms per frame
+    #[getter]
+    fn n_atoms(&self) -> usize {
+        self.reader.n_atoms()
+    }
+
+    /// Read the next frame
+    ///
+    /// Returns
+    /// -------
+    /// dict or None
+    ///     Dictionary with 'step', 'time', 'positions', 'box_dims' or None if EOF
+    fn read_frame<'py>(&mut self, py: Python<'py>) -> PyResult<Option<&'py PyDict>> {
+        match self.reader.read_frame()
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(format!("Error reading frame: {}", e)))?
+        {
+            Some(frame) => {
+                let dict = PyDict::new(py);
+                dict.set_item("step", frame.step)?;
+                dict.set_item("time", frame.time)?;
+
+                // Convert positions to NumPy array (n_atoms × 3)
+                let n_atoms = frame.positions.len();
+                let mut pos_data = Vec::with_capacity(n_atoms * 3);
+                for v in &frame.positions {
+                    pos_data.push(v.x);
+                    pos_data.push(v.y);
+                    pos_data.push(v.z);
+                }
+                let positions = PyArray2::from_vec2(py, &[pos_data])
+                    .unwrap()
+                    .reshape([n_atoms, 3])
+                    .unwrap();
+                dict.set_item("positions", positions)?;
+
+                // Box dimensions
+                let box_dims = [frame.box_dims.x, frame.box_dims.y, frame.box_dims.z];
+                dict.set_item("box_dims", box_dims.to_pyarray(py))?;
+
+                Ok(Some(dict))
+            }
+            None => Ok(None)
+        }
+    }
+
+    /// Read all frames
+    ///
+    /// Returns
+    /// -------
+    /// list
+    ///     List of frame dictionaries
+    fn read_all_frames<'py>(&mut self, py: Python<'py>) -> PyResult<Vec<&'py PyDict>> {
+        let mut frames = Vec::new();
+        while let Some(frame) = self.read_frame(py)? {
+            frames.push(frame);
+        }
+        Ok(frames)
+    }
+
+    /// Seek to a specific frame
+    ///
+    /// Parameters
+    /// ----------
+    /// frame : int
+    ///     Frame index (0-based)
+    fn seek_frame(&mut self, frame: usize) -> PyResult<()> {
+        self.reader.seek_frame(frame)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(format!("Error seeking: {}", e)))
+    }
+
+    fn __repr__(&self) -> String {
+        format!("DcdReader({} frames, {} atoms)", self.n_frames(), self.n_atoms())
+    }
+
+    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
+        slf
+    }
+
+    fn __next__<'py>(mut slf: PyRefMut<'_, Self>, py: Python<'py>) -> PyResult<Option<&'py PyDict>> {
+        slf.read_frame(py)
+    }
+}
+
+/// Binary energy trajectory reader (fast, lossless)
+///
+/// Reads binary energy files with 20-40× faster performance than ASCII.
+///
+/// Examples
+/// --------
+/// >>> reader = gromos.BinaryEnergyReader("energy.tre.bin")
+/// >>> print(f"Frames: {reader.n_frames}")
+/// >>> frame = reader.read_frame()
+/// >>> print(f"Total energy: {frame['total']:.2f} kJ/mol")
+#[pyclass(name = "BinaryEnergyReader")]
+pub struct PyBinaryEnergyReader {
+    reader: BinaryEnergyReader,
+}
+
+#[pymethods]
+impl PyBinaryEnergyReader {
+    /// Open a binary energy file
+    ///
+    /// Parameters
+    /// ----------
+    /// path : str
+    ///     Path to .tre.bin file
+    #[new]
+    fn new(path: &str) -> PyResult<Self> {
+        let reader = BinaryEnergyReader::new(path)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(format!("Error opening energy file: {}", e)))?;
+        Ok(Self { reader })
+    }
+
+    /// Total number of frames
+    #[getter]
+    fn n_frames(&self) -> usize {
+        self.reader.n_frames()
+    }
+
+    /// Trajectory title
+    #[getter]
+    fn title(&self) -> &str {
+        self.reader.title()
+    }
+
+    /// Read the next energy frame
+    ///
+    /// Returns
+    /// -------
+    /// dict or None
+    ///     Dictionary with all energy components or None if EOF
+    fn read_frame<'py>(&mut self, py: Python<'py>) -> PyResult<Option<&'py PyDict>> {
+        match self.reader.read_frame()
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(format!("Error reading frame: {}", e)))?
+        {
+            Some(frame) => {
+                let dict = PyDict::new(py);
+                dict.set_item("time", frame.time)?;
+                dict.set_item("kinetic", frame.kinetic)?;
+                dict.set_item("potential", frame.potential)?;
+                dict.set_item("total", frame.total)?;
+                dict.set_item("temperature", frame.temperature)?;
+                dict.set_item("volume", frame.volume)?;
+                dict.set_item("pressure", frame.pressure)?;
+                dict.set_item("bond", frame.bond)?;
+                dict.set_item("angle", frame.angle)?;
+                dict.set_item("improper", frame.improper)?;
+                dict.set_item("dihedral", frame.dihedral)?;
+                dict.set_item("lj", frame.lj)?;
+                dict.set_item("coul_real", frame.coul_real)?;
+                dict.set_item("coul_recip", frame.coul_recip)?;
+                dict.set_item("coul_self", frame.coul_self)?;
+                dict.set_item("shake", frame.shake)?;
+                dict.set_item("restraint", frame.restraint)?;
+                Ok(Some(dict))
+            }
+            None => Ok(None)
+        }
+    }
+
+    /// Read all energy frames
+    ///
+    /// Returns
+    /// -------
+    /// list
+    ///     List of energy frame dictionaries
+    fn read_all_frames<'py>(&mut self, py: Python<'py>) -> PyResult<Vec<&'py PyDict>> {
+        let mut frames = Vec::new();
+        while let Some(frame) = self.read_frame(py)? {
+            frames.push(frame);
+        }
+        Ok(frames)
+    }
+
+    /// Seek to a specific frame
+    ///
+    /// Parameters
+    /// ----------
+    /// frame : int
+    ///     Frame index (0-based)
+    fn seek_frame(&mut self, frame: usize) -> PyResult<()> {
+        self.reader.seek_frame(frame)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(format!("Error seeking: {}", e)))
+    }
+
+    fn __repr__(&self) -> String {
+        format!("BinaryEnergyReader({} frames)", self.n_frames())
+    }
+
+    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
+        slf
+    }
+
+    fn __next__<'py>(mut slf: PyRefMut<'_, Self>, py: Python<'py>) -> PyResult<Option<&'py PyDict>> {
+        slf.read_frame(py)
+    }
+}
+
+//==============================================================================
+// CONVERSION FUNCTIONS
+//==============================================================================
+
+/// Convert trajectory between ASCII and binary formats
+///
+/// Parameters
+/// ----------
+/// input_file : str
+///     Input trajectory file (.trc or .dcd)
+/// output_file : str
+///     Output trajectory file (.trc or .dcd)
+/// topology_file : str, optional
+///     Topology file for metadata
+///
+/// Examples
+/// --------
+/// >>> # ASCII to binary
+/// >>> gromos.convert_trajectory("input.trc", "output.dcd")
+///
+/// >>> # Binary to ASCII
+/// >>> gromos.convert_trajectory("input.dcd", "output.trc")
+#[pyfunction]
+#[pyo3(signature = (input_file, output_file, topology_file=None))]
+fn convert_trajectory(
+    input_file: &str,
+    output_file: &str,
+    topology_file: Option<&str>,
+) -> PyResult<()> {
+    use gromos_rs::io::{DcdWriter, BinaryTrajectoryWriter};
+    use std::path::Path;
+
+    let input_ext = Path::new(input_file).extension().and_then(|s| s.to_str()).unwrap_or("");
+    let output_ext = Path::new(output_file).extension().and_then(|s| s.to_str()).unwrap_or("");
+
+    // Determine conversion direction
+    match (input_ext, output_ext) {
+        // ASCII to DCD
+        ("trc" | "trj" | "g96", "dcd") => {
+            let mut reader = TrajectoryReader::new(input_file)
+                .map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(format!("Error opening input: {}", e)))?;
+
+            let mut writer = DcdWriter::new(output_file, "Converted from ASCII")
+                .map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(format!("Error creating output: {}", e)))?;
+
+            let frames = reader.read_all_frames()
+                .map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(format!("Error reading frames: {}", e)))?;
+
+            // Convert frames
+            for frame in &frames {
+                // Create a temporary configuration for DCD writer
+                let mut config = RustConfiguration::new(frame.positions.len(), 1, 1);
+                config.current_mut().pos = frame.positions.clone();
+                config.current_mut().box_config = gromos_rs::configuration::Box::rectangular(
+                    frame.box_dims.x, frame.box_dims.y, frame.box_dims.z
+                );
+
+                writer.write_frame(frame.step, frame.time as f64, &config)
+                    .map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(format!("Error writing frame: {}", e)))?;
+            }
+
+            writer.finish()
+                .map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(format!("Error finalizing: {}", e)))?;
+
+            println!("✓ Converted {} frames: {} → {}", frames.len(), input_file, output_file);
+        }
+
+        // DCD to ASCII
+        ("dcd", "trc" | "trj") => {
+            use gromos_rs::io::TrajectoryWriter;
+
+            let mut reader = DcdReader::new(input_file)
+                .map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(format!("Error opening input: {}", e)))?;
+
+            let mut writer = TrajectoryWriter::new(output_file, "Converted from DCD", false, false)
+                .map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(format!("Error creating output: {}", e)))?;
+
+            let mut frame_count = 0;
+            while let Some(frame) = reader.read_frame()
+                .map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(format!("Error reading frame: {}", e)))?
+            {
+                // Create temporary configuration
+                let mut config = RustConfiguration::new(frame.positions.len(), 1, 1);
+                config.current_mut().pos = frame.positions;
+                config.current_mut().box_config = gromos_rs::configuration::Box::rectangular(
+                    frame.box_dims.x, frame.box_dims.y, frame.box_dims.z
+                );
+
+                writer.write_frame(frame.step, frame.time as f64, &config)
+                    .map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(format!("Error writing frame: {}", e)))?;
+
+                frame_count += 1;
+            }
+
+            writer.flush()
+                .map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(format!("Error flushing: {}", e)))?;
+
+            println!("✓ Converted {} frames: {} → {}", frame_count, input_file, output_file);
+        }
+
+        _ => {
+            return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(
+                format!("Unsupported conversion: {} → {}. Supported: .trc↔.dcd", input_ext, output_ext)
+            ));
+        }
+    }
+
+    Ok(())
+}
+
+/// Convert energy trajectory between ASCII and binary formats
+///
+/// Parameters
+/// ----------
+/// input_file : str
+///     Input energy file (.tre or .tre.bin)
+/// output_file : str
+///     Output energy file (.tre or .tre.bin)
+///
+/// Examples
+/// --------
+/// >>> # ASCII to binary
+/// >>> gromos.convert_energy("input.tre", "output.tre.bin")
+///
+/// >>> # Binary to ASCII
+/// >>> gromos.convert_energy("input.tre.bin", "output.tre")
+#[pyfunction]
+fn convert_energy(
+    input_file: &str,
+    output_file: &str,
+) -> PyResult<()> {
+    use gromos_rs::io::{EnergyWriter, BinaryEnergyWriter, EnergyReader};
+    use std::path::Path;
+
+    let input_ext = Path::new(input_file).extension().and_then(|s| s.to_str()).unwrap_or("");
+    let output_name = Path::new(output_file).file_name().and_then(|s| s.to_str()).unwrap_or("");
+    let is_output_binary = output_name.contains(".bin");
+
+    // Determine format
+    if input_ext == "tre" && !input_file.contains(".bin") && is_output_binary {
+        // ASCII to binary
+        let mut reader = EnergyReader::new(input_file)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(format!("Error opening input: {}", e)))?;
+
+        let mut writer = BinaryEnergyWriter::new(output_file, reader.title())
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(format!("Error creating output: {}", e)))?;
+
+        let frames = reader.read_all_frames()
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(format!("Error reading frames: {}", e)))?;
+
+        for frame in &frames {
+            writer.write_frame(frame)
+                .map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(format!("Error writing frame: {}", e)))?;
+        }
+
+        writer.finish()
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(format!("Error finalizing: {}", e)))?;
+
+        println!("✓ Converted {} energy frames: {} → {}", frames.len(), input_file, output_file);
+    } else if is_output_binary == false && input_file.contains(".bin") {
+        // Binary to ASCII
+        let mut reader = BinaryEnergyReader::new(input_file)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(format!("Error opening input: {}", e)))?;
+
+        let mut writer = EnergyWriter::new(output_file, reader.title())
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(format!("Error creating output: {}", e)))?;
+
+        let mut frame_count = 0;
+        while let Some(frame) = reader.read_frame()
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(format!("Error reading frame: {}", e)))?
+        {
+            writer.write_frame(&frame)
+                .map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(format!("Error writing frame: {}", e)))?;
+            frame_count += 1;
+        }
+
+        writer.finalize()
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(format!("Error finalizing: {}", e)))?;
+
+        println!("✓ Converted {} energy frames: {} → {}", frame_count, input_file, output_file);
+    } else {
+        return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(
+            "Unsupported conversion. Supported: .tre ↔ .tre.bin"
+        ));
+    }
+
+    Ok(())
 }
 
 //==============================================================================

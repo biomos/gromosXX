@@ -28,7 +28,7 @@ pub mod output;
 pub use imd::{ImdParameters, TempBathParameters, PressureParameters};
 pub use trajectory::TrajectoryWriter;
 pub use trajectory_binary::{DcdWriter, DcdReader, BinaryFrame, BinaryTrajectoryWriter, BinaryTrajectoryReader};
-pub use energy::{EnergyWriter, EnergyFrame, EnergyBlock};
+pub use energy::{EnergyWriter, EnergyReader, EnergyFrame, EnergyBlock};
 pub use energy_binary::{BinaryEnergyWriter, BinaryEnergyReader};
 pub use force::ForceWriter;
 pub use ptp::PtpWriter;
