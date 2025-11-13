@@ -231,20 +231,20 @@ eds_ana @vr eds_vr.dat @input eds.imd
 
 ### Output File Writers (New)
 - [ ] `src/io/output/repdat.rs` - Write replica.dat
-- [x] `src/io/output/gamd_stats.rs` - Write GaMD statistics
-- [ ] `src/io/output/eds_stats.rs` - Write EDS statistics
+- [x] `src/io/output/gamd_stats.rs` - Write GaMD statistics and boost
+- [x] `src/io/output/eds_stats.rs` - Write EDS statistics and V_R
 
 ### Binaries (Refactor)
-- [x] `src/bin/md.rs` - Add GAMD/EDS support via input blocks (GAMD complete)
+- [x] `src/bin/md.rs` - Add GAMD/EDS support via input blocks (GAMD and EDS complete)
 - [ ] `src/bin/repex_mpi.rs` - MPI-based REMD (NEW)
 - [ ] Remove `src/bin/remd.rs` (standalone - incorrect architecture)
 - [ ] Remove `src/bin/gamd.rs` (standalone - incorrect architecture)
 - [ ] Remove `src/bin/eds.rs` (standalone - incorrect architecture)
 
 ### Analysis Tools (New)
-- [ ] `src/bin/rep_ana.rs` - Analyze replica.dat
-- [ ] `src/bin/gamd_ana.rs` - Analyze GaMD boost potential
-- [ ] `src/bin/eds_ana.rs` - Analyze EDS reference potential
+- [x] `src/bin/rep_ana.rs` - Analyze replica.dat (exchange statistics)
+- [x] `src/bin/gamd_ana.rs` - Analyze GaMD boost potential (reweighting)
+- [x] `src/bin/eds_ana.rs` - Analyze EDS reference potential (free energies)
 
 ### mk_script Enhancements
 - [ ] `src/bin/mk_script.rs` - Add REMD support
