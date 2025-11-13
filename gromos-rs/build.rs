@@ -4,16 +4,23 @@ use std::process::Command;
 fn main() {
     let crate_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
 
-    // Generate C header file using cbindgen
-    cbindgen::Builder::new()
-        .with_crate(crate_dir)
-        .with_language(cbindgen::Language::C)
-        .with_include_guard("GROMOS_RS_H")
-        .with_documentation(true)
-        .with_pragma_once(true)
+    // Generate C header file using cbindgen (with config file)
+    // Note: Binary I/O modules are Rust-only and excluded from C bindings
+    let config = cbindgen::Config::from_file("cbindgen.toml").unwrap_or_default();
+    match cbindgen::Builder::new()
+        .with_crate(&crate_dir)
+        .with_config(config)
         .generate()
-        .expect("Unable to generate C bindings")
-        .write_to_file("gromos_rs.h");
+    {
+        Ok(bindings) => {
+            bindings.write_to_file("gromos_rs.h");
+            println!("cargo:warning=C bindings generated successfully");
+        }
+        Err(e) => {
+            println!("cargo:warning=Unable to generate C bindings: {:?}", e);
+            println!("cargo:warning=Binary I/O modules are Rust-only and excluded from C API");
+        }
+    }
 
     // Auto-detect FFTW3 library and enable feature if available
     if is_fftw3_available() {
