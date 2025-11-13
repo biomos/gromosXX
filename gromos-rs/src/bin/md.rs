@@ -588,13 +588,6 @@ fn main() {
         block.to_parameters()
     });
 
-    // Create EDS parameters if enabled (will be done after topology is fully loaded)
-    let eds_params = eds_block.as_ref().map(|block| {
-        log_info!("Creating EDS parameters from input block");
-        // Note: We need num_atoms, which we'll get after creating configuration
-        block
-    });
-
     // Validate coordinates
     log_debug!("Validating coordinates");
     let coord_validation = validate_coordinates(&positions, Some(box_dims));
@@ -624,6 +617,35 @@ fn main() {
         box_dims.z,
     );
     conf.copy_current_to_old();
+
+    // Create EDS parameters if enabled (now that we have num_atoms)
+    let mut eds_params = if let Some(ref block) = eds_block {
+        log_info!("Creating EDS parameters from input block");
+        if block.search_enabled {
+            match block.to_aeds_parameters(topo.num_atoms()) {
+                Ok(aeds) => Some(aeds),
+                Err(e) => {
+                    log_error!("Failed to create AEDS parameters: {}", e);
+                    eprintln!("Error: Failed to create AEDS parameters: {}", e);
+                    process::exit(1);
+                }
+            }
+        } else {
+            match block.to_parameters(topo.num_atoms()) {
+                Ok(eds) => {
+                    // Wrap in AEDS for uniform handling
+                    Some(gromos_rs::eds::AEDSParameters::new(eds, 0.0, 0.0, false))
+                }
+                Err(e) => {
+                    log_error!("Failed to create EDS parameters: {}", e);
+                    eprintln!("Error: Failed to create EDS parameters: {}", e);
+                    process::exit(1);
+                }
+            }
+        }
+    } else {
+        None
+    };
 
     // Validate configuration
     log_debug!("Validating configuration (topology + coordinates)");
@@ -956,6 +978,52 @@ fn main() {
                 if let Err(e) = writer.write_frame(step, time, boost, boost_dih, boost_pot) {
                     log_warn!("Failed to write GaMD boost at step {}: {}", step, e);
                 }
+            }
+        }
+
+        // Apply EDS if enabled
+        if let Some(ref mut aeds) = eds_params {
+            let current_potential = conf.current().energies.potential_total;
+
+            // For EDS, we need to:
+            // 1. Update each state's energy (for simplicity, using current potential as state 0)
+            // 2. Calculate reference energy V_R
+            // 3. Apply EDS forces
+
+            // TODO: This is a simplified implementation
+            // Full EDS requires multiple state energies calculated simultaneously
+            // For now, we'll just set up the framework
+
+            let eds = &mut aeds.eds;
+
+            // Update state 0 with current potential
+            if eds.num_states > 0 {
+                eds.states[0].energy = current_potential;
+            }
+
+            // Calculate reference energy based on form
+            match eds.form {
+                gromos_rs::eds::EDSForm::SingleS => eds.calculate_reference_energy_single_s(),
+                gromos_rs::eds::EDSForm::MultiS => eds.calculate_reference_energy_multi_s(),
+                gromos_rs::eds::EDSForm::PairS => {
+                    log_warn!("PairS EDS form not yet fully implemented");
+                    eds.calculate_reference_energy_single_s();
+                }
+            }
+
+            // Apply EDS forces (modifies configuration)
+            eds.apply_forces(&mut conf);
+
+            // Replace potential energy with reference energy
+            conf.current_mut().energies.potential_total = eds.reference_energy;
+
+            log_debug!("EDS applied: V_R={:.4}, original V={:.4}",
+                eds.reference_energy, current_potential);
+
+            // Update AEDS parameters if search enabled
+            if aeds.search_enabled {
+                // TODO: Implement AEDS parameter updates
+                log_debug!("AEDS search mode active");
             }
         }
 
