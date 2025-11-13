@@ -1,3 +1,15 @@
 tutorial.zip
 gromos_tutorial/
 gromos_tutorial_livecoms/
+
+# Rust build artifacts
+target/
+
+# Python build artifacts
+*.pyc
+__pycache__/
+*.so
+*.egg-info/
+dist/
+build/
+.pytest_cache/
