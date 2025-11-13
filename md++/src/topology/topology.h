@@ -1363,6 +1363,35 @@ namespace topology
       return m_perturbed_distance_restraint;
     }
     /**
+     * const coordnum restraints accessor.
+     */
+    std::vector<coordnum_restraint_struct > const & coordnum_restraint()const
+    {
+      return m_coordnum_restraint;
+    }
+    /**
+     *  coordnum restraints accessor.
+     */
+    std::vector<coordnum_restraint_struct >  & coordnum_restraint()
+    {
+      return m_coordnum_restraint;
+    } 
+    /**
+     * const perturbed coordnum restraints accessor.
+     */
+    std::vector<perturbed_coordnum_restraint_struct > const & perturbed_coordnum_restraint()const
+    {
+      return m_perturbed_coordnum_restraint;
+    }
+    /**
+     *  perturbed coordnum restraints accessor.
+     */
+    std::vector<perturbed_coordnum_restraint_struct >  & perturbed_coordnum_restraint()
+    {
+      return m_perturbed_coordnum_restraint;
+    } 
+
+    /**
      * const distancefield restraints accessor.
      */
     disfield_restraint_struct const & disfield_restraints()const
@@ -1946,6 +1975,14 @@ namespace topology
      * eds distance restraints
      */
     std::vector<eds_distance_restraint_struct> m_eds_distance_restraint;
+    /**
+     * coordnum restraints 
+     */
+    std::vector<coordnum_restraint_struct > m_coordnum_restraint;
+    /**
+     * perturbed coordnum restraints 
+     */
+    std::vector<perturbed_coordnum_restraint_struct > m_perturbed_coordnum_restraint;
     /**
      * angle restraints
      */
