@@ -24,6 +24,10 @@ import os
 ######## specific code for the test ########
 # set test directory in the repository (gromos_test_files)
 _repo_test_dir='tutorial_pept'
+if os.getenv('CUDA_OPTIONS'):
+    _conf_file = 'gpu_default_param.yaml'
+else:
+    _conf_file = 'default_param.yaml'
 ######## specific code for the test ########
 
 ######## default code ########
@@ -32,7 +36,7 @@ _parent = os.path.dirname(_current)
 sys.path.append(_parent)
 from ..helper_fnc._config_test_params import ConfigTest
 
-_config_file = ConfigTest.find_config_file(_repo_test_dir)
+_config_file = ConfigTest.find_config_file(_repo_test_dir, _conf_file)
 _test_conf = ConfigTest(_config_file)
 
 # make sure to clear_up the sim_dir before running the tests
