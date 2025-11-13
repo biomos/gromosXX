@@ -21,7 +21,7 @@ ENERTRJ
   block TIMESTEP
     subblock TIME 2 1
   block ENERGY03
-    subblock ENER 51 1
+    subblock ENER 52 1
     size NUM_BATHS
     subblock KINENER NUM_BATHS 3
     size NUM_ENERGY_GROUPS
@@ -54,7 +54,7 @@ FRENERTRJ
     subblock TIME 2 1
   block FREEENERDERIVS03
     subblock RLAM 1 1
-    subblock FREEENER 51 1
+    subblock FREEENER 52 1
     size NUM_BATHS
     subblock FREEKINENER NUM_BATHS 3
     size NUM_ENERGY_GROUPS
@@ -218,6 +218,7 @@ totene_phys = ENER[48]
 eds_vr_shift = ENER[49]
 eds_vr_phys = ENER[50]
 totgamd_dV = ENER[51]
+colvar = ENER[52]
 gamd_dV1 = GAMD[2][5]
 gamd_ed1 = GAMD[2][1]
 gamd_et1 = GAMD[2][2]
