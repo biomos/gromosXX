@@ -198,8 +198,7 @@ void interaction::QM_Zone::write(topology::Topology& topo,
   // write separate charges for interaction between the buffer region and MM region
   if (sim.param().qmmm.use_qm_buffer
       && sim.param().qmmm.qm_ch == simulation::qm_ch_dynamic
-      && (sim.param().qmmm.software != simulation::qm_schnetv2 || sim.param().qmmm.software != simulation::qm_schnetv1
-          || sim.steps() % sim.param().qmmm.nn.charge_steps == 0))
+      && sim.param().qmmm.software == simulation::qm_schnetv2)
     {
     // First reset delta charges
     std::fill(topo.qm_delta_charge().begin(), topo.qm_delta_charge().end(), 0.0);
@@ -212,6 +211,14 @@ void interaction::QM_Zone::write(topology::Topology& topo,
         topo.qm_delta_charge(it->index) = delta_charge;
       }
     }
+  }
+  if (sim.param().qmmm.use_qm_buffer
+      && sim.param().qmmm.qm_ch == simulation::qm_ch_dynamic
+      && sim.param().qmmm.software == simulation::qm_schnetv1)
+    {
+    std::ostringstream msg;
+    msg << "Dynamic Charges currently only supported with schnet_v2 worker";
+    io::messages.add(msg.str(), "QM_Zone", io::message::error);
   }
 
   // Write energies
@@ -482,11 +489,6 @@ int interaction::QM_Zone::gather_chargegroups(const topology::Topology& topo,
   for (std::set<QM_Atom>::const_iterator
       qm_it = this->qm.begin(), qm_to = this->qm.end(); qm_it != qm_to; ++qm_it)
     {
-    // Initial dumb implementation - gather only around the first atom, if
-    // AtomType == QM_Atom (true only for QM buffer atoms gathering)
-    if (std::is_same<AtomType,QM_Atom>::value && qm_it != this->qm.begin()) {
-      break;
-    }
     DEBUG(15, "Gathering around QM atom " << qm_it->index);
     const math::Vec& qm_pos = qm_it->pos;
     math::Vec r_qm_cg;
@@ -537,7 +539,7 @@ int interaction::QM_Zone::gather_chargegroups(const topology::Topology& topo,
                 // Atom already in the list but as different periodic image, exit
                 std::ostringstream msg;
                 msg << "QM atom " << (qm_it->index + 1)
-                    << " sees different periodic copy of MM atom "
+                    << " sees different periodic copy of MM/QM_buffer atom "
                     << (set_it->index + 1);
                 io::messages.add(msg.str(), "QM_Zone", io::message::error);
                 return E_BOUNDARY_ERROR;
@@ -645,13 +647,13 @@ int interaction::QM_Zone::_get_buffer_atoms(topology::Topology& topo,
   // update the QM buffer topology so the pairlist algorithm can skip them
   std::set<QM_Atom>::const_iterator set_it = buffer_atoms.begin();
   for (unsigned i = 0; i < topo.num_atoms(); ++i) {
-    if (topo.is_qm_buffer(i)) {
+    if (topo.is_qm_buffer(i)) { // resolves to true if the value is non-zero
       if (topo.is_static_adaptive(i) == 2) {
             topo.is_qm_buffer(i) = 2;
-            buffer_atoms.emplace_hint(set_it,i,conf.current().pos(i),topo.qm_atomic_number(i));
+            buffer_atoms.emplace_hint(set_it, i, conf.current().pos(i), topo.qm_atomic_number(i));
             DEBUG(8, "Atom " << i << " in static buffer");
           }
-      if (topo.is_static_adaptive(i) != 2) {
+      else {
         if (buffer_atoms.count(i)) {
           topo.is_qm_buffer(i) = 1;
           DEBUG(12, "Atom " << i << " in adaptive buffer");
@@ -824,6 +826,16 @@ void interaction::QM_Zone::get_linked_mm_atoms(const topology::Topology& topo
         it != to; ++it) {
     const unsigned qm_i = it->first,
                     mm_i = it->second;
+
+    // Skip if QM atom is not active (neither QM nor active buffer)
+    if (!topo.is_qm(qm_i) &&
+        topo.is_qm_buffer(qm_i) != 1 &&
+        topo.is_qm_buffer(qm_i) != 2)
+    {
+      DEBUG(10, "Skipping link " << mm_i << " since QM atom " << qm_i << " is inactive buffer");
+      continue;
+    }
+
     DEBUG(10, "Gathering MM atom " << mm_i << " linked to QM atom " << qm_i);
     assert(topo.is_qm(qm_i) || topo.is_qm_buffer(qm_i));
     assert(!topo.is_qm(mm_i));
@@ -873,7 +885,19 @@ void interaction::QM_Zone::get_links(const topology::Topology& topo,
   const linkset& links = topo.qmmm_link();
   for (linkset::const_iterator it = links.begin(), to = links.end(); it != to; ++it)
     {
-    // assert that atoms are gathered in the sets
+    const unsigned qm_i = it->first;
+    const unsigned mm_i = it->second;
+
+    // --- Skip if QM atom is inactive (neither QM nor active buffer)
+    if (!topo.is_qm(qm_i) &&
+        topo.is_qm_buffer(qm_i) != 1 &&
+        topo.is_qm_buffer(qm_i) != 2)
+    {
+      DEBUG(12, "Skipping link " << qm_i << "-" << mm_i << " because QM atom " << qm_i << " is inactive buffer");
+      continue;
+    }
+
+      // assert that atoms are gathered in the sets
     assert(this->qm.find(it->first) != this->qm.end());
     assert(this->mm.find(it->second) != this->mm.end());
 

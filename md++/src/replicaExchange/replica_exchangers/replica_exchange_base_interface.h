@@ -165,16 +165,6 @@ namespace re {
      */
     unsigned int globalThreadID;
 
-    /////////////////////////////////////////////////////////
-    /**
-     * Temperature of replica
-     */
-    double T;
-    /**
-     * Lambda of replica
-     */
-    double l;   //think about removing here and putting into l_T HREMD
-    ////////////////////////////////////////////////////////
 
     ////Simulation_MPI
     /**
@@ -194,6 +184,17 @@ namespace re {
      */
     unsigned int simulationThreadID;
 
+
+    /////////////////////////////////////////////////////////
+    /**
+     * Temperature of replica
+     */
+    double T;
+    /**
+     * Lambda of replica
+     */
+    double l;   //think about removing here and putting into l_T HREMD
+    ////////////////////////////////////////////////////////
 
     //REplica Exchange:
     ////Me and my partner

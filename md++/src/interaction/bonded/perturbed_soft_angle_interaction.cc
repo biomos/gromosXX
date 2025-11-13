@@ -123,7 +123,6 @@ static int _calculate_perturbed_soft_angle_interactions
     double diff = cost - cos0;
     double diff2 = diff * diff;
 
-    const double K_diff = K_B-K_A;
     const double cos_diff=angletypes[a_it->B_type].cos0- 
       angletypes[a_it->A_type].cos0;
     
@@ -169,7 +168,7 @@ static int _calculate_perturbed_soft_angle_interactions
 
     DEBUG(9, "energy: " << energy);
 
-    DEBUG(9, "K_diff: " << K_diff);
+    DEBUG(9, "K_diff: " << K_B-K_A);
 
     DEBUG(9, "cos_diff: " << cos_diff);
     

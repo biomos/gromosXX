@@ -118,20 +118,20 @@ static int _calculate_perturbed_angle_restraint_interactions
       }
     }
     
-    double theta0_A = it->A_theta;
+    //double theta0_A = it->A_theta;
     double cost0_A = cos(it->A_theta);
-    double theta0_B = it->B_theta;
+    //double theta0_B = it->B_theta;
     double cost0_B = cos(it->B_theta);
     double cost0 = (1-l) * cost0_A + l * cost0_B;
 
     double theta  = acos(cost);
-    double theta0  = acos(cost0);
+    //double theta0  = acos(cost0);
     (*d_it) = theta;   
  
     DEBUG(9, "theta=" << 180 * theta / math::Pi << " theta0=" << 180 * acos(cost0) / math::Pi);
     
     double delta_cost = cost - cost0;
-    double delta_theta = theta - theta0;
+    //double delta_theta = theta - theta0;
     double K = sim.param().angrest.K;
     double K_A = sim.param().angrest.K;
     double K_B = sim.param().angrest.K;
@@ -199,12 +199,12 @@ static int _calculate_perturbed_angle_restraint_interactions
 
         // determine current lambda for this index
         double lam=(lam_index * lambda_step) + sim.param().precalclam.min_lam;
-
+#ifndef NDEBUG
         double Klam = (1-lam)*K_A + lam*K_B;
         double cos0lam = (1-lam)*cost0_A + lam*cost0_B;
         double difflam = cost - cos0lam;
         double difflam2 = difflam * difflam;
-
+#endif
         double prefactorlam = pow(2.0, it->m + it->n) * pow(lam, it->n) * pow(1.0-lam, it->m);
 
         double en_termlam = 0.5 * K * delta_cost * delta_cost;

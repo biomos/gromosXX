@@ -519,6 +519,21 @@ GAUFILES
 /path/to/gaussian.out
 END
 @endverbatim
+ * GAUFCHK block for the Gaussian worker
+ * The GAUFCHK block specifies the formatted checkpoint file to read gradients data from Gaussian
+ * 
+ * The file has to be created using the 'formcheck' keyword in the GAUROUTE block. Otherwise,
+ * the run ends with an error.
+ *
+ * This block is optional. If unspecified, gradients are read from the standard output file.
+ * Expect reduced precision. If specified as 'tmp', temporary file is created using TMPDIR
+ * environment variable. User-specified files are not deleted after use.
+ *
+ * @verbatim
+GAUFCHK
+/path/to/Test.FChk
+END
+@endverbatim
  *
  * The GAUHEADER block specifies the header part of the Gaussian input file.
  * 
@@ -634,9 +649,9 @@ void io::In_QMMM::read(topology::Topology& topo,
         std::ostream & os) {
   io::messages.add("Reading QM/MM specification file",
                    "In_QMMM", io::message::notice);
-  //std::string blockname = "QMZONE";
+
   this->read_zone(topo, sim, "QMZONE");
-  //blockname = "BUFFERZONE";
+
   if (!sim.param().qmmm.qm_constraint) {
     DEBUG(15, "Removing constraints");
     this->remove_constraints(topo);
@@ -645,7 +660,7 @@ void io::In_QMMM::read(topology::Topology& topo,
   }
   this->read_zone(topo, sim, "BUFFERZONE");
 
-  if (sim.param().perturbation.perturbation == true) {
+  if (sim.param().perturbation.perturbation) {
       this->read_pert_qmzone(sim, &sim.param().qmmm.nn);
     }
   
@@ -946,15 +961,35 @@ void io::In_QMMM::read(topology::Topology& topo,
         io::messages.add("Using temporary files for Gaussian input/output",
                 "In_QMMM", io::message::notice);
       } else {
-        if (buffer.size() != 4) {
+        if (buffer.size() == 4) {
+          sim.param().qmmm.gaussian.input_file = buffer[1];
+          sim.param().qmmm.gaussian.output_file = buffer[2];
+        } else {
           io::messages.add("GAUFILES block corrupt. Provide 2 lines.",
                   "In_QMMM", io::message::error);
           return;
         }
-        sim.param().qmmm.gaussian.input_file = buffer[1];
-        sim.param().qmmm.gaussian.output_file = buffer[2];
       }
     } // GAUFILES
+    { // GAUFCHK
+      buffer = m_block["GAUFCHK"];
+      if (!buffer.size()) {
+        io::messages.add("Reading forces from Gaussian standard output (lower precision)",
+                "In_QMMM", io::message::notice);
+      } else {
+        if (buffer.size() == 3) {
+          sim.param().qmmm.gaussian.use_fchk = true;
+          // allow use of temporary file
+          if (buffer[1] != "tmp") {
+            sim.param().qmmm.gaussian.fchk_file = buffer[1];
+          }
+        } else {
+          io::messages.add("GAUFCHK block corrupt. Provide 1 line.",
+                  "In_QMMM", io::message::error);
+          return;
+        }
+      }
+    } // GAUFCHK
     { // GAUHEADER
       buffer = m_block["GAUHEADER"];
 
@@ -1087,8 +1122,16 @@ void io::In_QMMM::read(topology::Topology& topo,
         if (_lineStream.fail()) { // if it fails fall back to default energy nnvalidation
           nnvalid_maxF = 0;
         } 
-        if (nnvalid_maxF == 0) sim.param().qmmm.nn.nnvalid = simulation::nn_valid_standard;
-        else if (nnvalid_maxF == 1) sim.param().qmmm.nn.nnvalid = simulation::nn_valid_maxF;
+        if (nnvalid_maxF == 0) {
+          sim.param().qmmm.nn.nnvalid = simulation::nn_valid_standard;
+          io::messages.add("NN validation based on energy deviation",
+                "In_QMMM", io::message::notice);
+        }
+        else if (nnvalid_maxF == 1) {
+          sim.param().qmmm.nn.nnvalid = simulation::nn_valid_maxF;
+          io::messages.add("Additional NN validation based on maximum force deviation",
+                "In_QMMM", io::message::notice);
+        }
       }
     } // NNVALID
     { // NNCHARGE
@@ -1107,6 +1150,8 @@ void io::In_QMMM::read(topology::Topology& topo,
           unsigned charge_steps;
           _lineStream >> charge_steps;
           sim.param().qmmm.nn.charge_steps = charge_steps;
+          io::messages.add("Charge model will be the NNMODEL.",
+              "In_QMMM", io::message::notice);
           if (_lineStream.fail()) {
             io::messages.add("bad line in NNCHARGE block",
                   "In_QMMM", io::message::error);
@@ -1116,6 +1161,10 @@ void io::In_QMMM::read(topology::Topology& topo,
           io::messages.add("Dynamic QM charges requested but NNCHARGE is not specified.",
               "In_QMMM", io::message::error);
         }
+      }
+      else {
+        io::messages.add("Static QM charges requested but NNCHARGE is specified - NNCHARGE will be ignored.",
+              "In_QMMM", io::message::notice);
       }
     } // NNCHARGE
     { // NNDEVICE
@@ -1319,16 +1368,8 @@ void io::In_QMMM::read(topology::Topology& topo,
     }
   } // CAPLEN
 
-  // check if NN charge model is defined
-  if (sw == (simulation::qm_schnetv1 || simulation::qm_schnetv2 )
-        && sim.param().qmmm.qm_ch == simulation::qm_ch_dynamic
-        && sim.param().qmmm.nn.charge_model_path.empty()) {
-    io::messages.add("dynamic QM charge requested but no NN charge model specified",
-                "In_QMMM", io::message::error);
-  }
-
   // allow learning_type == nn_learning_type_qmonly only for single-atom QM region
-  if (sw == (simulation::qm_schnetv1 || simulation::qm_schnetv2)
+  if ((sw == simulation::qm_schnetv1 || sw == simulation::qm_schnetv2 )
         && sim.param().qmmm.nn.learning_type == simulation::nn_learning_type_qmonly) {
     size_t qm_size = 0;
     for (unsigned i = 0; i < topo.num_atoms(); ++i) {
@@ -1655,8 +1696,7 @@ void io::In_QMMM::read_zone(topology::Topology& topo
 
   int charge = 0, spin_mult = 0;
   
-  _lineStream >> charge
-              >> spin_mult;
+  _lineStream >> charge >> spin_mult;
   if (blockname == "BUFFERZONE") {
     _lineStream >> sim.param().qmmm.buffer_zone.cutoff;
     if (sim.param().pairlist.skip_step > 1) {
@@ -1699,10 +1739,8 @@ void io::In_QMMM::read_zone(topology::Topology& topo
 
     // the first 17 chars are ignored
     line.erase(line.begin(), line.begin() + 17);
-
     _lineStream.clear();
     _lineStream.str(line);
-
     _lineStream >> qmi >> qmz >> qmli;
 
     if (_lineStream.fail()) {
@@ -1712,7 +1750,7 @@ void io::In_QMMM::read_zone(topology::Topology& topo
       return;
     }
 
-    // Take care of optional brstat input in QMZONE and BUFFERZONE
+    // Optional BRSTAT
     _lineStream >> brstat;
     if (_lineStream.fail()) {
       if (blockname == "QMZONE"){
@@ -1723,6 +1761,7 @@ void io::In_QMMM::read_zone(topology::Topology& topo
       }
     } 
 
+    // Validation checks
     if (qmi < 1 || qmi > topo.num_atoms()) {
       std::ostringstream msg;
       msg << blockname << " block: atom out of range";
@@ -1753,6 +1792,7 @@ void io::In_QMMM::read_zone(topology::Topology& topo
     }
     topo.is_qm(qmi - 1) = topo.is_qm(qmi - 1) || (blockname == "QMZONE");
 
+    // Assign zone membership flag
     const bool is_qm_buffer = (blockname == "BUFFERZONE");
 
     // ADDED MICHAEL check for static or adaptive BR atom
@@ -1780,6 +1820,7 @@ void io::In_QMMM::read_zone(topology::Topology& topo
       io::messages.add(msg.str(), "In_QMMM", io::message::error);
       return;
     }
+
 
     if (is_qm_buffer
         && (sim.param().qmmm.qm_ch == simulation::qm_ch_dynamic)
@@ -1812,6 +1853,8 @@ void io::In_QMMM::read_zone(topology::Topology& topo
       io::messages.add(msg.str(), "In_QMMM", io::message::warning);
   }
 
+
+  // Validate Link atoms
   for (std::set< std::pair<unsigned,unsigned> >::const_iterator
       it = topo.qmmm_link().begin(), to = topo.qmmm_link().end();
       it != to; ++it)

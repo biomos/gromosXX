@@ -1,5 +1,3 @@
-#import subprocess as sbp
-#import pandas as pd
 import numpy as np
 import os
 from glob import glob
@@ -54,7 +52,7 @@ class SchNet_V1_Calculator:
         get_forces(self):
             Get the predicted forces for the last atomic system.
 
-        get_nn_valid_dev(self):
+        get_nn_valid_ene(self):
             Get the validation deviation calculated during the last validation step.
     """
 
@@ -182,12 +180,11 @@ class SchNet_V1_Calculator:
 
             # Calculate validation deviation based on validation results.
             if len(val_energies) == 1:
-                self.nn_valid_dev = self.energy - val_energies[0]
+                self.nn_valid_ene = (self.energy - val_energies[0])/np.sqrt(2) # devided by sqrt(2) to match the sample standard deviation bellow
             else:
                 val_energies.append(self.energy)
                 val_energies = np.array(val_energies)
-                var = val_energies.var()
-                self.nn_valid_dev = var / (len(val_energies) - 1)
+                self.nn_valid_ene = val_energies.std(ddof=1) # to calculate sample standard deviation
         return None
 
     def get_energy(self):
@@ -208,14 +205,14 @@ class SchNet_V1_Calculator:
         """
         return self.forces
 
-    def get_nn_valid_dev(self):
+    def get_nn_valid_ene(self):
         """
         Get the validation deviation calculated during the last validation step.
 
         Returns:
             float: Validation deviation.
         """
-        return self.nn_valid_dev
+        return self.nn_valid_ene
 
 class Pert_SchNet_V1_Calculator_Error(Exception):
     pass
@@ -537,7 +534,7 @@ class Pert_SchNet_V1_Calculator(SchNet_V1_Calculator):
                 # Convert the list of validation energies to a numpy array.
                 perturbed_energies_a_val = np.array(perturbed_energies_a_val)
                 # Calculate variance of the validation energies.
-                dev = perturbed_energies_a_val.var() / (len(perturbed_energies_a_val) - 1)
+                dev = perturbed_energies_a_val.std()
             return dev
 
         # Case when two states (A and B) are present.
@@ -690,7 +687,7 @@ class Pert_SchNet_V1_Calculator(SchNet_V1_Calculator):
 
         # Validate the perturbed energy if the current time step matches the validation frequency.
         if len(self.val_calculators) > 0 and time_step % self.nn_valid_freq == 0:
-            self.nn_valid_dev = self.validate_perturbed_energy()
+            self.nn_valid_ene = self.validate_perturbed_energy()
         return None
 
 

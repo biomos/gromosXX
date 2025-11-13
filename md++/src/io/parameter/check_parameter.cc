@@ -199,7 +199,7 @@ int io::simple_crosschecks(simulation::Simulation & sim) {
 
     // pressure scaling or calculation and trajectory reading mode
     if (param.analyze.analyze && param.pcouple.scale != math::pcouple_off) {
-        io::messages.add("PRESSURESCALE block: Pressure scaling in trajectory reading mode will lead"
+        io::messages.add("PRESSURESCALE block: Pressure scaling in trajectory reading mode will lead "
                          "to unexpected results.", "In_Parameter", io::message::warning);
     }
     if (param.analyze.analyze && param.pcouple.calculate) {
@@ -4699,6 +4699,8 @@ int io::check_features(simulation::Simulation  &sim)
   fc.unlock("qmmm", "distance_field");
   fc.unlock("qmmm", "dihedral_rest");
   fc.unlock("qmmm", "dihedral_const");
+  fc.unlock("qmmm", "angle_rest");
+  fc.unlock("qmmm", "angle_const");
   fc.unlock("qmmm", "jvalue_rest");
   fc.unlock("qmmm", "rdc_rest");
   fc.unlock("qmmm", "perscale");
@@ -4790,6 +4792,8 @@ int io::check_features(simulation::Simulation  &sim)
   fc.unlock("virtualatoms", "position_const_scaled");
   fc.unlock("virtualatoms", "distance_rest");
   fc.unlock("virtualatoms", "distance_field");
+  // fc.unlock("virtualatoms", "angle_rest");
+  // fc.unlock("virtualatoms", "angle_const");
   fc.unlock("virtualatoms", "dihedral_rest");
   fc.unlock("virtualatoms", "dihedral_const");
   fc.unlock("virtualatoms", "jvalue_rest");

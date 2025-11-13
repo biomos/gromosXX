@@ -247,7 +247,8 @@ static void _init_dihres_data(topology::Topology &topo,
   math::VArray &pos = conf.current().pos;
 
   math::Vec rij, rkj, rkl, rmj, rnk;
-  double dkj2 = 0.0, dkj = 0.0, dmj2 = 0.0, dmj = 0.0, dnk2 = 0.0, dnk = 0.0, ip = 0.0, phi = 0.0;
+  //double dkj2 = 0.0, dkj = 0.0, dmj2 = 0.0, dmj = 0.0, dnk2 = 0.0, dnk = 0.0, ip = 0.0, phi = 0.0;
+  double dmj2 = 0.0, dmj = 0.0, dnk2 = 0.0, dnk = 0.0, ip = 0.0, phi = 0.0;
 
   for (std::vector<topology::dihedral_restraint_struct>::const_iterator
            it = topo.dihedral_restraints().begin(),
@@ -281,13 +282,14 @@ static void _init_dihres_data(topology::Topology &topo,
     rmj = cross(rij, rkj);
     rnk = cross(rkj, rkl);
 
-    dkj2 = abs2(rkj);
     dmj2 = abs2(rmj);
     dnk2 = abs2(rnk);
-    dkj = sqrt(dkj2);
     dmj = sqrt(dmj2);
     dnk = sqrt(dnk2);
-
+#ifndef NDEBUG
+    double dkj2 = abs2(rkj);
+    double dkj = sqrt(dkj2);
+#endif
     DEBUG(15, "dkj=" << dkj << " dmj=" << dmj << " dnk=" << dnk);
 
     assert(dmj != 0.0);

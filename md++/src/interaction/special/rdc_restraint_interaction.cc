@@ -672,8 +672,10 @@ int _calculate_interactions_mfield(topology::Topology & topo,
           const double x = conf_it->MFpoint[h][0];
           const double y = conf_it->MFpoint[h][1];
           const double z = conf_it->MFpoint[h][2];
-          const double r = sqrt(x*x + y*y + z*z);
+#ifndef NDEBUG
+	  const double r = sqrt(x*x + y*y + z*z);
           assert(abs(1.0 - r) < 1.0e-5);
+#endif
           const double theta = acos(z);
           const double phi = atan2(y, x);
           // cout << "x: " << x << "y: " << y << "z: " << z << endl;

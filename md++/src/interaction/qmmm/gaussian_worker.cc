@@ -69,6 +69,7 @@ int interaction::Gaussian_Worker::init(const topology::Topology& topo
   // Aliases to shorten the code
   std::string& inp = this->param->input_file;
   std::string& out = this->param->output_file;
+  std::string& fchk = this->param->fchk_file;
 
   if (inp.empty()) {
     if(util::create_tmpfile(inp) < 1) {
@@ -95,6 +96,39 @@ int interaction::Gaussian_Worker::init(const topology::Topology& topo
         "Gaussian_Worker", io::message::notice);
     }
   }
+
+  if (fchk.empty()) {
+    if (util::create_tmpfile(fchk) < 1) {
+      io::messages.add("Unable to create temporary formatted checkpoint file: " + fchk,
+        "Gaussian_Worker", io::message::critical);
+      return 1;
+    }
+    else {
+      this->tmp_files.insert(fchk);
+      io::messages.add("Using temporary formatted checkpoint file: " + fchk,
+        "Gaussian_Worker", io::message::notice);
+    }
+  }
+  
+  #ifdef HAVE_SYMLINK
+  // create Test.FChk link for gradients
+  if ((this->param->use_fchk) && ("Test.FChk" != fchk)) {
+    if (symlink(fchk.c_str(), "Test.FChk") != 0) {
+      io::messages.add("Unable to create symbolic link from Test.FChk to "
+        + fchk + " - check permissions.",
+        "Gaussian_Worker", io::message::critical);
+      return 1;
+    }
+    this->tmp_files.insert("Test.FChk");
+  }
+#else
+  {
+    fchk = "Test.FChk";
+    io::messages.add("Symbolic links are not supported in this built. "
+      + "Formatted checkpoint file file is now set to Test.FChk",
+      "Gaussian_Worker", io::message::warning);
+  }
+#endif
   
 #ifndef HAVE_UNLINK
   {
@@ -385,6 +419,7 @@ int interaction::Gaussian_Worker::parse_forces(const simulation::Simulation& sim
                                             , std::ifstream& ofs
                                             , interaction::QM_Zone& qm_zone) const {
   std::string& out = this->param->output_file;
+  //std::string& fchk = this->param->fchk_file;
   std::string line;
   int err = 0;
   
@@ -409,8 +444,7 @@ int interaction::Gaussian_Worker::parse_forces(const simulation::Simulation& sim
     std::set<interaction::MM_Atom>::iterator it, to;
     for(std::set<interaction::MM_Atom>::iterator
         it = qm_zone.mm.begin(), to = qm_zone.mm.end(); it != to; ++it) {
-      const int i = it->index;
-      DEBUG(15, "Parsing electric field on MM atom " << i);
+      DEBUG(15, "Parsing electric field on MM atom " << it->index);
       err = this->parse_force(ofs, it->force);
       if (err) return err;
       // We still need to multiply by charge, since here we parsed electric field only
@@ -421,15 +455,68 @@ int interaction::Gaussian_Worker::parse_forces(const simulation::Simulation& sim
         it->cos_force *= it->cos_charge;
       }
       else {
-        DEBUG(15, "Charge of atom " << i << ": " << it->charge);
+        DEBUG(15, "Charge of atom " << it->index << ": " << it->charge);
         it->force *= it->charge;
-        DEBUG(15, "stored force on MM atom " << i << ": " << math::v2s(it->force));
+        DEBUG(15, "stored force on MM atom " << it->index << ": " << math::v2s(it->force));
       }
     }
   }
-  {
+  bool got_qm_forces = false;
+  if (this->param->use_fchk) {
+    DEBUG(15, "Parsing forces on QM atoms from the formatted checkpoint file");
+    // Find QM forces - from the checkpoint file
+    std::ifstream fchkfs;
+    int err = this->open_output(fchkfs, this->param->fchk_file);
+    if (err) return err;
+    while (std::getline(fchkfs, line)) {
+      if (line.find("Cartesian Gradient") != std::string::npos) {
+        got_qm_forces = true;
+        break;
+      }
+    }
+    if (!got_qm_forces) {
+      io::messages.add("Unable to find QM forces in formatted checkpoint file " + this->param->fchk_file,
+                          this->name(), io::message::error);
+      return 1;
+    }
+    // Read number of floats to read
+    std::string dummy;
+    std::stringstream ss(line);
+    unsigned num_values = 0;
+    ss >> dummy >> dummy >> dummy >> dummy >> num_values;
+    // Assert correct size
+    if (num_values != 3 * (qm_zone.qm.size() + qm_zone.link.size())) {
+      io::messages.add("Number of cartesian gradients in formatted checkpoint file do not match"
+                                  + this->param->fchk_file,
+                          this->name(), io::message::error);
+      return 1;
+    }
+    // Parse QM atoms
+    for(std::set<QM_Atom>::iterator
+        it = qm_zone.qm.begin(), to = qm_zone.qm.end(); it != to; ++it) {
+      for (unsigned i=0; i < 3; ++i) {
+        fchkfs >> it->force(i);
+        // convert gradients to forces
+        it->force(i) *= -this->param->unit_factor_force;
+      }
+    }
+    // Parse link QM atoms
+    for(std::set<QM_Link>::iterator
+        it = qm_zone.link.begin(), to = qm_zone.link.end(); it != to; ++it) {
+      for (unsigned i=0; i < 3; ++i) {
+        fchkfs >> it->force(i);
+        // convert gradients to forces
+        it->force(i) *= -this->param->unit_factor_force;
+      }
+    }
+    if (fchkfs.fail()) {
+      std::ostringstream msg;
+      msg << "Failed to parse forces in " << this->param->fchk_file;
+      io::messages.add(msg.str(), this->name(), io::message::error);
+      return 1;
+    }
+  } else {
     // Find QM forces
-    bool got_qm_forces = false;
     while (std::getline(ofs, line)) {
       if (line.find("Forces (Hartrees/Bohr)") != std::string::npos) {
         got_qm_forces = true;
