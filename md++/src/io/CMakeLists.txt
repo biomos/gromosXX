@@ -16,6 +16,7 @@ set(IO_CC
     configuration/in_configuration.cc
     configuration/out_configuration.cc
     topology/in_posres.cc
+    topology/in_colvarres.cc
     topology/in_distanceres.cc
     topology/in_angrest.cc
     topology/in_dihrest.cc
