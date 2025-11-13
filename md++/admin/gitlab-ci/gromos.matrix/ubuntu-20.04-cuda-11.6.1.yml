@@ -16,17 +16,18 @@ gromos:ubuntu-20.04-cuda-11.6.1:build:
   image: ${CI_REGISTRY}/gromos/gromosxx/gromos-ubuntu-20.04-cuda-11.6.1
   variables:
     BUILD_DIR: build
-    BIN_PATH: build/bin/md
+    BIN_PATH: $BUILD_DIR/bin/md
   needs:
     - job: gromos:ubuntu-20.04-cuda-11.6.1:configure
 
 gromos:ubuntu-20.04-cuda-11.6.1:sim_test:
   extends:
     - .gromos:base:sim_test
+    - .use-cuda
   image: ${CI_REGISTRY}/gromos/gromosxx/gromos-ubuntu-20.04-cuda-11.6.1
   variables:
     BUILD_DIR: build
-    BIN_PATH: $BUILD_DIR/usr/local/bin/md
+    BIN_PATH: $BUILD_DIR/bin/md
     TEST_REPO: $CI_PROJECT_DIR/gromos_test_files/
   needs:
     - job: gromos:ubuntu-20.04-cuda-11.6.1:build

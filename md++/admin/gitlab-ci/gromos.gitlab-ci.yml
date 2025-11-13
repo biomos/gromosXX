@@ -137,8 +137,9 @@
   stage: sim_test
   script: 
     - echo $CI_PROJECT_DIR
-    - echo $BIN_PATH
     - echo $TEST_REPO
+    - echo $CUDA_OPTIONS
+    - echo $BIN_PATH
     - echo $PRE_MD_BIN
     - echo $OMPI_ALLOW_RUN_AS_ROOT_CONFIRM
     - echo $OMPI_ALLOW_RUN_AS_ROOT
@@ -149,6 +150,7 @@
     when: always
     paths:
       - $BUILD_DIR
+      - gromos_test_files
     reports:
       junit:
         - sim_test_report.xml
