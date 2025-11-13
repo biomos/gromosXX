@@ -88,8 +88,19 @@ from .gromos import (
     Topology,
 )
 
-# Note: Integrators and advanced sampling methods are available
-# through the GROMOS-RS command-line binaries (md, gamd, eds, remd)
+# Import MD simulation runners
+from .md_runners import (
+    MDSimulation,
+    GaMDSimulation,
+    EDSSimulation,
+    REMDSimulation,
+    TISimulation,
+    run_standard_md,
+    run_gamd,
+    run_eds,
+    run_remd,
+    run_ti,
+)
 
 __version__ = "0.1.0"
 
@@ -104,6 +115,20 @@ __all__ = [
     "State",
     "Configuration",
     "Topology",
+
+    # MD simulation classes
+    "MDSimulation",
+    "GaMDSimulation",
+    "EDSSimulation",
+    "REMDSimulation",
+    "TISimulation",
+
+    # MD simulation functions
+    "run_standard_md",
+    "run_gamd",
+    "run_eds",
+    "run_remd",
+    "run_ti",
 
     # Version
     "__version__",
