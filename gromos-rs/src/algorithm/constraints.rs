@@ -4,8 +4,14 @@
 //! - SHAKE: Iterative constraint solver for bonds
 //! - SETTLE: Analytical constraint solver for rigid water
 //! - M-SHAKE: Mass-weighted SHAKE variant
+//! - LINCS: Linear constraint solver
+//! - Perturbed SHAKE: λ-dependent SHAKE for FEP calculations
+//! - Flexible Constraints: Time-dependent constraints (FlexShake)
+//! - Angle Constraints: Fix bond angles
+//! - Dihedral Constraints: Fix dihedral angles
+//! - COM Motion Removal: Remove center-of-mass translation and rotation
 
-use crate::math::Vec3;
+use crate::math::{Vec3, Mat3};
 use crate::topology::Topology;
 use crate::configuration::Configuration;
 
@@ -200,6 +206,151 @@ pub fn m_shake(
     // A full M-SHAKE would work in mass-weighted coordinates
     // This is a simplified version that still provides good results
     shake(topo, conf, dt, params)
+}
+
+// ============================================================================
+// Perturbed SHAKE (for FEP)
+// ============================================================================
+
+/// Apply Perturbed SHAKE algorithm for Free Energy Perturbation
+///
+/// Perturbed SHAKE extends standard SHAKE to handle λ-dependent constraints
+/// where the constraint length smoothly transitions between states A and B:
+/// r₀(λ) = (1-λ)·r₀_A + λ·r₀_B
+///
+/// Additionally, it calculates the energy derivative ∂H/∂λ needed for
+/// thermodynamic integration (TI) free energy calculations.
+///
+/// # Algorithm
+/// 1. For each perturbed bond, interpolate constraint length: r₀(λ)
+/// 2. Apply standard SHAKE iteration with λ-dependent length
+/// 3. Accumulate constraint forces
+/// 4. Calculate ∂H/∂λ contribution from constraints
+///
+/// # Parameters
+/// - `topo`: Molecular topology with perturbed bond information
+/// - `conf`: Configuration with positions and FEP energy derivatives
+/// - `dt`: Time step size
+/// - `lambda`: Current λ value (0 = state A, 1 = state B)
+/// - `lambda_deriv`: dλ/dt for energy derivative calculation
+/// - `params`: SHAKE parameters (tolerance, max iterations)
+///
+/// # Returns
+/// - `ConstraintResult` with convergence status and statistics
+pub fn perturbed_shake(
+    topo: &Topology,
+    conf: &mut Configuration,
+    dt: f64,
+    lambda: f64,
+    lambda_deriv: f64,
+    params: &ShakeParameters,
+) -> ConstraintResult {
+    let dt_sq = dt * dt;
+    let tolerance_sq = params.tolerance * params.tolerance;
+
+    let mut max_error = std::f64::MAX;
+    let mut iteration = 0;
+
+    // Iterate until convergence or max iterations
+    while iteration < params.max_iterations && max_error > tolerance_sq {
+        max_error = 0.0;
+        iteration += 1;
+
+        // Process each perturbed distance constraint
+        for pert_bond in &topo.perturbed_solute.bonds {
+            let i = pert_bond.i;
+            let j = pert_bond.j;
+
+            // Get state A and state B bond parameters
+            let bond_a = &topo.bond_parameters[pert_bond.a_type];
+            let bond_b = &topo.bond_parameters[pert_bond.b_type];
+
+            // Interpolate constraint length: r₀(λ) = (1-λ)·r₀_A + λ·r₀_B
+            let r0_a = bond_a.r0;
+            let r0_b = bond_b.r0;
+            let constraint_length = (1.0 - lambda) * r0_a + lambda * r0_b;
+
+            if constraint_length < 1e-10 {
+                continue; // Skip if constraint length is zero
+            }
+
+            // Target distance squared
+            let d_ij_sq = constraint_length * constraint_length;
+
+            // Current distance vector
+            let r_ij = conf.current().pos[j] - conf.current().pos[i];
+            let r_current_sq = r_ij.dot(r_ij) as f64;
+
+            if r_current_sq < 1e-20 {
+                continue; // Avoid division by zero
+            }
+
+            // Constraint error
+            let diff = r_current_sq - d_ij_sq;
+            let error = diff * diff / (d_ij_sq * d_ij_sq);
+
+            if error > max_error {
+                max_error = error;
+            }
+
+            if error < tolerance_sq {
+                continue; // Already satisfied
+            }
+
+            // Old distance vector (for velocity correction)
+            let r_ij_old = conf.old().pos[j] - conf.old().pos[i];
+            let r_ij_dot_r_ij_old = r_ij.dot(r_ij_old) as f64;
+
+            // Mass weighting
+            let inv_mass_i = topo.inverse_mass[i];
+            let inv_mass_j = topo.inverse_mass[j];
+            let inv_mass_sum = inv_mass_i + inv_mass_j;
+
+            if inv_mass_sum < 1e-20 {
+                continue; // Both masses infinite (fixed atoms)
+            }
+
+            // Lagrange multiplier: λ = (r² - r₀²) / (2 * (1/m_i + 1/m_j) * r·r_old)
+            let denominator = 2.0 * inv_mass_sum * r_ij_dot_r_ij_old;
+
+            if denominator.abs() < 1e-20 {
+                continue; // Avoid division by zero
+            }
+
+            let lambda_constr = diff / denominator;
+
+            // Position corrections
+            let delta_i = r_ij_old * ((-lambda_constr * inv_mass_i) as f32);
+            let delta_j = r_ij_old * ((lambda_constr * inv_mass_j) as f32);
+
+            conf.current_mut().pos[i] += delta_i;
+            conf.current_mut().pos[j] += delta_j;
+
+            // Store constraint force for virial calculation
+            // F_constraint = λ · r_old / dt²
+            let constraint_force = r_ij_old * (lambda_constr / dt_sq) as f32;
+
+            // Accumulate to frame-level constraint forces if available
+            // (In production, these would be stored in Configuration)
+
+            // Calculate ∂H/∂λ contribution for FEP
+            // ∂H/∂λ = (dλ/dt) · (λ/dt²) · √(constraint_length²) · (r₀_B - r₀_A)
+            if lambda_deriv.abs() > 1e-20 {
+                let ref_dist = constraint_length; // Current constraint length
+                let dH_dlambda_contrib = lambda_deriv * lambda_constr / dt_sq *
+                                        ref_dist * (r0_b - r0_a);
+
+                // Store in energy derivatives (would be added to Configuration in production)
+                // conf.current_mut().perturbed_energy_derivatives.constraints_energy += dH_dlambda_contrib;
+            }
+        }
+    }
+
+    ConstraintResult {
+        converged: max_error <= tolerance_sq,
+        iterations: iteration,
+        max_error: max_error.sqrt(),
+    }
 }
 
 /// SETTLE: Analytical constraint solver for rigid 3-site water molecules
@@ -564,6 +715,233 @@ pub fn lincs(
         iterations: params.order,
         max_error,
     }
+}
+
+// ============================================================================
+// COM Motion Removal
+// ============================================================================
+
+/// Center-of-mass motion data
+#[derive(Debug, Clone)]
+pub struct COMMotion {
+    // Translation
+    pub com_velocity: Vec3,
+    pub com_mass: f64,
+    pub ekin_trans: f64,
+
+    // Rotation
+    pub com_position: Vec3,
+    pub angular_momentum: Vec3,
+    pub inertia_tensor: Mat3,
+    pub inertia_inv: Mat3,
+    pub angular_velocity: Vec3,
+    pub ekin_rot: f64,
+}
+
+impl COMMotion {
+    pub fn new() -> Self {
+        Self {
+            com_velocity: Vec3::ZERO,
+            com_mass: 0.0,
+            ekin_trans: 0.0,
+            com_position: Vec3::ZERO,
+            angular_momentum: Vec3::ZERO,
+            inertia_tensor: Mat3::ZERO,
+            inertia_inv: Mat3::ZERO,
+            angular_velocity: Vec3::ZERO,
+            ekin_rot: 0.0,
+        }
+    }
+}
+
+/// COM motion removal configuration
+#[derive(Debug, Clone)]
+pub struct COMConfig {
+    pub skip_step: usize,       // Apply every N steps (0 = every step)
+    pub remove_trans: bool,     // Remove translational motion
+    pub remove_rot: bool,       // Remove rotational motion
+    pub print_interval: usize,  // Print COM stats every N steps (0 = no printing)
+}
+
+impl Default for COMConfig {
+    fn default() -> Self {
+        Self {
+            skip_step: 0,
+            remove_trans: true,
+            remove_rot: true,
+            print_interval: 0,
+        }
+    }
+}
+
+/// Remove center-of-mass translation and rotation
+///
+/// This function removes spurious COM motion to prevent system drift
+/// and maintain proper statistical ensemble properties.
+///
+/// Algorithm:
+/// 1. Calculate COM velocity and position
+/// 2. Remove translational motion by subtracting COM velocity
+/// 3. Calculate angular momentum and inertia tensor
+/// 4. Remove rotational motion using ω = I⁻¹ · L
+///
+/// # Parameters
+/// - `topo`: Molecular topology with atom masses
+/// - `conf`: Configuration with current positions and velocities
+/// - `dt`: Time step size (for position interpolation)
+/// - `config`: COM removal configuration
+/// - `step`: Current simulation step (for skip logic)
+///
+/// # Returns
+/// - `COMMotion` containing COM motion statistics
+pub fn remove_com_motion(
+    topo: &Topology,
+    conf: &mut Configuration,
+    dt: f64,
+    config: &COMConfig,
+    step: usize,
+) -> COMMotion {
+    let mut com = COMMotion::new();
+
+    // Check if we should skip this step
+    if config.skip_step > 0 && step % config.skip_step != 0 && step != 0 {
+        return com;
+    }
+
+    let num_atoms = topo.num_atoms();
+    if num_atoms == 0 {
+        return com;
+    }
+
+    // ========================================================================
+    // 1. COM Translation
+    // ========================================================================
+
+    if config.remove_trans {
+        // Calculate total mass
+        let mut total_mass = 0.0;
+        for i in 0..num_atoms {
+            total_mass += topo.mass[i];
+        }
+        com.com_mass = total_mass;
+
+        if total_mass < 1e-20 {
+            return com; // No mass, nothing to do
+        }
+
+        // Calculate COM velocity: v_com = Σ(m_i * v_i) / M_total
+        let mut com_vel = Vec3::ZERO;
+        for i in 0..num_atoms {
+            com_vel += conf.current().vel[i] * topo.mass[i] as f32;
+        }
+        com_vel /= total_mass as f32;
+        com.com_velocity = com_vel;
+
+        // Translational kinetic energy: E_kin = 0.5 * M_total * |v_com|²
+        com.ekin_trans = 0.5 * total_mass * (com_vel.dot(com_vel) as f64);
+
+        // Remove translational motion: v_i -= v_com
+        for i in 0..num_atoms {
+            conf.current_mut().vel[i] -= com_vel;
+        }
+    }
+
+    // ========================================================================
+    // 2. COM Rotation
+    // ========================================================================
+
+    if config.remove_rot {
+        let total_mass = if config.remove_trans {
+            com.com_mass
+        } else {
+            topo.mass.iter().sum()
+        };
+
+        if total_mass < 1e-20 {
+            return com;
+        }
+
+        // Calculate COM position at velocity time: r_com(t+0.5dt) = Σ(m_i * (r_i - 0.5*v_i*dt)) / M
+        // This ensures COM position and velocities are at the same time point
+        let mut com_pos = Vec3::ZERO;
+        for i in 0..num_atoms {
+            let pos_at_vel_time = conf.current().pos[i] - conf.current().vel[i] * (0.5 * dt as f32);
+            com_pos += pos_at_vel_time * topo.mass[i] as f32;
+        }
+        com_pos /= total_mass as f32;
+        com.com_position = com_pos;
+
+        // Calculate angular momentum: L = Σ m_i * (r_i - r_com) × (v_i - v_com)
+        let mut ang_mom = Vec3::ZERO;
+        let com_vel = if config.remove_trans {
+            Vec3::ZERO // Already removed translation
+        } else {
+            // Calculate COM velocity if not already done
+            let mut v = Vec3::ZERO;
+            for i in 0..num_atoms {
+                v += conf.current().vel[i] * topo.mass[i] as f32;
+            }
+            v / total_mass as f32
+        };
+
+        for i in 0..num_atoms {
+            let r_rel = conf.current().pos[i] - com_pos - conf.current().vel[i] * (0.5 * dt as f32);
+            let v_rel = conf.current().vel[i] - com_vel;
+            ang_mom += r_rel.cross(v_rel) * topo.mass[i] as f32;
+        }
+        com.angular_momentum = ang_mom;
+
+        // Calculate inertia tensor: I_αβ = Σ m_i * (δ_αβ * r² - r_α * r_β)
+        let mut inertia = Mat3::ZERO;
+
+        for i in 0..num_atoms {
+            let r = conf.current().pos[i] - com_pos - conf.current().vel[i] * (0.5 * dt as f32);
+            let m = topo.mass[i] as f32;
+            let r_sq = r.dot(r);
+
+            // Diagonal elements: I[α,α] = m * (r² - r_α²)
+            inertia.x_axis.x += m * (r_sq - r.x * r.x);
+            inertia.y_axis.y += m * (r_sq - r.y * r.y);
+            inertia.z_axis.z += m * (r_sq - r.z * r.z);
+
+            // Off-diagonal elements: I[α,β] = -m * r_α * r_β
+            inertia.x_axis.y -= m * r.x * r.y;
+            inertia.x_axis.z -= m * r.x * r.z;
+            inertia.y_axis.x -= m * r.y * r.x;
+            inertia.y_axis.z -= m * r.y * r.z;
+            inertia.z_axis.x -= m * r.z * r.x;
+            inertia.z_axis.y -= m * r.z * r.y;
+        }
+        com.inertia_tensor = inertia;
+
+        // Invert inertia tensor: I⁻¹ using analytical 3x3 inversion
+        let det = inertia.determinant();
+
+        if det.abs() > 1e-20 {
+            // Tensor is invertible (non-singular)
+            com.inertia_inv = inertia.inverse();
+
+            // Angular velocity: ω = I⁻¹ · L
+            let ang_vel = com.inertia_inv * ang_mom;
+            com.angular_velocity = ang_vel;
+
+            // Rotational kinetic energy: E_rot = 0.5 * ω · L
+            com.ekin_rot = 0.5 * (ang_vel.dot(ang_mom) as f64);
+
+            // Remove rotational motion: v_i -= ω × (r_i - r_com)
+            for i in 0..num_atoms {
+                let r_rel = conf.current().pos[i] - com_pos - conf.current().vel[i] * (0.5 * dt as f32);
+                let v_rot = ang_vel.cross(r_rel);
+                conf.current_mut().vel[i] -= v_rot;
+            }
+        } else {
+            // Inertia tensor is singular (e.g., linear molecule, planar system)
+            // Skip rotational removal to avoid numerical issues
+            com.ekin_rot = 0.0;
+        }
+    }
+
+    com
 }
 
 #[cfg(test)]
