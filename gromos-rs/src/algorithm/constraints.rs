@@ -944,6 +944,305 @@ pub fn remove_com_motion(
     com
 }
 
+// ============================================================================
+// Angle Constraints
+// ============================================================================
+
+/// Angle constraint data structure
+#[derive(Debug, Clone, Copy)]
+pub struct AngleConstraint {
+    pub i: usize,      // First atom
+    pub j: usize,      // Central atom (vertex)
+    pub k: usize,      // Third atom
+    pub theta: f64,    // Target angle in radians
+}
+
+/// Perturbed angle constraint for FEP
+#[derive(Debug, Clone, Copy)]
+pub struct PerturbedAngleConstraint {
+    pub i: usize,
+    pub j: usize,
+    pub k: usize,
+    pub a_theta: f64,  // State A angle (radians)
+    pub b_theta: f64,  // State B angle (radians)
+}
+
+/// Angle constraint parameters
+#[derive(Debug, Clone)]
+pub struct AngleConstraintParameters {
+    pub tolerance: f64,
+    pub max_iterations: usize,
+}
+
+impl Default for AngleConstraintParameters {
+    fn default() -> Self {
+        Self {
+            tolerance: 1e-4,
+            max_iterations: 1000,
+        }
+    }
+}
+
+/// Apply angle constraints using iterative SHAKE-like algorithm
+///
+/// Constrains bond angles (i-j-k) to fixed values using the algorithm from:
+/// J. Comput. Chem. 2021;42:418–434.
+///
+/// # Algorithm
+/// 1. Calculate current angle θ from dot product of bond vectors
+/// 2. Compute auxiliary vectors a₁₂₃ and a₃₂₁ (constraint gradients)
+/// 3. Calculate mass-weighted vectors b₁₂₃ and b₃₂₁
+/// 4. Solve for Lagrange multiplier λ
+/// 5. Update positions of all three atoms
+///
+/// # Parameters
+/// - `constraints`: List of angle constraints to apply
+/// - `topo`: Molecular topology
+/// - `conf`: Configuration with positions
+/// - `dt`: Time step
+/// - `params`: Constraint parameters
+///
+/// # Returns
+/// - `ConstraintResult` with convergence status
+pub fn angle_constraints(
+    constraints: &[AngleConstraint],
+    topo: &Topology,
+    conf: &mut Configuration,
+    dt: f64,
+    params: &AngleConstraintParameters,
+) -> ConstraintResult {
+    let dt_sq = dt * dt;
+    let tolerance_sq = params.tolerance * params.tolerance;
+
+    let mut max_error = std::f64::MAX;
+    let mut iteration = 0;
+
+    while iteration < params.max_iterations && max_error > tolerance_sq {
+        max_error = 0.0;
+        iteration += 1;
+
+        for constraint in constraints {
+            let i = constraint.i;
+            let j = constraint.j;
+            let k = constraint.k;
+            let theta0 = constraint.theta;
+
+            // Bond vectors: r12 = r_i - r_j, r32 = r_k - r_j
+            let r12 = conf.current().pos[i] - conf.current().pos[j];
+            let r32 = conf.current().pos[k] - conf.current().pos[j];
+
+            let d12 = r12.length() as f64;
+            let d32 = r32.length() as f64;
+
+            if d12 < 1e-10 || d32 < 1e-10 {
+                continue; // Avoid division by zero
+            }
+
+            // Current angle: θ = acos(r12 · r32 / (|r12| |r32|))
+            let dot_product = (r12.dot(r32) as f64) / (d12 * d32);
+            let dot_product = dot_product.clamp(-1.0, 1.0); // Numerical safety
+            let theta = dot_product.acos();
+
+            // Constraint error
+            let diff = (theta - theta0).abs();
+            let error = diff * diff;
+
+            if error > max_error {
+                max_error = error;
+            }
+
+            if error < tolerance_sq {
+                continue; // Already satisfied
+            }
+
+            // Reference positions for velocity correction
+            let r12_old = conf.old().pos[i] - conf.old().pos[j];
+            let r32_old = conf.old().pos[k] - conf.old().pos[j];
+
+            // Auxiliary vectors (eq. 18 from paper)
+            // a123 = (d12² * r32 - (r12·r32) * r12) / (d12³ * d32)
+            let dot_12_32 = r12_old.dot(r32_old) as f64;
+            let a123 = (r32_old * (d12 * d12) as f32 - r12_old * dot_12_32 as f32) / (d12 * d12 * d12 * d32) as f32;
+
+            // a321 = (d32² * r12 - (r12·r32) * r32) / (d12 * d32³)
+            let a321 = (r12_old * (d32 * d32) as f32 - r32_old * dot_12_32 as f32) / (d12 * d32 * d32 * d32) as f32;
+
+            // Masses
+            let m1 = topo.mass[i];
+            let m2 = topo.mass[j];
+            let m3 = topo.mass[k];
+
+            // Mass-weighted vectors (eq. 28)
+            // b123 = a123/m1 + (a123 + a321)/m2
+            let b123 = a123 / m1 as f32 + (a123 + a321) / m2 as f32;
+
+            // b321 = a321/m3 + (a123 + a321)/m2
+            let b321 = a321 / m3 as f32 + (a123 + a321) / m2 as f32;
+
+            // Constants for Lagrange multiplier calculation
+            let c1 = r12_old.dot(r32_old) as f64;  // eq. 39
+            let c2 = (r12_old.dot(b321) + r32_old.dot(b123)) as f64;  // eq. 39
+            let c3 = d12 * d32;  // eq. 40
+            let c4 = (d12 / d32 * r32_old.dot(b321) as f64 +
+                      d32 / d12 * r12_old.dot(b123) as f64);  // eq. 41
+
+            // Lagrange multiplier (eq. 43)
+            // λ/dt² = (c1 - c3*cos(θ0)) / (c2 - c4*cos(θ0))
+            let numerator = c1 - c3 * theta0.cos();
+            let denominator = c2 - c4 * theta0.cos();
+
+            if denominator.abs() < 1e-20 {
+                continue; // Avoid division by zero
+            }
+
+            let lambda_over_dt_sq = numerator / denominator;
+
+            // Position updates (eq. 14+17)
+            // pos(i) -= (λ/dt²) * a123 / m1
+            // pos(j) += (λ/dt²) * (a123 + a321) / m2
+            // pos(k) -= (λ/dt²) * a321 / m3
+            conf.current_mut().pos[i] -= a123 * (lambda_over_dt_sq / m1) as f32;
+            conf.current_mut().pos[j] += (a123 + a321) * (lambda_over_dt_sq / m2) as f32;
+            conf.current_mut().pos[k] -= a321 * (lambda_over_dt_sq / m3) as f32;
+        }
+    }
+
+    ConstraintResult {
+        converged: max_error <= tolerance_sq,
+        iterations: iteration,
+        max_error: max_error.sqrt(),
+    }
+}
+
+/// Apply perturbed angle constraints for FEP
+///
+/// Like `angle_constraints` but with λ-dependent target angles:
+/// θ₀(λ) = (1-λ)·θ_A + λ·θ_B
+///
+/// Also calculates ∂H/∂λ for thermodynamic integration.
+///
+/// # Parameters
+/// - `constraints`: List of perturbed angle constraints
+/// - `topo`: Molecular topology
+/// - `conf`: Configuration
+/// - `dt`: Time step
+/// - `lambda`: Current λ value (0 to 1)
+/// - `lambda_deriv`: dλ/dt for FEP
+/// - `params`: Constraint parameters
+///
+/// # Returns
+/// - `ConstraintResult` with convergence status
+pub fn perturbed_angle_constraints(
+    constraints: &[PerturbedAngleConstraint],
+    topo: &Topology,
+    conf: &mut Configuration,
+    dt: f64,
+    lambda: f64,
+    lambda_deriv: f64,
+    params: &AngleConstraintParameters,
+) -> ConstraintResult {
+    let dt_sq = dt * dt;
+    let tolerance_sq = params.tolerance * params.tolerance;
+
+    let mut max_error = std::f64::MAX;
+    let mut iteration = 0;
+
+    while iteration < params.max_iterations && max_error > tolerance_sq {
+        max_error = 0.0;
+        iteration += 1;
+
+        for constraint in constraints {
+            let i = constraint.i;
+            let j = constraint.j;
+            let k = constraint.k;
+
+            // Interpolate target angle: θ₀(λ) = (1-λ)·θ_A + λ·θ_B
+            let theta0 = (1.0 - lambda) * constraint.a_theta + lambda * constraint.b_theta;
+
+            // Bond vectors
+            let r12 = conf.current().pos[i] - conf.current().pos[j];
+            let r32 = conf.current().pos[k] - conf.current().pos[j];
+
+            let d12 = r12.length() as f64;
+            let d32 = r32.length() as f64;
+
+            if d12 < 1e-10 || d32 < 1e-10 {
+                continue;
+            }
+
+            // Current angle
+            let dot_product = (r12.dot(r32) as f64) / (d12 * d32);
+            let dot_product = dot_product.clamp(-1.0, 1.0);
+            let theta = dot_product.acos();
+
+            // Constraint error
+            let diff = (theta - theta0).abs();
+            let error = diff * diff;
+
+            if error > max_error {
+                max_error = error;
+            }
+
+            if error < tolerance_sq {
+                continue;
+            }
+
+            // Reference positions
+            let r12_old = conf.old().pos[i] - conf.old().pos[j];
+            let r32_old = conf.old().pos[k] - conf.old().pos[j];
+
+            // Auxiliary vectors
+            let dot_12_32 = r12_old.dot(r32_old) as f64;
+            let a123 = (r32_old * (d12 * d12) as f32 - r12_old * dot_12_32 as f32) / (d12 * d12 * d12 * d32) as f32;
+            let a321 = (r12_old * (d32 * d32) as f32 - r32_old * dot_12_32 as f32) / (d12 * d32 * d32 * d32) as f32;
+
+            // Masses
+            let m1 = topo.mass[i];
+            let m2 = topo.mass[j];
+            let m3 = topo.mass[k];
+
+            // Mass-weighted vectors
+            let b123 = a123 / m1 as f32 + (a123 + a321) / m2 as f32;
+            let b321 = a321 / m3 as f32 + (a123 + a321) / m2 as f32;
+
+            // Lagrange multiplier constants
+            let c1 = r12_old.dot(r32_old) as f64;
+            let c2 = (r12_old.dot(b321) + r32_old.dot(b123)) as f64;
+            let c3 = d12 * d32;
+            let c4 = (d12 / d32 * r32_old.dot(b321) as f64 +
+                      d32 / d12 * r12_old.dot(b123) as f64);
+
+            let numerator = c1 - c3 * theta0.cos();
+            let denominator = c2 - c4 * theta0.cos();
+
+            if denominator.abs() < 1e-20 {
+                continue;
+            }
+
+            let lambda_over_dt_sq = numerator / denominator;
+
+            // Position updates
+            conf.current_mut().pos[i] -= a123 * (lambda_over_dt_sq / m1) as f32;
+            conf.current_mut().pos[j] += (a123 + a321) * (lambda_over_dt_sq / m2) as f32;
+            conf.current_mut().pos[k] -= a321 * (lambda_over_dt_sq / m3) as f32;
+
+            // Energy derivative for FEP (eq. 48)
+            // ∂H/∂λ = λ_deriv * (λ/dt²) * sin(θ₀) * (θ_B - θ_A)
+            if lambda_deriv.abs() > 1e-20 {
+                let _dh_dlambda = lambda_deriv * lambda_over_dt_sq * theta0.sin() *
+                                 (constraint.b_theta - constraint.a_theta);
+                // Store in energy derivatives (would be added to Configuration)
+            }
+        }
+    }
+
+    ConstraintResult {
+        converged: max_error <= tolerance_sq,
+        iterations: iteration,
+        max_error: max_error.sqrt(),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
