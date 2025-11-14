@@ -9,7 +9,7 @@
 
 Implementing 5 critical constraint algorithms missing from gromos-rs, as identified in the GROMOS translation evaluation.
 
-**Progress**: 2/5 Complete (40%)
+**Progress**: 3/5 Complete (60%) - **MAJOR UPDATE**
 
 ---
 
@@ -110,9 +110,100 @@ let result = perturbed_shake(
 
 ---
 
-## ⏳ Remaining Implementations
+### 3. **Angle Constraints** ⭐⭐ (MEDIUM PRIORITY) ✅
 
-### 3. Flexible Constraints (2 weeks) - PENDING
+**Status**: Complete
+**Location**: `gromos-rs/src/algorithm/constraints.rs:947-1244`
+**Commit**: e776e29
+**Paper Reference**: J. Comput. Chem. 2021;42:418–434
+
+**Features**:
+- Constrains bond angles (i-j-k) to fixed values
+- SHAKE-like iterative algorithm for 3-body geometry
+- ~300 lines of production-ready code
+- Includes perturbed variant for FEP
+
+**Algorithm**:
+```
+1. Calculate current angle: θ = acos(r₁₂ · r₃₂ / (|r₁₂| |r₃₂|))
+2. Compute auxiliary vectors:
+   a₁₂₃ = (|r₁₂|² r₃₂ - (r₁₂·r₃₂)r₁₂) / (|r₁₂|³|r₃₂|)
+   a₃₂₁ = (|r₃₂|² r₁₂ - (r₁₂·r₃₂)r₃₂) / (|r₁₂||r₃₂|³)
+3. Calculate mass-weighted vectors:
+   b₁₂₃ = a₁₂₃/m₁ + (a₁₂₃+a₃₂₁)/m₂
+   b₃₂₁ = a₃₂₁/m₃ + (a₁₂₃+a₃₂₁)/m₂
+4. Solve for Lagrange multiplier:
+   λ/dt² = (r₁₂·r₃₂ - |r₁₂||r₃₂|cos(θ₀)) / (r₁₂·b₃₂₁ + r₃₂·b₁₂₃ - ...)
+5. Update all three atom positions
+```
+
+**Data Structures**:
+```rust
+struct AngleConstraint {
+    i: usize,
+    j: usize,  // Central atom (vertex)
+    k: usize,
+    theta: f64,
+}
+
+struct PerturbedAngleConstraint {
+    i: usize,
+    j: usize,
+    k: usize,
+    a_theta: f64,
+    b_theta: f64,
+}
+
+struct AngleConstraintParameters {
+    tolerance: f64,
+    max_iterations: usize,
+}
+```
+
+**Usage**:
+```rust
+let constraints = vec![
+    AngleConstraint { i: 0, j: 1, k: 2, theta: 1.911 } // ~109.5°
+];
+let params = AngleConstraintParameters::default();
+let result = angle_constraints(
+    &constraints,
+    &topology,
+    &mut configuration,
+    dt,
+    &params
+);
+
+// For FEP:
+let pert_constraints = vec![
+    PerturbedAngleConstraint {
+        i: 0, j: 1, k: 2,
+        a_theta: 1.911,  // State A
+        b_theta: 2.094,  // State B (~120°)
+    }
+];
+let result = perturbed_angle_constraints(
+    &pert_constraints,
+    &topology,
+    &mut configuration,
+    dt,
+    lambda,
+    lambda_deriv,
+    &params
+);
+```
+
+**Importance**:
+- **Structural restraints** - Maintain specific angular geometries
+- **Ring systems** - Preserve cyclic structure angles
+- **FEP compatibility** - Enable free energy calculations with angle changes
+- **Experimental data** - Incorporate NMR/crystallography angle restraints
+
+---
+
+## ⏳ Remaining Implementations (2/5)
+
+### 4. Flexible Constraints (2 weeks) - PENDING
 
 **Priority**: Low-Medium
 **Complexity**: Moderate
@@ -158,75 +249,15 @@ struct FlexibleConstraintConfig {
 
 ---
 
-### 4. Angle Constraints (2 weeks) - PENDING
-
-**Priority**: Low
-**Complexity**: Moderate
-**md++ Reference**: `md++/src/algorithm/constraints/angle_constraint.cc`
-**Paper**: J. Comput. Chem. 2021;42:418–434
-
-**Concept**:
-- Constrain bond angles (i-j-k) to fixed values
-- SHAKE-like iterative algorithm for 3-body geometry
-- Can have perturbed variants: θ₀(λ) = (1-λ)·θ_A + λ·θ_B
-
-**Key Equations**:
-```
-Current angle: θ = acos(r₁₂ · r₃₂ / (|r₁₂| |r₃₂|))
-Constraint: θ = θ₀
-
-Auxiliary vectors:
-  a₁₂₃ = (|r₁₂|² r₃₂ - (r₁₂·r₃₂)r₁₂) / (|r₁₂|³|r₃₂|)
-  a₃₂₁ = (|r₃₂|² r₁₂ - (r₁₂·r₃₂)r₃₂) / (|r₁₂||r₃₂|³)
-
-Mass-weighted:
-  b₁₂₃ = a₁₂₃/m₁ + (a₁₂₃+a₃₂₁)/m₂
-  b₃₂₁ = a₃₂₁/m₃ + (a₁₂₃+a₃₂₁)/m₂
-
-Lagrange multiplier:
-  λ/dt² = (r₁₂·r₃₂ - |r₁₂||r₃₂|cos(θ₀)) /
-          (r₁₂·b₃₂₁ + r₃₂·b₁₂₃ - ...)
-
-Position updates:
-  pos(i) -= (λ/dt²) * a₁₂₃ / m₁
-  pos(j) += (λ/dt²) * (a₁₂₃ + a₃₂₁) / m₂
-  pos(k) -= (λ/dt²) * a₃₂₁ / m₃
-```
-
-**Required Data Structures**:
-```rust
-struct AngleConstraint {
-    i: usize,
-    j: usize,  // Central atom (vertex)
-    k: usize,
-    theta: f64,  // Target angle (radians)
-}
-
-struct PerturbedAngleConstraint {
-    i: usize,
-    j: usize,
-    k: usize,
-    A_theta: f64,
-    B_theta: f64,
-}
-```
-
-**Challenges**:
-- All 3 atoms must be updated simultaneously
-- Coupling with distance constraints requires outer iteration loop
-- More complex geometry than bond constraints
-- Angle wrapping and numerical stability near 0° and 180°
-
----
-
 ### 5. Dihedral Constraints (2 weeks) - PENDING
 
 **Priority**: Low
-**Complexity**: High
+**Complexity**: Very High (Most Complex)
 **md++ Reference**: `md++/src/algorithm/constraints/dihedral_constraint.cc`
 **Papers**:
 - J. Phys. Chem. B. 2006;110(16):8488-98 (Appendix)
 - J. Chem. Phys. 152, 024109 (2020)
+
 
 **Concept**:
 - Constrain dihedral angles (i-j-k-l) to fixed values
