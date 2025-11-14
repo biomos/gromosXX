@@ -299,6 +299,11 @@ pub struct Configuration {
     state1: State,
     state2: State,
     current_idx: usize,  // 0 or 1
+
+    /// Lattice shifts for periodic boundary tracking (FEP)
+    /// Stores how many times each atom crossed periodic boundaries
+    /// Dimension: [n_atoms][3] for x, y, z shifts
+    pub lattice_shifts: Vec<[i32; 3]>,
 }
 
 impl Configuration {
@@ -307,6 +312,7 @@ impl Configuration {
             state1: State::new(n_atoms, num_temperature_groups, num_energy_groups),
             state2: State::new(n_atoms, num_temperature_groups, num_energy_groups),
             current_idx: 0,
+            lattice_shifts: vec![[0, 0, 0]; n_atoms],
         }
     }
 
