@@ -1,0 +1,8 @@
+# /home/markus/projects/gromos++/LINUX_ICC/programs/.libs/lt-rot_rel
+
+	@topo ex.top
+	@pbc  r
+	@time 0 0.002
+	@axes <two pairs of atoms>
+	@traj ex.tr
+

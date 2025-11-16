@@ -1,0 +1,6 @@
+@topo ex.top
+@pbc r
+@mol 1
+@grspace 0.2
+#i just use on frame here, i.e. on g96 file
+@traj exref.coo

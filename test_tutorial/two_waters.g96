@@ -1,0 +1,14 @@
+TITLE
+Two water molecules for testing nonbonded interactions
+END
+POSITION
+    1  SOL   OW    1   0.500   0.500   0.500
+    2  SOL  HW1    2   0.595   0.500   0.500
+    3  SOL  HW2    3   0.469   0.590   0.500
+    4  SOL   OW    1   1.200   1.200   1.200
+    5  SOL  HW1    2   1.295   1.200   1.200
+    6  SOL  HW2    3   1.169   1.290   1.200
+END
+GENBOX
+   3.0000   3.0000   3.0000
+END

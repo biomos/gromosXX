@@ -1,0 +1,21 @@
+# cbindgen configuration for gromos-rs
+language = "C"
+include_guard = "GROMOS_RS_H"
+pragma_once = true
+documentation = true
+
+# Exclude binary I/O modules from C bindings (Rust-only features)
+[parse]
+parse_deps = true
+include = []
+exclude = [
+    "trajectory_binary",
+    "energy_binary",
+]
+
+# Expand features
+[parse.expand]
+crates = ["gromos-rs"]
+all_features = false
+default_features = true
+features = []

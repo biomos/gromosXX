@@ -1,0 +1,10 @@
+@sys		md_peptide
+@bin            /opt/gromos/gromosXX/OPT/bin/md
+@dir            /home/sinoswiss/peptide/md
+@files
+  topo		../topo/peptide_2Cl_53a6.top
+  input		md.imd
+  coord		../eq/eq_peptide_5.cnf
+@template	mk_script_brutus.lib
+@version  md++
+@script		1 10

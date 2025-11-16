@@ -1,0 +1,219 @@
+TITLE
+DISICL library in gromos format
+converted from ../DISICL/libs/DISICL_nucl_det.lib
+END
+DSCLANG
+EPS      C4*  C3*  O3*  P      0   0   0   1 
+ZET      C3*  O3*  P    O5*    0   0   1   1 
+CHI      O4*  C1*  N1;GUA,ADE,DGUA,DADE:N9 C2;GUA,ADE,DGUA,DADE:C4   0   0   0   0 
+END
+DSCLREG
+alfa1        175.0     180.0    -110.0     -50.0     170.0     180.0 
+alfa1       -180.0    -135.0    -110.0     -50.0     170.0     180.0 
+alfa1        175.0     180.0     -55.0     -50.0    -180.0    -125.0 
+alfa1        175.0     180.0    -110.0     -55.0    -180.0    -145.0 
+alfa1       -180.0    -135.0     -55.0     -50.0    -180.0    -125.0 
+alfa1       -180.0    -135.0    -110.0     -55.0    -180.0    -145.0 
+alfa2        165.0     180.0     -50.0       0.0     160.0     180.0 
+alfa2       -180.0    -110.0     -50.0       0.0     160.0     180.0 
+alfa2        165.0     180.0     -50.0       0.0    -180.0    -110.0 
+alfa2       -180.0    -110.0     -50.0       0.0    -180.0    -110.0 
+alfa2        145.0     180.0       0.0      40.0    -180.0     -90.0 
+alfa2       -180.0    -130.0       0.0      40.0    -180.0     -90.0 
+alfa3       -110.0     -70.0    -110.0     -50.0     150.0     180.0 
+alfa3       -135.0    -110.0     -75.0     -50.0     150.0     180.0 
+alfa3       -135.0    -110.0    -110.0     -75.0     150.0     170.0 
+alfa3       -110.0     -70.0    -110.0     -50.0    -180.0    -100.0 
+alfa3       -135.0    -110.0     -75.0     -50.0    -180.0    -100.0 
+alfa3       -135.0    -110.0    -110.0     -75.0    -145.0    -100.0 
+beta1        145.0     175.0    -120.0     -55.0    -145.0     -70.0 
+beta1        175.0     180.0    -120.0    -110.0    -145.0     -70.0 
+beta1        175.0     180.0    -110.0     -55.0    -125.0     -70.0 
+beta1       -180.0    -135.0    -120.0    -110.0     -90.0     -70.0 
+beta1       -180.0    -135.0    -110.0     -55.0    -125.0     -70.0 
+beta2       -135.0     -50.0     120.0     180.0    -180.0     -50.0 
+beta2        -60.0     -50.0    -180.0    -135.0    -180.0     -50.0 
+beta2       -135.0     -60.0    -180.0    -145.0    -180.0     -50.0 
+beta2       -135.0     -60.0    -145.0    -135.0     -80.0     -50.0 
+beta3        160.0     180.0     150.0     180.0    -145.0     -80.0 
+beta3       -180.0    -135.0     150.0     180.0    -145.0     -80.0 
+beta3        160.0     180.0    -180.0    -120.0    -145.0     -80.0 
+beta3       -180.0    -135.0    -180.0    -120.0    -145.0     -80.0 
+zeta1        150.0     180.0    -130.0     -30.0      20.0     100.0 
+zeta1       -180.0    -100.0    -130.0     -30.0      20.0     100.0 
+zeta2        170.0     180.0      40.0     120.0     160.0     180.0 
+zeta2       -180.0     -40.0      40.0     120.0     160.0     180.0 
+zeta2        170.0     180.0      40.0     120.0    -180.0     -70.0 
+zeta2       -180.0     -40.0      40.0     120.0    -180.0     -70.0 
+zeta3        135.0     180.0      30.0     120.0      20.0     105.0 
+zeta3       -180.0    -110.0      30.0     120.0      20.0     105.0 
+delta1        20.0     100.0      25.0     135.0     170.0     180.0 
+delta1        20.0     100.0      25.0     135.0    -180.0     -70.0 
+delta2        20.0     120.0     155.0     180.0    -170.0     -70.0 
+delta2        20.0     120.0    -180.0     -20.0    -170.0     -70.0 
+delta3        20.0     100.0      25.0     100.0      30.0     100.0 
+ab1          175.0     180.0    -110.0     -55.0    -145.0    -125.0 
+ab1         -180.0    -135.0    -110.0     -55.0    -145.0    -125.0 
+ab2         -135.0     -60.0    -145.0    -110.0     160.0     180.0 
+ab2         -135.0     -60.0    -145.0    -110.0    -180.0     -80.0 
+alfa1       -135.0    -110.0    -110.0     -75.0     170.0     180.0 
+alfa1       -135.0    -110.0    -110.0     -75.0    -180.0    -145.0 
+beta3       -180.0    -135.0    -120.0    -110.0    -145.0     -90.0 
+END
+DSCLCLASS
+BI-helix             beta1    beta1    BI    
+BI-helix             beta1    ab1      BI    
+BII-helix            beta1    beta2    BII   
+BII-helix            beta2    beta1    BII   
+BIII-helix           beta3    beta3    BIII  
+B-loop               beta1    beta3    BL    
+B-loop               beta3    beta1    BL    
+B-loop               beta2    beta2    BL    
+B-loop               beta3    beta2    BL    
+B-loop               beta2    beta3    BL    
+B-loop               beta3    ab1      BL    
+B-loop               ab1      beta3    BL    
+B-loop               beta2    ab1      BL    
+B-loop               ab1      beta2    BL    
+A-helix              alfa1    alfa1    AH    
+A-helix              alfa1    ab1      AH    
+A-loop               ab1      alfa3    AL    
+A-loop               alfa3    ab1      AL    
+A-loop               alfa3    alfa3    AL    
+A-loop               alfa1    alfa3    AL    
+A-loop               alfa1    alfa2    AL    
+Z-helix              zeta1    zeta2    ZH    
+Z-helix              zeta2    zeta1    ZH    
+Z-helix              zeta2    zeta3    ZH    
+Z-helix              zeta3    zeta2    ZH    
+Quad-loop            zeta1    zeta1    QL    
+Quad-loop            zeta1    zeta3    QL    
+Quad-loop            zeta3    zeta1    QL    
+Quad-loop            delta1   delta1   QL    
+Quad-loop            delta3   delta3   QL    
+Quad-loop            delta1   delta3   QL    
+Quad-loop            delta3   delta1   QL    
+Quad-loop            delta3   delta2   QL    
+Quad-loop            delta2   delta3   QL    
+Quad-loop            ab1      zeta1    QL    
+Quad-loop            zeta1    ab1      QL    
+Quad-loop            zeta1    beta1    QL    
+Quad-loop            beta1    zeta1    QL    
+Quad-loop            delta3   beta1    QL    
+Quad-loop            zeta1    beta3    QL    
+Quad-loop            beta3    zeta1    QL    
+Quad-loop            beta1    zeta2    QL    
+Quad-loop            zeta1    delta1   QL    
+Quad-loop            zeta1    alfa3    QL    
+Quad-loop            zeta1    beta2    QL    
+Sharpturn            zeta2    zeta2    ST    
+Sharpturn            alfa3    beta3    ST    
+Sharpturn            delta2   delta2   ST    
+Sharpturn            delta2   delta1   ST    
+Sharpturn            zeta2    alfa3    ST    
+Sharpturn            alfa3    beta1    ST    
+Sharpturn            delta2   beta2    ST    
+Sharpturn            zeta2    ab1      ST    
+Sharpturn            zeta2    beta3    ST    
+Sharpturn            zeta2    alfa1    ST    
+Sharpturn            ab2      beta2    ST    
+Sharpturn            zeta2    alfa2    ST    
+Sharpturn            zeta2    beta1    ST    
+Sharpturn            zeta2    beta2    ST    
+TL-bulge             alfa2    beta2    TL    
+TL-bulge             delta1   delta2   TL    
+TL-bulge             alfa3    alfa1    TL    
+TL-bulge             alfa2    alfa2    TL    
+TL-bulge             alfa2    alfa1    TL    
+TL-bulge             alfa2    beta3    TL    
+TL-bulge             alfa2    alfa3    TL    
+TL-bulge             alfa3    alfa2    TL    
+TL-bulge             alfa3    zeta2    TL    
+TL-bulge             alfa3    beta2    TL    
+TL-bulge             ab1      zeta2    TL    
+TL-bulge             alfa1    zeta2    TL    
+TL-bulge             delta1   zeta1    TL    
+TL-bulge             alfa2    ab2      TL    
+#TL-bulge             alfa2    zeta2    TL    
+ABtrans              ab1      ab1      AB    
+ABtrans              ab1      alfa1    AB    
+ABtrans              ab1      beta1    AB    
+ABtrans              alfa1    beta1    AB    
+ABtrans              alfa1    beta3    AB    
+ABtrans              beta1    alfa1    AB    
+ABtrans              alfa1    ab2      AB    
+ABtrans              beta1    ab2      AB    
+AB2trans             beta2    alfa3    AB2   
+AB2trans             beta3    alfa1    AB2   
+AB2trans             beta3    alfa3    AB2   
+AB2trans             ab2      ab2      AB2   
+AB2trans             beta3    alfa2    AB2   
+AB2trans             alfa1    beta2    AB2   
+AB2trans             beta2    alfa1    AB2   
+AB2trans             ab2      alfa1    AB2   
+AB2trans             ab2      alfa3    AB2   
+AB2trans             ab2      beta1    AB2   
+AB2trans             ab2      delta1   AB2   
+AB2trans             delta1   ab2      AB2   
+AZ                   alfa1    zeta1    AZ    
+AZ                   alfa1    zeta3    AZ    
+AZ                   zeta1    alfa1    AZ    
+AZ                   zeta3    alfa1    AZ    
+AZ                   alfa2    zeta1    AZ    
+AZ                   alfa2    zeta2    AZ    
+AZ                   alfa2    zeta3    AZ    
+AZ                   zeta1    alfa2    AZ    
+AZ                   zeta3    alfa2    AZ    
+AZ                   alfa3    zeta1    AZ    
+AZ                   alfa3    zeta3    AZ    
+AZ                   zeta3    alfa3    AZ    
+ZB                   beta1    zeta3    ZB    
+ZB                   beta2    zeta1    ZB    
+ZB                   beta2    zeta2    ZB    
+ZB                   beta2    zeta3    ZB    
+ZB                   beta3    zeta2    ZB    
+ZB                   beta3    zeta3    ZB    
+ZB                   zeta3    beta1    ZB    
+ZB                   zeta3    beta2    ZB    
+ZB                   zeta3    beta3    ZB    
+AD                   alfa1    delta1   AD    
+AD                   alfa1    delta2   AD    
+AD                   alfa1    delta3   AD    
+AD                   alfa3    delta3   AD    
+AD                   delta1   alfa1    AD    
+AD                   delta2   alfa1    AD    
+AD                   delta3   alfa1    AD    
+AD                   delta3   alfa3    AD    
+BD                   beta1    delta1   BD    
+BD                   beta1    delta2   BD    
+BD                   beta1    delta3   BD    
+BD                   delta1   beta1    BD    
+BD                   delta2   beta1    BD    
+BD                   beta2    delta1   BD    
+BD                   beta2    delta3   BD    
+BD                   delta1   beta2    BD    
+BD                   delta3   beta2    BD    
+BD                   beta3    delta1   BD    
+BD                   beta3    delta2   BD    
+BD                   beta3    delta3   BD    
+BD                   delta1   beta3    BD    
+BD                   delta2   beta3    BD    
+BD                   delta3   beta3    BD    
+BD                   delta1   ab1      BD    
+ZD                   zeta1    delta2   ZD    
+ZD                   zeta1    delta3   ZD    
+ZD                   delta2   zeta1    ZD    
+ZD                   delta3   zeta1    ZD    
+ZD                   zeta2    delta1   ZD    
+ZD                   zeta2    delta2   ZD    
+ZD                   zeta2    delta3   ZD    
+ZD                   delta1   zeta2    ZD    
+ZD                   delta2   zeta2    ZD    
+ZD                   delta3   zeta2    ZD    
+ZD                   zeta3    delta1   ZD    
+ZD                   zeta3    delta2   ZD    
+ZD                   zeta3    delta3   ZD    
+ZD                   delta1   zeta3    ZD    
+ZD                   delta2   zeta3    ZD    
+ZD                   delta3   zeta3    ZD    
+END

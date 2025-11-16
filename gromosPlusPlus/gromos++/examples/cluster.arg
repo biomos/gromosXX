@@ -1,0 +1,7 @@
+# As output from rmsdmat program we got RMSDMAT.bin
+@rmsdmat RMSDMAT.bin
+# here we can specify the rmsd cutoff value
+@cutoff 0.06
+@time 0 5
+# We want to use all structures (optional)
+@maxstruct

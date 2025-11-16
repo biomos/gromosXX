@@ -1,0 +1,8 @@
+# this combines several topologies into one solute topology.
+@topo  peptide_53a6.top 2:Cl_53a6.top
+# the parameters (what you specified with @param in maketop) are taken from the first topology. 
+# this is not important if all the topologies use the same force field.
+@param 1
+# the solvent is taken from the first topology.
+@solv  1
+

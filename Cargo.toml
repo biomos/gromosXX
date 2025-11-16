@@ -1,0 +1,35 @@
+[workspace]
+members = [
+    "gromos-rs",
+    "py-gromos",
+]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = ["GROMOS Developers"]
+license = "GPL-2.0"
+
+[workspace.dependencies]
+# Core Rust library
+gromos-rs = { path = "gromos-rs" }
+
+# SIMD and math
+glam = { version = "0.24", features = ["bytemuck"] }
+wide = "0.7"
+
+# Parallelism
+rayon = "1.8"
+crossbeam = "0.8"
+
+# Python bindings
+pyo3 = { version = "0.21", features = ["extension-module", "abi3-py38"] }
+numpy = "0.21"
+
+# Random number generation
+rand = "0.8"
+rand_distr = "0.4"
+
+# Complex numbers for FFT
+num-complex = "0.4"

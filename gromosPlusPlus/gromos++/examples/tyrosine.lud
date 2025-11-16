@@ -1,0 +1,14 @@
+TITLE
+Local elevation umbrella defintion file
+END
+LEUSBIAS
+# NRUMB
+  1
+# NLEPID NDIM CLES
+       1    1  0.1
+# VARTYPE(N) NTLEFU(N) WLES(N) RLES(N) NGRID(N) GRIDMIN(N) GRIDMAX(N)
+           1        0      1.0     1.0       36        0.0        0.0
+# NCONLE
+  0
+# NVISLE ICONF
+END

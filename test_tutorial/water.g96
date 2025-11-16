@@ -1,0 +1,11 @@
+TITLE
+Single water molecule for testing
+END
+POSITION
+    1  SOL   OW    1   0.000   0.000   0.000
+    2  SOL  HW1    2   0.095   0.000   0.000
+    3  SOL  HW2    3  -0.031   0.090   0.000
+END
+GENBOX
+   3.0000   3.0000   3.0000
+END

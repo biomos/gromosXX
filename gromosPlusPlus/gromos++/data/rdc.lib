@@ -1,0 +1,24 @@
+TITLE
+  rdc library
+  (don't change this file without alse changing src/util/Rdcfuncs.*)
+END
+RDCSPEC
+# type atom names          gyromagnetic ratios  distances
+#      i    j     k     l       i       j       ij     ik
+# N:H (peptide backbone)
+1      N    H     0     0    -27.12    267.520   0.104  0.104
+# CA:C (peptide backbone)
+2      CA   C     0     0    67.283    67.283   0.153  0.153
+# C:N (peptide backbone) (NOTE: C from residue i, N from i+1)
+3      C    N     0     0    67.283    -27.12    0.132  0.132
+# CA:HA (using pseudo-atom for HA) (NOTE: cannot be GLY)
+4      CA   N     C     CB   67.283   267.520   0.100  0.100
+# N:H (ASN side-chain)
+5      ND2  HD21  HD22  0    -27.12    267.520   0.104  0.104
+# N:H (GLN side-chain)
+6      NE2  HE21  HE22  0    -27.12    267.520   0.104  0.104
+# H:H (ASN side-chain)
+7      HD21   HD22  0   0   267.520   267.520   0.000  0.000
+# H:H (GLN side-chain)
+8      HE21   HE22  0   0   267.520   267.520   0.000  0.000
+END

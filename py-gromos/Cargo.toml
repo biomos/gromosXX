@@ -1,0 +1,33 @@
+[package]
+name = "py-gromos"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Python bindings for GROMOS-RS molecular dynamics engine"
+
+[lib]
+name = "gromos"
+crate-type = ["cdylib"]
+
+[dependencies]
+# Core Rust library
+gromos-rs = { workspace = true }
+
+# Python bindings
+pyo3 = { workspace = true, features = ["extension-module", "abi3-py38"] }
+numpy = { workspace = true }
+
+# SIMD and math (re-export from gromos-rs)
+glam = { workspace = true }
+
+# Parallelism
+rayon = { workspace = true }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+
+[build-dependencies]
+pyo3-build-config = "0.21"

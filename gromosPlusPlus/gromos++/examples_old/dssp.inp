@@ -1,0 +1,11 @@
+#Topology
+@topo protein.top
+#Periodic boundary conditions
+@pbc  t
+#Initial time and "time step"
+@time 0 0.2
+#Do calculation, and print out results, every nthframe:th frame
+@nthframe 10
+#Trajectories
+@traj
+protein.traj

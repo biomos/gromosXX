@@ -1,0 +1,17 @@
+#Dg_ener calculates a free energy change by reading in a file
+#        containing the output of the program ener for state A and state B
+#
+#
+@stateA 
+   ener_A.dat
+#   time series of atomic energies that make up state A
+#
+@stateB
+   ener_B.dat
+#   time series of atomic energies that make up state B
+#
+@temp 298.15
+#   temperature to be used in the perturbation formula
+#
+
+

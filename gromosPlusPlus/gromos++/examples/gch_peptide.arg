@@ -1,0 +1,5 @@
+@topo  ../topo/peptide_53a6.top
+# the coordinates for which you want to generate the hydrogens.
+@pos pdb2g96_peptide.cnf
+# All hydrogens within a bond length tolerance of 0.1% are kept - the others are generated.
+@tol   0.1

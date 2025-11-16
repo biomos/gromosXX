@@ -1,0 +1,69 @@
+/**
+ * @file 0index_contrib.doxy
+ * @page contrib Contrib Program Documentation
+ * @anchor contrib <h2>Contrib Program Documentation</h2>
+ *
+ * <p>
+ * authors:
+ * - Jane Allison @anchor ja (ja)
+ * - Riccardo Baron @anchor rba (rba)
+ * - Roland B&uuml;rgi @anchor rb (rb)
+ * - Markus Christen @anchor mc (mc)
+ * - Andreas Eichenberger @anchor ae (ae)
+ * - Fabian Freitag @anchor ff (ff)
+ * - Daan Geerke @anchor dg (dg)
+ * - Alice Gl&auml;ttli @anchor ag (ag)
+ * - Tomas Hansson @anchor th (th)
+ * - Bruno Horta @anchor ff (bh)
+ * - Mika Kastenholz @anchor mk (mk)
+ * - Vincent Kraeutler @anchor vk (vk)
+ * - Chris Oostenbrink @anchor co (co)
+ * - Nathan Schmid @anchor ns (ns)
+ * - Axel S&uuml;ndermann @anchor as (as)
+ * - Daniel Trzesniak @anchor dt (dt)
+ * - Sereina Riniker @anchor sr (sr)
+ * - Martina Setz @anchor ms (ms)
+ * </p>
+ * <hr>
+ *
+ * <h2>Contributed Programs, not part of the release:</h2>
+ * - @ref add_atom
+ * - @ref aggregates finds aggregates of atoms in a box
+ * - @ref bb2tex
+ * - @ref bilayer_gel characterizes the geometry of a gel phase
+ * - @ref cg_potential calculates coarse grain potentials from a fine grain trajectory
+ * - @ref cgLJpot calculates coarse-grained LJ potentials form fine grained simulations
+ * - @ref countbb counts building blocks in building block file
+ * - @ref crossdih_top
+ * - @ref distmat calculate a distance matrix between structures 
+ * - @ref dipole_pot calculate the potential from water dipoles at a certain location
+ * - @ref eds_mult_all calculates the parameters s and EiR iteratively for multiple EDS states
+ * - @ref ener_rplc nonbonded energies after replacement of atoms
+ * - @ref espmap calculates the vacuum electrostatic potential around a group of atoms
+ * - @ref force calculates the LJ and CRF force between two groups of atoms
+ * - @ref gca_ener combines the functionality of @ref gca and @ref ener
+ * - @ref gromacs2gromos converts GROMACS topologies and trajectories
+ * - @ref grid_dens Compute occurrence densities on grids
+ * - @ref hvap calculates the heat of vaporistaion from a coordinate trajectory
+ * - @ref iwdcf calculates the ion-waterdipole orientation correlation function
+ * - @ref lb_top converts to Lorentz-Berthelot combination rules
+ * - @ref local_comp calculates the local composition of a binary mixture
+ * - @ref prep_hybrid helper program to prepare FG/CG hybrid simulations
+ * - @ref m_ener calculates (non-bonded) interaction energies for specific atoms
+ * - @ref model models atom positions based on expressions
+ * - @ref prep_bb prepares a building block
+ * - @ref renumber re-assigns force field types in building blocks
+ * - @ref rmsd_cmp calculates atom-positional root-mean-square deviations between two trajectories
+ * - @ref rottemp calculates temparature distributions
+ * - @ref saltbridge monitors the occurrence of saltbridges
+ * - @ref shake applies the SHAKE algorithm to a trajectory
+ * - @ref stacking monitors the occurrence of stacking residues
+ * - @ref stat_ana calculates statistical quantities such as averages, standard deviations, block averaged error estimate and distributions
+ * - @ref structal threads a topology through a structure
+ * - @ref fit_rdc
+ * - @ref top_to_build convert a topology to a building block
+ * - @ref sphericity calculate sphericity of a set of atoms
+ * <hr>
+ *
+ */
+

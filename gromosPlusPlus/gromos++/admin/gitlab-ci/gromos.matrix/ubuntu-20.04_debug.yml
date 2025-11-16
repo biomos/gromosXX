@@ -1,0 +1,23 @@
+gromos:ubuntu-20.04_debug:configure:
+  extends:
+    - .gromos:base:configure
+    - .use-openmp
+    - .use-share
+    - .use-debug
+  image: ${CI_REGISTRY}/gromos/gromosplspls/gromos-ubuntu-20.04
+  variables:
+    BUILD_DIR: build
+
+gromos:ubuntu-20.04_debug:build:
+  extends:
+    - .gromos:base:build
+    - .use-openmp
+    - .use-share
+    - .use-debug
+  image: ${CI_REGISTRY}/gromos/gromosplspls/gromos-ubuntu-20.04
+  variables:
+    BUILD_DIR: build
+    BIN_PATH: ${BUILD_DIR}/bin
+  needs:
+    - job: gromos:ubuntu-20.04_debug:configure
+

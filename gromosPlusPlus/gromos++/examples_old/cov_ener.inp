@@ -1,0 +1,17 @@
+# cov_ener monitors covalent interaction energies over time
+#
+@topo ex.top
+#   topology
+#
+@pbc r
+#   periodic boundary conditions: rectangular
+#
+@time 0 0.1
+#   time and time increment
+#
+@prop d%1:8,9 a%1:1,2,3 t%1:42,44,46,48 i%1:12,10,14,13
+#   properties to monitor, in this case a distance, an angle
+#   a torsional angle and an improper dihedral
+#
+@traj ex.tr
+#  trajectory

@@ -1,0 +1,190 @@
+TITLE
+I like birds
+END
+FORCEFIELD
+53A6
+END
+ELEMENTMAPPING
+# mass  element
+1       H
+3       C
+4       C
+5       C
+6       C
+12      C
+14      N
+16      O
+19      F
+23      NA
+24      MG
+28      SI
+31      P
+32      S
+35      CL
+39      AR
+40      CA
+56      FE
+63      CU
+65      ZN
+80      BR
+END
+BONDMAPPING
+#	ICB(H)[N]    CB[N] B0[N]
+#
+1   1.0
+# H  -  OA      750     
+#
+2   1.0
+# H  -  N (all) 895     
+#
+3   1.0
+# HC  -  C      700     
+#
+4   2.0
+# C - O (CO in heme)  2220
+#
+5   2.0
+# C  - O        1200    
+#
+6   2.0
+# C  - OM       1000    
+#
+7   1.0
+# CR1  -  NR (6-ring)   1000    
+#
+8   1.0
+# H  -  S       750     
+#
+9   1.0
+# C  -  NT, NL  900     
+#
+10  1.0
+# C, CR1  -  N, NR, CR1, C (peptide, 5-ring)       1000    
+#
+11  1.0
+# C  -  N, NZ, NE       900     
+#
+12  1.5
+# C  -  NR (no H) (6-ring)      1000    
+#
+13  1.0
+# C  -  OA      900     
+#
+14  1.5
+# C  -  NR (heme)       1000    
+#
+15  1.0
+# CH2  -  C, CR1 (6-ring)       800     
+#
+16  1.5
+# C, CR1  -  CH2, C, CR1 (6-ring)       1000    
+#
+17  1.0
+# C, CR1, CH2  -  NR (6-ring)   800     
+#
+18  1.0
+# CHn  -  OA    800     
+#
+19  1.0
+# CHn  -  OM    900     
+#
+20  1.0
+# CHn  -  OA (sugar)    600     
+#
+21  1.0
+# CHn  -  N, NT, NL, NZ, NE     900     
+#
+22  1.5
+# CHn  -  NR (5-ring)   600     
+#
+23  1.5
+# CHn  -   NR (6-ring)  800     
+#
+24  2.0
+# O, OM  -   P     900     
+#
+25  2.0
+# O  -  S       900     
+#
+26  1.0
+# CHn  -   CHn (sugar)  600     
+#
+27  1.0
+# C, CHn  -   C, CHn    800     
+#
+28  1.0
+# OA  -   P     600     
+#
+29  1.0
+# OA  -   SI    600     
+#
+30  1.0
+# FE  -  C (Heme)
+#
+31  1.0
+# CH3  -   S    900     
+#
+32  1.0
+# CH2  -   S    900     
+#
+33  1.0
+# CH1  -   SI   600     
+#
+34  1.0
+# NR  -   FE    120    
+#
+35  1.0
+# NR (heme)  -  FE   120
+#
+36  1.0
+# S  -   S      1000    
+#
+37  1.0
+# NR  -  FE     126
+#
+38  1.0
+# HWat  -   OWat        1110    
+#
+39  1.0
+# HChl  -   CChl        700     
+#
+40  1.0
+# CChl  -   CLChl       1200    
+#
+41  2.0
+# ODmso  -   SDmso      900     
+#
+42  1.0
+# SDmso  -   CDmso      890     
+#
+43  1.0
+# CCl4  -   CLCl4       1200    
+#
+44  2.0
+# CUrea  -  OUrea       1000
+#
+45  1.0
+# CUrea  -  NUrea       900
+#
+46  1.0
+# HWat  -   HWat        1110    
+#
+47  1.0
+# HChl  -   CLChl        700    
+#
+48  1.0
+# CLChl -   CLChl       1200    
+#
+49  2.0
+# ODmso -   CDmso        890    
+#
+50  1.0
+# CDmso -   CDmso        890    
+#
+51  1.0
+# HMet  -   CMet         820    
+#
+52  1.0
+# CLCl4 -   CLCl4       1200    
+#
+END

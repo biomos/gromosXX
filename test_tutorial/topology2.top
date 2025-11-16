@@ -1,0 +1,49 @@
+TITLE
+Test topology 2 - Another simple molecule
+END
+PHYSICALCONSTANTS
+# FPEPSI: 1.0/(4.0*PI*EPS0)
+  138.9354
+# HBAR: Planck's constant HBAR = H/(2*PI)
+  0.0635078
+# SPDL: Speed of light (nm/ps)
+  299792.458
+# BOLTZ: Boltzmann's constant
+  0.00831441
+END
+TOPVERSION
+2.0
+END
+ATOMTYPENAME
+# NTYP
+2
+# TYPE
+N
+C
+END
+RESNAME
+# NRES
+1
+# residue name
+MOL
+END
+SOLUTEATOM
+# ATNM MRES PANM IAC  MASS      CG     CGC INE
+2
+    1    1   N1   1  14.0067  0.25000    1   1
+    2
+    2    1   C1   2  12.0110 -0.25000    1   1
+    1
+END
+BONDSTRETCHTYPE
+# NBTY
+1
+#  CB          CHB          B0
+ 1.00000e+07  5.00000e+05  0.1470000
+END
+BOND
+# NBH
+1
+#  IB   JB  ICB
+    1    2    1
+END

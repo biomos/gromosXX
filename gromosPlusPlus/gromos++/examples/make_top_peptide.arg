@@ -1,0 +1,15 @@
+# specify which forcefield building blocks and parameters you want to use with the @build and @param arguments.
+@build	53a6.mtb
+@param	53a6.ifp
+# using the @seq argument you tell the program which building blocks you want to put in a row to build your molecule. 
+# Here, NH3+ is the amino, COO- the carboxy terminus.
+@seq	NH3+ VAL TYR ARG LYSH GLN COO-
+# Specify the solvent.
+@solv	H2O
+# To incorporate a disulfide bridge between i.e. residues 23 (CYS1) and 45 (CYS2) uncomment the following line
+# @cys 23-45
+# Multiple bridges would look like this: 
+# @cys 23-45 30-115 64-80
+#
+# To incorporate a link between residue 53 (HIS1) and 102 (HEME) uncomment the following line
+# @heme 53 102

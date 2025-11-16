@@ -1,0 +1,18 @@
+# Cog writes out the centre of mass or geometry
+# of the solute molecules in your trajectory.
+# Your solute molecules are replaced by single-
+# atom molecules, or these single molecules can
+# be added to your trajectory after every solute molecule
+#
+#
+@topo mysys.top
+@pbc r
+@traj mysys.trj
+# Skip every nth frame (default=1)
+@nthframe 16
+# Do you want to write out the centre of mass (com)
+# or the centre of geometry (cog) ?
+@cog_com cog
+# Do you want to add or replace the com or cog?
+# (add or repl)
+@add_repl repl

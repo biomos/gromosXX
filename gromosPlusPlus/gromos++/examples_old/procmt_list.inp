@@ -1,0 +1,11 @@
+@topo    ex.top
+@pbc     r
+@coord   exref.coo
+@cutp    0.8
+@cutl    1.4
+@refpos  1:40
+#        if you specify three numbers (doubles) here, it will make the list 
+#        from those coordinates
+@type    CHARGEGROUP
+#        give ATOMIC for an atomic pairlist
+

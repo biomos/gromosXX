@@ -1,0 +1,15 @@
+Makefile.in
+m4
+BUILD*
+build*
+aclocal.m4
+autom4te.cache
+config.h.in
+config
+configure
+
+# hidden folders:
+/.*/
+gromos++/tags
+
+.ipynb_checkpoints

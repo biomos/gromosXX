@@ -1,0 +1,30 @@
+#### sample input and options for neighbours
+#    This program writes out atomic neighbours of specific atoms
+#    where neighbours are defined as atoms sharing a plane of their
+#    voronoi cell.
+#
+@topo ex.top
+#     topology file
+@pbc r
+#     periodic boundary conditions -> rectangular
+@nsm 1
+#     number of solute molecules; if your coordinate file
+#     contains more copies of your topology, specify the number here 
+#     default is 1
+@time 0 0.1
+#     the starting time and increment between between frames in
+#     trajectory
+@cut 0.6
+#     only atoms within this distance are considered in the first place
+#     usually 0.6 is enough, but a warning is written if seems to be too
+#     small
+@atoms 1:3-5
+#     write out the neighbours for atoms 3 to 5 of molecule 1
+#     default is @atoms all
+@traj ex.tr
+#     trajectory files
+@out ex.out
+#     the output will be written to the screen and (if specified) to the
+#     file ex.out in a specific format. (This can then be read by other
+#     programs such as clusmol)
+

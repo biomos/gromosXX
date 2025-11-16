@@ -1,0 +1,43 @@
+#Ener prints out a time series of the non-bonded interaction energies
+#
+#
+@topo ex.top
+#   topology
+#
+@pbc r
+#   periodic boundariy conditions: rectangular
+#
+@atoms 1:34 1:41-42
+#   atom specifier(s), here atoms 34, 40, 41 and 42 of the first
+#   molecule are selected
+#
+@props a%1:1,2,3
+#   property specifier(s), here we want to monitor the covalent energy of 
+#   the angle 1-2-3 in molecule 1.
+#
+@time 0 0.1
+#   starting time and increment per frame
+#
+@cut 1.4
+#   cut-off distance for the interactions, also used as the RF radius
+#
+@eps 62.0
+#   epsilon outside the RF radius, for reaction field
+#
+@kap 0.0
+#   inverse debye screening length, for reaction field
+#
+#@soft 1:40
+#   a list of the atoms that are to be treated as soft atoms
+#
+#@softpar 0.5 1.51 44.5
+#   parameters for soft vdw and electrostatic interactions.
+#   lambda = 0.5, alhpa_lj = 1.51 and nkT = 44.5 (charge scaled soft
+#   electrostatics)
+#
+@traj ex.tr
+#   trajectory files
+
+
+
+

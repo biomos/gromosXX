@@ -1,0 +1,12 @@
+TITLE
+perturbation topology from SPC to dummies 
+END
+PERTATOMPARAM
+# number of perturbed atoms
+   3
+#  
+#   NR RES NAME IAC(A) MASS(A)  CHARGE(A) IAC(B) MASS(B)  CHARGE(B)   ALJ  ACRF
+    1  1   OW   5      15.99940 -0.82000  22     15.99940 0.00000     1.0  1.0
+    2  1   HW1  21      1.00800  0.41000  22      1.00800 0.00000     1.0  1.0
+    3  1   HW1  21      1.00800  0.41000  22      1.00800 0.00000     1.0  1.0
+END

@@ -1,0 +1,15 @@
+@topo ex.top
+@pbc r
+@mol 1
+@time 0 0.5
+@moln 1
+# as we dont specify any N atoms, the order
+# parameter will be calculated for all of them
+# in the topology
+@oatoms
+@type NH
+@ref exref.coo
+@class CA
+@winframe 1
+@traj
+ex.tr 

@@ -1,0 +1,10 @@
+#### Topology file 
+@topo 
+ex.top 
+### periodic boundaries -> Trunc_Oct 
+@pbc r
+@time 0 0.5
+@atoms 1:a
+@massweighted
+@traj 
+ex.tr

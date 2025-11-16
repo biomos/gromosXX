@@ -1,0 +1,57 @@
+@topo		 	../../topo/peptide_2Cl_53a6.top
+@pbc			r
+
+# give a file which specifies which atoms should be used as donor, acceptor, and H, by using their masses
+@massfile       mass.file
+# in case you dont want to use the default values for standard H-bonds:
+# @Hbparas        0.3 140
+
+# also calculate three-centered H-bonds (1 Donor-H and 2 Acceptors) with special geometric parameters:
+@threecenter
+
+# specify atoms:
+# H-bonds will be calculated between AcceptorAtomsA - DonorAtomsB and AcceptorAtomsB - DonorAtomsA
+# no need to specify AcceptorAtomsB and DonorAtomsB in case you only want to monitor H-bonds within molecule 1:
+@AcceptorAtomsA 1:a
+@DonorAtomsA	1:a
+# however, if you wish to get H-bonds between 2 molecules (1 and 2), specify ALSO:
+# @AcceptorAtomsB 2:a
+# @DonorAtomsB    2:a
+
+# or between 1 and 2 AND within 1:
+# @AcceptorAtomsB 1:a 2:a                                           
+# @DonorAtomsB    1:a 2:a
+
+# if you specify solvent...
+@AcceptorAtomsB s:a
+@DonorAtomsB    s:a
+# ... you can also monitor solute-solvent-solute bridges between molecule 1 and solvent:
+@solventbridges
+
+# if you specified solvent, it might be useful to use the @reducesolvent flag. 
+# it reduces the output of any H-bond involving solvent to the number of H-bonds of a single solvent molecule
+# just try it out and compare it to a run without this flag :)
+@reducesolvent
+
+# use more than 1 cpu (4 in this case)
+@cpus 4
+
+# additionally print output sorted by H-bond occurrence. this applies to all H-bonds (standard, 3-centered, and solventbridges)
+@sort
+
+# if you want to remove all the many H-bonds that have an occurrence (in %) that is less than the given number
+# only show H-bonds >= 1% occurrence:
+@higherthan 1
+
+# give trajectories:
+@traj
+../../md/md_peptide_1.trc.gz
+../../md/md_peptide_2.trc.gz
+../../md/md_peptide_3.trc.gz
+../../md/md_peptide_4.trc.gz
+../../md/md_peptide_5.trc.gz
+../../md/md_peptide_6.trc.gz
+../../md/md_peptide_7.trc.gz
+../../md/md_peptide_8.trc.gz
+../../md/md_peptide_9.trc.gz
+../../md/md_peptide_10.trc.gz

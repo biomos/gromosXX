@@ -1,0 +1,21 @@
+@topo		../../topo/peptide_2Cl_53a6.top
+@pbc 		r
+@include	SOLUTE
+# This is the VMD "Amber Coordinates" format which can be in VMD loaded onto a coordinate file of
+# the molecule. 
+@outformat	vmdam
+@ref		../../ion/peptide_2Cl_h2o.cnf
+@atomsfit	1:CA
+@single
+@traj
+../../md/md_peptide_1.trc.gz
+../../md/md_peptide_2.trc.gz
+../../md/md_peptide_3.trc.gz
+../../md/md_peptide_4.trc.gz
+../../md/md_peptide_5.trc.gz
+../../md/md_peptide_6.trc.gz
+../../md/md_peptide_7.trc.gz
+../../md/md_peptide_8.trc.gz
+../../md/md_peptide_9.trc.gz
+../../md/md_peptide_10.trc.gz
+@spec		ALL
