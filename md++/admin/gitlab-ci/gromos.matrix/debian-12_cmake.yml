@@ -1,0 +1,39 @@
+gromos:debian-12:configure_cmake:
+  extends:
+    - .gromos:base:configure_cmake
+  image: ${CI_REGISTRY}/gromos/gromosxx/gromos-debian-12
+  variables:
+    BUILD_DIR: build
+
+gromos:debian-12:build_make_test_cmake:
+  extends:
+    - .gromos:base:build_make_test_cmake
+  image: ${CI_REGISTRY}/gromos/gromosxx/gromos-debian-12
+  variables:
+    BUILD_DIR: build
+    DESTDIR: $BUILD_DIR
+    BIN_PATH: $BUILD_DIR/usr/local/bin/md
+  needs:
+    - job: gromos:debian-12:configure_cmake
+
+gromos:debian-12:sim_test:
+  extends:
+    - .gromos:base:sim_test
+  image: ${CI_REGISTRY}/gromos/gromosxx/gromos-debian-12
+  variables:
+    BUILD_DIR: build
+    BIN_PATH: $BUILD_DIR/usr/local/bin/md
+    TEST_REPO: $CI_PROJECT_DIR/gromos_test_files/
+  needs:
+    - job: gromos:debian-12:build_make_test_cmake
+
+gromos:debian-12:sim_test_extensive:
+  extends:
+    - .gromos:base:sim_test_extensive
+  image: ${CI_REGISTRY}/gromos/gromosxx/gromos-debian-12
+  variables:
+    BUILD_DIR: build
+    BIN_PATH: $BUILD_DIR/usr/local/bin/md
+    TEST_REPO: $CI_PROJECT_DIR/gromos_test_files/
+  needs:
+    - job: gromos:debian-12:build_make_test_cmake

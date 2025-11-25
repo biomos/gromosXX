@@ -1,5 +1,3 @@
-#import subprocess as sbp
-#import pandas as pd
 import numpy as np
 import os
 from glob import glob
