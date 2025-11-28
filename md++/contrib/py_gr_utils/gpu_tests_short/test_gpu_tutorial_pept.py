@@ -24,7 +24,7 @@ import os
 ######## specific code for the test ########
 # set test directory in the repository (gromos_test_files)
 _repo_test_dir='tutorial_pept'
-_conf_file = 'default_param.yaml'
+_conf_file='gpu_default_param.yaml'
 ######## specific code for the test ########
 
 ######## default code ########
@@ -50,6 +50,7 @@ class Test_tutpept_MD(Base_MD_Test):
 from ..helper_fnc._tre_tests import Basic_Tests_tre
 class Test_tutpept_tre(Basic_Tests_tre):
     test_conf = _test_conf
+Test_tutpept_tre.precision = 2 # reduce the precision for asserting hardcoded values
 ######## specific code for the test ########
 
 
