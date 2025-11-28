@@ -212,12 +212,12 @@
         - sim_test_extensive_report.xml
 
 include:
-  - local: 'md++/admin/gitlab-ci/gromos.matrix/debian-12.yml'
-  - local: 'md++/admin/gitlab-ci/gromos.matrix/debian-12_cmake.yml'
-  - local: 'md++/admin/gitlab-ci/gromos.matrix/debian-12-mpi.yml'
-  - local: 'md++/admin/gitlab-ci/gromos.matrix/debian-12-mpi_debug.yml'
+  #  - local: 'md++/admin/gitlab-ci/gromos.matrix/debian-12.yml'
+  #  - local: 'md++/admin/gitlab-ci/gromos.matrix/debian-12_cmake.yml'
+  #  - local: 'md++/admin/gitlab-ci/gromos.matrix/debian-12-mpi.yml'
+  #  - local: 'md++/admin/gitlab-ci/gromos.matrix/debian-12-mpi_debug.yml'
   - local: 'md++/admin/gitlab-ci/gromos.matrix/debian-12-cuda.yml'
-  - local: 'md++/admin/gitlab-ci/gromos.matrix/debian-12-cuda_debug.yml'
+    #- local: 'md++/admin/gitlab-ci/gromos.matrix/debian-12-cuda_debug.yml'
 # NEW DEBIAN BUILDS ABOVE, OLD UBUNTU BUILDS BELOW
 #   - local: 'md++/admin/gitlab-ci/gromos.matrix/ubuntu-22.04_cmake.yml'
 # #  - local: 'md++/admin/gitlab-ci/gromos.matrix/ubuntu-22.04.yml'
