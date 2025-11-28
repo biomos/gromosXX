@@ -30,5 +30,5 @@ gromos:debian-12-cuda:sim_test:
     BIN_PATH: ${BUILD_DIR}/bin/md
     TEST_REPO: $CI_PROJECT_DIR/gromos_test_files/
   needs:
-    - job: gromos:debian-12-gpu:build
+    - job: gromos:debian-12-cuda:build
 
