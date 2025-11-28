@@ -471,6 +471,28 @@ namespace configuration {
 
       } /** disres informaton */ distanceres;
       disres_struct pertdistanceres;
+      
+      struct colvarres_struct {
+      
+        /**
+         * the sum of all collective variables
+         */
+         double totv;
+        /**
+         * total energy of collective variable restraints
+         */
+         double tote;
+      
+        /**
+         * the values
+         */
+        std::vector<double> values;
+        /**
+         * the energies
+         */
+        std::vector<double> energies;
+      } /** colvarres informaton */ colvarres;
+      colvarres_struct pertcolvarres;
 
       /**
        * @struct disfield_struct

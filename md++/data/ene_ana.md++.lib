@@ -21,13 +21,13 @@ ENERTRJ
   block TIMESTEP
     subblock TIME 2 1
   block ENERGY03
-    subblock ENER 51 1
+    subblock ENER 52 1
     size NUM_BATHS
     subblock KINENER NUM_BATHS 3
     size NUM_ENERGY_GROUPS
     subblock BONDED NUM_ENERGY_GROUPS 5
     subblock NONBONDED matrix_NUM_ENERGY_GROUPS 6
-    subblock SPECIAL NUM_ENERGY_GROUPS 12
+    subblock SPECIAL NUM_ENERGY_GROUPS 13
     size NUM_EDS_STATES
     subblock EDS NUM_EDS_STATES 6
     size NUM_GAMD_GROUPS
@@ -54,13 +54,13 @@ FRENERTRJ
     subblock TIME 2 1
   block FREEENERDERIVS03
     subblock RLAM 1 1
-    subblock FREEENER 51 1
+    subblock FREEENER 52 1
     size NUM_BATHS
     subblock FREEKINENER NUM_BATHS 3
     size NUM_ENERGY_GROUPS
     subblock FREEBONDED NUM_ENERGY_GROUPS 5
     subblock FREENONBONDED matrix_NUM_ENERGY_GROUPS 6
-    subblock FREESPECIAL NUM_ENERGY_GROUPS 12
+    subblock FREESPECIAL NUM_ENERGY_GROUPS 13
     size NUM_EDS_STATES
     subblock FREEEDS NUM_EDS_STATES 6
     size NUM_GAMD_GROUPS
@@ -218,6 +218,7 @@ totene_phys = ENER[48]
 eds_vr_shift = ENER[49]
 eds_vr_phys = ENER[50]
 totgamd_dV = ENER[51]
+colvar = ENER[52]
 gamd_dV1 = GAMD[2][5]
 gamd_ed1 = GAMD[2][1]
 gamd_et1 = GAMD[2][2]
