@@ -40,6 +40,7 @@
 .gromos:base:configure:
   stage: configure-build
   script:
+    - nvidia-smi
     - echo $ENV_COMPILER
     - echo $OPENMP_OPTIONS
     - echo $MPI_OPTIONS
@@ -136,6 +137,7 @@
 .gromos:base:sim_test:
   stage: sim_test
   script: 
+    - nvidia-smi
     - echo $CI_PROJECT_DIR
     - echo $TEST_REPO
     - echo $CUDA_OPTIONS
