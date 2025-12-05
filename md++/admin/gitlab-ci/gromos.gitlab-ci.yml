@@ -144,8 +144,10 @@
     - echo $OMPI_ALLOW_RUN_AS_ROOT_CONFIRM
     - echo $OMPI_ALLOW_RUN_AS_ROOT
     - git clone https://gromosx.boku.ac.at/gromos_tests/gromos_test_files.git
-    - cd md++/contrib/py_gr_utils/tests_short/
+    - cd $TESTS_SHORT_FD
     - pytest-3 --junitxml=${CI_PROJECT_DIR}/sim_test_report.xml
+  variables:
+    TESTS_SHORT_FD: md++/contrib/py_gr_utils/tests_short/
   artifacts:
     when: always
     paths:
@@ -160,28 +162,10 @@
 # this could be done more programmatically within the above test and by including a check for env variables in the test_tutorial_pept.py script: e.g. os.environ['CUDA_OPTIONS']
 # this is more error prone however, as the CPU test is run in case when the `CUDA_OPTIONS` variable is not defined - leading to running and passing a wrong test...
 .gromos:base:sim_test_gpu:
-  stage: sim_test
-  script: 
-    - nvidia-smi
-    - echo $CI_PROJECT_DIR
-    - echo $TEST_REPO
-    - echo $CUDA_OPTIONS
-    - echo $BIN_PATH
-    - echo $PRE_MD_BIN
-    - echo $OMPI_ALLOW_RUN_AS_ROOT_CONFIRM
-    - echo $OMPI_ALLOW_RUN_AS_ROOT
-    - git clone https://gromosx.boku.ac.at/gromos_tests/gromos_test_files.git
-    - cd md++/contrib/py_gr_utils/gpu_tests_short/
-    - pytest-3 --junitxml=${CI_PROJECT_DIR}/sim_test_report.xml
-  artifacts:
-    when: always
-    paths:
-      - $BUILD_DIR
-      - gromos_test_files
-      - ${CI_PROJECT_DIR}/sim_test_report.xml
-    reports:
-      junit:
-        - sim_test_report.xml
+  extends:
+    - .gromos:base:sim_test
+  variables:
+    TESTS_SHORT_FD: md++/contrib/py_gr_utils/gpu_tests_short/
 
 # This is set contains more extensive tests that are only to be run on request (e.g. AEDS tests).
 # This set of tests will only be run when the commit message contains the string "-fullTest", otherwise they are set to manual. Manual tests can be triggered manually in gitlab web.
