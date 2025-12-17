@@ -190,6 +190,11 @@ configuration::Configuration::Configuration
   special().distancefield.dist = conf.special().distancefield.dist;
   special().distancefield.energy = conf.special().distancefield.energy;
   special().distancefield.energy_deriv = conf.special().distancefield.energy_deriv;
+
+  special().colvarres.energies=conf.special().colvarres.energies;
+  special().colvarres.values=conf.special().colvarres.values;
+  special().colvarres.totv=conf.special().colvarres.totv;
+  special().colvarres.tote=conf.special().colvarres.tote;
   
   special().angleres.energy = conf.special().angleres.energy;
   special().angleres.d = conf.special().angleres.d;
@@ -323,6 +328,11 @@ configuration::Configuration & configuration::Configuration::operator=
   special().distancefield.dist = conf.special().distancefield.dist;
   special().distancefield.energy = conf.special().distancefield.energy;
   special().distancefield.energy_deriv = conf.special().distancefield.energy_deriv;
+
+  special().colvarres.energies=conf.special().colvarres.energies;
+  special().colvarres.values=conf.special().colvarres.values;
+  special().colvarres.totv=conf.special().colvarres.totv;
+  special().colvarres.tote=conf.special().colvarres.tote;
   
   special().angleres.energy = conf.special().angleres.energy;
   special().angleres.d = conf.special().angleres.d;

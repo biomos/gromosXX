@@ -218,8 +218,15 @@ def add_base_stage(name, input_args):
                 'CUDA_HOME': f'/usr/local/cuda-{input_args.cuda}',
                 'PATH':      f'/usr/local/cuda-{input_args.cuda}/bin:$PATH',
                 'LD_LIBRARY_PATH': 
-                     f'/usr/local/cuda-{input_args.cuda}/lib64:$LD_LIBRARY_PATH'
-              }
+                     f'/usr/local/cuda-{input_args.cuda}/lib64:$LD_LIBRARY_PATH',
+                'LIBRARY_PATH':
+                     f'/usr/local/cuda/lib64:/usr/local/cuda-{input_args.cuda}/lib64:$LIBRARY_PATH',
+                'CPATH':
+                     f'/usr/local/cuda/include:$CPATH',
+                'LDFLAGS':
+                     f'-L/usr/local/cuda-11.7/targets/x86_64-linux/lib/stubs'
+
+            }
         )
 
     return output_stages

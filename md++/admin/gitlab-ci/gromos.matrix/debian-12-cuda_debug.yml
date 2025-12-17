@@ -1,0 +1,22 @@
+gromos:debian-12-cuda-debug:configure:
+  extends:
+    - .gromos:base:configure
+    - .use-openmp
+    - .use-cuda
+    - .use-share
+    - .use-debug
+  image: ${CI_REGISTRY}/gromos/gromosxx/gromos-debian-12-cuda
+  variables:
+    BUILD_DIR: build_debug
+
+gromos:debian-12-cuda-debug:build:
+  extends:
+    - .gromos:base:build
+    - .use-openmp
+    - .use-cuda
+  image: ${CI_REGISTRY}/gromos/gromosxx/gromos-debian-12-cuda
+  variables:
+    BUILD_DIR: build_debug
+    BIN_PATH: ${BUILD_DIR}/bin/md
+  needs:
+    - job: gromos:debian-12-cuda-debug:configure

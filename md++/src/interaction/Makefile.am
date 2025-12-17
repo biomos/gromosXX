@@ -98,7 +98,15 @@ xxintnbspecial_HEADERS = special/create_special.h\
 	special/order_parameter_restraint_interaction.h\
 	special/rdc_restraint_interaction.h\
 	special/symmetry_restraint_interaction.h\
-	special/dfunct_interaction.h
+	special/dfunct_interaction.h\
+	special/colvar_restraint_interaction.h\
+	special/perturbed_colvar_restraint_interaction.h
+
+xxintspecialcolvardir = $(includedir)/md++/interaction/special/colvar
+xxintspecialcolvar_HEADERS = special/colvar/colvar.h\
+	special/colvar/colvar_utils.h\
+	special/colvar/coordnum.h\
+	special/colvar/perturbed_coordnum.h
 
 xxintspecialxraydir = $(includedir)/md++/interaction/special/xray
 xxintspecialxray_HEADERS = special/xray/dens.h\
@@ -197,6 +205,12 @@ libgrointeraction_la_SOURCES = interaction.cc\
 	special/rdc_restraint_interaction.cc\
 	special/symmetry_restraint_interaction.cc\
 	special/dfunct_interaction.cc\
+	special/colvar_restraint_interaction.cc\
+	special/perturbed_colvar_restraint_interaction.cc\
+    special/colvar/colvar.cc\
+    special/colvar/colvar_utils.cc\
+	special/colvar/coordnum.cc\
+	special/colvar/perturbed_coordnum.cc\
 	qmmm/qm_link.cc\
 	qmmm/qm_zone.cc\
 	qmmm/qm_worker.cc\

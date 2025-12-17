@@ -509,6 +509,7 @@ namespace io
     os << type << "Entropy              : " << std::setw(30) << e.entropy_term << "\n";
     os << type << "NN validation        : " << std::setw(30) << e.nn_valid << "\n";
     os << type << "NN validation Fmax   : " << std::setw(30) << e.nn_valid_maxF << "\n";
+    os << type << "Collective variables : " << std::setw(30) << e.colvarres_total << "\n";
     os << "\n";
 
     os << std::setw(20) << "COV";
