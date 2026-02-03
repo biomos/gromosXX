@@ -334,24 +334,71 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
 
   // Assign dynamic charges for IR+BR
   if (sim.param().qmmm.qm_ch == simulation::qm_ch_dynamic) {
-    std::vector<double> partial_charges = mlp_calculator.attr("get_charges")().cast<std::vector<double>>();
-    it = qm_zone.qm.begin();
-    double totcharge=0.0;
-    for (unsigned i = 0; it != to; ++it, ++i) {
-      it->qm_charge = partial_charges[i] * this->param->unit_factor_charge;
-      totcharge+=it->qm_charge;
-    }
-    // Adjust predicted partial charges to match with requested total charge by applying homogenous background charge
-    if(totcharge != sim.param().qmmm.qm_zone.charge){
-      DEBUG(10, "Charges from NN model do not add up: requested " << sim.param().qmmm.qm_zone.charge  << " predicted " << totcharge << ". Homogeneously adjusting charges");
-      double q_adjust=(sim.param().qmmm.qm_zone.charge - totcharge) / qm_zone.qm.size();
-      it = qm_zone.qm.begin();
-      for(; it!=to; ++it){
-        it->qm_charge += q_adjust;
-        DEBUG(10, "Charge adjusted for atom " << it->index << " from " << it->qm_charge - q_adjust << " to " << it->qm_charge);
+      std::vector<double> partial_charges = mlp_calculator.attr("get_charges")().cast<std::vector<double>>();
+
+      // Assign QM atom charges
+      double tot_qm_charge = 0.0;
+      size_t index = 0;
+
+      for (auto &atom : qm_zone.qm) {
+          atom.qm_charge = partial_charges[index] * this->param->unit_factor_charge;
+          tot_qm_charge += atom.qm_charge;
+          index++;
       }
-    }
+
+      // Assign link atom charges
+      double tot_link_charge = 0.0;
+
+      for (auto &link : qm_zone.link) {
+          link.qm_charge = partial_charges[index] * this->param->unit_factor_charge;
+          tot_link_charge += link.qm_charge;
+          index++;
+      }
+
+      double total_predicted_charge = tot_qm_charge + tot_link_charge;
+
+      const double system_charge =
+          sim.param().qmmm.qm_zone.charge +
+          sim.param().qmmm.buffer_zone.charge;
+
+      DEBUG(10, "NN charge summary: requested=" << system_charge
+                << " predicted=" << total_predicted_charge
+                << " (QM=" << tot_qm_charge
+                << ", LA=" << tot_link_charge << ")");
+
+      // Homogeneous background charge correction
+      double diff =  system_charge - total_predicted_charge;
+
+      if (total_predicted_charge != system_charge) {
+
+          double delta = diff /  (qm_zone.qm.size()+qm_zone.link.size());
+
+          DEBUG(10, "Applying homogeneous correction of " << delta
+                      << " to all QM and link atoms (" << qm_zone.qm.size()+qm_zone.link.size()
+                      << " atoms).");
+
+        // Apply correction to QM atoms
+        for (auto &atom : qm_zone.qm) {
+            double old = atom.qm_charge;
+            atom.qm_charge = old + delta;  // subtract, because diff = predicted - desired
+            DEBUG(10, "Charge adjusted for atom " << atom.index 
+                  << " from " << old << " to " << atom.qm_charge);
+        }
+
+        // Apply correction to link atoms
+        for (auto &link : qm_zone.link) {
+            double old = link.qm_charge;
+            link.qm_charge = old + delta;
+            DEBUG(10, "LA charge adjusted for atom " << link.mm_index
+                  << " from " << old << " to " << link.qm_charge);
+        }
+
+
+      } else {
+          DEBUG(10, "Predicted charge matches requested charge; no correction applied.");
+      }
   }
+
   
   // NN validation
   if (!sim.param().qmmm.nn.val_model_paths.empty()

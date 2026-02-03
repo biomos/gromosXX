@@ -186,31 +186,41 @@ void interaction::QM_Zone::write(topology::Topology& topo,
       }
     }
     // Add capping atom charge to QM link atom
-    for (std::set<QM_Link>::const_iterator
-          it = this->link.begin(), to = this->link.end(); it != to; ++it)
-      {
-      DEBUG(15, "Capping atom " << it->qm_index << "-" << it->mm_index << ", charge: " << it->qm_charge);
-      topo.charge()(it->qm_index) += it->qm_charge;
-      DEBUG(15, "Charge added to QM atom " << it->qm_index << ", new charge: " << topo.charge(it->qm_index));
-    }
+    //for (std::set<QM_Link>::const_iterator
+    //      it = this->link.begin(), to = this->link.end(); it != to; ++it)
+      //{
+      //DEBUG(10, "Capping atom " << it->qm_index << "-" << it->mm_index << ", charge: " << it->qm_charge);
+      //topo.charge()(it->qm_index) += it->qm_charge;
+    //  DEBUG(10, "Charge added to QM atom " << it->qm_index << ", new charge: " << topo.charge(it->qm_index));
+    //}
   }
-
+  
   // write separate charges for interaction between the buffer region and MM region
   if (sim.param().qmmm.use_qm_buffer
       && sim.param().qmmm.qm_ch == simulation::qm_ch_dynamic
       && sim.param().qmmm.software == simulation::qm_schnetv2)
-    {
-    // First reset delta charges
-    std::fill(topo.qm_delta_charge().begin(), topo.qm_delta_charge().end(), 0.0);
-    // Fill with delta-charges
-    for (std::set<QM_Atom>::const_iterator
-        it = this->qm.begin(), to = this->qm.end(); it != to; ++it) {
-      if (topo.is_adaptive_qm_buffer(it->index)) {
-        const double delta_charge = it->qm_charge - topo.charge(it->index);
-        DEBUG(15, "Atom " << it->index << ", new delta charge: " << delta_charge);
-        topo.qm_delta_charge(it->index) = delta_charge;
+  {
+      // First reset delta charges
+      std::fill(topo.qm_delta_charge().begin(), topo.qm_delta_charge().end(), 0.0);
+
+      // Fill with delta-charges
+      for (std::set<QM_Atom>::const_iterator it = this->qm.begin(), to = this->qm.end(); it != to; ++it) {
+          if (topo.is_adaptive_qm_buffer(it->index)) {
+
+              // Start with the QM atom charge
+              double delta_charge = it->qm_charge - topo.charge(it->index);
+
+              // Add charges from any link atoms that cap this QM atom
+              for (std::set<QM_Link>::const_iterator link_it = this->link.begin(), link_to = this->link.end(); link_it != link_to; ++link_it) {
+                  if (link_it->qm_index == it->index) {
+                      delta_charge += link_it->qm_charge;
+                  }
+              }
+
+              DEBUG(15, "Atom " << it->index << ", new delta charge (including capping atoms): " << delta_charge);
+              topo.qm_delta_charge(it->index) = delta_charge;
+          }
       }
-    }
   }
   if (sim.param().qmmm.use_qm_buffer
       && sim.param().qmmm.qm_ch == simulation::qm_ch_dynamic
