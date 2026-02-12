@@ -217,8 +217,31 @@ int interaction::NN_Worker::init(const topology::Topology& topo
       // get perturbed QM states
       py::list perturbed_qm_states = py::cast(sim.param().qmmm.nn.pertqm_state);
 
+      // get perturbed state total charge and spin multiplicity
+      int pert_system_charge = sim.param().qmmm.qm_zone.pert_charge + sim.param().qmmm.buffer_zone.pert_charge;
+      py::int_ pert_total_charge = pert_system_charge;
+
+      // number of unpaired spins of the QM zone
+      const int pert_spin_qm = sim.param().qmmm.qm_zone.pert_spin_mult - 1;
+      // number of unpaired spins of the buffer zone
+      const int pert_spin_buf = sim.param().qmmm.buffer_zone.pert_spin_mult - 1;
+      // consider no spin pairing between the QM and buffer zone
+      int pert_spin_multiplicity = pert_spin_qm + pert_spin_buf + 1;
+      py::int_ pert_spin_mult = pert_spin_multiplicity;
+      
+      // Decide if reference vacuum energies should be used according to .qmmm specification file
+      py::object ref_vacA_obj = py::none();
+      py::object ref_vacB_obj = py::none();
+
+      if (sim.param().qmmm.qm_zone.has_ref_vacA && sim.param().qmmm.qm_zone.has_ref_vacB) {
+        ref_vacA_obj = py::float_(sim.param().qmmm.qm_zone.ref_vacA);
+        ref_vacB_obj = py::float_(sim.param().qmmm.qm_zone.ref_vacB);
+      }
+
       // Initialize mlp_calculator Pert_SchNet_V2_Calculator Python object
-      mlp_calculator = schnet_v2.attr("Pert_SchNet_V2_Calculator")(model_path, val_models_paths, write_val_step, write_energy_step, spin_mult, total_charge, lambda, perturbed_qm_states);
+      mlp_calculator = schnet_v2.attr("Pert_SchNet_V2_Calculator")(model_path, val_models_paths, write_val_step, 
+        write_energy_step, spin_mult, total_charge, lambda, perturbed_qm_states,pert_total_charge, pert_spin_mult,
+        ref_vacA_obj, ref_vacB_obj);
     }
 
     else {
@@ -240,7 +263,47 @@ int interaction::NN_Worker::init(const topology::Topology& topo
 }
 
 interaction::NN_Worker::~NN_Worker() = default;
-
+/**
+ * @brief Execute a single NN “QM” step: build NN inputs, call Python, and map outputs back.
+ *
+ * This routine replaces the traditional QM backend call by a call into a Python
+ * calculator (SchNetPack wrappers) exposed via pybind11.
+ *
+ * ## High-level data flow
+ * 1. **Build NN inputs**
+ *    - Assemble `atomic_numbers` and `system_coordinates` for the NN model.
+ *    - Convert positions from the MD length unit to the NN model unit using
+ *      `unit_factor_length`.
+ *
+ * 2. **Call the Python calculator**
+ *    - Invoke `mlp_calculator.calculate_next_step(...)` which performs the NN
+ *      forward pass for the current MD step.
+ *    - The Python side caches the predicted energy/forces (and optionally charges,
+ *      committee disagreement, and dE/dlambda for TI).
+ *
+ * 3. **Read outputs and redistribute them to GROMOS objects**
+ *    - Energy is stored in `qm_zone.QM_energy()`.
+ *    - Forces are written into the `QM_Atom::force` fields of the QM/Buffer
+ *      atoms and into the `QM_Link::force` fields of capping atoms.
+ *    - If dynamic charges are enabled, predicted partial charges are mapped back
+ *      to `qm_charge` fields and (optionally) corrected to match the requested
+ *      integer total charge.
+ *
+ * ## Ordering contract (critical for correct force mapping)
+ * The NN returns forces in the exact order in which atoms are passed in.
+ * Historically, the ordering of `qm_zone.qm` can differ from the ordering used
+ * by perturbation input blocks (QMZONE / PERTQMZONE). For perturbation, the
+ * *partition* between IR (QMZONE) and BR (BUFFERZONE) must be consistent.
+ *
+ * We therefore build a deterministic order `qm_atoms_order`:
+ *  - First: all atoms that satisfy `topo.is_qm(index)` (IR)
+ *  - Second: all remaining atoms in `qm_zone.qm` (BR)
+ *  - Finally: all link/capping atoms in `qm_zone.link` (caps)
+ *
+ * The same order is used to:
+ *  - build the Python input arrays
+ *  - interpret the Python output force array
+ */
 int interaction::NN_Worker::run_QM(topology::Topology& topo
                      , configuration::Configuration& conf
                      , simulation::Simulation& sim, interaction::QM_Zone & qm_zone) {
@@ -250,109 +313,138 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
   // Prepare the input for mlp_calculator object
   double length_to_nn = 1 / this->param->unit_factor_length;
 
-  std::set<interaction::QM_Atom>::const_iterator it, to;
-  it = qm_zone.qm.begin();
-  to = qm_zone.qm.end();
+  // --- Build a deterministic order for qm_zone.qm that matches PERTQMZONE (QMZONE/IR) first ---
+  std::vector<const interaction::QM_Atom*> qm_atoms_order;
+  qm_atoms_order.reserve(qm_zone.qm.size());
 
-  // Atomic numbers
-  std::vector<uint32_t> atom_nums;
-
-  // Coordinates
-  py::list system_coordinates;
-
-  for (;it != to; ++it) {
-    atom_nums.push_back(it->atomic_number);
-
-    // convert positions
-    math::Vec nn_pos = it->pos * length_to_nn;
-    py::list atom_coordinates;
-    atom_coordinates.attr("append")(nn_pos[0]);
-    atom_coordinates.attr("append")(nn_pos[1]);
-    atom_coordinates.attr("append")(nn_pos[2]);
-    system_coordinates.attr("append")(atom_coordinates);
-    DEBUG(15, "atom to NN: " << it->index << " : " << math::v2s(nn_pos));
+  // 1) IR atoms (QMZONE): topo.is_qm(index) == true
+  for (auto it = qm_zone.qm.begin(); it != qm_zone.qm.end(); ++it) {
+    if (topo.is_qm(it->index)) {
+      qm_atoms_order.push_back(&(*it));
+    }
   }
 
-  // Write capping atoms
-  DEBUG(15,"Writing capping atoms coordinates");
-  for (std::set<QM_Link>::const_iterator it = qm_zone.link.begin(), to = qm_zone.link.end(); it != to; ++it) {
+  // 2) BR atoms (BUFFERZONE): everything else in qm_zone.qm
+  for (auto it = qm_zone.qm.begin(); it != qm_zone.qm.end(); ++it) {
+    if (!topo.is_qm(it->index)) {
+      qm_atoms_order.push_back(&(*it));
+    }
+  }
+
+  // Atomic numbers + coordinates in that order
+  std::vector<uint32_t> atom_nums;
+  atom_nums.reserve(qm_atoms_order.size() + qm_zone.link.size());
+
+  py::list system_coordinates;
+
+  for (const auto* a : qm_atoms_order) {
+    atom_nums.push_back(a->atomic_number);
+
+    math::Vec nn_pos = a->pos * length_to_nn;
+    py::list atom_coordinates;
+    atom_coordinates.attr("append")(nn_pos[0]);
+    atom_coordinates.attr("append")(nn_pos[1]);
+    atom_coordinates.attr("append")(nn_pos[2]);
+    system_coordinates.attr("append")(atom_coordinates);
+  }
+
+  // Caps (link atoms) are appended last. This is important because the
+  // redistribution below assumes: [QM+BR atoms..., caps...].
+  for (auto it = qm_zone.link.begin(); it != qm_zone.link.end(); ++it) {
     atom_nums.push_back(it->atomic_number);
 
-    // convert positions
     math::Vec nn_pos = it->pos * length_to_nn;
     py::list atom_coordinates;
     atom_coordinates.attr("append")(nn_pos[0]);
     atom_coordinates.attr("append")(nn_pos[1]);
     atom_coordinates.attr("append")(nn_pos[2]);
     system_coordinates.attr("append")(atom_coordinates);
-    DEBUG(15,"Capping atom to NN " << it->qm_index << "-" << it->mm_index << ": " << it->atomic_number << " " << math::v2s(nn_pos));
-  }  
+  }
 
-  // Convert std::vector<uint32_t> atom_nums to Python list
   py::list atomic_numbers = py::cast(atom_nums);
 
-  // Get time step
   py::int_ step = sim.steps();
+  py::int_ n_caps = static_cast<int>(qm_zone.link.size());
 
   // Run the method calculate_next_step to predict energy, forces and NN validation
-  mlp_calculator.attr("calculate_next_step")(atomic_numbers, system_coordinates, step);
-  
+  mlp_calculator.attr("calculate_next_step")(atomic_numbers, system_coordinates, step, n_caps);
+
   // Store predicted energy
   const double energy = mlp_calculator.attr("get_energy")().cast<double>() * this->param->unit_factor_energy;
   DEBUG(13, "energy from NN, " << energy);
   qm_zone.QM_energy() = energy;
 
+
   // Store predicted forces
   std::vector<std::vector<double>> forces = mlp_calculator.attr("get_forces")().cast<std::vector<std::vector<double>>>();
-  it = qm_zone.qm.begin();
-  int QMBR_zone_size = 0;
-  for (unsigned i = 0; it != to; ++it, ++i) {
-    it->force[0] = forces[i][0];
-    it->force[1] = forces[i][1];
-    it->force[2] = forces[i][2];
-    it->force *= this->param->unit_factor_force;
-    DEBUG(15, "force from NN, atom " << it->index << " : " << math::v2s(it->force));
-    QMBR_zone_size += 1;
+  // First QM atoms (IR+BR) in the same order we sent
+  const int qmb_size = static_cast<int>(qm_atoms_order.size());
+  for (int i = 0; i < qmb_size; ++i) {
+    const interaction::QM_Atom* a = qm_atoms_order[i];
+    // The Python model returns forces in its internal units; we convert back
+    // to the MD force unit using unit_factor_force.
+    //
+    // NOTE: qm_atoms_order stores pointers into qm_zone.qm, so writing to
+    // a->force updates the underlying QM_Atom stored in the zone.
+    a->force[0] = forces[i][0];
+    a->force[1] = forces[i][1];
+    a->force[2] = forces[i][2];
+    a->force *= this->param->unit_factor_force;
+    DEBUG(15, "force from NN, atom " << a->index << " : " << math::v2s(a->force));
   }
 
-  // Also parse capping atoms
-  unsigned i = 0;
-  for(std::set<QM_Link>::iterator it = qm_zone.link.begin(), to = qm_zone.link.end(); it != to; ++it) {
-    it->force[0] = forces[QMBR_zone_size+i][0];
-    it->force[1] = forces[QMBR_zone_size+i][1];
-    it->force[2] = forces[QMBR_zone_size+i][2];
+
+  // Now redistribute capping atom forces. Caps start at index qmb_size.
+  int i_cap = 0;
+  for (auto it = qm_zone.link.begin(); it != qm_zone.link.end(); ++it, ++i_cap) {
+    // Link/capping atoms are appended after all physical QM/BR atoms.
+    // Their forces are stored on the QM_Link objects (used later to project
+    // forces back onto the real MM atoms participating in the link).
+    it->force[0] = forces[qmb_size + i_cap][0];
+    it->force[1] = forces[qmb_size + i_cap][1];
+    it->force[2] = forces[qmb_size + i_cap][2];
     it->force *= this->param->unit_factor_force;
     DEBUG(13, "force from NN, capping atom " << it->qm_index << "-" << it->mm_index << ": "  << math::v2s(it->force));
-    i += 1;
   }
 
   // Free energy derivative if perturbation is performed
   if (sim.param().perturbation.perturbation) {
+    // dE/dlambda is provided by the Python TI wrapper.
     const double energy_derivative = mlp_calculator.attr("get_derivative")().cast<double>() * this->param->unit_factor_energy;
     qm_zone.QM_energy_derivative() = energy_derivative;
   }
 
-  // Assign dynamic charges for IR+BR
+  // Assign dynamic charges for IR+BR (partial charges predicted by the NN)
+  //
+  // IMPORTANT ORDERING CONTRACT:
+  //   The Python calculator returns charges in the same order as coordinates were provided:
+  //     [ IR atoms (deterministic) ][ BR atoms (deterministic) ][ link/cap atoms ]
+  //   This is the same ordering used above for forces. Therefore we must *assign charges*
+  //   via qm_atoms_order (IR+BR) and then via qm_zone.link (caps), NOT via qm_zone.qm's
+  //   internal iteration order.
   if (sim.param().qmmm.qm_ch == simulation::qm_ch_dynamic) {
       std::vector<double> partial_charges = mlp_calculator.attr("get_charges")().cast<std::vector<double>>();
 
-      // Assign QM atom charges
+      // Defensive sanity check: expect one charge per (IR+BR) atom plus one per link/cap atom.
+      const int n_caps = static_cast<int>(qm_zone.link.size());
+      const int n_expected = qmb_size + n_caps;
+
+      // Assign QM atom charges in the same order as sent (IR+BR).
       double tot_qm_charge = 0.0;
-      size_t index = 0;
-
-      for (auto &atom : qm_zone.qm) {
-          atom.qm_charge = partial_charges[index] * this->param->unit_factor_charge;
-          tot_qm_charge += atom.qm_charge;
-          index++;
+      for (int i = 0; i < qmb_size; ++i) {
+        const interaction::QM_Atom* a = qm_atoms_order[i];
+        a->qm_charge = partial_charges[i] * this->param->unit_factor_charge;
+        tot_qm_charge += a->qm_charge;
+        DEBUG(10, "qm_charge from NN, atom " << a->index << " : " << a->qm_charge);
       }
-
-      // Assign link atom charges
+      // Assign link/cap charges in the same order as sent (iteration order of qm_zone.link).
       double tot_link_charge = 0.0;
-
-      for (auto &link : qm_zone.link) {
-          link.qm_charge = partial_charges[index] * this->param->unit_factor_charge;
-          tot_link_charge += link.qm_charge;
-          index++;
+      int i_cap = 0;
+      for (auto it = qm_zone.link.begin(); it != qm_zone.link.end(); ++it, ++i_cap) {
+        it->qm_charge = partial_charges[qmb_size + i_cap] * this->param->unit_factor_charge;
+        tot_link_charge += it->qm_charge;
+        DEBUG(15, "qm_charge from NN, capping atom " << it->qm_index << "-" << it->mm_index
+                  << " : " << it->qm_charge);
       }
 
       double total_predicted_charge = tot_qm_charge + tot_link_charge;
@@ -366,34 +458,34 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
                 << " (QM=" << tot_qm_charge
                 << ", LA=" << tot_link_charge << ")");
 
-      // Homogeneous background charge correction
+    // Homogeneous background charge correction (if needed).
+    // We distribute the difference equally over all (IR+BR) atoms and all cap atoms.
       double diff =  system_charge - total_predicted_charge;
 
       if (total_predicted_charge != system_charge) {
-
           double delta = diff /  (qm_zone.qm.size()+qm_zone.link.size());
 
           DEBUG(10, "Applying homogeneous correction of " << delta
                       << " to all QM and link atoms (" << qm_zone.qm.size()+qm_zone.link.size()
                       << " atoms).");
 
-        // Apply correction to QM atoms
-        for (auto &atom : qm_zone.qm) {
-            double old = atom.qm_charge;
-            atom.qm_charge = old + delta;  // subtract, because diff = predicted - desired
-            DEBUG(10, "Charge adjusted for atom " << atom.index 
-                  << " from " << old << " to " << atom.qm_charge);
+        // Apply correction to QM atoms (IR+BR) in the same order.
+        for (int i = 0; i < qmb_size; ++i) {
+          const interaction::QM_Atom* a = qm_atoms_order[i];
+          const double old = a->qm_charge;
+          a->qm_charge = old + delta;
+          DEBUG(10, "Charge adjusted for atom " << a->index
+                    << " from " << old << " to " << a->qm_charge);
         }
 
-        // Apply correction to link atoms
-        for (auto &link : qm_zone.link) {
-            double old = link.qm_charge;
-            link.qm_charge = old + delta;
-            DEBUG(10, "LA charge adjusted for atom " << link.mm_index
-                  << " from " << old << " to " << link.qm_charge);
+        // Apply correction to link/cap atoms.
+        i_cap = 0;
+        for (auto it = qm_zone.link.begin(); it != qm_zone.link.end(); ++it, ++i_cap) {
+          const double old = it->qm_charge;
+          it->qm_charge = old + delta;
+          DEBUG(10, "LA charge adjusted for atom " << it->mm_index
+                    << " from " << old << " to " << it->qm_charge);
         }
-
-
       } else {
           DEBUG(10, "Predicted charge matches requested charge; no correction applied.");
       }

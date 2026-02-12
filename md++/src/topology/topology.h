@@ -925,7 +925,7 @@ namespace topology
     }
 
     /**
-     * is the atom in the adaptive QM buffer?
+     * is the atom in the QM buffer?
      */
     bool is_adaptive_qm_buffer(const unsigned i)const {
       assert(i < m_is_qm_buffer.size());
