@@ -472,6 +472,28 @@ bool io::In_Configuration::read_box
            os <<"\treading GENBOX...\n";
        _read_genbox(conf.current().box,conf.current().phi, conf.current().theta,
               conf.current().psi, buffer, sim.param().boundary.boundary);
+      // --- Zero-box check for GENBOX ---
+          const double eps = 1e-12; // safety threshold
+
+          double lx = conf.current().box(0)(0);
+          double ly = conf.current().box(1)(1);
+          double lz = conf.current().box(2)(2);
+
+          if (fabs(lx) < eps || fabs(ly) < eps || fabs(lz) < eps) {
+            std::string msg =
+                  "ERROR: GENBOX contains at least one box dimension equal to 0.\n"
+                  "       Simulation cannot continue with a zero-size box.\n"
+                  "       Please check your input configuration file.";
+                  // Add to io::messages for internal tracking
+                    io::messages.add(msg, io::message::error);
+
+                    // Print to the simulation's output file
+                    os << msg << std::endl;
+
+                    // Abort immediately
+                    throw std::runtime_error("Zero-size box detected");
+                }
+
        conf.old().box = conf.current().box;
        conf.old().phi = conf.current().phi;
        conf.old().theta = conf.current().theta;
@@ -484,6 +506,27 @@ bool io::In_Configuration::read_box
 	os << "\treading TRICLINICBOX...\n";
       _read_box(conf.current().box,conf.current().phi, conf.current().theta,
               conf.current().psi,buffer, sim.param().boundary.boundary);
+
+      // --- Zero-box check for TRICLINICBOX ---
+      const double eps = 1e-12; // safety threshold
+      double lx = conf.current().box(0)(0);
+      double ly = conf.current().box(1)(1);
+      double lz = conf.current().box(2)(2);
+
+      if (fabs(lx) < eps || fabs(ly) < eps || fabs(lz) < eps) {
+          std::string msg = 
+              "ERROR: TRICLINICBOX contains at least one box dimension equal to 0.\n"
+              "       Simulation cannot continue with a zero-size box.\n"
+              "       Please check your input configuration file.";
+              // Add to io::messages for internal tracking
+                io::messages.add(msg, io::message::error);
+
+                // Print to the simulation's output file
+                os << msg << std::endl;
+
+                // Abort immediately
+                throw std::runtime_error("Zero-size box detected");
+            }
       conf.old().box = conf.current().box;
       conf.old().phi = conf.current().phi;
       conf.old().theta = conf.current().theta;
@@ -499,6 +542,29 @@ bool io::In_Configuration::read_box
 			    sim.param().boundary.boundary == math::truncoct)){
 	if (!quiet) os << "\treading BOX...\n";
         _read_g96_box(conf.current().box, buffer);
+
+        // Checking if the box has all the dimentions
+
+        double lx = conf.current().box(0)(0);
+        double ly = conf.current().box(1)(1);
+        double lz = conf.current().box(2)(2);
+
+        const double eps = 1e-12; // safety threshold
+
+        if (fabs(lx) < eps || fabs(ly) < eps || fabs(lz) < eps) {
+            std::string msg = 
+                "ERROR: GENBOX contains at least one box dimension equal to 0.\n"
+                "       Simulation cannot continue with a zero-size box.\n"
+                "       Please check your input configuration file.";
+                // Add to io::messages for internal tracking
+                  io::messages.add(msg, io::message::error);
+
+                  // Print to the simulation's output file
+                  os << msg << std::endl;
+
+                  // Abort immediately
+                  throw std::runtime_error("Zero-size box detected");
+              }
         conf.old().box = conf.current().box;
         conf.old().phi = conf.current().phi;
         conf.old().theta = conf.current().theta;
