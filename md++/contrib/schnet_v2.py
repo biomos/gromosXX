@@ -894,12 +894,9 @@ class Pert_SchNet_V2_Calculator(SchNet_V2_Calculator):
         for state in self.states.keys():
             self.states[state]['energy_vac'], self.states[state]['forces_vac'] = self.predict_energy_and_forces(system=self.states[state]['vac'])
             self.states[state]['energy_burnn'], self.states[state]['forces_burnn'] = self.predict_energy_and_forces(self.states[state]['burnn'])
-            print(f"{state}: forces Vac:\n{self.states[state]['forces_vac']}")
-            print(f"{state}: forces BuRNN:\n{self.states[state]['forces_burnn']}")
         # Calculate the perturbed energy and its derivative using the predicted energies.
         self.energy, self.derivative = self.calculate_perturbed_energy_and_derivative()
         self.forces = self.calculate_perturbed_forces()
-        print(self.forces)
         # Validate the perturbed energy if the current time step matches the validation frequency.
         if len(self.val_calculators) > 0 and time_step % self.nn_valid_freq == 0:
             self.nn_valid_ene = self.validate_perturbed_energy()
