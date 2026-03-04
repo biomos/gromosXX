@@ -288,7 +288,24 @@ namespace interaction {
     int _update_qm_pos(const topology::Topology& topo, 
                        const configuration::Configuration& conf, 
                        const simulation::Simulation& sim);
-
+    /**
+     * Gather OR cutoff centres - determines if only IR atoms are used as cutoff centres (static charges)
+     * or if IR+activeBR atoms are used
+     */
+    #include <vector>
+    void get_or_cutoff_centers(const topology::Topology& topo,
+                              const simulation::Simulation& sim,
+                              std::vector<const interaction::QM_Atom*>& centers) const;
+    /**
+     * Updated gather chargegroups within cutoff from QM atoms with centers of either IR or BR
+     */
+    template <math::boundary_enum B, class AtomType>
+    int gather_chargegroups_from_centers(const topology::Topology& topo,
+                                        const configuration::Configuration& conf,
+                                        const simulation::Simulation& sim,
+                                        std::set<AtomType>& atom_set,
+                                        const double cutoff2,
+                                        const std::vector<const interaction::QM_Atom*>& centers);
     /**
      * Gather MM atoms (chargegroup-based cutoff) - internal function
      */
@@ -316,14 +333,23 @@ namespace interaction {
     /**
      * Emplace the atom of proper type to the provided set - internal function
      */
+    // template<class AtomType>
+    // inline void emplace_atom(std::set<AtomType>& set,
+    //                          typename std::set<AtomType>::const_iterator& it,
+    //                          const unsigned index,
+    //                          const math::Vec& pos,
+    //                          const unsigned atomic_number,
+    //                          const double charge,
+    //                          const bool is_qm_buffer);
+
     template<class AtomType>
-    inline void emplace_atom(std::set<AtomType>& set,
-                             typename std::set<AtomType>::const_iterator& it,
-                             const unsigned index,
-                             const math::Vec& pos,
-                             const unsigned atomic_number,
-                             const double charge,
-                             const bool is_qm_buffer);
+    void emplace_atom(std::set<AtomType>& set,
+                      typename std::set<AtomType>::const_iterator& it,
+                      const unsigned index,
+                      const math::Vec& pos,
+                      const unsigned atomic_number,
+                      const double charge,
+                      const int buffer_state);
 
     /**
      * Skip the chargegroup search - internal function
@@ -349,8 +375,7 @@ namespace interaction {
                       const math::Vec& pos,
                       const unsigned atomic_number,
                       const double charge,
-                      const bool is_qm_buffer);
-
+                      const int buffer_state);
   /**
    * Emplace the MM atom
    */
@@ -362,8 +387,7 @@ namespace interaction {
                       const math::Vec& pos,
                       const unsigned atomic_number,
                       const double charge,
-                      const bool is_qm_buffer);
-
+                      const int buffer_state);
   /**
    * Skip the chargegroup search - QM_Atom version
    */

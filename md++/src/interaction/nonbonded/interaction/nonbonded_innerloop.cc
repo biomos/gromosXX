@@ -2682,22 +2682,59 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::ls_real_excluded_innerloop
  * calculate the product of charges based on the charge type
  * this function implements variable charges for the QM buffer region
  */
+// template <typename t_nonbonded_spec>
+// double interaction::Nonbonded_Innerloop<t_nonbonded_spec>::charge_product(
+//         topology::Topology const & topo, 
+//         unsigned i, unsigned j) {
+//   double q = topo.charge(i) * topo.charge(j);
+//   switch (t_nonbonded_spec::charge_type) {
+//     case simulation::mm_charge : break;
+//     case simulation::qm_buffer_charge : {
+//       if (topo.is_adaptive_qm_buffer(i) != topo.is_adaptive_qm_buffer(j)) {
+//         DEBUG(11, "\tqm_delta_charge i=" << topo.qm_delta_charge(i) << " j=" << topo.qm_delta_charge(j));
+//         q +=  topo.charge(i) * topo.qm_delta_charge(j)
+//             + topo.charge(j) * topo.qm_delta_charge(i);
+//       }
+//       break;
+//     }
+//     default : io::messages.add("Charge type not implemented.", "nonbonded_innerloop", io::message::warning);
+//   }
+//   return q;
+// }
 template <typename t_nonbonded_spec>
 double interaction::Nonbonded_Innerloop<t_nonbonded_spec>::charge_product(
-        topology::Topology const & topo, 
-        unsigned i, unsigned j) {
+        topology::Topology const & topo,
+        unsigned i, unsigned j)
+{
+
+  // --- Disable QM/MM electrostatics cross terms (B2) ---
+  const bool i_qm_side = topo.is_qm(i) || (topo.is_qm_buffer(i) > 0);
+  const bool j_qm_side = topo.is_qm(j) || (topo.is_qm_buffer(j) > 0);
+
+  // exactly one is QM-side -> cross term -> no classical electrostatics
+  if (i_qm_side || j_qm_side) {
+    return 0.0;
+  }
+
+  // otherwise, normal behavior
   double q = topo.charge(i) * topo.charge(j);
+
   switch (t_nonbonded_spec::charge_type) {
-    case simulation::mm_charge : break;
-    case simulation::qm_buffer_charge : {
+    case simulation::mm_charge:
+      break;
+
+    case simulation::qm_buffer_charge: {
+      // legacy buffer-MM electrostatics using delta charges
       if (topo.is_adaptive_qm_buffer(i) != topo.is_adaptive_qm_buffer(j)) {
-        DEBUG(11, "\tqm_delta_charge i=" << topo.qm_delta_charge(i) << " j=" << topo.qm_delta_charge(j));
         q +=  topo.charge(i) * topo.qm_delta_charge(j)
             + topo.charge(j) * topo.qm_delta_charge(i);
       }
       break;
     }
-    default : io::messages.add("Charge type not implemented.", "nonbonded_innerloop", io::message::warning);
+
+    default:
+      io::messages.add("Charge type not implemented.", "nonbonded_innerloop", io::message::warning);
   }
+
   return q;
 }

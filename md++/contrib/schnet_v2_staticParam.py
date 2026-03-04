@@ -7,9 +7,6 @@ import ase
 import schnetpack as spk
 
 EV_TO_KJMOL = 96.4853321233  
-# Coulomb prefactor
-K_E_KJMOL_NM_E2 = 138.935456  # kJ/mol·nm·e^-2
-K_E_EV_NM_E2 = K_E_KJMOL_NM_E2 / EV_TO_KJMOL  # convert to eV·nm·e^-2
 
 class YamlParser:
     def __init__(self, yaml_file):
@@ -321,469 +318,91 @@ class SchNet_V2_Calculator:
         return partial_charges
     
 
-    def validate_prediction(
-        self,
-        system: ase.Atoms,
-        dynamic_charges: bool = False,
-        r_qeq_A: torch.Tensor | None = None,
-        r_or_A: torch.Tensor | None = None,
-        q_or: torch.Tensor | None = None,
-        cutoff_nm: float | None = None,
-    ) -> list[float]:
+    def validate_prediction(self, system: ase.Atoms):
         """
-        Committee energy list.
+        Validate predictions using the validation calculators.
 
-        - legacy: model ASE energy (kJ/mol) (this is your E_mlp)
-        - dynamic_charges (B2): returns E_mlp (NOT E_total)
-        """
-        if len(self.val_calculators) == 0:
-            return []
-
-        if not dynamic_charges:
-            val_energies: list[float] = []
-            for val_calculator in self.val_calculators:
-                e_kj, _ = self._energy_forces_kjmol(system=system, calculator=val_calculator)
-                val_energies.append(float(e_kj))
-            return val_energies
-
-        assert r_qeq_A is not None and r_or_A is not None and q_or is not None and cutoff_nm is not None
-
-        val_energies: list[float] = []
-        for val_calc in self.val_calculators:
-            rq = r_qeq_A.detach().clone().requires_grad_(True)
-            ro = r_or_A.detach().clone().requires_grad_(True)
-
-            _, _, _, _, E_mlp, _ = self._b2_eval_model(
-                calculator=val_calc,
-                system=system,
-                r_qeq_A=rq,
-                r_or_A=ro,
-                q_or=q_or,
-                cutoff_nm=cutoff_nm,
-            )
-            val_energies.append(float(E_mlp))
-
-        return val_energies
-    
-    def validate_prediction_maxForceDeviation(
-        self,
-        system: ase.Atoms,
-        dynamic_charges: bool = False,
-        r_qeq_A: torch.Tensor | None = None,
-        r_or_A: torch.Tensor | None = None,
-        q_or: torch.Tensor | None = None,
-        cutoff_nm: float | None = None,
-    ) -> float:
-        """
-        Committee max-force disagreement (max over atoms of sigmaF_alpha).
-
-        - legacy: uses ASE forces (MLP forces)
-        - dynamic_charges (B2): uses forces from E_mlp only (NOT E_total)
-        """
-        if len(self.val_calculators) == 0:
-            return 0.0
-
-        if not dynamic_charges:
-            model_forces = [np.linalg.norm(self.forces, axis=1)]
-            for val_calculator in self.val_calculators:
-                _, f_kj_A = self._energy_forces_kjmol(system=system, calculator=val_calculator)
-                model_forces.append(np.linalg.norm(f_kj_A, axis=1))
-        else:
-            assert r_qeq_A is not None and r_or_A is not None and q_or is not None and cutoff_nm is not None
-            assert self.forces_mlp is not None
-
-            # production model MLP-only forces
-            model_forces = [np.linalg.norm(self.forces_mlp, axis=1)]
-
-            for val_calc in self.val_calculators:
-                rq = r_qeq_A.detach().clone().requires_grad_(True)
-                ro = r_or_A.detach().clone().requires_grad_(True)
-
-                _, _, _, _, _, F_mlp_qeq = self._b2_eval_model(
-                    calculator=val_calc,
-                    system=system,
-                    r_qeq_A=rq,
-                    r_or_A=ro,
-                    q_or=q_or,
-                    cutoff_nm=cutoff_nm,
-                )
-                model_forces.append(np.linalg.norm(F_mlp_qeq, axis=1))
-
-        ensemble = np.mean(model_forces, axis=0)
-        sigma = np.sqrt(np.mean([(f - ensemble) ** 2 for f in model_forces], axis=0))
-        return float(np.max(sigma))
-    
-    def _b2_eval_model(
-        self,
-        calculator: spk.interfaces.SpkCalculator,
-        system: ase.Atoms,
-        r_qeq_A: torch.Tensor,
-        r_or_A: torch.Tensor,
-        q_or: torch.Tensor,
-        cutoff_nm: float,
-    ):
-        """
-        Evaluate one model in B2.
-        Returns both:
-        - total:   E_total = E_mlp + sum_i q_i*phi_i   and forces from E_total
-        - mlp-only: E_mlp and forces from E_mlp
+        Args:
+            system (ase.Atoms): Atomic system to validate.
 
         Returns:
-        E_total_kJmol: float
-        F_total_qeq_kJmol_A: np.ndarray (Nq,3)
-        F_total_or_kJmol_A : np.ndarray (Nor,3)
-        q_e               : np.ndarray (Nq,)
-        E_mlp_kJmol       : float
-        F_mlp_qeq_kJmol_A : np.ndarray (Nq,3)
+            list: Validation energies computed by the validation calculators.
         """
-        r_qeq_nm = r_qeq_A * 0.1
-        r_or_nm  = r_or_A * 0.1
-
-        inputs = calculator.converter(system)
-        inputs[spk.properties.R] = r_qeq_A
-
-        phi = self._coulomb_phi_ev(r_qeq_nm, r_or_nm, q_or, cutoff_nm)
-        inputs["phi"] = phi
-
-        # Forward without force modules
-        model = calculator.model
-
-        input_modules = getattr(model, "input_modules", None)
-        if input_modules is not None:
-            for mod in input_modules:
-                inputs = mod(inputs)
-
-        inputs = model.representation(inputs)
-
-        force_key = getattr(calculator, "force_key", "forces")
-        for mod in model.output_modules:
-            outs = getattr(mod, "model_outputs", [])
-            if (force_key in outs) or ("forces" in outs):
-                continue
-            inputs = mod(inputs)
-
-        out = inputs
-
-        # --- energies ---
-        E_mlp = out[calculator.energy_key].sum()   # kJ/mol (per your SpkCalculator config)
-        q = out["charges"]                        # e
-
-        E_qphi = torch.sum(q * phi) * EV_TO_KJMOL  # kJ/mol
-        E_total = E_mlp + E_qphi
-
-        # --- forces from E_total (what you integrate) ---
-        dEt_dRqeq, dEt_dRor = torch.autograd.grad(
-            E_total,
-            [r_qeq_A, r_or_A],
-            create_graph=False,
-            retain_graph=True,   # keep graph for E_mlp grad below
-            allow_unused=True,
-        )
-        if dEt_dRqeq is None:
-            dEt_dRqeq = torch.zeros_like(r_qeq_A)
-        if dEt_dRor is None:
-            dEt_dRor = torch.zeros_like(r_or_A)
-
-        F_total_qeq = (-dEt_dRqeq).detach().cpu().numpy()
-        F_total_or  = (-dEt_dRor).detach().cpu().numpy()
-
-        # --- forces from E_mlp only (committee metric) ---
-        dEm_dRqeq = torch.autograd.grad(
-            E_mlp,
-            r_qeq_A,
-            create_graph=False,
-            retain_graph=False,
-            allow_unused=True,
-        )[0]
-        if dEm_dRqeq is None:
-            dEm_dRqeq = torch.zeros_like(r_qeq_A)
-
-        F_mlp_qeq = (-dEm_dRqeq).detach().cpu().numpy()
-
-        return (
-            float(E_total.detach().cpu().item()),
-            F_total_qeq,
-            F_total_or,
-            q.detach().cpu().numpy(),
-            float(E_mlp.detach().cpu().item()),
-            F_mlp_qeq,
-        )
-
-    def calculate_next_step(
-        self,
-        atomic_numbers: list,
-        positions_A: list,
-        time_step: int,
-        dynamic_charges: bool = False,
-        or_positions_nm: list | None = None,
-        or_charges_e: list | None = None,
-        cutoff_nm: float | None = None,
-    ) -> None:
+        val_energies = []
+        for val_calculator in self.val_calculators:
+            system.calc = val_calculator
+            e_kj, _ = self._energy_forces_kjmol(system=system, calculator=val_calculator)
+            val_energies.append(e_kj)
+        return val_energies
+    
+    def validate_prediction_maxForceDeviation(self, system: ase.Atoms):
         """
-        Unified next-step:
-        - dynamic_charges=False: classic SchNetPack ASE energy+forces
-        - dynamic_charges=True : B2 energy+forces (E_mlp + q·phi) + OR forces
-        Committee validation uses the SAME definition in each regime.
+        Validate predictions using the validation calculators.
+        Calculate Maximum force committee disagreement among all atoms in a structure 
+        based on formula 1 in https://pubs.acs.org/doi/10.1021/acs.jctc.4c01382 
+        Args:
+            system (ase.Atoms): Atomic system to validate.
+
+        Returns:
+            list: Validation energies computed by the validation calculators.
         """
-        system = ase.Atoms(numbers=atomic_numbers, positions=positions_A)
-        system.info["total_charge"] = float(self.total_charge)
-        system.info["spin_multiplicity"] = float(self.spin_multiplicity)
-
-        self.time_step = time_step
-        self.or_forces = np.zeros((0, 3), dtype=float)
-
-        # -------------------------
-        # Legacy mode
-        # -------------------------
-        if not dynamic_charges:
-            self.energy, self.forces = self.predict_energy_and_forces(system=system)
-
-            if self.has_partial_charges:
-                self.charges = self.predict_partial_charges(system=system)
-
-            if len(self.val_calculators) > 0 and time_step % self.nn_valid_freq == 0:
-                val_energies = self.validate_prediction(system=system, dynamic_charges=False)
-
-                self.nn_valid_maxF = self.validate_prediction_maxForceDeviation(
-                    system=system,
-                    dynamic_charges=False,
-                )
-
-                if len(val_energies) == 1:
-                    self.nn_valid_ene = (self.energy - val_energies[0]) / np.sqrt(2)
-                else:
-                    all_E = np.array(val_energies + [self.energy], dtype=float)
-                    self.nn_valid_ene = all_E.std(ddof=1)
-
-            return None
-
-        # -------------------------
-        # Dynamic charges / B2 mode
-        # -------------------------
-        if or_positions_nm is None or or_charges_e is None or cutoff_nm is None:
-            raise ValueError("dynamic_charges=True requires or_positions_nm, or_charges_e, cutoff_nm")
-
-        r_qeq_A = torch.tensor(positions_A, dtype=torch.float32, device=self.torchdevice, requires_grad=True)
-
-        if len(or_positions_nm) > 0:
-            r_or_A = torch.tensor(or_positions_nm, dtype=torch.float32, device=self.torchdevice, requires_grad=True) * 10.0
-            q_or = torch.tensor(or_charges_e, dtype=torch.float32, device=self.torchdevice)
-        else:
-            r_or_A = torch.zeros((0, 3), dtype=torch.float32, device=self.torchdevice, requires_grad=True)
-            q_or = torch.zeros((0,), dtype=torch.float32, device=self.torchdevice)
-
-        # production model B2
-        E_total, F_total_qeq, F_total_or, q_qeq, E_mlp, F_mlp_qeq = self._b2_eval_model(
-            calculator=self.pred_calculator,
-            system=system,
-            r_qeq_A=r_qeq_A,
-            r_or_A=r_or_A,
-            q_or=q_or,
-            cutoff_nm=cutoff_nm,
-        )
-
-        # what MD uses
-        self.energy = float(E_total)
-        self.forces = F_total_qeq
-        self.or_forces = F_total_or
-        self.charges = q_qeq
-
-        # what validation uses
-        self.energy_mlp = float(E_mlp)
-        self.forces_mlp = F_mlp_qeq
-
-        # committee validation (B2-consistent)
-        if len(self.val_calculators) > 0 and time_step % self.nn_valid_freq == 0:
-            val_energies = self.validate_prediction(
-                system=system,
-                dynamic_charges=True,
-                r_qeq_A=r_qeq_A,
-                r_or_A=r_or_A,
-                q_or=q_or,
-                cutoff_nm=cutoff_nm,
-            )
-
-            self.nn_valid_maxF = self.validate_prediction_maxForceDeviation(
-                system=system,
-                dynamic_charges=True,
-                r_qeq_A=r_qeq_A,
-                r_or_A=r_or_A,
-                q_or=q_or,
-                cutoff_nm=cutoff_nm,
-            )
+        model_forces = [np.linalg.norm(self.forces,axis=1)] # initialize production model
+        # add validation model forces to model_forces
+        for val_calculator in self.val_calculators:
+            system.calc = val_calculator
+            _, f_kj_A = self._energy_forces_kjmol(system=system, calculator=val_calculator)
+            model_forces.append(np.linalg.norm(f_kj_A, axis=1))
             
-            #print("validation energies: ", val_energies)
+        # Calculate ensemble force 
+        ensemble_Falpha = np.mean(model_forces, axis=0)  # Average force acting on every atom from all calculators
+        # Calculate sigmaF_alpha
+        Falpha_diff = [(np.asarray(force - ensemble_Falpha))**2 for force in model_forces]
+        sigmaF_alpha = np.sqrt(np.mean(Falpha_diff, axis=0))
 
-            if len(val_energies) == 1:
-                self.nn_valid_ene = (self.energy_mlp - val_energies[0]) / np.sqrt(2)
-            else:
-                all_E = np.array(val_energies + [self.energy_mlp], dtype=float)
-                self.nn_valid_ene = all_E.std(ddof=1)
+        # Store results
+        maxForce_deviation = max(sigmaF_alpha)
+        return maxForce_deviation
 
-        return None
-
-    def _coulomb_phi_ev(self, r_qeq_nm, r_or_nm, q_or_e, cutoff_nm):
+    def calculate_next_step(self, atomic_numbers: list, positions: list, time_step: int, phi:list) -> None:
         """
-        Compute phi_i = k_e * sum_j q_j / r_ij (plain Coulomb with cutoff)
-        Units:
-            r in nm
-            q in e
-            returns phi in eV per e
+        Perform energy and force prediction, and validate the predictions if necessary.
+
+        Args:
+            atomic_numbers (list): List of atomic numbers for the atoms in the system.
+            positions (list): List of atomic positions in the system.
+            time_step (int): Current simulation time step.
         """
-
-        if r_or_nm.shape[0] == 0:
-            return torch.zeros(r_qeq_nm.shape[0], device=r_qeq_nm.device)
-
-        # pair distances
-        diff = r_qeq_nm[:, None, :] - r_or_nm[None, :, :]
-        dist = torch.norm(diff, dim=-1)  # (Nq, Nor)
-
-        #mask = dist < cutoff_nm
-        #safe_dist = torch.where(mask, dist, torch.ones_like(dist))
-
-        #inv_r = torch.where(mask, 1.0 / safe_dist, torch.zeros_like(dist))
-        inv_r = 1.0 / dist.clamp_min(1e-8)
-
-        phi = K_E_EV_NM_E2 * torch.sum(inv_r * q_or_e[None, :], dim=1)
-
-        return phi
-
-    def _model_forward_no_forces(self, inputs: dict) -> dict:
-        """
-        Forward through SchNetPack model while skipping any output module that
-        computes forces via autograd. Still runs input_modules so PaiNN gets
-        neighbor geometry (_Rij, idx_i/j, ...).
-        """
-        model = self.pred_calculator.model
-
-        # 1) run input modules (neighbor list etc.)
-        input_modules = getattr(model, "input_modules", None)
-        if input_modules is not None:
-            for mod in input_modules:
-                inputs = mod(inputs)
-
-        # 2) representation (PaiNN)
-        inputs = model.representation(inputs)
-
-        # 3) output modules (skip forces-producing ones)
-        force_key = getattr(self.pred_calculator, "force_key", "forces")
-
-        for mod in model.output_modules:
-            outs = getattr(mod, "model_outputs", [])
-            # Skip anything that outputs forces
-            if (force_key in outs) or ("forces" in outs):
-                continue
-            inputs = mod(inputs)
-
-        return inputs
-
-    def calculate_next_step_b2(
-        self,
-        atomic_numbers: list,
-        positions_A: list,
-        time_step: int,
-        or_positions_nm: list,
-        or_charges_e: list,
-        cutoff_nm: float,
-    ) -> None:
-        """
-        B2: Compute phi internally from OR coords/charges, solve QEq in-model, and
-        return conservative forces on both QEq sites and OR sites.
-        Keeps same validation behavior as calculate_next_step().
-        All returned forces are stored in kJ/mol/Å.
-        """
-        self.time_step = time_step
-
-        # --- Build ASE system for validation (same as calculate_next_step) ---
-        system = ase.Atoms(numbers=atomic_numbers, positions=positions_A)
+        # Create an ASE atomic system using atomic numbers and positions.
+        system = ase.Atoms(numbers=atomic_numbers, positions=positions)
+        
         system.info["total_charge"] = float(self.total_charge)
         system.info["spin_multiplicity"] = float(self.spin_multiplicity)
+        
+        # per-atom potential
+        phi_kjmol = np.asarray(phi, dtype=np.float32)
+        phi_ev = phi_kjmol / EV_TO_KJMOL # internal ase units
+        system.arrays["phi"] = phi_ev
 
-        # --- Leaf coords (Å) for autograd ---
-        r_qeq_A = torch.tensor(positions_A, dtype=torch.float32, device=self.torchdevice, requires_grad=True)
+        # Predict energy and forces using the primary calculator.
+        self.energy, self.forces = self.predict_energy_and_forces(system=system)
+        
+        # Predict partial charges if requested
+        if self.has_partial_charges == True:
+            self.charges = self.predict_partial_charges(system=system)
 
-        if len(or_positions_nm) > 0:
-            r_or_A = torch.tensor(or_positions_nm, dtype=torch.float32, device=self.torchdevice, requires_grad=True) * 10.0
-            q_or = torch.tensor(or_charges_e, dtype=torch.float32, device=self.torchdevice)
-        else:
-            r_or_A = torch.zeros((0, 3), dtype=torch.float32, device=self.torchdevice, requires_grad=True)
-            q_or = torch.zeros((0,), dtype=torch.float32, device=self.torchdevice)
-
-        # nm versions only for Coulomb distance
-        r_qeq_nm = r_qeq_A * 0.1
-        r_or_nm  = r_or_A * 0.1
-
-        # --- Prepare model inputs (converter) ---
-        inputs = self.pred_calculator.converter(system)
-        inputs[spk.properties.R] = r_qeq_A  # override with grad-enabled coords
-
-        # --- Compute phi in Torch (eV per e we need to later on reconvert) ---
-        phi = self._coulomb_phi_ev(r_qeq_nm, r_or_nm, q_or, cutoff_nm)  # (Nq,)
-        inputs["phi"] = phi
-
-        # for validation models (they expect phi via ASE arrays)
-        system.arrays["phi"] = phi.detach().cpu().numpy()
-
-        # --- Forward model (must output charges + chi + Jii if using QEqCharges head) ---
-        out = self._model_forward_no_forces(inputs)
-
-        E_mlp = out[self.pred_calculator.energy_key].sum()  
-
-        # QEq outputs (your QEqCharges head)
-        q   = out["charges"]
-        chi = out["chi_qeq"] # in units of phi feeded into torch
-        Jii = out["Jii_qeq"] # in units of phi feeded into torch
-
-        # --- QEq energy (eV) ---
-        E_qphi = torch.sum(q * phi)*EV_TO_KJMOL # we transform from eV back to kJ/mol
-        E_chiq = torch.sum(chi * q)*EV_TO_KJMOL
-        E_halfJiiqq = torch.sum(0.5 * Jii * q**2)*EV_TO_KJMOL
-        #print("E_qphi:", E_qphi.tolist(),"E_chiq:", E_chiq.tolist(),"E_halfJiiqq:", E_halfJiiqq.tolist())
-        E_qeq = E_qphi + E_chiq + E_halfJiiqq
-        E_total = E_mlp + E_qphi # we only add the classical electrostatic energy because we dont want self terms reflected by E_chiq and e_halfJiiqq
-        #print("phi: ", np.asarray(phi.tolist())*EV_TO_KJMOL)
-        #print("chi: ", np.asarray(chi.tolist())*EV_TO_KJMOL)
-        #print("Jii: ", np.asarray(Jii.tolist())*EV_TO_KJMOL)
-        #print("E_qphi:", E_qphi.tolist(),"E_mlp:", E_mlp.tolist(),"E_total:", E_total.tolist())
-
-        # --- Forces (eV/Å) ---
-        dE_dRqeq, dE_dRor = torch.autograd.grad(
-            E_total,
-            [r_qeq_A, r_or_A],
-            create_graph=False,
-            retain_graph=False,
-            allow_unused=True,
-        )
-
-        if dE_dRqeq is None:
-            dE_dRqeq = torch.zeros_like(r_qeq_A)
-        if dE_dRor is None:
-            dE_dRor = torch.zeros_like(r_or_A)
-
-        # Store (kJ/mol and kJ/mol/Å)
-        self.energy = float(E_total.detach().cpu().item()) # if we fetch it with out[self.pred_calculator.energy_key].sum() we are already in kJ/mol
-        self.forces = (-dE_dRqeq).detach().cpu().numpy()
-        self.or_forces = (-dE_dRor).detach().cpu().numpy()
-
-        # Optional: charges (same behavior)
-        if self.has_partial_charges:
-            self.charges = q.detach().cpu().numpy()
-
-        # --- Validation (same logic as calculate_next_step) ---
+        # Perform validation at specified intervals.
         if len(self.val_calculators) > 0 and time_step % self.nn_valid_freq == 0:
             val_energies = self.validate_prediction(system=system)
+
+            # Calculate validation deviation based on validation results.
             self.nn_valid_maxF = self.validate_prediction_maxForceDeviation(system=system)
-
             if len(val_energies) == 1:
-                self.nn_valid_ene = (E_mlp - val_energies[0]) / np.sqrt(2) # Remove the IR-OR  again
+                self.nn_valid_ene = (self.energy - val_energies[0])/np.sqrt(2) # devided by sqrt(2) to match the sample standard deviation bellow
             else:
-                val_energies = np.array(val_energies + E_mlp, dtype=float) # Remove IR-OR coupling again
-                self.nn_valid_ene = val_energies.std(ddof=1)
-
+                val_energies.append(self.energy)
+                val_energies = np.array(val_energies)
+                self.nn_valid_ene = val_energies.std(ddof=1) # to calculate sample standard deviation
         return None
-
-    def get_or_forces(self):
-        return self.or_forces
 
     def get_energy(self):
         """

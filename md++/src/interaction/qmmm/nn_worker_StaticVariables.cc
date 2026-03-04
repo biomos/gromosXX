@@ -374,43 +374,35 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
   py::int_ step = sim.steps();
   py::int_ n_caps = static_cast<int>(qm_zone.link.size());
 
-  if (sim.param().qmmm.qm_ch == simulation::qm_ch_dynamic) {
-    // Dynamic/B2: build OR arrays + cutoff and pass them
-    std::vector<std::vector<double>> or_coordinates_nm;
-    std::vector<double> or_charges_e;
+  // Build phi in the SAME order as the atoms you pass to Python.
+  // Units: phi_i = four_pi_eps_i * sum_j q_j/r_ij   (GROMOS electrostatics units)
+  const double prefactor = math::four_pi_eps_i;
 
-    or_coordinates_nm.reserve(qm_zone.mm.size());
-    or_charges_e.reserve(qm_zone.mm.size());
+  py::list phi_list;
 
-    for (auto mm_it = qm_zone.mm.begin(); mm_it != qm_zone.mm.end(); ++mm_it) {
-      // mm_it->pos is already in nm (GROMOS internal)
-      or_coordinates_nm.push_back({mm_it->pos[0], mm_it->pos[1], mm_it->pos[2]});
-      or_charges_e.push_back(mm_it->charge); // e
-    }
 
-    const double cutoff_nm = sim.param().qmmm.cutoff;
+  DEBUG(10, "QEq: qm_zone.mm size = " << qm_zone.mm.size()
+          << " qm_zone.qm size = " << qm_zone.qm.size()
+          << " link size = " << qm_zone.link.size());
 
-    mlp_calculator.attr("calculate_next_step")(
-        atomic_numbers,
-        system_coordinates,
-        step,
-        "dynamic_charges"_a=true,
-        "or_positions_nm"_a=or_coordinates_nm,
-        "or_charges_e"_a=or_charges_e,
-        "cutoff_nm"_a=cutoff_nm
-    );
+  // 1) IR+BR atoms (the deterministic order you already built)
+  for (const auto* a : qm_atoms_order) {
+    const double sum_q_over_r = total_potential_q_over_r(topo, sim, qm_zone, *a);
+    const double phi = prefactor * sum_q_over_r;
+    DEBUG(8, "QEq: phi^OR on QM atom " << a->index
+          << " (Z=" << a->atomic_number << ") = " << phi << " four_pi_eps_i = " << prefactor);
+    phi_list.attr("append")(phi);
   }
 
-  else {
-    // Legacy: no OR arrays needed
-    mlp_calculator.attr("calculate_next_step")(
-        atomic_numbers,
-        system_coordinates,
-        step,
-        "dynamic_charges"_a=false
-    );
+  // 2) Caps: usually safest initial choice is phi = 0.0
+  // (because cap sites are fictitious and you usually do NOT want them in QEq)
+  for (auto it = qm_zone.link.begin(); it != qm_zone.link.end(); ++it) {
+    phi_list.attr("append")(0.0);
   }
 
+  // Run the method calculate_next_step to predict energy, forces and NN validation
+  mlp_calculator.attr("calculate_next_step")(atomic_numbers, system_coordinates, step, phi_list);
+  
   // Store predicted energy
   const double energy = mlp_calculator.attr("get_energy")().cast<double>() * this->param->unit_factor_energy;
   DEBUG(13, "energy from NN, " << energy);
@@ -456,95 +448,75 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
   // Assign dynamic charges for IR+BR
   if (sim.param().qmmm.qm_ch == simulation::qm_ch_dynamic) {
 
-    // fetch OR forces due to Qeq
-    auto or_forces = mlp_calculator.attr("get_or_forces")()
-        .cast<std::vector<std::vector<double>>>();
-
-    if (or_forces.size() != qm_zone.mm.size()) {
-      throw std::runtime_error("OR force size mismatch");
-    }
-
-    int mm_index = 0;
-    for (auto mm_it = qm_zone.mm.begin(); mm_it != qm_zone.mm.end(); ++mm_it, ++mm_index) {
-      mm_it->force[0] = or_forces[mm_index][0];
-      mm_it->force[1] = or_forces[mm_index][1];
-      mm_it->force[2] = or_forces[mm_index][2];
-
-      mm_it->force *= this->param->unit_factor_force;
-      DEBUG(15, "force from NN, OR atom " << mm_it->index << " : " << math::v2s(mm_it->force));
+      // CRUDE IMPLEMENTATION get_charges should be replaced or not used if we are in the perturbation
+      if (sim.param().perturbation.perturbation) {
+        io::messages.add("perturbation with DQ not in this compilation look at /pool/m_gillhofer/software/BuRNN/GROMOS/gromosXX/md++/src/interaction/qmmm/nn_worker.cc", io::message::error);
       }
-
-    // CRUDE IMPLEMENTATION get_charges should be replaced or not used if we are in the perturbation
-    if (sim.param().perturbation.perturbation) {
-      io::messages.add("perturbation with DQ not in this compilation look at /pool/m_gillhofer/software/BuRNN/GROMOS/gromosXX/md++/src/interaction/qmmm/nn_worker.cc", io::message::error);
-    }
-    
-    // Unperturbed behaviour
-    else {
-      std::vector<double> partial_charges = mlp_calculator.attr("get_charges")().cast<std::vector<double>>();
-      // Assign QM atom charges in the same order as sent (IR+BR).
-      double tot_qm_charge = 0.0;
-      for (int i = 0; i < qmb_size; ++i) {
-        const interaction::QM_Atom* a = qm_atoms_order[i];
-        a->qm_charge = partial_charges[i] * this->param->unit_factor_charge;
-        tot_qm_charge += a->qm_charge;
-        DEBUG(10, "qm_charge from NN, atom " << a->index << " : " << a->qm_charge);
-      }
-      // Assign link/cap charges in the same order as sent (iteration order of qm_zone.link).
-      double tot_link_charge = 0.0;
-      int i_cap = 0;
-      for (auto it = qm_zone.link.begin(); it != qm_zone.link.end(); ++it, ++i_cap) {
-        it->qm_charge = partial_charges[qmb_size + i_cap] * this->param->unit_factor_charge;
-        tot_link_charge += it->qm_charge;
-        DEBUG(15, "qm_charge from NN, capping atom " << it->qm_index << "-" << it->mm_index
-                  << " : " << it->qm_charge);
-      }
-
-      double total_predicted_charge = tot_qm_charge + tot_link_charge;
-
-      const double system_charge =
-          sim.param().qmmm.qm_zone.charge +
-          sim.param().qmmm.buffer_zone.charge;
-
-      DEBUG(10, "NN charge summary: requested=" << system_charge
-                << " predicted=" << total_predicted_charge
-                << " (QM=" << tot_qm_charge
-                << ", LA=" << tot_link_charge << ")");
-
-      // Homogeneous background charge correction (if needed).
-      // We distribute the difference equally over all (IR+BR) atoms and all cap atoms.
-      double diff =  system_charge - total_predicted_charge;
-      //const double diffA = total_predicted_charge_A - system_charge;
-      const double abs_tol = 1e-4;
-
-      if (std::abs(diff) > abs_tol) {
-          double delta = diff /  (qm_zone.qm.size()+qm_zone.link.size());
-
-          DEBUG(10, "Applying homogeneous correction of " << delta
-                      << " to all QM and link atoms (" << qm_zone.qm.size()+qm_zone.link.size()
-                      << " atoms).");
-
-        // Apply correction to QM atoms (IR+BR) in the same order.
+      
+      // Unperturbed behaviour
+      else {
+        std::vector<double> partial_charges = mlp_calculator.attr("get_charges")().cast<std::vector<double>>();
+        // Assign QM atom charges in the same order as sent (IR+BR).
+        double tot_qm_charge = 0.0;
         for (int i = 0; i < qmb_size; ++i) {
           const interaction::QM_Atom* a = qm_atoms_order[i];
-          const double old = a->qm_charge;
-          a->qm_charge = old + delta;
-          DEBUG(10, "Charge adjusted for atom " << a->index
-                    << " from " << old << " to " << a->qm_charge);
+          a->qm_charge = partial_charges[i] * this->param->unit_factor_charge;
+          tot_qm_charge += a->qm_charge;
+          DEBUG(10, "qm_charge from NN, atom " << a->index << " : " << a->qm_charge);
+        }
+        // Assign link/cap charges in the same order as sent (iteration order of qm_zone.link).
+        double tot_link_charge = 0.0;
+        int i_cap = 0;
+        for (auto it = qm_zone.link.begin(); it != qm_zone.link.end(); ++it, ++i_cap) {
+          it->qm_charge = partial_charges[qmb_size + i_cap] * this->param->unit_factor_charge;
+          tot_link_charge += it->qm_charge;
+          DEBUG(15, "qm_charge from NN, capping atom " << it->qm_index << "-" << it->mm_index
+                    << " : " << it->qm_charge);
         }
 
-        // Apply correction to link/cap atoms.
-        i_cap = 0;
-        for (auto it = qm_zone.link.begin(); it != qm_zone.link.end(); ++it, ++i_cap) {
-          const double old = it->qm_charge;
-          it->qm_charge = old + delta;
-          DEBUG(10, "LA charge adjusted for atom " << it->mm_index
-                    << " from " << old << " to " << it->qm_charge);
+        double total_predicted_charge = tot_qm_charge + tot_link_charge;
+
+        const double system_charge =
+            sim.param().qmmm.qm_zone.charge +
+            sim.param().qmmm.buffer_zone.charge;
+
+        DEBUG(10, "NN charge summary: requested=" << system_charge
+                  << " predicted=" << total_predicted_charge
+                  << " (QM=" << tot_qm_charge
+                  << ", LA=" << tot_link_charge << ")");
+
+        // Homogeneous background charge correction (if needed).
+        // We distribute the difference equally over all (IR+BR) atoms and all cap atoms.
+        double diff =  system_charge - total_predicted_charge;
+
+        if (total_predicted_charge != system_charge) {
+            double delta = diff /  (qm_zone.qm.size()+qm_zone.link.size());
+
+            DEBUG(10, "Applying homogeneous correction of " << delta
+                        << " to all QM and link atoms (" << qm_zone.qm.size()+qm_zone.link.size()
+                        << " atoms).");
+
+          // Apply correction to QM atoms (IR+BR) in the same order.
+          for (int i = 0; i < qmb_size; ++i) {
+            const interaction::QM_Atom* a = qm_atoms_order[i];
+            const double old = a->qm_charge;
+            a->qm_charge = old + delta;
+            DEBUG(10, "Charge adjusted for atom " << a->index
+                      << " from " << old << " to " << a->qm_charge);
+          }
+
+          // Apply correction to link/cap atoms.
+          i_cap = 0;
+          for (auto it = qm_zone.link.begin(); it != qm_zone.link.end(); ++it, ++i_cap) {
+            const double old = it->qm_charge;
+            it->qm_charge = old + delta;
+            DEBUG(10, "LA charge adjusted for atom " << it->mm_index
+                      << " from " << old << " to " << it->qm_charge);
+          }
+        } else {
+            DEBUG(10, "Predicted charge matches requested charge; no correction applied.");
         }
-      } else {
-          DEBUG(10, "Predicted charge matches requested charge; no correction applied.");
       }
-    }
   }
 
   

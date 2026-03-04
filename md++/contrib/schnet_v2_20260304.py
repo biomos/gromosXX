@@ -333,8 +333,8 @@ class SchNet_V2_Calculator:
         """
         Committee energy list.
 
-        - legacy: model ASE energy (kJ/mol) (this is your E_mlp)
-        - dynamic_charges (B2): returns E_mlp (NOT E_total)
+        - legacy: each model's ASE energy (kJ/mol)
+        - dynamic_charges (B2): each model's B2 energy E_total = E_mlp + sum_i q_i * phi_i (kJ/mol)
         """
         if len(self.val_calculators) == 0:
             return []
@@ -346,6 +346,7 @@ class SchNet_V2_Calculator:
                 val_energies.append(float(e_kj))
             return val_energies
 
+        # B2
         assert r_qeq_A is not None and r_or_A is not None and q_or is not None and cutoff_nm is not None
 
         val_energies: list[float] = []
@@ -353,7 +354,7 @@ class SchNet_V2_Calculator:
             rq = r_qeq_A.detach().clone().requires_grad_(True)
             ro = r_or_A.detach().clone().requires_grad_(True)
 
-            _, _, _, _, E_mlp, _ = self._b2_eval_model(
+            E_i, _, _, _ = self._b2_eval_model(
                 calculator=val_calc,
                 system=system,
                 r_qeq_A=rq,
@@ -361,7 +362,7 @@ class SchNet_V2_Calculator:
                 q_or=q_or,
                 cutoff_nm=cutoff_nm,
             )
-            val_energies.append(float(E_mlp))
+            val_energies.append(float(E_i))
 
         return val_energies
     
@@ -377,8 +378,8 @@ class SchNet_V2_Calculator:
         """
         Committee max-force disagreement (max over atoms of sigmaF_alpha).
 
-        - legacy: uses ASE forces (MLP forces)
-        - dynamic_charges (B2): uses forces from E_mlp only (NOT E_total)
+        - legacy: uses each calculator's ASE forces (kJ/mol/Å)
+        - dynamic_charges (B2): uses B2 autograd forces on QEq sites (IR+BR+caps)
         """
         if len(self.val_calculators) == 0:
             return 0.0
@@ -390,16 +391,14 @@ class SchNet_V2_Calculator:
                 model_forces.append(np.linalg.norm(f_kj_A, axis=1))
         else:
             assert r_qeq_A is not None and r_or_A is not None and q_or is not None and cutoff_nm is not None
-            assert self.forces_mlp is not None
 
-            # production model MLP-only forces
-            model_forces = [np.linalg.norm(self.forces_mlp, axis=1)]
+            model_forces = [np.linalg.norm(self.forces, axis=1)]  # production QEq-site forces
 
             for val_calc in self.val_calculators:
                 rq = r_qeq_A.detach().clone().requires_grad_(True)
                 ro = r_or_A.detach().clone().requires_grad_(True)
 
-                _, _, _, _, _, F_mlp_qeq = self._b2_eval_model(
+                _, Fq, _, _ = self._b2_eval_model(
                     calculator=val_calc,
                     system=system,
                     r_qeq_A=rq,
@@ -407,7 +406,7 @@ class SchNet_V2_Calculator:
                     q_or=q_or,
                     cutoff_nm=cutoff_nm,
                 )
-                model_forces.append(np.linalg.norm(F_mlp_qeq, axis=1))
+                model_forces.append(np.linalg.norm(Fq, axis=1))
 
         ensemble = np.mean(model_forces, axis=0)
         sigma = np.sqrt(np.mean([(f - ensemble) ** 2 for f in model_forces], axis=0))
@@ -423,18 +422,14 @@ class SchNet_V2_Calculator:
         cutoff_nm: float,
     ):
         """
-        Evaluate one model in B2.
-        Returns both:
-        - total:   E_total = E_mlp + sum_i q_i*phi_i   and forces from E_total
-        - mlp-only: E_mlp and forces from E_mlp
+        Evaluate one model with B2 definition:
+        E_total = E_mlp + sum_i q_i * phi_i
 
         Returns:
         E_total_kJmol: float
-        F_total_qeq_kJmol_A: np.ndarray (Nq,3)
-        F_total_or_kJmol_A : np.ndarray (Nor,3)
-        q_e               : np.ndarray (Nq,)
-        E_mlp_kJmol       : float
-        F_mlp_qeq_kJmol_A : np.ndarray (Nq,3)
+        F_qeq_kJmol_A: np.ndarray (Nq,3)
+        F_or_kJmol_A : np.ndarray (Nor,3)
+        q_e         : np.ndarray (Nq,)
         """
         r_qeq_nm = r_qeq_A * 0.1
         r_or_nm  = r_or_A * 0.1
@@ -445,7 +440,7 @@ class SchNet_V2_Calculator:
         phi = self._coulomb_phi_ev(r_qeq_nm, r_or_nm, q_or, cutoff_nm)
         inputs["phi"] = phi
 
-        # Forward without force modules
+        # Forward without force modules (do NOT depend on self.pred_calculator here)
         model = calculator.model
 
         input_modules = getattr(model, "input_modules", None)
@@ -464,50 +459,29 @@ class SchNet_V2_Calculator:
 
         out = inputs
 
-        # --- energies ---
-        E_mlp = out[calculator.energy_key].sum()   # kJ/mol (per your SpkCalculator config)
+        E_mlp = out[calculator.energy_key].sum()  # kJ/mol (per your SpkCalculator config)
         q = out["charges"]                        # e
 
         E_qphi = torch.sum(q * phi) * EV_TO_KJMOL  # kJ/mol
+        print("E_qphi energy: ", E_qphi, "E_mlp energy : ", E_mlp)
         E_total = E_mlp + E_qphi
 
-        # --- forces from E_total (what you integrate) ---
-        dEt_dRqeq, dEt_dRor = torch.autograd.grad(
+        dE_dRqeq, dE_dRor = torch.autograd.grad(
             E_total,
             [r_qeq_A, r_or_A],
             create_graph=False,
-            retain_graph=True,   # keep graph for E_mlp grad below
-            allow_unused=True,
-        )
-        if dEt_dRqeq is None:
-            dEt_dRqeq = torch.zeros_like(r_qeq_A)
-        if dEt_dRor is None:
-            dEt_dRor = torch.zeros_like(r_or_A)
-
-        F_total_qeq = (-dEt_dRqeq).detach().cpu().numpy()
-        F_total_or  = (-dEt_dRor).detach().cpu().numpy()
-
-        # --- forces from E_mlp only (committee metric) ---
-        dEm_dRqeq = torch.autograd.grad(
-            E_mlp,
-            r_qeq_A,
-            create_graph=False,
             retain_graph=False,
             allow_unused=True,
-        )[0]
-        if dEm_dRqeq is None:
-            dEm_dRqeq = torch.zeros_like(r_qeq_A)
-
-        F_mlp_qeq = (-dEm_dRqeq).detach().cpu().numpy()
-
-        return (
-            float(E_total.detach().cpu().item()),
-            F_total_qeq,
-            F_total_or,
-            q.detach().cpu().numpy(),
-            float(E_mlp.detach().cpu().item()),
-            F_mlp_qeq,
         )
+
+        if dE_dRqeq is None:
+            dE_dRqeq = torch.zeros_like(r_qeq_A)
+        if dE_dRor is None:
+            dE_dRor = torch.zeros_like(r_or_A)
+
+        F_qeq = (-dE_dRqeq).detach().cpu().numpy()
+        F_or  = (-dE_dRor).detach().cpu().numpy()
+        return float(E_total.detach().cpu().item()), F_qeq, F_or, q.detach().cpu().numpy()
 
     def calculate_next_step(
         self,
@@ -573,7 +547,7 @@ class SchNet_V2_Calculator:
             q_or = torch.zeros((0,), dtype=torch.float32, device=self.torchdevice)
 
         # production model B2
-        E_total, F_total_qeq, F_total_or, q_qeq, E_mlp, F_mlp_qeq = self._b2_eval_model(
+        E_total, F_qeq, F_or, q_qeq = self._b2_eval_model(
             calculator=self.pred_calculator,
             system=system,
             r_qeq_A=r_qeq_A,
@@ -582,15 +556,11 @@ class SchNet_V2_Calculator:
             cutoff_nm=cutoff_nm,
         )
 
-        # what MD uses
         self.energy = float(E_total)
-        self.forces = F_total_qeq
-        self.or_forces = F_total_or
-        self.charges = q_qeq
-
-        # what validation uses
-        self.energy_mlp = float(E_mlp)
-        self.forces_mlp = F_mlp_qeq
+        self.forces = F_qeq
+        self.or_forces = F_or
+        self.charges = q_qeq  # QEq charges
+        #print("production energy: ", self.energy)
 
         # committee validation (B2-consistent)
         if len(self.val_calculators) > 0 and time_step % self.nn_valid_freq == 0:
@@ -615,9 +585,9 @@ class SchNet_V2_Calculator:
             #print("validation energies: ", val_energies)
 
             if len(val_energies) == 1:
-                self.nn_valid_ene = (self.energy_mlp - val_energies[0]) / np.sqrt(2)
+                self.nn_valid_ene = (self.energy - val_energies[0]) / np.sqrt(2)
             else:
-                all_E = np.array(val_energies + [self.energy_mlp], dtype=float)
+                all_E = np.array(val_energies + [self.energy], dtype=float)
                 self.nn_valid_ene = all_E.std(ddof=1)
 
         return None

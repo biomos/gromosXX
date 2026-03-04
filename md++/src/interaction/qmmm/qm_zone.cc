@@ -42,6 +42,7 @@
 #include "mm_atom.h"
 #include "qm_link.h"
 #include "qm_zone.h"
+#include "q_equilibration.h"
 
 #undef MODULE
 #undef SUBMODULE
@@ -177,23 +178,28 @@ void interaction::QM_Zone::write(topology::Topology& topo,
   // Write charges
   if (sim.param().qmmm.qmmm == simulation::qmmm_mechanical
       && sim.param().qmmm.qm_ch == simulation::qm_ch_dynamic) {
-    for (std::set<QM_Atom>::const_iterator
-          it = this->qm.begin(), to = this->qm.end(); it != to; ++it)
-      {
+    
+    //if (this->mm.empty()) {
+    //  DEBUG(6, "QM_Zone::ensure_mm_atoms: mm empty -> calling get_mm_atoms()"
+    //            << " qmmm=" << sim.param().qmmm.qmmm
+    //            << " qm_ch=" << sim.param().qmmm.qm_ch
+    //            << " use_qm_buffer=" << sim.param().qmmm.use_qm_buffer
+    //            << " cutoff=" << sim.param().qmmm.cutoff
+    //            << " atomic_cutoff=" << sim.param().qmmm.atomic_cutoff);
+
+    //  this->get_mm_atoms(topo, conf, sim);
+    //  DEBUG(6, "QM_Zone::ensure_mm_atoms: mm size after get_mm_atoms = " << this->mm.size());
+    //}
+
+    //interaction::qeq::update_qm_charges_by_qeq(topo, conf, sim, *this);
+
+    for (auto it = this->qm.begin(), to = this->qm.end(); it != to; ++it) {
       if (topo.is_qm(it->index)) {
-        DEBUG(15, "Atom " << it->index << ", new charge: " << it->qm_charge);
         topo.charge()(it->index) = it->qm_charge;
       }
     }
-    // Add capping atom charge to QM link atom
-    //for (std::set<QM_Link>::const_iterator
-    //      it = this->link.begin(), to = this->link.end(); it != to; ++it)
-      //{
-      //DEBUG(10, "Capping atom " << it->qm_index << "-" << it->mm_index << ", charge: " << it->qm_charge);
-      //topo.charge()(it->qm_index) += it->qm_charge;
-    //  DEBUG(10, "Charge added to QM atom " << it->qm_index << ", new charge: " << topo.charge(it->qm_index));
-    //}
   }
+
   
   // write separate charges for interaction between the buffer region and MM region
   if (sim.param().qmmm.use_qm_buffer
@@ -574,51 +580,194 @@ int interaction::QM_Zone::gather_chargegroups(const topology::Topology& topo,
   return 0;
 }
 
+template <math::boundary_enum B, class AtomType>
+int interaction::QM_Zone::gather_chargegroups_from_centers(const topology::Topology& topo, 
+                                              const configuration::Configuration& conf, 
+                                              const simulation::Simulation& sim,
+                                              std::set<AtomType>& atom_set,
+                                              const double cutoff2,
+                                              const std::vector<const interaction::QM_Atom*>& centers) {
+  math::Periodicity<B> periodicity(conf.current().box);
+  /** We are running twice almost the same loop for solute and solvent.
+   * COG of solute is calculated normally, but in solvent, first atom is
+   * considered the COG
+   * Lambdas cannot be used because passing capturing lambda to lambda
+   * is not allowed. We can solve this by passing local functors to lambda.
+   */
+  class cog_calculator {
+    public:
+    virtual ~cog_calculator() {};
+      virtual const math::Vec& operator()(unsigned i) const = 0;
+    };
+
+  class solute_cog_calculator : public cog_calculator {
+      const math::VArray& m_cogs;
+    public:
+    solute_cog_calculator(const math::VArray& cogs)
+                : m_cogs(cogs) {};
+      const math::Vec& operator()(unsigned i) const {
+        return m_cogs(i);
+      }
+    };
+
+  class solvent_cog_calculator : public cog_calculator {
+      const topology::Topology& m_topo;
+      const math::VArray& m_pos;
+    public:
+    solvent_cog_calculator(const topology::Topology& topo, const math::VArray& pos)
+                :m_topo(topo), m_pos(pos) {};
+      const math::Vec& operator()(unsigned i) const {
+        return m_pos(m_topo.chargegroup(i));
+      }
+    };
+  // End of functors definition
+
+  // Initialize constants
+  const math::VArray& pos = conf.current().pos;
+  const math::Vec& ref_qm_pos = centers.front()->pos; // deterministic
+  DEBUG(15, "cutoff2 = " << cutoff2);
+
+  const unsigned num_cg = topo.num_chargegroups()
+                , num_solute_cg = topo.num_solute_chargegroups();
+  DEBUG(15, "num_cg = " << num_cg);
+  DEBUG(15, "num_solute_cg = " << num_solute_cg);
+
+  // Calculate solute CG COGs
+  math::VArray cogs(num_solute_cg);
+  {
+    topology::Chargegroup_Iterator cg_it = topo.chargegroup_begin();
+    for (unsigned cg = 0; cg < num_solute_cg; ++cg_it, ++cg) {
+      cg_it.cog(pos, cogs(cg));
+    }
+  }
+  // Functor for solute CG COGs
+  cog_calculator* solute_cgs = new solute_cog_calculator(cogs);
+  // Functor for solvent CG COGs
+  cog_calculator* solvent_cgs = new solvent_cog_calculator(topo, pos);
+
+  // Collect MM chargegroups within every QM atom cutoff
+  for (const auto* qm_center : centers) {
+    const math::Vec& qm_pos = qm_center->pos;
+    DEBUG(15, "Gathering around QM atom " << qm_center->index);
+    //const math::Vec& qm_pos = qm_it->pos;
+    math::Vec r_qm_cg;
+    typename std::set<AtomType>::iterator set_it = atom_set.begin();
+    // We run almost the same loop twice
+    // With functors and lambda, one definition is enough
+    auto cg_cogs_loop = [&](unsigned cg_from, unsigned cg_to, cog_calculator* cog)-> int {
+      for(unsigned cg = cg_from; cg < cg_to; ++cg) {
+        unsigned a = topo.chargegroup(cg);
+        // The whole chargegroup is the same type, so skip based on the type
+        if (this->skip_cg<AtomType>(topo, a)) continue;
+        // get distance
+        //periodicity.nearest_image(qm_pos, (*cog)(cg), r_qm_cg);
+        //DEBUG(15, "qm_pos: " << math::v2s(qm_pos));
+        //DEBUG(15, "(*cog)(cg): " << math::v2s((*cog)(cg)));
+        //DEBUG(15, "Nearest image qm_pos - cg " << cg << " : " << math::v2s(r_qm_cg));
+        //DEBUG(15, "math::abs2(r_qm_cg) = " << math::abs2(r_qm_cg));
+        periodicity.nearest_image(qm_pos, (*cog)(cg), r_qm_cg);
+        if (math::abs2(r_qm_cg) < cutoff2) {
+          // Iterate over atoms in cg
+          for (unsigned a_to = topo.chargegroup(cg + 1); a < a_to; ++a) {
+            // nearest image of atom to CG COG
+            // For cutoff test (per-center, unchanged)
+
+            // For consistent stored coordinates (reference image)
+            math::Vec r_ref_cg;
+            periodicity.nearest_image(ref_qm_pos, (*cog)(cg), r_ref_cg);
+
+            // Atom within CG (unchanged)
+            math::Vec r_mm_cg;
+            periodicity.nearest_image(pos(a), (*cog)(cg), r_mm_cg);
+
+            // Store MM atom in reference image (NOT qm_pos image)
+            const math::Vec mm_pos_store = ref_qm_pos - r_ref_cg + r_mm_cg;
+
+            const size_t size = atom_set.size();
+            if (set_it != atom_set.end()) std::advance(set_it, 1);
+
+            this->emplace_atom<AtomType>(atom_set, set_it, a, mm_pos_store,
+                                        topo.qm_atomic_number(a), topo.charge(a),
+                                        topo.is_qm_buffer(a));
+
+            if (size == atom_set.size()) {
+              const double delta = math::abs2(set_it->pos - mm_pos_store);
+              if (delta > math::epsilon) {
+                // This should now not happen; but if it does, prefer the first image and continue.
+                // (Optional: keep as error if you want strictness.)
+                DEBUG(5, "Duplicate atom with different image after ref mapping: " << a);
+              }
+            }
+          } // for atoms in cg
+        } // if cg within cutoff
+      } // for cgs in the range
+      return 0;
+    }; // lambda cg_cogs_loop
+    //int err = 0;
+    DEBUG(15, "Iterating over solute cgs");
+    m_err = cg_cogs_loop(0, num_solute_cg, solute_cgs);
+    if (m_err) return m_err;
+
+    DEBUG(15, "Iterating over solvent cgs");
+    m_err = cg_cogs_loop(num_solute_cg, num_cg, solvent_cgs);
+    if (m_err) return m_err;
+  }
+  delete solute_cgs;
+  delete solvent_cgs;
+  return 0;
+}
+
 // emplace is very similar for QM and MM atom, except the buffer logic is flipped, so we use template here
 template<>
-void interaction::QM_Zone::emplace_atom(std::set<interaction::QM_Atom>& set,
-                                        std::set<interaction::QM_Atom>::const_iterator& it,
-                                        const unsigned index,
-                                        const math::Vec& pos,
-                                        const unsigned atomic_number,
-                                        const double charge,
-                                        const bool is_qm_buffer)
-  {
-  if (is_qm_buffer) {
-    DEBUG(15, "Adding QM buffer atom " << index);
+void interaction::QM_Zone::emplace_atom(
+        std::set<interaction::QM_Atom>& set,
+        std::set<interaction::QM_Atom>::const_iterator& it,
+        const unsigned index,
+        const math::Vec& pos,
+        const unsigned atomic_number,
+        const double charge,
+        const int buffer_state)
+{
+  // Add only ACTIVE buffer atoms
+  if (buffer_state > 0) {
     it = set.emplace_hint(it, index, pos, atomic_number);
   }
 }
 
 template<>
-void interaction::QM_Zone::emplace_atom(std::set<interaction::MM_Atom>& set,
-                                        std::set<interaction::MM_Atom>::const_iterator& it,
-                                        const unsigned index,
-                                        const math::Vec& pos,
-                                        const unsigned atomic_number,
-                                        const double charge,
-                                        const bool is_qm_buffer) 
+void interaction::QM_Zone::emplace_atom(
+        std::set<interaction::MM_Atom>& set,
+        std::set<interaction::MM_Atom>::const_iterator& it,
+        const unsigned index,
+        const math::Vec& pos,
+        const unsigned atomic_number,
+        const double charge,
+        const int buffer_state)
 {
-  if (!is_qm_buffer) {
-    DEBUG(15, "Adding MM atom " << index);
+  // Add only NON-buffer atoms
+  if (buffer_state <= 0) {
     it = set.emplace_hint(it, index, pos, atomic_number, charge);
   }
 }
 
 template<>
-bool interaction::QM_Zone::skip_cg<interaction::QM_Atom>
-                                (const topology::Topology& topo,
-                                 const unsigned index)
-  {
-  return (topo.is_qm(index) || !topo.is_qm_buffer(index));
+bool interaction::QM_Zone::skip_cg<interaction::QM_Atom>(
+        const topology::Topology& topo,
+        const unsigned index)
+{
+  // When building the buffer region:
+  // skip QM atoms and atoms that are NOT active buffer candidates
+  return topo.is_qm(index) || topo.is_qm_buffer(index) <= 0;
 }
 
 template<>
-bool interaction::QM_Zone::skip_cg<interaction::MM_Atom>
-                                (const topology::Topology& topo,
-                                 const unsigned index)
-  {
-  return (topo.is_qm(index) || topo.is_qm_buffer(index));
+bool interaction::QM_Zone::skip_cg<interaction::MM_Atom>(
+        const topology::Topology& topo,
+        const unsigned index)
+{
+  // When building OR:
+  // skip QM atoms and ACTIVE buffer atoms
+  return topo.is_qm(index) || topo.is_qm_buffer(index) > 0;
 }
 
 void interaction::QM_Zone::get_buffer_atoms(topology::Topology& topo, 
@@ -640,7 +789,7 @@ int interaction::QM_Zone::_get_buffer_atoms(topology::Topology& topo,
   for (std::set<QM_Atom>::const_iterator qm_it = this->qm.begin();
         qm_it != this->qm.end();) {
     const unsigned i = qm_it->index;
-    if (topo.is_qm_buffer(i)) {
+    if (topo.is_qm_buffer(i) == 1) {   // remove only adaptive buffer
       DEBUG(12, "Removing QM buffer atom " << qm_it->index);
       qm_it = this->qm.erase(qm_it);
     }
@@ -689,6 +838,34 @@ int interaction::QM_Zone::_get_buffer_atoms(topology::Topology& topo,
   if ((m_err = this->_update_qm_pos<B>(topo, conf, sim)))
     return m_err;
   return 0;
+}
+
+// Determine if dynamic or static behaviour for cutoff centeres should be used
+void interaction::QM_Zone::get_or_cutoff_centers(
+    const topology::Topology& topo,
+    const simulation::Simulation& sim,
+    std::vector<const interaction::QM_Atom*>& centers) const
+{
+  centers.clear();
+  centers.reserve(this->qm.size());
+
+  const bool dyn_ch = (sim.param().qmmm.qm_ch == simulation::qm_ch_dynamic);
+
+  // deterministic: this->qm is std::set sorted by global index
+  for (auto it = this->qm.begin(); it != this->qm.end(); ++it) {
+    const unsigned i = it->index;
+
+    // Default/legacy behavior: use only IR atoms as cutoff centers
+    if (!dyn_ch) {
+      if (topo.is_qm(i)) centers.push_back(&(*it));
+      continue;
+    }
+
+    // Dynamic-charge behavior: embedding centers = IR ∪ active BR
+    // active BR means buffer flag 1 or 2 (NOT -1)
+    const int b = topo.is_qm_buffer(i);
+    if (topo.is_qm(i) || b == 1 || b == 2) centers.push_back(&(*it));
+  }
 }
 
 void interaction::QM_Zone::get_mm_atoms(const topology::Topology& topo, 
@@ -750,12 +927,18 @@ int interaction::QM_Zone::_get_mm_atoms(const topology::Topology& topo,
   // MM link atoms need to be always gathered
   this->get_linked_mm_atoms<B>(topo, conf, periodicity);
   // Gather MM atoms only for electrostatic or polarisable embedding
-  if (sim.param().qmmm.qmmm > simulation::qmmm_mechanical) {
+  if (sim.param().qmmm.qmmm > simulation::qmmm_mechanical
+    || sim.param().qmmm.qm_ch == simulation::qm_ch_dynamic) {
     DEBUG(9, "Gathering MM atoms using chargegroup-based cutoff");
     const double cutoff2 = sim.param().qmmm.cutoff * sim.param().qmmm.cutoff;
-    if ((m_err = this->gather_chargegroups<B>(topo, conf, sim, this->mm, cutoff2)))
+    //if ((m_err = this->gather_chargegroups<B>(topo, conf, sim, this->mm, cutoff2)))
+    //  return m_err;
+    std::vector<const interaction::QM_Atom*> centers;
+    this->get_or_cutoff_centers(topo, sim, centers);
+
+    if ((m_err = this->gather_chargegroups_from_centers<B>(
+            topo, conf, sim, this->mm, cutoff2, centers)))
       return m_err;
-    
   }
   return 0;
 }
@@ -771,7 +954,8 @@ int interaction::QM_Zone::_get_mm_atoms_atomic(const topology::Topology& topo,
   this->get_linked_mm_atoms<B>(topo, conf, periodicity);
 
   // Gather MM atoms only for electrostatic or polarisable embedding
-  if (sim.param().qmmm.qmmm > simulation::qmmm_mechanical) {
+  if (sim.param().qmmm.qmmm > simulation::qmmm_mechanical
+    || sim.param().qmmm.qm_ch == simulation::qm_ch_dynamic) {
     DEBUG(9, "Gathering MM atoms using atomic cutoff");
     const math::VArray& pos = conf.current().pos;
 
@@ -782,10 +966,15 @@ int interaction::QM_Zone::_get_mm_atoms_atomic(const topology::Topology& topo,
     const unsigned num_atoms = topo.num_atoms();
 
     // Collect MM atoms within every QM atom cutoff
-    for (std::set<QM_Atom>::const_iterator
-        qm_it = this->qm.begin(), qm_to = this->qm.end(); qm_it != qm_to; ++qm_it)
-      {
-      const math::Vec& qm_pos = qm_it->pos;
+    //for (std::set<QM_Atom>::const_iterator
+    //    qm_it = this->qm.begin(), qm_to = this->qm.end(); qm_it != qm_to; ++qm_it)
+    //  {
+    //       const math::Vec& qm_pos = qm_it->pos;
+    std::vector<const interaction::QM_Atom*> centers;
+    this->get_or_cutoff_centers(topo, sim, centers);
+
+    for (const auto* qm_center : centers) {
+      const math::Vec& qm_pos = qm_center->pos;
       math::Vec r_qm_mm;
       std::set<MM_Atom>::iterator mm_it = this->mm.begin();
       for(unsigned i = 0; i < num_atoms; ++i) {
@@ -812,7 +1001,7 @@ int interaction::QM_Zone::_get_mm_atoms_atomic(const topology::Topology& topo,
             if (delta > math::epsilon) {
               // Atom already in the list but as different periodic image, exit
               std::ostringstream msg;
-              msg << "QM atom " << (qm_it->index + 1)
+              msg << "QM atom " << (qm_center->index + 1)
                   << " sees multiple periodic copies of MM atom "
                   << (mm_it->index + 1);
               io::messages.add(msg.str(), "QM_Zone", io::message::error);
