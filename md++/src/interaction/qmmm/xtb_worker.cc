@@ -80,8 +80,8 @@ int interaction::XTB_Worker::init(const topology::Topology& topo
   if (err) return err;
 
   // Charge and spin
-  this->charge = qm_zone.charge() * this->param->unit_factor_charge;
-  this->uhf = (qm_zone.spin_mult() - 1) / 2; // spin multiplicity to # unpaired electrons
+  this->charge = qm_zone.charge();
+  this->uhf = qm_zone.spin_mult() - 1; // spin multiplicity to # unpaired electrons
 
   // size of the QM zone
   this->natoms = qm_zone.qm.size() + qm_zone.link.size();
