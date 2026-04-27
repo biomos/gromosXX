@@ -38,6 +38,7 @@
  * @param a the vector
  * @return squared length
  */
+
 template <typename V, typename T = decltype(V().x),
           typename std::enable_if<
               std::is_same<V, float2>::value ||
@@ -45,7 +46,7 @@ template <typename V, typename T = decltype(V().x),
               std::is_same<V, float4>::value ||
               std::is_same<V, double2>::value ||
               std::is_same<V, double3>::value ||
-              std::is_same<V, double4>::value,
+              std::is_same<V, double4_a>::value,
               bool>::type = true>
 HOSTDEVICE T abs2(const V & a) {
   return dot(a,a);
@@ -63,7 +64,7 @@ template <typename V, typename T = decltype(V().x),
               std::is_same<V, float4>::value ||
               std::is_same<V, double2>::value ||
               std::is_same<V, double3>::value ||
-              std::is_same<V, double4>::value,
+              std::is_same<V, double4_a>::value,
               bool>::type = true>
 HOSTDEVICE T abs(const V & a) {
   return sqrtf(abs2(a));

@@ -29,6 +29,12 @@
   #error "Don't include float4.h without defining HOSTDEVICE"
 #else
 
+#if CUDA_VERSION >= 12000
+    using double4_a = double4_16a;
+#else
+    using double4_a = double4;
+#endif
+
 /**
  * calculates the scalar (dot) product of two vectors
  * @param[in] a first vector
@@ -38,7 +44,7 @@
 template <typename T4, typename T = decltype(T4().x),
           typename std::enable_if<
               std::is_same<T4, float4>::value ||
-              std::is_same<T4, double4>::value,
+              std::is_same<T4, double4_a>::value,
               bool>::type = true>
 HOSTDEVICE T dot(const T4 & a, const T4 & b) {
   return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
@@ -53,7 +59,7 @@ HOSTDEVICE T dot(const T4 & a, const T4 & b) {
 template <typename T4, typename T = decltype(T4().x),
           typename std::enable_if<
               std::is_same<T4, float4>::value ||
-              std::is_same<T4, double4>::value,
+              std::is_same<T4, double4_a>::value,
               bool>::type = true>
 HOSTDEVICE T4 operator-(const T4 & a, const T4 & b) {
   return T4{
@@ -73,7 +79,7 @@ HOSTDEVICE T4 operator-(const T4 & a, const T4 & b) {
 template <typename T4, typename T = decltype(T4().x),
           typename std::enable_if<
               std::is_same<T4, float4>::value ||
-              std::is_same<T4, double4>::value,
+              std::is_same<T4, double4_a>::value,
               bool>::type = true>
 HOSTDEVICE T4 operator+(const T4 & a, const T4 & b) {
   return T4{
@@ -92,7 +98,7 @@ HOSTDEVICE T4 operator+(const T4 & a, const T4 & b) {
 template <typename T4, typename T = decltype(T4().x),
           typename std::enable_if<
               std::is_same<T4, float4>::value ||
-              std::is_same<T4, double4>::value,
+              std::is_same<T4, double4_a>::value,
               bool>::type = true>
 HOSTDEVICE T4 operator-(const T4 & a) {
   return T4{
@@ -112,7 +118,7 @@ HOSTDEVICE T4 operator-(const T4 & a) {
 template <typename T4, typename T = decltype(T4().x),
           typename std::enable_if<
               std::is_same<T4, float4>::value ||
-              std::is_same<T4, double4>::value,
+              std::is_same<T4, double4_a>::value,
               bool>::type = true>
 HOSTDEVICE T4 operator*(const T4 & a, T b) {
   return T4{
@@ -132,7 +138,7 @@ HOSTDEVICE T4 operator*(const T4 & a, T b) {
 template <typename T4, typename T = decltype(T4().x),
           typename std::enable_if<
               std::is_same<T4, float4>::value ||
-              std::is_same<T4, double4>::value,
+              std::is_same<T4, double4_a>::value,
               bool>::type = true>
 HOSTDEVICE T4 operator*(T b, const T4 & a) {
   return a * b;
@@ -147,7 +153,7 @@ HOSTDEVICE T4 operator*(T b, const T4 & a) {
 template <typename T4, typename T = decltype(T4().x),
           typename std::enable_if<
               std::is_same<T4, float4>::value ||
-              std::is_same<T4, double4>::value,
+              std::is_same<T4, double4_a>::value,
               bool>::type = true>
 HOSTDEVICE T4 operator/(const T4 & a, T b) {
   b = 1.0f / b;
