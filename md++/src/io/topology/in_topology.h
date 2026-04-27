@@ -26,6 +26,7 @@
 #ifndef INCLUDED_IN_TOPOLOGY_H
 #define INCLUDED_IN_TOPOLOGY_H
 
+#include <vector>
 
 #include "../ifp.h"
 #include "../instream.h"

@@ -26,6 +26,9 @@
 #ifndef INCLUDED_ALGORITHM_ALGORITHM_H
 #define INCLUDED_ALGORITHM_ALGORITHM_H
 
+#include <iostream>
+#include <vector>
+
 namespace algorithm
 {
   /**
