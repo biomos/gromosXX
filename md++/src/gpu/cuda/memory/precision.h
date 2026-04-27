@@ -11,18 +11,27 @@
   #define FP_PRECISION 1  // default to float only
 #endif
 
+struct FPPolicy {
+
 #if FP_PRECISION == 1
-    using FPL_TYPE = float;
-    using FPH_TYPE = float;
+    using low  = float;
+    using high = float;
+
 #elif FP_PRECISION == 2
-    using FPL_TYPE = float;
-    using FPH_TYPE = double;
+    using low  = float;
+    using high = double;
+
 #elif FP_PRECISION == 3
-    using FPL_TYPE = double;
-    using FPH_TYPE = double;
+    using low  = double;
+    using high = double;
+
 #else
     #error "FP_PRECISION must be 1, 2, or 3"
 #endif
+
+};
+using FPL_TYPE = FPPolicy::low;
+using FPH_TYPE = FPPolicy::high;
 
 template<typename FP, int N>
 struct FPVec;
@@ -33,7 +42,7 @@ template<> struct FPVec<float,4>  { using type = float4; };
 
 template<> struct FPVec<double,2> { using type = double2; };
 template<> struct FPVec<double,3> { using type = double3; };
-template<> struct FPVec<double,4> { using type = double4; };
+template<> struct FPVec<double,4> { using type = double4_a; };
 
 // convenience aliases
 template<typename FP, int N>
