@@ -26,6 +26,9 @@
 #ifndef INCLUDED_INTERACTION_H
 #define INCLUDED_INTERACTION_H
 
+#include <iostream>
+#include <string>
+
 namespace configuration{
   class Configuration;
 }
