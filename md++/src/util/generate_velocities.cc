@@ -28,7 +28,7 @@
 #include <simulation/multibath.h>
 #include <simulation/parameter.h>
 
-#include "generate_velocities.h"
+#include <util/generate_velocities.h>
 
 #undef MODULE
 #undef SUBMODULE

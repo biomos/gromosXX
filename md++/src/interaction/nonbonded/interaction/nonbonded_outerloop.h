@@ -23,7 +23,7 @@
  * the non bonded outerloops.
  */
 
-#include "latticesum.h"
+#include <interaction/nonbonded/interaction/latticesum.h>
 
 
 #ifndef INCLUDED_NONBONDED_OUTERLOOP_H

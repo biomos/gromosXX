@@ -38,7 +38,7 @@
 #ifndef INCLUDED_IN_RDC_H
 #define INCLUDED_IN_RDC_H
 
-#include "../instream.h"
+#include <io/instream.h>
 
 namespace io {
 

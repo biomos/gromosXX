@@ -25,10 +25,10 @@
  * Created on April 29, 2011, 2:06 PM
  */
 
-#include "replicaExchange/replica/replica.h"
-#include "replicaExchange/replica/replica_MPI_master.h"
-#include "replicaExchange/replica/replica_MPI_slave.h"
-#include "replicaExchange/replica_exchangers/2D_T_lambda_REPEX/re_base_2d_l_T_HREMD.h"
+#include <replicaExchange/replica/replica.h>
+#include <replicaExchange/replica/replica_MPI_master.h>
+#include <replicaExchange/replica/replica_MPI_slave.h>
+#include <replicaExchange/replica_exchangers/2D_T_lambda_REPEX/re_base_2d_l_T_HREMD.h>
 
 #include <stdheader.h>
 

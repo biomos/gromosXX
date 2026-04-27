@@ -26,7 +26,7 @@
 #ifndef _CYCLE_THREAD_H
 #define	_CYCLE_THREAD_H
 #include <pthread.h>
-#include "thread.h"
+#include <util/thread.h>
 //#include "pthread_barrier.h"
 
 #ifdef __APPLE__

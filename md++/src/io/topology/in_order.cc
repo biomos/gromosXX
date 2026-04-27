@@ -34,7 +34,7 @@
 #include <io/instream.h>
 #include <io/blockinput.h>
 
-#include "in_order.h"
+#include <io/topology/in_order.h>
 
 #undef MODULE
 #undef SUBMODULE

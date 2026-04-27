@@ -31,7 +31,7 @@
 
 #include <stdheader.h>
 
-#include "replica_MPI_slave.h"
+#include <replicaExchange/replica/replica_MPI_slave.h>
 #include <io/argument.h>
 #include <util/error.h>
 #include <math/volume.h>

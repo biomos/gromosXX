@@ -26,7 +26,7 @@
 #ifndef INCLUDED_STOCHASTIC_H
 #define INCLUDED_STOCHASTIC_H
 
-#include "../../math/random.h"
+#include <math/random.h>
 
 namespace simulation {
   class Parameter;

@@ -30,7 +30,7 @@ namespace configuration {
   class Configuration;
 }
 
-#include "bs_vector.h"
+#include <util/bs_vector.h>
 
 namespace util{
   

@@ -25,16 +25,16 @@
  * for the EDS class
  */
 
-#include "../../stdheader.h"
+#include <stdheader.h>
 
-#include "../../algorithm/algorithm.h"
-#include "../../topology/topology.h"
-#include "../../simulation/simulation.h"
-#include "../../configuration/configuration.h"
+#include <algorithm/algorithm.h>
+#include <topology/topology.h>
+#include <simulation/simulation.h>
+#include <configuration/configuration.h>
 
-#include "../../util/error.h"
+#include <util/error.h>
 
-#include "eds.h"
+#include <algorithm/integration/eds.h>
 
 #undef MODULE
 #undef SUBMODULE

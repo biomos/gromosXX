@@ -25,9 +25,9 @@
  */
 
 #define CUKERNEL_TYPES_ONLY
-#include "lib/types.h"
-#include "parameter.h"
-#include "pairlist.h"
+#include <cukernel/lib/types.h>
+#include <cukernel/parameter.h>
+#include <cukernel/pairlist.h>
 #define gpu_status void
 #undef CUKERNEL_TYPES_ONLY
 

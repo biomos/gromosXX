@@ -18,19 +18,19 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "../stdheader.h"
+#include <stdheader.h>
 
-#include "../algorithm/algorithm.h"
-#include "../topology/topology.h"
-#include "../simulation/simulation.h"
-#include "../configuration/configuration.h"
-#include "../math/periodicity.h"
+#include <algorithm/algorithm.h>
+#include <topology/topology.h>
+#include <simulation/simulation.h>
+#include <configuration/configuration.h>
+#include <math/periodicity.h>
 
-#include "../util/bs_umbrella.h"
-#include "../util/bs_subspace.h"
-#include "../util/bs_potentials.h"
-#include "../util/template_split.h"
-#include "../util/debug.h"
+#include <util/bs_umbrella.h>
+#include <util/bs_subspace.h>
+#include <util/bs_potentials.h>
+#include <util/template_split.h>
+#include <util/debug.h>
 
 #undef MODULE
 #undef SUBMODULE

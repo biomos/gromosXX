@@ -42,7 +42,7 @@
 #ifndef IN_BSLEUS_H
 #define	IN_BSLEUS_H
 
-#include "../instream.h"
+#include <io/instream.h>
 
 namespace io {
   /**

@@ -27,13 +27,13 @@
 #define INCLUDED_CONFIGURATION_H
 
 // headers needed for configuration
-#include "energy.h"
-#include "average.h"
-#include "mesh.h"
-#include "influence_function.h"
-#include "kspace.h"
-#include "../util/umbrella.h"
-#include "../util/bs_umbrella.h"
+#include <configuration/energy.h>
+#include <configuration/average.h>
+#include <configuration/mesh.h>
+#include <configuration/influence_function.h>
+#include <configuration/kspace.h>
+#include <util/umbrella.h>
+#include <util/bs_umbrella.h>
 
 // Additional Clipper Headers
 #ifdef HAVE_CLIPPER

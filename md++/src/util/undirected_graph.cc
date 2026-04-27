@@ -18,7 +18,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "undirected_graph.h"
+#include <util/undirected_graph.h>
 #include <limits>
 
 namespace util {

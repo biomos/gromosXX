@@ -23,23 +23,23 @@
  * template methods of Perturbed_Improper_Dihedral_Interaction
  */
 
-#include "../../stdheader.h"
+#include <stdheader.h>
 
-#include "../../algorithm/algorithm.h"
-#include "../../topology/topology.h"
-#include "../../simulation/simulation.h"
-#include "../../configuration/configuration.h"
-#include "../../interaction/interaction.h"
+#include <algorithm/algorithm.h>
+#include <topology/topology.h>
+#include <simulation/simulation.h>
+#include <configuration/configuration.h>
+#include <interaction/interaction.h>
 
-#include "../../math/periodicity.h"
+#include <math/periodicity.h>
 
 // interactions
-#include "../../interaction/interaction_types.h"
-#include "improper_dihedral_interaction.h"
-#include "perturbed_improper_dihedral_interaction.h"
+#include <interaction/interaction_types.h>
+#include <interaction/bonded/improper_dihedral_interaction.h>
+#include <interaction/bonded/perturbed_improper_dihedral_interaction.h>
 
-#include "../../util/template_split.h"
-#include "../../util/debug.h"
+#include <util/template_split.h>
+#include <util/debug.h>
 
 #undef MODULE
 #undef SUBMODULE

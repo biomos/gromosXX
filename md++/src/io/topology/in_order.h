@@ -35,7 +35,7 @@
 #ifndef IN_ORDER_H
 #define	IN_ORDER_H
 
-#include "../instream.h"
+#include <io/instream.h>
 
 namespace io {
 

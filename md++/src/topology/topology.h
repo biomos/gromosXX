@@ -26,15 +26,15 @@
 #ifndef INCLUDED_TOPOLOGY_H
 #define INCLUDED_TOPOLOGY_H
 
-#include "core/core.h"
-#include "solute.h"
-#include "solvent.h"
-#include "perturbed_atom.h"
-#include "perturbed_solute.h"
-#include "sd.h"
-#include "exclusions.h"
-#include "../interaction/interaction_types.h"
-#include "../util/virtual_atom.h"
+#include <topology/core/core.h>
+#include <topology/solute.h>
+#include <topology/solvent.h>
+#include <topology/perturbed_atom.h>
+#include <topology/perturbed_solute.h>
+#include <topology/sd.h>
+#include <topology/exclusions.h>
+#include <interaction/interaction_types.h>
+#include <util/virtual_atom.h>
 
 namespace simulation
 {

@@ -45,13 +45,13 @@
 
 #include "config.h"
 
-#include "math/gmath.h"
-#include "util/debug.h"
+#include <math/gmath.h>
+#include <util/debug.h>
 
-#include "io/message.h"
-#include "io/gzstream.h"
+#include <io/message.h>
+#include <io/gzstream.h>
 
-#include "util/timing.h"
+#include <util/timing.h>
 
 #define GROMOSXX "MD++"
 

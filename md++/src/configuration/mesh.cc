@@ -28,10 +28,10 @@
 #endif
 
 
-#include "../stdheader.h"
-#include "../configuration/mesh.h"
-#include "../util/error.h"
-#include "../util/debug.h"
+#include <stdheader.h>
+#include <configuration/mesh.h>
+#include <util/error.h>
+#include <util/debug.h>
 
 // for memcpy
 #include <cstring>

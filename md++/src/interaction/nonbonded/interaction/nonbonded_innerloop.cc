@@ -26,9 +26,9 @@
 #include <vector>
 #include <set>
 
-#include "storage.h"
-#include "nonbonded_innerloop.h"
-#include "topology/topology.h"
+#include <interaction/nonbonded/interaction/storage.h>
+#include <interaction/nonbonded/interaction/nonbonded_innerloop.h>
+#include <topology/topology.h>
 
 
 #undef MODULE
@@ -36,7 +36,7 @@
 #define MODULE interaction
 #define SUBMODULE nonbonded
 
-#include "solvent_innerloop.cc"
+#include <interaction/nonbonded/interaction/solvent_innerloop.cc>
 
 template<typename t_nonbonded_spec>
 inline void

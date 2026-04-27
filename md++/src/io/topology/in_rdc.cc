@@ -34,7 +34,7 @@
 #include <vector>
 #include <iosfwd>
 #include <math/random.h>
-#include "in_rdc.h"
+#include <io/topology/in_rdc.h>
 
 #undef MODULE
 #undef SUBMODULE

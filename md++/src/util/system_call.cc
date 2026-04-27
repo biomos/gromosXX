@@ -28,9 +28,9 @@
 
 #include <unistd.h>
 
-#include "system_call.h"
+#include <util/system_call.h>
 
-#include "../../config.h"
+#include "config.h"
 
 #undef MODULE
 #undef SUBMODULE

@@ -23,7 +23,7 @@
  * globals of the io library
  */
 
-#include "../stdheader.h"
+#include <stdheader.h>
 #include "config.h"
 
 double io_ver = 0.10;

@@ -28,10 +28,10 @@
 #define MODULE interaction
 #define SUBMODULE pairlist
 
-#include "../../../stdheader.h"
-#include "../../../interaction/nonbonded/pairlist/pairlist.h"
+#include <stdheader.h>
+#include <interaction/nonbonded/pairlist/pairlist.h>
 
-#include "../../../util/debug.h"
+#include <util/debug.h>
 
 namespace interaction
 {

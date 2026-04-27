@@ -28,10 +28,10 @@
 #ifndef INCLUDED_NONBONDED_SET_H
 #define INCLUDED_NONBONDED_SET_H
 
-#include "pairlist.h"
-#include "storage.h"
-#include "nonbonded_outerloop.h"
-#include "nonbonded_set_interface.h"
+#include <interaction/nonbonded/pairlist/pairlist.h>
+#include <interaction/nonbonded/interaction/storage.h>
+#include <interaction/nonbonded/interaction/nonbonded_outerloop.h>
+#include <interaction/nonbonded/interaction/nonbonded_set_interface.h>
 
 namespace interaction
 {

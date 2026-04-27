@@ -24,8 +24,8 @@
 
 #ifndef BS_SUBSPACE_H
 #define	BS_SUBSPACE_H
-#include "bs_coordinate.h"
-#include "bs_potentials.h"
+#include <util/bs_coordinate.h>
+#include <util/bs_potentials.h>
 
 namespace util {
 

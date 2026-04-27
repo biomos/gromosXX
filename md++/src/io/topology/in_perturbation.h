@@ -281,7 +281,7 @@ END
 #ifndef INCLUDED_IN_PERTURBATION_H
 #define INCLUDED_IN_PERTURBATION_H
 
-#include "../instream.h"
+#include <io/instream.h>
 
 namespace io
 {

@@ -36,7 +36,7 @@
 #ifndef INCLUDED_IN_SYMREST_H
 #define INCLUDED_IN_SYMREST_H
 
-#include "../instream.h"
+#include <io/instream.h>
 
 namespace io {
 

@@ -23,12 +23,12 @@
  * implementation of the Argument class.
  */
 
-#include "../stdheader.h"
+#include <stdheader.h>
 
-#include "argument.h"
-#include "blockinput.h"
-#include "../util/error.h"
-#include "../util/usage.h"
+#include <io/argument.h>
+#include <io/blockinput.h>
+#include <util/error.h>
+#include <util/usage.h>
 
 namespace io{
 

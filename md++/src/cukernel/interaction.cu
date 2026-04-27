@@ -23,11 +23,11 @@
  * interaction compuation
  */
 
-#include "gpu_status.h"
-#include "interaction.h"
-#include "lib/utils.h"
-#include "lib/math.h"
-#include "../util/debug.h"
+#include <cukernel/gpu_status.h>
+#include <cukernel/interaction.h>
+#include <cukernel/lib/utils.h>
+#include <cukernel/lib/math.h>
+#include <util/debug.h>
 
 #undef MODULE
 #undef SUBMODULE

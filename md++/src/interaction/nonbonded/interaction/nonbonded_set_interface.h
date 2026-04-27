@@ -28,7 +28,7 @@
 #ifndef INCLUDED_NONBONDED_SET_INTERFACE_H
 #define INCLUDED_NONBONDED_SET_INTERFACE_H
 
-#include "pairlist.h"
+#include <interaction/nonbonded/pairlist/pairlist.h>
 // #include "storage.h"
 // #include "nonbonded_outerloop.h"
 

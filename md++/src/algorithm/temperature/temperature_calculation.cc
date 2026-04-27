@@ -23,17 +23,17 @@
  * calculates the temperature.
  */
 
-#include "../../stdheader.h"
+#include <stdheader.h>
 
-#include "../../algorithm/algorithm.h"
-#include "../../topology/topology.h"
-#include "../../simulation/simulation.h"
-#include "../../configuration/configuration.h"
-#include "../../configuration/state_properties.h"
+#include <algorithm/algorithm.h>
+#include <topology/topology.h>
+#include <simulation/simulation.h>
+#include <configuration/configuration.h>
+#include <configuration/state_properties.h>
 
-#include "../../io/print_block.h"
+#include <io/print_block.h>
 
-#include "temperature_calculation.h"
+#include <algorithm/temperature/temperature_calculation.h>
 
 #undef MODULE
 #undef SUBMODULE
@@ -41,7 +41,7 @@
 #define MODULE algorithm
 #define SUBMODULE temperature
 
-#include "../../util/debug.h"
+#include <util/debug.h>
 
 int algorithm::Temperature_Calculation
 ::apply(topology::Topology & topo,

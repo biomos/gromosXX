@@ -293,6 +293,6 @@ namespace interaction
 } // interaction
 
 // inline methods
-#include "nonbonded_term.cc"
+#include <interaction/nonbonded/interaction/nonbonded_term.cc>
 
 #endif

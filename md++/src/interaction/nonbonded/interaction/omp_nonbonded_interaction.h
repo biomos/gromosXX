@@ -28,7 +28,7 @@
 #ifndef INCLUDED_OMP_NONBONDED_INTERACTION_H
 #define INCLUDED_OMP_NONBONDED_INTERACTION_H
 
-#include "nonbonded_interaction.h"
+#include <interaction/nonbonded/interaction/nonbonded_interaction.h>
 
 namespace interaction
 {

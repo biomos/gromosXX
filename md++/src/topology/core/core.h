@@ -31,12 +31,12 @@
  */
 
 
-#include "atom_iterator.h"
-#include "atomgroup_iterator.h"
-#include "chargegroup_iterator.h"
-#include "molecule_iterator.h"
-#include "temperaturegroup_iterator.h"
-#include "pressuregroup_iterator.h"
-#include "../../util/virtual_atom.h"
-#include "body_term.h"
-#include "compound.h"
+#include <topology/core/atom_iterator.h>
+#include <topology/core/atomgroup_iterator.h>
+#include <topology/core/chargegroup_iterator.h>
+#include <topology/core/molecule_iterator.h>
+#include <topology/core/temperaturegroup_iterator.h>
+#include <topology/core/pressuregroup_iterator.h>
+#include <util/virtual_atom.h>
+#include <topology/core/body_term.h>
+#include <topology/core/compound.h>

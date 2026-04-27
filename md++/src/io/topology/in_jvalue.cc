@@ -23,18 +23,18 @@
  * implements methods of In_Jvalue
  */
 
-#include "../../stdheader.h"
+#include <stdheader.h>
 
-#include "../../algorithm/algorithm.h"
-#include "../../topology/topology.h"
-#include "../../simulation/simulation.h"
-#include "../../interaction/interaction_types.h"
-#include "../../configuration/configuration.h"
+#include <algorithm/algorithm.h>
+#include <topology/topology.h>
+#include <simulation/simulation.h>
+#include <interaction/interaction_types.h>
+#include <configuration/configuration.h>
 
-#include "../../io/instream.h"
-#include "../../io/blockinput.h"
+#include <io/instream.h>
+#include <io/blockinput.h>
 
-#include "in_jvalue.h"
+#include <io/topology/in_jvalue.h>
 
 #undef MODULE
 #undef SUBMODULE

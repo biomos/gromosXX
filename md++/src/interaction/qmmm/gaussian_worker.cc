@@ -23,27 +23,27 @@
  * interface to the Gaussian software package
  */
 
-#include "../../../stdheader.h"
+#include <stdheader.h>
 
-#include "../../../algorithm/algorithm.h"
-#include "../../../topology/topology.h"
-#include "../../../simulation/simulation.h"
-#include "../../../configuration/configuration.h"
+#include <algorithm/algorithm.h>
+#include <topology/topology.h>
+#include <simulation/simulation.h>
+#include <configuration/configuration.h>
 
-#include "../../../interaction/interaction.h"
+#include <interaction/interaction.h>
 
-#include "../../../io/blockinput.h"
+#include <io/blockinput.h>
 
-#include "../../../util/timing.h"
-#include "../../../util/system_call.h"
-#include "../../../util/debug.h"
+#include <util/timing.h>
+#include <util/system_call.h>
+#include <util/debug.h>
 
-#include "qm_atom.h"
-#include "mm_atom.h"
-#include "qm_link.h"
-#include "qm_zone.h"
-#include "qm_worker.h"
-#include "gaussian_worker.h"
+#include <interaction/qmmm/qm_atom.h>
+#include <interaction/qmmm/mm_atom.h>
+#include <interaction/qmmm/qm_link.h>
+#include <interaction/qmmm/qm_zone.h>
+#include <interaction/qmmm/qm_worker.h>
+#include <interaction/qmmm/gaussian_worker.h>
 
 #undef MODULE
 #undef SUBMODULE

@@ -23,20 +23,20 @@
  * methods of the Prepare_VirtualAtoms
  */
 
-#include "../../stdheader.h"
+#include <stdheader.h>
 
-#include "../../algorithm/algorithm.h"
-#include "../../topology/topology.h"
-#include "../../simulation/simulation.h"
-#include "../../configuration/configuration.h"
-#include "../../util/virtual_atom.h"
-#include "../../interaction/interaction.h"
-#include "../../interaction/forcefield/forcefield.h"
-#include "../../interaction/forcefield/create_forcefield.h"
-#include "../../interaction/nonbonded/interaction/nonbonded_interaction.h"
-#include "../io/topology/in_topology.h"
+#include <algorithm/algorithm.h>
+#include <topology/topology.h>
+#include <simulation/simulation.h>
+#include <configuration/configuration.h>
+#include <util/virtual_atom.h>
+#include <interaction/interaction.h>
+#include <interaction/forcefield/forcefield.h>
+#include <interaction/forcefield/create_forcefield.h>
+#include <interaction/nonbonded/interaction/nonbonded_interaction.h>
+#include <io/topology/in_topology.h>
 
-#include "prepare_virtualatoms.h"
+#include <algorithm/virtualatoms/prepare_virtualatoms.h>
 
 #undef MODULE
 #undef SUBMODULE

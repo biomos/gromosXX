@@ -40,8 +40,8 @@ namespace simulation
   class Simulation;
 }
 
-#include "interaction.h"
-#include "nonbonded_parameter.h"
+#include <interaction/interaction.h>
+#include <interaction/nonbonded/interaction/nonbonded_parameter.h>
 
 namespace interaction
 {

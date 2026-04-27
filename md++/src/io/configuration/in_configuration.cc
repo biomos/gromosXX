@@ -41,7 +41,7 @@
 #include <math/transformation.h>
 #include <util/umbrella_weight.h>
 
-#include "in_configuration.h"
+#include <io/configuration/in_configuration.h>
 
 #undef MODULE
 #undef SUBMODULE

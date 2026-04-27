@@ -29,7 +29,7 @@
 #ifndef INCLUDED_MPI_NONBONDED_MASTER_H
 #define INCLUDED_MPI_NONBONDED_MASTER_H
 
-#include "nonbonded_interaction.h"
+#include <interaction/nonbonded/interaction/nonbonded_interaction.h>
 
 namespace interaction
 {

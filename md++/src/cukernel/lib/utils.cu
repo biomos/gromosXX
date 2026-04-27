@@ -25,7 +25,7 @@
 
 #include <cuda.h>
 #include <iostream>
-#include "utils.h"
+#include <cukernel/lib/utils.h>
 
 int cudakernel::checkError(const char * err_msg) {
   cudaError_t error = cudaGetLastError();

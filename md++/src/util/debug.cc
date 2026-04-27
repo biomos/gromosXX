@@ -22,11 +22,11 @@
  * @file debug.cc
  */
 
-#include "../stdheader.h"
+#include <stdheader.h>
 
 #ifndef NDEBUG
 
-    #include "debug.h"
+    #include <util/debug.h>
 
     int debug_level = 0;
     namespace util

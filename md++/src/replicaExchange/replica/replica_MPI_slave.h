@@ -47,7 +47,7 @@
 #include <interaction/interaction.h>
 #include <interaction/forcefield/forcefield.h>
 
-#include "_replica_Interface.h"
+#include <replicaExchange/replica/_replica_Interface.h>
 
 #ifndef GROMOSXX_REPLICA_MPI_Slave_H
 #define GROMOSXX_REPLICA_MPI_Slave_H

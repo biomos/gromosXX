@@ -676,7 +676,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::shortrange_spc_table_innerlo
   };
   
   #define SHORTRANGE "shortrange"
-  #include "spc_table.h"
+  #include <interaction/nonbonded/interaction/spc_table.h>
   #undef SHORTRANGE
 
   static const double to_table = table_size / data_range;
@@ -1087,7 +1087,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::longrange_spc_table_innerloo
   };
   
   #define LONGRANGE "longrange"
-  #include "spc_table.h"
+  #include <interaction/nonbonded/interaction/spc_table.h>
   #undef LONGRANGE
 
   static const double to_table = table_size / data_range;
@@ -1467,7 +1467,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::shortrange_spc_table_innerlo
   };
   
   #define SHORTRANGE "shortrange"
-  #include "spc_table.h"
+  #include <interaction/nonbonded/interaction/spc_table.h>
   #undef SHORTRANGE
 
   static const double to_table = table_size / data_range;
@@ -1616,7 +1616,7 @@ interaction::Nonbonded_Innerloop<t_nonbonded_spec>::longrange_spc_table_innerloo
   };
   
   #define LONGRANGE "longrange"
-  #include "spc_table.h"
+  #include <interaction/nonbonded/interaction/spc_table.h>
   #undef LONGRANGE
 
   static const double to_table = table_size / data_range;

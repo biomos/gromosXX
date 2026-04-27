@@ -36,7 +36,7 @@
 #ifndef INCLUDED_IN_FRICTION_H
 #define INCLUDED_IN_FRICTION_H
 
-#include "../instream.h"
+#include <io/instream.h>
 
 namespace io {
 

@@ -23,8 +23,8 @@
  * implementation of box transformations
  */
 
-#include "../stdheader.h"
-#include "../math/transformation.h"
+#include <stdheader.h>
+#include <math/transformation.h>
 
 #undef MODULE
 #undef SUBMODULE

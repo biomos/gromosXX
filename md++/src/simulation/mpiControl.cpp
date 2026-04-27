@@ -33,8 +33,8 @@
 #ifdef XXMPI
     #include<mpi.h>
 #endif
-#include "stdheader.h"
-#include "mpiControl.h"
+#include <stdheader.h>
+#include <simulation/mpiControl.h>
 
 namespace simulation {
 

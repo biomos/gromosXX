@@ -24,8 +24,8 @@
  */
 
 #ifndef CUKERNEL_CONSTRAINTS
-#include "parameter.h"
-#include "macros.h"
+#include <cukernel/parameter.h>
+#include <cukernel/macros.h>
 
 namespace cudakernel {
   /**

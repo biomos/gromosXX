@@ -26,7 +26,7 @@
 #ifndef _GRID_CELL_PARILIST_H
 #define	_GRID_CELL_PARILIST_H
 
-#include "pairlist_algorithm.h"
+#include <interaction/nonbonded/pairlist/pairlist_algorithm.h>
 
 namespace interaction {
 

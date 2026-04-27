@@ -28,7 +28,7 @@
 #define MODULE interaction
 #define SUBMODULE nonbonded
 
-#include "simulation/parameter.h"
+#include <simulation/parameter.h>
 
 /**
  * helper function to initialize the constants.

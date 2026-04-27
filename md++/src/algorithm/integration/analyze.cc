@@ -24,24 +24,24 @@
  * for trajectory analysis
  */
 
-#include "../../stdheader.h"
+#include <stdheader.h>
 
-#include "../../algorithm/algorithm.h"
-#include "../../topology/topology.h"
-#include "../../simulation/simulation.h"
-#include "../../configuration/configuration.h"
+#include <algorithm/algorithm.h>
+#include <topology/topology.h>
+#include <simulation/simulation.h>
+#include <configuration/configuration.h>
 
-#include "../../io/blockinput.h"
-#include "../../io/instream.h"
-#include "../../io/configuration/inframe.h"
-#include "../../io/configuration/in_configuration.h"
+#include <io/blockinput.h>
+#include <io/instream.h>
+#include <io/configuration/inframe.h>
+#include <io/configuration/in_configuration.h>
 
-#include "../../math/periodicity.h"
-#include "../../util/template_split.h"
+#include <math/periodicity.h>
+#include <util/template_split.h>
 
-#include "analyze.h"
+#include <algorithm/integration/analyze.h>
 
-#include "../../util/error.h"
+#include <util/error.h>
 
 #undef MODULE
 #undef SUBMODULE

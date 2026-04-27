@@ -26,7 +26,7 @@
 #ifndef INCLUDED_CONJUGATE_GRADIENT_H
 #define INCLUDED_CONJUGATE_GRADIENT_H
 
-#include "../../algorithm/constraints/shake.h"
+#include <algorithm/constraints/shake.h>
 
 namespace algorithm
 {

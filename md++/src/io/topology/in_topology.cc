@@ -24,19 +24,19 @@
  */
 
 
-#include "../../stdheader.h"
+#include <stdheader.h>
 
-#include "../../topology/topology.h"
-#include "../../simulation/multibath.h"
-#include "../../simulation/parameter.h"
-#include "../../interaction/interaction_types.h"
-#include "../../io/instream.h"
-#include "../../util/parse_tcouple.h"
+#include <topology/topology.h>
+#include <simulation/multibath.h>
+#include <simulation/parameter.h>
+#include <interaction/interaction_types.h>
+#include <io/instream.h>
+#include <util/parse_tcouple.h>
 
-#include "../../io/blockinput.h"
+#include <io/blockinput.h>
 #include <vector>
 
-#include "in_topology.h"
+#include <io/topology/in_topology.h>
 
 #undef MODULE
 #undef SUBMODULE

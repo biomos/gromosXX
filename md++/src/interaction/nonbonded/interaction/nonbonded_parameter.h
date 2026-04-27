@@ -26,7 +26,7 @@
 #ifndef INCLUDED_NONBONDED_PARAMETER_H
 #define INCLUDED_NONBONDED_PARAMETER_H
 
-#include "../../interaction_types.h"
+#include <interaction/interaction_types.h>
 
 namespace interaction
 {

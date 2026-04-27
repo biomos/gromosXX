@@ -23,12 +23,12 @@
  * basic input stream class definition.
  */
 
-#include "../../stdheader.h"
+#include <stdheader.h>
 
-#include "../blockinput.h"
-#include "../instream.h"
-#include "inframe.h"
-#include "../../util/error.h"
+#include <io/blockinput.h>
+#include <io/instream.h>
+#include <io/configuration/inframe.h>
+#include <util/error.h>
 
 #undef MODULE
 #undef SUBMODULE

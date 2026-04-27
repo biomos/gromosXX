@@ -23,13 +23,13 @@
  * implementation of the parse verbosity function
  */
 
-#include "../stdheader.h"
+#include <stdheader.h>
 
-#include "../util/error.h"
-#include "../io/argument.h"
-#include "../io/message.h"
+#include <util/error.h>
+#include <io/argument.h>
+#include <io/message.h>
 
-#include "parse_verbosity.h"
+#include <util/parse_verbosity.h>
 
 int util::parse_verbosity(io::Argument &args, std::string flag, 
 			   std::ostream &os)

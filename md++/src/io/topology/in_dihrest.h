@@ -35,7 +35,7 @@
 #ifndef INCLUDED_IN_DIHREST_H
 #define INCLUDED_IN_DIHREST_H
 
-#include "../instream.h"
+#include <io/instream.h>
 
 namespace io {
 

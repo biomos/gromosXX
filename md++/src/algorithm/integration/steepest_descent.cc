@@ -24,16 +24,16 @@
  * for steepest descent energy minimisation
  */
 
-#include "../../stdheader.h"
+#include <stdheader.h>
 
-#include "../../algorithm/algorithm.h"
-#include "../../topology/topology.h"
-#include "../../simulation/simulation.h"
-#include "../../configuration/configuration.h"
+#include <algorithm/algorithm.h>
+#include <topology/topology.h>
+#include <simulation/simulation.h>
+#include <configuration/configuration.h>
 
-#include "steepest_descent.h"
+#include <algorithm/integration/steepest_descent.h>
 
-#include "../../util/error.h"
+#include <util/error.h>
 
 #undef MODULE
 #undef SUBMODULE

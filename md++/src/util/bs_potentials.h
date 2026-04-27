@@ -26,7 +26,7 @@
 
 #ifndef BS_POTENTIALS_H
 #define	BS_POTENTIALS_H
-#include "bs_vector.h"
+#include <util/bs_vector.h>
 
 namespace util{
   

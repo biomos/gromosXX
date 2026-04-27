@@ -23,8 +23,8 @@
  * get usage string
  */
 
-#include "../stdheader.h"
-#include "usage.h"
+#include <stdheader.h>
+#include <util/usage.h>
 #include <sys/utsname.h>
 
 void util::get_usage(util::Known const &knowns, std::string &usage, std::string name)

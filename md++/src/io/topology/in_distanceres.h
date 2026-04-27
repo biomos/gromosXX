@@ -38,7 +38,7 @@
 #ifndef INCLUDED_IN_DISTANCERES_H
 #define INCLUDED_IN_DISTANCERES_H
 
-#include "../instream.h"
+#include <io/instream.h>
 
 namespace io {
 

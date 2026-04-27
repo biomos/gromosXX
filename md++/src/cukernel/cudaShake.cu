@@ -25,17 +25,17 @@
 
 #define NUM_THREADS_PER_BLOCK_SHAKE 64
 
-#include "gpu_status.h"
-#include "lib/math.h"
+#include <cukernel/gpu_status.h>
+#include <cukernel/lib/math.h>
 
-#include "cudaShake.h"
+#include <cukernel/cudaShake.h>
 
-#include "lib/utils.h"
-#include "parameter.h"
+#include <cukernel/lib/utils.h>
+#include <cukernel/parameter.h>
 
-#include "macros.h"
+#include <cukernel/macros.h>
 
-#include "../util/debug.h"
+#include <util/debug.h>
 
 #undef MODULE
 #undef SUBMODULE

@@ -7,7 +7,7 @@ NVCC_CFLAGS = @NVCC_CFLAGS@
 ## This would be too tedious and I hope that CMake will be handling this better
 ## For now, we just delete the intermediate files to always enforce recompilation
 .cu.o:
-	$(NVCC) $(NVCCFLAGS) -dc --compiler-options '$(NVCC_CFLAGS)' $< -o $@
+	$(NVCC) $(NVCCFLAGS) $(AM_CPPFLAGS) -dc --compiler-options '$(NVCC_CFLAGS)' $< -o $@
 
 libgrocukernel.o: $(libgrocukernel_a_OBJECTS)
 	$(NVCC) $(NVCCFLAGS) --compiler-options '$(NVCC_CFLAGS)' -dlink $^ -o $@

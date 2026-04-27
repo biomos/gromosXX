@@ -23,35 +23,35 @@
  * implements the factory function for the QM_Worker class
  */
 
-#include "../../../stdheader.h"
+#include <stdheader.h>
 
-#include "../../../algorithm/algorithm.h"
-#include "../../../topology/topology.h"
-#include "../../../simulation/simulation.h"
-#include "../../../configuration/configuration.h"
-#include "../../../interaction/interaction.h"
+#include <algorithm/algorithm.h>
+#include <topology/topology.h>
+#include <simulation/simulation.h>
+#include <configuration/configuration.h>
+#include <interaction/interaction.h>
 
-#include "../../../simulation/parameter.h"
+#include <simulation/parameter.h>
 
-#include "../../../util/timing.h"
-#include "../../../util/system_call.h"
+#include <util/timing.h>
+#include <util/system_call.h>
 
-#include "qm_atom.h"
-#include "qm_link.h"
-#include "mm_atom.h"
-#include "qm_zone.h"
-#include "qm_worker.h"
-#include "ghost_worker.h"
-#include "mndo_worker.h"
-#include "turbomole_worker.h"
-#include "dftb_worker.h"
-#include "mopac_worker.h"
-#include "gaussian_worker.h"
-#include "orca_worker.h"
-#include "nn_worker.h"
+#include <interaction/qmmm/qm_atom.h>
+#include <interaction/qmmm/qm_link.h>
+#include <interaction/qmmm/mm_atom.h>
+#include <interaction/qmmm/qm_zone.h>
+#include <interaction/qmmm/qm_worker.h>
+#include <interaction/qmmm/ghost_worker.h>
+#include <interaction/qmmm/mndo_worker.h>
+#include <interaction/qmmm/turbomole_worker.h>
+#include <interaction/qmmm/dftb_worker.h>
+#include <interaction/qmmm/mopac_worker.h>
+#include <interaction/qmmm/gaussian_worker.h>
+#include <interaction/qmmm/orca_worker.h>
+#include <interaction/qmmm/nn_worker.h>
 
 #ifdef XTB
-  #include "xtb_worker.h"
+  #include <interaction/qmmm/xtb_worker.h>
 #endif
 
 #undef MODULE

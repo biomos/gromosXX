@@ -27,10 +27,10 @@
  */
 
 #ifdef XXMPI
-#include "mpi.h"
+#include <mpi.h>
 #endif
-#include "stdheader.h"
-#include "replica_graph_control.h"
+#include <stdheader.h>
+#include <replicaExchange/replica_graph_control.h>
 
 #undef MODULE
 #undef SUBMODULE

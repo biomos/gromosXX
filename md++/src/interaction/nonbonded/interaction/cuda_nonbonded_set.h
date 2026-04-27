@@ -27,11 +27,11 @@
 #ifndef INCLUDED_CUDA_NONBONDED_SET_H
 #define INCLUDED_CUDA_NONBONDED_SET_H
 
-#include "pairlist.h"
-#include "storage.h"
-#include "nonbonded_outerloop.h"
-#include "nonbonded_set_interface.h"
-#include "nonbonded_set.h"
+#include <interaction/nonbonded/pairlist/pairlist.h>
+#include <interaction/nonbonded/interaction/storage.h>
+#include <interaction/nonbonded/interaction/nonbonded_outerloop.h>
+#include <interaction/nonbonded/interaction/nonbonded_set_interface.h>
+#include <interaction/nonbonded/interaction/nonbonded_set.h>
 #include <util/cycle_thread.h>
 #define gpu_status void
 

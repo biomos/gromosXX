@@ -23,16 +23,16 @@
  * methods of the Propagate_Forces class
  */
 
-#include "../../stdheader.h"
+#include <stdheader.h>
 
-#include "../../algorithm/algorithm.h"
-#include "../../topology/topology.h"
-#include "../../simulation/simulation.h"
-#include "../../configuration/configuration.h"
-#include "../../util/virtual_atom.h"
-#include "../../interaction/interaction.h"
+#include <algorithm/algorithm.h>
+#include <topology/topology.h>
+#include <simulation/simulation.h>
+#include <configuration/configuration.h>
+#include <util/virtual_atom.h>
+#include <interaction/interaction.h>
 
-#include "propagate_forces.h"
+#include <algorithm/virtualatoms/propagate_forces.h>
 
 #undef MODULE
 #undef SUBMODULE

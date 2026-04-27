@@ -23,48 +23,48 @@
  */
 
 
-#include "../stdheader.h"
+#include <stdheader.h>
 
-#include "../algorithm/algorithm.h"
-#include "../topology/topology.h"
-#include "../simulation/simulation.h"
-#include "../configuration/configuration.h"
+#include <algorithm/algorithm.h>
+#include <topology/topology.h>
+#include <simulation/simulation.h>
+#include <configuration/configuration.h>
 
-#include "../algorithm/algorithm/algorithm_sequence.h"
-#include "../interaction/interaction.h"
-#include "../interaction/forcefield/forcefield.h"
+#include <algorithm/algorithm/algorithm_sequence.h>
+#include <interaction/interaction.h>
+#include <interaction/forcefield/forcefield.h>
 
-#include "../io/argument.h"
-#include "../util/parse_verbosity.h"
-#include "../util/error.h"
+#include <io/argument.h>
+#include <util/parse_verbosity.h>
+#include <util/error.h>
 
-#include "../interaction/interaction_types.h"
-#include "../io/instream.h"
-#include "../util/parse_tcouple.h"
-#include "../io/blockinput.h"
-#include "../io/topology/in_topology.h"
+#include <interaction/interaction_types.h>
+#include <io/instream.h>
+#include <util/parse_tcouple.h>
+#include <io/blockinput.h>
+#include <io/topology/in_topology.h>
 
-#include "../algorithm/integration/leap_frog.h"
-#include "../algorithm/temperature/temperature_calculation.h"
-#include "../algorithm/temperature/berendsen_thermostat.h"
-#include "../algorithm/pressure/pressure_calculation.h"
-#include "../algorithm/pressure/berendsen_barostat.h"
+#include <algorithm/integration/leap_frog.h>
+#include <algorithm/temperature/temperature_calculation.h>
+#include <algorithm/temperature/berendsen_thermostat.h>
+#include <algorithm/pressure/pressure_calculation.h>
+#include <algorithm/pressure/berendsen_barostat.h>
 
-#include "../interaction/forcefield/create_forcefield.h"
+#include <interaction/forcefield/create_forcefield.h>
 
-#include "../util/create_simulation.h"
-#include "../algorithm/create_md_sequence.h"
+#include <util/create_simulation.h>
+#include <algorithm/create_md_sequence.h>
 
-#include "../math/periodicity.h"
-#include "../math/volume.h"
+#include <math/periodicity.h>
+#include <math/volume.h>
 
-#include "../util/template_split.h"
-#include "../util/prepare_virial.h"
+#include <util/template_split.h>
+#include <util/prepare_virial.h>
 
 #include <time.h>
 
-#include "check.h"
-#include "check_state.h"
+#include <check/check.h>
+#include <check/check_state.h>
 
 using namespace std;
 

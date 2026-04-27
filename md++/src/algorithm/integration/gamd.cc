@@ -24,14 +24,14 @@
  * for the Gaussian accelerated md class
  */
 
-#include "../../stdheader.h"
+#include <stdheader.h>
 
-#include "../../algorithm/algorithm.h"
-#include "../../topology/topology.h"
-#include "../../simulation/simulation.h"
-#include "../../configuration/configuration.h"
+#include <algorithm/algorithm.h>
+#include <topology/topology.h>
+#include <simulation/simulation.h>
+#include <configuration/configuration.h>
 
-#include "gamd.h"
+#include <algorithm/integration/gamd.h>
 
 #undef MODULE
 #undef SUBMODULE

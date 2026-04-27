@@ -52,8 +52,8 @@
 #ifdef HAVE_HOOMD
 #include <HOOMD_GROMOSXX_processor.h>
 #endif
-#include "read_input.h"
-#include "read_special.h"
+#include <io/read_input.h>
+#include <io/read_special.h>
 
 #undef MODULE
 #undef SUBMODULE

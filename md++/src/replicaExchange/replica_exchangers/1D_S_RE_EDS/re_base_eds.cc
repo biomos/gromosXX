@@ -30,8 +30,8 @@
 //Constructor
 #include <replicaExchange/replica_exchangers/replica_exchange_base_interface.h>
 #include <replicaExchange/replica/replica.h>
-#include "replicaExchange/replica/replica_MPI_master.h"
-#include "replicaExchange/replica/replica_MPI_slave.h"
+#include <replicaExchange/replica/replica_MPI_master.h>
+#include <replicaExchange/replica/replica_MPI_slave.h>
 #include <stdheader.h>
 
 #include <algorithm/algorithm.h>

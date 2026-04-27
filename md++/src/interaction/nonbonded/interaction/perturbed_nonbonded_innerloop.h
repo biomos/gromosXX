@@ -131,6 +131,6 @@ namespace interaction
   
 } // interaction
 
-#include "perturbed_nonbonded_innerloop.cc"
+#include <interaction/nonbonded/interaction/perturbed_nonbonded_innerloop.cc>
 
 #endif

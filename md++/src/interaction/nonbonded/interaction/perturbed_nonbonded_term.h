@@ -535,6 +535,6 @@ namespace interaction
 } // interaction
 
 // inline methods
-#include "perturbed_nonbonded_term.cc"
+#include <interaction/nonbonded/interaction/perturbed_nonbonded_term.cc>
 
 #endif

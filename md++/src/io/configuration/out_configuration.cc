@@ -38,7 +38,7 @@
 #include <io/print_block.h>
 #include <io/argument.h>
 
-#include "out_configuration.h"
+#include <io/configuration/out_configuration.h>
 
 #include <util/template_split.h>
 #include <util/debug.h>

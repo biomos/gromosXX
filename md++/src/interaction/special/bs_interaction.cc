@@ -18,22 +18,22 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "../../stdheader.h"
+#include <stdheader.h>
 
-#include "../../algorithm/algorithm.h"
-#include "../../topology/topology.h"
-#include "../../simulation/simulation.h"
-#include "../../configuration/configuration.h"
-#include "../../interaction/interaction.h"
+#include <algorithm/algorithm.h>
+#include <topology/topology.h>
+#include <simulation/simulation.h>
+#include <configuration/configuration.h>
+#include <interaction/interaction.h>
 
-#include "../../math/periodicity.h"
+#include <math/periodicity.h>
 
 // special interactions
-#include "../../util/bs_umbrella.h"
-#include "bs_interaction.h"
+#include <util/bs_umbrella.h>
+#include <interaction/special/bs_interaction.h>
 
-#include "../../util/template_split.h"
-#include "../../util/debug.h"
+#include <util/template_split.h>
+#include <util/debug.h>
 
 #undef MODULE
 #undef SUBMODULE

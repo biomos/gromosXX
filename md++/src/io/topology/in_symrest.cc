@@ -23,20 +23,20 @@
  * implements methods of In_Symrest
  */
 
-#include "../../stdheader.h"
+#include <stdheader.h>
 
-#include "../../algorithm/algorithm.h"
-#include "../../topology/topology.h"
-#include "../../simulation/simulation.h"
-#include "../../interaction/interaction_types.h"
-#include "../../configuration/configuration.h"
+#include <algorithm/algorithm.h>
+#include <topology/topology.h>
+#include <simulation/simulation.h>
+#include <interaction/interaction_types.h>
+#include <configuration/configuration.h>
 
-#include "../../io/instream.h"
-#include "../../io/blockinput.h"
-#include "../../io/configuration/in_configuration.h"
-#include "../../io/configuration/out_configuration.h"
+#include <io/instream.h>
+#include <io/blockinput.h>
+#include <io/configuration/in_configuration.h>
+#include <io/configuration/out_configuration.h>
 
-#include "in_symrest.h"
+#include <io/topology/in_symrest.h>
 
 #undef MODULE
 #undef SUBMODULE

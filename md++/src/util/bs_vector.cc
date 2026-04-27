@@ -18,14 +18,14 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "../stdheader.h"
+#include <stdheader.h>
 
 //#include "../math/periodicity.h"
-#include "../io/message.h"
+#include <io/message.h>
 
-#include "../util/template_split.h"
-#include "../util/debug.h"
-#include "../util/bs_vector.h"
+#include <util/template_split.h>
+#include <util/debug.h>
+#include <util/bs_vector.h>
 
 #undef MODULE
 #undef SUBMODULE

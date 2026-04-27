@@ -27,15 +27,15 @@
 
 // float3 operations
 #define HOSTDEVICE __device__ inline
-#include "float3.h"
-#include "double3.h"
+#include <cukernel/lib/float3.h>
+#include <cukernel/lib/double3.h>
 #undef HOSTDEVICE
 
 // additional types
-#include "types.h"
+#include <cukernel/lib/types.h>
 
 // For the precision
-#include "../macros.h"
+#include <cukernel/macros.h>
 
 /**
  * a very small number

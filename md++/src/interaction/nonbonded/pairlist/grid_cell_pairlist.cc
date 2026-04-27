@@ -23,21 +23,21 @@
  * Implementation of a fast grid-cell algorithm
  */
 
-#include "../../../stdheader.h"
-#include "../../../algorithm/algorithm.h"
-#include "../../../topology/topology.h"
-#include "../../../simulation/simulation.h"
-#include "../../../configuration/configuration.h"
-#include "../../../math/gmath.h"
-#include "../../../math/periodicity.h"
+#include <stdheader.h>
+#include <algorithm/algorithm.h>
+#include <topology/topology.h>
+#include <simulation/simulation.h>
+#include <configuration/configuration.h>
+#include <math/gmath.h>
+#include <math/periodicity.h>
 
-#include "../../../interaction/nonbonded/pairlist/pairlist.h"
-#include "../../../interaction/nonbonded/pairlist/grid_cell_pairlist.h"
-#include "../../../interaction/nonbonded/pairlist/standard_pairlist_algorithm.h"
+#include <interaction/nonbonded/pairlist/pairlist.h>
+#include <interaction/nonbonded/pairlist/grid_cell_pairlist.h>
+#include <interaction/nonbonded/pairlist/standard_pairlist_algorithm.h>
 
 
-#include "../../../util/debug.h"
-#include "../../../util/template_split.h"
+#include <util/debug.h>
+#include <util/template_split.h>
 
 #include <algorithm>
 

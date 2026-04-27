@@ -25,7 +25,7 @@
 
 #ifndef INCLUDED_PERTURBED_ATOM_H
 #define INCLUDED_PERTURBED_ATOM_H
-#include "exclusions.h"
+#include <topology/exclusions.h>
 
 namespace topology
 {

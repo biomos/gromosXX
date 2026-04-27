@@ -25,24 +25,24 @@
  * taken from GROMOS96 Manual
  */
 
-#include "../../stdheader.h"
+#include <stdheader.h>
 
-#include "../../algorithm/algorithm.h"
-#include "../../topology/topology.h"
-#include "../../simulation/simulation.h"
-#include "../../configuration/configuration.h"
-#include "../../interaction/interaction.h"
+#include <algorithm/algorithm.h>
+#include <topology/topology.h>
+#include <simulation/simulation.h>
+#include <configuration/configuration.h>
+#include <interaction/interaction.h>
 
-#include "../../math/periodicity.h"
+#include <math/periodicity.h>
 
-#include "../../algorithm/algorithm/algorithm_sequence.h"
-#include "../../interaction/forcefield/forcefield.h"
-#include "../../algorithm/constraints/shake.h"
-#include "../../algorithm/constraints/position_constraints.h"
+#include <algorithm/algorithm/algorithm_sequence.h>
+#include <interaction/forcefield/forcefield.h>
+#include <algorithm/constraints/shake.h>
+#include <algorithm/constraints/position_constraints.h>
 
-#include "conjugate_gradient.h"
+#include <algorithm/integration/conjugate_gradient.h>
 
-#include "../../util/error.h"
+#include <util/error.h>
 
 #undef MODULE
 #undef SUBMODULE

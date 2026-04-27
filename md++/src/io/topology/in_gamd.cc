@@ -22,18 +22,18 @@
  * @file in_gamd.cc
  * implements methods of In_GAMD
  */
-#include "../../stdheader.h"
+#include <stdheader.h>
 
-#include "../../algorithm/algorithm.h"
-#include "../../topology/topology.h"
-#include "../../simulation/simulation.h"
-#include "../../simulation/parameter.h"
-#include "../../configuration/configuration.h"
+#include <algorithm/algorithm.h>
+#include <topology/topology.h>
+#include <simulation/simulation.h>
+#include <simulation/parameter.h>
+#include <configuration/configuration.h>
 
-#include "../../io/instream.h"
-#include "../../io/blockinput.h"
-#include "../../io/topology/in_gamd.h"
-#include "../../io/configuration/in_configuration.h"
+#include <io/instream.h>
+#include <io/blockinput.h>
+#include <io/topology/in_gamd.h>
+#include <io/configuration/in_configuration.h>
 
 #undef MODULE
 #undef SUBMODULE

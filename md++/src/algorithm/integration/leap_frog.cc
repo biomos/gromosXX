@@ -24,14 +24,14 @@
  * for the classes Leap_Frog_Position and Leap_Frog_Velocity.
  */
 
-#include "../../stdheader.h"
+#include <stdheader.h>
 
-#include "../../algorithm/algorithm.h"
-#include "../../topology/topology.h"
-#include "../../simulation/simulation.h"
-#include "../../configuration/configuration.h"
+#include <algorithm/algorithm.h>
+#include <topology/topology.h>
+#include <simulation/simulation.h>
+#include <configuration/configuration.h>
 
-#include "leap_frog.h"
+#include <algorithm/integration/leap_frog.h>
 
 #undef MODULE
 #undef SUBMODULE

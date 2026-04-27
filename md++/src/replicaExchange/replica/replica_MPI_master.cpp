@@ -26,7 +26,7 @@
  * Modified June 18, 2021 - bschroed, srieder
  */
 
-#include "replica_MPI_master.h"
+#include <replicaExchange/replica/replica_MPI_master.h>
 #include <io/argument.h>
 #include <util/error.h>
 #include <util/debug.h>

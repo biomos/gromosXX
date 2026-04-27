@@ -27,9 +27,9 @@
 #define INCLUDED_SIMULATION_H
 
 // necessary headers
-#include "multibath.h"
-#include "parameter.h"
-#include "mpiControl.h"
+#include <simulation/multibath.h>
+#include <simulation/parameter.h>
+#include <simulation/mpiControl.h>
 #ifdef HAVE_HOOMD
 #include <HOOMD_GROMOSXX_processor.h>
 #endif

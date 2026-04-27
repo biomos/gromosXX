@@ -18,7 +18,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "exclusions.h"
+#include <topology/exclusions.h>
 namespace topology {
 
 	bool Exclusions::find_and_remove(const value_type & j) {

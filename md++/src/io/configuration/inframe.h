@@ -26,7 +26,7 @@
 #ifndef INCLUDED_INFRAME_H
 #define INCLUDED_INFRAME_H
 
-#include "../instream.h"
+#include <io/instream.h>
 
 namespace io {
 

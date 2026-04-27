@@ -23,15 +23,15 @@
  * basic input stream class definition.
  */
 
-#include "../stdheader.h"
+#include <stdheader.h>
 #include <vector>
 #include <sstream>
 
-#include "blockinput.h"
-#include "instream.h"
-#include "message.h"
+#include <io/blockinput.h>
+#include <io/instream.h>
+#include <io/message.h>
 
-#include "../util/coding.h"
+#include <util/coding.h>
 #include <fstream>
 
 #undef MODULE

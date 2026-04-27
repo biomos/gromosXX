@@ -23,54 +23,54 @@
  */
 
 
-#include "../stdheader.h"
+#include <stdheader.h>
 
-#include "../algorithm/algorithm.h"
-#include "../topology/topology.h"
-#include "../simulation/simulation.h"
-#include "../simulation/parameter.h"
-#include "../configuration/configuration.h"
+#include <algorithm/algorithm.h>
+#include <topology/topology.h>
+#include <simulation/simulation.h>
+#include <simulation/parameter.h>
+#include <configuration/configuration.h>
 
-#include "../util/le_coordinate.h"
+#include <util/le_coordinate.h>
 
-#include "../algorithm/algorithm/algorithm_sequence.h"
-#include "../interaction/interaction.h"
-#include "../interaction/nonbonded/interaction/nonbonded_interaction.h"
-#include "../interaction/forcefield/forcefield.h"
+#include <algorithm/algorithm/algorithm_sequence.h>
+#include <interaction/interaction.h>
+#include <interaction/nonbonded/interaction/nonbonded_interaction.h>
+#include <interaction/forcefield/forcefield.h>
 
-#include "../interaction/nonbonded/pairlist/pairlist_algorithm.h"
-#include "../interaction/nonbonded/pairlist/standard_pairlist_algorithm.h"
-#include "../interaction/nonbonded/pairlist/extended_grid_pairlist_algorithm.h"
-#include "../interaction/nonbonded/pairlist/grid_cell_pairlist.h"
+#include <interaction/nonbonded/pairlist/pairlist_algorithm.h>
+#include <interaction/nonbonded/pairlist/standard_pairlist_algorithm.h>
+#include <interaction/nonbonded/pairlist/extended_grid_pairlist_algorithm.h>
+#include <interaction/nonbonded/pairlist/grid_cell_pairlist.h>
 
-#include "../io/argument.h"
-#include "../util/parse_verbosity.h"
-#include "../util/error.h"
+#include <io/argument.h>
+#include <util/parse_verbosity.h>
+#include <util/error.h>
 
-#include "../interaction/interaction_types.h"
-#include "../io/instream.h"
-#include "../util/parse_tcouple.h"
-#include "../io/blockinput.h"
-#include "../io/topology/in_topology.h"
+#include <interaction/interaction_types.h>
+#include <io/instream.h>
+#include <util/parse_tcouple.h>
+#include <io/blockinput.h>
+#include <io/topology/in_topology.h>
 
-#include "../algorithm/integration/leap_frog.h"
-#include "../algorithm/temperature/temperature_calculation.h"
-#include "../algorithm/temperature/berendsen_thermostat.h"
-#include "../algorithm/pressure/pressure_calculation.h"
-#include "../algorithm/pressure/berendsen_barostat.h"
+#include <algorithm/integration/leap_frog.h>
+#include <algorithm/temperature/temperature_calculation.h>
+#include <algorithm/temperature/berendsen_thermostat.h>
+#include <algorithm/pressure/pressure_calculation.h>
+#include <algorithm/pressure/berendsen_barostat.h>
 
-#include "../interaction/forcefield/create_forcefield.h"
+#include <interaction/forcefield/create_forcefield.h>
 
-#include "../util/create_simulation.h"
-#include "../algorithm/create_md_sequence.h"
+#include <util/create_simulation.h>
+#include <algorithm/create_md_sequence.h>
 
 #include <time.h>
 
 #include <map>
 #include <sstream>
 
-#include "check.h"
-#include "check_forcefield.h"
+#include <check/check.h>
+#include <check/check_forcefield.h>
 
 using namespace std;
 

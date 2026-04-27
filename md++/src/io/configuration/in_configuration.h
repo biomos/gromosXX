@@ -26,7 +26,7 @@
 #ifndef INCLUDED_IN_CONFIGURATION_H
 #define INCLUDED_IN_CONFIGURATION_H
 
-#include "inframe.h"
+#include <io/configuration/inframe.h>
 
 namespace util
 {

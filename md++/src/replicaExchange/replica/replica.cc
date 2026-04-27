@@ -33,10 +33,11 @@
 
 
 #include <stdheader.h>
+#include <stdheader.h>
 #include <io/argument.h>
 #include <util/error.h>
 #include <math/volume.h>
-#include "replica.h"
+#include <replicaExchange/replica/replica.h>
 
 
 #undef MODULE

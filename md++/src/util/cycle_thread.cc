@@ -28,15 +28,15 @@
 #include <unistd.h>
 #include <signal.h>
 #include <errno.h>
-#include "../stdheader.h"
-#include "../util/debug.h"
+#include <stdheader.h>
+#include <util/debug.h>
 //#include "../util/pthread_barrier.h"
 #undef MODULE
 #undef SUBMODULE
 #define MODULE util
 #define SUBMODULE util
 
-#include "cycle_thread.h"
+#include <util/cycle_thread.h>
 
 #ifdef __APPLE__
 int pthread_barrier_init(pthread_barrier_t *barrier, const pthread_barrierattr_t *attr, unsigned int count)

@@ -26,7 +26,7 @@
 
 #ifndef BS_UMBRELLA_H
 #define	BS_UMBRELLA_H
-#include "bs_subspace.h"
+#include <util/bs_subspace.h>
 
 namespace configuration {
   class Configuration;

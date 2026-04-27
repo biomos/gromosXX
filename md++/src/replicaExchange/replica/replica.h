@@ -23,7 +23,7 @@
  * Holds all the information for a single replica
  */
 #include <stdheader.h>
-#include "_replica_Interface.h"
+#include <replicaExchange/replica/_replica_Interface.h>
 
 #ifndef REPLICA_H
 #define REPLICA_H

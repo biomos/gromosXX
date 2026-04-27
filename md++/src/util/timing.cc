@@ -22,9 +22,9 @@
  * @file timing.cc
  */
 
-#include "../stdheader.h"
-#include "../util/debug.h"
-#include "../simulation/simulation.h"
+#include <stdheader.h>
+#include <util/debug.h>
+#include <simulation/simulation.h>
 
 #include <stddef.h> /* defines NULL */
 #ifdef OMP
@@ -42,7 +42,7 @@
   #include <sys/time.h>
 #endif
 
-#include "timing.h"
+#include <util/timing.h>
 
 #undef MODULE
 #undef SUBMODULE

@@ -26,7 +26,7 @@
 #ifndef INCLUDED_PERIODICITY_H
 #define INCLUDED_PERIODICITY_H
 
-#include "boundary_implementation.h"
+#include <math/boundary_implementation.h>
 
 namespace math
 {
@@ -80,7 +80,7 @@ namespace math
 } // math
 
 // inline functions
-#include "periodicity.cc"
+#include <math/periodicity.cc>
 
 #endif
   

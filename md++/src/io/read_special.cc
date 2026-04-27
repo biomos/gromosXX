@@ -23,41 +23,41 @@
  * implementation of function read_special
  */
 
-#include "../stdheader.h"
+#include <stdheader.h>
 #include <fstream>
 
-#include "../algorithm/algorithm.h"
-#include "../topology/topology.h"
-#include "../simulation/simulation.h"
-#include "../configuration/configuration.h"
-#include "../interaction/interaction.h"
-#include "../interaction/interaction_types.h"
+#include <algorithm/algorithm.h>
+#include <topology/topology.h>
+#include <simulation/simulation.h>
+#include <configuration/configuration.h>
+#include <interaction/interaction.h>
+#include <interaction/interaction_types.h>
 
-#include "../io/argument.h"
-#include "../io/blockinput.h"
-#include "../io/instream.h"
-#include "../io/configuration/inframe.h"
-#include "../io/configuration/in_configuration.h"
-#include "../io/topology/in_topology.h"
-#include "../io/topology/in_perturbation.h"
-#include "../io/parameter/in_parameter.h"
-#include "../io/topology/in_posres.h"
-#include "../io/topology/in_distanceres.h"
-#include "../io/topology/in_angrest.h"
-#include "../io/topology/in_dihrest.h"
-#include "../io/topology/in_jvalue.h"
-#include "../io/topology/in_friction.h"
-#include "../io/topology/in_xray.h"
-#include "../io/topology/in_gamd.h"
-#include "../io/topology/in_leus.h"
-#include "../io/topology/in_bsleus.h"
-#include "../io/topology/in_qmmm.h"
-#include "../io/topology/in_order.h"
-#include "../io/topology/in_symrest.h"
-#include "../io/topology/in_rdc.h"
-#include "../util/coding.h"
+#include <io/argument.h>
+#include <io/blockinput.h>
+#include <io/instream.h>
+#include <io/configuration/inframe.h>
+#include <io/configuration/in_configuration.h>
+#include <io/topology/in_topology.h>
+#include <io/topology/in_perturbation.h>
+#include <io/parameter/in_parameter.h>
+#include <io/topology/in_posres.h>
+#include <io/topology/in_distanceres.h>
+#include <io/topology/in_angrest.h>
+#include <io/topology/in_dihrest.h>
+#include <io/topology/in_jvalue.h>
+#include <io/topology/in_friction.h>
+#include <io/topology/in_xray.h>
+#include <io/topology/in_gamd.h>
+#include <io/topology/in_leus.h>
+#include <io/topology/in_bsleus.h>
+#include <io/topology/in_qmmm.h>
+#include <io/topology/in_order.h>
+#include <io/topology/in_symrest.h>
+#include <io/topology/in_rdc.h>
+#include <util/coding.h>
 
-#include "read_special.h"
+#include <io/read_special.h>
 
 
 #undef MODULE

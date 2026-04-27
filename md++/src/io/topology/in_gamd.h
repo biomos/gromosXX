@@ -35,7 +35,7 @@
 #ifndef INCLUDED_IN_GAMD_H
 #define INCLUDED_IN_GAMD_H
 
-#include "../instream.h"
+#include <io/instream.h>
 
 namespace io {
 

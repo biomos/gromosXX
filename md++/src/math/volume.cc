@@ -22,8 +22,8 @@
  * @file volume.cc
  */
 
-#include "../stdheader.h"
-#include "volume.h"
+#include <stdheader.h>
+#include <math/volume.h>
 
 #undef MODULE
 #undef SUBMODULE

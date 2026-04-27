@@ -23,8 +23,8 @@
  * features and their cross checks
  */
 
-#include "../stdheader.h"
-#include "feature.h"
+#include <stdheader.h>
+#include <util/feature.h>
 
 void util::FeatureChecker::lock_all() {
   m_locked.clear();

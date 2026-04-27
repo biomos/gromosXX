@@ -39,7 +39,7 @@
 #include <math/random.h>
 #include <replicaExchange/repex_mpi.h>
 #include <util/usage.h>
-#include "_replica_Interface.h"
+#include <replicaExchange/replica/_replica_Interface.h>
 
 
 #ifndef REPLICA_MPI_MASTER_H

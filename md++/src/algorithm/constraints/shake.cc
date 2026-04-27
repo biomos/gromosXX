@@ -27,24 +27,24 @@
 #include <mpi.h>
 #endif
 
-#include "../../stdheader.h"
+#include <stdheader.h>
 
-#include "../../algorithm/algorithm.h"
-#include "../../topology/topology.h"
-#include "../../simulation/simulation.h"
-#include "../../configuration/configuration.h"
+#include <algorithm/algorithm.h>
+#include <topology/topology.h>
+#include <simulation/simulation.h>
+#include <configuration/configuration.h>
 
-#include "../../interaction/interaction.h"
-#include "../../interaction/interaction_types.h"
+#include <interaction/interaction.h>
+#include <interaction/interaction_types.h>
 
-#include "../../math/periodicity.h"
+#include <math/periodicity.h>
 
-#include "../../algorithm/constraints/shake.h"
+#include <algorithm/constraints/shake.h>
 
-#include "../../util/template_split.h"
-#include "../../util/error.h"
-#include "../../util/debug.h"
-#include "../../util/undirected_graph.h"
+#include <util/template_split.h>
+#include <util/error.h>
+#include <util/debug.h>
+#include <util/undirected_graph.h>
 
 #include <limits>
 
@@ -54,9 +54,9 @@
 #define SUBMODULE constraints
 
 // angle constraints template method
-#include "angle_constraint.cc"
+#include <algorithm/constraints/angle_constraint.cc>
 // dihedral constraints template method
-#include "dihedral_constraint.cc"
+#include <algorithm/constraints/dihedral_constraint.cc>
 
 /**
  * Constructor.

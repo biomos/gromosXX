@@ -24,16 +24,16 @@
  * for the Energy_Calculation class
  */
 
-#include "../../stdheader.h"
+#include <stdheader.h>
 
-#include "../../algorithm/algorithm.h"
-#include "../../topology/topology.h"
-#include "../../simulation/simulation.h"
-#include "../../configuration/configuration.h"
+#include <algorithm/algorithm.h>
+#include <topology/topology.h>
+#include <simulation/simulation.h>
+#include <configuration/configuration.h>
 
-#include "energy_calculation.h"
+#include <algorithm/integration/energy_calculation.h>
 
-#include "../../util/error.h"
+#include <util/error.h>
 
 #undef MODULE
 #undef SUBMODULE

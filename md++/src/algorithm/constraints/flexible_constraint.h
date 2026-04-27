@@ -209,25 +209,25 @@ namespace algorithm
  * Definitions of templated functions
  *********************************************************************/
 
-#include "../../stdheader.h"
+#include <stdheader.h>
 
-#include "../../algorithm/algorithm.h"
-#include "../../topology/topology.h"
-#include "../../simulation/simulation.h"
-#include "../../configuration/configuration.h"
+#include <algorithm/algorithm.h>
+#include <topology/topology.h>
+#include <simulation/simulation.h>
+#include <configuration/configuration.h>
 
-#include "../../interaction/interaction.h"
-#include "../../interaction/nonbonded/interaction/nonbonded_interaction.h"
+#include <interaction/interaction.h>
+#include <interaction/nonbonded/interaction/nonbonded_interaction.h>
 
-#include "../../interaction/forcefield/forcefield.h"
+#include <interaction/forcefield/forcefield.h>
 
-#include "../../math/periodicity.h"
+#include <math/periodicity.h>
 
-#include "../../algorithm/constraints/flexible_constraint.h"
+#include <algorithm/constraints/flexible_constraint.h>
 
-#include "../../util/template_split.h"
-#include "../../util/error.h"
-#include "../../util/debug.h"
+#include <util/template_split.h>
+#include <util/error.h>
+#include <util/debug.h>
 
 // save previous values
 #ifdef MODULE

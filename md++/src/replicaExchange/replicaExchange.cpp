@@ -26,7 +26,7 @@
  *
  */
 
-#include "../stdheader.h"
+#include <stdheader.h>
 #include "config.h"
 
 double replicaExchange_ver = 1.0;

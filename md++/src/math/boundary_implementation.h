@@ -319,6 +319,6 @@ namespace math
 }
 
 // template methods have to be visible
-#include "boundary_implementation.cc"
+#include <math/boundary_implementation.cc>
 
 #endif

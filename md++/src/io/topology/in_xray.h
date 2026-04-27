@@ -47,7 +47,7 @@
 #ifndef INCLUDED_IN_XRAYRES_H
 #define INCLUDED_IN_XRAYRES_H
 
-#include "../instream.h"
+#include <io/instream.h>
 
 namespace io {
 

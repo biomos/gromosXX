@@ -402,6 +402,6 @@ namespace interaction
   };
 } // interaction
 
-#include "nonbonded_innerloop.cc"
+#include <interaction/nonbonded/interaction/nonbonded_innerloop.cc>
 
 #endif
