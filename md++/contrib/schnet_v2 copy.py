@@ -8,7 +8,7 @@ import ase
 import schnetpack as spk
 
 # Coulomb prefactor
-K_E_KJMOL_NM_E2 = 138.9354  # kJ/mol·nm·e^-2
+K_E_KJMOL_NM_E2 = 138.935456  # kJ/mol·nm·e^-2
 K_E_kJMOL_ANG_E2 = K_E_KJMOL_NM_E2 * 10
 
 EV_TO_KJMOL = 96.4853321233
@@ -262,9 +262,7 @@ class SchNet_V2_Calculator:
 
     def __init__(self, model_path: str, val_model_paths: list,
                  nn_valid_freq: int, write_energy_freq: int,
-                 spin_multiplicity:int,total_charge:int,
-                 debug: bool = False, 
-                 debug_level: int = 3,) -> None:
+                 spin_multiplicity:int,total_charge:int) -> None:
         """
         Initialize the calculator.
         """
@@ -287,8 +285,6 @@ class SchNet_V2_Calculator:
         self.write_energy_freq = write_energy_freq
         self.spin_multiplicity = spin_multiplicity
         self.total_charge = total_charge
-        self.debug = debug
-        self.debug_level = int(debug_level)
     
     def get_calculator(self, model_path) -> spk.interfaces.SpkCalculator:
         """
@@ -398,7 +394,7 @@ class SchNet_V2_Calculator:
                 r_qeq_A=r_mlp_A,
                 r_or_A=r_or_A,
                 q_or_e=q_or,
-                cutoff_A=14.0,
+                cutoff_A=None,
             )
             
             E_elec_IRBR2OR = torch.sum(q_pred * phi_or)
@@ -646,7 +642,7 @@ class SchNet_V2_Calculator:
             q_or = torch.zeros((0,), dtype=torch.float32, device=self.torchdevice)
 
         # production model with ExternalCoulombEmbedding at inference
-        E_total, F_total_qeq, F_total_or, q_np, E_MLP = self.predict_energy_and_forces(
+        E_total, F_total_qeq, F_total_or, outputs, E_MLP = self.predict_energy_and_forces(
             system=system,
             r_mlp_A=r_qeq_A,
             r_or_A=r_or_A,
@@ -658,38 +654,10 @@ class SchNet_V2_Calculator:
         self.forces = F_total_qeq
         self.or_forces = F_total_or
 
-        if q_np is not None:
-            self.charges = np.asarray(q_np, dtype=float)
+        if "charges" in outputs:
+            self.charges = outputs["charges"].detach().cpu().numpy()
         else:
             self.charges = np.zeros((len(positions_A),), dtype=float)
-        
-        if self.debug and self.debug_level >= 3 and len(or_positions_nm) > 0:
-
-            #imax = torch.argmax(np.abs(self.charges))
-            print("\n===== DEBUG Dynamic Charges =====")
-            print("charge array: ", self.charges)
-            #print("max |q| atom:", int(imax))
-            #print("q_max:", float(q[imax]))
-            self._debug_qm_or_distances(
-                positions_A,
-                np.asarray(or_positions_nm) * 10.0,
-                threshold_A=14.0,
-                max_print=5,
-            )
-           # self._debug_pair_distances(
-           #     positions_A,
-           #     label="QM/BR/caps input",
-           #     threshold_A=15.0,
-           #     max_print=100,
-           # )
-
-            #if dynamic_charges and or_positions_nm is not None and len(or_positions_nm) > 0:
-            #    self._debug_pair_distances(
-            #        np.asarray(or_positions_nm) * 10.0,
-            #        label="OR input",
-            #        threshold_A=15.0,
-            #        max_print=100,
-            #    )       
 
         # committee validation (ExternalCoulombEmbedding-consistent)
         if len(self.val_calculators) > 0 and time_step % self.nn_valid_freq == 0:
@@ -745,7 +713,7 @@ class SchNet_V2_Calculator:
         Units:
             r in Ang
             q in e
-            returns phi in kJ/mol/e
+            returns phi in eV
         """
         if r_or_A.shape[0] == 0:
             return torch.zeros(
@@ -774,60 +742,6 @@ class SchNet_V2_Calculator:
             phi = torch.zeros_like(phi)
 
         return phi
-    
-    def _debug_pair_distances(
-        self,
-        positions_A,
-        label="system",
-        threshold_A=None,
-        max_print=50,
-    ):
-        pos = np.asarray(positions_A, dtype=float)
-        n = pos.shape[0]
-
-        rows = []
-        for i in range(n):
-            for j in range(i + 1, n):
-                d = np.linalg.norm(pos[i] - pos[j])
-                if threshold_A is None or d > threshold_A:
-                    rows.append((i, j, d))
-
-        rows.sort(key=lambda x: x[2], reverse=True)
-
-        print(f"[DEBUG] Pair distances for {label}: n={n}")
-        if threshold_A is not None:
-            print(f"[DEBUG] Printing only distances > {threshold_A:.3f} Å")
-
-        for i, j, d in rows[:max_print]:
-            print(f"[DEBUG] d({i},{j}) = {d:.6f} Å")
-
-        if len(rows) > max_print:
-            print(f"[DEBUG] ... {len(rows) - max_print} more pairs not printed")
-            
-    def _debug_qm_or_distances(
-        self,
-        qm_positions_A,
-        or_positions_A,
-        threshold_A=14.0,
-        max_print=50,
-    ):
-        qm = np.asarray(qm_positions_A, dtype=float)
-        ori = np.asarray(or_positions_A, dtype=float)
-
-        diff = qm[:, None, :] - ori[None, :, :]
-        dist = np.linalg.norm(diff, axis=-1)
-
-        above = np.argwhere(dist > threshold_A)
-        print(f"[DEBUG] QM-OR distances: QM={qm.shape[0]}, OR={ori.shape[0]}")
-        print(f"[DEBUG] max QM-OR distance = {dist.max():.6f} Å")
-        print(f"[DEBUG] min QM-OR distance = {dist.min():.6f} Å")
-        print(f"[DEBUG] number QM-OR distances > {threshold_A:.3f} Å = {len(above)}")
-
-        rows = [(i, j, dist[i, j]) for i, j in above]
-        rows.sort(key=lambda x: x[2], reverse=True)
-
-        for i, j, d in rows[:max_print]:
-            print(f"[DEBUG] d(QM {i}, OR {j}) = {d:.6f} Å")
 
     def get_or_forces(self):
         return self.or_forces
@@ -939,8 +853,6 @@ class Pert_SchNet_V2_Calculator(SchNet_V2_Calculator):
         perturbed_spin_multiplicity: int,
         ref_vacA=None,
         ref_vacB=None,
-        debug: bool = False, 
-        debug_level: int = 2
     ) -> None:
         super().__init__(
             model_path,
@@ -997,9 +909,6 @@ class Pert_SchNet_V2_Calculator(SchNet_V2_Calculator):
 
         self.nn_valid_ene = 0.0
         self.nn_valid_maxF = 0.0
-        
-        self.debug = debug
-        self.debug_level = int(debug_level)
 
     def _active_ir_indices(self, endstate: str):
         if endstate == "A":
@@ -1173,11 +1082,6 @@ class Pert_SchNet_V2_Calculator(SchNet_V2_Calculator):
                 cap_start,
                 n_total,
             ).reshape((n_total,))
-            
-            if self.debug and self.debug_level >= 2 and q_full is not None:
-                print(f"[DEBUG] Endstate {endstate} charges (full ordering):")
-                print(q_full)
-                print(f"[DEBUG] Endstate {endstate} charge sum: {np.sum(q_full): .6f}")
 
         return {
             "E_total": E_corr_total,
@@ -1258,16 +1162,13 @@ class Pert_SchNet_V2_Calculator(SchNet_V2_Calculator):
             r_or_A=r_or_A,
             q_or=q_or,
         )
-        
 
         self.energy = (1.0 - lam) * A["E_total"] + lam * B["E_total"]
-        E_mlp_prod = (1.0 - lam) * A["E_mlp"] + lam * B["E_mlp"]
         self.forces = (1.0 - lam) * A["F_full"] + lam * B["F_full"]
 
         self.derivative_mlp = B["E_mlp"] - A["E_mlp"]
         self.derivative_elec = B["E_elec"] - A["E_elec"]
         self.derivative = self.derivative_mlp + self.derivative_elec
-
         if self.debug:
             print("\n[DEBUG] ===== Perturbation Step =====")
             print(f"[DEBUG] lambda = {lam: .4f}")
@@ -1299,7 +1200,7 @@ class Pert_SchNet_V2_Calculator(SchNet_V2_Calculator):
                 print("[DEBUG] Interpolated charges:")
                 print(self.charges)
                 print(f"[DEBUG] sum(q_interp) = {np.sum(self.charges): .6f}")
-
+                
         if dynamic_charges:
             self.or_forces = (1.0 - lam) * A["F_or"] + lam * B["F_or"]
         else:
@@ -1344,12 +1245,11 @@ class Pert_SchNet_V2_Calculator(SchNet_V2_Calculator):
                 )
 
                 E_vals.append((1.0 - lam) * A_val + lam * B_val)
-                
 
             if len(E_vals) == 1:
-                self.nn_valid_ene = abs(E_mlp_prod - E_vals[0]) / np.sqrt(2.0)
+                self.nn_valid_ene = abs(self.energy - E_vals[0]) / np.sqrt(2.0)
             elif len(E_vals) > 1:
-                self.nn_valid_ene = np.array(E_vals + [E_mlp_prod], dtype=float).std(ddof=1)
+                self.nn_valid_ene = np.array(E_vals + [self.energy], dtype=float).std(ddof=1)
 
         return None
 
@@ -1371,7 +1271,7 @@ class Pert_SchNet_V2_Calculator(SchNet_V2_Calculator):
             n_caps,
         )
 
-        E_burnn_total, _, _, _, E_burnn_mlp = self._eval_with_calculator(
+        E_burnn_total, _, _, _, _ = self._eval_with_calculator(
             burnn,
             val_calculator,
             r_or_A=r_or_A if dynamic_charges else None,
@@ -1380,18 +1280,18 @@ class Pert_SchNet_V2_Calculator(SchNet_V2_Calculator):
         )
 
         if self.reference_energies is None:
-            E_vac_total, _, _, _, E_vac_mlp = self._eval_with_calculator(
+            E_vac_total, _, _, _, _ = self._eval_with_calculator(
                 vac,
                 val_calculator,
                 r_or_A=None,
                 q_or=None,
                 compute_or_forces=False,
             )
-            E_vac = E_vac_mlp
+            E_vac = E_vac_total
         else:
             E_vac = float(self.reference_energies[endstate])
 
-        return float(E_burnn_mlp - E_vac)
+        return float(E_burnn_total - E_vac)
 
     def get_derivative(self) -> float:
         return float(self.derivative)
@@ -1414,5 +1314,3 @@ class Pert_SchNet_V2_Calculator(SchNet_V2_Calculator):
 
     def get_or_forces(self):
         return self.or_forces
-
-

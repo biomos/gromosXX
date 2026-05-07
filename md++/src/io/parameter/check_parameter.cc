@@ -296,7 +296,7 @@ int io::simple_crosschecks(simulation::Simulation & sim) {
     if (param.perturbation.perturbation &&
         param.qmmm.qmmm != simulation::qmmm_off &&
         ! (param.qmmm.qmmm == simulation::qmmm_mechanical &&
-            param.qmmm.qm_ch == simulation::qm_ch_constant &&
+            //param.qmmm.qm_ch == simulation::qm_ch_constant &&
             (param.qmmm.software == simulation::qm_schnetv1 || param.qmmm.software == simulation::qm_schnetv2)
          )) {
       io::messages.add("QMMM block: Perturbation allowed only with ME, constant charge, Schnet v1 or Schnet v2 and standard pairlist",

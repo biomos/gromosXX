@@ -83,8 +83,17 @@ END
  *
  * @verbatim
 PERTQMZONE
+# Header line format:
+#   IRcharge_state2  IRspin_mult_state2  BRcharge_state2  BRspin_mult_state2  [ref_vacA  ref_vacB]
+#
+# - The first 4 integers are REQUIRED.
+# - ref_vacA and ref_vacB are OPTIONAL, but if you provide one you must provide both.
+#
 # STATE: state number of the QM atom, 0 = both states, 1 = state A, 2 = state B
 #
+#   IRcharge_state2  IRspin_mult_state2  BRcharge_state2  BRspin_mult_state2  [ref_vacA  ref_vacB]
+                  0                   1                0                    1                       # <-- example header (no reference energies)
+#                 0                   1                0                    1       0.0       0.0   # <-- example header with optional ref_vacA ref_vacB
 # Warning: the first 17 characters are ignored!
 # RESIDUE   ATOM     STATE
     1 H2O   OW         1
@@ -93,7 +102,7 @@ PERTQMZONE
     2 H2O   OW         2
     2 H2O   HW1        2
     2 H2O   HW2        2
-END
+END 
 @endverbatim
  *
  * @section bufferzone BUFFERZONE block
@@ -1638,8 +1647,41 @@ void io::In_QMMM::read_pert_qmzone(simulation::Simulation& sim
   _lineStream.clear();
   _lineStream.str(line);
 
+  // Added option to read in different charge and multiplicity for state 2
+  int IRcharge_state2 = 0, IRspin_mult_state2 = 0, BRcharge_state2 = 0, BRspin_mult_state2 = 0;
+  float ref_vacA,ref_vacB;
+  
+  _lineStream >> IRcharge_state2 >> IRspin_mult_state2 >> BRcharge_state2 >> BRspin_mult_state2;
+
+
+  // Reset optional flags by default (so re-reading a file doesn’t keep old values)
+  sim.param().qmmm.qm_zone.has_ref_vacA = false;
+  sim.param().qmmm.qm_zone.has_ref_vacB = false;
+  sim.param().qmmm.qm_zone.ref_vacA = std::numeric_limits<double>::quiet_NaN();
+  sim.param().qmmm.qm_zone.ref_vacB = std::numeric_limits<double>::quiet_NaN();
+
+  // Try read optional ref energies (both must be present if any)
+  if (_lineStream >> ref_vacA) {
+    if (!(_lineStream >> ref_vacB)) {
+      io::messages.add("PERTQMZONE header: ref_vacA provided but ref_vacB missing (need 2 floats).",
+                      "In_QMMM", io::message::error);
+      return;
+    }
+    sim.param().qmmm.qm_zone.has_ref_vacA = true;
+    sim.param().qmmm.qm_zone.has_ref_vacB = true;
+    sim.param().qmmm.qm_zone.ref_vacA = ref_vacA;
+    sim.param().qmmm.qm_zone.ref_vacB = ref_vacB;
+  }
+
+  // Assign Electronic states for state A and B
+  sim.param().qmmm.qm_zone.pert_charge = IRcharge_state2;
+  sim.param().qmmm.qm_zone.pert_spin_mult = IRspin_mult_state2;
+
+  sim.param().qmmm.buffer_zone.pert_charge = BRcharge_state2;
+  sim.param().qmmm.buffer_zone.pert_spin_mult = BRspin_mult_state2;
+
   unsigned state = 0;
-  for (std::vector<std::string>::const_iterator it = buffer.begin() + 1
+  for (std::vector<std::string>::const_iterator it = buffer.begin() + 2
                                               , to = buffer.end() - 1
                                               ; it != to; ++it) {
     std::string line(*it);

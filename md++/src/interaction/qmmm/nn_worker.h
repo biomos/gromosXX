@@ -26,6 +26,9 @@
 #ifndef INCLUDED_NN_WORKER_H
 #define	INCLUDED_NN_WORKER_H
 
+#include "../../../math/periodicity.h"
+#include <vector>
+
 #ifdef HAVE_PYBIND11
   #include <pybind11/embed.h>
   namespace py = pybind11;
@@ -65,6 +68,19 @@ namespace interaction {
                    , const interaction::QM_Zone& qm_zone) override;
 
   private:
+
+    template<math::boundary_enum B>
+    void build_or_arrays_imaged(
+        const topology::Topology& topo,
+        const configuration::Configuration& conf,
+        const simulation::Simulation& sim,
+        const interaction::QM_Zone& qm_zone,
+        const std::vector<const interaction::QM_Atom*>& qm_atoms_order,
+        std::vector<std::vector<double>>& or_coordinates_nm,
+        std::vector<double>& or_charges_e,
+        std::vector<double>& or_atomic_numbers,
+        std::vector<unsigned>& or_indices
+    ) const;
     /**
      * Pointer to simulation parameters
      */

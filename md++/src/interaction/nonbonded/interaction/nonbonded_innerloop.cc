@@ -2713,7 +2713,15 @@ double interaction::Nonbonded_Innerloop<t_nonbonded_spec>::charge_product(
 
   // exactly one is QM-side -> cross term -> no classical electrostatics
   if (i_qm_side || j_qm_side) {
-    return 0.0;
+      double q = 0.0;
+
+    if (topo.is_adaptive_qm_buffer(i) && topo.is_adaptive_qm_buffer(j)) {
+       q +=  topo.charge(i) * topo.charge(j);
+    }
+    else {
+    q = 0.0;
+    }
+    return q;
   }
 
   // otherwise, normal behavior

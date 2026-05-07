@@ -4169,7 +4169,6 @@ namespace simulation
        * if dynamic charges are used with QM buffer zone
        */
       bool dynamic_buffer_charges;
-
       /**
        * QM zone parameters
        */
@@ -4182,15 +4181,35 @@ namespace simulation
        */
       qm_zone_struct() :
                       charge(0)
-                    , spin_mult(1) {}
+                    , pert_charge(0)
+                    , spin_mult(1)
+                    , pert_spin_mult(1)
+                    , has_ref_vacA(false)
+                    , has_ref_vacB(false)
+                    , ref_vacA(std::numeric_limits<double>::quiet_NaN())
+                    , ref_vacB(std::numeric_limits<double>::quiet_NaN())  {}
         /**
          * net charge
          */
         int charge;
         /**
+         * perturbed net charge of state 2
+         */
+        int pert_charge;
+        /**
          * spin multiplicity
          */
         int spin_mult;
+        /**
+         * perturbed spin multiplicity of state 2
+         */
+        int pert_spin_mult;
+
+        // Optional reference energies
+        bool has_ref_vacA;
+        bool has_ref_vacB;
+        double ref_vacA;
+        double ref_vacB;
       } qm_zone;
 
       /**

@@ -46,6 +46,8 @@ namespace interaction {
          ) : pos(pos)
            , force(0.0)
            , qm_charge(0.0)
+           , qm_charge_A(0.0)
+           , qm_charge_B(0.0)
            , index(index)
            , atomic_number(atomic_number)
            , is_linked(is_linked)
@@ -57,6 +59,8 @@ namespace interaction {
     QM_Atom(const QM_Atom & a) : pos(a.pos)
                                , force(a.force)
                                , qm_charge(a.qm_charge)
+                               , qm_charge_A(a.qm_charge_A)
+                               , qm_charge_B(a.qm_charge_B)
                                , index(a.index)
                                , atomic_number(a.atomic_number)
                                , is_linked(a.is_linked)
@@ -76,6 +80,8 @@ namespace interaction {
      * The charge calculated from QM
      */
     mutable double qm_charge;
+    mutable double qm_charge_A;
+    mutable double qm_charge_B;
 
     /**
      * the index of the atom in topology - starts with 0

@@ -31,9 +31,6 @@
 #include "../../../configuration/configuration.h"
 
 #include "../../../interaction/interaction.h"
-#include "../../../math/periodicity.h"
-#include "../../../util/template_split.h"
-#include <cmath>
 
 #include "../../../io/blockinput.h"
 
@@ -66,98 +63,6 @@
 #ifdef HAVE_PYBIND11
   using namespace py::literals;
 #endif
-
-template<math::boundary_enum B>
-void interaction::NN_Worker::build_or_arrays_imaged(
-    const topology::Topology& topo,
-    const configuration::Configuration& conf,
-    const simulation::Simulation& sim,
-    const interaction::QM_Zone& qm_zone,
-    const std::vector<const interaction::QM_Atom*>& qm_atoms_order,
-    std::vector<std::vector<double>>& or_coordinates_nm,
-    std::vector<double>& or_charges_e,
-    std::vector<double>& or_atomic_numbers,
-    std::vector<unsigned>& or_indices
-) const {
-    math::Periodicity<B> periodicity(conf.current().box);
-
-    if (qm_atoms_order.empty()) {
-        throw std::runtime_error("Cannot image OR atoms: empty QM atom list.");
-    }
-
-    const math::Vec& ref_qm_pos = qm_atoms_order.front()->pos;
-
-    or_coordinates_nm.clear();
-    or_charges_e.clear();
-    or_atomic_numbers.clear();
-    or_indices.clear();
-
-    or_coordinates_nm.reserve(qm_zone.mm.size());
-    or_charges_e.reserve(qm_zone.mm.size());
-    or_atomic_numbers.reserve(qm_zone.mm.size());
-    or_indices.reserve(qm_zone.mm.size());
-
-    for (auto mm_it = qm_zone.mm.begin(); mm_it != qm_zone.mm.end(); ++mm_it) {
-        const unsigned idx = mm_it->index;
-
-        // Defensive exclusions. OR must never contain IR or active BR.
-        if (topo.is_qm(idx)) continue;
-        if (topo.is_qm_buffer(idx) > 0) continue;
-
-        // Also exclude MM atoms that are link partners.
-        bool is_link_partner = false;
-        for (auto link_it = qm_zone.link.begin(); link_it != qm_zone.link.end(); ++link_it) {
-            if (link_it->mm_index == idx) {
-                is_link_partner = true;
-                break;
-            }
-        }
-        if (is_link_partner) continue;
-
-        // Re-image the already gathered MM atom relative to the same QM reference.
-        // This follows the same convention used in QM_Zone::_update_qm_pos:
-        // nearest_image(ref, pos, nim), imaged_pos = ref - nim.
-        math::Vec nim;
-        periodicity.nearest_image(ref_qm_pos, mm_it->pos, nim);
-        const math::Vec or_pos = ref_qm_pos - nim;
-
-        // Safety check: OR must not overlap QM/BR/caps.
-        double min_d2 = std::numeric_limits<double>::max();
-        unsigned min_qm_idx = 0;
-
-        for (const auto* qm_atom : qm_atoms_order) {
-            const double d2 = math::abs2(qm_atom->pos - or_pos);
-            if (d2 < min_d2) {
-                min_d2 = d2;
-                min_qm_idx = qm_atom->index;
-            }
-        }
-
-        for (auto link_it = qm_zone.link.begin(); link_it != qm_zone.link.end(); ++link_it) {
-            const double d2 = math::abs2(link_it->pos - or_pos);
-            if (d2 < min_d2) {
-                min_d2 = d2;
-                min_qm_idx = link_it->qm_index;
-            }
-        }
-
-        //if (min_d2 < 0.25 * 0.25) {
-        //    std::ostringstream msg;
-        //    msg << "NN_Worker OR/QM overlap or periodic self-image: OR atom "
-        //        << (idx + 1)
-        //        << " is only "
-        //        << std::sqrt(min_d2)
-        //        << " nm from QM/cap atom "
-        //        << (min_qm_idx + 1);
-        //    throw std::runtime_error(msg.str());
-        //}
-
-        or_coordinates_nm.push_back({or_pos[0], or_pos[1], or_pos[2]});
-        or_charges_e.push_back(mm_it->charge);
-        or_atomic_numbers.push_back(mm_it->atomic_number);
-        or_indices.push_back(idx);
-    }
-}
 
 interaction::NN_Worker::NN_Worker() : QM_Worker("NN Worker"),
                                       param(nullptr),
@@ -314,31 +219,8 @@ int interaction::NN_Worker::init(const topology::Topology& topo
       // get perturbed QM states
       py::list perturbed_qm_states = py::cast(sim.param().qmmm.nn.pertqm_state);
 
-      // get perturbed state total charge and spin multiplicity
-      int pert_system_charge = sim.param().qmmm.qm_zone.pert_charge + sim.param().qmmm.buffer_zone.pert_charge;
-      py::int_ pert_total_charge = pert_system_charge;
-
-      // number of unpaired spins of the QM zone
-      const int pert_spin_qm = sim.param().qmmm.qm_zone.pert_spin_mult - 1;
-      // number of unpaired spins of the buffer zone
-      const int pert_spin_buf = sim.param().qmmm.buffer_zone.pert_spin_mult - 1;
-      // consider no spin pairing between the QM and buffer zone
-      int pert_spin_multiplicity = pert_spin_qm + pert_spin_buf + 1;
-      py::int_ pert_spin_mult = pert_spin_multiplicity;
-      
-      // Decide if reference vacuum energies should be used according to .qmmm specification file
-      py::object ref_vacA_obj = py::none();
-      py::object ref_vacB_obj = py::none();
-
-      if (sim.param().qmmm.qm_zone.has_ref_vacA && sim.param().qmmm.qm_zone.has_ref_vacB) {
-        ref_vacA_obj = py::float_(sim.param().qmmm.qm_zone.ref_vacA);
-        ref_vacB_obj = py::float_(sim.param().qmmm.qm_zone.ref_vacB);
-      }
-
       // Initialize mlp_calculator Pert_SchNet_V2_Calculator Python object
-      mlp_calculator = schnet_v2.attr("Pert_SchNet_V2_Calculator")(model_path, val_models_paths, write_val_step, 
-        write_energy_step, spin_mult, total_charge, lambda, perturbed_qm_states,pert_total_charge, pert_spin_mult,
-        ref_vacA_obj, ref_vacB_obj);
+      mlp_calculator = schnet_v2.attr("Pert_SchNet_V2_Calculator")(model_path, val_models_paths, write_val_step, write_energy_step, spin_mult, total_charge, lambda, perturbed_qm_states);
     }
 
     else {
@@ -429,46 +311,7 @@ static inline double pair_potential_q_over_r(const math::Vec& qm_pos,
   }
 
 interaction::NN_Worker::~NN_Worker() = default;
-/**
- * @brief Execute a single NN “QM” step: build NN inputs, call Python, and map outputs back.
- *
- * This routine replaces the traditional QM backend call by a call into a Python
- * calculator (SchNetPack wrappers) exposed via pybind11.
- *
- * ## High-level data flow
- * 1. **Build NN inputs**
- *    - Assemble `atomic_numbers` and `system_coordinates` for the NN model.
- *    - Convert positions from the MD length unit to the NN model unit using
- *      `unit_factor_length`.
- *
- * 2. **Call the Python calculator**
- *    - Invoke `mlp_calculator.calculate_next_step(...)` which performs the NN
- *      forward pass for the current MD step.
- *    - The Python side caches the predicted energy/forces (and optionally charges,
- *      committee disagreement, and dE/dlambda for TI).
- *
- * 3. **Read outputs and redistribute them to GROMOS objects**
- *    - Energy is stored in `qm_zone.QM_energy()`.
- *    - Forces are written into the `QM_Atom::force` fields of the QM/Buffer
- *      atoms and into the `QM_Link::force` fields of capping atoms.
- *    - If dynamic charges are enabled, the electrostatic energy is turned off for IR+BR to OR pairs in GROMOS
- *      and is directly predicted via torch autograd 
- *
- * ## Ordering contract (critical for correct force mapping)
- * The NN returns forces in the exact order in which atoms are passed in.
- * Historically, the ordering of `qm_zone.qm` can differ from the ordering used
- * by perturbation input blocks (QMZONE / PERTQMZONE). For perturbation, the
- * *partition* between IR (QMZONE) and BR (BUFFERZONE) must be consistent.
- *
- * We therefore build a deterministic order `qm_atoms_order`:
- *  - First: all atoms that satisfy `topo.is_qm(index)` (IR)
- *  - Second: all remaining atoms in `qm_zone.qm` (BR)
- *  - Finally: all link/capping atoms in `qm_zone.link` (caps)
- *
- * The same order is used to:
- *  - build the Python input arrays
- *  - interpret the Python output force array
- */
+
 int interaction::NN_Worker::run_QM(topology::Topology& topo
                      , configuration::Configuration& conf
                      , simulation::Simulation& sim, interaction::QM_Zone & qm_zone) {
@@ -531,25 +374,22 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
   py::int_ step = sim.steps();
   py::int_ n_caps = static_cast<int>(qm_zone.link.size());
 
-
-  std::vector<std::vector<double>> or_coordinates_nm;
-  std::vector<double> or_charges_e;
-  std::vector<double> or_atomic_numbers;
-  std::vector<unsigned> or_indices;
-
   if (sim.param().qmmm.qm_ch == simulation::qm_ch_dynamic) {
-      SPLIT_BOUNDARY(
-          this->build_or_arrays_imaged,
-          topo,
-          conf,
-          sim,
-          qm_zone,
-          qm_atoms_order,
-          or_coordinates_nm,
-          or_charges_e,
-          or_atomic_numbers,
-          or_indices
-      );
+    // Dynamic/B2: build OR arrays + cutoff and pass them
+    std::vector<std::vector<double>> or_coordinates_nm;
+    std::vector<double> or_charges_e;
+    std::vector<double> or_atomic_numbers;
+
+    or_coordinates_nm.reserve(qm_zone.mm.size());
+    or_charges_e.reserve(qm_zone.mm.size());
+    or_atomic_numbers.reserve(qm_zone.mm.size());
+
+    for (auto mm_it = qm_zone.mm.begin(); mm_it != qm_zone.mm.end(); ++mm_it) {
+      // mm_it->pos is already in nm (GROMOS internal)
+      or_coordinates_nm.push_back({mm_it->pos[0], mm_it->pos[1], mm_it->pos[2]});
+      or_charges_e.push_back(mm_it->charge); // e
+      or_atomic_numbers.push_back(mm_it->atomic_number);
+    }
 
     const double cutoff_nm = sim.param().qmmm.cutoff;
 
@@ -557,12 +397,12 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
         atomic_numbers,
         system_coordinates,
         step,
+        "use_static_embedding"_a=true,
         "or_positions_nm"_a=or_coordinates_nm,
-        "dynamic_charges"_a=true,
         "or_charges_e"_a=or_charges_e,
         "cutoff_nm"_a=cutoff_nm,
-        "or_atomic_numbers"_a=or_atomic_numbers,
-        "n_caps"_a=n_caps);
+        "or_atomic_numbers"_a=or_atomic_numbers
+    );
   }
 
   else {
@@ -570,7 +410,8 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
     mlp_calculator.attr("calculate_next_step")(
         atomic_numbers,
         system_coordinates,
-        step
+        step,
+        "use_static_embedding"_a=false
     );
   }
 
@@ -610,10 +451,8 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
     it->force *= this->param->unit_factor_force;
     DEBUG(13, "force from NN, capping atom " << it->qm_index << "-" << it->mm_index << ": "  << math::v2s(it->force));
   }
-
   // Free energy derivative if perturbation is performed
   if (sim.param().perturbation.perturbation) {
-        // dE/dlambda is provided by the Python TI wrapper.
     const double energy_derivative = mlp_calculator.attr("get_derivative")().cast<double>() * this->param->unit_factor_energy;
     qm_zone.QM_energy_derivative() = energy_derivative;
   }
@@ -625,40 +464,92 @@ int interaction::NN_Worker::run_QM(topology::Topology& topo
     auto or_forces = mlp_calculator.attr("get_or_forces")()
         .cast<std::vector<std::vector<double>>>();
 
-    if (or_forces.size() != or_indices.size()) {
+    if (or_forces.size() != qm_zone.mm.size()) {
       throw std::runtime_error("OR force size mismatch");
     }
 
-    for (size_t k = 0; k < or_indices.size(); ++k) {
-        const unsigned idx = or_indices[k];
+    int mm_index = 0;
+    for (auto mm_it = qm_zone.mm.begin(); mm_it != qm_zone.mm.end(); ++mm_it, ++mm_index) {
+      mm_it->force[0] = or_forces[mm_index][0];
+      mm_it->force[1] = or_forces[mm_index][1];
+      mm_it->force[2] = or_forces[mm_index][2];
 
-        auto mm_it = qm_zone.mm.find(interaction::MM_Atom(idx));
-        if (mm_it == qm_zone.mm.end()) {
-            throw std::runtime_error("Could not find OR atom in qm_zone.mm.");
-        }
-
-        math::Vec f_or;
-        f_or[0] = or_forces[k][0];
-        f_or[1] = or_forces[k][1];
-        f_or[2] = or_forces[k][2];
-
-        if (!std::isfinite(f_or[0]) || !std::isfinite(f_or[1]) || !std::isfinite(f_or[2])) {
-            throw std::runtime_error("Non-finite OR force from NN.");
-        }
-
-        f_or *= this->param->unit_factor_force;
-
-        // I recommend add, not overwrite.
-        mm_it->force += f_or;
-
-        DEBUG(15, "force from NN, OR atom " << mm_it->index << " : " << math::v2s(mm_it->force));
+      mm_it->force *= this->param->unit_factor_force;
+      DEBUG(15, "force from NN, OR atom " << mm_it->index << " : " << math::v2s(mm_it->force));
       }
 
     // CRUDE IMPLEMENTATION get_charges should be replaced or not used if we are in the perturbation
-    //if (sim.param().perturbation.perturbation) {
-    //  io::messages.add("perturbation with DQ not in this compilation look at /pool/m_gillhofer/software/BuRNN/GROMOS/gromosXX/md++/src/interaction/qmmm/nn_worker.cc", io::message::error);
+    if (sim.param().perturbation.perturbation) {
+      io::messages.add("perturbation with DQ not in this compilation look at /pool/m_gillhofer/software/BuRNN/GROMOS/gromosXX/md++/src/interaction/qmmm/nn_worker.cc", io::message::error);
     }
+    
+    // Unperturbed behaviour
+    else {
+      std::vector<double> partial_charges = mlp_calculator.attr("get_charges")().cast<std::vector<double>>();
+      // Assign QM atom charges in the same order as sent (IR+BR).
+      double tot_qm_charge = 0.0;
+      for (int i = 0; i < qmb_size; ++i) {
+        const interaction::QM_Atom* a = qm_atoms_order[i];
+        a->qm_charge = partial_charges[i] * this->param->unit_factor_charge;
+        tot_qm_charge += a->qm_charge;
+        DEBUG(10, "qm_charge from NN, atom " << a->index << " : " << a->qm_charge);
+      }
+      // Assign link/cap charges in the same order as sent (iteration order of qm_zone.link).
+      double tot_link_charge = 0.0;
+      int i_cap = 0;
+      for (auto it = qm_zone.link.begin(); it != qm_zone.link.end(); ++it, ++i_cap) {
+        it->qm_charge = partial_charges[qmb_size + i_cap] * this->param->unit_factor_charge;
+        tot_link_charge += it->qm_charge;
+        DEBUG(15, "qm_charge from NN, capping atom " << it->qm_index << "-" << it->mm_index
+                  << " : " << it->qm_charge);
+      }
 
+      double total_predicted_charge = tot_qm_charge + tot_link_charge;
+
+      const double system_charge =
+          sim.param().qmmm.qm_zone.charge +
+          sim.param().qmmm.buffer_zone.charge;
+
+      DEBUG(10, "NN charge summary: requested=" << system_charge
+                << " predicted=" << total_predicted_charge
+                << " (QM=" << tot_qm_charge
+                << ", LA=" << tot_link_charge << ")");
+
+      // Homogeneous background charge correction (if needed).
+      // We distribute the difference equally over all (IR+BR) atoms and all cap atoms.
+      double diff =  system_charge - total_predicted_charge;
+      //const double diffA = total_predicted_charge_A - system_charge;
+      const double abs_tol = 1e-4;
+
+      if (std::abs(diff) > abs_tol) {
+          double delta = diff /  (qm_zone.qm.size()+qm_zone.link.size());
+
+          DEBUG(10, "Applying homogeneous correction of " << delta
+                      << " to all QM and link atoms (" << qm_zone.qm.size()+qm_zone.link.size()
+                      << " atoms).");
+
+        // Apply correction to QM atoms (IR+BR) in the same order.
+        for (int i = 0; i < qmb_size; ++i) {
+          const interaction::QM_Atom* a = qm_atoms_order[i];
+          const double old = a->qm_charge;
+          a->qm_charge = old + delta;
+          DEBUG(10, "Charge adjusted for atom " << a->index
+                    << " from " << old << " to " << a->qm_charge);
+        }
+
+        // Apply correction to link/cap atoms.
+        i_cap = 0;
+        for (auto it = qm_zone.link.begin(); it != qm_zone.link.end(); ++it, ++i_cap) {
+          const double old = it->qm_charge;
+          it->qm_charge = old + delta;
+          DEBUG(10, "LA charge adjusted for atom " << it->mm_index
+                    << " from " << old << " to " << it->qm_charge);
+        }
+      } else {
+          DEBUG(10, "Predicted charge matches requested charge; no correction applied.");
+      }
+    }
+  }
 
   
   // NN validation
