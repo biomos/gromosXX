@@ -983,7 +983,11 @@ namespace simulation
     /*
      * use Schnetpack v2 NN
      */
-    qm_schnetv2 = 8
+    qm_schnetv2 = 8,
+    /*
+     * use MACE MLIP
+     */
+    qm_mace = 9
   };
 
   /**

@@ -28,4 +28,5 @@ EXTRA_DIST = VERSION\
 	doc/main.doxy\
     data/ene_ana.md++.lib\
 	contrib/schnet_v1.py\
-	contrib/schnet_v2.py
+	contrib/schnet_v2.py\
+	contrib/mace_gromos.py

@@ -2,7 +2,7 @@ AM_CXXFLAGS = @MY_CXXFLAGS@
 AM_CPPFLAGS = -I$(top_srcdir) -I$(top_srcdir)/src
 
 gdatadir = $(datadir)/contrib
-dist_gdata_DATA = schnet_v1.py schnet_v2.py
+dist_gdata_DATA = schnet_v1.py schnet_v2.py mace_gromos.py
 
 if WITH_CUDA
   AM_CPPFLAGS += -I$(top_srcdir)/src/cukernel

@@ -5502,7 +5502,7 @@ void io::In_Parameter::read_QMMM(simulation::Parameter & param,
     exampleblock << "#    1: apply mechanical embedding scheme with dynamic QM charges\n";
     exampleblock << "#    2: apply electrostatic embedding scheme\n";
     exampleblock << "#    3: apply polarisable embedding scheme\n";
-    exampleblock << "# NTQMSW -1..7 QM software package to use\n";
+    exampleblock << "# NTQMSW -1..9 QM software package to use\n";
     exampleblock << "#   -1: Ghost\n";
     exampleblock << "#    0: MNDO\n";
     exampleblock << "#    1: Turbomole\n";
@@ -5545,7 +5545,7 @@ void io::In_Parameter::read_QMMM(simulation::Parameter & param,
         double mm_scale = -1.;
         double cutoff = 0.0;
         block.get_next_parameter("NTQMMM", enable, "", "-1,0,1,2,3");
-        block.get_next_parameter("NTQMSW", software, "", "-1,0,1,2,3,4,5,6,7,8");
+        block.get_next_parameter("NTQMSW", software, "", "-1,0,1,2,3,4,5,6,7,8,9");
         block.get_next_parameter("RCUTQM", cutoff, "", "");
         block.get_next_parameter("NTWQMMM", write, ">=0", "");
         block.get_next_parameter("QMLJ", qmlj, "", "0,1");
@@ -5627,6 +5627,16 @@ void io::In_Parameter::read_QMMM(simulation::Parameter & param,
                                 "In_Parameter", io::message::error);
 #endif
             break;
+        case 9:
+#ifdef HAVE_PYBIND11
+            param.qmmm.software = simulation::qm_mace;
+#else
+            io::messages.add("QMMM block: MACE MLIP interface is not available "
+                                "in your compilation. Use --enable-schnetpack for compiling.",
+                                "In_Parameter", io::message::error);
+#endif
+            break;
+
         default:
             break;
     }
@@ -5659,7 +5669,7 @@ void io::In_Parameter::read_QMMM(simulation::Parameter & param,
         param.qmmm.cutoff = fabs(cutoff);
         param.qmmm.write = write;
         if (param.qmmm.qmmm != simulation::qmmm_mechanical 
-            && (param.qmmm.software == simulation::qm_schnetv1 || param.qmmm.software == simulation::qm_schnetv2))
+            && (param.qmmm.software == simulation::qm_schnetv1 || param.qmmm.software == simulation::qm_schnetv2 || param.qmmm.software == simulation::qm_mace))
             io::messages.add("QMMM block: Schnetpack NN works only with mechanical embedding scheme",
                 "io::In_Parameter",
                 io::message::error);

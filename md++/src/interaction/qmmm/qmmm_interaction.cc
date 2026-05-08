@@ -456,6 +456,9 @@ int interaction::QMMM_Interaction::init(topology::Topology& topo,
       case simulation::qm_schnetv2:
         os << "Schnet v2";
         break;
+      case simulation::qm_mace:
+        os << "MACE";
+        break;
       default:
         os << "unknown";
         break;

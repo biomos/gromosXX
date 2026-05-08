@@ -1040,7 +1040,7 @@ void io::In_QMMM::read(topology::Topology& topo,
   /*
    * Schnetpack NN
    */
-  else if (sw == simulation::qm_schnetv1 || sw == simulation::qm_schnetv2) {
+  else if (sw == simulation::qm_schnetv1 || sw == simulation::qm_schnetv2 || sw == simulation::qm_mace) {
     this->read_units(sim, &sim.param().qmmm.nn);
     //this->read_elements(topo, &sim.param().qmmm.nn);
 

@@ -453,6 +453,9 @@ int io::read_special(io::Argument const & args,
             case simulation::qm_schnetv2:
                 iq.title = "Schnetpack v2";
                 break;
+            case simulation::qm_mace:
+                iq.title = "MACE";
+                break;
         }
         
         iq.read(topo, sim, os);

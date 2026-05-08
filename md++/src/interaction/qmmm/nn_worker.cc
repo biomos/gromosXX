@@ -227,7 +227,29 @@ int interaction::NN_Worker::init(const topology::Topology& topo
     }
 }
 
-  
+  if (software == simulation::qm_mace) {
+    py::module_ mace = py::module_::import("mace_gromos");
+    py::object mace_class = mace.attr("MACE_GROMOS_Calculator");
+
+    if (sim.param().qmmm.qm_ch == simulation::qm_ch_dynamic) {
+      io::messages.add("Dynamic QM charges are not implemented for the minimal MACE interface.",
+        "NN_Worker", io::message::error);
+    }
+    if (sim.param().perturbation.perturbation) {
+      io::messages.add("Perturbation / dE/dlambda is not implemented for the minimal MACE interface.",
+        "NN_Worker", io::message::error);
+    }
+    if (sim.param().qmmm.nn.model_type != simulation::nn_model_type_standard) {
+      io::messages.add("The minimal MACE interface currently supports only nn_model_type_standard.",
+        "NN_Worker", io::message::error);
+    }
+
+    io::messages.add("Model is using MACE nuclear-only standard NN mode",
+      "NN_Worker", io::message::notice);
+
+    mlp_calculator = mace_class(model_path, val_models_paths, write_val_step, write_energy_step, spin_mult, total_charge);
+  }
+
   // Restore omp_num_threads
   #ifdef OMP
     omp_set_num_threads(num_threads);

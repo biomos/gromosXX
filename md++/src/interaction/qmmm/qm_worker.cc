@@ -101,6 +101,8 @@ interaction::QM_Worker * interaction::QM_Worker::get_instance(const simulation::
       return new NN_Worker;
     case simulation::qm_schnetv2 :
       return new NN_Worker;
+    case simulation::qm_mace :
+      return new NN_Worker;
     case simulation::qm_orca :
       return new Orca_Worker;
 #ifdef XTB
