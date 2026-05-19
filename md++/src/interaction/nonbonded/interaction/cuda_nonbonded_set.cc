@@ -282,11 +282,16 @@ void interaction::CUDA_Nonbonded_Set::cycle() {
   
   error += cudakernel::cudaCopyPositions(&myconf->current().pos(mytopo->num_solute_atoms())(0), gpu_stat);
   DEBUG(15, "myconf->current().pos(mytopo->num_solute_atoms())(0) = " << myconf->current().pos(mytopo->num_solute_atoms())(0));
-  
 
   // copy the box if pressure is coupled
   if (mysim->param().pcouple.scale != math::pcouple_off) {
     error += cudakernel::cudaCopyBox(gpu_stat, myconf->current().box(0)(0), myconf->current().box(1)(1), myconf->current().box(2)(2));
+  }
+  if (error) {
+    std::ostringstream msg;
+    msg << "Cannot run a nonbonded interaction cycle on GPU " << mysim->param().innerloop.gpu_device_number.at(mygpu_id);
+    io::messages.add(msg.str(), "CUDA_Nonbonded_Set", io::message::error);
+    return;
   }
   if (mygpu_id == 0)  
     m_pairlist_alg.timer().stop_subtimer("GPU data copy");
