@@ -930,7 +930,22 @@ namespace configuration {
     void copy_to_gpu() {
       m_gpu->copy_to_device(*this);
     }
-    
+
+    /** Copy positions and velocities to GPU (cheaper per-step update). */
+    void copy_pos_vel_to_gpu() {
+      m_gpu->copy_pos_vel_to_device(*this);
+    }
+
+    /** Copy GPU forces back to CPU (synchronises device first). */
+    void copy_forces_from_gpu() {
+      m_gpu->copy_forces_from_device(*this);
+    }
+
+    /** Raw device pointers of the current GPU state (for kernel launches). */
+    gpu::Configuration::RawPtrs get_gpu_raw_ptrs() {
+      return m_gpu->current_raw();
+    }
+
     /**
      * get GPU configuration struct of pointers to device memory
      */

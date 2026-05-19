@@ -44,6 +44,29 @@
 
 #include "gpu/cuda/utils.h"
 
+void gpu::Configuration::copy_pos_vel_to_device(const configuration::Configuration& conf) {
+    const size_t n = conf.current().pos.size();
+    current.pos.resize(n);
+    current.vel.resize(n);
+    old.pos.resize(n);
+    old.vel.resize(n);
+    for (size_t i = 0; i < n; ++i) {
+        current.pos[i] = static_cast<FPL3_TYPE>(conf.current().pos(i));
+        current.vel[i] = static_cast<FPL3_TYPE>(conf.current().vel(i));
+        old.pos[i]     = static_cast<FPL3_TYPE>(conf.old().pos(i));
+        old.vel[i]     = static_cast<FPL3_TYPE>(conf.old().vel(i));
+    }
+}
+
+void gpu::Configuration::copy_forces_from_device(configuration::Configuration& conf) {
+    CUDA_CHECK(cudaDeviceSynchronize());
+    const size_t n = current.force.size();
+    for (size_t i = 0; i < n; ++i) {
+        const FPL3_TYPE& f = current.force[i];
+        conf.current().force(i) = math::Vec(f.x, f.y, f.z);
+    }
+}
+
 void gpu::Configuration::copy_to_device(configuration::Configuration& conf) {
     CUDA_CHECK_ERROR("At gpu::Configuration::copy_to_device");
     const size_t num_atoms = conf.current().pos.size();

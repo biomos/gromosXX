@@ -60,6 +60,8 @@ namespace gpu
 
             HOSTDEVICE bool empty() const { return m_size == 0; }
             HOSTDEVICE size_t size() const { return m_size; }
+            HOSTDEVICE value_type* data() { return m_data; }
+            HOSTDEVICE const value_type* data() const { return m_data; }
 
             class iterator {
                 public:

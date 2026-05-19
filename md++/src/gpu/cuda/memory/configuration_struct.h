@@ -168,12 +168,25 @@ namespace gpu {
     };
 
     /**
+     * @brief Raw device pointers for passing directly to CUDA kernels.
+     * Use instead of ConfigurationStateView when the kernel needs FPL3_TYPE*.
+     */
+    struct ConfigurationRawPtrs {
+        FPL3_TYPE* pos     = nullptr;
+        FPL3_TYPE* vel     = nullptr;
+        FPL3_TYPE* force   = nullptr;
+        FPL3_TYPE* constraint_force = nullptr;
+        Box*       box     = nullptr;
+    };
+
+    /**
      * @brief Holds GPU-side state copies of configuration data.
-     * 
+     *
      */
     struct Configuration {
         using State = ConfigurationState;
         using View = ConfigurationView;
+        using RawPtrs = ConfigurationRawPtrs;
 
         /**
          * @brief The current state
@@ -188,10 +201,20 @@ namespace gpu {
         State old;
 
         /**
-         * @brief Update the configuration
-         * 
+         * @brief Copy all arrays from CPU configuration to GPU (full sync).
          */
         void copy_to_device(configuration::Configuration& conf);
+
+        /**
+         * @brief Copy only positions and velocities from CPU to GPU (per-step).
+         */
+        void copy_pos_vel_to_device(const configuration::Configuration& conf);
+
+        /**
+         * @brief Copy GPU forces back to the CPU configuration.
+         * Calls cudaDeviceSynchronize() internally.
+         */
+        void copy_forces_from_device(configuration::Configuration& conf);
 
         /**
          * @brief Allow to exchange states efficiently
@@ -214,9 +237,18 @@ namespace gpu {
 
         /**
          * @brief Create view of the configuration
-         * 
-         * @return View 
+         *
+         * @return View
          */
         View view() { return View{current.view(), old.view()}; }
+
+        /**
+         * @brief Raw device pointers of the current state, for direct kernel use.
+         */
+        RawPtrs current_raw() {
+            return { current.pos.data(), current.vel.data(),
+                     current.force.data(), current.constraint_force.data(),
+                     current.box };
+        }
     };
 }

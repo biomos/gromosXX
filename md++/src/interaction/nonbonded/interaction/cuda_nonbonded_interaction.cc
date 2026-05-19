@@ -1,247 +1,232 @@
 /*
  * This file is part of GROMOS.
- * 
+ *
  * Copyright (c) 2011, 2012, 2016, 2018, 2021, 2023 Biomos b.v.
  * See <https://www.gromos.net> for details.
- * 
+ *
  * GROMOS is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
 /**
  * @file cuda_nonbonded_interaction.cc
- * template methods of CUDA_Nonbonded_Interaction.
+ * CUDA_Nonbonded_Interaction: vanilla GPU LJ + CRF nonbonded forces.
+ *
+ * Pair list construction is delegated to the CPU Standard_Pairlist_Algorithm
+ * which handles all exclusions, chargegroups, and periodic images correctly.
+ * The resulting flat pair list is then processed by GPU force kernels.
  */
+
 #include "stdheader.h"
 
 #include "algorithm/algorithm.h"
 #include "topology/topology.h"
 #include "simulation/simulation.h"
 #include "configuration/configuration.h"
-
 #include "simulation/parameter.h"
 
 #include "interaction/interaction.h"
 #include "interaction/interaction_types.h"
 #include "interaction/nonbonded/interaction/nonbonded_parameter.h"
-
-#include "interaction/nonbonded/pairlist/pairlist.h"
-#include "interaction/nonbonded/pairlist/pairlist_algorithm.h"
-#include "interaction/nonbonded/pairlist/standard_pairlist_algorithm.h"
-#include "interaction/nonbonded/pairlist/cuda_pairlist_algorithm.h"
-
-#include "interaction/nonbonded/interaction/storage.h"
-
-#include "interaction/nonbonded/interaction/nonbonded_outerloop.h"
-#include "interaction/nonbonded/interaction/nonbonded_set_interface.h"
-#include "interaction/nonbonded/interaction/nonbonded_set.h"
-
-#include "interaction/nonbonded/interaction/nonbonded_term.h"
-#include "interaction/nonbonded/interaction/perturbed_nonbonded_term.h"
-
-#include "interaction/nonbonded/interaction/perturbed_nonbonded_pair.h"
-#include "interaction/nonbonded/interaction/perturbed_nonbonded_outerloop.h"
-
-#include "interaction/nonbonded/interaction/perturbed_nonbonded_set.h"
-
 #include "interaction/nonbonded/interaction/nonbonded_interaction.h"
 #include "interaction/nonbonded/interaction/cuda_nonbonded_interaction.h"
 
-#include "util/debug.h"
+#include "gpu/cuda/interaction/nonbonded/kernels/nb_kernels.h"
+#include "gpu/cuda/utils.h"
 
 #include "math/periodicity.h"
 #include "math/boundary_checks.h"
-#include "util/template_split.h"
-
-#include "gpu/cuda/utils.h"
-
-#ifdef OMP
-#include <omp.h>
-#endif
+#include "util/debug.h"
 
 #undef MODULE
 #undef SUBMODULE
 #define MODULE interaction
 #define SUBMODULE nonbonded
 
-/**
- * Constructor.
- */
-interaction::CUDA_Nonbonded_Interaction::CUDA_Nonbonded_Interaction(CUDA_Pairlist_Algorithm<util::gpuBackend> *pa)
-: Nonbonded_Interaction(pa) {
+// ─────────────────────────────────────────────────────────────────────────────
+
+interaction::CUDA_Nonbonded_Interaction::CUDA_Nonbonded_Interaction(
+    CUDA_Pairlist_Algorithm<util::gpuBackend>* pa)
+    : Nonbonded_Interaction(pa)
+{
 }
 
-/**
- * Destructor.
- * @bug change destruction of nonbonded set to be standard - conform!
- */
-interaction::CUDA_Nonbonded_Interaction::~CUDA_Nonbonded_Interaction() {
-  delete m_pairlist_algorithm;
+interaction::CUDA_Nonbonded_Interaction::~CUDA_Nonbonded_Interaction()
+{
+    delete m_pairlist_algorithm;
 }
 
-/**
- * calculate nonbonded forces and energies.
- */
-int interaction::CUDA_Nonbonded_Interaction::
-calculate_interactions(topology::Topology & topo,
-        configuration::Configuration & conf,
-        simulation::Simulation & sim) {
-  DEBUG(4, "CUDA_Nonbonded_Interaction::calculate_interactions");
+// ─────────────────────────────────────────────────────────────────────────────
+// build_flat_pairlist: convert CPU PairlistContainer → flat GPU cuvector
+// ─────────────────────────────────────────────────────────────────────────────
 
-  m_timer.start(sim);
+void interaction::CUDA_Nonbonded_Interaction::build_flat_pairlist(
+    const PairlistContainer& pl)
+{
+    m_gpu_pairs.clear();
 
-  // check if we want to calculate nonbonded
-  // might not be necessary if multiple time-stepping is enabled
+    auto append = [&](const Pairlist& src) {
+        for (unsigned i = 0; i < static_cast<unsigned>(src.size()); ++i) {
+            for (unsigned j : src[i]) {
+                m_gpu_pairs.push_back(make_uint2(i, j));
+            }
+        }
+    };
 
-  int steps = sim.param().multistep.steps;
-  if (steps == 0) steps = 1;
-
-  // std::cerr << "Nonbonded: steps = " << steps << std::endl;
-  configuration::Configuration *p_conf = &conf;
-  topology::Topology *p_topo = &topo;
-  if ((sim.steps() % steps) == 0) {
-
-    // std::cerr << "\tMULTISTEP: full non-bonded calculation" << std::endl;
-
-    // shared memory do this only once
-    if (m_pairlist_algorithm->prepare(*p_topo, *p_conf, sim))
-      return 1;
-
-    // have to do all from here (probably it's only one,
-    // but then maybe it's clearer like it is...)
-    // for (int i = 0; i < m_set_size; ++i) {
-    //   if(m_nonbonded_set[i]->calculate_interactions(*p_topo, *p_conf, sim))
-	  //     return 1;
-    // }
-
-    ///////////////////////////////////////////////////
-    // end of multiple time stepping: calculate
-    ////////////////////////////////////////////////////
-  } else {
-    // std::cerr << "\tMULTISTEP: no non-bonded calculation" << std::endl;
-  }
-
-  DEBUG(6, "sets are done, adding things up...");
-  store_set_data(*p_topo, *p_conf, sim);
-  
-  if (sim.param().multicell.multicell) {
-    reduce_configuration(topo, conf, sim, *p_conf);
-  }
-
-  ////////////////////////////////////////////////////
-  // printing pairlist
-  ////////////////////////////////////////////////////
-  if (sim.param().pairlist.print &&
-      (!(sim.steps() % sim.param().pairlist.skip_step))) {
-    DEBUG(7, "print pairlist...");
-    std::cerr << "printing pairlist!" << std::endl;
-    print_pairlist(*p_topo, *p_conf, sim);
-  }
-
-  DEBUG(6, "CUDA_Nonbonded_Interaction::calculate_interactions done");
-  m_timer.stop();
-
-  return 0;
+    append(pl.solute_short);
+    append(pl.solute_long);
+    append(pl.solvent_short);
+    append(pl.solvent_long);
 }
 
-/**
- * initialize the arrays
- */
-int interaction::CUDA_Nonbonded_Interaction::init(topology::Topology & topo,
-        configuration::Configuration & conf,
-        simulation::Simulation & sim,
-        std::ostream & os,
-        bool quiet) {
-  if (!quiet)
-    os << "NONBONDED INTERACTION (CUDA)\n";
+// ─────────────────────────────────────────────────────────────────────────────
+// init
+// ─────────────────────────────────────────────────────────────────────────────
 
-  // initialize data on GPU - positions, forces, energies
-  // std::cuvector<float3> pos, force; // should be part of conf?
-  // load all simulation and nonbonded parameters
+int interaction::CUDA_Nonbonded_Interaction::init(
+    topology::Topology&           topo,
+    configuration::Configuration& conf,
+    simulation::Simulation&       sim,
+    std::ostream&                 os,
+    bool                          quiet)
+{
+    if (!quiet) os << "NONBONDED INTERACTION (CUDA)\n";
 
-  // pairlist then initializes pairlist
-  
-
-  configuration::Configuration * p_conf = &conf;
-  topology::Topology * p_topo = &topo;
-
-  if (!math::boundary_check_cutoff(p_conf->current().box, p_conf->boundary_type,
-            sim.param().pairlist.cutoff_long)) {
-    io::messages.add("box is too small: not twice the cutoff!",
-            "configuration", io::message::error);
-    return 1;
-  }
-  // if (m_pairlist_algorithm) {
-  //     std::cout << "m_pairlist_algorithm address: " << m_pairlist_algorithm << std::endl;
-  //     try {
-  //         std::cout << "Runtime type: " << typeid(*m_pairlist_algorithm).name() << std::endl;
-  //     } catch (const std::exception& e) {
-  //         std::cerr << "Exception while accessing typeid: " << e.what() << std::endl;
-  //     }
-  // } else {
-  //     std::cerr << "m_pairlist_algorithm is null!" << std::endl;
-  // }
-
-  // initialise the pairlist...
-  m_pairlist_algorithm->init(*p_topo, *p_conf, sim, os, quiet);
-
-  if (sim.param().nonbonded.method != simulation::el_reaction_field) {
-    if (!quiet)
-      os << "\tlattice-sum electrostatics\n";
-    p_conf->lattice_sum().init(*p_topo, sim);
-  }
-
-  DEBUG(15, "nonbonded_interaction::initialize");
-  m_nonbonded_set.clear();
-
-  // in case we do perturbation and eds at the same time, this is handled
-  // in the eds_outer_loop. So we start with checking for EDS.
-  if (sim.param().eds.eds || sim.param().perturbation.perturbation) {
-    DEBUG(16, "creating EDS-perturbed nonbonded set");
-    for (int i = 0; i < m_set_size; ++i) {
-      m_nonbonded_set.push_back(new Perturbed_Nonbonded_Set(*m_pairlist_algorithm,
-              m_parameter, i, m_set_size));
-      DEBUG(16, "pushed back EDS-perturbed nonbonded set");
+    if (!math::boundary_check_cutoff(conf.current().box, conf.boundary_type,
+                                     sim.param().pairlist.cutoff_long)) {
+        io::messages.add("box too small: not twice the long cutoff",
+                         "CUDA_Nonbonded_Interaction", io::message::error);
+        return 1;
     }
-  } else {
-    for (int i = 0; i < m_set_size; ++i) {
-      m_nonbonded_set.push_back(new Nonbonded_Set(*m_pairlist_algorithm,
-              m_parameter, i, m_set_size));
+
+    // ── Initialise CPU pairlist algorithm ────────────────────────────────────
+    if (m_std_pairlist_alg.init(topo, conf, sim, os, quiet))
+        return 1;
+
+    m_pairlist.resize(topo.num_atoms());
+
+    // ── Build GPU LJ parameter matrix ────────────────────────────────────────
+    m_lj_params.init(m_parameter);
+
+    // ── Precompute reaction-field constants (mirrors Nonbonded_Term::init) ───
+    {
+        const auto& p   = sim.param().nonbonded;
+        const double rc = p.rf_cutoff;
+
+        double crf = 0.0;
+        if (rc > 0.0) {
+            if (p.rf_epsilon == 0.0) {
+                crf = -1.0;
+            } else {
+                const double kr  = p.rf_kappa * rc;
+                const double kr2 = kr * kr;
+                crf = (2.0 * (p.epsilon - p.rf_epsilon) * (1.0 + kr)
+                       - p.rf_epsilon * kr2)
+                    / ((p.epsilon + 2.0 * p.rf_epsilon) * (1.0 + kr)
+                       + p.rf_epsilon * kr2);
+            }
+            const double cut3i = 1.0 / (rc * rc * rc);
+            m_nb_params.crf_2cut3i = static_cast<FPL_TYPE>(crf * cut3i / 2.0);
+            m_nb_params.crf_cut    = static_cast<FPL_TYPE>((1.0 - crf / 2.0) / rc);
+        }
+
+        m_nb_params.four_pi_eps_i =
+            static_cast<FPL_TYPE>(math::four_pi_eps_i);
+        m_nb_params.cutoff_short_sq =
+            static_cast<FPL_TYPE>(sim.param().pairlist.cutoff_short *
+                                  sim.param().pairlist.cutoff_short);
+        m_nb_params.cutoff_long_sq =
+            static_cast<FPL_TYPE>(sim.param().pairlist.cutoff_long *
+                                  sim.param().pairlist.cutoff_long);
     }
-  }
 
-  std::vector<Nonbonded_Set_Interface *>::iterator
-  it = m_nonbonded_set.begin(),
-          to = m_nonbonded_set.end();
+    // ── Reserve GPU pair list (rough estimate) ────────────────────────────────
+    m_gpu_pairs.reserve(topo.num_atoms() * 80u);
 
-  if (!quiet)
-    os << "\tcreated " << m_nonbonded_set.size() << " set"
-        <<  (m_nonbonded_set.size() > 1 ? "s" : "")    << "\n";
+    // ── Initial full data upload to GPU ──────────────────────────────────────
+    conf.copy_to_gpu();
+    // Ensure GPU force array is the right size
+    conf.get_gpu_raw_ptrs(); // triggers lazy GPU Configuration resize if needed
 
-  bool q = quiet;
-  for (; it != to; ++it) {
-      (*it)->init(*p_topo, *p_conf, sim, os, q);
-    // only print first time...
-    q = true;
-  }
+    if (!quiet) {
+        os << "\tGPU force kernel  : LJ + reaction-field CRF\n";
+        os << "\tLJ types          : " << m_lj_params.num_types << "\n";
+        os << "\tcrf_2cut3i        : " << m_nb_params.crf_2cut3i << "\n";
+        os << "\tcrf_cut           : " << m_nb_params.crf_cut    << "\n";
+        os << "END\n";
+    }
 
-  if (check_special_loop(*p_topo, *p_conf, sim, os, quiet) != 0) {
-    io::messages.add("special solvent loop check failed", "CUDA_Nonbonded_Interaction",
-            io::message::error);
-    return 1;
-  }
-  if (!quiet)
-    os << "END\n";
-  DEBUG(9, "nonbonded init done");
-  return 0;
+    return 0;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// calculate_interactions
+// ─────────────────────────────────────────────────────────────────────────────
+
+int interaction::CUDA_Nonbonded_Interaction::calculate_interactions(
+    topology::Topology&           topo,
+    configuration::Configuration& conf,
+    simulation::Simulation&       sim)
+{
+    DEBUG(4, "CUDA_Nonbonded_Interaction::calculate_interactions");
+    m_timer.start(sim);
+
+    int steps = sim.param().multistep.steps;
+    if (steps == 0) steps = 1;
+
+    if ((sim.steps() % steps) == 0) {
+
+        // ── Step 1: CPU pairlist construction ────────────────────────────────
+        const bool pairlist_update =
+            !(sim.steps() % sim.param().pairlist.skip_step);
+
+        if (pairlist_update) {
+            if (m_std_pairlist_alg.prepare(topo, conf, sim))
+                return 1;
+            m_std_pairlist_alg.update(topo, conf, sim,
+                                      m_pairlist, 0,
+                                      topo.num_atoms(), 1);
+        }
+
+        // ── Step 2: Convert pairlist to flat GPU format ───────────────────────
+        build_flat_pairlist(m_pairlist);
+
+        // ── Step 3: Upload current positions to GPU ───────────────────────────
+        conf.copy_pos_vel_to_gpu();
+
+        // ── Step 4: Zero GPU force array ──────────────────────────────────────
+        auto ptrs = conf.get_gpu_raw_ptrs();
+        const unsigned num_atoms = static_cast<unsigned>(topo.num_atoms());
+        gpu::launch_zero_forces(ptrs.force, num_atoms);
+
+        // ── Step 5: LJ-CRF force kernel ───────────────────────────────────────
+        gpu::launch_lj_crf_forces(
+            ptrs.pos,
+            ptrs.force,
+            topo.get_gpu_view().iac,
+            topo.get_gpu_view().charge,
+            m_gpu_pairs.data(),
+            static_cast<unsigned>(m_gpu_pairs.size()),
+            m_lj_params.view(),
+            m_nb_params,
+            conf.boundary_type,
+            conf.current().box);
+
+        // ── Step 6: Sync GPU forces back to CPU ───────────────────────────────
+        conf.copy_forces_from_gpu();
+    }
+
+    DEBUG(6, "CUDA_Nonbonded_Interaction::calculate_interactions done");
+    m_timer.stop();
+    return 0;
 }

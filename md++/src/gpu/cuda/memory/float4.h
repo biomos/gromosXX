@@ -29,8 +29,9 @@
   #error "Don't include float4.h without defining HOSTDEVICE"
 #else
 
+
 #if CUDA_VERSION >= 12000
-    using double4_a = double4_16a;
+    using double4_a = double4_16a;  // works for both nvcc and g++
 #else
     using double4_a = double4;
 #endif

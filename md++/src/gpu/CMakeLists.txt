@@ -58,13 +58,13 @@ if(USE_CUDA)
 
     add_library(grocuda STATIC ${GPU_SOURCES})
 
-    set_target_properties(grocuda PROPERTIES
-        CUDA_SEPARABLE_COMPILATION ON
-        POSITION_INDEPENDENT_CODE ON
-        CXX_STANDARD 17
-        CUDA_ARCHITECTURES "60;62;70;75;80;86"
-        CUDA_RUNTIME_LIBRARY Static  # Optional
-    )
+    # set_target_properties(grocuda PROPERTIES
+    #     CUDA_SEPARABLE_COMPILATION ON
+    #     POSITION_INDEPENDENT_CODE ON
+    #     CXX_STANDARD 17
+    #     CUDA_ARCHITECTURES "70;75;80;86;89;90"
+    #     CUDA_RUNTIME_LIBRARY Static  # Optional
+    # )
 
     target_link_libraries(grocuda PUBLIC CUDA::cudart ${CUDAToolkit_LIBRARIES})
     target_compile_definitions(grocuda PRIVATE USE_CUDA)
