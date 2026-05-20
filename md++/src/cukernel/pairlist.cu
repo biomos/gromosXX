@@ -27,7 +27,9 @@
 #include "gpu_status.h"
 
 #include "lib/math.h"
+#include "lib/utils.h"
 #include "../util/debug.h"
+
 
 #undef MODULE
 #undef SUBMODULE
